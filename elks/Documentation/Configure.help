@@ -1,6 +1,55 @@
 # Linux ELKS Kernel Configuration
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
+
+# Advanced - for Developers and Hackers only
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Prompt for development and/or incomplete code/drivers
+CONFIG_EXPERIMENTAL
+  Some of the various things that ELKS supports (such as network 
+  drivers, file systems, network protocols, etc.) can be in a state 
+  of development where the functionality, stability, or the level of 
+  testing is not yet high enough for general use. This is usually
+  known as the "alpha-test" phase amongst developers. If a feature is
+  currently in alpha-test, then the developers usually discourage 
+  uninformed widespread use of this feature by the general public to
+  avoid "Why doesn't this work?" type email messages.
+
+  However, active testing and use of these systems is welcomed. Just
+  be aware that it may not meet the normal level of reliability or it
+  may fail to work in some special cases. Detailed bug reports from
+  people familiar with the kernel internals are usually welcomed by
+  the developers.
+
+  Unless you intend to help test and develop a feature or driver that
+  falls into this category, or you have a situation that requires
+  using these features, you should probably say N here, which will
+  cause this configure script to present you with fewer choices. If
+  you say Y here, you will be offered the choice of using features or
+  drivers that are currently considered to be in the alpha-test phase.
+
+  Just say N and live in peace.
+
+Prompt for obsolete drivers
+CONFIG_OBSOLETE
+  Some of the drivers that ELKS supports have been superceded by later
+  drivers with more general support, but have been left in the source
+  tree for various reasons. However, the kernel developers discourage
+  use of the obsolete drivers, at least partly because they are likely
+  to vanish without further warning in a forthcoming kernel release.
+
+  Just say N and live in peace.
+
+Prompt for unimplemented options
+CONFIG_NOT_YET
+  In several cases, options are included in the ELKS configuration
+  tree that have no corresponding code in the source tree, usually as
+  a result of planned development that has yet to take place. Whilst
+  playing with these options will not damage the compiled kernel in
+  any way, neither will it do anything constructive at this time.
+
+  Just say N and live in peace.
+
 # General Setup
 # ~~~~~~~~~~~~~
 
@@ -113,8 +162,8 @@ Lines per page
 ROM_HIGH_OF_CRT
   Specify the number of lines that can be displayed on the screen.
 
-# absolute segment
-#~~~~~~~~~~~~~~~~~
+# Absolute segment
+# ~~~~~~~~~~~~~~~~
 
 Codesegment for setup.S      (SEG, size ca. 0x60 ROM)
 ROM_SETUP_CODE
@@ -142,8 +191,8 @@ ROM_KERNEL_DATA
   Segment location of the kernels data segment, used only when the
   kernel image is in ROM.
 
-# Info for ROM-IMG Generator
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Information for ROM image generator
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Start address of ROM (for offset in image-file)
 ROM_BASIS
@@ -187,14 +236,14 @@ ROM_E_SIM_CALL
   including command line perameters etc.
 
 # Generate debug code
-#~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~
 
 ROM-CODE debug infos
 ROM_CODE_DEBUG
   Saying yes will compile the ROM image with all debug information turned on.
 
-# ROM code conf
-#~~~~~~~~~~~~~~
+# ROM code configuration
+# ~~~~~~~~~~~~~~~~~~~~~~
 
 Use IRQ-Mask of 8259 at boot time as default
 ROM_USE_ORG_INTMASK
@@ -218,10 +267,8 @@ GET_DISKPARAM_BY_INT13_NO_SEEK
   Saying yes will explicitly tell ELKS not to use Int13.08 to get 
   Floppy information (Int 13.08 doesn't work on PC/XT floppy drives).
 
-# 286 Protected Mode support
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Support for 286+ features
+# 286 Protected Mode support - 286+ features
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 286 Protected Mode support
 CONFIG_286PMODE
@@ -229,7 +276,8 @@ CONFIG_286PMODE
   risk. (This option will probably not interact well with the BIOS disk
   drivers)
 
-# Support for 386+ features
+# 286 Protected Mode support - 386+ features
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Support more than 16 Megs of RAM
 CONFIG_386RAM
@@ -257,10 +305,11 @@ CONFIG_NOFS
   Remove the filesystem support for small embedded systems with no block
   devices.
 
-Exec code from ROM
+Execute code from ROM
 CONFIG_EXEC_ROM
   Add support for executing user processes in place from an image in ROM.
   Can be used even if no filesystem code is included.
+
   ~~~~~~~~~~~~CURRENTLY UNIMPLEMENTED~~~~~~~~~~~~~~~~~
 
 # Console display support
@@ -425,12 +474,14 @@ CONFIG_ELKSFS_FS
 MS-DOS file system support
 CONFIG_MSDOS_FS
   Support for standard MS-DOS style partitions. 
+
   ~~~~~~~~~~~~~~~~Currently non-existant~~~~~~~~~~~~~~
-#
+
 Include VFAT style long name support
 CONFIG_VFAT_FS
   Extension to standard MS-DOS fs support to permit Win95 style long
   file names. 
+
   ~~~~~~~~~~~~~~~~Currently non-existant~~~~~~~~~~~~~
 
 ROM file system support
@@ -476,6 +527,7 @@ Minix file format
 CONFIG_EXEC_MINIX
   This lets you run Minix binaries compiled with bcc. This is the only
   real format allowed at the moment. 
+
   ~~~~~~~~~~~~~~~~~~~Required~~~~~~~~~~~~~~~~~~
 
 MSDOS (EXE) file format
@@ -516,5 +568,3 @@ CONFIG_SOCK_STREAMONLY
   the only type supported.
 
 # EOF
-
-

@@ -6,6 +6,15 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Fri Jun 29 17:05:39 GMT 2001	Riley Williams <rhw@memalpha.cx>
+	* Add CONFIG_EXPERIMENTAL, CONFIG_OBSOLETE and CONFIG_NOT_YET to
+	  Documentation/Configure.help and arch/i86/config.in files ready
+	  for use with other options.
+	* Rationalise arch/i86/config.in to enable `make menuconfig` to
+	  work - previously, it didn't.
+	* Upgrade scripts/Configure and scripts/Menuconfig to the versions
+	  included with the Linux 2.4.5 kernel source trees.
+
 Tue Jun 26 01:18:57 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 	* Semaphores made all inode downs block because sleeping when non positive.
 	  Fixed to sleep on negative and wake on non negative.
