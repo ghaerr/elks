@@ -1,0 +1,29 @@
+This file is used to record changes made to the CVS database. Please add to
+the top of this file before committing any changes. Please use the header
+format provided for each entry, noting that the text on each line should not
+be longer than the lines of dashes.
+
+Contributor		Email address			CHANGELOG entries found
+~~~~~~~~~~~~~~~~~~~~~~	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	~~~~~~~~~~~~~~~~~~~~~~~
+Alistair Riddoch	<alriddoch@zepler.org>		 1 Jan 1995-20 Oct 1999
+Harry Kalogirou 	<HarKal@rainbow.cs.unipi.gr>	 7 Nov 2001
+Riley Williams		<rhw@MemAlpha.cx>		 8 Nov 2001
+
+-------------------------------------------------------------------------------
+
+Thu Nov  8 22:18:20 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Rationalised index.html page of dynamic snapshot.
+	* Committed first version of revised pages - much still absent.
+
+Wed Nov  7 00:13:21 GMT 2001	Harry Kalogirou <HarKal@rainbow.cs.unipi.gr>
+
+	* Snapshot of Al's dynamic ELKS website taken and used as base for
+	  new website.
+
+Sat Oct 20 12:34:56 GMT 1999	Alistair Riddoch <alriddoch@zepler.org>
+
+	* Last update to dynamic ELKS website.
+
+-------------------------------------------------------------------------------
+END OF CHANGELOG
