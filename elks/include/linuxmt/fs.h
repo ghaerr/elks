@@ -253,7 +253,7 @@ struct inode
 	unsigned char i_seek;
 	unsigned char i_update;
 #endif
-	unsigned short i_sem;
+	short i_sem;
 	union {
 		struct pipe_inode_info pipe_i;
 		struct romfs_inode_info romfs_i;
