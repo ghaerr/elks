@@ -7,12 +7,6 @@ this file if you find any kernel related bugs.
 	Al
 --
 
-The interrupt routine for the serial driver rs_irq() is currently not called 
-when the serial port should be generating an interrupt. It is not clear why,
-but it is probable there is a bug somewhere in the serial port configuration
-code
-
-
 Sometimes unmounting a non-root filesystem returns EBUSY when nothing is using,
 and nothing seems to rectify it.
 
@@ -46,3 +40,13 @@ memory".
 
 
 fchown function seems to corrupt inode table. (See login source code).
+
+
+Long command lines cause programs to crash. When copying files from
+the /bin directory of a floppy onto the harddisk when installing, the cp
+process often crashes before it has finished and frequently displays
+unexpected behavoir. This could be because there is a problem dealing with
+command lines of more than a couple of hundred bytes, or it could be a problem
+that comes up after copying lots of data between files. The bug occurs
+irespective of whether the commandline was typed in by hand, or automacally
+constructed using wildcards.
