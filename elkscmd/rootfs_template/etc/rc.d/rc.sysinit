@@ -20,7 +20,7 @@ then
 	ktcp $localip $sliptty &
 	echo ' ktcp'
 	
-	echo -n "Staring network daemons: "
+	echo -n "Starting network daemons: "
 	for daemon in ftpd httpd
 	do
 		if test -f /bin/$daemon 
