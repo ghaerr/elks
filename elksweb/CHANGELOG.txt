@@ -14,6 +14,13 @@ Riley Williams          <rhw@MemAlpha.cx>                8 Nov 2001-10 Nov 2001
 
 -------------------------------------------------------------------------------
 
+Sun Nov 11 11:06:53 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Reformatted English FAQ. Much of this appears to be long out of
+	  date, but I've added it as it stands for now, and will work
+	  through it to bring it up to date once I have the rest of the
+	  old ELKS website transferred across.
+
 Sat Nov 10 10:21:11 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Added details of mailing lists.
