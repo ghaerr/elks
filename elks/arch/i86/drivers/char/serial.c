@@ -138,7 +138,7 @@ struct pt_regs *regs;
 	int status;
 	register struct serial_info * sp;
 	unsigned char ch;
-	printd_rs("Serial interrupt %d recieved.\n", irq);
+	printd_rs1("Serial interrupt %d recieved.\n", irq);
 
 	sp = &ports[irq_port[irq -2]];
 	do {

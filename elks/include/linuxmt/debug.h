@@ -187,8 +187,10 @@
 
 #if 0
 #define printd_rs printk
+#define printd_rs1 printk
 #else
 #define printd_rs(_a)
+#define printd_rs1(_a,_b)
 #endif
 
 #if 0
