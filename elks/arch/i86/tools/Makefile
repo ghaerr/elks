@@ -59,7 +59,7 @@ wrt_disk.tmp: wrt_disk.o file.o
 		../drivers/block/ssd_asm.o
 
 wrt_disk.img: wrt_disk.tmp imgconv
-	./imgconf wrt_disk.tmp wrt_disk.img
+	./imgconv wrt_disk.tmp wrt_disk.img
 
 build: build.c
 	gcc -I $(BASEDIR)/include -o build build.c
