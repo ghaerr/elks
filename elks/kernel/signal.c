@@ -18,20 +18,18 @@
 
 static void generate(int sig, register struct task_struct *p)
 {
-    sigset_t mask = 1 << (sig - 1);
     register struct sigaction *sa = &(p->sig.action[sig - 1]);
+    sigset_t mask = 1 << (sig - 1);
 
-    if (sa->sa_handler == SIG_IGN) {
+    if (sa->sa_handler == SIG_IGN)
 	return;
-    }
     if ((sa->sa_handler == SIG_DFL) &&
 	(sig == SIGCONT || sig == SIGCHLD || sig == SIGWINCH
 #ifndef SMALLSIG
 	 || sig == SIGURG
 #endif
-	)) {
+	))
 	return;
-    }
     printd_sig1("Generating sig %d.\n", sig);
     p->signal |= mask;
     if ((p->state == TASK_INTERRUPTIBLE) /* && (p->signal & ~p->blocked) */ ) {
@@ -61,15 +59,14 @@ int send_sig(pid_t sig, register struct task_struct *p, int priv)
 #ifndef SMALLSIG
 	|| sig == SIGTTIN || sig == SIGTTOU
 #endif
-	) {
+	)
 	p->signal &= ~(1 << (SIGCONT - 1));
-    }
     /* Actually generate the signal */
     generate(sig, p);
     return 0;
 }
 
-int kill_pg(pid_t pgrp, int sig, int priv)
+int kill_pg(pid_t pgrp, sig_t sig, int priv)
 {
     register struct task_struct *p;
     int err = -ESRCH;
@@ -77,37 +74,37 @@ int kill_pg(pid_t pgrp, int sig, int priv)
     printd_sig1("Killing pg %d\n", pgrp);
     for_each_task(p)
 	if (p->pgrp == pgrp)
-	err = send_sig(sig, p, priv);
+	    err = send_sig(sig, p, priv);
     return err;
 }
 
-int kill_process(pid_t pid, int sig, int priv)
+int kill_process(pid_t pid, sig_t sig, int priv)
 {
     register struct task_struct *p;
 
     printd_sig2("Killing PID %d with sig %d.\n", pid, sig);
     for_each_task(p)
 	if (p->pid == pid)
-	return send_sig(sig, p, 0);
+	    return send_sig(sig, p, 0);
     return -ESRCH;
 }
 
-int sys_kill(pid_t pid, int sig)
+int sys_kill(pid_t pid, sig_t sig)
 {
-    int count = 0;
-    int err, retval = 0;
+    register struct task_struct *p;
+    int count = 0, err, retval = 0;
+
     if ((sig < 1) || (sig > NSIG))
 	return -EINVAL;
     if (!pid)
 	return kill_pg(current->pgrp, sig, 0);
     if (pid == -1) {
-	register struct task_struct *p;
 	for_each_task(p)
 	    if (p->pid > 1 && p != current) {
-	    ++count;
-	    if ((err = send_sig(sig, p, 0)) != -EPERM)
-		retval = err;
-	}
+		count++;
+		if ((err = send_sig(sig, p, 0)) != -EPERM)
+		    retval = err;
+	    }
 	return (count ? retval : -ESRCH);
     }
     if (pid < 0)
@@ -124,6 +121,5 @@ int sys_signal(int signr, __sighandler_t handler)
 	return -EINVAL;
     sa = &current->sig.action[signr - 1];
     sa->sa_handler = handler;
-
     return 0;
 }

@@ -140,7 +140,7 @@ include/linuxmt/compiler-generated.h:
 #########################################################################
 # lint rule
 
-lint:	include/linuxmt/autoconf.h
+xlint:	include/linuxmt/autoconf.h
 	@echo
 	$(LINT) -I$(TOPDIR)/include -c init/main.c
 	@echo

@@ -53,19 +53,19 @@ void do_exit(int status)
     current->mm.dseg = NULL;
 
     /* Keep all of the family stuff straight */
-    if (task = current->p_prevsib) {
+    if ((task = current->p_prevsib)) {
 	task->p_nextsib = current->p_nextsib;
     }
-    if (task = current->p_nextsib) {
+    if ((task = current->p_nextsib)) {
 	task->p_prevsib = current->p_prevsib;
     }
 
     /* Ack. I hate repeating code like this */
     parent = current->p_parent;
     if (parent->p_child == current) {
-	if (task = current->p_prevsib) {
+	if ((task = current->p_prevsib)) {
 	    parent->p_child = task;
-	} else if (task = current->p_nextsib) {
+	} else if ((task = current->p_nextsib)) {
 	    parent->p_child = task;
 	}
     }

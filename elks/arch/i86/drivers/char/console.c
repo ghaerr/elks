@@ -67,7 +67,10 @@ extern void AddQueue(unsigned char Key);	/* From xt_key.c */
 
 void WriteChar(register Console * C, char c)
 {
-    int loopx, loopy;
+#ifdef CONFIG_VIRTUAL_CONSOLE
+    int loopx
+#endif
+    int loopy;
 
     switch (c) {
     case '\f':
@@ -272,10 +275,10 @@ void power_on(void)
 
 void init_console(void)
 {
+#ifdef CONFIG_VIRTUAL_CONSOLE
+
     unsigned int i;
     register Console *temp;
-
-#ifdef CONFIG_VIRTUAL_CONSOLE
 
     for (i = 1; i < MAX_CONSOLES; i++) {
 	temp = &Con[i];

@@ -221,7 +221,7 @@ AR		= ar
 CC_PROTO	= gcc -I$(INCDIR) -M -MG $(CCDEFS)
 CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) -ansi
 CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
-LINT		= lclint
+LINT		= splint
 
 ifeq ($(USEBCC), Y)
 
@@ -276,7 +276,7 @@ elks:
 # Standard commands.
 
 doclean: $(CLEANDEP)
-	rm -fv *~ *.bak *.a *.o *.map *.tmp core $(CLEANME)
+	rm -fv *~ *.a *.bak *.lint *.map *.o *.tmp core $(CLEANME)
 	@for FILE in *.s ; do \
 		BASE=`basename "$$FILE" .s` ; \
 		if [ -f "$$BASE.c" -o -f "$$BASE.S" ]; then \
@@ -309,6 +309,20 @@ indent:	indent-me
 
 indent-me:
 	$(BASEDIR)/scripts/reindent $(NOINDENT)
+
+lint:
+	@for FILE in *.c ; do \
+		if [ -f "$$FILE" ] && ! fgrep -q '#asm' "$$FILE" ; then \
+			TGT=`echo "$$FILE" | rev | cut -b 3- | rev`.lint ; \
+			echo $(LINT) -I$(INCDIR) -weak $(CCDEFS) "$$FILE" ; \
+			$(LINT) -I$(INCDIR) -weak $(CCDEFS) "$$FILE" > "$$TGT" ; \
+		fi ; \
+	done
+	@for DIR in */ ; do \
+		if [ -f "$$DIR/Makefile" ]; then \
+			${MAKE} -C "$$DIR" lint ; \
+		fi ; \
+	done
 
 mkdep:
 	@sed '/\#\#\# Dependencies:/q' < Makefile > make.tmp

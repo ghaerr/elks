@@ -32,6 +32,25 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Thu Apr 25 23:59:40 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* After downloading and installing the splint C code checker
+	  (available from http://www.splint.org/ on the Internet), I
+	  implemented the `make lint` command in the Makefiles to go
+	  through the entire source tree and check all C source files
+	  that do not contain #asm ... #endasm sections. This tweaks
+	  the Makefile to implement the global `make lint` command.
+	* Applied `make lint` to the arch/i86/drivers/char/KeyMaps/
+	  directory and confirmed that the header files herein are
+	  all clean.
+	* Applied `make lint` to the kernel/ directory.
+	* Fixed some of the more obvious bugs to kernel/exit.c found.
+	* Discovered that the varargs structure used in kernel/printk.c
+	  is not accepted by splint.
+	* Fixed some of the more obvious bugs to kernel/signal.c found.
+	* Fixed some of the more obvious bugs to kernel/time.c found.
+	  At the -weak detection level, this file is clean.
+
 Thu Apr 25 19:05:24 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Committed the results of applying `make indent` to the

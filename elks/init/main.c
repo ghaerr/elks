@@ -5,9 +5,6 @@
 #include <linuxmt/timex.h>
 #include <linuxmt/utsname.h>
 
-/* Enable debugging */
-/* #define DEBUGME */
-
 /*
  *	System variable setups
  */
@@ -24,14 +21,6 @@ int root_mountflags = 0;
 /**************************************/
 
 static void init_task(void);
-
-#ifdef DEBUGME
-static void pause(int n);
-static void printme(int n);
-#else
-#define pause(n)
-#define printme(n)
-#endif
 
 extern __ptask _reglasttask, _regnexttask;
 
@@ -73,11 +62,12 @@ void start_kernel(void)
 
 #ifndef CONFIG_SYS_VERSION
     printk("ELKS version %s\n", system_utsname.release);
+#else
+    printk("ELKS version %s\n", system_utsname.release);
 #endif
 
     task[0].t_kstackm = KSTACK_MAGIC;
     task[0].next_run = task[0].prev_run = &task[0];
-    printme(0);
     kfork_proc(&task[1], init_task);
 
     /* 
@@ -87,37 +77,6 @@ void start_kernel(void)
     while (1)
 	schedule();
 }
-
-#ifdef DEBUGME
-
-static void pause(int n)
-{
-    printk("\nPAUSE %d: ",n);
-    {
-#asm
-	push	ax
-	push	cx
-	mov	ax,10
-	xor	cx,cx
-
-again:
-	dec	cx
-	jnz	again
-	dec	ax
-	jnz	again
-	pop	cx
-	pop	ax
-#endasm
-    }
-    printk("Done.\n\n");
-}
-
-static void printme(int n)
-{
-    printk("DEBUG: Step %d.\n",n);
-}
-
-#endif
 
 static char args[] = "\0\0\0\0\0\0/bin/init\0\0";
 /*		      ^   ^   ^		     ^
@@ -146,9 +105,9 @@ static void init_task()
 
     printk("Loading init\n");
 
-    pause(0);
+    if ((num = sys_execve("/bin/init", args, 18))) {
 
-    if (sys_execve("/bin/init", args, 18)) {
+	printk("sys_execve(\"/bin/init\",args,18) => %d.\n",num);
 
 #ifdef CONFIG_CONSOLE_SERIAL
 	if ((num = sys_open("/dev/ttys0", 2)) < 0)
@@ -157,20 +116,12 @@ static void init_task()
 #endif
 	    printk("Unable to open /dev/tty (error %u)\n", -num);
 
-	pause(1);
-
 	if (sys_dup(0) != 1)
 	    printk("dup failed\n");
 
-	pause(2);
-
 	sys_dup(0);
 
-	pause(3);
-
 	printk("No init - running /bin/sh\n");
-
-	pause(4);
 
 	if (sys_execve("/bin/sh", args, 0))
 	    panic("No init or sh found");

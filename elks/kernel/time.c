@@ -59,22 +59,20 @@ int sys_settimeofday(struct timeval *tv, register struct timezone *tz)
 
     /* verify we have valid addresses to read from */
     if (tv != NULL) {
-	if (error =
-	    verified_memcpy_fromfs(&tmp_tv, tv, sizeof(struct timeval))) {
+	if ((error = verified_memcpy_fromfs(&tmp_tv, tv,
+					    sizeof(struct timeval))))
 	    return error;
-	}
-	if ((tmp_tv.tv_usec < 0) || (tmp_tv.tv_usec >= 1000000L)) {
+	if ((tmp_tv.tv_usec < 0) || (tmp_tv.tv_usec >= 1000000L))
 	    return -EINVAL;
-	}
     }
+
     if (tz != NULL) {
-	if (error =
-	    verified_memcpy_fromfs(&tmp_tz, tz,
-				   sizeof(struct timezone))) return error;
+	if ((error = verified_memcpy_fromfs(&tmp_tz, tz,
+					    sizeof(struct timezone))))
+	    return error;
 	if ((tmp_tz.tz_dsttime < DST_NONE)
-	    || (tmp_tz.tz_dsttime > DST_AUSTALT)) {
+	    || (tmp_tz.tz_dsttime > DST_AUSTALT))
 	    return -EINVAL;
-	}
     }
 
     /* Setting time is a bit tricky, since we don't really keep the time in the xtime
@@ -99,22 +97,23 @@ int sys_settimeofday(struct timeval *tv, register struct timezone *tz)
 /* return the time of day to the user */
 int sys_gettimeofday(register struct timeval *tv, struct timezone *tz)
 {
-    int error;
     struct timeval tmp_tv;
     jiff_t now;
+    int error;
 
     /* load the current time into the structures passed */
     if (tv != NULL) {
 	now = jiffies;
 	tmp_tv.tv_sec = xtime.tv_sec + (now / HZ);
 	tmp_tv.tv_usec = xtime.tv_usec + ((now % HZ) * (1000000l / HZ));
-	if (error = verified_memcpy_tofs(tv, &tmp_tv, sizeof(struct timeval)))
+	if ((error = verified_memcpy_tofs(tv, &tmp_tv,
+					  sizeof(struct timeval))))
 	    return error;
     }
-    if (tz != NULL) {
-	if (error = verified_memcpy_tofs(tz, &xzone, sizeof(struct timezone)))
+    if (tz != NULL)
+	if ((error = verified_memcpy_tofs(tz, &xzone,
+					  sizeof(struct timezone))))
 	    return error;
-    }
 
     /* success */
     return 0;
