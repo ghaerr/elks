@@ -66,15 +66,16 @@ int sel_type;
 
 	switch (sel_type) {
 		case SEL_IN:
-			if (chq_peekch(&tty->outq)) {
+			if (chq_peekch(&tty->outq))
 				return 1;
-			}
-		case SEL_EX: /* fall thru! */
 			select_wait (&tty->outq.wq);
 			return 0;
-		case SEL_OUT: /* Hm.  We can always write to a tty?  (not really) */
-		default:
-			return 1;
+		case SEL_OUT: /* Hm.
+			if (!chq_full(&tty->inq)) 
+				return 1;
+			select_wait (&tty->inq.wq);
+		case SEL_EX: /* fall thru! */
+			return 0;
 	}
 }
 

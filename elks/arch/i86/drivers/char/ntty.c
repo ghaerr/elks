@@ -277,15 +277,15 @@ int sel_type;
 		case SEL_IN:
 			if (chq_peekch(&tty->inq))
 				return 1;
-			break;
+			select_wait(&tty->inq.wq);
+			return 0;
 		case SEL_OUT:
 			if (!chq_full(&tty->outq))
 				return 1;
+			select_wait(&tty->outq.wq);
 		case SEL_EX: /* fall thru! */
-			;
+			return 0;
 	}
-	select_wait(&tty->inq.wq);
-	return 0;
 }
 
 static struct file_operations tty_fops =
