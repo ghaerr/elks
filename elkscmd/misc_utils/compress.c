@@ -139,6 +139,9 @@
  *
  * 2004-06-03 Claudio Matsuoka <claudio@conectiva.com>
  * - placing tables back in BSS, build with bcc -X-H0xe000
+ *
+ * 2004-06-04 Claudio Matsuoka <claudio@conectiva.com>
+ * - removed workaround for bcc bug (fixed in bcc 0.16.16)
  */ 
 #define ELKS
 #define LSTAT
@@ -481,13 +484,10 @@ union	bytes
 	} bytes;
 };
 
-/*
- * [ELKS] CM: FIXME: int x added to work around bcc bug generating mov di,al
- */
+/* You need bcc 0.16.16 or later to compile this */
 #if BYTEORDER == 4321 && NOALLIGN == 1
 # define output(b,o,c,n) { \
-    int x = o & 0x07; \
-    *(long *)&((b)[(o)>>3]) |= ((long)(c))<<x; \
+    *(long *)&((b)[(o)>>3]) |= ((long)(c))<<((o)&0x07); \
     (o) += (n); \
   }
 #else
@@ -513,11 +513,11 @@ union	bytes
 #  endif
 #endif
 
-/* [ELKS] CM: int x added to work around bcc bug */
+/* You need bcc 0.16.16 or later to compile this */
 #if BYTEORDER == 4321 && NOALLIGN == 1
 #  define input(b,o,c,n,m) { \
      int x = o & 0x07; \
-     (c) = (*(long *)(&(b)[(o)>>3])>>x) & (m); \
+     (c) = (*(long *)(&(b)[(o)>>3])>>((o)&0x07)) & (m); \
      (o) += (n); \
    }
 #else

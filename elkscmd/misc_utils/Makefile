@@ -38,7 +38,7 @@ PRGS=ed tar compress uncompress zcat
 
 all: $(PRGS)
 
-compress:
+compress: compress.c
 	$(CC) $(CFLAGS) -X-H0xe000 -s $@.c -o $@
 
 uncompress: compress
@@ -48,11 +48,13 @@ zcat: compress
 	ln -sf compress zcat
 
 rfs: all
-	cp -p $(PRGS) $(TARGET_MNT)/bin
+	cp -p $(STD_USR_BIN) $(TARGET_MNT)/usr/bin
 
 net_rfs: rfs
 
-min_rfs: rfs
+min_rfs: all
+	cp -p $(MIN_USR_BIN) $(TARGET_MNT)/usr/bin
+	cp -p $(PRGS) $(TARGET_MNT)/bin
 
 smin_rfs:
 
