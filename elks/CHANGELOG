@@ -7,9 +7,14 @@ be longer than the lines of dashes.
 Al
 -------------------------------------------------------------------------------
 
+Sat Sep  8 19:51:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Added `mkMake` script to scripts directory.
+
 Thu Aug 30 19:16:22 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* Rationalised ELKS Makefiles to use standard rule prototypes.
+	* Rationalised ELKS Makefiles to use standard rule prototypes, with
+	  elks/Makefile-rules containing all of the standard prototypes.
 
 Tue Aug 28 11:43:35 BST 2001	Paul Nasrat <pnasrat@uk.now.com>
 
@@ -18,7 +23,7 @@ Tue Aug 28 11:43:35 BST 2001	Paul Nasrat <pnasrat@uk.now.com>
 Mon Aug 27 11:59:12 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
 	* Changed tcpdev.c to use semaphores now we have them.
-	* Fixed bug in inet_read(). Should sleep again if waken up and has
+	* Fixed bug in inet_read(). Should sleep again if woken up and has
 	  no lock on the buffer.
 	* Did some inet code cleanup
 	* Some fixes to the tcp behavior.
