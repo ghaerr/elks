@@ -33,14 +33,20 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Thu May 30 23:45:40 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Added new header arch/asm.h with definitions specific to the
+	  use of the SPLINT tool with sections of C code containing
+	  the asm() function.
+	* Added a document (still being written) on the Minix file
+	  system and how it works.
+
 Thu May 30 16:00:37 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Standardised on clr_irq() and set_irq() macros throughout
 	  the source tree. clri() would have been acceptable, but
-	  seti() is the Search for Extra-Terrestial Intelligence,
-	  so is misleading in this context.
-	* Verified that current codebase both compiles and boots on my
-	  286 based laptop.
+	  seti() is the Search for Extra-Terrestial Intelligence, so
+	  is misleading in this context.
 
 Thu May 30 10:57:30 BST 2002	Riley Williams <Riley@Williams.Name>
 
