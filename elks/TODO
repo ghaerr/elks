@@ -65,6 +65,8 @@ system, but which are not specific to the ELKS kernel or project itself:
 	be obtained from Harry Kalogirou <HarKal@gmx.net> who demonstrated
 	it in the Internet in late November 2001.
 
+    *	ELKS-based print server software.
+
     *	openssh
 
     *	screen

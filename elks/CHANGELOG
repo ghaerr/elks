@@ -21,13 +21,27 @@ Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001-20 Nov 2001
 Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
 Peter L Vachuska        <pvachusk@nconnect.net>         13 Aug 2001
-Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-13 Jan 2002
+Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-18 Jan 2002
 Roman Festchook         <roma@polesye.net>              27 Oct 2001
 Simon Weijgers          <simon@weijgers.com>            16 Sep 1998-15 Nov 1999
 Simon Wood                                              06 Jan 2000-12 Jan 2000
 Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Fri Jan 18 23:22:10 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+
+	* Updated TODO list from suggestions received.
+
+Mon Jan 14 16:18:21 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+
+	* OOPS: Previous commit accidentally omitted a patch - applied.
+	* Complete dependency checking - `make nodep` skipped two of the
+	  Makefiles due to a spelling mistake.
+	* Arranged for `make test` to produce comparable distributions
+	  before and after the compilation run - previously, the after
+	  distribution always included the dependencies and the before
+	  distribution did not.
 
 Sun Jan 13 22:37:14 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
@@ -687,7 +701,7 @@ Mon Aug 13 18:50:50 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 	ROM_SETUP_CODE			CONFIG_ROM_SETUP_CODE
 	ROM_SETUP_DATA			CONFIG_ROM_SETUP_DATA
 	ROM_USE_ORG_INTMASK		CONFIG_HW_259_USE_ORIGINAL_MASK
-	ROM_VIDEO_HIGHOFCHARACTERS	CONFIG_HW_VIDEO_LINES_PER_CHARACTER
+	CONFIG_HW_VIDEO_LINES_PER_CHARACTERS	CONFIG_HW_VIDEO_LINES_PER_CHARACTER
 	__ROM_VIDEO_HOC			CONFIG_HW_VIDEO_HOC
 
 Mon Aug 13 18:44:52 BST 2001	Riley Williams <rhw@MemAlpha.cx>
