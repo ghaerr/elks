@@ -19,8 +19,10 @@
 #include <linuxmt/utime.h>
 
 #include <arch/segment.h>
+#include <arch/system.h>
 
 #if 0
+
 int sys_statfs(char *path, register struct statfs *buf)
 {
     register struct inode *inode;
@@ -172,7 +174,8 @@ int sys_access(char *filename, int mode)
 {
     struct inode *inode;
     register __ptask currentp = current;
-    int old_euid, old_egid;
+    uid_t old_euid;
+    gid_t old_egid;
     int res;
 
     if (mode != (mode & S_IRWXO))	/* where's F_OK, X_OK, W_OK, R_OK? */
@@ -362,11 +365,12 @@ int sys_fchown(unsigned int fd, uid_t user, gid_t group)
  * used by symlinks.
  */
 
-int sys_open(char *filename, int flags, int mode)
+int sys_open(char *filename, unsigned short int flags, mode_t mode)
 {
     struct inode *inode;
     register struct file *f;
-    int flag, error, fd;
+    unsigned short int flag;
+    int error, fd;
 
     f = get_empty_filp();
     if (!f) {
@@ -488,7 +492,7 @@ int sys_close(unsigned int fd)
 
     if (fd >= NR_OPEN)
 	return -EBADF;
-    clear_bit(fd, &cfiles->close_on_exec);
+    (void) clear_bit(fd, &cfiles->close_on_exec);
     if (!(filp = cfiles->fd[fd]))
 	return -EBADF;
     cfiles->fd[fd] = NULL;

@@ -462,8 +462,16 @@ extern int block_write(struct inode *,struct file *,char *,int);
 
 #endif
 
+extern int fd_check(unsigned int,char *,size_t,int,struct file **);
 extern void fs_init(void);
+
+extern int _namei(char *,struct inode *,int,struct inode **);
+
 extern int sys_dup(int);
+
+extern struct buffer_head *bread(dev_t, block_t);
+
+extern char *get_pipe_mem(void);
 
 #endif
 

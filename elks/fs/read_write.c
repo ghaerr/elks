@@ -15,12 +15,11 @@
 #include <arch/segment.h>
 #include <linuxmt/debug.h>
 
-int sys_lseek(unsigned int fd, off_t * p_offset, unsigned int origin)
+loff_t sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
 {
-    off_t offset;
     register struct file *file;
     register struct file_operations *fop;
-    off_t tmp;
+    loff_t offset, tmp;
 
     offset = get_fs_long(p_offset);
     if (fd >= NR_OPEN || !(file = current->files.fd[fd])
@@ -76,7 +75,7 @@ int sys_lseek(unsigned int fd, off_t * p_offset, unsigned int origin)
  *    EFAULT: buf is outside your accessible address space.
  */
 
-int fd_check(unsigned int fd, char *buf, unsigned int count, int rw,
+int fd_check(unsigned int fd, char *buf, size_t count, int rw,
 	     struct file **file)
 {
     register struct file *tfil;
@@ -97,18 +96,18 @@ int fd_check(unsigned int fd, char *buf, unsigned int count, int rw,
     return 0;
 }
 
-int sys_read(unsigned int fd, char *buf, unsigned int count)
+size_t sys_read(unsigned int fd, char *buf, size_t count)
 {
-    int retval;
     register struct file_operations *fop;
     struct file *file;
+    size_t retval;
 
     if (((retval = fd_check(fd, buf, count, FMODE_READ, &file)) == 0)
 	&& (0 != count)) {
 	fop = file->f_op;
-	if (!fop->read) {
+	if (!fop->read)
 	    retval = -EINVAL;
-	} else {
+	else {
 	    retval = fop->read(file->f_inode, file, buf, count);
 	    schedule();
 	}
@@ -116,11 +115,11 @@ int sys_read(unsigned int fd, char *buf, unsigned int count)
     return retval;
 }
 
-int sys_write(unsigned int fd, char *buf, unsigned int count)
+size_t sys_write(unsigned int fd, char *buf, size_t count)
 {
     struct file *file;
     register struct inode *inode;
-    int written;
+    size_t written;
 
     if (((written = fd_check(fd, buf, count, FMODE_WRITE, &file)) == 0)
 	&& (0 != count)) {
@@ -137,6 +136,7 @@ int sys_write(unsigned int fd, char *buf, unsigned int count)
 	     * Set ATTR_FORCE so it will always be changed.
 	     */
 	    if (!suser() && (inode->i_mode & (S_ISUID | S_ISGID))) {
+
 #ifdef USE_NOTIFY_CHANGE
 		struct iattr newattrs;
 		newattrs.ia_mode = inode->i_mode & ~(S_ISUID | S_ISGID);
@@ -145,6 +145,7 @@ int sys_write(unsigned int fd, char *buf, unsigned int count)
 #else
 		inode->i_mode = inode->i_mode & ~(S_ISUID | S_ISGID);
 #endif
+
 	    }
 
 	    written = file->f_op->write(inode, file, buf, count);

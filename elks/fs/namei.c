@@ -9,6 +9,8 @@
  */
 
 #include <arch/segment.h>
+#include <arch/system.h>
+
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/sched.h>
@@ -359,7 +361,10 @@ int open_namei(char *pathname, int flag, int mode,
     }
     if (!error) {
 	if (flag & O_TRUNC) {
+
+#ifdef USE_NOTIFY_CHANGE
 	    struct iattr newattrs;
+#endif
 
 #ifndef get_write_access
 	    if ((error = get_write_access(inode))) {
@@ -367,6 +372,7 @@ int open_namei(char *pathname, int flag, int mode,
 		return error;
 	    }
 #endif
+
 #ifdef USE_NOTIFY_CHANGE
 	    newattrs.ia_size = 0;
 	    newattrs.ia_valid = ATTR_SIZE;
@@ -378,6 +384,7 @@ int open_namei(char *pathname, int flag, int mode,
 #else
 	    inode->i_size = 0L;
 #endif
+
 	    down(&inode->i_sem);
 	    if ((iop = inode->i_op) && iop->truncate) {
 		iop->truncate(inode);

@@ -24,13 +24,21 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-28 Apr 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-29 Apr 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Mon Apr 29 00:49:41 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Verified that all fs/*.c files other than fs/super.c are clean
+	  as far as `splint -weak` is concerned. This does NOT include
+	  those files in subdirectories of that directory.
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop.
 
 Sun Apr 28 22:55:56 BST 2002	Riley Williams <Riley@Williams.Name>
 

@@ -456,20 +456,26 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
     int retval;
     char *t;
     int new_flags = 0;
+
+#ifdef CONFIG_FULL_VFS
     /* FIXME ltype is way too big for our stack goal.. */
     char ltype[16];		/* is enough isn't it? */
+#endif
 
     if (!suser())
 	return -EPERM;
+
 #ifdef BLOAT_FS			/* new_flags is set to zero, so this is never true. */
     if ((new_flags & MS_REMOUNT) == MS_REMOUNT) {
 	retval = do_remount(dir_name, new_flags & ~MS_REMOUNT, NULL);
 	return retval;
     }
 #endif
+
     /*
      *      FIMXE: copy type to user cleanly or use numeric types ??
      */
+
 #ifdef CONFIG_FULL_VFS
     printd_mount("MOUNT: performing type check\n");
 
@@ -488,12 +494,14 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 #else
     fstype = file_systems[0];
 #endif
+
     t = fstype->name;
     fops = NULL;
+
 #ifdef BLOAT_FS
-    if (fstype->requires_dev)
+    if (fstype->requires_dev) {
 #endif
-    {
+
 	retval = namei(dev_name, &inode, 0, 0);
 	if (retval)
 	    return retval;
@@ -520,18 +528,20 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 	    struct file dummy;	/* allows read-write or read-only flag */
 	    memset(&dummy, 0, sizeof(dummy));
 	    dummy.f_inode = inode;
-	    dummy.f_mode = (new_flags & MS_RDONLY) ? 1 : 3;
+	    dummy.f_mode = (new_flags & MS_RDONLY) ? ((mode_t) 1)
+						   : ((mode_t) 3);
 	    retval = fops->open(inode, &dummy);
 	    if (retval) {
 		iput(inode);
 		return retval;
 	    }
 	}
+
 #ifdef BLOAT_FS
-    } else {
+    } else
 	printk("unnumbered fs is unsupported.\n");
 #endif
-    }
+
     retval = do_mount(dev, dir_name, t, new_flags, NULL);
     if (retval && fops && fops->release)
 	fops->release(inode, NULL);

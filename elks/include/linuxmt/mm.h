@@ -20,7 +20,7 @@ extern unsigned long high_memory;
 
 #define verify_area(mode, point, size) verfy_area(point, size)
 
-extern int verfy_area(char *,size_t);
+extern int verfy_area(void *,size_t);
 extern void memcpy_fromfs(void *,void *,size_t);
 extern void memcpy_tofs(void *,void *,size_t);
 extern void put_fs_long(unsigned long int,unsigned long int *);

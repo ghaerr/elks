@@ -8,22 +8,23 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/errno.h>
 
-int verfy_area(char *ptr, size_t len)
+int verfy_area(void *p, size_t len)
 {
+    register char *ptr = p;
     register __ptask currentp = current;
 
     /*
      *	Kernel tasks can always access
      */
-    if(get_ds()==currentp->t_regs.ds)
+    if (get_ds() == currentp->t_regs.ds)
 	return 0;
 
     /*
      *	User process boundaries
      */
-    if((__pptr)(ptr+len) > currentp->t_endseg)
+    if ((__pptr)(ptr + len) > currentp->t_endseg)
 	return -EFAULT;
-		
+
     return 0;
 }
 

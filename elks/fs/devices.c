@@ -22,7 +22,7 @@ struct device_struct {
     struct file_operations *ds_fops;
 };
 
-static struct device_struct chrdevs[MAX_CHRDEV] = {
+static struct device_struct chrdevs[MAX_CHRDEV] = /*@i1@*/ {
 #ifdef CONFIG_DEV_NAMES
     {NULL, NULL},
 #else
@@ -30,7 +30,7 @@ static struct device_struct chrdevs[MAX_CHRDEV] = {
 #endif
 };
 
-static struct device_struct blkdevs[MAX_BLKDEV] = {
+static struct device_struct blkdevs[MAX_BLKDEV] = /*@i1@*/ {
 #ifdef CONFIG_DEV_NAMES
     {NULL, NULL},
 #else

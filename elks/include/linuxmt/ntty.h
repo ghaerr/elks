@@ -63,7 +63,7 @@ extern int ttynull_openrelease(struct tty *);
 extern int tty_intcheck(struct tty *,unsigned char);
 		/* Check for ctrl-C etc.. */
 
-extern int pipe_lseek(struct inode *,struct file *,off_t,int);
+extern loff_t pipe_lseek(struct inode *,struct file *,off_t,int);
 		/* Empty function, returns -ESPIPE. useful */
 
 extern struct termios def_vals;

@@ -34,14 +34,15 @@ int get_unused_fd(void)
 
     for (fd = 0; fd < NR_OPEN; fd++)
 	if (!current->files.fd[fd]) {
-	    clear_bit(fd, &current->files.close_on_exec);
+	    (void) clear_bit(fd, &current->files.close_on_exec);
 	    return fd;
 	}
 
     return -EMFILE;
 }
 
-int pipe_lseek(struct inode *inode, struct file *file, off_t offset, int orig)
+loff_t pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
+		  int orig)
 {
     printd_pipe("PIPE lseek called.\n");
     return -ESPIPE;
@@ -55,7 +56,8 @@ int pipe_lseek(struct inode *inode, struct file *file, off_t offset, int orig)
  */
 
 char pipe_base[MAX_PIPES][PIPE_BUF];
-int pipe_in_use[MAX_PIPES] = { 0, };
+
+int pipe_in_use[MAX_PIPES] = /*@i1@*/ { 0, };
 
 char *get_pipe_mem(void)
 {
@@ -373,7 +375,7 @@ int sys_pipe(unsigned int *filedes)
 
     printd_pipe("PIPE called.\n");
 
-    if (error = do_pipe(fd))
+    if ((error = do_pipe(fd)))
 	return error;
 
     printd2_pipe("PIPE worked %d %d.\n", fd[0], fd[1]);

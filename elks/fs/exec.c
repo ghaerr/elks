@@ -42,6 +42,7 @@
 #include <linuxmt/minix.h>
 #include <linuxmt/dll.h>
 #include <linuxmt/msdos.h>
+#include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 
 #include <arch/segment.h>
@@ -58,23 +59,21 @@ static struct msdos_exec_hdr mshdr;
 
 #define INIT_HEAP 0x1000
 
-int sys_execve(char *filename, char *sptr, int slen)
+int sys_execve(char *filename, char *sptr, size_t slen)
 {
-    struct file file;		/* We can push this to stack its now only about 20 bytes */
-    unsigned int result;
-    int retval, execformat;
-    int ds = current->t_regs.ds;
-    seg_t cseg, dseg;
-    lsize_t len;
+    struct file file;	/* We can push this to stack its now only 20 bytes */
+
+    void *ptr;
     struct inode *inode;
-    char *ptr;
-    size_t count;
-    int i;
-    seg_t stack_top = 0;
-    unsigned int effuid, effgid;
-    int suidfile, sgidfile;
     register struct file *filp = &file;
     __registers *tregs;
+    int suidfile, sgidfile, retval, execformat, i;
+    __u16 ds = current->t_regs.ds;
+    seg_t cseg, dseg, stack_top = 0;
+    uid_t effuid;
+    gid_t effgid;
+    lsize_t len;
+    size_t count, result;
 
     /*
      *      Open the image
@@ -98,9 +97,11 @@ int sys_execve(char *filename, char *sptr, int slen)
     filp->f_count = 1;
     filp->f_inode = inode;
     filp->f_pos = 0;
+
 #ifdef BLOAT_FS
     filp->f_reada = 0;
 #endif
+
     filp->f_op = inode->i_op->default_file_ops;
     retval = -ENOEXEC;
     if (!filp->f_op)
@@ -271,9 +272,11 @@ int sys_execve(char *filename, char *sptr, int slen)
 	count--;
     }
     /* fmemset should work, but doesn't */
+
 #if 0
     fmemset(ptr, dseg, 0, count);
 #endif
+
     /*
      *      Copy the stack
      */
@@ -330,13 +333,14 @@ int sys_execve(char *filename, char *sptr, int slen)
      *      (better to use the entry offset in the header)
      */
 
+    tregs->ss = dseg;
+    tregs->sp = ((__u16) ptr);		/* Just below the arguments */
     tregs->cs = cseg;
     tregs->ds = dseg;
-    tregs->ss = dseg;
-    tregs->sp = ptr;		/* Just below the arguments */
-    current->t_begstack = ptr;
+    current->t_begstack = ((__pptr) ptr);
     current->t_endbrk = (__pptr) (mh.dseg + mh.bseg + stack_top);
-    current->t_enddata = (__pptr) (mh.dseg + stack_top);	/* Needed for sys_brk() */
+    current->t_enddata = (__pptr) (mh.dseg + stack_top);
+					/* Needed for sys_brk() */
     current->t_endseg = (__pptr) len;
     current->t_inode = inode;
     arch_setup_kernel_stack(current);

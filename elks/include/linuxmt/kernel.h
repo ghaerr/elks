@@ -44,7 +44,7 @@ extern int wait_for_keypress(void);
  * "suser()" checks against the effective user id.
  */
 
-extern int sys_execve(char *,char *,int);
+extern int sys_execve(char *,char *,size_t);
 
 #define suser() (current->euid == 0)
 

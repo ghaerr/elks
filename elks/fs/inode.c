@@ -514,7 +514,7 @@ struct inode *__iget(REGOPT struct super_block *sb,
     inode->i_sb = sb;
     inode->i_dev = sb->s_dev;
     inode->i_ino = inr;
-    inode->i_flags = sb->s_flags;
+    inode->i_flags = ((unsigned short int) sb->s_flags);
     put_last_free(inode);
     printd_iget("iget: Reading inode\n");
     read_inode(inode);

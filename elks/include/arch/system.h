@@ -25,4 +25,7 @@ extern void save_regs(__ptasks);
 #undef __ptasks
 #endif
 
+extern int in_group_p(gid_t);
+extern int get_unused_fd(void);
+
 #endif

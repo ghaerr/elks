@@ -11,16 +11,16 @@
  */
 
 #include <linuxmt/config.h>
-#include <linuxmt/types.h>
-#include <linuxmt/time.h>
+#include <linuxmt/errno.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/kernel.h>
-#include <linuxmt/sched.h>
-#include <linuxmt/string.h>
-#include <linuxmt/stat.h>
-#include <linuxmt/signal.h>
-#include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/sched.h>
+#include <linuxmt/signal.h>
+#include <linuxmt/stat.h>
+#include <linuxmt/string.h>
+#include <linuxmt/time.h>
+#include <linuxmt/types.h>
 
 #if 0
 #include <linuxmt/personality.h>
@@ -68,15 +68,15 @@ void select_wait(struct wait_queue *q)
  * and we aren't going to sleep on the select_table.  -- jrs
  */
 
-static int check(int flag, wait, struct file *file)
+static int check(int flag, struct file *file)
 {
     register struct inode *inode;
     register struct file_operations *fops;
-    int (*select) ();
 
     inode = file->f_inode;
-    if ((fops = file->f_op) && (select = fops->select))
-	return (select(inode, file, flag));
+
+    if ((fops = file->f_op) && fops->select)
+	return (fops->select(inode, file, flag));
 
     if (flag != SEL_EX)
 	return 1;

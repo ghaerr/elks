@@ -127,4 +127,6 @@ struct sigaction {
 #endif
 };
 
+extern int send_sig(pid_t,struct task_struct *,int);
+
 #endif

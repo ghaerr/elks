@@ -13,21 +13,22 @@
 
 #undef	__FD_SET
 #define __FD_SET(fd,fdsetp) {				\
-		int mask, retval, addr = fdsetp;	\
+		int mask, addr = ((int) fdsetp);	\
 							\
-		i_cli(); addr += fd >> 4;		\
+		addr += fd >> 4;			\
 		mask = 1 << (fd & 0xf); 		\
+		i_cli();				\
 		*(int*)addr |= mask;			\
 		i_sti();				\
 	}
 
 #undef	__FD_CLR
 #define __FD_CLR(fd,fdsetp) {				\
-		int mask, retval, addr = fdsetp;	\
+		int mask, addr = ((int) fdsetp);	\
 							\
-		i_cli();				\
 		addr += fd >> 4;			\
 		mask = 1 << (fd & 0xf); 		\
+		i_cli();				\
 		*(int*)addr &= ~mask;			\
 		i_sti();				\
 	}
