@@ -358,8 +358,7 @@ static void tcpdev_release()
 
 	n = tcpcb_find_by_sock(sock);
 	if(!n){
-		printf("KTCP Panic in release\n");
-		exit(1);
+		printf("KTCP release unknown sock : %x \n", sock);
 	}
 	cb = &n->tcpcb;
 	switch(cb->state){

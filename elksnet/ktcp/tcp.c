@@ -400,14 +400,14 @@ struct iphdr_s *iph;
 	iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_IHL(iph);
 	
 	if(tcp_chksum(&iptcp) != 0){
-		printf("TCP check sum failed\n");
+		/* printf("TCP check sum failed\n"); */
 		return;
 	}
 		
 	cbnode = tcpcb_find(iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
 
 	if(!cbnode){
-		printf("Refusing packet \n");
+		/* printf("Refusing packet \n"); */
 		/* TODO : send RST and stuff */
 		return;
 	}

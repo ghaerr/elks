@@ -58,7 +58,7 @@ struct tcpcb_s *cb;
 		tcpcb_buf_write(cb, &cbstats, sizeof(cbstats));
 	}
 #endif
-
+	cb->bytes_to_push = CB_BUF_USED(cb);
 }
 
 
