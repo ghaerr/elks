@@ -9,19 +9,13 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/major.h>
-
+#if NEED_RESCHED
+#include <linuxmt/sched.h>
+#endif
 #include <linuxmt/lp.h>
 
-/* This enables use of ports, detected by BIOS */
-/* Works fine here and should be tested on other machines */
-/* like 5150 as they are the oldest and might not support this */
-
-#define BIOS_PORTS
-
-#ifdef BIOS_PORTS
-/* max. 4, but it will produce weird results on any box other than original blue PC */
-#define LP_PORTS 3
-#endif
+/* byte-wide put_user() */
+#define put_user(offset) peekb(current->t_regs.ds, offset)
 
 /* static int access_count[LP_PORTS] = {0,}; */
 
@@ -34,6 +28,7 @@ struct lp_info
 
 #ifdef BIOS_PORTS
 /* We'll get port info from BIOS */ 
+/* There are max 4 ports */
 static struct lp_info ports[LP_PORTS] = 
 {
 	0,0,0,
@@ -41,7 +36,6 @@ static struct lp_info ports[LP_PORTS] =
 #else
 /* extended to support some unusual ports;
  won't be used if BIOS_PORTS works fine */
- 
 static struct lp_info ports[LP_PORTS] =
 {
 	0x3BC,0,0,
@@ -82,6 +76,27 @@ static struct file_operations lp_fops =
 #endif
 };
 
+int lp_reset(target)
+int target;
+{
+	struct lp_info * lpp;
+	int tmp;
+	
+#ifndef BIOS_PORTS
+	target = port_order[target];
+#endif
+
+	lpp = &ports[target];
+
+	LP_CONTROL(LP_SELECT, lpp);
+	tmp = 0;
+	while (tmp != LP_RESET_WAIT) tmp++;
+	LP_CONTROL(LP_SELECT | LP_INIT, lpp);
+	/* we are )(ab)using same variable, no reason to waste DS */
+	tmp = LP_STATUS(lpp);
+	return tmp;
+}
+
 int lp_char_polled(c, target)
 char c;
 int target;
@@ -94,53 +109,57 @@ int target;
 #endif
 	lpp = &ports[target];
 	/* safety checks */
-	status = inb_p(lpp->io + STATUS);
+	status = LP_STATUS(lpp);
 
-	/* This comments out one of (redundant) sections. If printer is not ready
-	it bails out and printing job must be restarted again by printing deamon.
-	
-	If we don't want that we have to comment out first part (change #if 1 to 0);
-	this makes function wait in busy loop and allow other processes to run in 
-	the meanwhile. */
-#if 1
+	/* safety checks, note that LP_ERROR and LP_SELECTED are inverted signals */
+
 	if (status & LP_OUTOFPAPER) {/* printer of out paper */
 		printk("lp%d: out of paper\n", target);
 		return 0;
 	}
+#if 0
 	if (!(status & LP_SELECTED)) {/* printer offline */
 		printk("lp%d: printer offline\n", target);
 		return 0;
 	}
-
-#else
-	while (!(status & LP_SELECTED)) {/* while not ready do */
-		status = inb_p(lpp->io + STATUS);
-
+#else    
+	wait = 0;
+	
+	while (!(status & LP_SELECTED) && (wait < LP_CHAR_WAIT)) 
+	/* while not ready do busy loop */
+	{
+		status = LP_STATUS(lpp);
+		wait++;
+#if NEED_RESCHED
 		if (need_resched)
-		schedule(); /* Al: is it OK for this to be here ? */
+			schedule();
+#endif
+	}
+	if (wait == LP_CHAR_WAIT) {
+		printk("lp%d: timed out\n", target);
+		return 0;
 	}
 #endif
+	if (!(status & LP_ERROR)) {/* printer error */
+		printk("lp%d: printer error\n", target);
+		return 0;
+	}
 
 	/* send character to port */
 	outb_p(c, lpp->io);
 
-	/* Delay duration is defined with LP_WAIT constant in lp.h header.
-	If your printer looses characters increase this number, otherwise 
-	leave it at 0.  Higher setting means slower printing. */
-	
 	/* 5 us delay */
 	wait = 0;
-	while (wait != LP_WAIT) wait++;
+	while (wait != LP_STROBE_WAIT) wait++;
 
 	/* strobe high */
-	outb_p(LP_INIT | LP_SELECT | LP_STROBE, 
-		lpp->io + CONTROL);
+	LP_CONTROL(LP_SELECT | LP_INIT | LP_STROBE, lpp);
+
+	/* strobe low */
+	LP_CONTROL(LP_SELECT | LP_INIT, lpp);
 
 	/* 5 us delay */
 	while (wait) wait--;
-
-	/* strobe low */
-	outb_p(LP_INIT | LP_SELECT, lpp->io + CONTROL);
 
 	return 1;
 }
@@ -153,8 +172,12 @@ int count;
 {
 	int chrs = 0;
 
+#if 0
+	/* initialize printer */
+	lp_reset(MINOR(inode->i_rdev));
+#endif
 	while (chrs < count) {
-		if (!lp_char_polled(peekb(current->t_regs.ds, buf + chrs), 
+		if (!(lp_char_polled(put_user(buf + chrs)), 
 			MINOR(inode->i_rdev))) {
 				break;
 		}
@@ -189,6 +212,7 @@ struct file * file;
 		return -EBUSY;
 	}
 
+/*	inexistent port can't be busy */
 	lpp->flags = LP_EXIST | LP_BUSY;
 
 /*	access_count[port_order[target]]++; */
@@ -213,21 +237,6 @@ struct file * file;
 	return;
 }
 
-#if 0
-int lp_write_polled(target, string, count)
-int target;
-char *string;
-int count;
-{
-/*	int status, target;
-	char * string; 
-	int count; */
-
-	/* send chars one by one */
-
-}
-#endif
-
 #ifndef BIOS_PORTS
 int lp_probe(lp)
 register struct lp_info *lp;
@@ -235,13 +244,13 @@ register struct lp_info *lp;
 	int wait;
 
 	/* send 0 to port */
-	outb_p(0, lp->io);
+	outb_p(LP_DUMMY, lp->io);
 
 	/* 5 us delay */
 	while (wait != LP_WAIT) wait++;
 
 	/* 0 expected; 255 returned if inexistent port */
-	if (inb_p(lp->io) == 0) {
+	if (inb_p(lp->io) == LP_DUMMY) {
 		lp->flags = LP_EXIST;
 		return 0;
 	}
