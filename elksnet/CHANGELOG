@@ -1,16 +1,20 @@
 -------------------------------------------------------------------------------
-This file is used to record changes made to the CVS database. Please add to
-the top of this file before committing any changes. Please use the header
-format provided for each entry, noting that the text on each line should not
-be longer than the lines of dashes.
-
-Riley
+This file is used to record changes made to the elksnet CVS database. Please
+add to the top of this file before committing any changes. Please use the
+header format provided for each entry, noting that the text on each line
+should not be longer than the lines of dashes.
+								-- Riley
 -------------------------------------------------------------------------------
+
+Mon Oct 29 15:14:31 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Merged multiple CHANGELOG documents into one, deleting duplicates.
+	* Merged multiple TODO documents into one, deleting duplicates.
 
 Sun Oct  7 00:46:33 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* Added `make clean` options to all Makefiles not currently
-	  containing them, also added WORKING global `make all` option.
+	* Added `make clean` options to all Makefiles not currently containing
+	  them, also added WORKING global `make all` option.
 
 Sat Oct  6 20:07:05 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
@@ -20,8 +24,20 @@ Wed Sep 19 23:22:38 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Added facility to automatically compile all utilities in ELKSnet
 	  package my doing `make all` in the base directory.
-	* Added v2.0a of screen utility to ELKSnet package, although it
-	  still needs tweaking for ELKS at this stage.
+	* Added v2.0a of screen utility to ELKSnet package, although it still
+	  needs tweaking for ELKS at this stage.
+
+Mon Aug 13 23:22:13 BST 2001	Riley Williams <rhw@memalpha.cx>
+
+	* Reformatted ktcp/mylibs.h to be more readable.
+
+Sun Jul 01 16:48:53 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* ktcp informs kernel socket about available data for use in select.
+
+Mon Jun 25 02:53:21 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+	
+	* Added at ELKS CVS
 
 -------------------------------------------------------------------------------
 END OF CHANGELOG
