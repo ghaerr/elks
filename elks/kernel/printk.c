@@ -9,15 +9,16 @@
  *
  *		%c	char
  *		%d	signed decimal
+ *		%i	signed decimal
  *		%o	octal
  *		%p	pointer (printed in hex)
  *		%s	string
  *		%t	pointer to string
  *		%u	unsigned decimal
- *		%x/%X	hexadecimal
+ *		%x/%X	hexadecimal with lower/upper case letters
  *
  *	All except %% can be followed by a width specifier 1 -> 31 only
- *	and the h/l length specifiers also work.
+ *	and the h/l length specifiers also work where appropriate.
  *
  *		Alan Cox.
  *
@@ -75,8 +76,9 @@ static void con_write(register char *buf, int len)
  */
 
 char *hex_string = "0123456789ABCDEF";		/* Also used by devices. */
+char *hex_lower  = "0123456789abcdef";
 
-static void numout(char *ptr, int len, int width, int base, int useSign)
+static void numout(char *ptr, int len, int width, int base, int useSign, int Upper)
 {
     long int vs;
     unsigned long int v;
@@ -101,7 +103,10 @@ static void numout(char *ptr, int len, int width, int base, int useSign)
 
     *bp = 0;
     do {
-	*--bp = hex_string[(v % base)]; 	/* Store digit */
+	if (Upper)
+	    *--bp = hex_string[v % base]; 	/* Store digit */
+	else
+	    *--bp = hex_lower[v % base]; 	/* Store digit */
     } while ((v /= base) && (bp > buf));
 
     while (bp2 - bp < width)			/* Process width */
@@ -127,14 +132,13 @@ void printk(register char *fmt,int a1)
 		continue;
 	    }
 
-	    len = 2;
-
 	    while (c >= '0' && c <= '9') {
 		width *= 10;
 		width += c - '0';
 		c = *fmt++;
 	    }
 
+	    len = 2;
 	    if (c == 'h')
 		c = *fmt++;
 	    else if (c == 'l') {
@@ -143,19 +147,21 @@ void printk(register char *fmt,int a1)
 	    }
 
 	    switch (c) {
+	    case 'o':
+		tmp = 8;
+		goto NUMOUT;
+	    case 'i':
+		c = 'd';
 	    case 'd':
 	    case 'u':
 		tmp = 10;
-		goto NUMOUT;
-	    case 'o':
-		tmp = 8;
 		goto NUMOUT;
 	    case 'p':
 	    case 'x':
 	    case 'X':
 		tmp = 16;
 	    NUMOUT:
-		numout(p, len, width, tmp, (c == 'd'));
+		numout(p, len, width, tmp, (c == 'd'), (c == 'X'));
 		p += len;
 		break;
 	    case 's':
