@@ -6,6 +6,10 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Fri Mar 03 11:44 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Final changes for 0.0.83
+
 Tue Feb 29 11:00 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Small change to setup.S to fix segment definitions for the
