@@ -50,7 +50,7 @@
 VERSION 	= 0	# (0-255)
 PATCHLEVEL	= 1	# (0-255)
 SUBLEVEL	= 2	# (0-255)
-#PRE		= 0	# (0-255)	If not a pre, comment this line.
+PRE		= 1	# (0-255)	If not a pre, comment this line.
 
 #########################################################################
 # Specify the architecture we will use.
