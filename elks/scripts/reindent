@@ -7,13 +7,8 @@
 
 export allow_null_glob_expansion=Y
 
-for FILE in *.[ch] ; do \
-    if ! printf '%s\n' "$@" | grep -q ^${FILE}'$' ; then
-	printf 'Reindenting %s ...\n' "${FILE}" >&2
-	if fgrep -q '#asm' "${FILE}" ; then
-	    printf "WARNING: %s contains '#asm' statement.\n" "${FILE}" >&2
-	fi
-	indent "${FILE}" --ignore-profile			\
+function reformat() {
+    indent "${FILE}" --ignore-profile				\
 		--braces-on-if-line				\
 		--braces-on-struct-decl-line			\
 		--cuddle-else					\
@@ -26,5 +21,16 @@ for FILE in *.[ch] ; do \
 		--space-after-cast				\
 		--start-left-side-of-comments			\
 		--tab-size8
+}
+
+for FILE in *.[ch] ; do \
+    if [ -f "${FILE}" ]; then
+	if ! printf '%s\n' "$@" | grep -q ^${FILE}'$' ; then
+	    printf 'Reindenting %s ...\n' "${FILE}" >&2
+	    if fgrep -q '#asm' "${FILE}" ; then
+		printf "WARNING: %s contains '#asm' statement.\n" "${FILE}" >&2
+	    fi
+	    reformat "${FILE}"
+	fi
     fi
 done

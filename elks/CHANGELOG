@@ -16,7 +16,7 @@ Christoph Plattner    Christoph.Plattner@dot.at         31 Jan 2000- 2 Feb 2000
 David Murn            scuffer@hups.apana.org.au         11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
-Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001- 7 Mar 2002
+Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-21 Apr 2002
 Jacek Lipkowski       sq5bpf@acid.ch.pw.edu.pl          20 Jan 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
@@ -24,7 +24,7 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-14 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        rhw@InfraDead.Org                 16 Nov 1998-19 Apr 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-21 Apr 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
@@ -32,7 +32,11 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Sun Apr 21 12:31:22 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+Sun Apr 21 20:54:00 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Fixed failure of `make indent` when run in the base directory.
+
+Sun Apr 21 12:31:22 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Added mm_get_usage() to mm.c
 	* Added a new ioctl to /dev/mem responding with memory information.
@@ -40,16 +44,22 @@ Sun Apr 21 12:31:22 EEST 2002 Harry Kalogirou <harkal@gmx.net>
 	  warning comment about corrupting the wait queues.
 	* Some changes to the swapper code.
 
-Sat Apr 20 16:28:30 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+Sat Apr 20 16:28:30 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Added swap support. Currently the code is only for "developers"
 	  since swap devices, sizes are hardcoded and. The swapping strategy
 	  also needs tweaking.
 
-Fri Apr 19 22:44:45 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+Fri Apr 19 22:44:45 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Fixed ramdisk driver to read/write to buffers anywhere is
 	  RAM.
+
+Fri Apr 19 22:24:28 BST 2002	Riley Williams <rhw@InfraDead.Org>
+
+	* ANSI'fied function prototypes in kernel and lib subtrees.
+	* Applied `make indent` rule to kernel and lib subtrees.
+	* Verified that kernel compiles with above changes applied.
 
 Fri Apr 19 17:38:04 BST 2002	Riley Williams <rhw@InfraDead.Org>
 
