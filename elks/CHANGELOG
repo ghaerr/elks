@@ -14,6 +14,12 @@ Sun May 30 00:05 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated serial termios support to allow baud rate to be changed.
 
+	* Added support for ^C and ^Z to generate signals from the console.
+
+	* Minor tweaks to select code.
+
+	* Added socket to syscall table.
+
 Sun May 30 00:01 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated todo file.
