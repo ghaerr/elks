@@ -108,12 +108,10 @@ static void init_task()
 
 	printk("sys_execve(\"/bin/init\",args,18) => %d.\n",num);
 
-	/* FIXME: sys_open expects THREE parameters */
-
 #ifdef CONFIG_CONSOLE_SERIAL
-	num = sys_open("/dev/ttyS0", 2);
+	num = sys_open("/dev/ttyS0", 2, 0);
 #else
-	num = sys_open("/dev/tty1", 2);
+	num = sys_open("/dev/tty1", 2, 0);
 #endif
 
 	if (num < 0)
