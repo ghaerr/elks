@@ -4,6 +4,16 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Fri Jul 09 17:00 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Major updates to socket code. Addition of server socket capability,
+	  and addition of unix domain socket code (currently no functional),
+	  plus nano sockets.
+
+Fri Jul 09 16:59 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Late commit of changes for version 0.0.77 due to cvs outage.
+
 Fri Jul 09 16:54 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added support for very basic pseudo ttys. Initially to

@@ -87,6 +87,10 @@ fchown		+66	3
 dlload		+67	2
 setsid		+68	0
 socket		+69	3
+bind		+70	3
+listen		+71	2
+accept		+72	3
+connect		+73	3
 #
 # Name			No	Args	Flag&comment
 #

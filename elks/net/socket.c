@@ -13,7 +13,7 @@
 
 #include <linuxmt/config.h>
 
-#ifdef SYS_SOCKET
+#ifdef CONFIG_SOCKET
 
 #include <linuxmt/errno.h>
 #include <linuxmt/socket.h>
@@ -86,7 +86,37 @@ int * ulen;
 }
 
 
+struct socket *sock_alloc()
+{
+	register struct inode * inode;
+	register struct socket * sock;
 
+	inode = get_empty_inode();
+	if (!inode)
+		return NULL;
+
+	inode->i_mode = S_IFSOCK;
+	inode->i_sock = 1;
+	inode->i_uid = current->uid;
+	inode->i_gid = current->gid;
+
+	sock = &inode->u.socket_i;
+	sock->state = SS_UNCONNECTED;
+	sock->flags = 0;
+	sock->ops = NULL;
+	sock->data = NULL;
+#ifdef CONFIG_UNIX /* Not used by INET sockets */
+	sock->conn = NULL;
+	sock->iconn = NULL;
+	sock->next = NULL;
+#endif /* CONFIG_UNIX */
+	sock->file = NULL;
+	sock->wait = &inode->i_wait;
+	sock->inode = inode;            /* "backlink": we could use pointer arithmetic instead */
+	sock->fasync_list = NULL;
+/*	sockets_in_use++; */ /* Maybe we'll find a use for this */
+	return sock;
+}
 
 
 struct socket *sockfd_lookup(fd, pfile)
@@ -117,36 +147,24 @@ struct file *	file;
 register char *	ubuf;
 int		size;
 {
-	register struct socket *sock;
+	struct socket *sock;
 	int err;
-	struct iovec iov;
-	struct msghdr msg;
-
-	sock = socki_lookup(inode);
-#ifndef CONFIG_SOCK_CLIENTONLY
-	if (sock->flags & SO_ACCEPTCON) {
-		return -EINVAL;
+  
+	if (!(sock = socki_lookup(inode))) 
+	{
+		printk("NET: sock_read: can't find socket for inode!\n");
+		return(-EBADF);
 	}
-#endif
+	if (sock->flags & SO_ACCEPTCON) 
+		return(-EINVAL);
 
-	if (size<0) {
+	if(size<0)
 		return -EINVAL;
-	}
-	if (size==0) {
+	if(size==0)
 		return 0;
-	}
-	if ((err=verify_area(VERIFY_WRITE,ubuf,size))<0) {
-		return err;
-	}
-	msg.msg_name = NULL;
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
-	msg.msg_control = NULL;
-	iov.iov_base = ubuf;
-	iov.iov_len = size;
-
-	return (sock->ops->recvmsg( sock, &msg, size, 0, 0, &msg.msg_namelen));
-	/* Fourth ARG in above should be (file->f_flags & O_NONBLOCK) */
+	if ((err=verify_area(VERIFY_WRITE,ubuf,size))<0)
+	  	return err;
+	return(sock->ops->read(sock, ubuf, size, (file->f_flags & O_NONBLOCK)));
 }
 	
 
@@ -156,38 +174,149 @@ struct file *	file;
 register char *		ubuf;
 int		size;
 {
-	register struct socket *sock;
+	struct socket *sock;
 	int err;
-	struct msghdr msg;
-	struct iovec iov;
-
-	sock = socki_lookup(inode);
-#ifndef CONFIG_SOCK_CLIENTONLY
-	if (sock->flags & SO_ACCEPTCON) {
-		return -EINVAL;
+	
+	if (!(sock = socki_lookup(inode))) 
+	{
+		printk("NET: sock_write: can't find socket for inode!\n");
+		return(-EBADF);
 	}
+
+	if (sock->flags & SO_ACCEPTCON) 
+		return(-EINVAL);
+	
+	if(size<0)
+		return -EINVAL;
+	if(size==0)
+		return 0;
+		
+	if ((err=verify_area(VERIFY_READ,ubuf,size))<0)
+	  	return err;
+	return(sock->ops->write(sock, ubuf, size,(file->f_flags & O_NONBLOCK)));
+}
+
+static int sock_select(inode, file, sel_type, wait)
+struct inode * inode;
+struct file * file;
+int sel_type;
+select_table * wait;
+{
+	register struct socket *sock;
+	
+	if (!(sock = socki_lookup(inode))) {
+		return -EBADF;
+	}
+
+	if (sock->ops && sock->ops->select) {
+		return (sock->ops->select(sock, sel_type, wait));
+	}
+	return 0;
+}
+
+#if 0
+int sock_wake_async(sock, how)
+struct socket *sock;
+int how;
+{
+	if (!sock || !sock->fasync_list)
+		return -1;
+	switch (how)
+	{
+		case 0:
+			kill_fasync(sock->fasync_list, SIGIO);
+			break;
+		case 1:
+			if (!(sock->flags & SO_WAITDATA))
+				kill_fasync(sock->fasync_list, SIGIO);
+			break;
+		case 2:
+			if (sock->flags & SO_NOSPACE)
+			{
+				kill_fasync(sock->fasync_list, SIGIO);
+				sock->flags &= ~SO_NOSPACE;
+			}
+			break;
+	}
+	return 0;
+}
 #endif
 
-	if (size<0) {
-		return -EINVAL;
-	}
-	if (size==0) {
-		return 0;
-	}
-	
-	if ((err=verify_area(VERIFY_READ,ubuf,size))<0) {
-		return err;
-	}
-	msg.msg_name = NULL;
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
-	msg.msg_control = NULL;
-	iov.iov_base = ubuf;
-	iov.iov_len = size;
+int sock_awaitconn(mysock, servsock, flags)
+register struct socket *mysock;
+struct socket *servsock;
+int flags;
+{
+	register struct socket *last;
 
-	return(sock->ops->sendmsg(sock, &msg, size, 0, 0));
-	/* Fourth ARG in above should be (file->f_flags & O_NONBLOCK) */
+	/*
+	 *	We must be listening
+	 */
+	if (!(servsock->flags & SO_ACCEPTCON)) 
+	{
+		return(-EINVAL);
+	}
+
+  	/*
+  	 *	Put ourselves on the server's incomplete connection queue. 
+  	 */
+  	 
+	mysock->next = NULL;
+	icli();
+	if (!(last = servsock->iconn)) 
+		servsock->iconn = mysock;
+	else 
+	{
+		while (last->next) 
+			last = last->next;
+		last->next = mysock;
+	}
+	mysock->state = SS_CONNECTING;
+	mysock->conn = servsock;
+	isti();
+
+	/*
+	 * Wake up server, then await connection. server will set state to
+	 * SS_CONNECTED if we're connected.
+	 */
+	wake_up_interruptible(servsock->wait);
+/*	sock_wake_async(servsock, 0); */ /* I don't think we need this */
+
+	if (mysock->state != SS_CONNECTED) 
+	{
+		if (flags & O_NONBLOCK)
+			return -EINPROGRESS;
+
+		interruptible_sleep_on(mysock->wait);
+		if (mysock->state != SS_CONNECTED &&
+		    mysock->state != SS_DISCONNECTING) 
+		{
+		/*
+		 * if we're not connected we could have been
+		 * 1) interrupted, so we need to remove ourselves
+		 *    from the server list
+		 * 2) rejected (mysock->conn == NULL), and have
+		 *    already been removed from the list
+		 */
+			if (mysock->conn == servsock) 
+			{
+				icli();
+				if ((last = servsock->iconn) == mysock)
+					servsock->iconn = mysock->next;
+				else 
+				{
+					while (last->next != mysock) 
+						last = last->next;
+					last->next = mysock->next;
+				}
+				isti();
+			}
+			return(mysock->conn ? -EINTR : -EACCES);
+		}
+	}
+	return(0);
 }
+
 
 #ifdef CONFIG_UNIX
 static void sock_release_peer(peer)
@@ -195,10 +324,8 @@ struct socket * peer;
 {
 	/* FIXME - some of these are not implemented */
 	peer->state = SS_DISCONNECTING;
-	/* wake_up_interruptible(peer->wait);
-	 * sock_wake_async(peer, 1);
-	 * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ --- both not yet implemented
-	 */
+	wake_up_interruptible(peer->wait);
+/*	sock_wake_async(peer, 1); */
 }
 #endif /* CONFIG_UNIX */
 
@@ -254,12 +381,58 @@ int fd;
 struct sockaddr *umyaddr;
 int addrlen;
 {
+	register struct socket *sock;
+	int i;
+	char address[MAX_SOCK_ADDR];
+	int err;
+
+	/* This is done in sockfd_lookup, so can be scrubbed later */
+/*	if (fd < 0 || fd >= NR_OPEN || (current->files.fd[fd] == NULL)) {
+		return(-EBADF);
+	} */
+
+	if (!(sock = sockfd_lookup(fd, NULL))) {
+		return(-ENOTSOCK);
+	}
+
+	if ((err = move_addr_to_kernel(umyaddr,addrlen,address))<0) {
+		return err;
+	}
+
+	if ((i=sock->ops->bind(sock,(struct sockaddr *)address,addrlen)) < 0) {
+		return(i);
+	}
+
+	return(0);
+
 }
 
 int sys_listen(fd, backlog)
 int fd;
 int backlog;
 {
+	register struct socket *sock;
+
+	/* This is done in sockfd_lookup, so can be scrubbed later */
+/*	if (fd < 0 || fd >= NR_OPEN || current->files.fd[fd] == NULL) {
+		return(-EBADF);
+	} */
+
+	if (!(sock = sockfd_lookup(fd, NULL))) {
+		return(-ENOTSOCK);
+	}
+
+	if (sock->state != SS_UNCONNECTED) {
+		return(-EINVAL);
+	}
+
+	if (sock->ops && sock->ops->listen) {
+		sock->ops->listen(sock, backlog);
+	}
+	sock->flags |= SO_ACCEPTCON;
+	printk("[%x %x}\n", sock, sock->flags);
+	return(0);
+
 }
 
 int sys_accept(fd, upeer_sockaddr, upeer_addrlen)
@@ -267,6 +440,65 @@ int fd;
 struct sockaddr *upeer_sockaddr;
 int *upeer_addrlen;
 {
+	struct file *file;
+	register struct socket *sock;
+	register struct socket *newsock;
+	int i;
+	char address[MAX_SOCK_ADDR];
+	int len;
+
+	/* This is done in sockfd_lookup, so can be scrubbed later */
+/*	if (fd < 0 || fd >= NR_OPEN || current->files.fd[fd] == NULL) {
+		return(-EBADF);
+	} */
+	printk("1");
+  	if (!(sock = sockfd_lookup(fd, &file))) {
+		return(-ENOTSOCK);
+	}
+	printk("2");
+	if (sock->state != SS_UNCONNECTED) {
+		return(-EINVAL);
+	}
+	printk("3");
+	if (!(sock->flags & SO_ACCEPTCON)) {
+		printk("[%x %x}\n", sock, sock->flags);
+		return(-EINVAL);
+	}
+
+	printk("4");
+	if (!(newsock = sock_alloc())) {
+		printk("NET: sock_accept: no more sockets\n");
+		return(-ENOSR);	/* Was: EAGAIN, but we are out of system
+				   resources! */
+	}
+	printk("5");
+	newsock->type = sock->type;
+	newsock->ops = sock->ops;
+	if ((i = sock->ops->dup(newsock, sock)) < 0) {
+		sock_release(newsock);
+		return(i);
+	}
+	printk("6");
+
+	i = newsock->ops->accept(sock, newsock, file->f_flags);
+	if ( i < 0) {
+		sock_release(newsock);
+		return(i);
+	}
+	printk("7");
+
+	if ((fd = get_fd(SOCK_INODE(newsock))) < 0) {
+		sock_release(newsock);
+		return(-EINVAL);
+	}
+	printk("8");
+
+	if (upeer_sockaddr) {
+		newsock->ops->getname(newsock, (struct sockaddr *)address, &len, 1);
+		move_addr_to_user(address,len, upeer_sockaddr, upeer_addrlen);
+	}
+	return(fd);
+
 }
 
 #endif
@@ -282,6 +514,7 @@ int addrlen;
 	char address[MAX_SOCK_ADDR];
 	int err;
 
+	printk("CONNECT");
 /* 	All this is done in sockfd_lookup */
 /*	if (fd < 0 || fd >= NR_OPEN || (file=current->files.fd[fd]) == NULL) {
 		return -EBADF;
@@ -290,9 +523,11 @@ int addrlen;
 	if (!(sock = sockfd_lookup(fd, &file))) {
 		return -ENOTSOCK;
 	}
+	printk("1");
 	if ((err = move_addr_to_kernel(uservaddr,addrlen,address))<0) {
 		return err;
 	}
+	printk("2");
 
 	switch(sock->state)
 	{
@@ -321,7 +556,9 @@ art
 		default:
 			return -EINVAL;
 	}
+	printk("3");
 	i = sock->ops->connect(sock, (struct sockaddr *)address, addrlen, file->f_flags);
+	printk("4");
 	if (i < 0) {
 		return i;
 	}
@@ -381,9 +618,7 @@ static struct file_operations socket_file_ops = {
 	sock_read,		/* read */
 	sock_write,		/* write */
 	NULL,			/* readdir */
-#ifdef BLOAT_FS
 	sock_select,		/* select */
-#endif
 	NULL,			/* ioctl */
 	NULL,			/* open */
 	sock_close		/* close */
@@ -419,37 +654,7 @@ register struct inode * inode;
 	return fd;
 }
 
-struct socket *sock_alloc()
-{
-	register struct inode * inode;
-	register struct socket * sock;
 
-	inode = get_empty_inode();
-	if (!inode)
-		return NULL;
-
-	inode->i_mode = S_IFSOCK;
-	inode->i_sock = 1;
-	inode->i_uid = current->uid;
-	inode->i_gid = current->gid;
-
-	sock = &inode->u.socket_i;
-	sock->state = SS_UNCONNECTED;
-	sock->flags = 0;
-	sock->ops = NULL;
-	sock->data = NULL;
-#ifdef CONFIG_UNIX /* Not used by INET sockets */
-	sock->conn = NULL;
-	sock->iconn = NULL;
-	sock->next = NULL;
-#endif /* CONFIG_UNIX */
-	sock->file = NULL;
-	sock->wait = &inode->i_wait;
-	sock->inode = inode;            /* "backlink": we could use pointer arithmetic instead */
-	sock->fasync_list = NULL;
-/*	sockets_in_use++; */ /* Maybe we'll find a use for this */
-	return sock;
-}
 
 int sys_socket(family, type, protocol)
 int family;
@@ -468,7 +673,7 @@ int protocol;
 	}
 	ops = pops[i];	/* Initially pops is not an array. */
 
-/*	Only TCP supported initially */
+/*	Only UNIX supported initially */
 
 	if (type != SOCK_STREAM) {
 		return -EINVAL;

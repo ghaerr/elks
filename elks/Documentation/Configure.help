@@ -268,7 +268,11 @@ CONFIG_SOCKET
 
 UNIX sockets
 CONFIG_UNIX
-  Include support for AF_UNIX sockets. Currently non existant.
+  Include support for AF_UNIX sockets. Currently under development.
+
+NANO sockets
+CONFIG_NANO
+  Include support for experimental AF_NANO sockets. Currently under development.
 
 CONFIG_INET
   Include support for AF_INET TCP/IP sockets.

@@ -24,11 +24,11 @@ struct socket {
 	long			flags;
 	struct proto_ops	*ops;
 	void			*data;
-#ifdef CONFIG_UNIX
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
 	struct socket		*conn;
 	struct socket		*iconn;
 	struct socket		*next;
-#endif /* CONFIG_UNIX */
+#endif /* CONFIG_UNIX || CONFIG_NANO */
 	struct wait_queue	**wait;
 	struct inode		*inode;
 	struct fasync_struct	*fasync_list;
@@ -45,20 +45,24 @@ struct proto_ops {
  	int	(*socketpair)	();
 	int	(*accept)	();
 	int	(*getname)	();
+	int	(*read)		();
+	int	(*write)	();
 	int	(*select)	();
 	int	(*ioctl)	();
 	int	(*listen)	();
+	int	(*send)		();
+	int	(*recv)		();
+	int	(*sendto)	();
+	int	(*recvfrom)	();
 	int	(*shutdown)	();
 	int	(*setsocketopt)	();
 	int	(*getsocketopt)	();
 	int	(*fcntl)	();
-	int	(*sendmsg)	();
-	int	(*recvmsg)	();
 };
 
-#define SO_ACCEPTCON	(1<<16)
-#define SO_WAITDATA	(1<<17)
-#define SO_NOSPACE	(1<<18)
+#define SO_ACCEPTCON	(1<<13)
+#define SO_WAITDATA	(1<<14)
+#define SO_NOSPACE	(1<<15)
 
 struct net_proto {
 	char *name;               /* Protocol name */

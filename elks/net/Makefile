@@ -24,7 +24,7 @@ CC_PROTO =gcc -I../include -M
 	$(CC) $(CFLAGS) \
 	-0 -c -o $*.o $<
 
-OBJS  = socket.o protocols.o ipv4/af_inet.o unix/af_unix.o
+OBJS  = socket.o protocols.o ipv4/af_inet.o unix/af_unix.o nano/af_nano.o
 
 net.a: $(OBJS)
 	ar rcs net.a $(OBJS)

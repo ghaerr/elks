@@ -83,6 +83,14 @@ _sys_dlload:
 #ifndef CONFIG_SOCKET
 export _sys_socket
 _sys_socket:
+export _sys_bind
+_sys_bind:
+export _sys_listen
+_sys_listen:
+export _sys_accept
+_sys_accept:
+export _sys_connect
+_sys_connect:
 #endif
 export _no_syscall
 _no_syscall:

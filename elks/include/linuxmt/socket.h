@@ -21,8 +21,13 @@ struct msghdr
 };
 
 #define AF_INET	0	/* Only implemented type */
+#define AF_UNIX	1
+#define AF_NANO	2
+
 
 #define PF_INET	AF_INET
+#define PF_UNIX	AF_UNIX
+#define PF_NANO	AF_NANO
 
 #define SOCK_STREAM     1               /* stream (connection) socket   */
 #define SOCK_DGRAM      2               /* datagram (conn.less) socket  */
