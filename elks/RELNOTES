@@ -1,3 +1,12 @@
+VERSION 0.0.76 NOTES
+--------------------
+
+	Added support for signal(2) and signal handlers. Currently no masking
+or blocking is supported.
+	Fixed code for select which now handles timeouts correctly, and
+works on the tty driver. This fix included a re-write of the low level
+context witching code so that timeouts worked properly throughout the kernel.
+
 VERSION 0.0.75 NOTES
 --------------------
 
