@@ -1,10 +1,9 @@
-#ifndef __ROMFS_FS_SB_H__
-#define __ROMFS_FS_SB_H__
+#ifndef LX86_LINUXMT_ROMFS_FS_SB_H
+#define LX86_LINUXMT_ROMFS_FS_SB_H
 
-/* romfs superblock in-core data */
+/* ROMfs superblock in-core data */
 
-struct romfs_sb_info
-{
+struct romfs_sb_info {
     unsigned long s_maxsize;
 };
 

@@ -4,15 +4,15 @@
  * Copyright (C) 1992, 1994 by Theodore Ts'o.
  * 
  * Redistribution of this file is permitted under the terms of the GNU 
- * Public License (GPL)
- * 
+ * General Public License (GPL)
+ *
  * These are the UART port assignments, expressed as offsets from the base
  * register.  These assignments should hold for any serial port based on
  * a 8250, 16450, or 16550(A).
  */
 
-#ifndef __LINUX_SERIAL_REG_H__
-#define __LINUX_SERIAL_REG_H__
+#ifndef LX86_LINUXMT_SERIAL_REG_H
+#define LX86_LINUXMT_SERIAL_REG_H
 
 #define UART_RX		0	/* In:  Receive buffer (DLAB=0) */
 #define UART_TX		0	/* Out: Transmit buffer (DLAB=0) */
@@ -29,9 +29,7 @@
 #define UART_MSR	6	/* In:  Modem Status Register */
 #define UART_SCR	7	/* I/O: Scratch Register */
 
-/*
- * These are the definitions for the FIFO Control Register
- * (16650 only)
+/* These are the definitions for the FIFO Control Register (16650 only)
  */
 #define UART_FCR_ENABLE_FIFO	0x01	/* Enable the FIFO */
 #define UART_FCR_CLEAR_RCVR	0x02	/* Clear the RCVR FIFO */
@@ -42,6 +40,7 @@
 #define UART_FCR_TRIGGER_4	0x40	/* Mask for trigger set at 4 */
 #define UART_FCR_TRIGGER_8	0x80	/* Mask for trigger set at 8 */
 #define UART_FCR_TRIGGER_14	0xC0	/* Mask for trigger set at 14 */
+
 /* 16650 redefinitions */
 #define UART_FCR6_R_TRIGGER_8	0x00	/* Mask for receive trigger set at 1 */
 #define UART_FCR6_R_TRIGGER_16	0x40	/* Mask for receive trigger set at 4 */
@@ -52,8 +51,7 @@
 #define UART_FCR6_T_TRIGGER_24  0x20	/* Mask for transmit trigger set at 24 */
 #define UART_FCR6_T_TRIGGER_30	0x30	/* Mask for transmit trigger set at 30 */
 
-/*
- * These are the definitions for the Line Control Register
+/* These are the definitions for the Line Control Register
  * 
  * Note: if the word length is 5 bits (UART_LCR_WLEN5), then setting 
  * UART_LCR_STOP will select 1.5 stop bits, not 2 stop bits.

@@ -71,50 +71,50 @@ int get_dma_list(char *buf)
 
 #endif
 
-int request_dma(unsigned int dmanr, char *device_id)
+int request_dma(unsigned char dma, void *device)
 {
-    if (dmanr >= MAX_DMA_CHANNELS)
+    unsigned char *device_id = device;
+
+    if (dma >= MAX_DMA_CHANNELS)
 	return -EINVAL;
 
-    if (xchg(&dma_chan_busy[dmanr].lock, 1) != 0)
+    if (xchg(&dma_chan_busy[dma].lock, 1) != 0)
 	return -EBUSY;
 
-    dma_chan_busy[dmanr].device_id = device_id;
+    dma_chan_busy[dma].device_id = device_id;
 
     /* old flag was 0, now contains 1 to indicate busy */
     return 0;
 }				/* request_dma */
 
-void free_dma(unsigned int dmanr)
+void free_dma(unsigned char dma)
 {
-    if (dmanr >= MAX_DMA_CHANNELS) {
-	printk("Trying to free DMA%u\n", dmanr);
-	return;
-    }
-
-    if (xchg(&dma_chan_busy[dmanr].lock, 0) == 0) {
-	printk("Trying to free free DMA%u\n", dmanr);
-	return;
-    }
-
+    if (dma >= MAX_DMA_CHANNELS)
+	printk("Trying to free DMA%u\n", dma);
+    else if (!xchg(&dma_chan_busy[dma].lock, 0)) {
+	printk("Trying to free free DMA%u\n", dma);
 }				/* free_dma */
 
 /* enable/disable a specific DMA channel */
 
-void enable_dma(unsigned int dmanr)
+void enable_dma(unsigned char dma)
 {
-    if (dmanr <= 3)
-	dma_outb(dmanr, DMA1_MASK_REG);
+    if (dma >= MAX_DMA_CHANNELS)
+	printk("Trying to enable DMA%u\n", dma);
+    else if (dma <= 3)
+	dma_outb(dma, DMA1_MASK_REG);
     else
-	dma_outb(dmanr & 3, DMA2_MASK_REG);
+	dma_outb(dma & 3, DMA2_MASK_REG);
 }
 
-void disable_dma(unsigned int dmanr)
+void disable_dma(unsigned char dma)
 {
-    if (dmanr <= 3)
-	dma_outb(dmanr | 4, DMA1_MASK_REG);
+    if (dma >= MAX_DMA_CHANNELS)
+	printk("Trying to disable DMA%u\n", dma);
+    else if (dma <= 3)
+	dma_outb(dma | 4, DMA1_MASK_REG);
     else
-	dma_outb((dmanr & 3) | 4, DMA2_MASK_REG);
+	dma_outb((dma & 3) | 4, DMA2_MASK_REG);
 }
 
 /* Clear the 'DMA Pointer Flip Flop'.
@@ -125,9 +125,11 @@ void disable_dma(unsigned int dmanr)
  * --- only be used while interrupts are disabled! ---
  */
 
-void clear_dma_ff(unsigned int dmanr)
+void clear_dma_ff(unsigned char dma)
 {
-    if (dmanr <= 3)
+    if (dma >= MAX_DMA_CHANNELS)
+	printk("Trying to disable DMA%u\n", dma);
+    else if (dma <= 3)
 	dma_outb(0, DMA1_CLEAR_FF_REG);
     else
 	dma_outb(0, DMA2_CLEAR_FF_REG);
@@ -135,43 +137,45 @@ void clear_dma_ff(unsigned int dmanr)
 
 /* set mode (above) for a specific DMA channel */
 
-void set_dma_mode(unsigned int dmanr, char mode)
+void set_dma_mode(unsigned char dma, unsigned char mode)
 {
-    if (dmanr <= 3)
-	dma_outb(mode | dmanr, DMA1_MODE_REG);
+    if (dma >= MAX_DMA_CHANNELS)
+	printk("Trying to disable DMA%u\n", dma);
+    else if (dma <= 3)
+	dma_outb(mode | dma, DMA1_MODE_REG);
     else
-	dma_outb(mode | (dmanr & 3), DMA2_MODE_REG);
+	dma_outb(mode | (dma & 3), DMA2_MODE_REG);
 }
 
 /* Set only the page register bits of the transfer address.
  * This is used for successive transfers when we know the contents of
- * the lower 16 bits of the DMA current address register, but a 64k boundary
- * may have been crossed.
+ * the lower 16 bits of the DMA current address register, but a 64k
+ * boundary may have been crossed.
  */
 
-void set_dma_page(unsigned int dmanr, char pagenr)
+void set_dma_page(unsigned char dma, unsigned char page)
 {
-    switch (dmanr) {
+    switch (dma) {
     case 0:
-	dma_outb(pagenr, DMA_PAGE_0);
+	dma_outb(page, DMA_PAGE_0);
 	break;
     case 1:
-	dma_outb(pagenr, DMA_PAGE_1);
+	dma_outb(page, DMA_PAGE_1);
 	break;
     case 2:
-	dma_outb(pagenr, DMA_PAGE_2);
+	dma_outb(page, DMA_PAGE_2);
 	break;
     case 3:
-	dma_outb(pagenr, DMA_PAGE_3);
+	dma_outb(page, DMA_PAGE_3);
 	break;
     case 5:
-	dma_outb(pagenr & 0xfe, DMA_PAGE_5);
+	dma_outb(page & 0xfe, DMA_PAGE_5);
 	break;
     case 6:
-	dma_outb(pagenr & 0xfe, DMA_PAGE_6);
+	dma_outb(page & 0xfe, DMA_PAGE_6);
 	break;
     case 7:
-	dma_outb(pagenr & 0xfe, DMA_PAGE_7);
+	dma_outb(page & 0xfe, DMA_PAGE_7);
 	break;
     }
 }
@@ -180,15 +184,15 @@ void set_dma_page(unsigned int dmanr, char pagenr)
  * Assumes dma flipflop is clear.
  */
 
-void set_dma_addr(unsigned int dmanr, unsigned int addr)
+void set_dma_addr(unsigned char dma, unsigned long addr)
 {
-    set_dma_page(dmanr, addr >> 16);
-    if (dmanr <= 3) {
-	dma_outb(addr & 0xff, ((dmanr & 3) << 1) + IO_DMA1_BASE);
-	dma_outb((addr >> 8) & 0xff, ((dmanr & 3) << 1) + IO_DMA1_BASE);
+    set_dma_page(dma, addr >> 16);
+    if (dma <= 3) {
+	dma_outb(addr & 0xff, (dma << 1) + IO_DMA1_BASE);
+	dma_outb((addr >> 8) & 0xff, (dma << 1) + IO_DMA1_BASE);
     } else {
-	dma_outb((addr >> 1) & 0xff, ((dmanr & 3) << 2) + IO_DMA2_BASE);
-	dma_outb((addr >> 9) & 0xff, ((dmanr & 3) << 2) + IO_DMA2_BASE);
+	dma_outb((addr >> 1) & 0xff, ((dma & 3) << 2) + IO_DMA2_BASE);
+	dma_outb((addr >> 9) & 0xff, ((dma & 3) << 2) + IO_DMA2_BASE);
     }
 }
 
@@ -201,15 +205,15 @@ void set_dma_addr(unsigned int dmanr, unsigned int addr)
  * NOTE 2: "count" represents _bytes_ and must be even for channels 5-7.
  */
 
-void set_dma_count(unsigned int dmanr, unsigned int count)
+void set_dma_count(unsigned char dma, unsigned int count)
 {
     count--;
-    if (dmanr <= 3) {
-	dma_outb(count & 0xff, ((dmanr & 3) << 1) + 1 + IO_DMA1_BASE);
-	dma_outb((count >> 8) & 0xff, ((dmanr & 3) << 1) + 1 + IO_DMA1_BASE);
+    if (dma <= 3) {
+	dma_outb(count & 0xff, (dma << 1) + 1 + IO_DMA1_BASE);
+	dma_outb((count >> 8) & 0xff, (dma << 1) + 1 + IO_DMA1_BASE);
     } else {
-	dma_outb((count >> 1) & 0xff, ((dmanr & 3) << 2) + 2 + IO_DMA2_BASE);
-	dma_outb((count >> 9) & 0xff, ((dmanr & 3) << 2) + 2 + IO_DMA2_BASE);
+	dma_outb((count >> 1) & 0xff, ((dma & 3) << 2) + 2 + IO_DMA2_BASE);
+	dma_outb((count >> 9) & 0xff, ((dma & 3) << 2) + 2 + IO_DMA2_BASE);
     }
 }
 
@@ -222,15 +226,14 @@ void set_dma_count(unsigned int dmanr, unsigned int count)
  * Assumes DMA flip-flop is clear.
  */
 
-int get_dma_residue(unsigned int dmanr)
+int get_dma_residue(unsigned char dma)
 {
-    unsigned int io_port = (dmanr <= 3) ? ((dmanr & 3) << 1) + 1 + IO_DMA1_BASE
-	: ((dmanr & 3) << 2) + 2 + IO_DMA2_BASE;
+    unsigned int io_port = (dma <= 3) ? (dma << 1) + 1 + IO_DMA1_BASE
+				      : ((dma & 3) << 2) + 2 + IO_DMA2_BASE;
 
     /* using short to get 16-bit wrap around */
-    unsigned short count;
+    unsigned short count = 1 + dma_inb(io_port);
 
-    count = 1 + dma_inb(io_port);
     count += dma_inb(io_port) << 8;
 
     return (dmanr <= 3) ? count : (count << 1);

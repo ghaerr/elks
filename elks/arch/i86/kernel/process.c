@@ -42,47 +42,53 @@
 
 
 #ifdef CONFIG_ROMCODE 
-   #define stashed_ds       [0]
-   #define stashed_si       [14]
-   #define sc_tmp           [16]
+
+#define stashed_ds	[0]
+#define stashed_si	[14]
+#define sc_tmp		[16]
 
 #else
-   #define stashed_ds       cseg_stashed_ds
-   #define stashed_si       cseg_stashed_si
-   #define sc_tmp           cseg_sc_tmp
+
+#define stashed_ds	cseg_stashed_ds
+#define stashed_si	cseg_stashed_si
+#define sc_tmp		cseg_sc_tmp
 
 #asm
-  .text
+
+    .text
   
-! This is from irqtab.c
 /*
  *  This code is either in code segment or CONFIG_ROM_IRQ_DATA 
- *  The CS-Code must always placed in irqtab.c, because the
- *  linker doesnt store them on block.
+ *  The CS-Code must always be placed in irqtab.c, because the
+ *  linker doesnt store them in block.
  */
 
-	.extern cseg_stashed_ds
-	.extern cseg_stashed_si  ;now in irqtab.c
-	.extern cseg_sc_tmp       
+	.extern	cseg_stashed_ds
+	.extern	cseg_stashed_si	; Now in irqtab.c
+	.extern	cseg_sc_tmp       
 
 /* and now code */
+
 #endasm
+
 #endif
 
-void sig_check()
+void sig_check(void)
 {
-	register __ptask currentp = current;
-	if (currentp->signal) {
-		do_signal();
-	}
-	currentp->signal = 0;
+    register __ptask currentp = current;
+
+    if (currentp->signal)
+	do_signal();
+    currentp->signal = 0;
 }
 
 #asm
 	.text
 
 #if 1	
+
 	.globl _tswitch
+
 _tswitch:
 	push bp		! /* schedule()'s bp */
 	pushf
@@ -103,8 +109,11 @@ _tswitch:
 	pop bp		! BP of schedule()
 	xor ax,ax
 	ret
+
 #else
+
 	.globl _save_regs
+
 _save_regs:
 !
 !	Save the CPU registers (note: only need those which bcc would
@@ -124,11 +133,10 @@ _save_regs:
 	mov  [bx],sp
 	push ax		! Return with the stack altered.
 	ret
-
-! /*
-!	Unlike save_regs this doesn't return to the caller but
-!	to the callers caller.
-! */
+!
+!	Unlike save_regs this doesn't return to the caller
+!	but to the caller's caller.
+!
 	.globl _load_regs
 
 _load_regs:
@@ -152,8 +160,9 @@ _load_regs:
 	pop bp		! BP of schedule()
 	mov sp,bp	! As schedule() would do on its return to get SP
 	pop bp		! Recover caller BP
-	xor ax,ax	! /* Set ax=0, as this may be child's fork() return */
+	xor ax,ax	! Set ax=0, as this may be child's fork() return
 	ret		! thus to caller of schedule()
+
 #endif
 	
 !
@@ -177,18 +186,21 @@ _syscall_int:
 	cli
 
         push ax
+
 #ifdef CONFIG_ROMCODE
         mov ax,#CONFIG_ROM_IRQ_DATA
 #else
         mov ax,cs
 #endif        
+
         mov ds,ax
         pop ax
 
 	mov sc_tmp,ax
-
-! Save si and free an index register
-        mov stashed_si, si
+!
+!	Save si and free an index register
+!
+	mov stashed_si, si
 	mov si,bx
 
 	mov ax,stashed_ds
@@ -353,15 +365,16 @@ _fake_save_regs:
  * We only need to do this as long as we support old format binaries
  * that grow stack and heap towards each other
  */
-void stack_check()
+void stack_check(void)
 {
-	register __ptask currentp = current;
-	if ((currentp->t_begstack > currentp->t_enddata) &&
-	    (currentp->t_regs.sp < currentp->t_endbrk)) {
-		printk("STACK (%d) ENTERED BSS (%ld) - PROCESS TERMINATING\n",
-			currentp->t_regs.sp, currentp->t_endbrk);
-		do_exit(SIGSEGV);
-	}
+    register __ptask currentp = current;
+
+    if ((currentp->t_begstack > currentp->t_enddata) &&
+	(currentp->t_regs.sp < currentp->t_endbrk)) {
+	printk("STACK (%d) ENTERED BSS (%ld) - PROCESS TERMINATING\n",
+		currentp->t_regs.sp, currentp->t_endbrk);
+	do_exit(SIGSEGV);
+    }
 }
 
 /*
@@ -369,27 +382,30 @@ void stack_check()
  *	so we fork onto our kernel stack.
  */
  
-void kfork_proc(t, addr)
-register struct task_struct *t;
-char *addr;
+void kfork_proc(register struct task_struct *t,char *addr)
 {
-	memset(t, 0, sizeof(struct task_struct));
-	t->t_regs.ksp=t->t_kstack+KSTACK_BYTES;
-	t->t_regs.ksp-=fake_save_regs(t->t_regs.ksp,addr);
-	t->t_regs.ds=get_ds();
-	t->state=TASK_UNINTERRUPTIBLE;
-	t->pid=get_pid();
-#ifdef OLD_SCHED
-	t->t_priority=10;
-	t->prev_run = t->next_run = t->next_task = t->prev_task = NULL;
-#else
-	t->prev_run = t->next_run = NULL;
-#endif
-	t->t_kstackm = KSTACK_MAGIC;
-	wake_up_process(t);
-	schedule();
-}
+    memset(t, 0, sizeof(struct task_struct));
+    t->t_regs.ksp=t->t_kstack+KSTACK_BYTES;
+    t->t_regs.ksp-=fake_save_regs(t->t_regs.ksp,addr);
+    t->t_regs.ds=get_ds();
+    t->state=TASK_UNINTERRUPTIBLE;
+    t->pid=get_pid();
 
+#ifdef OLD_SCHED
+
+    t->t_priority=10;
+    t->prev_run = t->next_run = t->next_task = t->prev_task = NULL;
+
+#else
+
+    t->prev_run = t->next_run = NULL;
+
+#endif
+
+    t->t_kstackm = KSTACK_MAGIC;
+    wake_up_process(t);
+    schedule();
+}
 
 /*
  *	Build a user return stack for exec*(). This is quite easy,
@@ -397,28 +413,23 @@ char *addr;
  */
 
 #define USER_FLAGS 0x3200		/* IPL 3, interrupt enabled */
-void put_ustack(t, off, val)
-register struct task_struct *t;
-int off, val;
+void put_ustack(register struct task_struct *t,int off,int val)
 {
     pokew(t->t_regs.ss, t->t_regs.sp+off, val);
 }
 
-unsigned get_ustack(t, off)
-register struct task_struct *t;
-int off;
+unsigned get_ustack(register struct task_struct *t,int off)
 {
-	return peekw(t->t_regs.ss, t->t_regs.sp+off);
+    return peekw(t->t_regs.ss, t->t_regs.sp+off);
 }
 
-void arch_setup_kernel_stack(t)
-register struct task_struct *t;
+void arch_setup_kernel_stack(register struct task_struct *t)
 {
-	put_ustack(t, -2, USER_FLAGS);		/* Flags */
-	put_ustack(t, -4, current->t_regs.cs);	/* user CS */
-	put_ustack(t, -6, 0);			/* addr 0 */
-	t->t_regs.sp-=6;
-	t->t_kstackm = KSTACK_MAGIC;
+    put_ustack(t, -2, USER_FLAGS);		/* Flags */
+    put_ustack(t, -4, current->t_regs.cs);	/* user CS */
+    put_ustack(t, -6, 0);			/* addr 0 */
+    t->t_regs.sp-=6;
+    t->t_kstackm = KSTACK_MAGIC;
 }
 
 /* We need to make the program return to another point - to the signal
@@ -434,32 +445,25 @@ register struct task_struct *t;
  * as we don't have any way of sorting out a return value yet.
  */
 
-void arch_setup_sighandler_stack(t, addr, signr)
-register struct task_struct *t;
-__sighandler_t addr;
-unsigned signr;
+void arch_setup_sighandler_stack(register struct task_struct *t,
+				 __sighandler_t addr,unsigned signr)
 {
-	printd_sig4("Stack %x was %x %x %x\n",
-		addr,
-		get_ustack(t, 0),
-		get_ustack(t, 2),
-		get_ustack(t, 4));
-	put_ustack(t, 2, get_ustack(t, 0));
-	put_ustack(t, 0, get_ustack(t, 4));
-	put_ustack(t, 4, signr);
-	put_ustack(t, -2, t->t_regs.cs);
-	put_ustack(t, -4, addr);
-	t->t_regs.sp-=4;
-	printd_sig5("Stack is %x %x %x %x %x\n",
-		get_ustack(t, 0),
-		get_ustack(t, 2),
-		get_ustack(t, 4),
-		get_ustack(t, 6),
+    printd_sig4("Stack %x was %x %x %x\n",addr,get_ustack(t, 0),
+		get_ustack(t, 2),get_ustack(t, 4));
+    put_ustack(t, 2, get_ustack(t, 0));
+    put_ustack(t, 0, get_ustack(t, 4));
+    put_ustack(t, 4, signr);
+    put_ustack(t, -2, t->t_regs.cs);
+    put_ustack(t, -4, addr);
+    t->t_regs.sp-=4;
+    printd_sig5("Stack is %x %x %x %x %x\n",get_ustack(t, 0),
+		get_ustack(t, 2),get_ustack(t, 4),get_ustack(t, 6),
 		get_ustack(t, 8));
 }
 
 /*
  * There are two cases when a process could be switched out:
+ *
  *  (1) an interrupt occurred, and schedule() was called at the end.
  *  (2) a system call was made, and schedule() was called during it.
  *
@@ -492,17 +496,19 @@ extern void ret_from_syscall();  /* our return address */
 
 static void* saved_bp; /* we have to recover user's bp */
 
-void arch_build_stack(t)
-struct task_struct *t;
+void arch_build_stack(struct task_struct *t)
 {
-	char *kstktop = t->t_kstack+KSTACK_BYTES;
-	t->t_regs.ksp=kstktop-fake_save_regs(kstktop,ret_from_syscall);
+    char *kstktop = t->t_kstack+KSTACK_BYTES;
+
+    t->t_regs.ksp = kstktop-fake_save_regs(kstktop, ret_from_syscall);
+{
 #asm
-	mov bx,[bp]	! bx = bp on entry to arch_build_stack
-	mov ax,[bx]	! ax = bp on entry to do_fork = users bp (hopefully!)
-	mov bx,ax
-	mov ax,[bx]	! ax = bp on entry to do_fork = users bp (hopefully!)
-	mov _saved_bp,ax
+	mov	bx,[bp]	! bx = bp on entry to arch_build_stack
+	mov	ax,[bx]	! ax = bp on entry to do_fork = users bp (hopefully!)
+	mov	bx,ax
+	mov	ax,[bx]	! ax = bp on entry to do_fork = users bp (hopefully!)
+	mov	_saved_bp,ax
 #endasm
-	*(void**)(kstktop-4) = saved_bp;
+}
+    *(void**) (kstktop-4) = saved_bp;
 }

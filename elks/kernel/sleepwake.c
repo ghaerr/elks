@@ -67,7 +67,7 @@ void wake_up_process(register struct task_struct *p)
 {
 	flag_t flags;
 	save_flags(flags);
-	icli();
+	i_cli();
 	p->state = TASK_RUNNING;
 	if (!p->next_run){
 		add_to_runqueue(p);

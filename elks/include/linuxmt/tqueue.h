@@ -1,8 +1,7 @@
-#ifndef __LINUXMT_TQUEUE_H__
-#define __LINUXMT_TQUEUE_H__
+#ifndef LX86_LINUXMT_TQUEUE_H
+#define LX86_LINUXMT_TQUEUE_H
 
-/*
- * tqueue.h --- task queue handling for Linux.
+/* tqueue.h --- task queue handling for Linux.
  *
  * Mostly based on a proposed bottom-half replacement code written by
  * Kai Petzke <wpp@marie.physik.tu-berlin.de>.
@@ -46,8 +45,7 @@
  *   the list.
  */
 
-struct tq_struct
-{
+struct tq_struct {
     struct tq_struct *next;	/* linked list of active bh's */
     int sync;			/* must be initialized to zero */
     void (*routine) ();		/* function to call */
@@ -60,8 +58,7 @@ typedef struct tq_struct *task_queue;
 
 extern task_queue tq_timer, tq_immediate, tq_scheduler, tq_disk;
 
-/*
- * To implement your own list of active bottom halfs, use the following
+/* To implement your own list of active bottom halfs, use the following
  * two definitions:
  *
  * struct tq_struct *my_bh = NULL;
@@ -123,7 +120,7 @@ extern __inline__ void queue_task_irq_off(bh_pointer, bh_list)
 	if (!set_bit(0,&bh_pointer->sync)) { \
 		flag_t flags; \
 		save_flags(flags); \
-		icli(); \
+		i_cli(); \
 		bh_pointer->next = *bh_list; \
 		*bh_list = bh_pointer; \
 		restore_flags(flags); \

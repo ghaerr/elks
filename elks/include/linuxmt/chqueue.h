@@ -1,21 +1,20 @@
-/* chqueue.h
- * (C) 1997 Chad Page
- */
-#ifndef __LINUXMT_CHQ_H__
-#define __LINUXMT_CHQ_H__
+/* chqueue.h (C) 1997 Chad Page */
 
-struct ch_queue
-{
-    char *buf;
-    int size, tail, len;
-    struct wait_queue wq;
+#ifndef LX86_LINUXMT_CHQ_H
+#define LX86_LINUXMT_CHQ_H
+
+struct ch_queue {
+    char		*buf;
+    struct wait_queue	wq;
+    int 		size, tail, len;
 };
 
-int chq_init();
-int chq_erase();
-int chq_addch();
-int chq_delch();
-int chq_getch();
-int chq_peekch();
+int chq_init(register struct ch_queue *,unsigned char *,int);
+int chq_erase(register struct ch_queue *);
+int chq_addch(register struct ch_queue *,unsigned char,int);
+int chq_delch(register struct ch_queue *);
+int chq_getch(register struct ch_queue *,register unsigned char *,int);
+int chq_peekch(register struct ch_queue *);
+int chq_full(register struct ch_queue *);
 
 #endif

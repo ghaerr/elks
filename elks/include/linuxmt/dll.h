@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_DLL_H__
-#define __LINUXMT_DLL_H__
+#ifndef LX86_LINUXMT_DLL_H
+#define LX86_LINUXMT_DLL_H
 
 /*
  *	DLL structures
@@ -10,11 +10,10 @@
 #define DLL_USED	1
 #define DLL_UNUSED	0
 
-struct dll_entry
-{
-    int d_state;
-    struct inode *d_inode;
-    unsigned short d_cseg;
+struct dll_entry {
+    int 		d_state;
+    struct inode	*d_inode;
+    unsigned short	d_cseg;
 };
 
 #endif

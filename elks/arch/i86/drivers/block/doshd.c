@@ -348,7 +348,7 @@ int seek_sector(int drive, int track, int sector)
 	BD_DX = (0 << 8) | drive;
 	BD_FL = 0;
 
-	isti();
+	i_sti();
 	call_bios();
 	if (CARRY_SET) {
 	    if (((BD_AX >> 8) == 0x04) && (count == MAX_ERRS - 1))
@@ -735,7 +735,7 @@ static void do_bioshd_request(void)
 
 #endif
 
-	    isti();
+	    i_sti();
 	    call_bios();
 
 	    if (CARRY_SET) {
@@ -801,13 +801,13 @@ static int revalidate_hddisk(int dev, int maxusage)
     target = DEVICE_NR(dev);
     gdev = &GENDISK_STRUCT;
 
-    icli();
+    i_cli();
     if (DEVICE_BUSY || USAGE > maxusage) {
-	isti();
+	i_sti();
 	return -EBUSY;
     };
     DEVICE_BUSY = 1;
-    isti();
+    i_sti();
 
     max_p = gdev->max_p;
     start = target << gdev->minor_shift;

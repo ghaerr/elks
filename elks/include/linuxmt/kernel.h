@@ -1,5 +1,5 @@
-#ifndef __LINUX_KERNEL_H__
-#define __LINUX_KERNEL_H__
+#ifndef LX86_LINUXMT_KERNEL_H
+#define LX86_LINUXMT_KERNEL_H
 
 /*
  * 'kernel.h' contains some often-used function prototypes etc
@@ -13,6 +13,7 @@
 #define ULONG_MAX	(~0UL)
 
 extern void panic();
+
 void do_exit();
 
 extern int kill_proc();
@@ -36,4 +37,5 @@ extern int wait_for_keypress();
 #define suser() (current->euid == 0)
 
 #endif
+
 #endif

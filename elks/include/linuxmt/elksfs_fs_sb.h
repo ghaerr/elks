@@ -1,27 +1,26 @@
-#ifndef __ELKSFS_FS_SB__
-#define __ELKSFS_FS_SB__
+#ifndef LX86_LINUXMT_FS_SB_H
+#define LX86_LINUXMT_FS_SB_H
 
 /*
  * elksfs super-block data in memory
  */
 
-struct elksfs_sb_info
-{
-    unsigned long s_ninodes;
-    unsigned long s_nzones;
-    unsigned long s_imap_blocks;
-    unsigned long s_zmap_blocks;
-    unsigned long s_firstdatazone;
-    unsigned long s_log_zone_size;
-    unsigned long s_max_size;
-    struct buffer_head *s_imap[8];
-    struct buffer_head *s_zmap[64];
-    unsigned long s_dirsize;
-    unsigned long s_namelen;
-    struct buffer_head *s_sbh;
-    struct elksfs_super_block *s_ms;
-    unsigned short s_mount_state;
-    unsigned short s_version;
+struct elksfs_sb_info {
+    unsigned long int		s_ninodes;
+    unsigned long int		s_nzones;
+    unsigned long int		s_imap_blocks;
+    unsigned long int		s_zmap_blocks;
+    unsigned long int		s_firstdatazone;
+    unsigned long int		s_log_zone_size;
+    unsigned long int		s_max_size;
+    struct buffer_head		*s_imap[8];
+    struct buffer_head		*s_zmap[64];
+    unsigned long int		s_dirsize;
+    unsigned long int		s_namelen;
+    struct buffer_head		*s_sbh;
+    struct elksfs_super_block	*s_ms;
+    unsigned short int		s_mount_state;
+    unsigned short int		s_version;
 };
 
 #endif

@@ -37,7 +37,7 @@ void device_setup(void)
 #ifndef CONFIG_NOFS
     blk_dev_init();
 #endif
-    isti();
+    i_sti();
 
 #ifndef CONFIG_NOFS
     for (p = gendisk_head; p; p = p->next) {

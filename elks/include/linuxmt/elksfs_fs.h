@@ -1,22 +1,19 @@
-#ifndef __LINUX_ELKSFS_FS_H__
-#define __LINUX_ELKSFS_FS_H__
+#ifndef LX86_LINUXMT_ELKSFS_FS_H
+#define LX86_LINUXMT_ELKSFS_FS_H
 
 #ifdef CONFIG_ELKSFS_FS
 
 /*
  * The elksfs filesystem constants/structures
- */
-
-/*
- * Thanks to Kees J Bot for sending me the definitions of the new
- * elksfs filesystem (aka V2) with bigger inodes and 32-bit block
- * pointers.
+ *
+ * Thanks to Kees J Bot for sending me the definitions of the new elksfs
+ * filesystem (aka V2) with bigger inodes and 32-bit block pointers.
  */
 
 #define ELKSFS_ROOT_INO 1
 
 /* Not the same as the bogus LINK_MAX in <linux/limits.h>. Oh well. */
-#define ELKSFS_LINK_MAX	250
+#define ELKSFS_LINK_MAX 	250
 
 #define ELKSFS_I_MAP_SLOTS	8
 #define ELKSFS_Z_MAP_SLOTS	64
@@ -41,8 +38,7 @@
  * This is the original elksfs inode layout on disk.
  * Note the 8-bit gid and atime and ctime.
  */
-struct elksfs_inode
-{
+struct elksfs_inode {
     __u16 i_mode;
     __u16 i_uid;
     __u32 i_size;
@@ -55,8 +51,7 @@ struct elksfs_inode
 /*
  * elksfs super-block data on disk
  */
-struct elksfs_super_block
-{
+struct elksfs_super_block {
     __u16 s_ninodes;
     __u16 s_nzones;
     __u16 s_imap_blocks;
@@ -69,8 +64,7 @@ struct elksfs_super_block
     __u32 s_zones;
 };
 
-struct elksfs_dir_entry
-{
+struct elksfs_dir_entry {
     __u16 inode;
     char name[0];
 };
@@ -130,4 +124,5 @@ extern struct inode_operations elksfs_symlink_inode_operations;
 
 #endif
 #endif
+
 #endif

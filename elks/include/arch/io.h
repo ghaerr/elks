@@ -1,13 +1,14 @@
-#ifndef __ARCH_8086_IO_H__
-#define __ARCH_8086_IO_H__
+#ifndef LX86_ARCH_IO_H
+#define LX86_ARCH_IO_H
 
-extern void outb();
-extern void outb_p();
-extern void outw();
-extern void outw_p();
-extern unsigned char inb();
-extern unsigned char inb_p();
-extern unsigned short inw();
-extern unsigned short inw_p();
+extern void outb(unsigned char, void *);
+extern void outb_p(unsigned char, void *);
+extern void outw(unsigned short int, void *);
+extern void outw_p(unsigned short int, void *);
+
+extern unsigned char inb(void *);
+extern unsigned char inb_p(void *);
+extern unsigned short int inw(void *);
+extern unsigned short int inw_p(void *);
 
 #endif

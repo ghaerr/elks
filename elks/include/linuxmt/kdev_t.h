@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_KDEV_T_H__
-#define __LINUXMT_KDEV_T_H__
+#ifndef LX86_LINUXMT_KDEV_T_H
+#define LX86_LINUXMT_KDEV_T_H
 
 #define MINORBITS	8
 #define MINORMASK	((1<<MINORBITS) - 1)
@@ -29,12 +29,13 @@ extern char *kdevname();	/* note: returns pointer to static data! */
  * from the kernel sources. These must be the externally visible ones.
  */
 
-#define MAJOR(dev)	((dev)>>MINORBITS)
-#define MINOR(dev)	((dev) & MINORMASK)
-#define MKDEV(ma,mi)	((ma)<<MINORBITS | (mi))
+#define MAJOR(dev)		((dev) >> MINORBITS)
+#define MINOR(dev)		((dev) & MINORMASK)
+#define MKDEV(major,minor)	((major) << MINORBITS | (minor))
 
 #undef MINORBITS
 #undef MINORMASK
 
 #endif
+
 #endif

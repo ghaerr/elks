@@ -222,6 +222,9 @@ CC_PROTO	= gcc -I$(INCDIR) -M -MG $(CCDEFS)
 CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) -ansi
 CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
 LINT		= splint
+LCFLAGS 	= -I$(INCDIR) $(CCDEFS) -D__LINT__
+LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
+		  -exportheader -varuse
 
 ifeq ($(USEBCC), Y)
 
@@ -300,6 +303,30 @@ dodep:	$(DEPEND)
 		fi ; \
 	done
 
+dolint:
+	@for FILE in *.[ch] ; do \
+	    if [ -f "$${FILE}" ] && ! fgrep -q '#asm' "$${FILE}" ; then \
+		echo $(LINT) ... "$${FILE}" ; \
+		if echo "$${FILE}" | grep -q '\.h$$' ; then \
+			$(LINT) -strict $(LHFLAGS) "$${FILE}" 2>&1 \
+					> "$${FILE}.lint" ; \
+		else \
+			$(LINT) -strict $(LCFLAGS) "$${FILE}" 2>&1 \
+					> "$${FILE}.lint" ; \
+		fi ; \
+		if [ $$? -eq 0 ]; then \
+		    rm -f "$${FILE}.lint" ; \
+		else \
+		    cat "$${FILE}.lint" ; \
+		fi ; \
+	    fi ; \
+	done
+	@for DIR in */ ; do \
+		if [ -f "$$DIR/Makefile" ]; then \
+			${MAKE} -C "$$DIR" lint ; \
+		fi ; \
+	done
+
 indent:	indent-me
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
@@ -310,19 +337,12 @@ indent:	indent-me
 indent-me:
 	$(BASEDIR)/scripts/reindent $(NOINDENT)
 
-lint:
-	@for FILE in *.c ; do \
-		if [ -f "$$FILE" ] && ! fgrep -q '#asm' "$$FILE" ; then \
-			TGT=`echo "$$FILE" | rev | cut -b 3- | rev`.lint ; \
-			echo $(LINT) -I$(INCDIR) -weak $(CCDEFS) "$$FILE" ; \
-			$(LINT) -I$(INCDIR) -weak $(CCDEFS) "$$FILE" > "$$TGT" ; \
-		fi ; \
-	done
-	@for DIR in */ ; do \
-		if [ -f "$$DIR/Makefile" ]; then \
-			${MAKE} -C "$$DIR" lint ; \
-		fi ; \
-	done
+lint:	dolint
+	@echo
+	@echo " * All files in and under this directory have now been checked. Where problems"
+	@echo " * were found, they will be found in the relevant *.lint file in the same"
+	@echo " * directory. However, where no problems were found, this file is deleted."
+	@echo
 
 mkdep:
 	@sed '/\#\#\# Dependencies:/q' < Makefile > make.tmp

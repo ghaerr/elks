@@ -16,7 +16,7 @@ Christoph Plattner    Christoph.Plattner@dot.at         31 Jan 2000- 2 Feb 2000
 David Murn            scuffer@hups.apana.org.au         11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
-Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-24 Apr 2002
+Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-26 Apr 2002
 Jacek Lipkowski       sq5bpf@acid.ch.pw.edu.pl          20 Jan 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
@@ -24,7 +24,7 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-25 Apr 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-26 Apr 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
@@ -32,17 +32,40 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Fri Apr 26 15:21:58 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+Fri Apr 26 20:01:37 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Applied `make lint` to include/arch directory.
+	* Fixed the bugs found in include/arch/io.h which several other
+	  header files import.
+	* Discovered that isti() is a reserved name, so changed it to
+	  i_sti() throughout the ELKS source tree. Also changed icli()
+	  to i_cli() throughout the ELKS source tree for consistency.
+	* Fixed all bugs found in include/arch/stat.h with -weak set.
+	* Fixed most of the bugs found in include/arch/system.h with the
+	  only remaining bug being that the type __ptasks appears never
+	  to be defined in the source tree. This is the ONLY remaining
+	  bug in this directory as far as `make lint` is concerned.
+	* Removed duplicate declaration of get_ss() from header file
+	  include/arch/segment.h and added prototypes for declarations.
+	* Tweaked machine name for uname such that if CONFIG_286PMODE is
+	  defined, we report as a 286 rather than an 8086.
+
+Fri Apr 26 15:21:58 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Cleanups in fork.c and use of register variables.
 	* Fixed tcpdev to be opened only by root.
 	* Corrected the sys_knlvsn() system call.
 	* Cleanups in sched.c
 
-Fri Apr 26 12:35:31 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+Fri Apr 26 14:28:42 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Official thanks to HarKal for finding the bug I introduced
+	  during my ANSI'fication of the ELKS source tree.
+
+Fri Apr 26 12:35:31 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Reverted a change Riley made during the ANSI'fication of
-	  the memory manager code, that made any allocation of memory
+	  the memory manager code that made any allocation of memory
 	  imposible.
 	* Added typedef of sig_t in signal.h to make the kernel
 	  compilable again after Riley's ANSI'fication of signal.c

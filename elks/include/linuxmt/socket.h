@@ -1,16 +1,14 @@
-#ifndef __LINUXMT_SOCKET_H__
-#define __LINUXMT_SOCKET_H__
+#ifndef LX86_LINUXMT_SOCKET_H
+#define LX86_LINUXMT_SOCKET_H
 
 #include <linuxmt/uio.h>
 
-struct sockaddr
-{
+struct sockaddr {
     unsigned short sa_family;
     char sa_data[14];
 };
 
-struct msghdr
-{
+struct msghdr {
     void *msg_name;
     int msg_namelen;
     struct iovec *msg_iov;
@@ -23,7 +21,6 @@ struct msghdr
 #define AF_INET	0		/* Only implemented type */
 #define AF_UNIX	1
 #define AF_NANO	2
-
 
 #define PF_INET	AF_INET
 #define PF_UNIX	AF_UNIX

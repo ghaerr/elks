@@ -1,5 +1,5 @@
-#ifndef __LINUX_MSDOS_H__
-#define __LINUX_MSDOS_H__
+#ifndef LX86_LINUXMT_MSDOS_H
+#define LX86_LINUXMT_MSDOS_H
 
 /*
  *	MSDOS binary formats
@@ -12,8 +12,7 @@
 #define MSDOS_MAGIC		0x4d5a	/* MZ */
 #endif
 
-struct msdos_exec_hdr
-{
+struct msdos_exec_hdr {
     unsigned int magic;		/* FIXME - is int 16bit? */
 };
 

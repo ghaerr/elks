@@ -19,7 +19,7 @@ DEPEND  	=
 
 DISTFILES	= 
 
-NOINDENT	= bitops.c memmove.c
+NOINDENT	= memmove.c
 
 #########################################################################
 # Include the standard rules.

@@ -1,14 +1,10 @@
-#ifndef __LINUX_MINIX_FS_H__
-#define __LINUX_MINIX_FS_H__
+#ifndef LX86_LINUXMT_MINIX_FS_H
+#define LX86_LINUXMT_MINIX_FS_H
 
-/*
- * The minix filesystem constants/structures
- */
-
-/*
- * Thanks to Kees J Bot for sending me the definitions of the new
- * minix filesystem (aka V2) with bigger inodes and 32-bit block
- * pointers.
+/* The minix filesystem constants/structures
+ *
+ * Thanks to Kees J Bot for sending me the definitions of the new minix
+ * filesystem (aka V2) with bigger inodes and 32-bit block pointers.
  */
 
 #define MINIX_ROOT_INO 1
@@ -37,8 +33,7 @@
  * This is the original minix inode layout on disk.
  * Note the 8-bit gid and atime and ctime.
  */
-struct minix_inode
-{
+struct minix_inode {
     __u16 i_mode;
     __u16 i_uid;
     __u32 i_size;
@@ -51,8 +46,7 @@ struct minix_inode
 /*
  * minix super-block data on disk
  */
-struct minix_super_block
-{
+struct minix_super_block {
     __u16 s_ninodes;
     __u16 s_nzones;
     __u16 s_imap_blocks;
@@ -65,8 +59,7 @@ struct minix_super_block
     __u32 s_zones;
 };
 
-struct minix_dir_entry
-{
+struct minix_dir_entry {
     __u16 inode;
     char name[0];
 };
@@ -125,4 +118,5 @@ extern struct inode_operations minix_dir_inode_operations;
 extern struct inode_operations minix_symlink_inode_operations;
 
 #endif
+
 #endif

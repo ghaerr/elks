@@ -1,7 +1,7 @@
-#ifndef __ARCH_BORDER_H__
-#define __ARCH_BORDER_H__
+#ifndef LX86_ARCH_BORDER_H
+#define LX86_ARCH_BORDER_H
 
-extern unsigned long htonl();
-extern unsigned long ntohl();
+extern unsigned long htonl(unsigned long);
+extern unsigned long ntohl(unsigned long);
 
 #endif

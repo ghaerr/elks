@@ -90,7 +90,7 @@ unsigned int irq_nr;
 	flag_t flags;
 	unsigned char mask = 1 << (irq_nr & 7);
 	save_flags(flags);
-	icli();
+	i_cli();
 	if(irq_nr < 8) {
 		cache_21 |= mask;
 		outb(cache_21,0x21);
@@ -113,13 +113,13 @@ unsigned int irq_nr;
 	mask = ~(1 << (irq_nr & 7));
 	save_flags(flags);
 	if (irq_nr < 8) {
-		icli();
+		i_cli();
 		cache_21 &= mask;
 		outb(cache_21,0x21);
 		restore_flags(flags);
 		return;
 	}
-	icli();
+	i_cli();
 	cache_A1 &= mask;
 	outb(cache_A1,0xA1);
 	restore_flags(flags);
@@ -258,7 +258,7 @@ void *dev_id;
 		return -EINVAL;
 	}
 	save_flags(flags);
-	icli();
+	i_cli();
 	action->handler = handler;
 	action->dev_id = dev_id;
 	enable_irq(irq);
@@ -282,7 +282,7 @@ unsigned int irq;
 		return;
 	}
 	save_flags(flags);
-	icli();
+	i_cli();
 
 	disable_irq(irq);
 

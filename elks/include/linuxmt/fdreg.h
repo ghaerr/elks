@@ -1,9 +1,9 @@
-#ifndef __LINUX_FDREG_H__
-#define __LINUX_FDREG_H__
-/*
- * This file contains some defines for the floppy disk controller.
- * Various sources. Mostly "IBM Microcomputers: A Programmers
- * Handbook", Sanches and Canton.
+#ifndef LX86_LINUXMT_FDREG_H
+#define LX86_LINUXMT_FDREG_H
+
+/* This file contains some defines for the floppy disk controller. Various
+ * sources. Mostly "IBM Microcomputers: A Programmers Handbook" by Sanches
+ * and Canton.
  */
 
 /* Fd controller regs. S&C, about page 340 */

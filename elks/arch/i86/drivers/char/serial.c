@@ -100,7 +100,7 @@ void update_port(register struct serial_info *port)
     if (cflags == B115200)
 	divisor = 1;
 
-    icli();
+    i_cli();
 
     /* Set the divisor latch bit */
     outb_p(port->lcr | UART_LCR_DLAB, port->io + UART_LCR);
@@ -112,7 +112,7 @@ void update_port(register struct serial_info *port)
     /* Clear the divisor latch bit */
     outb_p(port->lcr, port->io + UART_LCR);
 
-    isti();
+    i_sti();
 }
 
 static char irq_port[4] = { 3, 1, 0, 2 };

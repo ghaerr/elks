@@ -1,5 +1,5 @@
-#ifndef __LINUX_CONFIG_H__
-#define __LINUX_CONFIG_H__
+#ifndef LX86_LINUXMT_CONFIG_H
+#define LX86_LINUXMT_CONFIG_H
 
 #include <linuxmt/autoconf.h>
 
@@ -66,15 +66,19 @@
 #endif
 
 #ifndef UTS_MACHINE
+#ifdef CONFIG_286PMODE
+#define UTS_MACHINE "i80286"
+#else
 #define UTS_MACHINE "i8086"
+#endif
 #endif
 
 #ifndef UTS_NODENAME
-#define UTS_NODENAME "(none)"	/* set by sethostname() */
+#define UTS_NODENAME "(none)"		/* set by sethostname() */
 #endif
 
 #ifndef UTS_DOMAINNAME
-#define UTS_DOMAINNAME "(none)"	/* set by setdomainname() */
+#define UTS_DOMAINNAME "(none)" 	/* set by setdomainname() */
 #endif
 
 /*
@@ -82,12 +86,11 @@
  * in linux/version.h, and should only be used by linux/version.c
  */
 
-/* Don't touch these, unless you really know what your doing. */
+/* Don't touch these, unless you really know what you are doing. */
 #define DEF_INITSEG	0x0100	/* original 0x0100
-				 * for netboot use for example 
-				 * 0x5000, as 0x0100 cannot be used
-				 * in connection to the netboot
-				 * loader
+				 * for netboot use for example 0x5000, as
+				 * 0x0100 cannot be used in connection
+				 * with the netboot loader
 				 */
 #define DEF_SYSSEG	0x1000
 #define DEF_SETUPSEG	DEF_INITSEG + 0x20

@@ -1,5 +1,5 @@
-#ifndef __LINUX_TTY_H__
-#define __LINUX_TTY_H__
+#ifndef LX86_LINUXMT_NTTY_H
+#define LX86_LINUXMT_NTTY_H
 
 /*
  * 'ntty.h' defines some structures used by ntty.c and some defines.
@@ -16,12 +16,12 @@
 #define DCREL_KRAW	(('D'<<8)+0x04)
 
 #ifdef __KERNEL__
+
 #include <linuxmt/fs.h>
 #include <linuxmt/termios.h>
 #include <linuxmt/chqueue.h>
 
 #include <arch/system.h>
-
 
 /*
  * Note: don't mess with NR_PTYS until you understand the tty minor 
@@ -43,13 +43,14 @@ struct tty_ops
     int (*ioctl) ();
 };
 
-struct tty
-{
+struct tty {
     struct tty_ops *ops;
     int minor;
     int flags;
     unsigned char inq_buf[INQ_SIZE], outq_buf[OUTQ_SIZE];
-/*	struct wait_queue *sleep; */
+#if 0
+    struct wait_queue *sleep;
+#endif
     struct ch_queue inq, outq;
     struct termios termios;
     pid_t pgrp;
@@ -66,4 +67,5 @@ extern struct termios def_vals;	/* global use of def_vals                 */
 #define TTY_OPEN	2
 
 #endif
+
 #endif

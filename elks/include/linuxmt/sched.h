@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_SCHED_H__
-#define __LINUXMT_SCHED_H__
+#ifndef LX86_LINUXMT_SCHED_H
+#define LX86_LINUXMT_SCHED_H
 
 #define MAX_TASKS 15
 #define NGROUPS	13		/* Supplementary groups */
@@ -15,37 +15,33 @@
 #include <linuxmt/ntty.h>
 #include <arch/param.h>
 #include <linuxmt/timex.h>
+
 #ifdef CONFIG_STRACE
 #include <linuxmt/strace.h>
 #endif
 
-struct file_struct
-{
+struct file_struct {
     fd_mask_t close_on_exec;
     struct file *fd[NR_OPEN];
 };
 
-struct fs_struct
-{
+struct fs_struct {
     unsigned short umask;
     struct inode *root, *pwd;
 };
 
-struct mm_struct
-{
+struct mm_struct {
     seg_t cseg, dseg;
     char flags;
 #define CS_SWAP		1
 #define DS_SWAP		2
 };
 
-struct signal_struct
-{
+struct signal_struct {
     struct sigaction action[NSIG];
 };
 
-struct task_struct
-{
+struct task_struct {
 /* Executive stuff */
     __registers t_regs;
     __pptr t_enddata, t_begstack, t_endbrk, t_endseg;

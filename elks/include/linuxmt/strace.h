@@ -1,8 +1,7 @@
-#ifndef __LINUXMT_STRACE_H__
-#define __LINUXMT_STRACE_H__
+#ifndef LX86_LINUXMT_STRACE_H
+#define LX86_LINUXMT_STRACE_H
 
-/* include/linuxmt/strace.h
- * (C) 1997 Chad Page
+/* include/linuxmt/strace.h (C) 1997 Chad Page
  *
  * strace allows us to track any system call going into the kernel, and the
  * return value going out.  This include file has the specs for the strace

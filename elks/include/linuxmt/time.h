@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_TIME_H__
-#define __LINUXMT_TIME_H__
+#ifndef LX86_LINUXMT_TIME_H
+#define LX86_LINUXMT_TIME_H
 
 #define DST_NONE        0	/* not on dst */
 #define DST_USA         1	/* USA style dst */
@@ -15,14 +15,12 @@
 
 #ifdef __KERNEL__
 
-struct timeval
-{
+struct timeval {
     long tv_sec;		/* seconds */
     long tv_usec;		/* microseconds */
 };
 
-struct timezone
-{
+struct timezone {
     int tz_minuteswest;		/* minutes west of Greenwich */
     int tz_dsttime;		/* type of dst correction */
 };

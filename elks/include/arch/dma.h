@@ -5,11 +5,10 @@
  * and John Boyd, Nov. 1992.
  */
 
-#ifndef __ARCH_8086_DMA_H__
-#define __ARCH_8086_DMA_H__
+#ifndef LX86_ARCH_DMA_H
+#define LX86_ARCH_DMA_H
 
 #include <arch/io.h>		/* need byte IO */
-
 
 #ifdef HAVE_REALLY_SLOW_DMA_CONTROLLER
 #define dma_outb	outb_p
@@ -130,15 +129,15 @@
 #define DMA_MODE_CASCADE 0xC0	/* pass thru DREQ->HRQ, DACK<-HLDA only */
 
 /* These are in kernel/dma.c: */
-extern void enable_dma();
-extern void disable_dma();
-extern void clear_dma_ff();
-extern void set_dma_mode();
-extern void set_dma_page();
-extern void set_dma_addr();
-extern void set_dma_count();
-extern int get_dma_residue();
-extern int request_dma();	/* reserve a DMA channel */
-extern void free_dma();		/* release it again */
+extern void enable_dma(unsigned char);
+extern void disable_dma(unsigned char);
+extern void clear_dma_ff(unsigned char);
+extern void set_dma_mode(unsigned char,unsigned char);
+extern void set_dma_page(unsigned char,unsigned char);
+extern void set_dma_addr(unsigned char,unsigned long);
+extern void set_dma_count(unsigned char,unsigned int);
+extern int get_dma_residue(unsigned char);
+extern int request_dma(unsigned char,void *);
+extern void free_dma(unsigned char);
 
 #endif

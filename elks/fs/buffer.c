@@ -394,7 +394,7 @@ void mark_buffer_uptodate(struct buffer_head *bh, int on)
     flag_t flags;
 
     save_flags(flags);
-    icli();
+    i_cli();
     bh->b_uptodate = on;
     restore_flags(flags);
 }

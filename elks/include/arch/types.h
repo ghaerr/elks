@@ -1,7 +1,7 @@
 /* arch/i86/include/asm/types.h - Basic Linux/MT data types. */
 
-#ifndef __ARCH_8086_TYPES__
-#define __ARCH_8086_TYPES__
+#ifndef LX86_ARCH_TYPES_H
+#define LX86_ARCH_TYPES_H
 
 /* First we define all of the __u and __s types...*/
 
@@ -9,16 +9,19 @@
 
 typedef unsigned char __u8;
 typedef unsigned char *__pu8;
+
 typedef signed char __s8;
 typedef signed char *__ps8;
 
 typedef unsigned short int __u16;
 typedef unsigned short int *__pu16;
+
 typedef signed short int __s16;
 typedef signed short int *__ps16;
 
 typedef unsigned long int __u32;
 typedef unsigned long int *__pu32;
+
 typedef signed long int __s32;
 typedef signed long int *__ps32;
 
@@ -26,6 +29,7 @@ typedef signed long int *__ps32;
 
 typedef unsigned short int __uint;
 typedef unsigned short int *__puint;
+
 typedef signed short int __sint;
 typedef signed short int *__psint;
 
@@ -50,7 +54,7 @@ typedef struct _mminit __arch_mminit;
 typedef struct _mminit *__parch_mminit;
 
 #ifndef NULL
-#define NULL	0
+#define NULL	((void *) 0)
 #endif
 
 #endif

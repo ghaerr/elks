@@ -166,7 +166,7 @@ static struct malloc_hole *best_fit_hole(struct malloc_head *mh, segext_t size)
 {
     register struct malloc_hole *m = mh->holes, *best = NULL;
 
-    while (m != NULL) {
+    while (m) {
 	if (m->extent >= size && m->flags == HOLE_FREE)
 	    if (!best || best->extent > m->extent)
 		best = m;
@@ -183,7 +183,7 @@ static struct malloc_hole *find_hole(struct malloc_head *mh, seg_t base)
 {
     register struct malloc_hole *m = mh->holes;
 
-    while (m != NULL) {
+    while (m) {
 	if (m->page_base == base)
 	    return m;
 	m = m->next;

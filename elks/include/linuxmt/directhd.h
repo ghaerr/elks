@@ -1,10 +1,8 @@
-#ifndef __LINUXMT_DIRECTHD_H__
-#define __LINUXMT_DIRECTHD_H__
-
-/*
- * directhd.h header for ELKS kernel
- * Copyright (C) 1998 Blaz Antonic
+/* directhd.h header for ELKS kernel - Copyright (C) 1998 Blaz Antonic
  */
+
+#ifndef LX86_LINUXMT_DIRECTHD_H
+#define LX86_LINUXMT_DIRECTHD_H
 
 /* define offsets from base port address */
 #define DIRECTHD_ERROR 1
@@ -25,10 +23,11 @@
 #define DIRECTHD_READ 0x20	/* read with retry */
 #define DIRECTHD_WRITE 0x30	/* write with retry */
 
-
 /* other definitions */
 #define MAX_DRIVES 4		/* 2 per i/o channel and 2 i/o channels */
-/*
-#define DIRECTHD_DEVICE_NAME "hd"
-*/
+
+#if 0
+#define DIRECTHD_DEVICE_NAME	"hd"
+#endif
+
 #endif

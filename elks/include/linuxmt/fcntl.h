@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_FCNTL_H__
-#define __LINUXMT_FCNTL_H__
+#ifndef LX86_LINUXMT_FCNTL_H
+#define LX86_LINUXMT_FCNTL_H
 
 /*
  *	Definitions taken from the i386 Linux kernel.
@@ -18,6 +18,7 @@
 #define O_APPEND	 02000
 #define O_NONBLOCK	 04000
 #define O_NDELAY	O_NONBLOCK
+
 #if 0
 #define O_SYNC		010000	/* Not supported */
 #define FASYNC		020000	/* Not supported */

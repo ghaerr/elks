@@ -238,7 +238,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 
 int wait_for_keypress(void)
 {
-    isti();
+    i_sti();
     return chq_getch(&ttys[0].inq, 0, 1);
 }
 

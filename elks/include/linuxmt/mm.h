@@ -1,5 +1,5 @@
-#ifndef __LINUX_MM_H__
-#define __LINUX_MM_H__
+#ifndef LX86_LINUXMT_MM_H
+#define LX86_LINUXMT_MM_H
 
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>

@@ -1,5 +1,5 @@
-#ifndef __LINUX_LOCKS_H__
-#define __LINUX_LOCKS_H__
+#ifndef LX86_LINUXMT_LOCKS_H
+#define LX86_LINUXMT_LOCKS_H
 
 extern void wait_on_buffer();
 extern void lock_buffer();

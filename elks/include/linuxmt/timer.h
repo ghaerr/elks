@@ -1,14 +1,11 @@
-#ifndef __LINUXMT_TIMER_H__
-#define __LINUXMT_TIMER_H__
+#ifndef LX86_LINUXMT_TIMER_H
+#define LX86_LINUXMT_TIMER_H
 
 #include <linuxmt/types.h>
 
-/*
- * DON'T CHANGE THESE!! Most of them are hardcoded into some assembly language
- * as well as being defined here.
- */
-
-/*
+/* DON'T CHANGE THESE!! Most of them are hardcoded into some assembly
+ * language as well as being defined here.
+ *
  * The timers are:
  *
  * BLANK_TIMER		console screen-saver timer
@@ -36,7 +33,6 @@
  * MCD_TIMER		Mitsumi CD-ROM Timer
  *
  * GSCD_TIMER		Goldstar CD-ROM Timer
- *
  */
 
 #define BLANK_TIMER	0

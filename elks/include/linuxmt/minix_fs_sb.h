@@ -1,12 +1,11 @@
-#ifndef __MINIX_FS_SB__
-#define __MINIX_FS_SB__
+#ifndef LX86_LINUX_MINIX_FS_SB
+#define LX86_LINUX_MINIX_FS_SB
 
 /*
  * minix super-block data in memory
  */
 
-struct minix_sb_info
-{
+struct minix_sb_info {
     unsigned short s_ninodes;
     unsigned short s_nzones;
     unsigned short s_imap_blocks;

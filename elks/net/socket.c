@@ -223,7 +223,7 @@ int sock_awaitconn(register struct socket *mysock,
      */
     mysock->next = NULL;
 
-    icli();
+    i_cli();
     if (!(last = servsock->iconn))
 	servsock->iconn = mysock;
     else {
@@ -233,7 +233,7 @@ int sock_awaitconn(register struct socket *mysock,
     }
     mysock->state = SS_CONNECTING;
     mysock->conn = servsock;
-    isti();
+    i_sti();
 
     /*
      * Wake up server, then await connection. server will set state to
@@ -260,7 +260,7 @@ int sock_awaitconn(register struct socket *mysock,
 	     *    already been removed from the list
 	     */
 	    if (mysock->conn == servsock) {
-		icli();
+		i_cli();
 		if ((last = servsock->iconn) == mysock)
 		    servsock->iconn = mysock->next;
 		else {
@@ -268,7 +268,7 @@ int sock_awaitconn(register struct socket *mysock,
 			last = last->next;
 		    last->next = mysock->next;
 		}
-		isti();
+		i_sti();
 	    }
 	    return (mysock->conn ? -EINTR : -EACCES);
 	}

@@ -1,5 +1,5 @@
-#ifndef __ARCH_8086_ERRNO_H__
-#define __ARCH_8086_ERRNO_H__
+#ifndef LX86_ARCH_ERRNO_H
+#define LX86_ARCH_ERRNO_H
 
 #define	EPERM		 1	/* Operation not permitted */
 #define	ENOENT		 2	/* No such file or directory */

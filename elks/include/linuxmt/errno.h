@@ -3,8 +3,8 @@
  * combined into a single file.
  */
 
-#ifndef __ELKS_ERRNO_H__
-#define __ELKS_ERRNO_H__
+#ifndef LX86_LINUXMT_ERRNO_H
+#define LX86_LINUXMT_ERRNO_H
 
 /*****************************************************************************/
 
@@ -146,7 +146,7 @@
  */
 
 #define EEEEEEEEEEEEK	510	/* cat /dev/mouse */
-#define EIEIO		511	/* Old McDonald's on the rampage */
+#define EIEIO		511	/* Old McDonald is on the rampage */
 
 /*****************************************************************************/
 

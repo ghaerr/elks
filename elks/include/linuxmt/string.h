@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_STRING_H__
-#define __LINUXMT_STRING_H__
+#ifndef LX86_LINUXMT_STRING_H
+#define LX86_LINUXMT_STRING_H
 
 extern char *strcpy();
 extern char *strncpy();

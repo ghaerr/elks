@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_NET_H__
-#define __LINUXMT_NET_H__
+#ifndef LX86_LINUXMT_NET_H
+#define LX86_LINUXMT_NET_H
 
 #include <linuxmt/config.h>
 #include <linuxmt/wait.h>
@@ -10,18 +10,15 @@
 
 #define SOCK_INODE(S)	((S)->inode)
 
-typedef enum
-{
+typedef enum {
     SS_FREE = 0,
     SS_UNCONNECTED,
     SS_CONNECTING,
     SS_CONNECTED,
     SS_DISCONNECTING
-}
-socket_state;
+} socket_state;
 
-struct socket
-{
+struct socket {
     short type;
     unsigned char state;
     long flags;
@@ -42,8 +39,7 @@ struct socket
     struct file *file;
 };
 
-struct proto_ops
-{
+struct proto_ops {
     int family;
     int (*create) ();
     int (*dup) ();
@@ -68,12 +64,11 @@ struct proto_ops
     int (*fcntl) ();
 };
 
-#define SO_ACCEPTCON	(1<<13)
-#define SO_WAITDATA	(1<<14)
-#define SO_NOSPACE	(1<<15)
+#define SO_ACCEPTCON	(1 << 13)
+#define SO_WAITDATA	(1 << 14)
+#define SO_NOSPACE	(1 << 15)
 
-struct net_proto
-{
+struct net_proto {
     char *name;			/* Protocol name */
     void (*init_func) ();	/* Bootstrap */
 };

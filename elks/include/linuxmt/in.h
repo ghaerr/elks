@@ -1,13 +1,11 @@
-#ifndef __LINUXMT_IN_H__
-#define __LINUXMT_IN_H__
+#ifndef LX86_LINUXMT_IN_H
+#define LX86_LINUXMT_IN_H
 
-struct in_addr
-{
+struct in_addr {
     unsigned long s_addr;
 };
 
-struct sockaddr_in
-{
+struct sockaddr_in {
     unsigned short sin_family;	/* AF_INET */
     unsigned short sin_port;	/* port in network order */
     struct in_addr sin_addr;

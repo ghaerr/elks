@@ -1,9 +1,7 @@
-#ifndef __LINUXMT_HDREG_H__
-#define __LINUXMT_HDREG_H__
+#ifndef LX86_LINUXMT_HDREG_H
+#define LX86_LINUXMT_HDREG_H
 
-/*
- * This file contains some defines for the AT-hd-controller.
- * Various sources.  
+/* This file contains some defines for the AT-hd-controller. Various sources.
  */
 
 #define HD_IRQ 14		/* the standard disk interrupt */
@@ -75,8 +73,7 @@
 #define ECC_ERR		0x40	/* Uncorrectable ECC error */
 #define	BBD_ERR		0x80	/* block marked bad */
 
-struct hd_geometry
-{
+struct hd_geometry {
     unsigned char heads;
     unsigned char sectors;
     unsigned short cylinders;
@@ -91,6 +88,5 @@ struct hd_geometry
 /* hd/ide ctl's that pass (arg) non-ptr values are numbered 0x032n/0x033n */
 #define HDIO_SET_UNMASKINTR	0x0322	/* permit other irqs during I/O */
 #define HDIO_SET_NOWERR		0x0325	/* change ignore-write-error flag */
-
 
 #endif

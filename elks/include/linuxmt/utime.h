@@ -1,8 +1,7 @@
-#ifndef __LINUXMT_UTIME_H__
-#define __LINUXMT_UTIME_H__
+#ifndef LX86_LINUXMT_UTIME_H
+#define LX86_LINUXMT_UTIME_H
 
-struct utimbuf
-{
+struct utimbuf {
     time_t actime;		/* Access time.  */
     time_t modtime;		/* Modification time.  */
 };

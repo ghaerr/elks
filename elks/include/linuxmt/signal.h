@@ -1,7 +1,8 @@
-#ifndef __LINUXMT_SIGNAL_H__
-#define __LINUXMT_SIGNAL_H__
+#ifndef LX86_LINUXMT_SIGNAL_H
+#define LX86_LINUXMT_SIGNAL_H
 
-/* The following signal mean nothing under ELKS currently
+/* The following signals mean nothing under ELKS currently:
+ *
  * SIGBUS SIGTRAP SIGIOT SIGEMT SIGSYS SIGSTKFLT SIGPOLL
  * SIGCPU SIGPROF SIGPWR SIGILL SIGFPE
  * 
@@ -11,6 +12,7 @@
 #define SMALLSIG
 
 #ifdef SMALLSIG
+
 typedef unsigned short sigset_t;	/* at least 16 bits */
 
 #define _NSIG             16
@@ -75,6 +77,8 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 
 #endif
 
+typedef int sig_t;
+
 /*
  * sa_flags values: SA_STACK is not supported
  * SA_INTERRUPT is a no-op, but left due to historical reasons. Use the
@@ -99,7 +103,6 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 #define SA_SAMPLE_RANDOM SA_RESTART
 #endif
 
-
 #define SIG_BLOCK          0	/* for blocking signals */
 #define SIG_UNBLOCK        1	/* for unblocking signals */
 #define SIG_SETMASK        2	/* for setting the signal mask */
@@ -107,14 +110,11 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 /* Type of a signal handler.  */
 typedef void (*__sighandler_t) ();
 
-#define SIG_DFL	((__sighandler_t)0)	/* default signal handling */
-#define SIG_IGN	((__sighandler_t)1)	/* ignore signal */
-#define SIG_ERR	((__sighandler_t)-1)	/* error return from signal */
+#define SIG_DFL	((__sighandler_t) 0)	/* default signal handling */
+#define SIG_IGN	((__sighandler_t) 1)	/* ignore signal */
+#define SIG_ERR	((__sighandler_t) -1)	/* error return from signal */
 
-typedef int sig_t;
-
-struct sigaction
-{
+struct sigaction {
     __sighandler_t sa_handler;
 /*	sigset_t sa_mask; */
 /*	unsigned long sa_flags; */

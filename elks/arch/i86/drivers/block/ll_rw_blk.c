@@ -112,7 +112,7 @@ static void plug_device(register struct blk_dev_struct *dev,
     plug->cmd = -1;
     plug->next = NULL;
     save_flags(flags);
-    icli();
+    i_cli();
     if (!dev->current_request)
 	dev->current_request = plug;
     restore_flags(flags);
@@ -128,7 +128,7 @@ static void unplug_device(struct blk_dev_struct *dev)
     unsigned int flags;
 
     save_flags(flags);
-    icli();
+    i_cli();
     req = dev->current_request;
     if (req && req->rq_status == RQ_INACTIVE && req->cmd == -1) {
 	dev->current_request = req->next;
@@ -191,9 +191,9 @@ static struct request *__get_request_wait(int n, kdev_t dev)
 	unplug_device(MAJOR(dev) + blk_dev);	/* Device can't be plugged */
 #endif
 	current->state = TASK_UNINTERRUPTIBLE;
-	icli();
+	i_cli();
 	req = get_request(n, dev);
-	isti();
+	i_sti();
 	if (req)
 	    break;
 	schedule();
@@ -209,9 +209,9 @@ static struct request *get_request_wait(int n, kdev_t dev)
 {
     register struct request *req;
 
-    icli();
+    i_cli();
     req = get_request(n, dev);
-    isti();
+    i_sti();
     if (req)
 	return req;
     return __get_request_wait(n, dev);
@@ -230,12 +230,12 @@ static void add_request(struct blk_dev_struct *dev,
     register struct request *tmp;
     short disk_index;
 
-    icli();
+    i_cli();
     mark_buffer_clean(req->rq_bh);
     if (!(tmp = dev->current_request)) {
 	dev->current_request = req;
 	(dev->request_fn) ();
-	isti();
+	i_sti();
 	return;
     }
     for (; tmp->rq_next; tmp = tmp->rq_next) {
@@ -246,7 +246,7 @@ static void add_request(struct blk_dev_struct *dev,
     req->rq_next = tmp->rq_next;
     tmp->rq_next = req;
 
-    isti();
+    i_sti();
 }
 
 static void make_request(int major, int rw, register struct buffer_head *bh)
@@ -317,7 +317,7 @@ static void make_request(int major, int rw, register struct buffer_head *bh)
 
     /* find an unused request. */
     req = get_request(max_req, bh->b_dev);
-    isti();
+    i_sti();
 
     /* if no request available: if rw_ahead, forget it;
      * otherwise try again blocking..

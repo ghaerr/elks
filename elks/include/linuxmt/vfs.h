@@ -1,5 +1,5 @@
-#ifndef __LINUX_VFS_H__
-#define __LINUX_VFS_H__
+#ifndef LX86_LINUXMT_VFS_H
+#define LX86_LINUXMT_VFS_H
 
 #include <arch/statfs.h>
 

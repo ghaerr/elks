@@ -1,10 +1,21 @@
-#ifndef __ARCH_8086_SYSTEM_H__
-#define __ARCH_8086_SYSTEM_H__
+#ifndef LX86_ARCH_SYSTEM_H
+#define LX86_ARCH_SYSTEM_H
 
-void _FUNCTION(setup_arch, ());
-void _FUNCTION(arch_setuptasks, ());
-void _FUNCTION(save_regs, (__ptask task));
-void _FUNCTION(load_regs, (__ptask task));
+#include <linuxmt/types.h>
+
+#ifdef __LINT__
+#define __ptasks int
+#endif
+
+void arch_setuptasks(void);
+void load_regs(__ptasks task);
+void save_regs(__ptasks task);
+void setup_arch(void);
 
 extern int arch_cpu;
+
+#ifdef __LINT__
+#undef __ptasks
+#endif
+
 #endif

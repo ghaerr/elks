@@ -1,8 +1,7 @@
-#ifndef __LINUX_PIPE_FS_I_H__
-#define __LINUX_PIPE_FS_I_H__
+#ifndef LX86_LINUXMT_PIPE_FS_I_H
+#define LX86_LINUXMT_PIPE_FS_I_H
 
-struct pipe_inode_info
-{
+struct pipe_inode_info {
     struct wait_queue wait;
     char *base;
     unsigned int start;

@@ -24,12 +24,12 @@ static struct nano_proto_data *nano_data_alloc(void)
 {
     register struct nano_proto_data *upd;
 
-    icli();
+    i_cli();
     for (upd = nano_datas; upd <= last_nano_data; ++upd) {
 	if (!upd->npd_refcnt) {
 	    /* nano domain socket not yet in itialised - bgm */
 	    upd->npd_refcnt = -1;
-	    isti();
+	    i_sti();
 	    upd->npd_socket = NULL;
 	    upd->npd_sockaddr_len = 0;
 	    upd->npd_sockaddr_na.sun_family = 0;
@@ -43,7 +43,7 @@ static struct nano_proto_data *nano_data_alloc(void)
 	    return upd;
 	}
     }
-    isti();
+    i_sti();
     return NULL;
 }
 

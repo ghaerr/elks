@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_FS_H__
-#define __LINUXMT_FS_H__
+#ifndef LX86_LINUXMT_FS_H
+#define LX86_LINUXMT_FS_H
 
 /*
  * This file has definitions for some important file table
@@ -17,11 +17,9 @@
 
 #include <arch/bitops.h>
 
-/*
- * It's silly to have NR_OPEN bigger than NR_FILE, but I'll fix
+/* It's silly to have NR_OPEN bigger than NR_FILE, but I'll fix
  * that later. Anyway, now the file code is no longer dependent
  * on bitmaps in unsigned longs, but uses the new fd_set structure..
- *
  */
 
 #ifdef CONFIG_SHORT_FILES
@@ -44,17 +42,17 @@
 #define NR_BUFFERS NR_MAPBUFS
 #endif
 
-#define MAY_EXEC 1
-#define MAY_WRITE 2
-#define MAY_READ 4
+#define MAY_EXEC	1
+#define MAY_WRITE	2
+#define MAY_READ	4
 
 #define FMODE_READ	1
 #define FMODE_WRITE	2
 
-#define READ 0
-#define WRITE 1
-#define READA 2			/* read-ahead - don't pause */
-#define WRITEA 3		/* "write-ahead" - silly, but somewhat useful */
+#define READ	0
+#define WRITE	1
+#define READA	2		/* read-ahead - don't pause */
+#define WRITEA	3		/* "write-ahead" - silly, but somewhat useful */
 
 #define SEL_IN		1
 #define SEL_OUT		2
@@ -458,4 +456,5 @@ extern int block_write();
 #define block_write NULL
 #endif
 #endif
+
 #endif

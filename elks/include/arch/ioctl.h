@@ -1,5 +1,5 @@
-#ifndef __ARCH_8086_IOCTL_H__
-#define __ARCH_8086_IOCTL_H__
+#ifndef LX86_ARCH_IOCTL_H
+#define LX86_ARCH_IOCTL_H
 
 /*
  *	Nothing here yet.

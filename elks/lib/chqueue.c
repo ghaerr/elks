@@ -2,21 +2,17 @@
  * (C) 1997 Chad Page 
  *
  * (Based on the original character queue code by Alan Cox(?))
- */
-
-/* Array queue handling for new tty drivers... rather generic routine, and
+ *
+ * Array queue handling for new tty drivers... rather generic routine, and
  * flexible to boot.  The character queue uses a data structure which 
  * references a seperately set up char array, removing hard limits from the
  * queing code
- */
-
-/* I can't help but think there's a race condition somewhere in here :)
- */
-
-/* 'warming' will be done by the tty driver itself when it copies data over
- */
-
-/* 16 July 2001 : A divide is quite expensive on an 8086 so I changed the 
+ *
+ * I can't help but think there's a race condition somewhere in here :)
+ *
+ * 'warming' will be done by the tty driver itself when it copies data over
+ *
+ * 16 July 2001 : A divide is quite expensive on an 8086 so I changed the 
  * code to use logical addition and not modulo. The only drawback is we
  * have to use only power of two buffer sizes. (Harry Kalogirou)
  */
@@ -27,22 +23,18 @@
 #include <linuxmt/debug.h>
 #include <linuxmt/types.h>
 
-int chq_init(register struct ch_queue *q, unsigned char *buf, int size)
-{
-    printd_chq3("CHQ: chq_init(%d, %d, %d)\n", q, buf, size);
-    q->buf = buf;
-    q->len = q->tail = 0;
-    q->size = size;
-}
-
-#if 0
-
 int chq_erase(register struct ch_queue *q)
 {
     q->len = q->tail = 0;
 }
 
-#endif
+int chq_init(register struct ch_queue *q, unsigned char *buf, int size)
+{
+    printd_chq3("CHQ: chq_init(%d, %d, %d)\n", q, buf, size);
+    q->buf = buf;
+    q->size = size;
+    chq_erase(q);
+}
 
 /* Adds character c, waiting if wait=1 (or otherwise throws out new char) */
 int chq_addch(register struct ch_queue *q, unsigned char c, int wait)
@@ -71,8 +63,6 @@ int chq_addch(register struct ch_queue *q, unsigned char c, int wait)
     return 0;
 }
 
-#if 0
-
 /* Deletes last character in list */
 int chq_delch(register struct ch_queue *q)
 {
@@ -82,8 +72,6 @@ int chq_delch(register struct ch_queue *q)
     } else
 	return 0;
 }
-
-#endif
 
 /* Gets tail character, waiting for one if wait != 0 */
 int chq_getch(register struct ch_queue *q, register unsigned char *c, int wait)

@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_TERMIOS_H__
-#define __LINUXMT_TERMIOS_H__
+#ifndef LX86_LINUXMT_TERMIOS_H
+#define LX86_LINUXMT_TERMIOS_H
 
 #include <linuxmt/types.h>
 
@@ -70,8 +70,7 @@
 #define TIOCPKT_NOSTOP		16
 #define TIOCPKT_DOSTOP		32
 
-struct winsize
-{
+struct winsize {
     unsigned short ws_row;
     unsigned short ws_col;
     unsigned short ws_xpixel;
@@ -79,8 +78,7 @@ struct winsize
 };
 
 #define NCC 8
-struct termio
-{
+struct termio {
     unsigned short c_iflag;	/* input mode flags */
     unsigned short c_oflag;	/* output mode flags */
     unsigned short c_cflag;	/* control mode flags */
@@ -90,8 +88,7 @@ struct termio
 };
 
 #define NCCS 19
-struct termios
-{
+struct termios {
     tcflag_t c_iflag;		/* input mode flags */
     tcflag_t c_oflag;		/* output mode flags */
     tcflag_t c_cflag;		/* control mode flags */
@@ -248,7 +245,6 @@ struct termios
 
 /* ioctl (fd, TIOCSERGETLSR, &result) where result may be as below */
 #define TIOCSER_TEMT    0x01	/* Transmitter physically empty */
-
 
 /* tcflow() and TCXONC use these */
 #define	TCOOFF		0

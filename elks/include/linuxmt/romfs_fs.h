@@ -1,5 +1,5 @@
-#ifndef __LINUX_ROMFS_FS_H__
-#define __LINUX_ROMFS_FS_H__
+#ifndef LX86_LINUXMT_ROMFS_FS_H
+#define LX86_LINUXMT_ROMFS_FS_H
 
 /* The basic structures of the romfs filesystem */
 
@@ -18,8 +18,7 @@
 
 /* On-disk "super block" */
 
-struct romfs_super_block
-{
+struct romfs_super_block {
     __u32 word0;
     __u32 word1;
     __u32 size;
@@ -29,8 +28,7 @@ struct romfs_super_block
 
 /* On disk inode */
 
-struct romfs_inode
-{
+struct romfs_inode {
     __u32 next;			/* low 4 bits see ROMFH_ */
     __u32 spec;
     __u32 size;
@@ -61,4 +59,5 @@ struct romfs_inode
 extern int init_romfs_fs();
 
 #endif
+
 #endif

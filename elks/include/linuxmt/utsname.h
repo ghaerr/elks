@@ -1,8 +1,7 @@
-#ifndef __LINUXMT_UTSNAME_H__
-#define __LINUXMT_UTSNAME_H__
+#ifndef LX86_LINUXMT_UTSNAME_H
+#define LX86_LINUXMT_UTSNAME_H
 
-struct utsname
-{
+struct utsname {
     char sysname[9];
     char nodename[65];
     char release[15];

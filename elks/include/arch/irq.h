@@ -1,7 +1,8 @@
-#ifndef __ARCH_8086_IRQ_H__
-#define __ARCH_8086_IRQ_H__
+#ifndef LX86_ARCH_IRQ_H
+#define LX86_ARCH_IRQ_H
 
 #include <arch/types.h>
+
 #define save_flags(x)	x=__save_flags()
 
 /* Who gets which entry in bh_base. Things which will occur most often
@@ -32,11 +33,6 @@ extern void restore_flags(void);
 extern int request_irq(void);
 extern void free_irq(void);
 
-#if 0
-extern void icli(void);
-extern void isti(void);
-#endif
-
 extern void do_bottom_half(void);
 
 extern int bh_mask_count[16];
@@ -45,11 +41,11 @@ extern unsigned bh_mask;
 extern void (*bh_base[16]) (void);
 
 #ifdef __KERNEL__
-#define icli() asm("cli")
-#define isti() asm("sti")
+#define i_cli() asm("cli")
+#define i_sti() asm("sti")
 #else
-#define icli()
-#define isti()
+#define i_cli()
+#define i_sti()
 #endif
 
 #ifdef ENDIS_BH

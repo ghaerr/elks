@@ -1,5 +1,5 @@
-#ifndef __LINUX_MINIX_H__
-#define __LINUX_MINIX_H__
+#ifndef LX86_LINUXMT_MINIX_H
+#define LX86_LINUXMT_MINIX_H
 
 /*
  *	Minix binary formats
@@ -7,8 +7,7 @@
 
 #define EXEC_HEADER_SIZE	32
 
-struct minix_exec_hdr
-{
+struct minix_exec_hdr {
     unsigned long type;
 #define MINIX_COMBID	0x04100301L
 #define MINIX_SPLITID	0x04200301L
@@ -23,13 +22,11 @@ struct minix_exec_hdr
     unsigned long unused2;
 };
 
-struct minix_supl_hdr
-{
+struct minix_supl_hdr {
     long msh_trsize;		/* text relocation size */
     long msh_drsize;		/* data relocation size */
     long msh_tbase;		/* text relocation base */
     long msh_dbase;		/* data relocation base */
 };
-
 
 #endif
