@@ -24,14 +24,14 @@
 /* #define NO_TRUNCATE */
 
 static int namecompare(len,maxlen,name,buffer)
-int len;
-int maxlen;
+size_t len;
+size_t maxlen;
 char * name;
 register char * buffer;
 {
 	int retval;
 
-	if ((len > maxlen)||(buffer[len] != 0)) 
+	if ((len > maxlen) || ((len < maxlen) && (buffer[len] != 0)))
 		retval = 0;
 	else
 		retval = !fs_memcmp(name, buffer, len);
@@ -49,7 +49,7 @@ register char * buffer;
  * Note2: bh must already be mapped! 
  */
 static int minix_match(len,name,bh,offset,info)
-unsigned int len;
+size_t len;
 char * name;
 struct buffer_head * bh;
 loff_t * offset;
@@ -67,7 +67,7 @@ register struct minix_sb_info * info;
 	if (!len && (de->name[0]=='.') && (de->name[1]=='\0')) {
 		return 1;
 	}
-	retval = namecompare(len,(int)info->s_namelen,name,de->name);
+	retval = namecompare(len,info->s_namelen,name,de->name);
 	return retval;
 }
 
@@ -84,7 +84,7 @@ register struct minix_sb_info * info;
 static struct buffer_head * minix_find_entry(dir,name,namelen,res_dir)
 register struct inode * dir;
 char * name;
-unsigned int namelen;
+size_t namelen;
 struct minix_dir_entry ** res_dir;
 {
 	unsigned short block;
@@ -193,7 +193,7 @@ register struct inode ** result;
 static int minix_add_entry(dir,name,namelen,res_buf,res_dir)
 register struct inode * dir;
 char * name;
-unsigned int namelen;
+size_t namelen;
 struct buffer_head ** res_buf;
 struct minix_dir_entry ** res_dir;
 {
@@ -243,7 +243,7 @@ struct minix_dir_entry ** res_dir;
 			dir->i_dirt = 1;
 		}
 		if (de->inode) {
-			if (namecompare(namelen, (int)info->s_namelen, name, de->name)) {
+			if (namecompare(namelen, info->s_namelen, name, de->name)) {
 				printd_mfs2("MINIXadd_entry: file %t==%s (already exists)\n", name, de->name);
 				unmap_brelse(bh);
 				return -EEXIST;

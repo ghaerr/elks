@@ -83,7 +83,7 @@ struct inode * inode;
 int lookup(dir,name,len,result)
 register struct inode * dir;
 char * name;
-int len;
+size_t len;
 struct inode ** result;
 {
 	register struct inode_operations * iop;
@@ -161,14 +161,15 @@ struct inode ** res_inode;
  
 static int dir_namei(pathname,namelen,name,base,res_inode)
 register char * pathname;
-int * namelen;
+size_t * namelen;
 char ** name;
 struct inode * base;
 struct inode ** res_inode;
 {
 	char c;
 	register char * thisname;
-	int len,error;
+	int error;
+	size_t len;
 	struct inode * inode;
 #if 0
 	printk("namei: entered dir_namei\n");
@@ -221,7 +222,8 @@ int follow_links;
 register struct inode ** res_inode;
 {
 	char * basename;
-	int namelen,error;
+	int error;
+	size_t namelen;
 	struct inode * inode;
 
 	printd_namei("_namei: calling dir_namei\n");
@@ -318,7 +320,8 @@ register struct inode ** res_inode;
 struct inode * base;
 {
 	char * basename;
-	int namelen,error;
+	size_t namelen;
+	int error;
 	struct inode * dir;
 	struct inode * inode;
 	register struct inode_operations * iop;
@@ -446,7 +449,8 @@ int mode;
 dev_t dev;
 {
 	char * basename;
-	int namelen, error;
+	size_t namelen;
+	int error;
 	struct inode * dir;
 	register struct inode * dirp;
 	register struct inode_operations * iop;
@@ -521,7 +525,8 @@ int mode;
 	return -EROFS;
 #else
 	char * basename;
-	int namelen, error;
+	size_t namelen;
+	int error;
 	struct inode * dir;
 	register struct inode * dirp;
 	register struct inode_operations * iop;
@@ -569,7 +574,8 @@ static int do_rmdir(name)
 char * name;
 {
 	char * basename;
-	int namelen, error;
+	size_t namelen;
+	int error;
 	struct inode * dir;
 	register struct inode * dirp;
 	register struct inode_operations * iop;
@@ -616,7 +622,8 @@ static int do_unlink(name)
 char * name;
 {
 	char * basename;
-	int namelen, error;
+	size_t namelen;
+	int error;
 	struct inode * dir;
 	register struct inode * dirp;
 	register struct inode_operations * iop;
@@ -665,7 +672,8 @@ char * newname;
 {
 	struct inode * dir;
 	char * basename;
-	int namelen, error;
+	size_t namelen;
+	int error;
 	register struct inode * dirp;
 	register struct inode_operations * iop;
 
@@ -723,7 +731,8 @@ char * newname;
 {
 	struct inode * dir;
 	char * basename;
-	int namelen, error;
+	size_t namelen;
+	int error;
 	register struct inode * dirp;
 
 	error = dir_namei(newname,&namelen,&basename,NULL,&dir);

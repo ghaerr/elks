@@ -218,7 +218,7 @@ unsigned int *dp;
 int fs_memcmp(p1,p2,len)
 unsigned char *p1;
 register unsigned char *p2;
-int len;
+size_t len;
 {
 	while(len)
 	{
