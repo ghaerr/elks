@@ -80,29 +80,31 @@ static void con_write(register char *buf, int len)
  *	Output a number
  */
 
-char *hex_string = "0123456789ABCDEF"; /* Also used by devices. */
+char *hex_string = "0123456789ABCDEF";		/* Also used by devices. */
 
 static void numout(char *ptr, int len, int base, int useSign)
 {
+    long int vs;
     unsigned long int v;
     register char *bp;
     char buf[16];
 
     bp = buf + 15;
 
-    v = (len == 2)
-	? *((unsigned short *) ptr)
-	: *((unsigned long *) ptr);
-
-    if (useSign && (((long)v) < 0)) {
-	v = -v;
-	*bp = '-';
-	con_write(bp, 1);
-    }
+    if (useSign) {
+	vs = (len == 2) ? *((short *) ptr) : *((long *) ptr);
+	if (vs < 0) {
+	    v = - vs;
+	    *bp = '-';
+	    con_write(bp, 1);
+	} else
+	    v = vs;
+    } else
+	v = (len == 2) ? *((unsigned short *) ptr) : *((unsigned long *) ptr);
 
     *bp = 0;
     do {
-	*--bp = hex_string[(v % base)]; /* Store digit. */
+	*--bp = hex_string[(v % base)]; 	/* Store digit. */
     } while ((v /= base) && (bp > buf));
 
     con_write(bp, buf - bp + sizeof(buf) - 1);
