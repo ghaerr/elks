@@ -37,6 +37,7 @@ Sun Apr 28 22:55:56 BST 2002	Riley Williams <Riley@Williams.Name>
 	* Enabled init_timer() and add_timer() routines. For some reason,
 	  they were #if 0'd out of the source code, but references still
 	  existed in routines that were not so treated.
+	* Detailed location of FIXME comments in `make lint` output.
 
 Sun Apr 28 21:54:19 BST 2002	Riley Williams <Riley@Williams.Name>
 

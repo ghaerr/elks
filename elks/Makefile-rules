@@ -309,6 +309,10 @@ dolint:
 	@for FILE in $${USEME:-*.[ch]} ; do \
 	    if [ -f "$${FILE}" ]; then \
 		echo $(LINT) ... "$${FILE}" ; \
+		if fgrep -q FIXME "$${FILE}" ; then \
+			echo WARNING: "$${FILE}" includes a FIXME comment. ; \
+			sleep 1 ; \
+		fi ; \
 		if fgrep -q '#ifndef S_SPLINT_S' "$${FILE}" ; then \
 			echo WARNING: "$${FILE}" includes disabled section. ; \
 			sleep 1 ; \
