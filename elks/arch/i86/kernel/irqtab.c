@@ -619,6 +619,12 @@ was_trap:
 	pop	ax	! stacked SS
 	pop	cx	! stacked SP
 	mov	bx,_current
+#ifdef CONFIG_SWAP
+	mov ax, 4[bx]	! user ds
+	mov bp, sp		
+	mov 12[bp], ax	! change the es in the stack
+	mov 14[bp], ax	! change the ds in the stack
+#endif
 	mov	[bx],sp
 	j	noschedpop
 	

@@ -227,7 +227,7 @@ void schedule(void)
 	int foo = 10;
 
 #if 0
-	printk("Switching to %x\n", next);
+	printk("Switching to %d\n", next->pid);
 #endif
 
 	if (timeout) {
@@ -244,10 +244,10 @@ void schedule(void)
 	    goto scheduling_in_interrupt;
 
 #ifdef CONFIG_SWAP
-		if(do_swapper_run(next) == -1){
-			printk("Can't become runnable\n");
-			return;
-		}
+	if(do_swapper_run(next) == -1){
+		printk("Can't become runnable %d\n", next->pid);
+		panic("");
+	}
 #endif
 
 	previous = current;	/* */

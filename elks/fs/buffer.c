@@ -414,7 +414,7 @@ void map_buffer(register struct buffer_head *bh)
      */
     printd_bufmap2("mapping buffer %d (%d)\n", bh->b_num, bh->b_mapcount);
 
-    if (bh->b_data) {
+    if (bh->b_data || bh->b_seg != get_ds()) {
 #if 0				/* debugging only */
 	if (!bh->b_mapcount) {
 	    printd_bufmap2

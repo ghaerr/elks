@@ -32,6 +32,13 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Wed Apr 24 16:14:33 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Commited a very important chunk I left out with my last
+	  commit, conserning map_buffer() function.
+	* Correct data segment rellocation after a schedule(), called
+	  at the end of an interrupt.
+
 Wed Apr 24 00:14:04 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* ANSI'fied function prototypes in the arch/i86/drivers/block subtree.
