@@ -18,6 +18,9 @@
  * 13-Jan-2002 rhw@MemAlpha.cx (Riley Williams)
  *		- Reformatted source consistently.
  *		- Added -A option: -a excluding . and ..
+ * 28-May-2004 claudio@conectiva.com (Claudio Matsuoka)
+ *		- Fixed sort direction, keeps qsort and strcmp consistent
+ *		- Removed alias to 'dir' (doesn't seem to belong here)
  */
 
 #if !defined(DEBUG)
@@ -71,7 +74,7 @@
 			( (c=name[1]) && (c!='.') ) || (name[2]&&c)
 
 
-static int cols = 0, col = 0, reverse=-1;
+static int cols = 0, col = 0, reverse = 1;
 static char fmt[16] = "%s";
 
 
@@ -81,7 +84,7 @@ static void setfmt();
 int namesort(a, b)
 const char **a, **b;
 {
-    return reverse*strcmp(*a, *b);
+    return reverse * strcmp(*a, *b);
 }
 
 struct Stack
@@ -465,8 +468,6 @@ char **argv;
 /*
  * Set relevant flags for command name
  */
-    if (!strcmp(*argv,"dir"))
-	flags |= LSF_LONG;
 
     while ( --argc && ((cp = * ++argv)[0]=='-') ) {
 	while (*++cp) {
