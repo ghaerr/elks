@@ -13,7 +13,7 @@ BASEDIR 	= ../../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 	= Y
+USEBCC		= Y
 
 CLEANDEP	= 
 
@@ -39,7 +39,8 @@ OBJS  = crt0.o main.o irq.o
 all:	pmode286
 
 pmode286: $(OBJS)
-	$(LD) $(LDFLAGS) -i $(OBJS) ../lib/lib86.a -M -o pmode286 > $(BASEDIR)/pmode286.map
+	$(LD) $(LDFLAGS) -i $(OBJS) ../lib/lib86.a -M -o pmode286 \
+		> $(BASEDIR)/pmode286.map
 
 #########################################################################
 # Standard commands.
