@@ -408,9 +408,10 @@ int KeyboardInit()
  *	with the monstrosity AT keyboards became.
  */
  
-void keyboard_irq(irq,regs)
+void keyboard_irq(irq,regs,dev_id)
 int irq;
 struct pt_regs *regs;
+void *dev_id;
 {
 	int code;
 	int mode;

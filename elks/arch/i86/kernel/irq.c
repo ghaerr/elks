@@ -33,6 +33,7 @@ struct irqaction
 {
 	void (*handler)();
 /*	unsigned long mask; */ /* Mask unused so removed to save space */
+	void *dev_id;
 };
 
 #define IRQF_BAD	1		/* This IRQ is bad if it occurs */
@@ -103,7 +104,7 @@ void *regs;
 	lastirq = i;	
 
 	if (irq->handler != NULL) {
-		irq->handler(i,regs);
+		irq->handler(i,regs,irq->dev_id);
 		lastirq = -1;
 	} else {
 		if(i > 15) {
@@ -173,9 +174,10 @@ void isti()
 #endif
 
 		
-int request_irq(irq, handler)
+int request_irq(irq, handler, dev_id)
 int irq;
 void (*handler);
+void *dev_id;
 {
 	register struct irqaction *action;
 	flag_t flags;
@@ -203,6 +205,7 @@ void (*handler);
 	save_flags(flags);
 	icli();
 	action->handler = handler;
+	action->dev_id = dev_id;
 /*	action->mask = 0; */ /* Mask unused, so removed to save space */
 /*	action->name = devname; */ /* name unsed - ditto */
 	enable_irq(irq);
@@ -235,6 +238,7 @@ unsigned int irq;
 		outb(0xA1,cache_A1);
 	}
 	action->handler = NULL;
+	action->dev_id = NULL;
 	action->flags = 0;
 /*	action->mask = 0; */ /* Mask unused so removed to save space */
 	action->name = NULL;
@@ -306,7 +310,7 @@ void init_IRQ()
 	 *	Set off the initial timer interrupt handler
 	 */
 	 
-	if(request_irq(0, timer_tick))
+	if(request_irq(0, timer_tick,NULL))
 		panic("Unable to get timer");
 
 	/*
@@ -329,7 +333,7 @@ void init_IRQ()
 	 *	Set off the initial keyboard interrupt handler
 	 */
 
-	if (request_irq(1, keyboard_irq)) {
+	if (request_irq(1, keyboard_irq,NULL)) {
 		panic("Unable to get keyboard");
 	}
 
