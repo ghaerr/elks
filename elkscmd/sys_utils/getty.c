@@ -45,6 +45,12 @@
 
 #define INIT_BUG_WORKAROUND	/* Disable when no longer needed */
 
+/* For those requiring a super-small getty, the following define cuts out
+ * all of the extra functionality regarding the /etc/issue code sequences.
+ */
+
+/* #define SUPER_SMALL		/* Disable for super-small binary */
+
 /* For development work, the following two defines are available. The
  * first causes general debugging lines to be displayed, and the latter
  * causes a detailed trace of program execution to be displayed.
@@ -84,10 +90,16 @@
 #define HOSTFILE	"/etc/HOSTNAME"
 #define ISSUE		"/etc/issue"
 
-char	Host[256], Buffer[64];
+char	Buffer[64];
+
+#ifndef SUPER_SMALL
+char	Host[256], *Date = 0, *Time = 0;
+#endif
+
 char	*nargv[3] = {NULL, NULL, NULL};
-char	*Date = 0, *Time = 0;
 int	ch, col = 0, fd;
+
+#ifndef SUPER_SMALL
 
 void host(void) {
     char *ptr;
@@ -111,6 +123,8 @@ void host(void) {
     debug1( "DEBUG: host() = <%s>\n", Host );
 }
 
+#endif
+
 void put(int ch) {
     if (ch == '\n' || ch == '\f')
 	col = 0;
@@ -130,6 +144,8 @@ void state(char *s) {
     trace1("TRACE: state( \"%s\" )\n",s);
     write(1,s,strlen(s));
 }
+
+#ifndef SUPER_SMALL
 
 /*	Before  = "Sun Dec 25 12:34:56 7890"
  *	Columns = "0....:....1....:....2..."
@@ -172,6 +188,8 @@ void when(void) {
     debug2( "DEBUG: when() = <%s> @ <%s>\n", Date, Time );
 }
 
+#endif
+
 void main(int argc, char **argv) {
     char *ptr;
     int n;
@@ -199,9 +217,13 @@ void main(int argc, char **argv) {
 	perror("ERROR");
     } else {
 	trace1("TRACE: File exists: %s\n", ISSUE);
+	put(13);
+#ifdef SUPER_SMALL
+	while ((n=read(fd,Buffer,sizeof(Buffer))) > 0)
+	    write(1,Buffer,n);
+#else
 	when();
 	host();
-	put(13);
 	*Buffer = '\0';
 	while (read(fd,Buffer,1) > 0) {
 	    ch = *Buffer;
@@ -309,6 +331,7 @@ void main(int argc, char **argv) {
 	    }
 	    *Buffer = '\0';
 	}
+#endif
 	close(fd);
     }
     trace1("TRACE: Finished with %s\n", ISSUE);
