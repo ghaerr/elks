@@ -195,7 +195,7 @@ _find_first_zero_bit:
 	jmp __ff_ret
 
 __ff_n1:
-! now we've got an empty bit in [di-2]
+! now we have got an empty bit in [di-2]
 	sub bx,di
 	add bx,#2
 	neg bx
@@ -204,7 +204,7 @@ __ff_n1:
 	shl bx,#1		! bx = offset & ~0xf
 	mov ax,[di-2]
 
-__ff_nx:			! don't need a counter, as ax != -1
+__ff_nx:			! a counter is not needed, as ax != -1
 	test ax,#1
 	jz __ff_done
 	inc bx
