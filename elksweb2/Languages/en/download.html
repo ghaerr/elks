@@ -24,7 +24,6 @@ that have been ported to ELKS.</P>
 </UL>
 
 <H1>CVS (Concurrent Versioning System)</H1>
-
 <P Align=Justify>You can also use CVS to get the latest snapshot of the
 various ELKS parts, either as an <A HRef="http://www.sf.net/">ELKS
 SourceForge Developer</A> (with a username listed on the <A
@@ -32,11 +31,9 @@ HRef="http://sf.net/projects/elks/">ELKS SourceForge Project Page</A>),
 or as a <B>Non-Developer Interested Party</B>.</P>
 
 <H2>ELKS SourceForge Developers</H2>
-
 <P Align=Justify>This project's SourceForge CVS repository can be checked
-out by ELKS developers through user (ext) CVS with the following
-instructions, replacing ${USER} with your assigned SourceForge username:</P>
-
+out by ELKS developers through user CVS with the following instructions,
+replacing ${USER} with your assigned SourceForge username:</P>
 <P><UL><Pre>
 CVS_RSH=`which ssh`
 CVSROOT=:ext:${USER}@cvs.elks.sf.net:/cvsroot/elks
@@ -45,13 +42,11 @@ cvs -d $CVSROOT get <I>modulename</I>
 </Pre></UL></P>
 
 <H2>Non-Developer Interested Parties</H2>
-
 <P Align=Justify>This project's SourceForge CVS repository can be checked
-out by non-developers through anonymous (pserver) CVS with the following
+out by non-developers through anonymous pserver CVS with the following
 instruction set. The <I>module</I> you wish to check out must be specified
 as the <I>modulename</I>. When prompted for a password for
 <I>anonymous</I> simply press the &lt;Enter&gt; key.</P>
-
 <P><UL><Pre>
 CVS_RSH=`which ssh`
 CVSROOT=:pserver:anonymous@cvs.elks.sf.net:/cvsroot/elks
