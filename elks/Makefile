@@ -1,49 +1,70 @@
-# Didn't check this file for CC and CFLAGS
-VERSION = 0
-PATCHLEVEL = 0
-SUBLEVEL = 85
-# If we're not a pre, comment the following line
-PRE = 2
+VERSION 	= 0
+PATCHLEVEL	= 0
+SUBLEVEL	= 85
+PRE		= 2		# If we're not a pre, comment this line
+
+#########################################################################
+# Variables derived directly from the ELKS version number
+
+DISTDIR 	= elks-$(VSN)
+ifne (X$PRE, X)
+VSN		= $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)-pre$(PRE)
+else
+VSN		= $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
+endif
 
 .EXPORT_ALL_VARIABLES:
 
-# linuxMT root directory
-# and backup directory
-#
-MT_DIR     = $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
-TOPDIR     = $(MT_DIR)
+#########################################################################
+# Relative path to ELKS base directory
 
-ifdef PRE
-VSN        = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)-pre$(PRE)
-else
-VSN        = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
-endif
+ELKSDIR 	= .
 
-DISTDIR    = elks-$(VSN)
+#########################################################################
+# linuxMT root and backup directories
+
+MT_DIR		= $(shell cd "$ELKSDIR" ; \
+			  if [ "$$PWD" != "" ]; then echo $$PWD; \
+						else pwd; fi)
+TOPDIR		= $(MT_DIR)
 
 TARGET_NB_IMAGE = /tftpboot/elksy/nbImage
 
-ARCH = i86
-ARCH_DIR = arch/$(ARCH)
+#########################################################################
+# Specify architecture
 
-CC	=bcc
-# This is where I broke your work :-) MG
-CFLBASE	=-D__KERNEL__ -O
-CFLAGS	=$(CFLBASE) -i
-CPP	=$(CC) -I$(MT_DIR)/include -E -D__KERNEL__
-CC_PROTO = gcc -I$(MT_DIR)/include -M -D__KERNEL__
+ARCH		= i86
+ARCH_DIR	= arch/$(ARCH)
 
-LINT	=lclint
+#########################################################################
+# Specify standard programs and flags
+
+AS		= as86
+
+CC		= bcc
+CFLBASE 	= -D__KERNEL__ -I $(TOPDIR)/include -O
+CFLAGS		= $(CFLBASE) -i
+
+CPP		= $(CC) -I$(TOPDIR)/include -E -D__KERNEL__
+CC_PROTO	= gcc -I$(MT_DIR)/include -M -D__KERNEL__
+
+LD		= ld86
+
+LINT		= lclint
+
+#########################################################################
+# Determine current shell
+
 CONFIG_SHELL := $(shell if [ -x "$$bash" ]; then echo $$bash; \
           else if [ -x /bin/bash ]; then echo /bin/bash; \
           else echo sh; fi ; fi)
 
-#
-# ROOT_DEV specifies the default root-device when making the image.
-# This does not yet work under ELKS. See include/linuxmt/config.h to
-# change the root device.
-#
-ROOT_DEV=FLOPPY
+#########################################################################
+# ROOT_DEV specifies the default root-device when making the image. This
+# does not yet work under ELKS. See include/linuxmt/config.h to change
+# the root device.
+
+ROOT_DEV	= FLOPPY
 
 #########################################################################
 # general construction rules
@@ -64,10 +85,10 @@ ROOT_DEV=FLOPPY
 
 all:	do-it-all
 
-#
+#########################################################################
 # Make "config" the default target if there is no configuration file or
-# "depend" the target if there is no top-level dependency information.
-#
+# "dep" the target if there is no top-level dependency information.
+
 ifeq (.config,$(wildcard .config))
 include .config
 #ifeq (.depend,$(wildcard .depend))
@@ -82,12 +103,14 @@ CONFIGURATION = config
 do-it-all:      config
 endif
 
-#
+#########################################################################
 # What do we need this time?
-#      
+
 ARCHIVES=kernel/kernel.a fs/fs.a lib/lib.a net/net.a
 
+#########################################################################
 # Check what filesystems to include
+
 ifeq ($(CONFIG_MINIX_FS), y)
 	ARCHIVES := $(ARCHIVES) fs/minix/minixfs.a
 endif
@@ -100,11 +123,17 @@ ifeq ($(CONFIG_ELKSFS_FS), y)
 	ARCHIVES := $(ARCHIVES) fs/elksfs/elksfs.a
 endif
 
+#########################################################################
+# Specify how to make the images
+
 Image: $(ARCHIVES) init/main.o
 	(cd $(ARCH_DIR); make Image)
 
 nbImage: $(ARCHIVES) init/main.o
 	(cd $(ARCH_DIR); make nbImage)
+
+#########################################################################
+# Specify how to install the images
 
 nb_install: nbImage
 	cp -f $(ARCH_DIR)/boot/nbImage $(TARGET_NB_IMAGE)
@@ -124,8 +153,8 @@ setup: $(ARCH_DIR)/boot/setup
 	(cd $(ARCH_DIR); make setup)
 
 #########################################################################
-# library rules
-# (all theses are built even if they aren't used)
+# library rules (all are built even if they aren't used)
+
 .PHONY: fs/fs.a fs/minix/minixfs.a fs/romfs/romfs.a fs/elksfs/elksfs.a \
         kernel/kernel.a lib/lib.a net/net.a
 
@@ -157,7 +186,7 @@ lint:
 	$(LINT) -I$(MT_DIR)/include -c init/main.c
 
 #########################################################################
-# misc
+# miscellaneous rules
 
 clean:
 	rm -f *~ Boot.map Setup.map System.map tmp_make core 
@@ -223,7 +252,9 @@ dep:
 	(cd lib; make dep)
 	(cd net; make dep)
 
+#########################################################################
 # Configuration stuff
+
 menuconfig:  
 	make -C scripts/lxdialog all
 	$(CONFIG_SHELL) scripts/Menuconfig arch/$(ARCH)/config.in
@@ -244,4 +275,5 @@ include/linuxmt/compile.h:
 	@mv -f .ver $@
 	sync
 
+#########################################################################
 ### Dependencies:

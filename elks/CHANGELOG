@@ -7,6 +7,11 @@ be longer than the lines of dashes.
 Al
 -------------------------------------------------------------------------------
 
+Sun Aug 26 21:22:43 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Rationalised elks/Makefile somewhat, ready for standardising the
+	  Makefile rules throughout the ELKS source tree.
+
 Sun Aug 26 10:54:19 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Clarified what is being incremented and decremented in sleepwake.c
