@@ -148,12 +148,12 @@ CONFIG_HW_NO_FLOPPY_DRIVE
   Saying yes will compile the code without floppy support.
 
 Get extended memory size via BIOS-Int 15
-CONFIG_MEM_EXTENDED_MEMORY
+CONFIG_XMS_INT15
   Saying yes will allow ELKS to get the extended memory size 
   by calling BIOS Int 15 (function 88).
 
 Extended memory size in kB
-CONFIG_MEM_EXTENDED_MEMORY_SIZE
+CONFIG_XMS_SIZE
   Specify howmany K of extended memory is in the target system.
 
 Get fontinfo via CRT-BIOS (40h:85h)

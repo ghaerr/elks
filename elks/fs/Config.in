@@ -1,23 +1,25 @@
 #
-# Filesystem configuration
+# File system configuration
 #
 mainmenu_option next_comment
-comment 'Filesystems'
+comment 'File systems'
 
-bool 'Minix fs support' CONFIG_MINIX_FS
-bool 'ROMFS fs support' CONFIG_ROMFS_FS
-bool 'elksfs fs support' CONFIG_ELKSFS_FS
+bool 'Elks file system' 		CONFIG_ELKSFS_FS		n
+bool 'Minix file system'		CONFIG_MINIX_FS 		y
+bool 'ROM file system'  		CONFIG_ROMFS_FS 		n
 
 comment 'General filesystem settings'
 
-bool 'Full VFS support' CONFIG_FULL_VFS
-bool 'Extra external buffer cache' CONFIG_FS_EXTERNAL_BUFFER
-bool 'Pipe support' CONFIG_PIPE
+bool 'Full VFS support' 		CONFIG_FULL_VFS 		n
+bool 'Extra external buffer cache'	CONFIG_FS_EXTERNAL_BUFFER	y
+bool 'Pipe support'			CONFIG_PIPE			y
 
 comment 'Executable file formats'
 
-bool 'Minix file format' CONFIG_EXEC_MINIX
-bool 'MSDOS (EXE) file format' CONFIG_EXEC_MSDOS
+bool 'Minix file format'		CONFIG_EXEC_MINIX		y
+if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+    bool 'MSDOS (EXE) file format'	CONFIG_EXEC_MSDOS		n
+fi
 
 endmenu
 

@@ -200,8 +200,8 @@ start_os:
 
 ! Get memory size (extended mem, kB)
 
-#ifdef CONFIG_MEM_EXTENDED_MEMORY_SIZE
-	mov	[2],#CONFIG_MEM_EXTENDED_MEMORY_SIZE
+#ifdef CONFIG_XMS_SIZE
+	mov	[2],#CONFIG_XMS_SIZE
 #else
 	mov	ah,#0x88
 	int	0x15

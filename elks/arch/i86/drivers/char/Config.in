@@ -3,60 +3,58 @@
 #
 
 mainmenu_option next_comment
-comment 'Character device drivers'
+    comment 'Character device drivers'
 
-comment 'Select a console driver'
-if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
-    choice 'Select console driver'                  \
-	"Direct         CONFIG_CONSOLE_DIRECT   \
-	 BIOS           CONFIG_CONSOLE_BIOS     \
-	 Serial         CONFIG_CONSOLE_SERIAL"  Direct
-    if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
-	bool 'Direct console VT52 emulation' CONFIG_DCON_VT52
-	if [ "$CONFIG_DCON_VT52" = "y" ]; then
-		bool 'Direct console ANSI emulation' CONFIG_DCON_ANSI
+    if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
+	choice 'Select console driver'			\
+		"Direct         CONFIG_CONSOLE_DIRECT	\
+		 BIOS           CONFIG_CONSOLE_BIOS	\
+		 Serial         CONFIG_CONSOLE_SERIAL"		Direct
+	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
+	    bool 'Direct console VT52 emulation'	CONFIG_DCON_VT52    y
+	    if [ "$CONFIG_DCON_VT52" = "y" ]; then
+		bool 'Direct console ANSI emulation'	CONFIG_DCON_ANSI    y
 		if [ "$CONFIG_DCON_ANSI" = "y" ]; then
-			bool 'ANSI Colourized printk' CONFIG_DCON_ANSI_PRINTK
+		    bool 'ANSI Colourized printk'	CONFIG_DCON_ANSI_PRINTK n
 		fi
+	    fi
+	    source arch/i86/drivers/char/KeyMaps/Config.in
 	fi
-	source arch/i86/drivers/char/KeyMaps/Config.in
-    fi
-    if [ "$CONFIG_CONSOLE_BIOS" = "y" ]; then
-	bool 'BIOS console VT52 emulation' CONFIG_BIOS_VT52
-    fi
-    if [ "$CONFIG_CONSOLE_SERIAL" = "y" ]; then
-	define_bool CONFIG_CHAR_DEV_RS y
-    fi
-else
-	choice 'Select console driver'                  \
-		"Direct         CONFIG_SIBO_CONSOLE_DIRECT   \
-		 Serial         CONFIG_CONSOLE_SERIAL"  CONFIG_SIBO_CONSOLE_DIRECT
+	if [ "$CONFIG_CONSOLE_BIOS" = "y" ]; then
+	    bool 'BIOS console VT52 emulation'		CONFIG_BIOS_VT52    y
+	fi
+    else
+	choice 'Select console driver'			\
+		"Direct     CONFIG_SIBO_CONSOLE_DIRECT	\
+		 Serial     CONFIG_CONSOLE_SERIAL"	Direct
 	if [ "$CONFIG_SIBO_CONSOLE_DIRECT" = "y" ]; then
-		bool 'Direct console virtual consoles' CONFIG_SIBO_VIRTUAL_CONSOLE
-		bool 'Direct console serial echo' CONFIG_SIBO_CONSOLE_ECHO
-		choice 'Keyboard support' \
-			"3c 	CONFIG_SIBO_3C_KEYMAP\
-			 3mx	CONFIG_SIBO_3MX_KEYMAP\
-			 3a     CONFIG_SIBO_DEFAULT_KEYMAP" 3a
+	    bool '  Support virtual consoles'	CONFIG_SIBO_VIRTUAL_CONSOLE  n
+	    bool '  Direct console serial echo'	CONFIG_SIBO_CONSOLE_ECHO     n
+	    choice 'Keyboard support'			\
+		"3c 		CONFIG_SIBO_3C_KEYMAP	\
+		 3mx		CONFIG_SIBO_3MX_KEYMAP	\
+		 3a		CONFIG_SIBO_DEFAULT_KEYMAP"	3a
 	fi
-fi
-comment 'Other character devices'
-if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
-	if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
-		bool 'Serial device driver' CONFIG_CHAR_DEV_RS
-	fi
-	bool 'Parallel device driver' CONFIG_CHAR_DEV_LP
-else
-	if [ "$CONFIG_CONSOLE_ECHO" = "n" ]; then
-		if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
-			bool 'Serial device driver' CONFIG_CHAR_SIBO_SERIAL
-		fi
-	fi
-fi
-bool 'Memory character devices /dev/zero /dev/null etc.' CONFIG_CHAR_DEV_MEM
-bool 'Pseudo tty device driver' CONFIG_PSEUDO_TTY
-if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
-	bool 'Meta device driver' CONFIG_DEV_META
-fi
+    fi
 
+    comment 'Other character devices'
+    if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
+	if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
+	    bool 'Serial device driver'		CONFIG_CHAR_DEV_RS	  y
+	else
+	    define_bool CONFIG_CHAR_DEV_RS y
+	fi
+	bool 'Parallel device driver'		CONFIG_CHAR_DEV_LP	  y
+    else
+	if [ "$CONFIG_CONSOLE_ECHO" = "n" ]; then
+	    if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
+		bool 'Serial device driver'	CONFIG_CHAR_SIBO_SERIAL   n
+	    fi
+	fi
+    fi
+    bool 'Memory character devices'		CONFIG_CHAR_DEV_MEM	  y
+    bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y
+    if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+	bool 'Meta device driver'		CONFIG_DEV_META		  n
+    fi
 endmenu

@@ -2,44 +2,40 @@
 # Block device driver configuration
 #
 mainmenu_option next_comment
-comment 'Block device drivers'
+    comment 'Block device drivers'
 
-if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
-
-	bool 'BIOS block device support' CONFIG_BLK_DEV_BIOS
+    if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
+	bool 'BIOS block device support'	CONFIG_BLK_DEV_BIOS	y
 	if [ "$CONFIG_BLK_DEV_BIOS" = "y" ]; then
-	  bool '  BIOS floppy drive support' CONFIG_BLK_DEV_BFD
-	  bool '  BIOS hard drive support' CONFIG_BLK_DEV_BHD
+	    bool '  BIOS floppy drive support'	CONFIG_BLK_DEV_BFD	y
+	    bool '  BIOS hard drive support'	CONFIG_BLK_DEV_BHD	y
 	fi
 	if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
-		bool 'Normal floppy disk support' CONFIG_BLK_DEV_FD
-		bool 'Normal IDE hardisk support' CONFIG_BLK_DEV_HD
+	    bool 'Normal floppy disk support'	CONFIG_BLK_DEV_FD	n
+	    bool 'Normal IDE hardisk support'	CONFIG_BLK_DEV_HD	n
 	fi
 	if [ "$CONFIG_NOT_YET" = "y" ]; then
-		bool 'Old XT hardisk support' CONFIG_BLK_DEV_XD
+	    bool 'Old XT hardisk support'	CONFIG_BLK_DEV_XD	n
 	fi
 	if [ "$CONFIG_BLK_DEV_FD" = "y" ]; then
-		define_bool CONFIG_DMA y
+	    define_bool CONFIG_DMA y
 	else
-		define_bool CONFIG_DMA n
+	    define_bool CONFIG_DMA n
 	fi
-
 	if [ "$CONFIG_BLK_DEV_BHD" = "y" ]; then
-		define_bool CONFIG_GENDISK y
+	    define_bool CONFIG_GENDISK y
+	else
+	    define_bool CONFIG_GENDISK n
 	fi
-
-else
-
-	bool 'SSD disk support' CONFIG_BLK_DEV_SSD
-	bool 'Internal disk support' CONFIG_BLK_DEV_ID
+    else
+	bool 'SSD disk support'			CONFIG_BLK_DEV_SSD	n
+	bool 'Internal disk support'		CONFIG_BLK_DEV_ID	n
 	define_bool CONFIG_BLK_DEV_BIOS n
+    fi
 
-fi
+    comment 'Additional block devices'
+    bool 'RAM disk support'			CONFIG_BLK_DEV_RAM	n
 
-comment 'Additional block devices'
-bool 'RAM disk support' CONFIG_BLK_DEV_RAM
-
-comment 'Block device options'
-bool 'Character access to block devices' CONFIG_BLK_DEV_CHAR
-
+    comment 'Block device options'
+    bool 'Character access to block devices'	CONFIG_BLK_DEV_CHAR	y
 endmenu

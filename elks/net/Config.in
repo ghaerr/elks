@@ -2,16 +2,20 @@
 # Networking configuration
 #
 
-bool 'Socket support' CONFIG_SOCKET
+mainmenu_option next_comment
+    comment 'Network support'
 
-if [ "$CONFIG_SOCKET" = "y" ]; then
-    bool '  NANO sockets'				CONFIG_NANO
-    bool '  TCP/IP sockets'				CONFIG_INET
-    if [ "$CONFIG_INET" = "y" ]; then
-	bool '    Enable status report' 		CONFIG_INET_STATUS
+    bool 'Socket support'			CONFIG_SOCKET		y
+
+    if [ "$CONFIG_SOCKET" = "y" ]; then
+	bool '  NANO sockets'			CONFIG_NANO		n
+	bool '  TCP/IP sockets'			CONFIG_INET		y
+	if [ "$CONFIG_INET" = "y" ]; then
+	    bool '    Enable status report'	CONFIG_INET_STATUS	y
+	fi
+	bool '  UNIX sockets'			CONFIG_UNIX		n
+
+	comment '  Advanced socket options'
+	bool '  Client socket support only'	CONFIG_SOCK_CLIENTONLY	n
     fi
-    bool '  UNIX sockets'				CONFIG_UNIX
-
-    comment '  Advanced socket options'
-    bool '  Client socket support only'			CONFIG_SOCK_CLIENTONLY
-fi
+endmenu

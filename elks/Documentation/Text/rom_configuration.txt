@@ -57,8 +57,8 @@ OS/loader function.
    Init floppy. The kernel code is in ROM, so you doesn't need this.
    
 
-'Get extended memory size via BIOS-Int 15'  CONFIG_MEM_EXTENDED_MEMORY  
-'Extended memory size in kB'                CONFIG_MEM_EXTENDED_MEMORY_SIZE
+'Get extended memory size via BIOS-Int 15'  CONFIG_XMS_INT15  
+'Extended memory size in kB'                CONFIG_XMS_SIZE
 -----------------------------------------------------------
 
   The BIOS function give the size of extended memory (above 1 MB)

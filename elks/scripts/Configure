@@ -200,11 +200,15 @@ function define_tristate () {
 
 # bool processes a boolean argument
 #
-#	bool question define
+#	bool question define [default]
 
 function bool () {
     old=$(eval echo "\${$2}")
-    def=${old:-'n'}
+    if [ $# -eq 3 ]; then
+	def=${old:-$3}
+    else
+	def=${old:-n}
+    fi
     case "$def" in
 	"y" | "m")	defprompt="Y/n/?"
 			def="y"

@@ -1,16 +1,16 @@
 #
-# For a description of the syntax of this configuration file,
-# see the Configure script.
+# See the Configure script for a description of the syntax of this file.
 #
+
 mainmenu_name "Linux ELKS Kernel Configuration"
 comment 'Just accept the defaults unless you know what you are doing'
 
 mainmenu_option next_comment
     comment 'Advanced - for Developers and Hackers only'
 
-    bool 'Prompt for development and/or incomplete code/drivers'	CONFIG_EXPERIMENTAL
-    bool 'Obsolete drivers'						CONFIG_OBSOLETE
-    bool 'Unimplemented drivers'					CONFIG_NOT_YET
+    bool 'Include development code/drivers'	CONFIG_EXPERIMENTAL	n
+    bool 'Include obsolete drivers'		CONFIG_OBSOLETE		n
+    bool 'Include unimplemented drivers'	CONFIG_NOT_YET		n
 endmenu
 
 mainmenu_option next_comment
@@ -18,7 +18,7 @@ mainmenu_option next_comment
 
     choice 'Select system architecture'		\
 	"Auto		CONFIG_ARCH_AUTO	\
-	 IBM-PC		CONFIG_ARCH_IBMPC	\
+	 IBM-PC 	CONFIG_ARCH_IBMPC	\
 	 SIBO		CONFIG_ARCH_SIBO"		Auto
 
     if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
@@ -28,7 +28,7 @@ mainmenu_option next_comment
 	     PC/AT	CONFIG_PC_AT		\
 	     MCA	CONFIG_PC_MCA"			Auto
 
-	bool 'Build kernel as ROM-bootable'			CONFIG_ROMCODE
+	bool 'Build kernel as ROM-bootable'		CONFIG_ROMCODE	n
     else
 	define_bool CONFIG_ROMCODE n
     fi
@@ -42,16 +42,8 @@ if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 	    "TrueClone	CONFIG_IBMPC_CLONE	\
 	     Compaq	CONFIG_IBMPC_COMPAQ"		TrueClone
 	if [ "$CONFIG_IBMPC_COMPAQ" = "y" ]; then
-	    bool 'Switch Compaq DeskPro to fast mode'		CONFIG_COMPAQ_FAST
+	    bool 'Switch Compaq DeskPro to fast mode'	CONFIG_COMPAQ_FAST  n
 	fi
-    endmenu
-fi
-
-if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
-    mainmenu_option next_comment
-	comment "Swap support"
-
-	bool 'Enable swap support'	CONFIG_SWAP
     endmenu
 fi
 
@@ -65,15 +57,31 @@ mainmenu_option next_comment
 	     80286	CONFIG_CPU_80286	\
 	     80386	CONFIG_CPU_80386	\
 	     80486+	CONFIG_CPU_80486"		8086
+	if [ "$CONFIG_CPU_8086" != "y" ]; then
+	    if [ "$CONFIG_CPU_80186" != "y" ]; then
+		define_bool CONFIG_CPU_SUB_80286 n
+		define_bool CONFIG_CPU_80286_PLUS y
+		if [ "$CONFIG_CPU_80286" != "y" ]; then
+		    define_bool CONFIG_CPU_80386_PLUS y
+		else
+		    define_bool CONFIG_CPU_80386_PLUS n
+		fi
+	    fi
+	fi
+	if [ "$CONFIG_CPU_SUB_80286" != "n" ]; then
+	    define_bool CONFIG_CPU_SUB_80286 y
+	    define_bool CONFIG_CPU_80286_PLUS n
+	    define_bool CONFIG_CPU_80386_PLUS n
+	fi
     fi
 
     if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 	mainmenu_option next_comment
 	    comment 'System Hardware'
 
-	    bool 'System has no maths coprocessor'		CONFIG_HW_NO_FPU y
-	    bool 'System has no PS/2 pointing device'		CONFIG_HW_NO_PS2_MOUSE y
-	    bool 'System has no VGA adapter'			CONFIG_HW_NO_VGA n
+	    bool 'System has no maths coprocessor'	CONFIG_HW_NO_FPU       n
+	    bool 'System has no PS/2 pointing device'	CONFIG_HW_NO_PS2_MOUSE n
+	    bool 'System has no VGA adapter'		CONFIG_HW_NO_VGA       n
 	endmenu
     fi
 
@@ -81,8 +89,8 @@ mainmenu_option next_comment
 	mainmenu_option next_comment
 	    comment 'Block Devices'
 
-	    bool 'System has no floppy drive'			CONFIG_HW_NO_FLOPPY_DRIVE n
-	    bool 'System has no hard drive'			CONFIG_HW_NO_HARD_DRIVE y
+	    bool 'System has no floppy drive'	CONFIG_HW_NO_FLOPPY_DRIVE   n
+	    bool 'System has no hard drive'	CONFIG_HW_NO_HARD_DRIVE     n
 	endmenu
 #    fi
 
@@ -96,13 +104,40 @@ mainmenu_option next_comment
 
     if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 	mainmenu_option next_comment
+	    comment 'Memory Configuration'
+
+	    int 'Base memory size (64k pages)'  	CONFIG_MEM_PAGES 8 4 10
+	    if [ "$CONFIG_NOT_YET" = "y" ]; then
+		bool 'Expanded (EMS) memory support'	CONFIG_EMS	  n
+	    fi
+	    bool 'Extended (XMS) memory support'	CONFIG_XMS	  n
+	    if [ "$CONFIG_XMS" = "y" ]; then
+		bool '  Use interrupt 15 for XMS size'	CONFIG_XMS_INT15  n
+		if [ "$CONFIG_XMS_INT15" != "y" ]; then
+		    int '  Extended memory size in kB'	CONFIG_XMS_SIZE   0
+		else
+		    define_int CONFIG_XMS_SIZE 0
+		fi
+	    else
+		define_bool CONFIG_XMS_INT15 n
+		define_int  CONFIG_XMS_SIZE  0
+	    fi
+	endmenu
+    fi
+
+    if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+	mainmenu_option next_comment
+	    comment "Swap support"
+
+	    bool 'Enable swap support'			CONFIG_SWAP	n
+	endmenu
+    fi
+
+    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
+	mainmenu_option next_comment
 	    comment 'BIOS Facilities'
 
-	    bool 'System has no keyboard BIOS support'		CONFIG_HW_NO_KEYBOARD_BIOS y
-	    bool 'Get extended memory size using BIOS Int 15'	CONFIG_MEM_EXTENDED_MEMORY n
-	    if [ "$CONFIG_MEM_EXTENDED_MEMORY" != "y" ]; then
-		int 'Extended memory size in kB'		CONFIG_MEM_EXTENDED_MEMORY_SIZE 0
-	    fi
+	    bool 'System has no keyboard BIOS support'		CONFIG_HW_NO_KEYBOARD_BIOS n
 	    bool 'Get fontinfo via CRT-BIOS (40h:85h)'		CONFIG_HW_VIDEO_HOC y
 	    if [ "$CONFIG_HW_VIDEO_HOC" != "y" ]; then
 		int 'Height of characters in lines'		CONFIG_HW_VIDEO_LINES_PER_CHARACTER 8
@@ -161,33 +196,31 @@ if [ "$CONFIG_ROMCODE" = "y" ]; then
 fi
 
 if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
-	mainmenu_option next_comment
-	    comment '286 Protected Mode Support'
+    mainmenu_option next_comment
+	comment '286 Protected Mode Support'
 
-	    source arch/i86/286pmode/Config.in
-	endmenu
+	bool '286 protected mode support'	CONFIG_286PMODE 	n
+	if [ "$CONFIG_286PMODE" = "y" ]; then
+	    bool 'Support 16M+ on 386+' 	CONFIG_386RAM		n
+	fi
+    endmenu
 fi
 
 mainmenu_option next_comment
     comment 'Driver Support'
 
-    source arch/i86/drivers/char/Config.in
     source arch/i86/drivers/block/Config.in
+    source arch/i86/drivers/char/Config.in
     source fs/Config.in
-endmenu
-
-mainmenu_option next_comment
-    comment 'Network Support'
-
     source net/Config.in
 endmenu
 
 mainmenu_option next_comment
     comment 'Kernel hacking'
 
-    bool 'Include kernel version system call'		CONFIG_SYS_VERSION
-    bool 'Optimise for size rather than speed'		CONFIG_OPT_SMALL
-    bool 'System Trace' 				CONFIG_STRACE
+    bool 'Include kernel version system call'	CONFIG_SYS_VERSION	n
+    bool 'Optimise for size rather than speed'	CONFIG_OPT_SMALL	n
+    bool 'System Trace' 			CONFIG_STRACE		n
 endmenu
 
 mainmenu_option next_comment
