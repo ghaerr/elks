@@ -101,10 +101,12 @@ void rd_init(void)
     printk("rd driver Copyright (C) 1997 Alistair Riddoch\n");
     if ((i = register_blkdev(MAJOR_NR, DEVICE_NAME, &rd_fops)) == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
+
 #if 0
 	blksize_size[MAJOR_NR] = 1024;
 	read_ahead[MAJOR_NR] = 2;
 #endif
+
 	rd_initialised = 1;
     } else {
 	printk("rd: unable to register\n");
@@ -142,6 +144,7 @@ static int rd_release(struct inode *inode, struct file *filp)
 int find_free_seg(void)
 {
     unsigned int i;
+
     for (i = 0; i < MAX_ENTRIES; i++) {
 	debug2("find_free_seg(): rd_segment[%d].seg_size = %d\n",
 	       i, rd_segment[i].seg_size);
@@ -273,7 +276,6 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
 	    return 0;
 	} else
 	    return -EINVAL;
-	break;
     }
     return -EINVAL;
 }
@@ -281,9 +283,6 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
 static void do_rd_request(void)
 {
     register char *buff;
-#if 0
-    unsigned long count;
-#endif
     rd_sector_t start;		/* absolute offset from start of device */
     seg_t segnum;		/* segment index; segment = rd_segment[segnum].segment */
     segext_t offset;		/* relative offset (from start of segment) */
