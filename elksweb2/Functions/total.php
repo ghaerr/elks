@@ -93,7 +93,7 @@
 		     "<a href=\"index.php?lang=$lang&+item=".str_replace(" ","",$data[6])."\">$data[6]</a> | ".
 		     "<a href=\"index.php?lang=$lang&+item=".str_replace(" ","",$data[7])."\">$data[7]</a> | ".
 			 "<a href=\"index.php?lang=$lang&+item=".str_replace(" ","",$data[8])."\">$data[8]</a>".
-		     "<hr width=\"90%\"></center></p></div>";
+		     "</p><hr width=\"90%\"></center></div>";
 		return $out;
 	}
 
