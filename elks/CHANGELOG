@@ -1,24 +1,36 @@
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 This file is used to record changes made to the CVS database. Please add to
 the top of this file before committing any changes. Please use the header
-format provided for each entry.
+format provided for each entry, noting that the text on each line should not
+be longer than the lines of dashes.
 
 Al
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-Wed Aug 22 23:25:57 GMT 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+Thu Aug 23 23:43:28 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Fixed printout alignment error in arch/i86/kernel/printreg.c and
+	  offered apologies to HarKal for the syntax error fixed below.
+	* Reformatted CHANGELOG back to 80 columns.
+	* Made `make dist` use the correct directory for pre-versions, and
+	  simplified the creation of include/linuxmt/version.h in the
+	  process.
+
+Wed Aug 22 23:25:57 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
 	* Fixed systax error in arch/i86/kernel/printreg.c
 
-Wed Aug 22 21:35:29 GMT 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+Wed Aug 22 21:35:29 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
-	* Added the needed functionality to enable processes to get info and 
-	  config the network. Look at the nettools directory in elkscmd.
+	* Added the needed functionality to enable processes to get info
+	  and config the network. Look at the nettools directory in
+	  elkscmd.
 
-Tue Aug 21 18:50:53 GMT 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+Tue Aug 21 18:50:53 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
-	* Changed in scripts/Menuconfig and scripts/Configure a "linux" leftover
-	  to "linuxmt" that caused configuration header file not to be writen. 
+	* Changed in scripts/Menuconfig and scripts/Configure a "linux"
+	  leftover to "linuxmt" that caused configuration header file not
+	  to be writen.
 	  
 Tue Aug 21 18:09:08 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
@@ -921,5 +933,5 @@ Wed Sep 16 20:20 CET 1998   Simon Weijgers  <mbit@mbit.doa.org>
 	  infinite loop would occur when faulty ansi escape sequences
 	  were fed to the kernel.
 
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 END OF CHANGELOG

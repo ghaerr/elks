@@ -3,7 +3,7 @@ VERSION = 0
 PATCHLEVEL = 0
 SUBLEVEL = 85
 # If we're not a pre, comment the following line
-PRE = "2"
+PRE = 2
 
 .EXPORT_ALL_VARIABLES:
 
@@ -12,9 +12,16 @@ PRE = "2"
 #
 MT_DIR     = $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
 TOPDIR     = $(MT_DIR)
-DISTDIR    = elks-$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
 
-TARGET_NB_IMAGE=/tftpboot/elksy/nbImage
+ifdef PRE
+VSN        = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)-pre$(PRE)
+else
+VSN        = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
+endif
+
+DISTDIR    = elks-$(VSN)
+
+TARGET_NB_IMAGE = /tftpboot/elksy/nbImage
 
 ARCH = i86
 ARCH_DIR = arch/$(ARCH)
@@ -226,13 +233,8 @@ config:
 
 
 include/linuxmt/version.h: ./Makefile
-ifdef PRE
-	@echo \#define UTS_RELEASE \"$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)-pre$(PRE)\" > .ver
-	@echo \#define ELKS_VERSION_CODE `expr $(VERSION) \\* 65536 \\* 8 + $(PATCHLEVEL) \\* 256 \\* 8 + $(SUBLEVEL) \\* 8 + $(PRE) ` >> .ver
-else
-	@echo \#define UTS_RELEASE \"$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)\" > .ver
-	@echo \#define ELKS_VERSION_CODE `expr $(VERSION) \\* 65536 \\* 8 + $(PATCHLEVEL) \\* 256 \\* 8 + $(SUBLEVEL) \\* 8  ` >> .ver
-endif
+	@echo \#define UTS_RELEASE \"$(VSN)\" > .ver
+	@echo \#define ELKS_VERSION_CODE `expr $(PRE) + $(SUBLEVEL) \\* 8 + $(PATCHLEVEL) \\* 256 \\* 8 + $(VERSION) \\* 65536 \\* 8` >> .ver
 	sync
 	@mv -f .ver $@
 	sync

@@ -7,7 +7,7 @@
 void print_regs2(ax, bx, cx, dx, di, si, cs, ds, es, ss, bp)
 int ax, bx, cx, dx, di, si, cs, ds, es, ss, bp;
 {
-	printk(	"AX=%x BX=%x CX=%x DX=%x DI=%x SI=%x\n CS=%x DS=%x ES=%x SS=%x BP=%x\n",
+	printk(	"AX=%x BX=%x CX=%x DX=%x DI=%x SI=%x\nCS=%x DS=%x ES=%x SS=%x BP=%x\n",
 		ax, bx, cx, dx, di, si, cs, ds, es, ss, bp);
 }
 
