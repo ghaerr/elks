@@ -64,9 +64,12 @@
 
 #ifdef CONFIG_BLK_DEV_BIOS
 
-static int bioshd_ioctl();
-static int bioshd_open();
-static void bioshd_release();
+static int bioshd_ioctl(struct inode *inode, struct file *file,
+			unsigned int cmd, unsigned int arg);
+
+static int bioshd_open(struct inode *inode, struct file *filp);
+
+static void bioshd_release(struct inode *, struct file *);
 
 static struct file_operations bioshd_fops = {
     NULL,			/* lseek - default */
@@ -89,6 +92,7 @@ static struct wait_queue busy_wait;
 #endif
 
 static struct wait_queue dma_wait;
+
 static int dma_avail = 1;
 
 static int bioshd_initialized = 0;
@@ -97,7 +101,8 @@ static int bioshd_initialized = 0;
 static int force_bioshd;
 #endif
 
-static int revalidate_hddisk();
+static int revalidate_hddisk(int dev, int maxusage);
+
 static struct drive_infot {
     int cylinders;
     int sectors;
@@ -126,6 +131,7 @@ static char busy[4] = { 0, };
 #endif
 
 static int access_count[4] = { 0, };
+
 static unsigned char hd_drive_map[4] = {
     0x80, 0x81,			/* hda, hdb */
     0x00, 0x01			/* fd0, fd1 */
@@ -133,7 +139,7 @@ static unsigned char hd_drive_map[4] = {
 
 static int bioshd_sizes[4 << 6] = { 0, };
 
-static void bioshd_geninit();
+static void bioshd_geninit(void);
 
 static struct gendisk bioshd_gendisk = {
     MAJOR_NR,			/* Major number */
@@ -178,10 +184,6 @@ int bioshd_gethdinfo(void)
     }
     return ndrives;
 }
-
-#endif
-
-#ifdef CONFIG_BLK_DEV_BFD
 
 int bioshd_getfdinfo(void)
 {
