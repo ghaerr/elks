@@ -1,7 +1,7 @@
 # Didn't check this file for CC and CFLAGS
 VERSION = 0
 PATCHLEVEL = 0
-SUBLEVEL = 76
+SUBLEVEL = 77
 # If we're not a pre, comment the following line
 # PRE = "2"
 
@@ -16,12 +16,6 @@ TOPDIR     = $(MT_DIR)
 ARCH = i86
 ARCH_DIR = arch/$(ARCH)
 
-AS86	=as86 -0
-LD86	=ld86 -0
-
-AS	=as
-LD	=ld86
-LDFLAGS	=-0 -i
 CC	=bcc
 # This is where I broke your work :-) MG
 CFLBASE	=-D__KERNEL__ -O
@@ -81,8 +75,7 @@ endif
 #
 # What do we need this time?
 #      
-ARCHIVES=kernel/kernel.a fs/fs.a lib/lib.a net/net.a $(ARCH_DIR)/kernel/akernel.a $(ARCH_DIR)/lib/lib86.a $(ARCH_DIR)/mm/mm.a
-DRIVERS =$(ARCH_DIR)/drivers/char/chr_drv.a $(ARCH_DIR)/drivers/block/blk_drv.a
+ARCHIVES=kernel/kernel.a fs/fs.a lib/lib.a net/net.a
 
 # Check what filesystems to include
 ifeq ($(CONFIG_MINIX_FS), y)
@@ -97,50 +90,20 @@ ifeq ($(CONFIG_ELKSFS_FS), y)
 	ARCHIVES := $(ARCHIVES) fs/elksfs/elksfs.a
 endif
 
-ifeq ($(CONFIG_286PMODE), y)
-Image: $(ARCH_DIR)/boot/bootsect $(ARCH_DIR)/boot/setup $(ARCH_DIR)/tools/system $(ARCH_DIR)/tools/build $(ARCH_DIR)/286pmode/pmode286
-	$(ARCH_DIR)/tools/build $(ARCH_DIR)/boot/bootsect $(ARCH_DIR)/boot/setup $(ARCH_DIR)/286pmode/pmode286 $(ARCH_DIR)/tools/system $(ROOT_DEV) > Image
-	sync
-else
-Image: $(ARCH_DIR)/boot/bootsect $(ARCH_DIR)/boot/setup $(ARCH_DIR)/tools/system $(ARCH_DIR)/tools/build 
-	$(ARCH_DIR)/tools/build $(ARCH_DIR)/boot/bootsect $(ARCH_DIR)/boot/setup $(ARCH_DIR)/tools/system $(ROOT_DEV) > Image
-	sync
-endif
+Image: $(ARCHIVES) init/main.o
+	(cd $(ARCH_DIR); make Image)
 
 boot: Image
-	dd if=/dev/zero of=boot bs=1024 count=360
-	dd if=Image of=boot bs=1024 conv=notrunc
-	sync
+	(cd $(ARCH_DIR); make boot)
 
 disk: Image
-	dd bs=8192 if=Image of=/dev/fd0
+	(cd $(ARCH_DIR); make disk)
 
 #########################################################################
 # library rules
-.PHONY: $(ARCH_DIR)/kernel/akernel.a $(ARCH_DIR)/lib/lib86.a \
-        $(ARCH_DIR)/mm/mm.a $(ARCH_DIR)/drivers/char/chr_drv.a \
-        $(ARCH_DIR)/drivers/block/blk_drv.a $(ARCH_DIR)/286pmode/pmode286 \
-        fs/fs.a fs/minix/minixfs.a fs/romfs/romfs.a fs/elksfs/elksfs.a \
+# (all theses are built even if they aren't used)
+.PHONY: fs/fs.a fs/minix/minixfs.a fs/romfs/romfs.a fs/elksfs/elksfs.a \
         kernel/kernel.a lib/lib.a net/net.a
-
-
-$(ARCH_DIR)/kernel/akernel.a:
-	(cd $(ARCH_DIR)/kernel; make)
-
-$(ARCH_DIR)/lib/lib86.a:
-	(cd $(ARCH_DIR)/lib; make)
-
-$(ARCH_DIR)/mm/mm.a:
-	(cd $(ARCH_DIR)/mm; make)
-
-$(ARCH_DIR)/drivers/char/chr_drv.a:
-	(cd $(ARCH_DIR)/drivers/char; make)
-
-$(ARCH_DIR)/drivers/block/blk_drv.a:
-	(cd $(ARCH_DIR)/drivers/block; make)
-
-$(ARCH_DIR)/286pmode/pmode286:
-	(cd $(ARCH_DIR)/286pmode; make)
 
 fs/fs.a:
 	(cd fs; make)
@@ -170,55 +133,12 @@ lint:
 	$(LINT) -I$(MT_DIR)/include -c init/main.c
 
 #########################################################################
-# arch tools
-
-$(ARCH_DIR)/boot/setup: $(ARCH_DIR)/boot/setup.S
-	gcc -E -traditional -I$(MT_DIR)/include/ -o $(ARCH_DIR)/boot/setup.s $(ARCH_DIR)/boot/setup.S
-	$(AS86) -o $(ARCH_DIR)/boot/setup.o $(ARCH_DIR)/boot/setup.s
-	$(LD86) -s -o $(ARCH_DIR)/boot/setup -M $(ARCH_DIR)/boot/setup.o \
-	> Setup.map
-
-$(ARCH_DIR)/boot/bootsect:	$(ARCH_DIR)/boot/bootsect.S
-	gcc -E -traditional -I$(MT_DIR)/include/ -o $(ARCH_DIR)/boot/bootsect.s $(ARCH_DIR)/boot/bootsect.S
-	$(AS86) -0 -o $(ARCH_DIR)/boot/bootsect.o $(ARCH_DIR)/boot/bootsect.s
-	$(LD86) -0 -s -o $(ARCH_DIR)/boot/bootsect -M \
-	$(ARCH_DIR)/boot/bootsect.o > Boot.map
-
-$(ARCH_DIR)/boot/crt1.o: $(ARCH_DIR)/boot/crt1.c
-
-$(ARCH_DIR)/boot/crt0.o: $(ARCH_DIR)/boot/crt0.s
-	$(AS86) -0 -o $(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt0.s
-
-$(ARCH_DIR)/tools/build: $(ARCH_DIR)/tools/build.c
-	gcc -I $(TOPDIR)/include -o $(ARCH_DIR)/tools/build $(ARCH_DIR)/tools/build.c
-
-$(ARCH_DIR)/tools/system: $(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt1.o init/main.o \
-		$(ARCHIVES) $(DRIVERS) $(MATH) $(LIBS)
-	$(LD) $(LDFLAGS) $(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt1.o init/main.o \
-		$(ARCHIVES) \
-		$(DRIVERS) \
-		$(MATH) \
-		$(LIBS) \
-		-t -M -o $(ARCH_DIR)/tools/system > System.map
-
-
-#########################################################################
 # misc
 
 clean:
-	rm -f *~ Image Boot.map Setup.map System.map tmp_make core 
-	rm -f $(ARCH_DIR)/boot/bootsect $(ARCH_DIR)/boot/setup \
-		  $(ARCH_DIR)/boot/bootsect.s $(ARCH_DIR)/boot/setup.s
-	rm -f $(ARCH_DIR)/boot/*~ $(ARCH_DIR)/boot/*.o
-	rm -f $(ARCH_DIR)/tools/system $(ARCH_DIR)/tools/build 
-	rm -f $(ARCH_DIR)/tools/*~ $(ARCH_DIR)/tools/*.o
+	rm -f *~ Boot.map Setup.map System.map tmp_make core 
 	rm -f init/*~ init/*.o 
-	(cd $(ARCH_DIR)/kernel; make clean)
-	(cd $(ARCH_DIR)/lib; make clean)
-	(cd $(ARCH_DIR)/mm; make clean)
-	(cd $(ARCH_DIR)/drivers/block; make clean)
-	(cd $(ARCH_DIR)/drivers/char; make clean)
-	(cd $(ARCH_DIR)/286pmode; make clean)
+	(cd $(ARCH_DIR); make clean)
 	(cd fs;make clean)
 	(cd fs/minix;make clean)
 	(cd fs/romfs;make clean)
@@ -242,12 +162,7 @@ dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in init/*.c;do echo -n "init/";$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
-	(cd $(ARCH_DIR)/kernel; make dep)
-	(cd $(ARCH_DIR)/lib; make dep)
-	(cd $(ARCH_DIR)/mm; make dep)
-	(cd $(ARCH_DIR)/drivers/block; make dep)
-	(cd $(ARCH_DIR)/drivers/char; make dep)
-	(cd $(ARCH_DIR)/286pmode; make dep)
+	(cd $(ARCH_DIR); make dep)
 	(cd fs; make dep)
 	(cd fs/minix; make dep)
 	(cd fs/romfs; make dep)
