@@ -1,0 +1,10 @@
+Plans for development of the ANSI video driver
+Copyright (C) 2001, Memory Alpha Systems,
+Released under the GNU General Public Licence, version 2 only.
+
+===============================================================================
+
+At the moment, there is a VT52 driver included in the kernel. I plan to
+start by abstracting this out into a separate usermode driver that talks
+to the kernel to perform the required functions, and also to register
+itself as an available video driver.

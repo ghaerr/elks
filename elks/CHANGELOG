@@ -6,6 +6,14 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Tue Aug 21 11:33:28 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Created separate video directory for standalone video drivers.
+	* Moved current ANSI video driver into video directory.
+	* Created new VT52 directory to move existing kernel VT52 driver
+	  into. I plan to get this working in usermode first, to help me
+	  to learn how to do such with the current kernel.
+
 Tue Aug 21 10:30:24 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Second draft of ANSI driver.

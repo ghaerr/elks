@@ -1,0 +1,587 @@
+<HTML>
+<Head>
+
+<Title>VT-100 Control Sequences</Title>
+
+</Head>
+<Body BGColor=White Text=Black Link=Blue VLink=Magenta ALink=Red>
+
+<H1 Align=Center>VT-100 Control Sequences</H1>
+
+<H2 Align=Center>Taken from the "Digital VT100 User Guide</H2>
+
+<P Align=Justify>The following notes, relating to the VT100 control
+sequences, are taken from the <I>Programming</I> section of the official
+<I>Digital VT100 User Guide</I>.</P>
+
+<H3>Control Characters</H3>
+
+<P Align=Justify>Control characters have values of 000 octal to 037 octal,
+and 177 octal. The control characters recognised by the VT100 are as
+follows, with all other control codes causing no action to be taken:</P>
+
+<Center>
+
+<Table Border=1 Width=75%>
+
+<TR>
+<TH Width=16%>Control<BR>Character</TH>
+<TH Width=7%>Octal<BR>Code</TH>
+<TH Width=7%>Hex<BR>Code</TH>
+<TH Width=70%>Action Taken</TH>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="NUL">NUL</TD>
+<TD Align=Center>000</TD>
+<TD Align=Center>00</TD>
+<TD><P Align=Justify>Ignored on input (not stored in buffer; see full
+duplex protocol)</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="ENQ">ENQ</TD>
+<TD Align=Center>005</TD>
+<TD Align=Center>05</TD>
+<TD><P Align=Justify>Transmit answerback message</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="BEL">BEL</TD>
+<TD Align=Center>007</TD>
+<TD Align=Center>07</TD>
+<TD><P Align=Justify>Sound bell tone from keyboard</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="BS">BS</TD>
+<TD Align=Center>010</TD>
+<TD Align=Center>08</TD>
+<TD><P Align=Justify>Move the cursor to the left one character position,
+unless it is at the left margin, in which case no action occurs</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="HT">HT (TAB)</TD>
+<TD Align=Center>011</TD>
+<TD Align=Center>09</TD>
+<TD><P Align=Justify>Move the cursor to the next tab stop, or to the right
+margin if no further tab stops are present on the line</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="LF">LF</TD>
+<TD Align=Center>012</TD>
+<TD Align=Center>0A</TD>
+<TD><P Align=Justify>This code causes a line feed or a new line operation
+(See new line mode)</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="VT">VT</TD>
+<TD Align=Center>013</TD>
+<TD Align=Center>0B</TD>
+<TD><P Align=Justify>Interpreted as <A HRef="#LF">LF</A></P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="FF">FF</TD>
+<TD Align=Center>014</TD>
+<TD Align=Center>0C</TD>
+<TD><P Align=Justify>Interpreted as <A HRef="#LF">LF</A></P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="CR">CR</TD>
+<TD Align=Center>015</TD>
+<TD Align=Center>0D</TD>
+<TD><P Align=Justify>Move cursor to left margin on the current
+line</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="SO">SO</TD>
+<TD Align=Center>016</TD>
+<TD Align=Center>0E</TD>
+<TD><P Align=Justify>Invoke G1 character set, as designated by <A
+HRef="#SCS">SCS</A> control sequence</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="SI">SI</TD>
+<TD Align=Center>017</TD>
+<TD Align=Center>0F</TD>
+<TD><P Align=Justify>Invoke G0 character set, as designated by <A
+Href="#ESC">ESC</A> control sequence</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="XON">XON</TD>
+<TD Align=Center>021</TD>
+<TD Align=Center>11</TD>
+<TD><P Align=Justify>Causes terminal to resume transmission</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="XOFF">XOFF</TD>
+<TD Align=Center>022</TD>
+<TD Align=Center>12</TD>
+<TD><P Align=Justify>Causes terminal to stop transmission of all codes
+except <A HRef="#XOFF">XOFF</A> and <A HRef="#XON">XON</A></P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="CAN">CAN</TD>
+<TD Align=Center>030</TD>
+<TD Align=Center>18</TD>
+<TD><P Align=Justify>If sent during a control sequence, the sequence is
+immediately terminated and not executed. It also causes the error
+character to be displayed</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="SUB">SUB</TD>
+<TD Align=Center>032</TD>
+<TD Align=Center>1A</TD>
+<TD><P Align=Justify>Interpreted as <A HRef="#CAN">CAN</A></P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="ESC">ESC</TD>
+<TD Align=Center>033</TD>
+<TD Align=Center>1B</TD>
+<TD><P Align=Justify>Aborts any control sequence in progress, and
+introduces a control sequence</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="DEL">DEL</TD>
+<TD Align=Center>177</TD>
+<TD Align=Center>7F</TD>
+<TD><P Align=Justify>Ignored on input, not stored in input buffer</P></TD>
+</TR>
+
+</Table>
+
+</Center>
+
+<P Align=Justify>Control character codes (codes 0 octal to 37 octal
+inclusive) are specifically excluded from the control sequence syntax, but
+may be embedded within a control sequence. Embedded control characters are
+executed as soon as they are encountered by the VT100. The processing of
+the control sequence then continues with the next character received. The
+exceptions are:</P>
+
+<OL>
+
+<LI><P Align=Justify>If the character <B>ESC</B> occurs, the current
+control sequence is aborted, and a new one commences beginning with the
+<B>ESC</B> just received.</P>
+
+<LI><P Align=Justify>If the character <B>CAN</B> or <B>SUB</B> occurs, the
+current control sequence is aborted.</P>
+
+</OL>
+
+<P Align=Justify>The ability to embed control characters allows the
+synchronisation characters <B>XON</B> and <B>XOFF</B> to be interpreted
+properly without affecting the control sequence.</P>
+
+<P Align=Justify>The VT100 terminal accepts and produces the following
+sequences, which are a subset of those specified in ANSI X-3.64 1977 and
+ANSI X-3.41 1974:</P>
+
+<Center>
+
+<Table Border=1 Width=90%>
+
+<TR>
+<TH Align=Center Width=5%>Name</TH>
+<TH Align=Center Width=5%>Host to<BR>VT100</TH>
+<TH Align=Center Width=5%>VT100<BR>to Host</TH>
+<TH Align=Center Width=20%>Sequence</TH>
+<TH Align=Center Width=55%>Description</TH>
+<TH Align=Center Width=10%>Default<BR>Value</TH>
+</TR>
+
+<TR>
+<TH Align=Center><A Name="CPR">CPR</TH>
+<TD Align=Center>&nbsp;</TD>
+<TD Align=Center>*</TD>
+<TD Align=Center>ESC [ <I>Pn</I> ; <I>Pn</I> R</TD>
+<TD Align=Center>Cursor Position Report</TD>
+<TD Align=Center>N/A</TD>
+</TR>
+
+<TR>
+<TD ColSpan=6><P Align=Justify>This sequencee reports the active position
+by means of the parameters. This sequence has two parameter values, the
+first specifying the line and the second specifying the column. The
+numbering of lines depends on the state of the Origin Mode (<A
+HRef="#DECOM">DECOM</A>). This control sequence is solicited by a device
+status report (<A HRef="#DSR">DSR</A>) sent from the host.</P></TD>
+</TR>
+
+<TR>
+<TH Align=Center><A Name="CUB">CUB</TH>
+<TD Align=Center>*</TD>
+<TD Align=Center>*</TD>
+<TD Align=Center>ESC [ <I>Pn</I> D</TD>
+<TD Align=Center>Cursor Backward</TD>
+<TD Align=Center>1</TD>
+</TR>
+
+<TR>
+<TD ColSpan=6><P Align=Justify>This sequence moves the active position to
+the left. The distance moved is determined by the parameter. If the
+parameter value is zero or one, the active position is moved one position
+to the left. If the parameter value is <I>n</I> (where <I>n</I> is greater
+than one), the active position is moved <I>n</I> positions to the left. If
+an attempt is made to move the active position to the left of the left
+margin, the active position stops at the left margin.</P></TD>
+</TR>
+
+<TR>
+<TH Align=Center><A Name="CUD">CUD</TH>
+<TD Align=Center>*</TD>
+<TD Align=Center>*</TD>
+<TD Align=Center>ESC [ <I>Pn</I> B</TD>
+<TD Align=Center>Cursor Down</TD>
+<TD Align=Center>1</TD>
+</TR>
+
+<TR>
+<TD ColSpan=6><P Align=Justify>This sequence moves the active position
+downward without altering the column position. The distance moved is
+determined by the parameter. If the parameter value is zero or one, the
+active position is moved one line downward. If the parameter value is
+<I>n</I> (where <I>n</I> is greater than one), the active position is
+moved <I>n</I> lines downward. If an attempt is made to move the active
+position below the bottom margin, the active position stops at the bottom
+margin.</P></TD>
+</TR>
+
+<TR>
+<TH Align=Center><A Name="CUF">CUF</TH>
+<TD Align=Center>*</TD>
+<TD Align=Center>*</TD>
+<TD Align=Center>ESC [ <I>Pn</I> C</TD>
+<TD Align=Center>Cursor Forward</TD>
+<TD Align=Center>1</TD>
+</TR>
+
+<TR>
+<TD ColSpan=6><P Align=Justify>This sequence moves the active position to
+the right. The distance moved is determined by the parameter. If the
+parameter value is zero or one, the active position is moved one position
+to the right. If the parameter value is <I>n</I> (where <I>n</I> is
+greater than one), the active position is moved <I>n</I> positions to the
+right. If an attempt is made to move the active position to the right of
+the right margin, the active position stops at the right margin.</P></TD>
+</TR>
+
+<TR>
+<TH Align=Center><A Name="CUP">CUP</TH>
+<TD Align=Center>*</TD>
+<TD Align=Center>&nbsp;</TD>
+<TD Align=Center>ESC [ <I>Pn</I> ; <I>Pn</I> H</TD>
+<TD Align=Center>Cursor Position</TD>
+<TD Align=Center>1 ; 1</TD>
+</TR>
+
+<TR>
+<TD ColSpan=6><P Align=Justify>This sequence moves the active position to
+the position specified by the parameters. This sequence has two parameter
+values, the first specifying the line position and the second specifying
+the column position. A parameter value of zero or one for the first or
+second parameter moves the active position to the first line or column in
+the display respectively. The default condition with no parameters is
+equivalent to a "cursor to home" action. In the VT100, this sequence
+behaves identically with its format effector counterpart, <A
+HRef="#HVP">HVP</A>.</P></TD>
+</TR>
+
+<TR>
+<TH Align=Center><A Name="CUU">CUU</TH>
+<TD Align=Center>*</TD>
+<TD Align=Center>*</TD>
+<TD Align=Center>ESC [ <I>Pn</I> A</TD>
+<TD Align=Center>Cursor Up</TD>
+<TD Align=Center>1</TD>
+</TR>
+
+<TR>
+<TD ColSpan=6><P Align=Justify>This sequence moves the active position
+upward without altering the column position. The distance moved is
+determined by the parameter. If the parameter value is zero or one, the
+active position is moved one line upward. If the parameter value is
+<I>n</I> (where <I>n</I> is greater than one), the active position is
+moved <I>n</I> lines upward. If an attempt is made to move the active
+position above the top margin, the active position stops at the top
+margin.</P></TD>
+</TR>
+
+<TR>
+<TH Align=Center><A Name="DA">DA</TH>
+<TD Align=Center>*</TD>
+<TD Align=Center>&nbsp;</TD>
+<TD Align=Center>ESC [ <I>Pn</I> c</TD>
+<TD Align=Center>Device Attribute (Request)</TD>
+<TD Align=Center>0</TD>
+</TR>
+
+<TR>
+<TD ColSpan=6><P Align=Justify>The host requests the VT100 to send a
+device attribute (<A HRef="#DA2">DA</A>) control sequence to identify
+itself by sending this sequence with either no parameter or a parameter
+of zero.</P></TD>
+</TR>
+
+<TR>
+<TH Align=Center><A Name="DA2">DA</TH>
+<TD Align=Center>&nbsp;</TD>
+<TD Align=Center>*</TD>
+<TD Align=Center>ESC [ ? 1 ; <I>Pn</I> c</TD>
+<TD Align=Center>Device Attribute (Response)</TD>
+<TD Align=Center>N/A</TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6>
+
+<P Align=Justify>The response to the <A HRef="#DA">DA</A> request is
+generated by the VT100 as a <A HRef="#DA2">DA</A> control sequence with
+the numeric parameter being the arithmetic sum of the following:</P>
+
+<P Align=Justify> &nbsp; 1 &nbsp; Processor Option (STP)</P>
+
+<P Align=Justify> &nbsp; 2 &nbsp; Advanced Video Option (AVO)</P>
+
+<P Align=Justify> &nbsp; 4 &nbsp; Graphics Option (GPO)</P>
+
+<P Align=Justify>If no options are fitted, the value zero is
+returned.</P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center><A Name="DSR">DSR</TH>
+<TD Align=Center>*</TD>
+<TD Align=Center>*</TD>
+<TD Align=Center>ESC [ <I>Ps</I> n</TD>
+<TD Align=Center>Device Status Report</TD>
+<TD Align=Center>0</TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+<TR>
+<TH Align=Center></TH>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+
+<TD ColSpan=6><P Align=Justify></P></TD>
+
+</TR>
+
+</Table>
+
+</Center>
+
+<HR Width=95%>
+
+<P Align=Center>This document last updated on Monday 20th August 2001</P>
+
+</Body>
+</HTML>
