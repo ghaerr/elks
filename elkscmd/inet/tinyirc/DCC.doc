@@ -1,0 +1,158 @@
+From: jnelson@iastate.edu (Jeremy Nelson)
+Newsgroups: alt.irc.ircii
+Subject: Re: Specs for DCC
+Date: 2 Apr 1994 22:50:53 GMT
+
+These are the *original* specifications for dcc.  DCC is inherently a
+feature of ircII, and any implementation had best be able to deal
+with DCC as currently implemented in ircII at this time.
+
+This is over two years old, so it is somewhat out of date, but the
+mechanism for dcc is still pretty much the same, but the implementation
+has evolved over time.
+
+------ snip here -----
+		A description of the DCC protocol
+		=================================
+	By Troy Rollo (troy@plod.cbme.unsw.oz.au)
+
+	(In response for requests for the protocol to be
+	 documented).
+
+	The first comment I should make is that the DCC protocol
+was never designed to be portable to clients other than IRCII.
+As such I take no responsibility for it being difficult to
+implement for other clients.
+
+
+		Why DCC?
+		========
+
+	DCC allows the user to overcome some limitations
+of the IRC server network and to have the ultimate in secure
+chat connections while still in an IRC oriented protocol.
+
+	DCC uses direct TCP connections between the clients
+taking part to carry data. There is no flood control, so
+packets can be sent at full speed, and there is no
+dependance on server links (or load imposed on them). In
+addition, since only the initial handshake for DCC conections
+is passed through the IRC network, it is impossible for
+Operators with cracked servers to spy on DCC messages.
+
+		How?
+		====
+
+	The initial socket for a DCC connection is created
+by the side that initiates (Offers) the connection. This socket
+should be a TCP socket bound to INADDR_ANY, listening for
+connections.
+	The Initiating client, on creating the socket, should
+send its details to the target client using the CTCP command
+DCC. This command takes the form:
+
+	DCC type argument address port
+
+type	- The connection type
+argument - The connectin type dependant argument
+address	- the host address of the initiator as an integer.
+port	- the port or the socket on which the initiator expects
+	  to receive the connection.
+
+The address and port should be sent as ascii representations of the
+decimal integer formed by converting the values to host byte order
+and treating them as an unsigned long and unsigned short respectively.
+
+
+	The following DCC connection types are known to IRCII:
+
+Type	Purpose				Argument
+CHAT	To carry a secure conversation	the string "chat"
+SEND	To send a file to the recipient	the file name
+
+In addition, the following are included in the IRCII DCC command,
+although they do not transmit a DCC request via IRC:
+
+TALK	Establishes a TALK connection
+
+
+		Implementation
+		==============
+
+	The CHAT and SEND connection types should not be
+accepted automatically as this would create the potential for
+terrorism. Instead, they should notify the user that an
+offer has been made, and allow the user to accept it.
+
+	The recipient should have the opportunity to rename
+a file send with the DCC SEND command prior to retrieving
+it.
+
+	The following are the steps which should occur in
+the clients:
+
+Initiator:
+	DCC command issued.
+	Create a socket, bind it to INADDR_ANY, port 0, and
+		make it passive (a listening socket).
+	Send the recipient a DCC request via CTCP supplying
+		the address and port of the socket. (This
+		is ideally taken from the address of the local
+		side of the socket which is connected to a
+		server. This is presumably the interface on
+		the host which is closest to the rest of
+		the net, and results in one less routing hop
+		in the case of gateway nodes).
+	Continue normally until a connection is received.
+
+	On a connection:
+	Accept the connection.
+	Close the original passive socket.
+	Conduct transaction on the new socket.
+
+Acceptor:
+	CTCP DCC request received.
+	Record information on the DCC request and notify the user.
+
+	At this point, the USER should be able to abort (close) the
+	request, or accept it. The request should be accepted with
+	a command specifying the sender, type, and argument, or
+	a subset of these where no ambiguity exists.
+
+	If accepted, create a TCP socket.
+	Connect the new socket to the address and port supplied.
+	Conduct the transaction over the socket.
+
+
+		Type specific details.
+		======================
+
+CHAT	Data sent across a CHAT connection should be sent line-by-line
+	without any prefixes or commands. A CHAT connection ends when
+	one party issues the DCC CLOSE command to their clients, which
+	causes the socket to be closed and the information on the connection
+	to be discarded.
+
+FILE	Data is sent in packets, rather than dumped in a stream manner.
+	This allows the DCC SEND connection to survive where an FTP
+	connection might fail. The size of the packets is up to the
+	client, and may be set by the user. Smaller packets result
+	in a higher probability of survival over bad links.
+	The recipient should acknowledge each packet by transmitting
+	the total number of bytes received as an unsigned, 4 byte
+	integer in network byte order. The sender should not continue
+	to transmit until the recipient has acknowledged all data
+	already transmitted. Additionally, the sender should not
+	close the connection until the last byte has been
+	acknowledged by the recipient.
+
+	Note that it is not possible for the recipient to tell if the
+	entire file has been received - only the sender has that
+	information, although IRCII does not report it. Users generally
+	verify the transfer by checking file sizes.
+
+	Note also that no provision is made for text translation.
+
+	The block size used by IRCII is BIG_BUFFER_SIZE (1024).
+	This should probably be reviewed and reduced.
+

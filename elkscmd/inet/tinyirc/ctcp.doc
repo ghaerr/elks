@@ -1,0 +1,659 @@
+
+From frechett@ucsu.Colorado.EDU Fri Jul 17 15:56:07 1992
+To: hrose@eff.org
+Subject: CTCP stuff..
+Date: Mon, 13 Jul 92 09:48:54 -0600
+From: frechett@ucsu.Colorado.EDU
+X-Mts: smtp
+
+
+------- Forwarded Message
+
+From owner-irc-dev@coke.CS.Berkeley.EDU Tue May 19 20:50:56 1992
+Received: from coke.CS.Berkeley.EDU by ucsu.Colorado.EDU with SMTP id AA10565
+  (5.65c+/IDA-1.4.4/CNS-2.1 for <frechett@ucsu.Colorado.EDU>); Tue, 19 May 1992 11:05:19 -0600
+Received: by coke.CS.Berkeley.EDU (5.65/1.43)
+	id AA04019; Tue, 19 May 92 09:52:06 -0700
+Received: from sunic.sunet.se by coke.CS.Berkeley.EDU (5.65/1.43)
+	id AA04014; Tue, 19 May 92 09:51:38 -0700
+Received: from Minsk.DoCS.UU.SE by sunic.sunet.se (5.65c8/1.25)
+	id AA26625; Tue, 19 May 1992 18:50:59 +0200
+Received: by Minsk.DoCS.UU.SE (Sun-4/630, SunOS 4.1.2)
+ with sendmail 5.61-bind 1.5+ida/ICU/DoCS id AA14442; Tue, 19 May 92 18:50:56 +0200
+Date: Tue, 19 May 92 18:50:56 +0200
+From: Klaus Zeuge  <sojge@Minsk.DoCS.UU.SE>
+Message-Id: <9205191650.AA14442@Minsk.DoCS.UU.SE>
+X-Zippy-Proclaims: I hope I bought the right relish...  zzzzzzzzz...
+X-Dogma: 36 >> 32
+X-Last-Band-Seen: Beagle at Barowiak in Uppsala, Sweden, 920409.
+X-Mini-Review: Pretty nice, FUNNY.
+To: irc-dev@coke.CS.Berkeley.EDU
+Subject: CTCP -- please comment
+
+
+Sometime in the fall last year I started writing on a paper to
+summerize the usage of CTCP (client to client protocoll), quoting etc.
+This is it.
+
+It needs proofreading, and suggestions about what's good and bad. It's
+not complete either.
+
+Maybe it's a start.
+
+- -----------------------------------------------------------------------------
+sojge@docs.uu.se Sun Oct 27 17:27:59 1991			-*-Text-*-
+
+The client-to-client protocol (CTCP) *13*
+
+This client-to-client protocol is meant to be used as a way to
+	1/	in general send structered data (such as graphics,
+		voice and different font information) between users
+		clients, and in a more specific case
+	2/	place a query to a users client and getting an answer.
+
+As of now, only a simple text encryption scheme is implemented in
+category 1, and a few query/reply pairs in category 2. This paper will
+concentrate on the latter category.
+
+*****************************************
+BASIC PROTOCOL BETWEEN CLIENTS AND SERVER
+*****************************************
+
+Characters between client and server are 8 bit bytes (also known as
+octets) and can have nummeric values from octal 0 up to 0377 inclusive
+(0 up to 255 decimal). Some characters are special.
+
+	CHARS	::= '\000' .. '\377' 
+	NUL	::= '\000'
+	NL	::= '\n'
+	CR	::= '\r'
+
+A line sent to a server, or received from a server (here called "low
+level messages") consist or zero or more octets (expcept NUL, NL or
+CR) with either a NL or CR appended.
+
+	L-CHARS	::= '\001' .. '\011' | '\013' | '\014' |
+		    '\016' .. '\377'
+	L-LINE	::= L-CHARS* CR LF
+
+A NUL is never sent over to the server.
+
+*****************
+LOW LEVEL QUOTING
+*****************
+
+As messages to and from servers can't contain NUL, NL and CR, but it
+still might be desirable to send ANY character (in so called "middle
+level messages") between clients, those three characters have to be
+quoted. Therefor a quote character is needed. Of course, the quote
+character itself has to be quoted too.
+
+	M-QUOTE	::= '\020'
+
+(Ie a CNTRL/P).
+
+When sending a middle level message, if finding a character being one
+of NUL, NL, CR or M-QUOTE, that character is replaced by a two
+character sequence according to the following table.
+
+	NUL	--> M-QUOTE '0'
+	NL	--> M-QUOTE 'n'
+	CR	--> M-QUOTE 'r'
+	M-QUOTE	--> M-QUOTE M-QUOTE
+
+When receiving a low level message, and seeing a M-QUOTE, look at the
+next character, and replace those two according to the following table
+to get the corresponding middle level message.
+
+	M-QUOTE '0'	--> NUL
+	M-QUOTE 'n'	--> NL
+	M-QUOTE 'r'	--> CR
+	M-QUOTE M-QUOTE	--> M-QUOTE
+
+If the character following M-QUOTE isn't any of the listed characters,
+that is an error, so drop the M-QUOTE character from the message,
+optionally warning the user about it. Ie, a string 'x' M-QUOTE 'y' 'z'
+>from a server dequotes into 'x 'y' 'z'.
+
+Before low level quoting, a message to the server (and in the opposite
+direction: after low level dequoting, a message from the server) looks
+like
+
+	M-LINE	::= CHARS*
+
+***********
+TAGGED DATA
+***********
+
+To send both extended data and query/reply pairs between clients, an
+extended data format is needed. The extended data are sent in the text
+part of a middle level message (and efter low level quoting of course
+also in the text part of the low level message).
+
+To send extended data inside the text, we need some way to delimit it.
+This is done by starting and ending extended data with a delimiter
+character.
+
+	X-DELIM	::= '\001'
+
+As both the starting and ending delimiter looks the same, every second
+X-DELIM is called the odd, and every second the even delimiter. The
+first one in a message is odd.
+
+When having being quoted (and conversly, before having been dequoted)
+any number of characters of any kind except X-DELIM can be used in the
+extended data, ie inside the X-DELIM pair.
+
+	X-CHR	::= '\000' | '\002' .. '\377'
+
+An extended message is either empty (ie nothing between the odd and
+even delimiter), has one or more non-space characters (ie any
+character but '\040') or has one or more non-space characters followed
+by a space followed by zero or more characters.
+
+	X-N-AS	::= '\000'  | '\002' .. '\037' | '\041' .. '\377'
+	SPC	::= '\040'
+	X-MSG	::= | X-N-AS+ | X-N-AS+ SPC X-CHR*
+
+The first characters up until the first SPC (or if no SPC, all of the
+X-MSG) is called the tag of the extended message. The tag is used to
+know what kind of extended data is used.
+
+The tag can be *any* strings of characters and if the happen to be
+letters, they are case sensitive, so upper and lower case matters.
+
+Extended data is only valid in PRIVMSG and NOTICE commands. If the
+extended data is a reply to a query, it is sent in a NOTICE, else it
+is sent in a PRIVMSG. Both PRIVMSG and NOTICE to a user and to a
+channel may contain extended data.
+
+The text part of a PRIVMSG or NOTICE might contain zero or more
+extended messages, intermixed with zero or more chunks of non-extended
+data.
+
+******************
+CTCP LEVEL QUOTING
+******************
+
+In order to be able to send the delimiter X-DELIM inside an extended
+data message, it has to be quoted. This introduces another quote
+character (which should differ from the low level quote character so
+it won't have to be quoted yet again).
+
+	X-QUOTE	::=	'\134'
+
+(Ie a back slash).
+
+When quoting on the CTCP level, only actual CTCP message (ie extended
+data, queries, replies) are quoted. This enables users to actually
+send X-QUOTE characters at will. The following translations should be
+used
+
+	X-DELIM	--> X-QUOTE 'a'
+	X-QUOTE	--> X-QUOTE X-QUOTE
+
+and when dequoting on the CTCP level, only CTCP messages are dequoted
+whereby the following table is used.
+
+	X-QUOTE 'a'	--> X-DELIM
+	X-QUOTE X-QUOTE	--> X-QUOTE
+
+If a X-QUOTE is seen with another the character following it than the
+ones above, that's an error and the X-QUOTE character should be
+dropped. Ie the CTCP-quoted string 'x' X-QUOTE 'y' 'z' becomes after
+dequoting the three character string 'x' 'y' 'z'.
+
+If a X-DELIM is found outside a CTCP message, the message will contain
+the X-DELIM. (This should only happen with the last X-DELIM when there
+are an odd number of X-DELIM's in a middle level message.
+
+***************
+QUTING EXAMPLES
+***************
+
+There are basically three levels of messages. The highest level (H) is
+the text on the user-to-client level. The middle layer (M) is on the
+level where CTCP quoting has been applied to the H-level message. The
+lowest level (L) is on the client-to-server level, where low level
+quoting has been applied to the M-level message.
+
+The following relations are true, with lowQuote(message) being a
+function doing the low level quoting, lowDequote(message) the low
+level dequoting, ctcpQuote(message) the CTCP level quoting,
+ctcpDequote(message) the CTCP level dequoting, and
+ctcpExtract(message) the removing of all CTCP messages from a message.
+The operator || denotes string concatenation.
+
+	L = lowQuote(M)
+	M = ctcpDequote(L)
+
+	M = ctcpQuote(H)
+	H = ctcpDequote(ctcpExtract(M))
+
+When sending CTCP message imbedded in normal text
+
+	M = ctcpQuote(H1) || '\001' || ctcpQuote(X) || '\001' || ctcpQuote(H2)
+
+Of course, there might be zero or more normal text messages and zero
+or more CTCP messages mixed.
+
+- --- Example 1 -----------------------------------------------------------------
+
+A user (called actor) wanting to send the string
+
+	Hi there!\nHow are you?
+
+to user victim, ie a message where the user has entered an inline
+newline (how this is done, if at all, differs from client to client),
+will result internaly in the client in the command
+
+	PRIVMSG victim :Hi there!\nHow are you? \K?
+
+which will be CTCP quoted into
+
+	PRIVMSG victim :Hi there!\nHow are you? \\K?
+
+which in turn will be low level quoted into
+
+	PRIVMSG victim :Hi there!\020nHow are you? \\K?
+
+and sent to the server after appending a newline at the end.
+
+This will arrive on victim's side as
+
+	:actor PRIVMSG victim :Hi there!\020nHow are you? \\K?
+
+(where the \\K would look similar to OK in SIS D47 et al) which after
+low level dequoting becomes
+
+	:actor PRIVMSG victim :Hi there!\nHow are you? \\K?
+
+and after CTCP dequoting
+
+	:actom PRIVMSG victim :Hi there!\nHow are you? \K?
+
+How this is displayed differs from client to client, but it suggested
+that a line break should occour between the words "there" and "How".
+
+- --- Example 2 -----------------------------------------------------------------
+
+If actor's client wants to send the string "Emacs wins" this might
+become the string "\n\t\big\020\001\000\\:" when being
+SED-encrypted using some key, so the client starts by CTCP-quoting
+this string into the string "\n\t\big\020\\a\000\\\\:" and
+builds the M-level command
+
+	PRIVMSG victim :\001SED \n\t\big\020\\a\000\\\\:\001
+
+which after low level quoting becomes
+
+	PRIVMSG victim :\001SED \020n\t\big\020\020\\a\0200\\\\:\001
+
+which will be sent to the server, with a newline tacked on.
+
+On victim's side, the string
+
+	:actor PRIVMSG victim :\001SED \020n\t\big\020\020\\a\0200\\\\:\001
+
+will be received from the server and low level dequoted into
+
+	:actor PRIVMSG victim :\001SED \n\t\big\020\\a\000\\\\:\001
+
+whereafter the string "\n\t\big\020\\a\000\\\\:" will be extracted
+and first CTCP dequoted into "\n\t\big\020\001\000\\:" and then
+SED decoded getting back "Emacs wins" when using the same key.
+
+- --- Example 3 -----------------------------------------------------------------
+
+If the user actor want's to query the USERINFO of user victim, and is
+in the middle of a conversation, the client may decide to tack on
+USERINFO request on a normal text message. Then the client wants to
+send the textmessage "Say hi to Ron\n\t/actor" and the CTCP request
+"USERINFO" to victim.
+
+	PRIVMSG victim :Say hi to Ron\n\t/actor
+
+plus
+
+	USERINFO
+
+which after CTCP quoting become
+
+	PRIVMSG victim :Say hi to Ron\n\t/actor
+
+plus
+
+	USERINFO
+
+which gets merged into
+
+	PRIVMSG victim :Say hi to Ron\n\t/actor\001USERINFO\001
+
+and after low level quoting
+
+	PRIVMSG victim :Say hi to Ron\020n\t/actor\001USERINFO\001
+
+and sent off to the server.
+
+On victim's side, the message
+
+	:actor PRIVMSG victim :Say hi to Ron\020n\t/actor\001USERINFO\001
+
+arrives. This gets low level dequoted into
+
+	:actor PRIVMSG victim :Say hi to Ron\n\t/actor\001USERINFO\001
+
+and thereafter split up into 
+
+	:actor PRIVMSG victim :Say hi to Ron\n\t/actor
+
+plus
+
+	USERINFO
+
+After CTCP dequoting both, the message
+
+	:actor PRiVMSG victim :Say hi to Ron\n\t/actor
+
+gets displayed, while the CTCP command
+
+	USERINFO
+
+gets replied to. The reply might be
+
+	USERINFO :CS student\n\001test\001
+
+which gets CTCP quoted into
+
+	USERINFO :CS student\n\\atest\\a
+
+and sent in a NOTICE as it is a reply:
+
+	NOTICE actor :\001USERINFO :CS student\n\\atest\\a\001
+
+and low level quoted into
+
+	NOTICE actor :\001USERINFO :CS student\020n\\atest\\a\001
+
+after which is it sent to victim's server.
+
+When arriving on actor's side, the message
+
+	:victim NOTICE actor :\001USERINFO :CS student\020n\\atest\\a\001
+
+gets low level dequoted into
+
+	:victim NOTICE actor :\001USERINFO :CS student\n\\atest\\a\001
+
+At this point, all CTCP replies get extracted, giving 1 CTCP reply and
+no normal NOTICE
+
+	USERINFO :CS student\n\\atest\\a
+
+The remaining reply gets CTCP dequoted into
+
+	USERINFO :CS student\n\001test\001
+
+and presumly displayed to user actor.
+
+*******************
+KNOWN EXTENDED DATA
+*******************
+
+<To be written by msa? Should include something about X-DELIM X-DELIM,
+ie CTCP message with empty tag, should translate into just X-DELIM in
+message.> 
+
+*************************
+KNOWN REQUEST/REPLY PAIRS
+*************************
+
+A request/reply pair is sent between the two clients in two phases.
+The first phase is to send the request. This is done with a "privmsg"
+command (either to a nick or to a channel -- it doesn't matter).
+
+The second phase is to send a reply. This is done with a "notice"
+command.
+
+The known request/reply pairs are for the following commands.
+
+CLIENTINFO	- Dynamic master index of what a client knows
+ERRMSG		- Used when an error needs to be replied with
+FINGER		- Mainly used to get a users idle time
+USERINFO	- A string set by the user (never client coder)
+VERSION		- The version and type of the client
+
+FINGER
+This is used to get some data stored locally at a users system about
+the user and also the idle time of the user. The request is in a
+"privmsg" and looks like
+
+	\001FINGER\001
+
+while the reply is in a "notice" and looks like
+
+	\001FINGER :#\001
+
+where the # denotes contains information about the users real name,
+login name at clientmachine and idle time and is of type X-N-AS.
+
+VERSION
+This is used to get information about the name of the other client and
+the version of it. The request in a "privmsg" is simply
+
+	\001VERSION\001
+
+and the reply
+
+	\001VERSION #:#:#\001
+
+where the first # denotes the name of the client, the second # denotes
+the version of the client, the third # the enviroment the client is
+running in.
+
+Using
+
+	X-N-CLN	::= '\000' .. '\071' | '\073' .. '\377' 
+
+the client name is a string of type X-N-CLN saying things like "Kiwi"
+or "ircII", the version saying things like "5.2" or "2.1.5c", the
+enviroment saying things like "GNU Emacs 18.57.19 under SunOS 4.1.1 on
+Sun SLC" or "Compiled with gcc -ansi under Ultrix 4.0 on VAX-11/730".
+
+
+SOURCE
+This is used to get information about where to get a copy of the
+client. The request in a "privmsg" is simply
+
+	\001SOURCE\001
+
+and the reply is zero or more CTCP replies of the form
+
+	\001SOURCE #:#:#\001
+
+followed by an end marker
+
+	\001SOURCE\001
+
+where the first # is the name of an Internet host where the client can
+be gotten from with anonymous FTP the second # a directory names, and
+the third # a space separated list of files to be gotten from that
+directory.
+
+Using
+
+	X-N-SPC	::= '\000' .. '\037' | '\041' .. '\377' 
+
+the name of the FTP site is to be given by name like "cs.bu.edu" or
+"funic.funet.fi".
+
+The file name field is a directory specification optionally followed
+by one or more file names, delimited by spaces. If only a directory
+name is given, all files in that directory should be copied when
+retrieving the clients source. If some files are given, only those
+files in that directpry should be copied. Note that the spcification
+allows for all characters but space in the names, this includes
+allowing :. Examples are "pub/emacs/irc/" to get all files in
+directory pub/emacs/irc/, the client should be able to first login as
+user "ftp" and the give the command "CD pub/emacs/irc/", followed by
+the command "mget *". (It of course has to take care of binary and
+prompt mode too). Another example is "/pub/irc Kiwi.5.2.el.Z" in which
+case a "CD /pub/irc" and "get Kiwi.5.2.el.Z" is what should be done.
+
+
+USERINFO
+This is used to transmit a string which is settable by the user (and
+never should be set by the client). The query is simply
+
+	\001USERINFO\001
+
+with the reply
+
+	\001USERINFO :#\001
+
+where the # is the value of the string the client's user has set.
+
+CLIENTINFO
+This is for client developers use to make it easier to show other
+client hackers what a certain client knows when it comes to CTCP. The
+replies should be fairly verbose explaining what CTCP commands are
+understood, what arguments are expected of what type, and what replies
+might be expected from the client.
+
+The query is the word CLIENTINFO in a "privmsg" optionally followed by
+a colon and one or more specifying words delimited by spaces, where
+the word CLIENTINFO by itself,
+
+	\001CLIENTINFO\001
+
+should be replied to by giving a list of known tags (see above in
+section TAGGED DATA). This is only intended to be read by humans.
+
+With one argument, the reply should be a description of how to use
+that tag. With two arguments, a description of how to use that
+tag's subcommand. And so on.
+
+ERRMSG
+This is used as a reply whenever an unknown query is seen. Also, when
+used as a query, the reply should echo back the text in the query,
+together with an indication that no error has happened. Should the
+query form be used, it is
+
+	\001ERRMSG #\001
+
+where # is a string containing any character, with the reply
+
+	\001ERRMSG # :#\001
+
+where the first # is the same string as in the query and the second #
+a short text notifying the user that no error has occurred.
+
+A normal ERRMSG reply which is sent when a corrupted query or some
+corrupted extended data is received, looks like
+
+	\001ERRMSG # :#\001
+
+where the first # is the the failed query or corrupted extended data
+and the second # a text explaining what the problem is, like "unknown
+query" or "failed decrypting text".
+
+********
+EXAMPLES
+********
+
+
+Sending
+
+	PRIVMSG victim :\001FINGER\001
+
+might return
+
+	:victim NOTICE actor :\001FINGER :Please check my USERINFO
+	instead :Klaus Zeuge (sojge@mizar) 1 second has passed since
+	victim gave a command last.\001
+
+(this is only one line) or why not
+
+	:victim NOTICE actor :\001FINGER :Please check my USERINFO
+	instead :Klaus Zeuge (sojge@mizar) 427 seconds (7 minutes and
+	7 seconds) have passed since victim gave a command last.\001
+
+if Klaus Zeuge happens to be lazy? :-)
+
+Sending
+
+	PRIVMSG victim :CLIENTINFO
+
+might return
+
+	:victim NOTICE actor :CLIENTINFO :You can request help of the
+	commands CLIENTINFO ERRMSG FINGER USERINFO VERSION by giving
+	an argument to CLIENTINFO.
+
+Sending
+
+	PRIVMSG victim :CLIENTINFO CLIENTINFO
+
+might return
+
+	:victim NOTICE actor :CLIENTINFO :CLIENTINFO with 0
+	arguments gives a list of known client query keywords. With 1
+	argument, a description of the client query keyword is
+	returned.
+
+while sending
+
+	PRIVMSG victim :clientinfo clientinfo
+
+probaly will return something like
+
+	:victim NOTICE actor :ERRMSG clientinfo clientinfo :Query is
+	unknown
+
+as tag "clientinfo" isn't known.
+
+Sending
+
+	PRIVMSG victim :CLIENTINFO ERRMSG
+
+might return
+
+	:victim NOTICE actor :CLIENTINFO :ERRMSG is the given answer
+	on seeing an unknown keyword. When seeing the keyword ERRMSG,
+	it works like an echo.
+
+Sending
+
+	PRIVMSG victim :\001USERINFO\001
+
+might return the somewhat pathetically long
+
+	:victim NOTICE actor :USERINFO :I'm studying computer
+	science in Uppsala, I'm male (somehow, that seems to be an
+	important matter on IRC:-) and I speak fluent swedish, decent
+	german, and some english.
+
+Sending
+
+	PRIVMSG victim :\001VERSION\001
+
+might return
+
+	:victim NOTICE actor :\001VERSION Kiwi:5.2:GNU Emacs
+	18.57.19 under SunOS 4.1.1 on Sun
+	SLC:FTP.Lysator.LiU.SE:/pub/emacs Kiwi-5.2.el.Z
+	Kiwi.README\001
+
+if the client is named Kiwi of version 5.2 and is used under GNU Emacs
+18.57.19 running on a Sun SLCwith SunOS 4.1.1. The client claims a
+copy of it can be found with anonymous FTP on FTP.Lysator.LiU.SE after
+giving the FTP command "cd /pub/emacs/". There, one should get files
+Kiwi-5.2.el.Z and Kiwi.README; presumly one of the files tells how to
+proceed with building the client after having gotten the files.
+- -----------------------------------------------------------------------------
+End of file.
+
+------- End of Forwarded Message
+ 
+
+
