@@ -16,15 +16,15 @@
 
 #include <arch/bitops.h>
 
-static int nibblemap[] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
-
 #ifdef BLOAT_FS
+
+static int nibblemap[] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 
 static unsigned long count_used(struct buffer_head *map[],
 				unsigned int numblocks, unsigned int numbits)
 {
-    unsigned int i, j, end, sum = 0;
     register struct buffer_head *bh;
+    unsigned int i, j, end, sum = 0;
 
     for (i = 0; (i < numblocks) && numbits; i++) {
 	if (!(bh = map[i]))
@@ -50,10 +50,11 @@ static unsigned long count_used(struct buffer_head *map[],
 #endif
 
 #ifndef CONFIG_FS_RO
-void elksfs_free_block(register struct super_block *sb, unsigned long block)
+void elksfs_free_block(register struct super_block *sb, block_t block)
 {
     register struct buffer_head *bh;
-    unsigned int bit, zone;
+    block_t zone;
+    unsigned short int bit;
 
     if (!sb) {
 	printk("trying to free block on nonexistent device\n");
@@ -77,12 +78,14 @@ void elksfs_free_block(register struct super_block *sb, unsigned long block)
 	return;
     }
     map_buffer(bh);
+
 #if 0
     if (!clear_bit(bit, bh->b_data))
 	printk("free_block (%s:%ld): bit already cleared\n",
 	       kdevname(sb->s_dev), block);
 #endif
-    clear_bit(bit, bh->b_data);
+
+    (void) clear_bit(bit, bh->b_data);
     unmap_buffer(bh);
     mark_buffer_dirty(bh, 1);
     return;
@@ -91,12 +94,13 @@ void elksfs_free_block(register struct super_block *sb, unsigned long block)
 unsigned int elksfs_new_block(register struct super_block *sb)
 {
     register struct buffer_head *bh;
-    unsigned int i, j;
+    unsigned short int i, j;
 
     if (!sb) {
 	printk("trying to get new block from nonexistent device\n");
 	return 0;
     }
+
   repeat:
     j = 8192;
     for (i = 0; i < 8; i++)
@@ -109,7 +113,7 @@ unsigned int elksfs_new_block(register struct super_block *sb)
     if (i >= 8 || !bh || j >= 8192)
 	return 0;
     if (set_bit(j, bh->b_data)) {
-	panic("new_block: bit already set %d %d\n", j, bh->b_data);
+	panic("new_block: bit already set: %d %d\n", j, bh->b_data);
 	unmap_buffer(bh);
 	goto repeat;
     }
@@ -118,11 +122,11 @@ unsigned int elksfs_new_block(register struct super_block *sb)
     unmap_buffer(bh);
     mark_buffer_dirty(bh, 1);
     j += i * 8192 + sb->u.minix_sb.s_firstdatazone - 1;
-    if (j < sb->u.elksfs_sb.s_firstdatazone || j >= sb->u.elksfs_sb.s_nzones) {
+    if (j < sb->u.elksfs_sb.s_firstdatazone || j >= sb->u.elksfs_sb.s_nzones)
 	return 0;
-    }
+
     /* WARNING: j is not converted, so we have to do it */
-    if (!(bh = getblk(sb->s_dev, (long) j))) {
+    if (!(bh = getblk(sb->s_dev, ((block_t) j)))) {
 	printk("new_block: cannot get block");
 	return 0;
     }
@@ -153,7 +157,7 @@ void elksfs_free_inode(register struct inode *inode)
     clear_inode(inode);
 #else
     register struct buffer_head *bh;
-    unsigned long ino;
+    ino_t ino;
 
     if (!inode)
 	return;
@@ -192,9 +196,11 @@ void elksfs_free_inode(register struct inode *inode)
     map_buffer(bh);
     clear_inode(inode);
     if (!clear_bit(ino & 8191, bh->b_data)) {
+
 #if 0
 	printk("%s: bit %ld already cleared.\n", ino);
 #endif
+
     }
     mark_buffer_dirty(bh, 1);
     unmap_buffer(bh);
@@ -207,7 +213,7 @@ struct inode *elksfs_new_inode(struct inode *dir)
     struct super_block *sb;
     register struct inode *inode;
     register struct buffer_head *bh;
-    int i, j;
+    unsigned short int i, j;
 
     if (!dir || !(inode = get_empty_inode()))
 	return NULL;
@@ -253,7 +259,7 @@ struct inode *elksfs_new_inode(struct inode *dir)
     inode->i_uid = current->euid;
     inode->i_gid = (dir->i_mode & S_ISGID) ? dir->i_gid : current->egid;
     inode->i_dirt = 1;
-    inode->i_ino = j;
+    inode->i_ino = ((ino_t) j);
     inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
     inode->i_op = NULL;
 #ifdef BLOAT_FS

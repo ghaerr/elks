@@ -5,7 +5,7 @@
 
 /* First we define all of the __u and __s types...*/
 
-/*@ignore@*/
+/*@-namechecks@*/
 
 #define signed
 
@@ -35,8 +35,6 @@ typedef unsigned short int *__puint;
 typedef signed short int __sint;
 typedef signed short int *__psint;
 
-/*@end@*/
-
 /* Then we define registers, etc... */
 
 struct _registers {
@@ -56,6 +54,8 @@ struct _mminit {
 
 typedef struct _mminit __arch_mminit;
 typedef struct _mminit *__parch_mminit;
+
+/*@+namechecks@*/
 
 #ifndef NULL
 #define NULL	((void *) 0)

@@ -57,7 +57,7 @@ VERSION 0.0.85-PRE3 NOTES
 	* Updated strace.h and strace.c so all system call types are printed
 	  correctly, also added additional common parameter types to table.
 	* Fixed bug where unknown syscall silently vanished.
-	* Found a panic using a bad swear word, so changed it...
+	* Found a panic() using a bad swear word, so changed it...
 	* Added required functionality to enable processes to obtain details
 	  needed to configure networking.
 	* Made /dev/tcpdev return EBUSY if used.

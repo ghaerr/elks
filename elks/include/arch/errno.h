@@ -1,7 +1,7 @@
 #ifndef LX86_ARCH_ERRNO_H
 #define LX86_ARCH_ERRNO_H
 
-/*@ignore@*/
+/*@-namechecks@*/
 
 #define	EPERM		 1	/* Operation not permitted */
 #define	ENOENT		 2	/* No such file or directory */
@@ -129,6 +129,7 @@
 #ifdef __KERNEL__
 
 /* Should never be seen by user programs */
+
 #define ERESTARTSYS     512
 #define ERESTARTNOINTR  513
 #define ERESTARTNOHAND  514	/* restart if no handler.. */
@@ -136,6 +137,6 @@
 
 #endif
 
-/*@end@*/
+/*@+namechecks@*/
 
 #endif

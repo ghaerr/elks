@@ -2,8 +2,7 @@
 #define LX86_LINUXMT_FS_H
 
 /*
- * This file has definitions for some important file table
- * structures etc.
+ * This file has definitions for some important file table structures etc.
  */
 
 #include <linuxmt/wait.h>
@@ -17,9 +16,9 @@
 
 #include <arch/bitops.h>
 
-/* It's silly to have NR_OPEN bigger than NR_FILE, but I'll fix
- * that later. Anyway, now the file code is no longer dependent
- * on bitmaps in unsigned longs, but uses the new fd_set structure..
+/*  It's silly to have NR_OPEN bigger than NR_FILE, but I'll fix that later.
+ *  Anyway, now the file code is no longer dependent on bitmaps in unsigned
+ *  longs, but uses the new fd_set structure..
  */
 
 #ifdef CONFIG_SHORT_FILES
@@ -88,8 +87,8 @@
  * Executable formats
  */
 
-#define EXEC_MINIX	0x1
-#define EXEC_MSDOS	0x2
+#define RUNNABLE_MINIX	0x1
+#define RUNNABLE_MSDOS	0x2
 
 /*
  * Note that read-only etc flags are inode-specific: setting some file-system
@@ -123,20 +122,24 @@ extern void inode_init(void);
 #endif
 
 struct buffer_head {
-    char *b_data;		/* Address in L1 buffer area */
-    block_t b_blocknr;
-    kdev_t b_dev;
-    struct buffer_head *b_next;
-    struct buffer_head *b_next_lru;
-    unsigned int b_count;
-    struct buffer_head *b_prev_lru;
-    struct wait_queue b_wait;
-    char b_uptodate, b_dirty, b_lock;
-    seg_t b_seg;
+    char			*b_data;	/* Address in L1 buffer area */
+    block_t			b_blocknr;
+    kdev_t			b_dev;
+    struct buffer_head		*b_next;
+    struct buffer_head		*b_next_lru;
+    block_t			b_count;
+    struct buffer_head		*b_prev_lru;
+    struct wait_queue		b_wait;
+    char			b_uptodate;
+    char			b_dirty;
+    char			b_lock;
+    seg_t			b_seg;
+
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-    unsigned char b_num;	/* Used to lookup L2 area */
-    unsigned int b_mapcount;	/* Used for the new L2 buffer cache scheme */
+    unsigned char		b_num;		/* Used to lookup L2 area */
+    unsigned int		b_mapcount;	/* Used for the new L2 buffer cache scheme */
 #endif
+
 };
 
 #define BLOCK_READ	0
@@ -171,83 +174,94 @@ extern void bforget(struct buffer_head *);
 #define ATTR_FORCE	512
 
 /*
- * This is the Inode Attributes structure, used for notify_change().  It
- * uses the above definitions as flags, to know which values have changed.
- * Also, in this manner, a Filesystem can look at only the values it cares
- * about.  Basically, these are the attributes that the VFS layer can
- * request to change from the FS layer.
+ * This is the Inode Attributes structure, used for notify_change(). It uses
+ * the above definitions as flags, to know which values have changed. Also in
+ * this manner, a Filesystem can look at only the values it cares about.
+ *
+ * Basically, these are the attributes that the VFS layer can request to
+ * change from the FS layer.
  *
  * Derek Atkins <warlord@MIT.EDU> 94-10-20
  */
 struct iattr {
-    unsigned int ia_valid;
-    umode_t ia_mode;
-    uid_t ia_uid;
-    gid_t ia_gid;
-    off_t ia_size;
-    time_t ia_atime;
-    time_t ia_mtime;
-    time_t ia_ctime;
+    unsigned int		ia_valid;
+    umode_t			ia_mode;
+    uid_t			ia_uid;
+    gid_t			ia_gid;
+    off_t			ia_size;
+    time_t			ia_atime;
+    time_t			ia_mtime;
+    time_t			ia_ctime;
 };
 
 #include <linuxmt/romfs_fs_i.h>
 
 struct inode {
+
     /* This stuff is on disk */
-    __u16 i_mode;
-    __u16 i_uid;
-    __u32 i_size;
-    __u32 i_mtime;
-    __u8 i_gid;
-    __u8 i_nlink;
-    __u16 i_zone[9];
+    __u16			i_mode;
+    __u16			i_uid;
+    __u32			i_size;
+    __u32			i_mtime;
+    __u8			i_gid;
+    __u8			i_nlink;
+    __u16			i_zone[9];
+
     /* This stuff is just in-memory... */
-    ino_t i_ino;
-    kdev_t i_dev;
-    kdev_t i_rdev;
-    time_t i_atime;
-    time_t i_ctime;
+    ino_t			i_ino;
+    kdev_t			i_dev;
+    kdev_t			i_rdev;
+    time_t			i_atime;
+    time_t			i_ctime;
+
 #ifdef BLOAT_FS
-    unsigned long i_blksize;
-    unsigned long i_blocks;
-    unsigned long i_version;
-    unsigned short i_wcount;
-    unsigned char i_seek;
-    unsigned char i_update;
+    unsigned long int		i_blksize;
+    unsigned long int		i_blocks;
+    unsigned long int		i_version;
+    unsigned short int		i_wcount;
+    unsigned char int		i_seek;
+    unsigned char int		i_update;
 #endif
-    struct inode_operations *i_op;
-    struct super_block *i_sb;
-    struct wait_queue i_wait;
-    struct inode *i_next, *i_prev;
-    struct inode *i_mount;
-    unsigned short i_count;
-    unsigned short i_flags;
-    unsigned char i_lock;
-    unsigned char i_dirt;
+
+    struct inode_operations	*i_op;
+    struct super_block		*i_sb;
+    struct wait_queue		i_wait;
+    struct inode		*i_next;
+    struct inode		*i_prev;
+    struct inode		*i_mount;
+    unsigned short		i_count;
+    unsigned short		i_flags;
+    unsigned char		i_lock;
+    unsigned char		i_dirt;
+
 #ifdef CONFIG_PIPE
-    unsigned char i_pipe;
+    unsigned char		i_pipe;
 #endif
-    unsigned char i_sock;
-    short i_sem;
+
+    unsigned char		i_sock;
+    short			i_sem;
+
     union {
-	struct pipe_inode_info pipe_i;
-	struct romfs_inode_info romfs_i;
-	struct socket socket_i;
-	void *generic_i;
+	struct pipe_inode_info	pipe_i;
+	struct romfs_inode_info	romfs_i;
+	struct socket		socket_i;
+	void			*generic_i;
     } u;
 };
 
 struct file {
-    mode_t f_mode;
-    loff_t f_pos;
-    unsigned short f_flags;
-    unsigned short f_count;
-    struct inode *f_inode;
-    struct file_operations *f_op;
+    mode_t			f_mode;
+    loff_t			f_pos;
+    unsigned short		f_flags;
+    unsigned short		f_count;
+    struct inode		*f_inode;
+    struct file_operations	*f_op;
+
 #ifdef BLOAT_FS
-    off_t f_reada;
-    unsigned long f_version;
-    void *private_data;		/* needed for tty driver, but not ntty */
+    off_t			f_reada;
+    unsigned long		f_version;
+    void			*private_data;
+				/* needed for tty driver, but not ntty */
 #endif
 };
 
@@ -256,27 +270,32 @@ struct file {
 #include <linuxmt/elksfs_fs_sb.h>
 
 struct super_block {
-    kdev_t s_dev;
-    unsigned char s_lock;
+    kdev_t			s_dev;
+    unsigned char		s_lock;
+
 #ifdef BLOAT_FS
-    unsigned char s_rd_only;
+    unsigned char		s_rd_only;
 #endif
-    unsigned char s_dirt;
-    struct file_system_type *s_type;
-    struct super_operations *s_op;
-    unsigned int s_flags;
+
+    unsigned char		s_dirt;
+    struct file_system_type	*s_type;
+    struct super_operations	*s_op;
+    unsigned short int		s_flags;
+
 #ifdef BLOAT_FS
-    unsigned long s_magic;
-    unsigned long s_time;
+    __u32			s_magic;
+    time_t			s_time;
 #endif
-    struct inode *s_covered;
-    struct inode *s_mounted;
-    struct wait_queue s_wait;
+
+    struct inode		*s_covered;
+    struct inode		*s_mounted;
+    struct wait_queue		s_wait;
+
     union {
-	struct minix_sb_info minix_sb;
-	struct romfs_sb_info romfs_sb;
-	struct elksfs_sb_info elksfs_sb;
-	void *generic_sbp;
+	struct minix_sb_info	minix_sb;
+	struct romfs_sb_info	romfs_sb;
+	struct elksfs_sb_info	elksfs_sb;
+	void			*generic_sbp;
     } u;
 };
 
@@ -290,63 +309,76 @@ struct super_block {
 typedef int (*filldir_t) ();
 
 struct file_operations {
-    loff_t (*lseek) ();
-    size_t (*read) ();
-    size_t (*write) ();
-    int (*readdir) ();
-    int (*select) ();
-    int (*ioctl) ();
-    int (*open) ();
-    void (*release) ();
+    loff_t			(*lseek) ();
+    size_t			(*read) ();
+    size_t			(*write) ();
+    int 			(*readdir) ();
+    int 			(*select) ();
+    int 			(*ioctl) ();
+    int 			(*open) ();
+    void			(*release) ();
+
 #ifdef BLOAT_FS
-    int (*fsync) ();
-    int (*check_media_change) ();
-    int (*revalidate) ();
+    int 			(*fsync) ();
+    int 			(*check_media_change) ();
+    int 			(*revalidate) ();
 #endif
+
 };
 
 struct inode_operations {
-    struct file_operations *default_file_ops;
-    int (*create) ();
-    int (*lookup) ();
-    int (*link) ();
-    int (*unlink) ();
-    int (*symlink) ();
-    int (*mkdir) ();
-    int (*rmdir) ();
-    int (*mknod) ();
-    int (*readlink) ();
-    int (*follow_link) ();
+    struct file_operations	*default_file_ops;
+    int 			(*create) ();
+    int 			(*lookup) ();
+    int 			(*link) ();
+    int 			(*unlink) ();
+    int 			(*symlink) ();
+    int 			(*mkdir) ();
+    int 			(*rmdir) ();
+    int 			(*mknod) ();
+    int 			(*readlink) ();
+    int 			(*follow_link) ();
+
 #ifdef BLOAT_FS
-    int (*bmap) ();
+    int 			(*bmap) ();
 #endif
-    void (*truncate) ();
+
+    void			(*truncate) ();
+
 #ifdef BLOAT_FS
-    int (*permission) ();
+    int 			(*permission) ();
 #endif
+
 };
 
 struct super_operations {
-    void (*read_inode) ();
+    void			(*read_inode) ();
+
 #ifdef BLOAT_FS
-    int (*notify_change) ();
+    int 			(*notify_change) ();
 #endif
-    void (*write_inode) ();
-    void (*put_inode) ();
-    void (*put_super) ();
-    void (*write_super) ();
+
+    void			(*write_inode) ();
+    void			(*put_inode) ();
+    void			(*put_super) ();
+    void			(*write_super) ();
+
 #ifdef BLOAT_FS
-    void (*statfs_kern) ();	/* i8086 statfs goes to kernel, then user */
+    void			(*statfs_kern) ();
+				/* i8086 statfs goes to kernel, then user */
 #endif
-    int (*remount_fs) ();
+
+    int 			(*remount_fs) ();
 };
 
 struct file_system_type {
-    struct super_block *(*read_super) ();
-    char *name;
+    struct super_block		*(*read_super) ();
+    char			*name;
+
 #ifdef BLOAT_FS
-    int requires_dev;
+    int 			requires_dev;
 #endif
+
 };
 
 extern int event;		/* Event counter */

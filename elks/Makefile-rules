@@ -50,7 +50,7 @@
 VERSION 	= 0	# (0-255)
 PATCHLEVEL	= 1	# (0-255)
 SUBLEVEL	= 0	# (0-255)
-#PRE		= 4	# (0-255)	If not a pre, comment this line.
+#PRE		= 0	# (0-255)	If not a pre, comment this line.
 
 #########################################################################
 # Specify the architecture we will use.
@@ -222,13 +222,13 @@ CC_PROTO	= gcc -I$(INCDIR) -M -MG $(CCDEFS)
 CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) -ansi
 CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
 LINT		= splint
-LINTLEVEL	= -weak
-LCFLAGS 	= -I$(INCDIR) $(CCDEFS) -isoreserved +ignoresigns
+LINTLEVEL	= -strict
+LCFLAGS 	= -I$(INCDIR) $(CCDEFS)
 LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
 		  -exportheader -varuse -exporttype -exportconst \
 		  -exportvar -typeuse -enummemuse -constuse
 
-ifeq ($(USEBCC), Y)
+ifneq ($(USEBCC), N)
 
 ################################
 # Definitions using BCC compiler

@@ -48,9 +48,12 @@
 #include <arch/segment.h>
 
 #ifdef CONFIG_EXEC_MINIX
+
 /* FIXME: These cant remain static .. */
+
 static struct minix_exec_hdr mh;
 static struct minix_supl_hdr msuph;
+
 #endif
 
 #ifdef CONFIG_EXEC_MSDOS
@@ -160,7 +163,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	printk("SBASE = %x\n", stack_top);
     }
 
-    execformat = EXEC_MINIX;
+    execformat = RUNNABLE_MINIX;
 /* This looks very hackish and it is, but bcc can't handle a goto xyz;
  * and a subsequent xyz:
  * -- simon weijgers
@@ -182,7 +185,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	retval = -ENOEXEC;
 	goto close_readexec;
     }
-    execformat = EXEC_MSDOS;
+    execformat = RUNNABLE_MSDOS;
 #if 0
     goto blah;
 #endif

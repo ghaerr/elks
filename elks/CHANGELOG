@@ -24,13 +24,24 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-29 Apr 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998- 1 May 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Wed May  1 23:25:40 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Clarified structures in various include/*/*.h header files.
+	* Dealt with FIXME comment in include/linuxmt/msdos.h file.
+	* Verified that all include/*/*.h header files are now clean as
+	  far as `splint -strict` is concerned.
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop.
+
+===============================================================================
 
 Tue Apr 30 22:17:52 EEST 2002 Harry Kalogirou <harkal@gmx.net>
 

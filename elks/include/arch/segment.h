@@ -8,7 +8,11 @@ extern __u16 get_bp(void), setupw(unsigned short int, unsigned short int *);
 
 extern pid_t get_pid(void);
 
+/*@-namechecks@*/
+
 extern short *_endtext, *_enddata, *_endbss;
+
+/*@+namechecks@*/
 
 #define put_user_char(val,ptr)	pokeb(current->t_regs.ds,ptr,val)
 #define get_user_char(ptr)	peekb(current->t_regs.ds,ptr)

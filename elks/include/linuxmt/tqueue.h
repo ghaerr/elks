@@ -12,10 +12,10 @@
  * The original comment follows below.
  */
 
-#if 0
-#include <asm/bitops.h>
-#endif
+#include <arch/bitops.h>
+
 #define __inline__
+
 #include <arch/irq.h>
 #include <arch/system.h>
 

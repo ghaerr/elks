@@ -22,13 +22,9 @@ extern int kill_sl(void);
 
 #ifdef S_SPLINT_S
 
-/*@ignore@*/
+/*@printflike@*/ extern void panic();
 
-extern void panic();
-
-extern int printk();
-
-/*@end@*/
+/*@printflike@*/ extern int printk();
 
 #endif
 

@@ -12,6 +12,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/elksfs_fs.h>
 #include <linuxmt/stat.h>
+#include <linuxmt/mm.h>
 
 #include <arch/segment.h>
 
@@ -36,8 +37,9 @@ struct inode_operations elksfs_symlink_inode_operations = {
 #ifdef BLOAT_FS
     NULL,			/* bmap */
 #endif
-    NULL,			/* truncate */
+    NULL			/* truncate */
 #ifdef BLOAT_FS
+	,
     NULL			/* permission */
 #endif
 };

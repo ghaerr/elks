@@ -15,7 +15,6 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/timer.h>
-#include <linuxmt/types.h>
 
 #include <arch/irq.h>
 
