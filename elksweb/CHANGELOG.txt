@@ -12,9 +12,13 @@ Alistair Riddoch        <AlRiddoch@zepler.org>           1 Jan 1995-20 Oct 1999
 Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>     7 Nov 2001-24 Nov 2001
 Martijn Bakker          <martijn@insecure.nl>           29 Mar 2002
 Michael McConnell       <Soruk@Eridani.co.uk>           11 Nov 2001-12 Nov 2001
-Riley Williams          <rhw@InfraDead.Org>              8 Nov 2001- 5 Apr 2002
+Riley Williams          <rhw@InfraDead.Org>              8 Nov 2001- 6 Apr 2002
 
 -------------------------------------------------------------------------------
+
+Sat Apr  6 22:45:56 BST 2002	Riley Williams <rhw@InfraDead.Org>
+
+	* Martijn's ELKS banner now marked as a binary file.
 
 Fri Apr  5 18:36:54 BST 2002	Riley Williams <rhw@InfraDead.Org>
 
