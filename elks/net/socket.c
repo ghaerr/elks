@@ -24,15 +24,14 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/stat.h>
 
+#include <arch/segment.h>
+
 /*#define CONFIG_SOCK_CLIENTONLY 1
 #define CONFIG_SOCK_STREAMONLY 1 */
 
 #define find_protocol_family(_a) 0
 
 #define MAX_SOCK_ADDR 16 /* Must be much bigger for AF_UNIX */
-
-#define get_user(ptr) peekw(current->t_regs.ds,ptr)
-#define put_user(val,ptr) pokew(current->t_regs.ds,ptr,val)
 
 static struct proto_ops *pops[NPROTO]= { NULL };
 

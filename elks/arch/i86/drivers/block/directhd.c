@@ -17,18 +17,14 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
+#include <arch/segment.h>
 
 /* And neither are these
 #include <linuxmt/config.h>
-#include <arch/segment.h>
 #include <arch/system.h>
 */
 
 #include <linuxmt/directhd.h>
-
-/* shouldn't these be defined somewhere else ? */
-#define put_user(val, ptr) pokew(current->t_regs.ds, ptr, val)
-#define get_user(ptr) peekw(current->t_regs.ds, ptr)
 
 /* maybe we should have word-wide input here instead of byte-wide ? */
 #define STATUS(port) inb_p(port + DIRECTHD_STATUS)

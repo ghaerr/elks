@@ -27,4 +27,7 @@ comment 'Additional block devices'
 bool 'RAM disk support' CONFIG_BLK_DEV_RAM
 bool 'Old XT hardisk support' CONFIG_BLK_DEV_XD
 
+comment 'Block device options'
+bool 'Character access to block devices' CONFIG_BLK_DEV_CHAR
+
 endmenu

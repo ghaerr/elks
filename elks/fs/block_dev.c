@@ -4,16 +4,22 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linuxmt/config.h>
+
+#ifdef CONFIG_BLK_DEV_CHAR
+
 #include <linuxmt/errno.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/fcntl.h>
+#include <linuxmt/fs.h>
+#include <linuxmt/locks.h>
 #include <linuxmt/mm.h>
 
 #include <arch/segment.h>
 #include <arch/system.h>
 
-int blk_rw(inode,filp,buf,count,wr)
+static int blk_rw(inode,filp,buf,count,wr)
 struct inode * inode;
 register struct file * filp;
 char * buf;
@@ -105,7 +111,7 @@ int wr;
 	if (write_error)
 		return -EIO;
 	if ((wr == BLOCK_WRITE) && !written)
-		return ENOSPC;
+		return -ENOSPC;
 	return written;
 }
 
@@ -115,7 +121,7 @@ register struct file * filp;
 register char * buf;
 int count;
 {
-	blk_rw(inode,filp,buf,count,BLOCK_READ);
+	return blk_rw(inode,filp,buf,count,BLOCK_READ);
 }
 
 int block_write(inode,filp,buf,count)
@@ -124,6 +130,7 @@ register struct file * filp;
 register char * buf;
 int count;
 {
-	blk_rw(inode,filp,buf,count,BLOCK_WRITE);
+	return blk_rw(inode,filp,buf,count,BLOCK_WRITE);
 }
 
+#endif /* CONFIG_BLK_DEV_CHAR */

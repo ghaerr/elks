@@ -172,7 +172,7 @@ blah:
 	if (!cseg) {
 		cseg=mm_alloc((segext_t)((mh.tseg+15)>>4));
 	}
-	if (cseg == -1) {
+	if (!cseg) {
 		retval=-ENOMEM;
 		goto close_readexec;
 	}
@@ -191,7 +191,7 @@ blah:
 
 	printd_exec1("Allocating %d bytes for data segment", len);
 	dseg=mm_alloc((segext_t)(len>>4));
-	if(dseg==-1)
+	if(!dseg)
 	{
 		retval=-ENOMEM;
 		mm_free(cseg);
@@ -271,8 +271,20 @@ blah:
 	printd_exec("EXEC: old binary flushed.");
 	
 	/*
-	 *	FIXME: Clear signal handlers..
+	 *	Clear signal handlers..
 	 */
+	for (i=0 ; i < NSIG ; i++) {
+		current->sig.action[i].sa_handler = NULL;
+	}
+	/*
+	 *	Close required files..
+	 */
+	for (i=0 ; i<NR_OPEN ; i++) {
+		if (FD_ISSET(i,&current->files.close_on_exec)) {
+			sys_close(i);
+		}
+	}
+
 	 
 	/*
 	 *	Arrange our return to be to CS:0
@@ -383,7 +395,7 @@ char * filename;
 	if (!cseg) {
 		printk("DLLOAD: Mallocing some RAM for the dll.\n");
 		cseg = mm_alloc((segext_t)((size+15)>>4));
-		if (cseg == -1) {
+		if (!cseg) {
 			printk("DLLOAD: No memory.\n");
 			retval=-ENOMEM;
 			goto close_readexec;
@@ -506,7 +518,7 @@ unsigned short * dll_cseg;
 	if (!cseg) {
 		printk("DLLOAD: Mallocing some RAM for the dll code.\n");
 		cseg = mm_alloc((segext_t)((mh.tseg+15)>>4));
-		if (cseg == -1) {
+		if (!cseg) {
 			printk("DLLOAD: No memory.\n");
 			retval=-ENOMEM;
 			goto close_readexec;

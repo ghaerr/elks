@@ -316,7 +316,7 @@ char * name;
 
 	if (!suser())
 		return -EPERM;
-	retval = namei(name,&inode);
+	retval = namei(name,&inode,0,0);
 	if (retval) {
 		retval = lnamei(name,&inode);
 		if (retval)

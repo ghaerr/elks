@@ -16,13 +16,6 @@
 
 #include <arch/segment.h>
 
-#define _S(nr) (1<<((nr)-1))
-
-#define _BLOCKABLE (~(_S(SIGKILL) | _S(SIGSTOP)))
-
-#define put_user(val,ptr) pokew(current->t_regs.ds,ptr,val)
-#define get_user(ptr) peekw(current->t_regs.ds,ptr)
-
 static void generate(sig, p)
 int sig;
 register struct task_struct * p;
@@ -30,17 +23,17 @@ register struct task_struct * p;
 	sigset_t mask = 1 << (sig-1);
 	register struct sigaction * sa = &(p->sig.action[sig - 1]);
 
-/*	if (!(mask & p->blocked)) { */
-		if (sa->sa_handler == SIG_IGN && sig != SIGCHLD)
-			return;
-		if ((sa->sa_handler == SIG_DFL) &&
-		    (sig == SIGCONT || sig == SIGCHLD || sig == SIGWINCH
+	if (sa->sa_handler == SIG_IGN) {
+		return;
+	}
+	if ((sa->sa_handler == SIG_DFL) &&
+	    (sig == SIGCONT || sig == SIGCHLD || sig == SIGWINCH
 #ifndef SMALLSIG
-			|| sig == SIGURG
+		|| sig == SIGURG
 #endif
-			))
-			return;
-/*	} */
+		)) {
+		return;
+	}
 	printd_sig1("Generating sig %d.\n", sig);
 	p->signal |= mask;
 	if ((p->state == TASK_INTERRUPTIBLE) /* && (p->signal & ~p->blocked) */) {
@@ -61,12 +54,9 @@ int priv;
 	    (currentp->uid ^ p->suid) && (currentp->uid ^ p->uid) &&
 	    !suser())
 		return -EPERM;
-/*	if (!p->sig)
-		return 0; */ /* Does not seem to be valid in ELKS */
 	if ((sig == SIGKILL) || (sig == SIGCONT)) {
 		if (p->state == TASK_STOPPED)
 			wake_up_process(p);
-/*		p->exit_code = 0; */
 		p->signal &= ~( (1<<(SIGSTOP-1)) | (1<<(SIGTSTP-1))
 #ifndef SMALLSIG
 			| (1<<(SIGTTIN-1)) | (1<<(SIGTTOU-1))

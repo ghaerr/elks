@@ -167,7 +167,7 @@ seg_t base;
  *	Allocate a segment
  */
 			
-int mm_alloc(pages)
+seg_t mm_alloc(pages)
 segext_t pages;
 {
 	/*
@@ -178,7 +178,7 @@ segext_t pages;
 	 *	No room , later check priority and swap
 	 */
 	if(m==NULL) {
-		return -1;
+		return NULL;
 	}
 	/*
 	 *	The hole is (probably) too big

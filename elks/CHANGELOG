@@ -4,6 +4,26 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Fri Aug 27 14:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Added CONFIG_SHORT_FILES which limits fds to 16.
+
+	* Removed unused supplementary groups, and made into a config option.
+
+	* Made link_count a global variable, rather than per task.
+
+	* Optimised the way read(2) and write(2) check file descriptors.
+
+	* Made character access to block devices an option.
+
+	* Cleaned up and tested signal code.
+
+	* Fixed cleaning up of signals and fds in close(2).
+
+	* Many bug fixes by Thomas G. McWilliams to fs code.
+
+	* Final version tweaks for 0.0.79
+
 Thu Aug 26 19:39 CEST 1999	Arnaud Launay  <zoro@multimania.com>
 
 	* Some additions and clean-ups in docs.

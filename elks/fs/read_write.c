@@ -62,33 +62,53 @@ unsigned int origin;
 	return 0;
 }
 
+int fd_check(fd, buf, count, rw)
+unsigned int fd;
+char * buf;
+unsigned int count;
+int rw;
+{
+	register struct file * file;
+	int error;
+
+	if (fd>=NR_OPEN || !(file=current->files.fd[fd]) || !(file->f_inode)) {
+		return -EBADF;
+	}
+	if (!(file->f_mode & rw)) {
+		return -EBADF;
+	}
+	if (!file->f_op) {
+		return -EINVAL;
+	}
+	if (!count) {
+		return 0;
+	}
+	if (error = verify_area(VERIFY_WRITE,buf,count)) {
+		return error;
+	}
+
+	return file;
+}
+	
+
 int sys_read(fd,buf,count)
 unsigned int fd;
 char * buf;
 unsigned int count;
 {
-	int error, retval;
-	register struct file * file;
-	struct inode * inode;
+	int retval;
 	register struct file_operations * fop;
+	register struct file * file;
 
-	if (fd>=NR_OPEN || !(file=current->files.fd[fd]) || !(inode=file->f_inode))
-		return -EBADF;
-	if (!(file->f_mode & 1))
-		return -EBADF;
+	if ((file = fd_check(fd, buf, count, FMODE_READ)) <= 0) {
+		return file;
+	}
 	fop = file->f_op;
-	if (!fop || !fop->read)
-	{
-		printk("readwrite: we're analphabetic\n");
+	if (!fop->read) {
 		return -EINVAL;
 	}
-
-	if (!count)
-		return 0;
-	error = verify_area(VERIFY_WRITE,buf,count);
-	if (error)
-		return error;
-	retval = fop->read(inode,file,buf,count);
+	
+	retval = fop->read(file->f_inode,file,buf,count);
 	schedule();
 	return retval;
 }
@@ -103,18 +123,14 @@ unsigned int count;
 	register struct inode * inode;
 	int written;
 
-/*	printk("{WRITE: %d %x %d, %x:%x.}", fd, buf, count, current->t_regs.cs, current->t_regs.ip); /* */
-	if (fd>=NR_OPEN || !(file=current->files.fd[fd]) || !(inode=file->f_inode))
-		return -EBADF;
-	if (!(file->f_mode & 2))
-		return -EBADF;
-	if (!file->f_op || !file->f_op->write)
+	if ((file = fd_check(fd, buf, count, FMODE_WRITE)) <= 0) {
+		return file;
+	}
+	if (!file->f_op->write) {
 		return -EINVAL;
-	if (!count)
-		return 0;
-	error = verify_area(VERIFY_READ,buf,count);
-	if (error)
-		return error;
+	}
+	inode=file->f_inode;
+
 	/*
 	 * If data has been written to the file, remove the setuid and
 	 * the setgid bits. We do it anyway otherwise there is an
@@ -129,9 +145,7 @@ unsigned int count;
 		notify_change(inode, &newattrs);
 	}
 
-/*	down(&inode->i_sem);*/
 	written = file->f_op->write(inode,file,buf,count);
-/*	up(&inode->i_sem);*/
 	schedule();
 	return written;
 }

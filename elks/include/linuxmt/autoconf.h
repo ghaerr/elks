@@ -57,6 +57,7 @@
 #define CONFIG_GENDISK 1
 #undef  CONFIG_BLK_DEV_RAM
 #undef  CONFIG_BLK_DEV_XD
+#define CONFIG_BLK_DEV_CHAR 1
 
 /*
  * Filesystems

@@ -107,9 +107,10 @@ struct stat * statbuf;
 	register struct file * f;
 	register struct inode * inode;
 
-	if (fd >= NR_OPEN || !(f=current->files.fd[fd]) || !(inode=f->f_inode))
-		return -EBADF;
-	return cp_stat(inode,statbuf);
+	if ((f = fd_check(fd, statbuf, sizeof(struct stat), FMODE_WRITE | FMODE_READ)) <= 0) {
+		return f;
+	}
+	return cp_stat(f->f_inode,statbuf);
 }
 
 int sys_readlink(path,buf,bufsiz)

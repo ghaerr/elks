@@ -198,6 +198,10 @@ Old XT Hard Disk support
 CONFIG_BLK_DEV_XD
   None existant device driver.
 
+Character access to block devices
+CONFIG_BLK_DEV_CHAR
+  Used to create and check filesystems, and by fdisk. Recommended.
+
 # File systems
 # ~~~~~~~~~~~~
 

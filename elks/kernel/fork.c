@@ -168,12 +168,10 @@ int virtual;
 
 pid_t sys_fork()
 {
-	printk("FORK");
 	return do_fork(0);
 }
 
 pid_t sys_vfork()
 {
-	printk("VFORK");
 	return do_fork(1);
 }

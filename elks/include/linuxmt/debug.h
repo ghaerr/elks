@@ -44,10 +44,14 @@
 #define printd_sig printk
 #define printd_sig1 printk
 #define printd_sig2 printk
+#define printd_sig4 printk
+#define printd_sig5 printk
 #else
 #define printd_sig(_a)
 #define printd_sig1(_a,_b)
 #define printd_sig2(_a,_b,_c)
+#define printd_sig4(_a,_b,_c,_d,_e)
+#define printd_sig5(_a,_b,_c,_d,_e,_f)
 #endif
 
 #if 0

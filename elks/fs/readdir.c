@@ -47,11 +47,11 @@ ino_t ino;
 		return -EINVAL;
 	buf->count++;
 	dirent = buf->dirent;
-	put_user(ino, &dirent->d_ino);
-	put_user(offset, &dirent->d_offset);
-	put_user(namlen, &dirent->d_namlen);
+	put_user_long(ino, &dirent->d_ino);
+	put_user_long(offset, &dirent->d_offset);
+	put_user(namlen, (int *)&dirent->d_namlen);
 	memcpy_tofs(dirent->d_name, name, namlen);
-	put_user(0, dirent->d_name + namlen);
+	put_user_char(0, dirent->d_name + namlen);
 	return 0;
 }
 
@@ -65,14 +65,13 @@ unsigned int count;
 	register struct file_operations * fop;
 	struct readdir_callback buf;
 
-	if (fd >= NR_OPEN || !(file = current->files.fd[fd]))
-		return -EBADF;
+	if ((file = fd_check(fd, dirent, sizeof(struct linux_dirent), FMODE_READ)) <= 0) {
+		return file;
+	}
 	fop=file->f_op;
-	if (!fop || !fop->readdir)
+	if (!fop || !fop->readdir) {
 		return -ENOTDIR;
-	error = verify_area(VERIFY_WRITE, dirent, sizeof(struct linux_dirent));
-	if (error)
-		return error;
+	}
 	buf.count = 0;
 	buf.dirent = dirent;
 	error = fop->readdir(file->f_inode, file, &buf, fillonedir);

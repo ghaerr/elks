@@ -1,4 +1,5 @@
 #include <linuxmt/types.h>
+#include <linuxmt/debug.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/config.h>
 
@@ -390,7 +391,7 @@ register struct task_struct *t;
 __sighandler_t addr;
 unsigned signr;
 {
-	printk("Stack %x was %x %x %x\n",
+	printd_sig4("Stack %x was %x %x %x\n",
 		addr,
 		get_ustack(t, 0),
 		get_ustack(t, 2),
@@ -401,7 +402,7 @@ unsigned signr;
 	put_ustack(t, -2, t->t_regs.cs);
 	put_ustack(t, -4, addr);
 	t->t_regs.sp-=4;
-	printk("Stack is %x %x %x %x %x\n",
+	printd_sig5("Stack is %x %x %x %x %x\n",
 		get_ustack(t, 0),
 		get_ustack(t, 2),
 		get_ustack(t, 4),

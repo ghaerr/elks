@@ -13,6 +13,7 @@
 #include <linuxmt/ioctl.h>
 #include <linuxmt/pipe_fs_i.h>
 #include <linuxmt/net.h>
+#include <linuxmt/config.h>
 
 #include <arch/bitops.h>
 
@@ -23,7 +24,11 @@
  *
  */
  
+#ifdef CONFIG_SHORT_FILES
+#define NR_OPEN 	16
+#else
 #define NR_OPEN 	20
+#endif
 
 #define NR_INODE	96	/* this should be bigger than NR_FILE */
 #define NR_FILE 	64	/* this can well be larger on a larger system */
@@ -441,9 +446,14 @@ extern void show_buffers();
 extern void mount_root();
 
 extern int char_read();
-extern int block_read();
 
+#ifdef CONFIG_BLK_DEV_CHAR
+extern int block_read();
 extern int block_write();
+#else
+#define block_read NULL
+#define block_write NULL
+#endif
 
 extern int inode_change_ok();
 extern void inode_setattr();

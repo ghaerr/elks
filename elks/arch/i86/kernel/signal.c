@@ -18,29 +18,7 @@
 
 #include <arch/segment.h>
 
-#define _S(nr) (1<<((nr)-1))
-
-#define put_user(val,ptr) pokew(current->t_regs.ds,ptr,val)
-
-#define _BLOCKABLE (~(_S(SIGKILL) | _S(SIGSTOP)))
-
-int sys_waitpid();
 int do_signal();
-
-/*
- * OK, we're invoking a handler
- */	
-
-static void handle_signal(signr, sa)
-unsigned signr;
-struct sigaction *sa;
-{
-	printd_sig1("Setting up return stack for sig handler %x.\n", sa->sa_handler);
-	printd_sig1("Stack at %x\n", current->t_regs.sp);
-	arch_setup_sighandler_stack(current, sa->sa_handler, signr);
-	printd_sig1("Stack at %x\n", current->t_regs.sp);
-	sa->sa_handler = SIG_DFL;
-}
 
 int do_signal()
 {
@@ -58,9 +36,6 @@ int do_signal()
 		signr++;
 		if (sa->sa_handler == SIG_IGN) {
 			printd_sig("Ignore\n");
-			if (signr != SIGCHLD)
-				continue;
-			while (sys_wait4(-1,NULL,WNOHANG) > 0);
 			continue;
 		}
 		if (sa->sa_handler == SIG_DFL) {
@@ -75,7 +50,6 @@ int do_signal()
 			case SIGTTIN: case SIGTTOU:
 #endif
 				currentp->state = TASK_STOPPED;
-			/*	currentp->exit_code =  signr; */
 			/* Let the parent know */
 				currentp->p_parent->child_lastend = currentp->pid;
 				currentp->p_parent->lastend_status = signr;
@@ -91,7 +65,11 @@ int do_signal()
 				do_exit(signr);
 			}
 		}
-		handle_signal(signr, sa);
+		printd_sig1("Setting up return stack for sig handler %x.\n", sa->sa_handler);
+		printd_sig1("Stack at %x\n", current->t_regs.sp);
+		arch_setup_sighandler_stack(current, sa->sa_handler, signr);
+		printd_sig1("Stack at %x\n", current->t_regs.sp);
+		sa->sa_handler = SIG_DFL;
 		return 1;
 	}
 	return 0;

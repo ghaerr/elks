@@ -21,7 +21,7 @@
 
 struct file_struct
 {
-	unsigned long close_on_exec;
+	fd_mask_t close_on_exec;
 	struct file *fd[NR_OPEN];
 };
 
@@ -45,7 +45,7 @@ struct task_struct
 #if 1
 	__pptr t_endtext, t_begstack, t_endstack, t_endbrk; 
 #else
-	__uint t_num; /* What is this for? */
+	__uint t_num;			/* What is this for? */
 	/* Most of these are not used! */
 	__pptr t_begcode, t_endcode, t_begdata, t_endtext, t_enddata, t_begstack, t_endstack, t_endbrk; 
 #endif
@@ -57,31 +57,31 @@ struct task_struct
 /* Scheduling + status variables */
 	__s16 state;
         __u32 timeout;                  /* for select() */
-#ifdef OLD_SCHED
-	__uint t_count, t_priority;	/* priority scheduling elements */
-/*	__u16 t_flags; 		/* Not defined yet */
-	__s32 counter;		/* Time counter (unused so far) */
-#endif /* OLD_SCHED */
         struct task_struct *next_run, *prev_run;
-#ifdef OLD_SCHED
-        struct task_struct *next_task, *prev_task;
-#endif
 	struct file_struct files;	/* File system structure */
 	struct fs_struct fs;		/* File roots */
 	struct mm_struct mm;		/* Memory blocks */
-	gid_t groups[NGROUPS];
-/*	int dumpable;		/* Can core dump */
 	pid_t pgrp;
 	struct tty * tty;
-	__u8 link_count;	/* Symlink loop counter */
-	/* only 1 child pntr is needed to get us into the sibling list */
+/*	__u8 link_count;		/* Symlink loop counter, now global */
 	struct task_struct *p_parent, *p_prevsib, *p_nextsib, *p_child;	 
   	struct wait_queue child_wait;
 	pid_t child_lastend;
 	int lastend_status;
 	struct inode * t_inode;
-	sigset_t signal/*,blocked*/;	/* Signal status */
+	sigset_t signal;		/* Signal status */
 	struct signal_struct sig;	/* Signal block */
+#ifdef CONFIG_CORE_DUMP
+	int dumpable;			/* Can core dump */
+#endif
+#ifdef CONFIG_OLD_SCHED
+	__uint t_count, t_priority;	/* priority scheduling elements */
+	__s32 counter;			/* Time counter (unused so far) */
+        struct task_struct *next_task, *prev_task;
+#endif /* CONFIG_OLD_SCHED */
+#ifdef CONFIG_SUPPLEMENTARY_GROUPS
+	gid_t groups[NGROUPS];
+#endif
 #ifdef CONFIG_STRACE
 	struct syscall_params sc_info;
 #endif

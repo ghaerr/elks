@@ -25,6 +25,21 @@ extern unsigned char get_fs_byte();
 extern void put_fs_word();
 extern unsigned int get_fs_word();
 extern int strlen_fromfs();
+extern int fs_memcmp();
+extern int verified_memcpy_tofs();
+extern int verified_memcpy_fromfs();
+
+extern seg_t mm_alloc();
+extern seg_t mm_realloc();
+extern void mm_free();
+extern void fmemcpy();
+extern void pokeb();
+extern char peekb();
+extern void pokew();
+extern int  peekw();
+extern void poked();
+extern long peekd();
+
 
 #endif /* __KERNEL__ */
 

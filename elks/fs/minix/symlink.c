@@ -51,6 +51,7 @@ struct inode ** res_inode;
 {
 	int error;
 	struct buffer_head * bh;
+	static int link_count = 0;
 
 	*res_inode = NULL;
 	if (!dir) {
@@ -66,7 +67,7 @@ struct inode ** res_inode;
 		*res_inode = inode;
 		return 0;
 	}
-	if (current->link_count > 5) {
+	if (/* current-> */link_count > 5) {
 		iput(inode);
 		iput(dir);
 		return -ELOOP;
@@ -77,10 +78,10 @@ struct inode ** res_inode;
 		return -EIO;
 	}
 	iput(inode);
-	current->link_count++;
+	/* current-> */link_count++;
 	map_buffer(bh);
 	error = open_namei(bh->b_data,flag,mode,res_inode,dir);
-	current->link_count--;
+	/* current-> */link_count--;
 	unmap_brelse(bh);
 	return error;
 }

@@ -402,7 +402,7 @@ int sys_setsid()
 /*
  * Supplementary group ID's
  */
-#if 0 
+#ifdef CONFIG_SUPPLEMENTARY_GROUPS
 int sys_getgroups(gidsetsize,grouplist)
 int gidsetsize;
 gid_t *grouplist;
@@ -443,7 +443,7 @@ gid_t *grouplist;
 		current->groups[i] = NOGROUP;
 	return 0;
 }
-#endif
+
 int in_group_p(grp)
 gid_t grp;
 {
@@ -460,6 +460,15 @@ gid_t grp;
 	}
 	return 0;
 }
+#else  /* CONFIG_SUPPLEMENTARY_GROUPS */
+int in_group_p(grp)
+gid_t grp;
+{
+	if (grp == current->egid) {
+		return 1;
+	}
+}
+#endif /* CONFIG_SUPPLEMENTARY_GROUPS */
 #if 0
 int sys_uname(name)
 struct utsname * name;

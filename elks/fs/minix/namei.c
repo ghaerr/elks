@@ -13,6 +13,7 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/mm.h>
 
 #include <arch/segment.h>
 
@@ -30,10 +31,11 @@ register char * buffer;
 {
 	int retval;
 
-	if (len > maxlen)
-		return 0;
-	retval = !fs_memcmp(name, buffer, len);
-	if (buffer[len] != 0) retval = 0;
+	if ((len > maxlen)||(buffer[len] != 0)) 
+		retval = 0;
+	else
+		retval = !fs_memcmp(name, buffer, len);
+
 	return retval;
 }
 
@@ -47,7 +49,7 @@ register char * buffer;
  * Note2: bh must already be mapped! 
  */
 static int minix_match(len,name,bh,offset,info)
-int len;
+unsigned int len;
 char * name;
 struct buffer_head * bh;
 loff_t * offset;
@@ -82,7 +84,7 @@ register struct minix_sb_info * info;
 static struct buffer_head * minix_find_entry(dir,name,namelen,res_dir)
 register struct inode * dir;
 char * name;
-int namelen;
+unsigned int namelen;
 struct minix_dir_entry ** res_dir;
 {
 	unsigned short block;
@@ -191,11 +193,10 @@ register struct inode ** result;
 static int minix_add_entry(dir,name,namelen,res_buf,res_dir)
 register struct inode * dir;
 char * name;
-int namelen;
+unsigned int namelen;
 struct buffer_head ** res_buf;
 struct minix_dir_entry ** res_dir;
 {
-	int i;
 	unsigned short block;
 	loff_t offset;
 	struct buffer_head * bh;
@@ -248,6 +249,7 @@ struct minix_dir_entry ** res_dir;
 				return -EEXIST;
 			}
 		} else {
+			unsigned int i;
 			dir->i_mtime = dir->i_ctime = CURRENT_TIME;
 			dir->i_dirt = 1;
 			for (i = 0; i < info->s_namelen ; i++)

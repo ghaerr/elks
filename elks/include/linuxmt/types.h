@@ -3,6 +3,7 @@
 
 #include <arch/types.h>
 #include <linuxmt/posix_types.h>
+#include <linuxmt/config.h>
 
 #define PRINT_STATS(a) { int __counter; printk("Entering %s : (%d, %d)\n", a, current->t_regs.sp, current->t_kstack); }
 
@@ -38,6 +39,11 @@ typedef __kernel_fd_set fd_set;
 typedef __u16 seg_t;			/* Segment no. */
 typedef __u16 segext_t;			/* Extent of segment */
 typedef __u32 jiff_t;
+#ifdef CONFIG_SHORT_FILES
+typedef __u16 fd_mask_t;
+#else /* CONFIG_SHORT_FILES */
+typedef __u32 fd_mask_t; 
+#endif /* CONFIG_SHORT_FILES */
 
 typedef int   ptrdiff_t;
 struct ustat {
