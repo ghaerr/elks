@@ -218,7 +218,7 @@ endif
 # Common definitions
 
 AR		= ar
-CC_PROTO	= gcc -I$(INCDIR) -M $(CCDEFS)
+CC_PROTO	= gcc -I$(INCDIR) -M -MG $(CCDEFS)
 CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) -ansi
 CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
 LINT		= lclint
@@ -314,7 +314,6 @@ mkdep:
 	@sed '/\#\#\# Dependencies:/q' < Makefile > make.tmp
 	@echo >> make.tmp
 	@for FILE in *.c ; do \
-		echo $(CC_PROTO) "$${FILE}" >> make.tmp ; \
 		$(CC_PROTO) "$${FILE}" >> make.tmp ; \
 		printf '\n\n' >> make.tmp ; \
 	done

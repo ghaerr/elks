@@ -1,5 +1,5 @@
 #
-# CHaracter device driver configuration
+# Character device driver configuration
 #
 
 mainmenu_option next_comment
@@ -19,16 +19,7 @@ if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 			bool 'ANSI Colourized printk' CONFIG_DCON_ANSI_PRINTK
 		fi
 	fi
-	choice 'XT Keyboard support'			\
-		"American	CONFIG_KEYMAP_US	\
-		 Belgique	CONFIG_KEYMAP_BE	\
-		 British	CONFIG_KEYMAP_UK	\
-		 Deutsch	CONFIG_KEYMAP_DE	\
-		 Dvorak		CONFIG_KEYMAP_DV	\
-		 Espanol	CONFIG_KEYMAP_ES	\
-		 Francais	CONFIG_KEYMAP_FR	\
-		 Suede		CONFIG_KEYMAP_SE"		American
-
+	source arch/i86/drivers/char/KeyMaps/Config.in
 	bool 'Raw keyboard mode' CONFIG_DCON_KRAW
     fi
     if [ "$CONFIG_CONSOLE_BIOS" = "y" ]; then

@@ -11,7 +11,7 @@ USEBCC 		= Y
 
 CLEANDEP	= 
 
-CLEANME 	= 
+CLEANME 	= Config.in keymaps.h
 
 DEPEND  	= 
 
@@ -23,6 +23,15 @@ NOINDENT	=
 # Include the standard rules.
 
 include $(BASEDIR)/Makefile-rules
+
+#########################################################################
+# Specify rules specific to this directory.
+
+Config.in:
+	./mkcfg > Config.tmp
+	mv -f Config.tmp Config.in
+
+keymaps.h: Config.in
 
 #########################################################################
 # Specify distribution rule.

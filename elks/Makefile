@@ -129,6 +129,9 @@ net/net.a:
 #########################################################################
 # Compiler-generated definitions not given as command arguments.
 
+arch/i86/drivers/char/KeyMaps/Config.in:
+	make -C arch/i86/drivers/char/KeyMaps Config.in
+
 include/linuxmt/compiler-generated.h:
 	printf > include/linuxmt/compiler-generated.h		\
 		'#define %s %s\n'				\
@@ -212,7 +215,7 @@ tar:	dist
 #########################################################################
 # Configuration stuff
 
-clean:	doclean
+clean:	nodep doclean
 	@echo
 	@if [ ! -f .config ]; then \
 	    echo ' * This system is not configured. You need to run' ;\
@@ -223,7 +226,7 @@ clean:	doclean
 	fi
 	@echo
 
-config:
+config:	arch/i86/drivers/char/KeyMaps/Config.in
 	@echo
 	@$(CONFIG_SHELL) scripts/Configure arch/$(ARCH)/config.in
 	@echo
@@ -254,7 +257,7 @@ dup:
 	@echo ' * Created backup tree for testing.'
 	@echo
 
-menuconfig:
+menuconfig:	arch/i86/drivers/char/KeyMaps/Config.in
 	${MAKE} -C scripts/lxdialog all
 	$(CONFIG_SHELL) scripts/Menuconfig arch/$(ARCH)/config.in
 

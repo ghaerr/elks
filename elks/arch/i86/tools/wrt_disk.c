@@ -7,157 +7,158 @@
 
 /* NOTE: Each time this is run it erases the SSD */
 
-#define BLOCKS 2 /* set for 128K SSD, 1 Block = 64K */
+#define BLOCKS 2		/* set for 128K SSD, 1 Block = 64K */
 
-main()
+int main(void)
 {
-	unsigned int high_address, low_address;
-	unsigned char data, result, not_done;
+    unsigned int high_address, low_address;
+    unsigned char data, result, not_done;
 
-	/* Connect to SSD in slot 'B' (under 'enter') */
-	ssd_open4(0x01);
-	
-	/* pre-program all bits to zero */
-	LCD_Position(0,0);
-	LCD_WriteChar('P');
-	LCD_WriteChar('r');
-	LCD_WriteChar('e');
-	LCD_WriteChar('P');
-	LCD_WriteChar('r');
-	LCD_WriteChar('o');
-	LCD_WriteChar('g');
+    /* Connect to SSD in slot 'B' (under 'enter') */
+    ssd_open4(0x01);
 
-	/* for block of 64K write data */
-	for (high_address = 0; high_address < BLOCKS ; high_address ++) {
-		low_address = 0;
-		not_done = 1;
+    /* pre-program all bits to zero */
+    LCD_Position(0, 0);
+    LCD_WriteChar('P');
+    LCD_WriteChar('r');
+    LCD_WriteChar('e');
+    LCD_WriteChar('P');
+    LCD_WriteChar('r');
+    LCD_WriteChar('o');
+    LCD_WriteChar('g');
 
-		while (not_done) {
-			if ( (low_address & 0x1F) == 0) {
-				LCD_Position(0,1);
-				print_address(high_address, low_address);
-			}
+    /* for block of 64K write data */
+    for (high_address = 0; high_address < BLOCKS; high_address++) {
+	low_address = 0;
+	not_done = 1;
 
-			result = ssd_write4(high_address, low_address, 0);
+	while (not_done) {
+	    if ((low_address & 0x1F) == 0) {
+		LCD_Position(0, 1);
+		print_address(high_address, low_address);
+	    }
 
-			if (result != data) {
-				LCD_Position(0,2);
-				error(data, result);
-			}
+	    result = ssd_write4(high_address, low_address, 0);
 
-			low_address ++;
-			if (low_address == 0) not_done = 0;	
-		}
+	    if (result != data) {
+		LCD_Position(0, 2);
+		error(data, result);
+	    }
+
+	    low_address++;
+	    if (low_address == 0)
+		not_done = 0;
 	}
-	
+    }
 
-	/* need to erase each chip in the SSD */
-	LCD_Position(0,0);
-	LCD_WriteChar('E');
-	LCD_WriteChar('r');
-	LCD_WriteChar('a');
-	LCD_WriteChar('s');
-	LCD_WriteChar('e');
-	LCD_WriteChar(' ');
-	LCD_WriteChar(' ');
-	
-	/* for block of 64K write data */
-	for (high_address = 0; high_address < BLOCKS ; high_address ++) {
-		LCD_Position(0,1);
-		print_address(high_address, 0);
 
-		result = ssd_erase4(0);
+    /* need to erase each chip in the SSD */
+    LCD_Position(0, 0);
+    LCD_WriteChar('E');
+    LCD_WriteChar('r');
+    LCD_WriteChar('a');
+    LCD_WriteChar('s');
+    LCD_WriteChar('e');
+    LCD_WriteChar(' ');
+    LCD_WriteChar(' ');
 
-		if ( result ) {
-			LCD_Position(0,2);
-			error(high_address, result);
-		}
+    /* for block of 64K write data */
+    for (high_address = 0; high_address < BLOCKS; high_address++) {
+	LCD_Position(0, 1);
+	print_address(high_address, 0);
+
+	result = ssd_erase4(0);
+
+	if (result) {
+	    LCD_Position(0, 2);
+	    error(high_address, result);
 	}
-	
-	open_file();
+    }
 
-	/* lets create the disk image */
-	LCD_Position(0,0);
-	LCD_WriteChar('P');
-	LCD_WriteChar('r');
-	LCD_WriteChar('o');
-	LCD_WriteChar('g');
-	LCD_WriteChar('r');
-	LCD_WriteChar('a');
-	LCD_WriteChar('m');
+    open_file();
 
-	/* for block of 64K write data */
-	for (high_address = 0; high_address < BLOCKS ; high_address ++) {
-		low_address = 0;
-		not_done = 1;
+    /* lets create the disk image */
+    LCD_Position(0, 0);
+    LCD_WriteChar('P');
+    LCD_WriteChar('r');
+    LCD_WriteChar('o');
+    LCD_WriteChar('g');
+    LCD_WriteChar('r');
+    LCD_WriteChar('a');
+    LCD_WriteChar('m');
 
-		while (not_done) {
-			data = read_byte();
-			if ( (low_address & 0x1F) == 0) {
-				LCD_Position(0,1);
-				print_address(high_address, low_address);
-			}
+    /* for block of 64K write data */
+    for (high_address = 0; high_address < BLOCKS; high_address++) {
+	low_address = 0;
+	not_done = 1;
 
-			LCD_WriteChar(data);
+	while (not_done) {
+	    data = read_byte();
+	    if ((low_address & 0x1F) == 0) {
+		LCD_Position(0, 1);
+		print_address(high_address, low_address);
+	    }
 
-			result = ssd_write4(high_address, low_address, data);
+	    LCD_WriteChar(data);
 
-			if (result != data) {
-				LCD_Position(0,2);
-				error(data, result);
-			}
+	    result = ssd_write4(high_address, low_address, data);
 
-			low_address ++;
-			if (low_address == 0) not_done = 0;	
-		}
+	    if (result != data) {
+		LCD_Position(0, 2);
+		error(data, result);
+	    }
+
+	    low_address++;
+	    if (low_address == 0)
+		not_done = 0;
 	}
+    }
 
-	close_file();
+    close_file();
 
-	LCD_Position(0,2);
-	LCD_WriteChar('D');
-	LCD_WriteChar('o');
-	LCD_WriteChar('n');
-	LCD_WriteChar('e');
-	LCD_WriteChar('.');
+    LCD_Position(0, 2);
+    LCD_WriteChar('D');
+    LCD_WriteChar('o');
+    LCD_WriteChar('n');
+    LCD_WriteChar('e');
+    LCD_WriteChar('.');
 
-	/* Sleep for every - requires a hard reset */
-	while(1);
+    /* Sleep for every - requires a hard reset */
+    while (1);
 
-	return(0);
+    return (0);
 }
 
 int print_address(high, low)
-int high;
-int low;
+     int high;
+     int low;
 {
-	/* Print out the address at the current location */
-	LCD_WriteChar( '0' + ((high & 0xF000) >> 12));
-	LCD_WriteChar( '0' + ((high & 0x0F00) >> 8));
-	LCD_WriteChar( '0' + ((high & 0x00F0) >> 4));
-	LCD_WriteChar( '0' + (high & 0x000F) );
-	
-	LCD_WriteChar( '0' + ((low & 0xF000) >> 12));
-	LCD_WriteChar( '0' + ((low & 0x0F00) >> 8));
-	LCD_WriteChar( '0' + ((low & 0x00F0) >> 4));
-	LCD_WriteChar( '0' + (low & 0x000F) );
+    /* Print out the address at the current location */
+    LCD_WriteChar('0' + ((high & 0xF000) >> 12));
+    LCD_WriteChar('0' + ((high & 0x0F00) >> 8));
+    LCD_WriteChar('0' + ((high & 0x00F0) >> 4));
+    LCD_WriteChar('0' + (high & 0x000F));
 
-	LCD_WriteChar( ' ' );
+    LCD_WriteChar('0' + ((low & 0xF000) >> 12));
+    LCD_WriteChar('0' + ((low & 0x0F00) >> 8));
+    LCD_WriteChar('0' + ((low & 0x00F0) >> 4));
+    LCD_WriteChar('0' + (low & 0x000F));
+
+    LCD_WriteChar(' ');
 }
 
 int error(data, result)
-int data;
-int result;
+     int data;
+     int result;
 {
-	LCD_WriteChar('E');
-	LCD_WriteChar('r');
-	LCD_WriteChar('r');
-	LCD_WriteChar('o');
-	LCD_WriteChar('r');
+    LCD_WriteChar('E');
+    LCD_WriteChar('r');
+    LCD_WriteChar('r');
+    LCD_WriteChar('o');
+    LCD_WriteChar('r');
 
-	LCD_WriteChar(' ');
-	print_address(data, result);
+    LCD_WriteChar(' ');
+    print_address(data, result);
 
-	while (1);
+    while (1);
 }
-

@@ -1,4 +1,4 @@
-static char *sccsid =  "@(#) dismain.c, Ver. 2.1 created 00:00:00 87/09/01";
+static char *sccsid = "@(#) dismain.c, Ver. 2.1 created 00:00:00 87/09/01";
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -29,21 +29,21 @@ static char *sccsid =  "@(#) dismain.c, Ver. 2.1 created 00:00:00 87/09/01";
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "dis.h"              /* Disassembler declarations  */
+#include "dis.h"		/* Disassembler declarations  */
 
-extern char *release;         /* Contains release string    */
-static char *IFILE = NULL;    /* Points to input file name  */
-static char *OFILE = NULL;    /* Points to output file name */
-static char *PRG;             /* Name of invoking program   */
-static unsigned long zcount;  /* Consecutive "0" byte count */
-int objflg = 0;               /* Flag: output object bytes  */
-int force = 0;		      /* Flag: override some checks */
+extern char *release;		/* Contains release string    */
+static char *IFILE = NULL;	/* Points to input file name  */
+static char *OFILE = NULL;	/* Points to output file name */
+static char *PRG;		/* Name of invoking program   */
+static unsigned long zcount;	/* Consecutive "0" byte count */
+int objflg = 0;			/* Flag: output object bytes  */
+int force = 0;			/* Flag: override some checks */
 
 #define unix 1
 #define i8086 1
 #define ibmpc 1
 
-#if unix && i8086 && ibmpc    /* Set the CPU identifier     */
+#if unix && i8086 && ibmpc	/* Set the CPU identifier     */
 static int cpuid = 1;
 #else
 static int cpuid = 0;
@@ -53,65 +53,48 @@ static int cpuid = 0;
 #define O_BINARY 0
 #endif
 
-_PROTOTYPE(static void usage, (char *s ));
-_PROTOTYPE(static void fatal, (char *s, char *t ));
-_PROTOTYPE(static void zdump, (unsigned long beg ));
 _PROTOTYPE(static void prolog, (void));
 _PROTOTYPE(static void distext, (void));
 _PROTOTYPE(static void disdata, (void));
 _PROTOTYPE(static void disbss, (void));
 
-_PROTOTYPE(static char *invoker, (char *s));
-_PROTOTYPE(static int objdump, (char *c));
-_PROTOTYPE(static char *getlab, (int type));
-_PROTOTYPE(static void prolog, (void));
-
  /* * * * * * * MISCELLANEOUS UTILITY FUNCTIONS * * * * * * */
 
-static void
-usage(s)
-   register char *s;
+static void usage(register char *s)
 {
-   fprintf(stderr,"Usage: %s [-o] ifile [ofile]\n",s);
-   exit(-1);
+    fprintf(stderr, "Usage: %s [-o] ifile [ofile]\n", s);
+    exit(-1);
 }
 
-static void
-fatal(s,t)
-   register char *s, *t;
+static void fatal(register char *s, register char *t)
 {
-   fprintf(stderr,"%s: %s\n",s,t);
-   exit(-1);
+    fprintf(stderr, "%s: %s\n", s, t);
+    exit(-1);
 }
 
-static void
-zdump(beg)
-   unsigned long beg;
+static void zdump(unsigned long beg)
 {
-   beg = PC - beg;
-   if (beg > 1L)
-      printf("\t.zerow\t%ld\n",(beg >> 1));
-   if (beg & 1L)
-      printf("\t.byte\t0\n");
+    beg = PC - beg;
+    if (beg > 1L)
+	printf("\t.zerow\t%ld\n", (beg >> 1));
+    if (beg & 1L)
+	printf("\t.byte\t0\n");
 }
 
-static char *
-invoker(s)
-   register char *s;
+static char *invoker(register char *s)
 {
-   register int k;
+    register int k;
 
-   k = strlen(s);
+    k = strlen(s);
 
-   while (k--)
-      if (s[k] == '/')
-         {
-         s += k;
-         ++s;
-         break;
-         }
+    while (k--)
+	if (s[k] == '/') {
+	    s += k;
+	    ++s;
+	    break;
+	}
 
-   return (s);
+    return (s);
 }
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -132,77 +115,76 @@ invoker(s)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-static int
-objdump(c)
+static int objdump(register char *c)
+{				/* * * * * * * * * * START OF  objdump() * * * * * * * * * */
 
-   register char *c;
+    register int k, j;
+    int retval = 0;
 
-{/* * * * * * * * * * START OF  objdump() * * * * * * * * * */
+    if (objptr == OBJMAX) {
+	for (k = 0; k < OBJMAX; ++k)
+	    if (objbuf[k])
+		break;
+	if (k == OBJMAX) {
+	    zcount += k;
+	    objptr = 0;
+	    if (c == NULL)
+		return (retval);
+	}
+    }
 
-   register int k,j;
-   int retval = 0;
+    if (zcount) {
+	printf("\t.zerow\t%ld\n", (zcount >> 1));
+	++retval;
+	zcount = 0L;
+    }
 
-   if (objptr == OBJMAX)
-      {
-      for (k = 0; k < OBJMAX; ++k)
-         if (objbuf[k])
-            break;
-      if (k == OBJMAX)
-         {
-         zcount += k;
-         objptr = 0;
-         if (c == NULL)
-            return (retval);
-         }
-      }
+    if (objptr) {
+	printf("\t.byte\t");
+	++retval;
+    } else
+	return (retval);
 
-   if (zcount)
-      {
-      printf("\t.zerow\t%ld\n",(zcount >> 1));
-      ++retval;
-      zcount = 0L;
-      }
+    for (k = 0; k < objptr; ++k) {
+	printf("$%02.2x", objbuf[k]);
+	if (k < (objptr - 1))
+	    putchar(',');
+    }
 
-   if (objptr)
-      {
-      printf("\t.byte\t");
-      ++retval;
-      }
-   else
-      return (retval);
+    for (k = objptr; k < OBJMAX; ++k)
+	printf("    ");
 
-   for (k = 0; k < objptr; ++k)
-      {
-      printf("$%02.2x",objbuf[k]);
-      if (k < (objptr - 1))
-         putchar(',');
-      }
+    printf("    | \"");
 
-   for (k = objptr; k < OBJMAX; ++k)
-      printf("    ");
+    for (k = 0; k < objptr; ++k) {
+	if (objbuf[k] > ' ' && objbuf[k] <= '~')
+	    putchar(objbuf[k]);
+	else
+	    switch (objbuf[k]) {
+	    case '\t':
+		printf("\\t");
+		break;
+	    case '\n':
+		printf("\\n");
+		break;
+	    case '\f':
+		printf("\\f");
+		break;
+	    case '\r':
+		printf("\\r");
+		break;
+	    default:
+		putchar('.');
+		break;
+	    }
+    }
+    printf("\"\n");
 
-   printf("    | \"");
+    objptr = 0;
 
-   for (k = 0; k < objptr; ++k)
-      {
-      if (objbuf[k] > ' ' && objbuf[k] <= '~' )
-         putchar(objbuf[k]);
-      else switch(objbuf[k])
-         {
-	 case '\t': printf("\\t"); break;
-	 case '\n': printf("\\n"); break;
-	 case '\f': printf("\\f"); break;
-	 case '\r': printf("\\r"); break;
-	 default:   putchar('.'); break;
-         }
-      }
-   printf("\"\n");
+    return (retval);
 
-   objptr = 0;
-
-   return (retval);
-
-}/* * * * * * * * * *  END OF  objdump()  * * * * * * * * * */
+}				/* * * * * * * * * *  END OF  objdump()  * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -217,41 +199,36 @@ objdump(c)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-static char *
-getlab(type)
-register int type;
-{/* * * * * * * * * *  START OF getlab()  * * * * * * * * * */
+static char *getlab(register int type)
+{				/* * * * * * * * * *  START OF getlab()  * * * * * * * * * */
 
-   register int k;
-   static char b[48], c[32];
+    register int k;
+    static char b[48], c[32];
 
-   if (symptr < 0)
-      if ((type == N_TEXT)
-       || ((type == N_DATA) && ( ! objptr ) && ( ! zcount )))
-         {
-         if (type == N_TEXT)
-            sprintf(b,"T%05.5lx:",PC);
-         else
-            sprintf(b,"D%05.5lx:",PC);
-         return (b);
-         }
-      else
-         return (NULL);
+    if (symptr < 0)
+	if ((type == N_TEXT)
+	    || ((type == N_DATA) && (!objptr) && (!zcount))) {
+	    if (type == N_TEXT)
+		sprintf(b, "T%05.5lx:", PC);
+	    else
+		sprintf(b, "D%05.5lx:", PC);
+	    return (b);
+	} else
+	    return (NULL);
 
-   for (k = 0; k <= symptr; ++k)
-      if ((symtab[k].n_value == PC)
-       && ((symtab[k].n_sclass & N_SECT) == type))
-         {
-         sprintf(b,"%s:\n",getnam(k));
-         if (objflg && (type != N_TEXT))
-            sprintf(c,"| %05.5lx\n",PC);
-         strcat(b,c);
-         return (b);
-         }
+    for (k = 0; k <= symptr; ++k)
+	if ((symtab[k].n_value == PC)
+	    && ((symtab[k].n_sclass & N_SECT) == type)) {
+	    sprintf(b, "%s:\n", getnam(k));
+	    if (objflg && (type != N_TEXT))
+		sprintf(c, "| %05.5lx\n", PC);
+	    strcat(b, c);
+	    return (b);
+	}
 
-   return (NULL);
+    return (NULL);
 
-}/* * * * * * * * * * * END OF getlab() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF getlab() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -261,88 +238,75 @@ register int type;
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-static void
-prolog()
+static void prolog(void)
+{				/* * * * * * * * * *  START OF prolog()  * * * * * * * * * */
 
-{/* * * * * * * * * *  START OF prolog()  * * * * * * * * * */
+    register int j, flag;
 
-   register int j, flag;
+    fflush(stdout);
 
-   fflush(stdout);
+    if (symptr < 0)
+	return;
 
-   if (symptr < 0)
-      return;
+    for (j = flag = 0; j <= symptr; ++j)
+	if ((symtab[j].n_sclass & N_CLASS) == C_EXT)
+	    if (((symtab[j].n_sclass & N_SECT) > N_UNDF)
+		&& ((symtab[j].n_sclass & N_SECT) < N_COMM)) {
+		char *c = getnam(j);
+		printf("\t.globl\t%s", c);
+		if (++flag == 1) {
+		    putchar('\t');
+		    if (strlen(c) < 8)
+			putchar('\t');
+		    printf("| Internal global\n");
+		} else
+		    putchar('\n');
+	    } else if (symtab[j].n_value) {
+		char *c = getnam(j);
+		printf("\t.comm\t%s,0x%08.8lx", c, symtab[j].n_value);
+		if (++flag == 1)
+		    printf("\t| Internal global\n");
+		else
+		    putchar('\n');
+	    }
 
-   for (j = flag = 0; j <= symptr; ++j)
-      if ((symtab[j].n_sclass & N_CLASS) == C_EXT)
-         if (((symtab[j].n_sclass & N_SECT) > N_UNDF)
-          && ((symtab[j].n_sclass & N_SECT) < N_COMM))
-            {
-            char *c = getnam(j);
-            printf("\t.globl\t%s",c);
-            if (++flag == 1)
-               {
-               putchar('\t');
-               if (strlen(c) < 8)
-                  putchar('\t');
-               printf("| Internal global\n");
-               }
-            else
-               putchar('\n');
-            }
-         else
-            if (symtab[j].n_value)
-               {
-               char *c = getnam(j);
-               printf("\t.comm\t%s,0x%08.8lx",c,
-                symtab[j].n_value);
-               if (++flag == 1)
-                  printf("\t| Internal global\n");
-               else
-                  putchar('\n');
-               }
+    if (flag)
+	putchar('\n');
+    fflush(stdout);
 
-   if (flag)
-      putchar('\n');
-   fflush(stdout);
+    for (j = flag = 0; j <= relptr; ++j)
+	if (relo[j].r_symndx < S_BSS) {
+	    char *c = getnam(relo[j].r_symndx);
+	    ++flag;
+	    printf("\t.globl\t%s", c);
+	    putchar('\t');
+	    if (strlen(c) < 8)
+		putchar('\t');
+	    printf("| Undef: %05.5lx\n", relo[j].r_vaddr);
+	}
 
-   for (j = flag = 0; j <= relptr; ++j)
-      if (relo[j].r_symndx < S_BSS)
-         {
-         char *c = getnam(relo[j].r_symndx);
-         ++flag;
-         printf("\t.globl\t%s",c);
-         putchar('\t');
-         if (strlen(c) < 8)
-            putchar('\t');
-         printf("| Undef: %05.5lx\n",relo[j].r_vaddr);
-         }
+    if (flag)
+	putchar('\n');
+    fflush(stdout);
 
-   if (flag)
-      putchar('\n');
-   fflush(stdout);
+    for (j = flag = 0; j <= symptr; ++j)
+	if ((symtab[j].n_sclass & N_SECT) == N_ABS) {
+	    char *c = getnam(j);
+	    printf("%s=0x%08.8lx", c, symtab[j].n_value);
+	    if (++flag == 1) {
+		printf("\t\t");
+		if (strlen(c) < 5)
+		    putchar('\t');
+		printf("| Literal\n");
+	    } else
+		putchar('\n');
+	}
 
-   for (j = flag = 0; j <= symptr; ++j)
-      if ((symtab[j].n_sclass & N_SECT) == N_ABS)
-         {
-         char *c = getnam(j);
-         printf("%s=0x%08.8lx",c,symtab[j].n_value);
-         if (++flag == 1)
-            {
-            printf("\t\t");
-            if (strlen(c) < 5)
-               putchar('\t');
-            printf("| Literal\n");
-            }
-         else
-            putchar('\n');
-         }
+    if (flag)
+	putchar('\n');
+    fflush(stdout);
 
-   if (flag)
-      putchar('\n');
-   fflush(stdout);
-
-}/* * * * * * * * * * * END OF prolog() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF prolog() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -351,69 +315,71 @@ prolog()
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-static void
-distext()
+static void distext(void)
+{				/* * * * * * * * * * START OF  distext() * * * * * * * * * */
 
-{/* * * * * * * * * * START OF  distext() * * * * * * * * * */
+    char *c;
+    register int j;
+    register void (*f) ();
 
-   char *c;
-   register int j;
-   register void (*f)();
+    for (j = 0; j < (int) (HDR.HeaderSizeBytes); ++j)
+	getchar();
 
-   for (j = 0; j < (int)(HDR.HeaderSizeBytes); ++j)
-      getchar();
+    printf("| %s, %s\n\n", PRG, release);
 
-   printf("| %s, %s\n\n",PRG,release);
+    printf("| @(");
 
-   printf("| @(");
+    printf("#)\tDisassembly of %s", IFILE);
 
-   printf("#)\tDisassembly of %s",IFILE);
+    if (symptr < 0)
+	printf(" (no symbols)\n\n");
+    else
+	printf("\n\n");
 
-   if (symptr < 0)
-      printf(" (no symbols)\n\n");
-   else
-      printf("\n\n");
+    prolog();			/* Should do nowt, since symptr == 0 */
 
-   prolog(); /* Should do nowt, since symptr == 0 */
+    printf("\t.text\t\t\t| loc = %05.5lx, size = %05.5lx\n\n",
+	   PC, HDR.CodeParas * 16);
+    fflush(stdout);
 
-   printf("\t.text\t\t\t| loc = %05.5lx, size = %05.5lx\n\n",
-    PC,HDR.CodeParas*16);
-   fflush(stdout);
+    segflg = 0;
 
-   segflg = 0;
+    for (PC = 0L; PC < HDR.CodeParas * 16; ++PC) {
+	j = getchar();
+	if (j == EOF)
+	    break;
+	j &= 0xFF;
+	if ((j == 0) && ((PC + 1L) == HDR.CodeParas * 16)) {
+	    ++PC;
+	    break;
+	}
+	if ((c = getlab(N_TEXT)) != NULL)
+	    printf("%s", c);
+	if (j >= 0 && j < 256) {
+	    f = optab[j].func;
+	    (*f) (j);
+	}
+	fflush(stdout);
+    }
 
-   for (PC = 0L; PC < HDR.CodeParas*16; ++PC)
-      {
-      j = getchar();
-      if( j == EOF ) break;
-      j &= 0xFF;
-      if ((j == 0) && ((PC + 1L) == HDR.CodeParas*16))
-         {
-         ++PC;
-         break;
-         }
-      if ((c = getlab(N_TEXT)) != NULL)
-         printf("%s",c);
-      if( j>=0 && j<256 )
-      {
-         f = optab[j].func;
-         (*f)(j);
-      }
-      fflush(stdout);
-      }
+}				/* * * * * * * * * *  END OF  distext()  * * * * * * * * * */
 
-}/* * * * * * * * * *  END OF  distext()  * * * * * * * * * */
+#if 0
+#define FETCH(p)  ++PC; p = getchar() & 0xff; objbuf[objptr++] = p
+#endif
 
-Fetch()
+int Fetch(void)
 {
-   int p;
-   ++PC;
-   if( symptr>=0 && getlab(N_TEXT) != NULL ) { --PC; return -1; }
-   
-/* #define FETCH(p)  ++PC; p = getchar() & 0xff; objbuf[objptr++] = p */
-   p = getchar();
-   objbuf[objptr++] = p;
-   return p;
+    int p;
+
+    ++PC;
+    if (symptr >= 0 && getlab(N_TEXT) != NULL) {
+	--PC;
+	return -1;
+    }
+    p = getchar();
+    objbuf[objptr++] = p;
+    return p;
 }
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -435,43 +401,40 @@ Fetch()
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-static void
-disdata()
+static void disdata(void)
+{				/* * * * * * * * * * START OF  disdata() * * * * * * * * * */
 
-{/* * * * * * * * * * START OF  disdata() * * * * * * * * * */
+    unsigned long end;
+    register char *c;
+    register int j;
 
-   register char *c;
-   register int j;
-   unsigned long end;
+    putchar('\n');
+    if (HDR.InitialisedData == 0)
+	return;
 
-   putchar('\n');
-   if( HDR.InitialisedData == 0 ) return;
+    PC = /*0L */ HDR.StackParas * 16;
+    end = PC + HDR.InitialisedData;
 
-   PC = /*0L*/ HDR.StackParas*16;
-   end = PC+HDR.InitialisedData;
+    printf("\t.data\t\t\t| loc = %05.5lx, size = %05.5lx\n\n",
+	   PC, HDR.InitialisedData);
 
-   printf("\t.data\t\t\t| loc = %05.5lx, size = %05.5lx\n\n",
-    PC,HDR.InitialisedData);
+    segflg = 0;
 
-   segflg = 0;
+    for (objptr = 0, zcount = 0L; PC < end; ++PC) {
+	if ((c = getlab(N_DATA)) != NULL) {
+	    objdump(c);
+	    printf("%s", c);
+	}
+	if (objptr >= OBJMAX)
+	    if (objdump(NULL) && (symptr < 0))
+		printf("D%05.5lx:", PC);
+	j = getchar() & 0xff;
+	objbuf[objptr++] = j;
+    }
 
-   for (objptr = 0, zcount = 0L; PC < end; ++PC)
-      {
-      if ((c = getlab(N_DATA)) != NULL)
-         {
-         objdump(c);
-         printf("%s",c);
-         }
-      if (objptr >= OBJMAX)
-         if (objdump(NULL) && (symptr < 0))
-            printf("D%05.5lx:",PC);
-      j = getchar() & 0xff;
-      objbuf[objptr++] = j;
-      }
+    objdump("");
 
-   objdump("");
-
-}/* * * * * * * * * *  END OF  disdata()  * * * * * * * * * */
+}				/* * * * * * * * * *  END OF  disdata()  * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -481,40 +444,37 @@ disdata()
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-static void disbss()
+static void disbss(void)
+{				/* * * * * * * * * *  START OF disbss()  * * * * * * * * * */
 
-{/* * * * * * * * * *  START OF disbss()  * * * * * * * * * */
+    unsigned long beg, end;
+    register char *c;
+    register int j;
 
-   register int j;
-   register char *c;
-   unsigned long beg, end;
+    putchar('\n');
 
-   putchar('\n');
+    if (HDR.InitialisedData == HDR.DataParas * 16)
+	return;
 
-   if( HDR.InitialisedData == HDR.DataParas*16 ) return;
+    end = HDR.DataParas * 16 - HDR.InitialisedData;
 
-   end = HDR.DataParas*16 - HDR.InitialisedData;
+    printf("\t.bss\t\t\t| loc = %05.5lx, size = %05.5lx\n\n", PC, end);
 
-   printf("\t.bss\t\t\t| loc = %05.5lx, size = %05.5lx\n\n",
-    PC,end);
+    segflg = 0;
 
-   segflg = 0;
+    for (beg = PC; PC < end; ++PC)
+	if ((c = getlab(N_BSS)) != NULL) {
+	    if (PC > beg) {
+		zdump(beg);
+		beg = PC;
+	    }
+	    printf("%s", c);
+	}
 
-   for (beg = PC; PC < end; ++PC)
-      if ((c = getlab(N_BSS)) != NULL)
-         {
-         if (PC > beg)
-            {
-            zdump(beg);
-            beg = PC;
-            }
-         printf("%s",c);
-         }
+    if (PC > beg)
+	zdump(beg);
 
-   if (PC > beg)
-      zdump(beg);
-
-}/* * * * * * * * * * * END OF disbss() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF disbss() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -528,137 +488,125 @@ static void disbss()
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-main(argc,argv)
+void main(int argc, register char **argv)
+{				/* * * * * * * * * * * START OF main() * * * * * * * * * * */
 
-   int argc;                  /* Command-line args from OS  */
-   register char **argv;
+    char a[1024];
+    register int fd;
+    long taboff, tabnum;
+    long reloff, relnum;
 
-{/* * * * * * * * * * * START OF main() * * * * * * * * * * */
+    PRG = invoker(*argv);
 
-   char a[1024];
-   register int fd;
-   long taboff, tabnum;
-   long reloff, relnum;
+    while (*++argv != NULL)	/* Process command-line args  */
+	if (**argv == '-')
+	    switch (*++*argv) {
+	    case 'o':
+		if (*++*argv)
+		    usage(PRG);
+		else
+		    ++objflg;
+		break;
+	    case 'f':
+		force++;
+		break;
+	    default:
+		usage(PRG);
+	} else if (IFILE == NULL)
+	    IFILE = *argv;
+	else if (OFILE == NULL)
+	    OFILE = *argv;
+	else
+	    usage(PRG);
 
-   PRG = invoker(*argv);
+    if (IFILE == NULL)
+	usage(PRG);
+    else if ((fd = open(IFILE, O_RDONLY | O_BINARY)) < 0) {
+	sprintf(a, "can't access input file %s", IFILE);
+	fatal(PRG, a);
+    }
 
-   while (*++argv != NULL)    /* Process command-line args  */
-      if (**argv == '-')
-         switch (*++*argv)
-            {
-            case 'o' :
-               if (*++*argv)
-                  usage(PRG);
-               else
-                  ++objflg;
-               break;
-            case 'f' :
-	       force++;
-               break;
-            default :
-               usage(PRG);
-            }
-      else
-         if (IFILE == NULL)
-            IFILE = *argv;
-         else if (OFILE == NULL)
-            OFILE = *argv;
-         else
-            usage(PRG);
+    if (OFILE != NULL)
+	if (freopen(OFILE, "w", stdout) == NULL) {
+	    sprintf(a, "can't open output file %s", OFILE);
+	    fatal(PRG, a);
+	}
 
-   if (IFILE == NULL)
-      usage(PRG);
-   else
-      if ((fd = open(IFILE,O_RDONLY|O_BINARY)) < 0)
-         {
-         sprintf(a,"can't access input file %s",IFILE);
-         fatal(PRG,a);
-         }
+    if (!cpuid)
+	fprintf(stderr, "%s: warning: host/cpu clash\n", PRG);
 
-   if (OFILE != NULL)
-      if (freopen(OFILE,"w",stdout) == NULL)
-         {
-         sprintf(a,"can't open output file %s",OFILE);
-         fatal(PRG,a);
-         }
+    read(fd, (char *) &HDR, sizeof(ImgHeader));
 
-   if ( ! cpuid )
-      fprintf(stderr,"%s: warning: host/cpu clash\n",PRG);
+    if (strncmp("ImageFileType**", HDR.Signature, 16) != 0) {
+	sprintf(a, "input file %s not in .img format", IFILE);
+	fatal(PRG, a);
+    }
 
-   read(fd, (char *) &HDR,sizeof(ImgHeader));
+    /*{
+     * HDR.a_trsize = HDR.a_drsize = 0L;
+     * HDR.a_tbase = HDR.a_dbase = 0L;
+     * } */
 
-   if (strncmp("ImageFileType**", HDR.Signature, 16) != 0)
-      {
-	 sprintf(a,"input file %s not in .img format",IFILE);
-	 fatal(PRG,a);
-      }
+    /*reloff = HDR.a_text        * Compute reloc data offset  *
+     * + HDR.a_data
+     * + (long)(HDR.a_hdrlen); */
+    reloff = 0;
 
-   /*{
-      HDR.a_trsize = HDR.a_drsize = 0L;
-      HDR.a_tbase = HDR.a_dbase = 0L;
-   }*/
+    relnum = 0;
+    /*(HDR.a_trsize + HDR.a_drsize) / sizeof(struct reloc); */
 
-   /*reloff = HDR.a_text        * Compute reloc data offset  *
-          + HDR.a_data
-          + (long)(HDR.a_hdrlen);*/
-   reloff = 0;
+    /*taboff = reloff            * Compute name table offset  *
+     * + HDR.a_trsize
+     * + HDR.a_drsize; */
+    taboff = 0;
 
-   relnum = 0;
-      /*(HDR.a_trsize + HDR.a_drsize) / sizeof(struct reloc);*/
+    /*tabnum = HDR.a_syms / sizeof(struct nlist); */
+    tabnum = 0;
 
-   /*taboff = reloff            * Compute name table offset  *
-          + HDR.a_trsize
-          + HDR.a_drsize;*/
-   taboff = 0;
+    if (relnum > MAXSYM)
+	fatal(PRG, "reloc table overflow");
 
-   /*tabnum = HDR.a_syms / sizeof(struct nlist);*/
-   tabnum = 0;
+    if (tabnum > MAXSYM)
+	fatal(PRG, "symbol table overflow");
 
-   if (relnum > MAXSYM)
-      fatal(PRG,"reloc table overflow");
+    /*if (relnum)                            * Get reloc data *
+     * if (lseek(fd,reloff,0) != reloff)
+     * fatal(PRG,"lseek error");
+     * else
+     * {
+     * for (relptr = 0; relptr < relnum; ++relptr)
+     * read(fd, (char *) &relo[relptr],sizeof(struct reloc));
+     * relptr--;
+     * }
+     * 
+     * if (tabnum)                            * Read in symtab *
+     * if (lseek(fd,taboff,0) != taboff)
+     * fatal(PRG,"lseek error");
+     * else
+     * {
+     * for (symptr = 0; symptr < tabnum; ++symptr)
+     * read(fd, (char *) &symtab[symptr],sizeof(struct nlist));
+     * symptr--;
+     * } */
 
-   if (tabnum > MAXSYM)
-      fatal(PRG,"symbol table overflow");
-
-   /*if (relnum)                            * Get reloc data *
-      if (lseek(fd,reloff,0) != reloff)
-         fatal(PRG,"lseek error");
-      else
-         {
-         for (relptr = 0; relptr < relnum; ++relptr)
-            read(fd, (char *) &relo[relptr],sizeof(struct reloc));
-         relptr--;
-         }
-
-   if (tabnum)                            * Read in symtab *
-      if (lseek(fd,taboff,0) != taboff)
-         fatal(PRG,"lseek error");
-      else
-         {
-         for (symptr = 0; symptr < tabnum; ++symptr)
-            read(fd, (char *) &symtab[symptr],sizeof(struct nlist));
-         symptr--;
-         }*/
-
-   close(fd);
+    close(fd);
 
 #ifdef MSDOS
-   if (freopen(IFILE,"rb",stdin) == NULL)
+    if (freopen(IFILE, "rb", stdin) == NULL)
 #else
-   if (freopen(IFILE,"r",stdin) == NULL)
+    if (freopen(IFILE, "r", stdin) == NULL)
 #endif
-      {
-      sprintf(a,"can't reopen input file %s",IFILE);
-      fatal(PRG,a);
-      }
+    {
+	sprintf(a, "can't reopen input file %s", IFILE);
+	fatal(PRG, a);
+    }
 
-   distext();
+    distext();
 
-   disdata();
+    disdata();
 
-   disbss();
+    disbss();
 
-   exit(0);
+    exit(0);
 
-}/* * * * * * * * * * *  END OF main()  * * * * * * * * * * */
+}				/* * * * * * * * * * *  END OF main()  * * * * * * * * * * */

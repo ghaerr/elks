@@ -1,5 +1,4 @@
-static char *sccsid =
-   "@(#) dishand.c, Ver. 2.1 created 00:00:00 87/09/01";
+static char *sccsid = "@(#) dishand.c, Ver. 2.1 created 00:00:00 87/09/01";
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -28,62 +27,47 @@ static char *sccsid =
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "dis.h"              /* Disassembler declarations  */
+#include "dis.h"		/* Disassembler declarations  */
 
-int segflg;                   /* Segment-override flag      */
+int segflg;			/* Segment-override flag      */
 
-unsigned char objbuf[OBJMAX]; /* Buffer for object code     */
+unsigned char objbuf[OBJMAX];	/* Buffer for object code     */
 
-int objptr;                   /* Index into objbuf[]        */
+int objptr;			/* Index into objbuf[]        */
 
-unsigned long PC;             /* Current program counter    */
+unsigned long PC;		/* Current program counter    */
 
  /* * * * * *  MISCELLANEOUS SUPPORTING ROUTINES  * * * * * */
 
 
-void
-objini(j)                     /* Object code init routine   */
-
-   register int j;
-
-{
-   if ((segflg == 1) || (segflg == 2))
-      segflg *= 3;
-   else
-      segflg = 0;
-   objptr = 0;
-   objbuf[objptr++] = (unsigned char)(j);
+void objini(register int j)
+{				/* Object code init routine   */
+    if ((segflg == 1) || (segflg == 2))
+	segflg *= 3;
+    else
+	segflg = 0;
+    objptr = 0;
+    objbuf[objptr++] = (unsigned char) (j);
 }
 
-
-void
-objout()                      /* Object-code output routine */
-
-{
+void objout(void)
+{				/* Object-code output routine */
     register int k;
 
-   if ( ! objflg )
-      return;
-   else
-      {
-      printf("\t|");
-      if (symptr >= 0)
-         printf(" %05.5lx:",(PC + 1L - (long)(objptr)));
-      for (k = 0; k < objptr; ++k)
-         printf(" %02.2x",objbuf[k]);
-      putchar('\n');
-      }
+    if (objflg) {
+	printf("\t|");
+	if (symptr >= 0)
+	    printf(" %05.5lx:", (PC + 1L - (long) (objptr)));
+	for (k = 0; k < objptr; ++k)
+	    printf(" %02.2x", objbuf[k]);
+	putchar('\n');
+    }
 }
 
-
-void
-badseq(j,k)                   /* Invalid-sequence routine   */
-
-   register int j, k;
-
-{
-   printf("\t.byte\t$%02.2x\t\t| invalid code sequence\n",j);
-   printf("\t.byte\t$%02.2x\n",k);
+void badseq(register int j, register int k)
+{				/* Invalid-sequence routine   */
+    printf("\t.byte\t$%02.2x\t\t| invalid code sequence\n", j);
+    printf("\t.byte\t$%02.2x\n", k);
 }
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -98,23 +82,19 @@ badseq(j,k)                   /* Invalid-sequence routine   */
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-dfhand(j)
+void dfhand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF dfhand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    segflg = 0;
 
-{/* * * * * * * * * *  START OF dfhand()  * * * * * * * * * */
+    printf("\t.byte\t$%02.2x", j);
 
-   segflg = 0;
+    if (optab[j].min || optab[j].max)
+	putchar('\n');
+    else
+	printf("\t\t| unimplemented opcode\n");
 
-   printf("\t.byte\t$%02.2x",j);
-
-   if (optab[j].min || optab[j].max)
-      putchar('\n');
-   else
-      printf("\t\t| unimplemented opcode\n");
-
-}/* * * * * * * * * * * END OF dfhand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF dfhand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -123,28 +103,24 @@ dfhand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-sbhand(j)
+void sbhand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF sbhand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    objini(j);
 
-{/* * * * * * * * * *  START OF sbhand()  * * * * * * * * * */
+    if (j == 0x2e)		/* seg cs   */
+	segflg = 1;
 
-   objini(j);
+    if ((j == 0x26)		/* seg es   */
+	||(j == 0x36)		/* seg ss   */
+	||(j == 0x3e))		/* seg ds   */
+	segflg = 2;
 
-   if (j == 0x2e)                               /* seg cs   */
-      segflg = 1;
+    printf("%s\n", optab[j].text);
 
-   if ((j == 0x26)                              /* seg es   */
-    || (j == 0x36)                              /* seg ss   */
-    || (j == 0x3e))                             /* seg ds   */
-      segflg = 2;
+    objout();
 
-   printf("%s\n",optab[j].text);
-
-   objout();
-
-}/* * * * * * * * * * * END OF sbhand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF sbhand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -153,58 +129,51 @@ sbhand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-aohand(j)
+void aohand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF aohand()  * * * * * * * * * */
+    char b[80];
+    register int k;
+    int m, n;
 
-   register int j;            /* Pointer to optab[] entry   */
+    objini(j);
 
-{/* * * * * * * * * *  START OF aohand()  * * * * * * * * * */
-
-   register int k;
-   int m, n;
-   char b[80];
-
-   objini(j);
-
-   switch (j & 7)
-      {
-      case 0 :
-      case 1 :
-      case 2 :
-      case 3 :
-         printf("%s\t",optab[j].text);
-         FETCH(k);
-         printf("%s\n",mtrans(j,k,TR_STD));
-         break;
-      case 4 :
-         FETCH(k);
-	 if( k < 16 )
-            printf("%s\tal,*%d\n",optab[j].text,k);
-	 else
-            printf("%s\tal,*$%02.2x\n",optab[j].text,k);
-         break;
-      case 5 :
-         FETCH(m);
-         FETCH(n);
-         k = (n << 8) | m;
-         if (lookext((long)(k),(PC - 1),b))
-            printf("%s\tax,#%s\n",optab[j].text,b);
-         else
-	    {
-	    if( k < 100 || k > 65436 )
-	       printf("%s\tax,#%d\n",optab[j].text, (short)k);
+    switch (j & 7) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+	printf("%s\t", optab[j].text);
+	FETCH(k);
+	printf("%s\n", mtrans(j, k, TR_STD));
+	break;
+    case 4:
+	FETCH(k);
+	if (k < 16)
+	    printf("%s\tal,*%d\n", optab[j].text, k);
+	else
+	    printf("%s\tal,*$%02.2x\n", optab[j].text, k);
+	break;
+    case 5:
+	FETCH(m);
+	FETCH(n);
+	k = (n << 8) | m;
+	if (lookext((long) (k), (PC - 1), b))
+	    printf("%s\tax,#%s\n", optab[j].text, b);
+	else {
+	    if (k < 100 || k > 65436)
+		printf("%s\tax,#%d\n", optab[j].text, (short) k);
 	    else
-	       printf("%s\tax,#$%04x\n",optab[j].text,k);
-	    }
-         break;
-      default :
-         dfhand(j);
-         break;
-      }
+		printf("%s\tax,#$%04x\n", optab[j].text, k);
+	}
+	break;
+    default:
+	dfhand(j);
+	break;
+    }
 
-   objout();
+    objout();
 
-}/* * * * * * * * * * * END OF aohand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF aohand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -213,36 +182,31 @@ aohand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-sjhand(j)
+void sjhand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF sjhand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    register int k;
+    int m;
+    unsigned short dest;
 
-{/* * * * * * * * * *  START OF sjhand()  * * * * * * * * * */
+    objini(j);
 
-   register int k;
-   int m;
-   unsigned short dest;
+    FETCH(m);
 
-   objini(j);
+    if (m & 0x80)
+	k = 0xff00;
+    else
+	k = 0;
 
-   FETCH(m);
+    k |= m;
+    dest = (PC + k + 1);
 
-   if (m & 0x80)
-      k = 0xff00;
-   else
-      k = 0;
+    printf("%s\t%s\t\t| loc %05.5lx\n", optab[j].text,
+	   lookup((long) dest, N_TEXT, LOOK_REL, -1L), (long) dest);
 
-   k |= m;
-   dest = (PC + k + 1);
+    objout();
 
-   printf("%s\t%s\t\t| loc %05.5lx\n",optab[j].text,
-    lookup((long) dest,N_TEXT,LOOK_REL,-1L),
-    (long) dest);
-
-   objout();
-
-}/* * * * * * * * * * * END OF sjhand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF sjhand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -256,151 +220,131 @@ sjhand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-imhand(j)
+void imhand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF imhand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    static char a[128], b[32];
+    unsigned long pc;
+    register int k;
+    int offset, oflag, immed, iflag, mod, opi, w, rm;
+    int m, n;
 
-{/* * * * * * * * * *  START OF imhand()  * * * * * * * * * */
+    objini(j);
 
-   unsigned long pc;
-   register int k;
-   int offset, oflag, immed, iflag, mod, opi, w, rm;
-   int m, n;
-   static char a[100], b[30];
+    FETCH(k);
 
-   objini(j);
+    pc = PC + 1;
 
-   FETCH(k);
+    offset = 0;
+    mod = (k & 0xc0) >> 6;
+    opi = (k & 0x38) >> 3;
+    w = j & 1;
+    rm = k & 7;
 
-   pc = PC + 1;
+    if ((j & 2)
+	&& ((opi == 1)
+	    || (opi == 4)
+	    || (opi == 6))) {
+	badseq(j, k);
+	return;
+    }
 
-   offset = 0;
-   mod = (k & 0xc0) >> 6;
-   opi = (k & 0x38) >> 3;
-   w = j & 1;
-   rm = k & 7;
+    strcpy(a, OPFAM[opi]);
 
-   if ((j & 2)
-    && ((opi == 1)
-     || (opi == 4)
-     || (opi == 6)))
-      {
-      badseq(j,k);
-      return;
-      }
+    if (!w)
+	strcat(a, "b");
 
-   strcpy(a,OPFAM[opi]);
+    if ((oflag = mod) > 2)
+	oflag = 0;
 
-   if ( ! w )
-      strcat(a,"b");
-
-   if ((oflag = mod) > 2)
-      oflag = 0;
-
-   if ((mod == 0) && (rm == 6))
-      {
-      FETCH(m);
-      FETCH(n);
-      offset = (n << 8) | m;
-      }
-   else if (oflag)
-      if (oflag == 2)
-         {
-         FETCH(m);
-         FETCH(n);
-         offset = (n << 8) | m;
-         }
-      else
-         {
-         FETCH(m);
-         if (m & 0x80)
-            n = -0xFF;
-         else
-            n = 0;
-         offset = n | m;
-         }
-
-   switch (j & 3)
-      {
-      case 0 :
-      case 2 :
-         FETCH(immed);
-         iflag = 0;
-         break;
-      case 1 :
-         FETCH(m);
-         FETCH(n);
-         immed = (n << 8) | m;
-         iflag = 1;
-         break;
-      case 3 :
-         FETCH(immed);
-         if (immed & 0x80)
-            immed &= 0xff00;
-         iflag = 0;
-         break;
-      }
-
-   strcat(a,"\t");
-
-   switch (mod)
-      {
-      case 0 :
-         if (rm == 6)
-            strcat(a,
-             lookup((long)(offset),N_DATA,LOOK_ABS,pc));
-         else
-            {
-            sprintf(b,"(%s)",REGS0[rm]);
-            strcat(a,b);
-            }
-         break;
-      case 1 :
-      case 2 :
-         if (mod == 1)
-	 {
-            strcat(a,"*");
-            sprintf(b,"%d(", (short)offset);
-	 }
-         else
-	 {
-            strcat(a,"#");
-	    if( offset < 100 || offset > 65436 )
-               sprintf(b,"%d(", (short)offset);
+    if ((mod == 0) && (rm == 6)) {
+	FETCH(m);
+	FETCH(n);
+	offset = (n << 8) | m;
+    } else if (oflag)
+	if (oflag == 2) {
+	    FETCH(m);
+	    FETCH(n);
+	    offset = (n << 8) | m;
+	} else {
+	    FETCH(m);
+	    if (m & 0x80)
+		n = -0xFF;
 	    else
-               sprintf(b,"$%04x(",offset);
-	 }
-         strcat(a,b);
-         strcat(a,REGS1[rm]);
-         strcat(a,")");
-         break;
-      case 3 :
-         strcat(a,REGS[(w << 3) | rm]);
-         break;
-      }
+		n = 0;
+	    offset = n | m;
+	}
 
-   strcat(a,",");
-   if (iflag)
-   {
-      strcat(a,"#");
-      if( immed < 100 || immed > 65436 )
-         sprintf(b,"%d", (short)immed);
-      else
-         sprintf(b,"$%04x",immed);
-   }
-   else
-   {
-      strcat(a,"*");
-      sprintf(b,"%d",immed);
-   }
-   strcat(a,b);
+    switch (j & 3) {
+    case 0:
+    case 2:
+	FETCH(immed);
+	iflag = 0;
+	break;
+    case 1:
+	FETCH(m);
+	FETCH(n);
+	immed = (n << 8) | m;
+	iflag = 1;
+	break;
+    case 3:
+	FETCH(immed);
+	if (immed & 0x80)
+	    immed &= 0xff00;
+	iflag = 0;
+	break;
+    }
 
-   printf("%s\n",a);
+    strcat(a, "\t");
 
-   objout();
+    switch (mod) {
+    case 0:
+	if (rm == 6)
+	    strcat(a, lookup((long) (offset), N_DATA, LOOK_ABS, pc));
+	else {
+	    sprintf(b, "(%s)", REGS0[rm]);
+	    strcat(a, b);
+	}
+	break;
+    case 1:
+    case 2:
+	if (mod == 1) {
+	    strcat(a, "*");
+	    sprintf(b, "%d(", (short) offset);
+	} else {
+	    strcat(a, "#");
+	    if (offset < 100 || offset > 65436)
+		sprintf(b, "%d(", (short) offset);
+	    else
+		sprintf(b, "$%04x(", offset);
+	}
+	strcat(a, b);
+	strcat(a, REGS1[rm]);
+	strcat(a, ")");
+	break;
+    case 3:
+	strcat(a, REGS[(w << 3) | rm]);
+	break;
+    }
 
-}/* * * * * * * * * * * END OF imhand() * * * * * * * * * * */
+    strcat(a, ",");
+    if (iflag) {
+	strcat(a, "#");
+	if (immed < 100 || immed > 65436)
+	    sprintf(b, "%d", (short) immed);
+	else
+	    sprintf(b, "$%04x", immed);
+    } else {
+	strcat(a, "*");
+	sprintf(b, "%d", immed);
+    }
+    strcat(a, b);
+
+    printf("%s\n", a);
+
+    objout();
+
+}				/* * * * * * * * * * * END OF imhand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -410,32 +354,28 @@ imhand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-mvhand(j)
+void mvhand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF mvhand()  * * * * * * * * * */
 
-   int j;                     /* Pointer to optab[] entry   */
+    register int k, m = j;
 
-{/* * * * * * * * * *  START OF mvhand()  * * * * * * * * * */
+    objini(j);
 
-   register int k, m = j;
+    FETCH(k);
 
-   objini(j);
+    if ((m == 0x84) || (m == 0x85)	/* Kind of kludgey   */
+	||(m == 0xc4) || (m == 0xc5)
+	|| (m == 0x8d))
+	if (m & 0x40)
+	    m |= 0x03;
+	else
+	    m |= 0x02;
 
-   FETCH(k);
+    printf("%s\t%s\n", optab[j].text, mtrans(m, k, TR_STD));
 
-   if ((m == 0x84) || (m == 0x85)      /* Kind of kludgey   */
-    || (m == 0xc4) || (m == 0xc5)
-    || (m == 0x8d))
-      if (m & 0x40)
-         m |= 0x03;
-      else
-         m |= 0x02;
+    objout();
 
-   printf("%s\t%s\n",optab[j].text,mtrans(m,k,TR_STD));
-
-   objout();
-
-}/* * * * * * * * * * * END OF mvhand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF mvhand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -443,30 +383,25 @@ mvhand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-mshand(j)
+void mshand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF mshand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    register int k;
 
-{/* * * * * * * * * *  START OF mshand()  * * * * * * * * * */
+    objini(j);
 
-   register int k;
+    FETCH(k);
 
-   objini(j);
+    if (k & 0x20) {
+	badseq(j, k);
+	return;
+    }
 
-   FETCH(k);
+    printf("%s\t%s\n", optab[j].text, mtrans(j, k, TR_SEG));
 
-   if (k & 0x20)
-      {
-      badseq(j,k);
-      return;
-      }
+    objout();
 
-   printf("%s\t%s\n",optab[j].text,mtrans(j,k,TR_SEG));
-
-   objout();
-
-}/* * * * * * * * * * * END OF mshand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF mshand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -477,37 +412,32 @@ mshand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-pohand(j)
+void pohand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF pohand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    char *a;
+    register int k;
 
-{/* * * * * * * * * *  START OF pohand()  * * * * * * * * * */
+    objini(j);
 
-   char *a;
-   register int k;
+    FETCH(k);
 
-   objini(j);
+    if (k & 0x38) {
+	badseq(j, k);
+	return;
+    }
 
-   FETCH(k);
+    printf("%s\t", optab[j].text);
 
-   if (k & 0x38)
-      {
-      badseq(j,k);
-      return;
-      }
+    a = mtrans((j & 0xfd), k, TR_STD);
 
-   printf("%s\t",optab[j].text);
+    mtrunc(a);
 
-   a = mtrans((j & 0xfd),k,TR_STD);
+    printf("%s\n", a);
 
-   mtrunc(a);
+    objout();
 
-   printf("%s\n",a);
-
-   objout();
-
-}/* * * * * * * * * * * END OF pohand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF pohand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -524,32 +454,28 @@ pohand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-cihand(j)
+void cihand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF cihand()  * * * * * * * * * */
 
-   int j;                     /* Pointer to optab[] entry   */
+    register int m, n;
 
-{/* * * * * * * * * *  START OF cihand()  * * * * * * * * * */
+    objini(j);
 
-   register int m, n;
+    printf("%s\t", optab[j].text);
 
-   objini(j);
+    FETCH(m);
+    FETCH(n);
 
-   printf("%s\t",optab[j].text);
+    printf("#$%04.4x,", ((n << 8) | m));
 
-   FETCH(m);
-   FETCH(n);
+    FETCH(m);
+    FETCH(n);
 
-   printf("#$%04.4x,",((n << 8) | m));
+    printf("#$%04.4x\n", ((n << 8) | m));
 
-   FETCH(m);
-   FETCH(n);
+    objout();
 
-   printf("#$%04.4x\n",((n << 8) | m));
-
-   objout();
-
-}/* * * * * * * * * * * END OF cihand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF cihand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -558,45 +484,37 @@ cihand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-mihand(j)
+void mihand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF mihand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    register int k;
+    int m, n;
+    char b[80];
 
-{/* * * * * * * * * *  START OF mihand()  * * * * * * * * * */
+    objini(j);
 
-   register int k;
-   int m, n;
-   char b[80];
+    printf("%s", optab[j].text);
 
-   objini(j);
+    if (j & 8) {
+	FETCH(m);
+	FETCH(n);
+	k = ((n << 8) | m);
+	if (lookext((long) (k), (PC - 1), b))
+	    printf("#%s\n", b);
+	else {
+	    if (k < 100 || k > 65436)
+		printf("#%d\n", (short) k);
+	    else
+		printf("#$%04x\n", k);
+	}
+    } else {
+	FETCH(m);
+	printf("*%d\n", m);
+    }
 
-   printf("%s",optab[j].text);
+    objout();
 
-   if (j & 8)
-      {
-      FETCH(m);
-      FETCH(n);
-      k = ((n << 8) | m);
-      if (lookext((long)(k),(PC - 1),b))
-         printf("#%s\n",b);
-      else
-         {
-         if( k < 100 || k > 65436 )
-            printf("#%d\n",(short)k);
-	 else
-            printf("#$%04x\n",k);
-         }
-      }
-   else
-      {
-      FETCH(m);
-      printf("*%d\n",m);
-      }
-
-   objout();
-
-}/* * * * * * * * * * * END OF mihand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF mihand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -604,39 +522,33 @@ mihand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-mqhand(j)
+void mqhand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF mqhand()  * * * * * * * * * */
 
-   int j;                     /* Pointer to optab[] entry   */
+    unsigned long pc;
+    register int m, n;
 
-{/* * * * * * * * * *  START OF mqhand()  * * * * * * * * * */
+    objini(j);
 
-   unsigned long pc;
-   register int m, n;
+    pc = PC + 1;
 
-   objini(j);
+    FETCH(m);
+    FETCH(n);
 
-   pc = PC + 1;
+    m = (n << 8) | m;
 
-   FETCH(m);
-   FETCH(n);
+    printf("%s\t", optab[j].text);
 
-   m = (n << 8) | m;
+    if (j & 2)
+	printf("%s,%s\n",
+	       lookup((long) (m), N_DATA, LOOK_ABS, pc), REGS[(j & 1) << 3]);
+    else
+	printf("%s,%s\n",
+	       REGS[(j & 1) << 3], lookup((long) (m), N_DATA, LOOK_ABS, pc));
 
-   printf("%s\t",optab[j].text);
+    objout();
 
-   if (j & 2)
-      printf("%s,%s\n",
-       lookup((long)(m),N_DATA,LOOK_ABS,pc),
-       REGS[(j & 1) << 3]);
-   else
-      printf("%s,%s\n",
-       REGS[(j & 1) << 3],
-       lookup((long)(m),N_DATA,LOOK_ABS,pc));
-
-   objout();
-
-}/* * * * * * * * * * * END OF mqhand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF mqhand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -644,47 +556,39 @@ mqhand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-tqhand(j)
+void tqhand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF tqhand()  * * * * * * * * * */
 
-   int j;                     /* Pointer to optab[] entry   */
+    char b[80];
+    register int m, n;
+    int k;
 
-{/* * * * * * * * * *  START OF tqhand()  * * * * * * * * * */
+    objini(j);
 
-   register int m, n;
-   int k;
-   char b[80];
+    printf("%s\t%s,", optab[j].text, REGS[(j & 1) << 3]);
 
-   objini(j);
+    FETCH(m);
 
-   printf("%s\t%s,",optab[j].text,REGS[(j & 1) << 3]);
+    if (j & 1) {
+	FETCH(n);
+	k = ((n << 8) | m);
+	if (lookext((long) (k), (PC - 1), b))
+	    printf("#%s\n", b);
+	else {
+	    if (k < 100 || k > 65436)
+		printf("#%d\n", (short) k);
+	    else
+		printf("#$%04x\n", k);
+	}
+    } else {
+	if (m & 80)
+	    m |= -0xFF;
+	printf("*%d\n", m);
+    }
 
-   FETCH(m);
+    objout();
 
-   if (j & 1)
-      {
-      FETCH(n);
-      k = ((n << 8) | m);
-      if (lookext((long)(k),(PC - 1),b))
-         printf("#%s\n",b);
-      else
-         {
-         if( k < 100 || k > 65436 )
-            printf("#%d\n",(short)k);
-	 else
-            printf("#$%04x\n",k);
-         }
-      }
-   else
-      {
-      if (m & 80)
-         m |= -0xFF;
-      printf("*%d\n",m);
-      }
-
-   objout();
-
-}/* * * * * * * * * * * END OF tqhand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF tqhand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -700,27 +604,23 @@ tqhand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-rehand(j)
+void rehand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF rehand()  * * * * * * * * * */
 
-   int j;                     /* Pointer to optab[] entry   */
+    register int m, n;
 
-{/* * * * * * * * * *  START OF rehand()  * * * * * * * * * */
+    objini(j);
 
-   register int m, n;
+    FETCH(m);
+    FETCH(n);
 
-   objini(j);
+    m = (n << 8) | m;
 
-   FETCH(m);
-   FETCH(n);
+    printf("%s\t#0x%04.4x\n", optab[j].text, m);
 
-   m = (n << 8) | m;
+    objout();
 
-   printf("%s\t#0x%04.4x\n",optab[j].text,m);
-
-   objout();
-
-}/* * * * * * * * * * * END OF rehand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF rehand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -729,62 +629,53 @@ rehand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-mmhand(j)
+void mmhand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF mmhand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    char b[80];
+    char *a;
+    register int k;
 
-{/* * * * * * * * * *  START OF mmhand()  * * * * * * * * * */
+    objini(j);
 
-   char *a;
-   register int k;
-   char b[80];
+    FETCH(k);
 
-   objini(j);
+    if (k & 0x38) {
+	badseq(j, k);
+	return;
+    }
 
-   FETCH(k);
+    printf("%s", optab[j].text);
 
-   if (k & 0x38)
-      {
-      badseq(j,k);
-      return;
-      }
+    if (!(j & 1))
+	putchar('b');
 
-   printf("%s",optab[j].text);
+    a = mtrans((j & 0xfd), (k & 0xc7), TR_STD);
 
-   if ( ! (j & 1) )
-      putchar('b');
+    mtrunc(a);
 
-   a = mtrans((j & 0xfd),(k & 0xc7),TR_STD);
+    printf("\t%s,", a);
 
-   mtrunc(a);
+    if (j & 1) {
+	FETCH(j);
+	FETCH(k);
+	k = (k << 8) | j;
+	if (lookext((long) (k), (PC - 1), b))
+	    printf("#%s\n", b);
+	else {
+	    if (k < 100 || k > 65436)
+		printf("#%d\n", (short) k);
+	    else
+		printf("#$%04x\n", k);
+	}
+    } else {
+	FETCH(k);
+	printf("*%d\n", k);
+    }
 
-   printf("\t%s,",a);
+    objout();
 
-   if (j & 1)
-      {
-      FETCH(j);
-      FETCH(k);
-      k = (k << 8) | j;
-      if (lookext((long)(k),(PC - 1),b))
-         printf("#%s\n",b);
-      else
-         {
-         if( k < 100 || k > 65436 )
-            printf("#%d\n",(short)k);
-	 else
-            printf("#$%04x\n",k);
-         }
-      }
-   else
-      {
-      FETCH(k);
-      printf("*%d\n",k);
-      }
-
-   objout();
-
-}/* * * * * * * * * * * END OF mmhand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF mmhand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -793,45 +684,40 @@ mmhand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-srhand(j)
+void srhand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF srhand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    char *a;
+    register int k;
 
-{/* * * * * * * * * *  START OF srhand()  * * * * * * * * * */
+    objini(j);
 
-   char *a;
-   register int k;
+    FETCH(k);
 
-   objini(j);
+    if ((k & 0x38) == 0x30) {
+	badseq(j, k);
+	return;
+    }
 
-   FETCH(k);
+    printf("%s", OPFAM[((k & 0x38) >> 3) + 16]);
 
-   if ((k & 0x38) == 0x30)
-      {
-      badseq(j,k);
-      return;
-      }
+    if (!(j & 1))
+	putchar('b');
 
-   printf("%s",OPFAM[((k & 0x38) >> 3) + 16]);
+    a = mtrans((j & 0xfd), (k & 0xc7), TR_STD);
 
-   if ( ! (j & 1) )
-      putchar('b');
+    mtrunc(a);
 
-   a = mtrans((j & 0xfd),(k & 0xc7),TR_STD);
+    printf("\t%s", a);
 
-   mtrunc(a);
+    if (j & 2)
+	printf(",cl\n");
+    else
+	printf(",*1\n");
 
-   printf("\t%s",a);
+    objout();
 
-   if (j & 2)
-      printf(",cl\n");
-   else
-      printf(",*1\n");
-
-   objout();
-
-}/* * * * * * * * * * * END OF srhand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF srhand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -839,30 +725,25 @@ srhand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-aahand(j)
+void aahand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF aahand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    register int k;
 
-{/* * * * * * * * * *  START OF aahand()  * * * * * * * * * */
+    objini(j);
 
-   register int k;
+    FETCH(k);
 
-   objini(j);
+    if (k != 0x0a) {
+	badseq(j, k);
+	return;
+    }
 
-   FETCH(k);
+    printf("%s\n", optab[j].text);
 
-   if (k != 0x0a)
-      {
-      badseq(j,k);
-      return;
-      }
+    objout();
 
-   printf("%s\n",optab[j].text);
-
-   objout();
-
-}/* * * * * * * * * * * END OF aahand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF aahand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -871,24 +752,20 @@ aahand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-iohand(j)
+void iohand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF iohand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    register int k;
 
-{/* * * * * * * * * *  START OF iohand()  * * * * * * * * * */
+    objini(j);
 
-   register int k;
+    FETCH(k);
 
-   objini(j);
+    printf("%s\t$%02.2x\n", optab[j].text, k);
 
-   FETCH(k);
+    objout();
 
-   printf("%s\t$%02.2x\n",optab[j].text,k);
-
-   objout();
-
-}/* * * * * * * * * * * END OF iohand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF iohand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -897,32 +774,27 @@ iohand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-ljhand(j)
+void ljhand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF ljhand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    register int k;
+    int m, n;
+    unsigned short dest;
 
-{/* * * * * * * * * *  START OF ljhand()  * * * * * * * * * */
+    objini(j);
 
-   register int k;
-   int m, n;
-   unsigned short dest;
+    FETCH(m);
+    FETCH(n);
 
-   objini(j);
+    k = (n << 8) | m;
+    dest = PC + k + 1;
 
-   FETCH(m);
-   FETCH(n);
+    printf("%s\t%s\t\t| loc %05.5lx\n", optab[j].text,
+	   lookup((long) dest, N_TEXT, LOOK_LNG, (PC - 1L)), (long) dest);
 
-   k = (n << 8) | m;
-   dest = PC + k + 1;
+    objout();
 
-   printf("%s\t%s\t\t| loc %05.5lx\n",optab[j].text,
-          lookup((long)dest,N_TEXT,LOOK_LNG,(PC - 1L)),
-          (long)dest);
-
-   objout();
-
-}/* * * * * * * * * * * END OF ljhand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF ljhand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -932,80 +804,71 @@ ljhand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-mahand(j)
+void mahand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF mahand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    char *a;
+    register int k;
+    char b[80];
 
-{/* * * * * * * * * *  START OF mahand()  * * * * * * * * * */
+    objini(j);
 
-   char *a;
-   register int k;
-   char b[80];
+    FETCH(k);
 
-   objini(j);
+    a = mtrans((j & 0xfd), (k & 0xc7), TR_STD);
 
-   FETCH(k);
+    mtrunc(a);
 
-   a = mtrans((j & 0xfd),(k & 0xc7),TR_STD);
+    switch (((k = objbuf[1]) & 0x38) >> 3) {
+    case 0:
+	printf("\ttest");
+	break;
+    case 1:
+	badseq(j, k);
+	return;
+    case 2:
+	printf("\tnot");
+	break;
+    case 3:
+	printf("\tneg");
+	break;
+    case 4:
+	printf("\tmul");
+	break;
+    case 5:
+	printf("\timul");
+	break;
+    case 6:
+	printf("\tdiv");
+	break;
+    case 7:
+	printf("\tidiv");
+	break;
+    }
 
-   mtrunc(a);
+    if (!(j & 1))
+	putchar('b');
 
-   switch (((k = objbuf[1]) & 0x38) >> 3)
-      {
-      case 0 :
-         printf("\ttest");
-         break;
-      case 1 :
-         badseq(j,k);
-         return;
-      case 2 :
-         printf("\tnot");
-         break;
-      case 3 :
-         printf("\tneg");
-         break;
-      case 4 :
-         printf("\tmul");
-         break;
-      case 5 :
-         printf("\timul");
-         break;
-      case 6 :
-         printf("\tdiv");
-         break;
-      case 7 :
-         printf("\tidiv");
-         break;
-      }
+    printf("\t%s", a);
 
-   if ( ! (j & 1) )
-      putchar('b');
+    if (k & 0x38)
+	putchar('\n');
+    else if (j & 1) {
+	FETCH(j);
+	FETCH(k);
+	k = (k << 8) | j;
+	if (lookext((long) (k), (PC - 1), b))
+	    printf(",#%s\n", b);
+	else
+	    printf(",#$%04x\n", k);
+    } else {
+	FETCH(k);
+	printf(",*%d\n", k);
+    }
 
-   printf("\t%s",a);
+    objout();
 
-   if (k & 0x38)
-      putchar('\n');
-   else
-      if (j & 1)
-         {
-         FETCH(j);
-         FETCH(k);
-         k = (k << 8) | j;
-         if (lookext((long)(k),(PC - 1),b))
-            printf(",#%s\n",b);
-         else
-            printf(",#$%04x\n",k);
-         }
-      else
-         {
-         FETCH(k);
-         printf(",*%d\n",k);
-         }
-
-   objout();
-
-}/* * * * * * * * * * * END OF mahand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF mahand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -1015,78 +878,72 @@ mahand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-mjhand(j)
+void mjhand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF mjhand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    char *a;
+    register int k;
 
-{/* * * * * * * * * *  START OF mjhand()  * * * * * * * * * */
+    objini(j);
 
-   char *a;
-   register int k;
+    FETCH(k);
 
-   objini(j);
+    a = mtrans((j & 0xfd), (k & 0xc7), TR_STD);
 
-   FETCH(k);
+    mtrunc(a);
 
-   a = mtrans((j & 0xfd),(k & 0xc7),TR_STD);
+    switch (((k = objbuf[1]) & 0x38) >> 3) {
+    case 0:
+	printf("\tinc");
+	if (!(j & 1))
+	    putchar('b');
+	putchar('\t');
+	break;
+    case 1:
+	printf("\tdec");
+	if (!(j & 1))
+	    putchar('b');
+	putchar('\t');
+	break;
+    case 2:
+	if (j & 1)
+	    printf("\tcall\t@");
+	else
+	    goto BAD;
+	break;
+    case 3:
+	if (j & 1)
+	    printf("\tcalli\t@");
+	else
+	    goto BAD;
+	break;
+    case 4:
+	if (j & 1)
+	    printf("\tjmp\t@");
+	else
+	    goto BAD;
+	break;
+    case 5:
+	if (j & 1)
+	    printf("\tjmpi\t@");
+	else
+	    goto BAD;
+	break;
+    case 6:
+	if (j & 1)
+	    printf("\tpush\t");
+	else
+	    goto BAD;
+	break;
+    case 7:
+      BAD:
+	badseq(j, k);
+	return;
+    }
 
-   mtrunc(a);
+    printf("%s\n", a);
 
-   switch (((k = objbuf[1]) & 0x38) >> 3)
-      {
-      case 0 :
-         printf("\tinc");
-         if ( ! (j & 1) )
-            putchar('b');
-         putchar('\t');
-         break;
-      case 1 :
-         printf("\tdec");
-         if ( ! (j & 1) )
-            putchar('b');
-         putchar('\t');
-         break;
-      case 2 :
-         if (j & 1)
-            printf("\tcall\t@");
-         else
-            goto BAD;
-         break;
-      case 3 :
-         if (j & 1)
-            printf("\tcalli\t@");
-         else
-            goto BAD;
-         break;
-      case 4 :
-         if (j & 1)
-            printf("\tjmp\t@");
-         else
-            goto BAD;
-         break;
-      case 5 :
-         if (j & 1)
-            printf("\tjmpi\t@");
-         else
-            goto BAD;
-         break;
-      case 6 :
-         if (j & 1)
-            printf("\tpush\t");
-         else
-            goto BAD;
-         break;
-      case 7 :
- BAD :
-         badseq(j,k);
-         return;
-      }
+    objout();
 
-   printf("%s\n",a);
-
-   objout();
-
-}/* * * * * * * * * * * END OF mjhand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF mjhand() * * * * * * * * * * */
 
-

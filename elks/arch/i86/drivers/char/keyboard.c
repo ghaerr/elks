@@ -1,4 +1,3 @@
-
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
 #include <arch/io.h>
@@ -12,7 +11,7 @@
 
 #ifdef CONFIG_CONSOLE_DIRECT
 
-#include "console.h"	/* for number of VC's */
+#include "console.h"		/* for number of VC's */
 
 extern struct tty ttys[];
 
@@ -21,7 +20,7 @@ extern struct tty ttys[];
 #define LSHIFT 	0x0100
 #define RSHIFT 	0x0400
 #define CTRL 	0x0200
-#define ALT 	0x0800	/* Diamond key */
+#define ALT 	0x0800		/* Diamond key */
 #define MENU	0x1000
 #define PSION   0x8000
 
@@ -36,116 +35,117 @@ int Current_VCminor = 0;
 /* from console.c */
 extern char power_state;
 
-int KeyboardInit()
+int KeyboardInit(void)
 {
+/* Do nothing */
 }
 
 /*
  *  Psion keyboard is very different to PC, this is a quick stab to get
  *  something going. Simon Wood 12th June 1999
  */
- 
-void keyboard_irq(/*irq,regsi*/)
-/*int irq;
-struct pt_regs *regs;*/
+
+void keyboard_irq(int irq, struct pt_regs *regs)
 {
-	int modifiers;
-	int key;
-	static int okey = 0;
+    int modifiers;
+    int key;
+    static int okey = 0;
 
-   	modifiers = psiongetchar();
-   	key = (modifiers & 0x00FF);
+    modifiers = psiongetchar();
+    key = (modifiers & 0x00FF);
 
-	/* FIXME: Need to add some form of Key repeat.. */
+    /* FIXME: Need to add some form of Key repeat.. */
 
-	if( modifiers & PSION)
-	{
-		if ( key == 0x31 && power_state == 1 ) /* Psion + 1 */
-			power_off();
+    if (modifiers & PSION) {
+	if (key == 0x31 && power_state == 1)	/* Psion + 1 */
+	    power_off();
 
-		if ( key == 0x20 && power_state == 0 ) /* Psion + Space */
-			power_on();
-	
-		return;
-	}
+	if (key == 0x20 && power_state == 0)	/* Psion + Space */
+	    power_on();
 
-	if (power_state == 0 ) return;		/* prevent key presses when off */
-      
-   	if( modifiers & MENU )
-   	{
-      		if( key < 0x40 && key > 0x30 ) /* MENU + 1..9 */
-      		{
+	return;
+    }
+
+    if (power_state == 0)
+	return;			/* prevent key presses when off */
+
+    if (modifiers & MENU) {
+	if (key < 0x40 && key > 0x30) {	/* MENU + 1..9 */
+
 #ifdef CONFIG_VIRTUAL_CONSOLE
-        		Console_set_vc( key - 0x31 );
-        		return;
-#else
-        		AddQueue( ESC );
-        		AddQueue( key - 0x31 + 'a' );
-        		return;
-#endif
-      		}
-   	}
-	if (!okey || key) {
-		if (key) {
-			okey = key;
-		}
-		return;
-	}
-	key = okey;
-	okey = 0;
 
-   	switch( key )
-   	{
-      		case 0x18 :  /* Arrow up */
-         		AddQueue( ESC );
-         		AddQueue( 'A' );
-         		return;
-      		case 0x19 :  /* Arrow down */
-         		AddQueue( ESC );
-         		AddQueue( 'B' );
-         		return;
-      		case 0x1A :  /* Arrow right */
-         		AddQueue( ESC );
-         		AddQueue( 'C' );
-         		return;
-      		case 0x1B :  /* Arrow left */
-         		AddQueue( ESC );
-         		AddQueue( 'D' );
-         		return;
-		case '\r' :
-			AddQueue( '\n' );
-			return;
-      		default :
-         		AddQueue( key );
-         		return;
-      	}
+	    Console_set_vc(key - 0x31);
+
+#else
+
+	    AddQueue(ESC);
+	    AddQueue(key - 0x31 + 'a');
+
+#endif
+
+	    return;
+	}
+    }
+    if (!okey || key) {
+	if (key)
+	    okey = key;
+	return;
+    }
+    key = okey;
+    okey = 0;
+
+    switch (key) {
+    case 0x18:			/* Arrow up */
+	AddQueue(ESC);
+	AddQueue('A');
+	return;
+    case 0x19:			/* Arrow down */
+	AddQueue(ESC);
+	AddQueue('B');
+	return;
+    case 0x1A:			/* Arrow right */
+	AddQueue(ESC);
+	AddQueue('C');
+	return;
+    case 0x1B:			/* Arrow left */
+	AddQueue(ESC);
+	AddQueue('D');
+	return;
+    case '\r':
+	AddQueue('\n');
+	return;
+    default:
+	AddQueue(key);
+	return;
+    }
 }
 
 /* Ack.  We can't add a character until the queue's ready */
 
-int AddQueue( Key )
-unsigned char Key;
+int AddQueue(unsigned char Key)
 {
-   register struct tty * ttyp = &ttys[Current_VCminor];
-   if (ttyp->inq.size != 0) {
-	   chq_addch(&ttyp->inq, Key);
-   }
-   return 0;
+    register struct tty *ttyp = &ttys[Current_VCminor];
+    if (ttyp->inq.size != 0)
+	chq_addch(&ttyp->inq, Key);
+    return 0;
 }
+
 #if 0
-int GetQueue()
+
+int GetQueue(void)
 {
-   return chq_getch(&ttys[0].inq, 0, 0);
+    return chq_getch(&ttys[0].inq, 0, 0);
 }
+
 #endif
 
 /*
  *      Busy wait for a keypress in kernel state for bootup/debug.
  */
 
-int wait_for_keypress()
+int wait_for_keypress(void)
 {
-	return chq_getch(&ttys[0].inq, 0, 1);
+    return chq_getch(&ttys[0].inq, 0, 1);
 }
 
 #endif

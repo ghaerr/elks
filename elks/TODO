@@ -9,26 +9,19 @@ at the appropriate point in this list.
 
  *  Before 0.1.0 is released:
 
-    *	Ensure parallel and serial drivers work, even if some of their
-	functionality is missing.
+    *	Complete the ANSI'fication of the source tree.
+
+    *	Ensure all configuration tools produce EXACTLY the same .config
+	files, including comments therein.
 
     *	Reduce code size.
 
-    *	Ensure that all configuration tools produce EXACTLY the same
-	.config files, including comments therein.
-
  *  Before 0.2.0 is released:
-
-    *	Complete and test parallel drivers.
-
-    *	Complete and test serial drivers.
 
     *	Ensure ELKS is fully ROMable and embeddable.
 
-    *	Modify interrupt code to save DS in VII rather than in kernel data
-	segment.
-
-    *	PLIP networking support.
+    *	Ensure the parallel and serial drivers work, even if some of their
+	functionality is missing.
 
     *	Reduce code size.
 
@@ -40,6 +33,19 @@ at the appropriate point in this list.
     *	Thoroughly test all supported file systems, ensuring they are stable
 	under every level of load that we can place on them.
 
+ *  Before 0.3.0 is released:
+
+    *	Complete and test parallel drivers.
+
+    *	Complete and test serial drivers.
+
+    *	Modify interrupt code to save DS in VII rather than in kernel data
+	segment. (Whatever this means - anybody care to explain?)
+
+    *	PLIP networking support.
+
+    *	Reduce code size.
+
     *	Working support for 286 processors.
 
  *  Before 1.0.0 is released.
@@ -49,12 +55,12 @@ at the appropriate point in this list.
     *	Support for ethernet adapters, including the NE1000, NE2000 and
 	WD8003 adapters.
 
-    *	Support for usermode AX.25 networking node and BBS system.
+    *	Support for usermode AX.25 networking node and bulletin boards.
 
 ===============================================================================
 
-Also included here are things we would like to see on an ELKS-based
-system, but which are not specific to the ELKS kernel or project itself:
+Also included here are things we would like to see on an ELKS-based system, but
+which are not specific to the ELKS kernel or project itself:
 
     *	ELKS-based DNS server.
 
@@ -63,7 +69,7 @@ system, but which are not specific to the ELKS kernel or project itself:
     *	ELKS-based HTTP server capable of handling non-static pages. It is
 	noted that a web server capable only of handling static pages can
 	be obtained from Harry Kalogirou <HarKal@gmx.net> who demonstrated
-	it in the Internet in late November 2001.
+	it on the Internet in late November 2001.
 
     *	ELKS-based print server software.
 
@@ -71,6 +77,7 @@ system, but which are not specific to the ELKS kernel or project itself:
 
     *	screen
 
-Other items may be added in future.
+Other items may be added in future as requested. Please address any wish-list
+requests to Riley Williams <Riley@Williams.Name> for inclusion herein.
 
 ===============================================================================

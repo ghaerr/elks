@@ -24,13 +24,40 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-14 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-22 Apr 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-23 Apr 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Tue Apr 23 17:27:03 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* ANSI'fied function prototypes in the arch/i86/drivers/char subtree.
+	* Applied `make indent` rule to the arch/i86/drivers/char subtree.
+	* Verified that the kernel compiles with the above changes applied.
+
+Tue Apr 23 16:35:53 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Simplified keyboard keycodes to auto-include all keycode header
+	  files currently defined. With this change, the ONLY steps needed
+	  to add another keycode table is to drop the relevant header file
+	  in the arch/i86/drivers/char/KeyMaps/ directory, with the correct
+	  comment line at the top, and the keymap will be included both in
+	  the configuration system and in the code itself. Also, if the map
+	  is for more than one language and a separate copy of this comment
+	  line is provided for each language, then all language options are
+	  automatically included, as currently happens with the BE/FR file.
+	* Updated TODO document.
+
+Tue Apr 23 01:27:03 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* ANSI'fied function prototypes in the arch/i86/sibo subtree.
+	* Applied `make indent` rule to the arch/i86/sibo subtree.
+	* ANSI'fied function prototypes in the arch/i86/tools subtree.
+	* Applied `make indent` rule to the arch/i86/tools subtree.
+	* Verified that the kernel compiles with the above changes applied.
 
 Mon Apr 22 23:11:38 BST 2002	Riley Williams <Riley@Williams.Name>
 

@@ -1,6 +1,6 @@
  /*
- ** @(#) dis.h, Ver. 2.1 created 00:00:00 87/09/01
- */
+  * ** @(#) dis.h, Ver. 2.1 created 00:00:00 87/09/01
+  */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -25,44 +25,43 @@
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include <sys/types.h>
-#include <fcntl.h>      /* System file-control definitions  */
+#include <fcntl.h>		/* System file-control definitions  */
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>      /* System standard I/O definitions  */
-#include "img.h"        /* Object file format definitions   */
-#include "a.out.h"   /* Just so it builds, really :)     */
+#include <stdio.h>		/* System standard I/O definitions  */
+#include "img.h"		/* Object file format definitions   */
+#include "a.out.h"		/* Just so it builds, really :)     */
 #include "ansi.h"
 
 #define MAXSYM  ((sizeof(int)-1)*32400/ \
                  (sizeof(struct nlist)+sizeof(struct reloc)))
 			/* Maximum entries in symbol table  */
 
-extern struct nlist     /* Array to hold the symbol table   */
-   symtab[MAXSYM];
+extern struct nlist		/* Array to hold the symbol table   */
+  symtab[MAXSYM];
 
-extern struct reloc     /* Array to hold relocation table   */
-   relo[MAXSYM];
+extern struct reloc		/* Array to hold relocation table   */
+  relo[MAXSYM];
 
-extern int symptr;      /* Index into the symtab[] array    */
-extern int relptr;      /* Index into the relo[] array      */
+extern int symptr;		/* Index into the symtab[] array    */
+extern int relptr;		/* Index into the relo[] array      */
 
-struct opcode           /* Format for opcode data records   */
-{
-   char *text;          /* Pointer to mnemonic text   */
-   void (*func)();      /* Pointer to handler routine */
-   unsigned min;        /* Minimum # of object bytes  */
-   unsigned max;        /* Maximum # of object bytes  */
+struct opcode {			/* Format for opcode data records   */
+    char *text;			/* Pointer to mnemonic text   */
+    void (*func) ();		/* Pointer to handler routine */
+    unsigned min;		/* Minimum # of object bytes  */
+    unsigned max;		/* Maximum # of object bytes  */
 };
 
-extern struct opcode    /* Array to hold the opcode table   */
+extern struct opcode		/* Array to hold the opcode table   */
   optab[256];
 
-extern char *REGS[];    /* Table of register names          */
-extern char *REGS0[];   /* Mode 0 register name table       */
-extern char *REGS1[];   /* Mode 1 register name table       */
+extern char *REGS[];		/* Table of register names          */
+extern char *REGS0[];		/* Mode 0 register name table       */
+extern char *REGS1[];		/* Mode 1 register name table       */
 
-#define AL REGS[0]      /* CPU register manifests           */
+#define AL REGS[0]		/* CPU register manifests           */
 #define CL REGS[1]
 #define DL REGS[2]
 #define BL REGS[3]
@@ -87,88 +86,76 @@ extern char *REGS1[];   /* Mode 1 register name table       */
 #define BP_SI REGS0[2]
 #define BP_DI REGS0[3]
 
-extern int symrank[6][6];     /* Symbol type/rank matrix    */
-extern unsigned long PC;      /* Current program counter    */
-extern int segflg;      /* Flag: segment override in effect */
-extern int objflg;      /* Flag: output object as a comment */
+extern int symrank[6][6];	/* Symbol type/rank matrix    */
+extern unsigned long PC;	/* Current program counter    */
+extern int segflg;		/* Flag: segment override in effect */
+extern int objflg;		/* Flag: output object as a comment */
 
-#define OBJMAX 8        /* Size of the object code buffer   */
+#define OBJMAX 8		/* Size of the object code buffer   */
 
-extern unsigned char    /* Internal buffer for object code  */
-   objbuf[OBJMAX];
+extern unsigned char /* Internal buffer for object code  */ objbuf[OBJMAX];
 
-extern int objptr;      /* Index into the objbuf[] array    */
+extern int objptr;		/* Index into the objbuf[] array    */
 
-extern char ADD[],      /* Opcode family mnemonic strings   */
-            OR[],
-            ADC[],
-            SBB[],
-            AND[],
-            SUB[],
-            XOR[],
-            CMP[],
-            NOT[],
-            NEG[],
-            MUL[],
-            DIV[],
-            MOV[],
-            ESC[],
-            TEST[],
-            AMBIG[];
+extern char ADD[],		/* Opcode family mnemonic strings   */
+  OR[],
+    ADC[],
+    SBB[],
+    AND[],
+    SUB[],
+    XOR[], CMP[], NOT[], NEG[], MUL[], DIV[], MOV[], ESC[], TEST[], AMBIG[];
 
-extern char *OPFAM[];   /* Indexed mnemonic family table    */
-extern ImgHeader HDR;   /* Holds the .img file's header   */
+extern char *OPFAM[];		/* Indexed mnemonic family table    */
+extern ImgHeader HDR;		/* Holds the .img file's header   */
 
-#define LOOK_ABS 0      /* Arguments to lookup() function   */
+#define LOOK_ABS 0		/* Arguments to lookup() function   */
 #define LOOK_REL 1
 #define LOOK_LNG 2
 
-#define TR_STD 0        /* Arguments to mtrans() function   */
+#define TR_STD 0		/* Arguments to mtrans() function   */
 #define TR_SEG 8
-
-                        /* Macro for byte input primitive   */
+			/* Macro for byte input primitive   */
 /* #define FETCH(p)  ++PC; p = getchar() & 0xff; objbuf[objptr++] = p */
 static int _F_;
 #define FETCH(p)  (p)=_F_ = Fetch(); if(_F_<0) {printf("???\n"); return FRV; }
 #define FRV
 
-
 /* disfp.c */
-_PROTOTYPE(void eshand, (int j ));
-_PROTOTYPE(void fphand, (int j ));
-_PROTOTYPE(void inhand, (int j ));
+_PROTOTYPE(void eshand, (int j));
+_PROTOTYPE(void fphand, (int j));
+_PROTOTYPE(void inhand, (int j));
 
 /* dishand.c */
-_PROTOTYPE(void objini, (int j ));
+_PROTOTYPE(void objini, (int j));
 _PROTOTYPE(void objout, (void));
-_PROTOTYPE(void badseq, (int j, int k ));
-_PROTOTYPE(void dfhand, (int j ));
-_PROTOTYPE(void sbhand, (int j ));
-_PROTOTYPE(void aohand, (int j ));
-_PROTOTYPE(void sjhand, (int j ));
-_PROTOTYPE(void imhand, (int j ));
-_PROTOTYPE(void mvhand, (int j ));
-_PROTOTYPE(void mshand, (int j ));
-_PROTOTYPE(void pohand, (int j ));
-_PROTOTYPE(void cihand, (int j ));
-_PROTOTYPE(void mihand, (int j ));
-_PROTOTYPE(void mqhand, (int j ));
-_PROTOTYPE(void tqhand, (int j ));
-_PROTOTYPE(void rehand, (int j ));
-_PROTOTYPE(void mmhand, (int j ));
-_PROTOTYPE(void srhand, (int j ));
-_PROTOTYPE(void aahand, (int j ));
-_PROTOTYPE(void iohand, (int j ));
-_PROTOTYPE(void ljhand, (int j ));
-_PROTOTYPE(void mahand, (int j ));
-_PROTOTYPE(void mjhand, (int j ));
+_PROTOTYPE(void badseq, (int j, int k));
+_PROTOTYPE(void dfhand, (int j));
+_PROTOTYPE(void sbhand, (int j));
+_PROTOTYPE(void aohand, (int j));
+_PROTOTYPE(void sjhand, (int j));
+_PROTOTYPE(void imhand, (int j));
+_PROTOTYPE(void mvhand, (int j));
+_PROTOTYPE(void mshand, (int j));
+_PROTOTYPE(void pohand, (int j));
+_PROTOTYPE(void cihand, (int j));
+_PROTOTYPE(void mihand, (int j));
+_PROTOTYPE(void mqhand, (int j));
+_PROTOTYPE(void tqhand, (int j));
+_PROTOTYPE(void rehand, (int j));
+_PROTOTYPE(void mmhand, (int j));
+_PROTOTYPE(void srhand, (int j));
+_PROTOTYPE(void aahand, (int j));
+_PROTOTYPE(void iohand, (int j));
+_PROTOTYPE(void ljhand, (int j));
+_PROTOTYPE(void mahand, (int j));
+_PROTOTYPE(void mjhand, (int j));
 
 /* dismain.c */
-_PROTOTYPE(void main, (int argc, char **argv ));
+_PROTOTYPE(void main, (int argc, char **argv));
 
 /* distabs.c */
-_PROTOTYPE(char *getnam, (int k ));
-_PROTOTYPE(int lookext, (long off, long loc, char *buf ));
-_PROTOTYPE(char *lookup, (long addr, int type, int kind, long ext ));
-_PROTOTYPE(char *mtrans, (int c, int m, int type ));
-_PROTOTYPE(void mtrunc, (char *a ));
+_PROTOTYPE(char *getnam, (int k));
+_PROTOTYPE(int lookext, (long off, long loc, char *buf));
+_PROTOTYPE(char *lookup, (long addr, int type, int kind, long ext));
+_PROTOTYPE(char *mtrans, (int c, int m, int type));
+_PROTOTYPE(void mtrunc, (char *a));

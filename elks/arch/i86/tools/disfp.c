@@ -1,5 +1,4 @@
-static char *sccsid =
-   "@(#) disfp.c, Ver. 2.1 created 00:00:00 87/09/01";
+static char *sccsid = "@(#) disfp.c, Ver. 2.1 created 00:00:00 87/09/01";
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -15,9 +14,9 @@ static char *sccsid =
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "dis.h"              /* Disassembler declarations  */
+#include "dis.h"		/* Disassembler declarations  */
 
-#define FPINT0 0xd8           /* Floating-point interrupts  */
+#define FPINT0 0xd8		/* Floating-point interrupts  */
 #define FPINT1 0xd9
 #define FPINT2 0xda
 #define FPINT3 0xdb
@@ -26,9 +25,8 @@ static char *sccsid =
 #define FPINT6 0xde
 #define FPINT7 0xdf
 
-                              /* Test for floating opcodes  */
-#define ISFLOP(x) \
-   (((x) >= FPINT0) && ((x) <= FPINT7))
+			      /* Test for floating opcodes  */
+#define ISFLOP(x) (((x) >= FPINT0) && ((x) <= FPINT7))
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -46,30 +44,26 @@ static char *sccsid =
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-eshand(j)
+void eshand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF eshand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    register int k;
+    register char *a;
 
-{/* * * * * * * * * *  START OF eshand()  * * * * * * * * * */
+    objini(j);
 
-   register char *a;
-   register int k;
+    FETCH(k);
 
-   objini(j);
+    a = mtrans((j & 0xfd), (k & 0xc7), TR_STD);
 
-   FETCH(k);
+    mtrunc(a);
 
-   a = mtrans((j & 0xfd),(k & 0xc7),TR_STD);
+    printf("\t.byte\t0x%02.2x\t\t| esc\t%s\n", j, a);
 
-   mtrunc(a);
+    for (k = 1; k < objptr; ++k)
+	printf("\t.byte\t0x%02.2x\n", objbuf[k]);
 
-   printf("\t.byte\t0x%02.2x\t\t| esc\t%s\n",j,a);
-
-   for (k = 1; k < objptr; ++k)
-      printf("\t.byte\t0x%02.2x\n",objbuf[k]);
-
-}/* * * * * * * * * * * END OF eshand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF eshand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -95,28 +89,24 @@ eshand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-fphand(j)
+void fphand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF fphand()  * * * * * * * * * */
+    register int k;
 
-   register int j;            /* Pointer to optab[] entry   */
+    segflg = 0;
 
-{/* * * * * * * * * *  START OF fphand()  * * * * * * * * * */
+    FETCH(k);
 
-   register int k;
+    printf("\t.byte\t0x%02.2x\t\t| 8087 code sequence\n", objbuf[0]);
 
-   segflg = 0;
+    for (k = 1; k < objptr; ++k)
+	printf("\t.byte\t0x%02.2x\n", objbuf[k]);
 
-   FETCH(k);
+#if 0
+    objout();			/* FOR NOW  */
+#endif
 
-   printf("\t.byte\t0x%02.2x\t\t| 8087 code sequence\n",
-    objbuf[0]);
-
-   for (k = 1; k < objptr; ++k)
-      printf("\t.byte\t0x%02.2x\n",objbuf[k]);
-
-/* objout();                                       FOR NOW  */
-
-}/* * * * * * * * * * * END OF fphand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF fphand() * * * * * * * * * * */
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   *                                                         *
@@ -129,29 +119,23 @@ fphand(j)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-inhand(j)
+void inhand(register int j)
+{				/* Pointer to optab[] entry   *//* * * * * * * * * *  START OF inhand()  * * * * * * * * * */
 
-   register int j;            /* Pointer to optab[] entry   */
+    register int k;
 
-{/* * * * * * * * * *  START OF inhand()  * * * * * * * * * */
+    objini(j);
 
-   register int k;
+    FETCH(k);
 
-   objini(j);
+    if (ISFLOP(k)) {
+	fphand(k);
+	return;
+    }
 
-   FETCH(k);
+    printf("%s\t$%02x\n", optab[j].text, k);
 
-   if (ISFLOP(k))
-      {
-      fphand(k);
-      return;
-      }
+    objout();
 
-   printf("%s\t$%02x\n",optab[j].text,k);
-
-   objout();
-
-}/* * * * * * * * * * * END OF inhand() * * * * * * * * * * */
+}				/* * * * * * * * * * * END OF inhand() * * * * * * * * * * */
 
-

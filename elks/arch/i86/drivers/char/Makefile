@@ -25,7 +25,8 @@ DEPEND  	=
 
 DISTFILES	= CGAsnow Changes NEW_NOTES NOTES
 
-NOINDENT	= bell.c bioscon.c console.c sibo_con.c
+NOINDENT	= bell.c bioscon.c
+# console.c sibo_con.c
 
 #########################################################################
 # Include standard commands.
@@ -67,6 +68,9 @@ key_asm.o: key_asm.s
 ser_asm.s: ser_asm.S
 
 ser_asm.o: ser_asm.s
+
+KeyMaps/keymaps.h:
+	make -C KeyMaps keymaps.h
 
 #########################################################################
 # Standard commands.
