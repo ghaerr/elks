@@ -46,10 +46,10 @@ clean:
 		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) || true
 	rm -f $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
 		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) boot images.zip core
-	-echo FIXME: make clean is temporarily broken, because there is no
-	-echo rootfs_template.tar anymore
 	rm -rf rootfs_template $(ROOTDIR)
 	@for i in $(DIRS); do make -C $$i clean ; done
+	-echo FIXME: make clean is temporarily broken, because there is no
+	-echo rootfs_template.tar anymore
 	tar xf rootfs_template.tar
 
 ###############################################################################
