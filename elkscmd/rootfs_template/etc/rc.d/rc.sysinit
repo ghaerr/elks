@@ -14,14 +14,14 @@ ttybaud=4800
 
 if test -f /bin/ktcp
 then
-	echo -n "Starting kernel network facilities: TCP/IP"
+	echo -n 'Starting kernel network facilities:'
 	stty $ttybaud < $sliptty
+	echo -n ' stty'
 	ktcp $localip $sliptty &
-
-	echo .
+	echo ' ktcp'
 	
 	echo -n "Staring network daemons: "
-	for daemon in httpd
+	for daemon in ftpd httpd
 	do
 		if test -f /bin/$daemon 
 		then
