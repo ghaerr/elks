@@ -118,8 +118,8 @@ int target;
 
 		if (need_resched)
 		schedule(); /* Al: is it OK for this to be here ? */
-#endif
 	}
+#endif
 
 	/* send character to port */
 	outb_p(c, lpp->io);
