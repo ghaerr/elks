@@ -138,7 +138,7 @@ int silent;
 	if (!(bh = bread(dev,(block_t)1))) {
 		s->s_dev = 0;
 		unlock_super(s);
-		printk("MINIX-fs: unable to read superblock\n");
+		printk("minix: unable to read sb\n");
 		return NULL;
 	}
 	map_buffer(bh);
@@ -167,7 +167,7 @@ int silent;
 		unlock_super(s);
 		unmap_brelse(bh);
 		if (!silent)
-			printk("VFS: Can't find a Minix V1 filesystem on dev %s.\n", kdevname(dev));
+			printk("VFS: dev %s is not minixfs.\n", kdevname(dev));
 		return NULL;
 	}
 	}
@@ -284,9 +284,7 @@ int create;
 				}
 			} else return 0;
 		}
-		printd_mfs1("MFSbmap: About to read indirect block #%d\n", i_zone[7]);
 		if (!(bh = bread(inode->i_dev, (block_t)i_zone[7]))) {
-			printd_mfs("MFSbmap: Bread of zone 7 failed\n");
 			return 0;
 		}
 		map_buffer(bh);
@@ -298,9 +296,9 @@ int create;
 			}
 		}
 		unmap_brelse(bh);
-		printd_mfs1("MFSbmap: Returning #%d\n", i);
 		return i;
 	}
+	/* FIXME - triple indirect is needed */
 	printk("MINIX-fs: bmap cannot handle > 519K files yet!\n");
 	return 0;
 }
@@ -314,10 +312,8 @@ int create;
 	unsigned short blknum;
 
 	blknum = _minix_bmap(inode, block, create);
-	printd_mfs2("MINIXfs: file block #%d -> disk block #%d\n", block, blknum);
 	if (blknum != 0) {
 		bh = getblk(inode->i_dev, (block_t)blknum); 
-		printd_mfs2("MINIXfs: m_getblk returning %x for blk %d\n", bh, block);
 		return bh;	
 	}
 	else 
@@ -331,9 +327,7 @@ int create;
 {
 	register struct buffer_head * bh;
 
-	printd_mfs3("mfs: minix_bread(%d, %d, %d)\n", inode, block, create);
 	if (!(bh = minix_getblk(inode,block,create))) return NULL;
-	printd_mfs2("MINIXfs: Reading block #%d with buffer #%x\n", block, bh);
 	return readbuf(bh);
 }
 
