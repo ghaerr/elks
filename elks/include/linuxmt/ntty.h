@@ -54,6 +54,8 @@ struct tty {
 int ttynull_openrelease();	/* Empty function, returns zero. useful */
 extern int pipe_lseek();	/* Empty function, returns -ESPIPE. useful */
 
+extern struct termios def_vals; /* global use of def_vals                 */
+
 /* tty.flags */
 #define TTY_STOPPED 	1
 #define TTY_OPEN	2
