@@ -31,20 +31,19 @@
  *	FIXME: Readahead
  */
 
-static int elksfs_file_read(struct inode *inode,
-			    register struct file *filp, char *buf, int icount)
+static int elksfs_file_read(struct inode *inode, register struct file *filp,
+			    char *buf, size_t icount)
 {
-    unsigned long offset;
-    unsigned long size;
-    unsigned long left;
-    unsigned long block;
-    /* We have to make count long since comparing ints to longs does not
-     * work with bcc! */
-    unsigned long count = (icount % 65536);
+    /*  We have to make count long since comparing ints to longs
+     *  does not work with bcc!
+     */
+
+    unsigned long int count = (unsigned long int) (icount % 65536);
     struct buffer_head *bh;
+    block_t block, blocks;
+    loff_t offset;
+    size_t chars, left, size;
     int read;
-    int chars;
-    int blocks;
 
     offset = filp->f_pos;
     size = inode->i_size;
@@ -53,7 +52,7 @@ static int elksfs_file_read(struct inode *inode,
      *      Amount we can do I/O over
      */
 
-    if (offset > size)
+    if (offset > (loff_t) size)
 	left = 0;
     else
 	left = size - offset;
@@ -76,17 +75,16 @@ static int elksfs_file_read(struct inode *inode,
     /*
      *      Block, offset pair from the byte offset
      */
-    block = offset >> BLOCK_SIZE_BITS;
+    block = (block_t) (offset >> BLOCK_SIZE_BITS);
     offset &= BLOCK_SIZE - 1;
     blocks = (offset + left + (BLOCK_SIZE - 1)) >> BLOCK_SIZE_BITS;
 
     while (blocks) {
 	--blocks;
 	printd_mfs1("MINREAD: Reading block #%ld\n", block);
-	if (bh = elksfs_getblk(inode, block++, 0)) {
-	    if (bh)
-		printd_mfs2("MINREAD: block %ld = buffer %d\n", block - 1,
-			    bh->b_num);
+	if ((bh = elksfs_getblk(inode, block++, 0))) {
+	    printd_mfs2("MINREAD: block %ld = buffer %d\n", block - 1,
+			bh->b_num);
 	    if (!readbuf(bh)) {
 		printd_mfs("MINREAD: readbuf failed\n");
 		left = 0;
@@ -124,21 +122,23 @@ static int elksfs_file_read(struct inode *inode,
 #ifdef BLOAT_FS
     filp->f_reada = 1;
 #endif
-#ifdef FIXME
+
+#if 0					/* FIXME */
     if (!IS_RDONLY(inode))
 	inode->i_atime = CURRENT_TIME;
 #endif
+
     return read;
 }
 
 static int elksfs_file_write(register struct inode *inode,
-			     struct file *filp, char *buf, int count)
+			     struct file *filp, char *buf, size_t count)
 {
 #ifdef CONFIG_FS_RO
     return -EINVAL;
 #else
     off_t pos;
-    int written, c;
+    size_t written, c;
     register struct buffer_head *bh;
     char *p;
 
@@ -151,12 +151,13 @@ static int elksfs_file_write(register struct inode *inode,
 	return -EINVAL;
     }
     if (filp->f_flags & O_APPEND)
-	pos = inode->i_size;
+	pos = (off_t) inode->i_size;
     else
 	pos = filp->f_pos;
     written = 0;
     while (written < count) {
-	bh = elksfs_getblk(inode, pos >> BLOCK_SIZE_BITS, 1);
+	bh = elksfs_getblk(inode,
+			   (unsigned long int) (pos >> BLOCK_SIZE_BITS), 1);
 	if (!bh) {
 	    if (!written)
 		written = -ENOSPC;
@@ -182,14 +183,16 @@ static int elksfs_file_write(register struct inode *inode,
 	written += c;
 	buf += c;
     }
-    if (pos > inode->i_size)
-	inode->i_size = pos;
+    if (pos > (off_t) inode->i_size)
+	inode->i_size = (__u32) pos;
     inode->i_mtime = inode->i_ctime = CURRENT_TIME;
     filp->f_pos = pos;
     inode->i_dirt = 1;
-    return written;
+    return (int) written;
 #endif
 }
+
+/*@-type@*/
 
 /*
  * We have mostly NULL's here: the current defaults are ok for
@@ -237,3 +240,5 @@ struct inode_operations elksfs_file_inode_operations = {
     NULL			/* permission */
 #endif
 };
+
+/*@+type@*/

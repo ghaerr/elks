@@ -1,8 +1,6 @@
 #ifndef LX86_LINUXMT_ELKSFS_FS_H
 #define LX86_LINUXMT_ELKSFS_FS_H
 
-#ifdef CONFIG_ELKSFS_FS
-
 /*
  * The elksfs filesystem constants/structures
  *
@@ -32,7 +30,9 @@
 #define MINIX_V2		0x0002	/* minix V2 fs */
 #define ELKSFS_V1		0x0003	/* elksfs V1 */
 
+#ifndef INODE_VERSION(inode)
 #define INODE_VERSION(inode)	inode->i_sb->u.elksfs_sb.s_version
+#endif
 
 /*
  * This is the original elksfs inode layout on disk.
@@ -71,58 +71,43 @@ struct elksfs_dir_entry {
 
 #ifdef __KERNEL__
 
-extern int elksfs_lookup(register struct inode *dir, char *name, int len,
-			 register struct inode **result);
-extern int elksfs_create(register struct inode *dir, char *name, int len,
-			 int mode, struct inode **result);
-extern int elksfs_mkdir(register struct inode *dir, char *name, int len,
-			int mode);
-extern int elksfs_rmdir(register struct inode *dir, char *name, int len);
-extern int elksfs_unlink(struct inode *dir, char *name, int len);
-extern int elksfs_symlink(struct inode *dir, char *name, int len,
-			  char *symname);
-extern int elksfs_link(register struct inode *oldinode,
-		       register struct inode *dir, char *name, int len);
-extern int elksfs_mknod(register struct inode *dir, char *name, int len,
-			int mode, int rdev);
 extern int elksfs_rename();
-extern struct inode *elksfs_new_inode(struct inode *dir);
-extern void elksfs_free_inode(register struct inode *inode);
-extern unsigned long elksfs_count_free_inodes(register struct super_block
-					      *sb);
-extern unsigned int elksfs_new_block(register struct super_block *sb);
-extern void elksfs_free_block(register struct super_block *sb,
-			      unsigned long block);
-extern unsigned long elksfs_count_free_blocks(register struct super_block
-					      *sb);
 extern int elksfs_bmap();
-
-extern struct buffer_head *elksfs_getblk(register struct inode *inode,
-					 unsigned long block, int create);
-extern struct buffer_head *elksfs_bread(register struct inode *inode,
-					unsigned long block, int create);
-
-extern void elksfs_truncate(register struct inode *inode);
-extern void elksfs_put_super(register struct super_block *sb);
-extern struct super_block *elksfs_read_super(register struct super_block
-					     *s, char *data, int silent);
-extern int init_elksfs_fs(void);
-extern void elksfs_write_super(register struct super_block *sb);
-extern int elksfs_remount(register struct super_block *sb, int *flags,
-			  char *data);
-extern void elksfs_read_inode(register struct inode *inode);
-extern void elksfs_write_inode(register struct inode *inode);
-extern void elksfs_put_inode(register struct inode *inode);
-extern void elksfs_statfs(register struct super_block *sb,
-			  struct statfs *buf, int bufsiz);
-extern int elksfs_sync_inode(register struct inode *inode);
 extern int elksfs_sync_file();
+
+extern int elksfs_lookup(struct inode *,char *,size_t,struct inode **);
+extern int elksfs_create(struct inode *,char *,size_t,int,struct inode **);
+extern int elksfs_mkdir(struct inode *,char *,size_t,int);
+extern int elksfs_rmdir(struct inode *,char *,size_t);
+extern int elksfs_unlink(struct inode *,char *,size_t);
+extern int elksfs_symlink(struct inode *,char *,size_t,char *);
+extern int elksfs_link(struct inode *,struct inode *,char *,size_t);
+extern int elksfs_mknod(struct inode *,char *,size_t,int,int);
+extern struct inode *elksfs_new_inode(struct inode *);
+extern void elksfs_free_inode(struct inode *);
+extern unsigned long elksfs_count_free_inodes(struct super_block *);
+extern unsigned int elksfs_new_block(struct super_block *);
+extern void elksfs_free_block(struct super_block *,unsigned long);
+extern unsigned long elksfs_count_free_blocks(struct super_block *);
+
+extern struct buffer_head *elksfs_getblk(struct inode *,unsigned long,int);
+extern struct buffer_head *elksfs_bread(struct inode *,block_t,int);
+
+extern void elksfs_truncate(struct inode *);
+extern void elksfs_put_super(struct super_block *);
+extern struct super_block *elksfs_read_super(struct super_block *,char *,int);
+extern int init_elksfs_fs(void);
+extern void elksfs_write_super(struct super_block *);
+extern int elksfs_remount(struct super_block *,int *,char *);
+extern void elksfs_read_inode(struct inode *);
+extern void elksfs_write_inode(struct inode *);
+extern void elksfs_put_inode(struct inode *);
+extern void elksfs_statfs(struct super_block *,struct statfs *,size_t);
+extern int elksfs_sync_inode(struct inode *);
 
 extern struct inode_operations elksfs_file_inode_operations;
 extern struct inode_operations elksfs_dir_inode_operations;
 extern struct inode_operations elksfs_symlink_inode_operations;
-
-#endif
 
 #endif
 

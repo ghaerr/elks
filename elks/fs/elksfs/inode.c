@@ -9,6 +9,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/elksfs_fs.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/locks.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
@@ -72,6 +73,8 @@ void elksfs_put_super(register struct super_block *sb)
     unlock_super(sb);
     return;
 }
+
+static void elksfs_read_inode(register struct inode *);
 
 static struct super_operations elksfs_sops = {
     elksfs_read_inode,
@@ -141,14 +144,14 @@ struct super_block *elksfs_read_super(register struct super_block *s,
 {
     struct buffer_head *bh;
     struct elksfs_super_block *ms;
-    int i;
-    unsigned long block;
+    unsigned long int i;
+    block_t block;
     kdev_t dev = s->s_dev;
 
     if (32 != sizeof(struct elksfs_inode))
 	panic("bad i-node size");
     lock_super(s);
-    if (!(bh = bread(dev, 1L))) {
+    if (!(bh = bread(dev, (block_t) 1))) {
 	s->s_dev = 0;
 	unlock_super(s);
 	printk("ELKSFS-fs: unable to read superblock\n");
@@ -165,6 +168,8 @@ struct super_block *elksfs_read_super(register struct super_block *s,
     s->u.elksfs_sb.s_firstdatazone = ms->s_firstdatazone;
     s->u.elksfs_sb.s_log_zone_size = ms->s_log_zone_size;
     s->u.elksfs_sb.s_max_size = ms->s_max_size;
+
+#ifdef BLOAT_FS
     s->s_magic = ms->s_magic;
     if (s->s_magic == ELKSFS_SUPER_MAGIC) {
 	s->u.elksfs_sb.s_version = ELKSFS_V1;
@@ -185,6 +190,8 @@ struct super_block *elksfs_read_super(register struct super_block *s,
 		   kdevname(dev));
 	return NULL;
     }
+#endif
+
     for (i = 0; i < ELKSFS_I_MAP_SLOTS; i++)
 	s->u.elksfs_sb.s_imap[i] = NULL;
     for (i = 0; i < ELKSFS_Z_MAP_SLOTS; i++)
@@ -216,8 +223,8 @@ struct super_block *elksfs_read_super(register struct super_block *s,
 	printk("elksfs: bad superblock or bitmaps\n");
 	return NULL;
     }
-    set_bit(0, s->u.elksfs_sb.s_imap[0]->b_data);
-    set_bit(0, s->u.elksfs_sb.s_zmap[0]->b_data);
+    (void) set_bit(0, s->u.elksfs_sb.s_imap[0]->b_data);
+    (void) set_bit(0, s->u.elksfs_sb.s_zmap[0]->b_data);
     unlock_super(s);
     /* set up enough so that it can read an inode */
     s->s_dev = dev;
@@ -245,8 +252,9 @@ struct super_block *elksfs_read_super(register struct super_block *s,
 }
 
 #ifdef BLOAT_FS
+
 void elksfs_statfs(register struct super_block *sb,
-		   struct statfs *buf, int bufsiz)
+		   struct statfs *buf, size_t bufsiz)
 {
     struct statfs tmp;
 
@@ -266,57 +274,60 @@ void elksfs_statfs(register struct super_block *sb,
 
 /* Adapted from Linux 0.12's inode.c.  _bmap() is a long function, I know */
 
-unsigned long _elksfs_bmap(register struct inode *inode,
-			   unsigned long block, int create)
+unsigned long _elksfs_bmap(register struct inode *inode, block_t block,
+			   int create)
 {
     struct buffer_head *bh;
-    register unsigned short *i_zone = inode->i_zone;
-    unsigned long i;
+    register block_t *i_zone = inode->i_zone, i;
 
     if (block > (7 + 512 + 512 * 512))
 	panic("_elksfs_bmap: block (%ld) >big", block);
 
     if (block < 7) {
+
 #ifndef CONFIG_FS_RO
 	if (create && !i_zone[block]) {
-	    if (i_zone[block] = elksfs_new_block(inode->i_sb)) {
+	    if ((i_zone[block] = (block_t) elksfs_new_block(inode->i_sb))) {
 		inode->i_ctime = CURRENT_TIME;
 		inode->i_dirt = 1;
 	    }
 	}
 #endif
+
 	return i_zone[block];
     }
     block -= 7;
     if (block <= 512) {
 	if (!i_zone[7]) {
+
 #ifndef CONFIG_FS_RO
 	    if (create) {
-		if (i_zone[7] = elksfs_new_block(inode->i_sb)) {
+		if ((i_zone[7] = (block_t) elksfs_new_block(inode->i_sb))) {
 		    inode->i_dirt = 1;
 		    inode->i_ctime = CURRENT_TIME;
 		}
 	    } else
-		return 0;
-#else
-	    return 0;
 #endif
+		return 0;
+
 	}
 	printd_mfs1("MFSbmap: About to read indirect block #%d\n", i_zone[7]);
-	if (!(bh = bread(inode->i_dev, (unsigned long) i_zone[7]))) {
+	if (!(bh = bread(inode->i_dev, i_zone[7]))) {
 	    printd_mfs("MFSbmap: Bread of zone 7 failed\n");
 	    return 0;
 	}
 	map_buffer(bh);
 	i = (((unsigned short *) (bh->b_data))[block]);
+
 #ifndef CONFIG_FS_RO
 	if (create && !i) {
-	    if (i = elksfs_new_block(inode->i_sb)) {
-		((unsigned short *) (bh->b_data))[block] = i;
+	    if ((i = (block_t) elksfs_new_block(inode->i_sb))) {
+		((block_t *) (bh->b_data))[block] = i;
 		bh->b_dirty = 1;
 	    }
 	}
 #endif
+
 	unmap_brelse(bh);
 	printd_mfs1("MFSbmap: Returning #%ld\n", i);
 	return i;
@@ -326,12 +337,11 @@ unsigned long _elksfs_bmap(register struct inode *inode,
 }
 
 struct buffer_head *elksfs_getblk(register struct inode *inode,
-				  unsigned long block, int create)
+				  block_t block, int create)
 {
     struct buffer_head *bh;
-    unsigned long blknum;
+    block_t blknum = (block_t) _elksfs_bmap(inode, block, create);
 
-    blknum = _elksfs_bmap(inode, block, create);
     printd_mfs2("ELKSFSfs: file block #%ld -> disk block #%ld\n", block,
 		blknum);
     if (blknum != 0) {
@@ -342,14 +352,12 @@ struct buffer_head *elksfs_getblk(register struct inode *inode,
 	return NULL;
 }
 
-struct buffer_head *elksfs_bread(struct inode *inode,
-				 unsigned long block, int create)
+struct buffer_head *elksfs_bread(struct inode *inode, block_t block, int create)
 {
     register struct buffer_head *bh;
-    register struct buffer_head *bha;
 
     printd_mfs3("mfs: elksfs_bread(%d, %d, %d)\n", inode, block, create);
-    if (!(bh = elksfs_getblk(inode, (long) block, create)))
+    if (!(bh = elksfs_getblk(inode, block, create)))
 	return NULL;
     printd_mfs2("ELKSFSfs: Reading block #%d with buffer #%x\n", block, bh);
     return readbuf(bh);
@@ -363,11 +371,9 @@ static void elksfs_read_inode(register struct inode *inode)
 {
     struct buffer_head *bh;
     struct elksfs_inode *raw_inode;
-    unsigned long block;
-    unsigned int ino;
-    static int __c = 0;
+    block_t block;
+    ino_t ino = inode->i_ino;
 
-    ino = inode->i_ino;
     inode->i_op = NULL;
     inode->i_mode = 0;
     if (!ino || ino >= inode->i_sb->u.elksfs_sb.s_ninodes) {
@@ -388,11 +394,11 @@ static void elksfs_read_inode(register struct inode *inode)
 	(ino - 1) % ELKSFS_INODES_PER_BLOCK;
     memcpy(inode, raw_inode, sizeof(struct elksfs_inode));
     inode->i_ctime = inode->i_atime = inode->i_mtime;
+
 #ifdef BLOAT_FS
     inode->i_blocks = inode->i_blksize = 0;
-#else
-    inode->i_blksize = 0;
 #endif
+
     if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
 	inode->i_rdev = to_kdev_t(raw_inode->i_zone[0]);
     else
@@ -409,10 +415,12 @@ static void elksfs_read_inode(register struct inode *inode)
 	inode->i_op = &chrdev_inode_operations;
     else if (S_ISBLK(inode->i_mode))
 	inode->i_op = &blkdev_inode_operations;
+
 #ifdef NOT_YET
     else if (S_ISFIFO(inode->i_mode))
 	init_fifo(inode);
 #endif
+
 }
 
 /*
@@ -420,15 +428,14 @@ static void elksfs_read_inode(register struct inode *inode)
  */
 
 #ifndef CONFIG_FS_RO
-static struct buffer_head *elksfs_update_inode(register struct inode
-					       *inode)
+
+static struct buffer_head *elksfs_update_inode(register struct inode *inode)
 {
     register struct buffer_head *bh;
     struct elksfs_inode *raw_inode;
-    unsigned int ino;
-    unsigned long block;
+    block_t block;
+    ino_t ino = inode->i_ino;
 
-    ino = inode->i_ino;
     if (!ino || ino >= inode->i_sb->u.elksfs_sb.s_ninodes) {
 	printk("Bad inode number on dev %s: %d is out of range\n",
 	       kdevname(inode->i_dev), ino);
@@ -457,20 +464,20 @@ static struct buffer_head *elksfs_update_inode(register struct inode
 
 void elksfs_write_inode(register struct inode *inode)
 {
-    register struct buffer_head *bh;
+    register struct buffer_head *bh = elksfs_update_inode(inode);
 
-    bh = elksfs_update_inode(inode);
     brelse(bh);
 }
+
 #endif
 
 #ifdef BLOAT_FS
+
 int elksfs_sync_inode(register struct inode *inode)
 {
+    struct buffer_head *bh = elksfs_update_inode(inode);
     int err = 0;
-    struct buffer_head *bh;
 
-    bh = elksfs_update_inode(inode);
     if (bh && buffer_dirty(bh)) {
 	ll_rw_blk(WRITE, bh);
 	wait_on_buffer(bh);
@@ -484,6 +491,7 @@ int elksfs_sync_inode(register struct inode *inode)
     brelse(bh);
     return err;
 }
+
 #endif
 
 struct file_system_type elksfs_fs_type = {
@@ -496,6 +504,8 @@ struct file_system_type elksfs_fs_type = {
 
 int init_elksfs_fs(void)
 {
+#if 0
+    register_filesystem(&elksfs_fs_type);
+#endif
     return 1;
-    /*register_filesystem(&elksfs_fs_type); */
 }

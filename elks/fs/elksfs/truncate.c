@@ -33,7 +33,7 @@
 /*
  * The functions for minix V1 fs truncation.
  */
-static int V1_trunc_direct(register struct inode *inode)
+static __u16 V1_trunc_direct(register struct inode *inode)
 {
     register struct buffer_head *bh;
     __u16 *p, i, retry = 0;
@@ -66,14 +66,13 @@ static int V1_trunc_direct(register struct inode *inode)
 }
 
 static int V1_trunc_indirect(register struct inode *inode,
-			     int offset, unsigned short *p)
+			     loff_t offset, __u16 *p)
 {
     struct buffer_head *bh;
-    int i;
-    unsigned long tmp;
     register struct buffer_head *ind_bh;
     unsigned short *ind;
-    int retry = 0;
+    block_t tmp;
+    int i, retry = 0;
 
     tmp = *p;
     if (!tmp)
@@ -88,6 +87,7 @@ static int V1_trunc_indirect(register struct inode *inode,
 	return 0;
     }
     map_buffer(ind_bh);
+
   repeat:
     for (i = INDIRECT_BLOCK(offset); i < 512; i++) {
 	if (i < 0)
@@ -130,13 +130,12 @@ static int V1_trunc_indirect(register struct inode *inode,
 }
 
 static int V1_trunc_dindirect(register struct inode *inode,
-			      int offset, unsigned short *p)
+			      loff_t offset, __u16 *p)
 {
-    int i;
-    unsigned long tmp;
     register struct buffer_head *dind_bh;
     unsigned short *dind;
-    int retry = 0;
+    block_t tmp;
+    int i, retry = 0;
 
     if (!(tmp = *p))
 	return 0;
@@ -150,6 +149,7 @@ static int V1_trunc_dindirect(register struct inode *inode,
 	return 0;
     }
     map_buffer(dind_bh);
+
   repeat:
     for (i = DINDIRECT_BLOCK(offset); i < 512; i++) {
 	if (i < 0)
@@ -179,18 +179,21 @@ static int V1_trunc_dindirect(register struct inode *inode,
 
 void elksfs_truncate(register struct inode *inode)
 {
-    int retry;
+    __u16 retry = 1;
 
     if (!(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode) ||
-	  S_ISLNK(inode->i_mode))) return;
-    while (1) {
-	retry = V1_trunc_direct(inode);
-	retry |= V1_trunc_indirect(inode, 7, inode->i_zone[7]);
-	retry |= V1_trunc_dindirect(inode, 7 + 512, inode->i_zone[8]);
-	if (!retry)
-	    break;
-	current->counter = 0;
-	schedule();
+	  S_ISLNK(inode->i_mode)))
+	return;
+    while (retry) {
+	retry = V1_trunc_direct(inode)
+	      | V1_trunc_indirect(inode, 7, &inode->i_zone[7])
+	      | V1_trunc_dindirect(inode, 7 + 512, &inode->i_zone[8]);
+	if (retry) {
+#ifdef CONFIG_OLD_SCHED
+	    current->counter = 0;
+#endif
+	    schedule();
+	}
     }
     inode->i_mtime = inode->i_ctime = CURRENT_TIME;
     inode->i_dirt = 1;

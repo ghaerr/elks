@@ -11,6 +11,7 @@
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/fcntl.h>
+#include <linuxmt/mm.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 
@@ -43,26 +44,19 @@ static int namecompare(size_t len, size_t max, char *name, register char *buf)
  *
  * Note2: bh must already be mapped! 
  */
-static int elksfs_match(int len,
-			char *name,
-			struct buffer_head *bh,
-			unsigned long *offset,
-			register struct elksfs_sb_info *info)
+static int elksfs_match(size_t len, char *name, struct buffer_head *bh,
+			loff_t *offset, register struct elksfs_sb_info *info)
 {
     register struct elksfs_dir_entry *de;
-    int retval;
 
     de = (struct elksfs_dir_entry *) (bh->b_data + *offset);
     *offset += info->s_dirsize;
-    if (!de->inode || len > info->s_namelen) {
+    if (!de->inode || (unsigned long int) len > info->s_namelen)
 	return 0;
-    }
     /* "" means "." ---> so paths like "/usr/lib//libc.a" work */
-    if (!len && (de->name[0] == '.') && (de->name[1] == '\0')) {
+    if (!len && (de->name[0] == '.') && (de->name[1] == '\0'))
 	return 1;
-    }
-    retval = namecompare(len, (int) info->s_namelen, name, de->name);
-    return retval;
+    return namecompare(len, (size_t) info->s_namelen, name, de->name);
 }
 
 /*
@@ -76,27 +70,30 @@ static int elksfs_match(int len,
  */
 
 static struct buffer_head *elksfs_find_entry(register struct inode *dir,
-					     char *name,
-					     int namelen,
+					     char *name, size_t namelen,
 					     struct elksfs_dir_entry **res_dir)
 {
-    register unsigned long block, offset;
     struct buffer_head *bh;
     struct elksfs_sb_info *info;
+    register block_t block;
+    register loff_t offset;
 
     *res_dir = NULL;
     if (!dir || !dir->i_sb)
 	return NULL;
     info = &dir->i_sb->u.elksfs_sb;
     if (namelen > info->s_namelen) {
+
 #ifdef NO_TRUNCATE
 	return NULL;
 #else
 	namelen = info->s_namelen;
 #endif
+
     }
     bh = NULL;
-    block = offset = 0;
+    block = 0;
+    offset = 0;
     while (block * BLOCK_SIZE + offset < dir->i_size) {
 	if (!bh) {
 	    bh = elksfs_bread(dir, block, 0);
@@ -125,12 +122,12 @@ static struct buffer_head *elksfs_find_entry(register struct inode *dir,
     return NULL;
 }
 
-int elksfs_lookup(register struct inode *dir,
-		  char *name, int len, register struct inode **result)
+int elksfs_lookup(register struct inode *dir, char *name, size_t len,
+		  register struct inode **result)
 {
-    unsigned int ino;
-    struct elksfs_dir_entry *de;
     struct buffer_head *bh;
+    struct elksfs_dir_entry *de;
+    ino_t ino;
 
     *result = NULL;
 
@@ -173,17 +170,17 @@ int elksfs_lookup(register struct inode *dir,
  */
 
 #ifndef CONFIG_FS_RO
-static int elksfs_add_entry(register struct inode *dir,
-			    char *name,
-			    int namelen,
-			    struct buffer_head **res_buf,
+
+static int elksfs_add_entry(register struct inode *dir, char *name,
+			    size_t namelen, struct buffer_head **res_buf,
 			    struct elksfs_dir_entry **res_dir)
 {
-    int i;
-    unsigned long block, offset;
     struct buffer_head *bh;
     struct elksfs_dir_entry *de;
     struct elksfs_sb_info *info;
+    unsigned long int i;
+    block_t block;
+    loff_t offset;
 
     *res_buf = NULL;
     *res_dir = NULL;
@@ -191,16 +188,19 @@ static int elksfs_add_entry(register struct inode *dir,
 	return -ENOENT;
     info = &dir->i_sb->u.elksfs_sb;
     if (namelen > info->s_namelen) {
+
 #ifdef NO_TRUNCATE
 	return -ENAMETOOLONG;
 #else
 	namelen = info->s_namelen;
 #endif
+
     }
     if (!namelen)
 	return -ENOENT;
     bh = NULL;
-    block = offset = 0;
+    block = 0;
+    offset = 0;
     while (1) {
 	if (!bh) {
 	    bh = elksfs_bread(dir, block, 1);
@@ -216,7 +216,8 @@ static int elksfs_add_entry(register struct inode *dir,
 	    dir->i_dirt = 1;
 	}
 	if (de->inode) {
-	    if (namecompare(namelen, (int) info->s_namelen, name, de->name)) {
+	    if (namecompare(namelen, (size_t) info->s_namelen, name,
+			    de->name)) {
 		printd_mfs2
 		    ("ELKSFSadd_entry: file %t==%s (already exists)\n",
 		     name, de->name);
@@ -227,10 +228,14 @@ static int elksfs_add_entry(register struct inode *dir,
 	    dir->i_mtime = dir->i_ctime = CURRENT_TIME;
 	    dir->i_dirt = 1;
 	    for (i = 0; i < info->s_namelen; i++)
-		de->name[i] = (i < namelen) ? get_fs_byte(name + i) : 0;
+		de->name[i] = (i < namelen)
+			? (char) get_fs_byte((unsigned char *) name + i)
+			: 0;
+
 #ifdef BLOAT_FS
 	    dir->i_version = ++event;
 #endif
+
 	    unmap_buffer(bh);
 	    mark_buffer_dirty(bh, 1);
 	    *res_dir = de;
@@ -248,13 +253,13 @@ static int elksfs_add_entry(register struct inode *dir,
     return 0;
 }
 
-int elksfs_create(register struct inode *dir,
-		  char *name, int len, int mode, struct inode **result)
+int elksfs_create(register struct inode *dir, char *name, size_t len,
+		  int mode, struct inode **result)
 {
-    int error;
-    register struct inode *inode;
     struct buffer_head *bh;
+    register struct inode *inode;
     struct elksfs_dir_entry *de;
+    int error;
 
     *result = NULL;
     if (!dir)
@@ -265,7 +270,7 @@ int elksfs_create(register struct inode *dir,
 	return -ENOSPC;
     }
     inode->i_op = &elksfs_file_inode_operations;
-    inode->i_mode = mode;
+    inode->i_mode = (__u16) mode;
     inode->i_dirt = 1;
     error = elksfs_add_entry(dir, name, len, &bh, &de);
     if (error) {
@@ -283,13 +288,13 @@ int elksfs_create(register struct inode *dir,
     return 0;
 }
 
-int elksfs_mknod(register struct inode *dir,
-		 char *name, int len, int mode, int rdev)
+int elksfs_mknod(register struct inode *dir, char *name, size_t len,
+		 int mode, int rdev)
 {
-    int error;
-    register struct inode *inode;
     struct buffer_head *bh;
+    register struct inode *inode;
     struct elksfs_dir_entry *de;
+    int error;
 
     if (!dir)
 	return -ENOENT;
@@ -305,7 +310,7 @@ int elksfs_mknod(register struct inode *dir,
 	return -ENOSPC;
     }
     inode->i_uid = current->euid;
-    inode->i_mode = mode;
+    inode->i_mode = (__u16) mode;
     inode->i_op = NULL;
     if (S_ISREG(inode->i_mode))
 	inode->i_op = &elksfs_file_inode_operations;
@@ -319,10 +324,12 @@ int elksfs_mknod(register struct inode *dir,
 	inode->i_op = &chrdev_inode_operations;
     else if (S_ISBLK(inode->i_mode))
 	inode->i_op = &blkdev_inode_operations;
+
 #ifdef NOT_YET
     else if (S_ISFIFO(inode->i_mode))
 	init_fifo(inode);
 #endif
+
     if (S_ISBLK(mode) || S_ISCHR(mode))
 	inode->i_rdev = to_kdev_t(rdev);
     inode->i_dirt = 1;
@@ -342,14 +349,13 @@ int elksfs_mknod(register struct inode *dir,
     return 0;
 }
 
-int elksfs_mkdir(register struct inode *dir, char *name, int len, int mode)
+int elksfs_mkdir(register struct inode *dir, char *name, size_t len, int mode)
 {
-    int error;
+    struct buffer_head *bh, *dir_block;
     register struct inode *inode;
-    struct buffer_head *dir_block;
-    struct buffer_head *bh;
     struct elksfs_dir_entry *de;
     struct elksfs_sb_info *info;
+    int error;
 
     if (!dir || !dir->i_sb) {
 	iput(dir);
@@ -362,6 +368,7 @@ int elksfs_mkdir(register struct inode *dir, char *name, int len, int mode)
 	iput(dir);
 	return -EEXIST;
     }
+
 #if 0
 /*	Above checks if bh is returned and exits, so bh
  *	is NULL at this point
@@ -430,11 +437,11 @@ int elksfs_mkdir(register struct inode *dir, char *name, int len, int mode)
  */
 static int empty_dir(register struct inode *inode)
 {
-    unsigned long block;
-    unsigned int offset;
     struct buffer_head *bh;
     struct elksfs_dir_entry *de;
     struct elksfs_sb_info *info;
+    block_t block;
+    loff_t offset;
 
     if (!inode || !inode->i_sb)
 	return 1;
@@ -444,7 +451,7 @@ static int empty_dir(register struct inode *inode)
     offset = 2 * info->s_dirsize;
     if (inode->i_size & (info->s_dirsize - 1))
 	goto bad_dir;
-    if (inode->i_size < offset)
+    if ((loff_t) inode->i_size < offset)
 	goto bad_dir;
     bh = elksfs_bread(inode, 0, 0);
     if (!bh)
@@ -479,18 +486,19 @@ static int empty_dir(register struct inode *inode)
     }
     brelse(bh);
     return 1;
+
   bad_dir:
     unmap_brelse(bh);
     printk("Bad directory on device %s\n", kdevname(inode->i_dev));
     return 1;
 }
 
-int elksfs_rmdir(register struct inode *dir, char *name, int len)
+int elksfs_rmdir(register struct inode *dir, char *name, size_t len)
 {
-    int retval;
-    register struct inode *inode;
     struct buffer_head *bh;
+    register struct inode *inode;
     struct elksfs_dir_entry *de;
+    int retval;
 
     inode = NULL;
     bh = elksfs_find_entry(dir, name, len, &de);
@@ -527,9 +535,11 @@ int elksfs_rmdir(register struct inode *dir, char *name, int len)
     if (inode->i_nlink != 2)
 	printk("empty directory has nlink!=2 (%d)\n", inode->i_nlink);
     de->inode = 0;
+
 #ifdef BLOAT_FS
     dir->i_version = ++event;
 #endif
+
     mark_buffer_dirty(bh, 1);
     inode->i_nlink = 0;
     inode->i_dirt = 1;
@@ -537,6 +547,7 @@ int elksfs_rmdir(register struct inode *dir, char *name, int len)
     dir->i_nlink--;
     dir->i_dirt = 1;
     retval = 0;
+
   end_rmdir:
     iput(dir);
     iput(inode);
@@ -544,12 +555,12 @@ int elksfs_rmdir(register struct inode *dir, char *name, int len)
     return retval;
 }
 
-int elksfs_unlink(struct inode *dir, char *name, int len)
+int elksfs_unlink(struct inode *dir, char *name, size_t len)
 {
-    int retval;
-    register struct inode *inode;
     struct buffer_head *bh;
     struct elksfs_dir_entry *de;
+    register struct inode *inode;
+    int retval;
 
   repeat:
     retval = -ENOENT;
@@ -566,7 +577,9 @@ int elksfs_unlink(struct inode *dir, char *name, int len)
     if (de->inode != inode->i_ino) {
 	iput(inode);
 	unmap_brelse(bh);
+#ifdef CONFIG_OLD_SCHED
 	current->counter = 0;
+#endif
 	schedule();
 	goto repeat;
     }
@@ -583,9 +596,11 @@ int elksfs_unlink(struct inode *dir, char *name, int len)
 	inode->i_nlink = 1;
     }
     de->inode = 0;
+
 #ifdef BLOAT_FS
     dir->i_version = ++event;
 #endif
+
     mark_buffer_dirty(bh, 1);
     dir->i_ctime = dir->i_mtime = CURRENT_TIME;
     dir->i_dirt = 1;
@@ -593,6 +608,7 @@ int elksfs_unlink(struct inode *dir, char *name, int len)
     inode->i_ctime = dir->i_ctime;
     inode->i_dirt = 1;
     retval = 0;
+
   end_unlink:
     unmap_brelse(bh);
     iput(inode);
@@ -600,12 +616,12 @@ int elksfs_unlink(struct inode *dir, char *name, int len)
     return retval;
 }
 
-int elksfs_symlink(struct inode *dir, char *name, int len, char *symname)
+int elksfs_symlink(struct inode *dir, char *name, size_t len, char *symname)
 {
-    struct elksfs_dir_entry *de;
-    register struct inode *inode = NULL;
     struct buffer_head *bh = NULL;
     register struct buffer_head *name_block = NULL;
+    struct elksfs_dir_entry *de;
+    register struct inode *inode = NULL;
     int i;
     char c;
 
@@ -613,7 +629,7 @@ int elksfs_symlink(struct inode *dir, char *name, int len, char *symname)
 	iput(dir);
 	return -ENOSPC;
     }
-    inode->i_mode = S_IFLNK | 0777;
+    inode->i_mode = (__u16) (S_IFLNK | 0777);
     inode->i_op = &elksfs_symlink_inode_operations;
     name_block = elksfs_bread(inode, 0, 1);
     if (!name_block) {
@@ -630,7 +646,7 @@ int elksfs_symlink(struct inode *dir, char *name, int len, char *symname)
     name_block->b_data[i] = 0;
     mark_buffer_dirty(name_block, 1);
     unmap_brelse(name_block);
-    inode->i_size = i;
+    inode->i_size = (__u32) i;
     inode->i_dirt = 1;
     bh = elksfs_find_entry(dir, name, len, &de);
     map_buffer(bh);
@@ -659,11 +675,11 @@ int elksfs_symlink(struct inode *dir, char *name, int len, char *symname)
 }
 
 int elksfs_link(register struct inode *oldinode,
-		register struct inode *dir, char *name, int len)
+		register struct inode *dir, char *name, size_t len)
 {
-    int error;
-    struct elksfs_dir_entry *de;
     struct buffer_head *bh;
+    struct elksfs_dir_entry *de;
+    int error;
 
     if (S_ISDIR(oldinode->i_mode)) {
 	iput(oldinode);
@@ -701,12 +717,13 @@ int elksfs_link(register struct inode *oldinode,
 #endif
 
 #if 0
+
 /* subdir() used in do_minix_rename() which is not present */
+
 static int subdir(register struct inode *new_inode,
 		  register struct inode *old_inode)
 {
-    int ino;
-    int result;
+    int ino, result;
 
     new_inode->i_count++;
     result = 0;
@@ -726,4 +743,5 @@ static int subdir(register struct inode *new_inode,
     iput(new_inode);
     return result;
 }
+
 #endif

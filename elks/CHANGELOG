@@ -32,6 +32,18 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sun May  5 23:11:33 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Verified that fs/elksfs/*.c is clean as far as `splint -weak`
+	  is concerned. This also eliminated a fair chunk of redundant
+	  code in the form of static functions that are only called if
+	  BLOAT_FS is defined. However, as this section is not included
+	  in the default configuration, this has probably not reduced
+	  the code size, although this stands a better chance of actually
+	  compiling after this cleanup.
+	* Verified that current codebase both compiles and boots on
+	  my 286 based laptop.
+
 Sun May  5 20:41:02 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Verified that fs/minix/*.c is clean as far as `splint -weak`

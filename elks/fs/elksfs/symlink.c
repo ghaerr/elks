@@ -65,7 +65,7 @@ static int elksfs_follow_link(register struct inode *dir,
 	*res_inode = inode;
 	return 0;
     }
-    if (current->link_count > 5) {
+    if (link_count > 7) {
 	iput(inode);
 	iput(dir);
 	return -ELOOP;
@@ -76,10 +76,10 @@ static int elksfs_follow_link(register struct inode *dir,
 	return -EIO;
     }
     iput(inode);
-    current->link_count++;
+    link_count++;
     map_buffer(bh);
     error = open_namei(bh->b_data, flag, mode, res_inode, dir);
-    current->link_count--;
+    link_count--;
     unmap_brelse(bh);
     return error;
 }

@@ -26,19 +26,20 @@ static int elksfs_readdir(struct inode *inode,
 			  register struct file *filp,
 			  char *dirent, filldir_t filldir)
 {
-    unsigned int offset;
     struct buffer_head *bh;
     struct elksfs_dir_entry *de;
     register struct elksfs_sb_info *info;
+    loff_t offset;
 
     if (!inode || !inode->i_sb || !S_ISDIR(inode->i_mode))
 	return -EBADF;
     info = &inode->i_sb->u.elksfs_sb;
     if (filp->f_pos & (info->s_dirsize - 1))
 	return -EBADF;
-    while (filp->f_pos < inode->i_size) {
+    while (filp->f_pos < (loff_t) inode->i_size) {
 	offset = filp->f_pos & 1023;
-	bh = elksfs_bread(inode, (filp->f_pos) >> BLOCK_SIZE_BITS, 0);
+	bh = elksfs_bread(inode,
+			  (block_t) (filp->f_pos >> BLOCK_SIZE_BITS), 0);
 	if (!bh) {
 	    filp->f_pos += 1024 - offset;
 	    continue;
@@ -48,7 +49,8 @@ static int elksfs_readdir(struct inode *inode,
 	do {
 	    de = (struct elksfs_dir_entry *) (offset + bh->b_data);
 	    if (de->inode) {
-		int size = strnlen(de->name, info->s_namelen);
+		size_t size = strnlen(de->name, info->s_namelen);
+
 		if (filldir(dirent, de->name, size, filp->f_pos, de->inode)
 		    < 0) {
 		    unmap_brelse(bh);
@@ -57,11 +59,13 @@ static int elksfs_readdir(struct inode *inode,
 	    }
 	    offset += info->s_dirsize;
 	    filp->f_pos += info->s_dirsize;
-	} while (offset < 1024 && filp->f_pos < inode->i_size);
+	} while (offset < 1024 && filp->f_pos < (loff_t) inode->i_size);
 	unmap_brelse(bh);
     }
     return 0;
 }
+
+/*@-type@*/
 
 static struct file_operations elksfs_dir_operations = {
     NULL,			/* lseek - default */
@@ -111,9 +115,12 @@ struct inode_operations elksfs_dir_inode_operations = {
 #ifdef BLOAT_FS
     NULL,			/* bmap */
 #endif
-    elksfs_truncate,		/* truncate */
+    elksfs_truncate		/* truncate */
 #endif
 #ifdef BLOAT_FS
+	,
     NULL			/* permission */
 #endif
 };
+
+/*@+type@*/

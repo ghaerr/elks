@@ -76,11 +76,6 @@ struct task_struct {
     struct mm_struct		mm;		/* Memory blocks */
     pid_t			pgrp;
     struct tty			*tty;
-
-#if 0
-    __u8			link_count;	/* Symlink loop counter (now global) */
-#endif
-
     struct task_struct		*p_parent;
     struct task_struct		*p_prevsib;
     struct task_struct		*p_nextsib;
