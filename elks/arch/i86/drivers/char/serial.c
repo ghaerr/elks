@@ -117,7 +117,7 @@ register struct serial_info *sp;
 
 	do {
 		ch = inb_p(sp->io + UART_RX);
-		chq_addch(sp->tty->inq, ch);
+		chq_addch(&sp->tty->inq, ch);
 	} while (inb_p(sp->io + UART_LSR) & UART_LSR_DR);
 }
 /*
@@ -138,13 +138,14 @@ struct pt_regs *regs;
 	int status;
 	register struct serial_info * sp;
 	unsigned char ch;
-	printd_rs("Serial interrupt recieved.\n");
+	printd_rs("Serial interrupt %d recieved.\n", irq);
 
 	sp = &ports[irq_port[irq -2]];
 	do {
 		status = inb_p(sp->io + UART_LSR);
-		if (status & UART_LSR_DR)
+		if (status & UART_LSR_DR) {
 			receive_chars(sp);
+		}
 /*		if (status & UART_LSR_THRE)
 			transmit_chars(sp); */
 	} while (!(inb_p(sp->io + UART_IIR) & UART_IIR_NO_INT));
