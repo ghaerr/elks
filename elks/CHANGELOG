@@ -8,11 +8,11 @@ Al
 Contributor             Email address                   CHANGELOG entries found
 ~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~
 Alan Cox                <alan@redhat.com>               17 Jun 2001-18 Jun 2001
-Alastair Bridgewater    <nyef@softhome.net>             19 Nov 1998-06 Dec 1998
+Alastair Bridgewater    <nyef@softhome.net>             19 Nov 1998- 6 Dec 1998
 Alistair Riddoch        <alriddoch@zepler.org>          25 Sep 1998-17 Jun 2001
 Arnaud Launay           <asl@launay.org>                15 Jul 1999-17 Oct 2001
 Christian Mardmuller    <chm@kdt.de>                    10 Nov 1999-29 Feb 2000
-Christoph Plattner      <Christoph.Plattner@dot.at>     31 Jan 2000-02 Feb 2000
+Christoph Plattner      <Christoph.Plattner@dot.at>     31 Jan 2000- 2 Feb 2000
 David Murn              <scuffer@hups.apana.org.au>     11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
@@ -23,13 +23,18 @@ Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001-20 Nov 2001
 Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
 Peter L Vachuska        <pvachusk@nconnect.net>         13 Aug 2001
-Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998- 5 Feb 2002
+Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998- 7 Feb 2002
 Roman Festchook         <roma@polesye.net>              27 Oct 2001
 Simon Weijgers          <simon@weijgers.com>            16 Sep 1998-15 Nov 1999
-Simon Wood                                              06 Jan 2000-12 Jan 2000
-Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
+Simon Wood                                               6 Jan 2000-12 Jan 2000
+Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Thu Feb  7 00:03:17 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+
+	* Reformatted doshd.c to standardise indentation. Also corrected
+	  spelling and grammar in comments in this file. No other changes.
 
 Tue Feb  5 18:28:49 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
