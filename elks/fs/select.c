@@ -48,32 +48,15 @@
  * Linus noticed.  -- jrs
  */
 
-static void free_wait(p)
-register select_table * p;
-{
-	register struct select_table_entry * entry = p->entry + p->nr;
+struct wait_queue select_poll;	/* magic queue - see sleepwake.c */
 
-	while (p->nr > 0) {
-		p->nr--;
-		entry--;
-		remove_wait_queue(entry->wait_address,&entry->wait);
-	}
-}
+
 
 /* FIXME */ /* should be an inline function */
-void select_wait(wait_address, p) 
-struct wait_queue ** wait_address;
-register select_table * p;
+void select_wait(q) 
+struct wait_queue *q;
 {
-	register struct select_table_entry * entry;
-	if ((p && wait_address) && (p->nr < __MAX_SELECT_TABLE_ENTRIES)) {
-		entry = p->entry + p->nr;
-		entry->wait_address = wait_address;
-		entry->wait.task = current;
-		entry->wait.next = NULL;
-		add_wait_queue(wait_address,&entry->wait);
-		p->nr++;
-	}
+	current->pollhash |= 1<<((((int)q)>>4)&15);
 }
 
 
@@ -90,7 +73,6 @@ register select_table * p;
 
 static int check(flag, wait, file)
 int flag;
-select_table * wait;
 struct file * file;
 {
 	register struct inode * inode;
@@ -99,8 +81,7 @@ struct file * file;
 
 	inode = file->f_inode;
 	if ((fops = file->f_op) && (select = fops->select)) {
-		return (select(inode, file, flag, wait)
-		    || (wait && select(inode, file, flag, NULL)));
+		return (select(inode, file, flag));
 	}
 	if (flag != SEL_EX) {
 		return 1;
@@ -118,9 +99,7 @@ fd_set *res_out;
 fd_set *res_ex;
 {
 	int count;
-	select_table wait_table, *wait;
 	__ptask currentp = current;
-	struct select_table_entry entry[__MAX_SELECT_TABLE_ENTRIES];
 	fd_set set;
 	int i,j;
 	int max = -1;
@@ -148,39 +127,33 @@ fd_set *res_ex;
 end_check:
 	n = max + 1;
 	count = 0;
-	wait_table.nr = 0;
-	wait_table.entry = &entry[0];
-	wait = &wait_table;
 repeat:
 	currentp->state = TASK_INTERRUPTIBLE;
+	currentp->pollhash = 0;
+	wait_set(&select_poll);
 	for (i = 0 ; i < n ; i++) {
 		struct file * file = currentp->files.fd[i];
 		if (file) {
-			if (FD_ISSET(i,in)) {
-			}
-			if (FD_ISSET(i,in) && check(SEL_IN,wait,file)) {
+			if (FD_ISSET(i,in) && check(SEL_IN,file)) {
 				FD_SET(i, res_in);
 				count++;
-				wait = NULL;
 			}
-			if (FD_ISSET(i,out) && check(SEL_OUT,wait,file)) {
+			if (FD_ISSET(i,out) && check(SEL_OUT,file)) {
 				FD_SET(i, res_out);
 				count++;
-				wait = NULL;
 			}
-			if (FD_ISSET(i,ex) && check(SEL_EX,wait,file)) {
+			if (FD_ISSET(i,ex) && check(SEL_EX,file)) {
 				FD_SET(i, res_ex);
 				count++;
-				wait = NULL;
 			}
 		}
 	}
-	wait = NULL;
 	if (!count && currentp->timeout && !(currentp->signal/* & ~currentp->blocked*/)) {
 		schedule();
 		goto repeat;
 	}
-	free_wait(&wait_table);
+	currentp->pollhash = 0;
+	wait_clear(&select_poll);
 	currentp->state = TASK_RUNNING;
 	return count;
 }
@@ -268,21 +241,8 @@ register struct timeval * tvp;
 		/*(fd_set *)*/ &res_in,
 		/*(fd_set *)*/ &res_out,
 		/*(fd_set *)*/ &res_ex);
-#if 0
-	timeout = current->timeout - jiffies - 1;
+
 	current->timeout = 0L;
-	/* User doesn't really need timeout info back */
-	if (timeout < 0L)
-		timeout = 0L;
-	if (tvp /*&& !(current->personality & STICKY_TIMEOUTS)*/) {
-		put_user(timeout/HZ, &tvp->tv_sec);
-		timeout %= HZ;
-		timeout *= (1000000/HZ);
-		put_user(timeout, &tvp->tv_usec);
-	}
-#else
-	current->timeout = 0L;
-#endif
 	if (error < 0)
 		goto out;
 	if (!error) {
