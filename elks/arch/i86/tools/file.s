@@ -12,7 +12,7 @@ _open_file:
 	mov ax, #0x0000		; connect to file server.
 	int 0x87
 	mov cx, #0x00		; binary, readonly.
-	mov bx, _file_name
+	mov bx, #_file_name
 	mov ah, #0x00
 	int 0x85
 	mov file_handle, ax	; Save file handle for later.
