@@ -9,7 +9,11 @@ Al
 
 Sat Sep  8 19:51:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* Added `mkMake` script to scripts directory.
+	* Added `mkMake` script to scripts directory. This new file forms
+	  part of the rationalisation of the ELKS Makefile system that I
+	  am undertaking, but does not impact on the current system in any
+	  way. It is an important part of the rationalised Makefile system
+	  though, so needs to be included.
 
 Thu Aug 30 19:16:22 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
