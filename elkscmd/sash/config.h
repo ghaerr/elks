@@ -9,10 +9,10 @@
 /* #define CMD_CMP       /*  904 bytes */
 /* #define CMD_CP        /* 1108 bytes */
 /* #define CMD_DD        /* 2524 bytes */
-#define CMD_ECHO      /*  264 bytes */
+#define CMD_ECHO      /*  264 bytes 
 /* #define CMD_ED        /* 8300 bytes */
 /* #define CMD_GREP      /*  144 bytes */
-#define CMD_HELP      /*   88 bytes */
+/* #define CMD_HELP      /*   88 bytes */
 /* #define CMD_KILL      /*  532 bytes */
 /* #define CMD_LN        /*  716 bytes */
 /* #define CMD_LS        /* 7092 bytes */
@@ -21,7 +21,7 @@
 /* #define CMD_MORE      /*  608 bytes */
 /* #define CMD_MOUNT     /*  600 bytes. Includes umount */
 /* #define CMD_MV        /* 1272 bytes */
-#define CMD_PRINTENV  /*  260 bytes */
+/* #define CMD_PRINTENV  /*  260 bytes */
 /* #define CMD_PROMPT    /*      bytes */
 /* #define CMD_PWD       /*  928 bytes */
 /* #define CMD_RM        /*  140 bytes */

@@ -415,7 +415,7 @@ find_command(name, entry, printerr)
 	/* If name is in the table, and not invalidated by cd, we're done */
 	if ((cmdp = cmdlookup(name, 0)) != NULL && cmdp->rehash == 0)
 		goto success;
-
+		
 	/* If %builtin not in path, check for builtin next */
 	if (builtinloc < 0 && (i = find_builtin(name)) >= 0) {
 		INTOFF;

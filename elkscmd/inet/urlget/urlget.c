@@ -256,11 +256,7 @@ int len;
 			return(-1);
 		}
    }
-   if(s < 0) {
-   	fprintf(stderr, "httpget: Read error\n");
-	return(-1);
-   }
-
+   
    close(fd);
 
    return(0);

@@ -1,4 +1,4 @@
-#!/bin/ash
+#!/bin/sh
 
 if [ $# -lt 6 -o $# -gt 7 ]; then
     echo

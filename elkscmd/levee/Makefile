@@ -36,7 +36,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-CFLAGS = -O -0 -DSIZE=16000L
+CFLAGS = -ansi -O -0 -DSIZE=16000L
 
 xCC=gcc
 xCFLAGS=-g

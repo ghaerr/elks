@@ -55,7 +55,7 @@ LEX = flex -I8
 #LEX = lex
 
 CC = bcc
-CFLAGS = -0 -O -D_POSIX_SOURCE
+CFLAGS = -ansi -0 -O -D_POSIX_SOURCE
 LDFLAGS = -0 -s
 
 OFILES = scan.o util.o main.o number.o storage.o load.o execute.o 

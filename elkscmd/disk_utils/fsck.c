@@ -134,7 +134,7 @@ static unsigned char * zone_count = NULL;
 
 void recursive_check(unsigned int ino);
 
-int set_bit(unsigned nr, void * add)
+unsigned char set_bit(unsigned int nr, void * add)
 {
 	unsigned int * addr = add;
 	int	mask, retval;
@@ -146,7 +146,7 @@ int set_bit(unsigned nr, void * add)
 	return retval;
 }
 
-int clear_bit(unsigned nr, void * add)
+unsigned char clear_bit(unsigned int nr, void * add)
 {
 	unsigned int * addr = add;
 	int	mask, retval;
@@ -158,7 +158,7 @@ int clear_bit(unsigned nr, void * add)
 	return retval;
 }
 
-int test_bit(unsigned nr, void * add)
+unsigned char test_bit(unsigned int nr, void * add)
 {
 	unsigned int * addr = add;
 	unsigned int	mask;

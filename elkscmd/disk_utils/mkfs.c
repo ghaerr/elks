@@ -49,7 +49,7 @@
 #include <string.h>
 #include <signal.h>
 #include <fcntl.h>
-#include <ctype.h>
+/*#include <ctype.h>*/
 #include <stdlib.h>
 #include <termios.h>
 #include <sys/stat.h>
@@ -104,8 +104,7 @@ static char super_block_buffer[BLOCK_SIZE];
 static char inode_map[BLOCK_SIZE * 8];
 static char zone_map[BLOCK_SIZE * 8];
 
-
-int set_bit(unsigned nr,void * add)
+unsigned char set_bit(unsigned int nr,void * add)
 {
 	unsigned int * addr = add;
 	int	mask, retval;
@@ -117,7 +116,7 @@ int set_bit(unsigned nr,void * add)
 	return retval;
 }
 
-int clear_bit(unsigned nr, void * add)
+unsigned char clear_bit(unsigned int nr, void * add)
 {
 	unsigned int * addr = add;
 	int	mask, retval;
@@ -129,7 +128,7 @@ int clear_bit(unsigned nr, void * add)
 	return retval;
 }
 
-int test_bit(unsigned nr, void * add)
+unsigned char test_bit(unsigned int nr, void * add)
 {
 	unsigned int * addr = add;
 	int	mask;
