@@ -26,7 +26,7 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-12 Jul 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-26 Jun 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-12 Jul 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
@@ -34,9 +34,16 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Fri Jul 12 19:32:16 EEST 2002	Paul Nasrat <pauln@truemesh.com>
+Fri Jul 12 19:53:43 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* This is ELKS 0.1.1-pre3
+
+	* Verified that Paul's patch fixes the problem that prevented
+	  ktcp working.
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop.
+
+Fri Jul 12 19:32:16 EEST 2002	Paul Nasrat <pauln@truemesh.com>
 
 	* Moved the definition of _rs_ops outside of a block excluded
 	  by #ifdef CONFIG_CONSOLE_SERIAL command.
