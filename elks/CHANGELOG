@@ -29,6 +29,15 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Tue Nov 27 13:57:20 EET 2001 Harry Kalogirou <harkal@gmx.net>
+
+	* Fixed CRLF files as pointed out by Paul Nasrat.
+
+Tue Nov 27 03:40:07 EET 2001 Harry Kalogirou <harkal@gmx.net>
+
+	* Fixed the TIME_WAIT leftover TCP control blocks issue.
+	* Added user timeout to TCP/IP.
+
 Mon Nov 26 15:19:36 EET 2001 Harry Kalogirou <harkal@gmx.net>
 
 	* Fixed back the fixed sys_lseek(). It seems that libc expects
