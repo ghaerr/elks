@@ -35,6 +35,8 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 Thu May 30 07:22:17 BST 2002	Riley Williams <Riley@Williams.Name>
 
+	* This is ELKS 0.1.1-pre1.
+
 	* Reverted to elks/fs/minix subdirectory from 0.1.0 kernel release.
 	* Re-ANSI'fied elks/fs/minix subdirectory.
 	* ANSI'fied elks/net subdirectory.
