@@ -337,7 +337,7 @@ int memory_open(struct inode *inode, register struct file *filp)
 	filp->f_op = &kmem_fops;
 	break;
 
-#ifdef C
+#ifdef DEBUGMM
 
     /*  The following entries are all currently subsumed by the default entry.
      *  However, if debugging is enabled, we include them to print out the
