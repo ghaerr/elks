@@ -4,7 +4,7 @@
 
 	function checklang($lang)
 	{
-		include("./Functions/data.php");
+		include("data.php");
 		if (in_array($lang,array_keys($langitems), True)==False)
 		{
 			$return=array_keys($langitems);
@@ -16,7 +16,7 @@
 
 	function checkitem($lang, $item)
 	{
-		include("./Functions/data.php");
+		include("data.php");
 
 		$arr=$langitems["$lang"]["menu"];
 		$t = array();
@@ -31,7 +31,7 @@
 	
 	function headers($lang)
 	{
-		include("./Functions/data.php");
+		include("data.php");
 
 		$title=$langitems["$lang"]["title"];
         $meta="<meta http-equiv=\"Content-Type\" content=\"text/html; charset=windows-1252\">";
@@ -61,7 +61,7 @@
 
 	function body($lang, $item)
 	{
-        $content=getcontent(strtolower("./Languages/$lang/$item.html"));
+        $content=getcontent("./Languages/".strtolower("$lang/$item.html"));
 		$top=showtop();
 		$menu=showmenu($lang);
                 $footer=footer($lang);
@@ -72,15 +72,15 @@
 	function showtop()
 	{
 		$out="<table border=\"0\" width=\"100%\">".
-		"<tr><td width=\"20%\" align=\"left\" valign=\"top\"><img src=\"images/ELKStag.gif\" alt=\"ELKS Logo\" height=\"77\" width=\"224\"></td>".
-		"<td width=\"70%\" align=\"center\" valign=\"middle\"><img src=\"images/ELKSbanner.gif\" alt=\"Linux in 640k\" height=\"60\" width=\"450\"></td>".
-		"<td width=\"10%\" align=\"right\" valign=\"top\"><img src=\"images/ELKSlogo.gif\" alt=\"Baby Linux Logo\" height=\"77\" width=\"65\"></td></tr></table>";
+		"<tr><td width=\"20%\" align=\"left\" valign=\"top\"><img src=\"Images/ELKStag.gif\" alt=\"ELKS Logo\" height=\"77\" width=\"224\"></td>".
+		"<td width=\"70%\" align=\"center\" valign=\"middle\"><img src=\"Images/ELKSbanner.gif\" alt=\"Linux in 640k\" height=\"60\" width=\"450\"></td>".
+		"<td width=\"10%\" align=\"right\" valign=\"top\"><img src=\"Images/ELKSlogo.gif\" alt=\"Baby Linux Logo\" height=\"77\" width=\"65\"></td></tr></table>";
 		return $out;
 	}
 
 	function showmenu($lang)
 	{
-		include("./Functions/data.php");
+		include("data.php");
 
 		$data=$langitems[$lang]["menu"];
 		$out="<div align=\"center\"><center><a href=\"CHANGELOG.txt\">$data[0]</a> | ".
@@ -98,10 +98,10 @@
 
 	function footer($lang)
 	{
-		include("./Functions/data.php");
+		include("data.php");
 
 		$data=$langitems[$lang]["footer"];
-		$out="<div align=\"center\"><center><hr width=\"90%\">$data[0]<br>$data[1]</center></div>";
+		$out="<div align=\"center\"><center><hr width=\"90%\">".(isset($data[0])?$data[0]:'')."<br>".(isset($data[1])?$data[1]:'')."</center></div>";
 		return $out;
 	}
 ?>
