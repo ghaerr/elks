@@ -6,6 +6,28 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Sun Jun 17 11:20:06 BST 2001   Alan Cox  <alan@redhat.com>
+	* Abolished the suid config option
+	* Merged stuff to reduce the ifdef clutter a bit
+	* Removed the nonexistant ip socket stuff. Its confusing having
+	  all this old nonentity crap in it
+	* Buffer cache and request queue now have segment data
+	* Implemented segment stuff in the bios driver
+	* Added the back end code (untested so far) for swapping
+	* Replaced the wait queues with a V7 like wakeup mechanism
+	  with a bit of auditing we should be ready to page kernel stacks
+	  of sleeping processes that will free a fair bit of the data
+	  segment at the same time as upping the task limit
+	  - still need to get stacks smaller than 1K/task.
+	* Made select work using a crude hash and the V7 like wakeups. May
+	  need a bigger hash
+	* Removed CONFIG_NOFS - just too ugly right now
+	* Cleaned up random #if 0 stuff
+	* Reformatted xt_key.c since it had bad tab/space damage
+	* Killed bh->b_prev for good
+	* Killed inode hash for good
+	* Make off_t signed as required by Unix and Posix
+
 Tue Apr 17 14:52 GMT 2001   Alistair Riddoch  <alriddoch@zepler.org>
 
 	* Added dist rule to Makefiles.
