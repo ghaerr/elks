@@ -11,9 +11,9 @@ This version supports the following meta-codes:
 .TP
 .B @@
 The '@' character.
-.. .TP
-.. .B @B
-.. The current Baud rate of the serial port.
+.TP
+.B @B
+The current Baud rate of the serial port, taken from the command line.
 .TP
 .B @D
 The current date in DD-MMM-YYYY format. 25-Dec-1984 would be an example.
@@ -23,7 +23,7 @@ The current system hostname. If /etc/HOSTNAME is found, the contents
 of its first line are used, otherwise "LocalHost" is assumed.
 .TP
 .B @L
-The current connection identifier, normally either "ttyN" or "ethernet".
+The current connection identifier, taken from the command line.
 .TP
 .B @S
 The current system type, always "ELKS".
