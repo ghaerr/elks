@@ -89,7 +89,7 @@ struct file *file;
 	int err;
 
 	if (otty = determine_tty(inode->i_rdev)) {
-		memcpy(&otty->termios, &def_vals, sizeof(struct termios));
+/*		memcpy(&otty->termios, &def_vals, sizeof(struct termios));*/
 		err = otty->ops->open(otty);
 		if (err) {
 			return err;
@@ -242,11 +242,7 @@ int len;
 				}
 			}
 		}
-/*		tty->ops->write(tty);*/
-/*	} while(i < len && !rawmode && j != '\n');*/
-	} while(i < len && (rawmode || j != '\n')); /* This makes elvis
-												 * not work but I think
-												 * this is right */
+	} while(i < len && (rawmode || j != '\n'));
 
 	return i;
 }
@@ -332,6 +328,7 @@ void tty_init()
 	for (i = 0; i < NUM_TTYS; i++) { 
 		ttyp = &ttys[i];
 		ttyp->minor = -1;
+		memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
 	}
 
 #ifdef CONFIG_CONSOLE_BIOS

@@ -3,8 +3,16 @@
  ELKS TCP/IP
 -------------
 
-Notes on networking code
-------------------------
+Table of contents
+-----------------
+
+1. Notes on networing code
+2. Setup
+3. Status
+
+
+  1. Notes on networking code
+-------------------------------
 
 The current development model is based around using a user process as the
 actual TCP/IP stack with socket file descriptors and device drivers dealt
@@ -42,8 +50,8 @@ The TCP/IP stack process then constructs TCP/IP packets and writes them to
 the network device driver, including all the necessary hardware headers.
 
 
-  SETUP
----------
+  2. Setup
+------------
 
 At the moment, ELKS supports only SLIP connections so you have to connect
 the machine running ELKS with another machine using a serial cable. The
@@ -64,12 +72,26 @@ On the ELKS side, you need to have the kernel compiled with inet sockets.
 You also build the ktcp module found in elksnet/ktcp. You boot up ELKS and
 log in, then you do :
 
-# ktcp 192.168.1.2 /dev/ttyS0 &
+# ktcp 192.168.1.2 /dev/ttys0 &
 
 This tells ELKS to use your first serial line and that the local IP is
-192.168.1.2.
+192.168.1.2. Note that this way the default baud rate will be used(9600bps).
+To change that use the stty program that comes with the elkscmd packet.
+
+# stty 1200 < /dev/ttys0
+
+The above command will set the first serial line at 1200 bps.
 
 This is it. Ping ELKS from the gateway to see if everything is fine.
 
+
+  3. Status
+-------------
+
+  This section desribes the current state of the networking code. It's
+purpose is to give users an idea of what is done and what to expect of
+the ELKS networking.
+
+-- To be writen --
 
 		Harry

@@ -6,7 +6,7 @@
  */
 
 #define INQ_SIZE 512
-#define OUTQ_SIZE 40
+#define OUTQ_SIZE 64
 
 #define NUM_TTYS	6
 

@@ -568,7 +568,9 @@ CONFIG_NANO
   Include support for experimental AF_NANO sockets. Currently under development.
 
 CONFIG_INET
-  Include support for AF_INET TCP/IP sockets.
+  Include support for AF_INET TCP/IP sockets. This depends on a user space
+  process to work. Read the Documentation/networking.txt for more info.
+  Warning that this code is very unstable.
 
 Only support client sockets (MUST)
 CONFIG_SOCK_CLIENTONLY

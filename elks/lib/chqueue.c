@@ -12,6 +12,10 @@
 
 /* 'warming' will be done by the tty driver itself when it copies data over */
 
+/* 16 July 2001 : A divide is quite expensive on an 8086 so I changed the 
+ * code to use logical addition and not modulo. The only drawback is we have
+ * to use only power of two buffer sizes. (Harry Kalogirou) */
+
 #include <linuxmt/config.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/chqueue.h>
@@ -60,7 +64,7 @@ int wait;
 		return -1;
 	}
 
-	nhead = (q->tail + q->len) % q->size;	
+	nhead = (q->tail + q->len) & (q->size - 1);	
 	q->buf[nhead] = c;
 	q->len++; 
 	wake_up(&q->wq);	
@@ -105,7 +109,7 @@ int wait;
 
 	retval = q->buf[q->tail];
 	q->tail++;
-	q->tail %= q->size;
+	q->tail &= q->size - 1;
 	q->len--;
 
 	wake_up(&q->wq);

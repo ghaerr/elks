@@ -67,6 +67,10 @@ static int divisors[16] =
 	6,		/* B19200	*/
 	3		/* B38400	*/
 };
+
+/* Flow control buffer markers */
+#define	RS_IALLMOSTFULL	(3 * INQ_SIZE / 4)
+#define	RS_IALLMOSTEMPTY	(INQ_SIZE / 4)
 	
 #ifdef CONFIG_CONSOLE_SERIAL
 
@@ -84,10 +88,18 @@ void update_port(port)
 register struct serial_info * port;
 {
 	register struct tty * tty = port->tty;
+	register tcflag_t cflags;
 	unsigned divisor;
 
 	/* set baud rate divisor, first lower, then higher byte */
-	divisor = divisors[tty->termios.c_cflag & 017];
+	cflags = tty->termios.c_cflag & CBAUD;
+	divisor = divisors[cflags & 017];
+
+	/* Support for this additional bauds */	
+	if(cflags == B57600)divisor = 2;
+	if(cflags == B115200)divisor = 1;
+
+	icli();
 
 	/* Set the divisor latch bit */
 	outb_p(port->lcr | UART_LCR_DLAB, port->io + UART_LCR);
@@ -96,6 +108,8 @@ register struct serial_info * port;
 	outb_p((divisor >> 8) & 0xff, port->io + UART_DLM);
 	/* Clear the divisor latch bit */
 	outb_p(port->lcr, port->io + UART_LCR);
+	
+	isti();
 }	
 
 static char irq_port[4] = {3,1,0,2};
@@ -178,20 +192,7 @@ struct tty * tty;
 	inb_p(port->io + UART_MSR);
 
 	/* set serial port parameters to match ports[rs_minor] */
-
-#if 1
 	update_port(port);
-#else
-	/* set baud rate divisor, first lower, then higher byte */
-	divisor = divisors[tty->termios.c_cflag & 017];
-
-	outb_p(UART_LCR_WLEN8 | UART_LCR_DLAB, port->io + UART_LCR);
-	outb_p(divisor & 0xff, port->io + UART_DLL);
-	outb_p((divisor >> 8) & 0xff, port->io + UART_DLM);
-
-	/* set wordlength to 8 bits, no parity, 1 stop bit */
-	outb_p(port->lcr, port->io + UART_LCR);
-#endif
 
 	/* enable reciever data interrupt; FIXME: update code to utilize full interrupt interface */
 	outb_p(UART_IER_RDI, port->io + UART_IER);
@@ -268,9 +269,6 @@ register struct serial_info *sp;
 
 	do {
 		ch = inb_p(sp->io + UART_RX);
-/*		if (ch == '\r') {
-			ch = '\n';
-		}*/
 		if (!tty_intcheck(sp->tty, ch)) {
 			chq_addch(&sp->tty->inq, ch, 0);
 		}

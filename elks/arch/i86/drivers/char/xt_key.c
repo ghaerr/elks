@@ -35,7 +35,6 @@ extern struct tty ttys[];
 /*
  * Include the relevant keymap.
  */
-
 #include "KeyMaps/keys-be.h"
 #include "KeyMaps/keys-de.h"
 #include "KeyMaps/keys-dv.h"
