@@ -23,7 +23,7 @@ DEPEND  	=
 
 DISTFILES	= 
 
-NOINDENT	= directhd.c floppy.c
+NOINDENT	= directhd.c
 
 #########################################################################
 # Include standard commands.

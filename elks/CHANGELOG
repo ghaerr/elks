@@ -24,13 +24,19 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-14 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-23 Apr 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-24 Apr 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Wed Apr 24 00:14:04 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* ANSI'fied function prototypes in the arch/i86/drivers/block subtree.
+	* Applied `make indent` rule to the arch/i86/drivers/block subtree.
+	* Verified that the kernel compiles with the above changes applied.
 
 Tue Apr 23 17:27:03 BST 2002	Riley Williams <Riley@Williams.Name>
 

@@ -29,22 +29,22 @@ extern void rd_load();
 extern int chr_dev_init();
 extern int blk_dev_init();
 
-void device_setup()
+void device_setup(void)
 {
-	register struct gendisk *p;
+    register struct gendisk *p;
 
-	chr_dev_init();
+    chr_dev_init();
 #ifndef CONFIG_NOFS
-	blk_dev_init();
+    blk_dev_init();
 #endif
-	isti();
+    isti();
 
 #ifndef CONFIG_NOFS
-	for (p = gendisk_head ; p ; p=p->next) {
-		setup_dev(p);
-	}
+    for (p = gendisk_head; p; p = p->next) {
+	setup_dev(p);
+    }
 #endif
 #ifdef CONFIG_BLK_DEV_RAM
-	rd_load();
+    rd_load();
 #endif
 }
