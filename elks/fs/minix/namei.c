@@ -122,13 +122,8 @@ struct minix_dir_entry ** res_dir;
 			return bh;
 		}
 		unmap_buffer(bh);
-#ifdef BLOAT_FS
-		if (offset < bh->b_size)
-			continue;
-#else
 		if (offset < 1024)
 			continue;
-#endif
 		brelse(bh);
 		bh = NULL;
 		offset = 0;
@@ -228,17 +223,9 @@ struct minix_dir_entry ** res_dir;
 		}
 		de = (struct minix_dir_entry *) (bh->b_data + offset);
 		offset += info->s_dirsize;
-#ifdef BLOAT_FS
-		if (((loff_t)block)*bh->b_size + offset > dir->i_size) {
-#else
 		if (((loff_t)block)*1024L + offset > dir->i_size) {
-#endif
 			de->inode = 0;
-#ifdef BLOAT_FS
-			dir->i_size = ((loff_t)block)*bh->b_size + offset;
-#else
 			dir->i_size = ((loff_t)block)*1024L + offset;
-#endif
 			dir->i_dirt = 1;
 		}
 		if (de->inode) {
@@ -261,13 +248,8 @@ struct minix_dir_entry ** res_dir;
 			*res_dir = de;
 			break;
 		}
-#ifdef BLOAT_FS
-		if (offset < bh->b_size)
-			continue;
-#else
 		if (offset < 1024)
 			continue;
-#endif
 		unmap_brelse(bh);
 		bh = NULL;
 		offset = 0;
@@ -502,13 +484,8 @@ register struct inode * inode;
 			unmap_brelse(bh);
 			return 0;
 		}
-#ifdef BLOAT_FS
-		if (offset < bh->b_size)
-			continue;
-#else
 		if (offset < 1024L)
 			continue;
-#endif
 		unmap_brelse(bh);
 		bh = NULL;
 		offset = 0L;
