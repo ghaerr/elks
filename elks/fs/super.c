@@ -571,16 +571,7 @@ void mount_root()
 	struct file filp;
 	int retval;
 
-/* If the line below is removed, the kernel crashes shortly after login *
- * initially giving messages about an invalid block device (0080), and  *
- * just locks up completely. It looks as though the is some data segment*
- * corruption, but I have not been able to find where from              *
- * The crash occurs if the string is less than three chars, or the line *
- * is not there  - AJR 10 May 98                                        */
-/*	printk("BUG\n"); */
 retry_floppy:
-/* I don't think this line is needed, the BSS is already zeroed - AJR 9May98*/
-/*	memset(super_blocks, 0, sizeof(super_blocks)); */
 	memset(&filp, 0, sizeof(filp));
 	memset(&d_inode, 0, sizeof(d_inode));
 	d_inode.i_rdev = ROOT_DEV;
