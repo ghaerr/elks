@@ -18,24 +18,21 @@
 struct request {
 	kdev_t rq_dev;		/* -1 if no request */
 	__u8  rq_cmd;		/* READ or WRITE */
-#ifdef BLOAT_FS
-	__u8  rq_errors;
-#endif
 	__u8  rq_status;
 	sector_t rq_sector;
-#ifdef BLOAT_FS
-	sector_t rq_nr_sectors;	/* always 2 */
-	sector_t rq_current_nr_sectors;
-#endif
 	char * rq_buffer;
+	seg_t  rq_seg;		/* Used by swapper */
+	struct buffer_head * rq_bh;
+	struct request * rq_next;
 #ifdef BLOAT_FS
 /* This may get used for dealing with waiting for requests later
  * but for now it is just not used
  */
 	struct task_struct * rq_waiting;
+	sector_t rq_nr_sectors;	/* always 2 */
+	sector_t rq_current_nr_sectors;
+	__u8  rq_errors;
 #endif
-	struct buffer_head * rq_bh;
-	struct request * rq_next;
 };
 
 #define RQ_INACTIVE	0
