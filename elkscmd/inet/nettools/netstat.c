@@ -59,7 +59,7 @@ int main(){
     localadr.sin_port = 0;
     localadr.sin_addr.s_addr = INADDR_ANY;  
     ret = bind(s, &localadr, sizeof(struct sockaddr_in));
-     
+
 	remaddr.sin_family = AF_INET;
 	remaddr.sin_port = htons(NETCONF_PORT);
 	remaddr.sin_addr.s_addr = 0;

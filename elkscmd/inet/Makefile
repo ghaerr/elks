@@ -1,6 +1,6 @@
 include ../Make.defs
 
-DIRS=httpd telnet
+DIRS=httpd telnet urlget
 DIRS2=nettools
 
 all:
