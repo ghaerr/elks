@@ -1,10 +1,10 @@
-.\" Copyright 2002 Riley H. Williams <Riley@Williams.Name>.
+.\" Copyright 1998-2002 Riley H. Williams <Riley@Williams.Name>.
 .\" May be distributed under the GNU General Public License.
 .
-.TH KNL 8 "28 May 2002" "Linux 2.0" "Linux Programmer's Manual"
+.TH KNL 8 "10 June 2002" "Linux 2.0" "Linux Programmer's Manual"
 .
 .SH NAME
-knl \- query/set image configuration parameters
+knl \- query/set kernel configuration parameters
 .
 .SH SYNOPSIS
 .TP
@@ -117,7 +117,6 @@ options, located at the following offsets:
 .nf
 .RS
 
- 496  1F0  Reserved
  498  1F2  Root flags
  500  1F4  Reserved
  502  1F6  Swap Device
@@ -143,27 +142,27 @@ options are as follows:
 .nf
 .RS
 
-/dev/aztcd           /dev/aztcd[1-255]
-/dev/bd[ab]          /dev/bd[ab][1-4]            (ELKS)
-                     /dev/cdouble[0-127]
-                     /dev/double[0-127]
-                     /dev/fd[0-3]
-/dev/flash           /dev/flash[1-7]
-/dev/gscd            /dev/gscd[1-255]
-/dev/hd[a-h]         /dev/hd[a-h][1-63]
-/dev/hitcd           /dev/hitcd[1-255]
-/dev/mcd             /dev/mcd[1-255]
-/dev/optcd           /dev/optcd[1-255]
-/dev/ram             /dev/ram[0-7]
-/dev/rflash          /dev/rflash[1-7]
-/dev/rom             /dev/rom[1-7]
-/dev/rrom            /dev/rrom[1-7]
-/dev/scd             /dev/scd[1-255]
-/dev/sd[a-g]         /dev/sd[a-g][1-15]
-/dev/sjcd            /dev/sjcd[1-255]
-/dev/sonycd          /dev/sonycd[1-255]
-/dev/xda             /dev/xda[1-63]
-/dev/xdb             /dev/xdb[1-63]
+/dev/aztcd       /dev/aztcd[1-255]
+/dev/bd[ab]      /dev/bd[ab][1-4]        (ELKS)
+                 /dev/cdouble[0-127]
+                 /dev/double[0-127]
+                 /dev/fd[0-3]
+/dev/flash       /dev/flash[1-7]
+/dev/gscd        /dev/gscd[1-255]
+/dev/hd[a-h]     /dev/hd[a-h][1-63]
+/dev/hitcd       /dev/hitcd[1-255]
+/dev/mcd         /dev/mcd[1-255]
+/dev/optcd       /dev/optcd[1-255]
+/dev/ram         /dev/ram[0-7]
+/dev/rflash      /dev/rflash[1-7]
+/dev/rom         /dev/rom[1-7]
+/dev/rrom        /dev/rrom[1-7]
+/dev/scd         /dev/scd[1-255]
+/dev/sd[a-g]     /dev/sd[a-g][1-15]
+/dev/sjcd        /dev/sjcd[1-255]
+/dev/sonycd      /dev/sonycd[1-255]
+/dev/xda         /dev/xda[1-63]
+/dev/xdb         /dev/xdb[1-63]
 
 .RE
 .fi
@@ -176,13 +175,18 @@ are synonyms for
 .B /dev/ram0
 and, additionally,
 .B Boot
-can be used to specify the boot device. The
+can be used to specify the boot device, and
+.B NFS
+can be used to specify that the root device is on the Network File System
+(NFS). The
 .B /dev/
 part is optional in each case (but must
 .B NOT
 be prefixed to the
 .B Boot
-option).
+or
+.B NFS
+options).
 .PP
 In addition to the above, a general method of specifying
 .B ANY
@@ -242,7 +246,7 @@ Valid numeric arguments are in the range from
 .B 0
 to
 .B 65499
-inclusive.
+inclusive, as supported by the video hardware in the system in question.
 .
 .SH ERRORS
 The following errorlevels may be reported:
@@ -282,9 +286,7 @@ since these parameters that
 .B knl
 modifies can be set from the
 .B LILO
-prompt during a boot.
-.br
-However,
+prompt during a boot. However,
 .B knl
 is still needed at this time for setting the RAM disk parameters.
 Users are encouraged to find the
@@ -296,11 +298,10 @@ when booting their systems.
 .SH AUTHORS
 The
 .B knl
-program and documentation was written by Riley Williams <Riley@Williams.Name>.
-.PP
-It was inspired by the
+program and documentation was written by Riley Williams
+<Riley@Williams.Name>. It was inspired by the
 .B rdev
-program and documentation originally written some time ago by Werner
-Almesberger <almesber@nessie.cs.id.ethz.ch> and modified by Peter
-MacDonald <pmacdona@SanJuan.UVic.CA>, with root flags support added by
-Stephen Tweedie <sct@dcs.ed.ac.uk>.
+program and documentation originally written by Werner Almesberger
+<almesber@nessie.cs.id.ethz.ch>, and modified by Peter MacDonald
+<pmacdona@SanJuan.UVic.ca>, with root flags support added by Stephen
+C. Tweedie <sct@dcs.ed.ac.uk>.
