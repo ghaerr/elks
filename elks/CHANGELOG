@@ -867,19 +867,9 @@ Sun Jan 31 17:50 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix main.c so init is launched with a valid set of argvs.
 	* Fix ntty.c so tty driver ioctls are called.
-<<<<<<< CHANGELOG
-=======
 
-------------------------------------------------------------------------------
->>>>>>> 1.172
-
-<<<<<<< CHANGELOG
-Sat Dec 06 00:24 GMT 1998   Alastair Bridgewater  <nyef@softhome.net>
-
-=======
 Sat Dec  6 00:24 GMT 1998   Alastair Bridgewater  <nyef@softhome.net>
 
->>>>>>> 1.172
 	* Fixed arch/i86/lib/Makefile to rebuild setup[bw].s when nessecary.
 
 Wed Dec  3 17:12 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
