@@ -12,9 +12,15 @@ Alistair Riddoch        <AlRiddoch@zepler.org>           1 Jan 1995-20 Oct 1999
 Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>     7 Nov 2001-24 Nov 2001
 Martijn Bakker          <martijn@insecure.nl>           29 Mar 2002
 Michael McConnell       <Soruk@Eridani.co.uk>           11 Nov 2001-12 Nov 2001
-Riley Williams          <rhw@InfraDead.Org>              8 Nov 2001-13 Apr 2002
+Riley Williams          <rhw@InfraDead.Org>              8 Nov 2001-16 May 2002
 
 -------------------------------------------------------------------------------
+
+Thu May 16 06:24:36 BST 2002	Riley Williams <rhw@InfraDead.Org>
+
+	* Release history brought up to date. The 0.1.0 kernel release
+	  has now been issued, and a source of early ELKS kernels has
+	  been found and announced.
 
 Sat Apr 13 19:42:16 BST 2002	Riley Williams <rhw@InfraDead.Org>
 
@@ -26,8 +32,6 @@ Sat Apr  6 22:45:56 BST 2002	Riley Williams <rhw@InfraDead.Org>
 
 Fri Apr  5 18:36:54 BST 2002	Riley Williams <rhw@InfraDead.Org>
 
-	* Release history brought up to date. The 0.1.0 kernel release
-	  has now been issued.
 	* Martijn's ELKS banner included on ELKS home page.
 
 Fri Mar 29 04:09:16 BST 2002	Martijn Bakker <martijn@insecure.nl>
