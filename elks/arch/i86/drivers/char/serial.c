@@ -32,7 +32,8 @@ struct serial_info
 
 #define CONSOLE_PORT 0
 
-/* all boxes should be able to do 9600 at least, afaik 8250 works fine up to 19200 */
+/* all boxes should be able to do 9600 at least, afaik 8250 works fine
+   up to 19200 */
 #define DEFAULT_BAUD_RATE 9600
 #define DEFAULT_LCR UART_LCR_WLEN8
 #define DEFAULT_MCR UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2
@@ -67,6 +68,18 @@ static int divisors[16] =
 	3		/* B38400	*/
 };
 	
+#ifdef CONFIG_CONSOLE_SERIAL
+
+void console_setdefault(port)
+register struct serial_info * port;
+{
+    register struct tty * tty = port->tty;
+
+    memcpy((void *)&(tty->termios), &def_vals, sizeof(struct termios));
+}
+
+#endif
+
 void update_port(port)
 register struct serial_info * port;
 {
@@ -108,7 +121,8 @@ struct serial_info * new_info;
 	int err; 
 	struct inode * inode;
 	
-	err = verified_memcpy_fromfs(info, new_info, sizeof(struct serial_info));
+	err = verified_memcpy_fromfs(info, new_info, 
+				     sizeof(struct serial_info));
 
 	if (err != 0) return err;
 
@@ -294,7 +308,8 @@ void *dev_id;
 int rs_probe(sp)
 register struct serial_info *sp;
 {
-	/* DS WASTING: is it just me or is this scratch2 redundant (srcatch can be reused) ? */
+	/* DS WASTING: is it just me or is this scratch2 redundant 
+	   (srcatch can be reused) ? */
 	int count;
 	int scratch,scratch2;
 	int status1,status2;
@@ -304,7 +319,9 @@ register struct serial_info *sp;
 	scratch=inb_p(sp->io+UART_IER);
 	outb_p(scratch,sp->io+UART_IER);
 	if(scratch)
-		return -1;
+	{
+	    return -1;
+	}
 
 	/* this code is weird, IMO */
 	scratch2=inb_p(sp->io+UART_LCR);
@@ -314,14 +331,17 @@ register struct serial_info *sp;
 
 	outb_p(UART_FCR_ENABLE_FIFO, sp->io+UART_FCR);
 
-	/* upper two bits of IIR define UART type, but according to both RB's intlist and HelpPC this code is wrong, see comments marked with [*] */
+	/* upper two bits of IIR define UART type, but according to both RB's
+	   intlist and HelpPC this code is wrong, see comments marked 
+	   with [*] */
 	scratch=inb_p(sp->io+UART_IIR)>>6;
 	switch(scratch)
 	{
 		case 0:
 			sp->flags=SERF_EXIST|ST_16450;
 			break;
-		case 1: /* [*] this denotes broken 16550 UART, not 16550A or any newer type */
+		case 1: /* [*] this denotes broken 16550 UART, 
+			   not 16550A or any newer type */
 			sp->flags=ST_UNKNOWN;
 			break;
 		case 2: /* invalid combination */
@@ -365,55 +385,84 @@ register struct serial_info *sp;
 int rs_init()
 {
 
-	register struct serial_info *sp=&ports[0];
-	int i;
-	int ttyno = 4;
-	printk("Serial driver version 0.01 with no serial options enabled\n");
-	for(i=0;i<4;i++)
+    register struct serial_info *sp=&ports[0];
+    int i;
+    int ttyno = 4;
+    printk("Serial driver version 0.01 with no serial options enabled\n");
+    for(i=0;i<4;i++)
+    {
+	if (sp->tty != NULL)
 	{
-		if((rs_probe(sp)==0) && (!request_irq(sp->irq, rs_irq, NULL)))
-		{
-			printk("ttys%d at 0x%x (irq = %d)",
-				i,sp->io,sp->irq);
-			switch(sp->flags&SERF_TYPE)
-			{
-				case ST_8250:
-					printk(" is a 8250\n");
-					break;
-				case ST_16450:
-					printk(" is a 16450\n");
-					break;
-				case ST_16550:
-					printk(" is a 16550\n");
-					break;
-				default:
-					printk("\n");
-					break;
-			}
-			sp->tty = &ttys[ttyno++];
-/*			outb_p(????, sp->io + UART_MCR); */
-		}	
-		sp++;
+	    /*
+	     * if rs_init is called twice, because of serial console
+	     */
+	    printk("ttys%d at 0x%x (irq = %d)",
+		   ttyno-4,sp->io,sp->irq);
+	    switch(sp->flags&SERF_TYPE)
+	    {
+	    case ST_8250:
+		printk(" is a 8250, fetched\n");
+		break;
+	    case ST_16450:
+		printk(" is a 16450, fetched\n");
+		break;
+	    case ST_16550:
+		printk(" is a 16550, fetched \n");
+		break;
+	    default:
+		printk(", fetched\n");
+		break;
+	    }
+	    ttyno++;
 	}
-	return 0;
+	else
+	{
+	    if((rs_probe(sp)==0) && (!request_irq(sp->irq, rs_irq, NULL)))
+	    {
+		printk("ttys%d at 0x%x (irq = %d)",
+		       ttyno-4,sp->io,sp->irq);
+		switch(sp->flags&SERF_TYPE)
+		{
+		case ST_8250:
+		    printk(" is a 8250\n");
+		    break;
+		case ST_16450:
+		    printk(" is a 16450\n");
+		    break;
+		case ST_16550:
+		    printk(" is a 16550\n");
+		    break;
+		default:
+		    printk("\n");
+		    break;
+		}
+		sp->tty = &ttys[ttyno++];
+/*			outb_p(????, sp->io + UART_MCR); */
+	    }
+	}
+	sp++;
+    }
+    return 0;
 }
 
 #ifdef CONFIG_CONSOLE_SERIAL
 static int con_init = 0;
 void init_console()
 {
-	rs_init();
-	con_init = 1;
-	printk("Console: Serial\n");
+    rs_init();
+    console_setdefault(&ports[CONSOLE_PORT]);
+    update_port(&ports[CONSOLE_PORT]);
+    con_init = 1;
+    printk("Console: Serial\n");
 }
 
 void con_charout(Ch)
 char Ch;
 {
-	if (con_init) {
-		while (!(inb_p(ports[CONSOLE_PORT].io + UART_LSR) & UART_LSR_TEMT));
-		outb(Ch, ports[CONSOLE_PORT].io + UART_TX);
-	}
+    if (con_init) {
+	while (!(inb_p(ports[CONSOLE_PORT].io + UART_LSR) & UART_LSR_TEMT));
+	outb(Ch, ports[CONSOLE_PORT].io + UART_TX);
+    }
 }
 
 int wait_for_keypress()
