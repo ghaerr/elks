@@ -7,6 +7,7 @@
 #include <linuxmt/serial_reg.h>
 #include <linuxmt/ntty.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/termios.h>
 
 extern struct tty ttys[];
 
@@ -17,10 +18,10 @@ struct serial_info
 	unsigned char flags;
 	unsigned char lcr;
 	unsigned char mcr;
-	unsigned int baud_rate;
 	struct tty * tty;	
 #define SERF_TYPE	15
 #define SERF_EXIST	16
+#define SERF_INUSE	32
 #define ST_8250		0
 #define ST_16450	1
 #define ST_16550	2
@@ -40,18 +41,55 @@ struct serial_info
 
 static struct serial_info ports[4]=
 {
-	{ 0x3f8,4,0,DEFAULT_LCR, DEFAULT_MCR, DEFAULT_BAUD_RATE,0 },
-	{ 0x2f8,3,0,DEFAULT_LCR, DEFAULT_MCR, DEFAULT_BAUD_RATE,0 },
-	{ 0x3e8,5,0,DEFAULT_LCR, DEFAULT_MCR, DEFAULT_BAUD_RATE,0 },
-	{ 0x2e8,2,0,DEFAULT_LCR, DEFAULT_MCR, DEFAULT_BAUD_RATE,0 },
+	{ 0x3f8,4,0,DEFAULT_LCR, DEFAULT_MCR, NULL },
+	{ 0x2f8,3,0,DEFAULT_LCR, DEFAULT_MCR, NULL },
+	{ 0x3e8,5,0,DEFAULT_LCR, DEFAULT_MCR, NULL },
+	{ 0x2e8,2,0,DEFAULT_LCR, DEFAULT_MCR, NULL },
 };
+
+static int divisors[16] =
+{
+	0,		/* B0		*/
+	2304,		/* B50		*/
+	1536,		/* B75		*/
+	1047/*.*/,	/* B110		*/
+	860/*.*/,	/* B134		*/
+	768,		/* B150		*/
+	576,		/* B200		*/
+	384,		/* B300		*/
+	192,		/* B600		*/
+	96,		/* B1200	*/
+	64,		/* B1800	*/
+	48,		/* B2400	*/
+	24,		/* B4800	*/
+	12,		/* B9600	*/
+	6,		/* B19200	*/
+	3		/* B38400	*/
+};
+	
+void update_port(port)
+register struct serial_info * port;
+{
+	register struct tty * tty = port->tty;
+	unsigned divisor;
+
+	/* set baud rate divisor, first lower, then higher byte */
+	divisor = divisors[tty->termios.c_cflag & 017];
+
+	printk("Setting serial baud rate to %x\n", tty->termios.c_cflag);
+	/* Set the divisor latch bit */
+	outb_p(port->lcr | UART_LCR_DLAB, port->io + UART_LCR);
+	/* Set the divisor low and high byte */
+	outb_p(divisor & 0xff, port->io + UART_DLL);
+	outb_p((divisor >> 8) & 0xff, port->io + UART_DLM);
+	/* Clear the divisor latch bit */
+	outb_p(port->lcr, port->io + UART_LCR);
+}	
 
 static char irq_port[4] = {3,1,0,2};
 
-static int rs_in_use[4];
-
-int rs_open(inode,file);
-void rs_release(inode,file);
+int rs_open(tty);
+void rs_release(tty);
 int rs_write(tty);
 static int rs_ioctl(tty, cmd, arg);
 
@@ -62,12 +100,6 @@ struct tty_ops rs_ops = {
 	NULL,
 	rs_ioctl
 };
-
-#if 0 /* Function stubs - implement to use as serial console */
-void init_console() {}
-
-void con_charout() {}
-#endif
 
 static int set_serial_info(info, new_info)
 struct serial_info * info;
@@ -99,86 +131,77 @@ struct serial_info * ret_info;
 	return verified_memcpy_tofs(ret_info, info, sizeof(struct serial_info));
 }
 
-int rs_open(inode,file)
-struct inode *inode;
-struct file *file;
+int rs_open(tty)
+struct tty * tty;
 {
 	int count;
 	int divisor;
-	int rs_minor = MINOR(inode->i_rdev) - RS_MINOR_OFFSET;
+	register struct serial_info * port = &ports[tty->minor - RS_MINOR_OFFSET];
 
 	printd_rs("RS_OPEN called\n");
 
-	if (!(ports[rs_minor].flags & SERF_EXIST))
+	if (!(port->flags & SERF_EXIST)) {
 		return -ENODEV;
+	}
 
 	/* is port already in use ? */
-	if (rs_in_use[rs_minor])
+	if (port->flags & SERF_INUSE) {
 		return -EBUSY;
+	}
 
 	/* no, mark it in use */
-	rs_in_use[rs_minor] = 1;
+	port->flags |= SERF_INUSE;
+
 
 	/* clear RX buffer */
-	inb_p(ports[rs_minor].io + UART_LSR);
+	inb_p(port->io + UART_LSR);
 	count = MAX_RX_BUFFER_SIZE;
 	do {
-		inb_p(ports[rs_minor].io + UART_RX);
+		inb_p(port->io + UART_RX);
 		count--;
-	} while ((count > 0) && (inb_p(ports[rs_minor].io + UART_LSR) & UART_LSR_DR));
+	} while ((count > 0) && (inb_p(port->io + UART_LSR) & UART_LSR_DR));
 
-	inb_p(ports[rs_minor].io + UART_IIR);
-	inb_p(ports[rs_minor].io + UART_MSR);
+	inb_p(port->io + UART_IIR);
+	inb_p(port->io + UART_MSR);
 
 	/* set serial port parameters to match ports[rs_minor] */
 
+#if 1
+	update_port(port);
+#else
 	/* set baud rate divisor, first lower, then higher byte */
-	divisor = 115200 / ports[rs_minor].baud_rate;
+	divisor = divisors[tty->termios.c_cflag & 017];
 
-	outb_p(UART_LCR_WLEN8 | UART_LCR_DLAB, ports[rs_minor].io + UART_LCR);
-	outb_p(divisor & 0xff, ports[rs_minor].io + UART_DLL);
-	outb_p((divisor >> 8) & 0xff, ports[rs_minor].io + UART_DLM);
+	outb_p(UART_LCR_WLEN8 | UART_LCR_DLAB, port->io + UART_LCR);
+	outb_p(divisor & 0xff, port->io + UART_DLL);
+	outb_p((divisor >> 8) & 0xff, port->io + UART_DLM);
 
 	/* set wordlength to 8 bits, no parity, 1 stop bit */
-	outb_p(ports[rs_minor].lcr, ports[rs_minor].io + UART_LCR);
+	outb_p(port->lcr, port->io + UART_LCR);
+#endif
 
 	/* enable reciever data interrupt; FIXME: update code to utilize full interrupt interface */
-	outb_p(UART_IER_RDI, ports[rs_minor].io + UART_IER);
+	outb_p(UART_IER_RDI, port->io + UART_IER);
 
-	outb_p(ports[rs_minor].mcr, ports[rs_minor].io + UART_MCR);
+	outb_p(port->mcr, port->io + UART_MCR);
 
 	/* clear Line/Modem Status, Intr ID and RX register */
-	inb_p(ports[rs_minor].io + UART_LSR);
-	inb_p(ports[rs_minor].io + UART_RX);
-	inb_p(ports[rs_minor].io + UART_IIR);
-	inb_p(ports[rs_minor].io + UART_MSR);
+	inb_p(port->io + UART_LSR);
+	inb_p(port->io + UART_RX);
+	inb_p(port->io + UART_IIR);
+	inb_p(port->io + UART_MSR);
 
-#if 0 
-/* this is old code */
-/*	outb_p(UART_LCR_WLEN8 | UART_LCR_DLAB, ports[rs_minor].io + UART_LCR);
-	outb_p(6, ports[rs_minor].io + UART_DLL);
-	outb_p(0, ports[rs_minor].io + UART_DLM); */
-
-	outb_p(UART_LCR_WLEN8, ports[rs_minor].io + UART_LCR);
-	outb_p(UART_IER_RDI, ports[rs_minor].io + UART_IER);
-	outb_p(UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2, ports[rs_minor].io + UART_MCR);
-/*	inb_p(ports[rs_minor].io + UART_LSR);
-	inb_p(ports[rs_minor].io + UART_RX);
-	inb_p(ports[rs_minor].io + UART_IIR);
-	inb_p(ports[rs_minor].io + UART_MSR); */
-#endif
 	return 0;
 }
 
-void rs_release(inode,file)
-struct inode *inode;
-struct file *file;
+void rs_release(tty)
+struct tty * tty;
 {
-	int rs_minor = MINOR(inode->i_rdev) - RS_MINOR_OFFSET;
+	register struct serial_info * port = &ports[tty->minor - RS_MINOR_OFFSET];
 
 	printd_rs("RS_RELEASE called\n");
-	rs_in_use[rs_minor] = 0;
-	outb_p(0, ports[rs_minor].io + UART_IER);
+	port->flags &= ~SERF_INUSE;
+	outb_p(0, port->io + UART_IER);
 
 }
 
@@ -186,10 +209,11 @@ int rs_write(tty)
 struct tty * tty;
 {
 	char ch;
-	int rs_minor = tty->minor - RS_MINOR_OFFSET;
+	register struct serial_info * port = &ports[tty->minor - RS_MINOR_OFFSET];
+
 	while (chq_getch(&tty->outq, &ch, 0) != -1) {
-		while (!(inb_p(ports[rs_minor].io + UART_LSR) & UART_LSR_TEMT));
-		outb(ch, ports[rs_minor].io + UART_TX);
+		while (!(inb_p(port->io + UART_LSR) & UART_LSR_TEMT));
+		outb(ch, port->io + UART_TX);
 	}
 }
 
@@ -199,20 +223,24 @@ int cmd;
 char * arg;
 {
 	int retval;
-	int sp = tty->minor - RS_MINOR_OFFSET;
+	register struct serial_info * port = &ports[tty->minor - RS_MINOR_OFFSET];
 	
 	/* few sanity checks should be here */
 
-	printk("rs_ioctl: sp = %d, cmd = %d\n", sp, cmd);
+	printk("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd);
 
-	switch (cmd)
-	{
+	switch (cmd) {
 		/* Unlike Linux we use verified_memcpy*fs() which calls verify_area() for us */
+		case TCSETSF: /* For information, return value is ignored */
+			update_port(port);
+			break;
 		case TIOCSSERIAL: 
-		retval = set_serial_info(&ports[sp], arg);
+			retval = set_serial_info(port, arg);
+			break;
 
 		case TIOCGSERIAL: 
-		retval = get_serial_info(&ports[sp], arg);
+			retval = get_serial_info(port, arg);
+			break;
 	}
 
 	return retval;
