@@ -207,9 +207,10 @@ int do_signal()
 			case SIGABRT: case SIGFPE: case SIGSEGV:
 		/* This is where w dump the core */
 			default:
-				sys_exit(signr);
+				do_exit(signr);
 			}
 		}
+/* No handlers yet */
 /*		handle_signal(signr, sa); */
 		return 1;
 	}

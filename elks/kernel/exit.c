@@ -20,24 +20,23 @@ int options;
 {
 	pid_t retval;
 
-	do {
-		if (current->child_lastend) {
-			if (status) {
-				if ((retval = verified_memcpy_tofs(status, 
-						&current->lastend_status, 
-						sizeof (int))) != 0)
-					return retval;
-			}
-			retval = current->child_lastend;
-			current->child_lastend = 0;
-			return retval;
+	if (!((options & WNOHANG) || (current->child_lastend))) {
+		interruptible_sleep_on(&current->child_wait);
+	}
+	if (current->child_lastend) {
+		if (status) {
+			if ((retval = verified_memcpy_tofs(status, 
+					&current->lastend_status, 
+					sizeof (int))) != 0)
+				return retval;
 		}
-		sleep_on(&current->child_wait);
-/*		schedule(); */
-	} while (!options);
+		retval = current->child_lastend;
+		current->child_lastend = 0;
+		return retval;
+	}
 }
 
-void sys_exit(status)
+void do_exit(status)
 int status;
 {
 	_close_allfiles();	
@@ -83,3 +82,9 @@ int status;
 	panic("Returning from sys_exit!\n");
 }
 
+void sys_exit(status)
+int status;
+{
+	status = (status & 0xff) << 8;
+	do_exit(status);
+}

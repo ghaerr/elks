@@ -37,9 +37,10 @@
 
 void sig_check()
 {
-	if (current->signal)
+	if (current->signal) {
 		printk("Process %d has a signal.\n", current->pid);
 		do_signal();
+	}
 	current->signal = 0;
 }
 
@@ -263,7 +264,7 @@ void stack_check()
 	if (current->t_regs.sp < current->t_endbrk)
 	{
 		printk("STACK (%d) ENTERED BSS (%ld) - PROCESS TERMINATING\n", current->t_regs.sp, current->t_endbrk);
-		sys_exit();
+		do_exit(SIGSEGV);
 	}
 }
 

@@ -566,7 +566,7 @@ int AddQueue( Key )
 unsigned char Key;
 {
    if (ttys[Current_VCminor].inq.size != 0) {
-	   chq_addch(&ttys[Current_VCminor].inq, Key, 0);
+	   chq_addch(&ttys[Current_VCminor].inq, Key);
    }
    return 0;
 }

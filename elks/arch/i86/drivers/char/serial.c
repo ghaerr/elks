@@ -117,7 +117,7 @@ register struct serial_info *sp;
 
 	do {
 		ch = inb_p(sp->io + UART_RX);
-		chq_addch(sp->tty->inq, ch, 0);
+		chq_addch(sp->tty->inq, ch);
 	} while (inb_p(sp->io + UART_LSR) & UART_LSR_DR);
 }
 /*

@@ -111,7 +111,7 @@ unsigned char ch;
 			tty_charout(tty, '\r');
 #endif		
 		default:
-			while (chq_addch(&tty->outq, ch, 0) == -1) {
+			while (chq_addch(&tty->outq, ch) == -1) {
 				tty->ops->write(tty);
 			}
 	};

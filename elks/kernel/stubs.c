@@ -5,7 +5,6 @@
 
 void kill_proc(){;}
 /*void sys_kill(){;} */
-void do_exit(){;}
 void hard_reset_now()
 {
 #asm

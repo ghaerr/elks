@@ -81,9 +81,9 @@ typedef void (*__sighandler_t)();
 
 struct sigaction {
 	__sighandler_t sa_handler;
-	sigset_t sa_mask;
-	unsigned long sa_flags;
-	void (*sa_restorer)();
+/*	sigset_t sa_mask; */
+/*	unsigned long sa_flags; */
+/*	void (*sa_restorer)(); */
 };
 
 #endif
