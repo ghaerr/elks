@@ -72,7 +72,7 @@ void print_tasks()
 }
 #endif
 
-/*static inline*/ void add_to_runqueue(p)
+void add_to_runqueue(p)
 register struct task_struct * p;
 {
 #if 0   /* sanity tests */ /* This is always pre-checked */
@@ -92,7 +92,7 @@ register struct task_struct * p;
 
 }
 
-static /*inline*/ void del_from_runqueue(p)
+void del_from_runqueue(p)
 struct task_struct * p;
 {
         register struct task_struct *next = p->next_run;
