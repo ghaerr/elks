@@ -14,6 +14,7 @@
 #undef  CONFIG_XT
 #undef  CONFIG_AT
 #undef  CONFIG_MODULE
+#undef  CONFIG_SHLIB
 #undef  CONFIG_COMPAQ_FAST
 
 /*
@@ -53,7 +54,7 @@
 #define CONFIG_CHAR_DEV_MEM 1
 #define CONFIG_CHAR_DEV_RS 1
 #define CONFIG_CHAR_DEV_LP 1
-#define CONFIG_DEV_META 1
+#undef  CONFIG_DEV_META
 
 /*
  * Block device drivers

@@ -11,17 +11,33 @@
 
 #ifndef __LINUXMT_UDD_H_
 #define __LINUXMT_UDD_H_
+#include <linuxmt/fs.h>
 
 #define MAX_UDD	8
 #define MAX_UDR	32
 
 struct ud_driver {
 	int	udd_type;
-	char *	udd_name;
-	int	udd_first_minor;
-	int	udd_num_minors;
-	pid_t	udd_pid;
-	struct task_struct * udd_task;
+	int	udd_major;
+	struct task * udd_task;
+	char *	udd_data;
+	struct ud_request * udd_req;
+	struct wait_queue * udd_wait;
+	struct wait_queue * udd_rwait;
+};
+
+/*
+ * This is the truncated version of the above that we copy back from user
+ * space, so as to guaranteee not everwriting kernel pointers and stuff.
+ * Must be the same order, but shorted and with no gaps, or kernel pointers
+ * in it.
+ */
+
+struct ud_driver_trunc {
+	int	udd_type;
+	int	udd_major;
+	struct task * udd_task;
+	char *	udd_data;
 };
 
 /* udd_type can be */
@@ -30,12 +46,27 @@ struct ud_driver {
 #define UDD_BLK_DEV	2
 
 struct ud_request {
-	int	udr_type;
-	int	udr_no;
 	char *	udr_data;
-	unsigned int	udr_size;
-	unsigned long	udr_ptr;
+	int	udr_status;
+	off_t	udr_ptr;
 	int	udr_param;
+	struct wait_queue * udr_wait;
+	struct wait_queue * udr_ewait;
+	int	udr_type;
+	int	udr_minor;
+	unsigned int	udr_size;
+};
+
+/*
+ * This is the truncated version of the above that we copy back from user
+ * space, so as to guaranteee not everwriting kernel pointers and stuff.
+ * Must be the same order, but shorted and with no gaps, or kernel pointers
+ * in it.
+ */
+
+struct ud_request_trunc {
+	char *	udr_data;
+	int	udr_status;
 };
 
 /* udr_type can be */
@@ -45,8 +76,16 @@ struct ud_request {
 #define UDR_SELECT	3
 #define UDR_IOCTL	4
 #define UDR_OPEN	5
-#define UDR_RELEASE	5
+#define UDR_RELEASE	6
+#define UDR_BLK		7
+#define UDR_BLK_READ	(UDR_BLK + READ)
+#define UDR_BLK_WRITE	(UDR_BLK + WRITE)
 
-	
+/* ioctls */
+
+#define META_BASE	0x0700
+#define	META_CREAT	0x0701
+#define	META_POLL	0x0702
+#define	META_ACK	0x0703
 
 #endif /* __LINUXMT_UDD_H_ */

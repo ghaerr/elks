@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Tue Jun 15 10:40 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Latest changes to (ALPHA) meta driver.
+
 Tue Jun 15 10:31 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Minor tweaks to Makefile
