@@ -1,6 +1,8 @@
 #ifndef LX86_LINUXMT_KERNEL_H
 #define LX86_LINUXMT_KERNEL_H
 
+#include <linuxmt/types.h>
+
 /*
  * 'kernel.h' contains some often-used function prototypes etc
  */
@@ -12,17 +14,23 @@
 #define LONG_MAX	((long)(~0UL>>1))
 #define ULONG_MAX	(~0UL)
 
+void do_exit(int);
+
+extern int kill_proc(void);
+
+extern int kill_pg(pid_t,sig_t,int);
+
+extern int kill_sl(void);
+
+/*@ignore@*/
+
 extern void panic();
-
-void do_exit();
-
-extern int kill_proc();
-extern int kill_pg();
-extern int kill_sl();
 
 extern int printk();
 
-extern int wait_for_keypress();
+/*@end@*/
+
+extern int wait_for_keypress(void);
 
 /*
  * This is defined as a macro, but at some point this might become a

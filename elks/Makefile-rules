@@ -222,9 +222,10 @@ CC_PROTO	= gcc -I$(INCDIR) -M -MG $(CCDEFS)
 CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) -ansi
 CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
 LINT		= splint
-LCFLAGS 	= -I$(INCDIR) $(CCDEFS) -D__LINT__
+LCFLAGS 	= -I$(INCDIR) $(CCDEFS) -D__LINT__ -isoreserved
 LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
-		  -exportheader -varuse
+		  -exportheader -varuse -exporttype -exportconst \
+		  -exportvar -typeuse -enummemuse -constuse
 
 ifeq ($(USEBCC), Y)
 
@@ -308,11 +309,11 @@ dolint:
 	    if [ -f "$${FILE}" ] && ! fgrep -q '#asm' "$${FILE}" ; then \
 		echo $(LINT) ... "$${FILE}" ; \
 		if echo "$${FILE}" | grep -q '\.h$$' ; then \
-			$(LINT) -strict $(LHFLAGS) "$${FILE}" 2>&1 \
-					> "$${FILE}.lint" ; \
+			$(LINT) -strict $(LHFLAGS) "$${FILE}" \
+				> "$${FILE}.lint" 2>&1 ; \
 		else \
-			$(LINT) -strict $(LCFLAGS) "$${FILE}" 2>&1 \
-					> "$${FILE}.lint" ; \
+			$(LINT) -strict $(LCFLAGS) "$${FILE}" \
+				> "$${FILE}.lint" 2>&1 ; \
 		fi ; \
 		if [ $$? -eq 0 ]; then \
 		    rm -f "$${FILE}.lint" ; \
@@ -321,9 +322,10 @@ dolint:
 		fi ; \
 	    fi ; \
 	done
+	@echo
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
-			${MAKE} -C "$$DIR" lint ; \
+			${MAKE} -C "$$DIR" dolint ; \
 		fi ; \
 	done
 

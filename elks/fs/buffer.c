@@ -59,14 +59,12 @@ void wait_on_buffer(register struct buffer_head *bh)
     }
 }
 
-#if 0
 void lock_buffer(struct buffer_head *bh)
 {
     wait_on_buffer(bh);
     bh->b_lock = 1;
     map_buffer(bh);
 }
-#endif
 
 static void put_last_lru(register struct buffer_head *bh)
 {

@@ -66,52 +66,38 @@ struct minix_dir_entry {
 
 #ifdef __KERNEL__
 
-extern int minix_lookup(register struct inode *dir, char *name, int len,
-			register struct inode **result);
-extern int minix_create(register struct inode *dir, char *name, int len,
-			int mode, struct inode **result);
-extern int minix_mkdir(register struct inode *dir, char *name, int len,
-		       int mode);
-extern int minix_rmdir(register struct inode *dir, char *name, int len);
-extern int minix_unlink(struct inode *dir, char *name, int len);
-extern int minix_symlink(struct inode *dir, char *name, int len,
-			 char *symname);
-extern int minix_link(register struct inode *oldinode,
-		      register struct inode *dir, char *name, int len);
-extern int minix_mknod(register struct inode *dir, char *name, int len,
-		       int mode, int rdev);
-extern int minix_rename();
-extern struct inode *minix_new_inode(struct inode *dir);
-extern void minix_free_inode(register struct inode *inode);
-extern unsigned long minix_count_free_inodes(register struct super_block
-					     *sb);
-extern unsigned int minix_new_block(register struct super_block *sb);
-extern void minix_free_block(register struct super_block *sb,
-			     unsigned short block);
-extern unsigned long minix_count_free_blocks(register struct super_block
-					     *sb);
-extern int minix_bmap();
+extern int minix_lookup(struct inode *,char *,int,struct inode **);
+extern int minix_create(struct inode *,char *,int,int,struct inode **);
+extern int minix_mkdir(struct inode *,char *,int,int);
+extern int minix_rmdir(struct inode *,char *,int);
+extern int minix_unlink(struct inode *,char *,int);
+extern int minix_symlink(struct inode *,char *,int,char *);
+extern int minix_link(struct inode *,struct inode *,char *,int);
+extern int minix_mknod(struct inode *,char *,int,int,int);
+extern int minix_rename(void);
+extern struct inode *minix_new_inode(struct inode *);
+extern void minix_free_inode(struct inode *);
+extern unsigned long minix_count_free_inodes(struct super_block *);
+extern unsigned int minix_new_block(struct super_block *);
+extern void minix_free_block(struct super_block *,unsigned short);
+extern unsigned long minix_count_free_blocks(struct super_block *);
+extern int minix_bmap(void);
 
-extern struct buffer_head *minix_getblk(register struct inode *inode,
-					unsigned short block, int create);
-extern struct buffer_head *minix_bread(struct inode *inode,
-				       unsigned short block, int create);
+extern struct buffer_head *minix_getblk(struct inode *,unsigned short,int);
+extern struct buffer_head *minix_bread(struct inode *,unsigned short,int);
 
-extern void minix_truncate(register struct inode *inode);
-extern void minix_put_super(register struct super_block *sb);
-extern struct super_block *minix_read_super(register struct super_block *s,
-					    char *data, int silent);
+extern void minix_truncate(struct inode *);
+extern void minix_put_super(struct super_block *);
+extern struct super_block *minix_read_super(struct super_block *,char *,int);
 extern int init_minix_fs(void);
-extern void minix_write_super(register struct super_block *sb);
-extern int minix_remount(register struct super_block *sb, int *flags,
-			 char *data);
-extern void minix_read_inode(register struct inode *inode);
-extern void minix_write_inode(register struct inode *inode);
-extern void minix_put_inode(register struct inode *inode);
-extern void minix_statfs(register struct super_block *sb,
-			 struct statfs *buf, int bufsize);
-extern int minix_sync_inode(register struct inode *inode);
-extern int minix_sync_file();
+extern void minix_write_super(struct super_block *);
+extern int minix_remount(struct super_block *, int *,char *);
+extern void minix_read_inode(struct inode *);
+extern void minix_write_inode(struct inode *);
+extern void minix_put_inode(struct inode *);
+extern void minix_statfs(struct super_block *,struct statfs *,int);
+extern int minix_sync_inode(struct inode *);
+extern int minix_sync_file(void);
 
 extern struct inode_operations minix_file_inode_operations;
 extern struct inode_operations minix_dir_inode_operations;

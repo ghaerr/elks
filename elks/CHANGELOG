@@ -32,6 +32,18 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Fri Apr 26 22:25:57 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Applied `make lint` to include/arch directory and cleaned up
+	  or tagged as acceptable all bugs listed therein under the
+	  -strict setting of splint, with the sole exception that in
+	  include/arch/system.h the function load_regs is defined with
+	  a signle parameter whose type is never declared.
+	* Applied `make lint` to include/linuxmt directory and cleaned
+	  up or tagged as acceptable all bugs listed therein under the
+	  -strict setting of splint, with the exception of those found
+	  in include/linuxmt/{mm,tqueue}.h which have still to be done.
+
 Fri Apr 26 20:01:37 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Applied `make lint` to include/arch directory.

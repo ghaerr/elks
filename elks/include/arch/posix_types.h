@@ -9,6 +9,8 @@
  * assume GCC is being used.
  */
 
+/*@ignore@*/
+
 #undef	__FD_SET
 #define __FD_SET(fd,fdsetp) {				\
 		int mask, retval, addr = fdsetp;	\
@@ -36,5 +38,7 @@
 
 #undef	__FD_ZERO
 #define __FD_ZERO(fdsetp)	(((unsigned long *)fdsetp)[0] = 0UL)
+
+/*@end@*/
 
 #endif

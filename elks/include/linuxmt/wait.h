@@ -21,8 +21,7 @@ struct select_table_entry {
 typedef struct select_table_struct {
     int nr;
     struct select_table_entry *entry;
-}
-select_table;
+} select_table;
 
 #define __MAX_SELECT_TABLE_ENTRIES 32
 

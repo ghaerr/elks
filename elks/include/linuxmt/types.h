@@ -12,27 +12,16 @@
 		a, current->t_regs.sp, current->t_kstack);	\
 }
 
-/* Throw away _FUNCTION parameters - the syntax is ripped off of Minix's
-   _PROTOTYPE.  Considering Borland did the same thing to MFC on a bigger
-   scale, I don't think PH will mind :) */
-
-/* Yes, this should be in arch/types.h too */
-
-#define _FUNCTION(function, params) function()
-#define _VFUNCTION(functiom, params) (*function) ()
-
 typedef __s32 off_t;
 typedef __s16 pid_t;
 typedef __u16 uid_t;
 typedef __u16 gid_t;
 typedef __u16 dev_t;
-typedef __u32 time_t;
 typedef __u16 umode_t;
 typedef __u16 nlink_t;
 typedef __u16 mode_t;
 typedef __u32 loff_t;
 typedef __u32 speed_t;
-typedef __u16 size_t;
 typedef __u32 lsize_t;
 typedef __u16 ino_t;
 typedef __u32 u_ino_t;
@@ -44,14 +33,23 @@ typedef __kernel_fd_set fd_set;
 typedef __u16 seg_t;
 typedef __u16 segext_t;
 typedef __u32 jiff_t;
+typedef __u8 sig_t;
+
+/*@ignore@*/
+
+/* The next three lines cause splint to complain needlessly */
+
+typedef __u32 time_t;
+typedef __u16 size_t;
+typedef int ptrdiff_t;
+
+/*@end@*/
 
 #ifdef CONFIG_SHORT_FILES
 typedef __u16 fd_mask_t;
 #else
 typedef __u32 fd_mask_t;
 #endif
-
-typedef int ptrdiff_t;
 
 struct ustat {
     daddr_t f_tfree;

@@ -55,8 +55,7 @@
 
 #define DIGI_TIMER	29
 
-struct timer_struct
-{
+struct timer_struct {
     jiff_t expires;
     void (*fn) ();
 };
@@ -77,8 +76,7 @@ extern struct timer_struct timer_table[32];
  * timeout function for several timeouts. You can use this
  * to distinguish between the different invocations.
  */
-struct timer_list
-{
+struct timer_list {
     struct timer_list *tl_next;
     struct timer_list *tl_prev;
     jiff_t tl_expires;
@@ -86,10 +84,10 @@ struct timer_list
     void (*tl_function) ();
 };
 
-extern void init_timer();
-extern void add_timer();
-extern int del_timer();
-extern void timer_tick( /*struct pt_regs * regs */ );
-extern void enable_timer_tick( /* void */ );
+extern void init_timer(struct timer_list *);
+extern void add_timer(struct timer_list *);
+extern int del_timer(struct timer_list *);
+extern void timer_tick(struct pt_regs *);
+extern void enable_timer_tick(void);
 
 #endif

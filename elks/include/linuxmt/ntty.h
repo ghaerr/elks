@@ -32,10 +32,9 @@
 
 #define NR_PTYS		4
 
-/* Not all of these will get used most likely */
+/* Most likely, not all of these will get used */
 
-struct tty_ops
-{
+struct tty_ops {
     int (*open) ();
     int (*release) ();
     int (*write) ();
@@ -56,9 +55,12 @@ struct tty {
     pid_t pgrp;
 };
 
-int ttynull_openrelease();	/* Empty function, returns zero. useful */
-int tty_intcheck();		/* Check for ctrl-C etc.. */
-extern int pipe_lseek();	/* Empty function, returns -ESPIPE. useful */
+int ttynull_openrelease(struct tty *);
+		/* Empty function, returns zero. useful */
+int tty_intcheck(struct tty *,unsigned char);
+		/* Check for ctrl-C etc.. */
+extern int pipe_lseek(struct inode *,struct file *,off_t,int);
+		/* Empty function, returns -ESPIPE. useful */
 
 extern struct termios def_vals;	/* global use of def_vals                 */
 

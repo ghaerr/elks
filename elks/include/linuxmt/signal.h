@@ -11,6 +11,8 @@
  */
 #define SMALLSIG
 
+#include <linuxmt/types.h>
+
 #ifdef SMALLSIG
 
 typedef unsigned short sigset_t;	/* at least 16 bits */
@@ -77,8 +79,6 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 
 #endif
 
-typedef int sig_t;
-
 /*
  * sa_flags values: SA_STACK is not supported
  * SA_INTERRUPT is a no-op, but left due to historical reasons. Use the
@@ -110,9 +110,13 @@ typedef int sig_t;
 /* Type of a signal handler.  */
 typedef void (*__sighandler_t) ();
 
+/*@ignore@*/
+
 #define SIG_DFL	((__sighandler_t) 0)	/* default signal handling */
 #define SIG_IGN	((__sighandler_t) 1)	/* ignore signal */
 #define SIG_ERR	((__sighandler_t) -1)	/* error return from signal */
+
+/*@end@*/
 
 struct sigaction {
     __sighandler_t sa_handler;

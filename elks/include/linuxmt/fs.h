@@ -110,8 +110,9 @@
 #define IS_IMMUTABLE(inode) ((inode)->i_flags & S_IMMUTABLE)
 
 #ifdef __KERNEL__
-extern void buffer_init();
-extern void inode_init();
+
+extern void buffer_init(void);
+extern void inode_init(void);
 
 #ifndef CONFIG_FS_EXTERNAL_BUFFER
 
@@ -121,9 +122,7 @@ extern void inode_init();
 
 #endif
 
-
-struct buffer_head
-{
+struct buffer_head {
     char *b_data;		/* Address in L1 buffer area */
     block_t b_blocknr;
     kdev_t b_dev;
@@ -152,9 +151,8 @@ struct buffer_head
 
 #define iget(_a, _b) __iget(_a, _b)
 
-extern void brelse();
-extern void bforget();
-/*extern struct inode *iget();*/
+extern void brelse(struct buffer_head *);
+extern void bforget(struct buffer_head *);
 
 /*
  * Attribute flags.  These should be or-ed together to figure out what
@@ -181,8 +179,7 @@ extern void bforget();
  *
  * Derek Atkins <warlord@MIT.EDU> 94-10-20
  */
-struct iattr
-{
+struct iattr {
     unsigned int ia_valid;
     umode_t ia_mode;
     uid_t ia_uid;
@@ -195,8 +192,7 @@ struct iattr
 
 #include <linuxmt/romfs_fs_i.h>
 
-struct inode
-{
+struct inode {
     /* This stuff is on disk */
     __u16 i_mode;
     __u16 i_uid;
@@ -233,8 +229,7 @@ struct inode
 #endif
     unsigned char i_sock;
     short i_sem;
-    union
-    {
+    union {
 	struct pipe_inode_info pipe_i;
 	struct romfs_inode_info romfs_i;
 	struct socket socket_i;
@@ -242,8 +237,7 @@ struct inode
     } u;
 };
 
-struct file
-{
+struct file {
     mode_t f_mode;
     loff_t f_pos;
     unsigned short f_flags;
@@ -261,8 +255,7 @@ struct file
 #include <linuxmt/romfs_fs_sb.h>
 #include <linuxmt/elksfs_fs_sb.h>
 
-struct super_block
-{
+struct super_block {
     kdev_t s_dev;
     unsigned char s_lock;
 #ifdef BLOAT_FS
@@ -279,8 +272,7 @@ struct super_block
     struct inode *s_covered;
     struct inode *s_mounted;
     struct wait_queue s_wait;
-    union
-    {
+    union {
 	struct minix_sb_info minix_sb;
 	struct romfs_sb_info romfs_sb;
 	struct elksfs_sb_info elksfs_sb;
@@ -297,8 +289,7 @@ struct super_block
 
 typedef int (*filldir_t) ();
 
-struct file_operations
-{
+struct file_operations {
     int (*lseek) ();
     int (*read) ();
     int (*write) ();
@@ -314,8 +305,7 @@ struct file_operations
 #endif
 };
 
-struct inode_operations
-{
+struct inode_operations {
     struct file_operations *default_file_ops;
     int (*create) ();
     int (*lookup) ();
@@ -336,8 +326,7 @@ struct inode_operations
 #endif
 };
 
-struct super_operations
-{
+struct super_operations {
     void (*read_inode) ();
 #ifdef BLOAT_FS
     int (*notify_change) ();
@@ -352,8 +341,7 @@ struct super_operations
     int (*remount_fs) ();
 };
 
-struct file_system_type
-{
+struct file_system_type {
     struct super_block *(*read_super) ();
     char *name;
 #ifdef BLOAT_FS
@@ -363,23 +351,25 @@ struct file_system_type
 
 extern int event;		/* Event counter */
 
-extern int sys_open();
-extern int sys_close();		/* yes, it's really unsigned */
-extern void _close_allfiles();
+extern int sys_open(char *,int,int);
+extern int sys_close(unsigned int);	/* yes, it's really unsigned */
+extern void _close_allfiles(void);
 
-extern int register_blkdev();
-extern int unregister_blkdev();
-extern int blkdev_open();
+extern int register_blkdev(unsigned int,char *,struct file_operations *);
+extern int unregister_blkdev(void);
+extern int blkdev_open(struct inode *,struct file *);
+
 extern struct file_operations def_blk_fops;
 extern struct inode_operations blkdev_inode_operations;
 
-extern int register_chrdev();
-extern int unregister_chrdev();
-extern int chrdev_open();
+extern int register_chrdev(unsigned int,char *,struct file_operations *);
+extern int unregister_chrdev(void);
+extern int chrdev_open(struct inode *,struct file *);
+
 extern struct file_operations def_chr_fops;
 extern struct inode_operations chrdev_inode_operations;
 
-extern void init_fifo();
+extern void init_fifo(struct inode *);
 
 extern struct file_operations connecting_fifo_fops;
 extern struct file_operations read_fifo_fops;
@@ -389,72 +379,88 @@ extern struct file_operations read_pipe_fops;
 extern struct file_operations write_pipe_fops;
 extern struct file_operations rdwr_pipe_fops;
 
-extern struct file_system_type *get_fs_type();
+extern struct file_system_type *get_fs_type(char *);
 
-extern int fs_may_mount();
-extern int fs_may_umount();
-extern int fs_may_remount_ro();
+extern int fs_may_mount(kdev_t);
+extern int fs_may_umount(kdev_t,struct inode *);
+extern int fs_may_remount_ro(kdev_t);
 
 extern struct file file_array[];
 extern int nr_files;
 extern struct super_block super_blocks[];
 
-extern void invalidate_inodes();
-extern void invalidate_buffers();
-extern void sync_inodes();
-extern void sync_dev();
-extern void fsync_dev();
-extern void sync_supers();
-extern int notify_change();
-extern int namei();
+extern void invalidate_inodes(kdev_t);
+extern void invalidate_buffers(kdev_t);
+extern void sync_inodes(kdev_t);
+extern void sync_dev(kdev_t);
+extern void fsync_dev(kdev_t);
+extern void sync_supers(kdev_t);
+extern int notify_change(struct inode *,struct iattr *);
+extern int namei(char *,struct inode **,int,int);
+
 #define lnamei(_a,_b) _namei(_a,NULL,0,_b)
 
-extern int permission();
+extern int permission(struct inode *,int);
+
 #ifdef BLOAT_FS
-extern int get_write_access();
-extern void put_write_access();
+
+extern int get_write_access(struct inode *);
+extern void put_write_access(struct inode *);
+
 #else
+
 #define get_write_access(_a)
 #define put_write_access(_a)
+
 #endif
-extern int open_namei();
-extern int do_mknod();
-extern int do_pipe();
-extern void iput();
+
+extern int open_namei(char *,int,int,struct inode **,struct inode *);
+extern int do_mknod(char *,int,dev_t);
+extern int do_pipe(int *);
+extern void iput(struct inode *);
+
+#if 0
 extern struct inode *__iget();
-extern struct inode *get_empty_inode();
-extern void insert_inode_hash();
-extern void clear_inode();
-extern struct inode *get_pipe_inode();
-extern struct file *get_empty_filp();
-extern int close_fp();
-extern struct buffer_head *get_hash_table();
-extern struct buffer_head *getblk();
-extern struct buffer_head *readbuf();
-extern void ll_rw_blk();
-extern void ll_rw_page();
-extern void ll_rw_swap_file();
+#endif
 
-extern void map_buffer();
-extern void unmap_buffer();
-extern void unmap_brelse();
-extern void print_bufmap_status();
+extern struct inode *get_empty_inode(void);
+extern void insert_inode_hash(struct inode *);
+extern void clear_inode(struct inode *);
+extern struct inode *get_pipe_inode(void);
+extern struct file *get_empty_filp(void);
+extern struct buffer_head *get_hash_table(kdev_t,block_t);
+extern struct buffer_head *getblk(kdev_t,block_t);
+extern struct buffer_head *readbuf(struct buffer_head *);
 
-extern void put_super();
+extern void ll_rw_blk(int,struct buffer_head *);
+extern void ll_rw_page(void);
+extern void ll_rw_swap_file(void);
+
+extern void map_buffer(struct buffer_head *);
+extern void unmap_buffer(struct buffer_head *);
+extern void unmap_brelse(struct buffer_head *);
+extern void print_bufmap_status(void);
+
+extern void put_super(kdev_t);
 extern kdev_t ROOT_DEV;
 
-extern void show_buffers();
-extern void mount_root();
+extern void show_buffers(void);
+extern void mount_root(void);
 
-extern int char_read();
+extern int char_read(struct inode *,struct file *,char *,int);
 
 #ifdef CONFIG_BLK_DEV_CHAR
-extern int block_read();
-extern int block_write();
+
+extern int block_read(struct inode *,struct file *,char *,int);
+extern int block_write(struct inode *,struct file *,char *,int);
+
 #else
+
 #define block_read NULL
 #define block_write NULL
+
 #endif
+
 #endif
 
 #endif

@@ -5,6 +5,8 @@
 
 /* First we define all of the __u and __s types...*/
 
+/*@ignore@*/
+
 #define signed
 
 typedef unsigned char __u8;
@@ -32,6 +34,8 @@ typedef unsigned short int *__puint;
 
 typedef signed short int __sint;
 typedef signed short int *__psint;
+
+/*@end@*/
 
 /* Then we define registers, etc... */
 

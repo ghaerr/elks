@@ -97,8 +97,8 @@
 #define DEF_SYSSIZE	0x2F00
 
 /* internal svga startup constants */
-#define NORMAL_VGA	0xffff	/* 80x25 mode */
-#define EXTENDED_VGA	0xfffe	/* 80x50 mode */
-#define ASK_VGA		0xfffd	/* ask for it at bootup */
+#define VGA_NORMAL	0xffff	/* 80x25 mode */
+#define VGA_EXTENDED	0xfffe	/* 80x50 mode */
+#define VGA_ASK 	0xfffd	/* ask for it at bootup */
 
 #endif

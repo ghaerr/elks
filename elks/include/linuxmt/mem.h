@@ -22,7 +22,11 @@ struct mem_usage {
 	unsigned int used_swap;
 };
 
+#ifdef CONFIG_MODULE
+
 extern char module_data[];
-extern int module_init();
+extern int module_init(void);
+
+#endif
 
 #endif
