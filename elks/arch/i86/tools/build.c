@@ -21,13 +21,13 @@
  * Changes by tytso to allow root device specification
  */
 
-#include <stdio.h>	/* fprintf */
+#include <stdio.h>			/* fprintf */
 #include <string.h>
-#include <stdlib.h>	/* contains exit */
-#include <sys/types.h>	/* unistd.h needs this */
+#include <stdlib.h>			/* contains exit */
+#include <sys/types.h>			/* unistd.h needs this */
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
-#include <unistd.h>	/* contains read/write */
+#include <unistd.h>			/* contains read/write */
 #include <fcntl.h>
 #include "a.out.h"
 #include <errno.h>
@@ -46,7 +46,8 @@ static int GCC_HEADER = sizeof(struct exec);
 #define DEFAULT_MINOR_ROOT 0
 
 /* max nr of sectors of setup: don't change unless you also change
- * bootsect etc */
+ * bootsect etc
+ */
 #define SETUP_SECTS 4
 
 #define STRINGIFY(x) #x

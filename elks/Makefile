@@ -1,4 +1,3 @@
-#########################################################################
 # State the current ELKS kernel version.
 
 VERSION 	= 0	# (0-4095)
@@ -9,6 +8,12 @@ PRE		= 3	# (0-15)	If not a pre, comment this line.
 # Specify the architecture we will use.
 
 ARCH		= i86
+
+# ROOT_DEV specifies the default root-device when making the image.
+# This does not yet work under ELKS. See include/linuxmt/config.h to
+# change the root device.
+
+ROOT_DEV	= FLOPPY
 
 # Specify the target for `make nbImage`
 
@@ -30,14 +35,18 @@ ELKSDIR		= .
 # Define variables directly dependant on the current ELKS version.
 
 ifeq (x$(PRE), x)
-DIST		= $(shell printf '%u.%u.%u' $(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
+
+DIST		= $(shell printf '%u.%u.%u' \
+			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
+
 else
-DIST		= $(shell printf '%u.%u.%u-pre%u' $(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $(PRE))
+
+DIST		= $(shell printf '%u.%u.%u-pre%u' \
+			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $(PRE))
+
 endif
 
-DISTDIR 	= elks-$(DIST)
-
-VSN		= $(shell printf '0x%03X%02X%02X%X' \
+VSNCODE		= $(shell printf '0x%03X%02X%02X%X' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $$[$(PRE)+0])
 
 #########################################################################
@@ -49,9 +58,14 @@ TOPDIR		= $(shell cd "$(ELKSDIR)" ; \
 				else pwd ; \
 			  fi)
 
-# Specify the architecture directory for the selected architecture.
+#########################################################################
+# Specify the various directories.
 
 ARCH_DIR	= arch/$(ARCH)
+
+DISTDIR 	= elks-$(DIST)
+
+INCDIR		= $(TOPDIR)/include
 
 #########################################################################
 # Specify the tools to use, with their flags.
@@ -71,13 +85,6 @@ CONFIG_SHELL	:= $(shell if [ -x "$$bash" ]; \
 					else echo sh ; \
 				     fi ; \
 			   fi)
-
-#########################################################################
-# ROOT_DEV specifies the default root-device when making the image.
-# This does not yet work under ELKS. See include/linuxmt/config.h to
-# change the root device.
-
-ROOT_DEV	= FLOPPY
 
 #########################################################################
 # Export all variables.
@@ -321,14 +328,14 @@ menuconfig:
 
 include/linuxmt/version.h: Makefile
 	@echo \#define UTS_RELEASE \"$(DIST)\" > .ver
-	@echo \#define ELKS_VERSION_CODE $(VSN) >> .ver
+	@echo \#define ELKS_VERSION_CODE $(VSNCODE) >> .ver
 	@mv -f .ver $@
-	sync
+	@sync
 
 include/linuxmt/compile.h:
 	@echo \#define UTS_VERSION \"\#$(VERSION) `date`\" > .ver
-	mv -f .ver $@
-	sync
+	@mv -f .ver $@
+	@sync
 
 #########################################################################
 ### Dependencies:
