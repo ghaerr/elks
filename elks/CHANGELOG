@@ -29,6 +29,10 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Fri Nov 23 15:36:00 EET 2001 Harry Kalogirou <harkal@gmx.net>
+
+	* Fixed the "minix header" bug.
+
 Fri Nov 23 02:32:35 EET 2001 Harry Kalogirou <harkal@gmx.net>
 
 	* Fixed zero tcp window issues

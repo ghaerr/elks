@@ -59,7 +59,7 @@ DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 .PHONY: 		boot/system tools
 
 boot/bootsect:		boot/bootsect.o
-	$(LD) $(LDFLAGS) $(ARCH_LD) -s -o boot/bootsect -M boot/bootsect.o > Boot.map
+	$(LD) -0 $(ARCH_LD) -s -o boot/bootsect -M boot/bootsect.o > Boot.map
 
 boot/bootsect.o:	boot/bootsect.s
 
@@ -73,7 +73,8 @@ boot/netbootsect:	boot/netbootsect.o
 boot/netbootsect.o:	boot/netbootsect.s
 
 boot/setup:		boot/setup.o
-	$(LD) $(LDFLAGS) $(ARCH_LD) -s -o boot/setup -M boot/setup.o > Setup.map
+	$(LD) -0 $(ARCH_LD) -s -o boot/setup -M boot/setup.o > Setup.map
+
 
 boot/setup.o:		boot/setup.s
 
