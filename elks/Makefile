@@ -75,10 +75,10 @@ endif
 # Define commands.
 
 Image: $(ARCHIVES) init/main.o
-	make -C $(ARCH_DIR) Image
+	${MAKE} -C $(ARCH_DIR) Image
 
 nbImage: $(ARCHIVES) init/main.o
-	make -C $(ARCH_DIR) nbImage
+	${MAKE} -C $(ARCH_DIR) nbImage
 
 nb_install: nbImage
 	cp -f $(ARCH_DIR)/boot/nbImage $(TARGET_NB_IMAGE)
@@ -89,13 +89,13 @@ nbrd_install: nbImage
 	cp -f $(ARCH_DIR)/boot/nbImage.rd $(TARGET_NB_IMAGE)
 
 boot: Image
-	make -C $(ARCH_DIR) boot
+	${MAKE} -C $(ARCH_DIR) boot
 
 disk: Image
-	make -C $(ARCH_DIR) disk
+	${MAKE} -C $(ARCH_DIR) disk
 
 setup: $(ARCH_DIR)/boot/setup
-	make -C $(ARCH_DIR) setup
+	${MAKE} -C $(ARCH_DIR) setup
 
 #########################################################################
 # library rules (all these are built even if they aren't used)
@@ -104,25 +104,25 @@ setup: $(ARCH_DIR)/boot/setup
         kernel/kernel.a lib/lib.a net/net.a
 
 fs/fs.a:
-	make -C fs fs.a
+	${MAKE} -C fs fs.a
 
 fs/elksfs/elksfs.a:
-	make -C fs/elksfs elksfs.a
+	${MAKE} -C fs/elksfs elksfs.a
 
 fs/minix/minixfs.a:
-	make -C fs/minix minixfs.a
+	${MAKE} -C fs/minix minixfs.a
 
 fs/romfs/romfs.a:
-	make -C fs/romfs romfs.a
+	${MAKE} -C fs/romfs romfs.a
 
 kernel/kernel.a:	include/linuxmt/compiler-generated.h
-	make -C kernel kernel.a
+	${MAKE} -C kernel kernel.a
 
 lib/lib.a:
-	make -C lib lib.a
+	${MAKE} -C lib lib.a
 
 net/net.a:
-	make -C net net.a
+	${MAKE} -C net net.a
 
 #########################################################################
 # Compiler-generated definitions not given as command arguments.
@@ -151,10 +151,10 @@ elks.spec: Makefile
 # Standard commands.
 
 dist:
-	@make -C . nodep clean distclean
+	@${MAKE} -C . nodep clean distclean
 	@echo
 	-rm -rf $(DISTDIR)
-	@make mkdist
+	@${MAKE} mkdist
 
 dist.old:
 	mkdir -m 755 -p $(DISTDIR)
@@ -165,15 +165,15 @@ dist.old:
 	(cd $(DISTDIR); mkdir -p $(ARCH_DIR) scripts)
 	(cd $(DISTDIR)/fs; mkdir elksfs minix romfs)
 	(cd $(DISTDIR)/include; mkdir arch linuxmt)
-	make -C $(ARCH_DIR) distdir
-	make -C fs distdir
-	make -C fs/elksfs distdir
-	make -C fs/minix distdir
-	make -C fs/romfs distdir
-	make -C kernel distdir
-	make -C lib distdir
-	make -C net distdir
-	make -C scripts distdir
+	${MAKE} -C $(ARCH_DIR) distdir
+	${MAKE} -C fs distdir
+	${MAKE} -C fs/elksfs distdir
+	${MAKE} -C fs/minix distdir
+	${MAKE} -C fs/romfs distdir
+	${MAKE} -C kernel distdir
+	${MAKE} -C lib distdir
+	${MAKE} -C net distdir
+	${MAKE} -C scripts distdir
 	cp -pf include/linuxmt/*.h $(DISTDIR)/include/linuxmt
 	cp -pf include/arch/*.h $(DISTDIR)/include/arch
 	cp -pf init/main.c $(DISTDIR)/init
@@ -217,7 +217,7 @@ config:
 	@echo
 
 defconfig:
-	@yes '' | make config
+	@yes '' | ${MAKE} config
 
 dup:
 	rm -fr ../elks-test
@@ -228,7 +228,7 @@ dup:
 	@echo
 
 menuconfig:
-	make -C scripts/lxdialog all
+	${MAKE} -C scripts/lxdialog all
 	$(CONFIG_SHELL) scripts/Menuconfig arch/$(ARCH)/config.in
 	@echo
 	@echo Configuration complete.
@@ -273,22 +273,22 @@ set:
 #########################################################################
 
 test:
-	make dist
+	${MAKE} dist
 	mv $(DISTDIR){,.Pre}
 	@printf '\n  %076u\n\n' 0 | tr 0 =
-	make clean
+	${MAKE} clean
 	@printf '\n  %076u\n\n' 0 | tr 0 =
-	make defconfig
+	${MAKE} defconfig
 	@printf '\n  %076u\n\n' 0 | tr 0 =
-	make dep
+	${MAKE} dep
 	@printf '\n  %076u\n\n' 0 | tr 0 =
-	make Image
+	${MAKE} dep
 	@printf '\n  %076u\n\n' 0 | tr 0 =
-	make nbImage
+	${MAKE} Image
 	@printf '\n  %076u\n\n' 0 | tr 0 =
-	make nodep
+	${MAKE} nbImage
 	@printf '\n  %076u\n\n' 0 | tr 0 =
-	make dist
+	${MAKE} dist
 	mv $(DISTDIR){,.Post}
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 	diff -ur $(DISTDIR).{Pre,Post} || true

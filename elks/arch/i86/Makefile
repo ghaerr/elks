@@ -79,7 +79,7 @@ boot/setup:		boot/setup.o
 boot/setup.o:		boot/setup.s
 
 tools:
-	make -C tools all
+	${MAKE} -C tools all
 
 #########################################################################
 # Image selection.
@@ -163,22 +163,22 @@ endif
 	drivers/block/blk_drv.a 286pmode/pmode286
 
 kernel/akernel.a:
-	make -C kernel akernel.a
+	${MAKE} -C kernel akernel.a
 
 lib/lib86.a:
-	make -C lib lib86.a
+	${MAKE} -C lib lib86.a
 
 mm/mm.a:
-	make -C mm mm.a
+	${MAKE} -C mm mm.a
 
 drivers/char/chr_drv.a:
-	make -C drivers/char chr_drv.a
+	${MAKE} -C drivers/char chr_drv.a
 
 drivers/block/blk_drv.a:
-	make -C drivers/block blk_drv.a
+	${MAKE} -C drivers/block blk_drv.a
 
 286pmode/pmode286:
-	make -C 286pmode pmode286
+	${MAKE} -C 286pmode pmode286
 
 #########################################################################
 # commands.
@@ -194,12 +194,12 @@ distdir:
 	cp -pf tools/Makefile tools/*.h $(DISTDIR)/arch/i86/tools
 	cp -pf tools/mknbi-elks tools/*.c $(DISTDIR)/arch/i86/tools
 	cp -pf tools/*.s tools/*.1 $(DISTDIR)/arch/i86/tools
-	make -C 286pmode distdir
-	make -C drivers/block distdir
-	make -C drivers/char distdir
-	make -C kernel distdir
-	make -C lib distdir
-	make -C mm distdir
+	${MAKE} -C 286pmode distdir
+	${MAKE} -C drivers/block distdir
+	${MAKE} -C drivers/char distdir
+	${MAKE} -C kernel distdir
+	${MAKE} -C lib distdir
+	${MAKE} -C mm distdir
 
 #########################################################################
 ### Dependencies:

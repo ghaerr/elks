@@ -26,7 +26,6 @@
 #include <stdlib.h>			/* contains exit */
 #include <sys/types.h>			/* unistd.h needs this */
 #include <sys/stat.h>
-#include <sys/sysmacros.h>
 #include <unistd.h>			/* contains read/write */
 #include <fcntl.h>
 #include "a.out.h"

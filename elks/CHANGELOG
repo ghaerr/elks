@@ -17,7 +17,8 @@ David Murn              <scuffer@hups.apana.org.au>     11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
 Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>    20 Jun 2001-27 Nov 2001
-Jacek Lipkowski 	<sq5bpf@acid.ch.pw.edu.pl>	20 Jan 2002
+Jacek Lipkowski         <sq5bpf@acid.ch.pw.edu.pl>      20 Jan 2002
+M Warner Losh           <imp@village.org>               20 Jan 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001-20 Nov 2001
 Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
@@ -29,6 +30,11 @@ Simon Wood                                              06 Jan 2000-12 Jan 2000
 Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Sun Jan 20 06:45:50 MST 2002	M Warner Losh <imp@village.org>
+
+	* Allow elks to build on systems where gnumake isn't installed as
+	  make and bash isn't installed as /bin/bash or /bin/sh !!!
 
 Sun Jan 20 12:15:18 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 

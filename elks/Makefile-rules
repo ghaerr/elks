@@ -118,13 +118,20 @@ DISTDIR 	= $(shell $(BASEDIR)/scripts/setdir $(TOPDIR)/../elks-$(DIST)/$(MYDIR))
 #########################################################################
 # Specify the configuration shell to use.
 
-CONFIG_SHELL	:= $(shell if [ -x "$$bash" ]; \
-				then echo $$bash ; \
-				else if [ -x /bin/bash ]; \
-					then echo /bin/bash ; \
+CONFIG_SHELL	:= $(shell \
+	     if [ -x "$$bash" ]; \
+		then echo $$bash ; \
+		else if [ -x /bin/bash ]; \
+			then echo /bin/bash ; \
+			else if [ -x /usr/bin/bash ]; \
+				then echo /usr/bin/bash ; \
+				else if [ -x /usr/local/bin/bash ]; \
+					then echo /usr/local/bin/bash ; \
 					else echo sh ; \
 				     fi ; \
-			   fi)
+			     fi ; \
+		     fi ; \
+	     fi)
 
 #########################################################################
 # Specify the standard definitions to be given to system programs.
@@ -258,7 +265,7 @@ endif
 # results in `make all` being called in the root directory of the tree.
 
 elks:
-	make -C $(BASEDIR) all
+	${MAKE} -C $(BASEDIR) all
 
 #########################################################################
 # Standard commands.
@@ -274,15 +281,15 @@ clean:	$(CLEANDEP)
 	done
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
-			make -C "$$DIR" clean ; \
+			${MAKE} -C "$$DIR" clean ; \
 		fi ; \
 	done
 
 dep:	$(DEPEND)
-	@if \ls *.c > /dev/null 2>&1 ; then make mkdep ; fi
+	@if \ls *.c > /dev/null 2>&1 ; then ${MAKE} mkdep ; fi
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
-			make -C "$$DIR" dep ; \
+			${MAKE} -C "$$DIR" dep ; \
 		fi ; \
 	done
 
@@ -310,7 +317,7 @@ nodep:
 	fi
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
-			make -C "$$DIR" nodep ; \
+			${MAKE} -C "$$DIR" nodep ; \
 		fi ; \
 	done
 
@@ -325,7 +332,7 @@ mkdist:
 	cp -pf $(MKDIST) $(DISTFILES) $(DISTDIR)
 	@for DIR in */ ; do \
 		if [ -f "$${DIR}/Makefile" ]; then \
-			make -C "$${DIR}" mkdist ; \
+			${MAKE} -C "$${DIR}" mkdist ; \
 		fi ; \
 	done
 
