@@ -48,9 +48,6 @@ clean:
 		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) boot images.zip core
 	rm -rf rootfs_template $(ROOTDIR)
 	@for i in $(DIRS); do make -C $$i clean ; done
-	-echo FIXME: make clean is temporarily broken, because there is no
-	-echo rootfs_template.tar anymore
-	tar xf rootfs_template.tar
 
 ###############################################################################
 #
@@ -154,42 +151,42 @@ $(ELKSCMD_DIR)/rootfs_template/etc/issue: $(ELKSCMD_DIR)/rootfs_template/etc/pas
 
 mount_combfs: $(COMB_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	$(MKFS) $(MKFS_OPTS) $(COMB_TARGET_FS) $(COMB_TARGET_BLKS)
-	sudo -u root mount $(COMB_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	mount $(COMB_TARGET_FS) $(TARGET_MNT) $(LOOP)
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
 
 mount_full3fs: $(FULL3_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	$(MKFS) $(MKFS_OPTS) $(FULL3_TARGET_FS) $(FULL3_TARGET_BLKS)
-	sudo -u root mount $(FULL3_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	mount $(FULL3_TARGET_FS) $(TARGET_MNT) $(LOOP)
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
 
 mount_full5fs: $(FULL5_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	$(MKFS) $(MKFS_OPTS) $(FULL5_TARGET_FS) $(FULL5_TARGET_BLKS)
-	sudo -u root mount $(FULL5_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	mount $(FULL5_TARGET_FS) $(TARGET_MNT) $(LOOP)
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
 
 mount_rootfs: $(ROOT_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	$(MKFS) $(MKFS_OPTS) $(ROOT_TARGET_FS) $(ROOT_TARGET_BLKS)
-	sudo -u root mount $(ROOT_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	mount $(ROOT_TARGET_FS) $(TARGET_MNT) $(LOOP)
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
 
 mount_rootnetfs: $(ROOT_NET_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	$(MKFS) $(MKFS_OPTS) $(ROOT_NET_TARGET_FS) $(ROOT_NET_TARGET_BLKS)
-	sudo -u root mount $(ROOT_NET_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	mount $(ROOT_NET_TARGET_FS) $(TARGET_MNT) $(LOOP)
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
 	
 mount_sibofs: $(SIBO_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	$(MKFS) $(MKFS_OPTS) $(SIBO_TARGET_FS) $(SIBO_TARGET_BLKS)
-	sudo -u root mount $(SIBO_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	mount $(SIBO_TARGET_FS) $(TARGET_MNT) $(LOOP)
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT) ; rm -rf home boot root var)
