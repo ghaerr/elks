@@ -57,8 +57,10 @@ distdir:
 	cp -pf *.c $(TOPDIR)/$(DISTDIR)/net
 	(mkdir $(TOPDIR)/$(DISTDIR)/net/nano)
 	(mkdir $(TOPDIR)/$(DISTDIR)/net/unix)
-	cp -pf nano/*.c nano/*.h $(TOPDIR)/$(DISTDIR)/net/nano
-	cp -pf unix/*.c unix/*.h $(TOPDIR)/$(DISTDIR)/net/unix
+	(mkdir $(TOPDIR)/$(DISTDIR)/net/ipv4)
+	cp -pf Makefile nano/*.c nano/*.h $(TOPDIR)/$(DISTDIR)/net/nano
+	cp -pf Makefile unix/*.c unix/*.h $(TOPDIR)/$(DISTDIR)/net/unix
+	cp -pf Makefile ipv4/*.c ipv4/*.h $(TOPDIR)/$(DISTDIR)/net/ipv4
 
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make

@@ -22,6 +22,11 @@ Thomas McWilliams	<tgm9999@yahoo.com>		 2 Apr 2001
 
 ------------------------------------------------------------------------------
 
+Thu Oct 18 17:32:06 EEST 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+	* Fixed make dist. Was stoping with error trying to create arch/i86 twice
+	* Fixed make dist to include the keymap headers in the distribution
+	* Fixed make dist to include the net/ipv4 directory in the distribution
+
 Thu Oct 18 16:53:02 EEST 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
 	* Fix in makefiles. version.h and compile.h are needed by "make dep"

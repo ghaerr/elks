@@ -36,7 +36,7 @@ tkparse.o tkcond.o tkgen.o:
 distdir:
 	cp -pf Makefile Configure Menuconfig $(TOPDIR)/$(DISTDIR)/scripts
 	cp -pf README.Menuconfig $(TOPDIR)/$(DISTDIR)/scripts
-	cp -pf *.c *.h *.tk *.awk *.sh *.cc $(TOPDIR)/$(DISTDIR)/scripts
+	cp -pf *.c *.h *.tk *.sh *.cc $(TOPDIR)/$(DISTDIR)/scripts
 	(mkdir $(TOPDIR)/$(DISTDIR)/scripts/lxdialog)
 	cp -pf lxdialog/Makefile $(TOPDIR)/$(DISTDIR)/scripts/lxdialog
 	cp -pf lxdialog/BIG.FAT.WARNING $(TOPDIR)/$(DISTDIR)/scripts/lxdialog

@@ -217,7 +217,7 @@ clean:
 	make -C mm clean
 
 distdir:
-	mkdir $(TOPDIR)/$(DISTDIR)/arch/i86
+#	mkdir $(TOPDIR)/$(DISTDIR)/arch/i86
 	(cd $(TOPDIR)/$(DISTDIR)/arch/i86 ; \
 		mkdir 286pmode boot drivers kernel lib mm tools)
 	(cd $(TOPDIR)/$(DISTDIR)/arch/i86/drivers ; \

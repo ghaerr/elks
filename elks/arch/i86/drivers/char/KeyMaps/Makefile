@@ -5,7 +5,7 @@
 
 ELKSDIR		= ../../../../..
 
-include $(ELKSDIR)/Makefile-rules
+#include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
 # Define rules that are required to be present. Note that if these rules
@@ -15,7 +15,7 @@ depclean:
 	@echo -n
 
 distdir:
-	@echo -n
+	cp -pf Makefile keys-*.h $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/char/KeyMaps
 
 #########################################################################
 ### Dependencies:

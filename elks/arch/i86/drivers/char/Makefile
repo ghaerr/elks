@@ -59,6 +59,8 @@ clean:
 	for i in *.S;do rm -f `basename $$i .S`.s;done
 
 distdir:
+	mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/char/KeyMaps
+	make -C KeyMaps distdir
 	cp -pf CGAsnow Changes NEW_NOTES $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/char
 	cp -pf NOTES README_CONSOLE $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/char
 	cp -pf Makefile Config.in $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/char
