@@ -47,10 +47,10 @@ BINDIR = $(PREFIX)/bin
 
 SHELL = /bin/sh
 
-YACC = yacc
-#YACC = bison -y
+#YACC = yacc
+YACC = bison -y
 
-LEX = flex -I8
+LEX = flex -I -8
 #LEX = lex
 
 CC = bcc

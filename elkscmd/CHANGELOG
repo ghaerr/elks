@@ -15,6 +15,13 @@ Tommy McCabe			rocketjet314@yahoo.com
 
 ---------------------------------------------------------------------------
 
+Sat Sep 18 09:08:23 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
+
+	* Fixed warning caused by some "," on bc.y and sbc.y
+	* Fixed a broken expresion on bc.y
+	* Fixed bc's Makefile to use bison rather than yacc, also fixed the
+	  flags from $(LEX), as flex will no accept -I8.
+
 Fri Sep 17 18:48:26 BRT 2004	Claudio Matsuoka <claudio@conectiva.com>
 
 	* Added a port of Nathan Laredo's tinyirc IRC client.

@@ -78,7 +78,7 @@
 /*     'return', 'for', 'if', 'while', 'sqrt', 'else' 	*/
 %token <i_value> Scale    Ibase    Obase    Auto  Read
 /*     'scale', 'ibase', 'obase', 'auto', 'read' 	*/
-%token <i_value> Warranty, Halt, Last, Continue, Print, Limits
+%token <i_value> Warranty Halt Last Continue Print Limits
 /*     'warranty', 'halt', 'last', 'continue', 'print', 'limits'   */
 
 /* Types of all other things. */
@@ -405,7 +405,6 @@ expression		:  named_expression ASSIGN_OP
 			      generate (genstr);
 			      $$ = 0;
 			    }
-			;
 			| expression AND 
 			    {
 			      warn("&& operator");

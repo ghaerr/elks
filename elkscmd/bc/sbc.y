@@ -58,7 +58,7 @@
 /*     'return', 'for', 'if', 'while', 'sqrt',  'else' 	*/
 %token <i_value> Scale    Ibase    Obase    Auto  Read
 /*     'scale', 'ibase', 'obase', 'auto', 'read' 	*/
-%token <i_value> Warranty, Halt, Last, Continue, Print, Limits
+%token <i_value> Warranty Halt Last Continue Print Limits
 /*     'warranty', 'halt', 'last', 'continue', 'print', 'limits'  */
 
 /* The types of all other non-terminals. */
