@@ -1,3 +1,20 @@
+VERSION 0.0.74-pre1 NOTES
+-------------------------
+
+	Fixed bios console so it now works.
+	More fixes and tweaks to serial driver so now serial console support
+works.
+	Latest versions of lp and directhd driver contributed by Blaz Antonic.
+	Various fixes and tweaks including major re-write of config scripts by
+Riley Williams.
+
+VERSION 0.0.73 NOTES
+--------------------
+
+	A number of bugfixes and tweaks by Simon Weijgers.
+	Added preliminary signal support.
+	Some tweaks to serail code which now works in both directions.
+
 VERSION 0.0.73-pre2 NOTES
 -------------------------
 

@@ -251,6 +251,9 @@ char *arg;
 		case MEM_GETTASK:
 			i = (char *)task;
 			memcpy_tofs(arg, &i, 2);
+#if 0
+/* ****** I am not here	*/ dmem();
+#endif
 			return 0;
 		case MEM_GETCS:
 			i = get_cs();

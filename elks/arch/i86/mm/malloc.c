@@ -94,6 +94,33 @@ void sweep_holes()
 			m=m->next;
 	}
 }
+#if 0
+void dmem()
+{
+	register struct malloc_hole *m=&holes[0];
+	char * foo;
+	while(m!=NULL && m->next!=NULL)
+	{
+		switch (m->flags) {
+			case HOLE_SPARE:
+				foo = "SPARE";
+			break;
+			case HOLE_FREE:
+				foo = "FREE";
+			break;
+			case HOLE_USED:
+				foo = "USED";
+			break;
+			default:
+				foo = "DIDGEY";
+			break;
+		}
+		printk("HOLE %x size %x is %s\n", m->page_base, m->extent, foo);
+		m=m->next;
+	}
+}
+#endif
+	
 
 /*
  *	Find the nearest fitting hole
