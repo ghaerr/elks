@@ -27,6 +27,7 @@ Tue Oct 23 01:44:24 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Brought Makefile-rules up to date.
 	* Removed the includes for compile.h and version.h - sorry!
+	* Preliminary version of documentation of Makefile structure added.
 
 Mon Oct 22 14:22:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
