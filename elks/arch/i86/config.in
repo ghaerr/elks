@@ -79,9 +79,9 @@ mainmenu_option next_comment
 	mainmenu_option next_comment
 	    comment 'System Hardware'
 
-	    bool 'System has no maths coprocessor'	CONFIG_HW_NO_FPU       n
-	    bool 'System has no PS/2 pointing device'	CONFIG_HW_NO_PS2_MOUSE n
-	    bool 'System has no VGA adapter'		CONFIG_HW_NO_VGA       n
+	    bool 'System has a maths coprocessor'	CONFIG_HW_FPU        y
+	    bool 'System has a PS/2 pointing device'	CONFIG_HW_PS2_MOUSE  y
+	    bool 'System has a VGA adapter'		CONFIG_HW_VGA        y
 	endmenu
     fi
 
@@ -89,8 +89,8 @@ mainmenu_option next_comment
 	mainmenu_option next_comment
 	    comment 'Block Devices'
 
-	    bool 'System has no floppy drive'	CONFIG_HW_NO_FLOPPY_DRIVE   n
-	    bool 'System has no hard drive'	CONFIG_HW_NO_HARD_DRIVE     n
+	    bool 'System has a floppy drive'	CONFIG_HW_FLOPPY_DRIVE   y
+	    bool 'System has a hard drive'	CONFIG_HW_HARD_DRIVE     y
 	endmenu
 #    fi
 
@@ -137,7 +137,7 @@ mainmenu_option next_comment
 	mainmenu_option next_comment
 	    comment 'BIOS Facilities'
 
-	    bool 'System has no keyboard BIOS support'		CONFIG_HW_NO_KEYBOARD_BIOS n
+	    bool 'System has keyboard BIOS support'		CONFIG_HW_KEYBOARD_BIOS y
 	    bool 'Get fontinfo via CRT-BIOS (40h:85h)'		CONFIG_HW_VIDEO_HOC y
 	    if [ "$CONFIG_HW_VIDEO_HOC" != "y" ]; then
 		int 'Height of characters in lines'		CONFIG_HW_VIDEO_LINES_PER_CHARACTER 8
@@ -146,8 +146,8 @@ mainmenu_option next_comment
 
 	    bool 'Use bootup IRQ-Mask of 8259 as default'	CONFIG_HW_259_USE_ORIGINAL_MASK n
 	    int 'Ticks for BogoMIPS (0 = check at boottime)'	CONFIG_BOGOMIPS 0
-	    bool 'NO Floppycount at 40:10 use INT13.08'		CONFIG_HW_USE_INT13_FOR_FLOPPY n 
-	    bool 'Dont seek to get Floppy information (use I13.8)' CONFIG_HW_NO_SEEK_FOR_FLOPPY y
+	    bool 'Use int 13 for floppy count'			CONFIG_HW_USE_INT13_FOR_FLOPPY n
+	    bool 'Use int 13 for disk parameters'		CONFIG_HW_USE_INT13_FOR_DISKPARMS y
 	endmenu
     fi
 endmenu

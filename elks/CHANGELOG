@@ -26,13 +26,28 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-12 Jul 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-12 Jul 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-13 Jul 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Sat Jul 13 06:51:45 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Inverted configuration options to be more logical.
+
+	  CONFIG_HW_NO_FLOPPY_DRIVE	=> CONFIG_HW_FLOPPY_DRIVE
+	  CONFIG_HW_NO_FPU		=> CONFIG_HW_FPU
+	  CONFIG_HW_NO_HARD_DRIVE	=> CONFIG_HW_HARD_DRIVE
+	  CONFIG_HW_NO_KEYBOARD_BIOS	=> CONFIG_HW_KEYBOARD_BIOS
+	  CONFIG_HW_NO_PS2_MOUSE	=> CONFIG_HW_PS2_MOUSE
+	  CONFIG_HW_NO_SEEK_FOR_FLOPPY	=> CONFIG_HW_USE_INT13_FOR_DISKPARMS
+	  CONFIG_HW_NO_VGA		=> CONFIG_HW_VGA
+
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop.
 
 Fri Jul 12 19:53:43 BST 2002	Riley Williams <Riley@Williams.Name>
 

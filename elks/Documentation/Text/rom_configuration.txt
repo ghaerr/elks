@@ -13,32 +13,32 @@ OS/loader function.
 
 
 
-'Build kernel as ROM-bootable'    CONFIG_ROMCODE 
+'Build kernel as ROM-bootable'    CONFIG_ROMCODE
 -------------------------------------------------
 
   Reduces the code and data size. Only the result strings for the
   specified group included to the code.   
    
    
-'System havent FPU'               CONFIG_HW_NO_FPU   
+'System has an FPU'               CONFIG_HW_FPU
 --------------------------------------------
 
-  Most systems haven't FPU. Reduces the code size.
+  Most systems do not have an FPU. Reduces the code size.
 
 
-'System havent keyboardbios (if no BIOS-Int 16h)'    CONFIG_HW_NO_KEYBOARD_BIOS 
+'System has a keyboard BIOS (if no BIOS-Int 16h)'    CONFIG_HW_KEYBOARD_BIOS 
 ------------------------------------------------------------------
 
   Systems with SIO console doesn't need a keyboard BIOS
   
 
-'System havent VGA-adapter'       CONFIG_HW_NO_VGA   
+'System has a VGA-adapter'        CONFIG_HW_VGA
 --------------------------------------------
   
   No search to VGA
   
   
-'System havent PS/2 pointing device'   CONFIG_HW_NO_PS2_MOUSE 
+'System has a PS/2 pointing device'   CONFIG_HW_PS2_MOUSE
 ------------------------------------------------------
 
   No search to PS/2 mouse. The variable is placed to the address 01ff 
@@ -46,13 +46,13 @@ OS/loader function.
   The device should disabled until the address is fixed.
 
 
-'System havent hard disk (in 0.76 should be "y")' CONFIG_HW_NO_HARD_DRIVE    
+'System has a hard drive          CONFIG_HW_HARD_DRIVE    
 ------------------------------------------------------------
   Do not init a hard disk. A comment in 0.76 says you should disable
   this option.
 
 
-'System havent floppy disk'       CONFIG_HW_NO_FLOPPY_DRIVE
+'System has a floppy drive'       CONFIG_HW_FLOPPY_DRIVE
 -----------------------------------------------
    Init floppy. The kernel code is in ROM, so you doesn't need this.
    
@@ -212,15 +212,13 @@ This section include the option used only in the kernel.
    (Only if you use BIOS FDD)
 
 
-'Dont seek to get Floppy information (use I13.8)'  CONFIG_HW_NO_SEEK_FOR_FLOPPY 
+'Use int 13 for disk parameters'	CONFIG_HW_USE_INT13_FOR_DISKPARMS 
 ----------------------------------------------------------------------------------
 
-   If you haven't real disks and the information of INT 13 function 8 are consistent,
+   If you have no real disks and the information of INT 13 function 8 are consistent,
    it's more faster to get the information via this interrupt.
 
 
 
 Christian Mardmöller (chm@kdt.de)
 10/1999
-
-

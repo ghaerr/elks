@@ -427,7 +427,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
  * the previous successfully probed format is the correct one.
  */
 
-#ifndef CONFIG_HW_NO_SEEK_FOR_FLOPPY
+#ifndef CONFIG_HW_USE_INT13_FOR_DISKPARMS
 
 	for (count = 0; count < 2; count++) {
 	    if (seek_sector(hd_drive_map[target], track_probe[count], 1)) {

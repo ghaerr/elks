@@ -210,7 +210,7 @@ start_os:
 
 ! set the keyboard repeat rate to the max
 
-#ifndef CONFIG_HW_NO_KEYBOARD_BIOS
+#ifdef CONFIG_HW_KEYBOARD_BIOS
 	mov	ax,#0x0305
 	xor	bx,bx		! clear bx
 	int	0x16
@@ -218,7 +218,7 @@ start_os:
 
 ! check for EGA/VGA and some config parameters
 
-#ifndef CONFIG_HW_NO_VGA
+#ifdef CONFIG_HW_VGA
  	mov	ah,#0x12
 	mov	bl,#0x10
 	int	0x10
@@ -273,7 +273,7 @@ novga:	mov	[14],al
 !	mov	ax,#INITSEG     !ds was not changed sinse good_gig
 !	mov	ds,ax
 	mov	[0x1ff],#0	! default is no pointing device
-#ifndef CONFIG_HW_NO_PS2_MOUSE
+#ifdef CONFIG_HW_PS2_MOUSE
 	int	0x11		! int 0x11: equipment determination
 	test	al,#0x04	! check if pointing device installed
 	jz	no_psmouse
@@ -292,10 +292,10 @@ no_psmouse:
 	rep
 	stosw
 	pop	es
-#ifndef CONFIG_HW_NO_HARD_DRIVE
+#ifdef CONFIG_HW_HARD_DRIVE
 !	call	gethd
 #endif
-#ifndef CONFIG_HW_NO_FLOPPY_DRIVE
+#ifdef CONFIG_HW_FLOPPY_DRIVE
 	call	getfloppy
 #endif
 	mov	ax,#INITSEG
@@ -776,7 +776,7 @@ con_cp1:
 	mov	ds,ax
 	mov	[0x20],cl
 
-#ifndef CONFIG_HW_NO_FPU
+#ifdef CONFIG_HW_FPU
 	fninit
 	fnstcw	copro
 	mov	ax,copro
@@ -894,7 +894,7 @@ queue_end:
 ! Determine the number and type of floppy disks
 ! attached to our system.
 !
-#ifndef CONFIG_HW_NO_FLOPPY_DRIVE
+#ifdef CONFIG_HW_FLOPPY_DRIVE
 getfloppy:
 	mov	ax,#INITSEG
 	mov	es,ax
@@ -987,7 +987,7 @@ floppies: dw f360, f1200, f720, f1440, f2880, f2880
 !
 ! gethd
 !
-#ifndef CONFIG_HW_NO_HARD_DRIVE
+#ifdef CONFIG_HW_HARD_DRIVE
 gethd:
 	mov	ax,#INITSEG
 	mov	ds,ax
@@ -1093,7 +1093,7 @@ v_id3:	db 0,0,0,0
 !
 f_none:	.ascii "no fpu"
 	db 0
-#ifndef CONFIG_HW_NO_FPU
+#ifdef CONFIG_HW_FPU
 f8087:	.ascii "8087"
 	db 0
 f80287:	.ascii "80287"
@@ -1102,7 +1102,7 @@ f80387: .ascii "80387 or above"
 	db 0
 #endif
 fpu_t:	.word f_none
-#ifndef CONFIG_HW_NO_FPU
+#ifdef CONFIG_HW_FPU
          .word f8087, f80287, f80387
 #endif
 
@@ -1178,7 +1178,7 @@ m_x86:	.ascii "Unknown Proc."
 	db 0
 #endif
 
-#ifndef CONFIG_HW_NO_FPU
+#ifdef CONFIG_HW_FPU
 copro:	dw 0
 #endif
 

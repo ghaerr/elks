@@ -118,35 +118,34 @@ CONFIG_CPU_8086
 
 	80486+	The 80486 and later processors.
 
-System has no maths coprocessor.
-CONFIG_HW_NO_FPU
-  Saying yes will compile the code for use in systems without a
+System has a maths coprocessor.
+CONFIG_HW_FPU
+  Saying no will compile the code for use in systems without a
   maths coprocessor.
 
 System has no keyboard BIOS support.
-CONFIG_HW_NO_KEYBOARD_BIOS
-  Saying yes will compile the code for systems that do not support
+CONFIG_HW_KEYBOARD_BIOS
+  Saying no will compile the code for systems that do not support
   the Keyboard BIOS interrupt 16.
 
 System has no VGA video adapter
-CONFIG_HW_NO_VGA
-  Saying yes will compile the code without support for VGA video
+CONFIG_HW_VGA
+  Saying no will compile the code without support for VGA video
   adapters, but will still allow use on systems with MDA, CGA or
   EGA adapters.
 
 System has no PS/2 pointing device
-CONFIG_HW_NO_PS2_MOUSE
-  Saying yes will compile the code without PS/2 pointing device
+CONFIG_HW_PS2_MOUSE
+  Saying no will compile the code without PS/2 pointing device
   support.
 
 System has no hard disk (in 0.76 should be "y")
-CONFIG_HW_NO_HARD_DRIVE
-  Saying yes will compile the code without hard disk support 
-  (in ELKS v0.76 this should always be yes)
+CONFIG_HW_HARD_DRIVE
+  Saying no will compile the code without hard disk support.
 
 System has no floppy disk
-CONFIG_HW_NO_FLOPPY_DRIVE
-  Saying yes will compile the code without floppy support.
+CONFIG_HW_FLOPPY_DRIVE
+  Saying no will compile the code without floppy support.
 
 Get extended memory size via BIOS-Int 15
 CONFIG_XMS_INT15
@@ -272,7 +271,7 @@ CONFIG_HW_USE_INT13_FOR_FLOPPY
   (get drive perameters (on PC/XT only works on Hard Drives)).
 
 Dont seek to get Floppy information (use I13.8)
-CONFIG_HW_NO_SEEK_FOR_FLOPPY
+CONFIG_HW_USE_INT13_FOR_DISKPARMS
   Saying yes will explicitly tell ELKS not to use Int13.08 to get 
   Floppy information (Int 13.08 doesn't work on PC/XT floppy drives).
 
