@@ -61,7 +61,7 @@ register struct super_block *sb;
 	int i;
 
 	lock_super(sb);
-#ifdef CONFIG_FS_RO
+#ifndef CONFIG_FS_RO
 	if (!(sb->s_flags & MS_RDONLY)) {
 		sb->u.minix_sb.s_ms->s_state = sb->u.minix_sb.s_mount_state;
 		mark_buffer_dirty(sb->u.minix_sb.s_sbh, 1);
