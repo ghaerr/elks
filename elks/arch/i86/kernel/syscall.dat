@@ -84,6 +84,7 @@ select          +63     5	. 5 paramaters is possible
 readdir		+64	3	*
 insmod		+65	1
 fchown		+66	3
+dlload		+67	2
 #
 # Name			No	Args	Flag&comment
 #
