@@ -29,6 +29,7 @@
 #endif
 
 /*#define DEBUG*/
+#define USE_ASM
 
 static char ipbuf[1024];
 
@@ -37,7 +38,7 @@ int ip_init(void)
     return 0;
 }
 
-#if 0
+#ifndef USE_ASM
 __u16 ip_calc_chksum(char *data, int len)
 {
     __u32 sum = 0;
@@ -52,8 +53,7 @@ __u16 ip_calc_chksum(char *data, int len)
     
     return ~((sum & 0xffff) + ((sum >> 16) & 0xffff));
 }
-#endif
-#if 1
+#else
 #asm
 /*__u16 ip_calc_chksum(char *data, int len)*/
 	.text
