@@ -19,7 +19,7 @@ include $(BASEDIR)/Make.defs
 #	DONTWORK	Directories that don't currently compile.
 #
 
-DIRS		= sys_utils ash bc byacc disk_utils file_utils levee \
+DIRS		= sys_utils ash bc byacc disk_utils e3 file_utils levee \
 		  minix1 minix2 minix3 misc_utils sash sh_utils inet
 
 DONTUSE 	= debug_utils lib m4 mtools prn-utils rc tools xvi
@@ -224,6 +224,9 @@ full3: mount_full3fs $(ELKS_DIR)/arch/i86/boot/Image $(FD_BSECT) $(KHELPER)
 	dd if=$(FD_BSECT) of=$(FULL3_TARGET_FS) bs=512 count=2 conv=notrunc
 
 full5: mount_full3fs $(ELKS_DIR)/arch/i86/boot/Image $(FD_BSECT) $(KHELPER)
+	cd $(ELKSNET_DIR)/ktcp ; \
+        make ; \
+        cp -p -f ktcp $(TARGET_MNT)/bin
 	@for i in $(DIRS); do make -C $$i rfs ; done
 	cp $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
 	cp $(KHELPER) $(TARGET_MNT)/boot/boot
