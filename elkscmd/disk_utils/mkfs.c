@@ -5,38 +5,42 @@
  * the Linux copyright.
  */
 
-/*
- * 24.11.91  -	time began. Used the fsck sources to get started.
+/***************************************************************************
  *
- * 25.11.91  -	corrected some bugs. Added support for ".badblocks"
+ * 24.11.1991 -	time began. Used the fsck sources to get started.
+ *
+ * 25.11.1991 -	corrected some bugs. Added support for ".badblocks"
  *		The algorithm for ".badblocks" is a bit weird, but
  *		it should work. Oh, well.
  *
- * 25.01.92  -  Added the -l option for getting the list of bad blocks
+ * 25.01.1992 -	Added the -l option for getting the list of bad blocks
  *              out of a named file. (Dave Rivers, rivers@ponds.uucp)
  *
- * 28.02.92  -	added %-information when using -c.
+ * 28.02.1992 -	added %-information when using -c.
  *
- * 28.02.93  -  added support for other namelengths than the original
+ * 28.02.1993 -	added support for other namelengths than the original
  *		14 characters so that I can test the new kernel routines..
  *
- * Sat Oct  9 11:48:31 1993, faith@cs.unc.edu: make exit status conform
- *                           to that required by fsutil
+ * 09.10.1993 -	make exit status conform to that required by fsutil
+ *		<faith@cs.unc.edu>
  *
- * 31.10.93  -  added inode request feature, for backup floppies: use
- *              32 inodes, for a news partition use more.
- *              (Scott Heavner, sdh@po.cwru.edu)
+ * 31.10.1993 -	added inode request feature, for backup floppies: use
+ *		32 inodes, for a news partition use more.
+ *		Scott Heavner <sdh@po.cwru.edu>
  *
- * Mon Jan  3 11:08:49 1994, Dr. Wettstein (greg%wind.uucp@plains.nodak.edu).
- *			     Added support for file system valid flag.
+ * 03.01.1994 -	Added support for file system valid flag.
+ *		Dr. Wettstein <greg%wind.uucp@plains.nodak.edu>
+ *
+ ***************************************************************************
  *
  * Usage:  mkfs [-c] [-nXX] [-iXX] device size-in-blocks
  *         mkfs [-l filename ] device size-in-blocks
  *
- *
  * The device may be a block device or a image of one, but this isn't
  * enforced (but it's not much fun on a character device :-). 
+ *
  */
+
 #include <errno.h>
 
 #include <stdio.h>
