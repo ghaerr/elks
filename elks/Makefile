@@ -251,6 +251,15 @@ defconfig:
 	@echo Configuration complete.
 	@echo
 
+me:
+	make defconfig
+	@printf '\n%079u\n\n' 0 | tr 0 =
+	make dep
+	@printf '\n%079u\n\n' 0 | tr 0 =
+	make clean
+	@printf '\n%079u\n\n' 0 | tr 0 =
+	make Image
+
 menuconfig:
 	make -C scripts/lxdialog all
 	$(CONFIG_SHELL) scripts/Menuconfig arch/$(ARCH)/config.in
