@@ -1,5 +1,4 @@
 <?php
-//Note that "en" (English) MUST be listed first here.
 $langitems = array(
 "en" => array(
 "title" => "ELKS: The Embeddable Linux Kernel System", 
