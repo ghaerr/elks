@@ -22,6 +22,34 @@ extern int tcp_timeruse;
 static int sfd;
 static int tcpdevfd;
 
+unsigned long int in_aton(str)
+const char *str;
+{
+        unsigned long l;
+        unsigned int val;
+        int i;
+
+        l = 0;
+        for (i = 0; i < 4; i++)
+        {
+                l <<= 8;
+                if (*str != '\0')
+                {
+                        val = 0;
+                        while (*str != '\0' && *str != '.')
+                        {
+                                val *= 10;
+                                val += *str - '0';
+                                str++;
+                        }
+                        l |= val;
+                        if (*str != '\0')
+                                str++;
+                }
+        }
+        return(htonl(l));   
+}
+
 void ktcp_run()
 {
     fd_set fdset;
@@ -66,17 +94,19 @@ int main(argc, argv)
 int argc;
 char **argv;
 {
-/*
+
     if(argc != 3){
-	printf("Syntax :\n    %s local_ip slip_tty\n",argv[0]);
+		printf("Syntax :\n    %s local_ip slip_tty\n",argv[0]);
+		exit(3);
     }
-*/
-    local_ip = 0x6401a8c0; /* Network order */
+
+    local_ip = in_aton(argv[1]);
+    
     if((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0){
 		exit(1);
     }
 
-    if((sfd = slip_init("/dev/ttyS0")) < 0){
+    if((sfd = slip_init(argv[2])) < 0){
 		exit(2);
     }
 
