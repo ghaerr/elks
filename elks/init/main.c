@@ -103,7 +103,11 @@ static void init_task()
 
 	printk("Loading init\n");
 	if (sys_execve("/bin/init", args, 18 )) {
+#ifdef CONFIG_CONSOLE_SERIAL
+		if((num=sys_open("/dev/ttys0",2))<0)
+#else
 		if((num=sys_open("/dev/tty1",2))<0)
+#endif
 			printk("Unable to open /dev/tty (error %d)\n",-num);
 		if (sys_dup(0)!=1)
 			printk("dup failed\n");
