@@ -1,4 +1,4 @@
-/* KNL v1.0.3 Program to configure the initial kernel settings.
+/* KNL v1.0.4 Program to configure the initial kernel settings.
  * Copyright (C) 1998-2002, Riley Williams <Riley@Williams.Name>
  *
  * This program and the associated documentation are distributed under
@@ -8,6 +8,12 @@
  *
  * CHANGELOG:
  * ~~~~~~~~~
+ *
+ *   1.0.4	Riley Williams <Riley@Williams.Name>
+ *
+ *	* Tweaked to assume ELKS devices if compiled using BCC. This
+ *	  has the result that /dev/bdaX and /dev/bdbX are available,
+ *        but /dev/hd[a-d]X have different node numbers.
  *
  *   1.0.3	Riley Williams <Riley@Williams.Name>
  *
@@ -27,7 +33,7 @@
  *	* Initial public release.
  */
 
-#define VERSION "1.0.3"
+#define VERSION "1.0.4"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,8 +49,9 @@
  */
 
 typedef unsigned char BOOLEAN;
-#define FALSE 0
-#define TRUE (!FALSE)
+
+#define FALSE	0
+#define TRUE	(!FALSE)
 
 typedef unsigned char BYTE;
 
@@ -130,15 +137,20 @@ void GetMajorMinor( char *Ptr, BYTE *Major, BYTE *Minor, BYTE *Valid )
  *   NFS	   0	255   Select NFS Boot.
  *
  *   aztcdX       29      X
+ *   bdaX          3      X   X < 64                      (ELKS)
  *   cdoubleX     19      Y   *, X < 128, Y = X + 128
  *   doubleX      19      X   *, X < 128
  *   fdX           2      X   *, X < 4
  *   flashX       31      Y   X < 8, Y = X + 16
  *   gscdX        16      X
- *   hdaX          3      X   X < 64
- *   hdbX          3      Y   X < 64, Y = X + 64
- *   hdcX         22      X   X < 64
- *   hddX         22      Y   X < 64, Y = X + 64
+ *   hdaX          3      X   X < 64                  (Not ELKS)
+ *   hdaX          5      X   X < 64                      (ELKS)
+ *   hdbX          3      Y   X < 64, Y = X + 64      (Not ELKS)
+ *   hdbX          5      Y   X < 64, Y = X + 192         (ELKS)
+ *   hdcX         22      X   X < 64                  (Not ELKS)
+ *   hdcX          5      Y   X < 64, Y = X + 128         (ELKS)
+ *   hddX         22      Y   X < 64, Y = X + 64      (Not ELKS)
+ *   hddX          5      Y   X < 64, Y = X + 192         (ELKS)
  *   hdeX         33      X   X < 64
  *   hdfX         33      Y   X < 64, Y = X + 64
  *   hdgX         34      X   X < 64
@@ -187,6 +199,14 @@ void GetDisk( char *Name, WORD *Disk, BYTE *Valid )
 		Minor = GetByte(Name+5,255,Valid,'Y');
 	    }
 	    break;
+#ifdef __BCC__
+	case 'b':
+	    if (!strncasecmp(Name,"bda",3)) {
+		Major = 3;
+		Minor = GetByte(Name+3,64,Valid,'Y');
+	    }
+	    break;
+#endif
 	case 'c':
 	    if (!strncasecmp(Name,"cdouble",7)) {
 		Major = 19;
@@ -228,10 +248,19 @@ void GetDisk( char *Name, WORD *Disk, BYTE *Valid )
 		    Partition = GetByte(Name+3,63,Valid,'Y');
 		    switch (tolower(Name[2]-1)|1) {
 			case 'a':
+#ifdef __BCC__
+			    Major = 5;
+#else
 			    Major = 3;
+#endif
 			    break;
 			case 'c':
+#ifdef __BCC__
+			    Major = 5;
+			    Partition += 128;
+#else
 			    Major = 22;
+#endif
 			    break;
 			case 'e':
 			    Major = 33;
@@ -508,9 +537,17 @@ char *SetDisk( WORD Value )
 	    break;
 	case 3:
 	    if (Minor < 128) {
+#ifdef __BCC__
+		sprintf( Result, "/dev/bda%u", Minor % 64 );
+#else
 		sprintf( Result, "/dev/hda%u", Minor % 64 );
+#endif
 		if (Minor & 64)
 		    Result[7]++;
+#ifdef __BCC__
+		if (Minor & 128)
+		    Result[7] += 2;
+#endif
 		if (Minor % 64 == 0)
 		    Result[8] = '\0';
 	    }
@@ -566,6 +603,7 @@ char *SetDisk( WORD Value )
 	    if (!Minor)
 		Result[10] = '\0';
 	    break;
+#ifndef __BCC__
 	case 22:
 	    if (Minor < 128) {
 		sprintf( Result, "/dev/hdc%u", Minor % 64 );
@@ -575,6 +613,7 @@ char *SetDisk( WORD Value )
 		    Result[8] = '\0';
 	    }
 	    break;
+#endif
 	case 23:
 	    sprintf( Result, "/dev/mcd%u", Minor );
 	    if (!Minor)
