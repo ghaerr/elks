@@ -6,7 +6,12 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
-Sun Jul 29 18:44:58 GMT 2001	Riley Williams <rhw@memalpha.cx>
+Fri Aug  3 21:36:21 BST 2001	Riley Williams <rhw@memalpha.cx>
+
+	* Updated all files to refer to vger.kernel.org instead of to
+	  vger.rutgers.edu as previously.
+
+Sun Jul 29 19:44:58 BST 2001	Riley Williams <rhw@memalpha.cx>
 
 	* Reformatted CHANGELOG to 80 character lines, with standardised
 	  layout throughout.
