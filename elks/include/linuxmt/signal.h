@@ -111,6 +111,8 @@ typedef void (*__sighandler_t) ();
 #define SIG_IGN	((__sighandler_t)1)	/* ignore signal */
 #define SIG_ERR	((__sighandler_t)-1)	/* error return from signal */
 
+typedef int sig_t;
+
 struct sigaction
 {
     __sighandler_t sa_handler;

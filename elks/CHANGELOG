@@ -32,6 +32,14 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Fri Apr 26 12:35:31 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Reverted a change Riley made during the ANSI'fication of
+	  the memory manager code, that made any allocation of memory
+	  imposible.
+	* Added typedef of sig_t in signal.h to make the kernel
+	  compilable again after Riley's ANSI'fication of signal.c
+
 Thu Apr 25 23:59:40 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* After downloading and installing the splint C code checker
