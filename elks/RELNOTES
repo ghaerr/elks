@@ -1,3 +1,15 @@
+VERSION 0.0.80 NOTES
+--------------------
+
+	Many more fixes to filesystem by Thomas G. McWilliams.
+	Fixes to filename length and fchown() by Blaz Antonic.
+	Fixed map_buffer() code which did not unmap buffers.
+	Added utime system call.
+	Fixed code which spins down floppy drive motor.
+	Latest version of ramdisk driver by Blaz Antonic.
+	Removed unused features from kernel.
+	Added full features to kill(2) system call.
+	
 VERSION 0.0.79 NOTES
 --------------------
 

@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Mon Nov 01 18:02 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Final changes for 0.0.80.
+
 Fri Oct 29 19:14 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Filled out kill(2) functionality to full System V spec.
