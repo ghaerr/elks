@@ -1,26 +1,27 @@
 DEV86_DIR=/usr/src/linux-86
+ELKS_DIR=$(BASEDIR)/../elks
 ELKSCMD_DIR=$(BASEDIR)
 ELKSNET_DIR=$(BASEDIR)/../elksnet
-ELKS_DIR=$(BASEDIR)/../elks
 
 INC_DIR=$(BASEDIR)/../elks/include
 
 PLATFORM=i86-ELKS
 
 ifeq ($(PLATFORM),i86-ELKS)
-	CC=bcc
-	CFLBASE=-0 -O -ansi
-	LDFLAGS=-s
-	CHECK=gcc -c -o .null.o -Wall -pedantic
+CC=bcc
+CFLBASE=-0 -O -ansi
+LDFLAGS=-s
+CHECK=gcc -c -o .null.o -Wall -pedantic
 endif
 
 ifeq ($(PLATFORM),default)
-	CC=cc
-	CFLBASE=
-	CHECK=cc -c -o .null.o
+CC=cc
+CFLBASE=
+LDFLAGS=
+CHECK=$(CC) -c -o .null.o
 endif
 
-CFLAGS	= $(CFLBASE) -I$(INC_DIR)
+CFLAGS=$(CFLBASE) -I$(INC_DIR)
 
 COMB_TARGET_FS=$(ELKSCMD_DIR)/comb
 COMB_TARGET_BLKS=720
