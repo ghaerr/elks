@@ -14,9 +14,6 @@
 #include <unistd.h>
 #include <termcap.h>
 
-/* Temporary hack to kill setsid() call */
-#define setsid()
-
 char PRINTER[]	= "/dev/lp";
 char SPOOL[]	= "/usr/spool/lpd";
 char LOG[]	= "/dev/log";

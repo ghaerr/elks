@@ -4,9 +4,9 @@ LOCALFLAGS=-D_POSIX_SOURCE
 
 include $(BASEDIR)/Make.defs
 
-PRGS=env install lp pwdauth tget remsync synctree lpd
+PRGS=env install lp pwdauth tget remsync synctree
 
-# mt # Doesn't compile.
+# lpd mt # Doesn't compile.
 
 NETPRGS=env
 
