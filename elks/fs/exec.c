@@ -46,7 +46,6 @@
 
 #include <arch/segment.h>
 
-static struct file file;
 #ifdef CONFIG_EXEC_MINIX
 static struct minix_exec_hdr mh;
 static struct minix_supl_hdr msuph;
@@ -57,15 +56,12 @@ static struct msdos_exec_hdr mshdr;
 
 #define INIT_HEAP 0x1000
 
-/*
- *	FIXME: Semaphore on entry needed.
- */
-
 int sys_execve(filename,sptr,slen)
 char *filename;
 char *sptr;
 int slen;		/* Size of built stack */
 {
+	struct file file;	/* We can push this to stack its now only about 20 bytes */
 	unsigned int result;
 	int retval,execformat;
 	int ds=current->t_regs.ds;
@@ -386,140 +382,3 @@ end_readexec:
 	return retval;
 }
 
-#if CONFIG_SHLIB
-
-static struct dll_entry dll[MAX_DLLS];
-
-unsigned short sys_dlload(filename, dll_cseg)
-char * filename;
-unsigned short * dll_cseg;
-{
-	int retval,i,dno=-1;
-	struct inode *inode;
-	struct file * filp = &file;
-	seg_t cseg = 0;
-	seg_t ds = current->t_regs.ds;
-	unsigned int result;
-	__registers * tregs;
-
-	/* The dll to be loaded should be a minix splitid format binary */
-
-	printk("DLLOAD: opening dll file.\n");
-	
-	/* Open the dll in the usual way */
-
-	retval = open_namei(filename, 0, 0, &inode, NULL);
-
-	printk("DLLOAD: open returned %d\n", retval);
-	if (retval)
-		return retval;
-
-	printk("DLLOAD: building file handler\n");
-
-	/* Build a file pointer to use when reading */
-
-	filp->f_mode=1;
-	filp->f_flags=0;
-	filp->f_count=1;
-	filp->f_inode=inode;
-	filp->f_pos=0;
-	filp->f_op = inode->i_op->default_file_ops;
-	retval=-ENOEXEC;
-	if(!filp->f_op)
-		goto end_readexec;
-	if(filp->f_op->open)
-		if(filp->f_op->open(inode,&file))
-			goto end_readexec;
-	if(!filp->f_op->read)
-		goto close_readexec;
-
-	/* Modify the current ds and load the header of the dll into *
-	 * kernel space. */
-
-	tregs = &current->t_regs;
-	tregs->ds=get_ds();
-	filp->f_pos=0; /* FIXME - should call lseek */
-	result=filp->f_op->read(inode, &file, &mh, sizeof(mh));
-	tregs->ds=ds;
-
-	/* Check it really is a splitid binary */
-
-	if( result != sizeof(mh) || 
-		(mh.type!=MINIX_DLLID) ||
-		mh.chmem<1024 || mh.tseg==0)
-	{
-		printd_exec1("DLLOAD: bad header, result %d",result);
-		retval=-ENOEXEC;
-		goto close_readexec;
-	}
-
-	/* Find out if we have loaded this one before, if not find a slot *
-	 * for it. */
-
-	for (i = 0; i < MAX_DLLS; i++) {
-		printk("Found dll no. %d, %s.\n", i, dll[i].d_state ? "used" : "unused");
-		if ((dll[i].d_state == DLL_USED) && (dll[i].d_inode == inode)) {			printk("DLLOAD: dll no. %d is the one we want to load, leave it then.\n");
-			cseg = dll[i].d_cseg;
-			break;
-		}
-		if (dll[i].d_state != DLL_USED) {
-			dno = i;
-		}
-	}
-
-	/* Oops, no more dlls allowed. This should never happen as it is
-	 * unlikely that more than 1 dll will exist. */
-
-	if (dno == -1) {
-		printk("DLLOAD: No free lib slots.\n");
-		retval = -ENOMEM;
-		goto close_readexec;
-	}
-
-	/* If the dll has not been loaded before, allocate some ram and load *
-	 * its text segment. */
-
-	if (!cseg) {
-		printk("DLLOAD: Mallocing some RAM for the dll code.\n");
-		cseg = mm_alloc((segext_t)((mh.tseg+15)>>4));
-		if (!cseg) {
-			printk("DLLOAD: No memory.\n");
-			retval=-ENOMEM;
-			goto close_readexec;
-		}
-		tregs->ds=cseg;
-		result = filp->f_op->read(inode, &file, 0, mh.tseg);
-		tregs->ds=ds;
-		if (result!=mh.tseg) {
-			printk("DLLOAD: Bad read expected %d got %d.\n",mh.tseg, result);
-			mm_free(cseg);
-			goto close_readexec;
-		}
-		dll[dno].d_state = DLL_USED;
-		dll[dno].d_cseg = cseg;
-		dll[dno].d_inode = inode;
-	}
-
-	/* Load the dlls data segment into the current processes data segment *
-	 * Space should have been assigned for this at compile time, and      *
-	 * allocated when the program was loaded */
-
-	filp->f_pos = (off_t)( sizeof(mh) + mh.tseg );
-	result = filp->f_op->read(inode, &file, 0, mh.dseg);
-	if(result!=mh.dseg) {
-			printk("DLLOAD: Bad read expected %d got %d.\n",mh.dseg, result);
-	}
-		
-	printk("DLLOAD: Returning code seg %d.\n",cseg);
-	verified_memcpy_tofs(dll_cseg, &cseg, sizeof(unsigned short));
-	return 0;
-
-close_readexec:
-	if(filp->f_op->release)
-		filp->f_op->release(inode,&file);
-end_readexec:
-
-	return retval;
-}
-
-#endif /* CONFIG_SHLIB */
