@@ -66,6 +66,7 @@ _ip_calc_chksum:
 	
 	mov	cx, 6[bp]
 	sar	cx, 1
+	dec	cx
 	mov	di, 4[bp]
 	mov	ax, [di]
 	inc	di
