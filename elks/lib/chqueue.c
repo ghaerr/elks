@@ -65,7 +65,8 @@ unsigned char c;
 	}
 
 	nhead = (q->tail + q->len) % q->size;	
-	q->buf[nhead] = c; q->len++; 
+	q->buf[nhead] = c;
+	q->len++; 
 	wake_up(&q->wq);	
 	return 0;
 }

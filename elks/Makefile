@@ -3,7 +3,7 @@ VERSION = 0
 PATCHLEVEL = 0
 SUBLEVEL = 73
 # If we're not a pre, comment the following line
-PRE = "2"
+#PRE = "0"
 
 .EXPORT_ALL_VARIABLES:
 
