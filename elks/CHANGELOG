@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Thu Jun 24 14:11 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Bug fix to bioscon driver.
+
 Tue Jun 15 10:40 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Latest changes to (ALPHA) meta driver.

@@ -139,7 +139,7 @@ struct tty * tty;
 int bioscon_open(tty)
 struct tty * tty;
 {
-	int minor = MINOR(inode->i_rdev);
+	int minor = tty->minor;
 	printd_tty("BIOSCON: open %d\n", minor);
 	if(minor!=0)
 		return -ENODEV;
