@@ -9,14 +9,18 @@ be longer than the lines of dashes.
 Contributor             Current Email address           CHANGELOG entries found
 ~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~
 Alistair Riddoch        <AlRiddoch@zepler.org>           1 Jan 1995-20 Oct 1999
-Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>     7 Nov 2001-24 Nov 2001
+Harry Kalogirou         <HarKal@gmx.net>                 7 Nov 2001-24 Nov 2001
 Martijn Bakker          <martijn@insecure.nl>           29 Mar 2002
 Michael McConnell       <Soruk@Eridani.co.uk>           11 Nov 2001-12 Nov 2001
-Riley Williams          <rhw@InfraDead.Org>              8 Nov 2001-16 May 2002
+Riley Williams          <Riley@Williams.Name>            8 Nov 2001-12 Jun 2002
 
 -------------------------------------------------------------------------------
 
-Thu May 16 06:24:36 BST 2002	Riley Williams <rhw@InfraDead.Org>
+Wed Jun 12 18:28:40 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Corrected faulty base href tags in various FAQ's.
+
+Thu May 16 06:24:36 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Release history brought up to date. The 0.1.0 kernel release
 	  has now been issued, and a source of early ELKS kernels has
@@ -24,15 +28,15 @@ Thu May 16 06:24:36 BST 2002	Riley Williams <rhw@InfraDead.Org>
 	* Corrected links to /download.html that should point to
 	  /download/ instead.
 
-Sat Apr 13 19:42:16 BST 2002	Riley Williams <rhw@InfraDead.Org>
+Sat Apr 13 19:42:16 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Inserted correct Base HRef in all pages.
 
-Sat Apr  6 22:45:56 BST 2002	Riley Williams <rhw@InfraDead.Org>
+Sat Apr  6 22:45:56 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Martijn's ELKS banner now marked as a binary file.
 
-Fri Apr  5 18:36:54 BST 2002	Riley Williams <rhw@InfraDead.Org>
+Fri Apr  5 18:36:54 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Martijn's ELKS banner included on ELKS home page.
 
@@ -40,15 +44,15 @@ Fri Mar 29 04:09:16 BST 2002	Martijn Bakker <martijn@insecure.nl>
 
 	* New ELKS banner supplied.
 
-Mon Mar 11 23:05:35 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+Mon Mar 11 23:05:35 GMT 2002	Riley Williams <Riley@Williams.Name>
 
 	* Release history brought up to date.
 
-Wed Jan  9 23:36:32 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+Wed Jan  9 23:36:32 GMT 2002	Riley Williams <Riley@Williams.Name>
 
 	* Prepared for addition of images.zip links to download index.
 
-Thu Nov 29 01:34:48 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+Thu Nov 29 01:34:48 GMT 2001	Riley Williams <Riley@Williams.Name>
 
 	* Corrected punctuation in homepage that led to wierd layout.
 
@@ -58,7 +62,7 @@ Sat Nov 24 16:44:47 EET 2001	Harry Kalogirou <harkal@gmx.net>
 	* Reformated the home page.
 	* Added new release entries.
 
-Tue Nov 20 20:42:09 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+Tue Nov 20 20:42:09 GMT 2001	Riley Williams <Riley@Williams.Name>
 
 	* Moved old homepage to "Introduction to ELKS" subpage.
 	* Committed outline of new home page, format as agreed on the
@@ -74,7 +78,7 @@ Mon Nov 12 21:53:33 GMT 2001	Michael McConnell <soruk@eridani.co.uk>
 
 	* Updated ELKS logo with transparent version.
 
-Mon Nov 12 00:00:00 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+Mon Nov 12 00:00:00 GMT 2001	Riley Williams <Riley@Williams.Name>
 
 	* Added "description" and "keywords" fields to all HTML headers.
 	* Reformatted home page slightly.
@@ -83,18 +87,18 @@ Sun Nov 11 21:33:54 GMT 2001	Michael McConnell <soruk@eridani.co.uk>
 
 	* Updated "Baby Linux" logo with transparent version.
 
-Sun Nov 11 11:06:53 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+Sun Nov 11 11:06:53 GMT 2001	Riley Williams <Riley@Williams.Name>
 
 	* Reformatted English FAQ. Much of this appears to be long out of
 	  date, but I've added it as it stands for now, and will work
 	  through it to bring it up to date once I have the rest of the
 	  old ELKS website transferred across.
 
-Sat Nov 10 10:21:11 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+Sat Nov 10 10:21:11 GMT 2001	Riley Williams <Riley@Williams.Name>
 
 	* Added details of mailing lists.
 
-Fri Nov  9 16:19:40 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+Fri Nov  9 16:19:40 GMT 2001	Riley Williams <Riley@Williams.Name>
 
 	* Added outline index pages for FAQ, History and News subtrees.
 	* Reformatted French FAQ. I don't read French, so can somebody who
@@ -103,21 +107,21 @@ Fri Nov  9 16:19:40 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 	  does please check this document to ensure it is accurate.
 	* Linked French and German FAQ's into FAQ index page.
 
-Thu Nov  8 22:18:20 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+Thu Nov  8 22:18:20 GMT 2001	Riley Williams <Riley@Williams.Name>
 
 	* Rationalised index.html page of dynamic snapshot.
 	* Committed first version of revised pages - much still absent.
 
-Wed Nov  7 00:13:21 GMT 2001	Harry Kalogirou <HarKal@rainbow.cs.unipi.gr>
+Wed Nov  7 00:13:21 GMT 2001	Harry Kalogirou <HarKal@gmx.net>
 
 	* Snapshot of Al's dynamic ELKS website taken and used as base for
 	  new website.
 
-Sat Oct 20 12:34:56 GMT 1999	Alistair Riddoch <alriddoch@zepler.org>
+Sat Oct 20 12:34:56 GMT 1999	Alistair Riddoch <AlRiddoch@zepler.org>
 
 	* Last update to dynamic ELKS website.
 
-Sun Jan  1 12:34:56 GMT 1995	Alistair Riddoch <alriddoch@zepler.org>
+Sun Jan  1 12:34:56 GMT 1995	Alistair Riddoch <AlRiddoch@zepler.org>
 
 	* Oldest reference on snapshot of dynamic ELKS website.
 
