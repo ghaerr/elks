@@ -318,9 +318,8 @@ register struct serial_info *sp;
 	outb_p(0,sp->io+UART_IER);
 	scratch=inb_p(sp->io+UART_IER);
 	outb_p(scratch,sp->io+UART_IER);
-	if(scratch)
-	{
-	    return -1;
+	if(scratch) {
+		return -1;
 	}
 
 	/* this code is weird, IMO */
@@ -335,8 +334,7 @@ register struct serial_info *sp;
 	   intlist and HelpPC this code is wrong, see comments marked 
 	   with [*] */
 	scratch=inb_p(sp->io+UART_IIR)>>6;
-	switch(scratch)
-	{
+	switch(scratch) {
 		case 0:
 			sp->flags=SERF_EXIST|ST_16450;
 			break;
@@ -385,84 +383,78 @@ register struct serial_info *sp;
 int rs_init()
 {
 
-    register struct serial_info *sp=&ports[0];
-    int i;
-    int ttyno = 4;
-    printk("Serial driver version 0.01 with no serial options enabled\n");
-    for(i=0;i<4;i++)
-    {
-	if (sp->tty != NULL)
-	{
-	    /*
-	     * if rs_init is called twice, because of serial console
-	     */
-	    printk("ttys%d at 0x%x (irq = %d)",
-		   ttyno-4,sp->io,sp->irq);
-	    switch(sp->flags&SERF_TYPE)
-	    {
-	    case ST_8250:
-		printk(" is a 8250, fetched\n");
-		break;
-	    case ST_16450:
-		printk(" is a 16450, fetched\n");
-		break;
-	    case ST_16550:
-		printk(" is a 16550, fetched \n");
-		break;
-	    default:
-		printk(", fetched\n");
-		break;
-	    }
-	    ttyno++;
-	}
-	else
-	{
-	    if((rs_probe(sp)==0) && (!request_irq(sp->irq, rs_irq, NULL)))
-	    {
-		printk("ttys%d at 0x%x (irq = %d)",
-		       ttyno-4,sp->io,sp->irq);
-		switch(sp->flags&SERF_TYPE)
-		{
-		case ST_8250:
-		    printk(" is a 8250\n");
-		    break;
-		case ST_16450:
-		    printk(" is a 16450\n");
-		    break;
-		case ST_16550:
-		    printk(" is a 16550\n");
-		    break;
-		default:
-		    printk("\n");
-		    break;
+	register struct serial_info *sp=&ports[0];
+	int i;
+	int ttyno = 4;
+	printk("Serial driver version 0.01 with no serial options enabled\n");
+	for(i=0;i<4;i++) {
+		if (sp->tty != NULL) {
+			/*
+			* if rs_init is called twice, because of serial console
+			*/
+			printk("ttys%d at 0x%x (irq = %d)",
+			ttyno-4,sp->io,sp->irq);
+			switch(sp->flags&SERF_TYPE) {
+				case ST_8250:
+					printk(" is a 8250, fetched\n");
+					break;
+				case ST_16450:
+					printk(" is a 16450, fetched\n");
+					break;
+				case ST_16550:
+					printk(" is a 16550, fetched \n");
+					break;
+				default:
+					printk(", fetched\n");
+					break;
+			}
+			ttyno++;
+		} else {
+			if((rs_probe(sp)==0) &&
+			  (!request_irq(sp->irq, rs_irq, NULL))) {
+				printk("ttys%d at 0x%x (irq = %d)",
+					ttyno-4,sp->io,sp->irq);
+				switch(sp->flags&SERF_TYPE) {
+					case ST_8250:
+						printk(" is a 8250\n");
+						break;
+					case ST_16450:
+						printk(" is a 16450\n");
+						break;
+					case ST_16550:
+						printk(" is a 16550\n");
+						break;
+					default:
+						printk("\n");
+						break;
+				}
+				sp->tty = &ttys[ttyno++];
+				/* outb_p(????, sp->io + UART_MCR); */
+			}
 		}
-		sp->tty = &ttys[ttyno++];
-/*			outb_p(????, sp->io + UART_MCR); */
-	    }
+		sp++;
 	}
-	sp++;
-    }
-    return 0;
+	return 0;
 }
 
 #ifdef CONFIG_CONSOLE_SERIAL
 static int con_init = 0;
 void init_console()
 {
-    rs_init();
-    console_setdefault(&ports[CONSOLE_PORT]);
-    update_port(&ports[CONSOLE_PORT]);
-    con_init = 1;
-    printk("Console: Serial\n");
+	rs_init();
+	console_setdefault(&ports[CONSOLE_PORT]);
+	update_port(&ports[CONSOLE_PORT]);
+	con_init = 1;
+	printk("Console: Serial\n");
 }
 
 void con_charout(Ch)
 char Ch;
 {
-    if (con_init) {
-	while (!(inb_p(ports[CONSOLE_PORT].io + UART_LSR) & UART_LSR_TEMT));
-	outb(Ch, ports[CONSOLE_PORT].io + UART_TX);
-    }
+	if (con_init) {
+		while (!(inb_p(ports[CONSOLE_PORT].io + UART_LSR) & UART_LSR_TEMT));
+		outb(Ch, ports[CONSOLE_PORT].io + UART_TX);
+	}
 }
 
 int wait_for_keypress()

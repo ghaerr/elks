@@ -15,7 +15,7 @@
  * 0x0100 /dev/ram0  ramdisk ram0      
  * 0x0301 /dev/bda1  bios disk0, part 1
  */
-#define CONFIG_ROOTDEV 0x0302
+#define CONFIG_ROOTDEV 0x0380
 #endif
 
 /*

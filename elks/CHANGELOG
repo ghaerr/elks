@@ -1,11 +1,17 @@
 ------------------------------------------------------------------------------
 This file is used to record changes made to the CVS database. Please add to
-the top of this file before committing any changes.
+the top of this file before committing any changes. Please use the header
+format provided for each entry.
 
 Al
 ------------------------------------------------------------------------------
 
-2000-02-02    <Christoph.Plattner@dot.at>
+Thu Feb 03 17:40 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Minor and cosmetic fixes to changes committed by Christoph
+	Plattner.
+
+Wed Feb 02 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* init/main.c (init_task): use /dev/ttys0 instead of /dev/tty1
 	if serial console is used.
@@ -17,7 +23,7 @@ Al
 	(init_console): beside the rs_init() also the tty termios are
 	initialized und updated for the serial console port.
 
-2000-02-02    <Christoph.Plattner@dot.at>
+Wed Feb 02 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* include/linuxmt/config.h (DEF_SETUPSEG): it should be defined
 	as DEF_INITSEG + 0x20, otherwise two things are to edit.
@@ -32,12 +38,12 @@ Al
 
 	* include/linuxmt/ntty.h: added external definition to def_vals
 
-2000-02-01    <Christoph.Plattner@dot.at>
+Tue Feb 01 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* arch/i86/Makefile (clean): added Boot.map and Setup.map in the
 	clean rule. Also crt0.s was not cleaned yet.
 
-2000-01-31    <Christoph.Plattner@dot.at>
+Mon Jan 31 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* include/arch/debug_disp.h: added display port to output debug
 	messages to LED, hex-display or logic analysator.
