@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Tue Jul 20 18:08 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fix debugging output in signal code.
+
 Tue Jul 20 17:34 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix to exec time memory allocation by Greg.
