@@ -16,6 +16,8 @@
 #include <linuxmt/fcntl.h>
 #include "af_unix.h"
 
+#ifdef CONFIG_UNIX
+
 struct unix_proto_data unix_datas[NSOCKETS_UNIX];
 
 static struct unix_proto_data * unix_data_alloc()
@@ -627,3 +629,4 @@ struct net_proto * pro;
 }
 
 	
+#endif /* CONFIG_UNIX */

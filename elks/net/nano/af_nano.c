@@ -16,6 +16,8 @@
 #include <linuxmt/fcntl.h>
 #include "af_nano.h"
 
+#ifdef CONFIG_NANO
+
 struct nano_proto_data nano_datas[NSOCKETS_NANO];
 
 static struct nano_proto_data * nano_data_alloc()
@@ -603,3 +605,4 @@ struct net_proto * pro;
 }
 
 	
+#endif /* CONFIG_NANO */
