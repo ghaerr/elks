@@ -225,8 +225,8 @@ struct minix_dir_entry ** res_dir;
 			bh = minix_bread(dir,block,1);
 			if (!bh)
 				return -ENOSPC;
+			map_buffer(bh);
 		}
-		map_buffer(bh);
 		de = (struct minix_dir_entry *) (bh->b_data + offset);
 		offset += info->s_dirsize;
 #ifdef BLOAT_FS
@@ -269,8 +269,7 @@ struct minix_dir_entry ** res_dir;
 		if (offset < 1024)
 			continue;
 #endif
-		printk("minix_add_entry may need another unmap_buffer :)");
-		brelse(bh);
+		unmap_brelse(bh);
 		bh = NULL;
 		offset = 0;
 		block++;

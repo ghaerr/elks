@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Thu Sep 30 10:34 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fixed unbalanced map_buffer calls in minix_add_entry().
+
 Fri Sep 24 16:24 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixes and code cleanups in fs code by Thomas McWilliams.
