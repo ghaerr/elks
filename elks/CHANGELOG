@@ -13,5 +13,6 @@ Wed Sep 16 20:20:00 CEST 1998	Simon Weijgers	<mbit@mbit.doa.org>
 Wed Sep 23 16:10:54 CEST 1998	Simon Weijgers	<mbit@mbit.doa.org>
 
 	* Changed #include <errno.h> to #include <linuxmt/errno.h>
+	  in file arch/i86/drivers/block/rd.c.
 	  It doesn't matter for compilation but it should be a kernel
 	  include file right?
