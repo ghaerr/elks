@@ -1,182 +1,6 @@
-# 1 "boot/crt0.S"
 ! enable the autoconfig tool
-
-# 1 "/usr/src/branch/rom_boot/elks/include/linuxmt/config.h" 1
-
-
-
-# 1 "/usr/src/branch/rom_boot/elks/include/linuxmt/autoconf.h" 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# 4 "/usr/src/branch/rom_boot/elks/include/linuxmt/config.h" 2
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# 3 "boot/crt0.S" 2
-
+#define __ASSEMBLY__
+#include <linuxmt/config.h>
 |
 |	Assembler boot strap hooks. This is called by setup
 |
@@ -196,19 +20,26 @@
 |	kernel when using the 286pmode extender.
 |
 _main:
-# 31 "boot/crt0.S"
-
+#ifdef CONFIG_ROMCODE
+	pop	ax
+	mov	__endtext, ax
+	pop	ax
+	mov	__enddata, ax
+	pop	bx
+	add	ax,bx
+	mov	__endbss, ax
+#else
 	mov	__endtext, bx
 	mov	__enddata, si
 	add	si, dx
 	mov	__endbss, si
-
+#endif
        
-
+#ifndef CONFIG_ROMCODE
 	mov	ax,ds           ;in ROMCODE stack is ready placed
 	mov	ss,ax
 	mov	sp,#_bootstack
-
+#endif
 
 !  overwrite start of main with a jmp to kernel_restarted()
 !  this will give is a call stack trace instead of the "timer bug" message
@@ -228,10 +59,10 @@ _main:
 	.globl __enddata
 	.globl __endbss
 	
-
+#ifndef CONFIG_ROMCODE
 	.zerow	384
 _bootstack:
-
+#endif
 | 768 byte boot stack. Print sp in wake_up and you'll see that more than
 ! 512 bytes of stack are used! 
 | Must be in data as its in use when we wipe the BSS

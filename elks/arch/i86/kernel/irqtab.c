@@ -4,38 +4,141 @@
 /*
  *	Easy way to store our kernel DS
  */
+
+
+/* moving variables from code segment to an extra segment
+/  ROM_KERNEL_IRQDATA for the ROM_CODE-Version
+/  ELKS 0.76 7/1999 Christian Mard”ller  (chm@kdt.de)
+/  */
+
+
+
+#ifdef CONFIG_ROMCODE 
+   #define stashed_ds       [0]
+   #define off_stashed_irq0 [2]
+   #define seg_stashed_irq0 [4]
+   #define stashed_ss       [6]
+   #define stashed_sp       [8]
+   #define stashed_irq      [10]  
+   #define bios_call_cnt    [12] 
+   /*      stashed_di       [14]   process.c */
+   /*      cs_tmp           [16]   process.c */
+   /*      _our_ds          [18]   bios16.c  */
+
+#else
+   #define stashed_ds       cseg_stashed_ds
+   #define seg_stashed_irq0 cseg_seg_stashed_irq0
+   #define off_stashed_irq0 cseg_off_stashed_irq0
+
+   #define stashed_ss       cseg_stashed_ss
+   #define stashed_sp       cseg_stashed_sp
+   #define stashed_irq      cseg_stashed_irq
+   #define bios_call_cnt    cseg_bios_call_cnt
+#endif
+
+
+
+#asm
+/* In ROM-Mode we must generate a physical 3th segment :-) 
+/  The segmentaddress is given by ROM_KERNEL_IRQDATA,
+/  the offset is constant per #define
+/-------------------------------------------------------*/
+
+
+
+#ifndef CONFIG_ROMCODE
+	.globl cseg_stashed_ds
+	.globl cseg_stashed_si
+	.globl cseg_sc_tmp
+	.globl IRQdata_offs
+
+        .even
+
+cseg_stashed_ds:
+	.word	0
+cseg_seg_stashed_irq0:
+	.word	0
+cseg_off_stashed_irq0:
+	.word	0
+
+
+cseg_stashed_ss:
+	.word 	0
+cseg_stashed_sp:
+	.word 	0
+cseg_stashed_irq:
+	.word	0
+cseg_bios_call_cnt:
+	.word	0
+
+
+;from process.c
+
+cseg_stashed_si:
+	.word 	0
+cseg_sc_tmp:
+	.word	0
+IRQdata_offs:
+        .word   0
+
+
+#endif	
+	
+
+#endasm
+
+
+
+
+
  
 void irqtab_init()
 {
 #asm
-	mov ax,ds
-	seg cs
-	mov stashed_ds,ax	! /* FIXME: code isn't ROM-able */
-	xor ax,ax
-	mov es,ax
-	cli
+
+; CS points to this kernel code segment
+; ES points to page 0  (interrupt table)
+; DS points to the irqdataseg (cs or ROM_KERNEL_IRQDATA)
+
+        push ds
+        mov dx,ds      ;the original value
+        cli            ;just here
+        
+        xor ax,ax
+        mov es,ax      ;intr table
+
+#ifdef CONFIG_ROMCODE
+        mov ax,#ROM_KERNEL_IRQDATA
+#else
+        mov ax,cs
+#endif        
+        mov ds,ax
+        
+	mov stashed_ds,dx	
+
+	seg es                     ;insert new timer intr 
+	mov bx,[32]
+	mov off_stashed_irq0, bx   ; the old one
 	lea ax,_irq0
 	seg es
-	mov bx,[32]
-	seg cs
-	mov off_stashed_irq0, bx
-	seg es
 	mov [32],ax
-	mov ax,cs
 	seg es
 	mov bx,[34]
-	seg cs
 	mov seg_stashed_irq0, bx
+	mov ax,cs
 	seg es
 	mov [34],ax
+
+
 #ifndef CONFIG_CONSOLE_BIOS
-	lea ax,_irq1
+	lea ax,_irq1      ;keyboard  
 	seg es
 	mov [36],ax
 	mov ax,cs
 	seg es
 	mov [38],ax
 #endif
+
 #if 0	
 	lea ax,_irq2
 	seg es
@@ -44,14 +147,15 @@ void irqtab_init()
 	seg es
 	mov [42],ax
 #endif	
-	lea ax,_irq3
+
+	lea ax,_irq3      ;com2
 	seg es
 	mov [44],ax
 	mov ax,cs
 	seg es
 	mov [46],ax
 	
-	lea ax,_irq4
+	lea ax,_irq4     ;com1
 	seg es
 	mov [48],ax
 	mov ax,cs
@@ -67,9 +171,12 @@ void irqtab_init()
 	seg es
 	mov [514],ax
 ! Tidy up
-	sti
+
+	pop ds           ;the org segments
 	mov ax,ds
 	mov es,ax
+	sti
+        
 #endasm
 }	
  
@@ -98,22 +205,17 @@ void irqtab_init()
 !	.globl _irq13
 !	.globl _irq14
 !	.globl _irq15
-	.globl stashed_ds
 	.extern _do_IRQ
+
 	.data
 	.extern _cache_A1
 	.extern _cache_21
 	.extern _jiffies
+
 	.text 
 			
-stashed_ds:
-	.word	0
-seg_stashed_irq0:
-	.word	0
-off_stashed_irq0:
-	.word	0
 
-_irq1:
+_irq1:                   ;keyboard  
 	push	ax
 	mov	ax,#1
 	br	_irqit
@@ -123,14 +225,15 @@ _irq2:
 	mov	ax,#2
 	br	_irqit
 #endif
-_irq3:
+_irq3:                   ;com2
 	push	ax
 	mov	ax,#3
 	br	_irqit
-_irq4:
+_irq4:                   ;com1
 	push	ax
 	mov	ax,#4
 	br	_irqit
+
 #if 0
 _irq5:
 	push	ax
@@ -335,20 +438,23 @@ _irqit:
 !
 !	Recover segments
 !
-	seg	cs
+#ifdef CONFIG_ROMCODE
+        mov bx,#ROM_KERNEL_IRQDATA
+#else
+        mov bx,cs
+#endif        
+        mov ds,bx
+        
 	mov	stashed_irq,ax	! Save IRQ number
 	mov	ax,ss		! Get current SS
 	mov	bx,ax		! Save for later
-	seg	cs
 	mov	stashed_ss, ax	! Save SS:SP
 	mov	ax,sp
-	seg	cs
 	mov	stashed_sp, ax
-	seg	cs		! Recover the data segment
-	mov	ax,stashed_ds
 !
 !	Switch segments
 !
+	mov	ax,stashed_ds   ! Recover the data segment
 	mov	ds,ax
 	mov	es,ax
 !
@@ -394,10 +500,20 @@ switched:
 !	leave them in stashed_ss/sp as we could re-enter the
 !	routine on a reschedule.
 ! */
+#ifdef CONFIG_ROMCODE
+        mov ax,#ROM_KERNEL_IRQDATA
+        mov es,ax
+        seg es
+	push	stashed_sp
+	seg es
+	push	stashed_ss
+        
+#else
 	seg 	cs
 	push	stashed_sp
 	seg	cs
 	push	stashed_ss
+#endif
 !
 !	We are on a suitable stack and cx says whether we can	
 !	switch afterwards. The C code will want to eat CX so
@@ -409,11 +525,19 @@ switched:
 	mov	bp,sp
 	mov	_can_tswitch, ch
 	push	cx		! Save ch
+#ifdef CONFIG_ROMCODE
+        seg	es
+#else        
 	seg	cs		! Recover the IRQ we saved
+#endif	
 	mov	ax,stashed_irq
 	push	ax		! IRQ for later
 	push	bp		! Register base
 	push	ax		! IRQ number
+#ifdef CONFIG_ROMCODE
+        mov ax,ds
+        mov es,ax        ;es back to dataseg
+#endif        
 !
 !	Call the C code
 !
@@ -520,11 +644,16 @@ noschedpop:
 	pop	cx
 	pop	bx
 	pop	es
-	pop	ds
+#ifdef CONFIG_ROMCODE
+	mov	ax,#ROM_KERNEL_IRQDATA
+	mov	ds,ax
+#else
 	seg	cs
+#endif
 	mov	ax, stashed_irq
 	or 	ax,ax
 	jz	irq0_bios
+	pop	ds
 	pop	ax
 !
 !	Iret restores CS:IP and F (thus including the interrupt bit)
@@ -536,40 +665,59 @@ noschedpop:
 !	FIXME: should call the bios only every fifth event.
 !
 irq0_bios:
-	pop	ax
+        pop     ds  
+	pop	ax           ;now the stack empty
+
+;------------------------------------------------
+;Build new Stack
+;
+;  SP    ->  RET seg
+;            RET offs
+;  SP-4  ->  BP
+;  SP-4  ->  BX   
+;            DS
+;  SP-8  ->  free                     ;sp
+
+label1:
+
+        sub sp,#4                     ;space for retf
+        push bp
+        mov bp,sp 
+
 	push	bx
-	seg 	cs
+	push    ds                 
+#ifdef CONFIG_ROMCODE
+        mov bx,#ROM_KERNEL_IRQDATA
+#else
+        mov bx,cs 
+#endif
+        mov ds,bx
 	mov	bx,bios_call_cnt
 	inc	bx
-	seg	cs
-	mov	bios_call_cnt,bx
 	cmp	bx,#5
 	jne	no_bios_call
+
 	xor	bx,bx
-	seg	cs
 	mov	bios_call_cnt,bx
-	pop	bx
-	seg	cs
-	push	seg_stashed_irq0
-	seg	cs
-	push	off_stashed_irq0
-	retf
-no_bios_call:
-	pop	bx
+        mov bx, seg_stashed_irq0
+	mov	[bp+4], bx
+        mov bx, off_stashed_irq0
+        mov 	[bp+2], bx
+
+        pop     ds
+	pop	bx       
+        pop bp
+	retf                          
+
+no_bios_call:                          ;sp-8 
+	mov	bios_call_cnt,bx
+        pop	ds
+	pop	bx                     ;sp-4              
+        pop     bp
+        add sp,#4
 	iret
-!
-!	Data.
-!
-	.even
-stashed_ss:
-	.word 	0
-stashed_sp:
-	.word 	0
-stashed_irq:
-	.word	0
-bios_call_cnt:
-	.word	0
-	
+
+
 	.data
 .globl	_can_tswitch
 _can_tswitch:

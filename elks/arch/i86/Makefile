@@ -51,11 +51,15 @@ boot/bootsect: boot/bootsect.S
 
 boot/crt1.o: boot/crt1.c
 
-boot/crt0.o: boot/crt0.s
+boot/crt0.o: boot/crt0.S
+	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/crt0.s boot/crt0.S
 	$(AS86) -0 -o boot/crt0.o boot/crt0.s
 
 tools/build: tools/build.c
 	gcc -I $(TOPDIR)/include -o tools/build tools/build.c
+
+tools/mkurlader: tools/mkurlader.c
+	gcc -I $(TOPDIR)/include -o tools/mkurlader tools/mkurlader.c
 
 boot/system: $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 	(cd ../.. ; $(LD) $(LDFLAGS) $(ARCH_DIR)/boot/crt0.o \
@@ -65,6 +69,7 @@ boot/system: $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 		$(DRIVERS) \
 		-t -M -o $(ARCH_DIR)/boot/system > System.map)
 	
+ifneq ($(CONFIG_ROMCODE), y)
 ifeq ($(CONFIG_286PMODE), y)
 
 Image: boot/bootsect boot/setup 286pmode/pmode286 boot/system tools/build
@@ -78,11 +83,30 @@ Image: boot/bootsect boot/setup boot/system tools/build
 	sync
 
 endif
+else
+
+ifeq ($(ROM_RESET_VEC), y)
+  RVECT = -r $(ROM_RESET_ADDR)   
+endif
+
+Image: tools/mkurlader boot/setup boot/system  
+	tools/mkurlader $(RVECT) -c $(ROM_SETUP_CODE) $(ROM_CHECKSUM_SIZE) Image $(ROM_BASIS) -a boot/setup $(ROM_SETUP_CODE) -s boot/system $(ROM_KERNEL_CODE) $(ROM_EXT_MOD1) $(ROM_EXT_MOD1_ADDR)
+	sync
+	$(ROM_E_SIM_CALL)
+
+endif
+#-----
+
 
 boot: Image
 	dd if=boot/Image of=/dev/fd0 bs=8192
 
 disk: boot
+
+setup: $(ARCH_DIR)/tools/mkurlader $(ARCH_DIR)/boot/setup  
+	tools/mkurlader $(RVECT) -c $(ROM_SETUP_CODE) $(ROM_MAX_SETUP_SIZE) Image $(ROM_BASIS) -a boot/setup $(ROM_SETUP_CODE) -s boot/system $(ROM_KERNEL_CODE) $(ROM_EXT_MOD1) $(ROM_EXT_MOD1_ADDR)
+	sync
+	$(ROM_E_SIM_CALL)
 
 #########################################################################
 # library rules

@@ -99,6 +99,9 @@ boot: Image
 disk: Image
 	(cd $(ARCH_DIR); make disk)
 
+setup: $(ARCH_DIR)/boot/setup  
+	(cd $(ARCH_DIR); make setup)
+
 #########################################################################
 # library rules
 # (all theses are built even if they aren't used)

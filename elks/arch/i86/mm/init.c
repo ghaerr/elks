@@ -41,7 +41,7 @@ void setup_mm()
 		proc_name[i] = setupb(0x30 + i);
 		cpuid[i] = setupb(0x50 + i);
 	}
-	printk("PC/%cT class machine, %s CPU\n%dK base",
+	printk("PC/%cT class machine, %s CPU\n%dK base RAM",
 		arch_cpu > 5 ? 'A' : 'X', proc_name, basemem);
 	if (arch_cpu<6)
 		xms=0;			/* XT bios hasn't got xms interrupt */
@@ -66,4 +66,5 @@ void setup_mm()
 		
 	if(setupb(0x1ff)==0xAA && arch_cpu>5)
 		printk("ps2: PS/2 pointing device detected\n");
+
 }

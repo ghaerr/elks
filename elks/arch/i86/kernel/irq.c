@@ -9,6 +9,11 @@
  * instead of just grabbing them. Thus setups with different IRQ numbers
  * shouldn't result in any weird surprises, and installing new handlers
  * should be easier.
+ *
+ * 9/1999 For ROM debuggers you can configure that not all interrupts
+ *        disable.
+ * 9/1999 The 100 Hz system timer 0 can configure for variable input
+ *        frequentcy. Christian Mardm"oller (chm@kdt.de)
  */
 
 #include <linuxmt/config.h>
@@ -245,11 +250,13 @@ jiff_t jiffies=0;
 
 void timer_tick(/*struct pt_regs * regs*/)
 {
-	do_timer(/*regs*/);
+	do_timer(/*regs*/); 
+
 #ifdef NEED_RESCHED	/* need_resched is not checked anywhere */
 	if (((int)jiffies & 7) == 0)
 		need_resched=1;	/* how primitive can you get? */
 #endif
+
 #if 0
 	#asm
 	! rotate the 20th character on the 3rd screen line
@@ -261,17 +268,30 @@ void timer_tick(/*struct pt_regs * regs*/)
 	pop es
 	#endasm
 #endif
+#ifdef CONFIG_DEBUG_TIMER
+        #asm
+        mov al,_jiffies
+        out 0x80,al 
+        #endasm
+
+#endif
 }
 
 /*
  *	IRQ setup.
  *
  */
- 
+
+          
 void init_IRQ()
 {
 	register struct irqaction *irq = irq_action + 16;
 	int ct;
+#ifdef ROM_USE_ORG_INTMASK       /* for example Debugger :-) */
+        cache_21 = inb_p(0x21);
+#endif
+
+
 
 #if 1
 	/* Stop the timer */
@@ -293,9 +313,12 @@ void init_IRQ()
 	 *	Re-start the timer only after irq is set
 	 */
  
-#if 1
 	/* set the clock to 100 Hz */
-	outb_p(0x34,0x43);		/* binary, mode 2, LSB/MSB, ch 0 */
+	outb_p(0x36,0x43);		/* binary, mode 2, LSB/MSB, ch 0 */
+#ifdef ROM_8253_100HZ
+	outb_p(ROM_8253_100HZ&0xff,0x40);	/* LSB */
+	outb_p(ROM_8253_100HZ>>8,0x40);		/* MSB */
+#else
 	outb_p(156,0x40);		/* LSB */
 	outb_p(46,0x40);		/* MSB */
 #endif
@@ -313,6 +336,7 @@ void init_IRQ()
 #else /* CONFIG_CONSOLE_DIRECT */
 	enable_irq(1);		/* Cascade */
 #endif /* CONFIG_CONSOLE_DIRECT */
+
 	/*
 	 *	Enable the drop through interrupts.
 	 */

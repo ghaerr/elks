@@ -17,6 +17,10 @@
 ! some changes and additional features by Christoph Niemann,
 ! March 1993/June 1994 (Christoph.Niemann@linux.org)
 !
+! changes for ROM-Version (ELKS) by Christian Mardmöller
+! Juni / 1999 chm@kdt.de
+!   This code is called after the BIOS-POST and replaces
+!   the BIOS OS/loader
 !
 ! The following data is passed to the main kernel (relative to INITSEG)
 !
@@ -55,80 +59,72 @@
 !	0x50:	zero terminated string containing the cpuid, 13 bytes
 !	0x80:	BIOS data for harddisk 0/1, 12 bytes
 !	0x8c:	data for floppy disk 0/1, 12 bytes
-!      0x1ff:   ps/2 mouse
 
 ! NOTE! These had better be the same as in bootsect.s!
+
 #define __ASSEMBLY__
 #include <linuxmt/config.h>
-! #include <asm/segment.h>
-
-#define SVGA_MODE NORMAL_VGA
 
 ! Signature words to ensure LILO loaded us right
 #define SIG1	0xAA55
 #define SIG2	0x5A5A
 
-INITSEG  = DEF_INITSEG	! we move boot here - out of the way
+#define MINIX_SPLITID_LOW 0x0301L
+#define KERNEL_MAGICNUMBER MINIX_SPLITID_LOW
+
+INITSEG  = DEF_INITSEG	! (DATASEG) we move boot here - out of the way
 SYSSEG   = DEF_SYSSEG	! system loaded at 0x10000 (65536).
 SETUPSEG = DEF_SETUPSEG	! this is the current segment
 
-.globl begtext, begdata, begbss, endtext, enddata, endbss
-.text
-begtext:
-.data
-begdata:
-.bss
-begbss:
 .text
 
 entry start
 start:
+#ifdef CONFIG_ROMCODE
+    .byte 0x55, 0xaa      ;sign for ROM-Extention
+    .byte 0x04            ;space for lengthcode (promsize/512)
+
+    push ds
+
+#else
 ! Bootlin depends on this being done early
 	mov	ax,#0x01500
 	mov	dl,#0x81
 	int	0x13
+#endif
+
 
 ! Check signature at end of setup
-	mov	ax,#SETUPSEG
+	mov	ax,#SETUPSEG      ;setup codesegment
 	mov	ds,ax
 	cmp	setup_sig1,#SIG1
 	jne	bad_sig
 	cmp	setup_sig2,#SIG2
 	jne	bad_sig
-	jmp	good_sig1
+	jmp	near good_sig     ;why double jmp
+
 
 ! Routine to print asciiz-string at DS:SI
+prts_1:	mov	bx,#0x0007   !page 0
+	mov	ah,#0x0e
+	int	0x10
 
-prts_1:	call 	prnt1
 prtstr:	lodsb
 	test	al,al
 	jnz	prts_1
 	ret
-! Part of above routine, this one just prints ascii al
 
-prnt1:	push	ax
-	push	cx
-	xor	bh,bh
-	mov	cx,#0x01
-	mov	ah,#0x0e
-	int	0x10
-	pop	cx
-	pop	ax
-	ret
 
-beep:	mov	al,#0x07
-	jmp	prnt1
-	
-no_sig_mess:	.ascii	"No setup signature found ..."
-		db	0x00
+
+#ifndef CONFIG_ROMCODE
+! We now have to find the rest of the setup code/data
+! in ROM the code is complete
+
+! variables in ROM are not very usefull
 start_sys_seg:	.word	SYSSEG
 
-good_sig1:
-	jmp	good_sig
-
-! We now have to find the rest of the setup code/data
 bad_sig:
-	mov	ax,#INITSEG
+	mov	ax,#INITSEG     ;code setup
 	mov	ds,ax
 	xor	bh,bh
 	mov	bl,[497]	! get setup sects from boot sector
@@ -161,32 +157,63 @@ bad_sig:
 	cmp	setup_sig2,#SIG2
 	jne	no_sig
 	jmp	good_sig
+#else
+bad_sig:
+#endif
 
 no_sig:
 	lea	si,no_sig_mess
 	call	prtstr
-no_sig_loop:
+no_sig_loop:			! And halt
 	jmp	no_sig_loop
 
+
+;------------------------------------------------
 good_sig:
-	mov	ax,#INITSEG
+#ifdef CONFIG_ROMCODE
+	xor ax,ax
+	mov ds,ax                      ;Interrupttable
+
+	mov word ptr[4*0x19],#start_os
+	mov word ptr[4*0x19+2],cs      ;set os/loader int
+
+	pop ds 
+	retf                           ;back to BIOS
+#endif
+
+
+
+
+;-------------------------------------------------------
+;-- from here the real loder starts
+;-------------------------------------------------------
+start_os:
+	mov	ax,#INITSEG       ;datasegment setup.S
 	mov	ds,ax
+
 
 ! Get memory size (extended mem, kB)
 
+#ifdef ROM_EXTMEMSIZE
+	mov	[2],#ROM_EXTMEMSIZE
+#else
 	mov	ah,#0x88
 	int	0x15
 	mov	[2],ax
+#endif
 
 ! set the keyboard repeat rate to the max
 
+#ifndef ROM_NOKBDBIOS
 	mov	ax,#0x0305
 	xor	bx,bx		! clear bx
 	int	0x16
+#endif
 
 ! check for EGA/VGA and some config parameters
 
-	mov	ah,#0x12
+#ifndef ROM_NOVGA
+ 	mov	ah,#0x12
 	mov	bl,#0x10
 	int	0x10
 	mov	[8],ax
@@ -204,34 +231,50 @@ good_sig:
 	jne	novga
 	movb	[15],#1		! we've detected a VGA
 !	call	chsvga
+#else
+        movb  [15],#0           ! no VGA in system
+#ifdef ROM_HIGH_OF_CRT
+        mov   al,#ROM_HIGH_OF_CRT
+#else
+        mov   al,#0x19          ! high of display ?
+#endif
+#endif
+
 novga:	mov	[14],al
 	mov	ah,#0x03	! read cursor pos
 	xor	bh,bh		! clear bh
 	int	0x10		! save it in known place, con_init fetches
-	mov	[0],dx		! it from 0x90000.
-	
+	mov	[0],dx	        ! it from 0x90000.
+
 ! Get video-card data:
-	
 	mov	ah,#0x0f
 	int	0x10
 	mov	[4],bx		! bh = display page
 	mov	[6],ax		! al = video mode, ah = window width
+
+#ifdef ROM_VIDEO_HIGHOFCHARACTER
+        mov   [16],#ROM_VIDEO_HIGHOFCHARACTER
+#else
 	xor	ax,ax
 	mov	es,ax		! Access low memory
 	seg es
 	mov	ax,[0x485]	! POINTS - Height of character matrix
 	mov	[16],ax
+#endif
 
 ! check for PS/2 pointing device
 
-	mov	ax,#INITSEG
-	mov	ds,ax
+!	mov	ax,#INITSEG     !ds was not changed sinse good_gig
+!	mov	ds,ax
 	mov	[0x1ff],#0	! default is no pointing device
+#ifndef ROM_NOPS2MOUSE
 	int	0x11		! int 0x11: equipment determination
 	test	al,#0x04	! check if pointing device installed
 	jz	no_psmouse
 	mov	[0x1ff],#0xaa	! device present
 no_psmouse:
+#endif
+
 	call	getcpu
 	push	es
 	mov	ax,#INITSEG
@@ -243,12 +286,104 @@ no_psmouse:
 	rep
 	stosw
 	pop	es
+#ifndef ROM_NOHDD
 !	call	gethd
+#endif
+#ifndef ROM_NOFLOPPY
 	call	getfloppy
+#endif
 	mov	ax,#INITSEG
 	mov	ds,ax
 	int	0x12		! determine the size of the basememory
 	mov	[0x2a],ax
+
+!----------------------------
+#ifdef CONFIG_ROMCODE
+! We must now copy the kernel to RAM (SYSSEG)
+
+        mov ax,cs          ;string is in this codeseg
+	mov ds,ax
+	lea si,load_kernel
+	call prtstr
+
+   	mov ax,#ROM_KERNEL_CODE   ;the ROM image
+   	mov ds,ax
+
+! test, if correct a.out header
+
+   	cmp word ptr[0],#KERNEL_MAGICNUMBER
+   	jne aouterr
+
+   	cmp byte ptr [3],#0x04   ;prozessortype = 8086
+   	jne test1
+	jmp near aout_ok
+
+test1:
+	cmp byte ptr [3],#0x10   ;prozessortype = 80386
+	jne aouterr
+	jmp near aout_ok
+
+aouterr:
+   	mov ax,cs
+   	mov ds,ax
+   	lea si,kernel_aouterr
+   	call prtstr
+err_loop:
+	jmp err_loop
+
+
+load_kernel:    .ascii "Loading kernel image..."
+                .byte 0
+kernel_aouterr: .byte 13,10
+                .ascii "--> ERROR: wrong kernel a.out Format!"
+                .byte 0
+kernel_to_big:  .byte 13,10
+                .ascii "--> ERROR: kernel size > 64k"
+                .byte 0
+
+
+aout_ok:
+   	mov ax,#ROM_KERNEL_DATA
+   	mov es,ax
+
+   	mov cx,[10]    ;hi of size
+   	or cx,cx       ;max 64k
+   	jz size_ok
+size_error:
+   	mov ax,cs
+   	mov ds,ax
+   	lea si,kernel_to_big
+   	call prtstr
+   	jmp near err_loop  ;and halt
+
+size_ok:
+        mov cx,[14]
+        or cx,cx
+        jnz size_error     ;.data zu groß
+
+;and now copy the kerneldata
+   	mov si,[0x08]  ;code size
+   	add si,[0x04]  ;+header size
+        xor di,di
+        mov cx,[0x0c]  ;data size
+        shr cx,1       ;copy words
+        cld
+        rep
+        movsw
+
+; now ist the data and code ad the right position
+
+        mov dx,[0x10]  ;bbs size
+        mov si,[0x0c]  ;data size
+        mov bx,[0x08]  ;text size
+
+        mov ax,#ROM_KERNEL_DATA
+        mov ds,ax
+        mov ss,ax    ;es is set
+        mov sp,#0xfffe
+#endif
+
+!--------------------------------------------------------
 ! We setup ds, es, and ss now
 !
 !
@@ -257,7 +392,10 @@ no_psmouse:
 !	ES=DS=SS. SP is at the top end of the segment, data at the bottom
 !	CS = DS is allowed (code then is start of data) or split.
 !
-	mov ax, #0x1000
+
+!header is only in ROM, ds points on it
+#ifndef CONFIG_ROMCODE
+	mov ax, #SYSSEG       ;in ROM ds ist always set
 	mov ds, ax	! Get the header into DS
 	mov ax, [8]	! TSeg
 	mov bx,	ax	! Save Text size
@@ -265,27 +403,38 @@ no_psmouse:
 	mov dx, [16]	! BSeg
 	mov cl, #4
 	shr ax, cl	! Data in paragraphs
-	mov cx, #0x1002 ! Code starts here
+
+	mov cx, #SYSSEG+2 ! Code starts here
 	add cx, ax	! Segment base for data/bss/stack
 	mov ds, cx
 	mov es, cx
 !	mov ss, cx
 !	mov sp, #0xFFFE	! Top of stack right at the end (temporary)
+#endif
 
-!	push	dx	! BSS size
-!	push	si	! Data size
-!	push	bx	! Text size
-! This is it...
+#ifdef CONFIG_ROMCODE
+	push	dx	! BSS size
+	push	si	! Data size
+	push	bx	! Text size
 
+ #ifdef ROM_CODE_DEBUG
+        int 3               ;break for debugger
+ #endif
+        jmp far SYSSEG+2:3
+#else
 ! changed jmpi 0,0x1002 to 3,0x1002 for kernel restart fix -AJB
+	jmpi	0x00003,SYSSEG+2   !jmp offset 0 of segment 0x1002 (cs)
+#endif
 
-	jmpi	0x0003,0x1002	! jmp offset 0 of segment 0x1002 (cs)
-
+!------------------------------
 ! This routine checks that the keyboard command queue is empty
 ! (after emptying the output buffers)
 !
 ! No timeout is used - if this hangs there is something wrong with
 ! the machine, and we probably couldn't proceed anyway.
+
+! no call to this functions
+#if 0
 empty_8042:
 	call	delay
 	in	al,#0x64	! 8042 status port
@@ -341,6 +490,7 @@ empty:	ret
 !
 ! Read the cmos clock. Return the seconds in al
 !
+
 gettime:
 	push	cx
 	mov	ah,#0x02
@@ -360,6 +510,10 @@ gettime:
 delay:
 	.word	0x00eb			! jmp $+2
 	ret
+#endif
+;from never calls
+
+!form this position are calles code
 
 !
 ! Probe for the CPU/Coprocessor
@@ -367,9 +521,10 @@ delay:
 ! and from the Linux-Kernel, arch/i386/kernel/head.S
 !
 getcpu:
-	pushf
-	mov	ax,#SETUPSEG
+	mov	ax,#SETUPSEG         /* Codesegment setup.S */
 	mov	ds,ax
+#ifndef CONFIG_ROMCODE
+	pushf
 	xor	ax,ax
 	push	ax
 	popf
@@ -423,10 +578,20 @@ chk486:	cli
 	add	cl,al
 	or	al,al
 	jnz	is486
+#endif
+#ifdef(ROM_IS386)
+        mov cl,#7
+	lea	si,p80386
+	br	getfpu
+#endif
+#ifndef CONFIG_ROMCODE
 	lea	si,p80386
 	br	getfpu
 tmp86:	br	is8086
 tmp286:	br	is80286
+#endif
+
+#if !defined(CONFIG_ROMCODE) || defined(ROM_IS486)
 is486:	! Now check whether this processor knows the CPU-id instruction
 	!
 	! This does not work. The code seems to destroy some other memory
@@ -532,12 +697,15 @@ old486:	xor	cl,cl
 	mov	cl,#8
 	lea	si,p80486
 	jmp	getfpu
+#endif
+
+#if !defined(CONFIG_ROMCODE) || defined(ROM_IS86)
 is8086:
 	mov	al,#0xff
 	mov	cl,#0x21	! 80188/86 uses only the five lower
 	shr	al,cl		! bits of cl to determine the number
 	jnz	is80186		! of shifts.
-	sti
+	sti             
 	xor	si,si
 	mov	cx,#0xffff
 	rep
@@ -553,9 +721,6 @@ is8086:
 is8088:	xor	cl,cl
 	lea	si,p8088
 	jmp	getfpu
-is80286:mov	cl,#6
-	lea	si,p80286
-	jmp	getfpu
 is80186:call	queue
 	jz	is80188
 	mov	cl,#5
@@ -564,13 +729,21 @@ is80186:call	queue
 is80188:mov	cl,#4
 	lea	si,p80188
 	jmp	getfpu
-isv30:	call	queue
+isv30:	
+	call	queue
 	jz	isv20
 	mov	cl,#3
 	lea	si,pv30
 	jmp	getfpu
 isv20:	mov	cl,#2
 	lea	si,pv20
+        jmp     getfpu
+#endif
+#if !defined (CONFIG_ROMCODE) || defined(ROM_IS286)
+is80286:mov	cl,#6
+	lea	si,p80286
+!	jmp	getfpu
+#endif
 
 getfpu:
 	!
@@ -596,6 +769,8 @@ con_cp1:
 	mov	ax,#INITSEG
 	mov	ds,ax
 	mov	[0x20],cl
+
+#ifndef ROM_NOFPU
 	fninit
 	fnstcw	copro
 	mov	ax,copro
@@ -624,7 +799,9 @@ is80287: mov	cl,#2
 	jmp	gotfpu
 is8087:	mov	cl,#1
 	jmp	gotfpu
+#endif
 nofpu:	xor	cl,cl
+
 gotfpu:	mov	ax,#INITSEG
 	mov	es,ax
 	mov	ax,#SETUPSEG
@@ -646,16 +823,45 @@ con_cp2:
 	loopnz	con_cp2
 	ret
 
+#if !defined(CONFIG_ROMCODE) || defined(ROM_IS86)
 !
-! Determine the length of the prefetch queue. 8088/188/v20 has 
+! Determine the length of the prefetch queue. 8088/188/v20 has
 ! a 4 bytes queue, 8086/186/v30 has 6 bytes.
 !
+! In ROM we can't change the code, we must copy to RAM
+! Using Kernel dataseg
+!
 queue:
+#ifdef CONFIG_ROMCODE
+        push ds
+        mov ax,#ROM_KERNEL_DATA
+        mov es,ax
+        mov ax,cs
+        mov ds,ax
+        mov si,#queue_start
+        xor di,di
+        mov cx,#0x20    
+        cli
+        cld
+        rep
+        movsw
+        sti
+        xor ax,ax
+        pop ds
+        push es
+        push ax
+        retf
+#endif
+queue_start:
+
 	mov	ax,cs
 	mov	es,ax
 	xor	dx,dx
 	std
 	lea	di,q_end
+#ifdef CONFIG_ROMCODE
+        sub di,#queue_start   ;we have new offset
+#endif	
 	mov	al,#0xfb
 	mov	cx,#0x03
 	cli
@@ -668,13 +874,21 @@ queue:
 	inc	dx
 q_end:	nop
 	sti
+
+#ifdef CONFIG_ROMCODE
+        jmp far ROM_SETUP_CODE:queue_end
+queue_end:
+#endif
+
 	or	dx,dx
 	ret
+#endif
 
 !
 ! Determine the number and type of floppy disks
 ! attached to our system.
 !
+#ifndef ROM_NOFLOPPY
 getfloppy:
 	mov	ax,#INITSEG
 	mov	es,ax
@@ -762,10 +976,12 @@ f1200:	dw 2,15,80
 f1440:	dw 2,18,80
 f2880:	dw 2,36,80
 floppies: dw f360, f1200, f720, f1440, f2880, f2880
+#endif
 
 !
 ! gethd
 !
+#ifndef ROM_NOHDD
 gethd:
 	mov	ax,#INITSEG
 	mov	ds,ax
@@ -825,10 +1041,13 @@ no_hd0:	mov	ah,#0x10
 	mov	[0x88],bx
 	mov	[0x8a],ax
 no_hd1:	ret
+#endif
+
 
 !
 ! The processor name must not be longer than 15 characters!
 !
+#if !defined(CONFIG_ROMCODE) || defined(ROM_IS86)
 p8088:	.ascii "8088"
 	db 0
 p8086:	.ascii "8086"
@@ -841,14 +1060,21 @@ p80188:	.ascii "80188"
 	db 0
 p80186:	.ascii "80186"
 	db 0
+#endif
+#if !defined(CONFIG_ROMCODE) || defined(ROM_IS286)
 p80286:	.ascii "80286"
 	db 0
+#endif
+#if !defined(CONFIG_ROMCODE) || defined(ROM_IS386)
 p80386:	.ascii "80386"
 	db 0
+#endif
+#if !defined(CONFIG_ROMCODE) || defined(ROM_IS486)
 p80486:	.ascii "80486 no CPUID"
 	db 0
 pvm86:	.ascii "VM86"
 	db 0
+#endif
 !
 ! Here is the CPU id stored
 !
@@ -861,17 +1087,23 @@ v_id3:	db 0,0,0,0
 !
 f_none:	.ascii "no fpu"
 	db 0
+#ifndef ROM_NOFPU
 f8087:	.ascii "8087"
 	db 0
 f80287:	.ascii "80287"
 	db 0
 f80387: .ascii "80387 or above"
 	db 0
-fpu_t:	.word f_none, f8087, f80287, f80387
+#endif
+fpu_t:	.word f_none
+#ifndef ROM_NOFPU
+         .word f8087, f80287, f80387
+#endif
 
 !
 ! Known 486 CPUs
 !
+#if !defined(CONFIG_ROMCODE) || defined(ROM_IS486)
 m486_0:	.ascii "486 model 0"
 	db 0
 m486_1:	.ascii "486DX"
@@ -938,8 +1170,15 @@ m686_t: .word m686_0, m686_1, m686_x
 
 m_x86:	.ascii "Unknown Proc."
 	db 0
+#endif
 
+#ifndef ROM_NOFPU
 copro:	dw 0
+#endif
+
+no_sig_mess:	.ascii	"No ELKS setup signature found ..."
+		db	0x00
+
 
 ! This must be last
 setup_sig1:	.word	SIG1
@@ -951,4 +1190,3 @@ endtext:
 enddata:
 .bss
 endbss:
-

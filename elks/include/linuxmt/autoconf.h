@@ -18,6 +18,11 @@
 #undef  CONFIG_COMPAQ_FAST
 
 /*
+ * ROM-CODE kernel-loader
+ */
+#undef  CONFIG_ROMCODE
+
+/*
  * 286 protected mode support
  */
 #undef  CONFIG_286PMODE

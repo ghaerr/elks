@@ -1,0 +1,81 @@
+Christian Mardm”ller (chm@kdt.de)
+10/1999
+
+
+Here is a list of Files I have made changes for ROM_CODE
+functionality.
+
+elks\MAKEFILE
+elks\ARCH\I86\CONFIG.IN
+elks\ARCH\I86\BOOT\CRT0.S
+elks\ARCH\I86\BOOT\SETUP.S
+elks\ARCH\I86\DRIVERS\BLOCK\DOSHD.C
+elks\ARCH\I86\KERNEL\BIOS16.C
+elks\ARCH\I86\KERNEL\IRQ.C
+elks\ARCH\I86\KERNEL\IRQTAB.C
+elks\ARCH\I86\KERNEL\PROCESS.C
+elks\ARCH\I86\MM\INIT.C
+elks\INCLUDE\LINUXMT\AUTOCONF.H
+elks\INCLUDE\LINUXMT\CONFIG.H
+elks\INCLUDE\LINUXMT\ROMFS_FS.H
+elks\INIT\MAIN.C
+
+
+
+Overview of changes:
+
+In this files I have put the configuration
+
+  elks\MAKEFILE
+  elks\ARCH\I86\CONFIG.IN
+
+
+The new boot loader sequence for the ROM-Code
+
+  elks\ARCH\I86\BOOT\SETUP.S
+     A lot of information are known in compile time. Tests can removed for
+     reduce code size. The kernel doesn't get loaded from floppy.
+
+  elks\ARCH\I86\BOOT\CRT0.S
+     In ROM-Mode the stack is already placed. 
+
+
+The Interrupt-Interface had some CS-Variables. I've fixed
+
+  elks\ARCH\I86\KERNEL\BIOS16.C
+     used CS variable
+  
+  elks\ARCH\I86\KERNEL\IRQ.C
+     Variable input frequency for timer 0 (Why an embedded 86 should have
+     an special oscillator?)
+     Not all Interrupts are mask out. (For debuggers using a SIO port)
+  
+  elks\ARCH\I86\KERNEL\IRQTAB.C
+     used CS variables
+      
+  elks\ARCH\I86\KERNEL\PROCESS.C
+     used CS variables
+     
+
+Some additional infos and debug defines
+
+  elks\ARCH\I86\MM\INIT.C
+     fix comment
+
+
+  elks\ARCH\I86\DRIVERS\BLOCK\DOSHD.C
+     Some disk parameters get by seek. My flash solid disk has some problems 
+     with this. The new code uses the BIOS function for getting the drives
+     parameters (this made problems with really 360k disks in 1.2 M drives).
+
+
+  elks\INIT\MAIN.C
+     To calculate the bogomips is vary slow at 8088! The new code use a
+     constant result. (in ROM Systems this should make no problems)
+     
+
+Some changes for configuration and segment placing
+
+  elks\INCLUDE\LINUXMT\CONFIG.H
+
+

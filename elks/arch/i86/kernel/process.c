@@ -35,6 +35,43 @@
  *	kernel address of our choice using its own stack/context.
  *
  */
+ 
+ 
+ 
+ /* ELKS 0.76 7/1999  Fixed for ROMCODE-Version
+ /  Christian Mardm”ller  (chm@kdt.de)
+ / */
+
+
+#ifdef CONFIG_ROMCODE 
+   #define stashed_ds       [0]
+   #define stashed_si       [14]
+   #define sc_tmp           [16]
+
+#else
+   #define stashed_ds       cseg_stashed_ds
+   #define stashed_si       cseg_stashed_si
+   #define sc_tmp           cseg_sc_tmp
+
+#asm
+  .text
+  
+! This is from irqtab.c
+/* This code is either in codesegment or ROM_KERNEL_IRQDATA 
+/  The CS-Code must always placed in irqtab.c, because the
+/  linker doesnt store them on block
+/ */
+
+	.extern IRQdata_offs
+	.extern cseg_stashed_ds
+	
+	.extern cseg_stashed_si  ;now in irqtab.c
+        .extern cseg_sc_tmp       
+        
+        
+/* and now code */
+#endasm
+#endif
 
 void sig_check()
 {
@@ -47,7 +84,6 @@ void sig_check()
 
 #asm
 	.text
-	.even
 
 #if 1	
 	.globl _tswitch
@@ -131,10 +167,10 @@ _load_regs:
 !
 
 	.globl _syscall_int
-! This is from irqtab.c
-	.extern stashed_ds
-stashed_si:
-        .word 0
+
+
+
+
 
 !
 !	System calls enter here with ax as function and bx,cx,dx as
@@ -146,16 +182,25 @@ _syscall_int:
 !	We know the process DS, we can discard it (indeed may change it)
 !
 	cli
-	seg cs
+
+        push ax
+#ifdef CONFIG_ROMCODE
+        mov ax,#ROM_KERNEL_IRQDATA
+#else
+        mov ax,cs
+#endif        
+        mov ds,ax
+        pop ax
+
 	mov sc_tmp,ax
-	seg cs
-	mov ax,stashed_ds
-	mov ds,ax
-! Save si
-        seg cs
+
+! Save si and free an index register
         mov stashed_si, si
-! Free an index register	
 	mov si,bx
+
+	mov ax,stashed_ds
+	mov ds,ax            ;the org DS of kernel
+
 !
 !	Find our TCB
 !
@@ -178,15 +223,23 @@ _syscall_int:
 !	Stack is now right, we can take interrupts OK
 !
 	sti
-	seg     cs
+#ifdef CONFIG_ROMCODE
+        mov ax,#ROM_KERNEL_IRQDATA
+#else
+        mov ax,cs
+#endif        
+        mov ds,ax
+        
 	mov     ax, stashed_si
 	push    ax              ! push si
         push    di
 	push	dx
 	push	cx
 	push	si		! saved bx
-	seg	cs
 	mov	ax,sc_tmp	! restore ax
+        push es
+        pop  ds            ;orig kernel ds
+
 #ifdef CONFIG_STRACE
 !
 !	strace(syscall#, params...)
@@ -242,8 +295,6 @@ _ret_from_syscall:
 !
 !	Done.
 !
-	.even	
-sc_tmp:	.word 0
 
 	.globl _fake_save_regs
 !

@@ -225,7 +225,15 @@ int bioshd_getfdinfo()
 	int drive, ndrives;
 
 	/* We get the # of drives from the BPB, which is PC-friendly */
+#ifdef ROM_GETFLOPPY_VIA_INT13
+        BD_AX = BIOSHD_DRIVE_PARMS;
+        BD_DX = 0;             /* only the number floppies */
+        BD_IRQ = BIOSHD_INT;
+        call_bios();
+        ndrives = (CARRY_SET)?0:BD_DX & 0xff;
+#else        
 	ndrives = (peekb(0x40, 0x10) >> 6) + 1;
+#endif
 	printk("doshd: found %d floppy drives\n", ndrives);
 
 	for (drive = 0; drive < ndrives; drive++) {
@@ -236,6 +244,13 @@ int bioshd_getfdinfo()
 /*		printk("%x\n", BD_AX); */
 /*		call_bios(); */
 /*		printk("%x\n", BD_AX); */
+#ifdef ROM_GETFLOPPY_VIA_INT13
+                call_bios();
+                if ((!CARRY_SET) && ((BD_AX & 0xff00) == 0)) {
+		   drive_info[drive+2] = fd_types[BD_BX - 1];
+		}
+		else printk("error in drivetype %d\n",drive);
+#else
 		if ((arch_cpu > 5) && (call_bios(),(!CARRY_SET)) && (BD_AX != 0x100)) { 
 			/* Some XT's return strange results - Al */
 			/* The arch_cpu is a safety check */
@@ -249,6 +264,7 @@ int bioshd_getfdinfo()
 /*			printk("drive %d type unknown\n", drive); */
 			drive_info[drive+2] = fd_types[4];
 		}
+#endif		
 	}
 #endif /* HARDCODED */
 
@@ -338,9 +354,9 @@ struct file *filp;
 	int target;
 	int fdtype;
 	register struct drive_infot * drivep;
-	target = DEVICE_NR(inode->i_rdev);
-	drivep = &drive_info[target];
 
+	target = DEVICE_NR(inode->i_rdev);  /* >> 6 */
+	drivep = &drive_info[target];
 	fdtype = drivep->fdtype;
 
 	/* Bounds testing */
@@ -362,12 +378,12 @@ struct file *filp;
 	access_count[target]++;
 
 	/* Check for disk type */
-
+	
 	/* I guess it works now as it should. Tested under dosemu with 720Kb,
 	1.2 MB and 1.44 MB floppy image and works fine - Blaz Antonic */
 
 #ifdef CONFIG_BLK_DEV_BFD
-	if (target >= 2) {
+	if (target >= 2) {         /* 2,3 are the floppydrives */
 		int count;
 		int i;
 #endif
@@ -428,6 +444,7 @@ struct file *filp;
 
 #else /* USE_OLD_PROBE */
 		/* first probe for track number */
+#ifndef GET_DISKPARAM_BY_INT13_NO_SEEK
 		for (count = 0; count < 2; count++)
 		{
 		/* we probe on sector 1, which is safe for all formats */
@@ -452,6 +469,20 @@ struct file *filp;
 			}
 		drivep->sectors = sector_probe[count];
 		}
+#else
+/* We can get the Geometry of the floppy by bios */
+		BD_IRQ = BIOSHD_INT;
+		BD_AX = BIOSHD_DRIVE_PARMS;
+		BD_DX = hd_drive_map[target];	/* Head 0, drive number */
+
+		call_bios();
+      if (!CARRY_SET) {
+         drivep->sectors = (BD_CX & 0xff) +1;
+         drivep->cylinders = (BD_CX >> 8) +1;
+      }
+      else printk("bioshd_open: no diskinfo %d\n",hd_drive_map[target]);
+#endif
+
 #endif /* USE_OLD_PROBE */
 #ifdef CONFIG_BLK_DEV_BFD
 		/* DMA code belongs out of the loop. */

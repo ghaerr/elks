@@ -2,11 +2,15 @@
  *	16bit PC BIOS interface library
  *
  *	FIXME: Only supports IRQ 0x13 for now. Needs to do 0x10 later!
+ *
+ *   9/1999  place the CS-Variable in a seperated RAM-Segment for
+ *           ROM version. Christian Mardm"oller (chm@kdt.de)
  */
  
 #include <linuxmt/types.h>
 #include <arch/segment.h>
 #include <linuxmt/biosparm.h>
+#include <linuxmt/config.h>
 
 static struct biosparms bdt;
 
@@ -25,9 +29,18 @@ struct biosparms *bios_data_table=&bdt;
 /*
  *	our_ds lives in the kernel cs or we can never recover it...
  */
- 
-_our_ds: 
+
+/* In ROM we cant store anything! The space for the extrasegment
+ * is managed in irqtab.c where I've found this mode first
+ * ChM 10/99
+ */
+#ifndef CONFIG_ROMCODE
+cseg_our_ds: 
 	.word	0
+   #define our_ds    cseg_our_ds
+#else 
+   #define our_ds    [18]
+#endif	
 	
 	.globl  _call_bios
 _call_bios:
@@ -39,9 +52,17 @@ _call_bios:
 	push di
 * We have to save DS carefully.	
 	mov ax, ds		
+
+#ifdef CONFIG_ROMCODE
+        mov bx,#ROM_KERNEL_IRQDATA
+        mov es,bx       ;es is already stored
+        seg es
+#else
+   * We can find our DS from CS now.
 	seg cs		
-* We can find our DS from CS now.	
-	mov _our_ds, ax
+#endif
+	mov our_ds, ax
+	
 	mov bx, _bios_data_table
 * Load the register block from the table	
 	mov cx,6[bx]
@@ -87,8 +108,16 @@ _call_bios:
  	mov  ax,ds
  * Stack is now returned FL, BX, AX, DS
  	push ax 
- 	seg  cs
- 	mov  ax, _our_ds
+
+#ifdef CONFIG_ROMCODE
+        mov ax,#ROM_KERNEL_IRQDATA
+        mov ds,ax       ;we can use ds for one fetch
+#else
+   * We can find our DS from CS now.
+	seg cs		
+#endif
+ 	mov  ax, our_ds
+
 * Recover our DS segment 	
  	mov  ds, ax
  	mov  bx, _bios_data_table
