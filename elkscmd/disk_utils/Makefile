@@ -38,32 +38,32 @@ PROGS=fdisk ramdisk mkfs fsck partype
 
 SPROGS=mkfs
 
-all:		$(PROGS)
-	mkdir -p $(TARGET_MNT)/sbin
+all: $(PROGS)
 
-rfs:		install
+rfs: install
 
-min_rfs:	install
+min_rfs: install
 
-net_rfs:	install
+net_rfs: install
 
-smin_rfs:	install_sibo
+smin_rfs: install_sibo
 
-install_sibo:	all
+install_sibo: all
 	cp -p $(SPROGS) $(TARGET_MNT)/sbin
 
-install:	all
+install: all
 	cp -p $(PROGS) $(TARGET_MNT)/sbin
 
-fsck:		fsck.o
+fsck: fsck.o
 
-fdisk:		fdisk.o
+fdisk: fdisk.o
 
-mkfs:		mkfs.o
+mkfs: mkfs.o
 
-partype:	partype.o
+partype: partype.o
 
-ramdisk:	ramdisk.o
+ramdisk: ramdisk.o
 
 clean:
 	rm -f *.o $(FORMATMOD) core $(PROGS)
+

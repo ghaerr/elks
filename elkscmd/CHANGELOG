@@ -15,6 +15,11 @@ Tommy McCabe			rocketjet314@yahoo.com
 
 ---------------------------------------------------------------------------
 
+Tue Jul 27 22:22:32 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
+
+	Merged Claudio's patch to:
+		- build full3, full5, comb, comb_net and boot.
+
 Tue Jul 27 07:48:56 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
 
 	* Removed sudo commands from the Makefile, fixed the broken "clean"
