@@ -27,7 +27,7 @@ struct nano_proto_data {
 	int		npd_bp_head, npd_bp_tail;
 	int		npd_srvno;
 	struct nano_proto_data *	npd_peerupd;
-	struct wait_queue * npd_wait;
+	struct wait_queue npd_wait;
 	int		npd_lock_flag;
 };
 
