@@ -586,7 +586,7 @@ struct net_proto * pro;
 {
 	printk("ELKS NANO domain Sockets\n");
 	sock_register(AF_NANO,&nano_proto_ops);
-}
+};
 
 	
 #endif /* CONFIG_NANO */

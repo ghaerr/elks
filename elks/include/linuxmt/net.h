@@ -26,6 +26,7 @@ struct socket {
 	void			*data;
 #if defined(CONFIG_INET)
 	int	avail_data;	/* I added this here for smaller code and memory use - HarKal */
+	short  sem;
 #endif
 #if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 	struct socket		*conn;

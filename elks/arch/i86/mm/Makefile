@@ -33,8 +33,8 @@ CC_PROTO	= gcc -I$(ELKSDIR)/include -M
 	$(AS) -0 -c -o $*.o $<
 
 .c.o:
-	$(CC) $(CFLAGS) -0 -S -o $*.o $<
-	$(AS) -0 -c -o $*.o $<
+	$(CC) $(CFLAGS) -0 -c -o $*.o $<
+#	$(AS) -0 -c -o $*.o $<
 
 #########################################################################
 # Objects to be compiled.
