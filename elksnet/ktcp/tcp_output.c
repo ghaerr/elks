@@ -81,14 +81,14 @@ loop1:
 	adc	ax, [si]
         inc si
         inc si
-        dec	cx
-        jg	loop1
+        loop	loop1
 
 	adc	ax, $E[di]	! h->iph->saddr
 	adc	ax, $C[di]
 	adc	ax, $12[di]	! h->iph->daddr
 	adc	ax, $10[di]
 	adc	ax, #$600
+	adc	ax, 0
 
         not	ax
 

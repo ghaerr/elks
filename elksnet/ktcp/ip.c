@@ -66,19 +66,20 @@ _ip_calc_chksum:
 	
 	mov	cx, 6[bp]
 	sar	cx, 1
-	dec	cx
+	sar	cx, 1
 	mov	di, 4[bp]
-	mov	ax, [di]
-	inc	di
-	inc	di
+	xor	ax, ax
 loop1:
 	adc	ax, [di]
-        inc	di
-        inc	di
+	inc di
+	inc di
+	adc	ax, [di]
+	inc di
+	inc di
 
-        dec	cx
-        jnz	loop1;
+        loop	loop1
 
+	adc	ax, 0
 	not	ax
 	
 	pop di
