@@ -1,38 +1,46 @@
 BUGS
 ----
 
-This is a list of things I have noticed go wrong. Please submit additions to
-this file if you find any kernel related bugs.
+This is a list of things I have noticed go wrong. Please submit additions
+to this file if you find any kernel related bugs.
 
 	Al
 --
 
-Sometimes unmounting a non-root filesystem returns EBUSY when nothing is using,
-and nothing seems to rectify it.
+Sometimes unmounting a non-root filesystem returns EBUSY when nothing is
+using, and nothing seems to rectify it.
 
 
-Sometimes for no aparent reason the umount command gives a STACK collided with
-BSS error without unmounting the filesystem.
+Sometimes for no aparent reason the umount command gives a STACK collided
+with BSS error without unmounting the filesystem.
 
 
-Deleting data from the filesystem results almost always with a
-"Deleting block not in data zone" type error message, and sometimes crashes.
-This seems to be due to the following line in V1_trunc_direct
+Deleting data from the filesystem results almost always with a "Deleting
+block not in data zone" type error message, and sometimes crashes. This
+seems to be due to the following line in V1_trunc_direct
+
 -               p = i + inode->u.minix_i.u.i1_data;
 +               p = inode->i_zone[i];
-The botton version being the ELKS version, the top one is the Linux version.
-The two don't seem to bear any relation to each other. This has now nearly been fixed by chenging the above line to:-
+
+The botton version being the ELKS version, the top one is the Linux
+version. The two don't seem to bear any relation to each other. This has
+now nearly been fixed by chenging the above line to:-
+
 		p = &inode->i_zone[i];
-But blocks are still not freed when the fs is checked later, and neither is the inode! Looking through truncate.c, and minix_free_block, there is heavy use
-of longs which are just not necessary.
-Fixed excessive use of longs, and got fs to the stage where some blocks are
-freed, and deleting large files no longer results in a system crash.
+
+But blocks are still not freed when the fs is checked later, and neither
+is the inode! Looking through truncate.c, and minix_free_block, there is
+heavy use of longs which are just not necessary.
+
+Fixed excessive use of longs, and got fs to the stage where some blocks
+are freed, and deleting large files no longer results in a system crash.
 
 
-Adding register variables to schedule causes a the chq wait queue to get 
+Adding register variables to schedule causes a the chq wait queue to get
 corrupted.
-See comments at the top of schedule() in kernel/sched.c. I
-occasionly get the same wait_queue corruption message when heavily testing the
+
+See comments at the top of schedule() in kernel/sched.c. I occasionly get
+the same wait_queue corruption message when heavily testing the
 multitasking.
 
 
@@ -47,6 +55,7 @@ chown(), so the call to iput is moved to sys_chown().
 
 
 Long command lines cause programs to crash.
+
 When copying files from the /bin directory of a floppy onto the harddisk
 when installing, the cp process often crashes before it has finished and
 frequently displays unexpected behavoir. This could be because there is a
@@ -57,22 +66,27 @@ by hand, or automacally constructed using wildcards.
 
 
 Renaming long filenames causes problems.
-  I have observed from my (admittedly brief) fiddling that elks has a 14
-character filename limit.  Is there a reason that 14 chars was picked? 
+
+I have observed from my (admittedly brief) fiddling that elks has a 14
+character filename limit.  Is there a reason that 14 chars was picked?  
 Big enough to be descriptive, but small enough for memory reasons?
-	  Also, I've found a strange quirk:
-	  Take any file, we'll call it "test"
+
+Also, I've found a strange quirk: Take any file, we'll call it "test"
+
 --
 cp test 12345678901234567890
 mv 12345678901234 12345.12345
 ls
 --
+
   Will return:
+
 --
 "12345678901234: no such file or directory"
 12345.12345
 test
 --
-This is caused by a bug in namecompare which has been fixed by Blaz Antonic
-which meant that 14 character filenames did not match under certain
-circumstances.
+
+This is caused by a bug in namecompare which has been fixed by Blaz
+Antonic which meant that 14 character filenames did not match under
+certain circumstances.
