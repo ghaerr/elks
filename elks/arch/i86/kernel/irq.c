@@ -232,10 +232,10 @@ unsigned int irq;
 	icli();
 	if (irq < 8) {
 		cache_21 |= 1 << irq;
-		outb(0x21,cache_21);
+		outb(cache_21,0x21);
 	} else {
 		cache_A1 |= 1 << (irq-8);
-		outb(0xA1,cache_A1);
+		outb(cache_A1,0xA1);
 	}
 	action->handler = NULL;
 	action->dev_id = NULL;

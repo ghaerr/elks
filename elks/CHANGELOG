@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Wed Jan 17 17:23 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fixed typo bug in free_irq() by Vladimir Shamaev.
+
 Fri Dec 17 16:37 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Modified console selection to make more sense.
