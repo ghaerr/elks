@@ -39,6 +39,7 @@ PROGS=fdisk ramdisk mkfs fsck partype
 SPROGS=mkfs
 
 all:		$(PROGS)
+	mkdir -p $(TARGET_MNT)/sbin
 
 rfs:		install
 
