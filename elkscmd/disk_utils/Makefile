@@ -6,31 +6,29 @@ PROGS=fdisk ramdisk mkfs fsck
 
 SPROGS=mkfs
 
-all: $(PROGS)
+all:		$(PROGS)
 
-rfs: install
+rfs:		install
 
-min_rfs: install
+min_rfs:	install
 
-net_rfs: install
+net_rfs:	install
 
-smin_rfs: install_sibo
+smin_rfs:	install_sibo
 
-install_sibo: all
-	cp -p $(SPROGS) $(TARGET_MNT)/bin
+install_sibo:	all
+	cp -p $(SPROGS) $(TARGET_MNT)/sbin
 
-install: all
-	cp -p $(PROGS) $(TARGET_MNT)/bin
+install:	all
+	cp -p $(PROGS) $(TARGET_MNT)/sbin
 
-fsck: fsck.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -ansi fsck.c -o fsck -Hffff
+fsck:		fsck.o
 
-fdisk: fdisk.o
-	$(CC) $(LDFLAGS) fdisk.o -o fdisk
+fdisk:		fdisk.o
 
+mkfs:		mkfs.o
 
-.c.o:
-#	$(CC) $(CFLAGS) -c $<
+ramdisk:	ramdisk.o
 
 clean:
 	rm -f *.o $(FORMATMOD) core $(PROGS)

@@ -1,0 +1,116 @@
+# This Makefile contains the rules used to create a tree of files ready
+# for turning into a root floppy image, and the command to turn the said
+# tree into just such an image. It assumes that the following value has
+# been defined before this file is included in any of the Makefiles:
+#
+#    BASEDIR       The relative path from the current directory to the
+#                  directory containing this file. This is the same value
+#                  used with Make.defs in this directory.
+#
+# In addition, the following values are assumed to be set for commands in
+# the current directory only:
+#
+#    MIN_BIN       Commands to be placed in /bin on all systems.
+#    MIN_SBIN      Commands to be placed in /sbin on all systems.
+#    MIN_USR_BIN   Commands to be placed in /usr/bin on all systems.
+#    MIN_USR_SBIN  Commands to be placed in /usr/sbin on all systems.
+#
+#    NET_BIN       Commands to be placed in /bin on networked systems.
+#    NET_SBIN      Commands to be placed in /sbin on networked systems.
+#    NET_USR_BIN   Commands to be placed in /usr/bin on networked systems.
+#    NET_USR_SBIN  Commands to be placed in /usr/sbin on networked systems.
+#
+#    STD_BIN       Commands to be placed in /bin on full installations.
+#    STD_SBIN      Commands to be placed in /sbin on full installations.
+#    STD_USR_BIN   Commands to be placed in /usr/bin on full installations.
+#    STD_USR_SBIN  Commands to be placed in /usr/sbin on full installations.
+#
+# For each command that is copied across, any file matching *.? will also be
+# copied to /usr/man/man? where the two ? characters are the same digit.
+#
+# Note that the MIN_* values are implicitly included in the relevant NET_*
+# and STD_* values, so should be omitted from the latter.
+#
+###############################################################################
+#
+# This Makefile uses these values to implement the following rules, used
+# by all Makefiles underneath it:
+#
+#	make basepkg	Create the tree used for i86 ELKS distributions, with
+#			the MINIMUM set of commands that are to be included.
+#			This is used as a base for the other tree commands,
+#			and copies the MIN_* values only.
+#
+#	make fullpkg	Create the tree used for a full non-networking ELKS
+#			i86 distribution. This uses pcmin as a base, and adds
+#			the remaining non-networking commands to it.
+#
+#	make netpkg	Create the tree used for a minimum i86 distribution
+#			that includes networking support. This uses pcmin as
+#			a base, and adds support for networking to it.
+#
+#	make maxpkg	Create a full tree of all commands available for ELKS
+#			i86 distribution, including all networking commands.
+#			This uses pcfull as a base, and adds support for
+#			networking to it.
+#
+###############################################################################
+#
+# Command to copy the tree across.
+
+MKTREE	= $(BASEDIR)/tools/mktree $(TARGET_DIR)
+
+basepkg:
+	$(MKTREE) /bin $(MIN_BIN)
+	$(MKTREE) /sbin $(MIN_SBIN)
+	$(MKTREE) /usr/bin $(MIN_USR_BIN)
+	$(MKTREE) /usr/sbin $(MIN_USR_SBIN)
+	@for DIR in */ ; do \
+	    if [ -f $(DIR)/Makefile ]; then \
+		make -C $(DIR) basepkg ; \
+	    fi ; \
+	done
+
+stdpkg: basepkg
+	$(MKTREE) /bin $(STD_BIN)
+	$(MKTREE) /sbin $(STD_SBIN)
+	$(MKTREE) /usr/bin $(STD_USR_BIN)
+	$(MKTREE) /usr/sbin $(STD_USR_SBIN)
+	@for DIR in */ ; do \
+	    if [ -f $(DIR)/Makefile ]; then \
+		make -C $(DIR) stdpkg ; \
+	    fi ; \
+	done
+
+mknet:
+	$(MKTREE) /bin $(NET_BIN)
+	$(MKTREE) /sbin $(NET_SBIN)
+	$(MKTREE) /usr/bin $(NET_USR_BIN)
+	$(MKTREE) /usr/sbin $(NET_USR_SBIN)
+
+netpkg: basepkg mknet
+	@for DIR in */ ; do \
+	    if [ -f $(DIR)/Makefile ]; then \
+		make -C $(DIR) netpkg ; \
+	    fi ; \
+	done
+
+maxpkg: stdpkg mknet
+	@for DIR in */ ; do \
+	    if [ -f $(DIR)/Makefile ]; then \
+		make -C $(DIR) netpkg ; \
+	    fi ; \
+	done
+	$(MKTREE) /bin $(STD_BIN)
+	$(MKTREE) /sbin $(STD_SBIN)
+	$(MKTREE) /usr/bin $(STD_USR_BIN)
+	$(MKTREE) /usr/sbin $(STD_USR_SBIN)
+	@for DIR in */ ; do \
+	    if [ -f $(DIR)/Makefile ]; then \
+		make -C $(DIR) maxpkg ; \
+	    fi ; \
+	done
+
+#######
+# EOF #
+#######

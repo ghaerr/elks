@@ -43,7 +43,21 @@ TARGET_MODE=LOOP
 
 ##############################################################################
 #
+# Specify platform to compile for. The following platforms are defined:
+#
+#	i86-ELKS	ELKS on an ix86 processor.
+#
+#	DEFAULT 	Anything not otherwise defined above.
+#
+# Select the relevant option here.
+
+PLATFORM=i86-ELKS
+
+##############################################################################
+#
 # It is not normally necessary to make changes below this line.
+#
+# Specify directories.
 
 HOMEDIR=$(shell cd $(BASEDIR)/.. ; pwd)
 
@@ -54,7 +68,9 @@ ELKSNET_DIR=$(HOMEDIR)/elksnet
 
 INC_DIR=$(HOMEDIR)/elks/include
 
-PLATFORM=i86-ELKS
+##############################################################################
+#
+# Determine compiler variables for this target.
 
 ifeq ($(PLATFORM),i86-ELKS)
 	CC=bcc
@@ -63,14 +79,34 @@ ifeq ($(PLATFORM),i86-ELKS)
 	CHECK=gcc -c -o .null.o -Wall -pedantic
 endif
 
-ifeq ($(PLATFORM),default)
+ifeq ($(PLATFORM),DEFAULT)
 	CC=cc
 	CFLBASE=
+	LDFLAGS=
 	CHECK=cc -c -o .null.o
 endif
 
-CFLAGS=$(CFLBASE) -I$(INC_DIR)
-# -I/usr/include
+CFLAGS=$(CFLBASE)
+
+##############################################################################
+#
+# Standard compilation rules.
+
+.c.s:
+	$(CC) $(CFLAGS) -I$(INC_DIR) -S -o $*.o $<
+
+.s.o:
+	$(AS) $(ASFLAGS) -o $*.o $<
+
+.S.s:
+	gcc -E -traditional -I$(INC_DIR) $(CCDEFS) -o $*.s $<
+
+.c.o:
+	$(CC) $(CFLAGS) -I$(INC_DIR) -c -o $*.o $<
+
+##############################################################################
+#
+# Standard targets.
 
 COMB_TARGET_FS=$(ELKSCMD_DIR)/comb
 COMB_TARGET_BLKS=720
@@ -89,7 +125,7 @@ MKFS_OPTS=-n14
 
 MINIX_BOOT=$(DEV86_DIR)/bootblocks
 
-####################################################################
+##############################################################################
 #
 # Select the target device depending on the above entry.
 
@@ -108,3 +144,6 @@ TARGET_MNT=/dev/ram0
 LOOP=
 endif
 
+#######
+# EOF #
+#######

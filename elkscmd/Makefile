@@ -1,3 +1,11 @@
+# Makefile for the ELKS commands that implements the following rules:
+#
+#	make all	Compile all ELKS commands that are not up to date.
+#
+#	make clean	Remove all files created by compiling ELKS commands.
+#
+###############################################################################
+
 BASEDIR=.
 
 include $(BASEDIR)/Make.defs
