@@ -1,3 +1,11 @@
+VERSION 0.0.77 NOTES
+--------------------
+
+	Added support for termios baud rate control, non-blocking IO on ttys,
+and improved select code so that nano-X can run.
+	Added support for virtual console locking for graphics mode.
+	Added support for console signals ^C and ^Z.
+
 VERSION 0.0.76 NOTES
 --------------------
 

@@ -50,3 +50,22 @@ command lines of more than a couple of hundred bytes, or it could be a problem
 that comes up after copying lots of data between files. The bug occurs
 irespective of whether the commandline was typed in by hand, or automacally
 constructed using wildcards.
+
+
+Renaming long filenames causes problems.
+  I have observed from my (admittedly brief) fiddling that elks has a 14
+character filename limit.  Is there a reason that 14 chars was picked? 
+Big enough to be descriptive, but small enough for memory reasons?
+	  Also, I've found a strange quirk:
+	  Take any file, we'll call it "test"
+--
+cp test 12345678901234567890
+mv 12345678901234 12345.12345
+ls
+--
+  Will return:
+--
+"12345678901234: no such file or directory"
+12345.12345
+test
+--
