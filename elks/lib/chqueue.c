@@ -123,5 +123,5 @@ register struct ch_queue *q;
 	if (q->len == 0)
 		return 0;
 
-	return q->buf[q->tail];
+	return 1;
 }
