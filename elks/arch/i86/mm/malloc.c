@@ -235,20 +235,21 @@ int base;
 	split_hole(m, o->extent);
 	m->flags=HOLE_USED;
 	m->refcount = 1;
-	i = (o->extent << 4) - 2;
+	i = (o->extent << 4)/* - 2*/;
 	fmemcpy(m->page_base, 0, o->page_base, 0, i);
 	return m->page_base;
 }
 
-/*	This is just to keep malloc et. al happy - it dosen't really do anyting
+/*	This is just to keep malloc et. al happy - it doesn't really do anything
  * 	- any memory is preallocated via chmem */
 
 int sys_brk(len)
-int len;
+unsigned int len;
 {
 	register __ptask currentp = current;
-	if ((len < (currentp->t_endtext)) || 
-	    (len > (currentp->t_endstack - USTACK_BYTES))) { 
+
+	if (len < currentp->t_endtext || 
+	    len > (currentp->t_endstack - USTACK_BYTES)) { 
 		return -ENOMEM; 
 	}
 
