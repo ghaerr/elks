@@ -16,7 +16,7 @@
 #define INQ_SIZE 160
 #define OUTQ_SIZE 40
 
-#define NUM_TTYS	8
+#define NUM_TTYS	12
 
 #define DCGET_GRAPH	(('D'<<8)+0x01)
 #define DCREL_GRAPH	(('D'<<8)+0x02)
@@ -37,7 +37,7 @@
  * hardcoded at present.)
  */
  
-#define NR_PTYS		32
+#define NR_PTYS		4
 #define NR_LDISCS	2
 
 /* Not all of these will get used most likely */
@@ -61,11 +61,12 @@ struct tty {
 	pid_t pgrp;
 };
 
+int ttynull_openrelease();	/* Empty function, returns zero. useful */
+extern int pipe_lseek();	/* Empty function, returns -ESPIPE. useful */
+
 /* tty.flags */
-#define TTY_Q 0
-#define TTY_CLOSED 	1
-#define TTY_STOPPED 	2
-#define TTY_OPEN	3
+#define TTY_STOPPED 	1
+#define TTY_OPEN	2
 
 #endif /* __KERNEL__ */
 #endif

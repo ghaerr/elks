@@ -4,6 +4,11 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Fri Jul 09 16:54 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Added support for very basic pseudo ttys. Initially to
+	  support terminal program for nano-X.
+
 Fri Jul 09 16:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Make exit send a SIGCHLD to parent.

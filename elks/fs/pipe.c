@@ -39,6 +39,17 @@ int get_unused_fd()
         return -EMFILE;
 }
 
+int pipe_lseek(inode, file, offset, orig)
+struct inode * inode;
+struct file * file;
+off_t offset;
+int orig;
+{
+	printd_pipe("PIPE lseek called.\n");
+	return -ESPIPE;
+}
+
+
 #ifdef CONFIG_PIPE
 
 char pipe_base[8][PIPE_BUF];
@@ -226,16 +237,6 @@ register struct file * filp;
         return 0;
 }
 
-
-static int pipe_lseek(inode, file, offset, orig)
-struct inode * inode;
-struct file * file;
-off_t offset;
-int orig;
-{
-	printd_pipe("PIPE lseek called.\n");
-	return -ESPIPE;
-}
 
 static int bad_pipe_rw(inode,filp,buf,count)
 struct inode * inode;

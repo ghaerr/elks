@@ -40,10 +40,10 @@ register struct ch_queue * q;
 #endif
 
 /* Adds character c, waiting if wait=1 (or otherwise throws out new char) */
-int chq_addch(q, c /*, wait */)
+int chq_addch(q, c, wait)
 register struct ch_queue * q;
 unsigned char c;
-/* int wait; */
+int wait;
 {
 	unsigned int nhead; 
 
@@ -51,7 +51,7 @@ unsigned char c;
 
 /* If waiting is required then the code below must be put back in */
 /* And the wait argument put back */
-#if 0
+#if 1
 	if (q->len == q->size) {
 		if (wait) {
 			printd_chq("CHQ: addch sleeping\n");
