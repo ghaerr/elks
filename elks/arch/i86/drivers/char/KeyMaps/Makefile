@@ -36,7 +36,7 @@ keymaps.h: Config.in
 # Specify distribution rule.
 
 distdir:
-	cp -pf Makefile keys-*.h $(DISTDIR)/arch/i86/drivers/char/KeyMaps
+	cp -pf Makefile mkcfg keys-*.h $(DISTDIR)/arch/i86/drivers/char/KeyMaps
 
 #########################################################################
 ### Dependencies:
