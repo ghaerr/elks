@@ -242,7 +242,7 @@ int request_irq(int irq, void (*handler)(), void *dev_id)
     action->handler = handler;
     action->dev_id = dev_id;
 
-    enable_irq(irq);
+    enable_irq((unsigned int) irq);
 
     restore_flags(flags);
 

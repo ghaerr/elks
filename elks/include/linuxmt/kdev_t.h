@@ -13,6 +13,14 @@
 #define NODEV		MKDEV(0,0)
 
 #ifdef __BCC__
+#define INCLUDE_OK
+#endif
+
+#ifdef S_SPLINT_S
+#define INCLUDE_OK
+#endif
+
+#ifdef INCLUDE_OK
 
 #include <linuxmt/types.h>
 
@@ -40,5 +48,7 @@ extern char *kdevname(kdev_t);	  /* note: returns pointer to static data! */
 #define MKDEV(major,minor)	((major) << MINORBITS | (minor))
 
 #endif
+
+#undef INCLUDE_OK
 
 #endif

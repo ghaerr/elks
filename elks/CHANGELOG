@@ -37,6 +37,8 @@ Mon Jun  3 00:43:09 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Oops - Committed tweaks from previous patch that somehow
 	  got omitted then.
+	* Verified that arch/i86/kernel/*.[ch] is clean as far as the
+	  `make splint` command is concerned.
 	* Verified that current codebase both compiles and boots on my
 	  286 based laptop. Noted that since I started ANSI'fying the
 	  ELKS kernel source, the compiled kernel has shrunk by over

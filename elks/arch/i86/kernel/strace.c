@@ -6,7 +6,6 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/config.h>
-#include <linuxmt/strace.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/sched.h>
 

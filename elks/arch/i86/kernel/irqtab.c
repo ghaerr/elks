@@ -37,7 +37,7 @@
 #endif
 
 
-
+#ifndef S_SPLINT_S
 #asm
 /* In ROM-Mode we must generate a physical 3th segment :-) 
 /  The segmentaddress is given by CONFIG_ROM_IRQ_DATA,
@@ -86,7 +86,7 @@ IRQdata_offs:
 	
 
 #endasm
-
+#endif
 
 
 
@@ -94,6 +94,7 @@ IRQdata_offs:
  
 void irqtab_init()
 {
+#ifndef S_SPLINT_S
 #asm
 
 ; CS points to this kernel code segment
@@ -178,12 +179,14 @@ void irqtab_init()
 	sti
         
 #endasm
+#endif
 }	
  
 /*
  *	IRQ and IRQ return paths for Linux 8086
  */
- 
+
+#ifndef S_SPLINT_S
 #asm
 !
 !	Other IRQs (see IRQ 0 at the bottom for the
@@ -732,3 +735,4 @@ _can_tswitch:
 _intstack:
 
 #endasm
+#endif

@@ -3,6 +3,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
+#include <linuxmt/signal.h>
 #include <linuxmt/types.h>
 
 #include <arch/segment.h>
@@ -426,7 +427,7 @@ void kfork_proc(register struct task_struct *t,char *addr)
 
 void put_ustack(register struct task_struct *t,int off,int val)
 {
-    pokew(t->t_regs.ss, t->t_regs.sp+off, val);
+    pokew(t->t_regs.ss, t->t_regs.sp+off, (__u16) val);
 }
 
 unsigned get_ustack(register struct task_struct *t,int off)
@@ -436,9 +437,9 @@ unsigned get_ustack(register struct task_struct *t,int off)
 
 void arch_setup_kernel_stack(register struct task_struct *t)
 {
-    put_ustack(t, -2, USER_FLAGS);		/* Flags */
-    put_ustack(t, -4, current->t_regs.cs);	/* user CS */
-    put_ustack(t, -6, 0);			/* addr 0 */
+    put_ustack(t, -2, USER_FLAGS);			/* Flags */
+    put_ustack(t, -4, (int) current->t_regs.cs);	/* user CS */
+    put_ustack(t, -6, 0);				/* addr 0 */
     t->t_regs.sp -= 6;
     t->t_kstackm = KSTACK_MAGIC;
 }
@@ -461,11 +462,11 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
 {
     debug4("Stack %x was %x %x %x\n", addr, get_ustack(t,0), get_ustack(t,2),
 	   get_ustack(t,4));
-    put_ustack(t, 2, get_ustack(t,0));
-    put_ustack(t, 0, get_ustack(t,4));
-    put_ustack(t, 4, signr);
-    put_ustack(t, -2, t->t_regs.cs);
-    put_ustack(t, -4, ((int) addr));
+    put_ustack(t, 2, (int) get_ustack(t,0));
+    put_ustack(t, 0, (int) get_ustack(t,4));
+    put_ustack(t, 4, (int) signr);
+    put_ustack(t, -2, (int)t->t_regs.cs);
+    put_ustack(t, -4, (int) addr);
     t->t_regs.sp -= 4;
     debug5("Stack is %x %x %x %x %x\n", get_ustack(t,0), get_ustack(t,2),
 	   get_ustack(t,4),get_ustack(t,6), get_ustack(t,8));
@@ -508,7 +509,7 @@ static void* saved_bp;			/* we have to recover user's bp */
 
 void arch_build_stack(struct task_struct *t)
 {
-    char *kstktop = t->t_kstack+KSTACK_BYTES;
+    char *kstktop = (char *) t->t_kstack+KSTACK_BYTES;
 
 /*@i3@*/ t->t_regs.ksp = kstktop - fake_save_regs(kstktop, ret_from_syscall);
 

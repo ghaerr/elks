@@ -40,6 +40,8 @@
 #ifndef __STRACE_H__
 #define __STRACE_H__
 
+#include <linuxmt/strace.h>
+
 struct syscall_info elks_table[] = {
     {  1, "sys_exit",            0, { P_NONE,     P_NONE,     P_NONE      } },
     {  2, "sys_fork",            0, { P_NONE,     P_NONE,     P_NONE      } },

@@ -52,10 +52,11 @@ int do_signal(void)
 	    case SIGTTIN:
 	    case SIGTTOU:
 #endif
+
 		currentp->state = TASK_STOPPED;
 		/* Let the parent know */
 		currentp->p_parent->child_lastend = currentp->pid;
-		currentp->p_parent->lastend_status = signr;
+		currentp->p_parent->lastend_status = (int) signr;
 		schedule();
 		continue;
 #if 0
@@ -72,7 +73,7 @@ int do_signal(void)
 #endif
 		/* This is where we dump the core, which we must do */
 	    default:
-		do_exit(signr);
+		do_exit((int) signr);
 	    }
 	}
 	debug1("Setting up return stack for sig handler %x.\n", sa->sa_handler);
