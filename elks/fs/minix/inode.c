@@ -270,11 +270,10 @@ static unsigned short map_izone(register struct inode *inode,
     return i_zone[block];
 }
 
-static unsigned short map_iblock(register struct inode *inode,
+static unsigned short map_iblock(register struct inode *inode, block_t i,
 				 block_t block, int create)
 {
     register struct buffer_head *bh;
-    block_t i;
 
     if (!(bh = bread(inode->i_dev, (block_t) i)))
 	return 0;
@@ -325,7 +324,7 @@ unsigned short _minix_bmap(register struct inode *inode, block_t block,
 	return 0;
 
     /* Two layer indirection */
-    i = map_iblock(inode, block >> 9, create);
+    i = map_iblock(inode, i, block >> 9, create);
 
   map1:
     /*
@@ -335,7 +334,7 @@ unsigned short _minix_bmap(register struct inode *inode, block_t block,
     if (i == 0)
 	return 0;
     /* Ok now load the second indirect block */
-    i = map_iblock(inode, block & 511, create);
+    i = map_iblock(inode, i, block & 511, create);
     return i;
 }
 

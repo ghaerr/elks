@@ -33,6 +33,10 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sun May 26 23:58:26 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Reverted thinko in earlier patch.
+
 Sun May 26 10:25:01 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Fixed thinko in wrt_disk.img simplification. It now compiles.
