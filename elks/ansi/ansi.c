@@ -6,6 +6,8 @@
 
 #include <stdio.h>
 
+#include <string.h>
+
 typedef unsigned char BYTE;
 typedef unsigned short int WORD;
 
@@ -14,19 +16,28 @@ typedef unsigned short int WORD;
 
 #define BufLen	1023
 
-/* Prototypes */
+/*
+ * Prototypes
+ */
 
 void addcmd(char ch);
+void ANSI(char cmd);
 void chout(char ch);
+void DEC(char ch);
+WORD getparm(char **S);
 void lineout(char *S, WORD N);
 
-/* Variables and Buffers */
+/*
+ * Variables and Buffers
+ */
 
 char Buffer[BufLen+1], Command[BufLen+1], *Next = Buffer, *NextCmd = Command;
 
 char XmitOK = TRUE;
 
-/* Functions */
+/*
+ * Functions
+ */
 
 void addcmd(char ch)
 {
@@ -41,18 +52,18 @@ void addcmd(char ch)
 
 void ANSI(char cmd)
 {
-    char *Ptr = Buffer + 2;
+    char *Ptr = Command + 2;
     WORD A, B;
 
-    *Next = '\0';
+    *NextCmd = '\0';
+    NextCmd = Command;
     switch (cmd) {
-
-	case '/':	/* RM */
-
-	case 'A':	/* CUU */
-	case 'B':	/* CUD */
-	case 'C':	/* CUF */
-	case 'D':	/* CUB */
+	case '/':					/* RM */
+	    break;
+	case 'A':					/* CUU */
+	case 'B':					/* CUD */
+	case 'C':					/* CUF */
+	case 'D':					/* CUB */
 	    while ((A = getparm(&Ptr))) {
 		if (!A)
 		    A = 1;
@@ -62,9 +73,8 @@ void ANSI(char cmd)
 		}
 	    }
 	    break;
-
-	case 'H':	/* CUP */
-	case 'f':	/* HVP */
+	case 'H':					/* CUP */
+	case 'f':					/* HVP */
 	    A = getparm(&Ptr) + 31;
 	    B = getparm(&Ptr) + 31;
 	    chout(*Buffer);
@@ -72,35 +82,32 @@ void ANSI(char cmd)
 	    chout(A);
 	    chout(B);
 	    break;
-
-	case 'J':	/* ED */
-	case 'K':	/* EL */
-	case 'R':	/* CPR */
-
-	case 'c':	/* DA */
-	case 'g':	/* TBC */
-	case 'h':	/* SM */
-	case 'm':	/* SGR */
-	case 'n':	/* DSR */
-	case 'q':	/* DECLL */
-	case 'r':	/* DECSTBM */
-	case 'x':	/* DECREQTPARM */
-	case 'y':	/* DECTST */
-
-	default:	/* Anything else */
+	case 'J':					/* ED */
 	    break;
-    }
-    NextCmd = Command;
-}
-
-void DEC(char ch)
-{
-    switch (ch) {
-	case '3':	/* DECDHL Top */
-	case '4':	/* DECDHL Bottom */
-	case '5':	/* DECSWL */
-	case '6':	/* DECDWL */
-	case '8':	/* DECALN */
+	case 'K':					/* EL */
+	    break;
+	case 'R':					/* CPR */
+	    break;
+	case 'c':					/* DA */
+	    break;
+	case 'g':					/* TBC */
+	    break;
+	case 'h':					/* SM */
+	    break;
+	case 'm':					/* SGR */
+	    break;
+	case 'n':					/* DSR */
+	    break;
+	case 'q':					/* DECLL */
+	    break;
+	case 'r':					/* DECSTBM */
+	    break;
+	case 'x':					/* DECREQTPARM */
+	    break;
+	case 'y':					/* DECTST */
+	    break;
+	default:					/* Anything else */
+	    break;
     }
 }
 
@@ -116,6 +123,32 @@ void chout(char ch)
     }
 }
 
+void DEC(char ch)
+{
+    switch (ch) {
+	case '3':	/* DECDHL Top */
+	case '4':	/* DECDHL Bottom */
+	case '5':	/* DECSWL */
+	case '6':	/* DECDWL */
+	case '8':	/* DECALN */
+	    break;
+    }
+}
+
+WORD getparm(char **S)
+{
+    WORD N = 0;
+
+    while (index("0123456789",**S)) {
+	N %= 1000;
+	N *= 10;
+	N += *(*S)++ - '0';
+    }
+    if (**S == ';')
+	(*S)++;
+    return N;
+}
+
 void lineout(char *S, WORD N)
 {
     while (N) {
@@ -124,7 +157,9 @@ void lineout(char *S, WORD N)
     }
 }
 
-/* Main program */
+/*
+ * Main program
+ */
 
 int main(int argc, char **argv)
 {
@@ -193,11 +228,17 @@ int main(int argc, char **argv)
 			if (index("0123456789;",ch))
 			    *NextCmd++ = ch;
 			else
-			    ANSI(Command,ch);
+			    ANSI( ch );
 		    } else {
-
+			*NextCmd++ = ch;
 		    }
 		    break;
+	    }
 	}
     }
 }
+
+/*******/
+/* EOF */
+/*******/
+
