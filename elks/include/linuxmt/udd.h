@@ -22,8 +22,8 @@ struct ud_driver {
 	struct task * udd_task;
 	char *	udd_data;
 	struct ud_request * udd_req;
-	struct wait_queue * udd_wait;
-	struct wait_queue * udd_rwait;
+	struct wait_queue udd_wait;
+	struct wait_queue udd_rwait;
 };
 
 /*
@@ -50,8 +50,8 @@ struct ud_request {
 	int	udr_status;
 	off_t	udr_ptr;
 	int	udr_param;
-	struct wait_queue * udr_wait;
-	struct wait_queue * udr_ewait;
+	struct wait_queue udr_wait;
+	struct wait_queue udr_ewait;
 	int	udr_type;
 	int	udr_minor;
 	unsigned int	udr_size;

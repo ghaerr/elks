@@ -29,7 +29,7 @@ struct socket {
 	struct socket		*iconn;
 	struct socket		*next;
 #endif /* CONFIG_UNIX || CONFIG_NANO */
-	struct wait_queue	**wait;
+	struct wait_queue	*wait;
 	struct inode		*inode;
 	struct fasync_struct	*fasync_list;
 	struct file		*file;
