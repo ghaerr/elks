@@ -1,0 +1,27 @@
+#!/bin/bash
+
+function Makefile() {
+    date '+# Basic Makefile, created on %A, %d %B %Y at %T %Z.' 
+    cat > "$1" <<.EOF
+#
+# Note that the standard Makefile rules and defines have been moved to
+# the file below.
+
+ELKSDIR		= $2/..
+
+include $(ELKSDIR)/Makefile-rules
+
+#########################################################################
+# Define rules that are required to be present. Note that if these rules
+# have nothing to do, they need to have an action of `@echo -n` defined.
+
+depclean:
+	@echo -n
+
+distdir:
+	@echo -n
+
+#########################################################################
+# EOF.
+.EOF
+}
