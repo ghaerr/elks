@@ -7,6 +7,13 @@ be longer than the lines of dashes.
 Al
 ------------------------------------------------------------------------------
 
+Fri Oct  5 01:08:14 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Removed files created in compilation from CVS archive, and thus
+	  from ELKS distribution set. These were elks/include/compile.h
+	  and elks/include/version.h which are both created anew as part
+	  of the compilation process.
+
 Thu Oct  4 00:00:00 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Removed empty depend.awk and hfiles.sh from elks/scripts directory.

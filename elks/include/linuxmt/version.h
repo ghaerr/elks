@@ -1,2 +1,0 @@
-#define UTS_RELEASE "0.0.85-pre3"
-#define ELKS_VERSION_CODE 0x00000553
