@@ -443,10 +443,10 @@ static struct proto_ops inet_proto_ops = {
         inet_select,
         inet_ioctl,
         inet_listen,
-		inet_send,
-		inet_recv,
-		inet_sendto,
-		inet_recvfrom,
+	inet_send,
+	inet_recv,
+	inet_sendto,
+	inet_recvfrom,
 
         inet_shutdown,
 
@@ -460,7 +460,7 @@ struct net_proto * pro;
 
 {
 
-	printk("ELKS TCP/IP by Harry Kalogiroy\n");
+	printk("ELKS TCP/IP by Harry Kalogirou\n");
 	sock_register(inet_proto_ops.family, &inet_proto_ops); 
 
 };
