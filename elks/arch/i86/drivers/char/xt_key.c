@@ -491,142 +491,142 @@ void *dev_id;
 	static unsigned ModeState = 0;
 	static int E0Prefix = 0;
 
-   code=inb_p(KBD_IO);
-   mode=inb_p(KBD_CTL);
-   outb_p(mode | 0x80,KBD_CTL);  /* Necessary for the XT. */
-   outb_p(mode,KBD_CTL);
+	code=inb_p(KBD_IO);
+	mode=inb_p(KBD_CTL);
+	outb_p(mode | 0x80,KBD_CTL);  /* Necessary for the XT. */
+	outb_p(mode,KBD_CTL);
 
-   if (kraw)
-   {
-     AddQueue(code);
-     return;
-   }
-   if( code == 0xE0 ) /* Remember this has been received */
-   {
-      E0Prefix = 1;
-      return;
-   }
-   if( E0Prefix )
-   {
-      E0 = 1;
-      E0Prefix = 0;
-   }
-   IsRelease = code & 0x80;
-   switch( code & 0x7F )
-   {
-      case 29 :
-         IsRelease ? ( ModeState &= ~CTRL ) : ( ModeState |= CTRL );
-         return;
-      case 42 :
-         IsRelease ? ( ModeState &= ~LSHIFT ) : ( ModeState |= LSHIFT );
-         return;
-      case 54 :
-         IsRelease ? ( ModeState &= ~RSHIFT ) : ( ModeState |= RSHIFT );
-         return;
-      case 56 : 
+	if (kraw)
+	{
+		AddQueue(code);
+		return;
+	}
+	if( code == 0xE0 ) /* Remember this has been received */
+	{
+		E0Prefix = 1;
+		return;
+	}
+	if( E0Prefix )
+	{
+		E0 = 1;
+		E0Prefix = 0;
+	}
+	IsRelease = code & 0x80;
+	switch( code & 0x7F )
+	{
+		case 29 :
+        		IsRelease ? ( ModeState &= ~CTRL ) : ( ModeState |= CTRL );
+        		return;
+		case 42 :
+			IsRelease ? ( ModeState &= ~LSHIFT ) : ( ModeState |= LSHIFT );
+			return;
+		case 54 :
+			IsRelease ? ( ModeState &= ~RSHIFT ) : ( ModeState |= RSHIFT );
+			return;
+		case 56 : 
 #if defined(CONFIG_DE_KEYMAP) || defined(CONFIG_SE_KEYMAP)
-         if ( E0 == 0 ) {
-             IsRelease ? ( ModeState &= ~ALT ) : ( ModeState |= ALT ) ;
-         }
-         else {
-             IsRelease ? ( ModeState &= ~ALT_GR ) : ( ModeState |= ALT_GR ) ;
-         };
+			if ( E0 == 0 ) {
+				IsRelease ? ( ModeState &= ~ALT ) : ( ModeState |= ALT ) ;
+			}
+			else {
+				IsRelease ? ( ModeState &= ~ALT_GR ) : ( ModeState |= ALT_GR ) ;
+			};
 #else
-         IsRelease ? ( ModeState &= ~ALT ) : ( ModeState |= ALT ) ;
+			IsRelease ? ( ModeState &= ~ALT ) : ( ModeState |= ALT ) ;
 #endif
-         return;
-      case 58 :
-         ModeState ^= IsRelease ? 0 : CAPS;
-         return;
-      case 69 :
-         ModeState ^= IsRelease ? 0 : NUM;
-         return;
-      default :
-         if( IsRelease )
-            return;
-         break;
-   }
+			return;
+		case 58 :
+			ModeState ^= IsRelease ? 0 : CAPS;
+			return;
+		case 69 :
+			ModeState ^= IsRelease ? 0 : NUM;
+			return;
+		default :
+        		if( IsRelease )
+				return;
+			break;
+	}
 
-/*	Handle CTRL-ALT-DEL	*/
+	/*	Handle CTRL-ALT-DEL	*/
 
-   if ((code == 0x53) && (ModeState & CTRL) && (ModeState & ALT))
-	ctrl_alt_del();
+	if ((code == 0x53) && (ModeState & CTRL) && (ModeState & ALT))
+		ctrl_alt_del();
 
-/*
- *	Pick the right keymap
- */
-   if( ModeState & CAPS && !( ModeState & ANYSHIFT ) )
-      key = xtkb_scan_caps[ code ];
-   else if( ModeState & ANYSHIFT && !( ModeState & CAPS ) )
-      key = xtkb_scan_shifted[ code ];
+	/*
+	 *	Pick the right keymap
+	 */
+	if( ModeState & CAPS && !( ModeState & ANYSHIFT ) )
+		key = xtkb_scan_caps[ code ];
+	else if( ModeState & ANYSHIFT && !( ModeState & CAPS ) )
+		key = xtkb_scan_shifted[ code ];
 
-/* added for belgian keyboard (Stefke) */
+	/* added for belgian keyboard (Stefke) */
 
-   else if ((ModeState & CTRL) && (ModeState & ALT))
-      key = xtkb_scan_ctrl_alt[ code ];
+	else if ((ModeState & CTRL) && (ModeState & ALT))
+		key = xtkb_scan_ctrl_alt[ code ];
 
-/* end belgian					*/
+	/* end belgian					*/
 
-/* added for German keyboard (Klaus Syttkus) */
+	/* added for German keyboard (Klaus Syttkus) */
 
-   else if (ModeState & ALT_GR)
-      key = xtkb_scan_ctrl_alt[code];
+	else if (ModeState & ALT_GR)
+		key = xtkb_scan_ctrl_alt[code];
+	/* end German */
+	else
+		key = xtkb_scan[ code ];
 
-/* end German */
-
-   else
-      key = xtkb_scan[ code ];
-   if( ModeState & CTRL && code < 14 && !(ModeState & ALT))
-      key = xtkb_scan_shifted[ code ];
-   if( code < 70 && ModeState & NUM )
-      key = xtkb_scan_shifted[ code ];
-/*
- *	Apply special modifiers
- */
-   if( ModeState & ALT && !(ModeState & CTRL))  /* Changed to support CTRL-ALT */
-      key |= 0x80; /* META-.. */
-   if( !key ) /* non meta-@ is 64 */
-      key = '@';
-   if( ModeState & CTRL && !(ModeState & ALT))   /* Changed to support CTRL-ALT */
-      key &= 0x1F; /* CTRL-.. */
-   if( code < 0x45 && code > 0x3A ) /* F1 .. F10 */
-   {
+	if( ModeState & CTRL && code < 14 && !(ModeState & ALT))
+		key = xtkb_scan_shifted[ code ];
+	if( code < 70 && ModeState & NUM )
+		key = xtkb_scan_shifted[ code ];
+	/*
+	 *	Apply special modifiers
+	 */
+	if( ModeState & ALT && !(ModeState & CTRL))  /* Changed to support CTRL-ALT */
+		key |= 0x80; /* META-.. */
+	if( !key ) /* non meta-@ is 64 */
+		key = '@';
+	if( ModeState & CTRL && !(ModeState & ALT))   /* Changed to support CTRL-ALT */
+		key &= 0x1F; /* CTRL-.. */
+	if( code < 0x45 && code > 0x3A ) /* F1 .. F10 */
+	{
 #ifdef CONFIG_CONSOLE_DIRECT
-      if( ModeState & ALT )
-      {
-         Console_set_vc( code - 0x3B );
-         return;
-      }
+		if( ModeState & ALT )
+		{
+			Console_set_vc( code - 0x3B );
+			return;
+		}
 #endif
-      AddQueue( ESC );
-      AddQueue( code - 0x3B + 'a' );
-      return;
-   }
-   if( E0 ) /* Is extended scancode */
-      switch( code )
-      {
-         case 0x48 :  /* Arrow up */
-            AddQueue( ESC );
-            AddQueue( 'A' );
-            return;
-         case 0x50 :  /* Arrow down */
-            AddQueue( ESC );
-            AddQueue( 'B' );
-            return;
-         case 0x4D :  /* Arrow right */
-            AddQueue( ESC );
-            AddQueue( 'C' );
-            return;
-         case 0x4B :  /* Arrow left */
-            AddQueue( ESC );
-            AddQueue( 'D' );
-            return;
-         case 0x1c :  /* keypad enter */
-            AddQueue( '\n' );
-            return;
-      }
-   if (key == '\r') key = '\n';
-   AddQueue( key );
+		AddQueue( ESC );
+		AddQueue( code - 0x3B + 'a' );
+		return;
+	}
+	if( E0 ) /* Is extended scancode */
+		switch( code )
+		{
+			case 0x48 :  /* Arrow up */
+				AddQueue( ESC );
+				AddQueue( 'A' );
+				return;
+			case 0x50 :  /* Arrow down */
+				AddQueue( ESC );
+				AddQueue( 'B' );
+				return;
+			case 0x4D :  /* Arrow right */
+				AddQueue( ESC );
+				AddQueue( 'C' );
+				return;
+			case 0x4B :  /* Arrow left */
+				AddQueue( ESC );
+				AddQueue( 'D' );
+				return;
+			case 0x1c :  /* keypad enter */
+				AddQueue( '\n' );
+				return;
+	}
+	if (key == '\r')
+		key = '\n';
+	AddQueue( key );
 }
 
 /* Ack.  We can't add a character until the queue's ready */
@@ -659,24 +659,14 @@ unsigned char Key;
 #endif
 	return;
 }
-#if 0
-int GetQueue()
-{
-   return chq_getch(&ttys[0].inq, 0, 0);
-}
 
-void SetLeds( State )
-unsigned State;
-{
-   /* Set the keyboard leds according to the locks in 'State' */
-}
-#endif
 /*
  *      Busy wait for a keypress in kernel state for bootup/debug.
  */
 
 int wait_for_keypress()
 {
+	isti();
 	return chq_getch(&ttys[0].inq, 0, 1);
 }
 
