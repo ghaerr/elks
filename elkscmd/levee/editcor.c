@@ -444,14 +444,14 @@ macrocommand()
 	    strcat(gcb,"c$"); break;
 	case 'Y':			/* yank ... */
 	    strcat(gcb,"y$"); break;
-	case '':			/* scroll up one page */
-	    strcpy(gcb,"22"); break;
-	case '':			/* ... down one page */
-	    strcpy(gcb,"22"); break;
-	case '':			/* scroll up one line */
-	    strcpy(gcb,"1"); break;
-	case '':			/* ... down one line */
-	    strcpy(gcb,"1"); break;
+	case 0x06: /* ^F */		/* scroll up one page */
+	    strcpy(gcb,"22\x04"); break; /* 22^D */
+	case 0x02: /* ^B */		/* ... down one page */
+	    strcpy(gcb,"22\x15"); break; /* 22^U */
+	case 0x05: /* ^E */		/* scroll up one line */
+	    strcpy(gcb,"1\x04"); break; /* 1^D */
+	case 0x19: /* ^Y */		/* ... down one line */
+	    strcpy(gcb,"1\x15"); break;	/* 1^U */
 	default:
             error();
             return 0;

@@ -85,8 +85,8 @@ bool visual;
 	Dflag = (cp==0 || core[cp-1]==EOL);
 	do {
 	    if (Dflag)
-		while ((cmd=peekc()) == '' || cmd == '') {
-		    if (readchar() == '')
+		while ((cmd=peekc()) == 0x14 || cmd == 0x04) {	/* handle ^T, ^D */
+		    if (readchar() == 0x14)
 			currDLE = min(COLS,currDLE+shiftwidth);
 		    else
 			currDLE = max(0,currDLE-shiftwidth);

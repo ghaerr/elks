@@ -392,10 +392,10 @@ int start, endd;
 	    *size = (ip-start);
             return (c==ESC) ? ESC : EOL;
 	}
-	else if ((!beautify) || c == TAB || c == ''
+	else if ((!beautify) || c == TAB || c == 0x16		/* ^V */
 			     || (c >= ' ' && c <= '~')) {
 	    if (ip < endd) {
-		if (c == '')
+		if (c == 0x16)
 		    c = readchar();
 		switch (cclass(c)) {
 		    case 0 : ixp++; break;
