@@ -278,7 +278,6 @@ gid_t group;
 	}
 	inode->i_dirt = 1;
 	error = notify_change(inode, nap);
-	iput(inode);
 	return(error);
 }
 
@@ -294,7 +293,9 @@ gid_t group;
 	if (error)
 		return error;
 
-	return do_chown(inode, user, group);
+	error = do_chown(inode, user, group);
+	iput(inode);
+	return error;
 }
 
 int sys_fchown(fd, user, group)

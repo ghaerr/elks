@@ -4,9 +4,15 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Tue Sep 14 19:32 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fix to problem with fchown() by Blaz Antonic.
+
 Tue Sep 14 19:29 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed types of all string lengths in namei code to size_t.
+
+	* Fixed problem with 14 char filenames by Blaz Antonic.
 
 Tue Sep 14 19:27 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
