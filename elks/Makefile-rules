@@ -308,6 +308,10 @@ dolint:
 	@for FILE in *.[ch] ; do \
 	    if [ -f "$${FILE}" ] && ! fgrep -q '#asm' "$${FILE}" ; then \
 		echo $(LINT) ... "$${FILE}" ; \
+		if fgrep -q '/*@ignore@*/' "$${FILE}" ; then \
+			echo WARNING: "$${FILE}" includes section ignored by splint ; \
+			sleep 1 ; \
+		fi ; \
 		if echo "$${FILE}" | grep -q '\.h$$' ; then \
 			$(LINT) -strict $(LHFLAGS) "$${FILE}" \
 				> "$${FILE}.lint" 2>&1 ; \
