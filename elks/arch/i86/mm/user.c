@@ -34,10 +34,12 @@ void memcpy_fromfs(void *daddr, void *saddr, size_t len)
 
 #ifndef S_SPLINT_S
 #asm
+	push	si
+	push	di
 	mov	dx,es
 	mov	bx,ds
 	mov	es,bx
-	mov	ax,[bp-6]	! source segment (local variable)
+	mov	ax,[bp-2]	! source segment (local variable)
 	mov	ds,ax
 	mov	di,[bp+4]	! destination address
 	mov	si,[bp+6]	! source address
@@ -47,8 +49,11 @@ void memcpy_fromfs(void *daddr, void *saddr, size_t len)
 	movsb
 	mov	ds,bx
 	mov	es,dx
+	pop	di
+	pop	si
 #endasm
 #endif
+
 }
 
 int verified_memcpy_fromfs(void *daddr, void *saddr, size_t len)
@@ -69,8 +74,10 @@ void memcpy_tofs(void *daddr, void *saddr, size_t len)
 
 #ifndef S_SPLINT_S
 #asm
+	push	si
+	push	di
 	mov	dx,es
-	mov	ax,[bp-6]	! source segment (local variable)
+	mov	ax,[bp-2]	! source segment (local variable)
 	mov	es,ax
 	mov	di,[bp+4]	! destination address
 	mov	si,[bp+6]	! source address
@@ -79,6 +86,8 @@ void memcpy_tofs(void *daddr, void *saddr, size_t len)
 	rep
 	movsb
 	mov	es,dx
+	pop	di
+	pop	si
 #endasm
 #endif
 }
