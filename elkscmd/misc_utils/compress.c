@@ -486,7 +486,7 @@ union	bytes
 	} bytes;
 };
 
-/* You need bcc 0.16.16 or later to compile this */
+/* CM: You need bcc 0.16.16 or later to compile this */
 #if BYTEORDER == 4321 && NOALLIGN == 1
 # define output(b,o,c,n) { \
     *(long *)&((b)[(o)>>3]) |= ((long)(c))<<((o)&0x07); \
@@ -515,10 +515,9 @@ union	bytes
 #  endif
 #endif
 
-/* You need bcc 0.16.16 or later to compile this */
+/* CM: You need bcc 0.16.16 or later to compile this */
 #if BYTEORDER == 4321 && NOALLIGN == 1
 #  define input(b,o,c,n,m) { \
-     int x = o & 0x07; \
      (c) = (*(long *)(&(b)[(o)>>3])>>((o)&0x07)) & (m); \
      (o) += (n); \
    }

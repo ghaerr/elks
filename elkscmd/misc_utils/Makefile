@@ -52,9 +52,7 @@ rfs: all
 
 net_rfs: rfs
 
-min_rfs: all
-	cp -p $(MIN_USR_BIN) $(TARGET_MNT)/usr/bin
-	cp -p $(PRGS) $(TARGET_MNT)/bin
+min_rfs:
 
 smin_rfs:
 
