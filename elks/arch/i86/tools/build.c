@@ -228,7 +228,7 @@ int main(int argc, char **argv)
     if ((ex->a_magic[0] != 0x01) || (ex->a_magic[1] != 0x03)) {
 	die("Non-MINIX header of '286pmode'");
     }
-    fprintf(stderr, "PMode is %d B (%d B code, %d B data and %ud B bss)\n",
+    fprintf(stderr, "PMode is %d B (%d B code, %d B data and %u B bss)\n",
 	    (intel_long(ex->a_text) + intel_long(ex->a_data) +
 	     intel_long(ex->a_bss)), intel_long(ex->a_text),
 	    intel_long(ex->a_data), (unsigned) intel_long(ex->a_bss));
@@ -288,7 +288,7 @@ int main(int argc, char **argv)
     if ((ex->a_magic[0] != 0x01) || (ex->a_magic[1] != 0x03)) {
 	die("Non-MINIX header of 'system'");
     }
-    fprintf(stderr, "System is %d B (%d B code, %d B data and %ud B bss)\n",
+    fprintf(stderr, "System is %d B (%d B code, %d B data and %u B bss)\n",
 	    (intel_long(ex->a_text) + intel_long(ex->a_data) +
 	     intel_long(ex->a_bss)), intel_long(ex->a_text),
 	    intel_long(ex->a_data), (unsigned) intel_long(ex->a_bss));

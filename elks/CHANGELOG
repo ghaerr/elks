@@ -20,19 +20,36 @@ Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-15 May 2002
 Jacek Lipkowski       sq5bpf@acid.ch.pw.edu.pl          20 Jan 2002
 Ken Martwick          kenm@efn.org                      12 May 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
-Manuel Novoa III      mjn3@codepoet.org                 18 Jun 2002
+Manuel Novoa III      mjn3@codepoet.org                 18 Jun 2002-25 Jun 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-24 Jun 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-26 Jun 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Wed Jun 26 04:11:35 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Clarified error messages in fs/minix/bitmap.c as some were
+	  rather too cryptic.
+	* Clarified size reports in arch/i86/tools/build.c to remove
+	  unnecessary 'd' suffix to some numbers.
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop, with the exception that ktcp still fails.
+
+		*** NOTE - KTCP DOES NOT CURRENTLY WORK ***
+
+Tue Jun 25 15:52:23 EST 2002	Manuel Novoa III <mjn3@codepoet.org>
+
+	* Optimised code in elks/fs/minix/bitmap.c to reduce size.
+
+		*** NOTE - KTCP DOES NOT CURRENTLY WORK ***
 
 Mon Jun 24 07:22:08 BST 2002	Riley Williams <Riley@Williams.Name>
 

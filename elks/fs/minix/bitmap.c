@@ -148,39 +148,48 @@ block_t minix_new_block(register struct super_block *sb)
     return j;
 }
 
-
-static char *fi_name = "free_inode";
-
 void minix_free_inode(register struct inode *inode)
 {
-    register struct buffer_head *bh;
+    struct buffer_head *bh;
+    register char *s;
+    int n = 0;
     ino_t ino;
 
     if (!inode)
 	return;
     if (!inode->i_dev) {
-	printk("%s: no dev\n", fi_name);
-	return;
+	s = "no device\n";
+	goto OUTPUT;
     }
     if (inode->i_count != 1) {
-	printk("%s: count=%d\n", fi_name, inode->i_count);
-	return;
+	n = inode->i_count;
+	s = "count=%d\n";
+	goto OUTPUT;
     }
     if (inode->i_nlink) {
-	printk("%s: nlink=%d\n", fi_name, inode->i_nlink);
-	return;
+	n = inode->i_nlink;
+	s = "nlink=%d\n";
+	goto OUTPUT;
     }
     if (!inode->i_sb) {
-	printk("%s: no sb\n", fi_name);
-	return;
+	s = "no sb\n";
+	goto OUTPUT;
     }
-    if (inode->i_ino < 1 || inode->i_ino > inode->i_sb->u.minix_sb.s_ninodes) {
-	printk("%s: 0 or nonexistent\n", fi_name);
-	return;
+    if (inode->i_ino < 1) {
+	s = "inode 0\n";
+	goto OUTPUT;
+    }
+    if (inode->i_ino > inode->i_sb->u.minix_sb.s_ninodes) {
+	s = "nonexistent inode\n";
+	goto OUTPUT;
     }
     ino = inode->i_ino;
     if (!(bh = inode->i_sb->u.minix_sb.s_imap[ino >> 13])) {
-	printk("%s: nonexistent imap\n", fi_name);
+	s = "nonexistent imap\n";
+
+      OUTPUT:
+	printk("free_inode: ");
+	printk(s, n);
 	return;
     }
     map_buffer(bh);
@@ -226,8 +235,7 @@ struct inode *minix_new_inode(struct inode *dir)
 	goto iputfail;
     }
     unmap_buffer(bh);
-    inode->i_count = 1;
-    inode->i_nlink = 1;
+    inode->i_nlink = inode->i_count = 1;
     inode->i_dev = inode->i_sb->s_dev;
     inode->i_uid = current->euid;
     inode->i_gid = (dir->i_mode & S_ISGID) ? dir->i_gid
@@ -236,9 +244,11 @@ struct inode *minix_new_inode(struct inode *dir)
     inode->i_ino = j;
     inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
     inode->i_op = NULL;
+
 #ifdef BLOAT_FS
     inode->i_blocks = inode->i_blksize = 0;
 #endif
+
     return inode;
 
     /*  Oh no! We have 'Return of Goto' in a double feature with

@@ -530,8 +530,8 @@ void init_bioshd(void)
 
 #endif
 
-    printk
-	("hd Driver Copyright (C) 1994 Yggdrasil Computing, Inc.\nExtended and modified for Linux8086 by Alan Cox.\n");
+    printk("hd Driver Copyright (C) 1994 Yggdrasil Computing, Inc.\n"
+	   "Extended and modified for Linux 8086 by Alan Cox.\n");
 
 #ifdef CONFIG_BLK_DEV_BFD
     bioshd_getfdinfo();
