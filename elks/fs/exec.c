@@ -74,10 +74,12 @@ int slen;		/* Size of built stack */
 #endif
 	file.f_op = inode->i_op->default_file_ops;
 	retval=-ENOEXEC;
+	if(!file.f_op)
+		goto end_readexec;
 	if(file.f_op->open)
 		if(file.f_op->open(inode,&file))
 			goto end_readexec;
-	if(!file.f_op || !file.f_op->read)
+	if(!file.f_op->read)
 		goto close_readexec;
 		
 	printd_exec1("EXEC: Opened ok inode dev = 0x%x\n", inode->i_dev);
@@ -198,6 +200,8 @@ int slen;		/* Size of built stack */
 	count = mh.bseg;
 	while (count)
 		pokeb(dseg, ptr++, 0), count--;
+	/* fmemset should work, but doesn't */
+/*	fmemset(ptr, dseg, 0, count); */
 	
 	/*
 	 *	Copy the stack

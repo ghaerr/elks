@@ -31,11 +31,13 @@ int size;
 	q->wq = NULL;
 }
 
+#if 0
 int chq_erase(q)
 register struct ch_queue * q;
 {
-	q->size = q->tail = 0;	
+	q->len = q->tail = 0;	
 }
+#endif
 
 /* Adds character c, waiting if wait=1 (or otherwise throws out new char) */
 int chq_addch(q, c, wait)
@@ -47,14 +49,13 @@ int wait;
 
 	printd_chq5("CHQ: chq_addch(%d, %c, %d) q->len=%d q->tail=%d\n", q, c, wait, q->len, q->tail);
 
-	while ((q->len == (q->size - 1)) && wait) {
+	while (q->len == q->size) {
+		if (!wait) {
+			return -1;
+		}
 		printd_chq("CHQ: addch sleeping\n");
 		sleep_on(&q->wq);
 		printd_chq("CHQ: addch waken up\n");
-	}
-
-	if (q->len == (q->size - 1)) {
-		return -1;
 	}
 
 	nhead = (q->tail + q->len) % q->size;	
@@ -63,17 +64,19 @@ int wait;
 	return 0;
 }
 
+#if 0
 /* Deletes last character in list */ 
 int chq_delch(q)
 register struct ch_queue * q;
 {
-	if (q->len == (q->size - 1)) {
+	if (q->len == q->size) {
 		q->len--;
 		return 1;
 	}
 	else
 		return 0;
 }
+#endif
 
 /* Gets tail character, waiting for one if wait != 0 */
 int chq_getch(q, c, wait)
@@ -87,13 +90,13 @@ int wait;
 	printd_chq6("CHQ: chq_getch(%d, %d, %d) q->len=%d q->tail=%d q->size=%d\n", q, c, wait, q->len, q->tail, q->size);
 
 	while ((q->len == 0) && wait) {
+		if (!wait) {
+			return -1;
+		}
 		printd_chq("CHQ: getch sleeping\n");
 		sleep_on(&q->wq);	
 		printd_chq("CHQ: getch wokeup\n");
 	};
-
-	if (q->len == 0) 
-		return -1;
 
 	retval = q->buf[q->tail];
 	q->tail++; q->tail %= q->size; q->len--;

@@ -137,15 +137,20 @@ unsigned int dseg, doff;
 } 
 #endif
 
+#ifdef CONFIG_FULL_VFS
 int strlen_fromfs(saddr)
 char *saddr;
 {
 	int 	ds = current->t_regs.ds;
+	/* scasb uses es:di, not ds:si, so it is not necessary to save and
+	   restore ds */
 #asm
-        mov     bx,ds
+!        mov     bx,ds
         mov     ax,[bp-6]       ! source segment (local variable)
-        mov     ds,ax
-        mov     si,[bp+4]       ! source address
+!        mov     ds,ax
+!        mov     si,[bp+4]       ! source address
+        mov     es,ax
+        mov     di,[bp+4]       ! source address
         cld
 	xor	al,al		! search for NULL byte
 	mov	cx,#-1
@@ -154,10 +159,11 @@ char *saddr;
 	sub	di,[bp+4]	! calc len +1
 	dec	di
 	mov	[bp-6],di	! save in local var ds
-        mov     ds,bx
+!        mov     ds,bx
 #endasm
 	return 	ds;
 }
+#endif /* CONFIG_FULL_VFS */
 
 unsigned long get_fs_long(dv)
 unsigned long *dv;

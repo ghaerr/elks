@@ -55,4 +55,3 @@ dep:
 	mv tmp_make Makefile
 
 ### Dependencies:
-bitops.s memmove.s memmove.o: memmove.c

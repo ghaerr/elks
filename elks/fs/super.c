@@ -572,7 +572,7 @@ void mount_root()
  * corruption, but I have not been able to find where from              *
  * The crash occurs if the string is less than three chars, or the line *
  * is not there  - AJR 10 May 98                                        */
-	printk("BUG\n");
+/*	printk("BUG\n"); */
 retry_floppy:
 /* I don't think this line is needed, the BSS is already zeroed - AJR 9May98*/
 /*	memset(super_blocks, 0, sizeof(super_blocks)); */

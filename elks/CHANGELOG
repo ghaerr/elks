@@ -3,6 +3,24 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Fri Sep 25 15:30 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fixed a some bugs pointed out by Marnix Coppens <maco@telindus.be>
+
+	  Changed code at 147 in arch/i86/mm/user.c in strlen_fromfs
+	  which should use es:di to point to a string rather than ds:si.
+
+	  Fixed code in fs/exec.c which uses file.f_op before it has been
+	  checked.
+	  Replaced code that clears bss in exec() to a call to fmemset() but
+	  this did not work. fmemset() may be buggy.
+
+	  Fixed chq_erase() so it zeroes len, not size, and ifdef'd it out.
+
+	  Tweaked getch and addch so they deal with waiting in less code,
+	  and modified checks for q->size - 1 into checks for q->size.
+
+	  ifdef'd out chq_delch
 
 Thu Sep 24 23:28:39 CEST 1998	Simon Weijgers	<mbit@mbit.doa.org>
 

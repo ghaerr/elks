@@ -38,3 +38,121 @@ dep:
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \
 		$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
+bitmap.s bitmap.o: bitmap.c ../../include/linuxmt/types.h \
+ ../../include/arch/types.h ../../include/linuxmt/posix_types.h \
+ ../../include/arch/posix_types.h ../../include/arch/irq.h \
+ ../../include/linuxmt/sched.h ../../include/linuxmt/fs.h \
+ ../../include/linuxmt/wait.h ../../include/linuxmt/vfs.h \
+ ../../include/arch/statfs.h ../../include/linuxmt/kdev_t.h \
+ ../../include/linuxmt/ioctl.h ../../include/arch/ioctl.h \
+ ../../include/linuxmt/pipe_fs_i.h ../../include/linuxmt/net.h \
+ ../../include/linuxmt/config.h ../../include/linuxmt/autoconf.h \
+ ../../include/linuxmt/socket.h ../../include/linuxmt/uio.h \
+ ../../include/arch/bitops.h ../../include/linuxmt/time.h \
+ ../../include/linuxmt/signal.h ../../include/arch/param.h \
+ ../../include/linuxmt/timex.h ../../include/linuxmt/elksfs_fs.h \
+ ../../include/linuxmt/stat.h ../../include/arch/stat.h \
+ ../../include/linuxmt/kernel.h ../../include/linuxmt/string.h \
+ ../../include/arch/string.h
+dir.s dir.o: dir.c ../../include/linuxmt/types.h ../../include/arch/types.h \
+ ../../include/linuxmt/posix_types.h ../../include/arch/posix_types.h \
+ ../../include/arch/irq.h ../../include/linuxmt/string.h \
+ ../../include/arch/string.h ../../include/linuxmt/errno.h \
+ ../../include/arch/errno.h ../../include/linuxmt/fs.h \
+ ../../include/linuxmt/wait.h ../../include/linuxmt/vfs.h \
+ ../../include/arch/statfs.h ../../include/linuxmt/kdev_t.h \
+ ../../include/linuxmt/ioctl.h ../../include/arch/ioctl.h \
+ ../../include/linuxmt/pipe_fs_i.h ../../include/linuxmt/net.h \
+ ../../include/linuxmt/config.h ../../include/linuxmt/autoconf.h \
+ ../../include/linuxmt/socket.h ../../include/linuxmt/uio.h \
+ ../../include/arch/bitops.h ../../include/linuxmt/elksfs_fs.h \
+ ../../include/linuxmt/stat.h ../../include/arch/stat.h \
+ ../../include/arch/segment.h
+file.s file.o: file.c ../../include/linuxmt/types.h \
+ ../../include/arch/types.h ../../include/linuxmt/posix_types.h \
+ ../../include/arch/posix_types.h ../../include/arch/irq.h \
+ ../../include/linuxmt/sched.h ../../include/linuxmt/fs.h \
+ ../../include/linuxmt/wait.h ../../include/linuxmt/vfs.h \
+ ../../include/arch/statfs.h ../../include/linuxmt/kdev_t.h \
+ ../../include/linuxmt/ioctl.h ../../include/arch/ioctl.h \
+ ../../include/linuxmt/pipe_fs_i.h ../../include/linuxmt/net.h \
+ ../../include/linuxmt/config.h ../../include/linuxmt/autoconf.h \
+ ../../include/linuxmt/socket.h ../../include/linuxmt/uio.h \
+ ../../include/arch/bitops.h ../../include/linuxmt/time.h \
+ ../../include/linuxmt/signal.h ../../include/arch/param.h \
+ ../../include/linuxmt/timex.h ../../include/linuxmt/elksfs_fs.h \
+ ../../include/linuxmt/kernel.h ../../include/linuxmt/errno.h \
+ ../../include/arch/errno.h ../../include/linuxmt/fcntl.h \
+ ../../include/linuxmt/stat.h ../../include/arch/stat.h \
+ ../../include/linuxmt/mm.h ../../include/linuxmt/string.h \
+ ../../include/arch/string.h ../../include/linuxmt/debug.h \
+ ../../include/arch/segment.h ../../include/arch/system.h
+inode.s inode.o: inode.c ../../include/linuxmt/types.h \
+ ../../include/arch/types.h ../../include/linuxmt/posix_types.h \
+ ../../include/arch/posix_types.h ../../include/arch/irq.h \
+ ../../include/linuxmt/sched.h ../../include/linuxmt/fs.h \
+ ../../include/linuxmt/wait.h ../../include/linuxmt/vfs.h \
+ ../../include/arch/statfs.h ../../include/linuxmt/kdev_t.h \
+ ../../include/linuxmt/ioctl.h ../../include/arch/ioctl.h \
+ ../../include/linuxmt/pipe_fs_i.h ../../include/linuxmt/net.h \
+ ../../include/linuxmt/config.h ../../include/linuxmt/autoconf.h \
+ ../../include/linuxmt/socket.h ../../include/linuxmt/uio.h \
+ ../../include/arch/bitops.h ../../include/linuxmt/time.h \
+ ../../include/linuxmt/signal.h ../../include/arch/param.h \
+ ../../include/linuxmt/timex.h ../../include/linuxmt/elksfs_fs.h \
+ ../../include/linuxmt/kernel.h ../../include/linuxmt/mm.h \
+ ../../include/linuxmt/errno.h ../../include/arch/errno.h \
+ ../../include/linuxmt/string.h ../../include/arch/string.h \
+ ../../include/linuxmt/stat.h ../../include/arch/stat.h \
+ ../../include/linuxmt/debug.h ../../include/arch/system.h \
+ ../../include/arch/segment.h
+namei.s namei.o: namei.c ../../include/linuxmt/types.h \
+ ../../include/arch/types.h ../../include/linuxmt/posix_types.h \
+ ../../include/arch/posix_types.h ../../include/arch/irq.h \
+ ../../include/linuxmt/sched.h ../../include/linuxmt/fs.h \
+ ../../include/linuxmt/wait.h ../../include/linuxmt/vfs.h \
+ ../../include/arch/statfs.h ../../include/linuxmt/kdev_t.h \
+ ../../include/linuxmt/ioctl.h ../../include/arch/ioctl.h \
+ ../../include/linuxmt/pipe_fs_i.h ../../include/linuxmt/net.h \
+ ../../include/linuxmt/config.h ../../include/linuxmt/autoconf.h \
+ ../../include/linuxmt/socket.h ../../include/linuxmt/uio.h \
+ ../../include/arch/bitops.h ../../include/linuxmt/time.h \
+ ../../include/linuxmt/signal.h ../../include/arch/param.h \
+ ../../include/linuxmt/timex.h ../../include/linuxmt/elksfs_fs.h \
+ ../../include/linuxmt/kernel.h ../../include/linuxmt/string.h \
+ ../../include/arch/string.h ../../include/linuxmt/stat.h \
+ ../../include/arch/stat.h ../../include/linuxmt/fcntl.h \
+ ../../include/linuxmt/errno.h ../../include/arch/errno.h \
+ ../../include/linuxmt/debug.h ../../include/arch/segment.h
+symlink.s symlink.o: symlink.c ../../include/linuxmt/types.h \
+ ../../include/arch/types.h ../../include/linuxmt/posix_types.h \
+ ../../include/arch/posix_types.h ../../include/arch/irq.h \
+ ../../include/linuxmt/errno.h ../../include/arch/errno.h \
+ ../../include/linuxmt/sched.h ../../include/linuxmt/fs.h \
+ ../../include/linuxmt/wait.h ../../include/linuxmt/vfs.h \
+ ../../include/arch/statfs.h ../../include/linuxmt/kdev_t.h \
+ ../../include/linuxmt/ioctl.h ../../include/arch/ioctl.h \
+ ../../include/linuxmt/pipe_fs_i.h ../../include/linuxmt/net.h \
+ ../../include/linuxmt/config.h ../../include/linuxmt/autoconf.h \
+ ../../include/linuxmt/socket.h ../../include/linuxmt/uio.h \
+ ../../include/arch/bitops.h ../../include/linuxmt/time.h \
+ ../../include/linuxmt/signal.h ../../include/arch/param.h \
+ ../../include/linuxmt/timex.h ../../include/linuxmt/elksfs_fs.h \
+ ../../include/linuxmt/stat.h ../../include/arch/stat.h \
+ ../../include/arch/segment.h
+truncate.s truncate.o: truncate.c ../../include/linuxmt/types.h \
+ ../../include/arch/types.h ../../include/linuxmt/posix_types.h \
+ ../../include/arch/posix_types.h ../../include/arch/irq.h \
+ ../../include/linuxmt/errno.h ../../include/arch/errno.h \
+ ../../include/linuxmt/sched.h ../../include/linuxmt/fs.h \
+ ../../include/linuxmt/wait.h ../../include/linuxmt/vfs.h \
+ ../../include/arch/statfs.h ../../include/linuxmt/kdev_t.h \
+ ../../include/linuxmt/ioctl.h ../../include/arch/ioctl.h \
+ ../../include/linuxmt/pipe_fs_i.h ../../include/linuxmt/net.h \
+ ../../include/linuxmt/config.h ../../include/linuxmt/autoconf.h \
+ ../../include/linuxmt/socket.h ../../include/linuxmt/uio.h \
+ ../../include/arch/bitops.h ../../include/linuxmt/time.h \
+ ../../include/linuxmt/signal.h ../../include/arch/param.h \
+ ../../include/linuxmt/timex.h ../../include/linuxmt/elksfs_fs.h \
+ ../../include/linuxmt/stat.h ../../include/arch/stat.h \
+ ../../include/linuxmt/fcntl.h
