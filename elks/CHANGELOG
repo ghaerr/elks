@@ -25,7 +25,7 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-31 May 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998- 3 Jun 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
@@ -36,6 +36,8 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 Mon Jun  3 10:59:54 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Killed dependencies accidentally committed in previous tweak.
+	* Updated TODO list to reflect the fact that 0.1.0 has been
+	  released.
 
 Mon Jun  3 00:43:09 BST 2002	Riley Williams <Riley@Williams.Name>
 
