@@ -244,7 +244,7 @@ void schedule(void)
 	    goto scheduling_in_interrupt;
 
 #ifdef CONFIG_SWAP
-		if(do_swapper_run(current) == -1){
+		if(do_swapper_run(next) == -1){
 			printk("Can't become runnable\n");
 			return;
 		}
