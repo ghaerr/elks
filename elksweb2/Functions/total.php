@@ -4,7 +4,7 @@
 
 	function checklang($lang)
 	{
-		include("./functions/data.php");
+		include("./Functions/data.php");
 		if (in_array($lang,array_keys($langitems), True)==False)
 		{
 			$return=array_keys($langitems);
@@ -16,7 +16,7 @@
 
 	function checkitem($lang, $item)
 	{
-		include("./functions/data.php");
+		include("./Functions/data.php");
 
 		$arr=$langitems["$lang"]["menu"];
 		$t = array();
@@ -31,13 +31,13 @@
 	
 	function headers($lang)
 	{
-		include("./functions/data.php");
+		include("./Functions/data.php");
 
 		$title=$langitems["$lang"]["title"];
         $meta="<meta http-equiv=\"Content-Type\" content=\"text/html; charset=windows-1252\">";
 		      "<meta name=\"description\" content=\"".$langitems["$lang"]["meta"][0].">".
 		      "<meta name=\"keywords\" content=\"Linux,linux-86,linux-8086,16-bit,UNIX,ELKS\">";
-       	$stylesheet="./functions/stylesheet.css";
+       	$stylesheet="./Functions/stylesheet.css";
        	$out="<head>$meta<title>$title</title><link href=\"$stylesheet\" rel=\"stylesheet\" type=\"text/css\"></head>";
        	return $out;
 	}
@@ -80,7 +80,7 @@
 
 	function showmenu($lang)
 	{
-		include("./functions/data.php");
+		include("./Functions/data.php");
 
 		$data=$langitems[$lang]["menu"];
 		$out="<div align=\"center\"><center><a href=\"CHANGELOG.txt\">$data[0]</a> | ".
@@ -98,7 +98,7 @@
 
 	function footer($lang)
 	{
-		include("./functions/data.php");
+		include("./Functions/data.php");
 
 		$data=$langitems[$lang]["footer"];
 		$out="<div align=\"center\"><center><hr width=\"90%\">$data[0]<br>$data[1]</center></div>";
