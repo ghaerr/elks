@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Tue May 06 16:39 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Minor fix to lp driver.
+
 Fri Apr 16 09:57 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added support for the signal(2) system call, and support

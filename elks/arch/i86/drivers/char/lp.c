@@ -177,7 +177,7 @@ int count;
 	lp_reset(MINOR(inode->i_rdev));
 #endif
 	while (chrs < count) {
-		if (!(lp_char_polled(put_user(buf + chrs)), 
+		if (!lp_char_polled(put_user(buf + chrs), 
 			MINOR(inode->i_rdev))) {
 				break;
 		}
