@@ -233,7 +233,7 @@ void tcpdev_read()
 		netconf_send(cb);	
 	}
 	
-	data_avail = CB_BUF_USED(cb);
+	data_avail = cb->bytes_to_push;
 
 	if(data_avail == 0){
 		if(db->nonblock){
@@ -246,20 +246,20 @@ void tcpdev_read()
 	}
 	
 	data_avail = db->size < data_avail ? db->size : data_avail;
+	cb->bytes_to_push -= data_avail;	
+	if(cb->bytes_to_push <= 0)tcpcb_need_push--;
 	
 	ret_data = sbuf;
 	ret_data->type = 0;
 	ret_data->ret_value = data_avail;
 	ret_data->sock = sock;
 	tcpcb_buf_read(cb, &ret_data->data, data_avail);
-	
-	write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail - 1);
-		
+
+	write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail - 1);		
 }
 
-void tcpdev_checkread(cb, push)
+void tcpdev_checkread(cb)
 struct tcpcb_s *cb;
-char push;
 {
 	struct tdb_return_data *ret_data;
 	int data_avail;
@@ -267,22 +267,26 @@ char push;
 
 	ret_data = sbuf;	
 	data_avail = CB_BUF_USED(cb);
+
+	if(cb->bytes_to_push <= 0)
+		return;
 	
 	if(cb->wait_data == 0){
 		/* Update the avail_data in the kernel socket (for select) */
 		sock = cb->sock;
 		ret_data->type = TDT_AVAIL_DATA;
-		ret_data->ret_value = data_avail;
+		ret_data->ret_value = cb->bytes_to_push;
 		ret_data->sock = sock;
 	
 		write(tcpdevfd, sbuf, sizeof(struct tdb_return_data));
 		return;	
 	}
 	
-	if(cb->wait_data > data_avail && !push)
-		return;
 		
-/*	data_avail = cb->wait_data < data_avail ? cb->wait_data : data_avail;*/
+	data_avail = cb->wait_data < cb->bytes_to_push ? cb->wait_data : cb->bytes_to_push;
+	cb->bytes_to_push -= data_avail;
+	if(cb->bytes_to_push <= 0)tcpcb_need_push--;
+	
 	ret_data->type = 0;
 	ret_data->ret_value = data_avail;
 	ret_data->sock = cb->sock;

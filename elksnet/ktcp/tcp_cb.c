@@ -11,6 +11,7 @@
 
 #include "config.h"
 #include "tcp.h"
+#include "tcpdev.h"
 
 static struct	tcpcb_list_s	*tcpcbs;
 int cbs_in_time_wait;
@@ -18,6 +19,7 @@ int cbs_in_time_wait;
 void tcpcb_init()
 {
 	tcpcbs = NULL;
+	tcpcb_need_push = 0;
 #ifdef CONFIG_INET_STATUS
 	tcpcb_num = 0;
 #endif
@@ -64,7 +66,7 @@ tcpcb_new()
 	}
 	
 	memset(&n->tcpcb, 0, sizeof(struct tcpcb_s));
-	n->tcpcb.rtt = 4 << 4; /* 3 sec */
+	n->tcpcb.rtt = 4 << 4; /* 4 sec */
 	
 	/* Link it to the list */
 	if(tcpcbs){
@@ -229,6 +231,16 @@ void tcpcb_expire_time_wait()
 	}
 }
 
+void tcpcb_push_data()
+{
+	struct tcpcb_list_s *n;
+	
+	for(n = tcpcbs ; n != NULL ; n = n->next){
+		if(n->tcpcb.bytes_to_push > 0){
+			tcpdev_checkread(&n->tcpcb);
+		}
+	}
+}
 
 /* There must be free space greater-equal than len */
 int tcpcb_buf_write(cb, data, len)
@@ -236,19 +248,17 @@ struct tcpcb_s	*cb;
 __u8 *data;
 __u16 len;
 {
-	int len1 = 0;
-
-	if(CB_IN_BUF_SIZE <= cb->buf_head + len){
-		len1 = CB_IN_BUF_SIZE - cb->buf_head;
-		memcpy(cb->in_buf + cb->buf_head, data, len1);
-		cb->buf_head = 0;
-	}
-
-	len = len - len1;
-	memcpy(cb->in_buf + cb->buf_head, data, len);
-	cb->buf_head += len;
+	int tail;
+	register int i;
 	
+	tail = cb->buf_head + cb->buf_len;
+	for(i = 0 ; i < len ; i++){
+		cb->in_buf[tail & (CB_IN_BUF_SIZE - 1)] = *(data + i);
+		tail++;
+	}
+	cb->buf_len += len;
 }
+
 
 /* same here */
 int tcpcb_buf_read(cb, data, len)
@@ -256,15 +266,14 @@ struct tcpcb_s	*cb;
 __u8 *data;
 __u16 len;
 {
-	int len1 = 0;
+	register int head;
+	register int i;
 	
-	if(CB_IN_BUF_SIZE <= cb->buf_tail + len){
-		len1 = CB_IN_BUF_SIZE - cb->buf_tail;
-		memcpy(data, cb->in_buf + cb->buf_tail, len1);
-		cb->buf_tail = 0;
+	head = cb->buf_head;
+	for(i = 0 ; i < len ; i++){
+		*(data + i) = cb->in_buf[head  & (CB_IN_BUF_SIZE - 1)];
+		head ++;
 	}
-
-	len = len - len1;
-	memcpy(data, cb->in_buf + cb->buf_tail, len);
-	cb->buf_tail += len;
+	cb->buf_head = head;
+	cb->buf_len -= len;
 }

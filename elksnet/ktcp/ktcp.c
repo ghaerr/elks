@@ -17,6 +17,7 @@
 #include "timer.h"
 #include "mylib.h"
 #include "ip.h"
+#include "tcp.h"
 #include "netconf.h"
 
 extern int tcp_timeruse;
@@ -58,7 +59,7 @@ void ktcp_run()
     struct timeval timeint, *tv;
 
     while(1){
-    	if(tcp_timeruse > 0){
+    	if(tcp_timeruse > 0 || tcpcb_need_push > 0){
 	    	timeint.tv_sec  = 1;
     		timeint.tv_usec = 0;
     		tv = &timeint;
@@ -69,13 +70,11 @@ void ktcp_run()
         FD_ZERO(&fdset);
         FD_SET(sfd, &fdset);
         FD_SET(tcpdevfd, &fdset);
-
 		select(sfd > tcpdevfd ? sfd + 1 : tcpdevfd + 1, &fdset, NULL, NULL, tv);
 		
 		Now = timer_get_time();
 	
-		if(tcp_timeruse > 0)
-			tcp_update();
+		tcp_update();
 			
 		if(FD_ISSET(sfd, &fdset)){
 	    	slip_process();

@@ -21,6 +21,7 @@
 #define	TF_PSH	htons(8)
 #define	TF_ACK	htons(16)
 #define TF_URG	htons(32)
+#define TF_ALL (TF_FIN | TF_SYN | TF_RST | TF_PSH | TF_ACK | TF_URG)
 
 #define	TCP_DATAOFF(x)		( ((x)->flags & 0xf0) >> 2 )
 
@@ -65,9 +66,10 @@ struct iptcp_s {
 #define	TS_LAST_ACK		9
 #define	TS_TIME_WAIT	10
 
-#define CB_IN_BUF_SIZE	2048
-#define CB_BUF_USED(x)	(((x)->buf_head - (x)->buf_tail) & (CB_IN_BUF_SIZE-1))
-#define CB_BUF_SPACE(x)	((CB_IN_BUF_SIZE - CB_BUF_USED(x) - 1))
+#define CB_IN_BUF_SIZE	512
+#define CB_BUF_USED(x)	((x)->buf_len)
+#define CB_BUF_SPACE(x)	(CB_IN_BUF_SIZE - CB_BUF_USED((x)))
+#define CB_BUF_TAIL(x)	(((x)->buf_head + (x)->buf_len) % (CB_IN_BUF_SIZE - 1))
 
 struct tcpcb_s {
 	__u16	newsock;
@@ -87,7 +89,12 @@ struct tcpcb_s {
 	__u16	wait_data;
 	__u8	in_buf[CB_IN_BUF_SIZE];
 	__u16	buf_head;
+#if 0
 	__u16	buf_tail;
+#else
+	__u16	buf_len;
+#endif
+	short	bytes_to_push;
 
 	__u32	send_una;
 	__u32	send_nxt;
@@ -131,6 +138,7 @@ struct	tcp_retrans_list_s {
 };
 
 int tcp_timeruse;
+int tcpcb_need_push;
 
 #define TCP_RTT_ALPHA		90
 #define TCP_RETRANS_MAXMEM	8192*2

@@ -18,7 +18,7 @@
 
 void netconf_init()
 {
- 	
+ 
 }
 
 static struct stat_request_s sreq;

@@ -62,8 +62,15 @@ struct tcpcb_s *cb;
 {
 	cb->flags = TF_RST;
 	cb->datalen = 0;
-	tcp_output(cb);
-		
+	tcp_output(cb);	
+}
+
+void tcp_send_ack(cb)
+struct tcpcb_s *cb;
+{
+	cb->flags = TF_ACK;
+	cb->datalen = 0;
+	tcp_output(cb);	
 }
 
 void tcp_connect(cb)
@@ -195,19 +202,23 @@ struct tcpcb_s *cb;
 	__u8 *data;
 	
 	h = iptcp->tcph;
-	
+		
 	cb->rcv_wnd = ntohs(h->window);	
 	
 	datasize = iptcp->tcplen - TCP_DATAOFF(h);
 	
-	if(datasize != 0){	
+	if(datasize != 0){
 		/* Process the data */
 		data = (__u8 *)h + TCP_DATAOFF(h);
 		/* FIXME : check if it fits */
 		if(datasize > CB_BUF_SPACE(cb))return;
 		tcpcb_buf_write(cb, data, datasize);	
 	
-		tcpdev_checkread(cb, h->flags & TF_PSH ? 1 : 0);
+		if(h->flags & TF_PSH || CB_BUF_SPACE(cb) == 0){
+			if(cb->bytes_to_push <=0)tcpcb_need_push++;
+			cb->bytes_to_push = CB_BUF_USED(cb);
+		}
+		tcpdev_checkread(cb);
 	}
 	
 	if(h->flags & TF_ACK){
@@ -215,7 +226,6 @@ struct tcpcb_s *cb;
 		if(SEQ_LT(cb->send_una, acknum))
 			cb->send_una = acknum;
 	}
-	
 	if(h->flags & TF_RST){
 		/* TODO: Check seqnum for security */
 		rmv_all_retrans(cb);
@@ -227,13 +237,12 @@ struct tcpcb_s *cb;
 		}
 		return;
 	}
-	
 	if(h->flags & TF_FIN){
 		cb->rcv_nxt ++;
 		cb->state = TS_CLOSE_WAIT;
 	}
 	
-	if(datasize == 0 && ((h->flags & 0xff00) == TF_ACK))
+	if(datasize == 0 && ((h->flags & TF_ALL) == TF_ACK))
 		return;
 		
 	cb->rcv_nxt += datasize;
@@ -263,7 +272,7 @@ struct tcpcb_s *cb;
 	cb->state = TS_ESTABLISHED;
 	tcpdev_checkaccept(cb);
 	
-	tcp_established(iptcp, cb);	
+	tcp_established(iptcp, cb);
 }
 
 void tcp_fin_wait_1(iptcp, cb)
@@ -371,6 +380,9 @@ void tcp_update()
 	if(cbs_in_time_wait > 0){
 		tcpcb_expire_time_wait();
 	}
+	if(tcpcb_need_push > 0){
+		tcpcb_push_data();
+	}
 }
 
 void tcp_process(iph)
@@ -386,8 +398,6 @@ struct iphdr_s *iph;
 	iptcp.iph = iph;
 	iptcp.tcph = tcph;
 	iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_IHL(iph);
-	
-/*	tcp_print(&iptcp);*/
 	
 	if(tcp_chksum(&iptcp) != 0){
 		printf("TCP check sum failed\n");
@@ -405,8 +415,11 @@ struct iphdr_s *iph;
 	cb = &cbnode->tcpcb;
 	
 	if(cb->state != TS_LISTEN && cb->state != TS_SYN_SENT && cb->state != TS_SYN_RECEIVED){	
-		if(cb->rcv_nxt != ntohl(tcph->seqnum))
-			return;	/* for now
+		if(cb->rcv_nxt != ntohl(tcph->seqnum)){
+			if(cb->rcv_nxt != ntohl(tcph->seqnum + 1))tcp_send_ack(cb);
+			return;
+		}	
+			/* for now
 					 * TODO queue up datagramms not in
 					 * order and process them in order
 				 	*/
