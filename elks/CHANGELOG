@@ -12,6 +12,10 @@ Thu Sep 30 10:34 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed unbalanced map_buffer calls in minix_add_entry().
 
+Thu Sep 30 05:24 UTC 1999   Thomas McWilliams  <tgm@netcom.com>
+
+	* Changed gotos to for() loop in map_buffer().
+
 Fri Sep 24 16:24 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixes and code cleanups in fs code by Thomas McWilliams.
