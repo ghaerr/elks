@@ -1,12 +1,7 @@
 #
 # 286pmode extender configuration
 #
-mainmenu_option next_comment
-comment '286 protected mode support'
-
 bool '286 protected mode support' CONFIG_286PMODE
 if [ "$CONFIG_286PMODE" = "y" ]; then
-  bool '  support for > 16M ram on 386' CONFIG_386RAM
+    bool '  Support for >16M of RAM on i386 and later' CONFIG_386RAM
 fi
-
-endmenu

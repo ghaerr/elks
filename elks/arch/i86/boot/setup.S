@@ -585,7 +585,7 @@ chk486:	cli
 	or	al,al
 	jnz	is486
 #endif
-#ifdef(ROM_IS386)
+#ifdef(CONFIG_ROM_IS386)
         mov cl,#7
 	lea	si,p80386
 	br	getfpu
@@ -597,7 +597,7 @@ tmp86:	br	is8086
 tmp286:	br	is80286
 #endif
 
-#if !defined(CONFIG_ROMCODE) || defined(ROM_IS486)
+#if !defined(CONFIG_ROMCODE) || defined(CONFIG_ROM_IS486)
 is486:	! Now check whether this processor knows the CPU-id instruction
 	!
 	! This does not work. The code seems to destroy some other memory
@@ -705,7 +705,7 @@ old486:	xor	cl,cl
 	jmp	getfpu
 #endif
 
-#if !defined(CONFIG_ROMCODE) || defined(ROM_IS86)
+#if !defined(CONFIG_ROMCODE) || defined(CONFIG_ROM_IS86)
 is8086:
 	mov	al,#0xff
 	mov	cl,#0x21	! 80188/86 uses only the five lower
@@ -745,7 +745,7 @@ isv20:	mov	cl,#2
 	lea	si,pv20
         jmp     getfpu
 #endif
-#if !defined (CONFIG_ROMCODE) || defined(ROM_IS286)
+#if !defined (CONFIG_ROMCODE) || defined(CONFIG_ROM_IS286)
 is80286:mov	cl,#6
 	lea	si,p80286
 !	jmp	getfpu
@@ -829,7 +829,7 @@ con_cp2:
 	loopnz	con_cp2
 	ret
 
-#if !defined(CONFIG_ROMCODE) || defined(ROM_IS86)
+#if !defined(CONFIG_ROMCODE) || defined(CONFIG_ROM_IS86)
 !
 ! Determine the length of the prefetch queue. 8088/188/v20 has
 ! a 4 bytes queue, 8086/186/v30 has 6 bytes.
@@ -1053,7 +1053,7 @@ no_hd1:	ret
 !
 ! The processor name must not be longer than 15 characters!
 !
-#if !defined(CONFIG_ROMCODE) || defined(ROM_IS86)
+#if !defined(CONFIG_ROMCODE) || defined(CONFIG_ROM_IS86)
 p8088:	.ascii "8088"
 	db 0
 p8086:	.ascii "8086"
@@ -1067,15 +1067,15 @@ p80188:	.ascii "80188"
 p80186:	.ascii "80186"
 	db 0
 #endif
-#if !defined(CONFIG_ROMCODE) || defined(ROM_IS286)
+#if !defined(CONFIG_ROMCODE) || defined(CONFIG_ROM_IS286)
 p80286:	.ascii "80286"
 	db 0
 #endif
-#if !defined(CONFIG_ROMCODE) || defined(ROM_IS386)
+#if !defined(CONFIG_ROMCODE) || defined(CONFIG_ROM_IS386)
 p80386:	.ascii "80386"
 	db 0
 #endif
-#if !defined(CONFIG_ROMCODE) || defined(ROM_IS486)
+#if !defined(CONFIG_ROMCODE) || defined(CONFIG_ROM_IS486)
 p80486:	.ascii "80486 no CPUID"
 	db 0
 pvm86:	.ascii "VM86"
@@ -1109,7 +1109,7 @@ fpu_t:	.word f_none
 !
 ! Known 486 CPUs
 !
-#if !defined(CONFIG_ROMCODE) || defined(ROM_IS486)
+#if !defined(CONFIG_ROMCODE) || defined(CONFIG_ROM_IS486)
 m486_0:	.ascii "486 model 0"
 	db 0
 m486_1:	.ascii "486DX"

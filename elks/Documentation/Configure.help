@@ -1,20 +1,25 @@
 # Linux ELKS Kernel Configuration
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
 # General Setup
 # ~~~~~~~~~~~~~
 
 Auto detect PC architecture
-CONFIG_ARCH_AUTO
-  Use this option to specify the architecture the kernel will 
-  run on AT (PC/AT), XT (PC/XT) or auto detect at boot time (Auto).
+CONFIG_ARCH_PC_AUTO
+  Use this option to specify the architecture the kernel will run on.
+  The supported options are:
 
-Support AT architecture only
-CONFIG_AT
-  Use this option to build a smaller kernel that only runs on AT type systems.
+	Auto	Automatically detect at boot time.
 
-Support XT architecture only
-CONFIG_XT
-  Use this option to build a smaller kernel that only runs on XT type systems.
+	MCA	Computers based on IBM's MicroChannel Architecture.
+
+	PC/XT	Computers based on the 8088 or 8086 processor that are
+		compatible with the IBM PC/XT computer.
+
+	PC/AT	Computers based on the 80286 processor that are
+     		compatible with the IBM PC/AT computer.
+
+	SIBO	Unknown - please document this choice.
 
 Support loadable modules
 CONFIG_MODULE
@@ -30,48 +35,51 @@ CONFIG_SHLIB
 Switch COMPAQ DeskPro into fast mode
 CONFIG_COMPAQ_FAST
   Saying yes includes code to switch COMPAQ Deskpro machines that
-  default to slow speed, into fast speed.
+  default to slow speed to fast speed.
 
-# ROM-CODE kernel-loader
-#~~~~~~~~~~~~~~~~~~~~~~~
+# ROM code kernel loader
+# ~~~~~~~~~~~~~~~~~~~~~~
 
 Build kernel as ROM-bootable
 CONFIG_ROMCODE
-  Saying yes will allow the kernel to be bootable from ROM.
+  Saying yes will allow the kernel to be programmed into an EPROM for
+  use as a replacement boot ROM.
 
-Select processor architecture
-ROM_IS86
-  Select the target CPU (default 8086,80186).
+Select the processor architecture
+CONFIG_ROM_IS86
+  Select the target processor for which this kernel image is to be
+  built. The available options are:
 
-Support 286
-ROM_IS286
-  Build for the 286 CPU
+	8086	The 8086 and 8088 processors.		(Default)
 
-Support 386
-ROM_IS386
-  Build for the 386 CPU
+	80186	The 80186 and 80188 processors.
 
-Support 486 or higher
-ROM_IS486
-  Build for the 486 or higher CPU's
+	80286	The 80286 processor.
 
-System has no FPU
+	80386	The 80386 processor.
+
+	80486+	The 80486 and later processors.
+
+System has no maths coprocessor.
 ROM_NOFPU
-  Saying yes will compile the code without FPU support.
+  Saying yes will compile the code for use in systems without a
+  maths coprocessor.
 
-System has no keyboardbios (if no BIOS-Int 16h)
+System has no keyboard BIOS support.
 ROM_NOKBDBIOS
   Saying yes will compile the code for systems that do not support
-  Int-16 in the BIOS. 
+  the Keyboard BIOS interrupt 16.
 
-System has no VGA-adapter
+System has no VGA video adapter
 ROM_NOVGA
-  Saying yes will compile the code without VGA compatability,
-   but will still allow EGA, CGA etc.
+  Saying yes will compile the code without support for VGA video
+  adapters, but will still allow use on systems with MDA, CGA or
+  EGA adapters.
 
 System has no PS/2 pointing device
 ROM_NOPS2MOUSE
-  Saying yes will compile the code without PS/2 pointing device support.
+  Saying yes will compile the code without PS/2 pointing device
+  support.
 
 System has no hard disk (in 0.76 should be "y")
 ROM_NOHDD
@@ -93,11 +101,13 @@ ROM_EXTMEMSIZE
 
 Get fontinfo via CRT-BIOS (40h:85h)
 __ROM_VIDEO_HOC
-  Saying yes will get the System font info using the CRT-BIOS at 40h:85h.
+  Saying yes will get the System font info using the CRT-BIOS at
+  40h:85h.
 
 High of character in lines
 ROM_VIDEO_HIGHOFCHARACTER
-  Specify the maximan height of a charactor on the display in pixels.
+  Specify the maximan height of a charactor on the display in
+  pixels.
 
 Lines per page
 ROM_HIGH_OF_CRT
