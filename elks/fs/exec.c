@@ -270,18 +270,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /*
      *      Wipe the BSS.
      */
-
-    ptr = ((char *) mh.dseg) + stack_top;
-    count = mh.bseg;
-    while (count) {
-	pokeb(dseg, ptr++, 0);
-	count--;
-    }
-    /* fmemset should work, but doesn't */
-
-#if 0
-    fmemset(ptr, dseg, 0, count);
-#endif
+    fmemset(((char *) mh.dseg) + stack_top, dseg, 0, mh.bseg);
 
     /*
      *      Copy the stack

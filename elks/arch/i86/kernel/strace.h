@@ -88,7 +88,7 @@ struct syscall_info elks_table[] = {
     { 45, "sys_dup2",            0, { P_NONE,     P_NONE,     P_NONE      } },
     { 46, "sys_setgid",          0, { P_NONE,     P_NONE,     P_NONE      } },
     { 47, "sys_getgid",          0, { P_NONE,     P_NONE,     P_NONE      } },
-    { 48, "sys_signal",          0, { P_NONE,     P_NONE,     P_NONE      } },
+    { 48, "sys_signal",          2, { P_USHORT,   P_PDATA,    P_NONE      } },
     { 49, "sys_getinfo",         0, { P_NONE,     P_NONE,     P_NONE      } },
     { 50, "sys_fcntl",           0, { P_NONE,     P_NONE,     P_NONE      } },
     { 51, "sys_acct",            0, { P_NONE,     P_NONE,     P_NONE      } },
