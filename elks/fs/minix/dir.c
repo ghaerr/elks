@@ -46,22 +46,6 @@ static struct file_operations minix_dir_operations = {
  */
 struct inode_operations minix_dir_inode_operations = {
 	&minix_dir_operations,	/* default directory file-ops */
-#ifdef CONFIG_FS_RO
-	NULL,			/* create */
-	minix_lookup,		/* lookup */
-	NULL,			/* link */
-	NULL,			/* unlink */
-	NULL,			/* symlink */
-	NULL,			/* mkdir */
-	NULL,			/* rmdir */
-	NULL,			/* mknod */
-	NULL,			/* readlink */
-	NULL,			/* follow_link */
-#ifdef BLOAT_FS
-	NULL,			/* bmap */
-#endif
-	NULL,			/* truncate */
-#else /* CONFIG_FS_RO */
 	minix_create,		/* create */
 	minix_lookup,		/* lookup */
 	minix_link,		/* link */
@@ -76,7 +60,6 @@ struct inode_operations minix_dir_inode_operations = {
 	NULL,			/* bmap */
 #endif
 	minix_truncate,		/* truncate */
-#endif /* CONFIG_FS_RO */
 #ifdef BLOAT_FS
 	NULL			/* permission */
 #endif
