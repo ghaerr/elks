@@ -128,7 +128,7 @@ block_t minix_new_block(register struct super_block *sb)
 	unmap_buffer(bh);
 	goto repeat;
     }
-    j == (block_t) find_first_zero_bit(bh->b_data, 8192);
+    j = (block_t) find_first_zero_bit(bh->b_data, 8192);
     if (j)
 	panic("still zero bit!%d\n", j);
     unmap_buffer(bh);
