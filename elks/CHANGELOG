@@ -39,6 +39,9 @@ Sat May 25 21:30:35 BST 2002	Riley Williams <Riley@Williams.Name>
 	  configuration parameters are now in a separate tools.h header
 	  file, and both wrt_disk.c and file.s make use of the values in
 	  this header file to achieve the required task.
+	* Made wrt_disk.img use an unsigned long int for the address var
+	  rather than the two separate unsigned short ints that were in
+	  use previously.
 
 Wed May 15 16:00:08 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
