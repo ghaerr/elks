@@ -185,9 +185,9 @@ static void tcpdev_listen()
 	struct tdb_listen *db;
    	struct tcpcb_list_s *n;	
 
-    db = sbuf;
+	db = sbuf;
 
-    n = tcpcb_find_by_sock(db->sock);
+	n = tcpcb_find_by_sock(db->sock);
 	if(!n || n->tcpcb.state != TS_CLOSED){
 		retval_to_sock(db->sock,-EINVAL);
 		return;
@@ -206,8 +206,8 @@ void tcpdev_read()
 	register int bcc_bug;
 	__u16  sock;
    	
-    db = sbuf;
-    sock = db->sock;
+	db = sbuf;
+	sock = db->sock;
 	n = tcpcb_find_by_sock(sock);
 	if(!n){
 		printf("KTCP Panic in read\n");
@@ -223,7 +223,7 @@ void tcpdev_read()
 	}
 
 	data_avail = CB_BUF_USED(cb);
-
+	
 	if(data_avail == 0){
 		if(db->nonblock){
 			retval_to_sock(sock, -EAGAIN);
@@ -257,7 +257,7 @@ char push;
 	ret_data = sbuf;	
 	data_avail = CB_BUF_USED(cb);
 	
-	if(cb->wait_data == 0 || (cb->wait_data > data_avail && !push)){
+	if(cb->wait_data == 0){
 		/* Update the avail_data in the kernel socket (for select) */
 		sock = cb->sock;
 		ret_data->type = TDT_AVAIL_DATA;
@@ -268,11 +268,10 @@ char push;
 		return;	
 	}
 	
-/*	if(cb->wait_data > data_avail && !push)
-		return;*/
+	if(cb->wait_data > data_avail && !push)
+		return;
 		
 /*	data_avail = cb->wait_data < data_avail ? cb->wait_data : data_avail;*/
-	
 	ret_data->type = 0;
 	ret_data->ret_value = data_avail;
 	ret_data->sock = cb->sock;

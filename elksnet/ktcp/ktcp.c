@@ -58,14 +58,20 @@ void ktcp_run()
 		if(tcp_timeruse > 0)		
 			tcp_retrans();
 	
-/*		   tcpcb_printall();*/
+		/*   tcpcb_printall();*/
     }
 }
 
-int main()
+int main(argc, argv)
+int argc;
+char **argv;
 {
-
-	local_ip = 0x6401a8c0; /* Network order */
+/*
+    if(argc != 3){
+	printf("Syntax :\n    %s local_ip slip_tty\n",argv[0]);
+    }
+*/
+    local_ip = 0x6401a8c0; /* Network order */
     if((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0){
 		exit(1);
     }

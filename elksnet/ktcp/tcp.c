@@ -404,12 +404,12 @@ struct iphdr_s *iph;
 	
 	cb = &cbnode->tcpcb;
 	
-	if(!cb->state & (TS_LISTEN|TS_SYN_SENT|TS_SYN_RECEIVED)){
+	if(cb->state != TS_LISTEN && cb->state != TS_SYN_SENT && cb->state != TS_SYN_RECEIVED){	
 		if(cb->rcv_nxt != ntohl(tcph->seqnum))
 			return;	/* for now
 					 * TODO queue up datagramms not in
 					 * order and process them in order
-					 */
+				 	*/
 	}
 	
 	switch (cb->state) {
