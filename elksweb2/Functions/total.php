@@ -83,7 +83,7 @@
 		include("Functions/data.php");
 
 		$data=$langitems[$lang]["menu"];
-		$out="<div align=\"center\"><center><p></p>".
+		$out="<div align=\"center\"><center><p>".
 		     "<a href=\"CHANGELOG.txt\">$data[0]</a> | ".
 		     "<a href=\"index.php?lang=$lang&+item=".str_replace(" ","",$data[1])."\">$data[1]</a> | ".
 		     "<a href=\"index.php?lang=$lang&+item=".str_replace(" ","",$data[2])."\">$data[2]</a> | ".
@@ -93,7 +93,7 @@
 		     "<a href=\"index.php?lang=$lang&+item=".str_replace(" ","",$data[6])."\">$data[6]</a> | ".
 		     "<a href=\"index.php?lang=$lang&+item=".str_replace(" ","",$data[7])."\">$data[7]</a> | ".
 			 "<a href=\"index.php?lang=$lang&+item=".str_replace(" ","",$data[8])."\">$data[8]</a>".
-		     "<hr width=\"90%\"></center></div>";
+		     "<hr width=\"90%\"></center></p></div>";
 		return $out;
 	}
 
