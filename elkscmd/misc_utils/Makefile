@@ -34,7 +34,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS=ed tar
+PRGS=ed tar compress
 
 all: $(PRGS)
 

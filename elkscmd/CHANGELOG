@@ -1,0 +1,25 @@
+This file is used to record changes made to the CVS database. Please add 
+yourself to the top of this file before committing any changes. Please use 
+the header format provided for each entry, noting that the text on each line 
+should not be longer than the lines of dashes.
+
+Miguel Bolanos.
+
+Contributor			Email
+-----------------------------------------------------------------
+
+Claudio Matsuoka		claudio@conectiva.com
+Miguel Bolanos			mike@linuxlabs.com
+Tommy McCabe			rocketjet314@yahoo.com
+
+-----------------------------------------------------------------
+
+Tue Jun 01 20:46:36 CST 2004	Claudio Matsuoka <claudio@conectiva.com>
+
+	* Ported ncompress, 12 bit compress atm.
+
+Tue Jun 01 09:23:15 CST	2004	Miguel Bolanos <mike@linuxlabs.com>
+
+	* Applied and Fixed some patches for bc and sys_utils.
+	* Created CHANGELOG file.
+
