@@ -429,6 +429,7 @@ _irqit:
 !
 !	Save all registers
 !
+
 	cli		! Might not be disabled on an exception
 	push	ds
 	push	es
@@ -438,6 +439,7 @@ _irqit:
 	push	si
 	push	di
 	push	bp
+		
 !
 !	Recover segments
 !
@@ -674,7 +676,7 @@ noschedpop:
 !	FIXME: should call the bios only every fifth event.
 !
 irq0_bios:
-        pop     ds  
+    pop     ds  
 	pop	ax           ;now the stack empty
 
 ;------------------------------------------------
@@ -689,18 +691,18 @@ irq0_bios:
 
 label1:
 
-        sub sp,#4                     ;space for retf
-        push bp
-        mov bp,sp 
+	sub sp,#4                     ;space for retf
+	push bp
+	mov bp,sp 
 
 	push	bx
 	push    ds                 
 #ifdef CONFIG_ROMCODE
-        mov bx,#CONFIG_ROM_IRQ_DATA
+	mov bx,#CONFIG_ROM_IRQ_DATA
 #else
-        mov bx,cs 
+	mov bx,cs 
 #endif
-        mov ds,bx
+	mov ds,bx
 	mov	bx,bios_call_cnt
 	inc	bx
 	cmp	bx,#5
@@ -708,24 +710,23 @@ label1:
 
 	xor	bx,bx
 	mov	bios_call_cnt,bx
-        mov bx, seg_stashed_irq0
+	mov bx, seg_stashed_irq0
 	mov	[bp+4], bx
-        mov bx, off_stashed_irq0
-        mov 	[bp+2], bx
+	mov bx, off_stashed_irq0
+	mov [bp+2], bx
 
-        pop     ds
+	pop ds
 	pop	bx       
-        pop bp
+	pop bp
 	retf                          
 
 no_bios_call:                          ;sp-8 
 	mov	bios_call_cnt,bx
-        pop	ds
+	pop	ds
 	pop	bx                     ;sp-4              
-        pop     bp
-        add sp,#4
+	pop bp
+	add sp,#4
 	iret
-
 
 	.data
 .globl	_can_tswitch

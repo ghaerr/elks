@@ -71,8 +71,10 @@ void start_kernel(void)
      * We are now the idle task. We won't run unless no other process can run.
      */
 
-    while (1)
-	schedule();
+    while (1){
+        schedule();
+	}
+
 }
 
 static char args[] = "\0\0\0\0\0\0/bin/init\0\0";

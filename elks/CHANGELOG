@@ -34,10 +34,25 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sat Oct 26 12:59:19 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Signal check when returing from a task switch, so that
+	  processes that don't make system calls can get signals.
+	* Fixed scheduler not to task switch to the idle task then
+	  there are other processes running. As a result now we have
+	  much less task switches.
+
+Fri Oct 25 16:58:14 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Removed all the OLD_SCHED code
+	* Fixed add_timer() in sched.c to always re-enable interrupts
+
 Wed Oct 23 10:20:10 EEST 2202	Harry Kalogirou <harkal@gmx.net>
 
 	* Applied fix for the assembly checksum routine in ip.c.
 	  Bug found and solved by Jay Barr.
+
+-------------------------------------------------------------------------------
 
 Sat Aug 10 23:40:20 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 

@@ -93,14 +93,6 @@ struct task_struct {
     jiff_t			last_running;
 #endif
 
-#ifdef CONFIG_OLD_SCHED
-    __uint			t_count;	/* priority scheduling elements */
-    __uint			t_priority;	/* priority scheduling elements */
-    __s32			counter;	/* Time counter (unused so far) */
-    struct task_struct		*next_task;
-    struct task_struct		*prev_task;
-#endif
-
 #ifdef CONFIG_SUPPLEMENTARY_GROUPS
     gid_t			groups[NGROUPS];
 #endif

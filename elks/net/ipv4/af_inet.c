@@ -38,16 +38,16 @@ int inet_process_tcpdev(char *buf, int len)
 
     switch (r->type) {
     case TDT_CHG_STATE:
-	sock->state = (unsigned char) r->ret_value;
-	tcpdev_clear_data_avail();
-	break;
+        sock->state = (unsigned char) r->ret_value;
+        tcpdev_clear_data_avail();
+        break;
     case TDT_AVAIL_DATA:
-	down(&sock->sem);
-	sock->avail_data = r->ret_value;
-	up(&sock->sem);
-	tcpdev_clear_data_avail();
+        down(&sock->sem);
+        sock->avail_data = r->ret_value;
+        up(&sock->sem);
+        tcpdev_clear_data_avail();
     default:
-	wake_up(sock->wait);
+        wake_up(sock->wait);
     }
 
     return 1;
@@ -58,7 +58,7 @@ static int inet_create(struct socket *sock, int protocol)
     debug1("inet_create(sock: 0x%x)\n", sock);
 
     if (protocol != 0)
-	return -EINVAL;
+        return -EINVAL;
 
     return 0;
 }
@@ -79,7 +79,7 @@ static int inet_release(struct socket *sock, struct socket *peer)
     cmd.sock = sock;
     ret = tcpdev_inetwrite(&cmd, sizeof(struct tdb_release));
     if (ret < 0)
-	return ret;
+        return ret;
     return 0;
 }
 
@@ -92,7 +92,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 
     debug1("inet_bind(sock: 0x%x)\n", sock);
     if (sockaddr_len <= 0 || sockaddr_len > sizeof(struct sockaddr_in))
-	return -EINVAL;
+        return -EINVAL;
 
     /* TODO : Check if the user has permision to bind the port */
 
@@ -104,13 +104,13 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 
     /* Sleep until tcpdev has news */
     while (bufin_sem == 0)
-	interruptible_sleep_on(sock->wait);
+        interruptible_sleep_on(sock->wait);
 
     ret_data = tdin_buf;
     ret = ret_data->ret_value;
     tcpdev_clear_data_avail();
     if (ret < 0)
-	return ret;
+        return ret;
 
     return 0;
 }
@@ -127,17 +127,17 @@ static int inet_connect(register struct socket *sock,
     debug1("inet_connect(sock: 0x%x)\n", sock);
 
     if (sockaddr_len <= 0 || sockaddr_len > sizeof(struct sockaddr_in))
-	return -EINVAL;
+        return -EINVAL;
 
     sockin = uservaddr;
     if (sockin->sin_family != AF_INET)
-	return -EINVAL;
+        return -EINVAL;
 
     if (sock->state == SS_CONNECTING)
-	return -EINPROGRESS;
+        return -EINPROGRESS;
 
     if (sock->state == SS_CONNECTED)
-	return -EISCONN;
+        return -EISCONN;
 
     cmd.cmd = TDC_CONNECT;
     cmd.sock = sock;
@@ -147,14 +147,14 @@ static int inet_connect(register struct socket *sock,
 
     /* Sleep until tcpdev has news */
     while (bufin_sem == 0)
-	interruptible_sleep_on(sock->wait);
+        interruptible_sleep_on(sock->wait);
 
     r = tdin_buf;
     ret = r->ret_value;
     tcpdev_clear_data_avail();
 
     if (ret < 0) {
-	return ret;
+        return ret;
     }
 
     sock->state = SS_CONNECTED;
@@ -183,9 +183,9 @@ static int inet_listen(register struct socket *sock, int backlog)
 
     /* Sleep until tcpdev has news */
     while (bufin_sem == 0) {
-	interruptible_sleep_on(sock->wait);
-	if (current->signal)
-	    return -ERESTARTSYS;
+        interruptible_sleep_on(sock->wait);
+        if (current->signal)
+            return -ERESTARTSYS;
     }
 
     ret_data = tdin_buf;
@@ -212,12 +212,12 @@ static int inet_accept(register struct socket *sock,
 
     /* Sleep until tcpdev has news */
     while (bufin_sem == 0) {
-	sock->flags |= SO_WAITDATA;
-	interruptible_sleep_on(sock->wait);
-	sock->flags &= ~SO_WAITDATA;
-	if (current->signal) {
-	    return -ERESTARTSYS;
-	}
+        sock->flags |= SO_WAITDATA;
+        interruptible_sleep_on(sock->wait);
+        sock->flags &= ~SO_WAITDATA;
+        if (current->signal) {
+            return -ERESTARTSYS;
+	    }
     }
 
     ret_data = tdin_buf;
@@ -225,7 +225,7 @@ static int inet_accept(register struct socket *sock,
     tcpdev_clear_data_avail();
 
     if (ret < 0)
-	return ret;
+        return ret;
 
     newsock->state = SS_CONNECTED;
 
@@ -259,7 +259,7 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
 
     /* Sleep until tcpdev has news and we have a lock on the buffer */
     while (bufin_sem == 0)
-	interruptible_sleep_on(sock->wait);
+        interruptible_sleep_on(sock->wait);
 
     down(&sock->sem);
 
@@ -267,8 +267,8 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     ret = r->ret_value;
 
     if (ret > 0) {
-	memcpy_tofs(ubuf, &r->data, (size_t) ret);
-	sock->avail_data = 0;
+        memcpy_tofs(ubuf, &r->data, (size_t) ret);
+        sock->avail_data = 0;
     }
 
     up(&sock->sem);
@@ -288,13 +288,13 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
     debug3("inet_write(socket: 0x%x size:%d nonblock: %d)\n", sock, size,
 	   nonblock);
     if (size <= 0)
-	return 0;
+        return 0;
 
     if (sock->state == SS_DISCONNECTING)
-	return -EPIPE;
+        return -EPIPE;
 
     if (sock->state != SS_CONNECTED)
-	return -EINVAL;
+        return -EINVAL;
 
     cmd.cmd = TDC_WRITE;
     cmd.sock = sock;
@@ -303,27 +303,27 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
     todo = size;
     while (todo) {
-	cmd.size = todo > TDB_WRITE_MAX ? TDB_WRITE_MAX : todo;
+        cmd.size = todo > TDB_WRITE_MAX ? TDB_WRITE_MAX : todo;
 
-	memcpy_fromfs(cmd.data, ubuf + size - todo, (size_t) cmd.size);
-	tcpdev_inetwrite(&cmd, sizeof(struct tdb_write));
-	todo -= cmd.size;
+        memcpy_fromfs(cmd.data, ubuf + size - todo, (size_t) cmd.size);
+        tcpdev_inetwrite(&cmd, sizeof(struct tdb_write));
+        todo -= cmd.size;
 
 	/* Sleep until tcpdev has news and we have a lock on the buffer */
-	while (bufin_sem == 0) {
-	    interruptible_sleep_on(sock->wait);
-	}
+        while (bufin_sem == 0) {
+            interruptible_sleep_on(sock->wait);
+	    }
 
-	r = tdin_buf;
-	ret = r->ret_value;
-	tcpdev_clear_data_avail();
-	if (ret < 0) {
-	    if (ret == -ERESTARTSYS) {
-		schedule();
-		todo += cmd.size;
-	    } else
-		return ret;
-	}
+        r = tdin_buf;
+        ret = r->ret_value;
+	    tcpdev_clear_data_avail();
+        if (ret < 0) {
+            if (ret == -ERESTARTSYS) {
+                schedule();
+                todo += cmd.size;
+            } else
+                return ret;
+        }
     }
 
     return size;
@@ -335,12 +335,12 @@ static int inet_select(register struct socket *sock,
 {
     debug("inet_select\n");
     if (sel_type == SEL_IN) {
-	if (sock->avail_data || sock->state != SS_CONNECTED)
-	    return 1;
-	else {
-	    select_wait(sock->wait);
-	    return 0;
-	}
+        if (sock->avail_data || sock->state != SS_CONNECTED)
+            return 1;
+        else {
+            select_wait(sock->wait);
+            return 0;
+        }
     } else if (sel_type == SEL_OUT)
 	return 1;
 }
@@ -393,7 +393,7 @@ static int inet_recv(struct socket *sock, void *buff, int len, int nonblock,
 		     unsigned int flags)
 {
     if (flags != 0)
-	return -EINVAL;
+        return -EINVAL;
 
     return inet_read(sock, (char *) buff, len, nonblock);
 }

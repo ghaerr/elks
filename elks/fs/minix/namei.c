@@ -559,10 +559,6 @@ int minix_unlink(struct inode *dir, char *name, size_t len)
 	iput(inode);
 	unmap_brelse(bh);
 
-#ifdef OLD_SCHED
-	current->counter = 0;
-#endif
-
 	schedule();
 	goto repeat;
     }

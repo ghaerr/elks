@@ -576,9 +576,6 @@ int elksfs_unlink(struct inode *dir, char *name, size_t len)
     if (de->inode != inode->i_ino) {
 	iput(inode);
 	unmap_brelse(bh);
-#ifdef CONFIG_OLD_SCHED
-	current->counter = 0;
-#endif
 	schedule();
 	goto repeat;
     }

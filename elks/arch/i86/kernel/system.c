@@ -50,21 +50,7 @@ void setup_arch(seg_t *start, seg_t *end)
     taskp = &task[0];
      taskp->state = TASK_RUNNING;
 
-#ifdef OLD_SCHED
-
-    taskp->t_count = 0;
-    taskp->t_priority = 0;	/* FIXME why is this here? */
-
-#endif
-
     taskp->t_regs.ksp = ((__u16) taskp->t_kstack) + KSTACK_BYTES;
-
-#ifdef OLD_SCHED
-
-    taskp->t_priority = 10;
-    taskp->t_count = 0;
-
-#endif
 
     taskp->t_regs.cs = get_cs();
     taskp->t_regs.ds = get_ds();	/* Run in kernel space */

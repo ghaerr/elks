@@ -191,9 +191,6 @@ void minix_truncate(register struct inode *inode)
 	retry |= V1_trunc_dindirect(inode, 7 + 512, &inode->i_zone[8]);
 	if (!retry)
 	    break;
-#ifdef OLD_SCHED
-	current->counter = 0;
-#endif
 	schedule();
     }
     inode->i_mtime = inode->i_ctime = CURRENT_TIME;

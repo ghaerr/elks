@@ -189,9 +189,6 @@ void elksfs_truncate(register struct inode *inode)
 	      | V1_trunc_indirect(inode, 7, &inode->i_zone[7])
 	      | V1_trunc_dindirect(inode, 7 + 512, &inode->i_zone[8]);
 	if (retry) {
-#ifdef CONFIG_OLD_SCHED
-	    current->counter = 0;
-#endif
 	    schedule();
 	}
     }

@@ -402,16 +402,7 @@ void kfork_proc(register struct task_struct *t,char *addr)
     t->state = TASK_UNINTERRUPTIBLE;
     t->pid = get_pid();
 
-#ifdef OLD_SCHED
-
-    t->t_priority = 10;
-    t->prev_run = t->next_run = t->next_task = t->prev_task = NULL;
-
-#else
-
     t->prev_run = t->next_run = NULL;
-
-#endif
 
     t->t_kstackm = KSTACK_MAGIC;
     wake_up_process(t);
