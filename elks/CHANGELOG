@@ -26,13 +26,35 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-12 Jul 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-13 Jul 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-16 Jul 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Tue Jul 16 12:00:00 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Converted various '#ifdef DEBUG / printk() / #endif' blocks
+	  into debug() blocks, simplifying code layout. Also mapped some
+	  "#if 0 / printk() / #endif" blocks to debug() blocks.
+	* Corrected calculation of hard drive size.
+	* Finished removing the "Roor location" menu by removing all of
+	  the relevant configuration variables from the help system.
+	* Rationalised configuration variables. The compiler will now set
+	  the root flags to indicate that the root partition is mounted
+	  read-only by default, the same as Linux does. In addition, some
+	  configuration variables that were simply aliases of others have
+	  been replaced by the variables they are aliases of. All of the
+	  remaining configuration variables actually occur within the
+	  configuration system, and all except three SiBO configuration
+	  variables also occur within the configuration help system.
+	* Standardised syntax of return statements throughout source.
+	* Updated script to list configuration variables and map how many
+	  of each typo of files each variable occurs with.
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop.
 
 Sat Jul 13 19:56:01 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 

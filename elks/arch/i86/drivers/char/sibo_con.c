@@ -128,7 +128,7 @@ void WriteChar(register Console * C, char c)
 
     case '\r':
 
-#ifdef CONFIG_CONSOLE_ECHO
+#ifdef CONFIG_SIBO_CONSOLE_ECHO
 
 	send_byte('\n');
 

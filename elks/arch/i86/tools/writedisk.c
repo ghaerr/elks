@@ -57,7 +57,8 @@ int main(void)
     LCD_WriteChar('e');
     LCD_WriteChar('.');
 
-    while (1);
+    while (1)
+	/* Do nothing */;
 
-    return (0);
+    return 0;
 }

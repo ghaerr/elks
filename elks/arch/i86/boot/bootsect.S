@@ -44,20 +44,21 @@ SYSSEGB   = DEF_SYSSEG + 2
 ! ROOT_DEV & SWAP_DEV are now written by "build".
 ROOT_DEV = 0
 SWAP_DEV = 0
+
 #ifndef SVGA_MODE
-#define SVGA_MODE VGA_ASK
+#define SVGA_MODE	VGA_ASK
 #endif
+
 #ifndef RAMDISK
-#define RAMDISK 0
+#define RAMDISK 	0
 #endif 
-#ifndef CONFIG_ROOT_RDONLY
-#define CONFIG_ROOT_RDONLY 0
-#endif
+
+#include <linuxmt/boot.h>
 
 ! ld86 requires an entry symbol. This may as well be the usual one.
 .globl	_main
 _main:
-#if 0 /* hook for debugger, harmless unless BIOS is fussy (old HP) */
+#if 0	/* hook for debugger, harmless unless BIOS is fussy (old HP) */
 	int	3
 #endif
 	mov	ax,#BOOTSEG
@@ -515,7 +516,7 @@ msg1end:
 setup_sects:
 	.byte SETUPSECS
 root_flags:
-	.word CONFIG_ROOT_RDONLY
+	.word ROOTFLAGS
 syssize:
 	.word SYSSIZE
 swap_dev:

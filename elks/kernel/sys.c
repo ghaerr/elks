@@ -137,7 +137,7 @@ unsigned short int sys_umask(unsigned short int mask)
 
     old = currentp->fs.umask;
     currentp->fs.umask = mask & ((unsigned short int) S_IRWXUGO);
-    return (old);
+    return old;
 }
 
 /*

@@ -50,9 +50,8 @@ SWAP_DEV = 0
 #ifndef RAMDISK
 #define RAMDISK 0
 #endif 
-#ifndef CONFIG_ROOT_RDONLY
-#define CONFIG_ROOT_RDONLY 0
-#endif
+
+#include <linuxmt/boot.h>
 
 ! ld86 requires an entry symbol. This may as well be the usual one.
 .globl	_main
@@ -91,7 +90,7 @@ _main:
 setup_sects:
 	.byte 0
 root_flags:
-	.word CONFIG_ROOT_RDONLY
+	.word ROOTFLAGS
 syssize:
 	.word SYSSIZE
 swap_dev:

@@ -43,7 +43,7 @@ unsigned long aoutsize(char *aout, unsigned long lg)
 	gr = lg;
 	printf("  Wrong a.out table?\n");
     }
-    return (gr);
+    return gr;
 }
 
 
@@ -72,9 +72,8 @@ int main(int argcnt, char **arg)
 	    ("   -r  add resetvector \"jmpf basis_rom*0x10+init\" to target finle at ffff0\n");
 	printf("   -s  strips symbols from a.out file\n");
 	printf("  adr must above basis_rom\n");
-	printf
-	    ("  mkurlader -p 0000 003ff  rom.bin e000  arch/i86/boot/setup e000 arch/i86/tools/system e040\n");
-	return (-1);
+	printf("  mkurlader -p 0000 003ff  rom.bin e000  arch/i86/boot/setup e000 arch/i86/tools/system e040\n");
+	return -1;
     }
 
     for (l = 0; l < MAXQ; l++)
@@ -125,7 +124,7 @@ int main(int argcnt, char **arg)
 	fclose(ff);
 	if (arg[i + 1] == NULL) {
 	    printf("ERROR: No base address for %s!\n", arg[i]);
-	    return (-1);
+	    return -1;
 	}
 	sscanf(arg[i + 1], "%lx", &source[nr].offs);
 	if (strip) {
@@ -161,7 +160,7 @@ int main(int argcnt, char **arg)
 	if ((signed long) l < 0) {
 	    printf("Bereichsfehler in Nr. %ld (offs < basis)!\n", i);
 	    fclose(ff);
-	    return (-1);
+	    return -1;
 	}
 	if (l > romgr)
 	    romgr = l;
@@ -189,7 +188,7 @@ int main(int argcnt, char **arg)
 	rom = (char *) malloc(romgr);
     if (rom == NULL) {
 	printf("malloc: no %ld Bytes RAM\n", romgr);
-	return (-1);
+	return -1;
     }
     for (l = 0; l < romgr; rom[l++] = 0xff);	// Speicher initialisieren
 
@@ -248,7 +247,7 @@ int main(int argcnt, char **arg)
 	check.ende -= offs;
 	if (check.ende > romgr) {
 	    printf("!! checksumme not in image file\n");
-	    return (-1);
+	    return -1;
 	} else {
 	    if ((rom[check.start] != 0x55)
 		|| (rom[check.start + 1] != (char) 0xaa)) {

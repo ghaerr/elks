@@ -11,6 +11,9 @@ mainmenu_option next_comment
     bool 'Include development code/drivers'	CONFIG_EXPERIMENTAL	n
     bool 'Include obsolete drivers'		CONFIG_OBSOLETE		n
     bool 'Include unimplemented drivers'	CONFIG_NOT_YET		n
+    if [ "$CONFIG_NOT_YET" = "y" ]; then
+	bool '  Include support for modules'	CONFIG_MODULES		n
+    fi
 endmenu
 
 mainmenu_option next_comment
@@ -44,6 +47,7 @@ if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 	if [ "$CONFIG_IBMPC_COMPAQ" = "y" ]; then
 	    bool 'Switch Compaq DeskPro to fast mode'	CONFIG_COMPAQ_FAST  n
 	fi
+	bool 'Mount root partition read-only by default' CONFIG_ROOT_READONLY n
     endmenu
 fi
 

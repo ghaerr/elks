@@ -94,7 +94,7 @@ static char *invoker(register char *s)
 	    break;
 	}
 
-    return (s);
+    return s;
 }
 
  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -129,7 +129,7 @@ static int objdump(register char *c)
 	    zcount += k;
 	    objptr = 0;
 	    if (c == NULL)
-		return (retval);
+		return retval;
 	}
     }
 
@@ -143,7 +143,7 @@ static int objdump(register char *c)
 	printf("\t.byte\t");
 	++retval;
     } else
-	return (retval);
+	return retval;
 
     for (k = 0; k < objptr; ++k) {
 	printf("$%02.2x", objbuf[k]);
@@ -182,7 +182,7 @@ static int objdump(register char *c)
 
     objptr = 0;
 
-    return (retval);
+    return retval;
 
 }				/* * * * * * * * * *  END OF  objdump()  * * * * * * * * * */
 
@@ -212,9 +212,9 @@ static char *getlab(register int type)
 		sprintf(b, "T%05.5lx:", PC);
 	    else
 		sprintf(b, "D%05.5lx:", PC);
-	    return (b);
+	    return b;
 	} else
-	    return (NULL);
+	    return NULL;
 
     for (k = 0; k <= symptr; ++k)
 	if ((symtab[k].n_value == PC)
@@ -223,10 +223,10 @@ static char *getlab(register int type)
 	    if (objflg && (type != N_TEXT))
 		sprintf(c, "| %05.5lx\n", PC);
 	    strcat(b, c);
-	    return (b);
+	    return b;
 	}
 
-    return (NULL);
+    return NULL;
 
 }				/* * * * * * * * * * * END OF getlab() * * * * * * * * * * */
 

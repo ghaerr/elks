@@ -371,11 +371,11 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 /* Bounds testing */
 
     if (bioshd_initialized == 0)
-	return (-ENXIO);
+	return -ENXIO;
     if (target >= 4)
-	return (-ENXIO);
+	return -ENXIO;
     if (((int) hd[MINOR(inode->i_rdev)].start_sect) == -1)
-	return (-ENXIO);
+	return -ENXIO;
 
 #if 0
 
@@ -573,8 +573,9 @@ void init_bioshd(void)
 
 	    /* Select appropriate unit */
 	    while (size > 99999 && unit[1]) {
-		debug3("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
-		size /= ((__u32) 1024);
+		debug3("DBG: Size = %lu (%X/%X)\n", size, *unit, unit[1]);
+		size += 512U;
+		size /= 1024U;
 		unit++;
 	    }
 	    debug3("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);

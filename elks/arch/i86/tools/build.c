@@ -346,5 +346,5 @@ int main(int argc, char **argv)
 	if (write(1, buf, 2) != 2)
 	    die("Write failed");
     }
-    return (0);
+    return 0;
 }

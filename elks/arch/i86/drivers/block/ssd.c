@@ -1,11 +1,8 @@
 #include <linuxmt/config.h>
-#if 0
-#include <linuxmt/rd.h>
-#endif
 #include <linuxmt/major.h>
 #include <linuxmt/kernel.h>
-#include <linuxmt/debug.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/debug.h>
 
 #ifdef CONFIG_BLK_DEV_SSD
 
@@ -26,7 +23,7 @@ static int ssd_ioctl(inode, file, cmd, arg);
 
 void rd_load(void)
 {
-/* Do nothing */
+    /* Do nothing */
 }
 
 static struct file_operations ssd_fops = {
@@ -37,11 +34,12 @@ static struct file_operations ssd_fops = {
     NULL,			/* select */
     ssd_ioctl,			/* ioctl */
     ssd_open,			/* open */
-    ssd_release,		/* release */
+    ssd_release 		/* release */
 #ifdef BLOAT_FS
+	,
     NULL,			/* fsync */
     NULL,			/* check_media_change */
-    NULL,			/* revalidate */
+    NULL			/* revalidate */
 #endif
 };
 
@@ -49,15 +47,20 @@ void ssd_init(void)
 {
     int i;
 
-    printk("SSD driver (Major = %u)\n", MAJOR_NR);
+    debug1("SSD driver (Major = %u)\n", MAJOR_NR);
     if ((i = register_blkdev(MAJOR_NR, DEVICE_NAME, &ssd_fops)) == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
-	/* blksize_size[MAJOR_NR] = 1024; */
-	/* read_ahead[MAJOR_NR] = 2; */
+
+#if 0
+
+	blksize_size[MAJOR_NR] = 1024;
+	read_ahead[MAJOR_NR] = 2;
+
+#endif
+
 	ssd_initialised = 1;
-    } else {
+    } else
 	printk("SSD failed to register.\n");
-    }
 }
 
 static int ssd_open(struct inode *inode, struct file *filp)
@@ -65,24 +68,28 @@ static int ssd_open(struct inode *inode, struct file *filp)
     int target;
 
     target = DEVICE_NR(inode->i_rdev);
-    /*printk("SSD_OPEN %u\n",target); */
+    debug1("SSD_OPEN %u\n",target);
     if (ssd_initialised == 0)
-	return (-ENXIO);
+	return -ENXIO;
+
 #if 0
+
     if (rd_busy[target])
-	return (-EBUSY);
+	return -EBUSY;
+
 #endif
+
     return 0;
 }
 
 static int ssd_release(struct inode *inode, struct file *filp)
 {
-    printk("SSD_RELEASE \n");
+    debug("SSD_RELEASE\n");
     return 0;
 }
 
-static int ssd_ioctl(register struct inode *inode,
-		     struct file *file, unsigned int cmd, unsigned int arg)
+static int ssd_ioctl(register struct inode *inode, struct file *file,
+		     unsigned int cmd, unsigned int arg)
 {
 #if 0
     int target = DEVICE_NR(inode->i_rdev);
@@ -136,7 +143,7 @@ static void do_ssd_request(void)
 	}
 
 	/* Remember 1 sector = 512 bytes */
-	count = 2 /*CURRENT->rq_nr_sectors */ ;
+	count = 2 /* CURRENT->rq_nr_sectors */ ;
 	start = CURRENT->rq_sector;
 	buff = CURRENT->rq_buffer;
 
@@ -160,14 +167,14 @@ static void do_ssd_request(void)
     }
 }
 
-ssd_write_blk(int target,
-	      unsigned long start, register char *buff, unsigned long count)
+void ssd_write_blk(int target, unsigned long start, register char *buff,
+		   unsigned long count)
 {
     /* write a number of sectors onto ssd */
 }
 
-ssd_read_blk(int target,
-	     unsigned long start, register char *buff, unsigned long count)
+void ssd_read_blk(int target, unsigned long start, register char *buff,
+		  unsigned long count)
 {
     /* read a number of sectors from ssd */
     char *destination = buff;
@@ -176,9 +183,7 @@ ssd_read_blk(int target,
     address_high = (unsigned int) (start >> 7);	/* Start * 512/65536 */
     address_low = (unsigned int) ((start & 0x7F) << 9);
 
-#if 0
-    printk("SSD high = %x, low %x\n", address_high, address_low);
-#endif
+    debug2("SSD high = %x, low %x\n", address_high, address_low);
 
     for (loop = 0; loop < (count * 512); loop++) {
 	*destination = ssd_read4(address_high, (address_low + loop));

@@ -59,8 +59,8 @@ CONFIG_MODULES
 
 Auto-detect architecture
 CONFIG_ARCH_AUTO
-  Use this option to specify the architecture the kernel will run on. The
-  supported options are:
+  Use this option to specify the architecture the kernel will run on.
+  The supported options are:
 
 	Auto	Automatically detect at boot time.
 
@@ -70,8 +70,8 @@ CONFIG_ARCH_AUTO
 
 Auto detect PC architecture
 CONFIG_PC_AUTO
-  Use this option to specify the architecture the kernel will run on. The
-  supported options are:
+  Use this option to specify the architecture the kernel will run on.
+  The supported options are:
 
 	Auto	Automatically detect at boot time.
 
@@ -83,9 +83,15 @@ CONFIG_PC_AUTO
 	PC/XT	Computers based on the 8088 or 8086 processor that are
 		compatible with the IBM PC/XT computer.
 
-Support loadable modules
-CONFIG_MODULE
-  Saying yes includes experimental support for loadable modules.
+Select a true IBM PC/XT clone
+CONFIG_IBMPC_CLONE
+  Use this option to specify the level of IBM PC/XT compatibility.
+  The supported options are:
+
+	TrueClone	The IBM PC/XT or a true clone thereof. This is
+			by far the commonest case.
+
+	CompaQ		One of the CompaQ clones of the IBM PC/XT.
 
 # Model-specific options
 # ~~~~~~~~~~~~~~~~~~~~~~
@@ -286,7 +292,7 @@ CONFIG_MEM_PAGES
 
 Expanded (EMS) Memory Support
 CONFIG_EMS
-  Includes support for EMS hardware. Currently unimplemented.
+  Includes support for EMS hardware. Currently not implemented.
 
 Extended (XMS) Memory Support
 CONFIG_XMS
@@ -350,14 +356,6 @@ CONFIG_SYS_VERSION
   This includes support for a system call that provides the version
   number of the current ELKS kernel.
 
-# Embedded systems
-# ~~~~~~~~~~~~~~~~
-
-Remove filesystem code
-CONFIG_NOFS
-  Remove the filesystem support for small embedded systems with no block
-  devices.
-
 # Console display support
 # ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -396,15 +394,6 @@ CONFIG_CONSOLE_SERIAL
 
 # Keyboard support
 # ~~~~~~~~~~~~~~~~
-
-Use full keymap layout names
-CONFIG_KEYMAP_FULL
-  This option does not directly affect the code produced, but instead
-  specifies whether to select the keyboard layout by abbreviated name
-  (default, recommended for 'make config') or full name (recommended
-  for 'make menuconfig'). Exactly the same options are available on
-  each setting, they just have different names and occur in a different
-  order.
 
 Select XT keyboard support for American (US) keyboards
 CONFIG_KEYMAP_US
@@ -465,7 +454,11 @@ CONFIG_CHAR_DEV_RS
 
 Enable meta device driver
 CONFIG_DEV_META
-  Include meta driver to support users space device drivers.
+  Include meta driver to provide support for userspace device drivers.
+
+Enable pseudo-tty driver
+CONFIG_PSEUDO_TTY
+  Include support for pseudo-tty's.
 
 Number of valid text consoles
 CONFIG_CONSOLES_MAX
@@ -481,6 +474,15 @@ CONFIG_CONSOLES_MAX
 
 # Block devices
 # ~~~~~~~~~~~~~
+
+Use DMA for transfers
+CONFIG_DMA
+  Use Direct Memory Access (DMA) for block transfers.
+
+Mount root partition read-only by default
+CONFIG_ROOT_READONLY
+  Specifies that the root partition is to be mounted rad-only by default.
+  This may cause problems at the moment, but will eventually be required.
 
 BIOS block device support
 CONFIG_BLK_DEV_BIOS
@@ -664,6 +666,11 @@ CONFIG_SOCK_CLIENTONLY
   just need to save some extra bytes out of the kernel. Saves around 450
   bytes. If you are not sure just say NO.
 
+Support SiBO Solid State Disks
+CONFIG_BLK_DEV_SSD
+  Say "y" here to include support for SiBO solid state disks.
+
+#############################################################################
 
 Options that do not need help texts.
 CONFIG_ARCH_IBMPC
@@ -678,8 +685,6 @@ CONFIG_BLK_DEV_BFD1_720
 CONFIG_BLK_DEV_BFD1_1200
 CONFIG_BLK_DEV_BFD1_1440
 CONFIG_BLK_DEV_BFD1_2880
-CONFIG_CONSOLE_BIOS
-CONFIG_CONSOLE_SERIAL
 CONFIG_CPU_80186
 CONFIG_CPU_80286
 CONFIG_CPU_80286_PLUS
@@ -691,13 +696,5 @@ CONFIG_IBMPC_COMPAQ
 CONFIG_PC_XT
 CONFIG_PC_AT
 CONFIG_PC_MCA
-CONFIG_ROOTDEV_BDA1
-CONFIG_ROOTDEV_BDA2
-CONFIG_ROOTDEV_BDA3
-CONFIG_ROOTDEV_BDA4
-CONFIG_ROOTDEV_FD1
-CONFIG_ROOTDEV_RAM
-CONFIG_SIBO_3MX_KEYMAP
-CONFIG_SIBO_DEFAULT_KEYMAP
 
 # EOF

@@ -495,7 +495,7 @@ int sys_close(unsigned int fd)
 	(void) clear_bit(fd, &cfiles->close_on_exec);
 	if ((filp = cfiles->fd[fd])) {
 	    cfiles->fd[fd] = NULL;
-	    return (close_fp(filp));
+	    return close_fp(filp);
 	}
     }
     return -EBADF;

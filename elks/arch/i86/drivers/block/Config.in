@@ -42,16 +42,8 @@ mainmenu_option next_comment
 	else
 	    define_bool CONFIG_DMA n
 	fi
-	if [ "$CONFIG_BLK_DEV_BHD" = "y" ]; then
-	    define_bool CONFIG_GENDISK y
-	else
-	    define_bool CONFIG_GENDISK n
-	fi
     else
 	bool 'SSD disk support'			CONFIG_BLK_DEV_SSD	n
-	if [ "$CONFIG_NOT_YET" = "y" ]; then
-	    bool 'Internal disk support'	CONFIG_BLK_DEV_ID	n
-	fi
 	define_bool CONFIG_BLK_DEV_BIOS n
     fi
 

@@ -28,7 +28,7 @@ static unsigned long count_used(struct buffer_head *map[],
 
     for (i = 0; (i < numblocks) && numbits; i++) {
 	if (!(bh = map[i]))
-	    return (0);
+	    return 0;
 	map_buffer(bh);
 	if (numbits >= (8 * BLOCK_SIZE)) {
 	    end = BLOCK_SIZE;
@@ -45,7 +45,7 @@ static unsigned long count_used(struct buffer_head *map[],
 		+ nibblemap[(bh->b_data[j] >> 4) & 0xf];
 	unmap_buffer(bh);
     }
-    return (sum);
+    return sum;
 }
 #endif
 

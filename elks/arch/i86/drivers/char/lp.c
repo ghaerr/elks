@@ -170,9 +170,12 @@ int lp_write(struct inode *inode, struct file *file, char *buf, int count)
     register char *chrsp;
 
 #if 0
+
     /* initialize printer */
     lp_reset(MINOR(inode->i_rdev));
+
 #endif
+
     chrsp = 0;
     while (((int)chrsp) < count) {
 	if (!lp_char_polled((int) put_user((__u16) (buf + (int)chrsp)),
@@ -180,7 +183,7 @@ int lp_write(struct inode *inode, struct file *file, char *buf, int count)
 	    break;
 	chrsp++;
     }
-    return (int)chrsp;
+    return (int) chrsp;
 }
 
 int lp_open(struct inode *inode, struct file *file)
@@ -188,7 +191,9 @@ int lp_open(struct inode *inode, struct file *file)
     register struct lp_info *lpp;
     register char *statusp;
     unsigned short int target;
-/*      short int status; */
+#if 0
+    short int status;
+#endif
 
     target = MINOR(inode->i_rdev);
 
@@ -272,8 +277,9 @@ static struct file_operations lp_fops = {
     NULL,			/* select */
     NULL,			/* ioctl */
     lp_open,			/* open */
-    lp_release,			/* release */
+    lp_release			/* release */
 #ifdef BLOAT_FS
+	,
     NULL,			/* fsync */
     NULL,			/* check_media_type */
     NULL			/* revalidate */

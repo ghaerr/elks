@@ -31,17 +31,17 @@
 extern int chr_dev_init();
 extern int blk_dev_init();
 
-#ifndef CONFIG_NOFS
-
 struct gendisk *gendisk_head = NULL;
 
 static unsigned short int current_minor = 0;
+
 #ifdef BDEV_SIZE_CHK
 extern int blk_size[];
 #endif
+
 extern void rd_load();
 
-#ifdef CONFIG_GENDISK
+#ifdef CONFIG_BLK_DEV_BHD
 
 static void print_minor_name(register struct gendisk *hd,
 			     unsigned short int minor)
@@ -172,10 +172,12 @@ static void extended_partition(register struct gendisk *hd, kdev_t dev)
 
   done:
     unmap_brelse(bh);
+
 #if 0
     unmap_buffer(bh);
     brelse(bh);
 #endif
+
 }
 
 static int msdos_partition(struct gendisk *hd,
@@ -235,10 +237,12 @@ static int msdos_partition(struct gendisk *hd,
     }
     printk("\n");
     unmap_brelse(bh);
+
 #if 0
     unmap_buffer(bh);
     brelse(bh);
 #endif
+
     return 1;
 }
 
@@ -252,12 +256,12 @@ void check_partition(register struct gendisk *hd, kdev_t dev)
     first_time = 0;
     first_sector = hd->part[MINOR(dev)].start_sect;
 
+#if 0
     /*
      * This is a kludge to allow the partition check to be
      * skipped for specific drives (e.g. IDE cd-rom drives)
      */
-#if 0
-    if ((sector_t) first_sector == (sector_t) - 1) {
+    if ((sector_t) first_sector == (sector_t) -1) {
 	hd->part[MINOR(dev)].start_sect = (sector_t) 0;
 	return;
     }
@@ -265,10 +269,12 @@ void check_partition(register struct gendisk *hd, kdev_t dev)
 
     printk(" ");
     print_minor_name(hd, MINOR(dev));
+
 #ifdef CONFIG_MSDOS_PARTITION
     if (msdos_partition(hd, dev, first_sector))
 	return;
 #endif
+
     printk(" unknown partition table\n");
 }
 #endif
@@ -277,12 +283,12 @@ void check_partition(register struct gendisk *hd, kdev_t dev)
    Much of the cleanup from the old partition tables should have already been
    done */
 
+#if 0				/* Currently unused */
 /* This function will re-read the partition tables for a given device, and set
  * things back up again. There are some important caveats, however. You must
  * ensure that no one is using the device, and no one can start using the
  * device while this function is being executed.
  */
-#if 0				/* Currently unused */
 void resetup_one_dev(struct gendisk *dev, int drive)
 {
     int i;
@@ -303,13 +309,15 @@ void setup_dev(register struct gendisk *dev)
 #ifdef BDEV_SIZE_CHK
     blk_size[dev->major] = NULL;
 #endif
+
     for (i = 0; i < end_minor; i++) {
 	hdp = &dev->part[i];
 	hdp->start_sect = 0;
 	hdp->nr_sects = 0;
     }
     dev->init(dev);
-#ifdef CONFIG_GENDISK
+
+#ifdef CONFIG_BLK_DEV_BHD
     for (drive = 0; drive < dev->nr_real; drive++) {
 	int first_minor = drive << dev->minor_shift;
 
@@ -317,6 +325,5 @@ void setup_dev(register struct gendisk *dev)
 	check_partition(dev, MKDEV(dev->major, first_minor));
     }
 #endif
-}
 
-#endif
+}

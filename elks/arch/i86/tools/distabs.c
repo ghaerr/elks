@@ -377,7 +377,7 @@ char *getnam(register int k)
 
     a[j] = '\0';
 
-    return (a);
+    return a;
 
 }				/* * * * * * * * * * * END OF getnam() * * * * * * * * * * */
 
@@ -422,10 +422,10 @@ int lookext(long off, long loc, char *buf)
 			sprintf(c, "+%ld", off);
 		    strcat(buf, c);
 		}
-		return (1);
+		return 1;
 	    }
 
-    return (0);
+    return 0;
 
 }				/* * * * * * * * * *  END OF  lookext()  * * * * * * * * * */
 
@@ -474,7 +474,7 @@ char *lookup(long addr,		/* Machine address to be located */
     } best;
 
     if (lookext(addr, ext, b))
-	return (b);
+	return b;
 
     if (segflg)
 	if (segflg & 1)
@@ -498,7 +498,7 @@ char *lookup(long addr,		/* Machine address to be located */
 		best.t = j, best.i = k;
 
     if (best.i >= 0)
-	return (getnam(best.i));
+	return getnam(best.i);
 
     if (kind == LOOK_ABS)
 	sprintf(b, "$%04lx", addr);
@@ -510,7 +510,7 @@ char *lookup(long addr,		/* Machine address to be located */
 	    sprintf(b, ".+%ld", x);
     }
 
-    return (b);
+    return b;
 
 }				/* * * * * * * * * * * END OF lookup() * * * * * * * * * * */
 
@@ -640,7 +640,7 @@ char *mtrans(register int c,	/* Primary instruction byte   */
 	strcat(a, REGS[type + ((w << 3) | reg)]);
     }
 
-    return (a);
+    return a;
 
 }				/* * * * * * * * * * * END OF mtrans() * * * * * * * * * * */
 

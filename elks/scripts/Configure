@@ -163,11 +163,13 @@ function readln () {
 #	comment 'xxx'
 # 
 function comment () {
+    local S=`echo "$1" | tr -s '\t' ' ' | sed 's/^ //'`
+
     echo " *"
-    echo " * $1"
+    echo " * $S"
     echo " *"
-    (echo "" ; echo "#"; echo "# $1" ; echo "#") >>$CONFIG
-    (echo "" ; echo "/*"; echo " * $1" ; echo " */") >>$CFG_H
+    (echo "" ; echo "#"; echo "# $S" ; echo "#") >>$CONFIG
+    (echo "" ; echo "/*"; echo " * $S" ; echo " */") >>$CFG_H
 }
 
 # define_bool sets the value of a boolean argument

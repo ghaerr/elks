@@ -30,10 +30,6 @@ mainmenu_option next_comment
 	if [ "$CONFIG_SIBO_CONSOLE_DIRECT" = "y" ]; then
 	    bool '  Support virtual consoles'	CONFIG_SIBO_VIRTUAL_CONSOLE  n
 	    bool '  Direct console serial echo'	CONFIG_SIBO_CONSOLE_ECHO     n
-	    choice 'Keyboard support'			\
-		"3c 		CONFIG_SIBO_3C_KEYMAP	\
-		 3mx		CONFIG_SIBO_3MX_KEYMAP	\
-		 3a		CONFIG_SIBO_DEFAULT_KEYMAP"	3a
 	fi
     fi
 
@@ -45,14 +41,6 @@ mainmenu_option next_comment
 	    define_bool CONFIG_CHAR_DEV_RS y
 	fi
 	bool 'Parallel device driver'		CONFIG_CHAR_DEV_LP	  y
-    else
-	if [ "$CONFIG_CONSOLE_ECHO" = "n" ]; then
-	    if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
-		if [ "$CONFIG_NOT_YET" = "y" ]; then
-		    bool 'Serial device driver'	CONFIG_CHAR_SIBO_SERIAL   n
-		fi
-	    fi
-	fi
     fi
     bool 'Memory character devices'		CONFIG_CHAR_DEV_MEM	  y
     bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y

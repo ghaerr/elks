@@ -508,7 +508,7 @@ struct inode *__iget(register struct super_block *sb,
 	debug1("iget: got one... (%x)!\n", empty);
 	if (empty)
 	    goto repeat;
-	return (NULL);
+	return NULL;
     }
     inode = empty;
     inode->i_sb = sb;

@@ -168,7 +168,7 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
     debugmem1("[k]mem_ioctl() %d\n", cmd);
     switch (cmd) {
 
-#ifdef CONFIG_MODULE
+#ifdef CONFIG_MODULES
 
     case MEM_GETMODTEXT:
 	i = (char *) module_init;

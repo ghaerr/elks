@@ -12,59 +12,57 @@
 /* #define DEBUG_2ND_MONITOR */
 /* #define ELKS_AT_RING_1 */
 
-#define PMODE_CODESEL 0x08
-#define PMODE_DATASEL 0x10
-#define PMODE_SCRNSEL 0x18
-#define PMODE_TEMPSEL 0x20
+#define PMODE_CODESEL		0x08
+#define PMODE_DATASEL		0x10
+#define PMODE_SCRNSEL		0x18
+#define PMODE_TEMPSEL		0x20
 
-#define PMODE_TSSSEL 0x28
-#define PMODE_LDTSEL 0x30
+#define PMODE_TSSSEL		0x28
+#define PMODE_LDTSEL		0x30
 
 #ifdef ELKS_AT_RING_1
-#  define ELKS_CODESEL 0x39
-#  define ELKS_DATASEL 0x41
-#  define SETUP_DATASEL 0x49
+#    define ELKS_CODESEL	0x39
+#    define ELKS_DATASEL	0x41
+#    define SETUP_DATASEL	0x49
+#    define GDT1		0xbb
+#    define GDT2		0xb3
 #else
-#  define ELKS_CODESEL 0x38
-#  define ELKS_DATASEL 0x40
-#  define SETUP_DATASEL 0x48
+#    define ELKS_CODESEL	0x38
+#    define ELKS_DATASEL	0x40
+#    define SETUP_DATASEL	0x48
+#    define GDT1		0x9b
+#    define GDT2		0x93
 #endif
 
-#define GATE_INTERRUPT 0x86
-#define GATE_TRAP      0x87
+#define GATE_INTERRUPT		0x86
+#define GATE_TRAP		0x87
 
-extern unsigned short _endtext;
-extern unsigned short _enddata;
-extern unsigned short _endbss;
-extern unsigned short _elksheader;
-extern unsigned char arch_cpu;
+extern unsigned short	_endtext;
+extern unsigned short	_enddata;
+extern unsigned short	_endbss;
+extern unsigned short	_elksheader;
+extern unsigned char	arch_cpu;
 
-extern int bootstack;		/* this really wants to be extern void, but bcc sucks. */
+extern int bootstack;		/* should be extern void, but bcc sucks */
 
-unsigned short realmode_ds;	/* used for calculating the address of the IDT */
+unsigned short realmode_ds;	/* used to calculate the address of the IDT */
 
-/* 0x20 processor exceptions, 0x10 hardware ints */
-struct descriptor idt[0x30];
+struct descriptor idt[0x30];	/* 0x20 processor exceptions,
+				   0x10 hardware ints */
 
 #define IDT_LIMIT 0x17f
 
 struct descriptor initial_gdt[10] = {
-    {0x0000, 0x0000, 0x00, 0x00, 0x0000},	/* NULL segment */
-    {0xffff, 0x0020, 0x01, 0x9b, 0x0000},	/* ring 0 code segment (ours) */
-    {0xffff, 0x0020, 0x01, 0x93, 0x0000},	/* ring 0 data segment (ours) */
-    {0xffff, 0x0000, 0x00, 0x93, 0x0000},	/* ring 0 screen data segment */
-    {0xffff, 0x0000, 0x00, 0x93, 0x0000},	/* ring 0 temporary data segment */
-    {0x002b, 0x0000, 0x00, 0x81, 0x0000},	/* initial TSS */
-    {0x0000, 0x0000, 0x00, 0x82, 0x0000},	/* 0-length LDT for TSS */
-#ifdef ELKS_AT_RING_1
-    {0x0000, 0x0000, 0x00, 0xbb, 0x0000},	/* ring 1 code segment (ELKSs) */
-    {0xffff, 0x0000, 0x00, 0xb3, 0x0000},	/* ring 1 data segment (ELKSs) */
-    {0xffff, 0x1000, 0x00, 0xb3, 0x0000},	/* ring 1 data segment (setup) */
-#else
-    {0x0000, 0x0000, 0x00, 0x9b, 0x0000},	/* ring 0 code segment (ELKSs) */
-    {0xffff, 0x0000, 0x00, 0x93, 0x0000},	/* ring 0 data segment (ELKSs) */
-    {0xffff, 0x1000, 0x00, 0x93, 0x0000},	/* ring 0 data segment (setup) */
-#endif
+    {0x0000, 0x0000, 0x00, 0x00, 0x0000},  /* NULL segment */
+    {0xffff, 0x0020, 0x01, 0x9b, 0x0000},  /* ring 0 code segment (ours) */
+    {0xffff, 0x0020, 0x01, 0x93, 0x0000},  /* ring 0 data segment (ours) */
+    {0xffff, 0x0000, 0x00, 0x93, 0x0000},  /* ring 0 screen data segment */
+    {0xffff, 0x0000, 0x00, 0x93, 0x0000},  /* ring 0 temporary data segment */
+    {0x002b, 0x0000, 0x00, 0x81, 0x0000},  /* initial TSS */
+    {0x0000, 0x0000, 0x00, 0x82, 0x0000},  /* 0-length LDT for TSS */
+    {0x0000, 0x0000, 0x00, GDT1, 0x0000},  /* ELKS's code segment */
+    {0xffff, 0x0000, 0x00, GDT2, 0x0000},  /* ELKS's data segment */
+    {0xffff, 0x1000, 0x00, GDT2, 0x0000},  /* setup data segment */
 };
 
 #define GDT_LIMIT 0x4f

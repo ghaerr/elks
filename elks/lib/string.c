@@ -234,13 +234,13 @@ char *strtok(char *s, char *ct)
     sbegin += strspn(sbegin, ct);
     if (*sbegin == '\0') {
 	___strtok = NULL;
-	return (NULL);
+	return NULL;
     }
     send = strpbrk(sbegin, ct);
     if (send && *send != '\0')
 	*send++ = '\0';
     ___strtok = send;
-    return (sbegin);
+    return sbegin;
 }
 
 #endif

@@ -1094,19 +1094,21 @@ save_configuration () {
     }
 
     function comment () {
+	local S=`echo "$1" | tr -s '\t' ' ' | sed 's/^ //'`
+
 	if [ "$comment_is_option" ]; then
 	    comment_is_option=
 	    cat >> $CONFIG <<-.EOM
 
 		#
-		# $1
+		# $S
 		#
 
 .EOM
 	    cat >> $CFG_H <<-.EOM
 
 		/*
-		 * $1
+		 * $S
 		 */
 
 .EOM

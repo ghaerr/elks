@@ -12,6 +12,27 @@ function files() {
     find * -type f ! -name CHANGELOG ! -name RELNOTES "$@"
 }
 
+function footer() {
+    cat <<-.eof
+	~~~  ~~~  ~~~  ~~~  ~~~  ~~~  ~~~~~~~~~~~~~~~~~~~~~~
+	$1 found.
+
+.eof
+}
+
+function header() {
+    cat <<-.eof
+	varhelp 1.0.0 configuration and help variable analyser
+	Copyright (C) 2002, Riley Williams <Riley@Williams.Name>
+	Released under the GNU General Public Licence, version 2 only.
+
+	`date '+Last run on %A, %d %B %Y at %T %Z.'`
+
+	Hlp   C   Asm  Cfg  Oth  Sum  Configuration Variable
+	~~~  ~~~  ~~~  ~~~  ~~~  ~~~  ~~~~~~~~~~~~~~~~~~~~~~
+.eof
+}
+
 function help() {
     local HELPFILE=Documentation/Configure.help
 
@@ -27,36 +48,26 @@ function list() {
 }
 
 function process() {
+    header
+    vars | sort | uniq | tally
+}
+
+function tally() {
     local N=0 IN_C IN_S INHELP INCFG OTHER TOTAL
 
-    cat <<-.eof
-	varhelp 1.0.0 configuration and help variable analyser
-	Copyright (C) 2002, Riley Williams <Riley@Williams.Name>
-	Released under the GNU General Public Licence, version 2 only.
-
-	`date '+Last run on %A, %d %B %Y at %T %Z.'`
-
-	 Help   *.[ch]  *.[Ss]  *.in    Other   Total   Configuration variable
-	~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~
-	.eof
-    vars | sort | uniq | while read VAR ; do
+    while read VAR ; do
 	INHELP=`help "${VAR}"`
 	IN_C=`list '*.[ch]' | count "${VAR}"`
 	IN_S=`list '*.[Ss]' | count "${VAR}"`
 	INCFG=`list '*.in' | count "${VAR}"`
 	TOTAL=`list '*' | count "${VAR}"`
 	OTHER=$[${TOTAL}-${INHELP}-${IN_C}-${IN_S}-${INCFG}]
-	if [ ${INHELP} -eq 0 -o ${TOTAL} -eq 1 ]; then
-	    printf '%6d  %6d  %6d  %6d  %6d  %6d  %s\n' \
-		${INHELP} ${IN_C} ${IN_S} ${INCFG} ${OTHER} ${TOTAL} "${VAR}"
-	    N=$[$N+1]
-	fi
+	printf '%3d  %3d  %3d  %3d  %3d  %3d  %s\n' \
+		${INHELP} ${IN_C} ${IN_S} ${INCFG} ${OTHER} ${TOTAL} "${VAR}" \
+	    | sed 's/ 0 /   /g'
+	N=$[$N+1]
     done
-    cat <<-.eof
-	~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~
-	$N found.
-
-	.eof
+    footer $N
 }
 
 function vars() {
@@ -67,4 +78,4 @@ function vars() {
     done
 }
 
-process 2>&1 | tee ${1:-/dev/null}
+process 2>&1 | tee ${1:-varlist.tmp}

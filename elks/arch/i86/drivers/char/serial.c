@@ -44,7 +44,7 @@ struct serial_info {
 #define DEFAULT_LCR		UART_LCR_WLEN8
 
 #define DEFAULT_MCR		\
-	(unsigned char) (UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2)
+	((unsigned char) (UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2))
 
 #define MAX_RX_BUFFER_SIZE 16
 

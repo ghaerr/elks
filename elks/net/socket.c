@@ -61,8 +61,10 @@ int move_addr_to_kernel(char *uaddr, size_t ulen, char *kaddr)
 {
     if (ulen < 0 || ulen > MAX_SOCK_ADDR)
 	return -EINVAL;
+
     if (ulen == 0)
 	return 0;
+
     return verified_memcpy_fromfs(kaddr, uaddr, ulen);
 }
 
@@ -73,14 +75,16 @@ int move_addr_to_user(char *kaddr, size_t klen, char *uaddr, register int *ulen)
 
     if ((err = verified_memcpy_fromfs(&len, ulen, sizeof(*ulen))))
 	return err;
+
     if (len > klen)
 	len = klen;
+
     if (len < 0 || len > MAX_SOCK_ADDR)
 	return -EINVAL;
-    if (len) {
+
+    if (len)
 	if ((err = verified_memcpy_tofs(uaddr, kaddr, len)))
 	    return err;
-    }
 
 #if 0
     put_user(len, ulen);	/* This is pointless isn't it */
@@ -122,9 +126,13 @@ struct socket *sock_alloc(void)
     sock->wait = &inode->i_wait;
     sock->inode = inode;	/* "backlink" use pointer arithmetic instead */
     sock->fasync_list = NULL;
+
 #if 0
+
     sockets_in_use++;		/* Maybe we'll find a use for this */
+
 #endif
+
     return sock;
 }
 
@@ -133,14 +141,12 @@ struct socket *sockfd_lookup(int fd, struct file **pfile)
     register struct file *file;
     register struct inode *inode;
 
-    if (fd < 0 || fd >= NR_OPEN || !(file = current->files.fd[fd])) {
+    if (fd < 0 || fd >= NR_OPEN || !(file = current->files.fd[fd]))
 	return NULL;
-    }
 
     inode = file->f_inode;
-    if (!inode || !inode->i_sock) {
+    if (!inode || !inode->i_sock)
 	return NULL;
-    }
 
     if (pfile)
 	*pfile = file;
@@ -158,15 +164,19 @@ static int sock_read(struct inode *inode, struct file *file,
 	printk("NET: sock_read: can't find socket for inode!\n");
 	return -EBADF;
     }
+
     if (sock->flags & SO_ACCEPTCON)
 	return -EINVAL;
 
     if (size < 0)
 	return -EINVAL;
+
     if (size == 0)
 	return 0;
+
     if ((err = verify_area(VERIFY_WRITE, ubuf, size)) < 0)
 	return err;
+
     return sock->ops->read(sock, ubuf, size, (file->f_flags & O_NONBLOCK));
 }
 
@@ -186,11 +196,13 @@ static int sock_write(struct inode *inode, struct file *file,
 
     if (size < 0)
 	return -EINVAL;
+
     if (size == 0)
 	return 0;
 
     if ((err = verify_area(VERIFY_READ, ubuf, size)) < 0)
 	return err;
+
     return sock->ops->write(sock, ubuf, size, (file->f_flags & O_NONBLOCK));
 }
 
@@ -199,13 +211,12 @@ static int sock_select(struct inode *inode,
 {
     register struct socket *sock;
 
-    if (!(sock = socki_lookup(inode))) {
+    if (!(sock = socki_lookup(inode)))
 	return -EBADF;
-    }
 
-    if (sock->ops && sock->ops->select) {
+    if (sock->ops && sock->ops->select)
 	return sock->ops->select(sock, sel_type, wait);
-    }
+
     return 0;
 }
 
@@ -217,9 +228,8 @@ int sock_awaitconn(register struct socket *mysock,
     /*
      *      We must be listening
      */
-    if (!(servsock->flags & SO_ACCEPTCON)) {
+    if (!(servsock->flags & SO_ACCEPTCON))
 	return -EINVAL;
-    }
 
     /*
      *      Put ourselves on the server's incomplete connection queue. 
@@ -273,7 +283,10 @@ int sock_awaitconn(register struct socket *mysock,
 		}
 		set_irq();
 	    }
-	    return (mysock->conn ? -EINTR : -EACCES);
+	    if (mysock->conn)
+		return -EINTR;
+	    else
+		return -EACCES;
 	}
     }
     return 0;
@@ -286,9 +299,11 @@ static void sock_release_peer(struct socket *peer)
     /* FIXME - some of these are not implemented */
     peer->state = SS_DISCONNECTING;
     wake_up_interruptible(peer->wait);
+
 #if 0
     sock_wake_async(peer, 1);
 #endif
+
 }
 #endif
 
@@ -301,9 +316,9 @@ void sock_release(register struct socket *sock)
     struct socket *nextsock;
 #endif
 
-    if ((oldstate = sock->state) != SS_UNCONNECTED) {
+    if ((oldstate = sock->state) != SS_UNCONNECTED)
 	sock->state = SS_DISCONNECTING;
-    }
+
 #if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
     for (peersock = sock->iconn; peersock; peersock = nextsock) {
 	nextsock = peersock->next;
@@ -314,27 +329,32 @@ void sock_release(register struct socket *sock)
 #else
     peersock = NULL;		/* sock-conn is always NULL for an INET socket */
 #endif
+
     if (sock->ops)
 	sock->ops->release(sock, peersock);
+
 #if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
     if (peersock)
 	sock_release_peer(peersock);
 #endif
+
 #if 0
-    --sockets_in_use;		/* maybe we'll find a use for this */
+    sockets_in_use--;		/* maybe we'll find a use for this */
 #endif
+
     sock->file = NULL;
     iput(SOCK_INODE(sock));
 }
 
 void sock_close(register struct inode *inode, struct file *filp)
 {
-    if (!inode) {
+    if (!inode)
 	return;
-    }
+
 #if 0
     sock_fasync(inode, filp, 0);
 #endif
+
     sock_release(socki_lookup(inode));
 }
 
@@ -347,7 +367,7 @@ int sys_bind(int fd, struct sockaddr *umyaddr, int addrlen)
 #if 0
     /* This is done in sockfd_lookup, so can be scrubbed later */
     if (fd < 0 || fd >= NR_OPEN || (current->files.fd[fd] == NULL))
-	return (-EBADF);
+	return -EBADF;
 #endif
 
     if (!(sock = sockfd_lookup(fd, NULL)))
@@ -361,7 +381,6 @@ int sys_bind(int fd, struct sockaddr *umyaddr, int addrlen)
 	return i;
 
     return 0;
-
 }
 
 /*@-type@*/
@@ -428,23 +447,22 @@ int sys_listen(int fd, int backlog)
     register struct socket *sock;
 
 #if 0
+
     /* This is done in sockfd_lookup, so can be scrubbed later */
-    if (fd < 0 || fd >= NR_OPEN || current->files.fd[fd] == NULL) {
-	return (-EBADF);
-    }
+    if (fd < 0 || fd >= NR_OPEN || current->files.fd[fd] == NULL)
+	return -EBADF;
+
 #endif
 
-    if (!(sock = sockfd_lookup(fd, NULL))) {
+    if (!(sock = sockfd_lookup(fd, NULL)))
 	return -ENOTSOCK;
-    }
 
-    if (sock->state != SS_UNCONNECTED) {
+    if (sock->state != SS_UNCONNECTED)
 	return -EINVAL;
-    }
 
-    if (sock->ops && sock->ops->listen) {
+    if (sock->ops && sock->ops->listen)
 	sock->ops->listen(sock, backlog);
-    }
+
     sock->flags |= SO_ACCEPTCON;
     return 0;
 
@@ -460,9 +478,11 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
     int i;
 
 #if 0
+
     /* This is done in sockfd_lookup, so can be scrubbed later */
     if (fd < 0 || fd >= NR_OPEN || current->files.fd[fd] == NULL)
-	return (-EBADF);
+	return -EBADF;
+
 #endif
 
     if (!(sock = sockfd_lookup(fd, &file)))
@@ -551,9 +571,9 @@ int sys_connect(int fd, struct sockaddr *uservaddr, int addrlen)
     }
     i = sock->ops->connect(sock, (struct sockaddr *) address, addrlen,
 			   file->f_flags);
-    if (i < 0) {
+    if (i < 0)
 	return i;
-    }
+
     return 0;
 }
 

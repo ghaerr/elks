@@ -63,11 +63,11 @@ int getopt(int argc, char **argv, char *opts)
     register int c;
 
     if (sp == 1)
-	if (optind >= argc ||
-	    argv[optind][0] != '-' || argv[optind][1] == '\0') return (EOF);
+	if (optind >= argc || argv[optind][0] != '-' || argv[optind][1] == '\0')
+	    return EOF;
 	else if (strcmp(argv[optind], "--") == 0) {
 	    optind++;
-	    return (EOF);
+	    return EOF;
 	}
     optopt = c = argv[optind][sp];
     if (c == ':' || (cp = index(opts, c)) == NULL) {
@@ -76,7 +76,7 @@ int getopt(int argc, char **argv, char *opts)
 	    optind++;
 	    sp = 1;
 	}
-	return ('?');
+	return '?';
     }
     if (*++cp == ':') {
 	if (argv[optind][sp + 1] != '\0')
@@ -84,7 +84,7 @@ int getopt(int argc, char **argv, char *opts)
 	else if (++optind >= argc) {
 	    ERR(": option requires an argument -- ", c);
 	    sp = 1;
-	    return ('?');
+	    return '?';
 	} else
 	    optarg = argv[optind++];
 	sp = 1;
@@ -95,5 +95,5 @@ int getopt(int argc, char **argv, char *opts)
 	}
 	optarg = NULL;
     }
-    return (c);
+    return c;
 }

@@ -29,7 +29,7 @@ struct mem_swap_info {
 	unsigned int size;
 };
 
-#ifdef CONFIG_MODULE
+#ifdef CONFIG_MODULES
 
 extern char module_data[];
 extern int module_init(void);

@@ -46,7 +46,7 @@ static unsigned short count_used(struct buffer_head *map[],
 		+ nibblemap[(bh->b_data[j] >> 4) & 0xf];
 	unmap_buffer(bh);
     }
-    return (sum);
+    return sum;
 }
 
 unsigned short minix_count_free_blocks(register struct super_block *sb)

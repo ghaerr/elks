@@ -32,7 +32,6 @@ CONFIG_PC_XT=n
 CONFIG_PC_AT=n
 CONFIG_PC_MCA=n
 CONFIG_ROMCODE=n
-CONFIG_ROMCODE=n
 
 #
 # Model-specific features
@@ -175,7 +174,6 @@ CONFIG_BLK_DEV_FD=n
 CONFIG_BLK_DEV_HD=n
 CONFIG_BLK_DEV_XD=n
 CONFIG_DMA=n
-CONFIG_GENDISK=y
 
 #
 # Additional block devices
