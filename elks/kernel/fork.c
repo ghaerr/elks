@@ -3,6 +3,18 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/debug.h>
 
+int check_task_table()
+{
+	int i,j;
+	j = 0;
+	for(j=0;j<MAX_TASKS;j++){
+		if(task[i].state!=TASK_UNUSED && task[i].pid == 8) {
+			j++;
+		}
+	}
+	return j;	
+}
+
 /*
  *	Find a free task slot.
  */
@@ -12,7 +24,7 @@ static int find_empty_process()
 	int i;
 	int unused=0;
 	int n;
-	
+
 	for(i=0;i<MAX_TASKS;i++) {
 		if(task[i].state==TASK_UNUSED) {
 			unused++;
@@ -65,7 +77,6 @@ int virtual;
 	if(i<0)
 		return i;
 
-
 	t=&task[i];
 	
 	/* Copy everything */
@@ -86,13 +97,13 @@ int virtual;
 		t->mm.dseg = mm_dup(currentp->mm.dseg);
 		if (t->mm.dseg == NULL) {
 			mm_free(currentp->mm.cseg);
+			t->state = TASK_UNUSED;
 			return -ENOMEM;
 		}
 
 		t->t_regs.ds = t->mm.dseg;
 		t->t_regs.ss = t->mm.dseg;
 	}
-
 	t->t_regs.ksp=t->t_kstack+KSTACK_BYTES;
 	t->state = TASK_UNINTERRUPTIBLE;
 	t->pid = get_pid();
@@ -138,7 +149,7 @@ int virtual;
 	 */
 	 
 	wake_up_process(t);
-	
+
 	/*
 	 *	Return the created task.
 	 */
