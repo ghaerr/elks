@@ -3,6 +3,11 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Sat Sep 26 02:07 CET 1998   Simon Weijgers  <mbit@mbit.doa.org>
+	
+	* Added a ### Dependencie line at the end of the Makefiles
+	  in fs/ and fs/elksfs/.
+
 Sat Sep 26 01:50 CET 1998   Simon Weijgers  <mbit@mbit.doa.org>
 	
 	* Fixed various things (typos etc) in fs/exec.c and
