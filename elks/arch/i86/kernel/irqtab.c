@@ -624,7 +624,7 @@ was_trap:
 	pop	ax	! stacked SS
 	pop	cx	! stacked SP
 	mov	bx,_current
-#ifdef CONFIG_SWAP
+#ifdef CONFIG_ADVANCED_MM
 	mov ax, 4[bx]	! user ds
 	mov bp, sp		
 	mov 12[bp], ax	! change the es in the stack

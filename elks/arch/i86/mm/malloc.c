@@ -30,19 +30,8 @@
 #define MAX_SEGMENTS		8+(MAX_TASKS*2)
 #define MAX_SWAP_SEGMENTS	8+(MAX_TASKS*2)
 
-/* This option specifies whether we have holes that are in a segment not
- * equal to the page base. This is required for binaries with the stack
- * at the bottom
- */
-#if 0
-#define FLOAT_HOLES
-#endif
-
 struct malloc_hole {
     seg_t page_base;		/* Pages */
-#ifdef FLOAT_HOLES
-    seg_t hole_seg;		/* Segments */
-#endif
     segext_t extent;		/* Pages */
     struct malloc_hole *next;	/* Next in list memory order */
     __u8 refcount;
@@ -137,8 +126,9 @@ static void sweep_holes(struct malloc_head *mh)
 
 void dmem(struct malloc_head *mh)
 {
-    register struct malloc_hole *m = mh->holes;
+    register struct malloc_hole *m;
     char *status;
+        if(mh)m = mh->holes;else m = memmap.holes;
     do {
 	switch (m->flags) {
 	case HOLE_SPARE:
@@ -154,9 +144,9 @@ void dmem(struct malloc_head *mh)
 	    status = "DODGY";
 	    break;
 	}
-	printk("HOLE %x size %x is %s\n", m->page_base, m->extent, status);
+	printk("HOLE %x size %x next start %x is %s\n", m->page_base, m->extent, m->page_base + m->extent, status);
 	m = m->next;
-    } while (!m);
+    } while (m);
 }
 
 #endif
@@ -205,16 +195,8 @@ int swap_out_someone();
 
 #endif
 
-#ifdef FLOAT_HOLES
-
-seg_t mm_alloc(segext_t pages, segext_t offset)
-
-#else
-
 seg_t mm_alloc(segext_t pages)
-
-#endif
- {
+{
     /*
      *      Which hole fits best ?
      */
@@ -244,18 +226,7 @@ seg_t mm_alloc(segext_t pages)
     m->flags = HOLE_USED;
     m->refcount = 1;
 
-#ifdef FLOAT_HOLES
-
-    m->hole_seg = m->page_base - offset;
-    /* FIXME must check this is legal */
-    return m->hole_seg;
-
-#else
-
     return m->page_base;
-
-#endif
-
 }
 
 /*
@@ -420,22 +391,86 @@ unsigned int mm_get_usage(int type, int used)
     return ret >> 6;
 }
 
-/* This is just to keep malloc et. al happy - it doesn't really do anything
- * as any memory is preallocated via chmem
- *
- * If the stack is at the top of the data segment then we have to leave
- * room for it, otherwise we just need a safety margin of 0x100 bytes
- * AJR <ajr@ecs.soton.ac.uk> 27/01/2000
+/*
+ * Resize a hole
  */
-#define HEAP_LIMIT ((currentp->t_begstack > currentp->t_enddata) ? \
-			USTACK_BYTES : 0x100)
+struct malloc_hole *mm_resize(struct malloc_hole *m, segext_t pages)
+{
+    register struct malloc_hole *next;
+    register segext_t ext;
+    seg_t base;
+    if(m->extent >= pages){
+        /* for now don't reduce holes */           
+        return m;
+    } 
+    
+    next = m->next;
+    ext = pages - m->extent;
+    if(next->flags == HOLE_FREE && next->extent >= ext){    
+        m->extent += ext;
+        next->extent -= ext;
+        next->page_base += ext;
+        if(next->extent == 0){
+            next->flags == HOLE_SPARE;
+            m->next = next->next;
+        }
+        return m;
+    }
+
+#ifdef CONFIG_ADVANCED_MM
+
+    base = mm_alloc(pages);
+    if(!next){
+        return NULL; /* Out of luck */    
+    }
+    fmemcpy(base, 0, m->page_base, 0, (__u16)(m->extent << 4));
+    next = find_hole(&memmap, base);
+    next->refcount = m->refcount;
+    m->flags = HOLE_FREE;
+    sweep_holes(&memmap);
+    
+    return next;
+
+#else
+
+    return NULL;
+
+#endif
+
+}
 
 int sys_brk(__pptr len)
 {
     register __ptask currentp = current;
+    
+    if (len < currentp->t_enddata)
+        return -ENOMEM;
+        
+    if (currentp->t_begstack > currentp->t_endbrk)
+        if(len > currentp->t_endseg - 0x1000)
+            return -ENOMEM;
 
-    if (len < currentp->t_enddata || (len > (currentp->t_endseg - HEAP_LIMIT)))
-	return -ENOMEM;
+#ifdef CONFIG_EXEC_ELKS
+    if(len > currentp->t_endseg){
+        /* Resize time */
+        register struct malloc_hole *h;        
+        seg_t tmp;
+        h = find_hole(&memmap, currentp->mm.dseg);    
+        tmp = h->page_base;
+        
+        h = mm_resize(h, (len + 15) >> 4);
+        if(!h){
+            return -ENOMEM;   
+        }
+        if(h->refcount != 1)
+            panic("Relocated shared hole");
+        
+        currentp->mm.dseg = h->page_base;
+        currentp->t_regs.ds = h->page_base;
+        currentp->t_regs.ss = h->page_base;
+        currentp->t_endseg = len;
+    }
+#endif
 
     currentp->t_endbrk = len;
 

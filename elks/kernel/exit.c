@@ -52,6 +52,7 @@ void do_exit(int status)
 	mm_free(current->mm.cseg);
     if (current->mm.dseg)
 	mm_free(current->mm.dseg);
+
     current->mm.cseg = current->mm.dseg = NULL;
 
     /* Keep all of the family stuff straight */

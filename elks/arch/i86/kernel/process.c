@@ -379,13 +379,22 @@ _fake_save_regs:
 void stack_check(void)
 {
     register __ptask currentp = current;
-
+    register segext_t end;
     if ((currentp->t_begstack > currentp->t_enddata) &&
 	(currentp->t_regs.sp < currentp->t_endbrk)) {
-	printk("STACK (%d) ENTERED BSS (%ld) - PROCESS TERMINATING\n",
-		currentp->t_regs.sp, currentp->t_endbrk);
-	do_exit(SIGSEGV);
+	end = currentp->t_endbrk;
+	goto stack_overflow;
     }
+#ifdef CONFIG_EXEC_ELKS 
+    else if (currentp->t_regs.sp > currentp->t_endseg){
+        end = 0xffff;
+	goto stack_overflow; 
+    }
+#endif
+    return;
+stack_overflow:
+    printk("STACK OVERFLOW BY %d BYTES\n", 0xffff - currentp->t_regs.sp);
+    do_exit(SIGSEGV);
 }
 
 /*

@@ -215,6 +215,7 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 #endif
 
 	memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
+	
 	return 0;
 
 #ifdef CONFIG_SWAP

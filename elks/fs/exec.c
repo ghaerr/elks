@@ -47,16 +47,10 @@
 
 #include <arch/segment.h>
 
-#ifdef CONFIG_EXEC_MINIX
-
-/* FIXME: These cant remain static .. */
-
 static struct minix_exec_hdr mh;
 static struct minix_supl_hdr msuph;
 
-#endif
-
-#define INIT_HEAP 0x1000
+#define INIT_HEAP 0x0
 
 int sys_execve(char *filename, char *sptr, size_t slen)
 {
@@ -73,6 +67,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     gid_t effgid;
     lsize_t len;
     size_t count, result;
+    char load_code = 0;
 
     /*
      *      Open the image
@@ -82,7 +77,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     retval = open_namei(filename, 0, 0, &inode, NULL);
 
-    debug1("EXEC: open returned %d\n", retval);
+    debug1("EXEC: open returned %d\n", -retval);
     if (retval)
 	goto end_readexec;
 
@@ -107,8 +102,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	goto close_readexec;
 
     debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
-
-#ifdef CONFIG_EXEC_MINIX
 
     /*
      *      Read the header.
@@ -143,9 +136,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	goto close_readexec;
     }
 
-#if 0
-    /* I am so far unsure about whether we need this, or the S_SPLITID format
-     */
+#ifdef CONFIG_EXEC_ELKS
     if ((unsigned int) mh.hlen == 0x30) {
 	/* BIG HEADER */
 	tregs->ds = get_ds();
@@ -156,11 +147,18 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    retval = -ENOEXEC;
 	    goto close_readexec;
 	}
-	stack_top = (seg_t) msuph.msh_dbase;
-	printk("SBASE = %x\n", stack_top);
+	stack_top = msuph.msh_dbase;
+	if(stack_top & 0xf){
+	     retval = -ENOEXEC;
+	     goto close_readexec;        
+	}
+	debug1("EXEC: New type executable stack = %x\n", stack_top);
     }
-#endif
-    execformat = RUNNABLE_MINIX;
+#else
+    if((unsigned int) mh.hlen != 0x20){
+        retval = -ENOEXEC;
+        goto close_readexec;       
+    }
 #endif
 
     debug("EXEC: Malloc time\n");
@@ -183,11 +181,12 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     }
 
     if (!cseg) {
-	cseg = mm_alloc((segext_t) ((mh.tseg + 15) >> 4));
-	if (!cseg) {
-	    retval = -ENOMEM;
-	    goto close_readexec;
-	}
+        cseg = mm_alloc((segext_t) ((mh.tseg + 15) >> 4));
+        if (!cseg) {
+            retval = -ENOMEM;
+            goto close_readexec;
+        }
+        load_code = 1;
     }
 
     /*
@@ -196,7 +195,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      */
     if (stack_top) {
 	len = mh.dseg + mh.bseg + stack_top + INIT_HEAP;
-	printk("NB [dseg = %x]\n", (segext_t) (len >> 4));
     } else {
 	len = mh.chmem;
     }
@@ -217,20 +215,25 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     }
 
     debug2("EXEC: Malloc succeeded - cs=%x ds=%x", cseg, dseg);
-    tregs->ds = cseg;
-    result = filp->f_op->read(inode, &file, 0, mh.tseg);
-    tregs->ds = ds;
-    if (result != mh.tseg) {
-	debug2("EXEC(tseg read): bad result %d, expected %d\n",
+
+    if(load_code){
+        tregs->ds = cseg;
+        result = filp->f_op->read(inode, &file, 0, mh.tseg);
+        tregs->ds = ds;
+        if (result != mh.tseg) {
+            debug2("EXEC(tseg read): bad result %d, expected %d\n",
 	       result, mh.tseg);
-	retval = -ENOEXEC;
-	mm_free(cseg);
-	mm_free(dseg);
-	goto close_readexec;
+	    retval = -ENOEXEC;
+	    mm_free(cseg);
+	    mm_free(dseg);
+	    goto close_readexec;
+        }
+    } else {
+        filp->f_pos += mh.tseg;       
     }
 
     tregs->ds = dseg;
-    result = filp->f_op->read(inode, &file, (char *) stack_top, mh.dseg);
+    result = filp->f_op->read(inode, &file, (char *)stack_top, mh.dseg);
     tregs->ds = ds;
     if (result != mh.dseg) {
 	debug2("EXEC(dseg read): bad result %d, expected %d\n",
@@ -240,7 +243,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	mm_free(dseg);
 	goto close_readexec;
     }
-
+    
     /*
      *      Wipe the BSS.
      */
@@ -316,7 +319,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     tregs->sp = ((__u16) ptr);		/* Just below the arguments */
     tregs->cs = cseg;
     tregs->ds = dseg;
-    
+
     {
 	register __ptask currentp = current;
 
@@ -335,7 +338,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    currentp->euid = effuid;
 	if (sgidfile)
 	    currentp->egid = effgid;
-
+    
 	retval = 0;
 	wake_up(&currentp->p_parent->child_wait);
     }

@@ -23,10 +23,7 @@ bool 'Pipe support'			CONFIG_PIPE			y
 
 comment 'Executable file formats'
 
-bool 'Minix file format'		CONFIG_EXEC_MINIX		y
-if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
-    bool 'MSDOS (EXE) file format'	CONFIG_EXEC_MSDOS		n
-fi
+bool 'Support ELKS file format'         CONFIG_EXEC_ELKS		y
 
 endmenu
 

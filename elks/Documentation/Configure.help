@@ -320,6 +320,13 @@ High Memory (HMA) Support
   contains the last 16 bytes of the first megabyte together with the
   HMA and this area is accessible from real mode once set up.
 
+Advanced Memory Manager
+CONFIG_ADVANCED_MM
+  Adds some features to the MM like resizable holes and relocatable
+  code and data segments for processes. If you are going to use the 
+  ELKS executable format then you better say Y here. 
+  This enlarges the kernel by around 110 bytes.
+
 Swap support (Experimental)
 CONFIG_SWAP
   Include support for swapping to virtual memory.
@@ -649,23 +656,12 @@ CONFIG_FS_RO
 # Executable file formats
 # ~~~~~~~~~~~~~~~~~~~~~~~
 
-Minix file format
-CONFIG_EXEC_MINIX
-  This lets you run Minix binaries compiled with bcc. This is the only
-  real format allowed at the moment. 
-
-  ~~~~~~~~~~~~~~~~~~~Required~~~~~~~~~~~~~~~~~~
-
-MSDOS (EXE) file format
-CONFIG_EXEC_MSDOS
-  This lets you run MSDOS *.EXE files under ELKS.
-
-  This support is VERY ALPHA at the moment, and may not work.
-  Use with caution. ie. If you compile this in, and something breaks,
-  then remove it, and try again.
-
-  In particluar, you might find you can't run any programs, including
-  init and login.
+ELKS file format
+CONFIG_EXEC_ELKS
+  Adds support for the new ELKS executable format that supports a growing
+  heap. If you are only going to run MINIX executables and you don't care
+  for a growing heap say N, otherwise say Y. 
+  This will enlarge the kernel by around 210 bytes.
 
 # Networking support
 # ~~~~~~~~~~~~~~~~~~

@@ -52,6 +52,17 @@ if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 fi
 
 mainmenu_option next_comment
+    comment 'Memory manager'
+  	
+    bool 'Advanced memory manager'			CONFIG_ADVANCED_MM	y
+	
+    if [ "$CONFIG_ADVANCED_MM" = "y" ]; then
+	     bool 'Enable swap support'			CONFIG_SWAP	n
+	fi
+
+endmenu
+
+mainmenu_option next_comment
     comment 'Hardware Facilities'
 
     if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
@@ -126,14 +137,6 @@ mainmenu_option next_comment
 		define_bool CONFIG_XMS_INT15 n
 		define_int  CONFIG_XMS_SIZE  0
 	    fi
-	endmenu
-    fi
-
-    if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
-	mainmenu_option next_comment
-	    comment "Swap support"
-
-	    bool 'Enable swap support'			CONFIG_SWAP	n
 	endmenu
     fi
 

@@ -5,7 +5,6 @@
 #define NGROUPS	13		/* Supplementary groups */
 #define NOGROUP 0xFFFF
 #define KSTACK_BYTES 1024	/* Size of kernel stacks */
-#define USTACK_BYTES 4096	/* Size of user-mode stacks */
 
 #include <linuxmt/types.h>
 #include <linuxmt/fs.h>
