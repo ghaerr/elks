@@ -29,24 +29,6 @@ struct termios def_vals = { 	BRKINT,
 			};
 
 
-/* FIXME */ /* should be an inline function */
-void select_wait(wait_address, p) 
-struct wait_queue ** wait_address;
-register select_table * p;
-{
-	register struct select_table_entry * entry;
-        if (!(p) || !wait_address)
-                return;
-        if ((p)->nr >= __MAX_SELECT_TABLE_ENTRIES)
-                return;
-        entry = (p)->entry + (p)->nr;
-        entry->wait_address = wait_address;
-        entry->wait.task = current;
-        entry->wait.next = NULL;
-        add_wait_queue(wait_address,&entry->wait);
-        (p)->nr++;
-}
-
 #define TAB_SPACES 8
 
 #define MAX_TTYS 8
@@ -236,21 +218,19 @@ struct file * file;
 int sel_type;
 select_table * wait;
 {
-  register struct tty *tty=determine_tty(inode->i_rdev);
+	register struct tty *tty=determine_tty(inode->i_rdev);
 
-printk("tty_select called\n");
-  switch (sel_type)
-    {
-    case SEL_IN:
-      if (chq_peekch(tty->inq))
-	{ printk("peekch: returning 1, peekch returns %d,inq.len=%d\n",
-		 chq_peekch(tty->inq), tty->inq.len); return 1; }
-    case SEL_EX: /* fall thru! */
-      select_wait (&tty->sleep, wait);
-      return 0;
-    case SEL_OUT: /* Hm.  We can always write to a tty?  (not really) */
-      return 1;
-    }
+	switch (sel_type) {
+		case SEL_IN:
+			if (chq_peekch(tty->inq)) {
+				return 1;
+			}
+		case SEL_EX: /* fall thru! */
+			select_wait (&tty->inq.wq, wait);
+			return 0;
+		case SEL_OUT: /* Hm.  We can always write to a tty?  (not really) */
+		return 1;
+	}
 }
 
 static struct file_operations tty_fops =

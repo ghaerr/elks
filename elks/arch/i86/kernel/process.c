@@ -47,8 +47,31 @@ void sig_check()
 #asm
 	.text
 	.even
+
+#if 1	
+	.globl _tswitch
+_tswitch:
+	push bp		! /* schedule()'s bp */
+	pushf
+	push di
+	push si
+	push bx
+	push dx
+	mov bx,_previous
+	mov [bx],sp
+	mov bx,_current
+	mov ax,[bx]
+	mov sp,ax
+	pop dx
+	pop bx
+	pop si
+	pop di
+	popf
+	pop bp		! BP of schedule()
+	xor ax,ax
+	ret
+#else
 	.globl _save_regs
-	
 _save_regs:
 !
 !	Save the CPU registers (note: only need those which bcc would
@@ -98,6 +121,7 @@ _load_regs:
 	pop bp		! Recover caller BP
 	xor ax,ax	! /* Set ax=0, as this may be child's fork() return */
 	ret		! thus to caller of schedule()
+#endif
 	
 !
 !	System Call Vector
@@ -230,6 +254,7 @@ sc_tmp:	.word 0
 !	registers suitably for
 !
 _fake_save_regs:
+#if 0
 	push 	bp
 	mov	bp,sp
 	mov     bx,4[bp]	! new task ksp
@@ -257,6 +282,26 @@ _fake_save_regs:
 	mov	ax,#16
 	pop	bp
 	ret
+#else
+	push	bp
+	mov	bp,sp
+	mov     bx,4[bp]	! new task ksp
+	mov	ax,6[bp]	! new task start address
+
+	mov	-2[bx],ax	! Return address
+	mov	ax,[bp]		! Caller BP
+	mov	-4[bx],ax	! Save caller BP
+	pushf
+	pop	ax
+	mov	-6[bx],ax	! Flags
+	mov	-8[bx],di
+	mov 	-10[bx],si
+	mov	-12[bx],bx
+	mov	-14[bx],dx
+	mov	ax,#14
+	pop	bp
+	ret
+#endif
 #endasm
 
 void stack_check()
@@ -405,7 +450,7 @@ struct task_struct *t;
 	t->t_regs.ksp=kstktop-fake_save_regs(kstktop,ret_from_syscall);
 #asm
 	mov bx,[bp]	! bx = bp on entry to arch_build_stack
-	mov ax,[bx]	! bx = bp on entry to do_fork = users bp (hopefully!)
+	mov ax,[bx]	! ax = bp on entry to do_fork = users bp (hopefully!)
 	mov _saved_bp,ax
 #endasm
 	*(void**)(kstktop-4) = saved_bp;

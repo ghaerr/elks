@@ -13,6 +13,8 @@
 #define DST_TUR         9       /* Turkey */
 #define DST_AUSTALT     10      /* Australian style with shift in 1986 */
 
+#ifdef __KERNEL__
+
 struct timeval {
 	long		tv_sec;		/* seconds */
 	long 		tv_usec;	/* microseconds */
@@ -22,6 +24,8 @@ struct timezone {
 	int	tz_minuteswest;	/* minutes west of Greenwich */
 	int	tz_dsttime;	/* type of dst correction */
 };
+
+#endif /* __KERNEL__ */
 
 /*
  * Names of the interval timers, and structure

@@ -12,10 +12,9 @@
 #endif
 
 /*
- * This allows for 1024 file descriptors: if NR_OPEN is ever grown
- * beyond that you'll have to change this too. But 1024 fd's seem to be
- * enough even for such "real" unices like OSF/1, so hopefully this is
- * one limit that doesn't have to be changed [again].
+ * This allows for 20 file descriptors: if NR_OPEN is ever grown
+ * beyond that you'll have to change this too. For now 20 fd's seem to be
+ * enough for ELKS, so hopefully this won't need changing.
  *
  * Note that POSIX wants the FD_CLEAR(fd,fdsetp) defines to be in
  * <sys/time.h> (and thus <linux/time.h>) - but this is a more logical
@@ -30,10 +29,10 @@
 #define __NFDBITS	(8 * sizeof(unsigned long))
 
 #undef __FD_SETSIZE
-#define __FD_SETSIZE	1024
+#define __FD_SETSIZE	20
 
 #undef __FDSET_LONGS
-#define __FDSET_LONGS	(__FD_SETSIZE/__NFDBITS)
+#define __FDSET_LONGS	(__FD_SETSIZE/__NFDBITS + 1)
 
 #undef __FDELT
 #define	__FDELT(d)	((d) / __NFDBITS)
@@ -42,7 +41,7 @@
 #define	__FDMASK(d)	(1UL << ((d) % __NFDBITS))
 
 typedef struct {
-	unsigned long fds_bits [__FDSET_LONGS];
+	unsigned long fds_bits[1];
 } __kernel_fd_set;
 
 #include <arch/posix_types.h>

@@ -19,16 +19,20 @@
 
 #define init_task task[0]
 
-int bh_mask_count[32];
-unsigned long bh_mask = 0L;
-void (*bh_base[32])();
-unsigned long bh_active = 0L;
-__ptask current, next;
+#ifdef ENDIS_BH
+int bh_mask_count[16];
+unsigned bh_mask = 0;
+#endif /* ENDIS_BH */
 
-static unsigned long lost_ticks = 0;
-static unsigned long lost_ticks_system = 0;
+void (*bh_base[16])();
+unsigned bh_active = 0;
+__ptask current, next, previous;
 
-extern struct wait_queue keywait;	/* For polled keyboard handling */
+static unsigned long lost_ticks = 0L;
+#if 0;
+static unsigned long lost_ticks_system = 0L;
+#endif
+
 extern unsigned char can_tswitch;
 extern int lastirq;
 
@@ -104,13 +108,21 @@ struct task_struct * p;
         p->prev_run = NULL;
 }
 
+static void init_timer(timer)
+struct timer_list * timer;
+{
+	timer->next = NULL;
+	timer->prev = NULL;
+}
+
+
 static void process_timeout(__data)
 int __data;
 {
         register struct task_struct * p = (struct task_struct *) __data;
 
-	/*printk("process_timeout called!  data=%x, waking task %d\n", __data, p->pid);*/
-        p->timeout = 0;
+	printk("process_timeout called!  data=%x, waking task %d\n", __data, p->pid);
+        p->timeout = 0UL;
         wake_up_process(p);
 }
 
@@ -172,7 +184,11 @@ void schedule()
 /*	if (intr_count)
 		goto scheduling_in_interrupt; */
 
+#ifdef ENDIS_BH
 	if (bh_active & bh_mask) {
+#else
+	if (bh_active) {
+#endif
 /*		intr_count = 1; */
 		do_bottom_half();
 /*		intr_count = 0; */
@@ -208,7 +224,7 @@ void schedule()
 			del_from_runqueue(prev);
 			/*break;*/
 		case TASK_RUNNING: break;
-		}
+	}
 
 	p = init_task.next_run;
 	/*if (init_task.next_run->pid != 0)
@@ -216,28 +232,29 @@ void schedule()
 	isti();
 
 	c = 0;
-        next = &init_task;
-        while (p != &init_task) {
-                int weight = goodness(p, prev);
+	next = &init_task;
+	while (p != &init_task) {
+		int weight = goodness(p, prev);
 		/*printk("checking out task %d (state=%d, goodness=%d), next=%d\n",
 		       p->pid, p->state, weight, p->next_run->pid); */
-                if (weight > c)
-                        c = weight, next = p;
-                p = p->next_run;
-        }
+		if (weight > c)
+			c = weight, next = p;
+		p = p->next_run;
+	}
 
 	/*	if (next->pid != 0)
 	printk("chose task %d (state=%d) to run\n", next->pid, next->state);*/
 
         /* if all runnable processes have "counter == 0", re-calculate counters
          */
-        if (c==1000) {
-                for_each_task(p)
-                        p->counter = (p->counter >> 1) + p->t_priority;
-        }
+	if (c==1000) {
+		for_each_task(p)
+			p->counter = (p->counter >> 1) + p->t_priority;
+	}
 
 	if (next != currentp) {
 		struct timer_list timer;
+		int foo = 10;
 
 		if (timeout) {
 			init_timer(&timer);
@@ -246,17 +263,26 @@ void schedule()
 			timer.function = process_timeout;
 			add_timer(&timer);
 		}
+	/* The code below has been changed as the old task switching code did not return
+	   here, which meant that defunct timers were not getting deleted which caused
+	   a kernel panic when the timer ran out.
+	   The new switcher consists of one function which switches from the task pointed
+	   to by previous, to that pointed to by current, instead of the old save_regs() 
+	   current = next load_regs() arrangement. Th is new arrangement allows us to return
+	   to the same point, except with a new task.
+	   Al <ajr@ecs.soton.ac.uk> 4th May 1999 */
 
-		save_regs();
+/*		save_regs();/* */
 		if ((!can_tswitch) && (lastirq != -1)) 
 			goto scheduling_in_interrupt;
 
+		previous = current; /* */
 		current = next;
 
-		load_regs();	/* Returns to our caller */
+		tswitch();	/* Won't return for a new task */
+/*		load_regs();	/* Returns to our caller */
 
 		if (timeout) {
-/*			printk("deleting timeout\n"); */
 			del_timer(&timer);
 		}
 	}
@@ -320,7 +346,7 @@ register struct timer_list * timer;
 	unsigned long expires = timer->expires;
 	unsigned long idx = expires - timer_jiffies;
 
-	if (idx < TVR_SIZE) {
+	if (idx < (unsigned long)TVR_SIZE) {
 		int i = expires & TVR_MASK;
 		insert_timer(timer, tv1.vec, i);
 	} else if (idx < 1 << (TVR_BITS + TVN_BITS)) {
@@ -337,13 +363,11 @@ register struct timer_list * timer;
 		 * or you set a timer to go off in the past
 		 */
 		insert_timer(timer, tv1.vec, tv1.index);
-	} else if (idx < 0xffffffffUL) {
+	} else {
 		int i = (expires >> (TVR_BITS + 3 * TVN_BITS)) & TVN_MASK;
 		insert_timer(timer, tv5.vec, i);
-	} else {
-		/* Can only get here on architectures with 64-bit jiffies */
-		timer->next = timer->prev = timer;
 	}
+	/* Last case removed as it could only occur with 64bit jiffies */
 }
 
 void add_timer(timer)
@@ -481,61 +505,34 @@ struct timer_struct timer_table[32];
 
 /* maybe someday I'll implement these profiling things -PL */
 #if 0
-static /*inline*/ void do_it_prof(p, ticks)
+static void do_it_prof(p, ticks)
 struct task_struct * p;
 unsigned long ticks;
 {
-        unsigned long it_prof = p->it_prof_value;
+	unsigned long it_prof = p->it_prof_value;
 
-        if (it_prof) {
-	  if (it_prof <= ticks) {
-                        it_prof = ticks + p->it_prof_incr;
-                        send_sig(SIGPROF, p, 1);
-	  }
-                p->it_prof_value = it_prof - ticks;
-        }
+	if (it_prof) {
+		if (it_prof <= ticks) {
+			it_prof = ticks + p->it_prof_incr;
+			send_sig(SIGPROF, p, 1);
+		}
+		p->it_prof_value = it_prof - ticks;
+	}
 }
-#endif
 
-#if 0
-static /*__inline__*/ void update_one_process(p, ticks, user, system)
+static void update_one_process(p, ticks, user, system)
 struct taks_struct * p;
 unsigned long ticks;
 unsigned long user;
 unsigned long system;
 {
-  /*do_process_times(p, user, system);*/
-  /*do_it_virt(p, user);*/
-  /*do_it_prof(p, ticks);*/
+	do_process_times(p, user, system);
+	do_it_virt(p, user);
+	do_it_prof(p, ticks);
 }
 #endif
 
-static void update_process_times(ticks, system)
-unsigned long ticks;
-unsigned long system;
-{
-        register struct task_struct * p = current;
-        unsigned long user = ticks - system;
-        if (p->pid) {
-                p->counter -= ticks;
-                if (p->counter < 0) {
-                        p->counter = 0;
-#ifdef NEED_RESCHED
-                        need_resched = 1;
-#endif
-                }
-#if 0
-                if (p->priority < DEF_PRIORITY)
-                        kstat.cpu_nice += user;
-                else
-                        kstat.cpu_user += user;
-                kstat.cpu_system += system;
-#endif
-        }
-        /*update_one_process(p, ticks, user, system);*/
-}
-
-static /*inline*/ void update_times()
+static void update_times()
 {
         unsigned long ticks;
 
@@ -545,24 +542,27 @@ static /*inline*/ void update_times()
 	isti();
 
         if (ticks) {
-                unsigned long system;
+		register struct task_struct * p = current;
 		
-		icli();
-		system = lost_ticks_system;
-		lost_ticks_system = 0;
-		isti();
-
                 /*calc_load(ticks);*/ /* don't care for now */
                 /*update_wall_time(ticks);*/ /* this either */
-                update_process_times(ticks, system);
+		if (p->pid) {
+			p->counter -= ticks;
+			if (p->counter < 0) {
+				p->counter = 0;
+#ifdef NEED_RESCHED
+				need_resched = 1;
+#endif
+			}
+		}
         }
 }
 
 static void timer_bh()
 {
-  update_times();
-  run_old_timers();
-  run_timer_list();
+	update_times();
+	run_old_timers();
+	run_timer_list();
 }
 
 void do_timer(regs)
@@ -592,13 +592,17 @@ struct pt_regs * regs;
 
 void do_bottom_half()
 {
-        unsigned long active;
-        unsigned long mask, left;
+        unsigned active;
+        unsigned mask, left;
         void (**bh)();
 
         isti();
         bh = bh_base;
+#ifdef ENDIS_BH
         active = bh_active & bh_mask;
+#else
+        active = bh_active;
+#endif
         for (mask = 1, left = ~0 ; left & active ; bh++,mask += mask,left += left) {
 	  if (mask & active) {
                         void (*fn)();
@@ -616,12 +620,12 @@ bad_bh:
 
 void sched_init()
 {
-  init_bh(TIMER_BH, timer_bh);
+	init_bh(TIMER_BH, timer_bh);
 #ifdef NEED_TQ_TIMER
-  init_bh(TQUEUE_BH, tqueue_bh);
+	init_bh(TQUEUE_BH, tqueue_bh);
 #endif
 #ifdef NEED_IMM_BH
-  init_bh(IMMEDIATE_BH, immediate_bh);
+	init_bh(IMMEDIATE_BH, immediate_bh);
 #endif
 }
 

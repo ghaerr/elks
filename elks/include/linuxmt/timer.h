@@ -91,12 +91,4 @@ extern int  del_timer();
 
 extern void it_real_fn();
 
-/* blah, lack of inline functions loses.*/
-/*extern*/ static /*inline*/ void init_timer(timer)
-struct timer_list * timer;
-{
-	timer->next = NULL;
-	timer->prev = NULL;
-}
-
 #endif /* _LINUXMT_TIMER_H */

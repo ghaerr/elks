@@ -58,14 +58,9 @@ typedef struct {
        	        }
 
 #undef	__FD_ISSET
-#define __FD_ISSET(fd,fdsetp) ((*(int*)((int)fdsetp+fd>>3) & (1<<(fd & 0xf))) != 0)
+#define __FD_ISSET(fd,fdsetp) ((((unsigned long *)fdsetp)[0] & (1<<(fd & 0x1f))) != 0)
 
 #undef	__FD_ZERO
-#define __FD_ZERO(fdsetp) \
-                {\
-		  int i = 0; \
-		  icli(); for (; i < 32; i++)\
-		    ((int*)fdsetp)[i] = 0; isti(); \
-		}
+#define __FD_ZERO(fdsetp) (((unsigned long *)fdsetp)[0] = 0UL)
 
 #endif /* __ARCH_8086_POSIZ_TYPES_H */

@@ -52,7 +52,7 @@ struct tty {
 	int minor;
 	int flags;
 	unsigned char inq_buf[INQ_SIZE], outq_buf[OUTQ_SIZE];
-	struct wait_queue *sleep;
+/*	struct wait_queue *sleep; */
 	struct ch_queue inq, outq;
 	struct termios termios;
 };

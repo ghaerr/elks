@@ -34,7 +34,8 @@ typedef struct select_table_struct {
 	struct select_table_entry * entry;
 } select_table;
 
-#define __MAX_SELECT_TABLE_ENTRIES (4096 / sizeof (struct select_table_entry))
+/*#define __MAX_SELECT_TABLE_ENTRIES (4096 / sizeof (struct select_table_entry))*/
+#define __MAX_SELECT_TABLE_ENTRIES 32
 
 #endif /* __KERNEL__ */
 

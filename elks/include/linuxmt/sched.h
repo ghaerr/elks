@@ -53,7 +53,7 @@ struct task_struct
         __u32 timeout;                  /* for select() */
 	__uint t_count, t_priority;	/* priority scheduling elements */
 /*	__u16 t_flags; 		/* Not defined yet */
-	__u32 counter;		/* Time counter (unused so far) */
+	__s32 counter;		/* Time counter (unused so far) */
         struct task_struct *next_run, *prev_run;
         struct task_struct *next_task, *prev_task;
 	struct file_struct files;	/* File system structure */

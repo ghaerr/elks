@@ -34,21 +34,34 @@ extern void isti();
 #endif
 extern void do_bottom_half();
 
-extern int bh_mask_count[32];
-extern unsigned long bh_active;
-extern unsigned long bh_mask;
-extern void (*bh_base[32])();
+extern int bh_mask_count[16];
+extern unsigned bh_active;
+extern unsigned bh_mask;
+extern void (*bh_base[16])();
 
+#ifdef __KERNEL__
 #define icli() asm("cli")
 #define isti() asm("sti")
+#else __KERNEL__
+#define icli()
+#define isti()
+#endif
+
+#ifdef ENDIS_BH
 
 #define init_bh(nr, routine) bh_base[nr] = routine; \
             bh_mask_count[nr] = 0; \
             bh_mask |= 1 << nr;
 
-#define mark_bh(nr) set_bit(nr, &bh_active);
-
 #define disable_bh(nr) bh_mask &= ~(1 << nr); bh_mask_count[nr]++;
 #define enable_bh(nr) if (!--bh_mask_count[nr]) bh_mask |= 1 << nr;
+
+#else
+
+#define init_bh(nr, routine) bh_base[nr] = routine;
+
+#endif
+
+#define mark_bh(nr) set_bit(nr, &bh_active);
 
 #endif /* __ARCH_8086_IRQ_H */
