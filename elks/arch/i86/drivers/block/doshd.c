@@ -727,8 +727,8 @@ static void do_bioshd_request()
 
 			BD_IRQ = BIOSHD_INT;
 			if (req->rq_cmd == WRITE) {
-			   BD_AX = BIOSHD_WRITE | this_pass;
-			   fmemcpy(BUFSEG, 0, get_ds(), buff, (this_pass * 512));
+				BD_AX = BIOSHD_WRITE | this_pass;
+				fmemcpy(BUFSEG, 0, req->rq_seg, buff, (this_pass * 512));
 			}
 			else {
 				BD_AX = BIOSHD_READ | this_pass;
@@ -763,7 +763,7 @@ static void do_bioshd_request()
 				continue;	/* try again */
 			}
 			if (req->rq_cmd==READ) {
-			  fmemcpy(get_ds(), buff, BUFSEG, 0, (this_pass * 512)); 
+				fmemcpy(req->rq_seg, buff, BUFSEG, 0, (this_pass * 512)); 
 			}
 			/* In case it's already been freed */	
 			if (!dma_avail) {
