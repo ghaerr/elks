@@ -35,6 +35,14 @@
  *
  */
 
+void sig_check()
+{
+	if (current->signal)
+		printk("Process %d has a signal.\n", current->pid);
+		do_signal();
+	current->signal = 0;
+}
+
 #asm
 	.text
 	.even
@@ -164,10 +172,13 @@ _syscall_int:
 !
 !	syscall(params...)
 !
-	push ax
+	push	ax
 	call	_stack_check
-	pop ax
+	pop	ax
 	call	_syscall
+	push	ax
+	call	_sig_check
+	pop	ax
 	pop	bx
 	pop	cx
 	pop	dx

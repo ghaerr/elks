@@ -160,6 +160,9 @@ int len;
 
 	while ((i < len) && (!mode || (j != 10))) { 
 		j = chq_getch(&tty->inq, &ch, 1);
+		if (j == -1) {
+			return -EINTR;
+		}
 		if (mode && (j == 4))
 			break;
 		if ((j != -1) && (!mode  || (j != '\b'))) {

@@ -112,6 +112,20 @@ int len;
 }
 #endif
 
+int find_first_non_zero_bit(addr, len) /* Use the old faithful version */
+unsigned long *addr;
+int len;
+{
+	unsigned int i;
+
+	for (i = 0; i < len; i++) {
+		if (test_bit(i, addr)) {
+			return i;
+		}
+	}	
+	return len;
+}
+
 int find_first_zero_bit(addr, len) /* Use the old faithful version */
 unsigned long *addr;
 int len;

@@ -27,6 +27,7 @@ int do_signal();
 /*
  * atomically swap in the new signal mask, and wait for a signal.
  */
+#if 0
 int sys_sigsuspend(restart,oldmask,set)
 int restart;
 unsigned long oldmask;
@@ -47,6 +48,7 @@ unsigned long set;
 			return -EINTR;
 	}
 }
+#endif
 
 /*
  * This sets regs->esp even though we don't actually use sigstacks yet..
@@ -64,13 +66,13 @@ unsigned long __unused;
  * FIXME
  */
 
+#if 0
 static void setup_frame(sa,regs,signr,oldmask)
 struct sigaction * sa;
 struct pt_regs * regs;
 int signr;
 unsigned long oldmask;
 {
-#if 0
 	unsigned long * frame;
 
 	frame = (unsigned long *) regs->esp;
@@ -125,20 +127,20 @@ unsigned long oldmask;
 	regs->ds = USER_DS; regs->es = USER_DS;
 	regs->gs = USER_DS; regs->fs = USER_DS;
 	regs->eflags &= ~TF_MASK;
-#endif	
 }
+#endif	
 
 /*
  * OK, we're invoking a handler
  */	
 
+#if 0
 static void handle_signal(signr,sa,oldmask,regs)
 unsigned long signr;
 struct sigaction *sa;
 unsigned long oldmask;
 struct pt_regs * regs;
 {
-#if 0
 	/* are we from a system call? */
 	if (regs->orig_eax >= 0) {
 		/* If so, check system call restarting.. */
@@ -165,9 +167,57 @@ struct pt_regs * regs;
 	if (sa->sa_flags & SA_ONESHOT)
 		sa->sa_handler = NULL;
 	current->blocked |= sa->sa_mask;
-#endif	
 }
+#endif	
 
+
+int do_signal()
+{
+	struct sigaction * sa;
+	unsigned signr;
+
+	while (current->signal) {
+		signr = find_first_non_zero_bit(&current->signal, 32);
+		if (signr == 32) {
+			printk("THIS SHOULD NEVER HAPPEN\n");
+		}
+		sa = current->sig.action + signr;
+		signr++;
+		if (sa->sa_handler == SIG_IGN) {
+			if (signr != SIGCHLD)
+				continue;
+			while (sys_wait4(-1,NULL,WNOHANG) > 0);
+			continue;
+		}
+		if (sa->sa_handler == SIG_DFL) {
+			if (current->pid == 1)
+				continue;
+			switch (signr) {
+			case SIGCONT: case SIGCHLD: case SIGWINCH:
+				continue;
+			case SIGSTOP: case SIGTSTP: case SIGTTIN: case SIGTTOU:
+				current->state = TASK_STOPPED;
+			/*	current->exit_code =  signr; */
+			/* Let the parent know */
+				current->p_parent->child_lastend = current->pid;
+				current->p_parent->lastend_status = signr;
+				schedule();
+				continue;
+/*			case SIGQUIT: case SIGILL: case SIGTRAP:
+			case SIGABRT: case SIGFPE: case SIGSEGV:
+		/* This is where w dump the core */
+			default:
+				sys_exit(signr);
+			}
+		}
+/*		handle_signal(signr, sa); */
+		return 1;
+	}
+	return 0;
+}
+	
+
+#if 0
 /*
  * Note that 'init' is a special process: it doesn't get signals it doesn't
  * want to handle. Thus you cannot kill init even with a SIGKILL even by
@@ -181,7 +231,6 @@ int do_signal(oldmask,regs)
 unsigned long oldmask;
 struct pt_regs * regs;
 {
-#if 0
 	unsigned long mask = ~current->blocked;
 	unsigned long signr;
 	struct sigaction * sa;
@@ -268,6 +317,6 @@ struct pt_regs * regs;
 			regs->eip -= 2;
 		}
 	}
-#endif	
 	return 0;
 }
+#endif	

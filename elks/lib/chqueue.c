@@ -89,17 +89,21 @@ int wait;
 
 	printd_chq6("CHQ: chq_getch(%d, %d, %d) q->len=%d q->tail=%d q->size=%d\n", q, c, wait, q->len, q->tail, q->size);
 
-	while ((q->len == 0) && wait) {
-		if (!wait) {
-			return -1;
+	if (q->len == 0) {
+		if (wait) {
+			printd_chq("CHQ: getch sleeping\n");
+			interruptible_sleep_on(&q->wq);	
+			printd_chq("CHQ: getch wokeup\n");
 		}
-		printd_chq("CHQ: getch sleeping\n");
-		sleep_on(&q->wq);	
-		printd_chq("CHQ: getch wokeup\n");
-	};
+	}
+	if (q->len == 0) {
+		return -1;
+	}
 
 	retval = q->buf[q->tail];
-	q->tail++; q->tail %= q->size; q->len--;
+	q->tail++;
+	q->tail %= q->size;
+	q->len--;
 
 	wake_up(&q->wq);
 	if (c != 0) *c = retval;

@@ -20,7 +20,7 @@ int options;
 {
 	pid_t retval;
 
-	while (1) {
+	do {
 		if (current->child_lastend) {
 			if (status) {
 				if ((retval = verified_memcpy_tofs(status, 
@@ -34,7 +34,7 @@ int options;
 		}
 		sleep_on(&current->child_wait);
 /*		schedule(); */
-	};
+	} while (!options);
 }
 
 void sys_exit(status)

@@ -28,6 +28,7 @@ struct task_struct * p;
 	unsigned long mask = 1 << (sig-1);
 	struct sigaction * sa = sig + p->sig.action - 1;
 
+	printk("Generating sig %d.\n", sig);
 	if (!(mask & p->blocked)) {
 		if (sa->sa_handler == SIG_IGN && sig != SIGCHLD)
 			return;
@@ -46,6 +47,7 @@ int sig;
 struct task_struct * p;
 int priv;
 {
+	printk("Killing with sig %d.\n", sig);
 	if (!priv && ((sig != SIGCONT) || (current->session != p->session)) &&
 	    (current->euid ^ p->suid) && (current->euid ^ p->uid) &&
 	    (current->uid ^ p->suid) && (current->uid ^ p->uid) &&
@@ -75,6 +77,7 @@ int sig;
 {
 	struct task_struct * p;
 
+	printk("Killing PID %d with sig %d.\n", pid, sig);
 	if ((sig < 1) || (sig > 32))
 		return -EINVAL;
 	for_each_task(p) {

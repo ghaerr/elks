@@ -24,7 +24,8 @@ CC_PROTO =gcc -I../../../include -M
 	$(CC) $(CFLAGS) \
 	-0 -c -o $*.o $<
 
-OBJS  = strace.o printreg.o system.o irq.o irqtab.o process.o bios16.o entry.o # signal.o
+OBJS  = strace.o printreg.o system.o irq.o irqtab.o process.o bios16.o \
+		entry.o signal.o
 
 akernel.a: $(OBJS)
 	ar rcs akernel.a $(OBJS)
