@@ -237,7 +237,7 @@ char *strtok(char *s, char *ct)
 
 #ifndef __HAVE_ARCH_MEMSET
 
-char *memset(char *s, char c, size_t count)
+void *memset(void *s, char c, size_t count)
 {
     register char *xs = s;
 
@@ -269,7 +269,7 @@ char *bcopy(char *src, char *dest, int count)
 
 #ifndef __HAVE_ARCH_MEMCPY
 
-char *memcpy(char *dest, char *src, size_t count)
+void *memcpy(void *dest, void *src, size_t count)
 {
     register char *tmp = dest, *s = src;
 
@@ -285,7 +285,7 @@ char *memcpy(char *dest, char *src, size_t count)
 
 #ifndef __HAVE_ARCH_MEMMOVE
 
-char *memmove(char *dest, char *src, size_t count)
+void *memmove(void *dest, void *src, size_t count)
 {
     register char *tmp = dest, *s = src;
 
@@ -310,7 +310,7 @@ char *memmove(char *dest, char *src, size_t count)
 
 #ifndef __HAVE_ARCH_MEMCMP
 
-int memcmp(char *cs, char *ct, size_t count)
+int memcmp(void *cs, void *ct, size_t count)
 {
     register unsigned char *su1 = cs, *su2 = ct;
     char res = 0;
@@ -329,7 +329,7 @@ int memcmp(char *cs, char *ct, size_t count)
  */
 #ifndef __HAVE_ARCH_MEMSCAN
 
-char *memscan(char *addr, int c, size_t size)
+void *memscan(void *addr, int c, size_t size)
 {
     register unsigned char *p = (unsigned char *) addr;
 

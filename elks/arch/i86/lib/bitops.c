@@ -46,7 +46,7 @@ unsigned char test_bit(unsigned int bit,void *addr)
 
     bit %= 8;
     mask = 1 << bit;
-    return ((mask & addr[offset]) != 0);
+    return ((mask & ptr[offset]) != 0);
 }
 
 /* Ack... nobody even seemed to try to write to a file before 0.0.49a was

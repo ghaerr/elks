@@ -32,7 +32,7 @@ extern char *strstr(char *,char *);
  * usage in the ELKS kernel source.
  */
 
-extern char *memscan(char *,int,size_t);
+extern void *memscan(void *,int,size_t);
 
 /*
  * Include machine specific routines
