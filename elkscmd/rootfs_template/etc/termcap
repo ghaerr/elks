@@ -1,0 +1,19 @@
+elks|ELKS vt52 console:\
+	:am:bs:\
+	:co#80:it#8:li#25:\
+	:ce=\EK:cl=\EH\EJ:cm=\EY%+ %+ :do=\EB:ho=\EH:\
+	:le=\ED:nd=\EC:ta=^I:up=\EA:
+ansi|ELKS ansi console:\
+	:am:bs:\
+	:co#80:it#8:li#25:\
+	:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:do=\E[B:ho=\E[H:\
+	:le=\E[D:nd=\E[C:ta=^I:up=\E[A:se=\E[m:so=\E[7m:
+ansi77|ansi 3.64 standard 1977 version:\
+	:am:bs:mi:\
+	:co#80:it#8:li#24:\
+	:al=5*\E[L:bl=^G:cd=\E[J:ce=\E[K:cl=\E[;H\E[2J:\
+	:cm=\E[%i%d;%dH:cr=^M:cs=\E[%i%d;%dr:dc=\E[P:dl=5*\E[M:\
+	:do=\E[B:ei=\E[4l:ho=\E[H:im=\E[4h:k1=\EOP:k2=\EOR:k4=\EOS:\
+	:kb=^H:kd=\E[B:kh=\E[H:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:\
+	:nd=\E[C:nw=^M\ED:se=\E[m:sf=\ED:so=\E[7m:sr=\EM:ta=^I:\
+	:ue=\E[m:up=\E[A:us=\E[4m:

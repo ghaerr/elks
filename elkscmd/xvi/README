@@ -1,0 +1,62 @@
+#
+# This stuff is taken from the xvi.c file.
+# (Archive maintainer)
+# 
+
+/*
+ *								xvi(H)
+ *
+ *	This program implements a screen oriented hexadecimal/octal editor 
+ *	whose commands are a subset of those of "vi".
+ *
+ *
+ *	Author: B. Sartirana
+ *
+ *
+ */
+
+
+
+
+
+                          COMMAND SUMMARY
+ 
+Cursor movement      Display control      File updating    String searching
+---------------      ---------------      -------------    ----------------
+ 
+TAB: change field    ctrl-f,f: next page  i: insert        /: search forw
+BS,h: left           ctrl-b,b: prec.page  a: local append  ?: search backw
+j,+: down            ctrl-u: scroll up    A: append to eof n: repeat search
+k,-: up              ctrl-d: scroll down  x: delete           same direction
+l,SPACE: right       ctrl-l: redraw       r: replace 1     N: repeat search
+LF, RET: newline     <address>G: goto        byte             opposite dir.
+H: home                                   R: replace 1 or
+M: middle                                    more bytes
+L: bottom                  Ex-like commands
+$: end of line             ----------------
+^,|: beginning of line     :q[!]                   quit
+                           :w[!] [filename]        write entire file
+                           :wq or :x               write and quit
+Miscellaneous              :r filename             read and insert after
+-------------                                      cursor position
+                           :f filename             change file name
+ctrl-g: display file       :<address>              goto
+        size and current   :<address>,<address> d  delete block
+        cursor position    :<address>,<address> w[!] [filename]   write block
+ctrl-?: display this       :.=                     display current address
+        summary            :!<shell command>       issue a shell command
+                           :!!                     repeat last shell command
+                                                   issued
+                           :h                      display this summary
+                           :set base=8/16          change numeric base
+                           :set pagesz=n           set # of bytes per page
+                           :set all                display current settings
+ 
+Symbols between \"[\" and \"]\" mean options.
+<address> is a decimal number or, if preceded by \"0x\ a hex number
+or, if preceded by a \"0\" not followed by \"x\ an octal number.
+For ex-like commands, <address> = '.' means address of the byte the cursor
+is on, and <address> = '$' means address of the last byte in the file.
+The insert,append,replace modes are closed by <esc> key.
+To enter the file characters normally interpreted, make them preceded by \"\\\".
+
