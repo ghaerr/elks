@@ -1,0 +1,43 @@
+# This file performs system initialization
+
+umask 022
+PATH=/bin:/usr/bin
+export PATH
+
+#
+# Network initialization
+#
+
+localip=192.168.1.100
+sliptty=/dev/ttys0
+ttybaud=4800
+
+if test -f /bin/ktcp
+then
+	echo -n "Starting kernel network facilities: TCP/IP"
+	stty $ttybaud < $sliptty
+	ktcp $localip $sliptty &
+
+	echo .
+	
+	echo -n "Staring network daemons: "
+	for daemon in httpd
+	do
+		if test -f /bin/$daemon 
+		then
+			echo -n " $daemon"
+			$daemon &
+		fi
+	done
+	echo .
+
+fi
+
+# 
+# View message of day
+#
+if test -f /etc/motd
+then
+    cat /etc/motd
+fi
+
