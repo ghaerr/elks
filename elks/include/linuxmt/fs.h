@@ -390,6 +390,8 @@ extern int sys_close(unsigned int);	/* yes, it's really unsigned */
 
 extern void _close_allfiles(void);
 
+extern struct inode *__iget(struct super_block *,ino_t);
+
 /*@+namechecks@*/
 
 extern int register_blkdev(unsigned int,char *,struct file_operations *);
@@ -455,10 +457,6 @@ extern int open_namei(char *,int,int,struct inode **,struct inode *);
 extern int do_mknod(char *,int,dev_t);
 extern int do_pipe(int *);
 extern void iput(struct inode *);
-
-#if 0
-extern struct inode *__iget();
-#endif
 
 extern struct inode *get_empty_inode(void);
 extern void insert_inode_hash(struct inode *);

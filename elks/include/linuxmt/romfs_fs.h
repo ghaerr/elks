@@ -14,7 +14,7 @@
 
 #define __mkw(h,l) (((h)&0x00ffL)<< 8|((l)&0x00ffL))
 #define __mkl(h,l) (((h)&0xffffL)<<16|((l)&0xffffL))
-#define __mk4(a,b,c,d) htonl(__mkl(__mkw(a,b),__mkw(c,d)))
+#define __mk4(a,b,c,d) htonl((unsigned long int)__mkl(__mkw(a,b),__mkw(c,d)))
 
 /*@+namechecks@*/
 

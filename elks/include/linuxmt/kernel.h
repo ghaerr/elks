@@ -20,7 +20,7 @@ extern int kill_pg(pid_t,sig_t,int);
 
 extern int kill_sl(void);
 
-#if 0
+#ifdef S_SPLINT_S
 
 extern void panic();
 extern int printk();
