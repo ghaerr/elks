@@ -126,8 +126,8 @@ CONFIG_CPU_8086
 
 System has a maths coprocessor.
 CONFIG_HW_FPU
-  Saying no will compile the code for use in systems without a
-  maths coprocessor.
+  Saying no will compile the code for use in systems without
+  a maths coprocessor.
 
 System has no keyboard BIOS support.
 CONFIG_HW_KEYBOARD_BIOS
@@ -153,14 +153,15 @@ System has no floppy disk
 CONFIG_HW_FLOPPY_DRIVE
   Saying no will compile the code without floppy support.
 
-Get extended memory size via BIOS-Int 15
+Get extended memory size via BIOS Interrupt 15
 CONFIG_XMS_INT15
   Saying yes will allow ELKS to get the extended memory size 
   by calling BIOS Int 15 (function 88).
 
 Extended memory size in kB
 CONFIG_XMS_SIZE
-  Specify howmany K of extended memory is in the target system.
+  Specify how many Kilobytes of extended memory is in the target
+  system.
 
 Get fontinfo via CRT-BIOS (40h:85h)
 CONFIG_HW_VIDEO_HOC
@@ -169,8 +170,7 @@ CONFIG_HW_VIDEO_HOC
 
 High of character in lines
 CONFIG_HW_VIDEO_LINES_PER_CHARACTER
-  Specify the maximan height of a charactor on the display in
-  pixels.
+  Specify the maximan height of a charactor on the display in pixels.
 
 Lines per page
 CONFIG_HW_VIDEO_LINES_PER_SCREEN
@@ -179,28 +179,28 @@ CONFIG_HW_VIDEO_LINES_PER_SCREEN
 # Absolute segment
 # ~~~~~~~~~~~~~~~~
 
-Codesegment for setup.S      (SEG, size ca. 0x60 ROM)
+Code segment for setup.S      (SEG, size ca. 0x60 ROM)
 CONFIG_ROM_SETUP_CODE
   Code segment location for the setup code when programmed into a ROM.
   This is usually the base segment address of the ROM.
 
-Codesegment kernel           (SEG, ca. 64k ROM)
+Code segment kernel           (SEG, ca. 64k ROM)
 CONFIG_ROM_KERNEL_CODE
   Code segment location for the kernel code when programmed into a ROM.
   This is usually the base segment address of the ROM + 0x60.
 
-Datasegment for setup.S      (SEG, size ca. 0x20 RAM)
+Data segment for setup.S      (SEG, size ca. 0x20 RAM)
 CONFIG_ROM_SETUP_DATA
   Segment location in RAM where the setup code keeps the values it
   is going to pass to the kernel.
 
-Datasegment (IRQ-Scheduler)  (SEG, size ca. 0x10 RAM)
+Data segment (IRQ-Scheduler)  (SEG, size ca. 0x10 RAM)
 CONFIG_ROM_IRQ_DATA
   Segment location of an absolute area of RAM where the kernel
   stores certain variables that it must be able to access
   when it does not know where its data segment is.
 
-Datasegment (DATA+BSS+STACK) (SEG, ca. 64k RAM)
+Data segment (DATA+BSS+STACK) (SEG, ca. 64k RAM)
 CONFIG_ROM_KERNEL_DATA
   Segment location of the kernels data segment, used only when the
   kernel image is in ROM.
@@ -215,17 +215,18 @@ CONFIG_ROM_BASE
 
 Area with BIOS Checksum in kbytes (normally 64)
 CONFIG_ROM_CHECKSUM_SIZE
-  Size of the ROM image to be prepared.
-  This value is stored in the ROM header,
-  and the whole ROM must checksum to zero.
+  Size of the ROM image to be prepared. This value is stored in
+  the ROM header, and the whole ROM must checksum to zero.
 
 Make image-file bootable by reset
 CONFIG_ROM_BOOTABLE_BY_RESET
-  Saying yes will allow the image file to boot via a warm boot sequence.
+  Saying yes will allow the image file to boot via a warm boot
+  sequence.
 
 Address jumped to after reset (offset in image)
 CONFIG_ROM_RESET_ADDRESS
-  The offset in the image-file that should be jumped to for a warm boot.
+  The offset in the image-file that should be jumped to for a
+  warm boot.
 
 Add startup module to image (BIOS-functions)
 CONFIG_ROM_ADD_BIOS_IMAGE
@@ -237,34 +238,38 @@ CONFIG_ROM_BIOS_MODULE
 
 Module codesegment address
 CONFIG_ROM_BIOS_MODULE_ADDR
-  The memory address to jump to after BIOS functions have ran (See CONFIG_ROM_BASE).
+  The memory address to jump to after BIOS functions have run.
+  See CONFIG_ROM_BASE.
 
 Use EPROM-Simulator after make
 CONFIG_ROM_USE_SIMULATOR
-  Saying yes will load an EPROM simulator/emulator after make has finished.
+  Saying yes will load an EPROM simulator/emulator after make
+  has finished.
 
 # Cannot realy create help for a string var
-Programcall
+Program call
 CONFIG_ROM_SIMULATOR_PROGRAM
-  The location of the executable to run for the EPROM simulator/emulator,
-  including command line perameters etc.
+  The location of the executable to run for the EPROM
+  simulator/emulator, including any command-line perameters etc.
 
 # Generate debug code
 # ~~~~~~~~~~~~~~~~~~~
 
 ROM-CODE debug infos
 CONFIG_ROM_DEBUG
-  Saying yes will compile the ROM image with all debug information turned on.
+  Saying yes will compile the ROM image with all debug information
+  turned on.
 
 # ROM code configuration
 # ~~~~~~~~~~~~~~~~~~~~~~
 
 Use IRQ-Mask of 8259 at boot time as default
 CONFIG_HW_259_USE_ORIGINAL_MASK
-  Saying yes will force the irq system to read 
-  in the original interrupt mask befor it starts sorting
-  out interrupts. 
+  Saying yes will force the irq system to read in the original
+  interrupt mask befor it starts sorting out interrupts. 
+
   By default the kernel disables all interrupts.
+
   This should only be used by kernel hackers.
 
 Ticks for BogoMIPS (0 = check at boot time)
@@ -273,13 +278,17 @@ CONFIG_BOGOMIPS
 
 NO Floppy count at 40:10 use INT13.08
 CONFIG_HW_USE_INT13_FOR_FLOPPY
-  Saying yes will get the number of floppy drive via INT-13 function 08,
-  (get drive perameters (on PC/XT only works on Hard Drives)).
+  Saying yes will get the number of floppy drive via the BIOS
+  interrupt 13 function 8, get drive perameters.
 
-Dont seek to get Floppy information (use I13.8)
+  On the PC/XT this only works on Hard Drives.
+
+Use interrupt 13 function 8 for floppy information
 CONFIG_HW_USE_INT13_FOR_DISKPARMS
-  Saying yes will explicitly tell ELKS not to use Int13.08 to get 
-  Floppy information (Int 13.08 doesn't work on PC/XT floppy drives).
+  Saying yes will explicitly tell ELKS to use BIOS interrupt
+  13 function 8 to get Floppy information
+
+  On the PC/XT this only works on Hard Drives.
 
 # Memory configuration
 # ~~~~~~~~~~~~~~~~~~~~
@@ -287,8 +296,8 @@ CONFIG_HW_USE_INT13_FOR_DISKPARMS
 Base memory size (64k pages)
 CONFIG_MEM_PAGES
   Specifies the minimum amount of memory in 64k pages that the target
-  system is required to have. The default is 8 pages (512k) and it can
-  be set between 4 pages (256k) and 10 pages (640k).
+  system is required to have. The default is 8 pages (512k) and this
+  can be set between 4 pages (256k) and 10 pages (640k).
 
 Expanded (EMS) Memory Support
 CONFIG_EMS
@@ -314,7 +323,7 @@ High Memory (HMA) Support
 Swap support (Experimental)
 CONFIG_SWAP
   Include support for swapping to virtual memory.
-  Enlarges kernel by about 2KB.
+  This enlarges kernel by about 2KB.
 
   WARNING: This code is VERY experimental at the moment.
 
@@ -323,25 +332,30 @@ CONFIG_SWAP
 
 286 Protected Mode support
 CONFIG_286PMODE
-  Include support for 286 Protected Mode. Experimental. Use at your own
-  risk. (This option will probably not interact well with the BIOS disk
-  drivers)
+  Include support for 286 Protected Mode. Experimental.
+  Use at your own risk.
+
+  This option will probably not interact well with the BIOS disk
+  drivers.
 
 # 286 Protected Mode support - 386+ features
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Support more than 16 Megs of RAM
 CONFIG_386RAM
-  Add support for RAM beyond 16 megs on 386+ systems. Currently
-  nonexistant.
+  Add support for RAM beyond 16 megs on 386+ systems.
+
+  Currently nonexistant.
 
 # Kernel hacking
 # ~~~~~~~~~~~~~~
 
 Strace
 CONFIG_STRACE
-  Strace displays a trace of all system calls made to the kernel. Only
-  kernel hackers need this option.
+  Strace displays a trace of all system calls made to the kernel.
+  Only kernel hackers need this option.
+
+  Say N and rest in peace.
 
 Optimise for size rather than speed
 CONFIG_OPT_SMALL
@@ -378,6 +392,8 @@ CONFIG_DCON_ANSI_PRINTK
   When the kernel reports something using printk(), the reports will
   be coloured.
 
+  This feature is of dubious value, so normally say N.
+
 BIOS console writes
 CONFIG_CONSOLE_BIOS
   The newly implemented BIOS based console driver.
@@ -389,8 +405,9 @@ CONFIG_BIOS_VT52
 
 Serial console writes
 CONFIG_CONSOLE_SERIAL
-  The serial console driver. Currently minimal support for console output over
-  a serial line.
+  The serial console driver.
+
+  Currently minimal support for console output over a serial line.
 
 # Keyboard support
 # ~~~~~~~~~~~~~~~~
@@ -445,8 +462,9 @@ CONFIG_CHAR_DEV_MEM
 
 Enable standard parallel (printer) ports
 CONFIG_CHAR_DEV_LP
-  Include support for parallel port devices. Currently under development.
-  Please test.
+  Include support for parallel port devices.
+
+  Currently under development. Please test.
 
 Enable standard serial ports
 CONFIG_CHAR_DEV_RS
@@ -455,6 +473,8 @@ CONFIG_CHAR_DEV_RS
 Enable meta device driver
 CONFIG_DEV_META
   Include meta driver to provide support for userspace device drivers.
+
+  Normally, say N and rest in peace.
 
 Enable pseudo-tty driver
 CONFIG_PSEUDO_TTY
@@ -468,9 +488,11 @@ CONFIG_CONSOLES_MAX
   of these consoles that are made available.
 
   This option allows the number of consoles to be made available to be
-  configured, and valid responses are in the range from 3 to 9. Because
-  of a historical legacy, the default is 3 consoles, as the serial ports
-  were originally mapped to conflict with virtual text consoles 4 to 7.
+  configured, and valid responses are in the range from 3 to 9.
+
+  Because of a historical legacy, the default is 3 consoles, as the
+  serial ports were originally mapped to conflict with virtual text
+  consoles 4 to 7.
 
 # Block devices
 # ~~~~~~~~~~~~~
@@ -482,12 +504,15 @@ CONFIG_DMA
 Mount root partition read-only by default
 CONFIG_ROOT_READONLY
   Specifies that the root partition is to be mounted rad-only by default.
+
   This may cause problems at the moment, but will eventually be required.
 
 BIOS block device support
 CONFIG_BLK_DEV_BIOS
   Device driver that allows access to floppy and hard drives through
-  BIOS. Currently required.
+  BIOS.
+
+  Currently required.
 
 BIOS Floppy Drive support
 CONFIG_BLK_DEV_BFD
@@ -495,8 +520,10 @@ CONFIG_BLK_DEV_BFD
 
 Pre-set floppy types
 CONFIG_BLK_DEV_BFD_HARD
-  Pre-set the floppy drive types. Useful when the BIOS does not
-  provide information on the floppy types.
+  Pre-set the floppy drive types.
+
+  Useful when the BIOS does not provide information on the floppy
+  drive types.
 
 Primary floppy drive type
 CONFIG_BLK_DEV_BFD0_NONE
@@ -537,14 +564,16 @@ CONFIG_BLK_DEV_FD
 
 Normal Hard Disk support
 CONFIG_BLK_DEV_HD
-  Device driver that provides direct access to IDE hard disks by Blaz
-  Antonic. Currently not tested. Use at you own risk.
+  Device driver that provides direct access to IDE hard disks by
+  Blaz Antonic.
+
+  Currently not tested. Use at you own risk.
 
 RAM Drive support
 CONFIG_BLK_DEV_RAM
-  Support for a RAM disk device driver which allows up to 8 64K ram
-  drives to be implemented. Not very useful, but can be adapted to
-  make use of EMS cards etc.
+  Support for a RAM disk device driver which allows up to eight
+  64K ramdrives to be implemented. Not very useful, but can be
+  adapted to make use of EMS cards etc.
 
 Old XT Hard Disk support
 CONFIG_BLK_DEV_XD
@@ -552,7 +581,9 @@ CONFIG_BLK_DEV_XD
 
 Character access to block devices
 CONFIG_BLK_DEV_CHAR
-  Used to create and check filesystems, and by fdisk. Recommended.
+  Used to create and check filesystems, and by fdisk.
+
+  Recommended.
 
 # File systems
 # ~~~~~~~~~~~~
@@ -595,11 +626,13 @@ Extra external buffer cache
 CONFIG_FS_EXTERNAL_BUFFER
   If you say no to this then the filesystem will not allocate 64K of
   buffers in main memory. This saves RAM, and makes the kernel smaller
-  and simpler, but cripples performance on systems with slow block devices
-  like floppies or old hard disks. This option should only be specified as
-  no for systems which have very fast block devices such as RAM, ROM or
-  Flash disks. It is also useful for stress testing the block device
-  code.
+  and simpler, but cripples performance on systems with slow block
+  devices like floppies or old hard disks.
+
+  This option should only be specified as no for systems which have
+  very fast block devices such as RAM, ROM or Flash disks.
+
+  It is also useful for stress testing the block device code.
   
 Inter-process pipe support
 CONFIG_PIPE
@@ -607,10 +640,11 @@ CONFIG_PIPE
 
 Make all file systems read-only
 CONFIG_FS_RO
-  Saying yes this option makes all access to the filesystem read only.
-  Support for system calls that modify the filesystem is removed. This
-  option allows a considerable amount of code space to be saved, thus
-  allowing other features into the kernel.
+  Saying y to this option makes all access to the filesystem read only.
+  Support for system calls that modify the filesystem is removed.
+
+  This option allows a considerable amount of code space to be saved,
+  thus allowing other features into the kernel.
 
 # Executable file formats
 # ~~~~~~~~~~~~~~~~~~~~~~~
@@ -624,9 +658,12 @@ CONFIG_EXEC_MINIX
 
 MSDOS (EXE) file format
 CONFIG_EXEC_MSDOS
-  This lets you run MSDOS .EXE files under ELKS. This support is VERY
-  ALPHA at the moment, and may not work. Use with caution. ie. If you
-  compile this in, and something breaks, then remove it, and try again.
+  This lets you run MSDOS *.EXE files under ELKS.
+
+  This support is VERY ALPHA at the moment, and may not work.
+  Use with caution. ie. If you compile this in, and something breaks,
+  then remove it, and try again.
+
   In particluar, you might find you can't run any programs, including
   init and login.
 
@@ -635,42 +672,54 @@ CONFIG_EXEC_MSDOS
 
 Socket support
 CONFIG_SOCKET
-  Include support for BSD style socket system calls. Currently under
-  development.
+  Include support for BSD style socket system calls.
+
+  Currently under development.
 
 UNIX sockets
 CONFIG_UNIX
-  Include support for AF_UNIX sockets. Enlarges kernel by 3KB. Currently
-  under development.
+  Include support for AF_UNIX sockets.
+
+  Enlarges kernel by 3KB. Currently under development.
 
 NANO sockets
 CONFIG_NANO
-  Include support for experimental AF_NANO sockets. Enlarges kernel by
-  3KB. Currently under development.
+  Include support for experimental AF_NANO sockets.
+
+  Enlarges kernel by 3KB. Currently under development.
 
 INET_sockets
 CONFIG_INET
-  Include support for AF_INET TCP/IP sockets. This depends on a user
-  space process to work. Read the Documentation/networking.txt for more
-  info.  Enlarges kernel by 3KB.
-  Warning that this code is very unstable.
+  Include support for AF_INET TCP/IP sockets.
+
+  This depends on a userspace process to work. Read the file
+  Documentation/networking.txt for more info.
+
+  Enlarges kernel by 3KB.
+
+  WARNING: This code is very unstable.
 
 Enable status report
 CONFIG_INET_STATUS
-  If you intent to use utilities like netstat say YES. If you don't say
-  NO it will save size from ktcp.
+  If you intent to use utilities like netstat say YES.
+
+  If you don't, say NO it will save size from ktcp.
   
 CSLIP TCP/IP header compression
 CONFIG_CSLIP
-  Add support for compressed TCP/IP headers in SLIP. This will improve 
-  a lot the networking over slow lines at the cost of enlarging memory
-  usage.
+  Add support for compressed TCP/IP headers in SLIP.
+
+  This will improve a lot the networking over slow lines at the
+  cost of enlarging memory usage.
 
 Only support client sockets
 CONFIG_SOCK_CLIENTONLY
-  Only include support for outgoing connections. Use this in case you
-  just need to save some extra bytes out of the kernel. Saves around 450
-  bytes. If you are not sure just say NO.
+  Only include support for outgoing connections.
+
+  Use this in case you just need to save some extra bytes from
+  the kernel. Saves around 450 bytes.
+
+  If you are not sure just say NO.
 
 Support SiBO Solid State Disks
 CONFIG_BLK_DEV_SSD
