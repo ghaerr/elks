@@ -4,6 +4,14 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Wed Oct 21 12:26 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* More register variable optimisation. Should now be complete.
+
+	* Fixed some small bugs introduced in previous optimisation.
+
+	* Discovered big bug in the minix truncate code - see BUGS.
+
 Thu Oct 13 20:20 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Heavily optimised fs code adding new register varables in

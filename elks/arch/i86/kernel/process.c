@@ -37,11 +37,12 @@
 
 void sig_check()
 {
-	if (current->signal) {
-		printk("Process %d has a signal.\n", current->pid);
+	register __ptask currentp = current;
+	if (currentp->signal) {
+		printk("Process %d has a signal.\n", currentp->pid);
 		do_signal();
 	}
-	current->signal = 0;
+	currentp->signal = 0;
 }
 
 #asm
@@ -261,9 +262,10 @@ _fake_save_regs:
 
 void stack_check()
 {
-	if (current->t_regs.sp < current->t_endbrk)
+	register __ptask currentp = current;
+	if (currentp->t_regs.sp < currentp->t_endbrk)
 	{
-		printk("STACK (%d) ENTERED BSS (%ld) - PROCESS TERMINATING\n", current->t_regs.sp, current->t_endbrk);
+		printk("STACK (%d) ENTERED BSS (%ld) - PROCESS TERMINATING\n", currentp->t_regs.sp, currentp->t_endbrk);
 		do_exit(SIGSEGV);
 	}
 }

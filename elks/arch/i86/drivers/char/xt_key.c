@@ -376,8 +376,6 @@ static unsigned char xtkb_scan_caps[84]=
 
 #define ANYSHIFT 3 /* [LR]SHIFT */
 
-static unsigned ModeState = 0;
-static int E0Prefix = 0;
 
 /****************************************************
  * Queue for input received but not yet read by the *
@@ -417,6 +415,8 @@ int mode;
 int IsRelease;
 int key;
 int E0 = 0;
+static unsigned ModeState = 0;
+static int E0Prefix = 0;
 
 extern int key_pressed;
 
@@ -565,8 +565,9 @@ int Current_VCminor = 0;
 int AddQueue( Key )
 unsigned char Key;
 {
-   if (ttys[Current_VCminor].inq.size != 0) {
-	   chq_addch(&ttys[Current_VCminor].inq, Key);
+   register struct tty * ttyp = &ttys[Current_VCminor];
+   if (ttyp->inq.size != 0) {
+	   chq_addch(&ttyp->inq, Key);
    }
    return 0;
 }

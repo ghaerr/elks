@@ -44,6 +44,7 @@ register struct inode * inode;
 repeat:
 	for (i = DIRECT_BLOCK ; i < 7 ; i++) {
 		p = inode->i_zone[i];
+/*		printk("P = %x\n*P = %x\n", p, *p); */
 		if (!(tmp = *p))
 			continue;
 		bh = get_hash_table(inode->i_dev,(unsigned long)tmp);
@@ -62,7 +63,8 @@ repeat:
 			mark_buffer_clean(bh);
 			brelse(bh);
 		}
-		minix_free_block(inode->i_sb,tmp);
+/*		printk("Freeing block %x\n", tmp); */
+		minix_free_block(inode->i_sb,(unsigned long)tmp);
 	}
 	return retry;
 }

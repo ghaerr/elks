@@ -67,8 +67,9 @@ int minor;
 unsigned long start;
 unsigned long size;
 {
-	hd->part[minor].start_sect = start;
-	hd->part[minor].nr_sects   = size;
+	register struct hd_struct * hdp = &hd->part[minor];
+	hdp->start_sect = start;
+	hdp->nr_sects   = size;
 	print_minor_name(hd, minor);
 }
 
@@ -96,12 +97,13 @@ kdev_t dev;
 {
 	struct buffer_head *bh;
 	register struct partition *p;
+	struct hd_struct * hdp = &hd->part[MINOR(dev)];
 	unsigned long first_sector, first_size, this_sector, this_size;
 	int mask = (1 << hd->minor_shift) - 1;
 	int i;
 
-	first_sector = hd->part[MINOR(dev)].start_sect;
-	first_size = hd->part[MINOR(dev)].nr_sects;
+	first_sector = hdp->start_sect;
+	first_size = hdp->nr_sects;
 	this_sector = first_sector;
 
 	while (1) {
@@ -123,7 +125,7 @@ kdev_t dev;
 
 		p = (struct partition *) (0x1BE + bh->b_data);
 
-		this_size = hd->part[MINOR(dev)].nr_sects;
+		this_size = hdp->nr_sects;
 
 		/*
 		 * Usually, the first entry is the real data partition,
@@ -186,13 +188,14 @@ done:
 }
 
 static int msdos_partition(hd,dev,first_sector)
-register struct gendisk *hd;
+struct gendisk *hd;
 kdev_t dev;
 unsigned long first_sector;
 {
 	int i, minor = current_minor;
 	struct buffer_head *bh;
 	register struct partition *p;
+	register struct hd_struct * hdp;
 	unsigned char *data;
 	int mask = (1 << hd->minor_shift) - 1;
 	if (!(bh = bread(dev,0L))) {
@@ -218,6 +221,7 @@ unsigned long first_sector;
 
 	current_minor += 4;  /* first "extra" minor (for extended partitions) */
 	for (i=1 ; i<=4 ; minor++,i++,p++) {
+		hdp = &hd->part[minor];
 		if (!NR_SECTS(p))
 		{
 			continue;
@@ -231,14 +235,14 @@ unsigned long first_sector;
 			 * be able to bread the block containing the extended
 			 * partition info.
 			 */
-			hd->sizes[minor] = hd->part[minor].nr_sects 
+			hd->sizes[minor] = hdp->nr_sects 
 			  	>> (BLOCK_SIZE_BITS - 9);
 			extended_partition(hd, MKDEV(hd->major, minor));
 			printk(" >");
 			/* prevent someone doing mkfs or mkswap on an
 			   extended partition, but leave room for LILO */
-			if (hd->part[minor].nr_sects > 2)
-				hd->part[minor].nr_sects = 2;
+			if (hdp->nr_sects > 2)
+				hdp->nr_sects = 2;
 		}
 	}
 	printk("\n");
@@ -308,13 +312,15 @@ register struct gendisk *dev;
 {
 	int i, drive;
 	int end_minor	= dev->max_nr * dev->max_p;
+	register struct hd_struct * hdp;
 
 #ifdef BDEV_SIZE_CHK
 	blk_size[dev->major] = NULL;
 #endif
 	for (i = 0 ; i < end_minor; i++) {
-		dev->part[i].start_sect = 0;
-		dev->part[i].nr_sects = 0;
+		hdp = &dev->part[i];
+		hdp->start_sect = 0;
+		hdp->nr_sects = 0;
 	}
 	dev->init(dev);
 #ifdef CONFIG_PART

@@ -14,6 +14,7 @@ int *start;
 int *end;
 {
 	int ct;
+	register __ptask taskp;
 /*
  *	Save segments
  */
@@ -37,16 +38,17 @@ int *end;
 	 *	as we will need this in interrupts.
 	 */	
 
- 	task[0].state = TASK_RUNNING;
-	task[0].t_count=0;
-	task[0].t_priority=0; /* FIXME why is this here? */
-	task[0].t_regs.ksp=task[0].t_kstack+KSTACK_BYTES;
-	task[0].t_priority=10;
-	task[0].t_count=0;
-	task[0].t_regs.cs=get_cs();
-	task[0].t_regs.ds=get_ds();	/* Run in kernel space */
+	taskp = &task[0];
+ 	taskp->state = TASK_RUNNING;
+	taskp->t_count=0;
+	taskp->t_priority=0; /* FIXME why is this here? */
+	taskp->t_regs.ksp=taskp->t_kstack+KSTACK_BYTES;
+	taskp->t_priority=10;
+	taskp->t_count=0;
+	taskp->t_regs.cs=get_cs();
+	taskp->t_regs.ds=get_ds();	/* Run in kernel space */
 	
-	current = &task[0];
+	current = taskp;
 	
 #ifdef CONFIG_COMPAQ_FAST
 	/*
@@ -59,8 +61,9 @@ int *end;
 	 *	Mark tasks 1-31 as not in use.
 	 */
 	for(ct=1;ct<MAX_TASKS;ct++) {
-		task[ct].state=TASK_UNUSED;
-		task[ct].t_kstackm = KSTACK_MAGIC;
+		taskp = &task[ct];
+		taskp->state=TASK_UNUSED;
+		taskp->t_kstackm = KSTACK_MAGIC;
 	}
 	/*
 	 *	Fill in the MM numbers - really ought to be in mm not kernel ?

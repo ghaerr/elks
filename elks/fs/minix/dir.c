@@ -89,9 +89,9 @@ char * dirent;
 filldir_t filldir;
 {
 	unsigned int offset;
-	struct buffer_head * bh;
+	register struct buffer_head * bh;
 	struct minix_dir_entry * de;
-	register struct minix_sb_info * info;
+	struct minix_sb_info * info;
 
 	if (!inode || !inode->i_sb || !S_ISDIR(inode->i_mode))
 		return -EBADF;

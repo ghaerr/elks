@@ -90,13 +90,14 @@ char c;
 int target;
 {
 	int status, wait;
+	register struct lp_info * lpp;
 
-	/* safety checks */
-#ifdef BIOS_PORTS
-	status = inb_p(ports[target].io + STATUS);
-#else
-	status = inb_p(ports[port_order[target]].io + STATUS);
+#ifndef BIOS_PORTS
+	target = port_order[target];
 #endif
+	lpp = &ports[target];
+	/* safety checks */
+	status = inb_p(lpp->io + STATUS);
 
 	if (status == LP_OUTOFPAPER) {/* printer of out paper */
 		printk("lp%d: out of paper\n", target);
@@ -108,40 +109,23 @@ int target;
 	}
 
 	while (!(status & LP_SELECTED)) {/* while not ready do */
-#ifdef BIOS_PORTS
-		status = inb_p(ports[target].io + STATUS);
-#else
-		status = inb_p(ports[port_order[target]].io + STATUS);
-#endif
+		status = inb_p(lpp->io + STATUS);
 		schedule(); /* Al: is it OK for this to be here ? */
 	}
 
 	/* send character to port */
-#ifdef BIOS_PORTS
-	outb_p(c, ports[target].io);
-#else
-	outb_p(c, ports[port_order[target]].io);
-#endif
+	outb_p(c, lpp->io);
 
 	/* strobe high */
-#ifdef BIOS_PORTS
 	outb_p(LP_INIT | LP_SELECT | LP_STROBE, 
-		ports[target].io + CONTROL);
-#else
-	outb_p(LP_INIT | LP_SELECT | LP_STROBE, 
-		ports[port_order[target]].io + CONTROL);
-#endif
+		lpp->io + CONTROL);
 
 	/* 5 us delay */
 	wait = 0;
 	while (wait != LP_WAIT) wait++;
 
 	/* strobe low */
-#ifdef BIOS_PORTS
-	outb_p(LP_INIT | LP_SELECT, ports[target].io + CONTROL);
-#else
-	outb_p(LP_INIT | LP_SELECT, ports[port_order[target]].io + CONTROL);
-#endif
+	outb_p(LP_INIT | LP_SELECT, lpp->io + CONTROL);
 	/* 5 us delay */
 	while (wait) wait--;
 
@@ -173,13 +157,14 @@ struct file * file;
 {
 	int target;
 	int status;
+	register struct lp_info * lpp;
 	target = MINOR(inode->i_rdev);
-
-#ifdef BIOS_PORTS
-	status = ports[target].flags;
-#else
-	status = ports[port_order[target]].flags;
+#ifndef BIOS_PORTS
+	target = port_order[target];
 #endif
+	lpp = &ports[target];
+
+	status = lpp->flags;
 
 	if (!(status & LP_EXIST)) { /* if LP_EXIST flag not set */
 /*		printk("lp: device lp%d doesn't exist\n", target); */
@@ -192,11 +177,7 @@ struct file * file;
 	}
 
 /*	inexistent port can't be busy */
-#ifdef BIOS_PORTS
-	ports[target].flags = LP_EXIST | LP_BUSY;
-#else
-	ports[port_order[target]].flags = LP_EXIST | LP_BUSY;
-#endif
+	lpp->flags = LP_EXIST | LP_BUSY;
 
 /*	access_count[port_order[target]]++; */
 
@@ -209,12 +190,11 @@ struct file * file;
 {
 	int target;
 	target = MINOR(inode->i_rdev);
-
-#ifdef BIOS_PORTS
-	ports[target].flags = LP_EXIST; /* not busy */
-#else
-	ports[port_order[target]].flags = LP_EXIST; /* not busy */
+#ifndef BIOS_PORTS
+	target = port_order[target];
 #endif
+
+	ports[target].flags = LP_EXIST; /* not busy */
 
 /*	access_count[port_order[target]]--; */
 

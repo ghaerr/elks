@@ -173,15 +173,16 @@ struct pt_regs * regs;
 
 int do_signal()
 {
-	struct sigaction * sa;
+	register struct sigaction * sa;
+	register __ptask currentp = current;
 	unsigned signr;
 
-	while (current->signal) {
-		signr = find_first_non_zero_bit(&current->signal, 32);
+	while (currentp->signal) {
+		signr = find_first_non_zero_bit(&currentp->signal, 32);
 		if (signr == 32) {
 			printk("THIS SHOULD NEVER HAPPEN\n");
 		}
-		sa = current->sig.action + signr;
+		sa = currentp->sig.action + signr;
 		signr++;
 		if (sa->sa_handler == SIG_IGN) {
 			if (signr != SIGCHLD)
@@ -190,17 +191,17 @@ int do_signal()
 			continue;
 		}
 		if (sa->sa_handler == SIG_DFL) {
-			if (current->pid == 1)
+			if (currentp->pid == 1)
 				continue;
 			switch (signr) {
 			case SIGCONT: case SIGCHLD: case SIGWINCH:
 				continue;
 			case SIGSTOP: case SIGTSTP: case SIGTTIN: case SIGTTOU:
-				current->state = TASK_STOPPED;
-			/*	current->exit_code =  signr; */
+				currentp->state = TASK_STOPPED;
+			/*	currentp->exit_code =  signr; */
 			/* Let the parent know */
-				current->p_parent->child_lastend = current->pid;
-				current->p_parent->lastend_status = signr;
+				currentp->p_parent->child_lastend = currentp->pid;
+				currentp->p_parent->lastend_status = signr;
 				schedule();
 				continue;
 /*			case SIGQUIT: case SIGILL: case SIGTRAP:

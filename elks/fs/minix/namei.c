@@ -387,13 +387,11 @@ int mode;
 	struct buffer_head * dir_block;
 	struct buffer_head * bh;
 	struct minix_dir_entry * de;
-	struct minix_sb_info * info;
 
 	if (!dir || !dir->i_sb) {
 		iput(dir);
 		return -EINVAL;
 	}
-	info = &dir->i_sb->u.minix_sb;
 	bh = minix_find_entry(dir,name,len,&de);
 	if (bh) {
 		brelse(bh);
@@ -413,7 +411,7 @@ int mode;
 	}
 	printd_fsmkdir("m_mkdir: new_inode succeeded\n");
 	inode->i_op = &minix_dir_inode_operations;
-	inode->i_size = 2 * info->s_dirsize;
+	inode->i_size = 2 * dir->i_sb->u.minix_sb.s_dirsize;
 	printd_fsmkdir("m_mkdir: starting minix_bread\n");
 	dir_block = minix_bread(inode,0,1);
 	if (!dir_block) {
@@ -428,7 +426,7 @@ int mode;
 	de = (struct minix_dir_entry *) dir_block->b_data;
 	de->inode=inode->i_ino;
 	strcpy(de->name,".");
-	de = (struct minix_dir_entry *) (dir_block->b_data + info->s_dirsize);
+	de = (struct minix_dir_entry *) (dir_block->b_data + dir->i_sb->u.minix_sb.s_dirsize);
 	de->inode = dir->i_ino;
 	strcpy(de->name,"..");
 	inode->i_nlink = 2;
@@ -468,15 +466,13 @@ register struct inode * inode;
 	unsigned int offset;
 	struct buffer_head * bh;
 	struct minix_dir_entry * de;
-	struct minix_sb_info * info;
 
 	if (!inode || !inode->i_sb)
 		return 1;
-	info = &inode->i_sb->u.minix_sb;
 	block = 0;
 	bh = NULL;
-	offset = 2*info->s_dirsize;
-	if (inode->i_size & (info->s_dirsize-1))
+	offset = 2*inode->i_sb->u.minix_sb.s_dirsize;
+	if (inode->i_size & (inode->i_sb->u.minix_sb.s_dirsize-1))
 		goto bad_dir;
 	if (inode->i_size < offset)
 		goto bad_dir;
@@ -487,7 +483,7 @@ register struct inode * inode;
 	de = (struct minix_dir_entry *) bh->b_data;
 	if (!de->inode || strcmp(de->name,"."))
 		goto bad_dir;
-	de = (struct minix_dir_entry *) (bh->b_data + info->s_dirsize);
+	de = (struct minix_dir_entry *) (bh->b_data + inode->i_sb->u.minix_sb.s_dirsize);
 	if (!de->inode || strcmp(de->name,".."))
 		goto bad_dir;
 	while (block*BLOCK_SIZE+offset < inode->i_size) {
@@ -499,7 +495,7 @@ register struct inode * inode;
 			}
 		}
 		de = (struct minix_dir_entry *) (bh->b_data + offset);
-		offset += info->s_dirsize;
+		offset += inode->i_sb->u.minix_sb.s_dirsize;
 		if (de->inode) {
 			unmap_brelse(bh);
 			return 0;

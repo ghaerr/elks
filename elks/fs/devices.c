@@ -88,7 +88,7 @@ register struct file_operations *fops;
 	}
 	if (major >= MAX_CHRDEV)
 		return -EINVAL;
-	if (dev->fops && dev->fops != fops)
+	if (dev->fops && (dev->fops != fops))
 		return -EBUSY;
 	dev->name = name;
 	dev->fops = fops;

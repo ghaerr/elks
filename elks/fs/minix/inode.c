@@ -147,7 +147,6 @@ char *data;
 int silent;
 {
 	struct buffer_head *bh;
-	struct minix_super_block *ms;
 	int i;
 	unsigned long block;
 	kdev_t dev = s->s_dev;
@@ -162,20 +161,23 @@ int silent;
 		return NULL;
 	}
 	map_buffer(bh);
-	ms = (struct minix_super_block *) bh->b_data;
-	s->u.minix_sb.s_ms = ms;
-	s->u.minix_sb.s_sbh = bh;
-	s->u.minix_sb.s_mount_state = ms->s_state;
-	s->u.minix_sb.s_ninodes = ms->s_ninodes;
-	s->u.minix_sb.s_imap_blocks = ms->s_imap_blocks;
-	s->u.minix_sb.s_zmap_blocks = ms->s_zmap_blocks;
-	s->u.minix_sb.s_firstdatazone = ms->s_firstdatazone;
-	s->u.minix_sb.s_log_zone_size = ms->s_log_zone_size;
-	s->u.minix_sb.s_max_size = ms->s_max_size;
-	s->s_magic = ms->s_magic;
+	{ /* Localise register variable */
+		register struct minix_super_block *ms;
+		ms = (struct minix_super_block *) bh->b_data;
+		s->u.minix_sb.s_ms = ms;
+		s->u.minix_sb.s_sbh = bh;
+		s->u.minix_sb.s_mount_state = ms->s_state;
+		s->u.minix_sb.s_ninodes = ms->s_ninodes;
+		s->u.minix_sb.s_imap_blocks = ms->s_imap_blocks;
+		s->u.minix_sb.s_zmap_blocks = ms->s_zmap_blocks;
+		s->u.minix_sb.s_firstdatazone = ms->s_firstdatazone;
+		s->u.minix_sb.s_log_zone_size = ms->s_log_zone_size;
+		s->u.minix_sb.s_max_size = ms->s_max_size;
+		s->s_magic = ms->s_magic;
+	}
 	if (s->s_magic == MINIX_SUPER_MAGIC) {
 		s->u.minix_sb.s_version = MINIX_V1;
-		s->u.minix_sb.s_nzones = ms->s_nzones;
+		s->u.minix_sb.s_nzones = s->u.minix_sb.s_ms->s_nzones;
 		s->u.minix_sb.s_dirsize = 16;
 		s->u.minix_sb.s_namelen = 14;
 	} else {
@@ -230,7 +232,7 @@ int silent;
 		return NULL;
 	}
 	if (!(s->s_flags & MS_RDONLY)) {
-		ms->s_state &= ~MINIX_VALID_FS;
+		s->u.minix_sb.s_ms->s_state &= ~MINIX_VALID_FS;
 		mark_buffer_dirty(bh, 1);
 		s->s_dirt = 1;
 	}
@@ -252,7 +254,7 @@ int bufsiz;
 
 	tmp.f_type = sb->s_magic;
 	tmp.f_bsize = BLOCK_SIZE;
-	tmp.f_blocks = (sb->u.minix_sb.s_nzones - sb->u.minix_sb.s_firstdatazone) << sb->u.minix_sb.s_log_zone_size;
+	ptmp->f_blocks = (sb->u.minix_sb.s_nzones - sb->u.minix_sb.s_firstdatazone) << sb->u.minix_sb.s_log_zone_size;
 	tmp.f_bfree = minix_count_free_blocks(sb);
 	tmp.f_bavail = tmp.f_bfree;
 	tmp.f_files = sb->u.minix_sb.s_ninodes;
@@ -349,7 +351,6 @@ int block;
 int create;
 {
 	register struct buffer_head * bh;
-	register struct buffer_head * bha;
 
 	printd_mfs3("mfs: minix_bread(%d, %d, %d)\n", inode, block, create);
 	if (!(bh = minix_getblk(inode,(long)block,create))) return NULL;
@@ -373,14 +374,17 @@ register struct inode * inode;
 	ino = inode->i_ino;
 	inode->i_op = NULL;
 	inode->i_mode = 0;
-	if (!ino || ino >= inode->i_sb->u.minix_sb.s_ninodes) {
-		printk("Bad inode number on dev %s: %d is out of range\n",
-			kdevname(inode->i_dev), ino);
-		return;
+	{ /* To isolate register variable */
+		register struct super_block * isb = inode->i_sb;
+		if (!ino || ino >= isb->u.minix_sb.s_ninodes) {
+			printk("Bad inode number on dev %s: %d is out of range\n",
+				kdevname(inode->i_dev), ino);
+			return;
+		}
+		block = 2 + isb->u.minix_sb.s_imap_blocks +
+			    isb->u.minix_sb.s_zmap_blocks +
+			    (ino-1)/MINIX_INODES_PER_BLOCK;
 	}
-	block = 2 + inode->i_sb->u.minix_sb.s_imap_blocks +
-		    inode->i_sb->u.minix_sb.s_zmap_blocks +
-		    (ino-1)/MINIX_INODES_PER_BLOCK;
 	if (!(bh=bread(inode->i_dev,block))) {
 		printk("Major problem: unable to read inode from dev %s\n", kdevname(inode->i_dev));
 		return;
@@ -438,6 +442,7 @@ register struct inode * inode;
 	}
 	block = 2 + inode->i_sb->u.minix_sb.s_imap_blocks + inode->i_sb->u.minix_sb.s_zmap_blocks +
 		(ino-1)/MINIX_INODES_PER_BLOCK;
+
 	if (!(bh=bread(inode->i_dev, block))) {
 		printk("unable to read i-node block\n");
 		inode->i_dirt = 0;
@@ -453,6 +458,7 @@ register struct inode * inode;
 	mark_buffer_dirty(bh, 1);
 	unmap_buffer(bh);
 	return bh;
+
 }
 
 void minix_write_inode(inode)

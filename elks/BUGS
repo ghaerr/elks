@@ -18,8 +18,16 @@ and nothing seems to rectify it.
 Sometimes for no aparent reason the umount command gives a STACK collided with
 BSS error without unmounting the filesystem.
 
-Deleting inodes from the filesystem results almost always with a
+Deleting data from the filesystem results almost always with a
 "Deleting block not in data zone" type error message, and sometimes crashes.
+This seems to be due to the following line in V1_trunc_direct
+
+-               p = i + inode->u.minix_i.u.i1_data;
++               p = inode->i_zone[i];
+
+The botton version being the ELKS version, the top one is the Linux version.
+The two don't seem to bear any relation to each other.
+
 
 Adding register variables to schedule causes a the chq wait queue to get 
 corrupted. See comments at the top of schedule() in kernel/sched.c. I

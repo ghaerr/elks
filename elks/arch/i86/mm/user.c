@@ -12,16 +12,17 @@ int verfy_area(ptr,len)
 char *ptr;
 unsigned int len;
 {
+	register __ptask currentp = current;
 	/*
 	 *	Kernel tasks can always access
 	 */
-	if(get_ds()==current->t_regs.ds)
+	if(get_ds()==currentp->t_regs.ds)
 		return 0;
 	/*
 	 *	User process boundaries
 	 */
 	
-	if((unsigned int)(ptr+len) > current->t_endstack)
+	if((unsigned int)(ptr+len) > currentp->t_endstack)
 		return -EFAULT;
 		
 	return 0;

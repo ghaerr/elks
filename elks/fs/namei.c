@@ -423,8 +423,9 @@ struct inode * base;
 		down(&inode->i_sem);
 #endif		
 		inode->i_size = 0;
-		if (iop = inode->i_op && iop->truncate)
+		if ((iop = inode->i_op) && iop->truncate) {
 			iop->truncate(inode);
+		}
 #ifdef NOT_YET			
 		up(&inode->i_sem);
 #endif		

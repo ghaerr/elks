@@ -65,7 +65,7 @@ unsigned long block;
 	}
 	if (block < sb->u.minix_sb.s_firstdatazone ||
 	    block >= sb->u.minix_sb.s_nzones) {
-		printk("trying to free block not in datazone\n");
+		printk("trying to free block %lx not in datazone\n", block);
 		return;
 	}
 	bh = get_hash_table(sb->s_dev,block);
@@ -199,21 +199,18 @@ register struct inode * inode;
 struct inode * minix_new_inode(dir)
 struct inode * dir;
 {
-	struct super_block * sb;
 	register struct inode * inode;
 	register struct buffer_head * bh;
+	/* Adding an sb here does not make the code smaller */
 	int i,j;
 
 	if (!dir || !(inode = get_empty_inode()))
 		return NULL;
-	sb = dir->i_sb;
-	inode->i_sb = sb;
-/*	inode->i_flags = inode->i_sb->s_flags; Changed to line below */
-	inode->i_flags = sb->s_flags;
+	inode->i_sb = dir->i_sb;
+	inode->i_flags = inode->i_sb->s_flags;
 	j = 8192;
 	for (i=0 ; i<8 ; i++)
-/*		if ((bh = inode->i_sb->u.minix_sb.s_imap[i]) != NULL) { */
-		if ((bh = sb->u.minix_sb.s_imap[i]) != NULL) {
+		if ((bh = inode->i_sb->u.minix_sb.s_imap[i]) != NULL) {
 			map_buffer(bh);
 			if ((j=find_first_zero_bit(bh->b_data, 8192)) < 8192)
 				break;
@@ -229,14 +226,13 @@ struct inode * dir;
 	}
 	mark_buffer_dirty(bh, 1);
 	j += i*8192;
-/*	if (!j || j >= inode->i_sb->u.minix_sb.s_ninodes) { */
-	if (!j || j >= sb->u.minix_sb.s_ninodes) {
+	if (!j || j >= inode->i_sb->u.minix_sb.s_ninodes) {
 		goto iputfail;	
 	}
 	unmap_buffer(bh);
 	inode->i_count = 1;
 	inode->i_nlink = 1;
-	inode->i_dev = sb->s_dev;
+	inode->i_dev = inode->i_sb->s_dev;
 	inode->i_uid = current->euid;
 	inode->i_gid = (dir->i_mode & S_ISGID) ? dir->i_gid : current->egid;
 	inode->i_dirt = 1;

@@ -149,18 +149,19 @@ int bioshd_gethdinfo()
 	int drive, ndrives = 0;
 
 	for (drive = 0; drive <= 1; drive++) {
+		register  struct drive_infot * drivep = &drive_info[drive];
 		ndrives++;
 		BD_AX = BIOSHD_DRIVE_PARMS;
 		BD_DX = drive + 0x80; 
 		BD_IRQ = BIOSHD_INT;
 		call_bios();
 		if ((BD_AX != 0x100) && (!CARRY_SET)) {
-			drive_info[drive].cylinders = ((BD_CX >> 8) & 255);
-			drive_info[drive].cylinders += 
+			drivep->cylinders = ((BD_CX >> 8) & 255);
+			drivep->cylinders += 
 					(((BD_CX >> 6) & 3) * 256); 
-			drive_info[drive].heads = ((BD_DX >> 8) & 63) + 1;
-			drive_info[drive].sectors = (BD_CX & 63);
-			drive_info[drive].fdtype = -1;
+			drivep->heads = ((BD_DX >> 8) & 63) + 1;
+			drivep->sectors = (BD_CX & 63);
+			drivep->fdtype = -1;
 		}
 		if ((BD_DX & 255) < 2) break;
 	}
@@ -329,9 +330,11 @@ struct file *filp;
 {
 	int target;
 	int fdtype;
+	register struct drive_infot * drivep;
 	target = DEVICE_NR(inode->i_rdev);
+	drivep = &drive_info[target];
 
-	fdtype = drive_info[target].fdtype;
+	fdtype = drivep->fdtype;
 
 	/* Bounds testing */
 
@@ -409,8 +412,8 @@ struct file *filp;
 					reset_bioshd(hd_drive_map[target]);
 					count++;
 				} else {
-					drive_info[target].cylinders = fd_types[probe_order[i]].cylinders;
-					drive_info[target].sectors = fd_types[probe_order[i]].sectors;
+					drivep->cylinders = fd_types[probe_order[i]].cylinders;
+					drivep->sectors = fd_types[probe_order[i]].sectors;
 					break;
 				}   
 			}
@@ -424,10 +427,10 @@ struct file *filp;
 		if (seek_sector(hd_drive_map[target], track_probe[count], 1))
 			/* seek error, assume type used before */
 			{
-			drive_info[target].cylinders = track_probe[count - 1];
+			drivep->cylinders = track_probe[count - 1];
 			break;
 			}
-		drive_info[target].cylinders = track_probe[count];		
+		drivep->cylinders = track_probe[count];		
 		}
 
 		/* and then for sector number */		
@@ -437,10 +440,10 @@ struct file *filp;
 		if (seek_sector(hd_drive_map[target], 40, sector_probe[count]))
 			/* seek error, assume type used before */
 			{
-			drive_info[target].sectors = sector_probe[count - 1];
+			drivep->sectors = sector_probe[count - 1];
 			break;
 			}
-		drive_info[target].sectors = sector_probe[count];
+		drivep->sectors = sector_probe[count];
 		}
 #endif /* USE_OLD_PROBE */
 #ifdef CONFIG_BLK_DEV_BFD
@@ -451,10 +454,10 @@ struct file *filp;
 		/* I moved this out of for loop to prevent trashing the screen
 		with seducing (repeating) probe messages about disk types */
 
-		if (drive_info[target].cylinders == 0 || drive_info[target].sectors == 0)
+		if (drivep->cylinders == 0 || drivep->sectors == 0)
 			printk("hd: Autoprobe failed!\n");
 		else
-			printk("hd: disc in /dev/fd%d probably has %d sectors and %d cylinders\n", target % 2, drive_info[target].sectors, drive_info[target].cylinders);
+			printk("hd: disc in /dev/fd%d probably has %d sectors and %d cylinders\n", target % 2, drivep->sectors, drivep->cylinders);
 
 /*
  *	This is not a bugfix, hence no code, but coders should be aware
@@ -480,6 +483,7 @@ void init_bioshd()
 	int count = 0;
 	int hdcount = 0;
 	register struct gendisk *ptr;
+	register struct drive_infot * drivep;
 	int addr = 0x8c;
 
 	printk("hd Driver Copyright (C) 1994 Yggdrasil Computing, Inc.\nExtended and modified for Linux8086 by Alan Cox.\n");
@@ -503,15 +507,16 @@ void init_bioshd()
 #ifdef DOSHD_VERBOSE_DRIVES
 	for (i = 0; i < 4; i++)
 	{
-		if (drive_info[i].heads != 0)
+		drivep = &drive_info[i];
+		if (drivep->heads != 0)
 		{
 			printk("/dev/%cd%c: %d heads, %d cylinders, %d sectors = %ld %s\n",
 				(i < 2 ? 'h' : 'f'), (i % 2) + (i < 2 ? 'a' : '0'),
-				drive_info[i].heads,
-				drive_info[i].cylinders,
-				drive_info[i].sectors,
-				(long) drive_info[i].heads * drive_info[i].cylinders *
-				drive_info[i].sectors * 512L / (1024L * (i < 2 ? 1024L : 1L)),
+				drivep->heads,
+				drivep->cylinders,
+				drivep->sectors,
+				(long) drivep->heads * drivep->cylinders *
+				drivep->sectors * 512L / (1024L * (i < 2 ? 1024L : 1L)),
 				(i < 2 ? "MB" : "kB"));
 		}
 	}
@@ -519,15 +524,16 @@ void init_bioshd()
 #ifdef CONFIG_BLK_DEV_BHD
 	for (i=0; i < 2; i++)
 	{
-		if (drive_info[i].heads != 0)
+		drivep = &drive_info[i];
+		if (drivep->heads != 0)
 		{
 			printk("/dev/hd%c: %d heads, %d cylinders, %d sectors = %ld MB\n",
 				(i + 'a'),
-				drive_info[i].heads,
-				drive_info[i].cylinders,
-				drive_info[i].sectors,
-				(long) drive_info[i].heads * drive_info[i].cylinders *
-				drive_info[i].sectors * 512L / (1024L * (i < 2 ? 1024L : 1L)));
+				drivep->heads,
+				drivep->cylinders,
+				drivep->sectors,
+				(long) drivep->heads * drivep->cylinders *
+				drivep->sectors * 512L / (1024L * (i < 2 ? 1024L : 1L)));
 			}
 	}
 #endif /* CONFIG_BLK_DEV_BHD */
@@ -558,18 +564,20 @@ void init_bioshd()
 }
 
 static int bioshd_ioctl(inode, file, cmd, arg)
-    register struct inode *inode;
+    struct inode *inode;
     struct file *file;
     unsigned int cmd;
     unsigned int arg;
 {
 	register struct hd_geometry *loc = (struct hd_geometry *) arg; /**/
+	register struct drive_infot * drivep;
 	int dev, err;
 	unsigned long flags;
 
 	if ((!inode) || !(inode->i_rdev))
 		return -EINVAL;
 	dev = DEVICE_NR(inode->i_rdev);
+	drivep = &drive_info[dev];
 	if (dev >= NR_HD)
 		return -ENODEV;
 
@@ -578,9 +586,9 @@ static int bioshd_ioctl(inode, file, cmd, arg)
 			err = verify_area(VERIFY_WRITE,arg,sizeof(*loc));
 			if (err)
 				return err;
-			put_user(drive_info[dev].heads, (char *) &loc->heads);
-			put_user(drive_info[dev].sectors, (char *) &loc->sectors);
-			put_user(drive_info[dev].cylinders, (short *) &loc->cylinders);
+			put_user(drivep->heads, (char *) &loc->heads);
+			put_user(drivep->sectors, (char *) &loc->sectors);
+			put_user(drivep->cylinders, (short *) &loc->cylinders);
 			put_user(hd[MINOR(inode->i_rdev)].start_sect, (long *) &loc->start);
 
 			return 0;
@@ -595,12 +603,13 @@ static void do_bioshd_request()
 {
 	unsigned long count;
 	unsigned long this_pass;
+	register struct request * req;
 	short cylinder;
 	short head;
 	short sector;
 	unsigned long start;
 	int tmp;
-	register char *buff;
+	char *buff;
 	int minor;
 	int errs;
 /*	int part; */
@@ -618,7 +627,8 @@ static void do_bioshd_request()
 		INIT_REQUEST;
 
 		/* make sure it's still valid */
-		if (CURRENT == NULL || CURRENT->sector == -1)
+		req = CURRENT;
+		if (req == NULL || req->sector == -1)
 			return;
 
 		if (bioshd_initialized != 1)
@@ -626,7 +636,7 @@ static void do_bioshd_request()
 			end_request(0);
 			continue;
 		}
-		minor = MINOR(CURRENT->dev);
+		minor = MINOR(req->dev);
 /*		part = minor & ((1 << 6) - 1); */
 		drive = minor >> 6;
 
@@ -637,9 +647,9 @@ static void do_bioshd_request()
 			end_request(0);
 			continue;
 		}
-		count = CURRENT->nr_sectors;
-		start = CURRENT->sector;
-		buff = CURRENT->buffer;
+		count = req->nr_sectors;
+		start = req->sector;
+		buff = req->buffer;
 
 		if (hd[minor].start_sect == -1 || start >= hd[minor].nr_sects)
 		{
@@ -653,22 +663,23 @@ static void do_bioshd_request()
 
 		while (count > 0)
 		{
-			sector = (start % drive_info[drive].sectors) + 1;
-			tmp = start / drive_info[drive].sectors;
-			head = tmp % drive_info[drive].heads;
-			cylinder = tmp / drive_info[drive].heads;
+			register struct drive_infot * drivep = &drive_info[drive];
+			sector = (start % drivep->sectors) + 1;
+			tmp = start / drivep->sectors;
+			head = tmp % drivep->heads;
+			cylinder = tmp / drivep->heads;
 
 			this_pass = count;
-			if (count <= (drive_info[drive].sectors - sector + 1))
+			if (count <= (drivep->sectors - sector + 1))
 				this_pass = count;
 			else
-				this_pass = drive_info[drive].sectors - sector + 1;
+				this_pass = drivep->sectors - sector + 1;
 
 			while (!dma_avail) sleep_on(&dma_wait);
 			dma_avail = 0;
 
 			BD_IRQ = BIOSHD_INT;
-			if (CURRENT->cmd == WRITE) {
+			if (req->cmd == WRITE) {
 			   BD_AX = BIOSHD_WRITE | this_pass;
 			   fmemcpy(BUFSEG, 0, get_ds(), buff, (this_pass * 512));
 			}
@@ -683,7 +694,7 @@ static void do_bioshd_request()
 			BD_FL = 0;
 #if 0
 			printk("cylinder=%d head=%d sector=%d drive=%d CMD=%d\n",
-			    cylinder, head, sector, drive, CURRENT->cmd);
+			    cylinder, head, sector, drive, req->cmd);
 			printk("blocks %d\n", this_pass);
 #endif
 
@@ -692,7 +703,7 @@ static void do_bioshd_request()
 
 			if (CARRY_SET)
 			{
-				reset_bioshd(MINOR(CURRENT->dev));
+				reset_bioshd(MINOR(req->dev));
 				dma_avail = 1;
 				errs++;
 				if (errs > MAX_ERRS)
@@ -704,7 +715,7 @@ static void do_bioshd_request()
 				}
 				continue;	/* try again */
 			}
-			if (CURRENT->cmd==READ) {
+			if (req->cmd==READ) {
 			  fmemcpy(get_ds(), buff, BUFSEG, 0, (this_pass * 512)); 
 			}
 			/* In case it's already been freed */	
@@ -789,19 +800,23 @@ static int revalidate_hddisk(dev, maxusage)
 static void bioshd_geninit()
 {
 	int i;
+	register struct drive_infot * drivep;
+	register struct hd_struct * hdp;
 
 	for (i = 0; i < 4 << 6; i++)
 	{
+		drivep = &drive_info[i >> 6];
+		hdp = &hd[i];
 		if ((i & ((1 << 6) - 1)) == 0)
 		{
-			hd[i].start_sect = 0;
-			hd[i].nr_sects = (long) drive_info[i >> 6].sectors *
-			  drive_info[i >> 6].heads *
-			  drive_info[i >> 6].cylinders;
+			hdp->start_sect = 0;
+			hdp->nr_sects = (long) drivep->sectors *
+			  drivep->heads *
+			  drivep->cylinders;
 		} else
 		{
-			hd[i].start_sect = -1;
-			hd[i].nr_sects = 0;
+			hdp->start_sect = -1;
+			hdp->nr_sects = 0;
 		}
 	}
 	/* blksize_size[MAJOR_NR] = 1024; */ /* Currently unused */

@@ -101,7 +101,7 @@ int * blk_size[MAX_BLKDEV] = { NULL, NULL, };
  */
 
 static void plug_device(dev,plug)
-struct blk_dev_struct * dev;
+register struct blk_dev_struct * dev;
 struct request * plug;
 {
 	unsigned int flags;

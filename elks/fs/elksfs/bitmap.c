@@ -65,7 +65,7 @@ unsigned long block;
 	}
 	if (block < sb->u.elksfs_sb.s_firstdatazone ||
 	    block >= sb->u.elksfs_sb.s_nzones) {
-		printk("trying to free block not in datazone\n");
+		printk("trying to free block %x not in datazone\n", block);
 		return;
 	}
 	bh = get_hash_table(sb->s_dev,block);

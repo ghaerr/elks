@@ -139,11 +139,15 @@ int CursorOfs;
 #ifdef CONFIG_DCON_ANSI
     if( C->InAnsi )
     {
-      C->AnsiStr[C->AnsiLen++]=Ch;
+      register unsigned char * astrp = &C->AnsiStr[C->AnsiLen++];
+      *astrp++ = Ch;
       if( isupper(Ch) || islower(Ch) )
       {
-        C->AnsiStr[C->AnsiLen++]=Ch;
-        C->AnsiStr[C->AnsiLen++]='\0';
+        *astrp++ = Ch;
+        *astrp = Ch;		/* No need for post increment */
+	C->AnsiLen += 2;
+/*        C->AnsiStr[C->AnsiLen++]=Ch;
+        C->AnsiStr[C->AnsiLen++]='\0'; */
         HandleAnsi(C,Ch);
         C->InCmd=C->InAnsi=0;
       }
@@ -580,6 +584,7 @@ struct tty_ops dircon_ops = {
 void init_console()
 {
    unsigned int i;
+   register Console * Conp;
 
    MaxCol = ( Width = peekb( 0x40, 0x4a ) ) - 1;
    /* Trust this. Cga does not support peeking at 0x40:0x84. */
@@ -594,24 +599,26 @@ void init_console()
  
    for( i = 0; i < NumConsoles; i++ )
    {
+      Conp = &Con[i];
 #ifdef CONFIG_DCON_VT52
-      Con[ i ].cx = Con[ i ].cy = Con[ i ].InCmd = 0;
-      Con[ i ].WaitParm = 0;
-      Con[ i ].Attr = A_DEFAULT;
+      Conp->cx = Con[ i ].cy = Con[ i ].InCmd = 0;
+      Conp->WaitParm = 0;
+      Conp->Attr = A_DEFAULT;
 #else
-      Con[ i ].cx = Con[ i ].cy = 0;
+      Conp->cx = Conp->cy = 0;
 #endif
-      Con[ i ].Seg = VideoSeg + ( PageSize >> 4 ) * i;
-      Con[ i ].Ord = i;
+      Conp->Seg = VideoSeg + ( PageSize >> 4 ) * i;
+      Conp->Ord = i;
 /*      Con[ i ].InUse = 0; */
       if (i != 0) {
-        ClearRange( &Con[ i ], 0, 0, Width, Height );
+        ClearRange( Conp, 0, 0, Width, Height );
       }
    }
-   Con[ 0 ].cx = peekb( 0x40, 0x50 );
-   Con[ 0 ].cy = peekb( 0x40, 0x51 );
+   Conp = &Con[0];
+   Conp->cx = peekb( 0x40, 0x50 );
+   Conp->cy = peekb( 0x40, 0x51 );
 /*   Con[ 0 ].InUse = 1; */
-   Visible = &Con[ 0 ];
+   Visible = Conp;
 #ifdef CONFIG_DCON_VT52
    printk(
          "Console: Direct %dx%d emulating vt52 (%d virtual consoles)\n",

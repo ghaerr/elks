@@ -61,10 +61,12 @@ struct tty * determine_tty(dev)
 dev_t dev;
 {
 	int i, minor = MINOR(dev);
+	register struct tty * ttyp;
 
 	for (i = 0; i < MAX_TTYS; i++) {
-		if (ttys[i].minor == minor)
-			return &ttys[i];
+		ttyp = &ttys[i];
+		if (ttyp->minor == minor)
+			return ttyp;
 	}
 	return 0; 
 }
@@ -266,29 +268,34 @@ static struct file_operations tty_fops =
 void tty_init()
 {
 	int i;
+	register struct tty * ttyp;
 
 	for (i = 0; i < NUM_TTYS; i++) { 
-		chq_init(&ttys[i].inq, ttys[i].inq_buf, INQ_SIZE);
-		chq_init(&ttys[i].outq, ttys[i].outq_buf, OUTQ_SIZE);
+		ttyp = &ttys[i];
+		chq_init(&ttyp->inq, ttyp->inq_buf, INQ_SIZE);
+		chq_init(&ttyp->outq, ttyp->outq_buf, OUTQ_SIZE);
 	}
 
 #ifdef CONFIG_CONSOLE_BIOS
-	ttys[0].ops = &bioscon_ops;
-	ttys[0].minor = 0;
-	memcpy(&ttys[0].termios, &def_vals, sizeof(struct termios));
+	ttyp = &ttys[0];
+	ttyp->ops = &bioscon_ops;
+	ttyp->minor = 0;
+	memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
 #endif
 #ifdef CONFIG_CONSOLE_DIRECT
 	for (i = 0; i < 3; i++) {
-		ttys[i].ops = &dircon_ops;
-		ttys[i].minor = i;
-		memcpy(&ttys[i].termios, &def_vals, sizeof(struct termios));
+		ttyp = &ttys[i];
+		ttyp->ops = &dircon_ops;
+		ttyp->minor = i;
+		memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
 	}
 #endif
 #ifdef CONFIG_CHAR_DEV_RS
 	for (i = 4; i < 8; i++) {
-		ttys[i].ops = &rs_ops;
-		ttys[i].minor = i;
-		memcpy(&ttys[i].termios, &def_vals, sizeof(struct termios));
+		ttyp = &ttys[i];
+		ttyp->ops = &rs_ops;
+		ttyp->minor = i;
+		memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
 	}
 #endif
 

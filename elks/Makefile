@@ -36,6 +36,7 @@ CFLAGS	=$(CFLBASE) -i
 CPP	=$(CC) -I$(MT_DIR)/include -E -D__KERNEL__
 CC_PROTO = gcc -I$(MT_DIR)/include -M -D__KERNEL__
 
+LINT	=lclint
 CONFIG_SHELL := $(shell if [ -x "$$bash" ]; then echo $$bash; \
           else if [ -x /bin/bash ]; then echo /bin/bash; \
           else echo sh; fi ; fi)
@@ -169,6 +170,12 @@ lib/lib.a:
 
 net/net.a:
 	(cd net; make)
+
+#########################################################################
+# lint rules
+
+lint:
+	$(LINT) -I$(MT_DIR)/include -c init/main.c
 
 #########################################################################
 # arch tools

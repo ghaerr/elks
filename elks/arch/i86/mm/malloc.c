@@ -219,12 +219,13 @@ int base;
 int sys_brk(len)
 int len;
 {
-	if ((len < (current->t_endtext)) || 
-	    (len > (current->t_endstack - USTACK_BYTES))) { 
+	register __ptask currentp = current;
+	if ((len < (currentp->t_endtext)) || 
+	    (len > (currentp->t_endstack - USTACK_BYTES))) { 
 		return -ENOMEM; 
 	}
 
-	current->t_endbrk = len;
+	currentp->t_endbrk = len;
 	return 0;
 }
 
@@ -237,6 +238,7 @@ int start;
 int end;
 {
 	int ct;
+	register struct malloc_hole * holep = &holes[0];
 	/*
 	 *	Mark pages free.
 	 */
@@ -245,18 +247,10 @@ int end;
 	/*
 	 *	Single hole containing all user memory.
 	 */
-	holes[0].flags=HOLE_FREE;
-	holes[0].page_base = start;
-	holes[0].extent = end-start;
-	holes[0].refcount = 0;
-#if 0
-	holes[1].flags=HOLE_FREE;
-	holes[1].page_base = 0x900;
-	holes[1].extent = (0xfff - 0x900);
-	holes[1].refcount = 0;
-	holes[0].next = &holes[1];
-#else
-	holes[0].next = NULL;
-#endif
+	holep->flags=HOLE_FREE;
+	holep->page_base = start;
+	holep->extent = end-start;
+	holep->refcount = 0;
+	holep->next = NULL;
 }
 
