@@ -49,9 +49,16 @@ boot/setup: boot/setup.S
 	$(LD86) -s -o boot/setup -M boot/setup.o > Setup.map
 
 boot/bootsect: boot/bootsect.S
-	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/bootsect.s boot/bootsect.S
+	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/bootsect.s \
+		boot/bootsect.S
 	$(AS86) -0 -o boot/bootsect.o boot/bootsect.s
 	$(LD86) -0 -s -o boot/bootsect -M boot/bootsect.o > Boot.map
+
+boot/netbootsect: boot/netbootsect.S
+	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/netbootsect.s \
+		boot/netbootsect.S
+	$(AS86) -0 -o boot/netbootsect.o boot/netbootsect.s
+	$(LD86) -0 -s -o boot/netbootsect -M boot/netbootsect.o > Netboot.map
 
 boot/crt1.o: boot/crt1.c
 
@@ -77,7 +84,7 @@ boot/system: $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
 		$(ARCHIVES) \
 		$(DRIVERS) \
 		-t -M -o $(ARCH_DIR)/boot/system > System.map)
-	
+
 #SIBO image build
 Image: boot/system tools
 	(cd boot; ../tools/imgconv system system.app -S192 -H72 -V)
@@ -92,20 +99,25 @@ boot/system: $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 		$(ARCHIVES) \
 		$(DRIVERS) \
 		-t -M -o $(ARCH_DIR)/boot/system > System.map)
-	
+
 #PC image build
 ifneq ($(CONFIG_ROMCODE), y)
 ifeq ($(CONFIG_286PMODE), y)
 
 Image: boot/bootsect boot/setup 286pmode/pmode286 boot/system tools
-	tools/build boot/bootsect boot/setup 286pmode/pmode286 boot/system $(ROOT_DEV) > Image
+	tools/build boot/bootsect boot/setup 286pmode/pmode286 \
+		boot/system $(ROOT_DEV) > Image
 	sync
 
 else
 
 Image: boot/bootsect boot/setup boot/system tools
-	tools/build boot/bootsect boot/setup boot/system $(ROOT_DEV) > boot/Image
+	tools/build boot/bootsect boot/setup boot/system \
+		$(ROOT_DEV) > boot/Image
 	sync
+
+nbImage: Image boot/netbootsect
+	tools/mknbi-elks boot/netbootsect boot/Image boot/nbImage
 
 endif
 else
@@ -162,8 +174,11 @@ drivers/block/blk_drv.a:
 # misc
 clean:
 	rm -f boot/bootsect boot/setup boot/bootsect.s boot/setup.s
+	rm -f boot/netbootsect boot/netbootsect.s
 	rm -f boot/*~ boot/*.o boot/system boot/Image boot/system.app
+	rm -f boot/nbImage boot/nbImage.rd Netboot.map
 	rm -f tools/*~ tools/*.o tools/build
+	rm -f Boot.map Setup.map boot/crt0.s
 	(cd kernel; make clean)
 	(cd lib; make clean)
 	(cd mm; make clean)

@@ -13,6 +13,8 @@ SUBLEVEL = 82
 MT_DIR     = $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
 TOPDIR     = $(MT_DIR)
 
+TARGET_NB_IMAGE=/tftpboot/elksy/nbImage
+
 ARCH = i86
 ARCH_DIR = arch/$(ARCH)
 
@@ -93,6 +95,17 @@ endif
 Image: $(ARCHIVES) init/main.o
 	(cd $(ARCH_DIR); make Image)
 
+nbImage: $(ARCHIVES) init/main.o
+	(cd $(ARCH_DIR); make nbImage)
+
+nb_install: nbImage
+	cp -f $(ARCH_DIR)/boot/nbImage $(TARGET_NB_IMAGE)
+
+nbrd_install: nbImage
+	cp -f $(ARCH_DIR)/boot/nbImage $(ARCH_DIR)/boot/nbImage.rd
+	cat $(ARCH_DIR)/boot/nbRamdisk >> $(ARCH_DIR)/boot/nbImage.rd
+	cp -f $(ARCH_DIR)/boot/nbImage.rd $(TARGET_NB_IMAGE)
+
 boot: Image
 	(cd $(ARCH_DIR); make boot)
 
@@ -150,7 +163,7 @@ clean:
 	(cd lib;make clean)
 	(cd net;make clean)
 	(cd scripts; make clean)
-	
+
 depclean:
 	@for i in `find -name Makefile`; do \
 	sed '/\#\#\# Dependencies/q' < $$i > tmp_make ; \
@@ -191,10 +204,13 @@ else
 	@echo \#define UTS_RELEASE \"$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)\" > .ver
 	@echo \#define ELKS_VERSION_CODE `expr $(VERSION) \\* 65536 \\* 8 + $(PATCHLEVEL) \\* 256 \\* 8 + $(SUBLEVEL) \\* 8  ` >> .ver
 endif
+	sync
 	@mv -f .ver $@
+	sync
 
 include/linuxmt/compile.h:
 	@echo \#define UTS_VERSION \"\#$(VERSION) `date`\" > .ver
 	@mv -f .ver $@
+	sync
 
 ### Dependencies:
