@@ -38,7 +38,7 @@ static void generate(int sig, register struct task_struct *p)
     }
 }
 
-int send_sig(pid_t sig, register struct task_struct *p, int priv)
+int send_sig(sig_t sig, register struct task_struct *p, int priv)
 {
     register __ptask currentp = current;
     debug1("SIGNAL: Killing with sig %d.\n", sig);

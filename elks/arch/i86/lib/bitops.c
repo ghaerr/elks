@@ -9,8 +9,8 @@
  
 unsigned char clear_bit(unsigned int bit,void *addr)
 {
-    unsigned char *ptr = addr;
-    unsigned int r, mask, offset = (bit / 8);
+    unsigned char *ptr = addr, r;
+    unsigned int mask, offset = (bit / 8);
     flag_t flags;
 
     bit%=8;
@@ -18,15 +18,15 @@ unsigned char clear_bit(unsigned int bit,void *addr)
     save_flags(flags);
     clr_irq();
     r = ptr[offset] & mask;
-    ptr[offset] &= ~mask;	/* xor bit with itself is 0 */
+    ptr[offset] &= ~mask;		/* xor bit with itself is 0 */
     restore_flags(flags);
-    return (r ? 1:0);
+    return r >> bit;
 }
 
 unsigned char set_bit(unsigned int bit,void *addr)
 {
-    unsigned char *ptr = addr;
-    unsigned int r, mask, offset = (bit / 8);
+    unsigned char *ptr = addr, r;
+    unsigned int mask, offset = (bit / 8);
     flag_t flags;
 
     bit %= 8;
@@ -34,9 +34,9 @@ unsigned char set_bit(unsigned int bit,void *addr)
     save_flags(flags);
     clr_irq();
     r = ptr[offset] & mask;
-    ptr[offset] |= mask;	/* xor bit with itself is 0 */
+    ptr[offset] |= mask;		/* xor bit with itself is 0 */
     restore_flags(flags);
-    return (r ? 1 : 0);
+    return r >> bit;
 }
 
 unsigned char test_bit(unsigned int bit,void *addr)
@@ -58,7 +58,7 @@ unsigned char test_bit(unsigned int bit,void *addr)
 /* Use the old faithful version */
 unsigned int find_first_non_zero_bit(void *addr, unsigned int len)
 {
-    unsigned short int i;
+    unsigned int i;
 
     for (i = 0; i < len; i++)
 	if (test_bit(i, addr))
@@ -67,9 +67,9 @@ unsigned int find_first_non_zero_bit(void *addr, unsigned int len)
 }
 
 /* Use the old faithful version */
-unsigned int find_first_zero_bit(void *addr,unsigned int len)
+unsigned int find_first_zero_bit(void *addr, unsigned int len)
 {
-    unsigned short int i;
+    unsigned int i;
 
     for (i = 0; i < len; i++)
 	if (!test_bit(i, addr))

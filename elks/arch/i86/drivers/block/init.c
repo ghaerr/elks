@@ -21,6 +21,7 @@
 #include <linuxmt/genhd.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/major.h>
+#include <linuxmt/init.h>
 #include <linuxmt/string.h>
 
 #include <arch/system.h>

@@ -43,22 +43,24 @@ extern void rd_load();
 
 #ifdef CONFIG_GENDISK
 
-static void print_minor_name(register struct gendisk *hd, int minor)
+static void print_minor_name(register struct gendisk *hd,
+			     unsigned short int minor)
 {
     unsigned int unit = minor >> hd->minor_shift;
     unsigned int part = minor & ((1 << hd->minor_shift) - 1);
 
     printk(" %s%c", hd->major_name, 'a' + unit);
     if (part)
-	printk("%d", part);
+	printk("%d:", part);
     else
 	printk(":");
 }
 
-static void add_partition(register struct gendisk *hd,
-			  int minor, sector_t start, sector_t size)
+static void add_partition(register struct gendisk *hd, unsigned int minor,
+			  sector_t start, sector_t size)
 {
     register struct hd_struct *hdp = &hd->part[minor];
+
     hdp->start_sect = start;
     hdp->nr_sects = size;
     print_minor_name(hd, minor);
@@ -182,7 +184,11 @@ static int msdos_partition(struct gendisk *hd,
     register struct partition *p;
     register struct hd_struct *hdp;
     unsigned char *data;
-    int i, minor = current_minor, mask = (1 << hd->minor_shift) - 1;
+    int i, minor = current_minor;
+
+#if 0
+    int mask = (1 << hd->minor_shift) - 1;
+#endif
 
     if (!(bh = bread(dev, (block_t) 0))) {
 	printk(" unable to read partition table\n");
@@ -217,7 +223,7 @@ static int msdos_partition(struct gendisk *hd,
 	     * be able to bread the block containing the extended
 	     * partition info.
 	     */
-	    hd->sizes[minor] = hdp->nr_sects >> (BLOCK_SIZE_BITS - 9);
+	    hd->sizes[minor] = (int) (hdp->nr_sects >> (BLOCK_SIZE_BITS - 9));
 	    extended_partition(hd, MKDEV(hd->major, minor));
 	    printk(" >");
 	    /* prevent someone doing mkfs or mkswap on an

@@ -4,7 +4,9 @@
  */
 
 #include <linuxmt/types.h>
+#include <linuxmt/kernel.h>
 #include <linuxmt/config.h>
+
 #include <arch/system.h>
 #include <arch/segment.h>
 
@@ -20,20 +22,21 @@
  *	0x9000:80	- 16 bytes of disk 0 info
  *	0x9000:90	- 16 bytes of disk 1 info
  *
- *	1ff		- AA if psmouse present
+ *	0x01ff		- AA if psmouse present
  */
 
-char proc_name[16];
-char cpuid[16];
+char cpuid[17], proc_name[17];
 
 void setup_mm(void)
 {
-    int basemem = setupw(0x2a);
-    int xms = setupw(2);	/* Fetched by boot code */
-    int cpu_model = setupb(0x24);
-    long memstart;
-    long memend;
+    long memstart, memend;
     int i;
+    __u16 basemem = setupw(0x2a);
+    __u16 xms = setupw(2);		/* Fetched by boot code */
+
+#ifdef CONFIG_EMS
+    __u16 ems = 0;			/* Fetched by boot code */
+#endif
 
     arch_cpu = setupb(0x20);
 
@@ -41,6 +44,7 @@ void setup_mm(void)
 	proc_name[i] = setupb(0x30 + i);
 	cpuid[i] = setupb(0x50 + i);
     }
+    proc_name[16] = cpuid[16] = '\0';
 
 #ifdef CONFIG_ARCH_SIBO
 
@@ -53,8 +57,12 @@ void setup_mm(void)
 	   arch_cpu > 5 ? 'A' : 'X', proc_name, basemem);
     if (arch_cpu < 6)
 	xms = 0;		/* XT bios hasn't got xms interrupt */
+#ifdef CONFIG_EMS
+    if (ems)
+	printk(", %dK expanded memory (EMS)", ems);
+#endif
     if (xms)
-	printk(", %dK extended", xms);
+	printk(", %dK extended memory (XMS)", xms);
     if (*cpuid)
 	printk(", CPUID `%s'", cpuid);
 

@@ -4,15 +4,15 @@
  * (Based on the original character queue code by Alan Cox(?))
  *
  * Array queue handling for new tty drivers... rather generic routine, and
- * flexible to boot.  The character queue uses a data structure which 
+ * flexible to boot.  The character queue uses a data structure that
  * references a seperately set up char array, removing hard limits from the
- * queing code
+ * queing code.
  *
  * I can't help but think there's a race condition somewhere in here :)
  *
  * 'warming' will be done by the tty driver itself when it copies data over
  *
- * 16 July 2001 : A divide is quite expensive on an 8086 so I changed the 
+ * 16 July 2001 : A divide is quite expensive on an 8086 so I changed the
  * code to use logical addition and not modulo. The only drawback is we
  * have to use only power of two buffer sizes. (Harry Kalogirou)
  */
@@ -31,7 +31,7 @@ int chq_erase(register struct ch_queue *q)
 int chq_init(register struct ch_queue *q, unsigned char *buf, int size)
 {
     debug3("CHQ: chq_init(%d, %d, %d)\n", q, buf, size);
-    q->buf = buf;
+    q->buf = (char *) buf;
     q->size = size;
     chq_erase(q);
 }
@@ -55,8 +55,8 @@ int chq_addch(register struct ch_queue *q, unsigned char c, int wait)
     if (q->len == q->size)
 	return -1;
 
-    nhead = (q->tail + q->len) & (q->size - 1);
-    q->buf[nhead] = c;
+    nhead = (unsigned int) ((q->tail + q->len) & (q->size - 1));
+    q->buf[nhead] = (char) c;
     q->len++;
     wake_up(&q->wq);
 
@@ -76,7 +76,7 @@ int chq_delch(register struct ch_queue *q)
 /* Gets tail character, waiting for one if wait != 0 */
 int chq_getch(register struct ch_queue *q, register unsigned char *c, int wait)
 {
-    int ntail, retval;
+    unsigned int retval;
 
     debug6("CHQ: chq_getch(%d, %d, %d) q->len=%d q->tail=%d q->size=%d\n",
 	   q, c, wait, q->len, q->tail, q->size);

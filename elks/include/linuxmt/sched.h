@@ -179,4 +179,7 @@ extern void put_ustack(register struct task_struct *,int,int);
 
 extern void tswitch(void);
 
+/* This should be an inline function !!! */
+extern void select_wait(struct wait_queue *);
+
 #endif

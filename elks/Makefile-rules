@@ -50,7 +50,7 @@
 VERSION 	= 0	# (0-255)
 PATCHLEVEL	= 1	# (0-255)
 SUBLEVEL	= 1	# (0-255)
-PRE		= 1	# (0-255)	If not a pre, comment this line.
+PRE		= 2	# (0-255)	If not a pre, comment this line.
 
 #########################################################################
 # Specify the architecture we will use.
@@ -305,21 +305,47 @@ dodep:	$(DEPEND)
 		fi ; \
 	done
 
+dofixme:
+	@for FILE in $${USEME:-*.[ch]} ; do \
+	    if [ -f "$${FILE}" ]; then \
+		if fgrep -q FIXME "$${FILE}" ; then \
+		    echo WARNING: "$${FILE}" includes a FIXME comment. ; \
+		fi ; \
+	    fi ; \
+	done
+	@if [ -z "$${USEME}" ]; then \
+		for DIR in */ ; do \
+			if [ -f "$$DIR/Makefile" ]; then \
+				${MAKE} -C "$$DIR" dolint ; \
+			fi ; \
+		done ; \
+	fi
+
+doindent:
+	$(BASEDIR)/scripts/reindent $(NOINDENT)
+
 dolint:
 	@for FILE in $${USEME:-*.[ch]} ; do \
 	    if [ -f "$${FILE}" ]; then \
 		    echo $(LINT) ... "$${FILE}" ; \
+		    SLEEP=N ; \
 		    if fgrep -q FIXME "$${FILE}" ; then \
 			echo WARNING: "$${FILE}" includes a FIXME comment. ; \
-			sleep 1 ; \
+			SLEEP=Y ; \
+		    fi ; \
+		    if fgrep -q '#asm' "$${FILE}" ; then \
+			echo WARNING: "$${FILE}" includes assembler section. ; \
+			SLEEP=Y ; \
 		    fi ; \
 		    if fgrep -q '#ifndef S_SPLINT_S' "$${FILE}" ; then \
 			echo WARNING: "$${FILE}" includes disabled section. ; \
-			sleep 1 ; \
+			SLEEP=Y ; \
 		    fi ; \
 		    if fgrep -q '/*@ignore@*/' "$${FILE}" ; then \
-			echo WARNING: "$${FILE}" includes section ignored \
-					by splint ; \
+			echo WARNING: "$${FILE}" includes section ignored by splint ; \
+			SLEEP=Y ; \
+		    fi ; \
+		    if [ $SLEEP != N ]; then \
 			sleep 1 ; \
 		    fi ; \
 		    if echo "$${FILE}" | grep -q '\.h$$' ; then \
@@ -336,7 +362,6 @@ dolint:
 		    fi ; \
 	    fi ; \
 	done
-	@echo
 	@if [ -z "$${USEME}" ]; then \
 		for DIR in */ ; do \
 			if [ -f "$$DIR/Makefile" ]; then \
@@ -345,17 +370,20 @@ dolint:
 		done ; \
 	fi
 
-indent:	indent-me
+fixme:	dofixme
+	@echo
+	@echo Those are all the FIXME comments in this tree.
+	@echo
+
+indent:	doindent
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
 			${MAKE} -C "$$DIR" indent ; \
 		fi ; \
 	done
 
-indent-me:
-	$(BASEDIR)/scripts/reindent $(NOINDENT)
-
 lint:	dolint
+	@echo
 	@echo " * All files in and under this directory have now been checked. Where problems"
 	@echo " * were found, they will be found in the relevant *.lint file in the same"
 	@echo " * directory. However, where no problems were found, this file is deleted."

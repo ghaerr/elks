@@ -372,8 +372,8 @@ void load_tr(void)
 #endif
 }
 
-void set_idt_entry(unsigned short interrupt,unsigned short cs,
-                   unsigned short ip,unsigned short type)
+void set_idt_entry(unsigned short interrupt, unsigned short cs,
+                   unsigned short ip, unsigned short type)
 {
     unsigned short flags = get_flags();
 
@@ -381,7 +381,7 @@ void set_idt_entry(unsigned short interrupt,unsigned short cs,
 
     idt[interrupt].limit = ip;
     idt[interrupt].baseaddr0 = cs;
-    idt[interrupt].flags = type;
+    idt[interrupt].flags = (unsigned char) type;
     idt[interrupt].baseaddr1 = 0;
     idt[interrupt].reserved = 0;
 
@@ -390,10 +390,11 @@ void set_idt_entry(unsigned short interrupt,unsigned short cs,
 
 void idt_init(void)
 {
-    int i;
+    unsigned short int i;
 
     for (i = 0; i < 0x30; i++)
-	set_idt_entry(i, PMODE_CODESEL, irqhandlers[i], GATE_INTERRUPT);
+	set_idt_entry(i, PMODE_CODESEL, (unsigned short int) irqhandlers[i],
+			 GATE_INTERRUPT);
 }
 
 char irq_mesg[] = "received irq ";
@@ -625,14 +626,15 @@ stpm_pmode:
  */
 void init_ksegs(unsigned short textlen)
 {
-    initial_gdt[7].baseaddr0 = ((long) _elksheader + 2) << 4;
-    initial_gdt[7].baseaddr1 = (((long) _elksheader + 2) >> 0xc) & 0xff;
+    unsigned long int eh = ((unsigned long int) _elksheader + 2);
+
+    initial_gdt[7].baseaddr0 = (unsigned short) (eh << 4);
+    initial_gdt[7].baseaddr1 = (unsigned short) ((eh >> 0xc) & 0xff);
     initial_gdt[7].limit = textlen;
 
-    initial_gdt[8].baseaddr0 =
-	((((long) _elksheader + 2) << 4) + textlen) & 0xffff;
-    initial_gdt[8].baseaddr1 =
-	(((((long) _elksheader + 2) << 4) + textlen) >> 0x10) & 0xff;
+    eh += textlen;
+    initial_gdt[8].baseaddr0 = (unsigned short) (eh << 4);
+    initial_gdt[8].baseaddr1 = (unsigned short) ((eh >> 0xc) & 0xff);
 }
 
 void bogus_magic(void)
@@ -654,8 +656,8 @@ void bogus_magic(void)
 
 void boot_kernel(void)
 {
-    initial_gdt[4].baseaddr0 = _elksheader << 4;
-    initial_gdt[4].baseaddr1 = (_elksheader >> 0xc) & 0xff;
+    initial_gdt[4].baseaddr0 = (unsigned short) (_elksheader << 4);
+    initial_gdt[4].baseaddr1 = (unsigned short) ((_elksheader >> 0xc) & 0xff);
 
 #ifndef S_SPLINT_S
 #asm

@@ -91,23 +91,6 @@ int null_write(struct inode *inode, struct file *filp, char *data, int len)
     return len;
 }
 
-static struct file_operations null_fops = {
-    null_lseek,			/* lseek */
-    null_read,			/* read */
-    null_write,			/* write */
-    NULL,			/* readdir */
-    NULL,			/* select */
-    NULL,			/* ioctl */
-    NULL,			/* open */
-    NULL			/* release */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
-};
-
 /*
  * /dev/full code
  */
@@ -124,50 +107,16 @@ int full_write(struct inode *inode, struct file *filp, char *data, int len)
     return -ENOSPC;
 }
 
-static struct file_operations full_fops = {
-    memory_lseek,		/* lseek */
-    full_read,			/* read */
-    full_write,			/* write */
-    NULL,			/* readdir */
-    NULL,			/* select */
-    NULL,			/* ioctl */
-    NULL,			/* open */
-    NULL			/* release */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
-};
-
-
 /*
  * /dev/zero code
  */
 int zero_read(struct inode *inode, struct file *filp, char *data, int len)
 {
     debugmem("zero_read()\n");
-    fmemset(data, current->mm.dseg, 0, len);
+    fmemset((__u16) data, current->mm.dseg, 0, (__u16) len);
     filp->f_pos += len;
     return len;
 }
-
-static struct file_operations zero_fops = {
-    memory_lseek,		/* lseek */
-    zero_read,			/* read */
-    null_write,			/* write */
-    NULL,			/* readdir */
-    NULL,			/* select */
-    NULL,			/* ioctl */
-    NULL,			/* open */
-    NULL,			/* release */
-#ifdef BLOAT_FS
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
-};
 
 static void split_seg_off(unsigned short int *segment,
 			  unsigned short int *offset,
@@ -188,10 +137,9 @@ loff_t kmem_read(struct inode *inode, register struct file *filp,
     debugmem("[k]mem_read()\n");
     split_seg_off(&sseg, &soff, filp->f_pos);
     debugmem3("Reading %u %p %p.\n", len, sseg, soff);
-    fmemcpy(current->mm.dseg, data, sseg, soff, len);
+    fmemcpy(current->mm.dseg, (__u16) data, sseg, soff, (__u16) len);
     filp->f_pos += len;
-
-    return len;
+    return (loff_t) len;
 }
 
 int kmem_write(struct inode *inode, register struct file *filp,
@@ -203,20 +151,19 @@ int kmem_write(struct inode *inode, register struct file *filp,
 
     split_seg_off(&dseg, &doff, filp->f_pos);
     debugmem2("Writing to %d:%d\n", dseg, doff);
-    fmemcpy(dseg, doff, current->mm.dseg, data, len);
+    fmemcpy(dseg, doff, current->mm.dseg, (__u16) data, (__u16) len);
     filp->f_pos += len;
-
-    return len;
+    return (int) len;
 }
 
-unsigned int kmem_ioctl(struct inode *inode,
-			struct file *file, int cmd, char *arg)
+int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 {
+    char *i;
     struct mem_usage mu;
+
 #ifdef CONFIG_SWAP
     struct mem_swap_info si;
 #endif
-    char *i;
 
     debugmem1("[k]mem_ioctl() %d\n", cmd);
     switch (cmd) {
@@ -249,11 +196,11 @@ unsigned int kmem_ioctl(struct inode *inode,
 
 	return 0;
     case MEM_GETCS:
-	i = get_cs();
+	i = (char *) get_cs();
 	memcpy_tofs(arg, &i, 2);
 	return 0;
     case MEM_GETDS:
-	i = get_ds();
+	i = (char *) get_ds();
 	memcpy_tofs(arg, &i, 2);
 	return 0;
     case MEM_GETUSAGE:
@@ -281,6 +228,59 @@ unsigned int kmem_ioctl(struct inode *inode,
     return -EINVAL;
 }
 
+/*@-type@*/
+
+static struct file_operations null_fops = {
+    null_lseek,			/* lseek */
+    null_read,			/* read */
+    null_write,			/* write */
+    NULL,			/* readdir */
+    NULL,			/* select */
+    NULL,			/* ioctl */
+    NULL,			/* open */
+    NULL			/* release */
+#ifdef BLOAT_FS
+	,
+    NULL,			/* fsync */
+    NULL,			/* check_media_change */
+    NULL			/* revalidate */
+#endif
+};
+
+static struct file_operations full_fops = {
+    memory_lseek,		/* lseek */
+    full_read,			/* read */
+    full_write,			/* write */
+    NULL,			/* readdir */
+    NULL,			/* select */
+    NULL,			/* ioctl */
+    NULL,			/* open */
+    NULL			/* release */
+#ifdef BLOAT_FS
+	,
+    NULL,			/* fsync */
+    NULL,			/* check_media_change */
+    NULL			/* revalidate */
+#endif
+};
+
+static struct file_operations zero_fops = {
+    memory_lseek,		/* lseek */
+    zero_read,			/* read */
+    null_write,			/* write */
+    NULL,			/* readdir */
+    NULL,			/* select */
+    NULL,			/* ioctl */
+    NULL,			/* open */
+    NULL			/* release */
+#ifdef BLOAT_FS
+	,
+    NULL,			/* fsync */
+    NULL,			/* check_media_change */
+    NULL			/* revalidate */
+#endif
+};
+
 static struct file_operations kmem_fops = {
     memory_lseek,		/* lseek */
     kmem_read,			/* read */
@@ -297,6 +297,8 @@ static struct file_operations kmem_fops = {
     NULL			/* revalidate */
 #endif
 };
+
+/*@+type@*/
 
 /*
  * memory device open multiplexor
@@ -372,6 +374,8 @@ int memory_open(struct inode *inode, register struct file *filp)
     return err;
 }
 
+/*@-type@*/
+
 static struct file_operations memory_fops = {
     NULL,			/* lseek */
     NULL,			/* read */
@@ -388,6 +392,8 @@ static struct file_operations memory_fops = {
     NULL			/* revalidate */
 #endif
 };
+
+/*@+type@*/
 
 void mem_dev_init(void)
 {

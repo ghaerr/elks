@@ -30,9 +30,9 @@ int verfy_area(void *p, size_t len)
 
 void memcpy_fromfs(void *daddr, void *saddr, size_t len)
 {
-    unsigned short int ds = current->t_regs.ds;
+    /*@unused@*/ unsigned short int ds = current->t_regs.ds;
 
-/*@ignore@*/
+#ifndef S_SPLINT_S
 #asm
 	mov	dx,es
 	mov	bx,ds
@@ -48,8 +48,7 @@ void memcpy_fromfs(void *daddr, void *saddr, size_t len)
 	mov	ds,bx
 	mov	es,dx
 #endasm
-/*@end@*/
-
+#endif
 }
 
 int verified_memcpy_fromfs(void *daddr, void *saddr, size_t len)
@@ -66,9 +65,9 @@ int verified_memcpy_fromfs(void *daddr, void *saddr, size_t len)
 
 void memcpy_tofs(void *daddr, void *saddr, size_t len)
 {
-    unsigned short int es = current->t_regs.ds;
+    /*@unused@*/ unsigned short int es = current->t_regs.ds;
 
-/*@ignore@*/
+#ifndef S_SPLINT_S
 #asm
 	mov	dx,es
 	mov	ax,[bp-6]	! source segment (local variable)
@@ -81,13 +80,12 @@ void memcpy_tofs(void *daddr, void *saddr, size_t len)
 	movsb
 	mov	es,dx
 #endasm
-/*@end@*/
-
+#endif
 }
 
 int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
 {
-    unsigned short int err = verify_area(VERIFY_WRITE, daddr, len);
+    int err = verify_area(VERIFY_WRITE, daddr, len);
 
     if (err)
 	return err;
@@ -99,7 +97,7 @@ int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
 
 /* fmemcpy(dseg, dest, sseg, src, size); */
 
-/*@ignore@*/
+#ifndef S_SPLINT_S
 #asm	
 
 	.globl	_fmemcpy
@@ -131,7 +129,7 @@ _fmemcpy:
 	pop	bp
 	ret
 #endasm	
-/*@end@*/
+#endif
 
 #if 0
 
@@ -151,13 +149,13 @@ int fstrlen(unsigned short int dseg, unsigned short int doff)
 
 int strlen_fromfs(void *saddr)
 {
-    int ds = current->t_regs.ds;
+    int ds = (int) current->t_regs.ds;
 
     /*  scasb uses es:di, not ds:si, so it is not necessary
      *  to save and restore ds
      */
 
-/*@ignore@*/
+#ifndef S_SPLINT_S
 #asm
 
 	mov	ax,[bp-6]	! source segment (local variable)
@@ -172,7 +170,7 @@ int strlen_fromfs(void *saddr)
 	dec	di
 	mov	[bp-6],di	! save in local var ds
 #endasm
-/*@end@*/
+#endif
 
     return ds;
 }
@@ -232,7 +230,7 @@ int fs_memcmp(void *s, void *d, size_t len)
     int c = 0;
 
     while (len-- && !c)
-	c = peekb(current->t_regs.ds,p1++) - *p2++;
+	c = peekb(current->t_regs.ds, (__u16) p1++) - *p2++;
 
     return c;
 }

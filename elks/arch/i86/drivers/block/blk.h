@@ -4,7 +4,7 @@
 #include <linuxmt/major.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kdev_t.h>
-/*#include <linuxmt/locks.h>*/
+#include <linuxmt/locks.h>
 #include <linuxmt/genhd.h>
 #include <linuxmt/config.h>
 
@@ -209,7 +209,10 @@ static void end_request(int uptodate)
 {
     register struct request *req;
     register struct buffer_head *bh;
+
+#ifdef BLOAT_FS
     struct task_struct *p;
+#endif
 
     req = CURRENT;
 

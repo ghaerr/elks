@@ -139,8 +139,9 @@ struct sigaction {
 
 };
 
-extern int send_sig(pid_t,struct task_struct *,int);
+extern int send_sig(sig_t,struct task_struct *,int);
 extern void arch_setup_sighandler_stack(register struct task_struct *,
 					__sighandler_t,unsigned);
+extern void ctrl_alt_del(void);
 
 #endif

@@ -9,6 +9,8 @@
 #include <linuxmt/debug.h>
 #include <linuxmt/termios.h>
 
+#include <arch/io.h>
+
 extern struct tty ttys[];
 
 struct serial_info {
@@ -37,9 +39,11 @@ struct serial_info {
  * afaik 8250 works fine up to 19200
  */
 
-#define DEFAULT_BAUD_RATE 9600
-#define DEFAULT_LCR UART_LCR_WLEN8
-#define DEFAULT_MCR UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2
+#define DEFAULT_BAUD_RATE	9600
+#define DEFAULT_LCR		UART_LCR_WLEN8
+
+#define DEFAULT_MCR		\
+	(unsigned char) (UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2)
 
 #define MAX_RX_BUFFER_SIZE 16
 
@@ -50,7 +54,7 @@ static struct serial_info ports[4] = {
     {0x2e8, 2, 0, DEFAULT_LCR, DEFAULT_MCR, NULL},
 };
 
-static int divisors[16] = {
+static unsigned int divisors[16] = {
     0,				/*  0 = B0      */
     2304,			/*  1 = B50     */
     1536,			/*  2 = B75     */
@@ -117,18 +121,14 @@ void update_port(register struct serial_info *port)
 
 static char irq_port[4] = { 3, 1, 0, 2 };
 
-int rs_open(tty);
-void rs_release(tty);
-int rs_write(tty);
-static int rs_ioctl(tty, cmd, arg);
+void rs_release(struct tty *tty)
+{
+    register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
 
-struct tty_ops rs_ops = {
-    rs_open,
-    rs_release,
-    rs_write,
-    NULL,
-    rs_ioctl
-};
+    debug("SERIAL: rs_release called\n");
+    port->flags &= ~SERF_INUSE;
+    outb_p(0, port->io + UART_IER);
+}
 
 static int set_serial_info(struct serial_info *info,
 			   struct serial_info *new_info)
@@ -201,15 +201,6 @@ int rs_open(struct tty *tty)
     inb_p(port->io + UART_MSR);
 
     return 0;
-}
-
-void rs_release(struct tty *tty)
-{
-    register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
-
-    debug("SERIAL: rs_release called\n");
-    port->flags &= ~SERF_INUSE;
-    outb_p(0, port->io + UART_IER);
 }
 
 int rs_write(struct tty *tty)
@@ -448,5 +439,13 @@ int wait_for_keypress(void)
 {
     /* Do something */
 }
+
+struct tty_ops rs_ops = {
+    rs_open,
+    rs_release,
+    rs_write,
+    NULL,
+    rs_ioctl
+};
 
 #endif

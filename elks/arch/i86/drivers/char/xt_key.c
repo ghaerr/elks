@@ -20,6 +20,7 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/config.h>
 #include <linuxmt/chqueue.h>
+#include <linuxmt/signal.h>
 #include <linuxmt/ntty.h>
 
 #ifdef CONFIG_CONSOLE_DIRECT
@@ -93,13 +94,15 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
     static int E0Prefix = 0;
     int code, mode, IsRelease, key, E0 = 0;
 
-    code = inb_p(KBD_IO);
-    mode = inb_p(KBD_CTL);
-    outb_p(mode | 0x80, KBD_CTL);	/* Necessary for the XT. */
-    outb_p(mode, KBD_CTL);
+    code = inb_p((void *) KBD_IO);
+    mode = inb_p((void *) KBD_CTL);
+
+    /* Necessary for the XT. */
+    outb_p((unsigned char) (mode | 0x80), (void *) KBD_CTL);
+    outb_p((unsigned char) mode, (void *) KBD_CTL);
 
     if (kraw) {
-	AddQueue(code);
+	AddQueue((unsigned char) code);
 	return;
     }
     if (code == 0xE0) {		/* Remember this has been received */
@@ -202,7 +205,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 #endif
 
 	AddQueue(ESC);
-	AddQueue(code - 0x3B + 'a');
+	AddQueue((unsigned char) (code - 0x3B + 'a'));
 	return;
     }
     if (E0)			/* Is extended scancode */
@@ -229,7 +232,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	}
     if (key == '\r')
 	key = '\n';
-    AddQueue(key);
+    AddQueue((unsigned char) key);
 }
 
 /*

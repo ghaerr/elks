@@ -166,7 +166,7 @@ size_t strnlen(char *s, size_t count)
 
     for (sc = s; count-- && *sc; ++sc)
 	/* Do nothing */ ;
-    return sc - s;
+    return (size_t) (sc - s);
 }
 
 #endif

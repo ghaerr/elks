@@ -22,6 +22,7 @@
 #include <linuxmt/termios.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
+#include <linuxmt/init.h>
 #include <linuxmt/major.h>
 
 /*
@@ -29,10 +30,10 @@
  */
 struct termios def_vals = { BRKINT,
     ONLCR,
-    B9600 | CS8,
-    ECHO | ICANON | ISIG,
+    (tcflag_t) (B9600 | CS8),
+    (tcflag_t) (ECHO | ICANON | ISIG),
     0,
-    {3, 28, 127, 21, 4, 0, 1, 0, 17, 19, 26, 0, 18, 15, 23, 22}
+    {3, 28, 127, 21, 4, 0, 1, 0, 17, 19, 26, 0, 18, 15, 23, 22, 0, 0, 0}
 };
 
 #define TAB_SPACES 8
@@ -46,13 +47,13 @@ extern struct tty_ops ttyp_ops;
 
 int tty_intcheck(register struct tty *ttyp, unsigned char key)
 {
-    int sig = 0;
+    sig_t sig = 0;
 
     if ((ttyp->termios.c_lflag & ISIG) && (ttyp->pgrp)) {
 	if (key == ttyp->termios.c_cc[VINTR])
-	    sig = SIGINT;
+	    sig = (sig_t) SIGINT;
 	if (key == ttyp->termios.c_cc[VSUSP])
-	    sig = SIGTSTP;
+	    sig = (sig_t) SIGTSTP;
 	if (sig) {
 	    kill_pg(ttyp->pgrp, sig, 1);
 	    return 1;
@@ -66,7 +67,7 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
 struct tty *determine_tty(dev_t dev)
 {
     register struct tty *ttyp;
-    int i, minor = MINOR(dev);
+    unsigned short int i, minor = MINOR(dev);
 
     for (i = 0; i < MAX_TTYS; i++) {
 	ttyp = &ttys[i];
@@ -81,10 +82,12 @@ int tty_open(register struct inode *inode, struct file *file)
     register struct tty *otty;
     int err;
 
-    if (otty = determine_tty(inode->i_rdev)) {
+    if ((otty = determine_tty(inode->i_rdev))) {
+
 #if 0
 	memcpy(&otty->termios, &def_vals, sizeof(struct termios));
 #endif
+
 	err = otty->ops->open(otty);
 	if (err)
 	    return err;
@@ -134,12 +137,11 @@ void tty_charout(register struct tty *tty, unsigned char ch)
 
     switch (ch) {
     case '\t':
-	if (!(tty->termios.c_lflag & ICANON)) {
+	if (!(tty->termios.c_lflag & ICANON))
 	    tty_charout_raw(tty, '\t');
-	    break;
-	}
-	for (j = 0; j < TAB_SPACES; j++)
-	    tty_charout(tty, ' ');
+	else
+	    for (j = 0; j < TAB_SPACES; j++)
+		tty_charout_raw(tty, ' ');
 	break;
     case '\n':
 	if (tty->termios.c_oflag & ONLCR)
@@ -164,10 +166,16 @@ void tty_echo(register struct tty *tty, unsigned char ch)
 int tty_write(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
-    int i = 0, blocking = (file->f_flags & O_NONBLOCK) ? 0 : 1;
+    int i = 0;
+#if 0
+    int blocking = (file->f_flags & O_NONBLOCK) ? 0 : 1;
+#endif
+    __u16 tmp;
 
-    while (i < len)
-	tty_charout(tty, peekb(current->t_regs.ds, data + i++), blocking);
+    while (i < len) {
+	tmp = peekb(current->t_regs.ds, (__u16) (data + i++));
+	tty_charout(tty, (unsigned char) tmp /* , blocking */ );
+    }
     tty->ops->write(tty);
     return i;
 }
@@ -175,10 +183,10 @@ int tty_write(struct inode *inode, struct file *file, char *data, int len)
 int tty_read(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
-    int i = 0, j = 0, k;
+    int i = 0, j = 0, k, lch;
     int rawmode = (tty->termios.c_lflag & ICANON) ? 0 : 1;
     int blocking = (file->f_flags & O_NONBLOCK) ? 0 : 1;
-    unsigned char ch, lch;
+    unsigned char ch;
 
     if (len == 0)
 	return 0;
@@ -198,12 +206,11 @@ int tty_read(struct inode *inode, struct file *file, char *data, int len)
 	if (!rawmode && (j == 04))	/* CTRL-D */
 	    break;
 	if (rawmode || (j != '\b')) {
-	    pokeb(current->t_regs.ds, (data + i++), ch);
+	    pokeb(current->t_regs.ds, (__u16) (data + i++), ch);
 	    tty_echo(tty, ch);
 	} else if (i > 0) {
-	    lch =
-		((peekb(current->t_regs.ds, (data + --i)) == '\t') ?
-		 TAB_SPACES : 1);
+	    lch = ((peekb(current->t_regs.ds, (__u16) (data + --i)) == '\t')
+			? TAB_SPACES : 1);
 	    for (k = 0; k < lch; k++)
 		tty_echo(tty, ch);
 	}
@@ -257,11 +264,14 @@ int tty_select(struct inode *inode,	/* how revolting, K&R style defs */
 	ret = !chq_full(&tty->outq);
 	if (!ret)
 	    select_wait(&tty->outq.wq);
-    case SEL_EX:		/* fall thru! */
+	    /*@fallthrough@*/
+    case SEL_EX:
 	break;
     }
     return ret;
 }
+
+/*@-type@*/
 
 static struct file_operations tty_fops = {
     pipe_lseek,			/* Same behavoir, return -ESPIPE */
@@ -271,22 +281,25 @@ static struct file_operations tty_fops = {
     tty_select,			/* Select - needs doing */
     tty_ioctl,			/* ioctl */
     tty_open,
-    tty_release,
+    tty_release
 #ifdef BLOAT_FS
+	,
     NULL,
     NULL,
     NULL
 #endif
 };
 
+/*@+type@*/
+
 void tty_init(void)
 {
     register struct tty *ttyp;
-    int i;
+    unsigned short int i;
 
     for (i = 0; i < NUM_TTYS; i++) {
 	ttyp = &ttys[i];
-	ttyp->minor = -1;
+	ttyp->minor -= (ttyp->minor + 1);	/* set unsigned to -1 */
 	memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
     }
 

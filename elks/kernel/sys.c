@@ -75,7 +75,7 @@ void ctrl_alt_del(void)
     if (C_A_D)
 	hard_reset_now();
     else
-	kill_process(1, SIGINT, 1);
+	kill_process(1, (sig_t) SIGINT, 1);
 }
 
 #ifdef CONFIG_SYS_VERSION

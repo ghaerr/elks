@@ -19,6 +19,8 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
 
+#include <arch/io.h>
+
 #ifdef CONFIG_CONSOLE_DIRECT
 
 #include "console.h"
@@ -103,8 +105,6 @@ static unsigned AttrArry[MAX_ATTR] = {
 #endif
 
 static void ScrollUp(register Console * C, int st, int en);
-static void PositionCursor(register Console * C);
-void WriteChar(register Console * C, char c);
 static void ClearRange(register Console * C, int x, int y, int xx, int yy);
 
 #ifdef CONFIG_DCON_VT52
@@ -130,10 +130,17 @@ extern void outb();
 
 extern void AddQueue(unsigned char Key);	/* From xt_key.c */
 
-void con_charout(char Ch)
+static void PositionCursor(register Console * C)
 {
-    WriteChar(Visible, Ch);
-    PositionCursor(Visible);
+    int Pos;
+
+    if (C != Visible)
+	return;
+    Pos = C->cx + Width * C->cy + (C->pageno * PageSize >> 1);
+    outb(14, CCBase);
+    outb((unsigned char) ((Pos >> 8) & 0xFF), CCBase + 1);
+    outb(15, CCBase);
+    outb((unsigned char) (Pos & 0xFF), CCBase + 1);
 }
 
 void WriteChar(register Console * C, char c)
@@ -151,7 +158,7 @@ void WriteChar(register Console * C, char c)
     /* ANSI param gathering and processing */
     if (C->state == ST_ANSI) {
 	if (C->parmptr < &C->params[MAXPARMS])
-	    *C->parmptr++ = c;
+	    *C->parmptr++ = (unsigned char) c;
 	if (isupper(c) || islower(c)) {
 	    *C->parmptr = 0;
 	    AnsiCmd(C, c);
@@ -200,7 +207,7 @@ void WriteChar(register Console * C, char c)
 	C->cx = 0;
 	break;
     default:
-	offset = (C->cx + C->cy * Width) << 1;
+	offset = ((unsigned int) (C->cx + C->cy * Width)) << 1;
 	pokeb(C->vseg, offset++, c);
 	pokeb(C->vseg, offset, C->attr);
 	++C->cx;
@@ -217,6 +224,12 @@ void WriteChar(register Console * C, char c)
     }
 }
 
+void con_charout(char Ch)
+{
+    WriteChar(Visible, Ch);
+    PositionCursor(Visible);
+}
+
 static void ScrollUp(register Console * C, int st, int en)
 {
     unsigned rdofs, wrofs;
@@ -224,7 +237,7 @@ static void ScrollUp(register Console * C, int st, int en)
 
     if (st < 1 || st >= en)
 	return;
-    rdofs = (Width << 1) * st;
+    rdofs = (unsigned int) ((Width << 1) * st);
     wrofs = rdofs - (Width << 1);
     cnt = Width * (en - st);
     far_memmove(C->vseg, rdofs, C->vseg, wrofs, cnt << 1);
@@ -241,7 +254,7 @@ static void ScrollDown(register Console * C, int st, int en)
 
     if (st > en || en > Height)
 	return;
-    rdofs = (Width << 1) * st;
+    rdofs = (unsigned int) ((Width << 1) * st);
     wrofs = rdofs + (Width << 1);
     cnt = Width * (en - st);
     far_memmove(C->vseg, rdofs, C->vseg, wrofs, cnt << 1);
@@ -250,22 +263,9 @@ static void ScrollDown(register Console * C, int st, int en)
 
 #endif
 
-static void PositionCursor(register Console * C)
-{
-    int Pos;
-
-    if (C != Visible)
-	return;
-    Pos = C->cx + Width * C->cy + (C->pageno * PageSize >> 1);
-    outb(14, CCBase);
-    outb((unsigned char) ((Pos >> 8) & 0xFF), CCBase + 1);
-    outb(15, CCBase);
-    outb((unsigned char) (Pos & 0xFF), CCBase + 1);
-}
-
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 {
-    unsigned st, en, ClrW, ofs;
+    int st, en, ClrW, ofs;
 
     st = (x + y * Width) << 1;
     en = (xx + yy * Width) << 1;
@@ -342,7 +342,7 @@ void Vt52CmdEx(register Console * C, char c)
 {
     switch (C->state) {
     case ST_ESCY:
-	C->tmp = c - ' ';
+	C->tmp = (unsigned char) (c - ' ');
 	C->state = ST_ESCY2;
 	return;
     case ST_ESCY2:
@@ -373,9 +373,9 @@ void Vt52CmdEx(register Console * C, char c)
 
 #ifdef CONFIG_DCON_ANSI
 
-static int parm1(char *buf)
+static int parm1(register char *buf)
 {
-    int n = atoi(buf);
+    register int n = atoi(buf);
 
     if (n == 0)
 	return 1;
@@ -386,9 +386,9 @@ static int parm2(register char *buf)
 {
     if (*buf != ';')
 	while (*buf && *buf != ';')
-	    ++buf;
+	    buf++;
     if (*buf)
-	++buf;
+	buf++;
     return parm1(buf);
 }
 
@@ -508,9 +508,11 @@ void Console_set_vc(int N)
     if (glock)
 	return;
     Visible = &Con[N];
+
 #if 0
     far_memmove(Visible->vseg, 0, VideoSeg, 0, (Width * Height) << 1);
 #endif
+
     offset = N * PageSize >> 1;
     outw((offset & 0xff00) | 0x0c, CCBase);
     outw(((offset & 0xff) << 8) | 0x0d, CCBase);
@@ -572,18 +574,21 @@ int Console_ioctl(struct tty *tty, int cmd, char *arg)
 
 int Console_write(register struct tty *tty)
 {
-    int cnt = 0, chi;
-    unsigned char ch;
     Console *C = &Con[tty->minor];
+    int cnt = 0;
+    unsigned char ch;
+
     while (tty->outq.len != 0) {
 	chq_getch(&tty->outq, &ch, 0);
+
 #if 0
 	if (ch == '\n')
 	    WriteChar(C, '\r');
 #endif
+
 	WriteChar(C, ch);
 	cnt++;
-    };
+    }
     PositionCursor(C);
     return cnt;
 }

@@ -36,6 +36,7 @@
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/config.h>
+#include <linuxmt/debug.h>
 
 #include <arch/segment.h>
 #include <arch/system.h>
@@ -71,6 +72,8 @@ static int bioshd_open(struct inode *, struct file *);
 
 static void bioshd_release(struct inode *, struct file *);
 
+/*@-type@*/
+
 static struct file_operations bioshd_fops = {
     NULL,			/* lseek - default */
     block_read,			/* read - general block-dev read */
@@ -79,13 +82,16 @@ static struct file_operations bioshd_fops = {
     NULL,			/* select */
     bioshd_ioctl,		/* ioctl */
     bioshd_open,		/* open */
-    bioshd_release,		/* release */
+    bioshd_release		/* release */
 #ifdef BLOAT_FS
+	,
     NULL,			/* fsync */
     NULL,			/* check_media_change */
-    NULL,			/* revalidate */
+    NULL			/* revalidate */
 #endif
 };
+
+/*@+type@*/
 
 static struct wait_queue dma_wait;
 
@@ -98,7 +104,9 @@ static struct wait_queue busy_wait;
 static int force_bioshd;
 #endif
 
+#if 0				/* Currently not used */
 static int revalidate_hddisk(int, int);
+#endif
 
 static struct drive_infot {
     int cylinders;
@@ -119,15 +127,14 @@ struct drive_infot fd_types[] = {
  * avoids a few senseless seeks in some cases
  */
 
-static int probe_order[5] = { 0, 2, 1, 3, 4 };
-
 static struct hd_struct hd[4 << 6];
 
-#if 0
-static char busy[4] = { 0, };
+#if 0						/* Currently not used */
+static int probe_order[5] = { 0, 2, 1, 3, 4 };
+static char busy[4] = { 0, 0, 0, 0 };
 #endif
 
-static int access_count[4] = { 0, };
+static int access_count[4] = { 0, 0, 0, 0 };
 
 static unsigned char hd_drive_map[4] = {
     0x80, 0x81,			/* hda, hdb */
@@ -158,9 +165,9 @@ static struct gendisk bioshd_gendisk = {
 
 #ifdef CONFIG_BLK_DEV_BHD
 
-int bioshd_gethdinfo(void)
+unsigned short int bioshd_gethdinfo(void)
 {
-    int drive, ndrives = 0;
+    unsigned short int drive, ndrives = 0;
 
     for (drive = 0; drive <= 1; drive++) {
 	register struct drive_infot *drivep = &drive_info[drive];
@@ -186,7 +193,7 @@ int bioshd_gethdinfo(void)
 
 #ifdef CONFIG_BLK_DEV_BFD
 
-int bioshd_getfdinfo(void)
+unsigned short int bioshd_getfdinfo(void)
 {
 
 #ifdef CONFIG_BLK_DEV_BFD_HARD
@@ -229,7 +236,7 @@ int bioshd_getfdinfo(void)
 
 #else
 
-    int drive, ndrives;
+    unsigned short int drive, ndrives;
 
 /* We get the # of drives from the BPB, which is PC-friendly
  */
@@ -296,8 +303,8 @@ int bioshd_getfdinfo(void)
 
 static void bioshd_release(struct inode *inode, struct file *filp)
 {
-    kdev_t dev = inode->i_rdev;
     int target;
+    kdev_t dev = inode->i_rdev;
 
     sync_dev(dev);
     target = DEVICE_NR(dev);
@@ -313,7 +320,7 @@ static void bioshd_release(struct inode *inode, struct file *filp)
  * as well try it -- Some XT controllers are happy with it.. [AC]
  */
 
-static void reset_bioshd(int minor)
+static void reset_bioshd(unsigned short int minor)
 {
     BD_IRQ = BIOSHD_INT;
     BD_AX = BIOSHD_RESET;
@@ -330,7 +337,7 @@ static void reset_bioshd(int minor)
     return;
 }
 
-int seek_sector(int drive, int track, int sector)
+int seek_sector(unsigned short int drive, char track, char sector)
 {
 
 /* i took this code from bioshd_open() where it replicates code used
@@ -344,11 +351,11 @@ int seek_sector(int drive, int track, int sector)
 	/* BIOS read sector */
 
 	BD_IRQ = BIOSHD_INT;
-	BD_AX = BIOSHD_READ | 1;	/* Read 1 sector */
-	BD_BX = 0;		/* Seg offset = 0 */
-	BD_ES = BUFSEG;		/* Segment to read to */
-	BD_CX = ((track - 40) << 8) | sector;
-	BD_DX = (0 << 8) | drive;
+	BD_AX = (unsigned short int) (BIOSHD_READ | 1); /* Read 1 sector  */
+	BD_BX = 0;					/* Seg offset = 0 */
+	BD_ES = BUFSEG;					/* Target segment */
+	BD_CX = (unsigned short int) (((track - 40) << 8) | sector);
+	BD_DX = drive;
 	BD_FL = 0;
 
 	set_irq();
@@ -366,7 +373,7 @@ int seek_sector(int drive, int track, int sector)
 static int bioshd_open(struct inode *inode, struct file *filp)
 {
     register struct drive_infot *drivep;
-    int target, fdtype;
+    int fdtype, target;
 
     target = DEVICE_NR(inode->i_rdev);	/* >> 6 */
     drivep = &drive_info[target];
@@ -378,7 +385,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	return (-ENXIO);
     if (target >= 4)
 	return (-ENXIO);
-    if (hd[MINOR(inode->i_rdev)].start_sect == -1)
+    if (((int) hd[MINOR(inode->i_rdev)].start_sect) == -1)
 	return (-ENXIO);
 
 #if 0
@@ -415,7 +422,6 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 #ifdef CONFIG_BLK_DEV_BFD
 
 	int count;
-	int i;
 
 	printk("fd: probing disc in /dev/fd%d\n", target % 2);
 
@@ -527,7 +533,7 @@ void init_bioshd(void)
 {
     register struct gendisk *ptr;
     register struct drive_infot *drivep;
-    int addr = 0x8c, count = 0, i;
+    int count = 0, i;
 
 #ifdef CONFIG_BLK_DEV_BHD
 
@@ -632,14 +638,14 @@ static int bioshd_ioctl(struct inode *inode,
 	return -ENODEV;
     switch (cmd) {
     case HDIO_GETGEO:
-	err = verify_area(VERIFY_WRITE, arg, sizeof(*loc));
+	err = verify_area(VERIFY_WRITE, (void *) arg, sizeof(*loc));
 	if (err)
 	    return err;
-	put_user(drivep->heads, (char *) &loc->heads);
-	put_user(drivep->sectors, (char *) &loc->sectors);
-	put_user(drivep->cylinders, (short *) &loc->cylinders);
-	put_user(hd[MINOR(inode->i_rdev)].start_sect,
-		 (sector_t *) & loc->start);
+	put_user((__u16) drivep->heads, (__u16) &loc->heads);
+	put_user((__u16) drivep->sectors, (__u16) &loc->sectors);
+	put_user((__u16) drivep->cylinders, (__u16) &loc->cylinders);
+	put_user((__u16) hd[MINOR(inode->i_rdev)].start_sect,
+		 (__u16) &loc->start);
 	return 0;
     }
     return -EINVAL;
@@ -648,30 +654,30 @@ static int bioshd_ioctl(struct inode *inode,
 static void do_bioshd_request(void)
 {
     register struct request *req;
+    char *buff;
     sector_t count, start, this_pass;
-    int drive, errs, minor, tmp;
+    int drive, errs, tmp;
+    short cylinder, head, sector;
+    unsigned short int minor;
+
 #if 0
     int part;
 #endif
-    short cylinder, head, sector;
-    char *buff;
 
     while (1) {
+
       next_block:
 
-/* make sure we have a valid request - Done by INIT_REQUEST */
-
+	/* make sure we have a valid request - Done by INIT_REQUEST */
 	if (!CURRENT || CURRENT->rq_dev < 0)
 	    return;
 
-/* now initialize it */
-
+	/* now initialize it */
 	INIT_REQUEST;
 
-/* make sure it's still valid */
-
+	/* make sure it's still valid */
 	req = CURRENT;
-	if (req == NULL || req->rq_sector == -1)
+	if (req == NULL || (int) req->rq_sector == -1)
 	    return;
 
 	if (bioshd_initialized != 1) {
@@ -702,7 +708,7 @@ static void do_bioshd_request(void)
 
 	start = req->rq_sector;
 	buff = req->rq_buffer;
-	if (hd[minor].start_sect == -1 || start >= hd[minor].nr_sects) {
+	if ((int) hd[minor].start_sect == -1 || start >= hd[minor].nr_sects) {
 	    printk("hd: bad partition start=%d sect=%d nr_sects=%d.\n",
 		   start, (int) hd[minor].start_sect,
 		   (int) hd[minor].nr_sects);
@@ -716,37 +722,34 @@ static void do_bioshd_request(void)
 	    register struct drive_infot *drivep = &drive_info[drive];
 	    sector = (start % drivep->sectors) + 1;
 	    tmp = start / drivep->sectors;
-	    head = tmp % drivep->heads;
-	    cylinder = tmp / drivep->heads;
+	    head = (short int) (tmp % drivep->heads);
+	    cylinder = (short int) (tmp / drivep->heads);
 	    this_pass = count;
-	    if (count <= (drivep->sectors - sector + 1))
+	    if (count <= (sector_t) (drivep->sectors - sector + 1))
 		this_pass = count;
 	    else
-		this_pass = drivep->sectors - sector + 1;
+		this_pass = (sector_t) (drivep->sectors - sector + 1);
 	    while (!dma_avail)
 		sleep_on(&dma_wait);
 	    dma_avail = 0;
 	    BD_IRQ = BIOSHD_INT;
 	    if (req->rq_cmd == WRITE) {
-		BD_AX = BIOSHD_WRITE | this_pass;
-		fmemcpy(BUFSEG, 0, req->rq_seg, buff, (this_pass * 512));
+		BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
+		fmemcpy(BUFSEG, 0, req->rq_seg, (__u16) buff,
+			(this_pass * 512));
 	    } else
-		BD_AX = BIOSHD_READ | this_pass;
+		BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
 	    BD_BX = 0;
 	    BD_ES = BUFSEG;
-	    BD_CX = (cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector;
+	    BD_CX = (unsigned short int)
+			((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
 	    BD_DX = (head << 8) | hd_drive_map[drive];
 	    BD_FL = 0;
-
-#if 0
-	    printk("cylinder=%d head=%d sector=%d drive=%d CMD=%d\n",
+	    debug5("cylinder=%d head=%d sector=%d drive=%d CMD=%d\n",
 		   cylinder, head, sector, drive, req->cmd);
-	    printk("blocks %d\n", this_pass);
-#endif
-
+	    debug1("blocks %d\n", this_pass);
 	    set_irq();
 	    call_bios();
-
 	    if (CARRY_SET) {
 		reset_bioshd(MINOR(req->rq_dev));
 		dma_avail = 1;
@@ -760,10 +763,10 @@ static void do_bioshd_request(void)
 		continue;	/* try again */
 	    }
 	    if (req->rq_cmd == READ)
-		fmemcpy(req->rq_seg, buff, BUFSEG, 0, (this_pass * 512));
+		fmemcpy(req->rq_seg, (__u16) buff, BUFSEG, 0,
+			(this_pass * 512));
 
-/* In case it's already been freed */
-
+	    /* In case it's already been freed */
 	    if (!dma_avail) {
 		dma_avail = 1;
 		wake_up(&dma_wait);
@@ -802,6 +805,9 @@ static void do_bioshd_request(void)
  */
 
 #if 0			/* Currently not used, removing for size. */
+#ifndef MAYBE_REINIT
+#define MAYBE_REINIT
+#endif
 
 static int revalidate_hddisk(int dev, int maxusage)
 {
@@ -810,7 +816,6 @@ static int revalidate_hddisk(int dev, int maxusage)
 
     target = DEVICE_NR(dev);
     gdev = &GENDISK_STRUCT;
-
     clr_irq();
     if (DEVICE_BUSY || USAGE > maxusage) {
 	set_irq();
@@ -818,11 +823,9 @@ static int revalidate_hddisk(int dev, int maxusage)
     }
     DEVICE_BUSY = 1;
     set_irq();
-
     max_p = gdev->max_p;
     start = target << gdev->minor_shift;
     major = MAJOR_NR << 8;
-
     for (i = max_p - 1; i >= 0; i--) {
 	sync_dev(major | start | i);
 	invalidate_inodes(major | start | i);
@@ -830,19 +833,13 @@ static int revalidate_hddisk(int dev, int maxusage)
 	gdev->part[start + i].start_sect = 0;
 	gdev->part[start + i].nr_sects = 0;
     };
-
-#ifdef MAYBE_REINIT
     MAYBE_REINIT;
-#endif
-
     gdev->part[start].nr_sects = CAPACITY;
     resetup_one_dev(gdev, target);
-
     DEVICE_BUSY = 0;
     wake_up(&busy_wait);
     return 0;
 }
-
 #endif
 
 static void bioshd_geninit(void)

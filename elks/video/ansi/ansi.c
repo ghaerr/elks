@@ -19,8 +19,6 @@
 
 #include <stdio.h>
 
-#include <string.h>
-
 typedef unsigned char BYTE;
 typedef unsigned short int WORD;
 
@@ -40,6 +38,19 @@ char Command[BufLen+1], *NextCmd = Command;
 char XmitOK = TRUE;
 
 /************************************************************************
+ * Function prototypes
+ ************************************************************************/
+
+extern char *index(char *,int);
+
+void addcmd(char);
+void ANSI(char);
+void chout(char);
+void DEC(char);
+char getparm(char **);
+void lineout(char *,WORD);
+
+/************************************************************************
  * Functions
  ************************************************************************/
 
@@ -57,7 +68,7 @@ void addcmd(char ch)
 void ANSI(char cmd)
 {
     char *Ptr = Command + 2;
-    WORD A, B;
+    char A, B;
 
     *NextCmd = '\0';
     NextCmd = Command;
@@ -139,9 +150,9 @@ void DEC(char ch)
     }
 }
 
-WORD getparm(char **S)
+char getparm(char **S)
 {
-    WORD N = 0;
+    char N = 0;
 
     while (index("0123456789",**S)) {
 	N %= 1000;

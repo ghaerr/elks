@@ -4,13 +4,14 @@
  *	Copyright 1999 Greg Haerr <greg@censoft.com>
  *
  * This file rings the PC speaker at a specified frequency.
- */
-
-/*
- * Turn PC speaker on at passed frequency.
+ *
+ ******************************************************************
+ *
+ * Turn PC speaker on at specified frequency.
  */
 static void sound(unsigned freq)
 {
+#ifndef S_SPLINT_S
 #asm
 	push	bp
 	mov	bp,sp
@@ -39,6 +40,7 @@ none:
 	pop	bp
 
 #endasm
+#endif
 }
 
 /*
@@ -46,11 +48,13 @@ none:
  */
 static void nosound(void)
 {
+#ifndef S_SPLINT_S
 #asm
 	in	al, $61
 	and	al, #$fc
 	out	$61, al
 #endasm
+#endif
 }
 
 /*

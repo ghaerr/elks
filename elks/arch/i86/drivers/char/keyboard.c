@@ -43,24 +43,19 @@ int KeyboardInit(void)
  *  something going. Simon Wood 12th June 1999
  */
 
-void keyboard_irq(int irq, struct pt_regs *regs)
+void keyboard_irq(int irq, struct pt_regs *regs, void *data)
 {
-    int modifiers;
-    int key;
-    static int okey = 0;
-
-    modifiers = psiongetchar();
-    key = (modifiers & 0x00FF);
+    int modifiers = psiongetchar();
+    unsigned char key = (modifiers & 0x00FF);
+    static int okay = 0;
 
     /* FIXME: Need to add some form of Key repeat.. */
 
     if (modifiers & PSION) {
 	if (key == 0x31 && power_state == 1)	/* Psion + 1 */
 	    power_off();
-
 	if (key == 0x20 && power_state == 0)	/* Psion + Space */
 	    power_on();
-
 	return;
     }
 
@@ -68,29 +63,25 @@ void keyboard_irq(int irq, struct pt_regs *regs)
 	return;			/* prevent key presses when off */
 
     if (modifiers & MENU) {
-	if (key < 0x40 && key > 0x30) {	/* MENU + 1..9 */
+	if (key < 0x40 && key > 0x30) { 	/* MENU + 1..9 */
 
 #ifdef CONFIG_VIRTUAL_CONSOLE
-
 	    Console_set_vc(key - 0x31);
-
 #else
-
 	    AddQueue(ESC);
 	    AddQueue(key - 0x31 + 'a');
-
 #endif
 
 	    return;
 	}
     }
-    if (!okey || key) {
+    if (!okay || key) {
 	if (key)
-	    okey = key;
+	    okay = key;
 	return;
     }
-    key = okey;
-    okey = 0;
+    key = okay;
+    okay = 0;
 
     switch (key) {
     case 0x18:			/* Arrow up */

@@ -20,7 +20,6 @@
 #include <linuxmt/tcpdev.h>
 #include "af_inet.h"
 
-
 #ifdef CONFIG_INET
 
 extern char tdin_buf[];
@@ -32,7 +31,7 @@ int inet_process_tcpdev(char *buf, int len)
     register struct tdb_return_data *r;
     register struct socket *sock;
 
-    r = buf;
+    r = (struct tdb_return_data *) buf;
 
     sock = (struct socket *) r->sock;
 
@@ -83,15 +82,12 @@ static int inet_release(struct socket *sock, struct socket *peer)
     return 0;
 }
 
-static int inet_bind(register struct socket *sock,
-		     struct sockaddr *addr, int sockaddr_len)
+static int inet_bind(register struct socket *sock, struct sockaddr *addr,
+		     size_t sockaddr_len)
 {
-    register struct inet_proto_data *upd = sock->data;
-    struct tdb_bind cmd;
-    unsigned char *tdret;
-    int len;
-    int ret;
     struct tdb_return_data *ret_data;
+    struct tdb_bind cmd;
+    int ret;
 
     debug1("inet_bind(sock: 0x%x)\n", sock);
     if (sockaddr_len <= 0 || sockaddr_len > sizeof(struct sockaddr_in))
@@ -120,7 +116,7 @@ static int inet_bind(register struct socket *sock,
 
 static int inet_connect(register struct socket *sock,
 			struct sockaddr *uservaddr,
-			int sockaddr_len, int flags)
+			size_t sockaddr_len, int flags)
 {
     struct sockaddr_in *sockin;
     register struct tdb_return_data *r;
@@ -242,8 +238,8 @@ void inet_getname(void)
     debug("inet_getname\n");
 }
 
-static int inet_read(register struct socket *sock,
-		     char *ubuf, int size, int nonblock)
+static int inet_read(register struct socket *sock, char *ubuf, int size,
+		     int nonblock)
 {
     register struct tdb_return_data *r;
     struct tdb_read cmd;
@@ -261,9 +257,8 @@ static int inet_read(register struct socket *sock,
     tcpdev_inetwrite(&cmd, sizeof(struct tdb_read));
 
     /* Sleep until tcpdev has news and we have a lock on the buffer */
-    while (bufin_sem == 0) {
+    while (bufin_sem == 0)
 	interruptible_sleep_on(sock->wait);
-    }
 
     down(&sock->sem);
 
@@ -282,10 +277,9 @@ static int inet_read(register struct socket *sock,
     return ret;
 }
 
-static int inet_write(register struct socket *sock,
-		      char *ubuf, int size, int nonblock)
+static int inet_write(register struct socket *sock, char *ubuf, int size,
+		      int nonblock)
 {
-    struct inet_proto_data *upd;
     register struct tdb_return_data *r;
     struct tdb_write cmd;
     int ret, todo;
@@ -326,9 +320,8 @@ static int inet_write(register struct socket *sock,
 	    if (ret == -ERESTARTSYS) {
 		schedule();
 		todo += cmd.size;
-	    } else {
+	    } else
 		return ret;
-	    }
 	}
     }
 
@@ -339,17 +332,14 @@ static int inet_write(register struct socket *sock,
 static int inet_select(register struct socket *sock,
 		       int sel_type, select_table * wait)
 {
-    int ret;
-
     debug("inet_select\n");
     if (sel_type == SEL_IN) {
-	if (sock->avail_data) {
+	if (sock->avail_data || sock->state != SS_CONNECTED)
 	    return 1;
-	} else if (sock->state != SS_CONNECTED) {
-	    return 1;
+	else {
+	    select_wait(sock->wait);
+	    return 0;
 	}
-	select_wait(sock->wait);
-	return 0;
     } else if (sel_type == SEL_OUT)
 	return 1;
 }
@@ -407,6 +397,8 @@ static int inet_recv(struct socket *sock, void *buff, int len, int nonblock,
     return inet_read(sock, (char *) buff, len, nonblock);
 }
 
+/*@-type@*/
+
 static struct proto_ops inet_proto_ops = {
     AF_INET,
     inet_create,
@@ -415,32 +407,36 @@ static struct proto_ops inet_proto_ops = {
     inet_bind,
     inet_connect,
     inet_socketpair,
+
 #ifdef CONFIG_SOCK_CLIENTONLY
     NULL,
 #else
     inet_accept,
 #endif
+
     inet_getname,
     inet_read,
     inet_write,
     inet_select,
     inet_ioctl,
+
 #ifdef CONFIG_SOCK_CLIENTONLY
     NULL,
 #else
     inet_listen,
 #endif
+
     inet_send,
     inet_recv,
     inet_sendto,
     inet_recvfrom,
-
     inet_shutdown,
-
     inet_setsockopt,
     inet_getsockopt,
     inet_fcntl,
 };
+
+/*@+type@*/
 
 void inet_proto_init(struct net_proto *pro)
 {

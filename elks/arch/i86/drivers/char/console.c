@@ -12,6 +12,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/kernel.h>
 #include <linuxmt/major.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/chqueue.h>
@@ -223,7 +224,7 @@ int Console_write(register struct tty *tty)
 
     while (tty->outq.len != 0) {
 	chq_getch(&tty->outq, &ch, 0);
-	WriteChar(C, ch);
+	WriteChar(C, (char) ch);
 	cnt++;
     }
 
@@ -237,7 +238,7 @@ void Console_release(struct inode *inode, struct file *file)
 
 int Console_open(struct inode *inode, struct file *file)
 {
-    int minor = MINOR(inode->i_rdev);
+    unsigned short int minor = MINOR(inode->i_rdev);
 
 #ifdef CONFIG_VIRTUAL_CONSOLE
 
@@ -251,6 +252,8 @@ int Console_open(struct inode *inode, struct file *file)
     return 0;
 }
 
+/*@-type@*/
+
 struct tty_ops dircon_ops = {
     Console_open,
     Console_release,		/* Do not remove this, or it crashes */
@@ -258,6 +261,8 @@ struct tty_ops dircon_ops = {
     NULL,
     NULL,
 };
+
+/*@+type@*/
 
 void power_off(void)
 {

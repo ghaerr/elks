@@ -45,8 +45,8 @@ struct tty_ops {
 
 struct tty {
     struct tty_ops *ops;
-    int minor;
-    int flags;
+    unsigned short int minor;
+    unsigned int flags;
     unsigned char inq_buf[INQ_SIZE], outq_buf[OUTQ_SIZE];
 
 #if 0
@@ -69,6 +69,9 @@ extern loff_t pipe_lseek(struct inode *,struct file *,off_t,int);
 
 extern struct termios def_vals;
 		/* global use of def_vals */
+
+struct tty *determine_tty(dev_t);
+		/* Function to determine relevant tty */
 
 /* tty.flags */
 #define TTY_STOPPED 	1

@@ -233,7 +233,6 @@ static void add_request(struct blk_dev_struct *dev,
 			register struct request *req)
 {
     register struct request *tmp;
-    short disk_index;
 
     clr_irq();
     mark_buffer_clean(req->rq_bh);
@@ -250,21 +249,23 @@ static void add_request(struct blk_dev_struct *dev,
     }
     req->rq_next = tmp->rq_next;
     tmp->rq_next = req;
-
     set_irq();
 }
 
-static void make_request(int major, int rw, register struct buffer_head *bh)
+static void make_request(unsigned short int major, int rw,
+			 register struct buffer_head *bh)
 {
     register struct request *req;
     sector_t sector, count;
     int max_req;
+
 #ifdef READ_AHEAD
     int rw_ahead;
 #endif
 
-    count = BLOCK_SIZE >> 9;
+    count = (sector_t) (BLOCK_SIZE >> 9);
     sector = bh->b_blocknr * count;
+
 #ifdef BDEV_SIZE_CHK
     if (blk_size[major])
 	if (blk_size[major][MINOR(bh->b_dev)] < (sector + count) >> 1) {
@@ -272,6 +273,7 @@ static void make_request(int major, int rw, register struct buffer_head *bh)
 	    return;
 	}
 #endif
+
     /* Uhhuh.. Nasty dead-lock possible here.. */
     if (buffer_locked(bh))
 	return;
@@ -282,12 +284,15 @@ static void make_request(int major, int rw, register struct buffer_head *bh)
 #ifdef READ_AHEAD
     rw_ahead = 0;		/* normal case; gets changed below for READA/WRITEA */
 #endif
+
     switch (rw) {
+
 #ifdef READ_AHEAD
     case READA:
 	rw_ahead = 1;
 	rw = READ;		/* drop into READ */
 #endif
+
     case READ:
 	if (buffer_uptodate(bh)) {
 	    unlock_buffer(bh);	/* Hmmph! Already have it */
@@ -295,11 +300,13 @@ static void make_request(int major, int rw, register struct buffer_head *bh)
 	}
 	max_req = NR_REQUEST;	/* reads take precedence */
 	break;
+
 #ifdef READ_AHEAD
     case WRITEA:
 	rw_ahead = 1;
 	rw = WRITE;		/* drop into WRITE */
 #endif
+
     case WRITE:
 	if (buffer_clean(bh)) {
 	    unlock_buffer(bh);	/* Hmmph! Nothing to write */
@@ -312,6 +319,7 @@ static void make_request(int major, int rw, register struct buffer_head *bh)
 	 */
 	max_req = (NR_REQUEST * 2) / 3;
 	break;
+
     default:
 	debug("make_request: bad block dev cmd, must be R/W/RA/WA\n");
 	unlock_buffer(bh);
@@ -326,6 +334,7 @@ static void make_request(int major, int rw, register struct buffer_head *bh)
      * otherwise try again blocking..
      */
     if (!req) {
+
 #ifdef READ_AHEAD
 	if (rw_ahead) {
 	    unlock_buffer(bh);
@@ -343,26 +352,29 @@ static void make_request(int major, int rw, register struct buffer_head *bh)
 #else
 	panic("Can't get request.");
 #endif
+
     }
 
     /* fill up the request-info, and add it to the queue */
-    req->rq_cmd = rw;
+    req->rq_cmd = (__u8) rw;
     req->rq_sector = sector;
-#ifdef BLOAT_FS
-    req->rq_nr_sectors = count;
-#endif
     req->rq_buffer = bh->b_data;
     req->rq_seg = bh->b_seg;
+
 #if 0
     req->rq_sem = NULL;
 #endif
+
     req->rq_bh = bh;
+
 #ifdef BLOAT_FS
+    req->rq_nr_sectors = count;
     req->rq_current_nr_sectors = count;
     req->rq_errors = 0;
 #endif
+
     req->rq_next = NULL;
-    add_request(major + blk_dev, req);
+    add_request(&blk_dev[major], req);
 }
 
 
@@ -371,29 +383,29 @@ static void make_request(int major, int rw, register struct buffer_head *bh)
  * to the same device.
  */
 #ifdef MULTI_BH
+
 void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
 {
-    struct request plug;
     struct blk_dev_struct *dev;
-    unsigned int major;
+    struct request plug;
+    unsigned short int major;
+    int i;
+
 #ifdef BLOAT_FS
     int correct_size;
 #endif
-    int i;
 
-    /* Make sure that the first block contains something reasonable */
+    /* Make sure the first block contains something reasonable */
     while (!*bh) {
 	bh++;
 	if (--nr <= 0)
 	    return;
-    };
-
+    }
     dev = NULL;
     if ((major = MAJOR(bh[0]->b_dev)) < MAX_BLKDEV)
 	dev = blk_dev + major;
     if (!dev || !dev->request_fn) {
-	printk
-	    ("ll_rw_block: Trying to read nonexistent block-device %s (%lu)\n",
+	printk("ll_rw_block: Trying to read nonexistent block-device %s (%lu)\n",
 	     kdevname(bh[0]->b_dev), bh[0]->b_blocknr);
 	goto sorry;
     }
@@ -404,11 +416,9 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
      * queue, and then we let it rip.  */
     if (nr > 1)
 	plug_device(dev, &plug);
-    for (i = 0; i < nr; i++) {
-	if (bh[i]) {
+    for (i = 0; i < nr; i++)
+	if (bh[i])
 	    make_request(major, rw, bh[i]);
-	}
-    }
     unplug_device(dev);
     return;
 
@@ -420,6 +430,7 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
 	}
     return;
 }
+
 #endif
 
 /* This function can be used to request a single buffer from a block device.
@@ -427,9 +438,9 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
 
 void ll_rw_blk(int rw, register struct buffer_head *bh)
 {
-    struct request plug;
     struct blk_dev_struct *dev;
-    unsigned int major;
+    unsigned short int major;
+
 #ifdef BLOAT_FS
     int correct_size;
 #endif
@@ -471,25 +482,32 @@ int blk_dev_init(void)
 	req->rq_status = RQ_INACTIVE;
 	req->rq_next = NULL;
     }
+
 #ifdef CONFIG_BLK_DEV_RAM
     rd_init();
 #endif
+
 #ifdef CONFIG_BLK_DEV_HD
     directhd_init();
 #endif
+
 #ifdef CONFIG_BLK_DEV_XD
     xd_init();
 #endif
+
 #ifdef CONFIG_BLK_DEV_FD
     floppy_init();
 #else
-    outb_p(0xc, 0x3f2);
+    outb_p(0xc, (void *) 0x3f2);
 #endif
+
 #ifdef CONFIG_BLK_DEV_BIOS
     init_bioshd();
 #endif
+
 #ifdef CONFIG_BLK_DEV_SSD
     ssd_init();
 #endif
+
     return 0;
 }

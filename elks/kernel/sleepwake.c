@@ -49,7 +49,7 @@ static void __sleep_on(register struct wait_queue *p, __s16 state)
 
 void sleep_on(struct wait_queue *p)
 {
-    marker = peekw(get_ds(), get_bp() + 2);
+    marker = (int) peekw(get_ds(), get_bp() + 2);
     __sleep_on(p, TASK_UNINTERRUPTIBLE);
 }
 

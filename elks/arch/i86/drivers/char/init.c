@@ -1,5 +1,6 @@
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
+#include <linuxmt/init.h>
 
 int chr_dev_init(void)
 {

@@ -14,19 +14,22 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
 #include <linuxmt/major.h>
+#include <linuxmt/debug.h>
 
 int pty_open(struct inode *inode, struct file *file)
 {
     struct tty *otty;
 
-    if (otty = determine_tty(inode->i_rdev)) {
-	printk("pty_open() %x", otty);
-	if (otty->flags & TTY_OPEN)
+    debug1("PTY: open() %x ", otty);
+    if ((otty = determine_tty(inode->i_rdev))) {
+	if (otty->flags & TTY_OPEN) {
+	    debug("failed: BUSY\n");
 	    return -EBUSY;
-	printk(" succeeded\n");
+	}
+	debug("succeeded\n");
 	return 0;
     } else {
-	printk(" failed\n");
+	debug("failed: NODEV\n");
 	return -ENODEV;
     }
 }
@@ -35,7 +38,7 @@ int pty_release(struct inode *inode, struct file *file)
 {
     struct tty *otty;
 
-    if (otty = determine_tty(inode->i_rdev))
+    if ((otty = determine_tty(inode->i_rdev)))
 	kill_pg(otty->pgrp, SIGHUP, 1);
     return 0;
 }
@@ -79,21 +82,24 @@ int pty_read(struct inode *inode, struct file *file, char *data, int len)
     int i = 0, j, l;
     unsigned char ch;
 
-    printk("pty_read()");
-    if (tty == NULL)
+    debug("PTY: read ");
+    if (tty == NULL) {
+	debug("failed: NODEV\n");
 	return -ENODEV;
+    }
     l = (file->f_flags & O_NONBLOCK) ? 0 : 1;
     while (i < len) {
 	j = chq_getch(&tty->outq, &ch, l);
 	if (j == -1)
-	    if (l)
+	    if (l) {
+		debug("failed: INTR\n");
 		return -EINTR;
-	    else
+	    } else
 		break;
-	printk(" rc[%u,%u]", i, len);
-	pokeb(current->t_regs.ds, (data + i++), ch);
+	debug2(" rc[%u,%u]", i, len);
+	pokeb(current->t_regs.ds, (__u16) (data + i++), ch);
     }
-    printk("{%u}\n", i);
+    debug1("{%u}\n", i);
     return i;
 }
 
@@ -101,25 +107,36 @@ int pty_write(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
     int i = 0, l;
-    char ch;
+    unsigned char ch;
 
-    printk("pty_write()");
-    if (tty == NULL)
+    debug("PTY: write ");
+    if (tty == NULL) {
+	debug("failed: NODEV\n");
 	return -ENODEV;
+    }
     l = (file->f_flags & O_NONBLOCK) ? 0 : 1;
     while (i < len) {
-	ch = peekb(current->t_regs.ds, data + i);
+	ch = (unsigned char) peekb(current->t_regs.ds, (__u16) (data + i));
 	if (chq_addch(&tty->inq, ch, l) == -1)
-	    if (l)
+	    if (l) {
+		debug("failed: INTR\n");
 		return -EINTR;
-	    else
+	    } else
 		break;
 	i++;
-	printk(" wc");
+	debug(" wc");
     }
-    printk("\n");
+    debug("\n");
     return i;
 }
+
+int ttyp_write(struct tty *tty)
+{
+    if (tty->outq.len == tty->outq.size)
+	interruptible_sleep_on(&tty->outq.wq);
+}
+
+/*@-type@*/
 
 static struct file_operations pty_fops = {
     pipe_lseek,			/* Same behavoir, return -ESPIPE */
@@ -129,19 +146,14 @@ static struct file_operations pty_fops = {
     pty_select,			/* Select - needs doing */
     pty_ioctl,			/* ioctl */
     pty_open,
-    pty_release,
+    pty_release
 #ifdef BLOAT_FS
+	,
     NULL,
     NULL,
     NULL
 #endif
 };
-
-int ttyp_write(struct tty *tty)
-{
-    if (tty->outq.len == tty->outq.size)
-	interruptible_sleep_on(&tty->outq.wq);
-}
 
 struct tty_ops ttyp_ops = {
     ttynull_openrelease,	/* None of these really need to do anything */
@@ -150,6 +162,8 @@ struct tty_ops ttyp_ops = {
     NULL,
     NULL,
 };
+
+/*@+type@*/
 
 void pty_init(void)
 {

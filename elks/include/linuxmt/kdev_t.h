@@ -6,10 +6,10 @@
 
 #ifdef __KERNEL__
 
-#define MAJOR(dev)	((dev) >> MINORBITS)
-#define MINOR(dev)	((dev) & MINORMASK)
+#define MAJOR(dev)	((unsigned short int) ((dev) >> MINORBITS))
+#define MINOR(dev)	((unsigned short int) ((dev) & MINORMASK))
 #define HASHDEV(dev)	(dev)
-#define MKDEV(ma,mi)	(((ma) << MINORBITS) | (mi))
+#define MKDEV(ma,mi)	((kdev_t) (((ma) << MINORBITS) | (mi)))
 #define NODEV		MKDEV(0,0)
 
 #ifdef __BCC__
@@ -43,8 +43,8 @@ extern char *kdevname(kdev_t);	  /* note: returns pointer to static data! */
  * from the kernel sources. These must be the externally visible ones.
  */
 
-#define MAJOR(dev)		((dev) >> MINORBITS)
-#define MINOR(dev)		((dev) & MINORMASK)
+#define MAJOR(dev)		(((dev) >> MINORBITS))
+#define MINOR(dev)		(((dev) & MINORMASK))
 #define MKDEV(major,minor)	((major) << MINORBITS | (minor))
 
 #endif

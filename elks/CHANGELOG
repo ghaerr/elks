@@ -33,6 +33,27 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+===============================================================================
+
+Mon Jun  3 23:03:46 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* This is ELKS 0.1.1-pre2
+
+	* Completed ANSI'fication of many more source files.
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop. However, one of the ANSI'fication changes
+	  obviously broke ktcp as that command now panics the kernel.
+
+		*** NOTE - KTCP DOES NOT WORK WITH THIS PATCH ***
+
+Mon Jun  3 13:07:28 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Verified that all C source files including #asm...#endasm
+	  sections have those sections excluded for SPLINT purposes
+	  with #ifndef S_SPLINT_S...#endif conditionals.
+	* Added new command `make fixme` to locate all FIXME comments
+	  in the ELKS source tree.
+
 Mon Jun  3 10:59:54 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Killed dependencies accidentally committed in previous tweak.
@@ -81,6 +102,8 @@ Thu May 30 10:57:30 BST 2002	Riley Williams <Riley@Williams.Name>
 	* Completed ANSI'fication of elks/fs subtree.
 	* Verified that current codebase both compiles and boots on my
 	  286 based laptop.
+
+===============================================================================
 
 Thu May 30 07:22:17 BST 2002	Riley Williams <Riley@Williams.Name>
 

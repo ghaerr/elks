@@ -376,7 +376,7 @@ seg_t mm_dup(seg_t base)
     m->flags = HOLE_USED;
     m->refcount = 1;
     i = (o->extent << 4);
-    fmemcpy(m->page_base, 0, o->page_base, 0, i);
+    fmemcpy(m->page_base, 0, o->page_base, 0, (__u16) i);
     return m->page_base;
 }
 
@@ -388,7 +388,8 @@ seg_t mm_dup(seg_t base)
 unsigned int mm_get_usage(int type, int used)
 {
     register struct malloc_hole *m;
-    int ret = 0, flag;
+    int flag;
+    unsigned int ret = 0;
 
 #ifdef CONFIG_SWAP
 
@@ -403,7 +404,7 @@ unsigned int mm_get_usage(int type, int used)
     flag = used ? HOLE_USED : HOLE_FREE;
 
     while (m != NULL) {
-	if (m->flags == flag)
+	if ((int) m->flags == flag)
 	    ret += m->extent;
 	m = m->next;
     }
@@ -444,9 +445,6 @@ int sys_brk(__pptr len)
  *	Initialise the memory manager.
  */
 
-static struct buffer_head swap_buf;
-static dev_t swap_dev;
-
 void mm_init(seg_t start, seg_t end)
 {
     register struct malloc_hole *holep = &holes[0];
@@ -478,6 +476,9 @@ void mm_init(seg_t start, seg_t end)
 /*
  *	Swapper task
  */
+
+static struct buffer_head swap_buf;
+static dev_t swap_dev;
 
 /*
  *	Push a segment to disk if possible

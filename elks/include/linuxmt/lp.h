@@ -28,7 +28,8 @@
 
 /* control port defines */
 
-#define LP_CONTROL(val, p) outb_p(val, p->io + CONTROL);
+#define LP_CONTROL(val, p)	\
+	outb_p((unsigned char) (val), (void *) ((p)->io + CONTROL));
 
 #define LP_SELECT	0x08
 #define LP_INIT		0x04

@@ -162,10 +162,11 @@ pid_t do_fork(int virtual)
 	 * and will be
 	 *            ret cs f
 	 */
-	unsigned ip, cs, fl;
-	ip = get_ustack(currentp, 6);
-	cs = get_ustack(currentp, 2);
-	fl = get_ustack(currentp, 4);
+	int ip, cs, fl;
+
+	ip = (int) get_ustack(currentp, 6);
+	cs = (int) get_ustack(currentp, 2);
+	fl = (int) get_ustack(currentp, 4);
 	currentp->t_regs.sp += 2;
 	sleep_on(&currentp->child_wait);
 	put_ustack(currentp, 0, ip);

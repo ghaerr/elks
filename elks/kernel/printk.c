@@ -104,7 +104,7 @@ static void numout(unsigned long *ptr, int len, int base, int useSign)
 
 void printk(register char *fmt,int a1)
 {
-    register unsigned char *p = (char *) &a1;
+    register char *p = (unsigned char *) &a1;
     char c, tmp;
 
     while ((c = *fmt++)) {
@@ -145,7 +145,7 @@ void printk(register char *fmt,int a1)
 		{
 		    char *cp = *((char **) p);
 		    p += sizeof(char *);
-		    while ((tmp = get_fs_byte(cp))) {
+		    while ((tmp = (char) get_fs_byte(cp))) {
 			con_charout(tmp);
 			cp++;
 		    }
@@ -165,21 +165,21 @@ void printk(register char *fmt,int a1)
     }
 }
 
-void panic(char *error, int a1, a2, a3, a4 /* VARARGS... */ )
+void panic(char *error, int a1 /* VARARGS... */ )
 {
     register int *bp = (int *) &error - 2;
     int i, j;
 
     printk("\npanic: ");
-    printk(error, a1, a2, a3, a4);
+    printk(error, a1);
 
     printk("\napparant call stack:\n");
     for (i = 0; i < 8; i++) {
-	printk("(%u) ret addr = %p params = ", i, bp[1]);
+	printk("(%u) ", i);
+	printk("ret addr = %p params = ", bp[1]);
 	bp = (int *) bp[0];
-	for (j = 2; j < 8; j++) {
+	for (j = 2; j < 8; j++)
 	    printk(" %p", bp[j]);
-	}
 	printk("\n");
     }
     while (1);
