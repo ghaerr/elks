@@ -79,8 +79,10 @@ INC_DIR=$(HOMEDIR)/elks/include
 #
 # Determine the ELKS kernel version.
 
-E_V=$(shell grep -v '^\#' $(ELKS_DIR)/Makefile-rules \
-	| fgrep = | head -4 | tr '\#' = | cut -d = -f 2)
+E_V=$(shell if [ -f $(ELKS_DIR)/Makefile-rules ]; then \
+		grep -v '^\#' $(ELKS_DIR)/Makefile-rules \
+		    | fgrep = | head -4 | tr '\#' = | cut -d = -f 2 ;\
+	    else echo Version not known ; fi)
 
 ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre$$//')
 
