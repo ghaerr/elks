@@ -269,18 +269,11 @@ register struct buffer_head * bh;
 #endif
 
 
-#ifdef BLOAT_FS
-	count = bh->b_size >> 9;
-#else
 	count = BLOCK_SIZE >> 9;
-#endif
 	sector = bh->b_blocknr * count;
 #ifdef BDEV_SIZE_CHK
 	if (blk_size[major])
 		if (blk_size[major][MINOR(bh->b_dev)] < (sector + count)>>1) {
-#ifdef BLOAT_FS
-			bh->b_state = 0;
-#endif
 			printk("attempt to access beyond end of device\n");
 			return;
 		}
@@ -409,21 +402,6 @@ register struct buffer_head * bh[];
 		goto sorry;
 	}
 
-#ifdef BLOAT_FS
-	/* Determine correct block size for this device.  */
-	correct_size = BLOCK_SIZE;
-
-	/* Verify requested block sizes.  */
-	for (i = 0; i < nr; i++) {
-		if (bh[i] && bh[i]->b_size != correct_size) {
-			printk("ll_rw_block: device %s: only %d-char blocks implemented (%d)\n",
-			       kdevname(bh[0]->b_dev),
-			       correct_size, bh[i]->b_size);
-			goto sorry;
-		}
-	}
-#endif
-
 	/* If there are no pending requests for this device, then we insert
 	   a dummy request for that device.  This will prevent the request
 	   from starting until we have shoved all of the blocks into the
@@ -472,18 +450,6 @@ register struct buffer_head * bh;
 		goto sorry;
 	}
 
-#ifdef BLOAT_FS
-	/* Determine correct block size for this device.  */
-	correct_size = BLOCK_SIZE;
-
-	/* Verify requested block sizes.  */
-	if (bh && bh->b_size != correct_size) {
-		printk("ll_rw_blk: device %s: only %d-char blocks implemented (%d)\n",
-		       kdevname(bh->b_dev),
-		       correct_size, bh->b_size);
-		goto sorry;
-	}
-#endif
 
 	/* If there are no pending requests for this device, then we insert
 	   a dummy request for that device.  This will prevent the request

@@ -226,12 +226,7 @@ block_t block;
 			return NULL;
 		bh->b_count++;
 		wait_on_buffer(bh);
-#ifdef BLOAT_FS
-		if (bh->b_dev == dev && bh->b_blocknr == block
-		                             && bh->b_size == 1024) {
-#else
 		if (bh->b_dev == dev && bh->b_blocknr == block) {
-#endif
 			return bh;
 		}
 		bh->b_count--;
@@ -291,9 +286,6 @@ block_t block;
 	bh->b_dev=dev;
 	bh->b_blocknr=block;
 	bh->b_seg = get_ds();
-#ifdef BLOAT_FS
-	bh->b_size=1024;
-#endif
 	return bh;
 }
 

@@ -474,7 +474,7 @@ int floppy_change(bh)
 		ll_rw_block(WRITE, 1, &bh);
 	else {
 		buffer_track = -1;
-		clear_bit(BH_Uptodate, &bh->b_state);
+		mark_buffer_uptodate(bh, 0);
 		ll_rw_block(READ, 1, &bh);
 	}
 	wait_on_buffer(bh);

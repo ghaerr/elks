@@ -140,10 +140,6 @@ struct buffer_head
 	unsigned char b_num;	 /* Used to lookup L2 area */
 	unsigned int b_mapcount; /* Used for the new L2 buffer cache scheme */
 #endif /* CONFIG_FS_EXTERNAL_BUFFER */
-#ifdef BLOAT_FS
-	unsigned long b_state;
-	unsigned int b_size;
-#endif
 };
 
 #define BLOCK_READ	0

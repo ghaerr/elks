@@ -110,10 +110,7 @@ kdev_t dev;
 	   * This block is from a device that we're about to stomp on.
 	   * So make sure nobody thinks this block is usable.
 	   */
-#ifdef BLOAT_FS
-		bh->b_state = 0;
-#endif
-
+	   
 		map_buffer(bh);
 		if (*(unsigned short *) (bh->b_data+510) != 0xAA55)
 			goto done;
@@ -202,9 +199,7 @@ sector_t first_sector;
 	/* In some cases we modify the geometry    */
 	/*  of the drive (below), so ensure that   */
 	/*  nobody else tries to re-use this data. */
-#ifdef BLOAT_FS
-	bh->b_state = 0;
-#endif
+
 	if (*(unsigned short *)  (0x1fe + data) != 0xAA55) {
 		printk(" bad magic number\n");
 		unmap_buffer(bh);

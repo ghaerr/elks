@@ -4,13 +4,6 @@
  * 14.04.1998 Bugfixes by Alastair Bridgewater nyef@sudval.org
  */
 
-/* these are not used at the moment
-#include <linuxmt/types.h>
-#include <linuxmt/kernel.h>
-#include <linuxmt/sched.h>
-#include <linuxmt/errno.h>
-*/
-
 #include <linuxmt/hdreg.h>
 #include <linuxmt/major.h>
 #include <linuxmt/genhd.h>
@@ -18,13 +11,9 @@
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
 #include <arch/segment.h>
-
-/* And neither are these
-#include <linuxmt/config.h>
-#include <arch/system.h>
-*/
-
 #include <linuxmt/directhd.h>
+
+#ifdef CONFIG_BLK_DEV_HD
 
 /* maybe we should have word-wide input here instead of byte-wide ? */
 #define STATUS(port) inb_p(port + DIRECTHD_STATUS)
@@ -665,3 +654,5 @@ void do_directhd_request()
 	}
 	return;
 }
+
+#endif
