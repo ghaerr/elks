@@ -316,7 +316,7 @@ dist:
 	@echo Directory $(DISTDIR) contains a clean ELKS distribution tree.
 	@echo
 
-dep:
+dep:	include/linuxmt/version.h include/linuxmt/compile.h 
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in init/*.c; do echo -n "init/"; $(CC_PROTO) $$i; echo; done) >> tmp_make
 	mv tmp_make Makefile

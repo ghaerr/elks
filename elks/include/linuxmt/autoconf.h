@@ -89,7 +89,7 @@
  * Networking
  */
 #define CONFIG_SOCKET 1
-#define CONFIG_UNIX 1
+#undef  CONFIG_UNIX
 #define CONFIG_NANO 1
 #undef  CONFIG_INET
 #undef  CONFIG_SOCK_CLIENTONLY

@@ -22,6 +22,10 @@ Thomas McWilliams	<tgm9999@yahoo.com>		 2 Apr 2001
 
 ------------------------------------------------------------------------------
 
+Thu Oct 18 16:53:02 EEST 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* Fix in makefiles. version.h and compile.h are needed by "make dep"
+
 Wed Oct 17 11:32:57 CEST 2001	Arnaud Launay <asl@launay.org>
 
 	* Updated my current email address.
