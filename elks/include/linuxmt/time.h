@@ -25,8 +25,6 @@ struct timezone {
 	int	tz_dsttime;	/* type of dst correction */
 };
 
-#endif /* __KERNEL__ */
-
 /*
  * Names of the interval timers, and structure
  * defining a timer setting.
@@ -39,6 +37,8 @@ struct	itimerval {
 	struct	timeval it_interval;	/* timer interval */
 	struct	timeval it_value;	/* current value */
 };
+
+#endif /* __KERNEL__ */
 
 #define NFDBITS                 __NFDBITS
 

@@ -101,8 +101,8 @@ struct file * file;
 
 	inode = file->f_inode;
 	if ((fops = file->f_op) && (select = fops->select)) {
-		return select(inode, file, flag, wait)
-		    || (wait && select(inode, file, flag, NULL));
+		return (select(inode, file, flag, wait)
+		    || (wait && select(inode, file, flag, NULL)));
 	}
 	if (flag != SEL_EX) {
 		return 1;
@@ -326,14 +326,6 @@ register struct timeval * tvp;
 	fd_set res_out, out;
 	fd_set res_ex, ex;
 	unsigned long timeout;
-/*
-	fd_set * inp;
-	fd_set * outp;
-	fd_set * exp;
-
-	memcpy_fromfs(&inp, table++, 2);
-	memcpy_fromfs(&outp, table++, 2);
-	memcpy_fromfs(&exp, table, 2); */
 
 	error = -EINVAL;
 	if (n < 0)
@@ -365,8 +357,10 @@ register struct timeval * tvp;
 		/*(fd_set *)*/ &res_in,
 		/*(fd_set *)*/ &res_out,
 		/*(fd_set *)*/ &res_ex);
+#if 0
 	timeout = current->timeout - jiffies - 1;
 	current->timeout = 0L;
+	/* User doesn't really need timeout info back */
 	if (timeout < 0L)
 		timeout = 0L;
 	if (tvp /*&& !(current->personality & STICKY_TIMEOUTS)*/) {
@@ -375,6 +369,9 @@ register struct timeval * tvp;
 		timeout *= (1000000/HZ);
 		put_user(timeout, &tvp->tv_usec);
 	}
+#else
+	current->timeout = 0L;
+#endif
 	if (error < 0)
 		goto out;
 	if (!error) {

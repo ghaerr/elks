@@ -121,7 +121,7 @@ int __data;
 {
         register struct task_struct * p = (struct task_struct *) __data;
 
-	printk("process_timeout called!  data=%x, waking task %d\n", __data, p->pid);
+/*	printk("process_timeout called!  data=%x, waking task %d\n", __data, p->pid); */
         p->timeout = 0UL;
         wake_up_process(p);
 }
