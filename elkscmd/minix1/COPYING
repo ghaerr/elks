@@ -1,0 +1,24 @@
+The contents of this directory were included in the minix distribution and
+include copyright statements that allow free use and distribution. Some of
+the files are public domain, others contain a statement allowing free use
+while maintaining copyright. Please check before modifying the contents of
+this directory.
+
+As a rough guide, the following files state that they are in the public
+domain:-
+
+decomp16.c
+grep.c
+proto.c
+sum.c
+uniq.c
+wc.c
+
+and the following include copyright statements which allow free use and
+distribution:-
+
+cksum.c
+cut.c
+du.c
+fgrep.c
+
