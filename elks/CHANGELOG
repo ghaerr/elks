@@ -22,6 +22,10 @@ Thomas McWilliams	<tgm9999@yahoo.com>		 2 Apr 2001
 
 ------------------------------------------------------------------------------
 
+Mon Oct 22 10:49:00 EEST 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* Fixed bug int net/Makefile spotted by Riley.
+
 Mon Oct 22 02:06:53 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Fixed typos in recent CHANGELOG entries.
