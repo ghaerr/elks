@@ -96,13 +96,13 @@ static int tcpdev_write(struct inode *inode, struct file *filp,
     else {
 	down(&bufin_sem);
 
-	tdin_tail = len;
+	tdin_tail = (unsigned) len;
 	memcpy_fromfs(tdin_buf, data, len);
 
 	/* Call the af_inet code to handle the data */
 	inet_process_tcpdev(tdin_buf, len);
 
-	ret = len;
+	ret = (int) len;
     }
     return ret;
 }

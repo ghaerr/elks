@@ -20,8 +20,9 @@
 #include <linuxmt/config.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/chqueue.h>
-#include <linuxmt/debug.h>
+#include <linuxmt/sched.h>
 #include <linuxmt/types.h>
+#include <linuxmt/debug.h>
 
 int chq_erase(register struct ch_queue *q)
 {
@@ -76,7 +77,7 @@ int chq_delch(register struct ch_queue *q)
 /* Gets tail character, waiting for one if wait != 0 */
 int chq_getch(register struct ch_queue *q, register unsigned char *c, int wait)
 {
-    unsigned int retval;
+    int retval;
 
     debug6("CHQ: chq_getch(%d, %d, %d) q->len=%d q->tail=%d q->size=%d\n",
 	   q, c, wait, q->len, q->tail, q->size);
@@ -98,7 +99,7 @@ int chq_getch(register struct ch_queue *q, register unsigned char *c, int wait)
 
     wake_up(&q->wq);
     if (c != 0)
-	*c = retval;
+	*c = (unsigned char) retval;
 
     return retval;
 }

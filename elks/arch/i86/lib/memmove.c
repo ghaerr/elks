@@ -5,8 +5,10 @@
  * Saku Airila 1996                                                *
  *******************************************************************/
 
-static void blt_back();
-static void blt_forth();
+#include <linuxmt/mm.h>
+
+static void blt_back(unsigned,unsigned,unsigned,unsigned,unsigned);
+static void blt_forth(unsigned,unsigned,unsigned,unsigned,unsigned);
 
 void far_memmove(unsigned sseg, unsigned soff, unsigned dseg, unsigned doff,
 		 unsigned bytes)

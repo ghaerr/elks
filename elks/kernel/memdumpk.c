@@ -13,9 +13,9 @@ void memdumpk(__u16 seg,__u16 off,size_t len)
 	printk("%x:%x ", seg, off);
 	for (i=0; i<16; i++) {
 	    printk(" ");
-	    switch (ch = buffer[i] / 16) {
+	    switch ((ch = buffer[i] / 16)) {
 	    case 7:
-		if (ch = 127)
+		if (ch == 127)
 		    buffer[i] = '.';
 	    case 2:
 	    case 3:

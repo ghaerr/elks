@@ -16,6 +16,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
 #include <linuxmt/config.h>
+#include <linuxmt/init.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 

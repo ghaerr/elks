@@ -60,6 +60,8 @@ extern __u32 peekd(__u16,__u16);
 extern void fmemcpy(__u16,__u16,__u16,__u16,__u16);
 extern void fmemset(__u16,__u16,__u16,__u16);
 
+extern void far_memmove(unsigned,unsigned,unsigned,unsigned,unsigned);
+
 /* FIXME: Following function prototypes are apparently phantom ones,
  *	  so are defined here with void parameters for now.
  */

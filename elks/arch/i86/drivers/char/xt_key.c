@@ -13,8 +13,6 @@
 
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
-#include <arch/io.h>
-#include <arch/keyboard.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/fcntl.h>
@@ -22,6 +20,9 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/ntty.h>
+
+#include <arch/io.h>
+#include <arch/keyboard.h>
 
 #ifdef CONFIG_CONSOLE_DIRECT
 
@@ -199,7 +200,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 #ifdef CONFIG_CONSOLE_DIRECT
 
 	if (ModeState & ALT) {
-	    Console_set_vc(code - 0x3B);
+	    Console_set_vc((unsigned) (code - 0x3B));
 	    return;
 	}
 #endif

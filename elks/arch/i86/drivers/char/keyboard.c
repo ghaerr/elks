@@ -1,13 +1,16 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
-#include <arch/io.h>
-#include <arch/keyboard.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/config.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
+
+#include <arch/io.h>
+#include <arch/keyboard.h>
+
+#ifdef CONFIG_SIBO
 
 #ifdef CONFIG_CONSOLE_DIRECT
 
@@ -127,5 +130,7 @@ int wait_for_keypress(void)
 {
     return chq_getch(&ttys[0].inq, 0, 1);
 }
+
+#endif
 
 #endif

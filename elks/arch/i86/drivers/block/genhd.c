@@ -35,7 +35,7 @@ extern int blk_dev_init();
 
 struct gendisk *gendisk_head = NULL;
 
-static int current_minor = 0;
+static unsigned short int current_minor = 0;
 #ifdef BDEV_SIZE_CHK
 extern int blk_size[];
 #endif
@@ -46,8 +46,8 @@ extern void rd_load();
 static void print_minor_name(register struct gendisk *hd,
 			     unsigned short int minor)
 {
-    unsigned int unit = minor >> hd->minor_shift;
-    unsigned int part = minor & ((1 << hd->minor_shift) - 1);
+    unsigned int unit = (unsigned) (minor >> hd->minor_shift);
+    unsigned int part = (unsigned) (minor & ((1 << hd->minor_shift) - 1));
 
     printk(" %s%c", hd->major_name, 'a' + unit);
     if (part)
@@ -56,8 +56,9 @@ static void print_minor_name(register struct gendisk *hd,
 	printk(":");
 }
 
-static void add_partition(register struct gendisk *hd, unsigned int minor,
-			  sector_t start, sector_t size)
+static void add_partition(register struct gendisk *hd,
+			  unsigned short int minor, sector_t start,
+			  sector_t size)
 {
     register struct hd_struct *hdp = &hd->part[minor];
 
@@ -183,8 +184,8 @@ static int msdos_partition(struct gendisk *hd,
     struct buffer_head *bh;
     register struct partition *p;
     register struct hd_struct *hdp;
-    unsigned char *data;
-    int i, minor = current_minor;
+    char *data;
+    unsigned short int i, minor = current_minor;
 
 #if 0
     int mask = (1 << hd->minor_shift) - 1;
@@ -200,7 +201,7 @@ static int msdos_partition(struct gendisk *hd,
     /* In some cases we modify the geometry of the drive (below), so ensure
      * that nobody else tries to re-use this data.
      */
-    if (*(unsigned short *) (0x1fe + data) != 0xAA55) {
+    if (*(unsigned short *) (data + 0x1fe) != 0xAA55) {
 	printk(" bad magic number\n");
 	unmap_buffer(bh);
 	brelse(bh);
@@ -311,7 +312,8 @@ void setup_dev(register struct gendisk *dev)
 #ifdef CONFIG_GENDISK
     for (drive = 0; drive < dev->nr_real; drive++) {
 	int first_minor = drive << dev->minor_shift;
-	current_minor = 1 + first_minor;
+
+	current_minor = (unsigned short int) (first_minor + 1);
 	check_partition(dev, MKDEV(dev->major, first_minor));
     }
 #endif

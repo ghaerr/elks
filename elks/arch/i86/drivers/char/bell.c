@@ -3,10 +3,12 @@
  *
  *	Copyright 1999 Greg Haerr <greg@censoft.com>
  *
- * This file rings the PC speaker at a specified frequency.
- *
- ******************************************************************
- *
+ *	This file rings the PC speaker at a specified frequency.
+ */
+
+#include <arch/io.h>
+
+/*
  * Turn PC speaker on at specified frequency.
  */
 static void sound(unsigned freq)

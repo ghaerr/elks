@@ -33,6 +33,28 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Tue Jun  4 17:45:06 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Verified that all source files that make up the actual kernel
+	  source tree are clean to `splint -weak` with the exception of
+	  the following, which still have some issues to deal with:
+
+		arch/i86/drivers/char/serial.c
+		arch/i86/mm/init.c
+		kernel/printk.c
+		net/ipv4/af_inet.c
+
+	  The issue with kernel/printk.c is concerned with telling the
+	  splint checker that printk() and panic() have a variable
+	  number of parameters. The issues with the other three source
+	  files are concerned with type mismatches that are not simple
+	  to solve.
+
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop, with the exception that ktcp still fails.
+
+		*** NOTE - KTCP DOES NOT CURRENTLY WORK ***
+
 ===============================================================================
 
 Mon Jun  3 23:03:46 BST 2002	Riley Williams <Riley@Williams.Name>
@@ -44,7 +66,7 @@ Mon Jun  3 23:03:46 BST 2002	Riley Williams <Riley@Williams.Name>
 	  286 based laptop. However, one of the ANSI'fication changes
 	  obviously broke ktcp as that command now panics the kernel.
 
-		*** NOTE - KTCP DOES NOT WORK WITH THIS PATCH ***
+		*** NOTE - KTCP DOES NOT CURRENTLY WORK ***
 
 Mon Jun  3 13:07:28 BST 2002	Riley Williams <Riley@Williams.Name>
 

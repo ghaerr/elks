@@ -12,4 +12,6 @@ extern unsigned char inb_p(void *);
 extern unsigned short int inw(void *);
 extern unsigned short int inw_p(void *);
 
+extern void bell(void);
+
 #endif

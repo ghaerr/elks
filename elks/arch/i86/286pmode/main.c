@@ -629,12 +629,12 @@ void init_ksegs(unsigned short textlen)
     unsigned long int eh = ((unsigned long int) _elksheader + 2);
 
     initial_gdt[7].baseaddr0 = (unsigned short) (eh << 4);
-    initial_gdt[7].baseaddr1 = (unsigned short) ((eh >> 0xc) & 0xff);
+    initial_gdt[7].baseaddr1 = (unsigned char) ((eh >> 0xc) & 0xff);
     initial_gdt[7].limit = textlen;
 
     eh += textlen;
     initial_gdt[8].baseaddr0 = (unsigned short) (eh << 4);
-    initial_gdt[8].baseaddr1 = (unsigned short) ((eh >> 0xc) & 0xff);
+    initial_gdt[8].baseaddr1 = (unsigned char) ((eh >> 0xc) & 0xff);
 }
 
 void bogus_magic(void)
@@ -657,7 +657,7 @@ void bogus_magic(void)
 void boot_kernel(void)
 {
     initial_gdt[4].baseaddr0 = (unsigned short) (_elksheader << 4);
-    initial_gdt[4].baseaddr1 = (unsigned short) ((_elksheader >> 0xc) & 0xff);
+    initial_gdt[4].baseaddr1 = (unsigned char) ((_elksheader >> 0xc) & 0xff);
 
 #ifndef S_SPLINT_S
 #asm

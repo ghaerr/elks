@@ -14,12 +14,15 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/kernel.h>
 #include <linuxmt/major.h>
+#include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
 
 #include <arch/io.h>
+#include <arch/keyboard.h>
 
 #ifdef CONFIG_CONSOLE_DIRECT
 
@@ -32,7 +35,6 @@
 /* public interface of dircon.c: */
 
 void con_charout(char Ch);
-void Console_set_vc(int N);
 int Console_write(struct tty *tty);
 void Console_release(struct tty *tty);
 int Console_open(struct tty *tty);
@@ -81,14 +83,13 @@ typedef struct {
 #endif
 } Console;
 
-static int Width, Height, MaxRow, MaxCol;
-static int CCBase;
-static int NumConsoles = MAX_CONSOLES;
-static unsigned VideoSeg, PageSize;
-static Console Con[MAX_CONSOLES];
-static Console *Visible;
-static Console *glock;		/* Which console owns the graphics hardware */
 static struct wait_queue glock_wait;
+static Console Con[MAX_CONSOLES], *Visible;
+static Console *glock;		/* Which console owns the graphics hardware */
+static void *CCBase;
+static int Width, Height, MaxRow, MaxCol;
+static unsigned VideoSeg, PageSize;
+static unsigned short int NumConsoles = MAX_CONSOLES;
 
 /* from keyboard.c */
 extern int Current_VCminor;
@@ -122,12 +123,6 @@ static void AnsiCmd(register Console * C, char c);
 
 #endif
 
-extern int peekb();
-extern int peekw();
-extern void pokeb();
-extern void pokew();
-extern void outb();
-
 extern void AddQueue(unsigned char Key);	/* From xt_key.c */
 
 static void PositionCursor(register Console * C)
@@ -138,9 +133,9 @@ static void PositionCursor(register Console * C)
 	return;
     Pos = C->cx + Width * C->cy + (C->pageno * PageSize >> 1);
     outb(14, CCBase);
-    outb((unsigned char) ((Pos >> 8) & 0xFF), CCBase + 1);
+    outb((unsigned char) ((Pos >> 8) & 0xFF), (char *) CCBase + 1);
     outb(15, CCBase);
-    outb((unsigned char) (Pos & 0xFF), CCBase + 1);
+    outb((unsigned char) (Pos & 0xFF), (char *) CCBase + 1);
 }
 
 void WriteChar(register Console * C, char c)
@@ -208,19 +203,19 @@ void WriteChar(register Console * C, char c)
 	break;
     default:
 	offset = ((unsigned int) (C->cx + C->cy * Width)) << 1;
-	pokeb(C->vseg, offset++, c);
-	pokeb(C->vseg, offset, C->attr);
-	++C->cx;
+	pokeb((__u16) C->vseg, (__u16) offset++, (__u8) c);
+	pokeb((__u16) C->vseg, (__u16) offset, C->attr);
+	C->cx++;
     }
 
     /* autowrap and/or scroll */
     if (C->cx > MaxCol) {
 	C->cx = 0;
-	++C->cy;
+	C->cy++;
     }
     if (C->cy >= Height) {
 	ScrollUp(C, 1, Height);
-	--C->cy;
+	C->cy--;
     }
 }
 
@@ -232,14 +227,13 @@ void con_charout(char Ch)
 
 static void ScrollUp(register Console * C, int st, int en)
 {
-    unsigned rdofs, wrofs;
-    int cnt;
+    unsigned rdofs, wrofs, cnt;
 
     if (st < 1 || st >= en)
 	return;
     rdofs = (unsigned int) ((Width << 1) * st);
     wrofs = rdofs - (Width << 1);
-    cnt = Width * (en - st);
+    cnt = (unsigned) (Width * (en - st));
     far_memmove(C->vseg, rdofs, C->vseg, wrofs, cnt << 1);
     en--;
     ClearRange(C, 0, en, Width, en);
@@ -249,14 +243,13 @@ static void ScrollUp(register Console * C, int st, int en)
 
 static void ScrollDown(register Console * C, int st, int en)
 {
-    unsigned rdofs, wrofs;
-    int cnt;
+    unsigned rdofs, wrofs, cnt;
 
     if (st > en || en > Height)
 	return;
     rdofs = (unsigned int) ((Width << 1) * st);
     wrofs = rdofs + (Width << 1);
-    cnt = Width * (en - st);
+    cnt = (unsigned) (Width * (en - st));
     far_memmove(C->vseg, rdofs, C->vseg, wrofs, cnt << 1);
     ClearRange(C, 0, st, Width, st);
 }
@@ -265,13 +258,13 @@ static void ScrollDown(register Console * C, int st, int en)
 
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 {
-    int st, en, ClrW, ofs;
+    __u16 st, en, ClrW, ofs;
 
-    st = (x + y * Width) << 1;
-    en = (xx + yy * Width) << 1;
-    ClrW = A_DEFAULT << 8 + ' ';
+    st = (__u16) ((x + y * Width) << 1);
+    en = (__u16) ((xx + yy * Width) << 1);
+    ClrW = (__u16) ((A_DEFAULT << 8) + ' ');
     for (ofs = st; ofs < en; ofs += 2)
-	pokew(C->vseg, ofs, ClrW);
+	pokew((__u16) C->vseg, ofs, ClrW);
 }
 
 #ifdef CONFIG_DCON_VT52
@@ -373,16 +366,16 @@ void Vt52CmdEx(register Console * C, char c)
 
 #ifdef CONFIG_DCON_ANSI
 
-static int parm1(register char *buf)
+static int parm1(register unsigned char *buf)
 {
-    register int n = atoi(buf);
+    register int n = atoi((char *) buf);
 
     if (n == 0)
 	return 1;
     return n;
 }
 
-static int parm2(register char *buf)
+static int parm2(register unsigned char *buf)
 {
     if (*buf != ';')
 	while (*buf && *buf != ';')
@@ -497,7 +490,7 @@ static void AnsiCmd(register Console * C, char c)
  * CAUTION: It *WILL* break if the console driver doesn't get tty0-X. 
  */
 
-void Console_set_vc(int N)
+void Console_set_vc(unsigned int N)
 {
     unsigned int offset;
 
@@ -514,10 +507,10 @@ void Console_set_vc(int N)
 #endif
 
     offset = N * PageSize >> 1;
-    outw((offset & 0xff00) | 0x0c, CCBase);
-    outw(((offset & 0xff) << 8) | 0x0d, CCBase);
+    outw((unsigned short int) ((offset & 0xff00) | 0x0c), CCBase);
+    outw((unsigned short int) (((offset & 0xff) << 8) | 0x0d), CCBase);
     PositionCursor(Visible);
-    Current_VCminor = N;
+    Current_VCminor = (int) N;
 }
 
 #ifdef CONFIG_DCON_VT52
@@ -586,7 +579,7 @@ int Console_write(register struct tty *tty)
 	    WriteChar(C, '\r');
 #endif
 
-	WriteChar(C, ch);
+	WriteChar(C, (char) ch);
 	cnt++;
     }
     PositionCursor(C);
@@ -605,6 +598,8 @@ int Console_open(struct tty *tty)
     return 0;
 }
 
+/*@-type@*/
+
 struct tty_ops dircon_ops = {
     Console_open,
     Console_release,
@@ -613,17 +608,19 @@ struct tty_ops dircon_ops = {
     Console_ioctl,
 };
 
+/*@+type@*/
+
 void init_console(void)
 {
-    unsigned int i;
     register Console *C;
+    unsigned int i;
 
     MaxCol = (Width = peekb(0x40, 0x4a)) - 1;
 
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
     MaxRow = (Height = 25) - 1;
-    CCBase = peekw(0x40, 0x63);
-    PageSize = peekw(0x40, 0x4C);
+    CCBase = (void *) peekw(0x40, 0x63);
+    PageSize = (unsigned int) peekw(0x40, 0x4C);
     if (peekb(0x40, 0x49) == 7) {
 	VideoSeg = 0xB000;
 	NumConsoles = 1;
@@ -635,7 +632,7 @@ void init_console(void)
 	C->cx = C->cy = 0;
 	C->state = ST_NORMAL;
 	C->vseg = VideoSeg + (PageSize >> 4) * i;
-	C->pageno = i;
+	C->pageno = (int) i;
 	C->attr = A_DEFAULT;
 
 #ifdef CONFIG_DCON_ANSI

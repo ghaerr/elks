@@ -27,6 +27,8 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
 
+#include <arch/segment.h>
+
 /*
  *	Just to make it work for now
  */
@@ -76,7 +78,7 @@ static void con_write(register char *buf, int len)
 
 static char *nstring = "0123456789ABCDEF";
 
-static void numout(unsigned long *ptr, int len, int base, int useSign)
+static void numout(char *ptr, int len, int base, int useSign)
 {
     char buf[16];
     register char *bp = buf + 14;
@@ -84,9 +86,10 @@ static void numout(unsigned long *ptr, int len, int base, int useSign)
     unsigned char c;
 
     bp[1] = 0;
-    v = *ptr;
     if (len == 2)
-	v = (unsigned short) v;
+	v = *((unsigned short *) ptr);
+    else
+	v = *((unsigned long *) ptr);
     if (useSign && v < 0) {
 	con_write("-", 1);
 	v = -v;
@@ -104,7 +107,7 @@ static void numout(unsigned long *ptr, int len, int base, int useSign)
 
 void printk(register char *fmt,int a1)
 {
-    register char *p = (unsigned char *) &a1;
+    register char *p = (char *) &a1;
     char c, tmp;
 
     while ((c = *fmt++)) {
@@ -112,6 +115,7 @@ void printk(register char *fmt,int a1)
 	    con_write(fmt - 1, 1);
 	else {
 	    int len = 2;
+
 	    c = *fmt++;
 	    if (c == 'h')
 		c = *fmt++;
@@ -193,5 +197,5 @@ void kernel_restarted(void)
 void redirect_main(void)
 {
     pokeb(get_cs(), 0, 0xe9);
-    pokew(get_cs(), 1, (int) kernel_restarted - 3);
+    pokew(get_cs(), 1, ((__u16) kernel_restarted) - 3);
 }

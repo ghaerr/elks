@@ -88,4 +88,6 @@ struct tdb_accept_ret {
     __u16 addr_port;
 };
 
+extern void tcpdev_clear_data_avail(void);
+
 #endif

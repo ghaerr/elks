@@ -36,5 +36,6 @@ extern void kfork_proc(struct task_struct *,void ());
 extern void arch_setup_kernel_stack(struct task_struct *);
 extern void setup_dev(register struct gendisk *);
 extern void mem_dev_init(void);
+extern void init_bioshd(void);
 
 #endif

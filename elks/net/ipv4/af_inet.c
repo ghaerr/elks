@@ -18,6 +18,7 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/net.h>
 #include <linuxmt/tcpdev.h>
+
 #include "af_inet.h"
 
 #ifdef CONFIG_INET
@@ -37,7 +38,7 @@ int inet_process_tcpdev(char *buf, int len)
 
     switch (r->type) {
     case TDT_CHG_STATE:
-	sock->state = r->ret_value;
+	sock->state = (unsigned char) r->ret_value;
 	tcpdev_clear_data_avail();
 	break;
     case TDT_AVAIL_DATA:
@@ -266,7 +267,7 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     ret = r->ret_value;
 
     if (ret > 0) {
-	memcpy_tofs(ubuf, &r->data, ret);
+	memcpy_tofs(ubuf, &r->data, (size_t) ret);
 	sock->avail_data = 0;
     }
 
@@ -304,7 +305,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
     while (todo) {
 	cmd.size = todo > TDB_WRITE_MAX ? TDB_WRITE_MAX : todo;
 
-	memcpy_fromfs(cmd.data, ubuf + size - todo, cmd.size);
+	memcpy_fromfs(cmd.data, ubuf + size - todo, (size_t) cmd.size);
 	tcpdev_inetwrite(&cmd, sizeof(struct tdb_write));
 	todo -= cmd.size;
 
