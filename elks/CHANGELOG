@@ -21,6 +21,11 @@ Thomas McWilliams	<tgm9999@yahoo.com>		 2 Apr 2001
 
 -----------------------------------------------------------------------------
 
+Thu Oct 25 23:14:32 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Updated elks/BUGS to match elks/BUGS.html
+	* Updated elks/INSTALLATION to match elks/INSTALLATION.html
+
 Tue Oct 23 17:36:10 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* THIS IS ELKS RELEASE 0.0.88
@@ -45,6 +50,8 @@ Mon Oct 22 14:22:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 	  the compilation process.
 	* Simplified creation of elks.spec for `make rpm` command (but
 	  this command is not yet guaranteed to work).
+	* Wrote design for revised Makefile system. Refer to the file
+	  elks/Documentation/Makefile-structure.html for details.
 
 Mon Oct 22 10:49:00 EEST 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 

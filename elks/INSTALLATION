@@ -11,16 +11,16 @@
    If you are looking for information on ELKS development or on compiling
    the kernel, please refer to the README file or the ELKS FAQ.
      __________________________________________________________________
- 
+   
                                Table of Contents
                                        
-    1. Introduction
-    2. Creating the installation floppies
-    3. Installing and booting ELKS
-    4. Credits/Thanks
+    1. [4]Introduction
+    2. [5]Creating the installation floppies
+    3. [6]Installing and booting ELKS
+    4. [7]Credits/Thanks
        
    If you have any questions relating to this document, please post your
-   question to the [4]Linux 8086 discussion list on the Internet.
+   question to the [8]Linux 8086 discussion list on the Internet.
      __________________________________________________________________
    
 Introduction
@@ -66,12 +66,12 @@ Creating your installation floppies
    depending on the system you are using to create them, so has been
    separated into the following sections:
    
-    1. Using an MS-DOS or PC-DOS system
-    2. Using a Microsoft Windows system
-    3. Using a Linux system
-    4. Using a Psion 3 SIBO system (Under Construction)
+    1. Using an [9]MS-DOS or PC-DOS system
+    2. Using a [10]Microsoft Windows system
+    3. Using a [11]Linux system
+    4. Using a [12]Psion 3 SIBO system (Under Construction)
        
-   When you have created your floppies, click here for instructions
+   When you have created your floppies, [13]click here for instructions
    relating to installing and booting ELKS.
      __________________________________________________________________
    
@@ -80,7 +80,7 @@ Using an MS-DOS or PC-DOS system
    For those of you using a DOS-based system, or a system where you have
    access to a DOS prompt, you will additionally need...
    
-     * The [5]RAWRITE package.
+     * The [14]RAWRITE package.
        
    First, unzip IMAGES.ZIP into a directory on your hard drive. If you
    don't know how to do this, or if you haven't the tools to do this,
@@ -101,8 +101,8 @@ Using an MS-DOS or PC-DOS system
 
    Finally, decide which set of images you wish to make:
    
-     * Separate Boot & Root floppies.
-     * A combined floppy.
+     * Separate [15]Boot & Root floppies.
+     * A [16]combined floppy.
      __________________________________________________________________
    
   Separate Boot & Root floppies
@@ -136,7 +136,7 @@ Using a Microsoft Windows system
 
    For those of you running a Microsoft Windows system where you can
    access a DOS Prompt, you are advised to do so, and to follow the
-   MS-DOS or PC-DOS instructions.
+   [17]MS-DOS or PC-DOS instructions.
    
    For other Microsoft Windows users, details will be posted here when
    available.
@@ -165,8 +165,8 @@ Using a Linux system
 
    Next, decide which type of installation you wish to make:
    
-     * Separate Boot & Root floppies.
-     * A combined floppy.
+     * Separate [18]Boot & Root floppies.
+     * A [19]combined floppy.
      __________________________________________________________________
    
   Separate Boot & Root floppies
@@ -202,14 +202,14 @@ Psion3 SIBO
    If you are interested in testing and developing the SIBO kernel,
    please refer to the section on the ELKS website at
    
-               http://www.elks.ecs.soton.ac.uk/sibo.php3
+               [20]http://www.elks.ecs.soton.ac.uk/sibo.php3
      __________________________________________________________________
    
 Installing and booting ELKS
 
    The procedure for installing and booting ELKS is quite simple, but
    differs slightly depending on whether the installation is from a
-   combined floppy or from separate boot & root floppies.
+   [21]combined floppy or from separate [22]boot & root floppies.
      __________________________________________________________________
    
   Installing and booting from a combined floppy
@@ -252,5 +252,22 @@ References
    1. mailto:gs25mrb@panther.gsu.edu
    2. mailto:ajr@ecs.soton.ac.uk
    3. mailto:rhw@MemAlpha.cx
-   4. http://www.elks.ecs.soton.ac.uk/maillist.php3
-   5. ftp://ftp.cdrom.com/pub/linux/slackware-7.0/bootdsks.144/
+   4. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#1
+   5. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2
+   6. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#3
+   7. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#4
+   8. http://www.elks.ecs.soton.ac.uk/maillist.php3
+   9. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.1
+  10. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.2
+  11. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.3
+  12. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.4
+  13. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#3
+  14. ftp://ftp.cdrom.com/pub/linux/slackware-7.0/bootdsks.144/
+  15. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.1.1
+  16. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.1.2
+  17. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.1
+  18. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.3.1
+  19. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.3.2
+  20. http://www.elks.ecs.soton.ac.uk/sibo.php3
+  21. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#3.1
+  22. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#3.2
