@@ -74,7 +74,7 @@
 		$out="<table border=\"0\" width=\"100%\">".
 		"<tr><td width=\"20%\" align=\"left\" valign=\"top\"><img src=\"Images/ELKStag.gif\" alt=\"ELKS Logo\" height=\"77\" width=\"224\"></td>".
 		"<td width=\"70%\" align=\"center\" valign=\"middle\"><img src=\"Images/ELKSbanner.gif\" alt=\"Linux in 640k\" height=\"60\" width=\"450\"></td>".
-		"<td width=\"10%\" align=\"right\" valign=\"top\"><img src=\"Images/ELKSlogo.gif\" alt=\"Baby Linux Logo\" height=\"77\" width=\"65\"></td></tr></table>";
+		"<td width=\"10%\" align=\"right\" valign=\"top\"><img src=\"Images/ELKSlogo.gif\" alt=\"Baby Linux Logo\" height=\"77\" width=\"65\"></td></tr></table><p></p>";
 		return $out;
 	}
 
