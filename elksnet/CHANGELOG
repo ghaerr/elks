@@ -4,7 +4,22 @@ add to the top of this file before committing any changes. Please use the
 header format provided for each entry, noting that the text on each line
 should not be longer than the lines of dashes.
 								-- Riley
+
+Contributor		Email address			CHANGELOG entries found
+~~~~~~~~~~~~~~~~~~~~~~	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	~~~~~~~~~~~~~~~~~~~~~~~
+Harry Kalogirou		<harkal@rainbow.cs.unipi.gr>	25 Jun 2001- 2 Nov 2001
+Riley Williams		<rhw@MemAlpha.cx>		13 Aug 2001- 5 Nov 2001
+
 -------------------------------------------------------------------------------
+
+Mon Nov  5 20:48:31 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Corrected typo in Makefile comment.
+
+Fri Nov  2 16:06:39 EET 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* Rolled back Riley's changes to the ktcp Makefile that caused
+	  problems.
 
 Mon Oct 29 15:14:31 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 

@@ -14,6 +14,8 @@ CFILES		= ktcp.c slip.c ip.c icmp.c tcp.c tcp_cb.c tcp_output.c \
 
 OBJ		= $(CFILES:.c=.o)
 
+##############################################################################
+
 all:	ktcp
 
 .c.o:
@@ -23,9 +25,11 @@ ktcp:	$(OBJ)
 	$(CC) $(OPT) -o ktcp $(OBJ) $(BASELIBS)
 
 clean: 
-	rm -f *.o ktcp core 
+	rm -f *~ *.o ktcp core 
 
 dep:
 	makedepend $(CFILES)
 
-
+#######
+# EOF #
+#######
