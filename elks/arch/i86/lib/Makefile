@@ -56,4 +56,8 @@ dep:
 		$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
 
+setupb.s: setupb.S
+
+setupw.s: setupw.S
+
 ### Dependencies:
