@@ -333,7 +333,7 @@ void init_console()
    
 
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE   
-   	printk("Console: Direct Dumb (%d virtual consoles)\n", MAX_CONS);
+   	printk("Console: Direct Dumb (%u virtual consoles)\n", MAX_CONS);
 #else
    	printk("Console: Direct Dumb (no screen store)\n");
 #endif

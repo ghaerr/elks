@@ -157,7 +157,7 @@ struct tty_ops bioscon_ops=
 
 void init_console()
 {
-	printk("Console: BIOS(%dx%d)\n",
+	printk("Console: BIOS(%ux%u)\n",
 		setupb(7),setupb(14));
 }
 

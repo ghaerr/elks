@@ -5,7 +5,11 @@
 #include <linuxmt/posix_types.h>
 #include <linuxmt/config.h>
 
-#define PRINT_STATS(a) { int __counter; printk("Entering %s : (%d, %d)\n", a, current->t_regs.sp, current->t_kstack); }
+#define PRINT_STATS(a) {					\
+	int __counter;						\
+	printk("Entering %s : (%x, %x)\n",			\
+		a, current->t_regs.sp, current->t_kstack);	\
+}
 
 /* Throw away _FUNCTION parameters - the syntax is ripped off of Minix's
    _PROTOTYPE.  Considering Borland did the same thing to MFC on a bigger

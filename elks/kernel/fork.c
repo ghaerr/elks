@@ -13,16 +13,16 @@ static int find_empty_process()
 	int unused=0;
 	int n;
 	
-	for(i=0;i<MAX_TASKS;i++)
-	{
-		if(task[i].state==TASK_UNUSED)
-		{
+	for(i=0;i<MAX_TASKS;i++) {
+		if(task[i].state==TASK_UNUSED) {
 			unused++;
 			n=i;
 		}
 	}
 
-	if (unused <=1) printk("Only %d slots\n", unused);
+	if (unused <=1)
+		printk("Only %d slots\n", unused);
+
 	if(unused==0 || (unused==1 && current->uid))
 		return -EAGAIN;
 	

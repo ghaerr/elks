@@ -110,8 +110,7 @@ kdev_t dev;
 	if (!fops->check_media_change(dev))
 		return 0;
 
-	printk("VFS: Disk change detected on device %s\n",
-		kdevname(dev));
+	printk("VFS: Disk change detected on device %s\n",kdevname(dev));
 	for (i=0 ; i<NR_SUPER ; i++)
 		if (super_blocks[i].s_dev == dev)
 			put_super(super_blocks[i].s_dev);

@@ -40,25 +40,33 @@ struct syscall_params {
  */
 
 #define P_NONE		  0	/* No parameters			*/
-
-#define P_STR		  1	/* String				*/
-#define P_PDATA		  2	/* Pointer to Data			*/
-#define P_PSTR		  3	/* Pointer to String			*/ 
+#define P_DATA		  1	/* Generic Data				*/
+#define P_POINTER	  2	/* Generic Data Pointer 		*/
+#define P_PDATA 	  3	/* Pointer to Generic Data		*/
 
 #define P_UCHAR 	  4	/* Unsigned Char			*/
 #define P_SCHAR 	  5	/* Signed Char				*/
-#define P_PUCHAR	  6	/* Pointer to Unsigned Char		*/
-#define P_PSCHAR	  7	/* Pointer to Signed Char		*/
+#define P_STR		  6	/* String				*/
+#define P_PSTR  	  7	/* Pointer to String			*/
 
 #define P_USHORT	  4	/* Unsigned Short Int			*/
 #define P_SSHORT	  5	/* Signed Short Int			*/
 #define P_PUSHORT 	  6	/* Pointer to Unsigned Short Int	*/
 #define P_PSSHORT 	  7	/* Pointer to Signed Short Int		*/
 
-#define P_ULONG		  8	/* Unsigned Long Int			*/
-#define P_SLONG		  9	/* Signed Long Int			*/
+#define P_ULONG 	  8	/* Unsigned Long Int			*/
+#define P_SLONG 	  9	/* Signed Long Int			*/
 #define P_PULONG 	 10	/* Pointer to Unsigned Long Int 	*/
 #define P_PSLONG	 11	/* Pointer to Signed Long Int		*/
+
+#ifdef NOT_YET
+
+#define P_ULLONG	 12	/* Unsigned Long Int			*/
+#define P_SLLONG	 13	/* Signed Long Int			*/
+#define P_PULLONG 	 14	/* Pointer to Unsigned Long Int 	*/
+#define P_PSLLONG	 15	/* Pointer to Signed Long Int		*/
+
+#endif
 
 /* Special parameter types go here... eventually we can process things
  * like O_RDONLY and whatnot... */

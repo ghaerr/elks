@@ -422,10 +422,9 @@ static void list_inode_status()
 {
 	int i;
 
-	for (i = 0; i < nr_inodes ; i++) {
-	   printk("[#%d: c=%d d=%x nr=%ld]", i,
-	   inode_block[i].i_count, inode_block[i].i_dev, inode_block[i].i_ino);
-	}
+	for (i = 0; i < nr_inodes ; i++)
+		printk("[#%u: c=%u d=%x nr=%lu]", i, inode_block[i].i_count,
+			inode_block[i].i_dev, inode_block[i].i_ino);
 }
 
 struct inode * get_empty_inode()

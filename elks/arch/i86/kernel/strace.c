@@ -88,16 +88,15 @@ struct syscall_info elks_table[] = {
 	{  64, "sys_readdir",         3, { P_USHORT, P_PDATA,  P_USHORT } },
 	{  68, "setsid",              0, { P_NONE,   P_NONE,   P_NONE   } },
 	{  69, "sys_socket",          3, { P_USHORT, P_USHORT, P_USHORT } },
-	{   0, "no_sys",              0, { P_NONE,   P_NONE,   P_NONE   } },
+	{   0, "no_sys",              0, { P_NONE,   P_NONE,   P_NONE   } }
 };
 
 void print_syscall(p, retval)
 register struct syscall_params *p;
 int retval;
 {
-	int tent = 0;
 	unsigned char i, tmpb;
-	int tmpa;
+	int tmpa, tent = 0;
 
 	/* Scan elks_syscalls for the system call info */
 
@@ -107,39 +106,86 @@ int retval;
 		tent++;
 	}
 
+	if(elks_table[tent].s_num) {
+		printk("Syscall not recognised: %u\n", p->s_num);
+	} else {
+
 #ifdef STRACE_PRINTSTACK
-	printk("[%d/%p: %d %s(", current->pid, current->t_regs.sp, p->s_num,elks_table[tent].s_name); 
+		printk("[%d/%p: %d %s(", current->pid, current->t_regs.sp, p->s_num,elks_table[tent].s_name); 
 #else
-	printk("[%d: %s(", current->pid, elks_table[tent].s_name);	
+		printk("[%d: %s(", current->pid, elks_table[tent].s_name);	
 #endif
 
-	for (i = 0; i < elks_table[tent].s_params; i++) {
-		if (i) printk(", ");
-		switch (elks_table[tent].t_param[i]) {
-			case P_SSHORT:
-			case P_USHORT:
-				printk("%d", p->s_param[i]);
-				break;
-			case P_LONG:
-			case P_ULONG:
-				printk("%ld", p->s_param[i]);
-			case P_PDATA:
-			case P_POINTER:
-				printk("0x%x", p->s_param[i]);
-				break;
-			case P_PLONG:
-			case P_PULONG:
-				printk("%ld", get_fs_long(p->s_param[i]));
-				break;
-			case P_PSTR:
-				con_charout('\"');
-				tmpa = p->s_param[i];
-				while ((tmpb = get_fs_byte(tmpa++)) != 0)
-					con_charout(tmpb);
-				con_charout('\"');
-			case P_NONE:
-			default:
-				break;
+		for (i = 0; i < elks_table[tent].s_params; i++) {
+			if (i) printk(", ");
+			switch (elks_table[tent].t_param[i]) {
+
+				case P_DATA:
+					printk("&0x%x", p->s_param[i]);
+
+				case P_NONE:
+					break;
+
+				case P_POINTER:
+				case P_PDATA:
+					printk("0x%x", p->s_param[i]);
+					break;
+
+				case P_UCHAR:
+				case P_SCHAR:
+					printk("'%c'", p->s_param[i]);
+					break;
+
+				case P_STR:
+					con_charout('\"');
+					tmpa = p->s_param[i];
+					while ((tmpb = get_fs_byte(tmpa++)))
+						con_charout(tmpb);
+					con_charout('\"');
+					break;
+
+				case P_PSTR:
+					con_charout('&');
+					con_charout('\"');
+					tmpa = *(p->s_param[i]);
+					while ((tmpb = get_fs_byte(tmpa++)))
+						con_charout(tmpb);
+					con_charout('\"');
+					break;
+
+				case P_USHORT:
+					printk("%u", p->s_param[i]);
+					break;
+
+				case P_SSHORT:
+					printk("%d", p->s_param[i]);
+					break;
+
+				case P_PUSHORT:
+					printk("&%u", *(p->s_param[i]));
+					break;
+
+				case P_PSSHORT:
+					printk("&%d", *(p->s_param[i]));
+					break;
+
+				case P_LONG:
+					printk("%ld", p->s_param[i]);
+					break;
+
+				case P_ULONG:
+					printk("%lu", p->s_param[i]);
+					break;
+
+				case P_PLONG:
+					printk("%ld", get_fs_long(p->s_param[i]));
+					break;
+
+				case P_PULONG:
+					printk("%lu", get_fs_long(p->s_param[i]));
+
+				default:
+					break;
 		};
 	}
 	#ifdef STRACE_RETWAIT

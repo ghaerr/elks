@@ -192,9 +192,9 @@ void *regs;
 		irq->handler(i,regs,irq->dev_id);
 	} else {
 		if(i > 15) {
-			printk("Unexpected trap: %d\n", i-16);
+			printk("Unexpected trap: %u\n", i-16);
 		} else {
-			printk("Unexpected interrupt: %d\n", i);
+			printk("Unexpected interrupt: %u\n", i);
 		}
 	}
 	lastirq = -1;
@@ -270,11 +270,11 @@ unsigned int irq;
 	flag_t flags;
 
 	if (irq > 15) {
-		printk("Trying to free IRQ%d\n",irq);
+		printk("Trying to free IRQ%u\n",irq);
 		return;
 	}
 	if (!action->handler) {
-		printk("Trying to free free IRQ%d\n",irq);
+		printk("Trying to free free IRQ%u\n",irq);
 		return;
 	}
 	save_flags(flags);

@@ -48,7 +48,7 @@ void ssd_init()
 {
 	int i;
 
-	printk("SSD driver (Major = %d)\n", MAJOR_NR);
+	printk("SSD driver (Major = %u)\n", MAJOR_NR);
 	if ((i = register_blkdev(MAJOR_NR, DEVICE_NAME, &ssd_fops)) == 0) {
 		blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 		/* blksize_size[MAJOR_NR] = 1024; */
@@ -66,7 +66,7 @@ struct file *filp;
 	int target;
 
 	target = DEVICE_NR(inode->i_rdev);
-	/*printk("SSD_OPEN %d\n",target);*/
+	/*printk("SSD_OPEN %u\n",target);*/
 	if (ssd_initialised == 0)
 		return (-ENXIO);
 /*	if (rd_busy[target])
@@ -133,7 +133,7 @@ static void do_ssd_request()
 			return;
 
 		if (ssd_initialised != 1) {
-			printk("SSD not initilised");
+			printk("SSD not initilised\n");
 			end_request(0);
 			continue;
 		}
@@ -153,7 +153,8 @@ static void do_ssd_request()
 			continue;
 		}
 		if (CURRENT->rq_cmd == WRITE) {
-			printk("SSD_REQUEST writing to %ld size %ld\n", start,count);
+			printk("SSD_REQUEST writing to %lu size %lu\n",
+				start,count);
 			ssd_write_blk(target, start, buff, count );
 		}
 		if (CURRENT->rq_cmd == READ) {

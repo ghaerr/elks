@@ -534,7 +534,7 @@ int len;
 		goto end_rmdir;
 	}
 	if (inode->i_nlink != 2)
-		printk("empty directory has nlink!=2 (%d)\n",inode->i_nlink);
+		printk("empty directory has nlink!=2 (%u)\n",inode->i_nlink);
 	de->inode = 0;
 #ifdef BLOAT_FS
 	dir->i_version = ++event;
@@ -593,7 +593,7 @@ repeat:
 		goto end_unlink;
 	}
 	if (!inode->i_nlink) {
-		printk("Deleting nonexistent file (%s:%lu), %d\n",
+		printk("Deleting nonexistent file (%s:%lu), %u\n",
 			kdevname(inode->i_dev),
 		       inode->i_ino, inode->i_nlink);
 		inode->i_nlink=1;

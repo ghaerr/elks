@@ -151,7 +151,8 @@ struct malloc_head *mh;
 				status = "DODGY";
 				break;
 		}
-		printk("HOLE %x size %x is %s\n", m->page_base, m->extent, status);
+		printk("HOLE %x size %x is %s\n",
+			m->page_base, m->extent, status);
 		m=m->next;
 	} while (m!=NULL);
 }

@@ -551,7 +551,7 @@ void print_bufmap_status()
 	printk("L1 slot / Buffer # / Reference Count\n");
 	for (i = 0; i < NR_MAPBUFS; i++) {
 		if (bufmem_map[i]) {
-			printk("%d / %d / %d\n", i, bufmem_map[i]->b_num,
+			printk("%u / %u / %u\n", i, bufmem_map[i]->b_num,
 				bufmem_map[i]->b_mapcount);
 		}
 	}

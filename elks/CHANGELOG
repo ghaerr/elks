@@ -6,6 +6,24 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Tue Aug 21 18:09:08 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Whilst I was validating the printk() format strings, I came across
+	  quite a few existing %o and %u format specifiers despite the fact
+	  that neither was implemented until I added both types to printk()
+	  earlier today.
+	* Completed the validation of those files containing not more than
+	  nine lines with printk() functions. Discovered several cases of
+	  printk() formats without a terminating newline, so added such.
+	* Found a panic() using a bad swear word, so changed it...
+
+Tue Aug 21 17:23:40 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Updated strace.h and strace.c so all parameter types are
+	  printed correctly, also added additional common parameter
+	  types to the list of available parameter types.
+	* Fixed a bug where an unknown syscall silently vanished.
+
 Tue Aug 21 14:01:13 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Added %o and %u types to printk() and redefined %d as signed.
@@ -15,14 +33,16 @@ Tue Aug 21 14:01:13 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 Tue Aug 21 12:23:14 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Documented VT52 sequences listed in the VT100 User Guide.
+	  Others probably exist that are only documented in the VT52
+	  User Guide, but I don't have access to that.
 
 Tue Aug 21 11:33:28 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Created separate video directory for standalone video drivers.
-	* Moved current ANSI video driver into video directory.
 	* Created new VT52 directory to move existing kernel VT52 driver
 	  into. I plan to get this working in usermode first, to help me
-	  to learn how to do such with the current kernel.
+	  to learn how to do likewise with the ANSI driver.
+	* Moved current ANSI video driver into video directory.
 
 Tue Aug 21 10:30:24 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 

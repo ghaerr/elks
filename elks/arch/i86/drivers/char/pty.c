@@ -103,10 +103,10 @@ int len;
 				break;
 			}
 		}
-		printk(" rc[%d,%d]", i, len);
+		printk(" rc[%u,%u]", i, len);
 		pokeb(current->t_regs.ds, (data + i++), ch);
 	}
-	printk("{%d}\n", i);
+	printk("{%u}\n", i);
 	return i;
 }
 

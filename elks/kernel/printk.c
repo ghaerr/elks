@@ -177,7 +177,7 @@ int a1,a2,a3,a4;	/* VARARGS.. */
 
 	printk("\napparant call stack:\n");
 	for (i = 0; i < 8; i++) {
-		printk("(%d) ret addr = %p params = ", i, bp[1]);		
+		printk("(%u) ret addr = %p params = ", i, bp[1]);		
 		bp = (int*)bp[0];
 		for (j = 2; j < 8; j++) {
 			printk(" %p", bp[j]);

@@ -204,7 +204,7 @@ unsigned int len;
 	printd_mem("[k]mem_read()\n");
 	soff = (filp->f_pos) & 0xfL;
 	sseg = (filp->f_pos) >> 4;
-/*	printk("Reading %d %p %p.\n", len, sseg, soff); */
+/*	printk("Reading %u %p %p.\n", len, sseg, soff); */
 	fmemcpy(current->mm.dseg, data, sseg, soff, len);
 	filp->f_pos += len;
 	return len;

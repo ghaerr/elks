@@ -96,12 +96,12 @@ void free_dma(dmanr)
 unsigned int dmanr;
 {
 	if (dmanr >= MAX_DMA_CHANNELS) {
-		printk("Trying to free DMA%d\n", dmanr);
+		printk("Trying to free DMA%u\n", dmanr);
 		return;
 	}
 
 	if (xchg(&dma_chan_busy[dmanr].lock, 0) == 0) {
-		printk("Trying to free free DMA%d\n", dmanr);
+		printk("Trying to free free DMA%u\n", dmanr);
 		return;
 	}	
 

@@ -654,10 +654,10 @@ void init_console()
    cons->cy = peekb( 0x40, 0x51 );
    Visible = cons;
 #ifdef CONFIG_DCON_VT52
-   printk("Console: Direct %dx%d emulating vt52 (%d virtual consoles)\n",
+   printk("Console: Direct %ux%u emulating vt52 (%u virtual consoles)\n",
          Width, Height, NumConsoles );
 #else
-   printk("Console: Direct %dx%d dumb (%d virtual consoles)\n",
+   printk("Console: Direct %ux%u dumb (%u virtual consoles)\n",
          Width, Height, NumConsoles );
 #endif
 }

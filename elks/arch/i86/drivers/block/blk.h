@@ -195,7 +195,7 @@ int uptodate;
 #endif
 	if (!uptodate) {
 		printk("%s:I/O error\n", DEVICE_NAME);
-		printk("dev %x, sector %ld\n",
+		printk("dev %x, sector %lu\n",
 		       req->rq_dev, req->rq_sector);
 #ifdef MULTI_BH
 		req->rq_nr_sectors--;

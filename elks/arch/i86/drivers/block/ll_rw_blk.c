@@ -397,7 +397,7 @@ register struct buffer_head * bh[];
 	if ((major = MAJOR(bh[0]->b_dev)) < MAX_BLKDEV)
 		dev = blk_dev + major;
 	if (!dev || !dev->request_fn) {
-		printk("ll_rw_block: Trying to read nonexistent block-device %s (%ld)\n",
+		printk("ll_rw_block: Trying to read nonexistent block-device %s (%lu)\n",
 		kdevname(bh[0]->b_dev), bh[0]->b_blocknr);
 		goto sorry;
 	}
@@ -445,7 +445,7 @@ register struct buffer_head * bh;
 	if ((major = MAJOR(bh->b_dev)) < MAX_BLKDEV)
 		dev = blk_dev + major;
 	if (!dev || !dev->request_fn) {
-		printk("ll_rw_blk: Trying to read nonexistent block-device %s (%ld)\n",
+		printk("ll_rw_blk: Trying to read nonexistent block-device %s (%lu)\n",
 		kdevname(bh->b_dev), bh->b_blocknr);
 		goto sorry;
 	}

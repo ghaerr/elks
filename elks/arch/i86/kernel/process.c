@@ -364,7 +364,8 @@ void stack_check()
 	register __ptask currentp = current;
 	if ((currentp->t_begstack > currentp->t_enddata) &&
 	    (currentp->t_regs.sp < currentp->t_endbrk)) {
-		printk("STACK (%d) ENTERED BSS (%ld) - PROCESS TERMINATING\n", currentp->t_regs.sp, currentp->t_endbrk);
+		printk("STACK (%d) ENTERED BSS (%ld) - PROCESS TERMINATING\n",
+			currentp->t_regs.sp, currentp->t_endbrk);
 		do_exit(SIGSEGV);
 	}
 }

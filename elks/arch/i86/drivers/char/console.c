@@ -300,7 +300,7 @@ void init_console()
    
 
 #ifdef CONFIG_VIRTUAL_CONSOLE   
-   	printk("Console: Direct dumb (%d virtual consoles)\n", MAX_CONS);
+   	printk("Console: Direct dumb (%u virtual consoles)\n", MAX_CONS);
 #else
    	printk("Console: Direct dumb (no screen store)\n");
 #endif

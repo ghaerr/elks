@@ -395,7 +395,8 @@ int nonblock;
 
 		if (avail <= 0) 
 		{
-			printk("UNIX: read: AVAIL IS NEGATIVE!!!\n");
+			printk("UNIX: read: AVAIL IS NEGATIVE (%d)!!!\n",
+				avail);
 			send_sig(SIGKILL, current, 1);
 			return(-EPIPE);
 		}
@@ -473,7 +474,8 @@ int nonblock;
 
 		if (space <= 0) 
 		{
-			printk("UNIX: write: SPACE IS NEGATIVE!!!\n");
+			printk("UNIX: write: SPACE IS NEGATIVE (%d)!!!\n",
+				space);
 			send_sig(SIGKILL, current, 1);
 			return(-EPIPE);
 		}

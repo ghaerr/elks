@@ -88,7 +88,7 @@ static void init_task()
 #else
 		if((num=sys_open("/dev/tty1",2))<0)
 #endif
-			printk("Unable to open /dev/tty (error %d)\n",-num);
+			printk("Unable to open /dev/tty (error %u)\n",-num);
 		if (sys_dup(0)!=1)
 			printk("dup failed\n");
 		sys_dup(0);
@@ -204,7 +204,7 @@ int calibrate_delay()
 			bogo=loops_per_sec/500000L;
 			sub=loops_per_sec/5000L;
 			sub%=100;
-			printk("ok - %ld.%s%ld BogoMips\n",
+			printk("ok - %lu.%s%lu BogoMips\n",
 			 	     bogo,
 			 	     (sub<10)?"0":"",
 				     sub

@@ -245,7 +245,7 @@ struct elksfs_dir_entry ** res_dir;
 		}
 		if (offset < 1024)
 			continue;
-		printk("elksfs_add_entry may need another unmap_buffer :)");
+		printk("elksfs_add_entry may need another unmap_buffer :)\n");
 		brelse(bh);
 		bh = NULL;
 		offset = 0;

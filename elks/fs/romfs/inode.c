@@ -205,7 +205,8 @@ unsigned long count;
 	maxsize = minl(count,avail);
 	res = strnlen(((char *)bh->b_data)+(offset&ROMBMASK),(size_t) maxsize);
 
-	printk("romfs: strnlen_1: %s\n",((char *)bh->b_data)+(offset&ROMBMASK));
+	printk("romfs: strnlen_1: %s\n",
+		((char *)bh->b_data)+(offset&ROMBMASK));
 
 	unmap_brelse(bh);
 
