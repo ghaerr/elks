@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Mon Feb 15 17:06 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Latest tweaks to serial driver by Blaz Antonic
+
 Mon Feb 15 16:56 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	
 	* Added alpha code for shared libraries.
