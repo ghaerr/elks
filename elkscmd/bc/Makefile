@@ -11,7 +11,7 @@ BASEDIR 	= ..
 MIN_BIN 	= 
 MIN_LIB 	= 
 MIN_SBIN	= 
-MIN_USR_BIN	= fbc
+MIN_USR_BIN	= fbc bc
 MIN_USR_LIB	= 
 MIN_USR_MAN	= 
 MIN_USR_SBIN	= 
@@ -62,7 +62,7 @@ OFILES = scan.o util.o main.o number.o storage.o load.o execute.o
 
 SUBDIRS = Examples Test
 
-all: fbc
+all: fbc bc
 
 bc: $& config.h bc.o $(OFILES) global.o
 	$(CC) -o bc $(LDFLAGS) bc.o $(OFILES) global.o
@@ -91,6 +91,7 @@ $(LIBDIR)/libmath.b:	libmath.b
 
 rfs: all
 	cp -p bc $(TARGET_MNT)/bin
+	cp -p fbc $(TARGET_MNT)/bin
 
 min_rfs: all
 

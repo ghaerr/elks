@@ -36,7 +36,7 @@ include $(BASEDIR)/Make.rules
 ###############################################################################
 
 PRGS		= getty kill man mount reboot umount clock exitemu who ps \
-		  init login passwd knl
+		  init login passwd knl meminfo
 
 NETPRGS=init getty login kill mount umount passwd reboot ps swapon meminfo who
 
@@ -47,15 +47,19 @@ SMIN_PRGS	= init mount umount
 all: $(PRGS)
 
 rfs: all
+	mkdir -p $(TARGET_MNT)/bin
 	cp -p $(PRGS) $(TARGET_MNT)/bin
 	
 net_rfs: all
+	mkdir -p $(TARGET_MNT)/bin
 	cp -p $(NETPRGS) $(TARGET_MNT)/bin
 
 min_rfs: all
+	mkdir -p $(TARGET_MNT)/bin
 	cp -p $(MIN_PRGS) $(TARGET_MNT)/bin
 
 smin_rfs: all
+	mkdir -p $(TARGET_MNT)/bin
 	cp -p $(SMIN_PRGS) $(TARGET_MNT)/bin
 
 clean:
