@@ -229,14 +229,15 @@ clean:
 	(cd net;make clean)
 	(cd scripts; make clean)
 	
-
-distclean:	clean
-	rm -f .config* .menuconfig*
-	rm -f scripts/lxdialog/*.o scripts/lxdialog/lxdialog
+depclean:
 	@for i in `find -name Makefile`; do \
 	sed '/\#\#\# Dependencies/q' < $$i > tmp_make ; \
 	mv tmp_make $$i ; \
 	done
+
+distclean:	clean depclean
+	rm -f .config* .menuconfig*
+	rm -f scripts/lxdialog/*.o scripts/lxdialog/lxdialog
 
 backup:	distclean
 	(cd .. ; tar cf - linuxmt | compress - > $(BACKUP_DIR)/linuxMT.tar.Z)
