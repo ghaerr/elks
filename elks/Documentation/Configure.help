@@ -14,8 +14,8 @@ CONFIG_CONSOLE_BIOS
 
 Support only for XT architecture
 CONFIG_XT
-  Saying yes removes all support for additional features of AT architecture
-  machines.
+  Saying yes removes all support for additional features of AT
+  architecture machines.
 
 Support for loadable modules
 CONFIG_MODULE
@@ -23,8 +23,8 @@ CONFIG_MODULE
 
 Switch COMPAQ DeskPro into fast mode
 CONFIG_COMPAQ_FAST
-  Saying yes includes code to switch COMPAQ Deskpro machines that default to
-  slow speed, into fast speed.
+  Saying yes includes code to switch COMPAQ Deskpro machines that default
+  to slow speed, into fast speed.
 
 Memory character devices /dev/zero /dev/null etc.
 CONFIG_CHAR_DEV_MEM
@@ -38,8 +38,8 @@ CONFIG_CHAR_DEV_RS
 
 Parallel device driver
 CONFIG_CHAR_DEV_LP
-  Include support for parallel port devices. Currently broken, only detects
-  parallel ports.
+  Include support for parallel port devices. Currently broken, only
+  detects parallel ports.
 
 Minix fs support
 CONFIG_MINIX_FS
@@ -61,10 +61,10 @@ CONFIG_FULL_VFS
 
 Make all FS read-only
 CONFIG_FS_RO
-  Saying yes this option makes all access to the filesystem read only. Support
-  for system calls that modify the filesystem is removed. This option allows
-  a considerable ammount of code space to be saved allowing other features
-  into the kernel.
+  Saying yes this option makes all access to the filesystem read only.
+  Support for system calls that modify the filesystem is removed. This
+  option allows a considerable ammount of code space to be saved allowing
+  other features into the kernel.
 
 Minix file format
 CONFIG_EXEC_MINIX
@@ -99,13 +99,14 @@ CONFIG_SOCK_CLIENTONLY
 
 Only include support for STREAM type sockets (MUST)
 CONFIG_SOCK_STREAMONLY
-  Only include support for STREAM type socket connections. Currently the only
-  type supported.
+  Only include support for STREAM type socket connections. Currently the
+  only type supported.
 
 Support for 286 protected mode
 CONFIG_286PMODE
-  Include support for 286 protected mode. Experimental. Use at your own risk.
-  (This option will probably not interact well with the BIOS disk drivers)
+  Include support for 286 protected mode. Experimental. Use at your own
+  risk. (This option will probably not interact well with the BIOS disk
+  drivers)
 
 Support for memory beyond 16M on 386+ systems
 CONFIG_386RAM
@@ -131,8 +132,8 @@ CONFIG_BLK_DEV_FD
 
 Hardisk support
 CONFIG_BLK_DEV_HD
-  Device driver that provides direct access to IDE hard disks by Blaz Antonic.
-  Currently not tested. Use at you own risk.
+  Device driver that provides direct access to IDE hard disks by Blaz
+  Antonic. Currently not tested. Use at you own risk.
 
 RAM disk support
 CONFIG_BLK_DEV_RAM
@@ -145,10 +146,10 @@ CONFIG_BLK_DEV_XD
 
 Strace
 CONFIG_STRACE
-  Strace displays a trace of all system calls made to the kernel. Hackers only
-  require this option.
+  Strace displays a trace of all system calls made to the kernel. Hackers
+  only require this option.
 
 Optimise for size rather than speed
 CONFIG_OPT_SMALL
-  Where two versions of a function exist this will cause the smaller version
-  rather than the faster version to be included.
+  Where two versions of a function exist this will cause the smaller
+  version rather than the faster version to be included.
