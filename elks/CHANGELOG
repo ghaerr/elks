@@ -33,11 +33,23 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Mon Jun  3 00:43:09 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Oops - Committed tweaks from previous patch that somehow
+	  got omitted then.
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop. Noted that since I started ANSI'fying the
+	  ELKS kernel source, the compiled kernel has shrunk by over
+	  3k in size.
+
+-------------------------------------------------------------------------------
+
 Fri May 31 23:28:44 BST 2002	Riley Williams <Riley@Williams.Name>
 
-	* Made selection of root device simpler and ensured nodes are
-	  synchronised with majors in include/linuxmt/major.h rather
-	  than having the numbers duplicated.
+	* Made selection of root device n include/linuxmt/config.h
+	  simpler and ensured nodes are synchronised with majors in
+	  include/linuxmt/major.h rather than having the numbers
+	  duplicated in these two files.
 
 Thu May 30 23:45:40 BST 2002	Riley Williams <Riley@Williams.Name>
 
@@ -52,7 +64,9 @@ Thu May 30 16:00:37 BST 2002	Riley Williams <Riley@Williams.Name>
 	* Standardised on clr_irq() and set_irq() macros throughout
 	  the source tree. clri() would have been acceptable, but
 	  seti() is the Search for Extra-Terrestial Intelligence, so
-	  is misleading in this context.
+	  is misleading in this context. The current mixture of using
+	  both cli() and i_cli() for one, and both sti() and i_sti()
+	  for the other was confusing.
 
 Thu May 30 10:57:30 BST 2002	Riley Williams <Riley@Williams.Name>
 

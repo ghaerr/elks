@@ -27,20 +27,24 @@
  *  7 - mice
  */
 
-#define UNNAMED_MAJOR	0
-#define MEM_MAJOR	1
-#define PTY_MASTER_MAJOR 2
-#define PTY_SLAVE_MAJOR 3
-#define TTY_MAJOR	4
-#define TTYAUX_MAJOR	5
-#define LP_MAJOR	6
-#define MISC_MAJOR	7
-#define TCPDEV_MAJOR	8
+/* These are the character devices */
 
-#define RAM_MAJOR	1
-#define FLOPPY_MAJOR	2
-#define BIOSHD_MAJOR	3
-#define MSCDEX_MAJOR	4
-#define ATHD_MAJOR	5
+#define UNNAMED_MAJOR		0
+#define MEM_MAJOR		1
+#define PTY_MASTER_MAJOR	2
+#define PTY_SLAVE_MAJOR 	3
+#define TTY_MAJOR		4
+#define TTYAUX_MAJOR		5
+#define LP_MAJOR		6
+#define MISC_MAJOR		7
+#define TCPDEV_MAJOR		8
+
+/* These are the block devices */
+
+#define RAM_MAJOR		1
+#define FLOPPY_MAJOR		2
+#define BIOSHD_MAJOR		3
+#define MSCDEX_MAJOR		4
+#define ATHD_MAJOR		5
 
 #endif

@@ -6,15 +6,21 @@
 
 #ifdef __KERNEL__
 
-typedef __u16 kdev_t;
-
 #define MAJOR(dev)	((dev) >> MINORBITS)
 #define MINOR(dev)	((dev) & MINORMASK)
 #define HASHDEV(dev)	(dev)
-#define NODEV		0
 #define MKDEV(ma,mi)	(((ma) << MINORBITS) | (mi))
+#define NODEV		MKDEV(0,0)
 
-extern char *kdevname(kdev_t);	/* note: returns pointer to static data! */
+#ifdef __BCC__
+
+#include <linuxmt/types.h>
+
+typedef __u16 kdev_t;
+
+extern char *kdevname(kdev_t);	  /* note: returns pointer to static data! */
+
+#endif
 
 /* As long as device numbers in the outside world have 16 bits only,
  * we use these conversions.
@@ -32,9 +38,6 @@ extern char *kdevname(kdev_t);	/* note: returns pointer to static data! */
 #define MAJOR(dev)		((dev) >> MINORBITS)
 #define MINOR(dev)		((dev) & MINORMASK)
 #define MKDEV(major,minor)	((major) << MINORBITS | (minor))
-
-#undef MINORBITS
-#undef MINORMASK
 
 #endif
 
