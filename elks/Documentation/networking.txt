@@ -1,9 +1,6 @@
 Notes on networking code
 ------------------------
 
-The networking code is currently being developed by Beau Kuiper
-<ekuiperba@alpha2.curtin.edu.au>.
-
 Current development model is based around using a user process to be the
 actual TCP/IP stack with socket file descriptors and device drivers dealt with
 by the kernel. The diagram below show how things should work.
@@ -34,7 +31,8 @@ by the kernel. The diagram below show how things should work.
 
 The Network Application uses the standard BSD socket interface to open and
 read and write to sockets. The socket code passes the data on to the TCP/IP
-stack process, through a file descriptor. (char device or socket).
+stack process, through the /dev/tcpdev device.
 
 The TCP/IP stack process then constructs TCP/IP packets and writes them to
 the network device driver including all the necessary hardware headers.
+

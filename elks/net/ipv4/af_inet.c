@@ -25,7 +25,7 @@
 
 extern char td_buf[];
 
-static int tcpdev_readlock = 0;
+static char tcpdev_readlock = 0;
 static int tcpdev_availdata = 0;
 
 extern int tcpdev_inetwrite();
@@ -259,7 +259,7 @@ int nonblock;
 
 	r = td_buf;
 	ret = r->ret_value;
-	
+
 	if(ret > 0){
 		memcpy_tofs(ubuf, &r->data, ret);
 		sock->avail_data = 0;
