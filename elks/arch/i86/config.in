@@ -6,49 +6,20 @@ mainmenu_name "Linux ELKS Kernel Configuration"
 comment 'Just accept the defaults unless you know what you are doing'
 mainmenu_option next_comment
 comment 'General setup'
-bool 'Direct console writes' CONFIG_CONSOLE_DIRECT
-if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
-	bool 'Direct console VT52 emulation' CONFIG_DCON_VT52
-	if [ "$CONFIG_DCON_VT52" = "y" ]; then
-		bool 'Direct console ANSI emulation' CONFIG_DCON_ANSI
-	fi
-	if [ "$CONFIG_DCON_ANSI" = "y" ]; then
-		bool 'ANSI Colourized printk' CONFIG_DCON_ANSI_PRINTK
-	fi
-	choice 'XT Keyboard support' \
-		"be 	CONFIG_BE_KEYMAP\
-		 fr	CONFIG_FR_KEYMAP\
-		 uk 	CONFIG_UK_KEYMAP\
-		 es 	CONFIG_ES_KEYMAP\
-		 de	CONFIG_DE_KEYMAP\
-		 usa    CONFIG_DEFAULT_KEYMAP" usa
-fi
-bool 'BIOS console writes' CONFIG_CONSOLE_BIOS
-if [ "$CONFIG_CONSOLE_BIOS" = "y" ]; then
-	bool 'BIOS console VT52 emulation' CONFIG_BIOS_VT52
-fi
-bool 'Serial console writes' CONFIG_CONSOLE_SERIAL
-if [ "$CONFIG_CONSOLE_SERIAL" = "y" ]; then
-	define_bool CONFIG_CHAR_DEV_RS y
-fi
 bool 'Support only for XT architecture' CONFIG_XT
 bool 'Support for loadable modules' CONFIG_MODULE
 bool 'Switch COMPAQ DeskPro into fast mode' CONFIG_COMPAQ_FAST
-bool 'Memory character devices /dev/zero /dev/null etc.' CONFIG_CHAR_DEV_MEM
-if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
-	bool 'Serial device driver' CONFIG_CHAR_DEV_RS
-fi
-bool 'Parallel device driver' CONFIG_CHAR_DEV_LP
-endmenu 
-
-source fs/Config.in
-source net/Config.in
-# The next lines are okay as we are already in arch/i86
-source arch/i86/drivers/block/Config.in
 source arch/i86/286pmode/Config.in
-
 mainmenu_option next_comment
 comment 'Kernel hacking'
 bool 'Strace' CONFIG_STRACE
 bool 'Optimise for size rather than speed' CONFIG_OPT_SMALL
 endmenu
+endmenu 
+
+# The next lines are okay as we are already in arch/i86
+source arch/i86/drivers/char/Config.in
+source arch/i86/drivers/block/Config.in
+source fs/Config.in
+source net/Config.in
+

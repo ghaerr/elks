@@ -1,83 +1,236 @@
+# Linux ELKS Kernel Configuration
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# General Setup
+# ~~~~~~~~~~~~~
+
+Support loadable modules
+CONFIG_MODULE
+  Saying yes includes experimental support for loadable modules.
+
+# Keyboard support
+# ~~~~~~~~~~~~~~~~
+
+Use full keymap layout names
+CONFIG_KEYMAP_FULL
+  This option does not directly affect the code produced, but instead
+  specifies whether to select the keyboard layout by abbreviated name
+  (default, recommended for 'make config') or full name (recommended
+  for 'make menuconfig'). Exactly the same options are available on
+  each setting, they just have different names and occur in a different
+  order.
+
+Select XT keyboard support for American (US) keyboards
+CONFIG_DEFAULT_KEYMAP
+  This option specifies that support be provided for XT keyboards with
+  the American key layout. There are no dead keys with this layout.
+
+Select XT keyboard support for Belgian (BE) keyboards
+CONFIG_BE_KEYMAP
+  This option specifies that support be provided for XT keyboards with
+  the Belgian key layout and associated dead keys.
+
+Select XT keyboard support for British (UK) keyboards
+CONFIG_UK_KEYMAP
+  This option specifies that support be provided for XT keyboards with
+  the British key layout. There are no dead keys with this layout.
+
+Select XT keyboard support for French (FR) keyboards
+CONFIG_FR_KEYMAP
+  This option specifies that support be provided for XT keyboards with
+  the French key layout and associated dead keys.
+
+Select XT keyboard support for German (DE) keyboards
+CONFIG_DE_KEYMAP
+  This option specifies that support be provided for XT keyboards with
+  the German key layout and associated dead keys.
+
+Select XT keyboard support for Spanish (ES) keyboards
+CONFIG_ES_KEYMAP
+  This option specifies that support be provided for XT keyboards with
+  the Spanish key layout and associated dead keys.
+
+# Console display support
+# ~~~~~~~~~~~~~~~~~~~~~~~
+
 Direct console writes
 CONFIG_CONSOLE_DIRECT
-  A direct console driver, currently the only console driver available
-  for ELKS.
+  A direct console driver. This is currently the only console driver
+  available for ELKS.
 
 Direct console VT52 emulation
 CONFIG_DCON_VT52
   Saying no removes some of the intelligent features from the console 
   code leaving a dumb text console which is much smaller.
 
+Direct console ANSI emulation
+CONFIG_DCON_ANSI
+  Provide direct console support for ANSI (VT-102) terminals.
+
+Use ANSI codes in printk()
+CONFIG_DCON_ANSI_PRINTK
+  When the kernel reports something using printk(), the reports will
+  be coloured.
+
 BIOS console writes
 CONFIG_CONSOLE_BIOS
-  The currently not working BIOS based console driver.
+  The newly implemented BIOS based console driver.
 
-Support only for XT architecture
+BIOS console VT-52 emulation
+CONFIG_BIOS_VT52
+  This enables the use of VT-52 codes when using the BIOS console
+  driver.
+
+Serial console writes
+CONFIG_CONSOLE_SERIAL
+  The serial console driver. Currently minimal support for console output over
+  a serial line.
+
+# 286 Protected Mode support
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Support XT architecture only
 CONFIG_XT
-  Saying yes removes all support for additional features of AT
-  architecture machines.
+  Use this option to build a smaller kernel that only runs on XT type systems.
 
-Support for loadable modules
-CONFIG_MODULE
-  Saying yes includes experimental support for loadable modules.
+# Support for 286+ features
+
+286 Protected Mode support
+CONFIG_286PMODE
+  Include support for 286 Protected Mode. Experimental. Use at your own
+  risk. (This option will probably not interact well with the BIOS disk
+  drivers)
+
+# Support for 386+ features
+
+Support more than 16 Megs of RAM
+CONFIG_386RAM
+  Add support for RAM beyond 16 megs on 386+ systems. Currently
+  nonexistant.
+
+# Model-specific options
+# ~~~~~~~~~~~~~~~~~~~~~~
 
 Switch COMPAQ DeskPro into fast mode
 CONFIG_COMPAQ_FAST
-  Saying yes includes code to switch COMPAQ Deskpro machines that default
-  to slow speed, into fast speed.
+  Saying yes includes code to switch COMPAQ Deskpro machines that
+  default to slow speed, into fast speed.
 
-Memory character devices /dev/zero /dev/null etc.
+# Character devices
+# ~~~~~~~~~~~~~~~~~
+
+Enable memory devices
 CONFIG_CHAR_DEV_MEM
-  Saying yes include support currently only /dev/zero, /dev/null and
-  /dev/full.
+  Saying yes include support for the various memory character devices.
+  Currently only mem, kmem, zero, null and full are supported.
 
-Serial device driver
-CONFIG_CHAR_DEV_RS
-  Include support for serial port devices. Currently broken, only output
-  works.
-
-Parallel device driver
+Enable standard parallel (printer) ports
 CONFIG_CHAR_DEV_LP
-  Include support for parallel port devices. Currently broken, only
-  detects parallel ports.
+  Include support for parallel port devices. Currently under development.
+  Please test.
 
-Minix fs support
-CONFIG_MINIX_FS
-  Support for the basic Minix filesystem. The only currently working 
-  filesystem. Until another filesystem is working this is required.
+Enable standard serial ports
+CONFIG_CHAR_DEV_RS
+  Include support for serial port devices. Currently under development. Please
+  test.
 
-ROMFS fs support
-CONFIG_ROMFS_FS
-  Incomplete support for the Read Only filesystem.
+# Block devices
+# ~~~~~~~~~~~~~
 
-ELKSFS fs support
-CONFIG_ELKSFS_FS
-  Support for the new ELKSFS native fs. Includes Minix fs emulation.
+BIOS block device support
+CONFIG_BLK_DEV_BIOS
+  Device driver that allows access to floppy and hard drives through
+  BIOS. Currently required.
+
+BIOS Floppy Drive support
+CONFIG_BLK_DEV_BFD
+  Option to allow floppy code to be left out of BIOS device driver.
+
+BIOD Hard Drive support
+CONFIG_BLK_DEV_BHD
+  Option to allow HDD code to be left out of BIOS device driver.
+
+Normal Floppy Disk support
+CONFIG_BLK_DEV_FD
+  Device driver that provides direct support for floppy drives.
+  Currently does not work.
+
+Normal Hard Disk support
+CONFIG_BLK_DEV_HD
+  Device driver that provides direct access to IDE hard disks by Blaz
+  Antonic. Currently not tested. Use at you own risk.
+
+RAM Drive support
+CONFIG_BLK_DEV_RAM
+  Support for a RAM disk device driver which allows up to 8 64K ram
+  drives to be implemented. Not very useful, but can be adapted to make use
+  of EMS cards etc.
+
+Old XT Hard Disk support
+CONFIG_BLK_DEV_XD
+  None existant device driver.
+
+# File systems
+# ~~~~~~~~~~~~
 
 Full VFS support
 CONFIG_FULL_VFS
   If you say no to this then the vfs will only support one filesystem 
-  type. You do not need to say yes currently as only minixfs is available.
+  type. You do not need to say yes currently as only minixfs is
+  available.
 
-Make all FS read-only
+Inter-process pipe support
+CONFIG_PIPE
+  Include support for standard UNIX inter-process pipes.
+
+Make all file systems read-only
 CONFIG_FS_RO
   Saying yes this option makes all access to the filesystem read only.
   Support for system calls that modify the filesystem is removed. This
-  option allows a considerable ammount of code space to be saved allowing
-  other features into the kernel.
+  option allows a considerable amount of code space to be saved, thus
+  allowing other features into the kernel.
+
+# Select available file systems
+
+Minix file system support
+CONFIG_MINIX_FS
+  Support for the basic Minix filesystem. The only currently working 
+  filesystem. Until another filesystem is working this is required.
+
+ELKS file system support
+CONFIG_ELKSFS_FS
+  Support for the new ELKSFS native fs. Includes Minix fs emulation.
+
+MS-DOS file system support
+CONFIG_MSDOS_FS
+  Support for standard MS-DOS style partitions. Currently non-existant
+
+Include VFAT style long name support
+CONFIG_VFAT_FS
+  Extension to standard MS-DOS fs support to permit Win95 style long
+  file names. Currently non-existant.
+
+ROM file system support
+CONFIG_ROMFS_FS
+  Incomplete support for the Read Only filesystem.
+
+# Executable file formats
+# ~~~~~~~~~~~~~~~~~~~~~~~
 
 Minix file format
 CONFIG_EXEC_MINIX
-  This lets you run Minix binaries compiled with bcc.  This is the only
-  real format allowed at the moment.
+  This lets you run Minix binaries compiled with bcc. This is the only
+  real format allowed at the moment. Required.
 
 MSDOS (EXE) file format
 CONFIG_EXEC_MSDOS
-  This lets you run MSDOS .EXE files under ELKS.  This support is VERY
-  ALPHA at the moment, and may not work.  Use with caution. ie. If you
+  This lets you run MSDOS .EXE files under ELKS. This support is VERY
+  ALPHA at the moment, and may not work. Use with caution. ie. If you
   compile this in, and something breaks, then remove it, and try again.
   In particluar, you might find you can't run any programs, including
   init and login.
+
+# Networking support
+# ~~~~~~~~~~~~~~~~~~
 
 Socket support
 CONFIG_SOCKET
@@ -92,65 +245,27 @@ INET sockets (TCP/IP)
 CONFIG_INET
   Include support for AF_INET TCP/IP sockets.
 
-Only include support for client sockets (MUST)
+Only support client sockets (MUST)
 CONFIG_SOCK_CLIENTONLY
-  Only include support for outgoing connections. Currently the only type
-  supported.
+  Only include support for outgoing connections. Currently the only
+  type supported.
 
-Only include support for STREAM type sockets (MUST)
+Only support STREAM type sockets (MUST)
 CONFIG_SOCK_STREAMONLY
-  Only include support for STREAM type socket connections. Currently the
-  only type supported.
+  Only include support for STREAM type socket connections. Currently
+  the only type supported.
 
-Support for 286 protected mode
-CONFIG_286PMODE
-  Include support for 286 protected mode. Experimental. Use at your own
-  risk. (This option will probably not interact well with the BIOS disk
-  drivers)
-
-Support for memory beyond 16M on 386+ systems
-CONFIG_386RAM
-  Add support for ram beyond 16 megs on 386+ systems. Currently
-  nonexistant.
-
-BIOS block device support
-CONFIG_BLK_DEV_BIOS
-  Device driver that allows access to floppy and hard drives through BIOS.
-  Currently required.
-
-BIOS block device floppy support
-CONFIG_BLK_DEV_BFD
-  Option to allow floppy code to be left out of BIOS device driver.
-
-BIOD block device HDD support
-CONFIG_BLK_DEV_BHD
-  Option to allow HDD code to be left out of BIOS device driver.
-
-Normal floppy disk support
-CONFIG_BLK_DEV_FD
-  Device driver that provides direct support for floppy drives. Currently
-  does not work.
-
-Hardisk support
-CONFIG_BLK_DEV_HD
-  Device driver that provides direct access to IDE hard disks by Blaz
-  Antonic. Currently not tested. Use at you own risk.
-
-RAM disk support
-CONFIG_BLK_DEV_RAM
-  Support for a RAM disk device driver which allows up to 8 64K ram
-  drives to be implemented.
-
-Old XT hardisk support
-CONFIG_BLK_DEV_XD
-  None existant device driver.
+# Kernel hacking
+# ~~~~~~~~~~~~~~
 
 Strace
 CONFIG_STRACE
-  Strace displays a trace of all system calls made to the kernel. Hackers
-  only require this option.
+  Strace displays a trace of all system calls made to the kernel. Only
+  kernel hackers need this option.
 
 Optimise for size rather than speed
 CONFIG_OPT_SMALL
   Where two versions of a function exist this will cause the smaller
   version rather than the faster version to be included.
+
+# EOF

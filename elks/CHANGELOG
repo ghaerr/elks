@@ -4,7 +4,12 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
-Tue Nov 16 19:16 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Nov 18 19:16 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Integrated updated and re-organised config scripts contributed
+	  by Riley Williams.
+
+Tue Nov 17 19:16 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Improved serial driver and added support for serial console.
 

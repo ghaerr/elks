@@ -2,7 +2,7 @@
 # Block device driver configuration
 #
 mainmenu_option next_comment
-comment 'Floppy, IDE, and other block devices'
+comment 'Block device drivers'
 
 bool 'BIOS block device support' CONFIG_BLK_DEV_BIOS
 if [ "$CONFIG_BLK_DEV_BIOS" = "y" ]; then
@@ -11,7 +11,7 @@ if [ "$CONFIG_BLK_DEV_BIOS" = "y" ]; then
 fi
 
 bool 'Normal floppy disk support' CONFIG_BLK_DEV_FD
-bool 'Hardisk support' CONFIG_BLK_DEV_HD
+bool 'Normal IDE hardisk support' CONFIG_BLK_DEV_HD
 
 if [ "$CONFIG_BLK_DEV_FD" = "y" ]; then
 	define_bool CONFIG_DMA y
