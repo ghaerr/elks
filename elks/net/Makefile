@@ -24,7 +24,7 @@ CC_PROTO =gcc -I../include -M
 	$(CC) $(CFLAGS) \
 	-0 -c -o $*.o $<
 
-OBJS  = socket.o protocols.o ipv4/af_inet.o unix/af_unix.o nano/af_nano.o
+OBJS  = socket.o unix/af_unix.o nano/af_nano.o
 
 net.a: $(OBJS)
 	ar rcs net.a $(OBJS)
@@ -36,10 +36,8 @@ clean:
 distdir:
 	cp -pf Config.in Makefile $(TOPDIR)/$(DISTDIR)/net
 	cp -pf *.c $(TOPDIR)/$(DISTDIR)/net
-	(mkdir $(TOPDIR)/$(DISTDIR)/net/ipv4)
 	(mkdir $(TOPDIR)/$(DISTDIR)/net/nano)
 	(mkdir $(TOPDIR)/$(DISTDIR)/net/unix)
-	cp -pf ipv4/*.c $(TOPDIR)/$(DISTDIR)/net/ipv4
 	cp -pf nano/*.c nano/*.h $(TOPDIR)/$(DISTDIR)/net/nano
 	cp -pf unix/*.c unix/*.h $(TOPDIR)/$(DISTDIR)/net/unix
 
