@@ -32,6 +32,15 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Mon Apr 29 15:18:52 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Removed the "raw keyboard mode" from the configuration, since 
+	  it does nothing.
+	* "meta device drivers", "direct floppy", "direct HDD", "286 support"
+	  are available now only in experimental.
+	* "old XT HDD support" available only in unimplemented.
+	* Updated the English FAQ.
+
 Mon Apr 29 00:49:41 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Verified that all fs/*.c files other than fs/super.c are clean

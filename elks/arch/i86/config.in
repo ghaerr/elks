@@ -8,9 +8,9 @@ comment 'Just accept the defaults unless you know what you are doing'
 mainmenu_option next_comment
     comment 'Advanced - for Developers and Hackers only'
 
-    bool 'Development and/or incomplete drivers'		CONFIG_EXPERIMENTAL
-    bool 'Obsolete drivers'					CONFIG_OBSOLETE
-    bool 'Unimplemented drivers'				CONFIG_NOT_YET
+    bool 'Prompt for development and/or incomplete code/drivers'	CONFIG_EXPERIMENTAL
+    bool 'Obsolete drivers'						CONFIG_OBSOLETE
+    bool 'Unimplemented drivers'					CONFIG_NOT_YET
 endmenu
 
 mainmenu_option next_comment
@@ -160,11 +160,13 @@ if [ "$CONFIG_ROMCODE" = "y" ]; then
     endmenu
 fi
 
-mainmenu_option next_comment
-    comment '286 Protected Mode Support'
+if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+	mainmenu_option next_comment
+	    comment '286 Protected Mode Support'
 
-    source arch/i86/286pmode/Config.in
-endmenu
+	    source arch/i86/286pmode/Config.in
+	endmenu
+fi
 
 mainmenu_option next_comment
     comment 'Driver Support'

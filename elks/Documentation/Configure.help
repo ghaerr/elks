@@ -410,11 +410,6 @@ CONFIG_KEYMAP_ES
   This option specifies that support be provided for XT keyboards with
   the Spanish key layout and associated dead keys.
 
-Raw keyboard mode
-CONFIG_DCON_KRAW
-  This option specified that support for raw keyboard scan code mode should
-  be included in the keyboard driver.
-
 # Character devices
 # ~~~~~~~~~~~~~~~~~
 

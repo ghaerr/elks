@@ -11,11 +11,13 @@ if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 	  bool '  BIOS floppy drive support' CONFIG_BLK_DEV_BFD
 	  bool '  BIOS hard drive support' CONFIG_BLK_DEV_BHD
 	fi
-
-	bool 'Normal floppy disk support' CONFIG_BLK_DEV_FD
-	bool 'Normal IDE hardisk support' CONFIG_BLK_DEV_HD
-	bool 'Old XT hardisk support' CONFIG_BLK_DEV_XD
-
+	if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+		bool 'Normal floppy disk support' CONFIG_BLK_DEV_FD
+		bool 'Normal IDE hardisk support' CONFIG_BLK_DEV_HD
+	fi
+	if [ "$CONFIG_NOT_YET" = "y" ]; then
+		bool 'Old XT hardisk support' CONFIG_BLK_DEV_XD
+	fi
 	if [ "$CONFIG_BLK_DEV_FD" = "y" ]; then
 		define_bool CONFIG_DMA y
 	else

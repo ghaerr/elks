@@ -20,7 +20,6 @@ if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 		fi
 	fi
 	source arch/i86/drivers/char/KeyMaps/Config.in
-	bool 'Raw keyboard mode' CONFIG_DCON_KRAW
     fi
     if [ "$CONFIG_CONSOLE_BIOS" = "y" ]; then
 	bool 'BIOS console VT52 emulation' CONFIG_BIOS_VT52
@@ -56,6 +55,8 @@ else
 fi
 bool 'Memory character devices /dev/zero /dev/null etc.' CONFIG_CHAR_DEV_MEM
 bool 'Pseudo tty device driver' CONFIG_PSEUDO_TTY
-bool 'Meta device driver' CONFIG_DEV_META
+if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+	bool 'Meta device driver' CONFIG_DEV_META
+fi
 
 endmenu
