@@ -36,14 +36,14 @@ akernel.a: $(OBJS)
 	ar rcs akernel.a $(OBJS)
 
 entry.c: syscall.dat mkentry.sh
-	sh mkentry.sh > tmp.o
-	mv tmp.o entry.c
+	sh mkentry.sh > entry.tmp
+	mv entry.tmp entry.c
 
 #########################################################################
 # Standard commands.
 
 clean:
-	rm -f core *~ *.o *.a tmp_make keyboard.s entry.c
+	rm -f core *~ *.o *.a *.tmp keyboard.s entry.c
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 
 distdir:
@@ -52,10 +52,10 @@ distdir:
 	cp -pf *.c $(DISTDIR)/arch/i86/kernel
 
 dep:
-	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
+	sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \
-		$(CC_PROTO) $$i;done) >> tmp_make
-	mv tmp_make Makefile
+		$(CC_PROTO) $$i;done) >> make.tmp
+	mv make.tmp Makefile
 
 #########################################################################
 ### Dependencies:

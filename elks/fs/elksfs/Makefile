@@ -33,17 +33,17 @@ elksfs.a:	$(OBJS)
 # Standard commands.
 
 clean:
-	rm -f core *~ *.o *.a tmp_make
+	rm -f core *~ *.o *.a *.tmp
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 
 distdir:
 	cp -pf Makefile *.c $(DISTDIR)/fs/elksfs
 
 dep:
-	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
+	sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \
-		$(CC_PROTO) $$i;done) >> tmp_make
-	mv tmp_make Makefile
+		$(CC_PROTO) $$i;done) >> make.tmp
+	mv make.tmp Makefile
 
 #########################################################################
 ### Dependencies:

@@ -40,41 +40,31 @@ DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 	$(ARCH_DIR)/drivers/block/blk_drv.a
 
 #########################################################################
-# Commands.
+# Things to make.
 
-.PHONY: boot/system tools
+.PHONY: 		boot/system tools
 
-boot/setup: boot/setup.S
-	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/setup.s boot/setup.S
-	$(AS) -o boot/setup.o boot/setup.s
-	$(LD) -s -o boot/setup -M boot/setup.o > Setup.map
-
-boot/bootsect: boot/bootsect.S
-	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/bootsect.s \
-		boot/bootsect.S
-	$(AS) -0 -o boot/bootsect.o boot/bootsect.s
+boot/bootsect:		boot/bootsect.o
 	$(LD) -0 -s -o boot/bootsect -M boot/bootsect.o > Boot.map
 
-boot/netbootsect: boot/netbootsect.S
-	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/netbootsect.s \
-		boot/netbootsect.S
-	$(AS) -0 -o boot/netbootsect.o boot/netbootsect.s
+boot/bootsect.o:	boot/bootsect.s
+
+boot/crt0.o:		boot/crt0.s
+
+boot/crt1.o:		boot/crt1.c
+
+boot/netbootsect:	boot/netbootsect.o
 	$(LD) -0 -s -o boot/netbootsect -M boot/netbootsect.o > Netboot.map
 
-boot/crt1.o: boot/crt1.c
+boot/netbootsect.o:	boot/netbootsect.s
 
-boot/crt0.o: boot/crt0.S
-	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/crt0.s boot/crt0.S
-	$(AS) -0 -o boot/crt0.o boot/crt0.s
+boot/setup:		boot/setup.o
+	$(LD) -0 -s -o boot/setup -M boot/setup.o > Setup.map
+
+boot/setup.o:		boot/setup.s
 
 tools:
 	make -C tools all
-
-tools/build: tools/build.c
-	gcc -I $(TOPDIR)/include -o tools/build tools/build.c
-
-tools/mkurlader: tools/mkurlader.c
-	gcc -I $(TOPDIR)/include -o tools/mkurlader tools/mkurlader.c
 
 #########################################################################
 # Image selection.
@@ -98,7 +88,7 @@ Image: boot/system tools
 
 else
 
-boot/system: $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
+boot/system:	$(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 	(cd $(ELKSDIR) ; $(LD) $(LDFLAGS) $(ARCH_DIR)/boot/crt0.o \
 		$(ARCH_DIR)/boot/crt1.o \
 		init/main.o \
@@ -113,19 +103,15 @@ ifneq ($(CONFIG_ROMCODE), y)
 
 ifeq ($(CONFIG_286PMODE), y)
 
-Image: tools/build boot/bootsect boot/setup 286pmode/pmode286 boot/system tools
-	tools/build boot/bootsect boot/setup 286pmode/pmode286 \
-		boot/system $(ROOT_DEV) > Image
-	sync
+Image:		tools/build boot/bootsect boot/setup 286pmode/pmode286 boot/system tools
+	tools/build boot/bootsect boot/setup 286pmode/pmode286 boot/system $(ROOT_DEV) > Image
 
 else
 
-Image: boot/bootsect boot/setup boot/system tools
-	tools/build boot/bootsect boot/setup boot/system \
-		$(ROOT_DEV) > boot/Image
-	sync
+Image:		boot/bootsect boot/setup boot/system tools
+	tools/build boot/bootsect boot/setup boot/system $(ROOT_DEV) > boot/Image
 
-nbImage: Image boot/netbootsect
+nbImage:	Image boot/netbootsect
 	tools/mknbi-elks boot/netbootsect boot/Image boot/nbImage
 
 endif
@@ -133,10 +119,10 @@ endif
 else
 
 ifeq ($(CONFIG_ROM_BOOTABLE_BY_RESET), y)
-  RVECT = -r $(CONFIG_ROM_RESET_ADDRESS)   
+    RVECT = -r $(CONFIG_ROM_RESET_ADDRESS)   
 endif
 
-Image: tools boot/setup boot/system  
+Image:	tools boot/setup boot/system  
 	tools/mkurlader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(CONFIG_ROM_CHECKSUM_SIZE) Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
 	sync
 	$(CONFIG_ROM_SIMULATOR_PROGRAM)
@@ -146,12 +132,12 @@ endif
 #########################################################################
 # Other commands.
 
-boot: Image
+boot:	Image
 	dd if=boot/Image of=/dev/fd0 bs=8192
 
-disk: boot
+disk:	boot
 
-setup: $(ARCH_DIR)/tools $(ARCH_DIR)/boot/setup  
+setup:	$(ARCH_DIR)/tools $(ARCH_DIR)/boot/setup  
 	tools/mkurlader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(ROM_MAX_SETUP_SIZE) Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
 	sync
 	$(CONFIG_ROM_SIMULATOR_PROGRAM)
@@ -188,7 +174,7 @@ drivers/block/blk_drv.a:
 
 clean:
 	rm -f boot/bootsect boot/setup boot/bootsect.s boot/setup.s
-	rm -f boot/netbootsect boot/netbootsect.s
+	rm -f boot/netbootsect boot/netbootsect.s *.tmp boot/*.tmp
 	rm -f boot/*~ boot/*.o boot/system boot/Image boot/system.app
 	rm -f boot/nbImage boot/nbImage.rd Netboot.map
 	rm -f tools/*~ tools/*.o tools/build

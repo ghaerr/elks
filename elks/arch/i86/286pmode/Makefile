@@ -28,7 +28,7 @@ pmode286: $(OBJS)
 	$(LD) -0 -i $(OBJS) ../lib/lib86.a -M -o pmode286 > $(ELKSDIR)/pmode286.map
 
 clean:
-	rm -f core *~ *.o *.a tmp_make pmode286 pmode286.map
+	rm -f core *~ *.o *.a *.tmp pmode286 pmode286.map
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 
 distdir:
@@ -36,10 +36,10 @@ distdir:
 	cp -pf crt0.s irq.s $(DISTDIR)/arch/i86/286pmode
 
 dep:
-	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
+	sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \
-		$(CC_PROTO) $$i;done) >> tmp_make
-	mv tmp_make Makefile
+		$(CC_PROTO) $$i;done) >> make.tmp
+	mv make.tmp Makefile
 
 #########################################################################
 ### Dependencies:

@@ -137,7 +137,7 @@ elks.spec: Makefile
 # miscellaneous
 
 clean:
-	rm -f *~ Boot.map Setup.map System.map tmp_make core
+	rm -f *~ *.tmp Boot.map Setup.map System.map core
 	rm -f init/*~ init/*.o include/linuxmt/compiler-generated.h
 	make -C $(ARCH_DIR) clean
 	make -C fs clean
@@ -154,11 +154,11 @@ clean:
 
 nodep:
 	@for i in `find -name Makefile`; do \
-		sed '/\#\#\# Dependencies/q' < $$i > tmp_make ; \
-		if ! diff Makefile tmp_make > /dev/null ; then \
-			mv tmp_make $$i ; \
+		sed '/\#\#\# Dependencies/q' < $$i > make.tmp ; \
+		if ! diff Makefile make.tmp > /dev/null ; then \
+			mv make.tmp $$i ; \
 		else \
-			rm -f tmp_make ; \
+			rm -f make.tmp ; \
 		fi ; \
 	done
 	@echo
@@ -200,9 +200,9 @@ dist:
 	@echo
 
 dep:	include/linuxmt/compiler-generated.h
-	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
-	(for i in init/*.c; do echo -n "init/"; $(CC_PROTO) $$i; echo; done) >> tmp_make
-	mv tmp_make Makefile
+	sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
+	(for i in init/*.c; do echo -n "init/"; $(CC_PROTO) $$i; echo; done) >> make.tmp
+	mv make.tmp Makefile
 	make -C $(ARCH_DIR) dep
 	make -C fs dep
 	make -C fs/minix dep
