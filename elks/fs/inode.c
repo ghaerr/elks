@@ -126,8 +126,8 @@ REGOPT struct inode * inode;
 }
 
 /*
- * Note that we don't want to disturb any wait-queues when we discard
- * an inode.
+ * Note that we don't have to care about wait queues unlike Linux proper
+ * because they are not in the object as such
  */
  
 void clear_inode(inode)
@@ -443,7 +443,6 @@ repeat:
 				break;
 		}
 	}
-/*	inode = best; */ /* If best is non-zero, inode == best already */
 	if (!best) {
 		printk("VFS: No free inodes - contact somebody other than Linus\n");
 		list_inode_status();
