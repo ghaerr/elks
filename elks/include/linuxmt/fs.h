@@ -228,6 +228,9 @@ struct inode
 	unsigned long	i_blocks;
 	unsigned long	i_version;
 	struct file_lock * i_flock;
+	unsigned short i_wcount;
+	unsigned char i_seek;
+	unsigned char i_update;
 #endif
 	struct inode_operations * i_op;
 	struct super_block * i_sb;
@@ -235,11 +238,6 @@ struct inode
 	struct inode * i_next, * i_prev;
 	struct inode * i_mount;
 	unsigned short i_count;
-#ifdef BLOAT_FS
-	struct inode * i_hash_next, *i_hash_prev;
-	struct inode * i_bound_to, * i_bound_by;
-	unsigned short i_wcount;
-#endif
 	unsigned short i_flags;
 	unsigned char i_lock;
 	unsigned char i_dirt;
@@ -247,10 +245,6 @@ struct inode
 	unsigned char i_pipe;
 #endif
 	unsigned char i_sock;
-#ifdef BLOAT_FS
-	unsigned char i_seek;
-	unsigned char i_update;
-#endif
 	short i_sem;
 	union {
 		struct pipe_inode_info pipe_i;
