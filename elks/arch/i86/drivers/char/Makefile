@@ -39,6 +39,12 @@ clean:
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 	for i in *.S;do rm -f `basename $$i .S`.s;done
 
+distdir:
+	cp -pf CGAsnow Changes NEW_NOTES $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/char
+	cp -pf NOTES README_CONSOLE $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/char
+	cp -pf Makefile Config.in $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/char
+	cp -pf *.S *.h *.c $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/char
+
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \

@@ -34,6 +34,10 @@ clean:
 	rm -f core *.o *.a tmp_make keyboard.s
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 
+distdir:
+	cp -pf Makefile $(TOPDIR)/$(DISTDIR)/arch/i86/mm
+	cp -pf *.c $(TOPDIR)/$(DISTDIR)/arch/i86/mm
+
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \

@@ -50,6 +50,10 @@ clean:
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 	rm -f setupb.s setupw.s
 
+distdir:
+	cp -pf Makefile $(TOPDIR)/$(DISTDIR)/arch/i86/lib
+	cp -pf *.c *.S *.s $(TOPDIR)/$(DISTDIR)/arch/i86/lib
+
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \

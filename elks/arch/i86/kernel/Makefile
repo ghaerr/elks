@@ -43,6 +43,11 @@ clean:
 	rm -f core *~ *.o *.a tmp_make keyboard.s entry.c
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 
+distdir:
+	cp -pf Makefile mkentry.sh $(TOPDIR)/$(DISTDIR)/arch/i86/kernel
+	cp -pf syscall.dat $(TOPDIR)/$(DISTDIR)/arch/i86/kernel
+	cp -pf *.c $(TOPDIR)/$(DISTDIR)/arch/i86/kernel
+
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \

@@ -12,6 +12,7 @@ SUBLEVEL = 83
 #
 MT_DIR     = $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
 TOPDIR     = $(MT_DIR)
+DISTDIR    = elks-$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
 
 TARGET_NB_IMAGE=/tftpboot/elksy/nbImage
 
@@ -170,9 +171,37 @@ depclean:
 	mv tmp_make $$i ; \
 	done
 
-distclean:	clean depclean
+distclean: clean depclean
 	rm -f .config* .menuconfig*
 	rm -f scripts/lxdialog/*.o scripts/lxdialog/lxdialog
+
+dist: distdir
+	-chmod -R a+r $(DISTDIR)
+	tar chozf $(DISTDIR).tar.gz $(DISTDIR)
+	-rm -rf $(DISTDIR)
+
+distdir:
+	-rm -rf $(DISTDIR)
+	mkdir $(DISTDIR)
+	-chmod 777 $(DISTDIR)
+	cp -pf BUGS CHANGELOG COPYING Makefile $(DISTDIR)
+	cp -pf nodeps README RELNOTES TODO $(DISTDIR)
+	(mkdir -p $(DISTDIR)/$(ARCH_DIR); cd $(ARCH_DIR); make distdir)
+	(mkdir $(DISTDIR)/fs; cd fs;make distdir)
+	(mkdir $(DISTDIR)/fs/minix; cd fs/minix;make distdir)
+	(mkdir $(DISTDIR)/fs/romfs; cd fs/romfs;make distdir)
+	(mkdir $(DISTDIR)/fs/elksfs; cd fs/elksfs;make distdir)
+	(mkdir $(DISTDIR)/kernel; cd kernel;make distdir)
+	(mkdir $(DISTDIR)/lib; cd lib;make distdir)
+	(mkdir $(DISTDIR)/net; cd net;make distdir)
+	(mkdir $(DISTDIR)/scripts; cd scripts; make distdir)
+	(mkdir -p $(DISTDIR)/include/linuxmt $(DISTDIR)/include/arch)
+	cp -pf include/linuxmt/*.h $(DISTDIR)/include/linuxmt
+	cp -pf include/arch/*.h $(DISTDIR)/include/arch
+	(mkdir -p $(DISTDIR)/init)
+	cp -pf init/main.c $(DISTDIR)/init
+	(mkdir -p $(DISTDIR)/Documentation)
+	cp -a Documentation $(DISTDIR)
 
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make

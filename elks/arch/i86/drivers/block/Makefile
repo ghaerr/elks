@@ -35,6 +35,10 @@ clean:
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 	for i in *.S;do rm -f `basename $$i .S`.s;done
 
+distdir:
+	cp -pf Config.in Makefile $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/block
+	cp -pf *.S *.h *.c $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/block
+
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \

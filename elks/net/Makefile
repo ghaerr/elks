@@ -33,6 +33,16 @@ clean:
 	rm -f core *~ *.o *.a tmp_make */*.o
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 
+distdir:
+	cp -pf Config.in Makefile $(TOPDIR)/$(DISTDIR)/net
+	cp -pf *.c $(TOPDIR)/$(DISTDIR)/net
+	(mkdir $(TOPDIR)/$(DISTDIR)/net/ipv4)
+	(mkdir $(TOPDIR)/$(DISTDIR)/net/nano)
+	(mkdir $(TOPDIR)/$(DISTDIR)/net/unix)
+	cp -pf ipv4/*.c $(TOPDIR)/$(DISTDIR)/net/ipv4
+	cp -pf nano/*.c nano/*.h $(TOPDIR)/$(DISTDIR)/net/nano
+	cp -pf unix/*.c unix/*.h $(TOPDIR)/$(DISTDIR)/net/unix
+
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \

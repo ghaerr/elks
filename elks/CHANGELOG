@@ -6,6 +6,10 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Tue Apr 17 14:52 GMT 2001   Alistair Riddoch  <alriddoch@zepler.org>
+
+	* Added dist rule to Makefiles.
+
 Mon Apr 02 14:06 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 
 	* Generate 8254 timer constants directly from definition of HZ.

@@ -33,6 +33,9 @@ clean:
 	rm -f core *~ *.o *.a tmp_make keyboard.s
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 
+distdir:
+	cp -pf Makefile inode.c $(TOPDIR)/$(DISTDIR)/fs/romfs
+
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \

@@ -104,7 +104,7 @@ boot/system: $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 ifneq ($(CONFIG_ROMCODE), y)
 ifeq ($(CONFIG_286PMODE), y)
 
-Image: boot/bootsect boot/setup 286pmode/pmode286 boot/system tools
+Image: tools/build boot/bootsect boot/setup 286pmode/pmode286 boot/system tools
 	tools/build boot/bootsect boot/setup 286pmode/pmode286 \
 		boot/system $(ROOT_DEV) > Image
 	sync
@@ -185,6 +185,21 @@ clean:
 	(cd drivers/block; make clean)
 	(cd drivers/char; make clean)
 	(cd 286pmode; make clean)
+
+distdir:
+	cp -pf config.in defconfig Makefile $(TOPDIR)/$(DISTDIR)/arch/i86
+	(mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/kernel; cd kernel; make distdir)
+	(mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/lib; cd lib; make distdir)
+	(mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/mm; cd mm; make distdir)
+	(mkdir -p $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/block; cd drivers/block; make distdir)
+	(mkdir -p $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/char; cd drivers/char; make distdir)
+	(mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/286pmode; cd 286pmode; make distdir)
+	(mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/boot)
+	cp -pf boot/*.S boot/*.c boot/tux.pic $(TOPDIR)/$(DISTDIR)/arch/i86/boot
+	(mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/tools)
+	cp -pf tools/Makefile tools/*.h $(TOPDIR)/$(DISTDIR)/arch/i86/tools
+	cp -pf tools/mknbi-elks tools/*.c $(TOPDIR)/$(DISTDIR)/arch/i86/tools
+	cp -pf tools/*.s tools/*.1 $(TOPDIR)/$(DISTDIR)/arch/i86/tools
 
 dep:
 	(cd kernel; make dep)

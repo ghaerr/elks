@@ -34,6 +34,11 @@ clean:
 	rm -f core *~ *.o *.a tmp_make pmode286 pmode286.map
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 
+distdir:
+	cp -pf Makefile Config.in $(TOPDIR)/$(DISTDIR)/arch/i86/286pmode
+	cp -pf crt0.s descriptor.h irq.s $(TOPDIR)/$(DISTDIR)/arch/i86/286pmode
+	cp -pf main.c tss.h $(TOPDIR)/$(DISTDIR)/arch/i86/286pmode
+
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \
