@@ -46,8 +46,6 @@ all:	kernel.a
 kernel.a: $(OBJS)
 	ar rcs kernel.a $(OBJS)
 
-version.o: version.c $(BASEDIR)/include/linuxmt/compiler-generated.h
-
 #########################################################################
 # Standard commands.
 

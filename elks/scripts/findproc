@@ -1,11 +1,31 @@
 #!/bin/bash
 
+function choose() {
+    local F="$1"
+
+    shift
+    grep "$@" < "$F"
+}
+
 function format() {
     fgrep ')$' tags		\
 	| tr '\t' ' '		\
 	| sed 's=/^=='		\
 	| cut -d '$' -f 1	\
 	| sort -f
+}
+
+function header() {
+cat <<.EOF
+This file contains a list of all functions used in the ELKS kernel source tree as of version 0.1.1 thereof. It is split into separate sections for static and
+global functions in each of the following categories:
+
+ 1. Scripts used to control the ELKS kernel compilation process.
+
+ 2. Tools used as part of the ELKS kernel compilation process.
+
+ 3. The ELKS kernel itself.
+.EOF
 }
 
 function layout() {
@@ -26,9 +46,34 @@ function newline() {
     sed 's/$/¬/' | tr '¬' '\r'
 }
 
+function process() {
+    format | layout > tags.txt
+    header
+    ruler
+    choose tags.txt ' scripts/'
+    ruler
+    choose tags.txt /tools/
+    ruler
+    choose tags.txt -v ' scripts/' | fgrep -v /tools/
+    ruler
+    trailer
+}
+
+function ruler() {
+cat <<.EOF
+
+================================================================================================================================================================
+
+.EOF
+}
+
+function trailer() {
+    echo End of listing.
+}
+
 if [ $# -eq 0 ]; then
     ctags *.c
 else
     ctags "$@"
 fi
-format | layout | newline > tags.lst
+process | newline > tags.lst

@@ -25,13 +25,20 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998- 4 Jun 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-21 Jun 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Fri Jun 21 00:27:05 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Updated routine to find source of functions to produce a
+	  more user-friendly output format.
+	* Removed redundant line from kernel/Makefile as it is appended
+	  to the said file by the `make dep` step anyway.
 
 Thu Jun  6 22:17:00 BST 2002	Riley Williams <Riley@Williams.Name>
 
