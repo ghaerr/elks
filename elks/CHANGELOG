@@ -10,6 +10,10 @@ Tue Aug 14 10:46:47 BST 2001	Riley Williams <rhw@memalpha.cx>
 
 	* Added INSTALLATION document submitted on Linux-8086 mailing
 	  list, after reformatting and HTML'ising.
+	* Added README document submitted on Linux-8086 mailing list,
+	  after reformatting.
+	* Changed all vger.rutgers.edu to vger.kernel.org in above.
+	* Added `renvar` script to scripts directory.
 
 Mon Aug 13 22:58:15 BST 2001	Peter L Vachuska <pvachusk@nconnect.net>
 

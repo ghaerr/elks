@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [ $# -ne 2 ]; then
+    echo Usage: `basename "$0"` oldvar newvar >&2
+    exit 255
+fi
+
+function count() {
+    sed 's/[^0-9_A-Z.a-z]*/ /' < "$2"	\
+	| tr -s ' ' '\n'		\
+	| fgrep -c "$1"
+}
+
+function files() {
+    fgrep "$1" `find elks -type f ! -name '*.orig'`	\
+	| cut -d : -f 1					\
+	| uniq -c					\
+	| tr -s '\t' ' '				\
+	| sort -nr					\
+	| cut -d ' ' -f 3
+}
+
+files "$1" | while read FILE ; do
+    printf '%5s:  %s\n' `count "$1" "$FILE"` "$FILE"
+    mv "$FILE" "$FILE.orig"
+    sed "s=$1=$2=g" < "$FILE.orig" > "$FILE"
+done
