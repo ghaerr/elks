@@ -1,0 +1,86 @@
+"screen" is a window manager that allows you to handle several independent
+screens (UNIX ttys) on a single physical terminal; each screen has its own
+set of processes connected to it (typically interactive shells).  Each
+virtual terminal created by "screen" emulates a DEC VT100 plus several ANSI
+X3.64 and ISO 2022 functions (including DEC VT102 features such as line and
+character deletion and insertion).
+
+Since "screen" uses pseudo-ttys, the select system call, and UNIX-domain
+sockets, it will not run under a system that does not include these
+features of 4.2 and 4.3 BSD UNIX.
+
+If you want to get a quick idea how "screen" works but don't want to read
+the entire manual, do the following:
+ 
+     -  call "screen" without arguments
+     -  wait for the shell prompt; execute some commands
+     -  type ^A ^C (Control-A followed by Control-C)
+     -  wait for the shell prompt; do something in the new window
+     -  type ^A ^A repeatedly to switch between the two windows
+     -  terminate the first shell ("screen" switches to the other window)
+     -  terminate the second shell
+
+If you have got "vttest" (the VT100 test program from mod.sources) you
+may want to run it from within "screen" to verify that it correctly
+emulates a VT100 on your terminal (except for 132 column mode and
+double width/height characters, of course).
+
+By the way, "screen" can be used to compensate for certain bugs of "real"
+VT100 terminals.  For instance, our 4.2 BSD version of mille(6) garbles
+the display on terminals of the VT100 family, but it works quite fine
+when it is invoked from within "screen".  In addition, "screen" enables
+you to use EMACS on terminals that are unable to generate Control-S and
+Control-Q from the keyboard or that require flow control using Control-S
+and Control-Q.  This is the reason why I have an alias like
+     alias emacs "screen emacs"
+in my .cshrc file.
+
+
+Major changes between this and the previous release are:
+
+*  "screen" allows you to `detach' the "screen" session from the physical
+   terminal and resume it at a later point in time (possibly on a
+   different terminal or in a different login session).
+
+  To get an impression of this functionality do the following:
+
+     - call "screen" and create a couple of windows
+     - type Control-A Control-D (screen terminates; you are back
+       in the shell)
+     - call "screen -r" to resume the detached "screen"
+
+*  "screen" supports multiple character sets and the ISO 2022 control
+   functions to designate and switch between character sets.
+   This allows you, for instance, to make use of the VT100 graphics
+   character set or national character sets
+
+
+Before typing "make", you should have a look into the Makefile.
+If your system maintains a 4.3-BSD-style load average, add -DLOADAV to
+the compiler options.  If the load average maintained by your system
+is in the Sun format (three longs; not three doubles), set -DSUNLOADAV
+in addition to -DLOADAV.
+
+In addition, you must set -DGETTTYENT if your system has the new format
+/etc/ttys and the getttyent(3) routines.
+
+If the bcopy() from your system's C library supports overlapping
+source and destination addresses, add -DUSEBCOPY.  Otherwise screen
+uses its own (possibly slower) version of bcopy().  If you are in
+doubt or don't know what bcopy() is, leave the option out.
+
+"screen" should be granted read and write access to /etc/utmp and, if
+-DLOADAV has been specified, read access to /vmunix and /dev/kmem.
+"screen" should be installed with set-uid and owner root to enable it
+to correctly change the owner of newly allocated virtual terminals.
+Failing to do this (e.g. if you fear a trojan horse) doesn't have any
+major disadvantages, except that w(1) and some other utilities may have
+some problems with the tty files of your virtual terminals.
+
+
+Regards,
+    Oliver Laumann
+    Technical University of Berlin,
+    Communications and Operating Systems Research Group.
+
+    net@tub.BITNET     US: pyramid!tub!net     Europe: unido!tub!net
