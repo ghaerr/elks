@@ -10,10 +10,21 @@ Contributor             Current Email address           CHANGELOG entries found
 ~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~
 Alistair Riddoch        <AlRiddoch@zepler.org>           1 Jan 1995-20 Oct 1999
 Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>     7 Nov 2001-24 Nov 2001
+Martijn Baker           <martijn@insecure.nl>           29 Mar 2002
 Michael McConnell       <Soruk@Eridani.co.uk>           11 Nov 2001-12 Nov 2001
-Riley Williams          <rhw@MemAlpha.cx>                8 Nov 2001-11 Mar 2002
+Riley Williams          <rhw@InfraDead.Org>              8 Nov 2001- 5 Apr 2002
 
 -------------------------------------------------------------------------------
+
+Fri Apr  5 18:36:54 BST 2002	Riley Williams <rhw@InfraDead.Org>
+
+	* Release history brought up to date. The 0.1.0 kernel release
+	  has now been issued.
+	* Martijn's ELKS banner included on ELKS home page.
+
+Fri Mar 29 04:09:16 BST 2002	Martijn Baker <martijn@insecure.nl>
+
+	* New ELKS banner supplied.
 
 Mon Mar 11 23:05:35 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
