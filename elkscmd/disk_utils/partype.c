@@ -1,4 +1,4 @@
-/* partype v1.0.0 Partition type locator
+/* partype v1.1.0 Partition type locator
  * Copyright (C) 2002, Riley H Williams G7GOD,
  * Released under the GNU General Public Licence, version 2 only.
  *
@@ -28,8 +28,10 @@
  *	131	Partition /dev/sda3 has the specified type.
  *	132	Partition /dev/sda4 has the specified type.
  *
- *	252	The raw drive is not seekable.
- *	253	Neither /dev/hda nor /dev/bda is available.
+ *	251	The raw drive is not seekable.
+ *	252	Neither /dev/hda nor /dev/bda is available.
+ *	253	The minimum size specified was larger than the
+ *		maximum size specified.
  *	254	An invalid partition type was specified.
  *	255	Usage message displayed.
  *
@@ -39,7 +41,35 @@
 
 #include <stdio.h>
 
+typedef struct {
+    unsigned char	head;
+    unsigned char	sector;
+    unsigned char	cylinder;
+} chs;
+
+typedef struct {
+    unsigned char	active;
+    chs			start;
+    unsigned char	partype;
+    chs			finish;
+    unsigned long int	system;
+    unsigned long int	size;
+} partentry;
+
+typedef union {
+    char c[64];
+    partentry e[4];
+} partable;
+
 unsigned char digit(char ch)
+{
+    if (ch >= '0' && ch <= '9')
+	return ch - '0';
+    else
+	return 0;
+}
+
+unsigned char xdigit(char ch)
 {
     if (ch >= '0' && ch <= '9')
 	return ch - '0';
@@ -51,58 +81,96 @@ unsigned char digit(char ch)
 	return 0;
 }
 
+unsigned long int decimal(char *ptr)
+{
+    unsigned long result = 0;
+
+    while (*ptr) {
+	result *= 10;
+	result += digit(*ptr++);
+    }
+    return result;
+}
+
+unsigned long int hex(char *ptr)
+{
+    unsigned long result = 0;
+
+    while (*ptr) {
+	result *= 16;
+	result += xdigit(*ptr++);
+    }
+    return result;
+}
+
 int main(int argc,char **argv)
 {
-    unsigned char table[64];
+    partable table;
     FILE *fp;
-    char *ptr = argv[1], *drive = "/dev/bda";
-    unsigned char n, partition = 0, result = 0;
+    char drive[16];
+    unsigned long min = 100UL, max = 16383UL, size;
+    unsigned char n, partition = 0;
 
-    if (argc != 2) {
-	fprintf(stderr, "Usage: %s <type>\n\n", *argv);
-	fprintf(stderr, "Where <type> is the hexadecimal partition type required\n");
+    if (argc != 2 && argc != 4) {
+	fprintf(stderr, "Usage: %s <type> [ <min> <max> ]\n\n", *argv);
+	fprintf(stderr, "where  <type>  is the hexadecimal partition type required,\n"
+			"       <min>   is the minimum acceptable partition size in Kilobytes,\n"
+			"  and  <max>   is the maximum acceptable partition size in Kilobytes.\n\n");
+	fprintf(stderr, "By defaults, partitions between %luk and %luk in size are valid.\n",
+			min, max);
 	exit(255);
     }
-    while (*ptr) {
-	partition *= 16;
-	partition += digit(*ptr++);
-    }
+    partition = hex(argv[1]);
     if (!partition) {
 	fprintf(stderr, "ERROR 1: Invalid partition type: %02X (%s)\n",
 		partition, argv[1]);
 	exit(254);
     }
-    
+    if (argc == 4) {
+	min = decimal(argv[2]);
+	max = decimal(argv[3]);
+	if (min > max) {
+	    fprintf(stderr, "ERROR 2: size range %lu to %lu is invalid.\n",
+			    min, max);
+	    exit(253);
+	}
+    }
+    strcpy(drive, "/dev/bda");
     if ((fp = fopen(drive,"rb")) == NULL) {
 	drive[5] = 'h';
 	if ((fp = fopen(drive,"rb")) == NULL) {
 	    drive[5] = 's';
 	    if ((fp = fopen(drive,"rb")) == NULL) {
-		fprintf(stderr, "ERROR 2: Can't open raw drive.\n");
-		fprintf(stderr, "         Searched /dev/hda - /dev/sda - /dev/bda only.\n");
-		exit(253);
+		fprintf(stderr, "ERROR 3: Can't open raw drive.\n");
+		fprintf(stderr, "         Searched /dev/bda - /dev/hda - /dev/sda only.\n");
+		exit(252);
 	    }
 	}
     }
-    if (fseek(fp,0x1c0,SEEK_SET)) {
-	fprintf(stderr, "ERROR 3: Can't seek to partition table in /dev/bda\n");
-	exit(252);
+    if (fseek(fp,0x1be,SEEK_SET)) {
+	fprintf(stderr, "ERROR 4: Can't seek to partition table in /dev/bda\n"
+			"         ");
+	perror("Reason");
+	exit(251);
     }
     for (n=0; n<64; n++)
-	table[n] = fgetc(fp);
-    for (n=4; n; n--)
-	if (table[16*n-14] == partition)
-	    result = n;
-    if (result) {
-	printf("%s%d\n",drive,result);
+	table.c[n] = fgetc(fp);
+    fclose(fp);
+    for (n=0; n<4; n++) {
+	size = table.e[n].size;
+	if (table.e[n].partype == partition && min <= size && size <= max)
+	    break;
+    }
+    if (n < 4) {
+	printf("%s%d\n",drive,n+1);
 	switch (drive[5]) {
 	    case 's':
-		result += 64;
+		n += 64;
 	    case 'h':
-		result += 64;
+		n += 64;
 	    case 'b':
 		break;
 	}
     }
-    exit(result);
+    exit(n);
 }
