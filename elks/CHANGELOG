@@ -34,6 +34,11 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Wed Oct 23 10:20:10 EEST 2202	Harry Kalogirou <harkal@gmx.net>
+
+	* Applied fix for the assembly checksum routine in ip.c.
+	  Bug found and solved by Jay Barr.
+
 Sat Aug 10 23:40:20 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* This is ELKS 0.1.1
@@ -1691,7 +1696,7 @@ Sun Jun 24 23:01:09 GMT 2001	Harry Kalogirou <HarKal@rainbow.cs.unipi.gr>
 
 Wed Jun 20 23:21:51 BST 2001	Harry Kalogirou <HarKal@rainbow.cs.unipi.gr>
 
-	* Merged fix for sycall.dat error Alan Cox made.
+	* Merged fix for syscall.dat error Alan Cox made.
 
 Wed Jun 20 23:21:21 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
