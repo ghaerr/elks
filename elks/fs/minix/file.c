@@ -37,11 +37,7 @@ static int minix_file_read();
 static struct file_operations minix_file_operations = {
 	NULL,			/* lseek - default */
 	minix_file_read,	/* read */
-#ifdef CONFIG_FS_RO
-	NULL,			/* write */
-#else
 	minix_file_write,	/* write */
-#endif
 	NULL,			/* readdir - bad */
 	NULL,			/* select - default */
 	NULL,			/* ioctl - default */
@@ -67,11 +63,7 @@ struct inode_operations minix_file_inode_operations = {
 #ifdef BLOAT_FS
 	NULL/*minix_bmap*/,	/* bmap */
 #endif
-#ifdef CONFIG_FS_RO
-	NULL,			/* truncate */
-#else
 	minix_truncate,		/* truncate */
-#endif
 #ifdef BLOAT_FS
 	NULL			/* permission */
 #endif
@@ -187,7 +179,6 @@ int icount;
 	return read;		
 }
 
-#ifndef CONFIG_FS_RO
 static int minix_file_write(inode,filp,buf,count)
 register struct inode * inode;
 struct file * filp;
@@ -241,13 +232,8 @@ int count;
 	}
 	if (pos > inode->i_size)
 		inode->i_size = pos;
-#ifdef CONFIG_ACTIME
 	inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-#else
-	inode->i_mtime = CURRENT_TIME;
-#endif
 	filp->f_pos = pos;
 	inode->i_dirt = 1;
 	return written;
 }
-#endif

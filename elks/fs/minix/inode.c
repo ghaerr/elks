@@ -24,13 +24,10 @@ register struct inode *inode;
 	if (inode->i_nlink)
 		return;
 	inode->i_size = 0;
-#ifndef CONFIG_FS_RO
 	minix_truncate(inode);
-#endif
 	minix_free_inode(inode);
 }
 
-#ifndef CONFIG_FS_RO
 static void minix_commit_super (sb)
 register struct super_block * sb;
 /*struct minix_super_block * ms; */
@@ -52,7 +49,6 @@ register struct super_block * sb;
 	}
 	sb->s_dirt = 0;
 }
-#endif /*CONFIG_FS_RO */
 
 
 void minix_put_super(sb)
@@ -61,12 +57,10 @@ register struct super_block *sb;
 	int i;
 
 	lock_super(sb);
-#ifndef CONFIG_FS_RO
 	if (!(sb->s_flags & MS_RDONLY)) {
 		sb->u.minix_sb.s_ms->s_state = sb->u.minix_sb.s_mount_state;
 		mark_buffer_dirty(sb->u.minix_sb.s_sbh, 1);
 	}
-#endif
 	sb->s_dev = 0;
 	for(i = 0 ; i < MINIX_I_MAP_SLOTS ; i++)
 		brelse(sb->u.minix_sb.s_imap[i]);
@@ -82,18 +76,10 @@ static struct super_operations minix_sops = {
 #ifdef BLOAT_FS
 	NULL,
 #endif
-#ifdef CONFIG_FS_RO
-	NULL,
-#else
 	minix_write_inode,
-#endif
 	minix_put_inode,
 	minix_put_super,
-#ifdef CONFIG_FS_RO
-	NULL,
-#else
 	minix_write_super,
-#endif
 #ifdef BLOAT_FS
 	minix_statfs,
 #endif
@@ -109,10 +95,6 @@ char * data;
 
 	ms = sb->u.minix_sb.s_ms;
 
-#ifdef CONFIG_FS_RO
-	if (!(*flags & MS_RDONLY))
-		return -EROFS;
-#else
 	if ((*flags & MS_RDONLY) == (sb->s_flags & MS_RDONLY))
 		return 0;
 	if (*flags & MS_RDONLY) {
@@ -137,7 +119,6 @@ char * data;
 		else if ((sb->u.minix_sb.s_mount_state & MINIX_ERROR_FS))
 			printk ("MINIX-fs warning: remounting fs with errors, running fsck is recommended.\n");
 	}
-#endif
 	return 0;
 }
 
@@ -285,33 +266,23 @@ int create;
 #endif
 
 	if (block < 7) {
-#ifndef CONFIG_FS_RO
 		if (create && !i_zone[block]) {
 			if (i_zone[block]=minix_new_block(inode->i_sb)) {
-#ifdef CONFIG_ACTIME
 				inode->i_ctime = CURRENT_TIME;
-#endif
 				inode->i_dirt = 1;
 			}
 		}
-#endif
 		return i_zone[block];
 	}
 	block -= 7;
 	if (block <= 512) {
 		if (!i_zone[7]) {
-#ifndef CONFIG_FS_RO
 			if (create) {
 				if (i_zone[7]=minix_new_block(inode->i_sb)) {
 					inode->i_dirt = 1;
-#ifdef CONFIG_ACTIME
 					inode->i_ctime = CURRENT_TIME;
-#endif
 				}
 			} else return 0;
-#else
-			return 0;
-#endif
 		}
 		printd_mfs1("MFSbmap: About to read indirect block #%d\n", i_zone[7]);
 		if (!(bh = bread(inode->i_dev, (block_t)i_zone[7]))) {
@@ -320,14 +291,12 @@ int create;
 		}
 		map_buffer(bh);
 		i = (((unsigned short *) (bh->b_data))[block]);
-#ifndef CONFIG_FS_RO
 		if (create && !i) {
 			if (i=minix_new_block(inode->i_sb)) {
 				((unsigned short *) (bh->b_data))[block] = i;
 				bh->b_dirty = 1;
 			}
 		}
-#endif
 		unmap_brelse(bh);
 		printd_mfs1("MFSbmap: Returning #%d\n", i);
 		return i;
@@ -403,9 +372,7 @@ register struct inode * inode;
 	raw_inode = ((struct minix_inode *) bh->b_data) +
 		    (ino-1)%MINIX_INODES_PER_BLOCK;
 	memcpy(inode, raw_inode, sizeof(struct minix_inode));
-#ifdef CONFIG_ACTIME
 	inode->i_ctime = inode->i_atime = inode->i_mtime; 
-#endif
 #ifdef BLOAT_FS
 	inode->i_blocks = inode->i_blksize = 0;
 #endif
@@ -434,7 +401,6 @@ register struct inode * inode;
  * The minix V1 function to synchronize an inode.
  */
  
-#ifndef CONFIG_FS_RO
 static struct buffer_head * minix_update_inode(inode)
 register struct inode * inode;
 {
@@ -479,7 +445,6 @@ struct inode * inode;
 	bh = minix_update_inode(inode);
 	brelse(bh);
 }
-#endif
 
 #ifdef BLOAT_FS
 int minix_sync_inode(inode)
