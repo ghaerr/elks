@@ -19,6 +19,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/mem.h> /* for mem_swap_info */
 #include <linuxmt/debug.h>
 
 /*
@@ -467,22 +468,8 @@ void mm_init(seg_t start, seg_t end)
     holep->next = NULL;
 
 #ifdef CONFIG_SWAP
-
-    for (ct = 1; ct < MAX_SWAP_SEGMENTS; ct++)
-	swap_holes[ct].flags = HOLE_SPARE;
-
-    /*
-     *      Single hole containing all user memory.
-     */
-    holep = &swap_holes[0];
-    holep->flags = HOLE_FREE;
-    holep->page_base = 0;
-    holep->extent = 128;
-    holep->refcount = 0;
-    holep->next = NULL;
-
-    swap_dev = 0x0100;
-
+    swap_dev = NULL;
+    mm_swap_on(NULL);
 #endif
 
 }
@@ -495,6 +482,31 @@ void mm_init(seg_t start, seg_t end)
 /*
  *	Push a segment to disk if possible
  */
+ 
+int mm_swap_on(struct mem_swap_info *si)
+{
+    register struct malloc_hole *holep;
+    int ct;
+    if(swap_dev)
+    	return -EPERM;
+
+    for (ct = 1; ct < MAX_SWAP_SEGMENTS; ct++)
+	swap_holes[ct].flags = HOLE_SPARE;
+
+    if(!si)
+    	return 0;
+  
+    holep = &swap_holes[0];
+    holep->flags = HOLE_FREE;
+    holep->page_base = 0;
+    holep->extent = si->size;
+    holep->refcount = 0;
+    holep->next = NULL;
+
+    swap_dev = (si->major << 8) + si->minor;
+    
+    return 0;	
+}
 
 static int swap_out(seg_t base)
 {

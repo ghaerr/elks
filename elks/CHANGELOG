@@ -32,6 +32,11 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sat Apr 27 22:54:16 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Added swap creation ioctl in mem.c. Swap in activated with
+	  the "swapon" utility in elkscmd package.
+
 Sat Apr 27 18:31:43 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Modified `make lint` to warn regarding /*@ignore@*/ sections.

@@ -47,5 +47,7 @@ extern int peekw();
 extern void poked();
 extern long peekd();
 
+extern int mm_swapon();
+
 #endif
 #endif

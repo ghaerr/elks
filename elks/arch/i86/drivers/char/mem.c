@@ -16,6 +16,7 @@
 
 #ifdef CONFIG_CHAR_DEV_MEM
 
+#include <linuxmt/kernel.h>
 #include <linuxmt/major.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/errno.h>
@@ -202,6 +203,9 @@ unsigned int kmem_ioctl(struct inode *inode,
 			struct file *file, int cmd, char *arg)
 {
     struct mem_usage mu;
+#ifdef CONFIG_SWAP
+    struct mem_swap_info si;
+#endif
     char *i;
 
     printd_mem1("[k]mem_ioctl() %d\n", cmd);
@@ -255,7 +259,14 @@ unsigned int kmem_ioctl(struct inode *inode,
 
 	memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
 	return 0;
+#ifdef CONFIG_SWAP
+    case MEM_SETSWAP:
+    	if(!suser())
+    	   return -EPERM;
+    	memcpy_fromfs(&si, arg, sizeof(struct mem_swap_info));
+    	return mm_swap_on(&si);
     }
+#endif
     return -EINVAL;
 }
 
