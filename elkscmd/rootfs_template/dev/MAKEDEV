@@ -17,7 +17,16 @@ MKDEV=/bin/mknod
 MKSET=/dev/MAKESET
 
 ##############################################################################
-# Memory devices.
+# Ensure required auxilliary script is present.
+
+if ! /bin/test -f "$MKSET"
+then
+    echo ERROR: \"$MKSET\" script missing, unable to continue.
+    exit 1
+fi
+
+##############################################################################
+# Create memory devices.
 
 	$MKDEV mem	c 1 1
 	$MKDEV kmem	c 1 2
