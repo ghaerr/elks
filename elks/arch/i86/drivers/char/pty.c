@@ -17,13 +17,6 @@
 #include <linuxmt/major.h>
 
 
-
-
-
-
-
-
-
 int pty_open(inode, file)
 struct inode * inode;
 struct file * file;
@@ -64,11 +57,10 @@ char * arg;
 	return -EINVAL;
 }
 
-int pty_select (inode, file, sel_type, wait)
+int pty_select (inode, file, sel_type)
 struct inode * inode;
 struct file * file;
 int sel_type;
-select_table * wait;
 {
 	register struct tty *tty=determine_tty(inode->i_rdev);
 
@@ -78,9 +70,7 @@ select_table * wait;
 				return 1;
 			}
 		case SEL_EX: /* fall thru! */
-			if (wait) {
-				select_wait (&tty->outq.wq, wait);
-			}
+			select_wait (&tty->outq.wq);
 			return 0;
 		case SEL_OUT: /* Hm.  We can always write to a tty?  (not really) */
 		default:

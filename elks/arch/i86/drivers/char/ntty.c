@@ -266,29 +266,10 @@ char *arg;
 	return 0;
 }
 
-#if 0 /* This is the same bahavoir as pipe lseek, so we use that. */
-int tty_lseek(inode,file,offset,origin)
-struct inode *inode;
-struct file *file;
-off_t offset;
-int origin;
-{
-	return -ESPIPE;
-}
-#endif
-
-#if 0 /* Default returns -ENOTDIR if no readdir exists, so this is redundant */
-int tty_readdir()
-{
-	return -ENOTDIR;
-}
-#endif
-
-int tty_select (inode, file, sel_type, wait)
+int tty_select (inode, file, sel_type)
 struct inode * inode; /* how revolting, K&R style defs */
 struct file * file;
 int sel_type;
-select_table * wait;
 {
 	register struct tty *tty=determine_tty(inode->i_rdev);
 
@@ -298,9 +279,7 @@ select_table * wait;
 				return 1;
 			}
 		case SEL_EX: /* fall thru! */
-			if (wait) {
-				select_wait (&tty->inq.wq, wait);
-			}
+			select_wait(&tty->inq.wq);
 			return 0;
 		case SEL_OUT: /* Hm.  We can always write to a tty?  (not really) */
 		default:

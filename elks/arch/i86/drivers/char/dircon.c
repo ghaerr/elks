@@ -90,7 +90,7 @@ static unsigned VideoSeg, PageSize;
 static Console Con[ MAX_CONS ];
 static Console * Visible;
 static Console * glock;	/* Which console owns the graphics hardware */
-static struct wait_queue * glock_wait = NULL;
+static struct wait_queue glock_wait;
 
 /* from keyboard.c */
 extern int Current_VCminor;
