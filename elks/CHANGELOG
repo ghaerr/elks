@@ -34,6 +34,26 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Fri Nov 01 01:52:44 EET 2002 Harry Kalogirou <harkal@gmx.net>
+
+        * Changed the position of ds in the _registers struct.
+        * Added support for loading the new ELKS executable format. This is 
+          actualy the big header a.out format. The how things work is
+          explained in the Documentation/bin_formats.txt file.
+        * Optimized sys_execve() not to reload the code segment from disk
+          when it is doing shared code segment.
+        * Added the mm_resize() function that resizes a memory hole.
+        * Implemented a sys_brk() that actualy enlarges the heap of the
+          process.
+        * Removed FLOAT_HOLES related code from malloc.c
+        * Stack overflow check for new the new process memory setup.
+        * Added CONFIG_ADVANCED_MM option to select the inclusion of 
+          growing holes and relocatable code and data segments code.
+        * Removed CONFIG_EXEC_MINIX. We support minix executables by default
+        * Rearranged memory manager related config menus
+        * Added the CONFIG_EXEC_ELKS to control the inclusion of code to
+          support the new executable format.
+
 Sun Oct 27 20:32:59 EET 2002 Harry Kalogirou <harkal@gmx.net>
 
         * Removed non-entity MSDOS exe file support code

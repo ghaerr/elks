@@ -236,7 +236,7 @@ ifneq ($(USEBCC), N)
 AS		= as86
 ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
 CC		= bcc
-CFLAGS		= $(CPU_CC) $(ARCH_CC) -i $(CFLBASE)
+CFLAGS		= $(CPU_CC) $(ARCH_CC) $(CFLBASE)
 LD		= ld86
 LDFLAGS 	= $(CPU_LD) -s
 
