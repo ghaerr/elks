@@ -25,4 +25,4 @@ DISTFILES	=
 include $(BASEDIR)/Makefile-rules
 
 #########################################################################
-### Dependencies
+### Dependencies:

@@ -1,58 +1,229 @@
+# This default configuration file lists every configuration option for all
+# available architectures as it exists on Monday, 14th January 2002 (ELKS
+# kernel 0.1.0-pre4) and provides the default options for all of them. All
+# comments produced by `make config` are also included herein, but those
+# options labelled as "# CONFIG_* is not set" have been changed to instead
+# read "CONFIG_*=n" to ensure they are read correctly.
+#
+###########################################################################
+#
+# Automatically generated make config: don't edit
+#
+
+#
+# Just accept the defaults unless you know what you are doing
+#
+
+#
+# Advanced - for Developers and Hackers only
+#
+CONFIG_EXPERIMENTAL=n
+CONFIG_OBSOLETE=n
+CONFIG_NOT_YET=n
+
+#
+# Architecture
+#
+CONFIG_ARCH_AUTO=y
+CONFIG_ARCH_IBMPC=n
+CONFIG_ARCH_SIBO=n
 CONFIG_PC_AUTO=y
-CONFIG_MODULE=n
-CONFIG_SHLIB=n
+CONFIG_PC_XT=n
+CONFIG_PC_AT=n
+CONFIG_PC_MCA=n
+CONFIG_ROMCODE=n
+CONFIG_ROMCODE=n
+
+#
+# Model-specific features
+#
+CONFIG_IBMPC_CLONE=y
+CONFIG_IBMPC_COMPAQ=n
 CONFIG_COMPAQ_FAST=n
 
+#
+# Hardware Facilities
+#
+CONFIG_CPU_8086=y
+CONFIG_CPU_80186=n
+CONFIG_CPU_80286=n
+CONFIG_CPU_80386=n
+CONFIG_CPU_80486=n
+
+#
+# System Hardware
+#
+CONFIG_HW_NO_FPU=n
+CONFIG_HW_NO_PS2_MOUSE=n
+CONFIG_HW_NO_VGA=n
+
+#
+# Block Devices
+#
+CONFIG_HW_NO_FLOPPY_DRIVE=n
+CONFIG_HW_NO_HARD_DRIVE=n
+
+#
+# Character Devices
+#
+CONFIG_CONSOLES_MAX=3
+
+#
+# BIOS Facilities
+#
+CONFIG_HW_NO_KEYBOARD_BIOS=n
+CONFIG_MEM_EXTENDED_MEMORY=n
+CONFIG_MEM_EXTENDED_MEMORY_SIZE=0
+CONFIG_HW_VIDEO_HOC=n
+CONFIG_HW_VIDEO_LINES_PER_CHARACTER=8
+CONFIG_HW_VIDEO_LINES_PER_SCREEN=25
+CONFIG_HW_259_USE_ORIGINAL_MASK=n
+CONFIG_BOGOMIPS=0
+CONFIG_HW_USE_INT13_FOR_FLOPPY=n
+CONFIG_HW_NO_SEEK_FOR_FLOPPY=n
+
+#
+# ROM-CODE kernel-loader
+#
+
+#
+# Absolute segment locations for code in target system EPROM
+#
+CONFIG_ROM_SETUP_CODE=e000
+CONFIG_ROM_KERNEL_CODE=e060
+
+#
+# 
+#
+
+#
+# Absolute segment locations for data in target system RAM
+#
+CONFIG_ROM_SETUP_DATA=0060
+CONFIG_ROM_IRQ_DATA=0080
+CONFIG_ROM_KERNEL_DATA=0090
+
+#
+# Information for ROM-Image generator
+#
+CONFIG_ROM_BASE=e000
+CONFIG_ROM_CHECKSUM_SIZE=64
+CONFIG_ROM_BOOTABLE_BY_RESET=n
+CONFIG_ROM_RESET_ADDRESS=0003
+CONFIG_ROM_ADD_BIOS_IMAGE=n
+CONFIG_ROM_BIOS_MODULE="bios/bioscode.bin"
+CONFIG_ROM_BIOS_MODULE_ADDR=f000
+
+#
+# Generate debug code and information
+#
+CONFIG_ROM_DEBUG=n
+
+#
+# EPROM Simulator
+#
+CONFIG_ROM_USE_SIMULATOR=n
+CONFIG_ROM_SIMULATOR_PROGRAM="/usr/bin/simu -t18 Image"
+
+#
+# 286 Protected Mode Support
+#
 CONFIG_286PMODE=n
-CONFIG_386RAM=n
 
-CONFIG_STRACE=n
-CONFIG_OPT_SMALL=n
+#
+# Driver Support
+#
 
-CONFIG_NOFS=n
-CONFIG_EXEC_ROM=n
+#
+# Character device drivers
+#
 
+#
+# Select a console driver
+#
 CONFIG_CONSOLE_DIRECT=y
+CONFIG_CONSOLE_BIOS=n
+CONFIG_CONSOLE_SERIAL=n
 CONFIG_DCON_VT52=y
 CONFIG_DCON_ANSI=y
 CONFIG_DCON_ANSI_PRINTK=n
-CONFIG_DCON_KRAW=y
-CONFIG_CONSOLE_BIOS=n
-CONFIG_BIOS_VT52=y
-CONFIG_CONSOLE_SERIAL=n
 CONFIG_KEYMAP_US=y
-CONFIG_CHAR_DEV_MEM=y
+CONFIG_KEYMAP_BE=n
+CONFIG_KEYMAP_UK=n
+CONFIG_KEYMAP_DE=n
+CONFIG_KEYMAP_DV=n
+CONFIG_KEYMAP_ES=n
+CONFIG_KEYMAP_FR=n
+CONFIG_KEYMAP_SE=n
+CONFIG_DCON_KRAW=y
+
+#
+# Other character devices
+#
 CONFIG_CHAR_DEV_RS=y
-CONFIG_PSEUDO_TTY=y
 CONFIG_CHAR_DEV_LP=y
+CONFIG_CHAR_DEV_MEM=y
+CONFIG_PSEUDO_TTY=y
 CONFIG_DEV_META=n
 
+#
+# Block device drivers
+#
+CONFIG_BLK_DEV_BIOS=y
+CONFIG_BLK_DEV_BFD=y
+CONFIG_BLK_DEV_BHD=y
 CONFIG_BLK_DEV_FD=n
 CONFIG_BLK_DEV_HD=n
-CONFIG_BLK_DEV_BIOS=y
-CONFIG_BLK_DEV_BHD=y
-CONFIG_BLK_DEV_BFD=y
-CONFIG_BLK_DEV_RAM=n
 CONFIG_BLK_DEV_XD=n
-CONFIG_BLK_DEV_CHAR=y
-CONFIG_BLK_DEV_SSD=y
-CONFIG_BLK_DEV_ID=n
+CONFIG_DMA=n
+CONFIG_GENDISK=y
 
+#
+# Additional block devices
+#
+CONFIG_BLK_DEV_RAM=n
+
+#
+# Block device options
+#
+CONFIG_BLK_DEV_CHAR=y
+
+#
+# Filesystems
+#
 CONFIG_MINIX_FS=y
 CONFIG_ROMFS_FS=n
 CONFIG_ELKSFS_FS=n
+
+#
+# General filesystem settings
+#
 CONFIG_FULL_VFS=n
 CONFIG_FS_EXTERNAL_BUFFER=y
 CONFIG_PIPE=y
-CONFIG_FS_RO=n
-CONFIG_EXEC_SUGID=n
+
+#
+# Executable file formats
+#
 CONFIG_EXEC_MINIX=y
 CONFIG_EXEC_MSDOS=n
 
+#
+# Network Support
+#
 CONFIG_SOCKET=y
-CONFIG_UNIX=n
 CONFIG_NANO=n
 CONFIG_INET=y
 CONFIG_INET_STATUS=y
+CONFIG_UNIX=n
+
+#
+#   Advanced socket options
+#
 CONFIG_SOCK_CLIENTONLY=n
 
+#
+# Kernel hacking
+#
+CONFIG_STRACE=n
+CONFIG_OPT_SMALL=n

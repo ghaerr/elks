@@ -545,21 +545,22 @@ fi
 
 DEFAULTS=arch/$ARCH/defconfig
 if [ -f .config ]; then
-  DEFAULTS=.config
+	DEFAULTS=.config
 fi
 
 if [ -f $DEFAULTS ]; then
-  echo "#"
-  echo "# Using defaults found in" $DEFAULTS
-  echo "#"
-  . $DEFAULTS
-  sed -e 's/# \(CONFIG_[^ ]*\) is not.*/\1=n/' <$DEFAULTS >.config-is-not.$$
-  . .config-is-not.$$
-  rm .config-is-not.$$
+	echo "#"
+	echo "# Using defaults found in" $DEFAULTS
+	echo "#"
+	. $DEFAULTS
+	sed -e 's/# \(CONFIG_[^ ]*\) is not.*/\1=n/'	< $DEFAULTS \
+							> .config-is-not.$$
+	. .config-is-not.$$
+	rm .config-is-not.$$
 else
-  echo "#"
-  echo "# No defaults found"
-  echo "#"
+	echo "#"
+	echo "# No defaults found"
+	echo "#"
 fi
 
 . $CONFIG_IN

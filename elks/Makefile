@@ -237,19 +237,56 @@ menuconfig:
 set:
 	@set
 
+#########################################################################
+#
+# The following command performs a test of all the major commands used in
+# this system. The steps taken are as follows:
+#
+#	make dist	Create a distribution tree from the current set
+#			of files. This creates the PRE distribution.
+#
+#	make clean	Remove all of the compilation junk, so we know
+#			we're starting from scratch.
+#
+#	make defconfig	Perform the configuration step that results from
+#			running `make config` and just pressing ENTER to
+#			every prompt that pops up.
+#
+#	make dep	Create a full set of dependencies.
+#
+#	make Image	Compile ELKS and create the standard image file.
+#
+#	make nbImage	Compile ELKS and create the NetBoot Image file.
+#
+#	make nodep	Remove all of the dependency information.
+#
+#	make dist	Create a distribution tree from the current set
+#			of files. This creates the POST distribution.
+#
+#	diff ...	Compare the PRE and POST distributions. In theory
+#			these will be identical, so any output from this
+#			stage indicates a problem somewhere.
+#
+# Note that the output from each of the above steps is separated by a row
+# of = signs that stretches across the screen.
+#
+#########################################################################
+
 test:
 	make dist
 	mv $(DISTDIR){,.Pre}
 	@printf '\n  %076u\n\n' 0 | tr 0 =
-	make defconfig
-	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make clean
+	@printf '\n  %076u\n\n' 0 | tr 0 =
+	make defconfig
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make dep
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make Image
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make nbImage
+	@printf '\n  %076u\n\n' 0 | tr 0 =
+	make nodep
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make dist
 	mv $(DISTDIR){,.Post}

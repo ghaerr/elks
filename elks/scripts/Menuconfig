@@ -1372,9 +1372,15 @@ Use the <TAB> key to move from the input field to the buttons below it."
 
 DIALOG="./scripts/lxdialog/lxdialog"
 
-kernel_version="${VERSION}.${PATCHLEVEL}.${SUBLEVEL}${EXTRAVERSION}"
+if [ -z "${PRE}" ]; then
+	kernel_version=`printf '%s.%s.%s%s' \
+		${VERSION} ${PATCHLEVEL} ${SUBLEVEL} ${EXTRAVERSION}`
+else
+	kernel_version=`printf '%s.%s.%s-pre%s%s' \
+		${VERSION} ${PATCHLEVEL} ${SUBLEVEL} ${PRE} ${EXTRAVERSION}`
+fi
 
-backtitle="ELKS v$kernel_version Configuration"
+backtitle="ELKS v${kernel_version} Configuration"
 
 trap "cleanup ; exit 1" 1 2 15
 
@@ -1389,15 +1395,14 @@ fi
 
 DEFAULTS=arch/$ARCH/defconfig
 if [ -f .config ]; then
-  DEFAULTS=.config
+	DEFAULTS=.config
 fi
 
-if [ -f $DEFAULTS ]
-then
-  echo "Using defaults found in" $DEFAULTS
-  load_config_file $DEFAULTS
+if [ -f $DEFAULTS ]; then
+	echo "Using defaults found in" $DEFAULTS
+	load_config_file $DEFAULTS
 else
-  echo "No defaults found"
+	echo "No defaults found"
 fi
 
 
@@ -1457,7 +1462,7 @@ else
 fi
 
 # Remove log if empty.
-if [ ! -s .menuconfig.log ] ; then
+if [ ! -s .menuconfig.log ]; then
 	rm -f .menuconfig.log
 fi
 

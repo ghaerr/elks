@@ -25,6 +25,97 @@
 #undef  CONFIG_PC_AT
 #undef  CONFIG_PC_MCA
 #undef  CONFIG_ROMCODE
+#undef  CONFIG_ROMCODE
+
+/*
+ * Model-specific features
+ */
+#define CONFIG_IBMPC_CLONE 1
+#undef  CONFIG_IBMPC_COMPAQ
+#undef  CONFIG_COMPAQ_FAST
+
+/*
+ * Hardware Facilities
+ */
+#define CONFIG_CPU_8086 1
+#undef  CONFIG_CPU_80186
+#undef  CONFIG_CPU_80286
+#undef  CONFIG_CPU_80386
+#undef  CONFIG_CPU_80486
+
+/*
+ * System Hardware
+ */
+#undef  CONFIG_HW_NO_FPU
+#undef  CONFIG_HW_NO_PS2_MOUSE
+#undef  CONFIG_HW_NO_VGA
+
+/*
+ * Block Devices
+ */
+#undef  CONFIG_HW_NO_FLOPPY_DRIVE
+#undef  CONFIG_HW_NO_HARD_DRIVE
+
+/*
+ * Character Devices
+ */
+
+/*
+ * BIOS Facilities
+ */
+#undef  CONFIG_HW_NO_KEYBOARD_BIOS
+#undef  CONFIG_MEM_EXTENDED_MEMORY
+#define CONFIG_MEM_EXTENDED_MEMORY_SIZE (0)
+#undef  CONFIG_HW_VIDEO_HOC
+#define CONFIG_HW_VIDEO_LINES_PER_CHARACTER (8)
+#define CONFIG_HW_VIDEO_LINES_PER_SCREEN (25)
+#undef  CONFIG_HW_259_USE_ORIGINAL_MASK
+#define CONFIG_BOGOMIPS (0)
+#undef  CONFIG_HW_USE_INT13_FOR_FLOPPY
+#undef  CONFIG_HW_NO_SEEK_FOR_FLOPPY
+
+/*
+ * ROM-CODE kernel-loader
+ */
+
+/*
+ * Absolute segment locations for code in target system EPROM
+ */
+#define CONFIG_ROM_SETUP_CODE 0xe000
+#define CONFIG_ROM_KERNEL_CODE 0xe060
+
+/*
+ * 
+ */
+
+/*
+ * Absolute segment locations for data in target system RAM
+ */
+#define CONFIG_ROM_SETUP_DATA 0x0060
+#define CONFIG_ROM_IRQ_DATA 0x0080
+#define CONFIG_ROM_KERNEL_DATA 0x0090
+
+/*
+ * Information for ROM-Image generator
+ */
+#define CONFIG_ROM_BASE 0xe000
+#define CONFIG_ROM_CHECKSUM_SIZE (64)
+#undef  CONFIG_ROM_BOOTABLE_BY_RESET
+#define CONFIG_ROM_RESET_ADDRESS 0x0003
+#undef  CONFIG_ROM_ADD_BIOS_IMAGE
+#define CONFIG_ROM_BIOS_MODULE "bios/bioscode.bin"
+#define CONFIG_ROM_BIOS_MODULE_ADDR 0xf000
+
+/*
+ * Generate debug code and information
+ */
+#undef  CONFIG_ROM_DEBUG
+
+/*
+ * EPROM Simulator
+ */
+#undef  CONFIG_ROM_USE_SIMULATOR
+#define CONFIG_ROM_SIMULATOR_PROGRAM "/usr/bin/simu -t18 Image"
 
 /*
  * 286 Protected Mode Support

@@ -52,4 +52,4 @@ distdir:
 	cp -pf Config.in Makefile *.c $(DISTDIR)/fs
 
 #########################################################################
-### Dependencies
+### Dependencies:

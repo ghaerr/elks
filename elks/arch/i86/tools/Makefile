@@ -9,11 +9,11 @@ BASEDIR 	= ../../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 	= N
+USEBCC		= Y
 
 CLEANDEP	= 
 
-CLEANME 	= build imgconv mkurlader
+CLEANME 	= build imgconv mkurlader wrt_disk.img
 
 DEPEND		= 
 
@@ -25,34 +25,13 @@ DISTFILES	= mknbi-elks
 include $(BASEDIR)/Makefile-rules
 
 ###########################################################################
-# Paramters.
+# SIBO paramters.
 
-stack_size	= 64		# paragraphs of 16 bytes
-heap_size	= 128		# paragraphs of 16 bytes
+STACK_SIZE	= 64		# paragraphs of 16 bytes
+HEAP_SIZE	= 128		# paragraphs of 16 bytes
 
-###########################################################################
-# Standard commands.
-
-AS		= as86
-ASFLAGS 	= $(CPU_AS)
-
-CC		= bcc
-CFLAGS		= $(CPU_CC) -c
-
-IC		= ./imgconf
-ICFLAGS		= -D$(stack_size) -H$(heap_size)
-
-###########################################################################
-# Standard prototypes.
-
-.c.o:
-	$(CC) $(CFLAGS) -o $@ $<
-
-.s.o:
-	$(AS) $(ASFLAGS) -o $@ $<
-
-.out.img:
-	$(IC) $(ICFLAGS) $< $@ 
+DATA_SEG	= 0x400 	# Segment address
+HEAP_SEG	= 0x800 	# Segment address
 
 ###########################################################################
 # Targets. You have to build the psion tree first to get driver stuff.
@@ -72,22 +51,25 @@ wrt_disk.o: wrt_disk.c
 file.o: file.s
 
 wrt_disk.out: wrt_disk.o file.o
-	ld86 -o wrt_disk.out -0 -i -D 0x400 -H 0x800 wrt_disk.o file.o \
+	ld86 -0 -i -D $(DATA_SEG) -H $(HEAP_SEG) -o wrt_disk.out \
+		wrt_disk.o \
+		file.o \
 		../drivers/char/con_asm.o \
 		../drivers/char/font.o \
 		../drivers/char/key_asm.o \
 		../drivers/block/ssd_asm.o
 
 wrt_disk.img: wrt_disk.out imgconv
+	./imgconf -D$(STACK_SIZE) -H$(HEAP_SIZE)
 
 build: build.c
-	gcc -I $(TOPDIR)/include -o build build.c
+	gcc -I $(BASEDIR)/include -o build build.c
 
 mkurlader: mkurlader.c
-	gcc -I $(TOPDIR)/include -o mkurlader mkurlader.c
+	gcc -I $(BASEDIR)/include -o mkurlader mkurlader.c
 
 imgconv: imgconv.c
 	gcc -o imgconv imgconv.c
 
 ###########################################################################
-## Dependencies:
+### Dependencies:

@@ -17,11 +17,12 @@ David Murn              <scuffer@hups.apana.org.au>     11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
 Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>    20 Jun 2001-27 Nov 2001
+Jacek Lipkowski 	<sq5bpf@acid.ch.pw.edu.pl>	20 Jan 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001-20 Nov 2001
 Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
 Peter L Vachuska        <pvachusk@nconnect.net>         13 Aug 2001
-Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-18 Jan 2002
+Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-20 Jan 2002
 Roman Festchook         <roma@polesye.net>              27 Oct 2001
 Simon Weijgers          <simon@weijgers.com>            16 Sep 1998-15 Nov 1999
 Simon Wood                                              06 Jan 2000-12 Jan 2000
@@ -29,7 +30,12 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
- ıÒ …·Ì 20 01:09:25 EET 2002 Jacek Lipkowski <sq5bpf@acid.ch.pw.edu.pl>
+Sun Jan 20 12:15:18 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+
+	* Version number display actually committed.
+	* Formatting clean-ups in Menuconfig script.
+
+Sun Jan 20 01:09:25 EET 2002	Jacek Lipkowski <sq5bpf@acid.ch.pw.edu.pl>
 
 	* Menuconfig non compilable fix.
 	* Better version number display for menuconfig.
@@ -706,7 +712,7 @@ Mon Aug 13 18:50:50 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 	ROM_SETUP_CODE			CONFIG_ROM_SETUP_CODE
 	ROM_SETUP_DATA			CONFIG_ROM_SETUP_DATA
 	ROM_USE_ORG_INTMASK		CONFIG_HW_259_USE_ORIGINAL_MASK
-	CONFIG_HW_VIDEO_LINES_PER_CHARACTERS	CONFIG_HW_VIDEO_LINES_PER_CHARACTER
+	ROM_VIDEO_HIGHOFCHARACTERS	CONFIG_HW_VIDEO_LINES_PER_CHARACTER
 	__ROM_VIDEO_HOC			CONFIG_HW_VIDEO_HOC
 
 Mon Aug 13 18:44:52 BST 2001	Riley Williams <rhw@MemAlpha.cx>

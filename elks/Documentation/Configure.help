@@ -162,7 +162,7 @@ CONFIG_HW_VIDEO_HOC
   40h:85h.
 
 High of character in lines
-ROM_VIDEO_HIGHOFCHARACTER
+CONFIG_HW_VIDEO_LINES_PER_CHARACTER
   Specify the maximan height of a charactor on the display in
   pixels.
 

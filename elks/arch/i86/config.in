@@ -97,7 +97,7 @@ mainmenu_option next_comment
 	    fi
 	    bool 'Get fontinfo via CRT-BIOS (40h:85h)'		CONFIG_HW_VIDEO_HOC y
 	    if [ "$CONFIG_HW_VIDEO_HOC" != "y" ]; then
-		int 'Height of characters in lines'		ROM_VIDEO_HIGHOFCHARACTER 8
+		int 'Height of characters in lines'		CONFIG_HW_VIDEO_LINES_PER_CHARACTER 8
 		int 'Lines per page'				CONFIG_HW_VIDEO_LINES_PER_SCREEN 25
 	    fi
 

@@ -202,42 +202,55 @@ endif
 #########################################################################
 # Specify the tools to use, with their flags.
 
-ifneq ($(USEBCC), N)
+################################
+# Common definitions
 
 AR		= ar
+CC_PROTO	= gcc -I$(INCDIR) -M $(CCDEFS)
+CFLBASE 	= -O -I$(INCDIR) $(CCDEFS)
+CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
+LINT		= lclint
+
+ifneq ($(USEBCC), N)
+
+################################
+# Definitions using BCC compiler
 
 AS		= as86
 ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
-
 CC		= bcc
-CFLBASE 	= -O $(CCDEFS)
 CFLAGS		= $(CPU_CC) $(ARCH_CC) -i $(CFLBASE)
-
-CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
-
-CC_PROTO	= gcc -I$(INCDIR) -M $(CCDEFS)
-
 LD		= ld86
 LDFLAGS 	= $(CPU_LD) -s -x
 
-LINT		= lclint
+else
+
+################################
+# Definitions using GCC compiler
+
+AS		= as
+ASFLAGS 	= 
+CC		= gcc
+CFLAGS		= -i $(CFLBASE)
+LD		= ld
+LDFLAGS 	= -s -x
+
+endif
 
 #########################################################################
 # general construction rules
 
 .c.s:
-	$(CC) $(CFLAGS) -0 -nostdinc -I$(INCDIR) -S -o $*.s $<
+	$(CC) $(CFLAGS) -S -o $*.s $<
 
 .s.o:
-	$(AS) -0 -o $*.o $<
+	$(AS) $(ASFLAGS) -o $*.o $<
 
 .S.s:
-	gcc -E -traditional $(CCDEFS) -I$(INCDIR) -o $*.s $<
+	gcc -E -traditional -I$(INCDIR) $(CCDEFS) -o $*.s $<
 
 .c.o:
-	$(CC) $(CFLAGS) -0 -I$(INCDIR) -c -o $*.o $<
-
-endif
+	$(CC) $(CFLAGS) -c -o $*.o $<
 
 #########################################################################
 # Default target, to allow standard targets to be included. This simply
@@ -274,7 +287,7 @@ dep:	$(DEPEND)
 	done
 
 mkdep:
-	@sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
+	@sed '/\#\#\# Dependencies:/q' < Makefile > make.tmp
 	@echo >> make.tmp
 	@for FILE in *.c ; do \
 		echo $(CC_PROTO) "$${FILE}" >> make.tmp ; \
@@ -289,12 +302,11 @@ mkdep:
 	fi
 
 nodep:
-	@sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
+	sed '/\#\#\# Dependencies:/q' < Makefile > make.tmp
 	@if ! diff Makefile make.tmp > /dev/null ; then \
-		echo Cleaning Makefile ; \
-		mv -f make.tmp Makefile ; \
+		mv -fv make.tmp Makefile ; \
 	else \
-		rm -f make.tmp ; \
+		rm -fv make.tmp ; \
 	fi
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \

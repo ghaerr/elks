@@ -258,8 +258,8 @@ novga:	mov	[14],al
 	mov	[4],bx		! bh = display page
 	mov	[6],ax		! al = video mode, ah = window width
 
-#ifdef ROM_VIDEO_HIGHOFCHARACTER
-        mov   [16],#ROM_VIDEO_HIGHOFCHARACTER
+#ifdef CONFIG_HW_VIDEO_LINES_PER_CHARACTER
+        mov   [16],#CONFIG_HW_VIDEO_LINES_PER_CHARACTER
 #else
 	xor	ax,ax
 	mov	es,ax		! Access low memory
