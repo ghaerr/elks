@@ -2,8 +2,8 @@ BASEDIR=..
 
 include $(BASEDIR)/Make.defs
 
-PRGS=init getty login kill man mount reboot passwd umount clock \
-	exitemu ps who
+PRGS=getty kill man mount reboot umount clock exitemu who passwd \
+# init login ps # These don't currently compile.
 
 # insmod 
 
@@ -27,7 +27,7 @@ smin_rfs: all
 	cp -p $(SMIN_PRGS) $(TARGET_MNT)/bin
 
 clean:
-	rm -f $(PRGS) *.o
+	rm -f *.o core $(PRGS)
 
 passwd: getpass.o passwd.o putpwent.o
 

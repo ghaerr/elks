@@ -30,8 +30,8 @@ install: all
 netstat: netstat.o
 	$(CC) $(LDFLAGS) netstat.o -o netstat
 
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+#.c.o:
+#	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm -f *.o $(FORMATMOD) $(PRGS)
+	rm -f core *.o $(PRGS) $(SPRGS)

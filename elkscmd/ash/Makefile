@@ -5,6 +5,8 @@
 
 BASEDIR=..
 
+LOCALFLAGS= -DSHELL -I. -D_MINIX -D_POSIX_SOURCE -Dsig_t=int
+
 include $(BASEDIR)/Make.defs
 
 SRCS=	builtins.c cd.c dirent.c error.c eval.c exec.c expand.c input.c \
@@ -23,9 +25,6 @@ OBJS=	builtins.o cd.o dirent.o error.o eval.o exec.o expand.o input.o \
 # editline package by Simmule Turner and Rich Salz.  (The big, bloated
 # and GPL contaminated FSF readline should work too.)
 #
-CPPFLAGS= -DSHELL -I. -D_MINIX -D_POSIX_SOURCE -Dsig_t=int
-CFLAGS=	-0 -O $(CPPFLAGS)
-LIBS=	#-ledit
 
 CLEANFILES= $(OBJS) \
 	builtins.c builtins.h init.c mkinit mknodes mksignames mksyntax \
@@ -47,8 +46,8 @@ smin_rfs:
 
 install: ash
 	cp -p ash $(TARGET_MNT)/bin/ash
-	rm -f $(TARGET_MNT)/sh
-	ln $(TARGET_MNT/ash $(TARGET_MNT/sh
+	rm -f $(TARGET_MNT)/bin/sh
+	ln $(TARGET_MNT)/bin/ash $(TARGET_MNT)/bin/sh
 
 clean:
 	rm -f core ash $(CLEANFILES)

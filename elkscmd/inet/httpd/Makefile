@@ -6,10 +6,7 @@ include $(BASEDIR)/Make.defs
 
 SHELL = /bin/sh
 
-BASE_CFLAGS = -c -O
-
-#CFLAGS = -D__LINUX__ $(BASE_CFLAGS)
-CFLAGS = $(BASE_CFLAGS)
+#CFLAGS = -c -O
 
 CFILES = httpd.c
 
@@ -17,8 +14,8 @@ OBJ = $(CFILES:.c=.o)
 
 all: httpd
 
-.c.o:
-	$(CC) $(CFLAGS) -o $@ $<
+#.c.o:
+#	$(CC) $(CFLAGS) -o $@ $<
 
 httpd: $(OBJ)
 	$(CC) $(OPT) -o httpd $(OBJ) $(BASELIBS)
@@ -33,4 +30,3 @@ clean:
 
 dep:
 	makedepend $(CFILES)
-

@@ -7,19 +7,7 @@ CFLAGS	= $(CFLBASE) -D_POSIX_SOURCE
 xCC=gcc
 xCFLAGS=-D_POSIX_SOURCE -D_PROTOTYPE\(a,b\)=
 
-PRGS =	\
-#	banner \
-	cksum \
-	cut \
-	decomp16 \
-	du \
-	fgrep \
-	grep \
-#	proto \
-	sum \
-	uniq \
-	wc
-	
+PRGS =	banner cksum cut decomp16 du fgrep grep proto sum uniq wc
 
 NETPRGS = decomp16 du grep wc
 

@@ -16,7 +16,7 @@ $MKDEV tty1 c 4 0
 $MKDEV tty2 c 4 1
 $MKDEV tty3 c 4 2
 
-$MKDEV ttys0 c 4 4
+$MKDEV ttys0 c 4 64
 
 #$MKDEV ttyp0 c 4 8
 #$MKDEV ttyp1 c 4 9

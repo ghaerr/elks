@@ -10,10 +10,10 @@ BASEDIR=.
 
 include $(BASEDIR)/Make.defs
 
-DIRS=disk_utils file_utils sh_utils sys_utils misc_utils sash \
-	levee ash minix1 minix2 bc byacc elvis
+DIRS=ash bc byacc disk_utils elvis file_utils inet levee minix1 minix2 \
+	misc_utils sash sh_utils sys_utils
 
-# inet
+# debug_utils lib m4 mtools prn-utils rc tools xvi	# Not used.
 
 KHELPER=$(MINIX_BOOT)/minix_elks.bin
 FD_BSECT=$(MINIX_BOOT)/minix.bin
