@@ -63,7 +63,7 @@ void print_tasks()
 /*static inline*/ void add_to_runqueue(p)
 register struct task_struct * p;
 {
-#if 1   /* sanity tests */
+#if 0   /* sanity tests */ /* This is always pre-checked */
         if (p->next_run || p->prev_run) {
                 printk("task already on run-queue\n");
                 return;
@@ -151,17 +151,21 @@ struct task_struct * prev;
 
 void schedule()
 {
+	/* Including the two registers below saves lots of code, but corrupts *
+	 * but corrupts wait queue. */
         __uint c; 
-	__ptask prev; 	/* Subscript calculation is *very* expensive in bcc */
-	__ptask next, p;
+	/* register */ __ptask prev; 	/* Subscript calculation is *very* expensive in bcc */
+	__ptask next;
+	/* register */ __ptask p;
+	__ptask currentp = current;
 	unsigned long flags, timeout = 0L;
 
-	if (current->t_kstackm != KSTACK_MAGIC)
+	if (currentp->t_kstackm != KSTACK_MAGIC)
 		panic("Process %d exceeded kernel stack limit! magic %x\n", 
-			current->pid, current->t_kstackm);
+			currentp->pid, currentp->t_kstackm);
 
 	/* We have to let a task exit! */
-	if (current->state == TASK_EXITING)
+	if (currentp->state == TASK_EXITING)
 		return;
 
 /* intr_count is not used in ELKS anywhere else */
@@ -182,7 +186,7 @@ void schedule()
 	need_resched = 0;
 #endif
 
-	prev = current;
+	prev = currentp;
 	icli();
 
 	switch (prev->state) {
@@ -232,7 +236,7 @@ void schedule()
                         p->counter = (p->counter >> 1) + p->t_priority;
         }
 
-	if (next != current) {
+	if (next != currentp) {
 		struct timer_list timer;
 
 		if (timeout) {
@@ -260,7 +264,7 @@ void schedule()
 
 scheduling_in_interrupt:
         printk("Aiee: scheduling in interrupt %d - %d %d\n",
-                lastirq, current->pid, prev->pid);
+                lastirq, currentp->pid, prev->pid);
 }
 
 #define TVN_BITS 6
@@ -405,9 +409,9 @@ register struct timer_vec * tv;
          * detach them individually, just clear the list afterwards.
          */
         while (timer) {
-                struct timer_list *tmp = timer;
-                timer = timer->next;
-                internal_add_timer(tmp);
+		struct timer_list *tmp = timer;
+		timer = timer->next;
+		internal_add_timer(tmp);
         }
         tv->vec[tv->index] = NULL;
         tv->index = (tv->index + 1) & TVN_MASK;

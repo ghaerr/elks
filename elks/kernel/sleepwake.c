@@ -33,7 +33,7 @@ register struct wait_queue *wait;
 }
 
 void remove_wait_queue(p,wait)
-register struct wait_queue **p;
+struct wait_queue **p;
 register struct wait_queue *wait;
 {
 	unsigned int flags;
@@ -43,7 +43,7 @@ register struct wait_queue *wait;
 		*p=NULL;
 	else
 	{
-		struct wait_queue *tmp=wait;
+		register struct wait_queue *tmp=wait;
 		while(tmp->next != wait)
 			tmp = tmp->next;
 		tmp->next = wait->next;

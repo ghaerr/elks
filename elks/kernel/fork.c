@@ -58,7 +58,8 @@ int do_fork()
 {
 	register struct task_struct *t;
 	int i=find_empty_process(), j;
-	register struct file * filp;
+	struct file * filp;
+	register __ptask currentp = current;
 
 	if(i<0)
 		return i;
@@ -69,21 +70,21 @@ int do_fork()
 	 *	Copy everything
 	 */
 	 
-	*t = *current;
+	*t = *currentp;
 	
 	/*
 	 *	Fix up what's different
 	 */
 
 	/* We can now do shared text with fork using realloc */
-	t->mm.cseg = mm_realloc(current->mm.cseg);
+	t->mm.cseg = mm_realloc(currentp->mm.cseg);
 /* 	if (t->mm.cseg == -1) {
 		return -ENOMEM;
 	} */ /* mm_realloc Cannot return -1 ever. */
 	
 	t->t_regs.cs = t->mm.cseg;
  
-	t->mm.dseg = mm_dup(current->mm.dseg);
+	t->mm.dseg = mm_dup(currentp->mm.dseg);
 	if (t->mm.dseg == -1) {
 		return -ENOMEM;
 	}
@@ -93,7 +94,7 @@ int do_fork()
 	t->t_regs.ksp=t->t_kstack+KSTACK_BYTES;
 	t->state = TASK_UNINTERRUPTIBLE;
 	t->pid = get_pid();
-	t->ppid = current->pid;
+	t->ppid = currentp->pid;
 	t->t_kstackm = KSTACK_MAGIC;
 	t->next_run = t->prev_run = NULL;
 	
@@ -106,26 +107,26 @@ int do_fork()
 	/* Increase the reference count to all open files */
 
 	for (j = 0; j < NR_OPEN; j++) {
-		if ((filp = current->files.fd[j])) {
+		if ((filp = currentp->files.fd[j])) {
 			filp->f_count++;
 		}
 	}
 	t->fs.root->i_count++;
 	t->fs.pwd->i_count++;
 	/* Set up our family tree */
-	t->p_parent = current;
+	t->p_parent = currentp;
 	t->p_nextsib = NULL;
 	t->p_child = NULL;
 	t->child_lastend = 0;
 	t->lastend_status = 0;
-	if (current->p_child) {
-		current->p_child->p_nextsib = t;
-		t->p_prevsib = current->p_child;
+	if (currentp->p_child) {
+		currentp->p_child->p_nextsib = t;
+		t->p_prevsib = currentp->p_child;
 	}
 	else {
 		t->p_prevsib = NULL;
 	}
-	current->p_child = t;
+	currentp->p_child = t;
 
 	/*
 	 *	Wake our new process

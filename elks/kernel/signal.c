@@ -23,10 +23,10 @@
 
 static void generate(sig, p)
 int sig;
-struct task_struct * p;
+register struct task_struct * p;
 {
 	unsigned long mask = 1 << (sig-1);
-	struct sigaction * sa = sig + p->sig.action - 1;
+	register struct sigaction * sa = sig + p->sig.action - 1;
 
 /*	if (!(mask & p->blocked)) { */
 		if (sa->sa_handler == SIG_IGN && sig != SIGCHLD)
@@ -46,13 +46,14 @@ struct task_struct * p;
 
 int send_sig(sig, p, priv)
 int sig;
-struct task_struct * p;
+register struct task_struct * p;
 int priv;
 {
+	register __ptask currentp = current;
 	printk("Killing with sig %d.\n", sig);
-	if (!priv && ((sig != SIGCONT) || (current->session != p->session)) &&
-	    (current->euid ^ p->suid) && (current->euid ^ p->uid) &&
-	    (current->uid ^ p->suid) && (current->uid ^ p->uid) &&
+	if (!priv && ((sig != SIGCONT) || (currentp->session != p->session)) &&
+	    (currentp->euid ^ p->suid) && (currentp->euid ^ p->uid) &&
+	    (currentp->uid ^ p->suid) && (currentp->uid ^ p->uid) &&
 	    !suser())
 		return -EPERM;
 /*	if (!p->sig)
@@ -77,7 +78,7 @@ int sys_kill(pid, sig)
 int pid;
 int sig;
 {
-	struct task_struct * p;
+	register struct task_struct * p;
 
 	printk("Killing PID %d with sig %d.\n", pid, sig);
 	if ((sig < 1) || (sig > 32))

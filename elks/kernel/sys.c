@@ -104,34 +104,35 @@ int sys_setregid(rgid,egid)
 gid_t rgid;
 gid_t egid;
 {
-	int old_rgid = current->gid;
-	int old_egid = current->egid;
+	register __ptask currentp = current;
+	int old_rgid = currentp->gid;
+	int old_egid = currentp->egid;
 
 	if (rgid != (gid_t) -1) {
 		if ((old_rgid == rgid) ||
-		    (current->egid==rgid) ||
+		    (currentp->egid==rgid) ||
 		    suser())
-			current->gid = rgid;
+			currentp->gid = rgid;
 		else
 			return(-EPERM);
 	}
 	if (egid != (gid_t) -1) {
 		if ((old_rgid == egid) ||
-		    (current->egid == egid) ||
-		    (current->sgid == egid) ||
+		    (currentp->egid == egid) ||
+		    (currentp->sgid == egid) ||
 		    suser())
-			current->egid = egid;
+			currentp->egid = egid;
 		else {
-			current->gid = old_rgid;
+			currentp->gid = old_rgid;
 			return(-EPERM);
 		}
 	}
 	if (rgid != (gid_t) -1 ||
 	    (egid != (gid_t) -1 && egid != old_rgid))
-		current->sgid = current->egid;
+		currentp->sgid = currentp->egid;
 #ifdef NEED_CORE
-	if (current->egid != old_egid)
-		current->dumpable = 0;
+	if (currentp->egid != old_egid)
+		currentp->dumpable = 0;
 #endif
 	return 0;
 }
@@ -143,17 +144,18 @@ gid_t egid;
 int sys_setgid(gid)
 gid_t gid;
 {
-	int old_egid = current->egid;
+	register __ptask currentp = current;
+	int old_egid = currentp->egid;
 
 	if (suser())
-		current->gid = current->egid = current->sgid = gid;
-	else if ((gid == current->gid) || (gid == current->sgid))
-		current->egid = gid;
+		currentp->gid = currentp->egid = currentp->sgid = gid;
+	else if ((gid == currentp->gid) || (gid == currentp->sgid))
+		currentp->egid = gid;
 	else
 		return -EPERM;
 #ifdef NEED_CORE
-	if (current->egid != old_egid)
-		current->dumpable = 0;
+	if (currentp->egid != old_egid)
+		currentp->dumpable = 0;
 #endif
 	return 0;
 }
@@ -266,17 +268,18 @@ uid_t euid;
 int sys_setuid(uid)
 uid_t uid;
 {
-	int old_euid = current->euid;
+	register __ptask currentp = current;
+	int old_euid = currentp->euid;
 
 	if (suser())
-		current->uid = current->euid = current->suid = uid;
-	else if ((uid == current->uid) || (uid == current->suid))
-		current->euid = uid;
+		currentp->uid = currentp->euid = currentp->suid = uid;
+	else if ((uid == currentp->uid) || (uid == currentp->suid))
+		currentp->euid = uid;
 	else
 		return -EPERM;
 #ifdef NEED_CORE
-	if (current->euid != old_euid)
-		current->dumpable = 0;
+	if (currentp->euid != old_euid)
+		currentp->dumpable = 0;
 #endif
 	return(0);
 }

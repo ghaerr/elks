@@ -19,19 +19,20 @@ register int * status;
 int options;
 {
 	pid_t retval;
+	register pid_t * lastendp = &current->child_lastend;
 
-	if (!((options & WNOHANG) || (current->child_lastend))) {
+	if (!((options & WNOHANG) || (*lastendp))) {
 		interruptible_sleep_on(&current->child_wait);
 	}
-	if (current->child_lastend) {
+	if (*lastendp) {
 		if (status) {
 			if ((retval = verified_memcpy_tofs(status, 
 					&current->lastend_status, 
 					sizeof (int))) != 0)
 				return retval;
 		}
-		retval = current->child_lastend;
-		current->child_lastend = 0;
+		retval = *lastendp;
+		*lastendp = 0;
 		return retval;
 	}
 }
@@ -39,6 +40,9 @@ int options;
 void do_exit(status)
 int status;
 {
+	register __ptask parent;
+	register __ptask task;
+
 	_close_allfiles();	
 	/* Let go of the process */
 	current->state = TASK_EXITING;
@@ -49,19 +53,20 @@ int status;
 	current->mm.cseg = NULL;
 	current->mm.dseg = NULL;
 	/* Keep all of the family stuff straight */
-	if (current->p_prevsib) {
-		current->p_prevsib->p_nextsib = current->p_nextsib;
+	if (task = current->p_prevsib) {
+		task->p_nextsib = current->p_nextsib;
 	}
-	if (current->p_nextsib) {
-		current->p_nextsib->p_prevsib = current->p_prevsib;
+	if (task = current->p_nextsib) {
+		task->p_prevsib = current->p_prevsib;
 	}
 	/* Ack. I hate repeating code like this */
-	if (current->p_parent->p_child == current) {
-		if (current->p_prevsib) { 
-			current->p_parent->p_child = current->p_prevsib;
+	parent = current->p_parent;
+	if (parent->p_child == current) {
+		if (task = current->p_prevsib) { 
+			parent->p_child = task;
 		} else 
-		if (current->p_nextsib) {
-			current->p_parent->p_child = current->p_nextsib;
+		if (task = current->p_nextsib) {
+			parent->p_child = task;
 		}
 	}
 	/* UN*X process take their children out with them...
@@ -69,15 +74,15 @@ int status;
 	 * have signals and we don't need them *yet*. */
 
 	/* Send control back to the parent */
-	current->p_parent->child_lastend = current->pid;
-	current->p_parent->lastend_status = status;
+	parent->child_lastend = current->pid;
+	parent->lastend_status = status;
 	/* Free the pwd and root inodes */
 	iput(current->fs.root);
 	iput(current->fs.pwd);
 	/* Now the task should never run again... - I hope this can still
  	 * be used outside of an int... :) */
 	current->state = TASK_UNUSED;
-	wake_up(&current->p_parent->child_wait);
+	wake_up(&parent->child_wait);
 	schedule();
 	panic("Returning from sys_exit!\n");
 }
