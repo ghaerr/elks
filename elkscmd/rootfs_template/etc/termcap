@@ -1,11 +1,13 @@
-elks|ELKS VT-52 console:\
+elks|vt52|vt-52|ELKS VT-52 console:\
 	:am:bs:co#80:it#8:li#25:\
 	:ce=\EK:cl=\EH\EJ:cm=\EY%+ %+ :do=\EB:ho=\EH:\
 	:le=\ED:nd=\EC:ta=^I:up=\EA:
-ansi|ELKS ANSI (VT-100) console:\
+
+ansi|vt100|vt-100|ELKS ANSI (VT-100) console:\
 	:am:bs:co#80:it#8:li#25:\
 	:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:do=\E[B:ho=\E[H:\
 	:le=\E[D:nd=\E[C:ta=^I:up=\E[A:se=\E[m:so=\E[7m:
+
 ansi77|ANSI 3.64 standard 1977 version:\
 	:am:bs:co#80:it#8:li#24:mi:\
 	:al=5*\E[L:bl=^G:cd=\E[J:ce=\E[K:cl=\E[;H\E[2J:\

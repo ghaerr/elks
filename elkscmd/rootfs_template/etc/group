@@ -14,16 +14,9 @@ mail::12:mail,postmaster
 news::13:news
 uucp::14:uucp
 man::15:man
-named::25:named
-gopher::30:gopher
-gdm::42:gdm
 ftp::50:ftp
-piranha::60:piranha
-nobody::99:nobody,guest
+nobody::99:nobody
 users::100:root,user0,user1,user2,user3,user4,user5,user6,user7,user8,user9
-xfs::102:xfs
-postgres::233:postgres
-squid::234:squid
 user0::500:user0
 user1::501:user1
 user2::502:user2
