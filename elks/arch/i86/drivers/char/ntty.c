@@ -22,9 +22,12 @@
 #include <linuxmt/ntty.h>
 #include <linuxmt/major.h>
 
+/*
+ * XXX plac: setting default to B9600 instead of B1200
+ */
 struct termios def_vals = { 	BRKINT,
 				ONLCR,
-				B1200 | CS8,
+				B9600 | CS8,
 				ECHO | ICANON | ISIG,
 				0,
 				{3,28,127,21,4,0,1,0,17,19,26,0,18,15,23,22}
