@@ -199,9 +199,9 @@ static struct buffer_head *get_free_buffer()
 		{
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 			if(bh->b_count==0 && !bh->b_dirty && !bh->b_lock && !bh->b_data)
-#else /* CONFIG_FS_EXTERNAL_BUFFER */
+#else
 			if(bh->b_count==0 && !bh->b_dirty && !bh->b_lock)
-#endif /* CONFIG_FS_EXTERNAL_BUFFER */
+#endif
 			{
 				put_last_lru(bh);
 				return bh;
@@ -539,7 +539,7 @@ register struct buffer_head *bh;
 		__brelse(bh);
 	}
 }
-#endif /* CONFIG_FS_EXTERNAL_BUFFER */
+#endif
 
 /* This function prints the status of the L1 mappings... */
 #if 0 /* Currently unused */
@@ -568,7 +568,7 @@ void buffer_init()
 	lastumap = 0;
 	for (i = 0; i < NR_MAPBUFS; i++)
 		bufmem_map[i] = 0;
-#endif /* CONFIG_FS_EXTERNAL_BUFFER */
+#endif
 	
 	for(i=0;i<NR_BUFFERS;i++)
 	{
@@ -576,9 +576,9 @@ void buffer_init()
 		bh->b_data = 0;		/* L1 buffer cache is reserved! */
 		bh->b_mapcount = 0;
 		bh->b_num = i;		/* Used to compute L2 location */
-#else /* CONFIG_FS_EXTERNAL_BUFFER */
+#else
 		bh->b_data = bufmem[i];
-#endif /* CONFIG_FS_EXTERNAL_BUFFER */
+#endif
 		if(i==0)
 		{
 			bh_chain=bh;

@@ -6,4 +6,4 @@ struct utimbuf {
 	time_t modtime;           /* Modification time.  */
 };
 
-#endif /* _LINUXMT_UTIME_H */
+#endif

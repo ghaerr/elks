@@ -286,4 +286,4 @@ int wait_for_keypress()
 	return chq_getch(&ttys[0].inq, 0, 1);
 }
 
-#endif /* CONFIG_CONSOLE_DIRECT */
+#endif

@@ -121,7 +121,7 @@ extern void inode_init();
 #define unmap_buffer(_a)
 #define unmap_brelse(_a) brelse(_a)
 
-#endif /* CONFIG_FS_EXTERNAL_BUFFER */
+#endif
 
 
 struct buffer_head
@@ -139,7 +139,7 @@ struct buffer_head
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 	unsigned char b_num;	 /* Used to lookup L2 area */
 	unsigned int b_mapcount; /* Used for the new L2 buffer cache scheme */
-#endif /* CONFIG_FS_EXTERNAL_BUFFER */
+#endif
 };
 
 #define BLOCK_READ	0
@@ -449,7 +449,5 @@ extern int block_write();
 #define block_read NULL
 #define block_write NULL
 #endif
-
-#endif /* __KERNEL__ */
-
+#endif
 #endif

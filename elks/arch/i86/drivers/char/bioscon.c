@@ -51,7 +51,7 @@ notzero1:
 	    break;
 	}
 }
-#endif /* CONFIG_BIOS_VT52 */
+#endif
 
 void con_charout(c)
 char c;
@@ -66,7 +66,7 @@ char c;
 	  InCmd=1;
 	  return;
 	}
-#endif /* CONFIG_BIOS_VT52 */
+#endif
 
 	/* \n\r handling */
 	if (c == '\n') con_charout('\r');
@@ -162,4 +162,4 @@ void init_console()
 }
 
 
-#endif /* CONFIG_CONSOLE_BIOS */
+#endif

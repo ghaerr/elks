@@ -280,12 +280,12 @@ int bioshd_getfdinfo()
 
     }
 
-#endif /* CONFIG_BLK_DEV_BFD_HARD */
+#endif
 
     return ndrives;
 }
 
-#endif /* CONFIG_BLK_DEV_BFD */
+#endif
 
 static void bioshd_release(inode, filp)
 struct inode *inode;
@@ -568,8 +568,7 @@ void init_bioshd()
 	}
     }
 
-#else /* DOSHD_VERBOSE_DRIVES */
-
+#else
 #ifdef CONFIG_BLK_DEV_BHD
 
     for (i=0; i < 2; i++) {
@@ -586,9 +585,8 @@ void init_bioshd()
     }
     bioshd_gendisk.nr_real = hdcount;
 
-#endif /* CONFIG_BLK_DEV_BHD */
-
-#endif /* DOSHD_VERBOSE_DRIVES */
+#endif
+#endif
 			
     i = register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops);
 
@@ -832,7 +830,7 @@ int dev, maxusage;
     return 0;
 }
 
-#endif /* 0 */
+#endif
 
 static void bioshd_geninit()
 {

@@ -32,4 +32,4 @@ struct nano_proto_data {
 	short npd_sem;
 };
 
-#endif AF_NANO_H
+#endif

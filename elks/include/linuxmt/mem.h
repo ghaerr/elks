@@ -14,8 +14,7 @@
 #define MEM_GETDS	5
 #define MEM_GETCS	6
 
-
 extern char module_data[];
 extern int module_init();
 
-#endif /* __LINUXMT_MOD_H_ */
+#endif

@@ -31,4 +31,4 @@
 /*
 #define DIRECTHD_DEVICE_NAME "hd"
 */
-#endif _LINUXMT_DIRECTHD_H
+#endif

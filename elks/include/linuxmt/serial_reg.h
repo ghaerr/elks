@@ -133,5 +133,4 @@
  * the low four bits control software flow control
  */
 
-#endif /* _LINUX_SERIAL_REG_H */
-
+#endif

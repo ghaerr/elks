@@ -331,7 +331,7 @@ REGOPT struct iattr *attr;
 	inode_setattr(inode, attr);
 	return 0;
 }
-#endif /* USE_NOTIFY_CHANGE */
+#endif
 
 void invalidate_inodes(dev)
 kdev_t dev;

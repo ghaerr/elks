@@ -3,4 +3,4 @@
 
 #include <linuxmt/in.h>
 
-#endif AF_INET_H
+#endif

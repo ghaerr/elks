@@ -731,8 +731,9 @@ int len;
 	iput(oldinode);
 	return 0;
 }
-#endif /* CONFIG_FS_RO */
-#if 0 /* subdir() used in do_minix_rename() which is not present */
+#endif
+#if 0
+/* subdir() used in do_minix_rename() which is not present */
 static int subdir(new_inode,old_inode)
 register struct inode * new_inode;
 register struct inode * old_inode;
@@ -758,4 +759,4 @@ register struct inode * old_inode;
 	iput(new_inode);
 	return result;
 }
-#endif /* 0 */
+#endif

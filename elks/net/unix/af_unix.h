@@ -32,4 +32,4 @@ struct unix_proto_data {
 	short sem;
 };
 
-#endif AF_UNIX_H
+#endif

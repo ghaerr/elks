@@ -125,7 +125,7 @@ struct socket *sock_alloc()
 	sock->conn = NULL;
 	sock->iconn = NULL;
 	sock->next = NULL;
-#endif /* CONFIG_UNIX || CONFIG_NANO || CONFIG_INET */
+#endif
 	sock->file = NULL;
 	sock->wait = &inode->i_wait;
 	sock->inode = inode;	/* "backlink" use pointer arithmetic instead */
@@ -320,7 +320,7 @@ struct socket * peer;
 	wake_up_interruptible(peer->wait);
 /*	sock_wake_async(peer, 1); */
 }
-#endif /* CONFIG_UNIX || CONFIG_NANO || CONFIG_INET */
+#endif
 
 void sock_release(sock)
 register struct socket * sock;
@@ -330,7 +330,7 @@ register struct socket * sock;
 
 #if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 	struct socket * nextsock;
-#endif /* CONFIG_UNIX || CONFIG_NANO || CONFIG_INET */
+#endif
 
 	if ((oldstate = sock->state) != SS_UNCONNECTED) {
 		sock->state = SS_DISCONNECTING;
@@ -343,15 +343,15 @@ register struct socket * sock;
 	}
 
 	peersock = (oldstate == SS_CONNECTED) ? sock->conn : NULL;
-#else  /* CONFIG_UNIX || CONFIG_NANO || CONFIG_INET */
+#else
 	peersock = NULL; /* sock-conn is always NULL for an INET socket */
-#endif /* CONFIG_UNIX || CONFIG_NANO || CONFIG_INET */
+#endif
 	if (sock->ops)
 		sock->ops->release(sock, peersock);
 #if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 	if (peersock)
 		sock_release_peer(peersock);
-#endif /* CONFIG_UNIX || CONFIG_NANO || CONFIG_INET */
+#endif
 /*	--sockets_in_use; */ /* maybe we'll find a use for this */
 	sock->file = NULL;
 	iput(SOCK_INODE(sock));

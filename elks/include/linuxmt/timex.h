@@ -14,10 +14,9 @@
 
 #define HZ 30
 
-#else /* CONFIG_ARCH_SIBO */
+#else
 
 #define HZ 100
 
-#endif /* CONFIG_ARCH_SIBO */
-
-#endif /* LINUXMT_TIMEX_H */
+#endif
+#endif

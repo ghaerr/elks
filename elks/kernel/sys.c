@@ -352,7 +352,7 @@ gid_t grp;
 	}
 	return 0;
 }
-#else  /* CONFIG_SUPPLEMENTARY_GROUPS */
+#else
 int in_group_p(grp)
 gid_t grp;
 {
@@ -360,4 +360,4 @@ gid_t grp;
 		return 1;
 	}
 }
-#endif /* CONFIG_SUPPLEMENTARY_GROUPS */
+#endif

@@ -33,4 +33,4 @@ struct tss {
     unsigned short ldt;
 };
 
-#endif /* __TSS_H__ */
+#endif

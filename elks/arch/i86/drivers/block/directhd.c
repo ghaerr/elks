@@ -144,7 +144,8 @@ int count;
 #ifndef CONFIG_PC_XT
     repz
     insw
-#else /* this should work on an 8088 */
+#else
+/* this should work on an 8088 */
 dhd_insw_loop:
     in ax, dx
     stosw
@@ -170,7 +171,8 @@ int count;
 
 	return;
 }
-#else /* the assembler version */
+#else
+/* the assembler version */
 /* again, this should work, but I haven't had a chance to test it yet. */
 void outsw(port, buffer, count)
 unsigned int port;
@@ -191,7 +193,8 @@ int count;
 #ifndef CONFIG_PC_XT
     repz
     outsw
-#else /* this should work on an 8088 */
+#else
+/* this should work on an 8088 */
 dhd_outsw_loop:
     lodsw
     out dx, ax

@@ -390,4 +390,4 @@ int sys_pipe(filedes)
 	return -ENOSYS;
 }
 
-#endif /* CONFIG_PIPE */
+#endif

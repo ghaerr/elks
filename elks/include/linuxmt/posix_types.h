@@ -10,7 +10,7 @@
  */
 
 #ifndef NULL
-# define NULL		((void *) 0)
+#define NULL		((void *) 0)
 #endif
 
 /*
@@ -38,7 +38,7 @@
 
 typedef __u16 __kernel_fd_set;
 
-#else /* CONFIG_SHORT_FILES */
+#else
 
 #undef __NFDBITS
 #define __NFDBITS	(8 * sizeof(unsigned long))
@@ -48,8 +48,8 @@ typedef __u16 __kernel_fd_set;
 
 typedef __u32 __kernel_fd_set;
 
-#endif /* CONFIG_SHORT_FILES */
+#endif
 
 #include <arch/posix_types.h>
 
-#endif /* _LINUXMT_POSIX_TYPES_H */
+#endif

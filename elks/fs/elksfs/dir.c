@@ -61,7 +61,7 @@ struct inode_operations elksfs_dir_inode_operations = {
 	NULL,			/* bmap */
 #endif
 	NULL,			/* truncate */
-#else /* CONFIG_FS_RO */
+#else
 	elksfs_create,		/* create */
 	elksfs_lookup,		/* lookup */
 	elksfs_link,		/* link */
@@ -76,7 +76,7 @@ struct inode_operations elksfs_dir_inode_operations = {
 	NULL,			/* bmap */
 #endif
 	elksfs_truncate,		/* truncate */
-#endif /* CONFIG_FS_RO */
+#endif
 #ifdef BLOAT_FS
 	NULL			/* permission */
 #endif

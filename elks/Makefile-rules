@@ -214,7 +214,7 @@ endif
 
 AR		= ar
 CC_PROTO	= gcc -I$(INCDIR) -M $(CCDEFS)
-CFLBASE 	= -O -I$(INCDIR) $(CCDEFS)
+CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) # -ansi
 CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
 LINT		= lclint
 

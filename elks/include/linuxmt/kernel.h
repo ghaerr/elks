@@ -35,6 +35,5 @@ extern int wait_for_keypress();
 
 #define suser() (current->euid == 0)
 
-#endif /* __KERNEL__ */
-
+#endif
 #endif

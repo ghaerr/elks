@@ -37,7 +37,9 @@ register char *buf;
 int len;
 {
 	char c;
+
 #ifdef CONFIG_DCON_ANSI_PRINTK
+
 	/* Colourizing */
 	static char colour= '1';
 	
@@ -54,7 +56,8 @@ int len;
 
 	colour++;
 	/* END Colourizing */
-#endif /* CONFIG_DCON_ANSI_PRINTK */
+
+#endif
 	
 	while (len) {
 		c = *buf;

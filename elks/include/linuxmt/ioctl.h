@@ -3,5 +3,4 @@
 
 #include <arch/ioctl.h>
 
-#endif /* _LINUX_IOCTL_H */
-
+#endif

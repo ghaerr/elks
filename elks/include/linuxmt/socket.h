@@ -35,5 +35,4 @@ struct msghdr
 #define SOCK_RDM        4               /* reliably-delivered message   */
 #define SOCK_SEQPACKET  5               /* sequential packet socket     */
 
-
-#endif /* LINUXMT_SOCKET_H */
+#endif

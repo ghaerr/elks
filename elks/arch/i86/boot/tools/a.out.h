@@ -108,4 +108,4 @@ struct nlist {			/* symbol table entry */
 #define C_EXT		0020	/* external symbol */
 #define C_STAT		0030	/* static */
 
-#endif /* _AOUT_H */
+#endif

@@ -66,7 +66,7 @@ void setup_mm()
 	if(setupb(0x1ff)==0xAA && arch_cpu>5)
 		printk("ps2: PS/2 pointing device detected\n");
 }
-#else /* CONFIG_ARCH_SIBO */
+#else
 void setup_mm()
 {
 	int basemem=setupw(0x2a);
@@ -108,4 +108,4 @@ void setup_mm()
 		printk("ps2: PS/2 pointing device detected\n");
 
 }
-#endif /* CONFIG_ARCH_SIBO */
+#endif

@@ -165,7 +165,7 @@ char *saddr;
 #endasm
 	return 	ds;
 }
-#endif /* CONFIG_FULL_VFS */
+#endif
 
 unsigned long get_fs_long(dv)
 unsigned long *dv;

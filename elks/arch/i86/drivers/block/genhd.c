@@ -273,7 +273,7 @@ kdev_t dev;
 #endif
 	printk(" unknown partition table\n");
 }
-#endif /* CONFIG_GENDISK */
+#endif
 
 /* This function is used to re-read partition tables for removable disks.
    Much of the cleanup from the old partition tables should have already been
@@ -321,4 +321,4 @@ register struct gendisk *dev;
 	}
 #endif
 }
-#endif /* CONFIG_NOFS */
+#endif

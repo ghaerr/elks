@@ -53,6 +53,5 @@
 #define	_VOLATILE
 #define _SIZET		int
 
-#endif /* _ANSI */
-
-#endif /* ANSI_H */
+#endif
+#endif

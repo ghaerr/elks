@@ -256,4 +256,4 @@ ypos:
 	.word 0x0000
 pump_ctrl:
 	.word 0x0000
-#endif /* CONFIG_SIBO_CONSOLE_DIRECT */
+#endif

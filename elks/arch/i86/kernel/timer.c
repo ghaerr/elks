@@ -27,16 +27,15 @@ void timer_tick(/*struct pt_regs * regs*/)
 	inc 40
 	pop es
 #endasm
-#endif /* 0 */
+#endif
 #ifdef CONFIG_DEBUG_TIMER
-        #asm
+#asm
         mov al,_jiffies
         out 0x80,al 
-        #endasm
-
-#endif /* CONFIG_DEBUG_TIMER */
+#endasm
+#endif
 }
-#else /* CONFIG_ARCH_SIBO */
+#else
 void timer_tick(/*struct pt_regs * regs*/)
 {
 	jiffies++;
@@ -74,4 +73,4 @@ void enable_timer_tick()
 #endasm
 	printk("Timer enabled...\n");
 }
-#endif /* CONFIG_ARCH_SIBO */
+#endif

@@ -25,6 +25,5 @@ typedef struct select_table_struct {
 
 #define __MAX_SELECT_TABLE_ENTRIES 32
 
-#endif /* __KERNEL__ */
-
+#endif
 #endif

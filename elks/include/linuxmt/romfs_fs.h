@@ -58,5 +58,5 @@ struct romfs_inode {
 /* Not much now */
 extern int init_romfs_fs();
 
-#endif /* __KERNEL__ */
+#endif
 #endif

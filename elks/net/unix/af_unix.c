@@ -620,5 +620,4 @@ struct net_proto * pro;
 	sock_register(AF_UNIX,&unix_proto_ops);
 };
 
-	
-#endif /* CONFIG_UNIX */
+#endif

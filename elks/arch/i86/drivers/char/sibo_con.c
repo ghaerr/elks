@@ -239,7 +239,7 @@ int N;
   	Current_VCminor = N;
 
 	Refresh();
-#endif	/* CONFIG_SIBO_VIRTUAL_CONSOLE */
+#endif
 }
 
 int Console_write(tty)
@@ -251,7 +251,7 @@ register struct tty * tty;
    Console * C = &Con[tty->minor];
 #else 
    Console * C = &Con[0];	/* use default console: This is probably wrong */
-#endif	/* CONFIG_SIBO_VIRTUAL_CONSOLE */
+#endif
    
    while (tty->outq.len != 0) { 
 	chq_getch(&tty->outq, &ch, 0);
@@ -324,7 +324,7 @@ void init_console()
 		WriteChar( temp, 'o');
 		WriteChar( temp, 0x30 + i);
    	}
-#endif	/* CONFIG_SIBO_VIRTUAL_CONSOLE */
+#endif
 
 	Visible = &Con[ 0 ];
 
@@ -340,5 +340,4 @@ void init_console()
 #endif
 }
 
-#endif	/* CONFIG_SIBO_CONSOLE_DIRECT */
-
+#endif

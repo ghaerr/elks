@@ -17,4 +17,4 @@ int chq_delch();
 int chq_getch();
 int chq_peekch();
 
-#endif /* _LINUXMT_CHQ_H_ */
+#endif

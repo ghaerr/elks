@@ -16,4 +16,4 @@ struct sockaddr_in {
 #define INADDR_NODE	0xffffffff
 #define INADDR_LOOPBACK	0x7f000001
 
-#endif /* _LINUX_IN_H */
+#endif

@@ -195,4 +195,4 @@ unsigned long count;
 	}
 }
 
-#endif /* CONFIG_BLK_DEV_SSD */
+#endif

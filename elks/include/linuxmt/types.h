@@ -45,9 +45,9 @@ typedef __u16 segext_t;			/* Extent of segment */
 typedef __u32 jiff_t;
 #ifdef CONFIG_SHORT_FILES
 typedef __u16 fd_mask_t;
-#else /* CONFIG_SHORT_FILES */
+#else
 typedef __u32 fd_mask_t; 
-#endif /* CONFIG_SHORT_FILES */
+#endif
 
 typedef int   ptrdiff_t;
 struct ustat {
@@ -58,4 +58,3 @@ struct ustat {
 };
 
 #endif
-

@@ -349,4 +349,4 @@ void meta_init()
 	}
 }
 
-#endif /* CONFIG_DEV_META */
+#endif

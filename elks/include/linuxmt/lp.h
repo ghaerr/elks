@@ -55,4 +55,4 @@
 
 #define LP_DEVICE_NAME	"lp"
 
-#endif _LINUXMT_LP_H
+#endif

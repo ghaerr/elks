@@ -213,4 +213,4 @@ unsigned long count;
 	ssd_close4();
 }
 
-#endif /* CONFIG_BLK_DEV_SSD */
+#endif

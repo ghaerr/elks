@@ -153,7 +153,7 @@ struct timeval * utimes;
 	iput(inodep);
 	return error;
 }
-#endif /* 0 */
+#endif
 
 int sys_utime(filename,times)
 char * filename;

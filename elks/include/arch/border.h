@@ -4,4 +4,4 @@
 extern unsigned long htonl();
 extern unsigned long ntohl();
 
-#endif _ARCH_BORDER_H
+#endif

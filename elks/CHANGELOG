@@ -31,9 +31,18 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sun Feb 24 14:50:29 GMT 2002	Riley Williams <rhw@memalpha.cx>
+
+	* Made ELKS not rely on the Linux kernel source being present for
+	  the error values, by importing the Linux 2.5.5 errno.h files
+	  into the ELKS tree. Also standardised the way this header file
+	  is included.
+
 Sun Feb 24 12:01:54 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
+	* Fixed #else and #endif to not fox the bcc -ansi option.
 	* Reformatted scripts/Configure in a consistent style.
+	* Reformatted scripts/Menuconfig in a consistent style.
 
 Wed Feb 20 12:27:08 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
@@ -43,7 +52,7 @@ Wed Feb 20 12:27:08 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 	  defaults to NOT including this support. When it is disabled,
 	  the kernel prints its version during system boot, but when
 	  it is enabled, that no longer happens and the startup script
-	  is expected to do this if required.
+	  is expected to do this instead if such is required.
 
 	  For those interested in the configuration option, it can be
 	  found under "Kernel Hacking" and is easily identifiable.

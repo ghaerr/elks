@@ -141,5 +141,4 @@ extern int get_dma_residue();
 extern int request_dma();	/* reserve a DMA channel */
 extern void free_dma();		/* release it again */
 
-
-#endif /* __ARCH_DMA_H */
+#endif

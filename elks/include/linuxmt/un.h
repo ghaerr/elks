@@ -8,4 +8,4 @@ struct sockaddr_un {
 	char sun_path[UNIX_PATH_MAX];	/* pathname */
 };
 
-#endif /* _LINUX_UN_H */
+#endif

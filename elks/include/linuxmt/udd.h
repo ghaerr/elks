@@ -89,4 +89,4 @@ struct ud_request_trunc {
 #define	META_POLL	0x0702
 #define	META_ACK	0x0703
 
-#endif /* __LINUXMT_UDD_H_ */
+#endif

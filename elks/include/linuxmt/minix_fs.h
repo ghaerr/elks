@@ -107,6 +107,5 @@ extern struct inode_operations minix_file_inode_operations;
 extern struct inode_operations minix_dir_inode_operations;
 extern struct inode_operations minix_symlink_inode_operations;
 
-#endif /* __KERNEL__ */
-
+#endif
 #endif

@@ -35,4 +35,4 @@
 #undef	__FD_ZERO
 #define __FD_ZERO(fdsetp) (((unsigned long *)fdsetp)[0] = 0UL)
 
-#endif /* __ARCH_8086_POSIZ_TYPES_H */
+#endif

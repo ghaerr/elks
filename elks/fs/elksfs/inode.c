@@ -52,8 +52,7 @@ register struct super_block * sb;
 	}
 	sb->s_dirt = 0;
 }
-#endif /*CONFIG_FS_RO */
-
+#endif
 
 void elksfs_put_super(sb)
 register struct super_block *sb;

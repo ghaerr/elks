@@ -271,4 +271,4 @@ struct termios {
 
 #define _POSIX_VDISABLE		'\0'
 
-#endif	/* __LINUXMT_TERMIOS_H */
+#endif

@@ -16,4 +16,4 @@ struct descriptor {
     unsigned short reserved;
 };
 
-#endif /* __DESCRIPTOR_H__ */
+#endif

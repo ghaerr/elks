@@ -466,4 +466,4 @@ int wait_for_keypress()
 {
 	/* Do something */
 }
-#endif /* CONFIG_CONSOLE_SERIAL */
+#endif

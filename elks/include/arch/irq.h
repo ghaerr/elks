@@ -47,7 +47,7 @@ extern void (*bh_base[16])();
 #ifdef __KERNEL__
 #define icli() asm("cli")
 #define isti() asm("sti")
-#else __KERNEL__
+#else
 #define icli()
 #define isti()
 #endif
@@ -69,4 +69,4 @@ extern void (*bh_base[16])();
 
 #define mark_bh(nr) set_bit(nr, &bh_active);
 
-#endif /* __ARCH_8086_IRQ_H */
+#endif

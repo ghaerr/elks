@@ -31,9 +31,6 @@
 #define DIVISOR 32 /* SECTOR_SIZE / P_SIZE */
 #define MAX_ENTRIES 8
 
-#ifndef DEBUG
-#endif
-
 typedef __u16 rd_sector_t;
 
 static int rd_initialised = 0;
@@ -362,4 +359,4 @@ static void do_rd_request()
 	}
 }
 
-#endif /* CONFIG_BLK_DEV_RAM */
+#endif

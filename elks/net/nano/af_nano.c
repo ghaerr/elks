@@ -588,5 +588,4 @@ struct net_proto * pro;
 	sock_register(AF_NANO,&nano_proto_ops);
 };
 
-	
-#endif /* CONFIG_NANO */
+#endif

@@ -40,7 +40,5 @@ extern int  peekw();
 extern void poked();
 extern long peekd();
 
-
-#endif /* __KERNEL__ */
-
+#endif
 #endif

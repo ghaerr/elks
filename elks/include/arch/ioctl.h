@@ -5,4 +5,4 @@
  *	Nothing here yet.
  */
 
-#endif /* __ARCH_8086_IOCTL_H */
+#endif

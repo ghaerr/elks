@@ -75,7 +75,7 @@ struct task_struct
 	__uint t_count, t_priority;	/* priority scheduling elements */
 	__s32 counter;			/* Time counter (unused so far) */
         struct task_struct *next_task, *prev_task;
-#endif /* CONFIG_OLD_SCHED */
+#endif
 #ifdef CONFIG_SUPPLEMENTARY_GROUPS
 	gid_t groups[NGROUPS];
 #endif

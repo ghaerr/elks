@@ -57,6 +57,5 @@
 #ifdef __KERNEL__
 #define F_POSIX		1
 #define F_FLOCK		2
-#endif /* __KERNEL__ */
-
+#endif
 #endif

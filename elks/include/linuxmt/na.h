@@ -6,4 +6,4 @@ struct sockaddr_na {
 	int sun_no;			/* address number */
 };
 
-#endif /* _LINUX_NA_H */
+#endif

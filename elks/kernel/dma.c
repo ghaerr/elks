@@ -256,4 +256,4 @@ unsigned int dmanr;
 	return (dmanr<=3)? count : (count<<1);
 }
 
-#endif /* CONFIG_DMA */
+#endif

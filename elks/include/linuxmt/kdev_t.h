@@ -16,25 +16,25 @@ typedef __u16 kdev_t;
 
 extern char * kdevname();	/* note: returns pointer to static data! */
 
-/*
-As long as device numbers in the outside world have 16 bits only,
-we use these conversions.
-*/
+/* As long as device numbers in the outside world have 16 bits only,
+ * we use these conversions.
+ */
 
 #define kdev_t_to_nr(dev)	(dev)
 #define to_kdev_t(dev)		(dev)
 
-#else /* __KERNEL__ */
+#else
 
-/*
-Some programs want their definitions of MAJOR and MINOR and MKDEV
-from the kernel sources. These must be the externally visible ones.
-*/
+/* Some programs want their definitions of MAJOR and MINOR and MKDEV
+ * from the kernel sources. These must be the externally visible ones.
+ */
+
 #define MAJOR(dev)	((dev)>>MINORBITS)
 #define MINOR(dev)	((dev) & MINORMASK)
 #define MKDEV(ma,mi)	((ma)<<MINORBITS | (mi))
 
 #undef MINORBITS
 #undef MINORMASK
-#endif /* __KERNEL__ */
+
+#endif
 #endif

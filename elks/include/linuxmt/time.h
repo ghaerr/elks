@@ -25,10 +25,9 @@ struct timezone {
 	int	tz_dsttime;	/* type of dst correction */
 };
 
-#endif /* __KERNEL__ */
+#endif
 
 #define NFDBITS                 __NFDBITS
-
 
 #define FD_SETSIZE              __FD_SETSIZE
 #define FD_SET(fd,fdsetp)       __FD_SET(fd,fdsetp)
@@ -37,4 +36,3 @@ struct timezone {
 #define FD_ZERO(fdsetp)         __FD_ZERO(fdsetp)
 
 #endif
-

@@ -27,7 +27,7 @@ __ptask current, next, previous;
 #ifdef OLD_SCHED
 static jiff_t lost_ticks = 0L;
 static jiff_t lost_ticks_system = 0L;
-#endif /* OLD_SCHED */
+#endif
 
 extern unsigned char can_tswitch;
 extern int lastirq;
@@ -389,7 +389,7 @@ static void update_times()
 		}
         }
 }
-#endif /* OLD_SCHED */
+#endif
 
 void do_timer(regs)
 struct pt_regs * regs;
@@ -397,11 +397,9 @@ struct pt_regs * regs;
         (*(jiff_t *)&jiffies)++;
 #ifdef OLD_SCHED
         lost_ticks++;
-#endif /* OLD_SCHED */
+#endif
 }
 
 void sched_init()
 {
 }
-
-

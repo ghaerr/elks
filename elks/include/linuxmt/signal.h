@@ -32,7 +32,8 @@ typedef unsigned short sigset_t;	/* at least 16 bits */
 #define SIGALRM		14
 #define SIGTERM		15
 
-#else /* SMALLSIG */
+#else
+
 typedef unsigned long sigset_t;		/* at least 32 bits */
 
 #define _NSIG             32
@@ -72,7 +73,7 @@ typedef unsigned long sigset_t;		/* at least 32 bits */
 #define SIGPWR		30
 #define	SIGUNUSED	31
 
-#endif /* SMALLSIG */
+#endif
 
 /*
  * sa_flags values: SA_STACK is not supported

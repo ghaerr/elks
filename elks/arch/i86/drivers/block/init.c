@@ -36,14 +36,14 @@ void device_setup()
 	chr_dev_init();
 #ifndef CONFIG_NOFS
 	blk_dev_init();
-#endif /* CONFIG_NOFS */
+#endif
 	isti();
 
 #ifndef CONFIG_NOFS
 	for (p = gendisk_head ; p ; p=p->next) {
 		setup_dev(p);
 	}
-#endif /* CONFIG_NOFS */
+#endif
 #ifdef CONFIG_BLK_DEV_RAM
 	rd_load();
 #endif

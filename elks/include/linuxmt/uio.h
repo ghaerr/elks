@@ -9,4 +9,4 @@ struct iovec
 
 #define UIO_MAXIOV	16
 
-#endif /* _LINUXMT_UIO_H */
+#endif

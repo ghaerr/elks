@@ -32,7 +32,7 @@ struct socket {
 	struct socket		*conn;
 	struct socket		*iconn;
 	struct socket		*next;
-#endif /* CONFIG_UNIX || CONFIG_NANO */
+#endif
 	struct wait_queue	*wait;
 	struct inode		*inode;
 	struct fasync_struct	*fasync_list;
@@ -73,5 +73,4 @@ struct net_proto {
 	void (*init_func)();  /* Bootstrap */
 };
 
-
-#endif /* LINUXMT_NET_H */
+#endif

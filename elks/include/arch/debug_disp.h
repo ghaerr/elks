@@ -8,6 +8,9 @@
  * Modifications:
  * 
  * $Log$
+ * Revision 1.1  2000/02/02 17:54:18  plattner
+ * First checkin
+ *
  *
  */
 
@@ -22,4 +25,4 @@
 #define DDISP(v)
 #endif
 
-#endif /* __debug_disp_h__ */
+#endif

@@ -119,7 +119,8 @@ void sti()
     sti
 #endasm
 }
-#else /* new versions. 4 bytes saved on overhead, and 2 bytes per call. */
+#else
+/* new versions. 4 bytes saved on overhead, and 2 bytes per call. */
 #define cli() asm("cli")
 #define sti() asm("sti")
 #endif

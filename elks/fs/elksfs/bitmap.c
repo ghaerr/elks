@@ -137,7 +137,7 @@ repeat:
 	unmap_brelse(bh);
 	return j;
 }
-#endif /* CONFIG_FS_RO */
+#endif
 
 #ifdef BLOAT_FS
 unsigned long elksfs_count_free_blocks(sb)
@@ -256,7 +256,7 @@ struct inode * dir;
 	printk("new_inode: Ack ack!  This sucked...\n");
 	unmap_buffer(bh); iput(inode); return NULL;
 }
-#endif /* CONFIG_FS_RO */
+#endif
 
 #ifdef BLOAT_FS
 unsigned long elksfs_count_free_inodes(sb)

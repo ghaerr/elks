@@ -206,7 +206,7 @@ int N;
   	Current_VCminor = N;
 
 	LCD_Refresh();
-#endif	/* CONFIG_VIRTUAL_CONSOLE */
+#endif
 }
 
 int Console_write(tty)
@@ -219,7 +219,7 @@ register struct tty * tty;
 #else 
    /* use default console: This is probably wrong */
    Console * C = &Con[0];
-#endif	/* CONFIG_VIRTUAL_CONSOLE */
+#endif
    
    while (tty->outq.len != 0) { 
 	chq_getch(&tty->outq, &ch, 0);
@@ -290,7 +290,7 @@ void init_console()
 		
 		WriteChar( temp, '0'+ i);
    	}
-#endif	/* CONFIG_VIRTUAL_CONSOLE */
+#endif
 
 	Visible = &Con[ 0 ];
 
@@ -306,5 +306,4 @@ void init_console()
 #endif
 }
 
-#endif	/* CONFIG_CONSOLE_DIRECT */
-
+#endif

@@ -329,9 +329,9 @@ void init_IRQ()
 		panic("Unable to get keyboard");
 	}
 
-#else /* CONFIG_CONSOLE_DIRECT */
+#else
 	enable_irq(1);		/* BIOS Keyboard */
-#endif /* CONFIG_CONSOLE_DIRECT */
+#endif
 
 	/* Enable the drop through interrupts. */
 
@@ -344,6 +344,5 @@ void init_IRQ()
 	enable_irq(2);		/* Cascade */
 	enable_irq(6);		/* Floppy */
 
-#endif /* CONFIG_ARCH_SIBO */
+#endif
 }
-

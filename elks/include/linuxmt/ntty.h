@@ -63,5 +63,5 @@ extern struct termios def_vals; /* global use of def_vals                 */
 #define TTY_STOPPED 	1
 #define TTY_OPEN	2
 
-#endif /* __KERNEL__ */
+#endif
 #endif

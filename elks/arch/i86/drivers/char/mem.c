@@ -357,4 +357,4 @@ void mem_dev_init()
 		printd_mem1("unable to get major %d for memory devices\n", MEM_MAJOR);
 }
 
-#endif /* CONFIG_CHAR_DEV_MEM */
+#endif

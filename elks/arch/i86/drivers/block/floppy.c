@@ -1469,5 +1469,5 @@ extern int blk_size[];
 		reset_floppy();
 	}
 }
-#endif /* 1 */
-#endif /* CONFIG_BLK_DEV_FD */
+#endif
+#endif

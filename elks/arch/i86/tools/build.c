@@ -29,7 +29,7 @@
 #include <unistd.h>			/* contains read/write */
 #include <fcntl.h>
 #include "a.out.h"
-#include <errno.h>
+#include <linuxmt/errno.h>
 #include <linuxmt/config.h>
 
 #define MINIX_HEADER 32

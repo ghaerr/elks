@@ -8,12 +8,12 @@
 
 #define HZ 30
 
-#else /* CONFIG_ARCH_SIBO */
+#else
 
 #define HZ 100
 
-#endif /* CONFIG_ARCH_SIBO */
-#endif /* HZ */
+#endif
+#endif
 
 #define EXEC_PAGESIZE	4096
 
@@ -27,4 +27,4 @@
 
 #define MAXHOSTNAMELEN	64	/* max length of hostname */
 
-#endif /* _ARCH_8086_PARAM_H */
+#endif

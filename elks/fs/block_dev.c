@@ -135,4 +135,4 @@ int count;
 	return blk_rw(inode,filp,buf,count,BLOCK_WRITE);
 }
 
-#endif /* CONFIG_BLK_DEV_CHAR */
+#endif
