@@ -3,6 +3,8 @@
  *	
  *	11th Nov 98	Re-wrote to work with ntty code
  *			Al - (ajr@ecs.soton.ac.uk)
+ *	19th May 1999   Re-wrote with modified ntty iface
+ *			Al - (ajr@ecs.soton.ac.uk)
  */
 
 #include <linuxmt/types.h>
@@ -128,16 +130,14 @@ _rawout:
 #endasm
 
 
-void bioscon_release(inode,file)
-struct inode *inode;
-struct file *file;
+void bioscon_release(tty)
+struct tty * tty;
 {
 	return;
 }
 
-int bioscon_open(inode,file)
-struct inode *inode;
-struct file *file;
+int bioscon_open(tty)
+struct tty * tty;
 {
 	int minor = MINOR(inode->i_rdev);
 	printd_tty("BIOSCON: open %d\n", minor);
@@ -162,83 +162,4 @@ void init_console()
 }
 
 
-#if 0
-
-/* Everything below this point was written as if the console driver *
- * was a character device driver rather than a ntty driver.         *
- * Makes absolutly no sense so I replaced it all.                   *
- * Al (ajr@ecs.soton.ac.uk) - 11 Nov 98                             */
-
-int bioscon_lseek(inode,file,offset,origin)
-struct inode *inode;
-struct file *file;
-off_t offset;
-int origin;
-{
-	return -ESPIPE;
-}
-
-int bioscon_write(inode,file,buf,count)
-struct inode *inode;
-struct file *file;
-char *buf;
-int count;
-{
-	int len=0;
-	for (; len < count; len++)	
-	{
-		con_charout(peekb(current->t_regs.ds, buf++));
-	}
-	return len;
-}
-
-int bioscon_read(inode,file,buf,count) /* FIXME - URGENT */
-struct inode *inode;
-struct file *file;
-char *buf;
-int count;
-{
-	int len=0;
-	char c;
-	printk("bioscon_read(count=%d)\n",count);
-	for(; len < count; len++)
-	{
-		printk("Reading kbd\n");
-		c=read_kbd();
-		printk("Reading kbd\n");
-		pokeb(current->t_regs.ds,buf++,c);
-		rawout(c);
-		if(c=='\n') break;
-	}
-	printk("Returning\n");
-	return len;
-}
-
-/* This doesn't make sense! This should not be a char device, it should be *
- * a tty device  - Al 11th Nov 98 */
-static struct file_operations bioscon_ops=
-{
-	bioscon_lseek,
-	bioscon_read,
-	bioscon_write,
-	NULL,
-	NULL,			/* Write select later */
-	NULL,			/* Write ioctl later */
-	bioscon_open,		/* Open the bios console */
-	bioscon_release,	/* Close the bios console */
-#ifdef BLOAT_FS
-	NULL,			/* Fsync */
-	NULL,			/* No media */
-	NULL			/* No media */
-#endif
-};
-
-void init_console()
-{
-	register_chrdev(TTY_MAJOR, "bioscon", &bioscon_ops);
-	printk("Console: BIOS(%dx%d)\n",
-		setupb(7),setupb(14));
-}
-
-#endif /* 0 */
 #endif /* CONFIG_CONSOLE_BIOS */
