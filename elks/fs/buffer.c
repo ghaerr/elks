@@ -3,6 +3,8 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/major.h>
 #include <linuxmt/string.h>
+#include <linuxmt/mm.h>
+#include <linuxmt/locks.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 
@@ -14,17 +16,17 @@
 /*
  *	STUBS for the buffer cache when we put it in
  */
-struct buffer_head *bh_chain=NULL;
-struct buffer_head *bh_lru=NULL;
-struct buffer_head *bh_llru=NULL;
+static struct buffer_head *bh_chain=NULL;
+static struct buffer_head *bh_lru=NULL;
+static struct buffer_head *bh_llru=NULL;
 
 /*struct wait_queue *bufwait; */	/* Wait for a free buffer */
-struct wait_queue *bufmapwait;		/* Wait for a free L1 buffer area */
+static struct wait_queue *bufmapwait;		/* Wait for a free L1 buffer area */
 
-struct buffer_head buffers[NR_BUFFERS];
-char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */ 
-struct buffer_head *bufmem_map[NR_MAPBUFS]; /* Array of bufmem's allocation */ 
-unsigned int _buf_ds;			/* Segment(s?) of L2 buffer cache */
+static struct buffer_head buffers[NR_BUFFERS];
+static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */ 
+static struct buffer_head *bufmem_map[NR_MAPBUFS]; /* Array of bufmem's allocation */ 
+static unsigned int _buf_ds;			/* Segment(s?) of L2 buffer cache */
 
 /*
  *	Wait on a buffer
@@ -43,11 +45,13 @@ register struct buffer_head * bh;
 
 	bh->b_count++;
 	add_wait_queue(&bh->b_wait, &wait);
-repeat:
-	current->state = TASK_UNINTERRUPTIBLE;
-	if (buffer_locked(bh)) {
+
+	for (;;) {
+		current->state = TASK_UNINTERRUPTIBLE;
+		if (!buffer_locked(bh)) {
+			break;
+		}
 		schedule();
-		goto repeat;
 	}
 	remove_wait_queue(&bh->b_wait, &wait);
 	bh->b_count--;
@@ -63,7 +67,7 @@ struct buffer_head *bh;
 }
 */
 
-void put_last_lru(bh)
+static void put_last_lru(bh)
 register struct buffer_head *bh;
 {
 	register struct buffer_head * bhn;
@@ -72,7 +76,7 @@ register struct buffer_head *bh;
 	/*
 	 *	Unhook
 	 */
-	if(bhn = bh->b_next_lru)
+	if((bhn = bh->b_next_lru))
 		bhn->b_prev_lru=bh->b_prev_lru;
 	if(bh->b_prev_lru)
 		bh->b_prev_lru->b_next_lru=bhn;
@@ -252,7 +256,9 @@ block_t block;
 	/* If there are too many dirty buffers, we wake up the update process
 	   now so as to ensure that there are still clean buffers available
 	   for user processes to use (and dirty) */
-repeat:
+#ifdef BLOAT_FS
+	for (;;) {
+#endif
 	bh = get_hash_table(dev, block);
 	if (bh != NULL) {
 		if (buffer_clean(bh)) {
@@ -265,8 +271,9 @@ repeat:
 	/* I think the following check is redundant *
 	 * So I will remove it for now */
 #ifdef BLOAT_FS
-	if (find_buffer(dev,block))
-		 goto repeat;
+	if (!find_buffer(dev,block))
+		break;
+	} /* end for(;;) */
 #endif
 	/*
 	 *	Create a buffer for this job.
@@ -313,7 +320,7 @@ register struct buffer_head * buf;
  * bforget() is like brelse(), except it removes the buffer 
  * data validity.
  */
-/* 
+#if 0 
 void __bforget(buf)
 struct buffer_head * buf;
 {
@@ -321,9 +328,10 @@ struct buffer_head * buf;
 	buf->b_dirty = 0;
 	buf->b_count--;
 	buf->b_dev = NODEV;
-/*	wake_up(&bufwait); 
+	wake_up(&bufwait); 
 }
- */
+#endif
+
 /* Turns out both minix_bread and bread do this, so I made this a function of
  * it's own... */
 
@@ -461,7 +469,7 @@ repeat:
 			bh->b_data = bufmem[i];
 			bh->b_mapcount++;
 			fmemcpy(get_ds(), bh->b_data, 
-				_buf_ds, (bh->b_num * 0x400), 0x400);
+				_buf_ds, (char *)(bh->b_num * 0x400), 0x400);
 			printd_bufmap3("BUFMAP: Buffer %d (block %ld) mapped into L1 slot %d.\n",
 					bh->b_num, bh->b_blocknr, i);
 			return;
@@ -477,7 +485,7 @@ repeat:
 		/*	printd_bufmap1("BUFMAP: Buffer %d unmapped from L1\n",
 					bufmem_map[i]->b_num);
 		*/	/* Now unmap it */
-			fmemcpy(_buf_ds, (bufmem_map[i]->b_num * 0x400), 
+			fmemcpy(_buf_ds,(char *)(bufmem_map[i]->b_num * 0x400), 
 				get_ds(), bufmem_map[i]->b_data, 0x400);
 			bufmem_map[i]->b_data = 0;
 			bufmem_map[i] = 0;

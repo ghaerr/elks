@@ -47,7 +47,7 @@ char *filename;
 char *sptr;
 int slen;		/* Size of built stack */
 {
-	unsigned int result, envp, argv;
+	unsigned int result;
 	int retval,execformat;
 	int ds=current->t_regs.ds;
 	seg_t cseg,dseg;
@@ -55,7 +55,7 @@ int slen;		/* Size of built stack */
 	struct inode *inode;
 	char *ptr;
 	size_t count;
-	int i, nzero, tmp;
+	int i;
 	register struct file * filp = &file;
 	__registers * tregs;
 
@@ -153,9 +153,9 @@ int slen;		/* Size of built stack */
 	execformat=EXEC_MSDOS;
 /*	goto blah;
  */
-#endif
 	
 blah:
+#endif
 	printd_exec("EXEC: Malloc time\n");
 	/*
 	 *	Looks good. Get the memory we need
@@ -248,6 +248,7 @@ blah:
 	 * right after argc.  This fixes them up so that the loaded program
 	 * gets the right strings. */
 
+#if 0
 	nzero = 0; i = ptr + 2;
 	while (nzero < 2) {
 		if ((tmp = peekw(dseg, i)) != 0) {
@@ -257,6 +258,20 @@ blah:
 		}
 		i += 2;
 	}; 
+#else
+	{
+	int *p, nzero = 0, tmp;
+	p = (int *) ptr;
+	while (nzero < 2) {
+		p++;
+		if ((tmp = peekw(dseg, p)) != 0) {
+			pokew(dseg, p, tmp + (int)ptr);
+		} else {
+			nzero++; /* increments for each array traveresed */
+		}
+	};
+	}
+#endif
 
 	/*
 	 *	Now flush the old binary out.
@@ -326,9 +341,10 @@ end_readexec:
 	return retval;
 }
 
-struct dll_entry dll[MAX_DLLS];
-
 #if CONFIG_SHLIB
+
+static struct dll_entry dll[MAX_DLLS];
+
 #if 0 /* Old bad way of loading dlls */
 unsigned short sys_dlload(filename)
 char * filename;

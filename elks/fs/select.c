@@ -195,7 +195,7 @@ fd_set * fs_pointer;
 fd_set * fdset;
 {
 	if (fs_pointer) {
-		return verified_memcpy_fromfs(fdset, fs_pointer, sizeof(fd_set));
+		return verified_memcpy_fromfs((char *)fdset, fs_pointer, sizeof(fd_set));
 	}
 	memset(fdset, 0, sizeof(fd_set));
 	return 0;
@@ -205,9 +205,9 @@ static void set_fd_set(fs_pointer, fdset)
 fd_set * fs_pointer;
 fd_set * fdset;
 {
-	if (!fs_pointer)
-		return;
-	return memcpy_tofs(fs_pointer, fdset, sizeof(fd_set));
+	if (fs_pointer) {
+		memcpy_tofs(fs_pointer, fdset, sizeof(fd_set));
+	}
 }
 
 static void zero_fd_set(fdset)

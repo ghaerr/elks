@@ -11,6 +11,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/fs.h>
 #include <arch/segment.h>
 #include <linuxmt/debug.h>
 

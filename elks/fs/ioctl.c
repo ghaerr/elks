@@ -5,6 +5,7 @@
  */
 
 #include <linuxmt/types.h>
+#include <linuxmt/ioctl.h>
 #include <arch/segment.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/mm.h>
@@ -26,7 +27,7 @@ unsigned int arg;
 	switch (cmd) {
 		case FIONREAD:
 			val = filp->f_inode->i_size - filp->f_pos;
-			return verified_memcpy_tofs(arg, &val, sizeof(loff_t));
+			return verified_memcpy_tofs((char *)arg, (char *)&val, sizeof(loff_t));
 	}
 	if (fop && fop->ioctl)
 		return fop->ioctl(filp->f_inode, filp, cmd, arg);

@@ -499,7 +499,6 @@ dev_t dev;
 	return -EROFS;
 #else
 	int error;
-	register char * tmp;
 
 	if (S_ISDIR(mode) || (!S_ISFIFO(mode) && !suser()))
 		return -EPERM;
@@ -787,7 +786,6 @@ char * newname;
 	return -EROFS;
 #else
 	int error;
-	register char * to;
 	struct inode * oldinode;
 
 	error = namei(oldname, &oldinode,0,0);

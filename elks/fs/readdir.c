@@ -58,7 +58,7 @@ ino_t ino;
 int sys_readdir(fd,dirent,count)
 unsigned int fd;
 char * dirent;
-unsigned int count; /* ignoed and unused, noted in Linux man page */
+unsigned int count; /* ignored and unused, noted in Linux man page */
 {
 	int error;
 	struct file * file;

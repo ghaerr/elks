@@ -64,8 +64,6 @@ unsigned int arg;
 {	
 	register struct file * filp;
 	register struct file_struct * fils = &current->files;
-	struct task_struct *p;
-	int task_found = 0;
 
 	if (fd >= NR_OPEN || !(filp = fils->fd[fd]))
 		return -EBADF;

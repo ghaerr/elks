@@ -14,6 +14,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/time.h>
+#include <linuxmt/fs.h>
 #include <linuxmt/mm.h>
 
 #include <arch/segment.h>
@@ -241,7 +242,7 @@ mode_t mode;
 	return error;
 }
 
-int do_chown(inode, user, group)
+static int do_chown(inode, user, group)
 register struct inode * inode;
 uid_t user;
 gid_t group;
@@ -327,7 +328,7 @@ gid_t group;
  * used by symlinks.
  */
  
-int do_open(filename,flags,mode)
+static int do_open(filename,flags,mode)
 char * filename;
 int flags;
 int mode;
@@ -406,8 +407,8 @@ cleanup_all:
 #ifdef BLOAT_FS
 	if (f->f_mode & FMODE_WRITE)
 		put_write_access(inode);
-#endif
 cleanup_inode:
+#endif
 	iput(inode);
 cleanup_file:
 	f->f_count--;
@@ -419,7 +420,6 @@ char * filename;
 int flags;
 int mode;
 {
-	char * tmp;
 	int error;
 
 	/* FIXME: VERIFY THE PATH IS IN USER MEM FIRST */
@@ -427,7 +427,7 @@ int mode;
 	return error;
 }
 
-int close_fp(filp)
+static int close_fp(filp)
 register struct file *filp;
 {
 	register struct inode *inode;
