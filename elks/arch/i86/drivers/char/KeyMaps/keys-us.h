@@ -2,8 +2,10 @@
  *	The keymap for the United States of America.
  */
 
-#ifndef __KEYMAP__
-#define __KEYMAP__
+#ifndef __KEYMAP_US__
+#define __KEYMAP_US__
+
+#if defined(CONFIG_US_KEYMAP)
 
 static unsigned char xtkb_scan[]=
 {
@@ -69,5 +71,7 @@ static unsigned char xtkb_scan_caps[]=
 	'8','9',0211,'4','5','6',0214,'1',
 	'2','3','0',0177
 };
+
+#endif
 
 #endif

@@ -32,25 +32,18 @@ extern struct tty ttys[];
 #define ESC 27
 #define KB_SIZE 64
 
-#if defined(CONFIG_BE_KEYMAP)
+/*
+ * Include the relevant keymap.
+ */
+
 #include "KeyMaps/keys-be.h"
-#elif defined(CONFIG_DE_KEYMAP)
-#include "KeyMaps/keys-uk.h"
-#elif defined(CONFIG_DV_KEYMAP)
+#include "KeyMaps/keys-de.h"
 #include "KeyMaps/keys-dv.h"
-#elif defined(CONFIG_ES_KEYMAP)
 #include "KeyMaps/keys-es.h"
-#elif defined(CONFIG_FR_KEYMAP)
 #include "KeyMaps/keys-fr.h"
-#elif defined(CONFIG_SE_KEYMAP)
 #include "KeyMaps/keys-se.h"
-#elif defined(CONFIG_UK_KEYMAP)
 #include "KeyMaps/keys-uk.h"
-#elif defined(CONFIG_US_KEYMAP)
 #include "KeyMaps/keys-us.h"
-#else
-#include "KeyMaps/keys-default.h"
-#endif
 
 int Current_VCminor = 0;
 int kraw = 0;

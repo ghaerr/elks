@@ -2,8 +2,10 @@
  *	The keymap for Germany.
  */
 
-#ifndef __KEYMAP__
-#define __KEYMAP__
+#ifndef __KEYMAP_DE__
+#define __KEYMAP_DE__
+
+#if defined(CONFIG_DE_KEYMAP)
 
 /**************************************************************
  * German Keyboard adapted from the spanish layout            *
@@ -71,5 +73,7 @@ static unsigned char xtkb_scan_caps[84]=
 	'8','9',0211,'4','5','6',0214,'1',
 	'2','3','0',0177
 };
+
+#endif
 
 #endif

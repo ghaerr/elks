@@ -2,8 +2,10 @@
  *	The keymap for Belgium and France.
  */
 
-#ifndef __KEYMAP__
-#define __KEYMAP__
+#ifndef __KEYMAP_BE_FR__
+#define __KEYMAP_BE_FR__
+
+#if defined(CONFIG_BE_KEYMAP) || defined(CONFIG_FR_KEYMAP)
 
 static unsigned char xtkb_scan[]=
 {
@@ -65,5 +67,7 @@ static unsigned char xtkb_scan_caps[]=
 	'8','9',0211,'4','5','6',0214,'1',
 	'2','3','0',0177
 };
+
+#endif
 
 #endif

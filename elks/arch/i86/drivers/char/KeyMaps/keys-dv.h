@@ -2,8 +2,10 @@
  *	The keymap for the Dvorak keyboard.
  */
 
-#ifndef __KEYMAP__
-#define __KEYMAP__
+#ifndef __KEYMAP_DV__
+#define __KEYMAP_DV__
+
+#if defined(CONFIG_DV_KEYMAP)
 
 /************************************************************************
  * First attempt at Dvorak keyboard layout * Peter Vachuska * July 2000 *
@@ -68,5 +70,7 @@ static unsigned char xtkb_scan_caps[]=
 	'8','9',0211,'4','5','6',0214,'1',
 	'2','3','0',0177
 };
+
+#endif
 
 #endif
