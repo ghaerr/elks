@@ -24,6 +24,8 @@ int bh_mask_count[16];
 unsigned bh_mask = 0;
 #endif /* ENDIS_BH */
 
+__task task[MAX_TASKS];
+
 void (*bh_base[16])();
 unsigned bh_active = 0;
 __ptask current, next, previous;

@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Wed Jul 14 18:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fix to sched.[ch] which was messing up .o file sizes by Greg Haerr.
+
 Wed Jul 14 18:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updates to memory allocation code by Greg Haerr which fixes

@@ -107,7 +107,7 @@ struct sched_param {
 typedef struct task_struct __task;
 typedef struct task_struct * __ptask;
 
-__task task[MAX_TASKS];
+extern __task task[MAX_TASKS];
 
 extern unsigned long jiffies;
 extern __ptask current, next;
