@@ -1,3 +1,15 @@
+VERSION 0.0.79 NOTES
+--------------------
+
+	Many bug fixes to filesystem by Thomas G. McWilliams.
+	Fix to exec time memory allocation by Greg Haerr.
+	Reduction in size of various data structures.
+	Addition of many new data types to make code cleaner.
+	Major cleanup of signal code.
+	Fix of bug which prevented boot/root disks working.
+	More CONFIG options.
+	Code optimisations to reduce size.
+
 VERSION 0.0.78 NOTES
 --------------------
 
