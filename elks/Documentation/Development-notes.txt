@@ -1,0 +1,98 @@
+                 Development notes for new developers
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following topics are covered in this file:
+
+ * Creating new directories.
+
+ * Testing your patches before committing them.
+
+==============================================================================
+
+CREATING NEW DIRECTORIES:
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you add any new directories to the ELKS tree, you can link them into the
+standard versions of the standard make commands for ELKS by including the
+following lines at the top of the Makefile you create in that directory:
+
+	ELKSDIR		= ..
+
+	ELKSSTD 	= Y
+
+	CLEANDEP	= 
+
+	CLEANME 	= 
+
+	DEPEND		= 
+
+	DISTFILES	= 
+
+	include $(ELKSDIR)/Makefile-rules
+
+The values on these lines MUST match the following descriptions:
+
+	ELKSDIR 	The relative path from the directory the Makefile
+			is in to the ELKS base directory. This is used
+			extensively by the various ruiles, so MUST be
+			accurate.
+
+	ELKSSTD 	Whether to compile for ELKS or Linux. If this is
+			set to 'N' it compiles for Linux, otherwise it
+			compiles for ELKS.
+
+	CLEANDEP	Any files in the current directory that the
+			`make clean` command is dependent on.
+
+	CLEANME 	Any files in the current directory to be removed
+			by the `make clean` command that are not in the
+			standard list of files matching "*~", "*.bak",
+			"*.o", "*.map" or "*.tmp", or named "core". Also
+			removed are any files matching "*.s" for which a
+			"*.c" or "*.S" file also exists.
+
+	DEPEND		Any files in the current directory that the
+			`make dep` command is dependent on.
+
+	DISTFILES	Any files in the current directory that are to
+			be included in a distribution made with the
+			`make dist` command that are not in the standard
+			list. This standard list consists of those files
+			NOT removed by `make clean` that match any of
+			the patterns "*.?", "*.cc", "*.html", "*.in",
+			"*.sh", "*.tk", "*.txt", "Makefile*" or "README*".
+
+No other variables should be defined before including this file.
+
+==============================================================================
+
+TESTING YOUR PATCHES BEFORE COMMITTING THEM:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you commit changes to the CVS archive that prevent the CVS snapshot
+from working, you will make yourself less than popular with those making
+use of the CVS archive for development. You are strongly recommended to
+always test your patches before committing them. Two commands have been
+included in the base Makefile to facilitate this, as follows:
+
+	make me 	Creates an exact copy of the current ELKS tree
+			(including your patches) based in the directory
+			../elks-tree relative to the current directory.
+
+	make test	Attempts to run most of the standard commands in
+			the following sequence:
+
+				make dist
+				mv $(DISTDIR) $(DISTDIR).pre
+				make defconfig
+				make clean
+				make dep
+				make Image
+				make nbImage
+				make dist
+				mv $(DISTDIR) $(DISTDIR).post
+				diff -ur $(DISTDIR).pre $(DISTDIR).post
+
+You are strongly advised to make use of these before committing any major
+changes to the CVS archive. In particular, do not commit anything to the
+CVS archive if `make test` fails, or if 

@@ -21,13 +21,29 @@ Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001-20 Nov 2001
 Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
 Peter L Vachuska        <pvachusk@nconnect.net>         13 Aug 2001
-Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-09 Dec 2001
+Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-10 Dec 2001
 Roman Festchook         <roma@polesye.net>              27 Oct 2001
 Simon Weijgers          <simon@weijgers.com>            16 Sep 1998-15 Nov 1999
 Simon Wood                                              06 Jan 2000-12 Jan 2000
 Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Mon Dec 10 18:52:25 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Updated TODO file at HarKal's request.
+
+Sun Dec  9 10:54:34 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Documented existence of `make me` and `make test` commands that
+	  simplify testing of patches. They were originally included as
+	  part of my testing the harmonisation of the compilation tools,
+	  and were committed by mistake, but have been left in as they
+	  are so useful.
+	* Simplified elks/scripts/lxdialog/Makefile where it locates the
+	  curses or ncurses include headers.
+	* Confirmed that updating from the CVS archive and immediately
+	  doing `make test` completes without any error messages.
 
 Sun Dec  9 00:00:28 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 

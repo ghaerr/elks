@@ -14,6 +14,9 @@ at the appropriate point in this list.
 
     *	Reduce code size.
 
+    *	Ensure that all configuration tools produce EXACTLY the same
+	.config files, including comments therein.
+
  *  Before 0.2.0 is released:
 
     *	Complete and test parallel drivers.
@@ -57,7 +60,10 @@ system, but which are not specific to the ELKS kernel or project itself:
 
     *	ELKS-based FTP server.
 
-    *	ELKS-based HTTP server.
+    *	ELKS-based HTTP server capable of handling non-static pages. It is
+	noted that a web server capable only of handling static pages can
+	be obtained from Harry Kalogirou <HarKal@gmx.net> who demonstrated
+	it in the Internet in late November 2001.
 
     *	openssh
 

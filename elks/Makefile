@@ -150,7 +150,9 @@ elks.spec: Makefile
 #########################################################################
 # Standard commands.
 
-dist:	nodep clean
+dist:
+	@make -C . nodep clean distclean
+	@echo
 	-rm -rf $(DISTDIR)
 	@make mkdist
 
@@ -183,10 +185,6 @@ dist.old:
 
 distclean: clean nodep
 	rm -f .config* .menuconfig*
-	rm -f scripts/lxdialog/*.o scripts/lxdialog/lxdialog
-	@echo
-	@echo This ELKS source tree has been cleaned ready for distribution.
-	@echo
 
 #########################################################################
 # Create distribution archives.
@@ -219,11 +217,7 @@ config:
 	@echo
 
 defconfig:
-	@echo
 	@yes '' | make config
-	@echo
-	@echo Configuration complete.
-	@echo
 
 me:
 	rm -fr ../elks-test
@@ -241,9 +235,7 @@ menuconfig:
 	@echo
 
 set:
-	@echo
 	@set
-	@echo
 
 test:
 	make dist
@@ -260,9 +252,9 @@ test:
 	make nbImage
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make dist
-	@printf '\n  %076u\n\n' 0 | tr 0 =
 	mv $(DISTDIR){,.Post}
-	diff -ur $(DISTDIR).{Pre,Post}
+	@printf '\n  %076u\n\n' 0 | tr 0 =
+	diff -ur $(DISTDIR).{Pre,Post} || true
 
 #########################################################################
 ### Dependencies:
