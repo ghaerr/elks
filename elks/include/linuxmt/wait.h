@@ -8,15 +8,14 @@
 #define wake_up_interruptible(_a) _wake_up(_a,0)
 
 struct wait_queue {
-	struct task_struct * task;
-	struct wait_queue * next;
+	char pad;
 };
 
 #ifdef __KERNEL__
 
 struct select_table_entry {
 	struct wait_queue wait;
-	struct wait_queue ** wait_address;
+	struct wait_queue *wait_address;
 };
 
 typedef struct select_table_struct {
