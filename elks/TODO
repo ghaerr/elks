@@ -9,8 +9,6 @@ at the appropriate point in this list.
 
  *  Before 0.2.0 is released:
 
-    *	Complete the ANSI'fication of the source tree.
-
     *	Ensure all configuration tools produce EXACTLY the same .config
 	files, including comments therein.
 
