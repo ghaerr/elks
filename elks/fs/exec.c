@@ -109,6 +109,13 @@ int slen;		/* Size of built stack */
 		goto close_readexec;
 	}
 	execformat=EXEC_MINIX;
+/* This looks very hackish and it is
+ * but bcc can't handle a goto xyz; and a subsequent xyz:
+ * -- simon weijgers
+ */
+#ifdef CONFIG_EXE_MSDOS
+	goto blah;
+#endif
 #endif
 
 #ifdef CONFIG_EXEC_MSDOS
@@ -126,8 +133,11 @@ int slen;		/* Size of built stack */
 		goto close_readexec;
 	}
 	execformat=EXEC_MSDOS;
+/*	goto blah;
+ */
 #endif
 	
+blah:
 	printd_exec("EXEC: Malloc time\n");
 	/*
 	 *	Looks good. Get the memory we need
