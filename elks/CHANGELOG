@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Tue Jul 06 14:23 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* More changes to the rd driver by Blaz Antonic.
+
 Mon Jul 05 14:11 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Sanitisation and enhancement of the rd driver by Blaz Antonic.
