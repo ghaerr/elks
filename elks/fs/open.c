@@ -16,6 +16,7 @@
 #include <linuxmt/time.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/utime.h>
 
 #include <arch/segment.h>
 
@@ -155,6 +156,31 @@ struct timeval * utimes;
 	return error;
 }
 #endif /* 0 */
+
+int sys_utime(filename,times)
+char * filename;
+struct utimbuf * times;
+{
+	struct inode * inode;
+	int error;
+	time_t actime,modtime;
+
+	error=namei(filename,&inode,0,0);
+	if (error)
+		return error;
+	if (times) {
+		actime = get_fs_long((unsigned long *) &times->actime);
+		modtime = get_fs_long((unsigned long *) &times->modtime);
+	} else
+		actime = modtime = CURRENT_TIME;
+	inode->i_atime = actime;
+	inode->i_mtime = modtime;
+	inode->i_dirt = 1;
+	iput(inode);
+	return 0;
+}
+
+
 
 /*
  * access() needs to use the real uid/gid, not the effective uid/gid.

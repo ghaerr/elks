@@ -47,7 +47,7 @@ ptrace		26	4	@ adb/sdb/dbx need this.
 alarm		27	2
 fstat		+28	2	 
 pause		29	0	 
-utime		30	2	 
+utime		+30	2	 
 chroot		+31	1
 vfork		+32	0
 access		+33	2	 
