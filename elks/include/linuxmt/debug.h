@@ -41,6 +41,16 @@
 #endif
 
 #if 0
+#define printd_sig printk
+#define printd_sig1 printk
+#define printd_sig2 printk
+#else
+#define printd_sig(_a)
+#define printd_sig1(_a,_b)
+#define printd_sig2(_a,_b,_c)
+#endif
+
+#if 0
 #define printd_exec printk
 #define printd_exec1 printk
 #define printd_exec2 printk
