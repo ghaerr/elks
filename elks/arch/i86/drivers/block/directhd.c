@@ -38,10 +38,10 @@
 
 /* use asm insw/outsw instead of C version */
 /* asm versions should work on 8088/86, but only with CONFIG_XT */
-#define USE_ASM
+/* #define USE_ASM */
 
 /* uncomment this to include debugging code .. this increases size of driver */
-/* #define USE_DEBUG_CODE */
+#define USE_DEBUG_CODE
 
 #define MAJOR_NR ATHD_MAJOR
 #define ATDISK
@@ -282,7 +282,7 @@ int directhd_init()
 	   (this explains why your computer was locking up after mentioning the
 	   serial port, doesn't it? :-) -- Alastair Bridgewater */
 	/* this should work now, IMO - Blaz Antonic */
-	for (drive = 0; drive < 4; drive++)
+	for (drive = 0; drive < 2; drive++)
 	{
 		/* send drive_ID command to drive */
 		out_hd(drive, 0, 0, 0, 0, DIRECTHD_DRIVE_ID);
@@ -296,7 +296,7 @@ int directhd_init()
 		{
 			/* error - drive not found or non-ide */
 #ifdef USE_DEBUG_CODE
-			printk("athd: drive not found\n");
+			printk("athd: drive %d (%d on port 0x%x) not found\n", drive, drive / 2, port);
 #endif
 			continue; /* this jumps to the start of for loop and 
 			             proceeds with checking for other drives */
@@ -322,7 +322,7 @@ int directhd_init()
 		}
 #endif
 		/* gather useful info */
-		/* FIXME: LBA support will be added here, later .. maybe
+		/* FIXME: LBA support will be added here, later .. maybe ..
 		   MFM/RLL support will be added after that .. maybe */
 
 		/* safety check - check for heads returned and assume CD
@@ -340,11 +340,17 @@ int directhd_init()
 
 		/* FIXME: This will cause problems on many new drives .. some
 		   of them even have more than 16.384 cylinders */
-		if ((buffer[0x6 / 2] < 4096) && (*buffer != 0) && (buffer[0x2 / 2] != 0) && (buffer[0x6 / 2] !=  0) && (buffer[0xc / 2] != 0))
+		/* This is some sort of bugfix, we will use same method as real Linux -
+		   work with disk geometry set in current translation mode rather than
+		   using physical drive info. Physical info might correspond to logical
+		   info for some drives (those which don't support/use LBA mode */
+
+		if ((buffer[0x6c / 2] < 34096) && (*buffer != 0) && (buffer[0x6c / 2] != 0) && (buffer[0x6e / 2] != 0) && (buffer[0x70 / 2] != 0))
 		{
-			drive_info[drive].cylinders = buffer[0x2 / 2];
-			drive_info[drive].heads = buffer[0x6 / 2];
-			drive_info[drive].sectors = buffer[0xc / 2];
+		/* Physical value offsets: cyl 0x2, heads 0x6, sectors 0C */
+			drive_info[drive].cylinders = buffer[0x6c / 2];
+			drive_info[drive].heads = buffer[0x6e / 2];
+			drive_info[drive].sectors = buffer[0x70 / 2];
 
 			hdcount++;
 		}
@@ -427,7 +433,7 @@ unsigned int arg;
 			put_user(drive_info[dev].heads, &loc->heads);
 			put_user(drive_info[dev].sectors, &loc->sectors);
 			put_user(drive_info[dev].cylinders, &loc->cylinders);
-			put_user(hd[MINOR(inode->i_rdev)].start_sect, &loc->start);	
+			put_user(hd[MINOR(inode->i_rdev)].start_sect, &loc->start);
 
 			return 0;
 			break;
@@ -477,7 +483,7 @@ void do_directhd_request()
         unsigned long count; /* # of sectors to read/write */
 	int this_pass; /* # of sectors read/written */
 	unsigned long start; /* first sector */
-	char *buff;
+	char *buff; /* max_sect * sector_size, 63 * 512 bytes; it seems that all requests are only 1024 bytes long */
 	short sector; /* 1 .. 63 ? */
 	short cylinder; /* 0 .. 1024 and maybe more */
 	short head; /* 0 .. 16 */
@@ -542,14 +548,21 @@ void do_directhd_request()
 				this_pass = count;
 			else
 				this_pass = drive_info[drive].sectors - sector + 1;
+
+#ifdef USE_DEBUG_CODE
+				printk("athd: drive: %d cylinder: %d head: %d sector: %d start: %d\n", drive, cylinder, head, sector, start);
+#endif
 			
 			port = io_ports[drive / 2];
 
 			if (CURRENT->cmd == READ)
 			{
 #ifdef USE_DEBUG_CODE
+/*
 				printk("athd: drive: %d this_pass: %d sector: %d head: %d\n", drive, this_pass, sector, head);
 				printk("athd: cyl: %d start: %ld tmp: %d count: %ld di[d].s: %d di[0].s: %d\n", cylinder, start, tmp, count, drive_info[drive].sectors, drive_info[0].sectors);
+*/
+
 #endif			
 			        /* read to buffer */
 				while (WAITING(port));
@@ -560,7 +573,8 @@ void do_directhd_request()
 				while (WAITING(port))
 				{
 #ifdef USE_DEBUG_CODE
- 					printk("athd: statusa: 0x%x\n", STATUS(port));
+/* 					printk("athd: statusa: 0x%x\n", STATUS(port));
+*/
 #endif	
 				}
 				if ((STATUS(port) & 1) == 1) {
@@ -587,7 +601,8 @@ void do_directhd_request()
 				    	{
 						tmp = STATUS(port);
 #ifdef USE_DEBUG_CODE
-						printk("athd: statusb: 0x%x\n", tmp);
+/*						printk("athd: statusb: 0x%x\n", tmp);
+*/
 #endif
 					}
 				}
