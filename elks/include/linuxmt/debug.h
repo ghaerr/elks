@@ -160,10 +160,12 @@
 #define printd_inet printk
 #define printd_inet1 printk
 #define printd_inet2 printk
+#define printd_inet3 printk
 #else
 #define printd_inet(_a)
 #define printd_inet1(_a,_b)
 #define printd_inet2(_a,_b,_c)
+#define printd_inet3(_a,_b,_c,_d)
 #endif
 
 

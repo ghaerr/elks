@@ -246,7 +246,7 @@ int nonblock;
 	struct tdb_read	cmd;
 	int ret;
 
-	printd_inet("inet_read()\n");	
+	printd_inet3("inet_read(socket: 0x%x size:%d nonblock: %d)\n", sock, size, nonblock);	
 	cmd.cmd	= TDC_READ;
 	cmd.sock = sock;
 	cmd.size = size;

@@ -245,8 +245,8 @@ int flags;
   	/*
   	 *	Put ourselves on the server's incomplete connection queue. 
   	 */
-  	 
 	mysock->next = NULL;
+	
 	icli();
 	if (!(last = servsock->iconn)) 
 		servsock->iconn = mysock;

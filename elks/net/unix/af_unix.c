@@ -636,7 +636,7 @@ struct net_proto * pro;
 {
 	printk("ELKS UNIX domain Sockets\n");
 	sock_register(AF_UNIX,&unix_proto_ops);
-}
+};
 
 	
 #endif /* CONFIG_UNIX */

@@ -561,16 +561,25 @@ CONFIG_SOCKET
 
 UNIX sockets
 CONFIG_UNIX
-  Include support for AF_UNIX sockets. Currently under development.
+  Include support for AF_UNIX sockets. Enlarges kernel by 3KB. Currently
+  under development.
 
 NANO sockets
 CONFIG_NANO
-  Include support for experimental AF_NANO sockets. Currently under development.
+  Include support for experimental AF_NANO sockets. Enlarges kernel by
+  3KB. Currently under development.
 
+INET_sockets
 CONFIG_INET
-  Include support for AF_INET TCP/IP sockets. This depends on a user space
-  process to work. Read the Documentation/networking.txt for more info.
+  Include support for AF_INET TCP/IP sockets. This depends on a user
+  space process to work. Read the Documentation/networking.txt for more
+  info.  Enlarges kernel by 3KB.
   Warning that this code is very unstable.
+
+Enable status report
+CONFIG_INET_STATUS
+  If you intent to use utilities like netstat say YES. If you don't say
+  NO it will save size from ktcp.
 
 Only support client sockets (MUST)
 CONFIG_SOCK_CLIENTONLY

@@ -569,7 +569,7 @@ if [ -f .config ]; then
 	mv .config .config.old
 fi
 mv .tmpconfig .config
-mv .tmpconfig.h include/linux/autoconf.h
+mv .tmpconfig.h include/linuxmt/autoconf.h
 
 echo
 echo "*** Next, you must run 'make dep'."

@@ -10,6 +10,11 @@ if [ "$CONFIG_SOCKET" = "y" ]; then
 	bool '  UNIX sockets' CONFIG_UNIX
 	bool '  NANO sockets' CONFIG_NANO
 	bool '  INET sockets (TCP/IP)' CONFIG_INET
+
+	if [ "$CONFIG_INET" = "y" ]; then
+		bool '  Enable status report' CONFIG_INET_STATUS
+	fi
+
 	comment '  Advance socket options'
 	bool '  Only include support for client sockets (MUST)' CONFIG_SOCK_CLIENTONLY
 	bool '  Only include support for STREAM type sockets (MUST)' CONFIG_SOCK_STREAMONLY

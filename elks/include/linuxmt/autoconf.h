@@ -4,18 +4,22 @@
 #define AUTOCONF_INCLUDED
 
 /*
- * General setup
+ * Advanced - for Developers and Hackers only
  */
-#define CONFIG_ARCH_PC_AUTO 1
+#undef  CONFIG_EXPERIMENTAL
+#undef  CONFIG_OBSOLETE
+#undef  CONFIG_NOT_YET
+
+/*
+ * Architecture
+ */
+#define CONFIG_ARCH_AUTO 1
+#undef  CONFIG_ARCH_PC
 #undef  CONFIG_ARCH_SIBO
+#define CONFIG_ARCH_PC_AUTO 1
 #undef  CONFIG_ARCH_PC_XT
 #undef  CONFIG_ARCH_PC_AT
 #undef  CONFIG_ARCH_PC_MCA
-#undef  CONFIG_COMPAQ_FAST
-
-/*
- * ROM-CODE kernel-loader
- */
 #undef  CONFIG_ROMCODE
 
 /*
@@ -36,13 +40,14 @@
 #define CONFIG_DCON_VT52 1
 #define CONFIG_DCON_ANSI 1
 #undef  CONFIG_DCON_ANSI_PRINTK
-#undef  CONFIG_BE_KEYMAP
-#undef  CONFIG_FR_KEYMAP
-#undef  CONFIG_UK_KEYMAP
-#undef  CONFIG_ES_KEYMAP
-#undef  CONFIG_DE_KEYMAP
-#undef  CONFIG_SE_KEYMAP
 #define CONFIG_US_KEYMAP 1
+#undef  CONFIG_BE_KEYMAP
+#undef  CONFIG_UK_KEYMAP
+#undef  CONFIG_DE_KEYMAP
+#undef  CONFIG_DV_KEYMAP
+#undef  CONFIG_ES_KEYMAP
+#undef  CONFIG_FR_KEYMAP
+#undef  CONFIG_SE_KEYMAP
 #define CONFIG_DCON_KRAW 1
 #define CONFIG_CHAR_DEV_RS 1
 #define CONFIG_CHAR_DEV_LP 1
@@ -87,6 +92,7 @@
 #undef  CONFIG_UNIX
 #undef  CONFIG_NANO
 #define CONFIG_INET 1
+#undef  CONFIG_INET_STATUS
 #undef  CONFIG_SOCK_CLIENTONLY
 #define CONFIG_SOCK_STREAMONLY 1
 

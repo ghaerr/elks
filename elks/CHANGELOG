@@ -6,6 +6,16 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Wed Aug 22 21:35:29 GMT 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* Added the needed functionality to enable processes to get info and 
+	  config the network. Look at the nettools directory in elkscmd.
+
+Tue Aug 21 18:50:53 GMT 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* Changed in scripts/Menuconfig and scripts/Configure a "linux" leftover
+	  to "linuxmt" that caused configuration header file not to be writen. 
+	  
 Tue Aug 21 18:09:08 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Whilst I was validating the printk() format strings, I came across
@@ -78,6 +88,7 @@ Fri Aug 17 17:43:14 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 	* Changed tty code to keep settings after every tty_open()
 	* Added support for 57600 and 115200 bauds in serial driver.
 	* Changed the Configure.help entry for CONFIG_INET.
+	* Changed version to 0.0.85-pre2 and made a new release.
 
 Tue Aug 14 22:18:01 BST 2001	Riley Williams <rhw@memalpha.cx>
 
