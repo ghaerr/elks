@@ -6,27 +6,26 @@
 
 Prompt for development and/or incomplete code/drivers
 CONFIG_EXPERIMENTAL
-  Some of the various things that ELKS supports (such as network 
-  drivers, file systems, network protocols, etc.) can be in a state 
-  of development where the functionality, stability, or the level of 
-  testing is not yet high enough for general use. This is usually
-  known as the "alpha-test" phase amongst developers. If a feature is
-  currently in alpha-test, then the developers usually discourage 
-  uninformed widespread use of this feature by the general public to
-  avoid "Why doesn't this work?" type email messages.
+  Some of the various things that ELKS supports (such as network drivers,
+  file systems, network protocols, etc.) can be in a state of development
+  where the functionality, stability, or level of testing is not yet high
+  enough for general use. This is usually known as the "alpha-test" phase
+  amongst developers. If a feature is currently in alpha-test, then the
+  developers usually discourage uninformed widespread use of this feature
+  by the general public to avoid "Why doesn't this work?" type email
+  messages.
 
-  However, active testing and use of these systems is welcomed. Just
-  be aware that it may not meet the normal level of reliability or it
-  may fail to work in some special cases. Detailed bug reports from
-  people familiar with the kernel internals are usually welcomed by
-  the developers.
+  However, active testing and use of these systems is welcomed. Just be
+  aware that it may not meet the normal level of reliability or it may
+  fail to work in some special cases. Detailed bug reports from people
+  familiar with the kernel internals are usually welcomed by developers.
 
   Unless you intend to help test and develop a feature or driver that
-  falls into this category, or you have a situation that requires
-  using these features, you should probably say N here, which will
-  cause this configure script to present you with fewer choices. If
-  you say Y here, you will be offered the choice of using features or
-  drivers that are currently considered to be in the alpha-test phase.
+  falls into this category, or you have a situation that requires using
+  these features, you should probably say N here, which will cause the
+  configure script to present you with fewer choices. If you say Y here,
+  you will be offered the choice of using features or drivers that are
+  currently considered to be in the alpha-test phase.
 
   Just say N and live in peace.
 
@@ -42,33 +41,42 @@ CONFIG_OBSOLETE
 
 Prompt for unimplemented options
 CONFIG_NOT_YET
-  In several cases, options are included in the ELKS configuration
-  tree that have no corresponding code in the source tree, usually as
-  a result of planned development that has yet to take place. Whilst
-  playing with these options will not damage the compiled kernel in
-  any way, neither will it do anything constructive at this time.
+  In several cases, options are included in the ELKS configuration tree
+  that have no corresponding code in the source tree, usually as a result
+  of planned development that has yet to take place. Whilst playing with
+  these options will not damage the compiled kernel in any way, neither
+  will it do anything constructive at this time.
 
   Just say N and live in peace.
 
-# General Setup
-# ~~~~~~~~~~~~~
+# Architecture selection
+# ~~~~~~~~~~~~~~~~~~~~~~
+
+Auto-detect architecture
+CONFIG_ARCH_AUTO
+  Use this option to specify the architecture the kernel will run on. The
+  supported options are:
+
+	Auto	Automatically detect at boot time.
+
+	IBM-PC	Computers compatible with one of the IBM PC range.
+
+	SIBO	The SIBO range of computers.
 
 Auto detect PC architecture
 CONFIG_ARCH_PC_AUTO
-  Use this option to specify the architecture the kernel will run on.
-  The supported options are:
+  Use this option to specify the architecture the kernel will run on. The
+  supported options are:
 
 	Auto	Automatically detect at boot time.
 
 	MCA	Computers based on IBM's MicroChannel Architecture.
 
+	PC/AT	Computers based on the 80286 processor that are compatible
+		with the IBM PC/AT computer.
+
 	PC/XT	Computers based on the 8088 or 8086 processor that are
 		compatible with the IBM PC/XT computer.
-
-	PC/AT	Computers based on the 80286 processor that are
-     		compatible with the IBM PC/AT computer.
-
-	SIBO	Unknown - please document this choice.
 
 Support loadable modules
 CONFIG_MODULE
@@ -83,8 +91,8 @@ CONFIG_SHLIB
 
 Switch COMPAQ DeskPro into fast mode
 CONFIG_COMPAQ_FAST
-  Saying yes includes code to switch COMPAQ Deskpro machines that
-  default to slow speed to fast speed.
+  Saying yes includes code to switch COMPAQ Deskpro machines that default
+  to slow speed to fast speed.
 
 # ROM code kernel loader
 # ~~~~~~~~~~~~~~~~~~~~~~

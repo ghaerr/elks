@@ -6,9 +6,14 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Tue Aug 14 10:46:47 BST 2001	Riley Williams <rhw@memalpha.cx>
+
+	* Added INSTALLATION document submitted on Linux-8086 mailing
+	  list, after reformatting and HTML'ising.
+
 Mon Aug 13 22:58:15 BST 2001	Peter L Vachuska <pvachusk@nconnect.net>
 
-	* Added DVORAK keyboard layout options.
+	* Added DVORAK keyboard layout and options.
 
 Mon Aug 13 18:50:50 BST 2001	Riley Williams <rhw@memalpha.cx>
 

@@ -243,3 +243,36 @@ include/linuxmt/compile.h:
 	sync
 
 ### Dependencies:
+init/main.o: init/main.c /home/rhw/CVS/Source/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/elks/include/arch/param.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/elks/include/linuxmt/utsname.h

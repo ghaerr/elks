@@ -43,3 +43,17 @@ dep:
 	mv tmp_make Makefile
 
 ### Dependencies:
+inode.s inode.o: inode.c ../../include/linuxmt/config.h \
+ ../../include/linuxmt/autoconf.h ../../include/linuxmt/types.h \
+ ../../include/arch/types.h ../../include/linuxmt/posix_types.h \
+ ../../include/arch/posix_types.h ../../include/arch/irq.h \
+ ../../include/linuxmt/errno.h ../../include/arch/errno.h \
+ ../../include/linuxmt/romfs_fs.h ../../include/linuxmt/fs.h \
+ ../../include/linuxmt/wait.h ../../include/linuxmt/vfs.h \
+ ../../include/arch/statfs.h ../../include/linuxmt/kdev_t.h \
+ ../../include/linuxmt/ioctl.h ../../include/arch/ioctl.h \
+ ../../include/linuxmt/pipe_fs_i.h ../../include/linuxmt/net.h \
+ ../../include/linuxmt/socket.h ../../include/linuxmt/uio.h \
+ ../../include/arch/bitops.h ../../include/linuxmt/locks.h \
+ ../../include/linuxmt/stat.h ../../include/arch/stat.h \
+ ../../include/arch/border.h ../../include/linuxmt/debug.h

@@ -1,0 +1,345 @@
+<HTML>
+<Head>
+
+<Title>Installing ELKS</Title>
+
+</Head>
+<Body BGColor=White Text=Black Link=Blue VLink=Magenta ALink=Red>
+
+<!--
+
+ELKS - INSTALL.TXT - v0.0.3 - 26 January 2000
+Original Author - Matt Balaun - gs25mrb@panther.gsu.edu
+Editor/Contributor - Al Riddoch - ajr@ecs.soton.ac.uk
+
+-->
+
+<H1 Align=Center>Installing ELKS</H1>
+
+<P Align=Center>Original Author: <A
+HRef="MailTo:gs25mrb@panther.gsu.edu">Matt Balaun</A><BR>
+Editor/Contributor: <A HRef="MailTo:ajr@ecs.soton.ac.uk">Al
+Riddoch</A><BR>Sub-editor: <A HRef="MailTo:rhw@MemAlpha.cx">Riley
+Williams</A></P>
+
+<P Align=Justify>Here are basic instructions on installing ELKS, the
+Embeddable Linux Kernel Subset, onto one or more floppy disks for use
+on your PC.</P>
+
+<P Align=Justify>If you are looking for information on ELKS development
+or on compiling the kernel, please refer to the README file or the ELKS
+FAQ.</P>
+
+<HR Width=95%>
+
+<H1>Table of Contents</H1>
+
+<P Align=Justify><OL>
+
+<LI><A HRef="#1">Introduction</A>
+<LI><A HRef="#2">Creating the installation floppies</A>
+<LI><A HRef="#3">Installing and booting ELKS</A>
+<LI><A HRef="#4">Credits/Thanks</A>
+
+</OL></P>
+
+<P Align=Justify>If you have any questions relating to this document,
+please post your question to the <A
+HRef="http://www.elks.ecs.soton.ac.uk/maillist.php3">Linux 8086</A>
+discussion list on the Internet.</P>
+
+<HR Width=95%>
+
+<A Name="1"><H2>Introduction</H2>
+
+<P Align=Justify>ELKS, the Embeddable Linux Kernel Subset, is an
+open-source project designed to bring linux-like functionality to old x86
+hardware (8088, 8086, 80186, and 80286 processors). Currently, ELKS runs
+off floppy disks only; there is no officially supported means of booting
+ELKS directly from a hard drive as of yet. This document will tell you
+step-by-step how to create your own set of ELKS floppy disks.</P>
+
+<P Align=Justify>These are the disk images for ELKS as contained in the
+file IMAGES.ZIP and as of ELKS version 0.0.82:</P>
+
+<P><Pre>
+	boot	Disk image used in creating the boot disk
+	root	Disk image used in creating the root disk
+
+	comb	Disk image used in creating a combination boot and
+		root disk
+</Pre></P>
+
+<P Align=Justify>According to Al Riddoch, the maintainer of the ELKS
+project, using the combined image is always better, but it requires a disk
+size larger than 360K, so cannot be used on machines that only have 360K
+drives. Thus, if you have only 360k floppies, make separate boot and root
+disks.</P>
+
+<HR Width=95%>
+
+<A Name="2"><H2>Creating your installation floppies</H2>
+
+<P Align=Justify>The first step in installing ELKS is to create the
+installation floppies. As a preliminary step, you will need...</P>
+
+<P Align=Justify><UL>
+
+<LI>To download the IMAGES.ZIP archive from the ELKS website.
+
+<LI>One 720k or larger floppy, if you wish to create a single floppy
+installation and boot system.
+
+<LI>Two floppies of any size, if you wish to create a "boot &amp; root"
+installation and boot system.
+
+</UL></P>
+
+<P Align=Justify>Depending on the system you intend to use to create the
+installation floppies, you may need additional tools as well.</P>
+
+<P Align=Justify>The method for creating the installation floppies differs
+wildly depending on the system you are using to create them, so has been
+separated into the following sections:</P>
+
+<P Align=Justify><OL>
+
+<LI>Using an <A HRef="#2.1">MS-DOS or PC-DOS</A> system
+<LI>Using a <A HRef="#2.2">Microsoft Windows</A> system
+<LI>Using a <A HRef="#2.3">Linux</A> system
+<LI>Using a <A HRef="#2.4">Psion 3 SIBO</A> system (Under Construction)
+
+</OL></P>
+
+<P Align=Justify>When you have created your floppies, <A HRef="#3">click
+here</A> for instructions relating to installing and booting ELKS.</P>
+
+<HR Width=95%>
+
+<A Name="2.1"><H2>Using an MS-DOS or PC-DOS system</H2>
+
+<P Align=Justify>For those of you using a DOS-based system, or a system
+where you have access to a DOS prompt, you will additionally need...</P>
+
+<P Align=Justify><UL>
+
+<LI>The <A
+HRef="ftp://ftp.cdrom.com/pub/linux/slackware-7.0/bootdsks.144/">RAWRITE
+package</A>.
+
+</UL></P>
+
+<P Align=Justify>First, unzip IMAGES.ZIP into a directory on your hard
+drive. If you don't know how to do this, or if you haven't the tools to do
+this, download PKZ204G.EXE from ftp.pkware.com, install it, and read the
+documentation included with it.</P>
+
+<P Align=Justify>Here is an example session:</P>
+
+<P><Pre>
+
+	C:\> md elks
+	C:\> copy images.zip c:\elks\
+	C:\> cd elks
+	C:\ELKS> pkunzip images.zip
+</Pre></P>
+
+<P Align=Justify>Second, put a copy of RAWRITE.EXE in the same
+directory:</P>
+
+<P><Pre>
+	C:\> copy c:\rawrite.exe c:\elks\
+</Pre></P>
+
+<P Align=Justify>Finally, decide which set of images you wish to make:</P>
+
+<P Align=Justify><UL>
+
+<LI>Separate <A HRef="#2.1.1">Boot &amp; Root</A> floppies.
+<LI>A <A HRef="#2.1.2">combined</A> floppy.
+
+</UL></P>
+
+<HR Width=95%>
+
+<A Name="2.1.1"><H3>Separate Boot &amp; Root floppies</H3>
+
+<P Align=Justify>First, label a blank floppy "ELKS Boot", put it in drive
+A: and create the boot floppy:</P>
+
+<P><Pre>
+	C:\ELKS> rawrite boot a:
+</Pre></P>
+
+<P Align=Justify>Take it out and put it on one side, then label a second
+blank floppy "ELKS Root", put it in the drive, and create the root
+floppy:</P>
+
+<P><Pre>
+	C:\ELKS> rawrite root a:
+</Pre></P>
+
+<P Align=Justify>Take it out and put it with the "ELKS Boot" floppy, then
+take both floppies over to the system you wish to install ELKS on.</P>
+
+<HR Width=95%>
+
+<A Name="2.1.2"><H3>A combined floppy</H3>
+
+<P Align=Justify>Label a blank floppy "ELKS Combined", put it in drive
+A: and create the floppy:</P>
+
+<P><Pre>
+	C:\ELKS> rawrite comb a:
+</Pre></P>
+
+<P Align=Justify>Take it out and take it over to the system you wish to
+install ELKS on.</P>
+
+<HR Width=95%>
+
+<A Name="2.2"><H2>Using a Microsoft Windows system</H2>
+
+<P Align=Justify>For those of you running a Microsoft Windows system where
+you can access a <B>DOS Prompt</B>, you are advised to do so, and to
+follow the <A HRef="#2.1">MS-DOS or PC-DOS</A> instructions.</P>
+
+<P Align=Justify>For other Microsoft Windows users, details will be posted
+here when available.</P>
+
+<HR Width=95%>
+
+<A Name="2.3"><H2>Using a Linux system</H2>
+
+<P Align=Justify>Linux systems supply all the tools you need as part of a
+standard installation. You will therefore only need to verify that the
+relevant tools were installed on your system, and add them if not. To
+verify this, type the following commands:</P>
+
+<P><Pre>
+	$ type -path unzip
+	$ type -path dd
+</Pre></P>
+
+<P Align=Justify>If either of those commands fails to produce any output,
+the relevant command is not installed on your system and you will need to
+install it.</P>
+
+<P Align=Justify>First, unzip the IMAGES.ZIP archive somewhere:</P>
+
+<P><Pre>
+	$ mkdir ~/ELKS
+	$ mv IMAGES.ZIP ~/ELKS
+	$ cd ~/ELKS
+	$ unzip IMAGES.ZIP
+</Pre></P>
+
+<P Align=Justify>Next, decide which type of installation you wish to
+make:</P>
+
+<P Align=Justify><UL>
+
+<LI>Separate <A HRef="#2.3.1">Boot &amp; Root</A> floppies.
+<LI>A <A HRef="#2.3.2">combined</A> floppy.
+
+</UL></P>
+
+<HR Width=95%>
+
+<A Name="2.3.1"><H3>Separate Boot &amp; Root floppies</H3>
+
+<P Align=Justify>First, label a blank floppy "ELKS Boot", put it in drive
+A: and create the boot floppy:</P>
+
+<P><Pre>
+	$ dd if=boot of=/dev/fd0
+</Pre></P>
+
+<P Align=Justify>Take it out and put it on one side, then label a second
+blank floppy "ELKS Root", put it in the drive, and create the root
+floppy:</P>
+
+<P><Pre>
+	$ dd if=root of=/dev/fd0
+</Pre></P>
+
+<P Align=Justify>Take it out and put it with the "ELKS Boot" floppy, then
+take both floppies over to the system you wish to install ELKS on.</P>
+
+<HR Width=95%>
+
+<A Name="2.3.2"><H3>A combined floppy</H3>
+
+<P Align=Justify>Label a blank floppy "ELKS Combined", put it in drive
+A: and create the floppy:</P>
+
+<P><Pre>
+	$ dd if=comb of=/dev/fd0
+</Pre></P>
+
+<P Align=Justify>Take it out and take it over to the system you wish to
+install ELKS on.</P>
+
+<HR Width=95%>
+
+<A Name="2.4"><H2>Psion3 SIBO</H2>
+
+<P Align=Justify>The SIBO port is not currently mature enough to be worth
+installing. If you are interested in testing and developing the SIBO
+kernel, please refer to the section on the ELKS website at</P>
+
+<P Align=Center><A HRef="http://www.elks.ecs.soton.ac.uk/sibo.php3">
+http://www.elks.ecs.soton.ac.uk/sibo.php3</A></P>
+
+<HR Width=95%>
+
+<A Name="3"><H2>Installing and booting ELKS</H2>
+
+<P Align=Justify>The procedure for installing and booting ELKS is quite
+simple, but differs slightly depending on whether the installation is from
+a <A HRef="#3.1">combined</A> floppy or from separate <A HRef="#3.2">boot
+&amp; root</A> floppies.</P>
+
+<HR Width=95%>
+
+<A Name="3.1"><H3>Installing and booting from a combined floppy</H3>
+
+<P Align=Justify>This is the simplest procedure: Just put the floppy in
+the floppy drive of the system you wish to run ELKS on, and boot the
+machine from that floppy drive.</P>
+
+<HR Width=95%>
+
+<A Name="3.2"><H3>Installing and booting from separate boot &amp; root
+floppies</H3>
+
+<P Align=Justify>The procedure here is to insert the <B>ELKS BOOT</B>
+floppy in the floppy drive of the target machine and boot the machine from
+that floppy drive. At the relevant point in the boot procedure, it will
+ask you to insert the <B>ELKS ROOT</B> floppy in the drive, at which point
+you should remove the boot floppy and insert the root floppy in its
+place, then press the key indicated on the screen.</P>
+
+<HR Width=95%>
+
+<A Name="4"><H2>Credits/Thanks</H2>
+
+<P Align=Justify>In updating v0.0.2 of this document, Al Riddoch
+contributed technical corrections throughout the whole text.</P>
+
+<P Align=Justify>In helping to distribute this document to all who are
+interested in ELKS, Phillip Rhoades has set up the ELKS Documentation
+Project homepage (http://www.crosswinds.net/~edp/) where the latest
+version of this and other documents relating to the ELKS project should
+always be available.</P>
+
+<P ALign=Justify>Thanks to Al, Phillip, and all the other fine people
+working on the ELKS project.</P>
+
+<HR Width=95%>
+
+<P Align=Justify>PS: Bug reports are welcome. Requests for help will be
+answered when time permits.</P>
+
+</Body>
+</HTML>

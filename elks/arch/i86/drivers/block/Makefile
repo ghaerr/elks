@@ -50,3 +50,165 @@ ssd_asm.o: ssd_asm.s
 ssd_asm.s: ssd_asm.S
 
 ### Dependencies:
+directhd.s directhd.o: directhd.c ../../../../include/linuxmt/hdreg.h \
+ ../../../../include/linuxmt/major.h \
+ ../../../../include/linuxmt/genhd.h \
+ ../../../../include/linuxmt/types.h ../../../../include/arch/types.h \
+ ../../../../include/linuxmt/posix_types.h \
+ ../../../../include/linuxmt/config.h \
+ ../../../../include/linuxmt/autoconf.h \
+ ../../../../include/arch/posix_types.h ../../../../include/arch/irq.h \
+ ../../../../include/linuxmt/fs.h ../../../../include/linuxmt/wait.h \
+ ../../../../include/linuxmt/vfs.h ../../../../include/arch/statfs.h \
+ ../../../../include/linuxmt/kdev_t.h \
+ ../../../../include/linuxmt/ioctl.h ../../../../include/arch/ioctl.h \
+ ../../../../include/linuxmt/pipe_fs_i.h \
+ ../../../../include/linuxmt/net.h \
+ ../../../../include/linuxmt/socket.h \
+ ../../../../include/linuxmt/uio.h ../../../../include/arch/bitops.h \
+ ../../../../include/linuxmt/string.h \
+ ../../../../include/arch/string.h ../../../../include/linuxmt/mm.h \
+ ../../../../include/linuxmt/sched.h \
+ ../../../../include/linuxmt/time.h \
+ ../../../../include/linuxmt/signal.h \
+ ../../../../include/linuxmt/ntty.h ../../../../include/arch/param.h \
+ ../../../../include/linuxmt/timex.h \
+ ../../../../include/linuxmt/errno.h ../../../../include/arch/errno.h \
+ ../../../../include/linuxmt/kernel.h \
+ ../../../../include/arch/segment.h \
+ ../../../../include/linuxmt/directhd.h
+doshd.s doshd.o: doshd.c ../../../../include/linuxmt/types.h \
+ ../../../../include/arch/types.h \
+ ../../../../include/linuxmt/posix_types.h \
+ ../../../../include/linuxmt/config.h \
+ ../../../../include/linuxmt/autoconf.h \
+ ../../../../include/arch/posix_types.h ../../../../include/arch/irq.h \
+ ../../../../include/linuxmt/kernel.h \
+ ../../../../include/linuxmt/sched.h ../../../../include/linuxmt/fs.h \
+ ../../../../include/linuxmt/wait.h ../../../../include/linuxmt/vfs.h \
+ ../../../../include/arch/statfs.h \
+ ../../../../include/linuxmt/kdev_t.h \
+ ../../../../include/linuxmt/ioctl.h ../../../../include/arch/ioctl.h \
+ ../../../../include/linuxmt/pipe_fs_i.h \
+ ../../../../include/linuxmt/net.h \
+ ../../../../include/linuxmt/socket.h \
+ ../../../../include/linuxmt/uio.h ../../../../include/arch/bitops.h \
+ ../../../../include/linuxmt/time.h \
+ ../../../../include/linuxmt/signal.h \
+ ../../../../include/linuxmt/ntty.h ../../../../include/arch/param.h \
+ ../../../../include/linuxmt/timex.h \
+ ../../../../include/linuxmt/errno.h ../../../../include/arch/errno.h \
+ ../../../../include/linuxmt/genhd.h \
+ ../../../../include/linuxmt/hdreg.h \
+ ../../../../include/linuxmt/biosparm.h \
+ ../../../../include/linuxmt/major.h \
+ ../../../../include/linuxmt/bioshd.h \
+ ../../../../include/linuxmt/string.h \
+ ../../../../include/arch/string.h ../../../../include/linuxmt/mm.h \
+ ../../../../include/arch/segment.h ../../../../include/arch/system.h \
+ blk.h
+floppy.s floppy.o: floppy.c ../../../../include/linuxmt/sched.h \
+ ../../../../include/linuxmt/fs.h ../../../../include/linuxmt/wait.h \
+ ../../../../include/linuxmt/types.h ../../../../include/arch/types.h \
+ ../../../../include/linuxmt/posix_types.h \
+ ../../../../include/linuxmt/config.h \
+ ../../../../include/linuxmt/autoconf.h \
+ ../../../../include/arch/posix_types.h ../../../../include/arch/irq.h \
+ ../../../../include/linuxmt/vfs.h ../../../../include/arch/statfs.h \
+ ../../../../include/linuxmt/kdev_t.h \
+ ../../../../include/linuxmt/ioctl.h ../../../../include/arch/ioctl.h \
+ ../../../../include/linuxmt/pipe_fs_i.h \
+ ../../../../include/linuxmt/net.h \
+ ../../../../include/linuxmt/socket.h \
+ ../../../../include/linuxmt/uio.h ../../../../include/arch/bitops.h \
+ ../../../../include/linuxmt/time.h \
+ ../../../../include/linuxmt/signal.h \
+ ../../../../include/linuxmt/ntty.h ../../../../include/arch/param.h \
+ ../../../../include/linuxmt/timex.h \
+ ../../../../include/linuxmt/kernel.h ../../../../include/linuxmt/mm.h \
+ ../../../../include/linuxmt/errno.h ../../../../include/arch/errno.h \
+ ../../../../include/linuxmt/string.h \
+ ../../../../include/arch/string.h ../../../../include/linuxmt/fdreg.h \
+ ../../../../include/linuxmt/fd.h ../../../../include/arch/dma.h \
+ ../../../../include/arch/io.h ../../../../include/arch/system.h \
+ ../../../../include/arch/segment.h
+genhd.s genhd.o: genhd.c ../../../../include/linuxmt/config.h \
+ ../../../../include/linuxmt/autoconf.h \
+ ../../../../include/linuxmt/fs.h ../../../../include/linuxmt/wait.h \
+ ../../../../include/linuxmt/types.h ../../../../include/arch/types.h \
+ ../../../../include/linuxmt/posix_types.h \
+ ../../../../include/arch/posix_types.h ../../../../include/arch/irq.h \
+ ../../../../include/linuxmt/vfs.h ../../../../include/arch/statfs.h \
+ ../../../../include/linuxmt/kdev_t.h \
+ ../../../../include/linuxmt/ioctl.h ../../../../include/arch/ioctl.h \
+ ../../../../include/linuxmt/pipe_fs_i.h \
+ ../../../../include/linuxmt/net.h \
+ ../../../../include/linuxmt/socket.h \
+ ../../../../include/linuxmt/uio.h ../../../../include/arch/bitops.h \
+ ../../../../include/linuxmt/genhd.h \
+ ../../../../include/linuxmt/kernel.h \
+ ../../../../include/linuxmt/major.h \
+ ../../../../include/linuxmt/string.h \
+ ../../../../include/arch/string.h ../../../../include/arch/system.h
+init.s init.o: init.c ../../../../include/linuxmt/config.h \
+ ../../../../include/linuxmt/autoconf.h \
+ ../../../../include/linuxmt/fs.h ../../../../include/linuxmt/wait.h \
+ ../../../../include/linuxmt/types.h ../../../../include/arch/types.h \
+ ../../../../include/linuxmt/posix_types.h \
+ ../../../../include/arch/posix_types.h ../../../../include/arch/irq.h \
+ ../../../../include/linuxmt/vfs.h ../../../../include/arch/statfs.h \
+ ../../../../include/linuxmt/kdev_t.h \
+ ../../../../include/linuxmt/ioctl.h ../../../../include/arch/ioctl.h \
+ ../../../../include/linuxmt/pipe_fs_i.h \
+ ../../../../include/linuxmt/net.h \
+ ../../../../include/linuxmt/socket.h \
+ ../../../../include/linuxmt/uio.h ../../../../include/arch/bitops.h \
+ ../../../../include/linuxmt/genhd.h \
+ ../../../../include/linuxmt/kernel.h \
+ ../../../../include/linuxmt/major.h \
+ ../../../../include/linuxmt/string.h \
+ ../../../../include/arch/string.h ../../../../include/arch/system.h
+ll_rw_blk.s ll_rw_blk.o: ll_rw_blk.c ../../../../include/linuxmt/types.h \
+ ../../../../include/arch/types.h \
+ ../../../../include/linuxmt/posix_types.h \
+ ../../../../include/linuxmt/config.h \
+ ../../../../include/linuxmt/autoconf.h \
+ ../../../../include/arch/posix_types.h ../../../../include/arch/irq.h \
+ ../../../../include/linuxmt/sched.h ../../../../include/linuxmt/fs.h \
+ ../../../../include/linuxmt/wait.h ../../../../include/linuxmt/vfs.h \
+ ../../../../include/arch/statfs.h \
+ ../../../../include/linuxmt/kdev_t.h \
+ ../../../../include/linuxmt/ioctl.h ../../../../include/arch/ioctl.h \
+ ../../../../include/linuxmt/pipe_fs_i.h \
+ ../../../../include/linuxmt/net.h \
+ ../../../../include/linuxmt/socket.h \
+ ../../../../include/linuxmt/uio.h ../../../../include/arch/bitops.h \
+ ../../../../include/linuxmt/time.h \
+ ../../../../include/linuxmt/signal.h \
+ ../../../../include/linuxmt/ntty.h ../../../../include/arch/param.h \
+ ../../../../include/linuxmt/timex.h \
+ ../../../../include/linuxmt/kernel.h \
+ ../../../../include/linuxmt/errno.h ../../../../include/arch/errno.h \
+ ../../../../include/linuxmt/string.h \
+ ../../../../include/arch/string.h ../../../../include/linuxmt/mm.h \
+ ../../../../include/arch/system.h ../../../../include/arch/io.h blk.h \
+ ../../../../include/linuxmt/major.h \
+ ../../../../include/linuxmt/genhd.h
+rd.s rd.o: rd.c ../../../../include/linuxmt/config.h \
+ ../../../../include/linuxmt/autoconf.h \
+ ../../../../include/linuxmt/rd.h ../../../../include/linuxmt/major.h \
+ ../../../../include/linuxmt/kernel.h \
+ ../../../../include/linuxmt/debug.h \
+ ../../../../include/linuxmt/errno.h ../../../../include/arch/errno.h
+sibo_ssd.s sibo_ssd.o: sibo_ssd.c ../../../../include/linuxmt/config.h \
+ ../../../../include/linuxmt/autoconf.h \
+ ../../../../include/linuxmt/major.h \
+ ../../../../include/linuxmt/kernel.h \
+ ../../../../include/linuxmt/debug.h \
+ ../../../../include/linuxmt/errno.h ../../../../include/arch/errno.h
+ssd.s ssd.o: ssd.c ../../../../include/linuxmt/config.h \
+ ../../../../include/linuxmt/autoconf.h \
+ ../../../../include/linuxmt/major.h \
+ ../../../../include/linuxmt/kernel.h \
+ ../../../../include/linuxmt/debug.h \
+ ../../../../include/linuxmt/errno.h ../../../../include/arch/errno.h
