@@ -10,8 +10,10 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
-#include <arch/segment.h>
 #include <linuxmt/directhd.h>
+#include <linuxmt/debug.h>
+
+#include <arch/segment.h>
 
 #ifdef CONFIG_BLK_DEV_HD
 
@@ -293,9 +295,7 @@ int directhd_init()
 	if (!*buffer) {
 	    /* unexpected 0; drive doesn't exist ? */
 	    /* something went wrong */
-#ifdef USE_DEBUG_CODE
-	    printk("athd: drive not found\n");
-#endif
+	    debug("athd: drive not found\n");
 	    break;
 
 	}
@@ -314,7 +314,7 @@ int directhd_init()
 	 * get 60416 with ATAPI (Mitsumi) CD - Blaz Antonic
 	 * 
 	 * Safety check - head, cyl and sector values must be other than
-	 * 0 and buffer has to contation valid data (first entry in buffer
+	 * 0 and buffer has to contain valid data (first entry in buffer
 	 * must be other than 0)
 	 *
 	 * FIXME: This will cause problems on many new drives .. some
