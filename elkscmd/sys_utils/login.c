@@ -98,7 +98,7 @@ char ** argv;
 	struct utmp entry;
 	struct utmp * entryp;
 	struct utmp newentry;
-	char lbuf[UT_NAMESIZE], pbuf[20], salt[3];
+	char lbuf[UT_NAMESIZE], * pbuf, salt[3];
 	char * tty_name;
 	int n;
 
@@ -144,14 +144,8 @@ not_tty:
 		if ((pwd != NULL) && (pwd->pw_passwd[0] == 0)) {
 			login(pwd, entryp);
 		}
-		write(STDOUT_FILENO,"Password: ",10);
-		if (read(STDIN_FILENO, pbuf, sizeof(pbuf)) < 1) {
-		    exit(1);
-		}
-		n = strlen(pbuf)-1;
-		if (pbuf[n] == '\n') {
-		    pbuf[n] = 0;
-		}
+		pbuf = getpass("Password:");
+		write(STDOUT_FILENO, "\n", 1);
 		if (pwd != NULL) {
 			salt[0]=pwd->pw_passwd[0];
 			salt[1]=pwd->pw_passwd[1];

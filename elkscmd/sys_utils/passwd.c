@@ -120,8 +120,6 @@ char ** argv;
 	    pwd = getpwent();
 	    while (pwd != NULL) {
 		if (pwd->pw_uid == uid) {
-			char * p = strchr(nbuf1, '\n');
-			if(p) *p = '\0';
 			pwd->pw_passwd = crypt(nbuf1, salt);
 		}
 	        if (putpwent(pwd, passwd_fp) == -1) {

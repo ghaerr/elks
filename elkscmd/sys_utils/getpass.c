@@ -63,10 +63,8 @@ char *prompt;
     if (fgets(result, sizeof(result)-1, in) == NULL) {
         result[0] = 0;
     } else {
-        n = strlen(result-1);
-	if (result[n] == '\n') {
-	    result[n] = 0;
-	}
+	char * p = strchr(result, '\n');
+	if(p) *p = '\0';
     }
 
     /* reset our terminal, if necessary */
