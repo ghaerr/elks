@@ -41,7 +41,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/locks.h>
 #include <linuxmt/stat.h>
-/* #include <arch/byteorder.h> */
+#include <arch/border.h>
 #include <linuxmt/debug.h>
 
 static int mini(a,b)

@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Fri Jul 09 16:10 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Updated romfs to use byteorder functions
+
 Fri Jul 09 15:45 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Tweaks to bioshd driver to fix problems with disabling hd
