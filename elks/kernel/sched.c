@@ -116,13 +116,6 @@ struct task_struct * p;
         p->prev_run = NULL;
 }
 
-static void init_timer(timer)
-struct timer_list * timer;
-{
-	timer->next = NULL;
-	timer->prev = NULL;
-}
-
 
 static void process_timeout(__data)
 int __data;
@@ -287,9 +280,9 @@ void schedule()
 /*		printk("Switching to %x\n", next); */
 		if (timeout) {
 			init_timer(&timer);
-			timer.expires = timeout;
-			timer.data = (int) prev;
-			timer.function = process_timeout;
+			timer.tl_expires = timeout;
+			timer.tl_data = (int) prev;
+			timer.tl_function = process_timeout;
 			add_timer(&timer);
 		}
 	/* The code below has been changed as the old task switching code did not return
@@ -322,117 +315,22 @@ scheduling_in_interrupt:
                 lastirq, currentp->pid, prev->pid);
 }
 
-#define TVN_BITS 6
-#define TVR_BITS 8
-#define TVN_SIZE (1 << TVN_BITS)
-#define TVR_SIZE (1 << TVR_BITS)
-#define TVN_MASK (TVN_SIZE - 1)
-#define TVR_MASK (TVR_SIZE - 1)
+struct timer_list tl_list = {NULL,};
 
-#define SLOW_BUT_DEBUGGING_TIMERS 0
-
-struct timer_vec {
-        int index;
-        struct timer_list *vec[TVN_SIZE];
-};
-
-struct timer_vec_root {
-        int index;
-        struct timer_list *vec[TVR_SIZE];
-};
-
-static struct timer_vec tv5 = { 0 };
-static struct timer_vec tv4 = { 0 };
-static struct timer_vec tv3 = { 0 };
-static struct timer_vec tv2 = { 0 };
-static struct timer_vec_root tv1 = { 0 };
-
-static struct timer_vec * /*const*/ tvecs[] = {
-	(struct timer_vec *)&tv1, &tv2, &tv3, &tv4, &tv5
-};
-
-#define NOOF_TVECS (sizeof(tvecs) / sizeof(tvecs[0]))
-
-static jiff_t timer_jiffies = 0;
-
-static /*inline*/ void insert_timer(timer, vec, idx)
-register struct timer_list *timer;
-register struct timer_list **vec;
-int idx;
-{
-	if ((timer->next = vec[idx]))
-		vec[idx]->prev = timer;
-	vec[idx] = timer;
-	timer->prev = (struct timer_list *)&vec[idx];
-}
-
-static /*inline*/ void internal_add_timer(timer)
-register struct timer_list * timer;
-{
-	/*
-	 * must be cli-ed when calling this
-	 */
-	jiff_t expires = timer->expires;
-	jiff_t idx = expires - timer_jiffies;
-
-	if (idx < (jiff_t)TVR_SIZE) {
-		int i = expires & TVR_MASK;
-		insert_timer(timer, tv1.vec, i);
-	} else if (idx < 1 << (TVR_BITS + TVN_BITS)) {
-		int i = (expires >> TVR_BITS) & TVN_MASK;
-		insert_timer(timer, tv2.vec, i);
-	} else if (idx < 1 << (TVR_BITS + 2 * TVN_BITS)) {
-		int i = (expires >> (TVR_BITS + TVN_BITS)) & TVN_MASK;
-		insert_timer(timer, tv3.vec, i);
-	} else if (idx < 1 << (TVR_BITS + 3 * TVN_BITS)) {
-		int i = (expires >> (TVR_BITS + 2 * TVN_BITS)) & TVN_MASK;
-		insert_timer(timer, tv4.vec, i);
-	} else if (expires < timer_jiffies) {
-		/* can happen if you add a timer with expires == jiffies,
-		 * or you set a timer to go off in the past
-		 */
-		insert_timer(timer, tv1.vec, tv1.index);
-	} else {
-		int i = (expires >> (TVR_BITS + 3 * TVN_BITS)) & TVN_MASK;
-		insert_timer(timer, tv5.vec, i);
-	}
-	/* Last case removed as it could only occur with 64bit jiffies */
-}
-
-void add_timer(timer)
-struct timer_list * timer;
-{
-	flag_t flags;
-	save_flags(flags);
-	icli();
-#if SLOW_BUT_DEBUGGING_TIMERS
-        if (timer->next || timer->prev) {
-                printk("add_timer() called with non-zero list from %p\n",
-		       __builtin_return_address(0));
-		goto out;
-        }
-#endif
-	internal_add_timer(timer);
-#if SLOW_BUT_DEBUGGING_TIMERS
-out:
-#endif
-	restore_flags(flags);
-}
-
-static /*inline*/ int detach_timer(timer)
+static int detach_timer(timer)
 struct timer_list * timer;
 {
 	int ret = 0;
 	register struct timer_list *next;
 	register struct timer_list *prev;
-	next = timer->next;
-	prev = timer->prev;
+	next = timer->tl_next;
+	prev = timer->tl_prev;
 	if (next) {
-		next->prev = prev;
+		next->tl_prev = prev;
 	}
 	if (prev) {
 		ret = 1;
-		prev->next = next;
+		prev->tl_next = next;
 	}
 	return ret;
 }
@@ -446,54 +344,66 @@ register struct timer_list * timer;
 	save_flags(flags);
 	icli();
 	ret = detach_timer(timer);
-	timer->next = timer->prev = 0;
+	timer->tl_next = timer->tl_prev = 0;
 	restore_flags(flags);
 	return ret;
 }
 
-static /*inline*/ void cascade_timers(tv)
-register struct timer_vec * tv;
+static void init_timer(timer)
+struct timer_list * timer;
 {
-        /* cascade all the timers from tv up one level */
-        register struct timer_list *timer;
-        timer = tv->vec[tv->index];
-        /*
-         * We are removing _all_ timers from the list, so we don't  have to
-         * detach them individually, just clear the list afterwards.
-         */
-        while (timer) {
-		struct timer_list *tmp = timer;
-		timer = timer->next;
-		internal_add_timer(tmp);
-        }
-        tv->vec[tv->index] = NULL;
-        tv->index = (tv->index + 1) & TVN_MASK;
+	timer->tl_next = NULL;
+	timer->tl_prev = NULL;
 }
 
-static /*inline*/ void run_timer_list()
+
+static void add_timer(timer)
+register struct timer_list * timer;
 {
+	flag_t flags;
+	struct timer_list * next = tl_list.tl_next;
+	struct timer_list * prev = &tl_list;
+
+	save_flags(flags);
 	icli();
-	while ((long)(jiffies - timer_jiffies) >= 0L) {
-		register struct timer_list *timer;
-		if (!tv1.index) {
-			int n = 1;
-			do {
-				cascade_timers(tvecs[n]);
-			} while (tvecs[n]->index == 1 && ++n < NOOF_TVECS);
+
+	while (next) {
+		if (next->tl_expires > timer->tl_expires) {
+			timer->tl_prev = next->tl_prev;
+			timer->tl_next = next;
+			timer->tl_prev->tl_next = timer;
+			next->tl_prev = timer;
+			printk("Timer installed in middle\n");
+			return;
 		}
-		while ((timer = tv1.vec[tv1.index])) {
-			void (*fn)() = timer->function;
-			int data = timer->data;
-			/*printk("boom!\n");*/
-			detach_timer(timer);
-			timer->next = timer->prev = NULL;
-			isti();
-			fn(data);
-			icli();
-		}
-		++timer_jiffies; 
-		tv1.index = (tv1.index + 1) & TVR_MASK;
+		prev = next;
+		next = next->tl_next;
 	}
+	printk("Timer installed at end\n");
+	timer->tl_prev = prev;
+/*	timer->tl_next = NULL; */
+	prev->tl_next = timer;
+	restore_flags(flags);
+}
+
+static void run_timer_list()
+{
+	struct timer_list * timer = tl_list.tl_next;
+
+	icli();
+
+	while (timer && timer->tl_expires < jiffies) {
+		void (*fn)() = timer->tl_function;
+		int data = timer->tl_data;
+		printk("Running a timer\n");
+		detach_timer(timer);
+		timer->tl_next = timer->tl_prev = NULL;
+		isti();
+		fn(data);
+		icli();
+		timer = timer->tl_next;
+	}
+
 	isti();
 }
 

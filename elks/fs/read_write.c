@@ -25,8 +25,6 @@ unsigned int origin;
 	register struct file_operations * fop;
 	off_t tmp;
 	
-/*	printk("%d lseek1\n",origin); */
-/*	printk("%ld lseek2\n",offset); */
 	if (fd >= NR_OPEN || !(file=current->files.fd[fd]) || !(file->f_inode))
 		return -EBADF;
 	if (origin > 2)

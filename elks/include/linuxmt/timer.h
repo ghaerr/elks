@@ -81,13 +81,14 @@ extern struct timer_struct timer_table[32];
  * to distinguish between the different invocations.
  */
 struct timer_list {
-	struct timer_list *next;
-	struct timer_list *prev;
-	jiff_t expires;
-	int data;
-	void (*function)();
+	struct timer_list *tl_next;
+	struct timer_list *tl_prev;
+	jiff_t tl_expires;
+	int tl_data;
+	void (*tl_function)();
 };
 
+extern void init_timer();
 extern void add_timer();
 extern int  del_timer();
 
