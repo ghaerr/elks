@@ -11,7 +11,7 @@ cc_flags = -0 -c
 as = as86
 as_flags = -0
 
-imgconv = imgconv
+imgconv = ./imgconv
 imgconv_flags = -D$(stack_size) -H$(heap_size)
 
 ## Rules
