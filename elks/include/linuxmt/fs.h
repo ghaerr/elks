@@ -143,9 +143,6 @@ struct buffer_head
 #ifdef BLOAT_FS
 	unsigned long b_state;
 	unsigned int b_size;
-	unsigned int b_list;
-	unsigned long b_flushtime;
-	unsigned long b_lru_time;
 #endif
 };
 
@@ -224,7 +221,6 @@ struct inode
 	unsigned long	i_blksize;
 	unsigned long	i_blocks;
 	unsigned long	i_version;
-	struct file_lock * i_flock;
 	unsigned short i_wcount;
 	unsigned char i_seek;
 	unsigned char i_update;
@@ -409,11 +405,8 @@ extern void fsync_dev();
 extern void sync_supers();
 extern int notify_change();
 extern int namei();
-#ifdef BLOAT_LNAMEI
-extern int lnamei();
-#else
 #define lnamei(_a,_b) _namei(_a,NULL,0,_b)
-#endif
+
 extern int permission();
 #ifdef BLOAT_FS
 extern int get_write_access();

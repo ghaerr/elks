@@ -417,7 +417,6 @@ unsigned int filesize;
 void unlock_buffer(bh)
 register struct buffer_head * bh;
 {
-/*	struct buffer_head *tmp; */
 	bh->b_lock = 0;
 	unmap_buffer(bh);
 	wake_up(&bh->b_wait);
