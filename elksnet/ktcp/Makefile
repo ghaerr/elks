@@ -7,7 +7,7 @@ CC		= bcc
 #BASE_CFLAGS	= -c -g
 BASE_CFLAGS	= -c -O 
 
-LOCALFLAGS	= -D__KERNEL__ -I../../elks-test/include -ansi
+LOCALFLAGS	= -D__KERNEL__
 
 CFLAGS		= $(BASE_CFLAGS) $(LOCALFLAGS)
 
