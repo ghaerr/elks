@@ -29,6 +29,11 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Mon Nov 26 15:19:36 EET 2001 Harry Kalogirou <harkal@gmx.net>
+
+	* Fixed back the fixed sys_lseek(). It seems that libc expects
+	  the return value to be passed through one of the parameters.
+
 Fri Nov 24 02:31:18 EET 2001 Harry Kalogirou <harkal@gmx.net>
 
 	* This is ELKS 0.1.0-pre2 !!!

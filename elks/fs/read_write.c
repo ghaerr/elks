@@ -20,11 +20,12 @@ unsigned int fd;
 off_t * p_offset;
 unsigned int origin;
 {
-	off_t offset = get_fs_long(p_offset);
+	off_t offset;
 	register struct file * file;
 	register struct file_operations * fop;
 	off_t tmp;
-	
+
+	offset = get_fs_long(p_offset);	
 	if (fd >= NR_OPEN || !(file=current->files.fd[fd]) || !(file->f_inode))
 		return -EBADF;
 	if (origin > 2)
@@ -60,7 +61,10 @@ unsigned int origin;
 		file->f_version = ++event;
 #endif
 	}
-	return tmp;
+	
+	memcpy_tofs(p_offset, &tmp, 4);
+	 
+	return 0;
 }
 
 /* fd_check -- validate file descriptor
