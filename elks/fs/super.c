@@ -201,6 +201,7 @@ struct ustat * ubuf;
         return 0;
 }
 #endif
+
 static struct super_block * read_super(dev,name,flags,data,silent)
 kdev_t dev;
 char *name;
@@ -477,7 +478,8 @@ char * type;
 	int retval;
 	char * t;
 	int new_flags = 0;
-	char	ltype[256];		/* is enough isn't it? */
+	/* FIXME ltype is way too big for out stack goal.. */
+	char	ltype[16];		/* is enough isn't it? */
 
 	if (!suser())
 		return -EPERM;
@@ -494,10 +496,10 @@ char * type;
 #ifdef CONFIG_FULL_VFS 
 	printd_mount("MOUNT: performing type check\n");
 
-	if ((retval = strlen_fromfs(type)) >= 256)
+	if ((retval = strlen_fromfs(type)) >= 16)
 	{
-		printd_mount("MOUNT: type size exceeds 256 characters, trunctating\n");
-		retval = 255;
+		printd_mount("MOUNT: type size exceeds 16 characters, trunctating\n");
+		retval = 15;
 	}
 
 	verified_memcpy_fromfs(ltype, type, retval);
