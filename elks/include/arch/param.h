@@ -1,9 +1,20 @@
 #ifndef _ARCH_8086_PARAM_H
 #define _ARCH_8086_PARAM_H
 
+#include <linuxmt/config.h>
+
+
 #ifndef HZ
+#ifdef CONFIG_ARCH_SIBO
+
+#define HZ 30
+
+#else /* CONFIG_ARCH_SIBO */
+
 #define HZ 100
-#endif
+
+#endif /* CONFIG_ARCH_SIBO */
+#endif /* HZ */
 
 #define EXEC_PAGESIZE	4096
 

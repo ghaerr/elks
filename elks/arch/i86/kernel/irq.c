@@ -29,6 +29,10 @@
 #include <arch/io.h>
 #include <arch/keyboard.h>
 
+extern void timer_tick();
+extern void enable_timer_tick();
+
+
 struct irqaction 
 {
 	void (*handler)();
@@ -47,6 +51,7 @@ unsigned char cache_A1 = 0xff;
 void disable_irq(irq_nr)
 unsigned int irq_nr;
 {
+#ifndef CONFIG_ARCH_SIBO
 	flag_t flags;
 	unsigned char mask = 1 << (irq_nr & 7);
 	save_flags(flags);
@@ -61,18 +66,20 @@ unsigned int irq_nr;
 /* BNOTE Is there missing code here! ????? cache_A1 |= mask ????? */
 	outb(cache_A1,0xA1);
 	restore_flags(flags);
+#endif
 }
 #endif
 
 void enable_irq(irq_nr)
 unsigned int irq_nr;
 {
+#ifndef CONFIG_ARCH_SIBO
 	flag_t flags;
 	unsigned char mask;
 
 	mask = ~(1 << (irq_nr & 7));
 	save_flags(flags);
-#ifndef CONFIG_XT
+#ifndef CONFIG_ARCH_PC_XT
 	if (irq_nr < 8) {
 #endif
 		icli();
@@ -80,13 +87,14 @@ unsigned int irq_nr;
 		outb(cache_21,0x21);
 		restore_flags(flags);
 		return;
-#ifndef CONFIG_XT
+#ifndef CONFIG_ARCH_PC_XT
 	}
 	icli();
 	cache_A1 &= mask;
 	outb(cache_A1,0xA1);
 	restore_flags(flags);
 #endif
+#endif /* CONFIG_ARCH_SIBO */
 }
 
 /*
@@ -181,11 +189,12 @@ void *dev_id;
 {
 	register struct irqaction *action;
 	flag_t flags;
-#ifdef CONFIG_XT
+#ifndef CONFIG_ARCH_SIBO
+#ifdef CONFIG_ARCH_PC_XT
 	if (irq > 7) {
 		return -EINVAL;
 	}
-#else	
+#else /* CONFIG_ARCH_PC_XT */
 	if (irq > 15) {
 		return -EINVAL;
 	}
@@ -194,7 +203,8 @@ void *dev_id;
 	}
 	if (irq == 2 && arch_cpu>1)
 		irq = 9;		/* Map IRQ 9/2 over */
-#endif
+#endif /* CONFIG_ARCH_PC_XT */
+#endif /* CONFIG_ARCH_SIBO */
 	action = irq_action + irq;
 	if(action->handler) {
 		return -EBUSY;
@@ -247,41 +257,6 @@ unsigned int irq;
 #endif
 
 /*
- *	Test timer tick routine
- */
-
-jiff_t jiffies=0;
-
-void timer_tick(/*struct pt_regs * regs*/)
-{
-	do_timer(/*regs*/); 
-
-#ifdef NEED_RESCHED	/* need_resched is not checked anywhere */
-	if (((int)jiffies & 7) == 0)
-		need_resched=1;	/* how primitive can you get? */
-#endif
-
-#if 0
-	#asm
-	! rotate the 20th character on the 3rd screen line
-	push es
-	mov ax,#0xb80a
-	mov es,ax
-	seg es
-	inc 40
-	pop es
-	#endasm
-#endif
-#ifdef CONFIG_DEBUG_TIMER
-        #asm
-        mov al,_jiffies
-        out 0x80,al 
-        #endasm
-
-#endif
-}
-
-/*
  *	IRQ setup.
  *
  */
@@ -295,14 +270,13 @@ void init_IRQ()
         cache_21 = inb_p(0x21);
 #endif
 
-
-
-#if 1
+#ifndef CONFIG_ARCH_SIBO
 	/* Stop the timer */
 	outb_p(0x30,0x43);
 	outb_p(0,0x40);
 	outb_p(0,0x40);
 #endif
+
 	/* Old IRQ 8 handler is nuked in this routine */
 	irqtab_init();			/* Store DS */
 
@@ -317,6 +291,9 @@ void init_IRQ()
 	 *	Re-start the timer only after irq is set
 	 */
  
+#ifdef CONFIG_ARCH_SIBO
+	enable_timer_tick();
+#else /* CONFIG_ARCH_SIBO */
 	/* set the clock to 100 Hz */
 	outb_p(0x36,0x43);		/* binary, mode 2, LSB/MSB, ch 0 */
 #ifdef ROM_8253_100HZ
@@ -344,7 +321,7 @@ void init_IRQ()
 	/*
 	 *	Enable the drop through interrupts.
 	 */
-#ifndef CONFIG_XT	 	
+#ifndef CONFIG_ARCH_PC_XT	 	
 	enable_irq(HD_IRQ);	/* AT ST506 */
 	enable_irq(15);		/* AHA1542 */
 #endif
@@ -352,12 +329,6 @@ void init_IRQ()
 	enable_irq(2);		/* Cascade */
 	enable_irq(6);		/* Floppy */
 
-	/*
-	 *	All traps are bad initially. One day IRQ's will be.
-	 */
-#if 0	/* This is now done in the declaration at the top. */
-	for(ct=16;ct<31;ct++)
-		irq++->flags|=IRQF_BAD;
-#endif
+#endif /* CONFIG_ARCH_SIBO */
 }
 

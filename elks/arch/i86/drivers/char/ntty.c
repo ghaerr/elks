@@ -316,7 +316,7 @@ void tty_init()
 	ttyp->ops = &bioscon_ops;
 	ttyp->minor = 0;
 #endif
-#ifdef CONFIG_CONSOLE_DIRECT
+#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT)
 	for (i = 0; i < 3; i++) {
 		ttyp = &ttys[i];
 		if (i == 0) {

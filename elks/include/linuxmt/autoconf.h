@@ -10,9 +10,10 @@
 /*
  * General setup
  */
-#define CONFIG_ARCH_AUTO 1
-#undef  CONFIG_XT
-#undef  CONFIG_AT
+#define CONFIG_ARCH_PC_AUTO 1
+#undef  CONFIG_ARCH_SIBO
+#undef  CONFIG_ARCH_PC_XT
+#undef  CONFIG_ARCH_PC_AT
 #undef  CONFIG_MODULE
 #undef  CONFIG_SHLIB
 #undef  CONFIG_COMPAQ_FAST
@@ -66,10 +67,10 @@
 /*
  * Other character devices
  */
-#define CONFIG_CHAR_DEV_MEM 1
 #define CONFIG_CHAR_DEV_RS 1
-#undef  CONFIG_PSEUDO_TTY
 #define CONFIG_CHAR_DEV_LP 1
+#define CONFIG_CHAR_DEV_MEM 1
+#undef  CONFIG_PSEUDO_TTY
 #undef  CONFIG_DEV_META
 
 /*
@@ -80,6 +81,7 @@
 #define CONFIG_BLK_DEV_BHD 1
 #undef  CONFIG_BLK_DEV_FD
 #undef  CONFIG_BLK_DEV_HD
+#undef  CONFIG_BLK_DEV_XD
 #undef  CONFIG_DMA
 #define CONFIG_GENDISK 1
 
@@ -87,7 +89,6 @@
  * Additional block devices
  */
 #undef  CONFIG_BLK_DEV_RAM
-#undef  CONFIG_BLK_DEV_XD
 
 /*
  * Block device options

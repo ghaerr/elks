@@ -11,6 +11,9 @@ int chr_dev_init()
 #endif
 #ifdef CONFIG_CONSOLE_DIRECT
 /*	xtk_init(); */
+#ifdef CONFIG_ARCH_SIBO
+	KeyboardInit();
+#endif
 #endif
 #ifdef CONFIG_CHAR_DEV_MEM
 	mem_dev_init();

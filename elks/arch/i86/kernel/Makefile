@@ -24,8 +24,13 @@ CC_PROTO =gcc -I../../../include -M
 	$(CC) $(CFLAGS) \
 	-0 -c -o $*.o $<
 
+ifeq ($(CONFIG_ARCH_SIBO), y)
+OBJS  = strace.o printreg.o system.o irq.o ../sibo/irqtab.o process.o \
+		entry.o signal.o timer.o
+else
 OBJS  = strace.o printreg.o system.o irq.o irqtab.o process.o bios16.o \
-		entry.o signal.o
+		entry.o signal.o timer.o
+endif
 
 akernel.a: $(OBJS)
 	ar rcs akernel.a $(OBJS)

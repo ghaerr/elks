@@ -92,6 +92,14 @@ extern void xd_init();
 #define DEVICE_OFF(device)
 
 #endif
+#ifdef SSDDISK
+#define DEVICE_NAME "ssddisk"
+#define DEVICE_REQUEST do_ssd_request
+#define DEVICE_NR(device) ((device) & 3)
+#define DEVICE_ON(device) 
+#define DEVICE_OFF(device)
+
+#endif
 #ifdef FLOPPYDISK
 
 static void floppy_on(); /*(unsigned int nr);*/

@@ -302,7 +302,7 @@ int drive;
 	check_partition(dev, MKDEV(dev->major, first_minor));
 }
 #endif 
-static void setup_dev(dev)
+void setup_dev(dev)
 register struct gendisk *dev;
 {
 	int i, drive;
@@ -327,23 +327,3 @@ register struct gendisk *dev;
 #endif
 }
 #endif /* CONFIG_NOFS */
-
-void device_setup()
-{
-	register struct gendisk *p;
-
-	chr_dev_init();
-#ifndef CONFIG_NOFS
-	blk_dev_init();
-#endif /* CONFIG_NOFS */
-	isti();
-
-#ifndef CONFIG_NOFS
-	for (p = gendisk_head ; p ; p=p->next) {
-		setup_dev(p);
-	}
-#endif /* CONFIG_NOFS */
-#ifdef CONFIG_BLK_DEV_RAM
-	rd_load();
-#endif
-}

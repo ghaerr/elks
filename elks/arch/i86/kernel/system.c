@@ -8,6 +8,7 @@
 
 __arch_mminit arch_segs;
 int arch_cpu;			/* Processor type */
+extern long int basmem;
 
 void setup_arch(start,end)
 seg_t *start;
@@ -73,10 +74,15 @@ seg_t *end;
 	/*
 	 *	Fill in the MM numbers - really ought to be in mm not kernel ?
 	 */
-	
+#ifndef CONFIG_ARCH_SIBO	
 	*end = setupw(0x2a)<<6;
 	*start = get_ds();
 	*start += ((unsigned int)(_endbss+15))>>4;
+#else /* CONFIG_ARCH_SIBO */
+	*end = (basmem)<<6;
+	*start = get_ds();
+	*start += (unsigned int)0x1000;
+#endif /* CONFIG_ARCH_SIBO */
 }
 
 #asm

@@ -1,0 +1,124 @@
+.TH imgconv 1 "Mar, 1997"
+.BY Matt Gumbley et al
+.nh
+.SH NAME
+imgconv \- a.out to .img executable file converter
+.SH SYNOPSIS
+.B imgconv a.out-file .img-file 
+.RB [ -Ccode_version_number ]
+.RB [ -Hheap_paragraphs ]
+.RB [ -Iinitial_IP ]
+.RB [ -Ppriority ]
+.RB [ -Sstack_paragraphs ]
+.RB [ -V ]
+.SH DESCRIPTION
+.B imgconv
+converts an executable file in the 
+.B a.out
+format (as produced by the
+.B bcc
+toolset) into a 
+.B .img
+file, suitable for executing on a SIBO-compatible computer, i.e. 
+Series 3/3a/3c etc.
+
+A .img file contains code and data, and also up to four embedded files. These
+files are added automatically according to an embedded file list.
+
+.B imgconv
+is normally invoked automatically by the
+.B bcc
+compiler front-end: when invoked like this, the 
+.B -Sstack_paragraphs
+option is always given.
+
+You may invoke 
+.B imgconv
+by hand.
+
+.SH OPTIONS
+.TP
+.B -Ccode_version_number
+Sets the code version number in the .img file header structure. The default
+value for this is 8204 decimal, 0x200C hex.
+.TP
+.B -Hheap_paragraphs
+Sets the initial size of the heap area in the .img file header structure. 
+The default value for this is 128 paragraphs. (A paragraph is 16 bytes)
+.TP
+.B -Iinitial_IP
+Sets the initial value for the instruction pointer register, in the .img
+file header structure. The default value for this is 0, meaning that
+execution of this .img will start at the first instruction in the code
+segment. (Which is usually the crt0.o startup module, automatically linked
+to your executable by ld86)
+.TP
+.B -Ppriority
+Sets the priority this executable will have when running under EPOC.
+The default value of this is 128.
+.TP
+.B -Sstack_paragraphs
+Sets the number of paragraphs allocated to the stack segment when this
+executable is run under EPOC. The default value is 16 paragraphs (256 bytes)
+
+Note: The data segment of a running process consists of the following areas:
+
+* The "magic statics" - these occupy the first 64 bytes of the data segment. 
+This area is not included in the .img file, but is automatically added when 
+a process is loaded into memory.
+
+* The stack area - This area is not included in the .img file, but is
+automatically added when a process is loaded into memory. The size of
+the stack area is determined by the 
+.B -Sstack_paragraphs
+option on
+.B imgconv
+
+* The initialised data area - initialised with data from the .img file
+
+* The uninitialised data area
+
+* The heap area
+
+
+Due to the fact that the stack area is before the process's variables in the
+initialised or uninitialised data areas, once a program has been linked, it 
+is not possible to change the stack size as this would change the offsets to 
+these variables.
+
+The 
+.B -Ddata_base_address
+option of 
+.B ld86
+and this option are related: this option specifies how large the stack will
+be, while the ld86 -D option ensures that offsets of variables in the data
+segment point to the memory area 
+.B after
+the stack.
+
+So, although you can use this option manually, it is better to let the 
+.B bcc
+front end handle it for you. In that way, the -X-D and -Y-S options are
+correctly passed to the linker and image converter.
+
+.TP
+.B -V
+Verbose mode - displays code statistics.
+.P
+.SH EMBEDDED FILES
+To embed other files within the .img file created by imgconv, place their
+names in a .afl file. This .afl file must have the same base name as 
+the .img file. 
+
+e.g. for a .img file fred.img, create a file list fred.afl 
+
+The files specified in the .afl file must exist. They can be zero length.
+
+.P
+.SH SEE ALSO
+bcc(1), ld86(1), imgdump(1)
+.SH BUGS
+<MICROSOFT> There are no bugs. </MICROSOFT>
+.SH AUTHOR
+Matt Gumbley <matt@cs.keele.ac.uk>, and a cast of thousands
+

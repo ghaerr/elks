@@ -5,7 +5,11 @@ LD86	=ld86 -0
 
 AS	=as
 LD	=ld86
+ifeq ($(CONFIG_ARCH_SIBO), y)
+LDFLAGS	=-0 -i -D 0xc00 -H 0x480
+else
 LDFLAGS	=-0 -i
+endif
 CC	=bcc
 
 #########################################################################
@@ -28,7 +32,7 @@ DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 	$(CC) $(CFLAGS) \
 	-0 -nostdinc -I$(MT_DIR)/include -S -o $*.s $<
 .s.o:
-	$(AS) -0 -I$(MT_DIR)/include -c -o $*.o $<
+	$(AS) -C -o -I$(MT_DIR)/include -o $*.o $<
 .S.s:
 	gcc -E -traditional -o $*.s $<
 .c.o:
@@ -37,7 +41,7 @@ DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 
 #########################################################################
 # arch tools
-.PHONY: boot/system
+.PHONY: boot/system tools
 
 boot/setup: boot/setup.S
 	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/setup.s boot/setup.S
@@ -55,11 +59,31 @@ boot/crt0.o: boot/crt0.S
 	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/crt0.s boot/crt0.S
 	$(AS86) -0 -o boot/crt0.o boot/crt0.s
 
+tools:
+	(cd tools; make)
+
 tools/build: tools/build.c
 	gcc -I $(TOPDIR)/include -o tools/build tools/build.c
 
 tools/mkurlader: tools/mkurlader.c
 	gcc -I $(TOPDIR)/include -o tools/mkurlader tools/mkurlader.c
+
+ifeq ($(CONFIG_ARCH_SIBO), y)
+
+boot/system: $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
+	(cd ../.. ; $(LD) $(LDFLAGS) $(ARCH_DIR)/sibo/crt0.o \
+		$(ARCH_DIR)/sibo/crt1.o \
+		init/main.o \
+		$(ARCHIVES) \
+		$(DRIVERS) \
+		-t -M -o $(ARCH_DIR)/boot/system > System.map)
+	
+#SIBO image build
+Image: boot/system tools
+	(cd boot; ../tools/imgconv system system.app -S192 -H72 -V)
+
+#End SIBO image section
+else
 
 boot/system: $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 	(cd ../.. ; $(LD) $(LDFLAGS) $(ARCH_DIR)/boot/crt0.o \
@@ -69,16 +93,17 @@ boot/system: $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 		$(DRIVERS) \
 		-t -M -o $(ARCH_DIR)/boot/system > System.map)
 	
+#PC image build
 ifneq ($(CONFIG_ROMCODE), y)
 ifeq ($(CONFIG_286PMODE), y)
 
-Image: boot/bootsect boot/setup 286pmode/pmode286 boot/system tools/build
+Image: boot/bootsect boot/setup 286pmode/pmode286 boot/system tools
 	tools/build boot/bootsect boot/setup 286pmode/pmode286 boot/system $(ROOT_DEV) > Image
 	sync
 
 else
 
-Image: boot/bootsect boot/setup boot/system tools/build
+Image: boot/bootsect boot/setup boot/system tools
 	tools/build boot/bootsect boot/setup boot/system $(ROOT_DEV) > boot/Image
 	sync
 
@@ -89,7 +114,7 @@ ifeq ($(ROM_RESET_VEC), y)
   RVECT = -r $(ROM_RESET_ADDR)   
 endif
 
-Image: tools/mkurlader boot/setup boot/system  
+Image: tools boot/setup boot/system  
 	tools/mkurlader $(RVECT) -c $(ROM_SETUP_CODE) $(ROM_CHECKSUM_SIZE) Image $(ROM_BASIS) -a boot/setup $(ROM_SETUP_CODE) -s boot/system $(ROM_KERNEL_CODE) $(ROM_EXT_MOD1) $(ROM_EXT_MOD1_ADDR)
 	sync
 	$(ROM_E_SIM_CALL)
@@ -103,10 +128,11 @@ boot: Image
 
 disk: boot
 
-setup: $(ARCH_DIR)/tools/mkurlader $(ARCH_DIR)/boot/setup  
+setup: $(ARCH_DIR)/tools $(ARCH_DIR)/boot/setup  
 	tools/mkurlader $(RVECT) -c $(ROM_SETUP_CODE) $(ROM_MAX_SETUP_SIZE) Image $(ROM_BASIS) -a boot/setup $(ROM_SETUP_CODE) -s boot/system $(ROM_KERNEL_CODE) $(ROM_EXT_MOD1) $(ROM_EXT_MOD1_ADDR)
 	sync
 	$(ROM_E_SIM_CALL)
+endif
 
 #########################################################################
 # library rules
@@ -136,7 +162,7 @@ drivers/block/blk_drv.a:
 # misc
 clean:
 	rm -f boot/bootsect boot/setup boot/bootsect.s boot/setup.s
-	rm -f boot/*~ boot/*.o boot/system boot/Image
+	rm -f boot/*~ boot/*.o boot/system boot/Image boot/system.app
 	rm -f tools/*~ tools/*.o tools/build
 	(cd kernel; make clean)
 	(cd lib; make clean)

@@ -4,28 +4,37 @@
 mainmenu_option next_comment
 comment 'Block device drivers'
 
-bool 'BIOS block device support' CONFIG_BLK_DEV_BIOS
-if [ "$CONFIG_BLK_DEV_BIOS" = "y" ]; then
-  bool '  BIOS floppy drive support' CONFIG_BLK_DEV_BFD
-  bool '  BIOS hard drive support' CONFIG_BLK_DEV_BHD
-fi
+if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 
-bool 'Normal floppy disk support' CONFIG_BLK_DEV_FD
-bool 'Normal IDE hardisk support' CONFIG_BLK_DEV_HD
+	bool 'BIOS block device support' CONFIG_BLK_DEV_BIOS
+	if [ "$CONFIG_BLK_DEV_BIOS" = "y" ]; then
+	  bool '  BIOS floppy drive support' CONFIG_BLK_DEV_BFD
+	  bool '  BIOS hard drive support' CONFIG_BLK_DEV_BHD
+	fi
 
-if [ "$CONFIG_BLK_DEV_FD" = "y" ]; then
-	define_bool CONFIG_DMA y
+	bool 'Normal floppy disk support' CONFIG_BLK_DEV_FD
+	bool 'Normal IDE hardisk support' CONFIG_BLK_DEV_HD
+	bool 'Old XT hardisk support' CONFIG_BLK_DEV_XD
+
+	if [ "$CONFIG_BLK_DEV_FD" = "y" ]; then
+		define_bool CONFIG_DMA y
+	else
+		define_bool CONFIG_DMA n
+	fi
+
+	if [ "$CONFIG_BLK_DEV_BHD" = "y" ]; then
+		define_bool CONFIG_GENDISK y
+	fi
+
 else
-	define_bool CONFIG_DMA n
-fi
 
-if [ "$CONFIG_BLK_DEV_BHD" = "y" ]; then
-	define_bool CONFIG_GENDISK y
+	bool 'SSD disk support' CONFIG_BLK_DEV_SSD
+	bool 'Internal disk support' CONFIG_BLK_DEV_ID
+
 fi
 
 comment 'Additional block devices'
 bool 'RAM disk support' CONFIG_BLK_DEV_RAM
-bool 'Old XT hardisk support' CONFIG_BLK_DEV_XD
 
 comment 'Block device options'
 bool 'Character access to block devices' CONFIG_BLK_DEV_CHAR

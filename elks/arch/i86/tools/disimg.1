@@ -1,0 +1,31 @@
+.TH disimg 1 LOCAL
+.SH "NAME"
+disimg \- 8088 symbolic disassembler
+.SH "SYNOPSIS"
+\fBdisimg\fP [ -f -o ] ifile [ ofile ]
+.SH "DESCRIPTION"
+Disimg reads ifile, which must be in EPOC .img format.
+It interprets the binary opcodes and data locations, and
+writes corresponding assembler source code to stdout, or
+to ofile if specified.  The program's output is in the
+format of, and fully compatible with, the as86 assembler,
+as86(1). The disassembler will make all necessary 
+adjustments in address-reference calculations.
+.PP
+If the "-o" option appears, object code will be included
+in comments during disassembly of the text segment.  This
+feature is used primarily for debugging the disassembler
+itself, but may provide information of passing interest
+to users.
+.PP
+If the "-f" option appears, disimg will attempt to disassemble
+any file whatsoever. It has to assume that the file begins
+at address zero.
+.PP
+Since this program is essentially dis88 for .img files,
+you should read the
+.B dis88
+man page, bearing in mind that .img files have no symbol
+table, and are "split I&D" files.
+.SH "SEE ALSO"
+dis88(1).

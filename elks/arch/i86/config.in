@@ -8,11 +8,14 @@ comment 'Just accept the defaults unless you know what you are doing'
 mainmenu_option next_comment
 comment 'General setup'
 choice 'Select system architecture'            \
-       "Auto           CONFIG_ARCH_AUTO        \
-        PC/XT          CONFIG_XT               \
-        PC/AT          CONFIG_AT"      CONFIG_ARCH_AUTO
+       "Auto           CONFIG_ARCH_PC_AUTO     \
+	SIBO           CONFIG_ARCH_SIBO        \
+        PC/XT          CONFIG_ARCH_PC_XT       \
+        PC/AT          CONFIG_ARCH_PC_AT" CONFIG_ARCH_PC_AUTO
 bool 'Support for loadable modules' CONFIG_MODULE
 bool 'Support for shared libraries' CONFIG_SHLIB
+
+if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 bool 'Switch COMPAQ DeskPro into fast mode' CONFIG_COMPAQ_FAST
 
 mainmenu_option next_comment
@@ -89,7 +92,8 @@ if [ "$CONFIG_ROMCODE" = "y" ]; then
 fi
 
 
-source arch/i86/286pmode/Config.in
+  source arch/i86/286pmode/Config.in
+fi
 
 mainmenu_option next_comment
 comment 'Kernel hacking'

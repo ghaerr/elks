@@ -534,5 +534,8 @@ int blk_dev_init()
 #ifdef CONFIG_BLK_DEV_BIOS
 	init_bioshd();
 #endif	
+#ifdef CONFIG_BLK_DEV_SSD
+	ssd_init();
+#endif	
 	return 0;
 }
