@@ -117,12 +117,12 @@ ifneq ($(CONFIG_ROMCODE), y)
 ifeq ($(CONFIG_286PMODE), y)
 
 Image:	toolkit boot/bootsect boot/setup lib/lib86.a 286pmode/pmode286 boot/system
-	tools/build boot/bootsect boot/setup 286pmode/pmode286 boot/system $(ROOT_DEV) > Image
+	tools/build boot/bootsect boot/setup 286pmode/pmode286 boot/system > Image
 
 else
 
 Image:	toolkit boot/bootsect boot/setup boot/system
-	tools/build boot/bootsect boot/setup boot/system $(ROOT_DEV) > boot/Image
+	tools/build boot/bootsect boot/setup boot/system > boot/Image
 
 nbImage:	Image boot/netbootsect
 	tools/mknbi-elks boot/netbootsect boot/Image boot/nbImage

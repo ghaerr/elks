@@ -34,6 +34,13 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sat Jul 13 19:56:01 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Added support for post-compilation change of the root device.
+	  The device is now set with the "rdev" command.
+	* Removed the "Root location" menu in the configuration as it's
+	  needed any more.
+
 Sat Jul 13 06:51:45 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Inverted configuration options to be more logical.

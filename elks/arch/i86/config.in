@@ -218,16 +218,3 @@ mainmenu_option next_comment
     bool 'Optimise for size rather than speed'	CONFIG_OPT_SMALL	n
     bool 'System Trace' 			CONFIG_STRACE		n
 endmenu
-
-mainmenu_option next_comment
-    comment 'Root location'
-
-    choice 'Select root device' 		\
-	"/dev/fd0	CONFIG_ROOTDEV_FD0	\
-	 /dev/fd1	CONFIG_ROOTDEV_FD1	\
-	 /dev/ram0	CONFIG_ROOTDEV_RAM	\
-	 /dev/bda1	CONFIG_ROOTDEV_BDA1	\
-	 /dev/bda2	CONFIG_ROOTDEV_BDA2	\
-	 /dev/bda3	CONFIG_ROOTDEV_BDA3	\
-	 /dev/bda4	CONFIG_ROOTDEV_BDA4"		/dev/fd0
-endmenu

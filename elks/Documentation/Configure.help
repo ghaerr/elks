@@ -664,41 +664,6 @@ CONFIG_SOCK_CLIENTONLY
   just need to save some extra bytes out of the kernel. Saves around 450
   bytes. If you are not sure just say NO.
 
-# Root device select
-# ~~~~~~~~~~~~~~~~~~
-
-Selecting the root filesystem device
-CONFIG_ROOTDEV_FD0
-  Once the kernel has loaded, it will look for the root filesystem to
-  boot the rest of the system (drivers, shells, etc.)
-  You have the following options:
-  
-  /dev/fd0	The first floppy drive. If the kernel has been loaded
-		from that drive, the drive is empty, or the disk in the
-		drive doesn't contain a MINIX filesystem, the kernel
-		will wait and prompt you to insert a root disk.
-  
-  /dev/fd1	Once the kernel has loaded, it will look for the root
-		filesystem on the second floppy drive.
-  
-  /dev/ram0	Once the kernel has loaded, it will look for the root
-		filesystem on the first RAM drive.
-  
-  /dev/bda1	Once the kernel has loaded, it will look for the root
-		filesystem on the first primary partition of the first
-		hard disk.
-
-  /dev/bda2	Once the kernel has loaded, it will look for the root
-		filesystem on the second primary partition of the first
-		hard disk.
-
-  /dev/bda3	Once the kernel has loaded, it will look for the root
-		filesystem on the third primary partition of the first
-		hard disk.
-
-  /dev/bda4	Once the kernel has loaded, it will look for the root
-		filesystem on the fourth primary partition of the first
-		hard disk.
 
 Options that do not need help texts.
 CONFIG_ARCH_IBMPC

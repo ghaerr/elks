@@ -3,6 +3,7 @@
 #include <linuxmt/wait.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/config.h>
+#include <linuxmt/fs.h> /* for ROOT_DEV */
 
 #include <arch/segment.h>
 
@@ -117,6 +118,8 @@ void setup_arch(seg_t *start, seg_t *end)
     *start += (unsigned int) 0x1000;
 
 #endif
+
+    ROOT_DEV = setupw(0x1fc);
 
 }
 

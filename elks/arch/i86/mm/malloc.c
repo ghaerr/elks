@@ -68,6 +68,8 @@ struct malloc_head memmap = { holes, MAX_SEGMENTS };
 
 #ifdef CONFIG_SWAP
 struct malloc_head swapmap = { swap_holes, MAX_SWAP_SEGMENTS };
+static struct buffer_head swap_buf;
+static dev_t swap_dev;
 #endif
 
 /*
@@ -475,9 +477,6 @@ void mm_init(seg_t start, seg_t end)
 /*
  *	Swapper task
  */
-
-static struct buffer_head swap_buf;
-static dev_t swap_dev;
 
 /*
  *	Push a segment to disk if possible

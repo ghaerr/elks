@@ -94,12 +94,6 @@ static void init_task()
 
     *++pip = (unsigned short int) &args[5];
 
-    /* Root of /dev/fd0 */
-
-#if 0
-    ROOT_DEV = CFG_ROOTDEV;
-#endif
-
     mount_root();
 
     printk("Loading init\n");

@@ -47,8 +47,8 @@ static int GCC_HEADER = sizeof(struct exec);
 
 #define SYS_SIZE DEF_SYSSIZE
 
-#define DEFAULT_MAJOR_ROOT 0
-#define DEFAULT_MINOR_ROOT 0
+#define DEFAULT_MAJOR_ROOT 0x03
+#define DEFAULT_MINOR_ROOT 0x80
 
 /* max nr of sectors of setup: don't change unless you also change bootsect etc
  */

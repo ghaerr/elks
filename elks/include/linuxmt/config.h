@@ -8,57 +8,6 @@
 #define REGOPT register
 
 /*
- * Determine which root device selected
- */
-
-#ifdef CONFIG_ROOTDEV_FD1
-#define CFG_ROOTDEV		MKDEV(BIOSHD_MAJOR,192)
-#endif
-
-#ifdef CONFIG_ROOTDEV_RAM
-#define CFG_ROOTDEV		MKDEV(RAM_MAJOR,0)
-#endif
-
-#ifdef CONFIG_ROOTDEV_BDA1
-#define CFG_ROOTDEV		MKDEV(BIOSHD_MAJOR,1)
-#endif
-
-#ifdef CONFIG_ROOTDEV_BDA2
-#define CFG_ROOTDEV		MKDEV(BIOSHD_MAJOR,2)
-#endif
-
-#ifdef CONFIG_ROOTDEV_BDA3
-#define CFG_ROOTDEV		MKDEV(BIOSHD_MAJOR,3)
-#endif
-
-#ifdef CONFIG_ROOTDEV_BDA4
-#define CFG_ROOTDEV		MKDEV(BIOSHD_MAJOR,4)
-#endif
-
-#ifdef CONFIG_ROOTDEV_HDA1
-#define CFG_ROOTDEV		MKDEV(ATHD_MAJOR,1)
-#endif
-
-#ifdef CONFIG_ROOTDEV_HDA2
-#define CFG_ROOTDEV		MKDEV(ATHD_MAJOR,2)
-#endif
-
-#ifdef CONFIG_ROOTDEV_HDA3
-#define CFG_ROOTDEV		MKDEV(ATHD_MAJOR,3)
-#endif
-
-#ifdef CONFIG_ROOTDEV_HDA4
-#define CFG_ROOTDEV		MKDEV(ATHD_MAJOR,4)
-#endif
-
-/*
- * If nothing was set, use the default of /dev/fd0
- */
-#ifndef CFG_ROOTDEV
-#define CFG_ROOTDEV		MKDEV(BIOSHD_MAJOR,128)
-#endif
-
-/*
  * Use this option to download a ramdisk (/dev/ram0) with the netboot
  * protocol. This ramdisk can be used as mini root disk (128KB) or
  * as auxilary disk.
