@@ -260,7 +260,7 @@ ccl:
 			break;
 		case RE_MATCHED:
 			/*
-			 * 19980218 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
+			 * 19980218 Claudio Matsuoka <claudio@conectiva.com>
 			 * Workaround for bcc compilation problem
 			 */
 			
@@ -310,7 +310,7 @@ bad:
 	len = 1;
 	if (*curpat == RE_MATCHED) {
 		/*
-		 * 19980218 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
+		 * 19980218 Claudio Matsuoka <claudio@conectiva.com>
 		 * Yet another workaround for a bcc problem.
 		 */
 #if 0

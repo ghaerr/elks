@@ -1,5 +1,5 @@
 /* l.c - A short version of `ls'
- * Sun Feb  8 16:28:03 EST 1998 - claudio@pos.inf.ufpr.br (Claudio Matsuoka)
+ * Sun Feb  8 16:28:03 EST 1998 - claudio@conectiva.com (Claudio Matsuoka)
  *
  * Based on the ls.c sources Copyright (c) 1993 by David I. Bell
  */

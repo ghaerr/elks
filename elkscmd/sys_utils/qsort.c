@@ -9,7 +9,7 @@
  */
 
 /*
- * Sun Feb  8 21:02:15 EST 1998 claudio@pos.inf.ufpr.br (Claudio Matsuoka)
+ * Sun Feb  8 21:02:15 EST 1998 claudio@conectiva.com (Claudio Matsuoka)
  * Changed sort direction
  */
 

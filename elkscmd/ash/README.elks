@@ -13,7 +13,7 @@ Public License. See the file bltin/LICENSE for more information.
 Change log:
 
 --------------------------------------------------------------
-19980209 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
+19980209 Claudio Matsuoka <claudio@conectiva.com>
 
 (*) Initial port (quite trivial).
     Adjusted makefiles for bcc, defined sig_t as int, kicked out some
@@ -59,7 +59,7 @@ TODO:
     Very important for some powerful but easy to use IPC.
 
 --------------------------------------------------------------
-19980218 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
+19980218 Claudio Matsuoka <claudio@conectiva.com>
 
 (*) Workaround for bcc miscompilation in bltin/expr.c.
     bcc complained about "invalid indirect to indirect" and "invalid label"

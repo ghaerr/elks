@@ -9,7 +9,7 @@
  *		- Added -C option to print 5 across screen.
  * 30-Jan-1998 ajr@ecs.soton.ac.uk (Al Riddoch)
  *		- Made -C default behavoir.
- * 02-Feb-1998 claudio@pos.inf.ufpr.br (Claudio Matsuoka)
+ * 02-Feb-1998 claudio@conectiva.com (Claudio Matsuoka)
  *		- Options -a, -F and simple multicolumn output added
  * 28-Nov-1999 mario.frasca@home.ict.nl (Mario Frasca)
  *		- Options -R -r added

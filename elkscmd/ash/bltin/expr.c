@@ -173,7 +173,7 @@ overflow:		error("Expression too complex");
 		  binary = opsp->op;
 		  for (;;) {
 			/*
-			 * 19980218 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
+			 * 19980218 Claudio Matsuoka <claudio@conectiva.com>
 			 * Oh my, this is a nasty one! Once again, bcc
 			 * complains about invalid indirect to indirect
 			 * (mov byte ptr -9[bp],#_op_argflag[bx]).
@@ -280,7 +280,7 @@ expr_is_false(val)
  */
 
 /*
- * 19980218 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
+ * 19980218 Claudio Matsuoka <claudio@conectiva.com>
  * So, here's one more workaround for a bcc problem. This time bcc
  * complains about an illegal label when using `goto filetype'.
  */

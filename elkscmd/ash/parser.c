@@ -692,7 +692,7 @@ readtoken() {
  */
 
 /*
- * 19980209 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
+ * 19980209 Claudio Matsuoka <claudio@conectiva.com>
  * bcc fails with `return lasttoken = token', returning an invalid value.
  */
 #define RETURN(token)	{ lasttoken = token; return token; }

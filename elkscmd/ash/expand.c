@@ -491,7 +491,7 @@ numvar:
 		break;
 #if 0
 	/*
-	 * 19980209 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
+	 * 19980209 Claudio Matsuoka <claudio@conectiva.com>
 	 * FIXME: Commented out due to problems with bcc (illegal
 	 * indirect to indirect: mov byte ptr -1[si],#_optchar[bx]).
 	 */

@@ -1,6 +1,6 @@
 # Makefile for ash.
 #
-# 19980209 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
+# 19980209 Claudio Matsuoka <claudio@conectiva.com>
 # Modified for ELKS and bcc
 
 BASEDIR=..
