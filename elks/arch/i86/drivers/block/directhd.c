@@ -37,7 +37,7 @@
 #define WAITING(port) (STATUS(port) & 0x80) == 0x80
 
 /* use asm insw/outsw instead of C version */
-/* asm versions currently don't work on 8088/86 .. */
+/* asm versions should work on 8088/86, but only with CONFIG_XT */
 #define USE_ASM
 
 /* uncomment this to include debugging code .. this increases size of driver */
@@ -137,10 +137,6 @@ int count;
 	return;
 }
 #else
-/* this version is both smaller and faster, but won't run on an 8088/86 */
-/* it wouldn't be too hard to make an 8088 version though. */
-
-/* Could someone please recode it to make it work on 8088 .. */
 
 /* this _should_ work on an 8088/86 now, but I haven't tested it yet */
 
@@ -160,7 +156,7 @@ int count;
     mov cx, [bp+08]
     shr cx, 1
     cld
-#ifdef CPU_IS_286_OR_BETTER
+#ifndef CONFIG_XT
     repz
     insw
 #else /* this should work on an 8088 */
@@ -176,8 +172,6 @@ dhd_insw_loop:
 #endasm
 }
 #endif
-
-/* .. and code this one in asm too ? */
 
 #ifndef USE_ASM
 void outsw(port, buffer, count)
@@ -209,7 +203,7 @@ int count;
     mov cx, [bp+08]
     shr cx, 1
     cld
-#ifdef CPU_IS_286_OR_BETTER
+#ifndef CONFIG_XT
     repz
     outsw
 #else /* this should work on an 8088 */
@@ -254,7 +248,7 @@ unsigned int drive, nsect, sect, head, cyl, cmd;
 	   the drive. (my BIOS sets this correctly, so it works for now but we should
 	   fix this to work properly)  -- Alastair Bridgewater */
 	/* this doesn't matter on newer (IDE) drives, but is important for MFM/RLLs
-	   I'll add support for those later and we'll ned it then - Blaz Antonic */
+	   I'll add support for those later and we'll need it then - Blaz Antonic */
 	/* meanwhile, I found some documentation that says that for IDE drives
 	   the correct WPCOM value is 0xff. so I changed it.
 	   -- Alastair Bridewater */
@@ -287,9 +281,8 @@ int directhd_init()
 	   in your computer. If you only have one, change the 4 to a 2.
 	   (this explains why your computer was locking up after mentioning the
 	   serial port, doesn't it? :-) -- Alastair Bridgewater */
+	/* this should work now, IMO - Blaz Antonic */
 	for (drive = 0; drive < 4; drive++)
-	/* ugly trick, goto doesn't work */
-	while (1)
 	{
 		/* send drive_ID command to drive */
 		out_hd(drive, 0, 0, 0, 0, DIRECTHD_DRIVE_ID);
@@ -305,10 +298,11 @@ int directhd_init()
 #ifdef USE_DEBUG_CODE
 			printk("athd: drive not found\n");
 #endif
-			break;
-		
-/*			goto doesnt_exist;
-*/		}
+			continue; /* this jumps to the start of for loop and 
+			             proceeds with checking for other drives */
+			/* this could use some optimisation as it is unlikely for 
+			computer to have slave drive on channel where master is missing */
+		}
 
 		/* get drive info */
 		
@@ -325,11 +319,10 @@ int directhd_init()
 #endif
 			break;
 
-/*			goto doesnt_exist;
-*/		}
+		}
 #endif
 		/* gather useful info */
-		/* LBA support will be added here, later ..
+		/* FIXME: LBA support will be added here, later .. maybe
 		   MFM/RLL support will be added after that .. maybe */
 
 		/* safety check - check for heads returned and assume CD
@@ -339,12 +332,14 @@ int directhd_init()
 		   IDE will be dead by that time
 	
 		   maybe we can assume some specific number here ? i always
-		   get 60416 with ATAPI (Mitsumi) CD
+		   get 60416 with ATAPI (Mitsumi) CD - Blaz Antonic
 
 		   safety check - head, cyl and sector values must be other than
 		   0 and buffer has to contation valid data (first entry in buffer
 		   must be other than 0) */
 
+		/* FIXME: This will cause problems on many new drives .. some
+		   of them even have more than 16.384 cylinders */
 		if ((buffer[0x6 / 2] < 4096) && (*buffer != 0) && (buffer[0x2 / 2] != 0) && (buffer[0x6 / 2] !=  0) && (buffer[0xc / 2] != 0))
 		{
 			drive_info[drive].cylinders = buffer[0x2 / 2];
@@ -353,10 +348,8 @@ int directhd_init()
 
 			hdcount++;
 		}
-		break;
 	
-/*	doesnt_exist:
-*/	}
+	}
 
 	if (!hdcount)
 	/* no drives found */
@@ -410,7 +403,7 @@ struct inode *inode;
 struct file *filp;
 unsigned int cmd;
 /* why is arg unsigned int here if it's used as hd_geometry later ? */
-/*  one of joys of K&R ? */
+/*  one of joys of K&R ? Someone please answer ... */
 unsigned int arg;
 {
 	struct hd_geometry *loc = (struct hd_geometry *) arg;
@@ -459,6 +452,8 @@ struct file *filp;
 	
 	/* something should be here, but can't remember what :) */
 	/* it really isn't important until probe code works */
+
+	/* probe code works now but i still can't remember what is missing. any clues ? */
 	
 	return 0;
 }
@@ -479,9 +474,9 @@ struct file *filp;
 
 void do_directhd_request()
 {
-        unsigned long count;
-	int this_pass;
-	unsigned long start;
+        unsigned long count; /* # of sectors to read/write */
+	int this_pass; /* # of sectors read/written */
+	unsigned long start; /* first sector */
 	char *buff;
 	short sector; /* 1 .. 63 ? */
 	short cylinder; /* 0 .. 1024 and maybe more */
@@ -489,11 +484,11 @@ void do_directhd_request()
 	unsigned int tmp;
 	int minor;
 	int drive; /* 0 .. 3 */
-	unsigned char i; /* 0 .. sectors per track - 1 .. 62 or less */
+	unsigned char i; /* 0 .. (sectors per track - 1) .. 62 or less */
 	unsigned char j; /* 0 .. 255 */
 	int port;
 
-	while (1)
+	while (1) /* process HD requests */
 	{
 	        if (!CURRENT || CURRENT->dev < 0)
 			return;
