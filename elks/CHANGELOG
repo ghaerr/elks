@@ -6,7 +6,12 @@ Al
 ------------------------------------------------------------------------------
 Fri Jul 09 16:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
+	* Make exit send a SIGCHLD to parent.
+
+Fri Jul 09 16:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
 	* Fixed the way the kernel handles loading sh if no init is found
+
 Fri Jul 09 16:15 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated signal code to make it clearer.

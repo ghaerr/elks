@@ -73,6 +73,9 @@ int status;
 	 * I'm not going to implement that for 0.0.51 becuase we don't 
 	 * have signals and we don't need them *yet*. */
 
+	/* Let the parent know */
+	kill_process(current->ppid, SIGCHLD, 1);
+
 	/* Send control back to the parent */
 	parent->child_lastend = current->pid;
 	parent->lastend_status = status;
