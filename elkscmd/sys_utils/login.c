@@ -43,8 +43,8 @@ struct utmp * ut_ent;
 	environ = renv;
 
 
-/*	if (fchown(0,pwd->pw_uid,pwd->pw_gid)<0)
-		perror("fchown"); */
+	if (fchown(0,pwd->pw_uid,pwd->pw_gid)<0)
+		perror("fchown");
 #ifdef USE_UTMP
 	ut_ent->ut_type = USER_PROCESS;
 	strncpy(ut_ent->ut_user, pwd->pw_name, UT_NAMESIZE);
