@@ -25,7 +25,7 @@ DEPEND  	=
 
 DISTFILES	= 
 
-NOINDENT	= string.c
+NOINDENT	= 
 
 #########################################################################
 # Include standard commands.
@@ -54,3 +54,31 @@ distdir:
 
 #########################################################################
 ### Dependencies:
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ chqueue.c
+chqueue.o: chqueue.c \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/debug.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/irq.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ string.c
+string.o: string.c \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/irq.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/string.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/string.h
+
+
