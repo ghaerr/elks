@@ -19,7 +19,8 @@
 #define BIOS_PORTS
 
 #ifdef BIOS_PORTS
-#define LP_PORTS 4
+/* max. 4, but it will produce weird results on any box other than original blue PC */
+#define LP_PORTS 3
 #endif
 
 /* static int access_count[LP_PORTS] = {0,}; */
@@ -33,13 +34,9 @@ struct lp_info
 
 #ifdef BIOS_PORTS
 /* We'll get port info from BIOS */ 
-/* There are max 4 ports */
 static struct lp_info ports[LP_PORTS] = 
 {
 	0,0,0,
-	0,0,0,
-	0,0,0,
-	0,0,0
 };
 #else
 /* extended to support some unusual ports;
@@ -99,7 +96,14 @@ int target;
 	/* safety checks */
 	status = inb_p(lpp->io + STATUS);
 
-	if (status == LP_OUTOFPAPER) {/* printer of out paper */
+	/* This comments out one of (redundant) sections. If printer is not ready
+	it bails out and printing job must be restarted again by printing deamon.
+	
+	If we don't want that we have to comment out first part (change #if 1 to 0);
+	this makes function wait in busy loop and allow other processes to run in 
+	the meanwhile. */
+#if 1
+	if (status & LP_OUTOFPAPER) {/* printer of out paper */
 		printk("lp%d: out of paper\n", target);
 		return 0;
 	}
@@ -108,26 +112,35 @@ int target;
 		return 0;
 	}
 
+#else
 	while (!(status & LP_SELECTED)) {/* while not ready do */
 		status = inb_p(lpp->io + STATUS);
+
+		if (need_resched)
 		schedule(); /* Al: is it OK for this to be here ? */
+#endif
 	}
 
 	/* send character to port */
 	outb_p(c, lpp->io);
+
+	/* Delay duration is defined with LP_WAIT constant in lp.h header.
+	If your printer looses characters increase this number, otherwise 
+	leave it at 0.  Higher setting means slower printing. */
+	
+	/* 5 us delay */
+	wait = 0;
+	while (wait != LP_WAIT) wait++;
 
 	/* strobe high */
 	outb_p(LP_INIT | LP_SELECT | LP_STROBE, 
 		lpp->io + CONTROL);
 
 	/* 5 us delay */
-	wait = 0;
-	while (wait != LP_WAIT) wait++;
+	while (wait) wait--;
 
 	/* strobe low */
 	outb_p(LP_INIT | LP_SELECT, lpp->io + CONTROL);
-	/* 5 us delay */
-	while (wait) wait--;
 
 	return 1;
 }
@@ -176,7 +189,6 @@ struct file * file;
 		return -EBUSY;
 	}
 
-/*	inexistent port can't be busy */
 	lpp->flags = LP_EXIST | LP_BUSY;
 
 /*	access_count[port_order[target]]++; */
