@@ -97,7 +97,7 @@ void setup_mm()
 	 *	This computes the 640K - _endbss 
 	 */
 	 
-	memend = ((long)basemem)<<10;
+	memend = (((long)basemem)<<10L)-(RAM_REDUCE << 4L);
 	memstart = ((long)get_ds())<<4;
 	memstart += (unsigned int)_endbss +15;
 	

@@ -75,7 +75,8 @@ seg_t *end;
 	 *	Fill in the MM numbers - really ought to be in mm not kernel ?
 	 */
 #ifndef CONFIG_ARCH_SIBO	
-	*end = setupw(0x2a)<<6;
+        *end = setupw(0x2a)<<6 - RAM_REDUCE; 
+                                 /* XXX plac: free root ram disk */
 	*start = get_ds();
 	*start += ((unsigned int)(_endbss+15))>>4;
 #else /* CONFIG_ARCH_SIBO */
