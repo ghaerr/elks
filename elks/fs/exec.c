@@ -384,10 +384,10 @@ blah:
   * in case the suid bit of the executable had been set */
 
 	if(suidfile) {
-		current->uid = effuid;
+		current->euid = effuid;
 	}
 	if(sgidfile) {
-		current->gid = effgid;
+		current->egid = effgid;
 	}
 #endif
 

@@ -6,6 +6,11 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Mon Feb 14 10:25 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fix setting of effective uid and gid on suid and sgid
+	executables. Fix by Mario Frasca.
+
 Fri Feb 04 18:37 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Modified buffer cache code so external 64K buffer cache
