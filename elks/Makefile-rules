@@ -158,7 +158,7 @@ LINT		= lclint
 .cpp.o:
 	$(CPP) $(CPFLAGS) -o $*.o $<
 .s.o:
-	$(AS) $(AFLAGS) -c -o $*.o $<
+	$(AS) $(AFLAGS) -o $*.o $<
 .S.s:
 	gcc -D__KERNEL__ -I $(INCDIR) -E -traditional -o $*.s $<
 
@@ -169,11 +169,28 @@ elks:
 	make -C $(ELKSDIR) all
 
 #########################################################################
-# Specify rule to perform CVS update correctly.
+# Specify rule to perform CVS actions correctly.
 
 cvs:
 	make depclean
-	cvs update -d
+	if [ -d CVS ]; then cvs update -d ; fi
+
+#########################################################################
+# Specify rule to create standard Makefiles throughout the source tree
+# where none currently exists.
+
+tree:
+	for DIR in [^.]*/ ; do echo DEBUG: $$DIR ; \
+	    if [ "$$DIR" != "CVS/" ]; then \
+		if [ ! -e $$DIR/Makefile ]; then \
+		    $(ELKSDIR)/scripts/mkMake $$DIR/Makefile $(ELKSDIR) ; \
+		    if [ -d $$DIR/CVS ]; then \
+			(cd $$DIR ; cvs add Makefile) ; \
+		    fi ; \
+		fi ; \
+		make -C $$DIR tree ; \
+	    fi ; \
+	done
 
 #########################################################################
 # End of standard rules

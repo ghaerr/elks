@@ -7,6 +7,10 @@ be longer than the lines of dashes.
 Al
 -------------------------------------------------------------------------------
 
+Sun Sep  9 09:56:25 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Used `mkMake` script to initialise all missing Makefile's.
+
 Sat Sep  8 22:33:39 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Prevented header files from being included more than once, as

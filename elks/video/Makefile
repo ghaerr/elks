@@ -1,19 +1,15 @@
-#!/bin/bash
-
-function Makefile() {
-    date '+# Basic Makefile, created on %A, %d %B %Y at %T %Z.' 
-    cat <<.EOF
+# Basic Makefile, created on Sunday, 09 September 2001 at 09:55:22 BST.
 #
 # Note that the standard Makefile rules and defines have been moved to
 # the file below.
 
-ELKSDIR		= $2/..
+ELKSDIR		= ./..
 
-include \$(ELKSDIR)/Makefile-rules
+include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
 # Define rules that are required to be present. Note that if these rules
-# have nothing to do, they need to have an action of \`@echo -n\` defined.
+# have nothing to do, they need to have an action of `@echo -n` defined.
 
 depclean:
 	@echo -n
@@ -23,7 +19,3 @@ distdir:
 
 #########################################################################
 # EOF.
-.EOF
-}
-
-Makefile "$@" > "$1"
