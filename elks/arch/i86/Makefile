@@ -105,9 +105,10 @@ else
 
 boot/system:	$(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) $(ARCH_LD) \
+		-t -M -o $(ARCH_DIR)/boot/system \
 		$(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
-		-t -M -o $(ARCH_DIR)/boot/system > System.tmp ; \
+		> System.tmp ; \
 		sort -k4 System.tmp > System.map ; rm -f System.tmp ) 
 
 #PC image build

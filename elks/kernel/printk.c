@@ -136,7 +136,7 @@ void printk(register char *fmt,int a1)
 		continue;
 	    }
 
-	    width = zero = '0';
+	    width = zero = 0;
 	    if (c == '0')
 		zero++;
 	    while (c >= '0' && c <= '9') {

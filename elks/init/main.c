@@ -106,7 +106,7 @@ static void init_task()
 #ifdef CONFIG_CONSOLE_SERIAL
 	num = sys_open("/dev/ttyS0", 2, 0);
 #else
-	num = sys_open("/dev/tty1", 2, 0);
+	num = sys_open("/dev/tty0", 2, 0);
 #endif
 
 	if (num < 0)

@@ -585,7 +585,7 @@ chk486:	cli
 	or	al,al
 	jnz	is486
 #endif
-#ifdef(CONFIG_CPU_80386)
+#ifdef CONFIG_CPU_80386
         mov cl,#7
 	lea	si,p80386
 	br	getfpu

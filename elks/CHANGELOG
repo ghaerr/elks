@@ -32,8 +32,18 @@ Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
+Tommy McCabe 	      rocketjet314@yahoo.com		31 May 2004
 
 -------------------------------------------------------------------------------
+
+Mon May 31 07:39:47 CST 2004	Tommy McCabe <rocketjet314@yahoo.com>
+
+	* Fix wrong assignment (typo?) on printk
+	* Fix order of LD parameters on arch/i86/Makefile
+	* Use #ifdef rightly on setup.S
+	* Fix init to use tty0, not tty1 as system console.
+
+===============================================================================
 
 Sun Jul 13 04:24:44 BST 2003	Riley Williams <Riley@Williams.Name>
 
