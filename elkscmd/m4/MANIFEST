@@ -1,0 +1,7 @@
+mdef.h	- definitions and structures
+main.c	- this file: driver routines
+eval.c	- general macro evaluator
+serv.c	- service routines (doxxxx)
+misc.c	- miscellaneous routines
+expr.c	- expression parser
+look.c	- hash table management

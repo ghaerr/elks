@@ -1,0 +1,33 @@
+#include "sigmsgs.h"
+
+Sigmsgs signals[] = {
+	{"",""},
+	{"sighup","hangup"},
+	{"sigint",""},
+	{"sigquit","quit"},
+	{"sigill","illegal instruction"},
+	{"sigtrap","trace trap"},
+	{"sigabrt","abort instruction"},
+	{"sigunused","unused signal"},
+	{"sigfpe","floating point exception"},
+	{"sigkill","killed"},
+	{"sigusr1","user defined signal 1"},
+	{"sigsegv","segmentation violation"},
+	{"sigusr2","user defined signal 2"},
+	{"sigpipe",""},
+	{"sigalrm","alarm clock"},
+	{"sigterm","terminated"},
+	{"sigstkflt","stack fault"},
+	{"sigchld","child stop or exit"},
+	{"sigcont","continue"},
+	{"sigtstop","stopped"},
+	{"sigstp","stopped"},
+	{"sigttin","background tty read"},
+	{"sigttou","background tty write"},
+	{"sigio","input/output possible"},
+	{"sigxcpu","exceeded cpu time limit"},
+	{"sigxfsz","exceeded file size limit"},
+	{"sigvtalrm","virtual time alarm"},
+	{"sigprof","profiling time alarm"},
+	{"sigwinch","window changed"}
+};

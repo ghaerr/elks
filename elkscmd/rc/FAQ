@@ -1,0 +1,1105 @@
+Subject: rc shell Frequently Asked Questions
+Summary: Answers to Frequently Asked Questions about rc -- a clean,
+         portable, and freely-available shell for UNIX systems.
+Newsgroups: comp.unix.shell,comp.answers,news.answers
+From: alan@oldp.astro.wisc.edu (Alan Watson)
+Organization: Department of Astronomy, University of Wisconsin -- Madison
+Followup-to: poster
+
+Archive-name: unix-faq/shell/rc
+Comp-unix-shell-archive-name: rc-FAQ
+Version: 2.18
+Last-modified: 05 Jul 1994
+
+This document attempts to answer some Frequently Asked Questions about
+rc, a clean, portable, and freely-available shell for UNIX systems (see
+1.1 for a very brief overview of rc).  It in no way replaces either the
+formal documentation for rc (see 1.2) or the mailing list archives (see
+2.2).
+
+This document draws heavily on the collective wisdom of the rc mailing
+list; the quality of the correspondence is such that often all that was
+required was a summary of one or two messages.  The rc mailing list
+archive is recommend reading for newcomers to rc (see 2.2).
+Contributors are acknowledged at the end of this document.
+
+Corrections, comments, and suggestions concerning this document are
+welcome (see 3.2).
+
+NOTE: Neither the editor nor any of the contributors to this document
+are responsible for any consequences resulting from the advice in this
+document.
+
+Table of Contents
+
+1.      Implementations of rc
+1.1     What is rc?
+1.2     Where is rc documented?
+1.3     How do I obtain rc?
+1.4     Are there any patches to rc?
+1.5     Can I compile rc on a ... machine with ... operating system and
+        ... compiler?
+1.6     Should rc be dynamically or statically linked?
+1.7     To whom do I report bugs?
+1.8     Does anyone have an implementation of /dev/fd for my UNIX?
+
+2.      The rc mailing list
+2.1     How do I subscribe to the rc mailing list?
+2.2     How do I obtain the rc mailing list archive?
+
+3.      The rc FAQ list
+3.1     How do I obtain the current version of the rc FAQ list?
+3.2     To whom do I make suggestions about the rc FAQ list?
+
+4.      Does rc have ... ?
+4.1     Does rc have job control?
+4.2     Does rc have command-line editing?
+4.3     Does rc have a history mechanism?
+4.4     Does rc have file name completion?
+4.5     Does rc have home directory expansion?
+4.6     Does rc check for new mail?
+4.7     Does rc have hierarchical lists?
+4.8     Does rc have cartesian products?
+4.9     Does rc cache the location of executables in the path?
+4.10    Does rc have C-style \ escapes?
+4.11    Does rc have ... built in?
+4.12    Does rc have echo built in?
+4.13    Does rc have test built in?
+4.14    Does rc have true, false, and `:' built in?
+
+5.      Using rc as a login shell
+5.1     How do I make rc my login shell?
+5.2     How do I use rc in a heterogeneous cluster?
+5.3     What problems occur with rc on Apollos?
+5.4     What problems occur with rc on SYSV-derived systems?
+5.5     What problems occur with rc on NeXTs?
+5.6     How do I keep down the size of my .rcrc file?
+5.7     How do I speed up the execution of my .rcrc file?
+
+6.      Interactions between rc and the rest of UNIX
+6.1     How do I get each new interactive rc to do ...?
+6.2     How do I get rc to do ... in each new xterm?
+6.3     How do I get rc to read .rcrc when I use rsh?
+6.4     How do I get at or batch to run an rc script?
+
+7.      Programming in rc
+7.1     What makes rc such a good scripting language?
+7.2     What are the trade-offs between functions and scripts?
+7.3     What can I do if I have deficient sed, awk, test, ... ?
+7.4     Where do I obtain the GNU tools and other software?
+7.5     How do I perform arithmetic in rc?
+7.6     How do I find the first occurrence of an element in a list?
+7.7     How do I use ranges in array subscripts in rc?
+7.8     How do I perform the equivalent of read in rc?
+
+1.      Implementations of rc
+
+1.1     What is rc?
+
+        rc is a shell designed by Tom Duff of Bell Labs to replace the
+        venerable Bourne sh in Plan 9.  (Plan 9 is an experimental
+        operating and networking system developed at Bell Labs.)  In
+        addition to Plan 9, Duff's rc runs on SunOS and v10 UNIX.  The
+        design of rc is extremely clean, in that precisely those
+        features of Bourne's sh that have caused problems over the years
+        (the slightly awkward flow control syntax, the Byzantine quoting
+        rules, the failure to export all variables into the environment)
+        were reworked, and the temptation to add superfluous features
+        was strongly resisted.
+
+        Byron Rakitzis has written a version of rc that is portable
+        between many version on UNIX and is largely compatible with
+        Duff's design.  Rakitzis' implementation has been successfully
+        used on UNIX platforms ranging from PCs running Linux to Cray
+        Y-MPs running Unicos.
+
+        Most of this document deals with issues that have arisen from
+        use of Rakitzis' rc, and most of the example code will follow
+        his minor modifications to rc.  Henceforth, a plain `rc' refers
+        to Rakitzis' rather than Duff's rc.
+
+1.2     Where is rc documented?
+
+        rc is documented in its man page, distributed with the source
+        (see 1.3).
+
+        The Plan 9 manual pages, including those on Duff's rc, are
+        available as research.att.com:/dist/plan9man/manual.ps.Z by
+        anonymous FTP.  The full manual is almost 600 pages long, but
+        the manual pages for Duff's rc are physical pages 142 to 147
+        (logical pages 116 to 121).
+
+        An early version of Duff's rc is described in the paper `rc -- a
+        Shell for Plan 9 and UNIX Systems', written for a UKUUG meeting.
+        Duff has kindly allowed the paper to be distributed by anonymous
+        FTP as viz.tamu.edu:/pub/rc/plan9.ps.  It provides an excellent
+        introduction and tutorial for Duff's rc, and describes the
+        motivations for the differences between Duff's rc and Bourne's
+        sh.
+
+        When reading Duff's paper and the Plan 9 manual pages, bear in
+        mind that Rakitzis' implementation of rc differs in detail from
+        Duff's (these differences are documented in the rc man page).
+
+        Another valuable source of information on rc is the rc mailing
+        list archive (see 2.2).
+
+1.3     How do I obtain rc?
+
+        The sources are available by anonymous FTP in the directory
+        viz.tamu.edu:/pub/rc.  Be sure to get the most recent version.
+        At the time this document was last updated, the most recent
+        version of rc was v1.4 announced on 21 May 1992, available as
+        viz.tamu.edu:/pub/rc/rc-1.4.tar.Z.  (A beta release of v1.5 is
+        on the horizon.)
+
+        rc is distributed on very liberal terms, although it has not
+        been placed in the public domain (see the file COPYRIGHT
+        distributed with the sources).
+
+        Duff's rc can be obtained by acquiring either a Plan 9 or a v10
+        UNIX system from Bell Labs.  Plan 9 can be licensed by academic
+        institutions, which should contact:
+
+            Neera Kuckreja
+            RM 2C557
+            ATT Bell Laboratories
+            Murray Hill
+            NJ 07974
+            USA
+            +1 908 582-3855
+            neera@research.att.com
+
+1.4     Are there any patches to rc?
+
+        Although the current version of rc is remarkably mature, a small
+        number of bugs have been found since its release and patches
+        have been posted to the rc mailing list (see 2.2).  Other
+        patches posted to the mailing list include work-arounds for
+        broken compilers or libraries and assorted features.
+
+        An up-to-date set of patches extracted from the mailing list
+        archive, together with a script to apply those patches, is
+        available as oldp.astro.wisc.edu:/pub/rc/patches.tar.Z by
+        anonymous FTP.
+
+1.5     Can I compile rc on a ... machine with ... operating system and
+        ... compiler?
+
+        rc is written in portable ANSI C, but it can be compiled by many
+        older C compilers after passing the sources through unproto (get
+        ftp.win.tue.nl:/pub/unix/unproto4.shar.Z by anonymous FTP).
+
+        If you use gcc, use v1.39 or later.
+
+        rc has been successfully compiled on systems with the following
+        combinations of architectures, operating systems, and compilers,
+        although this list is probably not exhaustive:
+
+            DEC VAX        Ultrix v3.x            gcc v1
+            DEC MIPS       Ultrix v4.[23]         gcc v2
+            DEC MIPS       Ultrix v4.[23]         cc          [a]
+            DEC AXP        OSF/1 v1.2             cc          [a][b]
+            DEC AXP        OSF/1 v1.2             cc -std1    [b]
+
+            Sun SPARC      Solaris v2             gcc v2      [b][c]
+            Sun SPARC                             acc         [b][c]
+            Sun SPARC      SunOS v4.1.[123]       cc          [a][b][c]
+            Sun SPARC      SunOS v4.1.[123]       gcc v2      [b][c]
+            Sun SPARC      BSD                                [b][c]
+            Sun 68K        SunOS v4.1.1           gcc v2      [b][c]
+            Sun 68K        SunOS v3.5             gcc v1      [b][c]
+
+            SGI Iris       Irix v[45].x           gcc v2
+
+            IBM RS/6000    AIX v3.1.5             cc
+            IBM RS/6000    AIX v3.2.[013]         cc
+
+            HP PA-RISC     HP-UX v8.0             gcc v2      [d][e]
+            HP PA-RISC     HP-UX v9.0             gcc v2      [d]
+            HP PA-RISC     OSF/1 v1.0.2           cc
+
+            i386/i486      SCO-ODT SVR3           gcc v2      [d][e]
+            i386/i486      SCO-ODT SVR3           cc          [d][e]
+            i386           Minix v1.5                         [d]
+            i386/i486      NetBSD                 gcc v[12]
+            i386/i486      Linux                  gcc v2      [d]
+            i386/i486      386BSD r0.0            gcc         [j]
+            i386/i486      SCO Xenix SVR2.3x                  [f]
+
+            NeXT           NeXT OS v2.x           gcc v[12]   [g]
+            NeXT           NeXT OS v3.0           gcc v2      [g]
+
+            Apollo 68K     DomainOS v10.4 (BSD)   cc          [h]
+            Apollo 10000   DomainOS v10.4 (BSD)   cc          [h]
+
+            Sony MIPS      NEWS/OS                cc          [a]
+            Sony 68K       NEWS/OS v4.0.1         cc          [a]
+
+            Convex C1      ConvexOS v10.1         cc
+
+            Pyramid 9810   OSx 5.1a (BSD)         cc -Xa      [i]
+
+            Cray Y-MP      Unicos 6.1.7           scc         [e][j]
+
+            Sequent        Dynix v3.2.0 (BSD)     gcc v2
+
+            Apple 68K      A/UX v3.0              cc
+
+            Encore MIPS    Umax v4.3              gcc v2
+
+            Acorn ARM      iX v1.21a              cc
+
+            Motorola 88K   System V R32V3         gcc v2
+            Motorola 88K   System V R32V3         cc          [a][k]
+
+        Notes:
+
+            [a] Sources pre-processed with unproto.
+            [b] See 1.6.
+            [c] Sun's yacc has a memory leak -- use another
+                implementation such as GNU bison (see 7.4).
+            [d] Requires intervention by hand to get mksignal to work,
+                because of of the non-standard signal.h file.
+            [e] See 4.13.
+            [f] See 5.4.
+            [g] See 5.5.
+            [h] See 5.3
+            [i] This compiler has no stdarg.h, but vararg.h sufficed.
+            [j] Minor modifications required to prototypes.
+            [k] Greenhills cc, used without any optimization.
+
+1.6     Should rc be dynamically or statically linked?
+
+        As far as one can generalize, statically linked executables fork
+        faster than dynamically linked executables.  This suggests that
+        shells, which fork a great deal, should probably be statically
+        linked (i.e., you should not link them with shared libraries).
+        rc makes so little use of libc functions that static linking
+        results in only a small increase in the size of the executable
+        on disc.
+
+        Versions of UNIX which support shared libraries include SVR4,
+        SunOS, Solaris, OSF/1, and Irix.
+
+1.7     To whom do I report bugs?
+
+        Byron Rakitzis (byron@netapp.com) or the rc mailing list
+        (rc@hawkwind.utcs.toronto.edu).  Please check the documentation
+        before reporting bugs, and check the mailing list archive in
+        case the bug is already known.
+
+1.8     Does anyone have an implementation of /dev/fd for my UNIX?
+
+        /dev/fd pseudo-devices allow a more reliable implementation of
+        non-linear pipelines (i.e., <{...}  and >{...}) than named
+        pipes, but they are not present in all versions of UNIX.
+
+        An implementation of Ultrix v4.2 and later was posted to the
+        mailing list in March 1993 (see 2.2).
+
+        An implementation for SunOS v4.1.1 is also available (although
+        it may well work with v4.1.2 and v4.1.3) by anonymous FTP as
+        ftp.cs.arizona.edu:/devfd.shar.
+
+        An implementation for SunOS v4.1.2 is available by anonymous FTP
+        as emx.cc.utexas.edu:/pub/mnt/source/sun/devfd.shar.  (This is
+        packaged as a loadable module, so you do not have to rebuild
+        your kernel.)
+
+        An implementation for NeXT OS 2.1 is available by anonymous FTP
+        as ftp.sys.toronto.edu:/pub/rc/devfd-next.shar.gz.
+
+        You will, of course, need to rebuild your kernel to install
+        these pseudo-devices.
+
+2.      The rc mailing list
+
+2.1     How do I subscribe to the rc mailing list?
+
+        Send mail to
+
+            rc-request@hawkwind.utcs.toronto.edu.
+
+        Chris Siebenmann maintains the mailing list, and can be reached
+        at the above address in the event of problems with the mailing
+        list or to unsubscribe.
+
+        The rc mailing list represents hundreds of user-years of
+        experience with rc.  Clearly, it is a courtesy to the list and
+        to your own advantage to check the mailing list archive before
+        posting to the list, to benefit from the experience and mistakes
+        of those before you, and to prevent topics being continually
+        rehashed.
+
+2.2     How do I obtain the rc mailing list archive?
+
+        The archive can be obtained by anonymous FTP.  At the moment, it
+        is split chronologically between the original and current
+        maintainers of the mailing list.
+
+        Period              File
+        Jun 91 to Dec 91    viz.tamu.edu:/pub/rc/rc-list.1991.Z
+        Jan 92 to May 92    viz.tamu.edu:/pub/rc/rc-list
+        May 92 to present   ftp.sys.toronto.edu:/pub/rc/rc-list
+
+3.      The rc FAQ list
+
+3.1     How do I obtain the current version of the rc FAQ list?
+
+        The current version of the rc FAQ list is archived automatically
+        and is available by anonymous FTP as
+        rtfm.mit.edu:/pub/usenet/comp.unix.shell/rc-FAQ.
+
+3.2     To whom do I make suggestions about the rc FAQ list?
+
+        To its editor, Alan Watson (alan@oldp.astro.wisc.edu), or the rc
+        mailing list if you think your suggestion warrants a wider
+        audience.
+
+4.      Does rc have ... ?
+
+4.1     Does rc have job control?
+
+        No.  This has been discussed at length in the rc mailing list.
+
+        Now that personal workstations with window systems are common
+        place, the case for job control is less compelling.  However, if
+        you have to use rc on a traditional terminal, you may wish to
+        obtain the screens program from a GNU archive (see 7.4), the sm
+        program that was posted to alt.sources in mid-1992 (see 7.4), or
+        investigate shell escape mechanisms in vi and shell mode in
+        emacs.
+
+4.2     Does rc have command-line editing?
+
+        If you wish.  Hooks are provided for the readline or editline
+        libraries which provide command-line editing.  The default is no
+        command-line editing.
+
+        The readline library can be obtained from a GNU archive (see
+        7.4).
+
+        The editline library is similar to the readline library, but is
+        a fraction of the size and offers fewer features.  The sources
+        are available as ftp.sys.toronto.edu:/pub/rc/editline.shar by
+        anonymous FTP).
+
+        Alternatively, you can use fep, ile, atty, or Rk to implement
+        editing on a per-terminal basis.  These have been discussed in
+        on the mailing list at one time or another, and modifications to
+        ile have been posted there.
+
+4.3     Does rc have a history mechanism?
+
+        Yes.  While, rc does not have a built-in csh-like history
+        mechanism, rather it is able to write interactive commands to a
+        file (see the history special variable in the man page),
+        allowing a history mechanism similar to the v8 `=' command to be
+        implemented as an external program (one such implementation is
+        supplied with the source of rc).
+
+        In Plan 9, `:' was the history program (the name was probably
+        changed from the `=' used in v8 because `=' is a special
+        character in rc, and needs quoting if it refers to a command).
+        However, this form of history was apparently used so little that
+        the ability to write commands to a file was removed from Duff's
+        rc.  The history program distributed with the rc source is
+        invoked with `-'.
+
+        Both editline and readline have command recall.
+
+4.4     Does rc have file name completion?
+
+        If you wish.  Plain rc does not have file name completion (as it
+        obtains its command input with read), but the readline library
+        does.
+
+4.5     Does rc have home directory expansion?
+
+        No.  This has been hotly debated on the rc mailing list, and a
+        patch to implement this was posted to the rc mailing list in
+        November 1992 (see 2.2 and 1.4).
+
+4.6     Does rc check for new mail?
+
+        No.  However, you can make it do so with the following prompt
+        function:
+
+            fn prompt { mail -e && echo You have mail. }
+
+        Alternatively, consider using biff or xbiff.
+
+4.7     Does rc have hierarchical lists?
+
+        No.  Each element of an rc list must be a string, and cannot be
+        another list.  Whenever a list appears inside another list, it
+        is expanded so that the outer list contains its elements.
+        Similarly, whenever two lists are adjacent, they are
+        concatenated to form a single list (with one exception).
+
+        In rc terms, the arguments to a command form a list, even though
+        they may not have explicit `(' and `)' delimiters around them.
+        Hierarchical lists do not correspond well to the `char **argv'
+        model for arguments to UNIX commands, although simple lists do.
+
+        The single exception to these rules are the arguments to the `~'
+        built-in command, which rc interprets as two lists -- a subject
+        list and a pattern list.  Normal expansion and concatenation is
+        performed on the two lists separately.  A consequence of this is
+        that the following command:
+
+                if ( ~ $1 () '' ) ...
+
+        does not check if $1 is either the null list or the null string,
+        as normal list concatenation occurs on the pattern list leading
+        to a pattern list with one element -- the null string.
+
+4.8     Does rc have cartesian products?
+
+        No.  If you really need them, they can be obtained in the
+        following manner:
+
+            ; x = (a b c)
+            ; y = (1 2 3)
+            ; product = ()
+            ; for ( elem in $x ) product = ( $product $elem^$y )
+            ; echo $product
+            a1 a2 a3 b1 b2 b3 c1 c2 c3
+
+        rc's concatenation operator works in a distributive manner if
+        one of the lists has only a single element and in a pairwise
+        manner if both lists have the same number of elements:
+
+            ; echo a^( x y z )
+            ax ay az
+            ; echo ( a b c )^( x y z )
+            ax by cz
+
+4.9     Does rc cache the location of executables in the path?
+
+        No.  This has been discussed on the mailing list.  As far as one
+        can generalize, searching the path is not a performance
+        bottleneck on most modern UNIX systems.
+
+4.10    Does rc have C-style \ escapes?
+
+        No.  One of the most attractive features of rc is its single
+        quoting rule.
+
+        If you need to embed control characters in your strings,
+        investigate tr and printf (see 7.3 if your system lacks the
+        latter).
+
+4.11    Does rc have ... built in?
+
+        It is not by accident that rc has fewer built-in commands than
+        most shells other than the original Bourne shell.  The
+        underlying philosophy, eloquently summarized by Boyd Roberts, is
+        that a shell is there to run other programs, not to have other
+        programs built into it.  By having a well-defined role, rc has
+        remained small and simple, properties that lead to better
+        performance, fewer bugs, and a more thorough understanding of
+        the shell by its users.
+
+        Most of the rc built-in commands perform functions that are
+        essential for a shell and cannot be performed by external
+        programs (e.g., cd, eval, limit, umask, wait).
+
+        rc does include hooks for users to add new built-in commands,
+        and these have been used to add test, access, kill, read, and
+        even sync and haltsys commands (see the mailing list and the
+        examples file for more details).  Such additions are unsupported
+        and potentially unportable.
+
+4.12    Does rc have echo built in?
+
+        If you wish.  While most of rc's built-in commands could not
+        easily be replaced by external commands, echo is the one
+        exception.  The justification is that echo is used so much that
+        providing it as a built-in command results in a significant gain
+        in performance, although this opinion is by no means universally
+        held.  By default, echo is built in.
+
+        It has also been noted that rc's echo is more portable that
+        /bin/echo, as the v7 and SYSV implementations of echo differ in
+        the method that must be used to suppress the final newline.
+        (However, rc's echo differs from both, as it uses `--' to
+        indicate that all other arguments are to be echoed literally.)
+
+        People who dislike the notion of a built-in echo command have
+        the option of excluding it from the compilation.  Alternatively,
+        the built-in echo can be subverted with the following function,
+        although this will not defeat an explicit call to `builtin
+        echo'.
+
+            fn echo { /bin/echo $* }
+
+        See also 7.3.
+
+4.13    Does rc have test built in?
+
+        No.  You can use the built-in `~' command to match strings, and
+        fall back on /bin/expr or /bin/test for numeric comparisons and
+        /bin/test for querying the file system.
+
+        If you are using rc on a system that lacks a stand-alone
+        /bin/test and /bin/[ and has test built into sh, the following
+        serves as an interim replacement:
+
+            #! /bin/sh
+            `basename $0` ${1+"$@"}
+            # end-of-file
+
+        This applies to Unicos and HP-UX v8.  Note that trip.rc, the
+        script provided with the rc sources to check basic functionality
+        after compilation, will fail unless a suitable test command
+        exists in the path.
+
+        SCO UNIX implements /bin/test in precisely this way.  You can
+        almost certainly get better performance by using the GNU
+        implementation of /bin/test (see 7.4), although this is
+        obviously more important on an i386 machine than on a Cray.
+
+        It is possible to get at the file system obliquely through the
+        globbing mechanism and the builtin cd command, and in some
+        circumstances these can be of use (see, for example, 5.7).  Such
+        speed hacks need to be carefully justified.
+
+        See also 7.3.
+
+4.14    Does rc have true, false, and `:' built in?
+
+        No.  The following functions are just as fast:
+
+            fn true  { return 0 }
+            fn false { return 1 }
+            fn : { return 0 }
+
+        Note that an indefinite loop in rc does not require the use of
+        an explicit `true' command:
+
+            while () {
+                ...
+            }
+
+5.      Using rc as a login shell
+
+5.1     How do I make rc my login shell?
+
+        On most systems, you or the system administrator will have to
+        add a line to /etc/shells containing the full path to rc.  This
+        will need to be done on each machine on which you wish to use
+        rc.
+
+        Next, use the chsh command to specify your new preference.  If
+        your machine is running Yellow Pages (YP), you will have to do
+        this on the YP server, otherwise you will have to do this on
+        each machine individually.  (To determine if your machine is
+        using YP, type `ypwhich -m passwd' that will either print the
+        name of your YP server or give an error if your machine is not
+        running YP.)  Often, you will also need to change your password
+        (using the yppasswd command) on the YP server to propagate the
+        new /etc/passwd entry contain your selected shell; changing your
+        password to itself will normally suffice.
+
+        An alternative method is to invoke rc from your .profile file or
+        its equivalent, but this has so many drawbacks that I cannot
+        recommend it.
+
+5.2     How do I use rc in a heterogeneous cluster?
+
+        There are two issues: finding the correct executable when you
+        login, and getting the correct path in scripts run using the #!
+        kernel hack.
+
+        If you have root privileges on every machine on the cluster, by
+        far the simplest solution is to place a copy of rc in /bin and
+        add /bin/rc to /etc/shells on each machine.  Use `#! /bin/rc' in
+        shell scripts.
+
+        Otherwise, use a sh wrapper around rc.  Create a shell script
+        called, say, rc-login, and make this your login shell.  The
+        purpose of this script is to set SHELL and PATH to point
+        appropriately according to the machine, and then to exec rc.
+
+        The following script is suitable for adaptation:
+
+            #! /bin/sh
+
+            # determine OS
+            TMP=/tmp/$$
+            ( exec >$TMP ; echo OS=`uname -m` )
+            . $TMP
+            rm -f $TMP
+
+            # determine location of rc executable
+            case $OS in
+            RISC)
+               PATH=$HOME/bin/mips:$PATH
+               SHELL=$HOME/bin/mips/rc
+               ;;
+            sun4c)
+               PATH=$HOME/bin/sparc:$PATH
+               SHELL=$HOME/bin/sparc/rc
+               ;;
+            alpha)
+               PATH=$HOME/bin/alpha:$PATH
+               SHELL=$HOME/bin/alpha/rc
+               ;;
+            *)
+               echo 1>&2 "WARNING: unknown architecture"
+               SHELL=/bin/sh
+               ;;
+            esac
+
+            # determine if this is a login shell
+            case $SHELL in
+            */rc)
+              case $0 in
+              -*)
+                 FLAG=-l
+                 ;;
+              esac
+              ;;
+            esac
+
+            export PATH
+            export SHELL
+
+            exec $SHELL $FLAG ${1+"$@"}
+
+            # end-of-file
+
+        The dance to capture the output of uname is necessary because of
+        a bug whereby redirection does not work in the original v7 sh if
+        stdout is closed.  (This bug lives on in the Ultrix /bin/sh.)
+
+        The easiest way to manage shell scripts is to keep a master copy
+        in a central directory, say $home/bin/share, and have slave
+        scripts in machine-specific directories which source the master
+        script.  For example, for a command called `foo' create the
+        following in each machine-specific directory:
+
+            #! /full/path/to/machine/specific/rc
+            . $home/bin/share/foo $*
+            # end-of-file
+
+        See 5.3 if your cluster contains Apollos.
+
+5.3     What problems occur with rc on Apollos?
+
+        Apollos require the login shell to be a binary, so you cannot
+        use a sh script wrapper around rc.
+
+5.4     What problems occur with rc on SYSV-derived systems?
+
+        Many SYSV-derived sh and ksh are `restricted' if the final
+        component of SHELL contains the letter `r'.  A restricted shell
+        will not allow you to cd, perform output redirection, set PATH,
+        or specify absolute paths to executables, meaning that many
+        shell scripts written in sh or ksh will fail.  This is also
+        applies to BSD-derived systems that also ship with a SYSV-
+        derived shell (for example, /bin/sh5 on Ultrix).
+
+        One solution is to link rc to a file that does not contain the
+        letter `r', and use that file as your SHELL.  You can achieve
+        this automatically by placing the following commands in your
+        .rcrc:
+
+            rcdir = `{ dirname $SHELL } {
+                test -f $rcdir/RC || ln $rcdir/rc $rcdir/RC
+                SHELL = $rcdir/RC
+            }
+
+        Make sure when you install a new version of rc that you remove
+        the previous RC.
+
+        This behaviour is also a potential problem if you use a sh
+        wrapper around rc as your login shell (see 5.2 and 6.3).  Make
+        sure that the name of the wrapper does not contain the letter
+        `r'.
+
+5.5     What problems occur with rc on NeXTs?
+
+        The NeXT window system assumes that all shells are `job control'
+        shells and will place themselves in a new process group.
+        Contrary to this assumption, rc is not a job control shell and
+        so does not do this.  The result is that a signal to one (such
+        as an interrupt) will be sent to all.
+
+        The `newpgrp' built-in command was provided to deal with this
+        problem.  You can use it to ensure that each new interactive rc
+        belongs to a new process group by using a prompt function to run
+        code in each new interactive instance of rc (see 6.1 and 6.2).
+        Other more elegant solutions (such as a wrapper around rc) are
+        precluded by the uncooperative and inflexible nature of the NeXT
+        window system.
+
+        See also 6.1 and 6.2.
+
+5.6     How do I keep down the size of my .rcrc file?
+
+        Given the nature of rc, the natural place to define functions is
+        in the .rcrc file.  However, as the number of functions grows,
+        it becomes more awkward to maintain them all in a single file.
+        One solution is to break out the functions into separate files
+        and automatically load them within .rcrc:
+
+            fnlib = $home/fnlib
+            fn load { ~ $#* 1 && builtin . $fnlib/$1 }
+            builtin cd $fnlib
+            name = () for ( name in * ) load $name
+            builtin cd
+
+        See also 5.7.
+
+5.7     How do I speed up the execution of my .rcrc file?
+
+        If you have lots of functions, you may wish to use lazy function
+        loading:
+
+            fnlib = $home/fnlib
+            fn load { ~ $#* 1 && builtin . $fnlib/$1 }
+            builtin cd $fnlib
+            name = () for ( name in * ) fn $name { load $0 && $0 $* }
+            builtin cd
+
+        Often, though, a more substantial amount of time is spent
+        testing directories before they are added to a path: rc does not
+        have a built-in test command, so each test implies a fork and an
+        exec.  In some circumstances, you can replace the test with code
+        similar to the following:
+
+            path = ()
+            dir = () for ( dir in ... )
+                builtin cd $dir >[1=] >[2=] && path = ( $path $dir )
+            builtin cd
+
+        See also 5.6 and 4.13.
+
+6.      Interactions between rc and the rest of UNIX
+
+6.1     How do I get each new interactive rc to do ...?
+
+        Rather than set the `-l' flag and place the code in .rcrc, you
+        can use a prompt function like the following:
+
+            fn prompt {
+                if ( ! ~ $ipid $pid ) {
+                    ipid=$pid
+                    ...
+                }
+            }
+
+        This will run ... at the start of each new interactive instance
+        of rc, but not in non-interactive instances of rc.
+
+        See also 6.2 and 5.5.
+
+6.2     How do I get rc to do ... in each new xterm?
+
+        Since xterm puts WINDOWID into the environment, you can use a
+        prompt function like the following:
+
+            fn prompt {
+                if ( ! ~ $wid $WINDOWID && ~ $TERM xterm* ) {
+                    wid=$WINDOWID
+                    ...
+                }
+            }
+
+        See also 6.1.
+
+6.3     How do I get rc to read .rcrc when I use rsh?
+
+        rshd does not place a `-' in the first character of argv[0] when
+        it execs a shell, so .rcrc is not run and this can cause
+        problems.
+
+        One solution is to have a false login shell called login-shell
+        that explicitly supplies a -l flag to rc, i.e., login-shell
+        contains:
+
+            #! /path/to/rc
+            exec /path/to/rc -l $*
+            # end-of-file
+
+        See also 5.2.
+
+6.4     How do I get at or batch to run an rc script?
+
+        at and batch only accept sh or csh scripts, so you need to
+        package your rc script in a sh wrapper.  The following two
+        functions accomplish this.  Note that they do not completely
+        emulate the standard commands, as they will not accept a file
+        name on the command line, but rather only read commands from
+        stdin.  A simple further enhancement might be to mail the stdout
+        and stderr of the job back to the user.
+
+            fn at {
+                if ( ~ $#* 0 ) {
+                    echo >[2=1] \
+                        'usage: at [ time [day] | -r job ... | -l [job ...] ]'
+                    return 1
+                }
+                switch ( $1 ) {
+                case -r
+                    builtin at $*
+                case -l
+                    builtin at $* >[2=1]
+                case *
+                    {
+                        echo 'SHELL='^$SHELL
+                        echo 'export SHELL'
+                        echo 'sed ''s/^-//'' <<''+'' | '^$SHELL
+                        sed 's/^/-/'
+                        echo '+'
+                    } | SHELL = /bin/sh builtin at $*
+                }
+            }
+
+            fn batch {
+                if ( ! ~ $#* 0 ) {
+                    echo >[1=2] 'usage: batch'
+                    return 1
+                }
+                {
+                    echo 'SHELL='^$SHELL
+                    echo 'export SHELL'
+                    echo 'sed ''s/^-//'' <<''+'' | '^$SHELL
+                    sed 's/^/-/'
+                    echo '+'
+                } | SHELL = /bin/sh builtin batch
+            }
+
+7.      Programming in rc
+
+7.1     What makes rc such a good scripting language?
+
+        Brian Kernighan and Rob Pike wrote of the original v7 Bourne
+        shell:
+
+            The UNIX shell isn't typical of command interpreters:
+            although it lets you run commands in the usual way, because
+            it is a programming language it can accomplish much more.
+
+        Their comments apply equally to rc, perhaps more so.
+
+        The two aspects of rc that contribute most to its utility as a
+        scripting language are its simple quoting rule coupled with the
+        absence of rescanning and the fact that the language is small,
+        simple, and well defined.
+
+        The former allows one to write scripts with complete control
+        over the lexical aspects of the process: when and if globbing,
+        pattern matching, and list formation take place.  Tom Duff wrote
+        that rc is `not a macro processor'.  The lack or rescanning,
+        together with improvements to backquote substitutions, allowed
+        him to collapse Bourne's four types of quoting down to one,
+        eliminating all of their complex interactions.
+
+        The latter means that the whole language can be readily
+        understood by the user.  Its grammar is well defined, in sharp
+        contrast to sh.  (Indeed, a skeleton yacc grammar is included as
+        an appendix to rc's manual page.)  The language is small and
+        well defined; there are, to quote John Mackin, no `dark
+        corners'.  Although the language is smaller and simpler, it
+        retains all the power and flexibility of sh, and improves and
+        extends on it in several areas.
+
+7.2     What are the trade-offs between functions and scripts?
+
+        Functions are run in the process that invokes them, so they can
+        make persistent changes to the environment of the interpreter.
+        They are essential for some actions (reading a variable, for
+        example).
+
+        Functions make excellent wrappers around standard commands, as
+        one can use the `builtin' command to invoke the standard command
+        from within the function.  Invoking a standard command from
+        within a script of the same name involves either hard-wiring the
+        name into the script or using a more elaborate method, such as
+        the `pathos' script posted to the mailing list in June 1992.
+
+        There is less overhead in invoking a function, as the kernel
+        need not exec rc once again.
+
+        However, functions take up space in the environment.  There is
+        often a hard limit on the size of the environment.  Although on
+        some systems this limit is very large, on others it is not.  In
+        addition, very large environments can degrade the performance of
+        fork.
+
+        Functions cannot be exec-ed directly by a C program, but must be
+        invoked through rc, although it is probably a good idea to do
+        this anyway, as responsibility for globbing and variable
+        substitution properly resides with the shell.
+
+7.3     What can I do if I have deficient sed, awk, test, ... ?
+
+        Shell programming on UNIX rests on two foundations: the shell
+        itself and the toolkit of programs provided in /bin and
+        /usr/bin.  Unfortunately, many vendors provide out-of-date tools
+        and there are many incompatibilities between BSD- and SYSV-
+        derived systems, so writing portable scripts is a problem.  This
+        problem can be especially acute in heterogeneous clusters.
+
+        There are two approaches to this problem: one is to use only
+        those tools and options that were present in v7, and the other
+        is to use only those tools and options that are present in
+        POSIX.2, and to replace the vendor-supplied tools with those
+        from GNU if the former do not conform (see 7.4).
+
+7.4     Where do I obtain the GNU tools and other software?
+
+        Get prep.ai.mit.edu:/pub/gnu/GNUinfo/FTP by anonymous FTP for a
+        list of sites that archive GNU software.
+
+        The article `How to find sources' lists sites that archive
+        software posted to Usenet source newgroups.  This article is
+        regularly cross-posted to comp.sources.wanted, comp.answers, and
+        news.answers, and is also available via anonymous FTP as
+        rtfm.mit.edu:/pub/usenet/comp.answers/finding-sources.
+
+7.5     How do I perform arithmetic in rc?
+
+        You can use /bin/expr, /bin/awk, or unary arithmetic with lists
+        (see 7.6 for an example).
+
+7.6     How do I find the first occurrence of an element in a list?
+
+        Use an `index' function, as in:
+
+            ; x = ( a b a b )
+            ; index b $x
+            2
+
+        This implementation of index uses a list to count up to the
+        index of the element:
+
+            fn index {
+                switch ( $#* ) {
+                case 0 1
+                    echo >[1=2] 'usage: index pattern list ...'
+                    return 1
+                case *
+                    elem = $1 prefix = () {
+                        shift
+                        if ( ! ~ $elem $* ) {
+                            echo 0
+                            return 1
+                        }
+                        while ( prefix = ( $prefix $1 ) && ! ~ $elem $1 )
+                            shift
+                        echo $#prefix
+                        return 0
+                    }
+                }
+            }
+
+7.7     How do I use ranges in array subscripts in rc?
+
+        Use a `seq' function, as in:
+
+            ; x = ( a b c d e f g h )
+            ; echo $x( `{seq 2 5} )
+            b c d e
+
+        There are many implementations of seq, most of which use awk,
+        like this one:
+
+            fn seq {
+                switch ( $#* ) {
+                case 1
+                    * = ( 1 $1 )
+                case 2
+                case *
+                    echo >[1=2] usage: seq [start] stop
+                    return 1
+                }
+                echo $1 $2 | awk '{
+                    if ( $1 <= $2 )
+                        for ( i = $1; i <= $2; i++ ) print i;
+                    else
+                        for ( i = $1; i >= $2; i-- ) print i;
+                }'
+            }
+
+7.8     How do I perform the equivalent of read in rc?
+
+        Use a `read' function, to read a single line from stdin, remove
+        the trailing newline, and assign it to a variable:
+
+            ; read foo
+            Do the funky gibbon!
+            ; echo $foo
+            Do the funky gibbon!
+            ; echo $#foo
+            1
+
+        The following implementation of read returns 1 if EOF is seen,
+        like the read in the v7 sh:
+
+            fn read {
+                if ( ! ~ $#* 1 ) {
+                    echo >[1=2] 'usage: read variable'
+                    return 1
+                }
+                if ( ~ $1 '*' () *'='* ) {
+                    echo >[1=2] 'read: bad variable name'
+                    return 1
+                }
+                lines = () nl = () {
+                    ifs = () { nl = `{ echo } }
+                    ifs = $nl { lines = `{ line ; echo $status } }
+                    if ( ~ $#lines 2 ) {
+                        $1 = $lines(1)
+                        return 0
+                    } else {
+                        $1 = ''
+                        return $lines(1)
+                    }
+                }
+            }
+
+        If your UNIX does not have a line command, the following is an
+        straightforward substitute.
+
+            #include <unistd.h>
+            int main ()
+            {
+                unsigned char c;
+
+                while (read (0, &c, 1) == 1 && c != '\n')
+                    write (1, &c, 1);
+                write (1, "\n", 1);
+                return c != '\n';
+            }
+
+        Attempts to use standard UNIX utilities (e.g., "sed 1q", "head
+        -1", and "awk '{ print; exit; }'") to replace the line command
+        fail because line does not buffer its input.  This was discussed
+        extensively in the mailing list in September 1991 (see 2.2).
+
+        Alternatively, a patch to add a built-in read was posted to the
+        mailing list in September 1993 (see 1.4).
+
+Acknowledgements
+
+Many people have contributed ideas, code, and information to this
+document, either directly or indirectly, through the rc mailing list and
+its influence on my understanding of rc.
+
+People who have directly contributed to this document include Vincent
+Broman, Raymond Chen, Tom Culliton, Stefan Dalibor, Jim Davis, Matt Day,
+Matthew Farwell, David Fiander, Tim Goodwin, Paul Haahr, Charles Hannum,
+David Hogan, Noel Hunt, John LoVerso, Hamish Macdonald, John Mackin,
+Byron Rakitzis, Boyd Roberts, Rich Salz, Chris Siebenmann, Emin Gun
+Sirer, Icarus Sparry, Gerry Tomlinson, Malte Uhl, Christopher Vance, and
+Victor Zandy.  My apologies to anyone I have missed.
+
+As a user of rc, I am indebted to Tom Duff for its design, to Steve
+Bourne for its foundation, and to Byron Rakitzis for its implementation.
+
+Alan Watson (alan@oldp.astro.wisc.edu)

@@ -1,0 +1,338 @@
+.TH M4 local "30 Aug 1987"
+.DA 08 Jan 1986
+.SH NAME
+pd m4 \- macro processor
+.SH ORIGIN
+MetaSystems
+.SH SYNOPSIS
+.BI m4 "[ options ]"
+.SH DESCRIPTION
+.I Pd M4
+is a un*x M4 look-alike macro processor
+intended as a front end for Ratfor, Pascal, and other languages that do not
+have a built-in macro processing capability.
+Pd M4 reads standard input, the processed text is written on the standard output.
+.PP
+The options and their effects are as follows:
+.TP
+\f3\-D\fP\f2name\^\fP[\f3=\fP\f2val\^\fP]
+Defines
+.I name
+to
+.I val
+or to null in
+.IR val 's
+absence.
+.TP
+.BI \-U name
+undefines
+.IR name .
+.PP
+Macro calls
+have the form:
+.PP
+.RS
+\fBname\fI(arg1,arg2, .\|.\|., argn)\fR
+.RE
+.PP
+The
+.B (
+must immediately follow the name of the macro.
+If the name of a defined macro is not followed by a
+.BR ( ,
+it is taken to be a call of that macro with no arguments, i.e. name().
+Potential macro names consist of alphabetic letters and digits.
+.PP
+Leading unquoted blanks, tabs and newlines are ignored while collecting 
+arguments.
+Left and right single quotes are used to quote strings.
+The value of a quoted string is the string stripped of the quotes.
+.PP
+When a macro name is recognized,
+its arguments are collected by searching for a matching
+.BR ) .
+If fewer arguments are supplied than are in the macro definition,
+the trailing arguments are taken to be null.
+Macro evaluation proceeds normally during the collection of the arguments,
+and any commas or right parentheses
+which happen to turn up within the value of a nested
+call are as effective as those in the original input text. (This is typically
+referred as
+.I inside-out
+macro expansion.)
+After argument collection,
+the value of the macro is pushed back onto the input stream
+and rescanned.
+.PP
+.I Pd M4
+makes available the following built-in macros.
+They may be redefined, but once this is done the original meaning is lost.
+Their values are null unless otherwise stated.
+.de MC
+.TP 14
+.B \\$1
+usage: \\fI\\$1\\$2\\fR
+.br
+..
+.MC define "(name [, val])"
+the second argument is installed as the value of the macro
+whose name is the first argument. If there is no second argument,
+the value is null.
+Each occurrence of
+.BI $ n
+in the replacement text,
+where
+.I n
+is a digit,
+is replaced by the
+.IR n -th
+argument.
+Argument 0 is the name of the macro;
+missing arguments are replaced by the null string.
+.MC defn "(name [, name ...])
+returns the quoted definition of its argument(s). Useful in renaming
+macros.
+.MC undefine "(name [, name ...])"
+removes the definition of the macro(s) named. If there is
+more than one definition for the named macro, (due to previous use of
+.IR pushdef ) 
+all definitions are removed.
+.MC pushdef "(name [, val])"
+like
+.IR define ,
+but saves any previous definition by stacking the current definition.
+.MC popdef "(name [, name ...])"
+removes current definition of its argument(s),
+exposing the previous one if any.
+.MC ifdef "(name, if-def [, ifnot-def])"
+if the first argument is defined, the value is the second argument, 
+otherwise the third.
+If there is no third argument, the value is null.
+A word indicating the current operating system is predefined.
+(e.g.
+.I unix
+or
+.IR vms )
+.MC shift "(arg, arg, arg, ...)"
+returns all but its first argument.
+The other arguments are quoted and pushed back with
+commas in between.
+The quoting nullifies the effect of the extra scan that
+will subsequently be performed.
+.MC changequote "(lqchar, rqchar)"
+change quote symbols to the first and second arguments.
+With no arguments, the quotes are reset back to the default
+characters. (i.e., \*`\|\*').
+.MC changecom "(lcchar, rcchar)"
+change left and right comment markers from the default
+.B #
+and 
+.BR newline .
+With no arguments, the comment mechanism is reset back to 
+the default characters.
+With one argument, the left marker becomes the argument and
+the right marker becomes newline.
+With two arguments, both markers are affected.
+.MC divert "(divnum)"
+.I m4
+maintains 10 output streams,
+numbered 0-9.  initially stream 0 is the current stream. 
+The
+.I divert
+macro changes the current output stream to its (digit-string)
+argument.
+Output diverted to a stream other than 0 through 9
+disappears into bitbucket.
+.MC undivert "([divnum [, divnum ...]])"
+causes immediate output of text from diversions named as
+argument(s), or all diversions if no argument.
+Text may be undiverted into another diversion.
+Undiverting discards the diverted text. At the end of input processing,
+.I M4
+forces an automatic
+.IR undivert ,
+unless
+.I m4wrap
+is defined.
+.MC divnum "()"
+returns the value of the current output stream.
+.MC dnl "()"
+reads and discards characters up to and including the next newline.
+.MC ifelse "(arg, arg, if-same [, ifnot-same | arg, arg ...])"
+has three or more arguments.
+If the first argument is the same string as the second,
+then the value is the third argument.
+If not, and if there are more than four arguments, the process is 
+repeated with arguments 4, 5, 6 and 7.
+Otherwise, the value is either the fourth string, or, if it is not present,
+null.
+.MC incr "(num)"
+returns the value of its argument incremented by 1.
+The value of the argument is calculated
+by interpreting an initial digit-string as a decimal number.
+.MC decr "(num)"
+returns the value of its argument decremented by 1.
+.MC eval "(expression)"
+evaluates its argument as a constant expression, using integer arithmetic.
+The evaluation mechanism is very similar to that of
+.I cpp
+(#if expression). 
+The expression can involve only integer constants and character constants,
+possibly connected by the binary operators
+.nf
+.ft B
+
+*	/	%	+	-	>>	<<	<	>	
+<=	>=	==	!=	&	^	|	&&	||
+
+.ft R
+.fi
+or the unary operators \fB\- ~ !\fR
+or by the ternary operator \fB ? : \fR.
+Parentheses may be used for grouping. Octal numbers may be specified as
+in C.
+.MC len "(string)"
+returns the number of characters in its argument.
+.MC index "(search-string, string)"
+returns the position in its first argument where the second argument 
+begins (zero origin),
+or \-1 if the second argument does not occur.
+.MC substr "(string, index [, length])"
+returns a substring of its first argument.
+The second argument is a zero origin
+number selecting the first character (internally treated as an expression);
+the third argument indicates the length of the substring.
+A missing third argument is taken to be large enough to extend to
+the end of the first string. 
+.MC translit "(source, from [, to])"
+transliterates the characters in its first argument
+from the set given by the second argument to the set given by the third.
+If the third argument is shorter than the second, all extra characters
+in the second argument are deleted from the first argument. If the third
+argument is missing altogether, all characters in the second argument are
+deleted from the first argument.
+.MC include "(filename)"
+returns the contents of the file named in the argument.
+.MC sinclude "(filename)"
+is identical to
+.IR include ,
+except that it
+says nothing if the file is inaccessible.
+.MC paste "(filename)"
+returns the contents of the file named in the argument without any
+processing, unlike 
+.IR include.
+.MC spaste "(filename)"
+is identical to
+.IR paste ,
+except that it says nothing if the file is inaccessible.
+.MC syscmd "(command)"
+executes the
+.SM UNIX
+command given in the first argument.
+No value is returned.
+.MC sysval "()"
+is the return code from the last call to
+.IR syscmd .
+.MC maketemp "(string)"
+fills in a string of
+.SM XXXXXX
+in its argument with the current process
+.SM ID\*S.
+.MC m4exit "([exitcode])"
+causes immediate exit from
+.IR m4 .
+Argument 1, if given, is the exit code;
+the default is 0.
+.MC m4wrap "(m4-macro-or-built-in)"
+argument 1 will be pushed back at final
+.BR EOF ;
+example: m4wrap(`dumptable()').
+.MC errprint "(str [, str, str, ...])"
+prints its argument(s) on stderr. If there is more than one argument,
+each argument is separated by a space during the output.
+.MC dumpdef "([name, name, ...])"
+prints current names and definitions,
+for the named items, or for all if no arguments are given.
+.dt
+.SH AUTHOR
+Ozan S. Yigit (oz)
+.SH BUGS
+Pd M4 is distributed at the source level, and does not require an expensive
+license agreement.
+.PP
+A sufficiently complex M4 macro set is about as readable
+as
+.BR APL .
+.PP
+All complex uses of M4 require the ability to program in deep recursion.
+Previous lisp experience is recommended.
+.PP
+Pd M4 is slower than V7 M4.
+.SH EXAMPLES
+.PP
+The following macro program illustrates the type of things that
+can be done with M4. 
+.PP
+.RS
+.nf
+\fBchangequote\fR(<,>) \fBdefine\fR(HASHVAL,99) \fBdnl\fR
+\fBdefine\fR(hash,<\fBexpr\fR(str(\fBsubstr\fR($1,1),0)%HASHVAL)>) \fBdnl\fR
+\fBdefine\fR(str,
+	<\fBifelse\fR($1,",$2,
+		<str(\fBsubstr\fR(<$1>,1),<\fBexpr\fR($2+'\fBsubstr\fR($1,0,1)')>)>)
+	>) \fBdnl\fR
+\fBdefine\fR(KEYWORD,<$1,hash($1),>) \fBdnl\fR
+\fBdefine\fR(TSTART,
+<struct prehash {
+	char *keyword;
+	int   hashval;
+} keytab[] = {>) \fBdnl\fR
+\fBdefine\fR(TEND,<	"",0
+};>) \fBdnl\fR
+.fi
+.RE
+.PP
+Thus a keyword table containing the keyword string and its pre-calculated
+hash value may be generated thus:
+.PP
+.RS
+.nf
+TSTART
+	KEYWORD("foo")
+	KEYWORD("bar")
+	KEYWORD("baz")
+TEND
+.fi
+.RE
+.PP
+which will expand into:
+.RS
+.nf
+struct prehash {
+	char *keyword;
+	int   hashval;
+} keytab[] = {
+	"foo",27,
+	"bar",12,
+	"baz",20,
+	"",0
+};
+.fi
+.RE
+.PP
+Presumably, such a table would speed up the installation of the
+keywords into a dynamic hash table. (Note that the above macro
+cannot be used with 
+.IR M4 , 
+since 
+.B eval
+does not handle character constants.)
+
+.SH SEE ALSO
+cc(1),
+m4(1),
+cpp(1).
+.I "The M4 Macro Processor\^"
+by B. W. Kernighan and D. M. Ritchie.
+

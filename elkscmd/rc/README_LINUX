@@ -1,0 +1,10 @@
+Linux changes:
+
+- mksignal does not work from Linux, don't delete sigmsgs.[ch]
+- use "/proc/self/fd" instead of "/dev/fd"
+- uses editline as a replacement for readline (about 1/7th the size)
+- staticly linked (should be faster forking)
+
+
+Neil Schemenauer <nas170@mail.usask.ca>
+July 26, 1997

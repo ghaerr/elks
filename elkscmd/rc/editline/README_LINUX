@@ -1,0 +1,5 @@
+Linux changes:
+
+- pressing tab when not unique causes alternatives to be listed (like ESC-?)
+- no beeping on ambiguous completions
+- completions for root dir work

@@ -1,0 +1,111 @@
+This is release 1.5 of rc.
+
+Read COPYRIGHT for copying information. All files are
+
+Copyright 1991, Byron Rakitzis.
+
+COMPILING
+
+rc was written in portable ANSI C. If you don't have an ANSI compiler
+like gcc or something close (e.g., sgi's cc) read further down on
+how to convert rc's source to old C.
+
+Please read the Makefile, and copy config.h-dist to config.h and
+examine the parameters in there; they let you customize rc to your
+Unix. For example, some Unices support /dev/fd, or some have FIFOs.
+If you do not perform this step then the Makefile will automatically
+copy config.h-dist to config.h and proceed assuming that everything
+is ok. Note that config.h-dist supplies default parameter configurations
+for SunOS, NeXT-OS, Irix, Ultrix and some others. Finally, if you're
+having trouble you may want to look at proto.h and see if everything
+in there jibes with your system.
+
+After you've built rc, you may wish to run it through a test script
+to see that everything is ok. Type "make trip" for this. This will
+produce some output, and end with "trip is complete". If the trip
+ends with "trip took a wrong turn..." then drop me a line.
+
+To compile the history program, go into the history subdirectory
+and type "make". This will create a binary called "history". However,
+in order for it to work as advertised it must be installed into
+your bin as four files named -, --, -p and --p. (these can be soft
+or hard links to the same file)
+
+rc may also be linked with either GNU readline (10,000+ lines of
+code!) or a supplied readline-like system by Simmule Turner (1,000+
+lines of code). See the Makefile on how to do this.
+
+BUGS
+
+Send bug reports to byron@archone.tamu.edu. If a core dump is
+generated, sending me a backtrace will help me out a great deal. You
+can get a backtrace like this:
+
+	; gdb rc core
+	(gdb) where
+	<<<BACKTRACE INFO>>>
+	(gdb)
+
+Also, always report the machine, compiler and OS used to make rc.  It's
+possible I may have access to a machine of that type, in which case it
+becomes much easier for me to track the bug down.
+
+If you are using gcc, please make sure that you have a recent version of
+the compiler (1.39 and up) before you send me a note; I have found that
+older versions of gcc choke over rc and generate bad code on several
+architectures. (this is especially relevant for the the MIPS architecture)
+
+FEEPING CREATURISM
+
+See the end of the man page, under "INCOMPATABILITIES" for (known?)
+differences from the "real" rc. Most of these changes were necessary
+to get rc to work in a reasonable fashion on a real (i.e., commercial,
+non-Labs) UNIX system; a few were changes motivated by concern
+about some inadequacies in the original design.
+
+YACC
+
+The yacc that Sun ships with SunOS 4.1.1 calls malloc() to allocate
+space for the state stack, and requires a call to YYACCEPT or YYABORT
+to free this memory. This means that if rc takes an interrupt while
+parsing a command (say, if ^C is typed), yacc will leak away this
+memory. The solution is to use a yacc which statically allocates
+this array, such as the yacc in the BSD distribution. Berkeley yacc-
+generated y.tab.c and y.tab.h are shipped with rc in case you cannot
+get hold of Berkeley yacc.
+
+OLD C
+
+If you need to convert rc's source into K&R C, you need to run the
+source through a filter called "unproto", posted in comp.sources.misc.
+A sample "cpp" shell script that I used to run unproto under SunOS
+is supplied with rc.
+
+CREDITS
+
+This shell was written by me, Byron Rakitzis, but kudos go to Paul
+Haahr for letting me know what a shell should do and for contributing
+certain bits and pieces to rc (notably the limits code, print.c,
+most of which.c and the backquote redirection code), and to Hugh
+Redelmeier for running rc through his fussy ANSI compiler and
+thereby provoking interesting discussions about portability, and
+also for providing many valuable suggestions for improving rc's
+code in general. Finally, many thanks go to David Sanderson, for
+reworking the man page to format well with troff, and for providing
+many suggestions both for rc and its man page.
+
+Thanks to Boyd Roberts for the original history.c, and to Hugh
+again for re-working parts of that code.
+
+Of course, without Tom Duff's design of the original rc, I could
+not have written this shell (though I probably would have written
+*a* shell). Almost of all of the features, with minor exceptions,
+have been implemented as described in the Unix v10 manuals. Hats
+off to td for designing a C-like, minimal but very useful shell.
+
+Tom Duff has kindly given permission for the paper he wrote for
+UKUUG to be distributed with this version of rc (called "plan9.ps"
+in the same ftp directory as the shell). Please read this paper
+bearing in mind that it describes a program that was written at
+AT&T and that the version of rc presented here differs in some
+respects.

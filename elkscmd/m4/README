@@ -1,0 +1,80 @@
+	What you have here is a completely PD implementation of
+	M4. It was originally written for the GNU project. 
+	This version was the last version before a major re-write 
+	took place.
+
+	Pd M4 is based on software tools macro, as described in the
+	two tools books by Kernighan and Plauger. Although some
+	serious changes have been made, this version inherits the basic
+	design problems of the original, hence the ugliness of the
+	underlying code. [GNU version of this processor is re-designed
+	in a much cleaner fashion, and is expected to be out before 
+	1988. GNU version also includes an extensive texinfo document.]
+
+	PDness:
+
+	This code *is* PD. You (public) have all the rights to the code. 
+	[But this also means you (singular) do not have any *extra*
+	rights to the code, hence it is impossible for you to restrict
+	the use and distribution of this code in any way.]
+
+	Dedication:
+
+	This posting is a dedication to an old 750 that started out
+	running 4.1BSD and had 1.5 meg, 1 dz11, and 2 Rk07 drives.
+	It was named yetti [sic] by accident, and was managed by the
+	author until its retirement few months ago. [the name yetti 
+	now identifies a different machine]
+
+	Distribution + misc:
+
+	The distribution includes a small test suite, the sources and
+	a man page. texinfo document is not included. The makefile is
+	pretty simple. See the makefile for configuration options.
+	Try "make time" for some timing comparisons between your un*x
+	m4 and the pd m4. [It should be slighly slower than V7 m4, and
+	slightly faster than SV m4]. Make sure to set MBIN to indicate
+	the location of un*x m4. See the test suite (test.m4) for some
+	additional comments about pd m4 vs un*x m4.
+
+	Some thoughts:
+
+	M4 is a neat macro processor but probably a bit outdated by
+	now. It does not need gratuitous additions, or "features", but
+	a complete re-write. As it stands, it is powerful enough for
+	most macro processing needs. We have, for example, used it to
+	build a configuration language for DECNET under VMS. It can
+	be a handy software engineering tool under most circumstances,
+	and can displace a lot of meaningless little hacks written in
+	C, pascal or whatever. [See some net postings for references.]
+
+	Suggestions for hacking:
+
+	If you want to hack M4 further, you may wish to implement the
+	SV m4 "trace" facility, and extended (5-char) Comment/Quote
+	definitions. This version also needs some dynamicity for its
+	data structures, and the ability to handle multiple file names
+	in the command line. If you want to add "features", you may wish
+	to first think about implementing the "feature" as an M4 macro.
+	If you really want to elevate this processor into a more state-of
+	the-art tool, than you should probably re-write it. [But I have
+	already done that, so you may wish to wait for the GNU version to
+	get a head start.]
+
+	Feedback:
+
+	If you have any important fixes and/or speed improvements,  I am
+	much interested, since my new version inherits some code from this
+	version. I am also interested in hearing about any unique applica-
+	tions of M4. I am not interested in gratuitous hacks or "neat"
+	kitchen-sink features. 
+
+	Contact:
+
+		Usenet: [decvax|ihnp4]!utzoo!yetti!oz || 
+			    ...seismo!mnetor!yetti!oz
+		Bitnet: oz@[yulibra|yuyetti].BITNET
+		Phonet: [416] 736-5257 x 3976
+
+
+	enjoy.	oz

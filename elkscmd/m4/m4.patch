@@ -1,0 +1,53 @@
+To: comp-sources-unix@uunet.uu.net
+From: Ozan Yigit <yunexus!oz@uunet.uu.net>
+Newsgroups: comp.sources.unix
+Subject: Patch #1 for Public Domain M4 (#38-39)
+Date: 1 Feb 88 16:15:24 GMT
+Reply-To: Ozan Yigit <yunexus!oz@uunet.uu.net>
+Organization: York U. Computing Services - Magic Group
+
+
+This patch fixes a bug introduced apparently just before the posting of
+m4.  Due to this bug, quote handling became retarded in some circumstances.
+
+Go to the source directory of m4, and feed the following to the patch program.
+
+Index: patchlevel.h
+*** /dev/null	Mon Feb  1 11:01:04 1988
+--- patchlevel.h	Mon Feb  1 11:03:08 1988
+***************
+*** 0 ****
+--- 1 ----
++ #define PATCHLEVEL 1
+
+Index: main.c
+*** main.c	Mon Feb  1 10:38:16 1988
+--- main.new.c	Sat Jan 30 13:54:36 1988
+***************
+*** 315,322 ****
+  					nlpar++;
+  				else if (l == EOF)
+  					error("m4: missing right quote");
+! 				if (nlpar > 0)
+! 					chrsave(l);
+  			}
+  			while (nlpar != 0);
+  		}
+--- 315,326 ----
+  					nlpar++;
+  				else if (l == EOF)
+  					error("m4: missing right quote");
+! 				if (nlpar > 0) {
+! 					if (sp < 0)
+! 						putc(l, active);
+! 					else
+! 						chrsave(l);
+! 				}
+  			}
+  			while (nlpar != 0);
+  		}
+-- 
+Those who lose the sight	     Usenet: [decvax|ihnp4]!utzoo!yunexus!oz
+of what is really important 	    	     ......!seismo!mnetor!yunexus!oz
+are destined to become 		     Bitnet: oz@[yusol|yulibra|yuyetti]
+irrelevant.	    - anon	     Phonet: +1 416 736-5257 x 3976
