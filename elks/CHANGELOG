@@ -34,6 +34,11 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Tue Jul 16 22:43:37 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Committed new header file with boot flag details that was omitted
+	  by accident in the previous commit. Sorry.
+
 Tue Jul 16 12:00:00 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Converted various '#ifdef DEBUG / printk() / #endif' blocks
