@@ -6,7 +6,7 @@
 #include <linuxmt/utsname.h>
 
 /* Enable debugging */
-#define DEBUGME
+/* #define DEBUGME */
 
 /*
  *	System variable setups
