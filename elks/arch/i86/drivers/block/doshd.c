@@ -738,7 +738,7 @@ static void do_bioshd_request(void)
 	    BD_DX = (head << 8) | hd_drive_map[drive];
 	    BD_FL = 0;
 	    debug5("cylinder=%d head=%d sector=%d drive=%d CMD=%d\n",
-		   cylinder, head, sector, drive, req->cmd);
+		   cylinder, head, sector, drive, req->rp_cmd);
 	    debug1("blocks %d\n", this_pass);
 	    set_irq();
 	    call_bios();

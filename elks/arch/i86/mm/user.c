@@ -39,11 +39,11 @@ void memcpy_fromfs(void *daddr, void *saddr, size_t len)
 	mov	dx,es
 	mov	bx,ds
 	mov	es,bx
-	mov	ax,[bp-2]	! source segment (local variable)
+	mov	ax,[bp+.memcpy_fromfs.ds]	! source segment (local variable)
 	mov	ds,ax
-	mov	di,[bp+4]	! destination address
-	mov	si,[bp+6]	! source address
-	mov	cx,[bp+8]	! number of bytes to copy
+	mov	di,[bp+.memcpy_fromfs.daddr]	! destination address
+	mov	si,[bp+.memcpy_fromfs.saddr]	! source address
+	mov	cx,[bp+.memcpy_fromfs.len]	! number of bytes to copy
 	cld
 	rep
 	movsb
@@ -77,11 +77,11 @@ void memcpy_tofs(void *daddr, void *saddr, size_t len)
 	push	si
 	push	di
 	mov	dx,es
-	mov	ax,[bp-2]	! source segment (local variable)
+	mov	ax,[bp+.memcpy_tofs.es]	! source segment (local variable)
 	mov	es,ax
-	mov	di,[bp+4]	! destination address
-	mov	si,[bp+6]	! source address
-	mov	cx,[bp+8]	! number of bytes to copy
+	mov	di,[bp+.memcpy_tofs.daddr]	! destination address
+	mov	si,[bp+.memcpy_tofs.saddr]	! source address
+	mov	cx,[bp+.memcpy_tofs.len]	! number of bytes to copy
 	cld
 	rep
 	movsb
@@ -169,17 +169,17 @@ int strlen_fromfs(void *saddr)
 
 	push	di
 	push	si
-	mov	ax,[bp-2]	! source segment (local variable)
+	mov	ax,[bp+.strlen_fromfs.ds]	! source segment (local variable)
 	mov	es,ax
-	mov	di,[bp+4]	! source address
+	mov	di,[bp+.strlen_fromfs.saddr]	! source address
 	cld
 	xor	al,al		! search for NULL byte
 	mov	cx,#-1
 	rep
 	scasb
-	sub	di,[bp+4]	! calc len +1
+	sub	di,[bp+.strlen_fromfs.saddr]	! calc len +1
 	dec	di
-	mov	[bp-6],di	! save in local var ds
+	mov	[bp+.strlen_fromfs.ds],di	! save in local var ds
 	pop	si
 	pop	di
 #endasm

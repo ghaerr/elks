@@ -38,6 +38,11 @@ Tommy McCabe 	      rocketjet314@yahoo.com		31 May 2004
 
 -------------------------------------------------------------------------------
 
+Thu Jun 03 07:48:25 CST 2004	Eduardo Habkost <ehabkost@conectiva.com.br>
+
+	* Fixed wrong struct field name for arch/i86/drivers/block/doshd.c
+	* Several fixes ro arch/i86/mm/user.c
+
 Web Jun 02 14:16:57 CST 2004    Claudio Matsuoka <claudio@conectiva.com>
 
 	* Added an extra fix to Eduardos memcpy fix.
