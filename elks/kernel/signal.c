@@ -112,9 +112,29 @@ int sys_kill(pid, sig)
 pid_t pid;
 int sig;
 {
-
-	if ((sig < 1) || (sig > NSIG))
+	int count = 0;
+	int err, retval = 0;
+	if ((sig < 1) || (sig > NSIG)) {
 		return -EINVAL;
+	}
+	if (!pid) {
+		return kill_pg(current->pgrp, sig, 0);
+	}
+	if (pid == -1) {
+		register struct task_struct * p;
+		for_each_task(p) {
+			if (p->pid > 1 && p != current) {
+				++count;
+				if ((err = send_sig(sig,p,0)) != -EPERM) {
+					retval = err;
+				}
+			}
+		}
+		return(count ? retval : -ESRCH);
+	}
+	if (pid < 0) {
+		return(kill_pg(-pid,sig,0));
+	}
 	return kill_process(pid, sig, 0);
 }
 
