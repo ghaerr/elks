@@ -6,8 +6,14 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Mon Aug 20 01:22:32 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-Fri Aug 17 17:43:14 GMT 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+	* Reformatted and spellchecked various documents.
+	* Added first draft of Documentation/HTML/VT-100.html which
+	  will document the requirements of a VT-100 interface as
+	  extracted from the Digital VT100 User Guide.
+
+Fri Aug 17 17:43:14 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
 	* Optimized character queue code.
 	* Changed tty code to keep settings after every tty_open()
