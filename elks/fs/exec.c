@@ -56,10 +56,6 @@ static struct minix_supl_hdr msuph;
 
 #endif
 
-#ifdef CONFIG_EXEC_MSDOS
-static struct msdos_exec_hdr mshdr;
-#endif
-
 #define INIT_HEAP 0x1000
 
 int sys_execve(char *filename, char *sptr, size_t slen)
@@ -147,6 +143,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	goto close_readexec;
     }
 
+#if 0
     /* I am so far unsure about whether we need this, or the S_SPLITID format
      */
     if ((unsigned int) mh.hlen == 0x30) {
@@ -162,35 +159,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	stack_top = (seg_t) msuph.msh_dbase;
 	printk("SBASE = %x\n", stack_top);
     }
-
+#endif
     execformat = RUNNABLE_MINIX;
-/* This looks very hackish and it is, but bcc can't handle a goto xyz;
- * and a subsequent xyz:
- * -- simon weijgers
- */
-#ifdef CONFIG_EXEC_MSDOS
-    goto blah;
-#endif
-#endif
-
-#ifdef CONFIG_EXEC_MSDOS
-    /* Read header */
-    tregs->ds = get_ds();
-    filp->f_pos = 0L;
-    result = filp->f_op->read(inode, &file, &mshdr, sizeof(mshdr));
-    tregs->ds = ds;
-
-    if ((result != sizeof(mshdr)) || (mshdr.magic != MSDOS_MAGIC)) {
-	debug1("EXEC: bad header, result %d\n", result);
-	retval = -ENOEXEC;
-	goto close_readexec;
-    }
-    execformat = RUNNABLE_MSDOS;
-#if 0
-    goto blah;
-#endif
-
-  blah:
 #endif
 
     debug("EXEC: Malloc time\n");
@@ -284,13 +254,13 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	: (char *) (len - slen);
     count = slen;
     fmemcpy(dseg, (__u16) ptr, current->mm.dseg, (__u16) sptr, (__u16) count);
-
+     
     /* argv and envp are two NULL-terminated arrays of pointers, located
      * right after argc.  This fixes them up so that the loaded program
      * gets the right strings. */
 
     {
-	__u16 *p = (__u16 *) ptr, nzero = 0, tmp;
+	register __u16 *p = (__u16 *) ptr, nzero = 0, tmp;
 
 	while (nzero < 2) {
 	    p++;
@@ -346,7 +316,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     tregs->sp = ((__u16) ptr);		/* Just below the arguments */
     tregs->cs = cseg;
     tregs->ds = dseg;
-
+    
     {
 	register __ptask currentp = current;
 

@@ -40,10 +40,10 @@ pid_t get_pid(void)
 /*      register int i; */
     register char *pi;
 
-  repeat:
-    if (++last_pid == 32768)
-	last_pid = 1;
-
+repeat:
+    if ( (++last_pid & 0x7fff) == 0 )
+        last_pid = 1;
+                
     pi = 0;
     do {
 	p = &task[(int)pi];

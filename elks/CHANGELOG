@@ -34,6 +34,17 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sun Oct 27 20:32:59 EET 2002 Harry Kalogirou <harkal@gmx.net>
+
+        * Removed non-entity MSDOS exe file support code
+        * Removed the "big header" minix suppord from exec.c
+          since we never use it.
+
+Sun Oct 27 20:08:36 EET 2002 Jay Barr
+
+        * Fixed get_pid() in fork.c to correctly wrap the pid
+          numbers
+
 Sat Oct 26 20:38:26 EEST 2002 Harry Kalogirou <harkal@gmx.net>
         
         * Removed panic from sys_socket() when unsupported protocol
