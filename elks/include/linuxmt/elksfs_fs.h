@@ -30,10 +30,6 @@
 #define MINIX_V2		0x0002	/* minix V2 fs */
 #define ELKSFS_V1		0x0003	/* elksfs V1 */
 
-#ifndef INODE_VERSION(inode)
-#define INODE_VERSION(inode)	inode->i_sb->u.elksfs_sb.s_version
-#endif
-
 /*
  * This is the original elksfs inode layout on disk.
  * Note the 8-bit gid and atime and ctime.

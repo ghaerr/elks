@@ -27,11 +27,8 @@
 #define MINIX_V1		0x0001	/* original minix fs */
 #define MINIX_V2		0x0002	/* minix V2 fs */
 
-#define INODE_VERSION(inode)	inode->i_sb->u.minix_sb.s_version
-
-/*
- * This is the original minix inode layout on disk.
- * Note the 8-bit gid and atime and ctime.
+/*  This is the original minix inode layout on disk.
+ *  Note the 8-bit gid and atime and ctime.
  */
 struct minix_inode {
     __u16 i_mode;

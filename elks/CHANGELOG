@@ -32,6 +32,11 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sun May  5 23:28:40 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Removed unused INODE_VERSION macros from include header files
+	  as they conflicted with each other.
+
 Sun May  5 23:11:33 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Verified that fs/elksfs/*.c is clean as far as `splint -weak`
