@@ -254,19 +254,6 @@ namei_end:
 	return error;
 }
 
-#ifdef BLOAT_LNAMEI
-int lnamei(pathname, res_inode)
-char *pathname;
-struct inode ** res_inode;
-{
-	int error;
-	printd_namei("lnamei: entering namei.\n");
-	error = _namei(pathname,NULL,0,res_inode);
-	printd_namei1("lnamei: returning %d\n", error);
-	return error;
-}
-#endif /* BLOAT_LNAMEI */
-
 /*
  *	namei()
  *
@@ -505,8 +492,9 @@ int mode;
 	return error;
 }
 
-int sys_rmdir(pathname)
-char * pathname;
+int __do_rmthing(pathname, opnum)
+char *pathname;
+int opnum;
 {
 	char * basename;
 	size_t namelen;
@@ -514,51 +502,46 @@ char * pathname;
 	struct inode * dir;
 	register struct inode * dirp;
 	register struct inode_operations * iop;
+	int (*op)();
 
 	error = dir_namei(pathname,&namelen,&basename,NULL,&dir);
 	dirp = dir;
-	if (!error) {
+	if (!error) 
+	{
 		if (!namelen) {
 			error = -ENOENT;
 		} else if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) == 0) {
 			iop = dirp->i_op;
-			if (!iop || !iop->rmdir) {
+			if (!iop)
 				error = -EPERM;
+			switch(opnum)
+			{
+				case 0:
+					op = iop->rmdir;
+					break;
+				case 1:
+					op = iop->unlink;
 			}
+			if(op==NULL)
+				error = -EPERM;
 		}
 		if (error) {
 			iput(dirp);
-		} else error = iop->rmdir(dirp,basename,namelen);
+		} else error = op(dirp,basename,namelen);
 	}
 	return error;
+}
+
+int sys_rmdir(pathname)
+char * pathname;
+{
+	__do_rmthing(pathname, 0);
 }
 
 int sys_unlink(pathname)
 char * pathname;
 {
-	char * basename;
-	size_t namelen;
-	int error;
-	struct inode * dir;
-	register struct inode * dirp;
-	register struct inode_operations * iop;
-
-	error = dir_namei(pathname,&namelen,&basename,NULL,&dir);
-	dirp = dir;
-	if (!error) {
-		if (!namelen) {
-			error = -EPERM;
-		} else if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) == 0) {
-			iop = dirp->i_op;
-			if (!iop || !iop->unlink) {
-				error = -EPERM;
-			}
-		}
-		if (error) {
-			iput(dirp);
-		} else error = iop->unlink(dir,basename,namelen);
-	}
-	return error;
+	__do_rmthing(pathname, 1);
 }
 
 int sys_symlink(oldname,newname)
