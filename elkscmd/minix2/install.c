@@ -79,7 +79,7 @@ pid_t filter(int fd, char **command)
 		return -1;
 	}
 
-	switch ((pid= fork())) {
+	switch ((pid= vfork())) {
 	case -1:
 		report("fork()");
 		return -1;

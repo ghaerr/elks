@@ -138,7 +138,7 @@ formatit(hdq)
   struct wait w;
   int retval;
 
-  if( (pid=fork()) == -1 ) {
+  if( (pid=vfork()) == -1 ) {
     fprintf(stderr,"%s: ",progname) ;
     perror("fork") ;
     exit(1) ;

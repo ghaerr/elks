@@ -632,7 +632,7 @@ static int execute(argv) char **argv;
 {
 	int pid, r, status;
 
-	if ((pid= fork())<0) {
+	if ((pid= vfork())<0) {
 		perr("fork()");
 		return 0;
 	}

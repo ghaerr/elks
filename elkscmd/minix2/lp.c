@@ -33,7 +33,7 @@ void lp(char *file)
 {
 	int pid, status;
 
-	if (file[0] != '/' || (pid= fork()) == 0) {
+	if (file[0] != '/' || (pid= vfork()) == 0) {
 		execl(LPD1, LPD1, file, (char *) nil);
 		if (errno != ENOENT) fatal(LPD1);
 		execl(LPD2, LPD2, file, (char *) nil);

@@ -279,7 +279,7 @@ void execute(int set_mp, char *file)
 		(void) fcntl(err[1], F_SETFD,
 					fcntl(err[1], F_GETFD) | FD_CLOEXEC);
 
-		if ((pid = fork()) < 0) {
+		if ((pid = vfork()) < 0) {
 			fprintf(stderr, "man: cannot fork: %s\n",
 				strerror(errno));
 			exit(1);

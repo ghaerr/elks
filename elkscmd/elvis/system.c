@@ -47,7 +47,7 @@ int system(cmd)
 	}
 
 	signal(SIGINT, SIG_IGN);
-	switch (fork())
+	switch (vfork())
 	{
 	  case -1:						/* error */
 		msg("fork() failed");
@@ -101,7 +101,7 @@ static int rpipe(cmd, in)
 	 */
 	signal(SIGINT, SIG_IGN);
 
-	switch (fork())
+	switch (vfork())
 	{
 	  case -1:						/* error */
 		return -1;
