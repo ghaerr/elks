@@ -4,7 +4,11 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
-Tue Jul 20 18:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Aug 23 11:19 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fixed tty bug that prevented boot/root disk from working.
+
+Wed Aug 18 19:40 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added vfork() capability.
 
