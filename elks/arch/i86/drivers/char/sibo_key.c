@@ -133,7 +133,7 @@ void AddQueue(unsigned char Key)
     register struct tty *ttyp = &ttys[Current_VCminor];
 
     if (ttyp->inq.size != 0)
-	chq_addch(&ttyp->inq, Key);
+	chq_addch(&ttyp->inq, Key, 0);
 }
 
 /*
