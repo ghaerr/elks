@@ -1,3 +1,20 @@
+VERSION 0.0.83 NOTES
+--------------------
+
+	SIBO keyboard fixed by Simon Wood.
+	Inode problems fixed.
+	ssd driver fix.
+	suid/sgid support added by Mario Frasca.
+	Addition netboot code by Christop Plattner.
+	Made 64K buffer cache an option.
+	Added raw move for keyboard for games use.
+	Added support for interrupt chars to serial code.
+	Added swedish keyboard map.
+	Fixed select code for descriptors file descriptors greater than 7.
+	Fixed socket disconnection code so nano sockets now work
+	with nano-X.
+	
+
 VERSION 0.0.82 NOTES
 --------------------
 
