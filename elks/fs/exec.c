@@ -183,7 +183,7 @@ blah:
 	 * for (at least) 64K
 	 */
 	len=(mh.chmem+15)&~15L;
-	if(len>65535L)
+	if(len>0x10000L)
 	{
 		retval=-ENOMEM;
 		mm_free(cseg);
