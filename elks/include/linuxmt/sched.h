@@ -45,13 +45,7 @@ struct task_struct
 {
 /* Executive stuff */
 	__registers t_regs;
-#if 1
 	__pptr t_enddata, t_begstack, t_endbrk, t_endseg;
-#else
-	__uint t_num;			/* What is this for? */
-	/* Most of these are not used! */
-	__pptr t_begcode, t_endcode, t_begdata, t_endtext, t_enddata, t_begstack, t_endstack, t_endbrk; 
-#endif
 /* Kernel info */
 	pid_t pid,ppid;
 	pid_t session;
@@ -60,24 +54,23 @@ struct task_struct
 /* Scheduling + status variables */
 	__s16 state;
         __u32 timeout;                  /* for select() */
+        struct wait_queue *waitpt;	/* Wait pointer */
+        __u16 pollhash;
         struct task_struct *next_run, *prev_run;
 	struct file_struct files;	/* File system structure */
-#ifndef CONFIG_NOFS
 	struct fs_struct fs;		/* File roots */
-#endif
 	struct mm_struct mm;		/* Memory blocks */
 	pid_t pgrp;
 	struct tty * tty;
+/*	__u8 link_count;		/* Symlink loop counter, now global */
 	struct task_struct *p_parent, *p_prevsib, *p_nextsib, *p_child;	 
-  	struct wait_queue * child_wait;
+  	struct wait_queue child_wait;
 	pid_t child_lastend;
 	int lastend_status;
 	struct inode * t_inode;
 	sigset_t signal;		/* Signal status */
 	struct signal_struct sig;	/* Signal block */
-#ifdef CONFIG_CORE_DUMP
 	int dumpable;			/* Can core dump */
-#endif
 #ifdef CONFIG_OLD_SCHED
 	__uint t_count, t_priority;	/* priority scheduling elements */
 	__s32 counter;			/* Time counter (unused so far) */
@@ -120,7 +113,5 @@ extern struct timeval xtime;
 
 #define for_each_task(p) \
 	for (p = &task[0] ; p!=&task[MAX_TASKS]; p++ )
-
-/* void add_wait_queue(struct wait_queue ** p, struct wait_queue * wait); */
 
 #endif
