@@ -299,7 +299,7 @@ void init_IRQ()
 {
 	register struct irqaction *irq = irq_action + 16;
 	int ct;
-#ifdef ROM_USE_ORG_INTMASK       /* for example Debugger :-) */
+#ifdef CONFIG_HW_259_USE_ORIGINAL_MASK       /* for example Debugger :-) */
         cache_21 = inb_p(0x21);
 #endif
 

@@ -110,46 +110,46 @@ CONFIG_ROM_IS86
 	80486+	The 80486 and later processors.
 
 System has no maths coprocessor.
-ROM_NOFPU
+CONFIG_HW_NO_FPU
   Saying yes will compile the code for use in systems without a
   maths coprocessor.
 
 System has no keyboard BIOS support.
-ROM_NOKBDBIOS
+CONFIG_HW_NO_KEYBOARD_BIOS
   Saying yes will compile the code for systems that do not support
   the Keyboard BIOS interrupt 16.
 
 System has no VGA video adapter
-ROM_NOVGA
+CONFIG_HW_NO_VGA
   Saying yes will compile the code without support for VGA video
   adapters, but will still allow use on systems with MDA, CGA or
   EGA adapters.
 
 System has no PS/2 pointing device
-ROM_NOPS2MOUSE
+CONFIG_HW_NO_PS2_MOUSE
   Saying yes will compile the code without PS/2 pointing device
   support.
 
 System has no hard disk (in 0.76 should be "y")
-ROM_NOHDD
+CONFIG_HW_NO_HARD_DRIVE
   Saying yes will compile the code without hard disk support 
   (in ELKS v0.76 this should always be yes)
 
 System has no floppy disk
-ROM_NOFLOPPY
+CONFIG_HW_NO_FLOPPY_DRIVE
   Saying yes will compile the code without floppy support.
 
 Get extended memory size via BIOS-Int 15
-__ROM_EXTMEM
+CONFIG_MEM_EXTENDED_MEMORY
   Saying yes will allow ELKS to get the extended memory size 
   by calling BIOS Int 15 (function 88).
 
 Extended memory size in kB
-ROM_EXTMEMSIZE
+CONFIG_MEM_EXTENDED_MEMORY_SIZE
   Specify howmany K of extended memory is in the target system.
 
 Get fontinfo via CRT-BIOS (40h:85h)
-__ROM_VIDEO_HOC
+CONFIG_HW_VIDEO_HOC
   Saying yes will get the System font info using the CRT-BIOS at
   40h:85h.
 
@@ -159,35 +159,35 @@ ROM_VIDEO_HIGHOFCHARACTER
   pixels.
 
 Lines per page
-ROM_HIGH_OF_CRT
+CONFIG_HW_VIDEO_LINES_PER_SCREEN
   Specify the number of lines that can be displayed on the screen.
 
 # Absolute segment
 # ~~~~~~~~~~~~~~~~
 
 Codesegment for setup.S      (SEG, size ca. 0x60 ROM)
-ROM_SETUP_CODE
+CONFIG_ROM_SETUP_CODE
   Code segment location for the setup code when programmed into a ROM.
   This is usually the base segment address of the ROM.
 
 Codesegment kernel           (SEG, ca. 64k ROM)
-ROM_KERNEL_CODE
+CONFIG_ROM_KERNEL_CODE
   Code segment location for the kernel code when programmed into a ROM.
   This is usually the base segment address of the ROM + 0x60.
 
 Datasegment for setup.S      (SEG, size ca. 0x20 RAM)
-ROM_SETUP_DATA
+CONFIG_ROM_SETUP_DATA
   Segment location in RAM where the setup code keeps the values it
   is going to pass to the kernel.
 
 Datasegment (IRQ-Scheduler)  (SEG, size ca. 0x10 RAM)
-ROM_KERNEL_IRQDATA
+CONFIG_ROM_IRQ_DATA
   Segment location of an absolute area of RAM where the kernel
   stores certain variables that it must be able to access
   when it does not know where its data segment is.
 
 Datasegment (DATA+BSS+STACK) (SEG, ca. 64k RAM)
-ROM_KERNEL_DATA
+CONFIG_ROM_KERNEL_DATA
   Segment location of the kernels data segment, used only when the
   kernel image is in ROM.
 
@@ -195,43 +195,43 @@ ROM_KERNEL_DATA
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Start address of ROM (for offset in image-file)
-ROM_BASIS
+CONFIG_ROM_BASE
   Set the memory address of the executable part of the code in HEX (0x????),
   this is also used to set the offset in the ROM image file.
 
 Area with BIOS Checksum in kbytes (normally 64)
-ROM_CHECKSUM_SIZE
+CONFIG_ROM_CHECKSUM_SIZE
   Size of the ROM image to be prepared.
   This value is stored in the ROM header,
   and the whole ROM must checksum to zero.
 
 Make image-file bootable by reset
-ROM_RESET_VEC
+CONFIG_ROM_BOOTABLE_BY_RESET
   Saying yes will allow the image file to boot via a warm boot sequence.
 
 Address jumped to after reset (offset in image)
-ROM_RESET_ADDR
+CONFIG_ROM_RESET_ADDRESS
   The offset in the image-file that should be jumped to for a warm boot.
 
 Add startup module to image (BIOS-functions)
-ROM_ADD_BIOS
+CONFIG_ROM_ADD_BIOS_IMAGE
   Saying yes will allow you to add a BIOS to the image-file.
 
 Name of module
-ROM_EXT_MOD1
+CONFIG_ROM_BIOS_MODULE
   The location of the BIOS image to add to the ELKS image-file.
 
 Module codesegment address
-ROM_EXT_MOD1_ADDR
-  The memory address to jump to after BIOS functions have ran (See ROM_BASIS).
+CONFIG_ROM_BIOS_MODULE_ADDR
+  The memory address to jump to after BIOS functions have ran (See CONFIG_ROM_BASE).
 
 Use EPROM-Simulator after make
-ROM_E_SIMULATOR
+CONFIG_ROM_USE_SIMULATOR
   Saying yes will load an EPROM simulator/emulator after make has finished.
 
 # Cannot realy create help for a string var
 Programcall
-ROM_E_SIM_CALL
+CONFIG_ROM_SIMULATOR_PROGRAM
   The location of the executable to run for the EPROM simulator/emulator,
   including command line perameters etc.
 
@@ -239,14 +239,14 @@ ROM_E_SIM_CALL
 # ~~~~~~~~~~~~~~~~~~~
 
 ROM-CODE debug infos
-ROM_CODE_DEBUG
+CONFIG_ROM_DEBUG
   Saying yes will compile the ROM image with all debug information turned on.
 
 # ROM code configuration
 # ~~~~~~~~~~~~~~~~~~~~~~
 
 Use IRQ-Mask of 8259 at boot time as default
-ROM_USE_ORG_INTMASK
+CONFIG_HW_259_USE_ORIGINAL_MASK
   Saying yes will force the irq system to read 
   in the original interrupt mask befor it starts sorting
   out interrupts. 
@@ -254,16 +254,16 @@ ROM_USE_ORG_INTMASK
   This should only be used by kernel hackers.
 
 Ticks for BogoMIPS (0 = check at boot time)
-ROM_BOGOMIPS
+CONFIG_BOGOMIPS
   Enter the number of ticks for the BogoMIPS (integer)
 
 NO Floppy count at 40:10 use INT13.08
-ROM_GETFLOPPY_VIA_INT13
+CONFIG_HW_USE_INT13_FOR_FLOPPY
   Saying yes will get the number of floppy drive via INT-13 function 08,
   (get drive perameters (on PC/XT only works on Hard Drives)).
 
 Dont seek to get Floppy information (use I13.8)
-GET_DISKPARAM_BY_INT13_NO_SEEK
+CONFIG_HW_NO_SEEK_FOR_FLOPPY
   Saying yes will explicitly tell ELKS not to use Int13.08 to get 
   Floppy information (Int 13.08 doesn't work on PC/XT floppy drives).
 

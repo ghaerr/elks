@@ -77,9 +77,9 @@
   SYSSEG   = DEF_SYSSEG	! system loaded at 0x10000 (65536).
   SETUPSEG = DEF_SETUPSEG	! this is the current code segment
 #else
-  INITSEG  = ROM_SETUP_DATA
-  SYSSEG   = ROM_KERNEL_CODE
-  SETUPSEG = ROM_SETUP_CODE
+  INITSEG  = CONFIG_ROM_SETUP_DATA
+  SYSSEG   = CONFIG_ROM_KERNEL_CODE
+  SETUPSEG = CONFIG_ROM_SETUP_CODE
 #endif
 
 .text
@@ -200,8 +200,8 @@ start_os:
 
 ! Get memory size (extended mem, kB)
 
-#ifdef ROM_EXTMEMSIZE
-	mov	[2],#ROM_EXTMEMSIZE
+#ifdef CONFIG_MEM_EXTENDED_MEMORY_SIZE
+	mov	[2],#CONFIG_MEM_EXTENDED_MEMORY_SIZE
 #else
 	mov	ah,#0x88
 	int	0x15
@@ -210,7 +210,7 @@ start_os:
 
 ! set the keyboard repeat rate to the max
 
-#ifndef ROM_NOKBDBIOS
+#ifndef CONFIG_HW_NO_KEYBOARD_BIOS
 	mov	ax,#0x0305
 	xor	bx,bx		! clear bx
 	int	0x16
@@ -218,7 +218,7 @@ start_os:
 
 ! check for EGA/VGA and some config parameters
 
-#ifndef ROM_NOVGA
+#ifndef CONFIG_HW_NO_VGA
  	mov	ah,#0x12
 	mov	bl,#0x10
 	int	0x10
@@ -239,8 +239,8 @@ start_os:
 !	call	chsvga
 #else
         movb  [15],#0           ! no VGA in system
-#ifdef ROM_HIGH_OF_CRT
-        mov   al,#ROM_HIGH_OF_CRT
+#ifdef CONFIG_HW_VIDEO_LINES_PER_SCREEN
+        mov   al,#CONFIG_HW_VIDEO_LINES_PER_SCREEN
 #else
         mov   al,#0x19          ! high of display (0x19 == 25 column)
 #endif
@@ -273,7 +273,7 @@ novga:	mov	[14],al
 !	mov	ax,#INITSEG     !ds was not changed sinse good_gig
 !	mov	ds,ax
 	mov	[0x1ff],#0	! default is no pointing device
-#ifndef ROM_NOPS2MOUSE
+#ifndef CONFIG_HW_NO_PS2_MOUSE
 	int	0x11		! int 0x11: equipment determination
 	test	al,#0x04	! check if pointing device installed
 	jz	no_psmouse
@@ -292,10 +292,10 @@ no_psmouse:
 	rep
 	stosw
 	pop	es
-#ifndef ROM_NOHDD
+#ifndef CONFIG_HW_NO_HARD_DRIVE
 !	call	gethd
 #endif
-#ifndef ROM_NOFLOPPY
+#ifndef CONFIG_HW_NO_FLOPPY_DRIVE
 	call	getfloppy
 #endif
 	mov	ax,#INITSEG
@@ -312,7 +312,7 @@ no_psmouse:
 	lea si,load_kernel
 	call prtstr
 
-   	mov ax,#ROM_KERNEL_CODE   ;the ROM image
+   	mov ax,#CONFIG_ROM_KERNEL_CODE   ;the ROM image
    	mov ds,ax
 
 ! test, if correct a.out header
@@ -349,7 +349,7 @@ kernel_to_big:  .byte 13,10
 
 
 aout_ok:
-   	mov ax,#ROM_KERNEL_DATA
+   	mov ax,#CONFIG_ROM_KERNEL_DATA
    	mov es,ax
 
    	mov cx,[10]    ;hi of size
@@ -383,7 +383,7 @@ size_ok:
         mov si,[0x0c]  ;data size
         mov bx,[0x08]  ;text size
 
-        mov ax,#ROM_KERNEL_DATA
+        mov ax,#CONFIG_ROM_KERNEL_DATA
         mov ds,ax
         mov ss,ax    ;es is set
         mov sp,#0xfffe
@@ -423,7 +423,7 @@ size_ok:
 	push	si	! Data size
 	push	bx	! Text size
 
- #ifdef ROM_CODE_DEBUG
+ #ifdef CONFIG_ROM_DEBUG
         int 3               ;break for debugger
  #endif
         jmp far SYSSEG+2:3
@@ -776,7 +776,7 @@ con_cp1:
 	mov	ds,ax
 	mov	[0x20],cl
 
-#ifndef ROM_NOFPU
+#ifndef CONFIG_HW_NO_FPU
 	fninit
 	fnstcw	copro
 	mov	ax,copro
@@ -840,7 +840,7 @@ con_cp2:
 queue:
 #ifdef CONFIG_ROMCODE
         push ds
-        mov ax,#ROM_KERNEL_DATA
+        mov ax,#CONFIG_ROM_KERNEL_DATA
         mov es,ax
         mov ax,cs
         mov ds,ax
@@ -882,7 +882,7 @@ q_end:	nop
 	sti
 
 #ifdef CONFIG_ROMCODE
-        jmp far ROM_SETUP_CODE:queue_end
+        jmp far CONFIG_ROM_SETUP_CODE:queue_end
 queue_end:
 #endif
 
@@ -894,7 +894,7 @@ queue_end:
 ! Determine the number and type of floppy disks
 ! attached to our system.
 !
-#ifndef ROM_NOFLOPPY
+#ifndef CONFIG_HW_NO_FLOPPY_DRIVE
 getfloppy:
 	mov	ax,#INITSEG
 	mov	es,ax
@@ -987,7 +987,7 @@ floppies: dw f360, f1200, f720, f1440, f2880, f2880
 !
 ! gethd
 !
-#ifndef ROM_NOHDD
+#ifndef CONFIG_HW_NO_HARD_DRIVE
 gethd:
 	mov	ax,#INITSEG
 	mov	ds,ax
@@ -1093,7 +1093,7 @@ v_id3:	db 0,0,0,0
 !
 f_none:	.ascii "no fpu"
 	db 0
-#ifndef ROM_NOFPU
+#ifndef CONFIG_HW_NO_FPU
 f8087:	.ascii "8087"
 	db 0
 f80287:	.ascii "80287"
@@ -1102,7 +1102,7 @@ f80387: .ascii "80387 or above"
 	db 0
 #endif
 fpu_t:	.word f_none
-#ifndef ROM_NOFPU
+#ifndef CONFIG_HW_NO_FPU
          .word f8087, f80287, f80387
 #endif
 
@@ -1178,7 +1178,7 @@ m_x86:	.ascii "Unknown Proc."
 	db 0
 #endif
 
-#ifndef ROM_NOFPU
+#ifndef CONFIG_HW_NO_FPU
 copro:	dw 0
 #endif
 

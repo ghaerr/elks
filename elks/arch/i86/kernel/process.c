@@ -58,7 +58,7 @@
   
 ! This is from irqtab.c
 /*
- *  This code is either in codesegment or ROM_KERNEL_IRQDATA 
+ *  This code is either in codesegment or CONFIG_ROM_IRQ_DATA 
  *  The CS-Code must always placed in irqtab.c, because the
  *  linker doesnt store them on block.
  */
@@ -184,7 +184,7 @@ _syscall_int:
 
         push ax
 #ifdef CONFIG_ROMCODE
-        mov ax,#ROM_KERNEL_IRQDATA
+        mov ax,#CONFIG_ROM_IRQ_DATA
 #else
         mov ax,cs
 #endif        
@@ -223,7 +223,7 @@ _syscall_int:
 !
 	sti
 #ifdef CONFIG_ROMCODE
-        mov ax,#ROM_KERNEL_IRQDATA
+        mov ax,#CONFIG_ROM_IRQ_DATA
 #else
         mov ax,cs
 #endif        

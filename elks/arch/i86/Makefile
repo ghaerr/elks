@@ -122,14 +122,14 @@ nbImage: Image boot/netbootsect
 endif
 else
 
-ifeq ($(ROM_RESET_VEC), y)
-  RVECT = -r $(ROM_RESET_ADDR)   
+ifeq ($(CONFIG_ROM_BOOTABLE_BY_RESET), y)
+  RVECT = -r $(CONFIG_ROM_RESET_ADDRESS)   
 endif
 
 Image: tools boot/setup boot/system  
-	tools/mkurlader $(RVECT) -c $(ROM_SETUP_CODE) $(ROM_CHECKSUM_SIZE) Image $(ROM_BASIS) -a boot/setup $(ROM_SETUP_CODE) -s boot/system $(ROM_KERNEL_CODE) $(ROM_EXT_MOD1) $(ROM_EXT_MOD1_ADDR)
+	tools/mkurlader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(CONFIG_ROM_CHECKSUM_SIZE) Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
 	sync
-	$(ROM_E_SIM_CALL)
+	$(CONFIG_ROM_SIMULATOR_PROGRAM)
 
 endif
 #-----
@@ -141,9 +141,9 @@ boot: Image
 disk: boot
 
 setup: $(ARCH_DIR)/tools $(ARCH_DIR)/boot/setup  
-	tools/mkurlader $(RVECT) -c $(ROM_SETUP_CODE) $(ROM_MAX_SETUP_SIZE) Image $(ROM_BASIS) -a boot/setup $(ROM_SETUP_CODE) -s boot/system $(ROM_KERNEL_CODE) $(ROM_EXT_MOD1) $(ROM_EXT_MOD1_ADDR)
+	tools/mkurlader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(ROM_MAX_SETUP_SIZE) Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
 	sync
-	$(ROM_E_SIM_CALL)
+	$(CONFIG_ROM_SIMULATOR_PROGRAM)
 endif
 
 #########################################################################

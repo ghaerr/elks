@@ -212,7 +212,7 @@ int bioshd_getfdinfo()
 	int drive, ndrives;
 
 	/* We get the # of drives from the BPB, which is PC-friendly */
-#ifdef ROM_GETFLOPPY_VIA_INT13
+#ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
         BD_AX = BIOSHD_DRIVE_PARMS;
         BD_DX = 0;             /* only the number floppies */
         BD_IRQ = BIOSHD_INT;
@@ -228,7 +228,7 @@ int bioshd_getfdinfo()
 		BD_DX = drive;
 		BD_BX = 0;
 		BD_IRQ = BIOSHD_INT;
-#ifdef ROM_GETFLOPPY_VIA_INT13
+#ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
                 call_bios();
                 if ((!CARRY_SET) && ((BD_AX & 0xff00) == 0)) {
 		   drive_info[drive+2] = fd_types[BD_BX - 1];
@@ -382,7 +382,7 @@ struct file *filp;
 		dma_avail = 0;
 #endif
 		/* first probe for track number */
-#ifndef GET_DISKPARAM_BY_INT13_NO_SEEK
+#ifndef CONFIG_HW_NO_SEEK_FOR_FLOPPY
 		for (count = 0; count < 2; count++)
 		{
 		/* we probe on sector 1, which is safe for all formats */

@@ -54,7 +54,7 @@ _call_bios:
 	mov ax, ds		
 
 #ifdef CONFIG_ROMCODE
-        mov bx,#ROM_KERNEL_IRQDATA
+        mov bx,#CONFIG_ROM_IRQ_DATA
         mov es,bx       ;es is already stored
         seg es
 #else
@@ -110,7 +110,7 @@ _call_bios:
  	push ax 
 
 #ifdef CONFIG_ROMCODE
-        mov ax,#ROM_KERNEL_IRQDATA
+        mov ax,#CONFIG_ROM_IRQ_DATA
         mov ds,ax       ;we can use ds for one fetch
 #else
    * We can find our DS from CS now.

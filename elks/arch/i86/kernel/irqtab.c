@@ -7,7 +7,7 @@
 
 
 /* moving variables from code segment to an extra segment
-/  ROM_KERNEL_IRQDATA for the ROM_CODE-Version
+/  CONFIG_ROM_IRQ_DATA for the ROM_CODE-Version
 /  ELKS 0.76 7/1999 Christian Mard”ller  (chm@kdt.de)
 /  */
 
@@ -40,7 +40,7 @@
 
 #asm
 /* In ROM-Mode we must generate a physical 3th segment :-) 
-/  The segmentaddress is given by ROM_KERNEL_IRQDATA,
+/  The segmentaddress is given by CONFIG_ROM_IRQ_DATA,
 /  the offset is constant per #define
 /-------------------------------------------------------*/
 
@@ -98,7 +98,7 @@ void irqtab_init()
 
 ; CS points to this kernel code segment
 ; ES points to page 0  (interrupt table)
-; DS points to the irqdataseg (cs or ROM_KERNEL_IRQDATA)
+; DS points to the irqdataseg (cs or CONFIG_ROM_IRQ_DATA)
 
         push ds
         mov dx,ds      ;the original value
@@ -108,7 +108,7 @@ void irqtab_init()
         mov es,ax      ;intr table
 
 #ifdef CONFIG_ROMCODE
-        mov ax,#ROM_KERNEL_IRQDATA
+        mov ax,#CONFIG_ROM_IRQ_DATA
 #else
         mov ax,cs
 #endif        
@@ -439,7 +439,7 @@ _irqit:
 !	Recover segments
 !
 #ifdef CONFIG_ROMCODE
-        mov bx,#ROM_KERNEL_IRQDATA
+        mov bx,#CONFIG_ROM_IRQ_DATA
 #else
         mov bx,cs
 #endif        
@@ -501,7 +501,7 @@ switched:
 !	routine on a reschedule.
 ! */
 #ifdef CONFIG_ROMCODE
-        mov ax,#ROM_KERNEL_IRQDATA
+        mov ax,#CONFIG_ROM_IRQ_DATA
         mov es,ax
         seg es
 	push	stashed_sp
@@ -645,7 +645,7 @@ noschedpop:
 	pop	bx
 	pop	es
 #ifdef CONFIG_ROMCODE
-	mov	ax,#ROM_KERNEL_IRQDATA
+	mov	ax,#CONFIG_ROM_IRQ_DATA
 	mov	ds,ax
 #else
 	seg	cs
@@ -687,7 +687,7 @@ label1:
 	push	bx
 	push    ds                 
 #ifdef CONFIG_ROMCODE
-        mov bx,#ROM_KERNEL_IRQDATA
+        mov bx,#CONFIG_ROM_IRQ_DATA
 #else
         mov bx,cs 
 #endif

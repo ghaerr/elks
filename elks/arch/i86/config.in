@@ -46,62 +46,62 @@ if [ "$CONFIG_ROMCODE" = "y" ]; then
 		 80386		CONFIG_ROM_IS386	\
 		 80486+		CONFIG_ROM_IS486"		8086
 
-	bool 'System has no maths coprocessor'		ROM_NOFPU y
-	bool 'System has no keyboard BIOS support'	ROM_NOKBDBIOS y
-	bool 'System has no VGA adapter'		ROM_NOVGA n
-	bool 'System has no PS/2 pointing device'	ROM_NOPS2MOUSE y
-	bool 'System has no hard drive'			ROM_NOHDD y
-	bool 'System has no floppy drive'		ROM_NOFLOPPY
-	bool 'Get extended memory size using BIOS Int 15' __ROM_EXTMEM n
-	if [ "$__ROM_EXTMEM" != "y" ]; then
-	    int 'Extended memory size in kB'		ROM_EXTMEMSIZE 0
+	bool 'System has no maths coprocessor'		CONFIG_HW_NO_FPU y
+	bool 'System has no keyboard BIOS support'	CONFIG_HW_NO_KEYBOARD_BIOS y
+	bool 'System has no VGA adapter'		CONFIG_HW_NO_VGA n
+	bool 'System has no PS/2 pointing device'	CONFIG_HW_NO_PS2_MOUSE y
+	bool 'System has no hard drive'			CONFIG_HW_NO_HARD_DRIVE y
+	bool 'System has no floppy drive'		CONFIG_HW_NO_FLOPPY_DRIVE
+	bool 'Get extended memory size using BIOS Int 15' CONFIG_MEM_EXTENDED_MEMORY n
+	if [ "$CONFIG_MEM_EXTENDED_MEMORY" != "y" ]; then
+	    int 'Extended memory size in kB'		CONFIG_MEM_EXTENDED_MEMORY_SIZE 0
 	fi
-	bool 'Get fontinfo via CRT-BIOS (40h:85h)'	__ROM_VIDEO_HOC y
-	if [ "$__ROM_VIDEO_HOC" != "y" ]; then
+	bool 'Get fontinfo via CRT-BIOS (40h:85h)'	CONFIG_HW_VIDEO_HOC y
+	if [ "$CONFIG_HW_VIDEO_HOC" != "y" ]; then
 	    int 'High of character in lines'		ROM_VIDEO_HIGHOFCHARACTER 8
-	    int 'Lines per page'			ROM_HIGH_OF_CRT 25
+	    int 'Lines per page'			CONFIG_HW_VIDEO_LINES_PER_SCREEN 25
 	fi
 
 	comment 'absolute segment location of target system'
-	hex 'Code segment for setup.S (SEG, size ca. 0x60 ROM)' ROM_SETUP_CODE 0xe000
-	hex 'Code segment kernel (SEG, ca. 64k ROM)' ROM_KERNEL_CODE 0xe060
-	hex 'Data segment for setup.S (SEG, size ca. 0x20 RAM)' ROM_SETUP_DATA 0x0060
-	hex 'Data segment (IRQ-Scheduler) (SEG, size ca. 0x10 RAM)' ROM_KERNEL_IRQDATA 0x0080
-	hex 'Data segment (DATA+BSS+STACK) (SEG, ca. 64k RAM)' ROM_KERNEL_DATA 0x0090
+	hex 'Code segment for setup.S (SEG, size ca. 0x60 ROM)' CONFIG_ROM_SETUP_CODE 0xe000
+	hex 'Code segment kernel (SEG, ca. 64k ROM)' CONFIG_ROM_KERNEL_CODE 0xe060
+	hex 'Data segment for setup.S (SEG, size ca. 0x20 RAM)' CONFIG_ROM_SETUP_DATA 0x0060
+	hex 'Data segment (IRQ-Scheduler) (SEG, size ca. 0x10 RAM)' CONFIG_ROM_IRQ_DATA 0x0080
+	hex 'Data segment (DATA+BSS+STACK) (SEG, ca. 64k RAM)' CONFIG_ROM_KERNEL_DATA 0x0090
 
 	comment 'Information for ROM-Image generator'
-	hex 'Start address of ROM (for offset in image-file)' ROM_BASIS 0xe000
-	int 'Area with BIOS Checksum in kbytes (normally 64)' ROM_CHECKSUM_SIZE 64
-	bool 'Make image-file bootable by reset'	ROM_RESET_VEC n
-	if [ "$ROM_RESET_VEC" = "y" ]; then
-	    hex 'Address jumped after reset (offset in image)' ROM_RESET_ADDR 0x0003
-	    bool 'Add startup module to image (BIOS-functions)' ROM_ADD_BIOS n
-	    if [ "$ROM_ADD_BIOS" = "y" ]; then
-		string 'Name of module'			ROM_EXT_MOD1 "bios/bioscode.bin"
-		hex 'Module code segment address'	ROM_EXT_MOD1_ADDR 0xf000
+	hex 'Start address of ROM (for offset in image-file)' CONFIG_ROM_BASE 0xe000
+	int 'Area with BIOS Checksum in kbytes (normally 64)' CONFIG_ROM_CHECKSUM_SIZE 64
+	bool 'Make image-file bootable by reset'	CONFIG_ROM_BOOTABLE_BY_RESET n
+	if [ "$CONFIG_ROM_BOOTABLE_BY_RESET" = "y" ]; then
+	    hex 'Address jumped after reset (offset in image)' CONFIG_ROM_RESET_ADDRESS 0x0003
+	    bool 'Add startup module to image (BIOS-functions)' CONFIG_ROM_ADD_BIOS_IMAGE n
+	    if [ "$CONFIG_ROM_ADD_BIOS_IMAGE" = "y" ]; then
+		string 'Name of module'			CONFIG_ROM_BIOS_MODULE "bios/bioscode.bin"
+		hex 'Module code segment address'	CONFIG_ROM_BIOS_MODULE_ADDR 0xf000
 	    fi
 	fi
-	bool 'Use EPROM Simulator after make'		ROM_E_SIMULATOR n
-	if [ "$ROM_E_SIMULATOR" = "y" ]; then
-	    string 'Program call' ROM_E_SIM_CALL "/usr/bin/simu -t18 Image"
+	bool 'Use EPROM Simulator after make'		CONFIG_ROM_USE_SIMULATOR n
+	if [ "$CONFIG_ROM_USE_SIMULATOR" = "y" ]; then
+	    string 'Program call' CONFIG_ROM_SIMULATOR_PROGRAM "/usr/bin/simu -t18 Image"
 	fi
 
 	comment 'Generate debug code and information'
-	bool 'ROM-CODE debug information'		ROM_CODE_DEBUG
+	bool 'ROM-CODE debug information'		CONFIG_ROM_DEBUG
     endmenu
 
 
     mainmenu_option next_comment
 	comment 'ROM-CODE kernel-configuration'
 
-	bool 'Use IRQ-Mask of 8259 at boottime as default'	ROM_USE_ORG_INTMASK n
-#	bool 'Different Systemclock at Timer 8253'		ROM_CONFIG_8253 n
-#	if [ "$ROM_CONFIG_8253" = "y" ]; then
-#	    hex 'Initvalue for Timerchanel 0 (for 10 ms)'	ROM_8253_100HZ 0x2e9c
+	bool 'Use IRQ-Mask of 8259 at boottime as default'	CONFIG_HW_259_USE_ORIGINAL_MASK n
+#	bool 'Different Systemclock at Timer 8253'		CONFIG_HW_8253_SYSTEM_CLOCK n
+#	if [ "$CONFIG_HW_8253_SYSTEM_CLOCK" = "y" ]; then
+#	    hex 'Initvalue for Timerchanel 0 (for 10 ms)'	CONFIG_HW_8253_VALUE_FOR_100HZ 0x2e9c
 #	fi
-	int 'Ticks for BogoMIPS (0 = check at boottime)'	ROM_BOGOMIPS 0
-	bool 'NO Floppycount at 40:10 use INT13.08'		ROM_GETFLOPPY_VIA_INT13 n 
-	bool 'Dont seek to get Floppy information (use I13.8)' GET_DISKPARAM_BY_INT13_NO_SEEK y
+	int 'Ticks for BogoMIPS (0 = check at boottime)'	CONFIG_BOGOMIPS 0
+	bool 'NO Floppycount at 40:10 use INT13.08'		CONFIG_HW_USE_INT13_FOR_FLOPPY n 
+	bool 'Dont seek to get Floppy information (use I13.8)' CONFIG_HW_NO_SEEK_FOR_FLOPPY y
 #	bool 'CHM-BIOSerweiterungen für Debugger'		CHM_BIOS y
     endmenu
 fi
