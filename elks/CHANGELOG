@@ -6,7 +6,13 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
-Sun Jun 17 19:47:58 BST 2001
+Mon Jun 18 00:18:55 BST 2001	Alan Cox  <alan@redhat.com>
+	* Fixed bugs in the new tty select code
+	* Added select to pty
+	* Added register keywords to malloc.c to save memory
+	* Fixed double indirection (> 512Kbytes) on minixfs
+
+Sun Jun 17 19:47:58 BST 2001	Alan Cox  <alan@redhat.com>
 	* Moved common code into minix_set_ops - based on a 2.4 change
 	  from mainstream by Al Viro
 	* Chop ltype down to 16 bytes - with our tiny stack 256 is crazy
