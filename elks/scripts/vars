@@ -1,0 +1,32 @@
+#!/bin/bash
+
+cd ~/CVS/Source
+
+function count() {
+    files "${1}"			\
+	| xargs fgrep -cw "${2}"	\
+	| grep -v ':0$'			\
+	| wc -l
+}
+
+function files() {
+    find "${1}" -type f | grep -v 'CHANGELOG$'
+}
+
+function process() {
+    local NEW OLD X Y
+
+    while read OLD NEW ; do
+	X=`count "${1}" "${OLD}"`
+#	if [ $X -gt 0 ]; then
+	    Y=`count "${1}" "${NEW}"`
+	    printf '%3u => %3u for %-31s => %s\n' ${X} ${Y} "${OLD}" "${NEW}"
+#	fi
+    done
+}
+
+function vars() {
+    fgrep CONFIG_ "${1}" | grep -v '[a-z]'
+}
+
+vars elks/CHANGELOG | process elks
