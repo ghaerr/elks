@@ -6,6 +6,10 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Wed Mar 28 08:37 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
+
+	* Change broken definition of pid_t from unsigned to signed.
+
 Mon Mar 26 16:29 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 
 	* Fix long standing file system bug: EBUSY when unmounting,
