@@ -1,0 +1,86 @@
+VERSION 	= 0
+PATCHLEVEL	= 0
+SUBLEVEL	= 85
+PRE		= 2		# If we're not a pre, comment this line
+
+#########################################################################
+# Variables derived directly from the ELKS version number
+
+ifneq (X$PRE, X)
+VSN		= $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)-pre$(PRE)
+else
+VSN		= $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
+endif
+
+DISTDIR 	= elks-$(VSN)
+
+.EXPORT_ALL_VARIABLES:
+
+#########################################################################
+# linuxMT root and backup directories
+
+TOPDIR		= $(shell cd "$(ELKSDIR)" ; \
+			  if [ "$$PWD" != "" ]; then echo $$PWD; \
+						else pwd; fi)
+INCDIR		= $(TOPDIR)/include
+
+TARGET_NB_IMAGE = /tftpboot/elksy/nbImage
+
+#########################################################################
+# Specify architecture
+
+ARCH		= i86
+ARCH_DIR	= arch/$(ARCH)
+
+#########################################################################
+# Specify standard programs and flags
+
+AR		= ar
+
+AS		= as86
+AFLAGS		= -D__KERNEL__ -I $(INCDIR) -0 -j -j
+
+CC		= bcc
+CFLAGS	 	= -D__KERNEL__ -I $(INCDIR) -O -i
+
+CPP		= bcc
+CPFLAGS 	= -D__KERNEL__ -I $(INCDIR) -E
+
+LD		= ld86
+
+ifeq ($(CONFIG_ARCH_SIBO), y)
+LDFLAGS 	= -0 -i -D 0xC00 -H 0x480
+else
+LDFLAGS 	= -0 -i
+endif
+
+LINT		= lclint
+
+#########################################################################
+# Determine current shell
+
+CONFIG_SHELL := $(shell if [ -x "$$bash" ]; then echo $$bash; \
+          else if [ -x /bin/bash ]; then echo /bin/bash; \
+          else echo sh; fi ; fi)
+
+#########################################################################
+# ROOT_DEV specifies the default root-device when making the image. This
+# does not yet work under ELKS. See include/linuxmt/config.h to change
+# the root device.
+
+ROOT_DEV	= FLOPPY
+
+#########################################################################
+# general construction rules
+
+.c.s:
+	$(CC) $(CFLAGS) -0 -nostdinc -Iinclude -S -o $*.s $<
+.cpp.o:
+	$(CPP) $(CPFLAGS) -o $*.o $<
+.s.o:
+	$(AS) $(AFLAGS) -c -o $*.o $<
+.S.s:
+	gcc -D__KERNEL__ -I $(INCDIR) -E -traditional -o $*.s $<
+
+#########################################################################
+# End of standard rules
