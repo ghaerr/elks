@@ -108,8 +108,8 @@ static void tcpdev_accept()
 	struct tcpcb_s *cb;
 	__u16  sock;
    	
-    db = sbuf;
-    sock = db->sock;
+	db = sbuf;
+	sock = db->sock;
 	n = tcpcb_find_by_sock(sock);
 	if(!n || n->tcpcb.state != TS_LISTEN){
 		retval_to_sock(db->sock,-EINVAL);
@@ -148,19 +148,21 @@ struct tcpcb_s *cb;
    	struct tdb_accept_ret *ret_data;
    	struct tcpcb_s *listencb;
 	
-	listencb = tcpcb_find_by_sock(cb->sock);
+	listencb = &tcpcb_find_by_sock(cb->sock)->tcpcb;
 	
 	ret_data = sbuf;
-	ret_data->type = 0;
+	ret_data->type = 123;
 	ret_data->ret_value = 0;
 	ret_data->sock = cb->sock;
 	ret_data->addr_ip = cb->remaddr;
 	ret_data->addr_port = cb->remport;
 	
-	cb->sock = listencb->newsock;
-	cb->unaccepted = 0;
-	
-	write(tcpdevfd, sbuf, sizeof(struct tdb_accept_ret));
+	if(listencb->newsock != 0){
+		cb->sock = listencb->newsock;
+		cb->unaccepted = 0;
+		listencb->newsock = 0;
+		write(tcpdevfd, sbuf, sizeof(struct tdb_accept_ret));
+	}
 }
 
 static void tcpdev_connect()
@@ -168,7 +170,7 @@ static void tcpdev_connect()
 	struct tdb_connect *db;
    	struct tcpcb_list_s *n;	
 
-    db = sbuf;
+	db = sbuf;
    		
 	n = tcpcb_find_by_sock(db->sock);
 	if(!n || n->tcpcb.state != TS_CLOSED){
@@ -215,6 +217,7 @@ void tcpdev_read()
    	
 	db = sbuf;
 	sock = db->sock;
+
 	n = tcpcb_find_by_sock(sock);
 	if(!n){
 		printf("KTCP Panic in read\n");
@@ -307,18 +310,18 @@ static void tcpdev_write()
    	struct tdb_return_data *ret_data;
 	__u16  sock;
 
-    db = sbuf;
-    sock = db->sock;
-    
-    /* This is a bit ugly but I'm to lazy right now */
-    if(tcp_retrans_memory > TCP_RETRANS_MAXMEM){
+	db = sbuf;
+	sock = db->sock;
+
+	/* This is a bit ugly but I'm to lazy right now */
+	if(tcp_retrans_memory > TCP_RETRANS_MAXMEM){
 		retval_to_sock(sock, -ERESTARTSYS);    	
 		return;
 	}
 
 	n = tcpcb_find_by_sock(sock);
 	if(!n){
-		printf("KTCP Oops in write(unknown sock:0x%x)\n",sock);
+		printf("KTCP panic in write (unknown sock:0x%x)\n",sock);
 		return;
 	}
 	
