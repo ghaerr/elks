@@ -14,14 +14,7 @@ MT_DIR     = $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
 TOPDIR     = $(MT_DIR)
 
 ARCH = i86
-ARCH_DIR = arch/i86
-BACKUP_DIR = /usr/local/src/elk
-
-#
-# if you want the ram-disk device, define this to be the
-# size in blocks.
-#
-RAMDISK = -DRAMDISK=512
+ARCH_DIR = arch/$(ARCH)
 
 AS86	=as86 -0
 LD86	=ld86 -0
@@ -29,7 +22,7 @@ LD86	=ld86 -0
 AS	=as
 LD	=ld86
 LDFLAGS	=-0 -i
-CC	=bcc $(RAMDISK)
+CC	=bcc
 # This is where I broke your work :-) MG
 CFLBASE	=-D__KERNEL__ -O
 CFLAGS	=$(CFLBASE) -i
@@ -43,11 +36,10 @@ CONFIG_SHELL := $(shell if [ -x "$$bash" ]; then echo $$bash; \
 
 #
 # ROOT_DEV specifies the default root-device when making the image.
-# This can be either FLOPPY, /dev/xxxx or empty, in which case the
-# default of /dev/hd6 is used by 'build'.
+# This does not yet work under ELKS. See include/linuxmt/config.h to
+# change the root device.
 #
 ROOT_DEV=FLOPPY
-SWAP_DEV=/dev/hd2
 
 #########################################################################
 # general construction rules
@@ -245,10 +237,6 @@ depclean:
 distclean:	clean depclean
 	rm -f .config* .menuconfig*
 	rm -f scripts/lxdialog/*.o scripts/lxdialog/lxdialog
-
-backup:	distclean
-	(cd .. ; tar cf - linuxmt | compress - > $(BACKUP_DIR)/linuxMT.tar.Z)
-	sync
 
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make

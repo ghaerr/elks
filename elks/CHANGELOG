@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Tue Jun 15 10:31 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Minor tweaks to Makefile
+
 Sun May 30 00:05 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixes code to allow loading of shared libraries.
