@@ -50,17 +50,16 @@ wrt_disk.o: wrt_disk.c
 
 file.o: file.s
 
-wrt_disk.out: wrt_disk.o file.o
-	ld86 -0 -i -D $(DATA_SEG) -H $(HEAP_SEG) -o wrt_disk.out \
-		wrt_disk.o \
-		file.o \
+wrt_disk.tmp: wrt_disk.o file.o
+	ld86 -0 -i -D $(DATA_SEG) -H $(HEAP_SEG) -o wrt_disk.tmp \
+		wrt_disk.o file.o \
 		../drivers/char/con_asm.o \
 		../drivers/char/font.o \
 		../drivers/char/key_asm.o \
 		../drivers/block/ssd_asm.o
 
-wrt_disk.img: wrt_disk.out imgconv
-	./imgconf -D$(STACK_SIZE) -H$(HEAP_SIZE)
+wrt_disk.img: wrt_disk.tmp imgconv
+	./imgconf wrt_disk.tmp wrt_disk.img
 
 build: build.c
 	gcc -I $(BASEDIR)/include -o build build.c

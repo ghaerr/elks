@@ -20,17 +20,25 @@ Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001- 7 Mar 2002
 Jacek Lipkowski       sq5bpf@acid.ch.pw.edu.pl          20 Jan 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
-Paul Nasrat           pnasrat@uk.now.com                29 Oct 2001-20 Nov 2001
+Paul Nasrat           pauln@truemesh.com                29 Oct 2001-14 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        rhw@MemAlpha.FSlife.Co.UK         16 Nov 1998-28 Mar 2002
+Riley Williams        rhw@InfraDead.Org                 16 Nov 1998-14 Apr 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Sun Apr 14 12:41:54 BST 2002	Riley Williams <rhw@InfraDead.Org>
+
+	* Patch to give temporary file .tmp extension.
+
+Sun Apr 14 12:07:24 BST 2002	Paul Nasrat <pauln@truemesh.com>
+
+	* Applied patch to enable SIBO port to compile.
 
 Tue Apr  2 21:11:14 BST 2002	Richard Wallman <murkygoth@murkygoth.uklinux.net>
 
