@@ -16,14 +16,14 @@ Christoph Plattner      <Christoph.Plattner@dot.at>     31 Jan 2000-02 Feb 2000
 David Murn              <scuffer@hups.apana.org.au>     11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
-Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>    20 Jun 2001-27 Nov 2001
+Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>    20 Jun 2001-27 Jan 2002
 Jacek Lipkowski         <sq5bpf@acid.ch.pw.edu.pl>      20 Jan 2002
 M Warner Losh           <imp@village.org>               20 Jan 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001-20 Nov 2001
 Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
 Peter L Vachuska        <pvachusk@nconnect.net>         13 Aug 2001
-Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-26 Jan 2002
+Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998- 5 Feb 2002
 Roman Festchook         <roma@polesye.net>              27 Oct 2001
 Simon Weijgers          <simon@weijgers.com>            16 Sep 1998-15 Nov 1999
 Simon Wood                                              06 Jan 2000-12 Jan 2000
@@ -31,7 +31,21 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Sun Jan 27 02:37:33 EET 2002 Harry Kalogirou <harkal@gmx.net>
+Tue Feb  5 18:28:49 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+
+	* Removed redundant flag in Makefile-rules LDFLAGS assignment.
+	* Cleaned up messages in `make dep` and `make nodep` commands.
+	* Fixed bug that prevented strace.c from compiling. Somebody had
+	  assigned the same values to different options in the primary
+	  SWITCH statement in strace.c and this fix consists of ensuring
+	  that all of these values are unique.
+	* Fixed typo that prevented some of the tools from compiling.
+
+NOTE:	* Found bugs that prevented meta.c from compiling. Produced hack
+	  that let this file compile, but this is NOT the proper fix.
+	  Will somebody please sort out the lines labelled FIXME therein!
+
+Sun Jan 27 02:37:33 EET 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Made the code aware that the serial tty devices minor numbers
 	  was changed. 

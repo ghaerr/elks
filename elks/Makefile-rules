@@ -228,7 +228,7 @@ ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
 CC		= bcc
 CFLAGS		= $(CPU_CC) $(ARCH_CC) -i $(CFLBASE)
 LD		= ld86
-LDFLAGS 	= $(CPU_LD) -s -x
+LDFLAGS 	= $(CPU_LD) -s
 
 else
 
@@ -302,7 +302,7 @@ mkdep:
 		printf '\n\n' >> make.tmp ; \
 	done
 	@if ! diff Makefile make.tmp > /dev/null ; then \
-		echo Assigning dependencies. ; \
+		echo -n 'Assigning dependencies: ' ; \
 		mv -fv make.tmp Makefile ; \
 	else \
 		rm -f make.tmp ; \
@@ -311,9 +311,10 @@ mkdep:
 nodep:
 	sed '/\#\#\# Dependencies:/q' < Makefile > make.tmp
 	@if ! diff Makefile make.tmp > /dev/null ; then \
+		echo -n 'Removing dependencies: ' ; \
 		mv -fv make.tmp Makefile ; \
 	else \
-		rm -fv make.tmp ; \
+		rm -f make.tmp ; \
 	fi
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \

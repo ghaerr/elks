@@ -56,7 +56,7 @@ DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 #########################################################################
 # Things to make.
 
-.PHONY: 		boot/system tools
+.PHONY: 		boot/system toolkit
 
 boot/bootsect:		boot/bootsect.o
 	$(LD) -0 $(ARCH_LD) -s -o boot/bootsect -M boot/bootsect.o > Boot.map
@@ -78,7 +78,7 @@ boot/setup:		boot/setup.o
 
 boot/setup.o:		boot/setup.s
 
-tools:
+toolkit:
 	${MAKE} -C tools all
 
 #########################################################################
@@ -94,7 +94,7 @@ boot/system: $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
 		sort -k4 System.tmp > System.map ; rm -f System.tmp ) 
 
 #SIBO image build
-Image: boot/system tools
+Image: boot/system toolkit
 	(cd boot; ../tools/imgconv system system.app -S192 -H72 -V)
 
 #End SIBO image section
@@ -114,12 +114,12 @@ ifneq ($(CONFIG_ROMCODE), y)
 
 ifeq ($(CONFIG_286PMODE), y)
 
-Image:		tools/build boot/bootsect boot/setup 286pmode/pmode286 boot/system tools
+Image:	toolkit boot/bootsect boot/setup lib/lib86.a 286pmode/pmode286 boot/system
 	tools/build boot/bootsect boot/setup 286pmode/pmode286 boot/system $(ROOT_DEV) > Image
 
 else
 
-Image:		boot/bootsect boot/setup boot/system tools
+Image:	toolkit boot/bootsect boot/setup boot/system
 	tools/build boot/bootsect boot/setup boot/system $(ROOT_DEV) > boot/Image
 
 nbImage:	Image boot/netbootsect
@@ -133,7 +133,7 @@ ifeq ($(CONFIG_ROM_BOOTABLE_BY_RESET), y)
     RVECT = -r $(CONFIG_ROM_RESET_ADDRESS)   
 endif
 
-Image:	tools boot/setup boot/system  
+Image:	toolkit boot/setup boot/system  
 	tools/mkurlader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(CONFIG_ROM_CHECKSUM_SIZE) Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
 	sync
 	$(CONFIG_ROM_SIMULATOR_PROGRAM)
@@ -148,7 +148,7 @@ boot:	Image
 
 disk:	boot
 
-setup:	$(ARCH_DIR)/tools $(ARCH_DIR)/boot/setup  
+setup:	toolkit boot/setup  
 	tools/mkurlader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(ROM_MAX_SETUP_SIZE) Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
 	sync
 	$(CONFIG_ROM_SIMULATOR_PROGRAM)

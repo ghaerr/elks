@@ -49,22 +49,22 @@ struct syscall_params {
 #define P_STR		  6	/* String				*/
 #define P_PSTR  	  7	/* Pointer to String			*/
 
-#define P_USHORT	  4	/* Unsigned Short Int			*/
-#define P_SSHORT	  5	/* Signed Short Int			*/
-#define P_PUSHORT 	  6	/* Pointer to Unsigned Short Int	*/
-#define P_PSSHORT 	  7	/* Pointer to Signed Short Int		*/
+#define P_USHORT	  8	/* Unsigned Short Int			*/
+#define P_SSHORT	  9	/* Signed Short Int			*/
+#define P_PUSHORT 	 10	/* Pointer to Unsigned Short Int	*/
+#define P_PSSHORT 	 11	/* Pointer to Signed Short Int		*/
 
-#define P_ULONG 	  8	/* Unsigned Long Int			*/
-#define P_SLONG 	  9	/* Signed Long Int			*/
-#define P_PULONG 	 10	/* Pointer to Unsigned Long Int 	*/
-#define P_PSLONG	 11	/* Pointer to Signed Long Int		*/
+#define P_ULONG 	 12	/* Unsigned Long Int			*/
+#define P_SLONG 	 13	/* Signed Long Int			*/
+#define P_PULONG 	 14	/* Pointer to Unsigned Long Int 	*/
+#define P_PSLONG	 15	/* Pointer to Signed Long Int		*/
 
 #ifdef NOT_YET
 
-#define P_ULLONG	 12	/* Unsigned Long Int			*/
-#define P_SLLONG	 13	/* Signed Long Int			*/
-#define P_PULLONG 	 14	/* Pointer to Unsigned Long Int 	*/
-#define P_PSLLONG	 15	/* Pointer to Signed Long Int		*/
+#define P_ULLONG	 16	/* Unsigned Long Long Int		*/
+#define P_SLLONG	 17	/* Signed Long Long Int			*/
+#define P_PULLONG 	 18	/* Pointer to Unsigned Long Long Int 	*/
+#define P_PSLLONG	 19	/* Pointer to Signed Long Long Int	*/
 
 #endif
 

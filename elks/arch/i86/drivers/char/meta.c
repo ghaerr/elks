@@ -3,12 +3,13 @@
  *
  * Copyright (C) 1999 by Alistair Riddoch
  *
- * ELKS meta driver for user spoace device drivers (UDDs)
+ * ELKS meta driver for user space device drivers (UDDs)
  */
 
 #include <linuxmt/config.h>
 
 #ifdef CONFIG_DEV_META
+
 #include <linuxmt/major.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/errno.h>
@@ -90,7 +91,6 @@ kdev_t device;
 		printk("2");
 		if (!req || req->rq_dev < 0 || req->rq_sector == -1)
 			return;
-
 		printk("5");
 		udr = new_request();
 		udr->udr_type = UDR_BLK + req->rq_cmd;
@@ -255,7 +255,7 @@ char * arg;
 		}
 		printk("device\n");
 		driver->udd_task = current;
-		driver->udd_rwait = NULL;
+/*		driver->udd_rwait = NULL;	/* FIXME: Not valid */
 		return minor;
 reg_err:
 		driver->udd_type = UDD_NONE;
@@ -270,7 +270,9 @@ reg_err:
 	switch (cmd) {
 		case META_POLL:
 			printk("waiting for request\n");
-			driver->udd_wait = NULL;
+
+/*			driver->udd_wait = NULL;	/* FIXME: not valid */
+
 			driver->udd_req = NULL;
 			wake_up(&driver->udd_rwait);
 			interruptible_sleep_on(&driver->udd_wait);
@@ -291,7 +293,9 @@ reg_err:
 			}
 			verified_memcpy_fromfs(driver->udd_req, arg, sizeof(struct ud_request_trunc));
 			wake_up(&driver->udd_req->udr_wait);
-			driver->udd_req->udr_wait = NULL;
+
+/*			driver->udd_req->udr_wait = NULL; /* FIXME: Not valid */
+
 			interruptible_sleep_on(&driver->udd_req->udr_wait);
 			break;		
 		default:

@@ -117,18 +117,21 @@ int retval;
 #endif
 
 		for (i = 0; i < elks_table[tent].s_params; i++) {
-			if (i) printk(", ");
+
+			if (i)
+				printk(", ");
+
 			switch (elks_table[tent].t_param[i]) {
 
 				case P_DATA:
-					printk("&0x%x", p->s_param[i]);
+					printk("&0x%X", p->s_param[i]);
 
 				case P_NONE:
 					break;
 
 				case P_POINTER:
 				case P_PDATA:
-					printk("0x%x", p->s_param[i]);
+					printk("0x%X", p->s_param[i]);
 					break;
 
 				case P_UCHAR:
@@ -169,7 +172,7 @@ int retval;
 					printk("&%d", p->s_param[i]);
 					break;
 
-				case P_LONG:
+				case P_SLONG:
 					printk("%ld", p->s_param[i]);
 					break;
 
@@ -177,27 +180,32 @@ int retval;
 					printk("%lu", p->s_param[i]);
 					break;
 
-				case P_PLONG:
+				case P_PSLONG:
 					printk("%ld", get_fs_long(p->s_param[i]));
 					break;
 
 				case P_PULONG:
 					printk("%lu", get_fs_long(p->s_param[i]));
+					break;
 
 				default:
 					break;
-		};
+			}
+
+		}
+
 	}
-	#ifdef STRACE_RETWAIT
-		printk(") = %d]\n", retval);
-	#else
-		p->s_name = elks_table[tent].s_name; 
-		printk(")]");
-	#endif
+#ifdef STRACE_RETWAIT
+	printk(") = %d]\n", retval);
+#else
+	p->s_name = elks_table[tent].s_name; 
+	printk(")]");
+#endif
 }
 
 /* Funny how syscall_params just happens to match the layout of the system
- * call paramters on the stack, ain't it? :) */
+ * call paramters on the stack, ain't it? :)
+ */
 
 int strace(p)
 struct syscall_params p;
