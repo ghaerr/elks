@@ -5,7 +5,8 @@
 
 Auto detect PC architecture
 CONFIG_ARCH_AUTO
-  Use this option to build the default kernel which will run on any PC.
+  Use this option to specify the architecture the kernel will 
+  run on AT (PC/AT), XT (PC/XT) or auto detect at boot time (Auto).
 
 Support AT architecture only
 CONFIG_AT
@@ -30,6 +31,182 @@ Switch COMPAQ DeskPro into fast mode
 CONFIG_COMPAQ_FAST
   Saying yes includes code to switch COMPAQ Deskpro machines that
   default to slow speed, into fast speed.
+
+# ROM-CODE kernel-loader
+#~~~~~~~~~~~~~~~~~~~~~~~
+
+Build kernel as ROM-bootable
+CONFIG_ROMCODE
+  Saying yes will allow the kernel to be bootable from ROM.
+
+Select processor architecture
+ROM_IS86
+  Select the target CPU (default 8086,80186).
+
+Support 286
+ROM_IS286
+  Build for the 286 CPU
+
+Support 386
+ROM_IS386
+  Build for the 386 CPU
+
+Support 486 or higher
+ROM_IS486
+  Build for the 486 or higher CPU's
+
+System has no FPU
+ROM_NOFPU
+  Saying yes will compile the code without FPU support.
+
+System has no keyboardbios (if no BIOS-Int 16h)
+ROM_NOKBDBIOS
+  Saying yes will compile the code for systems that do not support
+  Int-16 in the BIOS. 
+
+System has no VGA-adapter
+ROM_NOVGA
+  Saying yes will compile the code without VGA compatability,
+   but will still allow EGA, CGA etc.
+
+System has no PS/2 pointing device
+ROM_NOPS2MOUSE
+  Saying yes will compile the code without PS/2 pointing device support.
+
+System has no hard disk (in 0.76 should be "y")
+ROM_NOHDD
+  Saying yes will compile the code without hard disk support 
+  (in ELKS v0.76 this should always be yes)
+
+System has no floppy disk
+ROM_NOFLOPPY
+  Saying yes will compile the code without floppy support.
+
+Get extended memory size via BIOS-Int 15
+__ROM_EXTMEM
+  Saying yes will allow ELKS to get the extended memory size 
+  by calling BIOS Int 15 (function 88).
+
+Extended memory size in kB
+ROM_EXTMEMSIZE
+  Specify howmany K of extended memory is in the target system.
+
+Get fontinfo via CRT-BIOS (40h:85h)
+__ROM_VIDEO_HOC
+  Saying yes will get the System font info using the CRT-BIOS at 40h:85h.
+
+High of character in lines
+ROM_VIDEO_HIGHOFCHARACTER
+  Specify the maximan height of a charactor on the display in pixels.
+
+Lines per page
+ROM_HIGH_OF_CRT
+  Specify the number of lines that can be displayed on the screen.
+
+# absolute segment
+#~~~~~~~~~~~~~~~~~
+
+Codesegment for setup.S      (SEG, size ca. 0x60 ROM)
+ROM_SETUP_CODE
+  Code segment location for the setup code when programmed into a ROM.
+  This is usually the base segment address of the ROM.
+
+Codesegment kernel           (SEG, ca. 64k ROM)
+ROM_KERNEL_CODE
+  Code segment location for the kernel code when programmed into a ROM.
+  This is usually the base segment address of the ROM + 0x60.
+
+Datasegment for setup.S      (SEG, size ca. 0x20 RAM)
+ROM_SETUP_DATA
+  Segment location in RAM where the setup code keeps the values it
+  is going to pass to the kernel.
+
+Datasegment (IRQ-Scheduler)  (SEG, size ca. 0x10 RAM)
+ROM_KERNEL_IRQDATA
+  Segment location of an absolute area of RAM where the kernel
+  stores certain variables that it must be able to access
+  when it does not know where its data segment is.
+
+Datasegment (DATA+BSS+STACK) (SEG, ca. 64k RAM)
+ROM_KERNEL_DATA
+  Segment location of the kernels data segment, used only when the
+  kernel image is in ROM.
+
+# Info for ROM-IMG Generator
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Start address of ROM (for offset in image-file)
+ROM_BASIS
+  Set the memory address of the executable part of the code in HEX (0x????),
+  this is also used to set the offset in the ROM image file.
+
+Area with BIOS Checksum in kbytes (normally 64)
+ROM_CHECKSUM_SIZE
+  Size of the ROM image to be prepared.
+  This value is stored in the ROM header,
+  and the whole ROM must checksum to zero.
+
+Make image-file bootable by reset
+ROM_RESET_VEC
+  Saying yes will allow the image file to boot via a warm boot sequence.
+
+Address jumped to after reset (offset in image)
+ROM_RESET_ADDR
+  The offset in the image-file that should be jumped to for a warm boot.
+
+Add startup module to image (BIOS-functions)
+ROM_ADD_BIOS
+  Saying yes will allow you to add a BIOS to the image-file.
+
+Name of module
+ROM_EXT_MOD1
+  The location of the BIOS image to add to the ELKS image-file.
+
+Module codesegment address
+ROM_EXT_MOD1_ADDR
+  The memory address to jump to after BIOS functions have ran (See ROM_BASIS).
+
+Use EPROM-Simulator after make
+ROM_E_SIMULATOR
+  Saying yes will load an EPROM simulator/emulator after make has finished.
+
+# Cannot realy create help for a string var
+Programcall
+ROM_E_SIM_CALL
+  The location of the executable to run for the EPROM simulator/emulator,
+  including command line perameters etc.
+
+# Generate debug code
+#~~~~~~~~~~~~~~~~~~~~
+
+ROM-CODE debug infos
+ROM_CODE_DEBUG
+  Saying yes will compile the ROM image with all debug information turned on.
+
+# ROM code conf
+#~~~~~~~~~~~~~~
+
+Use IRQ-Mask of 8259 at boot time as default
+ROM_USE_ORG_INTMASK
+  Saying yes will force the irq system to read 
+  in the original interrupt mask befor it starts sorting
+  out interrupts. 
+  By default the kernel disables all interrupts.
+  This should only be used by kernel hackers.
+
+Ticks for BogoMIPS (0 = check at boot time)
+ROM_BOGOMIPS
+  Enter the number of ticks for the BogoMIPS (integer)
+
+NO Floppy count at 40:10 use INT13.08
+ROM_GETFLOPPY_VIA_INT13
+  Saying yes will get the number of floppy drive via INT-13 function 08,
+  (get drive perameters (on PC/XT only works on Hard Drives)).
+
+Dont seek to get Floppy information (use I13.8)
+GET_DISKPARAM_BY_INT13_NO_SEEK
+  Saying yes will explicitly tell ELKS not to use Int13.08 to get 
+  Floppy information (Int 13.08 doesn't work on PC/XT floppy drives).
 
 # 286 Protected Mode support
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,8 +249,9 @@ CONFIG_NOFS
 
 Exec code from ROM
 CONFIG_EXEC_ROM
-  Add support for executing user processes in place from an image in ROM. Can
-  be used even if no filesystem code is included. CURRENTLY UNIMPLEMENTED.
+  Add support for executing user processes in place from an image in ROM.
+  Can be used even if no filesystem code is included.
+  ~~~~~~~~~~~~CURRENTLY UNIMPLEMENTED~~~~~~~~~~~~~~~~~
 
 # Console display support
 # ~~~~~~~~~~~~~~~~~~~~~~~
@@ -229,14 +407,16 @@ ELKS file system support
 CONFIG_ELKSFS_FS
   Support for the new ELKSFS native fs. Includes Minix fs emulation.
 
-#MS-DOS file system support
-#CONFIG_MSDOS_FS
-#  Support for standard MS-DOS style partitions. Currently non-existant
+MS-DOS file system support
+CONFIG_MSDOS_FS
+  Support for standard MS-DOS style partitions. 
+  ~~~~~~~~~~~~~~~~Currently non-existant~~~~~~~~~~~~~~
 #
-#Include VFAT style long name support
-#CONFIG_VFAT_FS
-#  Extension to standard MS-DOS fs support to permit Win95 style long
-#  file names. Currently non-existant.
+Include VFAT style long name support
+CONFIG_VFAT_FS
+  Extension to standard MS-DOS fs support to permit Win95 style long
+  file names. 
+  ~~~~~~~~~~~~~~~~Currently non-existant~~~~~~~~~~~~~
 
 ROM file system support
 CONFIG_ROMFS_FS
@@ -247,7 +427,7 @@ CONFIG_FULL_VFS
   If you say no to this then the vfs will only support one filesystem 
   type. You do not need to say yes currently as only minixfs is
   available.
-
+  
 Inter-process pipe support
 CONFIG_PIPE
   Include support for standard UNIX inter-process pipes.
@@ -265,7 +445,8 @@ CONFIG_FS_RO
 Minix file format
 CONFIG_EXEC_MINIX
   This lets you run Minix binaries compiled with bcc. This is the only
-  real format allowed at the moment. Required.
+  real format allowed at the moment. 
+  ~~~~~~~~~~~~~~~~~~~Required~~~~~~~~~~~~~~~~~~
 
 MSDOS (EXE) file format
 CONFIG_EXEC_MSDOS
@@ -305,3 +486,5 @@ CONFIG_SOCK_STREAMONLY
   the only type supported.
 
 # EOF
+
+

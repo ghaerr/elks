@@ -52,6 +52,9 @@
 #
 # 090398 Axel Boldt (boldt@math.ucsb.edu) - allow for empty lines in help
 # texts.
+#
+# 112299 Giles Russell (gilesr@freakish.f9.co.uk - added a \n after
+# text to neaten up display.
 
 #
 # Make sure we're really running bash.
@@ -102,7 +105,7 @@ ${var}:\\
      then
 	  echo; echo "  Sorry, no help available for this option yet.";echo
      else
-	  (echo; echo "$text") | ${PAGER:-more}
+	  (echo; echo -e "$text\n") | ${PAGER:-more}
      fi
   else
      echo;
@@ -531,3 +534,5 @@ echo "the files are correctly re-made"
 echo
 
 exit 0
+
+

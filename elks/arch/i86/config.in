@@ -17,19 +17,19 @@ bool 'Switch COMPAQ DeskPro into fast mode' CONFIG_COMPAQ_FAST
 
 mainmenu_option next_comment
 comment 'ROM-CODE kernel-loader'
-bool 'Build kernel as ROM-bootable' CONFIG_ROMCODE 
+bool 'Build kernel as ROM-bootable' CONFIG_ROMCODE
 if [ "$CONFIG_ROMCODE" = "y" ]; then
-   choice 'Select prozessor architecture'            \
+   choice 'Select processor architecture'            \
           "8086,80186     ROM_IS86\
            80286          ROM_IS286   \
            80386          ROM_IS386   \
            80486_or_more  ROM_IS486" 8086,80186
-   bool 'System havent FPU'                               ROM_NOFPU      y
-   bool 'System havent keybordbios (if no BIOS-Int 16h)'  ROM_NOKBDBIOS 
-   bool 'System havent VGA-adapter'                       ROM_NOVGA      y
-   bool 'System havent PS/2 pointing device'              ROM_NOPS2MOUSE y
-   bool 'System havent hard disk (in 0.76 should be "y")' ROM_NOHDD      y
-   bool 'System havent floppy disk'                       ROM_NOFLOPPY
+   bool 'System has no FPU'                               ROM_NOFPU      y
+   bool 'System has no keybordbios (if no BIOS-Int 16h)'  ROM_NOKBDBIOS  y
+   bool 'System has no VGA-adapter'                       ROM_NOVGA      n
+   bool 'System has no PS/2 pointing device'              ROM_NOPS2MOUSE y
+   bool 'System has no hard disk (in 0.76 should be "y")' ROM_NOHDD      y
+   bool 'System has no floppy disk'                       ROM_NOFLOPPY
    bool 'Get extended memory size via BIOS-Int 15'        __ROM_EXTMEM   n
    if [ "$__ROM_EXTMEM" != "y" ]; then
       int  'Extended memory size in kB'                   ROM_EXTMEMSIZE 0
@@ -48,7 +48,7 @@ if [ "$CONFIG_ROMCODE" = "y" ]; then
    hex 'Datasegment (DATA+BSS+STACK) (SEG, ca. 64k RAM)'        ROM_KERNEL_DATA    0x0090
 
    comment 'Information for ROM-Image generator'
-   hex 'Startaddress of ROM (for offset in image-file)'  ROM_BASIS       0xf000
+   hex 'Startaddress of ROM (for offset in image-file)'  ROM_BASIS       0xe000
    int 'Area with BIOS Checksum in kbytes (normally 64)' ROM_CHECKSUM_SIZE 64
    bool 'Make image-file bootable by reset'              ROM_RESET_VEC   n
    if [ "$ROM_RESET_VEC" = "y" ]; then
@@ -76,14 +76,14 @@ if [ "$CONFIG_ROMCODE" = "y" ]; then
     comment 'ROM-CODE kernel-configuration'
 
     bool 'Use IRQ-Mask of 8259 at boottime as default'      ROM_USE_ORG_INTMASK n
-    bool 'Different Systemclock at Timer 8253'              ROM_CONFIG_8253  n
-    if [ "$ROM_CONFIG_8253" = "y" ]; then
-       hex 'Initvalue for Timerchanel 0 (for 10 ms)'        ROM_8253_100HZ   0x2e9c
-    fi
+#    bool 'Different Systemclock at Timer 8253'              ROM_CONFIG_8253  n
+#    if [ "$ROM_CONFIG_8253" = "y" ]; then
+#       hex 'Initvalue for Timerchanel 0 (for 10 ms)'        ROM_8253_100HZ   0x2e9c
+#    fi
     int 'Ticks for BogoMIPS (0 = check at boottime)'        ROM_BOGOMIPS 0
     bool 'NO Floppycount at 40:10 use INT13.08'             ROM_GETFLOPPY_VIA_INT13 n 
     bool 'Dont seek to get Floppy information (use I13.8)'  GET_DISKPARAM_BY_INT13_NO_SEEK y
-    bool 'CHM-BIOSerweiterungen für Debugger'               CHM_BIOS y
+#    bool 'CHM-BIOSerweiterungen für Debugger'               CHM_BIOS y
 
   endmenu
 fi
@@ -112,4 +112,6 @@ if [ "$CONFIG_NOFS" = "n" ]; then
 	source fs/Config.in
 fi
 source net/Config.in
+
+
 
