@@ -7,6 +7,19 @@ be longer than the lines of dashes.
 Al
 ------------------------------------------------------------------------------
 
+Thu Oct  4 00:00:00 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Removed empty depend.awk and hfiles.sh from elks/scripts directory.
+	* Tweaked elks/Makefile-rules to show my idea of how the Makefile
+	  system ought to work. The aim is that the rules in here will be
+	  both available and used by every Makefile in the tree.
+	* Changed tag v0m0m73 to elks-0_0_73 to match other tags.
+
+Wed Oct  3 23:37:43 EEST 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* Fixed bug introduced by my commit of 29 Sep 2001 and spotted by
+	  Riley earlier today.
+
 Wed Oct  3 18:14:08 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Reverted changes accidentally made to remaining Makefiles. There
@@ -22,17 +35,23 @@ Tue Oct  2 23:22:12 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 Tue Oct  2 21:29:28 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
+	* THIS IS ELKS RELEASE 0.0.85-PRE3.
+
 	* Reverted changes accidentally made to elks/Makefile previously.
 	  Changes to other Makefiles in the tree still have to be reverted.
-	* Changed method of calculating ELKS_VERSION_CODE and simplified
-	  it in the process. The new method allows for 15 pre's between
-	  sublevels, instead of the 7 that previously existed.
-	* Bumped version up to 0.0.85-pre3 to provide a marker for the
-	  previous change. This is tagged as V0-0-85-PRE3 in CVS.
 	* Added `make ELKS` rule to elks/Makefile - this will also be added
 	  to all other Makefiles as I progress through the tree, and will
 	  have the result of performing `make all` in the base directory
 	  independantly of the current location in the tree.
+	* Changed method of calculating ELKS_VERSION_CODE and simplified
+	  it in the process. The new method allows for 15 pre's between
+	  sublevels, instead of the 7 that previously existed.
+	* Bumped version up to 0.0.85-pre3 to provide a marker for the
+	  previous change. This is tagged both as V0-0-85-PRE3 and as
+	  elks-0_0_85-pre3 in CVS, the latter being the standard used for
+	  most other releases from CVS as determined by inspection.
+
+------------------------------------------------------------------------------
 
 Sat Sep 29 13:47:47 EEST 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
@@ -220,6 +239,8 @@ Mon Aug 20 01:22:32 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 Fri Aug 17 17:43:14 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
+	* THIS IS ELKS RELEASE 0.0.85-PRE2.
+
 	* Optimized character queue code.
 	* Changed tty code to keep settings after every tty_open()
 	* Added support for 57600 and 115200 bauds in serial driver.
@@ -361,6 +382,8 @@ Sun Jun 17 19:47:58 BST 2001	Alan Cox  <alan@redhat.com>
 
 Sun Jun 17 18:38 BST 2001   Alistair Riddoch  <alriddoch@zepler.org>
 
+	* THIS IS ELKS RELEASE 0.0.84.
+
 	* Resolved some minor clashes between Alan's commit and Thomas's
 	  fix.
 	* Bumped up version to 0.0.84 for release.
@@ -414,19 +437,11 @@ Mon Mar 26 16:29 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 
 	* Fix long standing file system bug: EBUSY when unmounting,
 	  and related sys_access() bug.
-<<<<<<< CHANGELOG
-=======
 
-------------------------------------------------------------------------------
->>>>>>> 1.172
-
-<<<<<<< CHANGELOG
-Fri Mar 03 11:44 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
-
-=======
 Fri Mar  3 11:44 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
->>>>>>> 1.172
+	* THIS IS ELKS RELEASE 0.0.83.
+
 	* Final changes for 0.0.83
 
 Tue Feb 29 11:00 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
@@ -555,6 +570,8 @@ Wed Jan 12 18:27 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 Mon Jan 10 17:07 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
+	* THIS IS ELKS RELEASE 0.0.82.
+
 	* Final changes before 0.0.82.
 
 Thu Jan  6 14:36 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
@@ -605,6 +622,8 @@ Fri Nov  5 17:21 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 Mon Nov  1 18:02 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
+	* THIS IS ELKS RELEASE 0.0.80.
+
 	* Final changes for 0.0.80.
 
 Fri Oct 29 19:14 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
@@ -612,6 +631,8 @@ Fri Oct 29 19:14 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	* Filled out kill(2) functionality to full System V spec.
 
 Tue Oct 26 14:24 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* THIS IS ELKS RELEASE 0.0.80-PRE1.
 
 	* Increment version to 0.0.80-pre1
 	* Removed unused "old timer" code from sched.c
@@ -671,6 +692,8 @@ Tue Sep 14 19:27 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 Fri Aug 27 14:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
+	* THIS IS ELKS RELEASE 0.0.79.
+
 	* Added CONFIG_SHORT_FILES which limits fds to 16.
 	* Removed unused supplementary groups, and made into a config
 	  option.
@@ -719,6 +742,8 @@ Thu Jul 15 22:17 CEST 1999  Arnaud Launay  <zoro@multimania.com>
 
 Thu Jul 15 14:14 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
+	* THIS IS ELKS RELEASE 0.0.78.
+
 	* Final updates for 0.0.78
 
 Wed Jul 14 18:32 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
@@ -753,6 +778,8 @@ Fri Jul  9 17:00 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	  not functional), plus nano sockets.
 
 Fri Jul  9 16:59 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* THIS IS ELKS RELEASE 0.0.77.
 
 	* Late commit of changes for version 0.0.77 due to cvs outage.
 
@@ -839,6 +866,8 @@ Fri May 28 20:04 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 Thu May 20 12:04 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
+	* THIS IS ELKS RELEASE 0.0.76.
+
 	* Final tweaks for 0.0.76
 
 Mon May 17 12:29 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
@@ -867,6 +896,8 @@ Thu Feb 25 21:13 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	* Fixed typo for read_only option.
 
 Tue Feb 16 12:34 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* THIS IS ELKS RELEASE 0.0.75.
 
 	* Final tweaks for 0.0.75
 
@@ -900,6 +931,8 @@ Sat Dec  6 00:24 GMT 1998   Alastair Bridgewater  <nyef@softhome.net>
 	* Fixed arch/i86/lib/Makefile to rebuild setup[bw].s when nessecary.
 
 Wed Dec  3 17:12 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* THIS IS ELKS RELEASE 0.0.74.
 
 	* Tweaked docs for 0.0.74
 
@@ -966,6 +999,8 @@ Tue Nov  3 12:44 CET 1998   Simon Weijgers  <simon@mbit.doa.org>
 	  <al.sutton@chase.com>.
 
 Thu Oct 22 17:46 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* THIS IS ELKS RELEASE 0.0.73.
 
 	* Some fixes to serial driver - now interrupts seem to work.
 	* Final tweeks before 0.0.73.

@@ -40,7 +40,38 @@
 VERSION 	= 0
 PATCHLEVEL	= 0
 SUBLEVEL	= 85
-PRE		= 2		# If we're not a pre, comment this line
+PRE		= 3		# If we're not a pre, comment this line.
+
+#########################################################################
+# Specify architecture to use.
+
+ARCH		= i86
+
+#########################################################################
+# ROOT_DEV specifies the default root-device when making the image. This
+# does not yet work under ELKS. See include/linuxmt/config.h to change
+# the root device.
+
+ROOT_DEV	= FLOPPY
+
+#########################################################################
+#									#
+#  There should normally be no reason to make any changes beyond here.  #
+#									#
+#########################################################################
+
+#########################################################################
+# Variables derived directly from the ELKS version number.
+
+ifneq (X$(PRE), X)
+VSN		= $(shell printf '%u.%u.%u-pre%u' \
+			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $(PRE))
+else
+VSN		= $(shell printf '%u.%u.%u' \
+			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
+endif
+
+DIST		= elks-$(VSN)
 
 #########################################################################
 # Define root directory.
@@ -51,13 +82,23 @@ TOPDIR		= $(shell cd "$(ELKSDIR)" ; \
 			  fi)
 
 #########################################################################
-# Define current and backup directories.
+# Define various directories.
+#
+#	ARCHDIR 	Directorry for architecture-specific stuff.
+#
+#	DISTDIR 	Directory for clean copy of distribution.
 #
 #	INCDIR		Include file directory.
 #
 #	LIBDIR		Libraries directory.
 #
 #	MYDIR		Current directory relative to TOPDIR/.
+#
+#########################################################################
+
+ARCH_DIR	= arch/$(ARCH)
+
+DISTDIR 	= $(TOPDIR)/$(DIST)
 
 INCDIR		= $(TOPDIR)/include
 
@@ -71,25 +112,6 @@ LIBDIR		= $(TOPDIR)/lib
 TARGET_NB_IMAGE = $(ELKSDIR)/nbImage
 
 #########################################################################
-# Variables derived directly from the ELKS version number.
-
-ifneq (X$(PRE), X)
-VSN		= $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)-pre$(PRE)
-else
-VSN		= $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
-endif
-
-DIST		= elks-$(VSN)
-
-DISTDIR 	= $(TOPDIR)/$(DIST)
-
-#########################################################################
-# Specify architecture to use.
-
-ARCH		= i86
-ARCH_DIR	= arch/$(ARCH)
-
-#########################################################################
 # Determine current shell.
 
 CONFIG_SHELL := $(shell if [ -x "$$bash" ]; \
@@ -99,13 +121,6 @@ CONFIG_SHELL := $(shell if [ -x "$$bash" ]; \
 						else echo sh; \
 				     fi; \
 			fi)
-
-#########################################################################
-# ROOT_DEV specifies the default root-device when making the image. This
-# does not yet work under ELKS. See include/linuxmt/config.h to change
-# the root device.
-
-ROOT_DEV	= FLOPPY
 
 #########################################################################
 # Specify contents of architecture-specific flags.
@@ -137,7 +152,7 @@ AS86		= as86
 AFLAGS		= -0 -j -j $(ASIBO)
 
 CC		= bcc
-CFLAGS	 	= -D__KERNEL__ -I$(INCDIR) -O -i $(CSIBO)
+CFLAGS	 	= -D__KERNEL__ -I$(INCDIR) -0 -O -i $(CSIBO)
 
 CPP		= bcc
 CPFLAGS 	= -D__KERNEL__ -I$(INCDIR) -E $(CPSIBO)
@@ -159,7 +174,7 @@ LINT		= lclint
 # General construction rules.
 
 .c.s:
-	$(CC) $(CFLAGS) -0 -nostdinc -Iinclude -S -o $*.s $<
+	$(CC) $(CFLAGS) -0 -nostdinc -S -o $*.s $<
 .cpp.o:
 	$(CPP) $(CPFLAGS) -o $*.o $<
 .html.txt:
@@ -167,7 +182,7 @@ LINT		= lclint
 .s.o:
 	$(AS86) $(AFLAGS) -o $*.o $<
 .S.s:
-	gcc -D__KERNEL__ -I $(INCDIR) -E -traditional -o $*.s $<
+	gcc -D__KERNEL__ -I$(INCDIR) -E -traditional -o $*.s $<
 
 #########################################################################
 # Specify default rule to use if no other rule is defined.
@@ -176,28 +191,88 @@ elks:
 	make -C $(ELKSDIR) all
 
 #########################################################################
-# Specify rule to perform CVS actions correctly.
+# Specify rule to clean all unwanted files from this tree.
 
-cvs:
-	make depclean
-	if [ -d CVS ]; then cvs update -d ; fi
+clean:	dirclean
+	for DIR in */ ; do \
+		if [ -f $$DIR/Makefile ]; then \
+			make -C $$DIR clean ; \
+		fi ; \
+	done
+	@echo
+	@echo Tree cleaning completed.
+	@echo
 
 #########################################################################
-# Specify rule to create standard Makefiles throughout the source tree
-# where none currently exists.
+# Specify a rule to create a default configuration from any directory.
 
-tree:
-	for DIR in [^.]*/ ; do echo DEBUG: $$DIR ; \
-	    if [ "$$DIR" != "CVS/" ]; then \
-		if [ ! -e $$DIR/Makefile ]; then \
-		    $(ELKSDIR)/scripts/mkMake $$DIR/Makefile $(ELKSDIR) ; \
-		    if [ -d $$DIR/CVS ]; then \
-			(cd $$DIR ; cvs add Makefile) ; \
-		    fi ; \
+defconfig:
+	@rm -f $(ELKSDIR)/.config
+	@yes '' | make -C $(ELKSDIR) config
+
+#########################################################################
+# Specify a rule to configure all dependencies as required.
+
+dep:
+	sed '/^\#\#\# Dependencies:/q' < Makefile > tmp_make
+	(for FILE in *.c ; do echo ; $(CC_PROTO) $$FILE ; done) >> tmp_make
+	for DIR in */ ; do \
+		if [ -f $$DIR/Makefile ]; then \
+			make -C $$DIR dep ; \
 		fi ; \
-		make -C $$DIR tree ; \
-	    fi ; \
 	done
+	mv -f tmp_make Makefile
+	@echo
+	@echo Dependency configuration complete.
+	@echo
+
+#########################################################################
+# Specify a rule to create a separate distribution tree.
+
+dist:	clean nodep
+	for DIR in */ ; do \
+		if [ -f $$DIR/Makefile ]; then \
+			make -C $$DIR dist ; \
+		fi ; \
+	done
+	@echo
+	@echo Distribution tree created.
+	@echo
+
+#########################################################################
+# Specify a rule to run LINT through the C source files in this tree.
+
+lint:
+	for FILE in *.c ; do \
+		$(LINT) -I$(INCDIR) -c $$FILE ; \
+		echo ; \
+	done
+	for DIR in */ ; do
+		if [ -f $$DIR/Makefile ]; then \
+			make -C $$DIR lint ; \
+		fi ; \
+	done
+	@echo
+	@echo End of C source checking with LINT.
+	@echo
+
+#########################################################################
+
+nodep:
+	sed '/^\#\#\# Dependencies:/q' < Makefile > tmp_make
+	if cmp -s Makefile tmp_make ; then \
+		rm -f tmp_make ; \
+	else \
+		mv -f tmp_make Makefile ; \
+	fi
+	for DIR in */ ; do \
+		if [ -f $$DIR/Makefile ]; then \
+			make -C $$DIR nodep ; \
+		fi ; \
+	done
+	@echo
+	@echo Dependency configuration removed.
+	@echo
 
 #########################################################################
 # End of standard rules

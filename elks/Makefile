@@ -225,7 +225,7 @@ clean:
 	@echo The ELKS source tree has been cleaned.
 	@echo
 
-depclean:
+nodep:
 	@for i in `find -name Makefile`; do \
 		sed '/\#\#\# Dependencies/q' < $$i > tmp_make ; \
 		if ! diff Makefile tmp_make > /dev/null ; then \
@@ -238,7 +238,7 @@ depclean:
 	@echo All dependencies have been removed.
 	@echo
 
-distclean: clean depclean
+distclean: clean nodep
 	rm -f .config* .menuconfig*
 	rm -f scripts/lxdialog/*.o scripts/lxdialog/lxdialog
 	@echo
