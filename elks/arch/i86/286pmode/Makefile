@@ -46,4 +46,3 @@ dep:
 	mv tmp_make Makefile
 
 ### Dependencies:
-main.s main.o: main.c descriptor.h tss.h
