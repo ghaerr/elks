@@ -15,13 +15,17 @@ Tommy McCabe			rocketjet314@yahoo.com
 
 ---------------------------------------------------------------------------
 
+Fri Sep 17 18:48:26 BRT 2004	Claudio Matsuoka <claudio@conectiva.com>
+
+	* Added a port of Nathan Laredo's tinyirc IRC client.
+
 Wed Jul 28 12:09:11 CST 2004	Tommy McCabe <rocketjet314@yahoo.com>
 
-	Added l to PRGS on file_utils
+	* Added l to PRGS on file_utils
 
 Tue Jul 27 22:22:32 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
 
-	Merged Claudio's patch to:
+	* Merged Claudio's patch to:
 		- build full3, full5, comb, comb_net and boot.
 
 Tue Jul 27 07:48:56 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
