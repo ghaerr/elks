@@ -84,32 +84,34 @@ char partOK[257] = {   /*	'0123456789ABCDEF'		*/
 
 void list_types()	/* FIXME - Should make this more flexible */
 {
-    printf("0 Empty                   3c PartitionMagic recovery 85 Linux extended\n");
-    printf("1 FAT12                   40 Venix 80286             86 NTFS volume set\n");
-    printf("2 XENIX root              41 PPC PReP Boot           87 NTFS volume set\n");
-    printf("3 XENIX usr               42 SFS                     93 Amoeba\n");
-    printf("4 FAT16 <32M              4d QNX4.x                  94 Amoeba BBT\n");
-    printf("5 Extended                4e QNX4.x 2nd part         a0 IBM Thinkpad hibernate\n");
-    printf("6 FAT16                   4f QNX4.x 3rd part         a5 BSD/386\n");
-    printf("7 HPFS/NTFS               50 OnTrack DM              a6 OpenBSD\n");
-    printf("8 AIX                     51 OnTrack DM6 Aux1        a7 NeXTSTEP\n");
-    printf("9 AIX bootable            52 CP/M                    b7 BSDI fs\n");
-    printf("a OS/2 Boot Manager       53 OnTrack DM6 Aux3        b8 BSDI swap\n");
-    printf("b Win95 FAT32             54 OnTrack DM6             c1 DRDOS/sec FAT-12\n");
-    printf("c Win95 FAT32 (LBA)       55 EZ-Drive                c4 DRDOS/sec FAT-16 <32M\n");
-    printf("e Win95 FAT16 (LBA)       56 Golden Bow              c6 DRDOS/sec FAT-16\n");
-    printf("f Win95 Extended (LBA)    5c Priam Edisk             c7 Syrinx\n");
-    printf("10 OPUS                   61 SpeedStor               db CP/M / CTOS / ...\n");
-    printf("11 Hide FAT12             63 GNU HURD or SysV        e1 DOS access\n");
-    printf("12 Compaq diagnostics     64 Novell Netware 286      e3 DOS R/O\n");
-    printf("14 Hide FAT16 <32M        65 Novell Netware 386      e4 SpeedStor\n");
-    printf("16 Hide FAT16             70 DiskSecure Multi-Boot   eb BeOS fs\n");
-    printf("17 Hide HPFS/NTFS         75 PC/IX                   f1 SpeedStor\n");
-    printf("18 AST Windows swapfile   80 Old Minix               f2 DOS secondary\n");
-    printf("1b Hide Win95 FAT32       81 Minix / old Linux       f4 SpeedStor\n");
-    printf("1c Hide Win95 FAT32 (LBA) 82 Linux swap              fd Linux raid autodetect\n");
-    printf("1e Hide Win95 FAT16 (LBA) 83 Linux                   fe LANstep\n");
-    printf("24 NEC DOS                84 OS/2 Hide C:            ff BBT\n");
+    printf(
+	" 0 Empty                  3c PartitionMagic recovery 85 Linux extended\n"
+	" 1 FAT12                  40 Venix 80286             86 NTFS volume set\n"
+	" 2 XENIX root             41 PPC PReP Boot           87 NTFS volume set\n"
+	" 3 XENIX usr              42 SFS                     93 Amoeba\n"
+	" 4 FAT16 <32M             4d QNX4.x                  94 Amoeba BBT\n"
+	" 5 Extended               4e QNX4.x 2nd part         a0 IBM Thinkpad hibernate\n"
+	" 6 FAT16                  4f QNX4.x 3rd part         a5 BSD/386\n"
+	" 7 HPFS/NTFS              50 OnTrack DM              a6 OpenBSD\n"
+	" 8 AIX                    51 OnTrack DM6 Aux1        a7 NeXTSTEP\n"
+	" 9 AIX bootable           52 CP/M                    b7 BSDI fs\n"
+	" a OS/2 Boot Manager      53 OnTrack DM6 Aux3        b8 BSDI swap\n"
+	" b Win9x FAT32            54 OnTrack DM6             c1 DR-DOS/sec FAT-12\n"
+	" c Win9x FAT32 (LBA)      55 EZ-Drive                c4 DR-DOS/sec FAT-16 <32M\n"
+	" e Win9x FAT16 (LBA)      56 Golden Bow              c6 DR-DOS/sec FAT-16\n"
+	" f Win9x Extended (LBA)   5c Priam Edisk             c7 Syrinx\n"
+	"10 OPUS                   61 SpeedStor               db CP/M / CTOS / ...\n"
+	"11 Hide FAT12             63 GNU HURD or SysV        e1 DOS access\n"
+	"12 Compaq diagnostics     64 Novell Netware 286      e3 DOS R/O\n"
+	"14 Hide FAT16 <32M        65 Novell Netware 386      e4 SpeedStor\n"
+	"16 Hide FAT16             70 DiskSecure Multi-Boot   eb BeOS fs\n"
+	"17 Hide HPFS/NTFS         75 PC/IX                   f1 SpeedStor\n"
+	"18 AST Windows swapfile   80 ELKS / Old Minix        f2 DOS secondary\n"
+	"1b Hide Win9x FAT32       81 New Minix / Old Linux   f4 SpeedStor\n"
+	"1c Hide Win9x FAT32 (LBA) 82 Linux swap              fd Linux raid autodetect\n"
+	"1e Hide Win9x FAT16 (LBA) 83 New Linux               fe LANstep\n"
+	"24 NEC DOS                84 OS/2 Hide C:            ff BBT\n"
+    );
     fflush(stdout);
 }
 
