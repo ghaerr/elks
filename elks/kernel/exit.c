@@ -81,13 +81,9 @@ int status;
 	/* Send control back to the parent */
 	parent->child_lastend = current->pid;
 	parent->lastend_status = status;
-
-	/* Free the text, pwd, and root inodes */
-	iput(current->t_inode);
-#ifndef CONFIG_NOFS
+	/* Free the pwd and root inodes */
 	iput(current->fs.root);
 	iput(current->fs.pwd);
-#endif
 	/* Now the task should never run again... - I hope this can still
  	 * be used outside of an int... :) */
 	current->state = TASK_UNUSED;
