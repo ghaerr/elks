@@ -215,7 +215,7 @@ void swap_order(unsigned char *buffer,int count)
 
 #endif
 
-void out_hd(unsinged int drive,unsigned int nsect,unsigned int sect,
+void out_hd(unsigned int drive,unsigned int nsect,unsigned int sect,
 	    unsigned int head,unsigned int cyl,unsigned int cmd)
 {
     unsigned int port;
