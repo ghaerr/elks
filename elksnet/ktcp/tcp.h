@@ -28,13 +28,14 @@
 #define TCP_SETHDRSIZE(c,s)	( *(__u8 *)&(c)->flags |= (s) << 4 )
 
 
-#define ENTER_TIME_WAIT(cb)		(cb)->time_wait_exp = Now + 120 << 4;\
-								(cb)->state = TS_TIME_WAIT;\
-								tcp_timeruse++;\
-								cbs_in_time_wait++;
+#define ENTER_TIME_WAIT(cb)	(cb)->time_wait_exp = Now + (120 << 4);\
+				(cb)->state = TS_TIME_WAIT;\
+				tcp_timeruse++;\
+				cbs_in_time_wait++;
 								
-#define LEAVE_TIME_WAIT(cb)		tcp_timeruse--;\
-								cbs_in_time_wait--;
+#define LEAVE_TIME_WAIT(cb)	tcp_timeruse--;\
+				cbs_in_time_wait--;
+				
 
 struct tcphdr_s {
 	__u16	sport;
@@ -89,11 +90,8 @@ struct tcpcb_s {
 	__u16	wait_data;
 	__u8	in_buf[CB_IN_BUF_SIZE];
 	__u16	buf_head;
-#if 0
-	__u16	buf_tail;
-#else
 	__u16	buf_len;
-#endif
+
 	short	bytes_to_push;
 
 	__u32	send_una;
@@ -105,12 +103,12 @@ struct tcpcb_s {
 	__u16	rcv_wnd;
 	__u32	irs;
 	
-	__u32		seg_seq;
-	__u32		seg_ack;
+	__u32	seg_seq;
+	__u32	seg_ack;
 	
-	__u16		flags;
-	__u8		*data;
-	__u16		datalen;
+	__u16	flags;
+	__u8	*data;
+	__u16	datalen;
 
 };
 

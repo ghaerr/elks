@@ -70,24 +70,24 @@ void ktcp_run()
         FD_ZERO(&fdset);
         FD_SET(sfd, &fdset);
         FD_SET(tcpdevfd, &fdset);
-		select(sfd > tcpdevfd ? sfd + 1 : tcpdevfd + 1, &fdset, NULL, NULL, tv);
+	select(sfd > tcpdevfd ? sfd + 1 : tcpdevfd + 1, &fdset, NULL, NULL, tv);
 		
-		Now = timer_get_time();
+	Now = timer_get_time();
 	
-		tcp_update();
+	tcp_update();
 			
-		if(FD_ISSET(sfd, &fdset)){
+	if(FD_ISSET(sfd, &fdset)){
 	    	slip_process();
-		}
+	}
 	
-		if(FD_ISSET(tcpdevfd, &fdset)){
+	if(FD_ISSET(tcpdevfd, &fdset)){
 	    	tcpdev_process();
-		}
+	}
 
-		if(tcp_timeruse > 0)		
-			tcp_retrans();
-	
-		/*   tcpcb_printall();*/
+	if(tcp_timeruse > 0)		
+		tcp_retrans();
+
+	/*   tcpcb_printall();*/
     }
 }
 

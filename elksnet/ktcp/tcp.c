@@ -21,6 +21,7 @@
 #include "mylib.h"
 
 extern int cbs_in_time_wait;
+extern int cbs_in_user_timeout;
 
 void tcp_print(head)
 struct iptcp_s *head;
@@ -285,11 +286,13 @@ struct tcpcb_s *cb;
 	__u32 lastack;
 	int needack = 0;
 	
+	cb->time_wait_exp = Now;
 	if(iptcp->tcph->flags & TF_FIN){
 		cb->rcv_nxt ++;
 		/* Remove the flag */
 		iptcp->tcph->flags &= ~TF_FIN;
-		cb->state = TS_CLOSING;
+		cb->state = TS_CLOSING; /* cbs_in_user_timeout stays unchanged */
+		cb->time_wait_exp = Now;
 		needack = 1;
 	}
 	
@@ -299,7 +302,8 @@ struct tcpcb_s *cb;
 	
 	if(SEQ_LT(lastack, cb->send_una)){
 		/* out FIN was acked */
-		cb->state = TS_FIN_WAIT_2;
+		cb->state = TS_FIN_WAIT_2; /* cbs_in_user_timeout stays unchanged */
+		cb->time_wait_exp = Now;
 	}
 	
 	if(needack){
@@ -315,10 +319,12 @@ struct tcpcb_s *cb;
 {
 	int needack = 0;
 	
+	cb->time_wait_exp = Now;
 	if(iptcp->tcph->flags & TF_FIN){
 		cb->rcv_nxt ++;
 		/* Remove the flag */
 		iptcp->tcph->flags &= ~TF_FIN;
+		cbs_in_user_timeout--;
 		ENTER_TIME_WAIT(cb);
 		needack = 1;
 	}
@@ -338,6 +344,8 @@ struct iptcp_s *iptcp;
 struct tcpcb_s *cb;
 {
 	__u32 lastack;
+	
+	cb->time_wait_exp = Now;
 	lastack = cb->send_una;
 	if(iptcp->tcph->flags & TF_FIN){
 		cb->rcv_nxt ++;
@@ -350,6 +358,7 @@ struct tcpcb_s *cb;
 	
 	if(SEQ_LT(lastack, cb->send_una)){
 		/* out FIN was acked */
+		cbs_in_user_timeout--;
 		ENTER_TIME_WAIT(cb);
 	}
 }
@@ -358,8 +367,10 @@ void tcp_last_ack(iptcp, cb)
 struct iptcp_s *iptcp;
 struct tcpcb_s *cb;
 {
+	cb->time_wait_exp = Now;
 	if(iptcp->tcph->flags & (TF_ACK|TF_RST)){
 		/* out FIN was acked */
+		cbs_in_user_timeout--;
 		cb->state = TS_CLOSED;
 		tcpcb_remove(cb); /* Remove the cb */
 	}
@@ -367,8 +378,8 @@ struct tcpcb_s *cb;
 
 void tcp_update()
 {
-	if(cbs_in_time_wait > 0){
-		tcpcb_expire_time_wait();
+	if(cbs_in_time_wait > 0 || cbs_in_user_timeout > 0){
+		tcpcb_expire_timeouts();
 	}
 	if(tcpcb_need_push > 0){
 		tcpcb_push_data();

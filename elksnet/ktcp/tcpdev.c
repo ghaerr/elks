@@ -26,18 +26,20 @@
 static unsigned char sbuf[TCPDEV_BUFSIZE];
 static int tcpdevfd;
 
+extern int cbs_in_user_timeout;
+
 
 int tcpdev_init(fdev)
 char *fdev;
 {
-    int len;
+	int len;
 
-    tcpdevfd = open(fdev, O_NONBLOCK | O_RDWR);
-    if(tcpdevfd < 0){
+	tcpdevfd = open(fdev, O_NONBLOCK | O_RDWR);
+	if(tcpdevfd < 0){
 		printf("ERROR : failed to open tcpdev device %s\n",fdev);
-    }
+	}
     
-    return tcpdevfd;    
+	return tcpdevfd;    
 }
 
 void retval_to_sock(sock, r)
@@ -379,6 +381,9 @@ static void tcpdev_release()
 				return;	
 			}
 			cb->state = TS_FIN_WAIT_1;
+			cbs_in_user_timeout++;
+			cb->time_wait_exp = Now;
+			
 			tcp_send_fin(cb);
 			/* Handle it as abort */
 	/*		tcp_send_reset(cb);
@@ -386,6 +391,9 @@ static void tcpdev_release()
 			break;
 		case TS_CLOSE_WAIT:
 			cb->state = TS_LAST_ACK;
+			cbs_in_user_timeout++;
+			cb->time_wait_exp = Now;
+			
 			tcp_send_fin(cb);
 			break;
 		}

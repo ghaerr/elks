@@ -15,6 +15,7 @@
 
 static struct	tcpcb_list_s	*tcpcbs;
 int cbs_in_time_wait;
+int cbs_in_user_timeout;
 
 void tcpcb_init()
 {
@@ -24,10 +25,12 @@ void tcpcb_init()
 	tcpcb_num = 0;
 #endif
 	cbs_in_time_wait = 0;
+	cbs_in_user_timeout = 0;
 }
 
 void tcpcb_printall()
 {
+#if 0
 	struct tcpcb_list_s *n;
 	
 	n = tcpcbs;
@@ -37,6 +40,7 @@ void tcpcb_printall()
 				n->tcpcb.localport, n->tcpcb.remport,n->tcpcb.rtt * 1000 / 16);
 		n = n->next;
 	}
+#endif
 }
 
 #ifdef CONFIG_INET_STATUS
@@ -216,16 +220,29 @@ struct tcpcb_s *cb;
 	}
 }
 
-void tcpcb_expire_time_wait()
+void tcpcb_expire_timeouts()
 {
 	struct tcpcb_list_s *n,*next;
 	
 	n = tcpcbs;
 	while(n){
 		next = n->next;
-		if(n->tcpcb.state == TS_TIME_WAIT && TIME_GT(n->tcpcb.time_wait_exp, Now)){
-			LEAVE_TIME_WAIT(&n->tcpcb);
-			tcpcb_remove(n);
+		switch (n->tcpcb.state) {
+		case TS_TIME_WAIT:
+			if(TIME_GT(Now, n->tcpcb.time_wait_exp)){
+				LEAVE_TIME_WAIT(&n->tcpcb);
+				tcpcb_remove(n);
+			}
+			break;
+		case TS_FIN_WAIT_1:
+		case TS_FIN_WAIT_2:
+		case TS_LAST_ACK:
+		case TS_CLOSING:
+			if(TIME_GT(Now - (240 << 4), n->tcpcb.time_wait_exp)){
+				cbs_in_user_timeout--;
+				tcpcb_remove(n);
+			}
+			break;
 		}
 		n = next;
 	}
