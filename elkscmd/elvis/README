@@ -1,0 +1,32 @@
+Elvis is a clone of vi/ex, the standard UNIX editor.  Elvis supports nearly
+all of the vi/ex commands, in both visual mode and colon mode.
+
+Elvis runs under BSD UNIX, AT&T SysV UNIX, SCO Xenix, Minix, MS-DOS, Atari TOS,
+OS9/68000, and Coherent.  Ports to other operating systems are in progress;
+contact me before you start porting it to some other OS, because somebody else
+may have already done it for you.
+
+Elvis is freely redistributable, in either source form or executable form.
+There are no restrictions on how you may use it.
+
+The documentation will reside in a subdirectory called "doc".  On some systems,
+you may need to create this directory before you can extract the documentation.
+The "doc/*.man" files are UNIX-style man pages; they are meant to be processed
+by "nroff -man".  The "doc/*.doc" files are all chapters of the manual.  They
+have already been formatted, and they contain Epson-compatible escape sequences
+to control type styles.  A program called "refont" is included for stripping
+these out, if necessary.
+
+The file named "Makefile.mix" is used for all systems except MS-DOS.  You
+should copy "Makefile.mix" to "Makefile", and then edit "Makefile" to select
+the appropriate group of settings for your system.
+
+
+Author: Steve Kirkendall
+
+E-mail:	kirkenda@cs.pdx.edu
+
+Snail	14407 SW Teal Blvd.  Apt.C
+ Mail:	Beaverton, OR   97005
+
+Phone:	(503) 643-6980

@@ -1,0 +1,51 @@
+.TH VIREC 1
+.SH NAME
+virec - Recover the modified version of a file after a crash
+.SH SYNOPSIS
+.nf
+\fBvirec\fP [\fB-d\fP \fItmpdir\fP] \fItextfilename...\fP
+\fBvirec\fP </tmp/elv\fIXXX\fP
+.fi
+.SH DESCRIPTION
+\fIVirec\fP is a program which extracts the most recent version of a
+text file from a temporary file in /tmp.
+.PP
+When you edit a file with Elvis,
+only about 5K bytes of the file are stored in RAM;
+the rest is stored in a file in /tmp.
+This allows you to edit files larger than a process' data space.
+It also plays a big part in the way that "undo" and "paste" were implemented.
+.PP
+The \fIvirec\fP program basically extracts the "undo" version from the file.
+This is most useful when the system (or Elvis) crashes in
+the middle of a long edit session,
+since the "undo" version of the file contains everything
+except your last change.
+Nearly all of your work can be salvaged.
+.PP
+The most common way to invoke virec is this:
+You just give virec the name of the file you were editing,
+and it finds the matching file in /tmp and writes
+the newest available version of the file over the existing version.
+It then deletes the /tmp file.
+.PP
+The other way, where you redirect its stdin to come from
+a particular /tmp file, is used when you have
+either forgotten which file that is and you want to see its contents,
+or when you want to recover the file
+without losing either the /tmp file or the current version of the text file.
+.SH OPTIONS
+.IP "\fB-d\fP \fItmpdir\fP"
+If your \fI.exrc\fP or \fI$EXINIT\fP causes Elvis to store temp files in
+a non-standard directory
+(usually, anyplace other than /tmp),
+then you must tell \fIvirec\fP which directory to look in.
+.SH FILES
+.IP /tmp/elv*
+The temporary file left over from when Elvis was editing a text file.
+.SH AUTHOR
+.nf
+Steve Kirkendall
+kirkenda@cs.pdx.edu
+\&...uunet!tektronix!psueea!eecs!kirkenda
+.fi

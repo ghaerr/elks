@@ -1,0 +1,198 @@
+
+     Elvis 1.4      DIFFERENCES BETWEEN ELVIS & BSD VI/EX       Page 7-1
+
+
+E7.  DIFFERENCES BETWEEN ELVIS & BSD VI/EXF
+
+
+   E7.1  ExtensionsF
+
+   :mkexrc
+   :mk
+
+        This  EX  command saves the current :set and :map configurations
+     in the ".exrc" file in your current directory.  
+
+   :Next
+   :previous
+   :N
+   :pre
+
+        These commands move backwards through the args list.  
+
+   zz
+
+        In visual command mode, the (lowercase) "zz" command will center 
+     the current line on the screen, like "z=".  
+
+   .
+
+        The default count value for  .  is  the  same  as  the  previous
+     command which  . is meant to repeat.  However, you can supply a new
+     count if you wish.  For example, after "3dw",  "."  will  delete  3
+     words, but "5." will delete 5 words.  
+
+   ".
+
+        The  text  which was most recently input (via a "cw" command, or
+     something similar) is saved in a cut buffer called ". (which  is  a
+     pretty hard name to write in an English sentence).  
+
+   K
+
+        In  visual command mode, you can move the cursor onto a word and
+     press shift-K to have Elvis run a reference program  to  look  that
+     word up.   This command alone is worth the price of admission!  See
+     the ctags and ref programs.  
+
+   #
+
+        In visual command mode, you can move the cursor  onto  a  number
+     and then  hit ## or #+ to increment that number by 1.  To increment
+     it by a larger amount, type in the increment value  before  hitting
+     the initial  #.    The  number  can  also  be decremented or set by
+     hitting #- or #=, respectively.  
+
+   input
+
+        You can backspace past the beginning of the line.  
+
+
+
+
+
+
+
+
+
+     Elvis 1.4      DIFFERENCES BETWEEN ELVIS & BSD VI/EX       Page 7-2
+
+
+        The arrow keys work in input mode.  
+
+        If you type control-A, then the text that you input last time is 
+     inserted.  You will remain in input mode, so you can backspace over 
+     part of it, or add more to it.  (This is sort of like control-@  on
+     the real vi, except that control-A really works.) 
+
+        Control-P will insert the contents of the cut buffer.  
+
+        Real  vi  can  only  remember up to 128 characters of input, but
+     Elvis can remember any amount.  
+
+        The ^T and ^D keys can adjust the indent of  a  line  no  matter
+     where the cursor happens to be in that line.  
+
+        You  can  save your file and exit Elvis directly from input mode
+     by hitting control-Z twice.  
+
+        Elvis supports digraphs as a way to enter non-ASCII characters.  
+
+   :set inputmode
+   :se im
+
+        If you set this flag in your .exrc file, then elvis  will  start
+     up in input mode instead of visual command mode.  
+
+   :set charattr
+   :se ca
+
+        Elvis  can  display  "backslash-f" style character attributes on
+     the screen as you edit.  The following example shows the recognized 
+     atributes: 
+
+            normal \fBboldface\fR \fIitalics\fR \fUunderlined\fR normal
+
+        NOTE: you must compile elvis without the -DNO_CHARATTR flag  for
+     this to work.  
+
+   :set sync
+   :se sy
+
+        After  a  crash, you can usually recover the altered form of the
+     file from the temporary file that Elvis uses.  With the sync option 
+     turned on, the odds are shifted a little more in your favor because 
+     Elvis will perform a sync() call after each change has been written 
+     to the temporary file.  
+
+   cursor shape
+
+        Elvis changes the shape of the cursor  to  indicate  which  mode
+     you're  in, if your terminal's termcap entry includes the necessary
+     capabilities.  
+
+   :set hideformat
+   :se hf
+
+
+
+
+
+
+
+
+     Elvis 1.4      DIFFERENCES BETWEEN ELVIS & BSD VI/EX       Page 7-3
+
+
+        This option hides format control lines.  (They are displayed  on
+     the screen as blank lines.) 
+
+   :errlist
+   *
+   elvis -m
+
+        Elvis  is  clever  enough to parse the error messages emitted by
+     many compilers.  To use  this  feature,  you  should  collect  your
+     compiler's  error messages into a file called "errlist"; elvis will
+     read this file,  determine  which  source  file  caused  the  error
+     messages,  start  editing  that  file,  move the cursor to the line
+     where the error was detected, and display the error message on  the
+     status line.  Nifty!  
+
+
+   E7.2  OmissionsF
+
+        The replace  mode  is  a hack.  It doesn't save the text that it
+     overwrites.  
+
+        Long lines are displayed differently -- where the real vi  would
+     wrap  a  long  line  onto  several rows of the screen, Elvis simply
+     displays part of the line, and allows  you  to  scroll  the  screen
+     sideways to see the rest of it.  
+
+        The ":preserve"  and ":recover" commands are missing.  So is the
+     -r flag.  I've never had a good  reason  to  use  ":preserve",  and
+     since  ":recover"  is used so rarely I decided to implement it as a
+     separate program.  There's no need to load the recovery  code  into
+     memory every time you edit a file, I figured.  
+
+        LISP support is missing.  
+
+        Due  to  naming  conventions used for the temporary files, Elvis
+     can be creating no more that one new  file  per  directory  at  any
+     given time.  Any number of existing files can be edited at the same 
+     time on multitasking computer systems, but only one new file can be 
+     created simultaneously per directory.  To relieve this problem, you 
+     would have to edit tmp.c and virec.c This is expected to be done in 
+     version 1.5 
+
+        Autoindent mode acts a little different from the real vi.  It is 
+     still  quite  useful,  but  if you frequently use both vi and elvis
+     then the differences may be  annoying.    Autoindent  is  -1gradually-0
+     improving.  
+
+        The  visual  "put"  command  cannot be repeated by hitting the .
+     key.  
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,528 @@
+
+     Elvis 1.4               COLON MODE COMMANDS                Page 3-1
+
+
+E3.  COLON MODE COMMANDSF
+
+        -1lines           command         arguments                    -0
+        [line]          -1a-0ppend
+                        -1ar-0gs            [files]
+                        -1cc-0              [files]
+                        -1cd-0              [directory]
+        [line][,line]   -1c-0hange
+                        -1chd-0ir           [directory]
+        [line][,line]   -1co-0py            line
+        [line][,line]   -1d-0elete          ["x]
+                        -1di-0graph[!]      [XX [Y]]
+                        -1e-0dit[!]         [file]
+                        -1er-0rlist[!]      [errlist]
+                        -1e-0x[!]           [file]
+                        -1f-0ile            [file]
+        [line][,line]   -1g-0lobal          /regexp/ command
+        [line]          -1i-0nsert
+        [line][,line]   -1j-0oin
+        [line][,line]   -1l-0ist
+                        -1mak-0e            [target]
+                        -1ma-0p[!]          key mapped_to
+        [line]          mar-1k-0            x
+                        -1mk-0exrc
+        [line][,line]   -1m-0ove            line
+                        -1n-0ext[!]         [files]
+                        -1N-0ext[!]
+        [line][,line]   -1nu-0mber
+                        -1pre-0vious[!]
+        [line][,line]   -1p-0rint
+        [line]          -1pu-0t             ["x]
+                        -1q-0uit[!]
+        [line]          -1r-0ead            file
+                        -1rew-0ind[!]
+                        -1se-0t             [options]
+                        -1so-0urce          file
+        [line][,line]   -1s-0ubstitute      /regexp/replacement/[p][g][c]
+                        -1ta-0g[!]          tagname
+        [line][,line]   -1t-0o              line
+                        -1u-0ndo
+                        -1unm-0ap[!]        key
+                        -1ve-0rsion
+        [line][,line]   -1v-0global         /regexp/ command
+                        -1vi-0sual
+                        -1wq-0
+        [line][,line]   -1w-0rite[!]        [[>>]file]
+                        -1x-0it[!]
+        [line][,line]   -1y-0ank            ["x]
+        [line][,line]   -1!-0               command
+        [line][,line]   -1<-0
+        [line][,line]   -1=-0
+        [line][,line]   -1>-0
+        [line][,line]   -1&-0
+                        -1@-0               "x
+
+
+
+
+
+
+
+
+
+     Elvis 1.4               COLON MODE COMMANDS                Page 3-2
+
+
+        To  use colon mode commands, you must switch from visual command
+     mode to colon command mode.  The visual mode commands  to  do  this
+     are  ":"  for  a  single  colon command, or "Q" for many colon mode
+     commands.  
+
+
+   E3.1  Line SpecifiersF
+
+        Line specifiers are always optional.  The first  line  specifier
+     of most  commands usually defaults to the current line.  The second
+     line specifier usually defaults to be the same as  the  first  line
+     specifier.  Exceptions are :write, :global, and :vglobal, which act 
+     on all lines of the file by default, and :!, which acts on no lines 
+     by default.  
+
+        Line  specifiers  consist  of  an  absolute  part and a relative
+     part.  The absolute part of a  line  specifier  may  be  either  an
+     explicit  line  number, a mark, a dot to denote the current line, a
+     dollar sign to denote the last line of the file, or  a  forward  or
+     backward search.  
+
+        An explicit line number is simply a decimal number, expressed as 
+     a string of digits.  
+
+        A mark is typed in as an apostrophe followed by a letter.  Marks 
+     must be  set before they can be used.  You can set a mark in visual
+     command mode by typing "m" and a letter, or you can set it in colon 
+     command mode via the "mark" command.  
+
+        A forward search is typed in as a regular expression  surrounded
+     by slash  characters;  searching  begins  at  the  default line.  A
+     backward search is typed in as a regular expression  surrounded  by
+     question  marks;  searching  begins  at the line before the default
+     line.  
+
+        If you omit the absolute part, then the default line is used.  
+
+        The relative part of a line specifier is typed as a "+"  or  "-"
+     character followed  by a decimal number.  The number is added to or
+     subtracted from the absolute part of the line specifier to  produce
+     the final line number.  
+
+        As  a  special  case, the % character may be used to specify all
+     lines of the file.  It is roughly equivelent to saying 1,$.    This
+     can be a handy shortcut.  
+
+        Some examples: 
+
+            :p              print the current line
+            :37p            print line 37
+            :'gp            print the line which contains mark g
+            :/foo/p         print the next line that contains "foo"
+            :$p             print the last line of the file
+            :20,30p         print lines 20 through 30
+            :1,$p           print all lines of the file
+            :%p             print all lines of the file
+            :/foo/-2,+4p    print 5 lines around the next "foo"
+
+
+
+
+
+
+     Elvis 1.4               COLON MODE COMMANDS                Page 3-3
+
+
+   E3.2  Text Entry CommandsF
+
+            [line] append
+            [line][,line] change ["x]
+            [line] insert
+
+        The -1a-0ppend command inserts text after the specified line.  
+
+        The -1i-0nsert command inserts text before the specified line.  
+
+        The  -1c-0hange command copies the range of lines into a cut buffer,
+     deletes them, and inserts new text where the old text used to be.  
+
+        For all of these commands, you indicate  the  end  of  the  text
+     you're inserting by hitting ^D or by entering a line which contains 
+     only a period.  
+
+
+   E3.3  Cut & Paste CommandsF
+
+            [line][,line] delete ["x]
+            [line][,line] yank ["x]
+            [line] put ["x]
+            [line][,line] copy line
+            [line][,line] to line
+            [line][,line] move line
+
+        The  -1d-0elete  command  copies the specified range of lines into a
+     cut buffer, and then deletes them.  
+
+        The -1y-0ank command copies the specified range of lines into a  cut
+     buffer, but does *not* delete them.  
+
+        The  -1pu-0t  command  inserts  text  from  a  cut  buffer after the
+     specified line.  
+
+        The -1co-0py and -1t-0o commands yank the specified range of  lines  and
+     then immediately paste them after some other line.  
+
+        The  -1m-0ove  command deletes the specified range of lines and then
+     immediately pastes them after some other line.  If the  destination
+     line  comes  after  the  deleted  text,  then  it  will be adjusted
+     automatically to account for the deleted lines.  
+
+
+   E3.4  Display Text CommandsF
+
+            [line][,line] print
+            [line][,line] list
+            [line][,line] number
+
+        The -1p-0rint command displays the specified range of lines.  
+
+        The -1nu-0mber command displays the lines, with line numbers.  
+
+
+
+
+
+
+
+
+
+     Elvis 1.4               COLON MODE COMMANDS                Page 3-4
+
+
+        The -1l-0ist command also displays them, but it is careful  to  make
+     control characters visible.  
+
+
+   E3.5  Global Operations CommandsF
+
+            [line][,line] global /regexp/ command
+            [line][,line] vglobal /regexp/ command
+
+        The  -1g-0lobal  command searches through the lines of the specified
+     range (or through the whole file if  no  range  is  specified)  for
+     lines that  contain  a given regular expression.  It then moves the
+     cursor to each of these lines and runs some other command on them.  
+
+        The -1v-0global command is similar, but it searches for  lines  that
+     -1don't-0 contain the regular expression.  
+
+
+   E3.6  Line Editing CommandsF
+
+            [line][,line] join
+            [line][,line] ! program
+            [line][,line] <
+            [line][,line] >
+            [line][,line] substitute /regexp/replacement/[p][g][c]
+            [line][,line] &
+
+        The  -1j-0oin  command  catenates  all  lines in the specified range
+     together to form one big line.  If only a single line is specified, 
+     then the following line is catenated onto it.  
+
+        The -1!-0 command runs an external filter  program,  and  feeds  the
+     specified range  of  lines  to  it's  stdin.    The  lines are then
+     replaced by the output of the filter.  A typical example  would  be
+     ":'a,'z!sort" to sort the lines 'a,'z.  
+
+        The  -1<-0 and -1>-0 commands shift the specified range of lines left or
+     right, normally by the width of 1 tab character.  The  "shiftwidth"
+     option determines the shifting amount.  
+
+        The  -1s-0ubstitute  command  finds  the  regular expression in each
+     line, and replaces it with the replacement text.   The  "p"  option
+     causes the altered lines to be printed.  The "g" option permits all 
+     instances  of  the  regular  expression  to  be  found  & replaced.
+     (Without "g", only the first occurrence in each line is  replaced.)
+     The "c" option asks for confirmation before each substitution.  
+
+        The   -1&-0  command  repeats  the  previous  substitution  command.
+     Actually, "&" is equivelent to "s//~/" with  the  same  options  as
+     last time.    It  searches for the last regular expression that you
+     specified for any purpose, and replaces it with the the  same  text
+     that was used in the previous substitution.  
+
+
+
+
+
+
+
+
+
+
+
+     Elvis 1.4               COLON MODE COMMANDS                Page 3-5
+
+
+   E3.7  Undo CommandF
+
+            undo
+
+        The -1u-0ndo command restores the file to the state it was in before 
+     your most recent command which changed text.  
+
+
+   E3.8  Configuration & Status CommandsF
+
+            map[!] [key mapped_to]
+            unmap[!] key
+            abbr [word expanded_form_of_word]
+            unabbr word
+            digraph[!] [XX [Y]]
+            set [options]
+            mkexrc
+            [line] mark "x
+            visual
+            version
+            [line][,line] =
+            file [file]
+            source file
+            @ "x
+
+        The  -1ma-0p command allows you to configure Elvis to recognize your
+     function keys, and treat them as though they transmitted some other 
+     sequence of characters.  Normally this mapping is done only when in 
+     the visual command mode, but with the [!] present it will map  keys
+     under all  contexts.  When this command is given with no arguments,
+     it prints a table showing all mappings currently in effect.    When
+     called  with  two  arguments,  the  first is the sequence that your
+     function key really sends, and the second is the sequence that  you
+     want Elvis to treat it as having sent.  
+
+        The -1unm-0ap command removes key definitions that were made via the 
+     map command.  
+
+        The   -1ab-0br   command   is   used   to  define/list  a  table  of
+     abbreviations.  The table contains both the  abbreviated  form  and
+     the fully  spelled-out form.  When you're in visual input mode, and
+     you  type  in  the  abbreviated  form,  Elvis  will   replace   the
+     abbreviated form  with  the  fully  spelled-out  form.    When this
+     command is called without arguments, it lists the table;  with  two
+     or  more  arguments, the first argument is taken as the abbreviated
+     form, and the rest of the command line  is  the  fully-spelled  out
+     form.  
+
+        The -1una-0bbr command deletes entries from the abbr table.  
+
+        The  -1di-0graph  command  allows you to display the set of digraphs
+     that Elvis is using, or add/remove a digraph.  To list the  set  of
+     digraphs, use  the  digraph  command  with  no arguments.  To add a
+     digraph, you should give the digraph command two  arguments.    The
+     first argument is the two ASCII characters that are to be combined; 
+     the second  is  the  non-ASCII  character that they represent.  The
+     non-ASCII character's most significant bit is automatically set  by
+     the digraph  command,  unless  to  append a !  to the command name.
+
+
+
+
+
+     Elvis 1.4               COLON MODE COMMANDS                Page 3-6
+
+
+     Removal of a digraph is similar to adding a  digraph,  except  that
+     you should leave off the second argument.  
+
+        The -1se-0t command allows you examine or set various options.  With 
+     no  arguments,  it  displays  the  values of options that have been
+     changed.  With the single argument "all" it displays the values  of
+     all  options,  regardless of whether they've been explicitly set or
+     not.  Otherwise, the arguments are treated as options to be set.  
+
+        The -1mk-0exrc command saves the current  configuration  to  a  file
+     called ".exrc" in the current directory.  
+
+        The  mar-1k-0  command  defines  a named mark to refer to a specific
+     place in the file.  This mark may be used later  to  specify  lines
+     for other commands.  
+
+        The -1vi-0sual command puts the editor into visual mode.  Instead of 
+     emulating ex, Elvis will start emulating vi.  
+
+        The  -1ve-0rsion  command  tells you that what version of Elvis this
+     is.  
+
+        The -1=-0 command tells you what line  you  specified,  or,  if  you
+     specified a range of lines, it will tell you both endpoints and the 
+     number of lines included in the range.  
+
+        The  -1f-0ile command tells you the name of the file, whether it has
+     been modified, the number of lines in the  file,  and  the  current
+     line number.  You can also use it to change the name of the current 
+     file.  
+
+        The  -1so-0urce command reads a sequence of colon mode commands from
+     a file, and interprets them.  
+
+        The -1@-0 command executes  the  contents  of  a  cut-buffer  as  EX
+     commands.  
+
+
+   E3.9  Multiple File CommandsF
+
+            args [files]
+            next[!] [files]
+            Next[!]
+            previous[!]
+            rewind[!]
+
+        When  you  invoke  Elvis  from  your  shell's  command line, any
+     filenames that you give to Elvis as arguments  are  stored  in  the
+     args list.    The  -1ar-0gs command will display this list, or define a
+     new one.  
+
+        The -1n-0ext command switches from the current file to the next  one
+     in the args list.  You may specify a new args list here, too.  
+
+        The  -1N-0ext  and -1pre-0vious commands (they're really aliases for the
+     same command) switch from the current file to the preceding file in 
+     the args list.  
+
+
+
+
+
+
+     Elvis 1.4               COLON MODE COMMANDS                Page 3-7
+
+
+        The -1rew-0ind command switches from the current file to  the  first
+     file in the args list.  
+
+
+   E3.10  Switching FilesF
+
+            edit[!] [file]
+            tag[!] tagname
+
+        The  -1e-0dit command allows to switch from the current file to some
+     other file.  This has nothing to do with  the  args  list,  by  the
+     way.  
+
+        The  -1ta-0g  command  looks  up  a  given  tagname in a file called
+     "tags".  This tells it which file the tag is in, and how to find it 
+     in that file.  Elvis then switches to the tag's file and finds  the
+     tag.  
+
+
+   E3.11  Working with a CompilerF
+
+            cc [files]
+            make [target]
+            errlist[!] [errlist]
+
+        The -1cc-0 and -1mak-0e commands execute your compiler or "make" utility 
+     and redirect  any  error messages into a file called "errlist".  By
+     default, cc is run on the current  file.    (You  should  write  it
+     before  running  cc.)  The  contents of the "errlist" file are then
+     scanned for error messages.  If an error message is found, then the 
+     cursor is moved to the line where the error was detected,  and  the
+     description of the error is displayed on the status line.  
+
+        After  you've fixed one error, the -1er-0rlist command will move the
+     cursor to the next error.  In visual command mode, hitting `*' will 
+     do this, too.  
+
+        You can also create an "errlist" file from outside of Elvis, and 
+     use "elvis -m" to start elvis and have  the  cursor  moved  to  the
+     first error.    Note  that you don't need to supply a filename with
+     "elvis -m" because the error messages always say which source  file
+     an error is in.  
+
+        Note: When you use errlist repeatedly to fix several errors in a 
+     single file, it will attempt to adjust the reported line numbers to 
+     allow for   lines  that  you  have  inserted  or  deleted.    These
+     adjustments are made with the assumption that you will work  though
+     the file from the beginning to the end.  
+
+
+   E3.12  Exit CommandsF
+
+            quit[!]
+            wq
+            xit
+
+
+
+
+
+
+
+
+     Elvis 1.4               COLON MODE COMMANDS                Page 3-8
+
+
+        The  -1q-0uit  command  exits  from  the  editor without saving your
+     file.  
+
+        The -1wq-0 command writes your file out, then then exits.  
+
+        The -1x-0it command is similar to the -1wq-0 command,  except  that  -1x-0it
+     won't bother to write your file if you haven't modified it.  
+
+
+   E3.13  File I/O CommandsF
+
+            [line] read file
+            [line][,line] write[!] [[>>]file]
+
+        The  -1r-0ead  command  gets  text  from another file and inserts it
+     after the specified line.   It  can  also  read  the  output  of  a
+     program;  simply  precede  the  program name by a '!' and use it in
+     place of the file name.  
+
+        The -1w-0rite command writes the whole file, or just part of it,  to
+     some other  file.    The !, if present, will permit the lines to be
+     written even if you've set the readonly option.  If you precede the 
+     filename by >> then the lines will be appended to the file.  
+
+
+   E3.14  Directory CommandsF
+
+            cd [directory]
+            chdir [directory]
+            shell
+
+        The -1cd-0 and -1chd-0ir commands (really two  names  for  one  command)
+     switch the current working directory.  
+
+        The -1sh-0ell command starts an interactive shell.  
+
+
+   E3.15  Debugging CommandsF
+
+            [line][,line] debug[!]
+            validate[!]
+
+        These  commands are only available if you compile Elvis with the
+     -DDEBUG flag.  
+
+        The de-1b-0ug command lists statistics for the blocks which  contain
+     the specified range  of  lines.    If  the  !  is present, then the
+     contents of those blocks is displayed, too.  
+
+        The -1va-0lidate  command  checks  certain  variables  for  internal
+     consistency.  Normally it doesn't output anything unless it detects 
+     a problem.    With  the  !,  though,  it will always produce *some*
+     output.  
+
+
+
+
+
+
+
+
+

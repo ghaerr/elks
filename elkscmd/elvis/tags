@@ -1,0 +1,690 @@
+ADDEDNL	vi.h	92
+ADD_META	regexp.c	55
+AMIGA	config.h	79
+ANY_UNIX	config.h	101
+ANY_UNIX	config.h	99
+ARGS	ctags.c	71
+A_ALTCHARSET	curses.h	46
+A_BOLD	curses.h	44
+A_NORMAL	curses.h	42
+A_STANDOUT	curses.h	43
+A_UNDERLINE	curses.h	45
+BANG	ex.c	25
+BASE_META	regexp.c	48
+BCLR	recycle.c	25
+BLKSIZE	vi.h	62
+BODY	ctags.c	72
+BOOL	opts.c	104
+BSD	config.h	21
+BSD	config.h	59
+BSET	recycle.c	24
+BTST	recycle.c	23
+BeforeAfter	vi.h	277
+CANSET	opts.c	108
+CAP	tinytcap.c	12
+CAP2	tinytcap.c	13
+CC_COMMAND	config.h	231
+CC_COMMAND	config.h	233
+CC_COMMAND	config.h	263
+CC_COMMAND	config.h	332
+CHECKBIOS	curses.h	119
+CHECKBIOS	curses.h	122
+CLR	recycle.c	29
+CMD_ABBR	vi.h	348
+CMD_APPEND	vi.h	350
+CMD_ARGS	vi.h	349
+CMD_AT	vi.h	351
+CMD_BANG	vi.h	352
+CMD_CC	vi.h	353
+CMD_CD	vi.h	354
+CMD_CHANGE	vi.h	355
+CMD_COPY	vi.h	356
+CMD_DEBUG	vi.h	404
+CMD_DELETE	vi.h	357
+CMD_DIGRAPH	vi.h	358
+CMD_EDIT	vi.h	359
+CMD_EQUAL	vi.h	360
+CMD_ERRLIST	vi.h	361
+CMD_FILE	vi.h	362
+CMD_GLOBAL	vi.h	363
+CMD_INSERT	vi.h	364
+CMD_JOIN	vi.h	365
+CMD_LIST	vi.h	366
+CMD_MAKE	vi.h	367
+CMD_MAP	vi.h	368
+CMD_MARK	vi.h	369
+CMD_MKEXRC	vi.h	370
+CMD_MOVE	vi.h	371
+CMD_NEXT	vi.h	372
+CMD_NULL	vi.h	347
+CMD_NUMBER	vi.h	373
+CMD_PRESERVE	vi.h	374
+CMD_PREVIOUS	vi.h	375
+CMD_PRINT	vi.h	376
+CMD_PUT	vi.h	377
+CMD_QUIT	vi.h	378
+CMD_READ	vi.h	379
+CMD_RECOVER	vi.h	380
+CMD_REWIND	vi.h	381
+CMD_SET	vi.h	382
+CMD_SHELL	vi.h	383
+CMD_SHIFTL	vi.h	384
+CMD_SHIFTR	vi.h	385
+CMD_SOURCE	vi.h	386
+CMD_STOP	vi.h	387
+CMD_SUBAGAIN	vi.h	388
+CMD_SUBSTITUTE	vi.h	389
+CMD_SUSPEND	vi.h	390
+CMD_TAG	vi.h	392
+CMD_TR	vi.h	391
+CMD_UNABBR	vi.h	393
+CMD_UNDO	vi.h	394
+CMD_UNMAP	vi.h	395
+CMD_VALIDATE	vi.h	405
+CMD_VERSION	vi.h	396
+CMD_VGLOBAL	vi.h	397
+CMD_VISUAL	vi.h	398
+CMD_WQUIT	vi.h	399
+CMD_WRITE	vi.h	400
+CMD_XIT	vi.h	401
+CMD_YANK	vi.h	402
+COHERENT	config.h	87
+COMPILED_BY	config.h	29
+COMPILED_BY	config.h	37
+COMPILED_BY	config.h	43
+COMPILED_BY	config.h	48
+COPYING	vi.h	14
+CREDIT	config.h	117
+CREDIT	config.h	121
+CREDIT	config.h	125
+CREDIT	config.h	129
+CURSOR	vi.c	21
+CURSOR_CNT_CMD	vi.c	28
+CURSOR_CNT_KEY	vi.c	22
+CURSOR_COUNT	vi.c	20
+CURSOR_EOL	vi.c	24
+CURSOR_MOVED	vi.c	23
+CURSOR_TEXT	vi.c	27
+CUTNAME	config.h	204
+CUTNAME	config.h	228
+CUTNAME	config.h	261
+CUTNAME	config.h	285
+ChangeText	vi.h	278
+DATE	cmd1.c	21
+DEFAULT	vi.h	328
+DFLALL	ex.c	29
+DFLNONE	ex.c	30
+DIGIT	vi.c	26
+ELVIS	alias.c	25
+ELVIS	alias.c	27
+ENOENT	vi.h	19
+ENOENT	vi.h	33
+ERRLIST	config.h	308
+EXINIT	config.h	210
+EXINIT	config.h	252
+EXPECTFN	ctags.c	70
+EXRC	config.h	206
+EXRC	config.h	266
+EXRC	config.h	289
+EXRCOK	ex.c	32
+EXTRA	ex.c	26
+FAIL	regexp.c	80
+FAIL	tmp.c	78
+FALSE	curses.h	41
+FILE1	ex.c	38
+FILEPERMS	config.h	272
+FILEPERMS	config.h	328
+FILES	ex.c	36
+FRNT	vi.c	33
+FROM	ex.c	23
+GET_META	regexp.c	56
+HADNUL	vi.h	89
+HMEXRC	config.h	294
+INCL	vi.c	34
+INFINITY	vi.h	53
+INT_META	regexp.c	49
+IS_CLASS	regexp.c	51
+IS_CLOSURE	regexp.c	54
+IS_END	regexp.c	53
+IS_META	regexp.c	50
+IS_START	regexp.c	52
+KBSIZ	curses.h	48
+KBSIZ	curses.h	50
+KEYWORD	vi.c	29
+KEYWORDPRG	config.h	299
+LNMD	vi.c	35
+LONGKEY	vi.h	54
+MAINFMT	ctags.c	56
+MAINFMT	ctags.c	61
+MAKE_COMMAND	config.h	336
+MARK_AT_LINE	vi.h	183
+MARK_FIRST	vi.h	181
+MARK_LAST	vi.h	182
+MARK_UNSET	vi.h	180
+MAXABBR	config.h	350
+MAXBIT	recycle.c	33
+MAXBLKS	vi.h	63
+MAXDIGS	config.h	347
+MAXENV	shell.c	28
+MAXFILES	wildcard.c	40
+MAXMAPS	config.h	249
+MAXMAPS	config.h	344
+MAXRCLEN	vi.h	56
+MAXWIDTH	opts.c	23
+MAX_SIGNAL	osk.c	139
+META	regexp.c	47
+MICROSOFT	config.h	107
+MICROSOFT	config.h	28
+MINIX	config.h	92
+MINIX	config.h	94
+MODE_COLON	vi.h	508
+MODE_EX	vi.h	506
+MODE_QUIT	vi.h	509
+MODE_VI	vi.h	507
+MODIFIED	vi.h	90
+MR	opts.c	110
+MSDOS	config.h	27
+MSDOS	config.h	35
+MSDOS	config.h	71
+MVMT	vi.c	31
+M_ANY	regexp.c	63
+M_BEGLINE	regexp.c	59
+M_BEGWORD	regexp.c	61
+M_CLASS	regexp.c	67
+M_END	regexp.c	69
+M_ENDLINE	regexp.c	60
+M_ENDWORD	regexp.c	62
+M_PLUS	regexp.c	65
+M_QMARK	regexp.c	66
+M_SPLAT	regexp.c	64
+M_START	regexp.c	68
+Malias	alias.c	/^main(argc, argv)$/
+Mctags	ctags.c	/^main(argc, argv)$/
+Mmain	main.c	/^void main(argc, argv)$/
+Mref	ref.c	/^main(argc, argv)$/
+Mrefont	refont.c	/^main(argc, argv)$/
+Mshell	shell.c	/^main(argc, argv)$/
+Mvirec	virec.c	/^main(argc, argv)$/
+Mwildcard	wildcard.c	/^main(argc, argv)$/
+NAMEDF	ex.c	39
+NAMEDFS	ex.c	40
+NANNONS	cut.c	23
+NBUFS	blk.c	19
+NCOL	vi.c	36
+NEEDSYNC	config.h	246
+NEEDSYNC	config.h	324
+NEWFILE	vi.h	87
+NL	ex.c	33
+NMARKS	vi.h	185
+NODFL	ex.c	31
+NOFILE	vi.h	91
+NONE	ex.c	42
+NOSPC	ex.c	28
+NO_ARGS	vi.c	19
+NO_FLAGS	vi.c	30
+NO_FUNC	vi.c	18
+NREFS	ref.c	31
+NREL	vi.c	37
+NSUBEXP	regexp.h	7
+NULL	opts.c	18
+NUM	opts.c	105
+NUMFMT	ctags.c	54
+NUMFMT	ctags.c	59
+OSK	config.h	83
+O_BINARY	vi.h	45
+O_RDONLY	vi.h	24
+O_RDONLY	vi.h	30
+O_RDWR	vi.h	26
+O_RDWR	vi.h	32
+O_WRONLY	vi.h	25
+O_WRONLY	vi.h	31
+PATCHLEVEL	osk.c	35
+PLUS	ex.c	34
+PROG	system.c	267
+PROG	system.c	271
+PROGLEN	system.c	268
+PROGLEN	system.c	272
+PTMV	vi.c	32
+RANGE	ex.c	41
+RCSET	opts.c	109
+READONLY	vi.h	88
+REDIRECT	config.h	217
+REDIRECT	config.h	247
+REDIRECT	config.h	273
+REDIRECT	config.h	340
+REFS	ctags.c	51
+REG	config.h	190
+REG	config.h	320
+SAY	ctags.c	65
+SAY	ctags.c	67
+SCRATCHIN	config.h	236
+SCRATCHIN	config.h	303
+SCRATCHOUT	config.h	208
+SCRATCHOUT	config.h	237
+SCRATCHOUT	config.h	268
+SCRATCHOUT	config.h	304
+SDOT	vi.c	38
+SET	opts.c	107
+SET	recycle.c	28
+SHELL	config.h	213
+SHELL	config.h	241
+SHELL	config.h	243
+SHELL	config.h	270
+SHELL	config.h	316
+SLASH	config.h	238
+SLASH	config.h	312
+SRCHFMT	ctags.c	55
+SRCHFMT	ctags.c	60
+STR	opts.c	106
+TAGS	config.h	277
+TMPDIR	config.h	198
+TMPDIR	config.h	200
+TMPDIR	config.h	225
+TMPDIR	config.h	258
+TMPNAME	config.h	203
+TMPNAME	config.h	227
+TMPNAME	config.h	260
+TMPNAME	config.h	281
+TO	ex.c	24
+TOS	config.h	42
+TOS	config.h	75
+TRUE	curses.h	40
+TST	recycle.c	27
+TURBOC	config.h	111
+TURBOC	config.h	36
+UCHAR	config.h	174
+UCHAR	config.h	177
+UNIX7	config.h	67
+UNIXV	config.h	11
+UNIXV	config.h	16
+UNIXV	config.h	63
+VAL2	tinytcap.c	16
+VAL2	tinytcap.c	22
+VAL2	tinytcap.c	27
+VAL3	tinytcap.c	17
+VAL3	tinytcap.c	23
+VAL3	tinytcap.c	28
+VERSION	vi.h	13
+VOIDBIOS	curses.h	120
+VOIDBIOS	curses.h	123
+WHEN_EX	vi.h	515
+WHEN_INMV	vi.h	517
+WHEN_MSG	vi.h	516
+WHEN_VICMD	vi.h	512
+WHEN_VIINP	vi.h	513
+WHEN_VIREP	vi.h	514
+WILDCARD_NO_MAIN	ctags.c	348
+WILDCARD_NO_MAIN	virec.c	243
+WINDOW	curses.h	37
+WORD1	ex.c	37
+XFILE	ex.c	27
+ZERO	ex.c	35
+ZERO	vi.c	25
+_addCR	curses.h	210
+_addCR	curses.h	213
+_addCR	curses.h	215
+abortdo	blk.c	/^void abortdo()$/
+access	atari.c	/^int access(file, mode)$/
+add	modify.c	/^void add(atmark, newtext)$/
+addch	curses.h	220
+addch	curses.h	222
+addfile	wildcard.c	/^addfile(buf)$/
+addstr	curses.h	232
+adjmove	vi.c	/^MARK adjmove(old, new, flags)$/
+afterdo	blk.c	/^void afterdo()$/
+alarm	curses.c	/^alarm(time)$/
+alarm	curses.c	/^alarm(time)$/
+alarm	curses.c	/^alarm(time)$/
+allocate	recycle.c	/^long allocate()$/
+attrset	curses.c	/^void attrset(a)$/
+beep	tio.c	/^void beep()$/
+beforedo	blk.c	/^void beforedo(forundo)$/
+blkadd	blk.c	/^BLK *blkadd(logical)$/
+blkdirty	blk.c	/^void blkdirty(bp)$/
+blkflush	blk.c	/^void blkflush(this)$/
+blkget	blk.c	/^BLK *blkget(logical)$/
+blkinit	blk.c	/^void blkinit()$/
+blksync	blk.c	/^void blksync()$/
+botline	vi.h	212
+buildmark	vi.h	341
+cb2str	cut.c	/^int cb2str(name, buf, size)$/
+cbreak	curses.h	249
+change	modify.c	/^void change(frommark, tomark, newtext)$/
+clrflag	vi.h	96
+clrtobot	curses.h	242
+clrtoeol	curses.h	241
+cmd_abbr	cmd1.c	/^void cmd_abbr(frommark, tomark, cmd, bang, extra)$/
+cmd_append	cmd2.c	/^void cmd_append(frommark, tomark, cmd, bang, extra)$/
+cmd_args	cmd1.c	/^void cmd_args(frommark, tomark, cmd, bang, extra)$/
+cmd_at	cmd2.c	/^void cmd_at(frommark, tomark, cmd, bang, extra)$/
+cmd_cd	cmd1.c	/^void cmd_cd(frommark, tomark, cmd, bang, extra)$/
+cmd_debug	cmd1.c	/^void cmd_debug(frommark, tomark, cmd, bang, extra)$/
+cmd_delete	cmd2.c	/^void cmd_delete(frommark, tomark, cmd, bang, extra)$/
+cmd_digraph	cmd1.c	/^void cmd_digraph(frommark, tomark, cmd, bang, extra)$/
+cmd_edit	cmd1.c	/^void cmd_edit(frommark, tomark, cmd, bang, extra)$/
+cmd_errlist	cmd1.c	/^void cmd_errlist(frommark, tomark, cmd, bang, extra)$/
+cmd_exit	shell.c	/^cmd_exit()$/
+cmd_file	cmd1.c	/^void cmd_file(frommark, tomark, cmd, bang, extra)$/
+cmd_global	cmd1.c	/^void cmd_global(frommark, tomark, cmd, bang, extra)$/
+cmd_join	cmd2.c	/^void cmd_join(frommark, tomark, cmd, bang, extra)$/
+cmd_make	cmd1.c	/^void cmd_make(frommark, tomark, cmd, bang, extra)$/
+cmd_map	cmd1.c	/^void cmd_map(frommark, tomark, cmd, bang, extra)$/
+cmd_mark	cmd1.c	/^void cmd_mark(frommark, tomark, cmd, bang, extra)$/
+cmd_mkexrc	cmd1.c	/^void cmd_mkexrc(frommark, tomark, cmd, bang, extra)$/
+cmd_move	cmd2.c	/^void cmd_move(frommark, tomark, cmd, bang, extra)$/
+cmd_next	cmd1.c	/^void cmd_next(frommark, tomark, cmd, bang, extra)$/
+cmd_print	cmd2.c	/^void cmd_print(frommark, tomark, cmd, bang, extra)$/
+cmd_put	cmd2.c	/^void cmd_put(frommark, tomark, cmd, bang, extra)$/
+cmd_read	cmd2.c	/^void cmd_read(frommark, tomark, cmd, bang, extra)$/
+cmd_set	cmd1.c	/^void cmd_set(frommark, tomark, cmd, bang, extra)$/
+cmd_set	shell.c	/^cmd_set(line)$/
+cmd_shell	cmd1.c	/^void cmd_shell(frommark, tomark, cmd, bang, extra)$/
+cmd_shift	cmd2.c	/^void cmd_shift(frommark, tomark, cmd, bang, extra)$/
+cmd_source	cmd2.c	/^void cmd_source(frommark, tomark, cmd, bang, extra)$/
+cmd_substitute	cmd2.c	/^void cmd_substitute(frommark, tomark, cmd, bang, extra)$/
+cmd_tag	cmd1.c	/^void cmd_tag(frommark, tomark, cmd, bang, extra)$/
+cmd_undo	cmd2.c	/^void cmd_undo(frommark, tomark, cmd, bang, extra)$/
+cmd_validate	cmd1.c	/^void cmd_validate(frommark, tomark, cmd, bang, extra)$/
+cmd_version	cmd1.c	/^void cmd_version(frommark, tomark, cmd, bang, extra)$/
+cmd_visual	cmd1.c	/^void cmd_visual(frommark, tomark, cmd, bang, extra)$/
+cmd_write	cmd1.c	/^void cmd_write(frommark, tomark, cmd, bang, extra)$/
+cmd_xit	cmd1.c	/^void cmd_xit(frommark, tomark, cmd, bang, extra)$/
+copytext	virec.c	/^copytext(tmpfd, fp)$/
+ctags	ctags.c	/^ctags(fp, name, refs)$/
+ctrl	vi.h	227
+cut	cut.c	/^void cut(from, to)$/
+cutend	cut.c	/^void cutend()$/
+cutname	cut.c	/^void cutname(name)$/
+cutneeds	cut.c	/^int cutneeds(need)$/
+cutswitch	cut.c	/^void cutswitch(tmpname)$/
+debout	modify.c	/^debout(msg, arg1, arg2, arg3, arg4, arg5)$/
+delch	curses.h	245
+delete	modify.c	/^void delete(frommark, tomark)$/
+deleteln	curses.h	244
+desired	ref.c	/^desired(line, word)$/
+digraph	input.c	/^char digraph(key1, key2)$/
+do_AE	curses.h	135
+do_AL	curses.h	139
+do_AS	curses.h	134
+do_CD	curses.h	138
+do_CE	curses.h	137
+do_CI	curses.h	158
+do_CQ	curses.h	155
+do_CR	curses.h	159
+do_CV	curses.h	157
+do_CX	curses.h	156
+do_DC	curses.h	151
+do_DL	curses.h	140
+do_EI	curses.h	150
+do_IC	curses.h	149
+do_IM	curses.h	148
+do_KE	curses.h	147
+do_KS	curses.h	146
+do_MD	curses.h	132
+do_ME	curses.h	133
+do_SE	curses.h	129
+do_SO	curses.h	128
+do_SR	curses.h	142
+do_SR	curses.h	144
+do_TE	curses.h	153
+do_TI	curses.h	152
+do_UE	curses.h	131
+do_UP	curses.h	127
+do_US	curses.h	130
+do_VB	curses.h	126
+do_abbr	input.c	/^void do_abbr(extra)$/
+do_aend	curses.h	161
+do_digraph	input.c	/^void do_digraph(bang, extra)$/
+doexcmd	ex.c	/^void doexcmd(cmdbuf)$/
+doexrc	ex.c	/^int doexrc(filename)$/
+doset	shell.c	/^doset(line, value)$/
+dumpkey	tio.c	/^void dumpkey(when)$/
+dumpopts	opts.c	/^void dumpopts(all)$/
+echo	curses.h	248
+endmsgs	tio.c	/^void endmsgs()$/
+endwin	curses.c	/^void endwin()$/
+ex	ex.c	/^void ex()$/
+execute	shell.c	/^execute(buf)$/
+expand	wildcard.c	/^expand(name)$/
+exrefresh	tio.c	/^void exrefresh()$/
+exstring	ex.c	/^void exstring(buf, len)$/
+faddch	curses.c	/^int faddch(ch)$/
+fetchline	misc.c	/^char *fetchline(line)$/
+ff_name	wildcard.c	30
+ff_name	wildcard.c	38
+ffblk	wildcard.c	29
+filter	system.c	/^int filter(from, to, cmd)$/
+findfirst	wildcard.c	27
+findfirst	wildcard.c	36
+findnext	wildcard.c	28
+findnext	wildcard.c	37
+fromcutbuf	tio.c	/^int fromcutbuf(cbname)$/
+fstat	osk.c	/^int fstat(fd, buff)$/
+garbage	recycle.c	/^void garbage()$/
+getkey	tio.c	/^int getkey(when)$/
+getsize	curses.c	/^int getsize(signo)$/
+has_AE	curses.h	174
+has_AL	curses.h	180
+has_AM	curses.h	163
+has_AS	curses.h	173
+has_CB	curses.h	176
+has_CD	curses.h	179
+has_CE	curses.h	178
+has_CQ	curses.h	204
+has_CS	curses.h	177
+has_DC	curses.h	200
+has_DL	curses.h	181
+has_EI	curses.h	199
+has_EN	curses.h	194
+has_HM	curses.h	193
+has_IC	curses.h	198
+has_IM	curses.h	197
+has_KD	curses.h	190
+has_KE	curses.h	188
+has_KL	curses.h	191
+has_KR	curses.h	192
+has_KS	curses.h	187
+has_KU	curses.h	189
+has_MD	curses.h	171
+has_ME	curses.h	172
+has_PD	curses.h	196
+has_PT	curses.h	164
+has_PU	curses.h	195
+has_SE	curses.h	168
+has_SO	curses.h	167
+has_SR	curses.h	183
+has_SR	curses.h	185
+has_TE	curses.h	202
+has_TI	curses.h	201
+has_UE	curses.h	170
+has_UP	curses.h	166
+has_US	curses.h	169
+has_VB	curses.h	165
+idx2col	redraw.c	/^int idx2col(curs, text, inputting)$/
+initflags	vi.h	98
+initopts	opts.c	/^void initopts()$/
+initscr	curses.c	/^void initscr()$/
+input	input.c	/^MARK input(from, to, when)$/
+insch	curses.c	/^void insch(ch)$/
+insertln	curses.h	243
+isascii	ex.c	18
+isascii	move1.c	18
+isascii	move5.c	18
+isatty	osk.c	/^isatty(fd)$/
+linespec	ex.c	/^char *linespec(s, markptr)$/
+link	osk.c	/^link(from,to)$/
+lookinfor	ref.c	/^int lookinfor(filename, func)$/
+m_Fch	move3.c	/^MARK	m_Fch(m, cnt, key)$/
+m_Nsrch	move2.c	/^MARK	m_Nsrch(m)$/
+m_Tch	move3.c	/^MARK	m_Tch(m, cnt, key)$/
+m__ch	move3.c	/^MARK	m__ch(m, cnt, cmd)$/
+m_bparagraph	move1.c	/^MARK	m_bparagraph(m, cnt)$/
+m_bsection	move1.c	/^MARK	m_bsection(m, cnt, key)$/
+m_bsentence	move1.c	/^MARK	m_bsentence(m, cnt)$/
+m_bsrch	move2.c	/^MARK	m_bsrch(m, ptrn)$/
+m_bword	move5.c	/^MARK	m_bword(m, cnt, cmd)$/
+m_eword	move5.c	/^MARK	m_eword(m, cnt, cmd)$/
+m_fch	move3.c	/^MARK	m_fch(m, cnt, key)$/
+m_fparagraph	move1.c	/^MARK	m_fparagraph(m, cnt)$/
+m_front	move1.c	/^MARK	m_front(m, cnt)$/
+m_fsection	move1.c	/^MARK	m_fsection(m, cnt, key)$/
+m_fsentence	move1.c	/^MARK	m_fsentence(m, cnt)$/
+m_fsrch	move2.c	/^MARK	m_fsrch(m, ptrn)$/
+m_fword	move5.c	/^MARK	m_fword(m, cnt, cmd)$/
+m_left	move1.c	/^MARK	m_left(m, cnt)$/
+m_match	move1.c	/^MARK	m_match(m, cnt)$/
+m_nsrch	move2.c	/^MARK	m_nsrch(m)$/
+m_rear	move1.c	/^MARK	m_rear(m, cnt)$/
+m_right	move1.c	/^MARK	m_right(m, cnt)$/
+m_row	move4.c	/^MARK m_row(m, cnt, key)$/
+m_scroll	move4.c	/^MARK m_scroll(m, cnt, key)$/
+m_tch	move3.c	/^MARK	m_tch(m, cnt, key)$/
+m_tocol	move1.c	/^MARK	m_tocol(m, cnt)$/
+m_tomark	move1.c	/^MARK	m_tomark(m, cnt, key)$/
+m_updnto	move1.c	/^MARK	m_updnto(m, cnt, cmd)$/
+m_z	move4.c	/^MARK m_z(m, cnt, key)$/
+main	alias.c	/^main(argc, argv)$/
+main	ctags.c	/^main(argc, argv)$/
+main	main.c	/^void main(argc, argv)$/
+main	ref.c	/^main(argc, argv)$/
+main	refont.c	/^main(argc, argv)$/
+main	shell.c	/^main(argc, argv)$/
+main	virec.c	/^main(argc, argv)$/
+main	wildcard.c	/^main(argc, argv)$/
+mapkey	tio.c	/^void mapkey(rawin, cooked, when, name)$/
+mark2phys	redraw.c	/^int mark2phys(m, text, inputting)$/
+markidx	vi.h	179
+markline	vi.h	178
+match	regexp.c	/^int match(re, str, prog, here)$/
+match1	regexp.c	/^int match1(re, ch, token)$/
+memcpy	config.h	155
+mktemp	atari.c	/^char *mktemp(template)$/
+move	curses.h	233
+msg	tio.c	/^void msg(fmt, arg1, arg2, arg3, arg4, arg5, arg6, arg7)$/
+mvaddch	curses.h	235
+nocbreak	curses.h	252
+noecho	curses.h	251
+noraw	curses.h	250
+parseptrn	ex.c	/^char	*parseptrn(ptrn)$/
+paste	cut.c	/^MARK paste(at, after, retend)$/
+perror	osk.c	/^perror(str)$/
+pfetch	misc.c	/^void	pfetch(l)$/
+pstrcmp	wildcard.c	/^int pstrcmp(a, b)$/
+qaddch	curses.h	218
+qaddstr	curses.c	/^void qaddstr(str)$/
+raw	curses.h	247
+recover	virec.c	/^void recover(filename)$/
+redraw	redraw.c	/^void redraw(curs, inputting)$/
+redrawrange	redraw.c	/^void redrawrange(after, pre, post)$/
+refont	refont.c	/^refont(fp)$/
+refresh	curses.h	236
+regcomp	regexp.c	/^regexp *regcomp(exp)$/
+regcomp	regexp.c	/^regexp *regcomp(text)$/
+regerror	misc.c	/^void regerror(txt)$/
+regexec	regexp.c	/^int regexec(prog, string, bolflag)$/
+regexec	regexp.c	/^int regexec(re, str, bol)$/
+regsub	regsub.c	/^void regsub(re, src, dst)$/
+rename	cut.c	20
+resume_curses	curses.c	/^void resume_curses(quietly)$/
+rightcol	vi.h	213
+rpclose	sysdos.c	/^int rpclose(fd)$/
+rpipe	sysdos.c	/^int rpipe(cmd, in)$/
+saveabbr	input.c	/^void saveabbr(fd)$/
+savedigs	input.c	/^void savedigs(fd)$/
+savekeys	tio.c	/^void savekeys(fd)$/
+saveopts	opts.c	/^void saveopts(fd)$/
+script	shell.c	/^script(name)$/
+scrollok	curses.h	246
+searchpath	shell.c	/^searchpath(from, to)$/
+setflag	vi.h	95
+setopts	opts.c	/^void setopts(assignments)$/
+sig_handler	osk.c	/^sig_handler(sig)$/
+signal	osk.c	/^procref signal(sig,func)$/
+sleep	curses.c	/^sleep(seconds)$/
+standend	curses.h	240
+standout	curses.h	239
+stat	osk.c	/^int stat(filename, buff)$/
+strchr	config.h	149
+suspend_curses	curses.c	/^void suspend_curses()$/
+switchar	pc.c	/^int switchar()$/
+sync	tmp.c	/^sync()$/
+system	sysdos.c	/^int system(cmd)$/
+system	system.c	/^int system(cmd)$/
+tgetent	tinytcap.c	/^int tgetent(bp, name)$/
+tgetflag	tinytcap.c	/^int tgetflag(id)$/
+tgetnum	tinytcap.c	/^int tgetnum(id)$/
+tgetstr	tinytcap.c	/^char *tgetstr(id, bp)$/
+tgoto	tinytcap.c	/^char *tgoto(cm, destcol, destrow)$/
+tmpabort	tmp.c	/^int tmpabort(bang)$/
+tmpend	tmp.c	/^int tmpend(bang)$/
+tmpsave	tmp.c	/^int tmpsave(filename, bang)$/
+tmpstart	tmp.c	/^int tmpstart(filename)$/
+tputs	tinytcap.c	/^void tputs(cp, affcnt, outfn)$/
+trapint	main.c	/^int trapint(signo)$/
+tread	atari.c	/^int tread(fd, buf, maxlen)$/
+tread	config.h	160
+try	shell.c	/^try(name)$/
+tstflag	vi.h	97
+ttyread	config.h	138
+ttyread	curses.c	/^ttyread(buf, len)$/
+ttyread	curses.c	/^ttyread(buf, len)$/
+ttyread	curses.c	/^ttyread(buf, len)$/
+ttywrite	config.h	141
+ttywrite	curses.c	/^ttywrite(buf, len)$/
+twrite	atari.c	/^int twrite(fd, buf, maxlen)$/
+twrite	config.h	161
+uchar	config.h	175
+uchar	config.h	178
+undo	blk.c	/^int undo()$/
+usage	refont.c	/^usage()$/
+v_1ex	vcmd.c	/^MARK v_1ex(m, text)$/
+v_again	vcmd.c	/^MARK v_again(m, n)$/
+v_al	pc.c	/^void v_al()$/
+v_at	vcmd.c	/^MARK v_at(m, cnt, key)$/
+v_cb	pc.c	/^void v_cb()$/
+v_cd	pc.c	/^void v_cd()$/
+v_ce	pc.c	/^void v_ce()$/
+v_change	vcmd.c	/^MARK v_change(m, n)$/
+v_cl	pc.c	/^void v_cl()$/
+v_cols	pc.c	/^int v_cols()$/
+v_cs	pc.c	/^void v_cs()$/
+v_delete	vcmd.c	/^MARK v_delete(m, n)$/
+v_dl	pc.c	/^void v_dl()$/
+v_errlist	vcmd.c	/^MARK v_errlist(m)$/
+v_filter	vcmd.c	/^MARK v_filter(m, n)$/
+v_increment	vcmd.c	/^MARK v_increment(keyword, m, cnt)$/
+v_insert	vcmd.c	/^MARK v_insert(m, cnt, key)$/
+v_join	vcmd.c	/^MARK v_join(m, cnt)$/
+v_keyword	vcmd.c	/^MARK v_keyword(keyword, m, cnt)$/
+v_lshift	vcmd.c	/^MARK v_lshift(m, n)$/
+v_mark	vcmd.c	/^MARK v_mark(m, count, key)$/
+v_move	pc.c	/^void v_move(x,y)$/
+v_overtype	vcmd.c	/^MARK v_overtype(m)$/
+v_paste	vcmd.c	/^MARK v_paste(m, cnt, cmd)$/
+v_put	pc.c	/^int v_put(ch)$/
+v_quit	vcmd.c	/^MARK v_quit()$/
+v_redraw	vcmd.c	/^MARK v_redraw()$/
+v_replace	vcmd.c	/^MARK v_replace(m, cnt, key)$/
+v_rows	pc.c	/^int v_rows()$/
+v_rshift	vcmd.c	/^MARK v_rshift(m, n)$/
+v_selcut	vcmd.c	/^MARK v_selcut(m, cnt, key)$/
+v_sr	pc.c	/^void v_sr()$/
+v_status	vcmd.c	/^MARK v_status()$/
+v_subst	vcmd.c	/^MARK v_subst(m, cnt)$/
+v_switch	vcmd.c	/^MARK v_switch()$/
+v_tag	vcmd.c	/^MARK v_tag(keyword, m, cnt)$/
+v_ulcase	vcmd.c	/^MARK v_ulcase(m, cnt)$/
+v_undo	vcmd.c	/^MARK v_undo(m)$/
+v_undoline	vcmd.c	/^MARK v_undoline(m)$/
+v_up	pc.c	/^void v_up()$/
+v_xchar	vcmd.c	/^MARK v_xchar(m, cnt, cmd)$/
+v_xit	vcmd.c	/^MARK v_xit(m, cnt, key)$/
+v_yank	vcmd.c	/^MARK v_yank(m, n)$/
+vgets	tio.c	/^int vgets(prompt, buf, bsize)$/
+vi	vi.c	/^void vi()$/
+void	config.h	168
+watch	vi.c	/^watch()$/
+wildcard	system.c	/^char *wildcard(names)$/
+wildexpand	wildcard.c	/^char **wildexpand(argc, argv)$/
+wqrefresh	curses.h	238
+wrefresh	curses.h	237

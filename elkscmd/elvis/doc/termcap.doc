@@ -1,0 +1,132 @@
+
+     Elvis 1.4                     TERMCAP                     Page 10-1
+
+
+E10.  TERMCAPF
+
+        Elvis uses  fairly  standard  termcap fields for most things.  I
+     invented the cursor shape names but other than that there should be 
+     no surprises.  
+
+
+   E10.1  Required numeric fieldsF
+
+        :co#:   number of columns on the screen (characters per line)
+        :li#:   number of lines on the screen
+
+
+   E10.2  Required string fieldsF
+
+        :ce=:   clear to end-of-line
+        :cl=:   home the cursor & clear the screen
+        :cm=:   move the cursor to a given row/column
+        :up=:   move the cursor up one line
+
+
+   E10.3  Boolean fieldsF
+
+        :am:    auto margins - wrap when a char is written to the last column?
+        :pt:    physical tabs?
+
+
+   E10.4  Optional string fieldsF
+
+        :al=:   insert a blank row on the screen
+        :dl=:   delete a row from the screen
+        :cd=:   clear to end of display
+        :ei=:   end insert mode
+        :ic=:   insert a blank character
+        :im=:   start insert mode
+        :dc=:   delete a character
+        :sr=:   scroll reverse (insert a row at the top of the screen)
+        :vb=:   visible bell
+        :ti=:   terminal initialization string, to start full-screen mode
+        :te=:   terminal termination, to end full-screen mode
+        :ks=:   enables the cursor keypad
+        :ke=:   disables the cursor keypad
+
+
+   E10.5  Optional strings received from the keyboardF
+
+        :kd=:   sequence sent by the <down arrow> key
+        :kl=:   sequence sent by the <left arrow> key
+        :kr=:   sequence sent by the <right arrow> key
+        :ku=:   sequence sent by the <up arrow> key
+        :kP=:   sequence sent by the <PgUp> key
+        :kN=:   sequence sent by the <PgDn> key
+        :kh=:   sequence sent by the <Home> key
+        :kH=:   sequence sent by the <End> key
+
+
+
+
+
+
+
+
+
+     Elvis 1.4                     TERMCAP                     Page 10-2
+
+
+        Originally, termcap  didn't  have  any  names  for  the  <PgUp>,
+     <PgDn>, <Home>,  and  <End>  keys.    Although the capability names
+     shown in the  table  above  are  the  most  common,  they  are  -1not-0
+     universal.  SCO Xenix uses :PU=:PD=:HM=:EN=: for those keys.  Also, 
+     if  the four arrow keys happen to be part of a 3x3 keypad, then the
+     five non-arrow keys may be named :K1=: through :K5=:, so an IBM  PC
+     keyboard may be described using those names instead.  Elvis can any 
+     of these names.  
+
+
+   E10.6  Optional fields that describe character attributesF
+
+        :so=: :se=:     start/end standout mode (We don't care about :sg#:)
+        :us=: :ue=:     start/end underlined mode
+        :md=: :me=:     start/end boldface mode
+        :as=: :ae=:     start/end alternate character set (italics)
+        :ug#:           visible gap left by :us=:ue=:md=:me=:as=:ae=:
+
+
+   E10.7  Optional fields that affect the cursor's shapeF
+
+        The  :cQ=: string is used by elvis immediately before exiting to
+     undo the effects of the other cursor shape strings.   If  :cQ=:  is
+     not given, then all other cursor shape strings are ignored.  
+
+        :cQ=:   normal cursor
+        :cX=:   cursor shape used for reading EX command -- steady underline
+        :cV=:   cursor shape used for reading VI commands -- steady block
+        :cI=:   cursor shape used during VI input mode -- blinking underline
+        :cR=:   cursor shape used during VI replace mode -- blinking block
+
+        If  the  capabilities above aren't given, then Elvis will try to
+     use the following values instead.  
+
+        :ve=:   normal cursor, used as :cQ=:cX=:cI=:cR=:
+        :vs=:   gaudy cursor, used as :cV=:
+
+
+   E10.8  An exampleF
+
+        Here's the termcap entry I use on my Minix-ST system.   Some  of
+     the fields in it have nothing to do with Elvis.  Some can only work 
+     on my system; I have modified my kernel's screen driver.  
+
+
+            mx|minix|minixst|ansi:\
+                :is=\E[0~:co#80:li#25:bs:pt:\
+                :cm=\E[%i%d;%dH:up=\E[A:do=^J:nd=\E[C:sr=\EM:\
+                :cd=\E[J:ce=\E[K:cl=\E[H\E[J:\
+                :al=\E[L:dl=\E[M:ic=\E[@:dc=\E[P:im=:ei=:\
+                :so=\E[7m:se=\E[m:us=\E[4m:ue=\E[m:\
+                :md=\E[1m:me=\E[m:as=\E[1;3m:ae=\E[m:\
+                :ku=\E[A:kd=\E[B:kr=\E[C:kl=\E[D:\
+                :k1=\E[1~:k2=\E[2~:k3=\E[3~:k4=\E[4~:k5=\E[5~:\
+                :k6=\E[6~:k7=\E[17~:k8=\E[18~:k9=\E[19~:k0=\E[20~:\
+                :kU=\E[36~:kQ=\E[32~:kH=\E[28~:\
+                :GV=3:GH=D:G1=?:G2=Z:G3=@:G4=Y:GC=E:GL=4:GR=C:GU=A:GD=B:\
+                :cQ=\E[k:cX=\E[2;0k:cV=\E[16;0k:cI=\E[k:cR=\E[16;20k
+
+
+
+

@@ -1,0 +1,21 @@
+.TH REF 1
+.SH NAME
+ref - Display a C function header
+.SH SYNOPSIS
+\fBref\fP \fIfunction_name\fP
+.SH DESCRIPTION
+\fIRef\fP is a program which looks up the function header of a
+particular function in any of a series of reference files.
+These reference files are produced by the \fIctags(1)\fP program.
+.PP
+\fIRef\fP is used by Elvis's shift-K command.
+.PP
+The list of files checked includes "refs" in the current directory,
+and possibly others.
+See the source code for an accurate list.
+.SH AUTHOR
+.nf
+Steve Kirkendall
+kirkenda@cs.pdx.edu
+\&...uunet!tektronix!psueea!eecs!kirkenda
+.fi

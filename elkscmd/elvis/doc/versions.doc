@@ -1,0 +1,264 @@
+
+     Elvis 1.4                    VERSIONS                     Page 12-1
+
+
+E12.  VERSIONSF
+
+        Elvis  currently  works  under BSD UNIX, AT&T System-V UNIX, SCO
+     XENIX, Minix, Coherent, MS-DOS,  Atari  TOS,  and  OS9/68k.    This
+     section  of the manual provides special information that applies to
+     each particular version of Elvis.  
+
+        For all versions except MS-DOS, the file  "Makefile.mix"  should
+     be  copied to "Makefile", and then edited to select the correct set
+     of options for your system.  There is more information  about  this
+     embedded in the file itself.  
+
+
+   E12.1  BSD UNIXF
+
+        Temporary files are stored in /tmp.  
+
+        Elvis doesn't  have  an  "expreserve" program yet.  Instead, you
+     should modify /etc/rc so that the temp files are not  deleted  when
+     the system is rebooted.  Find a line in /etc/rc which reads 
+
+            rm -rf /tmp/*
+
+        or something like that, and change it to read 
+
+            rm -rf /tmp/[^e]* /tmp/e[^l]* /tmp/el[^v]* /tmp/elv_*
+
+        If  you  do  not  have permission to modify /etc/rc, don't fret.
+     The above modification is only needed to allow you to recover  your
+     changes after a system crash.  You can still run Elvis without that 
+     modification,  and  you  can  still recover your changes when Elvis
+     crashes or when your dialup modem looses  the  carrier  signal,  or
+     something like  that.   A system crash is the only thing that could
+     hurt you.  
+
+        Both Elvis and the real Vi read initialization commands  from  a
+     file  called  ".exrc",  but the commands in that file might work on
+     one but not the other.  For example, "set keywordprg=man" will work 
+     for  Elvis,  but  Vi  will  complain  because  it  doesn't  have  a
+     "keywordprg" option.    If the warning messages annoy you, then you
+     can edit the config.h file to change the name of the initialization 
+     file ".exrc" to something else, such as ".elvisrc".  
+
+        If you use X windows, you  may  wish  to  add  "-DCS_LATIN1"  to
+     CFLAGS.   This will cause the digraph table and the flipcase option
+     to have  default  values  that  are  appropriate  for  the  LATIN-1
+     character set.  That's the standard character set for X.  
+
+
+   E12.2  System-V UNIXF
+
+        If  your  system uses terminfo instead of termcap, then you will
+     have to edit the LIBS setting in the Makefile.  Currently  it  says
+     "LIBS=-ltermcap",    but   you   may   have   to   change   it   to
+     "LIBS=-lterminfo" or "LIBS=-lterm" or something like that.  
+
+
+
+
+
+
+
+
+     Elvis 1.4                    VERSIONS                     Page 12-2
+
+
+        The /etc/rc  file  should  be  modified  as  described  for  BSD
+     systems, above.  The potential trouble with ".exrc" described above 
+     for BSD UNIX applies to System-V UNIX as well.  
+
+        Elvis uses control-C as the interrupt key, not Delete.  
+
+
+   E12.3  SCO XenixF
+
+        For Xenix-386,  you  can use the generic System-V settings.  You
+     may wish to add "-DCS_IBMPC" to CFLAGS, to have the  digraph  table
+     and  flipcase option start up in a mode that is appropriate for the
+     console.  
+     There is a separate group of settings for use with Xenix-286.    It
+     already has "-DCS_IBMPC" in CFLAGS.  
+
+        Because  Xenix  is  so  similar  to  System-V, everything I said
+     earlier about System-V applies to the Xenix version too.  
+
+
+   E12.4  MinixF
+
+        There are separate settings in  Makefile.mix  for  Minix-PC  and
+     Minix-ST.   The  differences  between  these  two  are  that the ST
+     version uses ".o" for  the  object  file  extension  where  the  PC
+     version  uses  ".s",  and  the  PC  version has some extra flags in
+     CFLAGS to reduce the size of Elvis.    The  PC  version  also  uses
+     tinytcap (instead of the full termcap) to make it smaller.  
+
+        Minix-PC  users  should  read  the CFLAGS section of this manual
+     very carefully.  You have some choices to make...  
+
+        The temporary files  are  stored  in  /usr/tmp.    The  /usr/tmp
+     directory  must  exist  before  you  run  Elvis,  and  it  must  be
+     readable/writable by everybody.  We use /usr/tmp  instead  of  /tmp
+     because  after a system crash or power failure, you can recover the
+     altered version of a file from the temporary file in /usr/tmp.   If
+     it  was  stored in /tmp, though, then it would be lost because /tmp
+     is probably located on the RAM disk.  
+
+        Elvis uses control-C as the interrupt key, not Delete.  
+
+
+   E12.5  CoherentF
+
+        Elvis was ported to Coherent by Esa Ahola.  
+
+        Elvis is too large to run under Coherent  unless  you  eliminate
+     some features via the CFLAGS setting.  The recommended settings, in 
+     Makefile.mix,  produce a working version of elvis which emulates Vi
+     faithfully, but lacks most of the extensions.  You should read  the
+     CFLAGS section of this manual carefully.  
+
+        You  can  probably  reduce the size of Elvis by using tinytcap.c
+     instead of -lterm.  This would allow you to keep most  features  of
+     Elvis, at  the  expense  of terminal independence.  (Tinytcap.c has
+     ANSI escape sequences hard-coded into it.) To  use  tinytcap,  just
+     add  "tinytcap.o"  to the "EXTRA=" line in the Makefile, and remove
+
+
+
+
+
+     Elvis 1.4                    VERSIONS                     Page 12-3
+
+
+     "-lterm" from the "LIBS=" line.  
+
+        The temporary files are stored in /tmp.  You should modify  your
+     /etc/rc file as described for BSD earlier.  
+
+
+   E12.6  MS-DOSF
+
+        Elvis  was  ported to MS-DOS by Guntram Blohm and Martin Patzel.
+     Dave  Lord  also  deserves  a  big  "thank  you"  for  exploring  a
+     compatibility glitch between DOS 4.01 and Elvis.  
+
+        Ideally,  Elvis  should be compiled with Microsoft C 5.1 and the
+     standard Microsoft Make utility, via the command "make  elvis.mak".
+     This will compile Elvis and all related utilities.  
+
+        If  you  have  Turbo-C,  then you can 4almost5 use the "Elvis.prj"
+     file to compile Elvis.    EYou  must  explicitly  force  Turbo-C  to
+     compile  it  with  the "medium" memoryF Emodel, and you must increase
+     the stack size to 16k.F Most of the related  programs  (ctags,  ref,
+     virec, refont, and wildcard) are  only one file long, so you should 
+     have no  trouble compiling them.  The "alias.c" file is meant to be
+     compiled once into an executable named "ex.exe".  You  should  then
+     copy "ex.exe" to "vi.exe", and "view.exe".  
+
+        Elvis stores  its  temporary  files  in  C:\tmp.  If this is not
+     satisfactory, then you should edit the CFLAGS line of your Makefile 
+     to change TMPDIR to something else before compiling.  You can  also
+     control  the name of the temp directory via an environment variable
+     named TMP or TEMP.  The directory must exist  before  you  can  run
+     Elvis.  
+
+        Normally,  the  TERM  environment variable should not be set, or
+     else it should be set to "pcbios".  This way, Elvis will make calls 
+     to BIOS to update the screen.  (If you don't like the  colors  that
+     the BIOS  interface  uses,  then  edit the attr[] table in pc.c.  A
+     ":color" command will be added eventually.) 
+
+        You may prefer to use  a  device  driver  such  as  ANSI.SYS  or
+     NNANSI.SYS,  for  speed; or you may NEED to use a device driver for
+     compatibility.  If so, you should install one of these  drivers  by
+     adding  "driver  = ansi.sys" (or whatever) to your CONFIG.SYS file,
+     and then you should define TERM to be either "ansi" or  "nansi"  by
+     adding  a  line  such as "set TERM=ansi" to your AUTOEXEC.BAT file.
+     You must then reboot for these changes to take effect.  After that, 
+     Elvis will notice the "TERM" setting and use the driver.  
+
+        Under MS-DOS, Elvis has an extra ":set" option  called  "pcbios"
+     which indicates whether the BIOS is being used directly.  This is a 
+     "read only" option; you can't use it to switch your interface style 
+     in the middle of an edit session.  
+
+        An extra  program,  called "wildcard", is needed for MS-DOS.  It
+     expands wildcard characters in file names.  
+
+
+
+
+
+
+
+
+
+     Elvis 1.4                    VERSIONS                     Page 12-4
+
+
+   E12.7  Atari TOSF
+
+        Elvis was ported to  Atari  TOS  by  Guntram  Blohm  and  Martin
+     Patzel.  It  is  very  similar  to the MS-DOS version.  It has only
+     been tested with the Mark Williams C compiler.  
+
+        The TERM environment variable is ignored;  the  ST  port  always
+     assumes that  TERM=vt52.   The SHELL (not COMSPEC!) variable should
+     be set to the name of a line-oriented shell.  
+
+        A simple shell in  included  with  elvis.    Its  source  is  in
+     "shell.c", and the name of the executable is "shell.ttp".  This was 
+     necessary because the standard Atari software doesn't offer any way 
+     to set environment variables.  The file "profile.sh" should contain 
+     a  set  of  instructions to be executed when the shell first starts
+     up.  An example of this file  is  included,  but  you  will  almost
+     certainly want to edit it right away to match your configuration.  
+
+        If  you  already have a command-line shell, then you'll probably
+     want to continue using it.  The shell that comes with Elvis is very 
+     limited.  
+
+        Currently, character  attributes  cannot  be  displayed  on  the
+     screen.   In  other  words, the "charattr" option doesn't work very
+     well.  Its ironic -- the only system that always  has  a  bitmapped
+     display is the only system that doesn't support multiple fonts!  
+
+
+   E12.8  OS9/68kF
+
+        Elvis was ported to OS9/68k by Peter Reinig.  
+
+        The  Makefile  is  currently configured to install elvis and the
+     related programs in /dd/usr/cmds If this this is unacceptable, then 
+     you  should  change  the  BIN  setting  to  some  other  directory.
+     Similarly,    it   expects   the   source   code   to   reside   in
+     /dd/usr/src/elvis; the ODIR setting is used to control this.  
+
+        Temporary files are stored  in  the  /dd/tmp  directory.    Your
+     /dd/startup  file  may  need  to  be  modified  to  prevent it from
+     deleting Elvis' temporary files.  
+
+        The program in alias.c is linked repeatedly to produce the "vi", 
+     "view", and "input" aliases for elvis.  Sadly, the  "ex"  alias  is
+     impossible to implement under OS9, because the shell has a built-in 
+     command by that name.  
+
+        For  some  purposes,  you  must  give  `make'  the  "-b" option.
+     Specifically, you need this  for  "make  -b  clean"  and  "make  -b
+     install".  
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,65 @@
+.TH CTAGS 1
+.SH NAME
+ctags - Generates "tags" and (optionally) "refs" files
+.SH SYNOPSIS
+\fBctags\fP [\fB-r\fP] \fIfiles\fP...
+.SH DESCRIPTION
+\fIctags\fP generates the "tags" and "refs" files
+from a group of C source files.
+The "tags" file is used by Elvis' ":tag" command,
+control-] command,
+and -t option.
+The "refs" file is used by the \fIref(1)\fP program.
+.PP
+Each C source file is scanned for #define statements and
+global function definitions.
+The name of the macro or function becomes the name of a tag.
+For each tag, a line is added to the "tags" file which contains:
+.RS
+.nf
+       - the name of the tag
+       - a tab character
+       - the name of the file containing the tag
+       - a tab character
+       - a way to find the particular line within the file.
+.RE
+.fi
+.PP
+The "refs" file is used by the \fIref(1)\fP program, which can be invoked
+via Elvis' K command.
+When ctags finds a global function definition,
+it copies the function header into the "refs" file.
+The first line is flush against the right margin,
+but the argument definitions are indented.
+The ref program can search the "refs" file
+.ul
+much
+faster than it could search all of the C source files.
+.PP
+The filenames list will typically be the names of all C source
+files in the current directory, like this:
+.RS
+.nf
+$ ctags -r *.[ch]
+.RE
+.fi
+.SH OPTIONS
+.IP \fB-r\fP
+This causes \fIctags\fP to generate both "tags" and "refs".
+Without \fB-r\fP, it would only generate "tags".
+.SH FILES
+.IP tags
+The "tags" file.
+.IP refs
+The "refs" file.
+.SH "SEE ALSO"
+elvis(1), refs(1)
+.SH BUGS
+This version of ctags doesn't parse ANSI-C source code very well.
+It has trouble recognizing the new-style function definitions.
+.SH AUTHOR
+.nf
+Steve Kirkendall
+kirkenda@cs.pdx.edu
+\&...uunet!tektronix!psueea!eecs!kirkenda
+.fi

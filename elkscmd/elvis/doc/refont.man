@@ -1,0 +1,67 @@
+.TH REFONT 1
+.SH NAME
+refont - changes the notation used for fonts
+.SH SYNOPSIS
+\fBrefont\fP [\fIflags\fP] \fIfiles\fP...
+.SH DESCRIPTION
+\fIRefont\fP reads a text file which contains font selection codes embedded
+within it,
+and it writes the same text with a different notation for fonts.
+.PP
+For example, the Elvis documentation uses Epson-compatible escape sequences
+to select different fonts.
+You could use the command "refont -b intro.doc >intro.b" to make a file
+that uses overtyping to implement boldface or underlined text.
+.SH OPTIONS
+.IP \fB-b\fP
+Emit text which uses the "backspace" notation for fonts.
+Each underlined character will be preceded by an underscore character
+and a backspace character.
+Bold characters are sent twice, with a backspace in between.
+The UNIX \fImore\fR utility understands this notation.
+.IP \fB-c\fP
+Emit text which uses the "carriage-return" notation for fonts.
+An entire line of text is written,
+followed by a carriage return instead of a newline.
+Then a space is sent for each normal character,
+an underscore is sent for each underlined or italic character,
+and each boldface character is sent a second time.
+Many mainframe line printers accept this notation.
+.IP \fB-d\fP
+Emit text which uses nroff-style "dot" commands for fonts.
+This doesn't work very well.
+.IP \fB-e\fP
+Emit text using Epson-compatible escape sequences for fonts.
+This is useful as a "least common denominator" for font notations,
+because this is the only supported notation to use control-character sequences
+and also distinguish between italics and underlining.
+.IP \fB-f\fP
+Emit text which uses nroff's "\\fX" notation for fonts.
+Underlined text is denoted by "\\fU",
+boldface by "\\fB",
+italics by "\\fI",
+and normal text by "\\fR".
+This is somewhat useful in conjunction with Elvis' "charattr" option.
+.IP \fB-x\fP
+Emit text which has had all font information stripped out.
+.IP \fB-I\fP
+When reading text, \fB-I\fP tells \fIrefont\fP to accept any of the above
+notations for fonts.
+Without \fB-I\fP it will ignore the "dot" command and "\\fX" notations;
+they will be treated as normal text.
+In other words, without \fB-I\fP the only things that could be recognized as
+font changes are control-character sequences.
+.IP \fB-F\fP
+This causes \fIrefont\fP to insert formfeed characters between input files.
+.SH BUGS
+Support for the nroff-style "dot" commands is not very good.
+.PP
+With \fB-b\fP/\fB-c\fP, both underlining and italics are implemented by
+overtyping the underscore character with a text character.
+Since they are represented the same way, the distinction between underlining
+and italics is lost.
+.SH AUTHOR
+.nf
+Steve Kirkendall
+kirkenda@cs.pdx.edu
+\&...uunet!tektronix!psueea!eecs!kirkenda

@@ -1,0 +1,264 @@
+
+     Elvis 1.4                     CFLAGS                       Page 9-1
+
+
+E9.  CFLAGSF
+
+        Elvis  uses  many  preprocessor  symbols to control compilation.
+     Some of  these  control  the  sizes  of  buffers  and  such.    The
+     "-DNO_XXXX" options remove small sets of related features.  
+
+        Most  Elvis  users  will  probably  want  to  keep  all features
+     available.  Minix-PC users, though, will  have  to  sacrifice  some
+     sets because  otherwise  Elvis  would be too bulky to compile.  The
+     "asld" phase of the compiler craps out.  
+
+     -DM_SYSV, -DTOS, -DCOHERENT 
+            These flags tell the compiler that Elvis is  being  compiled
+            for  System-V  UNIX,  Atari  TOS, or Coherent, respectively.
+            For other systems, the config.h file can generally figure it 
+            out automatically.  
+
+     -DDATE=4string5 
+            DATE should be defined to be  a  string  constant.    It  is
+            printed  by  the :version command as the compilation date of
+            the program.  
+
+            It is only used in cmd1.c, and even there you may  leave  it
+            undefined without causing an urp.  
+
+     -DNBUFS=4number5 
+            Elvis  keeps  most  of your text in a temporary file; only a
+            small amount is actually stored in RAM.   This  flag  allows
+            you  to  control  how  much of the file can be in RAM at any
+            time.  The default is 5 blocks.  (See  the  -DBLKSIZE  flag,
+            below.) 
+
+            More  RAM  allows  global changes to happen a little faster.
+            If you're just making many small changes in one section of a 
+            file, though, extra RAM won't help much.  
+
+     -DBLKSIZE=4number5 
+            This  controls  the  size  of   blocks   that   Elvis   uses
+            internally.   The  value  of BLKSIZE must be a power of two.
+            The default value is 1024, which allows you to edit files up 
+            to almost 512K bytes long.  Every time you  double  BLKSIZE,
+            you quadruple the size of a text file that Elvis can handle, 
+            but you also cause the temporary file to grow faster.  
+
+     -DTMPDIR=4string5 
+            This sets the default value of the "directory" option, which 
+            specifies where  the  temporary  files  should  reside.  The
+            value of TMPDIR must be a string,  so  be  sure  your  value
+            includes the quote characters on each end.  
+
+     -DEXRC=4str5, -DHMEXRC=4str5, -DSYSEXRC=4str5, -DEXINIT=4str5 
+            This  lets  you  control  the  names  of  the initialization
+            files.  Their values must be strings, so  be  careful  about
+            quoting.  
+
+
+
+
+
+
+
+
+
+     Elvis 1.4                     CFLAGS                       Page 9-2
+
+
+            EXRC  is  the name of the initialization file in the current
+            directory.  Its default value is ".exrc" on UNIX systems  --
+            the same  as  the  real  vi.    For other systems, check the
+            config.h file.  
+
+            HMEXRC is the name of the initialization file in  your  home
+            directory.  By  default, it is the same as EXRC.  Elvis will
+            automatically prepend the name of  your  home  directory  to
+            HMEXRC at run time, so don't give a full path name.  
+
+            SYSEXRC  is  the  name of a system-wide initialization file.
+            It has no default value; if you don't define a value for it, 
+            then the code that supports  SYSEXRC  just  isn't  compiled.
+            The value of SYSEXRC should be a full pathname, in quotes.  
+
+            EXINIT  is  the  name  of  an  environment variable that can
+            contain initialization commands.   Normally,  its  value  is
+            "EXINIT".  
+
+     -DKEYWORDPRG=4string5 
+            This  flag  determines the default value of the "keywordprg"
+            option.  Its value must be a string,  so  be  careful  about
+            quoting.   The default value of this flag is "ref", which is
+            a C reference program.  
+
+     -DCC_COMMAND=4string5 -DMAKE_COMMAND=4string5 -DERRLIST=4string5 
+            These control the  names  of  the  C  compiler,  the  "make"
+            utility, and  the error output file, respectively.  They are
+            only used if -DNO_ERRLIST is not given.  
+
+     -DMAXMAPS=4number5 
+            This controls the capacity of the key map table.  
+
+     -DMAXRCLEN=4number5 
+            This determines how large a .exrc file can be  (measured  in
+            bytes).  The  default  is  1000 bytes.  If you increase this
+            value significantly, then you may  need  to  allocate  extra
+            memory for  the  stack.    See  the  "CHMEM"  setting in the
+            Makefile.  
+
+     -DSHELL=4string5 
+            This is the default value of the "shell" option,  and  hence
+            the default  shell  used  from  within  Elvis.    This  only
+            controls the  default;  the  value  you  give  here  may  be
+            overridden  at  run-time  by setting an environment variable
+            named SHELL (or COMSPEC for MS-DOS).  Its value  must  be  a
+            string constant, so be careful about quoting.  
+
+     -DTAGS=4string5 
+            This  sets the name of the "tags" file, which is used by the
+            :tag command.  Its value must be a string  constant,  so  be
+            careful about quoting.  
+
+     -DCS_IBMPC 
+            The  digraph  table  and flipcase option will normally start
+            out empty.  However, if you add -DCS_IBMPC or -DCS_LATIN1 to 
+            your CFLAGS, then they will start  out  filled  with  values
+            that are appropriate for the IBM PC character set or the ISO 
+
+
+
+
+
+     Elvis 1.4                     CFLAGS                       Page 9-3
+
+
+            Latin-1 character set, respectively.  
+
+     -DDEBUG 
+            This  adds  the  ":debug" and ":validate" commands, and also
+            adds many internal consistency checks.    It  increases  the
+            size of the ".text" segment by about 6K.  
+
+     -DCRUNCH 
+            This  flag  removes some non-critical code, so that Elvis is
+            smaller.  For example,  it  removes  a  short-cut  from  the
+            regexp package,  so  that  text  searches are slower.  Also,
+            screen updates are not as efficient.  A  couple  of  obscure
+            features are disabled by this, too.  
+
+     -DNO_MKEXRC 
+            This  removes  the  ":mkexrc" command, so you have to create
+            any .exrc files manually.  The size  of  the  .text  segment
+            will be reduced by about 600 bytes.  
+
+     -DNO_CHARATTR 
+            Permanently disables  the charattr option.  This reduces the
+            size of your ".text" segment by about 850 bytes.  
+
+     -DNO_RECYCLE 
+            Normally, Elvis will recycle space (from the tmp file) which 
+            contains totally obsolete text.   This  flag  disables  this
+            recycling.   Without recycling, the ".text" segment is about
+            1K smaller than it would otherwise  be,  but  the  tmp  file
+            grows much  faster.  If you have a lot of free space on your
+            harddisk, but Elvis is too bulky to run with recycling, then 
+            try it without recycling.  
+
+            When using a version of Elvis that has  been  compiled  with
+            -DNO_RECYCLE,  you  should  be  careful to avoid making many
+            small changes to a file because each individual change  will
+            cause the  tmp  file  to  grow  by at least 1k.  Hitting "x"
+            thirty times counts as  thirty  changes,  but  typing  "30x"
+            counts as  one  change.   Also, you should occasionally do a
+            ":w" followed by a ":e" to start with a fresh tmp file.  
+
+     -DNO_SENTENCE 
+            Leaves out the "(" and ")" visual mode commands.  Also,  the
+            "[[",  "]]",  "{", and "}" commands will not recognize *roff
+            macros.  The sections and paragraphs options go away.   This
+            saves about 650 bytes in the ".text" segment.  
+
+     -DNO_CHARSEARCH 
+            Leaves   out  the  visual  commands  which  locate  a  given
+            character in the current line: "f", "t", "F", "T",  ","  and
+            ";".  This saves about 900 bytes.  
+
+     -DNO_EXTENSIONS 
+            Leaves out the "K" and "#" visual commands.  Also, the arrow 
+            keys will  no  longer work in input mode.  (Other extensions
+            are  either  inherent  in  the  design  of  elvis,  or   are
+            controlled  by  more  specific  flags, or are too tiny to be
+            worth removing.) This saves about 250 bytes.  
+
+
+
+
+
+
+     Elvis 1.4                     CFLAGS                       Page 9-4
+
+
+     -DNO_MAGIC 
+            Permanently  disables  the  "magic"  option,  so  that  most
+            meta-characters   in   a   regular   expression   are  *NOT*
+            recognized.  This saves about 3k of  space  in  the  ".text"
+            segment,  because the complex regular expression code can be
+            replaced by much simpler code.  
+
+     -DNO_SHOWMODE 
+            Permanently disables the "showmode" option, saving about 250 
+            bytes.  
+
+     -DNO_CURSORSHAPE 
+            Normally, Elvis tries to adjust the shape of the cursor as a 
+            reminder of which mode you're in.  The -DNO_CURSORSHAPE flag 
+            disables this, saving about 150 bytes.  
+
+     -DNO_DIGRAPH 
+            To allow  entry  of  non-ASCII  characters,  Elvis  supports
+            digraphs.  A digraph is a single (non-ASCII) character which 
+            is   entered   as   a   combination  of  two  other  (ASCII)
+            characters.   If  you  don't   need   to   input   non-ASCII
+            characters,  or  if  your  keyboard supports a better way of
+            entering non-ASCII characters,  then  you  can  disable  the
+            digraph code and save about 450 bytes.  
+
+     -DNO_ERRLIST 
+            Elvis   adds  a  ":errlist"  command,  which  is  useful  to
+            programmers.  If  you  don't  need  this  feature,  you  can
+            disable it  via the -DNO_ERRLIST flag.  This will reduce the
+            .text segment by about 900 bytes, and the  .bss  segment  by
+            about 300 bytes.  
+
+     -DNO_ABBR 
+            The -DNO_ABBR flag disables the ":abbr" command, and reduces 
+            the size of Elvis by about 600 bytes.  
+
+     -DNO_OPTCOLS 
+            When  Elvis  displays  the  current options settings via the
+            ":set"  command,  the  options  are  normally  sorted   into
+            columns.   The  -DNO_OPTCOLS  flag  causes the options to be
+            sorted across  the  rows,  which  is  much  simpler.     The
+            -DNO_OPTCOLS flag will reduce the size of your .text segment 
+            by about 500 bytes.  
+
+     -DNO_MODELINE 
+            This removes all support for modelines.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

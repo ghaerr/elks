@@ -1,0 +1,66 @@
+
+     Elvis 1.4              ENVIRONMENT VARIABLES              Page 11-1
+
+
+E11.  ENVIRONMENT VARIABLESF
+
+        Elvis  examines several environment variables when it starts up.
+     The values of these variables are used internally for a variety  of
+     purposes.   You don't need to define all of these; on most systems,
+     Elvis only requires TERM to be defined.  On  MS-DOS  systems,  even
+     that is optional.  
+
+
+   E11.1  TERM, TERMCAPF
+
+        TERM tells  Elvis the name of the termcap entry to use.  TERMCAP
+     may contain either the entire termcap entry, or the  full  pathname
+     of the termcap file to search through.  
+
+
+   E11.2  TMP, TEMPF
+
+        These only  work  for  MS-DOS  and  Atari  TOS.  Either of these
+     variables may be used to set the "directory" option, which controls 
+     where temporary files are stored.  If you define  them  both,  then
+     TMP is used, and TEMP is ignored.  
+
+
+   E11.3  EXINITF
+
+        This  variable  may  contain a colon-mode command, which will be
+     executed after all of the  ".exrc"  files  but  before  interactive
+     editing begins.  
+
+
+   E11.4  SHELL, COMSPECF
+
+        You  can use COMSPEC in MS-DOS, or SHELL in any other system, to
+     specify which shell should  be  used  for  executing  commands  and
+     expanding wildcards.  
+
+
+   E11.5  HOMEF
+
+        This  variable  should  give  the  full  pathname  of  your home
+     directory.  Elvis needs to know the name of your home directory  so
+     it can locate the ".exrc" file there.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

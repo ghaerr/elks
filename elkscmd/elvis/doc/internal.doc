@@ -1,0 +1,198 @@
+
+     Elvis 1.4                    INTERNAL                      Page 8-1
+
+
+E8.  INTERNALF
+
+        You  don't  need  to  know  the  material in this section to use
+     elvis.  You only need it if you intend to modify elvis.  
+
+
+   E8.1  The temporary fileF
+
+        The temporary file is divided into blocks of 1024 bytes each.  
+
+        When elvis starts up, the file  is  copied  into  the  temporary
+     file.  Small amounts of extra space are inserted into the temporary 
+     file  to  insure  that  no  text lines cross block boundaries; this
+     speeds up processing and simplifies storage management.  The "extra 
+     space" is filled with NUL  characters;  the  input  file  must  not
+     contain any NULs, to avoid confusion.  
+
+        The  first  block  of  the  temporary file is an array of shorts
+     which describe the order of the blocks;  i.e.    header[1]  is  the
+     block number  of  the  first  block,  and  so  on.  This limits the
+     temporary file to 512 active blocks, so the largest  file  you  can
+     edit is about 400K bytes long.  I hope that's enough!  
+
+        When blocks are altered, they are rewritten to a -1different-0 block 
+     in the file, and the in-core version of the header block is updated 
+     accordingly.   The  in-core header block will be copied to the temp
+     file immediately before the  next  change...    or,  to  undo  this
+     change,  swap  the  old  header  (from  the temp file) with the new
+     (in-core) header.  
+
+        Elvis  maintains  another  in-core  array  which  contains   the
+     line-number of the last line in every block.  This allows you to go 
+     directly to a line, given its line number.  
+
+
+   E8.2  Implementation of EditingF
+
+        There are three basic operations which affect text: 
+
+            * delete text   - delete(from, to)
+            * add text      - add(at, text)
+            * yank text     - cut(from, to)
+
+        To yank text, all text between two text positions is copied into 
+     a cut buffer.   The original text is not changed.  To copy the text
+     into a cut buffer, you need only  remember  which  physical  blocks
+     that  contain  the cut text, the offset into the first block of the
+     start of the cut, the offset into the last block of the end of  the
+     cut, and  what  kind  of cut it was.  (Cuts may be either character
+     cuts or line cuts; the kind of a cut affects the way  it  is  later
+     "put".) This is implemented in the function cut().  
+
+        To  delete  text, you must modify the first and last blocks, and
+     remove any reference to the  intervening  blocks  in  the  header's
+     list.  The  text  to be deleted is specified by two marks.  This is
+     implemented in the function delete().  
+
+
+
+
+
+
+
+     Elvis 1.4                    INTERNAL                      Page 8-2
+
+
+        To add  text,  you  must  specify  the  text  to  insert  (as  a
+     NUL-terminated string) and the place to insert it (as a mark).  The 
+     block  into  which  the text is to be inserted may need to be split
+     into as many as four blocks, with new intervening blocks needed  as
+     well...   or  it  could  be  as simple as modifying a single block.
+     This is implemented in the function add().  
+
+        Other interesting functions are paste() (to copy text from a cut 
+     buffer into the file), modify() (for an efficient way to  implement
+     a  combined delete/add sequence), and input() (to get text from the
+     user & insert it into the file).  
+
+        When text is modified, an internal file-revision counter, called 
+     "changes", is incremented.  This counter is  used  to  detect  when
+     certain caches  are  out  of  date.  (The "changes" counter is also
+     incremented when we switch to a different file, and also in one  or
+     two similar situations -- all related to invalidating caches.) 
+
+
+   E8.3  Marks and the CursorF
+
+        Marks are   places  within  the  text.    They  are  represented
+     internally as a long variable which is split into two bitfields:  a
+     line number  and a character index.  Line numbers start with 1, and
+     character indexes start with 0.  
+
+        Since line numbers start with 1, it is impossible for a set mark 
+     to have a value of 0L.  0L is therefore  used  to  represent  unset
+     marks.  
+
+        When  you  do the "delete text" change, any marks that were part
+     of the deleted text are unset, and  any  marks  that  were  set  to
+     points after  it are adjusted.  Similarly, marks are adjusted after
+     new text is inserted.  
+
+        The cursor is represented as a mark.  
+
+
+   E8.4  Colon Command InterpretationF
+
+        Colon commands are parsed, and the command name is looked up  in
+     an array of structures which also contain a pointer to the function 
+     that  implements  the  command,  and a description of the arguments
+     that the command can take.  If the command is  recognized  and  its
+     arguments are legal, then the function is called.  
+
+        Each function performs its task; this may cause the cursor to be 
+     moved to a different line, or whatever.  
+
+
+   E8.5  Screen ControlF
+
+        The  screen  is  updated  via  a  package  which  looks like the
+     "curses" library, but isn't.  It is actually much  simpler.    Most
+     curses  operations  are implemented as macros which copy characters
+     into a large I/O buffer, which is then written with a single  large
+     write() call as part of the refresh() operation.  
+
+
+
+
+
+
+     Elvis 1.4                    INTERNAL                      Page 8-3
+
+
+        The  functions  which  modify  text  (namely add() and delete())
+     remember where text has been modified.  They do this by calling the 
+     function redrawrange().  The screen redrawing  function,  redraw(),
+     uses  these  clues  to  help  it  reduce the amount of text that is
+     redrawn each time.  
+
+
+   E8.6  PortabilityF
+
+        To  improve  portability,  Elvis  collects  as   much   of   the
+     system-dependent  definitions  as  possible into the config.h file.
+     This file begins with some preprocessor instructions which  attempt
+     to determine  which  compiler and operating system you have.  After
+     that, it conditionally defines some macros and constants  for  your
+     system.  
+
+        One of  the  more  significant  macros  is ttyread(buf,n).  This
+     macro is used to read raw characters from the keyboard.  An attempt 
+     to read may be cut short by a SIGALRM signal.   For  UNIX  systems,
+     this simply  reads  bytes  from  stdin.    For MSDOS, TOS, and OS9,
+     ttyread() is a function defined in  curses.c.    There  is  also  a
+     ttywrite() macro.  
+
+        The  tread()  and  twrite()  macros  are  versions of read() and
+     write() that are used for text files.  On UNIX systems,  these  are
+     equivelent to  read()  and  write().    On  MS-DOS,  these are also
+     equivelent to read() and write(), since DOS libraries are generally 
+     clever enough to convert newline  characters  automatically.    For
+     Atari  TOS, though, the MWC library is too stupid to do this, so we
+     had to do the conversion explicitly.  
+
+        Other macros may substitute index() for strchr(), or bcopy() for 
+     memcpy(), or map the "void" data type to "int", or whatever.  
+
+        The file "tinytcap.c" contains a set of functions  that  emulate
+     the termcap  library  for  a  small  set  of  terminal  types.  The
+     terminal-specific info is hard-coded into this file.   It  is  only
+     used for   systems  that  don't  support  real  termcap.    Another
+     alternative for screen control can be seen in  the  "curses.h"  and
+     "pc.c" files.    Here, macros named VOIDBIOS and CHECKBIOS are used
+     to  indirectly  call  functions  which  perform  low-level   screen
+     manipulation via BIOS calls.  
+
+        The  stat()  function  must  be  able to come up with UNIX-style
+     major/minor/inode  numbers  that  uniquely  identify  a   file   or
+     directory.  
+
+        Please  try  to  keep  you  changes  localized, and wrap them in
+     #if/#endif pairs, so that elvis can  still  be  compiled  on  other
+     systems.   And  PLEASE  let  me know about it, so I can incorporate
+     your changes into my latest-and-greatest version of elvis.  
+
+
+
+
+
+
+
+
+
+
+

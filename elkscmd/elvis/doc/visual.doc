@@ -1,0 +1,330 @@
+
+     Elvis 1.4              VISUAL MODE COMMANDS                Page 2-1
+
+
+E2.  VISUAL MODE COMMANDSF
+
+        Most visual mode commands are one keystroke long.  The following 
+     table  lists  the  operation  performed by each keystroke, and also
+     denotes any options or arguments that it accepts.  Notes at the end 
+     of the table describe the notation used in this table.  
+
+        In addition to the keys listed  here,  your  keyboard's  "arrow"
+     keys  will  be  interpretted  as  the  appropriate  cursor movement
+     commands.  The same goes for <PgUp> and <PgDn>,  if  your  keyboard
+     has them.    There  is a colon mode command (to be described later)
+     which will allow you to define other keys, such as function keys.  
+
+        A tip: visual command mode looks a lot like text input mode.  If 
+     you forget which mode you're in, just hit the <Esc> key.  If  elvis
+     beeps, then you're in visual command mode.  If elvis does not beep, 
+     then  you  were  in  input mode, but by hitting <Esc> you will have
+     switched to visual command mode.  So, one  way  or  another,  after
+     <Esc> elvis will be ready for a command.  
+
+-1command         description                                             type-0
+        ^A      ---
+        ^B      Move toward the top of the file by 1 screenful
+        ^C      ---
+count   ^D      scroll down <count> lines (default 1/2 screen)
+count   ^E      scroll up <count> lines
+        ^F      move toward the bottom of the file by 1 screenful
+        ^G      show file status, and the current line #
+count   ^H      move left, like h                                       MOVE
+        ^I      ---
+count   ^J      move down                                               MOVE
+        ^K      ---
+        ^L      redraw the screen
+count   ^M      move to the front of the next line                      MOVE
+count   ^N      move down                                               MOVE
+        ^O      ---
+count   ^P      move up                                                 MOVE
+        ^Q      ---
+        ^R      redraw the screen
+        ^S      ---
+        ^T      ---
+count   ^U      scroll up <count> lines (default 1/2 screen)
+        ^V      ---
+        ^W      ---
+        ^X      ---
+count   ^Y      scroll down <count> lines
+        ^Z      ---
+        ESC     ---
+        ^\      ---
+        ^]      if the cursor is on a tag name, go to that tag
+        ^^      switch to the previous file, like ":e #"
+        ^_      ---
+count   SPC     move right,like l                                       MOVE
+         ! mv   run the selected lines thru an external filter program
+         " key  select which cut buffer to use next
+count    # +    increment a number                                      EDIT
+         $      move to the rear of the current line                    MOVE
+         %      move to the matching (){}[] character                   MOVE
+
+
+
+
+
+     Elvis 1.4              VISUAL MODE COMMANDS                Page 2-2
+
+
+count    &      repeat the previous ":s//" command here                 EDIT
+         ' key  move to a marked line                                   MOVE
+count    (      move backward <count> sentences                         MOVE
+count    )      move forward <count> sentences                          MOVE
+         *      go to the next error in the errlist
+count    +      move to the front of the next line                      MOVE
+count    ,      repeat the previous [fFtT] but in the other direction   MOVE
+count    -      move to the front of the preceding line                 MOVE
+count    .      repeat the previous "edit" command
+         / text search forward for a given regular expression           MOVE
+         0      if not part of count, move to 1st char of this line     MOVE
+         1      part of count
+         2      part of count
+         3      part of count
+         4      part of count
+         5      part of count
+         6      part of count
+         7      part of count
+         8      part of count
+         9      part of count
+         : text run single EX cmd
+count    ;      repeat the previous [fFtT] cmd                          MOVE
+         < mv   shift text left                                         EDIT
+         =      ---
+         > mv   shift text right                                        EDIT
+         ? text search backward for a given regular expression          MOVE
+         @ key  execute the contents of a cut-buffer as VI commands
+count    A inp  append at end of the line                               EDIT
+count    B      move back Word                                          MOVE
+         C inp  change text from the cursor through the end of the line EDIT
+         D      delete text from the cursor through the end of the line EDIT
+count    E      move end of Word                                        MOVE
+count    F key  move leftward to a given character                      MOVE
+count    G      move to line #<count> (default is the bottom line)      MOVE
+count    H      move to home row (the line at the top of the screen)
+count    I inp  insert at the front of the line (after indents)         EDIT
+count    J      join lines, to form one big line                        EDIT
+         K      look up keyword
+count    L      move to last row (the line at the bottom of the screen)
+         M      move to middle row
+         N      repeat previous search, but in the opposite direction   MOVE
+count    O inp  open up a new line above the current line               EDIT
+         P      paste text before the cursor
+         Q      quit to EX mode
+         R inp  overtype                                                EDIT
+count    S inp  change lines, like <count>cc
+count    T key  move leftward *almost* to a given character             MOVE
+         U      Undo all recent changes to the current line
+         V      ---
+count    W      move forward <count> Words                              MOVE
+count    X      delete the character(s) to the left of the cursor       EDIT
+count    Y      yank text line(s) (copy them into a cut buffer)
+         Z Z    save the file & exit
+         [ [    move back 1 section                                     MOVE
+         \      ---
+         ] ]    move forward 1 section                                  MOVE
+         ^      move to the front of the current line (after indent)    MOVE
+         _      ---
+
+
+
+
+
+     Elvis 1.4              VISUAL MODE COMMANDS                Page 2-3
+
+
+         ` key  move to a marked character                              MOVE
+count    a inp  insert text after the cursor                            EDIT
+count    b      move back <count> words                                 MOVE
+         c mv   change text                                             EDIT
+         d mv   delete text                                             EDIT
+count    e      move forward to the end of the current word             MOVE
+count    f key  move rightward to a given character                     MOVE
+         g      ---
+count    h      move left                                               MOVE
+count    i inp  insert text at the cursor                               EDIT
+count    j      move down                                               MOVE
+count    k      move up                                                 MOVE
+count    l      move right                                              MOVE
+         m key  mark a line or character
+         n      repeat the previous search                              MOVE
+count    o inp  open a new line below the current line                  EDIT
+         p      paste text after the cursor
+         q      ---
+count    r key  replace <count> chars by a given character              EDIT
+count    s inp  replace <count> chars with text from the user           EDIT
+count    t key  move rightward *almost* to a given character            MOVE
+         u      undo the previous edit command
+         v      ---
+count    w      move forward <count> words                              MOVE
+count    x      delete the character that the cursor's on               EDIT
+         y mv   yank text (copy it into a cut buffer)
+         z key  scroll current line to the screen's +=top -=bottom .=middle
+count    {      move back <count> paragraphs                            MOVE
+count    |      move to column <count> (the leftmost column is 1)
+count    }      move forward <count> paragraphs                         MOVE
+count    ~      switch a character between uppercase & lowercase        EDIT
+        DEL     ---
+--------------------------------------------------------------------------------
+
+count   Many commands may be preceded by a count.  This is a sequence of digits
+        representing a decimal number.  For most commands that use a count,
+        the command is repeated <count> times.  The count is always optional,
+        and usually defaults to 1.
+
+key     Some commands require two keystrokes.  The first key always determines
+        which command is to be executed.  The second key is used as a parameter
+        to the command.
+
+mv      Six commands (! < > c d y) operate on text between the cursor and some
+        other position.  To specify that other position, you are expected to
+        follow the command keystroke with a movement command.  Also, you may
+        have the command operate on the whole line that the cursor is on by
+        typing the command key a second time.
+
+inp     Many commands allow the user to interactively enter text.
+
+EDIT    These commands affect text, and may be repeated by the "." command.
+
+MOVE    These commands move the cursor, and may be used to specify the extent
+        of a member of the "mv" class of commands.
+
+
+
+
+
+
+
+
+     Elvis 1.4              VISUAL MODE COMMANDS                Page 2-4
+
+
+   E2.1  Input ModeF
+
+        You  can't type text into your file directly from visual command
+     mode.  Instead, you must first give a command which  will  put  you
+     into input mode.  The commands to do this are A/C/I/O/R/S/a/i/o/s.  
+
+        The  S/s/C/c  commands  temporarily  place a $ at the end of the
+     text that they are going to change.  
+
+        In input mode, all keystrokes are inserted into the text at  the
+     cursor's position, except for the following: 
+
+                ^A      insert a copy of the last input text
+                ^D      delete one indent character
+                ^H      (backspace) erase the character before the cursor
+                ^L      redraw the screen
+                ^M      (carriage return) insert a newline (^J, linefeed)
+                ^P      insert the contents of the cut buffer
+                ^R      redraw the screen, like ^L
+                ^T      insert an indent character
+                ^U      backspace to the beginning of the line
+                ^V      insert the following keystroke, even if special
+                ^W      backspace to the beginning of the current word
+                ^Z^Z    write the file & exit elvis
+                ^[      (ESCape) exit from input mode, back to command mode
+
+        Also,  on  some  systems,  ^S  may  stop  output, ^Q may restart
+     output, and ^C may interupt execution.    ^@  (the  NUL  character)
+     cannot be inserted.  
+
+        The  R  visual  command  puts  you  in overtype mode, which is a
+     slightly different form of input mode.  In overtype mode, each time 
+     you insert a character, one of the old characters is  deleted  from
+     the file.  
+
+
+   E2.2  Arrow keys in Input ModeF
+
+        The  arrow  keys  can  be used to move the cursor in input mode.
+     (This is an extension; the real Vi doesn't support  arrow  keys  in
+     input  mode.)  The  <PgUp>,  <PgDn>, <Home>, and <End> keys work in
+     input mode, too.  The <Delete> key deletes a  single  character  in
+     input mode.  
+
+        The  best  thing about allowing arrow keys to work in input mode
+     is that as long as you're in input mode,  Elvis  seems  to  have  a
+     fairly ordinary  user interface.  With most other text editors, you
+     are always in either insert mode or replace mode, and you  can  use
+     the arrow  keys at any time to move the cursor.  Now, Elvis can act
+     like that, too.  In fact, with the new "inputmode" option  and  the
+     "control-Z  control-Z" input command, you may never have to go into
+     visual command mode for simple edit sessions.  
+
+
+
+
+
+
+
+
+
+
+
+     Elvis 1.4              VISUAL MODE COMMANDS                Page 2-5
+
+
+   E2.3  DigraphsF
+
+        Elvis supports digraphs as a way to enter non-ASCII  characters.
+     A   digraph   is  a  character  which  is  composed  of  two  other
+     characters.  For example, an apostrophe and the letter i  could  be
+     defined  as  a  digraph  which  is  to  be stored & displayed as an
+     accented i.  
+
+        There is no single standard for extended ASCII  character  sets.
+     Elvis  can  be compiled to fill the digraph with values appropriate
+     for either the IBM PC character set, or the LATIN-1  character  set
+     used by  X windows, or neither.  (See the discussions of -DCS_IBMPC
+     and -DCS_LATIN1 in the CFLAGS section of this manual.) You can view 
+     or edit the digraph table via the ":digraph" colon command.  
+
+        Digraphs wil  not  be  recognized  until  you've  entered  ":set
+     digraph".  
+
+        To  actually  use  a  digraph type the first character, then hit
+     <Backspace>, and then type the second character.  Elvis  will  then
+     substitute the non-ASCII character in their place.  
+
+
+   E2.4  AbbreviationsF
+
+        Elvis can   expand   abbreviations  for  you.    You  define  an
+     abbreviation with the :abbr command, and then whenever you type  in
+     the  abbreviated  form  while in input mode, elvis will immediately
+     the long form.  COBOL programmers should find this useful.  :-) 
+
+        Elvis  doesn't  perform  the  substitution  until  you  type   a
+     non-alphanumeric character  to  mark  the  end of the word.  If you
+     type a control-V before that non-alphanumeric character, then Elvis 
+     will not perform the substitution.  
+
+
+   E2.5  Auto-IndentF
+
+        With  the  ":set  autoindent"  option  turned  on,  Elvis   will
+     automatically  insert  leading  whitespace at the beginning of each
+     new line that you type in.  The leading whitespace is  copied  from
+     the preceding line.  
+
+        To add  more leading whitespace, type control-T.  To remove some
+     whitespace, type control-D.  
+
+        Elvis' autoindent mode isn't 100%  compatible  with  vi's.    In
+     Elvis, 0^D and ^^D don't work, ^U can wipeout all indentation,  and 
+     sometimes  Elvis will use a different amount of indentation than vi
+     would.  
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,4 @@
+Code in curses.c that looks at termio needs to be changed to termios, and
+can be made alot more effiient by using register pointers.
+
+
