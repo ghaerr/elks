@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Thu Nov 18 14:31 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fixed typo in hdisk reporting.
+
 Wed Nov 18 19:16 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Integrated updated and re-organised config scripts contributed

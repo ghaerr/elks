@@ -527,7 +527,7 @@ void init_bioshd()
 		drivep = &drive_info[i];
 		if (drivep->heads != 0)
 		{
-			printk("/dev/hd%c: %d heads, %d cylinders, %d sectors = %ld MB\n",
+			printk("/dev/bd%c: %d heads, %d cylinders, %d sectors = %ld MB\n",
 				(i + 'a'),
 				drivep->heads,
 				drivep->cylinders,
