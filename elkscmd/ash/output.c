@@ -318,7 +318,7 @@ fmtstr(va_alist)
 #define TEMPSIZE 24
 
 #ifdef __STDC__
-static const char digit[16] = "0123456789ABCDEF";
+static const char digit[17] = "0123456789ABCDEF";
 #else
 static const char digit[17] = "0123456789ABCDEF";
 #endif
