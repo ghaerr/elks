@@ -129,35 +129,27 @@ extern void inode_init();
 
 struct buffer_head
 {
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
-	unsigned char b_num;	 /* Used to lookup L2 area */
-	unsigned int b_mapcount; /* Used for the new L2 buffer cache scheme */
-#endif /* CONFIG_FS_EXTERNAL_BUFFER */
 	char *b_data;		 /* Address in L1 buffer area */
 	block_t b_blocknr;
 	kdev_t b_dev;
 	struct buffer_head *b_next;
-#ifdef BLOAT_FS
-	unsigned long b_state;
-#endif
 	struct buffer_head *b_next_lru;
 	unsigned int b_count;
+	struct buffer_head *b_prev_lru;
+	struct wait_queue b_wait;
+	char b_uptodate, b_dirty, b_lock;	
+	seg_t b_seg;
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
+	unsigned char b_num;	 /* Used to lookup L2 area */
+	unsigned int b_mapcount; /* Used for the new L2 buffer cache scheme */
+#endif /* CONFIG_FS_EXTERNAL_BUFFER */
 #ifdef BLOAT_FS
+	unsigned long b_state;
 	unsigned int b_size;
-#endif
-#ifdef BLOAT_FS
 	unsigned int b_list;
 	unsigned long b_flushtime;
 	unsigned long b_lru_time;
 #endif
-	struct wait_queue *b_wait;
-#ifdef BLOAT_FS
-	struct buffer_head *b_prev, *b_prev_lru;
-#else
-	struct buffer_head *b_prev_lru;
-#endif
-	char b_uptodate, b_dirty, b_lock;
-	
 };
 
 #define BLOCK_READ	0
@@ -241,7 +233,7 @@ struct inode
 #endif
 	struct inode_operations * i_op;
 	struct super_block * i_sb;
-	struct wait_queue * i_wait;
+	struct wait_queue i_wait;
 	struct inode * i_next, * i_prev;
 	struct inode * i_mount;
 	unsigned short i_count;
@@ -303,7 +295,7 @@ struct super_block {
 #endif
 	struct inode * s_covered;
 	struct inode * s_mounted;
-	struct wait_queue * s_wait;
+	struct wait_queue s_wait;
 	union {
 		struct minix_sb_info minix_sb;
 		struct romfs_sb_info romfs_sb;
