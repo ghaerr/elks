@@ -6,7 +6,7 @@ include $(BASEDIR)/Make.defs
 #
 # Include standard packaging commands.
 
-MIN_BIN 	= kill login mount ps umount
+MIN_BIN 	= getty init kill login mount passwd ps swapon meminfo reboot umount
 MIN_LIB 	= 
 MIN_SBIN	= clock exitemu getty init reboot
 MIN_USR_BIN	= meminfo passwd
@@ -38,13 +38,11 @@ include $(BASEDIR)/Make.rules
 PRGS		= getty kill man mount reboot umount clock exitemu who ps \
 		  init login passwd knl
 
-NETPRGS 	= init getty login kill mount umount passwd reboot ps who \
-		  meminfo
+NETPRGS=init getty login kill mount umount passwd reboot ps swapon meminfo who
 
-MIN_PRGS	= init getty login kill mount reboot umount clock exitemu \
-		  ps meminfo
+MIN_PRGS=init getty login kill mount reboot umount clock exitemu ps swapon meminfo
 
-SMIN_PRGS	= mount umount
+SMIN_PRGS	= init mount umount
 
 all: $(PRGS)
 
@@ -82,11 +80,17 @@ getty: getty.c
 meminfo: meminfo.c
 	$(CC) $(CFLAGS) $(LDFLAGS) meminfo.c -o meminfo -H 100
 
+swapon: swapon.c
+	$(CC) $(CFLAGS) $(LDFLAGS) swapon.c -o swapon -H 100
+
 new_init: init.c utent.o
 	$(CC) $(CFLAGS) $(LDFLAGS) init.c utent.o -o init
 
 init: init.c 
 	$(CC) $(CFLAGS) $(LDFLAGS) init.c -o init -H 2000
+
+rdev: rdev.c 
+	$(CC) $(CFLAGS) $(LDFLAGS) rdev.c -o rdev
 
 login: getpass.o login.o utent.o
 	$(CC) $(CFLAGS) $(LDFLAGS) getpass.o login.o utent.o -o login -H 2000

@@ -394,7 +394,7 @@ static WORD GetDisk(char *Name)
 	    case 'b':
 		switch (tolower(Name[1])) {
 		    case 'd':
-			Partition = (BYTE) posn("ab",tolower(Name[2]);
+			Partition = (BYTE) posn("ab",tolower(Name[2]));
 			if (Partition < 4) {
 			    trace("TRACE: Found /dev/bd...\n");
 			    Partition *= (BYTE) 64;
