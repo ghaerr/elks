@@ -167,7 +167,9 @@ int strlen_fromfs(void *saddr)
 #ifndef S_SPLINT_S
 #asm
 
-	mov	ax,[bp-6]	! source segment (local variable)
+	push	di
+	push	si
+	mov	ax,[bp-2]	! source segment (local variable)
 	mov	es,ax
 	mov	di,[bp+4]	! source address
 	cld
@@ -178,6 +180,8 @@ int strlen_fromfs(void *saddr)
 	sub	di,[bp+4]	! calc len +1
 	dec	di
 	mov	[bp-6],di	! save in local var ds
+	pop	si
+	pop	di
 #endasm
 #endif
 
