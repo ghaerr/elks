@@ -1,6 +1,6 @@
 include ../Make.defs
 
-DIRS=httpd telnet
+DIRS=httpd telnet nettools
 
 all:
 	@for i in $(DIRS); do \
