@@ -45,7 +45,7 @@ SYSSEGB   = DEF_SYSSEG + 2
 ROOT_DEV = 0
 SWAP_DEV = 0
 #ifndef SVGA_MODE
-#define SVGA_MODE ASK_VGA
+#define SVGA_MODE VGA_ASK
 #endif
 #ifndef RAMDISK
 #define RAMDISK 0

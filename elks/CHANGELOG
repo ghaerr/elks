@@ -24,13 +24,22 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-26 Apr 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-27 Apr 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Sat Apr 27 00:49:08 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Tweaked include/linuxmt/string.h such that the definitions
+	  therein match those on the GNU man pages for those functions.
+	* Tweaked arch/i86/lib/bitops.c to match the revised prototypes
+	  used above.
+	* Ensured that the ELKS kernel compiles, and also that it boots
+	  on my i80286 based laptop computer.
 
 Sat Apr 27 00:16:36 BST 2002	Riley Williams <Riley@Williams.Name>
 
