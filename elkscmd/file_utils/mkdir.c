@@ -38,7 +38,7 @@ main (argc,argv)
 	if ((argv[1][0] == '-') && (argv[1][1] == 'p'))	
 		parent = 1;
 	
-	newmode = 0666 & ~umask(0);
+	newmode = 0777 & ~umask(0);
 
 	for(i=parent+1;i<argc;i++) {
 		if (argv[i][0] != '-') {

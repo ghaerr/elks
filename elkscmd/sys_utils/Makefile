@@ -16,7 +16,7 @@ min_rfs: all
 clean:
 	rm -f $(PRGS) *.o
 
-passwd: getpass.o passwd.o
+passwd: getpass.o passwd.o putpwent.o
 
 
 utent.o: utent.c
