@@ -244,7 +244,7 @@ static fd_device[4] = { 0,0,0,0 };
 
 /* Synchronization of FDC access. */
 static int format_status = FORMAT_NONE, fdc_busy = 0;
-static struct wait_queue *fdc_wait = NULL, *format_done = NULL;
+static struct wait_queue fdc_wait, format_done;
 
 /* Errors during formatting are counted here. */
 static int format_errors;
