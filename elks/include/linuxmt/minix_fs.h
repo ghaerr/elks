@@ -33,77 +33,81 @@
  *  Note the 8-bit gid and atime and ctime.
  */
 struct minix_inode {
-    __u16 i_mode;
-    __u16 i_uid;
-    __u32 i_size;
-    __u32 i_time;
-    __u8 i_gid;
-    __u8 i_nlinks;
-    __u16 i_zone[9];
+    __u16	i_mode;
+    __u16	i_uid;
+    __u32	i_size;
+    __u32	i_time;
+    __u8	i_gid;
+    __u8	i_nlinks;
+    __u16	i_zone[9];
 };
 
 /*
  * minix super-block data on disk
  */
 struct minix_super_block {
-    __u16 s_ninodes;
-    __u16 s_nzones;
-    __u16 s_imap_blocks;
-    __u16 s_zmap_blocks;
-    __u16 s_firstdatazone;
-    __u16 s_log_zone_size;
-    __u32 s_max_size;
-    __u16 s_magic;
-    __u16 s_state;
-    __u32 s_zones;
+    __u16	s_ninodes;
+    __u16	s_nzones;
+    __u16	s_imap_blocks;
+    __u16	s_zmap_blocks;
+    __u16	s_firstdatazone;
+    __u16	s_log_zone_size;
+    __u32	s_max_size;
+    __u16	s_magic;
+    __u16	s_state;
+    __u32	s_zones;
 };
 
 struct minix_dir_entry {
-    __u16 inode;
-    char name[0];
+    __u16	inode;
+    char	name[0];
 };
 
 #ifdef __KERNEL__
 
-extern int minix_lookup(struct inode *,char *,size_t,struct inode **);
-extern int minix_create(struct inode *,char *,size_t,int,struct inode **);
-extern int minix_mkdir(struct inode *,char *,size_t,int);
-extern int minix_rmdir(struct inode *,char *,size_t);
-extern int minix_unlink(struct inode *,char *,size_t);
-extern int minix_symlink(struct inode *,char *,size_t,char *);
-extern int minix_link(struct inode *,struct inode *,char *,size_t);
-extern int minix_mknod(struct inode *,char *,size_t,int,int);
+#if 0
 extern int minix_rename(void);
-extern struct inode *minix_new_inode(struct inode *);
-extern void minix_free_inode(struct inode *);
-extern unsigned long minix_count_free_inodes(struct super_block *);
-extern block_t minix_new_block(struct super_block *);
-extern void minix_free_block(struct super_block *,unsigned short);
-extern unsigned long minix_count_free_blocks(struct super_block *);
-extern int minix_bmap(void);
-
-extern struct buffer_head *minix_getblk(struct inode *,unsigned short,int);
-extern struct buffer_head *minix_bread(struct inode *,unsigned short,int);
-
-extern void minix_truncate(struct inode *);
-extern void minix_put_super(struct super_block *);
-extern struct super_block *minix_read_super(struct super_block *,char *,int);
-extern int init_minix_fs(void);
-extern void minix_write_super(struct super_block *);
-extern int minix_remount(struct super_block *, int *,char *);
-extern void minix_read_inode(struct inode *);
-extern void minix_write_inode(struct inode *);
-extern void minix_put_inode(struct inode *);
-extern void minix_statfs(struct super_block *,struct statfs *,int);
-extern int minix_sync_inode(struct inode *);
 extern int minix_sync_file(void);
+#endif
 
+extern unsigned short minix_bmap(register struct inode *,block_t,int);
+extern struct buffer_head *minix_bread(struct inode *,block_t,int);
+extern unsigned long minix_count_free_blocks(register struct super_block *);
+extern unsigned long minix_count_free_inodes(register struct super_block *);
+extern int minix_create(register struct inode *,char *,size_t,int,
+			struct inode **);
+extern void minix_free_block(register struct super_block *,block_t);
+extern void minix_free_inode(register struct inode *);
+extern struct buffer_head *minix_getblk(register struct inode *,block_t,int);
+extern int minix_link(register struct inode *,register struct inode *,
+		      char *,size_t);
+extern int minix_lookup(register struct inode *,char *,size_t,
+			register struct inode **);
+extern int minix_mkdir(register struct inode *,char *,size_t,int);
+extern int minix_mknod(register struct inode *,char *,size_t,int,int);
+extern block_t minix_new_block(register struct super_block *);
+extern struct inode *minix_new_inode(struct inode *);
+extern void minix_put_inode(register struct inode *);
+extern void minix_put_super(register struct super_block *);
+extern void minix_read_inode(register struct inode *);
+extern struct super_block *minix_read_super(register struct super_block *,
+					    char *,int);
+extern int minix_remount(register struct super_block *,int *,char *);
+extern int minix_rmdir(register struct inode *,char *,size_t);
 extern void minix_set_ops(struct inode *);
+extern void minix_statfs(register struct super_block *,struct statfs *,size_t);
+extern int minix_symlink(struct inode *,char *,size_t,char *);
+extern int minix_sync_inode(register struct inode *);
+extern void minix_truncate(register struct inode *);
+extern int minix_unlink(struct inode *,char *,size_t);
+extern void minix_write_inode(register struct inode *);
+extern void minix_write_super(register struct super_block *);
+
+extern int init_minix_fs(void);
 
 extern struct inode_operations minix_file_inode_operations;
 extern struct inode_operations minix_dir_inode_operations;
 extern struct inode_operations minix_symlink_inode_operations;
 
 #endif
-
 #endif

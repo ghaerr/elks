@@ -31,7 +31,7 @@ _LCD_Position:
 	pop bp
 	ret
 ;--------------------------------------------------------------
-; Clear a line without effecting cursor position
+; Clear a line without affecting cursor position
 
 _LCD_ClearLine:
 	cli

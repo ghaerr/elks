@@ -16,6 +16,14 @@
 #define INDIRECT_BLOCK(offset)	((int)(DIRECT_BLOCK)-offset)
 #define DINDIRECT_BLOCK(offset) (((int)(DIRECT_BLOCK)-offset)>>9)
 
+/* Static functions in this file */
+
+static int V1_trunc_dindirect(register struct inode *,int,unsigned short *);
+static int V1_trunc_direct(register struct inode *);
+static int V1_trunc_indirect(register struct inode *,int,unsigned short *);
+
+/* Function definitions */
+
 /*
  * Truncate has the most races in the whole filesystem: coding it is
  * a pain in the a**. Especially as I don't do any locking...
@@ -34,11 +42,10 @@
  */
 static int V1_trunc_direct(register struct inode *inode)
 {
-    unsigned short *p;
     register struct buffer_head *bh;
+    unsigned short *p;
+    int i, retry = 0;
     unsigned short tmp;
-    int i;
-    int retry = 0;
 
   repeat:
     for (i = DIRECT_BLOCK; i < 7; i++) {
@@ -66,17 +73,14 @@ static int V1_trunc_direct(register struct inode *inode)
     return retry;
 }
 
-static int V1_trunc_indirect(register struct inode *inode,
-			     int offset, unsigned short *p)
+static int V1_trunc_indirect(register struct inode *inode, int offset, unsigned short *p)
 {
     struct buffer_head *bh;
-    int i;
-    unsigned short tmp;
     register struct buffer_head *ind_bh;
     unsigned short *ind;
-    int retry = 0;
+    int i, retry = 0;
+    unsigned short tmp = *p;
 
-    tmp = *p;
     if (!tmp)
 	return 0;
     ind_bh = bread(inode->i_dev, (block_t) tmp);
@@ -89,6 +93,7 @@ static int V1_trunc_indirect(register struct inode *inode,
 	return 0;
     }
     map_buffer(ind_bh);
+
   repeat:
     for (i = INDIRECT_BLOCK(offset); i < 512; i++) {
 	if (i < 0) {
@@ -131,14 +136,12 @@ static int V1_trunc_indirect(register struct inode *inode,
     return retry;
 }
 
-static int V1_trunc_dindirect(register struct inode *inode,
-			      int offset, unsigned short *p)
+static int V1_trunc_dindirect(register struct inode *inode, int offset, unsigned short *p)
 {
-    int i;
-    unsigned short tmp;
     register struct buffer_head *dind_bh;
     unsigned short *dind;
-    int retry = 0;
+    int i, retry = 0;
+    unsigned short tmp;
 
     if (!(tmp = *p))
 	return 0;
@@ -152,6 +155,7 @@ static int V1_trunc_dindirect(register struct inode *inode,
 	return 0;
     }
     map_buffer(dind_bh);
+
   repeat:
     for (i = DINDIRECT_BLOCK(offset); i < 512; i++) {
 	if (i < 0)

@@ -16,13 +16,19 @@
 
 #include <arch/segment.h>
 
+/* Static functions in this file */
+
+static int minix_follow_link(register struct inode *,register struct inode *,
+			     int,int,struct inode **);
+static int minix_readlink(register struct inode *,char *,int);
+
+/* Function definitions */
+
 /* Define global link_count */
 
 __s16 link_count = 0;
 
-static int minix_follow_link(register struct inode *dir,
-			     register struct inode *inode,
-			     int flag, int mode, struct inode **res_inode)
+static int minix_follow_link(register struct inode *dir, register struct inode *inode, int flag, int mode, struct inode **res_inode)
 {
 
     /*
@@ -66,8 +72,7 @@ static int minix_follow_link(register struct inode *dir,
     return error;
 }
 
-static int minix_readlink(register struct inode *inode,
-			  char *buffer, int buflen)
+static int minix_readlink(register struct inode *inode, char *buffer, int buflen)
 {
     register struct buffer_head *bh;
     int i;

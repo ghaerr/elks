@@ -19,6 +19,15 @@
 #include <arch/segment.h>
 #include <arch/system.h>
 
+/* Static functions in this file */
+
+static int minix_file_read(struct inode *,register struct file *, char *,
+			   size_t);
+static int minix_file_write(register struct inode *,struct file *,char *,
+			    size_t);
+
+/* Function definitions */
+
 #define	NBUF	2
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -26,12 +35,6 @@
 
 #include <linuxmt/fs.h>
 #include <linuxmt/minix_fs.h>
-
-static int minix_file_read(struct inode *inode, register struct file *filp,
-			   char *buf, size_t icount);
-
-static int minix_file_write(register struct inode *inode,
-			    struct file *filp, char *buf, size_t count);
 
 /*@-type@*/
 
@@ -66,7 +69,7 @@ struct inode_operations minix_file_inode_operations = {
     NULL,			/* readlink */
     NULL,			/* follow_link */
 #ifdef BLOAT_FS
-    NULL /*minix_bmap */ ,	/* bmap */
+    minix_bmap, 		/* bmap */
 #endif
     minix_truncate,		/* truncate */
 #ifdef BLOAT_FS
@@ -80,8 +83,7 @@ struct inode_operations minix_file_inode_operations = {
  *	FIXME: Readahead
  */
 
-static int minix_file_read(struct inode *inode, register struct file *filp,
-			   char *buf, size_t icount)
+static int minix_file_read(struct inode *inode, register struct file *filp, char *buf, size_t icount)
 {
     /*  We have to make count loff_t since comparing ints to longs
      *  does not work with bcc!
@@ -127,8 +129,7 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
     offset &= BLOCK_SIZE - 1;
     blocks = ((block_t) (offset + left + (BLOCK_SIZE - 1)) >> BLOCK_SIZE_BITS);
 
-    while (blocks) {
-	--blocks;
+    while (blocks--) {
 	debug1("MINREAD: Reading block #%d\n", block);
 	if ((bh = minix_getblk(inode, block++, 0))) {
 	    debug2("MINREAD: block %d = buffer %d\n", block - 1, bh->b_num);
@@ -177,8 +178,7 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
     return read;
 }
 
-static int minix_file_write(register struct inode *inode,
-			    struct file *filp, char *buf, size_t count)
+static int minix_file_write(register struct inode *inode, struct file *filp, char *buf, size_t count)
 {
     register struct buffer_head *bh;
     char *p;

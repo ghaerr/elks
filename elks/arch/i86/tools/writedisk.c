@@ -5,6 +5,8 @@
  * pick up any improvements as that developes.
  */
 
+#include "writedisk.h"
+
 /* NOTE: Each time this is run it erases the SSD */
 
 int main(void)
@@ -21,7 +23,7 @@ int main(void)
     LCD_WriteChar('e');
     ssd_erase4(0);
 
-    open_file();
+    open_file(filename);
 
     LCD_Position(0, 1);
     LCD_WriteChar('P');

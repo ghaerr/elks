@@ -190,8 +190,6 @@ static int elksfs_file_write(register struct inode *inode,
 #endif
 }
 
-/*@-type@*/
-
 /*
  * We have mostly NULL's here: the current defaults are ok for
  * the minix filesystem.
@@ -208,8 +206,9 @@ static struct file_operations elksfs_file_operations = {
     NULL,			/* select - default */
     NULL,			/* ioctl - default */
     NULL,			/* no special open is needed */
-    NULL,			/* release */
+    NULL			/* release */
 #ifdef BLOAT_FS
+	,
     NULL			/* fsync : minix_file_fsync */
 #endif
 };
@@ -225,18 +224,20 @@ struct inode_operations elksfs_file_inode_operations = {
     NULL,			/* rmdir */
     NULL,			/* mknod */
     NULL,			/* readlink */
-    NULL,			/* follow_link */
+    NULL			/* follow_link */
 #ifdef BLOAT_FS
-    NULL /*minix_bmap */ ,	/* bmap */
+	,
+    minix_bmap  		/* bmap */
 #endif
 #ifdef CONFIG_FS_RO
-    NULL,			/* truncate */
+	,
+    NULL			/* truncate */
 #else
-    elksfs_truncate,		/* truncate */
+	,
+    elksfs_truncate		/* truncate */
 #endif
 #ifdef BLOAT_FS
+	,
     NULL			/* permission */
 #endif
 };
-
-/*@+type@*/

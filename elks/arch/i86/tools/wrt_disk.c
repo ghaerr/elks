@@ -7,6 +7,8 @@
  * pick up any improvements as that developes.
  */
 
+#define DEBUG
+
 #include "tools.h"
 
 /* Select method to use - uncomment the following line to use a single long
@@ -14,7 +16,6 @@
  */
 
 #define LONG_INT
-/****/
 
 /* Pseudotypes we use internally */
 
@@ -49,6 +50,63 @@ void print_address(WORD high, WORD low)
     print_word(low);
     LCD_WriteChar(' ');
 }
+
+#ifndef DEBUG
+
+void debug(char *a) {
+    while (*a)
+	LCD_WriteChar(a++);
+}
+
+void print_ulong(DWORD value)
+{
+    char result[32], *ptr = result + 31, n = -1;
+
+    *ptr = '\0';
+    while (value > 0) {
+	if (++n == 3) {
+	    *--ptr = ',';
+	    n = 0;
+	}
+	*--ptr = (value % 10) + '0';
+	value /= 10;
+    }
+    if (!*ptr)
+	*--ptr = '0';
+    debug(ptr);
+}
+
+void debugl(char *a, long n) {
+    while (*a) {
+	if (*a != '%')
+	    LCD_WriteChar(*a++);
+	else {
+	    print_ulong(n);
+	    a += 2;
+	}
+    }
+}
+
+void debugs(char *a, char *s) {
+    char *ptr;
+
+    while (*a)
+	if (*a != '%')
+	    LCD_WriteChar(*a++);
+	else {
+	    for (ptr = s; *ptr; ptr++)
+		LCD_WriteChar(*ptr);
+	    a += 2;
+	}
+}
+
+#else
+
+#define debug(a)
+#define debugl(a,b)
+#define debugs(a,b)
+
+#endif
 
 void error(char Pass, WORD data, WORD result)
 {
@@ -96,6 +154,10 @@ int main(void)
     strcat(filename, "loc::m:\\");
     filename[5] = DRIVE;
     strcat(filename,FILENAME);
+    debugs("Target file: %s\n", filename );
+    debugl("Flash size:  %d kb", (DWORD) DISK_SIZE);
+    debugl(" - %dx64 kb,", (DWORD) blocks);
+    debugl(" %ld bytes.\n", (DWORD) SIZE);
 
     /* Connect to SSD in slot 'B' (under 'enter') */
     ssd_open4(0x01);

@@ -17,6 +17,19 @@
 
 #include <arch/segment.h>
 
+/* Static functions in this file */
+
+static int empty_dir(register struct inode *);
+static int minix_add_entry(register struct inode *,char *,size_t,
+			   struct buffer_head **,struct minix_dir_entry **);
+static struct buffer_head *minix_find_entry(register struct inode *,char *,
+					    size_t,struct minix_dir_entry **);
+static int minix_match(size_t,char *,struct buffer_head *,loff_t *,
+		       register struct minix_sb_info *);
+static int namecompare(size_t,size_t,char *,register char *);
+
+/* Function definitions */
+
 /*
  * comment out this line if you want names > info->s_namelen chars to be
  * truncated. Else they will be disallowed (ENAMETOOLONG).
@@ -44,25 +57,19 @@ static int namecompare(size_t len, size_t max, char *name, register char *buf)
  *
  * Note2: bh must already be mapped! 
  */
-static int minix_match(size_t len,
-		       char *name,
-		       struct buffer_head *bh,
-		       loff_t * offset, register struct minix_sb_info *info)
+static int minix_match(size_t len, char *name, struct buffer_head *bh, loff_t * offset, register struct minix_sb_info *info)
 {
     register struct minix_dir_entry *de;
-    int retval;
 
     de = (struct minix_dir_entry *) (bh->b_data + *offset);
     *offset += info->s_dirsize;
-    if (!de->inode || len > info->s_namelen) {
+    if (!de->inode || len > info->s_namelen)
 	return 0;
-    }
-    /* "" means "." ---> so paths like "/usr/lib//libc.a" work */
-    if (!len && (de->name[0] == '.') && (de->name[1] == '\0')) {
+
+    /* // means /./ ---> so paths like "/usr/lib//libc.a" work */
+    if (!len && (de->name[0] == '.') && (de->name[1] == '\0'))
 	return 1;
-    }
-    retval = namecompare(len, info->s_namelen, name, de->name);
-    return retval;
+    return namecompare(len, info->s_namelen, name, de->name);
 }
 
 /*
@@ -75,14 +82,12 @@ static int minix_match(size_t len,
  * 
  */
 
-static struct buffer_head *minix_find_entry(register struct inode *dir,
-					    char *name, size_t namelen, struct minix_dir_entry
-					    **res_dir)
+static struct buffer_head *minix_find_entry(register struct inode *dir, char *name, size_t namelen, struct minix_dir_entry **res_dir)
 {
-    unsigned short block;
-    loff_t offset;
     struct buffer_head *bh;
     struct minix_sb_info *info;
+    loff_t offset;
+    unsigned short block;
 
     *res_dir = NULL;
     if (!dir || !dir->i_sb)
@@ -129,8 +134,7 @@ static struct buffer_head *minix_find_entry(register struct inode *dir,
     return NULL;
 }
 
-int minix_lookup(register struct inode *dir, char *name, size_t len,
-		 register struct inode **result)
+int minix_lookup(register struct inode *dir, char *name, size_t len, register struct inode **result)
 {
     struct buffer_head *bh;
     struct minix_dir_entry *de;
@@ -147,8 +151,8 @@ int minix_lookup(register struct inode *dir, char *name, size_t len,
     }
     debug("minix_lookup: Entering minix_find_entry\n");
     bh = minix_find_entry(dir, name, len, &de);
-    debug2("minix_lookup: minix_find_entry returned %x %d\n", bh,
-	   bh->b_mapcount);
+    debug2("minix_lookup: minix_find_entry returned 0x%x %d\n",
+	   bh, bh->b_mapcount);
     if (!bh) {
 	iput(dir);
 	return -ENOENT;
@@ -176,17 +180,13 @@ int minix_lookup(register struct inode *dir, char *name, size_t len,
  * the entry, as someone else might have used it while you slept.
  */
 
-static int minix_add_entry(register struct inode *dir,
-			   char *name,
-			   size_t namelen,
-			   struct buffer_head **res_buf,
-			   struct minix_dir_entry **res_dir)
+static int minix_add_entry(register struct inode *dir, char *name, size_t namelen, struct buffer_head **res_buf, struct minix_dir_entry **res_dir)
 {
     struct buffer_head *bh;
     struct minix_dir_entry *de;
     struct minix_sb_info *info;
-    block_t block;
     loff_t offset;
+    block_t block;
 
     *res_buf = NULL;
     *res_dir = NULL;
@@ -258,8 +258,7 @@ static int minix_add_entry(register struct inode *dir,
     return 0;
 }
 
-int minix_create(register struct inode *dir, char *name, size_t len,
-		 int mode, struct inode **result)
+int minix_create(register struct inode *dir, char *name, size_t len, int mode, struct inode **result)
 {
     struct buffer_head *bh;
     register struct inode *inode;
@@ -293,8 +292,7 @@ int minix_create(register struct inode *dir, char *name, size_t len,
     return 0;
 }
 
-int minix_mknod(register struct inode *dir, char *name, size_t len,
-		int mode, int rdev)
+int minix_mknod(register struct inode *dir, char *name, size_t len, int mode, int rdev)
 {
     struct buffer_head *bh;
     register struct inode *inode;
@@ -663,8 +661,7 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     return 0;
 }
 
-int minix_link(register struct inode *oldinode,
-	       register struct inode *dir, char *name, size_t len)
+int minix_link(register struct inode *oldinode, register struct inode *dir, char *name, size_t len)
 {
     struct buffer_head *bh;
     struct minix_dir_entry *de;

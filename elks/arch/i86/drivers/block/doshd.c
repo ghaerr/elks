@@ -64,10 +64,10 @@
 
 #ifdef CONFIG_BLK_DEV_BIOS
 
-static int bioshd_ioctl(struct inode *inode, struct file *file,
-			unsigned int cmd, unsigned int arg);
+static int bioshd_ioctl(struct inode *, struct file *, unsigned int,
+			unsigned int);
 
-static int bioshd_open(struct inode *inode, struct file *filp);
+static int bioshd_open(struct inode *, struct file *);
 
 static void bioshd_release(struct inode *, struct file *);
 
@@ -87,10 +87,6 @@ static struct file_operations bioshd_fops = {
 #endif
 };
 
-#if 0
-static struct wait_queue busy_wait;
-#endif
-
 static struct wait_queue dma_wait;
 
 static int dma_avail = 1;
@@ -98,10 +94,11 @@ static int dma_avail = 1;
 static int bioshd_initialized = 0;
 
 #if 0
+static struct wait_queue busy_wait;
 static int force_bioshd;
 #endif
 
-static int revalidate_hddisk(int dev, int maxusage);
+static int revalidate_hddisk(int, int);
 
 static struct drive_infot {
     int cylinders;
@@ -184,6 +181,10 @@ int bioshd_gethdinfo(void)
     }
     return ndrives;
 }
+
+#endif
+
+#ifdef CONFIG_BLK_DEV_BFD
 
 int bioshd_getfdinfo(void)
 {

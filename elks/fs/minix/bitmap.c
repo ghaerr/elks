@@ -13,18 +13,27 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/string.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/debug.h>
 
 #include <arch/bitops.h>
 
 #ifdef BLOAT_FS
 
+/* Static functions in this file */
+
+static unsigned short count_used(struct buffer_head **,unsigned int,
+				 unsigned int);
+
+/* Function definitions */
+
 static char nibblemap[] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 
-static unsigned short count_used(struct buffer_head *map[],
-				 unsigned int numblocks, unsigned int numbits)
+static unsigned short count_used(struct buffer_head **map,
+				 unsigned int numblocks,
+				 unsigned int numbits)
 {
-    unsigned int i, j, end, sum = 0;
     register struct buffer_head *bh;
+    unsigned int end, i, j, sum = 0;
 
     for (i = 0; (i < numblocks) && numbits; i++) {
 	if (!(bh = map[i]))
@@ -50,26 +59,26 @@ static unsigned short count_used(struct buffer_head *map[],
 
 unsigned short minix_count_free_blocks(register struct super_block *sb)
 {
-    return (sb->u.minix_sb.s_nzones -
-	    count_used(sb->u.minix_sb.s_zmap, sb->u.minix_sb.s_zmap_blocks,
-		       sb->u.minix_sb.s_nzones)) << sb->u.
-	minix_sb.s_log_zone_size;
+    struct minix_sb_info ms = sb->u.minix_sb;
+
+    return (ms.s_nzones - count_used(ms.s_zmap, ms.s_zmap_blocks, ms.s_nzones))
+			<< ms.s_log_zone_size;
 }
 
 
 unsigned short minix_count_free_inodes(register struct super_block *sb)
 {
-    return sb->u.minix_sb.s_ninodes - count_used(sb->u.minix_sb.s_imap,
-						 sb->u.minix_sb.s_imap_blocks,
-						 sb->u.minix_sb.s_ninodes);
+    struct minix_sb_info ms = sb->u.minix_sb;
+
+    return ms.s_ninodes - count_used(ms.s_imap, ms.s_imap_blocks, ms.s_ninodes);
 }
 
 #endif
 
-void minix_free_block(register struct super_block *sb,
-		      unsigned short int block)
+void minix_free_block(register struct super_block *sb, block_t block)
 {
     register struct buffer_head *bh;
+    register struct minix_sb_info *ms;
     unsigned int zone;
     unsigned short int bit;
 
@@ -77,19 +86,19 @@ void minix_free_block(register struct super_block *sb,
 	printk("mfb: bad dev\n");
 	return;
     }
-    if (block < sb->u.minix_sb.s_firstdatazone ||
-	block >= sb->u.minix_sb.s_nzones) {
+    ms = &sb->u.minix_sb;
+    if (block < ms->s_firstdatazone || block >= ms->s_nzones) {
 	printk("trying to free block %lx not in datazone\n", block);
 	return;
     }
-    bh = get_hash_table(sb->s_dev, (block_t) block);
+    bh = get_hash_table(sb->s_dev, block);
     if (bh)
 	bh->b_dirty = 0;
     brelse(bh);
-    zone = block - sb->u.minix_sb.s_firstdatazone + 1;
+    zone = block - ms->s_firstdatazone + 1;
     bit = (unsigned short int) (zone & 8191);
     zone >>= 13;
-    bh = sb->u.minix_sb.s_zmap[zone];
+    bh = ms->s_zmap[zone];
     if (!bh) {
 	printk("mfb: bad bitbuf\n");
 	return;
@@ -105,17 +114,19 @@ void minix_free_block(register struct super_block *sb,
 block_t minix_new_block(register struct super_block *sb)
 {
     register struct buffer_head *bh;
+    register struct minix_sb_info *ms;
     block_t i, j;
 
     if (!sb) {
 	printk("mnb: no sb\n");
 	return 0;
     }
+    ms = &sb->u.minix_sb;
 
   repeat:
     j = 8192;
     for (i = 0; i < 8; i++)
-	if ((bh = sb->u.minix_sb.s_zmap[i]) != NULL) {
+	if ((bh = ms->s_zmap[i]) != NULL) {
 	    map_buffer(bh);
 	    if ((j = find_first_zero_bit(bh->b_data, 8192)) < 8192)
 		break;
@@ -132,11 +143,12 @@ block_t minix_new_block(register struct super_block *sb)
 	panic("still zero bit!%d\n", j);
     unmap_buffer(bh);
     mark_buffer_dirty(bh, 1);
-    j += i * 8192 + sb->u.minix_sb.s_firstdatazone - 1;
-    if (j < sb->u.minix_sb.s_firstdatazone || j >= sb->u.minix_sb.s_nzones)
+    j += i * 8192 + ms->s_firstdatazone - 1;
+    if (j < ms->s_firstdatazone || j >= ms->s_nzones)
 	return 0;
+
     /* WARNING: j is not converted, so we have to do it */
-    if (!(bh = getblk(sb->s_dev, (block_t) j))) {
+    if (!(bh = getblk(sb->s_dev, j))) {
 	printk("mnb: cannot get");
 	return 0;
     }
@@ -148,12 +160,12 @@ block_t minix_new_block(register struct super_block *sb)
     return j;
 }
 
-
 static char *fi_name = "free_inode";
 
 void minix_free_inode(register struct inode *inode)
 {
     register struct buffer_head *bh;
+    register struct minix_sb_info *ms;
     ino_t ino;
 
     if (!inode)
@@ -174,23 +186,20 @@ void minix_free_inode(register struct inode *inode)
 	printk("%s: no sb\n", fi_name);
 	return;
     }
-    if (inode->i_ino < 1 || inode->i_ino > inode->i_sb->u.minix_sb.s_ninodes) {
+    ino = inode->i_ino;
+    ms = &inode->i_sb->u.minix_sb;
+    if (ino < 1 || ino > ms->s_ninodes) {
 	printk("%s: 0 or nonexistent\n", fi_name);
 	return;
     }
-    ino = inode->i_ino;
-    if (!(bh = inode->i_sb->u.minix_sb.s_imap[ino >> 13])) {
+    if (!(bh = ms->s_imap[ino >> 13])) {
 	printk("%s: nonexistent imap\n", fi_name);
 	return;
     }
     map_buffer(bh);
     clear_inode(inode);
     if (!clear_bit(ino & 8191, bh->b_data)) {
-
-#if 0
-	printk("%s: bit %ld already cleared.\n",ino);
-#endif
-
+	debug2("%s: bit %ld already cleared.\n",fi_name,ino);
     }
     mark_buffer_dirty(bh, 1);
     unmap_buffer(bh);
@@ -198,8 +207,9 @@ void minix_free_inode(register struct inode *inode)
 
 struct inode *minix_new_inode(struct inode *dir)
 {
-    register struct inode *inode;
     register struct buffer_head *bh;
+    register struct inode *inode;
+    register struct minix_sb_info *ms;
 
     /* Adding an sb here does not make the code smaller */
     unsigned short int i, j;
@@ -209,8 +219,9 @@ struct inode *minix_new_inode(struct inode *dir)
     inode->i_sb = dir->i_sb;
     inode->i_flags = inode->i_sb->s_flags;
     j = 8192;
+    ms = &inode->i_sb->u.minix_sb;
     for (i = 0; i < 8; i++)
-	if ((bh = inode->i_sb->u.minix_sb.s_imap[i]) != NULL) {
+	if ((bh = ms->s_imap[i]) != NULL) {
 	    map_buffer(bh);
 	    if ((j = find_first_zero_bit(bh->b_data, 8192)) < 8192)
 		break;
@@ -226,7 +237,7 @@ struct inode *minix_new_inode(struct inode *dir)
     }
     mark_buffer_dirty(bh, 1);
     j += i * 8192;
-    if (!j || j > inode->i_sb->u.minix_sb.s_ninodes) {
+    if (!j || j > ms->s_ninodes) {
 	goto iputfail;
     }
     unmap_buffer(bh);
