@@ -1,6 +1,8 @@
 #ifndef __LINUX_ELKSFS_FS_H__
 #define __LINUX_ELKSFS_FS_H__
 
+#ifdef CONFIG_ELKSFS_FS
+
 /*
  * The elksfs filesystem constants/structures
  */
@@ -110,5 +112,7 @@ extern struct inode_operations elksfs_dir_inode_operations;
 extern struct inode_operations elksfs_symlink_inode_operations;
 
 #endif /* __KERNEL__ */
+
+#endif /* CONFIG_ELKSFS */
 
 #endif

@@ -270,7 +270,7 @@ elks:
 #########################################################################
 # Standard commands.
 
-clean:	$(CLEANDEP)
+doclean: $(CLEANDEP)
 	rm -fv *~ *.bak *.a *.o *.map *.tmp core $(CLEANME)
 	@for FILE in *.s ; do \
 		BASE=`basename "$$FILE" .s` ; \
@@ -281,15 +281,15 @@ clean:	$(CLEANDEP)
 	done
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
-			${MAKE} -C "$$DIR" clean ; \
+			${MAKE} -C "$$DIR" doclean ; \
 		fi ; \
 	done
 
-dep:	$(DEPEND)
+dodep:	$(DEPEND)
 	@if \ls *.c > /dev/null 2>&1 ; then ${MAKE} mkdep ; fi
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
-			${MAKE} -C "$$DIR" dep ; \
+			${MAKE} -C "$$DIR" dodep ; \
 		fi ; \
 	done
 
@@ -320,6 +320,12 @@ nodep:
 			${MAKE} -C "$$DIR" nodep ; \
 		fi ; \
 	done
+
+#########################################################################
+# Recreate autoconf.h if it's missing.
+
+$(BASEDIR)/include/linuxmt/autoconf.h:
+	@yes '' | make -C $(BASEDIR) config
 
 #########################################################################
 # Sub-command used by the `make dist` command in the toplevel Makefile.

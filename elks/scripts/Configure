@@ -132,7 +132,7 @@ function readln () {
 #	comment 'xxx'
 # 
 function comment () {
-	echo "*"; echo "* $1" ; echo "*"
+	echo " *"; echo " * $1" ; echo " *"
 	(echo "" ; echo "#"; echo "# $1" ; echo "#") >>$CONFIG
 	(echo "" ; echo "/*"; echo " * $1" ; echo " */") >>$CONFIG_H
 }
@@ -572,8 +572,6 @@ fi
 mv .tmpconfig .config
 mv .tmpconfig.h include/linuxmt/autoconf.h
 
-echo
-echo "*** Next, you must run 'make dep'."
 echo
 
 exit 0

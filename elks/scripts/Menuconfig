@@ -1451,13 +1451,14 @@ then
 	save_configuration
 	echo
 	echo
-	echo "*** End of ELKS kernel configuration."
-	echo "*** Next, you must run 'make dep'."
+	echo ' * End of ELKS kernel configuration.'
+	echo
+	echo ' * You need to run `make dep` next.'
 	echo
 else
 	echo
     	echo 
-	echo Your kernel configuration changes were NOT saved.
+	echo ' * Your kernel configuration changes were NOT saved.'
 	echo
 fi
 

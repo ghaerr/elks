@@ -74,10 +74,10 @@ endif
 #########################################################################
 # Define commands.
 
-Image: $(ARCHIVES) init/main.o
+Image: include/linuxmt/autoconf.h $(ARCHIVES) init/main.o
 	${MAKE} -C $(ARCH_DIR) Image
 
-nbImage: $(ARCHIVES) init/main.o
+nbImage: include/linuxmt/autoconf.h $(ARCHIVES) init/main.o
 	${MAKE} -C $(ARCH_DIR) nbImage
 
 nb_install: nbImage
@@ -98,7 +98,7 @@ setup: $(ARCH_DIR)/boot/setup
 	${MAKE} -C $(ARCH_DIR) setup
 
 #########################################################################
-# library rules (all these are built even if they aren't used)
+# library rules (all these are built even if they aren't used).
 
 .PHONY: fs/fs.a fs/minix/minixfs.a fs/romfs/romfs.a fs/elksfs/elksfs.a \
         kernel/kernel.a lib/lib.a net/net.a
@@ -135,7 +135,8 @@ include/linuxmt/compiler-generated.h:
 #########################################################################
 # lint rule
 
-lint:
+lint:	include/linuxmt/autoconf.h
+	@echo
 	$(LINT) -I$(TOPDIR)/include -c init/main.c
 	@echo
 	@echo Checking with lint is now complete.
@@ -209,11 +210,35 @@ tar:	dist
 #########################################################################
 # Configuration stuff
 
+clean:	doclean
+	@echo
+	@if [ ! -f .config ]; then \
+	    echo ' * This system is not configured. You need to run' ;\
+	    echo ' * `make config` or `make menuconfig` to configure it.' ;\
+	else \
+	    echo ' * This system has been configured. You need to run' ;\
+	    echo ' * `make dep` next to set up the relevant dependencies.' ;\
+	fi
+	@echo
+
 config:
 	@echo
 	@$(CONFIG_SHELL) scripts/Configure arch/$(ARCH)/config.in
 	@echo
-	@echo Configuration complete.
+	@echo ' * Configuration complete. You need to run `make dep` next.'
+	@echo
+
+dep:	include/linuxmt/autoconf.h
+	@make dodep
+	@echo
+	@echo ' * Dependencies configured. Next, you need to run one of the'
+	@echo ' * following commands:'
+	@echo ' *'
+	@echo ' *    `make Image`     to create a kernel image ready to boot'
+	@echo ' *                     from floppy diskette, or'
+	@echo ' *'
+	@echo ' *    `make nbImage`   to create a kernel image ready to boot'
+	@echo ' *                     across a network connection.'
 	@echo
 
 defconfig:
@@ -224,15 +249,12 @@ dup:
 	mkdir ../elks-test
 	tar c * | ( cd ../elks-test ; tar xv )
 	@echo
-	@echo Created backup tree for testing.
+	@echo ' * Created backup tree for testing.'
 	@echo
 
 menuconfig:
 	${MAKE} -C scripts/lxdialog all
 	$(CONFIG_SHELL) scripts/Menuconfig arch/$(ARCH)/config.in
-	@echo
-	@echo Configuration complete.
-	@echo
 
 set:
 	@set
@@ -279,8 +301,6 @@ test:
 	${MAKE} clean
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 	${MAKE} defconfig
-	@printf '\n  %076u\n\n' 0 | tr 0 =
-	${MAKE} dep
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 	${MAKE} dep
 	@printf '\n  %076u\n\n' 0 | tr 0 =
