@@ -5,6 +5,12 @@
 	.globl _main
 	.extern	_start_kernel
 	.extern _arch_boot
+
+| note: this next instruction is part of the kernel restart fix for
+| protexted mode. it must be 3 bytes long.
+	.extern _kernel_restarted
+	br _kernel_restarted
+	
 |
 |	Setup passes these on the stack	
 |	Setup patched to pass parameters in registers to avoid clobbering the
@@ -29,8 +35,9 @@ _main:
 
 !  overwrite start of main with a jmp to kernel_restarted()
 !  this will give is a call stack trace instead of the "timer bug" message
-	.extern _redirect_main
-	call	_redirect_main
+!  no longer nessecary due to pmode fix. -AJB
+!	.extern _redirect_main
+!	call	_redirect_main
 
 	call	_arch_boot
 	call	_start_kernel

@@ -4,6 +4,13 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Wed Nov 19 17:51 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Added latest changes to 286 pmode code by
+	  Alastair Bridgewater. Include change to the code that detects
+	  when the kernel is restarted so it no longer has to modify its own
+	  code segment.
+
 Wed Nov 19 17:39 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix to minix truncate code. See BUGS.

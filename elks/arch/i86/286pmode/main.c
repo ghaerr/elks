@@ -7,6 +7,9 @@
 #include "descriptor.h"
 #include "tss.h"
 
+/* #define DEBUG_2ND_MONITOR */
+/* #define ELKS_AT_RING_1 */
+
 #define PMODE_CODESEL 0x08
 #define PMODE_DATASEL 0x10
 #define PMODE_SCRNSEL 0x18
@@ -15,8 +18,15 @@
 #define PMODE_TSSSEL 0x28
 #define PMODE_LDTSEL 0x30
 
-#define ELKS_CODESEL 0x39
-#define ELKS_DATASEL 0x41
+#ifdef ELKS_AT_RING_1
+#  define ELKS_CODESEL 0x39
+#  define ELKS_DATASEL 0x41
+#  define SETUP_DATASEL 0x49
+#else
+#  define ELKS_CODESEL 0x38
+#  define ELKS_DATASEL 0x40
+#  define SETUP_DATASEL 0x48
+#endif
 
 #define GATE_INTERRUPT 0x86
 #define GATE_TRAP      0x87
@@ -35,7 +45,7 @@ struct descriptor idt[0x30];
 
 #define IDT_LIMIT 0x17f
 
-struct descriptor initial_gdt[9] = {
+struct descriptor initial_gdt[10] = {
     {0x0000, 0x0000, 0x00, 0x00, 0x0000}, /* NULL segment */
     {0xffff, 0x0020, 0x01, 0x9b, 0x0000}, /* ring 0 code segment (ours) */
     {0xffff, 0x0020, 0x01, 0x93, 0x0000}, /* ring 0 data segment (ours) */
@@ -43,11 +53,18 @@ struct descriptor initial_gdt[9] = {
     {0xffff, 0x0000, 0x00, 0x93, 0x0000}, /* ring 0 temporary data segment */
     {0x002b, 0x0000, 0x00, 0x81, 0x0000}, /* initial TSS */
     {0x0000, 0x0000, 0x00, 0x82, 0x0000}, /* 0-length LDT for TSS */
+#ifdef ELKS_AT_RING_1
     {0x0000, 0x0000, 0x00, 0xbb, 0x0000}, /* ring 1 code segment (ELKSs) */
     {0xffff, 0x0000, 0x00, 0xb3, 0x0000}, /* ring 1 data segment (ELKSs) */
+    {0xffff, 0x1000, 0x00, 0xb3, 0x0000}, /* ring 1 data segment (setup) */
+#else
+    {0x0000, 0x0000, 0x00, 0x9b, 0x0000}, /* ring 0 code segment (ELKSs) */
+    {0xffff, 0x0000, 0x00, 0x93, 0x0000}, /* ring 0 data segment (ELKSs) */
+    {0xffff, 0x1000, 0x00, 0x93, 0x0000}, /* ring 0 data segment (setup) */
+#endif
 };
 
-#define GDT_LIMIT 0x47
+#define GDT_LIMIT 0x4f
 
 /* most of these fields can be nil without affecting anything. */
 struct tss initial_tss = {
@@ -88,6 +105,7 @@ unsigned short irqhandlers[0x30] = {
     &irq_8, &irq_9, &irq_a, &irq_b, &irq_c, &irq_d, &irq_e, &irq_f,
 };
 
+#if 0 /* old versions */
 void cli()
 {
 #asm
@@ -101,6 +119,10 @@ void sti()
     sti
 #endasm
 }
+#else /* new versions. 4 bytes saved on overhead, and 2 bytes per call. */
+#define cli() asm("cli")
+#define sti() asm("sti")
+#endif
 
 unsigned short get_ds()
 {
@@ -133,6 +155,7 @@ void set_flags(flags)
 void load_gdtr()
 {
 #asm
+#ifdef DEBUG_2ND_MONITOR
     push es
     mov ax, #0xb000
     mov es, ax
@@ -140,6 +163,7 @@ void load_gdtr()
     seg es
     mov [0x24], ax
     pop es
+#endif
 	
     push bp
     mov bp, sp
@@ -159,6 +183,7 @@ void load_gdtr()
     push cx
     lgdt [bp-6]
 
+#ifdef DEBUG_2ND_MONITOR
 #if 0
     push es
     push di
@@ -244,9 +269,11 @@ void load_gdtr()
     pop es
 /*     db 0xeb, 0xfe */
 #endif
+#endif
     add sp, #6
     pop bp
 
+#ifdef DEBUG_2ND_MONITOR
     push es
     mov ax, #0xb000
     mov es, ax
@@ -254,6 +281,7 @@ void load_gdtr()
     seg es
     mov [0x28], ax
     pop es
+#endif
 #endasm
 }
 
@@ -277,6 +305,7 @@ void load_idtr()
     push cx
     lidt [bp-6]
 
+#ifdef DEBUG_2ND_MONITOR
 #if 0
     push es
     push di
@@ -362,6 +391,7 @@ void load_idtr()
     pop es
 /*     db 0xeb, 0xfe */
 #endif
+#endif
     add sp, #6
     pop bp
 #endasm
@@ -410,6 +440,7 @@ void do_irq(irqnum, es, ds, di, si, bp, ignore, bx, dx, cx, ax)
     push bp
     mov bp, sp
 
+#ifdef DEBUG_2ND_MONITOR
     push es
     mov ax, #PMODE_SCRNSEL
     mov es, ax
@@ -447,7 +478,8 @@ do_irq_done_print:
     stosw
 
     pop es
-    db 0xeb, 0xfe
+#endif
+    dw 0xfeeb /* foo: jmp foo */
 
     pop bp
 #endasm
@@ -462,6 +494,7 @@ void do_exc(excnum, es, ds, di, si, bp, ignore, bx, dx, cx, ax)
     push bp
     mov bp, sp
 
+#ifdef DEBUG_2ND_MONITOR
     push es
     mov ax, #PMODE_SCRNSEL
     mov es, ax
@@ -499,6 +532,7 @@ do_exc_done_print:
     stosw
 
     pop es
+#endif
     db 0xeb, 0xfe
 
     pop bp
@@ -601,7 +635,15 @@ stpm_pmode:
 #endasm
 }
 
-/* FIXME: I don't trust this compiler to generate accurate code for this. */
+/*
+ * FIXME: I don't trust this compiler to generate accurate code for this.
+ * either prove that it doesn't, or change it.
+ */
+
+/*
+ * FIXME: bcc doesn't generate anything like efficient code for this.
+ * I'm not sure what the reason is, but the code looks amazingly repetitive.
+ */
 void init_ksegs(textlen)
      unsigned short textlen;
 {
@@ -609,12 +651,13 @@ void init_ksegs(textlen)
     initial_gdt[7].baseaddr1 = (((long)_elksheader + 2) >> 0xc) &0xff;
     initial_gdt[7].limit = textlen;
 
-    initial_gdt[8].baseaddr0 = (((_elksheader + 2) << 4) + textlen) & 0xffff;
-    initial_gdt[8].baseaddr1 = ((((_elksheader + 2) << 4) + textlen) >> 0xc) & 0xff;
+    initial_gdt[8].baseaddr0 = ((((long)_elksheader + 2) << 4) + textlen) & 0xffff;
+    initial_gdt[8].baseaddr1 = (((((long)_elksheader + 2) << 4) + textlen) >> 0x10) & 0xff;
 }
 
 void bogus_magic()
 {
+#ifdef DEBUG_2ND_MONITOR
 #asm
     mov ax, #PMODE_SCRNSEL
     mov es, ax
@@ -625,6 +668,7 @@ void bogus_magic()
     stosw
     dw 0xfeeb
 #endasm
+#endif
 }
 
 void boot_kernel()
@@ -655,10 +699,14 @@ boot_kernel_good_sig:
     mov ax, #ELKS_DATASEL
     mov ds, ax
     mov es, ax
+
+#if 1 /* this can be left in even if ELKS is running at ring 0. */
     push #ELKS_DATASEL
     push #0xfffe
+#endif
+	
     push #ELKS_CODESEL
-    push #0x0000
+    push #0x0003
     retf
 #endasm
 }

@@ -277,7 +277,9 @@ no_psmouse:
 !	push	bx	! Text size
 ! This is it...
 
-	jmpi	0x0,0x1002	! jmp offset 0 of segment 0x1002 (cs)
+! changed jmpi 0,0x1002 to 3,0x1002 for kernel restart fix -AJB
+
+	jmpi	0x0003,0x1002	! jmp offset 0 of segment 0x1002 (cs)
 
 ! This routine checks that the keyboard command queue is empty
 ! (after emptying the output buffers)

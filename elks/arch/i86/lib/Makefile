@@ -35,9 +35,11 @@ CFLAGS 		=-D__KERNEL__ -I../../../include
 	$(CC) $(CFLAGS) \
 	-0 -c -o $*.o $<
 
-.S.o:
+#.S.o:
+#	gcc -I ../../../include -E -traditional -o $*.s $<
+#	$(AS) -0 -c -o $*.o $*.s
+.S.s:
 	gcc -I ../../../include -E -traditional -o $*.s $<
-	$(AS) -0 -c -o $*.o $*.s
 
 lib86.a: $(OBJS)
 	ar rcs lib86.a $(OBJS)

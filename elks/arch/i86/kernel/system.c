@@ -61,7 +61,8 @@ int *end;
 	 *	Mark tasks 1-31 as not in use.
 	 */
 	for(ct=1;ct<MAX_TASKS;ct++) {
-		taskp = &task[ct];
+/* 		taskp = &task[ct]; */
+		taskp++;
 		taskp->state=TASK_UNUSED;
 		taskp->t_kstackm = KSTACK_MAGIC;
 	}

@@ -3,6 +3,12 @@
 |
 	.text
 	.globl _main
+
+| note: the next 3 int 3 instructions are part of the kernel_restart fix
+| for protected mode.
+	int 3
+	int 3
+	int 3
 |
 |	Setup passes these in registers (it used to use the stack, but that
 |	would clobber the ELKS kernel)
@@ -192,7 +198,7 @@ _delete_self:
 | no sense in hanging around here...
 | (does anyone want to finish this routine? it has to relocate a small chunk
 |   of code to somewhere else and use said code to relocate the kernel to
-|   linear 0x10000 and transfer to it as if it were called directly from setup)
+|   DEF_INITSEG and transfer to it as if it were called directly from setup)
 	db 0xeb, 0xfe
 
 |
