@@ -1,3 +1,10 @@
+VERSION 0.0.74 NOTES
+--------------------
+
+	Fixed trucate code in minix filesystem.
+	Patch to fix bugs in boot code by Riley Williams.
+	Latest updates to 286 pmode code.
+
 VERSION 0.0.74-pre1 NOTES
 -------------------------
 
