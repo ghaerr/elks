@@ -20,8 +20,6 @@
 
 #include <arch/segment.h>
 
-#ifndef CONFIG_NOFS
-
 #if 0
 int sys_statfs(path,buf)
 char * path;
@@ -212,8 +210,6 @@ int mode;
 	currentp->euid = currentp->uid;
 	currentp->egid = currentp->gid;
 	res = namei(filename,&inode, 0, mode);
-	if (0 == res)
-	    iput(inode);
 	currentp->euid = old_euid;
 	currentp->egid = old_egid;
 	return res;
@@ -346,6 +342,7 @@ gid_t group;
 	return(error);
 }
 #endif
+
 static int do_chown(inode, user, group)
 register struct inode * inode;
 uid_t user;
@@ -395,8 +392,6 @@ gid_t group;
 
 	return do_chown(filp->f_inode, user, group);
 }
-
-#endif /* CONFIG_NOFS */
 
 /*
  * Note that while the flag value (low two bits) for sys_open means:
