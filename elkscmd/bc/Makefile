@@ -7,6 +7,7 @@
 # Include standard packaging commands.
 
 BASEDIR 	= ..
+include $(BASEDIR)/Make.defs
 
 MIN_BIN 	= 
 MIN_LIB 	= 
@@ -31,8 +32,6 @@ STD_USR_BIN	=
 STD_USR_LIB	= 
 STD_USR_MAN	= 
 STD_USR_SBIN	= 
-
-include $(BASEDIR)/Make.rules
 
 ###############################################################################
 #
@@ -72,7 +71,7 @@ sbc: sbc.o $(OFILES) global.o
 
 math.h: libmath.b
 	$(MAKE) -$(MAKEFLAGS) fbc
-	/lib/elksemu ./fbc -c libmath.b </dev/null >math.h
+	elksemu ./fbc -c libmath.b </dev/null >math.h
 	./fix_math.h
 	rm -f ./fbc
 

@@ -119,7 +119,8 @@ $(ELKS_DIR)/arch/i86/boot/Image: $(ELKS_DIR)/.config
 # Create relevant parts of other packages.
 
 $(FD_BSECT):
-	make -C $(MINIX_BOOT) bin
+	make -C $(MINIX_BOOT)
+	make -C $(MINIX_BOOT) minix.bin
 
 $(KHELPER):
 	make -C $(MINIX_BOOT)
@@ -154,42 +155,42 @@ $(ELKSCMD_DIR)/rootfs_template/etc/issue: $(ELKSCMD_DIR)/rootfs_template/etc/pas
 
 mount_combfs: $(COMB_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	$(MKFS) $(MKFS_OPTS) $(COMB_TARGET_FS) $(COMB_TARGET_BLKS)
-	mount $(COMB_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	sudo -u root mount $(COMB_TARGET_FS) $(TARGET_MNT) $(LOOP)
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
 
 mount_full3fs: $(FULL3_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	$(MKFS) $(MKFS_OPTS) $(FULL3_TARGET_FS) $(FULL3_TARGET_BLKS)
-	mount $(FULL3_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	sudo -u root mount $(FULL3_TARGET_FS) $(TARGET_MNT) $(LOOP)
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
 
 mount_full5fs: $(FULL5_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	$(MKFS) $(MKFS_OPTS) $(FULL5_TARGET_FS) $(FULL5_TARGET_BLKS)
-	mount $(FULL5_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	sudo -u root mount $(FULL5_TARGET_FS) $(TARGET_MNT) $(LOOP)
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
 
 mount_rootfs: $(ROOT_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	$(MKFS) $(MKFS_OPTS) $(ROOT_TARGET_FS) $(ROOT_TARGET_BLKS)
-	mount $(ROOT_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	sudo -u root mount $(ROOT_TARGET_FS) $(TARGET_MNT) $(LOOP)
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
 
 mount_rootnetfs: $(ROOT_NET_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	$(MKFS) $(MKFS_OPTS) $(ROOT_NET_TARGET_FS) $(ROOT_NET_TARGET_BLKS)
-	mount $(ROOT_NET_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	sudo -u root mount $(ROOT_NET_TARGET_FS) $(TARGET_MNT) $(LOOP)
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
 	
 mount_sibofs: $(SIBO_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	$(MKFS) $(MKFS_OPTS) $(SIBO_TARGET_FS) $(SIBO_TARGET_BLKS)
-	mount $(SIBO_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	sudo -u root mount $(SIBO_TARGET_FS) $(TARGET_MNT) $(LOOP)
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT) ; rm -rf home boot root var)

@@ -14,21 +14,29 @@ Tommy McCabe			rocketjet314@yahoo.com
 
 -----------------------------------------------------------------
 
-Web Jun 02 21:20:47 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
+Fri Jun 04 05:26:48 CST 2004	Claudio Matsuoka <claudio@conectiva.com>
+
+	* Fixes to rebuild disk images, improvements by Miguel.
+
+Fri Jun 04 05:25:34 CST 2004	Tommy McCabe <rocketjet314@yahoo.com>
+
+	* Improved Makefile to mount filesystems using sudo.
+
+Thu Jun 03 21:20:47 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
 
 	* Added lib/ directory to rootfs_template
 	* Removed rootfs_template.tar.
 	* Removed "mkdir" commands from sys_utils/Makefile
 
-Web Jun 02 21:05:56 CST 2004	Tommy McCabe <rocketjet314@yahoo.com>
+Thu Jun 03 21:05:56 CST 2004	Tommy McCabe <rocketjet314@yahoo.com>
 
 	* Improvements to MAKEDEV.. patch adapted by Eduardo Habkost
 
-Web Jun 02 21:01:34 CST 2004    Claudio Matsuoka <claudio@conectiva.com>
+Thu Jun 03 21:01:34 CST 2004    Claudio Matsuoka <claudio@conectiva.com>
 
 	* fixed BSS problem
 
-Web Jun 02 14:16:57 CST 2004	Claudio Matsuoka <claudio@conectiva.com>
+Wed Jun 02 14:16:57 CST 2004	Claudio Matsuoka <claudio@conectiva.com>
 	
 	* Added more minix utilities (cal diff file find head sort tail tee)
 	* Removed warning comment from ash/expand.c as bcc compiles the code.

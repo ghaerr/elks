@@ -162,7 +162,7 @@ volatile void fatal_error(const char * fmt_string,int status)
 	exit(status);
 }
 
-#define usage() fatal_error("Usage: mkfs /dev/name blocks # Max blocks=65535\n",16)
+#define usage() fatal_error("Usage: mkfs /dev/name blocks (Max blocks=65535)\n",16)
 #define die(str) fatal_error("mkfs: " str "\n",8)
 
 void write_tables(void)
