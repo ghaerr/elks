@@ -87,56 +87,6 @@ seg_t *end;
 }
 
 #asm
-#ifdef CONFIG_NOFS
-export _sys_access
-export _sys_chdir
-export _sys_chmod
-export _sys_chown
-export _sys_chroot
-export _sys_fchown
-export _sys_fstat
-export _sys_insmod
-export _sys_link
-export _sys_lstat
-export _sys_mkdir
-export _sys_mknod
-export _sys_mount
-export _sys_readdir
-export _sys_readlink
-export _sys_rename
-export _sys_rmdir
-export _sys_stat
-export _sys_symlink
-export _sys_sync
-export _sys_umask
-export _sys_umount
-export _sys_unlink
-export _sys_utime
-_sys_access:
-_sys_chdir:
-_sys_chmod:
-_sys_chown:
-_sys_chroot:
-_sys_fchown:
-_sys_fstat:
-_sys_insmod:
-_sys_link:
-_sys_lstat:
-_sys_mkdir:
-_sys_mknod:
-_sys_mount:
-_sys_readdir:
-_sys_readlink:
-_sys_rename:
-_sys_rmdir:
-_sys_stat:
-_sys_symlink:
-_sys_sync:
-_sys_umask:
-_sys_umount:
-_sys_unlink:
-_sys_utime:
-#endif
 #ifndef CONFIG_SHLIB
 export _sys_dlload
 _sys_dlload:
