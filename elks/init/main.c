@@ -40,17 +40,13 @@ void start_kernel()
 /*	calibrate_delay(); */
 	setup_mm();		/* Architecture specifics */
 	tty_init();
-#ifndef CONFIG_NOFS
 	buffer_init();
-#endif
 #ifdef CONFIG_SOCKET
 	sock_init();
 #endif
 	device_setup();
 	inode_init();
-#ifndef CONFIG_NOFS
 	fs_init();
-#endif
 	sched_init();
 	printk("ELKS version %s\n", system_utsname.release );
 	task[0].t_kstackm = KSTACK_MAGIC;
@@ -81,24 +77,10 @@ static void init_task()
 	unsigned short * pip = args;
 	*++pip = &args[5];
 	
-/*	printk("Starting init...\n"); *//* Not true, init is started later. */
-
 	/* Root of /dev/fd0 */
 /*	ROOT_DEV=CONFIG_ROOTDEV; */
 	mount_root();
 	
-/*	printk("Root mounted.\n"); */
-	
-#if 0	
-	if((num=sys_open("/dev/tty",2))<0)
-		printk("Unable to open /dev/tty (error %d)\n",-num);
-
-	if(sys_dup(0)!=1)
-		printk("dup failed\n");
-	sys_dup(0);
-	sys_write(1,"tty working!\r\n",14);
-#endif
-
 	printk("Loading init\n");
 	if (sys_execve("/bin/init", args, 18 )) {
 #ifdef CONFIG_CONSOLE_SERIAL
@@ -119,11 +101,6 @@ static void init_task()
 	 * code if they are not there.
 	 */
 	{
-#if 0
-	printk("User SS=%x\n",current->t_regs.ss);
-	printk("User CS=%x\n",current->t_regs.cs);
-	printk("Ready to roll...\n"); /* These are really unecessary */
-#endif
 	#asm
 	! This kludge is here because we called sys_execve directly, rather
 	! than via syscall_int (a BIOS interrupt). So we simulate the last
