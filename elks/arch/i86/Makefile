@@ -89,7 +89,7 @@ boot/system: $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
 	(cd $(ELKSDIR) ; $(LD) $(LDFLAGS) $(ARCH_LD) \
 		$(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
-		-t -M -o $(ARCH_DIR)/boot/system > System.tmp ; \ 
+		-t -M -o $(ARCH_DIR)/boot/system > System.tmp ; \
 		sort -k4 System.tmp > System.map ; rm -f System.tmp ) 
 
 #SIBO image build
