@@ -15,11 +15,6 @@ at the appropriate point in this list.
 
     *	Reduce code size.
 
-    *	Standardise Makefile rules so all modules that comprise part of the
-	ELKS kernel are compiled using exactly the same ruleset at each stage
-	of the compilation process. This eliminates bugs caused by the use of
-	incompatible compilation options for different modules.
-
  *  Before 0.2.0 is released:
 
     *	Ensure ELKS is fully ROMable and embeddable.
