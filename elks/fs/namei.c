@@ -433,9 +433,6 @@ char * filename;
 int mode;
 dev_t dev;
 {
-#ifdef CONFIG_FS_RO
-	return -EROFS;
-#else
 	char * basename;
 	size_t namelen;
 	int error;
@@ -478,16 +475,12 @@ dev_t dev;
 	}
 mknod_end:
 	return error;
-#endif
 }
 
 int sys_mkdir(pathname,mode)
 char *pathname;
 int mode;
 {
-#ifdef CONFIG_FS_RO
-	return -EROFS;
-#else
 	char * basename;
 	size_t namelen;
 	int error;
@@ -518,15 +511,11 @@ int mode;
 		printd_fsmkdir("mkdir: complete\n");
 	}
 	return error;
-#endif /* CONFIG_FS_RO */
 }
 
 int sys_rmdir(pathname)
 char * pathname;
 {
-#ifdef CONFIG_FS_RO
-	return -EROFS;
-#else
 	char * basename;
 	size_t namelen;
 	int error;
@@ -550,15 +539,11 @@ char * pathname;
 		} else error = iop->rmdir(dirp,basename,namelen);
 	}
 	return error;
-#endif
 }
 
 int sys_unlink(pathname)
 char * pathname;
 {
-#ifdef CONFIG_FS_RO
-	return -EROFS;
-#else
 	char * basename;
 	size_t namelen;
 	int error;
@@ -582,16 +567,12 @@ char * pathname;
 		} else error = iop->unlink(dir,basename,namelen);
 	}
 	return error;
-#endif
 }
 
 int sys_symlink(oldname,newname)
 char * oldname;
 char * newname;
 {
-#ifdef CONFIG_FS_RO
-	return -EROFS;
-#else
 	struct inode * dir;
 	char * basename;
 	size_t namelen;
@@ -618,16 +599,12 @@ char * newname;
 		iput(dirp);
 	}
 	return error;
-#endif
 }
 
 int sys_link(oldname,newname)
 char * oldname;
 char * newname;
 {
-#ifdef CONFIG_FS_RO
-	return -EROFS;
-#else
 	int error;
 	struct inode * oldinode;
 
@@ -666,7 +643,6 @@ link_fail:
 		iput(oldinode);
 	}
 	return error;
-#endif
 }
 
 /* This probably isn't a proper implementation of sys_rename, but we don't have
@@ -677,15 +653,11 @@ int sys_rename(oldname, newname)
 register char * oldname;
 char * newname;
 {
-#ifdef CONFIG_FS_RO
-	return -EROFS;
-#else
 	int err;
 
 	if (!(err = sys_link(oldname, newname))) {
 		err = sys_unlink(oldname);
 	}
 	return err;
-#endif
 }
 
