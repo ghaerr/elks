@@ -268,9 +268,11 @@ __zero_fd_set((nr)-1, (unsigned long *) (fdp))
  * I'm trying ERESTARTNOHAND which restart only when you want to.
  */
      /*asmlinkage*/ 
-int sys_select(n, table, tvp)
+int sys_select(n, inp, outp, exp, tvp)
 int n;
-fd_set ** table;
+fd_set * inp;
+fd_set * outp;
+fd_set * exp;
 REGOPT struct timeval * tvp;
 {
   	int error;
@@ -278,13 +280,14 @@ REGOPT struct timeval * tvp;
 	limited_fd_set res_out, out;
 	limited_fd_set res_ex, ex;
 	unsigned long timeout;
+/*
 	fd_set * inp;
 	fd_set * outp;
 	fd_set * exp;
 
 	memcpy_fromfs(&inp, table++, 2);
 	memcpy_fromfs(&outp, table++, 2);
-	memcpy_fromfs(&exp, table, 2);
+	memcpy_fromfs(&exp, table, 2); */
 
 #if 1 /* JUST TESTING */
 	printk("SELECT: %d %d %d %d %d\n", n, inp, outp, exp, tvp);

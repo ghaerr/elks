@@ -80,7 +80,7 @@ readlink	+59	3
 umask		+60	1	 
 settimeofday	+61	2
 gettimeofday	+62	2
-select          +63     3	* 5 paramaters is just not possible
+select          +63     5	. 5 paramaters is possible
 readdir		+64	3	*
 insmod		+65	1
 fchown		+66	3
