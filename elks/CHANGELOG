@@ -31,6 +31,11 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sun Jan 27 02:37:33 EET 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Made the code aware that the serial tty devices minor numbers
+	  was changed. 
+
 Sat Jan 26 10:08:44 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
 	* Corrected typos in arch/i86/drivers/char/mem.c

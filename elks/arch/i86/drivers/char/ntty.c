@@ -350,7 +350,7 @@ void tty_init()
 	for (i = 4; i < 8; i++) {
 		ttyp = &ttys[i];
 		ttyp->ops = &rs_ops;
-		ttyp->minor = i;
+		ttyp->minor = i + 60;
 	}
 #endif
 #ifdef CONFIG_PSEUDO_TTY
