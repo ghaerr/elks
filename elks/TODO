@@ -1,23 +1,53 @@
-TODO
-----
+                                ELKS TO-DO LIST
+                                ~~~~~~~~~~~~~~~
 
-This is firstly a list of things that need to be done for 0.1, and then a
-list of more general things. Please let me know what you think should be
-in here.
+This is a list of things that need to be completed before we can realistically
+release the stated kernel versions. If you see anything missing, please add it
+at the appropriate point in this list.
 
-	Al
---
+===============================================================================
 
-Complete and test serial and parallel drivers.
+ *  Before 0.1.0 is released:
 
-Debug filesystem.
+    *	Complete and test parallel drivers.
 
-Reduce code size.
+    *	Complete and test serial drivers.
 
-Simplify device request functions as they can only be asked to get 1
-block.
+    *	Reduce code size.
 
-Modify interrupt code to save ds in VII rather than in kernel data
-segment. Re-write exec and device code to run without filesystem.
-Generally make ELKS ROMable and embedable.
+    *	Standardise Makefile rules so all modules that comprise part of the
+	ELKS kernel are compiled using exactly the same ruleset at each stage
+	of the compilation process. This eliminates bugs caused by the use of
+	incompatible compilation options for different modules.
 
+ *  Before 0.2.0 is released:
+
+    *	Ensure ELKS is fully ROMable and embeddable.
+
+    *	Modify interrupt code to save DS in VII rather than in kernel data
+	segment.
+
+    *	PLIP networking support.
+
+    *	Reduce code size.
+
+    *	Rewrite exec and device code to be able to run without file systems.
+
+    *	Simplify device request functions as they can only be asked to get
+	one block at a time.
+
+    *	Thoroughly test all supported file systems, ensuring they are stable
+	under every level of load that we can place on them.
+
+    *	Working support for 286 processors.
+
+ *  Before 1.0.0 is released.
+
+    *	Reduce code size.
+
+    *	Support for ethernet adapters, including the NE1000, NE2000 and
+	WD8003 adapters.
+
+    *	Support for usermode AX.25 networking node and BBS system.
+
+===============================================================================
