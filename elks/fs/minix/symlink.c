@@ -16,19 +16,9 @@
 
 #include <arch/segment.h>
 
-/* Static functions in this file */
-
-static int minix_follow_link(register struct inode *,register struct inode *,
-			     int,int,struct inode **);
-static int minix_readlink(register struct inode *,char *,int);
-
-/* Function definitions */
-
-/* Define global link_count */
-
-__s16 link_count = 0;
-
-static int minix_follow_link(register struct inode *dir, register struct inode *inode, int flag, int mode, struct inode **res_inode)
+static int minix_follow_link(register struct inode *dir,
+			     register struct inode *inode,
+			     int flag, int mode, struct inode **res_inode)
 {
 
     /*
@@ -36,8 +26,9 @@ static int minix_follow_link(register struct inode *dir, register struct inode *
      *             #2 Needs to be current->link_count as this is blocking
      */
 
-    struct buffer_head *bh;
     int error;
+    struct buffer_head *bh;
+    static int link_count = 0;
 
     *res_inode = NULL;
     if (!dir) {
@@ -53,7 +44,7 @@ static int minix_follow_link(register struct inode *dir, register struct inode *
 	*res_inode = inode;
 	return 0;
     }
-    if (link_count > 7) {
+    if ( /* current-> */ link_count > 5) {
 	iput(inode);
 	iput(dir);
 	return -ELOOP;
@@ -64,15 +55,16 @@ static int minix_follow_link(register struct inode *dir, register struct inode *
 	return -EIO;
     }
     iput(inode);
-    link_count++;
+    /* current-> */ link_count++;
     map_buffer(bh);
     error = open_namei(bh->b_data, flag, mode, res_inode, dir);
-    link_count--;
+    /* current-> */ link_count--;
     unmap_brelse(bh);
     return error;
 }
 
-static int minix_readlink(register struct inode *inode, char *buffer, int buflen)
+static int minix_readlink(register struct inode *inode,
+			  char *buffer, int buflen)
 {
     register struct buffer_head *bh;
     int i;

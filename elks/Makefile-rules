@@ -336,11 +336,13 @@ dolint:
 	    fi ; \
 	done
 	@echo
-	@for DIR in */ ; do \
-		if [ -f "$$DIR/Makefile" ]; then \
-			${MAKE} -C "$$DIR" dolint ; \
-		fi ; \
-	done
+	@if [ -z "$${USEME}" ]; then \
+		for DIR in */ ; do \
+			if [ -f "$$DIR/Makefile" ]; then \
+				${MAKE} -C "$$DIR" dolint ; \
+			fi ; \
+		done ; \
+	fi
 
 indent:	indent-me
 	@for DIR in */ ; do \

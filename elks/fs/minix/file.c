@@ -19,15 +19,6 @@
 #include <arch/segment.h>
 #include <arch/system.h>
 
-/* Static functions in this file */
-
-static int minix_file_read(struct inode *,register struct file *, char *,
-			   size_t);
-static int minix_file_write(register struct inode *,struct file *,char *,
-			    size_t);
-
-/* Function definitions */
-
 #define	NBUF	2
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -35,6 +26,12 @@ static int minix_file_write(register struct inode *,struct file *,char *,
 
 #include <linuxmt/fs.h>
 #include <linuxmt/minix_fs.h>
+
+static int minix_file_read(struct inode *inode, register struct file *filp,
+			   char *buf, size_t icount);
+
+static int minix_file_write(register struct inode *inode, struct file *filp,
+			    char *buf, size_t count);
 
 /*@-type@*/
 
@@ -69,7 +66,7 @@ struct inode_operations minix_file_inode_operations = {
     NULL,			/* readlink */
     NULL,			/* follow_link */
 #ifdef BLOAT_FS
-    minix_bmap, 		/* bmap */
+    NULL /*minix_bmap */ ,	/* bmap */
 #endif
     minix_truncate,		/* truncate */
 #ifdef BLOAT_FS
@@ -83,17 +80,14 @@ struct inode_operations minix_file_inode_operations = {
  *	FIXME: Readahead
  */
 
-static int minix_file_read(struct inode *inode, register struct file *filp, char *buf, size_t icount)
+static int minix_file_read(struct inode *inode, register struct file *filp,
+			   char *buf, size_t icount)
 {
-    /*  We have to make count loff_t since comparing ints to longs
-     *  does not work with bcc!
-     */
-
     struct buffer_head *bh;
-    block_t block, blocks;
-    loff_t offset, size, count = ((loff_t) icount) % 65536;
-    size_t chars, left;
+    loff_t offset, size;
+    size_t chars, count = (icount % 65536), left;
     int read;
+    block_t block, blocks;
 
     offset = filp->f_pos;
     size = (loff_t) inode->i_size;
@@ -103,14 +97,14 @@ static int minix_file_read(struct inode *inode, register struct file *filp, char
      */
 
     if (offset > size)
-	left = 0;
+	left = 0L;
     else
 	left = (size_t) (size - offset);
-    if (left > (size_t) count)
-	left = (size_t) count;
+    if (left > count)
+	left = count;
     if (left <= 0) {
 	debug("MFSREAD: EOF reached.\n");
-	return 0;					/* EOF */
+	return 0;		/* EOF */
     }
     if (!inode) {
 	printk("minix_file_read: inode = NULL\n");
@@ -127,7 +121,7 @@ static int minix_file_read(struct inode *inode, register struct file *filp, char
      */
     block = (block_t) (offset >> BLOCK_SIZE_BITS);
     offset &= BLOCK_SIZE - 1;
-    blocks = ((block_t) (offset + left + (BLOCK_SIZE - 1)) >> BLOCK_SIZE_BITS);
+    blocks = (block_t) ((offset + left + (BLOCK_SIZE - 1)) >> BLOCK_SIZE_BITS);
 
     while (blocks--) {
 	debug1("MINREAD: Reading block #%d\n", block);
@@ -151,8 +145,8 @@ static int minix_file_read(struct inode *inode, register struct file *filp, char
 	if (bh) {
 	    map_buffer(bh);
 	    debug2("MINREAD: Copying data for block #%d, buffer #%d\n",
-		   block - 1, bh->b_num);
-	    memcpy_tofs(buf, offset + bh->b_data, chars);
+		 block - 1, bh->b_num);
+	    memcpy_tofs(buf, offset + bh->b_data, (size_t) chars);
 	    unmap_brelse(bh);
 	    buf += chars;
 	} else {
@@ -169,21 +163,20 @@ static int minix_file_read(struct inode *inode, register struct file *filp, char
 #ifdef BLOAT_FS
     filp->f_reada = 1;
 #endif
-
-#if 0					/* FIXME */
+#ifdef FIXME
     if (!IS_RDONLY(inode))
 	inode->i_atime = CURRENT_TIME;
 #endif
-
     return read;
 }
 
-static int minix_file_write(register struct inode *inode, struct file *filp, char *buf, size_t count)
+static int minix_file_write(register struct inode *inode,
+			    struct file *filp, char *buf, size_t count)
 {
     register struct buffer_head *bh;
     char *p;
-    off_t pos;
-    size_t written, c;
+    loff_t pos;
+    size_t c, written;
 
     if (!inode) {
 	printk("minix_file_write: inode = NULL\n");
@@ -194,7 +187,7 @@ static int minix_file_write(register struct inode *inode, struct file *filp, cha
 	return -EINVAL;
     }
     if (filp->f_flags & O_APPEND)
-	pos = (off_t) inode->i_size;
+	pos = (loff_t) inode->i_size;
     else
 	pos = filp->f_pos;
     written = 0;
@@ -225,7 +218,7 @@ static int minix_file_write(register struct inode *inode, struct file *filp, cha
 	written += c;
 	buf += c;
     }
-    if (pos > (off_t) inode->i_size)
+    if (pos > (loff_t) inode->i_size)
 	inode->i_size = (__u32) pos;
     inode->i_mtime = inode->i_ctime = CURRENT_TIME;
     filp->f_pos = pos;

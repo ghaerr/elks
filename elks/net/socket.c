@@ -32,7 +32,7 @@
 
 #define MAX_SOCK_ADDR 16	/* Must be much bigger for AF_UNIX */
 
-static struct proto_ops *pops[NPROTO] = { NULL };
+static struct proto_ops *pops[NPROTO] = { NULL, NULL, NULL };
 
 extern struct net_proto protocols[];	/* Network protocols */
 
@@ -57,10 +57,8 @@ struct socket *socki_lookup(struct inode *inode)
  * 	#define socki_lookup(_a) (&_a->u.sock_i)
  */
 
-int move_addr_to_kernel(char *uaddr, int ulen, char *kaddr)
+int move_addr_to_kernel(char *uaddr, size_t ulen, char *kaddr)
 {
-    int err;
-
     if (ulen < 0 || ulen > MAX_SOCK_ADDR)
 	return -EINVAL;
     if (ulen == 0)
@@ -68,21 +66,22 @@ int move_addr_to_kernel(char *uaddr, int ulen, char *kaddr)
     return verified_memcpy_fromfs(kaddr, uaddr, ulen);
 }
 
-int move_addr_to_user(char *kaddr, int klen, char *uaddr, register int *ulen)
+int move_addr_to_user(char *kaddr, size_t klen, char *uaddr, register int *ulen)
 {
+    size_t len;
     int err;
-    int len;
 
-    if (err = verified_memcpy_fromfs(&len, ulen, sizeof(*ulen)))
+    if ((err = verified_memcpy_fromfs(&len, ulen, sizeof(*ulen))))
 	return err;
     if (len > klen)
 	len = klen;
     if (len < 0 || len > MAX_SOCK_ADDR)
 	return -EINVAL;
     if (len) {
-	if (err = verified_memcpy_tofs(uaddr, kaddr, len))
+	if ((err = verified_memcpy_tofs(uaddr, kaddr, len)))
 	    return err;
     }
+
 #if 0
     put_user(len, ulen);	/* This is pointless isn't it */
 #endif
@@ -102,20 +101,24 @@ struct socket *sock_alloc(void)
     inode->i_mode = S_IFSOCK;
     inode->i_sock = 1;
     inode->i_uid = current->uid;
-    inode->i_gid = current->gid;
+    inode->i_gid = (__u8) current->gid;
 
     sock = &inode->u.socket_i;
     sock->state = SS_UNCONNECTED;
     sock->flags = 0;
     sock->ops = NULL;
     sock->data = NULL;
+
 #if defined(CONFIG_INET)
     sock->avail_data = 0;
 #endif
+
+    sock->file = NULL;
+
 #if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
     sock->conn = sock->iconn = sock->next = NULL;
 #endif
-    sock->file = NULL;
+
     sock->wait = &inode->i_wait;
     sock->inode = inode;	/* "backlink" use pointer arithmetic instead */
     sock->fasync_list = NULL;
@@ -145,8 +148,8 @@ struct socket *sockfd_lookup(int fd, struct file **pfile)
     return socki_lookup(inode);
 }
 
-static int sock_read(struct inode *inode,
-		     struct file *file, register char *ubuf, int size)
+static int sock_read(struct inode *inode, struct file *file,
+		     register char *ubuf, size_t size)
 {
     struct socket *sock;
     int err;
@@ -167,8 +170,8 @@ static int sock_read(struct inode *inode,
     return sock->ops->read(sock, ubuf, size, (file->f_flags & O_NONBLOCK));
 }
 
-static int sock_write(struct inode *inode,
-		      struct file *file, register char *ubuf, int size)
+static int sock_write(struct inode *inode, struct file *file,
+		      register char *ubuf, size_t size)
 {
     struct socket *sock;
     int err;
@@ -338,28 +341,72 @@ void sock_close(register struct inode *inode, struct file *filp)
 int sys_bind(int fd, struct sockaddr *umyaddr, int addrlen)
 {
     register struct socket *sock;
-    int i;
     char address[MAX_SOCK_ADDR];
-    int err;
+    int err, i;
 
 #if 0
     /* This is done in sockfd_lookup, so can be scrubbed later */
-    if (fd < 0 || fd >= NR_OPEN || (current->files.fd[fd] == NULL)) {
+    if (fd < 0 || fd >= NR_OPEN || (current->files.fd[fd] == NULL))
 	return (-EBADF);
-    }
 #endif
-    if (!(sock = sockfd_lookup(fd, NULL))) {
+
+    if (!(sock = sockfd_lookup(fd, NULL)))
 	return -ENOTSOCK;
-    }
-    if ((err = move_addr_to_kernel(umyaddr, addrlen, address)) < 0) {
+
+    err = move_addr_to_kernel((char *) umyaddr, (size_t) addrlen, address);
+    if (err < 0)
 	return err;
-    }
-    if ((i = sock->ops->bind(sock, (struct sockaddr *) address, addrlen)) < 0) {
+
+    if ((i = sock->ops->bind(sock, (struct sockaddr *) address, addrlen)) < 0)
 	return i;
-    }
 
     return 0;
 
+}
+
+/*@-type@*/
+
+static struct file_operations socket_file_ops = {
+    NULL,			/* lseek */
+    sock_read,			/* read */
+    sock_write,			/* write */
+    NULL,			/* readdir */
+    sock_select,		/* select */
+    NULL,			/* ioctl */
+    NULL,			/* open */
+    sock_close			/* close */
+#ifdef BLOAT_FS
+	,
+    NULL,			/* fsync */
+    NULL,			/* check_media_change */
+    NULL			/* revalidate */
+#endif
+};
+
+/*@+type@*/
+
+int get_fd(register struct inode *inode)
+{
+    int fd;
+
+    fd = get_unused_fd();
+    if (fd >= 0) {
+	struct file *file = get_empty_filp();
+	if (!file) {
+	    return -ENFILE;
+	}
+
+	current->files.fd[fd] = file;
+	file->f_op = &socket_file_ops;
+	file->f_mode = 3;
+	file->f_flags = O_RDWR;
+	file->f_count = 1;
+	file->f_inode = inode;
+	if (inode)
+	    inode->i_count++;
+	file->f_pos = 0;
+    }
+    return fd;
 }
 
 #ifdef CONFIG_SOCK_CLIENTONLY
@@ -408,31 +455,30 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
     struct file *file;
     register struct socket *sock;
     register struct socket *newsock;
-    int i;
     char address[MAX_SOCK_ADDR];
-    int len;
+    size_t len;
+    int i;
 
 #if 0
     /* This is done in sockfd_lookup, so can be scrubbed later */
-    if (fd < 0 || fd >= NR_OPEN || current->files.fd[fd] == NULL) {
+    if (fd < 0 || fd >= NR_OPEN || current->files.fd[fd] == NULL)
 	return (-EBADF);
-    }
 #endif
 
-    if (!(sock = sockfd_lookup(fd, &file))) {
+    if (!(sock = sockfd_lookup(fd, &file)))
 	return -ENOTSOCK;
-    }
-    if (sock->state != SS_UNCONNECTED) {
+
+    if (sock->state != SS_UNCONNECTED)
 	return -EINVAL;
-    }
-    if (!(sock->flags & SO_ACCEPTCON)) {
+
+    if (!(sock->flags & SO_ACCEPTCON))
 	return -EINVAL;
-    }
 
     if (!(newsock = sock_alloc())) {
 	printk("NET: sock_accept: no more sockets\n");
 	return -ENOSR;		/* Was EAGAIN, but we are out of system resources! */
     }
+
     newsock->type = sock->type;
     newsock->ops = sock->ops;
     if ((i = sock->ops->dup(newsock, sock)) < 0) {
@@ -453,10 +499,10 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
 
     if (upeer_sockaddr) {
 	newsock->ops->getname(newsock, (struct sockaddr *) address, &len, 1);
-	move_addr_to_user(address, len, upeer_sockaddr, upeer_addrlen);
+	move_addr_to_user(address, len, (char *) upeer_sockaddr, upeer_addrlen);
     }
-    return fd;
 
+    return fd;
 }
 
 #endif
@@ -465,23 +511,21 @@ int sys_connect(int fd, struct sockaddr *uservaddr, int addrlen)
 {
     register struct socket *sock;
     struct file *file;
-    int i;
     char address[MAX_SOCK_ADDR];
-    int err;
+    int err, i;
 
 #if 0
 /* All this is done in sockfd_lookup */
-    if (fd < 0 || fd >= NR_OPEN || (file = current->files.fd[fd]) == NULL) {
+    if (fd < 0 || fd >= NR_OPEN || (file = current->files.fd[fd]) == NULL)
 	return -EBADF;
-    }
 #endif
 
-    if (!(sock = sockfd_lookup(fd, &file))) {
+    if (!(sock = sockfd_lookup(fd, &file)))
 	return -ENOTSOCK;
-    }
-    if ((err = move_addr_to_kernel(uservaddr, addrlen, address)) < 0) {
+
+    err = move_addr_to_kernel((char *) uservaddr, (size_t) addrlen, address);
+    if (err < 0)
 	return err;
-    }
 
     switch (sock->state) {
     case SS_UNCONNECTED:
@@ -542,58 +586,16 @@ void proto_init(void)
 
 void sock_init(void)
 {
-    int i;
-
     printk("ELKS Sockets.\n");
 
     proto_init();
 }
 
-static struct file_operations socket_file_ops = {
-    NULL,			/* lseek */
-    sock_read,			/* read */
-    sock_write,			/* write */
-    NULL,			/* readdir */
-    sock_select,		/* select */
-    NULL,			/* ioctl */
-    NULL,			/* open */
-    sock_close			/* close */
-#ifdef BLOAT_FS
-	, NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
-};
-
-int get_fd(register struct inode *inode)
-{
-    int fd;
-
-    fd = get_unused_fd();
-    if (fd >= 0) {
-	struct file *file = get_empty_filp();
-	if (!file) {
-	    return -ENFILE;
-	}
-
-	current->files.fd[fd] = file;
-	file->f_op = &socket_file_ops;
-	file->f_mode = 3;
-	file->f_flags = O_RDWR;
-	file->f_count = 1;
-	file->f_inode = inode;
-	if (inode)
-	    inode->i_count++;
-	file->f_pos = 0;
-    }
-    return fd;
-}
-
 int sys_socket(int family, int type, int protocol)
 {
-    int i, fd;
     register struct socket *sock;
     register struct proto_ops *ops;
+    int i, fd;
 
 /*	find_protocol_family() is a macro which gives 0 while only
  *	AF_INET sockets are supported
@@ -607,15 +609,13 @@ int sys_socket(int family, int type, int protocol)
 
     ops = pops[i];		/* Initially pops is not an array. */
 
-    if (type != SOCK_STREAM) {
+    if (type != SOCK_STREAM)
 	return -EINVAL;
-    }
 
-    if (!(sock = sock_alloc())) {
+    if (!(sock = sock_alloc()))
 	return -ENOSR;
-    }
 
-    sock->type = type;
+    sock->type = (short int) type;
     sock->ops = ops;
     if ((i = sock->ops->create(sock, protocol)) < 0) {
 	sock_release(sock);

@@ -17,19 +17,6 @@
 
 #include <arch/segment.h>
 
-/* Static functions in this file */
-
-static int empty_dir(register struct inode *);
-static int minix_add_entry(register struct inode *,char *,size_t,
-			   struct buffer_head **,struct minix_dir_entry **);
-static struct buffer_head *minix_find_entry(register struct inode *,char *,
-					    size_t,struct minix_dir_entry **);
-static int minix_match(size_t,char *,struct buffer_head *,loff_t *,
-		       register struct minix_sb_info *);
-static int namecompare(size_t,size_t,char *,register char *);
-
-/* Function definitions */
-
 /*
  * comment out this line if you want names > info->s_namelen chars to be
  * truncated. Else they will be disallowed (ENAMETOOLONG).
@@ -57,19 +44,25 @@ static int namecompare(size_t len, size_t max, char *name, register char *buf)
  *
  * Note2: bh must already be mapped! 
  */
-static int minix_match(size_t len, char *name, struct buffer_head *bh, loff_t * offset, register struct minix_sb_info *info)
+static int minix_match(size_t len,
+		       char *name,
+		       struct buffer_head *bh,
+		       loff_t * offset, register struct minix_sb_info *info)
 {
     register struct minix_dir_entry *de;
+    int retval;
 
     de = (struct minix_dir_entry *) (bh->b_data + *offset);
     *offset += info->s_dirsize;
-    if (!de->inode || len > info->s_namelen)
+    if (!de->inode || len > info->s_namelen) {
 	return 0;
-
-    /* // means /./ ---> so paths like "/usr/lib//libc.a" work */
-    if (!len && (de->name[0] == '.') && (de->name[1] == '\0'))
+    }
+    /* "" means "." ---> so paths like "/usr/lib//libc.a" work */
+    if (!len && (de->name[0] == '.') && (de->name[1] == '\0')) {
 	return 1;
-    return namecompare(len, info->s_namelen, name, de->name);
+    }
+    retval = namecompare(len, info->s_namelen, name, de->name);
+    return retval;
 }
 
 /*
@@ -82,12 +75,14 @@ static int minix_match(size_t len, char *name, struct buffer_head *bh, loff_t * 
  * 
  */
 
-static struct buffer_head *minix_find_entry(register struct inode *dir, char *name, size_t namelen, struct minix_dir_entry **res_dir)
+static struct buffer_head *minix_find_entry(register struct inode *dir,
+					    char *name, size_t namelen,
+					    struct minix_dir_entry **res_dir)
 {
     struct buffer_head *bh;
     struct minix_sb_info *info;
+    block_t block;
     loff_t offset;
-    unsigned short block;
 
     *res_dir = NULL;
     if (!dir || !dir->i_sb)
@@ -105,8 +100,7 @@ static struct buffer_head *minix_find_entry(register struct inode *dir, char *na
     bh = NULL;
     block = 0;
     offset = 0L;
-    while (((loff_t) (((loff_t) block) * BLOCK_SIZE + offset))
-				< (loff_t) dir->i_size) {
+    while (block * BLOCK_SIZE + offset < dir->i_size) {
 	if (!bh) {
 	    bh = minix_bread(dir, block, 0);
 	    if (!bh) {
@@ -134,11 +128,12 @@ static struct buffer_head *minix_find_entry(register struct inode *dir, char *na
     return NULL;
 }
 
-int minix_lookup(register struct inode *dir, char *name, size_t len, register struct inode **result)
+int minix_lookup(register struct inode *dir, char *name, size_t len,
+		 register struct inode **result)
 {
-    struct buffer_head *bh;
+    unsigned int ino;
     struct minix_dir_entry *de;
-    ino_t ino;
+    struct buffer_head *bh;
 
     *result = NULL;
 
@@ -151,8 +146,8 @@ int minix_lookup(register struct inode *dir, char *name, size_t len, register st
     }
     debug("minix_lookup: Entering minix_find_entry\n");
     bh = minix_find_entry(dir, name, len, &de);
-    debug2("minix_lookup: minix_find_entry returned 0x%x %d\n",
-	   bh, bh->b_mapcount);
+    debug2("minix_lookup: minix_find_entry returned %x %d\n", bh,
+		  bh->b_mapcount);
     if (!bh) {
 	iput(dir);
 	return -ENOENT;
@@ -180,30 +175,32 @@ int minix_lookup(register struct inode *dir, char *name, size_t len, register st
  * the entry, as someone else might have used it while you slept.
  */
 
-static int minix_add_entry(register struct inode *dir, char *name, size_t namelen, struct buffer_head **res_buf, struct minix_dir_entry **res_dir)
+static int minix_add_entry(register struct inode *dir,
+			   char *name,
+			   size_t namelen,
+			   struct buffer_head **res_buf,
+			   struct minix_dir_entry **res_dir)
 {
+    unsigned short block;
+    loff_t offset;
     struct buffer_head *bh;
     struct minix_dir_entry *de;
     struct minix_sb_info *info;
-    loff_t offset;
-    block_t block;
 
     *res_buf = NULL;
     *res_dir = NULL;
     if (!dir || !dir->i_sb)
 	return -ENOENT;
     info = &dir->i_sb->u.minix_sb;
-    if (!namelen)
-	return -ENOENT;
     if (namelen > info->s_namelen) {
-
 #ifdef NO_TRUNCATE
 	return -ENAMETOOLONG;
 #else
 	namelen = info->s_namelen;
 #endif
-
     }
+    if (!namelen)
+	return -ENOENT;
     bh = NULL;
     block = 0;
     offset = 0L;
@@ -216,15 +213,15 @@ static int minix_add_entry(register struct inode *dir, char *name, size_t namele
 	}
 	de = (struct minix_dir_entry *) (bh->b_data + offset);
 	offset += info->s_dirsize;
-	if ((__u32) (((loff_t) block) * 1024L + offset) > dir->i_size) {
+	if (block * 1024L + offset > dir->i_size) {
 	    de->inode = 0;
-	    dir->i_size = (__u32) (((loff_t) block) * 1024L + offset);
+	    dir->i_size = block * 1024L + offset;
 	    dir->i_dirt = 1;
 	}
 	if (de->inode) {
 	    if (namecompare(namelen, info->s_namelen, name, de->name)) {
 		debug2("MINIXadd_entry: file %t==%s (already exists)\n",
-		       name, de->name);
+		     name, de->name);
 		unmap_brelse(bh);
 		return -EEXIST;
 	    }
@@ -234,9 +231,8 @@ static int minix_add_entry(register struct inode *dir, char *name, size_t namele
 	    dir->i_mtime = dir->i_ctime = CURRENT_TIME;
 	    dir->i_dirt = 1;
 	    for (i = 0; i < info->s_namelen; i++)
-		de->name[i] = (i < namelen)
-			? (char) get_fs_byte(((unsigned char *) name) + i)
-			: 0;
+		de->name[i] = (i < namelen) ? (char) get_fs_byte(name + i)
+					    : '\0';
 
 #ifdef BLOAT_FS
 	    dir->i_version = ++event;
@@ -258,10 +254,11 @@ static int minix_add_entry(register struct inode *dir, char *name, size_t namele
     return 0;
 }
 
-int minix_create(register struct inode *dir, char *name, size_t len, int mode, struct inode **result)
+int minix_create(register struct inode *dir, char *name, size_t len,
+		 int mode, struct inode **result)
 {
-    struct buffer_head *bh;
     register struct inode *inode;
+    struct buffer_head *bh;
     struct minix_dir_entry *de;
     int error;
 
@@ -292,12 +289,13 @@ int minix_create(register struct inode *dir, char *name, size_t len, int mode, s
     return 0;
 }
 
-int minix_mknod(register struct inode *dir, char *name, size_t len, int mode, int rdev)
+int minix_mknod(register struct inode *dir, char *name, size_t len,
+		int mode, int rdev)
 {
-    struct buffer_head *bh;
-    register struct inode *inode;
-    struct minix_dir_entry *de;
     int error;
+    register struct inode *inode;
+    struct buffer_head *bh;
+    struct minix_dir_entry *de;
 
     if (!dir)
 	return -ENOENT;
@@ -343,10 +341,11 @@ int minix_mknod(register struct inode *dir, char *name, size_t len, int mode, in
 
 int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
 {
-    struct buffer_head *bh, *dir_block;
-    register struct inode *inode;
-    struct minix_dir_entry *de;
     int error;
+    register struct inode *inode;
+    struct buffer_head *dir_block;
+    struct buffer_head *bh;
+    struct minix_dir_entry *de;
 
     if (!dir || !dir->i_sb) {
 	iput(dir);
@@ -421,10 +420,10 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
  */
 static int empty_dir(register struct inode *inode)
 {
+    unsigned short block;
+    loff_t offset;
     struct buffer_head *bh;
     struct minix_dir_entry *de;
-    block_t block;
-    loff_t offset;
 
     if (!inode || !inode->i_sb)
 	return 1;
@@ -433,7 +432,7 @@ static int empty_dir(register struct inode *inode)
     offset = 2 * inode->i_sb->u.minix_sb.s_dirsize;
     if (inode->i_size & (inode->i_sb->u.minix_sb.s_dirsize - 1))
 	goto bad_dir;
-    if ((loff_t) inode->i_size < offset)
+    if (inode->i_size < (__u32) offset)
 	goto bad_dir;
     bh = minix_bread(inode, 0, 0);
     if (!bh)
@@ -447,9 +446,7 @@ static int empty_dir(register struct inode *inode)
 				    inode->i_sb->u.minix_sb.s_dirsize);
     if (!de->inode || strcmp(de->name, ".."))
 	goto bad_dir;
-
-    while ((__u32) (((loff_t) block) * 1024L + offset) < inode->i_size) {
-
+    while (block * 1024L + offset < inode->i_size) {
 	if (!bh) {
 	    bh = minix_bread(inode, block, 0);
 	    if (!bh) {
@@ -472,7 +469,6 @@ static int empty_dir(register struct inode *inode)
     }
     brelse(bh);
     return 1;
-
   bad_dir:
     unmap_brelse(bh);
     printk("Bad directory on device %s\n", kdevname(inode->i_dev));
@@ -481,13 +477,14 @@ static int empty_dir(register struct inode *inode)
 
 int minix_rmdir(register struct inode *dir, char *name, size_t len)
 {
-    struct buffer_head *bh;
+    int retval;
     register struct inode *inode;
+    struct buffer_head *bh;
     struct minix_dir_entry *de;
-    int retval = -ENOENT;
 
     inode = NULL;
     bh = minix_find_entry(dir, name, len, &de);
+    retval = -ENOENT;
     if (!bh)
 	goto end_rmdir;
     map_buffer(bh);
@@ -542,10 +539,10 @@ int minix_rmdir(register struct inode *dir, char *name, size_t len)
 
 int minix_unlink(struct inode *dir, char *name, size_t len)
 {
-    struct buffer_head *bh;
-    register struct inode *inode;
-    struct minix_dir_entry *de;
     int retval;
+    register struct inode *inode;
+    struct buffer_head *bh;
+    struct minix_dir_entry *de;
 
   repeat:
     retval = -ENOENT;
@@ -605,10 +602,10 @@ int minix_unlink(struct inode *dir, char *name, size_t len)
 
 int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
 {
+    struct minix_dir_entry *de;
+    register struct inode *inode = NULL;
     struct buffer_head *bh = NULL;
     register struct buffer_head *name_block = NULL;
-    register struct inode *inode = NULL;
-    struct minix_dir_entry *de;
     int i;
     char c;
 
@@ -661,11 +658,12 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     return 0;
 }
 
-int minix_link(register struct inode *oldinode, register struct inode *dir, char *name, size_t len)
+int minix_link(register struct inode *oldinode, register struct inode *dir,
+		char *name, size_t len)
 {
-    struct buffer_head *bh;
-    struct minix_dir_entry *de;
     int error;
+    struct minix_dir_entry *de;
+    struct buffer_head *bh;
 
     if (S_ISDIR(oldinode->i_mode)) {
 	iput(oldinode);

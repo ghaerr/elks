@@ -16,13 +16,18 @@
 
 #include <arch/segment.h>
 
-/* Static functions in this file */
+static int minix_dir_read(inode, filp, buf, count)
+     struct inode *inode;
+     struct file *filp;
+     char *buf;
+     int count;
+{
+    return -EISDIR;
+}
 
-static size_t minix_dir_read(struct inode *,struct file *,char *,int);
-static size_t minix_readdir(struct inode *,register struct file *,char *,
-			    filldir_t);
-
-/* Function definitions */
+static int minix_readdir(struct inode *inode,
+			 register struct file *filp,
+			 char *dirent, filldir_t filldir);
 
 /*@-type@*/
 
@@ -58,39 +63,31 @@ struct inode_operations minix_dir_inode_operations = {
 #ifdef BLOAT_FS
     NULL,			/* bmap */
 #endif
-    minix_truncate		/* truncate */
+    minix_truncate,		/* truncate */
 #ifdef BLOAT_FS
-	,
     NULL			/* permission */
 #endif
 };
 
 /*@+type@*/
 
-static size_t minix_dir_read(struct inode *inode, struct file *filp,
-			     char *buf, int count)
-{
-    return -EISDIR;
-}
-
-static size_t minix_readdir(struct inode *inode, register struct file *filp,
-			    char *dirent, filldir_t filldir)
+static int minix_readdir(struct inode *inode,
+			 register struct file *filp,
+			 char *dirent, filldir_t filldir)
 {
     register struct buffer_head *bh;
     struct minix_dir_entry *de;
-    struct minix_sb_info *ms;
+    struct minix_sb_info *info;
     loff_t offset;
 
     if (!inode || !inode->i_sb || !S_ISDIR(inode->i_mode))
 	return -EBADF;
-    ms = &inode->i_sb->u.minix_sb;
-    if (filp->f_pos & (ms->s_dirsize - 1))
+    info = &inode->i_sb->u.minix_sb;
+    if (filp->f_pos & (info->s_dirsize - 1))
 	return -EBADF;
     while (filp->f_pos < (loff_t) inode->i_size) {
 	offset = filp->f_pos & 1023;
-	bh = minix_bread(inode,
-			 (unsigned short int) (filp->f_pos >> BLOCK_SIZE_BITS),
-			 0);
+	bh = minix_bread(inode, (block_t) ((filp->f_pos) >> BLOCK_SIZE_BITS), 0);
 	if (!bh) {
 	    filp->f_pos += 1024 - offset;
 	    continue;
@@ -100,15 +97,15 @@ static size_t minix_readdir(struct inode *inode, register struct file *filp,
 	do {
 	    de = (struct minix_dir_entry *) (offset + bh->b_data);
 	    if (de->inode) {
-		size_t size = strnlen(de->name, ms->s_namelen);
+		size_t size = strnlen(de->name, info->s_namelen);
 		if (filldir(dirent, de->name, size, filp->f_pos, de->inode)
 		    < 0) {
 		    unmap_brelse(bh);
 		    return 0;
 		}
 	    }
-	    offset += ms->s_dirsize;
-	    filp->f_pos += ms->s_dirsize;
+	    offset += info->s_dirsize;
+	    filp->f_pos += info->s_dirsize;
 	} while (offset < 1024 && filp->f_pos < (loff_t) inode->i_size);
 	unmap_brelse(bh);
     }

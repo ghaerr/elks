@@ -90,7 +90,7 @@ static void init_task()
 
     /* Make sure the correct exec stack is in place for init. */
 
-    unsigned short int *pip = args;
+    unsigned short int *pip = (unsigned short int *) args;
 
     *++pip = (unsigned short int) &args[5];
 
