@@ -139,6 +139,6 @@ short *s;
 		sleep_on((void *)s);
 	}
 	/* Take it */
-	*s--;
+	--*s;
 }
 
