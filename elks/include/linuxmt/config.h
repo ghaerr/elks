@@ -6,15 +6,37 @@
 #define REGOPT register
 
 /*
- * Set this to 0x380 to have /dev/fd0 be the root device, or 0x3c0 for /dev/fd1 
+ * Determine which root device selected
  */
 
-#ifndef CONFIG_ROOTDEV
-/* 
- * 0x0380 /dev/fd0   bios floppy
- * 0x0100 /dev/ram0  ramdisk ram0      
- * 0x0301 /dev/bda1  bios disk0, part 1
+#ifdef CONFIG_ROOTDEV_FD1
+#define CONFIG_ROOTDEV 0x03c0
+#endif
+
+#ifdef CONFIG_ROOTDEV_RAM
+#define CONFIG_ROOTDEV 0x0100
+#endif
+
+#ifdef CONFIG_ROOTDEV_BDA1
+#define CONFIG_ROOTDEV 0x0301
+#endif
+
+#ifdef CONFIG_ROOTDEV_BDA2
+#define CONFIG_ROOTDEV 0x0302
+#endif
+
+#ifdef CONFIG_ROOTDEV_BDA3
+#define CONFIG_ROOTDEV 0x0303
+#endif
+
+#ifdef CONFIG_ROOTDEV_BDA4
+#define CONFIG_ROOTDEV 0x0304
+#endif
+
+/*
+ * If nothing was set, use the default of /dev/fd0
  */
+#ifndef CONFIG_ROOTDEV
 #define CONFIG_ROOTDEV 0x0380
 #endif
 
