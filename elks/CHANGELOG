@@ -33,6 +33,13 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Wed May 15 16:00:08 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Invert the is(is not) a system call valid contition in strace.
+	* Added parameter strace for sys_signal().
+	* Fixed the BSS zeroing in exec.c. This caused a lot of serius problems
+	  to programs that assumed a zeroed BSS. "ash" was one of them.
+
 Mon May 13 22:47:47 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Standardised macros for debugging printk's - the function names

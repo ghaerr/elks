@@ -27,7 +27,7 @@ void print_syscall(register struct syscall_params *p, int retval)
 	   (elks_table[tent].s_num != p->s_num))
 	tent++;
 
-    if (elks_table[tent].s_num)
+    if (!elks_table[tent].s_num)
 	printk("Syscall not recognised: %u\n", p->s_num);
     else {
 
