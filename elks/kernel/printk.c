@@ -185,9 +185,9 @@ void panic(char *error, int a1 /* VARARGS... */ )
     printk("\npanic: ");
     printk(error, a1);
 
-    printk("\napparant call stack:\n");
+    printk("\napparent call stack:\n");
     for (i = 0; i < 8; i++) {
-	printk("(%u) ret addr = %p params = ", i, bp[1]);
+	printk("(%u) return address = %p, params = ", i, bp[1]);
 	bp = (int *) bp[0];
 	for (j = (char *) 2; ((int) j) < 8; j++)
 	    printk(" %p", bp[(int) j]);
@@ -201,9 +201,9 @@ void panic(char *error, int a1 /* VARARGS... */ )
     printk("\npanic: ");
     printk(error, a1);
 
-    printk("\napparant call stack:\n");
+    printk("\napparent call stack:\n");
     for (i = 0; i < 8; i++) {
-	printk("(%u) ret addr = %p params = ", i, bp[1]);
+	printk("(%u) return address = %p, params = ", i, bp[1]);
 	bp = (int *) bp[0];
 	for (j = 2; j < 8; j++)
 	    printk(" %p", bp[j]);
