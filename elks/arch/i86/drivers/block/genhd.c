@@ -28,6 +28,9 @@
 #define NR_SECTS(p)	p->nr_sects
 #define START_SECT(p)	p->start_sect
 
+extern int chr_dev_init();
+extern int blk_dev_init();
+
 struct gendisk *gendisk_head = NULL;
 
 static int current_minor = 0;
@@ -36,17 +39,7 @@ extern int blk_size[];
 #endif
 extern void rd_load();
 
-extern int chr_dev_init();
-extern int blk_dev_init();
-
-#ifdef CONFIG_BLK_DEV_BHD
-#define CONFIG_PART
-#endif
-#ifdef CONFIG_BLK_DEV_HD
-#define CONFIG_PART
-#endif
-
-#ifdef CONFIG_PART
+#ifdef CONFIG_GENDISK
 static void print_minor_name (hd,minor)
 register struct gendisk *hd;
 int minor;
@@ -283,7 +276,7 @@ kdev_t dev;
 #endif
 	printk(" unknown partition table\n");
 }
-#endif /* CONFIG_PART */
+#endif /* CONFIG_GENDISK */
 
 /* This function is used to re-read partition tables for removable disks.
    Much of the cleanup from the old partition tables should have already been
@@ -323,7 +316,7 @@ register struct gendisk *dev;
 		hdp->nr_sects = 0;
 	}
 	dev->init(dev);
-#ifdef CONFIG_PART
+#ifdef CONFIG_GENDISK
 	for (drive = 0 ; drive < dev->nr_real ; drive++) {
 		int first_minor	= drive << dev->minor_shift;
 		current_minor = 1 + first_minor;
@@ -335,7 +328,6 @@ register struct gendisk *dev;
 void device_setup()
 {
 	register struct gendisk *p;
-	int nr=0;
 
 	chr_dev_init();
 	blk_dev_init();
@@ -343,7 +335,6 @@ void device_setup()
 
 	for (p = gendisk_head ; p ; p=p->next) {
 		setup_dev(p);
-		nr += p->nr_real;
 	}
 #ifdef CONFIG_BLK_DEV_RAM
 	rd_load();

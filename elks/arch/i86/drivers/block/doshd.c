@@ -127,9 +127,10 @@ static unsigned char hd_drive_map[4] =
 };
 
 
-static void bioshd_geninit();
 
 static int bioshd_sizes[4 << 6] = {0,};
+
+static void bioshd_geninit();
 
 static struct gendisk bioshd_gendisk =
 {
@@ -487,7 +488,9 @@ void init_bioshd()
 {
 	int i;
 	int count = 0;
+#ifdef CONFIG_BLK_DEV_BHD
 	int hdcount = 0;
+#endif
 	register struct gendisk *ptr;
 	register struct drive_infot * drivep;
 	int addr = 0x8c;
@@ -502,13 +505,21 @@ void init_bioshd()
 #endif
 
 	for (i = 0; i <= 3; i++) {
-		if (drive_info[i].heads) {count++; if (i <= 1) hdcount++;} 
+		if (drive_info[i].heads) {
+			count++;
+#ifdef CONFIG_BLK_DEV_BHD
+			if (i <= 1)
+				hdcount++;
+#endif
+		} 
 	}
 
 	if (!count)
 		return;
 
+#ifdef CONFIG_BLK_DEV_BHD
 	printk("doshd: found %d hard drive%c\n", hdcount, hdcount == 1 ? ' ' : 's');
+#endif
 
 #ifdef DOSHD_VERBOSE_DRIVES
 	for (i = 0; i < 4; i++)
@@ -542,25 +553,21 @@ void init_bioshd()
 				drivep->sectors * 512L / (1024L * (i < 2 ? 1024L : 1L)));
 			}
 	}
+	bioshd_gendisk.nr_real = hdcount;
 #endif /* CONFIG_BLK_DEV_BHD */
 #endif /* DOSHD_VERBOSE_DRIVES */
 			
-	bioshd_gendisk.nr_real = hdcount;
 	i = register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops);
 
-	if (i == 0)
-	{
+	if (i == 0) {
 		blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 		/* blksize_size[MAJOR_NR] = 1024; */ /* Currently unused */
 		/* read_ahead[MAJOR_NR] = 2; */ /* Currently unused */
-		if (gendisk_head == NULL)
-		{
+		if (gendisk_head == NULL) {
 			bioshd_gendisk.next = gendisk_head;
 			gendisk_head = &bioshd_gendisk;
-		} else
-		{
-			for (ptr = gendisk_head; ptr->next != NULL; ptr = ptr->next)
-				;
+		} else {
+			for (ptr = gendisk_head; ptr->next != NULL; ptr = ptr->next);
 			ptr->next = &bioshd_gendisk;
 			bioshd_gendisk.next = NULL;
 		}
@@ -805,7 +812,7 @@ static int revalidate_hddisk(dev, maxusage)
 	wake_up(&busy_wait);
 	return 0;
 }
-#endif
+#endif /* 0 */
 
 static void bioshd_geninit()
 {

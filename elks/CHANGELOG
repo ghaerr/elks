@@ -4,40 +4,45 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
-Wed Jul 07 19:17 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul 09 15:45 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Tweaks to bioshd driver to fix problems with disabling hd
+	  support. Fix to Changelog times.
+
+Wed Jul 07 19:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated build system to make it more arch independant. Makefile
 	  contributed by Simon Wood.
 
-Tue Jul 06 19:17 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Jul 06 19:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added byteorder functions for romfs.
 
-Tue Jul 06 14:23 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Jul 06 14:23 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* More changes to the rd driver by Blaz Antonic.
 
-Mon Jul 05 14:11 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Jul 05 14:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Sanitisation and enhancement of the rd driver by Blaz Antonic.
 
-Thu Jun 24 14:11 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu Jun 24 14:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Bug fix to bioscon driver.
 
-Tue Jun 15 10:40 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Jun 15 10:40 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Latest changes to (ALPHA) meta driver.
 
-Tue Jun 15 10:31 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Jun 15 10:31 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Minor tweaks to Makefile
 
-Sun May 30 00:05 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Sun May 30 00:05 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixes code to allow loading of shared libraries.
 
-Sun May 30 00:05 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Sun May 30 00:05 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Modified tty interface to simplify it.
 
@@ -53,15 +58,15 @@ Sun May 30 00:05 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added socket to syscall table.
 
-Sun May 30 00:01 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Sun May 30 00:01 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated todo file.
 
-Fri May 28 20:04 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri May 28 20:04 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated bugs file.
 
-Thu May 20 12:04 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu May 20 12:04 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Final tweaks for 0.0.76
 

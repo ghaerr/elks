@@ -19,6 +19,10 @@ else
 	define_bool CONFIG_DMA n
 fi
 
+if [ "$CONFIG_BLK_DEV_BHD" = "y" ]; then
+	define_bool CONFIG_GENDISK y
+fi
+
 comment 'Additional block devices'
 bool 'RAM disk support' CONFIG_BLK_DEV_RAM
 bool 'Old XT hardisk support' CONFIG_BLK_DEV_XD
