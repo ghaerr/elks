@@ -4,6 +4,15 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Wed Nov 11 15:32 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Latest version of Blaz Antonics directhd driver added.
+
+	* Fixed bioscon driver as contributed by David Murn - now
+	  works correctly.
+
+	* Minor tweaks to nearby code.
+
 Tue Nov  3 12:44 CET 1998   Simon Weijgers  <simon@mbit.doa.org>
 	
 	* Fixed a little parse error pointed out by Al Sutton

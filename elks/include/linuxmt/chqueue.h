@@ -1,6 +1,8 @@
 /* chqueue.h
  * (C) 1997 Chad Page
  */
+#ifndef _LINUXMT_CHQ_H_
+#define _LINUXMT_CHQ_H_
 
 struct ch_queue {
 	char *buf;
@@ -17,3 +19,4 @@ int chq_delch();
 int chq_getch();
 int chq_peekch();
 
+#endif /* _LINUXMT_CHQ_H_ */

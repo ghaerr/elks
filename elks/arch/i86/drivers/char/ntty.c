@@ -156,12 +156,16 @@ char *data;
 int len;
 {
 	register struct tty *tty=determine_tty(inode->i_rdev);
-	int i = 0, j = 0, k;
+	int i = 0, j = 0, k, l = 1;
 	unsigned char ch, lch;
 	int mode = (tty->termios.c_lflag & ICANON);
 
-	while ((i < len) && (!mode || (j != 10))) { 
-		j = chq_getch(&tty->inq, &ch, 1);
+	while ((i < len) && (!mode || (j != '\n'))) { 
+		if (tty->ops->read) {
+			tty->ops->read(tty);
+			l = 0;
+		}
+		j = chq_getch(&tty->inq, &ch, l);
 		if (j == -1) {
 			return -EINTR;
 		}
@@ -180,8 +184,6 @@ int len;
 	};
 	return i;
 }
-
-#if 1 /* Default returns -EINVAL if no ioctl exists, so this is redundant */
 
 int tty_ioctl(inode,file, cmd, arg)
 struct inode *inode;
@@ -207,7 +209,6 @@ char *arg;
 	}
 	return 0;
 }
-#endif
 
 int tty_lseek(inode,file,offset,origin)
 struct inode *inode;

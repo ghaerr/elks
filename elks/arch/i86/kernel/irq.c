@@ -336,12 +336,18 @@ void init_IRQ()
 	outb_p(46,0x40);		/* MSB */
 #endif
 
+#ifdef CONFIG_CONSOLE_DIRECT
+
 	/*
 	 *	Set off the initial keyboard interrupt handler
 	 */
 
 	if(request_irq(1, keyboard_irq, 0L, "keyboard"))
 		panic("Unable to get keyboard");
+
+#else /* CONFIG_CONSOLE_DIRECT */
+	enable_irq(1);		/* Cascade */
+#endif /* CONFIG_CONSOLE_DIRECT */
 	/*
 	 *	Enable the drop through interrupts.
 	 */

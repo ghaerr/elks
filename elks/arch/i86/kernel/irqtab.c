@@ -1,4 +1,5 @@
 #include <arch/irq.h>
+#include <linuxmt/config.h>
 
 /*
  *	Easy way to store our kernel DS
@@ -27,13 +28,14 @@ void irqtab_init()
 	mov seg_stashed_irq0, bx
 	seg es
 	mov [34],ax
-
+#ifndef CONFIG_CONSOLE_BIOS
 	lea ax,_irq1
 	seg es
 	mov [36],ax
 	mov ax,cs
 	seg es
 	mov [38],ax
+#endif
 #if 0	
 	lea ax,_irq2
 	seg es

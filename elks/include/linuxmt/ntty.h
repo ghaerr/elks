@@ -22,6 +22,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/termios.h>
 #include <linuxmt/clist.h>
+#include <linuxmt/chqueue.h>
 
 #include <arch/system.h>
 

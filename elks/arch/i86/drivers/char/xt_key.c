@@ -25,6 +25,8 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
 
+#ifdef CONFIG_CONSOLE_DIRECT
+
 extern struct tty ttys[];
 
 #define ESC 27
@@ -591,3 +593,5 @@ int wait_for_keypress()
 {
 	return chq_getch(&ttys[0].inq, 0, 1);
 }
+
+#endif /* CONFIG_CONSOLE_DIRECT */

@@ -144,10 +144,8 @@ int CursorOfs;
       if( isupper(Ch) || islower(Ch) )
       {
         *astrp++ = Ch;
-        *astrp = Ch;		/* No need for post increment */
+        *astrp = '\0';		/* No need for post increment */
 	C->AnsiLen += 2;
-/*        C->AnsiStr[C->AnsiLen++]=Ch;
-        C->AnsiStr[C->AnsiLen++]='\0'; */
         HandleAnsi(C,Ch);
         C->InCmd=C->InAnsi=0;
       }

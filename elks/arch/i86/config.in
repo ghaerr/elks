@@ -12,25 +12,25 @@ if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
 	if [ "$CONFIG_DCON_VT52" = "y" ]; then
 		bool 'Direct console ANSI emulation' CONFIG_DCON_ANSI
 	fi
-		if [ "$CONFIG_DCON_ANSI" = "y" ]; then
-			bool 'ANSI Colourized printk' CONFIG_DCON_ANSI_PRINTK
-		fi
+	if [ "$CONFIG_DCON_ANSI" = "y" ]; then
+		bool 'ANSI Colourized printk' CONFIG_DCON_ANSI_PRINTK
+	fi
+	choice 'XT Keyboard support' \
+		"be 	CONFIG_BE_KEYMAP\
+		 fr	CONFIG_FR_KEYMAP\
+		 uk 	CONFIG_UK_KEYMAP\
+		 es 	CONFIG_ES_KEYMAP\
+		 de	CONFIG_DE_KEYMAP\
+		 usa    CONFIG_DEFAULT_KEYMAP" usa
 fi
 bool 'BIOS console writes' CONFIG_CONSOLE_BIOS
 if [ "$CONFIG_CONSOLE_BIOS" = "y" ]; then
 	bool 'BIOS console VT52 emulation' CONFIG_BIOS_VT52
 fi
-choice 'XT Keyboard support' \
-	"be 	CONFIG_BE_KEYMAP\
-	 fr	CONFIG_FR_KEYMAP\
-	 uk 	CONFIG_UK_KEYMAP\
-	 es 	CONFIG_ES_KEYMAP\
-	 de	CONFIG_DE_KEYMAP\
-	 usa    CONFIG_DEFAULT_KEYMAP" usa
 bool 'Support only for XT architecture' CONFIG_XT
 bool 'Support for loadable modules' CONFIG_MODULE
 bool 'Switch COMPAQ DeskPro into fast mode' CONFIG_COMPAQ_FAST
-bool 'Memory character devicess /dev/zero /dev/null etc.' CONFIG_CHAR_DEV_MEM
+bool 'Memory character devices /dev/zero /dev/null etc.' CONFIG_CHAR_DEV_MEM
 bool 'Serial device driver' CONFIG_CHAR_DEV_RS
 bool 'Parallel device driver' CONFIG_CHAR_DEV_LP
 endmenu 
