@@ -393,19 +393,19 @@ pid_t pid;
 
 }
 #endif
-#ifdef NOT_YET	
+
 int sys_setsid()
 {
-	if (current->leader)
-		return -EPERM;
-	current->leader = 1;
-	current->session = current->pgrp = current->pid;
-	current->tty = NULL;
-	current->tty_old_pgrp = 0;
-	return current->pgrp;
-}
+	register __ptask currentp = current;
 
-#endif
+	if (currentp->session == currentp->pid) {
+		return -EPERM;
+	}
+	currentp->session = currentp->pgrp = currentp->pid;
+	currentp->tty = NULL;
+/*	currentp->tty_old_pgrp = 0; */
+	return currentp->pgrp;
+}
 
 /*
  * Supplementary group ID's

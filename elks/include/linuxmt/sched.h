@@ -12,6 +12,7 @@
 #include <linuxmt/signal.h>
 #include <linuxmt/autoconf.h>
 #include <linuxmt/wait.h>
+#include <linuxmt/ntty.h>
 #include <arch/param.h>
 #include <linuxmt/timex.h>
 #ifdef CONFIG_STRACE
@@ -63,6 +64,7 @@ struct task_struct
 	gid_t groups[NGROUPS];
 /*	int dumpable;		/* Can core dump */
 	pid_t pgrp;
+	struct tty * tty;
 	__u8 link_count;	/* Symlink loop counter */
 	__u32 signal/*,blocked*/;	/* Signal status */
 	/* only 1 child pntr is needed to get us into the sibling list */

@@ -45,7 +45,7 @@ register struct task_struct * p;
 }
 
 int send_sig(sig, p, priv)
-int sig;
+pid_t sig;
 register struct task_struct * p;
 int priv;
 {
@@ -72,10 +72,27 @@ int priv;
         return 0;
 }
 
+int kill_pg(pgrp, sig, priv)
+pid_t pgrp;
+int sig;
+int priv;
+{
+	register struct task_struct * p;
+	int err = -ESRCH;
+
+	printk("Killing pg %d\n", pgrp);
+	for_each_task(p) {
+		if (p->pgrp == pgrp) {
+			err = send_sig(sig,p,priv);
+		}
+	}
+	return err;
+}
+
 
 
 int sys_kill(pid, sig)
-int pid;
+pid_t pid;
 int sig;
 {
 	register struct task_struct * p;
