@@ -16,7 +16,7 @@ Christoph Plattner      <Christoph.Plattner@dot.at>     31 Jan 2000-02 Feb 2000
 David Murn              <scuffer@hups.apana.org.au>     11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
-Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>    20 Jun 2001-11 Nov 2001
+Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>    20 Jun 2001-27 Nov 2001
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001-20 Nov 2001
 Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
@@ -29,46 +29,46 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Tue Nov 27 14:18:57 EET 2001 Harry Kalogirou <harkal@gmx.net>
+Tue Nov 27 14:18:57 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* This is ELKS 0.1.0-pre3
 
-Tue Nov 27 13:57:20 EET 2001 Harry Kalogirou <harkal@gmx.net>
+Tue Nov 27 13:57:20 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* Fixed CRLF files as pointed out by Paul Nasrat.
 
-Tue Nov 27 03:40:07 EET 2001 Harry Kalogirou <harkal@gmx.net>
+Tue Nov 27 03:40:07 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* Fixed the TIME_WAIT leftover TCP control blocks issue.
 	* Added user timeout to TCP/IP.
 
-Mon Nov 26 15:19:36 EET 2001 Harry Kalogirou <harkal@gmx.net>
+Mon Nov 26 15:19:36 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* Fixed back the fixed sys_lseek(). It seems that libc expects
 	  the return value to be passed through one of the parameters.
 
-Fri Nov 24 02:31:18 EET 2001 Harry Kalogirou <harkal@gmx.net>
+Fri Nov 24 02:31:18 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* This is ELKS 0.1.0-pre2 !!!
 
-Fri Nov 23 19:34:28 EET 2001 Harry Kalogirou <harkal@gmx.net>
+Fri Nov 23 19:34:28 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* Fixed sys_lseek() to correctly return the resulting offset
 	  location.
 	* Made inet aware of CONFIG_SOCK_CLIENTONLY.
 
-Fri Nov 23 15:36:00 EET 2001 Harry Kalogirou <harkal@gmx.net>
+Fri Nov 23 15:36:00 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* Fixed the "minix header" bug.
 
-Fri Nov 23 02:32:35 EET 2001 Harry Kalogirou <harkal@gmx.net>
+Fri Nov 23 02:32:35 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
-	* Fixed zero tcp window issues
 	* Fixed do_fork(). It was not freeing the previously
 	  allocated code segment when the allocation of the
 	  data segment was failing.
+	* Fixed zero tcp window issues
 
-Wed Nov 21 01:37:32 EET 2001 Harry Kalogirou <harkal@gmx.net>
+Wed Nov 21 01:37:32 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* Major fix in inet code.
 	* Removed the CONFIG_SOCK_STREAMONLY config variable
@@ -78,8 +78,8 @@ Wed Nov 21 01:37:32 EET 2001 Harry Kalogirou <harkal@gmx.net>
 	* Made inet status report default
 	* Updated the help for CONFIG_CHAR_DEV_RS
 
-Sat Nov 19 17:26:40 EET 2001 Harry Kalogirou <harkal@gmx.net>
-	
+Sat Nov 19 17:26:40 EET 2001	Harry Kalogirou <harkal@gmx.net>
+
 	* Reorder of some commands in inet code.
 
 Tue Nov 20 21:39:03 GMT 2001	Paul Nasrat <pnasrat@uk.now.com>
