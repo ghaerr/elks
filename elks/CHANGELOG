@@ -29,6 +29,11 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
+ ıÒ …·Ì 20 01:09:25 EET 2002 Jacek Lipkowski <sq5bpf@acid.ch.pw.edu.pl>
+
+	* Menuconfig non compilable fix.
+	* Better version number display for menuconfig.
+
 Fri Jan 18 23:22:10 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
 	* Updated TODO list from suggestions received.

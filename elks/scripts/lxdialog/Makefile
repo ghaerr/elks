@@ -84,7 +84,7 @@ local-curses.h:
 
 ncurses: local-curses.h
 	@x=`find /lib/ /usr/lib/ /usr/local/lib/ -maxdepth 1 -name 'libncurses.*'` ;\
-	@if [ ! "$$x" ]; then \
+	if [ ! "$$x" ]; then \
 		echo -e "\007" ;\
 		echo ">> Unable to find the Ncurses libraries." ;\
 		echo ">>" ;\
