@@ -118,13 +118,8 @@ struct elksfs_dir_entry ** res_dir;
 			return bh;
 		}
 		unmap_buffer(bh);
-#ifdef BLOAT_FS
-		if (offset < bh->b_size)
-			continue;
-#else
 		if (offset < 1024)
 			continue;
-#endif
 		brelse(bh);
 		bh = NULL;
 		offset = 0;
@@ -224,17 +219,9 @@ struct elksfs_dir_entry ** res_dir;
 		map_buffer(bh);
 		de = (struct elksfs_dir_entry *) (bh->b_data + offset);
 		offset += info->s_dirsize;
-#ifdef BLOAT_FS
-		if (block*bh->b_size + offset > dir->i_size) {
-#else
 		if (block*1024 + offset > dir->i_size) {
-#endif
 			de->inode = 0;
-#ifdef BLOAT_FS
-			dir->i_size = block*bh->b_size + offset;
-#else
 			dir->i_size = block*1024 + offset;
-#endif
 			dir->i_dirt = 1;
 		}
 		if (de->inode) {
@@ -256,13 +243,8 @@ struct elksfs_dir_entry ** res_dir;
 			*res_dir = de;
 			break;
 		}
-#ifdef BLOAT_FS
-		if (offset < bh->b_size)
-			continue;
-#else
 		if (offset < 1024)
 			continue;
-#endif
 		printk("elksfs_add_entry may need another unmap_buffer :)");
 		brelse(bh);
 		bh = NULL;
@@ -504,13 +486,8 @@ register struct inode * inode;
 			unmap_brelse(bh);
 			return 0;
 		}
-#ifdef BLOAT_FS
-		if (offset < bh->b_size)
-			continue;
-#else
 		if (offset < 1024)
 			continue;
-#endif
 		unmap_brelse(bh);
 		bh = NULL;
 		offset = 0;
