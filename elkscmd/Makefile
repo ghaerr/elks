@@ -1,13 +1,15 @@
 include Make.defs
 
 DIRS=disk_utils file_utils sh_utils sys_utils misc_utils sash \
-	levee ash minix1 minix2 bc byacc elvis inet
+	levee ash minix1 minix2 bc byacc elvis
+
+# inet
 
 KHELPER=$(MINIX_BOOT)/minix_elks.bin
 FD_BSECT=$(MINIX_BOOT)/minix.bin
 
 all:
-	@for i in $(DIRS); do make -C $$i ; done
+	@for i in $(DIRS); do make -C $$i all ; done
 
 $(COMB_TARGET_FS):
 	dd if=/dev/zero of=$(COMB_TARGET_FS) bs=1024 count=$(COMB_TARGET_BLKS)
@@ -117,4 +119,4 @@ clean:
 	umount $(ROOT_NET_TARGET_FS) || true
 	rm -f $(ROOT_TARGET_FS) $(COMB_TARGET_FS) $(SIBO_TARGET_FS) $(ROOT_NET_TARGET_FS)
 	rm -f boot images.zip
-#	rm -rf rootfs_template
+	rm -rf rootfs_template

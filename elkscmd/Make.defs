@@ -1,27 +1,29 @@
-DEV86_DIR=/usr/src/linux-86
-ELKS_DIR=$(BASEDIR)/../elks
-ELKSCMD_DIR=$(BASEDIR)
-ELKSNET_DIR=$(BASEDIR)/../elksnet
+BASEDIR=/home/rhw/CVS/Source
 
-INC_DIR=$(BASEDIR)/../elks/include
+DEV86_DIR=$(BASEDIR)/linux-86
+ELKS_DIR=$(BASEDIR)/elks
+ELKSCMD_DIR=$(BASEDIR)/elkscmd
+ELKSNET_DIR=$(BASEDIR)/elksnet
+
+INC_DIR=$(BASEDIR)/elks/include
 
 PLATFORM=i86-ELKS
 
 ifeq ($(PLATFORM),i86-ELKS)
-CC=bcc
-CFLBASE=-0 -O -ansi
-LDFLAGS=-s
-CHECK=gcc -c -o .null.o -Wall -pedantic
+	CC=bcc
+	CFLBASE=-0 -O -ansi
+	LDFLAGS=-s
+	CHECK=gcc -c -o .null.o -Wall -pedantic
 endif
 
 ifeq ($(PLATFORM),default)
-CC=cc
-CFLBASE=
-LDFLAGS=
-CHECK=$(CC) -c -o .null.o
+	CC=cc
+	CFLBASE=
+	CHECK=cc -c -o .null.o
 endif
 
-CFLAGS=$(CFLBASE) -I $(INC_DIR)
+CFLAGS=$(CFLBASE) -I$(INC_DIR)
+# -I/usr/include
 
 COMB_TARGET_FS=$(ELKSCMD_DIR)/comb
 COMB_TARGET_BLKS=720
@@ -35,11 +37,29 @@ ROOT_NET_TARGET_BLKS=720
 SIBO_TARGET_FS=$(ELKSCMD_DIR)/sibo
 SIBO_TARGET_BLKS=128
 
-TARGET_MNT=/mnt/ef
-
 MKFS=/sbin/mkfs.minix
 MKFS_OPTS=-n14
-#Include the line below if TARGET_FS is a file, not a device
-LOOP=-o loop
 
 MINIX_BOOT=$(DEV86_DIR)/bootblocks
+
+####################################################################
+#
+# Define type of target for creating boot file system on.
+
+TARGET_MODE=loop
+
+####################################################################
+#
+# Select the target device depending on the above entry.
+
+ifeq ($(TARGET_MODE),loop)
+
+TARGET_MNT=/mnt/ef
+LOOP=-o loop
+
+else
+
+TARGET_MNT=/dev/fd0
+LOOP=
+
+endif

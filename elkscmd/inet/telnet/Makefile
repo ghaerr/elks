@@ -1,8 +1,6 @@
 # Makefile for telnet
 
-BASEDIR = ../..
-
-include $(BASEDIR)/Make.defs
+include ../../Make.defs
 
 CC=bcc
 

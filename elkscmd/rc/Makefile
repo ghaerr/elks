@@ -1,8 +1,6 @@
 # Makefile for rc.
 
-BASEDIR = ..
-
-include $(BASEDIR)/Make.defs
+include ../Make.defs
 
 # Please check the configuration parameters in config.h (and if you want
 # to make sure, the definitions in proto.h) to make sure they are correct
@@ -34,13 +32,12 @@ OBJS=$(ADDON) builtins.o except.o exec.o $(EXECVE) fn.o footobar.o getopt.o \
 	nalloc.o open.o print.o redir.o sigmsgs.o signal.o status.o tree.o \
 	utils.o var.o version.o wait.o walk.o which.o y.tab.o libedit.a
 
-# Allow `make all` to do the right thing.
-all: rc
-
 # If rc is compiled with READLINE defined, you must supply the correct
 # arguments to ld on this line. Typically this would be something like:
 #
 #	$(CC) -o $@ $(OBJS) -lreadline -ltermcap
+
+all: rc
 
 rc: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)

@@ -1,6 +1,4 @@
-BASEDIR = ..
-
-include $(BASEDIR)/Make.defs
+include ../Make.defs
 
 CFLAGS= $(CFLBASE)
 LFLAGS= -s
@@ -16,4 +14,4 @@ rfs: xvi
 min_rfs: xvi
 
 clean:
-	rm -f *.o xvi
+	rm -f core xvi *.o

@@ -1,10 +1,7 @@
 #
 # Makefile for sash
 #
-
-BASEDIR = ..
-
-include $(BASEDIR)/Make.defs
+include ../Make.defs
 
 #OBJS = sash.o cmds.o cmd_ls.o utils.o
 OBJS = sash.o cmds.o cmd_dd.o cmd_ed.o cmd_grep.o cmd_ls.o cmd_tar.o utils.o
@@ -15,7 +12,7 @@ sash:	$(OBJS)
 	$(CC) $(LDFLAGS) -o sash $(OBJS)
 
 clean:
-	rm -f $(OBJS) sash
+	rm -f core sash $(OBJS)
 
 rfs: install
 

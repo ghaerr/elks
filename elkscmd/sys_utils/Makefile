@@ -1,6 +1,4 @@
-BASEDIR = ..
-
-include $(BASEDIR)/Make.defs
+include ../Make.defs
 
 PRGS=init getty login kill man mount reboot passwd umount clock \
 	exitemu ps who # insmod 

@@ -1,9 +1,9 @@
-BASEDIR = ..
-
-include $(BASEDIR)/Make.defs
+include ../Make.defs
 
 PRGS=basename date dirname echo false printenv pwd true which whoami yes \
-	logname tr xargs mesg write stty test # uname
+	logname tr xargs mesg write stty test
+
+# uname
 
 NETPRGS=date echo false true yes stty test pwd
 

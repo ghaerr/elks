@@ -1,14 +1,11 @@
-BASEDIR = ../..
-
-include $(BASEDIR)/Make.defs
+include ../../Make.defs
 
 OBJS = err.o daemon.o
-TARGET = libbsd2.a
 
-all: $(TARGET)
+all: libbsd2.a
 
-$(TARGET): $(OBJS)
+libbsd2.a: $(OBJS)
 	ar -rc $(TARGET) $(OBJS)
 
 clean:
-	rm -rf *.o $(TARGET)
+	rm -rf core libbsd2.a *.o

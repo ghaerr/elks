@@ -1,8 +1,5 @@
-# makefile for Levee 
-
-BASEDIR = ..
-
-# include $(BASEDIR)/Make.defs
+# makefile for Levee
+include ../Make.defs
 
 CFLAGS = -O -0 -DSIZE=16000L
 

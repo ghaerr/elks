@@ -2,10 +2,7 @@
 #
 # 19980209 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
 # Modified for ELKS and bcc
-
-BASEDIR = ..
-
-include $(BASEDIR)/Make.defs
+include ../Make.defs
 
 SRCS=	builtins.c cd.c dirent.c error.c eval.c exec.c expand.c input.c \
 	jobs.c mail.c main.c memalloc.c miscbltin.c mystring.c nodes.c \
@@ -35,7 +32,7 @@ CLEANFILES= $(OBJS) \
 all:	ash
 
 ash:	$(OBJS)
-	$(CC) $(CFLAGS) -o ash $(OBJS) $(LIBS)
+	$(CC) $(CFLAGS) -o sh $(OBJS) $(LIBS)
 
 rfs: install
 
@@ -47,10 +44,11 @@ smin_rfs:
 
 install: ash
 	cp -p ash $(TARGET_MNT)/bin/ash
-	ln $(TARGET_MNT)/bin/ash $(TARGET_MNT)/bin/sh
+	rm -f $(TARGET_MNT)/sh
+	ln $(TARGET_MNT/ash $(TARGET_MNT/sh
 
 clean:
-	rm -f $(CLEANFILES) ash core
+	rm -f core sh $(CLEANFILES)
 
 parser.o: token.def
 

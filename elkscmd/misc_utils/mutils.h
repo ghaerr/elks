@@ -7,10 +7,12 @@
  */
 
 #include <stdio.h>
+/*
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
 #include <ctype.h>
+*/
 
 #define	PATHLEN		256	
 #define	CMDLEN		512	

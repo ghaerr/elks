@@ -1,6 +1,4 @@
-BASEDIR = ../..
-
-include $(BASEDIR)/Make.defs
+include ../../Make.defs
 
 PRGS=netstat
 
@@ -19,10 +17,10 @@ min_rfs:
 smin_rfs:
 
 install_sibo: all
-	cp -p $(SPRGS) $(TARGET_MNT)/sbin
+	cp -p $(SPRGS) $(TARGET_MNT)/bin
 
 install: all
-	cp -p $(PRGS) $(TARGET_MNT)/sbin
+	cp -p $(PRGS) $(TARGET_MNT)/bin
 
 #fsck: fsck.c
 #	$(CC) $(CFLAGS) $(LDFLAGS) -ansi fsck.c -o fsck -Hffff

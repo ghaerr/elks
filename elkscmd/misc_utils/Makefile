@@ -1,6 +1,4 @@
-BASEDIR = ..
-
-include $(BASEDIR)/Make.defs
+include ../Make.defs
 
 PRGS=ed tar
 

@@ -1,12 +1,10 @@
-BASEDIR = ..
+include ../Make.defs
 
-include $(BASEDIR)/Make.defs
+PROGS=fdisk ramdisk mkfs fsck
 
-PRGS=fdisk ramdisk mkfs fsck
+SPROGS=mkfs
 
-SPRGS=mkfs
-
-all: $(PRGS)
+all: $(PROGS)
 
 rfs: install
 
@@ -17,10 +15,10 @@ net_rfs: install
 smin_rfs: install_sibo
 
 install_sibo: all
-	cp -p $(SPRGS) $(TARGET_MNT)/sbin
+	cp -p $(SPROGS) $(TARGET_MNT)/bin
 
 install: all
-	cp -p $(PRGS) $(TARGET_MNT)/sbin
+	cp -p $(PROGS) $(TARGET_MNT)/bin
 
 fsck: fsck.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -ansi fsck.c -o fsck -Hffff
@@ -30,7 +28,7 @@ fdisk: fdisk.o
 
 
 .c.o:
-	$(CC) $(CFLAGS) -c $<
+#	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm -f *.o $(FORMATMOD) fdisk ramdisk core mkfs fsck
+	rm -f *.o $(FORMATMOD) core $(PROGS)

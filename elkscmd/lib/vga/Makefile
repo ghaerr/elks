@@ -1,5 +1,3 @@
-BASEDIR = ../..
-
 CC=bcc
 CFLAGS=-ansi -DELKS
 
