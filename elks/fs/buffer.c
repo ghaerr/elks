@@ -445,61 +445,74 @@ static int lastumap;
 void map_buffer(bh)
 register struct buffer_head * bh;
 {
-	int i, done;
 
-	/* If the buffer is already mapped, just increase the refcount and 
-	 * return... */
+    /* If buffer is already mapped, just increase the refcount and return */
+    printd_bufmap2("mapping buffer %d (%d)\n", bh->b_num, bh->b_mapcount);
 
-	printd_bufmap2("mapping buffer %d (%d)\n", bh->b_num, bh->b_mapcount);
+    if (bh->b_data) {
+#if 0                           /* debugging only */
+        if (!bh->b_mapcount) {
+            printd_bufmap2
+                ("BUFMAP: Buffer %d (block %d) `remapped' into L1.\n",
+                 bh->b_num, bh->b_blocknr);
+        }
+#endif
+        bh->b_mapcount++;
+        return;
+    }
 
-	if (bh->b_data) {
-		if (!bh->b_mapcount) { 
-	/*		printd_bufmap2("BUFMAP: Buffer %d (block %d) `remapped' into L1.\n"
-					, bh->b_num, bh->b_blocknr);
-	*/	}
-		bh->b_mapcount++;
-		return;
-	}
+    /* else keep trying till we succeed */
+    for (;;) {
+        int i;
 
-repeat:
-	for (i = 0; i < NR_MAPBUFS; i++) {	
-		if (!bufmem_map[i]) {
-			/* We can just map here! */
-			bufmem_map[i] = bh;
-			bh->b_data = bufmem[i];
-			bh->b_mapcount++;
-			fmemcpy(get_ds(), bh->b_data, 
-				_buf_ds, (char *)(bh->b_num * 0x400), 0x400);
-			printd_bufmap3("BUFMAP: Buffer %d (block %ld) mapped into L1 slot %d.\n",
-					bh->b_num, bh->b_blocknr, i);
-			return;
-		}
-	}
-	/* Now, we check for a mapped buffer with no count and then 
-	 * hopefully find one to send back to L2 */
+        /* First check for the trivial case */
+        for (i = 0; i < NR_MAPBUFS; i++) {
+            if (!bufmem_map[i]) {
+                /* We can just map here! */
+                bufmem_map[i] = bh;
+                bh->b_data = bufmem[i];
+                bh->b_mapcount++;
+                fmemcpy(get_ds(), bh->b_data,
+                        _buf_ds, (char *) (bh->b_num * 0x400), 0x400);
+                printd_bufmap3
+                    ("BUFMAP: Buffer %d (block %ld) mapped into L1 slot %d.\n",
+                     bh->b_num, bh->b_blocknr, i);
+                return;
+            }
+        }
 
-	i = (lastumap + 1) % NR_MAPBUFS;
-	done = 0;	
-	while ((i != lastumap) || (!done)) {
-		if (!bufmem_map[i]->b_mapcount) { 
-		/*	printd_bufmap1("BUFMAP: Buffer %d unmapped from L1\n",
-					bufmem_map[i]->b_num);
-		*/	/* Now unmap it */
-			fmemcpy(_buf_ds,(char *)(bufmem_map[i]->b_num * 0x400), 
-				get_ds(), bufmem_map[i]->b_data, 0x400);
-			bufmem_map[i]->b_data = 0;
-			bufmem_map[i] = 0;
-			lastumap = i;
-			goto repeat;
-		}
-		i = ((i + 1) % NR_MAPBUFS);
-		printd_bufmap1("BUFMAP: trying slot %d\n", i);
-	};
-	/* The last case is to wait until unmap gets a b_mapcount down to 0 */
-	printd_bufmap1("BUFMAP: buffer #%d waiting on L1 slot\n", bh->b_num);
-	sleep_on(&bufmapwait);
-	printd_bufmap("BUFMAP: wait queue woken up...\n");
-	goto repeat;
+        /* Now, we check for a mapped buffer with no count and then 
+         * hopefully find one to send back to L2 */
+        for (i = (lastumap + 1) % NR_MAPBUFS;
+             i != lastumap; i = ((i + 1) % NR_MAPBUFS)) {
+
+            printd_bufmap1("BUFMAP: trying slot %d\n", i);
+
+            if (!bufmem_map[i]->b_mapcount) {
+                printd_bufmap1("BUFMAP: Buffer %d unmapped from L1\n",
+                               bufmem_map[i]->b_num);
+                /* Now unmap it */
+                fmemcpy(_buf_ds,
+                        (char *) (bufmem_map[i]->b_num * 0x400),
+                        get_ds(), bufmem_map[i]->b_data, 0x400);
+                bufmem_map[i]->b_data = 0;
+                bufmem_map[i] = 0;
+                break;
+            }
+        }
+
+        /* The last case is to wait until unmap gets a b_mapcount down to 0 */
+        if (i == lastumap) {
+            /* previous loop failed */
+            printd_bufmap1("BUFMAP: buffer #%d waiting on L1 slot\n",
+                           bh->b_num);
+            sleep_on(&bufmapwait);
+            printd_bufmap("BUFMAP: wait queue woken up...\n");
+        } else {
+            /* success */
+            lastumap = i;
+        }
+    }
 }
 
 /* unmap_buffer decreases bh->b_mapcount, and wakes up anyone waiting over
