@@ -21,13 +21,19 @@ Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001-20 Nov 2001
 Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
 Peter L Vachuska        <pvachusk@nconnect.net>         13 Aug 2001
-Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-12 Dec 2001
+Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-26 Dec 2001
 Roman Festchook         <roma@polesye.net>              27 Oct 2001
 Simon Weijgers          <simon@weijgers.com>            16 Sep 1998-15 Nov 1999
 Simon Wood                                              06 Jan 2000-12 Jan 2000
 Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Wed Dec 26 17:09:16 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Brought include/linuxmt/autoconf.h in the repository up to date
+	  with respect to what is generated - but is this file meant to
+	  be in the repository in the first place?
 
 Wed Dec 12 22:52:34 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
