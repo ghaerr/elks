@@ -42,6 +42,40 @@ struct irqaction
 
 static struct irqaction irq_action[32];
 
+#ifdef CONFIG_ARCH_SIBO
+
+/*
+ *	Low level interrupt handling for the SIBO platform
+ */
+ 
+void disable_irq(int nr)
+{
+	/* Not supported on SIBO */
+}
+
+void enable_irq(irq_nr)
+unsigned int irq_nr;
+{
+	/* Not supported on SIBO */
+}
+
+static int remap_irq(x)
+int x;
+{
+	return x;
+}
+
+static void arch_init_IRQ()
+{
+}
+
+#else
+
+/*
+ *	Low level interrupt handling for the X86 PC/XT and PC/AT
+ *	platform
+ */
+ 
 unsigned char cache_21 = 0xff;
 unsigned char cache_A1 = 0xff;
 
@@ -49,51 +83,96 @@ unsigned char cache_A1 = 0xff;
 void disable_irq(irq_nr)
 unsigned int irq_nr;
 {
-#ifndef CONFIG_ARCH_SIBO
 	flag_t flags;
 	unsigned char mask = 1 << (irq_nr & 7);
 	save_flags(flags);
+	icli();
 	if(irq_nr < 8) {
-		icli();
 		cache_21 |= mask;
 		outb(cache_21,0x21);
-		restore_flags(flags);
-		return;
 	}
-	icli();
-/* BNOTE Is there missing code here! ????? cache_A1 |= mask ????? */
-	outb(cache_A1,0xA1);
+	else
+	{
+		cache_A1 |= 1 << (irq-8);
+		outb(cache_A1,0xA1);
+	}
 	restore_flags(flags);
-#endif
 }
 #endif
 
 void enable_irq(irq_nr)
 unsigned int irq_nr;
 {
-#ifndef CONFIG_ARCH_SIBO
 	flag_t flags;
 	unsigned char mask;
 
 	mask = ~(1 << (irq_nr & 7));
 	save_flags(flags);
-#ifndef CONFIG_ARCH_PC_XT
 	if (irq_nr < 8) {
-#endif
 		icli();
 		cache_21 &= mask;
 		outb(cache_21,0x21);
 		restore_flags(flags);
 		return;
-#ifndef CONFIG_ARCH_PC_XT
 	}
 	icli();
 	cache_A1 &= mask;
 	outb(cache_A1,0xA1);
 	restore_flags(flags);
-#endif
-#endif /* CONFIG_ARCH_SIBO */
 }
+
+
+static int remap_irq(irq)
+int irq;
+{
+	if (irq > 15) {
+		return -EINVAL;
+	}
+	if (irq > 7 && arch_cpu<2) {
+		return -EINVAL;		/* AT interrupt line on an XT */
+	}
+	if (irq == 2 && arch_cpu>1)
+		irq = 9;		/* Map IRQ 9/2 over */
+}
+
+/*
+These 8253/8254 macros generate proper timer constants based on the timer
+tick macro HZ which is defined in timex.h (usually 100 Hz).
+
+The PC timer chip can be programmed to divide its reference frequency by 
+a 16 bit unsigned number. The reference frequency of 1193181.8 Hz happens 
+to be 1/3 of the NTSC color burst frequency.  In fact, the hypothetical 
+exact reference frequency for the timer is 39375000/33 Hz. The macros
+use scaled fixed point arithmetic for greater accuracy. 
+*/
+
+#define TIMER_CMDS_PORT 0x43  /* command port */
+#define TIMER_DATA_PORT 0x40  /* data port    */
+
+#define TIMER_MODE0 0x30   /* timer 0, binary count, mode 0, lsb/msb */
+#define TIMER_MODE2 0x34   /* timer 0, binary count, mode 2, lsb/msb */ 
+
+#define TIMER_LO_BYTE (__u8)(((5+(11931818L/(HZ)))/10)%256)
+#define TIMER_HI_BYTE (__u8)(((5+(11931818L/(HZ)))/10)/256)
+
+static void arch_init_IRQ()
+{
+	/* Stop the timer */
+	outb (TIMER_MODE0, TIMER_CMDS_PORT);
+	outb (0, TIMER_DATA_PORT);
+	outb (0, TIMER_DATA_PORT);
+}
+
+static void enable_timer_tick()
+{
+	/* set the clock frequency */
+	outb (TIMER_MODE2, TIMER_CMDS_PORT);   
+	outb (TIMER_LO_BYTE, TIMER_DATA_PORT); /* LSB */
+	outb (TIMER_HI_BYTE, TIMER_DATA_PORT); /* MSB */
+}
+
+#endif
+
 
 /*
  *	Called by the assembler hooks
@@ -111,7 +190,6 @@ void *regs;
 
 	if (irq->handler != NULL) {
 		irq->handler(i,regs,irq->dev_id);
-		lastirq = -1;
 	} else {
 		if(i > 15) {
 			printk("Unexpected trap: %d\n", i-16);
@@ -119,6 +197,7 @@ void *regs;
 			printk("Unexpected interrupt: %d\n", i);
 		}
 	}
+	lastirq = -1;
 }
 
 /*
@@ -137,18 +216,10 @@ ___save_flags:
 #endasm
 /*}*/
 
-#if 0 /* this version leaves something to be desired. */
-void restore_flags(flags)
-unsigned int flags;
-{
-	flag_t v=flags;
-#asm
-	push ax
-	popf
-#endasm
-}
-#else
-/* this version is smaller than the functionally equivalent C version above
+
+/*unsigned int restore_flags(flags)
+{*/
+/* this version is smaller than the functionally equivalent C version
    at 7 bytes vs. 21 or thereabouts :-) --Alastair Bridgewater */
 #asm
         .globl _restore_flags
@@ -161,7 +232,6 @@ _restore_flags:
 	popf
 	jmp ax
 #endasm
-#endif
 
 
 int request_irq(irq, handler, dev_id)
@@ -171,22 +241,11 @@ void *dev_id;
 {
 	register struct irqaction *action;
 	flag_t flags;
-#ifndef CONFIG_ARCH_SIBO
-#ifdef CONFIG_ARCH_PC_XT
-	if (irq > 7) {
+	
+	irq = remap_irq(irq);
+	if(irq < 0)
 		return -EINVAL;
-	}
-#else /* CONFIG_ARCH_PC_XT */
-	if (irq > 15) {
-		return -EINVAL;
-	}
-	if (irq > 7 && arch_cpu<2) {
-		return -EINVAL;		/* AT interrupt line on an XT */
-	}
-	if (irq == 2 && arch_cpu>1)
-		irq = 9;		/* Map IRQ 9/2 over */
-#endif /* CONFIG_ARCH_PC_XT */
-#endif /* CONFIG_ARCH_SIBO */
+		
 	action = irq_action + irq;
 	if(action->handler) {
 		return -EBUSY;
@@ -220,13 +279,9 @@ unsigned int irq;
 	}
 	save_flags(flags);
 	icli();
-	if (irq < 8) {
-		cache_21 |= 1 << irq;
-		outb(cache_21,0x21);
-	} else {
-		cache_A1 |= 1 << (irq-8);
-		outb(cache_A1,0xA1);
-	}
+
+	disable_irq(irq);
+
 	action->handler = NULL;
 	action->dev_id = NULL;
 	action->flags = 0;
@@ -239,25 +294,6 @@ unsigned int irq;
  *	IRQ setup.
  */
 
-/*
-These 8253/8254 macros generate proper timer constants based on the timer
-tick macro HZ which is defined in timex.h (usually 100 Hz).
-
-The PC timer chip can be programmed to divide its reference frequency by 
-a 16 bit unsigned number. The reference frequency of 1193181.8 Hz happens 
-to be 1/3 of the NTSC color burst frequency.  In fact, the hypothetical 
-exact reference frequency for the timer is 39375000/33 Hz. The macros
-use scaled fixed point arithmetic for greater accuracy. 
-*/
-
-#define TIMER_CMDS_PORT 0x43  /* command port */
-#define TIMER_DATA_PORT 0x40  /* data port    */
-
-#define TIMER_MODE0 0x30   /* timer 0, binary count, mode 0, lsb/msb */
-#define TIMER_MODE2 0x34   /* timer 0, binary count, mode 2, lsb/msb */ 
-
-#define TIMER_LO_BYTE (__u8)(((5+(11931818L/(HZ)))/10)%256)
-#define TIMER_HI_BYTE (__u8)(((5+(11931818L/(HZ)))/10)/256)
 
 void init_IRQ()
 {
@@ -267,12 +303,7 @@ void init_IRQ()
         cache_21 = inb_p(0x21);
 #endif
 
-#ifndef CONFIG_ARCH_SIBO
-	/* Stop the timer */
-	outb (TIMER_MODE0, TIMER_CMDS_PORT);
-	outb (0, TIMER_DATA_PORT);
-	outb (0, TIMER_DATA_PORT);
-#endif
+	arch_init_IRQ();
 
 	/* Old IRQ 8 handler is nuked in this routine */
 	irqtab_init();			/* Store DS */
@@ -282,13 +313,10 @@ void init_IRQ()
 		panic("Unable to get timer");
 
 	/* Re-start the timer only after irq is set */
-#ifdef CONFIG_ARCH_SIBO
+
 	enable_timer_tick();
-#else
-	/* set the clock frequency */
-	outb (TIMER_MODE2, TIMER_CMDS_PORT);   
-	outb (TIMER_LO_BYTE, TIMER_DATA_PORT); /* LSB */
-	outb (TIMER_HI_BYTE, TIMER_DATA_PORT); /* MSB */
+	
+#ifndef CONFIG_ARCH_SIBO
 	
 #ifdef CONFIG_CONSOLE_DIRECT
 	/* Set off the initial keyboard interrupt handler */
@@ -303,10 +331,11 @@ void init_IRQ()
 
 	/* Enable the drop through interrupts. */
 
-#ifndef CONFIG_ARCH_PC_XT	 	
-	enable_irq(HD_IRQ);	/* AT ST506 */
-	enable_irq(15);		/* AHA1542 */
-#endif
+	if(arch_cpu > 1)
+	{
+		enable_irq(HD_IRQ);	/* AT ST506 */
+		enable_irq(15);		/* AHA1542 */
+	}
 	enable_irq(5);		/* XT ST506 */
 	enable_irq(2);		/* Cascade */
 	enable_irq(6);		/* Floppy */
