@@ -37,6 +37,7 @@ static struct nano_proto_data * nano_data_alloc()
 			upd->npd_bp_head = upd->npd_bp_tail = 0;
 			upd->npd_srvno = 0;
 			upd->npd_peerupd = NULL;
+			upd->npd_sem;
 			return(upd);
 		}
 	}
@@ -82,24 +83,6 @@ register struct nano_proto_data *upd;
 	}
 	--upd->npd_refcnt;
 }
-
-static void nano_lock(upd)
-register struct nano_proto_data *upd;
-{
-	while (upd->npd_lock_flag) {
-		sleep_on(&upd->npd_wait);
-	}
-	upd->npd_lock_flag = 1;
-}
-
-
-static void nano_unlock(upd)
-register struct nano_proto_data *upd;
-{
-	upd->npd_lock_flag = 0;
-	wake_up(&upd->npd_wait);
-}
-
 
 static int nano_create(sock, protocol)
 register struct socket * sock;
@@ -355,7 +338,7 @@ int nonblock;
  *	watching for wraparound. Then we wake up the writer.
  */
    
-	nano_lock(upd);
+	down(&upd->npd_sem);
 	do {
 		int part, cando;
 
@@ -382,7 +365,7 @@ int nonblock;
 		avail = NA_BUF_AVAIL(upd);
 	} 
 	while(todo && avail);
-	nano_unlock(upd);
+	up(&upd->npd_sem);
 	return(size - todo);
 }
 
@@ -432,8 +415,7 @@ int nonblock;
  *	watching for wraparound. Then we wake up the reader.
  */
    
-	nano_lock(pupd);
-
+	down(&pupd->npd_sem);
 	do 
 	{
 		int part, cando;
@@ -453,7 +435,7 @@ int nonblock;
 		if (sock->state == SS_DISCONNECTING) 
 		{
 			send_sig(SIGPIPE, current, 1);
-			nano_unlock(pupd);
+			up(&pupd->npd_sem);
 			return(-EPIPE);
 		}
 		
@@ -476,7 +458,7 @@ int nonblock;
 	}
 	while(todo && space);
 
-	nano_unlock(pupd);
+	up(&pupd->npd_sem);
 	return(size - todo);
 }
 
@@ -604,7 +586,7 @@ struct net_proto * pro;
 {
 	printk("ELKS NANO domain Sockets\n");
 	sock_register(AF_NANO,&nano_proto_ops);
-};
+}
 
 	
 #endif /* CONFIG_NANO */

@@ -5,7 +5,7 @@
  *
  * The kernel side part of the ELKS TCP/IP stack. It uses tcpdev.c
  * to communicate with the actual TCP/IP stack that resides in
- * user space (ktcpd)..
+ * user space (ktcp)..
  */
 
 #include <linuxmt/errno.h>
@@ -45,7 +45,9 @@ int len;
 			tcpdev_clear_data_avail();
 			break;
 		case TDT_AVAIL_DATA:
+			down(&sock->sem);
 			sock->avail_data = r->ret_value;
+			up(&sock->sem);
 			tcpdev_clear_data_avail();
 		default:
 			wake_up(sock->wait);
@@ -252,6 +254,8 @@ int nonblock;
 	while(bufin_sem == 0)
 		interruptible_sleep_on(sock->wait);
 
+	down(&sock->sem);
+	
 	r = tdin_buf;
 	ret = r->ret_value;
 
@@ -259,6 +263,9 @@ int nonblock;
 		memcpy_tofs(ubuf, &r->data, ret);
 		sock->avail_data = 0;
 	}
+	
+	up(&sock->sem);
+	
 	tcpdev_clear_data_avail();
 
 	sum += ret;	

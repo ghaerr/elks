@@ -37,6 +37,7 @@ static struct unix_proto_data * unix_data_alloc()
 			upd->bp_head = upd->bp_tail = 0;
 			upd->inode = NULL;
 			upd->peerupd = NULL;
+			upd->sem = 0;
 			return(upd);
 		}
 	}
@@ -85,24 +86,6 @@ struct unix_proto_data *upd;
 	}
 	--upd->refcnt;
 }
-
-static void unix_lock(upd)
-struct unix_proto_data *upd;
-{
-	while (upd->lock_flag) {
-		sleep_on(&upd->wait);
-	}
-	upd->lock_flag = 1;
-}
-
-
-static void unix_unlock(upd)
-struct unix_proto_data *upd;
-{
-	upd->lock_flag = 0;
-	wake_up(&upd->wait);
-}
-
 
 static int unix_create(sock, protocol)
 struct socket * sock;
@@ -389,7 +372,7 @@ int nonblock;
  *	watching for wraparound. Then we wake up the writer.
  */
    
-	unix_lock(upd);
+	down(&upd->sem);
 	do {
 		int part, cando;
 
@@ -417,7 +400,7 @@ int nonblock;
 		avail = UN_BUF_AVAIL(upd);
 	} 
 	while(todo && avail);
-	unix_unlock(upd);
+	up(&upd->sem);
 	return(size - todo);
 }
 
@@ -466,8 +449,7 @@ int nonblock;
  *	watching for wraparound. Then we wake up the reader.
  */
    
-	unix_lock(pupd);
-
+	down(&pupd->sem);
 	do 
 	{
 		int part, cando;
@@ -488,7 +470,7 @@ int nonblock;
 		if (sock->state == SS_DISCONNECTING) 
 		{
 			send_sig(SIGPIPE, current, 1);
-			unix_unlock(pupd);
+			up(&pupd->sem);
 			return(-EPIPE);
 		}
 		
@@ -511,7 +493,7 @@ int nonblock;
 	}
 	while(todo && space);
 
-	unix_unlock(pupd);
+	up(&pupd->sem);
 	return(size - todo);
 }
 
@@ -636,7 +618,7 @@ struct net_proto * pro;
 {
 	printk("ELKS UNIX domain Sockets\n");
 	sock_register(AF_UNIX,&unix_proto_ops);
-};
+}
 
 	
 #endif /* CONFIG_UNIX */
