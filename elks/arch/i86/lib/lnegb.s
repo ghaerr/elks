@@ -1,4 +1,4 @@
-| lnegb.s
+! lnegb.s
 
 	.globl	lnegb
 	.globl	lnegub
@@ -6,6 +6,7 @@
 	.even
 
 lnegb:
+
 lnegub:
 	neg	ax
 	neg	bx

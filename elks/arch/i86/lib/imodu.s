@@ -1,5 +1,5 @@
-| imodu.s
-| imodu doesn't preserve dx (returns quotient in it)
+! imodu.s
+! imodu doesn't preserve dx (returns quotient in it)
 
 	.globl imodu
 	.text
@@ -8,6 +8,5 @@
 imodu:
 	xor	dx,dx
 	div	bx
-	mov	ax,dx		
-| instruction queue full so xchg slower
+	mov	ax,dx		! instruction queue full so xchg slower
 	ret

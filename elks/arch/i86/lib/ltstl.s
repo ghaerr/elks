@@ -1,5 +1,5 @@
-| ltstl.s
-| ltstl, ltstul don't preserve bx
+! ltstl.s
+! ltstl, ltstul don't preserve bx
 
 	.globl	ltstl
 	.globl	ltstul
@@ -22,6 +22,5 @@ LTST_NOT_SURE:
 	.even
 
 LTST_FIX_SIGN:
-	inc	bx		
-| clear ov and mi, set ne for greater than
+	inc	bx		! clear ov and mi, set ne for greater than
 	ret

@@ -1,5 +1,5 @@
-# imod.s
-# imod doesn't preserve dx (returns quotient in it)
+! imod.s
+! imod doesn't preserve dx (returns quotient in it)
 
 	.globl imod
 	.text
@@ -7,7 +7,6 @@
 
 imod:
 	cwd
-	idiv	bx
-# Instruction queue full so xchg slower
+	idiv	bx		! Instruction queue full so xchg slower
 	mov	ax,dx
 	ret

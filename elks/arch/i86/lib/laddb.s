@@ -1,4 +1,4 @@
-| laddb.s
+! laddb.s
 
 	.globl	laddb
 	.globl	laddub
@@ -6,6 +6,7 @@
 	.even
 
 laddb:
+
 laddub:
 	add	bx,2(di)
 	adc	ax,(di)

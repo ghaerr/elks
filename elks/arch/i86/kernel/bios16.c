@@ -34,6 +34,7 @@ struct biosparms *bios_data_table=&bdt;
  * is managed in irqtab.c where I've found this mode first
  * ChM 10/99
  */
+
 #ifndef CONFIG_ROMCODE
 cseg_our_ds: 
 	.word	0
@@ -43,14 +44,19 @@ cseg_our_ds:
 #endif	
 	
 	.globl  _call_bios
+
 _call_bios:
 	pushf			
-* Things we want to save - direction flag BP ES
+
+! Things we want to save - direction flag BP ES
+
 	push bp		
 	push es	
 	push si
 	push di
-* We have to save DS carefully.	
+
+! We have to save DS carefully.	
+
 	mov ax, ds		
 
 #ifdef CONFIG_ROMCODE
@@ -58,78 +64,114 @@ _call_bios:
         mov es,bx       ;es is already stored
         seg es
 #else
-   * We can find our DS from CS now.
+   ! We can find our DS from CS now.
 	seg cs		
 #endif
 	mov our_ds, ax
-	
+
 	mov bx, _bios_data_table
-* Load the register block from the table	
+
+!	Load the register block from the table	
+
 	mov cx,6[bx]
 	mov dx,8[bx]
 	mov si,10[bx]
 	mov di,12[bx]
 	mov bp,14[bx]
-* ES in 16
+
+!	ES in 16
+
 	mov ax,16[bx]
 	mov es,ax
-* Flags in 20
+
+!	Flags in 20
+
 	mov ax,20[bx]	
-* Flags to end up with	
-	push ax		
-* AX final 	
+
+!	Flags to end up with	
+
+	push ax
+
+!	AX final 	
+
 	mov ax, 2[bx]	
-* Stack is now Flags, AX
+
+!	Stack is now Flags, AX
+
 	push ax		
-* DS value final
+
+!	DS value final
+
 	mov ax, 18[bx]  
-* Load BX	
+
+!	Load BX	
+
 	mov bx, 4[bx]	
-* Stack now holds stuff to restore followed by the call values 
-* for flags,AX 
-*********** DS is now wrong we cannot load from the array again **********/
-* DS desired
+
+!	Stack now holds stuff to restore followed by the call values 
+!	for flags,AX
+
+! ***** DS is now wrong we cannot load from the array again *****
+
+!	DS desired
+
 	mov ds,ax
-* AX desired	
+
+!	AX desired	
+
 	pop ax
-* Flags desired
+
+!	Flags desired
+
 	popf
-*
-*	Do a disk interrupt.
-*
+
+!	Do a disk interrupt.
+
 	int #0x13
-*
-*	Now recover the results
-*
-* Make some breathing room
+
+!	Now recover the results
+
+!	Make some breathing room
+
  	pushf
  	push bx
  	push ax
  	mov  ax,ds
- * Stack is now returned FL, BX, AX, DS
+
+!	Stack is now returned FL, BX, AX, DS
+
  	push ax 
 
 #ifdef CONFIG_ROMCODE
         mov ax,#CONFIG_ROM_IRQ_DATA
         mov ds,ax       ;we can use ds for one fetch
 #else
-   * We can find our DS from CS now.
+   ! We can find our DS from CS now.
 	seg cs		
 #endif
  	mov  ax, our_ds
 
-* Recover our DS segment 	
+!	Recover our DS segment 	
+
  	mov  ds, ax
  	mov  bx, _bios_data_table
-********** We can now use the bios data table again ***************
+
+! ***** We can now use the bios data table again *****
+
   	pop ax
-* Save the old DS 
+
+!	Save the old DS 
+
   	mov 18[bx], ax
  	pop ax
-* Save the old AX 	
+
+!	Save the old AX 	
+
  	mov 2[bx], ax
 	pop ax
-* Save the old BX	
+
+!	Save the old BX	
+
 	mov 4[bx], ax
 	mov 6[bx], cx
 	mov 8[bx], dx
@@ -139,16 +181,18 @@ _call_bios:
 	mov ax,es
 	mov 16[bx], ax
 	pop ax
-* Pop the returned flags off
+
+!	Pop the returned flags off
+
 	mov 20[bx], ax
-*
-*	Restore things we must save
-*	 
+
+!	Restore things we must save
+
 	pop di
 	pop si
 	pop es
 	pop bp
 	popf
 	ret
+
 #endasm
-	

@@ -1,4 +1,4 @@
-| lorb.s
+! lorb.s
 
 	.globl	lorb
 	.globl	lorub
@@ -6,6 +6,7 @@
 	.even
 
 lorb:
+
 lorub:
 	or	ax,(di)
 	or	bx,2(di)

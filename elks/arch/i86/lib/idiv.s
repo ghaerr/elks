@@ -1,5 +1,5 @@
-| idiv.s
-| idiv_ doesn't preserve dx (returns remainder in it)
+! idiv.s
+! idiv_ doesn't preserve dx (returns remainder in it)
 
 	.globl idiv_
 	.text

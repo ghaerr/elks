@@ -1,4 +1,4 @@
-| landl.s
+! landl.s
 
 	.globl	landl
 	.globl	landul
@@ -6,6 +6,7 @@
 	.even
 
 landl:
+
 landul:
 	and	ax,[di]
 	and	bx,2[di]

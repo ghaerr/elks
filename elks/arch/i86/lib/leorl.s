@@ -1,4 +1,4 @@
-| leorl.s
+! leorl.s
 
 	.globl	leorl
 	.globl	leorul
@@ -6,6 +6,7 @@
 	.even
 
 leorl:
+
 leorul:
 	xor	ax,[di]
 	xor	bx,2[di]

@@ -1,5 +1,5 @@
-| isr.s
-| isr doesn't preserve cl
+! isr.s
+! isr doesn't preserve cl
 
 	.globl isr
 	.text

@@ -1,9 +1,10 @@
-| int inb( int port );
-| reads a byte from the i/o port  port  and returns it
+! int inb( int port );
+! reads a byte from the i/o port  port  and returns it
 
 	.globl	_inb
 	.text
 	.even
+
 _inb:
 	pop	bx
 	pop	dx
@@ -13,9 +14,9 @@ _inb:
 	sub	ah,ah
 	jmp	bx
 
-| int inb( int port );
-| reads a byte from the i/o port  port  and returns it. Uses an in
-| from port 0x80 to slow the process down.
+! int inb( int port );
+! reads a byte from the i/o port  port  and returns it. Uses an in
+! from port 0x80 to slow the process down.
 
 	.globl	_inb_p
 	.text
@@ -30,4 +31,3 @@ _inb_p:
 	in	dx
 	sub	ah,ah
 	jmp	bx
-

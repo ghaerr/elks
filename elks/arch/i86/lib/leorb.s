@@ -1,4 +1,4 @@
-| leorb.s
+! leorb.s
 
 	.globl	leorb
 	.globl	leorub
@@ -6,6 +6,7 @@
 	.even
 
 leorb:
+
 leorub:
 	xor	ax,(di)
 	xor	bx,2(di)

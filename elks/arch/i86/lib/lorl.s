@@ -1,4 +1,4 @@
-| lorl.s
+! lorl.s
 
 	.globl	lorl
 	.globl	lorul
@@ -6,6 +6,7 @@
 	.even
 
 lorl:
+
 lorul:
 	or	ax,[di]
 	or	bx,2[di]

@@ -140,36 +140,36 @@ jiff_t loops;
 #asm
 	.text
 _delay:
-*
-*	Create the stack frame
-*
+
+!	Create the stack frame
+
 	push bp
 	mov bp,sp
-*
-* Get the high word
-*
+
+!	Get the high word
+
 	mov ax,6[bp]
-*
-*	Delay the higher word
-*
+
+!	Delay the higher word
+
 	or ax,ax
 	jz  dellow
 axlp:
 	xor bx,bx
-*
-*	Delay a complete low word loop time
-*
+
+!	Delay a complete low word loop time
+
 bxlp:
 	dec bx
 	jnz bxlp
-*
-*	Now back around for the next high word
-*
+
+!	Now back around for the next high word
+
 	dec ax
 	jnz axlp
-*
-*	Delay for the low part of the time
-*
+
+!	Delay for the low part of the time
+
 dellow:
 	mov ax,4[bp]
 	or ax,bx
@@ -177,9 +177,9 @@ dellow:
 dellp:
 	dec ax
 	jnz dellp
-*
-*	Recover stack frame and return
-*
+
+!	Recover stack frame and return
+
 deldone:
 	pop bp
 	ret
@@ -215,4 +215,3 @@ int calibrate_delay()
 	printk("failed\n");
 	return -1;
 }
-

@@ -1,4 +1,4 @@
-| lcoml.s
+! lcoml.s
 
 	.globl	lcoml
 	.globl	lcomul
@@ -6,6 +6,7 @@
 	.even
 
 lcoml:
+
 lcomul:
 	not	ax
 	not	bx

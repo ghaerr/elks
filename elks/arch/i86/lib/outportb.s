@@ -1,9 +1,10 @@
-| void outb( char value, int port);
-| writes the byte  value  to  the i/o port  port
+! void outb( char value, int port);
+! writes the byte  value  to  the i/o port  port
 
 	.globl	_outb
 	.text
 	.even
+
 _outb:
 	pop	bx
 	pop	ax
@@ -12,12 +13,13 @@ _outb:
 	out	dx
 	jmp	bx
 
-| void outb_p( char value, int port);
-| writes the byte  value  to  the i/o port  port
+! void outb_p( char value, int port);
+! writes the byte  value  to  the i/o port  port
 
 	.globl	_outb_p
 	.text
 	.even
+
 _outb_p:
 	pop	bx
 	inb	0x80

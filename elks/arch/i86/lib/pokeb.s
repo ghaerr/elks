@@ -1,9 +1,10 @@
-| void pokeb( unsigned segment, char *offset, char value );
-| writes the byte  value  at the far pointer  segment:offset
+! void pokeb( unsigned segment, char *offset, char value );
+! writes the byte  value  at the far pointer  segment:offset
 
 	.define	_pokeb
 	.text
 	.even
+
 _pokeb:
 	mov	cx,ds
 	pop	dx

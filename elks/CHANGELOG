@@ -16,18 +16,38 @@ Christoph Plattner      <Christoph.Plattner@dot.at>     31 Jan 2000-02 Feb 2000
 David Murn              <scuffer@hups.apana.org.au>     11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
-Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>    20 Jun 2001-22 Oct 2001
+Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>    20 Jun 2001-11 Nov 2001
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001
 Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
 Peter L Vachuska        <pvachusk@nconnect.net>         13 Aug 2001
-Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998- 5 Nov 2001
+Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-13 Nov 2001
 Roman Festchook         <roma@polesye.net>              27 Oct 2001
 Simon Weijgers          <simon@weijgers.com>            16 Sep 1998-15 Nov 1999
 Simon Wood                                              06 Jan 2000-12 Jan 2000
 Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Tue Nov 13 17:40:00 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Renamed config vars as follows:
+
+		CONFIG_ARCH_PC		CONFIG_ARCH_IBMPC
+		CONFIG_ARCH_PC_AT	CONFIG_PC_AT
+		CONFIG_ARCH_PC_AUTO	CONFIG_PC_AUTO
+		CONFIG_ARCH_PC_MCA	CONFIG_PC_MCA
+		CONFIG_ARCH_PC_XT	CONFIG_PC_XT
+		CONFIG_ROM_IS186	CONFIG_CPU_80186
+		CONFIG_ROM_IS286	CONFIG_CPU_80286
+		CONFIG_ROM_IS386	CONFIG_CPU_80386
+		CONFIG_ROM_IS486	CONFIG_CPU_80486
+		CONFIG_ROM_IS86 	CONFIG_CPU_8086
+
+Mon Nov 12 14:05:37 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Corrected faulty ASM comment markers to remove unnecessary display
+	  of assembly comments.
 
 Sun Nov 11 19:50:43 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 

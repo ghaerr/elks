@@ -1,4 +1,4 @@
-| lcomb.s
+! lcomb.s
 
 	.globl	lcomb
 	.globl	lcomub
@@ -6,6 +6,7 @@
 	.even
 
 lcomb:
+
 lcomub:
 	not	ax
 	not	bx

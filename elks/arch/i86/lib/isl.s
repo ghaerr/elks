@@ -1,5 +1,5 @@
-| isl.s
-| isl, islu don't preserve cl
+! isl.s
+! isl, islu don't preserve cl
 
 	.globl isl
 	.globl islu
@@ -7,6 +7,7 @@
 	.even
 
 isl:
+
 islu:
 	mov	cl,bl
 	shl	ax,cl

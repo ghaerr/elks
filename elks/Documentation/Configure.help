@@ -103,7 +103,7 @@ CONFIG_ROMCODE
   use as a replacement boot ROM.
 
 Select the processor architecture
-CONFIG_ROM_IS86
+CONFIG_CPU_8086
   Select the target processor for which this kernel image is to be
   built. The available options are:
 

@@ -1,4 +1,4 @@
-| ldecb.s
+! ldecb.s
 
 	.globl	ldecb
 	.globl	ldecub
@@ -6,6 +6,7 @@
 	.even
 
 ldecb:
+
 ldecub:
 	cmp	2(bx),*0
 	je	LDEC_BOTH

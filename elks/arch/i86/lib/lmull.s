@@ -1,5 +1,5 @@
-| lmull.s
-| lmull, lmulul don't preserve cx, dx
+! lmull.s
+! lmull, lmulul don't preserve cx, dx
 
 	.globl	lmull
 	.globl	lmulul
@@ -7,6 +7,7 @@
 	.even
 
 lmull:
+
 lmulul:
 	mov	cx,ax
 	mul	word ptr 2[di]

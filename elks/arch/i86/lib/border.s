@@ -1,4 +1,4 @@
-| border.s
+! border.s
 
 	.globl _ntohl
 	.globl _htonl

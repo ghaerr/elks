@@ -1,9 +1,10 @@
-| int peekb( unsigned segment, char *offset );
-| returns the (unsigned) byte at the far pointer  segment:offset
+! int peekb( unsigned segment, char *offset );
+! returns the (unsigned) byte at the far pointer  segment:offset
 
 	.define	_peekb
 	.text
 	.even
+
 _peekb:
 	mov	cx,ds
 	pop	dx

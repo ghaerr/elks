@@ -1,4 +1,4 @@
-| lincb.s
+! lincb.s
 
 	.globl	lincb
 	.globl	lincub
@@ -6,6 +6,7 @@
 	.even
 
 lincb:
+
 lincub:
 	inc	2(bx)
 	je	LINC_HIGH_WORD

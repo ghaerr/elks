@@ -1,8 +1,10 @@
 !
-1 void farmemset(char *off, int seg, int value, size_t count)
+! void farmemset(char *off, int seg, int value, size_t count)
 !
+
 	.globl _fmemset
 	.text
+
 _fmemset:
 	push	bp
 	mov	bp,sp
@@ -15,6 +17,7 @@ _fmemset:
 	test cl,1
 	jz ___memset_words
 	stosb
+
 ___memset_words:
 	shr	cx,#1
 	mov	ah,al
@@ -24,4 +27,3 @@ ___memset_words:
 	pop	es
 	pop	bp
 	ret
-

@@ -1,4 +1,4 @@
-| ldecl.s
+! ldecl.s
 
 	.globl	ldecl
 	.globl	ldecul
@@ -6,6 +6,7 @@
 	.even
 
 ldecl:
+
 ldecul:
 	cmp	word ptr [bx],*0
 	je	LDEC_BOTH

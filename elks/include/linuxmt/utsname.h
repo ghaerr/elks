@@ -5,7 +5,7 @@ struct utsname {
 	char sysname[9];
 	char nodename[65];
 	char release[15];
-	char version[40];
+	char version[42];
 	char machine[9];
 };
 

@@ -53,11 +53,11 @@ else
 	comment 'Hardware Facilities'
 
 	choice 'Processor'			\
-	    "8086	CONFIG_ROM_IS86		\
-	     80186	CONFIG_ROM_IS186	\
-	     80286	CONFIG_ROM_IS286	\
-	     80386	CONFIG_ROM_IS386	\
-	     80486+	CONFIG_ROM_IS486"		8086
+	    "8086	CONFIG_CPU_8086		\
+	     80186	CONFIG_CPU_80186	\
+	     80286	CONFIG_CPU_80286	\
+	     80386	CONFIG_CPU_80386	\
+	     80486+	CONFIG_CPU_80486"		8086
 
 	mainmenu_option next_comment
 	    comment 'System Hardware'

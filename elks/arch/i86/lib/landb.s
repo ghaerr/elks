@@ -1,4 +1,4 @@
-| landb.s
+! landb.s
 
 	.globl	landb
 	.globl	landub
@@ -6,6 +6,7 @@
 	.even
 
 landb:
+
 landub:
 	and	ax,(di)
 	and	bx,2(di)

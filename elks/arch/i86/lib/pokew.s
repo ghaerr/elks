@@ -1,5 +1,5 @@
-| void pokew( unsigned segment, int *offset, int value );
-| writes the word value  at the far pointer  segment:offset
+! void pokew( unsigned segment, int *offset, int value );
+! writes the word value  at the far pointer  segment:offset
 
 	.define	_pokew
 	.text

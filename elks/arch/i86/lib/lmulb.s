@@ -1,5 +1,5 @@
-| lmulb.s
-| lmulb, lmulub don't preserve cx, dx
+! lmulb.s
+! lmulb, lmulub don't preserve cx, dx
 
 	.globl	lmulb
 	.globl	lmulub
@@ -7,6 +7,7 @@
 	.even
 
 lmulb:
+
 lmulub:
 	mul	2(di)
 	xchg	ax,bx

@@ -1,9 +1,10 @@
-| int peekw( unsigned segment, int *offset );
-| returns the word at the far pointer  segment:offset
+! int peekw( unsigned segment, int *offset );
+! returns the word at the far pointer  segment:offset
 
 	.define	_peekw
 	.text
 	.even
+
 _peekw:
 	mov	cx,ds
 	pop	dx

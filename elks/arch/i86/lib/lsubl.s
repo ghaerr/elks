@@ -1,4 +1,4 @@
-| lsubl.s
+! lsubl.s
 
 	.globl	lsubl
 	.globl	lsubul
@@ -6,6 +6,7 @@
 	.even
 
 lsubl:
+
 lsubul:
 	sub	ax,[di]
 	sbb	bx,2[di]

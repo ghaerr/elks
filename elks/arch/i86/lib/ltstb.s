@@ -1,5 +1,5 @@
-| ltstb.s
-| ltstb, ltstub don't preserve ax
+! ltstb.s
+! ltstb, ltstub don't preserve ax
 
 	.globl	ltstb
 	.globl	ltstub
@@ -7,6 +7,7 @@
 	.even
 
 ltstb:
+
 ltstub:
 	test	ax,ax
 	je	LTST_NOT_SURE
@@ -22,5 +23,5 @@ LTST_NOT_SURE:
 	.even
 
 LTST_FIX_SIGN:
-	inc	ax		| clear ov and mi, set ne for greater than
+	inc	ax		! clear ov and mi, set ne for greater than
 	ret
