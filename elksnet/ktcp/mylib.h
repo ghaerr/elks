@@ -2,6 +2,7 @@
 #define MYLIB_H
 
 #ifndef ntohs
+
 #define ntohs(x)	( (((x) >> 8) & 0xff) | ((x) << 8) )
 #define htons(x)	ntohs(x)
 #endif

@@ -21,14 +21,15 @@
 
 char buf[128];
 
+/*#define USE_ASM*/
+
 static struct tcp_retrans_list_s *retrans_list;
 
+#ifndef USE_ASM
 __u16 tcp_chksum(struct iptcp_s *h)
 {
     __u32 sum = htons(h->tcplen);
     __u16 *data = (__u16) h->tcph, len = h->tcplen;
-
-    /* I will optimize this for 8086 later */
 
     for(; len > 1 ; len -= 2)
 	sum += *data++;
@@ -44,13 +45,64 @@ __u16 tcp_chksum(struct iptcp_s *h)
 
     return ~((sum & 0xffff) + ((sum >> 16) & 0xffff));
 }
+#else
+#asm
+/*__u16 tcp_chksum(struct iptcp_s *h)*/
+	.text
+	.globl _tcp_chksum
+_tcp_chksum:
+	push	bp
+	mov	bp, sp
+	push	di
+	push	si
+	
+	mov	bx, 4[bp]	! h
+	mov	ax, 4[bx]	! h->tcplen
+	mov	cx, ax
+	xchg	al, ah
+	
+	mov	di, [bx]	! h->iph
+	
+	mov	si, 2[bx]	! h->tcph
+	mov	bx, cx
+	sar	cx, #$1
 
+	mov	dx, bx
+	and	bx, #$1
+	jz	loop1
+	
+	mov	bx, dx
+	dec	bx
+	mov	dl, [si + bx]
+	xor	dh, dh
+	add	ax, dx
+		
+loop1:        
+	adc	ax, [si]
+        inc si
+        inc si
+        dec	cx
+        jg	loop1
+
+	adc	ax, $E[di]	! h->iph->saddr
+	adc	ax, $C[di]
+	adc	ax, $12[di]	! h->iph->daddr
+	adc	ax, $10[di]
+	adc	ax, #$600
+
+        not	ax
+
+	pop	si
+	pop	di
+	pop	bp
+	ret
+#endasm
+#endif
+#ifndef USE_ASM
 __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len)
 {
     __u32 sum = htons(len);
     __u16 *data = (__u16 *) h;
-
-    /* I will optimize this for 8086 later */
 
     for(; len > 1 ; len -= 2)
 	sum += *data++;
@@ -66,7 +118,55 @@ __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len)
 
     return ~((sum & 0xffff) + ((sum >> 16) & 0xffff));
 }
+#else
+#asm
+/*__u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len)*/
+	.text
+	.globl _tcp_chksumraw
+_tcp_chksumraw:
+	push	bp
+	mov	bp, sp
+	push	di
+	push	si
+	
+	mov	si, 4[bp]	! h
+	mov	ax, $E[bp]	! len
+	mov	cx, ax
+	xchg	al, ah
+	mov	bx, cx
+	sar	cx, #$1
 
+	mov	dx, bx
+	and	bx, #$1
+	jz	loop2
+	
+	mov	bx, dx
+	dec	bx
+	mov	dl, [si + bx]
+	xor	dh, dh
+	add	ax, dx
+		
+loop2:        
+	adc	ax, [si]
+        inc si
+        inc si
+        dec	cx
+        jg	loop2
+
+	adc	ax, 6[bp]
+	adc	ax, 8[bp]
+	adc	ax, $A[bp]
+	adc	ax, $C[bp]	
+	adc	ax, #$600
+
+        not	ax
+	
+	pop	si
+	pop	di
+	pop	bp
+	ret
+#endasm
+#endif
 struct tcp_retrans_list_s *rmv_from_retrans(struct tcp_retrans_list_s *n)
 {
     struct tcp_retrans_list_s *next = n->next;

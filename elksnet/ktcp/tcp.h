@@ -149,7 +149,8 @@ struct tcpcb_list_s *tcpcb_find();
 struct tcpcb_list_s *tcpcb_find_by_sock();
 void tcpcb_remove();
 
-__u16 tcp_chksum();
+__u16 tcp_chksum(struct iptcp_s *h);
+__u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len);
 void tcp_output();
 
 #endif

@@ -34,6 +34,12 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Tue Jul 30 01:30:23 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Added optimized assembly version of the checksum functions
+	  in TCP/IP stack. Saved 608 bytes and checksumming is around
+	  five times faster.
+
 Sun Jul 28 18:32:52 EEST 2002 Harry Kalogirou <harkal@gmx.net>
 
 	* Added TCP/IP header compression to SLIP (CSLIP)

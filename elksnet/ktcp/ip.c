@@ -37,17 +37,58 @@ int ip_init(void)
     return 0;
 }
 
+#if 0
 __u16 ip_calc_chksum(char *data, int len)
 {
     __u32 sum = 0;
     int i;
     __u16 *p = (__u16 *) data;
     
-    for (i=0; i < (len >> 1) ; i++)
+    len >>= 1;
+    
+    for (i=0; i < len ; i++){
 	sum += *p++;
+    }
     
     return ~((sum & 0xffff) + ((sum >> 16) & 0xffff));
 }
+#endif
+#if 1
+#asm
+/*__u16 ip_calc_chksum(char *data, int len)*/
+	.text
+	.globl _ip_calc_chksum
+_ip_calc_chksum:
+
+	push	bp
+	mov	bp,sp
+	push	di
+	
+	mov	cx, 6[bp]
+	sar	cx, 1
+	mov	di, 4[bp]
+	mov	ax, [di]
+	inc	di
+	inc	di
+	dec	cx
+loop1:
+	adc	ax, [di]
+        inc	di
+        inc	di
+
+        dec	cx
+        jnz	loop1;
+
+	not	ax
+	
+	pop di
+	pop bp
+	
+	ret
+#endasm
+	
+
+#endif
 
 void ip_print(struct iphdr_s *head)
 {

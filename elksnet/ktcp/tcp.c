@@ -392,7 +392,7 @@ void tcp_process(struct iphdr_s *iph)
 
     if (tcp_chksum(&iptcp) != 0) {
 #if 0
-	printf("TCP check sum failed\n");
+	printf("TCP check sum failed (%x) %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
 #endif
 	return;
     }
