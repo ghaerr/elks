@@ -22,7 +22,7 @@ unsigned int len;
 	 *	User process boundaries
 	 */
 	
-	if((__pptr)(ptr+len) > currentp->t_endstack)
+	if((__pptr)(ptr+len) > currentp->t_endseg)
 		return -EFAULT;
 		
 	return 0;

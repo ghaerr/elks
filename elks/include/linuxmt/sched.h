@@ -43,7 +43,7 @@ struct task_struct
 /* Executive stuff */
 	__registers t_regs;
 #if 1
-	__pptr t_endtext, t_begstack, t_endstack, t_endbrk; 
+	__pptr t_enddata, t_begstack, t_endbrk, t_endseg;
 #else
 	__uint t_num;			/* What is this for? */
 	/* Most of these are not used! */

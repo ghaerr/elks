@@ -356,11 +356,15 @@ _fake_save_regs:
 #endif
 #endasm
 
+/*
+ * We only need to do this as long as we support old format binaries
+ * that grow stack and heap towards each other
+ */
 void stack_check()
 {
 	register __ptask currentp = current;
-	if (currentp->t_regs.sp < currentp->t_endbrk)
-	{
+	if ((currentp->t_begstack > currentp->t_enddata) &&
+	    (currentp->t_regs.sp < currentp->t_endbrk)) {
 		printk("STACK (%d) ENTERED BSS (%ld) - PROCESS TERMINATING\n", currentp->t_regs.sp, currentp->t_endbrk);
 		do_exit(SIGSEGV);
 	}

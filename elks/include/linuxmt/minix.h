@@ -23,4 +23,13 @@ struct minix_exec_hdr
 	unsigned long unused2; 
 };
 
+struct minix_supl_hdr
+{
+	long		msh_trsize;	/* text relocation size */
+	long		msh_drsize;	/* data relocation size */
+	long		msh_tbase;	/* text relocation base */
+	long		msh_dbase;	/* data relocation base */
+};
+
+
 #endif

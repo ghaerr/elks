@@ -4,6 +4,16 @@
  *	Memory allocator for ELKS. We keep a hole list so we can keep the
  *	malloc arena data in the kernel npot scattered into hard to read 
  *	user memory.
+ *
+ *	20th Jan 2000	Alistair Riddoch (ajr@ecs.soton.ac.uk)
+ *			For reasons explained in fs/exec.c, support is
+ *			required for holes which do not start at the
+ *			the bottom of the segment. To facilitate this
+ *			I have added a hole_seg field to the hole descriptor
+ *			structure which indicates the segment number the hole
+ *			exists in. Later we will add support for growing holes
+ *			in both directions to allow for a growing stack at the
+ *			bottom and a heap at the top.
  */
  
 #include <linuxmt/types.h>
@@ -17,9 +27,17 @@
  
 #define MAX_SEGMENTS	8+(MAX_TASKS*2)
 
+/* This option specifies whether we have holes that are in a segment not equal
+ * to the page base. This is require for binaries with the stack at the
+ * bottom */
+/* #define FLOAT_HOLES /**/
+
 struct malloc_hole
 {
 	seg_t		page_base;	/* Pages */
+#ifdef FLOAT_HOLES
+	seg_t		hole_seg;	/* segment */
+#endif
 	segext_t	extent;		/* Pages */
 	struct malloc_hole *next;	/* Next in list memory order */
 	int		refcount;
@@ -167,8 +185,14 @@ seg_t base;
  *	Allocate a segment
  */
 			
+#ifdef FLOAT_HOLES
+seg_t mm_alloc(pages, offset)
+segext_t pages;
+segext_t offset;
+#else
 seg_t mm_alloc(pages)
 segext_t pages;
+#endif
 {
 	/*
 	 *	Which hole fits best ?
@@ -187,7 +211,13 @@ segext_t pages;
 	split_hole(m, pages);
 	m->flags=HOLE_USED;
 	m->refcount = 1;
+#ifdef FLOAT_HOLES
+	m->hole_seg = m->page_base - offset;
+	/* FIXME must check this is legal */
+	return m->hole_seg;
+#else
 	return m->page_base;
+#endif
 }
 
 /* 	Increase refcount */
@@ -244,15 +274,24 @@ seg_t base;
 }
 
 /*	This is just to keep malloc et. al happy - it doesn't really do anything
- * 	- any memory is preallocated via chmem */
+ * 	- any memory is preallocated via chmem
+ */
+
+/* If the stack is at the top of the data segment then we have to leave
+ * room for it, otherwise we just need a safety margin of 0x100 bytes
+ * AJR <ajr@ecs.soton.ac.uk> 27/01/2000
+ */
+#define HEAP_LIMIT ((currentp->t_begstack > currentp->t_enddata) ? \
+			USTACK_BYTES : 0x100)
+
 
 int sys_brk(len)
 __pptr len;
 {
 	register __ptask currentp = current;
 
-	if (len < currentp->t_endtext || 
-	    len > (currentp->t_endstack - USTACK_BYTES)) { 
+	if (len < currentp->t_enddata || 
+	    (len > (currentp->t_endseg - HEAP_LIMIT))) {
 		return -ENOMEM; 
 	}
 

@@ -10,6 +10,22 @@
  *			is used in sys_exec to offset loading of the processes
  *			data at run time, new MINIX_DLLID library format, and
  *			new MINIX_S_SPLITID binary format.
+ *	21th Jan 2000	Alistair Riddoch (ajr@ecs.soton.ac.uk)
+ *			Rethink of binary format leads me to think that the
+ *			shared library route is not worth persuing with the
+ *			implemented so far. Removed hacks from exec()
+ *			related to this, and instead add support for
+ *			binaries which have the stack below the data
+ *			segment. Binaries in this form have a large minix
+ *			format header (0x30 bytes rather than 0x20) which
+ *			contain a field which is reffered to in the a.out.h
+ *			file as "data relocation base". This is taken as the
+ *			address within the data segment where the program
+ *			expects its data segment to begin. Below this we
+ *			then put the stack. This requires adding support
+ *			For allocating blocks of memory which do not start
+ *			at the bottom of the segment. See arch/i86/mm/malloc.c
+ *			for details.
  */
 
 #include <linuxmt/vfs.h>
@@ -33,10 +49,13 @@
 static struct file file;
 #ifdef CONFIG_EXEC_MINIX
 static struct minix_exec_hdr mh;
+static struct minix_supl_hdr msuph;
 #endif
 #ifdef CONFIG_EXEC_MSDOS
 static struct msdos_exec_hdr mshdr;
 #endif
+
+#define INIT_HEAP 0x1000
 
 /*
  *	FIXME: Semaphore on entry needed.
@@ -56,6 +75,7 @@ int slen;		/* Size of built stack */
 	char *ptr;
 	size_t count;
 	int i;
+	seg_t stack_top = 0;
 #ifdef CONFIG_EXEC_SUGID
 	unsigned int effuid, effgid;
 	int suidfile, sgidfile;
@@ -126,11 +146,7 @@ int slen;		/* Size of built stack */
 	 */
 	
 	if( result != sizeof(mh) || 
-#if CONFIG_SHLIB
-		(mh.type!=MINIX_SPLITID && mh.type!=MINIX_S_SPLITID) ||
-#else
 		(mh.type!=MINIX_SPLITID) ||
-#endif
 		mh.chmem<1024 || mh.tseg==0)
 	{
 		printd_exec1("EXEC: bad header, result %d",result);
@@ -138,9 +154,21 @@ int slen;		/* Size of built stack */
 		goto close_readexec;
 	}
 	/* I am so far unsure about whether we need this, or the S_SPLITID format */
-	if (mh.type!=MINIX_S_SPLITID) {
-		mh.unused = 0;
+	if ((unsigned int)mh.hlen == 0x30) {
+		/* BIG HEADER */
+		tregs->ds=get_ds();
+		result=filp->f_op->read(inode, &file, &msuph, sizeof(msuph));
+		tregs->ds=ds;
+		if (result != sizeof(msuph)) {
+			printd_exec1("EXEC: bad secondary header, result %d",
+					result);
+			retval=-ENOEXEC;
+			goto close_readexec;
+		}
+		stack_top = (seg_t)msuph.msh_dbase;
+		printk("SBASE = %x\n", stack_top);
 	}
+		
 	execformat=EXEC_MINIX;
 /* This looks very hackish and it is
  * but bcc can't handle a goto xyz; and a subsequent xyz:
@@ -195,7 +223,13 @@ blah:
 	 * mh.chmem is "total size" requested by ld. Note that ld used to ask 
 	 * for (at least) 64K
 	 */
-	len=(mh.chmem+15)&~15L;
+	if (stack_top) {
+		len = mh.dseg + mh.bseg + stack_top + INIT_HEAP;
+		printk("NB [dseg = %x]\n", (segext_t)(len>>4));
+	} else {
+		len = mh.chmem;
+	}
+	len=(len+15)&~15L;
 	if (len > 0x10000L)
 	{
 		retval=-ENOMEM;
@@ -226,7 +260,7 @@ blah:
 	}
 
 	tregs->ds=dseg;
-	result=filp->f_op->read(inode, &file, (char *)mh.unused, mh.dseg);
+	result=filp->f_op->read(inode, &file, (char *)stack_top, mh.dseg);
 	tregs->ds=ds;
 	if(result!=mh.dseg)
 	{
@@ -241,7 +275,7 @@ blah:
 	 *	Wipe the BSS.
 	 */
 	 
-	ptr = (char *)mh.dseg;
+	ptr = ((char *)mh.dseg) + stack_top;
 	count = mh.bseg;
 	while (count) {
 		pokeb(dseg, ptr++, 0);
@@ -254,7 +288,11 @@ blah:
 	 *	Copy the stack
 	 */
 	
-	ptr = (char *)(len-slen);
+	if (stack_top) {
+		ptr = (char *)(stack_top - slen);
+	} else {
+		ptr = (char *)(len-slen);
+	}
 	count = slen;
 	fmemcpy(dseg, ptr, current->mm.dseg, sptr, count);
 
@@ -323,14 +361,21 @@ blah:
 	tregs->cs=cseg;
 	tregs->ds=dseg;
 	tregs->ss=dseg;
-	tregs->sp=len-slen;	/* Just below the arguments */ 
-	current->t_begstack=len-slen;
+	tregs->sp=ptr;	/* Just below the arguments */ 
+	current->t_begstack=ptr;
 #if 0
 	current->t_endbrk=current->t_enddata=mh.dseg+mh.bseg;
 #endif
-	current->t_endbrk=(__pptr)mh.dseg+mh.bseg;
-	current->t_endtext=(__pptr)mh.dseg;	/* Needed for sys_brk() */
-	current->t_endstack=(__pptr)len;	/* with 64K = 0000 but that's OK */
+	current->t_endbrk=(__pptr)(mh.dseg+mh.bseg+stack_top);
+	current->t_enddata=(__pptr)(mh.dseg + stack_top);	/* Needed for sys_brk() */
+#if 0
+	if (stack_top) {
+		current->t_endstack=(__pptr)stack_top;
+	} else {
+		current->t_endstack=(__pptr)len;	/* with 64K = 0000 but that's OK */
+	}
+#endif
+	current->t_endseg=(__pptr)len;
 	current->t_inode=inode;
 	arch_setup_kernel_stack(current);
 
