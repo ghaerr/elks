@@ -6,7 +6,7 @@
 all:
 	@for DIR in */ ; do \
 	    if [ -f "$$DIR"/Makefile ]; then \
-		make -C "$$DIR" all ;
+		make -C "$$DIR" all ; \
 	    fi ; \
 	done
 
@@ -16,7 +16,7 @@ all:
 clean:
 	@for DIR in */ ; do \
 	    if [ -f "$$DIR"/Makefile ]; then \
-		make -C "$$DIR" clean ;
+		make -C "$$DIR" clean ; \
 	    fi ; \
 	done
 
