@@ -8,7 +8,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/errno.h>
 
-int verfy_area(char *ptr,unsigned int len)
+int verfy_area(char *ptr, size_t len)
 {
     register __ptask currentp = current;
 
@@ -17,6 +17,7 @@ int verfy_area(char *ptr,unsigned int len)
      */
     if(get_ds()==currentp->t_regs.ds)
 	return 0;
+
     /*
      *	User process boundaries
      */
@@ -26,9 +27,9 @@ int verfy_area(char *ptr,unsigned int len)
     return 0;
 }
 
-void memcpy_fromfs(char *daddr,char *saddr,int len)
+void memcpy_fromfs(void *daddr, void *saddr, size_t len)
 {
-    int ds = current->t_regs.ds;
+    unsigned short int ds = current->t_regs.ds;
 
 #asm
 	mov	dx,es
@@ -47,19 +48,21 @@ void memcpy_fromfs(char *daddr,char *saddr,int len)
 #endasm
 }
 
-int verified_memcpy_fromfs(char *daddr,register char *saddr,int len)
+int verified_memcpy_fromfs(void *daddr, void *saddr, size_t len)
 {
     int err = verify_area(VERIFY_READ, saddr, len);
 
     if (err)
 	return err;
+
     memcpy_fromfs(daddr, saddr, len);
+
     return 0;
 }
 
-void memcpy_tofs(char *daddr,char *saddr,int len)
+void memcpy_tofs(void *daddr, void *saddr, size_t len)
 {
-    int es = current->t_regs.ds;
+    unsigned short int es = current->t_regs.ds;
 
 #asm
 	mov	dx,es
@@ -75,18 +78,22 @@ void memcpy_tofs(char *daddr,char *saddr,int len)
 #endasm
 }
 
-int verified_memcpy_tofs(register char *daddr,char *saddr,int len)
+int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
 {
-    int err = verify_area(VERIFY_WRITE, daddr, len);
+    unsigned short int err = verify_area(VERIFY_WRITE, daddr, len);
 
     if (err)
 	return err;
+
     memcpy_tofs(daddr, saddr, len);
+
     return 0;
 }
 
 /* fmemcpy(dseg, dest, sseg, src, size); */
+
 #asm	
+
 	.globl	_fmemcpy
 
 _fmemcpy:
@@ -119,12 +126,13 @@ _fmemcpy:
 
 #if 0
 
-int fstrlen(unsigned int dseg,unsigned int doff)
+int fstrlen(unsigned short int dseg, unsigned short int doff)
 {
-    int i = 0;
+    unsigned short int i = 0;
 
     while (peekb(dseg, doff++))
 	i++;
+
     return i;
 } 
 
@@ -139,7 +147,9 @@ int strlen_fromfs(char *saddr)
     /* scasb uses es:di, not ds:si, so it is not necessary
      * to save and restore ds
      */
+
 #asm
+
 !	mov	bx,ds
 	mov	ax,[bp-6]	! source segment (local variable)
 !	mov	ds,ax
@@ -155,23 +165,25 @@ int strlen_fromfs(char *saddr)
 	dec	di
 	mov	[bp-6],di	! save in local var ds
 !	mov	ds,bx
+
 #endasm
 
     return ds;
 }
 #endif
 
-unsigned long get_fs_long(unsigned long *dv)
+unsigned long int get_fs_long(unsigned long int *dv)
 {
     unsigned long retv;
 
     memcpy_fromfs(&retv,dv,4);
+
     return retv;
 }
 
 #if 0
 
-void put_fs_long(unsigned long dv,unsigned long *dp)
+void put_fs_long(unsigned long int dv, unsigned long int *dp)
 {
     memcpy_tofs(dp,&dv,4);
 }
@@ -188,28 +200,29 @@ unsigned char get_fs_byte(unsigned char *dv)
 
 #if 0
 
-void put_fs_byte(unsigned char dv,unsigned char *dp)
+void put_fs_byte(unsigned char dv, unsigned char *dp)
 {
     memcpy_tofs(dp,&dv,1);
 }
 
-unsigned int get_fs_word(unsigned int *dv)
+unsigned short int get_fs_word(unsigned short int *dv)
 {
-    unsigned int retv;
+    unsigned short int retv;
 
     memcpy_fromfs(&retv,dv,2);
     return retv;
 }
 
-void put_fs_word(unsigned int dv,unsigned int *dp)
+void put_fs_word(unsigned short int dv, unsigned short int *dp)
 {
     memcpy_tofs(dp,&dv,2);
 }
 
 #endif
 
-int fs_memcmp(unsigned char *p1,register unsigned char *p2,size_t len)
+int fs_memcmp(void *s, void *d, size_t len)
 {
+    unsigned char *p1 = s, *p2 = d;
     int c = 0;
 
     while (len-- && !c)

@@ -20,32 +20,36 @@ extern unsigned long high_memory;
 
 #define verify_area(mode, point, size) verfy_area(point, size)
 
-extern int verfy_area();
-extern void memcpy_fromfs();
-extern void memcpy_tofs();
-extern void put_fs_long();
-extern unsigned long get_fs_long();
-extern void put_fs_byte();
-extern unsigned char get_fs_byte();
-extern void put_fs_word();
-extern unsigned int get_fs_word();
-extern int strlen_fromfs();
-extern int fs_memcmp();
-extern int verified_memcpy_tofs();
-extern int verified_memcpy_fromfs();
+extern int verfy_area(char *,size_t);
+extern void memcpy_fromfs(void *,void *,size_t);
+extern void memcpy_tofs(void *,void *,size_t);
+extern void put_fs_long(unsigned long int,unsigned long int *);
+extern void put_fs_byte(unsigned char,unsigned char *);
+extern void put_fs_word(unsigned short int,unsigned short int *);
+extern unsigned long get_fs_long(unsigned long int *);
+extern unsigned char get_fs_byte(unsigned char *);
+extern unsigned int get_fs_word(unsigned short int *);
+extern int strlen_fromfs(char *);
+extern int fs_memcmp(void *,void *,size_t);
+extern int verified_memcpy_tofs(void *,void *,size_t);
+extern int verified_memcpy_fromfs(void *,void *,size_t);
 
 extern seg_t mm_alloc();
 extern seg_t mm_realloc();
-extern void mm_free();
-extern int do_swapper_run();
-extern unsigned int mm_get_usage();
+
+extern void mm_free(seg_t);
+extern int do_swapper_run(struct task_struct *);
+extern unsigned int mm_get_usage(int,int);
+
 extern void fmemcpy();
+
 extern void pokeb();
-extern char peekb();
 extern void pokew();
-extern int peekw();
 extern void poked();
-extern long peekd();
+
+extern unsigned char peekb();
+extern unsigned short int peekw();
+extern unsigned long int peekd();
 
 extern int mm_swapon();
 

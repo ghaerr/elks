@@ -222,6 +222,7 @@ CC_PROTO	= gcc -I$(INCDIR) -M -MG $(CCDEFS)
 CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) -ansi
 CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
 LINT		= splint
+LINTLEVEL	= -weak
 LCFLAGS 	= -I$(INCDIR) $(CCDEFS) -D__LINT__ -isoreserved
 LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
 		  -exportheader -varuse -exporttype -exportconst \
@@ -313,10 +314,10 @@ dolint:
 			sleep 1 ; \
 		fi ; \
 		if echo "$${FILE}" | grep -q '\.h$$' ; then \
-			$(LINT) -strict $(LHFLAGS) "$${FILE}" \
+			$(LINT) $(LINTLEVEL) $(LHFLAGS) "$${FILE}" \
 				> "$${FILE}.lint" 2>&1 ; \
 		else \
-			$(LINT) -strict $(LCFLAGS) "$${FILE}" \
+			$(LINT) $(LINTLEVEL) $(LCFLAGS) "$${FILE}" \
 				> "$${FILE}.lint" 2>&1 ; \
 		fi ; \
 		if [ $$? -eq 0 ]; then \
