@@ -19,7 +19,7 @@ include $(BASEDIR)/Make.defs
 #	DONTWORK	Directories that don't currently compile.
 #
 
-DIRS		= sys_utils ash bc byacc disk_utils e3 file_utils levee \
+DIRS		= sys_utils ash bc byacc disk_utils file_utils levee \
 		  minix1 minix2 minix3 misc_utils sash sh_utils inet
 
 DONTUSE 	= debug_utils lib m4 mtools prn-utils rc tools xvi
