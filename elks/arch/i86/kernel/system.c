@@ -76,6 +76,10 @@ int *end;
 }
 
 #asm
+#ifndef CONFIG_SHLIB
+export _sys_dlload
+_sys_dlload:
+#endif
 #ifndef CONFIG_SOCKET
 export _sys_socket
 _sys_socket:

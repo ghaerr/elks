@@ -12,6 +12,7 @@ choice 'Select system architecture'            \
         PC/XT          CONFIG_XT               \
         PC/AT          CONFIG_AT"      CONFIG_ARCH_AUTO
 bool 'Support for loadable modules' CONFIG_MODULE
+bool 'Support for shared libraries' CONFIG_SHLIB
 bool 'Switch COMPAQ DeskPro into fast mode' CONFIG_COMPAQ_FAST
 
 source arch/i86/286pmode/Config.in

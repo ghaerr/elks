@@ -22,7 +22,6 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/signal.h>
-#include <linuxmt/tty.h>
 #include <linuxmt/time.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/minix.h>
@@ -114,16 +113,21 @@ int slen;		/* Size of built stack */
 	 */
 	
 	if( result != sizeof(mh) || 
-		(mh.type!=MINIX_COMBID && mh.type!=MINIX_SPLITID && mh.type!=MINIX_S_SPLITID) ||
+#if CONFIG_SHLIB
+		(mh.type!=MINIX_SPLITID && mh.type!=MINIX_S_SPLITID) ||
+#else
+		(mh.type!=MINIX_SPLITID) ||
+#endif
 		mh.chmem<1024 || mh.tseg==0)
 	{
 		printd_exec1("EXEC: bad header, result %d",result);
 		retval=-ENOEXEC;
 		goto close_readexec;
 	}
-/*	if (mh.type!=MINIX_DLLID) {
+	/* I am so far unsure about whether we need this, or the S_SPLITID format */
+	if (mh.type!=MINIX_S_SPLITID) {
 		mh.unused = 0;
-	} */
+	}
 	execformat=EXEC_MINIX;
 /* This looks very hackish and it is
  * but bcc can't handle a goto xyz; and a subsequent xyz:
@@ -178,7 +182,7 @@ blah:
 	 * mh.chmem is "total size" requested by ld. Note that ld used to ask 
 	 * for (at least) 64K
 	 */
-	len=(/*mh.unused+*/mh.chmem+15)&~15L;
+	len=(mh.chmem+15)&~15L;
 	if(len>65535L)
 	{
 		retval=-ENOMEM;
@@ -209,7 +213,7 @@ blah:
 	}
 
 	tregs->ds=dseg;
-	result=filp->f_op->read(inode, &file, /*mh.unused*/0, mh.dseg);
+	result=filp->f_op->read(inode, &file, (char *)mh.unused, mh.dseg);
 	tregs->ds=ds;
 	if(result!=mh.dseg)
 	{
@@ -307,6 +311,7 @@ end_readexec:
 
 struct dll_entry dll[MAX_DLLS];
 
+#if CONFIG_SHLIB
 #if 0 /* Old bad way of loading dlls */
 unsigned short sys_dlload(filename)
 char * filename;
@@ -462,7 +467,7 @@ unsigned short * dll_cseg;
 		(mh.type!=MINIX_DLLID) ||
 		mh.chmem<1024 || mh.tseg==0)
 	{
-		printd_exec1("EXEC: bad header, result %d",result);
+		printd_exec1("DLLOAD: bad header, result %d",result);
 		retval=-ENOEXEC;
 		goto close_readexec;
 	}
@@ -494,7 +499,7 @@ unsigned short * dll_cseg;
 	 * its text segment. */
 
 	if (!cseg) {
-		printk("DLLOAD: Mallocing some RAM for the dll.\n");
+		printk("DLLOAD: Mallocing some RAM for the dll code.\n");
 		cseg = mm_alloc(((mh.tseg+15)>>4),0);
 		if (cseg == -1) {
 			printk("DLLOAD: No memory.\n");
@@ -536,4 +541,5 @@ end_readexec:
 	return retval;
 }
 
-#endif
+#endif /* 0 */
+#endif /* CONFIG_SHLIB */

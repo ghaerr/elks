@@ -6,6 +6,10 @@ Al
 ------------------------------------------------------------------------------
 Sun May 30 00:05 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
+	* Fixes code to allow loading of shared libraries.
+
+Sun May 30 00:05 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
 	* Modified tty interface to simplify it.
 
 	* Added support for non-blocking IO on ttys.

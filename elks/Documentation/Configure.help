@@ -19,6 +19,10 @@ Support loadable modules
 CONFIG_MODULE
   Saying yes includes experimental support for loadable modules.
 
+Support shared libraries
+CONFIG_SHLIB
+  Saying yes includes experimental support for shared libraries.
+
 # Model-specific options
 # ~~~~~~~~~~~~~~~~~~~~~~
 
