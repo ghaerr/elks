@@ -7,35 +7,36 @@ comment 'Character device drivers'
 
 comment 'Select a console driver'
 if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
-	choice 'Select console driver'                  \
-		"Direct         CONFIG_CONSOLE_DIRECT   \
-		 BIOS           CONFIG_CONSOLE_BIOS     \
-		 Serial         CONFIG_CONSOLE_SERIAL"  Direct
-	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
-		bool 'Direct console VT52 emulation' CONFIG_DCON_VT52
-		if [ "$CONFIG_DCON_VT52" = "y" ]; then
-			bool 'Direct console ANSI emulation' CONFIG_DCON_ANSI
-			if [ "$CONFIG_DCON_ANSI" = "y" ]; then
-				bool 'ANSI Colourized printk' CONFIG_DCON_ANSI_PRINTK
-			fi
+    choice 'Select console driver'                  \
+	"Direct         CONFIG_CONSOLE_DIRECT   \
+	 BIOS           CONFIG_CONSOLE_BIOS     \
+	 Serial         CONFIG_CONSOLE_SERIAL"  Direct
+    if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
+	bool 'Direct console VT52 emulation' CONFIG_DCON_VT52
+	if [ "$CONFIG_DCON_VT52" = "y" ]; then
+		bool 'Direct console ANSI emulation' CONFIG_DCON_ANSI
+		if [ "$CONFIG_DCON_ANSI" = "y" ]; then
+			bool 'ANSI Colourized printk' CONFIG_DCON_ANSI_PRINTK
 		fi
-		choice 'XT Keyboard support'		\
-			"be 	CONFIG_BE_KEYMAP	\
-			 de	CONFIG_DE_KEYMAP	\
-			 dv     CONFIG_DV_KEYMAP	\
-			 es 	CONFIG_ES_KEYMAP	\
-			 fr	CONFIG_FR_KEYMAP	\
-			 se	CONFIG_SE_KEYMAP	\
-			 uk 	CONFIG_UK_KEYMAP	\
-			 usa    CONFIG_DEFAULT_KEYMAP"		usa
-		bool 'Raw keyboard mode' CONFIG_DCON_KRAW
 	fi
-	if [ "$CONFIG_CONSOLE_BIOS" = "y" ]; then
-		bool 'BIOS console VT52 emulation' CONFIG_BIOS_VT52
-	fi
-	if [ "$CONFIG_CONSOLE_SERIAL" = "y" ]; then
-		define_bool CONFIG_CHAR_DEV_RS y
-	fi
+	choice 'XT Keyboard support'			\
+		"American	CONFIG_US_KEYMAP	\
+		 Belgique	CONFIG_BE_KEYMAP	\
+		 British	CONFIG_UK_KEYMAP	\
+		 Deutsch	CONFIG_DE_KEYMAP	\
+		 Dvorak		CONFIG_DV_KEYMAP	\
+		 Espanol	CONFIG_ES_KEYMAP	\
+		 Francais	CONFIG_FR_KEYMAP	\
+		 Suede		CONFIG_SE_KEYMAP"		American
+
+	bool 'Raw keyboard mode' CONFIG_DCON_KRAW
+    fi
+    if [ "$CONFIG_CONSOLE_BIOS" = "y" ]; then
+	bool 'BIOS console VT52 emulation' CONFIG_BIOS_VT52
+    fi
+    if [ "$CONFIG_CONSOLE_SERIAL" = "y" ]; then
+	define_bool CONFIG_CHAR_DEV_RS y
+    fi
 else
 	choice 'Select console driver'                  \
 		"Direct         CONFIG_SIBO_CONSOLE_DIRECT   \

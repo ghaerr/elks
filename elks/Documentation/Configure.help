@@ -369,7 +369,7 @@ CONFIG_KEYMAP_FULL
   order.
 
 Select XT keyboard support for American (US) keyboards
-CONFIG_DEFAULT_KEYMAP
+CONFIG_US_KEYMAP
   This option specifies that support be provided for XT keyboards with
   the American key layout. There are no dead keys with this layout.
 

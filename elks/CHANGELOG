@@ -6,6 +6,10 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Tue Aug 14 22:18:01 BST 2001	Riley Williams <rhw@memalpha.cx>
+
+	* Revamped keymap system to make it easier to add new keymaps.
+
 Tue Aug 14 10:46:47 BST 2001	Riley Williams <rhw@memalpha.cx>
 
 	* Added INSTALLATION document submitted on Linux-8086 mailing
