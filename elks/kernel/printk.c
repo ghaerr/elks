@@ -11,7 +11,7 @@
  *		%d	signed decimal
  *		%i	signed decimal
  *		%o	octal
- *		%p	pointer (printed in hex)
+ *		%p/%P	pointer - same as %x/%X respectively
  *		%s	string
  *		%t	pointer to string
  *		%u	unsigned decimal
@@ -78,7 +78,8 @@ static void con_write(register char *buf, int len)
 char *hex_string = "0123456789ABCDEF";		/* Also used by devices. */
 char *hex_lower  = "0123456789abcdef";
 
-static void numout(char *ptr, int len, int width, int base, int useSign, int Upper)
+static void numout(char *ptr, int len, int width, int base, int useSign,
+		   int Upper, int Zero)
 {
     long int vs;
     unsigned long int v;
@@ -110,7 +111,10 @@ static void numout(char *ptr, int len, int width, int base, int useSign, int Upp
     } while ((v /= base) && (bp > buf));
 
     while (bp2 - bp < width)			/* Process width */
-	*--bp = ' ';
+	if (Zero)
+	    *--bp = '0';
+	else
+	    *--bp = ' ';
 
     con_write(bp, buf - bp + sizeof(buf) - 1);
 }
@@ -118,7 +122,7 @@ static void numout(char *ptr, int len, int width, int base, int useSign, int Upp
 void printk(register char *fmt,int a1)
 {
     register char *p = (char *) &a1;
-    int len, width = 0;
+    int len, width, zero;
     char c, tmp, *cp;
 
     while ((c = *fmt++)) {
@@ -132,6 +136,9 @@ void printk(register char *fmt,int a1)
 		continue;
 	    }
 
+	    width = zero = '0';
+	    if (c == '0')
+		zero++;
 	    while (c >= '0' && c <= '9') {
 		width *= 10;
 		width += c - '0';
@@ -156,12 +163,14 @@ void printk(register char *fmt,int a1)
 	    case 'u':
 		tmp = 10;
 		goto NUMOUT;
+	    case 'P':
 	    case 'p':
-	    case 'x':
+		c += 'X' - 'P';
 	    case 'X':
+	    case 'x':
 		tmp = 16;
 	    NUMOUT:
-		numout(p, len, width, tmp, (c == 'd'), (c == 'X'));
+		numout(p, len, width, tmp, (c == 'd'), (c == 'X'), zero);
 		p += len;
 		break;
 	    case 's':
@@ -207,7 +216,7 @@ void panic(char *error, int a1 /* VARARGS... */ )
     printk("\npanic: ");
     printk(error, a1);
     printk("\napparent call stack:\n");
-    printk("Line Address    Parameters\n~~~~ ~~~~~~~    ~~~~~~~~~~\n");
+    printk("Line: Addr    Parameters\n~~~~: ~~~~~~~    ~~~~~~~~~~\n");
 
     i = 0;
     do {
@@ -216,14 +225,16 @@ void panic(char *error, int a1 /* VARARGS... */ )
 	for (j = 2; j < 8; j++)
 	    k |= bp2[j];
 	if (k) {
-	    printk("%3u : %4p  =>", i, bp[1]);
+	    printk("%4u: %04P =>", i, bp[1]);
 	    for (j = 2; j < 8; j++)
-		printk(" %4p", bp2[j]);
+		printk(" %04X", bp2[j]);
 	    printk("\n");
 	} else
 	    printk("---\nEND OF STACK\n");
 	bp = bp2;
     } while (k && (++i > 9));
+
+    /* Lock up with infinite loop */
 
     while (1)
 	/* Do nothing */;
