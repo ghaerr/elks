@@ -173,9 +173,10 @@ int silent;
 		s->u.minix_sb.s_firstdatazone = ms->s_firstdatazone;
 		s->u.minix_sb.s_log_zone_size = ms->s_log_zone_size;
 		s->u.minix_sb.s_max_size = ms->s_max_size;
+#ifdef BLOAT_FS
 		s->s_magic = ms->s_magic;
-	}
-	if (s->s_magic == MINIX_SUPER_MAGIC) {
+#endif
+	if (ms->s_magic == MINIX_SUPER_MAGIC) {
 		s->u.minix_sb.s_version = MINIX_V1;
 		s->u.minix_sb.s_nzones = s->u.minix_sb.s_ms->s_nzones;
 		s->u.minix_sb.s_dirsize = 16;
@@ -187,6 +188,7 @@ int silent;
 		if (!silent)
 			printk("VFS: Can't find a Minix V1 filesystem on dev %s.\n", kdevname(dev));
 		return NULL;
+	}
 	}
 	for (i=0;i < MINIX_I_MAP_SLOTS;i++)
 		s->u.minix_sb.s_imap[i] = NULL;
@@ -400,8 +402,6 @@ register struct inode * inode;
 	inode->i_ctime = inode->i_atime = inode->i_mtime; 
 #ifdef BLOAT_FS
 	inode->i_blocks = inode->i_blksize = 0;
-#else
-	inode->i_blksize = 0;
 #endif
 	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
 		inode->i_rdev = to_kdev_t(raw_inode->i_zone[0]);

@@ -227,8 +227,8 @@ struct inode
 	kdev_t		i_rdev;
 	time_t		i_atime;
 	time_t		i_ctime;
-	unsigned long	i_blksize;
 #ifdef BLOAT_FS
+	unsigned long	i_blksize;
 	unsigned long	i_blocks;
 	unsigned long	i_version;
 	struct file_lock * i_flock;
@@ -292,8 +292,8 @@ struct super_block {
 	struct file_system_type *s_type;
 	struct super_operations *s_op;
 	unsigned int s_flags;
-	unsigned long s_magic;
 #ifdef BLOAT_FS
+	unsigned long s_magic;
 	unsigned long s_time;
 #endif
 	struct inode * s_covered;

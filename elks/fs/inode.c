@@ -558,7 +558,7 @@ struct inode * get_pipe_inode()
 	inode->i_uid = current->euid;
 	inode->i_gid = current->egid;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-	inode->i_blksize = PAGE_SIZE;
+/*	inode->i_blksize = PAGE_SIZE; */
 	return inode;
 }
 #endif

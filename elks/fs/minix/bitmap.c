@@ -243,8 +243,6 @@ struct inode * dir;
 	inode->i_op = NULL;
 #ifdef BLOAT_FS
 	inode->i_blocks = inode->i_blksize = 0;
-#else
-	inode->i_blksize = 0;
 #endif
 	insert_inode_hash(inode);
 	return inode;
