@@ -32,7 +32,7 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Sun Apr 28 12:49:59 BST 2002	Riley Williams <Riley@Williams.Name>
+Sun Apr 28 14:49:59 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Rephrased comments in arch/i86/kernel/process.c to avoid
 	  compiler bug.
@@ -40,6 +40,8 @@ Sun Apr 28 12:49:59 BST 2002	Riley Williams <Riley@Williams.Name>
 	  it is regularly used with negative values.
 	* Fixed bug in Harry's swap code that prevented the kernel from
 	  compiling if swap was disabled.
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop.
 
 Sun Apr 28 12:30:32 BST 2002	Riley Williams <Riley@Williams.Name>
 
