@@ -5,14 +5,14 @@ SHELL		= /bin/sh
 CC		= bcc
 
 #BASE_CFLAGS	= -c -g
-BASE_CFLAGS	= -c -O 
+BASE_CFLAGS	= -ansi -c -O 
 
 LOCALFLAGS	= -D__KERNEL__
 
 CFLAGS		= $(BASE_CFLAGS) $(LOCALFLAGS)
 
 CFILES		= ktcp.c slip.c ip.c icmp.c tcp.c tcp_cb.c tcp_output.c \
-		  timer.c tcpdev.c netconf.c
+		  timer.c tcpdev.c netconf.c vjhc.c
 
 OBJ		= $(CFILES:.c=.o)
 

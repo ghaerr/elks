@@ -28,6 +28,8 @@
 #define IP_FLAGS(s)	((s)->frag_off>>13)
 #endif
 
+/*#define DEBUG*/
+
 static char ipbuf[1024];
 
 int ip_init(void)
@@ -84,23 +86,35 @@ void ip_recvpacket(char *packet,int size)
     /*printf("IP: Got packet of size : %d \n",size,*packet);
     ip_print(iphdr);*/
 
-    if(IP_VERSION(iphdr) != 4)
+    if(IP_VERSION(iphdr) != 4){
+#ifdef DEBUG
+        printf("IP : Bad IP version\n");
+#endif
 	return;
+    }
 
-    if(IP_IHL(iphdr) < 5)
+    if(IP_IHL(iphdr) < 5){
+#ifdef DEBUG
+        printf("IP : Bad IHL\n");
+#endif
 	return;
-
-    if(ntohs(iphdr->tot_len) != size)
-	return;
-
+    }
+    
     data = packet + 4 * IP_IHL(iphdr);
 
     switch (iphdr->protocol) {
     case PROTO_ICMP:
+#ifdef DEBUG
+                printf("IP : ICMP packet\n");
+#endif
+
 		icmp_process(iphdr, data);
 		break;
 
     case PROTO_TCP:
+#ifdef DEBUG
+                printf("IP : TCP packet\n");
+#endif
 		tcp_process(iphdr);
 		break;
 
@@ -136,11 +150,7 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     /* "route" */
     if(iph->daddr == local_ip && iph->daddr == 0x0100007f) {
 	/* 127.0.0.1 */
-
-#if 0
-	ip_recvpacket(iph, tlen + len); 	/* FIXME */
-#endif
-
+	/* TODO */
     } else
 	slip_send(&ipbuf, tlen + len);   
 }

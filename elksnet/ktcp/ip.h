@@ -14,9 +14,11 @@
 #define IP_IHL(s)	((s)->version_ihl & 0xf)
 #define IP_FLAGS(s)	((s)->frag_off >> 13)
 
+typedef __u32	ipaddr_t;
+
 struct addr_pair {
-	__u32	daddr;
-	__u32	saddr;
+	ipaddr_t daddr;
+	ipaddr_t saddr;
 	__u8	protocol;
 };
 
@@ -29,9 +31,13 @@ struct iphdr_s {
 	__u8	ttl;
 	__u8	protocol;
 	__u16	check;
-	__u32	saddr;
-	__u32	daddr;
+	ipaddr_t	saddr;
+	ipaddr_t	daddr;
 };
+
+typedef struct iphdr_s iphdr_t;
+
+__u16 ip_calc_chksum(char *data, int len);
 
 long 	local_ip;
 __u16	next_port;

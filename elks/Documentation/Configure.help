@@ -659,6 +659,12 @@ Enable status report
 CONFIG_INET_STATUS
   If you intent to use utilities like netstat say YES. If you don't say
   NO it will save size from ktcp.
+  
+CSLIP TCP/IP header compression
+CONFIG_CSLIP
+  Add support for compressed TCP/IP headers in SLIP. This will improve 
+  a lot the networking over slow lines at the cost of enlarging memory
+  usage.
 
 Only support client sockets
 CONFIG_SOCK_CLIENTONLY

@@ -14,18 +14,18 @@
 #define SEQ_GT(a,b)	((long)((a)-(b)) > 0)
 #define SEQ_GEQ(a,b)	((long)((a)-(b)) >= 0)
 
-#define	TF_FIN	htons(1)
-#define TF_SYN	htons(2)
-#define	TF_RST	htons(4)
-#define	TF_PSH	htons(8)
-#define	TF_ACK	htons(16)
-#define TF_URG	htons(32)
+#define	TF_FIN	1
+#define TF_SYN	2
+#define	TF_RST	4
+#define	TF_PSH	8
+#define	TF_ACK	16
+#define TF_URG	32
 
 #define TF_ALL (TF_FIN | TF_SYN | TF_RST | TF_PSH | TF_ACK | TF_URG)
 
-#define	TCP_DATAOFF(x)		( ((x)->flags & 0xf0) >> 2 )
+#define	TCP_DATAOFF(x)		( (x)->data_off >> 2 )
 
-#define TCP_SETHDRSIZE(c,s)	( *(__u8 *)&(c)->flags |= (s) << 2 )
+#define TCP_SETHDRSIZE(c,s)	( (c)->data_off = (s) << 2 )
 
 #define ENTER_TIME_WAIT(cb)	(cb)->time_wait_exp = Now + (30 << 4); \
 				(cb)->state = TS_TIME_WAIT; \
@@ -40,12 +40,15 @@ struct tcphdr_s {
 	__u16	dport;
 	__u32	seqnum;
 	__u32	acknum;
-	__u16	flags;
+	__u8	data_off;
+	__u8	flags;
 	__u16	window;
 	__u16	chksum;
 	__u16	urgpnt;
 	__u8	options;
 };
+
+typedef struct tcphdr_s tcphdr_t;
 
 struct iptcp_s {
 	struct iphdr_s	*iph;

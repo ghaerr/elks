@@ -9,12 +9,16 @@
  *	2 of the License, or (at your option) any later version.
  */
 
+#include "config.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <linuxmt/termios.h>
 
 #include "slip.h"
+#include "vjhc.h"
+
+/*#define DEBUG*/
 
 #define SERIAL_BUFFER_SIZE	256
 
@@ -28,7 +32,7 @@
 
 static unsigned char 	sbuf[SERIAL_BUFFER_SIZE];
 static unsigned char	lastchar;
-static unsigned char 	packet[SLIP_MTU];
+static unsigned char 	packet[SLIP_MTU + 128];
 static unsigned int	packpos;
 static int devfd;
 
@@ -51,11 +55,55 @@ int slip_init(char *fdev)
 
     /* Init some variables 
      */
-    packpos = 0;
+    packpos = 128;
     lastchar = 0;
+
+#ifdef CONFIG_CSLIP
+    ip_vjhc_init();
+#endif
 
     return devfd;
 }
+
+#ifdef CONFIG_CSLIP
+void cslip_decompress(__u8 **packet, size_t *len){
+    pkt_ut p;
+    __u8 c;
+    
+    p.p_data = *packet;
+    p.p_size = *len;
+    p.p_offset = 128;
+    p.p_maxsize = SLIP_MTU;
+    
+    c = *(*packet + 128) & 0xf0;
+    if( c != TYPE_IP){   	
+        if(c & 0x80){
+            c = TYPE_COMPRESSED_TCP;
+            ip_vjhc_arr_compr(&p);
+#ifdef DEBUG
+            printf("CSLIP : Compressed TCP packet offset %d size %d (%d)\n", p.p_offset, p.p_size, *len);
+#endif
+        }
+        else if (c == TYPE_UNCOMPRESSED_TCP){
+            *(*packet + 128) &= 0x4f;
+            ip_vjhc_arr_uncompr(&p);
+#ifdef DEBUG
+            printf("CSLIP : Uncompressed TCP packet offset %d size %d (%d)\n", p.p_offset, p.p_size, *len);
+#endif
+        }
+        if((p.p_size > 0)){
+            *packet += p.p_offset;
+        }
+    } else {
+#ifdef DEBUG
+        printf("CSLIP : IP packet\n");
+#endif
+    	*packet += 128;
+    }
+    
+    *len = p.p_size;
+}
+#endif
 
 /*
  * slip_process()
@@ -66,6 +114,8 @@ int slip_init(char *fdev)
  */
 void slip_process(void)
 {
+    size_t p_size;
+    __u8 *p;
     int i, len, packet_num = 0;
 
     while (packet_num < 3) {
@@ -97,14 +147,23 @@ void slip_process(void)
 			break;
 
 		    case END:
-			if (packpos == 0)
+			if (packpos == 128)
 			    break;
 
-			ip_recvpacket(&packet, packpos);
+			p_size = packpos - 128;
+#ifdef CONFIG_CSLIP			
+			p = packet;
+		        cslip_decompress(&p, &p_size);		        
+#else
+			p = packet + 128;
+#endif
+		        if(p_size > 0)
+			    ip_recvpacket(p, p_size);
+
 			packet_num++;
 
 			/* Reset */
-			packpos = 0;
+			packpos = 128;
 			lastchar = 0;
 			break;
 
@@ -127,12 +186,44 @@ void send_char(__u8 ch)
 #endif
 }
 
+#ifdef CONFIG_CSLIP
+void cslip_compress(__u8 **packet, int *len)
+{
+    pkt_ut p;
+    __u8 type;
+    size_t orig_len;
+    
+    orig_len = *len;
+    
+    p.p_data = *packet;
+    p.p_size = *len;
+    p.p_offset = 0;
+    p.p_maxsize = SLIP_MTU;
+    
+    type = ip_vjhc_compress(&p);
+    
+    if(type != TYPE_IP){
+        *packet += p.p_offset;
+        *len = p.p_size;
+        *packet[0] |= type;
+    }
+
+#ifdef DEBUG   
+    printf("cslip : from %d to %d\n", orig_len, p.p_size);
+#endif
+}
+#endif
+
 /*
  * TODO : Use a buffer to reduse the write calls
  */
 void slip_send(char *packet, int len)
 {
     __u8 *p = (__u8 *)packet;
+    
+#ifdef CONFIG_CSLIP
+    cslip_compress(&p, &len);
+#endif
 
     send_char(END);
     while (len--) {
@@ -157,3 +248,6 @@ void slip_send(char *packet, int len)
     }
     send_char(END);
 }
+
+
+

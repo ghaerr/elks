@@ -34,6 +34,10 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sun Jul 28 18:32:52 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Added TCP/IP header compression to SLIP (CSLIP)
+
 Tue Jul 16 22:43:37 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Committed new header file with boot flag details that was omitted
