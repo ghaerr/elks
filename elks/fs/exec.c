@@ -47,6 +47,7 @@
 #include <arch/segment.h>
 
 #ifdef CONFIG_EXEC_MINIX
+/* FIXME: These cant remain static .. */
 static struct minix_exec_hdr mh;
 static struct minix_supl_hdr msuph;
 #endif
