@@ -369,37 +369,37 @@ CONFIG_KEYMAP_FULL
   order.
 
 Select XT keyboard support for American (US) keyboards
-CONFIG_US_KEYMAP
+CONFIG_KEYMAP_US
   This option specifies that support be provided for XT keyboards with
   the American key layout. There are no dead keys with this layout.
 
 Select XT keyboard support for Belgian (BE) keyboards
-CONFIG_BE_KEYMAP
+CONFIG_KEYMAP_BE
   This option specifies that support be provided for XT keyboards with
   the Belgian key layout and associated dead keys.
 
 Select XT keyboard support for British (UK) keyboards
-CONFIG_UK_KEYMAP
+CONFIG_KEYMAP_UK
   This option specifies that support be provided for XT keyboards with
   the British key layout. There are no dead keys with this layout.
 
 Select XT keyboard support for French (FR) keyboards
-CONFIG_FR_KEYMAP
+CONFIG_KEYMAP_FR
   This option specifies that support be provided for XT keyboards with
   the French key layout and associated dead keys.
 
 Select XT keyboard support for German (DE) keyboards
-CONFIG_DE_KEYMAP
+CONFIG_KEYMAP_DE
   This option specifies that support be provided for XT keyboards with
   the German key layout and associated dead keys.
 
 Select XT keyboard support for Dvorak (DV) keyboards
-CONFIG_DV_KEYMAP
+CONFIG_KEYMAP_DV
   This option specifies that support be provided for XT keyboards with
   the Dvorak key layout and associated dead keys.
 
 Select XT keyboard support for Spanish (ES) keyboards
-CONFIG_ES_KEYMAP
+CONFIG_KEYMAP_ES
   This option specifies that support be provided for XT keyboards with
   the Spanish key layout and associated dead keys.
 

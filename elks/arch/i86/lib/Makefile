@@ -53,7 +53,7 @@ setupw.s: setupw.S
 # Standard commands.
 
 distdir:
-	cp -pf Makefile *.c *.S *.s *.h $(DISTDIR)/arch/i86/lib
+	cp -pf Makefile *.c *.S *.s $(DISTDIR)/arch/i86/lib
 
 #########################################################################
 ### Dependencies:

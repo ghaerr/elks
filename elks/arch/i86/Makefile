@@ -173,11 +173,11 @@ drivers/block/blk_drv.a:
 # commands.
 
 distdir:
-	mkdir $(DISTDIR)/arch/i86
+	mkdir -p $(DISTDIR)/arch/i86
 	(cd $(DISTDIR)/arch/i86 ; \
-		mkdir 286pmode boot drivers kernel lib mm tools)
+		mkdir -p 286pmode boot drivers kernel lib mm tools)
 	(cd $(DISTDIR)/arch/i86/drivers ; \
-		mkdir block char)
+		mkdir -p block char)
 	cp -pf config.in defconfig Makefile $(DISTDIR)/arch/i86
 	cp -pf boot/*.S boot/*.c boot/tux.pic $(DISTDIR)/arch/i86/boot
 	cp -pf tools/Makefile tools/*.h $(DISTDIR)/arch/i86/tools

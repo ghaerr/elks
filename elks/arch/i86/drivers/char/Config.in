@@ -20,14 +20,14 @@ if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 		fi
 	fi
 	choice 'XT Keyboard support'			\
-		"American	CONFIG_US_KEYMAP	\
-		 Belgique	CONFIG_BE_KEYMAP	\
-		 British	CONFIG_UK_KEYMAP	\
-		 Deutsch	CONFIG_DE_KEYMAP	\
-		 Dvorak		CONFIG_DV_KEYMAP	\
-		 Espanol	CONFIG_ES_KEYMAP	\
-		 Francais	CONFIG_FR_KEYMAP	\
-		 Suede		CONFIG_SE_KEYMAP"		American
+		"American	CONFIG_KEYMAP_US	\
+		 Belgique	CONFIG_KEYMAP_BE	\
+		 British	CONFIG_KEYMAP_UK	\
+		 Deutsch	CONFIG_KEYMAP_DE	\
+		 Dvorak		CONFIG_KEYMAP_DV	\
+		 Espanol	CONFIG_KEYMAP_ES	\
+		 Francais	CONFIG_KEYMAP_FR	\
+		 Suede		CONFIG_KEYMAP_SE"		American
 
 	bool 'Raw keyboard mode' CONFIG_DCON_KRAW
     fi

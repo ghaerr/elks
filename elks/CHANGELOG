@@ -21,13 +21,28 @@ Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001
 Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
 Peter L Vachuska        <pvachusk@nconnect.net>         13 Aug 2001
-Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-14 Nov 2001
+Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-17 Nov 2001
 Roman Festchook         <roma@polesye.net>              27 Oct 2001
 Simon Weijgers          <simon@weijgers.com>            16 Sep 1998-15 Nov 1999
 Simon Wood                                              06 Jan 2000-12 Jan 2000
 Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Sat Nov 17 12:14:01 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Tweaked config variables as follows:
+
+		CONFIG_BE_KEYMAP	CONFIG_KEYMAP_BE
+		CONFIG_DE_KEYMAP	CONFIG_KEYMAP_DE
+		CONFIG_DV_KEYMAP	CONFIG_KEYMAP_DV
+		CONFIG_ES_KEYMAP	CONFIG_KEYMAP_ES
+		CONFIG_FR_KEYMAP	CONFIG_KEYMAP_FR
+		CONFIG_SE_KEYMAP	CONFIG_KEYMAP_SE
+		CONFIG_UK_KEYMAP	CONFIG_KEYMAP_UK
+		CONFIG_US_KEYMAP	CONFIG_KEYMAP_US
+
+	* Fixed bug in `make dist` that stopped it from working.
 
 Fri Nov 16 09:28:55 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 

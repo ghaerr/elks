@@ -5,7 +5,7 @@
 #ifndef __KEYMAP_SE__
 #define __KEYMAP_SE__
 
-#if defined(CONFIG_SE_KEYMAP)
+#if defined(CONFIG_KEYMAP_SE)
 
 /**************************************************************
  * Swedish keyboard adapted from the German layout by Per     *

@@ -140,7 +140,7 @@ void *dev_id;
 			IsRelease ? ( ModeState &= ~RSHIFT ) : ( ModeState |= RSHIFT );
 			return;
 		case 56 : 
-#if defined(CONFIG_DE_KEYMAP) || defined(CONFIG_SE_KEYMAP)
+#if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE)
 			if ( E0 == 0 ) {
 				IsRelease ? ( ModeState &= ~ALT ) : ( ModeState |= ALT ) ;
 			}

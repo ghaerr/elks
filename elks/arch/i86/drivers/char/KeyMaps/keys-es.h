@@ -5,7 +5,7 @@
 #ifndef __KEYMAP_ES__
 #define __KEYMAP_ES__
 
-#if defined(CONFIG_ES_KEYMAP)
+#if defined(CONFIG_KEYMAP_ES)
 
 /* Spanish Keyboard add by Nacho Martin. imartin@cie.uva.es */
 

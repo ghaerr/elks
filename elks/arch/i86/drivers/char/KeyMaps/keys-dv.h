@@ -5,7 +5,7 @@
 #ifndef __KEYMAP_DV__
 #define __KEYMAP_DV__
 
-#if defined(CONFIG_DV_KEYMAP)
+#if defined(CONFIG_KEYMAP_DV)
 
 /************************************************************************
  * First attempt at Dvorak keyboard layout * Peter Vachuska * July 2000 *

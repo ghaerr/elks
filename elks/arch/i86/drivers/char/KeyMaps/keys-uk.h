@@ -5,7 +5,7 @@
 #ifndef __KEYMAP_UK__
 #define __KEYMAP_UK__
 
-#if defined(CONFIG_UK_KEYMAP)
+#if defined(CONFIG_KEYMAP_UK)
 
 static unsigned char xtkb_scan[]=
 {

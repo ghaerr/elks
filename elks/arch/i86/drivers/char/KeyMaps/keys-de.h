@@ -5,7 +5,7 @@
 #ifndef __KEYMAP_DE__
 #define __KEYMAP_DE__
 
-#if defined(CONFIG_DE_KEYMAP)
+#if defined(CONFIG_KEYMAP_DE)
 
 /**************************************************************
  * German Keyboard adapted from the spanish layout            *
