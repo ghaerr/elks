@@ -31,13 +31,13 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Thu Mar 07 14:47:03 EET 2002	Harry Kalogirou <harkal@gmx.net>
+Thu Mar  7 14:47:03 EET 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Added MSS tcp option transmition.
 	* Fixed do_fork() bug, it was leaving dummy tasks on the
 	  task table under memory shortage.
 
-Mon Mar 04 01:04:28 EET 2002	Harry Kalogirou <harkal@gmx.net>
+Mon Mar  4 01:04:28 EET 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* This is ELKS 0.1.0-pre4
 
