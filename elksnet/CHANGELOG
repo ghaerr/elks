@@ -7,6 +7,11 @@ be longer than the lines of dashes.
 Riley
 -------------------------------------------------------------------------------
 
+Sun Oct  7 00:46:33 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Added `make clean` options to all Makefiles not currently
+	  containing them, also added WORKING global `make all` option.
+
 Sat Oct  6 20:07:05 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Actually committed changes listed below !!!!!!!

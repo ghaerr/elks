@@ -35,3 +35,6 @@ screen.o: screen.c screen.h
 
 ansi.o: ansi.c screen.h
 	$(CC) $(CFLAGS) -c ansi.c
+
+clean:
+	rm -f screen *.o core *~

@@ -25,7 +25,7 @@ ktcp:	$(OBJ)
 	$(CC) $(OPT) -o ktcp $(OBJ) $(BASELIBS)
 
 clean: 
-	rm -f *\.o ktcp core
+	rm *.o ktcp *.o core *~
 
 dep:
 	makedepend $(CFILES)
