@@ -33,7 +33,7 @@ unsigned int origin;
 	if (fop && fop->lseek)
 		return fop->lseek(file->f_inode,file,offset,origin);
 
-/* this is the default handler if no lseek handler is present */
+	/* this is the default handler if no lseek handler is present */
 	switch (origin) {
 		case 0:
 			tmp = offset;
@@ -50,11 +50,9 @@ unsigned int origin;
 		/* bogus origin */
 			return -EINVAL;
 	}
-/*	printk("%d lseek3\n",fd); */
 
-/* Cannot be nagative as unsigend. Should off_t be unsigned? */
-/*	if (tmp < 0)
-		return -EINVAL; */
+	if (tmp < 0)
+		return -EINVAL;
 	if (tmp != file->f_pos) {
 		file->f_pos = tmp;
 #ifdef BLOAT_FS
@@ -140,7 +138,6 @@ unsigned int count;
 		} else {
 			inode=file->f_inode;
 
-#ifndef CONFIG_NOFS
 	/*
 	 * If data has been written to the file, remove the setuid and
 	 * the setgid bits. We do it anyway otherwise there is an
@@ -158,7 +155,6 @@ unsigned int count;
 				inode->i_mode = inode->i_mode & ~(S_ISUID | S_ISGID);
 #endif
 			}
-#endif
 
 			written = file->f_op->write(inode,file,buf,count);
 			schedule();
