@@ -47,19 +47,15 @@ SMIN_PRGS	= init mount umount
 all: $(PRGS)
 
 rfs: all
-	mkdir -p $(TARGET_MNT)/bin
 	cp -p $(PRGS) $(TARGET_MNT)/bin
 	
 net_rfs: all
-	mkdir -p $(TARGET_MNT)/bin
 	cp -p $(NETPRGS) $(TARGET_MNT)/bin
 
 min_rfs: all
-	mkdir -p $(TARGET_MNT)/bin
 	cp -p $(MIN_PRGS) $(TARGET_MNT)/bin
 
 smin_rfs: all
-	mkdir -p $(TARGET_MNT)/bin
 	cp -p $(SMIN_PRGS) $(TARGET_MNT)/bin
 
 clean:

@@ -14,6 +14,12 @@ Tommy McCabe			rocketjet314@yahoo.com
 
 -----------------------------------------------------------------
 
+Web Jun 02 21:20:47 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
+
+	* Added lib/ directory to rootfs_template
+	* Removed rootfs_template.tar.
+	* Removed "mkdir" commands from sys_utils/Makefile
+
 Web Jun 02 21:05:56 CST 2004	Tommy McCabe <rocketjet314@yahoo.com>
 
 	* Improvements to MAKEDEV.. patch adapted by Eduardo Habkost
