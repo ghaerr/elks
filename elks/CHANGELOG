@@ -33,6 +33,8 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999- 2 Apr 2001
 
 Sun Feb 24 14:50:29 GMT 2002	Riley Williams <rhw@memalpha.cx>
 
+	* This is ELKS 0.1.0-pre5
+
 	* Made ELKS not rely on the Linux kernel source being present for
 	  the error values, by importing the Linux 2.5.5 errno.h files
 	  into the ELKS tree. Also standardised the way this header file
