@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Wed Nov 17 12:12 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* English version of ROM image builder mkurlader.c
+
 Mon Nov 15 08:38 GMT 1999   Simon Weijgers  <simon@weijgers.com>
 
 	* Patch from David Murn <scuffer@hups.apana.org.au>:
