@@ -30,7 +30,7 @@
 #include "fdisk.h"
 
 #define die { printf("Usage %s [-l] <device-name>\n",argv[0]); fflush(stdout); exit(1); }
-#define spc (geometry.heads*geometry.sectors)
+#define spc ((unsigned long)(geometry.heads*geometry.sectors))
 
 static Funcs funcs[] = {
   { 'a',"Add partion",           add_part },
@@ -69,7 +69,7 @@ void add_part()
   char buf[8];
   unsigned char pentry[16];
   int part,scyl,ecyl;
-  long int tmp;
+  unsigned long tmp;
   unsigned char *oset;
 
   pentry[0]=0;
@@ -116,21 +116,21 @@ void add_part()
   pentry[6]=geometry.sectors+((ecyl >> 2) & 0xc0);
   pentry[7]=(ecyl&0xff);
 
-  tmp=spc*scyl;
-  if(scyl==0) tmp=geometry.sectors;
+  tmp=spc*(unsigned long)scyl;
+  if(scyl==0) tmp=(unsigned long)geometry.sectors;
 
-  pentry[11]=(tmp>>24)&0xff;
-  pentry[10]=(tmp>>16)&0xff;
-  pentry[ 9]=(tmp>> 8)&0xff;
-  pentry[ 8]=(tmp)    &0xff;
+  pentry[11]=(unsigned char)((tmp>>24uL)&0x000000ffuL);
+  pentry[10]=(unsigned char)((tmp>>16uL)&0x000000ffuL);
+  pentry[ 9]=(unsigned char)((tmp>> 8uL)&0x000000ffuL);
+  pentry[ 8]=(unsigned char)((tmp      )&0x000000fful);
 
-  tmp=spc*(ecyl-scyl+1);
-  if(scyl==0) tmp-=geometry.sectors;
+  tmp=spc*(unsigned long)(ecyl-scyl+1);
+  if(scyl==0) tmp-=(unsigned long)geometry.sectors;
 
-  pentry[15]=(tmp>>24)&0xff;
-  pentry[14]=(tmp>>16)&0xff;
-  pentry[13]=(tmp>> 8)&0xff;
-  pentry[12]=(tmp    )&0xff;
+  pentry[15]=(unsigned char)((tmp>>24uL)&0x000000ffuL);
+  pentry[14]=(unsigned char)((tmp>>16uL)&0x000000ffuL);
+  pentry[13]=(unsigned char)((tmp>> 8uL)&0x000000ffuL);
+  pentry[12]=(unsigned char)((tmp      )&0x000000ffuL);
 
   printf("Adding partition");
   memcpy(oset,pentry,16);
@@ -260,7 +260,10 @@ char *devname;
   printf("Device    Boot  Head Sector Cylinder   Head Sector Cylinder  Type  Sector count\n");
   for(i=0x1be;i<0x1fe;i+=16) {
     partition=ptbl+i;   /* FIXME /--- gotta be a better way to do this ---\ */
-    seccnt=(partition[15]*16777216)+(partition[14]*65536)+(partition[13]*256)+partition[12];
+    seccnt=((unsigned long)partition[15] << 24uL) + \
+	((unsigned long)partition[14] << 16uL) + \
+	((unsigned long)partition[13] << 8uL) + \
+	(unsigned long)partition[12];
     if(partition[5])
     printf("%s%d  %c     %2d   %2d   %4d         %2d   %2d     %4d      %2x    %10ld\n",
            devname==NULL?dev:devname,1+((i-0x1be)/16),
