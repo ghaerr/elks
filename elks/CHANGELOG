@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Fri Feb 12 16:35 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Trimmed block request code.
+
 Sun Jan 31 17:50 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix main.c so init is launched with a valid set of argvs.

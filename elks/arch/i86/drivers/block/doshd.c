@@ -59,6 +59,12 @@
 
 /* #define HARDCODED */
 
+/* Uncomment this if the driver needs to support requests that are not
+ * 1024 bytes (2 sectors)
+ */
+
+/* #define MULT_SECT_RQ */
+
 #define BUFSEG 0x800
 
 #ifdef CONFIG_BLK_DEV_BIOS
@@ -620,7 +626,7 @@ static void do_bioshd_request()
 	      next_block:
 
 		/* make sure we have a valid request *//*Done by INIT_REQUEST*/
-		if (!CURRENT || CURRENT->dev < 0)
+		if (!CURRENT || CURRENT->rq_dev < 0)
 			return;
 
 		/* now initialize it */
@@ -628,7 +634,7 @@ static void do_bioshd_request()
 
 		/* make sure it's still valid */
 		req = CURRENT;
-		if (req == NULL || req->sector == -1)
+		if (req == NULL || req->rq_sector == -1)
 			return;
 
 		if (bioshd_initialized != 1)
@@ -636,7 +642,7 @@ static void do_bioshd_request()
 			end_request(0);
 			continue;
 		}
-		minor = MINOR(req->dev);
+		minor = MINOR(req->rq_dev);
 /*		part = minor & ((1 << 6) - 1); */
 		drive = minor >> 6;
 
@@ -647,9 +653,13 @@ static void do_bioshd_request()
 			end_request(0);
 			continue;
 		}
-		count = req->nr_sectors;
-		start = req->sector;
-		buff = req->buffer;
+#ifdef MULT_SECT_RQ
+		count = req->rq_nr_sectors;
+#else
+		count = 2;
+#endif
+		start = req->rq_sector;
+		buff = req->rq_buffer;
 
 		if (hd[minor].start_sect == -1 || start >= hd[minor].nr_sects)
 		{
@@ -679,7 +689,7 @@ static void do_bioshd_request()
 			dma_avail = 0;
 
 			BD_IRQ = BIOSHD_INT;
-			if (req->cmd == WRITE) {
+			if (req->rq_cmd == WRITE) {
 			   BD_AX = BIOSHD_WRITE | this_pass;
 			   fmemcpy(BUFSEG, 0, get_ds(), buff, (this_pass * 512));
 			}
@@ -703,7 +713,7 @@ static void do_bioshd_request()
 
 			if (CARRY_SET)
 			{
-				reset_bioshd(MINOR(req->dev));
+				reset_bioshd(MINOR(req->rq_dev));
 				dma_avail = 1;
 				errs++;
 				if (errs > MAX_ERRS)
@@ -715,7 +725,7 @@ static void do_bioshd_request()
 				}
 				continue;	/* try again */
 			}
-			if (req->cmd==READ) {
+			if (req->rq_cmd==READ) {
 			  fmemcpy(get_ds(), buff, BUFSEG, 0, (this_pass * 512)); 
 			}
 			/* In case it's already been freed */	

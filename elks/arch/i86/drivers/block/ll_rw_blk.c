@@ -41,6 +41,8 @@ static struct request all_requests[NR_REQUEST];
  * used to wait on when there are no free requests
  */
 
+int foo_foo_bar;
+
 #ifdef MULTI_BH
 struct wait_queue * wait_for_request = NULL;
 #endif
@@ -151,8 +153,11 @@ kdev_t dev;
 	register struct request *req;
 	register struct request *limit;
 
+#ifdef BLOAT_FS
+	/* This function is called with a constant value for n */
 	if (n <= 0)
 		panic("get_request(%d): impossible!\n", n);
+#endif
 
 	limit = all_requests + n;
 	if (limit != prev_limit) {
@@ -169,7 +174,7 @@ kdev_t dev;
 	}
 	prev_found = req;
 	req->rq_status = RQ_ACTIVE;
-	req->dev = dev;
+	req->rq_dev = dev;
 	return req;
 }
 
@@ -237,21 +242,21 @@ register struct request * req;
 	short		 disk_index;
 
 	icli();
-	mark_buffer_clean(req->bh);
+	mark_buffer_clean(req->rq_bh);
 	if (!(tmp = dev->current_request)) {
 		dev->current_request = req;
 		(dev->request_fn)();
 		isti();
 		return;
 	}
-	for ( ; tmp->next ; tmp = tmp->next) {
+	for ( ; tmp->rq_next ; tmp = tmp->rq_next) {
 		if ((IN_ORDER(tmp,req) ||
-		    !IN_ORDER(tmp,tmp->next)) &&
-		    IN_ORDER(req,tmp->next))
+		    !IN_ORDER(tmp,tmp->rq_next)) &&
+		    IN_ORDER(req,tmp->rq_next))
 			break;
 	}
-	req->next = tmp->next;
-	tmp->next = req;
+	req->rq_next = tmp->rq_next;
+	tmp->rq_next = req;
 
 	isti();
 }
@@ -343,6 +348,12 @@ register struct buffer_head * bh;
 			return;
 		}
 #endif
+
+/* I suspect we may need to call get_request_wait() but not at the moment
+ * For now I will wait until we start getting panics, and then work out
+ * what we have to do - Al <ajr@ecs.soton.ac.uk>
+ */
+
 #ifdef MULTI_BH
 		req = __get_request_wait(max_req, bh->b_dev);
 #else
@@ -351,18 +362,19 @@ register struct buffer_head * bh;
 	}
 
 /* fill up the request-info, and add it to the queue */
-	req->cmd = rw;
-	req->sector = sector;
-	req->nr_sectors = count;
-	req->current_nr_sectors = count;
-	req->buffer = bh->b_data;
-/*	req->sem = NULL;*/
-	req->bh = bh;
+	req->rq_cmd = rw;
+	req->rq_sector = sector;
 #ifdef BLOAT_FS
-	req->errors = 0;
-	req->bhtail = bh;
+	req->rq_nr_sectors = count;
 #endif
-	req->next = NULL;
+	req->rq_buffer = bh->b_data;
+/*	req->rq_sem = NULL;*/
+	req->rq_bh = bh;
+#ifdef BLOAT_FS
+	req->rq_current_nr_sectors = count;
+	req->rq_errors = 0;
+#endif
+	req->rq_next = NULL;
 	add_request(major+blk_dev,req);
 }
 
@@ -503,7 +515,7 @@ int blk_dev_init()
 	req = all_requests + NR_REQUEST;
 	while (--req >= all_requests) {
 		req->rq_status = RQ_INACTIVE;
-		req->next = NULL;
+		req->rq_next = NULL;
 	}
 #ifdef CONFIG_BLK_DEV_RAM
 	rd_init();

@@ -496,12 +496,12 @@ void do_directhd_request()
 
 	while (1) /* process HD requests */
 	{
-	        if (!CURRENT || CURRENT->dev < 0)
+	        if (!CURRENT || CURRENT->rq_dev < 0)
 			return;
 	
 		INIT_REQUEST;
 		
-		if (CURRENT == NULL || CURRENT->sector == -1)
+		if (CURRENT == NULL || CURRENT->rq_sector == -1)
 			return;
 	
 		if (directhd_initialized != 1)
@@ -510,7 +510,7 @@ void do_directhd_request()
 			continue;
 		}
 
-		minor = MINOR(CURRENT->dev);
+		minor = MINOR(CURRENT->rq_dev);
 		drive = minor >> 6;
 
 		/* check if drive exists */
@@ -521,9 +521,13 @@ void do_directhd_request()
 			continue;
 		}
 	
-		count = CURRENT->nr_sectors;
-		start = CURRENT->sector;
-		buff = CURRENT->buffer;			
+#ifdef BLOAT_FS
+		count = CURRENT->rq_nr_sectors;
+#else
+		count = 2;
+#endif
+		start = CURRENT->rq_sector;
+		buff = CURRENT->rq_buffer;			
 
 		/* safety check should be here */
 		
@@ -555,7 +559,7 @@ void do_directhd_request()
 			
 			port = io_ports[drive / 2];
 
-			if (CURRENT->cmd == READ)
+			if (CURRENT->rq_cmd == READ)
 			{
 #ifdef USE_DEBUG_CODE
 /*
@@ -611,7 +615,7 @@ void do_directhd_request()
 				/* read this_pass * 512 bytes, which is 63 * 512 b max. */
 				insw(port, buff, this_pass * 512);
 			}
-			if (CURRENT->cmd == WRITE)
+			if (CURRENT->rq_cmd == WRITE)
 			{
 				/* write from buffer */
 				while (WAITING(port));

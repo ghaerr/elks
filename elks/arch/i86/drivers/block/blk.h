@@ -6,6 +6,7 @@
 #include <linuxmt/kdev_t.h>
 /*#include <linuxmt/locks.h>*/
 #include <linuxmt/genhd.h>
+#include <linuxmt/config.h>
 
 /*
  * Ok, this is an expanded form so that we can use the same
@@ -15,19 +16,26 @@
  */
 
 struct request {
-	kdev_t dev;		/* -1 if no request */
-	__u8  cmd;		/* READ or WRITE */
+	kdev_t rq_dev;		/* -1 if no request */
+	__u8  rq_cmd;		/* READ or WRITE */
 #ifdef BLOAT_FS
-	__u8  errors;
+	__u8  rq_errors;
 #endif
 	__u8  rq_status;
-	unsigned long sector;
-	unsigned long nr_sectors;
-	unsigned long current_nr_sectors;
-	char * buffer;
-	struct task_struct * waiting;
-	struct buffer_head * bh;
-	struct request * next;
+	unsigned long rq_sector;
+#ifdef BLOAT_FS
+	unsigned long rq_nr_sectors;	/* always 2 */
+	unsigned long rq_current_nr_sectors;
+#endif
+	char * rq_buffer;
+#ifdef BLOAT_FS
+/* This may get used for dealing with waiting for requests later
+ * but for now it is just not used
+ */
+	struct task_struct * rq_waiting;
+#endif
+	struct buffer_head * rq_bh;
+	struct request * rq_next;
 };
 
 #define RQ_INACTIVE	0
@@ -43,9 +51,9 @@ struct request {
  */
  
 #define IN_ORDER(s1,s2) \
-((s1)->cmd > (s2)->cmd || ((s1)->cmd == (s2)->cmd && \
-((s1)->dev < (s2)->dev || (((s1)->dev == (s2)->dev && \
-(s1)->sector < (s2)->sector)))))
+((s1)->rq_cmd > (s2)->rq_cmd || ((s1)->rq_cmd == (s2)->rq_cmd && \
+((s1)->rq_dev < (s2)->rq_dev || (((s1)->rq_dev == (s2)->rq_dev && \
+(s1)->rq_sector < (s2)->rq_sector)))))
 
 struct blk_dev_struct {
 	void (*request_fn)();
@@ -54,7 +62,7 @@ struct blk_dev_struct {
 
 #define SECTOR_MASK 2		/* 1024 logical 512 physical */
 
-#define SUBSECTOR(block) (CURRENT->current_nr_sectors > 0)
+#define SUBSECTOR(block) (CURRENT->rq_current_nr_sectors > 0)
 
 extern struct blk_dev_struct blk_dev[MAX_BLKDEV];
 #ifdef MULTI_BH
@@ -134,11 +142,19 @@ static void floppy_off(); /*(unsigned int nr);*/
 #define DEVICE_OFF(device)
 #endif
 
+#ifdef METADISK
+#define DEVICE_NAME "meta"
+#define DEVICE_REQUEST do_meta_request
+#define DEVICE_NR(device) (MINOR(device))
+#define DEVICE_ON(device)
+#define DEVICE_OFF(device)
+#endif
+
 #ifndef CURRENT
 #define CURRENT (blk_dev[MAJOR_NR].current_request)
 #endif
 
-#define CURRENT_DEV DEVICE_NR(CURRENT->dev)
+#define CURRENT_DEV DEVICE_NR(CURRENT->rq_dev)
 
 #ifdef DEVICE_INTR
 void (*DEVICE_INTR)() = NULL;
@@ -169,56 +185,57 @@ static void end_request(uptodate)
 int uptodate;
 {
 	register struct request * req;
-	struct buffer_head * bh;
+	register struct buffer_head * bh;
 	struct task_struct * p;
 
 	req = CURRENT;
 #ifdef BLOAT_FS
-	req->errors = 0;
+	req->rq_errors = 0;
 #endif
 	if (!uptodate) {
 		printk("%s:I/O error\n", DEVICE_NAME);
 		printk("dev %x, sector %d\n",
-		       (unsigned long)req->dev, req->sector);
-		req->nr_sectors--;
-		req->nr_sectors &= ~SECTOR_MASK;
-		req->sector += (BLOCK_SIZE / 512);
-		req->sector &= ~SECTOR_MASK;		
+		       (unsigned long)req->rq_dev, req->rq_sector);
+#ifdef MULTI_BH
+		req->rq_nr_sectors--;
+		req->rq_nr_sectors &= ~SECTOR_MASK;
+		req->rq_sector += (BLOCK_SIZE / 512);
+		req->rq_sector &= ~SECTOR_MASK;		
+#endif
 	}
 
-	if ((bh = req->bh) != NULL) {
+	bh = req->rq_bh;
 #ifdef BLOAT_FS
-		req->bh = bh->b_reqnext;
-		bh->b_reqnext = NULL;
-#else
-		req->bh = NULL;
+	req->rq_bh = bh->b_reqnext;
+	bh->b_reqnext = NULL;
 #endif
-		icli();
-		bh->b_uptodate = uptodate;
-		isti();
-		unlock_buffer(bh);
+	icli();
+	bh->b_uptodate = uptodate;
+	isti();
+	unlock_buffer(bh);
 #ifdef BLOAT_FS
-		if ((bh = req->bh) != NULL) {
-			req->current_nr_sectors = bh->b_size >> 9;
-/*			req->current_nr_sectors = 1024 >> 9; */
-			if (req->nr_sectors < req->current_nr_sectors) {
-				req->nr_sectors = req->current_nr_sectors;
-				printk("end_request: buffer-list destroyed\n");
-			}
-			req->buffer = bh->b_data;
-			return;
+	if ((bh = req->rq_bh) != NULL) {
+		req->rq_current_nr_sectors = bh->b_size >> 9;
+/*			req->rq_current_nr_sectors = 1024 >> 9; */
+		if (req->rq_nr_sectors < req->rq_current_nr_sectors) {
+			req->rq_nr_sectors = req->rq_current_nr_sectors;
+			printk("end_request: buffer-list destroyed\n");
 		}
-#endif
+		req->rq_buffer = bh->b_data;
+		return;
 	}
+#endif
 	DEVICE_OFF(req->dev);
-	CURRENT = req->next;
-	if ((p = req->waiting) != NULL) {
-		req->waiting = NULL;
+	CURRENT = req->rq_next;
+#ifdef BLOAT_FS
+	if ((p = req->rq_waiting) != NULL) {
+		req->rq_waiting = NULL;
 		p->state = TASK_RUNNING;
 /*		if (p->counter > current->counter)
 			need_resched = 1; */
 	}
-	req->dev = -1;
+#endif
+	req->rq_dev = -1;
 	req->rq_status = RQ_INACTIVE;
 #ifdef MULTI_BH
 	wake_up(&wait_for_request);
@@ -237,10 +254,9 @@ int uptodate;
 		CLEAR_INTR; \
 		return; \
 	} \
-	if (MAJOR(CURRENT->dev) != MAJOR_NR) \
-		panic("%s: request list destroyed (%d, %d)", DEVICE_NAME, MAJOR(CURRENT->dev), MAJOR_NR); \
-	if (CURRENT->bh) { \
-		if (!buffer_locked(CURRENT->bh)) \
+	if (MAJOR(CURRENT->rq_dev) != MAJOR_NR) \
+		panic("%s: request list destroyed (%d, %d)", DEVICE_NAME, MAJOR(CURRENT->rq_dev), MAJOR_NR); \
+	if ((CURRENT->rq_bh) && (!buffer_locked(CURRENT->rq_bh))) { \
 			panic("%s:block not locked", DEVICE_NAME); \
 	}
 
