@@ -7,14 +7,15 @@
 
 #define RUNNABLE_HEADER_SIZE	32
 
-struct minix_exec_hdr {
-    unsigned long type;
+/* Values for the type field of minix_exec_header */
 
 #define MINIX_COMBID	0x04100301L
 #define MINIX_SPLITID	0x04200301L
 #define MINIX_S_SPLITID	0x04600301L
 #define MINIX_DLLID	0x04A00301L
 
+struct minix_exec_hdr {
+    unsigned long type;
     unsigned long hlen;
     unsigned long tseg;
     unsigned long dseg;

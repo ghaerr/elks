@@ -16,9 +16,10 @@
 
 #include <arch/bitops.h>
 
+#ifdef BLOAT_FS
+
 static char nibblemap[] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 
-#ifdef BLOAT_FS
 static unsigned short count_used(struct buffer_head *map[],
 				 unsigned int numblocks, unsigned int numbits)
 {
@@ -65,10 +66,12 @@ unsigned short minix_count_free_inodes(register struct super_block *sb)
 
 #endif
 
-void minix_free_block(register struct super_block *sb, unsigned short block)
+void minix_free_block(register struct super_block *sb,
+		      unsigned short int block)
 {
     register struct buffer_head *bh;
-    unsigned int bit, zone;
+    unsigned int zone;
+    unsigned short int bit;
 
     if (!sb) {
 	printk("mfb: bad dev\n");
@@ -84,7 +87,7 @@ void minix_free_block(register struct super_block *sb, unsigned short block)
 	bh->b_dirty = 0;
     brelse(bh);
     zone = block - sb->u.minix_sb.s_firstdatazone + 1;
-    bit = zone & 8191;
+    bit = (unsigned short int) (zone & 8191);
     zone >>= 13;
     bh = sb->u.minix_sb.s_zmap[zone];
     if (!bh) {
@@ -99,16 +102,16 @@ void minix_free_block(register struct super_block *sb, unsigned short block)
     return;
 }
 
-unsigned int minix_new_block(register struct super_block *sb)
+block_t minix_new_block(register struct super_block *sb)
 {
     register struct buffer_head *bh;
-    unsigned int i;
-    unsigned short j;
+    block_t i, j;
 
     if (!sb) {
 	printk("mnb: no sb\n");
 	return 0;
     }
+
   repeat:
     j = 8192;
     for (i = 0; i < 8; i++)
@@ -182,8 +185,12 @@ void minix_free_inode(register struct inode *inode)
     }
     map_buffer(bh);
     clear_inode(inode);
-    if (!clear_bit((int) (ino & 8191L), bh->b_data)) {
-/*		printk("%s: bit %ld already cleared.\n",ino); */
+    if (!clear_bit(ino & 8191, bh->b_data)) {
+
+#if 0
+	printk("%s: bit %ld already cleared.\n",ino);
+#endif
+
     }
     mark_buffer_dirty(bh, 1);
     unmap_buffer(bh);
@@ -193,8 +200,9 @@ struct inode *minix_new_inode(struct inode *dir)
 {
     register struct inode *inode;
     register struct buffer_head *bh;
+
     /* Adding an sb here does not make the code smaller */
-    int i, j;
+    unsigned short int i, j;
 
     if (!dir || !(inode = get_empty_inode()))
 	return NULL;
@@ -212,7 +220,7 @@ struct inode *minix_new_inode(struct inode *dir)
 	printk("No new inodes found!\n");
 	goto iputfail;
     }
-    if (set_bit(j, bh->b_data)) {	/* shouldn't happen */
+    if (set_bit(j, bh->b_data)) {		/* shouldn't happen */
 	printk("mni: already set\n");
 	goto iputfail;
     }
@@ -226,17 +234,23 @@ struct inode *minix_new_inode(struct inode *dir)
     inode->i_nlink = 1;
     inode->i_dev = inode->i_sb->s_dev;
     inode->i_uid = current->euid;
-    inode->i_gid = (dir->i_mode & S_ISGID) ? dir->i_gid : current->egid;
+    inode->i_gid = (__u8) ((dir->i_mode & S_ISGID) ? ((gid_t) dir->i_gid)
+						   : current->egid);
     inode->i_dirt = 1;
     inode->i_ino = j;
     inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
     inode->i_op = NULL;
+
 #ifdef BLOAT_FS
     inode->i_blocks = inode->i_blksize = 0;
 #endif
+
     return inode;
-    /* Oh no! It's 'Return of Goto' in a double feature with 'Mozilla vs.
-     * Internet Exploder :) */
+
+    /*  Oh no! It's 'Return of Goto' in a double feature with
+     *  'Mozilla vs. Internet Exploder' :)
+     */
+
   iputfail:
     printk("new_inode: iput fail\n");
     unmap_buffer(bh);

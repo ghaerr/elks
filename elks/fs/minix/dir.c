@@ -16,18 +16,16 @@
 
 #include <arch/segment.h>
 
-static int minix_dir_read(inode, filp, buf, count)
-     struct inode *inode;
-     struct file *filp;
-     char *buf;
-     int count;
+static size_t minix_dir_read(struct inode *inode, struct file *filp,
+			     char *buf, int count)
 {
     return -EISDIR;
 }
 
-static int minix_readdir(struct inode *inode,
-			 register struct file *filp,
-			 char *dirent, filldir_t filldir);
+static size_t minix_readdir(struct inode *inode, register struct file *filp,
+			    char *dirent, filldir_t filldir);
+
+/*@-type@*/
 
 static struct file_operations minix_dir_operations = {
     NULL,			/* lseek - default */
@@ -61,29 +59,33 @@ struct inode_operations minix_dir_inode_operations = {
 #ifdef BLOAT_FS
     NULL,			/* bmap */
 #endif
-    minix_truncate,		/* truncate */
+    minix_truncate		/* truncate */
 #ifdef BLOAT_FS
+	,
     NULL			/* permission */
 #endif
 };
 
-static int minix_readdir(struct inode *inode,
-			 register struct file *filp,
-			 char *dirent, filldir_t filldir)
+/*@+type@*/
+
+static size_t minix_readdir(struct inode *inode, register struct file *filp,
+			    char *dirent, filldir_t filldir)
 {
-    unsigned int offset;
     register struct buffer_head *bh;
     struct minix_dir_entry *de;
     struct minix_sb_info *info;
+    loff_t offset;
 
     if (!inode || !inode->i_sb || !S_ISDIR(inode->i_mode))
 	return -EBADF;
     info = &inode->i_sb->u.minix_sb;
     if (filp->f_pos & (info->s_dirsize - 1))
 	return -EBADF;
-    while (filp->f_pos < inode->i_size) {
+    while (filp->f_pos < (loff_t) inode->i_size) {
 	offset = filp->f_pos & 1023;
-	bh = minix_bread(inode, (filp->f_pos) >> BLOCK_SIZE_BITS, 0);
+	bh = minix_bread(inode,
+			 (unsigned short int) (filp->f_pos >> BLOCK_SIZE_BITS),
+			 0);
 	if (!bh) {
 	    filp->f_pos += 1024 - offset;
 	    continue;
@@ -102,7 +104,7 @@ static int minix_readdir(struct inode *inode,
 	    }
 	    offset += info->s_dirsize;
 	    filp->f_pos += info->s_dirsize;
-	} while (offset < 1024 && filp->f_pos < inode->i_size);
+	} while (offset < 1024 && filp->f_pos < (loff_t) inode->i_size);
 	unmap_brelse(bh);
     }
     return 0;

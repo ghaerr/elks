@@ -20,8 +20,8 @@ extern char *kdevname(kdev_t);	/* note: returns pointer to static data! */
  * we use these conversions.
  */
 
-#define kdev_t_to_nr(dev)	(dev)
-#define to_kdev_t(dev)		(dev)
+#define kdev_t_to_nr(dev)	((__u16) dev)
+#define to_kdev_t(dev)		((kdev_t) dev)
 
 #else
 

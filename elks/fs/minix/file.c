@@ -27,11 +27,13 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/minix_fs.h>
 
-static int minix_file_read(struct inode *inode,
-			   register struct file *filp, char *buf, int icount);
+static int minix_file_read(struct inode *inode, register struct file *filp,
+			   char *buf, size_t icount);
 
 static int minix_file_write(register struct inode *inode,
-			    struct file *filp, char *buf, int count);
+			    struct file *filp, char *buf, size_t count);
+
+/*@-type@*/
 
 /*
  * We have mostly NULL's here: the current defaults are ok for
@@ -72,41 +74,41 @@ struct inode_operations minix_file_inode_operations = {
 #endif
 };
 
+/*@+type@*/
+
 /*
  *	FIXME: Readahead
  */
 
-static int minix_file_read(struct inode *inode,
-			   register struct file *filp, char *buf, int icount)
+static int minix_file_read(struct inode *inode, register struct file *filp,
+			   char *buf, size_t icount)
 {
-    loff_t offset;
-    loff_t size;
-    loff_t left;
-    unsigned short block;
-    /* We have to make count loff_t since comparing ints to longs does not
-     * work with bcc! */
-    loff_t count = (icount % 65536);
+    /*  We have to make count loff_t since comparing ints to longs
+     *  does not work with bcc!
+     */
+
     struct buffer_head *bh;
+    block_t block, blocks;
+    loff_t offset, size, count = ((loff_t) icount) % 65536;
+    size_t chars, left;
     int read;
-    int chars;
-    unsigned short blocks;
 
     offset = filp->f_pos;
-    size = inode->i_size;
+    size = (loff_t) inode->i_size;
 
     /*
      *      Amount we can do I/O over
      */
 
     if (offset > size)
-	left = 0L;
+	left = 0;
     else
-	left = size - offset;
-    if (left > count)
-	left = count;
+	left = (size_t) (size - offset);
+    if (left > (size_t) count)
+	left = (size_t) count;
     if (left <= 0) {
 	printd_mfs("MFSREAD: EOF reached.\n");
-	return 0;		/* EOF */
+	return 0;					/* EOF */
     }
     if (!inode) {
 	printk("minix_file_read: inode = NULL\n");
@@ -121,17 +123,16 @@ static int minix_file_read(struct inode *inode,
     /*
      *      Block, offset pair from the byte offset
      */
-    block = (unsigned short) (offset >> BLOCK_SIZE_BITS);
+    block = (block_t) (offset >> BLOCK_SIZE_BITS);
     offset &= BLOCK_SIZE - 1;
-    blocks = (offset + left + (BLOCK_SIZE - 1)) >> BLOCK_SIZE_BITS;
+    blocks = ((block_t) (offset + left + (BLOCK_SIZE - 1)) >> BLOCK_SIZE_BITS);
 
     while (blocks) {
 	--blocks;
 	printd_mfs1("MINREAD: Reading block #%d\n", block);
-	if (bh = minix_getblk(inode, block++, 0)) {
-	    if (bh)
-		printd_mfs2("MINREAD: block %d = buffer %d\n", block - 1,
-			    bh->b_num);
+	if ((bh = minix_getblk(inode, block++, 0))) {
+	    printd_mfs2("MINREAD: block %d = buffer %d\n", block - 1,
+			bh->b_num);
 	    if (!readbuf(bh)) {
 		printd_mfs("MINREAD: readbuf failed\n");
 		left = 0;
@@ -169,20 +170,22 @@ static int minix_file_read(struct inode *inode,
 #ifdef BLOAT_FS
     filp->f_reada = 1;
 #endif
-#ifdef FIXME
+
+#if 0					/* FIXME */
     if (!IS_RDONLY(inode))
 	inode->i_atime = CURRENT_TIME;
 #endif
+
     return read;
 }
 
 static int minix_file_write(register struct inode *inode,
-			    struct file *filp, char *buf, int count)
+			    struct file *filp, char *buf, size_t count)
 {
-    off_t pos;
-    int written, c;
     register struct buffer_head *bh;
     char *p;
+    off_t pos;
+    size_t written, c;
 
     if (!inode) {
 	printk("minix_file_write: inode = NULL\n");
@@ -193,7 +196,7 @@ static int minix_file_write(register struct inode *inode,
 	return -EINVAL;
     }
     if (filp->f_flags & O_APPEND)
-	pos = inode->i_size;
+	pos = (off_t) inode->i_size;
     else
 	pos = filp->f_pos;
     written = 0;
@@ -224,10 +227,10 @@ static int minix_file_write(register struct inode *inode,
 	written += c;
 	buf += c;
     }
-    if (pos > inode->i_size)
-	inode->i_size = pos;
+    if (pos > (off_t) inode->i_size)
+	inode->i_size = (__u32) pos;
     inode->i_mtime = inode->i_ctime = CURRENT_TIME;
     filp->f_pos = pos;
     inode->i_dirt = 1;
-    return written;
+    return (int) written;
 }

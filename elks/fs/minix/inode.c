@@ -8,6 +8,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/minix_fs.h>
+#include <linuxmt/locks.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/string.h>
@@ -28,7 +29,6 @@ void minix_put_inode(register struct inode *inode)
 }
 
 static void minix_commit_super(register struct super_block *sb)
-/*struct minix_super_block * ms; */
 {
     mark_buffer_dirty(sb->u.minix_sb.s_sbh, 1);
     sb->s_dirt = 0;
@@ -66,21 +66,6 @@ void minix_put_super(register struct super_block *sb)
     return;
 }
 
-static struct super_operations minix_sops = {
-    minix_read_inode,
-#ifdef BLOAT_FS
-    NULL,
-#endif
-    minix_write_inode,
-    minix_put_inode,
-    minix_put_super,
-    minix_write_super,
-#ifdef BLOAT_FS
-    minix_statfs,
-#endif
-    minix_remount
-};
-
 int minix_remount(register struct super_block *sb, int *flags, char *data)
 {
     register struct minix_super_block *ms;
@@ -94,12 +79,14 @@ int minix_remount(register struct super_block *sb, int *flags, char *data)
 	    !(sb->u.minix_sb.s_mount_state & MINIX_VALID_FS)) {
 	    return 0;
 	}
+
 	/* Mounting a rw partition read-only. */
 	ms->s_state = sb->u.minix_sb.s_mount_state;
 	mark_buffer_dirty(sb->u.minix_sb.s_sbh, 1);
 	sb->s_dirt = 1;
 	minix_commit_super(sb);
     } else {
+
 	/* Mount a partition which is read-only, read-write. */
 	sb->u.minix_sb.s_mount_state = ms->s_state;
 	ms->s_state &= ~MINIX_VALID_FS;
@@ -116,12 +103,28 @@ int minix_remount(register struct super_block *sb, int *flags, char *data)
     return 0;
 }
 
+static void minix_read_inode(register struct inode *inode);
+
+static struct super_operations minix_sops = {
+    minix_read_inode,
+#ifdef BLOAT_FS
+    NULL,
+#endif
+    minix_write_inode,
+    minix_put_inode,
+    minix_put_super,
+    minix_write_super,
+#ifdef BLOAT_FS
+    minix_statfs,
+#endif
+    minix_remount
+};
+
 struct super_block *minix_read_super(register struct super_block *s,
 				     char *data, int silent)
 {
     struct buffer_head *bh;
-    int i;
-    unsigned short block;
+    unsigned short int block, i;
     kdev_t dev = s->s_dev;
 
     if (32 != sizeof(struct minix_inode))
@@ -135,6 +138,7 @@ struct super_block *minix_read_super(register struct super_block *s,
     }
     map_buffer(bh);
     {				/* Localise register variable */
+
 	register struct minix_super_block *ms;
 	ms = (struct minix_super_block *) bh->b_data;
 	s->u.minix_sb.s_ms = ms;
@@ -146,9 +150,11 @@ struct super_block *minix_read_super(register struct super_block *s,
 	s->u.minix_sb.s_firstdatazone = ms->s_firstdatazone;
 	s->u.minix_sb.s_log_zone_size = ms->s_log_zone_size;
 	s->u.minix_sb.s_max_size = ms->s_max_size;
+
 #ifdef BLOAT_FS
 	s->s_magic = ms->s_magic;
 #endif
+
 	if (ms->s_magic == MINIX_SUPER_MAGIC) {
 	    s->u.minix_sb.s_version = MINIX_V1;
 	    s->u.minix_sb.s_nzones = s->u.minix_sb.s_ms->s_nzones;
@@ -168,6 +174,7 @@ struct super_block *minix_read_super(register struct super_block *s,
     for (i = 0; i < MINIX_Z_MAP_SLOTS; i++)
 	s->u.minix_sb.s_zmap[i] = NULL;
     block = 2;
+
     /*
      *      FIXME:: We cant keep these in memory on an 8086, need to change
      *      the code to fetch/release each time we get a block.
@@ -193,9 +200,10 @@ struct super_block *minix_read_super(register struct super_block *s,
 	printk("minix: bad superblock or bitmaps\n");
 	return NULL;
     }
-    set_bit(0, s->u.minix_sb.s_imap[0]->b_data);
-    set_bit(0, s->u.minix_sb.s_zmap[0]->b_data);
+    (void) set_bit(0, s->u.minix_sb.s_imap[0]->b_data);
+    (void) set_bit(0, s->u.minix_sb.s_zmap[0]->b_data);
     unlock_super(s);
+
     /* set up enough so that it can read an inode */
     s->s_dev = dev;
     s->s_op = &minix_sops;
@@ -222,8 +230,9 @@ struct super_block *minix_read_super(register struct super_block *s,
 }
 
 #ifdef BLOAT_FS
-void minix_statfs(register struct super_block *sb,
-		  struct statfs *buf, int bufsiz)
+
+void minix_statfs(register struct super_block *sb, struct statfs *buf,
+		  size_t bufsiz)
 {
     struct statfs tmp;
 
@@ -239,19 +248,21 @@ void minix_statfs(register struct super_block *sb,
     tmp.f_namelen = sb->u.minix_sb.s_namelen;
     memcpy(buf, &tmp, bufsiz);
 }
+
 #endif
 
-/* Adapted from Linux 0.12's inode.c.  _bmap() is a big function, I know 
-
-   Rewritten 2001 by Alan Cox based on newer kernel code + my own plans */
+/*  Adapted from Linux 0.12's inode.c.  _bmap() is a big function, I know 
+ *
+ *  Rewritten 2001 by Alan Cox based on newer kernel code + my own plans
+ */
 
 static unsigned short map_izone(register struct inode *inode,
 				unsigned short block, int create)
 {
-    register unsigned short *i_zone = inode->i_zone;
+    register block_t *i_zone = inode->i_zone;
 
     if (create && !i_zone[block]) {
-	if (i_zone[block] = minix_new_block(inode->i_sb)) {
+	if ((i_zone[block] = minix_new_block(inode->i_sb))) {
 	    inode->i_ctime = CURRENT_TIME;
 	    inode->i_dirt = 1;
 	}
@@ -260,18 +271,17 @@ static unsigned short map_izone(register struct inode *inode,
 }
 
 static unsigned short map_iblock(register struct inode *inode,
-				 unsigned short i,
-				 unsigned short block, int create)
+				 block_t block, int create)
 {
     register struct buffer_head *bh;
+    block_t i;
 
-    if (!(bh = bread(inode->i_dev, (block_t) i))) {
+    if (!(bh = bread(inode->i_dev, (block_t) i)))
 	return 0;
-    }
     map_buffer(bh);
     i = (((unsigned short *) (bh->b_data))[block]);
     if (create && !i) {
-	if (i = minix_new_block(inode->i_sb)) {
+	if ((i = minix_new_block(inode->i_sb))) {
 	    ((unsigned short *) (bh->b_data))[block] = i;
 	    bh->b_dirty = 1;
 	}
@@ -280,8 +290,8 @@ static unsigned short map_iblock(register struct inode *inode,
     return i;
 }
 
-unsigned short _minix_bmap(register struct inode *inode,
-			   unsigned short block, int create)
+unsigned short _minix_bmap(register struct inode *inode, block_t block,
+			   int create)
 {
     register unsigned short i;
 
@@ -314,9 +324,8 @@ unsigned short _minix_bmap(register struct inode *inode,
     if (i == 0)
 	return 0;
 
-
     /* Two layer indirection */
-    i = map_iblock(inode, i, block >> 9, create);
+    i = map_iblock(inode, block >> 9, create);
 
   map1:
     /*
@@ -326,31 +335,29 @@ unsigned short _minix_bmap(register struct inode *inode,
     if (i == 0)
 	return 0;
     /* Ok now load the second indirect block */
-    i = map_iblock(inode, i, block & 511, create);
+    i = map_iblock(inode, block & 511, create);
     return i;
 }
 
 struct buffer_head *minix_getblk(register struct inode *inode,
-				 unsigned short block, int create)
+				 block_t block, int create)
 {
-    struct buffer_head *bh;
-    unsigned short blknum;
+    struct buffer_head *bh = NULL;
+    block_t blknum = _minix_bmap(inode, block, create);
 
-    blknum = _minix_bmap(inode, block, create);
-    if (blknum != 0) {
+    if (blknum)
 	bh = getblk(inode->i_dev, (block_t) blknum);
-	return bh;
-    } else
-	return NULL;
+
+    return bh;
 }
 
-struct buffer_head *minix_bread(struct inode *inode,
-				unsigned short block, int create)
+struct buffer_head *minix_bread(struct inode *inode, block_t block, int create)
 {
     register struct buffer_head *bh;
 
     if (!(bh = minix_getblk(inode, block, create)))
 	return NULL;
+
     return readbuf(bh);
 }
 
@@ -370,10 +377,12 @@ void minix_set_ops(struct inode *inode)
 	inode->i_op = &chrdev_inode_operations;
     else if (S_ISBLK(inode->i_mode))
 	inode->i_op = &blkdev_inode_operations;
+
 #ifdef NOT_YET
     else if (S_ISFIFO(inode->i_mode))
 	init_fifo(inode);
 #endif
+
 }
 
 /*
@@ -384,14 +393,14 @@ static void minix_read_inode(register struct inode *inode)
 {
     struct buffer_head *bh;
     struct minix_inode *raw_inode;
-    unsigned short block;
-    unsigned int ino;
-    static int __c = 0;
+    block_t block;
+    ino_t ino;
 
     ino = inode->i_ino;
     inode->i_op = NULL;
     inode->i_mode = 0;
-    {				/* To isolate register variable */
+    {				/* Isolate register variable */
+
 	register struct super_block *isb = inode->i_sb;
 	if (!ino || ino > isb->u.minix_sb.s_ninodes) {
 	    printk("Bad inode number on dev %s: %d is out of range\n",
@@ -411,9 +420,11 @@ static void minix_read_inode(register struct inode *inode)
 	(ino - 1) % MINIX_INODES_PER_BLOCK;
     memcpy(inode, raw_inode, sizeof(struct minix_inode));
     inode->i_ctime = inode->i_atime = inode->i_mtime;
+
 #ifdef BLOAT_FS
     inode->i_blocks = inode->i_blksize = 0;
 #endif
+
     if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
 	inode->i_rdev = to_kdev_t(raw_inode->i_zone[0]);
     else
@@ -431,8 +442,8 @@ static struct buffer_head *minix_update_inode(register struct inode *inode)
 {
     register struct buffer_head *bh;
     struct minix_inode *raw_inode;
-    unsigned int ino;
-    unsigned short block;
+    block_t block;
+    ino_t ino;
 
     ino = inode->i_ino;
     if (!ino || ino > inode->i_sb->u.minix_sb.s_ninodes) {
@@ -465,17 +476,16 @@ static struct buffer_head *minix_update_inode(register struct inode *inode)
 
 void minix_write_inode(register struct inode *inode)
 {
-    register struct buffer_head *bh;
-
-    bh = minix_update_inode(inode);
+    register struct buffer_head *bh = minix_update_inode(inode);
     brelse(bh);
 }
 
 #ifdef BLOAT_FS
+
 int minix_sync_inode(register struct inode *inode)
 {
-    int err = 0;
     struct buffer_head *bh;
+    int err = 0;
 
     bh = minix_update_inode(inode);
     if (bh && buffer_dirty(bh)) {
@@ -494,15 +504,17 @@ int minix_sync_inode(register struct inode *inode)
 #endif
 
 struct file_system_type minix_fs_type = {
+    minix_read_super,
+    "minix"
 #ifdef BLOAT_FS
-    minix_read_super, "minix", 1
-#else
-    minix_read_super, "minix"
+	   , 1
 #endif
 };
 
 int init_minix_fs(void)
 {
+#if 0
+    register_filesystem(&minix_fs_type);
+#endif
     return 1;
-    /*register_filesystem(&minix_fs_type); */
 }

@@ -508,9 +508,11 @@ extern int _namei(char *,struct inode *,int,struct inode **);
 
 extern int sys_dup(int);
 
-extern struct buffer_head *bread(dev_t, block_t);
+extern struct buffer_head *bread(dev_t,block_t);
 
 extern char *get_pipe_mem(void);
+
+extern void mark_buffer_uptodate(struct buffer_head *,int);
 
 #endif
 
