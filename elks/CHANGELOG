@@ -36,6 +36,9 @@ Sun Jun 17 11:20:06 BST 2001   Alan Cox  <alan@redhat.com>
 	* Fix link error about protocols
 	* Clean up a lot of pointless define options
 	* Remove BH stuff we definitely dont need
+	* Add chq_full and fix select for write on tty interfaces
+	* Shrink various minixfs messages to cut down on data segment
+	* Note that the pipefs needs to be using minixfs blocks as per V7
 
 Tue Apr 17 14:52 GMT 2001   Alistair Riddoch  <alriddoch@zepler.org>
 
