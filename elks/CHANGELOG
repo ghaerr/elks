@@ -10,6 +10,8 @@ Al
 Wed Sep 26 23:36:17 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Deleted redundant Makefile's from elks/Documentation subtree.
+	* Added prototype rule to Makefile-rules to allow automatic
+	  conversion of *.html to *.txt by Makefiles.
 
 Sun Sep  9 xx:xx:xx BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
