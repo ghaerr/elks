@@ -296,7 +296,7 @@ register struct inode * inode;
 unsigned short block;
 int create;
 {
-	unsigned short i;
+	register unsigned short i;
 
 /* I do not understand what this bit means, it cannot be this big,
  * it is a short. If this was a long it would make sense. We need to
