@@ -204,7 +204,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	goto close_readexec;
     }
 
-    debug1("EXEC: Allocating %d bytes for data segment\n", len);
+    debug1("EXEC: Allocating %ld bytes for data segment\n", len);
 
     dseg = mm_alloc((segext_t) (len >> 4));
     if (!dseg) {

@@ -69,9 +69,10 @@ void setup_mm(void)
 
 #endif
 
-    printk(".\nELKS kernel (%d text + %d data + %d bss)\n"
+    printk(".\nELKS kernel (%u text + %u data + %u bss)\n"
 	   "Kernel text at %x:0000, data at %x:0000 \n",
-	   (int) _endtext, (int) _enddata, (int) _endbss - (int) _enddata,
+	   (unsigned)_endtext, (unsigned)_enddata,
+	   (unsigned)_endbss - (unsigned)_enddata,
 	   get_cs(), get_ds());
 
     /*
