@@ -34,7 +34,7 @@ extern int lastirq;
 static void run_timer_list();
 static void run_old_timers();
 
-#if 0
+#ifdef OLD_SCHED
 int need_resched = 0;
 static int intr_count = 0;
 #endif
@@ -131,7 +131,7 @@ void schedule(void)
     __uint c;
     __ptask p;
 #endif
-	register __ptask prev; 	/* Subscript calculation is *very* expensive in bcc */
+	register __ptask prev;
 	register __ptask next;
 	__ptask currentp = current;
 	jiff_t timeout = 0L;
@@ -237,9 +237,7 @@ void schedule(void)
 	    timer.tl_function = process_timeout;
 	    add_timer(&timer);
 	}
-#if 0
-	save_regs();		/* */
-#endif
+
 	if ((!can_tswitch) && (lastirq != -1))
 	    goto scheduling_in_interrupt;
 
@@ -250,15 +248,14 @@ void schedule(void)
 	}
 #endif
 
-	previous = current;	/* */
+	previous = current;
 	current = next;
-
-				
-		tswitch();	/* Won't return for a new task */
 		
-		if (timeout) {
-			del_timer(&timer);
-		}
+	tswitch();	/* Won't return for a new task */
+		
+	if (timeout) {
+		del_timer(&timer);
+	}
     }
     return;
 

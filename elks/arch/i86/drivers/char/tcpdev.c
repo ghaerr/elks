@@ -130,6 +130,9 @@ static int tcpdev_open(struct inode *inode, struct file *file)
 {
     printd_td("tcpdev : open()\n");
 
+    if(!suser())
+    	return -EPERM;
+
     if (tcpdev_inuse)
 	return -EBUSY;
 

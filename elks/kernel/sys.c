@@ -84,13 +84,9 @@ void ctrl_alt_del(void)
  * This function returns the version number associated with this kernel.	
  */
 
-int sys_knlvsn(char **vsn)
+int sys_knlvsn(char *vsn)
 {
-    if (vsn && *vsn) {
-	strcpy(*vsn, system_utsname.release);
-	return 0;
-    } else
-	return -1;
+	verified_memcpy_tofs(vsn, system_utsname.release, strlen(system_utsname.release) + 1);
 }
 
 #endif

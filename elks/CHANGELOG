@@ -32,6 +32,13 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Fri Apr 26 15:21:58 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Cleanups in fork.c and use of register variables.
+	* Fixed tcpdev to be opened only by root.
+	* Corrected the sys_knlvsn() system call.
+	* Cleanups in sched.c
+
 Fri Apr 26 12:35:31 EEST 2002 Harry Kalogirou <harkal@gmx.net>
 
 	* Reverted a change Riley made during the ANSI'fication of

@@ -5,7 +5,8 @@
 
 int check_task_table(void)
 {
-    int i, j;
+    register int i;
+    register int j;
     j = 0;
     for (j = 0; j < MAX_TASKS; j++) {
 	if (task[i].state != TASK_UNUSED && task[i].pid == 8) {
@@ -18,11 +19,10 @@ int check_task_table(void)
 /*
  *	Find a free task slot.
  */
-
 static int find_empty_process(void)
 {
-    int i;
-    int unused = 0;
+    register int i;
+    register int unused = 0;
     int n;
 
     for (i = 0; i < MAX_TASKS; i++) {
@@ -46,7 +46,7 @@ int get_pid(void)
 {
     static unsigned int last_pid = 0;
     register struct task_struct *p;
-    int i;
+    register int i;
 
   repeat:
     if (++last_pid == 32768)
@@ -82,15 +82,10 @@ pid_t do_fork(int virtual)
 
     /* Fix up what's different */
 
-    /* We can now do shared text with fork using realloc
-     * cs and cseg are not altered by realloc
+    /* 
+     * We do shared text.
      */
-
-    /* t->mm.cseg = */ mm_realloc(currentp->mm.cseg);
-
-#if 0
-    t->t_regs.cs = t->mm.cseg;
-#endif
+    mm_realloc(currentp->mm.cseg);
 
     if (virtual) {
 	mm_realloc(currentp->mm.dseg);
@@ -126,7 +121,6 @@ pid_t do_fork(int virtual)
 
     /* Increase the reference count for program text inode - tgm */
     t->t_inode->i_count++;
-
     t->fs.root->i_count++;
     t->fs.pwd->i_count++;
 
@@ -147,7 +141,6 @@ pid_t do_fork(int virtual)
     /*
      *      Wake our new process
      */
-
     wake_up_process(t);
 
     /*
