@@ -22,8 +22,6 @@
 
 __task task[MAX_TASKS];
 
-void (*bh_base[16])();
-unsigned bh_active = 0;
 __ptask current, next, previous;
 
 #ifdef OLD_SCHED
