@@ -108,10 +108,8 @@ mainmenu_option next_comment
 comment 'Driver Support'
 
 source arch/i86/drivers/char/Config.in
-if [ "$CONFIG_NOFS" = "n" ]; then
-    source arch/i86/drivers/block/Config.in
-    source fs/Config.in
-fi
+source arch/i86/drivers/block/Config.in
+source fs/Config.in
 endmenu
 
 mainmenu_option next_comment
