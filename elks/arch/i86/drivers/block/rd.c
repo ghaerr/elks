@@ -44,7 +44,11 @@ static struct rd_infot
 	rd_sector_t size; /* ramdisk size in 512 B blocks */
 } rd_info[MAX_ENTRIES] = 
 {
-	{0,0,0},
+#ifdef CONFIG_PRELOAD_RAMDISK
+        {0,RD_BUSY,256},
+#else
+        {0,0,0},
+#endif
 	{0,0,0},
 	{0,0,0},
 	{0,0,0},
@@ -61,14 +65,19 @@ static struct rd_segmentt
 	rd_sector_t seg_size; /* segment size in 512 byte blocks */
 } rd_segment[MAX_ENTRIES] = /* max 640 KB will be used for RAM disk(s) */
 {
+#ifdef CONFIG_PRELOAD_RAMDISK
+        {0x6000,1,128,},
+        {0x7000,MAX_ENTRIES+1,128,},
+#else
+        {0,MAX_ENTRIES+1,0,},
+        {0,MAX_ENTRIES+1,0,},
+#endif
 	{0,MAX_ENTRIES+1,0,},
 	{0,MAX_ENTRIES+1,0,},
 	{0,MAX_ENTRIES+1,0,},
 	{0,MAX_ENTRIES+1,0,},
 	{0,MAX_ENTRIES+1,0,},
 	{0,MAX_ENTRIES+1,0,},
-	{0,MAX_ENTRIES+1,0,},
-	{0,MAX_ENTRIES+1,0,}
 };
 
 static int rd_open(inode, filp);
@@ -341,11 +350,13 @@ static void do_rd_request()
 #endif
 		if (CURRENT->rq_cmd == WRITE) {
 			printd_rd1("RD_REQUEST writing to %ld\n", start);
-			fmemcpy(rd_segment[segnum].segment, offset, get_ds(), buff, 1024);
+			fmemcpy(rd_segment[segnum].segment, 
+				offset * SECTOR_SIZE, get_ds(), buff, 1024);
 		}
 		if (CURRENT->rq_cmd == READ) {
 			printd_rd1("RD_REQUEST reading from %ld\n", start);
-			fmemcpy(get_ds(), buff, rd_segment[segnum].segment, offset, 1024);
+			fmemcpy(get_ds(), buff, rd_segment[segnum].segment, 
+				offset * SECTOR_SIZE, 1024);
 		}
 		end_request(1, CURRENT->rq_dev);
 	}
