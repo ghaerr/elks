@@ -54,7 +54,7 @@ struct wait_queue select_poll;	/* magic queue - see sleepwake.c */
 /* FIXME *//* should be an inline function */
 void select_wait(struct wait_queue *q)
 {
-    current->pollhash |= 1 << ((((int) q) >> 4) & 15);
+    current->pollhash |= 1 << ((((int) q) >> 8) & 15);
 }
 
 /*

@@ -442,7 +442,7 @@ struct malloc_hole *mm_resize(struct malloc_hole *m, segext_t pages)
 int sys_brk(__pptr len)
 {
     register __ptask currentp = current;
-    
+
     if (len < currentp->t_enddata)
         return -ENOMEM;
         
@@ -453,17 +453,17 @@ int sys_brk(__pptr len)
 #ifdef CONFIG_EXEC_ELKS
     if(len > currentp->t_endseg){
         /* Resize time */
-        register struct malloc_hole *h;        
-        seg_t tmp;
+        register struct malloc_hole *h;
+        
         h = find_hole(&memmap, currentp->mm.dseg);    
-        tmp = h->page_base;
         
         h = mm_resize(h, (len + 15) >> 4);
         if(!h){
-            return -ENOMEM;   
+            return -ENOMEM;
         }
-        if(h->refcount != 1)
+        if(h->refcount != 1){   
             panic("Relocated shared hole");
+        }
         
         currentp->mm.dseg = h->page_base;
         currentp->t_regs.ds = h->page_base;
@@ -471,7 +471,7 @@ int sys_brk(__pptr len)
         currentp->t_endseg = len;
     }
 #endif
-
+brk_return:
     currentp->t_endbrk = len;
 
     return 0;

@@ -159,6 +159,7 @@ pid_t do_fork(int virtual)
 	put_ustack(currentp, 0, ip);
 	put_ustack(currentp, 2, cs);
 	put_ustack(currentp, 4, fl);
+
     }
 
     /*
@@ -174,5 +175,9 @@ pid_t sys_fork(void)
 
 pid_t sys_vfork(void)
 {
+#ifdef CONFIG_EXEC_ELKS
+    return do_fork(0);
+#else
     return do_fork(1);
+#endif
 }

@@ -72,7 +72,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /*
      *      Open the image
      */
-
     debug1("EXEC: opening file: %s\n", filename);
 
     retval = open_namei(filename, 0, 0, &inode, NULL);

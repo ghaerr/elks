@@ -101,7 +101,7 @@ void _wake_up(struct wait_queue *q, unsigned short int it)
 
     extern struct wait_queue select_poll;
 
-    phash >>= 4;
+    phash >>= 8;
     phash &= 0x0F;
     phash = ((unsigned short int) 1) << phash;
 

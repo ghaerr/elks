@@ -135,7 +135,7 @@ makerunnable:
             timer.tl_function = process_timeout;
             add_timer(&timer);
         }
-        
+
         if ((!can_tswitch) && (lastirq != -1))
             goto scheduling_in_interrupt;
 
