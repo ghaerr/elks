@@ -214,7 +214,6 @@ REGOPT struct inode * inode;
 	sb->s_op->write_inode(inode);
 	unlock_inode(inode);
 }
-/* I GOT TO HERE FIXME */
 
 static void read_inode(inode)
 struct inode * inode;
@@ -471,9 +470,7 @@ repeat:
 #ifdef BLOAT_FS
 	inode->i_version = ++event;
 #endif
-#ifdef NOT_YET	
-	inode->i_sem.count = 1;
-#endif	
+	inode->i_sem = 0;
 	inode->i_ino = ++ino;
 	inode->i_dev = 0;
 	nr_free_inodes--;
