@@ -129,7 +129,7 @@ int main(void)
 #else
 
     /* for block of 64K write data */
-    for (high_address = 0; high_address <SIZE; high_address++) {
+    for (high_address = 0; high_address < BLOCKS; high_address++) {
 	low_address = 0;
 	not_done = 1;
 
