@@ -21,20 +21,21 @@ ttn.c
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #ifndef __LINUX__
 #include <linuxmt/in.h>
 #include <linuxmt/net.h>
 #include <linuxmt/time.h>
 #include "../httpd/mylib.h"
 
-#define assert(a)
+/*#define assert(a)*/
 #else
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
 
-#include <netdb.h>
+/*#include <netdb.h>*/
 
 #include "ttn.h"
 
