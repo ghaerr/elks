@@ -250,20 +250,29 @@ void tcpdev_checkread(cb, push)
 struct tcpcb_s *cb;
 char push;
 {
-   	struct tdb_return_data *ret_data;
+	struct tdb_return_data *ret_data;
 	int data_avail;
-	
-	if(cb->wait_data == 0)
-		return;
-	
+	__u16 sock;
+
+	ret_data = sbuf;	
 	data_avail = CB_BUF_USED(cb);
 	
-	if(cb->wait_data > data_avail && !push)
-		return;
+	if(cb->wait_data == 0 || (cb->wait_data > data_avail && !push)){
+		/* Update the avail_data in the kernel socket (for select) */
+		sock = cb->sock;
+		ret_data->type = TDT_AVAIL_DATA;
+		ret_data->ret_value = data_avail;
+		ret_data->sock = sock;
+	
+		write(tcpdevfd, sbuf, sizeof(struct tdb_return_data));
+		return;	
+	}
+	
+/*	if(cb->wait_data > data_avail && !push)
+		return;*/
 		
 /*	data_avail = cb->wait_data < data_avail ? cb->wait_data : data_avail;*/
 	
-	ret_data = sbuf;
 	ret_data->type = 0;
 	ret_data->ret_value = data_avail;
 	ret_data->sock = cb->sock;
