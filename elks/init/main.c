@@ -111,7 +111,7 @@ static void init_task()
 	/* FIXME: sys_open expects THREE parameters */
 
 #ifdef CONFIG_CONSOLE_SERIAL
-	num = sys_open("/dev/ttys0", 2);
+	num = sys_open("/dev/ttyS0", 2);
 #else
 	num = sys_open("/dev/tty1", 2);
 #endif
