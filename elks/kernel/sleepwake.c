@@ -119,3 +119,25 @@ int it;
 		}
 	}
 }
+
+/*
+ *	Semaphores. These are not IRQ safe not needed to be so for ELKS
+ */
+ 
+void up(s)
+short *s;
+{
+	if(++*s==1)	/* Gone positive */
+		wake_up((void *)s);
+}
+
+void down(s)
+short *s;
+{
+	/* Wait for the semaphore */
+	while(*s<1)
+		sleep_on((void *)s);
+	/* Take it */
+	*s--;
+}
+
