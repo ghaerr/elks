@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Tue Feb 16 12:34 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Final tweaks for 0.0.75
+
 Mon Feb 15 17:08 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Driver stub of meta driver for user space device drivers

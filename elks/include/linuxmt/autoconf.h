@@ -53,6 +53,7 @@
 #define CONFIG_CHAR_DEV_MEM 1
 #define CONFIG_CHAR_DEV_RS 1
 #define CONFIG_CHAR_DEV_LP 1
+#define CONFIG_DEV_META 1
 
 /*
  * Block device drivers

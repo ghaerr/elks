@@ -12,11 +12,14 @@ when the serial port should be generating an interrupt. It is not clear why,
 but it is probable there is a bug somewhere in the serial port configuration
 code
 
+
 Sometimes unmounting a non-root filesystem returns EBUSY when nothing is using,
 and nothing seems to rectify it.
 
+
 Sometimes for no aparent reason the umount command gives a STACK collided with
 BSS error without unmounting the filesystem.
+
 
 Deleting data from the filesystem results almost always with a
 "Deleting block not in data zone" type error message, and sometimes crashes.
@@ -37,5 +40,9 @@ corrupted. See comments at the top of schedule() in kernel/sched.c. I
 occasionly get the same wait_queue corruption message when heavily testing the
 multitasking.
 
+
 Shell sometimes reports "No such file or directory" when it means "Out of
 memory".
+
+
+fchown function seems to corrupt inode table. (See login source code).

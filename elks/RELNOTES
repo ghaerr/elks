@@ -1,3 +1,15 @@
+VERSION 0.0.75 NOTES
+--------------------
+
+	Optimised request code to make it smaller and more efficient.
+	Added stub for the meta device driver to support user space
+device drivers.
+	Latest version of serial driver from Blaz Antonic which adds
+early support for serial driver config ioctls.
+	Incomplete code to support shared libraries.
+	Cleaned up debugging output macros.
+	Fixed init code to launch init with valid args.
+
 VERSION 0.0.74 NOTES
 --------------------
 

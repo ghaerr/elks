@@ -1,2 +1,2 @@
-#define UTS_RELEASE "0.0.74-pre1"
-#define ELKS_VERSION_CODE 593
+#define UTS_RELEASE "0.0.75"
+#define ELKS_VERSION_CODE 600

@@ -24,25 +24,13 @@
 
 #if 0
 #define printd_mfs printk 
-#else
-#define printd_mfs(_a)
-#endif
-
-#if 0
 #define printd_mfs1 printk 
-#else
-#define printd_mfs1(_a,_b)
-#endif
-
-#if 0
 #define printd_mfs2 printk 
-#else
-#define printd_mfs2(_a,_b,_c)
-#endif
-
-#if 0
 #define printd_mfs3 printk 
 #else
+#define printd_mfs(_a)
+#define printd_mfs1(_a,_b)
+#define printd_mfs2(_a,_b,_c)
 #define printd_mfs3(_a,_b,_c,_d)
 #endif
 
@@ -54,19 +42,11 @@
 
 #if 0
 #define printd_exec printk
-#else
-#define printd_exec(_a)
-#endif
-
-#if 0
 #define printd_exec1 printk
-#else
-#define printd_exec1(_a,_b)
-#endif
-
-#if 0
 #define printd_exec2 printk
 #else
+#define printd_exec(_a)
+#define printd_exec1(_a,_b)
 #define printd_exec2(_a,_b,_c)
 #endif
 
@@ -78,25 +58,13 @@
 
 #if 0
 #define printd_bufmap printk
-#else
-#define printd_bufmap(_a)
-#endif
-
-#if 0
 #define printd_bufmap1 printk
-#else
-#define printd_bufmap1(_a,_b)
-#endif
-
-#if 0
 #define printd_bufmap2 printk
-#else
-#define printd_bufmap2(_a,_b,_c)
-#endif
-
-#if 0
 #define printd_bufmap3 printk
 #else
+#define printd_bufmap(_a)
+#define printd_bufmap1(_a,_b)
+#define printd_bufmap2(_a,_b,_c)
 #define printd_bufmap3(_a,_b,_c,_d)
 #endif
 
@@ -108,25 +76,13 @@
 
 #if 0
 #define printd_chq printk
-#else
-#define printd_chq(_a)
-#endif
-
-#if 0
 #define printd_chq3 printk
-#else
-#define printd_chq3(_a,_b,_c,_d)
-#endif
-
-#if 0
 #define printd_chq5 printk
-#else
-#define printd_chq5(_a,_b,_c,_d,_e,_f)
-#endif
-
-#if 0
 #define printd_chq6 printk
 #else
+#define printd_chq(_a)
+#define printd_chq3(_a,_b,_c,_d)
+#define printd_chq5(_a,_b,_c,_d,_e,_f)
 #define printd_chq6(_a,_b,_c,_d,_e,_f,_g)
 #endif
 
@@ -138,50 +94,31 @@
 
 #if 0
 #define printd_namei printk
-#else
-#define printd_namei(_a)
-#endif
-
-#if 0
 #define printd_namei1 printk
-#else
-#define printd_namei1(_a,_b)
-#endif
-
-#if 0
 #define printd_namei2 printk
 #else
+#define printd_namei(_a)
+#define printd_namei1(_a,_b)
 #define printd_namei2(_a,_b,_c)
 #endif
 
 #if 0
 #define printd_iget printk
-#else
-#define printd_iget(_a)
-#endif
-
-#if 0
 #define printd_iget1 printk
-#else
-#define printd_iget1(_a,_b)
-#endif
-
-#if 0
 #define printd_iget3 printk
 #else
+#define printd_iget(_a)
+#define printd_iget1(_a,_b)
 #define printd_iget3(_a,_b,_c,_d)
 #endif
+
 /* This is really chatty, and not recommended for use on a 5150 :) */
 
 #if 0
 #define printd_mem printk
-#else
-#define printd_mem(_a)
-#endif
-
-#if 0
 #define printd_mem1 printk
 #else
+#define printd_mem(_a)
 #define printd_mem1(_a,_b)
 #endif
 
@@ -195,30 +132,18 @@
 
 #if 0
 #define printd_rd printk
-#else
-#define printd_rd(_a)
-#endif
-
-#if 0
 #define printd_rd1 printk
-#else
-#define printd_rd1(_a,_b)
-#endif
-
-#if 0
 #define printd_rd2 printk
 #else
+#define printd_rd(_a)
+#define printd_rd1(_a,_b)
 #define printd_rd2(_a,_b,_c)
 #endif
 
 #if 0
 #define printd_pipe printk
-#else
-#define printd_pipe(_a)
-#endif
-
-#if 0
 #define printd2_pipe printk
 #else
+#define printd_pipe(_a)
 #define printd2_pipe(_a,_b,_c)
 #endif
