@@ -2,13 +2,12 @@ include Make.defs
 
 DIRS=disk_utils file_utils sh_utils sys_utils misc_utils sash \
 	levee ash minix1 minix2 bc byacc elvis inet
+
 KHELPER=$(MINIX_BOOT)/minix_elks.bin
 FD_BSECT=$(MINIX_BOOT)/minix.bin
 
 all:
-	@for i in $(DIRS); do \
-	(cd $$i; make) ; \
-	done
+	@for i in $(DIRS); do make -C $$i ; done
 
 $(COMB_TARGET_FS):
 	dd if=/dev/zero of=$(COMB_TARGET_FS) bs=1024 count=$(COMB_TARGET_BLKS)
@@ -60,76 +59,62 @@ mount_sibofs: $(SIBO_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	
 
 #rfs: mount_rfs
-#	@for i in $(DIRS); do \
-#	(cd $$i; make rfs) ; \
-#	done
+#	@for i in $(DIRS); do make -C $$i rfs ; done
 #	umount $(TARGET_FS)
 	
 #min_rfs: mount_rfs
-#	@for i in $(DIRS); do \
-#	(cd $$i; make min_rfs) ; \
-#	done
+#	@for i in $(DIRS); do make -C $$i min_rfs ; done
 #	umount $(TARGET_FS)
 
 $(ELKS_DIR)/.config:
-	(cd $(ELKS_DIR) ; make config)
+	make -C $(ELKS_DIR) config
 
 $(ELKS_DIR)/arch/i86/boot/Image: $(ELKS_DIR)/.config
-	(cd $(ELKS_DIR) ; make)
+	make -C $(ELKS_DIR)
 
 $(FD_BSECT):
-	(cd $(MINIX_BOOT) ; make bin)
+	make -C $(MINIX_BOOT) bin
 
 $(KHELPER):
-	(cd $(MINIX_BOOT) ; make)
+	make -C $(MINIX_BOOT)
 
 boot: $(ELKS_DIR)/arch/i86/boot/Image
 	cp $(ELKS_DIR)/arch/i86/boot/Image boot
 	
 
 comb: mount_combfs $(ELKS_DIR)/arch/i86/boot/Image $(FD_BSECT) $(KHELPER)
-	@for i in $(DIRS); do \
-	(cd $$i; make min_rfs) ; \
-	done
+	@for i in $(DIRS); do make -C $$i min_rfs ; done
 	cp $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
 	cp $(KHELPER) $(TARGET_MNT)/boot/boot
 	umount $(COMB_TARGET_FS)
 	dd if=$(FD_BSECT) of=$(COMB_TARGET_FS) bs=512 count=2 conv=notrunc
 
 root: mount_rootfs
-	@for i in $(DIRS); do \
-	(cd $$i; make min_rfs) ; \
-	done
+	@for i in $(DIRS); do make -C $$i min_rfs ; done
 	umount $(ROOT_TARGET_FS)
 	
 comb_net: mount_rootnetfs $(ELKS_DIR)/arch/i86/boot/Image $(FD_BSECT) $(KHELPER)
 	cd $(ELKSNET_DIR)/ktcp ; \
 	make ; \
 	cp -p -f ktcp $(TARGET_MNT)/bin
-	@for i in $(DIRS); do \
-	(cd $$i; make net_rfs) ; \
-	done
+	@for i in $(DIRS); do make -C $$i net_rfs ; done
 	cp $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
 	cp $(KHELPER) $(TARGET_MNT)/boot/boot
 	umount $(ROOT_NET_TARGET_FS)
 	dd if=$(FD_BSECT) of=$(ROOT_NET_TARGET_FS) bs=512 count=2 conv=notrunc
 
 sibo: mount_sibofs
-	@for i in $(DIRS); do \
-	(cd $$i; make smin_rfs) ; \
-	done
+	@for i in $(DIRS); do make -C $$i smin_rfs ; done
 	umount $(SIBO_TARGET_FS)
 
 images.zip: boot comb root comb_net
 	zip images.zip boot root comb comb_net
 
 clean:
-	@for i in $(DIRS); do \
-	(cd $$i; make clean) ; \
-	done
+	@for i in $(DIRS); do make -C $$i clean ; done
 	umount $(COMB_TARGET_FS) || true
 	umount $(ROOT_TARGET_FS) || true
 	umount $(ROOT_NET_TARGET_FS) || true
 	rm -f $(ROOT_TARGET_FS) $(COMB_TARGET_FS) $(SIBO_TARGET_FS) $(ROOT_NET_TARGET_FS)
 	rm -f boot images.zip
-	rm -rf rootfs_template
+#	rm -rf rootfs_template

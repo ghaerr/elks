@@ -29,10 +29,10 @@ CLEANFILES= $(OBJS) \
 	nodes.c nodes.h signames.c signames.h syntax.c syntax.h token.def \
 	bltin/operators.h bltin/operators.c
 
-all:	sh
+all:	ash
 
-sh:	$(OBJS)
-	$(CC) $(CFLAGS) -o sh $(OBJS) $(LIBS)
+ash:	$(OBJS)
+	$(CC) $(CFLAGS) -o ash $(OBJS) $(LIBS)
 
 rfs: install
 
@@ -42,11 +42,12 @@ net_rfs: install
 
 smin_rfs:
 
-install: sh
-	cp -p sh $(TARGET_MNT)/bin/sh
+install: ash
+	cp -p ash $(TARGET_MNT)/bin/ash
+	ln $(TARGET_MNT)/bin/ash $(TARGET_MNT)/bin/sh
 
 clean:
-	rm -f $(CLEANFILES) sh core
+	rm -f $(CLEANFILES) ash core
 
 parser.o: token.def
 

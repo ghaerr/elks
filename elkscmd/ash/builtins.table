@@ -54,30 +54,30 @@ bgcmd -j	bg
 breakcmd	break continue
 #catfcmd	catf
 cdcmd		cd chdir
-dotcmd		.
-echocmd		echo
-evalcmd		eval
-execcmd		exec
-exitcmd		exit
+dotcmd		. source
+echocmd 	echo
+evalcmd 	eval
+execcmd 	exec
+exitcmd 	exit
 exportcmd	export readonly
-#exprcmd		expr test [
+#exprcmd 	expr test [
 fgcmd -j	fg
 getoptscmd	getopts
-hashcmd		hash
+hashcmd 	hash
 jobidcmd	jobid
-jobscmd		jobs
+jobscmd 	jobs
 #lccmd		lc
-#linecmd		line
-localcmd	local
+#linecmd 	line
+localcmd 	local
 #nlechocmd	nlecho
 #pwdcmd		pwd
-readcmd		read
+readcmd 	read
 returncmd	return
 setcmd		set
 setvarcmd	setvar
 shiftcmd	shift
-trapcmd		trap
-truecmd		: true false
+trapcmd 	trap
+truecmd 	: true false
 umaskcmd	umask
 unsetcmd	unset
-waitcmd		wait
+waitcmd 	wait

@@ -17,10 +17,10 @@ min_rfs:
 smin_rfs:
 
 install_sibo: all
-	cp -p $(SPRGS) $(TARGET_MNT)/bin
+	cp -p $(SPRGS) $(TARGET_MNT)/sbin
 
 install: all
-	cp -p $(PRGS) $(TARGET_MNT)/bin
+	cp -p $(PRGS) $(TARGET_MNT)/sbin
 
 #fsck: fsck.c
 #	$(CC) $(CFLAGS) $(LDFLAGS) -ansi fsck.c -o fsck -Hffff

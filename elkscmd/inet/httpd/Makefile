@@ -27,10 +27,10 @@ httpd: $(OBJ)
 install: all
 	mkdir $(TARGET_MNT)/usr/lib/httpd
 	cp -f -p sample_index.html $(TARGET_MNT)/usr/lib/httpd/index.html
-	cp -p httpd $(TARGET_MNT)/bin
+	cp -p httpd $(TARGET_MNT)/sbin
 
 clean: 
-	rm -f *\.o httpd
+	rm -f *\.o httpd core
 
 dep:
 	makedepend $(CFILES)
