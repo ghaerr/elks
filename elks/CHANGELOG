@@ -4,6 +4,11 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Thu Jan 13 18:30 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fix to bug which meant last possible inode could not be
+	  accessed.
+
 Wed Jan 12 18:43 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed problem with inodes not released.

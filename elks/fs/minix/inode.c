@@ -386,7 +386,7 @@ register struct inode * inode;
 	inode->i_mode = 0;
 	{ /* To isolate register variable */
 		register struct super_block * isb = inode->i_sb;
-		if (!ino || ino >= isb->u.minix_sb.s_ninodes) {
+		if (!ino || ino > isb->u.minix_sb.s_ninodes) {
 			printk("Bad inode number on dev %s: %d is out of range\n",
 				kdevname(inode->i_dev), ino);
 			return;
@@ -444,7 +444,7 @@ register struct inode * inode;
 	unsigned short block;
 
 	ino = inode->i_ino;
-	if (!ino || ino >= inode->i_sb->u.minix_sb.s_ninodes) {
+	if (!ino || ino > inode->i_sb->u.minix_sb.s_ninodes) {
 		printk("Bad inode number on dev %s: %d is out of range\n",
 			kdevname(inode->i_dev), ino);
 		inode->i_dirt = 0;

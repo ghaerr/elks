@@ -179,7 +179,7 @@ register struct inode * inode;
 		printk("%s: inode on nonexistent device\n",fi_name);
 		return;
 	}
-	if (inode->i_ino < 1 || inode->i_ino >= inode->i_sb->u.minix_sb.s_ninodes) {
+	if (inode->i_ino < 1 || inode->i_ino > inode->i_sb->u.minix_sb.s_ninodes) {
 		printk("%s: inode 0 or nonexistent inode\n",fi_name);
 		return;
 	}
@@ -229,7 +229,7 @@ struct inode * dir;
 	}
 	mark_buffer_dirty(bh, 1);
 	j += i*8192;
-	if (!j || j >= inode->i_sb->u.minix_sb.s_ninodes) {
+	if (!j || j > inode->i_sb->u.minix_sb.s_ninodes) {
 		goto iputfail;	
 	}
 	unmap_buffer(bh);
