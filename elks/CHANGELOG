@@ -33,6 +33,11 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Tue Jun  4 21:10:13 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Updated Documentation/function.lst to reflect the current
+	  definitions of the various functions.
+
 Tue Jun  4 19:43:50 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Added debugging to arch/i856/drivers/char/tcpdev.c to try
