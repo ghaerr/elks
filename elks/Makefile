@@ -101,7 +101,7 @@ fs/minix/minixfs.a:
 fs/romfs/romfs.a:
 	make -C fs/romfs
 
-kernel/kernel.a:
+kernel/kernel.a: include/linuxmt/compiler-generated.h
 	make -C kernel
 
 lib/lib.a:
