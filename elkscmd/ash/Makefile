@@ -51,7 +51,7 @@ install: ash
 	ln $(TARGET_MNT/ash $(TARGET_MNT/sh
 
 clean:
-	rm -f core sh $(CLEANFILES)
+	rm -f core ash $(CLEANFILES)
 
 parser.o: token.def
 

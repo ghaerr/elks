@@ -66,7 +66,7 @@ smin_rfs: all
 net_rfs:
 
 clean:
-	rm -f *.o *.bak core math.h bc sbc
+	rm -f *.o *.bak core math.h bc fbc sbc
 
 scan.c: scan.l
 	$(LEX) scan.l
