@@ -14,7 +14,7 @@
 
 LINK=/bin/ln
 MKDEV=/bin/mknod
-MKSET=./MAKESET
+MKSET=/dev/MAKESET
 
 ##############################################################################
 # Memory devices.
