@@ -1,6 +1,6 @@
 Date: Thu, 28 May 1998 13:57:06 +0100
 From: Paul Roberts <proberts@stnc.com>
-To: linux-8086 <linux-8086@vger.rutgers.edu>
+To: linux-8086 <linux-8086@vger.kernel.org>
 Subject: Compiling ELKS on NT
 
 This briefly describes the steps I have taken to compile ELKS on NT 4.0:
