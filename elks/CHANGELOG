@@ -31,6 +31,15 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Mon Mar 4 01:04:28 EET 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* TCP/IP accept bug.
+	* Reduced the TIME_WAIT expire from 2mins to 30 secs.
+	  This helps keep down the number of active TCP control blocks.
+	* Fixed final "write config file" dialog in menuconfig.
+	* Made this 0.1.0-pre4 release, since there was no actual 
+	  release last time (Sun Jan 13 22:37:14).
+
 Sun Feb 24 14:50:29 GMT 2002	Riley Williams <rhw@memalpha.cx>
 
 	* This is ELKS 0.1.0-pre5

@@ -1272,8 +1272,10 @@ cleanup1
 
 # Confirm and Save
 
-if $DIALOG --yesno "Do you wish to save your new kernel configuration?" \
-	   --backtitle "$backtitle" 5 60
+#if $DIALOG --yesno "Do you wish to save your new kernel configuration?" \
+#	   --backtitle "$backtitle" 5 60
+if $DIALOG --backtitle "$backtitle" \
+	--yesno "Do you wish to save your new kernel configuration?" 5 60
 then
     save_configuration
     cat <<-.EOM
