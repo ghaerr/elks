@@ -1,3 +1,22 @@
+VERSION 0.0.78 NOTES
+--------------------
+
+	Updated ramdisk driver by Blaz Antonic.
+	Byteorder functions added to make romfs compile.
+	Build system revised so that several architecures can be supported, by
+Simon Wood.
+	Signal code updated and cleaned up. Children now send SIGCHLD to parent
+when they exit()
+	Basic pseudo tty support added to support improvised nano-X terminal
+program.
+	Socket code heavily updated including unix socket layer under
+development and working nano sockets for local communication.
+	Fixes by Greg Haerr for memory allocation, forking, select and object
+file sizes.
+	Update to the direct console driver to support more complete ANSI
+features, and console beep, by Greg Haerr!
+	Updates to tty code making it cleaner and fixing behavoir.
+
 VERSION 0.0.77 NOTES
 --------------------
 
