@@ -232,6 +232,7 @@ blah:
 	}
 
 	printd_exec1("Allocating %d bytes for data segment", len);
+	
 	dseg=mm_alloc((segext_t)(len>>4));
 	if(!dseg)
 	{

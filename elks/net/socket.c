@@ -29,13 +29,24 @@
 /*#define CONFIG_SOCK_CLIENTONLY 1
 #define CONFIG_SOCK_STREAMONLY 1 */
 
-#define find_protocol_family(_a) 0
+/*#define find_protocol_family(_a) 0*/
 
 #define MAX_SOCK_ADDR 16 /* Must be much bigger for AF_UNIX */
 
 static struct proto_ops *pops[NPROTO]= { NULL };
 
 extern struct net_proto protocols[];    /* Network protocols */
+
+static int find_protocol_family(family)
+int family;
+{
+	int i;
+	
+	for(i = 0 ; i < NPROTO ; i++ )
+		if(pops[i]->family == family)return i;
+	
+	return -1;
+}
 
 struct socket *socki_lookup(inode)
 struct inode *inode;
@@ -104,7 +115,7 @@ struct socket *sock_alloc()
 	sock->flags = 0;
 	sock->ops = NULL;
 	sock->data = NULL;
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 	sock->conn = NULL;
 	sock->iconn = NULL;
 	sock->next = NULL;
@@ -289,7 +300,7 @@ int flags;
 }
 
 
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 static void sock_release_peer(peer)
 struct socket * peer;
 {
@@ -305,7 +316,7 @@ register struct socket * sock;
 {
 	int oldstate;
 	register struct socket * peersock;
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 	struct socket * nextsock;
 #endif
 
@@ -313,7 +324,7 @@ register struct socket * sock;
 		sock->state = SS_DISCONNECTING;
 	}
 
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 	for (peersock = sock->iconn; peersock; peersock = nextsock) {
 		nextsock = peersock->next;
 		sock_release_peer(peersock);
@@ -325,7 +336,7 @@ register struct socket * sock;
 #endif /* CONFIG_UNIX || CONFIG_NANO */
 	if (sock->ops)
 		sock->ops->release(sock, peersock);
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 	if (peersock)
 		sock_release_peer(peersock);
 #endif
@@ -361,15 +372,12 @@ int addrlen;
 /*	if (fd < 0 || fd >= NR_OPEN || (current->files.fd[fd] == NULL)) {
 		return(-EBADF);
 	} */
-
 	if (!(sock = sockfd_lookup(fd, NULL))) {
 		return(-ENOTSOCK);
 	}
-
 	if ((err = move_addr_to_kernel(umyaddr,addrlen,address))<0) {
 		return err;
 	}
-
 	if ((i=sock->ops->bind(sock,(struct sockaddr *)address,addrlen)) < 0) {
 		return(i);
 	}
@@ -614,17 +622,19 @@ int protocol;
 
 /*	find_protocol_family() is a macro which gives 0 while only
  *	AF_INET sockets are supported */
-
 	if ((i = find_protocol_family(family)) < 0) {
+		printk("fail family : %d\n",i);
+		panic("fuc");
 		return -EINVAL;
 	}
+	printk("family : %d\n",i);
 	ops = pops[i];	/* Initially pops is not an array. */
 
-/*	Only UNIX supported initially */
-
+#ifdef CONFIG_SOCK_STREAMONLY
 	if (type != SOCK_STREAM) {
 		return -EINVAL;
 	}
+#endif
 
 	if (!(sock = sock_alloc())) {
 		return(-ENOSR);

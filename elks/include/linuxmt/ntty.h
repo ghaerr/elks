@@ -5,10 +5,10 @@
  * 'ntty.h' defines some structures used by ntty.c and some defines.
  */
 
-#define INQ_SIZE 160
+#define INQ_SIZE 512
 #define OUTQ_SIZE 40
 
-#define NUM_TTYS	12
+#define NUM_TTYS	6
 
 #define DCGET_GRAPH	(('D'<<8)+0x01)
 #define DCREL_GRAPH	(('D'<<8)+0x02)

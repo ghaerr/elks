@@ -244,6 +244,8 @@ char * arg;
 
 	switch (cmd) {
 		/* Unlike Linux we use verified_memcpy*fs() which calls verify_area() for us */
+		case TCSETS:
+		case TCSETSW:
 		case TCSETSF: /* For information, return value is ignored */
 			update_port(port);
 			break;
@@ -266,9 +268,9 @@ register struct serial_info *sp;
 
 	do {
 		ch = inb_p(sp->io + UART_RX);
-		if (ch == '\r') {
+/*		if (ch == '\r') {
 			ch = '\n';
-		}
+		}*/
 		if (!tty_intcheck(sp->tty, ch)) {
 			chq_addch(&sp->tty->inq, ch, 0);
 		}
@@ -431,6 +433,7 @@ int rs_init()
 						break;
 				}
 				sp->tty = &ttys[ttyno++];
+				update_port(sp);
 				/* outb_p(????, sp->io + UART_MCR); */
 			}
 		}

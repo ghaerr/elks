@@ -11,65 +11,20 @@
 #undef  CONFIG_ARCH_PC_XT
 #undef  CONFIG_ARCH_PC_AT
 #undef  CONFIG_ARCH_PC_MCA
-#define CONFIG_COMPAQ_FAST 1
+#undef  CONFIG_COMPAQ_FAST
 
 /*
  * ROM-CODE kernel-loader
  */
-#define CONFIG_ROMCODE 1
-#define CONFIG_ROM_IS86 1
-#undef  CONFIG_ROM_IS286
-#undef  CONFIG_ROM_IS386
-#undef  CONFIG_ROM_IS486
-#undef  ROM_NOFPU
-#undef  ROM_NOKBDBIOS
-#undef  ROM_NOVGA
-#undef  ROM_NOPS2MOUSE
-#undef  ROM_NOHDD
-#undef  ROM_NOFLOPPY
-#undef  __ROM_EXTMEM
-#define ROM_EXTMEMSIZE (0)
-#undef  __ROM_VIDEO_HOC
-#define ROM_VIDEO_HIGHOFCHARACTER (8)
-#define ROM_HIGH_OF_CRT (25)
-#define ROM_SETUP_CODE 0xe000
-#define ROM_KERNEL_CODE 0xe060
-#define ROM_SETUP_DATA 0x0060
-#define ROM_KERNEL_IRQDATA 0x0080
-#define ROM_KERNEL_DATA 0x0090
-#define ROM_BASIS 0xe000
-#define ROM_CHECKSUM_SIZE (64)
-#define ROM_RESET_VEC 1
-#define ROM_RESET_ADDR 0x0003
-#undef  ROM_ADD_BIOS
-#undef  ROM_E_SIMULATOR
-#define ROM_CODE_DEBUG 1
+#undef  CONFIG_ROMCODE
 
 /*
- * ROM-CODE kernel-configuration
- */
-#undef  ROM_USE_ORG_INTMASK
-#define ROM_BOGOMIPS (0)
-#undef  ROM_GETFLOPPY_VIA_INT13
-#define GET_DISKPARAM_BY_INT13_NO_SEEK 1
-
-/*
- * 286 Protected Mode Configuration
- */
-
-/*
- * 286 protected mode support
+ * 286 Protected Mode Support
  */
 #undef  CONFIG_286PMODE
 
 /*
- * Kernel hacking
- */
-#define CONFIG_STRACE 1
-#define CONFIG_OPT_SMALL 1
-
-/*
- * Driver configuration
+ * Driver Support
  */
 
 /*
@@ -80,20 +35,20 @@
 #undef  CONFIG_CONSOLE_SERIAL
 #define CONFIG_DCON_VT52 1
 #define CONFIG_DCON_ANSI 1
-#define CONFIG_DCON_ANSI_PRINTK 1
+#undef  CONFIG_DCON_ANSI_PRINTK
 #undef  CONFIG_BE_KEYMAP
 #undef  CONFIG_FR_KEYMAP
-#define CONFIG_UK_KEYMAP 1
+#undef  CONFIG_UK_KEYMAP
 #undef  CONFIG_ES_KEYMAP
 #undef  CONFIG_DE_KEYMAP
 #undef  CONFIG_SE_KEYMAP
-#undef  CONFIG_DEFAULT_KEYMAP
+#define CONFIG_DEFAULT_KEYMAP 1
 #define CONFIG_DCON_KRAW 1
 #define CONFIG_CHAR_DEV_RS 1
 #define CONFIG_CHAR_DEV_LP 1
 #define CONFIG_CHAR_DEV_MEM 1
 #define CONFIG_PSEUDO_TTY 1
-#define CONFIG_DEV_META 1
+#undef  CONFIG_DEV_META
 
 /*
  * Block device drivers
@@ -106,7 +61,7 @@
 #undef  CONFIG_BLK_DEV_XD
 #undef  CONFIG_DMA
 #define CONFIG_GENDISK 1
-#define CONFIG_BLK_DEV_RAM 1
+#undef  CONFIG_BLK_DEV_RAM
 #define CONFIG_BLK_DEV_CHAR 1
 
 /*
@@ -114,8 +69,8 @@
  */
 #define CONFIG_MINIX_FS 1
 #undef  CONFIG_ROMFS_FS
-#define CONFIG_ELKSFS_FS 1
-#define CONFIG_FULL_VFS 1
+#undef  CONFIG_ELKSFS_FS
+#undef  CONFIG_FULL_VFS
 #define CONFIG_FS_EXTERNAL_BUFFER 1
 #define CONFIG_PIPE 1
 #undef  CONFIG_FS_RO
@@ -123,11 +78,21 @@
 #undef  CONFIG_EXEC_MSDOS
 
 /*
+ * Network Support
+ */
+
+/*
  * Networking
  */
 #define CONFIG_SOCKET 1
-#define CONFIG_UNIX 1
-#define CONFIG_NANO 1
+#undef  CONFIG_UNIX
+#undef  CONFIG_NANO
 #define CONFIG_INET 1
 #undef  CONFIG_SOCK_CLIENTONLY
-#undef  CONFIG_SOCK_STREAMONLY
+#define CONFIG_SOCK_STREAMONLY 1
+
+/*
+ * Kernel hacking
+ */
+#undef  CONFIG_STRACE
+#undef  CONFIG_OPT_SMALL

@@ -407,53 +407,84 @@ onamei_end:
 	return error;
 }
 
+/*
+do_mknod(char *filename, int mode, dev_t dev)
+
+I'm only guessing here...
+*/
+
+int do_mknod(filename, mode, dev)
+char * filename;
+int mode;
+dev_t dev;
+{
+#ifdef CONFIG_FS_RO
+    return -EROFS;
+#else
+    struct inode * dir;
+    register struct inode * dirp;
+    register struct inode_operations * iop;
+    char * basename;
+    size_t namelen;
+    int error;
+
+    mode &= ~current->fs.umask;
+    error = dir_namei(filename,&namelen,&basename, NULL, &dir);
+    dirp = dir;
+    if (error) 
+	return error;
+	    
+    if (!namelen)
+	return -ENOENT;
+	
+    if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) == 0) {
+	iop = dirp->i_op;
+	if (!iop || !iop->mknod) {
+	    error = -EPERM;
+	} else {
+	    dirp->i_count++;
+	    down(&dirp->i_sem);
+	    error = iop->mknod(dirp,basename,namelen,mode,dev);
+	    up(&dirp->i_sem);
+	}
+    }
+    iput(dirp);
+    
+    return error;
+#endif
+}
+
 int sys_mknod(filename,mode,dev)
 char * filename;
 int mode;
 dev_t dev;
 {
-	char * basename;
-	size_t namelen;
+#ifdef CONFIG_FS_RO
+	return -EROFS;
+#else
 	int error;
-	struct inode * dir;
-	register struct inode * dirp;
-	register struct inode_operations * iop;
 
-	if (S_ISDIR(mode) || (!S_ISFIFO(mode) && !suser())) {
-		error = -EPERM;
-	} else {
-		switch (mode & S_IFMT) {
-		case 0:
-			mode |= S_IFREG;
-			break;
-		case S_IFREG: case S_IFCHR: case S_IFBLK: case S_IFIFO: case S_IFSOCK:
-			break;
-		default:
-			error = -EINVAL;
-			goto mknod_end;
-		}
-		
-		mode &= ~current->fs.umask;
-		error = dir_namei(filename,&namelen,&basename, NULL, &dir);
-		dirp = dir;
-		if (error) goto mknod_end;
-		if (!namelen) {
-			error = -ENOENT;
-		} else if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) == 0) {
-			iop = dirp->i_op;
-			if (!iop || !iop->mknod) {
-				error = -EPERM;
-			} else {
-				dirp->i_count++;
-				down(&dirp->i_sem);
-				error = iop->mknod(dirp,basename,namelen,mode,dev);
-				up(&dirp->i_sem);
-			}
-		}
-		iput(dirp);
+	if (S_ISDIR(mode) || (!S_ISFIFO(mode) && !suser()))
+		return -EPERM;
+
+	switch (mode & S_IFMT) {
+	case 0:
+		mode |= S_IFREG;
+		break;
+	case S_IFREG:
+	case S_IFCHR:
+	case S_IFBLK:
+	case S_IFIFO:
+	case S_IFSOCK:
+		break;
+	default:
+		return -EINVAL;
 	}
-mknod_end:
+	
+	error = do_mknod(filename, mode, dev);		
+	
 	return error;
+#endif
 }
 
 int sys_mkdir(pathname,mode)

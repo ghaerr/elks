@@ -51,15 +51,18 @@ struct inode *inode;
 {
 	 struct unix_proto_data *upd;
 
-	 for(upd = unix_datas; upd <= last_unix_data; ++upd) 
-	 {
-		if (upd->refcnt > 0 && upd->socket &&
-			upd->socket->state == SS_UNCONNECTED &&
-			upd->sockaddr_un.sun_family == sockun->sun_family &&
-			upd->inode == inode) 
-			
-			return(upd);
+	 for(upd = unix_datas; upd <= last_unix_data; ++upd){
+	         
+		if (upd->refcnt > 0 && upd->socket){
+		    if(	upd->socket->state == SS_UNCONNECTED){
+			if(upd->sockaddr_un.sun_family == sockun->sun_family &&
+				upd->inode == inode){ 
+				return(upd);
+			    }
+		    }
+		}
 	}
+	
 	return(NULL);
 }
 
@@ -138,7 +141,7 @@ struct socket *peer;
 
         if (!upd) {
                 return(0);
-	}
+		}
 
         if (upd->socket != sock) {
                 printk("UNIX: release: socket link mismatch!\n");
@@ -185,6 +188,7 @@ int sockaddr_len;
 
 	memcpy(fname, upd->sockaddr_un.sun_path, sockaddr_len);
 	fname[sockaddr_len] = '\0';
+	
 	old_ds = current->t_regs.ds;
 	current->t_regs.ds = get_ds();
 
@@ -245,6 +249,9 @@ int flags;
 
 	old_ds = current->t_regs.ds;
 	current->t_regs.ds = get_ds();
+	
+
+	
 	i = open_namei(fname, 2, S_IFSOCK, &inode, NULL);
 	current->t_regs.ds = old_ds;
 	if (i < 0) 
@@ -254,6 +261,7 @@ int flags;
 	  
 	serv_upd = unix_data_lookup(&sockun, sockaddr_len, inode);
 	iput(inode);
+	
 	if (!serv_upd) {
 		return(-EINVAL);
 	}

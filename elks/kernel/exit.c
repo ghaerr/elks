@@ -22,7 +22,7 @@ int options;
 	pid_t retval;
 	register pid_t * lastendp = &current->child_lastend;
 
-	if (!((options & WNOHANG) || (*lastendp))) {
+	if (!( (options & WNOHANG) || (*lastendp) )) {
 		interruptible_sleep_on(&current->child_wait);
 	}
 	if (*lastendp) {

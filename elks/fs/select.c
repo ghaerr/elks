@@ -150,6 +150,7 @@ repeat:
 	}
 	if (!count && currentp->timeout && !(currentp->signal/* & ~currentp->blocked*/)) {
 		schedule();
+		wait_clear(&select_poll);
 		goto repeat;
 	}
 	currentp->pollhash = 0;

@@ -7,7 +7,7 @@
 
 /* limits */
 
-#define MAX_CHRDEV 8
+#define MAX_CHRDEV 9
 #define MAX_BLKDEV 8
 
 /*
@@ -35,6 +35,7 @@
 #define TTYAUX_MAJOR	5
 #define LP_MAJOR	6
 #define MISC_MAJOR	7
+#define TCPDEV_MAJOR	8
 
 #define RAM_MAJOR	1
 #define FLOPPY_MAJOR	2

@@ -27,7 +27,7 @@ OBJS  = init.o con_asm.o font.o sibo_key.o key_asm.o sibo_con.o \
 	mem.o meta.o ntty.o ser_asm.o
 else
 OBJS  = bioscon.o serial.o lp.o xt_key.o init.o dircon.o ntty.o mem.o meta.o \
-	pty.o bell.o # clist.o tty.o
+	tcpdev.o pty.o bell.o # clist.o tty.o
 endif
 
 chr_drv.a: $(OBJS)

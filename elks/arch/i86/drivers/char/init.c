@@ -21,4 +21,7 @@ int chr_dev_init()
 #ifdef CONFIG_DEV_META
 	meta_init();
 #endif
+#ifdef CONFIG_INET
+	tcpdev_init();
+#endif
 }

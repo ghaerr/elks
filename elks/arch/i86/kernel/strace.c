@@ -86,6 +86,8 @@ struct syscall_info elks_table[] = {
 	{62, "sys_gettimeofday", 0, {P_NONE, P_NONE, P_NONE}},
 	{63, "sys_wait4", 0, {P_NONE, P_NONE, P_NONE}},
 	{64, "sys_readdir", 3, {P_UINT, P_PDATA, P_UINT}},
+	{68, "setsid", 0, {P_NONE, P_NONE, P_NONE}},
+	{69, "sys_socket", 3, {P_UINT, P_UINT, P_UINT}},
 	{0, "no_sys", 0, {P_NONE, P_NONE, P_NONE}},
 };
 
@@ -106,10 +108,11 @@ int retval;
 	}
 
 #ifdef STRACE_PRINTSTACK
-	printk("[%d/%d: %s(", current->pid, current->t_regs.sp, elks_table[tent].s_name); 
+	printk("[%d/%p: %d %s(", current->pid, current->t_regs.sp, p->s_num,elks_table[tent].s_name); 
 #else
 	printk("[%d: %s(", current->pid, elks_table[tent].s_name);	
 #endif
+
 	for (i = 0; i < elks_table[tent].s_params; i++) {
 		if (i) printk(", ");
 		switch (elks_table[tent].t_param[i]) {

@@ -3,6 +3,8 @@
  * (C) 1997 Chad Page et. al
  *
  * Modified by Greg Haerr <greg@censoft.com> for screen editors
+ * 
+ * 03/27/2001 : Modified for raw mode support (HarKal)
  */
 
 /* 
@@ -131,8 +133,15 @@ struct file *file;
 	}
 }
 
-/* Write 1 byte to a terminal, with processing */
+static void tty_charout_raw(tty, ch)
+register struct tty *tty;
+unsigned char ch;
+{
+	chq_addch(&tty->outq, ch, 1); /* Will block */
+    tty->ops->write(tty);
+}
 
+/* Write 1 byte to a terminal, with processing */
 void tty_charout(tty, ch)
 register struct tty *tty;
 unsigned char ch;
@@ -140,21 +149,25 @@ unsigned char ch;
 	int j;
 
 	switch (ch) {
-		case '\t':		
+		case '\t':
+			if (!(tty->termios.c_lflag & ICANON)){
+			    tty_charout_raw(tty, '\t');
+			    break;
+			}    
 			for (j = 0; j < TAB_SPACES; j++) {
-				tty_charout(tty, ' ');
+			    tty_charout(tty, ' ');
 			}
 			break;
 		case '\n':
 			if (tty->termios.c_oflag & ONLCR) {
 				tty_charout(tty, '\r');
 			}
-			/* fall through */
 		default:
-			while (chq_addch(&tty->outq, ch, 0) == -1) {
-				tty->ops->write(tty);
-			}
+			tty_charout_raw(tty, ch);
+			break;	
 	};
+	
+	
 }
 
 void tty_echo(tty, ch)
@@ -178,10 +191,11 @@ char *data;
 int len;
 {
 	register struct tty *tty=determine_tty(inode->i_rdev);
+	int blocking = (file->f_flags & O_NONBLOCK)? 0 : 1;
 	int i = 0;
 
 	while (i < len) {
-		tty_charout(tty, peekb(current->t_regs.ds, data + i++)); 
+		tty_charout(tty, peekb(current->t_regs.ds, data + i++), blocking);
 	}
 	tty->ops->write(tty);
 	return i;
@@ -207,6 +221,7 @@ int len;
 			blocking = 0;
 		}
 		j = chq_getch(&tty->inq, &ch, blocking);
+
 		if (j == -1) {
 			if (blocking) {
 				return -EINTR;
@@ -219,15 +234,19 @@ int len;
 		if (rawmode || (j != '\b')) {
 			pokeb(current->t_regs.ds, (data + i++), ch);		
 			tty_echo(tty, ch);
-		} else if (i > 0) {
-			lch = ((peekb(current->t_regs.ds, (data + --i)) == '\t') ? TAB_SPACES : 1 );
-			for (k = 0; k < lch ; k++) {
-				tty_echo(tty, ch);
+		} else {
+			if (i > 0) {
+				lch = ((peekb(current->t_regs.ds, (data + --i)) == '\t') ? TAB_SPACES : 1 );
+				for (k = 0; k < lch ; k++) {
+					tty_echo(tty, ch);
+				}
 			}
 		}
-		tty->ops->write(tty);
-	} while(i < len && !rawmode && j != '\n');
-	/*} while(i < len && (rawmode || j != '\n'));*/
+/*		tty->ops->write(tty);*/
+/*	} while(i < len && !rawmode && j != '\n');*/
+	} while(i < len && (rawmode || j != '\n')); /* This makes elvis
+												 * not work but I think
+												 * this is right */
 
 	return i;
 }

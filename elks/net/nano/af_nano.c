@@ -53,9 +53,9 @@ int serv_no;
 	printk("ndl [%d] ", serv_no);
 	for(upd = nano_datas; upd <= last_nano_data; ++upd) {
 		printk("%d %d %d %d\n", upd->npd_refcnt, upd->npd_socket->state, SS_UNCONNECTED, upd->npd_srvno);
-		if (upd->npd_refcnt > 0 && /* upd->npd_socket && */
-/*			upd->npd_socket->state == SS_UNCONNECTED && */
-/*			upd->npd_sockaddr_na.sun_family == sockna->sun_family && */
+		if (upd->npd_refcnt > 0 &&  upd->npd_socket &&
+			upd->npd_socket->state == SS_UNCONNECTED &&
+			upd->npd_sockaddr_na.sun_family == sockna->sun_family && 
 			upd->npd_srvno == serv_no) {
 			return(upd);
 		}
@@ -575,6 +575,7 @@ unsigned flags;
 
 struct proto_ops nano_proto_ops = {
 	PF_NANO,
+	
 	nano_create,
 	nano_dup,
 	nano_release,

@@ -145,6 +145,27 @@
 #endif
 
 #if 0
+#define printd_td printk
+#define printd_td1 printk
+#define printd_td2 printk
+#else
+#define printd_td(_a)
+#define printd_td1(_a,_b)
+#define printd_td2(_a,_b,_c)
+#endif
+
+#if 0
+#define printd_inet printk
+#define printd_inet1 printk
+#define printd_inet2 printk
+#else
+#define printd_inet(_a)
+#define printd_inet1(_a,_b)
+#define printd_inet2(_a,_b,_c)
+#endif
+
+
+#if 0
 #define printd_rd printk
 #define printd_rd1 printk
 #define printd_rd2 printk

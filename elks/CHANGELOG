@@ -6,6 +6,19 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Sun Jun 24 23:01:09 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+	* implemented do_mknod()
+	* Some fixes in AF_UNIX sockets.
+	* socket.state changed to unsighed char to solve compiler problems
+	* Modified ntty.c and serial.c to support "raw" mode required for
+	  networking
+	* Now serial baud rate is set to the default on init and not open
+	* tty_charout now blocks the right way if queue is full in ntty.c
+	* Modified tty_read() in ntty.c
+	* Merged in TCP/IP code
+	* Fixed bug in do_select(). The new wait_set() expects current->waitpt
+	  to be null. The do_select() didn't honor that.
+
 Wed Jun 20 23:21:51 BST 2001    Alan Cox  <alan@redhat.com>
 	* Merged fix for sycall.dat error I made (fix by Harry Kalogirou)
 	* Merged Riley's first Configure changes

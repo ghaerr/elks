@@ -6,7 +6,7 @@
 #include <linuxmt/socket.h>
 
 /* Number of protocols */
-#define NPROTO 1
+#define NPROTO 3
 
 #define SOCK_INODE(S)	((S)->inode)
 
@@ -20,11 +20,11 @@ typedef enum {
 
 struct socket {
 	short			type;
-	socket_state		state;
+	unsigned char		state;
 	long			flags;
 	struct proto_ops	*ops;
 	void			*data;
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 	struct socket		*conn;
 	struct socket		*iconn;
 	struct socket		*next;
