@@ -63,7 +63,7 @@ struct ConsoleTag
 #endif
    int WaitParm, PTmp;
 #endif
-   unsigned Seg, Off;
+   unsigned Seg;
 #ifdef CONFIG_DCON_VT52
    unsigned char Attr;
 #ifdef CONFIG_DCON_ANSI
@@ -191,11 +191,11 @@ int CursorOfs;
    else
    {
       CursorOfs = ( C->cx << 1 ) + ( ( Width * C->cy ) << 1 );
-      pokeb( C->Seg, C->Off + CursorOfs, Ch );
+      pokeb( C->Seg, CursorOfs, Ch );
 #ifdef CONFIG_DCON_VT52
-      pokeb( C->Seg, C->Off + CursorOfs + 1, C->Attr );
+      pokeb( C->Seg, CursorOfs + 1, C->Attr );
 #else
-      pokeb( C->Seg, C->Off + CursorOfs + 1, A_DEFAULT );
+      pokeb( C->Seg, CursorOfs + 1, A_DEFAULT );
 #endif
 #if 0
       if (C == Visible)
@@ -234,7 +234,7 @@ int cnt;
    rdofs = ( Width << 1 ) * st;
    wrofs = rdofs - ( Width << 1 );
    cnt = Width * ( en - st );
-   far_memmove( C->Seg, C->Off + rdofs, C->Seg, C->Off + wrofs, cnt << 1 );
+   far_memmove( C->Seg, rdofs, C->Seg, wrofs, cnt << 1 );
    en--;
    ClearRange( C, 0, en, Width, en );
 }
@@ -251,7 +251,7 @@ int cnt;
    rdofs = ( Width << 1 ) * st;
    wrofs = rdofs + ( Width << 1 );
    cnt = Width * ( en - st );
-   far_memmove( C->Seg, C->Off + rdofs, C->Seg, C->Off + wrofs, cnt << 1 );
+   far_memmove( C->Seg, rdofs, C->Seg, wrofs, cnt << 1 );
    ClearRange( C, 0, st, Width, st );
 }
 #endif
@@ -278,7 +278,7 @@ unsigned st, en, ClrW, ofs;
    en = ( xx << 1 ) + yy * ( Width << 1 );
    ClrW = A_DEFAULT << 8 + 0x20;
    for( ofs = st; ofs < en; ofs += 2 )
-      pokew( C->Seg, C->Off + ofs, ClrW );
+      pokew( C->Seg, ofs, ClrW );
 }
 
 #ifdef CONFIG_DCON_VT52
@@ -498,7 +498,7 @@ int N;
   Visible = &Con[ N ];
 #if 0
   far_memmove(
-	      Visible->Seg, Visible->Off,
+	      Visible->Seg, 0,
 	      VideoSeg, 0,
 	      ( Width * Height ) << 1 );
 #endif
@@ -602,7 +602,6 @@ void init_console()
       Con[ i ].cx = Con[ i ].cy = 0;
 #endif
       Con[ i ].Seg = VideoSeg + ( PageSize >> 4 ) * i;
-      Con[ i ].Off = 0;
       Con[ i ].Ord = i;
 /*      Con[ i ].InUse = 0; */
       if (i != 0) {
