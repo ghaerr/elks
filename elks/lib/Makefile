@@ -54,30 +54,3 @@ distdir:
 
 #########################################################################
 ### Dependencies:
-
-chqueue.o: chqueue.c \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/debug.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
- /home/rhw/CVS/Source/X/elks/include/arch/types.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
- /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
- /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
- /home/rhw/CVS/Source/X/elks/include/arch/asm.h
-
-
-string.o: string.c /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
- /home/rhw/CVS/Source/X/elks/include/arch/types.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
- /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
- /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
- /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/string.h \
- /home/rhw/CVS/Source/X/elks/include/arch/string.h
-
-

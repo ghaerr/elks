@@ -53,14 +53,3 @@ distdir:
 
 #########################################################################
 ### Dependencies:
-
-main.o: main.c /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
- /home/rhw/CVS/Source/X/elks/include/arch/types.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
- /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
- /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
- /home/rhw/CVS/Source/X/elks/include/arch/asm.h descriptor.h tss.h
-
-
