@@ -684,7 +684,7 @@ static seg_t swap_strategy(register struct task_struct *swapin_target)
 	}
     }
 
-    printd_mm1("Choose pid %d rate %d\n", best_pid, best_rate);
+    printd_mm2("Choose pid %d rate %d\n", best_pid, best_rate);
 
     return best_ret;
 }
