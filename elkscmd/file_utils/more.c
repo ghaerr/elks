@@ -25,7 +25,7 @@ main(argc, argv)
 	FILE	*fp;
 	int	fd;
 	char	*name;
-	int	ch;
+	char	ch;
 	int	line;
 	int	col;
 	char	buf[80];
