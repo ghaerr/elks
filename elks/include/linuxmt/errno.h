@@ -6,6 +6,8 @@
 #ifndef LX86_LINUXMT_ERRNO_H
 #define LX86_LINUXMT_ERRNO_H
 
+/*@-namechecks@*/
+
 /*****************************************************************************/
 
 /* These were in Linux's include/asm/errno.h file.
@@ -176,5 +178,7 @@
 #endif
 
 /*****************************************************************************/
+
+/*@+namechecks@*/
 
 #endif

@@ -73,3 +73,19 @@ distdir:
 
 #########################################################################
 ### Dependencies:
+
+bitops.o: bitops.c \
+ /home/rhw/CVS/Source/X/elks-test/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks-test/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks-test/include/linuxmt/kernel.h \
+ /home/rhw/CVS/Source/X/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks-test/include/arch/posix_types.h
+
+
+memmove.o: memmove.c
+
+

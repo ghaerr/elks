@@ -385,7 +385,12 @@ extern int event;		/* Event counter */
 
 extern int sys_open(char *,int,int);
 extern int sys_close(unsigned int);	/* yes, it's really unsigned */
+
+/*@-namechecks@*/
+
 extern void _close_allfiles(void);
+
+/*@+namechecks@*/
 
 extern int register_blkdev(unsigned int,char *,struct file_operations *);
 extern int unregister_blkdev(void);
@@ -497,7 +502,11 @@ extern int block_write(struct inode *,struct file *,char *,int);
 extern int fd_check(unsigned int,char *,size_t,int,struct file **);
 extern void fs_init(void);
 
+/*@-namechecks@*/
+
 extern int _namei(char *,struct inode *,int,struct inode **);
+
+/*@+namechecks@*/
 
 extern int sys_dup(int);
 

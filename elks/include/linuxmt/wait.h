@@ -23,7 +23,11 @@ typedef struct select_table_struct {
     struct select_table_entry *entry;
 } select_table;
 
+/*@-namechecks@*/
+
 #define __MAX_SELECT_TABLE_ENTRIES 32
+
+/*@+namechecks@*/
 
 #endif
 

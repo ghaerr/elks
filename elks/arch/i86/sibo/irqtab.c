@@ -12,7 +12,6 @@
 #define stashed_sp       cseg_stashed_sp
 #define stashed_irq      cseg_stashed_irq
 
-#ifndef S_SPLINT_S
 #asm
 
 	.globl	cseg_stashed_ds
@@ -52,11 +51,9 @@ IRQdata_offs:
         .word   0
 
 #endasm
-#endif
-
+ 
 void irqtab_init(void)
 {
-#ifndef S_SPLINT_S
 #asm				! disable psion hardware interrupt sources
 	mov	al, #0x00
 	out	0x15, al
@@ -137,14 +134,12 @@ void irqtab_init(void)
 	mov	es,ax
 	sti
 #endasm
-#endif
 }	
  
 /*
  *	IRQ and IRQ return paths for Linux 8086
  */
-
-#ifndef S_SPLINT_S 
+ 
 #asm
 !
 !	Other IRQs (see IRQ 0 at the bottom for the
@@ -591,4 +586,3 @@ _can_tswitch:
 _intstack:
 
 #endasm
-#endif

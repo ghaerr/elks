@@ -10,9 +10,14 @@
 
 #define ROMFS_MAXFN 128
 
+/*@-namechecks@*/
+
 #define __mkw(h,l) (((h)&0x00ffL)<< 8|((l)&0x00ffL))
 #define __mkl(h,l) (((h)&0xffffL)<<16|((l)&0xffffL))
 #define __mk4(a,b,c,d) htonl(__mkl(__mkw(a,b),__mkw(c,d)))
+
+/*@+namechecks@*/
+
 #define ROMSB_WORD0 __mk4('-','r','o','m')
 #define ROMSB_WORD1 __mk4('1','f','s','-')
 

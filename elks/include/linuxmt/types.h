@@ -35,7 +35,7 @@ typedef __u16 segext_t;
 typedef __u32 jiff_t;
 typedef __u8 sig_t;
 
-/*@ignore@*/
+/*@-incondefs -namechecks@*/
 
 /* The next three lines cause splint to complain needlessly */
 
@@ -43,7 +43,7 @@ typedef __u32 time_t;
 typedef __u16 size_t;
 typedef int ptrdiff_t;
 
-/*@end@*/
+/*@+incondefs +namechecks@*/
 
 #ifdef CONFIG_SHORT_FILES
 typedef __u16 fd_mask_t;

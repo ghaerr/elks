@@ -353,9 +353,8 @@ indent-me:
 	$(BASEDIR)/scripts/reindent $(NOINDENT)
 
 lint:	dolint
-	@echo
 	@echo " * All files in and under this directory have now been checked. Where problems"
-	@echo " * were found, they are described in the relevant *.lint file in the same"
+	@echo " * were found, they will be found in the relevant *.lint file in the same"
 	@echo " * directory. However, where no problems were found, this file is deleted."
 	@echo
 

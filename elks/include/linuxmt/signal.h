@@ -13,6 +13,8 @@
 
 #include <linuxmt/types.h>
 
+/*@-namechecks@*/
+
 #ifdef SMALLSIG
 
 typedef unsigned short sigset_t;	/* at least 16 bits */
@@ -79,6 +81,8 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 
 #endif
 
+/*@+namechecks@*/
+
 /*
  * sa_flags values: SA_STACK is not supported
  * SA_INTERRUPT is a no-op, but left due to historical reasons. Use the
@@ -103,6 +107,8 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 #define SA_SAMPLE_RANDOM SA_RESTART
 #endif
 
+/*@-namechecks@*/
+
 #define SIG_BLOCK          0	/* for blocking signals */
 #define SIG_UNBLOCK        1	/* for unblocking signals */
 #define SIG_SETMASK        2	/* for setting the signal mask */
@@ -110,7 +116,7 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 /* Type of a signal handler.  */
 typedef void (*__sighandler_t) ();
 
-/*@ignore@*/
+/*@-namechecks@*/ /*@ignore@*/
 
 #define SIG_DFL	((__sighandler_t) 0)	/* default signal handling */
 #define SIG_IGN	((__sighandler_t) 1)	/* ignore signal */

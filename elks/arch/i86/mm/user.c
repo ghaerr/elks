@@ -32,7 +32,6 @@ void memcpy_fromfs(void *daddr, void *saddr, size_t len)
 {
     unsigned short int ds = current->t_regs.ds;
 
-#ifndef S_SPLINT_S
 #asm
 	mov	dx,es
 	mov	bx,ds
@@ -48,7 +47,6 @@ void memcpy_fromfs(void *daddr, void *saddr, size_t len)
 	mov	ds,bx
 	mov	es,dx
 #endasm
-#endif
 }
 
 int verified_memcpy_fromfs(void *daddr, void *saddr, size_t len)
@@ -67,7 +65,6 @@ void memcpy_tofs(void *daddr, void *saddr, size_t len)
 {
     unsigned short int es = current->t_regs.ds;
 
-#ifndef S_SPLINT_S
 #asm
 	mov	dx,es
 	mov	ax,[bp-6]	! source segment (local variable)
@@ -80,7 +77,6 @@ void memcpy_tofs(void *daddr, void *saddr, size_t len)
 	movsb
 	mov	es,dx
 #endasm
-#endif
 }
 
 int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
@@ -97,7 +93,6 @@ int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
 
 /* fmemcpy(dseg, dest, sseg, src, size); */
 
-#ifndef S_SPLINT_S
 #asm	
 
 	.globl	_fmemcpy
@@ -129,7 +124,6 @@ _fmemcpy:
 	pop	bp
 	ret
 #endasm	
-#endif
 
 #if 0
 
@@ -155,7 +149,6 @@ int strlen_fromfs(char *saddr)
      * to save and restore ds
      */
 
-#ifndef S_SPLINT_S
 #asm
 
 !	mov	bx,ds
@@ -175,7 +168,6 @@ int strlen_fromfs(char *saddr)
 !	mov	ds,bx
 
 #endasm
-#endif
 
     return ds;
 }

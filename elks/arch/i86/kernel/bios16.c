@@ -24,7 +24,6 @@ struct biosparms *bios_data_table=&bdt;
  *	Quick drop into assembler for this one.
  */
  
-#ifndef S_SPLINT_S
 #asm
 	.text
 /*
@@ -197,4 +196,3 @@ _call_bios:
 	ret
 
 #endasm
-#endif

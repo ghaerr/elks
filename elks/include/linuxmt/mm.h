@@ -20,16 +20,22 @@ extern unsigned long high_memory;
 
 #define verify_area(mode, point, size) verfy_area(point, size)
 
-extern int verfy_area(void *,size_t);
+/*@-namechecks@*/
+
 extern void memcpy_fromfs(void *,void *,size_t);
 extern void memcpy_tofs(void *,void *,size_t);
+
+extern int strlen_fromfs(char *);
+
+/*@+namechecks@*/
+
+extern int verfy_area(void *,size_t);
 extern void put_fs_long(unsigned long int,unsigned long int *);
 extern void put_fs_byte(unsigned char,unsigned char *);
 extern void put_fs_word(unsigned short int,unsigned short int *);
 extern unsigned long get_fs_long(unsigned long int *);
 extern unsigned char get_fs_byte(unsigned char *);
 extern unsigned int get_fs_word(unsigned short int *);
-extern int strlen_fromfs(char *);
 extern int fs_memcmp(void *,void *,size_t);
 extern int verified_memcpy_tofs(void *,void *,size_t);
 extern int verified_memcpy_fromfs(void *,void *,size_t);
@@ -41,17 +47,17 @@ extern seg_t mm_dup(seg_t);
 
 extern void mm_free(seg_t);
 extern int do_swapper_run(struct task_struct *);
-extern unsigned long int mm_get_usage(int,int);
+extern unsigned int mm_get_usage(int,int);
 
 extern void fmemcpy();
 
-extern void pokeb();
-extern void pokew();
-extern void poked();
+extern void pokeb(__u16,__u16,__u8);
+extern void pokew(__u16,__u16,__u16);
+extern void poked(__u16,__u16,__u32);
 
-extern unsigned char peekb();
-extern unsigned short int peekw();
-extern unsigned long int peekd();
+extern __u8  peekb(__u16,__u16);
+extern __u16 peekw(__u16,__u16);
+extern __u32 peekd(__u16,__u16);
 
 extern int mm_swapon();
 

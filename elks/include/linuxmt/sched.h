@@ -129,8 +129,12 @@ struct task_struct {
 #define TASK_WAITING		7
 #define TASK_EXITING		8
 
+/*@-namechecks@*/
+
 /* We use typedefs to avoid using struct foobar (*) */
 typedef struct task_struct __task, *__ptask;
+
+/*@+namechecks@*/
 
 extern load_regs(__ptask);
 extern save_regs(__ptask);
@@ -156,7 +160,11 @@ extern void wait_clear(struct wait_queue *);
 extern void sleep_on(struct wait_queue *);
 extern void interruptible_sleep_on(struct wait_queue *);
 
+/*@-namechecks@*/
+
 extern void _wake_up(struct wait_queue *,unsigned short int);
+
+/*@+namechecks@*/
 
 extern void down(unsigned short int *);
 extern void up(unsigned short int *);
@@ -170,8 +178,8 @@ extern void kill_process(pid_t,sig_t,int);
 extern void add_to_runqueue(struct task_struct *);
 
 extern void arch_build_stack(struct task_struct *);
-extern __u16 get_ustack(struct task_struct *,__u16);
-extern void put_ustack(register struct task_struct *,__u16,__u16);
+extern unsigned int get_ustack(struct task_struct *,int);
+extern void put_ustack(register struct task_struct *,int,int);
 
 extern void tswitch(void);
 

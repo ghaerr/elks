@@ -3,6 +3,8 @@
 
 #include <linuxmt/types.h>
 
+/*@-namechecks@*/
+
 /* The following prototypes all match the current GNU manpage prototypes.
  * It is still to be confirmed whether these also match the declarations
  * and the usage made thereof.
@@ -33,6 +35,8 @@ extern char *strstr(char *,char *);
  */
 
 extern void *memscan(void *,int,size_t);
+
+/*@+namechecks@*/
 
 /*
  * Include machine specific routines
