@@ -245,8 +245,8 @@ sibo: mount_sibofs
 	@for i in $(DIRS); do make -C $$i smin_rfs ; done
 	umount $(SIBO_TARGET_FS)
 
-images.zip: boot comb root comb_net
-	zip images.zip boot root comb comb_net
+images.zip: boot comb root comb_net full3 full5
+	zip images.zip boot root comb comb_net full3 full5
 
 #######
 # EOF #
