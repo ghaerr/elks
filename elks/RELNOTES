@@ -1,3 +1,12 @@
+VERSION 0.0.81 NOTES
+--------------------
+
+	Fixed serious bug in inode lookup code which caused problems with
+	mount.
+	Replaced the bulky timer mechanism with a much simpler one.
+	Merged in code that allows the kernel to be built and booted
+	from a ROM contributed by Christian Mardmuller (chm@kdt.de).
+	
 VERSION 0.0.80 NOTES
 --------------------
 
