@@ -10,7 +10,10 @@
 
 #define TCP_DEVICE_NAME	"tcpdev"
 
-#define TCPDEV_WRITEBUFFERSIZE	1024/*128*/
+#define TCPDEV_INBUFFERSIZE	1024
+#define TCPDEV_OUTBUFFERSIZE	128
+
+#define TCPDEV_MAXREAD TCPDEV_INBUFFERSIZE - sizeof(struct tdb_return_data)
 
 #define TDC_BIND	1
 #define TDC_ACCEPT	2

@@ -147,7 +147,7 @@ int retval;
 				case P_PSTR:
 					con_charout('&');
 					con_charout('\"');
-					tmpa = *(p->s_param[i]);
+					tmpa = p->s_param[i];
 					while ((tmpb = get_fs_byte(tmpa++)))
 						con_charout(tmpb);
 					con_charout('\"');
@@ -162,11 +162,11 @@ int retval;
 					break;
 
 				case P_PUSHORT:
-					printk("&%u", *(p->s_param[i]));
+					printk("&%u", p->s_param[i]);
 					break;
 
 				case P_PSSHORT:
-					printk("&%d", *(p->s_param[i]));
+					printk("&%d", p->s_param[i]);
 					break;
 
 				case P_LONG:

@@ -23,13 +23,14 @@
 
 extern inet_process_tcpdev();
 
-unsigned char td_buf[TCPDEV_WRITEBUFFERSIZE];
-static unsigned char buf_lock;
-static unsigned int buf_tail;
-static unsigned char buf_data_avail;
+unsigned char tdin_buf[TCPDEV_INBUFFERSIZE];
+unsigned char tdout_buf[TCPDEV_OUTBUFFERSIZE];
+static unsigned int tdin_tail, tdout_tail;
+short	bufin_sem, bufout_sem;	/* Buffer semaphores */
 
-static struct wait_queue tcpdev_wait;
 static struct wait_queue tcpdevp;
+
+static char tcpdev_inuse;
 
 static int tcpdev_read(inode, filp, data, len)
 struct inode *inode;
@@ -38,7 +39,8 @@ char *data;
 int len;
 {
 	printd_td("tcpdev : read()\n");
-	while(buf_data_avail == 0){
+	
+	while(tdout_tail == 0){
 		if(filp->f_flags & O_NONBLOCK)
 			return -EAGAIN;
 			
@@ -52,13 +54,12 @@ int len;
 	 * than what is in the buffer is will loose data
 	 * so the tcpip stack sould read BIG
 	 */
-	len = len < buf_tail ? len : buf_tail;
-	memcpy_tofs(data, td_buf, len);
+	len = len < tdout_tail ? len : tdout_tail;
+	memcpy_tofs(data, tdout_buf, len);
 	
-	buf_tail = buf_data_avail = 0;
-	buf_lock = 0;
-	
-	wake_up(&tcpdev_wait);
+	tdout_tail = 0;
+
+	up(&bufout_sem);
 
     return len;
 }
@@ -70,36 +71,23 @@ int len;
 	unsigned int ds;
 
 	printd_td("tcpdev : inetwrite()\n");	
-	if(len > TCPDEV_WRITEBUFFERSIZE)
-		return -EINVAL;
+	if(len > TCPDEV_OUTBUFFERSIZE)
+		return -EINVAL; /* FIXME: make sure this never happen */
+		
+	down(&bufout_sem);
 
-	while(buf_lock == 1){	
-		interruptible_sleep_on(&tcpdev_wait);
-		if(current->signal)
-			return -ERESTARTSYS;
-	}
-
-	/* Lock the buffer */
-	buf_lock = 1;
-	
 	/* Copy the data to the buffer */
 	ds = get_ds();
-	fmemcpy(ds, td_buf, ds, data, len);
-	buf_tail = len;
-	buf_data_avail = 1;
+	fmemcpy(ds, tdout_buf, ds, data, len);
+	tdout_tail = len;
 	
 	wake_up(&tcpdevp);
-	/* The buffer will be unlocked when the data are read */
-/*	
-	while(buf_lock == 1){	
-		interruptible_sleep_on(&tcpdev_wait);
-	}	
-	*/
+
 	return 0;
 }
 
 void tcpdev_clear_data_avail(){
-	buf_lock = 0;
+	up(&bufin_sem);
 }
 
 static int tcpdev_write(inode, filp, data, len)
@@ -114,31 +102,15 @@ int len;
 	if(len <= 0)
 		return 0;
 		
-	if(len > TCPDEV_WRITEBUFFERSIZE)
-		return -EINVAL;
-		
-	while(buf_lock == 1){
-		if(filp->f_flags & O_NONBLOCK)
-			return -EAGAIN;
-			
-		interruptible_sleep_on(&tcpdev_wait);
-		if(current->signal)
-			return -ERESTARTSYS;
-	}
-	
-	/* Cleared to write. Lock the buffer */
-	buf_lock = 1;
-	
-	buf_tail = len;
-	memcpy_fromfs(td_buf, data, len);
+	down(&bufin_sem);
+
+	tdin_tail = len;
+	memcpy_fromfs(tdin_buf, data, len);
 	
 	/* Call the af_inet code to handle the data */
-	inet_process_tcpdev(td_buf, len);
-	
-	buf_lock = 0;
-/*	buf_data_avail = 0;*/
-	return len;
-	
+	inet_process_tcpdev(tdin_buf, len);
+
+	return len;	
 }
 
 int tcpdev_select(inode, filp, sel_type)
@@ -148,13 +120,14 @@ int sel_type;
 {
     switch (sel_type) {
     case SEL_OUT:
-    	if(buf_lock == 0)
+		if(bufin_sem == 0)
     		return 1;
 		select_wait(&tcpdevp);
 		return 0;
 	case SEL_IN:
-		if(buf_data_avail == 1)
+		if(tdout_tail != 0){
 			return 1;
+		}
 		select_wait(&tcpdevp);
 		return 0;
     }
@@ -166,6 +139,21 @@ struct inode * inode;
 struct file * file;
 {
 	printd_td("tcpdev : open()\n");	
+	
+	if(tcpdev_inuse)
+		return -EBUSY;
+		
+    tdin_tail = tdout_tail = 0;
+	
+	tcpdev_inuse = 1;
+	return 0;
+}
+
+int tcpdev_release(inode,file)
+struct inode *inode;
+struct file *file;
+{
+	tcpdev_inuse = 0;
 	return 0;
 }
 
@@ -178,7 +166,7 @@ static struct file_operations tcpdev_fops =
 	tcpdev_select,		/* select */
 	NULL,		/* ioctl */
 	tcpdev_open,	/* open */
-	NULL,	/* release */
+	tcpdev_release,	/* release */
 #ifdef BLOAT_FS
 	NULL,		/* fsync */
 	NULL,		/* check_media_type */
@@ -190,8 +178,8 @@ void tcpdev_init()
 {
     register_chrdev(TCPDEV_MAJOR, "tcpdev", &tcpdev_fops);
 
-    buf_lock = 0;
-    buf_data_avail = 0;
+	bufin_sem = bufout_sem = 0;
+    tcpdev_inuse = 0;
 }
 
 #endif

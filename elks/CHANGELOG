@@ -7,6 +7,15 @@ be longer than the lines of dashes.
 Al
 -------------------------------------------------------------------------------
 
+
+Mon Aug 27 11:59:12 GMT 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* Changed tcpdev.c to use semaphores now we have them.
+	* Fixed bug in inet_read(). Should sleep again if waken up and has no
+	  lock on the buffer.
+	* Did some inet code cleanup
+	* Some fixes to the tcp behavior.
+
 Sun Aug 26 21:22:43 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Rationalised elks/Makefile somewhat, ready for standardising the

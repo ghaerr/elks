@@ -23,11 +23,8 @@
 
 #ifdef CONFIG_INET
 
-extern char td_buf[];
-
-static char tcpdev_readlock = 0;
-static int tcpdev_availdata = 0;
-
+extern char tdin_buf[];
+extern short bufin_sem, bufout_sem;
 extern int tcpdev_inetwrite();
 
 int inet_process_tcpdev(buf, len)
@@ -39,23 +36,18 @@ int len;
 	int i;
 	
 	r = buf;
-	
-/*	printk("tcpdev : got %d bytes\n",len);
-	for(i = 0 ; i < len ; i++){
-		printk("%x ",buf[i]);
-	}
-	printk("\n");
-*/		
 
 	sock = (struct socket *)r->sock;
 	
 	switch (r->type) {
 		case TDT_CHG_STATE:
 			sock->state = r->ret_value;
+			tcpdev_clear_data_avail();
 			break;
 		case TDT_AVAIL_DATA:
 			sock->avail_data = r->ret_value;
-		default: 	
+			tcpdev_clear_data_avail();
+		default:
 			wake_up(sock->wait);
 	}
 	
@@ -68,7 +60,7 @@ int protocol;
 {
     register struct inet_proto_data *upd;
         
-	printd_inet("inet_create()\n");
+	printd_inet1("inet_create(sock: 0x%x)\n", sock);
 	if(protocol != 0)
 		return -EINVAL;
 
@@ -92,7 +84,7 @@ struct socket *peer;
 	struct tdb_return_data	*ret_data;
 	int ret;
 
-	printd_inet("inet_release()\n");	
+	printd_inet1("inet_release(sock: 0x%x)\n",sock);	
 	cmd.cmd  = TDC_RELEASE;
 	cmd.sock = sock;
 
@@ -102,7 +94,7 @@ struct socket *peer;
 	/* Sleep until tcpdev has news */
 	interruptible_sleep_on(sock->wait);
 	
-	ret_data = td_buf;
+	ret_data = tdin_buf;
 	ret = ret_data->ret_value;
 	tcpdev_clear_data_avail();
 
@@ -121,7 +113,7 @@ int sockaddr_len;
 	int ret;
 	struct tdb_return_data	*ret_data;
 
-	printd_inet("inet_bind()\n");
+	printd_inet1("inet_bind(sock: 0x%x)\n", sock);
 	if(sockaddr_len <= 0 || sockaddr_len > sizeof(struct sockaddr_in))
 		return -EINVAL;
 		
@@ -131,13 +123,12 @@ int sockaddr_len;
 	cmd.sock = sock;
 	memcpy(&cmd.addr, addr, sockaddr_len);
 	
-	ret = tcpdev_inetwrite(&cmd, sizeof(struct tdb_bind));
-	if(ret < 0)return ret;
+	tcpdev_inetwrite(&cmd, sizeof(struct tdb_bind));
 		
 	/* Sleep until tcpdev has news */
 	interruptible_sleep_on(sock->wait);
 	
-	ret_data = td_buf;
+	ret_data = tdin_buf;
 	ret = ret_data->ret_value;
 	tcpdev_clear_data_avail();
 	if(ret < 0)
@@ -157,7 +148,7 @@ int flags;
 	struct tdb_connect cmd;
 	int ret;
 
-	printd_inet("inet_connect()\n");	
+	printd_inet1("inet_connect(sock: 0x%x)\n", sock);	
 	if (sockaddr_len <= 0 || sockaddr_len > sizeof(struct sockaddr_in)) {
 		return(-EINVAL);
 	}
@@ -179,7 +170,7 @@ int flags;
 	/* Sleep until tcpdev has news */
 	interruptible_sleep_on(sock->wait);
 	
-	r = td_buf;
+	r = tdin_buf;
 	ret = r->ret_value;
 	tcpdev_clear_data_avail();
 	
@@ -193,7 +184,7 @@ int flags;
 
 inet_socketpair()
 {
-	printk("inet_sockpair\n");
+	printd_inet("inet_sockpair\n");
 }
 
 static int inet_accept(sock, newsock, flags)
@@ -205,22 +196,22 @@ int flags;
 	struct tdb_accept_ret *ret_data;
 	int ret;
 
-	printd_inet("inet_accept()\n");	
+	printd_inet2("inet_accept(sock: 0x%x newsock: 0x%x)\n",sock,newsock);	
 	cmd.cmd  = TDC_ACCEPT;
 	cmd.sock = sock;
 	cmd.newsock = newsock;
 	cmd.nonblock = flags & O_NONBLOCK;
 	sock->flags |= SO_WAITDATA;
-	ret = tcpdev_inetwrite(&cmd, sizeof(struct tdb_accept));
-	if(ret < 0)return ret;
+	tcpdev_inetwrite(&cmd, sizeof(struct tdb_accept));
 		
 	/* Sleep until tcpdev has news */
 	interruptible_sleep_on(sock->wait);
 	
 	sock->flags &= ~SO_WAITDATA;
 
-	ret_data = td_buf;
+	ret_data = tdin_buf;
 	ret = ret_data->ret_value;
+
 	tcpdev_clear_data_avail();
 	if(ret < 0)
 		return ret;
@@ -232,7 +223,7 @@ int flags;
 
 inet_getname()
 {
-	printk("inet_getname\n");
+	printd_inet("inet_getname\n");
 }
 
 static int inet_read(sock, ubuf, size, nonblock)
@@ -245,8 +236,11 @@ int nonblock;
 	struct tdb_return_data *r;
 	struct tdb_read	cmd;
 	int ret;
+	static sum = 0;
 
 	printd_inet3("inet_read(socket: 0x%x size:%d nonblock: %d)\n", sock, size, nonblock);	
+	
+	if(size > TCPDEV_MAXREAD)size = TCPDEV_MAXREAD;
 	cmd.cmd	= TDC_READ;
 	cmd.sock = sock;
 	cmd.size = size;
@@ -254,10 +248,11 @@ int nonblock;
 	
 	tcpdev_inetwrite(&cmd, sizeof(struct tdb_read));
 	
-	/* Sleep until tcpdev has news */
-	interruptible_sleep_on(sock->wait);
+	/* Sleep until tcpdev has news and we have a lock on the buffer */
+	while(bufin_sem == 0)
+		interruptible_sleep_on(sock->wait);
 
-	r = td_buf;
+	r = tdin_buf;
 	ret = r->ret_value;
 
 	if(ret > 0){
@@ -265,7 +260,9 @@ int nonblock;
 		sock->avail_data = 0;
 	}
 	tcpdev_clear_data_avail();
-	
+
+	sum += ret;	
+/*	printk("sum:%d\n",sum);*/
 	return ret;
 	
 }
@@ -281,7 +278,7 @@ int nonblock;
 	struct tdb_write cmd;
 	int ret,todo;
 
-	printd_inet("inet_write()\n");	
+	printd_inet3("inet_write(socket: 0x%x size:%d nonblock: %d)\n", sock, size, nonblock);	
 	if(size <= 0)
 		return 0;
 		
@@ -305,7 +302,7 @@ int nonblock;
 		/* Sleep until tcpdev has news */
 		interruptible_sleep_on(sock->wait);
 
-		r = td_buf;
+		r = tdin_buf;
 		ret = r->ret_value;
 		tcpdev_clear_data_avail();
 		if(ret < 0){
@@ -346,7 +343,7 @@ select_table * wait;
 
 inet_ioctl()
 {
-	printk("inet_ioctl\n");
+	printd_inet("inet_ioctl\n");
 }
 
 static int inet_listen(sock, backlog)
@@ -367,7 +364,7 @@ int backlog;
 	/* Sleep until tcpdev has news */
 	interruptible_sleep_on(sock->wait);
 	
-	ret_data = td_buf;
+	ret_data = tdin_buf;
 	ret = ret_data->ret_value;
 	tcpdev_clear_data_avail();
 	
@@ -377,32 +374,32 @@ int backlog;
 
 inet_shutdown()
 {
-printk("inet_shutdown\n");
+	printd_inet("inet_shutdown\n");
 }
 
 inet_setsockopt()
 {
-printk("setsockopt\n");
+	printd_inet("setsockopt\n");
 }
 
 inet_getsockopt()
 {
-printk("inet_getsockopt\n");
+	printd_inet("inet_getsockopt\n");
 }
 
 inet_fcntl()
 {
-printk("inet_fcntl\n");
+	printd_inet("inet_fcntl\n");
 }
 
 inet_sendto()
 {
-printk("inet_sendto\n");
+	printd_inet("inet_sendto\n");
 }
 
 inet_recvfrom()
 {
-printk("inet_recvfrom\n");
+	printd_inet("inet_recvfrom\n");
 }
 
 static int inet_send(sock, buff, len, nonblock, flags)
@@ -459,13 +456,6 @@ static struct proto_ops inet_proto_ops = {
         inet_getsockopt,
         inet_fcntl,
 };
-
-
-
-
-
-
-
 
 void inet_proto_init(pro)
 struct net_proto * pro;
