@@ -6,7 +6,7 @@ include $(BASEDIR)/Make.defs
 #
 # Include standard packaging commands.
 
-MIN_BIN 	= getty init insmod kill login mount passwd ps reboot umount
+MIN_BIN 	= getty init kill login mount passwd ps reboot umount
 MIN_LIB 	= 
 MIN_SBIN	= clock exitemu
 MIN_USR_BIN	= 
@@ -31,9 +31,8 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS=getty kill man mount reboot umount clock exitemu who
-
-# init insmod login passwd ps	# These do not currently compile.
+PRGS=getty kill man mount reboot umount clock exitemu who \
+	init login passwd ps
 
 NETPRGS=init getty login kill mount umount passwd reboot ps who
 
@@ -77,8 +76,8 @@ getty: getty.c
 new_init: init.c utent.o
 	$(CC) $(CFLAGS) $(LDFLAGS) init.c utent.o -o init
 
-#init: min_init.c utent.o
-#	$(CC) $(CFLAGS) $(LDFLAGS) min_init.c utent.o -o init -H 2000
+init: init.c 
+	$(CC) $(CFLAGS) $(LDFLAGS) init.c -o init -H 2000
 
 login: getpass.o login.o utent.o
 	$(CC) $(CFLAGS) $(LDFLAGS) getpass.o login.o utent.o -o login -H 2000

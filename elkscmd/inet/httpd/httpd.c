@@ -163,6 +163,17 @@ char** argv;
 	char *t;
 	struct sockaddr_in localadr;
 
+	ret = fork();
+	if(ret > 0 || ret == -1){
+		exit(0);	
+	}
+	ret = open("/dev/null", O_RDWR); /* our log file! */
+	dup2(ret, 0);
+	dup2(ret, 1);
+	dup2(ret, 2);
+	close(ret);
+	setsid();
+
 	strcpy(doc_base, DEF_DOCBASE);
 	
 	listen_sock = socket(AF_INET, SOCK_STREAM, 0);

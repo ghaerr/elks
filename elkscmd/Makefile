@@ -20,9 +20,9 @@ include $(BASEDIR)/Make.defs
 #
 
 DIRS		= sys_utils ash bc byacc disk_utils file_utils levee \
-		  minix1 minix2 misc_utils sash sh_utils
+		  minix1 minix2 misc_utils sash sh_utils inet
 
-DONTWORK	= elvis inet
+DONTWORK	= elvis
 
 DONTUSE 	= debug_utils lib m4 mtools prn-utils rc tools xvi
 

@@ -34,17 +34,6 @@
  * These are all works in progress.
  */
 
-/* As of ELKS 0.1.0-pre4 there is a bug in the init program used, such
- * that it ignores any parameters given to the getty command in the
- * /etc/inittab file. However, the current init sources don't compile
- * on my system, so we have to work round the init bug here.
- *
- * The workround for this bug is included in this getty code if the
- * following define is enabled, and excluded otherwise.
- */
-
-#define INIT_BUG_WORKAROUND	/* Disable when no longer needed */
-
 /* For those requiring a super-small getty, the following define cuts out
  * all of the extra functionality regarding the /etc/issue code sequences.
  */
@@ -197,11 +186,7 @@ void main(int argc, char **argv) {
     debug1("DEBUG: main( %d, **argv )\n",argc);
     if (argc < 2 || argc > 3) {
 	fprintf(stderr,
-#ifdef INIT_BUG_WORKAROUND
-		"\nWARNING: Invalid number of arguments: %d\nCommand: %s",
-#else
 		"\nERROR:   Invalid number of arguments: %d\nCommand: %s",
-#endif
 		argc-1,*argv);
 	for (n=1; n<argc; n++)
 	    fprintf(stderr," \"%s\"",argv[n]);

@@ -44,6 +44,8 @@ all:	urlget
 urlget:	$(SRC)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o urlget $(SRC)
 
+net_rfs: all
+
 install: all
 	cp -p urlget $(TARGET_MNT)/bin
 

@@ -306,7 +306,8 @@ const char **a;
 	    dup2(fd ,STDERR_FILENO);
 
 	    argv[0] = GETTY;
-	    argv[1] = NULL;
+	    argv[1] = devtty;
+	    argv[2] = NULL;
 
 	    execv(argv[0], argv);
 	}	

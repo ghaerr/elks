@@ -42,6 +42,8 @@ all:	ttn
 ttn:	$(SRC)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o telnet $(SRC)
 
+net_rfs: all
+
 install: all
 	cp -p telnet $(TARGET_MNT)/bin
 

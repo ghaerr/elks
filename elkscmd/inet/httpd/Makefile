@@ -49,6 +49,8 @@ all: httpd
 httpd: $(OBJ)
 	$(CC) $(OPT) -o httpd $(OBJ) $(BASELIBS)
 
+net_rfs: all
+
 install: all
 	mkdir $(TARGET_MNT)/usr/lib/httpd
 	cp -f -p sample_index.html $(TARGET_MNT)/usr/lib/httpd/index.html

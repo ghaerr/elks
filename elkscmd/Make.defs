@@ -46,7 +46,7 @@
 # Each option has both advantages and disadvantages, and it is up to the
 # developer to determine the appropriate one to use.
 
-TARGET_MODE=RAM
+TARGET_MODE=LOOP
 
 ##############################################################################
 #

@@ -31,23 +31,23 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-DIRS=httpd telnet urlget
+DIRS=nettools httpd telnet urlget
 
-DIRS2=nettools
+DIRS2=
 
 all:
 	@for i in $(DIRS); do make -C $$i all ; done
 
 rfs:
 
-net_rfs: install
-	@for i in $(DIRS2); do make -C $$i net_rfs ; done
+net_rfs:
+	@for i in $(DIRS); do make -C $$i net_rfs install ; done
 
 min_rfs:
 
 smin_rfs:
 
-install:
+install: all
 	@for i in $(DIRS); do make -C $$i install ; done
 
 clean:

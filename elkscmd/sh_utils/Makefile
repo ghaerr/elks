@@ -38,7 +38,7 @@ PRGS=basename date dirname echo false printenv pwd true which whoami yes \
 
 NETPRGS=date echo false true yes stty test pwd
 
-MIN_PRGS=date pwd printenv
+MIN_PRGS=date pwd printenv test
 
 write: write.o ../sys_utils/utent.o
 
