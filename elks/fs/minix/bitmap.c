@@ -68,7 +68,7 @@ unsigned short block;
 		printk("trying to free block %lx not in datazone\n", block);
 		return;
 	}
-	bh = get_hash_table(sb->s_dev,(unsigned long)block);
+	bh = get_hash_table(sb->s_dev,(block_t)block);
 	if (bh)
 		bh->b_dirty = 0;
 	brelse(bh);
@@ -97,7 +97,8 @@ unsigned int minix_new_block(sb)
 register struct super_block * sb;
 {
 	register struct buffer_head * bh;
-	unsigned int i, j;
+	unsigned int i;
+	unsigned short j;
 
 	if (!sb) {
 		printk("trying to get new block from nonexistent device\n");
@@ -128,7 +129,7 @@ repeat:
 	    j >= sb->u.minix_sb.s_nzones)
 		return 0;
 	/* WARNING: j is not converted, so we have to do it */
-	if (!(bh = getblk(sb->s_dev, (unsigned long)j))) {
+	if (!(bh = getblk(sb->s_dev, (block_t)j))) {
 		printk("new_block: cannot get block");
 		return 0;
 	}
@@ -158,7 +159,7 @@ register struct inode * inode;
 	clear_inode(inode);
 #else
 	register struct buffer_head * bh;
-	unsigned long ino;
+	ino_t ino;
 
 	if (!inode)
 		return;

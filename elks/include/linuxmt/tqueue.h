@@ -1,3 +1,6 @@
+#ifndef _LINUXMT_TQUEUE_H
+#define _LINUXMT_TQUEUE_H
+
 /*
  * tqueue.h --- task queue handling for Linux.
  *
@@ -9,9 +12,6 @@
  *
  * The original comment follows below.
  */
-
-#ifndef _LINUXMT_TQUEUE_H
-#define _LINUXMT_TQUEUE_H
 
 #if 0
 #include <asm/bitops.h>
@@ -117,7 +117,7 @@ task_queue * bh_list;
 #define queue_task(bh_pointer, bh_list) \
 { \
 	if (!set_bit(0,&bh_pointer->sync)) { \
-		unsigned long flags; \
+		flag_t flags; \
 		save_flags(flags); \
 		icli(); \
 		bh_pointer->next = *bh_list; \

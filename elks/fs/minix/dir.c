@@ -110,7 +110,7 @@ filldir_t filldir;
 		do {
 			de = (struct minix_dir_entry *) (offset + bh->b_data);
 			if (de->inode) {
-				int size = strnlen(de->name, info->s_namelen);
+				size_t size = strnlen(de->name, info->s_namelen);
 				if (filldir(dirent, de->name, size, filp->f_pos, de->inode) < 0) {
 					unmap_brelse(bh);
 					return 0;

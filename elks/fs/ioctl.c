@@ -19,14 +19,14 @@ register struct file *filp;
 unsigned int cmd;
 unsigned int arg;
 {
-	long val;
-	int block;
+	loff_t val;
+
 	register struct file_operations * fop = filp->f_op;
 
 	switch (cmd) {
 		case FIONREAD:
 			val = filp->f_inode->i_size - filp->f_pos;
-			return verified_memcpy_tofs(arg, &val, sizeof(long));
+			return verified_memcpy_tofs(arg, &val, sizeof(loff_t));
 	}
 	if (fop && fop->ioctl)
 		return fop->ioctl(filp->f_inode, filp, cmd, arg);
@@ -39,7 +39,6 @@ unsigned int fd;
 unsigned int cmd;
 unsigned int arg;
 {	
-/*	unsigned long arg = get_fs_long(parg); */
 	register struct file * filp;
 	register struct file_operations * fop;
 	int on;

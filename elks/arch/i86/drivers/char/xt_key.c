@@ -412,15 +412,13 @@ void keyboard_irq(irq,regs)
 int irq;
 struct pt_regs *regs;
 {
-int code;
-int mode;
-int IsRelease;
-int key;
-int E0 = 0;
-static unsigned ModeState = 0;
-static int E0Prefix = 0;
-
-extern int key_pressed;
+	int code;
+	int mode;
+	int IsRelease;
+	int key;
+	int E0 = 0;
+	static unsigned ModeState = 0;
+	static int E0Prefix = 0;
 
    code=inb_p(KBD_IO);
    mode=inb_p(KBD_CTL);
@@ -551,11 +549,6 @@ extern int key_pressed;
             AddQueue( '\n' );
             return;
       }
-/*
- *   key_pressed is no longer needed... GetQueue returns -1 if there's
- *   nothing available. SA
- *   Flag for init.
- */	
    if (key == '\r') key = '\n';
    AddQueue( key );
 }

@@ -41,7 +41,7 @@ register struct file * filp;
 off_t offset;
 unsigned int origin;
 {
-	long int tmp = -1;
+	off_t tmp = -1;
 
 	printd_mem("mem_lseek()\n");
 	switch(origin) {

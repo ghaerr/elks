@@ -20,13 +20,10 @@
  * Traditional linux readdir() handling..
  *
  */
-#define NAME_OFFSET(de) ((int) ((de)->d_name - (char *) (de)))
-#define ROUND_UP(x) (((x)+sizeof(long)-1) & ~(sizeof(long)-1))
-
 struct linux_dirent {
-	unsigned long	d_ino;
-	unsigned long	d_offset;
-	unsigned short	d_namlen;
+	u_ino_t		d_ino;
+	loff_t		d_offset;
+	size_t		d_namlen;
 	char		d_name[255];
 };
 
@@ -39,7 +36,7 @@ struct readdir_callback
 static int fillonedir(__buf,name,namlen,offset,ino)
 char *__buf;
 char * name;
-int namlen;
+size_t namlen;
 off_t offset;
 ino_t ino;
 {

@@ -34,7 +34,7 @@ int max_inodes = NR_INODE;
 
 static struct inode_hash_entry *hash(dev,i)
 kdev_t dev;
-int i;
+ino_t i;
 {
 	return hash_table + ((HASHDEV(dev) ^ i) % NR_IHASH);
 }
@@ -446,9 +446,7 @@ repeat:
 	wake_up(&inode_wait);
 #ifdef NOT_YET	
 	if (inode->i_pipe) {
-		unsigned long page = (unsigned long) PIPE_BASE(*inode);
-		PIPE_BASE(*inode) = NULL;
-		free_page(page);
+		/* Free up any memory allocated to the pipe */
 	}
 #endif	
 
@@ -481,7 +479,7 @@ void list_inode_status()
 
 struct inode * get_empty_inode()
 {
-	static int ino = 0;
+	static ino_t ino = 0;
 	REGOPT struct inode * inode, * best;
 	int i;
 
@@ -563,9 +561,9 @@ struct inode * get_pipe_inode()
 }
 #endif
 
-struct inode *__iget(sb,nr/* ,crossmntp*/)
+struct inode *__iget(sb, inr/* ,crossmntp*/)
 REGOPT struct super_block * sb;
-long nr;
+ino_t inr;
 /*int crossmntp;*/
 {
 	static struct wait_queue * update_wait = NULL;
@@ -573,13 +571,13 @@ long nr;
 	REGOPT struct inode * inode;
 	REGOPT struct inode * empty = NULL;
 
-	printd_iget3("iget called(%x, %d, %d)\n", sb, nr, 0 /* crossmntp*/);
+	printd_iget3("iget called(%x, %d, %d)\n", sb, inr, 0 /* crossmntp*/);
 	if (!sb)
 		panic("VFS: iget with sb==NULL");
-	h = hash(sb->s_dev, nr);
+	h = hash(sb->s_dev, inr);
 repeat:
 	for (inode = h->inode; inode ; inode = inode->i_hash_next)
-		if (inode->i_dev == sb->s_dev && inode->i_ino == nr)
+		if (inode->i_dev == sb->s_dev && inode->i_ino == inr)
 			goto found_it;
 	if (!empty) {
 		h->updating++;
@@ -595,7 +593,7 @@ repeat:
 	inode = empty;
 	inode->i_sb = sb;
 	inode->i_dev = sb->s_dev;
-	inode->i_ino = nr;
+	inode->i_ino = inr;
 	inode->i_flags = sb->s_flags;
 	put_last_free(inode);
 	insert_inode_hash(inode);
@@ -609,7 +607,7 @@ found_it:
 		nr_free_inodes--;
 	inode->i_count++;
 	wait_on_inode(inode);
-	if (inode->i_dev != sb->s_dev || inode->i_ino != nr) {
+	if (inode->i_dev != sb->s_dev || inode->i_ino != inr) {
 		printk("Whee.. inode changed from under us. Tell _.\n");
 		iput(inode);
 		goto repeat;

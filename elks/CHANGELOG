@@ -6,6 +6,24 @@ Al
 ------------------------------------------------------------------------------
 Tue Jul 20 18:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
+	* Added vfork() capability.
+
+	* Added simple data types for many values in the kernel.
+
+	* Cleaned up header files.
+
+	* Removed unused features from the interrupt code.
+
+	* Cut down to 16 signals rather than 32.
+
+	* Replaced schedular code with a more compact round robin version.
+
+	* Changed default size of block and inode values from 32 to 16 bit.
+
+	* Made closing a terminal HUP the process group.
+	
+Tue Jul 20 18:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
 	* Removed unused members of fs structures.
 
 Tue Jul 20 18:08 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>

@@ -22,10 +22,10 @@ struct request {
 	__u8  rq_errors;
 #endif
 	__u8  rq_status;
-	unsigned long rq_sector;
+	sector_t rq_sector;
 #ifdef BLOAT_FS
-	unsigned long rq_nr_sectors;	/* always 2 */
-	unsigned long rq_current_nr_sectors;
+	sector_t rq_nr_sectors;	/* always 2 */
+	sector_t rq_current_nr_sectors;
 #endif
 	char * rq_buffer;
 #ifdef BLOAT_FS
@@ -70,14 +70,10 @@ extern struct wait_queue *wait_for_request;
 #endif
 extern void resetup_one_dev();
 
-extern unsigned long hd_init();
-extern int is_read_only();
-extern void set_device_ro();
-
 extern void rd_load();
-/* extern long rd_init(); */
+extern void rd_init();
 
-extern unsigned long xd_init();
+extern void xd_init();
 
 #ifdef MAJOR_NR
 
@@ -194,8 +190,8 @@ int uptodate;
 #endif
 	if (!uptodate) {
 		printk("%s:I/O error\n", DEVICE_NAME);
-		printk("dev %x, sector %d\n",
-		       (unsigned long)req->rq_dev, req->rq_sector);
+		printk("dev %x, sector %ld\n",
+		       req->rq_dev, req->rq_sector);
 #ifdef MULTI_BH
 		req->rq_nr_sectors--;
 		req->rq_nr_sectors &= ~SECTOR_MASK;

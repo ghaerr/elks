@@ -35,8 +35,8 @@ awk '/^#/{next;}
 END{
    for(callno=0; callno<=maxno; callno++)
    {
-      if( assigned_to[callno] == "fork" )
-         gsub("_sys_fork", "_do_fork ", line[callno]);
+#      if( assigned_to[callno] == "fork" )
+#        gsub("_sys_fork", "_do_fork ", line[callno]);
 
       if( assigned_to[callno] == "insmod" )
          gsub("_sys_insmod", "_module_init", line[callno]);
@@ -47,11 +47,11 @@ END{
       {
          if( assigned_to[callno] == "" )
             assigned_to[callno] = "unassigned";
-         if( assigned_to[callno] == "vfork" )
-	 {
-            str = "\t.word _do_fork";
-	 }
-	 else
+#        if( assigned_to[callno] == "vfork" )
+# {
+#           str = "\t.word _do_fork";
+# }
+# else
             str = "\t.word _no_syscall";
          printf "%-25s ! %d - %s\n", str, callno, assigned_to[callno];
       }

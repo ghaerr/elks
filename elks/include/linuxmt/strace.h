@@ -1,3 +1,6 @@
+#ifndef __LINUXMT_STRACE_H
+#define __LINUXMT_STRACE_H
+
 /* include/linuxmt/strace.h
  * (C) 1997 Chad Page
  *
@@ -6,18 +9,7 @@
  * tables in strace.c which will let it produce semi-readable output
  */ 
 
-#ifndef ELKS_STRACE
-#define ELKS_STRACE
-
 /* Config parameters */
-
-#define DEBUG_STRACE 1
-
-/* RETWAIT tells it to to print after the system call returns.  Use this unless
- * the kernel is crashing or hanging within the system call... */
-#if 0
-#define STRACE_RETWAIT 1 
-#endif
 
 /* This tells strace to print stack params */
 

@@ -1,6 +1,8 @@
 #ifndef _LINUXMT_TIMER_H
 #define _LINUXMT_TIMER_H
 
+#include <linuxmt/types.h>
+
 /*
  * DON'T CHANGE THESE!! Most of them are hardcoded into some assembly language
  * as well as being defined here.
@@ -58,7 +60,7 @@
 #define DIGI_TIMER	29
 
 struct timer_struct {
-	unsigned long expires;
+	jiff_t expires;
 	void (*fn)();
 };
 
@@ -81,14 +83,12 @@ extern struct timer_struct timer_table[32];
 struct timer_list {
 	struct timer_list *next;
 	struct timer_list *prev;
-	unsigned long expires;
+	jiff_t expires;
 	int data;
 	void (*function)();
 };
 
 extern void add_timer();
 extern int  del_timer();
-
-extern void it_real_fn();
 
 #endif /* _LINUXMT_TIMER_H */

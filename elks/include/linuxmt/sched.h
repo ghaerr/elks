@@ -31,19 +31,24 @@ struct fs_struct {
 };
 
 struct mm_struct {
-	unsigned short cseg,dseg;
+	seg_t cseg,dseg;
 };
 
 struct signal_struct {
-	struct sigaction action[32];
+	struct sigaction action[NSIG];
 };
 
 struct task_struct 
 {
 /* Executive stuff */
 	__registers t_regs;
-	__uint t_num;
+#if 1
+	__pptr t_endtext, t_begstack, t_endstack, t_endbrk; 
+#else
+	__uint t_num; /* What is this for? */
+	/* Most of these are not used! */
 	__pptr t_begcode, t_endcode, t_begdata, t_endtext, t_enddata, t_begstack, t_endstack, t_endbrk; 
+#endif
 /* Kernel info */
 	pid_t pid,ppid;
 	pid_t session;
@@ -52,30 +57,34 @@ struct task_struct
 /* Scheduling + status variables */
 	__s16 state;
         __u32 timeout;                  /* for select() */
+#ifdef OLD_SCHED
 	__uint t_count, t_priority;	/* priority scheduling elements */
 /*	__u16 t_flags; 		/* Not defined yet */
 	__s32 counter;		/* Time counter (unused so far) */
+#endif /* OLD_SCHED */
         struct task_struct *next_run, *prev_run;
+#ifdef OLD_SCHED
         struct task_struct *next_task, *prev_task;
+#endif
 	struct file_struct files;	/* File system structure */
 	struct fs_struct fs;		/* File roots */
 	struct mm_struct mm;		/* Memory blocks */
-	struct signal_struct sig;	/* Signal block */
 	gid_t groups[NGROUPS];
 /*	int dumpable;		/* Can core dump */
 	pid_t pgrp;
 	struct tty * tty;
 	__u8 link_count;	/* Symlink loop counter */
-	__u32 signal/*,blocked*/;	/* Signal status */
 	/* only 1 child pntr is needed to get us into the sibling list */
 	struct task_struct *p_parent, *p_prevsib, *p_nextsib, *p_child;	 
   	struct wait_queue child_wait;
 	pid_t child_lastend;
 	int lastend_status;
 	struct inode * t_inode;
-	#ifdef CONFIG_STRACE
+	sigset_t signal/*,blocked*/;	/* Signal status */
+	struct signal_struct sig;	/* Signal block */
+#ifdef CONFIG_STRACE
 	struct syscall_params sc_info;
-	#endif
+#endif
 	__u16 t_kstackm;	/* To detect stack corruption */
 	__u8 t_kstack[KSTACK_BYTES];
 };
@@ -92,34 +101,17 @@ struct task_struct
 #define TASK_WAITING		7
 #define TASK_EXITING		8
 
-/*
- * Scheduling policies
- */
-#define SCHED_OTHER             0
-#define SCHED_FIFO              1
-#define SCHED_RR                2
-
-struct sched_param {
-        int sched_priority;
-};
-
 /* We use typedefs to avoid using struct foobar (*) */
 typedef struct task_struct __task;
 typedef struct task_struct * __ptask;
 
 extern __task task[MAX_TASKS];
 
-extern unsigned long jiffies;
-extern __ptask current, next;
-extern __uint curnum;
+extern jiff_t jiffies;
+extern __ptask current; /* next; */
 extern int need_resched;
 
-_FUNCTION(__uint build_task, ());
-_FUNCTION(__uint alloc_task, (__ptask ptask));
-_FUNCTION(void schedule, ()); 
-
 extern struct timeval xtime;
-extern unsigned long jiffies;
 #define CURRENT_TIME ((xtime.tv_sec) + (jiffies/HZ))
 
 #define for_each_task(p) \

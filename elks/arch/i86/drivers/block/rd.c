@@ -29,12 +29,14 @@
 #ifdef DEBUG
 #endif
 
+typedef __u16 rd_sector_t;
+
 static int rd_initialised = 0;
 static struct rd_infot
 {
 	int index;
 	int flags;
-	int size; /* ramdisk size in 512 B blocks */
+	rd_sector_t size; /* ramdisk size in 512 B blocks */
 } rd_info[MAX_ENTRIES] = 
 {
 	{0,0,0},
@@ -51,7 +53,7 @@ static struct rd_segmentt
 {
 	int segment;
 	int next;
-	int seg_size; /* segment size in 512 byte blocks */
+	rd_sector_t short seg_size; /* segment size in 512 byte blocks */
 } rd_segment[MAX_ENTRIES] = /* max 640 KB will be used for RAM disk(s) */
 {
 	{0,MAX_ENTRIES+1,0,},
@@ -179,7 +181,7 @@ unsigned int arg;
 {
 	int target = DEVICE_NR(inode->i_rdev);
 	int i, j, k;
-	int size;
+	rd_sector_t size;
 
 	if (!suser())
 		return -EPERM;
@@ -211,7 +213,7 @@ unsigned int arg;
 						else
 						size = SEG_SIZE;
 
-					if ((rd_segment[j].segment = mm_alloc(size, 0)) == -1) {
+					if ((rd_segment[j].segment = mm_alloc(size) == -1) {
 						rd_dealloc(target);
 						return -ENOMEM;
 					}
@@ -258,10 +260,11 @@ unsigned int arg;
 static void do_rd_request()
 {
 /* 	unsigned long count; */
-	unsigned long start;
+	rd_sector_t start;
 	register char *buff;
 	int target;
-	int offset, segnum;
+	rd_sector_t offset;
+	int segnum;
 
 	while(1) {
 		if (!CURRENT || CURRENT->rq_dev <0)
@@ -269,7 +272,7 @@ static void do_rd_request()
 
 		INIT_REQUEST;
 
-		if (CURRENT == NULL || CURRENT->rq_sector == -1)
+		if (CURRENT == NULL || CURRENT->rq_sector == (sector_t)-1)
 			return;
 
 		if (rd_initialised != 1) {
@@ -277,7 +280,7 @@ static void do_rd_request()
 			continue;
 		}
 
-		start = CURRENT->rq_sector;
+		start = (rd_sector_t)CURRENT->rq_sector;
 		buff = CURRENT->rq_buffer;
 		target = DEVICE_NR(CURRENT->rq_dev);
 
@@ -303,11 +306,11 @@ static void do_rd_request()
 		printk("do_rd_request: target: %d, start: %ld, segment %d, offset: %d\n", target, (long)start, segnum, offset);
 #endif
 		if (CURRENT->rq_cmd == WRITE) {
-			printd_rd2("RD_REQUEST writing to %ld size %ld\n", start,count);
+			printd_rd1("RD_REQUEST writing to %ld\n", start);
 			fmemcpy(rd_segment[segnum].segment, offset, get_ds(), buff, 1024);
 		}
 		if (CURRENT->rq_cmd == READ) {
-			printd_rd2("RD_REQUEST reading from %ld size %ld\n", start,count);
+			printd_rd1("RD_REQUEST reading from %ld\n", start);
 			fmemcpy(get_ds(), buff, rd_segment[segnum].segment, offset, 1024);
 		}
 		end_request(1, CURRENT->rq_dev);

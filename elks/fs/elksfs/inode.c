@@ -227,7 +227,7 @@ int silent;
 	/* set up enough so that it can read an inode */
 	s->s_dev = dev;
 	s->s_op = &elksfs_sops;
-	s->s_mounted = iget(s,(long) ELKSFS_ROOT_INO);
+	s->s_mounted = iget(s,(ino_t) ELKSFS_ROOT_INO);
 	if (!s->s_mounted) {
 		s->s_dev = 0;
 		unmap_brelse(bh);

@@ -57,8 +57,8 @@ int minor;
 static void add_partition (hd,minor,start,size)
 register struct gendisk *hd;
 int minor;
-unsigned long start;
-unsigned long size;
+sector_t start;
+sector_t size;
 {
 	register struct hd_struct * hdp = &hd->part[minor];
 	hdp->start_sect = start;
@@ -91,7 +91,7 @@ kdev_t dev;
 	struct buffer_head *bh;
 	register struct partition *p;
 	struct hd_struct * hdp = &hd->part[MINOR(dev)];
-	unsigned long first_sector, first_size, this_sector, this_size;
+	sector_t first_sector, first_size, this_sector, this_size;
 	int mask = (1 << hd->minor_shift) - 1;
 	int i;
 
@@ -102,7 +102,7 @@ kdev_t dev;
 	while (1) {
 		if ((current_minor & mask) == 0)
 			return;
-		if (!(bh = bread(dev,0L)))
+		if (!(bh = bread(dev,(block_t)0)))
 			return;
 	  /*
 	   * This block is from a device that we're about to stomp on.
@@ -145,7 +145,7 @@ kdev_t dev;
 			     first_sector + first_size))
 		      continue;
 
-		    add_partition(hd, current_minor, (unsigned long)this_sector+START_SECT(p), (unsigned long)NR_SECTS(p));
+		    add_partition(hd, current_minor, (sector_t)this_sector+START_SECT(p), (sector_t)NR_SECTS(p));
 		    current_minor++;
 		    if ((current_minor & mask) == 0)
 		      goto done;
@@ -156,7 +156,7 @@ kdev_t dev;
 		 *  extended_partition()  recursive and allow a tree
 		 *  of extended partitions.)
 		 * It should be a link to the next logical partition.
-		 * Create a minor for this just long enough to get the next
+		 * Create a minor for this just enough to get the next
 		 * partition table.  The minor will be reused for the next
 		 * data partition.
 		 */
@@ -183,7 +183,7 @@ done:
 static int msdos_partition(hd,dev,first_sector)
 struct gendisk *hd;
 kdev_t dev;
-unsigned long first_sector;
+sector_t first_sector;
 {
 	int i, minor = current_minor;
 	struct buffer_head *bh;
@@ -191,7 +191,7 @@ unsigned long first_sector;
 	register struct hd_struct * hdp;
 	unsigned char *data;
 	int mask = (1 << hd->minor_shift) - 1;
-	if (!(bh = bread(dev,0L))) {
+	if (!(bh = bread(dev,(block_t)0))) {
 		printk(" unable to read partition table\n");
 		return -1;
 	}
@@ -250,7 +250,7 @@ register struct gendisk *hd;
 kdev_t dev;
 {
 	static int first_time = 1;
-	unsigned long first_sector;
+	sector_t first_sector;
 
 	if (first_time)
 		printk("Partition check:\n");
@@ -262,8 +262,8 @@ kdev_t dev;
 	 * skipped for specific drives (e.g. IDE cd-rom drives)
 	 */
 #if 0
-	if ((long)first_sector == -1) {
-		hd->part[MINOR(dev)].start_sect = 0;
+	if ((sector_t)first_sector == (sector_t)-1) {
+		hd->part[MINOR(dev)].start_sect = (sector_t)0;
 		return;
 	}
 #endif

@@ -1,7 +1,7 @@
 #include <linuxmt/config.h>
 
 #ifdef CONFIG_MODULE
-#include <linuxmt/module.h>
+#include <linuxmt/mem.h>
 
 char module_data[DATASIZE] = "There is no module.";
 

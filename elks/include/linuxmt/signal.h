@@ -1,6 +1,38 @@
 #ifndef _LINUXMT_SIGNAL_H
 #define _LINUXMT_SIGNAL_H
 
+/* The following signal mean nothing under ELKS currently
+ * SIGBUS SIGTRAP SIGIOT SIGEMT SIGSYS SIGSTKFLT SIGPOLL
+ * SIGCPU SIGPROF SIGPWR SIGILL SIGFPE
+ * 
+ * So we can have much tighter signal code if we have 16 bit signal
+ * mask by losing all these unused signals.
+ */
+#define SMALLSIG
+
+#ifdef SMALLSIG
+typedef unsigned short sigset_t;	/* at least 16 bits */
+
+#define _NSIG             16
+#define NSIG		_NSIG
+
+#define SIGHUP		 1
+#define SIGINT		 2
+#define SIGQUIT		 3
+#define SIGWINCH	 4
+#define SIGSTOP		 5
+#define SIGABRT		 6
+#define SIGTSTP		 7
+#define SIGCONT		 8
+#define SIGKILL		 9
+#define SIGUSR1		10
+#define SIGSEGV		11
+#define SIGCHLD		12
+#define SIGPIPE		13
+#define SIGALRM		14
+#define SIGTERM		15
+
+#else /* SMALLSIG */
 typedef unsigned long sigset_t;		/* at least 32 bits */
 
 #define _NSIG             32
@@ -37,11 +69,10 @@ typedef unsigned long sigset_t;		/* at least 32 bits */
 #define SIGWINCH	28
 #define SIGIO		29
 #define SIGPOLL		SIGIO
-/*
-#define SIGLOST		29
-*/
 #define SIGPWR		30
 #define	SIGUNUSED	31
+
+#endif /* SMALLSIG */
 
 /*
  * sa_flags values: SA_STACK is not supported

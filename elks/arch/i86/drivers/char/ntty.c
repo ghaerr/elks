@@ -98,6 +98,7 @@ struct file *file;
 	rtty = determine_tty(inode->i_rdev);
 	if (rtty)  {
 		if (current->pid == rtty->pgrp) {
+			kill_pg(rtty->pgrp, SIGHUP, 1);
 			rtty->pgrp = NULL;
 		}
 		rtty->flags &= ~TTY_OPEN;

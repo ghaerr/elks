@@ -154,7 +154,7 @@ int silent;
 	if (32 != sizeof (struct minix_inode))
 		panic("bad i-node size");
 	lock_super(s);
-	if (!(bh = bread(dev,1L))) {
+	if (!(bh = bread(dev,(block_t)1))) {
 		s->s_dev = 0;
 		unlock_super(s);
 		printk("MINIX-fs: unable to read superblock\n");
@@ -162,19 +162,19 @@ int silent;
 	}
 	map_buffer(bh);
 	{ /* Localise register variable */
-		register struct minix_super_block *ms;
-		ms = (struct minix_super_block *) bh->b_data;
-		s->u.minix_sb.s_ms = ms;
-		s->u.minix_sb.s_sbh = bh;
-		s->u.minix_sb.s_mount_state = ms->s_state;
-		s->u.minix_sb.s_ninodes = ms->s_ninodes;
-		s->u.minix_sb.s_imap_blocks = ms->s_imap_blocks;
-		s->u.minix_sb.s_zmap_blocks = ms->s_zmap_blocks;
-		s->u.minix_sb.s_firstdatazone = ms->s_firstdatazone;
-		s->u.minix_sb.s_log_zone_size = ms->s_log_zone_size;
-		s->u.minix_sb.s_max_size = ms->s_max_size;
+	register struct minix_super_block *ms;
+	ms = (struct minix_super_block *) bh->b_data;
+	s->u.minix_sb.s_ms = ms;
+	s->u.minix_sb.s_sbh = bh;
+	s->u.minix_sb.s_mount_state = ms->s_state;
+	s->u.minix_sb.s_ninodes = ms->s_ninodes;
+	s->u.minix_sb.s_imap_blocks = ms->s_imap_blocks;
+	s->u.minix_sb.s_zmap_blocks = ms->s_zmap_blocks;
+	s->u.minix_sb.s_firstdatazone = ms->s_firstdatazone;
+	s->u.minix_sb.s_log_zone_size = ms->s_log_zone_size;
+	s->u.minix_sb.s_max_size = ms->s_max_size;
 #ifdef BLOAT_FS
-		s->s_magic = ms->s_magic;
+	s->s_magic = ms->s_magic;
 #endif
 	if (ms->s_magic == MINIX_SUPER_MAGIC) {
 		s->u.minix_sb.s_version = MINIX_V1;
@@ -200,12 +200,12 @@ int silent;
 	 *	the code to fetch/release each time we get a block.
 	 */
 	for (i=0 ; i < s->u.minix_sb.s_imap_blocks ; i++)
-		if ((s->u.minix_sb.s_imap[i]=bread(dev,(unsigned long)block)) != NULL)
+		if ((s->u.minix_sb.s_imap[i]=bread(dev,(block_t)block)) != NULL)
 			block++;
 		else
 			break;
 	for (i=0 ; i < s->u.minix_sb.s_zmap_blocks ; i++)
-		if ((s->u.minix_sb.s_zmap[i]=bread(dev,(unsigned long)block)) != NULL)
+		if ((s->u.minix_sb.s_zmap[i]=bread(dev,(block_t)block)) != NULL)
 			block++;
 		else
 			break;
@@ -226,7 +226,7 @@ int silent;
 	/* set up enough so that it can read an inode */
 	s->s_dev = dev;
 	s->s_op = &minix_sops;
-	s->s_mounted = iget(s, (long) MINIX_ROOT_INO);
+	s->s_mounted = iget(s, (ino_t) MINIX_ROOT_INO);
 	if (!s->s_mounted) {
 		s->s_dev = 0;
 		unmap_brelse(bh);
@@ -256,17 +256,17 @@ int bufsiz;
 
 	tmp.f_type = sb->s_magic;
 	tmp.f_bsize = BLOCK_SIZE;
-	ptmp->f_blocks = (sb->u.minix_sb.s_nzones - sb->u.minix_sb.s_firstdatazone) << sb->u.minix_sb.s_log_zone_size;
+	tmp->f_blocks = (sb->u.minix_sb.s_nzones - sb->u.minix_sb.s_firstdatazone) << sb->u.minix_sb.s_log_zone_size;
 	tmp.f_bfree = minix_count_free_blocks(sb);
 	tmp.f_bavail = tmp.f_bfree;
-	tmp.f_files = sb->u.minix_sb.s_ninodes;
+	tmp.f_files = (long)sb->u.minix_sb.s_ninodes;
 	tmp.f_ffree = minix_count_free_inodes(sb);
 	tmp.f_namelen = sb->u.minix_sb.s_namelen;
 	memcpy(buf, &tmp, bufsiz);
 }
 #endif
 
-/* Adapted from Linux 0.12's inode.c.  _bmap() is a long function, I know */
+/* Adapted from Linux 0.12's inode.c.  _bmap() is a big function, I know */
 
 unsigned short _minix_bmap(inode, block, create)
 register struct inode * inode;
@@ -310,7 +310,7 @@ int create;
 #endif
 		}
 		printd_mfs1("MFSbmap: About to read indirect block #%d\n", i_zone[7]);
-		if (!(bh = bread(inode->i_dev, (unsigned long)i_zone[7]))) {
+		if (!(bh = bread(inode->i_dev, (block_t)i_zone[7]))) {
 			printd_mfs("MFSbmap: Bread of zone 7 failed\n");
 			return 0;
 		}
@@ -343,7 +343,7 @@ int create;
 	blknum = _minix_bmap(inode, block, create);
 	printd_mfs2("MINIXfs: file block #%d -> disk block #%d\n", block, blknum);
 	if (blknum != 0) {
-		bh = getblk(inode->i_dev, (unsigned long)blknum); 
+		bh = getblk(inode->i_dev, (block_t)blknum); 
 		printd_mfs2("MINIXfs: m_getblk returning %x for blk %d\n", bh, block);
 		return bh;	
 	}
@@ -391,7 +391,7 @@ register struct inode * inode;
 			    isb->u.minix_sb.s_zmap_blocks +
 			    (ino-1)/MINIX_INODES_PER_BLOCK;
 	}
-	if (!(bh=bread(inode->i_dev,(unsigned long)block))) {
+	if (!(bh=bread(inode->i_dev,(block_t)block))) {
 		printk("Major problem: unable to read inode from dev %s\n", kdevname(inode->i_dev));
 		return;
 	}
@@ -447,7 +447,7 @@ register struct inode * inode;
 	block = 2 + inode->i_sb->u.minix_sb.s_imap_blocks + inode->i_sb->u.minix_sb.s_zmap_blocks +
 		(ino-1)/MINIX_INODES_PER_BLOCK;
 
-	if (!(bh=bread(inode->i_dev, (unsigned long)block))) {
+	if (!(bh=bread(inode->i_dev, (block_t)block))) {
 		printk("unable to read i-node block\n");
 		inode->i_dirt = 0;
 		return 0;

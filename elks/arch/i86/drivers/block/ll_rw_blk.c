@@ -106,7 +106,7 @@ static void plug_device(dev,plug)
 register struct blk_dev_struct * dev;
 struct request * plug;
 {
-	unsigned int flags;
+	flag_t flags;
 
 	plug->rq_status = RQ_INACTIVE;
 	plug->cmd = -1;
@@ -266,7 +266,7 @@ int major;
 int rw;
 register struct buffer_head * bh;
 {
-	unsigned int sector, count;
+	sector_t sector, count;
 	register struct request * req;
 	int max_req;
 #ifdef READ_AHEAD
@@ -319,7 +319,7 @@ register struct buffer_head * bh;
 			rw = WRITE;	/* drop into WRITE */
 #endif
 		case WRITE:
-			if (!buffer_dirty(bh)) {
+			if (buffer_clean(bh)) {
 				unlock_buffer(bh); /* Hmmph! Nothing to write */
 				return;
 			}

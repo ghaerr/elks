@@ -1,4 +1,5 @@
 #include <arch/bitops.h>
+#include <arch/types.h>
 #include <arch/irq.h>
 #include <linuxmt/kernel.h>
 
@@ -22,7 +23,7 @@ int clear_bit(bit,addr)
 int bit;
 unsigned char *addr;
 {
-	unsigned int flags;
+	flag_t flags;
 	int offset = (bit / 8);
 	unsigned int r;
 	unsigned int mask;
@@ -64,7 +65,7 @@ int set_bit(bit,addr)
 int bit;
 unsigned char *addr;
 {
-	unsigned int flags;
+	flag_t flags;
 	int offset = (bit / 8);
 	unsigned int r;
 	unsigned int mask;
@@ -126,22 +127,8 @@ _test_bit:
  */
 #if 1
 
-#if 0
-int find_first_zero_bit_test(addr, len)
-unsigned long *addr;
-int len;
-{
-	int res;
-
-/*	printk("ffzb: new = %x, vnew = %x\n",
-		res = find_first_zero_bit_new(addr,len),
-		find_first_zero_bit_vnew(addr,len)); */ /* Just to make it compile*/
-	return res;
-}
-#endif
-
 int find_first_non_zero_bit(addr, len) /* Use the old faithful version */
-unsigned long *addr;
+unsigned int *addr;
 int len;
 {
 	unsigned int i;
@@ -155,7 +142,7 @@ int len;
 }
 
 int find_first_zero_bit(addr, len) /* Use the old faithful version */
-unsigned long *addr;
+unsigned int *addr;
 int len;
 {
 	unsigned int i;
@@ -169,7 +156,7 @@ int len;
 }
 #if 0
 int find_first_zero_bit_new(addr, len)
-unsigned long *addr;
+unsigned int *addr;
 int len;
 {
 	unsigned int *ip = (unsigned int*)addr;

@@ -25,14 +25,6 @@
 
 static int C_A_D = 1;
 
-extern void adjust_clock();
-#if 0
-sys_ni_syscall()
-{
-	return -ENOSYS;
-}
-#endif
-
 extern void hard_reset_now();
 extern int sys_kill();
 

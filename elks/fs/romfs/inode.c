@@ -91,7 +91,7 @@ int silent;
 
 	lock_super(s);
 	
-	if(!(bh = bread(dev,0L)))
+	if(!(bh = bread(dev,(block_t)0)))
 	{
 		s->s_dev = 0;
 		unlock_super(s);
@@ -131,7 +131,7 @@ int silent;
 
 	unlock_super(s);
 	
-	if (!(s->s_mounted = iget(s,  sz)))
+	if (!(s->s_mounted = iget(s, (ino_t)sz)))
 		goto outnobh;
 
 	/* Ehrhm; sorry.. :)  And thanks to Hans-Joachim Widmaier  :) */
@@ -192,7 +192,7 @@ unsigned long count;
 	if (count > maxsize || offset+count > maxsize)
 		count = maxsize-offset;
 
-	bh = bread(i->i_dev,(unsigned long)(offset>>ROMBSBITS));
+	bh = bread(i->i_dev,(block_t)(offset>>ROMBSBITS));
 	if (!bh)
 	{
 		printk("romfs: abort: romfs_strnlen\n");
@@ -215,7 +215,7 @@ unsigned long count;
 	while (res < count) {
 		offset += maxsize;
 
-		bh = bread(i->i_dev,(unsigned long)(offset>>ROMBSBITS));
+		bh = bread(i->i_dev,(block_t)(offset>>ROMBSBITS));
 		if (!bh)
 			return -1;
 		
@@ -258,7 +258,7 @@ unsigned long count;
 	printd_rfs("romfs:     offset>>ROMBSBITS = 0x%x%x\n",
 		(int) ((offset>>ROMBSBITS)>>16), (int) (offset>>ROMBSBITS));
 #endif
-	bh = bread(i->i_dev,(unsigned long)(offset>>ROMBSBITS));
+	bh = bread(i->i_dev,(block_t)(offset>>ROMBSBITS));
 
 	if (!bh)
 		return -1;		/* error */
@@ -275,7 +275,7 @@ unsigned long count;
 		offset += maxsize;
 		dest += maxsize;
 
-		bh = bread(i->i_dev,(unsigned long)(offset>>ROMBSBITS));
+		bh = bread(i->i_dev,(block_t)(offset>>ROMBSBITS));
 		
 		if (!bh)
 			return -1;		/* error */
@@ -419,7 +419,7 @@ struct inode **result;
 		offset = ntohl(ri.spec) & ROMFH_MASK;
 
 	res = 0;
-	if (!(*result = iget(dir->i_sb, offset)))
+	if (!(*result = iget(dir->i_sb, (ino_t)offset)))
 		res = -EACCES;
 
 out:

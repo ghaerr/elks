@@ -47,7 +47,6 @@
 #define READA 2		/* read-ahead - don't pause */
 #define WRITEA 3	/* "write-ahead" - silly, but somewhat useful */
 
-#define NIL_FILP	((struct file *)0)
 #define SEL_IN		1
 #define SEL_OUT		2
 #define SEL_EX		4
@@ -103,32 +102,14 @@
 #define IS_APPEND(inode) ((inode)->i_flags & S_APPEND)
 #define IS_IMMUTABLE(inode) ((inode)->i_flags & S_IMMUTABLE)
 
-/* the read-only stuff doesn't really belong here, but any other place is
-   probably as bad and I don't want to create yet another include file. */
-
-#define BLKROSET   _IO(0x12,93)	/* set device read-only (0 = read-write) */
-#define BLKROGET   _IO(0x12,94)	/* get read-only status (0 = read_write) */
-#define BLKRRPART  _IO(0x12,95)	/* re-read partition table */
-#define BLKGETSIZE _IO(0x12,96)	/* return device size */
-#define BLKFLSBUF  _IO(0x12,97)	/* flush buffer cache */
-#define BLKRASET   _IO(0x12,98)	/* Set read ahead for block device */
-#define BLKRAGET   _IO(0x12,99)	/* get current read ahead setting */
-
-#define BMAP_IOCTL 1		/* obsolete - kept for compatibility */
-#define FIBMAP	   _IO(0x00,1)	/* bmap access */
-#define FIGETBSZ   _IO(0x00,2)	/* get the block size used for bmap */
-
 #ifdef __KERNEL__
 extern void buffer_init();
 extern void inode_init();
-extern void file_table_init();
-
-typedef char buffer_block[BLOCK_SIZE];
 
 struct buffer_head
 {
 	unsigned char b_num;	/* Used to lookup L2 area */
-	unsigned long b_blocknr;
+	block_t b_blocknr;
 	kdev_t b_dev;
 	struct buffer_head *b_next;
 #ifdef BLOAT_FS
@@ -222,7 +203,7 @@ struct inode
 	__u8	i_nlink;
 	__u16	i_zone[9];
 	/* This stuff is just in-memory... */
-	unsigned long	i_ino;
+	ino_t		i_ino;
 	kdev_t		i_dev;
 	kdev_t		i_rdev;
 	time_t		i_atime;
@@ -233,7 +214,6 @@ struct inode
 	unsigned long	i_version;
 	struct file_lock * i_flock;
 #endif
-/*	struct semaphore i_sem;*/
 	struct inode_operations * i_op;
 	struct super_block * i_sb;
 	struct wait_queue * i_wait;
@@ -378,15 +358,9 @@ struct file_system_type {
 
 extern int event;		/* Event counter */
 
-extern int register_filesystem();
-extern int unregister_filesystem();
-
 extern int sys_open();
 extern int sys_close();		/* yes, it's really unsigned */
 extern void _close_allfiles();
-
-extern int getname();
-extern void putname();
 
 extern int register_blkdev();
 extern int unregister_blkdev();
@@ -420,30 +394,12 @@ extern struct file file_array[];
 extern int nr_files;
 extern struct super_block super_blocks[];
 
-extern void set_writetime();
-
-extern struct buffer_head ** buffer_pages;
-extern int nr_buffers;
-extern int buffermem;
-extern int nr_buffer_heads;
-extern int blksize_size[];
-
-#define BUF_CLEAN 0
-#define BUF_UNSHARED 1 /* Buffers that were shared but are not any more */
-#define BUF_LOCKED 2   /* Buffers scheduled for write */
-#define BUF_LOCKED1 3  /* Supers, inodes */
-#define BUF_DIRTY 4    /* Dirty buffers, not yet scheduled for write */
-#define BUF_SHARED 5   /* Buffers shared */
-#define NR_LIST 6
-
 extern void invalidate_inodes();
 extern void invalidate_buffers();
-extern int floppy_is_wp();
 extern void sync_inodes();
 extern void sync_dev();
 extern void fsync_dev();
 extern void sync_supers();
-extern int bmap();
 extern int notify_change();
 extern int namei();
 extern int lnamei();
@@ -472,16 +428,6 @@ extern struct buffer_head * readbuf();
 extern void ll_rw_blk();
 extern void ll_rw_page();
 extern void ll_rw_swap_file();
-extern int is_read_only();
-extern void buffer_wait();
-extern void buffer_wait_clean();
-extern struct buffer_head *buffer_get();
-#define BG_NOREAD 	1
-#define PRI_DISKIO	1
-#define PRI_SWAPIO	0
-extern void buffer_free();
-extern void buffer_lock();
-extern void buffer_unlock();
 
 extern void map_buffer();
 extern void unmap_buffer();
@@ -496,13 +442,8 @@ extern void mount_root();
 
 extern int char_read();
 extern int block_read();
-extern int read_ahead[];
 
-extern int char_write();
 extern int block_write();
-
-extern int block_fsync();
-extern int file_fsync();
 
 extern int inode_change_ok();
 extern void inode_setattr();

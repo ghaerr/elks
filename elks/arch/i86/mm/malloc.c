@@ -19,11 +19,11 @@
 
 struct malloc_hole
 {
-	unsigned short page_base;	/* Pages */
-	unsigned short extent;		/* Pages */
+	seg_t		page_base;	/* Pages */
+	segext_t	extent;		/* Pages */
 	struct malloc_hole *next;	/* Next in list memory order */
-	unsigned short refcount;
-	unsigned short flags;		/* So we know if it is free */
+	int		refcount;
+	int		flags;		/* So we know if it is free */
 #define HOLE_USED		1	
 #define HOLE_FREE		2
 #define HOLE_SPARE		3
@@ -39,10 +39,11 @@ struct malloc_hole *alloc_hole()
 {
 	int ct=0;
 	register struct malloc_hole *m=&holes[0];
-	while(ct<MAX_SEGMENTS)
-	{
-		if(m->flags==HOLE_SPARE)
+
+	while(ct<MAX_SEGMENTS) {
+		if(m->flags==HOLE_SPARE) {
 			return m;
+		}
 		m++;
 		ct++;
 	}
@@ -53,12 +54,13 @@ struct malloc_hole *alloc_hole()
  *	Split a hole into two
  */
  
-void split_hole(m, len)
+static void split_hole(m, len)
 register struct malloc_hole *m;
-int len;
+segext_t len;
 {
 	register struct malloc_hole *n;
-	int spare=m->extent-len;
+	seg_t spare=m->extent-len;
+
 	if (!spare)
 		return;
 	/*
@@ -78,9 +80,10 @@ int len;
  *	Merge adjacent free holes
  */
  
-void sweep_holes()
+static void sweep_holes()
 {
 	register struct malloc_hole *m=&holes[0];
+
 	while(m!=NULL && m->next!=NULL)
 	{
 		if(m->flags==HOLE_FREE && m->next->flags==HOLE_FREE && 
@@ -99,8 +102,7 @@ void dmem()
 {
 	register struct malloc_hole *m=&holes[0];
 	char * foo;
-	while(m!=NULL && m->next!=NULL)
-	{
+	while (m!=NULL && m->next!=NULL) {
 		switch (m->flags) {
 			case HOLE_SPARE:
 				foo = "SPARE";
@@ -126,16 +128,18 @@ void dmem()
  *	Find the nearest fitting hole
  */
  
-struct malloc_hole *best_fit_hole(size)
-int size;
+static struct malloc_hole *best_fit_hole(size)
+segext_t size;
 {
 	register struct malloc_hole *m=&holes[0];
 	register struct malloc_hole *best=NULL;
-	while(m!=NULL)
-	{
-		if(m->extent>=size && m->flags==HOLE_FREE) 
-			if(!best || best->extent > m->extent)
+
+	while (m!=NULL) {
+		if (m->extent>=size && m->flags==HOLE_FREE) {
+			if(!best || best->extent > m->extent) {
 				best=m;
+			}
+		}
 		m=m->next;
 	}
 	return best;
@@ -145,12 +149,12 @@ int size;
  *	Find the hole starting at a given location
  */
  
-struct malloc_hole *find_hole(base)
-int base;
+static struct malloc_hole *find_hole(base)
+seg_t base;
 {
 	register struct malloc_hole *m=&holes[0];
-	while(m!=NULL)
-	{
+
+	while (m!=NULL) {
 		if(m->page_base==base)
 			return m;
 		m=m->next;
@@ -163,9 +167,8 @@ int base;
  *	Allocate a segment
  */
 			
-int mm_alloc(pages, priority)
-int pages;
-int priority;
+int mm_alloc(pages)
+segext_t pages;
 {
 	/*
 	 *	Which hole fits best ?
@@ -189,16 +192,13 @@ int priority;
 
 /* 	Increase refcount */
 
-int mm_realloc(base)
-int base;
+seg_t mm_realloc(base)
+seg_t base;
 {
-#if 1
 	register struct malloc_hole *m=find_hole(base);
+
 	m->refcount++;
 	return m->page_base;
-#else
-	return mm_dup(base);
-#endif
 }
 
 /*
@@ -206,11 +206,13 @@ int base;
  */
  
 void mm_free(base)
-int base;
+seg_t base;
 {
 	register struct malloc_hole *m=find_hole(base);
-	if(m->flags!=HOLE_USED)
+
+	if (m->flags!=HOLE_USED) {
 		panic("double free");
+	}
 	m->refcount--;
 	if (!m->refcount) {
 		m->flags=HOLE_FREE;
@@ -222,16 +224,17 @@ int base;
  *	Allocate a segment and copy it from another
  */
  
-int mm_dup(base)
-int base;
+seg_t mm_dup(base)
+seg_t base;
 {
 	register struct malloc_hole *o, *m;
-	int i;
+	size_t i;
 	
 	o=find_hole(base);
 	m=best_fit_hole(o->extent);
-	if(m==NULL)
-		return -1;
+	if(m==NULL) {
+		return NULL;
+	}
 	split_hole(m, o->extent);
 	m->flags=HOLE_USED;
 	m->refcount = 1;
@@ -244,7 +247,7 @@ int base;
  * 	- any memory is preallocated via chmem */
 
 int sys_brk(len)
-unsigned int len;
+__pptr len;
 {
 	register __ptask currentp = current;
 
@@ -262,8 +265,8 @@ unsigned int len;
  */
 
 void mm_init(start,end)
-int start;
-int end;
+seg_t start;
+seg_t end;
 {
 	int ct;
 	register struct malloc_hole * holep = &holes[0];

@@ -40,7 +40,7 @@
 struct timeval xtime;
 
 /* ticks updated by the timer interrupt, to be added to the base time */
-extern unsigned long jiffies;
+extern jiff_t jiffies;
 
 /* timezone in effect */
 static struct timezone xzone;
@@ -53,7 +53,7 @@ register struct timezone *tz;
     int error;
     struct timeval tmp_tv;
     struct timezone tmp_tz;
-    unsigned long now;
+    jiff_t now;
 
   /* only user running as root can set the time */
     if (current->euid != 0) {
@@ -101,7 +101,7 @@ struct timezone *tz;
 {
     int error;
     struct timeval tmp_tv;
-    unsigned long now;
+    jiff_t now;
 
   /* load the current time into the structures passed */
     if (tv != NULL) {

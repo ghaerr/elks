@@ -27,15 +27,18 @@ static void generate(sig, p)
 int sig;
 register struct task_struct * p;
 {
-	unsigned long mask = 1 << (sig-1);
+	sigset_t mask = 1 << (sig-1);
 	register struct sigaction * sa = &(p->sig.action[sig - 1]);
 
 /*	if (!(mask & p->blocked)) { */
 		if (sa->sa_handler == SIG_IGN && sig != SIGCHLD)
 			return;
 		if ((sa->sa_handler == SIG_DFL) &&
-		    (sig == SIGCONT || sig == SIGCHLD || 
-		     sig == SIGWINCH || sig == SIGURG))
+		    (sig == SIGCONT || sig == SIGCHLD || sig == SIGWINCH
+#ifndef SMALLSIG
+			|| sig == SIGURG
+#endif
+			))
 			return;
 /*	} */
 	printd_sig1("Generating sig %d.\n", sig);
@@ -64,11 +67,19 @@ int priv;
 		if (p->state == TASK_STOPPED)
 			wake_up_process(p);
 /*		p->exit_code = 0; */
-		p->signal &= ~( (1<<(SIGSTOP-1)) | (1<<(SIGTSTP-1)) |
-			(1<<(SIGTTIN-1)) | (1<<(SIGTTOU-1)) );
+		p->signal &= ~( (1<<(SIGSTOP-1)) | (1<<(SIGTSTP-1))
+#ifndef SMALLSIG
+			| (1<<(SIGTTIN-1)) | (1<<(SIGTTOU-1))
+#endif
+			);
 	}
-	if (sig == SIGSTOP || sig == SIGTSTP || sig == SIGTTIN || sig == SIGTTOU)
+#ifdef SMALLSIG
+	if (sig == SIGSTOP || sig == SIGTSTP) {
+#else
+	if (sig == SIGSTOP || sig == SIGTSTP || sig == SIGTTIN || sig == SIGTTOU ) {
+#endif
                 p->signal &= ~(1<<(SIGCONT-1));
+	}
         /* Actually generate the signal */
         generate(sig,p);
         return 0;
@@ -112,7 +123,7 @@ pid_t pid;
 int sig;
 {
 
-	if ((sig < 1) || (sig > 32))
+	if ((sig < 1) || (sig > NSIG))
 		return -EINVAL;
 	return kill_process(pid, sig, 0);
 }
@@ -124,7 +135,7 @@ __sighandler_t handler;
 	struct sigaction * sa;
 
 	printd_sig2("Registering action %x for signal %d.\n", handler, signr);
-	if (signr<1 || signr>32 || signr==SIGKILL || signr==SIGSTOP) {
+	if (signr<1 || signr>NSIG || signr==SIGKILL || signr==SIGSTOP) {
 		return -EINVAL;
 	}
 	sa = &current->sig.action[signr - 1];

@@ -236,7 +236,7 @@ int flags;
 /*
  * Try to open the name in the filesystem - this is how we
  * identify ourselves and our server. Note that we don't
- * hold onto the inode that long, just enough to find our
+ * hold onto the inode much, just enough to find our
  * server. When we're connected, we mooch off the server.
  */
 

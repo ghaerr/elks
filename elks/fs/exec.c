@@ -14,7 +14,6 @@
 
 #include <linuxmt/vfs.h>
 #include <linuxmt/types.h>
-#include <linuxmt/utime.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/stat.h>
@@ -51,11 +50,11 @@ int slen;		/* Size of built stack */
 	unsigned int result, envp, argv;
 	int retval,execformat;
 	int ds=current->t_regs.ds;
-	unsigned short cseg,dseg;
-	unsigned long len;
+	seg_t cseg,dseg;
+	lsize_t len;
 	struct inode *inode;
 	char *ptr;
-	unsigned short count;
+	size_t count;
 	int i, nzero, tmp;
 	register struct file * filp = &file;
 	__registers * tregs;
@@ -140,13 +139,12 @@ int slen;		/* Size of built stack */
 
 #ifdef CONFIG_EXEC_MSDOS
 	/* Read header */
-	tregs->ds=get_ds();
-	filp->f_pos=0;
-	result=filp->f_op->read(inode, &file, &mshdr, sizeof(mshdr));
-	tregs->ds=ds;
+	tregs->ds = get_ds();
+	filp->f_pos = 0L;
+	result = filp->f_op->read(inode, &file, &mshdr, sizeof(mshdr));
+	tregs->ds = ds;
 
-	if( (result != sizeof(mshdr)) ||
-		(mshdr.magic!=MSDOS_MAGIC) )
+	if ((result != sizeof(mshdr)) || (mshdr.magic != MSDOS_MAGIC) )
 	{
 		printd_exec1("EXEC: bad header, result %d",result);
 		retval=-ENOEXEC;
@@ -171,9 +169,10 @@ blah:
 	  }	
 	}
 	
-	if (!cseg) cseg=mm_alloc((int)((mh.tseg+15)>>4),0);
-	if(cseg==-1)
-	{
+	if (!cseg) {
+		cseg=mm_alloc((segext_t)((mh.tseg+15)>>4));
+	}
+	if (cseg == -1) {
 		retval=-ENOMEM;
 		goto close_readexec;
 	}
@@ -183,7 +182,7 @@ blah:
 	 * for (at least) 64K
 	 */
 	len=(mh.chmem+15)&~15L;
-	if(len>0x10000L)
+	if (len > 0x10000L)
 	{
 		retval=-ENOMEM;
 		mm_free(cseg);
@@ -191,7 +190,7 @@ blah:
 	}
 
 	printd_exec1("Allocating %d bytes for data segment", len);
-	dseg=mm_alloc((int)(len>>4),0);
+	dseg=mm_alloc((segext_t)(len>>4));
 	if(dseg==-1)
 	{
 		retval=-ENOMEM;
@@ -230,8 +229,10 @@ blah:
 	 
 	ptr = (char *)mh.dseg;
 	count = mh.bseg;
-	while (count)
-		pokeb(dseg, ptr++, 0), count--;
+	while (count) {
+		pokeb(dseg, ptr++, 0);
+		count--;
+	}
 	/* fmemset should work, but doesn't */
 /*	fmemset(ptr, dseg, 0, count); */
 	
@@ -283,13 +284,17 @@ blah:
 	tregs->ss=dseg;
 	tregs->sp=len-slen;	/* Just below the arguments */ 
 	current->t_begstack=len-slen;
-	current->t_endtext=mh.dseg;	/* Needed for sys_brk() */
+#if 0
 	current->t_endbrk=current->t_enddata=mh.dseg+mh.bseg;
-	current->t_endstack=len;	/* with 64K = 0000 but that's OK */
+#endif
+	current->t_endbrk=(__pptr)mh.dseg+mh.bseg;
+	current->t_endtext=(__pptr)mh.dseg;	/* Needed for sys_brk() */
+	current->t_endstack=(__pptr)len;	/* with 64K = 0000 but that's OK */
 	current->t_inode=inode;
 	arch_setup_kernel_stack(current);
 	
 	retval = 0;
+	wake_up(&current->p_parent->child_wait);
 
 	/*
 	 *	Done
@@ -377,7 +382,7 @@ char * filename;
 
 	if (!cseg) {
 		printk("DLLOAD: Mallocing some RAM for the dll.\n");
-		cseg = mm_alloc(((size+15)>>4),0);
+		cseg = mm_alloc((segext_t)((size+15)>>4));
 		if (cseg == -1) {
 			printk("DLLOAD: No memory.\n");
 			retval=-ENOMEM;
@@ -416,8 +421,8 @@ unsigned short * dll_cseg;
 	int retval,i,dno=-1;
 	struct inode *inode;
 	struct file * filp = &file;
-	unsigned short cseg = 0;
-	unsigned short ds=current->t_regs.ds;
+	seg_t cseg = 0;
+	seg_t ds = current->t_regs.ds;
 	unsigned int result;
 	__registers * tregs;
 
@@ -500,7 +505,7 @@ unsigned short * dll_cseg;
 
 	if (!cseg) {
 		printk("DLLOAD: Mallocing some RAM for the dll code.\n");
-		cseg = mm_alloc(((mh.tseg+15)>>4),0);
+		cseg = mm_alloc((segext_t)((mh.tseg+15)>>4));
 		if (cseg == -1) {
 			printk("DLLOAD: No memory.\n");
 			retval=-ENOMEM;

@@ -9,6 +9,10 @@
  *
  */
 
+/* Commnent in below to use the old scheduler which uses counters */
+/* #define OLD_SCHED */
+
+
 #include <linuxmt/types.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/timer.h>
@@ -30,10 +34,10 @@ void (*bh_base[16])();
 unsigned bh_active = 0;
 __ptask current, next, previous;
 
-static unsigned long lost_ticks = 0L;
-#if 0;
-static unsigned long lost_ticks_system = 0L;
-#endif
+#ifdef OLD_SCHED
+static jiff_t lost_ticks = 0L;
+static jiff_t lost_ticks_system = 0L;
+#endif /* OLD_SCHED */
 
 extern unsigned char can_tswitch;
 extern int lastirq;
@@ -48,6 +52,8 @@ DECLARE_TASK_QUEUE(tq_immediate);
 DECLARE_TASK_QUEUE(tq_scheduler);
 #endif
 
+static void run_timer_list();
+static void run_old_timers();
 /* int need_resched = 0; */
 /* static int intr_count = 0; */
 
@@ -76,7 +82,7 @@ register struct task_struct * p;
         }
 #endif
 #if 0
-        if (/*p->policy != SCHED_OTHER ||*/ p->counter > current->counter + 3)
+        if (p->counter > current->counter + 3)
                 need_resched = 1;
 #endif
 	/*        nr_running++;*/
@@ -128,6 +134,7 @@ int __data;
         wake_up_process(p);
 }
 
+#ifdef OLD_SCHED
 static /*inline*/ int goodness(p, prev)
 register struct task_struct * p;
 struct task_struct * prev;
@@ -156,6 +163,7 @@ struct task_struct * prev;
 
         return weight+1000;
 }
+#endif
 
 /*
  *	Schedule a task. On entry current is the task, which will
@@ -167,12 +175,14 @@ void schedule()
 {
 	/* Including the two registers below saves lots of code, *
 	 * but corrupts wait queue. */
+#ifdef OLD_SCHED
         __uint c; 
+	__ptask p;
+#endif
 	/* register */ __ptask prev; 	/* Subscript calculation is *very* expensive in bcc */
 	__ptask next;
-	/* register */ __ptask p;
 	__ptask currentp = current;
-	unsigned long flags, timeout = 0L;
+	jiff_t timeout = 0L;
 
 	if (currentp->t_kstackm != KSTACK_MAGIC)
 		panic("Process %d exceeded kernel stack limit! magic %x\n", 
@@ -186,6 +196,7 @@ void schedule()
 /*	if (intr_count)
 		goto scheduling_in_interrupt; */
 
+#ifdef USE_BH
 #ifdef ENDIS_BH
 	if (bh_active & bh_mask) {
 #else
@@ -195,6 +206,10 @@ void schedule()
 		do_bottom_half();
 /*		intr_count = 0; */
 	}
+#else
+	run_old_timers();
+	run_timer_list();
+#endif
 
 #ifdef NEED_TQ_SCHEDULER
 	run_task_queue(&tq_scheduler);
@@ -205,6 +220,7 @@ void schedule()
 #endif
 
 	prev = currentp;
+	next = prev->next_run;
 	icli();
 
 	switch (prev->state) {
@@ -228,6 +244,7 @@ void schedule()
 		case TASK_RUNNING: break;
 	}
 
+#ifdef OLD_SCHED
 	p = init_task.next_run;
 	/*if (init_task.next_run->pid != 0)
 	  printk("init_task.next_run->pid=%d\n", init_task.next_run->pid);*/
@@ -253,11 +270,19 @@ void schedule()
 		for_each_task(p)
 			p->counter = (p->counter >> 1) + p->t_priority;
 	}
+#else
+	isti();
+	while ((next != &init_task) && (next == prev)) {
+		next = next->next_run;
+	}
+
+#endif
 
 	if (next != currentp) {
 		struct timer_list timer;
 		int foo = 10;
 
+/*		printk("Switching to %x\n", next); */
 		if (timeout) {
 			init_timer(&timer);
 			timer.expires = timeout;
@@ -326,7 +351,7 @@ static struct timer_vec * /*const*/ tvecs[] = {
 
 #define NOOF_TVECS (sizeof(tvecs) / sizeof(tvecs[0]))
 
-static unsigned long timer_jiffies = 0;
+static jiff_t timer_jiffies = 0;
 
 static /*inline*/ void insert_timer(timer, vec, idx)
 register struct timer_list *timer;
@@ -345,10 +370,10 @@ register struct timer_list * timer;
 	/*
 	 * must be cli-ed when calling this
 	 */
-	unsigned long expires = timer->expires;
-	unsigned long idx = expires - timer_jiffies;
+	jiff_t expires = timer->expires;
+	jiff_t idx = expires - timer_jiffies;
 
-	if (idx < (unsigned long)TVR_SIZE) {
+	if (idx < (jiff_t)TVR_SIZE) {
 		int i = expires & TVR_MASK;
 		insert_timer(timer, tv1.vec, i);
 	} else if (idx < 1 << (TVR_BITS + TVN_BITS)) {
@@ -375,7 +400,7 @@ register struct timer_list * timer;
 void add_timer(timer)
 struct timer_list * timer;
 {
-	unsigned long flags;
+	flag_t flags;
 	save_flags(flags);
 	icli();
 #if SLOW_BUT_DEBUGGING_TIMERS
@@ -415,7 +440,7 @@ int del_timer(timer)
 register struct timer_list * timer;
 {
 	int ret;
-	unsigned long flags;
+	flag_t flags;
 	save_flags(flags);
 	icli();
 	ret = detach_timer(timer);
@@ -446,7 +471,7 @@ register struct timer_vec * tv;
 static /*inline*/ void run_timer_list()
 {
 	icli();
-	while ((long)(jiffies - timer_jiffies) >= 0) {
+	while ((long)(jiffies - timer_jiffies) >= 0L) {
 		register struct timer_list *timer;
 		if (!tv1.index) {
 			int n = 1;
@@ -509,9 +534,9 @@ struct timer_struct timer_table[32];
 #if 0
 static void do_it_prof(p, ticks)
 struct task_struct * p;
-unsigned long ticks;
+jiff_t ticks;
 {
-	unsigned long it_prof = p->it_prof_value;
+	jiff_t it_prof = p->it_prof_value;
 
 	if (it_prof) {
 		if (it_prof <= ticks) {
@@ -524,9 +549,9 @@ unsigned long ticks;
 
 static void update_one_process(p, ticks, user, system)
 struct taks_struct * p;
-unsigned long ticks;
-unsigned long user;
-unsigned long system;
+jiff_t ticks;
+jiff_t user;
+jiff_t system;
 {
 	do_process_times(p, user, system);
 	do_it_virt(p, user);
@@ -534,9 +559,10 @@ unsigned long system;
 }
 #endif
 
+#ifdef OLD_SCHED
 static void update_times()
 {
-        unsigned long ticks;
+        jiff_t ticks;
 
 	icli();
 	ticks = lost_ticks;
@@ -559,10 +585,13 @@ static void update_times()
 		}
         }
 }
+#endif /* OLD_SCHED */
 
 static void timer_bh()
 {
+#ifdef OLD_SCHED
 	update_times();
+#endif /* OLD_SCHED */
 	run_old_timers();
 	run_timer_list();
 }
@@ -570,22 +599,13 @@ static void timer_bh()
 void do_timer(regs)
 struct pt_regs * regs;
 {
-        (*(unsigned long *)&jiffies)++;
+        (*(jiff_t *)&jiffies)++;
+#ifdef OLD_SCHED
         lost_ticks++;
+#endif /* OLD_SCHED */
+
         mark_bh(TIMER_BH);
-#if 0
-        if (!user_mode(regs)) {
-                lost_ticks_system++;
-                if (prof_buffer && current->pid) {
-                        extern int _stext;
-                        unsigned long ip = instruction_pointer(regs);
-                        ip -= (unsigned long) &_stext;
-                        ip >>= prof_shift;
-                        if (ip < prof_len)
-                                prof_buffer[ip]++;
-                }
-        }
-#endif
+
 #ifdef NEED_TQ_TIMER
         if (tq_timer)
                 mark_bh(TQUEUE_BH);

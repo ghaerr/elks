@@ -21,7 +21,7 @@ int count;
 int wr;
 {
 	int write_error;
-	unsigned long block;
+	block_t block;
 	off_t offset;
 	int chars;
 	int written = 0;
@@ -50,13 +50,15 @@ int wr;
 		 *	Read the block in - use getblk on a write
 		 *	of a whole block to avoid a read of the data.
 		 */
-		if(wr&&chars==BLOCK_SIZE)
+		if (wr == BLOCK_WRITE && chars == BLOCK_SIZE) {
 			bh = getblk(dev,block);
-		else 
+		} else {
 			bh = bread(dev,block);
+		}
 		block++;
-		if (!bh)
+		if (!bh) {
 			return written?written:-EIO;
+		}
 /*		p = offset + bh->b_data; */
 /*		offset = 0; */
 		filp->f_pos += chars;
@@ -67,8 +69,7 @@ int wr;
 		 */
 		map_buffer(bh);
 		p = offset + bh->b_data;
-		if(wr)
-		{
+		if (wr == BLOCK_WRITE) {
 			/*
 			 *	Alter buffer, mark dirty
 			 */
@@ -87,23 +88,23 @@ int wr;
 /*		p += chars; */
 		offset = 0;
 		buf += chars;
-		if(wr)
-		{
+		if (wr == BLOCK_WRITE) {
 			/*
 			 *	Writing: queue physical I/O
 			 */
 			ll_rw_blk(WRITE, bh);
 			wait_on_buffer(bh);
-			if (!bh->b_uptodate)
+			if (!bh->b_uptodate) {
 				write_error=1;
+			}
 		}
 		unmap_brelse(bh);
 		if(write_error)
 			break;
 	}
-	if(write_error)
+	if (write_error)
 		return -EIO;
-	if(wr&&!written)
+	if ((wr == BLOCK_WRITE) && !written)
 		return ENOSPC;
 	return written;
 }
@@ -114,7 +115,7 @@ register struct file * filp;
 register char * buf;
 int count;
 {
-	blk_rw(inode,filp,buf,count,0);
+	blk_rw(inode,filp,buf,count,BLOCK_READ);
 }
 
 int block_write(inode,filp,buf,count)
@@ -123,6 +124,6 @@ register struct file * filp;
 register char * buf;
 int count;
 {
-	blk_rw(inode,filp,buf,count,1);
+	blk_rw(inode,filp,buf,count,BLOCK_WRITE);
 }
 

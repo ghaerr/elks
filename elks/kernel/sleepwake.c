@@ -16,7 +16,7 @@ void add_wait_queue(p,wait)
 register struct wait_queue **p;
 register struct wait_queue *wait;
 {
-	unsigned int flags;
+	flag_t flags;
 	save_flags(flags);
 	icli();
 	if(!*p)
@@ -36,7 +36,7 @@ void remove_wait_queue(p,wait)
 struct wait_queue **p;
 register struct wait_queue *wait;
 {
-	unsigned int flags;
+	flag_t flags;
 	save_flags(flags);
 	icli();
 	if((*p==wait) && ((*p=wait->next)==wait))
@@ -58,7 +58,7 @@ static void __sleep_on(p,state)
 register struct wait_queue **p;
 int state;
 {
-	unsigned int flags;
+	flag_t flags;
 	struct wait_queue wait;
 	
 	wait.next=NULL;
@@ -104,7 +104,7 @@ struct wait_queue **p;
 void wake_up_process(p)
 register struct task_struct * p;
 {
-	unsigned int flags;
+	flag_t flags;
 
 	save_flags(flags);
 	icli();

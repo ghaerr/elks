@@ -165,7 +165,7 @@ register struct inode ** result;
 	map_buffer(bh);
 	ino = de->inode;
 	unmap_brelse(bh);
-	*result = iget(dir->i_sb,(long) ino);
+	*result = iget(dir->i_sb,(ino_t) ino);
 	if (!*result) {
 		iput(dir);
 		return -EACCES;
@@ -542,7 +542,7 @@ int len;
 		goto end_rmdir;
 	map_buffer(bh);
 	retval = -EPERM;
-	if (!(inode = iget(dir->i_sb, (long) de->inode)))
+	if (!(inode = iget(dir->i_sb, (ino_t) de->inode)))
 		goto end_rmdir;
         if ((dir->i_mode & S_ISVTX) && !suser() &&
             current->euid != inode->i_uid &&
@@ -605,7 +605,7 @@ repeat:
 	if (!bh)
 		goto end_unlink;
 	map_buffer(bh);
-	if (!(inode = iget(dir->i_sb, (long) de->inode)))
+	if (!(inode = iget(dir->i_sb, (ino_t) de->inode)))
 		goto end_unlink;
 	retval = -EPERM;
 	if (S_ISDIR(inode->i_mode))

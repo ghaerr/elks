@@ -1,3 +1,6 @@
+#ifndef _LINUX_BIOSPARM_H
+#define _LINUX_BIOSPARM_H
+
 /* biosparm.h */
 /* Copyright (C) 1994 Yggdrasil Computing, Incorporated
    4880 Stevens Creek Blvd. Suite 205
@@ -24,9 +27,6 @@
 
 /* Written by Ross Biro July 1994 */ 
 /* Hacked up for Linux/8086 Alan Cox Feb 1996 */
-
-#ifndef _LINUX_BIOSPARM_H
-#define _LINUX_BIOSPARM_H
 
 struct biosparms 
 {

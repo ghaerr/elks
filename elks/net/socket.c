@@ -214,34 +214,6 @@ select_table * wait;
 	return 0;
 }
 
-#if 0
-int sock_wake_async(sock, how)
-struct socket *sock;
-int how;
-{
-	if (!sock || !sock->fasync_list)
-		return -1;
-	switch (how)
-	{
-		case 0:
-			kill_fasync(sock->fasync_list, SIGIO);
-			break;
-		case 1:
-			if (!(sock->flags & SO_WAITDATA))
-				kill_fasync(sock->fasync_list, SIGIO);
-			break;
-		case 2:
-			if (sock->flags & SO_NOSPACE)
-			{
-				kill_fasync(sock->fasync_list, SIGIO);
-				sock->flags &= ~SO_NOSPACE;
-			}
-			break;
-	}
-	return 0;
-}
-#endif
-
 int sock_awaitconn(mysock, servsock, flags)
 register struct socket *mysock;
 struct socket *servsock;
@@ -563,15 +535,6 @@ art
 		return i;
 	}
 	return 0;
-}
-
-int sock_fcntl(filp, cmd, arg)
-struct file * filp;
-unsigned int cmd;
-unsigned long arg;
-{
-	/* FIXME */
-	return -EINVAL;
 }
 
 int sock_register(family, ops)

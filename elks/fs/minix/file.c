@@ -87,13 +87,13 @@ register struct file * filp;
 char * buf;
 int icount;
 {
-	unsigned long offset;
-	unsigned long size;
-	unsigned long left;
+	loff_t offset;
+	loff_t size;
+	loff_t left;
 	unsigned short block;
-	/* We have to make count long since comparing ints to longs does not
+	/* We have to make count loff_t since comparing ints to longs does not
  	 * work with bcc! */
-	unsigned long count = (icount % 65536);
+	loff_t count = (icount % 65536);
 	struct buffer_head *bh;
 	int read;
 	int chars;

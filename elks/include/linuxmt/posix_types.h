@@ -40,9 +40,7 @@
 #undef __FDMASK
 #define	__FDMASK(d)	(1UL << ((d) % __NFDBITS))
 
-typedef struct {
-	unsigned long fds_bits[1];
-} __kernel_fd_set;
+typedef unsigned long __kernel_fd_set;
 
 #include <arch/posix_types.h>
 

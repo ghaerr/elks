@@ -480,10 +480,10 @@ struct file *filp;
 
 void do_directhd_request()
 {
-        unsigned long count; /* # of sectors to read/write */
+        sector_t count; /* # of sectors to read/write */
 	int this_pass; /* # of sectors read/written */
-	unsigned long start; /* first sector */
-	char *buff; /* max_sect * sector_size, 63 * 512 bytes; it seems that all requests are only 1024 bytes long */
+	sector_t start; /* first sector */
+	char *buff; /* max_sect * sector_size, 63 * 512 bytes; it seems that all requests are only 1024 bytes */
 	short sector; /* 1 .. 63 ? */
 	short cylinder; /* 0 .. 1024 and maybe more */
 	short head; /* 0 .. 16 */

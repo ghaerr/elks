@@ -33,10 +33,12 @@ struct _registers {
 	__u16 ksp, sp, ss, ax, bx, cx, dx, di, si, ds, es, bp, ip, cs, flags;
 };
 
+typedef __u16 flag_t;
+
 typedef struct _registers __registers; 
 typedef struct _registers * __pregisters;
 
-typedef __u32 __pptr;
+typedef __u16 __pptr; /* Changed to short as that is what it is */
 
 struct _mminit {
 	__u16 cs, endcs, ds, endds, ss, endss, lowss;

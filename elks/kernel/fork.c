@@ -53,8 +53,9 @@ repeat:
 /*
  *	Clone a process.
  */
- 
-int do_fork()
+
+pid_t do_fork(virtual)
+int virtual;
 {
 	register struct task_struct *t;
 	int i=find_empty_process(), j;
@@ -64,32 +65,32 @@ int do_fork()
 	if(i<0)
 		return i;
 
+
 	t=&task[i];
 	
-	/*
-	 *	Copy everything
-	 */
+	/* Copy everything */
 	 
 	*t = *currentp;
 	
-	/*
-	 *	Fix up what's different
-	 */
+	/* Fix up what's different */
 
 	/* We can now do shared text with fork using realloc */
-	t->mm.cseg = mm_realloc(currentp->mm.cseg);
-/* 	if (t->mm.cseg == -1) {
-		return -ENOMEM;
-	} */ /* mm_realloc Cannot return -1 ever. */
+	/* cs and cseg are not altered by realloc */
+	/* t->mm.cseg = */ mm_realloc(currentp->mm.cseg);
 	
-	t->t_regs.cs = t->mm.cseg;
+/*	t->t_regs.cs = t->mm.cseg; */
  
-	t->mm.dseg = mm_dup(currentp->mm.dseg);
-	if (t->mm.dseg == -1) {
-		return -ENOMEM;
+	if (virtual) {
+		mm_realloc(currentp->mm.dseg);
+	} else {
+		t->mm.dseg = mm_dup(currentp->mm.dseg);
+		if (t->mm.dseg == NULL) {
+			return -ENOMEM;
+		}
+
+		t->t_regs.ds = t->mm.dseg;
+		t->t_regs.ss = t->mm.dseg;
 	}
-	t->t_regs.ds = t->mm.dseg;
-	t->t_regs.ss = t->mm.dseg;
 
 	t->t_regs.ksp=t->t_kstack+KSTACK_BYTES;
 	t->state = TASK_UNINTERRUPTIBLE;
@@ -122,8 +123,7 @@ int do_fork()
 	if (currentp->p_child) {
 		currentp->p_child->p_nextsib = t;
 		t->p_prevsib = currentp->p_child;
-	}
-	else {
+	} else {
 		t->p_prevsib = NULL;
 	}
 	currentp->p_child = t;
@@ -137,7 +137,43 @@ int do_fork()
 	/*
 	 *	Return the created task.
 	 */
+	if (virtual) {
+		/* When the parent returns, the stack frame will have gone so
+		 * save enough stack state that we will be able to return to
+		 * the point where vfork() was called in the code, not to the
+		 * point in the library code where the actual syscall int was
+		 * done - ajr 16th August 1999
+		 */
+		/* Stack was
+		 *         ip cs f ret
+		 * and will be
+		 *            ret cs f
+		 */
+		unsigned ip, cs, fl;
+		ip = get_ustack(currentp, 6);
+		cs = get_ustack(currentp, 2);
+		fl = get_ustack(currentp, 4);
+		currentp->t_regs.sp += 2;
+		sleep_on(&currentp->child_wait);
+		put_ustack(currentp, 0, ip);
+		put_ustack(currentp, 2, cs);
+		put_ustack(currentp, 4, fl);
+	}
 
+	/*
+	 *	Return the created task.
+	 */
 	return t->pid;
 }
 
+pid_t sys_fork()
+{
+	printk("FORK");
+	return do_fork(0);
+}
+
+pid_t sys_vfork()
+{
+	printk("VFORK");
+	return do_fork(1);
+}

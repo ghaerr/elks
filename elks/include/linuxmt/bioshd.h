@@ -1,3 +1,6 @@
+#ifndef _LINUX_BIOSHD_H
+#define _LINUX_BIOSHD_H
+
 /* bioshd.h */
 /* Copyright (C) 1994 Yggdrasil Computing, Incorporated
    4880 Stevens Creek Blvd. Suite 205
@@ -23,9 +26,6 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
  
 /* By Ross Biro July 1994 */
-
-#ifndef _LINUX_BIOSHD_H
-#define _LINUX_BIOSHD_H
 
 #define BIOSHD_INT 0x13
 #define BIOSHD_TESTDRIVE 0x1000

@@ -3,7 +3,6 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/major.h>
 #include <linuxmt/string.h>
-/*#include <linux/locks.h>*/
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 
@@ -15,10 +14,6 @@
 /*
  *	STUBS for the buffer cache when we put it in
  */
-#if 0
-void refile_buffer(){;}
-void set_writetime(){;}
-#endif
 struct buffer_head *bh_chain=NULL;
 struct buffer_head *bh_lru=NULL;
 struct buffer_head *bh_llru=NULL;
@@ -104,22 +99,25 @@ int wait;
 
 	for(bh=bh_chain;bh!=NULL;bh=bh->b_next)
 	{
-		if (dev && bh->b_dev != dev)
+		if (dev && bh->b_dev != dev) {
 			continue;
+		}
 		/*
 		 *	Skip clean buffers.
 		 */
-		if(!buffer_dirty(bh))
+		if (buffer_clean(bh)) {
 			continue;
+		}
 		/*
 		 *	Locked buffers..
 		 */
 		/* Buffer is locked; skip it unless wait is
 		   requested AND pass > 0. */
-		if (buffer_locked(bh) && wait)
+		if (buffer_locked(bh) && wait) {
 			continue;
-		else
+		} else {
 			wait_on_buffer (bh);
+		}
 		/*
 		 *	Do the stuff
 		 */
@@ -176,7 +174,7 @@ kdev_t dev;
 
 static struct buffer_head * find_buffer(dev,block)
 kdev_t dev;
-unsigned long block;
+block_t block;
 {		
 	register struct buffer_head * tmp;
 
@@ -212,7 +210,7 @@ static struct buffer_head *get_free_buffer()
 	
 struct buffer_head * get_hash_table(dev,block)
 kdev_t dev;
-unsigned long block;
+block_t block;
 {
 	register struct buffer_head * bh;
 
@@ -246,7 +244,7 @@ unsigned long block;
 
 struct buffer_head * getblk(dev,block)
 kdev_t dev;
-unsigned long block;
+block_t block;
 {
 	register struct buffer_head * bh;
 
@@ -257,7 +255,7 @@ unsigned long block;
 repeat:
 	bh = get_hash_table(dev, block);
 	if (bh != NULL) {
-		if (!buffer_dirty(bh)) {
+		if (buffer_clean(bh)) {
 			if (buffer_uptodate(bh))
 				 put_last_lru(bh);
 		}
@@ -347,7 +345,7 @@ register struct buffer_head * bh;
 
 struct buffer_head * bread(dev,block)
 kdev_t dev;
-unsigned long block;
+block_t block;
 {
 #ifdef BLOAT_FS /* getblk never returns null */
 	register struct buffer_head * bh;
@@ -370,7 +368,7 @@ unsigned long block;
 struct buffer_head * breada(dev,block,bufsize,
 	pos, filesize)
 kdev_t dev;
-unsigned long block;
+block_t block;
 int bufsize;
 unsigned int pos;
 unsigned int filesize;
@@ -422,7 +420,8 @@ void mark_buffer_uptodate(bh, on)
 struct buffer_head *bh;
 int on;
 {
-	unsigned int flags;
+	flag_t flags;
+
 	save_flags(flags);
 	icli();
 	bh->b_uptodate = on;
@@ -549,7 +548,7 @@ void buffer_init()
 	register struct buffer_head *bh=&buffers[0];
 	int i;
 
-	_buf_ds = mm_alloc(NR_BUFFERS * 0x40, 1);
+	_buf_ds = mm_alloc(NR_BUFFERS * 0x40);
 	lastumap = 0;
 	for (i = 0; i < NR_MAPBUFS; i++)
 		bufmem_map[i] = 0;

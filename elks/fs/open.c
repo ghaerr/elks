@@ -6,7 +6,6 @@
 
 #include <linuxmt/vfs.h>
 #include <linuxmt/types.h>
-#include <linuxmt/utime.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/stat.h>
@@ -47,7 +46,7 @@ register struct statfs * buf;
 #ifndef CONFIG_FS_RO
 int do_truncate(inode,length)
 register struct inode *inode;
-unsigned long length;
+loff_t length;
 {
 	int error;
 	struct iattr newattrs;
@@ -65,10 +64,9 @@ unsigned long length;
 	return error;
 }
 
-#if 0
 int sys_truncate(path,length)
 char * path;
-unsigned long length;
+loff_t length;
 {
 	struct inode * inode;
 	register struct inode * inodep;
@@ -97,7 +95,7 @@ unsigned long length;
 
 int sys_ftruncate(fd,length)
 unsigned int fd;
-unsigned long length;
+loff_t length;
 {
 	register struct inode * inode;
 	register struct file * file;
@@ -110,7 +108,6 @@ unsigned long length;
 		return -EACCES;
 	return do_truncate(inode, length);
 }
-#endif /* 0 */
 #endif /* CONFIG_FS_RO */
 
 /* If times==NULL, set access and modification to current time,

@@ -57,10 +57,10 @@ unsigned int fildes;
 	return dupfd(fildes,0);
 }
 
-long sys_fcntl(fd,cmd,arg)
+int sys_fcntl(fd,cmd,arg)
 unsigned int fd;
 unsigned int cmd;
-unsigned long arg;
+unsigned int arg;
 {	
 	register struct file * filp;
 	register struct file_struct * fils = &current->files;

@@ -46,7 +46,7 @@ repeat:
 		p = &inode->i_zone[i];
 		if (!(tmp = *p))
 			continue;
-		bh = get_hash_table(inode->i_dev,(unsigned long)tmp);
+		bh = get_hash_table(inode->i_dev,(block_t)tmp);
 		if (i < DIRECT_BLOCK) {
 			brelse(bh);
 			goto repeat;
@@ -82,7 +82,7 @@ unsigned short * p;
 	tmp = *p;
 	if (!tmp)
 		return 0;
-	ind_bh = bread(inode->i_dev, (unsigned long)tmp);
+	ind_bh = bread(inode->i_dev, (block_t)tmp);
 	if (tmp != *p) {
 		brelse(ind_bh);
 		return 1;
@@ -103,7 +103,7 @@ repeat:
 		tmp = *ind;
 		if (!tmp)
 			continue;
-		bh = get_hash_table(inode->i_dev,(unsigned long)tmp);
+		bh = get_hash_table(inode->i_dev,(block_t)tmp);
 		if (i < INDIRECT_BLOCK(offset)) {
 			brelse(bh);
 			goto repeat;
@@ -147,7 +147,7 @@ unsigned short *p;
 
 	if (!(tmp = *p))
 		return 0;
-	dind_bh = bread(inode->i_dev, (unsigned long)tmp);
+	dind_bh = bread(inode->i_dev, (block_t)tmp);
 	if (tmp != *p) {
 		brelse(dind_bh);
 		return 1;
@@ -198,7 +198,9 @@ register struct inode * inode;
 		retry |= V1_trunc_dindirect(inode, 7+512, &inode->i_zone[8]);
 		if (!retry)
 			break;
+#ifdef OLD_SCHED
 		current->counter = 0;
+#endif
 		schedule();
 	}
 	inode->i_mtime = inode->i_ctime = CURRENT_TIME;

@@ -27,11 +27,17 @@ typedef __u16 mode_t;
 typedef __u32 loff_t;
 typedef __u32 speed_t;
 typedef __u16 size_t;
+typedef __u32 lsize_t;
 typedef __u16 ino_t;
+typedef __u32 u_ino_t;
+typedef __u16 block_t;
 typedef __u32 daddr_t;
 typedef __u32 tcflag_t;
 typedef __u8  cc_t;
 typedef __kernel_fd_set fd_set;
+typedef __u16 seg_t;			/* Segment no. */
+typedef __u16 segext_t;			/* Extent of segment */
+typedef __u32 jiff_t;
 
 typedef int   ptrdiff_t;
 struct ustat {

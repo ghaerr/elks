@@ -22,7 +22,7 @@ unsigned int len;
 	 *	User process boundaries
 	 */
 	
-	if((unsigned int)(ptr+len) > currentp->t_endstack)
+	if((__pptr)(ptr+len) > currentp->t_endstack)
 		return -EFAULT;
 		
 	return 0;
@@ -99,6 +99,7 @@ int len;
 }
 
 #asm	
+	/* fmemcpy(dseg, dest, sseg, src, size); */
 	.globl _fmemcpy
 _fmemcpy:
 	push bp

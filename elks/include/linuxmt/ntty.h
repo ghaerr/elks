@@ -2,16 +2,8 @@
 #define _LINUX_TTY_H
 
 /*
- * 'tty.h' defines some structures used by tty_io.c and some defines.
+ * 'ntty.h' defines some structures used by ntty.c and some defines.
  */
-
-/*
- * These constants are also useful for user-level apps (e.g., VC
- * resizing).
- */
-#define MIN_NR_CONSOLES	1	/* must be at least 1 */
-#define MAX_NR_CONSOLES	1	/* serial lines start at 32 */
-#define MAX_NR_USER_CONSOLES 1	/* must be root to allocate above this */
 
 #define INQ_SIZE 160
 #define OUTQ_SIZE 40
@@ -24,7 +16,6 @@
 #ifdef __KERNEL__
 #include <linuxmt/fs.h>
 #include <linuxmt/termios.h>
-#include <linuxmt/clist.h>
 #include <linuxmt/chqueue.h>
 
 #include <arch/system.h>
@@ -38,7 +29,6 @@
  */
  
 #define NR_PTYS		4
-#define NR_LDISCS	2
 
 /* Not all of these will get used most likely */
 

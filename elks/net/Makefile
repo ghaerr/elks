@@ -30,7 +30,7 @@ net.a: $(OBJS)
 	ar rcs net.a $(OBJS)
 
 clean:
-	rm -f core *~ *.o *.a tmp_make
+	rm -f core *~ *.o *.a tmp_make */*.o
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 
 dep:

@@ -10,8 +10,8 @@ __arch_mminit arch_segs;
 int arch_cpu;			/* Processor type */
 
 void setup_arch(start,end)
-int *start;
-int *end;
+seg_t *start;
+seg_t *end;
 {
 	int ct;
 	register __ptask taskp;
@@ -40,11 +40,15 @@ int *end;
 
 	taskp = &task[0];
  	taskp->state = TASK_RUNNING;
+#ifdef OLD_SCHED
 	taskp->t_count=0;
 	taskp->t_priority=0; /* FIXME why is this here? */
+#endif /* OLD_SCHED */
 	taskp->t_regs.ksp=taskp->t_kstack+KSTACK_BYTES;
+#ifdef OLD_SCHED
 	taskp->t_priority=10;
 	taskp->t_count=0;
+#endif /* OLD_SCHED */
 	taskp->t_regs.cs=get_cs();
 	taskp->t_regs.ds=get_ds();	/* Run in kernel space */
 	

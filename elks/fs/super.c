@@ -186,7 +186,6 @@ struct ustat * ubuf;
         register struct super_block *s;
         struct ustat tmp;
         struct statfs sbuf;
-        unsigned long old_fs;
         int error;
 
         s = get_super(to_kdev_t(dev));
@@ -482,7 +481,6 @@ char * type;
 	kdev_t dev;
 	int retval;
 	char * t;
-/*	unsigned long flags = 0; */
 	int new_flags = 0;
 	char	ltype[256];		/* is enough isn't it? */
 

@@ -370,7 +370,7 @@ int rs_init()
 	printk("Serial driver version 0.01 with no serial options enabled\n");
 	for(i=0;i<4;i++)
 	{
-		if((rs_probe(sp)==0) && (!request_irq(sp->irq, rs_irq, 0L, "serial")))
+		if((rs_probe(sp)==0) && (!request_irq(sp->irq, rs_irq)))
 		{
 			printk("ttys%d at 0x%x (irq = %d)",
 				i,sp->io,sp->irq);

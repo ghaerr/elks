@@ -1,5 +1,5 @@
-#ifndef _LINUX_HDREG_H
-#define _LINUX_HDREG_H
+#ifndef _LINUXMT_HDREG_H
+#define _LINUXMT_HDREG_H
 
 /*
  * This file contains some defines for the AT-hd-controller.

@@ -50,7 +50,7 @@ struct file * file;
 	struct tty * otty;
 
 	if (otty = determine_tty(inode->i_rdev)) {
-		kill_pg(otty->pgrp);
+		kill_pg(otty->pgrp, SIGHUP, 1);
 	}
 	return 0;
 }

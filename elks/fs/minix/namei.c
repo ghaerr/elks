@@ -50,7 +50,7 @@ static int minix_match(len,name,bh,offset,info)
 int len;
 char * name;
 struct buffer_head * bh;
-unsigned long * offset;
+loff_t * offset;
 register struct minix_sb_info * info;
 {
 	register struct minix_dir_entry * de;
@@ -85,8 +85,8 @@ char * name;
 int namelen;
 struct minix_dir_entry ** res_dir;
 {
-	register unsigned short block;
-	register unsigned long offset;
+	unsigned short block;
+	loff_t offset;
 	struct buffer_head * bh;
 	struct minix_sb_info * info;
 
@@ -104,7 +104,7 @@ struct minix_dir_entry ** res_dir;
 	bh = NULL;
 	block = 0;
 	offset = 0L;
-	while (((unsigned long)block)*BLOCK_SIZE+offset < dir->i_size) {
+	while (((loff_t)block)*BLOCK_SIZE+offset < dir->i_size) {
 		if (!bh) {
 			bh = minix_bread(dir,block,0);
 			if (!bh) {
@@ -167,7 +167,7 @@ register struct inode ** result;
 	map_buffer(bh);
 	ino = de->inode;
 	unmap_brelse(bh);
-	*result = iget(dir->i_sb,(long) ino);
+	*result = iget(dir->i_sb,(ino_t) ino);
 	if (!*result) {
 		iput(dir);
 		return -EACCES;
@@ -197,7 +197,7 @@ struct minix_dir_entry ** res_dir;
 {
 	int i;
 	unsigned short block;
-	unsigned long offset;
+	loff_t offset;
 	struct buffer_head * bh;
 	struct minix_dir_entry * de;
 	struct minix_sb_info * info;
@@ -229,15 +229,15 @@ struct minix_dir_entry ** res_dir;
 		de = (struct minix_dir_entry *) (bh->b_data + offset);
 		offset += info->s_dirsize;
 #ifdef BLOAT_FS
-		if (((unsigned long)block)*bh->b_size + offset > dir->i_size) {
+		if (((loff_t)block)*bh->b_size + offset > dir->i_size) {
 #else
-		if (((unsigned long)block)*1024L + offset > dir->i_size) {
+		if (((loff_t)block)*1024L + offset > dir->i_size) {
 #endif
 			de->inode = 0;
 #ifdef BLOAT_FS
-			dir->i_size = ((unsigned long)block)*bh->b_size + offset;
+			dir->i_size = ((loff_t)block)*bh->b_size + offset;
 #else
-			dir->i_size = ((unsigned long)block)*1024L + offset;
+			dir->i_size = ((loff_t)block)*1024L + offset;
 #endif
 			dir->i_dirt = 1;
 		}
@@ -467,7 +467,7 @@ static int empty_dir(inode)
 register struct inode * inode;
 {
 	unsigned short block;
-	unsigned long offset;
+	loff_t offset;
 	struct buffer_head * bh;
 	struct minix_dir_entry * de;
 
@@ -490,7 +490,7 @@ register struct inode * inode;
 	de = (struct minix_dir_entry *) (bh->b_data + inode->i_sb->u.minix_sb.s_dirsize);
 	if (!de->inode || strcmp(de->name,".."))
 		goto bad_dir;
-	while (((unsigned long)block)*1024L+offset < inode->i_size) {
+	while (((loff_t)block)*1024L+offset < inode->i_size) {
 		if (!bh) {
 			bh = minix_bread(inode,block,0);
 			if (!bh) {
@@ -542,7 +542,7 @@ int len;
 		goto end_rmdir;
 	map_buffer(bh);
 	retval = -EPERM;
-	if (!(inode = iget(dir->i_sb, (long) de->inode)))
+	if (!(inode = iget(dir->i_sb, (ino_t) de->inode)))
 		goto end_rmdir;
         if ((dir->i_mode & S_ISVTX) && !suser() &&
             current->euid != inode->i_uid &&
@@ -605,7 +605,7 @@ repeat:
 	if (!bh)
 		goto end_unlink;
 	map_buffer(bh);
-	if (!(inode = iget(dir->i_sb, (long) de->inode)))
+	if (!(inode = iget(dir->i_sb, (ino_t) de->inode)))
 		goto end_unlink;
 	retval = -EPERM;
 	if (S_ISDIR(inode->i_mode))
@@ -613,7 +613,9 @@ repeat:
 	if (de->inode != inode->i_ino) {
 		iput(inode);
 		unmap_brelse(bh);
+#ifdef OLD_SCHED
 		current->counter = 0;
+#endif
 		schedule();
 		goto repeat;
 	}

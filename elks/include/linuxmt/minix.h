@@ -23,6 +23,4 @@ struct minix_exec_hdr
 	unsigned long unused2; 
 };
 
-#define PARAGRAPH(x)	(((unsigned long)(x))>>4)
-
 #endif

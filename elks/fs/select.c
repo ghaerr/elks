@@ -123,7 +123,7 @@ fd_set *res_ex;
 	select_table wait_table, *wait;
 	__ptask currentp = current;
 	struct select_table_entry entry[__MAX_SELECT_TABLE_ENTRIES];
-	unsigned long set;
+	fd_set set;
 	int i,j;
 	int max = -1;
 
@@ -132,7 +132,7 @@ fd_set *res_ex;
 		i = j * __NFDBITS;
 		if (i >= n)
 			break;
-		set = in->fds_bits[j] | out->fds_bits[j] | ex->fds_bits[j];
+		set = *in | *out | *ex;
 
 		j++;
 		for ( ; set ; i++,set >>= 1) {
@@ -189,99 +189,10 @@ repeat:
  * We do a VERIFY_WRITE here even though we are only reading this time:
  * we'll write to it eventually..
  *
- * Use "int" accesses to let user-mode fd_set's be int-aligned.
  */
-#ifdef 0 /* Thuis set of function don't appear to work */
-static int __get_fd_set(nr, fs_pointer, fdset)
-int nr;
-register int * fs_pointer;
-register int * fdset;
-{
-	/* round up nr to nearest "int" */
-	nr = (nr + 8*sizeof(int)-1) / (8*sizeof(int));
-	if (fs_pointer) {
-		int error = verify_area(VERIFY_WRITE,fs_pointer,nr*sizeof(int));
-		if (!error) {
-			while (nr) {
-				*fdset = get_user(fs_pointer);
-				nr--;
-				fs_pointer++;
-				fdset++;
-			}
-		}
-		return error;
-	}
-	while (nr) {
-		*fdset = 0;
-		nr--;
-		fdset++;
-	}
-	return 0;
-}
-
-static void __set_fd_set(nr, fs_pointer, fdset)
-int nr;
-register int * fs_pointer;
-register int * fdset;
-{
-	if (!fs_pointer)
-		return;
-	while (nr >= 0) {
-		put_user(*fdset, fs_pointer);
-		nr -= 8 * sizeof(int);
-		fdset++;
-		fs_pointer++;
-	}
-}
-
-/* We can do long accesses here, kernel fdsets are always long-aligned */
-static /*inline */void __zero_fd_set(nr, fdset)
-int nr;
-register unsigned long * fdset;
-{
-	while (nr >= 0) {
-		*fdset = 0;
-		nr -= 8 * sizeof(unsigned long);
-		fdset++;
-	}
-}		
-
-/*
- * Due to kernel stack usage, we use a _limited_ fd_set type here, and once
- * we really start supporting >256 file descriptors we'll probably have to
- * allocate the kernel fd_set copies dynamically.. (The kernel select routines
- * are careful to touch only the defined low bits of any fd_set pointer, this
- * is important for performance too).
- *
- * This is not relevant in ELKS as we only have 20 descriptors, so we only need one
- * long to store them in. I have removed the limited type, and we use the ordinary
- * type instead.
- *
- * Note a few subtleties: we use "long" for the dummy, not int, and we do a
- * subtract by 1 on the nr of file descriptors. The former is better for
- * machines with long > int, and the latter allows us to test the bit count
- * against "zero or positive", which can mostly be just a sign bit test..
- */
-/* struct _limited_fd_set {
-	unsigned long dummy[32/(8*(sizeof(unsigned long)))];
-};
-
-typedef struct _limited_fd_set limited_fd_set; */
-/*
-#define get_fd_set(nr,fsp,fdp) \
-__get_fd_set(nr, (int *) (fsp), (int *) (fdp))
-
-#define set_fd_set(nr,fsp,fdp) \
-__set_fd_set((nr)-1, (int *) (fsp), (int *) (fdp))
-
-#define zero_fd_set(nr,fdp) \
-__zero_fd_set((nr)-1, (unsigned long *) (fdp))
-*/
-
-#else
 static int get_fd_set(fs_pointer, fdset)
-register int * fs_pointer;
-register int * fdset;
+fd_set * fs_pointer;
+fd_set * fdset;
 {
 	if (fs_pointer) {
 		return verified_memcpy_fromfs(fdset, fs_pointer, sizeof(fd_set));
@@ -291,8 +202,8 @@ register int * fdset;
 }
 
 static void set_fd_set(fs_pointer, fdset)
-register int * fs_pointer;
-register int * fdset;
+fd_set * fs_pointer;
+fd_set * fdset;
 {
 	if (!fs_pointer)
 		return;
@@ -300,11 +211,11 @@ register int * fdset;
 }
 
 static void zero_fd_set(fdset)
-register unsigned long * fdset;
+register fd_set * fdset;
 {
 	memset(fdset, 0, sizeof(fd_set));
 }		
-#endif
+
 /*
  * We can actually return ERESTARTSYS instead of EINTR, but I'd
  * like to be certain this leads to no problems. So I return
@@ -313,7 +224,7 @@ register unsigned long * fdset;
  * Update: ERESTARTSYS breaks at least the xview clock binary, so
  * I'm trying ERESTARTNOHAND which restart only when you want to.
  */
-     /*asmlinkage*/ 
+
 int sys_select(n, inp, outp, exp, tvp)
 int n;
 fd_set * inp;
@@ -325,7 +236,7 @@ register struct timeval * tvp;
        	fd_set res_in, in;
 	fd_set res_out, out;
 	fd_set res_ex, ex;
-	unsigned long timeout;
+	jiff_t timeout;
 
 	error = -EINVAL;
 	if (n < 0)
@@ -342,7 +253,7 @@ register struct timeval * tvp;
 			goto out;
 
 		timeout = ROUND_UP(get_user(&tvp->tv_usec),(1000000/HZ));
-		timeout += get_user(&tvp->tv_sec) * (unsigned long) HZ;
+		timeout += get_user(&tvp->tv_sec) * (jiff_t) HZ;
 		if (timeout)
 			timeout += jiffies + 1UL;
 	}

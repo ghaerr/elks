@@ -532,7 +532,7 @@ void init_bioshd()
 				drivep->heads,
 				drivep->cylinders,
 				drivep->sectors,
-				(long) drivep->heads * drivep->cylinders *
+				(sector_t) drivep->heads * drivep->cylinders *
 				drivep->sectors * 512L / (1024L * (i < 2 ? 1024L : 1L)),
 				(i < 2 ? "MB" : "kB"));
 		}
@@ -549,7 +549,7 @@ void init_bioshd()
 				drivep->heads,
 				drivep->cylinders,
 				drivep->sectors,
-				(long) drivep->heads * drivep->cylinders *
+				(sector_t) drivep->heads * drivep->cylinders *
 				drivep->sectors * 512L / (1024L * (i < 2 ? 1024L : 1L)));
 			}
 	}
@@ -585,7 +585,6 @@ static int bioshd_ioctl(inode, file, cmd, arg)
 	register struct hd_geometry *loc = (struct hd_geometry *) arg; /**/
 	register struct drive_infot * drivep;
 	int dev, err;
-	unsigned long flags;
 
 	if ((!inode) || !(inode->i_rdev))
 		return -EINVAL;
@@ -602,7 +601,7 @@ static int bioshd_ioctl(inode, file, cmd, arg)
 			put_user(drivep->heads, (char *) &loc->heads);
 			put_user(drivep->sectors, (char *) &loc->sectors);
 			put_user(drivep->cylinders, (short *) &loc->cylinders);
-			put_user(hd[MINOR(inode->i_rdev)].start_sect, (long *) &loc->start);
+			put_user(hd[MINOR(inode->i_rdev)].start_sect, (sector_t *) &loc->start);
 
 			return 0;
 			break;
@@ -614,13 +613,13 @@ static int bioshd_ioctl(inode, file, cmd, arg)
 
 static void do_bioshd_request()
 {
-	unsigned long count;
-	unsigned long this_pass;
+	sector_t count;
+	sector_t this_pass;
 	register struct request * req;
 	short cylinder;
 	short head;
 	short sector;
-	unsigned long start;
+	sector_t start;
 	int tmp;
 	char *buff;
 	int minor;
@@ -751,7 +750,7 @@ static void do_bioshd_request()
 
 /* #define DEVICE_BUSY busy[target] */
 #define USAGE access_count[target]
-#define CAPACITY ((long)drive_info[target].heads*drive_info[target].sectors*drive_info[target].cylinders)
+#define CAPACITY ((sector_t)drive_info[target].heads*drive_info[target].sectors*drive_info[target].cylinders)
 /* We assume that the the bios parameters do not change, so the disk capacity
    will not change */
 #undef MAYBE_REINIT
@@ -827,7 +826,7 @@ static void bioshd_geninit()
 		if ((i & ((1 << 6) - 1)) == 0)
 		{
 			hdp->start_sect = 0;
-			hdp->nr_sects = (long) drivep->sectors *
+			hdp->nr_sects = (sector_t) drivep->sectors *
 			  drivep->heads *
 			  drivep->cylinders;
 		} else

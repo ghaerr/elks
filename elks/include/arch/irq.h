@@ -1,6 +1,7 @@
 #ifndef __ARCH_8086_IRQ_H
 #define __ARCH_8086_IRQ_H
 
+#include <arch/types.h>
 #define save_flags(x)	x=__save_flags()
 /* Who gets which entry in bh_base.  Things which will occur most often
    should come first - in which case NET should be up the top with SERIAL/TQUEUE! */
@@ -24,7 +25,7 @@ enum {
 extern void disable_irq();
 extern void enable_irq();
 extern void do_IRQ();
-extern unsigned long __save_flags();
+extern flag_t __save_flags();
 extern void restore_flags();
 extern int request_irq();
 extern void free_irq();

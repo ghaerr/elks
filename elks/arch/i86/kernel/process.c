@@ -329,9 +329,13 @@ char *addr;
 	t->t_regs.ds=get_ds();
 	t->state=TASK_UNINTERRUPTIBLE;
 	t->pid=get_pid();
+#ifdef OLD_SCHED
 	t->t_priority=10;
-	t->t_kstackm = KSTACK_MAGIC;
 	t->prev_run = t->next_run = t->next_task = t->prev_task = NULL;
+#else
+	t->prev_run = t->next_run = NULL;
+#endif
+	t->t_kstackm = KSTACK_MAGIC;
 	wake_up_process(t);
 	schedule();
 }
@@ -343,14 +347,14 @@ char *addr;
  */
 
 #define USER_FLAGS 0x3200	/* IPL 3, interrupt enabled */
-static void put_ustack(t, off, val)
+void put_ustack(t, off, val)
 register struct task_struct *t;
 int off, val;
 {
     pokew(t->t_regs.ss, t->t_regs.sp+off, val);
 }
 
-static unsigned get_ustack(t, off)
+unsigned get_ustack(t, off)
 register struct task_struct *t;
 int off;
 {
@@ -391,10 +395,6 @@ unsigned signr;
 		get_ustack(t, 0),
 		get_ustack(t, 2),
 		get_ustack(t, 4));
-/*	put_ustack(t, 2, get_ustack(t, 4));
-	put_ustack(t, 4, get_ustack(t, 0));
-	put_ustack(t, 0, t->t_regs.cs);
-	put_ustack(t, -2, addr); */
 	put_ustack(t, 2, get_ustack(t, 0));
 	put_ustack(t, 0, get_ustack(t, 4));
 	put_ustack(t, 4, signr);
@@ -450,6 +450,8 @@ struct task_struct *t;
 	t->t_regs.ksp=kstktop-fake_save_regs(kstktop,ret_from_syscall);
 #asm
 	mov bx,[bp]	! bx = bp on entry to arch_build_stack
+	mov ax,[bx]	! ax = bp on entry to do_fork = users bp (hopefully!)
+	mov bx,ax
 	mov ax,[bx]	! ax = bp on entry to do_fork = users bp (hopefully!)
 	mov _saved_bp,ax
 #endasm

@@ -1,6 +1,8 @@
 #ifndef _LINUX_GENHD_H
 #define _LINUX_GENHD_H
 
+#include <linuxmt/types.h>
+
 /*
  * 	genhd.h Copyright (C) 1992 Drew Eckhardt
  *	Generic hard disk header file by  
@@ -17,10 +19,7 @@
 #define DOS_EXTENDED_PARTITION 5
 #define LINUX_EXTENDED_PARTITION 0x85
 
-#define DM6_PARTITION		0x54	/* has DDO: use xlated geom & offset */
-#define EZD_PARTITION		0x55	/* EZ-DRIVE:  same as DM6 (we think) */
-#define DM6_AUX1PARTITION	0x51	/* no DDO:  use xlated geom */
-#define DM6_AUX3PARTITION	0x53	/* no DDO:  use xlated geom */
+typedef __u32 sector_t;
 	
 struct partition {
 	unsigned char boot_ind;		/* 0x80 - active */
@@ -31,13 +30,13 @@ struct partition {
 	unsigned char end_head;		/* end head */
 	unsigned char end_sector;	/* end sector */
 	unsigned char end_cyl;		/* end cylinder */
-	unsigned long start_sect;	/* starting sector counting from 0 */
-	unsigned long nr_sects;		/* nr of sectors in partition */
+	sector_t start_sect;		/* starting sector counting from 0 */
+	sector_t nr_sects;		/* nr of sectors in partition */
 };
 
 struct hd_struct {
-	long start_sect;
-	long nr_sects;
+	sector_t start_sect;
+	sector_t nr_sects;
 };
 
 struct gendisk {

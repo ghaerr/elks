@@ -17,6 +17,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/timex.h>
+#include <linuxmt/hdreg.h>
 
 #include <arch/system.h>
 #include <arch/irq.h>
@@ -26,47 +27,12 @@
 struct irqaction 
 {
 	void (*handler)();
-	unsigned long flags;
 /*	unsigned long mask; */ /* Mask unused so removed to save space */
-	char *name;
 };
 
 #define IRQF_BAD	1		/* This IRQ is bad if it occurs */
 	
-static struct irqaction irq_action[32]= { 
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-	{NULL,IRQF_BAD,NULL},
-};
+static struct irqaction irq_action[32];
 
 unsigned char cache_21 = 0xff;
 unsigned char cache_A1 = 0xff;
@@ -75,7 +41,7 @@ unsigned char cache_A1 = 0xff;
 void disable_irq(irq_nr)
 unsigned int irq_nr;
 {
-	unsigned int flags;
+	flag_t flags;
 	unsigned char mask = 1 << (irq_nr & 7);
 	save_flags(flags);
 	if(irq_nr < 8) {
@@ -95,7 +61,7 @@ unsigned int irq_nr;
 void enable_irq(irq_nr)
 unsigned int irq_nr;
 {
-	unsigned int flags;
+	flag_t flags;
 	unsigned char mask;
 
 	mask = ~(1 << (irq_nr & 7));
@@ -130,15 +96,16 @@ void *regs;
 	register struct irqaction *irq = irq_action + i;
 
 	lastirq = i;	
-	if(irq->flags&IRQF_BAD) {
+
+	if (irq->handler != NULL) {
+		irq->handler(i,regs);
+		lastirq = -1;
+	} else {
 		if(i > 15) {
 			printk("Unexpected trap: %d\n", i-16);
 		} else {
 			printk("Unexpected interrupt: %d\n", i);
 		}
-	} else if(irq->handler != NULL) {
-		irq->handler(i,regs);
-		lastirq = -1;
 	}
 }
 
@@ -146,7 +113,7 @@ void *regs;
  *	Low level IRQ control.
  */
  
-/*unsigned long __save_flags()
+/*unsigned int __save_flags()
 {*/
 #asm
 	.globl ___save_flags
@@ -162,7 +129,7 @@ ___save_flags:
 void restore_flags(flags)
 unsigned int flags;
 {
-	unsigned int v=flags;
+	flag_t v=flags;
 #asm
 	push ax
 	popf
@@ -201,14 +168,12 @@ void isti()
 #endif
 
 		
-int request_irq(irq, handler, irqflags, devname)
+int request_irq(irq, handler)
 int irq;
 void (*handler);
-unsigned long irqflags;
-char *devname;	
 {
 	register struct irqaction *action;
-	unsigned int flags;
+	flag_t flags;
 #ifdef CONFIG_XT
 	if (irq > 7) {
 		return -EINVAL;
@@ -233,9 +198,8 @@ char *devname;
 	save_flags(flags);
 	icli();
 	action->handler = handler;
-	action->flags = irqflags;
 /*	action->mask = 0; */ /* Mask unused, so removed to save space */
-	action->name = devname;
+/*	action->name = devname; */ /* name unsed - ditto */
 	enable_irq(irq);
 	restore_flags(flags);
 	return 0;
@@ -246,7 +210,7 @@ void free_irq(irq)
 unsigned int irq;
 {
 	register struct irqaction * action = irq_action + irq;
-	unsigned int flags;
+	flag_t flags;
 
 	if (irq > 15) {
 		printk("Trying to free IRQ%d\n",irq);
@@ -277,7 +241,7 @@ unsigned int irq;
  *	Test timer tick routine
  */
 
-unsigned long jiffies=0;
+jiff_t jiffies=0;
 
 void timer_tick(/*struct pt_regs * regs*/)
 {
@@ -322,7 +286,7 @@ void init_IRQ()
 	 *	Set off the initial timer interrupt handler
 	 */
 	 
-	if(request_irq(0, timer_tick, 0L, "timer"))
+	if(request_irq(0, timer_tick))
 		panic("Unable to get timer");
 
 	/*
@@ -342,8 +306,9 @@ void init_IRQ()
 	 *	Set off the initial keyboard interrupt handler
 	 */
 
-	if(request_irq(1, keyboard_irq, 0L, "keyboard"))
+	if (request_irq(1, keyboard_irq)) {
 		panic("Unable to get keyboard");
+	}
 
 #else /* CONFIG_CONSOLE_DIRECT */
 	enable_irq(1);		/* Cascade */
@@ -352,7 +317,7 @@ void init_IRQ()
 	 *	Enable the drop through interrupts.
 	 */
 #ifndef CONFIG_XT	 	
-	enable_irq(14);		/* AT ST506 */
+	enable_irq(HD_IRQ);	/* AT ST506 */
 	enable_irq(15);		/* AHA1542 */
 #endif
 	enable_irq(5);		/* XT ST506 */

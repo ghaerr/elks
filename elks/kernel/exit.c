@@ -7,6 +7,7 @@
  */
 
 #include <linuxmt/sched.h>
+#include <linuxmt/errno.h>
 
 /* Note : sys_wait only keeps *one* task in the task_struct right now...
  * this is different than V7 symantics I think, but good enough for 0.0.51
@@ -35,6 +36,7 @@ int options;
 		*lastendp = 0;
 		return retval;
 	}
+	return -EINTR;
 }
 
 void do_exit(status)

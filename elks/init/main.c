@@ -19,7 +19,7 @@ static void init_task();
 
 extern __ptask _reglasttask, _regnexttask;
 
-long loops_per_sec = 1;
+jiff_t loops_per_sec = 1;
 
 /*
  *	For the moment this routine _MUST_ come first.
@@ -29,8 +29,7 @@ void start_kernel()
 {
 	__u16 a;
 	__pregisters set; 
-	int base,end;
-	extern unsigned long jiffies;
+	seg_t base,end;
 
 /*	We set the scheduler up as task #0, and this as task #1 */
 
@@ -38,7 +37,7 @@ void start_kernel()
 	mm_init(base, end);
 	init_IRQ();
 	init_console();
-	calibrate_delay();
+/*	calibrate_delay(); */
 	setup_mm();		/* Architecture specifics */
 	tty_init();
 	buffer_init();
@@ -140,9 +139,9 @@ static void init_task()
 
 #ifdef USE_C
 static void delay(loops)
-long loops;
+jiff_t loops;
 {
-	long i;
+	jiff_t i;
 	for(i=loops;i>=0;i--);
 }
 #else
@@ -204,8 +203,7 @@ deldone:
 
 int calibrate_delay()
 {
-	extern unsigned long jiffies;
-        unsigned long ticks;
+        jiff_t ticks;
 	printk("Calibrating delay loop.. ");
   
 	while ((loops_per_sec <<= 1)) 
@@ -215,9 +213,9 @@ int calibrate_delay()
 		ticks = jiffies - ticks;
 		if (ticks >= HZ) 
 		{
-			unsigned long bogo;
-			unsigned long sub;
-			loops_per_sec = (loops_per_sec / ticks) * (unsigned long)HZ;
+			jiff_t bogo;
+			jiff_t sub;
+			loops_per_sec = (loops_per_sec / ticks) * (jiff_t)HZ;
 			bogo=loops_per_sec/500000L;
 			sub=loops_per_sec/5000L;
 			sub%=100;

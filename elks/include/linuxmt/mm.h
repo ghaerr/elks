@@ -26,10 +26,6 @@ extern void put_fs_word();
 extern unsigned int get_fs_word();
 extern int strlen_fromfs();
 
-extern void mem_init();
-extern void oom();
-extern void si_meminfo();
-
 #endif /* __KERNEL__ */
 
 #endif
