@@ -1,8 +1,9 @@
 TODO
 ----
 
-This is firstly a list of things that need to be done for 0.1, and then a list
-of more general things. Please let me know what you think should be in here.
+This is firstly a list of things that need to be done for 0.1, and then a
+list of more general things. Please let me know what you think should be
+in here.
 
 	Al
 --
@@ -13,13 +14,14 @@ Debug filesystem.
 
 Reduce code size.
 
-Re-write wait queues so they don't sit on the kernel stack, but sit on the task
-structure instead.
+Re-write wait queues so they don't sit on the kernel stack, but sit on the
+task structure instead.
 
-Simplify device request functions as they can only be asked to get 1 block.
+Simplify device request functions as they can only be asked to get 1
+block.
 
-Modify interrupt code to save ds in VII rather than in kernel data segment.
-Re-write exec and device code to run without filesystem. Generally make ELKS
-ROMable and embedable.
+Modify interrupt code to save ds in VII rather than in kernel data
+segment. Re-write exec and device code to run without filesystem.
+Generally make ELKS ROMable and embedable.
 
 Fix select.

@@ -6,6 +6,11 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Fri Aug 10 23:38:14 BST 2001	Riley Williams <rhw@memalpha.cx>
+
+	* Reformatted TODO to fit in 80 columns.
+	  Not sure if it's up to date though...
+
 Fri Aug  3 21:36:21 BST 2001	Riley Williams <rhw@memalpha.cx>
 
 	* Updated all files to refer to vger.kernel.org instead of to
