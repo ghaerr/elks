@@ -21,16 +21,9 @@
 int event=0;
 #endif
 
-#ifdef HASH_INODES
-static struct inode_hash_entry {
-	struct inode * inode;
-	int updating;
-} hash_table[NR_IHASH];
-#endif
-
 static struct inode inode_block[NR_INODE];
 static struct inode * first_inode;
-static struct wait_queue * inode_wait = NULL;
+static struct wait_queue inode_wait;
 static int nr_inodes = 0;
 static int nr_free_inodes = 0;
 
@@ -57,43 +50,6 @@ REGOPT struct inode *inode;
 		inode->i_prev->i_next = inode->i_next;
 	inode->i_next = inode->i_prev = NULL;
 }
-
-#ifdef HASH_INODE
-static struct inode_hash_entry *hash(dev,i)
-kdev_t dev;
-ino_t i;
-{
-	return hash_table + ((HASHDEV(dev) ^ i) % NR_IHASH);
-}
-
-void insert_inode_hash(inode)
-register struct inode *inode;
-{
-	register struct inode_hash_entry *h;
-	h = hash(inode->i_dev, inode->i_ino);
-
-	inode->i_hash_next = h->inode;
-	inode->i_hash_prev = NULL;
-	if (inode->i_hash_next)
-		inode->i_hash_next->i_hash_prev = inode;
-	h->inode = inode;
-}
-
-static void remove_inode_hash(inode)
-register struct inode *inode;
-{
-	register struct inode_hash_entry *h;
-	h = hash(inode->i_dev, inode->i_ino);
-
-	if (h->inode == inode)
-		h->inode = inode->i_hash_next;
-	if (inode->i_hash_next)
-		inode->i_hash_next->i_hash_prev = inode->i_hash_prev;
-	if (inode->i_hash_prev)
-		inode->i_hash_prev->i_hash_next = inode->i_hash_next;
-	inode->i_hash_prev = inode->i_hash_next = NULL;
-}
-#endif
 
 static void put_last_free(inode)
 REGOPT struct inode *inode;
