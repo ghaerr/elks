@@ -7,7 +7,21 @@ be longer than the lines of dashes.
 Al
 ------------------------------------------------------------------------------
 
-Sat Sep 29 13:47:47 EEST 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+Tue Oct  2 21:29:28 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Reverted changes accidentally made to elks/Makefile previously.
+	  Changes to other Makefiles in the tree still have to be reverted.
+	* Changed method of calculating ELKS_VERSION_CODE and simplified
+	  it in the process. The new method allows for 15 pre's between
+	  sublevels, instead of the 7 that previously existed.
+	* Bumped version up to 0.0.85-pre3 to provide a marker for the
+	  previous change. This is tagged as V0-0-85-PRE3 in CVS.
+	* Added `make ELKS` rule to elks/Makefile - this will also be added
+	  to all other Makefiles as I progress through the tree, and will
+	  have the result of performing `make all` in the base directory
+	  independantly of the current location in the tree.
+
+Sat Sep 29 13:47:47 EEST 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
 	* Added lefted out locking of sock.avail_data
 	* Changed unix and nano sockets to use semaphores. Saved around
