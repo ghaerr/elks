@@ -1,5 +1,4 @@
-/*
- ************************************************************************
+/************************************************************************
  *
  * ANSI driver for ELKS kernel, v0.0.1
  * Copyright (C) 2001, Memory Alpha Systems,
@@ -16,8 +15,7 @@
  *	stdin/stdout to talk to the user or application, and
  *	vidin/vidout to talk to the VT52 driver in the kernel.
  *
- ************************************************************************
- */
+ ************************************************************************/
 
 #include <stdio.h>
 
@@ -30,17 +28,6 @@ typedef unsigned short int WORD;
 #define TRUE	(!FALSE)
 
 #define BufLen	1023
-
-/************************************************************************
- * Prototypes
- ************************************************************************/
-
-void addcmd(char ch);
-void ANSI(char cmd);
-void chout(char ch);
-void DEC(char ch);
-WORD getparm(char **S);
-void lineout(char *S, WORD N);
 
 /************************************************************************
  * Variables and Buffers

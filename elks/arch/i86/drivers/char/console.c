@@ -63,14 +63,13 @@ void LCD_Position();
 void LCD_ClearLine();
 void LCD_WriteChar();
 
-extern int AddQueue();		/* From xt_key.c */
-extern int GetQueue();
+extern void AddQueue(unsigned char Key);	/* From xt_key.c */
 
-void WriteChar(register Console * C, char Ch)
+void WriteChar(register Console *C, char c)
 {
     int loopx, loopy;
 
-    switch (Ch) {
+    switch (c) {
     case '\f':
 	C->xpos = C->ypos = 0;
 
@@ -141,11 +140,11 @@ void WriteChar(register Console * C, char Ch)
     }
 
     if (Visible == &Con[Current_VCminor])
-	LCD_WriteChar(Ch);
+	LCD_WriteChar(c);
 
 #ifdef CONFIG_VIRTUAL_CONSOLE
 
-    C->screen[C->ypos][C->xpos] = Ch;
+    C->screen[C->ypos][C->xpos] = c;
 
 #endif
 

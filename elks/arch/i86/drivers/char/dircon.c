@@ -102,18 +102,24 @@ static unsigned AttrArry[MAX_ATTR] = {
 };
 #endif
 
-static void ScrollUp();
-static void PositionCursor();
-static void WriteChar();
-static void ClearRange();
+static void ScrollUp(register Console *C, int st, int en);
+static void PositionCursor(register Console *C);
+void WriteChar(register Console *C, char c);
+static void ClearRange(register Console *C, int x, int y, int xx, int yy);
+
 #ifdef CONFIG_DCON_VT52
-static void ScrollDown();
-static void Vt52Cmd();
-static void Vt52CmdEx();
-static void Console_gotoxy();
+
+static void ScrollDown(register Console *C, int st, int en);
+void Vt52Cmd(register Console *C, char c);
+void Vt52CmdEx(register Console *C, char c);
+static void Console_gotoxy(register Console *C, int x, int y);
+
 #ifdef CONFIG_DCON_ANSI
-static void AnsiCmd();
+
+static void AnsiCmd(register Console *C, char c);
+
 #endif
+
 #endif
 
 extern int peekb();
@@ -122,8 +128,7 @@ extern void pokeb();
 extern void pokew();
 extern void outb();
 
-extern int AddQueue();		/* From xt_key.c */
-extern int GetQueue();
+extern void AddQueue(unsigned char Key);	/* From xt_key.c */
 
 void con_charout(char Ch)
 {
@@ -131,25 +136,25 @@ void con_charout(char Ch)
     PositionCursor(Visible);
 }
 
-void WriteChar(register Console * cons, char c)
+void WriteChar(register Console *C, char c)
 {
     unsigned int offset;
 
     /* check for graphics lock */
     while (glock) {
-	if (glock == cons)
+	if (glock == C)
 	    return;
 	sleep_on(&glock_wait);
     }
 
 #ifdef CONFIG_DCON_ANSI
     /* ANSI param gathering and processing */
-    if (cons->state == ST_ANSI) {
-	if (cons->parmptr < &cons->params[MAXPARMS])
-	    *cons->parmptr++ = c;
+    if (C->state == ST_ANSI) {
+	if (C->parmptr < &C->params[MAXPARMS])
+	    *C->parmptr++ = c;
 	if (isupper(c) || islower(c)) {
-	    *cons->parmptr = 0;
-	    AnsiCmd(cons, c);
+	    *C->parmptr = 0;
+	    AnsiCmd(C, c);
 	}
 	return;
     }
@@ -157,15 +162,15 @@ void WriteChar(register Console * cons, char c)
 
 #ifdef CONFIG_DCON_VT52
     /* VT52 command processing */
-    if (cons->state >= ST_ESCSEEN) {
+    if (C->state >= ST_ESCSEEN) {
 #ifdef CONFIG_DCON_ANSI
 	if (c == '[') {
-	    cons->state = ST_ANSI;
-	    cons->parmptr = cons->params;
+	    C->state = ST_ANSI;
+	    C->parmptr = C->params;
 	    return;
 	}
 #endif
-	Vt52Cmd(cons, c);
+	Vt52Cmd(C, c);
 	return;
     }
 #endif
@@ -177,42 +182,42 @@ void WriteChar(register Console * cons, char c)
 	return;
 #ifdef CONFIG_DCON_VT52
     case ESC:
-	cons->state = ST_ESCSEEN;
+	C->state = ST_ESCSEEN;
 	return;
 #endif
     case BS:
-	if (cons->cx > 0) {
-	    --cons->cx;
-	    WriteChar(cons, ' ');
-	    --cons->cx;
-	    PositionCursor(cons);
+	if (C->cx > 0) {
+	    --C->cx;
+	    WriteChar(C, ' ');
+	    --C->cx;
+	    PositionCursor(C);
 	}
 	return;
     case NL:
-	++cons->cy;
+	++C->cy;
 	/* fall thru for now: fixme when ONLCR complete */
     case CR:
-	cons->cx = 0;
+	C->cx = 0;
 	break;
     default:
-	offset = (cons->cx + cons->cy * Width) << 1;
-	pokeb(cons->vseg, offset++, c);
-	pokeb(cons->vseg, offset, cons->attr);
-	++cons->cx;
+	offset = (C->cx + C->cy * Width) << 1;
+	pokeb(C->vseg, offset++, c);
+	pokeb(C->vseg, offset, C->attr);
+	++C->cx;
     }
 
     /* autowrap and/or scroll */
-    if (cons->cx > MaxCol) {
-	cons->cx = 0;
-	++cons->cy;
+    if (C->cx > MaxCol) {
+	C->cx = 0;
+	++C->cy;
     }
-    if (cons->cy >= Height) {
-	ScrollUp(cons, 1, Height);
-	--cons->cy;
+    if (C->cy >= Height) {
+	ScrollUp(C, 1, Height);
+	--C->cy;
     }
 }
 
-void ScrollUp(register Console * C, int st, int en)
+static void ScrollUp(register Console *C, int st, int en)
 {
     unsigned rdofs, wrofs;
     int cnt;
@@ -229,7 +234,7 @@ void ScrollUp(register Console * C, int st, int en)
 
 #ifdef CONFIG_DCON_VT52
 
-void ScrollDown(register Console * C, int st, int en)
+static void ScrollDown(register Console *C, int st, int en)
 {
     unsigned rdofs, wrofs;
     int cnt;
@@ -245,9 +250,10 @@ void ScrollDown(register Console * C, int st, int en)
 
 #endif
 
-void PositionCursor(register Console * C)
+static void PositionCursor(register Console *C)
 {
     int Pos;
+
     if (C != Visible)
 	return;
     Pos = C->cx + Width * C->cy + (C->pageno * PageSize >> 1);
@@ -257,9 +263,10 @@ void PositionCursor(register Console * C)
     outb((unsigned char) (Pos & 0xFF), CCBase + 1);
 }
 
-void ClearRange(register Console * C, int x, int y, int xx, int yy)
+static void ClearRange(register Console *C, int x, int y, int xx, int yy)
 {
     unsigned st, en, ClrW, ofs;
+
     st = (x + y * Width) << 1;
     en = (xx + yy * Width) << 1;
     ClrW = A_DEFAULT << 8 + ' ';
@@ -269,52 +276,52 @@ void ClearRange(register Console * C, int x, int y, int xx, int yy)
 
 #ifdef CONFIG_DCON_VT52
 
-void Vt52Cmd(register Console * cons, char c)
+void Vt52Cmd(register Console *C, char c)
 {
     /* process multi character ESC sequences */
-    if (cons->state > ST_ESCSEEN) {
-	Vt52CmdEx(cons, c);
+    if (C->state > ST_ESCSEEN) {
+	Vt52CmdEx(C, c);
 	return;
     }
 
     /* process single ESC char sequences */
     switch (c) {
     case 'H':			/* home */
-	cons->cx = cons->cy = 0;
+	C->cx = C->cy = 0;
 	break;
     case 'A':			/* up */
-	if (cons->cy)
-	    --cons->cy;
+	if (C->cy)
+	    --C->cy;
 	break;
     case 'B':			/* down */
-	if (cons->cy < MaxRow)
-	    ++cons->cy;
+	if (C->cy < MaxRow)
+	    ++C->cy;
 	break;
     case 'C':			/* right */
-	if (cons->cx < MaxCol)
-	    ++cons->cx;
+	if (C->cx < MaxCol)
+	    ++C->cx;
 	break;
     case 'D':			/* left */
-	if (cons->cx)
-	    --cons->cx;
+	if (C->cx)
+	    --C->cx;
 	break;
     case 'K':			/* clear to eol */
-	ClearRange(cons, cons->cx, cons->cy, Width, cons->cy);
+	ClearRange(C, C->cx, C->cy, Width, C->cy);
 	break;
     case 'J':			/* clear to eoscreen */
-	ClearRange(cons, 0, 0, Width, Height);
+	ClearRange(C, 0, 0, Width, Height);
 	break;
     case 'I':			/* linefeed reverse */
-	ScrollDown(cons, 0, MaxRow);
+	ScrollDown(C, 0, MaxRow);
 	break;
     case 'P':			/* NOT VT52. insert/delete line */
-	cons->state = ST_ESCP;
+	C->state = ST_ESCP;
 	return;
     case 'Q':			/* NOT VT52. My own additions. Attributes... */
-	cons->state = ST_ESCQ;
+	C->state = ST_ESCQ;
 	return;
     case 'Y':			/* cursor move */
-	cons->state = ST_ESCY;
+	C->state = ST_ESCY;
 	return;
 
 #if 0
@@ -328,38 +335,38 @@ void Vt52Cmd(register Console * cons, char c)
 #endif
 
     }
-    cons->state = ST_NORMAL;
+    C->state = ST_NORMAL;
 }
 
-void Vt52CmdEx(register Console * cons, char c)
+void Vt52CmdEx(register Console *C, char c)
 {
-    switch (cons->state) {
+    switch (C->state) {
     case ST_ESCY:
-	cons->tmp = c - ' ';
-	cons->state = ST_ESCY2;
+	C->tmp = c - ' ';
+	C->state = ST_ESCY2;
 	return;
     case ST_ESCY2:
-	Console_gotoxy(cons, c - ' ', cons->tmp);
+	Console_gotoxy(C, c - ' ', C->tmp);
 	break;
     case ST_ESCP:
 	switch (c) {
 	case 'f':		/* insert line at crsr */
-	    ScrollDown(cons, cons->cy, MaxRow);
+	    ScrollDown(C, C->cy, MaxRow);
 	    break;
 	case 'd':		/* delete line at crsr */
-	    ScrollUp(cons, cons->cy + 1, Height);
+	    ScrollUp(C, C->cy + 1, Height);
 	    break;
 	}
 	break;
     case ST_ESCQ:
 	c -= ' ';
 	if (c > 0 && c < MAX_ATTR)
-	    cons->attr |= AttrArry[c - 1];
+	    C->attr |= AttrArry[c - 1];
 	if (c == 0)
-	    cons->attr = A_DEFAULT;
+	    C->attr = A_DEFAULT;
 	break;
     }
-    cons->state = ST_NORMAL;
+    C->state = ST_NORMAL;
 }
 
 #endif
@@ -385,103 +392,103 @@ static int parm2(register char *buf)
     return parm1(buf);
 }
 
-void AnsiCmd(register Console * cons, char c)
+static void AnsiCmd(register Console *C, char c)
 {
     register unsigned char *p;
     int n;
 
     switch (c) {
     case 's':			/* Save the current location */
-	cons->savex = cons->cx;
-	cons->savey = cons->cy;
+	C->savex = C->cx;
+	C->savey = C->cy;
 	break;
     case 'u':			/* Restore saved location */
-	cons->cx = cons->savex;
-	cons->cy = cons->savey;
+	C->cx = C->savex;
+	C->cy = C->savey;
 	break;
     case 'A':			/* Move up n lines */
-	n = parm1(cons->params);
-	cons->cy -= n;
-	if (cons->cy < 0)
-	    cons->cy = 0;
+	n = parm1(C->params);
+	C->cy -= n;
+	if (C->cy < 0)
+	    C->cy = 0;
 	break;
     case 'B':			/* Move down n lines */
-	n = parm1(cons->params);
-	cons->cy += n;
-	if (cons->cy > MaxRow)
-	    cons->cy = MaxRow;
+	n = parm1(C->params);
+	C->cy += n;
+	if (C->cy > MaxRow)
+	    C->cy = MaxRow;
 	break;
     case 'C':			/* Move right n characters */
-	n = parm1(cons->params);
-	cons->cx += n;
-	if (cons->cx > MaxCol)
-	    cons->cx = MaxCol;
+	n = parm1(C->params);
+	C->cx += n;
+	if (C->cx > MaxCol)
+	    C->cx = MaxCol;
 	break;
     case 'D':			/* Move left n characters */
-	n = parm1(cons->params);
-	cons->cx -= n;
-	if (cons->cx < 0)
-	    cons->cx = 0;
+	n = parm1(C->params);
+	C->cx -= n;
+	if (C->cx < 0)
+	    C->cx = 0;
 	break;
     case 'H':			/* cursor move */
-	Console_gotoxy(cons, parm2(cons->params) - 1, parm1(cons->params) - 1);
+	Console_gotoxy(C, parm2(C->params) - 1, parm1(C->params) - 1);
 	break;
     case 'J':			/* erase */
-	if (parm1(cons->params) == 2)
-	    ClearRange(cons, 0, 0, Width, Height);
+	if (parm1(C->params) == 2)
+	    ClearRange(C, 0, 0, Width, Height);
 	break;
     case 'K':			/* Clear to EOL */
-	ClearRange(cons, cons->cx, cons->cy, Width, cons->cy);
+	ClearRange(C, C->cx, C->cy, Width, C->cy);
 	break;
     case 'm':			/* ansi color */
-	cons->state = ST_NORMAL;
-	p = cons->params;
+	C->state = ST_NORMAL;
+	p = C->params;
 	for (;;) {
 	    switch (*p++) {
 	    case 'm':
-		if (p == &cons->params[1])
-		    cons->attr = A_DEFAULT;
+		if (p == &C->params[1])
+		    C->attr = A_DEFAULT;
 		return;
 	    case ';':
 		continue;
 	    case '0':
-		cons->attr = A_DEFAULT;
+		C->attr = A_DEFAULT;
 		continue;
 	    case '1':
-		cons->attr |= A_BOLD;
+		C->attr |= A_BOLD;
 		continue;
 	    case '5':
-		cons->attr |= A_BLINK;
+		C->attr |= A_BLINK;
 		continue;
 	    case '7':
-		cons->attr = A_REVERSE;
+		C->attr = A_REVERSE;
 		continue;
 	    case '8':
-		cons->attr = A_BLANK;
+		C->attr = A_BLANK;
 		continue;
 	    case '3':
 		if (*p >= '0' && *p <= '7') {
-		    cons->attr &= 0xf8;
-		    cons->attr |= *p++ & 0x07;
+		    C->attr &= 0xf8;
+		    C->attr |= *p++ & 0x07;
 		    continue;
 		}
-		cons->attr = A_DEFAULT;
+		C->attr = A_DEFAULT;
 		return;
 	    case '4':
 		if (*p >= '0' && *p <= '7') {
-		    cons->attr &= 0x8f;
-		    cons->attr |= (*p++ << 4) & 0x70;
+		    C->attr &= 0x8f;
+		    C->attr |= (*p++ << 4) & 0x70;
 		    continue;
 		}
 		/* fall thru */
 	    default:
-		cons->attr = A_DEFAULT;
+		C->attr = A_DEFAULT;
 		return;
 	    }
 	}
 	break;
     }
-    cons->state = ST_NORMAL;
+    C->state = ST_NORMAL;
 }
 
 #endif
@@ -513,7 +520,7 @@ void Console_set_vc(int N)
 
 #ifdef CONFIG_DCON_VT52
 
-void Console_gotoxy(register Console * cons, int x, int y)
+static void Console_gotoxy(register Console *C, int x, int y)
 {
     if (x >= MaxCol)
 	x = MaxCol;
@@ -523,9 +530,9 @@ void Console_gotoxy(register Console * cons, int x, int y)
 	x = 0;
     if (y < 0)
 	y = 0;
-    cons->cx = x;
-    cons->cy = y;
-    PositionCursor(cons);
+    C->cx = x;
+    C->cy = y;
+    PositionCursor(C);
 }
 
 #endif
@@ -604,7 +611,7 @@ struct tty_ops dircon_ops = {
 void init_console(void)
 {
     unsigned int i;
-    register Console *cons;
+    register Console *C;
 
     MaxCol = (Width = peekb(0x40, 0x4a)) - 1;
 
@@ -619,27 +626,27 @@ void init_console(void)
 	VideoSeg = 0xb800;
 
     for (i = 0; i < NumConsoles; i++) {
-	cons = &Con[i];
-	cons->cx = cons->cy = 0;
-	cons->state = ST_NORMAL;
-	cons->vseg = VideoSeg + (PageSize >> 4) * i;
-	cons->pageno = i;
-	cons->attr = A_DEFAULT;
+	C = &Con[i];
+	C->cx = C->cy = 0;
+	C->state = ST_NORMAL;
+	C->vseg = VideoSeg + (PageSize >> 4) * i;
+	C->pageno = i;
+	C->attr = A_DEFAULT;
 
 #ifdef CONFIG_DCON_ANSI
 
-	cons->savex = cons->savey = 0;
+	C->savex = C->savey = 0;
 
 #endif
 
 	if (i != 0)
-	    ClearRange(cons, 0, 0, Width, Height);
+	    ClearRange(C, 0, 0, Width, Height);
     }
 
-    cons = &Con[0];
-    cons->cx = peekb(0x40, 0x50);
-    cons->cy = peekb(0x40, 0x51);
-    Visible = cons;
+    C = &Con[0];
+    C->cx = peekb(0x40, 0x50);
+    C->cy = peekb(0x40, 0x51);
+    Visible = C;
 
 #ifdef CONFIG_DCON_VT52
 

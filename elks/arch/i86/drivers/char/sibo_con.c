@@ -65,18 +65,14 @@ extern int Current_VCminor;
 void LCD_ScrollUp();
 void LCD_Position();
 void LCD_ClearLine();
-void LCD_WriteChar();
 
-extern int AddQueue();		/* From xt_key.c */
-extern int GetQueue();
+extern void AddQueue(unsigned char Key);	/* From xt_key.c */
 
-void WriteChar(
-     register Console *C,
-     char Ch)
+void WriteChar(register Console *C, char c)
 {
     int loopx, loopy;
 
-    if (Ch == '\f') {
+    if (c == '\f') {
 	C->xpos = 0;
 	C->ypos = 0;
 
@@ -104,7 +100,7 @@ void WriteChar(
 	return;
     }
 
-    switch (Ch) {
+    switch (c) {
 
     case '\b':
 	if (C->xpos > 0) {
@@ -198,17 +194,17 @@ void WriteChar(
 
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE
 
-    C->screen[C->ypos][C->xpos] = Ch;
+    C->screen[C->ypos][C->xpos] = c;
 
     if (Visible == &Con[Current_VCminor])
 
 #endif
 
-	LCD_WriteChar(Ch);
+	LCD_WriteChar(c);
 
 #ifdef CONFIG_SIBO_CONSOLE_ECHO
 
-    send_byte(Ch);
+    send_byte(c);
 
 #endif
 

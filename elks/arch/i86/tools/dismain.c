@@ -488,7 +488,7 @@ static void disbss(void)
   *                                                         *
   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void main(int argc, register char **argv)
+int main(int argc, register char **argv)
 {				/* * * * * * * * * * * START OF main() * * * * * * * * * * */
 
     char a[1024];

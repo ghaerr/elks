@@ -34,17 +34,6 @@ extern struct tty ttys[];
  */
 #include "KeyMaps/keymaps.h"
 
-#if 0
-#include "KeyMaps/keys-be.h"
-#include "KeyMaps/keys-de.h"
-#include "KeyMaps/keys-dv.h"
-#include "KeyMaps/keys-es.h"
-#include "KeyMaps/keys-fr.h"
-#include "KeyMaps/keys-se.h"
-#include "KeyMaps/keys-uk.h"
-#include "KeyMaps/keys-us.h"
-#endif
-
 int Current_VCminor = 0;
 int kraw = 0;
 
@@ -73,8 +62,7 @@ int kraw = 0;
 
 static void SetLeds();
 
-void AddQueue();
-int GetQueue();
+void AddQueue(unsigned char Key);
 
 int KeyboardInit(void)
 {
@@ -242,35 +230,12 @@ void keyboard_irq(
 
 /* Ack.  We can't add a character until the queue's ready */
 
-void AddQueue(
-     unsigned char Key)
+void AddQueue(unsigned char Key)
 {
     register struct tty *ttyp = &ttys[Current_VCminor];
 
-#if 0
-
-    if ((ttyp->termios.c_lflag & ISIG) && (ttyp->pgrp)) {
-	int sig = 0;
-	if (Key == ttyp->termios.c_cc[VINTR])
-	    sig = SIGINT;
-	if (Key == ttyp->termios.c_cc[VSUSP])
-	    sig = SIGTSTP;
-	if (sig) {
-	    kill_pg(ttyp->pgrp, sig, 1);
-	    return;
-	}
-    }
-    if (ttyp->inq.size != 0)
-	chq_addch(&ttyp->inq, Key, 0);
-
-#else
-
     if (!tty_intcheck(ttyp, Key) && (ttyp->inq.size != 0))
 	chq_addch(&ttyp->inq, Key, 0);
-
-#endif
-
-    return;
 }
 
 /*

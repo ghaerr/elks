@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# This is a script to create the correct choice command to select from
+# the currently available keyboard code sets when configuring ELKS.
+
+function codes() {
+    grep '^/\* Keymap:' keys-*.h | cut -d : -f 1,3,4 | tr : ' '
+}
+
+function process() {
+    local CODE FILE NAME SEP='"'
+
+    while read FILE CODE NAME ; do
+	printf '\t\\\n\t%-12s\tCONFIG_KEYMAP_%s' >> Config.in \
+		"${SEP}${NAME}" "${CODE}"
+	SEP=' '
+	printf '#include "%s"\t\t/* %s\t%-9s\t*/\n' >> keymaps.h \
+		"${FILE}" "${CODE}" "${NAME}"
+    done
+}
+
+printf '/* Automatically created - do not edit */\n\n' > keymaps.h
+printf '# Automatically created - do not edit.\n\n' > Config.in
+printf "choice 'XT Keyboard support'\t\t" >> Config.in
+codes | sort +1f | process
+printf '"\t\tAmerican\n\n# EOF.\n' >> Config.in

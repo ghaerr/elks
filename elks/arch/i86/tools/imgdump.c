@@ -249,12 +249,14 @@ void imagedump(char *filename)
 }
 
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     int i;
+
     if (argc == 1)
 	fprintf(stderr, "usage: imgdump .img-file1 .... .img-fileN\n");
     else
 	for (i = 1; i < argc; i++)
 	    imagedump(argv[i]);
+    exit(0);
 }

@@ -62,7 +62,7 @@ void scanfile(char *parentname, char *filename, int indent)
     fclose(fp);
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     char buf[12], *cp;
     int c;

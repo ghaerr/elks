@@ -23,17 +23,16 @@
  */
 /* #define NO_TRUNCATE */
 
-static int namecompare(size_t len,
-		       size_t maxlen, char *name, register char *buffer)
+static int namecompare(size_t len, size_t max, char *name, register char *buf)
 {
-    int retval;
+    int ret;
 
-    if ((len > maxlen) || ((len < maxlen) && (buffer[len] != 0)))
-	retval = 0;
+    if ((len > max) || ((len < max) && (buf[len] != 0)))
+	ret = 0;
     else
-	retval = !fs_memcmp(name, buffer, len);
+	ret = !fs_memcmp(name, buf, len);
 
-    return retval;
+    return ret;
 }
 
 /*

@@ -16,7 +16,7 @@ Christoph Plattner    Christoph.Plattner@dot.at         31 Jan 2000- 2 Feb 2000
 David Murn            scuffer@hups.apana.org.au         11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
-Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-21 Apr 2002
+Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-24 Apr 2002
 Jacek Lipkowski       sq5bpf@acid.ch.pw.edu.pl          20 Jan 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
@@ -32,12 +32,30 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Wed Apr 24 16:14:33 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+Wed Apr 24 18:40:12 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Actually added mkcfg script referred to in previous commit.
+
+Wed Apr 24 16:14:33 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Commited a very important chunk I left out with my last
 	  commit, conserning map_buffer() function.
 	* Correct data segment rellocation after a schedule(), called
 	  at the end of an interrupt.
+
+Wed Apr 24 11:25:14 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Standardised prototypes for AddQueue function.
+	* Standardised prototypes for AnsiCmd function.
+	* Standardised prototypes for ClearRange function.
+	* Standardised prototypes for KeyboardInit function.
+	* Standardised prototypes for namecompare function.
+	* Standardised prototypes for PositionCursor function.
+	* Standardised prototypes for ScrollDown function.
+	* Standardised prototypes for ScrollUp function.
+	* Standardised prototypes for Vt52Cmd function.
+	* Standardised prototypes for Vt52CmdEx function.
+	* Standardised prototypes for WriteChar function.
 
 Wed Apr 24 00:14:04 BST 2002	Riley Williams <Riley@Williams.Name>
 
@@ -62,6 +80,7 @@ Tue Apr 23 16:35:53 BST 2002	Riley Williams <Riley@Williams.Name>
 	  is for more than one language and a separate copy of this comment
 	  line is provided for each language, then all language options are
 	  automatically included, as currently happens with the BE/FR file.
+	* Accidentally omitted mkcfg script when committing this. Sorry.
 	* Updated TODO document.
 
 Tue Apr 23 01:27:03 BST 2002	Riley Williams <Riley@Williams.Name>

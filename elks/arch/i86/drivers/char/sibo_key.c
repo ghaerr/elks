@@ -24,9 +24,7 @@ extern struct tty ttys[];
 
 #define ANYSHIFT LSHIFT|RSHIFT
 
-int AddQueue();
-int GetQueue();
-int KeyboardInit();
+void AddQueue(unsigned char Key);
 
 int Current_VCminor = 0;
 
@@ -130,24 +128,13 @@ struct pt_regs *regs)
 /* Ack.  We can't add a character until the queue's ready
  */
 
-int AddQueue(
-     unsigned char Key)
+void AddQueue(unsigned char Key)
 {
     register struct tty *ttyp = &ttys[Current_VCminor];
-    if (ttyp->inq.size != 0) {
+
+    if (ttyp->inq.size != 0)
 	chq_addch(&ttyp->inq, Key);
-    }
-    return 0;
 }
-
-#if 0
-
-int GetQueue(void)
-{
-    return chq_getch(&ttys[0].inq, 0, 0);
-}
-
-#endif
 
 /*
  *      Busy wait for a keypress in kernel state for bootup/debug.
