@@ -70,7 +70,6 @@ _ip_calc_chksum:
 	mov	ax, [di]
 	inc	di
 	inc	di
-	dec	cx
 loop1:
 	adc	ax, [di]
         inc	di
