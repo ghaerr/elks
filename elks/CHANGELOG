@@ -6,6 +6,12 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Fri Feb 04 18:37 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Modified buffer cache code so external 64K buffer cache
+	can be removed on systems with fast block device access
+	and low RAM.
+
 Thu Feb 03 17:40 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Minor and cosmetic fixes to changes committed by Christoph

@@ -21,12 +21,16 @@ static struct buffer_head *bh_lru=NULL;
 static struct buffer_head *bh_llru=NULL;
 
 /*struct wait_queue *bufwait; */	/* Wait for a free buffer */
-static struct wait_queue *bufmapwait;		/* Wait for a free L1 buffer area */
 
 static struct buffer_head buffers[NR_BUFFERS];
 static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */ 
+
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
+static struct wait_queue *bufmapwait;		/* Wait for a free L1 buffer area */
 static struct buffer_head *bufmem_map[NR_MAPBUFS]; /* Array of bufmem's allocation */ 
 static unsigned int _buf_ds;			/* Segment(s?) of L2 buffer cache */
+#endif
+
 
 /*
  *	Wait on a buffer
@@ -195,7 +199,11 @@ static struct buffer_head *get_free_buffer()
 		register struct buffer_head *bh=bh_lru;
 		while(bh)
 		{
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
 			if(bh->b_count==0 && !bh->b_dirty && !bh->b_lock && !bh->b_data)
+#else /* CONFIG_FS_EXTERNAL_BUFFER */
+			if(bh->b_count==0 && !bh->b_dirty && !bh->b_lock)
+#endif /* CONFIG_FS_EXTERNAL_BUFFER */
 			{
 				put_last_lru(bh);
 				return bh;
@@ -433,6 +441,8 @@ int on;
 	restore_flags(flags);
 }
 
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
+
 static int lastumap;
 
 /* map_buffer forces a buffer into L1 buffer space. It will freeze forever 
@@ -544,6 +554,7 @@ register struct buffer_head *bh;
 		__brelse(bh);
 	}
 }
+#endif /* CONFIG_FS_EXTERNAL_BUFFER */
 
 /* This function prints the status of the L1 mappings... */
 #if 0 /* Currently unused */
@@ -567,16 +578,22 @@ void buffer_init()
 	register struct buffer_head *bh=&buffers[0];
 	int i;
 
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
 	_buf_ds = mm_alloc(NR_BUFFERS * 0x40);
 	lastumap = 0;
 	for (i = 0; i < NR_MAPBUFS; i++)
 		bufmem_map[i] = 0;
+#endif /* CONFIG_FS_EXTERNAL_BUFFER */
 	
 	for(i=0;i<NR_BUFFERS;i++)
 	{
-		bh->b_data=0;		/* L1 buffer cache is reserved! */
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
+		bh->b_data = 0;		/* L1 buffer cache is reserved! */
 		bh->b_mapcount = 0;
 		bh->b_num = i;		/* Used to compute L2 location */
+#else /* CONFIG_FS_EXTERNAL_BUFFER */
+		bh->b_data = bufmem[i];
+#endif /* CONFIG_FS_EXTERNAL_BUFFER */
 		if(i==0)
 		{
 			bh_chain=bh;

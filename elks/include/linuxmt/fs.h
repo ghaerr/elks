@@ -33,10 +33,17 @@
 #define NR_INODE	96	/* this should be bigger than NR_FILE */
 #define NR_FILE 	64	/* this can well be larger on a larger system */
 #define NR_SUPER	4
-#define NR_BUFFERS	64	/* This may be assumed by some code! */
+#define NR_EXT_BUFFERS	64	/* This may be assumed by some code! */
 #define NR_MAPBUFS	8	/* Maximum number of mappable buffers */	
-#define BLOCK_SIZE 1024
+#define BLOCK_SIZE	1024
 #define BLOCK_SIZE_BITS 10
+
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
+#define NR_BUFFERS NR_EXT_BUFFERS
+#else
+#define NR_BUFFERS NR_MAPBUFS
+#endif
+
 
 #define NR_IHASH	11
 
@@ -111,9 +118,22 @@
 extern void buffer_init();
 extern void inode_init();
 
+#ifndef CONFIG_FS_EXTERNAL_BUFFER
+
+#define map_buffer(_a)
+#define unmap_buffer(_a)
+#define unmap_brelse(_a) brelse(_a)
+
+#endif /* CONFIG_FS_EXTERNAL_BUFFER */
+
+
 struct buffer_head
 {
-	unsigned char b_num;	/* Used to lookup L2 area */
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
+	unsigned char b_num;	 /* Used to lookup L2 area */
+	unsigned int b_mapcount; /* Used for the new L2 buffer cache scheme */
+#endif /* CONFIG_FS_EXTERNAL_BUFFER */
+	char *b_data;		 /* Address in L1 buffer area */
 	block_t b_blocknr;
 	kdev_t b_dev;
 	struct buffer_head *b_next;
@@ -125,8 +145,6 @@ struct buffer_head
 #ifdef BLOAT_FS
 	unsigned int b_size;
 #endif
-	unsigned int b_mapcount; /* Used for the new L2 buffer cache scheme */
-	char *b_data;		/* Address in L1 buffer area */
 #ifdef BLOAT_FS
 	unsigned int b_list;
 	unsigned long b_flushtime;

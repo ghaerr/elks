@@ -6,7 +6,7 @@
 #include <arch/bitops.h>
 #include <linuxmt/fs.h>
 
-extern void brelse(bh)
+void brelse(bh)
 register struct buffer_head *bh;
 {
 	if(bh)

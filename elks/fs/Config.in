@@ -11,6 +11,7 @@ bool 'elksfs fs support' CONFIG_ELKSFS_FS
 comment 'General filesystem settings'
 
 bool 'Full VFS support' CONFIG_FULL_VFS
+bool 'Extra external buffer cache' CONFIG_FS_EXTERNAL_BUFFER
 bool 'Pipe support' CONFIG_PIPE
 bool 'Make all FS read-only' CONFIG_FS_RO
 

@@ -427,6 +427,16 @@ CONFIG_FULL_VFS
   If you say no to this then the vfs will only support one filesystem 
   type. You do not need to say yes currently as only minixfs is
   available.
+
+Extra external buffer cache
+CONFIG_FS_EXTERNAL_BUFFER
+  If you say no to this then the filesystem will not allocate 64K of
+  buffers in main memory. This saves RAM, and makes the kernel smaller
+  and simpler, but cripples performance on systems with slow block devices
+  like floppies or old hard disks. This option should only be specified as
+  no for systems which have very fast block devices such as RAM, ROM or
+  Flash disks. It is also useful for stress testing the block device
+  code.
   
 Inter-process pipe support
 CONFIG_PIPE
