@@ -32,6 +32,12 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sun Apr 21 22:54:03 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* ANSI'fied function prototypes in net subtree.
+	* Applied `make indent` rule to net subtree.
+	* Verified that kernel compiles with above changes applied.
+
 Sun Apr 21 20:54:00 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Fixed failure of `make indent` when run in the base directory.

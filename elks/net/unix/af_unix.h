@@ -13,23 +13,23 @@
 							(UN_BUF_SIZE-1))
 #define UN_BUF_SPACE(UPD)	((UN_BUF_SIZE-1) - UN_BUF_AVAIL(UPD))
 
-
-
 struct unix_proto_data {
-	int		refcnt;
-	struct socket * socket;
+    int refcnt;
+    struct socket *socket;
+
 #if BLOAT_NET
-	int		protocol;
+    int protocol;
 #endif
-	struct sockaddr_un sockaddr_un;
-	short		sockaddr_len;
-	char		buf[UN_BUF_SIZE];
-	int		bp_head, bp_tail;
-	struct inode *	inode;
-	struct unix_proto_data *	peerupd;
-	struct wait_queue wait;
-	int		lock_flag;
-	short sem;
+
+    struct sockaddr_un sockaddr_un;
+    short sockaddr_len;
+    char buf[UN_BUF_SIZE];
+    int bp_head, bp_tail;
+    struct inode *inode;
+    struct unix_proto_data *peerupd;
+    struct wait_queue wait;
+    int lock_flag;
+    short sem;
 };
 
 #endif
