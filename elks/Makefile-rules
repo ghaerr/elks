@@ -37,6 +37,11 @@
 #			the patterns "*.?", "*.cc", "*.html", "*.in",
 #			"*.sh", "*.tk", "*.txt", "Makefile*" or "README*".
 #
+#	NOINDENT	Any files in the current directory that are NOT
+#			to be processed in a `make indent` run. Usually,
+#			these files include sections of assembly code,
+#			which gets mangled by the `indent` command.
+#
 # No other variables should be defined before including this file.
 #
 #########################################################################
@@ -286,10 +291,22 @@ doclean: $(CLEANDEP)
 	done
 
 dodep:	$(DEPEND)
-	@if \ls *.c > /dev/null 2>&1 ; then ${MAKE} mkdep ; fi
+	@if \ls *.c > /dev/null 2>&1 ; then \
+		${MAKE} mkdep ; \
+	fi
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
 			${MAKE} -C "$$DIR" dodep ; \
+		fi ; \
+	done
+
+indent:
+	@if \ls *.c > /dev/null 2>&1 ; then \
+		$(BASEDIR)/scripts/reindent $(NOINDENT) ; \
+	fi
+	@for DIR in */ ; do \
+		if [ -f "$$DIR/Makefile" ]; then \
+			${MAKE} -C "$$DIR" indent ; \
 		fi ; \
 	done
 

@@ -560,7 +560,7 @@ void print_bufmap_status()
 
 void buffer_init()
 {
-	register struct buffer_head *bh=&buffers[0];
+	register struct buffer_head *bh=buffers;
 	int i;
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER

@@ -89,12 +89,12 @@ int useSign;
 	int c;
 
 	bp[1]=0;
-	v=*ptr;
+	v = *ptr;
 	if(len == 2)
 		v = (unsigned short)v;
 	if(useSign && v < 0) {
 		con_write("-",1);
-		v=-v;
+		v = -v;
 	}
 
 	do {
@@ -114,17 +114,17 @@ int a1;
 	register unsigned char *p=(char *)&a1;
 	char c, tmp;
 
-	while(c=*fmt++) {
+	while(c = *fmt++) {
 		if(c!='%')
 			con_write(fmt-1,1);
 		else {
 			int len=2;
-			c=*fmt++;
+			c = *fmt++;
 			if(c=='h')
-				c=*fmt++;
+				c = *fmt++;
 			else if(c=='l') {
 				len=4;
-				c=*fmt++;
+				c = *fmt++;
 			}
 			
 			switch(c)				
@@ -143,7 +143,7 @@ int a1;
 					break;
 				case 's':
 				{
-					char *cp=*((char **)p);
+					char *cp = *((char **)p);
 					p+=sizeof(char*);
 					while(*cp)
 						con_write(cp++,1);
@@ -151,7 +151,7 @@ int a1;
 				}
 				case 't':
 				{
-					char * cp=*((char **)p);
+					char * cp = *((char **)p);
 					p+=sizeof(char *);
 					while ((tmp = get_fs_byte(cp))) {
 						con_charout(tmp);

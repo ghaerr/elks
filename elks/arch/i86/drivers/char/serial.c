@@ -387,7 +387,7 @@ register struct serial_info *sp;
 int rs_init()
 {
 
-	register struct serial_info *sp=&ports[0];
+	register struct serial_info *sp=ports;
 	int i;
 	int ttyno = 4;
 	printk("Serial driver version 0.01 with no serial options enabled\n");

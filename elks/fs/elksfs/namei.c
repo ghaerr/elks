@@ -655,7 +655,7 @@ char * symname;
 	}
 	map_buffer(name_block);
 	i = 0;
-	while (i < 1023 && (c=*(symname++)))
+	while (i < 1023 && (c = *(symname++)))
 		name_block->b_data[i++] = c;
 	name_block->b_data[i] = 0;
 	mark_buffer_dirty(name_block, 1);

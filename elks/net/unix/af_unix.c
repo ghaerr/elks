@@ -183,7 +183,7 @@ int sockaddr_len;
 	if (i < 0) {
 /*		printk("UNIX: bind: can't open socket %s\n", fname);*/
 		if (i==-EEXIST) {
-			i=-EADDRINUSE;
+			i = -EADDRINUSE;
 		}
 		return(i);
 	}

@@ -54,7 +54,7 @@ repeat:
 			
 	for(i=0;i<MAX_TASKS;i++)
 	{
-		p=&task[i];
+		p = &task[i];
 		if(p->pid==last_pid || p->pgrp==last_pid || 
 			p->session == last_pid)
 			goto repeat;
@@ -77,7 +77,7 @@ int virtual;
 	if(i<0)
 		return i;
 
-	t=&task[i];
+	t = &task[i];
 	
 	/* Copy everything */
 	 

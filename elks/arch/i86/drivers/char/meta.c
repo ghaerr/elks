@@ -262,7 +262,7 @@ reg_err:
 		return -ENODEV;
 	}
 
-	driver=&drivers[minor - 1];
+	driver = &drivers[minor - 1];
 	if (driver->udd_task != current) {
 		printk("task mismatch %x %x\n", driver->udd_task, current);
 		return -EINVAL;

@@ -24,13 +24,49 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-14 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        rhw@InfraDead.Org                 16 Nov 1998-14 Apr 2002
+Riley Williams        rhw@InfraDead.Org                 16 Nov 1998-18 Apr 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Thu Apr 18 23:15:09 BST 2002	Riley Williams <rhw@InfraDead.Org>
+
+	* Added scripts/reindent to reindent all *.c files in current
+	  directory that are NOT listed on the command line, using a
+	  standard set of indentation parameters.
+	* Added `make indent` command to reindent all *.c files using
+	  a standard indentation scheme. The scheme chosen is the GNU
+	  indentation scheme tweaked to my personal preferences, with
+	  any .indent.pro files ignored and all relevant options given
+	  on the command line used.
+	* Added new NOINDENT makevar to state code files not to be
+	  reformatted by `make indent` - usually because they include
+	  asm statements, which indent doesn't handle at all well.
+	* Resolved ambiguities discovered by a test application of the
+	  new `make indent` command detailed above. These ambiguities
+	  were primarily caused by the current coding format omitting
+	  spaces either side of the assignment operator, and resulted
+	  in the sequences '=*', '=-' and '=&' appearing regularly.
+	  These sequences can have either of two different meanings,
+	  as follows:
+
+		Symbol		Meaning 1	Meaning 2
+		~~~~~~		~~~~~~~~~	~~~~~~~~~
+
+		X =* Y		X = (X * Y)	X = (*Y)
+		X =- Y		X = (X - Y)	X = (-Y)
+		X =& Y		X = (X & Y)	X = (&Y)
+
+	  In each case, the two meanings produce completely different
+	  results in most cases, and which option gets selected is
+	  compiler-dependent. Since meaning 1 is depretiated nowadays,
+	  all current compilers SHOULD select meaning 2, but there is
+	  no guarantee that this takes place.
+
+	NOTE: The ELKS source has NOT been reformatted at this point.
 
 Sun Apr 14 12:41:54 BST 2002	Riley Williams <rhw@InfraDead.Org>
 

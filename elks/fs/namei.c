@@ -271,7 +271,7 @@ int perm;
 	register struct inode *inode;
 	error = _namei(pathname,NULL,1,res_inode);
 	if (!error) {
-		inode=*res_inode;
+		inode = *res_inode;
 		if (dir==NOT_DIR && S_ISDIR(inode->i_mode)) {
 			error = -EISDIR;
 		} else if (dir==IS_DIR && !S_ISDIR(inode->i_mode)) {

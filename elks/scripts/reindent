@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# This script is used by the `make indent` command, and expects to be called
+# with a list of files in the current directory that are NOT to be reindented.
+# It reindents all files in the current directory not in that list that match
+# the *.c pattern.
+
+# If the following line is uncommented, this script takes steps to ensure that
+# no changes are made to any files.
+
+export DEBUG=N
+
+if [ x$DEBUG != x ]; then
+    printf 'DEBUG: Using ' >&2
+    printf ' <%s>' "$@" >&2
+    echo >&2
+fi
+for FILE in *.c ; do \
+    if ! printf '%s\n' "$@" | grep -q ^${FILE}'$' ; then
+	if [ x$DEBUG != x ]; then
+	    echo DEBUG: Process "${FILE}"
+	    cp -f "${FILE}"{,.ok}
+	fi
+	if fgrep -q '#asm' "${FILE}" ; then
+	    printf '\nWARNING: %s contains #asm construct.\n\n' \
+			"${FILE}" >&2
+	fi
+	indent "${FILE}" --ignore-profile			\
+		--braces-on-if-line				\
+		--cuddle-else					\
+		--dont-break-procedure-type			\
+		--indent-level4 				\
+		--no-space-after-function-call-names		\
+		--space-after-cast				\
+		--start-left-side-of-comments			\
+		--tab-size8
+	if [ x$DEBUG != x ]; then
+	    mv -f "${FILE}"{.ok,}
+	fi
+    fi
+done

@@ -105,7 +105,7 @@ int slen;		/* Size of built stack */
 	filp->f_reada=0;
 #endif
 	filp->f_op = inode->i_op->default_file_ops;
-	retval=-ENOEXEC;
+	retval = -ENOEXEC;
 	if(!filp->f_op)
 		goto end_readexec;
 	if(filp->f_op->open)
@@ -145,7 +145,7 @@ int slen;		/* Size of built stack */
 		mh.chmem<1024 || mh.tseg==0)
 	{
 		printd_exec1("EXEC: bad header, result %d",result);
-		retval=-ENOEXEC;
+		retval = -ENOEXEC;
 		goto close_readexec;
 	}
 	/* I am so far unsure about whether we need this, or the S_SPLITID format */
@@ -157,7 +157,7 @@ int slen;		/* Size of built stack */
 		if (result != sizeof(msuph)) {
 			printd_exec1("EXEC: bad secondary header, result %d",
 					result);
-			retval=-ENOEXEC;
+			retval = -ENOEXEC;
 			goto close_readexec;
 		}
 		stack_top = (seg_t)msuph.msh_dbase;
@@ -184,7 +184,7 @@ int slen;		/* Size of built stack */
 	if ((result != sizeof(mshdr)) || (mshdr.magic != MSDOS_MAGIC) )
 	{
 		printd_exec1("EXEC: bad header, result %d",result);
-		retval=-ENOEXEC;
+		retval = -ENOEXEC;
 		goto close_readexec;
 	}
 	execformat=EXEC_MSDOS;
@@ -210,7 +210,7 @@ blah:
 		cseg=mm_alloc((segext_t)((mh.tseg+15)>>4));
 	}
 	if (!cseg) {
-		retval=-ENOMEM;
+		retval = -ENOMEM;
 		goto close_readexec;
 	}
 	 
@@ -227,7 +227,7 @@ blah:
 	len=(len+15)&~15L;
 	if (len > 0x10000L)
 	{
-		retval=-ENOMEM;
+		retval = -ENOMEM;
 		mm_free(cseg);
 		goto close_readexec;
 	}
@@ -237,7 +237,7 @@ blah:
 	dseg=mm_alloc((segext_t)(len>>4));
 	if(!dseg)
 	{
-		retval=-ENOMEM;
+		retval = -ENOMEM;
 		mm_free(cseg);
 		goto close_readexec;
 	}
@@ -249,7 +249,7 @@ blah:
 	if(result!=mh.tseg)
 	{
 		printd_exec2("EXEC(tseg read): bad result %d, expected %d",result,mh.tseg);
-		retval=-ENOEXEC;
+		retval = -ENOEXEC;
 		mm_free(cseg);
 		mm_free(dseg);
 		goto close_readexec;
@@ -261,7 +261,7 @@ blah:
 	if(result!=mh.dseg)
 	{
 		printd_exec2("EXEC(dseg read): bad result %d, expected %d",result,mh.dseg);
-		retval=-ENOEXEC;
+		retval = -ENOEXEC;
 		mm_free(cseg);
 		mm_free(dseg);
 		goto close_readexec;

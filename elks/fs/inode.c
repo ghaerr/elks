@@ -71,7 +71,7 @@ static void setup_inodes()
 	REGOPT struct inode * inode;
 	int i = NR_INODE;
 	
-	inode=&inode_block[0];
+	inode=inode_block;
 
 	nr_inodes = i;
 	nr_free_inodes = i;

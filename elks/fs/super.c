@@ -592,7 +592,7 @@ retry_floppy:
 	
 	for(fs_type = &file_systems[0];*fs_type;fs_type++)
 	{
-		struct file_system_type *fp=*fs_type;
+		struct file_system_type *fp = *fs_type;
 		if(retval)
 			break;
 #ifdef BLOAT_FS
