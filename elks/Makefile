@@ -2,8 +2,8 @@
 
 VERSION 	= 0	# (0-255)
 PATCHLEVEL	= 0	# (0-255)
-SUBLEVEL	= 88	# (0-255)
-# PRE		= 1	# (0-255)	If not a pre, comment this line.
+SUBLEVEL	= 89	# (0-255)
+PRE		= 1	# (0-255)	If not a pre, comment this line.
 
 # Specify the architecture we will use.
 
@@ -15,7 +15,7 @@ ARCH		= i86
 
 ROOT_DEV	= FLOPPY
 
-# Specify the target for `make nbImage`
+# Specify the target for the netboot image.
 
 TARGET_NB_IMAGE	= $(TOPDIR)/nbImage
 
@@ -54,7 +54,7 @@ VSNCODE		= $(shell printf '0x%06X%02X' $$[$(VSNCODE1)-1] $(PRE))
 endif
 
 #########################################################################
-# Specify the linuxMT root directory.
+# Specify the root directory.
 
 TOPDIR		= $(shell cd "$(ELKSDIR)" ; \
 			  if [ -n "$$PWD" ]; \
@@ -72,7 +72,9 @@ DISTDIR 	= elks-$(DIST)
 INCDIR		= $(TOPDIR)/include
 
 #########################################################################
-# Specify the standard definitions to be given to ELKS programs.
+# Specify the standard definitions to be given to ELKS programs. We use
+# ASCII code 160 decimal for spaces in the date and UTS_VERSION strings
+# to avoid the shell splitting them up as separate 'words'.
 
 CCDATE		= $(shell date | tr ' ' ' ')
 
@@ -326,7 +328,8 @@ deb:	tar
 rpm:	tar rpm.spec
 	@echo
 	@echo I do not yet know how to create *.rpm archives, sorry.
-	@echo I have, however, created the spec file required to do so.
+	@echo I have, however, created the spec file required to do so,
+	@echo and the tar archive to be placed inside it.
 	@echo
 
 tar:	dist
@@ -338,23 +341,30 @@ tar:	dist
 # Configuration stuff
 
 config:
-	$(CONFIG_SHELL) scripts/Configure arch/$(ARCH)/config.in
+	@echo
+	@$(CONFIG_SHELL) scripts/Configure arch/$(ARCH)/config.in
 	@echo
 	@echo Configuration complete.
 	@echo
 
 defconfig:
+	@echo
 	@yes '' | make config
+	@echo
+	@echo Configuration complete.
+	@echo
 
 menuconfig:
 	make -C scripts/lxdialog all
 	$(CONFIG_SHELL) scripts/Menuconfig arch/$(ARCH)/config.in
 	@echo
-	@echo COnfiguration complete.
+	@echo Configuration complete.
 	@echo
 
 test:
-	@printf '\t%s\n' $(CCDEFS)
+	@echo
+	@set
+	@echo
 
 #########################################################################
 ### Dependencies:
