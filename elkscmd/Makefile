@@ -16,7 +16,10 @@ $(COMB_TARGET_FS):
 $(ROOT_TARGET_FS):
 	dd if=/dev/zero of=$(ROOT_TARGET_FS) bs=1024 count=$(ROOT_TARGET_BLKS)
 
-$(ELKSCMD_DIR)/rootfs_template/etc/issue: $(ELKS_DIR)/Makefile
+$(ELKSCMD_DIR)/rootfs_template/etc/passwd: rootfs_template.tar
+	tar xpf rootfs_template.tar
+
+$(ELKSCMD_DIR)/rootfs_template/etc/issue: $(ELKSCMD_DIR)/rootfs_template/etc/passwd $(ELKS_DIR)/Makefile
 	$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile > $(ELKSCMD_DIR)/rootfs_template/etc/issue
 
 mount_combfs: $(COMB_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
@@ -90,3 +93,4 @@ clean:
 	umount $(COMB_TARGET_FS) || true
 	umount $(ROOT_TARGET_FS) || true
 	rm -f $(ROOT_TARGET_FS) $(COMB_TARGET_FS) boot images.zip
+	rm -rf rootfs_template
