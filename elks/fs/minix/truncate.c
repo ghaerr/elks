@@ -203,11 +203,7 @@ register struct inode * inode;
 #endif
 		schedule();
 	}
-#ifdef CONFIG_ACTIME
 	inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-#else
-	inode->i_mtime = CURRENT_TIME;
-#endif
 	inode->i_dirt = 1;
 }
 
