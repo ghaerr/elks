@@ -7,6 +7,12 @@ be longer than the lines of dashes.
 Al
 ------------------------------------------------------------------------------
 
+Sat Sep 29 13:47:47 EEST 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* Added lefted out locking of sock.avail_data
+	* Changed unix and nano sockets to use semaphores. Saved around
+	  120 bytes of code.
+
 Wed Sep 26 23:36:17 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Deleted redundant Makefile's from elks/Documentation subtree.
@@ -25,6 +31,10 @@ Sun Sep  9 xx:xx:xx BST 2001	Riley Williams <rhw@MemAlpha.cx>
 	  generate the *.a files from the collections of *.o files that
 	  were created by the earlier rationalisation, rather than using
 	  a mixture of ld for some and ld86 for others.
+
+Sun Sep  9 09:56:25 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Used `mkMake` script to initialise all missing Makefile's.
 
 Sat Sep  8 22:33:39 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
@@ -377,11 +387,19 @@ Mon Mar 26 16:29 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 
 	* Fix long standing file system bug: EBUSY when unmounting,
 	  and related sys_access() bug.
+<<<<<<< CHANGELOG
+=======
 
 ------------------------------------------------------------------------------
+>>>>>>> 1.172
 
+<<<<<<< CHANGELOG
+Fri Mar 03 11:44 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+=======
 Fri Mar  3 11:44 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
+>>>>>>> 1.172
 	* Final changes for 0.0.83
 
 Tue Feb 29 11:00 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
@@ -849,11 +867,19 @@ Sun Jan 31 17:50 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix main.c so init is launched with a valid set of argvs.
 	* Fix ntty.c so tty driver ioctls are called.
+<<<<<<< CHANGELOG
+=======
 
 ------------------------------------------------------------------------------
+>>>>>>> 1.172
 
+<<<<<<< CHANGELOG
+Sat Dec 06 00:24 GMT 1998   Alastair Bridgewater  <nyef@softhome.net>
+
+=======
 Sat Dec  6 00:24 GMT 1998   Alastair Bridgewater  <nyef@softhome.net>
 
+>>>>>>> 1.172
 	* Fixed arch/i86/lib/Makefile to rebuild setup[bw].s when nessecary.
 
 Wed Dec  3 17:12 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
