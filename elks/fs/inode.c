@@ -58,7 +58,7 @@ REGOPT struct inode *inode;
 	inode->i_next = inode->i_prev = NULL;
 }
 
-#ifdef HAS_INODE
+#ifdef HASH_INODE
 static struct inode_hash_entry *hash(dev,i)
 kdev_t dev;
 ino_t i;
@@ -636,6 +636,7 @@ repeat:
 			goto found_it;
 #else
 repeat:
+	inode = inode_block;
 	for (i = NR_INODE ; i ; i--,inode++ ) {
 		if (inode->i_dev == sb->s_dev && inode->i_ino == inr) {
 			goto found_it;

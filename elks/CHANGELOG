@@ -4,7 +4,11 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
-Mon Nov 01 18:02 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Nov 05 17:21 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fixed inode finding bug which caused mount problems.
+
+Mon Nov 01 18:02 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Final changes for 0.0.80.
 
