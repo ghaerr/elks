@@ -29,35 +29,37 @@
  * (Note: the *_driver.minor_start values 1, 64, 128, 192 are
  * hardcoded at present.)
  */
- 
+
 #define NR_PTYS		4
 
 /* Not all of these will get used most likely */
 
-struct tty_ops {
-	int (*open)();
-	int (*release)();
-	int (*write)();
-	int (*read)();
-	int (*ioctl)();
+struct tty_ops
+{
+    int (*open) ();
+    int (*release) ();
+    int (*write) ();
+    int (*read) ();
+    int (*ioctl) ();
 };
 
-struct tty {
-	struct tty_ops *ops;
-	int minor;
-	int flags;
-	unsigned char inq_buf[INQ_SIZE], outq_buf[OUTQ_SIZE];
+struct tty
+{
+    struct tty_ops *ops;
+    int minor;
+    int flags;
+    unsigned char inq_buf[INQ_SIZE], outq_buf[OUTQ_SIZE];
 /*	struct wait_queue *sleep; */
-	struct ch_queue inq, outq;
-	struct termios termios;
-	pid_t pgrp;
+    struct ch_queue inq, outq;
+    struct termios termios;
+    pid_t pgrp;
 };
 
 int ttynull_openrelease();	/* Empty function, returns zero. useful */
 int tty_intcheck();		/* Check for ctrl-C etc.. */
 extern int pipe_lseek();	/* Empty function, returns -ESPIPE. useful */
 
-extern struct termios def_vals; /* global use of def_vals                 */
+extern struct termios def_vals;	/* global use of def_vals                 */
 
 /* tty.flags */
 #define TTY_STOPPED 	1

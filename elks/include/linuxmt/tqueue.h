@@ -46,14 +46,15 @@
  *   the list.
  */
 
-struct tq_struct {
-	struct tq_struct *next;		/* linked list of active bh's */
-	int sync;			/* must be initialized to zero */
-	void (*routine)();	/* function to call */
-	void *data;			/* argument to function */
+struct tq_struct
+{
+    struct tq_struct *next;	/* linked list of active bh's */
+    int sync;			/* must be initialized to zero */
+    void (*routine) ();		/* function to call */
+    void *data;			/* argument to function */
 };
 
-typedef struct tq_struct * task_queue;
+typedef struct tq_struct *task_queue;
 
 #define DECLARE_TASK_QUEUE(q)  task_queue q = NULL
 
@@ -87,13 +88,13 @@ extern task_queue tq_timer, tq_immediate, tq_scheduler, tq_disk;
  * handler or a bottom half handler.
  */
 extern __inline__ void queue_task_irq(bh_pointer, bh_list)
-struct tq_struct * bh_pointer;
-task_queue * bh_list;
+     struct tq_struct *bh_pointer;
+     task_queue *bh_list;
 {
-	if (!set_bit(0,&bh_pointer->sync)) {
-		bh_pointer->next = *bh_list;
-		*bh_list = bh_pointer;
-	}
+    if (!set_bit(0, &bh_pointer->sync)) {
+	bh_pointer->next = *bh_list;
+	*bh_list = bh_pointer;
+    }
 }
 
 /*
@@ -101,14 +102,14 @@ task_queue * bh_list;
  * "bh_list".  You may call this function only when interrupts are off.
  */
 extern __inline__ void queue_task_irq_off(bh_pointer, bh_list)
-struct tq_struct * bh_pointer;
-task_queue * bh_list;
+     struct tq_struct *bh_pointer;
+     task_queue *bh_list;
 {
-	if (!(bh_pointer->sync & 1)) {
-		bh_pointer->sync = 1;
-		bh_pointer->next = *bh_list;
-		*bh_list = bh_pointer;
-	}
+    if (!(bh_pointer->sync & 1)) {
+	bh_pointer->sync = 1;
+	bh_pointer->next = *bh_list;
+	*bh_list = bh_pointer;
+    }
 }
 
 

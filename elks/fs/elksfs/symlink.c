@@ -22,95 +22,90 @@ static int elksfs_follow_link();
  * symlinks can't do much...
  */
 struct inode_operations elksfs_symlink_inode_operations = {
-	NULL,			/* no file-operations */
-	NULL,			/* create */
-	NULL,			/* lookup */
-	NULL,			/* link */
-	NULL,			/* unlink */
-	NULL,			/* symlink */
-	NULL,			/* mkdir */
-	NULL,			/* rmdir */
-	NULL,			/* mknod */
-	elksfs_readlink,		/* readlink */
-	elksfs_follow_link,	/* follow_link */
+    NULL,			/* no file-operations */
+    NULL,			/* create */
+    NULL,			/* lookup */
+    NULL,			/* link */
+    NULL,			/* unlink */
+    NULL,			/* symlink */
+    NULL,			/* mkdir */
+    NULL,			/* rmdir */
+    NULL,			/* mknod */
+    elksfs_readlink,		/* readlink */
+    elksfs_follow_link,		/* follow_link */
 #ifdef BLOAT_FS
-	NULL,			/* bmap */
+    NULL,			/* bmap */
 #endif
-	NULL,			/* truncate */
+    NULL,			/* truncate */
 #ifdef BLOAT_FS
-	NULL			/* permission */
+    NULL			/* permission */
 #endif
 };
 
-static int elksfs_follow_link(dir,inode,flag,mode,res_inode)
-register struct inode * dir;
-register struct inode * inode;
-int flag;
-int mode;
-struct inode ** res_inode;
+static int elksfs_follow_link(register struct inode *dir,
+			      register struct inode *inode,
+			      int flag, int mode, struct inode **res_inode)
 {
-	int error;
-	struct buffer_head * bh;
+    int error;
+    struct buffer_head *bh;
 
-	*res_inode = NULL;
-	if (!dir) {
-		dir = current->fs.root;
-		dir->i_count++;
-	}
-	if (!inode) {
-		iput(dir);
-		return -ENOENT;
-	}
-	if (!S_ISLNK(inode->i_mode)) {
-		iput(dir);
-		*res_inode = inode;
-		return 0;
-	}
-	if (current->link_count > 5) {
-		iput(inode);
-		iput(dir);
-		return -ELOOP;
-	}
-	if (!(bh = elksfs_bread(inode, 0, 0))) {
-		iput(inode);
-		iput(dir);
-		return -EIO;
-	}
+    *res_inode = NULL;
+    if (!dir) {
+	dir = current->fs.root;
+	dir->i_count++;
+    }
+    if (!inode) {
+	iput(dir);
+	return -ENOENT;
+    }
+    if (!S_ISLNK(inode->i_mode)) {
+	iput(dir);
+	*res_inode = inode;
+	return 0;
+    }
+    if (current->link_count > 5) {
 	iput(inode);
-	current->link_count++;
-	map_buffer(bh);
-	error = open_namei(bh->b_data,flag,mode,res_inode,dir);
-	current->link_count--;
-	unmap_brelse(bh);
-	return error;
+	iput(dir);
+	return -ELOOP;
+    }
+    if (!(bh = elksfs_bread(inode, 0, 0))) {
+	iput(inode);
+	iput(dir);
+	return -EIO;
+    }
+    iput(inode);
+    current->link_count++;
+    map_buffer(bh);
+    error = open_namei(bh->b_data, flag, mode, res_inode, dir);
+    current->link_count--;
+    unmap_brelse(bh);
+    return error;
 }
 
-static int elksfs_readlink(inode,buffer,buflen)
-register struct inode * inode;
-char * buffer;
-int buflen;
+static int elksfs_readlink(register struct inode *inode,
+			   char *buffer, int buflen)
 {
-	register struct buffer_head * bh;
-	int i;
-	char c;
+    register struct buffer_head *bh;
+    int i;
+    char c;
 
-	if (!S_ISLNK(inode->i_mode)) {
-		iput(inode);
-		return -EINVAL;
-	}
-	if (buflen > 1023)
-		buflen = 1023;
-	bh = elksfs_bread(inode, 0, 0);
+    if (!S_ISLNK(inode->i_mode)) {
 	iput(inode);
-	if (!bh)
-		return 0;
-	map_buffer(bh);
-	i = 0;
-	while (i<buflen && (c = bh->b_data[i])) {
-		i++;
-		memcpy_tofs(buffer++,&c,1);
-		/* put_fs_byte(c,buffer++); */
-	}
-	unmap_brelse(bh);
-	return i;
+	return -EINVAL;
+    }
+    if (buflen > 1023)
+	buflen = 1023;
+    bh = elksfs_bread(inode, 0, 0);
+    iput(inode);
+    if (!bh)
+	return 0;
+    map_buffer(bh);
+    i = 0;
+    while (i < buflen && (c = bh->b_data[i])) {
+	i++;
+	memcpy_tofs(buffer++, &c, 1);
+	/* put_fs_byte(c,buffer++); */
+    }
+    unmap_brelse(bh);
+    return i;
 }

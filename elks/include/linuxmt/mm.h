@@ -36,7 +36,7 @@ extern void fmemcpy();
 extern void pokeb();
 extern char peekb();
 extern void pokew();
-extern int  peekw();
+extern int peekw();
 extern void poked();
 extern long peekd();
 

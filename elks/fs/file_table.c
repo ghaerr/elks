@@ -24,23 +24,22 @@ struct file file_array[NR_FILE];
  * Returns NULL, if there are no more free file structures or
  * we run out of memory.
  */
- 
-struct file * get_empty_filp()
+
+struct file *get_empty_filp(void)
 {
-	int i;
-	register struct file * f;
+    int i;
+    register struct file *f;
 
-	for (f = file_array, i=0; i < nr_files; i++, f++) {
-		if (!f->f_count) {
-			memset(f,0,sizeof(*f));
-			f->f_count = 1;
+    for (f = file_array, i = 0; i < nr_files; i++, f++) {
+	if (!f->f_count) {
+	    memset(f, 0, sizeof(*f));
+	    f->f_count = 1;
 #ifdef BLOAT_FS
-			f->f_version = ++event;
+	    f->f_version = ++event;
 #endif
-			return f;
-		}
+	    return f;
 	}
+    }
 
-	return NULL;
+    return NULL;
 }
-

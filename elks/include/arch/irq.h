@@ -9,40 +9,40 @@
    SERIAL/TQUEUE! */
 
 enum {
-        TIMER_BH = 0,
-        CONSOLE_BH,
-        TQUEUE_BH,
-        DIGI_BH,
-        SERIAL_BH,
-        RISCOM8_BH,
-        SPECIALIX_BH,
-        BAYCOM_BH,
-        NET_BH,
-        IMMEDIATE_BH,
-        KEYBOARD_BH,
-        CYCLADES_BH,
-        CM206_BH
+    TIMER_BH = 0,
+    CONSOLE_BH,
+    TQUEUE_BH,
+    DIGI_BH,
+    SERIAL_BH,
+    RISCOM8_BH,
+    SPECIALIX_BH,
+    BAYCOM_BH,
+    NET_BH,
+    IMMEDIATE_BH,
+    KEYBOARD_BH,
+    CYCLADES_BH,
+    CM206_BH
 };
 
-extern void disable_irq();
-extern void enable_irq();
-extern void do_IRQ();
-extern flag_t __save_flags();
-extern void restore_flags();
-extern int request_irq();
-extern void free_irq();
+extern void disable_irq(void);
+extern void enable_irq(void);
+extern void do_IRQ(void);
+extern flag_t __save_flags(void);
+extern void restore_flags(void);
+extern int request_irq(void);
+extern void free_irq(void);
 
 #if 0
-extern void icli();
-extern void isti();
+extern void icli(void);
+extern void isti(void);
 #endif
 
-extern void do_bottom_half();
+extern void do_bottom_half(void);
 
 extern int bh_mask_count[16];
 extern unsigned bh_active;
 extern unsigned bh_mask;
-extern void (*bh_base[16])();
+extern void (*bh_base[16]) (void);
 
 #ifdef __KERNEL__
 #define icli() asm("cli")
@@ -54,19 +54,26 @@ extern void (*bh_base[16])();
 
 #ifdef ENDIS_BH
 
-#define init_bh(nr, routine) bh_base[nr] = routine; \
-            bh_mask_count[nr] = 0; \
-            bh_mask |= 1 << nr;
+#define init_bh(nr, routine) do { \
+	bh_base[nr] = routine; \
+	bh_mask_count[nr] = 0; \
+	bh_mask |= 1 << nr; \
+	} until 0
 
-#define disable_bh(nr) bh_mask &= ~(1 << nr); bh_mask_count[nr]++;
-#define enable_bh(nr) if (!--bh_mask_count[nr]) bh_mask |= 1 << nr;
+#define disable_bh(nr) do { \
+	bh_mask &= ~(1 << nr); \
+	bh_mask_count[nr]++; \
+	} until 0
+
+#define enable_bh(nr) if (!--bh_mask_count[nr]) \
+	bh_mask |= 1 << nr
 
 #else
 
-#define init_bh(nr, routine) bh_base[nr] = routine;
+#define init_bh(nr, routine) bh_base[nr] = routine
 
 #endif
 
-#define mark_bh(nr) set_bit(nr, &bh_active);
+#define mark_bh(nr) set_bit(nr, &bh_active)
 
 #endif

@@ -15,15 +15,15 @@
 #include <linuxmt/elksfs_fs.h>
 #include <linuxmt/major.h>
 
-void fs_init()
+void fs_init(void)
 {
 #ifdef CONFIG_MINIX_FS
-	init_minix_fs();
+    init_minix_fs();
 #endif
 #ifdef CONFIG_ROMFS_FS
-	init_romfs_fs();
+    init_romfs_fs();
 #endif
 #ifdef CONFIG_ELKSFS_FS
-	init_elksfs_fs();
+    init_elksfs_fs();
 #endif
 }

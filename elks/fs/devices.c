@@ -15,75 +15,68 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/errno.h>
 
-struct device_struct 
-{
+struct device_struct {
 #ifdef CONFIG_DEV_NAMES
-	char * ds_name;
+    char *ds_name;
 #endif
-	struct file_operations * ds_fops;
+    struct file_operations *ds_fops;
 };
 
-static struct device_struct chrdevs[MAX_CHRDEV] = 
-{
+static struct device_struct chrdevs[MAX_CHRDEV] = {
 #ifdef CONFIG_DEV_NAMES
-	{ NULL, NULL },
+    {NULL, NULL},
 #else
-	{ NULL },
+    {NULL},
 #endif
 };
 
 static struct device_struct blkdevs[MAX_BLKDEV] = {
 #ifdef CONFIG_DEV_NAMES
-	{ NULL, NULL },
+    {NULL, NULL},
 #else
-	{ NULL },
+    {NULL},
 #endif
 };
 
-struct file_operations * get_blkfops(major)
-unsigned int major;
+struct file_operations *get_blkfops(unsigned int major)
 {
-	if (major >= MAX_BLKDEV)
-		return NULL;
-	return blkdevs[major].ds_fops;
+    if (major >= MAX_BLKDEV)
+	return NULL;
+    return blkdevs[major].ds_fops;
 }
 
-int register_chrdev(major,name, fops)
-unsigned int major;
-char * name;
-register struct file_operations *fops;
+int register_chrdev(unsigned int major,
+		    char *name, register struct file_operations *fops)
 {
-	register struct device_struct * dev = &chrdevs[major];
+    register struct device_struct *dev = &chrdevs[major];
 
-	if (major >= MAX_CHRDEV) {
-		return -EINVAL;
-	}
-	if (dev->ds_fops && (dev->ds_fops != fops)) {
-		return -EBUSY;
-	}
+    if (major >= MAX_CHRDEV) {
+	return -EINVAL;
+    }
+    if (dev->ds_fops && (dev->ds_fops != fops)) {
+	return -EBUSY;
+    }
 #ifdef CONFIG_DEV_NAMES
-	dev->ds_name = name;
+    dev->ds_name = name;
 #endif
-	dev->ds_fops = fops;
-	return 0;
+    dev->ds_fops = fops;
+    return 0;
 }
 
-int register_blkdev(major,name,fops)
-unsigned int major;
-char * name;
-register struct file_operations *fops;
+int register_blkdev(unsigned int major,
+		    char *name, register struct file_operations *fops)
 {
-	register struct device_struct * dev = &blkdevs[major];
+    register struct device_struct *dev = &blkdevs[major];
 
-	if (major >= MAX_BLKDEV)
-		return -EINVAL;
-	if (dev->ds_fops && dev->ds_fops != fops)
-		return -EBUSY;
+    if (major >= MAX_BLKDEV)
+	return -EINVAL;
+    if (dev->ds_fops && dev->ds_fops != fops)
+	return -EBUSY;
 #ifdef CONFIG_DEV_NAMES
-	dev->ds_name = name;
+    dev->ds_name = name;
 #endif
-	dev->ds_fops = fops;
-	return 0;
+    dev->ds_fops = fops;
+    return 0;
 }
 
 /*
@@ -96,30 +89,29 @@ register struct file_operations *fops;
  * to lose :-)
  */
 #ifdef BLOAT_FS
-int check_disk_change(dev)
-kdev_t dev;
+int check_disk_change(kdev_t dev)
 {
-	int i;
-	register struct file_operations * fops;
+    int i;
+    register struct file_operations *fops;
 
-	i = MAJOR(dev);
-	if (i >= MAX_BLKDEV || (fops = blkdevs[i].ds_fops) == NULL)
-		return 0;
-	if (fops->check_media_change == NULL)
-		return 0;
-	if (!fops->check_media_change(dev))
-		return 0;
+    i = MAJOR(dev);
+    if (i >= MAX_BLKDEV || (fops = blkdevs[i].ds_fops) == NULL)
+	return 0;
+    if (fops->check_media_change == NULL)
+	return 0;
+    if (!fops->check_media_change(dev))
+	return 0;
 
-	printk("VFS: Disk change detected on device %s\n",kdevname(dev));
-	for (i=0 ; i<NR_SUPER ; i++)
-		if (super_blocks[i].s_dev == dev)
-			put_super(super_blocks[i].s_dev);
-	invalidate_inodes(dev);
-	invalidate_buffers(dev);
+    printk("VFS: Disk change detected on device %s\n", kdevname(dev));
+    for (i = 0; i < NR_SUPER; i++)
+	if (super_blocks[i].s_dev == dev)
+	    put_super(super_blocks[i].s_dev);
+    invalidate_inodes(dev);
+    invalidate_buffers(dev);
 
-	if (fops->revalidate)
-		fops->revalidate(dev);
-	return 1;
+    if (fops->revalidate)
+	fops->revalidate(dev);
+    return 1;
 }
 #endif
 
@@ -127,20 +119,18 @@ kdev_t dev;
  * Called every time a block special file is opened
  */
 
-int blkdev_open(inode,filp)
-register struct inode * inode;
-register struct file * filp;
+int blkdev_open(register struct inode *inode, register struct file *filp)
 {
-	int i;
+    int i;
 
-	i = MAJOR(inode->i_rdev);
-	if (i >= MAX_BLKDEV || !blkdevs[i].ds_fops)
-		return -ENODEV;
-	filp->f_op = blkdevs[i].ds_fops;
-	if (filp->f_op->open)
-		return filp->f_op->open(inode,filp);
-	return 0;
-}	
+    i = MAJOR(inode->i_rdev);
+    if (i >= MAX_BLKDEV || !blkdevs[i].ds_fops)
+	return -ENODEV;
+    filp->f_op = blkdevs[i].ds_fops;
+    if (filp->f_op->open)
+	return filp->f_op->open(inode, filp);
+    return 0;
+}
 
 /*
  * Dummy default file-operations: the only thing this does
@@ -148,34 +138,34 @@ register struct file * filp;
  * depending on the special file...
  */
 struct file_operations def_blk_fops = {
-	NULL,		/* lseek */
-	NULL,		/* read */
-	NULL,		/* write */
-	NULL,		/* readdir */
-	NULL,		/* select */
-	NULL,		/* ioctl */
-	blkdev_open,	/* open */
-	NULL,		/* release */
+    NULL,			/* lseek */
+    NULL,			/* read */
+    NULL,			/* write */
+    NULL,			/* readdir */
+    NULL,			/* select */
+    NULL,			/* ioctl */
+    blkdev_open,		/* open */
+    NULL,			/* release */
 };
 
 struct inode_operations blkdev_inode_operations = {
-	&def_blk_fops,		/* default file operations */
-	NULL,			/* create */
-	NULL,			/* lookup */
-	NULL,			/* link */
-	NULL,			/* unlink */
-	NULL,			/* symlink */
-	NULL,			/* mkdir */
-	NULL,			/* rmdir */
-	NULL,			/* mknod */
-	NULL,			/* readlink */
-	NULL,			/* follow_link */
+    &def_blk_fops,		/* default file operations */
+    NULL,			/* create */
+    NULL,			/* lookup */
+    NULL,			/* link */
+    NULL,			/* unlink */
+    NULL,			/* symlink */
+    NULL,			/* mkdir */
+    NULL,			/* rmdir */
+    NULL,			/* mknod */
+    NULL,			/* readlink */
+    NULL,			/* follow_link */
 #ifdef BLOAT_FS
-	NULL,			/* bmap */
+    NULL,			/* bmap */
 #endif
-	NULL,			/* truncate */
+    NULL,			/* truncate */
 #ifdef BLOAT_FS
-	NULL			/* permission */
+    NULL			/* permission */
 #endif
 };
 
@@ -183,19 +173,18 @@ struct inode_operations blkdev_inode_operations = {
  * Called every time a character special file is opened
  */
 
-static int chrdev_open(inode,filp)
-register struct inode * inode;
-register struct file * filp;
+static int chrdev_open(register struct inode *inode,
+		       register struct file *filp)
 {
-	int i;
+    int i;
 
-	i = MAJOR(inode->i_rdev);
-	if (i >= MAX_CHRDEV || !chrdevs[i].ds_fops)
-		return -ENODEV;
-	filp->f_op = chrdevs[i].ds_fops;
-	if (filp->f_op->open)
-		return filp->f_op->open(inode,filp);
-	return 0;
+    i = MAJOR(inode->i_rdev);
+    if (i >= MAX_CHRDEV || !chrdevs[i].ds_fops)
+	return -ENODEV;
+    filp->f_op = chrdevs[i].ds_fops;
+    if (filp->f_op->open)
+	return filp->f_op->open(inode, filp);
+    return 0;
 }
 
 /*
@@ -204,37 +193,35 @@ register struct file * filp;
  * depending on the special file...
  */
 
-struct file_operations def_chr_fops = 
-{
-	NULL,		/* lseek */
-	NULL,		/* read */
-	NULL,		/* write */
-	NULL,		/* readdir */
-	NULL,		/* select */
-	NULL,		/* ioctl */
-	chrdev_open,	/* open */
-	NULL,		/* release */
+struct file_operations def_chr_fops = {
+    NULL,			/* lseek */
+    NULL,			/* read */
+    NULL,			/* write */
+    NULL,			/* readdir */
+    NULL,			/* select */
+    NULL,			/* ioctl */
+    chrdev_open,		/* open */
+    NULL,			/* release */
 };
 
-struct inode_operations chrdev_inode_operations = 
-{
-	&def_chr_fops,		/* default file operations */
-	NULL,			/* create */
-	NULL,			/* lookup */
-	NULL,			/* link */
-	NULL,			/* unlink */
-	NULL,			/* symlink */
-	NULL,			/* mkdir */
-	NULL,			/* rmdir */
-	NULL,			/* mknod */
-	NULL,			/* readlink */
-	NULL,			/* follow_link */
+struct inode_operations chrdev_inode_operations = {
+    &def_chr_fops,		/* default file operations */
+    NULL,			/* create */
+    NULL,			/* lookup */
+    NULL,			/* link */
+    NULL,			/* unlink */
+    NULL,			/* symlink */
+    NULL,			/* mkdir */
+    NULL,			/* rmdir */
+    NULL,			/* mknod */
+    NULL,			/* readlink */
+    NULL,			/* follow_link */
 #ifdef BLOAT_FS
-	NULL,			/* bmap */
+    NULL,			/* bmap */
 #endif
-	NULL,			/* truncate */
+    NULL,			/* truncate */
 #ifdef BLOAT_FS
-	NULL			/* permission */
+    NULL			/* permission */
 #endif
 };
 
@@ -244,19 +231,18 @@ struct inode_operations chrdev_inode_operations =
  * Note: returns pointer to static data!
  */
 
-char * kdevname(dev)
-kdev_t dev;
+char *kdevname(kdev_t dev)
 {
-	static char buffer[16];
-	register char *hexof="0123456789ABCDEF";
-	register char *bp=buffer;
-	unsigned char b=MAJOR(dev);
+    static char buffer[16];
+    register char *hexof = "0123456789ABCDEF";
+    register char *bp = buffer;
+    unsigned char b = MAJOR(dev);
 
-	*bp++=hexof[b>>4];
-	*bp++=hexof[b&15];
-	b=MINOR(dev);
-	*bp++=hexof[b>>4];
-	*bp++=hexof[b&15];
-	*bp=0;
-	return buffer;
+    *bp++ = hexof[b >> 4];
+    *bp++ = hexof[b & 15];
+    b = MINOR(dev);
+    *bp++ = hexof[b >> 4];
+    *bp++ = hexof[b & 15];
+    *bp = 0;
+    return buffer;
 }

@@ -1,8 +1,8 @@
 #ifndef __ARCH_8086_SEGMENT_H__
 #define __ARCH_8086_SEGMENT_H__
 
-extern short *_endtext,*_enddata,*_endbss;
-extern int get_ss(),get_ds(),get_es(),get_ss(),get_cs();
+extern short *_endtext, *_enddata, *_endbss;
+extern int get_ss(), get_ds(), get_es(), get_ss(), get_cs();
 
 #define put_user_char(val,ptr) pokeb(current->t_regs.ds,ptr,val)
 #define get_user_char(ptr) peekb(current->t_regs.ds,ptr)

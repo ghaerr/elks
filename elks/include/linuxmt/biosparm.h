@@ -25,22 +25,22 @@
    along with Linux; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-/* Written by Ross Biro July 1994 */ 
+/* Written by Ross Biro July 1994 */
 /* Hacked up for Linux/8086 Alan Cox Feb 1996 */
 
-struct biosparms 
+struct biosparms
 {
-    unsigned short irq;	/* 0 */
-    unsigned short ax;	/* 2 */
-    unsigned short bx;	/* 4 */
-    unsigned short cx;	/* 6 */
-    unsigned short dx;	/* 8 */
-    unsigned short si;	/* 10 */
-    unsigned short di;	/* 12 */
-    unsigned short bp;	/* 14 */
-    unsigned short es;	/* 16 */
-    unsigned short ds;	/* 18 */
-    unsigned short fl;	/* 20 */
+    unsigned short irq;		/* 0 */
+    unsigned short ax;		/* 2 */
+    unsigned short bx;		/* 4 */
+    unsigned short cx;		/* 6 */
+    unsigned short dx;		/* 8 */
+    unsigned short si;		/* 10 */
+    unsigned short di;		/* 12 */
+    unsigned short bp;		/* 14 */
+    unsigned short es;		/* 16 */
+    unsigned short ds;		/* 18 */
+    unsigned short fl;		/* 20 */
 };
 
 /* Useful defines for accessing the above structure. */
@@ -55,7 +55,7 @@ struct biosparms
 #define BD_DX bios_data_table->dx
 #define BD_SI bios_data_table->si
 #define BD_DI bios_data_table->di
-#define BD_ES bios_data_table->es 
+#define BD_ES bios_data_table->es
 #define BD_FL bios_data_table->fl
 
 

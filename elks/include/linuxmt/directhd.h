@@ -27,7 +27,7 @@
 
 
 /* other definitions */
-#define MAX_DRIVES 4	/* 2 per i/o channel and 2 i/o channels */
+#define MAX_DRIVES 4		/* 2 per i/o channel and 2 i/o channels */
 /*
 #define DIRECTHD_DEVICE_NAME "hd"
 */

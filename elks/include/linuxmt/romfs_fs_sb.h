@@ -3,8 +3,9 @@
 
 /* romfs superblock in-core data */
 
-struct romfs_sb_info {
-	unsigned long s_maxsize;
+struct romfs_sb_info
+{
+    unsigned long s_maxsize;
 };
 
 #endif

@@ -1,28 +1,30 @@
 #ifndef __LINUXMT_TIME_H__
 #define __LINUXMT_TIME_H__
 
-#define DST_NONE        0       /* not on dst */
-#define DST_USA         1       /* USA style dst */
-#define DST_AUST        2       /* Australian style dst */
-#define DST_WET         3       /* Western European dst */
-#define DST_MET         4       /* Middle European dst */
-#define DST_EET         5       /* Eastern European dst */
-#define DST_CAN         6       /* Canada */
-#define DST_GB          7       /* Great Britain and Eire */
-#define DST_RUM         8       /* Rumania */
-#define DST_TUR         9       /* Turkey */
-#define DST_AUSTALT     10      /* Australian style with shift in 1986 */
+#define DST_NONE        0	/* not on dst */
+#define DST_USA         1	/* USA style dst */
+#define DST_AUST        2	/* Australian style dst */
+#define DST_WET         3	/* Western European dst */
+#define DST_MET         4	/* Middle European dst */
+#define DST_EET         5	/* Eastern European dst */
+#define DST_CAN         6	/* Canada */
+#define DST_GB          7	/* Great Britain and Eire */
+#define DST_RUM         8	/* Rumania */
+#define DST_TUR         9	/* Turkey */
+#define DST_AUSTALT     10	/* Australian style with shift in 1986 */
 
 #ifdef __KERNEL__
 
-struct timeval {
-	long		tv_sec;		/* seconds */
-	long 		tv_usec;	/* microseconds */
+struct timeval
+{
+    long tv_sec;		/* seconds */
+    long tv_usec;		/* microseconds */
 };
 
-struct timezone {
-	int	tz_minuteswest;	/* minutes west of Greenwich */
-	int	tz_dsttime;	/* type of dst correction */
+struct timezone
+{
+    int tz_minuteswest;		/* minutes west of Greenwich */
+    int tz_dsttime;		/* type of dst correction */
 };
 
 #endif

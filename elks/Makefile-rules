@@ -219,11 +219,11 @@ endif
 
 AR		= ar
 CC_PROTO	= gcc -I$(INCDIR) -M $(CCDEFS)
-CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) # -ansi
+CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) -ansi
 CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
 LINT		= lclint
 
-ifneq ($(USEBCC), N)
+ifeq ($(USEBCC), Y)
 
 ################################
 # Definitions using BCC compiler
@@ -300,15 +300,15 @@ dodep:	$(DEPEND)
 		fi ; \
 	done
 
-indent:
-	@if \ls *.c > /dev/null 2>&1 ; then \
-		$(BASEDIR)/scripts/reindent $(NOINDENT) ; \
-	fi
+indent:	indent-me
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
 			${MAKE} -C "$$DIR" indent ; \
 		fi ; \
 	done
+
+indent-me:
+	$(BASEDIR)/scripts/reindent $(NOINDENT)
 
 mkdep:
 	@sed '/\#\#\# Dependencies:/q' < Makefile > make.tmp

@@ -4,10 +4,11 @@
 #ifndef __LINUXMT_CHQ_H__
 #define __LINUXMT_CHQ_H__
 
-struct ch_queue {
-	char *buf;
-	int size, tail, len;
-	struct wait_queue wq;
+struct ch_queue
+{
+    char *buf;
+    int size, tail, len;
+    struct wait_queue wq;
 };
 
 int chq_init();

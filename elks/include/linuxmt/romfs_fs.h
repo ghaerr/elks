@@ -18,22 +18,24 @@
 
 /* On-disk "super block" */
 
-struct romfs_super_block {
-	__u32 word0;
-	__u32 word1;
-	__u32 size;
-	__u32 checksum;
-	char name[0];		/* volume name */
+struct romfs_super_block
+{
+    __u32 word0;
+    __u32 word1;
+    __u32 size;
+    __u32 checksum;
+    char name[0];		/* volume name */
 };
 
 /* On disk inode */
 
-struct romfs_inode {
-	__u32 next;		/* low 4 bits see ROMFH_ */
-	__u32 spec;
-	__u32 size;
-	__u32 checksum;
-	char name[0];
+struct romfs_inode
+{
+    __u32 next;			/* low 4 bits see ROMFH_ */
+    __u32 spec;
+    __u32 size;
+    __u32 checksum;
+    char name[0];
 };
 
 #define ROMFH_TYPE 7

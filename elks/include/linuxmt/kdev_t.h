@@ -14,7 +14,7 @@ typedef __u16 kdev_t;
 #define NODEV		0
 #define MKDEV(ma,mi)	(((ma) << MINORBITS) | (mi))
 
-extern char * kdevname();	/* note: returns pointer to static data! */
+extern char *kdevname();	/* note: returns pointer to static data! */
 
 /* As long as device numbers in the outside world have 16 bits only,
  * we use these conversions.

@@ -57,13 +57,13 @@
 #define WIN_MULTREAD		0xC4	/* read sectors using multiple mode */
 #define WIN_MULTWRITE		0xC5	/* write sectors using multiple mode */
 #define WIN_SETMULT		0xC6	/* enable/disable multiple mode */
-#define WIN_IDENTIFY		0xEC	/* ask drive to identify itself	*/
+#define WIN_IDENTIFY		0xEC	/* ask drive to identify itself */
 #define WIN_SETFEATURES		0xEF	/* set special drive features */
 #define WIN_READDMA		0xc8	/* read sectors using DMA transfers */
 #define WIN_WRITEDMA		0xca	/* write sectors using DMA transfers */
 
 /* Additional drive command codes used by ATAPI devices. */
-#define WIN_PIDENTIFY		0xA1	/* identify ATAPI device	*/
+#define WIN_PIDENTIFY		0xA1	/* identify ATAPI device        */
 #define WIN_SRST		0x08	/* ATAPI soft reset command */
 #define WIN_PACKETCMD		0xa0	/* Send a packet command. */
 
@@ -75,11 +75,12 @@
 #define ECC_ERR		0x40	/* Uncorrectable ECC error */
 #define	BBD_ERR		0x80	/* block marked bad */
 
-struct hd_geometry {
-      unsigned char heads;
-      unsigned char sectors;
-      unsigned short cylinders;
-      unsigned long start;
+struct hd_geometry
+{
+    unsigned char heads;
+    unsigned char sectors;
+    unsigned short cylinders;
+    unsigned long start;
 };
 
 /* hd/ide ctl's that pass (arg) ptrs to user space are numbered 0x030n/0x031n */

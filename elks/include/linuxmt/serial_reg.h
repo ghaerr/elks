@@ -33,24 +33,24 @@
  * These are the definitions for the FIFO Control Register
  * (16650 only)
  */
-#define UART_FCR_ENABLE_FIFO	0x01 /* Enable the FIFO */
-#define UART_FCR_CLEAR_RCVR	0x02 /* Clear the RCVR FIFO */
-#define UART_FCR_CLEAR_XMIT	0x04 /* Clear the XMIT FIFO */
-#define UART_FCR_DMA_SELECT	0x08 /* For DMA applications */
-#define UART_FCR_TRIGGER_MASK	0xC0 /* Mask for the FIFO trigger range */
-#define UART_FCR_TRIGGER_1	0x00 /* Mask for trigger set at 1 */
-#define UART_FCR_TRIGGER_4	0x40 /* Mask for trigger set at 4 */
-#define UART_FCR_TRIGGER_8	0x80 /* Mask for trigger set at 8 */
-#define UART_FCR_TRIGGER_14	0xC0 /* Mask for trigger set at 14 */
+#define UART_FCR_ENABLE_FIFO	0x01	/* Enable the FIFO */
+#define UART_FCR_CLEAR_RCVR	0x02	/* Clear the RCVR FIFO */
+#define UART_FCR_CLEAR_XMIT	0x04	/* Clear the XMIT FIFO */
+#define UART_FCR_DMA_SELECT	0x08	/* For DMA applications */
+#define UART_FCR_TRIGGER_MASK	0xC0	/* Mask for the FIFO trigger range */
+#define UART_FCR_TRIGGER_1	0x00	/* Mask for trigger set at 1 */
+#define UART_FCR_TRIGGER_4	0x40	/* Mask for trigger set at 4 */
+#define UART_FCR_TRIGGER_8	0x80	/* Mask for trigger set at 8 */
+#define UART_FCR_TRIGGER_14	0xC0	/* Mask for trigger set at 14 */
 /* 16650 redefinitions */
-#define UART_FCR6_R_TRIGGER_8	0x00 /* Mask for receive trigger set at 1 */
-#define UART_FCR6_R_TRIGGER_16	0x40 /* Mask for receive trigger set at 4 */
-#define UART_FCR6_R_TRIGGER_24  0x80 /* Mask for receive trigger set at 8 */
-#define UART_FCR6_R_TRIGGER_28	0xC0 /* Mask for receive trigger set at 14 */
-#define UART_FCR6_T_TRIGGER_16	0x00 /* Mask for transmit trigger set at 16 */
-#define UART_FCR6_T_TRIGGER_8	0x10 /* Mask for transmit trigger set at 8 */
-#define UART_FCR6_T_TRIGGER_24  0x20 /* Mask for transmit trigger set at 24 */
-#define UART_FCR6_T_TRIGGER_30	0x30 /* Mask for transmit trigger set at 30 */
+#define UART_FCR6_R_TRIGGER_8	0x00	/* Mask for receive trigger set at 1 */
+#define UART_FCR6_R_TRIGGER_16	0x40	/* Mask for receive trigger set at 4 */
+#define UART_FCR6_R_TRIGGER_24  0x80	/* Mask for receive trigger set at 8 */
+#define UART_FCR6_R_TRIGGER_28	0xC0	/* Mask for receive trigger set at 14 */
+#define UART_FCR6_T_TRIGGER_16	0x00	/* Mask for transmit trigger set at 16 */
+#define UART_FCR6_T_TRIGGER_8	0x10	/* Mask for transmit trigger set at 8 */
+#define UART_FCR6_T_TRIGGER_24  0x20	/* Mask for transmit trigger set at 24 */
+#define UART_FCR6_T_TRIGGER_30	0x30	/* Mask for transmit trigger set at 30 */
 
 /*
  * These are the definitions for the Line Control Register

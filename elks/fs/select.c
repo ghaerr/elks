@@ -21,6 +21,7 @@
 #include <linuxmt/signal.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
+
 #if 0
 #include <linuxmt/personality.h>
 #endif
@@ -33,8 +34,8 @@
 /*
  * Ok, Peter made a complicated, but straightforward multiple_wait() function.
  * I have rewritten this, taking some shortcuts: This code may not be easy to
- * follow, but it should be free of race-conditions, and it's practical. If you
- * understand what I'm doing here, then you understand how the linux
+ * follow, but it should be free of race-conditions, and it's practical. If
+ * you understand what I'm doing here, then you understand how the linux
  * sleep/wakeup mechanism works.
  *
  * Two very simple procedures, select_wait() and free_wait() make all the work.
@@ -50,15 +51,11 @@
 
 struct wait_queue select_poll;	/* magic queue - see sleepwake.c */
 
-
-
-/* FIXME */ /* should be an inline function */
-void select_wait(q) 
-struct wait_queue *q;
+/* FIXME *//* should be an inline function */
+void select_wait(struct wait_queue *q)
 {
-	current->pollhash |= 1<<((((int)q)>>4)&15);
+    current->pollhash |= 1 << ((((int) q) >> 4) & 15);
 }
-
 
 /*
  * The check function checks the ready status of a file using the vfs layer.
@@ -71,92 +68,85 @@ struct wait_queue *q;
  * and we aren't going to sleep on the select_table.  -- jrs
  */
 
-static int check(flag, wait, file)
-int flag;
-struct file * file;
+static int check(int flag, wait, struct file *file)
 {
-	register struct inode * inode;
-	register struct file_operations *fops;
-	int (*select) ();
+    register struct inode *inode;
+    register struct file_operations *fops;
+    int (*select) ();
 
-	inode = file->f_inode;
-	if ((fops = file->f_op) && (select = fops->select)) {
-		return (select(inode, file, flag));
-	}
-	if (flag != SEL_EX) {
-		return 1;
-	}
-	return 0;
+    inode = file->f_inode;
+    if ((fops = file->f_op) && (select = fops->select))
+	return (select(inode, file, flag));
+
+    if (flag != SEL_EX)
+	return 1;
+
+    return 0;
 }
 
-static int do_select(n, in, out, ex, res_in, res_out, res_ex)
-int n;
-fd_set *in;
-fd_set *out;
-fd_set *ex;
-fd_set *res_in;
-fd_set *res_out;
-fd_set *res_ex;
+static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
+		     fd_set * res_in, fd_set * res_out, fd_set * res_ex)
 {
-	int count;
-	__ptask currentp = current;
-	fd_set set;
-	int i,j;
-	int max = -1;
+    int count;
+    __ptask currentp = current;
+    fd_set set;
+    int i, j;
+    int max = -1;
 
-	j = 0;
-	for (;;) {
-		i = j * __NFDBITS;
-		if (i >= n)
-			break;
-		set = *in | *out | *ex;
+    j = 0;
+    for (;;) {
+	i = j * __NFDBITS;
+	if (i >= n)
+	    break;
+	set = *in | *out | *ex;
 
-		j++;
-		for ( ; set ; i++,set >>= 1) {
-			if (i >= n)
-				goto end_check;
-			if (!(set & 1))
-				continue;
-			if (!currentp->files.fd[i])
-				return -EBADF;
-			if (!currentp->files.fd[i]->f_inode)
-				return -EBADF;
-			max = i;
-		}
+	j++;
+	for (; set; i++, set >>= 1) {
+	    if (i >= n)
+		goto end_check;
+	    if (!(set & 1))
+		continue;
+	    if (!currentp->files.fd[i])
+		return -EBADF;
+	    if (!currentp->files.fd[i]->f_inode)
+		return -EBADF;
+	    max = i;
 	}
-end_check:
-	n = max + 1;
-	count = 0;
-repeat:
-	currentp->state = TASK_INTERRUPTIBLE;
-	currentp->pollhash = 0;
-	wait_set(&select_poll);
-	for (i = 0 ; i < n ; i++) {
-		struct file * file = currentp->files.fd[i];
-		if (file) {
-			if (FD_ISSET(i,in) && check(SEL_IN,file)) {
-				FD_SET(i, res_in);
-				count++;
-			}
-			if (FD_ISSET(i,out) && check(SEL_OUT,file)) {
-				FD_SET(i, res_out);
-				count++;
-			}
-			if (FD_ISSET(i,ex) && check(SEL_EX,file)) {
-				FD_SET(i, res_ex);
-				count++;
-			}
-		}
+    }
+  end_check:
+    n = max + 1;
+    count = 0;
+  repeat:
+    currentp->state = TASK_INTERRUPTIBLE;
+    currentp->pollhash = 0;
+    wait_set(&select_poll);
+    for (i = 0; i < n; i++) {
+	struct file *file = currentp->files.fd[i];
+	if (file) {
+	    if (FD_ISSET(i, in) && check(SEL_IN, file)) {
+		FD_SET(i, res_in);
+		count++;
+	    }
+	    if (FD_ISSET(i, out) && check(SEL_OUT, file)) {
+		FD_SET(i, res_out);
+		count++;
+	    }
+	    if (FD_ISSET(i, ex) && check(SEL_EX, file)) {
+		FD_SET(i, res_ex);
+		count++;
+	    }
 	}
-	if (!count && currentp->timeout && !(currentp->signal/* & ~currentp->blocked*/)) {
-		schedule();
-		wait_clear(&select_poll);
-		goto repeat;
-	}
-	currentp->pollhash = 0;
+    }
+    if (!count && currentp->timeout
+	&& !(currentp->signal /* & ~currentp->blocked */ )) {
+	schedule();
 	wait_clear(&select_poll);
-	currentp->state = TASK_RUNNING;
-	return count;
+	goto repeat;
+    }
+    currentp->pollhash = 0;
+    wait_clear(&select_poll);
+    currentp->state = TASK_RUNNING;
+    return count;
 }
 
 /*
@@ -164,100 +154,88 @@ repeat:
  * we'll write to it eventually..
  *
  */
-static int get_fd_set(fs_pointer, fdset)
-fd_set * fs_pointer;
-fd_set * fdset;
+static int get_fd_set(fd_set * fs_pointer, fd_set * fdset)
 {
-	if (fs_pointer) {
-		return verified_memcpy_fromfs((char *)fdset, fs_pointer, sizeof(fd_set));
-	}
-	memset(fdset, 0, sizeof(fd_set));
-	return 0;
+    if (fs_pointer)
+	return verified_memcpy_fromfs((char *) fdset, fs_pointer,
+				      sizeof(fd_set));
+
+    memset(fdset, 0, sizeof(fd_set));
+    return 0;
 }
 
-static void set_fd_set(fs_pointer, fdset)
-fd_set * fs_pointer;
-fd_set * fdset;
+static void set_fd_set(fd_set * fs_pointer, fd_set * fdset)
 {
-	if (fs_pointer) {
-		memcpy_tofs(fs_pointer, fdset, sizeof(fd_set));
-	}
+    if (fs_pointer)
+	memcpy_tofs(fs_pointer, fdset, sizeof(fd_set));
 }
 
-static void zero_fd_set(fdset)
-register fd_set * fdset;
+static void zero_fd_set(register fd_set * fdset)
 {
-	memset(fdset, 0, sizeof(fd_set));
-}		
+    memset(fdset, 0, sizeof(fd_set));
+}
 
 /*
- * We can actually return ERESTARTSYS instead of EINTR, but I'd
- * like to be certain this leads to no problems. So I return
- * EINTR just for safety.
+ * We can actually return ERESTARTSYS instead of EINTR, but I'd like to be
+ * certain this leads to no problems. So I return EINTR just for safety.
  *
  * Update: ERESTARTSYS breaks at least the xview clock binary, so
  * I'm trying ERESTARTNOHAND which restart only when you want to.
  */
 
-int sys_select(n, inp, outp, exp, tvp)
-int n;
-fd_set * inp;
-fd_set * outp;
-fd_set * exp;
-register struct timeval * tvp;
+int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
+	       register struct timeval *tvp)
 {
-  	int error;
-       	fd_set res_in, in;
-	fd_set res_out, out;
-	fd_set res_ex, ex;
-	jiff_t timeout;
+    int error;
+    fd_set res_in, in;
+    fd_set res_out, out;
+    fd_set res_ex, ex;
+    jiff_t timeout;
 
-	error = -EINVAL;
-	if (n < 0)
-		goto out;
-	if (n > NR_OPEN)
-		n = NR_OPEN;
-	if ((error = get_fd_set(inp, &in)) ||
-	    (error = get_fd_set(outp, &out)) ||
-	    (error = get_fd_set(exp, &ex))) goto out;
-	timeout = ~0UL;
-	if (tvp) {
-		error = verify_area(VERIFY_WRITE, tvp, sizeof(*tvp));
-		if (error)
-			goto out;
+    error = -EINVAL;
+    if (n < 0)
+	goto out;
+    if (n > NR_OPEN)
+	n = NR_OPEN;
+    if ((error = get_fd_set(inp, &in)) ||
+	(error = get_fd_set(outp, &out)) || (error = get_fd_set(exp, &ex)))
+	goto out;
+    timeout = ~0UL;
+    if (tvp) {
+	error = verify_area(VERIFY_WRITE, tvp, sizeof(*tvp));
+	if (error)
+	    goto out;
 
-		timeout = ROUND_UP(get_fs_long(&tvp->tv_usec),(1000000/HZ));
-		timeout += get_fs_long(&tvp->tv_sec) * (jiff_t) HZ;
-		if (timeout)
-			timeout += jiffies + 1UL;
-	}
-	zero_fd_set(&res_in);
-	zero_fd_set(&res_out);
-	zero_fd_set(&res_ex);
-	current->timeout = timeout;
-	error = do_select(n,
-		/*(fd_set *)*/ &in,
-		/*(fd_set *)*/ &out,
-		/*(fd_set *)*/ &ex,
-		/*(fd_set *)*/ &res_in,
-		/*(fd_set *)*/ &res_out,
-		/*(fd_set *)*/ &res_ex);
+	timeout = ROUND_UP(get_fs_long(&tvp->tv_usec), (1000000 / HZ));
+	timeout += get_fs_long(&tvp->tv_sec) * (jiff_t) HZ;
+	if (timeout)
+	    timeout += jiffies + 1UL;
+    }
+    zero_fd_set(&res_in);
+    zero_fd_set(&res_out);
+    zero_fd_set(&res_ex);
+    current->timeout = timeout;
+    error = do_select(n,
+		      /*(fd_set *) */ &in,
+		      /*(fd_set *) */ &out,
+		      /*(fd_set *) */ &ex,
+		      /*(fd_set *) */ &res_in,
+		      /*(fd_set *) */ &res_out,
+		      /*(fd_set *) */ &res_ex);
 
-	current->timeout = 0L;
-	if (error < 0)
-		goto out;
-	if (!error) {
-		error = -ERESTARTNOHAND;
-		if (current->signal/* & ~current->blocked*/)
-			goto out;
-		error = 0;
-	}
-	set_fd_set(inp, &res_in);
-	set_fd_set(outp, &res_out);
-	set_fd_set(exp, &res_ex);
-out:
-	return error;
+    current->timeout = 0L;
+    if (error < 0)
+	goto out;
+    if (!error) {
+	error = -ERESTARTNOHAND;
+	if (current->signal /* & ~current->blocked */ )
+	    goto out;
+	error = 0;
+    }
+    set_fd_set(inp, &res_in);
+    set_fd_set(outp, &res_out);
+    set_fd_set(exp, &res_ex);
+
+  out:
+    return error;
 }
-
-
-

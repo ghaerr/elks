@@ -24,7 +24,7 @@
    You should have received a copy of the GNU General Public License
    along with Linux; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
- 
+
 /* By Ross Biro July 1994 */
 
 #define BIOSHD_INT 0x13

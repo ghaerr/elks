@@ -12,9 +12,9 @@
 
 struct dll_entry
 {
-	int		d_state;
-	struct inode *	d_inode;
-	unsigned short	d_cseg;
+    int d_state;
+    struct inode *d_inode;
+    unsigned short d_cseg;
 };
 
 #endif

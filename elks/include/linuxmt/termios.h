@@ -44,8 +44,8 @@
 #define TIOCSETD	(__TERMIOS_MAJ+0x23)
 #define TIOCGETD	(__TERMIOS_MAJ+0x24)
 #define TCSBRKP		(__TERMIOS_MAJ+0x25)	/* Needed for POSIX tcsendbreak() */
-#define TIOCTTYGSTRUCT	(__TERMIOS_MAJ+0x26)  /* For debugging only */
-#define FIONCLEX	(__TERMIOS_MAJ+0x50)  /* these numbers need to be adjusted. */
+#define TIOCTTYGSTRUCT	(__TERMIOS_MAJ+0x26)	/* For debugging only */
+#define FIONCLEX	(__TERMIOS_MAJ+0x50)	/* these numbers need to be adjusted. */
 #define FIOCLEX		(__TERMIOS_MAJ+0x51)
 #define FIOASYNC	(__TERMIOS_MAJ+0x52)
 #define TIOCSERCONFIG	(__TERMIOS_MAJ+0x53)
@@ -53,10 +53,10 @@
 #define TIOCSERSWILD	(__TERMIOS_MAJ+0x55)
 #define TIOCGLCKTRMIOS	(__TERMIOS_MAJ+0x56)
 #define TIOCSLCKTRMIOS	(__TERMIOS_MAJ+0x57)
-#define TIOCSERGSTRUCT	(__TERMIOS_MAJ+0x58) /* For debugging only */
-#define TIOCSERGETLSR   (__TERMIOS_MAJ+0x59) /* Get line status register */
-#define TIOCSERGETMULTI (__TERMIOS_MAJ+0x5A) /* Get multiport config  */
-#define TIOCSERSETMULTI (__TERMIOS_MAJ+0x5B) /* Set multiport config */
+#define TIOCSERGSTRUCT	(__TERMIOS_MAJ+0x58)	/* For debugging only */
+#define TIOCSERGETLSR   (__TERMIOS_MAJ+0x59)	/* Get line status register */
+#define TIOCSERGETMULTI (__TERMIOS_MAJ+0x5A)	/* Get multiport config  */
+#define TIOCSERSETMULTI (__TERMIOS_MAJ+0x5B)	/* Set multiport config */
 
 #define TIOCMIWAIT	(__TERMIOS_MAJ+0x5C)	/* wait for a change on serial input line(s) */
 #define TIOCGICOUNT	(__TERMIOS_MAJ+0x5D)	/* read serial port inline interrupt counts */
@@ -70,31 +70,34 @@
 #define TIOCPKT_NOSTOP		16
 #define TIOCPKT_DOSTOP		32
 
-struct winsize {
-	unsigned short ws_row;
-	unsigned short ws_col;
-	unsigned short ws_xpixel;
-	unsigned short ws_ypixel;
+struct winsize
+{
+    unsigned short ws_row;
+    unsigned short ws_col;
+    unsigned short ws_xpixel;
+    unsigned short ws_ypixel;
 };
 
 #define NCC 8
-struct termio {
-	unsigned short c_iflag;		/* input mode flags */
-	unsigned short c_oflag;		/* output mode flags */
-	unsigned short c_cflag;		/* control mode flags */
-	unsigned short c_lflag;		/* local mode flags */
-	unsigned char c_line;		/* line discipline */
-	unsigned char c_cc[NCC];	/* control characters */
+struct termio
+{
+    unsigned short c_iflag;	/* input mode flags */
+    unsigned short c_oflag;	/* output mode flags */
+    unsigned short c_cflag;	/* control mode flags */
+    unsigned short c_lflag;	/* local mode flags */
+    unsigned char c_line;	/* line discipline */
+    unsigned char c_cc[NCC];	/* control characters */
 };
 
 #define NCCS 19
-struct termios {
-	tcflag_t c_iflag;		/* input mode flags */
-	tcflag_t c_oflag;		/* output mode flags */
-	tcflag_t c_cflag;		/* control mode flags */
-	tcflag_t c_lflag;		/* local mode flags */
-	cc_t c_line;			/* line discipline */
-	cc_t c_cc[NCCS];		/* control characters */
+struct termios
+{
+    tcflag_t c_iflag;		/* input mode flags */
+    tcflag_t c_oflag;		/* output mode flags */
+    tcflag_t c_cflag;		/* control mode flags */
+    tcflag_t c_lflag;		/* local mode flags */
+    cc_t c_line;		/* line discipline */
+    cc_t c_cc[NCCS];		/* control characters */
 };
 
 /* c_cc characters */
@@ -211,7 +214,7 @@ struct termios {
 #define  B115200 0010002
 #define  B230400 0010003
 #define CIBAUD	  002003600000	/* input baud rate (not used) */
-#define CRTSCTS	  020000000000		/* flow control */
+#define CRTSCTS	  020000000000	/* flow control */
 
 /* c_lflag bits */
 #define ISIG	0000001

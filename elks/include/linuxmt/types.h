@@ -38,23 +38,24 @@ typedef __u32 u_ino_t;
 typedef __u16 block_t;
 typedef __u32 daddr_t;
 typedef __u32 tcflag_t;
-typedef __u8  cc_t;
+typedef __u8 cc_t;
 typedef __kernel_fd_set fd_set;
-typedef __u16 seg_t;			/* Segment no. */
-typedef __u16 segext_t;			/* Extent of segment */
+typedef __u16 seg_t;		/* Segment no. */
+typedef __u16 segext_t;		/* Extent of segment */
 typedef __u32 jiff_t;
 #ifdef CONFIG_SHORT_FILES
 typedef __u16 fd_mask_t;
 #else
-typedef __u32 fd_mask_t; 
+typedef __u32 fd_mask_t;
 #endif
 
-typedef int   ptrdiff_t;
-struct ustat {
-	daddr_t f_tfree;
-	ino_t f_tinode;
-	char f_fname[6];
-	char f_fpack[6];
+typedef int ptrdiff_t;
+struct ustat
+{
+    daddr_t f_tfree;
+    ino_t f_tinode;
+    char f_fname[6];
+    char f_fpack[6];
 };
 
 #endif

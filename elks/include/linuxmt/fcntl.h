@@ -4,7 +4,7 @@
 /*
  *	Definitions taken from the i386 Linux kernel.
  */
- 
+
 /* open/fcntl */
 
 #define O_ACCMODE	  0003
@@ -51,7 +51,7 @@
 #define LOCK_SH		1	/* shared lock */
 #define LOCK_EX		2	/* exclusive lock */
 #define LOCK_NB		4	/* or'd with one of the above to prevent
-				   blocking */
+				 * blocking */
 #define LOCK_UN		8	/* remove lock */
 
 #ifdef __KERNEL__

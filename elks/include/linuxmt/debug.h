@@ -26,10 +26,10 @@
 #endif
 
 #if 0
-#define printd_mfs printk 
-#define printd_mfs1 printk 
-#define printd_mfs2 printk 
-#define printd_mfs3 printk 
+#define printd_mfs printk
+#define printd_mfs1 printk
+#define printd_mfs2 printk
+#define printd_mfs3 printk
 #else
 #define printd_mfs(_a)
 #define printd_mfs1(_a,_b)
@@ -38,7 +38,7 @@
 #endif
 
 #if 0
-#define printd_rfs printk 
+#define printd_rfs printk
 #else
 #define printd_rfs(_a)
 #endif

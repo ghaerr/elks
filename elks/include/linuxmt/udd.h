@@ -17,14 +17,15 @@
 #define MAX_UDD	8
 #define MAX_UDR	32
 
-struct ud_driver {
-	int	udd_type;
-	int	udd_major;
-	struct task * udd_task;
-	char *	udd_data;
-	struct ud_request * udd_req;
-	struct wait_queue udd_wait;
-	struct wait_queue udd_rwait;
+struct ud_driver
+{
+    int udd_type;
+    int udd_major;
+    struct task *udd_task;
+    char *udd_data;
+    struct ud_request *udd_req;
+    struct wait_queue udd_wait;
+    struct wait_queue udd_rwait;
 };
 
 /*
@@ -34,11 +35,12 @@ struct ud_driver {
  * in it.
  */
 
-struct ud_driver_trunc {
-	int	udd_type;
-	int	udd_major;
-	struct task * udd_task;
-	char *	udd_data;
+struct ud_driver_trunc
+{
+    int udd_type;
+    int udd_major;
+    struct task *udd_task;
+    char *udd_data;
 };
 
 /* udd_type can be */
@@ -46,16 +48,17 @@ struct ud_driver_trunc {
 #define UDD_CHR_DEV	1
 #define UDD_BLK_DEV	2
 
-struct ud_request {
-	char *	udr_data;
-	int	udr_status;
-	off_t	udr_ptr;
-	int	udr_param;
-	struct wait_queue udr_wait;
-	struct wait_queue udr_ewait;
-	int	udr_type;
-	int	udr_minor;
-	unsigned int	udr_size;
+struct ud_request
+{
+    char *udr_data;
+    int udr_status;
+    off_t udr_ptr;
+    int udr_param;
+    struct wait_queue udr_wait;
+    struct wait_queue udr_ewait;
+    int udr_type;
+    int udr_minor;
+    unsigned int udr_size;
 };
 
 /*
@@ -65,9 +68,10 @@ struct ud_request {
  * in it.
  */
 
-struct ud_request_trunc {
-	char *	udr_data;
-	int	udr_status;
+struct ud_request_trunc
+{
+    char *udr_data;
+    int udr_status;
 };
 
 /* udr_type can be */

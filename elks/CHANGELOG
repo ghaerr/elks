@@ -1,4 +1,4 @@
-This file is used to record changes made to the CVS database. Please add to
+7This file is used to record changes made to the CVS database. Please add to
 the top of this file before committing any changes. Please use the header
 format provided for each entry, noting that the text on each line should not
 be longer than the lines of dashes.
@@ -24,13 +24,19 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-14 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        rhw@InfraDead.Org                 16 Nov 1998-18 Apr 2002
+Riley Williams        rhw@InfraDead.Org                 16 Nov 1998-19 Apr 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Fri Apr 19 17:38:04 BST 2002	Riley Williams <rhw@InfraDead.Org>
+
+	* ANSI'fied function prototypes in fs subtree.
+	* Applied `make indent` rule to fs and include subtrees.
+	* Verified that kernel compiles with above changes applied.
 
 Thu Apr 18 23:15:09 BST 2002	Riley Williams <rhw@InfraDead.Org>
 
@@ -44,7 +50,7 @@ Thu Apr 18 23:15:09 BST 2002	Riley Williams <rhw@InfraDead.Org>
 	  on the command line used.
 	* Added new NOINDENT makevar to state code files not to be
 	  reformatted by `make indent` - usually because they include
-	  asm statements, which indent doesn't handle at all well.
+	  '#asm' statements, which indent doesn't handle at all well.
 	* Resolved ambiguities discovered by a test application of the
 	  new `make indent` command detailed above. These ambiguities
 	  were primarily caused by the current coding format omitting

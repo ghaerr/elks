@@ -83,19 +83,19 @@
  */
 
 /* Don't touch these, unless you really know what your doing. */
-#define DEF_INITSEG	0x0100   /* original 0x0100
-				  * for netboot use for example 
-				  * 0x5000, as 0x0100 cannot be used
-				  * in connection to the netboot
-				  * loader
-				  */
+#define DEF_INITSEG	0x0100	/* original 0x0100
+				 * for netboot use for example 
+				 * 0x5000, as 0x0100 cannot be used
+				 * in connection to the netboot
+				 * loader
+				 */
 #define DEF_SYSSEG	0x1000
 #define DEF_SETUPSEG	DEF_INITSEG + 0x20
 #define DEF_SYSSIZE	0x2F00
 
 /* internal svga startup constants */
-#define NORMAL_VGA	0xffff		/* 80x25 mode */
-#define EXTENDED_VGA	0xfffe		/* 80x50 mode */
-#define ASK_VGA		0xfffd		/* ask for it at bootup */
+#define NORMAL_VGA	0xffff	/* 80x25 mode */
+#define EXTENDED_VGA	0xfffe	/* 80x50 mode */
+#define ASK_VGA		0xfffd	/* ask for it at bootup */
 
 #endif

@@ -1,16 +1,17 @@
 #ifndef __LINUX_PIPE_FS_I_H__
 #define __LINUX_PIPE_FS_I_H__
 
-struct pipe_inode_info {
-	struct wait_queue wait;
-	char * base;
-	unsigned int start;
-	unsigned int len;
-	unsigned int lock;
-	unsigned int rd_openers;
-	unsigned int wr_openers;
-	unsigned int readers;
-	unsigned int writers;
+struct pipe_inode_info
+{
+    struct wait_queue wait;
+    char *base;
+    unsigned int start;
+    unsigned int len;
+    unsigned int lock;
+    unsigned int rd_openers;
+    unsigned int wr_openers;
+    unsigned int readers;
+    unsigned int writers;
 };
 
 #define PAGE_SIZE 512
