@@ -112,16 +112,16 @@ ROOT_DEV	= FLOPPY
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
 
-ASSIBO		=
-CCSIBO		=
-CPPSIBO 	=
+ASIBO		=
+CSIBO		=
+CPSIBO		=
 LDSIBO		= -D 0xC00 -H 0x480
 
 else
 
-ASSIBO		=
-CCSIBO		=
-CPPSIBO 	=
+ASIBO		=
+CSIBO		=
+CPSIBO		=
 LDSIBO		=
 
 endif
@@ -132,13 +132,13 @@ endif
 AR		= ar
 
 AS		= as86
-AFLAGS		= -0 -j -j $(ASSIBO)
+AFLAGS		= -0 -j -j $(ASIBO)
 
 CC		= bcc
-CFLAGS	 	= -D__KERNEL__ -I$(INCDIR) -O -i $(CCSIBO)
+CFLAGS	 	= -D__KERNEL__ -I$(INCDIR) -O -i $(CSIBO)
 
 CPP		= bcc
-CPFLAGS 	= -D__KERNEL__ -I$(INCDIR) -E $(CPPSIBO)
+CPFLAGS 	= -D__KERNEL__ -I$(INCDIR) -E $(CPSIBO)
 
 LD		= ld86
 LDFLAGS 	= -0 -i $(LDSIBO)

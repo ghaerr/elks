@@ -26,26 +26,26 @@ DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 
 boot/setup: boot/setup.S
 	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/setup.s boot/setup.S
-	$(AS86) -o boot/setup.o boot/setup.s
-	$(LD86) -s -o boot/setup -M boot/setup.o > Setup.map
+	$(AS) $(AFLAGS) -o boot/setup.o boot/setup.s
+	$(LD) $(LDFLAGS) -s -o boot/setup -M boot/setup.o > Setup.map
 
 boot/bootsect: boot/bootsect.S
 	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/bootsect.s \
 		boot/bootsect.S
-	$(AS86) -0 -o boot/bootsect.o boot/bootsect.s
-	$(LD86) -0 -s -o boot/bootsect -M boot/bootsect.o > Boot.map
+	$(AS) $(AFLAGS) -o boot/bootsect.o boot/bootsect.s
+	$(LD) $(LDFLAGS) -s -o boot/bootsect -M boot/bootsect.o > Boot.map
 
 boot/netbootsect: boot/netbootsect.S
 	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/netbootsect.s \
 		boot/netbootsect.S
-	$(AS86) -0 -o boot/netbootsect.o boot/netbootsect.s
-	$(LD86) -0 -s -o boot/netbootsect -M boot/netbootsect.o > Netboot.map
+	$(AS) $(AFLAGS) -o boot/netbootsect.o boot/netbootsect.s
+	$(LD) $(LDFLAGS) -s -o boot/netbootsect -M boot/netbootsect.o > Netboot.map
 
 boot/crt1.o: boot/crt1.c
 
 boot/crt0.o: boot/crt0.S
 	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/crt0.s boot/crt0.S
-	$(AS86) -0 -o boot/crt0.o boot/crt0.s
+	$(AS) $(AFLAGS) -o boot/crt0.o boot/crt0.s
 
 tools:
 	make -C tools all

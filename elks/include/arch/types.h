@@ -5,6 +5,8 @@
 
 /* First we define all of the __u and __s types...*/
 
+#define signed
+
 typedef unsigned char   __u8;
 typedef unsigned char * __pu8;
 typedef   signed char   __s8;

@@ -20,6 +20,8 @@ Sat Sep  8 19:51:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 	  am undertaking, but does not impact on the current system in any
 	  way. It is an important part of the rationalised Makefile system
 	  though, so needs to be included.
+	* Arranged Makefile such that `make elks` from ANY directory in
+	  the ELKS source tree will compile the entire tree.
 
 Thu Aug 30 19:16:22 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 

@@ -10,26 +10,38 @@ ELKSDIR		= ../../..
 include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
-
-OBJS		= $(IOBJS) $(JOBJS) $(LLOBJS) $(LXOBJS)
-
 # compiler support for integer arithmetic
+
 IOBJS		= idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o
 
+#########################################################################
 # miscellaneous
+
 JOBJS		= inport.o inportb.o outport.o outportb.o \
 		  peekb.o peekw.o peekd.o pokeb.o pokew.o poked.o \
 		  bitops.o memmove.o string.o fmemset.o border.o
 #		  ntohl.o ntohs.o
 
+#########################################################################
 # compiler support for long arithmetic on little-endian (normal) longs
+
 LLOBJS		= laddl.o landl.o lcmpl.o lcoml.o ldecl.o ldivl.o \
 		  ldivul.o leorl.o lincl.o lmodl.o lmodul.o lmull.o \
 		  lnegl.o lorl.o lsll.o lsrl.o lsrul.o lsubl.o ltstl.o \
 		  setupw.o setupb.o
 
+#########################################################################
 # compiler support for long arithmetic on all longs
+
 LXOBJS		= ldivmod.o
+
+#########################################################################
+# All of the above combined.
+
+OBJS		= $(IOBJS) $(JOBJS) $(LLOBJS) $(LXOBJS)
+
+#########################################################################
+# Relevant targets
 
 all:	lib86.a
 

@@ -84,16 +84,16 @@ setup: $(ARCH_DIR)/boot/setup
         kernel/kernel.a lib/lib.a net/net.a
 
 fs/elksfs/elksfs.a:
-	make -C elksfs all
+	make -C fs/elksfs all
 
 fs/fs.a:
 	make -C fs all
 
 fs/minix/minixfs.a:
-	make -C minix all
+	make -C fs/minix all
 
 fs/romfs/romfs.a:
-	make -C romfs all
+	make -C fs/romfs all
 
 kernel/kernel.a: include/linuxmt/version.h include/linuxmt/compile.h
 	make -C kernel all
