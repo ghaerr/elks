@@ -29,8 +29,8 @@ static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 static struct wait_queue bufmapwait;	/* Wait for a free L1 buffer area */
-static struct buffer_head *bufmem_map[NR_MAPBUFS];	/* Array of bufmem's allocation */
-static unsigned int _buf_ds;	/* Segment(s?) of L2 buffer cache */
+static struct buffer_head *bufmem_map[NR_MAPBUFS]; /* Array of bufmem's allocation */
+static __u16 _buf_ds;			/* Segment(s?) of L2 buffer cache */
 #endif
 
 /*
@@ -392,7 +392,7 @@ void mark_buffer_uptodate(struct buffer_head *bh, int on)
     flag_t flags;
 
     save_flags(flags);
-    i_cli();
+    clr_irq();
     bh->b_uptodate = on;
     restore_flags(flags);
 }
@@ -436,11 +436,10 @@ void map_buffer(register struct buffer_head *bh)
 		bufmem_map[i] = bh;
 		bh->b_data = bufmem[i];
 		bh->b_mapcount++;
-		fmemcpy(get_ds(), bh->b_data,
-			_buf_ds, (char *) (bh->b_num * 0x400), 0x400);
-		debug3
-		    ("BUFMAP: Buffer %d (block %ld) mapped into L1 slot %d.\n",
-		     bh->b_num, bh->b_blocknr, i);
+		fmemcpy(get_ds(), (__u16) bh->b_data, _buf_ds,
+			(__u16) (bh->b_num * 0x400), 0x400);
+		debug3("BUFMAP: Buffer %d (block %ld) mapped into L1 slot %d.\n",
+			bh->b_num, bh->b_blocknr, i);
 		return;
 	    }
 	}
@@ -456,9 +455,8 @@ void map_buffer(register struct buffer_head *bh)
 		debug1("BUFMAP: Buffer %d unmapped from L1\n",
 			       bufmem_map[i]->b_num);
 		/* Now unmap it */
-		fmemcpy(_buf_ds,
-			(char *) (bufmem_map[i]->b_num * 0x400),
-			get_ds(), bufmem_map[i]->b_data, 0x400);
+		fmemcpy(_buf_ds, (__u16) (bufmem_map[i]->b_num * 0x400),
+			get_ds(), (__u16) bufmem_map[i]->b_data, 0x400);
 		bufmem_map[i]->b_data = 0;
 		bufmem_map[i] = 0;
 		break;
@@ -532,7 +530,7 @@ void print_bufmap_status(void)
 void buffer_init(void)
 {
     register struct buffer_head *bh = buffers;
-    int i;
+    unsigned char i;
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     _buf_ds = mm_alloc(NR_BUFFERS * 0x40);

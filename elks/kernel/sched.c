@@ -152,7 +152,7 @@ void schedule(void)
 
     prev = currentp;
     next = prev->next_run;
-    i_cli();
+    clr_irq();
 
     switch (prev->state) {
     case TASK_INTERRUPTIBLE:
@@ -188,7 +188,7 @@ void schedule(void)
     if (init_task.next_run->pid != 0)
 	printk("init_task.next_run->pid=%d\n", init_task.next_run->pid);
 #endif
-    i_sti();
+    set_irq();
 
     c = 0;
     next = &init_task;
@@ -216,7 +216,7 @@ void schedule(void)
 
 #else
 
-    i_sti();
+    set_irq();
     while ((next != &init_task) && (next == prev))
 	next = next->next_run;
 
@@ -291,7 +291,7 @@ int del_timer(register struct timer_list *timer)
     int ret;
     flag_t flags;
     save_flags(flags);
-    i_cli();
+    clr_irq();
     ret = detach_timer(timer);
     timer->tl_next = timer->tl_prev = 0;
     restore_flags(flags);
@@ -311,7 +311,7 @@ void add_timer(register struct timer_list *timer)
     struct timer_list *prev = &tl_list;
 
     save_flags(flags);
-    i_cli();
+    clr_irq();
 
     while (next) {
 	if (next->tl_expires > timer->tl_expires) {
@@ -338,20 +338,19 @@ static void run_timer_list(void)
 {
     struct timer_list *timer = tl_list.tl_next;
 
-    i_cli();
-
+    clr_irq();
     while (timer && timer->tl_expires < jiffies) {
 	void (*fn) () = timer->tl_function;
 	int data = timer->tl_data;
 	detach_timer(timer);
 	timer->tl_next = timer->tl_prev = NULL;
-	i_sti();
+	set_irq();
 	fn(data);
-	i_cli();
+	clr_irq();
 	timer = timer->tl_next;
     }
 
-    i_sti();
+    set_irq();
 }
 
 /* maybe someday I'll implement these profiling things -PL */
@@ -387,10 +386,10 @@ static void update_times(void)
 {
     jiff_t ticks;
 
-    i_cli();
+    clr_irq();
     ticks = lost_ticks;
     lost_ticks = 0;
-    i_sti();
+    set_irq();
 
     if (ticks) {
 	register struct task_struct *p = current;

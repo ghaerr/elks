@@ -45,26 +45,26 @@ struct file_operations *get_blkfops(unsigned int major)
     return blkdevs[major].ds_fops;
 }
 
-int register_chrdev(unsigned int major,
-		    char *name, register struct file_operations *fops)
+int register_chrdev(unsigned int major, char *name,
+		    register struct file_operations *fops)
 {
     register struct device_struct *dev = &chrdevs[major];
 
-    if (major >= MAX_CHRDEV) {
+    if (major >= MAX_CHRDEV)
 	return -EINVAL;
-    }
-    if (dev->ds_fops && (dev->ds_fops != fops)) {
+    if (dev->ds_fops && (dev->ds_fops != fops))
 	return -EBUSY;
-    }
+    dev->ds_fops = fops;
+
 #ifdef CONFIG_DEV_NAMES
     dev->ds_name = name;
 #endif
-    dev->ds_fops = fops;
+
     return 0;
 }
 
-int register_blkdev(unsigned int major,
-		    char *name, register struct file_operations *fops)
+int register_blkdev(unsigned int major, char *name,
+		    register struct file_operations *fops)
 {
     register struct device_struct *dev = &blkdevs[major];
 
@@ -72,12 +72,16 @@ int register_blkdev(unsigned int major,
 	return -EINVAL;
     if (dev->ds_fops && dev->ds_fops != fops)
 	return -EBUSY;
+    dev->ds_fops = fops;
+
 #ifdef CONFIG_DEV_NAMES
     dev->ds_name = name;
 #endif
-    dev->ds_fops = fops;
+
     return 0;
 }
+
+#ifdef BLOAT_FS
 
 /*
  * This routine checks whether a removable media has been changed,
@@ -88,11 +92,10 @@ int register_blkdev(unsigned int major,
  * People changing diskettes in the middle of an operation deserve
  * to lose :-)
  */
-#ifdef BLOAT_FS
 int check_disk_change(kdev_t dev)
 {
-    int i;
     register struct file_operations *fops;
+    int i;
 
     i = MAJOR(dev);
     if (i >= MAX_BLKDEV || (fops = blkdevs[i].ds_fops) == NULL)
@@ -113,6 +116,7 @@ int check_disk_change(kdev_t dev)
 	fops->revalidate(dev);
     return 1;
 }
+
 #endif
 
 /*
@@ -121,7 +125,7 @@ int check_disk_change(kdev_t dev)
 
 int blkdev_open(register struct inode *inode, register struct file *filp)
 {
-    int i;
+    unsigned int i;
 
     i = MAJOR(inode->i_rdev);
     if (i >= MAX_BLKDEV || !blkdevs[i].ds_fops)
@@ -170,13 +174,13 @@ struct inode_operations blkdev_inode_operations = {
 };
 
 /*
- * Called every time a character special file is opened
+ * Called every time a character special file is opened.
  */
 
 static int chrdev_open(register struct inode *inode,
-		       register struct file *filp)
+			register struct file *filp)
 {
-    int i;
+    unsigned int i;
 
     i = MAJOR(inode->i_rdev);
     if (i >= MAX_CHRDEV || !chrdevs[i].ds_fops)
@@ -236,7 +240,7 @@ char *kdevname(kdev_t dev)
     static char buffer[16];
     register char *hexof = "0123456789ABCDEF";
     register char *bp = buffer;
-    unsigned char b = MAJOR(dev);
+    kdev_t b = MAJOR(dev);
 
     *bp++ = hexof[b >> 4];
     *bp++ = hexof[b & 15];

@@ -30,12 +30,12 @@
 
 int get_unused_fd(void)
 {
-    int fd;
+    unsigned int fd;
 
     for (fd = 0; fd < NR_OPEN; fd++)
 	if (!current->files.fd[fd]) {
 	    (void) clear_bit(fd, &current->files.close_on_exec);
-	    return fd;
+	    return (int) fd;
 	}
 
     return -EMFILE;
@@ -77,7 +77,7 @@ char *get_pipe_mem(void)
 static int pipe_read(register struct inode *inode, struct file *filp,
 		     char *buf, int count)
 {
-    int chars = 0, size = 0, read = 0;
+    size_t chars = 0, size = 0, read = 0;
     register char *pipebuf;
 
     debug("PIPE: read called.\n");
@@ -100,10 +100,10 @@ static int pipe_read(register struct inode *inode, struct file *filp,
 	    interruptible_sleep_on(&(inode->u.pipe_i.wait));
 	}
     (inode->u.pipe_i.lock)++;
-    while (count > 0 && (size = (inode->u.pipe_i.len))) {
+    while (count > 0 && (size = (size_t) (inode->u.pipe_i.len))) {
 	chars = (PIPE_BUF - (inode->u.pipe_i.start));
-	if (chars > count)
-	    chars = count;
+	if (chars > (size_t) count)
+	    chars = (size_t) count;
 	if (chars > size)
 	    chars = size;
 	read += chars;
@@ -119,7 +119,7 @@ static int pipe_read(register struct inode *inode, struct file *filp,
     wake_up_interruptible(&(inode->u.pipe_i.wait));
     if (read) {
 	inode->i_atime = CURRENT_TIME;
-	return read;
+	return (int) read;
     }
     if ((inode->u.pipe_i.writers))
 	return -EAGAIN;
@@ -129,8 +129,8 @@ static int pipe_read(register struct inode *inode, struct file *filp,
 static int pipe_write(register struct inode *inode, struct file *filp,
 		      char *buf, int count)
 {
-    int chars = 0, free = 0, written = 0;
     register char *pipebuf;
+    size_t chars = 0, free = 0, written = 0;
 
     debug("PIPE: write called.\n");
     if (!(inode->u.pipe_i.readers)) {
@@ -139,7 +139,7 @@ static int pipe_write(register struct inode *inode, struct file *filp,
     }
 
     if (count <= PIPE_BUF)
-	free = count;
+	free = (size_t) count;
     else
 	free = 1;
     while (count > 0) {
@@ -147,12 +147,12 @@ static int pipe_write(register struct inode *inode, struct file *filp,
 	       || (inode->u.pipe_i.lock)) {
 	    if (!(inode->u.pipe_i.readers)) {
 		send_sig(SIGPIPE, current, 0);
-		return written ? written : -EPIPE;
+		return written ? (int) written : -EPIPE;
 	    }
 	    if (current->signal)
-		return written ? written : -ERESTARTSYS;
+		return written ? (int) written : -ERESTARTSYS;
 	    if (filp->f_flags & O_NONBLOCK)
-		return written ? written : -EAGAIN;
+		return written ? (int) written : -EAGAIN;
 	    interruptible_sleep_on(&(inode->u.pipe_i.wait));
 	}
 	(inode->u.pipe_i.lock)++;
@@ -161,8 +161,8 @@ static int pipe_write(register struct inode *inode, struct file *filp,
 	    chars = -(((inode->u.pipe_i.start) + (inode->u.pipe_i.len))
 		      & (PIPE_BUF - 1)) + PIPE_BUF;
 
-	    if (chars > count)
-		chars = count;
+	    if (chars > (size_t) count)
+		chars = (size_t) count;
 
 	    if (chars > free)
 		chars = free;
@@ -182,7 +182,7 @@ static int pipe_write(register struct inode *inode, struct file *filp,
     }
     inode->i_ctime = inode->i_mtime = CURRENT_TIME;
 
-    return written;
+    return (int) written;
 }
 
 static void pipe_read_release(register struct inode *inode, struct file *filp)
@@ -251,6 +251,8 @@ static int bad_pipe_rw(struct inode *inode, struct file *filp,
     return -EBADF;
 }
 
+/*@-type@*/
+
 struct file_operations read_pipe_fops = {
     pipe_lseek, pipe_read, bad_pipe_rw, NULL,	/* no readdir */
     NULL,			/* select */
@@ -299,6 +301,8 @@ struct inode_operations pipe_inode_operations = {
     NULL			/* permission */
 #endif
 };
+
+/*@+type@*/
 
 int do_pipe(int *fd)
 {

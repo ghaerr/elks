@@ -235,9 +235,9 @@ static void end_request(int uptodate)
 
 #endif
 
-    i_cli();
+    clr_irq();
     bh->b_uptodate = uptodate;
-    i_sti();
+    set_irq();
     unlock_buffer(bh);
 
 #ifdef BLOAT_FS

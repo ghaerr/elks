@@ -34,17 +34,20 @@ void device_setup(void)
     register struct gendisk *p;
 
     chr_dev_init();
+
 #ifndef CONFIG_NOFS
     blk_dev_init();
 #endif
-    i_sti();
+
+    set_irq();
 
 #ifndef CONFIG_NOFS
-    for (p = gendisk_head; p; p = p->next) {
+    for (p = gendisk_head; p; p = p->next)
 	setup_dev(p);
-    }
 #endif
+
 #ifdef CONFIG_BLK_DEV_RAM
     rd_load();
 #endif
+
 }

@@ -73,3 +73,19 @@ distdir:
 
 #########################################################################
 ### Dependencies:
+
+bitops.o: bitops.c /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kernel.h
+
+
+memmove.o: memmove.c
+
+

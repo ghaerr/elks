@@ -18,22 +18,20 @@
 static int cp_stat(register struct inode *inode, struct stat *statbuf)
 {
     struct stat tmp;
-#if 0
-    unsigned int blocks, indirect;	/* UNUSED */
-#endif
 
     memset(&tmp, 0, sizeof(tmp));
-    tmp.st_dev = kdev_t_to_nr(inode->i_dev);
-    tmp.st_ino = inode->i_ino;
-    tmp.st_mode = inode->i_mode;
-    tmp.st_nlink = inode->i_nlink;
-    tmp.st_uid = inode->i_uid;
-    tmp.st_gid = inode->i_gid;
-    tmp.st_size = inode->i_size;
-    tmp.st_rdev = kdev_t_to_nr(inode->i_rdev);
-    tmp.st_mtime = inode->i_mtime;
-    tmp.st_atime = inode->i_atime;
-    tmp.st_ctime = inode->i_ctime;
+
+    tmp.st_dev		= kdev_t_to_nr(inode->i_dev);
+    tmp.st_ino		= inode->i_ino;
+    tmp.st_mode 	= inode->i_mode;
+    tmp.st_nlink	= inode->i_nlink;
+    tmp.st_uid		= inode->i_uid;
+    tmp.st_gid		= inode->i_gid;
+    tmp.st_size 	= (off_t) inode->i_size;
+    tmp.st_rdev 	= kdev_t_to_nr(inode->i_rdev);
+    tmp.st_mtime	= inode->i_mtime;
+    tmp.st_atime	= inode->i_atime;
+    tmp.st_ctime	= inode->i_ctime;
 
 /*
  * st_blocks and st_blksize are approximated with a simple algorithm if
@@ -52,6 +50,7 @@ static int cp_stat(register struct inode *inode, struct stat *statbuf)
  */
 
 #if 0
+
 #define D_B   7
 #define I_B   (BLOCK_SIZE / sizeof(unsigned short))
 
@@ -61,6 +60,8 @@ static int cp_stat(register struct inode *inode, struct stat *statbuf)
  */
 
     if (!inode->i_blksize) {
+	unsigned int blocks, indirect;
+
 	blocks = (tmp.st_size + BLOCK_SIZE - 1) >> BLOCK_SIZE_BITS;
 	if (blocks > D_B) {
 	    indirect = (blocks - D_B + I_B - 1) / I_B;
@@ -116,7 +117,7 @@ int sys_fstat(unsigned int fd, struct stat *statbuf)
     return cp_stat(f->f_inode, statbuf);
 }
 
-int sys_readlink(char *path, register char *buf, int bufsiz)
+int sys_readlink(char *path, register char *buf, size_t bufsiz)
 {
     struct inode *inode;
     register struct inode_operations *iop;

@@ -311,7 +311,7 @@ static int do_chown(register struct inode *inode, uid_t user, gid_t group)
     if (!IS_RDONLY(inode)) {
 	if (suser() || (current->euid == inode->i_uid)) {
 	    if (group != (gid_t) - 1) {
-		inode->i_gid = group;
+		inode->i_gid = (__u8) group;
 		inode->i_mode &= ~S_ISGID;
 	    }
 	    if (user != (uid_t) - 1) {
@@ -365,20 +365,19 @@ int sys_fchown(unsigned int fd, uid_t user, gid_t group)
  * used by symlinks.
  */
 
-int sys_open(char *filename, unsigned short int flags, mode_t mode)
+int sys_open(char *filename, int flags, int mode)
 {
     struct inode *inode;
     register struct file *f;
-    unsigned short int flag;
-    int error, fd;
+    int error, fd, flag;
 
     f = get_empty_filp();
     if (!f) {
 	printk("\nNo filps\n");
 	return -ENFILE;
     }
-    f->f_flags = flag = flags;
-    f->f_mode = (flag + 1) & O_ACCMODE;
+    f->f_flags = (unsigned short int) (flag = flags);
+    f->f_mode = (mode_t) ((flag + 1) & O_ACCMODE);
     if (f->f_mode)
 	flag++;
     if (flag & (O_TRUNC | O_CREAT))

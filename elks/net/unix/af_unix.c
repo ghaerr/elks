@@ -25,12 +25,12 @@ static struct unix_proto_data *unix_data_alloc(void)
 {
     struct unix_proto_data *upd;
 
-    i_cli();
+    clr_irq();
     for (upd = unix_datas; upd <= last_unix_data; ++upd) {
 	if (!upd->refcnt) {
 	    /* unix domain socket not yet in itialised - bgm */
 	    upd->refcnt = -1;
-	    i_sti();
+	    set_irq();
 	    upd->socket = NULL;
 	    upd->sockaddr_len = 0;
 	    upd->sockaddr_un.sun_family = 0;
@@ -46,7 +46,7 @@ static struct unix_proto_data *unix_data_alloc(void)
 	    return upd;
 	}
     }
-    i_sti();
+    set_irq();
     return NULL;
 }
 

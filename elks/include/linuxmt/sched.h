@@ -162,8 +162,8 @@ extern void _wake_up(struct wait_queue *,unsigned short int);
 
 /*@+namechecks@*/
 
-extern void down(unsigned short int *);
-extern void up(unsigned short int *);
+extern void down(short int *);
+extern void up(short int *);
 
 extern void wake_up_process(struct task_struct *);
 

@@ -65,12 +65,12 @@ static struct msdos_exec_hdr mshdr;
 int sys_execve(char *filename, char *sptr, size_t slen)
 {
     struct file file;	/* We can push this to stack its now only 20 bytes */
-
     void *ptr;
     struct inode *inode;
     register struct file *filp = &file;
     __registers *tregs;
-    int suidfile, sgidfile, retval, execformat, i;
+    unsigned int suidfile, sgidfile, i;
+    int retval, execformat;
     __u16 ds = current->t_regs.ds;
     seg_t cseg, dseg, stack_top = 0;
     uid_t effuid;
@@ -227,7 +227,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	len = mh.chmem;
     }
     len = (len + 15) & ~15L;
-    if (len > 0x10000L) {
+    if (len > (lsize_t) 0x10000L) {
 	retval = -ENOMEM;
 	mm_free(cseg);
 	goto close_readexec;
@@ -270,32 +270,31 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /*
      *      Wipe the BSS.
      */
-    fmemset(((char *) mh.dseg) + stack_top, dseg, 0, mh.bseg);
+    fmemset((__u16) mh.dseg + stack_top, dseg, 0, (__u16) mh.bseg);
 
     /*
      *      Copy the stack
      */
-    if (stack_top) {
+    if (stack_top)
 	ptr = (char *) (stack_top - slen);
-    } else {
+    else
 	ptr = (char *) (len - slen);
-    }
     count = slen;
-    fmemcpy(dseg, ptr, current->mm.dseg, sptr, count);
+    fmemcpy(dseg, (__u16) ptr, current->mm.dseg, (__u16) sptr, (__u16) count);
 
     /* argv and envp are two NULL-terminated arrays of pointers, located
      * right after argc.  This fixes them up so that the loaded program
      * gets the right strings. */
 
     {
-	int *p, nzero = 0, tmp;
-	p = (int *) ptr;
+	__u16 *p = (__u16 *) ptr, nzero = 0, tmp;
+
 	while (nzero < 2) {
 	    p++;
-	    if ((tmp = peekw(dseg, p)) != 0) {
-		pokew(dseg, p, tmp + (int) ptr);
+	    if ((tmp = peekw(dseg, (__u16) p)) != 0) {
+		pokew(dseg, (__u16) p, (__u16) (((char *) ptr) + tmp));
 	    } else
-		nzero++;	/* increments for each array traveresed */
+		nzero++;	/* increments for each array traversed */
 	}
     }
 

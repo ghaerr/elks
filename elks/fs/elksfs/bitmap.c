@@ -94,7 +94,7 @@ void elksfs_free_block(register struct super_block *sb, block_t block)
 unsigned int elksfs_new_block(register struct super_block *sb)
 {
     register struct buffer_head *bh;
-    unsigned short int i, j;
+    unsigned int i, j;
 
     if (!sb) {
 	printk("trying to get new block from nonexistent device\n");
@@ -213,7 +213,7 @@ struct inode *elksfs_new_inode(struct inode *dir)
     struct super_block *sb;
     register struct inode *inode;
     register struct buffer_head *bh;
-    unsigned short int i, j;
+    unsigned int i, j;
 
     if (!dir || !(inode = get_empty_inode()))
 	return NULL;

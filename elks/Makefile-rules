@@ -308,31 +308,32 @@ dodep:	$(DEPEND)
 dolint:
 	@for FILE in $${USEME:-*.[ch]} ; do \
 	    if [ -f "$${FILE}" ]; then \
-		echo $(LINT) ... "$${FILE}" ; \
-		if fgrep -q FIXME "$${FILE}" ; then \
+		    echo $(LINT) ... "$${FILE}" ; \
+		    if fgrep -q FIXME "$${FILE}" ; then \
 			echo WARNING: "$${FILE}" includes a FIXME comment. ; \
 			sleep 1 ; \
-		fi ; \
-		if fgrep -q '#ifndef S_SPLINT_S' "$${FILE}" ; then \
+		    fi ; \
+		    if fgrep -q '#ifndef S_SPLINT_S' "$${FILE}" ; then \
 			echo WARNING: "$${FILE}" includes disabled section. ; \
 			sleep 1 ; \
-		fi ; \
-		if fgrep -q '/*@ignore@*/' "$${FILE}" ; then \
-			echo WARNING: "$${FILE}" includes section ignored by splint ; \
+		    fi ; \
+		    if fgrep -q '/*@ignore@*/' "$${FILE}" ; then \
+			echo WARNING: "$${FILE}" includes section ignored \
+					by splint ; \
 			sleep 1 ; \
-		fi ; \
-		if echo "$${FILE}" | grep -q '\.h$$' ; then \
+		    fi ; \
+		    if echo "$${FILE}" | grep -q '\.h$$' ; then \
 			$(LINT) $(LINTLEVEL) $(LHFLAGS) "$${FILE}" \
 				> "$${FILE}.lint" 2>&1 ; \
-		else \
+		    else \
 			$(LINT) $(LINTLEVEL) $(LCFLAGS) "$${FILE}" \
 				> "$${FILE}.lint" 2>&1 ; \
-		fi ; \
-		if [ $$? -eq 0 ]; then \
-		    rm -f "$${FILE}.lint" ; \
-		else \
-		    cat "$${FILE}.lint" ; \
-		fi ; \
+		    fi ; \
+		    if [ $$? -eq 0 ]; then \
+			rm -f "$${FILE}.lint" ; \
+		    else \
+			cat "$${FILE}.lint" ; \
+		    fi ; \
 	    fi ; \
 	done
 	@echo

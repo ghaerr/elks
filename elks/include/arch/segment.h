@@ -3,8 +3,24 @@
 
 #include <linuxmt/types.h>
 
+#if 1
+
 extern __u16 get_cs(void), get_ds(void), get_es(void), get_ss(void);
-extern __u16 get_bp(void), setupw(unsigned short int, unsigned short int *);
+extern __u16 get_bp(void);
+
+#else
+
+#include <arch/asm.h>
+
+#define get_cs()	asm("mov ax,cs")
+#define get_ds()	asm("mov ax,ds")
+#define get_es()	asm("mov ax,es")
+#define get_ss()	asm("mov ax,ss")
+#define get_bp()	asm("mov ax,bp")
+
+#endif
+
+extern __u16 setupw(unsigned short int, unsigned short int *);
 
 extern pid_t get_pid(void);
 

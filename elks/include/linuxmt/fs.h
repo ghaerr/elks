@@ -489,8 +489,8 @@ extern int char_read(struct inode *,struct file *,char *,int);
 
 #ifdef CONFIG_BLK_DEV_CHAR
 
-extern int block_read(struct inode *,struct file *,char *,int);
-extern int block_write(struct inode *,struct file *,char *,int);
+extern int block_read(struct inode *,struct file *,char *,size_t);
+extern int block_write(struct inode *,struct file *,char *,size_t);
 
 #else
 
@@ -508,7 +508,7 @@ extern int _namei(char *,struct inode *,int,struct inode **);
 
 /*@+namechecks@*/
 
-extern int sys_dup(int);
+extern int sys_dup(unsigned int);
 
 extern struct buffer_head *bread(dev_t,block_t);
 

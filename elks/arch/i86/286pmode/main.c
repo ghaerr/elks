@@ -4,6 +4,8 @@
  * main source file for the 286pmode ELKS kernel extender
  */
 
+#include <arch/irq.h>
+
 #include "descriptor.h"
 #include "tss.h"
 
@@ -93,7 +95,7 @@ extern int exc_11, exc_xx;
 extern int irq_0, irq_1, irq_2, irq_3, irq_4, irq_5, irq_6, irq_7;
 extern int irq_8, irq_9, irq_a, irq_b, irq_c, irq_d, irq_e, irq_f;
 
-unsigned short irqhandlers[0x30] = {
+int *irqhandlers[0x30] = {
     &exc_00, &exc_01, &exc_02, &exc_03, &exc_04, &exc_05, &exc_06, &exc_07,
     &exc_08, &exc_09, &exc_0a, &exc_0b, &exc_0c, &exc_0d, &exc_0e, &exc_xx,
     &exc_10, &exc_11, &exc_xx, &exc_xx, &exc_xx, &exc_xx, &exc_xx, &exc_xx,
@@ -102,47 +104,20 @@ unsigned short irqhandlers[0x30] = {
     &irq_8, &irq_9, &irq_a, &irq_b, &irq_c, &irq_d, &irq_e, &irq_f,
 };
 
-#if 0				/* old versions */
-
-void cli(void)
-{
-#asm
-    cli
-#endasm
-}
-
-void sti(void)
-{
-#asm
-    sti
-#endasm
-}
-
-#else
-
-/* new versions. 4 bytes saved on overhead, and 2 bytes per call. */
-#define cli() asm("cli")
-#define sti() asm("sti")
-
-#endif
-
 unsigned short get_ds(void)
 {
-#asm
-    mov ax, ds
-#endasm
+    asm("mov ax,ds");
 }
 
 unsigned short get_flags(void)
 {
-#asm
-    pushf
-    pop ax
-#endasm
+    asm("pushf");
+    asm("pop ax");
 }
 
 void set_flags(unsigned short flags)
 {
+#ifndef S_SPLINT_S
 #asm
     pop bx
     pop ax
@@ -151,10 +126,12 @@ void set_flags(unsigned short flags)
     push ax
     popf
 #endasm
+#endif
 }
 
 void load_gdtr(void)
 {
+#ifndef S_SPLINT_S
 #asm
 #ifdef DEBUG_2ND_MONITOR
     push es
@@ -275,10 +252,12 @@ void load_gdtr(void)
     pop es
 #endif
 #endasm
+#endif
 }
 
 void load_idtr(void)
 {
+#ifndef S_SPLINT_S
 #asm
     push bp
     mov bp, sp
@@ -380,14 +359,17 @@ void load_idtr(void)
     add sp, #6
     pop bp
 #endasm
+#endif
 }
 
 void load_tr(void)
 {
+#ifndef S_SPLINT_S
 #asm
     mov ax, #PMODE_TSSSEL
     ltr ax
 #endasm
+#endif
 }
 
 void set_idt_entry(unsigned short interrupt,unsigned short cs,
@@ -395,7 +377,7 @@ void set_idt_entry(unsigned short interrupt,unsigned short cs,
 {
     unsigned short flags = get_flags();
 
-    cli();
+    clr_irq();
 
     idt[interrupt].limit = ip;
     idt[interrupt].baseaddr0 = cs;
@@ -419,6 +401,7 @@ char irq_mesg[] = "received irq ";
 void do_irq(irqnum, es, ds, di, si, bp, ignore, bx, dx, cx, ax)
      unsigned short irqnum, es, ds, di, si, bp, ignore, bx, dx, cx, ax;
 {
+#ifndef S_SPLINT_S
 #asm
     push bp
     mov bp, sp
@@ -470,6 +453,7 @@ foo:
 
     pop bp
 #endasm
+#endif
 }
 
 char exc_mesg[] = "recieved exception ";
@@ -477,6 +461,7 @@ char exc_mesg[] = "recieved exception ";
 void do_exc(excnum, es, ds, di, si, bp, ignore, bx, dx, cx, ax)
      unsigned short excnum, es, ds, di, si, bp, ignore, bx, dx, cx, ax;
 {
+#ifndef S_SPLINT_S
 #asm
     push bp
     mov bp, sp
@@ -520,10 +505,12 @@ do_exc_done_print:
     db 0xeb, 0xfe
     pop bp
 #endasm
+#endif
 }
 
 void revector_8259s(unsigned short where)
 {
+#ifndef S_SPLINT_S
 #asm
     pop dx	/* cheap trick to get the parameter into bx */
     pop bx
@@ -569,20 +556,24 @@ void revector_8259s(unsigned short where)
     mov al, #0x1
     out 0xa1, al
 #endasm
+#endif
 }
 
 void disable_irqs(void)
 {
+#ifndef S_SPLINT_S
 #asm
     mov al, #0xff
     out 0x21, al
     out 0xa1, al
 #endasm
+#endif
 }
 
 void fix_flags_for_pmode(void)
 {
     if (arch_cpu > 6) {
+#ifndef S_SPLINT_S
 #asm
 	pushfd
 	pop eax
@@ -590,7 +581,9 @@ void fix_flags_for_pmode(void)
 	push eax
 	popfd
 #endasm
+#endif
     } else {
+#ifndef S_SPLINT_S
 #asm
 	pushf
 	pop ax
@@ -598,11 +591,13 @@ void fix_flags_for_pmode(void)
 	push ax
 	popf
 #endasm
+#endif
     }
 }
 
 void switch_to_pmode(void)
 {
+#ifndef S_SPLINT_S
 #asm
     call _fix_flags_for_pmode
     smsw ax
@@ -618,6 +613,7 @@ stpm_pmode:
     mov ds, ax
     mov es, ax
 #endasm
+#endif
 }
 
 /*
@@ -642,6 +638,7 @@ void init_ksegs(unsigned short textlen)
 void bogus_magic(void)
 {
 #ifdef DEBUG_2ND_MONITOR
+#ifndef S_SPLINT_S
 #asm
     mov ax, #PMODE_SCRNSEL
     mov es, ax
@@ -652,6 +649,7 @@ void bogus_magic(void)
     dw 0xfeeb
 #endasm
 #endif
+#endif
 }
 
 void boot_kernel(void)
@@ -659,6 +657,7 @@ void boot_kernel(void)
     initial_gdt[4].baseaddr0 = _elksheader << 4;
     initial_gdt[4].baseaddr1 = (_elksheader >> 0xc) & 0xff;
 
+#ifndef S_SPLINT_S
 #asm
     mov ax, #PMODE_TEMPSEL
     mov es, ax
@@ -697,6 +696,7 @@ boot_kernel_good_sig:
     retf
 
 #endasm
+#endif
 }
 
 void pmodekern_init(void)
@@ -708,7 +708,7 @@ void pmodekern_init(void)
     initial_gdt[2].baseaddr0 += _endtext;
     load_gdtr();
 
-    cli();
+    clr_irq();
     switch_to_pmode();
 
     initial_gdt[3].baseaddr0 = 0x0000;
@@ -723,7 +723,7 @@ void pmodekern_init(void)
 
     disable_irqs();
 
-    sti();
+    set_irq();
 
 #if 1
 
@@ -740,6 +740,7 @@ void pmodekern_init(void)
 #endif
 
 #if 0
+#ifndef S_SPLINT_S
 #asm
     xor ax, ax
     mov es, ax
@@ -747,6 +748,8 @@ void pmodekern_init(void)
     mov[0], ax		/* this SIGSEGVs quite nicely. :-) */
 #endasm
 #endif
+#endif
+
     boot_kernel();
 
     while (1)

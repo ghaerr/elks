@@ -16,7 +16,7 @@ unsigned char clear_bit(unsigned int bit,void *addr)
     bit%=8;
     mask = (1 << bit);
     save_flags(flags);
-    i_cli();
+    clr_irq();
     r = ptr[offset] & mask;
     ptr[offset] &= ~mask;	/* xor bit with itself is 0 */
     restore_flags(flags);
@@ -32,7 +32,7 @@ unsigned char set_bit(unsigned int bit,void *addr)
     bit %= 8;
     mask = (1 << bit);
     save_flags(flags);
-    i_cli();
+    clr_irq();
     r = ptr[offset] & mask;
     ptr[offset] |= mask;	/* xor bit with itself is 0 */
     restore_flags(flags);

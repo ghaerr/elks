@@ -124,7 +124,7 @@ extern __inline__ void queue_task(struct tq_struct *bh_pointer,
 		flag_t flags; \
 \
 		save_flags(flags); \
-		i_cli(); \
+		clr_irq(); \
 		bh_pointer->next = *bh_list; \
 		*bh_list = bh_pointer; \
 		restore_flags(flags); \

@@ -85,3 +85,548 @@ distdir:
 
 #########################################################################
 ### Dependencies:
+
+bell.o: bell.c
+
+
+bioscon.o: bioscon.c \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fcntl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/major.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h
+
+
+common.o: common.c common.h
+
+
+console.o: console.c \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fcntl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/major.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h console.h
+
+
+dircon.o: dircon.c /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fcntl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/major.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h console.h
+
+
+init.o: init.c /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h
+
+
+keyboard.o: keyboard.c \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/io.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/keyboard.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fcntl.h console.h
+
+
+lp.o: lp.c /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/lp.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/major.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h
+
+
+mem.o: mem.c /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kernel.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/major.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/mm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/string.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/string.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/debug.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/mem.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/segment.h
+
+
+meta.o: meta.c /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h
+
+
+ntty.o: ntty.c /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fcntl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/mm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kernel.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/string.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/string.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/major.h
+
+
+pty.o: pty.c /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fcntl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/mm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kernel.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/string.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/string.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/major.h
+
+
+serial.o: serial.c /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/serial_reg.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/debug.h
+
+
+sibo_con.o: sibo_con.c \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fcntl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/major.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h
+
+
+sibo_key.o: sibo_key.c \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/io.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/keyboard.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fcntl.h
+
+
+tcpdev.o: tcpdev.c \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kernel.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/debug.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/major.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fcntl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/tcpdev.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/in.h
+
+
+xt_key.o: xt_key.c /home/rhw/CVS/Source/X/elks/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/statfs.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/bitops.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/system.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/param.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/io.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/keyboard.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/fcntl.h KeyMaps/keymaps.h \
+ KeyMaps/keys-be.h KeyMaps/keys-de.h KeyMaps/keys-dv.h \
+ KeyMaps/keys-es.h KeyMaps/keys-se.h KeyMaps/keys-uk.h \
+ KeyMaps/keys-us.h
+
+

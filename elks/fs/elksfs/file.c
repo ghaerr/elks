@@ -190,6 +190,8 @@ static int elksfs_file_write(register struct inode *inode,
 #endif
 }
 
+/*@-type@*/
+
 /*
  * We have mostly NULL's here: the current defaults are ok for
  * the minix filesystem.
@@ -241,3 +243,5 @@ struct inode_operations elksfs_file_inode_operations = {
     NULL			/* permission */
 #endif
 };
+
+/*@+type@*/

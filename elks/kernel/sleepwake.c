@@ -71,7 +71,7 @@ void wake_up_process(register struct task_struct *p)
 {
 	flag_t flags;
 	save_flags(flags);
-	i_cli();
+	clr_irq();
 	p->state = TASK_RUNNING;
 	if (!p->next_run){
 		add_to_runqueue(p);
@@ -83,8 +83,8 @@ void wake_up_process(register struct task_struct *p)
  * wake_up doesn't wake up stopped processes - they have to be awakened
  * with signals or similar.
  *
- * Note that this doesn't need cli-sti pairs: interrupts may not change
- * the wait-queue structures directly, but only call wake_up() to wake
+ * Note that this doesn't need clr_irq / set_irq pairs: interrupts may not
+ * change the wait-queue structures directly, but only call wake_up() to wake
  * a process. The process itself must remove the queue once it has woken.
  */
 
@@ -118,13 +118,13 @@ void _wake_up(struct wait_queue *q, unsigned short int it)
  *	Semaphores. These are not IRQ safe nor needed to be so for ELKS
  */
 
-void up(unsigned short int *s)
+void up(short int *s)
 {
-    if (++(*s) == 0)		/* Gone non negative */
+    if (++(*s) == 0)		/* Gone non-negative */
 	wake_up((void *) s);
 }
 
-void down(unsigned short int *s)
+void down(short int *s)
 {
     /* Wait for the semaphore */
     while (*s < 0)

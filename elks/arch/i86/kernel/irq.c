@@ -85,7 +85,7 @@ void disable_irq(unsigned int irq)
     unsigned char mask = 1 << (irq & 7);
 
     save_flags(flags);
-    i_cli();
+    clr_irq();
     if (irq < 8) {
 	cache_21 |= mask;
 	outb(cache_21,((void *) 0x21));
@@ -105,7 +105,7 @@ void enable_irq(unsigned int irq)
 
     mask = ~(1 << (irq & 7));
     save_flags(flags);
-    i_cli();
+    clr_irq();
     if (irq < 8) {
 	cache_21 &= mask;
 	outb(cache_21,((void *) 0x21));
@@ -237,7 +237,7 @@ int request_irq(int irq, void (*handler)(), void *dev_id)
 	return -EINVAL;
 
     save_flags(flags);
-    i_cli();
+    clr_irq();
 
     action->handler = handler;
     action->dev_id = dev_id;
@@ -265,7 +265,7 @@ void free_irq(unsigned int irq)
 	return;
     }
     save_flags(flags);
-    i_cli();
+    clr_irq();
 
     disable_irq(irq);
 

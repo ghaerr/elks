@@ -26,3 +26,25 @@ include $(BASEDIR)/Makefile-rules
 
 #########################################################################
 ### Dependencies:
+
+crt1.o: crt1.c /home/rhw/CVS/Source/X/elks/include/arch/segment.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h
+
+
+irqtab.o: irqtab.c /home/rhw/CVS/Source/X/elks/include/arch/irq.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/types.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/X/elks/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/X/elks/include/arch/asm.h
+
+

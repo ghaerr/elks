@@ -17,9 +17,9 @@
 							\
 		addr += fd >> 4;			\
 		mask = 1 << (fd & 0xf); 		\
-		i_cli();				\
+		clr_irq();					\
 		*(int*)addr |= mask;			\
-		i_sti();				\
+		set_irq();					\
 	}
 
 #undef	__FD_CLR
@@ -28,9 +28,9 @@
 							\
 		addr += fd >> 4;			\
 		mask = 1 << (fd & 0xf); 		\
-		i_cli();				\
+		clr_irq();					\
 		*(int*)addr &= ~mask;			\
-		i_sti();				\
+		set_irq();					\
 	}
 
 #undef	__FD_ISSET

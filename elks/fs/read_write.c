@@ -21,7 +21,7 @@ loff_t sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
     register struct file_operations *fop;
     loff_t offset, tmp;
 
-    offset = get_fs_long(p_offset);
+    offset = (loff_t) get_fs_long(p_offset);
     if (fd >= NR_OPEN || !(file = current->files.fd[fd])
 	|| !(file->f_inode))
 	return -EBADF;
@@ -52,10 +52,12 @@ loff_t sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
 	return -EINVAL;
     if (tmp != file->f_pos) {
 	file->f_pos = tmp;
+
 #ifdef BLOAT_FS
 	file->f_reada = 0;
 	file->f_version = ++event;
 #endif
+
     }
 
     memcpy_tofs(p_offset, &tmp, 4);
@@ -96,30 +98,30 @@ int fd_check(unsigned int fd, char *buf, size_t count, int rw,
     return 0;
 }
 
-size_t sys_read(unsigned int fd, char *buf, size_t count)
+int sys_read(unsigned int fd, char *buf, size_t count)
 {
     register struct file_operations *fop;
     struct file *file;
-    size_t retval;
+    int retval;
 
     if (((retval = fd_check(fd, buf, count, FMODE_READ, &file)) == 0)
-	&& (0 != count)) {
+	&& count) {
 	fop = file->f_op;
 	if (!fop->read)
 	    retval = -EINVAL;
 	else {
-	    retval = fop->read(file->f_inode, file, buf, count);
+	    retval = (int) fop->read(file->f_inode, file, buf, count);
 	    schedule();
 	}
     }
     return retval;
 }
 
-size_t sys_write(unsigned int fd, char *buf, size_t count)
+int sys_write(unsigned int fd, char *buf, size_t count)
 {
     struct file *file;
     register struct inode *inode;
-    size_t written;
+    int written;
 
     if (((written = fd_check(fd, buf, count, FMODE_WRITE, &file)) == 0)
 	&& (0 != count)) {
@@ -147,8 +149,7 @@ size_t sys_write(unsigned int fd, char *buf, size_t count)
 #endif
 
 	    }
-
-	    written = file->f_op->write(inode, file, buf, count);
+	    written = (int) file->f_op->write(inode, file, buf, count);
 	    schedule();
 	}
     }

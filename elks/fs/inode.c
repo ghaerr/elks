@@ -474,11 +474,13 @@ struct inode *get_pipe_inode(void)
 	inode->i_pipe = 1;
 	inode->i_mode |= S_IFIFO | S_IRUSR | S_IWUSR;
 	inode->i_uid = current->euid;
-	inode->i_gid = current->egid;
+	inode->i_gid = (__u8) current->egid;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+
 #if 0
 	inode->i_blksize = PAGE_SIZE;
 #endif
+
     }
     return inode;
 }

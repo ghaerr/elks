@@ -3,6 +3,8 @@
 
 #include <linuxmt/types.h>
 
+#include <arch/asm.h>
+
 #define save_flags(x)	x=__save_flags()
 
 /*	FIXME:	Who gets which entry in bh_base. Things which will occur
@@ -46,37 +48,31 @@ extern void (*bh_base[16]) (void);
 
 extern flag_t __save_flags(void);
 
-#ifdef S_SPLINT_S
-
-extern void asm(char *);
-
-#endif
-
 /*@+namechecks@*/
 
 #ifdef __KERNEL__
 
-#define i_cli() asm("cli")
-#define i_sti() asm("sti")
+#define clr_irq()	asm("cli")
+#define set_irq()	asm("sti")
 
 #else
 
-#define i_cli()
-#define i_sti()
+#define clr_irq()
+#define set_irq()
 
 #endif
 
 #ifdef ENDIS_BH
 
 #define init_bh(nr, routine) do { \
-	bh_base[nr] = routine; \
-	bh_mask_count[nr] = 0; \
-	bh_mask |= 1 << nr; \
+		bh_base[nr] = routine; \
+		bh_mask_count[nr] = 0; \
+		bh_mask |= 1 << nr; \
 	} until 0
 
 #define disable_bh(nr) do { \
-	bh_mask &= ~(1 << nr); \
-	bh_mask_count[nr]++; \
+		bh_mask &= ~(1 << nr); \
+		bh_mask_count[nr]++; \
 	} until 0
 
 #define enable_bh(nr) if (!--bh_mask_count[nr]) \

@@ -57,11 +57,13 @@ extern __u8  peekb(__u16,__u16);
 extern __u16 peekw(__u16,__u16);
 extern __u32 peekd(__u16,__u16);
 
+extern void fmemcpy(__u16,__u16,__u16,__u16,__u16);
+extern void fmemset(__u16,__u16,__u16,__u16);
+
 /* FIXME: Following function prototypes are apparently phantom ones,
  *	  so are defined here with void parameters for now.
  */
 
-extern void fmemcpy(void);
 extern int mm_swapon(void);
 
 #endif

@@ -360,11 +360,11 @@ static struct timer_list motor_on_timer[4] = {
 static void motor_off_callback(unsigned long nr)
 {
     unsigned char mask = ~(0x10 << nr);
-    cli();
+    clr_irq();
     running &= mask;
     current_DOR &= mask;
     outb(current_DOR, FD_DOR);
-    sti();
+    set_irq();
 }
 
 #ifndef TRP_TIMER
@@ -492,7 +492,7 @@ static void setup_DMA(void)
 	if (command == FD_WRITE)
 	    copy_buffer(CURRENT->buffer, tmp_floppy_area);
     }
-    cli();
+    clr_irq();
     disable_dma(FLOPPY_DMA);
     clear_dma_ff(FLOPPY_DMA);
     set_dma_mode(FLOPPY_DMA,
@@ -500,7 +500,7 @@ static void setup_DMA(void)
     set_dma_addr(FLOPPY_DMA, addr);
     set_dma_count(FLOPPY_DMA, count);
     enable_dma(FLOPPY_DMA);
-    sti();
+    set_irq();
 }
 
 static void output_byte(char byte)
@@ -905,22 +905,22 @@ static void reset_floppy(void)
     need_configure = 1;
     if (!initial_reset_flag)
 	printk("Reset-floppy called\n");
-    cli();
+    clr_irq();
     outb_p(current_DOR & ~0x04, FD_DOR);
     for (i = 0; i < 1000; i++)
 	__asm__("nop");
     outb(current_DOR, FD_DOR);
-    sti();
+    set_irq();
 }
 
 static void floppy_shutdown(void)
 {
-    cli();
+    clr_irq();
     do_floppy = NULL;
     request_done(0);
     recover = 1;
     reset_floppy();
-    sti();
+    set_irq();
     redo_fd_request();
 }
 
@@ -1135,11 +1135,11 @@ static void redo_fd_request(void)
 
 void do_fd_request(void)
 {
-    cli();
+    clr_irq();
     while (fdc_busy)
 	sleep_on(&fdc_wait);
     fdc_busy = 1;
-    sti();
+    set_irq();
     redo_fd_request();
 }
 
@@ -1161,9 +1161,9 @@ static int fd_ioctl(struct inode *inode,
     case FDFMTEND:
 	if (!suser())
 	    return -EPERM;
-	cli();
+	clr_irq();
 	fake_change |= 1 << (drive & 3);
-	sti();
+	set_irq();
 	drive &= 3;
 	cmd = FDCLRPRM;
 	break;
@@ -1185,7 +1185,7 @@ static int fd_ioctl(struct inode *inode,
 	    return -EPERM;
 	if (fd_ref[drive & 3] != 1)
 	    return -EBUSY;
-	cli();
+	clr_irq();
 	while (format_status != FORMAT_NONE)
 	    sleep_on(&format_done);
 	for (cnt = 0; cnt < sizeof(struct format_descr); cnt++)
@@ -1203,7 +1203,7 @@ static int fd_ioctl(struct inode *inode,
 	}
 	while (format_status != FORMAT_OKAY && format_status != FORMAT_ERROR)
 	    sleep_on(&format_done);
-	sti();
+	set_irq();
 	okay = format_status == FORMAT_OKAY;
 	format_status = FORMAT_NONE;
 	floppy_off(drive & 3);
@@ -1212,9 +1212,9 @@ static int fd_ioctl(struct inode *inode,
     case FDFLUSH:
 	if (!permission(inode, 2))
 	    return -EPERM;
-	cli();
+	clr_irq();
 	fake_change |= 1 << (drive & 3);
-	sti();
+	set_irq();
 	check_disk_change(inode->i_rdev);
 	return 0;
     }
@@ -1237,11 +1237,11 @@ static int fd_ioctl(struct inode *inode,
 	if (cmd == FDDEFPRM)
 	    keep_data[drive] = -1;
 	else {
-	    cli();
+	    clr_irq();
 	    while (fdc_busy)
 		sleep_on(&fdc_wait);
 	    fdc_busy = 1;
-	    sti();
+	    set_irq();
 	    outb_p((current_DOR & 0xfc) | drive | (0x10 << drive), FD_DOR);
 	    for (cnt = 0; cnt < 1000; cnt++)
 		__asm__("nop");

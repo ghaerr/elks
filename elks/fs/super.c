@@ -141,12 +141,12 @@ static struct super_block *get_super(kdev_t dev)
 	return NULL;
 
     s = 0 + super_blocks;
-    while (s < NR_SUPER + super_blocks)
+    while (s < super_blocks + NR_SUPER)
 	if (s->s_dev == dev) {
 	    wait_on_super(s);
 	    if (s->s_dev == dev)
 		return s;
-	    s = 0 + super_blocks;
+	    s = super_blocks;
 	} else
 	    s++;
     return NULL;
@@ -172,7 +172,8 @@ void put_super(kdev_t dev)
 	sop->put_super(sb);
 }
 
-#if 0
+#ifdef BLOAT_FS
+
 int sys_ustat(__u16 dev, struct ustat *ubuf)
 {
     register struct super_block *s;
@@ -197,6 +198,7 @@ int sys_ustat(__u16 dev, struct ustat *ubuf)
 	return error;
     return 0;
 }
+
 #endif
 
 static struct super_block *read_super(kdev_t dev, char *name, int flags,
@@ -213,6 +215,7 @@ static struct super_block *read_super(kdev_t dev, char *name, int flags,
     s = get_super(dev);
     if (s)
 	return s;
+
 #if CONFIG_FULL_VFS
     if (!(type = get_fs_type(name))) {
 	printk("VFS: dev %s: get_fs_type(%s) failed\n", kdevname(dev), name);
@@ -221,14 +224,15 @@ static struct super_block *read_super(kdev_t dev, char *name, int flags,
 #else
     type = file_systems[0];
 #endif
-    for (s = 0 + super_blocks;; s++) {
-	if (s >= NR_SUPER + super_blocks)
+
+    for (s = super_blocks;; s++) {
+	if (s >= super_blocks + NR_SUPER)
 	    return NULL;
 	if (!(s->s_dev))
 	    break;
     }
     s->s_dev = dev;
-    s->s_flags = flags;
+    s->s_flags = (unsigned short int) flags;
 
     if (!type->read_super(s, data, silent)) {
 	s->s_dev = 0;
@@ -236,11 +240,13 @@ static struct super_block *read_super(kdev_t dev, char *name, int flags,
     }
     s->s_dev = dev;
     s->s_covered = NULL;
+    s->s_dirt = 0;
+    s->s_type = type;
+
 #ifdef BLOAT_FS
     s->s_rd_only = 0;
 #endif
-    s->s_dirt = 0;
-    s->s_type = type;
+
     return s;
 }
 
@@ -337,10 +343,12 @@ int sys_umount(char *name)
 	fops = get_blkfops(MAJOR(dev));
 	if (fops && fops->release)
 	    fops->release(inodep, NULL);
+
 #ifdef NOT_YET
 	if (MAJOR(dev) == UNNAMED_MAJOR)
 	    put_unnamed_dev(dev);
 #endif
+
     }
     if (inodep != &dummy_inode)
 	iput(inodep);
@@ -407,9 +415,11 @@ static int do_remount_sb(register struct super_block *sb, int flags,
 
     if (!(flags & MS_RDONLY) && sb->s_dev)
 	return -EACCES;
+
 #if 0
     flags |= MS_RDONLY;
 #endif
+
     /* If we are remounting RDONLY, make sure there are no rw files open */
     if ((flags & MS_RDONLY) && !(sb->s_flags & MS_RDONLY))
 	if (!fs_may_remount_ro(sb->s_dev))
@@ -419,11 +429,13 @@ static int do_remount_sb(register struct super_block *sb, int flags,
 	if (retval)
 	    return retval;
     }
-    sb->s_flags = (sb->s_flags & ~MS_RMT_MASK) | (flags & MS_RMT_MASK);
+    sb->s_flags = (unsigned short int)
+		((sb->s_flags & ~MS_RMT_MASK) | (flags & MS_RMT_MASK));
     return 0;
 }
 
 #ifdef BLOAT_FS			/* Never called */
+
 static int do_remount(char *dir, int flags, char *data)
 {
     register struct inode *dir_i;
@@ -554,8 +566,7 @@ void mount_root(void)
 {
     register struct file_system_type **fs_type;
     register struct super_block *sb;
-    struct inode *inode;
-    struct inode d_inode;
+    struct inode *inode, d_inode;
     struct file filp;
     int retval;
 
@@ -580,17 +591,19 @@ void mount_root(void)
 	struct file_system_type *fp = *fs_type;
 	if (retval)
 	    break;
+
 #ifdef BLOAT_FS
 	if (!fp->requires_dev)
 	    continue;
 #endif
+
 	sb = read_super(ROOT_DEV, fp->name, root_mountflags, NULL, 1);
 	if (sb) {
 	    inode = sb->s_mounted;
 	    /* NOTE! it is logically used 4 times, not 1 */
 	    inode->i_count += 3;
 	    sb->s_covered = inode;
-	    sb->s_flags = root_mountflags;
+	    sb->s_flags = (unsigned short int) root_mountflags;
 	    current->fs.pwd = inode;
 	    current->fs.root = inode;
 	    printk("VFS: Mounted root (%s filesystem)%s.\n",
@@ -598,6 +611,7 @@ void mount_root(void)
 	    return;
 	}
     }
+
 #ifdef CONFIG_BLK_DEV_BIOS
     if (ROOT_DEV == 0x0380) {
 	if (filp.f_op->release)

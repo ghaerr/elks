@@ -34,27 +34,29 @@
 
 int permission(register struct inode *inode, int mask)
 {
-    int mode = inode->i_mode;
+    __u16 mode = inode->i_mode;
     int error = -EACCES;
 
-    if ((mask & MAY_WRITE) && (IS_RDONLY(inode))) {
+    if ((mask & MAY_WRITE) && (IS_RDONLY(inode)))
 	error = -EROFS;
-    }
+
 #ifdef BLOAT_FS
     else if (inode->i_op && inode->i_op->permission)
 	error = inode->i_op->permission(inode, mask);
 #endif
+
 #ifdef HAVE_IMMUTABLE
     else if ((mask & S_IWOTH) && IS_IMMUTABLE(inode))
 	/* Nobody gets write access to an immutable file */
 	error = -EACCES;
 #endif
+
     else {
 	if (current->euid == inode->i_uid)
 	    mode >>= 6;
 	else if (in_group_p(inode->i_gid))
 	    mode >>= 3;
-	if (((mode & mask & 0007) == mask) || suser())
+	if (((mode & mask & 0007) == (__u16) mask) || suser())
 	    error = 0;
     }
     return error;
@@ -66,12 +68,9 @@ int permission(register struct inode *inode, int mask)
  */
 
 #ifdef BLOAT_FS
+
 int get_write_access(struct inode *inode)
 {
-#if 0
-    struct task_struct *p;
-#endif
-
     inode->i_wcount++;
     return 0;
 }
@@ -80,6 +79,7 @@ void put_write_access(struct inode *inode)
 {
     inode->i_wcount--;
 }
+
 #endif
 
 /*
@@ -99,7 +99,7 @@ int lookup(register struct inode *dir, char *name, size_t len,
 	/* check permissions before traversing mount-points */
 	perm = permission(dir, MAY_EXEC);
 	if (len == 2 && get_fs_byte(name) == '.'
-	    && get_fs_byte(name + 1) == '.') {
+		     && get_fs_byte(name + 1) == '.') {
 	    if (dir == current->fs.root) {
 		*result = dir;
 		goto lkp_end;
@@ -115,9 +115,11 @@ int lookup(register struct inode *dir, char *name, size_t len,
 	}
 	iop = dir->i_op;
 	if (!iop || !iop->lookup) {
+
 #if 1
 	    panic("Oops - trying to access dir\n");
 #endif
+
 	    iput(dir);
 	    retval = -ENOTDIR;
 	} else if (perm != 0) {
@@ -129,6 +131,7 @@ int lookup(register struct inode *dir, char *name, size_t len,
 	    retval = iop->lookup(dir, name, len, result);
     } else
 	retval = -ENOENT;
+
   lkp_end:
     return retval;
 }
@@ -136,8 +139,9 @@ int lookup(register struct inode *dir, char *name, size_t len,
 int follow_link(struct inode *dir, register struct inode *inode,
 		int flag, int mode, struct inode **res_inode)
 {
-    int error;
     register struct inode_operations *iop = inode->i_op;
+    int error;
+
     if (!dir || !inode) {
 	iput(dir);
 	iput(inode);
@@ -162,15 +166,13 @@ int follow_link(struct inode *dir, register struct inode *inode,
 static int dir_namei(register char *pathname, size_t * namelen,
 		     char **name, struct inode *base, struct inode **res_inode)
 {
-    char c;
     register char *thisname;
-    int error = 0;
-    size_t len;
     struct inode *inode;
-#if 0
-    printk("namei: entered dir_namei\n");
-#endif
+    size_t len;
+    int error = 0;
+    unsigned char c;
 
+    debug("namei: entered dir_namei\n");
     *res_inode = NULL;
     if (!base) {
 	base = current->fs.pwd;
@@ -206,9 +208,8 @@ static int dir_namei(register char *pathname, size_t * namelen,
 	*namelen = len;
 	*res_inode = base;
     }
-#if 0
-    printk("namei: left dir_namei succesfully\n");
-#endif
+    debug("namei: left dir_namei succesfully\n");
+
   dnamei_end:
     return error;
 }
@@ -241,6 +242,7 @@ int _namei(char *pathname, struct inode *base, int follow_links,
 	} else
 	    iput(base);
     }
+
   namei_end:
     return error;
 }
@@ -254,21 +256,19 @@ int _namei(char *pathname, struct inode *base, int follow_links,
  */
 int namei(char *pathname, register struct inode **res_inode, int dir, int perm)
 {
-    int error;
     register struct inode *inode;
-    error = _namei(pathname, NULL, 1, res_inode);
+    int error = _namei(pathname, NULL, 1, res_inode);
+
     if (!error) {
 	inode = *res_inode;
-	if (dir == NOT_DIR && S_ISDIR(inode->i_mode)) {
+	if (dir == NOT_DIR && S_ISDIR(inode->i_mode))
 	    error = -EISDIR;
-	} else if (dir == IS_DIR && !S_ISDIR(inode->i_mode)) {
+	else if (dir == IS_DIR && !S_ISDIR(inode->i_mode))
 	    error = -ENOTDIR;
-	} else if (perm) {
+	else if (perm)
 	    error = permission(inode, perm);
-	}
-	if (error != 0) {
+	if (error)
 	    iput(inode);
-	}
     }
     return error;
 }
@@ -297,16 +297,13 @@ int open_namei(char *pathname, int flag, int mode,
     struct inode *inode;
     register struct inode_operations *iop;
 
-#if 0
-    printk("NAMEI: open namei entered\n");
-#endif
-
+    debug("NAMEI: open namei entered\n");
     mode &= S_IALLUGO & ~current->fs.umask;
     mode |= S_IFREG;
     error = dir_namei(pathname, &namelen, &basename, base, &dir);
-
     if (error)
 	goto onamei_end;
+
     if (!namelen) {		/* special case: '/usr/' etc */
 	if (flag & 2) {
 	    iput(dir);
@@ -396,6 +393,7 @@ int open_namei(char *pathname, int flag, int mode,
 	*res_inode = inode;
     } else
 	iput(inode);
+
   onamei_end:
     return error;
 }
@@ -470,12 +468,12 @@ int sys_mknod(char *filename, int mode, dev_t dev)
 
 int sys_mkdir(char *pathname, int mode)
 {
-    char *basename;
-    size_t namelen;
-    int error;
     struct inode *dir;
     register struct inode *dirp;
     register struct inode_operations *iop;
+    char *basename;
+    size_t namelen;
+    int error;
 
     debug("mkdir: calling dir_namei\n");
     error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
@@ -507,20 +505,20 @@ int sys_mkdir(char *pathname, int mode)
 
 int __do_rmthing(char *pathname, int opnum)
 {
-    char *basename;
-    size_t namelen;
-    int error;
     struct inode *dir;
     register struct inode *dirp;
     register struct inode_operations *iop;
+    char *basename;
     int (*op) ();
+    size_t namelen;
+    int error;
 
     error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
     dirp = dir;
     if (!error) {
-	if (!namelen) {
+	if (!namelen)
 	    error = -ENOENT;
-	} else if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0) {
+	else if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0) {
 	    iop = dirp->i_op;
 	    if (!iop)
 		error = -EPERM;
@@ -534,9 +532,9 @@ int __do_rmthing(char *pathname, int opnum)
 	    if (op == NULL)
 		error = -EPERM;
 	}
-	if (error) {
+	if (error)
 	    iput(dirp);
-	} else
+	else
 	    error = op(dirp, basename, namelen);
     }
     return error;
@@ -554,23 +552,22 @@ int sys_unlink(char *pathname)
 
 int sys_symlink(char *oldname, char *newname)
 {
+    register struct inode *dirp;
+    register struct inode_operations *iop;
     struct inode *dir;
     char *basename;
     size_t namelen;
-    int error;
-    register struct inode *dirp;
-    register struct inode_operations *iop;
+    int error = dir_namei(newname, &namelen, &basename, NULL, &dir);
 
-    error = dir_namei(newname, &namelen, &basename, NULL, &dir);
     dirp = dir;
     if (!error) {
-	if (!namelen) {
+	if (!namelen)
 	    error = -ENOENT;
-	} else if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0) {
+	else if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0) {
 	    iop = dirp->i_op;
-	    if (!iop || !iop->symlink) {
+	    if (!iop || !iop->symlink)
 		error = -EPERM;
-	    } else {
+	    else {
 		dirp->i_count++;
 		down(&dirp->i_sem);
 		error = iop->symlink(dirp, basename, namelen, oldname);
@@ -584,56 +581,52 @@ int sys_symlink(char *oldname, char *newname)
 
 int sys_link(char *oldname, char *newname)
 {
-    int error;
     struct inode *oldinode;
+    int error;
 
     error = namei(oldname, &oldinode, 0, 0);
     if (!error) {
+	register struct inode *dirp;
 	struct inode *dir;
 	char *basename;
 	size_t namelen;
-	register struct inode *dirp;
 
 	error = dir_namei(newname, &namelen, &basename, NULL, &dir);
 	dirp = dir;
-	if (error) {
+	if (error)
 	    goto link_fail;
-	}
-	if (!namelen) {
+	if (!namelen)
 	    error = -EPERM;
-	} else if (dirp->i_dev != oldinode->i_dev) {
+	else if (dirp->i_dev != oldinode->i_dev)
 	    error = -EXDEV;
-	} else if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0) {
-	    if (!dirp->i_op || !dirp->i_op->link) {
+	else if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0)
+	    if (!dirp->i_op || !dirp->i_op->link)
 		error = -EPERM;
-	    }
-	}
 	if (!error) {
 	    dirp->i_count++;
 	    down(&dirp->i_sem);
 	    error = dirp->i_op->link(oldinode, dirp, basename, namelen);
 	    up(&dirp->i_sem);
-	} else {
+	} else
 	    iput(oldinode);
-	}
+
       link_fail:
 	iput(dirp);
-    } else {
+    } else
 	iput(oldinode);
-    }
     return error;
 }
 
-/* This probably isn't a proper implementation of sys_rename, but we don't have
- * space for one, and I don't want to write one when I can make a simple 6-line
- * version like this one :) - Chad */
+/*  This probably isn't a proper implementation of sys_rename, but we
+ *  don't have space for one, and I don't want to write one when I can
+ *  make a simple 6-line version like this one :) - Chad
+ */
 
 int sys_rename(register char *oldname, char *newname)
 {
-    int err;
+    int err = sys_link(oldname, newname);
 
-    if (!(err = sys_link(oldname, newname))) {
+    if (!err)
 	err = sys_unlink(oldname);
-    }
     return err;
 }
