@@ -192,7 +192,7 @@ unsigned long count;
 	if (count > maxsize || offset+count > maxsize)
 		count = maxsize-offset;
 
-	bh = bread(i->i_dev,offset>>ROMBSBITS);
+	bh = bread(i->i_dev,(unsigned long)(offset>>ROMBSBITS));
 	if (!bh)
 	{
 		printk("romfs: abort: romfs_strnlen\n");
@@ -215,7 +215,7 @@ unsigned long count;
 	while (res < count) {
 		offset += maxsize;
 
-		bh = bread(i->i_dev,offset>>ROMBSBITS);
+		bh = bread(i->i_dev,(unsigned long)(offset>>ROMBSBITS));
 		if (!bh)
 			return -1;
 		
@@ -258,7 +258,7 @@ unsigned long count;
 	printd_rfs("romfs:     offset>>ROMBSBITS = 0x%x%x\n",
 		(int) ((offset>>ROMBSBITS)>>16), (int) (offset>>ROMBSBITS));
 #endif
-	bh = bread(i->i_dev,(offset>>ROMBSBITS));
+	bh = bread(i->i_dev,(unsigned long)(offset>>ROMBSBITS));
 
 	if (!bh)
 		return -1;		/* error */
@@ -275,7 +275,7 @@ unsigned long count;
 		offset += maxsize;
 		dest += maxsize;
 
-		bh = bread(i->i_dev,offset>>ROMBSBITS);
+		bh = bread(i->i_dev,(unsigned long)(offset>>ROMBSBITS));
 		
 		if (!bh)
 			return -1;		/* error */

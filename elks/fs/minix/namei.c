@@ -85,7 +85,8 @@ char * name;
 int namelen;
 struct minix_dir_entry ** res_dir;
 {
-	register unsigned long block, offset;
+	register unsigned short block;
+	register unsigned long offset;
 	struct buffer_head * bh;
 	struct minix_sb_info * info;
 
@@ -101,8 +102,9 @@ struct minix_dir_entry ** res_dir;
 #endif
 	}
 	bh = NULL;
-	block = offset = 0;
-	while (block*BLOCK_SIZE+offset < dir->i_size) {
+	block = 0;
+	offset = 0L;
+	while (((unsigned long)block)*BLOCK_SIZE+offset < dir->i_size) {
 		if (!bh) {
 			bh = minix_bread(dir,block,0);
 			if (!bh) {
@@ -194,7 +196,8 @@ struct buffer_head ** res_buf;
 struct minix_dir_entry ** res_dir;
 {
 	int i;
-	unsigned long block, offset;
+	unsigned short block;
+	unsigned long offset;
 	struct buffer_head * bh;
 	struct minix_dir_entry * de;
 	struct minix_sb_info * info;
@@ -214,7 +217,8 @@ struct minix_dir_entry ** res_dir;
 	if (!namelen)
 		return -ENOENT;
 	bh = NULL;
-	block = offset = 0;
+	block = 0;
+	offset = 0L;
 	while (1) {
 		if (!bh) {
 			bh = minix_bread(dir,block,1);
@@ -225,15 +229,15 @@ struct minix_dir_entry ** res_dir;
 		de = (struct minix_dir_entry *) (bh->b_data + offset);
 		offset += info->s_dirsize;
 #ifdef BLOAT_FS
-		if (block*bh->b_size + offset > dir->i_size) {
+		if (((unsigned long)block)*bh->b_size + offset > dir->i_size) {
 #else
-		if (block*1024 + offset > dir->i_size) {
+		if (((unsigned long)block)*1024L + offset > dir->i_size) {
 #endif
 			de->inode = 0;
 #ifdef BLOAT_FS
-			dir->i_size = block*bh->b_size + offset;
+			dir->i_size = ((unsigned long)block)*bh->b_size + offset;
 #else
-			dir->i_size = block*1024 + offset;
+			dir->i_size = ((unsigned long)block)*1024L + offset;
 #endif
 			dir->i_dirt = 1;
 		}
@@ -462,8 +466,8 @@ int mode;
 static int empty_dir(inode)
 register struct inode * inode;
 {
-	unsigned long block;
-	unsigned int offset;
+	unsigned short block;
+	unsigned long offset;
 	struct buffer_head * bh;
 	struct minix_dir_entry * de;
 
@@ -486,7 +490,7 @@ register struct inode * inode;
 	de = (struct minix_dir_entry *) (bh->b_data + inode->i_sb->u.minix_sb.s_dirsize);
 	if (!de->inode || strcmp(de->name,".."))
 		goto bad_dir;
-	while (block*BLOCK_SIZE+offset < inode->i_size) {
+	while (((unsigned long)block)*1024L+offset < inode->i_size) {
 		if (!bh) {
 			bh = minix_bread(inode,block,0);
 			if (!bh) {
@@ -504,12 +508,12 @@ register struct inode * inode;
 		if (offset < bh->b_size)
 			continue;
 #else
-		if (offset < 1024)
+		if (offset < 1024L)
 			continue;
 #endif
 		unmap_brelse(bh);
 		bh = NULL;
-		offset = 0;
+		offset = 0L;
 		block++;
 	}
 	brelse(bh);

@@ -13,9 +13,8 @@
 #include <linuxmt/fcntl.h>
 
 #define DIRECT_BLOCK		((inode->i_size + 1023) >> 10)
-#define INDIRECT_BLOCK(offset)	(DIRECT_BLOCK-offset)
-#define DINDIRECT_BLOCK(offset) ((DIRECT_BLOCK-offset)>>9)
-#define TINDIRECT_BLOCK(offset)	((DIRECT_BLOCK-(offset))>>9)
+#define INDIRECT_BLOCK(offset)	((int)(DIRECT_BLOCK)-offset)
+#define DINDIRECT_BLOCK(offset) (((int)(DIRECT_BLOCK)-offset)>>9)
 
 /*
  * Truncate has the most races in the whole filesystem: coding it is
@@ -38,13 +37,13 @@ register struct inode * inode;
 {
 	unsigned short * p;
 	register struct buffer_head * bh;
-	unsigned int i, tmp;
+	unsigned short tmp;
+	int i;
 	int retry = 0;
 
 repeat:
 	for (i = DIRECT_BLOCK ; i < 7 ; i++) {
 		p = &inode->i_zone[i];
-		printk("P = %x\n*P = %x\n", p, *p);
 		if (!(tmp = *p))
 			continue;
 		bh = get_hash_table(inode->i_dev,(unsigned long)tmp);
@@ -63,8 +62,7 @@ repeat:
 			mark_buffer_clean(bh);
 			brelse(bh);
 		}
-		printk("Freeing block %x\n", tmp);
-		minix_free_block(inode->i_sb,(unsigned long)tmp);
+		minix_free_block(inode->i_sb,tmp);
 	}
 	return retry;
 }
@@ -76,7 +74,7 @@ unsigned short * p;
 {
 	struct buffer_head * bh;
 	int i;
-	unsigned long tmp;
+	unsigned short tmp;
 	register struct buffer_head * ind_bh;
 	unsigned short * ind;
 	int retry = 0;
@@ -84,7 +82,7 @@ unsigned short * p;
 	tmp = *p;
 	if (!tmp)
 		return 0;
-	ind_bh = bread(inode->i_dev, tmp);
+	ind_bh = bread(inode->i_dev, (unsigned long)tmp);
 	if (tmp != *p) {
 		brelse(ind_bh);
 		return 1;
@@ -96,15 +94,16 @@ unsigned short * p;
 	map_buffer(ind_bh);
 repeat:
 	for (i = INDIRECT_BLOCK(offset) ; i < 512 ; i++) {
-		if (i < 0)
+		if (i < 0) {
 			i = 0;
-		if (i < INDIRECT_BLOCK(offset))
+		} else if (i < INDIRECT_BLOCK(offset)) {
 			goto repeat;
+		}
 		ind = i+(unsigned short *) ind_bh->b_data;
 		tmp = *ind;
 		if (!tmp)
 			continue;
-		bh = get_hash_table(inode->i_dev,tmp);
+		bh = get_hash_table(inode->i_dev,(unsigned long)tmp);
 		if (i < INDIRECT_BLOCK(offset)) {
 			brelse(bh);
 			goto repeat;
@@ -141,14 +140,14 @@ int offset;
 unsigned short *p;
 {
 	int i;
-	unsigned long tmp;
+	unsigned short tmp;
 	register struct buffer_head * dind_bh;
 	unsigned short * dind;
 	int retry = 0;
 
 	if (!(tmp = *p))
 		return 0;
-	dind_bh = bread(inode->i_dev, tmp);
+	dind_bh = bread(inode->i_dev, (unsigned long)tmp);
 	if (tmp != *p) {
 		brelse(dind_bh);
 		return 1;

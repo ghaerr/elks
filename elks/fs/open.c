@@ -66,6 +66,7 @@ unsigned long length;
 	return error;
 }
 
+#if 0
 int sys_truncate(path,length)
 char * path;
 unsigned long length;
@@ -110,6 +111,7 @@ unsigned long length;
 		return -EACCES;
 	return do_truncate(inode, length);
 }
+#endif /* 0 */
 #endif /* CONFIG_FS_RO */
 
 /* If times==NULL, set access and modification to current time,

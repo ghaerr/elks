@@ -90,14 +90,14 @@ int icount;
 	unsigned long offset;
 	unsigned long size;
 	unsigned long left;
-	unsigned long block;
+	unsigned short block;
 	/* We have to make count long since comparing ints to longs does not
  	 * work with bcc! */
 	unsigned long count = (icount % 65536);
 	struct buffer_head *bh;
 	int read;
 	int chars;
-	int blocks;
+	unsigned short blocks;
 
 	offset = filp->f_pos;
 	size = inode->i_size;
@@ -107,7 +107,7 @@ int icount;
 	 */
 	 
 	if(offset>size)
-		left=0;
+		left=0L;
 	else
 		left = size - offset;
 	if(left>count)
@@ -129,18 +129,18 @@ int icount;
 	/*
 	 *	Block, offset pair from the byte offset
 	 */
-	block = offset >> BLOCK_SIZE_BITS;
+	block = (unsigned short)(offset >> BLOCK_SIZE_BITS);
 	offset &= BLOCK_SIZE -1;
 	blocks = (offset + left + (BLOCK_SIZE-1)) >> BLOCK_SIZE_BITS;
 	
 	while(blocks)
 	{
 		--blocks;
-		printd_mfs1("MINREAD: Reading block #%ld\n", block);
+		printd_mfs1("MINREAD: Reading block #%d\n", block);
 		if (bh = minix_getblk(inode, block++, 0))
 		{
 			if (bh) 
-				printd_mfs2("MINREAD: block %ld = buffer %d\n", block - 1, bh->b_num);
+				printd_mfs2("MINREAD: block %d = buffer %d\n", block - 1, bh->b_num);
 			if(!readbuf(bh))
 			{
 				printd_mfs("MINREAD: readbuf failed\n");
@@ -160,7 +160,7 @@ int icount;
 		if (bh)
 		{
 			map_buffer(bh);
-			printd_mfs2("MINREAD: Copying data for block #%ld, buffer #%d\n", block - 1, bh->b_num);
+			printd_mfs2("MINREAD: Copying data for block #%d, buffer #%d\n", block - 1, bh->b_num);
 			memcpy_tofs(buf, offset+bh->b_data, chars);
 			unmap_brelse(bh);
 			buf += chars;
@@ -213,7 +213,7 @@ int count;
 		pos = filp->f_pos;
 	written = 0;
 	while (written < count) {
-		bh = minix_getblk(inode,pos>>BLOCK_SIZE_BITS,1);
+		bh = minix_getblk(inode,(unsigned short)(pos>>BLOCK_SIZE_BITS),1);
 		if (!bh) {
 			if (!written)
 				written = -ENOSPC;

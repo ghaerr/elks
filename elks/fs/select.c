@@ -326,9 +326,9 @@ REGOPT struct timeval * tvp;
 		(fd_set *) &res_ex);
 	printk("quack quack: sys_select called, timeout=%d.\n", timeout);
 	timeout = current->timeout - jiffies - 1;
-	current->timeout = 0;
-	if ((long) timeout < 0)
-		timeout = 0;
+	current->timeout = 0L;
+	if (timeout < 0L)
+		timeout = 0L;
 	if (tvp /*&& !(current->personality & STICKY_TIMEOUTS)*/) {
 		put_user(timeout/HZ, &tvp->tv_sec);
 		timeout %= HZ;

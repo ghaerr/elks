@@ -148,7 +148,7 @@ int silent;
 {
 	struct buffer_head *bh;
 	int i;
-	unsigned long block;
+	unsigned short block;
 	kdev_t dev = s->s_dev;
 
 	if (32 != sizeof (struct minix_inode))
@@ -198,12 +198,12 @@ int silent;
 	 *	the code to fetch/release each time we get a block.
 	 */
 	for (i=0 ; i < s->u.minix_sb.s_imap_blocks ; i++)
-		if ((s->u.minix_sb.s_imap[i]=bread(dev,block)) != NULL)
+		if ((s->u.minix_sb.s_imap[i]=bread(dev,(unsigned long)block)) != NULL)
 			block++;
 		else
 			break;
 	for (i=0 ; i < s->u.minix_sb.s_zmap_blocks ; i++)
-		if ((s->u.minix_sb.s_zmap[i]=bread(dev,block)) != NULL)
+		if ((s->u.minix_sb.s_zmap[i]=bread(dev,(unsigned long)block)) != NULL)
 			block++;
 		else
 			break;
@@ -224,7 +224,7 @@ int silent;
 	/* set up enough so that it can read an inode */
 	s->s_dev = dev;
 	s->s_op = &minix_sops;
-	s->s_mounted = iget(s,(long) MINIX_ROOT_INO);
+	s->s_mounted = iget(s, (long) MINIX_ROOT_INO);
 	if (!s->s_mounted) {
 		s->s_dev = 0;
 		unmap_brelse(bh);
@@ -266,17 +266,21 @@ int bufsiz;
 
 /* Adapted from Linux 0.12's inode.c.  _bmap() is a long function, I know */
 
-unsigned long _minix_bmap(inode, block, create)
+unsigned short _minix_bmap(inode, block, create)
 register struct inode * inode;
-unsigned long block;
+unsigned short block;
 int create;
 {
 	struct buffer_head * bh;
 	register unsigned short *i_zone = inode->i_zone;
-	unsigned long i;
+	unsigned short i;
 
+/* I do not understand what this bit means, it cannot be this big,
+ * it is a short */
+#if 0
 	if (block > (7+512+512*512))	
-		panic("_minix_bmap: block (%ld) >big", block);
+		panic("_minix_bmap: block (%d) >big", block);
+#endif
 
 	if (block < 7) {
 #ifndef CONFIG_FS_RO
@@ -319,7 +323,7 @@ int create;
 		}
 #endif
 		unmap_brelse(bh);
-		printd_mfs1("MFSbmap: Returning #%ld\n", i);
+		printd_mfs1("MFSbmap: Returning #%d\n", i);
 		return i;
 	}
 	printk("MINIX-fs: bmap cannot handle > 519K files yet!\n");
@@ -328,16 +332,16 @@ int create;
 
 struct buffer_head * minix_getblk(inode,block,create)
 register struct inode * inode;
-unsigned long block;
+unsigned short block;
 int create;
 {
 	struct buffer_head * bh;
-	unsigned long blknum;
+	unsigned short blknum;
 
 	blknum = _minix_bmap(inode, block, create);
-	printd_mfs2("MINIXfs: file block #%ld -> disk block #%ld\n", block, blknum);
+	printd_mfs2("MINIXfs: file block #%d -> disk block #%d\n", block, blknum);
 	if (blknum != 0) {
-		bh = getblk(inode->i_dev, blknum); 
+		bh = getblk(inode->i_dev, (unsigned long)blknum); 
 		printd_mfs2("MINIXfs: m_getblk returning %x for blk %d\n", bh, block);
 		return bh;	
 	}
@@ -347,13 +351,13 @@ int create;
 
 struct buffer_head * minix_bread(inode,block,create)
 struct inode * inode;
-int block;
+unsigned short block;
 int create;
 {
 	register struct buffer_head * bh;
 
 	printd_mfs3("mfs: minix_bread(%d, %d, %d)\n", inode, block, create);
-	if (!(bh = minix_getblk(inode,(long)block,create))) return NULL;
+	if (!(bh = minix_getblk(inode,block,create))) return NULL;
 	printd_mfs2("MINIXfs: Reading block #%d with buffer #%x\n", block, bh);
 	return readbuf(bh);
 }
@@ -367,7 +371,7 @@ register struct inode * inode;
 {
 	struct buffer_head * bh;
 	struct minix_inode * raw_inode;
-	unsigned long block;
+	unsigned short block;
 	unsigned int ino;
 	static int __c = 0;
 
@@ -385,7 +389,7 @@ register struct inode * inode;
 			    isb->u.minix_sb.s_zmap_blocks +
 			    (ino-1)/MINIX_INODES_PER_BLOCK;
 	}
-	if (!(bh=bread(inode->i_dev,block))) {
+	if (!(bh=bread(inode->i_dev,(unsigned long)block))) {
 		printk("Major problem: unable to read inode from dev %s\n", kdevname(inode->i_dev));
 		return;
 	}
@@ -431,7 +435,7 @@ register struct inode * inode;
 	register struct buffer_head * bh;
 	struct minix_inode * raw_inode;
 	unsigned int ino;
-	unsigned long block;
+	unsigned short block;
 
 	ino = inode->i_ino;
 	if (!ino || ino >= inode->i_sb->u.minix_sb.s_ninodes) {
@@ -443,7 +447,7 @@ register struct inode * inode;
 	block = 2 + inode->i_sb->u.minix_sb.s_imap_blocks + inode->i_sb->u.minix_sb.s_zmap_blocks +
 		(ino-1)/MINIX_INODES_PER_BLOCK;
 
-	if (!(bh=bread(inode->i_dev, block))) {
+	if (!(bh=bread(inode->i_dev, (unsigned long)block))) {
 		printk("unable to read i-node block\n");
 		inode->i_dirt = 0;
 		return 0;

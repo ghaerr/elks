@@ -19,7 +19,7 @@
 static int nibblemap[] = { 0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4 };
 
 #ifdef BLOAT_FS
-static unsigned long count_used(map,numblocks,numbits)
+static unsigned short count_used(map,numblocks,numbits)
 struct buffer_head *map[];
 unsigned int numblocks;
 unsigned int numbits;
@@ -54,7 +54,7 @@ unsigned int numbits;
 #ifndef CONFIG_FS_RO
 void minix_free_block(sb,block)
 register struct super_block * sb;
-unsigned long block;
+unsigned short block;
 {
 	register struct buffer_head * bh;
 	unsigned int bit,zone;
@@ -68,7 +68,7 @@ unsigned long block;
 		printk("trying to free block %lx not in datazone\n", block);
 		return;
 	}
-	bh = get_hash_table(sb->s_dev,block);
+	bh = get_hash_table(sb->s_dev,(unsigned long)block);
 	if (bh)
 		bh->b_dirty = 0;
 	brelse(bh);
@@ -81,11 +81,13 @@ unsigned long block;
 		return;
 	}
 	map_buffer(bh);
-/*	if (!clear_bit(bit,bh->b_data))
+#if 1
+	if (!clear_bit(bit,bh->b_data))
 		printk("free_block (%s:%ld): bit already cleared\n",
 		       kdevname(sb->s_dev), block);
-*/	
+#else
 	clear_bit(bit, bh->b_data);
+#endif
 	unmap_buffer(bh);
 	mark_buffer_dirty(bh, 1);
 	return;
@@ -126,7 +128,7 @@ repeat:
 	    j >= sb->u.minix_sb.s_nzones)
 		return 0;
 	/* WARNING: j is not converted, so we have to do it */
-	if (!(bh = getblk(sb->s_dev, (long)j))) {
+	if (!(bh = getblk(sb->s_dev, (unsigned long)j))) {
 		printk("new_block: cannot get block");
 		return 0;
 	}
@@ -140,7 +142,7 @@ repeat:
 #endif /* CONFIG_FS_RO */
 
 #ifdef BLOAT_FS
-unsigned long minix_count_free_blocks(sb)
+unsigned short minix_count_free_blocks(sb)
 register struct super_block *sb;
 {
 	return (sb->u.minix_sb.s_nzones - count_used(sb->u.minix_sb.s_zmap,sb->u.minix_sb.s_zmap_blocks,sb->u.minix_sb.s_nzones))
@@ -187,7 +189,7 @@ register struct inode * inode;
 	}
 	map_buffer(bh);
 	clear_inode(inode);
-	if (!clear_bit(ino & 8191, bh->b_data)) {
+	if (!clear_bit((int)(ino & 8191L), bh->b_data)) {
 /*		printk("%s: bit %ld already cleared.\n",ino); */
 	}
 	mark_buffer_dirty(bh, 1);
@@ -255,7 +257,7 @@ struct inode * dir;
 #endif /* CONFIG_FS_RO */
 
 #ifdef BLOAT_FS
-unsigned long minix_count_free_inodes(sb)
+unsigned short minix_count_free_inodes(sb)
 register struct super_block *sb;
 {
 	return sb->u.minix_sb.s_ninodes - count_used(sb->u.minix_sb.s_imap,sb->u.minix_sb.s_imap_blocks,sb->u.minix_sb.s_ninodes);

@@ -482,7 +482,7 @@ char * type;
 	kdev_t dev;
 	int retval;
 	char * t;
-	unsigned long flags = 0;
+/*	unsigned long flags = 0; */
 	int new_flags = 0;
 	char	ltype[256];		/* is enough isn't it? */
 

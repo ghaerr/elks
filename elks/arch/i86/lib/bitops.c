@@ -2,11 +2,17 @@
 #include <arch/irq.h>
 #include <linuxmt/kernel.h>
 
+#if _32_BIT_MASKS
 unsigned long bit_masks[] = 
 	{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 
   	32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 
 	8388608, 16777216, 33554432, 67108864, 134217728, 268435456,  
 	536870912, 1073741824, 2147483648};
+#endif
+
+#if _8_BIT_MASKS
+unsigned char bit_masks[] = {1, 2, 4, 8, 16, 32, 64, 128};
+#endif
 
 /*
  *	Messy as we lack atomic bit operations on an 8086.
@@ -19,18 +25,19 @@ unsigned char *addr;
 	unsigned int flags;
 	int offset = (bit / 8);
 	unsigned int r;
+	unsigned int mask;
+
 	bit%=8;
 	save_flags(flags);
 	icli();
-	r=(addr[offset]&&(1<<bit));
-	addr[offset] ^= r;	/* xor bit with itself is 0 */
+	mask = (1 << bit);
+	r = addr[offset] & mask;
+	addr[offset] &= ~mask;	/* xor bit with itself is 0 */
 	restore_flags(flags);
-/*	if(r)
-		return 1;
-	return r; */
 	return (r ? 1:0);
 }
 
+#if 0 /* I don't like this version of set_bit() - Al */
 int set_bit(nr,addr)
 int nr;
 register unsigned int *addr;
@@ -52,6 +59,26 @@ register unsigned int *addr;
 		return 0;
 	}
 }
+#else
+int set_bit(bit,addr)
+int bit;
+unsigned char *addr;
+{
+	unsigned int flags;
+	int offset = (bit / 8);
+	unsigned int r;
+	unsigned int mask;
+
+	bit %= 8;
+	save_flags(flags);
+	icli();
+	mask = (1 << bit);
+	r = addr[offset] & mask;
+	addr[offset] |= mask;	/* xor bit with itself is 0 */
+	restore_flags(flags);
+	return (r ? 1 : 0);
+}
+#endif
 
 #if 1
 int test_bit(bit,addr)
@@ -62,7 +89,8 @@ unsigned int *addr;
 	int offset;
 	int i;
 	offset = (bit / 16);
-	mask = bit_masks[bit % 16];
+	bit %= 16;
+	mask = 1 << bit;
 	return ((mask & addr[offset] ) != 0);
 }
 #else
