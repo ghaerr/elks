@@ -465,5 +465,5 @@ char *argv[];
 	    }
 	}
     }
-    return(0);
+    exit(0);
 }
