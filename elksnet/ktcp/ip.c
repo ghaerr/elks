@@ -56,6 +56,7 @@ int len;
 void ip_print(head)
 struct iphdr_s *head;
 {
+#if 0
     __u8 *addr;
     int i;
     
@@ -77,6 +78,7 @@ struct iphdr_s *head;
 	printf("%x ",addr[i]);
 
     printf("\n");
+#endif
 }
 
 
@@ -150,7 +152,7 @@ struct addr_pair *apair;
         
     /* "route" */
     if(iph->daddr == local_ip && iph->daddr == 0x0100007f){ /* 127.0.0.1 */
-    	ip_recvpacket(iph, tlen + len);
+/*    	ip_recvpacket(iph, tlen + len); */ /* FIXME */
     } else {
 		slip_send(&ipbuf, tlen + len);   
 	}

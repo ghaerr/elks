@@ -39,7 +39,7 @@ struct tcpcb_s *cb;
 
 #ifdef CONFIG_INET_STATUS
 	if(sreq.type == NS_GENERAL){
-		gstats.cb_num = tcpcb_num;	
+		gstats.cb_num = tcpcb_num;
 		gstats.retrans_memory = tcp_retrans_memory;
 		tcpcb_buf_write(cb, &gstats, sizeof(gstats));
 	} else

@@ -17,6 +17,7 @@
 #include "slip.h"
 #include "ip.h"
 #include "tcp.h"
+#include "timer.h"
 #include "mylib.h"
 
 extern int cbs_in_time_wait;
@@ -24,12 +25,14 @@ extern int cbs_in_time_wait;
 void tcp_print(head)
 struct iptcp_s *head;
 {
-/*	printf("TCP header\n");
+#if 0
+	printf("TCP header\n");
 	printf("sport : %d dport :%d \n",ntohs(head->tcph->sport),ntohs(head->tcph->dport));
 	printf("seq : %lu ack : %lu \n",ntohl(head->tcph->seqnum), ntohl(head->tcph->acknum));
 	printf("flags :%d\n",head->tcph->flags);
 	printf("window : %d urgpnt : %d\n",ntohs(head->tcph->window),head->tcph->urgpnt);	
-	printf("chksum : %d\n",tcp_chksum(head));*/
+	printf("chksum : %d\n",tcp_chksum(head));
+#endif
 }
 
 int tcp_init()
@@ -42,10 +45,9 @@ int tcp_init()
     return 0;
 }
 
-long choose_seq()
+__u32 choose_seq()
 {
-	static num = 200;
-	return num++;
+	return timer_get_time();
 }
 
 void tcp_send_fin(cb)
@@ -233,13 +235,14 @@ struct tcpcb_s *cb;
 			ENTER_TIME_WAIT(cb);
 		} else {
 			cb->state = TS_CLOSED;
-			tcpdev_sock_state(cb, SS_UNCONNECTED);
 		}
+		tcpdev_sock_state(cb, SS_UNCONNECTED);
 		return;
 	}
 	if(h->flags & TF_FIN){
 		cb->rcv_nxt ++;
 		cb->state = TS_CLOSE_WAIT;
+		tcpdev_sock_state(cb, SS_DISCONNECTING);
 	}
 	
 	if(datasize == 0 && ((h->flags & TF_ALL) == TF_ACK))
@@ -355,24 +358,11 @@ void tcp_last_ack(iptcp, cb)
 struct iptcp_s *iptcp;
 struct tcpcb_s *cb;
 {
-	__u32 lastack;
-	lastack = cb->send_una;
-	
-	if(iptcp->tcph->flags & TF_FIN){
-		cb->rcv_nxt ++;
-		/* Remove the flag */
-		iptcp->tcph->flags &= ~TF_FIN;
-	}
-
-	/* Process like there was no FIN */
-	tcp_established(iptcp, cb);
-	
-	if(SEQ_LT(lastack, cb->send_una)){
+	if(iptcp->tcph->flags & (TF_ACK|TF_RST)){
 		/* out FIN was acked */
 		cb->state = TS_CLOSED;
 		tcpcb_remove(cb); /* Remove the cb */
 	}
-	
 }
 
 void tcp_update()
@@ -444,6 +434,9 @@ struct iphdr_s *iph;
 		break;
 	case TS_FIN_WAIT_2:
 		tcp_fin_wait_2(&iptcp, cb);
+		break;
+	case TS_LAST_ACK:
+		tcp_last_ack(&iptcp, cb);
 		break;
 	case TS_CLOSING:
 		tcp_closing(&iptcp, cb);

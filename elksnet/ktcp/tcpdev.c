@@ -222,20 +222,22 @@ void tcpdev_read()
 	}
 
 	cb = &n->tcpcb;
-	if(!cb->state & ( TS_ESTABLISHED
-					| TS_FIN_WAIT_1
-					| TS_FIN_WAIT_2 )){
-		retval_to_sock(sock, -EINVAL);
+	if(cb->state == TS_CLOSING && cb->state == TS_LAST_ACK && cb->state == TS_TIME_WAIT ){
+		retval_to_sock(sock, -EPIPE);
 		return;
 	}
 
-	if(cb->remport == NETCONF_PORT && cb->remaddr == 0){		
+	if(cb->remport == NETCONF_PORT && cb->remaddr == 0){
 		netconf_send(cb);	
 	}
 	
 	data_avail = cb->bytes_to_push;
 
 	if(data_avail == 0){
+		if(cb->state == TS_CLOSE_WAIT){
+			retval_to_sock(sock, -EPIPE);
+			return;
+		}
 		if(db->nonblock){
 			retval_to_sock(sock, -EAGAIN);
 			return;
@@ -316,14 +318,13 @@ static void tcpdev_write()
 
 	n = tcpcb_find_by_sock(sock);
 	if(!n){
-		printf("KTCP Panic in write\n");
-		exit(1);
+		printf("KTCP Oops in write(unknown sock:0x%x)\n",sock);
+		return;
 	}
 	
 	cb = &n->tcpcb;
 	
-	if(!cb->state & ( TS_ESTABLISHED
-					| TS_CLOSE_WAIT )){
+	if(cb->state != TS_ESTABLISHED && cb->state != TS_CLOSE_WAIT){
 		retval_to_sock(sock, -EPIPE);/* FIXME : is this the right error? */
 		return;
 	}
@@ -357,39 +358,35 @@ static void tcpdev_release()
     sock = db->sock;
 
 	n = tcpcb_find_by_sock(sock);
-	if(!n){
-		printf("KTCP release unknown sock : %x \n", sock);
-	}
-	cb = &n->tcpcb;
-	switch(cb->state){
-	case TS_CLOSED:
-		tcpcb_remove(n);
-		break;
-	case TS_LISTEN:
-	case TS_SYN_SENT:
-		tcpcb_rmv_all_unaccepted(&n->tcpcb);/* FIXME : Properly disconnect all this */
-		tcpcb_remove(n);
-		break;
-	case TS_SYN_RECEIVED:
-	case TS_ESTABLISHED:
-		if(cb->remport == NETCONF_PORT && cb->remaddr == 0){		
+	if(n){
+		cb = &n->tcpcb;
+		switch(cb->state){
+		case TS_CLOSED:
 			tcpcb_remove(n);
-			retval_to_sock(db->sock, 0);
-			return;	
+			break;
+		case TS_LISTEN:
+		case TS_SYN_SENT:
+			tcpcb_rmv_all_unaccepted(&n->tcpcb);/* FIXME : Properly disconnect all this */
+			tcpcb_remove(n);
+			break;
+		case TS_SYN_RECEIVED:
+		case TS_ESTABLISHED:
+			if(cb->remport == NETCONF_PORT && cb->remaddr == 0){		
+				tcpcb_remove(n);
+				return;	
+			}
+			cb->state = TS_FIN_WAIT_1;
+			tcp_send_fin(cb);
+			/* Handle it as abort */
+	/*		tcp_send_reset(cb);
+			tcpcb_remove(cb);*/
+			break;
+		case TS_CLOSE_WAIT:
+			cb->state = TS_LAST_ACK;
+			tcp_send_fin(cb);
+			break;
 		}
-		cb->state = TS_FIN_WAIT_1;
-		tcp_send_fin(cb);
-		/* Handle it as abort */
-/*		tcp_send_reset(cb);
-		tcpcb_remove(cb);*/
-		break;
-	case TS_CLOSE_WAIT:
-		cb->state = TS_LAST_ACK;
-		tcp_send_fin(cb);
-		break;
 	}
-	
-	retval_to_sock(db->sock, 0);
 }
 
 void tcpdev_sock_state(cb, state)

@@ -126,7 +126,7 @@ struct tcpcb_list_s *n;
 		next->prev = n->prev;
 	}
 	
-	rmv_all_retrans(n);	
+	rmv_all_retrans(n);
 	free(n);
 	n = NULL;
 }
