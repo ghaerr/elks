@@ -37,8 +37,10 @@ Thu May 30 16:00:37 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Standardised on clr_irq() and set_irq() macros throughout
 	  the source tree. clri() would have been acceptable, but
-	  seti() is the Search for Extra-Terrestial Intelligence, so
-	  is misleading in this context.
+	  seti() is the Search for Extra-Terrestial Intelligence,
+	  so is misleading in this context.
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop.
 
 Thu May 30 10:57:30 BST 2002	Riley Williams <Riley@Williams.Name>
 
