@@ -26,11 +26,6 @@
 
 #include <arch/segment.h>
 
-/*
-#define CONFIG_SOCK_CLIENTONLY 1
-#define CONFIG_SOCK_STREAMONLY 1
- */
-
 /*#define find_protocol_family(_a) 0*/
 
 #define MAX_SOCK_ADDR 16		/* Must be much bigger for AF_UNIX */
@@ -373,7 +368,6 @@ struct file * filp;
 	sock_release(socki_lookup(inode));
 }
 
-#ifndef CONFIG_SOCK_CLIENTONLY /* FIXME - all of these */
 
 int sys_bind(fd, umyaddr, addrlen)
 int fd;
@@ -403,6 +397,10 @@ int addrlen;
 
 }
 
+#ifdef CONFIG_SOCK_CLIENTONLY
+int sys_listen(){return(-EINVAL);}
+int sys_accept(){return(-EINVAL);}
+#else
 int sys_listen(fd, backlog)
 int fd;
 int backlog;
@@ -521,16 +519,6 @@ int addrlen;
 			break;
 		case SS_CONNECTED:
 			/* Socket is already connected */
-
-#ifndef CONFIG_SOCK_STREAMONLY
-
-/* Hack for now - move this all into the protocol */
-
-			if(sock->type == SOCK_DGRAM)
-				break;
-
-#endif
-
 			return -EISCONN;
 		case SS_CONNECTING:
 			/* Not yet connected... we will check this. */
@@ -657,11 +645,9 @@ int protocol;
 
 	ops = pops[i];	/* Initially pops is not an array. */
 
-#ifdef CONFIG_SOCK_STREAMONLY
 	if (type != SOCK_STREAM) {
 		return -EINVAL;
 	}
-#endif
 
 	if (!(sock = sock_alloc())) {
 		return(-ENOSR);

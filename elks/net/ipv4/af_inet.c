@@ -120,7 +120,8 @@ int sockaddr_len;
 	tcpdev_inetwrite(&cmd, sizeof(struct tdb_bind));
 		
 	/* Sleep until tcpdev has news */
-	interruptible_sleep_on(sock->wait);
+	while(bufin_sem == 0)
+		interruptible_sleep_on(sock->wait);
 	
 	ret_data = tdin_buf;
 	ret = ret_data->ret_value;
@@ -162,7 +163,8 @@ int flags;
 	tcpdev_inetwrite(&cmd, sizeof(struct tdb_connect));
 	
 	/* Sleep until tcpdev has news */
-	interruptible_sleep_on(sock->wait);
+	while(bufin_sem == 0)
+		interruptible_sleep_on(sock->wait);
 	
 	r = tdin_buf;
 	ret = r->ret_value;
@@ -195,20 +197,23 @@ int flags;
 	cmd.sock = sock;
 	cmd.newsock = newsock;
 	cmd.nonblock = flags & O_NONBLOCK;
-	sock->flags |= SO_WAITDATA;
+	
 	tcpdev_inetwrite(&cmd, sizeof(struct tdb_accept));
 		
 	/* Sleep until tcpdev has news */
-	interruptible_sleep_on(sock->wait);
-	if(current->signal)
-		return(-ERESTARTSYS);
-	
-	sock->flags &= ~SO_WAITDATA;
-
+	while(bufin_sem == 0){
+		sock->flags |= SO_WAITDATA;
+		interruptible_sleep_on(sock->wait);
+		sock->flags &= ~SO_WAITDATA;
+		if(current->signal){
+			return(-ERESTARTSYS);
+		}
+	}
+		
 	ret_data = tdin_buf;
 	ret = ret_data->ret_value;
-
 	tcpdev_clear_data_avail();
+	
 	if(ret < 0)
 		return ret;
 
@@ -240,12 +245,12 @@ int nonblock;
 	cmd.sock = sock;
 	cmd.size = size;
 	cmd.nonblock = nonblock;
-	
 	tcpdev_inetwrite(&cmd, sizeof(struct tdb_read));
 	
 	/* Sleep until tcpdev has news and we have a lock on the buffer */
-	while(bufin_sem == 0)
+	while(bufin_sem == 0){
 		interruptible_sleep_on(sock->wait);
+	}
 	
 	down(&sock->sem);
 	
@@ -299,8 +304,9 @@ int nonblock;
 		todo -= cmd.size;
 	
 		/* Sleep until tcpdev has news and we have a lock on the buffer */
-		while(bufin_sem == 0)
+		while(bufin_sem == 0){
 			interruptible_sleep_on(sock->wait);
+		}
 
 		r = tdin_buf;
 		ret = r->ret_value;
@@ -362,7 +368,11 @@ int backlog;
 	tcpdev_inetwrite(&cmd, sizeof(struct tdb_listen));
 	
 	/* Sleep until tcpdev has news */
-	interruptible_sleep_on(sock->wait);
+	while(bufin_sem == 0){
+		interruptible_sleep_on(sock->wait);
+		if(current->signal)
+			return -ERESTARTSYS;
+	}
 	
 	ret_data = tdin_buf;
 	ret = ret_data->ret_value;

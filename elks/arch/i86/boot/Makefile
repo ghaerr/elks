@@ -29,3 +29,5 @@ include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
 ### Dependencies:
+crt1.o: crt1.c /usr/src/elks/include/arch/segment.h
+

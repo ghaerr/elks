@@ -13,6 +13,5 @@ if [ "$CONFIG_SOCKET" = "y" ]; then
     bool '  UNIX sockets'				CONFIG_UNIX
 
     comment '  Advanced socket options'
-    bool '  Client socket support only (REQUIRED)'	CONFIG_SOCK_CLIENTONLY
-    bool '  STREAM type socket support only (REQUIRED)'	CONFIG_SOCK_STREAMONLY
+    bool '  Client socket support only'			CONFIG_SOCK_CLIENTONLY
 fi

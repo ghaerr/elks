@@ -60,6 +60,7 @@ int len;
 	tdout_tail = 0;
 
 	up(&bufout_sem);
+	if(bufout_sem > 0)panic("bufout_sem tragedy");
 
     return len;
 }
@@ -75,7 +76,8 @@ int len;
 		return -EINVAL; /* FIXME: make sure this never happen */
 		
 	down(&bufout_sem);
-
+	printd_td("tcpdev : inetwrite() writing\n");
+	
 	/* Copy the data to the buffer */
 	ds = get_ds();
 	fmemcpy(ds, tdout_buf, ds, data, len);

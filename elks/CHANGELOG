@@ -29,6 +29,20 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Wed Nov 21 01:37:32 EET 2001 Harry Kalogirou <harkal@gmx.net>
+
+	* Major fix in inet code.
+	* Removed the CONFIG_SOCK_STREAMONLY config variable
+	* Updated the help for CONFIG_SOCK_CLIENTONLY
+	* Fixed the CONFIG_SOCK_CLIENT effect
+	* Made inet sockets the default config
+	* Made inet status report default
+	* Updated the help for CONFIG_CHAR_DEV_RS
+
+Sat Nov 19 17:26:40 EET 2001 Harry Kalogirou <harkal@gmx.net>
+	
+	* Reorder of some commands in inet code.
+
 Tue Nov 20 21:39:03 GMT 2001	Paul Nasrat <pnasrat@uk.now.com>
 
 	* Removed rogue space that stopped compile.
@@ -54,6 +68,10 @@ Sun Nov 18 18:55:53 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 	  itself.
 	* Verified that all config variable renames stated in this CHANGELOG
 	  document had actually been committed to the CVS archive.
+
+Sat Nov 17 18:03:45 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* THIS IS ELKS RELEASE 0.0.90 !!!
 
 Sat Nov 17 18:03:45 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 

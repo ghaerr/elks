@@ -423,8 +423,7 @@ CONFIG_CHAR_DEV_LP
 
 Enable standard serial ports
 CONFIG_CHAR_DEV_RS
-  Include support for serial port devices. Currently under development. Please
-  test.
+  Include support for serial port devices.
 
 Enable meta device driver
 CONFIG_DEV_META
@@ -581,14 +580,10 @@ CONFIG_INET_STATUS
   If you intent to use utilities like netstat say YES. If you don't say
   NO it will save size from ktcp.
 
-Only support client sockets (MUST)
+Only support client sockets
 CONFIG_SOCK_CLIENTONLY
-  Only include support for outgoing connections. Currently the only
-  type supported.
-
-Only support STREAM type sockets (MUST)
-CONFIG_SOCK_STREAMONLY
-  Only include support for STREAM type socket connections. Currently
-  the only type supported.
+  Only include support for outgoing connections. Use this in case you
+  just need to save some extra bytes out of the kernel. Saves around 450
+  bytes. If you are not sure just say NO.
 
 # EOF
