@@ -44,11 +44,11 @@ all:
 clean:
 	@for i in $(DIRS); do make -C $$i clean ; done
 	umount $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
-		|| true
-	rm -f $(ROOT_TARGET_FS) $(COMB_TARGET_FS) $(SIBO_TARGET_FS) \
-		$(ROOT_NET_TARGET_FS) $(ROOTDIR) boot images.zip
-	rm -rf rootfs_template
-	@tar xf rootfs_template.tar
+		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) || true
+	rm -f $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
+		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) boot images.zip
+	rm -rf rootfs_template $(ROOTDIR)
+	tar xf rootfs_template.tar
 
 ###############################################################################
 #
@@ -214,14 +214,14 @@ comb: mount_combfs $(ELKS_DIR)/arch/i86/boot/Image $(FD_BSECT) $(KHELPER)
 	dd if=$(FD_BSECT) of=$(COMB_TARGET_FS) bs=512 count=2 conv=notrunc
 
 full3: mount_full3fs $(ELKS_DIR)/arch/i86/boot/Image $(FD_BSECT) $(KHELPER)
-	@for i in $(DIRS); do make -C $$i min_rfs ; done
+	@for i in $(DIRS); do make -C $$i rfs ; done
 	cp $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
 	cp $(KHELPER) $(TARGET_MNT)/boot/boot
 	umount $(FULL3_TARGET_FS)
 	dd if=$(FD_BSECT) of=$(FULL3_TARGET_FS) bs=512 count=2 conv=notrunc
 
 full5: mount_full3fs $(ELKS_DIR)/arch/i86/boot/Image $(FD_BSECT) $(KHELPER)
-	@for i in $(DIRS); do make -C $$i min_rfs ; done
+	@for i in $(DIRS); do make -C $$i rfs ; done
 	cp $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
 	cp $(KHELPER) $(TARGET_MNT)/boot/boot
 	umount $(FULL3_TARGET_FS)
