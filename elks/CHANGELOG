@@ -4,9 +4,13 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Fri Jul 09 16:15 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Updated signal code to make it clearer.
+
 Fri Jul 09 16:10 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
-	* Updated romfs to use byteorder functions
+	* Updated romfs to use byteorder functions.
 
 Fri Jul 09 15:45 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 

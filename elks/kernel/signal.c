@@ -4,6 +4,8 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linuxmt/debug.h>
+
 #include <linuxmt/types.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
@@ -36,10 +38,10 @@ register struct task_struct * p;
 		     sig == SIGWINCH || sig == SIGURG))
 			return;
 /*	} */
-	printk("Generating sig %d.\n", sig);
+	printd_sig1("Generating sig %d.\n", sig);
 	p->signal |= mask;
 	if ((p->state == TASK_INTERRUPTIBLE) /* && (p->signal & ~p->blocked) */) {
-		printk("and wakig up\n");
+		printd_sig("and wakig up\n");
 		wake_up_process(p);
 	}
 }
@@ -50,7 +52,7 @@ register struct task_struct * p;
 int priv;
 {
 	register __ptask currentp = current;
-	printk("Killing with sig %d.\n", sig);
+	printd_sig1("Killing with sig %d.\n", sig);
 	if (!priv && ((sig != SIGCONT) || (currentp->session != p->session)) &&
 	    (currentp->euid ^ p->suid) && (currentp->euid ^ p->uid) &&
 	    (currentp->uid ^ p->suid) && (currentp->uid ^ p->uid) &&
@@ -80,7 +82,7 @@ int priv;
 	register struct task_struct * p;
 	int err = -ESRCH;
 
-	printk("Killing pg %d\n", pgrp);
+	printd_sig1("Killing pg %d\n", pgrp);
 	for_each_task(p) {
 		if (p->pgrp == pgrp) {
 			err = send_sig(sig,p,priv);
@@ -89,22 +91,30 @@ int priv;
 	return err;
 }
 
-
-
-int sys_kill(pid, sig)
+int kill_process(pid, sig, priv)
 pid_t pid;
 int sig;
+int priv;
 {
 	register struct task_struct * p;
 
-	printk("Killing PID %d with sig %d.\n", pid, sig);
-	if ((sig < 1) || (sig > 32))
-		return -EINVAL;
+	printd_sig2("Killing PID %d with sig %d.\n", pid, sig);
 	for_each_task(p) {
 		if (p->pid == pid)
 			return send_sig(sig,p,0);
 	}
 	return -ESRCH;
+}
+	
+
+int sys_kill(pid, sig)
+pid_t pid;
+int sig;
+{
+
+	if ((sig < 1) || (sig > 32))
+		return -EINVAL;
+	return kill_process(pid, sig, 0);
 }
 
 int sys_signal(signr, handler)
@@ -113,7 +123,7 @@ __sighandler_t handler;
 {
 	struct sigaction * sa;
 
-	printk("Registering action %x for signal %d.\n", handler, signr);
+	printd_sig2("Registering action %x for signal %d.\n", handler, signr);
 	if (signr<1 || signr>32 || signr==SIGKILL || signr==SIGSTOP) {
 		return -EINVAL;
 	}
