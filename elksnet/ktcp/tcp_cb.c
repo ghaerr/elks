@@ -34,10 +34,11 @@ void tcpcb_printall()
 	struct tcpcb_list_s *n;
 	
 	n = tcpcbs;
-	printf("--- Control Blocks --- %d (%d)\n",tcp_timeruse,tcp_retrans_memory);
+	printf("--- Control Blocks --- %d (%d)\n",tcpcb_num,tcp_retrans_memory);
 	while(n){
-		printf("CtrlBlock:%p State:%d LPort:%d RPort:%d RTT: %d ms\n",&n->tcpcb, n->tcpcb.state, 
-				n->tcpcb.localport, n->tcpcb.remport,n->tcpcb.rtt * 1000 / 16);
+		printf("CB:%p sock:0x%x 0x%x State:%d LP:%d RP:%d RTT: %d ms unacc : %d\n",&n->tcpcb, n->tcpcb.sock, 
+				n->tcpcb.newsock, n->tcpcb.state, 
+				n->tcpcb.localport, n->tcpcb.remport,n->tcpcb.rtt * 1000 / 16, n->tcpcb.unaccepted);
 		n = n->next;
 	}
 #endif
@@ -111,7 +112,7 @@ struct tcpcb_list_s *n;
 	tcpcb_num--;
 #endif	
 	next = n->next;
-	
+
 	if(n->prev){
 		n->prev->next = next;
 	} else {

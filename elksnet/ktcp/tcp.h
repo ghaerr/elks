@@ -28,7 +28,7 @@
 #define TCP_SETHDRSIZE(c,s)	( *(__u8 *)&(c)->flags |= (s) << 4 )
 
 
-#define ENTER_TIME_WAIT(cb)	(cb)->time_wait_exp = Now + (120 << 4);\
+#define ENTER_TIME_WAIT(cb)	(cb)->time_wait_exp = Now + (30 << 4);\
 				(cb)->state = TS_TIME_WAIT;\
 				tcp_timeruse++;\
 				cbs_in_time_wait++;

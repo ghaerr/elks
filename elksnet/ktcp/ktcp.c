@@ -97,18 +97,18 @@ char **argv;
 {
 
     if(argc < 3){
-		printf("Syntax :\n    %s local_ip slip_tty\n",argv[0]);
-		exit(3);
+			printf("Syntax :\n    %s local_ip slip_tty\n",argv[0]);
+			exit(3);
     }
 
     local_ip = in_aton(argv[1]);
     
     if((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0){
-		exit(1);
+			exit(1);
     }
 
     if((sfd = slip_init(argv[2])) < 0){
-		exit(2);
+			exit(2);
     }
 
     ip_init();

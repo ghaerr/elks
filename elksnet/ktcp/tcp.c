@@ -158,6 +158,7 @@ struct tcpcb_s *lcb;
 	n = tcpcb_clone(lcb);
 	cb = &n->tcpcb;
 	cb->unaccepted = 1; /* Mark as unaccepted */
+	cb->newsock = lcb->sock;
 	
 	cb->seg_seq = ntohl(h->seqnum);
 	cb->seg_ack = ntohl(h->acknum);
@@ -453,6 +454,6 @@ struct iphdr_s *iph;
 		tcp_closing(&iptcp, cb);
 		break;	
 	}
-	
+
 }
 

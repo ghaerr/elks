@@ -11,7 +11,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <fcntl.h
 #include <linuxmt/tcpdev.h>
 #include <linuxmt/net.h>
 #include <linuxmt/in.h>
@@ -131,7 +131,9 @@ static void tcpdev_accept()
 	
 	cb = &newn->tcpcb;
 	cb->unaccepted = 0;
+	
 	cb->sock = db->newsock;
+	cb->newsock = 0;
 	
 	ret_data = sbuf;
 	ret_data->type = 0;
@@ -149,22 +151,21 @@ struct tcpcb_s *cb;
 {
    	struct tdb_accept_ret *ret_data;
    	struct tcpcb_s *listencb;
-	
-	listencb = &tcpcb_find_by_sock(cb->sock)->tcpcb;
-	
+
+	if(!cb->unaccepted)return;							
+	listencb = &tcpcb_find_by_sock(cb->newsock)->tcpcb;
+
 	ret_data = sbuf;
 	ret_data->type = 123;
 	ret_data->ret_value = 0;
 	ret_data->sock = cb->sock;
 	ret_data->addr_ip = cb->remaddr;
 	ret_data->addr_port = cb->remport;
-	
-	if(listencb->newsock != 0){
+
 		cb->sock = listencb->newsock;
 		cb->unaccepted = 0;
 		listencb->newsock = 0;
 		write(tcpdevfd, sbuf, sizeof(struct tdb_accept_ret));
-	}
 }
 
 static void tcpdev_connect()
@@ -204,6 +205,7 @@ static void tcpdev_listen()
 		return;
 	}
 	n->tcpcb.state = TS_LISTEN;
+	n->tcpcb.newsock = 0;
 	retval_to_sock(db->sock, 0);
 }
 
@@ -317,7 +319,7 @@ static void tcpdev_write()
 
 	/* This is a bit ugly but I'm to lazy right now */
 	if(tcp_retrans_memory > TCP_RETRANS_MAXMEM){
-		retval_to_sock(sock, -ERESTARTSYS);    	
+		retval_to_sock(sock, -ERESTARTSYS);
 		return;
 	}
 
@@ -426,7 +428,7 @@ void tcpdev_process()
 	if(len <= 0)return;
 	
 /*    printf("tcpdev_process : read %d bytes\n",len);*/
-	
+
     switch (sbuf[0]){
 		case TDC_BIND:
 		    tcpdev_bind();
@@ -450,6 +452,5 @@ void tcpdev_process()
 		    tcpdev_write();
 			break;
     }
-
 }
 
