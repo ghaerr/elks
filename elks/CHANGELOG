@@ -4,6 +4,11 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Mon May 17 12:29 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Added Documentation/cs_write which describes code that
+	  writes to the kernel code segment.
+
 Tue May 06 17:19 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed select code, including modifications to scheduler
