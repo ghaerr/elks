@@ -47,11 +47,13 @@ if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
     endmenu
 fi
 
-mainmenu_option next_comment
-		comment "Swap support"
+if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+    mainmenu_option next_comment
+	comment "Swap support"
 
-		bool 'Enable swap support'	CONFIG_SWAP
-endmenu
+	bool 'Enable swap support'	CONFIG_SWAP
+    endmenu
+fi
 
 mainmenu_option next_comment
     comment 'Hardware Facilities'

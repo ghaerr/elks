@@ -32,6 +32,11 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sat Apr 27 00:16:36 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Labelled virtual memory swapping support as experimental, and
+	  made it invisible unless CONFIG_EXPERIMENTAL is enabled.
+
 Fri Apr 26 22:25:57 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Applied `make lint` to include/arch directory and cleaned up

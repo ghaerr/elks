@@ -275,10 +275,12 @@ CONFIG_HW_NO_SEEK_FOR_FLOPPY
   Saying yes will explicitly tell ELKS not to use Int13.08 to get 
   Floppy information (Int 13.08 doesn't work on PC/XT floppy drives).
 
-Swap support
+Swap support (Experimental)
 CONFIG_SWAP
-	Include support for swapping. Enlarges kernel by 2KB's.
-	WARNING : This code is experimental.
+  Include support for swapping to virtual memory.
+  Enlarges kernel by about 2KB.
+
+  WARNING: This code is VERY experimental at the moment.
 
 # 286 Protected Mode support - 286+ features
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
