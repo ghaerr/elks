@@ -4,4 +4,8 @@ the top of this file before committing any changes.
 Al
 ------------------------------------------------------------------------------
 
+Wed Sep 16 20:20:00 CEST 1998	Simon Weijgers	<mbit@mbit.doa.org>
 
+	* Fixed infinite loop bug in dircon.c ansi color code;
+	  the infinite loop would occur when faulty ansi escape
+	  sequences were fed to the kernel.
