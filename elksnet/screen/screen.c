@@ -16,6 +16,7 @@
 static char ScreenVersion[] = "screen 2.0a.1 (ELKS) 19-Sep-2001";
 
 #include <stdio.h>
+#include <dirent.h>
 #include <signal.h>
 #include <errno.h>
 #include <ctype.h>
@@ -32,6 +33,8 @@ static char ScreenVersion[] = "screen 2.0a.1 (ELKS) 19-Sep-2001";
 #ifdef ELKS
 #include <termios.h>
 #include <bsd/sgtty.h>
+#include <linuxmt/un.h>
+#include <unistd.h>
 #else
 #include <sgtty.h>
 #include <nlist.h>
@@ -1058,7 +1061,7 @@ static char *GetTtyName () {
 static Attach (how) {
     register s, lasts, found = 0;
     register DIR *dirp;
-    register struct direct *dp;
+    register struct dirent *dp;
     struct msg m;
     char last[MAXNAMLEN+1];
 
@@ -1579,7 +1582,7 @@ static SetUtmp (name) char *name; {
     if (tp == NULL)
 	return 0;
     strncpy (u.ut_line, p, 8);
-    strncpy (u.ut_name, LoginName, 8);
+    strncpy (u.ut_user, LoginName, 8);
     u.ut_host[0] = '\0';
     time (&u.ut_time);
     (void) lseek (utmpf, (long)(slot * sizeof (u)), 0);
