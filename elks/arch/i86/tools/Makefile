@@ -5,6 +5,25 @@
 
 ELKSDIR 	= ../../..
 
+#########################################################################
+# Define the variables required by the standard rules - see the standard
+# rules file (below) for details of these variables.
+
+ELKSSTD 	= N
+
+CLEANDEP	= 
+
+CLEANME 	= build imgconv mkurlader
+
+DEPEND		= 
+
+DISTFILES	= mknbi-elks
+
+###########################################################################
+# Include the standard rules.
+
+include $(ELKSDIR)/Makefile-rules
+
 ###########################################################################
 # Paramters.
 
@@ -15,10 +34,10 @@ heap_size	= 128		# paragraphs of 16 bytes
 # Standard commands.
 
 AS		= as86
-ASFLAGS 	= -0
+ASFLAGS 	= $(CPU_AS)
 
 CC		= bcc
-CFLAGS		= -0 -c
+CFLAGS		= $(CPU_CC) -c
 
 IC		= ./imgconf
 ICFLAGS		= -D$(stack_size) -H$(heap_size)
@@ -69,15 +88,6 @@ mkurlader: mkurlader.c
 
 imgconv: imgconv.c
 	gcc -o imgconv imgconv.c
-
-clean:
-	rm -f *.img *.out build imgconv mkurlader
-
-dep:
-	@echo -n
-
-nodep:
-	@echo -n
 
 ###########################################################################
 ## Dependencies:

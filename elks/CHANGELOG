@@ -21,7 +21,7 @@ Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001
 Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
 Peter L Vachuska        <pvachusk@nconnect.net>         13 Aug 2001
-Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-17 Nov 2001
+Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-20 Nov 2001
 Roman Festchook         <roma@polesye.net>              27 Oct 2001
 Simon Weijgers          <simon@weijgers.com>            16 Sep 1998-15 Nov 1999
 Simon Wood                                              06 Jan 2000-12 Jan 2000
@@ -29,9 +29,29 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Sat Nov 17 18:03:45 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+Tue Nov 20 00:34:21 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* THIS IS ELKS RELEASE 0.0.90 !!!
+	* THIS IS ELKS RELEASE 0.1.0-PRE1 !!!
+
+	* Removed unused config variable CONFIG_IBMPC_RAINBOW pending any
+	  decision on whether to port to this system.
+	* Verified that all standard make commands now work using the
+	  standardised ruleset.
+
+Sun Nov 18 18:55:53 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* All temporary files now have *.tmp format names.
+	* Created new `setdir` script to simplify the `make dist` command.
+	  This gets rid of a nasty bug.
+	* If `make dep` and `make nodep` find that the resulting Makefile
+	  is unchanged, they retain it.
+	* Moved `make dist` dir to be under the same directory that the ELKS
+	  base directory is under rather than under the ELKS base directory
+	  itself.
+	* Verified that all config variable renames stated in this CHANGELOG
+	  document had actually been committed to the CVS archive.
+
+Sat Nov 17 18:03:45 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Fixed bug in `make dist` - it missed an important file out!
 
@@ -91,7 +111,10 @@ Tue Nov 13 17:40:00 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 		CONFIG_ARCH_PC		CONFIG_ARCH_IBMPC
 		CONFIG_ARCH_PC_AT	CONFIG_PC_AT
 		CONFIG_ARCH_PC_AUTO	CONFIG_PC_AUTO
+		CONFIG_ARCH_PC_CLONE	CONFIG_IBMPC_CLONE
+		CONFIG_ARCH_PC_COMPAQ	CONFIG_IBMPC_COMPAQ
 		CONFIG_ARCH_PC_MCA	CONFIG_PC_MCA
+		CONFIG_ARCH_PC_RAINBOW	CONFIG_IBMPC_RAINBOW
 		CONFIG_ARCH_PC_XT	CONFIG_PC_XT
 		CONFIG_ROM_IS186	CONFIG_CPU_80186
 		CONFIG_ROM_IS286	CONFIG_CPU_80286
@@ -179,7 +202,7 @@ Tue Oct 23 17:36:10 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 Tue Oct 23 01:44:24 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* THIS IS ELKS RELEASE 0.0.88-pre1.
+	* THIS IS ELKS RELEASE 0.0.88-PRE1.
 
 	* Brought Makefile-rules up to date.
 	* Removed includes for compile.h and version.h - sorry!
@@ -236,7 +259,7 @@ Wed Oct 17 11:32:57 CEST 2001	Arnaud Launay <asl@launay.org>
 
 Tue Oct 16 21:59:27 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* THIS IS ELKS RELEASE 0.0.87-pre1.
+	* THIS IS ELKS RELEASE 0.0.87-PRE1.
 
 	* Reformatted ELKS_VERSION_CODE to reflect the actual use made of the
 	  PRE's as being BEFORE the non-PRE version rather than after as was

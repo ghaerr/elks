@@ -1,3 +1,30 @@
+#########################################################################
+# Relative path to base directory.
+
+ELKSDIR 	= ../..
+
+#########################################################################
+# Define the variables required by the standard rules - see the standard
+# rules file (below) for details of these variables.
+
+ELKSSTD 	= N
+
+CLEANDEP	= 
+
+CLEANME 	= lxdialog
+
+DEPEND		= 
+
+DISTFILES	= BIG.FAT.WARNING
+
+#########################################################################
+# Include the standard commands.
+
+include $(ELKSDIR)/Makefile-rules
+
+#########################################################################
+# Local commands.
+
 CC = gcc
 CPP = gcc -E
 OPTIM = -O2 -Wall -fomit-frame-pointer
@@ -41,9 +68,6 @@ ncurses:
 		echo ;\
 		exit 1 ;\
 	fi
-
-clean:
-	rm -f core *.o *~ *.tmp *.bak lxdialog
 
 ###################################
 ### Dependencies:

@@ -22,7 +22,7 @@
 #define WAITING(port) (STATUS(port) & 0x80) == 0x80
 
 /* use asm insw/outsw instead of C version */
-/* asm versions should work on 8088/86, but only with CONFIG_ARCH_PC_XT */
+/* asm versions should work on 8088/86, but only with CONFIG_PC_XT */
 /* #define USE_ASM */
 
 /* uncomment this to include debugging code .. this increases size of driver */
@@ -141,7 +141,7 @@ int count;
     mov cx, [bp+08]
     shr cx, 1
     cld
-#ifndef CONFIG_ARCH_PC_XT
+#ifndef CONFIG_PC_XT
     repz
     insw
 #else /* this should work on an 8088 */
@@ -188,7 +188,7 @@ int count;
     mov cx, [bp+08]
     shr cx, 1
     cld
-#ifndef CONFIG_ARCH_PC_XT
+#ifndef CONFIG_PC_XT
     repz
     outsw
 #else /* this should work on an 8088 */

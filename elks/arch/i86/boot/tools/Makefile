@@ -7,6 +7,23 @@
 
 ELKSDIR		= ../../../..
 
+#########################################################################
+# Define the variables required by the standard rules - see the standard
+# rules file (below) for details of these variables.
+
+ELKSSTD 	= N
+
+CLEANDEP	= 
+
+CLEANME 	= 
+
+DEPEND		= 
+
+DISTFILES	= a a.out build
+
+#########################################################################
+# Include the standard rules.
+
 include $(ELKSDIR)/Makefile-rules
 
 #########################################################################

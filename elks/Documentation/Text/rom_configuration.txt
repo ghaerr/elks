@@ -229,13 +229,6 @@ This section include the option used only in the kernel.
 
 
 
-'CHM-BIOSerweiterungen für Debugger'               CHM_BIOS 
--------------------------------------------------------------
-   This added only some breakpoints and prints in the kernel code
-   (the function should remove if the ROM_CODE in a stable state)
-
-
-
 Christian Mardmöller (chm@kdt.de)
 10/1999
 

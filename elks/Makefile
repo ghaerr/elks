@@ -11,6 +11,20 @@
 ELKSDIR		= .
 
 #########################################################################
+# Define the variables required by the standard rules - see the standard
+# rules file (below) for details of these variables.
+
+ELKSSTD 	= Y
+
+CLEANDEP	= include/linuxmt/compiler-generated.h
+
+CLEANME 	= 
+
+DEPEND		= 
+
+DISTFILES	= BUGS CHANGELOG COPYING INSTALLATION RELNOTES TODO nodeps
+
+#########################################################################
 # Include the standard ruleset.
 
 include $(ELKSDIR)/Makefile-rules
@@ -136,12 +150,15 @@ elks.spec: Makefile
 #########################################################################
 # Standard commands.
 
-dist:
+dist:	nodep clean
 	-rm -rf $(DISTDIR)
-	mkdir $(DISTDIR)
-	-chmod 777 $(DISTDIR)
-	cp -pf BUGS CHANGELOG COPYING Makefile Makefile-rules $(DISTDIR)
-	cp -pf nodeps README RELNOTES TODO $(DISTDIR)
+	@make mkdist
+
+dist.old:
+	mkdir -m 755 -p $(DISTDIR)
+	cp -pf BUGS BUGS.html CHANGELOG COPYING nodeps $(DISTDIR)
+	cp -pf Makefile Makefile-rules README RELNOTES $(DISTDIR)
+	cp -pf INSTALLATION INSTALLATION.html TODO $(DISTDIR)
 	(cd $(DISTDIR); mkdir Documentation fs include init kernel lib net)
 	(cd $(DISTDIR); mkdir -p $(ARCH_DIR) scripts)
 	(cd $(DISTDIR)/fs; mkdir elksfs minix romfs)
@@ -229,15 +246,15 @@ set:
 
 test:
 	make defconfig
-	@printf '\n%079u\n\n' 0 | tr 0 =
-	make dep
-	@printf '\n%079u\n\n' 0 | tr 0 =
+	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make clean
-	@printf '\n%079u\n\n' 0 | tr 0 =
+	@printf '\n  %076u\n\n' 0 | tr 0 =
+	make dep
+	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make Image
-	@printf '\n%079u\n\n' 0 | tr 0 =
+	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make nbImage
-	@printf '\n%079u\n\n' 0 | tr 0 =
+	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make dist
 
 #########################################################################

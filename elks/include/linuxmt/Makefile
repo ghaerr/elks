@@ -6,9 +6,18 @@
 ELKSDIR		= ../..
 
 #########################################################################
-# Variables used by the standard rules.
+# Define the variables required by the standard rules - see the standard
+# rules file (below) for details of these variables.
+
+ELKSSTD 	= Y
+
+CLEANDEP	= 
 
 CLEANME 	= compiler-generated.h
+
+DEPEND		= 
+
+DISTFILES	= 
 
 #########################################################################
 # Include the standard rules.

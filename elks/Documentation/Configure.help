@@ -64,7 +64,7 @@ CONFIG_ARCH_AUTO
 	SIBO	The SIBO range of computers.
 
 Auto detect PC architecture
-CONFIG_ARCH_PC_AUTO
+CONFIG_PC_AUTO
   Use this option to specify the architecture the kernel will run on. The
   supported options are:
 

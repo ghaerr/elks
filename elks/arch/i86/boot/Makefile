@@ -8,10 +8,19 @@
 ELKSDIR		= ../../..
 
 #########################################################################
-# Variables used by the standard rules.
+# Define the variables required by the standard rules - see the standard
+# rules file (below) for details of these variables.
+
+ELKSSTD 	= Y
+
+CLEANDEP	= 
 
 CLEANME 	= Image bootsect nbImage nbImage.rd netbootsect setup \
 		  system system.app
+
+DEPEND		= 
+
+DISTFILES	= empty system.afl system.rsz tux.pic
 
 #########################################################################
 # Include the standard rules.

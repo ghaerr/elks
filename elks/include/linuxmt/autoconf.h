@@ -18,13 +18,14 @@
  * Architecture
  */
 #define CONFIG_ARCH_AUTO 1
-#undef  CONFIG_ARCH_PC
+#undef  CONFIG_ARCH_IBMPC
 #undef  CONFIG_ARCH_SIBO
-#define CONFIG_ARCH_PC_AUTO 1
-#undef  CONFIG_ARCH_PC_XT
-#undef  CONFIG_ARCH_PC_AT
-#undef  CONFIG_ARCH_PC_MCA
+#define CONFIG_PC_AUTO 1
+#undef  CONFIG_PC_XT
+#undef  CONFIG_PC_AT
+#undef  CONFIG_PC_MCA
 #undef  CONFIG_ROMCODE
+#define CONFIG_IBMPC_CLONE 1
 
 /*
  * 286 Protected Mode Support
@@ -112,17 +113,13 @@
 /*
  * Network Support
  */
-
-/*
- * Networking
- */
 #define CONFIG_SOCKET 1
-#undef  CONFIG_UNIX
 #define CONFIG_NANO 1
 #undef  CONFIG_INET
+#undef  CONFIG_UNIX
 
 /*
- *   Advance socket options
+ *   Advanced socket options
  */
 #undef  CONFIG_SOCK_CLIENTONLY
 #define CONFIG_SOCK_STREAMONLY 1

@@ -6,6 +6,20 @@
 ELKSDIR 	= ../..
 
 #########################################################################
+# Define the variables required by the standard rules - see the standard
+# rules file (below) for details of these variables.
+
+ELKSSTD 	= Y
+
+CLEANDEP	= 
+
+CLEANME 	= 
+
+DEPEND		= 
+
+DISTFILES	= defconfig
+
+#########################################################################
 # Include standard commands.
 
 include $(ELKSDIR)/Makefile-rules
@@ -45,7 +59,7 @@ DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 .PHONY: 		boot/system tools
 
 boot/bootsect:		boot/bootsect.o
-	$(LD) -0 -s -o boot/bootsect -M boot/bootsect.o > Boot.map
+	$(LD) $(LDFLAGS) $(ARCH_LD) -s -o boot/bootsect -M boot/bootsect.o > Boot.map
 
 boot/bootsect.o:	boot/bootsect.s
 
@@ -54,12 +68,12 @@ boot/crt0.o:		boot/crt0.s
 boot/crt1.o:		boot/crt1.c
 
 boot/netbootsect:	boot/netbootsect.o
-	$(LD) -0 -s -o boot/netbootsect -M boot/netbootsect.o > Netboot.map
+	$(LD) $(LDFLAGS) $(ARCH_LD) -s -o boot/netbootsect -M boot/netbootsect.o > Netboot.map
 
 boot/netbootsect.o:	boot/netbootsect.s
 
 boot/setup:		boot/setup.o
-	$(LD) -0 -s -o boot/setup -M boot/setup.o > Setup.map
+	$(LD) $(LDFLAGS) $(ARCH_LD) -s -o boot/setup -M boot/setup.o > Setup.map
 
 boot/setup.o:		boot/setup.s
 
@@ -72,11 +86,9 @@ tools:
 ifeq ($(CONFIG_ARCH_SIBO), y)
 
 boot/system: $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
-	(cd $(ELKSDIR) ; $(LD) $(LDFLAGS) $(ARCH_DIR)/sibo/crt0.o \
-		$(ARCH_DIR)/sibo/crt1.o \
-		init/main.o \
-		$(ARCHIVES) \
-		$(DRIVERS) \
+	(cd $(ELKSDIR) ; $(LD) $(LDFLAGS) $(ARCH_LD) \
+		$(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
+		init/main.o $(ARCHIVES) $(DRIVERS) \
 		-t -M -o $(ARCH_DIR)/boot/system > System.tmp ; \ 
 		sort -k4 System.tmp > System.map ; rm -f System.tmp ) 
 
@@ -89,11 +101,9 @@ Image: boot/system tools
 else
 
 boot/system:	$(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
-	(cd $(ELKSDIR) ; $(LD) $(LDFLAGS) $(ARCH_DIR)/boot/crt0.o \
-		$(ARCH_DIR)/boot/crt1.o \
-		init/main.o \
-		$(ARCHIVES) \
-		$(DRIVERS) \
+	(cd $(ELKSDIR) ; $(LD) $(LDFLAGS) $(ARCH_LD) \
+		$(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt1.o \
+		init/main.o $(ARCHIVES) $(DRIVERS) \
 		-t -M -o $(ARCH_DIR)/boot/system > System.tmp ; \
 		sort -k4 System.tmp > System.map ; rm -f System.tmp ) 
 

@@ -1,3 +1,31 @@
+#########################################################################
+# Relative path to base directory.
+
+ELKSDIR 	= ..
+
+#########################################################################
+# Define the variables required by the standard rules - see the standard
+# rules file (below) for details of these variables.
+
+ELKSSTD 	= N
+
+CLEANDEP	= 
+
+CLEANME 	=  kconfig.tk tkparse
+
+DEPEND		= 
+
+DISTFILES	= Configure Menuconfig elksspec index mkMake renvar \
+		  setdir vars
+
+#########################################################################
+# Include the standard commands.
+
+include $(ELKSDIR)/Makefile-rules
+
+#########################################################################
+# Local commands.
+
 HOSTCFLAGS:=$(HOSTCFLAGS) -Wall
 HEADER=header.tk
 TAIL=tail.tk
@@ -33,6 +61,8 @@ tkgen.o: tkgen.c tkparse.h
 tkparse.o tkcond.o tkgen.o:
 	$(HOSTCC) $(HOSTCFLAGS) -c -o $@ $(@:.o=.c)
 
+#########################################################################
+
 distdir:
 	cp -pf Makefile Configure Menuconfig $(DISTDIR)/scripts
 	cp -pf README.Menuconfig $(DISTDIR)/scripts
@@ -42,14 +72,5 @@ distdir:
 	cp -pf lxdialog/BIG.FAT.WARNING $(DISTDIR)/scripts/lxdialog
 	cp -pf lxdialog/*.c lxdialog/*.h $(DISTDIR)/scripts/lxdialog
 
-clean:
-	rm -f *~ *.bak *.o *.tmp core kconfig.tk tkparse
-
-dep:
-	@echo -n
-
-nodep:
-	@echo -n
-
-########################################
+#########################################################################
 ### Dependencies:

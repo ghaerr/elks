@@ -18,15 +18,15 @@ mainmenu_option next_comment
 
     choice 'Select system architecture'		\
 	"Auto		CONFIG_ARCH_AUTO	\
-	 IBM-PC		CONFIG_ARCH_PC		\
+	 IBM-PC		CONFIG_ARCH_IBMPC	\
 	 SIBO		CONFIG_ARCH_SIBO"		Auto
 
     if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 	choice 'Select PC system architecture'	\
-	    "Auto	CONFIG_ARCH_PC_AUTO	\
-	     PC/XT	CONFIG_ARCH_PC_XT	\
-	     PC/AT	CONFIG_ARCH_PC_AT	\
-	     MCA	CONFIG_ARCH_PC_MCA"		Auto
+	    "Auto	CONFIG_PC_AUTO		\
+	     PC/XT	CONFIG_PC_XT		\
+	     PC/AT	CONFIG_PC_AT		\
+	     MCA	CONFIG_PC_MCA"			Auto
 
 	bool 'Build kernel as ROM-bootable'			CONFIG_ROMCODE
     else
@@ -34,17 +34,14 @@ mainmenu_option next_comment
     fi
 endmenu
 
-if [ "$CONFIG_ARCH_PC" != "y" ]; then
-    define_bool CONFIG_ARCH_PC_CLONE y
-else
+if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
     mainmenu_option next_comment
 	comment 'Model-specific features'
 
 	choice 'Model of computer'		\
-	    "TrueClone	CONFIG_ARCH_PC_CLONE	\
-	     Compaq	CONFIG_ARCH_PC_COMPAQ	\
-	     Rainbow	CONFIG_ARCH_PC_RAINBOW"		TrueClone
-	if [ "$CONFIG_ARCH_PC_COMPAQ" = "y" ]; then
+	    "TrueClone	CONFIG_IBMPC_CLONE	\
+	     Compaq	CONFIG_IBMPC_COMPAQ"		TrueClone
+	if [ "$CONFIG_IBMPC_COMPAQ" = "y" ]; then
 	    bool 'Switch Compaq DeskPro to fast mode'		CONFIG_COMPAQ_FAST
 	fi
     endmenu
@@ -73,10 +70,12 @@ else
 	    bool 'System has no floppy drive'			CONFIG_HW_NO_FLOPPY_DRIVE n
 	    bool 'System has no hard drive'			CONFIG_HW_NO_HARD_DRIVE y
 	endmenu
+
 #	mainmenu_option next_comment
 #	    comment 'Character Devices'
 #
 #	endmenu
+
 	mainmenu_option next_comment
 	    comment 'BIOS Facilities'
 
@@ -99,7 +98,6 @@ else
 	    int 'Ticks for BogoMIPS (0 = check at boottime)'	CONFIG_BOGOMIPS 0
 	    bool 'NO Floppycount at 40:10 use INT13.08'		CONFIG_HW_USE_INT13_FOR_FLOPPY n 
 	    bool 'Dont seek to get Floppy information (use I13.8)' CONFIG_HW_NO_SEEK_FOR_FLOPPY y
-#	    bool 'CHM-BIOSerweiterungen für Debugger'		CHM_BIOS y
 	endmenu
     endmenu
 fi

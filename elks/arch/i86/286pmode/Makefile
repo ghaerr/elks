@@ -10,9 +10,18 @@
 ELKSDIR 	= ../../..
 
 #########################################################################
-# Variables used by the standard rules.
+# Define the variables required by the standard rules - see the standard
+# rules file (below) for details of these variables.
+
+ELKSSTD 	= Y
+
+CLEANDEP	= 
 
 CLEANME 	= pmode286
+
+DEPEND		= 
+
+DISTFILES	= 
 
 #########################################################################
 # Include standard commands.
@@ -30,7 +39,7 @@ OBJS  = crt0.o main.o irq.o
 all:	pmode286
 
 pmode286: $(OBJS)
-	$(LD) -0 -i $(OBJS) ../lib/lib86.a -M -o pmode286 > $(ELKSDIR)/pmode286.map
+	$(LD) $(LDFLAGS) -i $(OBJS) ../lib/lib86.a -M -o pmode286 > $(ELKSDIR)/pmode286.map
 
 #########################################################################
 # Standard commands.

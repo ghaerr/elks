@@ -1,9 +1,47 @@
+#########################################################################
+#                                                                       #
+#     Standard rulesets for use when compiling and installing ELKS.     #
+#                                                                       #
+#########################################################################
+#
+# This file expects the following variables to have been defined before
+# it is included into any other Makefile on this system:
+#
+#	ELKSDIR 	The relative path from the directory the Makefile
+#			is in to the ELKS base directory.
+#
+#	ELKSSTD 	Whether to compile for ELKS or Linux. If this is
+#			set to 'N' it compiles for Linux, otherwise it
+#			compiles for ELKS.
+#
+#	CLEANDEP	Any files in the current directory that the
+#			`make dep` command is dependent on.
+#
+#	CLEANME 	Any files in the current directory to be removed
+#			by the `make clean` command that are not in the
+#			standard list of files matching "*~", "*.bak",
+#			"*.o", "*.map" or "*.tmp", or named "core".
+#
+#	DEPEND		Any files in the current directory that the
+#			`make dep` command is dependent on.
+#
+#	DISTFILES	Any files in the current directory that are to
+#			be included in a distribution made with the
+#			`make dist` command that are not in the standard
+#			list. This standard list consists of those files
+#			NOT removed by `make clean` that match any of
+#			the patterns "*.?", "*.cc", "*.html", "*.in",
+#			"*.sh", "*.tk", "*.txt", "Makefile*" or "README*".
+#
+# No other variables should be defined before including this file.
+#
+#########################################################################
 # State the current ELKS kernel version.
 
 VERSION 	= 0	# (0-255)
-PATCHLEVEL	= 0	# (0-255)
-SUBLEVEL	= 90	# (0-255)
-# PRE		= 0	# (0-255)	If not a pre, comment this line.
+PATCHLEVEL	= 1	# (0-255)
+SUBLEVEL	= 0	# (0-255)
+PRE		= 1	# (0-255)	If not a pre, comment this line.
 
 # Specify the architecture we will use.
 
@@ -60,37 +98,16 @@ TOPDIR		= $(shell cd "$(ELKSDIR)" ; \
 
 ARCH_DIR	= arch/$(ARCH)
 
-DISTDIR 	= $(TOPDIR)/elks-$(DIST)
-
 INCDIR		= $(TOPDIR)/include
 
-#########################################################################
-# Specify the standard definitions to be given to ELKS programs. We use
-# ASCII code 160 decimal for spaces in the date and UTS_VERSION strings
-# to avoid the shell splitting them up as separate 'words'.
-
-CCDEFS		= -DELKS_VERSION_CODE=$(VSNCODE)		\
-		  -DUTS_RELEASE=\"$(DIST)\"			\
-		  -D__KERNEL__
+MYDIR		= $(shell pwd | sed 's¬^$(TOPDIR)¬.¬')
 
 #########################################################################
-# Specify the tools to use, with their flags.
+# Specify the directory we are to create the distribution copy of this
+# directory in, in such a way that no . or .. directories occur. This
+# also makes this an absolute path, but that fact is not important.
 
-AR		= ar
-
-AS		= as86
-ASFLAGS 	= -0
-
-CC		= bcc
-CFLBASE 	= $(CCDEFS) -O
-CFLAGS		= $(CFLBASE) -i
-CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
-CC_PROTO	= gcc -I$(INCDIR) -M $(CCDEFS)
-
-LD		= ld86
-LDFLAGS 	= -0 -s -x
-
-LINT		= lclint
+DISTDIR 	= $(shell $(ELKSDIR)/scripts/setdir $(TOPDIR)/../elks-$(DIST)/$(MYDIR))
 
 #########################################################################
 # Specify the configuration shell to use.
@@ -104,9 +121,102 @@ CONFIG_SHELL	:= $(shell if [ -x "$$bash" ]; \
 			   fi)
 
 #########################################################################
+# Specify the standard definitions to be given to ELKS programs. We use
+# ASCII code 160 decimal for spaces in the date and UTS_VERSION strings
+# to avoid the shell splitting them up as separate 'words'.
+
+CCDEFS		= -DELKS_VERSION_CODE=$(VSNCODE)		\
+		  -DUTS_RELEASE=\"$(DIST)\"			\
+		  -D__KERNEL__
+
+#########################################################################
+# Set the target environment.
+
+ifeq (wildcard($(ELKSDIR)/.config), $(ELKSDIR)/.config)
+    MK_ARCH	= $(shell grep '^CONFIG_ARCH_' $(ELKSDIR)/.config \
+			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
+    MK_CPU	= $(shell grep '^CONFIG_CPU_' $(ELKSDIR)/.config \
+			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
+else
+    MK_ARCH	= ibmpc
+    MK_CPU	= 8086
+endif
+
+#########################################################################
+# Define architecture-specific flags.
+
+ifeq ($(MK_ARCH), ibmpc)
+    ARCH_AS	=
+    ARCH_CC	=
+    ARCH_LD	=
+endif
+
+ifeq ($(MK_ARCH), sibo)
+    ARCH_AS	=
+    ARCH_CC	=
+    ARCH_LD	= -D 0xC00 -H 0x480
+endif
+
+#########################################################################
+# Define CPU-specific flags.
+
+ifeq ($(MK_CPU), 8086)
+    CPU_AS	= -0
+    CPU_CC	= -0
+    CPU_LD	= -0
+endif
+
+ifeq ($(MK_CPU), 80186)
+    CPU_AS	= -1
+    CPU_CC	= -0
+    CPU_LD	= -0
+endif
+
+ifeq ($(MK_CPU), 80286)
+    CPU_AS	= -2
+    CPU_CC	= -0
+    CPU_LD	= -0
+endif
+
+ifeq ($(MK_CPU), 80386)
+    CPU_AS	= -3
+    CPU_CC	= -3
+    CPU_LD	= -3
+endif
+
+ifeq ($(MK_CPU), 80486)
+    CPU_AS	= -3
+    CPU_CC	= -3
+    CPU_LD	= -3
+endif
+
+#########################################################################
 # Export all variables.
 
 .EXPORT_ALL_VARIABLES:
+
+#########################################################################
+# Specify the tools to use, with their flags.
+
+ifeq ($(ELKSSTD), Y)
+
+AR		= ar
+
+AS		= as86
+ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
+
+CC		= bcc
+CFLBASE 	= -O $(CCDEFS)
+CFLAGS		= $(CPU_CC) $(ARCH_CC) -i $(CFLBASE)
+
+CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
+
+CC_PROTO	= gcc -I$(INCDIR) -M $(CCDEFS)
+
+LD		= ld86
+LDFLAGS 	= $(CPU_LD) -s -x
+
+LINT		= lclint
 
 #########################################################################
 # general construction rules
@@ -123,6 +233,8 @@ CONFIG_SHELL	:= $(shell if [ -x "$$bash" ]; \
 .c.o:
 	$(CC) $(CFLAGS) -0 -I$(INCDIR) -c -o $*.o $<
 
+endif
+
 #########################################################################
 # Default target, to allow standard targets to be included. This simply
 # allows `make elks` to be called from any directory in the tree, and
@@ -135,11 +247,12 @@ elks:
 # Standard commands.
 
 clean:	$(CLEANDEP)
-	rm -f *~ *.o *.map *.tmp core $(CLEANME)
+	rm -fv *~ *.bak *.o *.map *.tmp core $(CLEANME)
 	@for FILE in *.s ; do \
 		BASE=`basename "$$FILE" .s` ; \
 		if [ -f "$$BASE.c" -o -f "$$BASE.S" ]; then \
-			rm -f "$$FILE" ; \
+			echo rm -fv "$$FILE" ; \
+			rm -fv "$$FILE" ; \
 		fi ; \
 	done
 	@for DIR in */ ; do \
@@ -149,34 +262,56 @@ clean:	$(CLEANDEP)
 	done
 
 dep:	$(DEPEND)
-	@if \ls *.c > /dev/null ; then \
-		sed '/\#\#\# Dependencies/q' < Makefile > make.tmp ; \
-		for i in *.c; do \
-			$(CC_PROTO) $$i >> make.tmp ; \
-			echo >> make.tmp ; \
-		done ; \
-		if ! diff Makefile make.tmp > /dev/null ; then \
-			mv make.tmp Makefile ; \
-		else \
-			rm -f make.tmp ; \
-		fi ; \
-	fi
+	@if \ls *.c > /dev/null 2>&1 ; then make mkdep ; fi
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
 			make -C "$$DIR" dep ; \
 		fi ; \
 	done
 
+mkdep:
+	sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
+	@echo >> make.tmp
+	@for FILE in *.c ; do \
+		echo $(CC_PROTO) "$${FILE}" >> make.tmp ; \
+		$(CC_PROTO) "$${FILE}" >> make.tmp ; \
+		printf '\n\n' >> make.tmp ; \
+	done
+	@if ! diff Makefile make.tmp > /dev/null ; then \
+		echo mv -fv make.tmp Makefile ; \
+		mv -fv make.tmp Makefile ; \
+	else \
+		echo rm -f make.tmp ; \
+		rm -f make.tmp ; \
+	fi
+
 nodep:
 	sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
 	@if ! diff Makefile make.tmp > /dev/null ; then \
-		mv make.tmp $$i ; \
+		echo mv -f make.tmp Makefile ; \
+		mv -f make.tmp Makefile ; \
 	else \
+		echo rm -f make.tmp ; \
 		rm -f make.tmp ; \
 	fi
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
 			make -C "$$DIR" nodep ; \
+		fi ; \
+	done
+
+#########################################################################
+# Sub-command used by the `make dist` command in the toplevel Makefile.
+
+MKDIST	= $(shell export allow_null_glob_expansion=Y ; \
+	  echo *.? *.cc *.html *.in *.png *.sh *.tk *.txt Makefile* README*)
+
+mkdist:	
+	mkdir -m 755 -p $(DISTDIR)
+	cp -pf $(MKDIST) $(DISTFILES) $(DISTDIR)
+	@for DIR in */ ; do \
+		if [ -f "$${DIR}/Makefile" ]; then \
+			make -C "$${DIR}" mkdist ; \
 		fi ; \
 	done
 

@@ -12,6 +12,20 @@
 ELKSDIR 	= ../../../..
 
 #########################################################################
+# Define the variables required by the standard rules - see the standard
+# rules file (below) for details of these variables.
+
+ELKSSTD 	= Y
+
+CLEANDEP	= 
+
+CLEANME 	= 
+
+DEPEND		= 
+
+DISTFILES	= CGAsnow Changes NEW_NOTES NOTES
+
+#########################################################################
 # Include standard commands.
 
 include $(ELKSDIR)/Makefile-rules

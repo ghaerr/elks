@@ -1,0 +1,29 @@
+#!/bin/bash
+
+function map() {
+    local CURRENT="${1}" DIR OK=Y
+
+    while read DIR ; do
+	if [ "${DIR}" != ".." ]; then
+	    CURRENT="${CURRENT}/${DIR}"
+	else
+	    CURRENT=`echo "$CURRENT" | rev | cut -d / -f 2- | rev`
+	    if [ -z "${CURRENT}" ]; then
+		OK=N
+	    fi
+	fi
+    done
+    if [ $OK != N ]; then
+	echo "${CURRENT}" | tr -s /
+    else
+	echo WARNING: Invalid path ignored: "${2}" >&2
+    fi
+}
+
+for PARM do
+    if echo "${PARM}" | grep ^/ > /dev/null ; then
+	echo "${PARM}" | tr / '\n' | grep -v '^\.$' | map /
+    else
+	echo "${PARM}" | tr / '\n' | grep -v '^\.$' | map "`pwd`"
+    fi
+done
