@@ -1,0 +1,151 @@
+                            ELKS Website Change Log
+                            ~~~~~~~~~~~~~~~~~~~~~~~
+
+This file is used to record changes made to the CVS database. Please add to
+the top of this file before committing any changes. Please use the header
+format provided for each entry, noting that the text on each line should not
+be longer than the lines of dashes.
+
+Contributor             Current Email address           CHANGELOG entries found
+~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~
+Alistair Riddoch        <AlRiddoch@zepler.org>           1 Jan 1995-20 Oct 1999
+Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>     7 Nov 2001-24 Nov 2001
+Martijn Bakker          <martijn@insecure.nl>           29 Mar 2002
+Michael McConnell       <Soruk@Eridani.co.uk>           11 Nov 2001-12 Nov 2001
+Riley Williams          <rhw@InfraDead.Org>              8 Nov 2001-13 Apr 2002
+Stefan de Konink        <skinkie@xs4all.nl>              3 May 2002
+
+-------------------------------------------------------------------------------
+
+Mon May 13 07:43:46 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Recoded ELKS website labelled as version 2.
+
+	Targets for files in version 1 of website:
+
+		Dutch		/Languages/nl/*
+		English		/Languages/en/*
+		French		/Languages/??/*		fr  ???
+		German		/Languages/??/*		de  ???
+		Japanese	/Languages/??/*		ja  ???
+		Portuguese	/Languages/??/*		po  ???
+		Russian		/Languages/??/*		ru  ???
+		Spanish		/Languages/??/*		es  ???
+
+Fri May 3 22:33:44 CEST 2002	Stefan de Konink <skinkie@xs4all.nl>
+
+	* Complety recoded the ELKS site using PHP.
+	* Fully W3C Compatible.
+	* PHP Automatic Language Selection.
+	* Menu sections per language in /Functions/data.php script.
+	* Functions in /Functions/total.php script.
+	* Full English support under /Languages/en/ directory.
+	* Dutch support (currently without FAQ translation) under
+	  /Languages/nl/ directory.
+	
+	Todo:
+
+	* Add Dutch FAQ
+	* Old translated FAQ's in currect format
+	
+Sat Apr 13 19:42:16 BST 2002	Riley Williams <rhw@InfraDead.Org>
+
+	* Inserted correct Base HRef in all pages.
+
+Sat Apr  6 22:45:56 BST 2002	Riley Williams <rhw@InfraDead.Org>
+
+	* Martijn's ELKS banner now marked as a binary file.
+
+Fri Apr  5 18:36:54 BST 2002	Riley Williams <rhw@InfraDead.Org>
+
+	* Release history brought up to date. The 0.1.0 kernel release
+	  has now been issued.
+	* Martijn's ELKS banner included on ELKS home page.
+
+Fri Mar 29 04:09:16 BST 2002	Martijn Bakker <martijn@insecure.nl>
+
+	* New ELKS banner supplied.
+
+Mon Mar 11 23:05:35 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+
+	* Release history brought up to date.
+
+Wed Jan  9 23:36:32 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+
+	* Prepared for addition of images.zip links to download index.
+
+Thu Nov 29 01:34:48 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Corrected punctuation in homepage that led to wierd layout.
+
+Sat Nov 24 16:44:47 EET 2001	Harry Kalogirou <harkal@gmx.net>
+
+	* Wrote the download page.
+	* Reformated the home page.
+	* Added new release entries.
+
+Tue Nov 20 20:42:09 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Moved old homepage to "Introduction to ELKS" subpage.
+	* Committed outline of new home page, format as agreed on the
+	  Linux-8086 mailing list.
+
+Mon Nov 12 23:57:31 EET 2001	Harry Kalogirou <harkal@gmx.net>
+
+	* Added info about the mailing list archive.
+	* Replaced tabs with spaces on the contributor list at the top of
+	  this file.
+
+Mon Nov 12 21:53:33 GMT 2001	Michael McConnell <soruk@eridani.co.uk>
+
+	* Updated ELKS logo with transparent version.
+
+Mon Nov 12 00:00:00 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Added "description" and "keywords" fields to all HTML headers.
+	* Reformatted home page slightly.
+
+Sun Nov 11 21:33:54 GMT 2001	Michael McConnell <soruk@eridani.co.uk>
+
+	* Updated "Baby Linux" logo with transparent version.
+
+Sun Nov 11 11:06:53 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Reformatted English FAQ. Much of this appears to be long out of
+	  date, but I've added it as it stands for now, and will work
+	  through it to bring it up to date once I have the rest of the
+	  old ELKS website transferred across.
+
+Sat Nov 10 10:21:11 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Added details of mailing lists.
+
+Fri Nov  9 16:19:40 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Added outline index pages for FAQ, History and News subtrees.
+	* Reformatted French FAQ. I don't read French, so can somebody who
+	  does please check this document to ensure it is accurate.
+	* Reformatted German FAQ. I don't read German, so can somebody who
+	  does please check this document to ensure it is accurate.
+	* Linked French and German FAQ's into FAQ index page.
+
+Thu Nov  8 22:18:20 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Rationalised index.html page of dynamic snapshot.
+	* Committed first version of revised pages - much still absent.
+
+Wed Nov  7 00:13:21 GMT 2001	Harry Kalogirou <HarKal@rainbow.cs.unipi.gr>
+
+	* Snapshot of Al's dynamic ELKS website taken and used as base for
+	  new website.
+
+Sat Oct 20 12:34:56 GMT 1999	Alistair Riddoch <alriddoch@zepler.org>
+
+	* Last update to dynamic ELKS website.
+
+Sun Jan  1 12:34:56 GMT 1995	Alistair Riddoch <alriddoch@zepler.org>
+
+	* Oldest reference on snapshot of dynamic ELKS website.
+
+-------------------------------------------------------------------------------
+END OF CHANGELOG
