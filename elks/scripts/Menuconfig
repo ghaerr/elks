@@ -579,8 +579,9 @@ function l_choice () {
 	shift 2
     done
     while true ; do
-	if $DIALOG --title "$title" --radiolist "$radiolist_instructions" \
-		   --backtitle "$backtitle" 15 70 6 $list 2>MCdialog.out
+	if $DIALOG --title "$title" --backtitle "$backtitle" \
+		   --radiolist "$radiolist_instructions" \
+				15 70 6 $list 2>MCdialog.out
 	then
 	    choice=`cat MCdialog.out`
 	    break
