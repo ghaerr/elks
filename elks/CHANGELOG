@@ -32,6 +32,12 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Mon Apr 22 23:11:38 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* ANSI'fied function prototypes in the arch/i86/mm subtree.
+	* Applied `make indent` rule to the arch/i86/mm subtree.
+	* Verified that the kernel compiles with the above changes applied.
+
 Mon Apr 22 18:22:01 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* ANSI'fied function prototypes in the arch/i86/286pmode subtree.
