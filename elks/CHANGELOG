@@ -16,7 +16,7 @@ Christoph Plattner    Christoph.Plattner@dot.at         31 Jan 2000- 2 Feb 2000
 David Murn            scuffer@hups.apana.org.au         11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
-Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-30 Apr 2002
+Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-16 May 2002
 Jacek Lipkowski       sq5bpf@acid.ch.pw.edu.pl          20 Jan 2002
 Ken Martwick          kenm@efn.org                      12 May 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
@@ -33,12 +33,14 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Wed May 15 16:00:08 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+Wed May 15 16:00:08 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
-	* Invert the is(is not) a system call valid condition in strace.
-	* Added parameter strace for sys_signal().
-	* Fixed the BSS zeroing in exec.c. This caused a lot of serius problems
-	  to programs that assumed a zeroed BSS. "ash" was one of them.
+	* Invert the "Is this system call valid" condition in strace.c
+	  so it actually works.
+	* Added parameters to strace for sys_signal().
+	* Fixed the BSS zeroing in exec.c. This caused a lot of serious
+	  problems to programs that assumed a zeroed BSS. "ash" was one
+	  of them.
 
 Mon May 13 22:47:47 BST 2002	Riley Williams <Riley@Williams.Name>
 
