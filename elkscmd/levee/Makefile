@@ -1,5 +1,8 @@
-# makefile for Levee
-include ../Make.defs
+# makefile for Levee 
+
+BASEDIR = ..
+
+# include $(BASEDIR)/Make.defs
 
 CFLAGS = -O -0 -DSIZE=16000L
 
@@ -10,6 +13,8 @@ xCFLAGS=-g
 OBJS = blockio.o display.o editcor.o exec.o find.o \
     unixcall.o globals.o insert.o main.o misc.o \
     modify.o move.o ucsd.o undo.o wildargs.o
+
+all: lev
 
 lev: $(OBJS)
 	$(CC) $(LDFLAGS) -o lev $(OBJS)

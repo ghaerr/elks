@@ -1,7 +1,11 @@
-include ../Make.defs
+BASEDIR = ..
+
+include $(BASEDIR)/Make.defs
 
 CFLAGS= $(CFLBASE)
 LFLAGS= -s
+
+all: xvi
 
 xvi: xvi.o
 	$(CC) $(LFLAGS) xvi.o -o xvi

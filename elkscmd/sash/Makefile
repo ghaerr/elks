@@ -1,10 +1,15 @@
 #
 # Makefile for sash
 #
-include ../Make.defs
+
+BASEDIR = ..
+
+include $(BASEDIR)/Make.defs
 
 #OBJS = sash.o cmds.o cmd_ls.o utils.o
 OBJS = sash.o cmds.o cmd_dd.o cmd_ed.o cmd_grep.o cmd_ls.o cmd_tar.o utils.o
+
+all: sash
 
 sash:	$(OBJS)
 	$(CC) $(LDFLAGS) -o sash $(OBJS)

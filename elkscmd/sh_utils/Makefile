@@ -1,4 +1,6 @@
-include ../Make.defs
+BASEDIR = ..
+
+include $(BASEDIR)/Make.defs
 
 PRGS=basename date dirname echo false printenv pwd true which whoami yes \
 	logname tr xargs mesg write stty test # uname

@@ -28,7 +28,6 @@ OFILES = scan.o util.o main.o number.o storage.o load.o execute.o
 SUBDIRS = Examples Test
 #
 
-
 all: bc
 
 bc: $& config.h bc.o $(OFILES) global.o

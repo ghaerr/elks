@@ -1,15 +1,16 @@
 # Makefile for httpd
 
-include ../../Make.defs
+BASEDIR=../..
 
-SHELL = /bin/sh
-CC = bcc
+include $(BASEDIR)/Make.defs
 
-BASE_CFLAGS = -c -O
-#BASE_CFLAGS = -c -O
+SHELL=/bin/sh
+CC=bcc
 
-#CFLAGS = -D__LINUX__ $(BASE_CFLAGS)
-CFLAGS = $(BASE_CFLAGS)
+BASE_CFLAGS=-c -O
+
+#CFLAGS=-D__LINUX__ $(BASE_CFLAGS)
+CFLAGS=$(BASE_CFLAGS)
 
 CFILES = \
 	httpd.c \

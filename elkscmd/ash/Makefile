@@ -2,7 +2,10 @@
 #
 # 19980209 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
 # Modified for ELKS and bcc
-include ../Make.defs
+
+BASEDIR = ..
+
+include $(BASEDIR)/Make.defs
 
 SRCS=	builtins.c cd.c dirent.c error.c eval.c exec.c expand.c input.c \
 	jobs.c mail.c main.c memalloc.c miscbltin.c mystring.c nodes.c \

@@ -1,6 +1,8 @@
 # Makefile for Berkeley yacc.
     
-include ../Make.defs
+BASEDIR = ..
+
+include $(BASEDIR)/Make.defs
 
 BINDIR	      = /usr/bin
 

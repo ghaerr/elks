@@ -1,4 +1,8 @@
+BASEDIR = ../..
+
 CC=gcc -g -O
+
+all: history
 
 history: history.c
 	$(CC) -o history history.c

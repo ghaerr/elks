@@ -71,7 +71,7 @@
 			( (c=name[1]) && (c!='.') ) || (name[2]&&c)
 
 
-static int cols = 0, col = 0, reverse=1;
+static int cols = 0, col = 0, reverse=-1;
 static char fmt[16] = "%s";
 
 
@@ -86,8 +86,7 @@ const char **a, **b;
 
 struct Stack
 {
-    int size,
-	allocd;
+    int size, allocd;
     char **buf;
 };
 
@@ -137,9 +136,10 @@ struct Stack *pstack;
     return !(pstack->size);
 }
 
-void getfiles(name, pstack)
+void getfiles(name, pstack, flags)
 char * name;
 struct Stack *pstack;
+int flags;
 {
     BOOL endslash, valid;
     DIR *dirp;
@@ -148,21 +148,22 @@ struct Stack *pstack;
     char c;
 
     endslash = name[strlen(name)-1] == '/';
-    valid = 0;
 
     /*
      * Do all the files in a directory.
      */
+
     dirp = opendir(name);
     if (dirp == NULL) {
 	perror(name);
 	exit(1);
     }
-
     while ((dp = readdir(dirp)) != NULL) {
-	if (LSF_ALL || *name != '.')
+	valid = 0;
+	if ((flags & LSF_ALL) || (*dp->d_name != '.'))
 	    valid = 1;
-	else if (LSF_ALLX && name[1] && (name[1] != '.' || name[2]))
+	else if ((flags & LSF_ALLX) && (dp->d_name[1])
+			&& (dp->d_name[1] != '.' || dp->d_name[2]))
 	    valid = 1;
 	if (valid) {
 	    *fullname = '\0';
@@ -170,13 +171,11 @@ struct Stack *pstack;
 	    if (!endslash)
 		strcat(fullname, "/");
 	    strcat(fullname, dp->d_name);
-	    pushStack( pstack, strdup(fullname));
+	    pushStack(pstack,strdup(fullname));
 	}
     }
-
     closedir(dirp);
-
-    sortStack( pstack );
+    sortStack(pstack);
 }
 
 
@@ -388,7 +387,7 @@ long t;
     strcpy(buf, &str[4]);
     buf[12] = '\0';
 
-    if ((t > now) || (t < now - 365*24*60*60L)) {
+    if ((t > now) || (t < now - 180*24*60*60L)) {
 	strcpy(&buf[7], &str[20]);
 	buf[11] = '\0';
     }
@@ -553,12 +552,14 @@ char **argv;
 		free(name);
 	}
 	if (!isEmptyStack(&dirs)) {
-	    getfiles( name = popStack(&dirs), &files );
-	    if (col) {
-		col=0;
-		fputc('\n', stdout);
+	    getfiles( name = popStack(&dirs), &files, flags );
+	    if (strcmp(name,".")) {
+		if (col) {
+		    col=0;
+		    fputc('\n', stdout);
+		}
+		printf("\n%s:\n", name);
 	    }
-	    printf("\n%s:\n", name);
 	    free(name);
 	    if (recursive)
 		recursive--;
