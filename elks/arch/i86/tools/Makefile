@@ -1,28 +1,42 @@
-# Makefile for compiling assembler for Psion 3a.		SDW 28/2/99
+# Makefile for compiling assembler for Psion 3a - SDW 28/2/99
 #
 ###########################################################################
-#
-# Note that the standard Makefile rules and defines have been moved to
-# the file below.
+# Relative path to base directory.
 
-ELKSDIR		= ../../..
-
-include $(ELKSDIR)/Makefile-rules
+ELKSDIR 	= ../../..
 
 ###########################################################################
+# Paramters.
 
-## Paramters
-stack_size = 64		# paras of 16 bytes
-heap_size = 128		# paras of 16 bytes
+stack_size	= 64		# paragraphs of 16 bytes
+heap_size	= 128		# paragraphs of 16 bytes
 
-imgconv = ./imgconv
-imgconv_flags = -D$(stack_size) -H$(heap_size)
+###########################################################################
+# Standard commands.
 
-%.img:%.out		# convert to psion
-	$(imgconv) $< $@ 
+AS		= as86
+ASFLAGS 	= -0
 
-## Targets
-## NOTE you have to build the psion tree first to get driver stuff
+CC		= bcc
+CFLAGS		= -0 -c
+
+IC		= ./imgconf
+ICFLAGS		= -D$(stack_size) -H$(heap_size)
+
+###########################################################################
+# Standard prototypes.
+
+.c.o:
+	$(CC) $(CFLAGS) -o $@ $<
+
+.s.o:
+	$(AS) $(ASFLAGS) -o $@ $<
+
+.out.img:
+	$(IC) $(ICFLAGS) $< $@ 
+
+###########################################################################
+# Targets. You have to build the psion tree first to get driver stuff.
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
 
@@ -57,10 +71,10 @@ imgconv: imgconv.c
 	gcc -o imgconv imgconv.c
 
 clean:
-	rm -f *.o
-	rm -f *.out
-	rm -f *.img
-	rm -f imgconv mkurlader
+	rm -f *.o *.out *.img imgconv mkurlader
+
+dep:
+	@echo -n
 
 ###########################################################################
-### Dependencies:
+## Dependencies:

@@ -1,4 +1,3 @@
-#
 # Makefile for the ELKS blocks devices.
 #
 # Note! Dependencies are done automagically by 'make dep', which also
@@ -6,18 +5,42 @@
 # unless it's something special (ie not a .c file).
 #
 #########################################################################
-#
-# Note that the standard Makefile rules and defines have been moved to
-# the file below.
+# Relative path to base directory.
 
-ELKSDIR		= ../../../..
-
-include $(ELKSDIR)/Makefile-rules
+ELKSDIR 	= ../../../..
 
 #########################################################################
+# Standard commands.
 
-OBJS  = genhd.o doshd.o ll_rw_blk.o rd.o floppy.o directhd.o init.o \
-	sibo_ssd.o ssd_asm.o
+AR		= ar
+AS		= as86 
+LD		= ld86 
+LDFLAGS 	= -0 -s -x
+CC		= bcc
+CFLAGS		= -0 -I$(ELKSDIR)/include  $(CFLBASE)
+CPP		= bcc -E -nostdinc -I$(ELKSDIR)/include
+CC_PROTO	= gcc -I$(ELKSDIR)/include -M
+
+#########################################################################
+# Standard prototypes.
+
+.c.s:
+	$(CC) $(CFLAGS) \
+	-0 -S -o $*.s $<
+.s.o:
+	$(AS) -0 -o $*.o $<
+.S.s:
+	$(CC) $(CFLAGS) -P -o $*.s $<
+.c.o:
+	$(CC) $(CFLAGS) -0 -c -o $*.o $<
+
+#########################################################################
+# Objects to be compiled.
+
+OBJS  = genhd.o doshd.o ll_rw_blk.o rd.o floppy.o directhd.o init.o sibo_ssd.o ssd_asm.o
+
+#########################################################################
+# Commands.
 
 all:	blk_drv.a
 

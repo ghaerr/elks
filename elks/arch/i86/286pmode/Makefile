@@ -5,21 +5,46 @@
 # unless it's something special (ie not a .c file).
 #
 #########################################################################
-#
-# Note that the standard Makefile rules and defines have been moved to
-# the file below.
+# Relative path to base directory.
 
-ELKSDIR		= ../../..
-
-include $(ELKSDIR)/Makefile-rules
+ELKSDIR 	= ../../..
 
 #########################################################################
-# crt0.o should be first on this next line.
+# Standard commands.
+
+AR		= ar
+AS		= as86 
+LD		= ld86 
+LDFLAGS 	= -0 -s -x
+CC		= bcc
+CFLAGS		= -0 -I$(ELKSDIR)/include  $(CFLBASE)
+CPP		= bcc -E -nostdinc -I$(ELKSDIR)/include
+CC_PROTO	= gcc -I$(ELKSDIR)/include -M
+
+#########################################################################
+# Standard prototypes.
+
+.c.s:
+	$(CC) $(CFLAGS) \
+	-0 -S -o $*.s $<
+.s.o:
+	$(AS) -0 -o $*.o $<
+.c.o:
+	$(CC) $(CFLAGS) \
+	-0 -c -o $*.o $<
+
+#########################################################################
+# Objects to be compiled. crt0.o should be first.
 
 OBJS  = crt0.o main.o irq.o
 
+#########################################################################
+# Commands.
+
+all:	pmode286
+
 pmode286: $(OBJS)
-	$(LD) -0 -i $(OBJS) ../lib/lib86.a -M -o pmode286 > ../../../pmode286.map
+	$(LD) -0 -i $(OBJS) ../lib/lib86.a -M -o pmode286 > $(ELKSDIR)/pmode286.map
 
 clean:
 	rm -f core *~ *.o *.a tmp_make pmode286 pmode286.map

@@ -18,6 +18,7 @@ struct	exec {			/* a.out header */
   long		a_syms;		/* size of symbol table */
 
   /* SHORT FORM ENDS HERE */
+
   long		a_trsize;	/* text relocation size */
   long		a_drsize;	/* data relocation size */
   long		a_tbase;	/* text relocation base */

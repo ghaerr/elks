@@ -30,9 +30,9 @@ ELKSDIR		= .
 # Define variables directly dependant on the current ELKS version.
 
 ifeq (x$(PRE), x)
-DIST		= $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
+DIST		= $(shell printf '%u.%u.%u' $(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
 else
-DIST		= $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)-pre$(PRE)
+DIST		= $(shell printf '%u.%u.%u-pre%u' $(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $(PRE))
 endif
 
 DISTDIR 	= elks-$(DIST)
@@ -59,8 +59,8 @@ ARCH_DIR	= arch/$(ARCH)
 CC		= bcc
 CFLBASE 	= -D__KERNEL__ -O
 CFLAGS		= $(CFLBASE) -i
-CPP		= $(CC) -I$(MT_DIR)/include -E -D__KERNEL__
-CC_PROTO	= gcc -I$(MT_DIR)/include -M -D__KERNEL__
+CPP		= $(CC) -I$(TOPDIR)/include -E -D__KERNEL__
+CC_PROTO	= gcc -I$(TOPDIR)/include -M -D__KERNEL__
 
 LINT		= lclint
 
@@ -88,14 +88,16 @@ ROOT_DEV	= FLOPPY
 # general construction rules
 
 .c.s:
-	$(CC) $(CFLAGS) -0 -nostdinc -Iinclude -S -o $*.s $<
+	$(CC) $(CFLAGS) -0 -nostdinc -I$(ELKSDIR)/include -S -o $*.s $<
+
 .s.o:
-	$(AS) -0 -I$(MT_DIR)/include -c -o $*.o $<
+	$(AS) -0 -I$(ELKSDIR)/include -c -o $*.o $<
+
 .S.s:
 	gcc -E -traditional -o $*.s $<
+
 .c.o:
-	$(CC) $(CFLAGS) -0 -nostdinc -Iinclude -S -o $*.s $<
-	$(AS) -0 -I$(MT_DIR)/include -c -o $*.o $<
+	$(CC) $(CFLAGS) -0 -I$(ELKSDIR)/include -c -o $*.o $<
 
 #########################################################################
 # Targets
@@ -199,7 +201,10 @@ net/net.a:
 # lint rule
 
 lint:
-	$(LINT) -I$(MT_DIR)/include -c init/main.c
+	$(LINT) -I$(TOPDIR)/include -c init/main.c
+	@echo
+	@echo Checking with lint is now complete.
+	@echo
 
 #########################################################################
 # miscellaneous
@@ -216,25 +221,37 @@ clean:
 	make -C lib clean
 	make -C net clean
 	make -C scripts clean
+	@echo
+	@echo The ELKS source tree has been cleaned.
+	@echo
 
 depclean:
 	@for i in `find -name Makefile`; do \
 		sed '/\#\#\# Dependencies/q' < $$i > tmp_make ; \
-		if ! diff Makefile tmp_make > /dev/null ; then
+		if ! diff Makefile tmp_make > /dev/null ; then \
 			mv tmp_make $$i ; \
 		else \
 			rm -f tmp_make ; \
 		fi ; \
 	done
+	@echo
+	@echo All dependencies have been removed.
+	@echo
 
 distclean: clean depclean
 	rm -f .config* .menuconfig*
 	rm -f scripts/lxdialog/*.o scripts/lxdialog/lxdialog
+	@echo
+	@echo This ELKS source tree has been cleaned ready for distribution.
+	@echo
 
 dist: distdir
 	-chmod -R a+r $(DISTDIR)
 	tar chozf $(DISTDIR).tar.gz $(DISTDIR)
 	-rm -rf $(DISTDIR)
+	@echo
+	@echo The ELKS source tarball $(DISTDIR).tar.gz can be distributed.
+	@echo
 
 distdir:
 	-rm -rf $(DISTDIR)
@@ -259,6 +276,9 @@ distdir:
 	cp -pf include/arch/*.h $(DISTDIR)/include/arch
 	cp -pf init/main.c $(DISTDIR)/init
 	cp -apf Documentation $(DISTDIR)
+	@echo
+	@echo Directory $(DISTDIR) contains a clean ELKS distribution tree.
+	@echo
 
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
@@ -272,16 +292,28 @@ dep:
 	make -C kernel dep
 	make -C lib dep
 	make -C net dep
+	@echo
+	@echo All ELKS dependencies are now configured.
+	@echo
 
 #########################################################################
 # Configuration stuff
 
+config:
+	$(CONFIG_SHELL) scripts/Configure arch/$(ARCH)/config.in
+	@echo
+	@echo Configuration complete.
+	@echo
+
+defconfig:
+	@yes '' | make config
+
 menuconfig:
 	make -C scripts/lxdialog all
 	$(CONFIG_SHELL) scripts/Menuconfig arch/$(ARCH)/config.in
-
-config:
-	$(CONFIG_SHELL) scripts/Configure arch/$(ARCH)/config.in
+	@echo
+	@echo COnfiguration complete.
+	@echo
 
 #########################################################################
 # Specify the current versions in the source code. Note that in kernel

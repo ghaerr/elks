@@ -1,27 +1,51 @@
 # Makefile for the ELKS character devices.
 #
+#########################################################################
+#
 # Note! Dependencies are done automagically by 'make dep', which also
 # removes any old dependencies. DON'T put your own dependencies here
 # unless it's something special (ie not a .c file).
 #
 #########################################################################
-#
-# Note that the standard Makefile rules and defines have been moved to
-# the file below.
+# Relative path to the base directory.
 
-ELKSDIR		= ../../../..
-
-include $(ELKSDIR)/Makefile-rules
+ELKSDIR 	= ../../../..
 
 #########################################################################
+# Standard commands.
+
+AR		= ar
+AS		= as86 
+LD		= ld86 
+LDFLAGS 	= -0 -s -x
+CC		= bcc
+CFLAGS		= -0 -nostdinc -I$(ELKSDIR)/include $(CFLBASE)
+CPP		= bcc -E -nostdinc -I$(ELKSDIR)/include
+CC_PROTO	= gcc -I$(ELKSDIR)/include -M
+
+#########################################################################
+# Standard prototypes.
+
+.s.o:
+	$(AS) -0 -o $*.o $<
+.S.s:
+	$(CC) $(CFLAGS) -P -o $*.s $<
+.c.o:
+	$(CC) $(CFLAGS) -0 -c -o $*.o $<
+
+#########################################################################
+# Objects to be compiled.
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
 OBJS  = init.o con_asm.o font.o sibo_key.o key_asm.o sibo_con.o \
-	mem.o meta.o ntty.o ser_asm.o pty.o
+	mem.o meta.o ntty.o ser_asm.o
 else
 OBJS  = bioscon.o serial.o lp.o xt_key.o init.o dircon.o ntty.o mem.o meta.o \
 	tcpdev.o pty.o bell.o # clist.o tty.o
 endif
+
+#########################################################################
+# Commands.
 
 all:	chr_drv.a
 

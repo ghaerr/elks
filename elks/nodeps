@@ -1,11 +1,3 @@
+#!/bin/bash
 
-for i in `find . -name Makefile`
-do
-   sed '/\#\#\# Dependencies/q' < $i > tmp_make
-
-   if cmp -s $i tmp_make
-   then :
-   else mv tmp_make $i
-   fi
-done
-rm -f tmp_make
+make depclean

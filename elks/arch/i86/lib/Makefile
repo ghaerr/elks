@@ -1,47 +1,68 @@
 # Makefile for bcc library - 8086 assembler routines
 #
 #########################################################################
-#
-# Note that the standard Makefile rules and defines have been moved to
-# the file below.
+# Relative path to base directory.
 
-ELKSDIR		= ../../..
-
-include $(ELKSDIR)/Makefile-rules
+ELKSDIR 	= ../../..
 
 #########################################################################
-# compiler support for integer arithmetic
+# Standard commands.
 
-IOBJS		= idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o
+AR		= ar
+AS		= bcc
+ASFLAGS 	= -0 -c
+CC		= bcc
+CFLAGS 		= -0 -D__KERNEL__ -I$(ELKSDIR)/include
 
-#########################################################################
-# miscellaneous
-
-JOBJS		= inport.o inportb.o outport.o outportb.o \
-		  peekb.o peekw.o peekd.o pokeb.o pokew.o poked.o \
-		  bitops.o memmove.o string.o fmemset.o border.o
-#		  ntohl.o ntohs.o
+CC_PROTO	= gcc -I$(ELKSDIR)/include -M
 
 #########################################################################
-# compiler support for long arithmetic on little-endian (normal) longs
+# Standard prototypes.
 
-LLOBJS		= laddl.o landl.o lcmpl.o lcoml.o ldecl.o ldivl.o \
-		  ldivul.o leorl.o lincl.o lmodl.o lmodul.o lmull.o \
-		  lnegl.o lorl.o lsll.o lsrl.o lsrul.o lsubl.o ltstl.o \
-		  setupw.o setupb.o
+.c.s:
+	$(CC) $(CFLAGS) -S -o $*.s $<
+
+.s.o:
+	$(AS) $(ASFLAGS) -o $*.o $<
+
+.c.o:
+	$(CC) $(CFLAGS) -c -o $*.o $<
+
+#.S.o:
+#	gcc -I $(ELKSDIR)/include -E -traditional -o $*.s $<
+#	$(AS) -0 -c -o $*.o $<
+
+.S.s:
+	gcc -I $(ELKSDIR)/include -E -traditional -o $*.s $<
 
 #########################################################################
-# compiler support for long arithmetic on all longs
-
-LXOBJS		= ldivmod.o
-
-#########################################################################
-# All of the above combined.
+# Objects to be compiled.
 
 OBJS		= $(IOBJS) $(JOBJS) $(LLOBJS) $(LXOBJS)
 
+# compiler support for integer arithmetic
+
+IOBJS		=idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o
+
+# miscellaneous
+
+JOBJS		=inport.o inportb.o outport.o outportb.o \
+		 peekb.o peekw.o peekd.o pokeb.o pokew.o poked.o bitops.o \
+		 memmove.o string.o fmemset.o border.o
+#		 ntohl.o ntohs.o
+
+# compiler support for long arithmetic on little-endian (normal) longs
+
+LLOBJS		=laddl.o landl.o lcmpl.o lcoml.o ldecl.o ldivl.o ldivul.o \
+		 leorl.o lincl.o lmodl.o lmodul.o lmull.o lnegl.o lorl.o \
+		 lsll.o lsrl.o lsrul.o lsubl.o ltstl.o setupw.o setupb.o
+
+# compiler support for long arithmetic on all longs
+
+LXOBJS		=ldivmod.o
+
 #########################################################################
-# Relevant targets
+# Commands.
 
 all:	lib86.a
 

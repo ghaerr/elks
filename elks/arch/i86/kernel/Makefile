@@ -1,19 +1,42 @@
 # Makefile for the Linux/MT-kernel.
 #
+#########################################################################
+#
 # Note! Dependencies are done automagically by 'make dep', which also
 # removes any old dependencies. DON'T put your own dependencies here
 # unless it's something special (ie not a .c file).
 #
 #########################################################################
-#
-# Note that the standard Makefile rules and defines have been moved to
-# the file below.
+# Relative path to base directory.
 
-ELKSDIR		= ../../..
-
-include $(ELKSDIR)/Makefile-rules
+ELKSDIR 	= ../../..
 
 #########################################################################
+# Standard commands.
+
+AR		= ar
+AS		= as86
+LD		= ld86
+LDFLAGS 	= -0 -s -x
+CC		= bcc
+CFLAGS		= -Wall $(CFLBASE) -I$(ELKSDIR)/include
+CPP		= bcc -E -nostdinc -I$(ELKSDIR)/include
+CC_PROTO	= gcc -I$(ELKSDIR)/include -M
+
+#########################################################################
+# Standard prototypes.
+
+.c.s:
+	$(CC) $(CFLAGS) \
+	-0 -S -o $*.s $<
+.s.o:
+	$(AS) -0 -c -o $*.o $<
+.c.o:
+	$(CC) $(CFLAGS) \
+	-0 -c -o $*.o $<
+
+#########################################################################
+# Objects to be compiled.
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
 OBJS  = strace.o printreg.o system.o irq.o ../sibo/irqtab.o process.o \
@@ -22,6 +45,9 @@ else
 OBJS  = strace.o printreg.o system.o irq.o irqtab.o process.o bios16.o \
 		entry.o signal.o timer.o
 endif
+
+#########################################################################
+# Commands.
 
 all:	akernel.a
 

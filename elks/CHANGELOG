@@ -7,6 +7,14 @@ be longer than the lines of dashes.
 Al
 ------------------------------------------------------------------------------
 
+Wed Oct  3 18:14:08 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Reverted changes accidentally made to remaining Makefiles. There
+	  appears to still be a bug in the reversion, which results in
+	  as86 being called with bcc's parameters, but the rest is fixed.
+	* Discovered bug in HarKal's commit of 29 Sep 2001 and reported it
+	  to him for sorting out.
+
 Tue Oct  2 23:22:12 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Added missing "### Dependencies:" tags to several Makefiles but
