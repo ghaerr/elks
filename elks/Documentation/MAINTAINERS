@@ -11,14 +11,19 @@ S: Status, one of the following:
 			role as you write your new code].
 	Stalled:	Someone was looking after it but there is no news.
 
+KERNEL HACKING & APPS (NanoX, Microwin, kernel side, etc.)
+P:	Greg Haerr
+M:	greg@censoft.com
+S:	Maintained
+
 COMPILER (BCC)
 P:	Robert de Bath
 M:	robert@mayday.cix.co.uk
 S:	Maintained
 
-DOCUMENTATION/ & SCRIPTS/
+DOCUMENTATION, SCRIPTS
 P:	Arnaud Launay
-M:	zoro@mygale.org
+M:	zoro@multimania.com
 S:	Maintained
 
 HD DRIVER
@@ -37,8 +42,13 @@ M:	ajr@ecs.soton.ac.uk
 S:	Maintained
 
 NETWORKING
+P:	
+M:	
+S:	Orphan
+
+RFS Filesystem
 P:	Beau Kuiper
-M:	ekuiperba@alpha2.curtin.edu.au
+M:	ekuiperba@cc.curtin.edu.au
 S:	Maintained
 
 ROMFS

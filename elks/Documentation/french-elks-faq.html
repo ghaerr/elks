@@ -135,8 +135,8 @@ d'apprentissage. Il en est pour l'instant aux premiers stades de
 développement, et de gros morceaux sont manquants, comme:
 
 <ul>
-<li>le swapping;
-<li>les librairies dynamiques;
+<li>le système de pagination;
+<li>les bibliothèques dynamiques;
 <li>la gestion des ports de communication, série et parallèle;
 <li>la gestion du réseau et de la couche tcp/ip (en cours).
 </ul>
@@ -194,18 +194,19 @@ utilisant cvs par la procédure suivante:
 <pre>
 export CVSROOT=:pserver:anonymous@elks.doa.org:/home/elks/cvs
 cvs login
-cvs -z9 checkout elks
+cvs -z9 co elks
+cvs -z9 co elkscmd
 </pre>
 
 Lorsque cvs vous demandera votre mot de passe, tapez simplement ENTREE.
 
 <h3><a name="22">Q2.2. Comment créer un noyau ELKS ?</a></h3>
-<p>Chargez dev86/Dev86src-0.14.5.tar.gz et elks/elks-0.0.73.tar.gz (ou les
+<p>Chargez dev86/Dev86src-0.14.8.tar.gz et elks/elks-0.0.79.tar.gz (ou les
 dernières versions) de linux.mit, ou l'un des autres sites.
 Décompressez les, par exemple, dans /usr/src :
 <pre>
-	tar -xvzf Dev86src-0.14.5.tar.gz -C /usr/src
-	tar -xvzf elks-0.0.73.tar.gz -C /usr/src
+	tar -xvzf Dev86src-0.14.8.tar.gz -C /usr/src
+	tar -xvzf elks-0.0.79.tar.gz -C /usr/src
 </pre>
 L'environnement de développement sera décompressé dans
 /usr/src/linux-86, et les sources du noyau dans /usr/src/elks.
@@ -336,7 +337,7 @@ des implants du noyau qui n'existeraient pas encore dans ELKS).
 </pre>
 A noter, vous devrez relancer 'insmod' à chaque lancement.
 <br>Si, lors de la compilation du module, vous obtenez une erreur indiquant
-"modversions.h: no such file or directory" , alors vous devrez éditer
+"modversions.h: no such file or directory", alors vous devrez éditer
 le Makefile pour retirer la référence à ce fichier,
 c'est-à-dire:
 <pre>
@@ -357,7 +358,7 @@ l'option -A pour forcer le lancement sur la disquette.
 <br><br>
 
 <h4>Page maintenue par: <a href="mailto:zoro@multimania.com">Arnaud Launay</a>.
-<br>Dernières modifications: <i>Juillet 99</i>.</h4>
+<br>Dernières modifications: <i>Septembre 99</i>.</h4>
 
 </body>
 </html>
