@@ -38,7 +38,7 @@ CC_PROTO	= gcc -I$(ELKSDIR)/include -M
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
 OBJS  = init.o con_asm.o font.o sibo_key.o key_asm.o sibo_con.o \
-	mem.o meta.o ntty.o ser_asm.o
+	mem.o meta.o ntty.o ser_asm.o pty.o
 else
 OBJS  = bioscon.o serial.o lp.o xt_key.o init.o dircon.o ntty.o mem.o meta.o \
 	tcpdev.o pty.o bell.o # clist.o tty.o

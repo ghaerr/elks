@@ -48,14 +48,14 @@ DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 # Standard prototypes.
 
 .c.s:
-	$(CC) $(CFLAGS) -0 -nostdinc -I$(MT_DIR)/include -S -o $*.s $<
+	$(CC) $(CFLAGS) -0 -nostdinc -I$(TOPDIR)/include -S -o $*.s $<
 .s.o:
-	$(AS) -C -o -I$(MT_DIR)/include -o $*.o $<
+	$(AS) -C -o -I$(TOPDIR)/include -o $*.o $<
 .S.s:
 	gcc -E -traditional -o $*.s $<
 .c.o:
 	$(CC) $(CFLAGS) \
-	2 -nostdinc -I$(MT_DIR)/include -c -o $*.o $<
+	2 -nostdinc -I$(TOPDIR)/include -c -o $*.o $<
 
 #########################################################################
 # Commands.
