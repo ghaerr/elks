@@ -77,59 +77,6 @@ void ctrl_alt_del()
 	
 
 /*
- * Unprivileged users may change the real gid to the effective gid
- * or vice versa.  (BSD-style)
- *
- * If you set the real gid at all, or set the effective gid to a value not
- * equal to the real gid, then the saved gid is set to the new effective gid.
- *
- * This makes it possible for a setgid program to completely drop its
- * privileges, which is often a useful assertion to make when you are doing
- * a security audit over a program.
- *
- * The general idea is that a program which uses just setregid() will be
- * 100% compatible with BSD.  A program which uses just setgid() will be
- * 100% compatible with POSIX w/ Saved ID's. 
- */
-#if 0
-int sys_setregid(rgid,egid)
-gid_t rgid;
-gid_t egid;
-{
-	register __ptask currentp = current;
-	int old_rgid = currentp->gid;
-	int old_egid = currentp->egid;
-
-	if (rgid != (gid_t) -1) {
-		if ((old_rgid == rgid) ||
-		    (currentp->egid==rgid) ||
-		    suser())
-			currentp->gid = rgid;
-		else
-			return(-EPERM);
-	}
-	if (egid != (gid_t) -1) {
-		if ((old_rgid == egid) ||
-		    (currentp->egid == egid) ||
-		    (currentp->sgid == egid) ||
-		    suser())
-			currentp->egid = egid;
-		else {
-			currentp->gid = old_rgid;
-			return(-EPERM);
-		}
-	}
-	if (rgid != (gid_t) -1 ||
-	    (egid != (gid_t) -1 && egid != old_rgid))
-		currentp->sgid = currentp->egid;
-#ifdef NEED_CORE
-	if (currentp->egid != old_egid)
-		currentp->dumpable = 0;
-#endif
-	return 0;
-}
-#endif
-/*
  * setgid() is implemented like SysV w/ SAVED_IDS 
  */
 
@@ -145,18 +92,11 @@ gid_t gid;
 		currentp->egid = gid;
 	else
 		return -EPERM;
-#ifdef NEED_CORE
 	if (currentp->egid != old_egid)
 		currentp->dumpable = 0;
-#endif
 	return 0;
 }
-#if 0
-int sys_acct()
-{
-	return -ENOSYS;
-}
-#endif
+
 int sys_getuid()
 {
 	return current->uid;
@@ -167,84 +107,15 @@ int sys_getpid()
 	return current->pid;
 }
 
-/*
- * Why do these exist?  Binary compatibility with some other standard?
- * If so, maybe they should be moved into the appropriate arch
- * directory.
- */
-#if 0
-int sys_phys()
+int sys_umask(mask)
+int mask;
 {
-	return -ENOSYS;
+	int old = current->fs.umask;
+
+	current->fs.umask = mask & S_IRWXUGO;
+	return (old);
 }
 
-int sys_lock()
-{
-	return -ENOSYS;
-}
-
-int sys_mpx()
-{
-	return -ENOSYS;
-}
-
-int sys_ulimit()
-{
-	return -ENOSYS;
-}
-#endif
-/*
- * Unprivileged users may change the real uid to the effective uid
- * or vice versa.  (BSD-style)
- *
- * If you set the real uid at all, or set the effective uid to a value not
- * equal to the real uid, then the saved uid is set to the new effective uid.
- *
- * This makes it possible for a setuid program to completely drop its
- * privileges, which is often a useful assertion to make when you are doing
- * a security audit over a program.
- *
- * The general idea is that a program which uses just setreuid() will be
- * 100% compatible with BSD.  A program which uses just setuid() will be
- * 100% compatible with POSIX w/ Saved ID's. 
- */
-#if 0
-int sys_setreuid(ruid,euid)
-uid_t ruid;
-uid_t euid;
-{
-	int old_ruid = current->uid;
-	int old_euid = current->euid;
-
-	if (ruid != (uid_t) -1) {
-		if ((old_ruid == ruid) || 
-		    (current->euid==ruid) ||
-		    suser())
-			current->uid = ruid;
-		else
-			return(-EPERM);
-	}
-	if (euid != (uid_t) -1) {
-		if ((old_ruid == euid) ||
-		    (current->euid == euid) ||
-		    (current->suid == euid) ||
-		    suser())
-			current->euid = euid;
-		else {
-			current->uid = old_ruid;
-			return(-EPERM);
-		}
-	}
-	if (ruid != (uid_t) -1 ||
-	    (euid != (uid_t) -1 && euid != old_ruid))
-		current->suid = current->euid;
-#ifdef NEED_CORE
-	if (current->euid != old_euid)
-		current->dumpable = 0;
-#endif
-	return 0;
-}
-#endif
 /*
  * setuid() is implemented like SysV w/ SAVED_IDS 
  * 
@@ -269,10 +140,8 @@ uid_t uid;
 		currentp->euid = uid;
 	else
 		return -EPERM;
-#ifdef NEED_CORE
 	if (currentp->euid != old_euid)
 		currentp->dumpable = 0;
-#endif
 	return(0);
 }
 
