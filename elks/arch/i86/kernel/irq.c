@@ -154,7 +154,7 @@ static void arch_init_IRQ(void)
 	outb (0, TIMER_DATA_PORT);
 }
 
-static void enable_timer_tick(void)
+void enable_timer_tick(void)
 {
 	/* set the clock frequency */
 	outb (TIMER_MODE2, TIMER_CMDS_PORT);

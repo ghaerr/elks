@@ -70,10 +70,9 @@ void start_kernel(void)
     /* 
      * We are now the idle task. We won't run unless no other process can run.
      */
-
     while (1){
         schedule();
-	}
+    }
 
 }
 

@@ -33,7 +33,7 @@ void wait_clear(struct wait_queue *p)
     register __ptask pcurrent = current;
 
     if (pcurrent->waitpt != p)
-	printk("wrong waitpt");
+	panic("wrong waitpt");
     pcurrent->waitpt = NULL;
 }
 

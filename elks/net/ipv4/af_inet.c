@@ -53,12 +53,15 @@ int inet_process_tcpdev(char *buf, int len)
     return 1;
 }
 
+extern char tcpdev_inuse;
+
 static int inet_create(struct socket *sock, int protocol)
 {
     debug1("inet_create(sock: 0x%x)\n", sock);
 
-    if (protocol != 0)
+    if (protocol != 0 || !tcpdev_inuse)
         return -EINVAL;
+    
 
     return 0;
 }

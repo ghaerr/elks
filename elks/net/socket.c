@@ -620,10 +620,7 @@ int sys_socket(int family, int type, int protocol)
 /*	find_protocol_family() is a macro which gives 0 while only
  *	AF_INET sockets are supported
  */
-
     if ((i = find_protocol_family(family)) < 0) {
-	printk("fail family : %d\n", -i);
-	panic("Socket family unknown");
 	return -EINVAL;
     }
 

@@ -33,7 +33,7 @@ static unsigned int tdin_tail, tdout_tail;
 
 static struct wait_queue tcpdevq;
 
-static char tcpdev_inuse;
+char tcpdev_inuse;
 
 static int tcpdev_read(struct inode *inode, struct file *filp, char *data,
 		       unsigned int len)
