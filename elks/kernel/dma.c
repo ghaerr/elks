@@ -93,7 +93,7 @@ void free_dma(unsigned char dma)
 	printk("Trying to free DMA%u\n", dma);
     else if (!xchg(&dma_chan_busy[dma].lock, 0)) {
 	printk("Trying to free free DMA%u\n", dma);
-}				/* free_dma */
+} }				/* free_dma */
 
 /* enable/disable a specific DMA channel */
 
