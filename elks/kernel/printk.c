@@ -82,14 +82,17 @@ static void con_write(register char *buf, int len)
 
 char *hex_string = "0123456789ABCDEF";		/* Also used by devices. */
 
-static void numout(char *ptr, int len, int base, int useSign)
+static void numout(char *ptr, int len, int width, int base, int useSign)
 {
     long int vs;
     unsigned long int v;
-    register char *bp;
-    char buf[16];
+    register char *bp, *bp2;
+    char buf[32];
 
-    bp = buf + 15;
+    if (width > 31)			/* Error-check width specified */
+	width = 31;
+
+    bp = bp2 = buf + 31;
 
     if (useSign) {
 	vs = (len == 2) ? *((short *) ptr) : *((long *) ptr);
@@ -104,8 +107,11 @@ static void numout(char *ptr, int len, int base, int useSign)
 
     *bp = 0;
     do {
-	*--bp = hex_string[(v % base)]; 	/* Store digit. */
+	*--bp = hex_string[(v % base)]; 	/* Store digit */
     } while ((v /= base) && (bp > buf));
+
+    while (bp2 - bp < width)			/* Process width */
+	*--bp = ' ';
 
     con_write(bp, buf - bp + sizeof(buf) - 1);
 }
@@ -113,7 +119,7 @@ static void numout(char *ptr, int len, int base, int useSign)
 void printk(register char *fmt,int a1)
 {
     register char *p = (char *) &a1;
-    int len;
+    int len, width = 0;
     char c, tmp;
 
     while ((c = *fmt++)) {
@@ -123,6 +129,12 @@ void printk(register char *fmt,int a1)
 	    len = 2;
 
 	    c = *fmt++;
+	    while (c >= '0' && c <= '9') {
+		width *= 10;
+		width += c - '0';
+		c = *fmt++;
+	    }
+
 	    if (c == 'h')
 		c = *fmt++;
 	    else if (c == 'l') {
@@ -177,40 +189,32 @@ void printk(register char *fmt,int a1)
 
 void panic(char *error, int a1 /* VARARGS... */ )
 {
-#if 1
     register int *bp = (int *) &error - 2;
-    register char *j;
-    int i;
+    int *bp2 = bp, i, j, k;
 
     printk("\npanic: ");
     printk(error, a1);
-
     printk("\napparent call stack:\n");
-    for (i = 0; i < 8; i++) {
-	printk("(%u) return address = %p, params = ", i, bp[1]);
-	bp = (int *) bp[0];
-	for (j = (char *) 2; ((int) j) < 8; j++)
-	    printk(" %p", bp[(int) j]);
-	printk("\n");
-    }
-    while (1);
-#else
-    register int *bp = (int *) &error - 2;
-    int i, j;
+    printk("Line Address    Parameters\n~~~~ ~~~~~~~    ~~~~~~~~~~\n");
 
-    printk("\npanic: ");
-    printk(error, a1);
-
-    printk("\napparent call stack:\n");
-    for (i = 0; i < 8; i++) {
-	printk("(%u) return address = %p, params = ", i, bp[1]);
-	bp = (int *) bp[0];
+    i = 0;
+    do {
+	bp2 = (int *) bp[0];
+	k = 0;
 	for (j = 2; j < 8; j++)
-	    printk(" %p", bp[j]);
-	printk("\n");
-    }
-    while (1);
-#endif
+	    k |= bp2[j];
+	if (k) {
+	    printk("%3u : %4p  =>", i, bp[1]);
+	    for (j = 2; j < 8; j++)
+		printk(" %4p", bp2[j]);
+	    printk("\n");
+	} else
+	    printk("---\nEND OF STACK\n");
+	bp = bp2;
+    } while (k && (++i > 9));
+
+    while (1)
+	/* Do nothing */;
 }
 
 void kernel_restarted(void)
