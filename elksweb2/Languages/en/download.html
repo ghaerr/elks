@@ -40,7 +40,7 @@ set, replacing ${USER} with your assigned SourceForge username:</P>
 CVS_RSH=`which ssh`
 CVSROOT=:ext:${USER}@cvs.elks.sf.net:/cvsroot/elks
 export CVS_RSH CVSROOT
-cvs -d $CVSROOT get <I>modulename</I>
+cvs -d $CVSROOT get <I>&lt;modulename&gt;</I>
 </Pre></UL></P>
 
 <H2>Non-Developer Interested Parties</H2>
@@ -54,7 +54,7 @@ CVS_RSH=`which ssh`
 CVSROOT=:pserver:anonymous@cvs.elks.sf.net:/cvsroot/elks
 export CVS_RSH CVSROOT
 cvs -d $CVSROOT login
-cvs -d $CVSROOT get modulename
+cvs -d $CVSROOT get <I>&lt;modulename&gt;</I>
 </Pre></UL></P>
 
 <HR Width="90%">
