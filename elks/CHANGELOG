@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Sat Dec 06 00:24 GMT 1998   Alastair Bridgewater  <nyef@softhome.net>
+
+	* Fixed arch/i86/lib/Makefile to rebuild setup[bw].s when nessecary.
+
 Wed Thu 03 17:12 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Tweaked docs for 0.0.74
