@@ -1,75 +1,75 @@
 
+
  ELKS TCP/IP
 -------------
-
 
 Notes on networking code
 ------------------------
 
-Current development model is based around using a user process to be the
-actual TCP/IP stack with socket file descriptors and device drivers dealt with
-by the kernel. The diagram below show how things should work.
+The current development model is based around using a user process as the
+actual TCP/IP stack with socket file descriptors and device drivers dealt
+with by the kernel. The diagram below shows how things should work.
 
 
-                 ___________________        ____________________
-                |                   |      |                    |
-                |Network Application|      |TCP/IP stack process|
-                |___________________|      |____________________|
-                            |               /           |
-                            |              /            |
-           _________________|_____________/_____________|________________
-          |                 |            /              |                |
-          | KERNEL          |           /               |                |
-          |            _____|__________/_     __________|________        |
-          |           |                  |   |                   |       |
-          |           |  Socket code     |   | RAW Driver        |       |
-          |           |__________________|   |___________________|       |
-          |                                             |                |
-          |                                             |                |
-          |_____________________________________________|________________|
-                                                        |
-                                              __________|________
-                                             |                   |
-                                             | Network Hardware  |
-                                             |___________________|
+            ___________________        ____________________
+           |                   |      |                    |
+           |Network Application|      |TCP/IP stack process|
+           |___________________|      |____________________|
+                       |               /           |
+                       |              /            |
+      _________________|_____________/_____________|________________
+     |                 |            /              |                |
+     | KERNEL          |           /               |                |
+     |            _____|__________/_     __________|________        |
+     |           |                  |   |                   |       |
+     |           |  Socket code     |   | RAW Driver        |       |
+     |           |__________________|   |___________________|       |
+     |                                             |                |
+     |                                             |                |
+     |_____________________________________________|________________|
+                                                   |
+                                         __________|________
+                                        |                   |
+                                        | Network Hardware  |
+                                        |___________________|
 
 
-The Network Application uses the standard BSD socket interface to open and
-read and write to sockets. The socket code passes the data on to the TCP/IP
+The Network Application uses the standard BSD socket interface to open,
+read and write sockets. The socket code passes the data on to the TCP/IP
 stack process, through the /dev/tcpdev device.
 
 The TCP/IP stack process then constructs TCP/IP packets and writes them to
-the network device driver including all the necessary hardware headers.
+the network device driver, including all the necessary hardware headers.
 
 
   SETUP
 ---------
 
-  At the moment ELKS supports only SLIP connections.  So you have to connect
-the machine running ELKS with one other machine using a serial cable. The
-cable you need is the so called "null modem cable". 
+At the moment, ELKS supports only SLIP connections so you have to connect
+the machine running ELKS with another machine using a serial cable. The
+cable required is a so-called "null modem cable".
 
-  From now on we will call the machine at the other end of the cable the
-gateway.  Now suppose that the gateway has the IP 192.168.0.1 and we like
-ELKS to have the IP 192.168.0.2. We do :
+From now on, we will call the machine at the other end of the cable the
+gateway.  Suppose that the gateway has the IP 192.168.1.1 and we like ELKS
+to have the IP 192.168.1.2. We do:
 
 # slattach -p slip -L -s 9600 /dev/ttyS1 &
-# ifconfig sl0 192.168.0.1 pointopoint 192.168.0.2
+# ifconfig sl0 192.168.1.1 pointopoint 192.168.1.2
 
-/dev/ttyS1 is the serial port we use.  Ofcourse kernel has to have slip 
-support compiled in. This is all we need to do on the gateway.  On ELKS side
-now you have to have the kernel compiled with inet sockets. You also build
-the ktcp module that rests in elksnet/ktcp.  You boot up ELKS and you log in.
-Then you do :
+We use /dev/ttyS1 as the serial port - replace as required. Of course, the
+kernel has to have slip support compiled in. This is all we need to do on
+the gateway.
 
-# ktcp 192.168.0.2 /dev/ttyS0 &
+On the ELKS side, you need to have the kernel compiled with inet sockets.
+You also build the ktcp module found in elksnet/ktcp. You boot up ELKS and
+log in, then you do :
+
+# ktcp 192.168.1.2 /dev/ttyS0 &
 
 This tells ELKS to use your first serial line and that the local IP is
-192.168.0.2.
+192.168.1.2.
 
 This is it. Ping ELKS from the gateway to see if everything is fine.
 
 
 		Harry
-
-
