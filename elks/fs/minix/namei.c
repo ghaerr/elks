@@ -189,7 +189,6 @@ register struct inode ** result;
  * the entry, as someone else might have used it while you slept.
  */
  
-#ifndef CONFIG_FS_RO
 static int minix_add_entry(dir,name,namelen,res_buf,res_dir)
 register struct inode * dir;
 char * name;
@@ -250,11 +249,7 @@ struct minix_dir_entry ** res_dir;
 			}
 		} else {
 			unsigned int i;
-#ifdef CONFIG_ACTIME
 			dir->i_mtime = dir->i_ctime = CURRENT_TIME;
-#else
-			dir->i_mtime = CURRENT_TIME;
-#endif
 			dir->i_dirt = 1;
 			for (i = 0; i < info->s_namelen ; i++)
 				de->name[i] = (i < namelen) ? get_fs_byte(name + i) : 0;
@@ -407,8 +402,6 @@ int mode;
 		iput(dir);
 		return -EEXIST;
 	}
-/*	map_buffer(bh); */ /* Above checks if bh is returned and exits, so bh
-			    * bh is NULL at this point */
 	if (dir->i_nlink >= MINIX_LINK_MAX) {
 		iput(dir);
 		return -EMLINK;
@@ -582,11 +575,7 @@ int len;
 	mark_buffer_dirty(bh, 1);
 	inode->i_nlink=0;
 	inode->i_dirt=1;
-#ifdef CONFIG_ACTIME
-	inode->i_ctime = dir->i_ctime = dir->i_mtime = CURRENT_TIME;
-#else
-	dir->i_mtime = CURRENT_TIME;
-#endif
+ 	inode->i_ctime = dir->i_ctime = dir->i_mtime = CURRENT_TIME;
 	dir->i_nlink--;
 	dir->i_dirt=1;
 	retval = 0;
@@ -647,16 +636,10 @@ repeat:
 	dir->i_version = ++event;
 #endif
 	mark_buffer_dirty(bh, 1);
-#ifdef CONFIG_ACTIME
 	dir->i_ctime = dir->i_mtime = CURRENT_TIME;
-#else
-	dir->i_mtime = CURRENT_TIME;
-#endif
 	dir->i_dirt = 1;
 	inode->i_nlink--;
-#ifdef CONFIG_ACTIME
 	inode->i_ctime = dir->i_ctime;
-#endif
 	inode->i_dirt = 1;
 	retval = 0;
 end_unlink:
@@ -766,38 +749,8 @@ int len;
 	brelse(bh);
 	iput(dir);
 	oldinode->i_nlink++;
-#ifdef CONFIG_ACTIME
 	oldinode->i_ctime = CURRENT_TIME;
-#endif
 	oldinode->i_dirt = 1;
 	iput(oldinode);
 	return 0;
 }
-#endif /* CONFIG_FS_RO */
-#if 0 /* subdir() used in do_minix_rename() which is not present */
-static int subdir(new_inode,old_inode)
-register struct inode * new_inode;
-register struct inode * old_inode;
-{
-	int ino;
-	int result;
-
-	new_inode->i_count++;
-	result = 0;
-	for (;;) {
-		if (new_inode == old_inode) {
-			result = 1;
-			break;
-		}
-		if (new_inode->i_dev != old_inode->i_dev)
-			break;
-		ino = new_inode->i_ino;
-		if (minix_lookup(new_inode,"..",2,&new_inode))
-			break;
-		if (new_inode->i_ino == ino)
-			break;
-	}
-	iput(new_inode);
-	return result;
-}
-#endif /* 0 */
