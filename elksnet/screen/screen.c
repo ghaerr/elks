@@ -6,30 +6,42 @@
  * the author is not construed to be liable for any results of using the
  * software, alterations are clearly marked as such, and this notice is
  * not modified.
+ *
+ * This code was modified for use with ELKS and the bcc compiler (which
+ * only supports K&R) by Riley Williams <rhw@MemAlpha.cx> with help from
+ * the Linux ELKS development team on SourceForge.Net. It is based on the
+ * screen 2.0a code as released on 19th October 1988.
  */
 
-static char ScreenVersion[] = "screen 2.0a 19-Oct-88";
+static char ScreenVersion[] = "screen 2.0a.1 (ELKS) 19-Sep-2001";
 
 #include <stdio.h>
-#include <sgtty.h>
 #include <signal.h>
 #include <errno.h>
 #include <ctype.h>
 #include <utmp.h>
 #include <pwd.h>
-#include <nlist.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/stat.h>
+
+#ifdef ELKS
+#include <termios.h>
+#else
+#include <sgtty.h>
+#include <nlist.h>
+#include <sys/un.h>
 #include <sys/dir.h>
+#endif
+
 #ifdef SUNLOADAV
 #include <sys/param.h>
 #endif
+
 #include "screen.h"
 
 #ifdef GETTTYENT
@@ -173,7 +185,9 @@ char *KeyNames[] = {
     0
 };
 
-main (ac, av) char **av; {
+int main (ac, av)
+char **av;
+{
     register n, len;
     register struct win **pp, *p;
     char *ap;

@@ -18,18 +18,20 @@
 # You should install as set-uid with owner root, so that it can read/write
 # /etc/utmp, read /dev/kmem, and chown/chmod the allocated pseudo-ttys.
 
-OPTIONS= -DLOADAV -DSUNLOADAV -DGETTTYENT -DUSEBCOPY
+INCDIR	= `pwd`/../../elks/include
 
-CFILES= screen.c ansi.c
-OFILES= screen.o ansi.o
+OPTIONS	= -DELKS # -DLOADAV -DSUNLOADAV -DGETTTYENT -DUSEBCOPY
+
+CC	= bcc
+CFLAGS	= -I$(INCDIR) $(OPTIONS)
 
 all:	screen
 
-screen: $(OFILES)
-	$(CC) $(CFLAGS) -o screen $(OFILES) -ltermcap
+screen:	ansi.o screen.o
+	$(CC) $(CFLAGS) -o screen screen.o ansi.o -ltermcap
 
 screen.o: screen.c screen.h
-	$(CC) $(OPTIONS) $(CFLAGS) -c screen.c
+	$(CC) $(CFLAGS) -c screen.c
 
 ansi.o: ansi.c screen.h
 	$(CC) $(CFLAGS) -c ansi.c
