@@ -9,10 +9,6 @@
   *
   */
 
-#ifdef __minix_vmd
-#define _MINIX_SOURCE
-#endif
-
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -26,7 +22,6 @@
 #endif
 
 /* Default settings, the Minix ones are defined in <termios.h> */
-
 #ifndef TCTRL_DEF
 #define TCTRL_DEF	(PARENB | CREAD | CS7)
 #endif
@@ -1021,10 +1016,8 @@ struct s2s {
 	{ B9600,	  9600 },
 	{ B19200,	 19200 },
 	{ B38400,	 38400 },
-#ifdef __minix
 	{ B57600,	 57600 },
 	{ B115200,	115200 },
-#endif
 };
 
 speed_t long2speed(num)

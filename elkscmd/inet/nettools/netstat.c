@@ -67,12 +67,11 @@ int main(){
 
 	sr.type = NS_GENERAL;
 	write(s, &sr, sizeof(sr));	
-
 	ret = read(s, buf, sizeof(buf));
 	gstats = buf;	
 	printf("Retransmition memory     : %d bytes\n", gstats->retrans_memory);
 	printf("Number of control blocks : %d\n\n", gstats->cb_num);
-	
+
 	printf(" no        State    RTT lport        raddress  rport\n");
 	printf("-----------------------------------------------------\n");
 	sr.type = NS_CB;

@@ -45,7 +45,14 @@ ttn.c
 static char *prog_name;
 static int tcp_fd;
 static char *term_env;
+static char done;
+static struct termios def_termios;
 
+void finish()
+{
+	tcsetattr(0, TCSANOW, &def_termios);
+	exit(0);	
+}
 
 unsigned long int in_aton(str)
 const char *str;
@@ -88,14 +95,12 @@ static void keybd()
 #if DEBUG && 0
  { where(); fprintf(stderr, "writing %d bytes\r\n", count); }
 #endif
-		count= write(tcp_fd, buffer, count);
+		count = write(tcp_fd, buffer, count);
 		if (count<0)
 		{
-			perror("write");
-			return;
+			perror("Connection closed");
+			finish();
 		}
-		if (!count)
-			return;
 }
 
 static void scrn()
@@ -103,13 +108,14 @@ static void scrn()
 	char buffer[1024], *bp, *iacptr;
 	int count, optsize;
 
-		count= read (tcp_fd, buffer, sizeof(buffer));
+		count = read (tcp_fd, buffer, sizeof(buffer));
 #if DEBUG && 0
  { where(); fprintf(stderr, "read %d bytes\r\n", count); }
 #endif
 		if (count < 0)
 		{
-			perror ("read");
+			perror ("Connection closed");
+			finish();
 		}
 		if (!count)
 			return;
@@ -149,7 +155,7 @@ assert (optsize);
 
 
 
-
+int
 main(argc, argv)
 int argc;
 char *argv[];
@@ -159,7 +165,6 @@ char *argv[];
 	int pid, ppid;
 	int result, count;
 	char buffer[1024];
-	struct termios termios;
 	struct sockaddr_in locadr, remadr;
 	char *tcp_device;
 	int ret;
@@ -206,9 +211,8 @@ char *argv[];
 	}
 	printf("Connected\r\n");
 
-	tcgetattr(0, &termios);
-	tcsetattr(0, TCSANOW, &termios);
-
+	tcgetattr(0, &def_termios);
+	
 	nonblock = 1;
 	ioctl(0, FIONBIO, &nonblock);
 
@@ -219,13 +223,13 @@ char *argv[];
 
 		select(tcp_fd + 1, &fdset, NULL, NULL, NULL);
 
-		if(FD_ISSET(0, &fdset)){
-			keybd();
-		}
-			
 		if(FD_ISSET(tcp_fd, &fdset)){
 			scrn();
 		}
+
+		if(FD_ISSET(0, &fdset)){
+			keybd();
+		}			
 	}
 }
 

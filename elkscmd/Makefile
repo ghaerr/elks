@@ -112,7 +112,7 @@ comb_net: mount_rootnetfs $(ELKS_DIR)/arch/i86/boot/Image $(FD_BSECT) $(KHELPER)
 	cp $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
 	cp $(KHELPER) $(TARGET_MNT)/boot/boot
 	umount $(ROOT_NET_TARGET_FS)
-	dd if=$(FD_BSECT) of=$(COMB_TARGET_FS) bs=512 count=2 conv=notrunc
+	dd if=$(FD_BSECT) of=$(ROOT_NET_TARGET_FS) bs=512 count=2 conv=notrunc
 
 sibo: mount_sibofs
 	@for i in $(DIRS); do \
