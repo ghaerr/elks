@@ -48,7 +48,7 @@ boot/crt0.o: boot/crt0.S
 	$(AS86) -0 -o boot/crt0.o boot/crt0.s
 
 tools:
-	(cd tools; make)
+	make -C tools all
 
 tools/build: tools/build.c
 	gcc -I $(TOPDIR)/include -o tools/build tools/build.c
@@ -59,11 +59,9 @@ tools/mkurlader: tools/mkurlader.c
 ifeq ($(CONFIG_ARCH_SIBO), y)
 
 boot/system: $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
-	(cd ../.. ; $(LD) $(LDFLAGS) $(ARCH_DIR)/sibo/crt0.o \
-		$(ARCH_DIR)/sibo/crt1.o \
-		init/main.o \
-		$(ARCHIVES) \
-		$(DRIVERS) \
+	(cd $(ELKSDIR); \
+	$(LD) $(LDFLAGS) $(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
+		init/main.o $(ARCHIVES) $(DRIVERS) \
 		-t -M -o $(ARCH_DIR)/boot/system > System.map)
 
 #SIBO image build
@@ -74,7 +72,7 @@ Image: boot/system tools
 else
 
 boot/system: $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
-	(cd ../.. ; $(LD) $(LDFLAGS) $(ARCH_DIR)/boot/crt0.o \
+	(cd $(ELKSDIR) ; $(LD) $(LDFLAGS) $(ARCH_DIR)/boot/crt0.o \
 		$(ARCH_DIR)/boot/crt1.o \
 		init/main.o \
 		$(ARCHIVES) \
@@ -134,23 +132,23 @@ endif
 .PHONY: kernel/akernel.a lib/lib86.a mm/mm.a drivers/char/chr_drv.a \
 	drivers/block/blk_drv.a 286pmode/pmode286
 
-kernel/akernel.a:
-	(cd kernel; make)
-
-lib/lib86.a:
-	(cd lib; make)
-
-mm/mm.a:
-	(cd mm; make)
-
-drivers/char/chr_drv.a:
-	(cd drivers/char; make)
+286pmode/pmode286:
+	make -C 286pmode all
 
 drivers/block/blk_drv.a:
-	(cd drivers/block; make)
+	make -C drivers/block all
 
-286pmode/pmode286:
-	(cd 286pmode; make)
+drivers/char/chr_drv.a:
+	make -C drivers/char all
+
+kernel/akernel.a:
+	make -C kernel all
+
+lib/lib86.a:
+	make -C lib all
+
+mm/mm.a:
+	make -C mm all
 
 #########################################################################
 # misc
@@ -162,32 +160,39 @@ clean:
 	rm -f boot/nbImage boot/nbImage.rd Netboot.map
 	rm -f tools/*~ tools/*.o tools/build
 	rm -f Boot.map Setup.map boot/crt0.s
-	(cd kernel; make clean)
-	(cd lib; make clean)
-	(cd mm; make clean)
-	(cd drivers/block; make clean)
-	(cd drivers/char; make clean)
-	(cd 286pmode; make clean)
+	make -C 286pmode clean
+	make -C drivers clean
+	make -C drivers/block clean
+	make -C drivers/char clean
+	make -C kernel clean
+	make -C lib clean
+	make -C mm clean
 
 distdir:
 	cp -pf config.in defconfig Makefile $(TOPDIR)/$(DISTDIR)/arch/i86
-	(mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/kernel; cd kernel; make distdir)
-	(mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/lib; cd lib; make distdir)
-	(mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/mm; cd mm; make distdir)
-	(mkdir -p $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/block; cd drivers/block; make distdir)
-	(mkdir -p $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/char; cd drivers/char; make distdir)
-	(mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/286pmode; cd 286pmode; make distdir)
-	(mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/boot)
-	cp -pf boot/*.S boot/*.c boot/tux.pic $(TOPDIR)/$(DISTDIR)/arch/i86/boot
-	(mkdir $(TOPDIR)/$(DISTDIR)/arch/i86/tools)
-	cp -pf tools/Makefile tools/*.h $(TOPDIR)/$(DISTDIR)/arch/i86/tools
-	cp -pf tools/mknbi-elks tools/*.c $(TOPDIR)/$(DISTDIR)/arch/i86/tools
-	cp -pf tools/*.s tools/*.1 $(TOPDIR)/$(DISTDIR)/arch/i86/tools
+	mkdir $(DISTDIR)/arch/i86/286pmode
+	make -C 286pmode distdir
+	mkdir -p $(DISTDIR)/arch/i86/drivers/block
+	make -C drivers/block distdir
+	mkdir -p $(DISTDIR)/arch/i86/drivers/char
+	make -C drivers/char distdir
+	mkdir $(DISTDIR)/arch/i86/kernel
+	make -C kernel distdir
+	mkdir $(DISTDIR)/arch/i86/lib
+	make -C lib distdir
+	mkdir $(DISTDIR)/arch/i86/mm
+	make -C mm distdir
+	mkdir $(DISTDIR)/arch/i86/boot
+	cp -pf boot/*.S boot/*.c boot/tux.pic $(DISTDIR)/arch/i86/boot
+	mkdir $(DISTDIR)/arch/i86/tools
+	cp -pf tools/Makefile tools/*.h $(DISTDIR)/arch/i86/tools
+	cp -pf tools/mknbi-elks tools/*.c $(DISTDIR)/arch/i86/tools
+	cp -pf tools/*.s tools/*.1 $(DISTDIR)/arch/i86/tools
 
 dep:
-	(cd kernel; make dep)
-	(cd lib; make dep)
-	(cd mm; make dep)
-	(cd drivers/block; make dep)
-	(cd drivers/char; make dep)
-	(cd 286pmode; make dep)
+	make -C 286pmode dep
+	make -C drivers/block dep
+	make -C drivers/char dep
+	make -C kernel dep
+	make -C lib dep
+	make -C mm dep

@@ -1,5 +1,5 @@
-#ifndef __LINUX_MINIX_H
-#define __LINUX_MINIX_H
+#ifndef __LINUX_MINIX_H__
+#define __LINUX_MINIX_H__
 
 /*
  *	Minix binary formats

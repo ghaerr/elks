@@ -1,5 +1,5 @@
-#ifndef _LINUX_PIPE_FS_I_H
-#define _LINUX_PIPE_FS_I_H
+#ifndef __LINUX_PIPE_FS_I_H__
+#define __LINUX_PIPE_FS_I_H__
 
 struct pipe_inode_info {
 	struct wait_queue wait;

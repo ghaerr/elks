@@ -1,5 +1,5 @@
-#ifndef __ROMFS_FS_SB
-#define __ROMFS_FS_SB
+#ifndef __ROMFS_FS_SB_H__
+#define __ROMFS_FS_SB_H__
 
 /* romfs superblock in-core data */
 

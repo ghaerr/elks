@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_KDEV_T_H
-#define _LINUXMT_KDEV_T_H
+#ifndef __LINUXMT_KDEV_T_H__
+#define __LINUXMT_KDEV_T_H__
 
 #define MINORBITS	8
 #define MINORMASK	((1<<MINORBITS) - 1)

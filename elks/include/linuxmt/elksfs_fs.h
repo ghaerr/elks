@@ -1,5 +1,5 @@
-#ifndef _LINUX_ELKSFS_FS_H
-#define _LINUX_ELKSFS_FS_H
+#ifndef __LINUX_ELKSFS_FS_H__
+#define __LINUX_ELKSFS_FS_H__
 
 /*
  * The elksfs filesystem constants/structures

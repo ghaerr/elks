@@ -17,6 +17,8 @@ include $(ELKSDIR)/Makefile-rules
 
 OBJS  = init.o segment.o malloc.o user.o
 
+all:	mm.a
+
 mm.a: $(OBJS)
 	ar rcs mm.a $(OBJS)
 	sync
@@ -35,4 +37,5 @@ dep:
 		$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
 
+#########################################################################
 ### Dependencies:

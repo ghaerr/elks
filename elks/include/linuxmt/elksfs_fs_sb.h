@@ -1,5 +1,5 @@
-#ifndef _ELKSFS_FS_SB
-#define _ELKSFS_FS_SB
+#ifndef __ELKSFS_FS_SB__
+#define __ELKSFS_FS_SB__
 
 /*
  * elksfs super-block data in memory

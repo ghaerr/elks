@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_NA_H
-#define _LINUXMT_NA_H
+#ifndef __LINUXMT_NA_H__
+#define __LINUXMT_NA_H__
 
 struct sockaddr_na {
 	unsigned short sun_family;	/* AF_NANO */

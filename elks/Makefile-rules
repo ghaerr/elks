@@ -1,67 +1,104 @@
+# This file contains the standard Makefile rules for ELKS, and assumes that
+# it is included in the Makefile in every directory in the ELKS tree that
+# is part of the ELKS compilation. Those directories that are NOT part of
+# the ELKS compilation (such as the directories containing tools used to
+# compile ELKS) should NOT include this file, but should define their own
+# version of these rules.
+#
+# Note that several standard rules are defined herein. All are defined in
+# a recursive manner, in that they descend into all subdirectories of the
+# directory they are called in and repeat the rule, so they should either
+# be defined by including this file or by directly defining them in the
+# Makefile in that directory, but not by doing both.
+#
+# In addition to the above, the following rules MUST be defined in each
+# Makefile in the ELKS source tree:
+#
+#	depclean	Does anything needed to clean up that directory
+#			that is not done by the standard rules, which
+#			delete any files with names matching *~ *.a or
+#			*.o or called core or tmp_make and additionally
+#			deletes any *.s files where there is a matching
+#			*.c or *.S file in the same directory.
+#
+#	distdir 	Copies any files across to the distribution tree
+#			that are not copied by the standard rules, but
+#			which need to be part of the distribution. These
+#			standard rules copy all files matching *.c *.h
+#			*.S or *.1 or named Makefile to the correct
+#			directory in the distribution tree.
+#
+# If either of these have nothing to do in a particular directory, they
+# should be defined with an action of `@echo -n' instead.
+#
+# Note that a basic Makefile that does nothing other than to allow the
+# standard rules to work can be obtained by running `make tree`
+#
+#########################################################################
+# Define current ELKS version number.
+
 VERSION 	= 0
 PATCHLEVEL	= 0
 SUBLEVEL	= 85
 PRE		= 2		# If we're not a pre, comment this line
 
 #########################################################################
-# Variables derived directly from the ELKS version number
+# Define root directory.
 
-ifneq (X$PRE, X)
+TOPDIR		= $(shell cd "$(ELKSDIR)" ; \
+			  if [ "$$PWD" != "" ]; then echo $$PWD; \
+						else pwd; \
+			  fi)
+
+#########################################################################
+# Define current and backup directories.
+#
+#	INCDIR		Include file directory.
+#
+#	LIBDIR		Libraries directory.
+#
+#	MYDIR		Current directory relative to TOPDIR/.
+
+INCDIR		= $(TOPDIR)/include
+
+MYDIR		= $(shell pwd | sed 's=$$=/.=;s=^$(TOPDIR)/==')
+
+LIBDIR		= $(TOPDIR)/lib
+
+#########################################################################
+# Define target for `make nbImage` command.
+
+TARGET_NB_IMAGE = $(ELKSDIR)/nbImage
+
+#########################################################################
+# Variables derived directly from the ELKS version number.
+
+ifneq (X$(PRE), X)
 VSN		= $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)-pre$(PRE)
 else
 VSN		= $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
 endif
 
-DISTDIR 	= elks-$(VSN)
+DIST		= elks-$(VSN)
 
-.EXPORT_ALL_VARIABLES:
-
-#########################################################################
-# linuxMT root and backup directories
-
-TOPDIR		= $(shell cd "$(ELKSDIR)" ; \
-			  if [ "$$PWD" != "" ]; then echo $$PWD; \
-						else pwd; fi)
-INCDIR		= $(TOPDIR)/include
-
-TARGET_NB_IMAGE = /tftpboot/elksy/nbImage
+DISTDIR 	= $(TOPDIR)/$(DIST)
 
 #########################################################################
-# Specify architecture
+# Specify architecture to use.
 
 ARCH		= i86
 ARCH_DIR	= arch/$(ARCH)
 
 #########################################################################
-# Specify standard programs and flags
+# Determine current shell.
 
-AR		= ar
-
-AS		= as86
-AFLAGS		= -D__KERNEL__ -I $(INCDIR) -0 -j -j
-
-CC		= bcc
-CFLAGS	 	= -D__KERNEL__ -I $(INCDIR) -O -i
-
-CPP		= bcc
-CPFLAGS 	= -D__KERNEL__ -I $(INCDIR) -E
-
-LD		= ld86
-
-ifeq ($(CONFIG_ARCH_SIBO), y)
-LDFLAGS 	= -0 -i -D 0xC00 -H 0x480
-else
-LDFLAGS 	= -0 -i
-endif
-
-LINT		= lclint
-
-#########################################################################
-# Determine current shell
-
-CONFIG_SHELL := $(shell if [ -x "$$bash" ]; then echo $$bash; \
-          else if [ -x /bin/bash ]; then echo /bin/bash; \
-          else echo sh; fi ; fi)
+CONFIG_SHELL := $(shell if [ -x "$$bash" ]; \
+				then echo $$bash; \
+				else if [ -x /bin/bash ]; \
+						then echo /bin/bash; \
+						else echo sh; \
+				     fi; \
+			fi)
 
 #########################################################################
 # ROOT_DEV specifies the default root-device when making the image. This
@@ -71,7 +108,50 @@ CONFIG_SHELL := $(shell if [ -x "$$bash" ]; then echo $$bash; \
 ROOT_DEV	= FLOPPY
 
 #########################################################################
-# general construction rules
+# Specify contents of architecture-specific flags.
+
+ifeq ($(CONFIG_ARCH_SIBO), y)
+
+ASSIBO		=
+CCSIBO		=
+CPPSIBO 	=
+LDSIBO		= -D 0xC00 -H 0x480
+
+else
+
+ASSIBO		=
+CCSIBO		=
+CPPSIBO 	=
+LDSIBO		=
+
+endif
+
+#########################################################################
+# Specify standard programs and flags.
+
+AR		= ar
+
+AS		= as86
+AFLAGS		= -0 -j -j $(ASSIBO)
+
+CC		= bcc
+CFLAGS	 	= -D__KERNEL__ -I$(INCDIR) -O -i $(CCSIBO)
+
+CPP		= bcc
+CPFLAGS 	= -D__KERNEL__ -I$(INCDIR) -E $(CPPSIBO)
+
+LD		= ld86
+LDFLAGS 	= -0 -i $(LDSIBO)
+
+LINT		= lclint
+
+#########################################################################
+# Export all of these variables.
+
+.EXPORT_ALL_VARIABLES:
+
+#########################################################################
+# General construction rules.
 
 .c.s:
 	$(CC) $(CFLAGS) -0 -nostdinc -Iinclude -S -o $*.s $<
@@ -81,6 +161,12 @@ ROOT_DEV	= FLOPPY
 	$(AS) $(AFLAGS) -c -o $*.o $<
 .S.s:
 	gcc -D__KERNEL__ -I $(INCDIR) -E -traditional -o $*.s $<
+
+#########################################################################
+# Specify default rule to use if no other rule is defined.
+
+elks:
+	make -C $(ELKSDIR) all
 
 #########################################################################
 # End of standard rules

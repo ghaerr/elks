@@ -1,5 +1,5 @@
-#ifndef __ARCH_8086_STATFS_H
-#define __ARCH_8086_STATFS_H
+#ifndef __ARCH_8086_STATFS_H__
+#define __ARCH_8086_STATFS_H__
 
 typedef struct {
 	long    val[2];

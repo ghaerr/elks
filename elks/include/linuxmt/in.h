@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_IN_H
-#define _LINUXMT_IN_H
+#ifndef __LINUXMT_IN_H__
+#define __LINUXMT_IN_H__
 
 struct in_addr {
     unsigned long s_addr;

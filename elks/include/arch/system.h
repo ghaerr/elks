@@ -1,5 +1,5 @@
-#ifndef __ARCH_8086_SYSTEM_H
-#define __ARCH_8086_SYSTEM_H
+#ifndef __ARCH_8086_SYSTEM_H__
+#define __ARCH_8086_SYSTEM_H__
 
 void _FUNCTION(setup_arch, ());
 void _FUNCTION(arch_setuptasks, ());

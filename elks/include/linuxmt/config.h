@@ -1,5 +1,5 @@
-#ifndef _LINUX_CONFIG_H
-#define _LINUX_CONFIG_H
+#ifndef __LINUX_CONFIG_H__
+#define __LINUX_CONFIG_H__
 
 #include <linuxmt/autoconf.h>
 

@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_STRACE_H
-#define __LINUXMT_STRACE_H
+#ifndef __LINUXMT_STRACE_H__
+#define __LINUXMT_STRACE_H__
 
 /* include/linuxmt/strace.h
  * (C) 1997 Chad Page

@@ -1,5 +1,5 @@
-#ifndef __ARCH_8086_STRING_H
-#define __ARCH_8086_STRING_H
+#ifndef __ARCH_8086_STRING_H__
+#define __ARCH_8086_STRING_H__
 
 /*
  * String functions for the 8086 architecture.

@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_POSIX_TYPES_H
-#define _LINUXMT_POSIX_TYPES_H
+#ifndef __LINUXMT_POSIX_TYPES_H__
+#define __LINUXMT_POSIX_TYPES_H__
 
 #include <linuxmt/config.h>
 

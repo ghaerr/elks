@@ -5,6 +5,9 @@
  * functions...
  */
 
+#ifndef __DEBUG_H__
+#define __DEBUG_H__
+
 /*
  * Found that strings were still included if debugging disabled so re-organised
  * so that each has a different macro depending on the no. of paramaters so
@@ -185,4 +188,6 @@
 #else
 #define printd_pipe(_a)
 #define printd2_pipe(_a,_b,_c)
+#endif
+
 #endif

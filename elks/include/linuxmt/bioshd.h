@@ -1,5 +1,5 @@
-#ifndef _LINUX_BIOSHD_H
-#define _LINUX_BIOSHD_H
+#ifndef __LINUX_BIOSHD_H__
+#define __LINUX_BIOSHD_H__
 
 /* bioshd.h */
 /* Copyright (C) 1994 Yggdrasil Computing, Incorporated

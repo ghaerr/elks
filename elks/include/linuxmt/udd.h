@@ -9,8 +9,9 @@
  * Header file for the ELKS meta driver for user space device drivers
  */
 
-#ifndef __LINUXMT_UDD_H_
-#define __LINUXMT_UDD_H_
+#ifndef __LINUXMT_UDD_H__
+#define __LINUXMT_UDD_H__
+
 #include <linuxmt/fs.h>
 
 #define MAX_UDD	8

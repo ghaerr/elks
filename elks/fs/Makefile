@@ -15,12 +15,13 @@ include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
 
-include ../.config
+include $(ELKSDIR)/.config
 
-OBJS  = super.o bufops.o devices.o fcntl.o stat.o \
-	inode.o file_table.o buffer.o block_dev.o \
-	namei.o ioctl.o filesystems.o open.o \
+OBJS  = super.o bufops.o devices.o fcntl.o stat.o inode.o file_table.o \
+	buffer.o block_dev.o namei.o ioctl.o filesystems.o open.o \
 	read_write.o readdir.o exec.o select.o pipe.o
+
+all:	fs.a
 
 fs.a: $(OBJS)
 	ar rcs fs.a $(OBJS)
@@ -39,4 +40,5 @@ dep:
 		$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
 
+#########################################################################
 ### Dependencies

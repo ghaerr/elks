@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_STAT_H
-#define __LINUXMT_STAT_H
+#ifndef __LINUXMT_STAT_H__
+#define __LINUXMT_STAT_H__
 #include "types.h"
 #include <arch/stat.h>
 

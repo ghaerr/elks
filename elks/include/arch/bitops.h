@@ -1,5 +1,5 @@
-#ifndef __ARCH_8086_BITOPS_H
-#define __ARCH_8086_BITOPS_H
+#ifndef __ARCH_8086_BITOPS_H__
+#define __ARCH_8086_BITOPS_H__
 
 extern int clear_bit();
 extern int set_bit();

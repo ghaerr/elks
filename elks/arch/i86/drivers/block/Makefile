@@ -16,7 +16,10 @@ include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
 
-OBJS  = genhd.o doshd.o ll_rw_blk.o rd.o floppy.o directhd.o init.o sibo_ssd.o ssd_asm.o
+OBJS  = genhd.o doshd.o ll_rw_blk.o rd.o floppy.o directhd.o init.o \
+	sibo_ssd.o ssd_asm.o
+
+all:	blk_drv.a
 
 blk_drv.a: $(OBJS)
 	ar rcs blk_drv.a $(OBJS)
@@ -40,4 +43,5 @@ ssd_asm.o: ssd_asm.s
 
 ssd_asm.s: ssd_asm.S
 
+#########################################################################
 ### Dependencies:

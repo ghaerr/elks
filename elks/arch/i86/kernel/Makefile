@@ -23,6 +23,8 @@ OBJS  = strace.o printreg.o system.o irq.o irqtab.o process.o bios16.o \
 		entry.o signal.o timer.o
 endif
 
+all:	akernel.a
+
 akernel.a: $(OBJS)
 	ar rcs akernel.a $(OBJS)
 
@@ -45,4 +47,5 @@ dep:
 		$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
 
+#########################################################################
 ### Dependencies:

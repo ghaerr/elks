@@ -1,5 +1,5 @@
-#ifndef _MINIX_FS_SB
-#define _MINIX_FS_SB
+#ifndef __MINIX_FS_SB__
+#define __MINIX_FS_SB__
 
 /*
  * minix super-block data in memory

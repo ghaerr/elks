@@ -1,8 +1,8 @@
 /* chqueue.h
  * (C) 1997 Chad Page
  */
-#ifndef _LINUXMT_CHQ_H_
-#define _LINUXMT_CHQ_H_
+#ifndef __LINUXMT_CHQ_H__
+#define __LINUXMT_CHQ_H__
 
 struct ch_queue {
 	char *buf;

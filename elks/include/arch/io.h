@@ -1,5 +1,5 @@
-#ifndef __ARCH_8086_IO_H
-#define __ARCH_8086_IO_H
+#ifndef __ARCH_8086_IO_H__
+#define __ARCH_8086_IO_H__
 
 extern void outb();
 extern void outb_p();

@@ -1,5 +1,5 @@
-#ifndef _LINUX_GENHD_H
-#define _LINUX_GENHD_H
+#ifndef __LINUX_GENHD_H__
+#define __LINUX_GENHD_H__
 
 #include <linuxmt/types.h>
 

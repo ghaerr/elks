@@ -1,5 +1,5 @@
-#ifndef __ARCH_8086_POSIX_TYPES_H
-#define __ARCH_8086_POSIX_TYPES_H
+#ifndef __ARCH_8086_POSIX_TYPES_H__
+#define __ARCH_8086_POSIX_TYPES_H__
 
 #include <arch/irq.h>
 

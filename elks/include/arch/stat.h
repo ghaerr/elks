@@ -1,5 +1,5 @@
-#ifndef __ARCH_8086_STAT_H
-#define __ARCH_8086_STAT_H
+#ifndef __ARCH_8086_STAT_H__
+#define __ARCH_8086_STAT_H__
 
 struct stat {
 	dev_t st_dev;

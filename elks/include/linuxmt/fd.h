@@ -1,5 +1,5 @@
-#ifndef _LINUX_FD_H
-#define _LINUX_FD_H
+#ifndef __LINUX_FD_H__
+#define __LINUX_FD_H__
 
 #define FDCLRPRM 0 /* clear user-defined parameters */
 #define FDSETPRM 1 /* set user-defined parameters for current media */

@@ -1,10 +1,12 @@
-#ifndef __ARCH_8086_IRQ_H
-#define __ARCH_8086_IRQ_H
+#ifndef __ARCH_8086_IRQ_H__
+#define __ARCH_8086_IRQ_H__
 
 #include <arch/types.h>
 #define save_flags(x)	x=__save_flags()
-/* Who gets which entry in bh_base.  Things which will occur most often
-   should come first - in which case NET should be up the top with SERIAL/TQUEUE! */
+
+/* Who gets which entry in bh_base. Things which will occur most often
+   should come first - in which case NET should be up the top with
+   SERIAL/TQUEUE! */
 
 enum {
         TIMER_BH = 0,
@@ -29,10 +31,12 @@ extern flag_t __save_flags();
 extern void restore_flags();
 extern int request_irq();
 extern void free_irq();
+
 #if 0
 extern void icli();
 extern void isti();
 #endif
+
 extern void do_bottom_half();
 
 extern int bh_mask_count[16];

@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_DLL_H
-#define __LINUXMT_DLL_H
+#ifndef __LINUXMT_DLL_H__
+#define __LINUXMT_DLL_H__
 
 /*
  *	DLL structures

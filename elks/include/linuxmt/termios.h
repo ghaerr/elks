@@ -1,5 +1,6 @@
-#ifndef __LINUXMT_TERMIOS_H
-#define __LINUXMT_TERMIOS_H
+#ifndef __LINUXMT_TERMIOS_H__
+#define __LINUXMT_TERMIOS_H__
+
 #include <linuxmt/types.h>
 
 /* This is just a magic number to make these relatively unique ('T') */

@@ -1,5 +1,5 @@
-#ifndef _LINUX_WAIT_H
-#define _LINUX_WAIT_H
+#ifndef __LINUX_WAIT_H__
+#define __LINUX_WAIT_H__
 
 #define WNOHANG		0x00000001
 #define WUNTRACED	0x00000002

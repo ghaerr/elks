@@ -1,5 +1,5 @@
-#ifndef LINUXMT_NET_H
-#define LINUXMT_NET_H
+#ifndef __LINUXMT_NET_H__
+#define __LINUXMT_NET_H__
 
 #include <linuxmt/config.h>
 #include <linuxmt/wait.h>

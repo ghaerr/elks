@@ -1,14 +1,14 @@
-#ifndef _LINUXMT_TQUEUE_H
-#define _LINUXMT_TQUEUE_H
+#ifndef __LINUXMT_TQUEUE_H__
+#define __LINUXMT_TQUEUE_H__
 
 /*
  * tqueue.h --- task queue handling for Linux.
  *
  * Mostly based on a proposed bottom-half replacement code written by
- * Kai Petzke, wpp@marie.physik.tu-berlin.de.
+ * Kai Petzke <wpp@marie.physik.tu-berlin.de>.
  *
- * Modified for use in the Linux kernel by Theodore Ts'o,
- * tytso@mit.edu.  Any bugs are my fault, not Kai's.
+ * Modified for use in the Linux kernel by Theodore Ts'o <tytso@mit.edu>.
+ * Any bugs are my fault, not Kai's.
  *
  * The original comment follows below.
  */
@@ -22,23 +22,26 @@
 
 /*
  * New proposed "bottom half" handlers:
- * (C) 1994 Kai Petzke, wpp@marie.physik.tu-berlin.de
+ * (C) 1994, Kai Petzke <wpp@marie.physik.tu-berlin.de>
  *
  * Advantages:
- * - Bottom halfs are implemented as a linked list.  You can have as many
+ *
+ * - Bottom halfs are implemented as a linked list. You can have as many
  *   of them, as you want.
  * - No more scanning of a bit field is required upon call of a bottom half.
- * - Support for chained bottom half lists.  The run_task_queue() function can be
- *   used as a bottom half handler.  This is for example useful for bottom
- *   halfs, which want to be delayed until the next clock tick.
+ * - Support for chained bottom half lists.  The run_task_queue() function
+ *   can be used as a bottom half handler.  This is for example useful for
+ *   bottom halfs, which want to be delayed until the next clock tick.
  *
  * Problems:
- * - The queue_task_irq() inline function is only atomic with respect to itself.
- *   Problems can occur, when queue_task_irq() is called from a normal system
- *   call, and an interrupt comes in.  No problems occur, when queue_task_irq()
- *   is called from an interrupt or bottom half, and interrupted, as run_task_queue()
- *   will not be executed/continued before the last interrupt returns.  If in
- *   doubt, use queue_task(), not queue_task_irq().
+ *
+ * - The queue_task_irq() inline function is only atomic with respect to
+ *   itself. Problems can occur, when queue_task_irq() is called from a
+ *   normal system call, and an interrupt comes in.  No problems occur, when
+ *   queue_task_irq() is called from an interrupt or bottom half, and
+ *   interrupted, as run_task_queue() will not be executed/continued before
+ *   the last interrupt returns.  If in doubt, use queue_task(), not
+ *   queue_task_irq().
  * - Bottom halfs are called in the reverse order that they were linked into
  *   the list.
  */

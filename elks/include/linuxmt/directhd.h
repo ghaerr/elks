@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_DIRECTHD_H
-#define _LINUXMT_DIRECTHD_H
+#ifndef __LINUXMT_DIRECTHD_H__
+#define __LINUXMT_DIRECTHD_H__
 
 /*
  * directhd.h header for ELKS kernel

@@ -1,5 +1,5 @@
-#ifndef __ARCH_8086_SEGMENT_H
-#define __ARCH_8086_SEGMENT_H
+#ifndef __ARCH_8086_SEGMENT_H__
+#define __ARCH_8086_SEGMENT_H__
 
 extern short *_endtext,*_enddata,*_endbss;
 extern int get_ss(),get_ds(),get_es(),get_ss(),get_cs();

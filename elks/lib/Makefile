@@ -17,6 +17,8 @@ include $(ELKSDIR)/Makefile-rules
 
 OBJS  = chqueue.o string.o
 
+all:	lib.a
+
 lib.a: $(OBJS)
 	ar rcs lib.a $(OBJS)
 	sync
@@ -34,4 +36,5 @@ dep:
 		$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
 
+#########################################################################
 ### Dependencies:

@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_UIO_H
-#define _LINUXMT_UIO_H
+#ifndef __LINUXMT_UIO_H__
+#define __LINUXMT_UIO_H__
 
 struct iovec
 {

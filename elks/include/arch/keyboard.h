@@ -1,5 +1,5 @@
-#ifndef __ARCH_8086_KEYBOARD_H
-#define __ARCH_8086_KEYBOARD_H
+#ifndef __ARCH_8086_KEYBOARD_H__
+#define __ARCH_8086_KEYBOARD_H__
 
 extern void keyboard_irq();
 

@@ -1,6 +1,5 @@
-#ifndef __LINUXMT_RD_H_
-#define __LINUXMT_RD_H_
-
+#ifndef __LINUXMT_RD_H__
+#define __LINUXMT_RD_H__
 
 #define RDCREATE 0
 #define RDDESTROY 1

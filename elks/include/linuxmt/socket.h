@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_SOCKET_H
-#define _LINUXMT_SOCKET_H
+#ifndef __LINUXMT_SOCKET_H__
+#define __LINUXMT_SOCKET_H__
 
 #include <linuxmt/uio.h>
 

@@ -1,5 +1,5 @@
-#ifndef _LINUX_MINIX_FS_H
-#define _LINUX_MINIX_FS_H
+#ifndef __LINUX_MINIX_FS_H__
+#define __LINUX_MINIX_FS_H__
 
 /*
  * The minix filesystem constants/structures

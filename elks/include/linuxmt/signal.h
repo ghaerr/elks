@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_SIGNAL_H
-#define _LINUXMT_SIGNAL_H
+#ifndef __LINUXMT_SIGNAL_H__
+#define __LINUXMT_SIGNAL_H__
 
 /* The following signal mean nothing under ELKS currently
  * SIGBUS SIGTRAP SIGIOT SIGEMT SIGSYS SIGSTKFLT SIGPOLL

@@ -1,5 +1,5 @@
-#ifndef __LINUX_ROMFS_FS_H
-#define __LINUX_ROMFS_FS_H
+#ifndef __LINUX_ROMFS_FS_H__
+#define __LINUX_ROMFS_FS_H__
 
 /* The basic structures of the romfs filesystem */
 

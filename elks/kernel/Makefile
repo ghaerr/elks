@@ -18,6 +18,8 @@ include $(ELKSDIR)/Makefile-rules
 OBJS  = sched.o printk.o sleepwake.o dma.o version.o sys.o stubs.o fork.o \
 	exit.o time.o signal.o
 
+all:	kernel.a
+
 kernel.a: $(OBJS)
 	ar rcs kernel.a $(OBJS)
 
@@ -35,4 +37,5 @@ dep:
 		$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
 
+#########################################################################
 ### Dependencies:

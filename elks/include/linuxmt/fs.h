@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_FS_H
-#define _LINUXMT_FS_H
+#ifndef __LINUXMT_FS_H__
+#define __LINUXMT_FS_H__
 
 /*
  * This file has definitions for some important file table

@@ -1,5 +1,5 @@
-#ifndef _LINUX_BIOSPARM_H
-#define _LINUX_BIOSPARM_H
+#ifndef __LINUX_BIOSPARM_H__
+#define __LINUX_BIOSPARM_H__
 
 /* biosparm.h */
 /* Copyright (C) 1994 Yggdrasil Computing, Incorporated

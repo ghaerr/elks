@@ -1,5 +1,5 @@
-#ifndef __LINUX_MSDOS_H
-#define __LINUX_MSDOS_H
+#ifndef __LINUX_MSDOS_H__
+#define __LINUX_MSDOS_H__
 
 /*
  *	MSDOS binary formats

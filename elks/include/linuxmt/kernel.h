@@ -1,5 +1,5 @@
-#ifndef _LINUX_KERNEL_H
-#define _LINUX_KERNEL_H
+#ifndef __LINUX_KERNEL_H__
+#define __LINUX_KERNEL_H__
 
 /*
  * 'kernel.h' contains some often-used function prototypes etc

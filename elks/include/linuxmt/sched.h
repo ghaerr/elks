@@ -1,5 +1,5 @@
-#ifndef LINUXMT_SCHED_H
-#define LINUXMT_SCHED_H
+#ifndef __LINUXMT_SCHED_H__
+#define __LINUXMT_SCHED_H__
 
 #define MAX_TASKS 15
 #define NGROUPS	13		/* Supplementary groups */

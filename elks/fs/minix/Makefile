@@ -17,6 +17,8 @@ include $(ELKSDIR)/Makefile-rules
 
 OBJS  = bitmap.o dir.o file.o namei.o symlink.o truncate.o inode.o
 
+all:	minixfs.a
+
 minixfs.a: $(OBJS)
 	ar rcs minixfs.a $(OBJS)
 
@@ -34,4 +36,5 @@ dep:
 		$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
 
+#########################################################################
 ### Dependencies:

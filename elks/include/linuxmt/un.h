@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_UN_H
-#define _LINUXMT_UN_H
+#ifndef __LINUXMT_UN_H__
+#define __LINUXMT_UN_H__
 
 #define UNIX_PATH_MAX	108
 

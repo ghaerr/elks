@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_UTSNAME_H
-#define _LINUXMT_UTSNAME_H
+#ifndef __LINUXMT_UTSNAME_H__
+#define __LINUXMT_UTSNAME_H__
 
 struct utsname {
 	char sysname[9];

@@ -1,5 +1,5 @@
-#ifndef _LINUX_TTY_H
-#define _LINUX_TTY_H
+#ifndef __LINUX_TTY_H__
+#define __LINUX_TTY_H__
 
 /*
  * 'ntty.h' defines some structures used by ntty.c and some defines.

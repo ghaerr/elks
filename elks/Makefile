@@ -34,7 +34,11 @@ endif
 ARCHIVES=kernel/kernel.a fs/fs.a lib/lib.a net/net.a
 
 #########################################################################
-# Check what filesystems to include
+# Check what filesystems to include, in ASCII order.
+
+ifeq ($(CONFIG_ELKSFS_FS), y)
+	ARCHIVES := $(ARCHIVES) fs/elksfs/elksfs.a
+endif
 
 ifeq ($(CONFIG_MINIX_FS), y)
 	ARCHIVES := $(ARCHIVES) fs/minix/minixfs.a
@@ -44,21 +48,23 @@ ifeq ($(CONFIG_ROMFS_FS), y)
 	ARCHIVES := $(ARCHIVES) fs/romfs/romfs.a
 endif
 
-ifeq ($(CONFIG_ELKSFS_FS), y)
-	ARCHIVES := $(ARCHIVES) fs/elksfs/elksfs.a
-endif
-
 #########################################################################
-# Specify how to make the images
+# Specify how to make the images, in ASCII order.
 
 Image: $(ARCHIVES) init/main.o
-	(cd $(ARCH_DIR); make Image)
+	make -C $(ARCH_DIR) Image
 
 nbImage: $(ARCHIVES) init/main.o
-	(cd $(ARCH_DIR); make nbImage)
+	make -C $(ARCH_DIR) nbImage
 
 #########################################################################
-# Specify how to install the images
+# Specify how to install the images, in ASCII order.
+
+boot: Image
+	make -c $(ARCH_DIR) boot
+
+disk: Image
+	make -c $(ARCH_DIR) disk
 
 nb_install: nbImage
 	cp -f $(ARCH_DIR)/boot/nbImage $(TARGET_NB_IMAGE)
@@ -68,14 +74,8 @@ nbrd_install: nbImage
 	cat $(ARCH_DIR)/boot/nbRamdisk >> $(ARCH_DIR)/boot/nbImage.rd
 	cp -f $(ARCH_DIR)/boot/nbImage.rd $(TARGET_NB_IMAGE)
 
-boot: Image
-	(cd $(ARCH_DIR); make boot)
-
-disk: Image
-	(cd $(ARCH_DIR); make disk)
-
 setup: $(ARCH_DIR)/boot/setup  
-	(cd $(ARCH_DIR); make setup)
+	make -c $(ARCH_DIR) setup
 
 #########################################################################
 # library rules (all are built even if they aren't used)
@@ -83,26 +83,26 @@ setup: $(ARCH_DIR)/boot/setup
 .PHONY: fs/fs.a fs/minix/minixfs.a fs/romfs/romfs.a fs/elksfs/elksfs.a \
         kernel/kernel.a lib/lib.a net/net.a
 
+fs/elksfs/elksfs.a:
+	make -C elksfs all
+
 fs/fs.a:
-	(cd fs; make)
+	make -C fs all
 
 fs/minix/minixfs.a:
-	(cd fs/minix; make)
+	make -C minix all
 
 fs/romfs/romfs.a:
-	(cd fs/romfs; make)
-
-fs/elksfs/elksfs.a:
-	(cd fs/elksfs; make)
+	make -C romfs all
 
 kernel/kernel.a: include/linuxmt/version.h include/linuxmt/compile.h
-	(cd kernel; make)
+	make -C kernel all
 
 lib/lib.a:
-	(cd lib; make)
+	make -C lib all
 
 net/net.a:
-	(cd net; make)
+	make -C net all
 
 #########################################################################
 # lint rules
@@ -116,15 +116,15 @@ lint:
 clean:
 	rm -f *~ Boot.map Setup.map System.map tmp_make core 
 	rm -f init/*~ init/*.o 
-	(cd $(ARCH_DIR); make clean)
-	(cd fs;make clean)
-	(cd fs/minix;make clean)
-	(cd fs/romfs;make clean)
-	(cd fs/elksfs;make clean)
-	(cd kernel;make clean)
-	(cd lib;make clean)
-	(cd net;make clean)
-	(cd scripts; make clean)
+	make -C $(ARCH_DIR) clean
+	make -C fs clean
+	make -C fs/elksfs clean
+	make -C fs/minix clean
+	make -C fs/romfs clean
+	make -C kernel clean
+	make -C lib clean
+	make -C net clean
+	make -C scripts clean
 
 depclean:
 	@for i in `find -name Makefile`; do \
@@ -147,15 +147,15 @@ distdir:
 	-chmod 777 $(DISTDIR)
 	cp -pf BUGS CHANGELOG COPYING Makefile $(DISTDIR)
 	cp -pf nodeps README RELNOTES TODO $(DISTDIR)
-	(mkdir -p $(DISTDIR)/$(ARCH_DIR); cd $(ARCH_DIR); make distdir)
-	(mkdir $(DISTDIR)/fs; cd fs;make distdir)
-	(mkdir $(DISTDIR)/fs/minix; cd fs/minix;make distdir)
-	(mkdir $(DISTDIR)/fs/romfs; cd fs/romfs;make distdir)
-	(mkdir $(DISTDIR)/fs/elksfs; cd fs/elksfs;make distdir)
-	(mkdir $(DISTDIR)/kernel; cd kernel;make distdir)
-	(mkdir $(DISTDIR)/lib; cd lib;make distdir)
-	(mkdir $(DISTDIR)/net; cd net;make distdir)
-	(mkdir $(DISTDIR)/scripts; cd scripts; make distdir)
+	(mkdir -p $(DISTDIR)/$(ARCH_DIR); make -C $(ARCH_DIR) distdir)
+	(mkdir $(DISTDIR)/fs; make -C fs distdir)
+	(mkdir $(DISTDIR)/fs/minix; make -C fs/minix distdir)
+	(mkdir $(DISTDIR)/fs/romfs; make -C fs/romfs distdir)
+	(mkdir $(DISTDIR)/fs/elksfs; make -C fs/elksfs distdir)
+	(mkdir $(DISTDIR)/kernel; make -C kernel distdir)
+	(mkdir $(DISTDIR)/lib; make -C lib distdir)
+	(mkdir $(DISTDIR)/net; make -C net distdir)
+	(mkdir $(DISTDIR)/scripts; make -C scripts distdir)
 	(mkdir -p $(DISTDIR)/include/linuxmt $(DISTDIR)/include/arch)
 	cp -pf include/linuxmt/*.h $(DISTDIR)/include/linuxmt
 	cp -pf include/arch/*.h $(DISTDIR)/include/arch
@@ -168,14 +168,14 @@ dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in init/*.c;do echo -n "init/";$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
-	(cd $(ARCH_DIR); make dep)
-	(cd fs; make dep)
-	(cd fs/minix; make dep)
-	(cd fs/romfs; make dep)
-	(cd fs/elksfs; make dep)
-	(cd kernel; make dep)
-	(cd lib; make dep)
-	(cd net; make dep)
+	make -C $(ARCH_DIR) dep
+	make -C fs dep
+	make -C fs/elksfs dep
+	make -C fs/minix dep
+	make -C fs/romfs dep
+	make -C kernel dep
+	make -C lib dep
+	make -C net dep
 
 #########################################################################
 # Configuration stuff

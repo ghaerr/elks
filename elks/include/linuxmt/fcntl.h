@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_FCNTL_H
-#define __LINUXMT_FCNTL_H
+#ifndef __LINUXMT_FCNTL_H__
+#define __LINUXMT_FCNTL_H__
 
 /*
  *	Definitions taken from the i386 Linux kernel.

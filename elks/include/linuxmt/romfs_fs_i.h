@@ -1,5 +1,5 @@
-#ifndef __ROMFS_FS_I
-#define __ROMFS_FS_I
+#ifndef __ROMFS_FS_I_H__
+#define __ROMFS_FS_I_H__
 
 /* inode in-kernel data */
 

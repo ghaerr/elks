@@ -1,5 +1,5 @@
-#ifndef _ARCH_BORDER_H
-#define _ARCH_BORDER_H
+#ifndef __ARCH_BORDER_H__
+#define __ARCH_BORDER_H__
 
 extern unsigned long htonl();
 extern unsigned long ntohl();

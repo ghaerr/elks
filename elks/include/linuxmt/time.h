@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_TIME_H
-#define _LINUXMT_TIME_H
+#ifndef __LINUXMT_TIME_H__
+#define __LINUXMT_TIME_H__
 
 #define DST_NONE        0       /* not on dst */
 #define DST_USA         1       /* USA style dst */

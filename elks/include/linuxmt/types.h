@@ -1,5 +1,5 @@
-#ifndef __LINUXMT_TYPES_H
-#define __LINUXMT_TYPES_H
+#ifndef __LINUXMT_TYPES_H__
+#define __LINUXMT_TYPES_H__
 
 #include <arch/types.h>
 #include <linuxmt/posix_types.h>

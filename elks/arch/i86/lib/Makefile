@@ -31,6 +31,8 @@ LLOBJS		= laddl.o landl.o lcmpl.o lcoml.o ldecl.o ldivl.o \
 # compiler support for long arithmetic on all longs
 LXOBJS		= ldivmod.o
 
+all:	lib86.a
+
 lib86.a: $(OBJS)
 	ar rcs lib86.a $(OBJS)
 	sync
@@ -54,4 +56,5 @@ setupb.s: setupb.S
 
 setupw.s: setupw.S
 
+#########################################################################
 ### Dependencies:

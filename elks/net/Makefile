@@ -17,6 +17,8 @@ include $(ELKSDIR)/Makefile-rules
 
 OBJS  = socket.o protocols.o ipv4/af_inet.o unix/af_unix.o nano/af_nano.o
 
+all:	net.a
+
 net.a: $(OBJS)
 	ar rcs net.a $(OBJS)
 
@@ -38,4 +40,5 @@ dep:
 		$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
 
+#########################################################################
 ### Dependencies:

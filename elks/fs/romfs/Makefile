@@ -17,6 +17,8 @@ include $(ELKSDIR)/Makefile-rules
 
 OBJS  = inode.o
 
+all:	romfs.a
+
 romfs.a: $(OBJS)
 	ar rcs romfs.a $(OBJS)
 
@@ -33,4 +35,5 @@ dep:
 		$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
 
+#########################################################################
 ### Dependencies:

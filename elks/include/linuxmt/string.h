@@ -1,5 +1,6 @@
-#ifndef __LINUXMT_STRING_H
-#define __LINUXMT_STRING_H
+#ifndef __LINUXMT_STRING_H__
+#define __LINUXMT_STRING_H__
+
 extern char *strcpy();
 extern char *strncpy();
 extern char *strcat();

@@ -1,5 +1,5 @@
-#ifndef _LINUX_FDREG_H
-#define _LINUX_FDREG_H
+#ifndef __LINUX_FDREG_H__
+#define __LINUX_FDREG_H__
 /*
  * This file contains some defines for the floppy disk controller.
  * Various sources. Mostly "IBM Microcomputers: A Programmers

@@ -1,5 +1,5 @@
-#ifndef _LINUX_MAJOR_H
-#define _LINUX_MAJOR_H
+#ifndef __LINUX_MAJOR_H__
+#define __LINUX_MAJOR_H__
 
 /*
  * This file has definitions for major device numbers

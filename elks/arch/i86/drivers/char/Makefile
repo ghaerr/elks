@@ -23,6 +23,8 @@ OBJS  = bioscon.o serial.o lp.o xt_key.o init.o dircon.o ntty.o mem.o meta.o \
 	tcpdev.o pty.o bell.o # clist.o tty.o
 endif
 
+all:	chr_dev.a
+
 chr_drv.a: $(OBJS)
 	ar rcs chr_drv.a $(OBJS)
 	sync
@@ -60,4 +62,5 @@ ser_asm.s: ser_asm.S
 
 ser_asm.o: ser_asm.s
 
+#########################################################################
 ### Dependencies:

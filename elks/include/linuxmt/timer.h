@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_TIMER_H
-#define _LINUXMT_TIMER_H
+#ifndef __LINUXMT_TIMER_H__
+#define __LINUXMT_TIMER_H__
 
 #include <linuxmt/types.h>
 

@@ -1,5 +1,5 @@
-#ifndef _LINUXMT_TIMEX_H
-#define _LINUXMT_TIMEX_H
+#ifndef __LINUXMT_TIMEX_H__
+#define __LINUXMT_TIMEX_H__
 
 #include <linuxmt/config.h>
 

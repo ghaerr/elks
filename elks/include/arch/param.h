@@ -1,8 +1,7 @@
-#ifndef _ARCH_8086_PARAM_H
-#define _ARCH_8086_PARAM_H
+#ifndef __ARCH_8086_PARAM_H__
+#define __ARCH_8086_PARAM_H__
 
 #include <linuxmt/config.h>
-
 
 #ifndef HZ
 #ifdef CONFIG_ARCH_SIBO

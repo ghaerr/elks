@@ -1,5 +1,5 @@
-#ifndef _LINUX_IOCTL_H
-#define _LINUX_IOCTL_H
+#ifndef __LINUX_IOCTL_H__
+#define __LINUX_IOCTL_H__
 
 #include <arch/ioctl.h>
 

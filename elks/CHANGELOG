@@ -7,6 +7,12 @@ be longer than the lines of dashes.
 Al
 -------------------------------------------------------------------------------
 
+Sat Sep  8 22:33:39 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Prevented header files from being included more than once, as
+	  some header files were not properly guarded against this.
+	* Simplified current Makefiles by making use of `make -C` option.
+
 Sat Sep  8 19:51:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Added `mkMake` script to scripts directory. This new file forms
