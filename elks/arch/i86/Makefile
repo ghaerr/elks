@@ -26,14 +26,14 @@ DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 
 .c.s:
 	$(CC) $(CFLAGS) \
-	-0 -nostdinc -Iinclude -S -o $*.s $<
+	-0 -nostdinc -I$(MT_DIR)/include -S -o $*.s $<
 .s.o:
 	$(AS) -0 -I$(MT_DIR)/include -c -o $*.o $<
 .S.s:
 	gcc -E -traditional -o $*.s $<
 .c.o:
 	$(CC) $(CFLAGS) \
-	2 -nostdinc -Iinclude -c -o $*.o $<
+	2 -nostdinc -I$(MT_DIR)/include -c -o $*.o $<
 
 #########################################################################
 # arch tools
