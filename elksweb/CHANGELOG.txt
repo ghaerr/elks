@@ -11,15 +11,21 @@ Contributor             Current Email address           CHANGELOG entries found
 Alistair Riddoch        <AlRiddoch@zepler.org>           1 Jan 1995-20 Oct 1999
 Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>     7 Nov 2001
 Michael McConnell       <Soruk@Eridani.co.uk>           11 Nov 2001-12 Nov 2001
-Riley Williams          <rhw@MemAlpha.cx>                8 Nov 2001-12 Nov 2001
+Riley Williams          <rhw@MemAlpha.cx>                8 Nov 2001-20 Nov 2001
 
 -------------------------------------------------------------------------------
 
-Mon Nov 12 23:57:31 EET 2001 Harry Kalogirou <harkal@gmx.net>
+Tue Nov 20 20:42:09 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Moved old homepage to "Introduction to ELKS" subpage.
+	* Committed outline of new home page, format as agreed on the
+	  Linux-8086 mailing list.
+
+Mon Nov 12 23:57:31 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* Added info about the mailing list archive.
-	* Replaced tabs with spaces on the contributor list at the top
-	  of this file.
+	* Replaced tabs with spaces on the contributor list at the top of
+	  this file.
 
 Mon Nov 12 21:53:33 GMT 2001	Michael McConnell <soruk@eridani.co.uk>
 
