@@ -19,6 +19,7 @@ struct serial_info
 	unsigned char lcr;
 	unsigned char mcr;
 	struct tty * tty;	
+
 #define SERF_TYPE	15
 #define SERF_EXIST	16
 #define SERF_INUSE	32
@@ -26,6 +27,7 @@ struct serial_info
 #define ST_16450	1
 #define ST_16550	2
 #define ST_UNKNOWN	15
+
 };
 
 #define RS_MINOR_OFFSET 64
@@ -34,6 +36,7 @@ struct serial_info
 
 /* all boxes should be able to do 9600 at least, afaik 8250 works fine
    up to 19200 */
+
 #define DEFAULT_BAUD_RATE 9600
 #define DEFAULT_LCR UART_LCR_WLEN8
 #define DEFAULT_MCR UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2
@@ -42,35 +45,34 @@ struct serial_info
 
 static struct serial_info ports[4]=
 {
-	{ 0x3f8,4,0,DEFAULT_LCR, DEFAULT_MCR, NULL },
-	{ 0x2f8,3,0,DEFAULT_LCR, DEFAULT_MCR, NULL },
-	{ 0x3e8,5,0,DEFAULT_LCR, DEFAULT_MCR, NULL },
-	{ 0x2e8,2,0,DEFAULT_LCR, DEFAULT_MCR, NULL },
+	{ 0x3f8, 4, 0, DEFAULT_LCR, DEFAULT_MCR, NULL },
+	{ 0x2f8, 3, 0, DEFAULT_LCR, DEFAULT_MCR, NULL },
+	{ 0x3e8, 5, 0, DEFAULT_LCR, DEFAULT_MCR, NULL },
+	{ 0x2e8, 2, 0, DEFAULT_LCR, DEFAULT_MCR, NULL },
 };
 
-static int divisors[16] =
-{
-	0,		/* B0		*/
-	2304,		/* B50		*/
-	1536,		/* B75		*/
-	1047/*.*/,	/* B110		*/
-	860/*.*/,	/* B134		*/
-	768,		/* B150		*/
-	576,		/* B200		*/
-	384,		/* B300		*/
-	192,		/* B600		*/
-	96,		/* B1200	*/
-	64,		/* B1800	*/
-	48,		/* B2400	*/
-	24,		/* B4800	*/
-	12,		/* B9600	*/
-	6,		/* B19200	*/
-	3		/* B38400	*/
+static int divisors[16] = {
+	0,		/*  0 = B0	*/
+	2304,		/*  1 = B50	*/
+	1536,		/*  2 = B75	*/
+	1047/*.*/,	/*  3 = B110	*/
+	860/*.*/,	/*  4 = B134	*/
+	768,		/*  5 = B150	*/
+	576,		/*  6 = B200	*/
+	384,		/*  7 = B300	*/
+	192,		/*  8 = B600	*/
+	96,		/*  9 = B1200	*/
+	64,		/* 10 = B1800	*/
+	48,		/* 11 = B2400	*/
+	24,		/* 12 = B4800	*/
+	12,		/* 13 = B9600	*/
+	6,		/* 14 = B19200	*/
+	3		/* 15 = B38400	*/
 };
 
 /* Flow control buffer markers */
-#define	RS_IALLMOSTFULL	(3 * INQ_SIZE / 4)
-#define	RS_IALLMOSTEMPTY	(INQ_SIZE / 4)
+#define	RS_IALLMOSTFULL 	(3 * INQ_SIZE / 4)
+#define	RS_IALLMOSTEMPTY	(    INQ_SIZE / 4)
 	
 #ifdef CONFIG_CONSOLE_SERIAL
 
