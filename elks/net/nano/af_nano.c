@@ -37,7 +37,7 @@ static struct nano_proto_data * nano_data_alloc()
 			upd->npd_bp_head = upd->npd_bp_tail = 0;
 			upd->npd_srvno = 0;
 			upd->npd_peerupd = NULL;
-			upd->npd_sem;
+			upd->npd_sem = 0;
 			return(upd);
 		}
 	}
