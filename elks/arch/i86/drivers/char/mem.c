@@ -252,7 +252,10 @@ char *arg;
 			i = (char *)task;
 			memcpy_tofs(arg, &i, 2);
 #if 0
-/* ****** I am not here	*/ dmem();
+		/* Include this code to make ps dump memory info */
+		/* The dmem() function must also ne included in */
+		/* arch/i86/mm/malloc.c */
+			dmem();
 #endif
 			return 0;
 		case MEM_GETCS:

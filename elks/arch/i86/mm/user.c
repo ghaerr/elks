@@ -138,7 +138,7 @@ unsigned int dseg, doff;
 } 
 #endif
 
-#ifdef CONFIG_FULL_VFS
+#if 1
 int strlen_fromfs(saddr)
 char *saddr;
 {
