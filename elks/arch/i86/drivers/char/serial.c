@@ -432,6 +432,8 @@ int wait_for_keypress(void)
     /* Do something */
 }
 
+#endif
+
 struct tty_ops rs_ops = {
     rs_open,
     rs_release,
@@ -440,4 +442,3 @@ struct tty_ops rs_ops = {
     rs_ioctl
 };
 
-#endif

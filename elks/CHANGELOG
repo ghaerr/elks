@@ -34,6 +34,12 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Fri Jul 12 19:32:16 EEST 2002 Paul Nasrat <pauln@truemesh.com>
+
+	* undefined symbol: _rs_ops 
+	  This was defined in a #ifdef for CONFIG_CONSOLE_SERIAL and a patch is
+	  attached which moves it outside.
+
 Wed Jun 26 04:11:35 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Clarified error messages in fs/minix/bitmap.c as some were
