@@ -32,6 +32,9 @@ struct fs_struct {
 
 struct mm_struct {
 	seg_t cseg,dseg;
+	char flags;
+#define CS_SWAP		1
+#define DS_SWAP		2
 };
 
 struct signal_struct {
