@@ -21,6 +21,13 @@ Thomas McWilliams	<tgm9999@yahoo.com>		 2 Apr 2001
 
 -----------------------------------------------------------------------------
 
+Tue Oct 23 17:36:10 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* THIS IS ELKS RELEASE 0.0.88
+
+	* Updated include/linuxmt/autoconf.h to match `make defconfig`
+	  results.
+
 Tue Oct 23 01:44:24 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* THIS IS ELKS RELEASE 0.0.88-pre1.
