@@ -4,6 +4,10 @@
  * Usage: /bin/init
  *       init [0123456]
  *
+ * 2001-08-23  Harry Kalogirou
+ *	Many bug fixes. In general made it finaly work.
+ *	Also corrected the C formating.
+ * 
  * 1999-11-07  mario.frasca@home.ict.nl
  *
  *  Copyright 1999 Mario Frasca
@@ -65,14 +69,14 @@
 int hash(string)
 char *string;
 {
- char *p;
- int result = 0, i=1;
+	char *p;
+	int result = 0, i=1;
 
- p = string;
- while (*p)
-  result += ( (*p++)-'a')*(i++);
+	p = string;
+	while (*p)
+		result += ( (*p++)-'a')*(i++);
 
- return result;
+	return result;
 }
 
 /* `gently' exit */
@@ -106,10 +110,9 @@ each of the entries from inittab corresponds to a child, each of which:
 for each running child, we keep the pid assigned to a given id.
 We take this information each time from the INITTAB file.
 */
-struct tabentry
-{
- char id[3];
- pid_t pid;
+struct tabentry {
+	char id[3];
+	pid_t pid;
 };
 
 struct tabentry
@@ -124,77 +127,79 @@ void parseLine(line, foo)
 const char* line;
 void foo();
 {
- char *a[4];
- int k = 0, action;
- char buf[256], *p;
+	char *a[4];
+	int k = 0, action;
+	char buf[256], *p;
 
- strcpy(buf, line);
- a[k++] = p = buf;
- while(k<4)
- {
-  /* looking for the k-th ':' */
-  while(*p && *p != ':') p++;
-  *p = 0;
-  a[k++] = ++p;
- }
- foo(a);
+	strcpy(buf, line);
+	a[k++] = p = buf;
+	while(*p <= ' '){
+		if(*p == 0)return;
+		p++;
+	}
+	if(*p == '#')return;
+	while(k<4){
+		/* looking for the k-th ':' */
+		while(*p && *p != ':') p++;
+		*p = 0;
+		a[k++] = ++p;
+	}
+	foo(a);
 }
 
 void scanFile(foo)
 void foo();
 {
- int f, left;
- char buf[BUFSIZE], *line, *next;
+	int f, left;
+	char buf[BUFSIZE], *line, *next;
 
- f = open(INITTAB, O_RDONLY);
- if(-1 == f)
-  PANIC0;
+	f = open(INITTAB, O_RDONLY);
+	if(-1 == f)
+		PANIC0;
 
- left = read(f, buf, BUFSIZE);
- line = strtok(buf, "\n");
- next = strtok(NULL, "\n");
+	left = read(f, buf, BUFSIZE);
+	line = strtok(buf, "\n");
+	next = strtok(NULL, "\n");
 
- while (left)
- {
-  if (!next)
-  {
-   if(line == buf)
-    PANIC0;
-   memmove(buf, line, left);
-   left += read(f, buf+left, BUFSIZE-left);
-   line = buf;
-   next = strtok(buf, "\n");
-  }
-  else
-  {
-   parseLine(line, foo);
+	while (1) {
+		if (!next) {
+			if(line == buf)
+				goto out;
+			memmove(buf, line, left);
+			left += read(f, buf+left, BUFSIZE-left);
+			line = buf;
+			next = strtok(buf, "\n");
+		}
+		else {
+			parseLine(line, foo);
 
-   left -= next-line;
-   line = next;
-   next = strtok(NULL, "\n");
-  }
- }
- close(f);
+			left -= next-line;
+			line = next;
+			next = strtok(NULL, "\n");
+		}
+	}
+out:
+	close(f);
 }
 
 /* returns a pointer to the child or NULL */
 struct tabentry * matchPid(pid)
 pid_t pid;
 {
- struct tabentry *i=nextchild;
- while(i!=children)
-  if((--i)->pid == pid) return i;
- return 0;
+	struct tabentry *i=nextchild;
+	while(i!=children)
+		if((--i)->pid == pid) return i;
+	return 0;
 }
 
 /* returns a pointer to the child or NULL */
 struct tabentry * matchId(id)
 char * id;
 {
- struct tabentry * i=nextchild;
- while(i!=children)
-  if(!strcmp((--i)->id, id)) return i;
- return 0;
+	struct tabentry * i=nextchild;
+	while(i!=children)
+		if(!strcmp((--i)->id, id)) return i;
+	return 0;
 }
 
 
@@ -203,21 +208,21 @@ void appendChild (id, pid)
 char * id;
 pid_t pid;
 {
- if(MAXCHILD == nextchild-children)
-  PANIC("too many children");
- memcpy(nextchild->id, id, 2);
- nextchild->id[2] = 0;
- nextchild->pid = pid;
- nextchild++;
+	if(MAXCHILD == nextchild-children)
+		PANIC("too many children");
+	memcpy(nextchild->id, id, 2);
+	nextchild->id[2] = 0;
+	nextchild->pid = pid;
+	nextchild++;
 }
 
 /* removes child information from the array */
 void removeChild (pos)
 struct tabentry * pos;
 {
- if(pos-children >= nextchild-children)
-  PANIC("unexistent child");
- memcpy(pos, --nextchild, sizeof (struct tabentry) );
+	if(pos-children >= nextchild-children)
+		PANIC("unexistent child");
+	memcpy(pos, --nextchild, sizeof (struct tabentry) );
 }
 
 void doSleep(int sec)
@@ -233,331 +238,352 @@ void doSleep(int sec)
  */
 }
 
+void makefork()
+{
+    int pid;
+    int fd;
+    char **argv;
+    
+    pid = fork();
+    if(pid == 0){
+	setsid();
+#ifdef DEBUG
+        close(0);
+	close(1);
+	close(2);
+#endif
+	fd = open("/dev/tty1",O_RDWR);
+        dup2(fd ,STDIN_FILENO);
+	dup2(fd ,STDOUT_FILENO);
+        dup2(fd ,STDERR_FILENO);
+        argv[0] = "/bin/ps";
+        argv[1] = NULL;
+	execv(argv[0], argv);
+    }
+    while(pid != wait(NULL));
+}
+
 pid_t respawn(a)
 const char **a;
 {
- int pid, status;
+    int pid, status;
+    char *argv[4], buf[128];	
+    int fd;
+    char *devtty;
 
- FPUTS("spawning \"")
- FPUTS(a[3])
- FPUTS("\"\n")
+    FPUTS("spawning \"")
+    FPUTS(a[3])
+    FPUTS("\"\n")
 
- if (a[3] == 0)
-  return 1;
- pid = fork();
- if (-1 == pid)
-  PANIC0;
- if (0 == pid)
- {
-  char *argv[4], buf[128];
-  strcpy(buf, a[3]);
+    if (a[3] == 0)
+	return 1;
+    
+    pid = fork();
+    if (-1 == pid)
+	PANIC0;
+	
+    if (0 == pid)
+    {
+	setsid();
+#ifdef DEBUG
+        close(0);
+	close(1);
+	close(2);
+#endif
+	strcpy(buf, a[3]);
+	if(!strncmp(buf, GETTY, sizeof GETTY -1)){
+	    
+	    devtty = strchr(buf, ' ');
 
-  if(!strncmp(buf, GETTY, sizeof GETTY -1))
-  {
-   int fd;
-   char *devtty;
-   devtty = strchr(buf, ' ');
+	    if(!devtty)
+		PANIC0;
+	    *(devtty++) = 0;
+	    if ((fd = open(devtty, O_RDWR)) < 0)
+		PANIC0;
 
-   if(!devtty)
-    PANIC0;
-   *(devtty++) = 0;
-   if ((fd = open(devtty, O_RDWR)) < 0)
-    PANIC0;
+	    dup2(fd ,STDIN_FILENO);
+	    dup2(fd ,STDOUT_FILENO);
+	    dup2(fd ,STDERR_FILENO);
 
-   dup2(fd ,STDIN_FILENO);
-   dup2(fd ,STDOUT_FILENO);
-   dup2(fd ,STDERR_FILENO);
+	    argv[0] = GETTY;
+	    argv[1] = NULL;
 
-   argv[0] = GETTY;
-   argv[1] = NULL;
+	    execv(argv[0], argv);
+	}	
+	else
+	{
+	    if ((fd = open(DEVTTY, O_RDWR)) < 0)
+		PANIC0;
 
-   execv(argv[0], argv);
-  }
-  else
-  {
-   int fd;
-   if ((fd = open(DEVTTY, O_RDWR)) < 0)
-    PANIC0;
+	    dup2(fd ,STDIN_FILENO);
+	    dup2(fd ,STDOUT_FILENO);
+	    dup2(fd ,STDERR_FILENO);
 
-   dup2(fd ,STDIN_FILENO);
-   dup2(fd ,STDOUT_FILENO);
-   dup2(fd ,STDERR_FILENO);
+	    argv[0] = SHELL;
+	    argv[1] = "-e";
+	    argv[2] = buf;
+	    argv[3] = strtok(buf, " ");
+	    argv[4] = NULL;
 
-   argv[0] = SHELL;
-   argv[1] = "-e";
-   argv[2] = buf;
-   argv[3] = strtok(buf, " ");
-   argv[4] = NULL;
+    	    execv(argv[0], argv);
+	}
 
-   execv(argv[0], argv);
-  }
+	PANIC0;
+    }
 
-  PANIC0;
- }
+    FPUTS("owner process owns ")
+    FPUTD(pid)
+    FPUTC('\n')
 
- FPUTS("owner process owns ")
- FPUTD(pid)
- FPUTC('\n')
-
- /* here I must do something about utmp */
- return pid;
+/* here I must do something about utmp */
+    return pid;
 }
 
 void passOne(a)
 char **a;
 {
- pid_t pid;
+	pid_t pid;
 
- switch(hash(a[2]))
- {
- case INITDEFAULT:
-  runlevel = a[1][0];
-  break;
+	switch(hash(a[2])){
+	case INITDEFAULT:
+		runlevel = a[1][0];
+		break;
 
- case SYSINIT:
-  pid = respawn(a);
-  while(pid != wait());
-  break;
+	case SYSINIT:
+		pid = respawn(a);
+		while(pid != wait(NULL));
+		break;
 
- default:
-  /* ignore */
-  ;
- }
+	default:
+	/* ignore */
+	;
+	}
 }
 
 void getRunlevel(a)
 char **a;
 {
- if(INITDEFAULT == hash(a[2]))
- {
-  runlevel = a[1][0];
- }
+	if(INITDEFAULT == hash(a[2])){
+		runlevel = a[1][0];
+	}
 }
 
 void exitRunlevel(a)
 char **a;
 {
- FPUTS(a[0]) FPUTC(':') FPUTS(a[1]) FPUTC(':') FPUTS(a[2]) FPUTC(':')
-FPUTS(a[3])
+	FPUTS(a[0]) FPUTC(':') FPUTS(a[1]) FPUTC(':') FPUTS(a[2]) FPUTC(':')
+	FPUTS(a[3])
 
- if( a[1][0] && !strchr(a[1], runlevel) ) /*not autorized*/
- {
-  pid_t pid;
-  struct tabentry *child;
+	if( a[1][0] && !strchr(a[1], runlevel) ) {
+		pid_t pid;
+		struct tabentry *child;
 
-  FPUTS(" stop it!")
+		FPUTS(" stop it!")
 
-  /* if running, terminate it gently*/
-  child = matchId(a[0]);
-  if(!child) {
-   FPUTS(" not running\n")
-   return;
-  }
-  if(!child->pid) {
-   FPUTS(" not running\n")
-   return;
-  }
-  kill(child->pid, SIGTERM);
+		/* if running, terminate it gently*/
+		child = matchId(a[0]);
+		if(!child) {
+			FPUTS(" not running\n")
+			return;
+		}
+		if(!child->pid) {
+			FPUTS(" not running\n")
+			return;
+		}
+		kill(child->pid, SIGTERM);
 
-  doSleep(2);                  /* give it the time */
+		doSleep(2);                  /* give it the time */
 
-  /* if still running, kill it right away */
-  child = matchId(a[0]);
-  if(!child) return;
-  if(!child->pid) return;
-  kill(child->pid, SIGKILL);
- }
- FPUTC('\n')
+		/* if still running, kill it right away */
+		child = matchId(a[0]);
+		if(!child) return;
+		if(!child->pid) return;
+		kill(child->pid, SIGKILL);
+	}
+	FPUTC('\n')
 }
 
 void enterRunlevel(a)
 char **a;
 {
- pid_t pid;
+    pid_t pid;
 
- FPUTS(a[0]) FPUTC(':') FPUTS(a[1]) FPUTC(':') FPUTS(a[2]) FPUTC(':')
-FPUTS(a[3])
+    FPUTS(a[0]) FPUTS(" : ") FPUTS(a[1]) FPUTS(" : ") FPUTS(a[2]) FPUTS(" : ")
+    FPUTS(a[3])
 
- if( !a[1][0] || strchr(a[1], runlevel) ) /*autorized*/
- {
-  int andWait=0;
+    if( !a[1][0] || strchr(a[1], runlevel) ) 
+    {
+	int andWait=0;
 
   /* if not running, spawn it */
-  if ( !matchId(a[0]) )
-  switch(hash(a[2]))
-  {
-  case WAIT:
-   andWait = 1;
-  case RESPAWN:
-  case ONCE:
-   pid = respawn(a);
-   if(andWait)
-    while(pid != wait());
-   else
-    appendChild(a[0], pid);
-
-   break;
-  default:
-   {
-    FPUTS("discarded\n")
-   }
-  }
-  else
-  {
-   FPUTS("already running!\n")
-  }
- }
+	if ( !matchId(a[0]) )
+	switch(hash(a[2])){
+	case WAIT:
+	    andWait = 1;
+	case RESPAWN:
+	case ONCE:
+	    pid = respawn(a);
+	    if(andWait)
+		while(pid != wait(NULL));
+	    else
+		appendChild(a[0], pid);
+	    break;
+	default:
+	{
+	    FPUTS("discarded\n")
+	}
+	}
+	else
+	{
+	    FPUTS("already running!\n")
+        }
+    }
 }
 
 void spawnThisOne(a)
 char **a;
 {
- if( !strncmp(a[0], thisOne->id, 2) )
- {
-  switch(hash(a[2]))
-  {
-  case RESPAWN:
-  case ONDEMAND:
-   thisOne->pid = respawn(a);
-   break;
-  default:
-   removeChild(thisOne);
-  }
-  strcpy(utentry.ut_line, strstr(a[3], "/tty")+1);
-  time(&utentry.ut_time);
-  utentry.ut_id[0] = a[0][0];
-  utentry.ut_id[1] = a[0][1];
-  utentry.ut_pid = thisOne->pid;
-   setutent();
-   pututline(&utentry);
-  endutent();
- }
-
+	if( !strncmp(a[0], thisOne->id, 2) ) {
+		switch(hash(a[2])) {
+		case RESPAWN:
+		case ONDEMAND:
+			thisOne->pid = respawn(a);
+			break;
+		default:
+		removeChild(thisOne);
+		}
+		
+		strcpy(utentry.ut_line, strstr(a[3], "/tty")+1);
+		time(&utentry.ut_time);
+		utentry.ut_id[0] = a[0][0];
+		utentry.ut_id[1] = a[0][1];
+		utentry.ut_pid = thisOne->pid;
+		setutent();
+		pututline(&utentry);
+		endutent();
+	}
 }
 
 void handle_signal(sig)
 int sig;
 {
- FPUTS("got signaled!\n")
- switch(sig)
- {
- case SIGHUP:
-/* got signaled by another instance of init, change runlevel! */
-  {
-   prevRunlevel = runlevel;
-   scanFile(getRunlevel);
+	FPUTS("got signaled!\n")
+	switch(sig) {
+		case SIGHUP:
+		/* got signaled by another instance of init, change runlevel! */
+		{
+			prevRunlevel = runlevel;
+			scanFile(getRunlevel);
+	
+			if (runlevel != prevRunlevel){
 
-   if (runlevel != prevRunlevel)
-   {
+				/* -stop all running children not needed in new run-level */
+				scanFile(exitRunlevel);
 
-  /* -stop all running children not needed in new run-level */
-   scanFile(exitRunlevel);
-
-  /* -start all non running children needed in new run-level */
-   scanFile(enterRunlevel);
-   }
-  }
-  break;
- }
+				/* -start all non running children needed in new run-level */
+				scanFile(enterRunlevel);
+			}
+		}
+		break;
+	}
 }
 
 int main(argc, argv)
 char ** argv;
 int argc;
 {
- int fd;
+	int fd;
+	pid_t pid;
+	struct tabentry *entry;
 
+	argv[0] = "init";
 #ifdef DEBUG
- fd = open(DEVTTY, 2);
- dup2(fd, 0);
- dup2(fd, 1);
- dup2(fd, 2);
-
- FPUTS("entered /bin/init\n")
+	fd = open(DEVTTY, 2);
+	dup2(fd, 0);
+	dup2(fd, 1);
+	dup2(fd, 2);
+	FPUTS("entered /bin/init\n")
 #endif
 
- memset(&utentry, 0, sizeof(struct utmp));
- utentry.ut_type = INIT_PROCESS;
- time(&utentry.ut_time);
- utentry.ut_id[0] = 'l';
- utentry.ut_id[1] = '1';
- utentry.ut_pid = getpid();
- strcpy(utentry.ut_user, "INIT");
-  setutent();
-  pututline(&utentry);
+	memset(&utentry, 0, sizeof(struct utmp));
+	utentry.ut_type = INIT_PROCESS;
+	time(&utentry.ut_time);
+	utentry.ut_id[0] = 'l';
+	utentry.ut_id[1] = '1';
+	utentry.ut_pid = getpid();
+	strcpy(utentry.ut_user, "INIT");
+	setutent();
+	pututline(&utentry);
 
-/* am I the No.1 init? */
- if(getpid() == 1)
- {
-  struct tabentry *entry;
+	/* am I the No.1 init? */
+	if(getpid() == 1){
+	
+		/*   signal(SIGALRM,  handle_signal); */
+		signal(SIGHUP,   handle_signal);
+		/*   signal(SIGINT,   handle_signal); */
+		/*   signal(SIGCHLD,  handle_signal); */
+		/*   signal(SIGPWR,   handle_signal); */
+		/*   signal(SIGWINCH, handle_signal); */
+		/*   signal(SIGUSR1,  handle_signal); */
+		/*   signal(SIGSTOP,  handle_signal); */
+		/*   signal(SIGTSTP,  handle_signal); */
+		/*   signal(SIGCONT,  handle_signal); */
+		/*   signal(SIGSEGV,  handle_signal); */			
+	
+		setutent();
 
-/*   signal(SIGALRM,  handle_signal); */
-  signal(SIGHUP,   handle_signal);
-/*   signal(SIGINT,   handle_signal); */
-/*   signal(SIGCHLD,  handle_signal); */
-/*   signal(SIGPWR,   handle_signal); */
-/*   signal(SIGWINCH, handle_signal); */
-/*   signal(SIGUSR1,  handle_signal); */
-/*   signal(SIGSTOP,  handle_signal); */
-/*   signal(SIGTSTP,  handle_signal); */
-/*   signal(SIGCONT,  handle_signal); */
-/*   signal(SIGSEGV,  handle_signal); */
+		/* get runlevel & spawn sysinit */
+		FPUTS("scanfile - passOne\n")
+		scanFile(passOne);
+		FPUTS("entered runlevel ")
+		FPUTC(runlevel)
+		FPUTC('\n')
+	  
+		/* spawn needed children */
+		FPUTS("scanfile - enterRunlevel\n")
+		scanFile(enterRunlevel);	
 
-   setutent();
+		endutent();
 
-  /* get runlevel & spawn sysinit */
-  FPUTS("scanfile - passOne\n")
-  scanFile(passOne);
-  FPUTS("entered runlevel ")
-  FPUTC(runlevel)
-  FPUTC('\n')
+		/* wait for signals. */
+		while(1) {	
 
-  /* spawn needed children */
-  FPUTS("scanfile - enterRunlevel\n")
-  scanFile(enterRunlevel);
+			FPUTS("about to go waiting...\n")
+			pid = wait(NULL);
 
-   endutent();
+			FPUTS("and ")
+			FPUTD(pid)
+			FPUTS(" came out\n")
 
-  /* wait for signals. */
-  while(1)
-  {
-   pid_t pid;
+			if(-1 == pid)
+				continue;
 
-   FPUTS("about to go waiting...\n")
-   pid = wait();
+			FPUTS("child ")
+			FPUTD(pid)
+			FPUTS(" died...\n")
 
-   FPUTS("and ")
-   FPUTD(pid)
-   FPUTS(" came out\n")
+			thisOne = matchPid(pid);
+			if(!thisOne)
+				continue;
 
-   if(-1 == pid)
-    continue;
+			FPUTS("scanfile - spawnThisOne\n")
+			scanFile(spawnThisOne);
+		}
+	}
+	else
+	{
+		/* store the new run-level into /etc/initrunlvl */
+		int f = open(INITLVL, O_WRONLY);
+		write(f, argv[1], 1);
+		close(f);
 
-   FPUTS("child ")
-   FPUTD(pid)
-   FPUTS(" died...\n")
+		FPUTS("change request to ")
+		FPUTC(argv[1][0])
+		FPUTC('\n')
 
-   thisOne = matchPid(pid);
-   if(!thisOne)
-    continue;
-
-   FPUTS("scanfile - spawnThisOne\n")
-   scanFile(spawnThisOne);
-  }
- }
- else
- {
-  /* store the new run-level into /etc/initrunlvl */
-  int f = open(INITLVL, O_WRONLY);
-  write(f, argv[1], 1);
-  close(f);
-
-  FPUTS("change request to ")
-  FPUTC(argv[1][0])
-  FPUTC('\n')
-
-  /* signal (SIGHUP) the No.1 init that we must switch run-level. */
-  kill(1, SIGHUP);
- }
- return 0;
+		/* signal (SIGHUP) the No.1 init that we must switch run-level. */
+		kill(1, SIGHUP);
+	}
+	return 0;
 }
+

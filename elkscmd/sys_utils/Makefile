@@ -37,7 +37,7 @@ getty: getty.c
 	$(CC) $(CFLAGS) $(LDFLAGS) getty.c -o getty -H 2000
 
 new_init: init.c utent.o
-	$(CC) $(CFLAGS) $(LDFLAGS) init.c utent.o -o new_init # -H 2000
+	$(CC) $(CFLAGS) $(LDFLAGS) init.c utent.o -o new_init
 
 init: min_init.c utent.o
 	$(CC) $(CFLAGS) $(LDFLAGS) min_init.c utent.o -o init -H 2000
