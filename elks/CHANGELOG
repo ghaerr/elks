@@ -16,7 +16,7 @@ Christoph Plattner      <Christoph.Plattner@dot.at>     31 Jan 2000- 2 Feb 2000
 David Murn              <scuffer@hups.apana.org.au>     11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
-Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>    20 Jun 2001-27 Jan 2002
+Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>    20 Jun 2001- 7 Mar 2002
 Jacek Lipkowski         <sq5bpf@acid.ch.pw.edu.pl>      20 Jan 2002
 M Warner Losh           <imp@village.org>               20 Jan 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
@@ -31,24 +31,22 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Thu Mar 07 14:47:03 EET 2002 Harry Kalogirou <harkal@gmx.net>
+Thu Mar 07 14:47:03 EET 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Added MSS tcp option transmition.
 	* Fixed do_fork() bug, it was leaving dummy tasks on the
 	  task table under memory shortage.
 
-Mon Mar 04 01:04:28 EET 2002 Harry Kalogirou <harkal@gmx.net>
+Mon Mar 04 01:04:28 EET 2002	Harry Kalogirou <harkal@gmx.net>
+
+	* This is ELKS 0.1.0-pre4
 
 	* TCP/IP accept bug.
 	* Reduced the TIME_WAIT expire from 2mins to 30 secs.
 	  This helps keep down the number of active TCP control blocks.
 	* Fixed final "write config file" dialog in menuconfig.
-	* Made this 0.1.0-pre4 release, since there was no actual 
-	  release last time (Sun Jan 13 22:37:14).
 
 Sun Feb 24 14:50:29 GMT 2002	Riley Williams <rhw@memalpha.cx>
-
-	* This is ELKS 0.1.0-pre5
 
 	* Made ELKS not rely on the Linux kernel source being present for
 	  the error values, by importing the Linux 2.5.5 errno.h files
@@ -154,8 +152,6 @@ Mon Jan 14 16:18:21 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
 Sun Jan 13 22:37:14 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
-	* This is ELKS 0.1.0-pre4
-
 	* Move serial ports from device minors 4-7 to 64-67 to allow for
 	  more virtual terminals (currently limited by the minors for
 	  the serial ports).
@@ -229,8 +225,7 @@ Fri Nov 24 02:31:18 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 Fri Nov 23 19:34:28 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
-	* Fixed sys_lseek() to correctly return the resulting offset
-	  location.
+	* Fixed sys_lseek() to correctly return the resulting offset location.
 	* Made inet aware of CONFIG_SOCK_CLIENTONLY.
 
 Fri Nov 23 15:36:00 EET 2001	Harry Kalogirou <harkal@gmx.net>
@@ -239,9 +234,8 @@ Fri Nov 23 15:36:00 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 Fri Nov 23 02:32:35 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
-	* Fixed do_fork(). It was not freeing the previously
-	  allocated code segment when the allocation of the
-	  data segment was failing.
+	* Fixed do_fork(). It was not freeing the previously allocated code
+	  segment when the allocation of the data segment was failing.
 	* Fixed zero tcp window issues
 
 Wed Nov 21 01:37:32 EET 2001	Harry Kalogirou <harkal@gmx.net>
