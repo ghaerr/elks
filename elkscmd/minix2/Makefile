@@ -1,16 +1,21 @@
 BASEDIR=..
 
+LOCALFLAGS=-D_POSIX_SOURCE
+
 include $(BASEDIR)/Make.defs
 
-CFLAGS	= $(CFLBASE) -D_POSIX_SOURCE
+PRGS=env install lp pwdauth tget remsync synctree lpd
 
-PRGS =	env install lp pwdauth  tget lpd # remsync synctree mt
+# mt # Doesn't compile.
 
-NETPRGS = env
+NETPRGS=env
 
 all: $(PRGS)
 
 lpd: lpd.o ../lib/mktemp.o
+
+../lib/mktemp.o:
+	make -C ../lib mktemp.o
 
 rfs: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin
@@ -23,4 +28,4 @@ min_rfs: all
 smin_rfs: all
 
 clean:
-	rm -f $(PRGS) *.o
+	rm -f core *.o $(PRGS)
