@@ -48,7 +48,9 @@ mainmenu_option next_comment
     else
 	if [ "$CONFIG_CONSOLE_ECHO" = "n" ]; then
 	    if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
-		bool 'Serial device driver'	CONFIG_CHAR_SIBO_SERIAL   n
+		if [ "$CONFIG_NOT_YET" = "y" ]; then
+		    bool 'Serial device driver'	CONFIG_CHAR_SIBO_SERIAL   n
+		fi
 	    fi
 	fi
     fi

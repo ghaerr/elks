@@ -59,7 +59,7 @@
  *	- Display help in text window to allow for cut and paste.
  *	- Allow for empty lines in help texts.
  *	- update_define should not set all variables unconditionally to 0:
- *	  they may have been set to 1 elsewhere. CONFIG_NETLINK is an example.
+ *	  they may have been set to 1 elsewhere.
  *
  * 2002 04 22	Riley Williams
  *	- Reindented code throughout, resulting in consistent formatting.

@@ -123,7 +123,7 @@ DISTDIR 	= $(shell $(BASEDIR)/scripts/setdir $(TOPDIR)/../elks-$(DIST)/$(MYDIR))
 #########################################################################
 # Specify the configuration shell to use.
 
-CONFIG_SHELL	:= $(shell \
+CFG_SHELL	:= $(shell \
 	     if [ -x "$$bash" ]; \
 		then echo $$bash ; \
 		else if [ -x /bin/bash ]; \

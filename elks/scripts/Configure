@@ -167,7 +167,7 @@ function comment () {
     echo " * $1"
     echo " *"
     (echo "" ; echo "#"; echo "# $1" ; echo "#") >>$CONFIG
-    (echo "" ; echo "/*"; echo " * $1" ; echo " */") >>$CONFIG_H
+    (echo "" ; echo "/*"; echo " * $1" ; echo " */") >>$CFG_H
 }
 
 # define_bool sets the value of a boolean argument
@@ -185,14 +185,14 @@ function define_bool () {
 function define_tristate () {
     case "$2" in
 	"y")	echo "$1=y" >>$CONFIG
-		echo "#define $1 1" >>$CONFIG_H
+		echo "#define $1 1" >>$CFG_H
 		;;
 	"m")	echo "$1=m" >>$CONFIG
-		echo "#undef  $1" >>$CONFIG_H
-		echo "#define $1_MODULE 1" >>$CONFIG_H
+		echo "#undef  $1" >>$CFG_H
+		echo "#define $1_MODULE 1" >>$CFG_H
 		;;
 	"n")	echo "# $1 is not set" >>$CONFIG
-		echo "#undef  $1" >>$CONFIG_H
+		echo "#undef  $1" >>$CFG_H
 		;;
     esac
     eval "$1=$2"
@@ -385,7 +385,7 @@ function dep_mbool () {
 
 function define_int () {
     echo "$1=$2" >>$CONFIG
-    echo "#define $1 ($2)" >>$CONFIG_H
+    echo "#define $1 ($2)" >>$CFG_H
     eval "$1=$2"
 }
 
@@ -423,7 +423,7 @@ function int () {
 
 function define_hex () {
     echo "$1=$2" >>$CONFIG
-    echo "#define $1 0x${2#*[x,X]}" >>$CONFIG_H
+    echo "#define $1 0x${2#*[x,X]}" >>$CFG_H
     eval "$1=$2"
 }
 
@@ -453,7 +453,7 @@ function hex () {
 
 function define_string () {
     echo "$1=\"$2\"" >>$CONFIG
-    echo "#define $1 \"$2\"" >>$CONFIG_H
+    echo "#define $1 \"$2\"" >>$CFG_H
     eval "$1=\"$2\""
 }
 
@@ -563,8 +563,8 @@ function choice () {
 }
 
 CONFIG=.tmpconfig
-CONFIG_H=.tmpconfig.h
-trap "rm -f $CONFIG $CONFIG_H ; exit 1" 1 2
+CFG_H=.tmpconfig.h
+trap "rm -f $CONFIG $CFG_H ; exit 1" 1 2
 
 # Make sure we start out with a clean slate.
 
@@ -573,7 +573,7 @@ cat > $CONFIG <<-.EOF
 	# Automatically generated make config: don't edit
 	#
 	.EOF
-cat > $CONFIG_H <<-.EOF
+cat > $CFG_H <<-.EOF
 	/*
 	 * Automatically generated C config: don't edit
 	 */
@@ -584,9 +584,9 @@ if [ "$1" = "-d" ] ; then
     DEFAULT="-d"
     shift
 fi
-CONFIG_IN=./config.in
+CFG_IN=./config.in
 if [ "$1" != "" ] ; then
-    CONFIG_IN=$1
+    CFG_IN=$1
 fi
 DEFAULTS=arch/$ARCH/defconfig
 if [ -f .config ]; then
@@ -609,7 +609,7 @@ else
 	#
 	.EOF
 fi
-. $CONFIG_IN
+. $CFG_IN
 rm -f .config.old
 if [ -f .config ]; then
     mv .config .config.old

@@ -26,13 +26,32 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-23 Jun 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-24 Jun 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Mon Jun 24 07:22:08 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Rewrote scripts/vars command so it actually works.
+	* Changed elks/Makefile and elks/Makefile-rules to use CFG_SHELL
+	  instead of CONFIG_SHELL to prevent false hits by scripts/vars.
+	* Changed scripts/Configure and scripts/Menuconfig to use
+	  CFG_H and CFG_IN rather than CONFIG_H and CONFIG_IN as local
+	  variables to prevent false hits by scripts/vars.
+	* Rationalise ELKS configuration options. Specifically, label
+	  all currently unimplemented options as being unimplemented.
+	* Create a full set of configuration options to describe the
+	  possible memory configurations.
+	* Added help texts for several currently undescribed options.
+	* Listed configuration options that are the second or later
+	  options in choice statements (and thus do not need to have
+	  associated help texts) at the end of the help file.
+
+		*** NOTE - KTCP DOES NOT CURRENTLY WORK ***
 
 Sun Jun 23 09:25:38 BST 2002	Riley Williams <Riley@Williams.Name>
 

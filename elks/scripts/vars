@@ -1,32 +1,70 @@
 #!/bin/bash
 
-cd ~/CVS/Source
+function analyse() {
+    sed 's/\#.*$//' | tr -cs '0-9_A-Za-z' '\n' | grep ^CONFIG_ | grep -v '_$'
+}
 
 function count() {
-    files "${1}"			\
-	| xargs fgrep -cw "${2}"	\
-	| grep -v ':0$'			\
-	| wc -l
+    fgrep -w "$1" | cut -d : -f 1 | uniq | wc -l
 }
 
 function files() {
-    find "${1}" -type f | grep -v 'CHANGELOG$'
+    find * -type f ! -name CHANGELOG ! -name RELNOTES "$@"
+}
+
+function help() {
+    local HELPFILE=Documentation/Configure.help
+
+    if [ ! -f "${HELPFILE}" ]; then
+	echo 0
+    else
+	grep "^$1"'$' < "${HELPFILE}" | wc -l
+    fi
+}
+
+function list() {
+    files -name "$1" -print0 | xargs -0 grep ^
 }
 
 function process() {
-    local NEW OLD X Y
+    local N=0 IN_C IN_S INHELP INCFG OTHER TOTAL
 
-    while read OLD NEW ; do
-	X=`count "${1}" "${OLD}"`
-#	if [ $X -gt 0 ]; then
-	    Y=`count "${1}" "${NEW}"`
-	    printf '%3u => %3u for %-31s => %s\n' ${X} ${Y} "${OLD}" "${NEW}"
-#	fi
+    cat <<-.eof
+	varhelp 1.0.0 configuration and help variable analyser
+	Copyright (C) 2002, Riley Williams <Riley@Williams.Name>
+	Released under the GNU General Public Licence, version 2 only.
+
+	`date '+Last run on %A, %d %B %Y at %T %Z.'`
+
+	 Help   *.[ch]  *.[Ss]  *.in    Other   Total   Configuration variable
+	~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~
+	.eof
+    vars | sort | uniq | while read VAR ; do
+	INHELP=`help "${VAR}"`
+	IN_C=`list '*.[ch]' | count "${VAR}"`
+	IN_S=`list '*.[Ss]' | count "${VAR}"`
+	INCFG=`list '*.in' | count "${VAR}"`
+	TOTAL=`list '*' | count "${VAR}"`
+	OTHER=$[${TOTAL}-${INHELP}-${IN_C}-${IN_S}-${INCFG}]
+	if [ ${INHELP} -eq 0 -o ${TOTAL} -eq 1 ]; then
+	    printf '%6d  %6d  %6d  %6d  %6d  %6d  %s\n' \
+		${INHELP} ${IN_C} ${IN_S} ${INCFG} ${OTHER} ${TOTAL} "${VAR}"
+	    N=$[$N+1]
+	fi
     done
+    cat <<-.eof
+	~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~
+	$N found.
+
+	.eof
 }
 
 function vars() {
-    fgrep CONFIG_ "${1}" | grep -v '[a-z]'
+    local FILE
+
+    files | while read FILE ; do
+	analyse < "${FILE}"
+    done
 }
 
-vars elks/CHANGELOG | process elks
+process 2>&1 | tee ${1:-/dev/null}

@@ -14,7 +14,6 @@ entered in as decimal or hexadecimal numbers or possibly text.
 Menu items beginning with [*], <M> or [ ] represent features 
 configured to be built in, modularized or removed respectively.
 Pointed brackets <> represent module capable features.
-                                                             more...
 
 To change any of these features, highlight it with the cursor 
 keys and press <Y> to build it in, <M> to make it a module or

@@ -6,6 +6,12 @@ comment 'File systems'
 
 bool 'Elks file system' 		CONFIG_ELKSFS_FS		n
 bool 'Minix file system'		CONFIG_MINIX_FS 		y
+if [ "$CONFIG_NOT_YET" = "y" ]; then
+    bool 'MS-DOS file system'		CONFIG_MSDOS_FS 		n
+    if [ "$CONFIG_MSDOS_FS" = "y" ]; then
+	bool 'vfat file system' 	CONFIG_VFAT_FS			n
+    fi
+fi
 bool 'ROM file system'  		CONFIG_ROMFS_FS 		n
 
 comment 'General filesystem settings'

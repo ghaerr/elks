@@ -32,7 +32,7 @@ struct super_block super_blocks[NR_SUPER];
 static int do_remount_sb();
 
 /* this is initialized in init/main.c */
-kdev_t ROOT_DEV = CONFIG_ROOTDEV;
+kdev_t ROOT_DEV = CFG_ROOTDEV;
 
 /*
  *	Supported File System List

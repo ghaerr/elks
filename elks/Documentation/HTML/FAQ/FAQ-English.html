@@ -508,12 +508,13 @@ some of the more useful ones:</a></p>
   <pre><a name="2.8">	umount /dev/bd??<br></a></pre>
           
   <p align="justify"><a name="2.8">You will now need to re-compile a new
-kernel with the correct root device selected. To do this edit include/linuxmt/config.h
- in the ELKS kernel sources, and changed the CONFIG_ROOTDEV from 0x380 to
-the device number of the partition. The last two digits must be the minor
- number of the partition in hex. The minor number can be found from the list
-above in the far right column. E.g. The minor number for bdb3 is 67, which
-is 43 in hex, so the ROOT_DEV value is 0x343.</a></p>
+kernel with the correct root device selected. To do this edit
+include/linuxmt/config.h in the ELKS kernel sources, and change the
+CFG_ROOTDEV from 0x380 to the device number of the partition. The last two
+digits must be the minor number of the partition in hex. The minor number
+can be found from the list above in the far right column. E.g. The minor
+number for bdb3 is 67, which is 43 in hex, so the ROOT_DEV value is
+0x343.</a></p>
           
   <p align="justify"><a name="2.8">When you have done this, type...</a></p>
           

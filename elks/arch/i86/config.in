@@ -145,10 +145,6 @@ mainmenu_option next_comment
 	    fi
 
 	    bool 'Use bootup IRQ-Mask of 8259 as default'	CONFIG_HW_259_USE_ORIGINAL_MASK n
-#	    bool 'Different System clock at Timer 8253'		CONFIG_HW_8253_SYSTEM_CLOCK n
-#	    if [ "$CONFIG_HW_8253_SYSTEM_CLOCK" = "y" ]; then
-#		hex 'Initvalue for Timerchanel 0 (for 10 ms)'	CONFIG_HW_8253_VALUE_FOR_100HZ 0x2e9c
-#	    fi
 	    int 'Ticks for BogoMIPS (0 = check at boottime)'	CONFIG_BOGOMIPS 0
 	    bool 'NO Floppycount at 40:10 use INT13.08'		CONFIG_HW_USE_INT13_FOR_FLOPPY n 
 	    bool 'Dont seek to get Floppy information (use I13.8)' CONFIG_HW_NO_SEEK_FOR_FLOPPY y

@@ -97,7 +97,7 @@ static void init_task()
     /* Root of /dev/fd0 */
 
 #if 0
-    ROOT_DEV = CONFIG_ROOTDEV;
+    ROOT_DEV = CFG_ROOTDEV;
 #endif
 
     mount_root();

@@ -229,7 +229,7 @@ clean:	nodep doclean
 
 config:	arch/i86/drivers/char/KeyMaps/Config.in
 	@echo
-	@$(CONFIG_SHELL) scripts/Configure arch/$(ARCH)/config.in
+	@$(CFG_SHELL) scripts/Configure arch/$(ARCH)/config.in
 	@echo
 	@echo ' * Configuration complete. You need to run `make dep` next.'
 	@echo
@@ -263,7 +263,7 @@ dup:
 
 menuconfig:	arch/i86/drivers/char/KeyMaps/Config.in
 	${MAKE} -C scripts/lxdialog all
-	$(CONFIG_SHELL) scripts/Menuconfig arch/$(ARCH)/config.in
+	$(CFG_SHELL) scripts/Menuconfig arch/$(ARCH)/config.in
 
 set:
 	@set

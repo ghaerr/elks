@@ -8,6 +8,26 @@ mainmenu_option next_comment
 	bool 'BIOS block device support'	CONFIG_BLK_DEV_BIOS	y
 	if [ "$CONFIG_BLK_DEV_BIOS" = "y" ]; then
 	    bool '  BIOS floppy drive support'	CONFIG_BLK_DEV_BFD	y
+	    if [ "$CONFIG_BLK_DEV_BFD" = "y" ]; then
+		bool '    Pre-set floppy types'	CONFIG_BLK_DEV_BFD_HARD n
+		if [ "$CONFIG_BLK_DEV_BFD_HARD" = "y" ]; then
+		    comment 'Currently ignored and assumed to be 2880k for both drives.'
+		    choice '      Primary floppy drive type'	  \
+			   "None	CONFIG_BLK_DEV_BFD0_NONE  \
+			    360k	CONFIG_BLK_DEV_BFD0_360   \
+			    720k	CONFIG_BLK_DEV_BFD0_720   \
+			    1200k	CONFIG_BLK_DEV_BFD0_1200  \
+			    1440k	CONFIG_BLK_DEV_BFD0_1440  \
+			    2880k	CONFIG_BLK_DEV_BFD0_2880"	2880K
+		    choice '      Secondary floppy drive type'	  \
+			   "None	CONFIG_BLK_DEV_BFD1_NONE  \
+			    360k	CONFIG_BLK_DEV_BFD1_360   \
+			    720k	CONFIG_BLK_DEV_BFD1_720   \
+			    1200k	CONFIG_BLK_DEV_BFD1_1200  \
+			    1440k	CONFIG_BLK_DEV_BFD1_1440  \
+			    2880k	CONFIG_BLK_DEV_BFD1_2880"	None
+		fi
+	    fi
 	    bool '  BIOS hard drive support'	CONFIG_BLK_DEV_BHD	y
 	fi
 	if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
@@ -29,7 +49,9 @@ mainmenu_option next_comment
 	fi
     else
 	bool 'SSD disk support'			CONFIG_BLK_DEV_SSD	n
-	bool 'Internal disk support'		CONFIG_BLK_DEV_ID	n
+	if [ "$CONFIG_NOT_YET" = "y" ]; then
+	    bool 'Internal disk support'	CONFIG_BLK_DEV_ID	n
+	fi
 	define_bool CONFIG_BLK_DEV_BIOS n
     fi
 

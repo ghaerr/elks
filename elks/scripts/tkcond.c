@@ -391,15 +391,15 @@ void fix_conditionals(struct kconfig *scfg)
     }
 
     /*
-     * Now go through the list, and every time we see a kvariable, check to
-     * see whether it also has some dependencies. If so, then append it to our
-     * list. The reason we do this is that we might have option CONFIG_FOO
-     * which is only used if CONFIG_BAR is set. It may turn out that in
-     * config.in that the default value for CONFIG_BAR is set to "y", but that
-     * CONFIG_BAR is not enabled because CONFIG_XYZZY is not set. The current
-     * condition chain does not reflect this, but we can fix this by searching
-     * for the tokens that this option depends upon and cloning the conditions
-     * and merging them with the list.
+#    * Now go through the list, and every time we see a kvariable, check to
+#    * see whether it also has some dependencies. If so, then append it to our
+#    * list. The reason we do this is that we might have option CONFIG_FOO
+#    * which is only used if CONFIG_BAR is set. It may turn out that in
+#    * config.in that the default value for CONFIG_BAR is set to "y", but that
+#    * CONFIG_BAR is not enabled because CONFIG_XYZZY is not set. The current
+#    * condition chain does not reflect this, but we can fix this by searching
+#    * for the tokens that this option depends upon and cloning the conditions
+#    * and merging them with the list.
      */
     for (cfg = scfg; cfg != NULL; cfg = cfg->next) {
 	/*

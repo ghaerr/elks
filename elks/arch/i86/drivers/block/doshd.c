@@ -48,17 +48,6 @@
 
 #include "blk.h"
 
-/* Uncomment this if your floppy drive(s) can't be properly recognized
- * Search for CONFIG_BLK_DEV_BFD_HARD and adjust ndrives and drive_info[]
- * to match your system
- */
-
-/* #define CONFIG_BLK_DEV_BFD_HARD */
-
-/* Uncomment this if the driver needs to support requests that are not
- * 1024 bytes (2 sectors)
- */
-
 /* #define MULT_SECT_RQ */
 
 #define BUFSEG 0x800

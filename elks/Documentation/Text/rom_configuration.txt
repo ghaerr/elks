@@ -197,15 +197,6 @@ This section include the option used only in the kernel.
    
    
    
-'Different system clock at Timer 8253'         CONFIG_HW_8253_SYSTEM_CLOCK  
-'Initvalue for timer chanel 0 (for 10 ms)'     CONFIG_HW_8253_VALUE_FOR_100HZ   
---------------------------------------------------------------------
-
-   If you system have an other input clock for timer 0 then the original
-   IBM PC you can define here the correct value to get a 10 ms (100 Hz) 
-   clock for the scheduler interrupt (IRQ 0).
-
-
 'Ticks for BogoMIPS (0 = check at boot time)'  CONFIG_BOGOMIPS
 ------------------------------------------------------------
 

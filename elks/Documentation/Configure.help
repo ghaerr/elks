@@ -49,6 +49,11 @@ CONFIG_NOT_YET
 
   Just say N and live in peace.
 
+Allow modules to be used.
+CONFIG_MODULES
+  This facility is not currently present in the ELKS kernel, so can be
+  ignored at this time.
+
 # Architecture selection
 # ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -81,10 +86,6 @@ CONFIG_PC_AUTO
 Support loadable modules
 CONFIG_MODULE
   Saying yes includes experimental support for loadable modules.
-
-Support shared libraries
-CONFIG_SHLIB
-  Saying yes includes experimental support for shared libraries.
 
 # Model-specific options
 # ~~~~~~~~~~~~~~~~~~~~~~
@@ -275,6 +276,36 @@ CONFIG_HW_NO_SEEK_FOR_FLOPPY
   Saying yes will explicitly tell ELKS not to use Int13.08 to get 
   Floppy information (Int 13.08 doesn't work on PC/XT floppy drives).
 
+# Memory configuration
+# ~~~~~~~~~~~~~~~~~~~~
+
+Base memory size (64k pages)
+CONFIG_MEM_PAGES
+  Specifies the minimum amount of memory in 64k pages that the target
+  system is required to have. The default is 8 pages (512k) and it can
+  be set between 4 pages (256k) and 10 pages (640k).
+
+Expanded (EMS) Memory Support
+CONFIG_EMS
+  Includes support for EMS hardware. Currently unimplemented.
+
+Extended (XMS) Memory Support
+CONFIG_XMS
+  Includes support for XMS memory. This is memory that is mapped above
+  the first megabyte of memory on systems based on 80286 and later
+  processors.
+
+High Memory (HMA) Support
+  Includes support for the HMA on systems based on 80286 and later
+  processors.
+
+  The HMA is the first 65,520 bytes of the second megabyte of memory,
+  and can be accessed by making use of a side-effect of the fact that
+  memory addresses do not wrap round on the later processors. Because
+  of this, a segment address of 0xFFFF produces a memory segment that
+  contains the last 16 bytes of the first megabyte together with the
+  HMA and this area is accessible from real mode once set up.
+
 Swap support (Experimental)
 CONFIG_SWAP
   Include support for swapping to virtual memory.
@@ -312,6 +343,14 @@ CONFIG_OPT_SMALL
   Where two versions of a function exist this will cause the smaller
   version rather than the faster version to be included.
 
+# System calls
+# ~~~~~~~~~~~~
+
+Include kernel version system call
+CONFIG_SYS_VERSION
+  This includes support for a system call that provides the version
+  number of the current ELKS kernel.
+
 # Embedded systems
 # ~~~~~~~~~~~~~~~~
 
@@ -319,13 +358,6 @@ Remove filesystem code
 CONFIG_NOFS
   Remove the filesystem support for small embedded systems with no block
   devices.
-
-Execute code from ROM
-CONFIG_EXEC_ROM
-  Add support for executing user processes in place from an image in ROM.
-  Can be used even if no filesystem code is included.
-
-  ~~~~~~~~~~~~CURRENTLY UNIMPLEMENTED~~~~~~~~~~~~~~~~~
 
 # Console display support
 # ~~~~~~~~~~~~~~~~~~~~~~~
@@ -390,6 +422,11 @@ CONFIG_KEYMAP_UK
   This option specifies that support be provided for XT keyboards with
   the British key layout. There are no dead keys with this layout.
 
+Select XT keyboard support for Dvorak (DV) keyboards
+CONFIG_KEYMAP_DV
+  This option specifies that support be provided for XT keyboards with
+  the Dvorak key layout and associated dead keys.
+
 Select XT keyboard support for French (FR) keyboards
 CONFIG_KEYMAP_FR
   This option specifies that support be provided for XT keyboards with
@@ -400,15 +437,15 @@ CONFIG_KEYMAP_DE
   This option specifies that support be provided for XT keyboards with
   the German key layout and associated dead keys.
 
-Select XT keyboard support for Dvorak (DV) keyboards
-CONFIG_KEYMAP_DV
-  This option specifies that support be provided for XT keyboards with
-  the Dvorak key layout and associated dead keys.
-
 Select XT keyboard support for Spanish (ES) keyboards
 CONFIG_KEYMAP_ES
   This option specifies that support be provided for XT keyboards with
   the Spanish key layout and associated dead keys.
+
+Select XT keyboard support for Swedish (ES) keyboards
+CONFIG_KEYMAP_SE
+  This option specifies that support be provided for XT keyboards with
+  the Swedish key layout and associated dead keys.
 
 # Character devices
 # ~~~~~~~~~~~~~~~~~
@@ -453,11 +490,44 @@ CONFIG_BLK_DEV_BIOS
 
 BIOS Floppy Drive support
 CONFIG_BLK_DEV_BFD
-  Option to allow floppy code to be left out of BIOS device driver.
+  Include floppy drive support in BIOS device driver.
+
+Pre-set floppy types
+CONFIG_BLK_DEV_BFD_HARD
+  Pre-set the floppy drive types. Useful when the BIOS does not
+  provide information on the floppy types.
+
+Primary floppy drive type
+CONFIG_BLK_DEV_BFD0_NONE
+  Specify the type of the primary floppy drive.
+  The available options are:
+
+	None	No floppy drive installed.
+
+	360k	5.25" drive with 360k capacity.
+	1200k	5.25" drive with 1200k capacity.
+
+	720k	3.5" drive with 720k capacity.
+	1440k	3.5" drive with 1440k capacity.
+	2880k	3.5" drive with 2880k capacity.
+
+Secondary floppy drive type
+CONFIG_BLK_DEV_BFD1_NONE
+  Specify the type of the secondary floppy drive.
+  The available options are:
+
+	None	No floppy drive installed.
+
+	360k	5.25" drive with 360k capacity.
+	1200k	5.25" drive with 1200k capacity.
+
+	720k	3.5" drive with 720k capacity.
+	1440k	3.5" drive with 1440k capacity.
+	2880k	3.5" drive with 2880k capacity.
 
 BIOD Hard Drive support
 CONFIG_BLK_DEV_BHD
-  Option to allow HDD code to be left out of BIOS device driver.
+  Include hard drive support in BIOS device driver.
 
 Normal Floppy Disk support
 CONFIG_BLK_DEV_FD
@@ -472,12 +542,12 @@ CONFIG_BLK_DEV_HD
 RAM Drive support
 CONFIG_BLK_DEV_RAM
   Support for a RAM disk device driver which allows up to 8 64K ram
-  drives to be implemented. Not very useful, but can be adapted to make use
-  of EMS cards etc.
+  drives to be implemented. Not very useful, but can be adapted to
+  make use of EMS cards etc.
 
 Old XT Hard Disk support
 CONFIG_BLK_DEV_XD
-  None existant device driver.
+  Non-existant device driver.
 
 Character access to block devices
 CONFIG_BLK_DEV_CHAR
@@ -543,11 +613,6 @@ CONFIG_FS_RO
 
 # Executable file formats
 # ~~~~~~~~~~~~~~~~~~~~~~~
-
-Suport for suid/sgid executables
-CONFIG_EXEC_SUGID
-  This allows support for the suid and sgid bits for binaries.
-
 
 Minix file format
 CONFIG_EXEC_MINIX
@@ -635,5 +700,40 @@ CONFIG_ROOTDEV_FD0
   /dev/bda4	Once the kernel has loaded, it will look for the root
 		filesystem on the fourth primary partition of the first
 		hard disk.
+
+Options that do not need help texts.
+CONFIG_ARCH_IBMPC
+CONFIG_ARCH_SIBO
+CONFIG_BLK_DEV_BFD0_360
+CONFIG_BLK_DEV_BFD0_720
+CONFIG_BLK_DEV_BFD0_1200
+CONFIG_BLK_DEV_BFD0_1440
+CONFIG_BLK_DEV_BFD0_2880
+CONFIG_BLK_DEV_BFD1_360
+CONFIG_BLK_DEV_BFD1_720
+CONFIG_BLK_DEV_BFD1_1200
+CONFIG_BLK_DEV_BFD1_1440
+CONFIG_BLK_DEV_BFD1_2880
+CONFIG_CONSOLE_BIOS
+CONFIG_CONSOLE_SERIAL
+CONFIG_CPU_80186
+CONFIG_CPU_80286
+CONFIG_CPU_80286_PLUS
+CONFIG_CPU_80386
+CONFIG_CPU_80386_PLUS
+CONFIG_CPU_80486
+CONFIG_CPU_SUB_80286
+CONFIG_IBMPC_COMPAQ
+CONFIG_PC_XT
+CONFIG_PC_AT
+CONFIG_PC_MCA
+CONFIG_ROOTDEV_BDA1
+CONFIG_ROOTDEV_BDA2
+CONFIG_ROOTDEV_BDA3
+CONFIG_ROOTDEV_BDA4
+CONFIG_ROOTDEV_FD1
+CONFIG_ROOTDEV_RAM
+CONFIG_SIBO_3MX_KEYMAP
+CONFIG_SIBO_DEFAULT_KEYMAP
 
 # EOF
