@@ -1,3 +1,18 @@
+/*
+ * ps.c
+ *
+ * Copyright 1998 Alistair Riddoch
+ * ajr@ecs.soton.ac.uk
+ *
+ * This file may be distributed under the terms of the GNU General Public
+ * License v2, or at your option any later version.
+ */
+
+/*
+ * This is a small version of ps for use in the ELKS project.
+ * It is not fully functional, and it is not portable.
+ */
+
 #include <linuxmt/mem.h>
 #include <linuxmt/sched.h>
 #include <unistd.h>

@@ -1,7 +1,7 @@
 /* 
  * file:	 login.c
  * descripton:	 login into a user account
- * author:	 Alistair Riddoch
+ * author:	 Alistair Riddoch <ajr@ecs.soton.ac.uk>
  * modification: David Murn <scuffer@hups.apana.org.au>
  *		 Added password entry
  * modification: Shane Kerr <kerr@wizard.net>

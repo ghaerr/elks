@@ -2,12 +2,23 @@
  *  elkscmd/sysutils/getty.c
  *
  *  Copyright (C) 1998 Alistair Riddoch
+ * ajr@ecs.soton.ac.uk
  *
  *  Source for the /bin/getty command.
  *  
  *  usage: /bin/getty /dev/tty?? <speed>
  *
+ * This file may be distributed under the terms of the GNU General Public
+ * License v2, or at your option any later version.
  */
+
+/*
+ * This is a small version of getty for use in the ELKS project.
+ * It is not fully functional, and may not be the most efficient
+ * implementation for larger systems. It minimises memory usage and
+ * code size.
+ */
+
 
 #include <sys/types.h>
 #include <sys/stat.h>
