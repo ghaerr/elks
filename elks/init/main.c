@@ -85,9 +85,7 @@ static void init_task()
 
 	/* Root of /dev/fd0 */
 /*	ROOT_DEV=CONFIG_ROOTDEV; */
-#ifndef CONFIG_NOFS
 	mount_root();
-#endif
 	
 /*	printk("Root mounted.\n"); */
 	
