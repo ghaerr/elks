@@ -14,6 +14,7 @@ Arnaud Launay         asl@launay.org                    15 Jul 1999-17 Oct 2001
 Christian Mardmuller  chm@kdt.de                        10 Nov 1999-29 Feb 2000
 Christoph Plattner    Christoph.Plattner@dot.at         31 Jan 2000- 2 Feb 2000
 Claudio Matsuoka      claudio@conectiva.com
+Daniele Giacomini     daniele@swlibero.org		20 Sep 2004
 David Murn            scuffer@hups.apana.org.au         11 Nov 1998-15 Nov 1999
 Eduardo Habkost	      ehabkost@conectiva.com.br		01 Jun 2004
 Giles Russell                                           22 Nov 1999
@@ -25,6 +26,7 @@ Ken Martwick          kenm@efn.org                      12 May 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
 Manuel Novoa III      mjn3@codepoet.org                 18 Jun 2002-25 Jun 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
+Miguel Bolanos	      mike@linuxlabs.com		20 Sep 2004
 Paul Nasrat           pauln@truemesh.com                29 Oct 2001-12 Jul 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
@@ -37,6 +39,11 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 Tommy McCabe 	      rocketjet314@yahoo.com		31 May 2004
 
 -------------------------------------------------------------------------------
+
+Mon Sep 20 23:27:23 CST 2004	Daniele Giacomini <daniele@swlibero.org>
+
+	* Added italian keys support, Miguel Bolanos cleaned the original
+	  file code.
 
 Wed Jun  9 17:27:52 BRT 2004	Eduardo Habkost <ehabkost@conectiva.com.br>
 
