@@ -4,6 +4,16 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Sun May 30 00:05 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Modified tty interface to simplify it.
+
+	* Added support for non-blocking IO on ttys.
+
+	* Included support for graphics on direct console driver.
+
+	* Updated serial termios support to allow baud rate to be changed.
+
 Sun May 30 00:01 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated todo file.
