@@ -16,8 +16,9 @@ Christoph Plattner    Christoph.Plattner@dot.at         31 Jan 2000- 2 Feb 2000
 David Murn            scuffer@hups.apana.org.au         11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
-Harry Kalogirou       HarKal@gmx.net                    20 Jun 2001-10 Aug 2002
+Harry Kalogirou       HarKal@gmx.net                    20 Jun 2001- 2 Jan 2003
 Jacek Lipkowski       sq5bpf@acid.ch.pw.edu.pl          20 Jan 2002
+Jay Barr                                                27 Oct 2002
 Ken Martwick          kenm@efn.org                      12 May 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
 Manuel Novoa III      mjn3@codepoet.org                 18 Jun 2002-25 Jun 2002
@@ -26,7 +27,7 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-12 Jul 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998- 9 Aug 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-13 Jul 2003
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
@@ -34,12 +35,28 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Thu Jan 02 16:12:36 EET 2003 Harry Kalogirou <harkal@gmx.net>
+Sun Jul 13 04:24:44 BST 2003	Riley Williams <Riley@Williams.Name>
+
+	* This is ELKS 0.1.3-pre1
+
+Sat Jul 12 12:24:36 BST 2003	Riley Williams <Riley@Williams.Name>
+
+	* Rewrote kernel/printk.c to allow printk() to correctly print out
+	  signed values.
+	* Rewrote kernel/printk.c to produce a less verbose panic() dump,
+	  and also to increase the number of lines of stack trace to 10.
+	* Various spelling corrections to printk() messages.
+
+===============================================================================
+
+Thu Jan 02 16:12:36 EET 2003	Harry Kalogirou <harkal@gmx.net>
 
         * Better select hash.
 	* This is ELKS 0.1.2
 
-Fri Nov 01 01:52:44 EET 2002 Harry Kalogirou <harkal@gmx.net>
+-------------------------------------------------------------------------------
+
+Fri Nov 01 01:52:44 EET 2002	Harry Kalogirou <harkal@gmx.net>
 
         * Changed the position of ds in the _registers struct.
         * Added support for loading the new ELKS executable format. This is 
@@ -59,24 +76,26 @@ Fri Nov 01 01:52:44 EET 2002 Harry Kalogirou <harkal@gmx.net>
         * Added the CONFIG_EXEC_ELKS to control the inclusion of code to
           support the new executable format.
 
-Sun Oct 27 20:32:59 EET 2002 Harry Kalogirou <harkal@gmx.net>
+-------------------------------------------------------------------------------
+
+Sun Oct 27 20:32:59 EET 2002	Harry Kalogirou <harkal@gmx.net>
 
         * Removed non-entity MSDOS exe file support code
         * Removed the "big header" minix suppord from exec.c
           since we never use it.
 
-Sun Oct 27 20:08:36 EET 2002 Jay Barr
+Sun Oct 27 20:08:36 EET 2002	Jay Barr
 
         * Fixed get_pid() in fork.c to correctly wrap the pid
           numbers
 
-Sat Oct 26 20:38:26 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+Sat Oct 26 20:38:26 EEST 2002	Harry Kalogirou <harkal@gmx.net>
         
         * Removed panic from sys_socket() when unsupported protocol
           is requested.
         * Fixed inet_create() to fail if there is no ktcp running.
 
-Sat Oct 26 12:59:19 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+Sat Oct 26 12:59:19 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Signal check when returing from a task switch, so that
 	  processes that don't make system calls can get signals.
@@ -84,7 +103,7 @@ Sat Oct 26 12:59:19 EEST 2002 Harry Kalogirou <harkal@gmx.net>
 	  there are other processes running. As a result now we have
 	  much less task switches.
 
-Fri Oct 25 16:58:14 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+Fri Oct 25 16:58:14 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Removed all the OLD_SCHED code
 	* Fixed add_timer() in sched.c to always re-enable interrupts
