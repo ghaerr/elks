@@ -247,60 +247,100 @@ int bufsiz;
 }
 #endif
 
-/* Adapted from Linux 0.12's inode.c.  _bmap() is a big function, I know */
+/* Adapted from Linux 0.12's inode.c.  _bmap() is a big function, I know 
+
+   Rewritten 2001 by Alan Cox based on newer kernel code + my own plans */
+   
+
+static unsigned short map_izone(inode, block, create)
+register struct inode *inode;
+unsigned short block;
+int create;
+{
+	register unsigned short *i_zone = inode->i_zone;
+
+	if (create && !i_zone[block]) {
+		if (i_zone[block]=minix_new_block(inode->i_sb)) {
+			inode->i_ctime = CURRENT_TIME;
+			inode->i_dirt = 1;
+		}
+	}
+	return i_zone[block];
+}
+
+static unsigned short map_iblock(inode, i, block, create)
+register struct inode *inode;
+unsigned short i;
+unsigned short block;
+int create;
+{
+	register struct buffer_head * bh;
+	
+	if (!(bh = bread(inode->i_dev, (block_t)i))) {
+		return 0;
+	}
+	map_buffer(bh);
+	i = (((unsigned short *) (bh->b_data))[block]);
+	if (create && !i) {
+		if (i=minix_new_block(inode->i_sb)) {
+			((unsigned short *) (bh->b_data))[block] = i;
+			bh->b_dirty = 1;
+		}
+	}
+	unmap_brelse(bh);
+	return i;	
+}
 
 unsigned short _minix_bmap(inode, block, create)
 register struct inode * inode;
 unsigned short block;
 int create;
 {
-	struct buffer_head * bh;
-	register unsigned short *i_zone = inode->i_zone;
 	unsigned short i;
 
 /* I do not understand what this bit means, it cannot be this big,
- * it is a short */
+ * it is a short. If this was a long it would make sense. We need to
+ * check for overruns in the block num elsewhere.. FIXME
+ */
+ 
 #if 0
 	if (block > (7+512+512*512))	
 		panic("_minix_bmap: block (%d) >big", block);
 #endif
 
 	if (block < 7) {
-		if (create && !i_zone[block]) {
-			if (i_zone[block]=minix_new_block(inode->i_sb)) {
-				inode->i_ctime = CURRENT_TIME;
-				inode->i_dirt = 1;
-			}
-		}
-		return i_zone[block];
+		return map_izone(inode, block, create);
 	}
 	block -= 7;
-	if (block <= 512) {
-		if (!i_zone[7]) {
-			if (create) {
-				if (i_zone[7]=minix_new_block(inode->i_sb)) {
-					inode->i_dirt = 1;
-					inode->i_ctime = CURRENT_TIME;
-				}
-			} else return 0;
-		}
-		if (!(bh = bread(inode->i_dev, (block_t)i_zone[7]))) {
-			return 0;
-		}
-		map_buffer(bh);
-		i = (((unsigned short *) (bh->b_data))[block]);
-		if (create && !i) {
-			if (i=minix_new_block(inode->i_sb)) {
-				((unsigned short *) (bh->b_data))[block] = i;
-				bh->b_dirty = 1;
-			}
-		}
-		unmap_brelse(bh);
-		return i;
+	if (block < 512) {
+		i = map_izone(inode, 7, create);
+		goto map1;
 	}
-	/* FIXME - triple indirect is needed */
-	printk("MINIX-fs: bmap cannot handle > 519K files yet!\n");
-	return 0;
+
+	/*
+	 *	Double indirection country. Do two block remaps
+	 */
+	 
+	block -= 512;
+	
+	i = map_izone(inode, 8, create);
+	if(i == 0)
+		return 0;
+
+
+	/* Two layer indirection */
+	i = map_iblock(inode, i, block >> 9, create);
+
+map1:
+	/*
+	 * Do the final indirect block check and read
+	 */
+	 
+	if(i == 0)
+		return 0;
+	/* Ok now load the second indirect block */
+	i = map_iblock(inode, i, block&511, create);
+	return i;
 }
 
 struct buffer_head * minix_getblk(inode,block,create)
