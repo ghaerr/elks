@@ -3,7 +3,7 @@
 #include <linuxmt/major.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/debug.h>
-#include <errno.h>
+#include <linuxmt/errno.h>
 
 #ifdef CONFIG_BLK_DEV_RAM
 
