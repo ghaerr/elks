@@ -179,6 +179,7 @@ dist.old:
 	@echo
 	@echo Directory $(DISTDIR) contains a clean ELKS distribution tree.
 	@echo
+	@printf '\n  %076u\n\n' 0 | tr 0 =
 
 distclean: clean nodep
 	rm -f .config* .menuconfig*
@@ -245,6 +246,9 @@ set:
 	@echo
 
 test:
+	make dist
+	mv $(DISTDIR){,.Pre}
+	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make defconfig
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make clean
@@ -256,6 +260,9 @@ test:
 	make nbImage
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 	make dist
+	@printf '\n  %076u\n\n' 0 | tr 0 =
+	mv $(DISTDIR){,.Post}
+	diff -ur $(DISTDIR).{Pre,Post}
 
 #########################################################################
 ### Dependencies:

@@ -59,6 +59,10 @@ system, but which are not specific to the ELKS kernel or project itself:
 
     *	ELKS-based HTTP server.
 
+    *	openssh
+
+    *	screen
+
 Other items may be added in future.
 
 ===============================================================================
