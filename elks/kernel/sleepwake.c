@@ -77,8 +77,6 @@ register struct task_struct * p;
 	save_flags(flags);
 	icli();
 	p->state = TASK_RUNNING;
-	/*	if (p->pid == 5)
-	  printk("adding task %d to runqueue\n", p->pid);*/
 	if (!p->next_run)
 		add_to_runqueue(p);
 	restore_flags(flags);
