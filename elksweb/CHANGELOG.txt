@@ -1,15 +1,27 @@
+                            ELKS Website Change Log
+                            ~~~~~~~~~~~~~~~~~~~~~~~
+
 This file is used to record changes made to the CVS database. Please add to
 the top of this file before committing any changes. Please use the header
 format provided for each entry, noting that the text on each line should not
 be longer than the lines of dashes.
 
-Contributor		Email address			CHANGELOG entries found
-~~~~~~~~~~~~~~~~~~~~~~	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	~~~~~~~~~~~~~~~~~~~~~~~
-Alistair Riddoch	<alriddoch@zepler.org>		 1 Jan 1995-20 Oct 1999
-Harry Kalogirou 	<HarKal@rainbow.cs.unipi.gr>	 7 Nov 2001
-Riley Williams		<rhw@MemAlpha.cx>		 8 Nov 2001
+Contributor             Current Email address           CHANGELOG entries found
+~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~
+Alistair Riddoch        <AlRiddoch@zepler.org>           1 Jan 1995-20 Oct 1999
+Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>     7 Nov 2001
+Riley Williams          <rhw@MemAlpha.cx>                8 Nov 2001- 9 Nov 2001
 
 -------------------------------------------------------------------------------
+
+Fri Nov  9 16:19:40 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Added outline index pages for FAQ, History and News subtrees.
+	* Reformatted French FAQ. I don't read French, so can somebody who
+	  does please check this document to ensure it is accurate.
+	* Reformatted German FAQ. I don't read German, so can somebody who
+	  does please check this document to ensure it is accurate.
+	* Linked French and German FAQ's into FAQ index page.
 
 Thu Nov  8 22:18:20 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
@@ -24,6 +36,10 @@ Wed Nov  7 00:13:21 GMT 2001	Harry Kalogirou <HarKal@rainbow.cs.unipi.gr>
 Sat Oct 20 12:34:56 GMT 1999	Alistair Riddoch <alriddoch@zepler.org>
 
 	* Last update to dynamic ELKS website.
+
+Sun Jan  1 12:34:56 GMT 1995	Alistair Riddoch <alriddoch@zepler.org>
+
+	* Oldest reference on snapshot of dynamic ELKS website.
 
 -------------------------------------------------------------------------------
 END OF CHANGELOG
