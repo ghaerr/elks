@@ -26,6 +26,8 @@ struct serial_info
 
 #define RS_MINOR_OFFSET 4
 
+#define CONSOLE_PORT 0
+
 static struct serial_info ports[4]=
 {
 	{ 0x3f8,4,0,0 },
@@ -117,6 +119,8 @@ register struct serial_info *sp;
 
 	do {
 		ch = inb_p(sp->io + UART_RX);
+		if (ch == '\r')
+			ch = '\n';
 		chq_addch(&sp->tty->inq, ch);
 	} while (inb_p(sp->io + UART_LSR) & UART_LSR_DR);
 }
@@ -243,4 +247,26 @@ int rs_init()
 	return 0;
 }
 
+#ifdef CONFIG_CONSOLE_SERIAL
+static int con_init = 0;
+void init_console()
+{
+	rs_init();
+	con_init = 1;
+	printk("Console: Serial\n");
+}
 
+void con_charout(Ch)
+char Ch;
+{
+	if (con_init) {
+		while (!(inb_p(ports[CONSOLE_PORT].io + UART_LSR) & UART_LSR_TEMT));
+		outb(Ch, ports[CONSOLE_PORT].io + UART_TX);
+	}
+}
+
+int wait_for_keypress()
+{
+	/* Do something */
+}
+#endif /* CONFIG_CONSOLE_SERIAL */

@@ -78,10 +78,10 @@ static void init_task()
 	
 /*	printk("Root mounted.\n"); */
 	
+#if 0	
 	if((num=sys_open("/dev/tty",2))<0)
 		printk("Unable to open /dev/tty (error %d)\n",-num);
 
-#if 0	
 	if(sys_dup(0)!=1)
 		printk("dup failed\n");
 	sys_dup(0);

@@ -27,11 +27,17 @@ bool 'BIOS console writes' CONFIG_CONSOLE_BIOS
 if [ "$CONFIG_CONSOLE_BIOS" = "y" ]; then
 	bool 'BIOS console VT52 emulation' CONFIG_BIOS_VT52
 fi
+bool 'Serial console writes' CONFIG_CONSOLE_SERIAL
+if [ "$CONFIG_CONSOLE_SERIAL" = "y" ]; then
+	define_bool CONFIG_CHAR_DEV_RS y
+fi
 bool 'Support only for XT architecture' CONFIG_XT
 bool 'Support for loadable modules' CONFIG_MODULE
 bool 'Switch COMPAQ DeskPro into fast mode' CONFIG_COMPAQ_FAST
 bool 'Memory character devices /dev/zero /dev/null etc.' CONFIG_CHAR_DEV_MEM
-bool 'Serial device driver' CONFIG_CHAR_DEV_RS
+if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
+	bool 'Serial device driver' CONFIG_CHAR_DEV_RS
+fi
 bool 'Parallel device driver' CONFIG_CHAR_DEV_LP
 endmenu 
 

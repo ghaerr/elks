@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Tue Nov 16 19:16 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Improved serial driver and added support for serial console.
+
 Mon Nov 16 17:48 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Cosmetic fix to bitops.c pointed out by Riley Williams.

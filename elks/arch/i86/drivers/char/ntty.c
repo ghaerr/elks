@@ -273,6 +273,7 @@ void tty_init()
 
 	for (i = 0; i < NUM_TTYS; i++) { 
 		ttyp = &ttys[i];
+		ttyp->minor = -1;
 		chq_init(&ttyp->inq, ttyp->inq_buf, INQ_SIZE);
 		chq_init(&ttyp->outq, ttyp->outq_buf, OUTQ_SIZE);
 	}
