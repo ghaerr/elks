@@ -402,10 +402,6 @@ seg_t base;
 
 	for(ct=0; ct< blocks; ct++)
 	{
-#ifdef BLOAT_FS
-		swap_buf.b_size = 2;
-		swap_buf.b_state = 0;
-#endif
 		swap_buf.b_blocknr = (so->page_base+ct)<<1;
 		swap_buf.b_dev = swap_dev;
 		swap_buf.b_lock = 0;
@@ -441,10 +437,6 @@ int chint;
 	
 	for(ct=0; ct< blocks; ct++)
 	{
-#ifdef BLOAT_FS
-		swap_buf.b_size = 2;
-		swap_buf.b_state = 0;
-#endif
 		swap_buf.b_blocknr = (so->page_base+ct)<<1;
 		swap_buf.b_dev = swap_dev;
 		swap_buf.b_lock = 0;
