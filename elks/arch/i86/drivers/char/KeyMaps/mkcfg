@@ -10,17 +10,17 @@ function codes() {
 function process() {
     local CODE FILE NAME SEP='"'
 
+    printf '# Automatically created - do not edit.\n\n' >&3
+    printf "choice 'XT Keyboard support'\t\t" >&3
+    printf '/* Automatically created - do not edit */\n\n' >&4
     while read FILE CODE NAME ; do
-	printf '\t\\\n\t%-12s\tCONFIG_KEYMAP_%s' >> Config.in \
+	printf '\t\\\n\t%-12s\tCONFIG_KEYMAP_%s' >&3 \
 		"${SEP}${NAME}" "${CODE}"
 	SEP=' '
-	printf '#include "%s"\t\t/* %s\t%-9s\t*/\n' >> keymaps.h \
+	printf '#include "%s"\t\t/* %s\t%-9s\t*/\n' >&4 \
 		"${FILE}" "${CODE}" "${NAME}"
     done
+    printf '"\t\tAmerican\n\n# EOF.\n' >&3
 }
 
-printf '/* Automatically created - do not edit */\n\n' > keymaps.h
-printf '# Automatically created - do not edit.\n\n' > Config.in
-printf "choice 'XT Keyboard support'\t\t" >> Config.in
-codes | sort +1f | process
-printf '"\t\tAmerican\n\n# EOF.\n' >> Config.in
+codes | sort +1f | process 3> Config.in 4> keymaps.h

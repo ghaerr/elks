@@ -28,8 +28,7 @@ include $(BASEDIR)/Makefile-rules
 # Specify rules specific to this directory.
 
 Config.in:
-	./mkcfg > Config.tmp
-	mv -f Config.tmp Config.in
+	./mkcfg
 
 keymaps.h: Config.in
 

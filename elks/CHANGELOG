@@ -20,7 +20,7 @@ Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-24 Apr 2002
 Jacek Lipkowski       sq5bpf@acid.ch.pw.edu.pl          20 Jan 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
-Paul Nasrat           pauln@truemesh.com                29 Oct 2001-14 Apr 2002
+Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
@@ -31,6 +31,13 @@ Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Wed Apr 24 20:12:29 BST 2002	Paul Nasrat <pauln@truemesh.com>
+
+	* Tweak to Makefile to stop it overwriting the Config.in script
+	  that mkcfg creates.
+	* Tweak to mkcfg script to correctly create both the Config.in
+	  script and the keymaps.h header file as it is supposed to.
 
 Wed Apr 24 18:40:12 BST 2002	Riley Williams <Riley@Williams.Name>
 
