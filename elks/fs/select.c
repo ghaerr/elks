@@ -156,6 +156,8 @@ repeat:
 	for (i = 0 ; i < n ; i++) {
 		struct file * file = currentp->files.fd[i];
 		if (file) {
+			if (FD_ISSET(i,in)) {
+			}
 			if (FD_ISSET(i,in) && check(SEL_IN,wait,file)) {
 				FD_SET(i, res_in);
 				count++;

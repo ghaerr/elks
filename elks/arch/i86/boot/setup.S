@@ -72,9 +72,15 @@
 #define MINIX_SPLITID_LOW 0x0301L
 #define KERNEL_MAGICNUMBER MINIX_SPLITID_LOW
 
-INITSEG  = DEF_INITSEG	! (DATASEG) we move boot here - out of the way
-SYSSEG   = DEF_SYSSEG	! system loaded at 0x10000 (65536).
-SETUPSEG = DEF_SETUPSEG	! this is the current segment
+#ifndef CONFIG_ROMCODE
+  INITSEG  = DEF_INITSEG	! (DATASEG) we move boot here - out of the way
+  SYSSEG   = DEF_SYSSEG	! system loaded at 0x10000 (65536).
+  SETUPSEG = DEF_SETUPSEG	! this is the current code segment
+#else
+  INITSEG  = ROM_SETUP_DATA
+  SYSSEG   = ROM_KERNEL_CODE
+  SETUPSEG = ROM_SETUP_CODE
+#endif
 
 .text
 
@@ -236,7 +242,7 @@ start_os:
 #ifdef ROM_HIGH_OF_CRT
         mov   al,#ROM_HIGH_OF_CRT
 #else
-        mov   al,#0x19          ! high of display ?
+        mov   al,#0x19          ! high of display (0x19 == 25 column)
 #endif
 #endif
 

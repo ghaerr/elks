@@ -43,6 +43,26 @@ extern struct tty_ops bioscon_ops;
 extern struct tty_ops rs_ops;
 extern struct tty_ops ttyp_ops;
 
+int tty_intcheck(ttyp, key)
+register struct tty * ttyp;
+unsigned char key;
+{
+	if ((ttyp->termios.c_lflag & ISIG) && (ttyp->pgrp)) {
+		int sig = 0;
+		if (key == ttyp->termios.c_cc[VINTR]) {
+			sig = SIGINT;
+		}
+		if (key == ttyp->termios.c_cc[VSUSP]) {
+			sig = SIGTSTP;
+		}
+		if (sig) {
+			kill_pg(ttyp->pgrp, sig, 1);
+			return 1;
+		}
+	}
+	return 0;
+}
+
 /* Turns a dev_t variable into its tty, or NULL if it's not valid */
 
 struct tty * determine_tty(dev)
@@ -229,11 +249,12 @@ char *arg;
 		case TCSETS:
 		case TCSETSW:
 		case TCSETSF:
-			return verified_memcpy_fromfs(&tty->termios, arg, sizeof(struct termios));
+			retval = verified_memcpy_fromfs(&tty->termios, arg, sizeof(struct termios));
 			/* Inform driver that things have changed */
 			if (tty->ops->ioctl != NULL) {
 				tty->ops->ioctl(tty, cmd, arg);
 			}
+			return retval;
 			break;
 		default:
 			if (tty->ops->ioctl == NULL) {

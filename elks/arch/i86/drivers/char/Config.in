@@ -25,7 +25,9 @@ if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 			 uk 	CONFIG_UK_KEYMAP\
 			 es 	CONFIG_ES_KEYMAP\
 			 de	CONFIG_DE_KEYMAP\
+			 se	CONFIG_SE_KEYMAP\
 			 usa    CONFIG_DEFAULT_KEYMAP" usa
+		bool 'Raw keyboard mode' CONFIG_DCON_KRAW
 	fi
 	if [ "$CONFIG_CONSOLE_BIOS" = "y" ]; then
 		bool 'BIOS console VT52 emulation' CONFIG_BIOS_VT52

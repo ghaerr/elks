@@ -104,11 +104,11 @@ struct socket *sock_alloc()
 	sock->flags = 0;
 	sock->ops = NULL;
 	sock->data = NULL;
-#ifdef CONFIG_UNIX /* Not used by INET sockets */
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
 	sock->conn = NULL;
 	sock->iconn = NULL;
 	sock->next = NULL;
-#endif /* CONFIG_UNIX */
+#endif /* CONFIG_UNIX || CONFIG_NANO */
 	sock->file = NULL;
 	sock->wait = &inode->i_wait;
 	sock->inode = inode;            /* "backlink": we could use pointer arithmetic instead */
@@ -289,7 +289,7 @@ int flags;
 }
 
 
-#ifdef CONFIG_UNIX
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
 static void sock_release_peer(peer)
 struct socket * peer;
 {
@@ -298,14 +298,14 @@ struct socket * peer;
 	wake_up_interruptible(peer->wait);
 /*	sock_wake_async(peer, 1); */
 }
-#endif /* CONFIG_UNIX */
+#endif /* CONFIG_UNIX || CONFIG_NANO */
 
 void sock_release(sock)
 register struct socket * sock;
 {
 	int oldstate;
 	register struct socket * peersock;
-#ifdef CONFIG_UNIX
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
 	struct socket * nextsock;
 #endif
 
@@ -313,19 +313,19 @@ register struct socket * sock;
 		sock->state = SS_DISCONNECTING;
 	}
 
-#ifdef CONFIG_UNIX
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
 	for (peersock = sock->iconn; peersock; peersock = nextsock) {
 		nextsock = peersock->next;
 		sock_release_peer(peersock);
 	}
 
 	peersock = (oldstate == SS_CONNECTED) ? sock->conn : NULL;
-#else /* CONFIG_UNIX */
+#else /* CONFIG_UNIX || CONFIG_NANO */
 	peersock = NULL; /* sock-conn is always NULL for an INET socket */
-#endif /* CONFIG_UNIX */
+#endif /* CONFIG_UNIX || CONFIG_NANO */
 	if (sock->ops)
 		sock->ops->release(sock, peersock);
-#ifdef CONFIG_UNIX
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
 	if (peersock)
 		sock_release_peer(peersock);
 #endif
@@ -401,7 +401,6 @@ int backlog;
 		sock->ops->listen(sock, backlog);
 	}
 	sock->flags |= SO_ACCEPTCON;
-	printk("[%x %x}\n", sock, sock->flags);
 	return(0);
 
 }
@@ -422,47 +421,38 @@ int *upeer_addrlen;
 /*	if (fd < 0 || fd >= NR_OPEN || current->files.fd[fd] == NULL) {
 		return(-EBADF);
 	} */
-	printk("1");
   	if (!(sock = sockfd_lookup(fd, &file))) {
 		return(-ENOTSOCK);
 	}
-	printk("2");
 	if (sock->state != SS_UNCONNECTED) {
 		return(-EINVAL);
 	}
-	printk("3");
 	if (!(sock->flags & SO_ACCEPTCON)) {
-		printk("[%x %x}\n", sock, sock->flags);
 		return(-EINVAL);
 	}
 
-	printk("4");
 	if (!(newsock = sock_alloc())) {
 		printk("NET: sock_accept: no more sockets\n");
 		return(-ENOSR);	/* Was: EAGAIN, but we are out of system
 				   resources! */
 	}
-	printk("5");
 	newsock->type = sock->type;
 	newsock->ops = sock->ops;
 	if ((i = sock->ops->dup(newsock, sock)) < 0) {
 		sock_release(newsock);
 		return(i);
 	}
-	printk("6");
 
 	i = newsock->ops->accept(sock, newsock, file->f_flags);
 	if ( i < 0) {
 		sock_release(newsock);
 		return(i);
 	}
-	printk("7");
 
 	if ((fd = get_fd(SOCK_INODE(newsock))) < 0) {
 		sock_release(newsock);
 		return(-EINVAL);
 	}
-	printk("8");
 
 	if (upeer_sockaddr) {
 		newsock->ops->getname(newsock, (struct sockaddr *)address, &len, 1);
@@ -485,7 +475,6 @@ int addrlen;
 	char address[MAX_SOCK_ADDR];
 	int err;
 
-	printk("CONNECT");
 /* 	All this is done in sockfd_lookup */
 /*	if (fd < 0 || fd >= NR_OPEN || (file=current->files.fd[fd]) == NULL) {
 		return -EBADF;
@@ -494,11 +483,9 @@ int addrlen;
 	if (!(sock = sockfd_lookup(fd, &file))) {
 		return -ENOTSOCK;
 	}
-	printk("1");
 	if ((err = move_addr_to_kernel(uservaddr,addrlen,address))<0) {
 		return err;
 	}
-	printk("2");
 
 	switch(sock->state)
 	{
@@ -527,9 +514,7 @@ art
 		default:
 			return -EINVAL;
 	}
-	printk("3");
 	i = sock->ops->connect(sock, (struct sockaddr *)address, addrlen, file->f_flags);
-	printk("4");
 	if (i < 0) {
 		return i;
 	}

@@ -6,6 +6,41 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Tue Feb 29 11:00 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Small change to setup.S to fix segment definitions for the
+	ROM boot code contributed by Christian Mardmoller.
+
+Sat Feb 26 19:23 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fixed bug in file descriptor macros which meant that
+	file descriptors > 7 did not work in select.
+
+Sat Feb 26 13:02 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fixed socket code that deals with disconnections which
+	was only included for UNIX sockets, but is required by
+	NANO sockets.
+
+Fri Feb 25 15:05 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Added swedish keyboard map submitted by Per Olofsson
+	(MagerValp@cling.gu.se).
+
+Tue Feb 22 15:45 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Alterred default config to allow nano-X to run on standard
+	kernel.
+
+Mon Feb 21 23:38 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Re-wrote tty input interrupt character code so it now
+	works on serial ttys.
+
+Fri Feb 19 19:38 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Added raw keyboard mode for games support.
+
 Mon Feb 14 10:25 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix setting of effective uid and gid on suid and sgid

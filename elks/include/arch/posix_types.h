@@ -14,7 +14,7 @@
                 {\
                 int     mask, retval,addr=fdsetp;\
 						 \
-                icli(); addr += fd >> 3;\
+                icli(); addr += fd >> 4;\
                 mask = 1 << (fd & 0xf);\
                 *(int*)addr |= mask; isti(); \
                 }
@@ -24,7 +24,7 @@
                 {\
                 int     mask, retval,addr=fdsetp;\
                                                  \
-                icli(); addr += fd >> 3;\
+                icli(); addr += fd >> 4;\
                 mask = 1 << (fd & 0xf);\
                 *(int*)addr &= ~mask; isti(); \
        	        }

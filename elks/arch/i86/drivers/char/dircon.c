@@ -94,6 +94,7 @@ static struct wait_queue * glock_wait = NULL;
 
 /* from keyboard.c */
 extern int Current_VCminor;
+extern int kraw;
 
 #ifdef CONFIG_DCON_VT52
 static unsigned AttrArry[MAX_ATTR] = {
@@ -548,7 +549,6 @@ struct tty * tty;
 int cmd;
 char * arg;
 {
-	printk("Console_ioctl()\n");
 	switch (cmd) {
 	case DCGET_GRAPH:
 		if (!glock) {
@@ -563,7 +563,20 @@ char * arg;
 			return 0;
 		}
 		return -EINVAL;
+	case DCSET_KRAW:
+		if (glock == &Con[tty->minor]) {
+			kraw = 1;
+			return 0;
+		}
+		return -EINVAL;
+	case DCREL_KRAW:
+		if ((glock == &Con[tty->minor]) && (kraw == 1)) {
+			kraw = 0;
+			return 1;
+		}
+		return -EINVAL;
 	}
+
 	return -EINVAL;
 }
 

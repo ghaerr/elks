@@ -12,6 +12,8 @@
 
 #define DCGET_GRAPH	(('D'<<8)+0x01)
 #define DCREL_GRAPH	(('D'<<8)+0x02)
+#define DCSET_KRAW	(('D'<<8)+0x03)
+#define DCREL_KRAW	(('D'<<8)+0x04)
 
 #ifdef __KERNEL__
 #include <linuxmt/fs.h>
@@ -52,6 +54,7 @@ struct tty {
 };
 
 int ttynull_openrelease();	/* Empty function, returns zero. useful */
+int tty_intcheck();		/* Check for ctrl-C etc.. */
 extern int pipe_lseek();	/* Empty function, returns -ESPIPE. useful */
 
 extern struct termios def_vals; /* global use of def_vals                 */

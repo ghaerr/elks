@@ -263,13 +263,16 @@ char * arg;
 void receive_chars(sp)
 register struct serial_info *sp;
 {
-	char ch;
+	unsigned char ch;
 
 	do {
 		ch = inb_p(sp->io + UART_RX);
-		if (ch == '\r')
+		if (ch == '\r') {
 			ch = '\n';
-		chq_addch(&sp->tty->inq, ch, 0);
+		}
+		if (!tty_intcheck(sp->tty, ch)) {
+			chq_addch(&sp->tty->inq, ch, 0);
+		}
 	} while (inb_p(sp->io + UART_LSR) & UART_LSR_DR);
 }
 /*

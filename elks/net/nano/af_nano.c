@@ -44,9 +44,8 @@ static struct nano_proto_data * nano_data_alloc()
 	return(NULL);
 }
 
-static struct nano_proto_data * nano_data_lookup(sockna, sockaddr_len, serv_no)
+static struct nano_proto_data * nano_data_lookup(sockna, serv_no)
 struct sockaddr_na *sockna;
-int sockaddr_len;
 int serv_no;
 {
 	register struct nano_proto_data *upd;
@@ -108,7 +107,7 @@ int protocol;
 {
 	register struct nano_proto_data * upd;
 
-	printk("nano_create\n");
+	printk("nano_create %x\n", sock);
 	if (protocol != 0) {
 		return -EINVAL;
 	}
@@ -138,7 +137,7 @@ struct socket *peer;
 {
         register struct nano_proto_data *upd = sock->data;
 
-	printk("nano_release\n");
+	printk("nano_release %x\n", sock);
         if (!upd) {
                 return(0);
 	}
@@ -172,7 +171,7 @@ int sockaddr_len;
 	unsigned short old_ds;
 	int i;
 
-	printk("nano_bind\n");
+	printk("nano_bind %x\n", sock);
 	if (sockaddr_len <= 0 || sockaddr_len > sizeof(struct sockaddr_na)) {
 		return(-EINVAL);
 	}
@@ -209,7 +208,7 @@ int flags;
 	struct nano_proto_data *serv_upd;
 	int i;
 
-	printk("nano_connect\n");
+	printk("nano_connect %x\n", sock);
 	if (sockaddr_len <= 0 || sockaddr_len > sizeof(struct sockaddr_na)) {
 		return(-EINVAL);
 	}
@@ -226,7 +225,7 @@ int flags;
 		return(-EINVAL);
 	}
 	  
-	serv_upd = nano_data_lookup(&sockna, sockaddr_len, sockna.sun_no);
+	serv_upd = nano_data_lookup(&sockna, sockna.sun_no);
 	if (!serv_upd) {
 		return(-EINVAL);
 	}
@@ -267,7 +266,7 @@ int flags;
  * then wait for one, unless nonblocking.
  */
 
-	printk("nano_accept\n");
+	printk("nano_accept %x %x\n", sock, newsock);
 	while(!(clientsock = sock->iconn)) 
 	{
 		if (flags & O_NONBLOCK) 
@@ -332,7 +331,7 @@ int nonblock;
 	register struct nano_proto_data *upd;
 	int todo, avail;
 
-	printk("nano_read\n");
+	/*printk("nano_read %x\n", sock);*/
 	if ((todo = size) <= 0) 
 		return(0);
 
@@ -396,7 +395,7 @@ int nonblock;
 	register struct nano_proto_data *pupd;
 	int todo, space;
 
-	printk("nano_write\n");
+	/*printk("nano_write %x\n", sock);*/
 	if ((todo = size) <= 0)
 		return(0);
 	if (sock->state != SS_CONNECTED) 
@@ -533,10 +532,12 @@ select_table * wait;
 	return(0);
 }
 
+/* As far as I am aware this function is totally unnecessary */
 static int nano_listen(sock, backlog)
 struct socket *sock;
 int backlog;
 {
+	printk("nano_listen %x\n", sock);
 	return(0);
 }
 
