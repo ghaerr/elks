@@ -15,15 +15,17 @@ BASEDIR 	= ..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 	= Y
+USEBCC 		= Y
 
 CLEANDEP	= 
 
 CLEANME 	= 
 
-DEPEND		= 
+DEPEND  	= 
 
 DISTFILES	= 
+
+NOINDENT	= string.c
 
 #########################################################################
 # Include standard commands.

@@ -7,16 +7,18 @@ BASEDIR 	= ..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 	= N
+USEBCC 		= N
 
 CLEANDEP	= 
 
-CLEANME 	=  kconfig.tk tkparse
+CLEANME 	= kconfig.tk tkparse
 
-DEPEND		= 
+DEPEND  	= 
 
 DISTFILES	= Configure Menuconfig elksspec index mkMake renvar \
 		  setdir vars
+
+NOINDENT	= 
 
 #########################################################################
 # Include the standard commands.

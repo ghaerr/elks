@@ -7,15 +7,17 @@ BASEDIR 	= ../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 	= N
+USEBCC 		= N
 
 CLEANDEP	= 
 
 CLEANME 	= local-curses.h lxdialog
 
-DEPEND		= local-curses.h
+DEPEND  	= local-curses.h
 
 DISTFILES	= BIG.FAT.WARNING
+
+NOINDENT	= 
 
 #########################################################################
 # Include the standard commands.

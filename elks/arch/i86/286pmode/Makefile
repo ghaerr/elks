@@ -13,15 +13,17 @@ BASEDIR 	= ../../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC		= Y
+USEBCC  	= Y
 
 CLEANDEP	= 
 
 CLEANME 	= pmode286
 
-DEPEND		= 
+DEPEND  	= 
 
 DISTFILES	= 
+
+NOINDENT	= main.c
 
 #########################################################################
 # Include standard commands.

@@ -8,21 +8,23 @@
 # Several other variables are defined based on the definition of this
 # variable, so it needs to be accurate.
 
-BASEDIR		= .
+BASEDIR 	= .
 
 #########################################################################
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC		= Y
+USEBCC  	= Y
 
 CLEANDEP	= 
 
 CLEANME 	= 
 
-DEPEND		= include/linuxmt/compiler-generated.h
+DEPEND  	= include/linuxmt/compiler-generated.h
 
 DISTFILES	= BUGS CHANGELOG COPYING INSTALLATION RELNOTES TODO nodeps
+
+NOINDENT	= 
 
 #########################################################################
 # Include the standard ruleset.

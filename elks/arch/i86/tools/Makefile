@@ -9,15 +9,17 @@ BASEDIR 	= ../../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC		= Y
+USEBCC  	= Y
 
 CLEANDEP	= 
 
 CLEANME 	= build imgconv mkurlader wrt_disk.img
 
-DEPEND		= 
+DEPEND  	= 
 
 DISTFILES	= mknbi-elks
+
+NOINDENT	= 
 
 ###########################################################################
 # Include the standard rules.

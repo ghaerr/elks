@@ -15,15 +15,18 @@ BASEDIR 	= ../../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 	= Y
+USEBCC 		= Y
 
 CLEANDEP	= 
 
 CLEANME 	= entry.c
 
-DEPEND		= 
+DEPEND  	= 
 
 DISTFILES	= syscall.dat
+
+NOINDENT	= bios16.c irq.c irqtab.c mkentry.sh printreg.c \
+		  process.c system.c timer.c
 
 #########################################################################
 # Include standard commands.

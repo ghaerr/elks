@@ -9,15 +9,17 @@ BASEDIR 	= ../../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 	= Y
+USEBCC 		= Y
 
 CLEANDEP	= 
 
 CLEANME 	= 
 
-DEPEND		= 
+DEPEND  	= 
 
 DISTFILES	= 
+
+NOINDENT	= bitops.c memmove.c
 
 #########################################################################
 # Include the standard rules.
@@ -42,13 +44,13 @@ JOBJS		=inport.o inportb.o outport.o outportb.o \
 
 # compiler support for long arithmetic on little-endian (normal) longs
 
-LLOBJS		=laddl.o landl.o lcmpl.o lcoml.o ldecl.o ldivl.o ldivul.o \
+LLOBJS  	=laddl.o landl.o lcmpl.o lcoml.o ldecl.o ldivl.o ldivul.o \
 		 leorl.o lincl.o lmodl.o lmodul.o lmull.o lnegl.o lorl.o \
 		 lsll.o lsrl.o lsrul.o lsubl.o ltstl.o setupw.o setupb.o
 
 # compiler support for long arithmetic on all longs
 
-LXOBJS		=ldivmod.o
+LXOBJS  	=ldivmod.o
 
 #########################################################################
 # Commands.

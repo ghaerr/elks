@@ -15,15 +15,17 @@ BASEDIR 	= ../../../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 	= Y
+USEBCC 		= Y
 
 CLEANDEP	= 
 
 CLEANME 	= 
 
-DEPEND		= 
+DEPEND  	= 
 
 DISTFILES	= CGAsnow Changes NEW_NOTES NOTES
+
+NOINDENT	= bell.c bioscon.c console.c sibo_con.c
 
 #########################################################################
 # Include standard commands.
