@@ -76,7 +76,7 @@ void process_request()
 	char *c, *file, fullpath[128];
 	struct stat st;
 	
-	read(conn_sock, buf, BUF_SIZE);
+	ret = read(conn_sock, buf, BUF_SIZE);
 	
 	c = buf;
 	while(*c && !WS(*c) && c < (buf + sizeof(buf))){
@@ -116,7 +116,7 @@ void process_request()
 	lseek(fin, 0, SEEK_SET);
 	send_header(DEF_CONTENT);
 	buf[0] = 0;
-	sprintf(buf,"Content-Length: %d\r\n",size);
+	sprintf(buf,"Content-Length: %d\r\n\r\n",size);
 	write(conn_sock, buf, strlen(buf));
 	
 	do {

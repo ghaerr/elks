@@ -5,14 +5,15 @@ CFLAGS	= $(CFLBASE) -D_POSIX_SOURCE
 xCC=gcc
 xCFLAGS=-D_POSIX_SOURCE -D_PROTOTYPE\(a,b\)=
 
-PRGS =	banner \
+PRGS =	\
+#	banner \
 	cksum \
 	cut \
 	decomp16 \
 	du \
 	fgrep \
 	grep \
-	proto \
+#	proto \
 	sum \
 	uniq \
 	wc

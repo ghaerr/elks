@@ -1,7 +1,7 @@
 include ../Make.defs
 
 PRGS=basename date dirname echo false printenv pwd true which whoami yes \
-	logname tr xargs mesg write # uname
+	logname tr xargs mesg write # stty uname
 
 MIN_PRGS=date pwd printenv
 

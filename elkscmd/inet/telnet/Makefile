@@ -1,5 +1,7 @@
 # Makefile for telnet
 
+include ../../Make.defs
+
 CC=bcc
 
 CFLAGS=	-O 
@@ -13,6 +15,9 @@ all:	ttn
 
 ttn:	$(SRC)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o telnet $(SRC)
+
+install: all
+	cp -p telnet $(TARGET_MNT)/bin
 
 clean:
 	rm -f telnet

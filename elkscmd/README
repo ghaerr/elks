@@ -17,9 +17,10 @@ This package has been put together for two main purposes:-
    reproduce a release.
 
 The Makefiles contain rules which automatically build disk images for
-the ELKS system. In order to do this you must the source code to the ELKS
-kernel, and to the Dev86 package unpacked and online, and the definitions
-at the top of the Make.defs point to the correct source directories.
+the ELKS system. In order to do this you must have the source code to the ELKS
+kernel, and to the Dev86 package and elksnet package unpacked and online, and 
+the definitions at the top of the Make.defs point to the correct source 
+directories.
 
 CAUTION: Building images must be done as root as it needs to mount and unmount
 loopback filesystems. It is essential that TARGET_MNT is set in Make.defs, or
@@ -30,7 +31,7 @@ as follows:-
 
 make images.zip
 
-This creates three of the four possible images, and puts them into a zip file
+This creates four of the five possible images, and puts them into a zip file
 ready for release.
 
 The images that can be created are as follows:-
@@ -40,6 +41,9 @@ boot	- A kernel boot disk - simply a copy of the kernel from the kernel
 
 root	- A 360K minimal root image. Includes enough programs and support files
 	  for a basic test system.
+	  
+root_net - A 720K root image. Includes networking utilities (a tiny webserver,
+		telnet, etc)
 
 comb	- A 720K combined boot/root image. Includes a kernel, everything on
 	  root, and installs the minixfs bootloader from the Dev86 package.

@@ -2,7 +2,7 @@ include ../Make.defs
 
 CFLAGS	= $(CFLBASE) -D_POSIX_SOURCE
 
-PRGS =	env install lp pwdauth remsync synctree tget lpd # mt
+PRGS =	env install lp pwdauth  tget lpd # remsync synctree mt
 
 all: $(PRGS)
 

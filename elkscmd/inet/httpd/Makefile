@@ -1,9 +1,11 @@
 # Makefile for httpd
 
+include ../../Make.defs
+
 SHELL = /bin/sh
 CC = bcc
 
-BASE_CFLAGS = -c -g 
+BASE_CFLAGS = -c -O
 #BASE_CFLAGS = -c -O
 
 #CFLAGS = -D__LINUX__ $(BASE_CFLAGS)
@@ -22,8 +24,13 @@ all: httpd
 httpd: $(OBJ)
 	$(CC) $(OPT) -o httpd $(OBJ) $(BASELIBS)
 
+install: all
+	mkdir $(TARGET_MNT)/usr/lib/httpd
+	cp -f -p sample_index.html $(TARGET_MNT)/usr/lib/httpd/index.html
+	cp -p httpd $(TARGET_MNT)/bin
+
 clean: 
-	rm -f *\.o httpd core
+	rm -f *\.o httpd
 
 dep:
 	makedepend $(CFILES)
