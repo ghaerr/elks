@@ -389,7 +389,7 @@ static unsigned char xtkb_scan_caps[84]=
 
 static void SetLeds();
 
-int AddQueue();
+void AddQueue();
 int GetQueue();
 int KeyboardInit();
 
@@ -564,14 +564,28 @@ extern int key_pressed;
 
 int Current_VCminor = 0;
 
-int AddQueue( Key )
+void AddQueue( Key )
 unsigned char Key;
 {
-   register struct tty * ttyp = &ttys[Current_VCminor];
-   if (ttyp->inq.size != 0) {
-	   chq_addch(&ttyp->inq, Key);
-   }
-   return 0;
+	register struct tty * ttyp = &ttys[Current_VCminor];
+
+	if ((ttyp->termios.c_lflag & ISIG) && (ttyp->pgrp)) {
+		int sig = 0;
+		if (Key == ttyp->termios.c_cc[VINTR]) {
+			sig = SIGINT;
+		}
+		if (Key == ttyp->termios.c_cc[VSUSP]) {
+			sig = SIGTSTP;
+		}
+		if (sig) {
+			kill_pg(ttyp->pgrp, sig, 1);
+			return;
+		}
+	}
+	if (ttyp->inq.size != 0) {
+		chq_addch(&ttyp->inq, Key);
+	}
+	return;
 }
 #if 0
 int GetQueue()

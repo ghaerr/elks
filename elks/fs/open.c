@@ -14,7 +14,6 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/signal.h>
-#include <linuxmt/tty.h>
 #include <linuxmt/time.h>
 #include <linuxmt/mm.h>
 
@@ -485,21 +484,3 @@ unsigned int fd;
 	cfiles->fd[fd] = NULL;
 	return (close_fp (filp));
 }
-
-/*
- * This routine simulates a hangup on the tty, to arrange that users
- * are given clean terminals at login time.
- */
-#if 0
-int sys_vhangup()
-{
-	if (!suser())
-		return -EPERM;
-	/* If there is a controlling tty, hang it up */
-#ifdef FIXME	
-	if (current->tty)
-		tty_vhangup(current->tty);
-#endif		
-	return 0;
-}
-#endif
