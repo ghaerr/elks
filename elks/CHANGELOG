@@ -6,6 +6,9 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Wed Jun 20 23:21:51 BST 2001    Alan Cox  <alan@redhat.com>
+	* Merged fix for sycall.dat error I made (fix by Harry Kalogirou)
+
 Mon Jun 18 00:18:55 BST 2001	Alan Cox  <alan@redhat.com>
 	* Fixed bugs in the new tty select code
 	* Added select to pty
