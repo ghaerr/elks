@@ -6,11 +6,18 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Sun Jul 29 18:44:58 GMT 2001	Riley Williams <rhw@memalpha.cx>
 
-Sun Jul 01 16:49:34 GMT 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+	* Reformatted CHANGELOG to 80 character lines, with standardised
+	  layout throughout.
+	* Corrected spelling in CHANGELOG.
+
+Sun Jul 01 16:49:34 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
 	* Added inet_select()
 
 Fri Jun 29 17:05:39 GMT 2001	Riley Williams <rhw@memalpha.cx>
+
 	* Add CONFIG_EXPERIMENTAL, CONFIG_OBSOLETE and CONFIG_NOT_YET to
 	  Documentation/Configure.help and arch/i86/config.in files ready
 	  for use with other options.
@@ -20,10 +27,12 @@ Fri Jun 29 17:05:39 GMT 2001	Riley Williams <rhw@memalpha.cx>
 	  included with the Linux 2.4.5 kernel source trees.
 
 Tue Jun 26 01:18:57 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
-	* Semaphores made all inode downs block because sleeping when non positive.
-	  Fixed to sleep on negative and wake on non negative.
+
+	* Semaphores made all inode downs block because sleeping when non
+	  positive. Fixed to sleep on negative and wake on non negative.
 
 Sun Jun 24 23:01:09 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
 	* implemented do_mknod()
 	* Some fixes in AF_UNIX sockets.
 	* socket.state changed to unsighed char to solve compiler problems
@@ -33,31 +42,36 @@ Sun Jun 24 23:01:09 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 	* tty_charout now blocks the right way if queue is full in ntty.c
 	* Modified tty_read() in ntty.c
 	* Merged in TCP/IP code
-	* Fixed bug in do_select(). The new wait_set() expects current->waitpt
-	  to be null. The do_select() didn't honor that.
+	* Fixed bug in do_select(). The new wait_set() expects
+	  current->waitpt to be null. The do_select() didn't honor that.
 
 Wed Jun 20 23:21:51 BST 2001    Alan Cox  <alan@redhat.com>
+
 	* Merged fix for sycall.dat error I made (fix by Harry Kalogirou)
 	* Merged Riley's first Configure changes
 
 Mon Jun 18 00:18:55 BST 2001	Alan Cox  <alan@redhat.com>
+
 	* Fixed bugs in the new tty select code
 	* Added select to pty
 	* Added register keywords to malloc.c to save memory
 	* Fixed double indirection (> 512Kbytes) on minixfs
 
 Sun Jun 17 19:47:58 BST 2001	Alan Cox  <alan@redhat.com>
+
 	* Moved common code into minix_set_ops - based on a 2.4 change
 	  from mainstream by Al Viro
 	* Chop ltype down to 16 bytes - with our tiny stack 256 is crazy
 	* Remove shlib stuff from fs/exec.c move file onto stack
 
 Sun Jun 17 18:38 BST 2001   Alistair Riddoch  <alriddoch@zepler.org>
+
 	* Resolved some minor clashes between Alan's commit and Thomas's
 	  fix.
 	* Bumped up version to 0.0.84 for release.
 
 Sun Jun 17 11:20:06 BST 2001   Alan Cox  <alan@redhat.com>
+
 	* Abolished the suid config option
 	* Merged stuff to reduce the ifdef clutter a bit
 	* Removed the nonexistant ip socket stuff. Its confusing having
@@ -70,8 +84,8 @@ Sun Jun 17 11:20:06 BST 2001   Alan Cox  <alan@redhat.com>
 	  of sleeping processes that will free a fair bit of the data
 	  segment at the same time as upping the task limit
 	  - still need to get stacks smaller than 1K/task.
-	* Made select work using a crude hash and the V7 like wakeups. May
-	  need a bigger hash
+	* Made select work using a crude hash and the V7 like wakeups.
+	  May need a bigger hash
 	* Removed CONFIG_NOFS - just too ugly right now
 	* Cleaned up random #if 0 stuff
 	* Reformatted xt_key.c since it had bad tab/space damage
@@ -93,7 +107,7 @@ Tue Apr 17 14:52 GMT 2001   Alistair Riddoch  <alriddoch@zepler.org>
 Mon Apr 02 14:06 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 
 	* Generate 8254 timer constants directly from definition of HZ.
-	Also some minor miscellaneous cleanups.
+	* Also some minor miscellaneous cleanups.
 
 Wed Mar 28 08:37 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 
@@ -102,7 +116,7 @@ Wed Mar 28 08:37 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 Mon Mar 26 16:29 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 
 	* Fix long standing file system bug: EBUSY when unmounting,
-	and related sys_access() bug.
+	  and related sys_access() bug.
 
 Fri Mar 03 11:44 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -111,28 +125,27 @@ Fri Mar 03 11:44 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 Tue Feb 29 11:00 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Small change to setup.S to fix segment definitions for the
-	ROM boot code contributed by Christian Mardmoller.
+	  ROM boot code contributed by Christian Mardmoller.
 
 Sat Feb 26 19:23 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed bug in file descriptor macros which meant that
-	file descriptors > 7 did not work in select.
+	  file descriptors > 7 did not work in select.
 
 Sat Feb 26 13:02 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
-	* Fixed socket code that deals with disconnections which
-	was only included for UNIX sockets, but is required by
-	NANO sockets.
+	* Fixed socket code that deals with disconnections which was only
+	  included for UNIX sockets, but is required by NANO sockets.
 
 Fri Feb 25 15:05 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added swedish keyboard map submitted by Per Olofsson
-	(MagerValp@cling.gu.se).
+	  (MagerValp@cling.gu.se).
 
 Tue Feb 22 15:45 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Alterred default config to allow nano-X to run on standard
-	kernel.
+	  kernel.
 
 Mon Feb 21 23:38 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -146,80 +159,67 @@ Fri Feb 19 19:38 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 Mon Feb 14 10:25 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix setting of effective uid and gid on suid and sgid
-	executables. Fix by Mario Frasca.
+	  executables. Fix by Mario Frasca.
 
 Fri Feb 04 18:37 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
-	* Modified buffer cache code so external 64K buffer cache
-	can be removed on systems with fast block device access
-	and low RAM.
+	* Modified buffer cache code so external 64K buffer cache can be
+	  removed on systems with fast block device access and low RAM.
 
 Thu Feb 03 17:40 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Minor and cosmetic fixes to changes committed by Christoph
-	Plattner.
+	  Plattner.
 
 Wed Feb 02 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* init/main.c (init_task): use /dev/ttys0 instead of /dev/tty1
-	if serial console is used.
-
+	  if serial console is used.
 	* arch/i86/drivers/char/serial.c (port;): added function to setup
-	tty termios for the serial console.
-	(rs_init): rs_init checks now, if a serial port has been already
-	checked and setup by serial console initialization
-	(init_console): beside the rs_init() also the tty termios are
-	initialized und updated for the serial console port.
+	  tty termios for the serial console.
+	* (rs_init): rs_init checks now, if a serial port has been already
+	  checked and setup by serial console initialization
+	* (init_console): beside the rs_init() also the tty termios are
+	  initialized und updated for the serial console port.
 
 Wed Feb 02 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* include/linuxmt/config.h (DEF_SETUPSEG): it should be defined
-	as DEF_INITSEG + 0x20, otherwise two things are to edit.
-
+	  as DEF_INITSEG + 0x20, otherwise two things are to edit.
 	* init/main.c (init_task): use serial console as default output
-
 	* Makefile (include/linuxmt/version.h): added sync against nfs
-	race problems on the host machines
-
+	  race problems on the host machines
 	* arch/i86/drivers/char/serial.c (rs_init): the printk saying
-	which ttys[0123] is setup has to use ttyno instead of i !
-
+	  which ttys[0123] is setup has to use ttyno instead of i !
 	* include/linuxmt/ntty.h: added external definition to def_vals
 
 Tue Feb 01 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* arch/i86/Makefile (clean): added Boot.map and Setup.map in the
-	clean rule. Also crt0.s was not cleaned yet.
+	  clean rule. Also crt0.s was not cleaned yet.
 
 Mon Jan 31 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* include/arch/debug_disp.h: added display port to output debug
-	messages to LED, hex-display or logic analysator.
-
+	  messages to LED, hex-display or logic analysator.
 	* arch/i86/mm/init.c (setup_mm): reduse ram for ramdisk.
-
 	* arch/i86/kernel/system.c: reducing the main memory for ramdisk.
-
 	* arch/i86/boot/netbootsect.S: added netboot sector for 
-	netboot-0.8.1 (c) Gero Kuhlmann
-
-	* include/linuxmt/config.h (CONFIG_PRELOAD_RAMDISK): new macro
-	to embed a ram disk, downloaded by netboot. This disk can be used
-	as mini root disk or as auxilary partition to transport new files
-	over net into the elks system. RAM_REDUCE reserves memory for that
-	(at the moment the seg 0x6000 & 0x7000 is used as disk to test
-	this option. This is defined in rd.c)
-
+	  netboot-0.8.1 (c) Gero Kuhlmann
+	* include/linuxmt/config.h (CONFIG_PRELOAD_RAMDISK): new macro to
+	  embed a ram disk, downloaded by netboot. This disk can be used
+	  as mini root disk or as auxilary partition to transport new
+	  files over net into the elks system. RAM_REDUCE reserves memory
+	  for that (at the moment the seg 0x6000 & 0x7000 is used as disk
+	  to test this option. This is defined in rd.c)
 	* arch/i86/Makefile (nbImage): added rule to create netboot image
-	(also delete netboot files in the clean section)
-
+	  (also delete netboot files in the clean section)
 	* Makefile (nbImage): added rule to create netboot image
-
-	* arch/i86/drivers/block/rd.c(do_rd_request): fixed the mix up
-	of sector offset address and byte offset address at fmemcpy.
-	In rd_info and rd_segment a fix preloaded disk can be defined
-	(CONFIG_PRELOAD_DISK, the values are hard coded for test
-	purpose).
+	* arch/i86/drivers/block/rd.c(do_rd_request): fixed the mix up of
+	  sector offset address and byte offset address at fmemcpy.
+	* In rd_info and rd_segment a fix preloaded disk can be defined
+	  (CONFIG_PRELOAD_DISK, the values are hard coded for test
+	  purpose).
 	
 Thu Jan 20 12:30 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -305,32 +305,24 @@ Fri Oct 29 19:14 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 Tue Oct 26 14:24 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Increment version to 0.0.80-pre1
-
 	* Removed unused "old timer" code from sched.c
-
 	* Removed unused bottom half code from sched.c
-
 	* Fixed errno return codes to negative values in kernel/time.c
 	  as pointed out by James M. Lowery about 16 months ago. Sorry.
-
 	* Added CONFIG option to allow atime and ctime to be removed
 	  from kernel, and enable by default as it is unimplemented in
 	  minixfs.
-
 	* Removed bloated notify_change() code, and instead implement 
 	  inode changes directly in the required functions.
-
 	* Fix to irqtab.c which should solve problems with floppy not
 	  spinning down.
 
 Mon Oct 11 14:00 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Latest version of the rd driver by Blaz Antonic
-
 	* Added CONFIG options for embedded systems including option
 	  to remove the complete filesystem, and execution in place of
 	  code in ROM.
-
 	* Removed the inode hashing code.
 
 Thu Sep 30 10:39 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
@@ -360,7 +352,6 @@ Tue Sep 14 19:32 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 Tue Sep 14 19:29 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed types of all string lengths in namei code to size_t.
-
 	* Fixed problem with 14 char filenames by Blaz Antonic.
 
 Tue Sep 14 19:27 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
@@ -370,21 +361,14 @@ Tue Sep 14 19:27 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 Fri Aug 27 14:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added CONFIG_SHORT_FILES which limits fds to 16.
-
-	* Removed unused supplementary groups, and made into a config option.
-
+	* Removed unused supplementary groups, and made into a config
+	  option.
 	* Made link_count a global variable, rather than per task.
-
 	* Optimised the way read(2) and write(2) check file descriptors.
-
 	* Made character access to block devices an option.
-
 	* Cleaned up and tested signal code.
-
 	* Fixed cleaning up of signals and fds in close(2).
-
 	* Many bug fixes by Thomas G. McWilliams to fs code.
-
 	* Final version tweaks for 0.0.79
 
 Thu Aug 26 19:39 CEST 1999	Arnaud Launay  <zoro@multimania.com>
@@ -398,19 +382,12 @@ Mon Aug 23 11:19 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 Wed Aug 18 19:40 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added vfork() capability.
-
 	* Added simple data types for many values in the kernel.
-
 	* Cleaned up header files.
-
 	* Removed unused features from the interrupt code.
-
 	* Cut down to 16 signals rather than 32.
-
 	* Replaced schedular code with a more compact round robin version.
-
 	* Changed default size of block and inode values from 32 to 16 bit.
-
 	* Made closing a terminal HUP the process group.
 	
 Tue Jul 20 18:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
@@ -435,8 +412,8 @@ Thu Jul 15 14:14 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 Wed Jul 14 18:32 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
-	* Many changes to tty code to correct various aspects of behavoir
-	  by Al Riddoch and Greg Haerr.
+	* Many changes to tty code to correct various aspects of
+	  behaviour by Al Riddoch and Greg Haerr.
 
 Wed Jul 14 18:28 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -450,7 +427,8 @@ Wed Jul 14 18:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 Wed Jul 14 18:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
-	* Fix to sched.[ch] which was messing up .o file sizes by Greg Haerr.
+	* Fix to sched.[ch] which was messing up .o file sizes by Greg
+	  Haerr.
 
 Wed Jul 14 18:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -459,9 +437,9 @@ Wed Jul 14 18:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 Fri Jul 09 17:00 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
-	* Major updates to socket code. Addition of server socket capability,
-	  and addition of unix domain socket code (currently no functional),
-	  plus nano sockets.
+	* Major updates to socket code. Addition of server socket
+	  capability, and addition of unix domain socket code (currently
+	  not functional), plus nano sockets.
 
 Fri Jul 09 16:59 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -529,17 +507,13 @@ Sun May 30 00:05 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 Sun May 30 00:05 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Modified tty interface to simplify it.
-
 	* Added support for non-blocking IO on ttys.
-
 	* Included support for graphics on direct console driver.
-
-	* Updated serial termios support to allow baud rate to be changed.
-
-	* Added support for ^C and ^Z to generate signals from the console.
-
+	* Updated serial termios support to allow baud rate to be
+	  changed.
+	* Added support for ^C and ^Z to generate signals from the
+	  console.
 	* Minor tweaks to select code.
-
 	* Added socket to syscall table.
 
 Sun May 30 00:01 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
@@ -604,7 +578,6 @@ Fri Feb 12 16:35 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 Sun Jan 31 17:50 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix main.c so init is launched with a valid set of argvs.
-
 	* Fix ntty.c so tty driver ioctls are called.
 
 Sat Dec 06 00:24 GMT 1998   Alastair Bridgewater  <nyef@softhome.net>
@@ -627,10 +600,9 @@ Wed Nov 19 18:22 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 Wed Nov 19 17:51 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
-	* Added latest changes to 286 pmode code by
-	  Alastair Bridgewater. Include change to the code that detects
-	  when the kernel is restarted so it no longer has to modify its own
-	  code segment.
+	* Added latest changes to 286 pmode code by Alastair Bridgewater.
+	  Include change to the code that detects when the kernel is
+	  restarted so it no longer has to modify its own code segment.
 
 Wed Nov 19 17:39 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -669,10 +641,8 @@ Mon Nov 16 16:31 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 Wed Nov 11 15:32 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Latest version of Blaz Antonics directhd driver added.
-
 	* Fixed bioscon driver as contributed by David Murn - now
 	  works correctly.
-
 	* Minor tweaks to nearby code.
 
 Tue Nov  3 12:44 CET 1998   Simon Weijgers  <simon@mbit.doa.org>
@@ -683,29 +653,24 @@ Tue Nov  3 12:44 CET 1998   Simon Weijgers  <simon@mbit.doa.org>
 Thu Oct 22 17:46 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Some fixes to serial driver - now interrupts seem to work.
-
 	* Final tweeks before 0.0.73.
 
 Wed Oct 21 12:26 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* More register variable optimisation. Should now be complete.
-
 	* Fixed some small bugs introduced in previous optimisation.
-
 	* Discovered big bug in the minix truncate code - see BUGS.
 
 Thu Oct 13 20:20 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Heavily optimised fs code adding new register varables in
 	  carefully selected places.
-
-	* Re-wrote block device code so it now only deals with single block
-	  accesses, but much more cleanly
-
+	* Re-wrote block device code so it now only deals with single
+	  block accesses, but much more cleanly
 	* Fixed comment in kernel/sched.c
-
 	* Removed alot of checking code from get_empty_inode() in
-	  fs/inode.c. I don't think this should cause a problem. opinions?
+	  fs/inode.c. I don't think this should cause a problem.
+	  Opinions?
 
 Thu Oct 13 20:20 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -722,13 +687,12 @@ Tue Oct 13 12:09 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 Sun Oct 11 13:37 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
-	* Corrected some signal behavoir, fixed return status behavoir.
+	* Corrected some signal behavoir, fixed return status behaviour.
 
 Sat Oct 10 11:59 CET 1998   Simon Weijgers  <simon@mbit.doa.org>
 
-	* After detection of executable format jump to
-	  rest of the code instead of going on detecting other
-	  formats.
+	* After detection of executable format jump to rest of the code
+	  instead of going on detecting other formats.
 
 Sat Oct 10 09:18 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -742,7 +706,6 @@ Mon Oct 05 11:15 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Replaced functions cli() and sti() with single asm instruction
 	  macros icli() and isti(), which saves 96 bytes.
-
 	* Moved Makefile dependency cleaning to distclean as I was fed up
 	  of doing make dep so much.
 
@@ -752,7 +715,7 @@ Sun Sep 25 12:37 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 Sat Sep 26 02:07 CET 1998   Simon Weijgers  <mbit@mbit.doa.org>
 	
-	* Added a ### Dependencie line at the end of the Makefiles
+	* Added a ### Dependencies line at the end of the Makefiles
 	  in fs/ and fs/elksfs/.
 
 Sat Sep 26 01:50 CET 1998   Simon Weijgers  <mbit@mbit.doa.org>
@@ -768,37 +731,34 @@ Sat Sep 26 00:32 CET 1998   Simon Weijgers  <mbit@mbit.doa.org>
 Fri Sep 25 15:30 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed a some bugs pointed out by Marnix Coppens <maco@telindus.be>
-
-	  Changed code at 147 in arch/i86/mm/user.c in strlen_fromfs
+	* Changed code at 147 in arch/i86/mm/user.c in strlen_fromfs
 	  which should use es:di to point to a string rather than ds:si.
-
-	  Fixed code in fs/exec.c which uses file.f_op before it has been
+	* Fixed code in fs/exec.c which uses file.f_op before it has been
 	  checked.
-	  Replaced code that clears bss in exec() to a call to fmemset() but
+	* Replaced code that clears bss in exec() to a call to fmemset() but
 	  this did not work. fmemset() may be buggy.
-
-	  Fixed chq_erase() so it zeroes len, not size, and ifdef'd it out.
-
-	  Tweaked getch and addch so they deal with waiting in less code,
+	* Fixed chq_erase() so it zeroes len, not size, and ifdef'd it out.
+	* Tweaked getch and addch so they deal with waiting in less code,
 	  and modified checks for q->size - 1 into checks for q->size.
-
-	  ifdef'd out chq_delch
+	* ifdef'd out chq_delch
 
 Thu Sep 24 23:28 CET 1998   Simon Weijgers  <mbit@mbit.doa.org>
 
-	* Changed "toplevel" Makefile to make it clean up all
-	  dependency stuff in all Makefiles. Should make it easier
-	  (no rejects) to patch and diff stuff. 
+	* Changed "toplevel" Makefile to make it clean up all dependency
+	  stuff in all Makefiles. Should make it easier (no rejects) to
+	  patch and diff stuff. 
 
 Wed Sep 23 16:10 CET 1998   Simon Weijgers  <mbit@mbit.doa.org>
 
-	* Changed #include <errno.h> to #include <linuxmt/errno.h>
-	  in file arch/i86/drivers/block/rd.c.
-	  It doesn't matter for compilation but it should be a kernel
-	  include file right?
+	* Changed #include <errno.h> to #include <linuxmt/errno.h> in file
+	  arch/i86/drivers/block/rd.c. It doesn't matter for compilation
+	  but it should be a kernel include file, right?
 
 Wed Sep 16 20:20 CET 1998   Simon Weijgers  <mbit@mbit.doa.org>
 
-	* Fixed infinite loop bug in dircon.c ansi color code;
-	  the infinite loop would occur when faulty ansi escape
-	  sequences were fed to the kernel.
+	* Fixed infinite loop bug in dircon.c ansi color code; the
+	  infinite loop would occur when faulty ansi escape sequences
+	  were fed to the kernel.
+
+------------------------------------------------------------------------------
+END OF CHANGELOG
