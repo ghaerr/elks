@@ -30,10 +30,10 @@ utent.o: utent.c
 # call malloc will need much more than this.
 
 getty: getty.c
-	$(CC) $(CFLAGS) $(LDFLAGS) getty.c -o getty -H 45C
+	$(CC) $(CFLAGS) $(LDFLAGS) getty.c -o getty -H 2000
 
 init: init.c utent.o
-	$(CC) $(CFLAGS) $(LDFLAGS) init.c utent.o -o init -H 9A4
+	$(CC) $(CFLAGS) $(LDFLAGS) init.c utent.o -o init -H 2000
 
 login: getpass.o login.o utent.o
 	$(CC) $(CFLAGS) $(LDFLAGS) getpass.o login.o utent.o -o login -H 2000

@@ -90,8 +90,9 @@ char ** argv;
 		}
 		if (task_table.state != TASK_UNUSED) {
 			pwent = (getpwuid(task_table.uid));
-			printf("%d %s %c %u ", 
+			printf("%d %d %s %c %u ", 
 				task_table.pid,
+				task_table.pgrp,
 				(pwent ? pwent->pw_name : "unknown"),
 				((task_table.state == TASK_RUNNING) ? 'R' : 'S'),
 				task_table.t_inode);

@@ -356,13 +356,15 @@ char *argv[];
     for(;;) {
       printf("Command%s:",flag==0?" (? for help)":""); flag=1;
       fflush(stdout);
-      fgets(buf,CMDLEN-1,stdin);
-      printf("\n");
+      *buf = 0;
+      if (fgets(buf,CMDLEN-1,stdin)) {
+        printf("\n");
 
-      for(tmp=funcs;tmp->cmd;tmp++) {
-        if (*buf==tmp->cmd) {
-          tmp->func();
-          break;
+        for(tmp=funcs;tmp->cmd;tmp++) {
+          if (*buf==tmp->cmd) {
+            tmp->func();
+            break;
+          }
         }
       }
     } /* for */

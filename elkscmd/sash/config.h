@@ -21,12 +21,12 @@
 /* #define CMD_MORE      /*  608 bytes */
 /* #define CMD_MOUNT     /*  600 bytes. Includes umount */
 /* #define CMD_MV        /* 1272 bytes */
-/* #define CMD_PRINTENV  /*  260 bytes */
+#define CMD_PRINTENV  /*  260 bytes */
 /* #define CMD_PROMPT    /*      bytes */
 /* #define CMD_PWD       /*  928 bytes */
 /* #define CMD_RM        /*  140 bytes */
 /* #define CMD_RMDIR     /*  140 bytes */
-/* #define CMD_SETENV    /*  129 bytes */
+#define CMD_SETENV    /*  129 bytes */
 /* #define CMD_SOURCE    /*      bytes */
 /* #define CMD_SYNC      /*   80 bytes */
 /* #define CMD_TAR       /* 5576 bytes */

@@ -1,0 +1,6 @@
+More programs are required to get a fully working ELKS system. Some of the
+major priorites at the moment are a non-BSD licensed shell, and a reliable
+text editor.
+
+If you have any code you have ported to ELKS that you would like to see
+incorporated into this package please mail ajr@ecs.soton.ac.uk.

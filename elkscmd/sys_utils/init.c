@@ -11,6 +11,7 @@ struct exec_struct {
 };
 
 #define NUM_TTYS 3
+/* #define DEBUG /* */
 
 struct exec_struct tty_list[] = {
 	{"/dev/tty1", 0},
@@ -44,6 +45,14 @@ int spawn_tty(int num)
 		pututline(&entry);
 		return pid;
 	}
+	setsid();
+	
+#ifdef DEBUG
+	close(0);
+	close(1);
+	close(2);
+#endif
+
 	if ((fd = open(tty_list[num].tty_name, O_RDWR)) < 0) {
 		exit(1);
 	}
@@ -52,6 +61,9 @@ int spawn_tty(int num)
 	dup2(fd ,STDERR_FILENO);
 
 	execv(nargv[0], nargv);
+#ifdef DEBUG
+	perror("EXEC:\n");
+#endif
 	exit(1);
 }
 
@@ -62,10 +74,12 @@ void main(int argc,char ** argv)
 
 	argv[0] = "init";
 
-/*	fd = open("/dev/tty1", 2);
+#ifdef DEBUG
+	fd = open("/dev/tty1", 2);
 	dup2(fd, 0);
 	dup2(fd, 1);
-	dup2(fd, 2); */
+	dup2(fd, 2); 
+#endif
 
 	memset(&entry, 0, sizeof(struct utmp));
 	entry.ut_type = INIT_PROCESS;
@@ -84,12 +98,20 @@ void main(int argc,char ** argv)
 	}
 	endutent();
 
-/*	printf("PID of init is %d\n",getpid());
-	fflush(stdout); */
+#ifdef DEBUG
+	printf("PID of init is %d\n",getpid());
+	fflush(stdout);
+#endif
 
 	while(1) {
 		pid = wait(NULL);
+		if (-1 == pid)
+			continue;
 		i = determine_tty(pid);
+#ifdef DEBUG
+		printf("TTY %d died %d\n", i, pid);
+		fflush(stdout);
+#endif
 		tty_list[i].tty_pid = 0;
 		time(&entry.ut_time);
 		tty_list[i].tty_pid = spawn_tty(i);

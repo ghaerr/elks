@@ -39,7 +39,7 @@ struct utmp * ut_ent;
 	char user_env[STR_SIZE], shell_env[STR_SIZE], home_env[STR_SIZE];
 	char sh_name[STR_SIZE];
 	int envno = 0;
-	char * renv[4];
+	char * renv[5];
 	environ = renv;
 
 
@@ -75,6 +75,7 @@ struct utmp * ut_ent;
 	strcpy(shell_env,"SHELL=");
 	strncpy(shell_env+6,pwd->pw_shell, STR_SIZE - 7);
 	environ[envno++] = shell_env;
+	environ[envno++] = "TERM=ansi";
 	environ[envno] = NULL;
 
 	*sh_name = '-';

@@ -159,7 +159,7 @@ static	CMDTAB	cmdtab[] = {
 
 #ifdef CMD_SETENV
 	"setenv",	"name value",		do_setenv,
-	3,		3,
+	2,		3,
 #endif
 
 #ifdef CMD_SOURCE
@@ -215,15 +215,14 @@ static	FILE	*sourcefiles[MAXSOURCE];
 static	int	sourcecount;
 #endif
 
-#ifdef SIGNALS
 static	BOOL	intcrlf = TRUE;
-#endif
 #ifdef CMD_PROMPT
 static	char	*prompt;
 #endif
 
 
 static	void	catchint();
+static	void	catchtstp();
 static	void	catchquit();
 static	void	readfile();
 static	void	command();
@@ -234,9 +233,7 @@ static	BOOL	trybuiltin();
 static	ALIAS	*findalias();
 #endif
 
-#ifdef SIGNALS
 BOOL	intflag;
-#endif
 
 
 main(argc, argv)
@@ -247,10 +244,9 @@ main(argc, argv)
 
 	printf("Stand-alone shell (version %s)\n", version);
 	fflush(stdout);
-#ifdef SIGNALS
 	signal(SIGINT, catchint);
 	signal(SIGQUIT, catchquit);
-#endif
+	signal(SIGTSTP, SIG_IGN);
 
 	if (getenv("PATH") == NULL)
 		putenv("PATH=/bin:/usr/bin:/etc");
@@ -320,13 +316,11 @@ readfile(name)
 		showprompt();
 
 #ifdef CMD_SOURCE
-#ifdef SIGNALS
 		if (intflag && !ttyflag && (fp != stdin)) {
 			fclose(fp);
 			sourcecount--;
 			return;
 		}
-#endif
 #endif
 
 		if (fgets(buf, CMDLEN - 1, fp) == NULL) {
@@ -379,14 +373,12 @@ command(cmd)
 {
 	char	**argv;
 	int	argc;
-#ifdef CND_ALIAS
+#ifdef CMD_ALIAS
 	ALIAS	*alias;
 	char	buf[CMDLEN];
 #endif
 
-#ifdef SIGNALS
 	intflag = FALSE;
-#endif
 #ifdef WILDCARDS
 	freechunks();
 #endif
@@ -537,10 +529,11 @@ runcmd(cmd, argc, argv)
 	char	**argv;
 {
 	register char *	cp;
-	BOOL		magic;
 	int		pid;
 	int		status;
 
+#if POINTLESS
+	BOOL		magic;
 	magic = FALSE;
 
 	for (cp = cmd; *cp; cp++) {
@@ -566,13 +559,14 @@ runcmd(cmd, argc, argv)
 /*		system(cmd);
 */		return;
 	}
+#endif
 
 	/*
 	 * No magic characters in the command, so do the fork and
 	 * exec ourself.  If this fails with ENOEXEC, then run the
 	 * shell anyway since it might be a shell script.
 	 */
-	pid = fork();
+	pid = vfork();
 
 	if (pid < 0) {
 		perror("fork failed");
@@ -581,16 +575,12 @@ runcmd(cmd, argc, argv)
 
 	if (pid) {
 		status = 0;
-#ifdef SIGNALS
 		intcrlf = FALSE;
-#endif
 
 		while (((pid = wait(&status)) < 0) && (errno == EINTR))
 			;
 
-#ifdef SIGNALS
 		intcrlf = TRUE;
-#endif
 		if ((status & 0xff) == 0)
 			return;
 
@@ -847,7 +837,17 @@ showprompt()
 }	
 
 
-#ifdef SIGNALS
+static void
+catchtstp()
+{
+	signal(SIGTSTP, catchtstp);
+
+	intflag = TRUE;
+
+	if (intcrlf)
+		write(STDOUT, "\n", 1);
+}
+
 static void
 catchint()
 {
@@ -870,6 +870,5 @@ catchquit()
 	if (intcrlf)
 		write(STDOUT, "\n", 1);
 }
-#endif
 
 /* END CODE */

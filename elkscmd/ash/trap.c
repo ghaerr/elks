@@ -149,21 +149,12 @@ setsignal(signo) {
 	register char *t;
 	extern void onsig();
 
-#if 0
-	/*
-	 * 1998021 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
-	 * FIXME: Commented out due to problems with bcc (Illegal
-	 * indirect to indirect: mov word ptr -$A[bp],#_trap[bx]).
-	 */
 	if ((t = trap[signo]) == NULL)
 		action = S_DFL;
 	else if (*t != '\0')
 		action = S_CATCH;
 	else
 		action = S_IGN;
-#else
-	action = S_DFL;
-#endif
 
 	if (rootshell && action == S_DFL) {
 		switch (signo) {

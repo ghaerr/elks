@@ -3,6 +3,9 @@ include ../Make.defs
 
 CFLAGS = -O -0 -DSIZE=16000L
 
+xCC=gcc
+xCFLAGS=-g
+
 
 OBJS = blockio.o display.o editcor.o exec.o find.o \
     unixcall.o globals.o insert.o main.o misc.o \

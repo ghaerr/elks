@@ -1,6 +1,7 @@
 include Make.defs
 
-DIRS=disk_utils file_utils sh_utils sys_utils misc_utils sash levee ash 
+DIRS=disk_utils file_utils fosh-1.1 sh_utils sys_utils misc_utils sash \
+	levee ash minix1 minix2 bc byacc elvis
 KHELPER=$(MINIX_BOOT)/minix_elks.bin
 FD_BSECT=$(MINIX_BOOT)/minix.bin
 
@@ -9,33 +10,46 @@ all:
 	(cd $$i; make) ; \
 	done
 
-$(TARGET_FS):
-	dd if=/dev/zero of=$(TARGET_FS) bs=1024 count=$(TARGET_BLKS)
+$(COMB_TARGET_FS):
+	dd if=/dev/zero of=$(COMB_TARGET_FS) bs=1024 count=$(COMB_TARGET_BLKS)
 
-mount_rfs: $(TARGET_FS)
-	$(MKFS) $(MKFS_OPTS) $(TARGET_FS) $(TARGET_BLKS)
-	mount $(TARGET_FS) $(TARGET_MNT) $(LOOP)
-	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - *) | \
+$(ROOT_TARGET_FS):
+	dd if=/dev/zero of=$(ROOT_TARGET_FS) bs=1024 count=$(ROOT_TARGET_BLKS)
+
+$(ELKSCMD_DIR)/rootfs_template/etc/issue: $(ELKS_DIR)/Makefile
+	$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile > $(ELKSCMD_DIR)/rootfs_template/etc/issue
+
+mount_combfs: $(COMB_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
+	$(MKFS) $(MKFS_OPTS) $(COMB_TARGET_FS) $(COMB_TARGET_BLKS)
+	mount $(COMB_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
+		(cd $(TARGET_MNT) ; tar xpvf -)
+	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
+
+mount_rootfs: $(ROOT_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
+	$(MKFS) $(MKFS_OPTS) $(ROOT_TARGET_FS) $(ROOT_TARGET_BLKS)
+	mount $(ROOT_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
 	
 
-rfs: mount_rfs
-	@for i in $(DIRS); do \
-	(cd $$i; make rfs) ; \
-	done
-	umount $(TARGET_FS)
+#rfs: mount_rfs
+#	@for i in $(DIRS); do \
+#	(cd $$i; make rfs) ; \
+#	done
+#	umount $(TARGET_FS)
 	
-min_rfs: mount_rfs
-	@for i in $(DIRS); do \
-	(cd $$i; make min_rfs) ; \
-	done
-	umount $(TARGET_FS)
+#min_rfs: mount_rfs
+#	@for i in $(DIRS); do \
+#	(cd $$i; make min_rfs) ; \
+#	done
+#	umount $(TARGET_FS)
 
 $(ELKS_DIR)/.config:
 	(cd $(ELKS_DIR) ; make config)
 
-$(ELKS_DIR)/Image: $(ELKS_DIR)/.config
+$(ELKS_DIR)/arch/i86/boot/Image: $(ELKS_DIR)/.config
 	(cd $(ELKS_DIR) ; make)
 
 $(FD_BSECT):
@@ -44,19 +58,35 @@ $(FD_BSECT):
 $(KHELPER):
 	(cd $(MINIX_BOOT) ; make)
 
-floppy: mount_rfs $(ELKS_DIR)/Image $(FD_BSECT) $(KHELPER)
+boot: $(ELKS_DIR)/arch/i86/boot/Image
+	cp $(ELKS_DIR)/arch/i86/boot/Image boot
+	
+
+comb: mount_combfs $(ELKS_DIR)/arch/i86/boot/Image $(FD_BSECT) $(KHELPER)
 	@for i in $(DIRS); do \
 	(cd $$i; make min_rfs) ; \
 	done
-	cp $(ELKS_DIR)/Image $(TARGET_MNT)/boot/linux
+	cp $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
 	cp $(KHELPER) $(TARGET_MNT)/boot/boot
-	umount $(TARGET_FS)
-#	dd if=$(FD_BSECT) of=$(TARGET_FS) bs=512 count=2
-	
+	umount $(COMB_TARGET_FS)
+	dd if=$(FD_BSECT) of=$(COMB_TARGET_FS) bs=512 count=2 conv=notrunc
+
+root: mount_rootfs
+	@for i in $(DIRS); do \
+	(cd $$i; make min_rfs) ; \
+	done
+	umount $(ROOT_TARGET_FS)
+
+boot: $(ELKS_DIR)/arch/i86/boot/Image
+	cp $(ELKS_DIR)/arch/i86/boot/Image boot
+
+images.zip: boot comb root
+	zip images.zip boot root comb
 
 clean:
 	@for i in $(DIRS); do \
 	(cd $$i; make clean) ; \
 	done
-	umount $(TARGET_FS) || true
-	dd if=/dev/zero of=$(TARGET_FS) bs=1024 count=$(TARGET_BLKS)
+	umount $(COMB_TARGET_FS) || true
+	umount $(ROOT_TARGET_FS) || true
+	rm -f $(ROOT_TARGET_FS) $(COMB_TARGET_FS) boot images.zip

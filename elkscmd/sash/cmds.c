@@ -54,7 +54,6 @@ do_pwd(argc, argv)
 }
 #endif /* CMD_PWD */
 
-
 void
 do_cd(argc, argv)
 	char	**argv;
@@ -718,8 +717,10 @@ do_setenv(argc, argv)
 	char	buf[1024];
 
 	strcpy(buf, argv[1]);
-	strcat(buf, "=");
-	strcat(buf, argv[2]);
+	if (argc > 2) {
+		strcat(buf, "=");
+		strcat(buf, argv[2]);
+	}
 	putenv(buf);
 }
 #endif /* CMD_SETENV */

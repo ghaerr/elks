@@ -6,6 +6,7 @@ PLATFORM=i86-ELKS
 
 ifeq ($(PLATFORM),i86-ELKS)
 	CC=bcc
+	CFLBASE=-0 -O -ansi
 	CFLAGS=-0 -O -ansi
 	LDFLAGS=-s
 	CHECK=gcc -c -o .null.o -Wall -pedantic
@@ -18,9 +19,14 @@ ifeq ($(PLATFORM),default)
 endif
 
 
-TARGET_FS=/usr/src/elkscmd/root
-TARGET_MNT=/elks
-TARGET_BLKS=720
+COMB_TARGET_FS=$(ELKSCMD_DIR)/comb
+COMB_TARGET_BLKS=720
+
+ROOT_TARGET_FS=$(ELKSCMD_DIR)/root
+ROOT_TARGET_BLKS=360
+
+TARGET_MNT=/mnt
+
 MKFS=/sbin/mkfs.minix
 MKFS_OPTS=-n14
 #Include the line below if TARGET_FS is a file, not a device

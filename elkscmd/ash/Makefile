@@ -38,10 +38,8 @@ rfs: install
 
 min_rfs: install
 
-install: $(TARGET_MNT)/ash
-
-$(TARGET_MNT)/ash: sh
-	cp -p sh $(TARGET_MNT)/bin/ash
+install: sh
+	cp -p sh $(TARGET_MNT)/bin/sh
 
 clean:
 	rm -f $(CLEANFILES) sh core

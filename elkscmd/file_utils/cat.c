@@ -13,6 +13,7 @@
 
 #define CAT_BUF_SIZE 4096
 
+int cat_read_size = 1;
 char colon[2] = { ':', ' ' };
 char nl = '\n';
 
@@ -22,7 +23,7 @@ int fd;
 	int nred;
 	char readbuf[CAT_BUF_SIZE];
 
-	while ((nred=read(fd,readbuf,CAT_BUF_SIZE)) > 0) {
+	while ((nred=read(fd,readbuf,cat_read_size)) > 0) {
 		write(STDOUT_FILENO,readbuf,nred);
 	}
 }

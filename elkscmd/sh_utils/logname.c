@@ -1,14 +1,14 @@
 #include <unistd.h>
+#include <pwd.h>
+#include <sys/types.h>
 
 void
 main ()
 {
-	char *cp;
+	register struct passwd * upw = getpwuid(getuid());
 
-	cp = getlogin ();
-	if (cp)
-	{
-		write(STDOUT_FILENO,cp,strlen(cp));
+	if (upw) {
+		write(STDOUT_FILENO,upw->pw_name,strlen(upw->pw_name));
 		write(STDOUT_FILENO,"\n",1);
 		exit (0);
 	}
