@@ -4,6 +4,11 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Wed Jul 14 18:32 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Many changes to tty code to correct various aspects of behavoir
+	  by Al Riddoch and Greg Haerr.
+
 Wed Jul 14 18:28 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Update and recode of direct console driver, adding more ansi

@@ -1,6 +1,8 @@
 /*
  * arch/i86/drivers/char/tty.c - A simple tty driver
  * (C) 1997 Chad Page et. al
+ *
+ * Modified by Greg Haerr <greg@censoft.com> for screen editors
  */
 
 /* 
@@ -62,6 +64,7 @@ struct file *file;
 	int err;
 
 	if (otty = determine_tty(inode->i_rdev)) {
+		memcpy(&otty->termios, &def_vals, sizeof(struct termios));
 		err = otty->ops->open(otty);
 		if (err) {
 			return err;
@@ -72,6 +75,8 @@ struct file *file;
 			current->tty = otty;
 		}
 		otty->flags |= TTY_OPEN;
+		chq_init(&otty->inq, otty->inq_buf, INQ_SIZE);
+		chq_init(&otty->outq, otty->outq_buf, OUTQ_SIZE);
 		return 0;
 	} else {
 		return -ENODEV;
@@ -112,12 +117,15 @@ unsigned char ch;
 
 	switch (ch) {
 		case '\t':		
-			for (j = 0; j < TAB_SPACES; j++) tty_charout(tty, ' ');
+			for (j = 0; j < TAB_SPACES; j++) {
+				tty_charout(tty, ' ');
+			}
 			break;
-#if 1
 		case '\n':
-			tty_charout(tty, '\r');
-#endif		
+			if (tty->termios.c_oflag & ONLCR) {
+				tty_charout(tty, '\r');
+			}
+			/* fall through */
 		default:
 			while (chq_addch(&tty->outq, ch, 0) == -1) {
 				tty->ops->write(tty);
@@ -162,27 +170,29 @@ char *data;
 int len;
 {
 	register struct tty *tty=determine_tty(inode->i_rdev);
-	int i = 0, j = 0, k, l;
+	int i = 0, j = 0, k;
 	unsigned char ch, lch;
-	int mode = (tty->termios.c_lflag & ICANON);
+	int rawmode = (tty->termios.c_lflag & ICANON)? 0: 1;
+	int blocking = (file->f_flags & O_NONBLOCK)? 0 : 1;
 
-	l = (file->f_flags & O_NONBLOCK) ? 0 : 1;
-	while ((i < len) && (!mode || (j != '\n'))) { 
+	if(len == 0)
+		return 0;
+	do {
 		if (tty->ops->read) {
 			tty->ops->read(tty);
-			l = 0;
+			blocking = 0;
 		}
-		j = chq_getch(&tty->inq, &ch, l);
+		j = chq_getch(&tty->inq, &ch, blocking);
 		if (j == -1) {
-			if (l) {
+			if (blocking) {
 				return -EINTR;
 			} else {
 				break;
 			}
 		}
-		if (mode && (j == 4))
+		if (!rawmode && (j == 04))	/* CTRLD*/
 			break;
-		if (!mode  || (j != '\b')) {
+		if (rawmode || (j != '\b')) {
 			pokeb(current->t_regs.ds, (data + i++), ch);		
 			tty_echo(tty, ch);
 		} else if (i > 0) {
@@ -192,7 +202,9 @@ int len;
 			}
 		}
 		tty->ops->write(tty);
-	};
+	} while(i < len && !rawmode && j != '\n');
+	/*} while(i < len && (rawmode || j != '\n'));*/
+
 	return i;
 }
 
@@ -296,22 +308,18 @@ void tty_init()
 	for (i = 0; i < NUM_TTYS; i++) { 
 		ttyp = &ttys[i];
 		ttyp->minor = -1;
-		chq_init(&ttyp->inq, ttyp->inq_buf, INQ_SIZE);
-		chq_init(&ttyp->outq, ttyp->outq_buf, OUTQ_SIZE);
 	}
 
 #ifdef CONFIG_CONSOLE_BIOS
 	ttyp = &ttys[0];
 	ttyp->ops = &bioscon_ops;
 	ttyp->minor = 0;
-	memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
 #endif
 #ifdef CONFIG_CONSOLE_DIRECT
 	for (i = 0; i < 3; i++) {
 		ttyp = &ttys[i];
 		ttyp->ops = &dircon_ops;
 		ttyp->minor = i;
-		memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
 	}
 #endif
 #ifdef CONFIG_CHAR_DEV_RS
@@ -319,7 +327,6 @@ void tty_init()
 		ttyp = &ttys[i];
 		ttyp->ops = &rs_ops;
 		ttyp->minor = i;
-		memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
 	}
 #endif
 #ifdef CONFIG_PSEUDO_TTY
@@ -327,7 +334,6 @@ void tty_init()
 		ttyp = &ttys[i];
 		ttyp->ops = &ttyp_ops;
 		ttyp->minor = i;
-		memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
 	}
 	pty_init();
 #endif
