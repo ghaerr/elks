@@ -33,6 +33,13 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sat May 25 21:30:35 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Simplified configuration of SiBO wrt_disk.img utility. The two
+	  configuration parameters are now in a separate tools.h header
+	  file, and both wrt_disk.c and file.s make use of the values in
+	  this header file to achieve the required task.
+
 Wed May 15 16:00:08 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Invert the "Is this system call valid" condition in strace.c

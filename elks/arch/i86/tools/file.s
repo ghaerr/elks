@@ -5,29 +5,23 @@
 	.global _open_file
 	.global _read_byte
 	.global _close_file
+	.global _file_name
 
 _open_file:
 	mov dx, #file_status
-	mov al, #0x00
-
-	mov ah, #0x00		;connect to file server
+	mov ax, #0x0000		; connect to file server.
 	int 0x87
-
-
-	mov bx, #file_name
-	mov cx, #0x00		;binary, readonly
-
+	mov cx, #0x00		; binary, readonly.
+	mov bx, _file_name
 	mov ah, #0x00
 	int 0x85
-
-	mov file_handle, ax
+	mov file_handle, ax	; Save file handle for later.
 	ret
 
 _read_byte:
 	mov bx, file_handle
 	mov cx, #file_buffer
 	mov dx, #0x01
-
 	mov ah, #0x11
 	int 0x86
 	
@@ -42,8 +36,6 @@ _close_file:
 	ret
 
 	.data
-file_name:
-	.ASCII "loc::m:\\minix.dsk\0"
 file_handle:
 	.word 0x0000
 file_buffer:

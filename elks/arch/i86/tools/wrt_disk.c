@@ -1,18 +1,101 @@
-/* This tool copies a Minix Disk image to the 'B' Flash SSD, it assumes
- * that the disk is a 128K Flash and the source file for the image is
- * LOC::M:\MINIX.DSK
+/* This tool copies a Minix Disk image to the 'B' Flash SSD. The original
+ * assumed  that the disk is a 128K Flash and that the source file for the
+ * image was LOC::M:\MINIX.DSK but this version draws both parameters from
+ * a separate header file where they can be configured.
+ *
  * It is rather slow at present but uses the SSD driver stuff so should 
  * pick up any improvements as that developes.
  */
 
+#include "tools.h"
+
+/* Select method to use - uncomment the following line to use a single long
+ * int for the address, or comment it to use two short ints instead.
+ */
+
+#define LONG_INT
+/****/
+
+/* Pseudotypes we use internally */
+
+#define DWORD	unsigned long int
+#define WORD	unsigned short int
+#define BYTE	unsigned char
+
+/* Common values generated from the parameters */
+
+#define BLOCKS	((WORD) ((DWORD) DISK_SIZE) / 64UL)
+#define SIZE	(((DWORD) DISK_SIZE) * 1024UL)
+
+/* Prototypes for local functions */
+
+void open_file(void);
+BYTE read_byte(void);
+void close_file(void);
+
+char filename[64];
+
+void print_word(WORD data)
+{
+    LCD_WriteChar('0' + ((data & 0xF000) >> 12));
+    LCD_WriteChar('0' + ((data & 0x0F00) >>  8));
+    LCD_WriteChar('0' + ((data & 0x00F0) >>  4));
+    LCD_WriteChar('0' +  (data & 0x000F)       );
+}
+
+void print_address(WORD high, WORD low)
+{
+    print_word(high);
+    print_word(low);
+    LCD_WriteChar(' ');
+}
+
+void error(char Pass, WORD data, WORD result)
+{
+    LCD_WriteChar('E');
+    LCD_WriteChar('r');
+    LCD_WriteChar('r');
+    LCD_WriteChar('o');
+    LCD_WriteChar('r');
+    LCD_WriteChar(' ');
+    LCD_WriteChar(Pass);
+    LCD_WriteChar(' ');
+    print_word(data);
+    LCD_WriteChar('/');
+    print_word(result);
+    LCD_WriteChar(' ');
+
+    /* Loop forever (requires hard reset) */
+    while (1)
+	/* Do nothing */;
+}
+
+void strcat(char *tgt, char *src)
+{
+    while (*tgt)
+	tgt++;
+    while (*src)
+	*tgt++ = *src++;
+    *tgt = *src;
+}
+
 /* NOTE: Each time this is run it erases the SSD */
-
-#define BLOCKS 2		/* set for 128K SSD, 1 Block = 64K */
-
 int main(void)
 {
-    unsigned int high_address, low_address;
-    unsigned char data, result, not_done;
+#ifdef LONG_INT
+    DWORD address;
+#endif
+    WORD high_address, low_address;
+    BYTE data, result;
+#ifndef LONG_INT
+    BYTE not_done;
+#endif
+
+    /* Specify the filename to use */
+    *filename = '\0';
+    strcat(filename, "loc::m:\\");
+    filename[5] = DRIVE;
+    strcat(filename,FILENAME);
 
     /* Connect to SSD in slot 'B' (under 'enter') */
     ssd_open4(0x01);
@@ -27,8 +110,26 @@ int main(void)
     LCD_WriteChar('o');
     LCD_WriteChar('g');
 
+#ifdef LONG_INT
+
+    for (address = 0; address < SIZE; address++) {
+	high_address = (WORD) (address >> 16);
+	low_address = (WORD) (address & 0xFFFF);
+	if ((low_address & 0x1F) == 0) {
+	    LCD_Position(0, 1);
+	    print_address(high_address, low_address);
+	}
+	result = ssd_write4(high_address, low_address, 0);
+	if (result) {
+	    LCD_Position(0, 2);
+	    error('1', data, result);
+	}
+    }
+
+#else
+
     /* for block of 64K write data */
-    for (high_address = 0; high_address < BLOCKS; high_address++) {
+    for (high_address = 0; high_address <SIZE; high_address++) {
 	low_address = 0;
 	not_done = 1;
 
@@ -40,9 +141,9 @@ int main(void)
 
 	    result = ssd_write4(high_address, low_address, 0);
 
-	    if (result != data) {
+	    if (result) {
 		LCD_Position(0, 2);
-		error(data, result);
+		error('1', data, result);
 	    }
 
 	    low_address++;
@@ -51,6 +152,7 @@ int main(void)
 	}
     }
 
+#endif
 
     /* need to erase each chip in the SSD */
     LCD_Position(0, 0);
@@ -71,7 +173,7 @@ int main(void)
 
 	if (result) {
 	    LCD_Position(0, 2);
-	    error(high_address, result);
+	    error('2',high_address, result);
 	}
     }
 
@@ -86,6 +188,25 @@ int main(void)
     LCD_WriteChar('r');
     LCD_WriteChar('a');
     LCD_WriteChar('m');
+
+#ifdef LONG_INT
+
+    for (address = 0; address < SIZE; address++) {
+	high_address = (unsigned short int) (address >> 16);
+	low_address = (unsigned short int) (address & 0xFFFF);
+	if ((low_address & 0x1F) == 0) {
+	    LCD_Position(0, 1);
+	    print_address(high_address, low_address);
+	}
+	data = read_byte();
+	result = ssd_write4(high_address, low_address, data);
+	if (result != data) {
+	    LCD_Position(0, 2);
+	    error('3', data, result);
+	}
+    }
+
+#else
 
     /* for block of 64K write data */
     for (high_address = 0; high_address < BLOCKS; high_address++) {
@@ -105,7 +226,7 @@ int main(void)
 
 	    if (result != data) {
 		LCD_Position(0, 2);
-		error(data, result);
+		error('3', data, result);
 	    }
 
 	    low_address++;
@@ -113,6 +234,8 @@ int main(void)
 		not_done = 0;
 	}
     }
+
+#endif
 
     close_file();
 
@@ -123,42 +246,9 @@ int main(void)
     LCD_WriteChar('e');
     LCD_WriteChar('.');
 
-    /* Sleep for every - requires a hard reset */
-    while (1);
+    /* Sleep forever - requires a hard reset */
+    while (1)
+	/* Do nothing */;
 
-    return (0);
-}
-
-int print_address(high, low)
-     int high;
-     int low;
-{
-    /* Print out the address at the current location */
-    LCD_WriteChar('0' + ((high & 0xF000) >> 12));
-    LCD_WriteChar('0' + ((high & 0x0F00) >> 8));
-    LCD_WriteChar('0' + ((high & 0x00F0) >> 4));
-    LCD_WriteChar('0' + (high & 0x000F));
-
-    LCD_WriteChar('0' + ((low & 0xF000) >> 12));
-    LCD_WriteChar('0' + ((low & 0x0F00) >> 8));
-    LCD_WriteChar('0' + ((low & 0x00F0) >> 4));
-    LCD_WriteChar('0' + (low & 0x000F));
-
-    LCD_WriteChar(' ');
-}
-
-int error(data, result)
-     int data;
-     int result;
-{
-    LCD_WriteChar('E');
-    LCD_WriteChar('r');
-    LCD_WriteChar('r');
-    LCD_WriteChar('o');
-    LCD_WriteChar('r');
-
-    LCD_WriteChar(' ');
-    print_address(data, result);
-
-    while (1);
+    return 0;
 }
