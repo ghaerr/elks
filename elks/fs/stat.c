@@ -32,13 +32,8 @@ struct stat * statbuf;
 	tmp.st_size = inode->i_size;
 	tmp.st_rdev = kdev_t_to_nr(inode->i_rdev);
 	tmp.st_mtime = inode->i_mtime;
-#ifdef CONFIG_ACTIME
 	tmp.st_atime = inode->i_atime;
 	tmp.st_ctime = inode->i_ctime;
-#else
-	tmp.st_atime = inode->i_mtime;
-	tmp.st_ctime = inode->i_mtime;
-#endif
 /*
  * st_blocks and st_blksize are approximated with a simple algorithm if
  * they aren't supported directly by the filesystem. The minix and msdos

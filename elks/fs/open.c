@@ -166,19 +166,12 @@ struct utimbuf * times;
 	error=namei(filename,&inode,0,0);
 	if (error)
 		return error;
-#ifdef CONFIG_ACTIME
 	if (times) {
 		actime = get_fs_long((unsigned long *) &times->actime);
 		modtime = get_fs_long((unsigned long *) &times->modtime);
 	} else
 		actime = modtime = CURRENT_TIME;
 	inode->i_atime = actime;
-#else
-	if (times) {
-		modtime = get_fs_long((unsigned long *) &times->modtime);
-	} else
-		modtime = CURRENT_TIME;
-#endif
 	inode->i_mtime = modtime;
 	inode->i_dirt = 1;
 	iput(inode);

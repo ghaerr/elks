@@ -286,12 +286,10 @@ REGOPT struct iattr *attr;
 		inode->i_size = attr->ia_size;
 	if (attr->ia_valid & ATTR_MTIME)
 		inode->i_mtime = attr->ia_mtime;
-#ifdef CONFIG_ACTIME
 	if (attr->ia_valid & ATTR_ATIME)
 		inode->i_atime = attr->ia_atime;
 	if (attr->ia_valid & ATTR_CTIME)
 		inode->i_ctime = attr->ia_ctime;
-#endif
 	if (attr->ia_valid & ATTR_MODE) {
 		inode->i_mode = attr->ia_mode;
 		if (!suser() && !in_group_p(inode->i_gid))
@@ -502,11 +500,7 @@ struct inode * get_pipe_inode()
 		inode->i_mode |= S_IFIFO | S_IRUSR | S_IWUSR;
 		inode->i_uid = current->euid;
 		inode->i_gid = current->egid;
-#ifdef CONFIG_ACTIME
 		inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-#else
-		inode->i_mtime = CURRENT_TIME;
-#endif
 	/*	inode->i_blksize = PAGE_SIZE; */
 	}
 	return inode;
