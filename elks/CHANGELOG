@@ -29,6 +29,12 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sat Nov 17 18:03:45 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* THIS IS ELKS RELEASE 0.0.90 !!!
+
+	* Fixed bug in `make dist` - it missed an important file out!
+
 Sat Nov 17 12:14:01 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Tweaked config variables as follows:

@@ -140,7 +140,7 @@ dist:
 	-rm -rf $(DISTDIR)
 	mkdir $(DISTDIR)
 	-chmod 777 $(DISTDIR)
-	cp -pf BUGS CHANGELOG COPYING Makefile $(DISTDIR)
+	cp -pf BUGS CHANGELOG COPYING Makefile Makefile-rules $(DISTDIR)
 	cp -pf nodeps README RELNOTES TODO $(DISTDIR)
 	(cd $(DISTDIR); mkdir Documentation fs include init kernel lib net)
 	(cd $(DISTDIR); mkdir -p $(ARCH_DIR) scripts)
