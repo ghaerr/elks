@@ -44,7 +44,7 @@ static struct request all_requests[NR_REQUEST];
 int foo_foo_bar;
 
 #ifdef MULTI_BH
-struct wait_queue * wait_for_request = NULL;
+struct wait_queue wait_for_request = NULL;
 #endif
 
 /* This specifies how many sectors to read ahead on the disk.  */
@@ -188,14 +188,9 @@ int n;
 kdev_t dev;
 {
 	register struct request *req;
-	struct wait_queue wait;
-	
-	wait.task = current;
-	wait.next = NULL;
-
 	printk("Waiting for request...\n");
 
-	add_wait_queue(&wait_for_request, &wait);
+	wait_set(&wait_for_request);
 	for (;;) {
 /*		unplug_device(MAJOR(dev)+blk_dev); */ /* Device can't be plugged */
 		current->state = TASK_UNINTERRUPTIBLE;
@@ -206,7 +201,7 @@ kdev_t dev;
 			break;
 		schedule();
 	}
-	remove_wait_queue(&wait_for_request, &wait);
+	wait_clear(&wait_for_request);
 	current->state = TASK_RUNNING;
 	return req;
 }
@@ -368,6 +363,7 @@ register struct buffer_head * bh;
 	req->rq_nr_sectors = count;
 #endif
 	req->rq_buffer = bh->b_data;
+	req->rq_seg = bh->b_seg;
 /*	req->rq_sem = NULL;*/
 	req->rq_bh = bh;
 #ifdef BLOAT_FS
