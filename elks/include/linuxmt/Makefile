@@ -13,7 +13,7 @@ USEBCC 	= Y
 
 CLEANDEP	= 
 
-CLEANME 	= compiler-generated.h
+CLEANME 	= autoconf.h compiler-generated.h
 
 DEPEND		= 
 
