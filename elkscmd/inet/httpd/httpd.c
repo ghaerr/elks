@@ -171,13 +171,13 @@ char** argv;
 	localadr.sin_port = htons(DEF_PORT);
 	localadr.sin_addr.s_addr = INADDR_ANY;
 
-    ret = bind(	listen_sock,
+	ret = bind(	listen_sock,
     			(struct sockaddr *)&localadr,
     			sizeof(struct sockaddr_in));
 
-    ret = listen(listen_sock, 5);
+	ret = listen(listen_sock, 5);
 
-    while(1){
+	while(1){
 		conn_sock = accept(listen_sock, NULL, NULL);
 		
 		if(conn_sock < 0)
@@ -192,6 +192,6 @@ char** argv;
 		} else {
 			close(conn_sock);
 		}
-    }
+	}
 }
 

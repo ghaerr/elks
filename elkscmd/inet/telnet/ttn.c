@@ -34,6 +34,8 @@ ttn.c
 #include <arpa/inet.h>
 #endif
 
+#include <netdb.h>
+
 #include "ttn.h"
 
 /*#define DEBUG 1*/
