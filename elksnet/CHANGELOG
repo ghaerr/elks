@@ -8,15 +8,20 @@ should not be longer than the lines of dashes.
 Contributor		Email address			CHANGELOG entries found
 ~~~~~~~~~~~~~~~~~~~~~~	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	~~~~~~~~~~~~~~~~~~~~~~~
 Harry Kalogirou		<harkal@rainbow.cs.unipi.gr>	25 Jun 2001- 2 Nov 2001
-Riley Williams		<rhw@MemAlpha.cx>		13 Aug 2001-20 Jan 2002
+Riley Williams		<Riley@Williams.Name>		13 Aug 2001-20 Jan 2002
 
 -------------------------------------------------------------------------------
 
-Sun Jan 20 12:20:03 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+Thu Jun 20 23:19:30 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Added debugging statements to ktcp.c to try to locate the
+	  problem that stops it running with current ELKS kernels.
+
+Sun Jan 20 12:20:03 GMT 2002	Riley Williams <Riley@Williams.Name>
 
 	* Simplified Makefile.
 
-Mon Nov  5 20:48:31 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+Mon Nov  5 20:48:31 GMT 2001	Riley Williams <Riley@Williams.Name>
 
 	* Corrected typo in Makefile comment.
 
@@ -25,28 +30,28 @@ Fri Nov  2 16:06:39 EET 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 	* Rolled back Riley's changes to the ktcp Makefile that caused
 	  problems.
 
-Mon Oct 29 15:14:31 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+Mon Oct 29 15:14:31 GMT 2001	Riley Williams <Riley@Williams.Name>
 
 	* Merged multiple CHANGELOG documents into one, deleting duplicates.
 	* Merged multiple TODO documents into one, deleting duplicates.
 
-Sun Oct  7 00:46:33 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+Sun Oct  7 00:46:33 BST 2001	Riley Williams <Riley@Williams.Name>
 
 	* Added `make clean` options to all Makefiles not currently containing
 	  them, also added WORKING global `make all` option.
 
-Sat Oct  6 20:07:05 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+Sat Oct  6 20:07:05 BST 2001	Riley Williams <Riley@Williams.Name>
 
 	* Actually committed changes listed below !!!!!!!
 
-Wed Sep 19 23:22:38 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+Wed Sep 19 23:22:38 BST 2001	Riley Williams <Riley@Williams.Name>
 
 	* Added facility to automatically compile all utilities in ELKSnet
 	  package my doing `make all` in the base directory.
 	* Added v2.0a of screen utility to ELKSnet package, although it still
 	  needs tweaking for ELKS at this stage.
 
-Mon Aug 13 23:22:13 BST 2001	Riley Williams <rhw@memalpha.cx>
+Mon Aug 13 23:22:13 BST 2001	Riley Williams <Riley@Williams.Name>
 
 	* Reformatted ktcp/mylibs.h to be more readable.
 

@@ -21,10 +21,15 @@
 #include "tcp.h"
 #include "netconf.h"
 
+#ifdef DEBUG
+#define debug	printf
+#else
+#define debug(s)
+#endif
+
 extern int tcp_timeruse;
 
-static int sfd;
-static int tcpdevfd;
+static int sfd, tcpdevfd;
 
 unsigned long int in_aton(const char *str)
 {
@@ -94,21 +99,32 @@ int main(int argc,char **argv)
 	exit(3);
     }
 
+    debug("KTCP: Mark 1.\n");
     local_ip = in_aton(argv[1]);
 
+    debug("KTCP: Mark 2.\n");
     if((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)
 	exit(1);
 
+    debug("KTCP: Mark 3.\n");
     if ((sfd = slip_init(argv[2])) < 0)
 	exit(2);
 
+    debug("KTCP: Mark 4.\n");
     ip_init();
+
+    debug("KTCP: Mark 5.\n");
     icmp_init();
+
+    debug("KTCP: Mark 6.\n");
     tcp_init();
 
+    debug("KTCP: Mark 7.\n");
     netconf_init();
 
+    debug("KTCP: Mark 8.\n");
     ktcp_run();
 
+    debug("KTCP: Mark 9.\n");
     exit(0);
 }

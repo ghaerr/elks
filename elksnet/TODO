@@ -7,7 +7,7 @@ at the appropriate point in this list.
 
 ===============================================================================
 
- *  Before 0.1.0 is released:
+ *  Before 0.2.0 is released:
 
     *	Convert screen to compile for ELKS.
 
@@ -16,7 +16,7 @@ at the appropriate point in this list.
 	stage of the compilation process. This eliminates bugs caused by the
 	use of incompatible compilation options for different modules.
 
- * Before 0.2.0 is released:
+ * Before 1.0.0 is released:
 
     *	Convert wvdial to compile under ELKS.
 
