@@ -10,10 +10,14 @@ Contributor             Current Email address           CHANGELOG entries found
 ~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~
 Alistair Riddoch        <AlRiddoch@zepler.org>           1 Jan 1995-20 Oct 1999
 Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>     7 Nov 2001
-Michael McConnell	<Soruk@Eridani.co.uk>		11 Nov 2001
+Michael McConnell	<Soruk@Eridani.co.uk>		11 Nov 2001-12 Nov 2001
 Riley Williams          <rhw@MemAlpha.cx>                8 Nov 2001-12 Nov 2001
 
 -------------------------------------------------------------------------------
+
+Mon Nov 12 21:53:33 GMT 2001	Michael McConnell <soruk@eridani.co.uk>
+
+	* Updated ELKS logo with transparent version.
 
 Mon Nov 12 00:00:00 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
