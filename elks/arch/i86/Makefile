@@ -1,18 +1,12 @@
-# Build the Psion specific stuff
+# Note that the standard Makefile rules and defines have been moved to
+# the file below.
 
-AS86	=as86 -0
-LD86	=ld86 -0
+ELKSDIR		= ../..
 
-AS	=as
-LD	=ld86
-ifeq ($(CONFIG_ARCH_SIBO), y)
-LDFLAGS	=-0 -i -D 0xc00 -H 0x480
-else
-LDFLAGS	=-0 -i
-endif
-CC	=bcc
+include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
+# Build the Psion specific stuff
 
 AARCHIVES = kernel/akernel.a lib/lib86.a mm/mm.a
 
@@ -26,21 +20,8 @@ DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 	$(ARCH_DIR)/drivers/block/blk_drv.a
 
 #########################################################################
-# general construction rules
-
-.c.s:
-	$(CC) $(CFLAGS) \
-	-0 -nostdinc -I$(MT_DIR)/include -S -o $*.s $<
-.s.o:
-	$(AS) -C -o -I$(MT_DIR)/include -o $*.o $<
-.S.s:
-	gcc -E -traditional -o $*.s $<
-.c.o:
-	$(CC) $(CFLAGS) \
-	2 -nostdinc -I$(MT_DIR)/include -c -o $*.o $<
-
-#########################################################################
 # arch tools
+
 .PHONY: boot/system tools
 
 boot/setup: boot/setup.S
@@ -147,8 +128,9 @@ setup: $(ARCH_DIR)/tools $(ARCH_DIR)/boot/setup
 endif
 
 #########################################################################
-# library rules
-# Build archives and add them to the list of things to link into kernel image
+# library rules to build archives and add them to the list of things to
+# link into kernel image
+
 .PHONY: kernel/akernel.a lib/lib86.a mm/mm.a drivers/char/chr_drv.a \
 	drivers/block/blk_drv.a 286pmode/pmode286
 
@@ -172,6 +154,7 @@ drivers/block/blk_drv.a:
 
 #########################################################################
 # misc
+
 clean:
 	rm -f boot/bootsect boot/setup boot/bootsect.s boot/setup.s
 	rm -f boot/netbootsect boot/netbootsect.s

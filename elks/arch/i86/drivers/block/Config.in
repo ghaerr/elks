@@ -30,6 +30,7 @@ else
 
 	bool 'SSD disk support' CONFIG_BLK_DEV_SSD
 	bool 'Internal disk support' CONFIG_BLK_DEV_ID
+	define_bool CONFIG_BLK_DEV_BIOS n
 
 fi
 

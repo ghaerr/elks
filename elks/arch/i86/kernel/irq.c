@@ -48,7 +48,8 @@ static struct irqaction irq_action[32];
  *	Low level interrupt handling for the SIBO platform
  */
  
-void disable_irq(int nr)
+void disable_irq(nr)
+int nr;
 {
 	/* Not supported on SIBO */
 }
@@ -68,6 +69,9 @@ int x;
 static void arch_init_IRQ()
 {
 }
+
+unsigned char cache_21 = 0xff;
+unsigned char cache_A1 = 0xff;
 
 #else
 

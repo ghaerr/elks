@@ -1,25 +1,22 @@
-## Makefile for compiling assembler for Psion 3a.
-## SDW 28/2/99
+# Makefile for compiling assembler for Psion 3a.		SDW 28/2/99
+#
+###########################################################################
+#
+# Note that the standard Makefile rules and defines have been moved to
+# the file below.
+
+ELKSDIR		= ../../..
+
+include $(ELKSDIR)/Makefile-rules
+
+###########################################################################
 
 ## Paramters
 stack_size = 64		# paras of 16 bytes
 heap_size = 128		# paras of 16 bytes
 
-cc = bcc
-cc_flags = -0 -c
-
-as = as86
-as_flags = -0
-
 imgconv = ./imgconv
 imgconv_flags = -D$(stack_size) -H$(heap_size)
-
-## Rules
-%.o:%.c			# compile
-	$(cc) -o $@ $(cc_flags) $<
-
-%.o:%.s			# assemble
-	$(as) -o $@ $(as_flags) $<
 
 %.img:%.out		# convert to psion
 	$(imgconv) $< $@ 

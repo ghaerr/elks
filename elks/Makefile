@@ -1,84 +1,9 @@
-VERSION 	= 0
-PATCHLEVEL	= 0
-SUBLEVEL	= 85
-PRE		= 2		# If we're not a pre, comment this line
+# Note that the standard Makefile rules and defines have been moved to
+# the file below.
 
-#########################################################################
-# Variables derived directly from the ELKS version number
+ELKSDIR		= .
 
-DISTDIR 	= elks-$(VSN)
-ifne (X$PRE, X)
-VSN		= $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)-pre$(PRE)
-else
-VSN		= $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
-endif
-
-.EXPORT_ALL_VARIABLES:
-
-#########################################################################
-# Relative path to ELKS base directory
-
-ELKSDIR 	= .
-
-#########################################################################
-# linuxMT root and backup directories
-
-MT_DIR		= $(shell cd "$ELKSDIR" ; \
-			  if [ "$$PWD" != "" ]; then echo $$PWD; \
-						else pwd; fi)
-TOPDIR		= $(MT_DIR)
-
-TARGET_NB_IMAGE = /tftpboot/elksy/nbImage
-
-#########################################################################
-# Specify architecture
-
-ARCH		= i86
-ARCH_DIR	= arch/$(ARCH)
-
-#########################################################################
-# Specify standard programs and flags
-
-AS		= as86
-
-CC		= bcc
-CFLBASE 	= -D__KERNEL__ -I $(TOPDIR)/include -O
-CFLAGS		= $(CFLBASE) -i
-
-CPP		= $(CC) -I$(TOPDIR)/include -E -D__KERNEL__
-CC_PROTO	= gcc -I$(MT_DIR)/include -M -D__KERNEL__
-
-LD		= ld86
-
-LINT		= lclint
-
-#########################################################################
-# Determine current shell
-
-CONFIG_SHELL := $(shell if [ -x "$$bash" ]; then echo $$bash; \
-          else if [ -x /bin/bash ]; then echo /bin/bash; \
-          else echo sh; fi ; fi)
-
-#########################################################################
-# ROOT_DEV specifies the default root-device when making the image. This
-# does not yet work under ELKS. See include/linuxmt/config.h to change
-# the root device.
-
-ROOT_DEV	= FLOPPY
-
-#########################################################################
-# general construction rules
-
-.c.s:
-	$(CC) $(CFLAGS) \
-	-0 -nostdinc -Iinclude -S -o $*.s $<
-.s.o:
-	$(AS) -0 -I$(MT_DIR)/include -c -o $*.o $<
-.S.s:
-	gcc -E -traditional -o $*.s $<
-.c.o:
-	$(CC) $(CFLAGS) \
-	-0 -nostdinc -Iinclude -c -o $*.o $<
+include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
 # targets

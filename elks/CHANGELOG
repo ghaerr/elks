@@ -7,14 +7,25 @@ be longer than the lines of dashes.
 Al
 -------------------------------------------------------------------------------
 
+Thu Aug 30 19:16:22 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-Mon Aug 27 11:59:12 GMT 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+	* Rationalised ELKS Makefiles to use standard rule prototypes.
+
+Tue Aug 28 11:43:35 BST 2001	Paul Nasrat <pnasrat@uk.now.com>
+
+	* Patched ELKS CVS source to compile for SIBO.
+
+Mon Aug 27 11:59:12 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
 	* Changed tcpdev.c to use semaphores now we have them.
-	* Fixed bug in inet_read(). Should sleep again if waken up and has no
-	  lock on the buffer.
+	* Fixed bug in inet_read(). Should sleep again if waken up and has
+	  no lock on the buffer.
 	* Did some inet code cleanup
 	* Some fixes to the tcp behavior.
+
+Mon Aug 27 08:24:38 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Unfolded prototype rules in makefiles.
 
 Sun Aug 26 21:22:43 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 

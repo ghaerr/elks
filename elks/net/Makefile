@@ -1,28 +1,19 @@
-#
 # Makefile for the Linux/MT-kernel.
 #
 # Note! Dependencies are done automagically by 'make dep', which also
 # removes any old dependencies. DON'T put your own dependencies here
 # unless it's something special (ie not a .c file).
 #
+#########################################################################
+#
+# Note that the standard Makefile rules and defines have been moved to
+# the file below.
 
-AR	=ar
-AS	=as86 
-LD	=ld86 
-LDFLAGS	=-0 -s -x
-CC	=bcc
-CFLAGS	=$(CFLBASE) -I../include 
-CPP	=bcc -E -nostdinc -I../include
-CC_PROTO =gcc -I../include -M
+ELKSDIR		= ..
 
-.c.s:
-	$(CC) $(CFLAGS) \
-	-0 -S -o $*.s $<
-.s.o:
-	$(AS) -0 -c -o $*.o $<
-.c.o:
-	$(CC) $(CFLAGS) \
-	-0 -c -o $*.o $<
+include $(ELKSDIR)/Makefile-rules
+
+#########################################################################
 
 OBJS  = socket.o protocols.o ipv4/af_inet.o unix/af_unix.o nano/af_nano.o
 
