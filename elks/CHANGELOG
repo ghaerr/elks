@@ -9,6 +9,7 @@ Al
 Sun Jun 17 19:47:58 BST 2001
 	* Moved common code into minix_set_ops - based on a 2.4 change
 	  from mainstream by Al Viro
+	* Chop ltype down to 16 bytes - with our tiny stack 256 is crazy
 
 Sun Jun 17 18:38 BST 2001   Alistair Riddoch  <alriddoch@zepler.org>
 	* Resolved some minor clashes between Alan's commit and Thomas's
