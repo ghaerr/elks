@@ -4,6 +4,35 @@ BASEDIR=..
 
 include $(BASEDIR)/Make.defs
 
+###############################################################################
+#
+# Include standard packaging commands.
+
+MIN_BIN 	= 
+MIN_LIB 	= 
+MIN_SBIN	= 
+MIN_USR_BIN	= 
+MIN_USR_LIB	= 
+MIN_USR_SBIN	= 
+
+NET_BIN 	= 
+NET_LIB 	= 
+NET_SBIN	= 
+NET_USR_BIN	= 
+NET_USR_LIB	= 
+NET_USR_SBIN	= 
+
+STD_BIN 	= 
+STD_LIB 	= 
+STD_SBIN	= 
+STD_USR_BIN	= 
+STD_USR_LIB	= 
+STD_USR_SBIN	= 
+
+include $(BASEDIR)/Make.rules
+
+###############################################################################
+#
 # Please check the configuration parameters in config.h (and if you want
 # to make sure, the definitions in proto.h) to make sure they are correct
 # for your system.
@@ -57,10 +86,10 @@ trip: rc
 	./rc -p < trip.rc
 
 clean: force
-	rm -f *.o *.tab.* rc
+	rm -f core *.o *.tab.* rc
 
 history: force
-	cd history; make CC="$(CC)" $(HISTORYMAKEFLAGS)
+	make -C history CC="$(CC)" $(HISTORYMAKEFLAGS)
 
 force:
 

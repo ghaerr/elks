@@ -1,5 +1,34 @@
 # combined Makefile for ELVIS - a clone of `vi`
 #
+###############################################################################
+#
+# Include standard packaging commands.
+
+MIN_BIN 	= 
+MIN_LIB 	= 
+MIN_SBIN	= 
+MIN_USR_BIN	= 
+MIN_USR_LIB	= 
+MIN_USR_SBIN	= 
+
+NET_BIN 	= 
+NET_LIB 	= 
+NET_SBIN	= 
+NET_USR_BIN	= 
+NET_USR_LIB	= 
+NET_USR_SBIN	= 
+
+STD_BIN 	= 
+STD_LIB 	= 
+STD_SBIN	= 
+STD_USR_BIN	= elvis ctags ref virec refont
+STD_USR_LIB	= 
+STD_USR_SBIN	= 
+
+include $(BASEDIR)/Make.rules
+
+###############################################################################
+#
 # After editing this Makefile as described below, you should...
 #
 # Use `make` to compile all programs
