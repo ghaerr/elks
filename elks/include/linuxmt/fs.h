@@ -462,6 +462,9 @@ extern int block_write(struct inode *,struct file *,char *,int);
 
 #endif
 
+extern void fs_init(void);
+extern int sys_dup(int);
+
 #endif
 
 #endif

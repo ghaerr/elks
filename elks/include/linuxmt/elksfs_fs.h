@@ -123,6 +123,7 @@ extern struct inode_operations elksfs_dir_inode_operations;
 extern struct inode_operations elksfs_symlink_inode_operations;
 
 #endif
+
 #endif
 
 #endif

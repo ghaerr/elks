@@ -22,9 +22,10 @@
  *	MTK:	Sep 97 - Misc hacks to shrink generated code
  */
 
-#include <linuxmt/types.h>
 #include <linuxmt/fcntl.h>
+#include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
+#include <linuxmt/types.h>
 
 /*
  *	Just to make it work for now
@@ -79,8 +80,8 @@ static void numout(unsigned long *ptr, int len, int base, int useSign)
 {
     char buf[16];
     register char *bp = buf + 14;
-    unsigned long v;
-    int c;
+    unsigned long int v;
+    unsigned char c;
 
     bp[1] = 0;
     v = *ptr;
@@ -92,23 +93,21 @@ static void numout(unsigned long *ptr, int len, int base, int useSign)
     }
 
     do {
-	c = v % base;		/* This digit */
-	*bp-- = nstring[c];	/* String for it */
-	v /= base;		/* Slide along */
+	c = ((unsigned char) (v % base));	/* This digit */
+	*bp-- = nstring[c];			/* String for it */
+	v /= base;				/* Slide along */
     } while (v && bp >= buf);
 
     bp++;
     con_write(bp, buf - bp + sizeof(buf) - 1);
 }
 
-void printk(fmt, a1)
-     register char *fmt;
-     int a1;
+void printk(register char *fmt,int a1)
 {
     register unsigned char *p = (char *) &a1;
     char c, tmp;
 
-    while (c = *fmt++) {
+    while ((c = *fmt++)) {
 	if (c != '%')
 	    con_write(fmt - 1, 1);
 	else {

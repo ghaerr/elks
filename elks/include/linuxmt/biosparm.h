@@ -59,7 +59,7 @@ struct biosparms {
 #define BD_FL bios_data_table->fl
 
 /* exported functions */
-void call_bios(void);
+extern void call_bios(void);
 
 /* Some globals that we need */
 extern struct biosparms *bios_data_table;

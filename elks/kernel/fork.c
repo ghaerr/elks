@@ -1,7 +1,9 @@
 #include <linuxmt/config.h>
-#include <linuxmt/errno.h>
-#include <linuxmt/sched.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/errno.h>
+#include <linuxmt/kernel.h>
+#include <linuxmt/mm.h>
+#include <linuxmt/sched.h>
 
 int check_task_table(void)
 {
@@ -19,18 +21,16 @@ int check_task_table(void)
 /*
  *	Find a free task slot.
  */
-static int find_empty_process(void)
+static pid_t find_empty_process(void)
 {
-    register int i;
-    register int unused = 0;
-    int n;
+    register pid_t i, unused = 0;
+    pid_t n;
 
-    for (i = 0; i < MAX_TASKS; i++) {
+    for (i = 0; i < MAX_TASKS; i++)
 	if (task[i].state == TASK_UNUSED) {
 	    unused++;
 	    n = i;
 	}
-    }
 
     if (unused <= 1)
 	printk("Only %d slots\n", unused);
@@ -42,10 +42,10 @@ static int find_empty_process(void)
 }
 
 
-int get_pid(void)
+pid_t get_pid(void)
 {
-    static unsigned int last_pid = 0;
     register struct task_struct *p;
+    static pid_t last_pid = 0;
     register int i;
 
   repeat:
@@ -55,7 +55,9 @@ int get_pid(void)
     for (i = 0; i < MAX_TASKS; i++) {
 	p = &task[i];
 	if (p->pid == last_pid || p->pgrp == last_pid ||
-	    p->session == last_pid) goto repeat;
+	    p->session == last_pid) {
+	    goto repeat;
+	}
     }
     return last_pid;
 }
@@ -67,7 +69,7 @@ int get_pid(void)
 pid_t do_fork(int virtual)
 {
     register struct task_struct *t;
-    int i = find_empty_process(), j;
+    pid_t i = find_empty_process(), j;
     struct file *filp;
     register __ptask currentp = current;
 
@@ -85,12 +87,13 @@ pid_t do_fork(int virtual)
     /* 
      * We do shared text.
      */
-    mm_realloc(currentp->mm.cseg);
+    (void) mm_realloc(currentp->mm.cseg);
 
     if (virtual) {
-	mm_realloc(currentp->mm.dseg);
+	(void) mm_realloc(currentp->mm.dseg);
     } else {
 	t->mm.dseg = mm_dup(currentp->mm.dseg);
+
 	if (t->mm.dseg == NULL) {
 	    mm_free(currentp->mm.cseg);
 	    t->state = TASK_UNUSED;
@@ -100,7 +103,8 @@ pid_t do_fork(int virtual)
 	t->t_regs.ds = t->mm.dseg;
 	t->t_regs.ss = t->mm.dseg;
     }
-    t->t_regs.ksp = t->t_kstack + KSTACK_BYTES;
+    t->t_regs.ksp = ((__u16) t->t_kstack) + KSTACK_BYTES;
+
     t->state = TASK_UNINTERRUPTIBLE;
     t->pid = get_pid();
     t->ppid = currentp->pid;

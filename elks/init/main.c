@@ -1,9 +1,12 @@
 #include <linuxmt/config.h>
-#include <linuxmt/types.h>
-#include <arch/system.h>
+#include <linuxmt/init.h>
+#include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/timex.h>
+#include <linuxmt/types.h>
 #include <linuxmt/utsname.h>
+
+#include <arch/system.h>
 
 /*
  *	System variable setups
@@ -32,8 +35,6 @@ jiff_t loops_per_sec = 1;
 
 void start_kernel(void)
 {
-    __u16 a;
-    __pregisters set;
     seg_t base, end;
 
 /* We set the scheduler up as task #0, and this as task #1 */
@@ -60,11 +61,7 @@ void start_kernel(void)
     fs_init();
     sched_init();
 
-#ifndef CONFIG_SYS_VERSION
     printk("ELKS version %s\n", system_utsname.release);
-#else
-    printk("ELKS version %s\n", system_utsname.release);
-#endif
 
     task[0].t_kstackm = KSTACK_MAGIC;
     task[0].next_run = task[0].prev_run = &task[0];
@@ -85,15 +82,17 @@ static char args[] = "\0\0\0\0\0\0/bin/init\0\0";
  *		      \argc
  */
 
-static char envp[] = "\0\0";
+/*@unused@*/ static char envp[] = "\0\0";
 
 static void init_task()
 {
     int num;
-    /* Make sure the correct exec stack is in place for init. */
-    unsigned short *pip = args;
 
-    *++pip = &args[5];
+    /* Make sure the correct exec stack is in place for init. */
+
+    unsigned short int *pip = args;
+
+    *++pip = (unsigned short int) &args[5];
 
     /* Root of /dev/fd0 */
 
@@ -109,11 +108,15 @@ static void init_task()
 
 	printk("sys_execve(\"/bin/init\",args,18) => %d.\n",num);
 
+	/* FIXME: sys_open expects THREE parameters */
+
 #ifdef CONFIG_CONSOLE_SERIAL
-	if ((num = sys_open("/dev/ttys0", 2)) < 0)
+	num = sys_open("/dev/ttys0", 2);
 #else
-	if ((num = sys_open("/dev/tty1", 2)) < 0)
+	num = sys_open("/dev/tty1", 2);
 #endif
+
+	if (num < 0)
 	    printk("Unable to open /dev/tty (error %u)\n", -num);
 
 	if (sys_dup(0) != 1)
@@ -126,6 +129,8 @@ static void init_task()
 	if (sys_execve("/bin/sh", args, 0))
 	    panic("No init or sh found");
     }
+
+#ifndef S_SPLINT_S
 
     /* Brackets round the following code are required as a work around
      * for a bug in the compiler which causes it to jump past the asm
@@ -147,6 +152,8 @@ static void init_task()
 	iret			! reloads flags = >reenables interrupts
 #endasm
     }
+#endif
+
     panic("iret failed!");
 }
 
@@ -164,6 +171,10 @@ static void delay(jiff_t loops)
 }
 
 #else
+
+static void delay(jiff_t loops);
+
+#ifndef S_SPLINT_S
 
 /*
  *	The C one just shows bcc isnt always[often] a very good 
@@ -221,6 +232,8 @@ deldone:
 	pop bp
 	ret
 #endasm
+
+#endif
 
 #endif
 

@@ -17,8 +17,7 @@
 #define MAX_UDD	8
 #define MAX_UDR	32
 
-struct ud_driver
-{
+struct ud_driver {
     int udd_type;
     int udd_major;
     struct task *udd_task;
@@ -35,8 +34,7 @@ struct ud_driver
  * in it.
  */
 
-struct ud_driver_trunc
-{
+struct ud_driver_trunc {
     int udd_type;
     int udd_major;
     struct task *udd_task;
@@ -48,8 +46,7 @@ struct ud_driver_trunc
 #define UDD_CHR_DEV	1
 #define UDD_BLK_DEV	2
 
-struct ud_request
-{
+struct ud_request {
     char *udr_data;
     int udr_status;
     off_t udr_ptr;
@@ -68,8 +65,7 @@ struct ud_request
  * in it.
  */
 
-struct ud_request_trunc
-{
+struct ud_request_trunc {
     char *udr_data;
     int udr_status;
 };

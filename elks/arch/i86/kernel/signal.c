@@ -26,9 +26,9 @@ int do_signal(void)
 
     while (currentp->signal) {
 	signr = find_first_non_zero_bit(&currentp->signal, NSIG);
-	if (signr == NSIG) {
+	if (signr == NSIG)
 	    panic("No signal set!\n");
-	}
+
 	printd_sig2("Process %d has signal %d.\n", currentp->pid, signr);
 	sa = &currentp->sig.action[signr];
 	signr++;

@@ -31,7 +31,7 @@
 static int C_A_D = 1;
 
 extern void hard_reset_now(void);
-extern int sys_kill(void);
+extern int sys_kill(sig_t,pid_t);
 
 /*
  * Reboot system call: for obvious reasons only root may call it, and even
@@ -75,7 +75,7 @@ void ctrl_alt_del(void)
     if (C_A_D)
 	hard_reset_now();
     else
-	kill_proc(1, SIGINT, 1);
+	kill_process(1, SIGINT, 1);
 }
 
 #ifdef CONFIG_SYS_VERSION
@@ -98,7 +98,7 @@ int sys_knlvsn(char *vsn)
 int sys_setgid(gid_t gid)
 {
     register __ptask currentp = current;
-    int old_egid = currentp->egid;
+    gid_t old_egid = currentp->egid;
 
     if (suser())
 	currentp->gid = currentp->egid = currentp->sgid = gid;
@@ -111,21 +111,21 @@ int sys_setgid(gid_t gid)
     return 0;
 }
 
-int sys_getuid(void)
+uid_t sys_getuid(void)
 {
     return current->uid;
 }
 
-int sys_getpid(void)
+pid_t sys_getpid(void)
 {
     return current->pid;
 }
 
-int sys_umask(int mask)
+unsigned short int sys_umask(unsigned short int mask)
 {
-    int old = current->fs.umask;
+    unsigned short int old = current->fs.umask;
 
-    current->fs.umask = mask & S_IRWXUGO;
+    current->fs.umask = mask & ((unsigned short int) S_IRWXUGO);
     return (old);
 }
 
@@ -144,7 +144,7 @@ int sys_umask(int mask)
 int sys_setuid(uid_t uid)
 {
     register __ptask currentp = current;
-    int old_euid = currentp->euid;
+    uid_t old_euid = currentp->euid;
 
     if (suser())
 	currentp->uid = currentp->euid = currentp->suid = uid;
@@ -154,7 +154,7 @@ int sys_setuid(uid_t uid)
 	return -EPERM;
     if (currentp->euid != old_euid)
 	currentp->dumpable = 0;
-    return (0);
+    return 0;
 }
 
 #ifdef NOT_YET

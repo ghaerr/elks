@@ -13,12 +13,13 @@
 #include <linuxmt/autoconf.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/ntty.h>
-#include <arch/param.h>
 #include <linuxmt/timex.h>
 
 #ifdef CONFIG_STRACE
 #include <linuxmt/strace.h>
 #endif
+
+#include <arch/param.h>
 
 struct file_struct {
     fd_mask_t close_on_exec;
@@ -61,20 +62,22 @@ struct task_struct {
     struct mm_struct mm;	/* Memory blocks */
     pid_t pgrp;
     struct tty *tty;
+
 #if 0
-	__u8 link_count;		/* Symlink loop counter, now global */
+	__u8 link_count;		/* Symlink loop counter (now global) */
 #endif
-	struct task_struct *p_parent, *p_prevsib, *p_nextsib, *p_child;	 
-	struct wait_queue child_wait;
-	pid_t child_lastend;
-	int lastend_status;
-	struct inode * t_inode;
-	sigset_t signal;		/* Signal status */
-	struct signal_struct sig;	/* Signal block */
-	int dumpable;			/* Can core dump */
+
+    struct task_struct *p_parent, *p_prevsib, *p_nextsib, *p_child;	 
+    struct wait_queue child_wait;
+    pid_t child_lastend;
+    int lastend_status;
+    struct inode * t_inode;
+    sigset_t signal;		/* Signal status */
+    struct signal_struct sig;	/* Signal block */
+    int dumpable;			/* Can core dump */
 	
 #ifdef CONFIG_SWAP
-	jiff_t last_running;
+    jiff_t last_running;
 #endif
 
 #ifdef CONFIG_OLD_SCHED
@@ -82,12 +85,15 @@ struct task_struct {
     __s32 counter;		/* Time counter (unused so far) */
     struct task_struct *next_task, *prev_task;
 #endif
+
 #ifdef CONFIG_SUPPLEMENTARY_GROUPS
     gid_t groups[NGROUPS];
 #endif
+
 #ifdef CONFIG_STRACE
     struct syscall_params sc_info;
 #endif
+
     __u16 t_kstackm;		/* To detect stack corruption */
     __u8 t_kstack[KSTACK_BYTES];
 };
@@ -119,5 +125,33 @@ extern struct timeval xtime;
 
 #define for_each_task(p) \
 	for (p = &task[0] ; p!=&task[MAX_TASKS]; p++ )
+
+/* Scheduling and sleeping function prototypes */
+
+extern void schedule(void);
+
+extern void wait_set(struct wait_queue *);
+extern void wait_clear(struct wait_queue *);
+extern void sleep_on(struct wait_queue *);
+extern void interruptible_sleep_on(struct wait_queue *);
+
+extern void _wake_up(struct wait_queue *,unsigned short int);
+
+extern void down(unsigned short int *);
+extern void up(unsigned short int *);
+
+extern void wake_up_process(struct task_struct *);
+
+#ifdef S_SPLINT_S
+extern void kill_process(pid_t,sig_t,int);
+#endif
+
+extern void add_to_runqueue(struct task_struct *);
+
+extern void arch_build_stack(struct task_struct *);
+extern unsigned int get_ustack(struct task_struct *,int);
+extern void put_ustack(register struct task_struct *,int,int);
+
+extern void tswitch(void);
 
 #endif

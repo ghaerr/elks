@@ -25,13 +25,15 @@ enum {
     CM206_BH
 };
 
-extern void disable_irq(void);
-extern void enable_irq(void);
-extern void do_IRQ(void);
+extern void disable_irq(unsigned int);
+extern void enable_irq(unsigned int);
+extern void do_IRQ(int,void *);
 extern flag_t __save_flags(void);
-extern void restore_flags(void);
-extern int request_irq(void);
-extern void free_irq(void);
+extern void restore_flags(flag_t);
+extern int request_irq(int,void (*),void *);
+extern void free_irq(unsigned int);
+
+extern void init_IRQ(void);
 
 extern void do_bottom_half(void);
 
@@ -41,11 +43,19 @@ extern unsigned bh_mask;
 extern void (*bh_base[16]) (void);
 
 #ifdef __KERNEL__
+
+#ifdef S_SPLINT_S
+extern void asm(char *);
+#endif
+
 #define i_cli() asm("cli")
 #define i_sti() asm("sti")
+
 #else
+
 #define i_cli()
 #define i_sti()
+
 #endif
 
 #ifdef ENDIS_BH

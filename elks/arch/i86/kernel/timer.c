@@ -7,15 +7,20 @@
 
 unsigned long jiffies=0;
 
-#ifndef CONFIG_ARCH_SIBO
-void timer_tick(/*struct pt_regs * regs*/)
+extern void do_timer(struct pt_regs *);
+
+void timer_tick(struct pt_regs * regs)
 {
-	do_timer(/*regs*/); 
+#ifndef CONFIG_ARCH_SIBO
+
+	do_timer(regs);
 
 #ifdef NEED_RESCHED	/* need_resched is not checked anywhere */
 	if (((int)jiffies & 7) == 0)
 		need_resched=1;	/* how primitive can you get? */
 #endif
+
+#ifndef S_SPLINT_S
 
 #if 0
 #asm
@@ -28,19 +33,24 @@ void timer_tick(/*struct pt_regs * regs*/)
 	pop es
 #endasm
 #endif
+
 #ifdef CONFIG_DEBUG_TIMER
 #asm
         mov al,_jiffies
         out 0x80,al 
 #endasm
 #endif
-}
+
+#endif
+
 #else
-void timer_tick(/*struct pt_regs * regs*/)
-{
+
 	jiffies++;
 
-	/* As We're now responsible for clearing interrupt */
+
+#ifndef S_SPLINT_S
+
+	/* As we are now responsible for clearing interrupt */
 #asm
 	cli
 	mov ax, #0x0000
@@ -51,26 +61,40 @@ void timer_tick(/*struct pt_regs * regs*/)
 	out 0x10, al
 	sti
 #endasm
+
+#endif
 	
 #if 0	
+
 #ifdef NEED_RESCHED	/* need_resched is not checked anywhere */
-	if (((int)jiffies & 7) == 0)
-		need_resched=1;	/* how primitive can you get? */
-#endif
+
+    if (!((int) jiffies & 7))
+	need_resched=1;	/* how primitive can you get? */
+
 #endif
 
-	keyboard_irq();
+#endif
+
+    keyboard_irq();
+
+#endif
 }
 
-void enable_timer_tick()
+#ifdef CONFIG_ARCH_SIBO
+
+void enable_timer_tick(void)
 {
+#ifndef S_SPLINT_S
 #asm
-	mov al, #0x00
-	out 0x15, al
-	
-	mov al, #0x02
-	out 0x08, al
+	mov	al, #0x00
+	out	0x15, al
+
+	mov	al, #0x02
+	out	0x08, al
 #endasm
-	printk("Timer enabled...\n");
+#endif
+
+    printk("Timer enabled...\n");
 }
+
 #endif

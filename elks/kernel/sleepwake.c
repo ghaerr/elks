@@ -1,6 +1,10 @@
 #include <arch/irq.h>
-#include <linuxmt/types.h>
+#include <arch/segment.h>
+
+#include <linuxmt/kernel.h>
+#include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
+#include <linuxmt/types.h>
 #include <linuxmt/wait.h>
 
 /*
@@ -31,7 +35,7 @@ void wait_clear(struct wait_queue *p)
 
 int marker;
 
-static void __sleep_on(register struct wait_queue *p, int state)
+static void __sleep_on(register struct wait_queue *p, __s16 state)
 {
     if (current == &task[0]) {
 	printk("task[0] trying to sleep ");
@@ -84,11 +88,16 @@ void wake_up_process(register struct task_struct *p)
  * a process. The process itself must remove the queue once it has woken.
  */
 
-void _wake_up(struct wait_queue *q, int it)
+void _wake_up(struct wait_queue *q, unsigned short int it)
 {
     register struct task_struct *p;
-    int phash = 1 << ((((int) q) >> 4) & 15);
+    unsigned short int phash = (unsigned short int) q;
+
     extern struct wait_queue select_poll;
+
+    phash >>= 4;
+    phash &= 0x0F;
+    phash = ((unsigned short int) 1) << phash;
 
     for_each_task(p) {
 	if (p->waitpt == q)
@@ -109,17 +118,18 @@ void _wake_up(struct wait_queue *q, int it)
  *	Semaphores. These are not IRQ safe nor needed to be so for ELKS
  */
 
-void up(short *s)
+void up(unsigned short int *s)
 {
     if (++(*s) == 0)		/* Gone non negative */
 	wake_up((void *) s);
 }
 
-void down(short *s)
+void down(unsigned short int *s)
 {
     /* Wait for the semaphore */
     while (*s < 0)
 	sleep_on((void *) s);
+
     /* Take it */
     --(*s);
 }

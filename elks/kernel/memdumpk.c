@@ -1,4 +1,5 @@
 #include <linuxmt/kernel.h>
+#include <linuxmt/mm.h>
 
 void memdumpk(int seg,int off,int len)
 {
@@ -14,6 +15,7 @@ void memdumpk(int seg,int off,int len)
 
 void printsp(void)
 {
+#ifndef S_SPLINT_S
 #asm
 
     .data
@@ -31,4 +33,5 @@ msg:	.ascii	"SP=%x:%x\n"
 	ret
 
 #endasm
+#endif
 }

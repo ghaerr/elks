@@ -34,8 +34,10 @@ extern int fs_memcmp(void *,void *,size_t);
 extern int verified_memcpy_tofs(void *,void *,size_t);
 extern int verified_memcpy_fromfs(void *,void *,size_t);
 
-extern seg_t mm_alloc();
-extern seg_t mm_realloc();
+extern void mm_init(seg_t,seg_t);
+extern seg_t mm_alloc(segext_t);
+extern seg_t mm_realloc(seg_t);
+extern seg_t mm_dup(seg_t);
 
 extern void mm_free(seg_t);
 extern int do_swapper_run(struct task_struct *);

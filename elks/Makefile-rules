@@ -223,7 +223,7 @@ CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) -ansi
 CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
 LINT		= splint
 LINTLEVEL	= -weak
-LCFLAGS 	= -I$(INCDIR) $(CCDEFS) -D__LINT__ -isoreserved +ignoresigns
+LCFLAGS 	= -I$(INCDIR) $(CCDEFS) -isoreserved +ignoresigns
 LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
 		  -exportheader -varuse -exporttype -exportconst \
 		  -exportvar -typeuse -enummemuse -constuse
@@ -307,8 +307,12 @@ dodep:	$(DEPEND)
 
 dolint:
 	@for FILE in $${USEME:-*.[ch]} ; do \
-	    if [ -f "$${FILE}" ] && ! fgrep -q '#asm' "$${FILE}" ; then \
+	    if [ -f "$${FILE}" ]; then \
 		echo $(LINT) ... "$${FILE}" ; \
+		if fgrep -q '#ifndef S_SPLINT_S' "$${FILE}" ; then \
+			echo WARNING: "$${FILE}" includes disabled section. ; \
+			sleep 1 ; \
+		fi ; \
 		if fgrep -q '/*@ignore@*/' "$${FILE}" ; then \
 			echo WARNING: "$${FILE}" includes section ignored by splint ; \
 			sleep 1 ; \

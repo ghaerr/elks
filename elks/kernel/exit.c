@@ -8,16 +8,17 @@
 
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/mm.h>
 
 /* Note: sys_wait only keeps *one* task in the task_struct right now...
  * this is different than V7 symantics I think, but good enough for 0.0.51
  * Whoops - we have to do wait3 for now :) 
  */
 
-pid_t sys_wait4(pid_t pid, register int *status, int options)
+int sys_wait4(pid_t pid, register int *status, int options)
 {
-    pid_t retval;
     register pid_t *lastendp = &current->child_lastend;
+    int retval;
 
     if (!((options & WNOHANG) || (*lastendp)))
 	interruptible_sleep_on(&current->child_wait);

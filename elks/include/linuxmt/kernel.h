@@ -14,13 +14,13 @@
 #define LONG_MAX	((long)(~0UL>>1))
 #define ULONG_MAX	(~0UL)
 
-void do_exit(int);
-
-extern int kill_proc(void);
+extern void do_exit(int);
 
 extern int kill_pg(pid_t,sig_t,int);
 
 extern int kill_sl(void);
+
+#ifdef S_SPLINT_S
 
 /*@ignore@*/
 
@@ -29,6 +29,8 @@ extern void panic();
 extern int printk();
 
 /*@end@*/
+
+#endif
 
 extern int wait_for_keypress(void);
 
@@ -41,6 +43,8 @@ extern int wait_for_keypress(void);
  *
  * "suser()" checks against the effective user id.
  */
+
+extern int sys_execve(char *,char *,int);
 
 #define suser() (current->euid == 0)
 

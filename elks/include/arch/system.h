@@ -5,8 +5,8 @@
 
 extern int arch_cpu;
 
-void arch_setuptasks(void);
-void setup_arch(void);
+extern void arch_setuptasks(void);
+extern void setup_arch(seg_t *,seg_t *);
 
 /* LINT complains about the following two entries, but I have no idea
  * what the correct prototype is as __ptaksks doesn't occur elsewhere.
@@ -14,14 +14,14 @@ void setup_arch(void);
  * LINT and is otherwise unused.
  */
 
-#ifdef __LINT__
+#ifdef S_SPLINT_S
 #define __ptasks int
 #endif
 
-void load_regs(__ptasks);
-void save_regs(__ptasks);
+extern void load_regs(__ptasks);
+extern void save_regs(__ptasks);
 
-#ifdef __LINT__
+#ifdef S_SPLINT_S
 #undef __ptasks
 #endif
 

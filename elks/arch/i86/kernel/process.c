@@ -1,7 +1,11 @@
-#include <linuxmt/types.h>
-#include <linuxmt/debug.h>
-#include <linuxmt/sched.h>
 #include <linuxmt/config.h>
+#include <linuxmt/debug.h>
+#include <linuxmt/kernel.h>
+#include <linuxmt/mm.h>
+#include <linuxmt/sched.h>
+#include <linuxmt/types.h>
+
+#include <arch/segment.h>
 
 /*
  *	This function can only be called with SS=DS=ES=kernel DS
@@ -34,12 +38,9 @@
  *	fake_save_regs builds a stack frame that returns a new task to a
  *	kernel address of our choice using its own stack/context.
  *
- */
- 
-/* ELKS 0.76 7/1999  Fixed for ROMCODE-Version
+ * ELKS 0.76 7/1999  Fixed for ROMCODE-Version
  * Christian Mardm”ller  (chm@kdt.de)
  */
-
 
 #ifdef CONFIG_ROMCODE 
 
@@ -53,6 +54,7 @@
 #define stashed_si	cseg_stashed_si
 #define sc_tmp		cseg_sc_tmp
 
+#ifndef S_SPLINT_S
 #asm
 
     .text
@@ -64,24 +66,31 @@
  */
 
 	.extern	cseg_stashed_ds
-	.extern	cseg_stashed_si	; Now in irqtab.c
-	.extern	cseg_sc_tmp       
+	.extern	cseg_stashed_si 	; Now in irqtab.c
+	.extern	cseg_sc_tmp
 
 /* and now code */
 
 #endasm
+#endif
 
 #endif
+
+typedef unsigned short int FsR;
+
+extern int do_signal(void);
+extern int fake_save_regs(FsR,FsR);
 
 void sig_check(void)
 {
     register __ptask currentp = current;
 
     if (currentp->signal)
-	do_signal();
+	(void) do_signal();
     currentp->signal = 0;
 }
 
+#ifndef S_SPLINT_S
 #asm
 	.text
 
@@ -360,6 +369,7 @@ _fake_save_regs:
 	ret
 #endif
 #endasm
+#endif
 
 /*
  * We only need to do this as long as we support old format binaries
@@ -385,15 +395,15 @@ void stack_check(void)
 void kfork_proc(register struct task_struct *t,char *addr)
 {
     memset(t, 0, sizeof(struct task_struct));
-    t->t_regs.ksp=t->t_kstack+KSTACK_BYTES;
-    t->t_regs.ksp-=fake_save_regs(t->t_regs.ksp,addr);
-    t->t_regs.ds=get_ds();
-    t->state=TASK_UNINTERRUPTIBLE;
-    t->pid=get_pid();
+    t->t_regs.ksp = ((__u16) t->t_kstack) + KSTACK_BYTES;
+    t->t_regs.ksp -= fake_save_regs((FsR)t->t_regs.ksp,(FsR)addr);
+    t->t_regs.ds = get_ds();
+    t->state = TASK_UNINTERRUPTIBLE;
+    t->pid = get_pid();
 
 #ifdef OLD_SCHED
 
-    t->t_priority=10;
+    t->t_priority = 10;
     t->prev_run = t->next_run = t->next_task = t->prev_task = NULL;
 
 #else
@@ -413,6 +423,7 @@ void kfork_proc(register struct task_struct *t,char *addr)
  */
 
 #define USER_FLAGS 0x3200		/* IPL 3, interrupt enabled */
+
 void put_ustack(register struct task_struct *t,int off,int val)
 {
     pokew(t->t_regs.ss, t->t_regs.sp+off, val);
@@ -428,7 +439,7 @@ void arch_setup_kernel_stack(register struct task_struct *t)
     put_ustack(t, -2, USER_FLAGS);		/* Flags */
     put_ustack(t, -4, current->t_regs.cs);	/* user CS */
     put_ustack(t, -6, 0);			/* addr 0 */
-    t->t_regs.sp-=6;
+    t->t_regs.sp -= 6;
     t->t_kstackm = KSTACK_MAGIC;
 }
 
@@ -454,8 +465,8 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
     put_ustack(t, 0, get_ustack(t, 4));
     put_ustack(t, 4, signr);
     put_ustack(t, -2, t->t_regs.cs);
-    put_ustack(t, -4, addr);
-    t->t_regs.sp-=4;
+    put_ustack(t, -4, ((int) addr));
+    t->t_regs.sp -= 4;
     printd_sig5("Stack is %x %x %x %x %x\n",get_ustack(t, 0),
 		get_ustack(t, 2),get_ustack(t, 4),get_ustack(t, 6),
 		get_ustack(t, 8));
@@ -492,16 +503,18 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
  * we need to do to recover the user's bp.
  */
 
-extern void ret_from_syscall();  /* our return address */
+extern void ret_from_syscall();		/* our return address */
 
-static void* saved_bp; /* we have to recover user's bp */
+static void* saved_bp;			/* we have to recover user's bp */
 
 void arch_build_stack(struct task_struct *t)
 {
     char *kstktop = t->t_kstack+KSTACK_BYTES;
 
-    t->t_regs.ksp = kstktop-fake_save_regs(kstktop, ret_from_syscall);
+/*@i3@*/ t->t_regs.ksp = kstktop - fake_save_regs(kstktop, ret_from_syscall);
+
 {
+#ifndef S_SPLINT_S
 #asm
 	mov	bx,[bp]	! bx = bp on entry to arch_build_stack
 	mov	ax,[bx]	! ax = bp on entry to do_fork = users bp (hopefully!)
@@ -509,6 +522,8 @@ void arch_build_stack(struct task_struct *t)
 	mov	ax,[bx]	! ax = bp on entry to do_fork = users bp (hopefully!)
 	mov	_saved_bp,ax
 #endasm
+#endif
 }
+
     *(void**) (kstktop-4) = saved_bp;
 }

@@ -46,10 +46,14 @@
 
 /* defines max number of ports */
 #ifndef BIOS_PORTS
+
 /* when this is set to 3 lp probes for port only on first three i/o addresses */
 #define LP_PORTS	3
+
 #else
+
 #define LP_PORTS	4
+
 #endif
 
 #define LP_DEVICE_NAME	"lp"

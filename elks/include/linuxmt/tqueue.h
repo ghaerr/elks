@@ -84,9 +84,8 @@ extern task_queue tq_timer, tq_immediate, tq_scheduler, tq_disk;
  * "bh_list".  You may call this function only from an interrupt
  * handler or a bottom half handler.
  */
-extern __inline__ void queue_task_irq(bh_pointer, bh_list)
-     struct tq_struct *bh_pointer;
-     task_queue *bh_list;
+extern __inline__ void queue_task_irq(struct tq_struct *bh_pointer,
+				      task_queue *bh_list)
 {
     if (!set_bit(0, &bh_pointer->sync)) {
 	bh_pointer->next = *bh_list;
@@ -98,9 +97,8 @@ extern __inline__ void queue_task_irq(bh_pointer, bh_list)
  * queue_task_irq_off: put the bottom half handler "bh_pointer" on the list
  * "bh_list".  You may call this function only when interrupts are off.
  */
-extern __inline__ void queue_task_irq_off(bh_pointer, bh_list)
-     struct tq_struct *bh_pointer;
-     task_queue *bh_list;
+extern __inline__ void queue_task_irq_off(struct tq_struct *bh_pointer,
+					  task_queue *bh_list)
 {
     if (!(bh_pointer->sync & 1)) {
 	bh_pointer->sync = 1;
@@ -113,8 +111,11 @@ extern __inline__ void queue_task_irq_off(bh_pointer, bh_list)
 /*
  * queue_task: as queue_task_irq, but can be called from anywhere.
  */
-/*extern __inline__ void queue_task(struct tq_struct *bh_pointer,
-			   task_queue *bh_list)*/
+#if 0
+extern __inline__ void queue_task(struct tq_struct *bh_pointer,
+				  task_queue *bh_list)
+#endif
+
 #define queue_task(bh_pointer, bh_list) \
 { \
 	if (!set_bit(0,&bh_pointer->sync)) { \
@@ -130,7 +131,10 @@ extern __inline__ void queue_task_irq_off(bh_pointer, bh_list)
 /*
  * Call all "bottom halfs" on a given list.
  */
-/*extern __inline__ void run_task_queue(task_queue *list)*/
+#if 0
+extern __inline__ void run_task_queue(task_queue *list)
+#endif
+
 #define run_task_queue(list) \
 {\
 	struct tq_struct *p;\

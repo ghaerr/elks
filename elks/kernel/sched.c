@@ -12,9 +12,11 @@
 /* Commnent in below to use the old scheduler which uses counters */
 /* #define OLD_SCHED */
 
-#include <linuxmt/types.h>
+#include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/timer.h>
+#include <linuxmt/types.h>
+
 #include <arch/irq.h>
 
 #define init_task task[0]
@@ -32,7 +34,6 @@ extern unsigned char can_tswitch;
 extern int lastirq;
 
 static void run_timer_list();
-static void run_old_timers();
 
 #ifdef OLD_SCHED
 int need_resched = 0;
@@ -224,7 +225,6 @@ void schedule(void)
 
     if (next != currentp) {
 	struct timer_list timer;
-	int foo = 10;
 
 #if 0
 	printk("Switching to %d\n", next->pid);
@@ -268,7 +268,7 @@ void schedule(void)
 	       lastirq, currentp->pid, prev->pid);
 }
 
-struct timer_list tl_list = { NULL, };
+struct timer_list tl_list = { NULL, NULL, NULL, NULL, NULL };
 
 static int detach_timer(struct timer_list *timer)
 {
@@ -298,6 +298,8 @@ int del_timer(register struct timer_list *timer)
     restore_flags(flags);
     return ret;
 }
+
+#if 0
 
 static void init_timer(struct timer_list *timer)
 {
@@ -333,6 +335,8 @@ static void add_timer(register struct timer_list *timer)
     restore_flags(flags);
 }
 
+#endif
+
 static void run_timer_list(void)
 {
     struct timer_list *timer = tl_list.tl_next;
@@ -355,6 +359,7 @@ static void run_timer_list(void)
 
 /* maybe someday I'll implement these profiling things -PL */
 #if 0
+
 static void do_it_prof(struct task_struct *p, jiff_t ticks)
 {
     jiff_t it_prof = p->it_prof_value;
@@ -375,9 +380,11 @@ static void update_one_process(struct taks_struct *p,
     do_it_virt(p, user);
     do_it_prof(p, ticks);
 }
+
 #endif
 
 #ifdef OLD_SCHED
+
 static void update_times(void)
 {
     jiff_t ticks;
@@ -408,6 +415,7 @@ static void update_times(void)
 void do_timer(struct pt_regs *regs)
 {
     (*(jiff_t *) & jiffies)++;
+
 #ifdef OLD_SCHED
     lost_ticks++;
 #endif
@@ -415,4 +423,5 @@ void do_timer(struct pt_regs *regs)
 
 void sched_init(void)
 {
+    /* Do nothing */ ;
 }

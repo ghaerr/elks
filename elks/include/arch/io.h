@@ -8,6 +8,7 @@ extern void outw_p(unsigned short int, void *);
 
 extern unsigned char inb(void *);
 extern unsigned char inb_p(void *);
+
 extern unsigned short int inw(void *);
 extern unsigned short int inw_p(void *);
 

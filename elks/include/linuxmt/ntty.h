@@ -47,22 +47,27 @@ struct tty {
     int minor;
     int flags;
     unsigned char inq_buf[INQ_SIZE], outq_buf[OUTQ_SIZE];
+
 #if 0
     struct wait_queue *sleep;
 #endif
+
     struct ch_queue inq, outq;
     struct termios termios;
     pid_t pgrp;
 };
 
-int ttynull_openrelease(struct tty *);
+extern int ttynull_openrelease(struct tty *);
 		/* Empty function, returns zero. useful */
-int tty_intcheck(struct tty *,unsigned char);
+
+extern int tty_intcheck(struct tty *,unsigned char);
 		/* Check for ctrl-C etc.. */
+
 extern int pipe_lseek(struct inode *,struct file *,off_t,int);
 		/* Empty function, returns -ESPIPE. useful */
 
-extern struct termios def_vals;	/* global use of def_vals                 */
+extern struct termios def_vals;
+		/* global use of def_vals */
 
 /* tty.flags */
 #define TTY_STOPPED 	1

@@ -19,7 +19,7 @@
 static void generate(int sig, register struct task_struct *p)
 {
     register struct sigaction *sa = &(p->sig.action[sig - 1]);
-    sigset_t mask = 1 << (sig - 1);
+    sigset_t mask = ((sigset_t) 1) << (sig - 1);
 
     if (sa->sa_handler == SIG_IGN)
 	return;
