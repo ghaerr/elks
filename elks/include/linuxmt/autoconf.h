@@ -90,7 +90,7 @@
  */
 #define CONFIG_SOCKET 1
 #undef  CONFIG_UNIX
-#undef  CONFIG_NANO
+#define CONFIG_NANO 1
 #define CONFIG_INET 1
 #undef  CONFIG_INET_STATUS
 #undef  CONFIG_SOCK_CLIENTONLY
