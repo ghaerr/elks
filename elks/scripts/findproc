@@ -1,0 +1,34 @@
+#!/bin/bash
+
+function format() {
+    fgrep ')$' tags		\
+	| tr '\t' ' '		\
+	| sed 's=/^=='		\
+	| cut -d '$' -f 1	\
+	| sort -f
+}
+
+function layout() {
+    local A B C D
+
+    while read A B D ; do
+	if echo "$D" | grep -q '^static ' ; then
+	    C=static
+	    D=`echo "$D" | cut -d ' ' -f 2-`
+	else
+	    C=''
+	fi
+	printf '%-31s %-37s %-7s %s\n' "$A" "$B" "$C" "$D"
+    done
+}
+
+function newline() {
+    sed 's/$/¬/' | tr '¬' '\r'
+}
+
+if [ $# -eq 0 ]; then
+    ctags *.c
+else
+    ctags "$@"
+fi
+format | layout | newline > tags.lst

@@ -25,13 +25,19 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-26 May 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-28 May 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Tue May 28 18:30:02 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Added list of functions and their prototypes to the ELKS
+	  kernel documentation.
+	* Added script to simplify updating of the above item.
 
 Sun May 26 23:58:26 BST 2002	Riley Williams <Riley@Williams.Name>
 
