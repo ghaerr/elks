@@ -32,6 +32,11 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sat Apr 27 15:12:56 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Some more corrections to the mm after the ANSI'fication.
+	* Bug fix in swap_strategy()
+
 Sat Apr 27 00:49:08 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Tweaked include/linuxmt/string.h such that the definitions

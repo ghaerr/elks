@@ -217,17 +217,12 @@ seg_t mm_alloc(segext_t pages)
      *      Which hole fits best ?
      */
     register struct malloc_hole *m;
-    /*
-     *      No room , later check priority and swap
-     */
 
 #ifdef CONFIG_SWAP
 
     while ((m = best_fit_hole(&memmap, pages)) == NULL) {
 	seg_t s = swap_strategy(NULL);
-	if (s == NULL)
-	    return NULL;
-	if (swap_out(s) == -1)
+	if (s == NULL || swap_out(s) == -1)
 	    return NULL;
     }
 
@@ -355,6 +350,7 @@ seg_t mm_dup(seg_t base)
     register struct malloc_hole *o, *m;
     size_t i;
 
+    printd_mm("mm_dup()\n");
     o = find_hole(&memmap, base);
     if (o->flags != HOLE_USED)
 	panic("bad/swapped hole");
@@ -363,9 +359,8 @@ seg_t mm_dup(seg_t base)
 
     while ((m = best_fit_hole(&memmap, o->extent)) == NULL) {
 	seg_t s = swap_strategy(NULL);
-	if (s == NULL)
+	if (!s || swap_out(s) == -1)
 	    return NULL;
-	swap_out(s);
     }
 
 #else
@@ -379,7 +374,7 @@ seg_t mm_dup(seg_t base)
     split_hole(&memmap, m, o->extent);
     m->flags = HOLE_USED;
     m->refcount = 1;
-    i = (o->extent << 4) /* - 2 */ ;
+    i = (o->extent << 4);
     fmemcpy(m->page_base, 0, o->page_base, 0, i);
     return m->page_base;
 }
@@ -482,7 +477,7 @@ void mm_init(seg_t start, seg_t end)
     holep = &swap_holes[0];
     holep->flags = HOLE_FREE;
     holep->page_base = 0;
-    holep->extent = 127;
+    holep->extent = 128;
     holep->refcount = 0;
     holep->next = NULL;
 
@@ -648,16 +643,23 @@ static seg_t swap_strategy(register struct task_struct *swapin_target)
 {
     register struct task_struct *t;
     struct malloc_hole *o;
-    seg_t best_ret = 0, ret = 0, rate = 0;
+    seg_t best_ret = 0;
+    int ret, rate;
     int best_rate = -1;
     int best_pid;
 
+    printd_mm1("swap_strategy(pid %d)\n", swapin_target->pid);
     for_each_task(t) {
-	if (t->pid == 0
-	    || t->mm.cseg == swapin_target->mm.cseg
-	    || t->mm.cseg == current->mm.cseg)
+	if (   t->state == TASK_UNUSED
+	    || t->pid == 0
+	    || t->mm.cseg == current->mm.cseg
+	    )
+	    continue;
+	if(swapin_target != NULL && t->mm.cseg == swapin_target->mm.cseg)
 	    continue;
 
+	ret = 0;
+	rate = 0;
 	if (t->state != TASK_RUNNING)
 	    rate++;
 
@@ -682,7 +684,7 @@ static seg_t swap_strategy(register struct task_struct *swapin_target)
 	}
     }
 
-    printd_mm1("Choose pid %d\n", best_pid);
+    printd_mm1("Choose pid %d rate %d\n", best_pid, best_rate);
 
     return best_ret;
 }
