@@ -170,6 +170,16 @@ struct pt_regs * regs;
 }
 #endif	
 
+static void handle_signal(signr, sa)
+unsigned signr;
+struct sigaction *sa;
+{
+	printk("Setting up return stack for sig handler %x.\n", sa->sa_handler);
+	printk("Stack at %x\n", current->t_regs.sp);
+	arch_setup_sighandler_stack(current, sa->sa_handler, signr);
+	printk("Stack at %x\n", current->t_regs.sp);
+	sa->sa_handler = SIG_DFL;
+}
 
 int do_signal()
 {
@@ -180,17 +190,20 @@ int do_signal()
 	while (currentp->signal) {
 		signr = find_first_non_zero_bit(&currentp->signal, 32);
 		if (signr == 32) {
-			printk("THIS SHOULD NEVER HAPPEN\n");
+			panic("No signal set!\n");
 		}
-		sa = currentp->sig.action + signr;
+		printk("Process %d has signal %d.\n", currentp->pid, signr);
+		sa = &currentp->sig.action[signr];
 		signr++;
 		if (sa->sa_handler == SIG_IGN) {
+			printk("Ignore\n");
 			if (signr != SIGCHLD)
 				continue;
 			while (sys_wait4(-1,NULL,WNOHANG) > 0);
 			continue;
 		}
 		if (sa->sa_handler == SIG_DFL) {
+			printk("Default\n");
 			if (currentp->pid == 1)
 				continue;
 			switch (signr) {
@@ -206,13 +219,12 @@ int do_signal()
 				continue;
 /*			case SIGQUIT: case SIGILL: case SIGTRAP:
 			case SIGABRT: case SIGFPE: case SIGSEGV:
-		/* This is where w dump the core */
+		/* This is where we dump the core, which we must do */
 			default:
 				do_exit(signr);
 			}
 		}
-/* No handlers yet */
-/*		handle_signal(signr, sa); */
+		handle_signal(signr, sa);
 		return 1;
 	}
 	return 0;

@@ -39,7 +39,6 @@ void sig_check()
 {
 	register __ptask currentp = current;
 	if (currentp->signal) {
-		printk("Process %d has a signal.\n", currentp->pid);
 		do_signal();
 	}
 	currentp->signal = 0;
@@ -306,6 +305,13 @@ int off, val;
     pokew(t->t_regs.ss, t->t_regs.sp+off, val);
 }
 
+static unsigned get_ustack(t, off)
+register struct task_struct *t;
+int off;
+{
+	return peekw(t->t_regs.ss, t->t_regs.sp+off);
+}
+
 void arch_setup_kernel_stack(t)
 register struct task_struct *t;
 {
@@ -314,6 +320,48 @@ register struct task_struct *t;
 	put_ustack(t, -6, 0);			/* addr 0 */
 	t->t_regs.sp-=6;
 	t->t_kstackm = KSTACK_MAGIC;
+}
+
+/* We need to make the program return to another point - to the signal
+ * handler.
+ * The stack currently looks like this:-
+ *
+ *              ip cs  f
+ *
+ * and will look like this
+ *
+ *      adr cs  f  ip  sig
+ *
+ * so that we return to the old point afterwards. This will confuse the code
+ * as we don't have any way of sorting out a return value yet.
+ */
+
+void arch_setup_sighandler_stack(t, addr, signr)
+register struct task_struct *t;
+__sighandler_t addr;
+unsigned signr;
+{
+	printk("Stack %x was %x %x %x\n",
+		addr,
+		get_ustack(t, 0),
+		get_ustack(t, 2),
+		get_ustack(t, 4));
+/*	put_ustack(t, 2, get_ustack(t, 4));
+	put_ustack(t, 4, get_ustack(t, 0));
+	put_ustack(t, 0, t->t_regs.cs);
+	put_ustack(t, -2, addr); */
+	put_ustack(t, 2, get_ustack(t, 0));
+	put_ustack(t, 0, get_ustack(t, 4));
+	put_ustack(t, 4, signr);
+	put_ustack(t, -2, t->t_regs.cs);
+	put_ustack(t, -4, addr);
+	t->t_regs.sp-=4;
+	printk("Stack is %x %x %x %x %x\n",
+		get_ustack(t, 0),
+		get_ustack(t, 2),
+		get_ustack(t, 4),
+		get_ustack(t, 6),
+		get_ustack(t, 8));
 }
 
 /*

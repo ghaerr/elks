@@ -26,7 +26,7 @@ int sig;
 register struct task_struct * p;
 {
 	unsigned long mask = 1 << (sig-1);
-	register struct sigaction * sa = sig + p->sig.action - 1;
+	register struct sigaction * sa = &(p->sig.action[sig - 1]);
 
 /*	if (!(mask & p->blocked)) { */
 		if (sa->sa_handler == SIG_IGN && sig != SIGCHLD)
@@ -90,3 +90,18 @@ int sig;
 	return -ESRCH;
 }
 
+int sys_signal(signr, handler)
+int signr;
+__sighandler_t handler;
+{
+	struct sigaction * sa;
+
+	printk("Registering action %x for signal %d.\n", handler, signr);
+	if (signr<1 || signr>32 || signr==SIGKILL || signr==SIGSTOP) {
+		return -EINVAL;
+	}
+	sa = &current->sig.action[signr - 1];
+	sa->sa_handler = handler;
+	
+	return 0;
+}

@@ -65,7 +65,7 @@ profil		44	4	@
 dup2		+45	2
 setgid		+46	1	 
 getgid		47	1	* this gets both gid and egid
-signal		48	2	* have put the despatch table in user space.
+signal		+48	2	* have put the despatch table in user space.
 getinfo		49	1	@ possible? gets pid,ppid,uid,euid etc
 fcntl		+50	3	 
 acct		51	1	@ Accounting to named file (off if null)
