@@ -22,8 +22,8 @@
 
 struct termios def_vals = { 	BRKINT,
 				ONLCR,
-				0,
-				ECHO | ICANON,
+				B1200 | CS8,
+				ECHO | ICANON | ISIG,
 				0,
 				{3,28,127,21,4,0,1,0,17,19,26,0,18,15,23,22}
 			};
@@ -53,29 +53,45 @@ dev_t dev;
 	return 0; 
 }
 
-/* Just open it for now :) */
-int tty_open(inode,file)
-register struct inode *inode;
+int tty_open(inode, file)
+register struct inode * inode;
 struct file *file;
 {
 	register struct tty * otty;
+	int err;
 
 	if (otty = determine_tty(inode->i_rdev)) {
-		return otty->ops->open(inode, file);
-	}
-	else
+		err = otty->ops->open(otty);
+		if (err) {
+			return err;
+		}
+		if (otty->pgrp == NULL && current->session == current->pid
+		    && current->tty == NULL) {
+			otty->pgrp = current->pgrp;
+			current->tty = otty;
+		}
+		return 0;
+	} else {
 		return -ENODEV;
+	}
 
 }
 
-void tty_release(inode,file)
+int tty_release(inode,file)
 register struct inode *inode;
 struct file *file;
 {
 	register struct tty *rtty;
 	rtty = determine_tty(inode->i_rdev);
-	if (rtty) 
-		return rtty->ops->release(inode, file);
+	if (rtty)  {
+		if (current->pid == rtty->pgrp) {
+			printk("nulling pgrp");
+			rtty->pgrp = NULL;
+		}
+		return rtty->ops->release(rtty);
+	} else {
+		return -ENODEV;
+	}
 }
 
 /* Write 1 byte to a terminal, with processing */
@@ -138,10 +154,11 @@ char *data;
 int len;
 {
 	register struct tty *tty=determine_tty(inode->i_rdev);
-	int i = 0, j = 0, k, l = 1;
+	int i = 0, j = 0, k, l;
 	unsigned char ch, lch;
 	int mode = (tty->termios.c_lflag & ICANON);
 
+	l = (file->f_flags & O_NONBLOCK) ? 0 : 1;
 	while ((i < len) && (!mode || (j != '\n'))) { 
 		if (tty->ops->read) {
 			tty->ops->read(tty);
@@ -149,18 +166,22 @@ int len;
 		}
 		j = chq_getch(&tty->inq, &ch, l);
 		if (j == -1) {
-			return -EINTR;
+			if (l) {
+				return -EINTR;
+			} else {
+				break;
+			}
 		}
 		if (mode && (j == 4))
 			break;
-		if ((j != -1) && (!mode  || (j != '\b'))) {
+		if (!mode  || (j != '\b')) {
 			pokeb(current->t_regs.ds, (data + i++), ch);		
 			tty_echo(tty, ch);
-		}
-		if (( mode && (j == '\b') && (i > 0))) {
+		} else if (i > 0) {
 			lch = ((peekb(current->t_regs.ds, (data + --i)) == '\t') ? TAB_SPACES : 1 );
-			for (k = 0; k < lch ; k++)
+			for (k = 0; k < lch ; k++) {
 				tty_echo(tty, ch);
+			}
 		}
 		tty->ops->write(tty);
 	};
@@ -185,6 +206,10 @@ char *arg;
 		case TCSETSW:
 		case TCSETSF:
 			return verified_memcpy_fromfs(&tty->termios, arg, sizeof(struct termios));
+			/* Inform driver that things have changed */
+			if (tty->ops->ioctl != NULL) {
+				tty->ops->ioctl(tty, cmd, arg);
+			}
 			break;
 		default:
 			if (tty->ops->ioctl == NULL) {
@@ -222,14 +247,17 @@ select_table * wait;
 
 	switch (sel_type) {
 		case SEL_IN:
-			if (chq_peekch(tty->inq)) {
+			if (chq_peekch(&tty->inq)) {
 				return 1;
 			}
 		case SEL_EX: /* fall thru! */
-			select_wait (&tty->inq.wq, wait);
+			if (wait) {
+				select_wait (&tty->inq.wq, wait);
+			}
 			return 0;
 		case SEL_OUT: /* Hm.  We can always write to a tty?  (not really) */
-		return 1;
+		default:
+			return 1;
 	}
 }
 
