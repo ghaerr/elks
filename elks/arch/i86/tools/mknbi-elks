@@ -1,0 +1,48 @@
+#!/bin/sh
+
+# usage:
+# 	mknbi-elks bootsect elks-image nb-image
+
+INC_CONF_H=../../include/linuxmt/config.h
+
+if [ ! -f $CFG_INC ] ; then
+	echo $0: cannot find $CFG_INC, abort.
+	exit 1
+fi
+
+if [ $# -lt 3 ] ; then
+	echo $0: invalid numbers of arguments "($#)", abort.
+	exit 1
+fi
+
+NBIMAGE=$3
+BOOTPATH=`dirname $1`
+
+if [ ! -f $1 ] ; then
+	echo $0: cannont find boot sector $1, abort.
+	exit 1
+fi
+
+if [ ! -f $2 ] ; then
+	echo $0: cannont find input image $2, abort.
+	exit 1
+fi
+
+dd if=$1 of=$NBIMAGE bs=1 skip=32
+dd if=$2 of=$BOOTPATH/tmpImage bs=1 skip=512
+cat $BOOTPATH/tmpImage >> $NBIMAGE
+
+SYSSIZE=`grep "DEF_SYSSIZE" $INC_CONF_H | \
+	 sed 's/^.*\(0x[0-9abcdefABCDEF]\)/\1/'`0
+SETUPSEG=4
+set dummy `ls -l $BOOTPATH/tmpImage`
+echo $6
+PADZERO=$(($SYSSIZE + $SETUPSEG * 512 - $6))
+
+dd if=/dev/zero of=$BOOTPATH/zeropad bs=1 count=$PADZERO
+cat $BOOTPATH/zeropad >> $NBIMAGE
+
+rm -f $BOOTPATH/tmpImage $BOOTPATH/zeropad
+sync
+
+
