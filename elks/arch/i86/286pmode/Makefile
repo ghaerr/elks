@@ -50,5 +50,3 @@ distdir:
 
 #########################################################################
 ### Dependencies:
-main.o: main.c descriptor.h tss.h
-

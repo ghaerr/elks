@@ -71,9 +71,3 @@ distdir:
 
 #########################################################################
 ### Dependencies:
-bitops.o: bitops.c /usr/src/elks/include/arch/bitops.h \
- /usr/src/elks/include/arch/types.h /usr/src/elks/include/arch/irq.h \
- /usr/src/elks/include/linuxmt/kernel.h
-
-memmove.o: memmove.c
-

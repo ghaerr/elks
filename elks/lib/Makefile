@@ -52,24 +52,3 @@ distdir:
 
 #########################################################################
 ### Dependencies:
-chqueue.o: chqueue.c /usr/src/elks/include/linuxmt/config.h \
- /usr/src/elks/include/linuxmt/autoconf.h \
- /usr/src/elks/include/linuxmt/wait.h \
- /usr/src/elks/include/linuxmt/chqueue.h \
- /usr/src/elks/include/linuxmt/debug.h \
- /usr/src/elks/include/linuxmt/types.h \
- /usr/src/elks/include/arch/types.h \
- /usr/src/elks/include/linuxmt/posix_types.h \
- /usr/src/elks/include/arch/posix_types.h \
- /usr/src/elks/include/arch/irq.h
-
-string.o: string.c /usr/src/elks/include/linuxmt/types.h \
- /usr/src/elks/include/arch/types.h \
- /usr/src/elks/include/linuxmt/posix_types.h \
- /usr/src/elks/include/linuxmt/config.h \
- /usr/src/elks/include/linuxmt/autoconf.h \
- /usr/src/elks/include/arch/posix_types.h \
- /usr/src/elks/include/arch/irq.h \
- /usr/src/elks/include/linuxmt/string.h \
- /usr/src/elks/include/arch/string.h
-
