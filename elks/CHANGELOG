@@ -38,6 +38,10 @@ Tommy McCabe 	      rocketjet314@yahoo.com		31 May 2004
 
 -------------------------------------------------------------------------------
 
+Wed Jun  9 17:27:52 BRT 2004	Eduardo Habkost <ehabkost@conectiva.com.br>
+
+	* fix for my last fix: s/rp_cmd/rq_cmd/
+
 Thu Jun 03 21:47:13 CST 2004    Claudio Matsuoka <claudio@conectiva.com>
 
 	* fixed format specifiers to correctly displaysegment sizes as unsigned
