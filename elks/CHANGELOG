@@ -4,6 +4,12 @@ the top of this file before committing any changes.
 Al
 ------------------------------------------------------------------------------
 
+Thu Sep 24 23:28:39 CEST 1998	Simon Weijgers	<mbit@mbit.doa.org>
+
+	* Changed "toplevel" Makefile to make it clean up all
+	  dependency stuff in all Makefiles. Should make it easier
+	  (no rejects) to patch and diff stuff. 
+
 Wed Sep 23 16:10:54 CEST 1998	Simon Weijgers	<mbit@mbit.doa.org>
 
 	* Changed #include <errno.h> to #include <linuxmt/errno.h>
