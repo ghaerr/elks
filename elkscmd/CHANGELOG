@@ -15,6 +15,15 @@ Tommy McCabe			rocketjet314@yahoo.com
 
 ---------------------------------------------------------------------------
 
+
+Sat Sep 18 13:29:26 BRT 2004	Claudio Matsuoka <claudio@conectiva.com>
+
+	* Don't use SHORTNAMES in bc (breaks compilation of parser files)
+	* Set Makefile to use yacc because bison usually installs
+	  /usr/bin/yacc as well
+	* Clean up generated files (bc.c, sbc.c, scan.c, y.tab.h) in the
+	  clean rule (also removed those files from CVS).
+	  
 Sat Sep 18 09:08:23 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
 
 	* Fixed warning caused by some "," on bc.y and sbc.y

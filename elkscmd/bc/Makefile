@@ -2,6 +2,7 @@
 #
 # A makefile for bc.  This is part of the bc/sbc distribution.
 #
+# $Id$
 ###############################################################################
 #
 # Include standard packaging commands.
@@ -47,8 +48,8 @@ BINDIR = $(PREFIX)/bin
 
 SHELL = /bin/sh
 
-#YACC = yacc
-YACC = bison -y
+YACC = yacc
+#YACC = bison -y
 
 LEX = flex -I -8
 #LEX = lex
@@ -99,7 +100,7 @@ smin_rfs: all
 net_rfs:
 
 clean:
-	rm -f *.o *.bak core math.h bc fbc sbc
+	rm -f *.o *.bak core math.h bc fbc sbc bc.c sbc.c scan.c y.tab.h
 
 scan.c: scan.l
 	$(LEX) scan.l
