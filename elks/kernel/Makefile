@@ -25,7 +25,7 @@ CC_PROTO =gcc -I../include -M
 	-0 -c -o $*.o $<
 
 OBJS  = sched.o printk.o sleepwake.o dma.o version.o sys.o stubs.o fork.o \
-	exit.o time.o module.o signal.o
+	exit.o time.o signal.o
 
 kernel.a: $(OBJS)
 	ar rcs kernel.a $(OBJS)
