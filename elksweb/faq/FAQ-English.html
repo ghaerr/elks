@@ -3,9 +3,9 @@
 <head>
   <title>ELKS FAQ: English</title>
                     
-  <meta name="description" description="English FAQ for ELKS, a port of Linux for 16-bit Intel architectures">
+  <meta name="description" content="English FAQ for ELKS, a port of Linux for 16-bit Intel architectures">
          
-  <meta name="keywords" keywords="Linux,linux-86,linux-8086,16-bit,UNIX,ELKS,FAQ">
+  <meta name="keywords" content="Linux,linux-86,linux-8086,16-bit,UNIX,ELKS,FAQ">
    
 </head>
  <body bgcolor="White" text="Black" link="Blue" vlink="Magenta" alink="Red">
@@ -257,8 +257,8 @@ it is believed that the kernel is not affected by this difference, but user
     <a name="2.2"></a>      
   <h4><a name="2.2">Q2.2. How do I make an ELKS kernel?</a></h4>
           
-  <p align="justify"><a name="2.2">Recent releases contain a conmpiled binary
- kernel which most people whould be able to use for initial testing. You
+  <p align="justify"><a name="2.2">Recent releases contain a compiled binary
+ kernel which most people would be able to use for initial testing. You
 should  only need to compile your own if you wish to modify the kernel, or
 change  the configuration options. The file boot in images.zip can be written
 to floppy with dd or RAWRITE.EXE to make a kernel boot disk.</a></p>
@@ -338,7 +338,7 @@ selects 8086 code generation,<br>
           
   <p align="justify"><a name="2.4">...and copy them into the /bin directory
  of your root disk. The login program requires an /etc/passwd and a /etc/group
- file, and a /bin/sh (or other depending on the entry in /etc/passwd.</a></p>
+ file, and a /bin/sh (or other depending on the entry in /etc/passwd).</a></p>
           
   <p align="justify"><a name="2.4">As of kernel 0.0.56 sash now works and
  is being used as /bin/sh by most people. It can be found in elkscmd.tar.gz.
@@ -499,7 +499,7 @@ some of the more useful ones:</a></p>
           
   <pre><a name="2.8">	cd /bin<br>	cp -v cp init getty login ls mount pwd sh umount /mnt/bin/<br>	cd /etc<br>	cp -v group passwd /mnt/etc/<br>	cp /usr/lib/liberror.txt /mnt/usr/lib/<br>	touch /mnt/var/run/utmp<br></a></pre>
           
-  <p align="justify"><a name="2.8">Finally create the essentail devices:</a></p>
+  <p align="justify"><a name="2.8">Finally create the essential devices:</a></p>
           
   <pre><a name="2.8">	cd /mnt/dev<br>	for N in 0 1 2 3 ; do mknod tty$N c 4 $N ; done<br>	mknod fd0 b 3 128<br>	mknod fd1 b 3 192<br>	for N in '' 1 2 3 4 ; do mknod bda$N b 3 $[$N+0] ; done<br>	for N in '' 1 2 3 4 ; do mknod bdb$N b 3 $[$N+64] ; done<br>	cd /<br></a></pre>
           
