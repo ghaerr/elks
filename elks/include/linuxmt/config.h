@@ -2,6 +2,8 @@
 #define LX86_LINUXMT_CONFIG_H
 
 #include <linuxmt/autoconf.h>
+#include <linuxmt/kdev_t.h>
+#include <linuxmt/major.h>
 
 #define REGOPT register
 
@@ -10,34 +12,50 @@
  */
 
 #ifdef CONFIG_ROOTDEV_FD1
-#define CONFIG_ROOTDEV 0x03c0
+#define CONFIG_ROOTDEV		MKDEV(BIOSHD_MAJOR,192)
 #endif
 
 #ifdef CONFIG_ROOTDEV_RAM
-#define CONFIG_ROOTDEV 0x0100
+#define CONFIG_ROOTDEV		MKDEV(RAM_MAJOR,0)
 #endif
 
 #ifdef CONFIG_ROOTDEV_BDA1
-#define CONFIG_ROOTDEV 0x0301
+#define CONFIG_ROOTDEV		MKDEV(BIOSHD_MAJOR,1)
 #endif
 
 #ifdef CONFIG_ROOTDEV_BDA2
-#define CONFIG_ROOTDEV 0x0302
+#define CONFIG_ROOTDEV		MKDEV(BIOSHD_MAJOR,2)
 #endif
 
 #ifdef CONFIG_ROOTDEV_BDA3
-#define CONFIG_ROOTDEV 0x0303
+#define CONFIG_ROOTDEV		MKDEV(BIOSHD_MAJOR,3)
 #endif
 
 #ifdef CONFIG_ROOTDEV_BDA4
-#define CONFIG_ROOTDEV 0x0304
+#define CONFIG_ROOTDEV		MKDEV(BIOSHD_MAJOR,4)
+#endif
+
+#ifdef CONFIG_ROOTDEV_HDA1
+#define CONFIG_ROOTDEV		MKDEV(ATHD_MAJOR,1)
+#endif
+
+#ifdef CONFIG_ROOTDEV_HDA2
+#define CONFIG_ROOTDEV		MKDEV(ATHD_MAJOR,2)
+#endif
+
+#ifdef CONFIG_ROOTDEV_HDA3
+#define CONFIG_ROOTDEV		MKDEV(ATHD_MAJOR,3)
+#endif
+
+#ifdef CONFIG_ROOTDEV_HDA4
+#define CONFIG_ROOTDEV		MKDEV(ATHD_MAJOR,4)
 #endif
 
 /*
  * If nothing was set, use the default of /dev/fd0
  */
 #ifndef CONFIG_ROOTDEV
-#define CONFIG_ROOTDEV 0x0380
+#define CONFIG_ROOTDEV		MKDEV(BIOSHD_MAJOR,128)
 #endif
 
 /*
