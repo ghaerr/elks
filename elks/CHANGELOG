@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Fri Dec 17 16:37 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Modified console selection to make more sense.
+
 Wed Dec 15 19:41 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Re-wrote a number of filesystem functions to make them smaller,

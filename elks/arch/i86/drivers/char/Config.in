@@ -6,7 +6,10 @@ mainmenu_option next_comment
 comment 'Character device drivers'
 
 comment 'Select a console driver'
-bool 'Direct console writes' CONFIG_CONSOLE_DIRECT
+choice 'Select console driver'			\
+	"Direct		CONFIG_CONSOLE_DIRECT	\
+	 BIOS		CONFIG_CONSOLE_BIOS	\
+	 Serial		CONFIG_CONSOLE_SERIAL"	CONFIG_CONSOLE_DIRECT
 if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
 	bool 'Direct console VT52 emulation' CONFIG_DCON_VT52
 	if [ "$CONFIG_DCON_VT52" = "y" ]; then
@@ -23,11 +26,9 @@ if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
 		 de	CONFIG_DE_KEYMAP\
 		 usa    CONFIG_DEFAULT_KEYMAP" usa
 fi
-bool 'BIOS console writes' CONFIG_CONSOLE_BIOS
 if [ "$CONFIG_CONSOLE_BIOS" = "y" ]; then
 	bool 'BIOS console VT52 emulation' CONFIG_BIOS_VT52
 fi
-bool 'Serial console writes' CONFIG_CONSOLE_SERIAL
 if [ "$CONFIG_CONSOLE_SERIAL" = "y" ]; then
 	define_bool CONFIG_CHAR_DEV_RS y
 fi

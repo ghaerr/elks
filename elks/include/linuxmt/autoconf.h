@@ -51,6 +51,8 @@
  * Select a console driver
  */
 #define CONFIG_CONSOLE_DIRECT 1
+#undef  CONFIG_CONSOLE_BIOS
+#undef  CONFIG_CONSOLE_SERIAL
 #define CONFIG_DCON_VT52 1
 #define CONFIG_DCON_ANSI 1
 #undef  CONFIG_DCON_ANSI_PRINTK
@@ -60,8 +62,6 @@
 #undef  CONFIG_ES_KEYMAP
 #undef  CONFIG_DE_KEYMAP
 #define CONFIG_DEFAULT_KEYMAP 1
-#undef  CONFIG_CONSOLE_BIOS
-#undef  CONFIG_CONSOLE_SERIAL
 
 /*
  * Other character devices
