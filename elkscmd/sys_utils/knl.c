@@ -1,19 +1,20 @@
-/* KNL v1.0.4 Program to configure the initial kernel settings.
- * Copyright (C) 1998-2002, Riley Williams <Riley@Williams.Name>
+/*  KNL v1.0.4 Program to configure the initial kernel settings.
+ *  Copyright (C) 1998-2002, Riley Williams <Riley@Williams.Name>
  *
- * This program and the associated documentation are distributed under
- * the GNU General Public Licence (GPL), version 2 only.
+ *  This program and the associated documentation are distributed under
+ *  the GNU General Public Licence (GPL), version 2 only.
  *
  **************************************************************************
  *
- * CHANGELOG:
- * ~~~~~~~~~
+ *  CHANGELOG:
+ *  ~~~~~~~~~
  *
  *   1.0.4	Riley Williams <Riley@Williams.Name>
  *
  *	* Tweaked to assume ELKS devices if compiled using BCC. This
  *	  has the result that /dev/bdaX and /dev/bdbX are available,
  *        but /dev/hd[a-d]X have different node numbers.
+ *	* Added debugging code to get it to work under ELKS.
  *
  *   1.0.3	Riley Williams <Riley@Williams.Name>
  *
@@ -45,7 +46,66 @@
 #define signed
 #endif
 
-/* Standard types used in this program
+#define DEBUG
+#define TRACE
+
+#ifdef DEBUG
+
+#define debug(s)			fprintf(stderr,s)
+#define debug1(s,a)			fprintf(stderr,s,a)
+#define debug2(s,a,b)			fprintf(stderr,s,a,b)
+#define debug3(s,a,b,c)			fprintf(stderr,s,a,b,c)
+#define debug4(s,a,b,c,d)		fprintf(stderr,s,a,b,c,d)
+#define debug5(s,a,b,c,d,e)		fprintf(stderr,s,a,b,c,d,e)
+#define debug6(s,a,b,c,d,e,f)		fprintf(stderr,s,a,b,c,d,e,f)
+#define debug7(s,a,b,c,d,e,f,g)		fprintf(stderr,s,a,b,c,d,e,f,g)
+#define debug8(s,a,b,c,d,e,f,g,h)	fprintf(stderr,s,a,b,c,d,e,f,g,h)
+#define debug9(s,a,b,c,d,e,f,g,h,i)	fprintf(stderr,s,a,b,c,d,e,f,g,h,i)
+
+#else
+
+#define debug(s)
+#define debug1(s,a)
+#define debug2(s,a,b)
+#define debug3(s,a,b,c)
+#define debug4(s,a,b,c,d)
+#define debug5(s,a,b,c,d,e)
+#define debug6(s,a,b,c,d,e,f)
+#define debug7(s,a,b,c,d,e,f,g)
+#define debug8(s,a,b,c,d,e,f,g,h)
+#define debug9(s,a,b,c,d,e,f,g,h,i)
+
+#endif
+
+#ifdef TRACE
+
+#define trace	debug
+#define trace1	debug1
+#define trace2	debug2
+#define trace3	debug3
+#define trace4	debug4
+#define trace5	debug5
+#define trace6	debug6
+#define trace7	debug7
+#define trace8	debug8
+#define trace9	debug9
+
+#else
+
+#define trace
+#define trace1
+#define trace2
+#define trace3
+#define trace4
+#define trace5
+#define trace6
+#define trace7
+#define trace8
+#define trace9
+
+#endif
+
+/*  Standard types used in this program
  */
 
 typedef unsigned char BOOLEAN;
@@ -61,7 +121,7 @@ typedef unsigned long int DWORD;
 typedef signed short int SWORD;
 typedef signed long int SDWORD;
 
-/* Routine to display help text.
+/*  Routine to display help text.
  */
 
 void help(void)
@@ -79,7 +139,7 @@ void help(void)
     exit( 255 );
 }
 
-/* Routine to decode a byte value.
+/*  Routine to decode a value.
  */
 
 DWORD GetValue( char *Ptr, DWORD Max, BYTE *Valid, char OmitOK )
@@ -87,6 +147,8 @@ DWORD GetValue( char *Ptr, DWORD Max, BYTE *Valid, char OmitOK )
     char *Next;
     SDWORD Value = 0;
 
+    trace4("TRACE: GetValue( \"%s\", $lu, %p, %c )\n",
+	   Ptr, Max, Valid, OmitOK );
     if (*Ptr) {
 	Value = strtol(Ptr,&Next,10);
 	if ( (*Next=='\0') && (Value>=0) && (Value<=Max) ) {
@@ -97,23 +159,24 @@ DWORD GetValue( char *Ptr, DWORD Max, BYTE *Valid, char OmitOK )
 	} else
 	    *Valid = 'N';
     } else
-	if (OmitOK != 'N')
-	    *Valid = 'Y';
-	else
-	    *Valid = 'N';
+	*Valid = OmitOK;
+    trace3("TRACE: GetValue returning %ld as %lu with Valid = %c\n",
+	   Value, (DWORD) Value, (char) (*Valid));
     return (DWORD) Value;
 }
 
 #define GetByte(Ptr,Max,Valid,OK)	(BYTE) GetValue(Ptr,Max,Valid,OK)
 #define GetWord(Ptr,Max,Valid,OK)	(WORD) GetValue(Ptr,Max,Valid,OK)
 
-/* Routine to get arbitrary major and minor numbers.
+/*  Routine to get arbitrary major and minor numbers.
  */
 
 void GetMajorMinor( char *Ptr, BYTE *Major, BYTE *Minor, BYTE *Valid )
 {
     char *Gap, Sep;
 
+    trace4("TRACE: GetMajorMinor( \"%s\", %p, %p, %p )\n",
+	   Ptr, Major, Minor, Valid);
     if (*Ptr) {
 	if ((Gap = index(Ptr,'.')) != NULL) {
 	    Sep = *Gap;
@@ -126,6 +189,8 @@ void GetMajorMinor( char *Ptr, BYTE *Major, BYTE *Minor, BYTE *Valid )
 	    *Valid = 'N';
     } else
 	*Valid = 'N';
+    trace3("TRACE: GetMajorMinor returned (%d,%d) with Valid = %c\n",
+	   (int) (*Major), (int) (*Minor), (char) (*Valid));
 }
 
 /* Routine to convert a disk reference into the relevant node numbers.
@@ -184,13 +249,17 @@ void GetDisk( char *Name, WORD *Disk, BYTE *Valid )
     BYTE Minor = 0;
     BYTE Partition = 0;
 
+    trace3("TRACE: GetDisk( \"%s\", %p, %p )\n",Name,Disk,Valid);
     if (!strcasecmp(Name,"Boot")) {
 	*Disk = 0;
 	*Valid = 'Y';
+	trace("TRACE: Returning 0 with Valid = Y\n");
 	return;
     }
-    if (!strncasecmp(Name,"/dev/",5))
+    if (!strncasecmp(Name,"/dev/",5)) {
 	Name += 5;
+	trace("TRACE: Skipping leading /dev/\n");
+    }
     *Valid = 'N';
     switch (tolower(*Name)) {
 	case 'a':
@@ -385,6 +454,8 @@ void GetDisk( char *Name, WORD *Disk, BYTE *Valid )
     }
     if (*Valid == 'Y')
 	*Disk = (Major << 8) + Minor;
+    trace2("TRACE: GetDisk returning %X with Valid = %c\n",
+	   (int) (*Disk), *Valid);
 }
 
 /* Routine to analyse the parameters to the "-f=" and "--flags=" options
@@ -405,10 +476,9 @@ void GetFlags(char *Ptr, SDWORD *Flags, BYTE *Valid)
     SDWORD Result = 0, Value = 0;
     char *Next;
 
-    if (!strcasecmp(Ptr,"None"))
-	*Flags = 0;
-    else {
-	*Valid = 'Y';
+    trace3("TRACE: GetFlags( \"%s\", %p, %p )\n",Ptr,Flags,Valid);
+    *Valid = 'Y';
+    if (strcasecmp(Ptr,"None"))
 	while (Ptr != NULL) {
 	    Next = index(Ptr,',');
 	    if (Next != NULL)
@@ -435,6 +505,8 @@ void GetFlags(char *Ptr, SDWORD *Flags, BYTE *Valid)
     }
     if (*Valid == 'Y')
 	*Flags = Value;
+    trace2("TRACE: GetFlags returned %ld with Valid = %c\n",
+	   (long) (*Flags), Valid);
 }
 
 /* Routine to analyse the "--ram=" option and set the offset to the start
@@ -445,11 +517,14 @@ void GetRam( char *Ptr, WORD *MaxSize, BYTE *RamOK, BYTE *Valid )
 {
     WORD Result;
 
+    trace4("TRACE: GetRAM( \"%p\", %p, %p, %p )\n",Ptr,MaxSize,RamOK, Valid);
     Result = GetWord(Ptr,8191,Valid,'N');
     if (*Valid == 'Y') {
 	*RamOK = 'Y';
 	*MaxSize = (WORD) Result;
     }
+    trace3("TRACE: GetWord returned %u / %c with Valid = %c\n",
+	   *MaxSize, *RamOK, *Valid);
 }
 
 /* Routine to analyse the "--video=" option and set the relevant
@@ -474,6 +549,8 @@ void GetVideo( char *Ptr, WORD *Video, BYTE *VideoOK, BYTE *Valid )
 {
     WORD Result;
 
+    trace4("TRACE: GetVideo( \"%s\", %p, %p, %p )\n", Ptr, Video, VideoOK,
+	   Valid);
     switch (toupper(*Ptr)) {
 	case 'A':
 	    if (!strcasecmp(Ptr,"Ask")) {
@@ -501,9 +578,11 @@ void GetVideo( char *Ptr, WORD *Video, BYTE *VideoOK, BYTE *Valid )
 	    }
 	    break;
     }
+    trace3("TRACE: GetVideo returned %d / %c with Valid = %c\n",
+	   (int) (*Video), *VideoOK, *Valid);
 }
 
-/* Routine to decode a disk number into a disk.
+/*  Routine to decode a disk number into a disk name.
  */
 
 char *SetDisk( WORD Value )
@@ -512,6 +591,7 @@ char *SetDisk( WORD Value )
     BYTE Major = Value >> 8;
     BYTE Minor = Value & 255;
 
+    trace3("TRACE: SetDisk( %X ) = (%d,%d)\n", Value, Major, Minor);
     *Result = '\0';
     switch (Major) {
 	case 0:
@@ -663,6 +743,7 @@ char *SetDisk( WORD Value )
     }
     if (*Result != '\0')
 	sprintf( Result, "Mode-%u.%u", Major, Minor );
+    trace1("TRACE: SetDisk returned \"%s\"\n", Result);
     return strdup( Result );
 }
 
@@ -674,6 +755,7 @@ char *SetFlags( WORD Flags )
     char Result[256];
     BYTE i;
 
+    trace1("TRACE: SetFlags( %X )\n", Flags);
     *Result = '\0';
     for ( i=16; i--; )
 	if (Flags & (1<<i) )
@@ -687,6 +769,7 @@ char *SetFlags( WORD Flags )
 	    }
     if (*Result == '\0')
 	strcpy( Result, " None" );
+    trace1("TRACE: SetFlags returned \"%s\"\n", Result+1);
     return strdup(Result+1);
 }
 
@@ -697,6 +780,7 @@ char *SetVideo( WORD Value )
 {
     char Buffer[32], *Result;
 
+    trace1("TRACE: SetVideo( %d )\n", Value);
     if (Value > 65499) {
 	Value -= 32768;
 	Value = 32768 - Value;
@@ -722,6 +806,7 @@ char *SetVideo( WORD Value )
 	Result = Buffer;
 	sprintf( Result, "%u", Value );
     }
+    trace1("TRACE: SetVideo returned \"%s\"\n", Result);
     return Result;
 }
 
@@ -744,9 +829,9 @@ WORD Buffer[BufSize] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 /* Main program */
 /****************/
 
-int main(int argc, char **argv)
+int main(int c, char **v)
 {
-    char *Image, *Ptr;
+    char *Image, *Ptr, *Value;
     FILE *fp;
     SDWORD Flags = -1;
     DWORD i = 0;
@@ -760,197 +845,176 @@ int main(int argc, char **argv)
     BYTE Valid = 'N';
     BYTE VideoOK = 'N';
 
-    if (argc == 1)
+    if (c == 1)
 	help();
     else {
 	Image = NULL;
-	for (i=1; i<argc; i++) {
-	    if (*argv[i] != '-') {
-		Image = argv[i];
+	for (i=1; i<c; i++) {
+	    Ptr = v[i];
+	    trace1("TRACE: Analysing \"%s\", Ptr);
+	    if (*Ptr != '-') {
+		Image = Ptr;
 		Valid = 'Y';
-#ifdef DEBUG
-		fprintf( stderr, "DEBUG: Kernel image: %s\n", argv[i] );
-#endif
-	    } else if (argv[i][1] != '-') {
-		Ptr = argv[i] + 2;
+		debug1("DEBUG: Kernel image: %s\n", Ptr);
+	    } else if (*(++Ptr) != '-') {
+		trace("TRACE: Analysing short options.\n");
 		Valid = 'N';
-		switch (tolower(argv[i][1])) {
+		switch (tolower(*Ptr++)) {
 		    case 'f':
 			if (*Ptr == '=') {
 			    GetFlags( ++Ptr, &Flags, &Valid );
-#ifdef DEBUG
-			    if (Valid == 'Y')
-				fprintf( stderr, "DEBUG: Flags set to %s\n", Ptr );
-			    else
-				fprintf( stderr, "DEBUG: Invalid flags: %s\n", Ptr );
-#endif
+			    if (Valid == 'Y') {
+				debug1("DEBUG: Flags set to %s\n", Ptr);
+			    } else {
+				debug1("DEBUG: Invalid flags: %s\n", Ptr);
+			    }
 			}
 			break;
 		    case 'p':
-			if (*Ptr == '\0') {
+			if (!*Ptr) {
 			    RamOK = RamPrompt = Valid = 'Y';
-#ifdef DEBUG
-			    fprintf( stderr, "DEBUG: Initial RamDisk enabled and prompting selected.\n" );
-#endif
+			    debug("DEBUG: Initial RamDisk enabled and prompting selected.\n");
 			}
 			break;
 		    case 'r':
 			if (*Ptr == '=') {
 			    GetDisk( ++Ptr, &RootDev, &Valid );
-#ifdef DEBUG
-			    if (Valid == 'Y')
-				fprintf( stderr, "DEBUG: Root device set to %s\n", Ptr );
-			    else
-				fprintf( stderr, "DEBUG: Invalid root device: %s\n", Ptr );
-#endif
+			    if (Valid == 'Y') {
+				debug1("DEBUG: Root device set to %s\n", Ptr);
+			    } else {
+				debug1("DEBUG: Invalid root device: %s\n", Ptr);
+			    }
 			}
 			break;
 		    case 's':
 			if (*Ptr == '=') {
 			    GetDisk( ++Ptr, &SwapDev, &Valid );
-#ifdef DEBUG
-			    if (Valid == 'Y')
-				fprintf( stderr, "DEBUG: Swap device set to %s\n", Ptr );
-			    else
-				fprintf( stderr, "DEBUG: Invalid swap device: %s\n", Ptr );
-#endif
+			    if (Valid == 'Y') {
+				debug1("DEBUG: Swap device set to %s\n", Ptr);
+			    } else {
+				debug1("DEBUG: Invalid swap device: %s\n", Ptr);
+			    }
 			}
 			break;
 		    case 'v':
 			if (*Ptr == '=') {
 			    GetVideo( ++Ptr, &VideoMode, &VideoOK, &Valid );
-#ifdef DEBUG
-			    if (Valid == 'Y')
-				fprintf( stderr, "DEBUG: Video mode set to %s\n", Ptr );
-			    else
-				fprintf( stderr, "DEBUG: Invalid video mode: %s\n", Ptr );
-#endif
+			    if (Valid == 'Y') {
+				debug1("DEBUG: Video mode set to %s\n", Ptr);
+			    } else {
+				debug1("DEBUG: Invalid video mode: %s\n", Ptr);
+			    }
 			}
 			break;
 		    default:
-#ifdef DEBUG
-			fprintf( stderr, "DEBUG: Invalid option: %s\n", argv[i] );
-#endif
+			debug1("DEBUG: Invalid option: %s\n", v[i]);
 			break;
 		}
 	    } else {
 		Valid = 'N';
-		if ( (Ptr = index(argv[i],'=')) != NULL) {
-		    *Ptr++ = '\0';
-		}
-		switch (argv[i][2]) {
+		if ( (Value = index(Ptr,'=')) != NULL)
+		    *Value++ = '\0';
+		switch (* ++Ptr) {
 		    case 'f':
-			if (!strcmp(argv[i],"--flags")) {
-			    GetFlags( Ptr, &Flags, &Valid );
-#ifdef DEBUG
-			    if (Valid == 'Y')
-				fprintf( stderr, "DEBUG: Flags set to %s\n", Ptr );
-			    else
-				fprintf( stderr, "DEBUG: Invalid flags: %s\n", Ptr );
-#endif
+			if (!strcmp(Ptr,"flags")) {
+			    GetFlags(Value, &Flags, &Valid);
+			    if (Valid == 'Y') {
+				debug1("DEBUG: Flags set to %s\n", Value);
+			    } else {
+				debug1("DEBUG: Invalid flags: %s\n", Value);
+			    }
 			}
 			break;
 		    case 'h':
-			if (!strcmp(argv[i],"--help") && (Ptr == NULL))
+			if (!strcmp(Ptr,"help") && (Value == NULL))
 			    help();
 			break;
 		    case 'k':
-			if (!strcmp(argv[i],"--kernel") && (Ptr != NULL)) {
-			    Image = Ptr;
+			if (!strcmp(Ptr,"kernel") && (Value != NULL)) {
+			    Image = Value;
 			    Valid = 'Y';
-#ifdef DEBUG
-			    fprintf( stderr, "DEBUG: Kernel image: %s\n", Ptr );
-#endif
+			    debug1("DEBUG: Kernel image: %s\n", Value);
 			}
 			break;
 		    case 'n':
-			if (!strcmp(argv[i],"--noram") && (Ptr == NULL)) {
+			if (!strcmp(Ptr,"noram") && (Value == NULL)) {
 			    RamOffset = 0;
 			    RamOK = 'N';
 			    RamPrompt = Valid = 'Y';
-#ifdef DEBUG
-			    fprintf( stderr, "DEBUG: Initial RamDisk disabled.\n" );
-#endif
+			    debug("DEBUG: Initial RamDisk disabled.\n");
 			}
 			break;
 		    case 'p':
-			if (!strcmp(argv[i],"--prompt") && (Ptr == NULL)) {
+			if (!strcmp(Ptr,"prompt") && (Value == NULL)) {
 			    RamOK = RamPrompt = Valid = 'Y';
-#ifdef DEBUG
-			    fprintf( stderr, "DEBUG: Initial RamDisk enabled and prompting selected.\n" );
-#endif
+			    debug("DEBUG: Initial RamDisk enabled and prompting selected.\n");
 			}
 			break;
 		    case 'r':
-			if (Ptr != NULL)
-			    switch (argv[i][3]) {
+			if (Value != NULL)
+			    switch (Ptr[1]) {
 				case 'a':
-				    if (!strcmp(argv[i],"--ram")) {
-					GetRam( Ptr, &RamOffset, &RamOK, &Valid );
-#ifdef DEBUG
-					if (Valid == 'Y')
-					    fprintf( stderr, "DEBUG: Initial RamDisk enabled with offset set to %s\n", Ptr );
-					else
-					    fprintf( stderr, "DEBUG: Invalid initial RamDisk offset: %s\n", Ptr );
-#endif
+				    if (!strcmp(Ptr,"ram")) {
+					GetRam(Value, &RamOffset, &RamOK, &Valid);
+					if (Valid == 'Y') {
+					    debug1("DEBUG: Initial RamDisk enabled with offset set to %s\n", Value);
+					} else {
+					    debug1("DEBUG: Invalid initial RamDisk offset: %s\n", Value);
+					}
 				    }
 				    break;
 				case 'o':
-				    if (!strcmp(argv[i],"--root")) {
-					GetDisk( Ptr, &RootDev, &Valid );
-#ifdef DEBUG
-					if (Valid == 'Y')
-					    fprintf( stderr, "DEBUG: Root device set to %s\n", Ptr );
-					else
-					    fprintf( stderr, "DEBUG: Invalid root device: %s\n", Ptr );
-#endif
+				    if (!strcmp(Ptr,"root")) {
+					GetDisk(Value, &RootDev, &Valid);
+					if (Valid == 'Y') {
+					    debug1("DEBUG: Root device set to %s\n", Value);
+					} else {
+					    debug1("DEBUG: Invalid root device: %s\n", Value);
+					}
 				    }
 				    break;
 			    }
 			break;
 		    case 's':
-			if (!strcmp(argv[i],"--swap") && (Ptr != NULL)) {
-			    GetDisk( Ptr, &SwapDev, &Valid );
-#ifdef DEBUG
-			    if (Valid == 'Y')
-				fprintf( stderr, "DEBUG: Swap device set to %s\n", Ptr );
-			    else
-				fprintf( stderr, "DEBUG: Invalid swap device: %s\n", Ptr );
-#endif
+			if (!strcmp(Ptr,"swap") && (Value != NULL)) {
+			    GetDisk(Value, &SwapDev, &Valid);
+			    if (Valid == 'Y') {
+				debug1("DEBUG: Swap device set to %s\n", Value);
+			    } else {
+				debug1("DEBUG: Invalid swap device: %s\n", Value);
+			    }
 			}
 			break;
 		    case 'v':
-			switch (argv[i][3]) {
+			switch (Ptr[1]) {
 			    case 'e':
-				if (!strcasecmp(argv[i],"--version") && (Ptr == NULL)) {
+				if (!strcasecmp(Ptr,"version") && (Value == NULL)) {
 				    fprintf( stderr, "knl v%s", VERSION );
 				    exit( 255 );
 				}
 				break;
 			    case 'i':
-				if (!strcmp(argv[i],"--video") && (Ptr != NULL)) {
-				    GetVideo( Ptr, &VideoMode, &VideoOK, &Valid );
-#ifdef DEBUG
-				    if (Valid == 'Y')
-					fprintf( stderr, "DEBUG: Video mode set to %s\n", Ptr );
-				    else
-					fprintf( stderr, "DEBUG: Invalid video mode: %s\n", Ptr );
-#endif
+				if (!strcmp(Ptr,"video") && (Value != NULL)) {
+				    GetVideo(Value, &VideoMode, &VideoOK, &Valid);
+				    if (Valid == 'Y') {
+					debug1("DEBUG: Video mode set to %s\n", Value);
+				    } else {
+					debug1("DEBUG: Invalid video mode: %s\n", Value);
+				    }
 				}
 				break;
 			}
 			break;
 		}
 		if (Valid == 'Y') {
-		    if (strcmp(argv[i],"--kernel"))
+		    if (strcmp(Ptr,"kernel"))
 			Display = 'N';
-		} else {
-		    if (Ptr != NULL)
-			*--Ptr = '=';
-		}
+		} else
+		    if (Value != NULL)
+			*--Value = '=';
 	    }
 	    if (Valid == 'N')
-		fprintf( stderr, "knl: Ignoring invalid option: %s\n", argv[i] );
+		fprintf(stderr, "knl: Ignoring invalid option: %s\n", v[i]);
 	}
 	if (Image == NULL) {
 	    fprintf( stderr, "knl: (1) Kernel image file not specified.\n" );
