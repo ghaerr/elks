@@ -13,14 +13,17 @@ Harry Kalogirou         <HarKal@gmx.net>                 7 Nov 2001-24 Nov 2001
 Martijn Bakker          <martijn@insecure.nl>           29 Mar 2002
 Michael McConnell       <Soruk@Eridani.co.uk>           11 Nov 2001-12 Nov 2001
 Riley Williams          <Riley@Williams.Name>            8 Nov 2001-12 Jun 2002
+Miguel Bolanos		<mike@linuxlabs.com>			28 May 2004
 
 -------------------------------------------------------------------------------
 
+Fri May 28 15:13:47 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
+
+	* Updated Download page due to cvs changes by sourceforge.
 
 Sun Oct 20 12:21:27 BST 2002	Paul Nasrat <pauln@truemesh.com>
 	
 	* Added Italian FAQ
-
 
 Wed Jun 12 18:28:40 BST 2002	Riley Williams <Riley@Williams.Name>
 
