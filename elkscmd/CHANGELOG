@@ -14,6 +14,10 @@ Tommy McCabe			rocketjet314@yahoo.com
 
 -----------------------------------------------------------------
 
+Web Jun 02 21:05:56 CST 2004	Tommy McCabe <rocketjet314@yahoo.com>
+
+	* Improvements to MAKEDEV.. patch adapted by Eduardo Habkost
+
 Web Jun 02 21:01:34 CST 2004    Claudio Matsuoka <claudio@conectiva.com>
 
 	* fixed BSS problem

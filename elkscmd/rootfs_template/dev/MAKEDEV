@@ -12,14 +12,14 @@
 #
 # Refer to the MAKESET command, also in this directory, for usage details.
 
-LINK=/bin/ln
-MKDEV=/bin/mknod
-MKSET=/dev/MAKESET
+LINK=ln
+MKDEV=mknod
+MKSET=./MAKESET
 
 ##############################################################################
 # Ensure required auxilliary script is present.
 
-if ! /bin/test -f "$MKSET"
+if ! test -f "$MKSET"
 then
     echo ERROR: \"$MKSET\" script missing, unable to continue.
     exit 1
@@ -97,11 +97,11 @@ fi
 ##############################################################################
 # Direct IDE disks, Primary channel.
 
-	$MKSET   0 63 $MKDEV hda d 5	# Currently.
-	$MKSET  64 63 $MKDEV hdb d 5	# Currently.
+	$MKSET   0 63 $MKDEV hda b 5	# Currently.
+	$MKSET  64 63 $MKDEV hdb b 5	# Currently.
 
-#	$MKSET   0 63 $MKDEV hda d 3	# Ought to be.
-#	$MKSET  64 63 $MKDEV hdb d 3	# Ought to be.
+#	$MKSET   0 63 $MKDEV hda b 3	# Ought to be.
+#	$MKSET  64 63 $MKDEV hdb b 3	# Ought to be.
 
 ##############################################################################
 # Virtual consoles. Note that tty4 through tty7 can't be enabled at this
@@ -136,22 +136,22 @@ fi
 ##############################################################################
 # SCSI disks. These are not yet supported.
 
-#	$MKSET   0 15 $MKDEV sda d 8
-#	$MKSET  16 15 $MKDEV sdb d 8
-#	$MKSET  32 15 $MKDEV sdc d 8
-#	$MKSET  48 15 $MKDEV sdd d 8
-#	$MKSET  64 15 $MKDEV sde d 8
-#	$MKSET  80 15 $MKDEV sdf d 8
-#	$MKSET  96 15 $MKDEV sdg d 8
-#	$MKSET 112 15 $MKDEV sdh d 8
-#	$MKSET 128 15 $MKDEV sdi d 8
-#	$MKSET 144 15 $MKDEV sdj d 8
-#	$MKSET 160 15 $MKDEV sdk d 8
-#	$MKSET 176 15 $MKDEV sdl d 8
-#	$MKSET 192 15 $MKDEV sdm d 8
-#	$MKSET 208 15 $MKDEV sdn d 8
-#	$MKSET 224 15 $MKDEV sdo d 8
-#	$MKSET 240 15 $MKDEV sdp d 8
+#	$MKSET   0 15 $MKDEV sda b 8
+#	$MKSET  16 15 $MKDEV sdb b 8
+#	$MKSET  32 15 $MKDEV sdc b 8
+#	$MKSET  48 15 $MKDEV sdd b 8
+#	$MKSET  64 15 $MKDEV sde b 8
+#	$MKSET  80 15 $MKDEV sdf b 8
+#	$MKSET  96 15 $MKDEV sdg b 8
+#	$MKSET 112 15 $MKDEV sdh b 8
+#	$MKSET 128 15 $MKDEV sdi b 8
+#	$MKSET 144 15 $MKDEV sdj b 8
+#	$MKSET 160 15 $MKDEV sdk b 8
+#	$MKSET 176 15 $MKDEV sdl b 8
+#	$MKSET 192 15 $MKDEV sdm b 8
+#	$MKSET 208 15 $MKDEV sdn b 8
+#	$MKSET 224 15 $MKDEV sdo b 8
+#	$MKSET 240 15 $MKDEV sdp b 8
 
 ##############################################################################
 # SCSI tapes. These are not yet supported.
@@ -189,15 +189,15 @@ fi
 ##############################################################################
 # BIOS hard disks.
 
-	$MKSET   0 63 $MKDEV bda d 3	# Currently
-	$MKSET  64 63 $MKDEV bdb d 3	# Currently
-	$MKSET 128 63 $MKDEV bdc d 3	# Currently
-	$MKSET 192 63 $MKDEV bdd d 3	# Currently
+	$MKSET   0 63 $MKDEV bda b 3	# Currently
+	$MKSET  64 63 $MKDEV bdb b 3	# Currently
+	$MKSET 128 63 $MKDEV bdc b 3	# Currently
+	$MKSET 192 63 $MKDEV bdd b 3	# Currently
 
-#	$MKSET   0 63 $MKDEV bda d 14	# Ought to be
-#	$MKSET  64 63 $MKDEV bdb d 14	# Ought to be
-#	$MKSET 128 63 $MKDEV bdc d 14	# Ought to be
-#	$MKSET 192 63 $MKDEV bdd d 14	# Ought to be
+#	$MKSET   0 63 $MKDEV bda b 14	# Ought to be
+#	$MKSET  64 63 $MKDEV bdb b 14	# Ought to be
+#	$MKSET 128 63 $MKDEV bdc b 14	# Ought to be
+#	$MKSET 192 63 $MKDEV bdd b 14	# Ought to be
 
 ##############################################################################
 # Joysticks. These are not yet supported.
@@ -213,14 +213,14 @@ fi
 ##############################################################################
 # Direct IDE disks, Secondary channel. These are not yet supported.
 
-#	$MKSET   0 63 $MKDEV hdc d 22
-#	$MKSET  64 63 $MKDEV hdd d 22
+#	$MKSET   0 63 $MKDEV hdc b 22
+#	$MKSET  64 63 $MKDEV hdd b 22
 
 ##############################################################################
 # Direct IDE disks, Tertiary channel. These are not yet supported.
 
-#	$MKSET   0 63 $MKDEV hde d 33
-#	$MKSET  64 63 $MKDEV hdf d 33
+#	$MKSET   0 63 $MKDEV hde b 33
+#	$MKSET  64 63 $MKDEV hdf b 33
 
 ##############################################################################
 # Z80-SIO devices. These are not yet supported.
@@ -230,20 +230,20 @@ fi
 ##############################################################################
 # Direct IDE disks, Quaternary channel. These are not yet supported.
 
-#	$MKSET   0 63 $MKDEV hde d 34
-#	$MKSET  64 63 $MKDEV hdf d 34
+#	$MKSET   0 63 $MKDEV hde b 34
+#	$MKSET  64 63 $MKDEV hdf b 34
 
 ##############################################################################
 # Direct IDE disks, Quinternary channel. These are not yet supported.
 
-#	$MKSET   0 63 $MKDEV hdg d 56
-#	$MKSET  64 63 $MKDEV hdh d 56
+#	$MKSET   0 63 $MKDEV hdg b 56
+#	$MKSET  64 63 $MKDEV hdh b 56
 
 ##############################################################################
 # Direct IDE disks, Quaternary channel. These are not yet supported.
 
-#	$MKSET   0 63 $MKDEV hdi d 57
-#	$MKSET  64 63 $MKDEV hdj d 57
+#	$MKSET   0 63 $MKDEV hdi b 57
+#	$MKSET  64 63 $MKDEV hdj b 57
 
 ##############################################################################
 # SCSI Media Changer. These are not yet supported.
