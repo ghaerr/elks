@@ -333,7 +333,7 @@ void device_setup()
 
 	chr_dev_init();
 	blk_dev_init();
-	sti();
+	isti();
 
 	for (p = gendisk_head ; p ; p=p->next) {
 		setup_dev(p);

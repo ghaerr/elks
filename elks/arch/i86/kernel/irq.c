@@ -79,13 +79,13 @@ unsigned int irq_nr;
 	unsigned char mask = 1 << (irq_nr & 7);
 	save_flags(flags);
 	if(irq_nr < 8) {
-		cli();
+		icli();
 		cache_21 |= mask;
 		outb(cache_21,0x21);
 		restore_flags(flags);
 		return;
 	}
-	cli();
+	icli();
 /* BNOTE Is there missing code here! ????? cache_A1 |= mask ????? */
 	outb(cache_A1,0xA1);
 	restore_flags(flags);
@@ -103,14 +103,14 @@ unsigned int irq_nr;
 #ifndef CONFIG_XT
 	if (irq_nr < 8) {
 #endif
-		cli();
+		icli();
 		cache_21 &= mask;
 		outb(cache_21,0x21);
 		restore_flags(flags);
 		return;
 #ifndef CONFIG_XT
 	}
-	cli();
+	icli();
 	cache_A1 &= mask;
 	outb(cache_A1,0xA1);
 	restore_flags(flags);
@@ -184,19 +184,22 @@ _restore_flags:
 #endasm
 #endif
 
-void cli()
+#if 0
+void icli()
 {
 #asm
 	cli
 #endasm
 }
 
-void sti()
+void isti()
 {
 #asm
 	sti
 #endasm
 }
+#endif
+
 		
 int request_irq(irq, handler, irqflags, devname)
 int irq;
@@ -228,7 +231,7 @@ char *devname;
 		return -EINVAL;
 	}
 	save_flags(flags);
-	cli();
+	icli();
 	action->handler = handler;
 	action->flags = irqflags;
 /*	action->mask = 0; */ /* Mask unused, so removed to save space */
@@ -254,7 +257,7 @@ unsigned int irq;
 		return;
 	}
 	save_flags(flags);
-	cli();
+	icli();
 	if (irq < 8) {
 		cache_21 |= 1 << irq;
 		outb(0x21,cache_21);

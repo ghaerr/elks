@@ -193,9 +193,9 @@ int uptodate;
 #else
 		req->bh = NULL;
 #endif
-		cli();
+		icli();
 		bh->b_uptodate = uptodate;
-		sti();
+		isti();
 		unlock_buffer(bh);
 #ifdef BLOAT_FS
 		if ((bh = req->bh) != NULL) {

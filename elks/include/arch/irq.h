@@ -28,14 +28,19 @@ extern unsigned long __save_flags();
 extern void restore_flags();
 extern int request_irq();
 extern void free_irq();
-extern void cli();
-extern void sti();
+#if 0
+extern void icli();
+extern void isti();
+#endif
 extern void do_bottom_half();
 
 extern int bh_mask_count[32];
 extern unsigned long bh_active;
 extern unsigned long bh_mask;
 extern void (*bh_base[32])();
+
+#define icli() asm("cli")
+#define isti() asm("sti")
 
 #define init_bh(nr, routine) bh_base[nr] = routine; \
             bh_mask_count[nr] = 0; \

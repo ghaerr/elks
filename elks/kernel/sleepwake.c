@@ -18,7 +18,7 @@ register struct wait_queue *wait;
 {
 	unsigned int flags;
 	save_flags(flags);
-	cli();
+	icli();
 	if(!*p)
 	{
 		wait->next = wait;
@@ -38,7 +38,7 @@ register struct wait_queue *wait;
 {
 	unsigned int flags;
 	save_flags(flags);
-	cli();
+	icli();
 	if((*p==wait) && ((*p=wait->next)==wait))
 		*p=NULL;
 	else
@@ -73,7 +73,7 @@ int state;
 	current->state = state;
 	add_wait_queue(p, &wait);
 	save_flags(flags);
-	sti();
+	isti();
 	schedule();
 	remove_wait_queue(p, &wait);
 	restore_flags(flags);
@@ -107,7 +107,7 @@ register struct task_struct * p;
 	unsigned int flags;
 
 	save_flags(flags);
-	cli();
+	icli();
 	p->state = TASK_RUNNING;
 	/*	if (p->pid == 5)
 	  printk("adding task %d to runqueue\n", p->pid);*/

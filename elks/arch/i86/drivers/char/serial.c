@@ -73,8 +73,11 @@ struct file *file;
 		} while (inb_p(ports[rs_minor].io + UART_LSR) & UART_LSR_DR);
 		inb_p(ports[rs_minor].io + UART_IIR);
 		inb_p(ports[rs_minor].io + UART_MSR);
-		outb_p(UART_IER_RDI, ports[rs_minor].io + UART_IER);
+/*		outb_p(UART_LCR_WLEN8 | UART_LCR_DLAB, ports[rs_minor].io + UART_LCR);
+		outb_p(6, ports[rs_minor].io + UART_DLL);
+		outb_p(0, ports[rs_minor].io + UART_DLM); */
 		outb_p(UART_LCR_WLEN8, ports[rs_minor].io + UART_LCR);
+		outb_p(UART_IER_RDI, ports[rs_minor].io + UART_IER);
 		outb_p(UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2, ports[rs_minor].io + UART_MCR);
 /*		inb_p(ports[rs_minor].io + UART_LSR);
 		inb_p(ports[rs_minor].io + UART_RX);

@@ -119,7 +119,7 @@ task_queue * bh_list;
 	if (!set_bit(0,&bh_pointer->sync)) { \
 		unsigned long flags; \
 		save_flags(flags); \
-		cli(); \
+		icli(); \
 		bh_pointer->next = *bh_list; \
 		*bh_list = bh_pointer; \
 		restore_flags(flags); \

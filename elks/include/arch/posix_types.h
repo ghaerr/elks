@@ -42,9 +42,9 @@ typedef struct {
                 {\
                 int     mask, retval,addr=fdsetp;\
 						 \
-                cli(); addr += fd >> 3;\
+                icli(); addr += fd >> 3;\
                 mask = 1 << (fd & 0xf);\
-                *(int*)addr |= mask; sti(); \
+                *(int*)addr |= mask; isti(); \
                 }
 
 #undef	__FD_CLR
@@ -52,9 +52,9 @@ typedef struct {
                 {\
                 int     mask, retval,addr=fdsetp;\
                                                  \
-                cli(); addr += fd >> 3;\
+                icli(); addr += fd >> 3;\
                 mask = 1 << (fd & 0xf);\
-                *(int*)addr &= ~mask; sti(); \
+                *(int*)addr &= ~mask; isti(); \
        	        }
 
 #undef	__FD_ISSET
@@ -64,8 +64,8 @@ typedef struct {
 #define __FD_ZERO(fdsetp) \
                 {\
 		  int i = 0; \
-		  cli(); for (; i < 32; i++)\
-		    ((int*)fdsetp)[i] = 0; sti(); \
+		  icli(); for (; i < 32; i++)\
+		    ((int*)fdsetp)[i] = 0; isti(); \
 		}
 
 #endif /* __ARCH_8086_POSIZ_TYPES_H */

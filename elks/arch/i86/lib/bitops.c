@@ -21,7 +21,7 @@ unsigned char *addr;
 	unsigned int r;
 	bit%=8;
 	save_flags(flags);
-	cli();
+	icli();
 	r=(addr[offset]&&(1<<bit));
 	addr[offset] ^= r;	/* xor bit with itself is 0 */
 	restore_flags(flags);
@@ -38,9 +38,9 @@ register unsigned int *addr;
 	unsigned int mask, retval, offset;
 	int i;
 
-	cli();
+	icli();
 	retval = test_bit(nr, addr);
-	sti();
+	isti();
 	if (retval) 
 		return 1;
 	else 

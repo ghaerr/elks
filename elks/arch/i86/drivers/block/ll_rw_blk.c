@@ -110,7 +110,7 @@ struct request * plug;
 	plug->cmd = -1;
 	plug->next = NULL;
 	save_flags(flags);
-	cli();
+	icli();
 	if (!dev->current_request)
 		dev->current_request = plug;
 	restore_flags(flags);
@@ -127,7 +127,7 @@ struct blk_dev_struct * dev;
 	unsigned int flags;
 
 	save_flags(flags);
-	cli();
+	icli();
 	req = dev->current_request;
 	if (req && req->rq_status == RQ_INACTIVE && req->cmd == -1) {
 		dev->current_request = req->next;
@@ -194,9 +194,9 @@ kdev_t dev;
 	for (;;) {
 /*		unplug_device(MAJOR(dev)+blk_dev); */ /* Device can't be plugged */
 		current->state = TASK_UNINTERRUPTIBLE;
-		cli();
+		icli();
 		req = get_request(n, dev);
-		sti();
+		isti();
 		if (req)
 			break;
 		schedule();
@@ -214,9 +214,9 @@ kdev_t dev;
 {
 	register struct request *req;
 
-	cli();
+	icli();
 	req = get_request(n, dev);
-	sti();
+	isti();
 	if (req)
 		return req;
 	return __get_request_wait(n, dev);
@@ -236,12 +236,12 @@ register struct request * req;
 	register struct request * tmp;
 	short		 disk_index;
 
-	cli();
+	icli();
 	mark_buffer_clean(req->bh);
 	if (!(tmp = dev->current_request)) {
 		dev->current_request = req;
 		(dev->request_fn)();
-		sti();
+		isti();
 		return;
 	}
 	for ( ; tmp->next ; tmp = tmp->next) {
@@ -253,7 +253,7 @@ register struct request * req;
 	req->next = tmp->next;
 	tmp->next = req;
 
-	sti();
+	isti();
 }
 
 static void make_request(major,rw,bh)
@@ -333,7 +333,7 @@ register struct buffer_head * bh;
 
 /* find an unused request. */
 	req = get_request(max_req, bh->b_dev);
-	sti();
+	isti();
 
 /* if no request available: if rw_ahead, forget it; otherwise try again blocking.. */
 	if (!req) {

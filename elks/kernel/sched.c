@@ -183,7 +183,7 @@ void schedule()
 #endif
 
 	prev = current;
-	cli();
+	icli();
 
 	switch (prev->state) {
 		case TASK_INTERRUPTIBLE:
@@ -209,7 +209,7 @@ void schedule()
 	p = init_task.next_run;
 	/*if (init_task.next_run->pid != 0)
 	  printk("init_task.next_run->pid=%d\n", init_task.next_run->pid);*/
-	sti();
+	isti();
 
 	c = 0;
         next = &init_task;
@@ -347,7 +347,7 @@ struct timer_list * timer;
 {
 	unsigned long flags;
 	save_flags(flags);
-	cli();
+	icli();
 #if SLOW_BUT_DEBUGGING_TIMERS
         if (timer->next || timer->prev) {
                 printk("add_timer() called with non-zero list from %p\n",
@@ -387,7 +387,7 @@ register struct timer_list * timer;
 	int ret;
 	unsigned long flags;
 	save_flags(flags);
-	cli();
+	icli();
 	ret = detach_timer(timer);
 	timer->next = timer->prev = 0;
 	restore_flags(flags);
@@ -415,7 +415,7 @@ register struct timer_vec * tv;
 
 static /*inline*/ void run_timer_list()
 {
-	cli();
+	icli();
 	while ((long)(jiffies - timer_jiffies) >= 0) {
 		register struct timer_list *timer;
 		if (!tv1.index) {
@@ -430,14 +430,14 @@ static /*inline*/ void run_timer_list()
 			/*printk("boom!\n");*/
 			detach_timer(timer);
 			timer->next = timer->prev = NULL;
-			sti();
+			isti();
 			fn(data);
-			cli();
+			icli();
 		}
 		++timer_jiffies; 
 		tv1.index = (tv1.index + 1) & TVR_MASK;
 	}
-	sti();
+	isti();
 }
 
 static /*inline*/ void run_old_timers()
@@ -454,7 +454,7 @@ static /*inline*/ void run_old_timers()
 			continue;
 		timer_active &= ~mask;
 		tp->fn();
-		sti();
+		isti();
 	}
 }
 
@@ -535,18 +535,18 @@ static /*inline*/ void update_times()
 {
         unsigned long ticks;
 
-	cli();
+	icli();
 	ticks = lost_ticks;
 	lost_ticks = 0;
-	sti();
+	isti();
 
         if (ticks) {
                 unsigned long system;
 		
-		cli();
+		icli();
 		system = lost_ticks_system;
 		lost_ticks_system = 0;
-		sti();
+		isti();
 
                 /*calc_load(ticks);*/ /* don't care for now */
                 /*update_wall_time(ticks);*/ /* this either */
@@ -592,7 +592,7 @@ void do_bottom_half()
         unsigned long mask, left;
         void (**bh)();
 
-        sti();
+        isti();
         bh = bh_base;
         active = bh_active & bh_mask;
         for (mask = 1, left = ~0 ; left & active ; bh++,mask += mask,left += left) {

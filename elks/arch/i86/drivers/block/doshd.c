@@ -304,7 +304,7 @@ int drive, track, sector;
 		BD_DX = (0 << 8) | drive;
 		BD_FL = 0;
 
-		sti();
+		isti();
 		call_bios();
 		
 		if (CARRY_SET)
@@ -398,7 +398,7 @@ struct file *filp;
 				BD_DX = (0 << 8) | hd_drive_map[target];	/* Head 0, drive number */
 				BD_FL = 0;
 
-				sti();
+				isti();
 				call_bios();
 
 				if (CARRY_SET)
@@ -687,7 +687,7 @@ static void do_bioshd_request()
 			printk("blocks %d\n", this_pass);
 #endif
 
-			sti();
+			isti();
 			call_bios();
 
 			if (CARRY_SET)
@@ -751,14 +751,14 @@ static int revalidate_hddisk(dev, maxusage)
 	target = DEVICE_NR(dev);
 	gdev = &GENDISK_STRUCT;
 
-	cli();
+	icli();
 	if (DEVICE_BUSY || USAGE > maxusage)
 	{
-		sti();
+		isti();
 		return -EBUSY;
 	};
 	DEVICE_BUSY = 1;
-	sti();
+	isti();
 
 	max_p = gdev->max_p;
 	start = target << gdev->minor_shift;

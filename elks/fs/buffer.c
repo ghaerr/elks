@@ -422,7 +422,7 @@ int on;
 {
 	unsigned int flags;
 	save_flags(flags);
-	cli();
+	icli();
 	bh->b_uptodate = on;
 	restore_flags(flags);
 }
