@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Wed Jan 19 14:05 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fixed hole diagnostic function so it now works.
+
 Wed Jan 19 13:55 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixes to the ssd access code used in the wrt_dsk program.

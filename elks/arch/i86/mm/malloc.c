@@ -101,25 +101,25 @@ static void sweep_holes()
 void dmem()
 {
 	register struct malloc_hole *m=&holes[0];
-	char * foo;
-	while (m!=NULL && m->next!=NULL) {
+	char * status;
+	do {
 		switch (m->flags) {
 			case HOLE_SPARE:
-				foo = "SPARE";
-			break;
+				status = "SPARE";
+				break;
 			case HOLE_FREE:
-				foo = "FREE";
-			break;
+				status = "FREE";
+				break;
 			case HOLE_USED:
-				foo = "USED";
-			break;
+				status = "USED";
+				break;
 			default:
-				foo = "DIDGEY";
-			break;
+				status = "DIDGEY";
+				break;
 		}
-		printk("HOLE %x size %x is %s\n", m->page_base, m->extent, foo);
+		printk("HOLE %x size %x is %s\n", m->page_base, m->extent, status);
 		m=m->next;
-	}
+	} while (m!=NULL);
 }
 #endif
 	
