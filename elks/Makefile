@@ -90,32 +90,33 @@ setup: $(ARCH_DIR)/boot/setup
         kernel/kernel.a lib/lib.a net/net.a
 
 fs/fs.a:
-	make -C fs
+	make -C fs fs.a
 
 fs/elksfs/elksfs.a:
-	make -C fs/elksfs
+	make -C fs/elksfs elksfs.a
 
 fs/minix/minixfs.a:
-	make -C fs/minix
+	make -C fs/minix minixfs.a
 
 fs/romfs/romfs.a:
-	make -C fs/romfs
+	make -C fs/romfs romfs.a
 
-kernel/kernel.a: include/linuxmt/compiler-generated.h
-	make -C kernel
+kernel/kernel.a:	include/linuxmt/compiler-generated.h
+	make -C kernel kernel.a
 
 lib/lib.a:
-	make -C lib
+	make -C lib lib.a
 
 net/net.a:
-	make -C net
+	make -C net net.a
 
 #########################################################################
 # Compiler-generated definitions not given as command arguments.
 
 include/linuxmt/compiler-generated.h:
-	printf > $< '#define $s "%s"\n' \
-		UTS_VERSION	"#$(DIST) $(shell date)"
+	printf > include/linuxmt/compiler-generated.h	\
+		'#define %s "%s"\n'			\
+		UTS_VERSION "#$(DIST) $(shell date)"
 
 #########################################################################
 # lint rule
@@ -137,7 +138,7 @@ elks.spec: Makefile
 
 clean:
 	rm -f *~ Boot.map Setup.map System.map tmp_make core
-	rm -f init/*~ init/*.o
+	rm -f init/*~ init/*.o include/linuxmt/compiler-generated.h
 	make -C $(ARCH_DIR) clean
 	make -C fs clean
 	make -C fs/elksfs clean
@@ -198,7 +199,7 @@ dist:
 	@echo Directory $(DISTDIR) contains a clean ELKS distribution tree.
 	@echo
 
-dep:
+dep:	include/linuxmt/compiler-generated.h
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in init/*.c; do echo -n "init/"; $(CC_PROTO) $$i; echo; done) >> tmp_make
 	mv tmp_make Makefile
@@ -267,7 +268,7 @@ menuconfig:
 	@echo Configuration complete.
 	@echo
 
-test:
+test:	nodep
 	rm -fr ../elks-test
 	mkdir ../elks-test
 	tar c * | ( cd ../elks-test ; tar xv )

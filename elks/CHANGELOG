@@ -29,6 +29,13 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Tue Nov 13 23:57:42 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* THIS IS ELKS RELEASE 0.0.89-pre2.
+
+	* Fixed stupid typos in previous bugfix !!!
+	* Stopped `make Image` from doing infinite recursion !!!
+
 Tue Nov 13 23:52:18 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Fixed bug in elks/Makefile that stopped compiles- I'd missed a

@@ -46,29 +46,29 @@ DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 
 boot/setup: boot/setup.S
 	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/setup.s boot/setup.S
-	$(AS86) -o boot/setup.o boot/setup.s
-	$(LD86) -s -o boot/setup -M boot/setup.o > Setup.map
+	$(AS) -o boot/setup.o boot/setup.s
+	$(LD) -s -o boot/setup -M boot/setup.o > Setup.map
 
 boot/bootsect: boot/bootsect.S
 	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/bootsect.s \
 		boot/bootsect.S
-	$(AS86) -0 -o boot/bootsect.o boot/bootsect.s
-	$(LD86) -0 -s -o boot/bootsect -M boot/bootsect.o > Boot.map
+	$(AS) -0 -o boot/bootsect.o boot/bootsect.s
+	$(LD) -0 -s -o boot/bootsect -M boot/bootsect.o > Boot.map
 
 boot/netbootsect: boot/netbootsect.S
 	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/netbootsect.s \
 		boot/netbootsect.S
-	$(AS86) -0 -o boot/netbootsect.o boot/netbootsect.s
-	$(LD86) -0 -s -o boot/netbootsect -M boot/netbootsect.o > Netboot.map
+	$(AS) -0 -o boot/netbootsect.o boot/netbootsect.s
+	$(LD) -0 -s -o boot/netbootsect -M boot/netbootsect.o > Netboot.map
 
 boot/crt1.o: boot/crt1.c
 
 boot/crt0.o: boot/crt0.S
 	gcc -E -traditional -I$(TOPDIR)/include/ -o boot/crt0.s boot/crt0.S
-	$(AS86) -0 -o boot/crt0.o boot/crt0.s
+	$(AS) -0 -o boot/crt0.o boot/crt0.s
 
 tools:
-	make -C tools
+	make -C tools all
 
 tools/build: tools/build.c
 	gcc -I $(TOPDIR)/include -o tools/build tools/build.c
@@ -175,13 +175,13 @@ mm/mm.a:
 	make -C mm mm.a
 
 drivers/char/chr_drv.a:
-	make -C drivers/char 
+	make -C drivers/char chr_drv.a
 
 drivers/block/blk_drv.a:
-	make -C drivers/block
+	make -C drivers/block blk_drv.a
 
 286pmode/pmode286:
-	make -C 286pmode
+	make -C 286pmode pmode286
 
 #########################################################################
 # commands.

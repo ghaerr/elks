@@ -3,7 +3,7 @@
 VERSION 	= 0	# (0-255)
 PATCHLEVEL	= 0	# (0-255)
 SUBLEVEL	= 89	# (0-255)
-PRE		= 1	# (0-255)	If not a pre, comment this line.
+PRE		= 2	# (0-255)	If not a pre, comment this line.
 
 # Specify the architecture we will use.
 
@@ -115,7 +115,7 @@ CONFIG_SHELL	:= $(shell if [ -x "$$bash" ]; \
 	$(CC) $(CFLAGS) -0 -nostdinc -I$(INCDIR) -S -o $*.s $<
 
 .s.o:
-	$(AS) -0 -c -o $*.o $<
+	$(AS) -0 -o $*.o $<
 
 .S.s:
 	gcc -E -traditional $(CCDEFS) -I$(INCDIR) -o $*.s $<
