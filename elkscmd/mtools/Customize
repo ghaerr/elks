@@ -1,0 +1,65 @@
+How to configure Mtools for non-standard disk formats...
+
+There are three approaches to the problem of trying to read and write
+MSDOS formatted diskettes in a Unix box doesn't have a floppy drive
+that meets the physical drive requirements.  For example, if your
+Unix box only has a 80 track floppy, you can:
+
+	1) Get a device driver to "double step" the 80 track drive
+	to read and write to 40 track diskettes.
+
+		Pros: No new hardware costs.
+		Cons: Device drivers are a bitch to write (or
+	  	      	expensive to buy).
+		      Success rates are low when using 80 track
+			drives to write 40 tracks.
+
+	2) Get a conventional device driver and purchase a 40 track
+	drive.  You'll still need the device driver unless your 
+	Unix vendor was thoughtful enough to leave you some "extras".
+
+		Pros: High success rates (40 track to 40 track)
+		Cons: The "foriegn" drive may cause trouble with
+			maintenance contracts
+
+	3) Purchase a 80 track drive for your PC.  This exploits the
+	fact that MSDOS already has a configurable device driver
+	feature.
+
+		Pros: You don't alter your Unix box in any way.
+		Cons: You'll have to process all MSDOS diskettes
+			thru the one PC before using Mtools.
+
+               +--------+          +-----------+
+          +--> | Unix   |          |  IBM PC   |
+          |    | box    |          |  clone    |
+        mtools +--------+          +-----+-----+
+          |    | 80 trk |          | 80  | 40  |        MSDOS
+          +--> | track  | <------> | trk | trk | <----> world
+               +--------+          +-----+-----+
+                                    ^         ^
+                                    |  MSDOS  |
+                                    +- COPY --+
+
+How to customize Mtools...
+
+The program can be easily customized to accept non-standard disk
+formats.  For example, a popular disk format for Unix machines seems to
+be 80 track, double sided, 8 sector.  This doesn't conform to any of the
+IBM standard formats, but MSDOS 3.2 (or greater) can be made to format
+virtually anything using DRIVPARM (or DRIVER.SYS) in the CONFIG.SYS
+file.  Let's take a hypothetical case of a brand X Unix machine with a
+80 track, double sided, 8 sector disk drive.  You could purchase an
+external 80 track drive for your IBM compatible computer and format the
+new drive D: under MSDOS with the following in your CONFIG.SYS file
+
+	DRIVPARM=/D:2 /T:80 /S:8 /H:2 /F:2
+		or
+	DEVICE=DRIVER.SYS /D:2 /T:80 /S:8 /H:2 /F:2
+
+
+Emmet P. Gray				US Army, HQ III Corps & Fort Hood
+...!unnet!uiucuxc!fthood!egray		Attn: AFZF-DE-ENV
+					Directorate of Engineering & Housing
+					Environmental Management Office
+					Fort Hood, TX 76544-5057

@@ -1,0 +1,36 @@
+.TH MDIR 1 local
+.SH NAME
+mdir \- display a MSDOS directory
+.SH SYNOPSIS
+.B mdir
+[
+.B -w
+] msdosdirectory
+.PP
+.B mdir
+[
+.B -w
+] msdosfile [ msdosfiles...  ] 
+.SH DESCRIPTION
+.I Mdir
+displays the contents of a MSDOS formatted diskette.  Sub directories
+are supported with either the '/' or '\e\' separator.  The use of 
+the '\e\' separator or wildcards will require the names to be enclosed
+in quotes to protect them from the shell.
+.PP
+.I Mdir
+will allow the following command line option:
+.TP
+.B w
+Wide output.  This option will print the file names across the page
+without displaying the file size or creation date.
+.PP
+An error occurs if a component of the path is not a directory.
+.PP
+The environmental variable MCWD may be used to establish a current
+working directory (relative to the MSDOS diskette).
+.SH SEE ALSO
+mtype(1)
+.SH BUGS
+Allows multiple arguments, which does not follow the MSDOS convention.
+Wildcards are only applied to filenames, not to directory names.

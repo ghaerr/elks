@@ -1,0 +1,5 @@
+mtools - tools to read msdos floppies from unix pc
+
+Compiled with a couple of tweaks, but cannot read disks, even under dosemu.
+
+Al (ajr@ecs.soton.ac.uk) Sun 11 Oct 1998 16:20

@@ -1,0 +1,31 @@
+.TH MDEL 1 local
+.SH NAME
+mdel \- delete a MSDOS file
+.SH SYNOPSIS
+.B mdel
+[
+.B -v
+] msdosfile [ msdosfiles...  ]
+.SH DESCRIPTION
+.I Mdel
+deletes a file on a MSDOS formatted diskette.  Sub directories are supported
+with either the '/' or '\e\' separator.  The use of the '\e\' separator
+or wildcards will require the names to be enclosed in quotes to protect
+them from the shell.
+.PP
+.I Mdel
+will allow the following command line option:
+.TP
+.B v
+Verbose mode.  Echo the file names as they are processed.
+.PP
+.I Mdel
+will ask for verification prior to removing a read\-only file.
+.PP
+The environmental variable MCWD may be used to establish a current
+working directory (relative to the MSDOS diskette).
+.SH SEE ALSO
+mdir(1)
+.SH BUGS
+Allows multiple arguments, which does not follow the MSDOS convention.
+Wildcards are only applied to filenames, not to directory names.

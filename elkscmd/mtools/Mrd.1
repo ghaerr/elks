@@ -1,0 +1,21 @@
+.TH MRD 1 local
+.SH NAME
+mrd \- remove a MSDOS sub directory
+.SH SYNOPSIS
+.B mrd
+msdosdirectory
+.SH DESCRIPTION
+.I Mrd
+removes a directory from a MSDOS formatted diskette.  Sub directories
+are supported with either the '/' or '\e\' separator.  The use of
+the '\e\' separator will require the directory name to be enclosed in
+quotes to protect it from the shell.
+.PP
+An error occurs if the directory is not empty.
+.PP
+Wildcards are not supported.
+.PP
+The environmental variable MCWD may be used to establish a current
+working directory (relative to the MSDOS diskette).
+.SH SEE ALSO
+mdir(1), mmd(1)

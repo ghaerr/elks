@@ -1,0 +1,53 @@
+=== mtools.shar1 =========================
+From sparkyfs!ames!mailrus!uunet!allbery Mon Mar 26 09:10:58 PST 1990
+
+Posting-number: Volume 11, Issue 81
+Submitted-by: viktor@melon.princeton.edu (Viktor Dukhovni)
+Archive-name: sparc-mtools/part01
+
+	By permission of Emmet Gray I am reposting "mtools"
+
+The comp.sources.unix archives are out of date wrt Emmet's latest version
+and I have added a somewhat more general driver support mechanism,   so
+that the Unix PC and other machines that can read DOS disks only after
+various parameters are changed with disk ioctls can be supported more easily.
+
+	Included is "mkdfs" an "mkfs" for dos disks,  currently this
+works only with 3.5", 80 track disks, and knows the path of the low level format
+program only on the SparcStation 1 or Sun 3/80.  A more general program
+based on an external table (/etc/dosformat.dat?) should be written one day.
+
+	The mread and mwrite are considerably faster on fresh disks,
+up to a factor of 12 for large files on high density disks.  The algorithm
+degrades to the original speed once files get substantially fragemented,
+A more robust algorithm is possible,  but this is quite good enough for
+moving files around,  which is the main application I would expect to see
+for this package.  
+
+	Enjoy!  And please send those bug fixes or improvements,  the
+package is still 90% Emmet's code,  so I would much have preferred for him
+to resubmit it,  but there is a lot of demand for it now with the desktop
+Suns selling in unprecedented numbers,  and Emmet did not have much time
+to devote to this.  The only bug I am aware of now is that globbing DOS
+file names does not work entirely as expected.  This should either be fixed
+or documented.
+
+	Viktor Dukhovni <viktor@math.princeton.edu>	: ARPA
+		<...!uunet!princeton!math!viktor>	: UUCP
+	Fine Hall, Washington Rd., Princeton, NJ 08544  : US-Post
+		+1-(609)-258-5792		 	: VOICE
+
+=== mtools.shar2 =========================
+From sparkyfs!ames!mailrus!uunet!allbery Mon Mar 26 09:11:18 PST 1990
+
+Posting-number: Volume 11, Issue 82
+Submitted-by: viktor@melon.princeton.edu (Viktor Dukhovni)
+Archive-name: sparc-mtools/part02
+
+=== mtools.shar3 =========================
+From sparkyfs!ames!think!zaphod.mps.ohio-state.edu!usc!cs.utexas.edu!uunet!allbery Mon Mar 26 09:11:32 PST 1990
+
+Posting-number: Volume 11, Issue 83
+Submitted-by: viktor@melon.princeton.edu (Viktor Dukhovni)
+Archive-name: sparc-mtools/part03
+

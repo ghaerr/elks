@@ -1,0 +1,17 @@
+/*
+ * Just enough of a high/low density 3.5" DOS boot block
+ * to define the FS parameters,  should keep us out of Copyright
+ * trouble!  If someone wants DOS bootable filesystems,
+ * include the complete boot block for your machine,
+ * and make sure to create the "hidden" files in mkdfs.c
+ * (this is not easy!)
+ */
+static unsigned short hdboot[] = {
+0xeb34,0x9020,0x2020,0x2020,0x2020,0x2000,0x0201,0x0100,
+0x02e0,0x0040,0x0bf0,0x0900,0x1200,0x0200,0x0000,0x0000,
+} ;
+
+static unsigned short ldboot[] = {
+0xeb34,0x9020,0x2020,0x2020,0x2020,0x2000,0x0202,0x0100,
+0x0270,0x00a0,0x05f9,0x0300,0x0900,0x0200,0x0000,0x0000,
+} ;

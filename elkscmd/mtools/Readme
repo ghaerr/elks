@@ -1,0 +1,87 @@
+				MTOOLS
+			version 1.6.2 - 5 Jul 89
+
+This is a collection of MSDOS tools to allow you to read and write to
+MSDOS formatted diskettes from a Unix based system.
+
+The following MSDOS commands are emulated:
+
+Mtool 		MSDOS
+name		equivalent	Description
+-----		----		-----------
+mcopy		COPY		copy MSDOS files to/from Unix
+mdel		DEL/ERASE	delete a MSDOS file
+mdir		DIR		display a MSDOS directory
+mkdfs		FORMAT		Format and build s DOS file system.
+mmd		MD/MKDIR	make a MSDOS sub directory
+mrd		RD/RMDIR	remove a MSDOS sub directory
+mread		COPY		low level read (copy) a MSDOS file to Unix
+mren		REN/RENAME	rename an existing MSDOS file
+mtype		TYPE		display contents of a MSDOS file
+mwrite		COPY		low level write (copy) a Unix file to MSDOS
+*		CD		change working directory
+
+	* by use of the environmental variable MCWD
+
+The formats of IBM PC floppy disk drives are:
+
+   bytes per  sectors per  tracks    number    total     disk   introduced
+    sector      track     per side  of sides  capacity   size    in MSDOS
+     512         8          40        1        160k      5.25      1.0
+     512         9          40        1        180k      5.25      1.1
+     512         8          40        2        320k      5.25      2.0
+     512         9          40        2        360k      5.25      2.0
+     512        15          80        2        1.2M      5.25      3.0
+     512         9          80        2        720k      3.5       3.1
+     512        18          80        2        1.4M      3.5       3.2
+
+
+Find UNIX device(s) capable of reading one or more of these formats
+and edit "devices.c" to add them to the driver switch,  you may
+add the same device more than once if it supports multiple formats
+and needs "ioctls" to be set to the right physical parameters.
+
+The disk geometry can be kept in the environment for unusual cases,
+init.c will pass "NCYL", "NSECT" and "NTRACK" to the disk parameter
+setting routine (if any).  This should be documented in an "mtools"
+manual page giving an overview of the whole package,  this file is a 
+start.
+
+The manuals are very terse...  it's assumed that the reader is already
+familiar with MSDOS.
+
+The use of the environmental variable MCWD to keep track of the current
+working directory is a little awkward, especially since there is no
+'change directory' command.  Bourne shell users will have to type two
+commands to initially set their working directory, ie:
+
+	MCWD=/TMP
+	export MCWD
+
+Wildcards are only applied to filenames and not to directory names.  For
+example '/usr/local/*.c' is appropriate, but '/usr/l*/main.c' is not.
+
+I really wanted to avoid the use of a 'text' mode and a 'data' mode when
+transferring files, but I couldn't find a better way.  It gets rather
+confusing and it's quite possible to mess up a file if you apply the
+text mode when it is not appropriate (ie:  to a COM or EXE file).
+Likewise, if you forget to apply the text mode (to a Unix text file)
+then if the file is used under MSDOS, it will be missing carriage
+returns.  However, if you aren't going to use the files on your Unix
+system (you just intend to hold the files and then transfer them back to
+MSDOS later) then you shouldn't use the text mode during either mread or
+mwrite.  This is because, the text mode is only useful if the files are
+gonna be used under Unix.
+
+The implementation of the Mcopy command is somewhat clumbsy since the
+MSDOS drive designation "A:" is used.  Mcopy is really a front-end to
+the low level Mread and Mwrite commands.
+
+There are is a shell archives called "Unixpc.shar" that contain files
+specific to the AT&T Unix PC 7300/3b1.
+
+Emmet P. Gray				US Army, HQ III Corps & Fort Hood
+...!uunet!uiucuxc!fthood!egray		Attn: AFZF-DE-ENV
+					Directorate of Engineering & Housing
+					Environmental Management Office
+					Fort Hood, TX 76544-5057

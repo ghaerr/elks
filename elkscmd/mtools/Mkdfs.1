@@ -1,0 +1,34 @@
+.TH MKDFS 1 local
+.SH NAME
+mkdfs \- Initialize an MSDOS disk.
+.SH SYNOPSIS
+.B mkdfs
+[
+.B -h
+]
+[
+.B -f
+]
+.SH DESCRIPTION
+.I Mkdfs
+Mkdfs formats and initializes a DOS file system on a 3.5 inch Sun 4/60 or
+3/80 internal floppy.  It first calls the standard Sun format utility and 
+then lays out an empty filesystem.
+.PP
+.I Mkdfs
+accepts the following options:
+.TP
+.B h
+High density switch.
+Since 720K disks are far more common in the DOS world,  the lower
+density is the default,  use this option for the high density 1.44MB disks.
+.TP
+.B f
+First reformat the drive,  useful for new or abused drives.  (Using the drive
+in a Mac counts in the last category)
+.SH SEE ALSO
+mdir(1), mread(1), mtype(1), mren(1), mkd(1), mrd(1), mdel(1), mcopy(1)
+.SH AUTHOR
+Viktor Dukhovni, <viktor@math.princeton.edu>
+.SH BUGS
+Should detect high density disks obsoleting the h option.

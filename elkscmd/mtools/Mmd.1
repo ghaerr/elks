@@ -1,0 +1,34 @@
+.TH MMD 1 local
+.SH NAME
+mmd \- make a MSDOS sub directory
+.SH SYNOPSIS
+.B mmd
+[
+.B -v
+] msdosdirectory
+.SH DESCRIPTION
+.I Mmd
+makes a new directory on a MSDOS formatted diskette.  Sub directories
+are supported with either the '/' or '\e\' separator.  The use of
+the '\e\' separator will require the directory name to be enclosed in
+quotes to protect it from the shell.
+.PP
+.I Mmd
+will allow the following command line option:
+.TP
+.B v
+Verbose mode.  Display the new directory name if the name supplied is
+invalid.
+.PP
+Reasonable care is taken to create a valid MSDOS directory name.  If an
+invalid name is specified,
+.I mmd
+will change the name (and display the new name if the verbose mode is
+set).
+.PP
+An error occurs if the directory already exists.
+.PP
+The environmental variable MCWD may be used to establish a current
+working directory (relative to the MSDOS diskette).
+.SH SEE ALSO
+mdir(1), mrd(1)

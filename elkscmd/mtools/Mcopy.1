@@ -1,0 +1,69 @@
+.TH MCOPY 1 local
+.SH NAME
+mcopy \- copy MSDOS files to/from Unix
+.SH SYNOPSIS
+.B mcopy
+[
+.B -tnvm
+] unixfile a:msdosfile
+.PP
+.B mcopy
+[
+.B -tnvm
+] unixfile [ unixfiles... ] a:msdosdirectory
+.PP
+.B mcopy
+[
+.B -tnm
+] a:msdosfile unixfile
+.PP
+.B mcopy
+[
+.B -tnm
+] a:msdosfile [ a:msdosfiles... ] unixdirectory
+.SH DESCRIPTION
+In the first two forms,
+.I mcopy
+copies the specified Unix file to the named MSDOS file or copies
+multiple Unix files to the named MSDOS directory.  The last two forms
+copy MSDOS files to Unix.  MSDOS sub directories are supported with
+either the '/' or '\e\' separator.  The use of the '\e\' separator or
+wildcards will require the names to be enclosed in quotes to protect
+them from the shell.
+.PP
+The use of the 'a:' drive designation on the MSDOS files determines the
+direction of the transfer.  A missing drive designation implies a Unix
+file whose path starts in the current directory 
+.PP
+.I Mcopy
+will allow the following command line options:
+.TP
+.B t
+Text file transfer.
+.I Mcopy
+will translate incoming carriage return/line feeds to line feeds.
+.TP
+.B n
+No warning.
+.I Mcopy
+will not warn the user when overwriting an existing file.
+.TP
+.B v
+verbose mode.
+.TP
+.B m
+Preserve the file modification time.
+.PP
+If the target file already exists, and the
+.I -n
+option is not in effect,
+.I mcopy
+asks whether or not to overwrite the file.
+.PP
+The environmental variable MCWD may be used to establish a current
+working directory (relative to the MSDOS diskette).
+.SH SEE ALSO
+mdir(1), mtype(1), mread(1), mwrite(1)
+.SH BUGS
+Wildcards are only applied to filenames, not to directory names.
+Unlike MSDOS, the destination directory may not be omitted.
