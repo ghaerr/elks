@@ -49,3 +49,16 @@ at the appropriate point in this list.
     *	Support for usermode AX.25 networking node and BBS system.
 
 ===============================================================================
+
+Also included here are things we would like to see on an ELKS-based
+system, but which are not specific to the ELKS kernel or project itself:
+
+    *	ELKS-based DNS server.
+
+    *	ELKS-based FTP server.
+
+    *	ELKS-based HTTP server.
+
+Other items may be added in future.
+
+===============================================================================

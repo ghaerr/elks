@@ -33,6 +33,8 @@ Thu Nov 29 00:44:13 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Fixed error in comments in Makefile-rules to match what the
 	  `make clean` command actually does.
+	* Added wish-list for software we'd like to see ported to ELKS to
+	  the end of the ELKS TODO list.
 
 Tue Nov 27 14:18:57 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
