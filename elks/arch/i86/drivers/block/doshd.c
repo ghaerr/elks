@@ -27,14 +27,12 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
-/*#include <linux/head.h> */
 #include <linuxmt/genhd.h>
 #include <linuxmt/hdreg.h>
 #include <linuxmt/biosparm.h>
 #include <linuxmt/major.h>
 #include <linuxmt/bioshd.h>
 #include <linuxmt/fs.h>
-/*#include <linux/signal.h> */
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/config.h>
@@ -46,12 +44,6 @@
 #define NR_HD ((drive_info[1].heads)?2:((drive_info[0].heads)?1:0))
 #define put_user(val,ptr) pokew(current->t_regs.ds,ptr,val)
 #include "blk.h"
-
-/* This doesn't need to be defined if user deselects BIOS FD code */
-
-#ifdef CONFIG_BLK_DEV_BFD
-/* #define USE_OLD_PROBE */
-#endif
 
 /* Uncomment this if your floppy drive(s) can't be properly recognized */
 /* Search for HARDCODED and adjust ndrives and drive_info[] to match your */
@@ -175,6 +167,7 @@ int bioshd_gethdinfo()
 	return ndrives;
 }
 #endif
+
 #ifdef CONFIG_BLK_DEV_BFD
 int bioshd_getfdinfo()
 {
@@ -208,12 +201,6 @@ int bioshd_getfdinfo()
 
 	/* /dev/fd1 */
 	drive_info[3] = fd_types[2];
-/*
-	if (drive_info[2].fdtype != 0) 
-		printk("drive 0 is %d\n", drive_info[2].fdtype); 
-	if (drive_info[3].fdtype != 0) 
-		printk("drive 1 is %d\n", drive_info[3].fdtype); 
-*/
 	/* That's it .. you're done :-) */
 
 	/* Warning: drive will be reported as 2880 KB at bootup if you've */
@@ -241,9 +228,6 @@ int bioshd_getfdinfo()
 		BD_DX = drive;
 		BD_BX = 0;
 		BD_IRQ = BIOSHD_INT;
-/*		printk("%x\n", BD_AX); */
-/*		call_bios(); */
-/*		printk("%x\n", BD_AX); */
 #ifdef ROM_GETFLOPPY_VIA_INT13
                 call_bios();
                 if ((!CARRY_SET) && ((BD_AX & 0xff00) == 0)) {
@@ -251,17 +235,15 @@ int bioshd_getfdinfo()
 		}
 		else printk("error in drivetype %d\n",drive);
 #else
-		if ((arch_cpu > 5) && (call_bios(),(!CARRY_SET)) && (BD_AX != 0x100)) { 
+		if ((arch_cpu > 1) && (call_bios(),(!CARRY_SET)) && (BD_AX != 0x100)) { 
 			/* Some XT's return strange results - Al */
 			/* The arch_cpu is a safety check */
 			/* AT archecture, drive type in DX */
 			/* Set to type 3 as this is less drastic */
-/*			printk("drive %d is %d\n", drive, BD_BX); */
 			drive_info[drive+2] = fd_types[BD_BX - 1];
 		} else {	
 			/* Cannot be determined correctly */
 			/* Type 4 should work on all systems */
-/*			printk("drive %d type unknown\n", drive); */
 			drive_info[drive+2] = fd_types[4];
 		}
 #endif		
@@ -302,12 +284,11 @@ static void reset_bioshd(minor)
 	BD_DX = hd_drive_map[DEVICE_NR(minor)];
 
 	call_bios();
-	if (CARRY_SET || (BD_AX & 0xff00) != 0)
-		printk("hd: unable to reset.\n");
+/* Dont log this fail - its fine 	if (CARRY_SET || (BD_AX & 0xff00) != 0)
+		printk("hd: unable to reset.\n"); */
 	return;
 }
 
-#ifndef USE_OLD_PROBE /* we need this as we don't want to duplicate the code */
 int seek_sector(drive, track, sector)
 int drive, track, sector;
 {
@@ -332,20 +313,17 @@ int drive, track, sector;
 		call_bios();
 		
 		if (CARRY_SET)
-			{
+		{
 			if (((BD_AX >> 8) == 0x04) && (count == MAX_ERRS - 1)) 
 				break; /* Sector not found */
 				
 			reset_bioshd(drive);
-			}
-			else 
-				return 0; /* everything is OK */
 		}
-		
-		return 1; /* error */
-
+		else 
+			return 0; /* everything is OK */
+	}
+	return 1; /* error */
 }
-#endif
 
 static int bioshd_open(inode, filp)
 struct inode *inode;
@@ -387,14 +365,12 @@ struct file *filp;
 		int count;
 		int i;
 #endif
-#ifndef USE_OLD_PROBE /* we need those for new probe */
 		/* probing range can be easily extended by adding 
 		more values to those two lists and adjusting for loop'
 		parameters in line 420 and 435 (or somewhere near) */
 		
 		static char sector_probe[5] = {8, 9, 15, 18, 36};
 		static char track_probe[2] = {40, 80};
-#endif /* USE_OLD_PROBE */
 #ifdef CONFIG_BLK_DEV_BFD
 
 		printk("hd: probing disc in /dev/fd%d\n", target % 2);
@@ -405,44 +381,6 @@ struct file *filp;
 		while (!dma_avail) sleep_on(&dma_wait);
 		dma_avail = 0;
 #endif
-#ifdef USE_OLD_PROBE
-		count = 0;
-		for (i = 0; i <= probe_order[fdtype]; i++)
-		{
-			count = 0;
- 
-			while (count < MAX_ERRS)
-			{
-/*				printk("type %d count %d\n", probe_order[i], count); */
-				/* BIOS read sector */
-
-				BD_IRQ = BIOSHD_INT;
-				BD_AX = BIOSHD_READ | 1;/* Read 1 sector */
-				BD_BX = 0;		/* Seg offset = 0 */
-				BD_ES = BUFSEG;		/* Segment to read to */
-				BD_CX = ((fd_types[probe_order[i]].cylinders-40)<<8)|fd_types[probe_order[i]].sectors;
-				BD_DX = (0 << 8) | hd_drive_map[target];	/* Head 0, drive number */
-				BD_FL = 0;
-
-				isti();
-				call_bios();
-
-				if (CARRY_SET)
-				{
-					if (((BD_AX >> 8) == 0x04) && (count == MAX_ERRS - 1)) 
-						break; /* Sector not found */
-
-					reset_bioshd(hd_drive_map[target]);
-					count++;
-				} else {
-					drivep->cylinders = fd_types[probe_order[i]].cylinders;
-					drivep->sectors = fd_types[probe_order[i]].sectors;
-					break;
-				}   
-			}
-		}
-
-#else /* USE_OLD_PROBE */
 		/* first probe for track number */
 #ifndef GET_DISKPARAM_BY_INT13_NO_SEEK
 		for (count = 0; count < 2; count++)
@@ -482,8 +420,6 @@ struct file *filp;
       }
       else printk("bioshd_open: no diskinfo %d\n",hd_drive_map[target]);
 #endif
-
-#endif /* USE_OLD_PROBE */
 #ifdef CONFIG_BLK_DEV_BFD
 		/* DMA code belongs out of the loop. */
 		dma_avail = 1;
@@ -497,19 +433,19 @@ struct file *filp;
 		else
 			printk("hd: disc in /dev/fd%d probably has %d sectors and %d cylinders\n", target % 2, drivep->sectors, drivep->cylinders);
 
-/*
- *	This is not a bugfix, hence no code, but coders should be aware
- *	that multi-sector reads from this point on depend on bootsect
- *	modifying the default Disk Parameter Block in BIOS.
- *	dpb[4] should be set to a high value such as 36 so that reads
- *	can go past what is hardwired in the BIOS.
- *	36 is the number of sectors in a 2.88 floppy track.
- *	If you are booting ELKS with anything other than bootsect you
- *	have to make equivalent arrangements.
- *	0:0x78 contains address of dpb (char dpb[12]), and dpb[4] is the End of
- *	Track parameter for the 765 Floppy Disk Controller.
- *	You may have to copy dpb to RAM as the original is in ROM.
- */
+		/*
+		 *	This is not a bugfix, hence no code, but coders should be aware
+		 *	that multi-sector reads from this point on depend on bootsect
+		 *	modifying the default Disk Parameter Block in BIOS.
+		 *	dpb[4] should be set to a high value such as 36 so that reads
+		 *	can go past what is hardwired in the BIOS.
+		 *	36 is the number of sectors in a 2.88 floppy track.
+		 *	If you are booting ELKS with anything other than bootsect you
+		 *	have to make equivalent arrangements.
+		 *	0:0x78 contains address of dpb (char dpb[12]), and dpb[4] is the End of
+		 *	Track parameter for the 765 Floppy Disk Controller.
+		 *	You may have to copy dpb to RAM as the original is in ROM.
+		 */
 	}
 #endif
 	return 0;
