@@ -12,9 +12,13 @@ Alistair Riddoch        <AlRiddoch@zepler.org>           1 Jan 1995-20 Oct 1999
 Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>     7 Nov 2001-24 Nov 2001
 Martijn Bakker          <martijn@insecure.nl>           29 Mar 2002
 Michael McConnell       <Soruk@Eridani.co.uk>           11 Nov 2001-12 Nov 2001
-Riley Williams          <rhw@InfraDead.Org>              8 Nov 2001- 6 Apr 2002
+Riley Williams          <rhw@InfraDead.Org>              8 Nov 2001-13 Apr 2002
 
 -------------------------------------------------------------------------------
+
+Sat Apr 13 19:42:16 BST 2002	Riley Williams <rhw@InfraDead.Org>
+
+	* Inserted correct Base HRef in all pages.
 
 Sat Apr  6 22:45:56 BST 2002	Riley Williams <rhw@InfraDead.Org>
 
