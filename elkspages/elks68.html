@@ -1,0 +1,120 @@
+<HTML>
+<HEAD>
+   <TITLE>ELKS - NEWS:ELKS 0.0.67 on ftp.soton.ac.uk</TITLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFFF" LINK="#CD853F" VLINK="#A0522D" ALINK="#FF7F50">
+<TABLE WIDTH="570">
+<TR>
+<TD>
+<P>
+<IMG SRC="ELKS-Logo.gif" HEIGHT=77 WIDTH=224 ALT="[ELKS - Logo]"><BR>
+</P>
+</TD>
+<TD valign=bottom>
+<h6>
+<A HREF="Intro.html">[INTRO]</a>
+<A HREF="ELKSfaq.html">[FAQ]</a>
+<A HREF="Where.html">[DOWNLOAD]</a>
+<A HREF="index.html#NEWS">[NEWS]</a>
+<A HREF="index.html">[HOME]</a>
+</h6>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE WIDTH="570">
+<TR>
+<TD>
+<p>
+<b>From</b> <a href="maito:ajr@ecs.soton.ac.uk">ajr@ecs.soton.ac.uk</a> Sun, 8 Feb 1998 23:26:41</br>
+<b>Date:</b> Sun, 8 Feb 1998 23:26:41 +0000 (GMT)<br>
+<b>From:</b> Alistair Riddoch <a href="mailto:ajr@ecs.soton.ac.uk">&lt ajr@ecs.soton.ac.uk &gt</a><br>
+<b>To:</b> Mailing List &lt linux-8086@vger.rutgers.edu &gt <br>
+<h3>
+<b>Subject:</b> ELKS 0.0.68 on ftp.ecs.soton.ac.uk
+</h3>
+</p>
+<p>
+ELKS 0.0.68 has been released and is now available for dowload from
+<p>
+<a
+href="ftp://ftp.ecs.soton.ac.uk/pub/elks/elks-0.0.68">ftp://ftp.ecs.soton.ac.uk/pub/elks/elks-0.0.68</a>
+</p> 
+ <P>  The release consists of four files:
+ <P>  <!-- indent --><P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;elks-0.0.68.tar.gz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- kernel source
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;elkscmd.tar.gz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- user programs
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;images.zip&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- boot and root images
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;libc_select.tgz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- patch to libc
+ <P>  This releases the last known cause of the timer bug, which is a problem
+ pointed out by Alan Cox with a hole reserved in low memory.
+ <P>  It is still possible a bug may be caused by the console driver on monochrom
+ systems.
+ <P>  Kernel changes
+ <PRE><SMALL>--------------
+ 
+ With this version we should now see an end to the timer panic. The
+ kernel will now explicitly say if it is restarted, and will show a
+ stack backtrace whenever it panics. (Thanks for the patch). From now
+ on it should be much easier to find out why something paniced, but users
+ will have to include the full stack backtrace in bug reports.
+ 
+ This version contains Patrick Lams select patch which I have not yet looked
+ at. As part of this patch support for run queue's bottom ends, task
+ queue's and timers has been included, though I have commented a lot of this
+ out to save space. The libc patch file contains the changes required to
+ libc in order to try out the new select call. This is necessary as 
+ select uses five parameters.
+ 
+ I have added support to this version for the System V terminal control
+ calls. I have implemented the TCGETA and TCSETA ioctl calls, and some
+ of the features of the termio structure. This is sufficient for a
+ modified version of levee (a vi clone) that is included in elkscmd, and on the 
+ root disk, to run fairly cleanly. I can't get escape to work at the moment, but
+ it all works fine as long as you don't go into insert mode. :-)
+ NOTE - ELKS does not currently support the POSIX TCGETS and TCSETS ioctls, and
+ the termios structure which is similar but larger than termio. Most of the
+ software I have found that would be suitable for ELKS uses termio, so I
+ have stuck with that for now. I think support for both would cause too
+ much bloat.
+ 
+ This release includes changes bu Blaz Antonic to the lp driver and doshd
+ driver. The lp driver now detects ports using the BIOS and prints okay
+ on my printer. This prevents it getting confused by finding serial ports
+ where it expects to find parallel ports. If you have a printer please
+ test this driver by copying a text file to the /dev/lp0 device, and 
+ see if it prints. Please report any dropped characters or other problems to
+ the list. 
+ 
+ The disk driver has been changed so it now uses a more flexible floppy probe
+ routine. This should help people using non standard floppy sizes.
+ 
+ Shane Kerrs time change were added around 0.0.68-pre2, but this is the first
+ full release with them in. The clock and date programs on the root disk
+ can be used with the CMOS clock and and system clock respectively. On my
+ system clock is able to read the CMOS clock, but cannot correctly set the
+ system time from it.
+ 
+ 
+ I have also made loads of bugfix changes, and code reductions particularly to
+ the block device code.
+ 
+ Al
+ 
+ 
+ </PRE></SMALL>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE WIDTH="570">
+<TR>
+<TD>
+<CENTER><h6><A HREF="index.html">[BACK to INDEX]</A></h6>
+<HR SIZE=5 NOSHADE WIDTH="570"><address>Last updated on 10 Febuary 1998<BR>
+Maintained by <A HREF="mailto:gabel@physik.uni-kl.de">Steffen Gabel</A>
+</address></CENTER>
+</TD>
+</TR>
+</TABLE>
+</BODY>
+</HTML>
