@@ -16,6 +16,7 @@
 #include <linuxmt/time.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/minix.h>
+#include <linuxmt/msdos.h>
 #include <linuxmt/debug.h>
 
 #include <arch/segment.h>
@@ -109,15 +110,16 @@ int slen;		/* Size of built stack */
 	}
 	execformat=EXEC_MINIX;
 #endif
+
 #ifdef CONFIG_EXEC_MSDOS
 	/* Read header */
 	current->t_regs.ds=get_ds();
-	file->f_pos=0;
+	file.f_pos=0;
 	result=file.f_op->read(inode, &file, &mshdr, sizeof(mshdr));
 	current->t_regs.ds=ds;
 
-	if( result != sizeof(mshdr) ||
-		(mh.magic!=MSDOS_MAGIC)
+	if( (result != sizeof(mshdr)) ||
+		(mshdr.magic!=MSDOS_MAGIC) )
 	{
 		printd_exec1("EXEC: bad header, result %d\n",result);
 		retval=-ENOEXEC;
@@ -145,7 +147,7 @@ int slen;		/* Size of built stack */
 		retval=-ENOMEM;
 		goto close_readexec;
 	}
-	
+	 
 	/*
 	 * mh.chmem is "total size" requested by ld. Note that ld used to ask 
 	 * for (at least) 64K
