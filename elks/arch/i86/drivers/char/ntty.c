@@ -31,11 +31,12 @@ struct termios def_vals = { 	BRKINT,
 
 #define TAB_SPACES 8
 
-#define MAX_TTYS 8
+#define MAX_TTYS NUM_TTYS
 struct tty ttys[MAX_TTYS];
 extern struct tty_ops dircon_ops;
 extern struct tty_ops bioscon_ops;
 extern struct tty_ops rs_ops;
+extern struct tty_ops ttyp_ops;
 
 /* Turns a dev_t variable into its tty, or NULL if it's not valid */
 
@@ -70,11 +71,18 @@ struct file *file;
 			otty->pgrp = current->pgrp;
 			current->tty = otty;
 		}
+		otty->flags |= TTY_OPEN;
 		return 0;
 	} else {
 		return -ENODEV;
 	}
 
+}
+
+int ttynull_openrelease(tty)
+struct tty * tty;
+{
+	return 0;
 }
 
 int tty_release(inode,file)
@@ -85,9 +93,9 @@ struct file *file;
 	rtty = determine_tty(inode->i_rdev);
 	if (rtty)  {
 		if (current->pid == rtty->pgrp) {
-			printk("nulling pgrp");
 			rtty->pgrp = NULL;
 		}
+		rtty->flags &= ~TTY_OPEN;
 		return rtty->ops->release(rtty);
 	} else {
 		return -ENODEV;
@@ -111,7 +119,7 @@ unsigned char ch;
 			tty_charout(tty, '\r');
 #endif		
 		default:
-			while (chq_addch(&tty->outq, ch) == -1) {
+			while (chq_addch(&tty->outq, ch, 0) == -1) {
 				tty->ops->write(tty);
 			}
 	};
@@ -221,6 +229,7 @@ char *arg;
 	return 0;
 }
 
+#if 0 /* This is the same bahavoir as pipe lseek, so we use that. */
 int tty_lseek(inode,file,offset,origin)
 struct inode *inode;
 struct file *file;
@@ -229,6 +238,7 @@ int origin;
 {
 	return -ESPIPE;
 }
+#endif
 
 #if 0 /* Default returns -ENOTDIR if no readdir exists, so this is redundant */
 int tty_readdir()
@@ -263,7 +273,7 @@ select_table * wait;
 
 static struct file_operations tty_fops =
 {
-	tty_lseek,
+	pipe_lseek,	/* Same behavoir, return -ESPIPE */
 	tty_read,
 	tty_write,
 	NULL,
@@ -312,7 +322,15 @@ void tty_init()
 		memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
 	}
 #endif
-
+#ifdef CONFIG_PSEUDO_TTY
+	for (i = 8; i < 8 + NR_PTYS; i++) {
+		ttyp = &ttys[i];
+		ttyp->ops = &ttyp_ops;
+		ttyp->minor = i;
+		memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
+	}
+	pty_init();
+#endif
 	register_chrdev(TTY_MAJOR,"tty",&tty_fops);
 }
 

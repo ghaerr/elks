@@ -98,7 +98,7 @@ register struct tty * tty;
 	if (c == '\r') {
 		c = '\n';
 	}
-	chq_addch(&tty->inq, c);
+	chq_addch(&tty->inq, c, 0);
 }
 
 

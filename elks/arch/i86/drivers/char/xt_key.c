@@ -583,7 +583,7 @@ unsigned char Key;
 		}
 	}
 	if (ttyp->inq.size != 0) {
-		chq_addch(&ttyp->inq, Key);
+		chq_addch(&ttyp->inq, Key, 0);
 	}
 	return;
 }

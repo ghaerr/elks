@@ -36,6 +36,7 @@ bool 'Memory character devices /dev/zero /dev/null etc.' CONFIG_CHAR_DEV_MEM
 if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
 	bool 'Serial device driver' CONFIG_CHAR_DEV_RS
 fi
+bool 'Pseudo tty device driver' CONFIG_PSEUDO_TTY
 bool 'Parallel device driver' CONFIG_CHAR_DEV_LP
 bool 'Meta device driver' CONFIG_DEV_META
 

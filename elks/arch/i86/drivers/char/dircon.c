@@ -22,7 +22,7 @@
 /* void con_charout (char Ch); */
 /* void Console_set_vc (int N); */
 /* int Console_write (struct tty * tty); */
-/* void Console_release (struct tty * tty); */
+/* int Console_release (struct tty * tty); */
 /* int Console_open (struct tty * tty); */
 /* struct tty_ops dircon_ops; */
 /* void init_console(void); */
@@ -589,24 +589,27 @@ register struct tty * tty;
 	return cnt;
 }
 
-void Console_release(tty)
+#if 0
+int Console_release(tty)
 struct tty * tty;
 {
+	return 0;
 }
+#endif
 
 int Console_open(tty)
 struct tty * tty;
 {
-	int minor = tty->minor;
-	if( minor >= NumConsoles )
+	if( tty->minor >= NumConsoles ) {
 		return -ENODEV;
+	}
 
 	return 0;
 }
 
 struct tty_ops dircon_ops = {
 	Console_open,
-	Console_release, /* Do not remove this, or it crashes */
+	ttynull_openrelease, /* Do not remove this, or it crashes */
 	Console_write,
 	NULL,
 	Console_ioctl,

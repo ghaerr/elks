@@ -24,7 +24,8 @@ CC_PROTO = gcc -I../../../../include -M
 	$(CC) $(CFLAGS) \
 	-0 -c -o $*.o $<
 
-OBJS  = bioscon.o serial.o lp.o xt_key.o init.o dircon.o ntty.o mem.o meta.o # clist.o tty.o
+OBJS  = bioscon.o serial.o lp.o xt_key.o init.o dircon.o ntty.o mem.o meta.o \
+	pty.o # clist.o tty.o
 
 chr_drv.a: $(OBJS)
 	ar rcs chr_drv.a $(OBJS)
