@@ -42,8 +42,8 @@ boot	- A kernel boot disk - simply a copy of the kernel from the kernel
 root	- A 360K minimal root image. Includes enough programs and support files
 	  for a basic test system.
 	  
-root_net - A 720K root image. Includes networking utilities (a tiny webserver,
-		telnet, etc)
+comb_net - A 720K combined boot/root image. Minimal networking elks disk.
+	  Includes networking utilities (a tiny webserver, telnet, etc)
 
 comb	- A 720K combined boot/root image. Includes a kernel, everything on
 	  root, and installs the minixfs bootloader from the Dev86 package.

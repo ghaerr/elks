@@ -15,6 +15,8 @@ rfs: all
 min_rfs: all
 	cp -p $(MIN_PRGS) $(TARGET_MNT)/bin
 
+net_rfs: min_rfs
+
 smin_rfs: all
 	cp -p $(SMIN_PRGS) $(TARGET_MNT)/bin
 

@@ -56,10 +56,12 @@ rfs: install
 
 min_rfs: all
 
+net_rfs:
+
 smin_rfs: all
 
 install: $(PROGRAM)
-	cp -p $(PROGRAM) $(TARGET_MNT)/usr/bin
+	cp -p $(PROGRAM) $(TARGET_MNT)/usr/bin/$(PROGRAM)
 
 clean:;		rm -f $(OBJS) $(PROGRAM) core
 

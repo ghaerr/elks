@@ -10,6 +10,8 @@ rfs: install
 
 min_rfs: install
 
+net_rfs: install
+
 smin_rfs: install_sibo
 
 install_sibo: all

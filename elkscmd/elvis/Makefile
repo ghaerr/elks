@@ -300,6 +300,8 @@ min_rfs: all
 
 smin_rfs: all
 
+net_rfs:
+
 elvis: $(OBJS) $(EXTRA) $(EXTRA2)
 	$(CC) -s $(CFLAGS) $(OF)elvis $(OBJS) $(EXTRA) $(EXTRA2) $(LIBS)
 	$(CHMEM)

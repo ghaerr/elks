@@ -102,14 +102,17 @@ root: mount_rootfs
 	done
 	umount $(ROOT_TARGET_FS)
 	
-root_net: mount_rootnetfs
+comb_net: mount_rootnetfs $(ELKS_DIR)/arch/i86/boot/Image $(FD_BSECT) $(KHELPER)
 	cd $(ELKSNET_DIR)/ktcp ; \
 	make ; \
 	cp -p -f ktcp $(TARGET_MNT)/bin
 	@for i in $(DIRS); do \
-	(cd $$i; make rfs) ; \
+	(cd $$i; make net_rfs) ; \
 	done
+	cp $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
+	cp $(KHELPER) $(TARGET_MNT)/boot/boot
 	umount $(ROOT_NET_TARGET_FS)
+	dd if=$(FD_BSECT) of=$(COMB_TARGET_FS) bs=512 count=2 conv=notrunc
 
 sibo: mount_sibofs
 	@for i in $(DIRS); do \
@@ -117,8 +120,8 @@ sibo: mount_sibofs
 	done
 	umount $(SIBO_TARGET_FS)
 
-images.zip: boot comb root root_net
-	zip images.zip boot root comb root_net
+images.zip: boot comb root comb_net
+	zip images.zip boot root comb comb_net
 
 clean:
 	@for i in $(DIRS); do \

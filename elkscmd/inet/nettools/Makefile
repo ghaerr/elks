@@ -8,11 +8,13 @@ CFLAGS=-0 -O -ansi -I$(ELKSNET_DIR)
 
 all: $(PRGS)
 
-rfs: install
+rfs:
 
-min_rfs: install
+net_rfs: install
 
-smin_rfs: install_sibo
+min_rfs:
+
+smin_rfs:
 
 install_sibo: all
 	cp -p $(SPRGS) $(TARGET_MNT)/bin

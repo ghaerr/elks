@@ -17,11 +17,17 @@ PRGS =	\
 	sum \
 	uniq \
 	wc
+	
+
+NETPRGS = decomp16 du grep wc
 
 all: $(PRGS)
 
 rfs: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin
+
+net_rfs: all
+	cp -p $(NETPRGS) $(TARGET_MNT)/bin
 
 min_rfs: all
 

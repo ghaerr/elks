@@ -1,7 +1,9 @@
 include ../Make.defs
 
 PRGS=init getty login kill man mount reboot passwd umount clock \
-	exitemu ps who new_init # insmod 
+	exitemu ps who # insmod 
+
+NETPRGS = init getty login kill mount umount passwd reboot ps who
 
 MIN_PRGS=init getty login kill mount reboot umount clock exitemu ps
 SMIN_PRGS=mount umount
@@ -10,6 +12,9 @@ all: $(PRGS)
 
 rfs: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin
+	
+net_rfs: all
+	cp -p $(NETPRGS) $(TARGET_MNT)/bin
 
 min_rfs: all
 	cp -p $(MIN_PRGS) $(TARGET_MNT)/bin
@@ -37,10 +42,10 @@ getty: getty.c
 	$(CC) $(CFLAGS) $(LDFLAGS) getty.c -o getty -H 2000
 
 new_init: init.c utent.o
-	$(CC) $(CFLAGS) $(LDFLAGS) init.c utent.o -o new_init
+	$(CC) $(CFLAGS) $(LDFLAGS) init.c utent.o -o init
 
-init: min_init.c utent.o
-	$(CC) $(CFLAGS) $(LDFLAGS) min_init.c utent.o -o init -H 2000
+#init: min_init.c utent.o
+#	$(CC) $(CFLAGS) $(LDFLAGS) min_init.c utent.o -o init -H 2000
 
 login: getpass.o login.o utent.o
 	$(CC) $(CFLAGS) $(LDFLAGS) getpass.o login.o utent.o -o login -H 2000

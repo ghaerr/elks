@@ -16,6 +16,8 @@ lev: $(OBJS)
 
 rfs: install
 
+net_rfs: install
+
 min_rfs: install
 
 smin_rfs:

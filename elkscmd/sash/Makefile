@@ -14,6 +14,8 @@ clean:
 
 rfs: install
 
+net_rfs: rfs
+
 min_rfs: install
 
 smin_rfs: sash
