@@ -58,7 +58,8 @@ wrt_disk.tmp: wrt_disk.o file.o
 		../drivers/char/con_asm.o \
 		../drivers/char/font.o \
 		../drivers/char/key_asm.o \
-		../drivers/block/ssd_asm.o
+		../drivers/block/ssd_asm.o \
+		../lib/lib86.a
 
 wrt_disk.img: wrt_disk.tmp imgconv
 	./imgconv wrt_disk.tmp wrt_disk.img

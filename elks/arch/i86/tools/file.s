@@ -5,14 +5,16 @@
 	.global _open_file
 	.global _read_byte
 	.global _close_file
-	.global _file_name
 
 _open_file:
 	mov dx, #file_status
 	mov ax, #0x0000		; connect to file server.
 	int 0x87
 	mov cx, #0x00		; binary, readonly.
-	mov bx, #_file_name
+	push bp
+	mov bp, sp
+	mov bx, 4[bp]
+	pop bp
 	mov ah, #0x00
 	int 0x85
 	mov file_handle, ax	; Save file handle for later.
@@ -24,13 +26,11 @@ _read_byte:
 	mov dx, #0x01
 	mov ah, #0x11
 	int 0x86
-	
 	mov ax, file_buffer
 	ret
 
 _close_file:
 	mov bx, file_handle
-
 	mov ah, #0x10
 	int 0x86
 	ret
@@ -38,7 +38,9 @@ _close_file:
 	.data
 file_handle:
 	.word 0x0000
+
 file_buffer:
 	.byte 0x00
+
 file_status:
 	.word 0x0000

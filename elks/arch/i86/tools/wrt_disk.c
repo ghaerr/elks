@@ -29,11 +29,11 @@
 
 /* Prototypes for local functions */
 
-void open_file(void);
+void open_file(char *);
 BYTE read_byte(void);
 void close_file(void);
 
-char filename[64];
+static char filename[64];
 
 void print_word(WORD data)
 {
@@ -177,7 +177,7 @@ int main(void)
 	}
     }
 
-    open_file();
+    open_file(filename);
 
     /* lets create the disk image */
     LCD_Position(0, 0);
