@@ -89,7 +89,6 @@ register struct serial_info * port;
 	/* set baud rate divisor, first lower, then higher byte */
 	divisor = divisors[tty->termios.c_cflag & 017];
 
-	printk("Setting serial baud rate to %x\n", tty->termios.c_cflag);
 	/* Set the divisor latch bit */
 	outb_p(port->lcr | UART_LCR_DLAB, port->io + UART_LCR);
 	/* Set the divisor low and high byte */
@@ -241,7 +240,7 @@ char * arg;
 	
 	/* few sanity checks should be here */
 
-	printk("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd);
+/*	printk("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd); */
 
 	switch (cmd) {
 		/* Unlike Linux we use verified_memcpy*fs() which calls verify_area() for us */
