@@ -16,17 +16,22 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
 #include <linuxmt/config.h>
-/*#include <linux/locks.h>*/
 #include <linuxmt/mm.h>
+#include <linuxmt/debug.h>
+
+#if 0
+#include <linux/locks.h>
+#endif
 
 #include <arch/system.h>
 #include <arch/io.h>
 #include <arch/irq.h>
+
 #include "blk.h"
 
 /*
  * The request-struct contains all necessary data
- * to load a nr of sectors into memory
+ * to load a number of sectors into memory
  *
  * NR_REQUEST is the number of entries in the request-queue.
  * NOTE that writes may use only the low 2/3 of these: reads
@@ -308,9 +313,7 @@ static void make_request(int major, int rw, register struct buffer_head *bh)
 	max_req = (NR_REQUEST * 2) / 3;
 	break;
     default:
-#if 0
-	printk("make_request: bad block dev cmd, must be R/W/RA/WA\n");
-#endif
+	debug("make_request: bad block dev cmd, must be R/W/RA/WA\n");
 	unlock_buffer(bh);
 	return;
     }

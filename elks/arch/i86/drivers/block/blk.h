@@ -43,9 +43,8 @@ struct request {
 #define RQ_ACTIVE	1
 
 /*
- * This is used in the elevator algorithm: Note that
- * reads always go before writes. This is natural: reads
- * are much more time-critical than writes.
+ * This is used in the elevator algorithm: Note that reads always go before
+ * writes. This is natural: reads are much more time-critical than writes.
  *
  * Update: trying with writes being preferred due to test
  * by Alessandro Rubini..
@@ -88,15 +87,19 @@ extern void xd_init();
  */
 
 #ifdef RAMDISK
+
 /* ram disk */
 #define DEVICE_NAME "ramdisk"
 #define DEVICE_REQUEST do_rd_request
 #define DEVICE_NR(device) ((device) & 7)
 #define DEVICE_ON(device)
 #define DEVICE_OFF(device)
+
 #endif
 
 #ifdef SSDDISK
+
+/* SiBO solid-state disk */
 #define DEVICE_NAME "ssddisk"
 #define DEVICE_REQUEST do_ssd_request
 #define DEVICE_NR(device) ((device) & 3)
@@ -104,6 +107,7 @@ extern void xd_init();
 #define DEVICE_OFF(device)
 
 #endif
+
 #ifdef FLOPPYDISK
 
 static void floppy_on();	/*(unsigned int nr); */
@@ -117,17 +121,16 @@ static void floppy_off();	/*(unsigned int nr); */
 #define DEVICE_OFF(device) floppy_off(DEVICE_NR(device))
 
 #endif
+
 #ifdef ATDISK
 
 /* harddisk: timeout is 6 seconds.. */
 #define DEVICE_NAME "harddisk"
 
 #if 0
-
 #define DEVICE_INTR do_hd
 #define DEVICE_TIMEOUT HD_TIMER
 #define TIMEOUT_VALUE 600
-
 #endif
 
 #define DEVICE_REQUEST do_directhd_request
@@ -136,6 +139,7 @@ static void floppy_off();	/*(unsigned int nr); */
 #define DEVICE_OFF(device)
 
 #endif
+
 #ifdef XTDISK
 
 #define DEVICE_NAME "xt disk"
@@ -147,19 +151,23 @@ static void floppy_off();	/*(unsigned int nr); */
 #endif
 
 #ifdef BIOSDISK
+
 #define DEVICE_NAME "BIOSHD"
 #define DEVICE_REQUEST do_bioshd_request
 #define DEVICE_NR(device) (MINOR(device)>>6)
 #define DEVICE_ON(device)
 #define DEVICE_OFF(device)
+
 #endif
 
 #ifdef METADISK
+
 #define DEVICE_NAME "meta"
 #define DEVICE_REQUEST do_meta_request
 #define DEVICE_NR(device) (MINOR(device))
 #define DEVICE_ON(device)
 #define DEVICE_OFF(device)
+
 #endif
 
 #ifndef CURRENT
