@@ -3,8 +3,8 @@ You are looking at a development snapshot of ELKS. Some things work -
 many things don't. Feedback is always welcome via the ELKS mailing list.
 To join, send "subscribe linux-8086" to "majordomo@vger.kernel.org"
 
-You can find more information in Documentation/elks-faq.html; please read
-this before posting questions.
+You can find more information in Documentation/HTML/FAQ/ in the source
+tree; please read this before posting questions.
 
 The boot and root images are gzipped in this directory... however the root
 image, although 360K, did not work correctly this time (maybe I should mkfs
