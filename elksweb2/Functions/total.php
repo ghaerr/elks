@@ -74,7 +74,7 @@
 		$out="<table border=\"0\" width=\"100%\">".
 		"<tr><td width=\"20%\" align=\"left\" valign=\"top\"><img src=\"Images/ELKStag.gif\" alt=\"ELKS Logo\" height=\"77\" width=\"224\"></td>".
 		"<td width=\"70%\" align=\"center\" valign=\"middle\"><img src=\"Images/ELKSbanner.gif\" alt=\"Linux in 640k\" height=\"60\" width=\"450\"></td>".
-		"<td width=\"10%\" align=\"right\" valign=\"top\"><img src=\"Images/ELKSlogo.gif\" alt=\"Baby Linux Logo\" height=\"77\" width=\"65\"></td></tr></table><p></p>";
+		"<td width=\"10%\" align=\"right\" valign=\"top\"><img src=\"Images/ELKSlogo.gif\" alt=\"Baby Linux Logo\" height=\"77\" width=\"65\"></td></tr></table>";
 		return $out;
 	}
 
@@ -83,7 +83,8 @@
 		include("Functions/data.php");
 
 		$data=$langitems[$lang]["menu"];
-		$out="<div align=\"center\"><center><a href=\"CHANGELOG.txt\">$data[0]</a> | ".
+		$out="<div align=\"center\"><center><p></p>".
+		     "<a href=\"CHANGELOG.txt\">$data[0]</a> | ".
 		     "<a href=\"index.php?lang=$lang&+item=".str_replace(" ","",$data[1])."\">$data[1]</a> | ".
 		     "<a href=\"index.php?lang=$lang&+item=".str_replace(" ","",$data[2])."\">$data[2]</a> | ".
 		     "<a href=\"index.php?lang=$lang&+item=".str_replace(" ","",$data[3])."\">$data[3]</a> | ".
