@@ -27,6 +27,10 @@ Sun Jun 17 11:20:06 BST 2001   Alan Cox  <alan@redhat.com>
 	* Killed bh->b_prev for good
 	* Killed inode hash for good
 	* Make off_t signed as required by Unix and Posix
+	* Fix bogus scheduling during IRQ report
+	* Fix link error about protocols
+	* Clean up a lot of pointless define options
+	* Remove BH stuff we definitely dont need
 
 Tue Apr 17 14:52 GMT 2001   Alistair Riddoch  <alriddoch@zepler.org>
 
