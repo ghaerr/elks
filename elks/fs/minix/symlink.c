@@ -49,6 +49,11 @@ int flag;
 int mode;
 struct inode ** res_inode;
 {
+
+	/*
+	 *	FIXME: #1 Stack use is too high
+	 *	#2 Needs to be current->link_count as this is blocking
+	 */
 	int error;
 	struct buffer_head * bh;
 	static int link_count = 0;
