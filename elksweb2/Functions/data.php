@@ -9,7 +9,7 @@ $langitems = array(
 "es" => array(
 "title" => "ELKS: El Sistema Embedible del Linux Kernel",
 "meta" => array("Un porte de Linux para arquitecturas Intel de 16-bit."),
-"menu" => array ("Hisroria del Website", "Descargas", "FAQ", "Historia", "Introduccion", "Lista de Correo", "Noticias", "Releases", "Inicio"),
+"menu" => array ("Historia del Website", "Descargas", "FAQ", "Historia", "Introduccion", "Lista de Correo", "Noticias", "Releases", "Inicio"),
 "footer" => array ("Este documento es liberado bajo los terminos de la <a href=\"http://www.fsf.org/licenses/gpl.html\">Licencia General Publica de GNU</a>, version 2 solamente y valida como HTML 4.01 Transitional")
 ),
 "nl" => array(
