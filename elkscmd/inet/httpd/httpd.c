@@ -138,8 +138,8 @@ void process_request()
 		send_error(404, "Document (probably) not found");
 		return;
 	}
-	size = lseek(fin, 0, SEEK_END);
-	lseek(fin, 0, SEEK_SET);
+	size = lseek(fin, (off_t)0, SEEK_END);
+	lseek(fin, (off_t)0, SEEK_SET);
 	send_header(get_mime_type(fullpath));
 	buf[0] = 0;
 	sprintf(buf,"Content-Length: %d\r\n\r\n",size);
