@@ -45,7 +45,6 @@ register struct statfs * buf;
 	return 0;
 }
 
-#ifndef CONFIG_FS_RO
 int do_truncate(inode,length)
 register struct inode *inode;
 loff_t length;
@@ -54,7 +53,7 @@ loff_t length;
 	struct iattr newattrs;
 	register struct inode_operations * iop = inode->i_op;
 
-/*	down(&inode->i_sem);*/
+	down(&inode->i_sem);
 	newattrs.ia_size = length;
 	newattrs.ia_valid = ATTR_SIZE | ATTR_CTIME;
 	error = notify_change(inode, &newattrs);
@@ -62,7 +61,7 @@ loff_t length;
 		if (iop && iop->truncate)
 			iop->truncate(inode);
 	}
-/*	up(&inode->i_sem);*/
+	up(&inode->i_sem);
 	return error;
 }
 
@@ -110,7 +109,6 @@ loff_t length;
 		return -EACCES;
 	return do_truncate(inode, length);
 }
-#endif /* CONFIG_FS_RO */
 
 /* If times==NULL, set access and modification to current time,
  * must be owner or have write permission.

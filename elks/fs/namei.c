@@ -22,14 +22,6 @@
 #define ACC_MODE(x) ("\000\004\002\006"[(x)&O_ACCMODE])
 
 /*
- * These functions are not defined or implemented yet.
- * I have not yet had a chance to verify whether they are required.
- */
-
-#define down(_a)
-#define up(_a)
-
-/*
  *	permission()
  *
  * is used to check for read/write/execute permissions on a file.
