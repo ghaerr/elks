@@ -18,6 +18,9 @@
 
 #define NUM_TTYS	8
 
+#define DCGET_GRAPH	(('D'<<8)+0x01)
+#define DCREL_GRAPH	(('D'<<8)+0x02)
+
 #ifdef __KERNEL__
 #include <linuxmt/fs.h>
 #include <linuxmt/termios.h>
@@ -55,6 +58,7 @@ struct tty {
 /*	struct wait_queue *sleep; */
 	struct ch_queue inq, outq;
 	struct termios termios;
+	pid_t pgrp;
 };
 
 /* tty.flags */
