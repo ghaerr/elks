@@ -21,7 +21,7 @@ LDFLAGS=
 CHECK=$(CC) -c -o .null.o
 endif
 
-CFLAGS=$(CFLBASE) -I$(INC_DIR)
+CFLAGS=$(CFLBASE) -I $(INC_DIR)
 
 COMB_TARGET_FS=$(ELKSCMD_DIR)/comb
 COMB_TARGET_BLKS=720
@@ -43,12 +43,3 @@ MKFS_OPTS=-n14
 LOOP=-o loop
 
 MINIX_BOOT=$(DEV86_DIR)/bootblocks
-
-me:	all
-
-set:
-	echo "DEV86_DIR   =" $(DEV86_DIR)
-	echo "ELKSCMD_DIR =" $(ELKSCMD_DIR)
-	echo "ELKSNET_DIR =" $(ELKSNET_DIR)
-	echo "ELKS_DIR    =" $(ELKS_DIR)
-	echo "INC_DIR     =" $(INC_DIR)
