@@ -17,34 +17,27 @@
 #include "ip.h"
 #include "mylib.h"
 
-int icmp_init()
+int icmp_init(void)
 {
     return 0;
 }
 
-void icmp_process(iph, packet)
-struct iphdr_s *iph;
-char *packet;
+void icmp_process(struct iphdr_s *iph,char *packet)
 {
     struct addr_pair apair;
     int len;
 
     switch (packet[0]){
-    case 8: /* ICMP_ECHO */
+	case 8: /* ICMP_ECHO */
+	    apair.daddr = iph->saddr;
+	    apair.saddr = iph->daddr;
+	    apair.protocol = PROTO_ICMP;
+	    len = ntohs(iph->tot_len) - 20;	/* Do this right */
 
-	apair.daddr = iph->saddr;
-	apair.saddr = iph->daddr;
-	apair.protocol = PROTO_ICMP;
-	
-	len = ntohs(iph->tot_len) - 20; /* Do this right */
-	
-	/*
-	 * Set the type to ICMP_ECHO_REPLY 
-	 */
-	packet[0] = 0;
-	ip_sendpacket(packet, len, &apair);
-		
-	break;
+/*	Set the type to ICMP_ECHO_REPLY 
+ */
+	    packet[0] = 0;
+	    ip_sendpacket(packet, len, &apair);
+	    break;
     }
 }
-

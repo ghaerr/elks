@@ -1,5 +1,4 @@
-/*
- * This file is part of the ELKS TCP/IP stack
+/* This file is part of the ELKS TCP/IP stack
  *
  * (C) 2001 Harry Kalogirou (harkal@rainbow.cs.unipi.gr)
  *
@@ -10,16 +9,15 @@
  */
 
 #include <linuxmt/time.h>
+
 #include "timer.h"
 
-
-
-timeq_t timer_get_time()
+timeq_t timer_get_time(void)
 {
-	struct timezone	tz;
-	struct timeval 	tv;
-	
-	gettimeofday(&tv, &tz);
-	
-	return (tv.tv_sec << 4) | (tv.tv_usec / 62500);
+    struct timezone	tz;
+    struct timeval 	tv;
+
+    gettimeofday(&tv, &tz);
+
+    return (tv.tv_sec << 4) | (tv.tv_usec / 62500);
 }

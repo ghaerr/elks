@@ -1,7 +1,6 @@
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #include <linuxmt/autoconf.h>
 
 #endif
-

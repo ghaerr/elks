@@ -1,12 +1,9 @@
-#ifndef __TIMER_H__
-#define __TIMER_H__
+#ifndef TIMER_H
+#define TIMER_H
 
 #include <sys/types.h>
 
-/*
- * time_t is the time type counted in
- * 62ms quantums
- */
+/* time_t is the time type counted in 62ms quantums */
 typedef	__u32 timeq_t;
 
 #define TIME_LT(a,b)		((long)((a)-(b)) < 0)
@@ -14,7 +11,6 @@ typedef	__u32 timeq_t;
 #define TIME_GT(a,b)		((long)((a)-(b)) > 0)
 #define TIME_GEQ(a,b)		((long)((a)-(b)) >= 0)
 
-timeq_t	Now;
+extern timeq_t Now;
 
 #endif
-

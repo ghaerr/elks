@@ -16,49 +16,43 @@
 #include "netconf.h"
 
 
-void netconf_init()
+void netconf_init(void)
 {
- 
+    /* Do nothing */
 }
 
 static struct stat_request_s sreq;
 
-void netconf_request(sr)
-struct stat_request_s *sr;
+void netconf_request(struct stat_request_s *sr)
 {
-	sreq.type = sr->type;
-	sreq.extra = sr->extra;		
+    sreq.type = sr->type;
+    sreq.extra = sr->extra;		
 }
 
-void netconf_send(cb)
-struct tcpcb_s *cb;
+void netconf_send(struct tcpcb_s *cb)
 {
-	struct general_stats_s gstats;
-	struct cb_stats_s cbstats;
-	struct tcpcb_s *ncb;
-
 #ifdef CONFIG_INET_STATUS
-	if(sreq.type == NS_GENERAL){
-		gstats.cb_num = tcpcb_num;
-		gstats.retrans_memory = tcp_retrans_memory;
-		tcpcb_buf_write(cb, &gstats, sizeof(gstats));
+    struct general_stats_s gstats;
+    struct cb_stats_s cbstats;
+    struct tcpcb_s *ncb;
+
+    if (sreq.type == NS_GENERAL) {
+	gstats.cb_num = tcpcb_num;
+	gstats.retrans_memory = tcp_retrans_memory;
+	tcpcb_buf_write(cb, &gstats, sizeof(gstats));
+    } else if (sreq.type == NS_CB) {
+	ncb = tcpcb_getbynum(sreq.extra);
+	if (ncb) {
+	    cbstats.valid = 1;
+	    cbstats.state = ncb->state;
+	    cbstats.rtt = ncb->rtt * 1000 / 16;
+	    cbstats.remaddr = ncb->remaddr;
+	    cbstats.remport = ncb->remport;
+	    cbstats.localport = ncb->localport;
 	} else
-	if(sreq.type == NS_CB){
-		ncb = tcpcb_getbynum(sreq.extra);
-		if(ncb){
-			cbstats.valid = 1;
-			cbstats.state = ncb->state;
-			cbstats.rtt = ncb->rtt * 1000 / 16;
-			cbstats.remaddr = ncb->remaddr;
-			cbstats.remport = ncb->remport;
-			cbstats.localport = ncb->localport;
-		} else {
-			cbstats.valid = 0;
-		}
-		tcpcb_buf_write(cb, &cbstats, sizeof(cbstats));
-	}
+	    cbstats.valid = 0;
+	tcpcb_buf_write(cb, &cbstats, sizeof(cbstats) );
+    }
 #endif
-	cb->bytes_to_push = CB_BUF_USED(cb);
+    cb->bytes_to_push = CB_BUF_USED(cb);
 }
-
-

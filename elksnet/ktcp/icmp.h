@@ -1,9 +1,6 @@
-
-#ifndef __ICMP_H__
-#define __ICMP_H__
+#ifndef ICMP_H
+#define ICMP_H
 
 #define PROTO_ICMP	1
 
-
 #endif
-

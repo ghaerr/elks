@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
 #include "ip.h"
 #include "icmp.h"
 #include "tcp.h"
@@ -27,38 +28,28 @@
 
 static char ipbuf[1024];
 
-int ip_init()
+int ip_init(void)
 {
     return 0;
 }
 
-
-__u16 ip_calc_chksum(data, len)
-char *data;
-int len;
+__u16 ip_calc_chksum(char *data, int len)
 {
+    __u32 sum = 0;
     int i;
-    __u32 sum;
-    __u16 *p;
+    __u16 *p = (__u16 *) data;
     
-    p = (__u16 *)data;
-    
-    sum = 0;
-    for( i = 0 ; i < len >> 1 ; i++ ){
-	sum += *p;
-	p++;
-    }
+    for (i=0; i < (len >> 1) ; i++)
+	sum += *p++;
     
     return ~((sum & 0xffff) + ((sum >> 16) & 0xffff));
 }
 
-
-void ip_print(head)
-struct iphdr_s *head;
+void ip_print(struct iphdr_s *head)
 {
-#if 0
-    __u8 *addr;
+#ifdef DEBUG
     int i;
+    __u8 *addr;
     
     printf("Version/IHL :  %d/%d\n",IP_VERSION(head),IP_IHL(head));
     printf("TypeOfService/Length :  %d/%d\n",head->tos,ntohs(head->tot_len));
@@ -81,61 +72,51 @@ struct iphdr_s *head;
 #endif
 }
 
-
-void ip_recvpacket(packet, size)
-char *packet;
-int size;
+void ip_recvpacket(char *packet,int size)
 {
     struct iphdr_s *iphdr;
-    __u8 *addr;
-    __u8 *data;
-    
+    __u8 *addr, *data;
+
     iphdr = (struct iphdr_s *)packet;
-    
+
     /*printf("IP: Got packet of size : %d \n",size,*packet);
     ip_print(iphdr);*/
-    
+
     if(IP_VERSION(iphdr) != 4)
 	return;
-	
+
     if(IP_IHL(iphdr) < 5)
 	return;
 
     if(ntohs(iphdr->tot_len) != size)
 	return;
-	
+
     data = packet + 4 * IP_IHL(iphdr);
-    
-    
+
     switch (iphdr->protocol) {
     case PROTO_ICMP:
 		icmp_process(iphdr, data);
 		break;
+
     case PROTO_TCP:
 		tcp_process(iphdr);
 		break;
+
     default:
 	break;	
+
     }
-    
 }
 
-
-void ip_sendpacket(packet, len, apair)
-char *packet;
-int len;
-struct addr_pair *apair;
+void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
 {
-    struct iphdr_s *iph;
+    struct iphdr_s *iph = (struct iphdr_s *)&ipbuf;
     __u16 tlen;
-    
-    
-    iph = (struct iphdr_s *)&ipbuf;
 
     iph->version_ihl	= 0x45;
-    
+
     tlen = 4 * IP_IHL(iph);
-    
+
     iph->tos 		= 0;
     iph->tot_len	= htons(tlen + len);
     iph->id		= 0;
@@ -144,17 +125,20 @@ struct addr_pair *apair;
     iph->protocol	= apair->protocol;
     iph->daddr		= apair->daddr;
     iph->saddr		= apair->saddr;
-    
+
     iph->check		= 0;
     iph->check		= ip_calc_chksum((char *)iph, tlen);    
 
     memcpy(&ipbuf[tlen], packet, len);
-        
-    /* "route" */
-    if(iph->daddr == local_ip && iph->daddr == 0x0100007f){ /* 127.0.0.1 */
-/*    	ip_recvpacket(iph, tlen + len); */ /* FIXME */
-    } else {
-		slip_send(&ipbuf, tlen + len);   
-	}
-}
 
+    /* "route" */
+    if(iph->daddr == local_ip && iph->daddr == 0x0100007f) {
+	/* 127.0.0.1 */
+
+#if 0
+	ip_recvpacket(iph, tlen + len); 	/* FIXME */
+#endif
+
+    } else
+	slip_send(&ipbuf, tlen + len);   
+}

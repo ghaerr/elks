@@ -1,9 +1,4 @@
-
-#ifndef __TCPDEV_H__
-#define __TCPDEV_H__
-
-
-
+#ifndef TCPDEV_H
+#define TCPDEV_H
 
 #endif
-

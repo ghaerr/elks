@@ -10,11 +10,11 @@
  */
 
 #include <sys/types.h>
-
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "slip.h"
 #include <linuxmt/termios.h>
+
+#include "slip.h"
 
 #define SERIAL_BUFFER_SIZE	256
 
@@ -26,25 +26,21 @@
 #define ESC_END		0334
 #define ESC_ESC		0335
 
-
 static unsigned char 	sbuf[SERIAL_BUFFER_SIZE];
 static unsigned char	lastchar;
 static unsigned char 	packet[SLIP_MTU];
 static unsigned int	packpos;
 static int devfd;
 
-
-int slip_init(fdev)
-char *fdev;
+int slip_init(char *fdev)
 {
     int len;
     struct termios tios;
 
     devfd = open(fdev, O_NONBLOCK|O_RDWR);
-    if(devfd < 0){
-		printf("ERROR : failed to open serial device %s\n",fdev);
-    }
-    
+    if (devfd < 0)
+	printf("ERROR : failed to open serial device %s\n",fdev);
+
     /* Setup the tty
      */
     ioctl(devfd, TCGETS, &tios);
@@ -52,14 +48,13 @@ char *fdev;
     tios.c_oflag &= ~ONLCR;
 
     ioctl(devfd, TCSETS, &tios);
-    
+
     /* Init some variables 
      */
     packpos = 0;
     lastchar = 0;
-    
+
     return devfd;
-    
 }
 
 /*
@@ -69,90 +64,96 @@ char *fdev;
  *	FIXME : Handle the buffer overrun when out
  *          MTU is not honored.
  */
-void slip_process()
+void slip_process(void)
 {
-	int i, len;
-	int packet_num = 0;
+    int i, len, packet_num = 0;
 
-	while(packet_num < 3){
-		len = read(devfd, &sbuf, SERIAL_BUFFER_SIZE);
-		if(len <= 0)break;
+    while (packet_num < 3) {
+	len = read(devfd, &sbuf, SERIAL_BUFFER_SIZE);
+	if (len <= 0)
+	    break;
 
-		for( i = 0 ; i < len ; i++ ){
-			if(lastchar == ESC){
-				switch (sbuf[i]){    
-				case ESC_END:
-				    packet[packpos++] = END; 
-				    break;
-				case ESC_ESC:
-				    packet[packpos++] = ESC;
-				    break;
-				default:
-				    /* Protocol error ??! */
-				    packet[packpos++] = sbuf[i];
-				} /* switch */
-			} else {
-				switch (sbuf[i]){
-				case ESC:
+	for (i=0; i < len ; i++) {
+	    if (lastchar == ESC) {
+		switch (sbuf[i]) { 
+
+		    case ESC_END:
+			packet[packpos++] = END; 
+			break;
+
+		    case ESC_ESC:
+			packet[packpos++] = ESC;
+			break;
+
+		    default:
+
+			/* Protocol error ??! */
+			packet[packpos++] = sbuf[i];
+		}
+	    } else {
+		switch (sbuf[i]) {
+
+		    case ESC:
+			break;
+
+		    case END:
+			if (packpos == 0)
 			    break;
-		    
-				case END:
-			    if(packpos == 0)
-					break;
 
-			    ip_recvpacket(&packet, packpos);
-			    packet_num++;
-			    /* Reset */
-			    packpos = 0;
-			    lastchar = 0;
-			    break;
-				default:
-			    packet[packpos++] = sbuf[i];
-				} /* switch */	
-			}
-			lastchar = sbuf[i];
-		} /* for */
+			ip_recvpacket(&packet, packpos);
+			packet_num++;
+
+			/* Reset */
+			packpos = 0;
+			lastchar = 0;
+			break;
+
+		    default:
+			packet[packpos++] = sbuf[i];
+		}
+	    }
+	    lastchar = sbuf[i];
 	}
+    }
 }
 
-void send_char(ch)
-__u8 ch;
+void send_char(__u8 ch)
 {
-    int i;
-    i = write(devfd, &ch, 1);
-/*    if(i <= 0){
-		perror("skata");
-    }*/
+    int i = write(devfd, &ch, 1);
+
+#if 0
+    if (i <= 0)
+	perror("skata");
+#endif
 }
 
 /*
  * TODO : Use a buffer to reduse the write calls
  */
-void slip_send(packet, len)
-char *packet;
-int len;
+void slip_send(char *packet, int len)
 {
-    __u8 *p;
-    
-    p = (__u8 *)packet;
+    __u8 *p = (__u8 *)packet;
+
     send_char(END);
-    
-    while(len--){
-	switch(*p){
-	case END:
-	    send_char(ESC);
-	    send_char(ESC_END);
-	    break;
-	case ESC:
-	    send_char(ESC);
-	    send_char(ESC_ESC);
-	    break;
-	default:
-	    send_char(*p);
+    while (len--) {
+	switch (*p) {
+
+	    case END:
+		send_char(ESC);
+		send_char(ESC_END);
+		break;
+
+	    case ESC:
+		send_char(ESC);
+		send_char(ESC_ESC);
+		break;
+
+	    default:
+		send_char(*p);
+		break;
+
 	}
 	p++;
-    }   
-    
-    send_char(END); 
+    }
+    send_char(END);
 }
-
