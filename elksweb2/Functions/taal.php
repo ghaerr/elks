@@ -6,6 +6,12 @@ $langitems = array(
 "menu" => array ("Website History", "Download", "FAQ", "History", "Introduction", "Mailing Lists", "News", "Releases", "Home"), 
 "footer" => array ("This document is released under the terms of the <a href=\"http://www.fsf.org/licenses/gpl.html\">GNU General Public Licence</a>, version 2 only and validates as HTML 4.01 Transitional")
 ),
+"es" => array(
+"title" => "ELKS: El Sistema Embedible del Linux Kernel",
+"meta" => array("Un porte de Linux para arquitecturas Intel de 16-bit."),
+"menu" => array ("Hisroria del Website", "Descargas", "FAQ", "Historia", "Introduccion", "Lista de Correo", "Noticias", "Releases", "Inicio"),
+"footer" => array ("Este documento es liberado bajo los terminos de la <a href=\"http://www.fsf.org/licenses/gpl.html\">Licencia General Publica de GNU</a>, version 2 solamente y valida como HTML 4.01 Transitional")
+),
 "nl" => array(
 "title" => "ELKS: Het Embeddable Linux Kernel System",
 "meta" => array ("Een port van Linux voor 16-bit Intel architectuur."),
