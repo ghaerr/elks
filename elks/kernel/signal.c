@@ -91,16 +91,20 @@ int kill_process(pid_t pid, sig_t sig, int priv)
 
 int sys_kill(pid_t pid, sig_t sig)
 {
+    register __ptask pcurrent = current;
     register struct task_struct *p;
-    int count = 0, err, retval = 0;
+    int count, err, retval;
 
-    if ((sig < 1) || (sig > NSIG))
+    if (((unsigned int)(sig - 1)) > (NSIG-1))
 	return -EINVAL;
     if (!pid)
-	return kill_pg(current->pgrp, sig, 0);
+	return kill_pg(pcurrent->pgrp, sig, 0);
+
+    count = retval = 0;
+
     if (pid == -1) {
 	for_each_task(p)
-	    if (p->pid > 1 && p != current) {
+	    if (p->pid > 1 && p != pcurrent) {
 		count++;
 		if ((err = send_sig(sig, p, 0)) != -EPERM)
 		    retval = err;
@@ -114,12 +118,10 @@ int sys_kill(pid_t pid, sig_t sig)
 
 int sys_signal(int signr, __sighandler_t handler)
 {
-    struct sigaction *sa;
-
     debug2("SIGNAL: Registering action %x for signal %d.\n", handler, signr);
-    if (signr < 1 || signr > NSIG || signr == SIGKILL || signr == SIGSTOP)
+    if ( (((unsigned int)(--signr)) > (NSIG-1))
+	 || signr == (SIGKILL-1) || signr == (SIGSTOP-1))
 	return -EINVAL;
-    sa = &current->sig.action[signr - 1];
-    sa->sa_handler = handler;
+    current->sig.action[signr].sa_handler = handler;
     return 0;
 }

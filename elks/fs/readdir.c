@@ -58,21 +58,20 @@ int sys_readdir(unsigned int fd, char *dirent, unsigned int count
     register struct file_operations *fop;
     struct readdir_callback buf;
 
-    error =
-	fd_check(fd, dirent, sizeof(struct linux_dirent), FMODE_READ, &file);
-    if (error < 0)
-	return error;
+    if ((error = fd_check(fd, dirent, sizeof(struct linux_dirent),
+			  FMODE_READ, &file))
+	>= 0) {
+	error = -ENOTDIR;
+	fop = file->f_op;
+	if (fop && fop->readdir) {
+	    buf.count = 0;
+	    buf.dirent = (struct linux_dirent *) dirent;
+	    if ((error = fop->readdir(file->f_inode, file,
+				      &buf, fillonedir))
+		>= 0)
+		return buf.count;
+	}
+    }
 
-    fop = file->f_op;
-    if (!fop || !fop->readdir)
-	return -ENOTDIR;
-
-    buf.count = 0;
-    buf.dirent = (struct linux_dirent *) dirent;
-    error = fop->readdir(file->f_inode, file, &buf, fillonedir);
-
-    if (error < 0)
-	return error;
-
-    return buf.count;
+    return error;
 }

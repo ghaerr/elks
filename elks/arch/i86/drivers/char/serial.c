@@ -91,12 +91,11 @@ void console_setdefault(register struct serial_info *port)
 
 void update_port(register struct serial_info *port)
 {
-    register struct tty *tty = port->tty;
-    register tcflag_t cflags;
+    tcflag_t cflags;
     unsigned divisor;
 
     /* set baud rate divisor, first lower, then higher byte */
-    cflags = tty->termios.c_cflag & CBAUD;
+    cflags = port->tty->termios.c_cflag & CBAUD;
     divisor = divisors[cflags & 017];
 
     /* Support for this additional bauds */
@@ -140,7 +139,7 @@ static int get_serial_info(struct serial_info *info,
 int rs_open(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
-    int count;
+    register char *countp;
 
     debug("SERIAL: rs_open called\n");
 
@@ -156,11 +155,11 @@ int rs_open(struct tty *tty)
 
     /* clear RX buffer */
     (void) inb_p(port->io + UART_LSR);
-    count = MAX_RX_BUFFER_SIZE;
+
+    countp = (int) MAX_RX_BUFFER_SIZE;
     do
 	(void) inb_p((void *) (port->io + UART_RX));
-    while ((--count > 0)
-		&& (inb_p((void *) (port->io + UART_LSR)) & UART_LSR_DR));
+    while (--countp && (inb_p((void *) (port->io + UART_LSR)) & UART_LSR_DR));
 
     (void) inb_p((void *) (port->io + UART_IIR));
     (void) inb_p((void *) (port->io + UART_MSR));
@@ -185,26 +184,25 @@ int rs_open(struct tty *tty)
 static int set_serial_info(struct serial_info *info,
 			   struct serial_info *new_info)
 {
-    struct inode *inode;
-    int err;
+    register struct inode *inode;
+    register char *errp;
 
-    err = verified_memcpy_fromfs(info, new_info, sizeof(struct serial_info));
-    if (err)
-	return err;
+    errp = (char *) verified_memcpy_fromfs(info, new_info,
+					   sizeof(struct serial_info));
+    if (!errp) {
+	/* shutdown serial port and restart UART with new settings */
 
-    /* shutdown serial port and restart UART with new settings */
-
-    /* witty cheat :) - either we do this (and waste some DS) or duplicate
-     * almost whole rs_release and rs_open (and waste much more CS)
-     */
-    inode->i_rdev = info->tty->minor;
-    rs_release(inode, NULL);
-    err = rs_open(inode, NULL);
-
-    return err;
+	/* witty cheat :) - either we do this (and waste some DS) or duplicate
+	 * almost whole rs_release and rs_open (and waste much more CS)
+	 */
+	inode->i_rdev = info->tty->minor;
+	rs_release(inode, NULL);
+	errp = (char *) rs_open(inode, NULL);
+    }
+    return (int) errp;
 }
 
-int rs_write(struct tty *tty)
+int rs_write(register struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
     unsigned char ch;
@@ -219,7 +217,7 @@ int rs_write(struct tty *tty)
 int rs_ioctl(struct tty *tty, int cmd, char *arg)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
-    int retval = 0;
+    register char *retvalp = 0;
 
     /* few sanity checks should be here */
 #if 0
@@ -233,15 +231,15 @@ int rs_ioctl(struct tty *tty, int cmd, char *arg)
 	update_port(port);
 	break;
     case TIOCSSERIAL:
-	retval = set_serial_info(port, arg);
+	retvalp = (char *) set_serial_info(port, arg);
 	break;
 
     case TIOCGSERIAL:
-	retval = get_serial_info(port, arg);
+	retvalp = (char *) get_serial_info(port, arg);
 	break;
     }
 
-    return retval;
+    return (int) retvalp;
 }
 
 void receive_chars(register struct serial_info *sp)
@@ -267,16 +265,17 @@ void receive_chars(register struct serial_info *sp)
 int rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
     register struct serial_info *sp;
-    int status;
+    register char *statusp;
+
 
     debug1("SERIAL: Interrupt %d recieved.\n", irq);
     sp = &ports[irq_port[irq - 2]];
     do {
-	status = inb_p(sp->io + UART_LSR);
-	if (status & UART_LSR_DR)
+	statusp = (int) inb_p(sp->io + UART_LSR);
+	if (((int) statusp) & UART_LSR_DR)
 	    receive_chars(sp);
 #if 0
-	if (status & UART_LSR_THRE)
+	if (((int) statusp) & UART_LSR_THRE)
 	    transmit_chars(sp);
 #endif
     } while (!(inb_p(sp->io + UART_IIR) & UART_IIR_NO_INT));
@@ -284,7 +283,7 @@ int rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 
 int rs_probe(register struct serial_info *sp)
 {
-    int count, status1, status2;
+    int status1, status2;
     unsigned char scratch;
 
     scratch = inb(sp->io + UART_IER);
@@ -345,60 +344,56 @@ int rs_probe(register struct serial_info *sp)
 			sp->io + UART_FCR);
 
     /* clear RX register */
-    count = MAX_RX_BUFFER_SIZE;
-    do {
-	(void) inb_p((void *) (sp->io + UART_RX));
-	count--;
-    } while ((count > 0) && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
+    {
+	register char *countp = (char *) MAX_RX_BUFFER_SIZE;
+	do {
+	    (void) inb_p((void *) (sp->io + UART_RX));
+	} while (--countp && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
+    }
 
     return 0;
+}
+
+static void print_serial_type(int st)
+{
+    switch (st) {
+    case ST_8250:
+	printk(" is an 8250");
+	break;
+    case ST_16450:
+	printk(" is a 16450");
+	break;
+    case ST_16550:
+	printk(" is a 16550");
+/*  	break; */
+    }
 }
 
 int rs_init(void)
 {
     register struct serial_info *sp = ports;
-    int i, ttyno = 4;
+    register char *pi;
+    int ttyno = 4;
 
     printk("Serial driver version 0.02\n");
-    for (i = 0; i < 4; i++) {
+    pi = (char *) 4;
+    do {
+	--pi;
+
 	if (sp->tty != NULL) {
 	    /*
 	     * if rs_init is called twice, because of serial console
 	     */
 	    printk("ttyS%d at 0x%x (irq = %d)", ttyno - 4, sp->io, sp->irq);
-	    switch (sp->flags & SERF_TYPE) {
-	    case ST_8250:
-		printk(" is an 8250, fetched\n");
-		break;
-	    case ST_16450:
-		printk(" is a 16450, fetched\n");
-		break;
-	    case ST_16550:
-		printk(" is a 16550, fetched \n");
-		break;
-	    default:
-		printk(", fetched\n");
-		break;
-	    }
+	    print_serial_type(sp->flags & SERF_TYPE);
+	    printk(", fetched\n");
 	    ttyno++;
 	} else {
 	    if ((rs_probe(sp) == 0) && (!request_irq(sp->irq, rs_irq, NULL))) {
 		printk("ttys%d at 0x%x (irq = %d)",
 		       ttyno - 4, sp->io, sp->irq);
-		switch (sp->flags & SERF_TYPE) {
-		case ST_8250:
-		    printk(" is an 8250\n");
-		    break;
-		case ST_16450:
-		    printk(" is a 16450\n");
-		    break;
-		case ST_16550:
-		    printk(" is a 16550\n");
-		    break;
-		default:
-		    printk("\n");
-		    break;
-		}
+		print_serial_type(sp->flags & SERF_TYPE);
+		printk("\n");
 		sp->tty = &ttys[ttyno++];
 		update_port(sp);
 #if 0
@@ -407,7 +402,7 @@ int rs_init(void)
 	    }
 	}
 	sp++;
-    }
+    } while (pi);
     return 0;
 }
 

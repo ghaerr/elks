@@ -15,31 +15,33 @@
  * Whoops - we have to do wait3 for now :) 
  */
 
-int sys_wait4(pid_t pid, register int *status, int options)
+int sys_wait4(pid_t pid, int *status, int options)
 {
-    register pid_t *lastendp = &current->child_lastend;
-    int retval;
+    register __ptask p = current;
+    register pid_t *lastendp = &p->child_lastend;
 
     if (!((options & WNOHANG) || (*lastendp)))
-	interruptible_sleep_on(&current->child_wait);
+	interruptible_sleep_on(&p->child_wait);
     if (*lastendp) {
 	if (status) {
-	    if ((retval = verified_memcpy_tofs(status,
-					       &current->lastend_status,
-					       sizeof(int))) != 0) {
-		return retval;
+	    if (verified_memcpy_tofs(status,
+				     &p->lastend_status,
+				     sizeof(int)) != 0) {
+		return -EFAULT;
 	    }
 	}
-	retval = *lastendp;
+	options = *lastendp;	/* TRASHING options!!! */
 	*lastendp = 0;
-	return retval;
+	return options;
     }
     return -EINTR;
 }
 
 void do_exit(int status)
 {
-    register __ptask parent;
+    register __ptask pcurrent = current;
+#define current pcurrent
+     __ptask parent;
     register __ptask task;
 
     _close_allfiles();
@@ -50,8 +52,7 @@ void do_exit(int status)
 	mm_free(current->mm.cseg);
     if (current->mm.dseg)
 	mm_free(current->mm.dseg);
-    current->mm.cseg = NULL;
-    current->mm.dseg = NULL;
+    current->mm.cseg = current->mm.dseg = NULL;
 
     /* Keep all of the family stuff straight */
     if ((task = current->p_prevsib)) {
@@ -62,6 +63,7 @@ void do_exit(int status)
     }
 
     /* Ack. I hate repeating code like this */
+#if 0
     parent = current->p_parent;
     if (parent->p_child == current) {
 	if ((task = current->p_prevsib)) {
@@ -70,6 +72,22 @@ void do_exit(int status)
 	    parent->p_child = task;
 	}
     }
+#else
+    if ((parent = current->p_parent)->p_child == current) {
+	if ((task = current->p_prevsib)
+	    || (task = current->p_nextsib)
+	    ) {
+	    parent->p_child = task;
+	}
+    }
+
+    /* Ok... we're done with task, but we still need parent a few
+     * times.  Since task is a register and parent isn't, stuff
+     * parent in task and use that. */
+    task = parent;
+#define parent task
+
+#endif
 
     /* UN*X process take their children out with them...
      * I'm not going to implement that for 0.0.51 becuase we don't 
@@ -94,9 +112,9 @@ void do_exit(int status)
     schedule();
     panic("Returning from sys_exit!\n");
 }
+#undef current
 
 void sys_exit(int status)
 {
-    status = (status & 0xff) << 8;
-    do_exit(status);
+    do_exit((status & 0xff) << 8);
 }

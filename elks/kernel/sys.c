@@ -45,23 +45,30 @@ extern int sys_kill(sig_t,pid_t);
 
 int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
 {
-    if (!suser())
+    if (!suser()) {
 	return -EPERM;
-    if (magic != 0x1D1E || magic_too != 0xC0DE)
-	return -EINVAL;
-    if (flag == 0x0123)
-	hard_reset_now();
-    else if (flag == 0x4567)
-	C_A_D = 1;
-    else if (!flag)
-	C_A_D = 0;
-    else if (flag == 0x6789) {
-	printk("System halted\n");
-	sys_kill(-1, SIGKILL);
-	do_exit(0);
-    } else
-	return -EINVAL;
-    return 0;
+    }
+
+    if ((magic == 0x1D1E) && (magic_too == 0xC0DE)) {
+	register int *pflag = &flag;
+
+	if (*pflag == 0x0123) {
+	    hard_reset_now();
+	}
+
+	if (*pflag == 0x6789) {
+	    printk("System halted\n");
+	    sys_kill(-1, SIGKILL);
+	    do_exit(0);
+	}
+
+	if ((*pflag == 0x4567) || !*pflag) {
+	    C_A_D = (*pflag ? 1 : 0);
+	    return 0;
+	}
+    }
+
+    return -EINVAL;
 }
 
 /*
@@ -74,8 +81,8 @@ void ctrl_alt_del(void)
 {
     if (C_A_D)
 	hard_reset_now();
-    else
-	kill_process(1, (sig_t) SIGINT, 1);
+
+    kill_process(1, (sig_t) SIGINT, 1);
 }
 
 #ifdef CONFIG_SYS_VERSION
@@ -86,7 +93,9 @@ void ctrl_alt_del(void)
 
 int sys_knlvsn(char *vsn)
 {
-	verified_memcpy_tofs(vsn, system_utsname.release, strlen(system_utsname.release) + 1);
+    register char *p = system_utsname.release;
+
+    verified_memcpy_tofs(vsn, p, strlen(p) + 1);
 }
 
 #endif
@@ -123,9 +132,11 @@ pid_t sys_getpid(void)
 
 unsigned short int sys_umask(unsigned short int mask)
 {
-    unsigned short int old = current->fs.umask;
+    register __ptask currentp = current;
+    unsigned short int old;
 
-    current->fs.umask = mask & ((unsigned short int) S_IRWXUGO);
+    old = currentp->fs.umask;
+    currentp->fs.umask = mask & ((unsigned short int) S_IRWXUGO);
     return (old);
 }
 
@@ -227,13 +238,13 @@ int sys_setpgid(pid_t pid, pid_t pgid)
 		for_each_task(tmp) {
 		    if ((tmp->pgrp == pgid)
 			&& (tmp->session == current->session)) {
-		      goto ok_pgid:
+			goto ok_pgid:
 		    }
 		}
 		return -EPERM;
 	    }
 
-	  ok_pgid:
+	ok_pgid:
 	    p->pgrp = pgid;
 
 	    return 0;
@@ -254,7 +265,7 @@ int sys_getpgid(pid_t pid)
 	return current->pgrp;
     for_each_task(p)
 	if (p->pid == pid)
-	return p->pgrp;
+	    return p->pgrp;
     return -ESRCH;
 }
 
@@ -271,7 +282,7 @@ int sys_getsid(pid_t pid)
 	return current->session;
     for_each_task(p)
 	if (p->pid == pid)
-	return p->session;
+	    return p->session;
     return -ESRCH;
 
 }
@@ -303,71 +314,82 @@ int sys_setsid(void)
 
 int sys_getgroups(int gidsetsize, gid_t * grouplist)
 {
-    int i, retval;
-    register gid_t *groups;
+    register gid_t *pg = current->groups;
+    register char *pi = 0;
 
-    groups = current->groups;
-    for (i = 0; (i < NGROUPS) && (*groups != NOGROUP); i++, groups++) {
-	if (!gidsetsize)
-	    continue;
-	if (i >= gidsetsize)
-	    break;
-	if ((retval = verified_memcpy_tofs(grouplist, groups, sizeof(gid_t)))
-	    != 0)
-	    return retval;
-	grouplist++;
+    while ((pg[(int)pi] != NOGROUP) && (((int)(++pi)) < NGROUPS));
+
+    if (pi && gidsetsize) {
+	if (((int)pi) > gidsetsize) {
+	    return -EINVAL;
+	}
+	if (verified_memcpy_tofs(grouplist, pg, ((int)pi) * sizeof(gid_t)) != 0)
+	    return -EFAULT;
+							  
     }
-    return i;
+
+    return (int)pi;
 }
 
 int sys_setgroups(int gidsetsize, gid_t * grouplist)
 {
-    int i, retval;
+    register gid_t *pg;
+    register gid_t *lg;
 
     if (!suser())
-	return -EPERM;
+        return -EPERM;
 
+#if 1
+    /* semantics change.. return EINVAL for gidsetsize < 0. */
+    if (((unsigned int)gidsetsize) > NGROUPS)
+        return -EINVAL;
+
+    pg = current->groups;
+    lg = pg + gidsetsize;
+#else
     if (gidsetsize > NGROUPS)
-	return -EINVAL;
+        return -EINVAL;
 
-    for (i = 0; i < gidsetsize; i++, grouplist++) {
-	gid_t g;
-	if (retval = verified_memcpy_fromfs(&g, grouplist, sizeof(gid_t)))
-	    return retval;
-	current->groups[i] = g;
+    pg = current->groups;
+    lg = pg + ((gidsetsize >= 0) ? gidsetsize : 0);
+#endif
+
+    if (lg > pg) {
+	if (verified_memcpy_fromfs(pg, grouplist, ((char *)lg) - ((char *)pg)))
+	    return -EFAULT;
     }
 
-    if (i < NGROUPS)
-	current->groups[i] = NOGROUP;
+    if (gidsetsize < NGROUPS) {
+	*lg = NOGROUP;
+    }
 
     return 0;
 }
 
 int in_group_p(gid_t grp)
 {
-    int i;
+    register char *p = (char *) current;
 
-    if (grp == current->egid)
-	return 1;
+    if (grp != ((__ptask) p)->egid) {
+	register gid_t *pg = ((__ptask) p)->groups - 1;
 
-    for (i = 0; i < NGROUPS; i++) {
+	p = (char *)(pg + NGROUPS);
 
-	if (current->groups[i] == NOGROUP)
-	    break;
-
-	if (current->groups[i] == grp)
-	    return 1;
+	do {
+	    if ((++pg > ((gid_t *) p)) || (*pg == NOGROUP)) {
+		return 0;
+	    }
+	} while (*pg != grp);
     }
 
-    return 0;
+    return 1;
 }
 
 #else
 
 int in_group_p(gid_t grp)
 {
-    if (grp == current->egid)
-	return 1;
+    return (grp == current->egid);
 }
 
 #endif

@@ -70,8 +70,8 @@ int chq_delch(register struct ch_queue *q)
     if (q->len == q->size) {
 	q->len--;
 	return 1;
-    } else
-	return 0;
+    }
+    return 0;
 }
 
 /* Gets tail character, waiting for one if wait != 0 */

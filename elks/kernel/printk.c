@@ -37,37 +37,41 @@ extern void con_charout();
 
 static void con_write(register char *buf, int len)
 {
-    char c;
-
 #ifdef CONFIG_DCON_ANSI_PRINTK
-
     /* Colourizing */
-    static char colour = '1';
 
-    if (colour == '8')
-	colour = '1';
+    static char colour[8] = { 27, '[', '3', '1', ';', '4', '0', 'm' };
 
-    con_charout(27);
-    con_charout('[');
-    con_charout('3');
-    con_charout(colour);
-    con_charout(';');
-    con_charout('4');
-    con_charout('0');
-    con_charout('m');
+    {
+	register char *p = colour;
 
-    colour++;
+	if (p[3] == '8') {
+	    p[3] = '1';
+	}
+
+	do {
+	    con_charout(*p);
+	    if (*p == 'm')
+		break;
+	    ++p;
+	} while (1);
+
+	++p[-4];
+    }
+
     /* END Colourizing */
-
 #endif
 
-    while (len) {
-	c = *buf;
-	if (c == '\n')
-	    con_charout('\r');
-	con_charout(c);
-	len--;
-	buf++;
+    {
+	register char *p = (char *) len;
+
+	while (p) {
+	    if (*buf == '\n')
+		con_charout('\r');
+	    con_charout(*buf);
+	    ++buf;
+	    --p;
+	}
     }
 }
 
@@ -76,45 +80,45 @@ static void con_write(register char *buf, int len)
  *	Output a number
  */
 
-static char *nstring = "0123456789ABCDEF";
+char *hex_string = "0123456789ABCDEF"; /* Also used by devices. */
 
 static void numout(char *ptr, int len, int base, int useSign)
 {
-    char buf[16];
-    register char *bp = buf + 14;
     unsigned long int v;
-    unsigned char c;
+    register char *bp;
+    char buf[16];
 
-    bp[1] = 0;
-    if (len == 2)
-	v = *((unsigned short *) ptr);
-    else
-	v = *((unsigned long *) ptr);
-    if (useSign && v < 0) {
-	con_write("-", 1);
+    bp = buf + 15;
+
+    v = (len == 2)
+	? *((unsigned short *) ptr)
+	: *((unsigned long *) ptr);
+
+    if (useSign && (((long)v) < 0)) {
 	v = -v;
+	*bp = '-';
+	con_write(bp, 1);
     }
 
+    *bp = 0;
     do {
-	c = ((unsigned char) (v % base));	/* This digit */
-	*bp-- = nstring[c];			/* String for it */
-	v /= base;				/* Slide along */
-    } while (v && bp >= buf);
+	*--bp = hex_string[(v % base)]; /* Store digit. */
+    } while ((v /= base) && (bp > buf));
 
-    bp++;
     con_write(bp, buf - bp + sizeof(buf) - 1);
 }
 
 void printk(register char *fmt,int a1)
 {
     register char *p = (char *) &a1;
+    int len;
     char c, tmp;
 
     while ((c = *fmt++)) {
 	if (c != '%')
 	    con_write(fmt - 1, 1);
 	else {
-	    int len = 2;
+	    len = 2;
 
 	    c = *fmt++;
 	    if (c == 'h')
@@ -127,14 +131,17 @@ void printk(register char *fmt,int a1)
 	    switch (c) {
 	    case 'd':
 	    case 'u':
-		numout(p, len, 10, (c == 'd'));
-		p += len;
-		break;
+		tmp = 10;
+		goto NUMOUT;
 	    case 'o':
+		tmp = 8;
+		goto NUMOUT;
 	    case 'p':
 	    case 'x':
 	    case 'X':
-		numout(p, len, (c == 'o') ? 8 : 16, 0);
+		tmp = 16;
+	    NUMOUT:
+		numout(p, len, tmp, (c == 'd'));
 		p += len;
 		break;
 	    case 's':
@@ -159,11 +166,8 @@ void printk(register char *fmt,int a1)
 		con_write(p, 1);
 		p += 2;
 		break;
-	    case '%':
-		con_write("%", 1);
-		break;
 	    default:
-		con_write("?", 1);
+		con_write( (c == '%') ? "%" : "?", 1);
 	    }
 	}
     }
@@ -171,6 +175,24 @@ void printk(register char *fmt,int a1)
 
 void panic(char *error, int a1 /* VARARGS... */ )
 {
+#if 1
+    register int *bp = (int *) &error - 2;
+    register char *j;
+    int i;
+
+    printk("\npanic: ");
+    printk(error, a1);
+
+    printk("\napparant call stack:\n");
+    for (i = 0; i < 8; i++) {
+	printk("(%u) ret addr = %p params = ", i, bp[1]);
+	bp = (int *) bp[0];
+	for (j = (char *) 2; ((int) j) < 8; j++)
+	    printk(" %p", bp[(int) j]);
+	printk("\n");
+    }
+    while (1);
+#else
     register int *bp = (int *) &error - 2;
     int i, j;
 
@@ -179,14 +201,14 @@ void panic(char *error, int a1 /* VARARGS... */ )
 
     printk("\napparant call stack:\n");
     for (i = 0; i < 8; i++) {
-	printk("(%u) ", i);
-	printk("ret addr = %p params = ", bp[1]);
+	printk("(%u) ret addr = %p params = ", i, bp[1]);
 	bp = (int *) bp[0];
 	for (j = 2; j < 8; j++)
 	    printk(" %p", bp[j]);
 	printk("\n");
     }
     while (1);
+#endif
 }
 
 void kernel_restarted(void)

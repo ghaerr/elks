@@ -21,27 +21,33 @@
 
 void wait_set(register struct wait_queue *p)
 {
-    if (current->waitpt)
+    register __ptask pcurrent = current;
+
+    if (pcurrent->waitpt)
 	panic("double wait");
-    current->waitpt = p;
+    pcurrent->waitpt = p;
 }
 
 void wait_clear(struct wait_queue *p)
 {
-    if (current->waitpt != p)
+    register __ptask pcurrent = current;
+
+    if (pcurrent->waitpt != p)
 	printk("wrong waitpt");
-    current->waitpt = NULL;
+    pcurrent->waitpt = NULL;
 }
 
 int marker;
 
 static void __sleep_on(register struct wait_queue *p, __s16 state)
 {
-    if (current == &task[0]) {
+    register __ptask pcurrent = current;
+
+    if (pcurrent == &task[0]) {
 	printk("task[0] trying to sleep ");
 	panic("from %x", marker);
     }
-    current->state = state;
+    pcurrent->state = state;
     wait_set(p);
     schedule();
     wait_clear(p);
@@ -100,17 +106,13 @@ void _wake_up(struct wait_queue *q, unsigned short int it)
     phash = ((unsigned short int) 1) << phash;
 
     for_each_task(p) {
-	if (p->waitpt == q)
+	if ((p->waitpt == q)
+	    || ((p->waitpt == &select_poll) && (p->pollhash & phash))
+	    )
 	    if (p->state == TASK_INTERRUPTIBLE ||
 		(it && p->state == TASK_UNINTERRUPTIBLE)) {
 		wake_up_process(p);
 	    }
-	if (p->waitpt == &select_poll)
-	    if (p->pollhash & phash)
-		if (p->state == TASK_INTERRUPTIBLE ||
-		    (it && p->state == TASK_UNINTERRUPTIBLE)) {
-		    wake_up_process(p);
-		}
     }
 }
 
@@ -118,13 +120,13 @@ void _wake_up(struct wait_queue *q, unsigned short int it)
  *	Semaphores. These are not IRQ safe nor needed to be so for ELKS
  */
 
-void up(short int *s)
+void up(register short int *s)
 {
     if (++(*s) == 0)		/* Gone non-negative */
 	wake_up((void *) s);
 }
 
-void down(short int *s)
+void down(register short int *s)
 {
     /* Wait for the semaphore */
     while (*s < 0)

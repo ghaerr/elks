@@ -32,22 +32,27 @@ char *strcpy(char *dest, char *src)
 
 #ifndef __HAVE_ARCH_ATOI
 
-int atoi(char *number)
+int atoi(register char *number)
 {
-    int n = 0, neg = 0;
+    int n;
+    char neg;
 
-    while (number && *number <= ' ')
+/*      if (!number) */
+/*  	return 0; */
+    while (*number <= ' ') {
+	if (!*number)
+	    return 0;
 	++number;
-    if (!*number)
-	return 0;
-    if (*number == '-') {
-	neg = 1;
-	number++;
-    } else if (*number == '+')
-	number++;
-    while (*number > '/' && *number < ':')
-	n = (n * 10) + (*number++) - '0';
-    return (neg ? -n : n);
+    }
+    if (((neg = *number) == '-') || (*number == '+')) {
+	++number;
+    }
+    n = 0;
+    while ((*number - '0') <= 9) {
+	n = (n * 10) + (*number - '0');
+	++number;
+    }
+    return (neg == '-' ? -n : n);
 }
 
 #endif
@@ -118,13 +123,16 @@ int strcmp(register char *cs, register char *ct)
 
 #ifndef __HAVE_ARCH_STRNCMP
 
-int strncmp(register char *cs, register char *ct, size_t count)
+int strncmp(register char *s1, register char *s2, size_t n)
 {
-    if (!count)
-	return 0;
-    while (*(cs++) != *(ct++) && --count)
-	/* Do nothing */;
-    return *(--cs) - *(--ct);
+    int r = 0;
+
+    while (n--
+	   && ((r = ((int)(*((unsigned char *)s1))) - *((unsigned char *)s2++))
+	       == 0)
+	   && *s1++);
+
+    return r;
 }
 
 #endif
@@ -160,13 +168,17 @@ size_t strlen(char *s)
 
 #ifndef __HAVE_ARCH_STRNLEN
 
-size_t strnlen(char *s, size_t count)
+size_t strnlen(char *s, size_t max)
 {
-    register char *sc;
+    register char *p = s;
+    register char *maxp = (char *) max;
 
-    for (sc = s; count-- && *sc; ++sc)
-	/* Do nothing */ ;
-    return (size_t) (sc - s);
+    while (maxp && *p) {
+	++p;
+	--maxp;
+    }
+
+    return p - s;
 }
 
 #endif

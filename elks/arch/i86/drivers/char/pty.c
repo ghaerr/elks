@@ -18,7 +18,7 @@
 
 int pty_open(struct inode *inode, struct file *file)
 {
-    struct tty *otty;
+    register struct tty *otty;
 
     debug1("PTY: open() %x ", otty);
     if ((otty = determine_tty(inode->i_rdev))) {
@@ -28,15 +28,14 @@ int pty_open(struct inode *inode, struct file *file)
 	}
 	debug("succeeded\n");
 	return 0;
-    } else {
-	debug("failed: NODEV\n");
-	return -ENODEV;
     }
+    debug("failed: NODEV\n");
+    return -ENODEV;
 }
 
 int pty_release(struct inode *inode, struct file *file)
 {
-    struct tty *otty;
+    register struct tty *otty;
 
     if ((otty = determine_tty(inode->i_rdev)))
 	kill_pg(otty->pgrp, SIGHUP, 1);
@@ -51,6 +50,17 @@ int pty_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 int pty_select(struct inode *inode, struct file *file, int sel_type)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
+#if 1
+
+    /* Since everything else was disabled... */
+    if (sel_type == SEL_IN) {
+	if (chq_peekch(&tty->outq))
+	    return 1;
+	select_wait(&tty->outq.wq);
+    }
+    return 0;
+
+#else
     int ret = 0;
 
     switch (sel_type) {
@@ -74,12 +84,14 @@ int pty_select(struct inode *inode, struct file *file, int sel_type)
 	break;
     }
     return ret;
+#endif
 }
 
 int pty_read(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
-    int i = 0, j, l;
+    register char *pi;
+    int j, l;
     unsigned char ch;
 
     debug("PTY: read ");
@@ -88,7 +100,8 @@ int pty_read(struct inode *inode, struct file *file, char *data, int len)
 	return -ENODEV;
     }
     l = (file->f_flags & O_NONBLOCK) ? 0 : 1;
-    while (i < len) {
+    pi = 0;
+    while (((int)pi) < len) {
 	j = chq_getch(&tty->outq, &ch, l);
 	if (j == -1)
 	    if (l) {
@@ -96,17 +109,19 @@ int pty_read(struct inode *inode, struct file *file, char *data, int len)
 		return -EINTR;
 	    } else
 		break;
-	debug2(" rc[%u,%u]", i, len);
-	pokeb(current->t_regs.ds, (__u16) (data + i++), ch);
+	debug2(" rc[%u,%u]", (int)pi, len);
+	pokeb(current->t_regs.ds, (__u16) (data + ((int)pi)), ch);
+	++pi;
     }
-    debug1("{%u}\n", i);
-    return i;
+    debug1("{%u}\n", (int)pi);
+    return (int)pi;
 }
 
 int pty_write(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
-    int i = 0, l;
+    register char *pi;
+    int l;
     unsigned char ch;
 
     debug("PTY: write ");
@@ -115,22 +130,23 @@ int pty_write(struct inode *inode, struct file *file, char *data, int len)
 	return -ENODEV;
     }
     l = (file->f_flags & O_NONBLOCK) ? 0 : 1;
-    while (i < len) {
-	ch = (unsigned char) peekb(current->t_regs.ds, (__u16) (data + i));
+    pi = 0;
+    while (((int)pi) < len) {
+	ch = (unsigned char) peekb(current->t_regs.ds, (__u16) (data + ((int)pi)));
 	if (chq_addch(&tty->inq, ch, l) == -1)
 	    if (l) {
 		debug("failed: INTR\n");
 		return -EINTR;
 	    } else
 		break;
-	i++;
+	pi++;
 	debug(" wc");
     }
     debug("\n");
-    return i;
+    return (int)pi;
 }
 
-int ttyp_write(struct tty *tty)
+int ttyp_write(register struct tty *tty)
 {
     if (tty->outq.len == tty->outq.size)
 	interruptible_sleep_on(&tty->outq.wq);

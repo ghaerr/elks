@@ -13,37 +13,18 @@ static void blt_forth(unsigned,unsigned,unsigned,unsigned,unsigned);
 void far_memmove(unsigned sseg, unsigned soff, unsigned dseg, unsigned doff,
 		 unsigned bytes)
 {
-    unsigned long slin, dlin;
+    if (bytes) {
+	sseg += (soff >> 4);
+	soff &= 0xf;
+	dseg += (doff >> 4);
+	doff &= 0xf;
 
-    slin = ( (unsigned long) sseg << 4 ) + (unsigned long) soff;
-    dlin = ( (unsigned long) dseg << 4 ) + (unsigned long) doff;
-    if (slin < dlin) {
-	/* The idea is to get most of the ptr info in the offset part. The
-	 * number of bytes to transfer must be added to the pointers because
-	 * here we are copying in reverse order starting from the tail.
-	 */
-	slin += bytes;
-	dlin += bytes;
-	soff = (unsigned) (slin & 0xFFFF);
-	doff = (unsigned) (dlin & 0xFFFF);
-	sseg = (unsigned) ((slin >> 4) & 0xF000);
-	dseg = (unsigned) ((dlin >> 4) & 0xF000);
-	while( soff < bytes + 1 ) {
-	    soff += 0x1000;
-	    sseg -= 0x0100;
+	if ((sseg < dseg) || ((sseg == dseg) && (soff < doff))) {
+	    --bytes;
+	    blt_forth(sseg, soff+bytes, dseg, doff+bytes, bytes+1);
+	} else {
+	    blt_back(sseg, soff, dseg, doff, bytes );
 	}
-	while( doff < bytes + 1 ) {
-	    doff += 0x1000;
-	    dseg -= 0x0100;
-	}
-	blt_forth( sseg, soff, dseg, doff, ++bytes );
-    } else {
-	/* And here, we want most of it in the segment part */
-	soff = (unsigned) (slin & 0x0F);
-	doff = (unsigned) (dlin & 0x0F);
-	sseg = (unsigned) ((slin >> 4) & 0xFFFF);
-	dseg = (unsigned) ((dlin >> 4) & 0xFFFF);
-	blt_back( sseg, soff, dseg, doff, bytes );
     }
 }
 

@@ -34,14 +34,32 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sat Jun 22 09:53:24 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Tweaked arch/i86/drivers/block/doshd.c to correctly display
+	  the size of the various hard drives found.
+	* Determined that the problem that stops ktcp in its tracks is
+	  a panic caused by the stty command that precedes the ktcp
+	  command in the rc.sysinit file. Reported this to HarKal.
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop, with the exception that ktcp still fails.
+
+		*** NOTE - KTCP DOES NOT CURRENTLY WORK ***
+
 Fri Jun 21 00:27:05 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Updated routine to find source of functions to produce a
 	  more user-friendly output format.
 	* Removed redundant line from kernel/Makefile as it is appended
 	  to the said file by the `make dep` step anyway.
-	* Verified that current codebase both compiles and boots on my
-	  286 based laptop, with the exception that ktcp still fails.
+
+		*** NOTE - KTCP DOES NOT CURRENTLY WORK ***
+
+Tue Jun 18 22:01:16 EST 2002	Manuel Novoa III <mjn3@codepoet.org>
+
+	* Further optimised ELKS source reducing the compiled codesize
+	  for the standard `make defconfig` configuration down to a size
+	  of 58,784 bytes code, 7,596 bytes data and 51,268 bytes BSS.
 
 		*** NOTE - KTCP DOES NOT CURRENTLY WORK ***
 

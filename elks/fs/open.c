@@ -144,24 +144,23 @@ int sys_utimes(char *filename, struct timeval *utimes)
 }
 #endif
 
-int sys_utime(char *filename, struct utimbuf *times)
+int sys_utime(char *filename, register struct utimbuf *times)
 {
     struct inode *inode;
+    register struct inode *pinode;
     int error;
-    time_t actime, modtime;
 
     error = namei(filename, &inode, 0, 0);
     if (error)
 	return error;
+    pinode = inode;
     if (times) {
-	actime = get_fs_long((unsigned long *) &times->actime);
-	modtime = get_fs_long((unsigned long *) &times->modtime);
+	pinode->i_atime = get_fs_long((unsigned long *) &times->actime);
+	pinode->i_mtime = get_fs_long((unsigned long *) &times->modtime);
     } else
-	actime = modtime = CURRENT_TIME;
-    inode->i_atime = actime;
-    inode->i_mtime = modtime;
-    inode->i_dirt = 1;
-    iput(inode);
+	pinode->i_atime = pinode->i_mtime = CURRENT_TIME;
+    pinode->i_dirt = 1;
+    iput(pinode);
     return 0;
 }
 
@@ -205,17 +204,18 @@ int sys_chdir(char *filename)
 
 int sys_chroot(char *filename)
 {
+    register __ptask currentp = current;
     struct inode *inode;
     int error;
 
+    error = -EPERM;
     if (suser()) {
 	error = namei(filename, &inode, IS_DIR, 0);
 	if (!error) {
-	    iput(current->fs.root);
-	    current->fs.root = inode;
+	    iput(currentp->fs.root);
+	    currentp->fs.root = inode;
 	}
-    } else
-	error = -EPERM;
+    }
     return error;
 }
 
@@ -308,21 +308,22 @@ static int do_chown(register struct inode *inode, uid_t user, gid_t group)
 
 static int do_chown(register struct inode *inode, uid_t user, gid_t group)
 {
-    if (!IS_RDONLY(inode)) {
-	if (suser() || (current->euid == inode->i_uid)) {
-	    if (group != (gid_t) - 1) {
-		inode->i_gid = (__u8) group;
-		inode->i_mode &= ~S_ISGID;
-	    }
-	    if (user != (uid_t) - 1) {
-		inode->i_uid = user;
-		inode->i_mode &= ~S_ISUID;
-	    }
-	    inode->i_dirt = 1;
-	} else
-	    return -EPERM;
-    } else
+    if (IS_RDONLY(inode))
 	return -EROFS;
+
+    if (!suser() && !(current->euid == inode->i_uid))
+	return -EPERM;
+
+    if (group != (gid_t) - 1) {
+	inode->i_gid = (__u8) group;
+	inode->i_mode &= ~S_ISGID;
+    }
+    if (user != (uid_t) - 1) {
+	inode->i_uid = user;
+	inode->i_mode &= ~S_ISUID;
+    }
+    inode->i_dirt = 1;
+
     return 0;
 }
 
@@ -473,15 +474,16 @@ static int close_fp(register struct file *filp)
 
 void _close_allfiles(void)
 {
-    int i;
     register struct file *filp;
+    register char *pi = 0;
 
-    for (i = 0; i < NR_OPEN; i++) {
-	if ((filp = current->files.fd[i])) {
-	    current->files.fd[i] = NULL;
+    do {
+	if ((filp = current->files.fd[(int) pi])) {
+	    current->files.fd[(int) pi] = NULL;
 	    close_fp(filp);
 	}
-    }
+	++pi;
+    } while (((int)pi) < NR_OPEN);
 }
 
 int sys_close(unsigned int fd)
@@ -489,11 +491,12 @@ int sys_close(unsigned int fd)
     register struct file *filp;
     register struct file_struct *cfiles = &current->files;
 
-    if (fd >= NR_OPEN)
-	return -EBADF;
-    (void) clear_bit(fd, &cfiles->close_on_exec);
-    if (!(filp = cfiles->fd[fd]))
-	return -EBADF;
-    cfiles->fd[fd] = NULL;
-    return (close_fp(filp));
+    if (fd < NR_OPEN) {
+	(void) clear_bit(fd, &cfiles->close_on_exec);
+	if ((filp = cfiles->fd[fd])) {
+	    cfiles->fd[fd] = NULL;
+	    return (close_fp(filp));
+	}
+    }
+    return -EBADF;
 }

@@ -93,7 +93,9 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
     static unsigned int ModeState = 0;
     static int E0Prefix = 0;
-    int code, mode, IsRelease, key, E0 = 0;
+    int code, mode, E0 = 0;
+    register char *keyp;
+    register char *IsReleasep;
 
     code = inb_p((void *) KBD_IO);
     mode = inb_p((void *) KBD_CTL);
@@ -114,42 +116,42 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	E0 = 1;
 	E0Prefix = 0;
     }
-    IsRelease = code & 0x80;
+    IsReleasep = (char *)(code & 0x80);
     switch (code & 0x7F) {
     case 29:
-	IsRelease ? (ModeState &= ~CTRL) : (ModeState |= CTRL);
+	IsReleasep ? (ModeState &= ~CTRL) : (ModeState |= CTRL);
 	return;
     case 42:
-	IsRelease ? (ModeState &= ~LSHIFT) : (ModeState |= LSHIFT);
+	IsReleasep ? (ModeState &= ~LSHIFT) : (ModeState |= LSHIFT);
 	return;
     case 54:
-	IsRelease ? (ModeState &= ~RSHIFT) : (ModeState |= RSHIFT);
+	IsReleasep ? (ModeState &= ~RSHIFT) : (ModeState |= RSHIFT);
 	return;
     case 56:
 
 #if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE)
 
 	if (E0 == 0) {
-	    IsRelease ? (ModeState &= ~ALT) : (ModeState |= ALT);
+	    IsReleasep ? (ModeState &= ~ALT) : (ModeState |= ALT);
 	} else {
-	    IsRelease ? (ModeState &= ~ALT_GR) : (ModeState |= ALT_GR);
+	    IsReleasep ? (ModeState &= ~ALT_GR) : (ModeState |= ALT_GR);
 	}
 
 #else
 
-	IsRelease ? (ModeState &= ~ALT) : (ModeState |= ALT);
+	IsReleasep ? (ModeState &= ~ALT) : (ModeState |= ALT);
 
 #endif
 
 	return;
     case 58:
-	ModeState ^= IsRelease ? 0 : CAPS;
+	ModeState ^= IsReleasep ? 0 : CAPS;
 	return;
     case 69:
-	ModeState ^= IsRelease ? 0 : NUM;
+	ModeState ^= IsReleasep ? 0 : NUM;
 	return;
     default:
-	if (IsRelease)
+	if (IsReleasep)
 	    return;
 	break;
     }
@@ -163,38 +165,38 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
      *      Pick the right keymap
      */
     if (ModeState & CAPS && !(ModeState & ANYSHIFT))
-	key = xtkb_scan_caps[code];
+	keyp = (char *) xtkb_scan_caps[code];
     else if (ModeState & ANYSHIFT && !(ModeState & CAPS))
-	key = xtkb_scan_shifted[code];
+	keyp = (char *) xtkb_scan_shifted[code];
 
     /* added for belgian keyboard (Stefke) */
 
     else if ((ModeState & CTRL) && (ModeState & ALT))
-	key = xtkb_scan_ctrl_alt[code];
+	keyp = (char *) xtkb_scan_ctrl_alt[code];
 
     /* end belgian                                  */
 
     /* added for German keyboard (Klaus Syttkus) */
 
     else if (ModeState & ALT_GR)
-	key = xtkb_scan_ctrl_alt[code];
+	keyp = (char *) xtkb_scan_ctrl_alt[code];
     /* end German */
     else
-	key = xtkb_scan[code];
+	keyp = (char *) xtkb_scan[code];
 
     if (ModeState & CTRL && code < 14 && !(ModeState & ALT))
-	key = xtkb_scan_shifted[code];
+	keyp = (char *) xtkb_scan_shifted[code];
     if (code < 70 && ModeState & NUM)
-	key = xtkb_scan_shifted[code];
+	keyp = (char *) xtkb_scan_shifted[code];
     /*
      *      Apply special modifiers
      */
     if (ModeState & ALT && !(ModeState & CTRL))	/* Changed to support CTRL-ALT */
-	key |= 0x80;		/* META-.. */
-    if (!key)			/* non meta-@ is 64 */
-	key = '@';
+	keyp = (char *)(((int) keyp) | 0x80); /* META-.. */
+    if (!keyp)			/* non meta-@ is 64 */
+	keyp = (char *) '@';
     if (ModeState & CTRL && !(ModeState & ALT))	/* Changed to support CTRL-ALT */
-	key &= 0x1F;		/* CTRL-.. */
+	keyp = (char *)(((int) keyp) & 0x1F); /* CTRL-.. */
     if (code < 0x45 && code > 0x3A) {	/* F1 .. F10 */
 
 #ifdef CONFIG_CONSOLE_DIRECT
@@ -231,9 +233,9 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	    AddQueue('\n');
 	    return;
 	}
-    if (key == '\r')
-	key = '\n';
-    AddQueue((unsigned char) key);
+    if (((int)keyp) == '\r')
+	keyp = (char *) '\n';
+    AddQueue((unsigned char) keyp);
 }
 
 /*

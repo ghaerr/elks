@@ -5,38 +5,29 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
 
-int check_task_table(void)
-{
-    register int i;
-    register int j;
-    j = 0;
-    for (j = 0; j < MAX_TASKS; j++) {
-	if (task[i].state != TASK_UNUSED && task[i].pid == 8) {
-	    j++;
-	}
-    }
-    return j;
-}
-
 /*
  *	Find a free task slot.
  */
 static pid_t find_empty_process(void)
 {
-    register pid_t i, unused = 0;
+/*      register pid_t i, unused = 0; */
+    register char *pi;
+    register char *punused;
     pid_t n;
 
-    for (i = 0; i < MAX_TASKS; i++)
-	if (task[i].state == TASK_UNUSED) {
-	    unused++;
-	    n = i;
+    pi = punused = 0;
+    do {
+	if (task[(int)pi].state == TASK_UNUSED) {
+	    punused++;
+	    n = (int)pi;
 	}
+    } while (((int)(++pi)) < MAX_TASKS);
 
-    if (unused <= 1)
-	printk("Only %d slots\n", unused);
-
-    if (unused == 0 || (unused == 1 && current->uid))
-	return -EAGAIN;
+    if (((int)punused) <= 1) {
+	printk("Only %d slots\n", (int)punused);
+	if (!punused || current->uid)
+	    return -EAGAIN;
+    }
 
     return n;
 }
@@ -46,19 +37,21 @@ pid_t get_pid(void)
 {
     register struct task_struct *p;
     static pid_t last_pid = 0;
-    register int i;
+/*      register int i; */
+    register char *pi;
 
   repeat:
     if (++last_pid == 32768)
 	last_pid = 1;
 
-    for (i = 0; i < MAX_TASKS; i++) {
-	p = &task[i];
+    pi = 0;
+    do {
+	p = &task[(int)pi];
 	if (p->pid == last_pid || p->pgrp == last_pid ||
 	    p->session == last_pid) {
 	    goto repeat;
 	}
-    }
+    } while (((int)(++pi)) < MAX_TASKS);
     return last_pid;
 }
 
@@ -100,8 +93,7 @@ pid_t do_fork(int virtual)
 	    return -ENOMEM;
 	}
 
-	t->t_regs.ds = t->mm.dseg;
-	t->t_regs.ss = t->mm.dseg;
+	t->t_regs.ds = t->t_regs.ss = t->mm.dseg;
     }
     t->t_regs.ksp = ((__u16) t->t_kstack) + KSTACK_BYTES;
 
@@ -130,15 +122,10 @@ pid_t do_fork(int virtual)
 
     /* Set up our family tree */
     t->p_parent = currentp;
-    t->p_nextsib = NULL;
-    t->p_child = NULL;
-    t->child_lastend = 0;
-    t->lastend_status = 0;
-    if (currentp->p_child) {
+    t->p_nextsib = t->p_child = /* NULL; */
+    t->child_lastend = t->lastend_status = 0;
+    if ((t->p_prevsib = currentp->p_child) != NULL) {
 	currentp->p_child->p_nextsib = t;
-	t->p_prevsib = currentp->p_child;
-    } else {
-	t->p_prevsib = NULL;
     }
     currentp->p_child = t;
 

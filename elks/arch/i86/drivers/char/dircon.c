@@ -28,8 +28,8 @@
 
 #include "console.h"
 
-#define islower(c) ((c) >= 'a' && (c) <= 'z')
-#define isupper(c) ((c) >= 'A' && (c) <= 'Z')
+/* Assumes ASCII values. */
+#define isalpha(c) (((unsigned char)(((c) | 0x20) - 'a')) < 26)
 
 #if 0
 /* public interface of dircon.c: */
@@ -127,15 +127,16 @@ extern void AddQueue(unsigned char Key);	/* From xt_key.c */
 
 static void PositionCursor(register Console * C)
 {
+    register char *CCBasep = (char *) CCBase;
     int Pos;
 
-    if (C != Visible)
-	return;
-    Pos = C->cx + Width * C->cy + (C->pageno * PageSize >> 1);
-    outb(14, CCBase);
-    outb((unsigned char) ((Pos >> 8) & 0xFF), (char *) CCBase + 1);
-    outb(15, CCBase);
-    outb((unsigned char) (Pos & 0xFF), (char *) CCBase + 1);
+    if (C == Visible) {
+	Pos = C->cx + Width * C->cy + (C->pageno * PageSize >> 1);
+	outb(14, CCBasep);
+	outb((unsigned char) ((Pos >> 8) & 0xFF), CCBasep + 1);
+	outb(15, CCBasep);
+	outb((unsigned char) (Pos & 0xFF), CCBasep + 1);
+    }
 }
 
 void WriteChar(register Console * C, char c)
@@ -154,7 +155,7 @@ void WriteChar(register Console * C, char c)
     if (C->state == ST_ANSI) {
 	if (C->parmptr < &C->params[MAXPARMS])
 	    *C->parmptr++ = (unsigned char) c;
-	if (isupper(c) || islower(c)) {
+	if (isalpha(c)) {
 	    *C->parmptr = 0;
 	    AnsiCmd(C, c);
 	}
@@ -169,10 +170,9 @@ void WriteChar(register Console * C, char c)
 	if (c == '[') {
 	    C->state = ST_ANSI;
 	    C->parmptr = C->params;
-	    return;
-	}
+	} else
 #endif
-	Vt52Cmd(C, c);
+	    Vt52Cmd(C, c);
 	return;
     }
 #endif
@@ -227,44 +227,45 @@ void con_charout(char Ch)
 
 static void ScrollUp(register Console * C, int st, int en)
 {
-    unsigned rdofs, wrofs, cnt;
+    unsigned rdofs, wrofs;
 
-    if (st < 1 || st >= en)
-	return;
-    rdofs = (unsigned int) ((Width << 1) * st);
-    wrofs = rdofs - (Width << 1);
-    cnt = (unsigned) (Width * (en - st));
-    far_memmove(C->vseg, rdofs, C->vseg, wrofs, cnt << 1);
-    en--;
-    ClearRange(C, 0, en, Width, en);
+    if (st >= 1 && st < en) {
+	wrofs = (rdofs = (unsigned int) ((Width << 1) * st)) - (Width << 1);
+	far_memmove(C->vseg, rdofs, C->vseg, wrofs,
+		    ((unsigned) (Width * (en - st))) << 1);
+	en--;
+	ClearRange(C, 0, en, Width, en);
+    }
 }
 
 #ifdef CONFIG_DCON_VT52
 
 static void ScrollDown(register Console * C, int st, int en)
 {
-    unsigned rdofs, wrofs, cnt;
+    unsigned rdofs, wrofs;
 
-    if (st > en || en > Height)
-	return;
-    rdofs = (unsigned int) ((Width << 1) * st);
-    wrofs = rdofs + (Width << 1);
-    cnt = (unsigned) (Width * (en - st));
-    far_memmove(C->vseg, rdofs, C->vseg, wrofs, cnt << 1);
-    ClearRange(C, 0, st, Width, st);
+    if (st <= en && en <= Height) {
+	wrofs = (rdofs = (unsigned int) ((Width << 1) * st)) + (Width << 1);
+	far_memmove(C->vseg, rdofs, C->vseg, wrofs,
+		    ((unsigned) (Width * (en - st))) << 1);
+	ClearRange(C, 0, st, Width, st);
+    }
 }
 
 #endif
 
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 {
-    __u16 st, en, ClrW, ofs;
+    __u16 en, ClrW;
+    register char *ofsp;
 
-    st = (__u16) ((x + y * Width) << 1);
-    en = (__u16) ((xx + yy * Width) << 1);
     ClrW = (__u16) ((A_DEFAULT << 8) + ' ');
-    for (ofs = st; ofs < en; ofs += 2)
-	pokew((__u16) C->vseg, ofs, ClrW);
+    en = (__u16) ((xx + yy * Width) << 1);
+    ofsp = (char *)((__u16) ((x + y * Width) << 1));
+    while (((__u16)ofsp) < en) {
+	pokew((__u16) C->vseg, (__u16) ofsp, ClrW);
+	ofsp += 2;
+    }
 }
 
 #ifdef CONFIG_DCON_VT52
@@ -366,20 +367,19 @@ void Vt52CmdEx(register Console * C, char c)
 
 #ifdef CONFIG_DCON_ANSI
 
-static int parm1(register unsigned char *buf)
+static int parm1(unsigned char *buf)
 {
-    register int n = atoi((char *) buf);
+    register char *np;
 
-    if (n == 0)
-	return 1;
-    return n;
+    np = (char *) atoi((char *) buf);
+    return (np) ? ((int) np) : 1;
+
 }
 
 static int parm2(register unsigned char *buf)
 {
-    if (*buf != ';')
-	while (*buf && *buf != ';')
-	    buf++;
+    while (*buf != ';' && *buf)
+	buf++;
     if (*buf)
 	buf++;
     return parm1(buf);
@@ -459,6 +459,7 @@ static void AnsiCmd(register Console * C, char c)
 	    case '8':
 		C->attr = A_BLANK;
 		continue;
+
 	    case '3':
 		if (*p >= '0' && *p <= '7') {
 		    C->attr &= 0xf8;
@@ -492,13 +493,12 @@ static void AnsiCmd(register Console * C, char c)
 
 void Console_set_vc(unsigned int N)
 {
+    register char *CCBasep;
     unsigned int offset;
 
-    if (N < 0 || N >= NumConsoles)
-	return;
-    if (Visible == &Con[N])
-	return;
-    if (glock)
+    if ((N >= NumConsoles)
+	|| (Visible == &Con[N])
+	|| (glock))
 	return;
     Visible = &Con[N];
 
@@ -506,9 +506,10 @@ void Console_set_vc(unsigned int N)
     far_memmove(Visible->vseg, 0, VideoSeg, 0, (Width * Height) << 1);
 #endif
 
+    CCBasep = (char *) CCBase;
     offset = N * PageSize >> 1;
-    outw((unsigned short int) ((offset & 0xff00) | 0x0c), CCBase);
-    outw((unsigned short int) (((offset & 0xff) << 8) | 0x0d), CCBase);
+    outw((unsigned short int) ((offset & 0xff00) | 0x0c), CCBasep);
+    outw((unsigned short int) (((offset & 0xff) << 8) | 0x0d), CCBasep);
     PositionCursor(Visible);
     Current_VCminor = (int) N;
 }
@@ -517,22 +518,20 @@ void Console_set_vc(unsigned int N)
 
 static void Console_gotoxy(register Console * C, int x, int y)
 {
-    if (x >= MaxCol)
-	x = MaxCol;
-    if (y >= MaxRow)
-	y = MaxRow;
-    if (x < 0)
-	x = 0;
-    if (y < 0)
-	y = 0;
-    C->cx = x;
-    C->cy = y;
+    {
+	register char *xp = (char *)x;
+	C->cx = ((((int) xp) >= MaxCol) ? MaxCol : ((((int)xp) < 0) ? 0 : (int)x));
+    }
+    {
+	register char *yp = (char *)y;
+	C->cy = ((((int) yp) >= MaxRow) ? MaxRow : ((((int)yp) < 0) ? 0 : (int)y));
+    }
     PositionCursor(C);
 }
 
 #endif
 
-int Console_ioctl(struct tty *tty, int cmd, char *arg)
+int Console_ioctl(register struct tty *tty, int cmd, char *arg)
 {
     switch (cmd) {
     case DCGET_GRAPH:
@@ -547,19 +546,19 @@ int Console_ioctl(struct tty *tty, int cmd, char *arg)
 	    wake_up(&glock_wait);
 	    return 0;
 	}
-	return -EINVAL;
+	break;
     case DCSET_KRAW:
 	if (glock == &Con[tty->minor]) {
 	    kraw = 1;
 	    return 0;
 	}
-	return -EINVAL;
+	break;
     case DCREL_KRAW:
 	if ((glock == &Con[tty->minor]) && (kraw == 1)) {
 	    kraw = 0;
 	    return 1;
 	}
-	return -EINVAL;
+/*  	break; */
     }
 
     return -EINVAL;
@@ -567,7 +566,7 @@ int Console_ioctl(struct tty *tty, int cmd, char *arg)
 
 int Console_write(register struct tty *tty)
 {
-    Console *C = &Con[tty->minor];
+    register Console *C = &Con[tty->minor];
     int cnt = 0;
     unsigned char ch;
 
@@ -593,9 +592,7 @@ void Console_release(struct tty *tty)
 
 int Console_open(struct tty *tty)
 {
-    if (tty->minor >= NumConsoles)
-	return -ENODEV;
-    return 0;
+    return (tty->minor >= NumConsoles) ? -ENODEV : 0;
 }
 
 /*@-type@*/
@@ -613,7 +610,6 @@ struct tty_ops dircon_ops = {
 void init_console(void)
 {
     register Console *C;
-    unsigned int i;
 
     MaxCol = (Width = peekb(0x40, 0x4a)) - 1;
 
@@ -621,28 +617,32 @@ void init_console(void)
     MaxRow = (Height = 25) - 1;
     CCBase = (void *) peekw(0x40, 0x63);
     PageSize = (unsigned int) peekw(0x40, 0x4C);
+
+    VideoSeg = 0xb800;
     if (peekb(0x40, 0x49) == 7) {
 	VideoSeg = 0xB000;
 	NumConsoles = 1;
-    } else
-	VideoSeg = 0xb800;
+    }
 
-    for (i = 0; i < NumConsoles; i++) {
-	C = &Con[i];
-	C->cx = C->cy = 0;
-	C->state = ST_NORMAL;
-	C->vseg = VideoSeg + (PageSize >> 4) * i;
-	C->pageno = (int) i;
-	C->attr = A_DEFAULT;
+    {
+	register char *pi;
+	for (pi = 0; ((unsigned int)pi) < NumConsoles; pi++) {
+	    C = &Con[(unsigned int)pi];
+	    C->cx = C->cy = 0;
+	    C->state = ST_NORMAL;
+	    C->vseg = VideoSeg + (PageSize >> 4) * ((unsigned int)pi);
+	    C->pageno = (int) pi;
+	    C->attr = A_DEFAULT;
 
 #ifdef CONFIG_DCON_ANSI
 
-	C->savex = C->savey = 0;
+	    C->savex = C->savey = 0;
 
 #endif
 
-	if (i != 0)
-	    ClearRange(C, 0, 0, Width, Height);
+	    if (pi)
+		ClearRange(C, 0, 0, Width, Height);
+	}
     }
 
     C = &Con[0];

@@ -28,9 +28,9 @@ static int blk_rw(struct inode *inode, register struct file *filp,
     kdev_t dev;
     off_t offset;
     size_t chars;
-    int write_error, written = 0;
+    int written;
 
-    write_error = 0;
+    written = 0;
     dev = inode->i_rdev;
 
     /*
@@ -51,10 +51,10 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	 *      Read the block in - use getblk on a write
 	 *      of a whole block to avoid a read of the data.
 	 */
-	if (wr == BLOCK_WRITE && chars == BLOCK_SIZE)
-	    bh = getblk(dev, block);
-	else
-	    bh = bread(dev, block);
+	bh = (wr == BLOCK_WRITE && chars == BLOCK_SIZE)
+	    ? getblk(dev, block)
+	    : bread(dev, block);
+
 	block++;
 	if (!bh)
 	    return written ? written : -EIO;
@@ -77,8 +77,7 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	     *      Alter buffer, mark dirty
 	     */
 	    memcpy_fromfs(p, buf, chars);
-	    bh->b_uptodate = 1;
-	    bh->b_dirty = 1;
+	    bh->b_uptodate = bh->b_dirty = 1;
 	} else {
 	    /*
 	     *      Empty buffer data. Buffer unchanged
@@ -93,36 +92,32 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	p += chars;
 #endif
 
-	offset = 0;
 	buf += chars;
+	offset = 0;
 	if (wr == BLOCK_WRITE) {
 	    /*
 	     *      Writing: queue physical I/O
 	     */
 	    ll_rw_blk(WRITE, bh);
 	    wait_on_buffer(bh);
-	    if (!bh->b_uptodate)
-		write_error = 1;
+	    if (!bh->b_uptodate) { /* Write error. */
+		unmap_brelse(bh);
+		return -EIO;
+	    }
 	}
 	unmap_brelse(bh);
-	if (write_error)
-	    break;
     }
-    if (write_error)
-	written = -EIO;
-    else if ((wr == BLOCK_WRITE) && !written)
-	written = -ENOSPC;
-    return written;
+    return ((wr == BLOCK_WRITE) && !written) ? -ENOSPC : written;
 }
 
-int block_read(register struct inode *inode, register struct file *filp,
-	       register char *buf, size_t count)
+int block_read(struct inode *inode, register struct file *filp,
+	       char *buf, size_t count)
 {
     return blk_rw(inode, filp, buf, count, BLOCK_READ);
 }
 
-int block_write(register struct inode *inode, register struct file *filp,
-		register char *buf, size_t count)
+int block_write(struct inode *inode, register struct file *filp,
+		char *buf, size_t count)
 {
     return blk_rw(inode, filp, buf, count, BLOCK_WRITE);
 }

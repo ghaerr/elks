@@ -77,9 +77,9 @@ struct malloc_head swapmap = { swap_holes, MAX_SWAP_SEGMENTS };
 static struct malloc_hole *alloc_hole(struct malloc_head *mh)
 {
     register struct malloc_hole *m = mh->holes;
-    int ct = 0;
+    register char *ct = (char *)(mh->size);
 
-    while (ct++ < mh->size) {
+    while (ct--) {
 	if (m->flags == HOLE_SPARE)
 	    return m;
 	m++;
@@ -165,7 +165,8 @@ void dmem(struct malloc_head *mh)
 
 static struct malloc_hole *best_fit_hole(struct malloc_head *mh, segext_t size)
 {
-    register struct malloc_hole *m = mh->holes, *best = NULL;
+    register struct malloc_hole *m = mh->holes;
+    register struct malloc_hole *best = NULL;
 
     while (m) {
 	if (m->extent >= size && m->flags == HOLE_FREE)
@@ -184,12 +185,10 @@ static struct malloc_hole *find_hole(struct malloc_head *mh, seg_t base)
 {
     register struct malloc_hole *m = mh->holes;
 
-    while (m) {
-	if (m->page_base == base)
-	    return m;
+    while (m && (m->page_base != base)) {
 	m = m->next;
     }
-    return NULL;
+    return m;
 }
 
 /*
@@ -448,13 +447,13 @@ int sys_brk(__pptr len)
 void mm_init(seg_t start, seg_t end)
 {
     register struct malloc_hole *holep = &holes[0];
-    int ct;
+    register char *pct;
 
     /*
      *      Mark pages free.
      */
-    for (ct = 1; ct < MAX_SEGMENTS; ct++)
-	holes[ct].flags = HOLE_SPARE;
+    for (pct = (char *) 1 ; ((int) pct) < MAX_SEGMENTS ; pct++)
+	holes[(int)pct].flags = HOLE_SPARE;
 
     /*
      *      Single hole containing all user memory.

@@ -53,13 +53,10 @@ void add_to_runqueue(register struct task_struct *p)
     init_task.prev_run = p;
 }
 
-void del_from_runqueue(struct task_struct *p)
+void del_from_runqueue(register struct task_struct *p)
 {
-    register struct task_struct *next = p->next_run;
-    register struct task_struct *prev = p->prev_run;
-
 #if 0				/* sanity tests */
-    if (!next || !prev) {
+    if (!p->next_run || !p->prev_run) {
 	printk("task %d not on run-queue (state=%d)\n", p->pid, p->state);
 	return;
     }
@@ -71,10 +68,9 @@ void del_from_runqueue(struct task_struct *p)
 #if 0
     nr_running--;
 #endif
-        next->prev_run = prev;
-        prev->next_run = next;
-        p->next_run = NULL;
-        p->prev_run = NULL;
+	p->next_run->prev_run = p->prev_run;
+	p->prev_run->next_run = p->next_run;
+        p->next_run = p->prev_run = NULL;
 #ifdef CONFIG_SWAP
         p->last_running = jiffies;
 #endif
@@ -136,6 +132,8 @@ void schedule(void)
 	__ptask currentp = current;
 	jiff_t timeout = 0L;
 
+    prev = currentp;
+#define currentp prev
 	if (currentp->t_kstackm != KSTACK_MAGIC)
 		panic("Process %d exceeded kernel stack limit! magic %x\n", 
 			currentp->pid, currentp->t_kstackm);
@@ -143,6 +141,7 @@ void schedule(void)
 	/* We have to let a task exit! */
 	if (currentp->state == TASK_EXITING)
 		return;
+#undef currentp
 
     run_timer_list();
 
@@ -150,7 +149,6 @@ void schedule(void)
     need_resched = 0;
 #endif
 
-    prev = currentp;
     next = prev->next_run;
     clr_irq();
 
@@ -166,8 +164,7 @@ void schedule(void)
 	printk("jiffies = %d/%d, timeout = %d/%d\n", jiffies, timeout);
 #endif
 	if (timeout && (timeout <= jiffies)) {
-	    prev->timeout = 0;
-	    timeout = 0;
+	    prev->timeout = timeout = 0;
 	  makerunnable:
 #if 0
 	    printk("sched: int -> run\n");
@@ -298,16 +295,15 @@ int del_timer(register struct timer_list *timer)
     return ret;
 }
 
-void init_timer(struct timer_list *timer)
+void init_timer(register struct timer_list *timer)
 {
-    timer->tl_next = NULL;
-    timer->tl_prev = NULL;
+    timer->tl_next = timer->tl_prev = NULL;
 }
 
 void add_timer(register struct timer_list *timer)
 {
     flag_t flags;
-    struct timer_list *next = tl_list.tl_next;
+    register struct timer_list *next = tl_list.tl_next;
     struct timer_list *prev = &tl_list;
 
     save_flags(flags);
@@ -324,19 +320,18 @@ void add_timer(register struct timer_list *timer)
 	prev = next;
 	next = next->tl_next;
     }
-    timer->tl_prev = prev;
+    (timer->tl_prev = prev)->tl_next = timer;
 
 #if 0
     timer->tl_next = NULL;
 #endif
 
-    prev->tl_next = timer;
     restore_flags(flags);
 }
 
 static void run_timer_list(void)
 {
-    struct timer_list *timer = tl_list.tl_next;
+    register struct timer_list *timer = tl_list.tl_next;
 
     clr_irq();
     while (timer && timer->tl_expires < jiffies) {

@@ -30,13 +30,16 @@
 
 int get_unused_fd(void)
 {
-    unsigned int fd;
+    register char *pfd = 0;
 
-    for (fd = 0; fd < NR_OPEN; fd++)
-	if (!current->files.fd[fd]) {
-	    (void) clear_bit(fd, &current->files.close_on_exec);
-	    return (int) fd;
+    do {
+	if (!current->files.fd[(unsigned int) pfd]) {
+	    (void) clear_bit((unsigned int) pfd,
+			     &current->files.close_on_exec);
+	    return (int) pfd;
 	}
+	++pfd;
+    } while (((int)pfd) < NR_OPEN);
 
     return -EMFILE;
 }
@@ -61,14 +64,16 @@ int pipe_in_use[MAX_PIPES] = /*@i1@*/ { 0, };
 
 char *get_pipe_mem(void)
 {
-    int i;
+    register char *pi = 0;
 
-    for (i = 0; i < MAX_PIPES; i++) {
-	if (!pipe_in_use[i]) {
-	    pipe_in_use[i] = 1;
-	    return pipe_base[i];
+    do {
+	if (!pipe_in_use[(int)pi]) {
+	    pipe_in_use[(int)pi] = 1;
+	    return pipe_base[(int)pi];
 	}
-    }
+	++pi;
+    } while (((int)pi) < MAX_PIPES);
+
     debug("PIPE: No more buffers.\n");		/* FIXME */
     return NULL;
 }
@@ -85,10 +90,7 @@ static int pipe_read(register struct inode *inode, struct file *filp,
 	if ((inode->u.pipe_i.lock))
 	    return -EAGAIN;
 	if (((inode->u.pipe_i.len) == 0))
-	    if ((inode->u.pipe_i.writers))
-		return -EAGAIN;
-	    else
-		return 0;
+	    return ((inode->u.pipe_i.writers)) ? -EAGAIN : 0;
     } else
 	while (((inode->u.pipe_i.len) == 0) || (inode->u.pipe_i.lock)) {
 	    if (((inode->u.pipe_i.len) == 0)) {
@@ -138,10 +140,7 @@ static int pipe_write(register struct inode *inode, struct file *filp,
 	return -EPIPE;
     }
 
-    if (count <= PIPE_BUF)
-	free = (size_t) count;
-    else
-	free = 1;
+    free = (count <= PIPE_BUF) ? (size_t) count : 1;
     while (count > 0) {
 	while (((PIPE_BUF - (inode->u.pipe_i.len)) < free)
 	       || (inode->u.pipe_i.lock)) {

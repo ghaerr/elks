@@ -63,32 +63,38 @@ static int minix_follow_link(register struct inode *dir,
     return error;
 }
 
-static int minix_readlink(register struct inode *inode,
+static int minix_readlink(struct inode *inode,
 			  char *buffer, int buflen)
 {
     register struct buffer_head *bh;
-    int i;
     char c;
 
-    if (!S_ISLNK(inode->i_mode)) {
-	iput(inode);
-	return -EINVAL;
+    {
+	register struct inode *inodep = inode;
+	if (!S_ISLNK(inodep->i_mode)) {
+	    iput(inodep);
+	    return -EINVAL;
+	}
+	if (buflen > 1023)
+	    buflen = 1023;
+	bh = minix_bread(inodep, 0, 0);
+	iput(inodep);
     }
-    if (buflen > 1023)
-	buflen = 1023;
-    bh = minix_bread(inode, 0, 0);
-    iput(inode);
+
     if (!bh)
 	return 0;
     map_buffer(bh);
-    i = 0;
-    while (i < buflen && (c = bh->b_data[i])) {
-	i++;
-	memcpy_tofs(buffer++, &c, 1);
-	/* put_fs_byte(c,buffer++); */
+
+    {
+	register char *pi = 0;
+	while (((int)pi) < buflen && (c = bh->b_data[(int)pi])) {
+	    pi++;
+	    memcpy_tofs(buffer++, &c, 1);
+	    /* put_fs_byte(c,buffer++); */
+	}
+	unmap_brelse(bh);
+	return (int)pi;
     }
-    unmap_brelse(bh);
-    return i;
 }
 
 /*

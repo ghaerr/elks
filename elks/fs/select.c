@@ -88,29 +88,30 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 		     fd_set * res_in, fd_set * res_out, fd_set * res_ex)
 {
     int count;
-    __ptask currentp = current;
+    register __ptask currentp = current;
     fd_set set;
-    int i, j;
+    int j;
     int max = -1;
+    register char *pi;
 
     j = 0;
     for (;;) {
-	i = j * __NFDBITS;
-	if (i >= n)
+	pi = (char *)(j * __NFDBITS);
+	if (((int)pi) >= n)
 	    break;
 	set = *in | *out | *ex;
 
 	j++;
-	for (; set; i++, set >>= 1) {
-	    if (i >= n)
+	for (; set; pi++, set >>= 1) {
+	    if (((int)pi) >= n)
 		goto end_check;
 	    if (!(set & 1))
 		continue;
-	    if (!currentp->files.fd[i])
+	    if (!currentp->files.fd[(int)pi])
 		return -EBADF;
-	    if (!currentp->files.fd[i]->f_inode)
+	    if (!currentp->files.fd[(int)pi]->f_inode)
 		return -EBADF;
-	    max = i;
+	    max = (int)pi;
 	}
     }
   end_check:
@@ -120,19 +121,19 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
     currentp->state = TASK_INTERRUPTIBLE;
     currentp->pollhash = 0;
     wait_set(&select_poll);
-    for (i = 0; i < n; i++) {
-	struct file *file = currentp->files.fd[i];
+    for (pi = 0; ((int)pi) < n; pi++) {
+	struct file *file = currentp->files.fd[(int)pi];
 	if (file) {
-	    if (FD_ISSET(i, in) && check(SEL_IN, file)) {
-		FD_SET(i, res_in);
+	    if (FD_ISSET(((int)pi), in) && check(SEL_IN, file)) {
+		FD_SET(((int)pi), res_in);
 		count++;
 	    }
-	    if (FD_ISSET(i, out) && check(SEL_OUT, file)) {
-		FD_SET(i, res_out);
+	    if (FD_ISSET(((int)pi), out) && check(SEL_OUT, file)) {
+		FD_SET(((int)pi), res_out);
 		count++;
 	    }
-	    if (FD_ISSET(i, ex) && check(SEL_EX, file)) {
-		FD_SET(i, res_ex);
+	    if (FD_ISSET(((int)pi), ex) && check(SEL_EX, file)) {
+		FD_SET(((int)pi), res_ex);
 		count++;
 	    }
 	}
@@ -154,7 +155,7 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
  * we'll write to it eventually..
  *
  */
-static int get_fd_set(fd_set * fs_pointer, fd_set * fdset)
+static int get_fd_set(register fd_set * fs_pointer, register fd_set * fdset)
 {
     if (fs_pointer)
 	return verified_memcpy_fromfs((char *) fdset, fs_pointer,
@@ -164,13 +165,13 @@ static int get_fd_set(fd_set * fs_pointer, fd_set * fdset)
     return 0;
 }
 
-static void set_fd_set(fd_set * fs_pointer, fd_set * fdset)
+static void set_fd_set(register fd_set * fs_pointer, fd_set * fdset)
 {
     if (fs_pointer)
 	memcpy_tofs(fs_pointer, fdset, sizeof(fd_set));
 }
 
-static void zero_fd_set(register fd_set * fdset)
+static void zero_fd_set(fd_set * fdset)
 {
     memset(fdset, 0, sizeof(fd_set));
 }

@@ -64,10 +64,10 @@ static void nosound(void)
  */
 void bell(void)
 {
-    unsigned int i;
+    register char *pi = (char *) 60000U;
 
     sound(800);
-    for(i=0; i<60000; ++i)
+	while (--pi)
 	/* Do nothing */ ;
     nosound();
 }

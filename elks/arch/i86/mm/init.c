@@ -30,7 +30,7 @@ char cpuid[17], proc_name[17];
 void setup_mm(void)
 {
     long memstart, memend;
-    int i;
+    register char *pi;
     __u16 basemem = setupw(0x2a);
     __u16 xms = setupw(2);		/* Fetched by boot code */
 
@@ -40,16 +40,17 @@ void setup_mm(void)
 
     arch_cpu = setupb(0x20);
 
-    for (i = 0; i < 16; i++) {
-	proc_name[i] = setupb(0x30 + i);
-	cpuid[i] = setupb(0x50 + i);
+    for (pi = 0; ((int)pi) < 16; pi++) {
+	proc_name[(int)pi] = setupb(0x30 + (int)pi);
+	cpuid[(int)pi] = setupb(0x50 + (int)pi);
     }
     proc_name[16] = cpuid[16] = '\0';
 
 #ifdef CONFIG_ARCH_SIBO
 
-    printk("Psion Series 3a machine, %s CPU\n%dK base", proc_name, basemem);
-    printk(", CPUID `NEC V30'", cpuid);
+    printk("Psion Series 3a machine, %s CPU\n%dK base"
+	   ", CPUID `NEC V30'",
+	   proc_name, basemem, cpuid);
 
 #else
 
@@ -68,10 +69,10 @@ void setup_mm(void)
 
 #endif
 
-    printk(".\nELKS kernel (%d text + %d data + %d bss)\n",
-	   (int) _endtext, (int) _enddata, (int) _endbss - (int) _enddata);
-
-    printk("Kernel text at %x:0000, data at %x:0000 \n", get_cs(), get_ds());
+    printk(".\nELKS kernel (%d text + %d data + %d bss)\n"
+	   "Kernel text at %x:0000, data at %x:0000 \n",
+	   (int) _endtext, (int) _enddata, (int) _endbss - (int) _enddata,
+	   get_cs(), get_ds());
 
     /*
      *      This computes the 640K - _endbss 

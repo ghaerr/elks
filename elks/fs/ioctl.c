@@ -22,8 +22,9 @@ static int file_ioctl(register struct file *filp, unsigned int cmd,
 
     register struct file_operations *fop = filp->f_op;
 
-    switch (cmd) {
-    case FIONREAD:
+    if (cmd == FIONREAD) {
+/*      switch (cmd) { */
+/*      case FIONREAD: */
 	val = filp->f_inode->i_size - filp->f_pos;
 	return verified_memcpy_tofs((char *) arg, (char *) &val,
 				    sizeof(loff_t));
@@ -57,10 +58,9 @@ int sys_ioctl(int fd, unsigned int cmd, unsigned int arg)
 #if 0
 	on = get_fs_word((unsigned int *) arg);
 #endif
-	if (on)
-	    filp->f_flags |= O_NONBLOCK;
-	else
-	    filp->f_flags &= ~O_NONBLOCK;
+	filp->f_flags = (on)
+	    ? filp->f_flags | O_NONBLOCK
+	    : filp->f_flags & ~O_NONBLOCK;
 	return 0;
 
     default:

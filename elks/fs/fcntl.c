@@ -24,11 +24,8 @@ static int dupfd(unsigned int fd, unsigned int arg)
     if (arg >= NR_OPEN)
 	return -EINVAL;
 
-    while (arg < NR_OPEN)
-	if (fils->fd[arg])
-	    arg++;
-	else
-	    break;
+    while ((arg < NR_OPEN) && (fils->fd[arg]))
+	++arg;
 
     if (arg >= NR_OPEN)
 	return -EMFILE;
@@ -41,17 +38,16 @@ static int dupfd(unsigned int fd, unsigned int arg)
 
 int sys_dup2(unsigned int oldfd, unsigned int newfd)
 {
-    if (oldfd >= NR_OPEN || !current->files.fd[oldfd])
-	return -EBADF;
-
-    if (newfd == oldfd)
-	return (int) newfd;
-
-    if (newfd >= NR_OPEN)
-	return -EBADF;		/* following POSIX.1 6.2.1 */
-
-    sys_close(newfd);
-    return dupfd(oldfd, newfd);
+    if (oldfd < NR_OPEN && current->files.fd[oldfd]) {
+	if (newfd == oldfd)
+	    return (int) newfd;
+	/* following POSIX.1 6.2.1, if newfd >= NR_OPEN, return -EBADF */
+	if (newfd < NR_OPEN) {
+	    sys_close(newfd);
+	    return dupfd(oldfd, newfd);
+	}
+    }
+    return -EBADF;
 }
 
 int sys_dup(unsigned int fildes)
@@ -90,9 +86,8 @@ int sys_fcntl(unsigned int fd, unsigned int cmd, unsigned int arg)
 	 * In the case of an append-only file, O_APPEND
 	 * cannot be cleared
 	 */
-	if (IS_APPEND(filp->f_inode) && !(arg & O_APPEND))
-	    result = -EPERM;
-	else {
+	result = -EPERM;
+	if (!IS_APPEND(filp->f_inode) || (arg & O_APPEND)) {
 	    filp->f_flags &= ~(O_APPEND | O_NONBLOCK);
 	    filp->f_flags |= arg & (O_APPEND | O_NONBLOCK);
 	    result = 0;

@@ -27,7 +27,7 @@ static struct wait_queue inode_wait;
 static int nr_inodes = 0;
 static int nr_free_inodes = 0;
 
-static void insert_inode_free(REGOPT struct inode *inode)
+static void insert_inode_free(register struct inode *inode)
 {
     register struct inode *in;
     in = inode->i_next = first_inode;
@@ -37,7 +37,7 @@ static void insert_inode_free(REGOPT struct inode *inode)
     first_inode = inode;
 }
 
-static void remove_inode_free(REGOPT struct inode *inode)
+static void remove_inode_free(register struct inode *inode)
 {
     register struct inode *in;
     if (first_inode == inode)
@@ -49,7 +49,7 @@ static void remove_inode_free(REGOPT struct inode *inode)
     inode->i_next = inode->i_prev = NULL;
 }
 
-static void put_last_free(REGOPT struct inode *inode)
+static void put_last_free(register struct inode *inode)
 {
     remove_inode_free(inode);
     if (first_inode) {
@@ -63,16 +63,14 @@ static void put_last_free(REGOPT struct inode *inode)
 
 static void setup_inodes(void)
 {
-    REGOPT struct inode *inode;
-    int i = NR_INODE;
+    register struct inode *inode = inode_block;
+    register char *pi;
 
-    inode = inode_block;
+    pi = (char *)(nr_inodes = nr_free_inodes = NR_INODE);
 
-    nr_inodes = i;
-    nr_free_inodes = i;
-
-    for (; i; i--)
+    do {
 	insert_inode_free(inode++);
+    } while (--pi);
 }
 
 void inode_init(void)
@@ -88,7 +86,7 @@ void inode_init(void)
  * much better for interrupt latency.
  */
 
-static void wait_on_inode(REGOPT struct inode *inode)
+static void wait_on_inode(register struct inode *inode)
 {
     if (!inode->i_lock)
 	return;
@@ -104,13 +102,13 @@ static void wait_on_inode(REGOPT struct inode *inode)
     current->state = TASK_RUNNING;
 }
 
-static void lock_inode(REGOPT struct inode *inode)
+static void lock_inode(register struct inode *inode)
 {
     wait_on_inode(inode);
     inode->i_lock = 1;
 }
 
-static void unlock_inode(REGOPT struct inode *inode)
+static void unlock_inode(register struct inode *inode)
 {
     inode->i_lock = 0;
     wake_up(&inode->i_wait);
@@ -121,7 +119,7 @@ static void unlock_inode(REGOPT struct inode *inode)
  * because they are not in the object as such
  */
 
-void clear_inode(REGOPT struct inode *inode)
+void clear_inode(register struct inode *inode)
 {
     wait_on_inode(inode);
     remove_inode_free(inode);
@@ -133,7 +131,7 @@ void clear_inode(REGOPT struct inode *inode)
 
 int fs_may_mount(kdev_t dev)
 {
-    REGOPT struct inode *inode, *next;
+    register struct inode *inode, *next;
     int i;
 
     next = first_inode;
@@ -149,9 +147,9 @@ int fs_may_mount(kdev_t dev)
     return 1;
 }
 
-int fs_may_umount(kdev_t dev, REGOPT struct inode *mount_rooti)
+int fs_may_umount(kdev_t dev, register struct inode *mount_rooti)
 {
-    REGOPT struct inode *inode;
+    register struct inode *inode;
     int i;
 
     inode = first_inode;
@@ -167,7 +165,7 @@ int fs_may_umount(kdev_t dev, REGOPT struct inode *mount_rooti)
 
 int fs_may_remount_ro(kdev_t dev)
 {
-    REGOPT struct file *file;
+    register struct file *file;
     register struct inode *inode;
     int i;
 
@@ -182,7 +180,7 @@ int fs_may_remount_ro(kdev_t dev)
     return 1;
 }
 
-static void write_inode(REGOPT struct inode *inode)
+static void write_inode(register struct inode *inode)
 {
     register struct super_block *sb = inode->i_sb;
     if (!inode->i_dirt)
@@ -199,7 +197,7 @@ static void write_inode(REGOPT struct inode *inode)
     unlock_inode(inode);
 }
 
-static void read_inode(REGOPT struct inode *inode)
+static void read_inode(register struct inode *inode)
 {
     register struct super_block *sb = inode->i_sb;
     register struct super_operations *sop = sb->s_op;
@@ -212,8 +210,8 @@ static void read_inode(REGOPT struct inode *inode)
 
 /* POSIX UID/GID verification for setting inode attributes */
 #if USE_NOTIFY_CHANGE
-static int inode_change_ok(REGOPT struct inode *inode,
-			   REGOPT struct iattr *attr)
+static int inode_change_ok(register struct inode *inode,
+			   register struct iattr *attr)
 {
     /*
      *      If force is set do it anyway.
@@ -257,8 +255,8 @@ static int inode_change_ok(REGOPT struct inode *inode,
  * the inode structure.
  */
 
-static void inode_setattr(REGOPT struct inode *inode,
-			  REGOPT struct iattr *attr)
+static void inode_setattr(register struct inode *inode,
+			  register struct iattr *attr)
 {
     if (attr->ia_valid & ATTR_UID)
 	inode->i_uid = attr->ia_uid;
@@ -287,7 +285,7 @@ static void inode_setattr(REGOPT struct inode *inode,
  * the change.
  */
 
-int notify_change(REGOPT struct inode *inode, REGOPT struct iattr *attr)
+int notify_change(register struct inode *inode, register struct iattr *attr)
 {
     int retval;
 
@@ -313,7 +311,7 @@ int notify_change(REGOPT struct inode *inode, REGOPT struct iattr *attr)
 
 void invalidate_inodes(kdev_t dev)
 {
-    REGOPT struct inode *inode, *next;
+    register struct inode *inode, *next;
     int i;
 
     next = first_inode;
@@ -332,11 +330,11 @@ void invalidate_inodes(kdev_t dev)
 
 void sync_inodes(kdev_t dev)
 {
-    int i;
-    REGOPT struct inode *inode;
+    register struct inode *inode;
+    register char *pi;
 
     inode = first_inode;
-    for (i = 0; i < nr_inodes * 2; i++, inode = inode->i_next) {
+    for (pi = 0; ((int) pi) < nr_inodes * 2; pi++, inode = inode->i_next) {
 	if (dev && inode->i_dev != dev)
 	    continue;
 	wait_on_inode(inode);
@@ -345,7 +343,7 @@ void sync_inodes(kdev_t dev)
     }
 }
 
-void iput(REGOPT struct inode *inode)
+void iput(register struct inode *inode)
 {
     if (inode) {
 	wait_on_inode(inode);
@@ -395,17 +393,18 @@ void iput(REGOPT struct inode *inode)
 
 static void list_inode_status(void)
 {
-    int i;
+    register char * pi;
 
-    for (i = 0; i < nr_inodes; i++)
-	printk("[#%u: c=%u d=%x nr=%lu]", i, inode_block[i].i_count,
-	       inode_block[i].i_dev, inode_block[i].i_ino);
+    for (pi = 0; ((int)pi) < nr_inodes; pi++)
+	printk("[#%u: c=%u d=%x nr=%lu]",
+	       ((int)pi), inode_block[(int)pi].i_count,
+	       inode_block[(int)pi].i_dev, inode_block[(int)pi].i_ino);
 }
 
 struct inode *get_empty_inode(void)
 {
     static ino_t ino = 0;
-    REGOPT struct inode *inode, *best;
+    register struct inode *inode, *best;
     int i;
 
   repeat:
@@ -438,8 +437,7 @@ struct inode *get_empty_inode(void)
 	goto repeat;
 #endif
     clear_inode(inode);
-    inode->i_count = 1;
-    inode->i_nlink = 1;
+    inode->i_count = inode->i_nlink = 1;
 #ifdef BLOAT_FS
     inode->i_version = ++event;
 #endif
@@ -457,7 +455,7 @@ struct inode *get_empty_inode(void)
 #if CONFIG_PIPE
 struct inode *get_pipe_inode(void)
 {
-    REGOPT struct inode *inode;
+    register struct inode *inode;
     extern struct inode_operations pipe_inode_operations;
 
     if ((inode = get_empty_inode())) {
@@ -486,12 +484,12 @@ struct inode *get_pipe_inode(void)
 }
 #endif
 
-struct inode *__iget(REGOPT struct super_block *sb,
+struct inode *__iget(register struct super_block *sb,
 		     ino_t inr /*,int crossmntp */ )
 {
     int i;
-    REGOPT struct inode *inode;
-    REGOPT struct inode *empty = NULL;
+    register struct inode *inode;
+    register struct inode *empty = NULL;
 
     debug3("iget called(%x, %d, %d)\n", sb, inr, 0 /* crossmntp */ );
     if (!sb)

@@ -40,9 +40,9 @@ static struct device_struct blkdevs[MAX_BLKDEV] = /*@i1@*/ {
 
 struct file_operations *get_blkfops(unsigned int major)
 {
-    if (major >= MAX_BLKDEV)
-	return NULL;
-    return blkdevs[major].ds_fops;
+    return (major >= MAX_BLKDEV)
+	? NULL
+	: blkdevs[major].ds_fops;
 }
 
 int register_chrdev(unsigned int major, char *name,
@@ -131,9 +131,9 @@ int blkdev_open(register struct inode *inode, register struct file *filp)
     if (i >= MAX_BLKDEV || !blkdevs[i].ds_fops)
 	return -ENODEV;
     filp->f_op = blkdevs[i].ds_fops;
-    if (filp->f_op->open)
-	return filp->f_op->open(inode, filp);
-    return 0;
+    return (filp->f_op->open)
+	? filp->f_op->open(inode, filp)
+	: 0;
 }
 
 /*
@@ -186,9 +186,9 @@ static int chrdev_open(register struct inode *inode,
     if (i >= MAX_CHRDEV || !chrdevs[i].ds_fops)
 	return -ENODEV;
     filp->f_op = chrdevs[i].ds_fops;
-    if (filp->f_op->open)
-	return filp->f_op->open(inode, filp);
-    return 0;
+    return (filp->f_op->open)
+	? filp->f_op->open(inode, filp)
+	: 0;
 }
 
 /*
@@ -235,10 +235,22 @@ struct inode_operations chrdev_inode_operations = {
  * Note: returns pointer to static data!
  */
 
+extern char *hex_string;	/* It lives in kernel/printk.c. */
+
 char *kdevname(kdev_t dev)
 {
+#if (MINORBITS == 8) && (MINORMASK == 255)
+    static char buffer[5];
+    register char *bp = buffer + 5;
+    *bp = 0;
+    do {
+	*--bp = hex_string[dev & 0xf];
+	dev >>= 4;
+    } while (bp > buffer);
+#else
     static char buffer[16];
-    register char *hexof = "0123456789ABCDEF";
+/*      register char *hexof = "0123456789ABCDEF"; */
+    register char *hexof = hex_string;
     register char *bp = buffer;
     kdev_t b = MAJOR(dev);
 
@@ -248,5 +260,6 @@ char *kdevname(kdev_t dev)
     *bp++ = hexof[b >> 4];
     *bp++ = hexof[b & 15];
     *bp = 0;
+#endif
     return buffer;
 }

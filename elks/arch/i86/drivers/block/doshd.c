@@ -581,16 +581,18 @@ void init_bioshd(void)
 	    __u32 size = ((__u32) drivep->sectors) * 5 /* 0.1 kB units */;
 
 	    size *= ((__u32) drivep->cylinders) * drivep->heads;
-	    printk("/dev/%cd%c: %d cylinders, %d heads, %d sectors = ",
-		   (i < 2 ? 'h' : 'f'), (i % 2) + (i < 2 ? 'a' : '0'),
-		   drivep->cylinders, drivep->heads, drivep->sectors);
 
 	    /* Select appropriate unit */
 	    while (size > 99999 && unit[1]) {
+		debug3("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
 		size /= ((__u32) 1024);
 		unit++;
 	    }
-	    printk("%lu.%u %cb\n", (size/10), (size%10), *unit);
+	    debug3("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
+	    printk("/dev/%cd%c: %d cylinders, %d heads, %d sectors = %lu.%u %cb\n",
+		   (i < 2 ? 'h' : 'f'), (i % 2) + (i < 2 ? 'a' : '0'),
+		   drivep->cylinders, drivep->heads, drivep->sectors,
+		   (size/10), (int) (size%10), *unit);
 	}
     }
 #endif

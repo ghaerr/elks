@@ -31,11 +31,11 @@ static struct buffer_head *minix_update_inode(register struct inode *);
 
 void minix_put_inode(register struct inode *inode)
 {
-    if (inode->i_nlink)
-	return;
-    inode->i_size = 0;
-    minix_truncate(inode);
-    minix_free_inode(inode);
+    if (!inode->i_nlink) {
+	inode->i_size = 0;
+	minix_truncate(inode);
+	minix_free_inode(inode);
+    }
 }
 
 static void minix_commit_super(register struct super_block *sb)
@@ -60,7 +60,7 @@ void minix_write_super(register struct super_block *sb)
 
 void minix_put_super(register struct super_block *sb)
 {
-    int i;
+    register char *pi;
 
     lock_super(sb);
     if (!(sb->s_flags & MS_RDONLY)) {
@@ -68,10 +68,10 @@ void minix_put_super(register struct super_block *sb)
 	mark_buffer_dirty(sb->u.minix_sb.s_sbh, 1);
     }
     sb->s_dev = 0;
-    for (i = 0; i < MINIX_I_MAP_SLOTS; i++)
-	brelse(sb->u.minix_sb.s_imap[i]);
-    for (i = 0; i < MINIX_Z_MAP_SLOTS; i++)
-	brelse(sb->u.minix_sb.s_zmap[i]);
+    for (pi = 0; ((int)pi) < MINIX_I_MAP_SLOTS; pi++)
+	brelse(sb->u.minix_sb.s_imap[(int)pi]);
+    for (pi = 0; ((int)pi) < MINIX_Z_MAP_SLOTS; pi++)
+	brelse(sb->u.minix_sb.s_zmap[(int)pi]);
     brelse(sb->u.minix_sb.s_sbh);
     unlock_super(sb);
     return;
@@ -91,6 +91,17 @@ static struct super_operations minix_sops = {
 #endif
     minix_remount
 };
+
+static void minix_mount_warning(register struct super_block *sb, char *prefix)
+{
+    if ((sb->u.minix_sb.s_mount_state & (MINIX_VALID_FS|MINIX_ERROR_FS))
+	!= MINIX_VALID_FS)
+	printk("MINIX-fs: %smounting %s, running fsck is recommended.\n",
+	       prefix,
+	     !(sb->u.minix_sb.s_mount_state & MINIX_VALID_FS)
+	       ? "unchecked file system" : "file system with errors");
+}
+
 
 int minix_remount(register struct super_block *sb, int *flags, char *data)
 {
@@ -117,12 +128,7 @@ int minix_remount(register struct super_block *sb, int *flags, char *data)
 	mark_buffer_dirty(sb->u.minix_sb.s_sbh, 1);
 	sb->s_dirt = 1;
 
-	if (!(sb->u.minix_sb.s_mount_state & MINIX_VALID_FS))
-	    printk
-		("MINIX-fs warning: remounting unchecked fs, running fsck is recommended.\n");
-	else if ((sb->u.minix_sb.s_mount_state & MINIX_ERROR_FS))
-	    printk
-		("MINIX-fs warning: remounting fs with errors, running fsck is recommended.\n");
+	minix_mount_warning(sb, "re");
     }
     return 0;
 }
@@ -131,7 +137,7 @@ struct super_block *minix_read_super(register struct super_block *s,
 				     char *data, int silent)
 {
     struct buffer_head *bh;
-    unsigned short block, i;
+    unsigned short block;
     kdev_t dev = s->s_dev;
 
     if (32 != sizeof(struct minix_inode))
@@ -176,35 +182,69 @@ struct super_block *minix_read_super(register struct super_block *s,
 	    return NULL;
 	}
     }
-    for (i = 0; i < MINIX_I_MAP_SLOTS; i++)
-	s->u.minix_sb.s_imap[i] = NULL;
-    for (i = 0; i < MINIX_Z_MAP_SLOTS; i++)
-	s->u.minix_sb.s_zmap[i] = NULL;
-    block = 2;
-    /*
-     *      FIXME:: We cant keep these in memory on an 8086, need to change
-     *      the code to fetch/release each time we get a block.
-     */
-    for (i = 0; i < s->u.minix_sb.s_imap_blocks; i++)
-	if ((s->u.minix_sb.s_imap[i] = bread(dev, (block_t) block)) != NULL)
+    {
+	register char *pi;
+
+	pi = (char *) MINIX_I_MAP_SLOTS;
+	do {
+	    --pi;
+	    s->u.minix_sb.s_imap[(unsigned short)pi] = NULL;
+	} while (pi);
+	pi = (char *) MINIX_Z_MAP_SLOTS;
+	do {
+	    --pi;
+	    s->u.minix_sb.s_zmap[(unsigned short) pi] = NULL;
+	} while (pi);
+
+	block = 2;
+	/*
+	 *      FIXME:: We cant keep these in memory on an 8086, need to change
+	 *      the code to fetch/release each time we get a block.
+	 */
+	for (pi = 0; ((unsigned short)pi) < s->u.minix_sb.s_imap_blocks; pi++) {
+	    if ((s->u.minix_sb.s_imap[(unsigned short)pi]
+		 = bread(dev, (block_t) block)) == NULL)
+		break;
 	    block++;
-	else
-	    break;
-    for (i = 0; i < s->u.minix_sb.s_zmap_blocks; i++)
-	if ((s->u.minix_sb.s_zmap[i] = bread(dev, (block_t) block)) != NULL)
+	}
+	for (pi = 0; ((unsigned short)pi) < s->u.minix_sb.s_zmap_blocks; pi++) {
+	    if ((s->u.minix_sb.s_zmap[(unsigned short)pi]
+		 = bread(dev, (block_t) block)) == NULL)
+		break;
 	    block++;
-	else
-	    break;
-    if (block != 2 + s->u.minix_sb.s_imap_blocks + s->u.minix_sb.s_zmap_blocks) {
-	for (i = 0; i < MINIX_I_MAP_SLOTS; i++)
-	    brelse(s->u.minix_sb.s_imap[i]);
-	for (i = 0; i < MINIX_Z_MAP_SLOTS; i++)
-	    brelse(s->u.minix_sb.s_zmap[i]);
-	s->s_dev = 0;
-	unlock_super(s);
-	unmap_brelse(bh);
-	printk("minix: bad superblock or bitmaps\n");
-	return NULL;
+	}
+
+	if (block != 2 + s->u.minix_sb.s_imap_blocks + s->u.minix_sb.s_zmap_blocks) {
+#if 1
+	    pi = 0;
+	    do {
+		brelse(s->u.minix_sb.s_imap[(unsigned short) pi]);
+		++pi;
+	    } while (((unsigned short) pi) < MINIX_I_MAP_SLOTS);
+	    pi = 0;
+	    do{
+		brelse(s->u.minix_sb.s_zmap[(unsigned short) pi]);
+		++pi;
+	    } while (((unsigned short) pi) < MINIX_Z_MAP_SLOTS);
+
+#else
+	    pi = (char *) MINIX_I_MAP_SLOTS;
+	    do {
+		--pi;
+		brelse(s->u.minix_sb.s_imap[(unsigned short) pi]);
+	    } while (pi);
+	    pi = (char *) MINIX_Z_MAP_SLOTS;
+	    do{
+		--pi;
+		brelse(s->u.minix_sb.s_zmap[(unsigned short) pi]);
+	    } while (pi);
+#endif
+	    s->s_dev = 0;
+	    unlock_super(s);
+	    unmap_brelse(bh);
+	    printk("minix: bad superblock or bitmaps\n");
+	    return NULL;
+	}
     }
     (void) set_bit(0, s->u.minix_sb.s_imap[0]->b_data);
     (void) set_bit(0, s->u.minix_sb.s_zmap[0]->b_data);
@@ -224,12 +264,9 @@ struct super_block *minix_read_super(register struct super_block *s,
 	mark_buffer_dirty(bh, 1);
 	s->s_dirt = 1;
     }
-    if (!(s->u.minix_sb.s_mount_state & MINIX_VALID_FS))
-	printk
-	    ("MINIX-fs: mounting unchecked file system, running fsck is recommended.\n");
-    else if (s->u.minix_sb.s_mount_state & MINIX_ERROR_FS)
-	printk
-	    ("MINIX-fs: mounting file system with errors, running fsck is recommended.\n");
+
+    minix_mount_warning(s, "");
+
     unmap_buffer(bh);
     return s;
 }
@@ -322,21 +359,18 @@ unsigned short _minix_bmap(register struct inode *inode,
 
     block -= 512;
     i = map_izone(inode, 8, create);
-    if (i == 0)
-	return 0;
-
-    /* Two layer indirection */
-    i = map_iblock(inode, i, (block_t) (block >> 9), create);
+    if (i != 0) {
+	/* Two layer indirection */
+	i = map_iblock(inode, i, (block_t) (block >> 9), create);
 
   map1:
-    /*
-     * Do the final indirect block check and read
-     */
-
-    if (i == 0)
-	return 0;
-    /* Ok now load the second indirect block */
-    i = map_iblock(inode, i, (block_t) (block & 511), create);
+	/*
+	 * Do the final indirect block check and read
+	 */
+	if (i != 0)
+	    /* Ok now load the second indirect block */
+	    i = map_iblock(inode, i, (block_t) (block & 511), create);
+    }
     return i;
 }
 
@@ -359,9 +393,7 @@ struct buffer_head *minix_bread(struct inode *inode,
 {
     register struct buffer_head *bh;
 
-    if (!(bh = minix_getblk(inode, block, create)))
-	return NULL;
-    return readbuf(bh);
+    return !(bh = minix_getblk(inode, block, create)) ? NULL : readbuf(bh);
 }
 
 /*
@@ -452,36 +484,33 @@ static struct buffer_head *minix_update_inode(register struct inode *inode)
 	printk("Bad inode number on dev %s: %d is out of range\n",
 	       kdevname(inode->i_dev), ino);
 	inode->i_dirt = 0;
-	return 0;
-    }
-    block = inode->i_sb->u.minix_sb.s_imap_blocks + 2 +
-	inode->i_sb->u.minix_sb.s_zmap_blocks + (ino - 1)
-			/ MINIX_INODES_PER_BLOCK;
+	bh = 0;
+    } else {
+	block = inode->i_sb->u.minix_sb.s_imap_blocks + 2 +
+	    inode->i_sb->u.minix_sb.s_zmap_blocks + (ino - 1)
+	    / MINIX_INODES_PER_BLOCK;
 
-    if (!(bh = bread(inode->i_dev, (block_t) block))) {
-	printk("unable to read i-node block\n");
-	inode->i_dirt = 0;
-	return 0;
+	if (!(bh = bread(inode->i_dev, (block_t) block))) {
+	    printk("unable to read i-node block\n");
+	    inode->i_dirt = 0;
+	} else {
+	    map_buffer(bh);
+	    raw_inode = ((struct minix_inode *) bh->b_data) +
+		(ino - 1) % MINIX_INODES_PER_BLOCK;
+	    memcpy(raw_inode, inode, sizeof(struct minix_inode));
+	    if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
+		raw_inode->i_zone[0] = kdev_t_to_nr(inode->i_rdev);
+	    inode->i_dirt = 0;
+	    mark_buffer_dirty(bh, 1);
+	    unmap_buffer(bh);
+	}
     }
-    map_buffer(bh);
-    raw_inode = ((struct minix_inode *) bh->b_data) +
-	(ino - 1) % MINIX_INODES_PER_BLOCK;
-    memcpy(raw_inode, inode, sizeof(struct minix_inode));
-    if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
-	raw_inode->i_zone[0] = kdev_t_to_nr(inode->i_rdev);
-    inode->i_dirt = 0;
-    mark_buffer_dirty(bh, 1);
-    unmap_buffer(bh);
     return bh;
-
 }
 
 void minix_write_inode(register struct inode *inode)
 {
-    register struct buffer_head *bh;
-
-    bh = minix_update_inode(inode);
-    brelse(bh);
+    brelse(minix_update_inode(inode));
 }
 
 #ifdef BLOAT_FS

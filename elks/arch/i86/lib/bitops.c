@@ -9,44 +9,42 @@
  
 unsigned char clear_bit(unsigned int bit,void *addr)
 {
-    unsigned char *ptr = addr, r;
-    unsigned int mask, offset = (bit / 8);
+    register unsigned char *ptr;
     flag_t flags;
+    unsigned int mask;
 
-    bit%=8;
-    mask = (1 << bit);
-    save_flags(flags);
-    clr_irq();
-    r = ptr[offset] & mask;
-    ptr[offset] &= ~mask;		/* xor bit with itself is 0 */
-    restore_flags(flags);
-    return r >> bit;
-}
-
-unsigned char set_bit(unsigned int bit,void *addr)
-{
-    unsigned char *ptr = addr, r;
-    unsigned int mask, offset = (bit / 8);
-    flag_t flags;
-
+	ptr = ((unsigned char *)addr) + (bit / 8);
     bit %= 8;
     mask = (1 << bit);
     save_flags(flags);
     clr_irq();
-    r = ptr[offset] & mask;
-    ptr[offset] |= mask;		/* xor bit with itself is 0 */
+	mask &= *ptr;
+    *ptr &= ~mask;
+    restore_flags(flags);
+    return mask >> bit;
+}
+
+unsigned char set_bit(unsigned int bit,void *addr)
+{
+    register unsigned char *ptr;
+    flag_t flags;
+    unsigned int mask, r;
+
+	ptr = ((unsigned char *)addr) + (bit / 8);
+    bit %= 8;
+    mask = (1 << bit);
+    save_flags(flags);
+    clr_irq();
+	r = *ptr & mask;
+    *ptr |= mask;
     restore_flags(flags);
     return r >> bit;
 }
 
 unsigned char test_bit(unsigned int bit,void *addr)
 {
-    unsigned char *ptr = addr;
-    unsigned int mask, offset = bit / 8;
-
-    bit %= 8;
-    mask = 1 << bit;
-    return ((mask & ptr[offset]) != 0);
+	return ( ((1 << (bit % 8))
+			  & ((unsigned char *) addr)[bit / 8]) != 0);
 }
 
 /* Ack... nobody even seemed to try to write to a file before 0.0.49a was
@@ -58,21 +56,27 @@ unsigned char test_bit(unsigned int bit,void *addr)
 /* Use the old faithful version */
 unsigned int find_first_non_zero_bit(void *addr, unsigned int len)
 {
-    unsigned int i;
+	register char *pi = 0;
 
-    for (i = 0; i < len; i++)
-	if (test_bit(i, addr))
-	    break;
-    return i;
+	while (((unsigned int) pi) < len) {
+		if (test_bit(((unsigned int) pi), addr)) {
+			break;
+		}
+		++pi;
+	}
+	return (unsigned int) pi;
 }
 
 /* Use the old faithful version */
 unsigned int find_first_zero_bit(void *addr, unsigned int len)
 {
-    unsigned int i;
+	register char *pi = 0;
 
-    for (i = 0; i < len; i++)
-	if (!test_bit(i, addr))
-	    break;
-    return i;
+	while (((unsigned int) pi) < len) {
+		if (!test_bit(((unsigned int) pi), addr)) {
+			break;
+		}
+		++pi;
+	}
+	return (unsigned int) pi;
 }

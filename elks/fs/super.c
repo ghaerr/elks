@@ -112,18 +112,14 @@ void sync_supers(kdev_t dev)
 
     for (sb = super_blocks + 0; sb < super_blocks + NR_SUPER; sb++) {
 
-	if (!sb->s_dev)
-	    continue;
-
-	if (dev && sb->s_dev != dev)
+	if ((!sb->s_dev)
+	    || (dev && sb->s_dev != dev))
 	    continue;
 
 	wait_on_super(sb);
 
-	if (!sb->s_dev || !sb->s_dirt)
-	    continue;
-
-	if (dev && (dev != sb->s_dev))
+	if ((!sb->s_dev || !sb->s_dirt)
+	    || (dev && (dev != sb->s_dev)))
 	    continue;
 
 	sop = sb->s_op;
@@ -137,18 +133,17 @@ static struct super_block *get_super(kdev_t dev)
 {
     register struct super_block *s;
 
-    if (!dev)
-	return NULL;
-
-    s = 0 + super_blocks;
-    while (s < super_blocks + NR_SUPER)
-	if (s->s_dev == dev) {
-	    wait_on_super(s);
-	    if (s->s_dev == dev)
-		return s;
-	    s = super_blocks;
-	} else
-	    s++;
+    if (dev) {
+	s = 0 + super_blocks;
+	while (s < super_blocks + NR_SUPER)
+	    if (s->s_dev == dev) {
+		wait_on_super(s);
+		if (s->s_dev == dev)
+		    return s;
+		s = super_blocks;
+	    } else
+		s++;
+    }
     return NULL;
 }
 
@@ -379,11 +374,10 @@ int do_mount(kdev_t dev, char *dir, char *type, int flags, char *data)
     dirp = dir_i;
     if (error)
 	return error;
-    if (dirp->i_count != 1 || dirp->i_mount) {
-	iput(dirp);
-	return -EBUSY;
-    }
-    if (!fs_may_mount(dev)) {
+    if ((dirp->i_count != 1 || dirp->i_mount)
+	|| (!fs_may_mount(dev))
+	) {
+    BUSY:
 	iput(dirp);
 	return -EBUSY;
     }
@@ -393,8 +387,7 @@ int do_mount(kdev_t dev, char *dir, char *type, int flags, char *data)
 	return -EINVAL;
     }
     if (sb->s_covered) {
-	iput(dirp);
-	return -EBUSY;
+	goto BUSY;
     }
     sb->s_covered = dirp;
     dirp->i_mount = sb->s_mounted;
@@ -519,6 +512,7 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 	    return retval;
 	debug("MOUNT: made it through namei\n");
 	if (!S_ISBLK(inode->i_mode)) {
+	NOTBLK:
 	    iput(inode);
 	    return -ENOTBLK;
 	}
@@ -533,8 +527,7 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 	}
 	fops = get_blkfops(MAJOR(dev));
 	if (!fops) {
-	    iput(inode);
-	    return -ENOTBLK;
+	    goto NOTBLK;
 	}
 	if (fops->open) {
 	    struct file dummy;	/* allows read-write or read-only flag */
@@ -604,8 +597,7 @@ void mount_root(void)
 	    inode->i_count += 3;
 	    sb->s_covered = inode;
 	    sb->s_flags = (unsigned short int) root_mountflags;
-	    current->fs.pwd = inode;
-	    current->fs.root = inode;
+	    current->fs.pwd = current->fs.root = inode;
 	    printk("VFS: Mounted root (%s filesystem)%s.\n",
 		   fp->name, (sb->s_flags & MS_RDONLY) ? " readonly" : "");
 	    return;

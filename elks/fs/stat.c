@@ -111,10 +111,7 @@ int sys_fstat(unsigned int fd, struct stat *statbuf)
     int error = fd_check(fd, (char *) statbuf, sizeof(struct stat),
 			 FMODE_WRITE | FMODE_READ, &f);
 
-    if (!error)
-	return error;
-
-    return cp_stat(f->f_inode, statbuf);
+    return (!error) ? 0 /* error */ : cp_stat(f->f_inode, statbuf);
 }
 
 int sys_readlink(char *path, register char *buf, size_t bufsiz)
@@ -123,19 +120,14 @@ int sys_readlink(char *path, register char *buf, size_t bufsiz)
     register struct inode_operations *iop;
     int error = -EINVAL;
 
-    if (bufsiz > 0) {
-	error = verify_area(VERIFY_WRITE, buf, bufsiz);
-	if (!error) {
-	    error = lnamei(path, &inode);
-	    if (!error) {
-		iop = inode->i_op;
-		if (!iop || !iop->readlink) {
-		    iput(inode);
-		    error = -EINVAL;
-		} else
-		    error = iop->readlink(inode, buf, bufsiz);
-	    }
-	}
+    if ((bufsiz > 0)
+	&& !(error = verify_area(VERIFY_WRITE, buf, bufsiz))
+	&& !(error = lnamei(path, &inode))
+	) {
+	iop = inode->i_op;
+	error = (!iop || !iop->readlink)
+	    ? (iput(inode), -EINVAL)
+	    : iop->readlink(inode, buf, bufsiz);
     }
 
     return error;

@@ -95,11 +95,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /*
      *      Build a reading file handle
      */
-    filp->f_mode = 1;
-    filp->f_flags = 0;
-    filp->f_count = 1;
+    filp->f_mode = filp->f_count = 1;
+    filp->f_pos = filp->f_flags = 0;
     filp->f_inode = inode;
-    filp->f_pos = 0;
 
 #ifdef BLOAT_FS
     filp->f_reada = 0;
@@ -107,12 +105,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     filp->f_op = inode->i_op->default_file_ops;
     retval = -ENOEXEC;
-    if (!filp->f_op)
-	goto end_readexec;
-    if (filp->f_op->open)
-	if (filp->f_op->open(inode, &file))
-	    goto end_readexec;
-    if (!filp->f_op->read)
+    if ((!filp->f_op)
+	|| ((filp->f_op->open) && (filp->f_op->open(inode, &file)))
+	|| (!filp->f_op->read))
 	goto close_readexec;
 
     debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
@@ -129,12 +124,16 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /*
      *      can I trust the following fields?
      */
-    suidfile = inode->i_mode & S_ISUID;
-    sgidfile = inode->i_mode & S_ISGID;
-    effuid = inode->i_uid;
-    effgid = inode->i_gid;
+    {
+	register struct inode *pinode = inode;
 
-    result = filp->f_op->read(inode, &file, &mh, sizeof(mh));
+	suidfile = pinode->i_mode & S_ISUID;
+	sgidfile = pinode->i_mode & S_ISGID;
+	effuid = pinode->i_uid;
+	effgid = pinode->i_gid;
+
+	result = filp->f_op->read(pinode, &file, &mh, sizeof(mh));
+    }
     tregs->ds = ds;
 
     /*
@@ -201,19 +200,24 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      */
 
     cseg = 0;
-    for (i = 0; i < MAX_TASKS; i++) {
-	if ((task[i].state != TASK_UNUSED) && (task[i].t_inode == inode)) {
-	    cseg = mm_realloc(task[i].mm.cseg);
-	    break;
-	}
+    {
+	register char *pi = 0;
+	do {
+	    if ((task[(int)pi].state != TASK_UNUSED)
+		&& (task[(int)pi].t_inode == inode)) {
+		cseg = mm_realloc(task[(int)pi].mm.cseg);
+		break;
+	    }
+	    ++pi;
+	} while (((int)pi) < MAX_TASKS);
     }
 
     if (!cseg) {
 	cseg = mm_alloc((segext_t) ((mh.tseg + 15) >> 4));
-    }
-    if (!cseg) {
-	retval = -ENOMEM;
-	goto close_readexec;
+	if (!cseg) {
+	    retval = -ENOMEM;
+	    goto close_readexec;
+	}
     }
 
     /*
@@ -275,10 +279,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /*
      *      Copy the stack
      */
-    if (stack_top)
-	ptr = (char *) (stack_top - slen);
-    else
-	ptr = (char *) (len - slen);
+    ptr = (stack_top)
+	? (char *) (stack_top - slen)
+	: (char *) (len - slen);
     count = slen;
     fmemcpy(dseg, (__u16) ptr, current->mm.dseg, (__u16) sptr, (__u16) count);
 
@@ -302,26 +305,38 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      *      Now flush the old binary out.
      */
 
-    if (current->mm.cseg)
-	mm_free(current->mm.cseg);
-    if (current->mm.dseg)
-	mm_free(current->mm.dseg);
-    current->mm.cseg = cseg;
-    current->mm.dseg = dseg;
+    {
+	register __ptask currentp = current;
+	if (currentp->mm.cseg)
+	    mm_free(currentp->mm.cseg);
+	if (currentp->mm.dseg)
+	    mm_free(currentp->mm.dseg);
+	currentp->mm.cseg = cseg;
+	currentp->mm.dseg = dseg;
+    }
     debug("EXEC: old binary flushed.\n");
 
-    /*
-     *      Clear signal handlers..
-     */
-    for (i = 0; i < NSIG; i++)
-	current->sig.action[i].sa_handler = NULL;
-    /*
-     *      Close required files..
-     */
-    for (i = 0; i < NR_OPEN; i++)
-	if (FD_ISSET(i, &current->files.close_on_exec))
-	    sys_close(i);
+    {
+	register char *pi;
+	/*
+	 *      Clear signal handlers..
+	 */
+	pi = (char *) NSIG;
+	do {
+	    --pi;
+	    current->sig.action[(int)pi].sa_handler = NULL;
+	} while (pi);
 
+	/*
+	 *      Close required files..
+	 */
+	pi = (char *) NR_OPEN;
+	do {
+	    --pi;
+	    if (FD_ISSET(((int)pi), &current->files.close_on_exec))
+		sys_close((int)pi);
+	} while (pi);
+    }
     /*
      *      Arrange our return to be to CS:0
      *      (better to use the entry offset in the header)
@@ -331,24 +346,29 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     tregs->sp = ((__u16) ptr);		/* Just below the arguments */
     tregs->cs = cseg;
     tregs->ds = dseg;
-    current->t_begstack = ((__pptr) ptr);
-    current->t_endbrk = (__pptr) (mh.dseg + mh.bseg + stack_top);
-    current->t_enddata = (__pptr) (mh.dseg + stack_top);
-					/* Needed for sys_brk() */
-    current->t_endseg = (__pptr) len;
-    current->t_inode = inode;
-    arch_setup_kernel_stack(current);
+
+    {
+	register __ptask currentp = current;
+
+	currentp->t_begstack = ((__pptr) ptr);
+	currentp->t_endbrk = (__pptr) (mh.dseg + mh.bseg + stack_top);
+	currentp->t_enddata = (__pptr) (mh.dseg + stack_top);
+	/* Needed for sys_brk() */
+	currentp->t_endseg = (__pptr) len;
+	currentp->t_inode = inode;
+	arch_setup_kernel_stack(currentp);
 
     /* this could be a good place to set the effective user identifier
      * in case the suid bit of the executable had been set */
 
-    if (suidfile)
-	current->euid = effuid;
-    if (sgidfile)
-	current->egid = effgid;
+	if (suidfile)
+	    currentp->euid = effuid;
+	if (sgidfile)
+	    currentp->egid = effgid;
 
-    retval = 0;
-    wake_up(&current->p_parent->child_wait);
+	retval = 0;
+	wake_up(&currentp->p_parent->child_wait);
+    }
 
     /*
      *      Done

@@ -25,14 +25,8 @@
 
 static int namecompare(size_t len, size_t max, char *name, register char *buf)
 {
-    int ret;
-
-    if ((len > max) || ((len < max) && (buf[len] != 0)))
-	ret = 0;
-    else
-	ret = !fs_memcmp(name, buf, len);
-
-    return ret;
+    return ((len > max) || ((len < max) && (buf[len] != 0)))
+	? 0 : !fs_memcmp(name, buf, len);
 }
 
 /*
@@ -50,7 +44,6 @@ static int minix_match(size_t len,
 		       loff_t * offset, register struct minix_sb_info *info)
 {
     register struct minix_dir_entry *de;
-    int retval;
 
     de = (struct minix_dir_entry *) (bh->b_data + *offset);
     *offset += info->s_dirsize;
@@ -61,8 +54,7 @@ static int minix_match(size_t len,
     if (!len && (de->name[0] == '.') && (de->name[1] == '\0')) {
 	return 1;
     }
-    retval = namecompare(len, info->s_namelen, name, de->name);
-    return retval;
+    return namecompare(len, info->s_namelen, name, de->name);
 }
 
 /*
@@ -137,31 +129,24 @@ int minix_lookup(register struct inode *dir, char *name, size_t len,
 
     *result = NULL;
 
-    if (!dir)
-	return -ENOENT;
-
-    if (!S_ISDIR(dir->i_mode)) {
+    if (dir) {
+	if (S_ISDIR(dir->i_mode)) {
+	    debug("minix_lookup: Entering minix_find_entry\n");
+	    bh = minix_find_entry(dir, name, len, &de);
+	    debug2("minix_lookup: minix_find_entry returned %x %d\n", bh,
+		   bh->b_mapcount);
+	    if (bh) {
+		map_buffer(bh);
+		ino = de->inode;
+		unmap_brelse(bh);
+		*result = iget(dir->i_sb, (ino_t) ino);
+		iput(dir);
+		return (!*result) ? -EACCES : 0;
+	    }
+	}
 	iput(dir);
-	return -ENOENT;
     }
-    debug("minix_lookup: Entering minix_find_entry\n");
-    bh = minix_find_entry(dir, name, len, &de);
-    debug2("minix_lookup: minix_find_entry returned %x %d\n", bh,
-		  bh->b_mapcount);
-    if (!bh) {
-	iput(dir);
-	return -ENOENT;
-    }
-    map_buffer(bh);
-    ino = de->inode;
-    unmap_brelse(bh);
-    *result = iget(dir->i_sb, (ino_t) ino);
-    if (!*result) {
-	iput(dir);
-	return -EACCES;
-    }
-    iput(dir);
-    return 0;
+    return -ENOENT;
 }
 
 /*
@@ -183,7 +168,7 @@ static int minix_add_entry(register struct inode *dir,
 {
     unsigned short block;
     loff_t offset;
-    struct buffer_head *bh;
+    register struct buffer_head *bh;
     struct minix_dir_entry *de;
     struct minix_sb_info *info;
 
@@ -324,6 +309,7 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
 	inode->i_rdev = to_kdev_t(rdev);
     inode->i_dirt = 1;
     error = minix_add_entry(dir, name, len, &bh, &de);
+#if 1
     if (error) {
 	inode->i_nlink--;
 	inode->i_dirt = 1;
@@ -337,6 +323,19 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
     iput(dir);
     iput(inode);
     return 0;
+#else  /* MJN3: If the ordering of the iput()s isn't important, do this. */
+    if (error) {
+	inode->i_nlink--;
+	inode->i_dirt = 1;
+    } else {
+	de->inode = inode->i_ino;
+	mark_buffer_dirty(bh, 1);
+	brelse(bh);
+    }
+    iput(dir);
+    iput(inode);
+    return error;
+#endif
 }
 
 int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
@@ -422,7 +421,7 @@ static int empty_dir(register struct inode *inode)
 {
     unsigned short block;
     loff_t offset;
-    struct buffer_head *bh;
+    register struct buffer_head *bh;
     struct minix_dir_entry *de;
 
     if (!inode || !inode->i_sb)

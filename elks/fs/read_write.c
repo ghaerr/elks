@@ -32,20 +32,13 @@ loff_t sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
 	return fop->lseek(file->f_inode, file, offset, origin);
 
     /* this is the default handler if no lseek handler is present */
-    switch (origin) {
-    case 0:
-	tmp = offset;
-	break;
-    case 1:
-	tmp = file->f_pos + offset;
-	break;
-    case 2:
+    /* Note: We already determined above that origin is in range. */
+    if (origin == 2) {
 	if (!file->f_inode)
 	    return -EINVAL;
 	tmp = file->f_inode->i_size + offset;
-	break;
-    default:			/* bogus origin */
-	return -EINVAL;
+    } else {
+	tmp = (!origin) ? offset : file->f_pos + offset;
     }
 
     if (tmp < 0)
@@ -81,7 +74,6 @@ int fd_check(unsigned int fd, char *buf, size_t count, int rw,
 	     struct file **file)
 {
     register struct file *tfil;
-    int error;
 
     if (fd >= NR_OPEN || !(tfil = current->files.fd[fd])
 	|| !(tfil->f_inode) || !(tfil->f_mode & rw)) {
@@ -92,8 +84,8 @@ int fd_check(unsigned int fd, char *buf, size_t count, int rw,
 	return -EINVAL;
 
     *file = tfil;
-    if (count && (error = verify_area(VERIFY_WRITE, buf, count)))
-	return error;
+    if (count && verify_area(VERIFY_WRITE, buf, count))
+	return -EFAULT;
 
     return 0;
 }
@@ -106,10 +98,9 @@ int sys_read(unsigned int fd, char *buf, size_t count)
 
     if (((retval = fd_check(fd, buf, count, FMODE_READ, &file)) == 0)
 	&& count) {
+	retval = -EINVAL;
 	fop = file->f_op;
-	if (!fop->read)
-	    retval = -EINVAL;
-	else {
+	if (fop->read) {
 	    retval = (int) fop->read(file->f_inode, file, buf, count);
 	    schedule();
 	}
@@ -125,9 +116,8 @@ int sys_write(unsigned int fd, char *buf, size_t count)
 
     if (((written = fd_check(fd, buf, count, FMODE_WRITE, &file)) == 0)
 	&& (0 != count)) {
-	if (!file->f_op->write)
-	    written = -EINVAL;
-	else {
+	written = -EINVAL;
+	if (file->f_op->write) {
 	    inode = file->f_inode;
 
 	    /*

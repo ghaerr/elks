@@ -441,8 +441,6 @@ int sys_mknod(char *filename, int mode, dev_t dev)
 #ifdef CONFIG_FS_RO
     return -EROFS;
 #else
-    int error;
-
     if (S_ISDIR(mode) || (!S_ISFIFO(mode) && !suser()))
 	return -EPERM;
 
@@ -460,9 +458,7 @@ int sys_mknod(char *filename, int mode, dev_t dev)
 	return -EINVAL;
     }
 
-    error = do_mknod(filename, mode, dev);
-
-    return error;
+    return do_mknod(filename, mode, dev);
 #endif
 }
 
@@ -520,22 +516,11 @@ int __do_rmthing(char *pathname, int opnum)
 	    error = -ENOENT;
 	else if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0) {
 	    iop = dirp->i_op;
-	    if (!iop)
-		error = -EPERM;
-	    switch (opnum) {
-	    case 0:
-		op = iop->rmdir;
-		break;
-	    case 1:
-		op = iop->unlink;
-	    }
-	    if (op == NULL)
-		error = -EPERM;
+	    if (iop && ((op = (opnum) ? iop->unlink : iop->rmdir) != NULL))
+		return op(dirp, basename, namelen);
+	    error = -EPERM;
 	}
-	if (error)
-	    iput(dirp);
-	else
-	    error = op(dirp, basename, namelen);
+	iput(dirp);
     }
     return error;
 }
@@ -581,39 +566,38 @@ int sys_symlink(char *oldname, char *newname)
 
 int sys_link(char *oldname, char *newname)
 {
+    register struct inode *oldinodep;
+    register struct inode *dirp;
     struct inode *oldinode;
+    struct inode *dir;
+    char *basename;
+    size_t namelen;
     int error;
 
     error = namei(oldname, &oldinode, 0, 0);
+    oldinodep = oldinode;
     if (!error) {
-	register struct inode *dirp;
-	struct inode *dir;
-	char *basename;
-	size_t namelen;
-
 	error = dir_namei(newname, &namelen, &basename, NULL, &dir);
 	dirp = dir;
-	if (error)
-	    goto link_fail;
-	if (!namelen)
-	    error = -EPERM;
-	else if (dirp->i_dev != oldinode->i_dev)
-	    error = -EXDEV;
-	else if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0)
-	    if (!dirp->i_op || !dirp->i_op->link)
-		error = -EPERM;
 	if (!error) {
-	    dirp->i_count++;
-	    down(&dirp->i_sem);
-	    error = dirp->i_op->link(oldinode, dirp, basename, namelen);
-	    up(&dirp->i_sem);
-	} else
-	    iput(oldinode);
-
-      link_fail:
+	    if (!namelen)
+		error = -EPERM;
+	    else if (dirp->i_dev != oldinodep->i_dev)
+		error = -EXDEV;
+	    else if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0)
+		if (!dirp->i_op || !dirp->i_op->link)
+		    error = -EPERM;
+	    if (!error) {
+		dirp->i_count++;
+		down(&dirp->i_sem);
+		error = dirp->i_op->link(oldinodep, dirp, basename, namelen);
+		up(&dirp->i_sem);
+	    } else
+		iput(oldinodep);
+	}
 	iput(dirp);
     } else
-	iput(oldinode);
+	iput(oldinodep);
     return error;
 }
 
@@ -624,9 +608,10 @@ int sys_link(char *oldname, char *newname)
 
 int sys_rename(register char *oldname, char *newname)
 {
-    int err = sys_link(oldname, newname);
+    int err;
 
-    if (!err)
-	err = sys_unlink(oldname);
-    return err;
+    return !(err = sys_link(oldname, newname))
+	? sys_unlink(oldname)
+	: err;
+	    
 }

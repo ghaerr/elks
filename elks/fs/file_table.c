@@ -27,10 +27,10 @@ struct file file_array[NR_FILE];
 
 struct file *get_empty_filp(void)
 {
-    int i;
-    register struct file *f;
+    register struct file *f = file_array;
+    register char *pi = nr_files;
 
-    for (f = file_array, i = 0; i < nr_files; i++, f++) {
+    while (pi) {		/* TODO: is nr_file const? */
 	if (!f->f_count) {
 	    memset(f, 0, sizeof(*f));
 	    f->f_count = 1;
@@ -39,6 +39,8 @@ struct file *get_empty_filp(void)
 #endif
 	    return f;
 	}
+	++f;
+	--pi;
     }
 
     return NULL;

@@ -80,6 +80,9 @@ struct inode_operations minix_file_inode_operations = {
  *	FIXME: Readahead
  */
 
+static char inode_equal_NULL[] = "inode = NULL\n";
+static char mode_equal_val[] = "mode = %07o\n";
+
 static int minix_file_read(struct inode *inode, register struct file *filp,
 			   char *buf, size_t icount)
 {
@@ -96,23 +99,27 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
      *      Amount we can do I/O over
      */
 
-    if (offset > size)
-	left = 0L;
-    else
-	left = (size_t) (size - offset);
+    left = (offset > size) ? 0 : (size_t) (size - offset);
+
     if (left > count)
 	left = count;
     if (left <= 0) {
 	debug("MFSREAD: EOF reached.\n");
 	return 0;		/* EOF */
     }
-    if (!inode) {
-	printk("minix_file_read: inode = NULL\n");
-	return -EINVAL;
-    }
-    if (!S_ISREG(inode->i_mode)) {
-	printk("minix_file_read: mode = %07o\n", inode->i_mode);
-	return -EINVAL;
+
+    {
+	register char *s;
+	if (!inode) {
+	    s = inode_equal_NULL;
+	    goto OUTPUT;
+	} else if (!S_ISREG(inode->i_mode)) {
+	    s = mode_equal_val; /* i_mode */
+	OUTPUT:
+	    printk("minix_file_read: ");
+	    printk(s, inode->i_mode);
+	    return -EINVAL;
+	}
     }
 
     read = 0;
@@ -134,10 +141,7 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
 	    }
 	}
 
-	if (left < (BLOCK_SIZE - offset))
-	    chars = left;
-	else
-	    chars = BLOCK_SIZE - offset;
+	chars = (left < (BLOCK_SIZE - offset)) ? left : (BLOCK_SIZE - offset);
 
 	filp->f_pos += chars;
 	left -= chars;
@@ -156,7 +160,6 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
 	}
 	offset = 0;
     }
-    while (left > 0);
     if (!read)
 	return -EIO;
 
@@ -173,25 +176,33 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
 static int minix_file_write(register struct inode *inode,
 			    struct file *filp, char *buf, size_t count)
 {
-    register struct buffer_head *bh;
     char *p;
     loff_t pos;
     size_t c, written;
 
-    if (!inode) {
-	printk("minix_file_write: inode = NULL\n");
-	return -EINVAL;
+    {
+	register char *s;
+	if (!inode) {
+	    s = inode_equal_NULL;
+	    goto OUTPUT;
+	}
+	if (!S_ISREG(inode->i_mode)) {
+	    s = mode_equal_val; /* inode->i_mode */
+	OUTPUT:
+	    printk("minix_file_write: ");
+	    printk(s, inode->i_mode);
+	    return -EINVAL;
+	}
     }
-    if (!S_ISREG(inode->i_mode)) {
-	printk("minix_file_write: mode = %07o\n", inode->i_mode);
-	return -EINVAL;
-    }
-    if (filp->f_flags & O_APPEND)
-	pos = (loff_t) inode->i_size;
-    else
-	pos = filp->f_pos;
+
+    pos = (filp->f_flags & O_APPEND)
+	? (loff_t) inode->i_size
+	: filp->f_pos;
+
     written = 0;
     while (written < count) {
+	register struct buffer_head *bh;
+
 	bh = minix_getblk(inode, (unsigned short) (pos >> BLOCK_SIZE_BITS), 1);
 	if (!bh) {
 	    if (!written)
