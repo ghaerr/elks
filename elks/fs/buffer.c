@@ -20,13 +20,13 @@ static struct buffer_head *bh_chain=NULL;
 static struct buffer_head *bh_lru=NULL;
 static struct buffer_head *bh_llru=NULL;
 
-/*struct wait_queue *bufwait; */	/* Wait for a free buffer */
+/*struct wait_queue bufwait; */	/* Wait for a free buffer */
 
 static struct buffer_head buffers[NR_BUFFERS];
 static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */ 
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-static struct wait_queue *bufmapwait;		/* Wait for a free L1 buffer area */
+static struct wait_queue bufmapwait;		/* Wait for a free L1 buffer area */
 static struct buffer_head *bufmem_map[NR_MAPBUFS]; /* Array of bufmem's allocation */ 
 static unsigned int _buf_ds;			/* Segment(s?) of L2 buffer cache */
 #endif
@@ -39,14 +39,11 @@ static unsigned int _buf_ds;			/* Segment(s?) of L2 buffer cache */
 void wait_on_buffer(bh)
 register struct buffer_head * bh;
 {
-	struct wait_queue wait;
-	
 	if (buffer_locked(bh)) {
-		wait.task = current;
-		wait.next = NULL;
 
 		bh->b_count++;
-		add_wait_queue(&bh->b_wait, &wait);
+		
+		wait_set(&bh->b_wait);
 
 		for (;;) {
 			current->state = TASK_UNINTERRUPTIBLE;
@@ -55,7 +52,8 @@ register struct buffer_head * bh;
 			}
 			schedule();
 		}
-		remove_wait_queue(&bh->b_wait, &wait);
+		
+		wait_clear(&bh->b_wait);
 		bh->b_count--;
 		current->state = TASK_RUNNING;
 	}
@@ -261,25 +259,24 @@ block_t block;
 	/* If there are too many dirty buffers, we wake up the update process
 	   now so as to ensure that there are still clean buffers available
 	   for user processes to use (and dirty) */
-#ifdef BLOAT_FS
-	for (;;) {
-#endif
-	bh = get_hash_table(dev, block);
-	if (bh != NULL) {
-		if (buffer_clean(bh)) {
-			if (buffer_uptodate(bh))
-				 put_last_lru(bh);
-		}
-		return bh;
-	}
 
-	/* I think the following check is redundant *
-	 * So I will remove it for now */
-#ifdef BLOAT_FS
-	if (!find_buffer(dev,block))
-		break;
+	for (;;) {
+		bh = get_hash_table(dev, block);
+		if (bh != NULL) {
+			if (buffer_clean(bh)) {
+				if (buffer_uptodate(bh))
+					 put_last_lru(bh);
+			}
+			return bh;
+		}
+
+		/* I think the following check is redundant *
+		 * So I will remove it for now */
+
+		if (!find_buffer(dev,block))
+			break;
 	} /* end for(;;) */
-#endif
+
 	/*
 	 *	Create a buffer for this job.
 	 */
@@ -293,13 +290,10 @@ block_t block;
 	bh->b_uptodate=0;
 	bh->b_dev=dev;
 	bh->b_blocknr=block;
+	bh->b_seg = get_ds();
 #ifdef BLOAT_FS
 	bh->b_size=1024;
 #endif
-#if 0	
-	bh->b_next=bh_chain;
-	bh_chain=bh;
-#endif	
 	return bh;
 }
 
@@ -598,17 +592,11 @@ void buffer_init()
 		{
 			bh_chain=bh;
 			bh_lru=bh;
-#ifdef BLOAT_FS
-			bh->b_prev=NULL;
-#endif
 			bh->b_prev_lru=NULL;
 		}
 		else
 		{
 			bh->b_prev_lru=bh-1;
-#ifdef BLOAT_FS
-			bh->b_prev=bh-1;
-#endif
 		}
 		if(i==NR_BUFFERS-1)
 		{
