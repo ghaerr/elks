@@ -6,6 +6,10 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Mon Aug 13 22:58:15 BST 2001	Peter L Vachuska <pvachusk@nconnect.net>
+
+	* Added DVORAK keyboard layout options.
+
 Mon Aug 13 18:50:50 BST 2001	Riley Williams <rhw@memalpha.cx>
 
 	* Renamed configuration variables such that all such variables

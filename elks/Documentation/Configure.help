@@ -385,6 +385,11 @@ CONFIG_DE_KEYMAP
   This option specifies that support be provided for XT keyboards with
   the German key layout and associated dead keys.
 
+Select XT keyboard support for Dvorak (DV) keyboards
+CONFIG_DV_KEYMAP
+  This option specifies that support be provided for XT keyboards with
+  the Dvorak key layout and associated dead keys.
+
 Select XT keyboard support for Spanish (ES) keyboards
 CONFIG_ES_KEYMAP
   This option specifies that support be provided for XT keyboards with

@@ -19,14 +19,15 @@ if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 				bool 'ANSI Colourized printk' CONFIG_DCON_ANSI_PRINTK
 			fi
 		fi
-		choice 'XT Keyboard support' \
-			"be 	CONFIG_BE_KEYMAP\
-			 fr	CONFIG_FR_KEYMAP\
-			 uk 	CONFIG_UK_KEYMAP\
-			 es 	CONFIG_ES_KEYMAP\
-			 de	CONFIG_DE_KEYMAP\
-			 se	CONFIG_SE_KEYMAP\
-			 usa    CONFIG_DEFAULT_KEYMAP" usa
+		choice 'XT Keyboard support'		\
+			"be 	CONFIG_BE_KEYMAP	\
+			 de	CONFIG_DE_KEYMAP	\
+			 dv     CONFIG_DV_KEYMAP	\
+			 es 	CONFIG_ES_KEYMAP	\
+			 fr	CONFIG_FR_KEYMAP	\
+			 se	CONFIG_SE_KEYMAP	\
+			 uk 	CONFIG_UK_KEYMAP	\
+			 usa    CONFIG_DEFAULT_KEYMAP"		usa
 		bool 'Raw keyboard mode' CONFIG_DCON_KRAW
 	fi
 	if [ "$CONFIG_CONSOLE_BIOS" = "y" ]; then
