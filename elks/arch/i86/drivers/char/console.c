@@ -35,7 +35,6 @@
 #define CONSOLE_NAME "console"
 #define WIDTH 60
 #define HEIGHT 12
-#define MAX_CONS 3
 
 char power_state = 1;
 
@@ -50,7 +49,7 @@ struct ConsoleTag
 
 /* allocate stores for virtual consoles */
 #ifdef CONFIG_VIRTUAL_CONSOLE
-static Console Con[ MAX_CONS ];
+static Console Con[ MAX_CONSOLES ];
 static Console * Visible;
 #else
 static Console Con[ 1 ];
@@ -197,7 +196,7 @@ int N;
 {
 #ifdef CONFIG_VIRTUAL_CONSOLE
 	/* Select Virtual console and display it */
-	if( N < 0 || N >= MAX_CONS )
+	if( N < 0 || N >= MAX_CONSOLES )
     		return;
 
 	if( Visible == &Con[ N ] )
@@ -218,7 +217,8 @@ register struct tty * tty;
 #ifdef CONFIG_VIRTUAL_CONSOLE
    Console * C = &Con[tty->minor];
 #else 
-   Console * C = &Con[0];	/* use default console: This is probably wrong */
+   /* use default console: This is probably wrong */
+   Console * C = &Con[0];
 #endif	/* CONFIG_VIRTUAL_CONSOLE */
    
    while (tty->outq.len != 0) { 
@@ -244,7 +244,7 @@ struct file *file;
    int minor = MINOR(inode->i_rdev);
    
 #ifdef CONFIG_VIRTUAL_CONSOLE
-   if( minor >= MAX_CONS )
+   if( minor >= MAX_CONSOLES )
 #else
    if( minor !=0 )
 #endif 
@@ -255,7 +255,7 @@ struct file *file;
 
 struct tty_ops dircon_ops = {
 	Console_open,
-	Console_release, /* Do not remove this, or it crashes */
+	Console_release,	/* Do not remove this, or it crashes */
 	Console_write,
 	NULL,
 	NULL,
@@ -281,7 +281,7 @@ void init_console()
 	register Console * temp;
 
 #ifdef CONFIG_VIRTUAL_CONSOLE
-   	for( i = 1; i < MAX_CONS; i++ )
+   	for( i = 1; i < MAX_CONSOLES; i++ )
    	{
 		temp = &Con[ i ];
 		temp->xpos = 0;
@@ -300,7 +300,7 @@ void init_console()
    
 
 #ifdef CONFIG_VIRTUAL_CONSOLE   
-   	printk("Console: Direct dumb (%u virtual consoles)\n", MAX_CONS);
+   	printk("Console: Direct dumb (%u virtual consoles)\n", MAX_CONSOLES);
 #else
    	printk("Console: Direct dumb (no screen store)\n");
 #endif

@@ -20,6 +20,8 @@
 
 #ifdef CONFIG_SIBO_CONSOLE_DIRECT
 
+#include "console.h"
+
 /* public interface of console.c: */
 
 /* void con_charout (char Ch); */
@@ -35,7 +37,6 @@
 /* Set up for 60 byte 20 (8x8pixels charcaters)*/
 #define WIDTH 60
 #define HEIGHT 20
-#define MAX_CONS 3
 
 /* Turn on by default */
 char power_state = 1;
@@ -51,7 +52,7 @@ struct ConsoleTag
 
 /* allocate stores for virtual consoles */
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE
-static Console Con[ MAX_CONS ];
+static Console Con[ MAX_CONSOLES ];
 static Console * Visible;
 #else
 static Console Con[ 1 ];
@@ -228,7 +229,7 @@ int N;
 {
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE
 	/* Select Virtual console and display it */
-	if( N < 0 || N >= MAX_CONS )
+	if( N < 0 || N >= MAX_CONSOLES )
     		return;
 
 	if( Visible == &Con[ N ] )
@@ -275,7 +276,7 @@ struct file *file;
    int minor = MINOR(inode->i_rdev);
    
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE
-   if( minor >= MAX_CONS )
+   if( minor >= MAX_CONSOLES )
 #else
    if( minor !=0 )
 #endif 
@@ -311,7 +312,7 @@ void init_console()
 	register Console * temp;
 
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE
-   	for( i = 1; i < MAX_CONS; i++ )
+   	for( i = 1; i < MAX_CONSOLES; i++ )
    	{
 		temp = &Con[ i ];
 		temp->xpos = 0;
@@ -333,7 +334,7 @@ void init_console()
    
 
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE   
-   	printk("Console: Direct Dumb (%u virtual consoles)\n", MAX_CONS);
+   	printk("Console: Direct Dumb (%u virtual consoles)\n", MAX_CONSOLES);
 #else
    	printk("Console: Direct Dumb (no screen store)\n");
 #endif

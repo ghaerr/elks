@@ -13,7 +13,7 @@ CLEANDEP	=
 
 CLEANME 	= local-curses.h lxdialog
 
-DEPEND		= 
+DEPEND		= local-curses.h
 
 DISTFILES	= BIG.FAT.WARNING
 
@@ -50,7 +50,7 @@ CC = gcc
 CPP = gcc -E
 OPTIM = -O2 -Wall -fomit-frame-pointer
 
-CFLAGS = $(OPTIM) -DLOCALE -DCURSES_LOC=$(CURSES) $(CURSES_INC)
+CFLAGS = $(OPTIM) -DLOCALE $(CURSES_INC)
 LDFLAGS = -s -L .
 LDLIBS = -lncurses
 
@@ -82,7 +82,7 @@ local-curses.h:
 #########################################################################
 # Check that ncurses is available.
 
-ncurses:
+ncurses: local-curses.h
 	@x=`find /lib/ /usr/lib/ /usr/local/lib/ -maxdepth 1 -name 'libncurses.*'` ;\
 	@if [ ! "$$x" ]; then \
 		echo -e "\007" ;\

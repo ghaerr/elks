@@ -16,11 +16,11 @@ BASEDIR		= .
 
 USEBCC		= Y
 
-CLEANDEP	= include/linuxmt/compiler-generated.h
+CLEANDEP	= 
 
 CLEANME 	= 
 
-DEPEND		= 
+DEPEND		= include/linuxmt/compiler-generated.h
 
 DISTFILES	= BUGS CHANGELOG COPYING INSTALLATION RELNOTES TODO nodeps
 
@@ -128,9 +128,9 @@ net/net.a:
 # Compiler-generated definitions not given as command arguments.
 
 include/linuxmt/compiler-generated.h:
-	printf > include/linuxmt/compiler-generated.h	\
-		'#define %s "%s"\n'			\
-		UTS_VERSION "#$(DIST) $(shell date)"
+	printf > include/linuxmt/compiler-generated.h		\
+		'#define %s %s\n'				\
+		UTS_VERSION "\"#$(DIST) $(shell date)\""
 
 #########################################################################
 # lint rule

@@ -28,7 +28,7 @@ struct serial_info
 #define ST_UNKNOWN	15
 };
 
-#define RS_MINOR_OFFSET 4
+#define RS_MINOR_OFFSET 64
 
 #define CONSOLE_PORT 0
 

@@ -21,6 +21,8 @@
 
 #ifdef CONFIG_CONSOLE_DIRECT
 
+#include "console.h"
+
 #define islower(c) ((c) >= 'a' && (c) <= 'z')
 #define isupper(c) ((c) >= 'A' && (c) <= 'Z')
 
@@ -33,14 +35,6 @@
 /* int Console_open (struct tty * tty); */
 /* struct tty_ops dircon_ops; */
 /* void init_console(void); */
-
-/****************************************************
- * This should come from the users configuration... *
- ****************************************************/
-/*
- * Actual number of virtual consoles may be less than this
- */
-#define MAX_CONS 3
 
 #define MAX_ATTR 	5
 #define A_DEFAULT 	0x07
@@ -85,9 +79,9 @@ typedef struct {
 
 static int Width, Height, MaxRow, MaxCol;
 static int CCBase;
-static int NumConsoles = MAX_CONS;
+static int NumConsoles = MAX_CONSOLES;
 static unsigned VideoSeg, PageSize;
-static Console Con[ MAX_CONS ];
+static Console Con[ MAX_CONSOLES ];
 static Console * Visible;
 static Console * glock;	/* Which console owns the graphics hardware */
 static struct wait_queue glock_wait;

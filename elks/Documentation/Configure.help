@@ -429,6 +429,18 @@ Enable meta device driver
 CONFIG_DEV_META
   Include meta driver to support users space device drivers.
 
+Number of valid text consoles
+CONFIG_CONSOLES_MAX
+  ELKS (like Linux) can run with multiple virtual text consoles. Unlike
+  Linux, there is a definite limit on the amount of memory available to
+  implement this feature, and there is thus a need to limit the number
+  of these consoles that are made available.
+
+  This option allows the number of consoles to be made available to be
+  configured, and valid responses are in the range from 3 to 9. Because
+  of a historical legacy, the default is 3 consoles, as the serial ports
+  were originally mapped to conflict with virtual text consoles 4 to 7.
+
 # Block devices
 # ~~~~~~~~~~~~~
 

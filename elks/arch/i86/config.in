@@ -45,17 +45,21 @@ if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 	    bool 'Switch Compaq DeskPro to fast mode'		CONFIG_COMPAQ_FAST
 	fi
     endmenu
+fi
 
-    mainmenu_option next_comment
-	comment 'Hardware Facilities'
+mainmenu_option next_comment
+    comment 'Hardware Facilities'
 
+    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 	choice 'Processor'			\
 	    "8086	CONFIG_CPU_8086		\
 	     80186	CONFIG_CPU_80186	\
 	     80286	CONFIG_CPU_80286	\
 	     80386	CONFIG_CPU_80386	\
 	     80486+	CONFIG_CPU_80486"		8086
+    fi
 
+    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 	mainmenu_option next_comment
 	    comment 'System Hardware'
 
@@ -63,19 +67,26 @@ if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 	    bool 'System has no PS/2 pointing device'		CONFIG_HW_NO_PS2_MOUSE y
 	    bool 'System has no VGA adapter'			CONFIG_HW_NO_VGA n
 	endmenu
+    fi
 
+#    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 	mainmenu_option next_comment
 	    comment 'Block Devices'
 
 	    bool 'System has no floppy drive'			CONFIG_HW_NO_FLOPPY_DRIVE n
 	    bool 'System has no hard drive'			CONFIG_HW_NO_HARD_DRIVE y
 	endmenu
+#    fi
 
+#    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 #	mainmenu_option next_comment
 #	    comment 'Character Devices'
 #
+#	    int 'Number of valid text consoles' CONFIG_CONSOLES_MAX 3 3 15
 #	endmenu
+#    fi
 
+    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 	mainmenu_option next_comment
 	    comment 'BIOS Facilities'
 
@@ -99,8 +110,8 @@ if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 	    bool 'NO Floppycount at 40:10 use INT13.08'		CONFIG_HW_USE_INT13_FOR_FLOPPY n 
 	    bool 'Dont seek to get Floppy information (use I13.8)' CONFIG_HW_NO_SEEK_FOR_FLOPPY y
 	endmenu
-    endmenu
-fi
+    fi
+endmenu
 
 if [ "$CONFIG_ROMCODE" = "y" ]; then
     mainmenu_option next_comment

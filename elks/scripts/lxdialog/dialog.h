@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include CURSES_LOC
+#include "local-curses.h"
 
 #define ESC 27
 #define TAB 9
