@@ -1,0 +1,23 @@
+
+This directory contains some utilities from Minix 2.0.3, ported to
+ELKS by Claudio Matsuoka <claudio@conectiva.com>, in June 1st, 2004.
+
+Minix is open source, see the Minix license-to-use is in the LICENSE
+file. (Translation in normal language: Redistribution allowed. Keep the
+Copyright notice. Don't hide the Copyright notice. Don't say we endorse
+what you do with it. Don't blame us if it blows up in your face.)
+
+Utilities under the Minix license:
+
+cal - print a calendar (Author: Maritn Minow)
+diff - print differences between 2 files (Author: Erik Baalbergen)
+file - report on file type. (Author: Andy Tanenbaum)
+find - look for files satisfying a predicate (Author: E. Baalbergen)
+head - print the first few lines of a file (Author: Andy Tanenbaum)
+sed - stream editor (Author: Eric S. Raymond)
+sort - sort a file of lines (Author: Michiel Huisjes)
+tee - pipe fitting (Author: Paul Polderman)
+
+Utilities released to the public domain:
+
+tail - copy the end of a file (Author: Norbert Schlenker)

@@ -489,19 +489,12 @@ numvar:
 		while (*p)
 			STPUTC(*p++, expdest);
 		break;
-#if 0
-	/*
-	 * 19980209 Claudio Matsuoka <claudio@conectiva.com>
-	 * FIXME: Commented out due to problems with bcc (illegal
-	 * indirect to indirect: mov byte ptr -1[si],#_optchar[bx]).
-	 */
 	case '-':
 		for (i = 0 ; optchar[i] ; i++) {
 			if (optval[i])
 				STPUTC(optchar[i], expdest);
 		}
 		break;
-#endif
 	case '@':
 		if (allow_split) {
 			sep = '\0';
