@@ -107,5 +107,6 @@ clean:
 	done
 	umount $(COMB_TARGET_FS) || true
 	umount $(ROOT_TARGET_FS) || true
-	rm -f $(ROOT_TARGET_FS) $(COMB_TARGET_FS) boot images.zip
+	rm -f $(ROOT_TARGET_FS) $(COMB_TARGET_FS) $(SIBO_TARGET_FS)
+	rm -f boot images.zip
 	rm -rf rootfs_template

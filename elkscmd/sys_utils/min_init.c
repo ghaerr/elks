@@ -32,6 +32,7 @@ struct exec_struct {
 
 struct exec_struct tty_list[] = {
 	{"/dev/tty1", 0},
+	{"/dev/ttys1", 0},
 	{"/dev/tty2", 0},
 	{"/dev/tty3", 0}
 };
