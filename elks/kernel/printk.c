@@ -1,21 +1,22 @@
 /*
- *	This is NOT stunningly portable, but works
- *	for pretty dumb non ANSI compilers and is
- *	tight.	Adjust the sizes to taste.
+ *	This is NOT stunningly portable, but works for pretty dumb non-ANSI
+ *	compilers and is tight. Adjust the sizes to taste.
  *
- *	Illegal format strings will break it. Only the
- *	following simple subset is supported
+ *	Illegal format strings will break it. Only the following simple
+ *	printf() subset is supported:
  *
- *	%%	-	literal % sign
- *	%c	-	char
- *	%d	-	signed decimal
- *	%o	-	octal
- *	%p	-	pointer (printed in hex)
- *	%s	-	string
- *	%u	-	unsigned decimal
- *	%x/%X	-	hexadecimal
+ *		%%	-	literal % sign
  *
- *	And the h/l length specifiers for %d/%x
+ *		%c	-	char
+ *		%d	-	signed decimal
+ *		%o	-	octal
+ *		%p	-	pointer (printed in hex)
+ *		%s	-	string
+ *		%u	-	unsigned decimal
+ *		%x/%X	-	hexadecimal
+ *
+ *	All except %% can be followed by a width specifier 1 -> 31 only
+ *	and the h/l length specifiers also work.
  *
  *		Alan Cox.
  *
@@ -37,41 +38,33 @@ extern void con_charout();
 
 static void con_write(register char *buf, int len)
 {
+    register char *p;
+
 #ifdef CONFIG_DCON_ANSI_PRINTK
+
     /* Colourizing */
 
-    static char colour[8] = { 27, '[', '3', '1', ';', '4', '0', 'm' };
+    static char colour[8] = { 27, '[', '3', '0', ';', '4', '0', 'm' };
 
-    {
-	register char *p = colour;
+    p = colour;
 
-	if (p[3] == '8') {
-	    p[3] = '1';
-	}
+    if (++(p[3]) == '8')
+	p[3] = '1';
 
-	do {
-	    con_charout(*p);
-	    if (*p == 'm')
-		break;
-	    ++p;
-	} while (1);
-
-	++p[-4];
-    }
+    do
+	con_charout(*p);
+    while (*p++ != 'm');
 
     /* END Colourizing */
+
 #endif
 
-    {
-	register char *p = (char *) len;
+    p = (char *) len;
 
-	while (p) {
-	    if (*buf == '\n')
-		con_charout('\r');
-	    con_charout(*buf);
-	    ++buf;
-	    --p;
-	}
+    while (p--) {
+	if (*buf == '\n')
+	    con_charout('\r');
+	con_charout(*buf++);
     }
 }
 
@@ -126,9 +119,15 @@ void printk(register char *fmt,int a1)
 	if (c != '%')
 	    con_write(fmt - 1, 1);
 	else {
+	    c = *fmt++;
+
+	    if (c == '%') {
+		con_write("%", 1);
+		continue;
+	    }
+
 	    len = 2;
 
-	    c = *fmt++;
 	    while (c >= '0' && c <= '9') {
 		width *= 10;
 		width += c - '0';
@@ -155,7 +154,7 @@ void printk(register char *fmt,int a1)
 	    case 'X':
 		tmp = 16;
 	    NUMOUT:
-		numout(p, len, tmp, (c == 'd'));
+		numout(p, len, width, tmp, (c == 'd'));
 		p += len;
 		break;
 	    case 's':
@@ -181,7 +180,7 @@ void printk(register char *fmt,int a1)
 		p += 2;
 		break;
 	    default:
-		con_write( (c == '%') ? "%" : "?", 1);
+		con_write( "?", 1);
 	    }
 	}
     }
