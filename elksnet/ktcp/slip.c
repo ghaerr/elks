@@ -50,8 +50,8 @@ char *fdev;
     ioctl(devfd, TCGETS, &tios);
     tios.c_lflag &= ~(ICANON|ECHO);
     tios.c_oflag &= ~ONLCR;
-	tios.c_cflag &= ~017;
-	tios.c_cflag |= 0xd;
+/*	tios.c_cflag &= ~017;
+	tios.c_cflag |= 0xd;*/
     ioctl(devfd, TCSETS, &tios);
     
     /* Init some variables 
@@ -75,7 +75,6 @@ void slip_process()
 
     while(packet_num < 3){
 	len = read(devfd, &sbuf, SERIAL_BUFFER_SIZE);
-
 	if(len <= 0)break;
 
 	for( i = 0 ; i < len ; i++ ){
