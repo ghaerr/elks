@@ -373,13 +373,11 @@ register struct timer_list * timer;
 			timer->tl_next = next;
 			timer->tl_prev->tl_next = timer;
 			next->tl_prev = timer;
-			printk("Timer installed in middle\n");
 			return;
 		}
 		prev = next;
 		next = next->tl_next;
 	}
-	printk("Timer installed at end\n");
 	timer->tl_prev = prev;
 /*	timer->tl_next = NULL; */
 	prev->tl_next = timer;
@@ -395,7 +393,6 @@ static void run_timer_list()
 	while (timer && timer->tl_expires < jiffies) {
 		void (*fn)() = timer->tl_function;
 		int data = timer->tl_data;
-		printk("Running a timer\n");
 		detach_timer(timer);
 		timer->tl_next = timer->tl_prev = NULL;
 		isti();
