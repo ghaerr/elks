@@ -332,6 +332,29 @@ int create;
 }
 
 /*
+ *	Set the ops on a minix inode
+ */
+
+void minix_set_ops(inode)
+struct inode * inode;
+{ 
+	if (S_ISREG(inode->i_mode))
+		inode->i_op = &minix_file_inode_operations;
+	else if (S_ISDIR(inode->i_mode))
+		inode->i_op = &minix_dir_inode_operations;
+	else if (S_ISLNK(inode->i_mode))
+		inode->i_op = &minix_symlink_inode_operations;
+	else if (S_ISCHR(inode->i_mode))
+		inode->i_op = &chrdev_inode_operations;
+	else if (S_ISBLK(inode->i_mode))
+		inode->i_op = &blkdev_inode_operations;
+#ifdef NOT_YET		
+	else if (S_ISFIFO(inode->i_mode))
+		init_fifo(inode);
+#endif		
+}
+ 
+/*
  * The minix V1 function to read an inode.
  */
  
@@ -375,20 +398,7 @@ register struct inode * inode;
 	else for (block = 0; block < 9; block++)
 		inode->i_zone[block] = raw_inode->i_zone[block];
 	unmap_brelse(bh);
-	if (S_ISREG(inode->i_mode))
-		inode->i_op = &minix_file_inode_operations;
-	else if (S_ISDIR(inode->i_mode))
-		inode->i_op = &minix_dir_inode_operations;
-	else if (S_ISLNK(inode->i_mode))
-		inode->i_op = &minix_symlink_inode_operations;
-	else if (S_ISCHR(inode->i_mode))
-		inode->i_op = &chrdev_inode_operations;
-	else if (S_ISBLK(inode->i_mode))
-		inode->i_op = &blkdev_inode_operations;
-#ifdef NOT_YET		
-	else if (S_ISFIFO(inode->i_mode))
-		init_fifo(inode);
-#endif		
+	minix_set_ops(inode);
 }
 
 /*
