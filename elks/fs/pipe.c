@@ -52,6 +52,11 @@ int orig;
 
 #ifdef CONFIG_PIPE
 
+/*
+ *	FIXME - we should pull pipes off the root (or pipe ?) fs as per
+ *	V7, and they should be buffers
+ */
+ 
 char pipe_base[8][PIPE_BUF];
 int pipe_in_use[8] = {0, };
 
