@@ -21,9 +21,14 @@ Thomas McWilliams	<tgm9999@yahoo.com>		 2 Apr 2001
 
 -----------------------------------------------------------------------------
 
-Mon Oct 22 14:22:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+Tue Oct 23 01:44:24 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* THIS IS ELKS RELEASE 0.0.88-pre1.
+
+	* Brought Makefile-rules up to date.
+	* Removed the includes for compile.h and version.h - sorry!
+
+Mon Oct 22 14:22:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Corrected ELKS_VERSION_CODE calculation - it didn't work when
 	  the SUBLEVEL was 0, a case I forgot to test :(((

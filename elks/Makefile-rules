@@ -39,8 +39,8 @@
 
 VERSION 	= 0
 PATCHLEVEL	= 0
-SUBLEVEL	= 85
-PRE		= 3		# If we're not a pre, comment this line.
+SUBLEVEL	= 88
+PRE		= 1		# If we're not a pre, comment this line.
 
 #########################################################################
 # Specify architecture to use.
@@ -63,10 +63,19 @@ ROOT_DEV	= FLOPPY
 #########################################################################
 # Variables derived directly from the ELKS version number.
 
+VSNCODE1	= $(shell printf '0x%02X%02X%02X' \
+			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL)
+
 ifneq (X$(PRE), X)
+
+VSNCODE 	= $(shell printf '0x%06X%02X' $$[$(VSNCODE1)-1] $(PRE))
+
 VSN		= $(shell printf '%u.%u.%u-pre%u' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $(PRE))
 else
+
+VSNCODE 	= $(VSNCODE1)00
+
 VSN		= $(shell printf '%u.%u.%u' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
 endif
@@ -127,19 +136,19 @@ CONFIG_SHELL := $(shell if [ -x "$$bash" ]; \
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
 
-ASIBO		=
-CSIBO		=
-CPSIBO		=
-L8SIBO		= -D 0xC00 -H 0x480
-LDSIBO		=
+ASARCH		=
+CCARCH		=
+CPARCH		=
+LDARCH		= -D 0xC00 -H 0x480
+LTARCH		=
 
 else
 
-ASIBO		=
-CSIBO		=
-CPSIBO		=
-L8SIBO		=
-LDSIBO		=
+ASARCH		=
+CCARCH		=
+CPARCH		=
+LDARCH		=
+LTARCH		=
 
 endif
 
@@ -149,22 +158,22 @@ endif
 AR		= ar
 
 AS86		= as86
-AFLAGS		= $(ASIBO) -0 -j -j
+AFLAGS		= $(ASARCH) -0 -j -j
 
 CC		= bcc
-CFLAGS	 	= $(CSIBO) -I$(INCDIR) -D__KERNEL__ -0 -O -i
+CFLAGS	 	= $(CCARCH) -I$(INCDIR) -D__KERNEL__ -0 -O -i
 
 CPP		= bcc
-CPFLAGS 	= $(CPSIBO) -I$(INCDIR) -D__KERNEL__ -E
+CPFLAGS 	= $(CPARCH) -I$(INCDIR) -D__KERNEL__ -E
 
 LD		= ld
-LDFLAGS 	= $(LDSIBO)
+LDFLAGS 	= $(LDARCH)
 
 LD86		= ld86
-L8FLAGS 	= $(L8SIBO) -0 -i
+L8FLAGS 	= $(LDARCH) -0 -i
 
 LINT		= lclint
-LTFLAGS 	= $(CSIBO) -I$(INCDIR) -D__KERNEL__
+LTFLAGS 	= $(LTARCH) -I$(INCDIR) -D__KERNEL__
 
 #########################################################################
 # Export all of these variables.

@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<Head>
+
+<Title>Makefile structure for the ELKS project</Title>
+
+<!-- Author:  Riley Williams <rhw@MemAlpha.cx> -->
+<!-- Licence: GNU General Public Licence, version 2 only -->
+
+</Head>
+<Body BGColor=White Text=Black Link=Blue VLink=Magenta ALink=Red>
+
+<H1 Align=Center>Makefile structure for the ELKS project</H1>
+
+<P Align=Justify>This document describes the intended structure of the 
+Makefiles in the ELKS project, and the standards that should apply to have
+a completely rational system. It makes a number of assumptions about how
+the process of compiling ELKS works, and these assumptions are hopefully
+documented here:</P>
+
+<OL>
+
+<LI><P Align=Justify>ELKS is not yet able to compile itself, so it has to
+be compiled under another operating system and ported across. It is not in
+general possible to use the same compiler to compile ELKS as to compile
+software designed to run under the other operating system, so there is a
+need for TWO sets of compilation rules, one for compiling ELKS and another
+for compiling the tools used in the process of configuring and compiling
+ELKS.</P>
+
+<LI><P Align=Justify>ELKS is complex enough to require multiple levels of
+source directories. It is assumed that all actions relating to the files
+in a given source directory will be documented in the Makefile in that
+directory.</P>
+
+</OL>
+
+<P Align=Justify>Based on these assumptions, the following design is
+offered for a coherent and rational Makefile system:</P>
+
+<OL>
+
+<LI><P Align=Justify>There will be a file <B>Makefile-rules</B> in the
+base directory of the ELKS source tree that collects together the standard
+rules for all subordinate Makefiles.</P>
+
+<LI><P Align=Justify>Each <B>Makefile</B> in the source tree will begin by
+defining the following variables...</P>
+
+<Center>
+
+<Table Border=1 Width=80%>
+
+<TR>
+<TH Width=20%>Variable</TH>
+<TH Width=70%>Definition</TH>
+<TH Width=10%>Values</TH>
+</TR>
+
+<TR>
+<TD Align=Center VAlign=Center>ELKSCODE</TD>
+<TD><P Align=Justify>States whether the current directory contains code
+that compiles to become part of the ELKS kernel, or code that compiles to
+produce tools to be used when configuring or compiling the ELKS
+kernel.</P></TD>
+<TD Align=Center>YES<BR>NO</TD>
+</TR>
+
+<TR>
+<TD Align=Center VAlign=Center>ELKSDIR</TD>
+<TD><P Align=Justify>The relative path from the current directory to the
+base directory of the ELKS source tree.</P></TD>
+</TR>
+
+</Table>
+
+</Center>
+
+<P Align=Justify>...and then includes the line...</P>
+
+<P Align=Center><Font Size=+1>include $(ELKSDIR)/Makefile-rules</Font></P>
+
+<P Align=Justify>...to generate the standard values and rules. Only AFTER
+it has done this may any other definitions be made.</P>
+
+<P Align=Justify>Once this has been done, the following additional
+variables have been defined and are available for use:</P>
+
+<Center>
+
+<Table Border=1 Width=80%>
+
+<TR>
+<TH Width=20%>Variable</TH>
+<TH Width=80%>Definition</TH>
+</TR>
+
+<TR>
+<TD Align=Center>DISTDIR</TD>
+<TD><P Align=Justify>The absolute path of the directory to copy files to
+when making a distribution copy of this directory.</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center>ELKS_VERSION_CODE</TD>
+<TD><P Align=Justify>The current ELKS version encoded as a 32-bit
+integer.</P></TD>
+
+<TR>
+<TD Align=Center>INCDIR</TD>
+<TD><P Align=Justify>The absolute path of the directory containing the
+include files to use when compiling ELKS.</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center>TOPDIR</TD>
+<TD><P Align=Justify>The absolute path to the ELKS base
+directory.</P></TD>
+</TR>
+
+</Table>
+
+</Center>
+
+<LI><P Align=Justify>The following rules <B>MUST</B> be defined in each
+Makefile. Each only needs to deal with appropriate files in its own
+directory as they are called recursively on each directory containing
+Makefile files.</P>
+
+<OL>
+
+<LI><H2>cleandir:</H2>
+
+<P Align=Justify>This rule performs any actions required to clean up the
+files in this directory beyond the standard actions of removing any files
+named <B>core</B> together with all files with names matching <B>*~</B> or
+<B>*.o</B> or <B>*.tmp</B> and finally removing any files named <B>*.s</B>
+where a matching <B>*.S</B> file exists.</P>
+
+<P>The above files will be removed automatically and no special action
+needs to be taken to remove them. Likewise, no special action needs to be
+taken to remove files in any subdirectories containing a Makefile as this
+rule is called recursively on all subdirectories.</P>
+
+<LI><H2>distdir:</H2>
+
+<P Align=Justify>This rule performs any actions required to create a
+distribution copy of the files in this directory beyond the standard steps
+of creating 
+
+</OL>
+
+</OL>
+
+<HR Width=90%>
+
+<P Align=Center>Copyright &copy; <A HRef="MailTo:rhw@MemAlpha.cx">Riley
+Williams</A>,<BR>
+Released under the GNU General Public Licence, version 2 only</P>
+
+</Body>
+</HTML>
