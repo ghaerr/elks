@@ -326,7 +326,7 @@ void init_IRQ()
 	}
 
 #else /* CONFIG_CONSOLE_DIRECT */
-	enable_irq(1);		/* Keyboard */
+	enable_irq(1);		/* BIOS Keyboard */
 #endif /* CONFIG_CONSOLE_DIRECT */
 
 	/* Enable the drop through interrupts. */

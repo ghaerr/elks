@@ -22,7 +22,7 @@ static int find_empty_process()
 		}
 	}
 
-	if (unused <=1) printk("Only %d slots\n", unused);	
+	if (unused <=1) printk("Only %d slots\n", unused);
 	if(unused==0 || (unused==1 && current->uid))
 		return -EAGAIN;
 	

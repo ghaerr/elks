@@ -42,7 +42,6 @@
 /*
  * Currently unimplemented features for use in embedded systems
  */
-#undef  CONFIG_NOFS
 #undef  CONFIG_EXEC_ROM
 
 /*
@@ -116,7 +115,6 @@
 /*
  * Executable file formats
  */
-#undef  CONFIG_EXEC_SUGID
 #define CONFIG_EXEC_MINIX 1
 #undef  CONFIG_EXEC_MSDOS
 

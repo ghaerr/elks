@@ -6,6 +6,11 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Sun Jun 17 18:38 BST 2001   Alistair Riddoch  <alriddoch@zepler.org>
+	* Resolved some minor clashes between Alan's commit and Thomas's
+	  fix.
+	* Bumped up version to 0.0.84 for release.
+
 Sun Jun 17 11:20:06 BST 2001   Alan Cox  <alan@redhat.com>
 	* Abolished the suid config option
 	* Merged stuff to reduce the ifdef clutter a bit

@@ -54,9 +54,9 @@ struct task_struct
 /* Scheduling + status variables */
 	__s16 state;
         __u32 timeout;                  /* for select() */
-        struct wait_queue *waitpt;	/* Wait pointer */
-        __u16 pollhash;
-        struct task_struct *next_run, *prev_run;
+	struct wait_queue *waitpt;	/* Wait pointer */
+	__u16 pollhash;
+	struct task_struct *next_run, *prev_run;
 	struct file_struct files;	/* File system structure */
 	struct fs_struct fs;		/* File roots */
 	struct mm_struct mm;		/* Memory blocks */
@@ -64,7 +64,7 @@ struct task_struct
 	struct tty * tty;
 /*	__u8 link_count;		/* Symlink loop counter, now global */
 	struct task_struct *p_parent, *p_prevsib, *p_nextsib, *p_child;	 
-  	struct wait_queue child_wait;
+	struct wait_queue child_wait;
 	pid_t child_lastend;
 	int lastend_status;
 	struct inode * t_inode;
