@@ -338,4 +338,3 @@ gid_t grp;
 	}
 }
 #endif /* CONFIG_SUPPLEMENTARY_GROUPS */
-

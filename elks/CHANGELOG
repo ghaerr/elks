@@ -6,6 +6,11 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Tue Aug 21 14:01:13 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Added %o and %u types to printk() and redefined %d as signed.
+	  Appropriate changes to printk calls will need to be made.
+
 Tue Aug 21 12:23:14 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Documented VT52 sequences listed in the VT100 User Guide.

@@ -6,10 +6,13 @@
  *	Illegal format strings will break it. Only the
  *	following simple subset is supported
  *
- *	%x	-	hex
- *	%d	-	decimal
- *	%s	-	string
  *	%c	-	char
+ *	%d	-	signed decimal
+ *	%o	-	octal
+ *	%p	-	pointer (printed in hex)
+ *	%s	-	string
+ *	%u	-	unsigned decimal
+ *	%x	-	hexadecimal
  *
  *	And the h/l length specifiers for %d/%x
  *
@@ -70,26 +73,30 @@ int len;
 
 static char *nstring="0123456789ABCDEF";
  
-static void numout(ptr,len,base)
+static void numout(ptr,len,base,useSign)
 unsigned long *ptr;
 int len;
 int base;
+int useSign;
 {
+	char buf[16];	/* Largest value must fit in this */
+	register char *bp=buf+14;
 	unsigned long v;
 	int c;
-	char buf[9];	/* Largest value must fit in this */
-	register char *bp=buf+7;
-	bp[1]=0;
 
-	v=*ptr;	
+	bp[1]=0;
+	v=*ptr;
 	if(len == 2)
 		v = (unsigned short)v;
+	if(useSign && v < 0) {
+		con_write("-",1);
+		v=-v;
+	}
 
 	do {
 		c=v%base;			/* This digit */
-		*bp=nstring[c];			/* String for it */
+		*bp--=nstring[c];		/* String for it */
 		v/=base;			/* Slide along */
-		bp--;
 	} while(v);
 	
 	bp++;
@@ -118,8 +125,15 @@ int a1;
 			
 			switch(c)				
 			{
-				case 'x': case 'p': case 'd':
-					numout(p,len, (c == 'd') ? 10:16);
+				case 'd':
+				case 'u':
+					numout(p,len,10,(c=='d'));
+					p+=len;
+					break;
+				case 'o':
+				case 'p':
+				case 'x':
+					numout(p,len,(c=='o')?8:16,0);
 					p+=len;
 					break;
 				case 's':
