@@ -238,7 +238,7 @@ struct tcpcb_s	*cb;
 	cb->send_nxt += cb->datalen;
 
 	len = (__u16)CB_BUF_SPACE(cb);
-	if(len == 0)len == 1;	/* Never advertise zero window size */
+	if(len == 0)len = 1;	/* Never advertise zero window size */
 	th->window = htons(len);
 	th->urgpnt = 0;
 	th->flags = cb->flags;	
