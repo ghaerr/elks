@@ -210,31 +210,25 @@ void printk(register char *fmt,int a1)
 
 void panic(char *error, int a1 /* VARARGS... */ )
 {
-    register int *bp = (int *) &error - 2;
-    int *bp2 = bp, i, j, k;
+    register int *bp = (int *) &error - 2, i = 0, j;
 
     printk("\npanic: ");
     printk(error, a1);
     printk("\napparent call stack:\n");
-    printk("Line: Addr    Parameters\n~~~~: ~~~~~~~    ~~~~~~~~~~\n");
+    printk("Line: Addr    Parameters\n");
+    printk("~~~~: ~~~~    ~~~~~~~~~~\n");
 
-    i = 0;
     do {
-	bp2 = (int *) bp[0];
-	k = 0;
-	for (j = 2; j < 8; j++)
-	    k |= bp2[j];
-	if (k) {
-	    printk("%4u: %04P =>", i, bp[1]);
-	    for (j = 2; j < 8; j++)
-		printk(" %04X", bp2[j]);
-	    printk("\n");
-	} else
-	    printk("---\nEND OF STACK\n");
-	bp = bp2;
-    } while (k && (++i > 9));
+	printk("%4u: %04P =>", i, bp[1]);
+	bp = (int *) bp[0];
+	for (j = 2; j <= 8; j++)
+	    printk(" %04X", bp[j]);
+	printk("\n");
+    } while (++i > 9);
 
     /* Lock up with infinite loop */
+
+    printk("\nSYSTEM LOCKED - Press CTRL-ALT-DEL to reboot: ");
 
     while (1)
 	/* Do nothing */;
