@@ -1,18 +1,20 @@
-#########################################################################
-#                                                                       #
-#     Standard rulesets for use when compiling and installing ELKS.     #
-#                                                                       #
-#########################################################################
+########################################################################
+#                                                                      #
+# Standard rulesets for use when compiling and installing this system. #
+#                                                                      #
+########################################################################
 #
 # This file expects the following variables to have been defined before
 # it is included into any other Makefile on this system:
 #
-#	ELKSDIR 	The relative path from the directory the Makefile
-#			is in to the ELKS base directory.
+#	BASEDIR 	The relative path from the directory the Makefile
+#			is in to the base directory. This is used quite
+#			extensively through these definitions, so must be
+#			correct.
 #
-#	ELKSSTD 	Whether to compile for ELKS or Linux. If this is
-#			set to 'N' it compiles for Linux, otherwise it
-#			compiles for ELKS.
+#	USEBCC		Whether to compile using BCC or GCC. If this is
+#			set to 'N' it compiles using GCC, otherwise it
+#			compiles using BCC.
 #
 #	CLEANDEP	Any files in the current directory that the
 #			`make dep` command is dependent on.
@@ -38,23 +40,26 @@
 # No other variables should be defined before including this file.
 #
 #########################################################################
-# State the current ELKS kernel version.
+# State the current version of this system.
 
 VERSION 	= 0	# (0-255)
 PATCHLEVEL	= 1	# (0-255)
 SUBLEVEL	= 0	# (0-255)
 PRE		= 3	# (0-255)	If not a pre, comment this line.
 
+#########################################################################
 # Specify the architecture we will use.
 
 ARCH		= i86
 
+#########################################################################
 # ROOT_DEV specifies the default root-device when making the image.
 # This does not yet work under ELKS. See include/linuxmt/config.h to
 # change the root device.
 
 ROOT_DEV	= FLOPPY
 
+#########################################################################
 # Specify the target for the netboot image.
 
 TARGET_NB_IMAGE	= $(TOPDIR)/nbImage
@@ -64,8 +69,7 @@ TARGET_NB_IMAGE	= $(TOPDIR)/nbImage
 #   From here onwards, it is not normally necessary to edit this file   #
 #									#
 #########################################################################
-
-# Define variables directly dependant on the current ELKS version.
+# Define variables directly dependant on the current version number.
 
 VSNCODE1	= $(shell printf '0x%02X%02X%02X' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
@@ -89,7 +93,7 @@ endif
 #########################################################################
 # Specify the root directory.
 
-TOPDIR		= $(shell cd "$(ELKSDIR)" ; \
+TOPDIR		= $(shell cd "$(BASEDIR)" ; \
 			  if [ -n "$$PWD" ]; \
 				then echo $$PWD ; \
 				else pwd ; \
@@ -109,7 +113,7 @@ MYDIR		= $(shell pwd | sed 's¬^$(TOPDIR)¬.¬')
 # directory in, in such a way that no . or .. directories occur. This
 # also makes this an absolute path, but that fact is not important.
 
-DISTDIR 	= $(shell $(ELKSDIR)/scripts/setdir $(TOPDIR)/../elks-$(DIST)/$(MYDIR))
+DISTDIR 	= $(shell $(BASEDIR)/scripts/setdir $(TOPDIR)/../elks-$(DIST)/$(MYDIR))
 
 #########################################################################
 # Specify the configuration shell to use.
@@ -123,9 +127,7 @@ CONFIG_SHELL	:= $(shell if [ -x "$$bash" ]; \
 			   fi)
 
 #########################################################################
-# Specify the standard definitions to be given to ELKS programs. We use
-# ASCII code 160 decimal for spaces in the date and UTS_VERSION strings
-# to avoid the shell splitting them up as separate 'words'.
+# Specify the standard definitions to be given to system programs.
 
 CCDEFS		= -DELKS_VERSION_CODE=$(VSNCODE)		\
 		  -DUTS_RELEASE=\"$(DIST)\"			\
@@ -134,10 +136,10 @@ CCDEFS		= -DELKS_VERSION_CODE=$(VSNCODE)		\
 #########################################################################
 # Set the target environment.
 
-ifeq (wildcard($(ELKSDIR)/.config), $(ELKSDIR)/.config)
-    MK_ARCH	= $(shell grep '^CONFIG_ARCH_' $(ELKSDIR)/.config \
+ifeq (wildcard($(BASEDIR)/.config), $(BASEDIR)/.config)
+    MK_ARCH	= $(shell grep '^CONFIG_ARCH_' $(BASEDIR)/.config \
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
-    MK_CPU	= $(shell grep '^CONFIG_CPU_' $(ELKSDIR)/.config \
+    MK_CPU	= $(shell grep '^CONFIG_CPU_' $(BASEDIR)/.config \
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
 else
     MK_ARCH	= ibmpc
@@ -200,7 +202,7 @@ endif
 #########################################################################
 # Specify the tools to use, with their flags.
 
-ifeq ($(ELKSSTD), Y)
+ifneq ($(USEBCC), N)
 
 AR		= ar
 
@@ -243,7 +245,7 @@ endif
 # results in `make all` being called in the root directory of the tree.
 
 elks:
-	make -C $(ELKSDIR) all
+	make -C $(BASEDIR) all
 
 #########################################################################
 # Standard commands.
@@ -306,7 +308,7 @@ nodep:
 MKDIST	= $(shell export allow_null_glob_expansion=Y ; \
 	  echo *.? *.cc *.html *.in *.png *.sh *.tk *.txt Makefile* README*)
 
-mkdist:	
+mkdist:
 	mkdir -m 755 -p $(DISTDIR)
 	cp -pf $(MKDIST) $(DISTFILES) $(DISTDIR)
 	@for DIR in */ ; do \

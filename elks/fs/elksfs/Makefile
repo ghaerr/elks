@@ -9,13 +9,13 @@
 #########################################################################
 # Relative path to base directory.
 
-ELKSDIR 	= ../..
+BASEDIR 	= ../..
 
 #########################################################################
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-ELKSSTD 	= Y
+USEBCC 	= Y
 
 CLEANDEP	= 
 
@@ -28,7 +28,7 @@ DISTFILES	=
 #########################################################################
 # Include the standard commands.
 
-include $(ELKSDIR)/Makefile-rules
+include $(BASEDIR)/Makefile-rules
 
 #########################################################################
 # Objects to be compiled.

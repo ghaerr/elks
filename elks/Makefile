@@ -4,17 +4,17 @@
 #							#
 #########################################################
 
-# Specify the relative path from here to the root of the ELKS tree.
+# Specify the relative path from here to the root of the tree.
 # Several other variables are defined based on the definition of this
 # variable, so it needs to be accurate.
 
-ELKSDIR		= .
+BASEDIR		= .
 
 #########################################################################
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-ELKSSTD 	= Y
+USEBCC		= Y
 
 CLEANDEP	= include/linuxmt/compiler-generated.h
 
@@ -27,7 +27,7 @@ DISTFILES	= BUGS CHANGELOG COPYING INSTALLATION RELNOTES TODO nodeps
 #########################################################################
 # Include the standard ruleset.
 
-include $(ELKSDIR)/Makefile-rules
+include $(BASEDIR)/Makefile-rules
 
 #########################################################################
 # Targets local to this directory.
@@ -179,7 +179,7 @@ dist.old:
 	cp -pf init/main.c $(DISTDIR)/init
 	cp -apf Documentation $(DISTDIR)
 	@echo
-	@echo Directory $(DISTDIR) contains a clean ELKS distribution tree.
+	@echo Directory $(DISTDIR) now contains a clean distribution tree.
 	@echo
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 
@@ -219,7 +219,7 @@ config:
 defconfig:
 	@yes '' | make config
 
-me:
+dup:
 	rm -fr ../elks-test
 	mkdir ../elks-test
 	tar c * | ( cd ../elks-test ; tar xv )

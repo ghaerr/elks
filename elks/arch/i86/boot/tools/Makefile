@@ -5,13 +5,13 @@
 # Note that the standard Makefile rules and defines have been moved to
 # the file below.
 
-ELKSDIR		= ../../../..
+BASEDIR		= ../../../..
 
 #########################################################################
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-ELKSSTD 	= N
+USEBCC 	= N
 
 CLEANDEP	= 
 
@@ -24,7 +24,7 @@ DISTFILES	= a a.out build
 #########################################################################
 # Include the standard rules.
 
-include $(ELKSDIR)/Makefile-rules
+include $(BASEDIR)/Makefile-rules
 
 #########################################################################
 ### Dependencies:

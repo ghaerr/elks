@@ -3,13 +3,13 @@
 #########################################################################
 # Relative path to base directory.
 
-ELKSDIR 	= ../..
+BASEDIR 	= ../..
 
 #########################################################################
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-ELKSSTD 	= Y
+USEBCC 	= Y
 
 CLEANDEP	= 
 
@@ -22,7 +22,7 @@ DISTFILES	= defconfig
 #########################################################################
 # Include standard commands.
 
-include $(ELKSDIR)/Makefile-rules
+include $(BASEDIR)/Makefile-rules
 
 #########################################################################
 # SIBO specific options.
@@ -87,7 +87,7 @@ tools:
 ifeq ($(CONFIG_ARCH_SIBO), y)
 
 boot/system: $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
-	(cd $(ELKSDIR) ; $(LD) $(LDFLAGS) $(ARCH_LD) \
+	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) $(ARCH_LD) \
 		$(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
 		-t -M -o $(ARCH_DIR)/boot/system > System.tmp ; \
@@ -102,7 +102,7 @@ Image: boot/system tools
 else
 
 boot/system:	$(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
-	(cd $(ELKSDIR) ; $(LD) $(LDFLAGS) $(ARCH_LD) \
+	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) $(ARCH_LD) \
 		$(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
 		-t -M -o $(ARCH_DIR)/boot/system > System.tmp ; \

@@ -1,13 +1,13 @@
 #########################################################################
 # Relative path to base directory.
 
-ELKSDIR 	= ..
+BASEDIR 	= ..
 
 #########################################################################
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-ELKSSTD 	= N
+USEBCC 	= N
 
 CLEANDEP	= 
 
@@ -21,7 +21,7 @@ DISTFILES	= Configure Menuconfig elksspec index mkMake renvar \
 #########################################################################
 # Include the standard commands.
 
-include $(ELKSDIR)/Makefile-rules
+include $(BASEDIR)/Makefile-rules
 
 #########################################################################
 # Local commands.

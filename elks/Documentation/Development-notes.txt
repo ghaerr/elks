@@ -16,9 +16,9 @@ If you add any new directories to the ELKS tree, you can link them into the
 standard versions of the standard make commands for ELKS by including the
 following lines at the top of the Makefile you create in that directory:
 
-	ELKSDIR		= ..
+	BASEDIR		= {path to the base directory for this tree}
 
-	ELKSSTD 	= Y
+	USEBCC	 	= Y
 
 	CLEANDEP	= 
 
@@ -28,18 +28,18 @@ following lines at the top of the Makefile you create in that directory:
 
 	DISTFILES	= 
 
-	include $(ELKSDIR)/Makefile-rules
+	include $(BASEDIR)/Makefile-rules
 
 The values on these lines MUST match the following descriptions:
 
-	ELKSDIR 	The relative path from the directory the Makefile
-			is in to the ELKS base directory. This is used
-			extensively by the various ruiles, so MUST be
+	BASEDIR 	The relative path from the directory the Makefile
+			is in to the system base directory. This is used
+			extensively by the various rules, so MUST be
 			accurate.
 
-	ELKSSTD 	Whether to compile for ELKS or Linux. If this is
-			set to 'N' it compiles for Linux, otherwise it
-			compiles for ELKS.
+	USEBCC		Whether to compile using BCC or GCC. If this is
+			set to 'N' it compiles using GCC, otherwise it
+			compiles using BCC.
 
 	CLEANDEP	Any files in the current directory that the
 			`make clean` command is dependent on.
@@ -75,7 +75,7 @@ use of the CVS archive for development. You are strongly recommended to
 always test your patches before committing them. Two commands have been
 included in the base Makefile to facilitate this, as follows:
 
-	make me 	Creates an exact copy of the current ELKS tree
+	make dup	Creates an exact copy of the current ELKS tree
 			(including your patches) based in the directory
 			../elks-tree relative to the current directory.
 
@@ -95,4 +95,4 @@ included in the base Makefile to facilitate this, as follows:
 
 You are strongly advised to make use of these before committing any major
 changes to the CVS archive. In particular, do not commit anything to the
-CVS archive if `make test` fails, or if 
+CVS archive if `make test` fails to complete.
