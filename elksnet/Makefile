@@ -3,21 +3,19 @@
 ###############################################################################
 # Compile everything present.
 
-all:
-	@for DIR in */ ; do \
-	    if [ -f "$$DIR"/Makefile ]; then \
-		make -C "$$DIR" all ; \
-	    fi ; \
+DIRS = ktcp # screen
+
+all: $(DIRS)
+	@for DIR in $(DIRS) ; do \
+	    make -C "$$DIR" all || exit 1; \
 	done
 
 ###############################################################################
 # Clean everything up.
 
 clean:
-	@for DIR in */ ; do \
-	    if [ -f "$$DIR"/Makefile ]; then \
-		make -C "$$DIR" clean ; \
-	    fi ; \
+	@for DIR in $(DIRS) ; do \
+	    make -C "$$DIR" clean || exit 1; \
 	done
 
 ###############################################################################

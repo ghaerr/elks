@@ -9,8 +9,13 @@ Contributor             Email address                   CHANGELOG entries found
 ~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~
 Harry Kalogirou         <harkal@rainbow.cs.unipi.gr>    25 Jun 2001- 2 Nov 2001
 Riley Williams          <Riley@Williams.Name>           13 Aug 2001-20 Jan 2002
+Eduardo Pereira Habkost <ehabkost@conectiva.com.br>      9 Jun 2004-
 
 -------------------------------------------------------------------------------
+
+Wed Jun  9 15:00:14 BRT 2004	Eduardo Pereira Habkost <ehabkost@conectiva.com.br>
+	* Don't build scren by default, until it is working
+	* Few little changes trying to make screen compile
 
 Thu Jun 20 23:19:30 BST 2002	Riley Williams <Riley@Williams.Name>
 

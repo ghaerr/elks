@@ -31,6 +31,7 @@ static char ScreenVersion[] = "screen 2.0a.1 (ELKS) 19-Sep-2001";
 
 #ifdef ELKS
 #include <termios.h>
+#include <bsd/sgtty.h>
 #else
 #include <sgtty.h>
 #include <nlist.h>
@@ -448,7 +449,7 @@ static SigHup () {
 static DoWait () {
     register pid;
     register struct win **pp;
-    union wait wstat;
+    int wstat;
 
     while ((pid = wait3 (&wstat, WNOHANG|WUNTRACED, NULL)) > 0) {
 	for (pp = wtab; pp < wtab+MAXWIN; ++pp) {
