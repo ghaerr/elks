@@ -6,7 +6,7 @@ include $(BASEDIR)/Make.defs
 #
 # Include standard packaging commands.
 
-MIN_BIN 	= getty init kill login mount passwd ps reboot umount
+MIN_BIN 	= getty init kill login mount passwd ps meminfo reboot umount
 MIN_LIB 	= 
 MIN_SBIN	= clock exitemu
 MIN_USR_BIN	= 
@@ -34,9 +34,9 @@ include $(BASEDIR)/Make.rules
 PRGS=getty kill man mount reboot umount clock exitemu who \
 	init login passwd ps
 
-NETPRGS=init getty login kill mount umount passwd reboot ps who
+NETPRGS=init getty login kill mount umount passwd reboot ps meminfo who
 
-MIN_PRGS=init getty login kill mount reboot umount clock exitemu ps
+MIN_PRGS=init getty login kill mount reboot umount clock exitemu ps meminfo
 
 SMIN_PRGS=mount umount
 
@@ -71,7 +71,10 @@ utent.o: utent.c
 # call malloc will need much more than this.
 
 getty: getty.c
-	$(CC) $(CFLAGS) $(LDFLAGS) getty.c -o getty -H 2000
+	$(CC) $(CFLAGS) $(LDFLAGS) getty.c -o getty -H 1800
+
+meminfo: meminfo.c
+	        $(CC) $(CFLAGS) $(LDFLAGS) meminfo.c -o meminfo -H 100
 
 new_init: init.c utent.o
 	$(CC) $(CFLAGS) $(LDFLAGS) init.c utent.o -o init

@@ -35,7 +35,7 @@ struct task_struct * task_table;
 	if (!(addr == lseek(fd, addr, SEEK_SET))) {
 		return -1;
 	}
-	if ((i = read(fd, task_table, sizeof (struct task_struct))) != (sizeof (struct task_struct))) {
+	if (!read(fd, task_table, sizeof (struct task_struct))) {
 		return -1;
 	}
 }
@@ -111,7 +111,10 @@ char ** argv;
 				(pwent ? pwent->pw_name : "unknown"),
 				((task_table.state == TASK_RUNNING) ? 'R' : 'S'),
 				task_table.t_inode);
-			get_name(fd, task_table.t_regs.ss, task_table.t_begstack + 2);
+			if(task_table.mm.flags & DS_SWAP)
+				printf("[data swapped] \n");
+			else
+				get_name(fd, task_table.t_regs.ss, task_table.t_begstack + 2);
 			fflush(stdout);
 		}
 	}
