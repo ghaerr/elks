@@ -81,7 +81,6 @@ struct tcpcb_s *cb;
 
 	tcp_output(cb);
 	
-	cb->send_nxt++;
 }
 
 void tcp_syn_sent(iptcp, cb)
