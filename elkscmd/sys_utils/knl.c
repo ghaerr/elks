@@ -49,6 +49,8 @@
  *	TRACE	Display a trace of program execution to stderr.
  */
 
+/*
+
 #define DEBUG
 #define TRACE
 
