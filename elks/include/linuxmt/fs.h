@@ -44,9 +44,6 @@
 #define NR_BUFFERS NR_MAPBUFS
 #endif
 
-
-#define NR_IHASH	11
-
 #define MAY_EXEC 1
 #define MAY_WRITE 2
 #define MAY_READ 4
