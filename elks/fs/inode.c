@@ -97,22 +97,17 @@ void inode_init()
 static void wait_on_inode(inode)
 REGOPT struct inode * inode;
 {
-	struct wait_queue wait;
-
 	if (!inode->i_lock)
 		return;
 	
-	wait.task = current;
-	wait.next = NULL;
-
-	add_wait_queue(&inode->i_wait, &wait);
+	wait_set(&inode->i_wait);
 repeat:
 	current->state = TASK_UNINTERRUPTIBLE;
 	if (inode->i_lock) {
 		schedule();
 		goto repeat;
 	}
-	remove_wait_queue(&inode->i_wait, &wait);
+	wait_clear(&inode->i_wait);
 	current->state = TASK_RUNNING;
 }
 
@@ -138,22 +133,14 @@ REGOPT struct inode * inode;
 void clear_inode(inode)
 REGOPT struct inode * inode;
 {
-	REGOPT struct wait_queue * wait;
-
 	wait_on_inode(inode);
-#ifdef HASH_INODES
-	remove_inode_hash(inode);
-#endif
 	remove_inode_free(inode);
-	wait = inode->i_wait;
 	if (inode->i_count)
 		nr_free_inodes++;
 	memset(inode,0,sizeof(*inode));
-	inode->i_wait = wait;
 	insert_inode_free(inode);
 }
 
-#ifndef CONFIG_NOFS
 int fs_may_mount(dev)
 kdev_t dev;
 {
@@ -347,37 +334,8 @@ REGOPT struct iattr *attr;
 	inode_setattr(inode, attr);
 	return 0;
 }
-#endif
 #endif /* USE_NOTIFY_CHANGE */
 
-#if 0
-#ifdef BLOAT_FS
-/*
- * bmap is needed for demand-loading and paging: if this function
- * doesn't exist for a filesystem, then those things are impossible:
- * executables cannot be run from the filesystem etc...
- *
- * This isn't as bad as it sounds: the read-routines might still work,
- * so the filesystem would be otherwise ok (for example, you might have
- * a DOS filesystem, which doesn't lend itself to bmap very well, but
- * you could still transfer files to/from the filesystem)
- *
- * We should be able to lose bmap...
- */
-int bmap(inode,block)
-REGOPT struct inode * inode;
-int block;
-{
-	register struct inode_operations * iop = inode->i_op;
-	if (iop && iop->bmap)
-		return iop->bmap(inode,block);
-	return 0;
-}
-
-#endif
-#endif
-
-#ifndef CONFIG_NOFS
 void invalidate_inodes(dev)
 kdev_t dev;
 {
@@ -414,11 +372,11 @@ kdev_t dev;
 			write_inode(inode);
 	}
 }
-#endif
 
 void iput(inode)
 REGOPT struct inode * inode;
 {
+	register struct super_operations * sop = inode->i_sb->s_op;
 	if (inode) {
 		wait_on_inode(inode);
 		if (!inode->i_count) {
@@ -444,22 +402,17 @@ repeat:
 		}
 #endif	
 
-		if (inode->i_sb) {
-			struct super_operations *sop = inode->i_sb->s_op;
-			if (sop && sop->put_inode) {
+		if (inode->i_sb && sop && sop->put_inode) {
 			sop->put_inode(inode);
 			if (!inode->i_nlink)
 				return;
 		}
-		}
 
-#ifndef CONFIG_NOFS
 		if (inode->i_dirt) {
 			write_inode(inode);	/* we can sleep - so do again */
 			wait_on_inode(inode);
 			goto repeat;
 		}
-#endif
 		inode->i_count--;
 		nr_free_inodes++;
 	}
@@ -544,7 +497,6 @@ struct inode * get_pipe_inode()
 		}
 		inode->i_op = &pipe_inode_operations;
 		inode->i_count = 2;	/* sum of readers/writers */
-		PIPE_WAIT(*inode) = NULL;
 		PIPE_START(*inode) = PIPE_LEN(*inode) = 0;
 		PIPE_RD_OPENERS(*inode) = PIPE_WR_OPENERS(*inode) = 0;
 		PIPE_READERS(*inode) = PIPE_WRITERS(*inode) = 1;
@@ -564,31 +516,18 @@ struct inode * get_pipe_inode()
 }
 #endif
 
-#ifndef CONFIG_NOFS
 struct inode *__iget(sb, inr/* ,crossmntp*/)
 REGOPT struct super_block * sb;
 ino_t inr;
 /*int crossmntp;*/
 {
-#ifdef HASH_INODES
-	static struct wait_queue * update_wait = NULL;
-	struct inode_hash_entry * h;
-#else
 	int i;
-#endif
 	REGOPT struct inode * inode;
 	REGOPT struct inode * empty = NULL;
 
 	printd_iget3("iget called(%x, %d, %d)\n", sb, inr, 0 /* crossmntp*/);
 	if (!sb)
 		panic("VFS: iget with sb==NULL");
-#ifdef HASH_INODES
-	h = hash(sb->s_dev, inr);
-repeat:
-	for (inode = h->inode; inode ; inode = inode->i_hash_next)
-		if (inode->i_dev == sb->s_dev && inode->i_ino == inr)
-			goto found_it;
-#else
 repeat:
 	inode = inode_block;
 	for (i = NR_INODE ; i ; i--,inode++ ) {
@@ -597,18 +536,10 @@ repeat:
 		}
 	}
 			
-#endif
 	if (!empty) {
-#ifdef HASH_INODES
-		h->updating++;
-#endif
 		printd_iget("iget: getting an empty inode...\n");
 		empty = get_empty_inode();
 		printd_iget1("iget: got one... (%x)!\n", empty);
-#ifdef HASH_INODES
-		if (!--h->updating)
-			wake_up(&update_wait);
-#endif
 		if (empty)
 			goto repeat;
 		return (NULL);
@@ -619,9 +550,6 @@ repeat:
 	inode->i_ino = inr;
 	inode->i_flags = sb->s_flags;
 	put_last_free(inode);
-#ifdef HASH_INODES
-	insert_inode_hash(inode);
-#endif
 	printd_iget("iget: Reading inode\n");
 	read_inode(inode);
 	printd_iget("iget: Read it\n");
@@ -648,12 +576,5 @@ found_it:
 		iput(empty);
 
 return_it:
-#ifdef HASH_INODES
-	while (h->updating) {
-		printd_iget("iget: sleeping\n");
-		sleep_on(&update_wait);
-	}
-#endif
 	return inode;
 }
-#endif /* CONFIG_NOFS */
