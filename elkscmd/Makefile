@@ -1,6 +1,6 @@
 include Make.defs
 
-DIRS=disk_utils file_utils fosh-1.1 sh_utils sys_utils misc_utils sash \
+DIRS=disk_utils file_utils sh_utils sys_utils misc_utils sash \
 	levee ash minix1 minix2 bc byacc elvis
 KHELPER=$(MINIX_BOOT)/minix_elks.bin
 FD_BSECT=$(MINIX_BOOT)/minix.bin
