@@ -68,7 +68,7 @@ Fri Jul 12 19:53:43 BST 2002	Riley Williams <Riley@Williams.Name>
 Fri Jul 12 19:32:16 EEST 2002	Paul Nasrat <pauln@truemesh.com>
 
 	* Moved the definition of _rs_ops outside of a block excluded
-	  by #ifdef CONFIG_CONSOLE_SERIAL command.
+	  by "#ifdef CONFIG_CONSOLE_SERIAL" command.
 
 	* KTCP NOW WORKS !!!
 
