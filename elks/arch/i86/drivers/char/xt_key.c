@@ -1,6 +1,6 @@
-/*
- * Tables from the Minix book, as that's all I have on XT keyboard controllers.
- * They need be loadable, this doesn't look good on my Finnish keyboard.
+/* Tables from the Minix book, as that's all I have on XT keyboard
+ * controllers. They need to be loadable, this doesn't look good on
+ * my Finnish keyboard.
  *
  ***************************************************************
  * Added primitive buffering, and function stubs for vfs calls *
@@ -45,6 +45,7 @@ int kraw = 0;
  * Changed this a lot. Made it work, too. ;) *
  * SA 1996                                   *
  *********************************************/
+
 #define LSHIFT 1
 #define RSHIFT 2
 #define CTRL 4
@@ -53,20 +54,27 @@ int kraw = 0;
 #define NUM 32
 #define ALT_GR 64
 
-#define ANYSHIFT 3		/* [LR]SHIFT */
+#define ANYSHIFT (LSHIFT | RSHIFT)
+
+/* Ack.  We can't add a character until the queue's ready
+ */
+
+void AddQueue(unsigned char Key)
+{
+    register struct tty *ttyp = &ttys[Current_VCminor];
+
+    if (!tty_intcheck(ttyp, Key) && (ttyp->inq.size != 0))
+	chq_addch(&ttyp->inq, Key, 0);
+}
 
 /*************************************************************************
  * Queue for input received but not yet read by the application. SA 1996 *
  * There needs to be many buffers if we implement virtual consoles...... *
  *************************************************************************/
 
-static void SetLeds();
-
-void AddQueue(unsigned char Key);
-
 int KeyboardInit(void)
 {
-/* Do nothing */
+    /* Do nothing */ ;
 }
 
 void xtk_init(void)
@@ -79,12 +87,9 @@ void xtk_init(void)
  *	with the monstrosity AT keyboards became.
  */
 
-void keyboard_irq(
-     int irq,
-     struct pt_regs *regs,
-     void *dev_id)
+void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
-    static unsigned ModeState = 0;
+    static unsigned int ModeState = 0;
     static int E0Prefix = 0;
     int code, mode, IsRelease, key, E0 = 0;
 
@@ -124,7 +129,7 @@ void keyboard_irq(
 	    IsRelease ? (ModeState &= ~ALT) : (ModeState |= ALT);
 	} else {
 	    IsRelease ? (ModeState &= ~ALT_GR) : (ModeState |= ALT_GR);
-	};
+	}
 
 #else
 
@@ -194,7 +199,6 @@ void keyboard_irq(
 	    Console_set_vc(code - 0x3B);
 	    return;
 	}
-
 #endif
 
 	AddQueue(ESC);
@@ -226,16 +230,6 @@ void keyboard_irq(
     if (key == '\r')
 	key = '\n';
     AddQueue(key);
-}
-
-/* Ack.  We can't add a character until the queue's ready */
-
-void AddQueue(unsigned char Key)
-{
-    register struct tty *ttyp = &ttys[Current_VCminor];
-
-    if (!tty_intcheck(ttyp, Key) && (ttyp->inq.size != 0))
-	chq_addch(&ttyp->inq, Key, 0);
 }
 
 /*

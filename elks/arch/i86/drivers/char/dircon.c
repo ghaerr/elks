@@ -102,21 +102,21 @@ static unsigned AttrArry[MAX_ATTR] = {
 };
 #endif
 
-static void ScrollUp(register Console *C, int st, int en);
-static void PositionCursor(register Console *C);
-void WriteChar(register Console *C, char c);
-static void ClearRange(register Console *C, int x, int y, int xx, int yy);
+static void ScrollUp(register Console * C, int st, int en);
+static void PositionCursor(register Console * C);
+void WriteChar(register Console * C, char c);
+static void ClearRange(register Console * C, int x, int y, int xx, int yy);
 
 #ifdef CONFIG_DCON_VT52
 
-static void ScrollDown(register Console *C, int st, int en);
-void Vt52Cmd(register Console *C, char c);
-void Vt52CmdEx(register Console *C, char c);
-static void Console_gotoxy(register Console *C, int x, int y);
+static void ScrollDown(register Console * C, int st, int en);
+void Vt52Cmd(register Console * C, char c);
+void Vt52CmdEx(register Console * C, char c);
+static void Console_gotoxy(register Console * C, int x, int y);
 
 #ifdef CONFIG_DCON_ANSI
 
-static void AnsiCmd(register Console *C, char c);
+static void AnsiCmd(register Console * C, char c);
 
 #endif
 
@@ -136,7 +136,7 @@ void con_charout(char Ch)
     PositionCursor(Visible);
 }
 
-void WriteChar(register Console *C, char c)
+void WriteChar(register Console * C, char c)
 {
     unsigned int offset;
 
@@ -217,7 +217,7 @@ void WriteChar(register Console *C, char c)
     }
 }
 
-static void ScrollUp(register Console *C, int st, int en)
+static void ScrollUp(register Console * C, int st, int en)
 {
     unsigned rdofs, wrofs;
     int cnt;
@@ -234,7 +234,7 @@ static void ScrollUp(register Console *C, int st, int en)
 
 #ifdef CONFIG_DCON_VT52
 
-static void ScrollDown(register Console *C, int st, int en)
+static void ScrollDown(register Console * C, int st, int en)
 {
     unsigned rdofs, wrofs;
     int cnt;
@@ -250,7 +250,7 @@ static void ScrollDown(register Console *C, int st, int en)
 
 #endif
 
-static void PositionCursor(register Console *C)
+static void PositionCursor(register Console * C)
 {
     int Pos;
 
@@ -263,7 +263,7 @@ static void PositionCursor(register Console *C)
     outb((unsigned char) (Pos & 0xFF), CCBase + 1);
 }
 
-static void ClearRange(register Console *C, int x, int y, int xx, int yy)
+static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 {
     unsigned st, en, ClrW, ofs;
 
@@ -276,7 +276,7 @@ static void ClearRange(register Console *C, int x, int y, int xx, int yy)
 
 #ifdef CONFIG_DCON_VT52
 
-void Vt52Cmd(register Console *C, char c)
+void Vt52Cmd(register Console * C, char c)
 {
     /* process multi character ESC sequences */
     if (C->state > ST_ESCSEEN) {
@@ -338,7 +338,7 @@ void Vt52Cmd(register Console *C, char c)
     C->state = ST_NORMAL;
 }
 
-void Vt52CmdEx(register Console *C, char c)
+void Vt52CmdEx(register Console * C, char c)
 {
     switch (C->state) {
     case ST_ESCY:
@@ -392,7 +392,7 @@ static int parm2(register char *buf)
     return parm1(buf);
 }
 
-static void AnsiCmd(register Console *C, char c)
+static void AnsiCmd(register Console * C, char c)
 {
     register unsigned char *p;
     int n;
@@ -520,7 +520,7 @@ void Console_set_vc(int N)
 
 #ifdef CONFIG_DCON_VT52
 
-static void Console_gotoxy(register Console *C, int x, int y)
+static void Console_gotoxy(register Console * C, int x, int y)
 {
     if (x >= MaxCol)
 	x = MaxCol;

@@ -44,9 +44,7 @@ int KeyboardInit(void)
  *  something going. Simon Wood 12th June 1999
  */
 
-void keyboard_irq(
-int irq,
-struct pt_regs *regs)
+void keyboard_irq(int irq, struct pt_regs *regs)
 {
     int modifiers;
     int key;

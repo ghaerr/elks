@@ -24,13 +24,25 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-24 Apr 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-25 Apr 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Thu Apr 25 19:05:24 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Committed the results of applying `make indent` to the
+	  arch/i86/drivers/char directory.
+
+Thu Apr 25 08:38:13 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Created placeholder files for the routines that are currently
+	  common to many of the source files in arch/i86/drivers/char/
+	  and tweaked arch/i86/drivers/char/Makefile to include these
+	  files in the compilation process.
 
 Wed Apr 24 23:19:32 BST 2002	Riley Williams <Riley@Williams.Name>
 

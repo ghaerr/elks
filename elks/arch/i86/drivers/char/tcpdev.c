@@ -29,11 +29,8 @@ static struct wait_queue tcpdevp;
 
 static char tcpdev_inuse;
 
-static int tcpdev_read(
-     struct inode *inode,
-     struct file *filp,
-     char *data,
-     int len)
+static int tcpdev_read(struct inode *inode,
+		       struct file *filp, char *data, int len)
 {
     printd_td("tcpdev : read()\n");
 
@@ -62,9 +59,7 @@ static int tcpdev_read(
     return len;
 }
 
-int tcpdev_inetwrite(
-     char *data,
-     int len)
+int tcpdev_inetwrite(char *data, int len)
 {
     unsigned int ds;
 
@@ -92,35 +87,29 @@ void tcpdev_clear_data_avail(void)
 	panic("bufin_sem tragedy");
 }
 
-static int tcpdev_write(
-     struct inode *inode,
-     struct file *filp,
-     char *data,
-     int len)
+static int tcpdev_write(struct inode *inode,
+			struct file *filp, char *data, int len)
 {
     int ret;
 
     printd_td("tcpdev : write()\n");
     if (len <= 0)
 	ret = 0;
-else {
-    down(&bufin_sem);
+    else {
+	down(&bufin_sem);
 
-    tdin_tail = len;
-    memcpy_fromfs(tdin_buf, data, len);
+	tdin_tail = len;
+	memcpy_fromfs(tdin_buf, data, len);
 
-    /* Call the af_inet code to handle the data */
-    inet_process_tcpdev(tdin_buf, len);
+	/* Call the af_inet code to handle the data */
+	inet_process_tcpdev(tdin_buf, len);
 
-    ret = len;
+	ret = len;
+    }
+    return ret;
 }
-return ret;
-}
 
-int tcpdev_select(
-     struct inode *inode,
-     struct file *filp,
-     int sel_type)
+int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
 {
     switch (sel_type) {
     case SEL_OUT:
@@ -137,9 +126,7 @@ int tcpdev_select(
     return 0;
 }
 
-static int tcpdev_open(
-     struct inode *inode,
-     struct file *file)
+static int tcpdev_open(struct inode *inode, struct file *file)
 {
     printd_td("tcpdev : open()\n");
 
@@ -152,9 +139,7 @@ static int tcpdev_open(
     return 0;
 }
 
-int tcpdev_release(
-     struct inode *inode,
-     struct file *file)
+int tcpdev_release(struct inode *inode, struct file *file)
 {
     tcpdev_inuse = 0;
     return 0;

@@ -75,8 +75,7 @@ static int divisors[16] = {
 
 #ifdef CONFIG_CONSOLE_SERIAL
 
-void console_setdefault(
-     register struct serial_info *port)
+void console_setdefault(register struct serial_info *port)
 {
     register struct tty *tty = port->tty;
 
@@ -85,8 +84,7 @@ void console_setdefault(
 
 #endif
 
-void update_port(
-     register struct serial_info *port)
+void update_port(register struct serial_info *port)
 {
     register struct tty *tty = port->tty;
     register tcflag_t cflags;
@@ -132,9 +130,8 @@ struct tty_ops rs_ops = {
     rs_ioctl
 };
 
-static int set_serial_info(
-     struct serial_info *info,
-     struct serial_info *new_info)
+static int set_serial_info(struct serial_info *info,
+			   struct serial_info *new_info)
 {
     struct inode *inode;
     int err;
@@ -155,15 +152,13 @@ static int set_serial_info(
     return err;
 }
 
-static int get_serial_info(
-     struct serial_info *info,
-     struct serial_info *ret_info)
+static int get_serial_info(struct serial_info *info,
+			   struct serial_info *ret_info)
 {
     return verified_memcpy_tofs(ret_info, info, sizeof(struct serial_info));
 }
 
-int rs_open(
-     struct tty *tty)
+int rs_open(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
     int count, divisor;
@@ -208,8 +203,7 @@ int rs_open(
     return 0;
 }
 
-void rs_release(
-     struct tty *tty)
+void rs_release(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
 
@@ -218,30 +212,26 @@ void rs_release(
     outb_p(0, port->io + UART_IER);
 }
 
-int rs_write(
-     struct tty *tty)
+int rs_write(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
     char ch;
 
     while (chq_getch(&tty->outq, &ch, 0) != -1) {
 	while (!(inb_p(port->io + UART_LSR) & UART_LSR_TEMT))
-		/* Do nothing */;
+	    /* Do nothing */ ;
 	outb(ch, port->io + UART_TX);
     }
 }
 
-int rs_ioctl(
-     struct tty *tty,
-     int cmd,
-     char *arg)
+int rs_ioctl(struct tty *tty, int cmd, char *arg)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
     int retval = 0;
 
     /* few sanity checks should be here */
 #if 0
-	printk("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd);
+    printk("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd);
 #endif
     switch (cmd) {
 	/* Unlike Linux we use verified_memcpy*fs() which calls verify_area() for us */
@@ -262,8 +252,7 @@ int rs_ioctl(
     return retval;
 }
 
-void receive_chars(
-     register struct serial_info *sp)
+void receive_chars(register struct serial_info *sp)
 {
     register struct ch_queue *q;
     int size;
@@ -287,10 +276,7 @@ void receive_chars(
     wake_up(&q->wq);
 }
 
-int rs_irq(
-     int irq,
-     struct pt_regs *regs,
-     void *dev_id)
+int rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
     register struct serial_info *sp;
     int status;
@@ -303,14 +289,13 @@ int rs_irq(
 	if (status & UART_LSR_DR)
 	    receive_chars(sp);
 #if 0
-		if (status & UART_LSR_THRE)
-			transmit_chars(sp);
+	if (status & UART_LSR_THRE)
+	    transmit_chars(sp);
 #endif
     } while (!(inb_p(sp->io + UART_IIR) & UART_IIR_NO_INT));
 }
 
-int rs_probe(
-     register struct serial_info *sp)
+int rs_probe(register struct serial_info *sp)
 {
     int count, scratch, status1, status2;
 
@@ -429,7 +414,7 @@ int rs_init(void)
 		sp->tty = &ttys[ttyno++];
 		update_port(sp);
 #if 0
-		outb_p(????, sp->io + UART_MCR);
+		outb_p(? ? ? ?, sp->io + UART_MCR);
 #endif
 	    }
 	}
@@ -451,8 +436,7 @@ void init_console(void)
     printk("Console: Serial\n");
 }
 
-void con_charout(
-     char Ch)
+void con_charout(char Ch)
 {
     if (con_init) {
 	while (!(inb_p(ports[CONSOLE_PORT].io + UART_LSR) & UART_LSR_TEMT));

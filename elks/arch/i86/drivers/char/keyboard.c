@@ -24,7 +24,7 @@ extern struct tty ttys[];
 #define MENU	0x1000
 #define PSION   0x8000
 
-#define ANYSHIFT LSHIFT|RSHIFT
+#define ANYSHIFT (LSHIFT | RSHIFT)
 
 void AddQueue(unsigned char Key);
 
@@ -35,7 +35,7 @@ extern char power_state;
 
 int KeyboardInit(void)
 {
-/* Do nothing */
+    /* Do nothing */ ;
 }
 
 /*

@@ -65,7 +65,7 @@ void LCD_WriteChar();
 
 extern void AddQueue(unsigned char Key);	/* From xt_key.c */
 
-void WriteChar(register Console *C, char c)
+void WriteChar(register Console * C, char c)
 {
     int loopx, loopy;
 

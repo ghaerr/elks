@@ -24,11 +24,11 @@
 #if 0
 /* public interface of console.c: */
 
-void con_charout (char Ch);
-void Console_set_vc (int N);
-int Console_write (struct tty * tty);
-void Console_release (struct inode * inode, struct file * file);
-int Console_open (struct inode * inode, struct file * file);
+void con_charout(char Ch);
+void Console_set_vc(int N);
+int Console_write(struct tty *tty);
+void Console_release(struct inode *inode, struct file *file);
+int Console_open(struct inode *inode, struct file *file);
 struct tty_ops dircon_ops;
 void init_console(void);
 #endif
@@ -68,7 +68,7 @@ void LCD_ClearLine();
 
 extern void AddQueue(unsigned char Key);	/* From xt_key.c */
 
-void WriteChar(register Console *C, char c)
+void WriteChar(register Console * C, char c)
 {
     int loopx, loopy;
 
@@ -79,7 +79,6 @@ void WriteChar(register Console *C, char c)
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE
 
 	if (Visible == &Con[Current_VCminor])
-
 #endif
 
 	    LCD_Position(C->xpos, C->ypos);
@@ -92,7 +91,6 @@ void WriteChar(register Console *C, char c)
 		C->screen[loopy][loopx] = ' ';
 
 	    if (Visible == &Con[Current_VCminor])
-
 #endif
 
 		LCD_ClearLine(loopy);
@@ -109,7 +107,6 @@ void WriteChar(register Console *C, char c)
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE
 
 	    if (Visible == &Con[Current_VCminor])
-
 #endif
 
 		LCD_Position(C->xpos, C->ypos);
@@ -123,7 +120,6 @@ void WriteChar(register Console *C, char c)
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE
 
 	    if (Visible == &Con[Current_VCminor])
-
 #endif
 
 		LCD_Position(C->xpos, C->ypos);
@@ -143,7 +139,6 @@ void WriteChar(register Console *C, char c)
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE
 
 	if (Visible == &Con[Current_VCminor])
-
 #endif
 
 	    LCD_Position(C->xpos, C->ypos);
@@ -163,7 +158,6 @@ void WriteChar(register Console *C, char c)
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE
 
 	if (Visible == &Con[Current_VCminor])
-
 #endif
 	    LCD_Position(C->xpos, C->ypos);
 
@@ -180,7 +174,6 @@ void WriteChar(register Console *C, char c)
 		C->screen[C->ypos][loopx] = ' ';
 
 	    if (Visible == &Con[Current_VCminor])
-
 #endif
 
 	    {
@@ -197,7 +190,6 @@ void WriteChar(register Console *C, char c)
     C->screen[C->ypos][C->xpos] = c;
 
     if (Visible == &Con[Current_VCminor])
-
 #endif
 
 	LCD_WriteChar(c);
@@ -216,7 +208,7 @@ void WriteChar(register Console *C, char c)
     }
 }
 
-void con_charout(     char Ch)
+void con_charout(char Ch)
 {
     WriteChar(Visible, Ch);
 }
@@ -269,8 +261,7 @@ void Console_set_vc(int N)
 #endif
 }
 
-int Console_write(
-     register struct tty *tty)
+int Console_write(register struct tty *tty)
 {
     Console *C;
     int cnt = 0;
@@ -279,7 +270,7 @@ int Console_write(
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE
     C = &Con[tty->minor];
 #else
-    C = &Con[0];	/* use default console: This is probably wrong */
+    C = &Con[0];		/* use default console: This is probably wrong */
 #endif
 
     while (tty->outq.len != 0) {
@@ -291,27 +282,21 @@ int Console_write(
     return cnt;
 }
 
-void Console_release(
-     struct inode *inode,
-     struct file *file)
+void Console_release(struct inode *inode, struct file *file)
 {
     /* Do nothing */
 }
 
-int Console_open(
-     struct inode *inode,
-     struct file *file)
+int Console_open(struct inode *inode, struct file *file)
 {
     int minor = MINOR(inode->i_rdev);
 
 #ifdef CONFIG_SIBO_VIRTUAL_CONSOLE
 
     if (minor >= MAX_CONSOLES)
-
 #else
 
     if (minor)
-
 #endif
 	return -ENODEV;
 

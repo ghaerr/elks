@@ -5,6 +5,9 @@
 #include <linuxmt/timex.h>
 #include <linuxmt/utsname.h>
 
+/* Enable debugging */
+#define DEBUGME
+
 /*
  *	System variable setups
  */
@@ -22,6 +25,14 @@ int root_mountflags = 0;
 
 static void init_task(void);
 
+#ifdef DEBUGME
+static void pause(int n);
+static void printme(int n);
+#else
+#define pause(n)
+#define printme(n)
+#endif
+
 extern __ptask _reglasttask, _regnexttask;
 
 jiff_t loops_per_sec = 1;
@@ -36,7 +47,7 @@ void start_kernel(void)
     __pregisters set;
     seg_t base, end;
 
-/*	We set the scheduler up as task #0, and this as task #1 */
+/* We set the scheduler up as task #0, and this as task #1 */
 
     setup_arch(&base, &end);
     mm_init(base, end);
@@ -66,6 +77,7 @@ void start_kernel(void)
 
     task[0].t_kstackm = KSTACK_MAGIC;
     task[0].next_run = task[0].prev_run = &task[0];
+    printme(0);
     kfork_proc(&task[1], init_task);
 
     /* 
@@ -75,6 +87,37 @@ void start_kernel(void)
     while (1)
 	schedule();
 }
+
+#ifdef DEBUGME
+
+static void pause(int n)
+{
+    printk("\nPAUSE %d: ",n);
+    {
+#asm
+	push	ax
+	push	cx
+	mov	ax,10
+	xor	cx,cx
+
+again:
+	dec	cx
+	jnz	again
+	dec	ax
+	jnz	again
+	pop	cx
+	pop	ax
+#endasm
+    }
+    printk("Done.\n\n");
+}
+
+static void printme(int n)
+{
+    printk("DEBUG: Step %d.\n",n);
+}
+
+#endif
 
 static char args[] = "\0\0\0\0\0\0/bin/init\0\0";
 /*		      ^   ^   ^		     ^
@@ -102,6 +145,9 @@ static void init_task()
     mount_root();
 
     printk("Loading init\n");
+
+    pause(0);
+
     if (sys_execve("/bin/init", args, 18)) {
 
 #ifdef CONFIG_CONSOLE_SERIAL
@@ -111,12 +157,20 @@ static void init_task()
 #endif
 	    printk("Unable to open /dev/tty (error %u)\n", -num);
 
+	pause(1);
+
 	if (sys_dup(0) != 1)
 	    printk("dup failed\n");
 
+	pause(2);
+
 	sys_dup(0);
 
+	pause(3);
+
 	printk("No init - running /bin/sh\n");
+
+	pause(4);
 
 	if (sys_execve("/bin/sh", args, 0))
 	    panic("No init or sh found");
