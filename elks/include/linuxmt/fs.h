@@ -409,7 +409,11 @@ extern void fsync_dev();
 extern void sync_supers();
 extern int notify_change();
 extern int namei();
+#ifdef BLOAT_LNAMEI
 extern int lnamei();
+#else
+#define lnamei(_a,_b) _namei(_a,NULL,0,_b)
+#endif
 extern int permission();
 #ifdef BLOAT_FS
 extern int get_write_access();

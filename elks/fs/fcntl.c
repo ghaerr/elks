@@ -15,52 +15,60 @@
 #include <linuxmt/string.h>
 
 int dupfd(fd,arg)
-unsigned int fd;
-unsigned int arg;
+int fd;
+int arg;
 {
 	register struct file_struct * fils = &current->files;
 
-	if (fd >= NR_OPEN || !fils->fd[fd])
+	if (fd >= NR_OPEN || !fils->fd[fd]) {
 		return -EBADF;
-	if (arg >= NR_OPEN)
+	}
+	if (arg >= NR_OPEN) {
 		return -EINVAL;
-	while (arg < NR_OPEN)
+	}
+	while (arg < NR_OPEN) {
 		if (fils->fd[arg])
 			arg++;
 		else
 			break;
-	if (arg >= NR_OPEN)
+	}
+	if (arg >= NR_OPEN) {
 		return -EMFILE;
+	}
 	clear_bit(arg, &fils->close_on_exec);
 	(fils->fd[arg] = fils->fd[fd])->f_count++;
+
 	return arg;
 }
 
 int sys_dup2(oldfd,newfd)
-unsigned int oldfd;
-unsigned int newfd;
+int oldfd;
+int newfd;
 {
-	if (oldfd >= NR_OPEN || !current->files.fd[oldfd])
+	if (oldfd >= NR_OPEN || !current->files.fd[oldfd]) {
 		return -EBADF;
-	if (newfd == oldfd)
+	}
+	if (newfd == oldfd) {
 		return newfd;
-	if (newfd >= NR_OPEN)
+	}
+	if (newfd >= NR_OPEN) {
 		return -EBADF;	/* following POSIX.1 6.2.1 */
+	}
 
 	sys_close(newfd);
 	return dupfd(oldfd,newfd);
 }
 
 int sys_dup(fildes)
-unsigned int fildes;
+int fildes;
 {
 	return dupfd(fildes,0);
 }
 
 int sys_fcntl(fd,cmd,arg)
-unsigned int fd;
+int fd;
 unsigned int cmd;
-unsigned int arg;
+int arg;
 {	
 	register struct file * filp;
 	register struct file_struct * fils = &current->files;
@@ -69,17 +77,21 @@ unsigned int arg;
 		return -EBADF;
 	switch (cmd) {
 		case F_DUPFD:
-			return dupfd(fd,arg);
+			arg = dupfd(fd,arg);
+			break;
 		case F_GETFD:
-			return test_bit(fd, &fils->close_on_exec);
+			arg = test_bit(fd, &fils->close_on_exec);
+			break;
 		case F_SETFD:
 			if (arg&1)
 				set_bit(fd, &fils->close_on_exec);
 			else
 				clear_bit(fd, &fils->close_on_exec);
-			return 0;
+			arg = 0;
+			break;
 		case F_GETFL:
-			return filp->f_flags;
+			arg = filp->f_flags;
+			break;
 		case F_SETFL:
 			/*
 			 * In the case of an append-only file, O_APPEND
@@ -89,9 +101,11 @@ unsigned int arg;
 				return -EPERM;
 			filp->f_flags &= ~(O_APPEND | O_NONBLOCK);
 			filp->f_flags |= arg & (O_APPEND | O_NONBLOCK);
-			return 0;
+			arg = 0;
+			break;
 		default:
-			return -EINVAL;
+			arg = -EINVAL;
 	}
+	return arg;
 }
 

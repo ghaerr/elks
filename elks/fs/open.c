@@ -224,11 +224,11 @@ char * filename;
 	int error;
 
 	error = namei(filename,&inode, IS_DIR, MAY_EXEC);
-	if (error)
-		return error;
-	iput(current->fs.pwd);
-	current->fs.pwd = inode;
-	return (0);
+	if (!error) {
+		iput(current->fs.pwd);
+		current->fs.pwd = inode;
+	}
+	return error;
 }
 
 int sys_chroot(filename)
@@ -237,16 +237,14 @@ char * filename;
 	struct inode * inode;
 	int error;
 
-	error = namei(filename,&inode, IS_DIR, 0);
-	if (error)
-		return error;
-	if (!suser()) {
-		iput(inode);
-		return -EPERM;
-	}
-	iput(current->fs.root);
-	current->fs.root = inode;
-	return (0);
+	if (suser()) {
+		error = namei(filename,&inode, IS_DIR, 0);
+		if (!error) {
+			iput(current->fs.root);
+			current->fs.root = inode;
+		}
+	} else error = -EPERM;
+	return error;
 }
 
 int sys_chmod(filename,mode)
@@ -282,35 +280,36 @@ mode_t mode;
 	int error;
 
 	error = namei(filename,&inode,0,0);
-	inodep = inode;
-	if (error)
-		return error;
-	if (IS_RDONLY(inodep)) {
+	if (!error) {
+		inodep = inode;
+		if (IS_RDONLY(inodep)) {
+			iput(inodep);
+			return -EROFS;
+		}
+		if (mode == (mode_t) -1)
+			mode = inodep->i_mode;
+		mode = (mode & S_IALLUGO) | (inodep->i_mode & ~S_IALLUGO);
+		if ((current->euid != inodep->i_uid) && !suser()) {
+/* FIXME - Should we iput(inodep); at this point? */
+			return -EPERM;
+		}
+		if (!suser() && !in_group_p(inodep->i_gid)) {
+			mode &= ~S_ISGID;
+		}
+		inodep->i_mode = mode;
+		inodep->i_dirt = 1;
 		iput(inodep);
-		return -EROFS;
 	}
-	if (mode == (mode_t) -1)
-		mode = inodep->i_mode;
-	mode = (mode & S_IALLUGO) | (inodep->i_mode & ~S_IALLUGO);
-	if ((current->euid != inodep->i_uid) && !suser()) {
-		return -EPERM;
-	}
-	if (!suser() && !in_group_p(inodep->i_gid)) {
-		mode &= ~S_ISGID;
-	}
-	inodep->i_mode = mode;
-	inodep->i_dirt = 1;
-	iput(inodep);
 	return error;
 #endif
 }
 
+#ifdef USE_NOTIFY_CHANGE
 static int do_chown(inode, user, group)
 register struct inode * inode;
 uid_t user;
 gid_t group;
 {
-#ifdef USE_NOTIFY_CHANGE
 	int error;
 	struct iattr newattrs;
 	register struct iattr * nap = &newattrs;
@@ -343,24 +342,27 @@ gid_t group;
 	inode->i_dirt = 1;
 	error = notify_change(inode, nap);
 	return(error);
-#else
-	if (IS_RDONLY(inode)) {
-		return -EROFS;
-	}
-	if (!suser() && (current->euid != inode->i_uid)) {
-		return -EROFS;
-	}
-	if (group != (gid_t) -1) {
-		inode->i_gid = group; 
-		inode->i_mode &= ~S_ISGID;
-	}
-	if (user != (uid_t) -1) {
-		inode->i_uid = user;
-		inode->i_mode &= ~S_ISUID;
-	}
-	inode->i_dirt = 1;
-	return(0);
+}
 #endif
+static int do_chown(inode, user, group)
+register struct inode * inode;
+uid_t user;
+gid_t group;
+{
+	if (!IS_RDONLY(inode)) {
+		if (suser() || (current->euid == inode->i_uid)) {
+			if (group != (gid_t) -1) {
+				inode->i_gid = group; 
+				inode->i_mode &= ~S_ISGID;
+			}
+			if (user != (uid_t) -1) {
+				inode->i_uid = user;
+				inode->i_mode &= ~S_ISUID;
+			}
+			inode->i_dirt = 1;
+		} else return -EPERM;
+	} else return -EROFS;
+	return 0;
 }
 
 int sys_chown(filename,user,group)
@@ -372,11 +374,10 @@ gid_t group;
 	int error;
 
 	error = lnamei(filename,&inode);
-	if (error)
-		return error;
-
-	error = do_chown(inode, user, group);
-	iput(inode);
+	if (!error) {
+		error = do_chown(inode, user, group);
+		iput(inode);
+	}
 	return error;
 }
 
@@ -410,7 +411,7 @@ gid_t group;
  * used by symlinks.
  */
  
-static int do_open(filename,flags,mode)
+int sys_open(filename,flags,mode)
 char * filename;
 int flags;
 int mode;
@@ -432,80 +433,67 @@ int mode;
 		flag |= 2;
 	error = open_namei(filename,flag,mode,&inode,NULL);
 
-	if (error) {
-		goto cleanup_file;
-	}
+	if (!error) {
 #ifdef BLOAT_FS
-	if (f->f_mode & FMODE_WRITE) {
-		error = get_write_access(inode);
-		if (error)
-			goto cleanup_inode;
-	}
-#endif
-
-	f->f_inode = inode;
-	f->f_pos = 0;
-#ifdef BLOAT_FS
-	f->f_reada = 0;
-#endif
-	f->f_op = NULL;
-	{
-	register struct inode_operations * iop = inode->i_op;
-	if (iop)
-		f->f_op = iop->default_file_ops;
-	}
-	{
-	register struct file_operations * fop = f->f_op;
-	if (fop && fop->open) {
-		error = fop->open(inode,f);
-		if (error) {
-			goto cleanup_all;
+		if (f->f_mode & FMODE_WRITE) {
+			error = get_write_access(inode);
+			if (error)
+				goto cleanup_inode;
 		}
-	}
-	f->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
+#endif
 
-	/*
-	 * We have to do this last, because we mustn't export
-	 * an incomplete fd to other processes which may share
-	 * the same file table with us.
-	 * FIXME - replace with call to get_unused_fd()
-	 */
-/*	for(fd = 0; fd < NR_OPEN; fd++) {
-		if (!current->files.fd[fd]) {
+		f->f_inode = inode;
+		f->f_pos = 0;
+#ifdef BLOAT_FS
+		f->f_reada = 0;
+#endif
+		f->f_op = NULL;
+		{
+		register struct inode_operations * iop = inode->i_op;
+		if (iop)
+			f->f_op = iop->default_file_ops;
+		}
+		{
+		register struct file_operations * fop = f->f_op;
+		if (fop && fop->open) {
+			error = fop->open(inode,f);
+			if (error) {
+				goto cleanup_all;
+			}
+		}
+		f->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
+
+		/*
+		 * We have to do this last, because we mustn't export
+		 * an incomplete fd to other processes which may share
+		 * the same file table with us.
+		 * FIXME - replace with call to get_unused_fd()
+		 */
+	/*	for(fd = 0; fd < NR_OPEN; fd++) {
+			if (!current->files.fd[fd]) {
+				current->files.fd[fd] = f;
+				clear_bit(fd,&current->files.close_on_exec);
+				return fd;
+			}
+		} */
+		if ((fd = get_unused_fd()) > -1) {
 			current->files.fd[fd] = f;
-			clear_bit(fd,&current->files.close_on_exec);
 			return fd;
 		}
-	} */
-	if ((fd = get_unused_fd()) > -1) {
-		current->files.fd[fd] = f;
-		return fd;
-	}
-	error = -EMFILE;
-	if (fop && fop->release)
-		fop->release(inode,f);
-	}
+		error = -EMFILE;
+		if (fop && fop->release)
+			fop->release(inode,f);
+		}
 cleanup_all:
 #ifdef BLOAT_FS
-	if (f->f_mode & FMODE_WRITE)
-		put_write_access(inode);
+		if (f->f_mode & FMODE_WRITE)
+			put_write_access(inode);
 cleanup_inode:
 #endif
-	iput(inode);
+		iput(inode);
+	}
 cleanup_file:
 	f->f_count--;
-	return error;
-}
-
-int sys_open(filename,flags,mode)
-char * filename;
-int flags;
-int mode;
-{
-	int error;
-
-	/* FIXME: VERIFY THE PATH IS IN USER MEM FIRST */
-	error = do_open(filename,flags,mode);
 	return error;
 }
 
@@ -516,11 +504,11 @@ register struct file *filp;
 
 	if (filp->f_count == 0) {
 		printk("VFS: Close: file count is 0\n");
-		return 0;
+		goto cfp_end;
 	}
 	if (filp->f_count > 1) {
 		filp->f_count--;
-		return 0;
+		goto cfp_end;
 	}
 	inode = filp->f_inode;
 	if (filp->f_op && filp->f_op->release)
@@ -532,6 +520,7 @@ register struct file *filp;
 		put_write_access(inode);
 #endif
 	iput(inode);
+cfp_end:
 	return 0;
 }
 

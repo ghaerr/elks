@@ -37,25 +37,24 @@ register struct buffer_head * bh;
 {
 	struct wait_queue wait;
 	
-	if (!buffer_locked(bh))
-		return;
+	if (buffer_locked(bh)) {
+		wait.task = current;
+		wait.next = NULL;
 
-	wait.task = current;
-	wait.next = NULL;
+		bh->b_count++;
+		add_wait_queue(&bh->b_wait, &wait);
 
-	bh->b_count++;
-	add_wait_queue(&bh->b_wait, &wait);
-
-	for (;;) {
-		current->state = TASK_UNINTERRUPTIBLE;
-		if (!buffer_locked(bh)) {
-			break;
+		for (;;) {
+			current->state = TASK_UNINTERRUPTIBLE;
+			if (!buffer_locked(bh)) {
+				break;
+			}
+			schedule();
 		}
-		schedule();
+		remove_wait_queue(&bh->b_wait, &wait);
+		bh->b_count--;
+		current->state = TASK_RUNNING;
 	}
-	remove_wait_queue(&bh->b_wait, &wait);
-	bh->b_count--;
-	current->state = TASK_RUNNING;
 }
 /*
 void lock_buffer(bh)
@@ -71,27 +70,28 @@ static void put_last_lru(bh)
 register struct buffer_head *bh;
 {
 	register struct buffer_head * bhn;
-	if(bh_llru==bh)
-		return;
-	/*
-	 *	Unhook
-	 */
-	if((bhn = bh->b_next_lru))
-		bhn->b_prev_lru=bh->b_prev_lru;
-	if(bh->b_prev_lru)
-		bh->b_prev_lru->b_next_lru=bhn;
-	/*
-	 *	Alter head
-	 */
-	if(bh==bh_lru)
-		bh_lru=bhn;
-	/*
-	 *	Put on lru end
-	 */
-	bh->b_next_lru=NULL;
-	bh->b_prev_lru=bh_llru;
-	bh_llru->b_next_lru=bh;
-	bh_llru=bh;
+
+	if (bh_llru != bh) {
+		/*
+		 *	Unhook
+		 */
+		if((bhn = bh->b_next_lru))
+			bhn->b_prev_lru=bh->b_prev_lru;
+		if(bh->b_prev_lru)
+			bh->b_prev_lru->b_next_lru=bhn;
+		/*
+		 *	Alter head
+		 */
+		if(bh==bh_lru)
+			bh_lru=bhn;
+		/*
+		 *	Put on lru end
+		 */
+		bh->b_next_lru=NULL;
+		bh->b_prev_lru=bh_llru;
+		bh_llru->b_next_lru=bh;
+		bh_llru=bh;
+	}
 }
 
 static void sync_buffers(dev,wait)
@@ -182,18 +182,16 @@ block_t block;
 {		
 	register struct buffer_head * tmp;
 
-	for (tmp = bh_chain ; tmp != NULL ; tmp = tmp->b_next)
-	{
+	for (tmp = bh_chain ; tmp != NULL ; tmp = tmp->b_next) {
 		if (tmp->b_blocknr == block && tmp->b_dev == dev)
-				return tmp;
+				break;
 	}
-	return NULL;
+	return tmp;
 }
 
 static struct buffer_head *get_free_buffer()
 {
-	do
-	{
+	do {
 		register struct buffer_head *bh=bh_lru;
 		while(bh)
 		{
@@ -208,8 +206,7 @@ static struct buffer_head *get_free_buffer()
 		sleep_on(&bufwait); */ /* This causes a sleep until another 
 					  process brelse's */
 		sync_buffers(0,0);
-	}
-	while(1);
+	} while(1);
 }
 	
 struct buffer_head * get_hash_table(dev,block)
@@ -307,13 +304,10 @@ register struct buffer_head * buf;
 {
 	wait_on_buffer(buf);
 
-	if (buf->b_count) 
-	{
+	if (buf->b_count) {
 		buf->b_count--;
 /*		wake_up(&bufwait); */
-		return;
-	}
-	panic("brelse");
+	} else panic("brelse");
 }
 
 /*
@@ -338,12 +332,15 @@ struct buffer_head * buf;
 struct buffer_head * readbuf(bh)
 register struct buffer_head * bh;
 {
-	if (buffer_uptodate(bh)) return bh;
-	ll_rw_blk(READ, bh);
-	wait_on_buffer(bh);
-	if (buffer_uptodate(bh)) return bh;
-	brelse(bh);
-	return NULL;			
+	if (!buffer_uptodate(bh)) {
+		ll_rw_blk(READ, bh);
+		wait_on_buffer(bh);
+		if (!buffer_uptodate(bh)) {
+			brelse(bh);
+			bh = NULL;
+		}
+	}
+	return bh;			
 }
 
 /*
@@ -523,16 +520,17 @@ register struct buffer_head * bh;
 void unmap_buffer(bh)
 register struct buffer_head * bh;
 {
-	if (!bh) return;
-	printd_bufmap1("unmapping buffer %d\n", bh->b_num);
-	if (bh->b_mapcount <= 0) {
-		printk("unmap_buffer: buffer #%x's b_mapcount<=0 already\n", bh->b_num);
-		bh->b_mapcount = 0;
-	} else { 
-		if (!(--bh->b_mapcount)) {
+	if (bh) {
+		printd_bufmap1("unmapping buffer %d\n", bh->b_num);
+		if (bh->b_mapcount <= 0) {
+			printk("unmap_buffer: buffer #%x's b_mapcount<=0 already\n", bh->b_num);
+			bh->b_mapcount = 0;
+		} else { 
+			if (!(--bh->b_mapcount)) {
 /*			printd_bufmap1("BUFMAP: buffer %d released from L1.\n",
-					bh->b_num);
-*/			wake_up(&bufmapwait);
+						bh->b_num);
+ */				wake_up(&bufmapwait);
+			}
 		}
 	}
 	return;

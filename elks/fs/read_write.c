@@ -87,10 +87,7 @@ struct file ** file;
 	register struct file * tfil;
 	int error;
 
-	if (fd>=NR_OPEN || !(tfil=current->files.fd[fd]) || !(tfil->f_inode)) {
-		return -EBADF;
-	}
-	if (!(tfil->f_mode & rw)) {
+	if (fd>=NR_OPEN || !(tfil=current->files.fd[fd]) || !(tfil->f_inode) || !(tfil->f_mode & rw)) {
 		return -EBADF;
 	}
 	if (!tfil->f_op) {
@@ -114,17 +111,16 @@ unsigned int count;
 	register struct file_operations * fop;
 	struct file * file;
 
-	if (((retval = fd_check(fd, buf, count, FMODE_READ, &file)) != 0)
-	    || (0 == count)) {
-		return retval;
+	if (((retval = fd_check(fd, buf, count, FMODE_READ, &file)) == 0)
+	    && (0 != count)) {
+		fop = file->f_op;
+		if (!fop->read) {
+			retval = -EINVAL;
+		} else {
+			retval = fop->read(file->f_inode,file,buf,count);
+			schedule();
+		}
 	}
-	fop = file->f_op;
-	if (!fop->read) {
-		return -EINVAL;
-	}
-	
-	retval = fop->read(file->f_inode,file,buf,count);
-	schedule();
 	return retval;
 }
 
@@ -137,14 +133,12 @@ unsigned int count;
 	register struct inode * inode;
 	int written;
 
-	if (((written = fd_check(fd, buf, count, FMODE_WRITE, &file)) != 0)
-	    || (0 == count)) {
-		return written;
-	}
-	if (!file->f_op->write) {
-		return -EINVAL;
-	}
-	inode=file->f_inode;
+	if (((written = fd_check(fd, buf, count, FMODE_WRITE, &file)) == 0)
+	    && (0 != count)) {
+		if (!file->f_op->write) {
+			written = -EINVAL;
+		} else {
+			inode=file->f_inode;
 
 #ifndef CONFIG_NOFS
 	/*
@@ -154,20 +148,22 @@ unsigned int count;
 	 *
 	 * Set ATTR_FORCE so it will always be changed.
 	 */
-	if (!suser() && (inode->i_mode & (S_ISUID | S_ISGID))) {
+			if (!suser() && (inode->i_mode & (S_ISUID | S_ISGID))) {
 #ifdef USE_NOTIFY_CHANGE
-		struct iattr newattrs;
-		newattrs.ia_mode = inode->i_mode & ~(S_ISUID | S_ISGID);
-		newattrs.ia_valid = ATTR_CTIME | ATTR_MODE | ATTR_FORCE;
-		notify_change(inode, &newattrs);
+				struct iattr newattrs;
+				newattrs.ia_mode = inode->i_mode & ~(S_ISUID | S_ISGID);
+				newattrs.ia_valid = ATTR_CTIME | ATTR_MODE | ATTR_FORCE;
+				notify_change(inode, &newattrs);
 #else
-		inode->i_mode = inode->i_mode & ~(S_ISUID | S_ISGID);
+				inode->i_mode = inode->i_mode & ~(S_ISUID | S_ISGID);
 #endif
-	}
+			}
 #endif
 
-	written = file->f_op->write(inode,file,buf,count);
-	schedule();
+			written = file->f_op->write(inode,file,buf,count);
+			schedule();
+		}
+	}
 	return written;
 }
 

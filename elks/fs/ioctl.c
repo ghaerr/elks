@@ -36,7 +36,7 @@ unsigned int arg;
 
 
 int sys_ioctl(fd,cmd,arg)
-unsigned int fd;
+int fd;
 unsigned int cmd;
 unsigned int arg;
 {	

@@ -22,6 +22,14 @@
 #define ACC_MODE(x) ("\000\004\002\006"[(x)&O_ACCMODE])
 
 /*
+ * These functions are not defined or implemented yet.
+ * I have not yet had a chance to verify whether they are required.
+ */
+
+#define down(_a)
+#define up(_a)
+
+/*
  *	permission()
  *
  * is used to check for read/write/execute permissions on a file.
@@ -35,22 +43,31 @@ register struct inode * inode;
 int mask;
 {
 	int mode = inode->i_mode;
+	int error = -EACCES;
 
+	if ((mask & MAY_WRITE) && (IS_RDONLY(inode))) {
+		error = -EROFS;
+	}
 #ifdef BLOAT_FS
-	if (inode->i_op && inode->i_op->permission)
-		return inode->i_op->permission(inode, mask);
+	else if (inode->i_op && inode->i_op->permission)
+		error = inode->i_op->permission(inode, mask);
 	else if ((mask & S_IWOTH) && IS_IMMUTABLE(inode))
+		error = -EACCES; /* Nobody gets write access to an immutable file */
 #else
-	if ((mask & S_IWOTH) && IS_IMMUTABLE(inode))
+#ifdef HAVE_IMMUTABLE
+	else if ((mask & S_IWOTH) && IS_IMMUTABLE(inode)) 
+		error = -EACCES; /* Nobody gets write access to an immutable file */
 #endif
-		return -EACCES; /* Nobody gets write access to an immutable file */
-	else if (current->euid == inode->i_uid)
-		mode >>= 6;
-	else if (in_group_p(inode->i_gid))
-		mode >>= 3;
-	if (((mode & mask & 0007) == mask) || suser())
-		return 0;
-	return -EACCES;
+#endif
+	else {
+		if (current->euid == inode->i_uid)
+			mode >>= 6;
+		else if (in_group_p(inode->i_gid))
+			mode >>= 3;
+		if (((mode & mask & 0007) == mask) || suser())
+			error = 0;
+	}
+	return error;
 }
 
 /*
@@ -87,46 +104,41 @@ size_t len;
 struct inode ** result;
 {
 	register struct inode_operations * iop;
-	int perm, retval;
+	int perm, retval = 0;
 
 	*result = NULL;
-	if (!dir) {
-		return -ENOENT;
-	}
-/* check permissions before traversing mount-points */
-	perm = permission(dir,MAY_EXEC);
-	if (len==2 && get_fs_byte(name) == '.' && get_fs_byte(name+1) == '.') {
-		if (dir == current->fs.root) {
-			*result = dir;
-			return 0;
-		} else if ((dir->i_sb) && (dir == dir->i_sb->s_mounted)) {
-			iput(dir);
-			dir = dir->i_sb->s_covered;
-			if (!dir) {
-				return -ENOENT;
+	if (dir) {
+	/* check permissions before traversing mount-points */
+		perm = permission(dir,MAY_EXEC);
+		if (len==2 && get_fs_byte(name) == '.' && get_fs_byte(name+1) == '.') {
+			if (dir == current->fs.root) {
+				*result = dir;
+				goto lkp_end;
+			} else if ((dir->i_sb) && (dir == dir->i_sb->s_mounted)) {
+				iput(dir);
+				dir = dir->i_sb->s_covered;
+				if (!dir) {
+					retval = -ENOENT;
+					goto lkp_end;
+				}
+				dir->i_count++;
 			}
-			dir->i_count++;
 		}
-	}
-	iop = dir->i_op;
-	if (!iop || !iop->lookup) {
+		iop = dir->i_op;
+		if (!iop || !iop->lookup) {
 #if 1
-		panic("Oops - trying to access dir\n"); 
+			panic("Oops - trying to access dir\n"); 
 #endif
-		iput(dir);
-		return -ENOTDIR;
-	}
- 	if (perm != 0) {
-		iput(dir);
-		return perm;
-	}
-	if (!len) {
-		*result = dir;
-		return 0;
-	}
-	printd_namei("lookup: calling fs lookup\n");
-	retval = iop->lookup(dir,name,len,result);
-	printd_namei1("lookup: returning %d\n", retval);
+			iput(dir);
+			retval = -ENOTDIR;
+		} else if (perm != 0) {
+			iput(dir);
+			retval = perm;
+		} else if (!len) {
+			*result = dir;
+		} else retval = iop->lookup(dir,name,len,result);
+	} else retval = -ENOENT;
+lkp_end:
 	return retval;
 }
 
@@ -137,19 +149,19 @@ int flag;
 int mode;
 struct inode ** res_inode;
 {
+	int error;
 	register struct inode_operations * iop = inode->i_op;
 	if (!dir || !inode) {
 		iput(dir);
 		iput(inode);
 		*res_inode = NULL;
-		return -ENOENT;
-	}
-	if (!iop || !iop->follow_link) {
+		error = -ENOENT;
+	} else if (!iop || !iop->follow_link) {
 		iput(dir);
 		*res_inode = inode;
-		return 0;
-	}
-	return iop->follow_link(dir,inode,flag,mode,res_inode);
+		error = 0;
+	} else error = iop->follow_link(dir,inode,flag,mode,res_inode);
+	return error;
 }
 
 /*
@@ -168,7 +180,7 @@ struct inode ** res_inode;
 {
 	char c;
 	register char * thisname;
-	int error;
+	int error = 0;
 	size_t len;
 	struct inode * inode;
 #if 0
@@ -196,26 +208,28 @@ struct inode ** res_inode;
 		error = lookup(base,thisname,len,&inode);
 		if (error) {
 			iput(base);
-			return error;
+			goto dnamei_end;
 		}
 		error = follow_link(base,inode,0,0,&base);
 		if (error)
-			return error;
+			goto dnamei_end;
 	}
 	if (!base->i_op || !base->i_op->lookup) {
 		iput(base);
-		return -ENOTDIR;
+		error = -ENOTDIR;
+	} else {
+		*name = thisname;
+		*namelen = len;
+		*res_inode = base;
 	}
-	*name = thisname;
-	*namelen = len;
-	*res_inode = base;
 #if 0	
 	printk("namei: left dir_namei succesfully\n");
 #endif
-	return 0;
+dnamei_end:
+	return error;
 }
 
-static int _namei(pathname,base,follow_links,res_inode)
+int _namei(pathname,base,follow_links,res_inode)
 char * pathname;
 struct inode * base;
 int follow_links;
@@ -230,26 +244,25 @@ register struct inode ** res_inode;
 	*res_inode = NULL;
 	error = dir_namei(pathname,&namelen,&basename,base,&base);
 	printd_namei1("_namei: dir_namei returned %d\n", error);
-	if (error)
-		return error;
-	base->i_count++;	/* lookup uses up base */
-	printd_namei("_namei: calling lookup\n");
-	error = lookup(base,basename,namelen,&inode);
-	printd_namei1("_namei: lookup returned %d\n", error);
-	if (error) {
-		iput(base);
-		return error;
+	if (!error) {
+		base->i_count++;	/* lookup uses up base */
+		printd_namei("_namei: calling lookup\n");
+		error = lookup(base,basename,namelen,&inode);
+		printd_namei1("_namei: lookup returned %d\n", error);
+		if (!error) {
+			if (follow_links) {
+				error = follow_link(base,inode,0,0,&inode);
+				if (error)
+					goto namei_end;
+			} else iput(base);
+			*res_inode = inode;
+		} else iput(base);
 	}
-	if (follow_links) {
-		error = follow_link(base,inode,0,0,&inode);
-		if (error)
-			return error;
-	} else
-		iput(base);
-	*res_inode = inode;
-	return 0;
+namei_end:
+	return error;
 }
 
+#ifdef BLOAT_LNAMEI
 int lnamei(pathname, res_inode)
 char *pathname;
 struct inode ** res_inode;
@@ -260,6 +273,7 @@ struct inode ** res_inode;
 	printd_namei1("lnamei: returning %d\n", error);
 	return error;
 }
+#endif /* BLOAT_LNAMEI */
 
 /*
  *	namei()
@@ -277,23 +291,18 @@ int perm;
 	int error;
 	register struct inode *inode;
 	error = _namei(pathname,NULL,1,res_inode);
-	if(error)
-		return error;
-	inode=*res_inode;
-	if(dir==NOT_DIR && S_ISDIR(inode->i_mode))
-	{
-		iput(inode);
-		return -EISDIR;
-	}
-	if(dir==IS_DIR && !S_ISDIR(inode->i_mode))
-	{
-		iput(inode);
-		return -ENOTDIR;
-	}
-	if(perm && (error=permission(inode, perm))!=0)
-	{
-		iput(inode);
-		return error;
+	if (!error) {
+		inode=*res_inode;
+		if (dir==NOT_DIR && S_ISDIR(inode->i_mode)) {
+			error = -EISDIR;
+		} else if (dir==IS_DIR && !S_ISDIR(inode->i_mode)) {
+			error = -ENOTDIR;
+		} else if (perm) {
+			error=permission(inode, perm);
+		}
+		if (error != 0) {
+			iput(inode);
+		}
 	}
 	return error;
 }
@@ -333,25 +342,20 @@ struct inode * base;
 	mode |= S_IFREG;
 	error = dir_namei(pathname,&namelen,&basename,base,&dir);
 	if (error)
-		return error;
+		goto onamei_end;
 	if (!namelen) {			/* special case: '/usr/' etc */
 		if (flag & 2) {
 			iput(dir);
-			return -EISDIR;
-		}
+			error = -EISDIR;
+		} else if ((error = permission(dir,ACC_MODE(flag))) != 0) {
 		/* thanks to Paul Pluzhnikov for noticing this was missing.. */
-		if ((error = permission(dir,ACC_MODE(flag))) != 0) {
 			iput(dir);
-			return error;
-		}
-		*res_inode=dir;
-		return 0;
+		} else *res_inode=dir;
+		goto onamei_end;
 	}
 	dir->i_count++;		/* lookup eats the dir */
 	if (flag & O_CREAT) {
-#ifdef NOT_YET
 		down(&dir->i_sem);
-#endif		
 		error = lookup(dir,basename,namelen,&inode);
 		iop = dir->i_op;
 		if (!error) {
@@ -363,136 +367,66 @@ struct inode * base;
 			;	/* error is already set! */
 		else if (!iop || !iop->create)
 			error = -EACCES;
-		else if (IS_RDONLY(dir))
-			error = -EROFS;
 		else {
 			dir->i_count++;		/* create eats the dir */
 			error = iop->create(dir,basename,namelen,mode,res_inode);
-#ifdef NOT_YET			
 			up(&dir->i_sem);
-#endif			
 			iput(dir);
-			return error;
+			goto onamei_end;
 		}
-#ifdef NOT_YET		
 		up(&dir->i_sem);
-#endif		
 	} else
 		error = lookup(dir,basename,namelen,&inode);
 	if (error) {
 		iput(dir);
-		return error;
+		goto onamei_end;
 	}
 	error = follow_link(dir,inode,flag,mode,&inode);
 	if (error)
-		return error;
+		goto onamei_end;
 	if (S_ISDIR(inode->i_mode) && (flag & 2)) {
-		iput(inode);
-		return -EISDIR;
-	}
-	if ((error = permission(inode,ACC_MODE(flag))) != 0) {
-		iput(inode);
-		return error;
-	}
-	if (S_ISBLK(inode->i_mode) || S_ISCHR(inode->i_mode)) {
-		if (IS_NODEV(inode)) {
-			iput(inode);
-			return -EACCES;
-		}
-		flag &= ~O_TRUNC;
-	} else {
-		if (IS_RDONLY(inode) && (flag & 2)) {
-			iput(inode);
-			return -EROFS;
+		error = -EISDIR;
+	} else if ((error = permission(inode,ACC_MODE(flag))) == 0) {
+		if (S_ISBLK(inode->i_mode) || S_ISCHR(inode->i_mode)) {
+			if (IS_NODEV(inode)) {
+				error = -EACCES;
+			} else flag &= ~O_TRUNC;
 		}
 	}
-	if (flag & O_TRUNC) {
-		struct iattr newattrs;
+	if (!error) {
+		if (flag & O_TRUNC) {
+			struct iattr newattrs;
 
-#ifdef BLOAT_FS
-		if ((error = get_write_access(inode))) {
-			iput(inode);
-			return error;
-		}
+#ifndef get_write_access
+			if ((error = get_write_access(inode))) {
+				iput(inode);
+				return error;
+			}
 #endif
 #ifdef USE_NOTIFY_CHANGE
-		newattrs.ia_size = 0;
-		newattrs.ia_valid = ATTR_SIZE;
-		if ((error = notify_change(inode, &newattrs))) {
-			put_write_access(inode);
-			iput(inode);
-			return error;
-		}
+			newattrs.ia_size = 0;
+			newattrs.ia_valid = ATTR_SIZE;
+			if ((error = notify_change(inode, &newattrs))) {
+				put_write_access(inode);
+				iput(inode);
+				return error;
+			}
 #else
-		inode->i_size = 0L;
+			inode->i_size = 0L;
 #endif
-#ifdef NOT_YET		
-		down(&inode->i_sem);
-#endif		
-		inode->i_size = 0;
-		if ((iop = inode->i_op) && iop->truncate) {
-			iop->truncate(inode);
+			down(&inode->i_sem);
+			if ((iop = inode->i_op) && iop->truncate) {
+				iop->truncate(inode);
+			}
+			up(&inode->i_sem);
+			inode->i_dirt = 1;
+			put_write_access(inode);
 		}
-#ifdef NOT_YET			
-		up(&inode->i_sem);
-#endif		
-		inode->i_dirt = 1;
-		put_write_access(inode);
-	}
-	*res_inode = inode;
-#if 0	
-	printk("NAMEI: open namei left\n");
-#endif
-	return 0;
-}
-
-#ifndef CONFIG_FS_RO
-int do_mknod(filename,mode,dev)
-char * filename;
-int mode;
-dev_t dev;
-{
-	char * basename;
-	size_t namelen;
-	int error;
-	struct inode * dir;
-	register struct inode * dirp;
-	register struct inode_operations * iop;
-
-	mode &= ~current->fs.umask;
-	error = dir_namei(filename,&namelen,&basename, NULL, &dir);
-	dirp = dir;
-	if (error)
-		return error;
-	if (!namelen) {
-		iput(dirp);
-		return -ENOENT;
-	}
-	if (IS_RDONLY(dirp)) {
-		iput(dirp);
-		return -EROFS;
-	}
-	if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) != 0) {
-		iput(dirp);
-		return error;
-	}
-	iop = dirp->i_op;
-	if (!iop || !iop->mknod) {
-		iput(dirp);
-		return -EPERM;
-	}
-	dirp->i_count++;
-#ifdef NOT_YET	
-	down(&dirp->i_sem);
-#endif	
-	error = iop->mknod(dirp,basename,namelen,mode,dev);
-#ifdef NOT_YET
-	up(&dirp->i_sem);
-#endif	
-	iput(dirp);
+		*res_inode = inode;
+	} else iput(inode);
+onamei_end:
 	return error;
 }
-#endif /* CONFIG_FS_RO */
 
 int sys_mknod(filename,mode,dev)
 char * filename;
@@ -502,20 +436,47 @@ dev_t dev;
 #ifdef CONFIG_FS_RO
 	return -EROFS;
 #else
+	char * basename;
+	size_t namelen;
 	int error;
+	struct inode * dir;
+	register struct inode * dirp;
+	register struct inode_operations * iop;
 
-	if (S_ISDIR(mode) || (!S_ISFIFO(mode) && !suser()))
-		return -EPERM;
-	switch (mode & S_IFMT) {
-	case 0:
-		mode |= S_IFREG;
-		break;
-	case S_IFREG: case S_IFCHR: case S_IFBLK: case S_IFIFO: case S_IFSOCK:
-		break;
-	default:
-		return -EINVAL;
+	if (S_ISDIR(mode) || (!S_ISFIFO(mode) && !suser())) {
+		error = -EPERM;
+	} else {
+		switch (mode & S_IFMT) {
+		case 0:
+			mode |= S_IFREG;
+			break;
+		case S_IFREG: case S_IFCHR: case S_IFBLK: case S_IFIFO: case S_IFSOCK:
+			break;
+		default:
+			error = -EINVAL;
+			goto mknod_end;
+		}
+		
+		mode &= ~current->fs.umask;
+		error = dir_namei(filename,&namelen,&basename, NULL, &dir);
+		dirp = dir;
+		if (error) goto mknod_end;
+		if (!namelen) {
+			error = -ENOENT;
+		} else if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) == 0) {
+			iop = dirp->i_op;
+			if (!iop || !iop->mknod) {
+				error = -EPERM;
+			} else {
+				dirp->i_count++;
+				down(&dirp->i_sem);
+				error = iop->mknod(dirp,basename,namelen,mode,dev);
+				up(&dirp->i_sem);
+			}
+		}
+		iput(dirp);
 	}
-	error = do_mknod(filename,mode,dev);
+mknod_end:
 	return error;
 #endif
 }
@@ -536,77 +497,30 @@ int mode;
 
 	printd_fsmkdir("mkdir: calling dir_namei\n");
 	error = dir_namei(pathname,&namelen,&basename,NULL,&dir);
-	dirp = dir;
-	if (error)
-		return error;
 	printd_fsmkdir("mkdir: finished dir_namei\n");
-	if (!namelen) {
+	dirp = dir;
+	if (!error) {
+		if (!namelen) {
+			error = -ENOENT;
+		} else if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) == 0) {
+			iop = dirp->i_op;
+			if (!iop || !iop->mkdir) {
+				error = -EPERM;
+			} else {
+				dirp->i_count++;
+				down(&dirp->i_sem);
+				printd_fsmkdir("mkdir: calling dir->i_op->mkdir...\n");
+				error = iop->mkdir(dir, basename, namelen, mode & 0777 & ~current->fs.umask);
+				up(&dirp->i_sem);
+			}
+		}
 		iput(dirp);
-		return -ENOENT;
+		printd_fsmkdir("mkdir: complete\n");
 	}
-	if (IS_RDONLY(dirp)) {
-		iput(dirp);
-		return -EROFS;
-	}
-	if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) != 0) {
-		iput(dirp);
-		return error;
-	}
-	iop = dirp->i_op;
-	if (!iop || !iop->mkdir) {
-		iput(dirp);
-		return -EPERM;
-	}
-	dirp->i_count++;
-#ifdef NOT_YET	
-	down(&dirp->i_sem);
-#endif	
-	printd_fsmkdir("mkdir: calling dir->i_op->mkdir...\n");
-	error = iop->mkdir(dir, basename, namelen, mode & 0777 & ~current->fs.umask);
-#ifdef NOT_YET	
-	up(&dirp->i_sem);
-#endif	
-	iput(dirp);
-	printd_fsmkdir("mkdir: (probably) successful\n");
+mkdir_end:
 	return error;
 #endif /* CONFIG_FS_RO */
 }
-
-#ifndef CONFIG_FS_RO
-static int do_rmdir(name)
-char * name;
-{
-	char * basename;
-	size_t namelen;
-	int error;
-	struct inode * dir;
-	register struct inode * dirp;
-	register struct inode_operations * iop;
-
-	error = dir_namei(name,&namelen,&basename,NULL,&dir);
-	dirp = dir;
-	if (error)
-		return error;
-	if (!namelen) {
-		iput(dirp);
-		return -ENOENT;
-	}
-	if (IS_RDONLY(dirp)) {
-		iput(dirp);
-		return -EROFS;
-	}
-	if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) != 0) {
-		iput(dirp);
-		return error;
-	}
-	iop = dirp->i_op;
-	if (!iop || !iop->rmdir) {
-		iput(dirp);
-		return -EPERM;
-	}
-	return iop->rmdir(dirp,basename,namelen);
-}
-#endif /* CONFIG_FS_RO */
 
 int sys_rmdir(pathname)
 char * pathname;
@@ -614,16 +528,6 @@ char * pathname;
 #ifdef CONFIG_FS_RO
 	return -EROFS;
 #else
-	int error;
-	error = do_rmdir(pathname);
-	return error;
-#endif
-}
-
-#ifndef CONFIG_FS_RO
-static int do_unlink(name)
-char * name;
-{
 	char * basename;
 	size_t namelen;
 	int error;
@@ -631,30 +535,24 @@ char * name;
 	register struct inode * dirp;
 	register struct inode_operations * iop;
 
-	error = dir_namei(name,&namelen,&basename,NULL,&dir);
+	error = dir_namei(pathname,&namelen,&basename,NULL,&dir);
 	dirp = dir;
-	if (error)
-		return error;
-	if (!namelen) {
-		iput(dirp);
-		return -EPERM;
+	if (!error) {
+		if (!namelen) {
+			error = -ENOENT;
+		} else if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) == 0) {
+			iop = dirp->i_op;
+			if (!iop || !iop->rmdir) {
+				error = -EPERM;
+			}
+		}
+		if (error) {
+			iput(dirp);
+		} else error = iop->rmdir(dirp,basename,namelen);
 	}
-	if (IS_RDONLY(dirp)) {
-		iput(dirp);
-		return -EROFS;
-	}
-	if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) != 0) {
-		iput(dirp);
-		return error;
-	}
-	iop = dirp->i_op;
-	if (!iop || !iop->unlink) {
-		iput(dirp);
-		return -EPERM;
-	}
-	return iop->unlink(dir,basename,namelen);
-}
+	return error;
 #endif
+}
 
 int sys_unlink(pathname)
 char * pathname;
@@ -662,57 +560,31 @@ char * pathname;
 #ifdef CONFIG_FS_RO
 	return -EROFS;
 #else
-	int error;
-	error=do_unlink(pathname);
-	return error;
-#endif
-}
-
-#ifndef CONFIG_FS_RO
-static int do_symlink(oldname,newname)
-char * oldname;
-char * newname;
-{
-	struct inode * dir;
 	char * basename;
 	size_t namelen;
 	int error;
+	struct inode * dir;
 	register struct inode * dirp;
 	register struct inode_operations * iop;
 
-	error = dir_namei(newname,&namelen,&basename,NULL,&dir);
+	error = dir_namei(pathname,&namelen,&basename,NULL,&dir);
 	dirp = dir;
-	if (error)
-		return error;
-	if (!namelen) {
-		iput(dirp);
-		return -ENOENT;
+	if (!error) {
+		if (!namelen) {
+			error = -EPERM;
+		} else if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) == 0) {
+			iop = dirp->i_op;
+			if (!iop || !iop->unlink) {
+				error = -EPERM;
+			}
+		}
+		if (error) {
+			iput(dirp);
+		} else error = iop->unlink(dir,basename,namelen);
 	}
-	if (IS_RDONLY(dirp)) {
-		iput(dirp);
-		return -EROFS;
-	}
-	if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) != 0) {
-		iput(dirp);
-		return error;
-	}
-	iop = dirp->i_op;
-	if (!iop || !iop->symlink) {
-		iput(dirp);
-		return -EPERM;
-	}
-	dirp->i_count++;
-#ifdef NOT_YET	
-	down(&dirp->i_sem);
-#endif	
-	error = iop->symlink(dirp,basename,namelen,oldname);
-#ifdef NOT_YET	
-	up(&dirp->i_sem);
-#endif	
-	iput(dirp);
 	return error;
+#endif
 }
-#endif /* CONFIG_FS_RO */
 
 int sys_symlink(oldname,newname)
 char * oldname;
@@ -721,66 +593,34 @@ char * newname;
 #ifdef CONFIG_FS_RO
 	return -EROFS;
 #else
-	int error;
-	error = do_symlink(oldname,newname);
-	return error;
-#endif
-}
-
-#ifndef CONFIG_FS_RO
-static int do_link(oldinode,newname)
-register struct inode * oldinode;
-char * newname;
-{
 	struct inode * dir;
 	char * basename;
 	size_t namelen;
 	int error;
 	register struct inode * dirp;
+	register struct inode_operations * iop;
 
 	error = dir_namei(newname,&namelen,&basename,NULL,&dir);
 	dirp = dir;
-	if (error) {
-		iput(oldinode);
-		return error;
-	}
-	if (!namelen) {
-		iput(oldinode);
+	if (!error) {
+		if (!namelen) {
+			error = -ENOENT;
+		} else if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) == 0) {
+			iop = dirp->i_op;
+			if (!iop || !iop->symlink) {
+				error = -EPERM;
+			} else {
+				dirp->i_count++;
+				down(&dirp->i_sem);
+				error = iop->symlink(dirp,basename,namelen,oldname);
+				up(&dirp->i_sem);
+			}
+		}
 		iput(dirp);
-		return -EPERM;
 	}
-	if (IS_RDONLY(dirp)) {
-		iput(oldinode);
-		iput(dirp);
-		return -EROFS;
-	}
-	if (dirp->i_dev != oldinode->i_dev) {
-		iput(dirp);
-		iput(oldinode);
-		return -EXDEV;
-	}
-	if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) != 0) {
-		iput(dirp);
-		iput(oldinode);
-		return error;
-	}
-	if (!dirp->i_op || !dirp->i_op->link) {
-		iput(dirp);
-		iput(oldinode);
-		return -EPERM;
-	}
-	dirp->i_count++;
-#ifdef NOT_YET	
-	down(&dirp->i_sem);
-#endif	
-	error = dirp->i_op->link(oldinode, dirp, basename, namelen);
-#ifdef NOT_YET	
-	up(&dirp->i_sem);
-#endif	
-	iput(dirp);
 	return error;
+#endif
 }
-#endif /* CONFIG_FS_RO */
 
 int sys_link(oldname,newname)
 char * oldname;
@@ -793,9 +633,39 @@ char * newname;
 	struct inode * oldinode;
 
 	error = namei(oldname, &oldinode,0,0);
-	if (error)
-		return error;
-	error = do_link(oldinode,newname);
+	if (!error) {
+		struct inode * dir;
+		char * basename;
+		size_t namelen;
+		register struct inode * dirp;
+
+		error = dir_namei(newname,&namelen,&basename,NULL,&dir);
+		dirp = dir;
+		if (error) {
+			goto link_fail;
+		}
+		if (!namelen) {
+			error = -EPERM;
+		} else if (dirp->i_dev != oldinode->i_dev) {
+			error = -EXDEV;
+		} else if ((error = permission(dirp,MAY_WRITE | MAY_EXEC)) == 0) {
+			if (!dirp->i_op || !dirp->i_op->link) {
+				error = -EPERM;
+			}
+		}
+		if (!error) {
+			dirp->i_count++;
+			down(&dirp->i_sem);
+			error = dirp->i_op->link(oldinode, dirp, basename, namelen);
+			up(&dirp->i_sem);
+		} else {
+			iput(oldinode);
+		}
+link_fail:
+		iput(dirp);
+	} else {
+		iput(oldinode);
+	}
 	return error;
 #endif
 }
@@ -813,10 +683,10 @@ char * newname;
 #else
 	int err;
 
-	if (!(err = sys_link(oldname, newname)))
-		return sys_unlink(oldname);
-	else
-		return err;
+	if (!(err = sys_link(oldname, newname))) {
+		err = sys_unlink(oldname);
+	}
+	return err;
 #endif
 }
 

@@ -66,16 +66,14 @@ struct wait_queue ** wait_address;
 register select_table * p;
 {
 	register struct select_table_entry * entry;
-	if (!p || !wait_address)
-		return;
-	if (p->nr >= __MAX_SELECT_TABLE_ENTRIES)
-		return;
-	entry = p->entry + p->nr;
-	entry->wait_address = wait_address;
-	entry->wait.task = current;
-	entry->wait.next = NULL;
-	add_wait_queue(wait_address,&entry->wait);
-	p->nr++;
+	if ((p && wait_address) && (p->nr < __MAX_SELECT_TABLE_ENTRIES)) {
+		entry = p->entry + p->nr;
+		entry->wait_address = wait_address;
+		entry->wait.task = current;
+		entry->wait.next = NULL;
+		add_wait_queue(wait_address,&entry->wait);
+		p->nr++;
+	}
 }
 
 
@@ -157,22 +155,22 @@ repeat:
 	currentp->state = TASK_INTERRUPTIBLE;
 	for (i = 0 ; i < n ; i++) {
 		struct file * file = currentp->files.fd[i];
-		if (!file)
-			continue;
-		if (FD_ISSET(i,in) && check(SEL_IN,wait,file)) {
-			FD_SET(i, res_in);
-			count++;
-			wait = NULL;
-		}
-		if (FD_ISSET(i,out) && check(SEL_OUT,wait,file)) {
-			FD_SET(i, res_out);
-			count++;
-			wait = NULL;
-		}
-		if (FD_ISSET(i,ex) && check(SEL_EX,wait,file)) {
-			FD_SET(i, res_ex);
-			count++;
-			wait = NULL;
+		if (file) {
+			if (FD_ISSET(i,in) && check(SEL_IN,wait,file)) {
+				FD_SET(i, res_in);
+				count++;
+				wait = NULL;
+			}
+			if (FD_ISSET(i,out) && check(SEL_OUT,wait,file)) {
+				FD_SET(i, res_out);
+				count++;
+				wait = NULL;
+			}
+			if (FD_ISSET(i,ex) && check(SEL_EX,wait,file)) {
+				FD_SET(i, res_ex);
+				count++;
+				wait = NULL;
+			}
 		}
 	}
 	wait = NULL;

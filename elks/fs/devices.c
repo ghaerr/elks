@@ -17,18 +17,28 @@
 
 struct device_struct 
 {
-	char * name;
-	struct file_operations * fops;
+#ifdef CONFIG_DEV_NAMES
+	char * ds_name;
+#endif
+	struct file_operations * ds_fops;
 };
 
 static struct device_struct chrdevs[MAX_CHRDEV] = 
 {
+#ifdef CONFIG_DEV_NAMES
 	{ NULL, NULL },
+#else
+	{ NULL },
+#endif
 };
 
 #ifndef CONFIG_NOFS
 static struct device_struct blkdevs[MAX_BLKDEV] = {
+#ifdef CONFIG_DEV_NAMES
 	{ NULL, NULL },
+#else
+	{ NULL },
+#endif
 };
 #endif
 
@@ -41,14 +51,14 @@ register char *page;
 
 	len = sprintf(page, "Character devices:\n");
 	for (i = 0; i < MAX_CHRDEV ; i++) {
-		if (chrdevs[i].fops) {
-			len += sprintf(page+len, "%2d %s\n", i, chrdevs[i].name);
+		if (chrdevs[i].ds_fops) {
+			len += sprintf(page+len, "%2d %s\n", i, chrdevs[i].ds_name);
 		}
 	}
 	len += sprintf(page+len, "\nBlock devices:\n");
 	for (i = 0; i < MAX_BLKDEV ; i++) {
-		if (blkdevs[i].fops) {
-			len += sprintf(page+len, "%2d %s\n", i, blkdevs[i].name);
+		if (blkdevs[i].ds_fops) {
+			len += sprintf(page+len, "%2d %s\n", i, blkdevs[i].ds_name);
 		}
 	}
 	return len;
@@ -61,7 +71,7 @@ unsigned int major;
 {
 	if (major >= MAX_BLKDEV)
 		return NULL;
-	return blkdevs[major].fops;
+	return blkdevs[major].ds_fops;
 }
 #endif
 #if 0
@@ -70,7 +80,7 @@ unsigned int major;
 {
 	if (major >= MAX_CHRDEV)
 		return NULL;
-	return chrdevs[major].fops;
+	return chrdevs[major].ds_fops;
 }
 #endif
 int register_chrdev(major,name, fops)
@@ -80,22 +90,30 @@ register struct file_operations *fops;
 {
 	register struct device_struct * dev = &chrdevs[major];
 
+#ifdef CONFIG_DEV_ASSIGNMAJOR
 	if (major == 0) {
 		for (major = MAX_CHRDEV-1; major > 0; major--) {
-			if (dev->fops == NULL) {
-				dev->name = name;
-				dev->fops = fops;
+			if (dev->ds_fops == NULL) {
+#ifdef CONFIG_DEV_NAMES
+				dev->ds_name = name;
+#endif
+				dev->ds_fops = fops;
 				return major;
 			}
 		}
 		return -EBUSY;
 	}
-	if (major >= MAX_CHRDEV)
+#endif /* CONFIG_DEV_ASSIGNMAJOR */
+	if (major >= MAX_CHRDEV) {
 		return -EINVAL;
-	if (dev->fops && (dev->fops != fops))
+	}
+	if (dev->ds_fops && (dev->ds_fops != fops)) {
 		return -EBUSY;
-	dev->name = name;
-	dev->fops = fops;
+	}
+#ifdef CONFIG_DEV_NAMES
+	dev->ds_name = name;
+#endif
+	dev->ds_fops = fops;
 	return 0;
 }
 
@@ -107,22 +125,28 @@ register struct file_operations *fops;
 {
 	register struct device_struct * dev = &blkdevs[major];
 
+#ifdef CONFIG_DEV_ASSIGNMAJOR
 	if (major == 0) {
 		for (major = MAX_BLKDEV-1; major > 0; major--) {
-			if (dev->fops == NULL) {
-				dev->name = name;
-				dev->fops = fops;
+			if (dev->ds_fops == NULL) {
+#ifdef CONFIG_DEV_NAMES
+				dev->ds_name = name;
+#endif
+				dev->ds_fops = fops;
 				return major;
 			}
 		}
 		return -EBUSY;
 	}
+#endif /* CONFIG_DEV_ASSIGNMAJOR */
 	if (major >= MAX_BLKDEV)
 		return -EINVAL;
-	if (dev->fops && dev->fops != fops)
+	if (dev->ds_fops && dev->ds_fops != fops)
 		return -EBUSY;
-	dev->name = name;
-	dev->fops = fops;
+#ifdef CONFIG_DEV_NAMES
+	dev->ds_name = name;
+#endif
+	dev->ds_fops = fops;
 	return 0;
 }
 #endif
@@ -133,12 +157,14 @@ char * name;
 {
 	if (major >= MAX_CHRDEV)
 		return -EINVAL;
-	if (!chrdevs[major].fops)
+	if (!chrdevs[major].ds_fops)
 		return -EINVAL;
-	if (strcmp(chrdevs[major].name, name))
+#ifdef CONFIG_DEV_NAMES
+	if (strcmp(chrdevs[major].ds_name, name))
 		return -EINVAL;
-	chrdevs[major].name = NULL;
-	chrdevs[major].fops = NULL;
+	chrdevs[major].ds_name = NULL;
+#endif
+	chrdevs[major].ds_fops = NULL;
 	return 0;
 }
 
@@ -148,12 +174,14 @@ char * name;
 {
 	if (major >= MAX_BLKDEV)
 		return -EINVAL;
-	if (!blkdevs[major].fops)
+	if (!blkdevs[major].ds_fops)
 		return -EINVAL;
-	if (strcmp(blkdevs[major].name, name))
+#ifdef CONFIG_DEV_NAMES
+	if (strcmp(blkdevs[major].ds_name, name))
 		return -EINVAL;
-	blkdevs[major].name = NULL;
-	blkdevs[major].fops = NULL;
+	blkdevs[major].ds_name = NULL;
+#endif
+	blkdevs[major].ds_fops = NULL;
 	return 0;
 }
 #endif
@@ -174,7 +202,7 @@ kdev_t dev;
 	register struct file_operations * fops;
 
 	i = MAJOR(dev);
-	if (i >= MAX_BLKDEV || (fops = blkdevs[i].fops) == NULL)
+	if (i >= MAX_BLKDEV || (fops = blkdevs[i].ds_fops) == NULL)
 		return 0;
 	if (fops->check_media_change == NULL)
 		return 0;
@@ -206,9 +234,9 @@ register struct file * filp;
 	int i;
 
 	i = MAJOR(inode->i_rdev);
-	if (i >= MAX_BLKDEV || !blkdevs[i].fops)
+	if (i >= MAX_BLKDEV || !blkdevs[i].ds_fops)
 		return -ENODEV;
-	filp->f_op = blkdevs[i].fops;
+	filp->f_op = blkdevs[i].ds_fops;
 	if (filp->f_op->open)
 		return filp->f_op->open(inode,filp);
 	return 0;
@@ -263,9 +291,9 @@ register struct file * filp;
 	int i;
 
 	i = MAJOR(inode->i_rdev);
-	if (i >= MAX_CHRDEV || !chrdevs[i].fops)
+	if (i >= MAX_CHRDEV || !chrdevs[i].ds_fops)
 		return -ENODEV;
-	filp->f_op = chrdevs[i].fops;
+	filp->f_op = chrdevs[i].ds_fops;
 	if (filp->f_op->open)
 		return filp->f_op->open(inode,filp);
 	return 0;

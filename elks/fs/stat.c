@@ -127,18 +127,20 @@ int bufsiz;
 	register struct inode_operations * iop;
 	int error;
 
-	if (bufsiz <= 0)
-		return -EINVAL;
-	error = verify_area(VERIFY_WRITE,buf,bufsiz);
-	if (error)
-		return error;
-	error = lnamei(path,&inode);
-	if (error)
-		return error;
-	iop = inode->i_op;
-	if (!iop || !iop->readlink) {
-		iput(inode);
-		return -EINVAL;
+	if (bufsiz <= 0) {
+		error = -EINVAL;
+	} else {
+		error = verify_area(VERIFY_WRITE,buf,bufsiz);
+		if (!error) {
+			error = lnamei(path,&inode);
+			if (!error) {
+				iop = inode->i_op;
+				if (!iop || !iop->readlink) {
+					iput(inode);
+					error = -EINVAL;
+				} else error = iop->readlink(inode,buf,bufsiz);
+			}
+		}
 	}
-	return iop->readlink(inode,buf,bufsiz);
+	return error;
 }

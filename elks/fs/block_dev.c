@@ -105,13 +105,15 @@ int wr;
 			}
 		}
 		unmap_brelse(bh);
-		if(write_error)
+		if (write_error) {
 			break;
+		}
 	}
-	if (write_error)
-		return -EIO;
-	if ((wr == BLOCK_WRITE) && !written)
-		return -ENOSPC;
+	if (write_error) {
+		written = -EIO;
+	} else if ((wr == BLOCK_WRITE) && !written) {
+		written = -ENOSPC;
+	}
 	return written;
 }
 

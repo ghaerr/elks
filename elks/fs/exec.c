@@ -69,7 +69,7 @@ int slen;		/* Size of built stack */
 	
 	printd_exec1("EXEC: open returned %d", retval);
 	if(retval)
-		return retval;
+		goto end_readexec;
 	
 	printd_exec("EXEC: start building a file handle");
 	/*

@@ -467,48 +467,48 @@ void iput(inode)
 REGOPT struct inode * inode;
 {
 	register struct super_operations * sop = inode->i_sb->s_op;
-	if (!inode)
-		return;
-	wait_on_inode(inode);
-	if (!inode->i_count) {
-		printk("VFS: iput: trying to free free inode\n");
-		printk("VFS: device %s, inode %lu, mode=0%07o\n",
-			kdevname(inode->i_rdev), inode->i_ino, inode->i_mode);
-		return;
-	}
+	if (inode) {
+		wait_on_inode(inode);
+		if (!inode->i_count) {
+			printk("VFS: iput: trying to free free inode\n");
+			printk("VFS: device %s, inode %lu, mode=0%07o\n",
+				kdevname(inode->i_rdev), inode->i_ino, inode->i_mode);
+			return;
+		}
 #ifdef NOT_YET
-	if (inode->i_pipe)
-		wake_up_interruptible(&PIPE_WAIT(*inode));
+		if (inode->i_pipe)
+			wake_up_interruptible(&PIPE_WAIT(*inode));
 #endif
 repeat:
-	if (inode->i_count>1) {
-		inode->i_count--;
-		return;
-	}
+		if (inode->i_count>1) {
+			inode->i_count--;
+			return;
+		}
 
-	wake_up(&inode_wait);
+		wake_up(&inode_wait);
 #ifdef NOT_YET	
-	if (inode->i_pipe) {
-		/* Free up any memory allocated to the pipe */
-	}
+		if (inode->i_pipe) {
+			/* Free up any memory allocated to the pipe */
+		}
 #endif	
 
-	if (inode->i_sb && sop && sop->put_inode) {
-		sop->put_inode(inode);
-		if (!inode->i_nlink)
-			return;
-	}
+		if (inode->i_sb && sop && sop->put_inode) {
+			sop->put_inode(inode);
+			if (!inode->i_nlink)
+				return;
+		}
 
 #ifndef CONFIG_NOFS
-	if (inode->i_dirt) {
-		write_inode(inode);	/* we can sleep - so do again */
-		wait_on_inode(inode);
-		goto repeat;
-	}
+		if (inode->i_dirt) {
+			write_inode(inode);	/* we can sleep - so do again */
+			wait_on_inode(inode);
+			goto repeat;
+		}
+#else
+		inode->i_count--;
+		nr_free_inodes++;
 #endif
-
-	inode->i_count--;
-	nr_free_inodes++;
+	}
 	return;
 }
 
@@ -583,29 +583,29 @@ struct inode * get_pipe_inode()
 	REGOPT struct inode * inode;
 	extern struct inode_operations pipe_inode_operations;
 
-	if (!(inode = get_empty_inode()))
-		return NULL;
-	if (!(PIPE_BASE(*inode) = get_pipe_mem())) {
-		iput(inode);
-		return NULL;
-	}
-	inode->i_op = &pipe_inode_operations;
-	inode->i_count = 2;	/* sum of readers/writers */
-	PIPE_WAIT(*inode) = NULL;
-	PIPE_START(*inode) = PIPE_LEN(*inode) = 0;
-	PIPE_RD_OPENERS(*inode) = PIPE_WR_OPENERS(*inode) = 0;
-	PIPE_READERS(*inode) = PIPE_WRITERS(*inode) = 1;
-	PIPE_LOCK(*inode) = 0;
-	inode->i_pipe = 1;
-	inode->i_mode |= S_IFIFO | S_IRUSR | S_IWUSR;
-	inode->i_uid = current->euid;
-	inode->i_gid = current->egid;
+	if ((inode = get_empty_inode())) {
+		if (!(PIPE_BASE(*inode) = get_pipe_mem())) {
+			iput(inode);
+			return NULL;
+		}
+		inode->i_op = &pipe_inode_operations;
+		inode->i_count = 2;	/* sum of readers/writers */
+		PIPE_WAIT(*inode) = NULL;
+		PIPE_START(*inode) = PIPE_LEN(*inode) = 0;
+		PIPE_RD_OPENERS(*inode) = PIPE_WR_OPENERS(*inode) = 0;
+		PIPE_READERS(*inode) = PIPE_WRITERS(*inode) = 1;
+		PIPE_LOCK(*inode) = 0;
+		inode->i_pipe = 1;
+		inode->i_mode |= S_IFIFO | S_IRUSR | S_IWUSR;
+		inode->i_uid = current->euid;
+		inode->i_gid = current->egid;
 #ifdef CONFIG_ACTIME
-	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+		inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
 #else
-	inode->i_mtime = CURRENT_TIME;
+		inode->i_mtime = CURRENT_TIME;
 #endif
-/*	inode->i_blksize = PAGE_SIZE; */
+	/*	inode->i_blksize = PAGE_SIZE; */
+	}
 	return inode;
 }
 #endif
