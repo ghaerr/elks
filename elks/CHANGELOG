@@ -6,6 +6,10 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Tue Jun 26 01:18:57 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+	* Semaphores made all inode downs block because sleeping when non positive.
+	  Fixed to sleep on negative and wake on non negative.
+
 Sun Jun 24 23:01:09 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 	* implemented do_mknod()
 	* Some fixes in AF_UNIX sockets.

@@ -66,8 +66,10 @@
 
 #if 0
 #define printd_fsmkdir printk
+#define printd_fsmkdir1 printk
 #else
 #define printd_fsmkdir(_a)
+#define printd_fsmkdir1(_a,_b)
 #endif
 
 #if 0

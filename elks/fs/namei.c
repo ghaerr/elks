@@ -320,6 +320,7 @@ struct inode * base;
 	mode &= S_IALLUGO & ~current->fs.umask;
 	mode |= S_IFREG;
 	error = dir_namei(pathname,&namelen,&basename,base,&dir);
+
 	if (error)
 		goto onamei_end;
 	if (!namelen) {			/* special case: '/usr/' etc */
@@ -500,7 +501,7 @@ int mode;
 
 	printd_fsmkdir("mkdir: calling dir_namei\n");
 	error = dir_namei(pathname,&namelen,&basename,NULL,&dir);
-	printd_fsmkdir("mkdir: finished dir_namei\n");
+	printd_fsmkdir1("mkdir: finished dir_namei (ret : %d)\n",error);
 	dirp = dir;
 	if (!error) {
 		if (!namelen) {
@@ -520,6 +521,7 @@ int mode;
 		iput(dirp);
 		printd_fsmkdir("mkdir: complete\n");
 	}
+	printd_fsmkdir1("mkdir: error %d\n",error);
 	return error;
 }
 

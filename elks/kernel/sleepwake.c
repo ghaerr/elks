@@ -127,7 +127,7 @@ int it;
 void up(s)
 short *s;
 {
-	if(++*s==1)	/* Gone positive */
+	if(++*s==0)	/* Gone non negative */
 		wake_up((void *)s);
 }
 
@@ -135,8 +135,9 @@ void down(s)
 short *s;
 {
 	/* Wait for the semaphore */
-	while(*s<1)
+	while(*s<0){
 		sleep_on((void *)s);
+	}
 	/* Take it */
 	*s--;
 }
