@@ -37,10 +37,10 @@ include $(BASEDIR)/Make.rules
 
 SRC=	ttn.c ttn_conf.c
 
-all:	ttn
+all:	telnet
 
-ttn:	$(SRC)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o telnet $(SRC)
+telnet:	$(SRC)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SRC)
 
 net_rfs: all
 
