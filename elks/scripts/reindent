@@ -23,14 +23,30 @@ function reformat() {
 		--tab-size8
 }
 
-for FILE in *.[ch] ; do \
-    if [ -f "${FILE}" ]; then
-	if ! printf '%s\n' "$@" | grep -q ^${FILE}'$' ; then
-	    printf 'Reindenting %s ...\n' "${FILE}" >&2
-	    if fgrep -q '#asm' "${FILE}" ; then
-		printf "WARNING: %s contains '#asm' statement.\n" "${FILE}" >&2
-	    fi
-	    reformat "${FILE}"
-	fi
+function reindent() {
+    printf 'Reindenting %s ...\n' "$1" >&2
+    if fgrep -q '#asm' "$1" ; then
+	printf "Can't reindent %s as it contains an '#asm' statement.\n" "$1" >&2
+	sleep 1
+    else
+	reformat "$1"
     fi
-done
+}
+
+OK=`printf '%s\n' "$@" | grep '^~' | cut -b 2-`
+
+if [ -n "${OK}" ]; then
+    for FILE in $OK ; do
+	if [ -f "${FILE}" ]; then
+	    reindent "${FILE}"
+	fi
+    done
+else
+    for FILE in *.[ch] ; do
+	if [ -f "${FILE}" ]; then
+	    if ! printf '%s\n' "$@" | grep -q ^${FILE}'$' ; then
+		reindent "${FILE}"
+	    fi
+	fi
+    done
+fi

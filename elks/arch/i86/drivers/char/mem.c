@@ -39,10 +39,10 @@
 /*
  * generally useful code...
  */
-int memory_lseek(struct inode *inode,
-		 register struct file *filp, off_t offset, unsigned int origin)
+loff_t memory_lseek(struct inode *inode, register struct file *filp,
+		    loff_t offset, unsigned int origin)
 {
-    off_t tmp = -1;
+    loff_t tmp = -1;
 
     printd_mem("mem_lseek()\n");
     switch (origin) {
@@ -59,10 +59,12 @@ int memory_lseek(struct inode *inode,
 	return -EINVAL;
     if (tmp != filp->f_pos) {
 	filp->f_pos = tmp;
+
 #ifdef BLOAT_FS
 	filp->f_reada = 0;
 	filp->f_version = ++event;
 #endif
+
     }
     return 0;
 }
@@ -70,7 +72,7 @@ int memory_lseek(struct inode *inode,
 /*
  * /dev/null code
  */
-int null_lseek(struct inode *inode,
+loff_t null_lseek(struct inode *inode,
 	       struct file *filp, off_t offset, int origin)
 {
     printd_mem("null_lseek()\n");
@@ -97,8 +99,9 @@ static struct file_operations null_fops = {
     NULL,			/* select */
     NULL,			/* ioctl */
     NULL,			/* open */
-    NULL,			/* release */
+    NULL			/* release */
 #ifdef BLOAT_FS
+	,
     NULL,			/* fsync */
     NULL,			/* check_media_change */
     NULL			/* revalidate */
@@ -129,8 +132,9 @@ static struct file_operations full_fops = {
     NULL,			/* select */
     NULL,			/* ioctl */
     NULL,			/* open */
-    NULL,			/* release */
+    NULL			/* release */
 #ifdef BLOAT_FS
+	,
     NULL,			/* fsync */
     NULL,			/* check_media_change */
     NULL			/* revalidate */
@@ -165,37 +169,43 @@ static struct file_operations zero_fops = {
 #endif
 };
 
+static void split_seg_off(unsigned short int *segment,
+			  unsigned short int *offset,
+			  long int posn)
+{
+    *segment = (unsigned short int) (((unsigned long int) posn) >> 4);
+    *offset  = (unsigned short int) (((unsigned long int) posn) & 0xF);
+}
+
 /*
  * /dev/kmem (and currently also mem) code
  */
-int kmem_read(struct inode *inode,
-	      register struct file *filp, char *data, unsigned int len)
+loff_t kmem_read(struct inode *inode, register struct file *filp,
+	      char *data, size_t len)
 {
-    unsigned int sseg, soff;
+    unsigned short int sseg, soff;
 
     printd_mem("[k]mem_read()\n");
-    soff = (filp->f_pos) & 0xfL;
-    sseg = (filp->f_pos) >> 4;
-#if 0
-    printk("Reading %u %p %p.\n", len, sseg, soff);
-#endif
+    split_seg_off(&sseg, &soff, filp->f_pos);
+    printd_mem3("Reading %u %p %p.\n", len, sseg, soff);
     fmemcpy(current->mm.dseg, data, sseg, soff, len);
     filp->f_pos += len;
+
     return len;
 }
 
-int kmem_write(struct inode *inode,
-	       register struct file *filp, char *data, unsigned int len)
+int kmem_write(struct inode *inode, register struct file *filp,
+	       char *data, size_t len)
 {
-    unsigned int dseg, doff;
+    unsigned short int dseg, doff;
 
     printd_mem("[k]mem_write()\n");
-    doff = (filp->f_pos) & 0xfL;
-    dseg = (filp->f_pos) >> 4;
-    printd_mem1("Writing to %d:", dseg);
-    printd_mem1("%d\n", doff);
+
+    split_seg_off(&dseg, &doff, filp->f_pos);
+    printd_mem2("Writing to %d:%d\n", dseg, doff);
     fmemcpy(dseg, doff, current->mm.dseg, data, len);
     filp->f_pos += len;
+
     return len;
 }
 
@@ -259,14 +269,15 @@ unsigned int kmem_ioctl(struct inode *inode,
 
 	memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
 	return 0;
+
 #ifdef CONFIG_SWAP
     case MEM_SETSWAP:
     	if(!suser())
     	   return -EPERM;
     	memcpy_fromfs(&si, arg, sizeof(struct mem_swap_info));
     	return mm_swap_on(&si);
-    }
 #endif
+    }
     return -EINVAL;
 }
 
@@ -278,8 +289,9 @@ static struct file_operations kmem_fops = {
     NULL,			/* select */
     kmem_ioctl,			/* ioctl */
     NULL,			/* open */
-    NULL,			/* release */
+    NULL			/* release */
 #ifdef BLOAT_FS
+	,
     NULL,			/* fsync */
     NULL,			/* check_media_change */
     NULL			/* revalidate */
@@ -291,45 +303,73 @@ static struct file_operations kmem_fops = {
  */
 int memory_open(struct inode *inode, register struct file *filp)
 {
+    int err=0;
+
     printd_mem1("memory_open: minor = %d; it's /dev/",
 		(int) MINOR(inode->i_rdev));
     switch (MINOR(inode->i_rdev)) {
-    case DEV_NULL_MINOR:
-	filp->f_op = &null_fops;
-	printd_mem("null!\n");
-	return 0;
-    case DEV_FULL_MINOR:
-	filp->f_op = &full_fops;
-	printd_mem("full!\n");
-	return 0;
-    case DEV_ZERO_MINOR:
-	filp->f_op = &zero_fops;
-	printd_mem("zero!\n");
-	return 0;
-    case DEV_KMEM_MINOR:
-    case DEV_MEM_MINOR:	/* assumes virt mem == phys mem */
-	filp->f_op = &kmem_fops;
-	printd_mem("kmem!\n");
-	return 0;
 
-#if 0
+    case DEV_NULL_MINOR:
+	printd_mem("null");
+	filp->f_op = &null_fops;
+	break;
+
+    case DEV_FULL_MINOR:
+	printd_mem("full");
+	filp->f_op = &full_fops;
+	break;
+
+    case DEV_ZERO_MINOR:
+	printd_mem("zero");
+	filp->f_op = &zero_fops;
+	break;
+
+    /*  The following two entries assume that virtual memory is identical
+     *  to physical memory. Is this still true now we have swap?
+     */
+
+    case DEV_KMEM_MINOR:
+	printd_mem("k");
+	/* Fallthru */
+
+    case DEV_MEM_MINOR: 
+	printd_mem("mem");
+	filp->f_op = &kmem_fops;
+	break;
+
+#ifdef C
+
+    /*  The following entries are all currently subsumed by the default entry.
+     *  However, if debugging is enabled, we include them to print out the
+     *  correct device name rather than the ??? that would otherwise appear.
+     */
 
     case DEV_PORT_MINOR:
-	printd_mem("port! (Not supported)\n");
-	return -ENXIO;
+	printd_mem("port");
+	err = -ENXIO;
+	break;
+
     case DEV_RANDOM_MINOR:
-	printd_mem("random! (Not supported)\n");
-	return -ENXIO;
+	printd_mem("random");
+	err = -ENXIO;
+	break;
+
     case DEV_URANDOM_MINOR:
-	printd_mem("urandom! (Not supported)\n");
-	return -ENXIO;
+	printd_mem("urandom");
+	err = -ENXIO;
+	break;
 
 #endif
 
     default:
-	printk("Device minor %d not supported.\n", MINOR(inode->i_rdev));
-	return -ENXIO;
+	printd_mem("???");
+	err = -ENXIO;
+	break;
     }
+    printd_mem(" !!!\n");
+    if (err)
+	printk("Device minor %d not supported.\n", MINOR(inode->i_rdev));
+    return err;
 }
 
 static struct file_operations memory_fops = {
@@ -340,8 +380,9 @@ static struct file_operations memory_fops = {
     NULL,			/* select */
     NULL,			/* ioctl */
     memory_open,		/* open */
-    NULL,			/* release */
+    NULL			/* release */
 #ifdef BLOAT_FS
+	,
     NULL,			/* fsync */
     NULL,			/* check_media_change */
     NULL			/* revalidate */

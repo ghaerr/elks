@@ -20,7 +20,7 @@ typedef __u16 dev_t;
 typedef __u16 umode_t;
 typedef __u16 nlink_t;
 typedef __u16 mode_t;
-typedef __u32 loff_t;
+typedef __s32 loff_t;
 typedef __u32 speed_t;
 typedef __u32 lsize_t;
 typedef __u16 ino_t;

@@ -133,10 +133,10 @@ _save_regs:
 	mov  [bx],sp
 	push ax		! Return with the stack altered.
 	ret
-!
-!	Unlike save_regs this doesn't return to the caller
-!	but to the caller's caller.
-!
+/*
+ *	Unlike save_regs this does not return to the caller
+ *	but to the caller's caller.
+ */
 	.globl _load_regs
 
 _load_regs:
@@ -160,7 +160,7 @@ _load_regs:
 	pop bp		! BP of schedule()
 	mov sp,bp	! As schedule() would do on its return to get SP
 	pop bp		! Recover caller BP
-	xor ax,ax	! Set ax=0, as this may be child's fork() return
+	xor ax,ax	! Set ax=0, as this may be fork() return from child
 	ret		! thus to caller of schedule()
 
 #endif

@@ -49,10 +49,10 @@
 #define FMODE_READ	1
 #define FMODE_WRITE	2
 
-#define READ	0
-#define WRITE	1
-#define READA	2		/* read-ahead - don't pause */
-#define WRITEA	3		/* "write-ahead" - silly, but somewhat useful */
+#define READ		0
+#define WRITE		1
+#define READA		2	/* read-ahead - don't pause */
+#define WRITEA		3	/* "write-ahead" - silly, but somewhat useful */
 
 #define SEL_IN		1
 #define SEL_OUT		2
@@ -62,22 +62,22 @@
  *	Passed to namei
  */
 
-#define IS_DIR	1
-#define NOT_DIR	2
+#define IS_DIR		1
+#define NOT_DIR 	2
 
 /*
  * These are the fs-independent mount-flags: up to 16 flags are supported
  */
 
-#define MS_RDONLY	 1	/* mount read-only */
-#define MS_NOSUID	 2	/* ignore suid and sgid bits */
-#define MS_NODEV	 4	/* disallow access to device special files */
-#define MS_NOEXEC	 8	/* disallow program execution */
-#define MS_SYNCHRONOUS	16	/* writes are synced at once */
-#define MS_REMOUNT	32	/* alter flags of a mounted FS */
+#define MS_RDONLY	    1	/* mount read-only */
+#define MS_NOSUID	    2	/* ignore suid and sgid bits */
+#define MS_NODEV	    4	/* disallow access to device special files */
+#define MS_NOEXEC	    8	/* disallow program execution */
+#define MS_SYNCHRONOUS	   16	/* writes are synced at once */
+#define MS_REMOUNT	   32	/* alter flags of a mounted FS */
 
-#define S_APPEND    256		/* append-only file */
-#define S_IMMUTABLE 512		/* immutable file */
+#define S_APPEND	  256	/* append-only file */
+#define S_IMMUTABLE	  512	/* immutable file */
 
 /*
  * Flags that can be altered by MS_REMOUNT
@@ -290,9 +290,9 @@ struct super_block {
 typedef int (*filldir_t) ();
 
 struct file_operations {
-    int (*lseek) ();
-    int (*read) ();
-    int (*write) ();
+    loff_t (*lseek) ();
+    size_t (*read) ();
+    size_t (*write) ();
     int (*readdir) ();
     int (*select) ();
     int (*ioctl) ();
@@ -428,6 +428,7 @@ extern void insert_inode_hash(struct inode *);
 extern void clear_inode(struct inode *);
 extern struct inode *get_pipe_inode(void);
 extern struct file *get_empty_filp(void);
+
 extern struct buffer_head *get_hash_table(kdev_t,block_t);
 extern struct buffer_head *getblk(kdev_t,block_t);
 extern struct buffer_head *readbuf(struct buffer_head *);

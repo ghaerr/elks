@@ -32,6 +32,15 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Sun Apr 28 12:49:59 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Rephrased comments in arch/i86/kernel/process.c to avoid
+	  compiler bug.
+	* Corrected definition of loff_t type from __u32 to __s32 as
+	  it is regularly used with negative values.
+	* Fixed bug in Harry's swap code that prevented the kernel from
+	  compiling if swap was disabled.
+
 Sun Apr 28 12:30:32 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Verified that all include/{arch,linuxmt}/*.h files are clean

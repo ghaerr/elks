@@ -157,10 +157,14 @@
 #ifdef DEBUGMM
 #define printd_mem printk
 #define printd_mem1 printk
+#define printd_mem2 printk
+#define printd_mem3 printk
 #endif
 #else
 #define printd_mem(_a)
 #define printd_mem1(_a,_b)
+#define printd_mem2(_a,_b,_c)
+#define printd_mem3(_a,_b,_c,_d)
 #endif
 
 #ifdef DEBUG

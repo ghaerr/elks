@@ -223,7 +223,7 @@ CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) -ansi
 CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
 LINT		= splint
 LINTLEVEL	= -weak
-LCFLAGS 	= -I$(INCDIR) $(CCDEFS) -D__LINT__ -isoreserved
+LCFLAGS 	= -I$(INCDIR) $(CCDEFS) -D__LINT__ -isoreserved +ignoresigns
 LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
 		  -exportheader -varuse -exporttype -exportconst \
 		  -exportvar -typeuse -enummemuse -constuse
@@ -306,7 +306,7 @@ dodep:	$(DEPEND)
 	done
 
 dolint:
-	@for FILE in *.[ch] ; do \
+	@for FILE in $${USEME:-*.[ch]} ; do \
 	    if [ -f "$${FILE}" ] && ! fgrep -q '#asm' "$${FILE}" ; then \
 		echo $(LINT) ... "$${FILE}" ; \
 		if fgrep -q '/*@ignore@*/' "$${FILE}" ; then \
