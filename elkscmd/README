@@ -1,0 +1,49 @@
+This is elkscmd, a loose colletion of user space code for ELKS including
+most of what you need apart from the kernel to build a working system.
+
+Note that inclusion of code in this package does not imply any kind of
+right to distribute the code. Please check the license for each program
+before modifying or distributing it.
+
+More contributions are required under a GPL compatable license. Please see
+the CONTRIBUTING file for more details.
+
+This package has been put together for two main purposes:-
+
+1. To make it as easy as possible to put together a working binary release
+   of a complete ELKS system.
+
+2. To make it as easy as possible for other developers to accuratly
+   reproduce a release.
+
+The Makefiles contain rules which automatically build disk images for
+the ELKS system. In order to do this you must the source code to the ELKS
+kernel, and to the Dev86 package unpacked and online, and the definitions
+at the top of the Make.defs point to the correct source directories.
+
+CAUTION: Building images must be done as root as it needs to mount and unmount
+loopback filesystems. It is essential that TARGET_MNT is set in Make.defs, or
+running these rules could render your system inoperable.
+
+The main rule used in building a release is called images.zip, can is envoked
+as follows:-
+
+make images.zip
+
+This creates three of the four possible images, and puts them into a zip file
+ready for release.
+
+The images that can be created are as follows:-
+
+boot	- A kernel boot disk - simply a copy of the kernel from the kernel
+	  source tree.
+
+root	- A 360K minimal root image. Includes enough programs and support files
+	  for a basic test system.
+
+comb	- A 720K combined boot/root image. Includes a kernel, everything on
+	  root, and installs the minixfs bootloader from the Dev86 package.
+
+sibo	- A 128K very minimal root image suitable for a 128K Solid State Disk
+	  as used in SIBO architecture machines such as the Psion series 3
+	  organiser.
