@@ -20,7 +20,7 @@ register struct inode * inode;
 struct stat * statbuf;
 {
 	struct stat tmp;
-	unsigned int blocks, indirect;
+/*	unsigned int blocks, indirect; UNUSED */
 
 	memset(&tmp, 0, sizeof(tmp));
 	tmp.st_dev = kdev_t_to_nr(inode->i_dev);
@@ -67,7 +67,7 @@ struct stat * statbuf;
 			}
 		}
 	}*/
-	return verified_memcpy_tofs(statbuf,&tmp,sizeof(tmp));
+	return verified_memcpy_tofs((char *)statbuf,(char *)&tmp,sizeof(tmp));
 }
 
 int sys_stat(filename,statbuf)
@@ -104,11 +104,11 @@ int sys_fstat(fd, statbuf)
 unsigned int fd;
 struct stat * statbuf;
 {
-	register struct file * f;
-	register struct inode * inode;
+	struct file * f;
+	int error;
 
-	if ((f = fd_check(fd, statbuf, sizeof(struct stat), FMODE_WRITE | FMODE_READ)) <= 0) {
-		return f;
+	if ((error = fd_check(fd, (char *)statbuf, sizeof(struct stat), FMODE_WRITE | FMODE_READ, &f)) != 0) {
+		return error;
 	}
 	return cp_stat(f->f_inode,statbuf);
 }

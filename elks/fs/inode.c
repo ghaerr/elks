@@ -29,8 +29,8 @@ static struct inode_hash_entry {
 static struct inode inode_block[NR_INODE];
 static struct inode * first_inode;
 static struct wait_queue * inode_wait = NULL;
-int nr_inodes = 0, nr_free_inodes = 0;
-int max_inodes = NR_INODE;
+static int nr_inodes = 0;
+static int nr_free_inodes = 0;
 
 static struct inode_hash_entry *hash(dev,i)
 kdev_t dev;
@@ -56,7 +56,7 @@ REGOPT struct inode *inode;
 	register struct inode * in;
 	if (first_inode == inode)
 		first_inode = first_inode->i_next;
-	if (in = inode->i_next)
+	if ((in = inode->i_next))
 		in->i_prev = inode->i_prev;
 	if (inode->i_prev)
 		inode->i_prev->i_next = inode->i_next;
@@ -106,7 +106,7 @@ REGOPT struct inode *inode;
 	inode->i_next->i_prev = inode;
 }
 
-void setup_inodes()
+static void setup_inodes()
 {
 	REGOPT struct inode * inode;
 	int i = NR_INODE;
@@ -128,7 +128,34 @@ void inode_init()
 	setup_inodes();
 }
 
-static void wait_on_inode();
+/*
+ * The "new" scheduling primitives (new as of 0.97 or so) allow this to
+ * be done without disabling interrupts (other than in the actual queue
+ * updating things: only a couple of 386 instructions). This should be
+ * much better for interrupt latency.
+ */
+ 
+static void wait_on_inode(inode)
+REGOPT struct inode * inode;
+{
+	struct wait_queue wait;
+
+	if (!inode->i_lock)
+		return;
+	
+	wait.task = current;
+	wait.next = NULL;
+
+	add_wait_queue(&inode->i_wait, &wait);
+repeat:
+	current->state = TASK_UNINTERRUPTIBLE;
+	if (inode->i_lock) {
+		schedule();
+		goto repeat;
+	}
+	remove_wait_queue(&inode->i_wait, &wait);
+	current->state = TASK_RUNNING;
+}
 
 static void lock_inode(inode)
 REGOPT struct inode * inode;
@@ -184,9 +211,9 @@ kdev_t dev;
 	return 1;
 }
 
-int fs_may_umount(dev,mount_root)
+int fs_may_umount(dev,mount_rooti)
 kdev_t dev;
-REGOPT struct inode * mount_root;
+REGOPT struct inode * mount_rooti;
 {
 	REGOPT struct inode * inode;
 	int i;
@@ -195,7 +222,7 @@ REGOPT struct inode * mount_root;
 	for (i=0 ; i < nr_inodes ; i++, inode = inode->i_next) {
 		if (inode->i_dev != dev || !inode->i_count)
 			continue;
-		if (inode == mount_root && inode->i_count == 1)
+		if (inode == mount_rooti && inode->i_count == 1)
 			continue;
 		return 0;
 	}
@@ -253,7 +280,7 @@ struct inode * inode;
 }
 
 /* POSIX UID/GID verification for setting inode attributes */
-int inode_change_ok(inode,attr)
+static int inode_change_ok(inode,attr)
 REGOPT struct inode *inode;
 REGOPT struct iattr *attr;
 {
@@ -298,7 +325,7 @@ REGOPT struct iattr *attr;
  * the inode structure.
  */
 
-void inode_setattr(inode,attr)
+static void inode_setattr(inode,attr)
 REGOPT struct inode *inode;
 REGOPT struct iattr *attr;
 {
@@ -467,7 +494,7 @@ repeat:
 	return;
 }
 
-void list_inode_status() 
+static void list_inode_status() 
 {
 	int i;
 
@@ -630,31 +657,3 @@ return_it:
 	return inode;
 }
 
-/*
- * The "new" scheduling primitives (new as of 0.97 or so) allow this to
- * be done without disabling interrupts (other than in the actual queue
- * updating things: only a couple of 386 instructions). This should be
- * much better for interrupt latency.
- */
- 
-static void wait_on_inode(inode)
-REGOPT struct inode * inode;
-{
-	struct wait_queue wait;
-
-	if (!inode->i_lock)
-		return;
-	
-	wait.task = current;
-	wait.next = NULL;
-
-	add_wait_queue(&inode->i_wait, &wait);
-repeat:
-	current->state = TASK_UNINTERRUPTIBLE;
-	if (inode->i_lock) {
-		schedule();
-		goto repeat;
-	}
-	remove_wait_queue(&inode->i_wait, &wait);
-	current->state = TASK_RUNNING;
-}

@@ -58,22 +58,22 @@ ino_t ino;
 int sys_readdir(fd,dirent,count)
 unsigned int fd;
 char * dirent;
-unsigned int count;
+unsigned int count; /* ignoed and unused, noted in Linux man page */
 {
 	int error;
-	register struct file * file;
+	struct file * file;
 	register struct file_operations * fop;
 	struct readdir_callback buf;
 
-	if ((file = fd_check(fd, dirent, sizeof(struct linux_dirent), FMODE_READ)) <= 0) {
-		return file;
+	if ((error = fd_check(fd, dirent, sizeof(struct linux_dirent), FMODE_READ, &file)) < 0) {
+		return error;
 	}
 	fop=file->f_op;
 	if (!fop || !fop->readdir) {
 		return -ENOTDIR;
 	}
 	buf.count = 0;
-	buf.dirent = dirent;
+	buf.dirent = (struct linux_dirent *)dirent;
 	error = fop->readdir(file->f_inode, file, &buf, fillonedir);
 	if (error < 0)
 		return error;

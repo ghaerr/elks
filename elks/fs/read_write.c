@@ -22,7 +22,7 @@ unsigned int origin;
 	off_t offset = get_fs_long(p_offset);
 	register struct file * file;
 	register struct file_operations * fop;
-	off_t tmp = -1;
+	off_t tmp;
 	
 /*	printk("%d lseek1\n",origin); */
 /*	printk("%ld lseek2\n",offset); */
@@ -47,11 +47,15 @@ unsigned int origin;
 				return -EINVAL;
 			tmp = file->f_inode->i_size + offset;
 			break;
+		default:
+		/* bogus origin */
+			return -EINVAL;
 	}
 /*	printk("%d lseek3\n",fd); */
 
-	if (tmp < 0)
-		return -EINVAL;
+/* Cannot be nagative as unsigend. Should off_t be unsigned? */
+/*	if (tmp < 0)
+		return -EINVAL; */
 	if (tmp != file->f_pos) {
 		file->f_pos = tmp;
 #ifdef BLOAT_FS
@@ -62,32 +66,43 @@ unsigned int origin;
 	return 0;
 }
 
-int fd_check(fd, buf, count, rw)
+/* fd_check -- validate file descriptor
+ *  Failure is indicated by a returning a non-zero value. Success is
+ *  indicated by returning 0. The parameter "file" is used for passing
+ *  back the pointer to the file struct associated with fd. The value of
+ *  "file" is undefined when this function returns unsuccessfully.
+ *
+ *  Possible error values are:
+ *    EBADF : fd is not a valid file descriptor or is not open for reading.
+ *    EINVAL: fd is attached to an object which is unsuitable for reading.
+ *    EFAULT: buf is outside your accessible address space.
+ */
+
+int fd_check(fd, buf, count, rw, file)
 unsigned int fd;
 char * buf;
 unsigned int count;
 int rw;
+struct file ** file;
 {
-	register struct file * file;
+	register struct file * tfil;
 	int error;
 
-	if (fd>=NR_OPEN || !(file=current->files.fd[fd]) || !(file->f_inode)) {
+	if (fd>=NR_OPEN || !(tfil=current->files.fd[fd]) || !(tfil->f_inode)) {
 		return -EBADF;
 	}
-	if (!(file->f_mode & rw)) {
+	if (!(tfil->f_mode & rw)) {
 		return -EBADF;
 	}
-	if (!file->f_op) {
+	if (!tfil->f_op) {
 		return -EINVAL;
 	}
-	if (!count) {
-		return 0;
-	}
-	if (error = verify_area(VERIFY_WRITE,buf,count)) {
+
+	*file = tfil;
+	if (count && (error = verify_area(VERIFY_WRITE, buf, count))) {
 		return error;
 	}
-
-	return file;
+	return 0;
 }
 	
 
@@ -98,10 +113,11 @@ unsigned int count;
 {
 	int retval;
 	register struct file_operations * fop;
-	register struct file * file;
+	struct file * file;
 
-	if ((file = fd_check(fd, buf, count, FMODE_READ)) <= 0) {
-		return file;
+	if (((retval = fd_check(fd, buf, count, FMODE_READ, &file)) != 0)
+	    || (0 == count)) {
+		return retval;
 	}
 	fop = file->f_op;
 	if (!fop->read) {
@@ -118,13 +134,13 @@ unsigned int fd;
 char * buf;
 unsigned int count;
 {
-	int error;
-	register struct file * file;
+	struct file * file;
 	register struct inode * inode;
 	int written;
 
-	if ((file = fd_check(fd, buf, count, FMODE_WRITE)) <= 0) {
-		return file;
+	if (((written = fd_check(fd, buf, count, FMODE_WRITE, &file)) != 0)
+	    || (0 == count)) {
+		return written;
 	}
 	if (!file->f_op->write) {
 		return -EINVAL;
