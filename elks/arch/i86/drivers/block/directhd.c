@@ -484,7 +484,7 @@ void do_directhd_request(void)
 
 	/* check if drive exists */
 	if (drive > 3 || drive < 0 || drive_info[drive].heads == 0) {
-	    printk("Non-existant drive\n");
+	    printk("Non-existent drive\n");
 	    end_request(0);
 	    continue;
 	}

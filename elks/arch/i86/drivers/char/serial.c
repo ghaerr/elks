@@ -388,7 +388,7 @@ int rs_init(void)
 	    ttyno++;
 	} else {
 	    if ((rs_probe(sp) == 0) && (!request_irq(sp->irq, rs_irq, NULL))) {
-		printk("ttys%d at 0x%x (irq = %d)",
+		printk("ttyS%d at 0x%x (irq = %d)",
 		       ttyno - 4, sp->io, sp->irq);
 		print_serial_type(sp->flags & SERF_TYPE);
 		printk("\n");

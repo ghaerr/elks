@@ -66,7 +66,7 @@ static int ssd_open(struct inode *inode, struct file *filp)
     int target;
 
     target = DEVICE_NR(inode->i_rdev);
-    /*printk("SSD_OPEN %u\n",target); */
+    printk("SSD_OPEN %u\n", target);
     if (ssd_initialised == 0)
 	return (-ENXIO);
 #if 0
@@ -132,7 +132,7 @@ static void do_ssd_request(void)
 	    return;
 
 	if (ssd_initialised != 1) {
-	    printk("SSD not initilised\n");
+	    printk("SSD not initialised\n");
 	    end_request(0);
 	    continue;
 	}

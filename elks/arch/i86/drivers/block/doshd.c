@@ -687,7 +687,7 @@ static void do_bioshd_request(void)
 /* make sure it's a disk that we are dealing with. */
 
 	if (drive > 3 || drive < 0 || drive_info[drive].heads == -0) {
-	    printk("hd: non-existant drive\n");
+	    printk("hd: non-existent drive\n");
 	    end_request(0);
 	    continue;
 	}

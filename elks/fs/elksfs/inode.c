@@ -186,7 +186,7 @@ struct super_block *elksfs_read_super(register struct super_block *s,
 	unlock_super(s);
 	unmap_brelse(bh);
 	if (!silent)
-	    printk("VFS: Can't find a Elksfs V1 filesystem on dev %s.\n",
+	    printk("VFS: Can't find an ELKSfs V1 filesystem on dev %s.\n",
 		   kdevname(dev));
 	return NULL;
     }

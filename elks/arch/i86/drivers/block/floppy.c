@@ -632,7 +632,7 @@ static void configure_fdc_mode(void)
 static void tell_sector(int nr)
 {
     if (nr != 7) {
-	printk(" -- FDC reply errror");
+	printk(" -- FDC reply error");
 	reset = 1;
     } else
 	printk(": track %d, head %d, sector %d", reply_buffer[3],
@@ -662,7 +662,7 @@ static void rw_interrupt(void)
 	    bad = 0;
 	} else if (ST1 & ST1_OR) {
 	    if (ftd_msg[ST0 & ST0_DS])
-		printk("%s: Over/Underrun - retrying\n", DEVICE_NAME);
+		printk("%s: Over/Under-run - retrying\n", DEVICE_NAME);
 	    /* could continue from where we stopped, but ... */
 	    bad = 0;
 	} else if (CURRENT_ERRORS > min_report_error_cnt[ST0 & ST0_DS]) {
