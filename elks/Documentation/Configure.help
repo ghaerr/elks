@@ -1,12 +1,12 @@
 Direct console writes
 CONFIG_CONSOLE_DIRECT
-  A direct console driver, currently the only console driver available for 
-  ELKS.
+  A direct console driver, currently the only console driver available
+  for ELKS.
 
 Direct console VT52 emulation
 CONFIG_DCON_VT52
-  Saying no removes some of the intelligent features from the console code
-  leaving a dumb text console which is much smaller.
+  Saying no removes some of the intelligent features from the console 
+  code leaving a dumb text console which is much smaller.
 
 BIOS console writes
 CONFIG_CONSOLE_BIOS
@@ -52,7 +52,7 @@ CONFIG_ROMFS_FS
 
 ELKSFS fs support
 CONFIG_ELKSFS_FS
- Support for the new ELKSFS native fs. Includes Minix fs emulation.
+  Support for the new ELKSFS native fs. Includes Minix fs emulation.
 
 Full VFS support
 CONFIG_FULL_VFS
@@ -110,7 +110,8 @@ CONFIG_286PMODE
 
 Support for memory beyond 16M on 386+ systems
 CONFIG_386RAM
-  Add support for ram beyond 16 megs on 386+ systems. Currently nonexistant.
+  Add support for ram beyond 16 megs on 386+ systems. Currently
+  nonexistant.
 
 BIOS block device support
 CONFIG_BLK_DEV_BIOS
@@ -137,8 +138,8 @@ CONFIG_BLK_DEV_HD
 
 RAM disk support
 CONFIG_BLK_DEV_RAM
-  Support for a RAM disk device driver which allows up to 8 64K ram drives
-  to be implemented.
+  Support for a RAM disk device driver which allows up to 8 64K ram
+  drives to be implemented.
 
 Old XT hardisk support
 CONFIG_BLK_DEV_XD
