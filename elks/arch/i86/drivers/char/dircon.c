@@ -1,6 +1,8 @@
 /**************************************
  * Direct video memory display driver *
  * Saku Airila 1996                   *
+ * Re-wrote for new ntty iface        *
+ * Al Riddoch  1999                   *
  **************************************/
 
 #include <linuxmt/types.h>
@@ -20,8 +22,8 @@
 /* void con_charout (char Ch); */
 /* void Console_set_vc (int N); */
 /* int Console_write (struct tty * tty); */
-/* void Console_release (struct inode * inode, struct file * file); */
-/* int Console_open (struct inode * inode, struct file * file); */
+/* void Console_release (struct tty * tty); */
+/* int Console_open (struct tty * tty); */
 /* struct tty_ops dircon_ops; */
 /* void init_console(void); */
 
@@ -79,6 +81,8 @@ static int NumConsoles = MAX_CONS;
 static unsigned VideoSeg, PageSize;
 static Console Con[ MAX_CONS ];
 static Console * Visible;
+static Console * glock;	/* Which console owns the graphics hardware */
+static struct wait_queue * glock_wait = NULL;
 
 /* from keyboard.c */
 extern int Current_VCminor;
@@ -136,6 +140,14 @@ register Console * C;
 char Ch;
 {
 int CursorOfs;
+
+    if (glock) {
+      if (glock == C) {
+        return;
+      } else {
+        sleep_on(&glock_wait);
+      }
+    }
 #ifdef CONFIG_DCON_ANSI
     if( C->InAnsi )
     {
@@ -497,6 +509,8 @@ int N;
     return;
   if( Visible == &Con[ N ] )
     return;
+  if (glock)
+    return;
   Visible = &Con[ N ];
 #if 0
   far_memmove(
@@ -530,6 +544,33 @@ int x, y;
 }
 #endif
 
+int Console_ioctl(tty, cmd, arg)
+struct tty * tty;
+int cmd;
+char * arg;
+{
+	printk("Console_ioctl()\n");
+	switch (cmd) {
+		case DCGET_GRAPH:
+			if (!glock) {
+				glock = &Con[tty->minor];
+				return 0;
+			} else {
+				return -EBUSY;
+			}
+		case DCREL_GRAPH:
+			if (glock == &Con[tty->minor]) {
+				glock = NULL;
+				wake_up(&glock_wait);
+				return 0;
+			} else {
+				return -EINVAL;
+			}
+		default:
+			return -EINVAL;
+	}
+}
+
 int Console_write(tty)
 register struct tty * tty;
 {
@@ -548,27 +589,19 @@ register struct tty * tty;
 	return cnt;
 }
 
-void Console_release( inode, file )
-struct inode *inode;
-struct file *file;
+void Console_release(tty)
+struct tty * tty;
 {
-#if 0
-int minor = MINOR( inode->i_rdev );
-   if( minor < NumConsoles )
-      Con[ minor ].InUse = 0;
-#endif
 }
 
-int Console_open( inode, file )
-struct inode *inode;
-struct file *file;
+int Console_open(tty)
+struct tty * tty;
 {
-int minor = MINOR(inode->i_rdev);
-   if( minor >= NumConsoles )
-      return -ENODEV;
+	int minor = tty->minor;
+	if( minor >= NumConsoles )
+		return -ENODEV;
 
-/*   Con[ minor ].InUse = 1; */
-return 0;
+	return 0;
 }
 
 struct tty_ops dircon_ops = {
@@ -576,7 +609,7 @@ struct tty_ops dircon_ops = {
 	Console_release, /* Do not remove this, or it crashes */
 	Console_write,
 	NULL,
-	NULL,
+	Console_ioctl,
 };
 
 void init_console()
