@@ -14,8 +14,9 @@ Arnaud Launay		<asl@launay.org>		17 Oct 2001
 Christop Plattner	<Christoph.Plattner@dot.at>	 2 Feb 2000
 Harry Kalogirou 	<harkal@rainbow.cs.unipi.gr>	22 Oct 2001
 Paul Nasrat		<pnasrat@uk.now.com>		28 Aug 2001
+Per Olofsson		<MagerValp@cling.gu.se>		25 Feb 2000
 Peter L Vachuska	<pvachusk@nconnect.net>		13 Aug 2001
-Riley Williams		<rhw@MemAlpha.cx>		22 Oct 2001
+Riley Williams		<rhw@MemAlpha.cx>		25 Oct 2001
 Roman Festchook 	<roma@polesye.net>		27 Oct 2001
 Simon Weijgers		<simon@weijgers.com>		15 Nov 1998
 Thomas McWilliams	<tgm9999@yahoo.com>		 2 Apr 2001
@@ -58,7 +59,7 @@ Mon Oct 22 14:22:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 	* Wrote design for revised Makefile system. Refer to the file
 	  elks/Documentation/Makefile-structure.html for details.
 
-Mon Oct 22 10:49:00 EEST 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+Mon Oct 22 10:49:00 EEST 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
 	* Fixed bug in net/Makefile spotted by Riley.
 
@@ -493,7 +494,7 @@ Sun Jun 17 19:47:58 BST 2001	Alan Cox  <alan@redhat.com>
 	* Chop ltype down to 16 bytes - with our tiny stack 256 is crazy
 	* Remove shlib stuff from fs/exec.c move file onto stack
 
-Sun Jun 17 18:38 BST 2001   Alistair Riddoch  <alriddoch@zepler.org>
+Sun Jun 17 18:38 BST 2001	Alistair Riddoch  <alriddoch@zepler.org>
 
 	* THIS IS ELKS RELEASE 0.0.84.
 
@@ -501,7 +502,7 @@ Sun Jun 17 18:38 BST 2001   Alistair Riddoch  <alriddoch@zepler.org>
 	  fix.
 	* Bumped up version to 0.0.84 for release.
 
-Sun Jun 17 11:20:06 BST 2001   Alan Cox  <alan@redhat.com>
+Sun Jun 17 11:20:06 BST 2001	Alan Cox  <alan@redhat.com>
 
 	* Abolished the suid config option
 	* Merged stuff to reduce the ifdef clutter a bit
@@ -531,84 +532,83 @@ Sun Jun 17 11:20:06 BST 2001   Alan Cox  <alan@redhat.com>
 	* Shrink various minixfs messages to cut down on data segment
 	* Note that the pipefs needs to be using minixfs blocks as per V7
 
-Tue Apr 17 14:52 GMT 2001   Alistair Riddoch  <alriddoch@zepler.org>
+Tue Apr 17 14:52 GMT 2001	Alistair Riddoch  <alriddoch@zepler.org>
 
 	* Added dist rule to Makefiles.
 
-Mon Apr  2 14:06 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
+Mon Apr  2 14:06 UTC 2001	Thomas McWilliams <tgm9999@yahoo.com>
 
 	* Generate 8254 timer constants directly from definition of HZ.
 	* Also some minor miscellaneous cleanups.
 
 -----------------------------------------------------------------------------
 
-Wed Mar 28 08:37 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
+Wed Mar 28 08:37 UTC 2001	Thomas McWilliams <tgm9999@yahoo.com>
 
 	* Change broken definition of pid_t from unsigned to signed.
 
-Mon Mar 26 16:29 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
+Mon Mar 26 16:29 UTC 2001	Thomas McWilliams <tgm9999@yahoo.com>
 
 	* Fix long standing file system bug: EBUSY when unmounting,
 	  and related sys_access() bug.
 
 =============================================================================
 
-Fri Mar  3 11:44 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Mar  3 11:44 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* THIS IS ELKS RELEASE 0.0.83.
 
 	* Final changes for 0.0.83
 
-Tue Feb 29 11:00 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Feb 29 11:00 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Small change to setup.S to fix segment definitions for the
 	  ROM boot code contributed by Christian Mardmoller.
 
-Sat Feb 26 19:23 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Sat Feb 26 19:23 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed bug in file descriptor macros which meant that
 	  file descriptors > 7 did not work in select.
 
-Sat Feb 26 13:02 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Sat Feb 26 13:02 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed socket code that deals with disconnections which was only
 	  included for UNIX sockets, but is required by NANO sockets.
 
-Fri Feb 25 15:05 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Feb 25 15:05 GMT 2000	Per Olofsson <MagerValp@cling.gu.se>
 
-	* Added swedish keyboard map submitted by Per Olofsson
-	  (MagerValp@cling.gu.se).
+	* Added swedish keyboard map.
 
-Tue Feb 22 15:45 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Feb 22 15:45 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Alterred default config to allow nano-X to run on standard
 	  kernel.
 
-Mon Feb 21 23:38 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Feb 21 23:38 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Re-wrote tty input interrupt character code so it now
 	works on serial ttys.
 
-Fri Feb 19 19:38 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Feb 19 19:38 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added raw keyboard mode for games support.
 
-Mon Feb 14 10:25 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Feb 14 10:25 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix setting of effective uid and gid on suid and sgid
 	  executables. Fix by Mario Frasca.
 
-Fri Feb  4 18:37 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Feb  4 18:37 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Modified buffer cache code so external 64K buffer cache can be
 	  removed on systems with fast block device access and low RAM.
 
-Thu Feb  3 17:40 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu Feb  3 17:40 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Minor and cosmetic fixes to changes committed by Christoph
 	  Plattner.
 
-Wed Feb  2 2000  Christop Plattner  <Christoph.Plattner@dot.at>
+Wed Feb  2 xx:xx GMT 2000	Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* init/main.c (init_task): use /dev/ttys0 instead of /dev/tty1
 	  if serial console is used.
@@ -619,7 +619,7 @@ Wed Feb  2 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 	* (init_console): beside the rs_init() also the tty termios are
 	  initialized und updated for the serial console port.
 
-Wed Feb  2 2000  Christop Plattner  <Christoph.Plattner@dot.at>
+Wed Feb  2 xx:xx GMT 2000	Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* include/linuxmt/config.h (DEF_SETUPSEG): it should be defined
 	  as DEF_INITSEG + 0x20, otherwise two things are to edit.
@@ -630,12 +630,12 @@ Wed Feb  2 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 	  which ttys[0123] is setup has to use ttyno instead of i !
 	* include/linuxmt/ntty.h: added external definition to def_vals
 
-Tue Feb  1 2000  Christop Plattner  <Christoph.Plattner@dot.at>
+Tue Feb  1 xx:xx GMT 2000	Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* arch/i86/Makefile (clean): added Boot.map and Setup.map in the
 	  clean rule. Also crt0.s was not cleaned yet.
 
-Mon Jan 31 2000  Christop Plattner  <Christoph.Plattner@dot.at>
+Mon Jan 31 xx:xx GMT 2000	Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* include/arch/debug_disp.h: added display port to output debug
 	  messages to LED, hex-display or logic analysator.
@@ -658,94 +658,94 @@ Mon Jan 31 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 	  (CONFIG_PRELOAD_DISK, the values are hard coded for test
 	  purpose).
 	
-Thu Jan 20 12:30 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu Jan 20 12:30 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Support for suid/sgid exec by Mario Frasca.
 
-Wed Jan 19 14:05 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jan 19 14:05 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed hole diagnostic function so it now works.
 
-Wed Jan 19 13:55 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jan 19 13:55 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixes to the ssd access code used in the wrt_dsk program.
 
-Thu Jan 13 18:30 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu Jan 13 18:30 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix to bug which meant last possible inode could not be
 	  accessed.
 
-Wed Jan 12 18:43 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jan 12 18:43 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed problem with inodes not released.
 
-Wed Jan 12 18:27 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jan 12 18:27 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Important fix to SIBO keyboard driver by Simon Wood.
 
-Mon Jan 10 17:07 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Jan 10 17:07 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* THIS IS ELKS RELEASE 0.0.82.
 
 	* Final changes before 0.0.82.
 
-Thu Jan  6 14:36 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu Jan  6 14:36 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Merged code by Simon Wood to make ELKS work on the Psion
 	  SIxteen Bit Organiser (SIBO) architecture.
 
-Wed Jan  5 17:23 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jan  5 17:23 GMT 2000	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed typo bug in free_irq() by Vladimir Shamaev.
 
 =============================================================================
 
-Fri Dec 17 16:37 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Dec 17 16:37 GMT 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Modified console selection to make more sense.
 
-Wed Dec 15 19:41 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Dec 15 19:41 GMT 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Re-wrote a number of filesystem functions to make them smaller,
 	  and faster.
 
-Mon Nov 22 13:11 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Nov 22 13:11 GMT 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Grammar correction of config files by Giles Russell.
 
-Wed Nov 17 12:12 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Nov 17 12:12 GMT 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* English version of ROM image builder mkurlader.c
 
-Mon Nov 15 08:38 GMT 1999   Simon Weijgers  <simon@weijgers.com>
+Mon Nov 15 08:38 GMT 1999	Simon Weijgers  <simon@weijgers.com>
 
 	* Patch from David Murn <scuffer@hups.apana.org.au>:
 	  Allows you to pass parameters to IRQ handlers.
 
-Wed Nov 10 16:04 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Nov 10 16:04 GMT 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Merge in code to boot kernel from rom, contributed by
 	  Christian Mardmuller (chm@kdt.de).
 
-Wed Nov 10 14:51 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Nov 10 14:51 GMT 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Replaced bulky timer mechanism with a simple one.
 
-Fri Nov  5 17:21 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Nov  5 17:21 GMT 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed inode finding bug which caused mount problems.
 
-Mon Nov  1 18:02 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Nov  1 18:02 GMT 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* THIS IS ELKS RELEASE 0.0.80.
 
 	* Final changes for 0.0.80.
 
-Fri Oct 29 19:14 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Oct 29 19:14 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Filled out kill(2) functionality to full System V spec.
 
-Tue Oct 26 14:24 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Oct 26 14:24 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* THIS IS ELKS RELEASE 0.0.80-PRE1.
 
@@ -762,7 +762,7 @@ Tue Oct 26 14:24 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	* Fix to irqtab.c which should solve problems with floppy not
 	  spinning down.
 
-Mon Oct 11 14:00 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Oct 11 14:00 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Latest version of the rd driver by Blaz Antonic
 	* Added CONFIG options for embedded systems including option
@@ -772,40 +772,40 @@ Mon Oct 11 14:00 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 -----------------------------------------------------------------------------
 
-Thu Sep 30 10:39 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu Sep 30 10:39 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added utime system call.
 
-Thu Sep 30 10:34 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu Sep 30 10:34 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed unbalanced map_buffer calls in minix_add_entry().
 
-Thu Sep 30 05:24 UTC 1999   Thomas McWilliams  <tgm@netcom.com>
+Thu Sep 30 05:24 UTC 1999	Thomas McWilliams  <tgm@netcom.com>
 
 	* Changed gotos to for() loop in map_buffer().
 
-Fri Sep 24 16:24 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Sep 24 16:24 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixes and code cleanups in fs code by Thomas McWilliams.
 	
-Thu Sep 16 12:04 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu Sep 16 12:04 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixes and code cleanups in fs code by Thomas McWilliams.
 
-Tue Sep 14 19:32 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Sep 14 19:32 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix to problem with fchown() by Blaz Antonic.
 
-Tue Sep 14 19:29 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Sep 14 19:29 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed types of all string lengths in namei code to size_t.
 	* Fixed problem with 14 char filenames by Blaz Antonic.
 
-Tue Sep 14 19:27 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Sep 14 19:27 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix type of task->child_wait by Thomas McWilliams.
 
-Fri Aug 27 14:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Aug 27 14:11 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* THIS IS ELKS RELEASE 0.0.79.
 
@@ -824,11 +824,11 @@ Thu Aug 26 19:39 CEST 1999	Arnaud Launay  <zoro@multimania.com>
 
 	* Some additions and clean-ups in docs.
 
-Mon Aug 23 11:19 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Aug 23 11:19 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed tty bug that prevented boot/root disk from working.
 
-Wed Aug 18 19:40 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Aug 18 19:40 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added vfork() capability.
 	* Added simple data types for many values in the kernel.
@@ -839,105 +839,105 @@ Wed Aug 18 19:40 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	* Changed default size of block and inode values from 32 to 16 bit.
 	* Made closing a terminal HUP the process group.
 	
-Tue Jul 20 18:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Jul 20 18:11 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Removed unused members of fs structures.
 
-Tue Jul 20 18:08 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Jul 20 18:08 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix debugging output in signal code.
 
-Tue Jul 20 17:34 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Jul 20 17:34 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix to exec time memory allocation by Greg.
 
-Thu Jul 15 22:17 CEST 1999  Arnaud Launay  <zoro@multimania.com>
+Thu Jul 15 22:17 CEST 1999	Arnaud Launay  <zoro@multimania.com>
 
 	* Updates to the french faq, and added the japanese faq.
 
-Thu Jul 15 14:14 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu Jul 15 14:14 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* THIS IS ELKS RELEASE 0.0.78.
 
 	* Final updates for 0.0.78
 
-Wed Jul 14 18:32 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jul 14 18:32 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Many changes to tty code to correct various aspects of
 	  behaviour by Al Riddoch and Greg Haerr.
 
-Wed Jul 14 18:28 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jul 14 18:28 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Update and recode of direct console driver, adding more ansi
 	  support, and BEL, by Greg Haerr.
 
-Wed Jul 14 18:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jul 14 18:21 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Change to chq_peekch() which fixes select() behavoir for zero
 	  bytes.
 
-Wed Jul 14 18:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jul 14 18:21 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix to sched.[ch] which was messing up .o file sizes by Greg
 	  Haerr.
 
-Wed Jul 14 18:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jul 14 18:17 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updates to memory allocation code by Greg Haerr which fixes
 	  environment truncation and brk() bug.
 
-Fri Jul  9 17:00 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 17:00 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Major updates to socket code. Addition of server socket
 	  capability, and addition of unix domain socket code (currently
 	  not functional), plus nano sockets.
 
-Fri Jul  9 16:59 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 16:59 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* THIS IS ELKS RELEASE 0.0.77.
 
 	* Late commit of changes for version 0.0.77 due to cvs outage.
 
-Fri Jul  9 16:54 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 16:54 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added support for very basic pseudo ttys. Initially to
 	  support terminal program for nano-X.
 
-Fri Jul  9 16:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 16:21 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Make exit send a SIGCHLD to parent.
 
-Fri Jul  9 16:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 16:21 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed the way the kernel handles loading sh if no init is found
 
-Fri Jul  9 16:15 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 16:15 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated signal code to make it clearer.
 
-Fri Jul  9 16:10 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 16:10 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated romfs to use byteorder functions.
 
-Fri Jul  9 15:45 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 15:45 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Tweaks to bioshd driver to fix problems with disabling hd
 	  support. Fix to Changelog times.
 
-Wed Jul  7 19:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jul  7 19:17 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated build system to make it more arch independant. Makefile
 	  contributed by Simon Wood.
 
-Tue Jul  6 19:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Jul  6 19:17 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added byteorder functions for romfs.
 
-Tue Jul  6 14:23 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Jul  6 14:23 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* More changes to the rd driver by Blaz Antonic.
 
-Mon Jul  5 14:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Jul  5 14:11 BST 1999	Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Sanitisation and enhancement of the rd driver by Blaz Antonic.
 
