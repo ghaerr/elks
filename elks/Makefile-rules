@@ -169,4 +169,11 @@ elks:
 	make -C $(ELKSDIR) all
 
 #########################################################################
+# Specify rule to perform CVS update correctly.
+
+cvs:
+	make depclean
+	cvs update -d
+
+#########################################################################
 # End of standard rules
