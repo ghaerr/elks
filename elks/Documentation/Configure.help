@@ -154,6 +154,10 @@ CONFIG_CHAR_DEV_RS
   Include support for serial port devices. Currently under development. Please
   test.
 
+Enable meta device driver
+CONFIG_DEV_META
+  Include meta driver to support users space device drivers.
+
 # Block devices
 # ~~~~~~~~~~~~~
 

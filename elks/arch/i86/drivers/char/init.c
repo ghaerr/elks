@@ -15,4 +15,7 @@ int chr_dev_init()
 #ifdef CONFIG_CHAR_DEV_MEM
 	mem_dev_init();
 #endif
+#ifdef CONFIG_DEV_META
+	meta_init();
+#endif
 }

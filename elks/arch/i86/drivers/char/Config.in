@@ -37,5 +37,6 @@ if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
 	bool 'Serial device driver' CONFIG_CHAR_DEV_RS
 fi
 bool 'Parallel device driver' CONFIG_CHAR_DEV_LP
+bool 'Meta device driver' CONFIG_DEV_META
 
 endmenu
