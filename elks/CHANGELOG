@@ -6,6 +6,10 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Tue Aug 21 01:08:01 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* First draft of ANSI driver.
+
 Mon Aug 20 09:01:05 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Prepare for writing of ANSI / VT100 druver as usermode by
