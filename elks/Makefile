@@ -2,8 +2,8 @@
 
 VERSION 	= 0	# (0-255)
 PATCHLEVEL	= 0	# (0-255)
-SUBLEVEL	= 87	# (0-255)
-#PRE		= 1	# (0-255)	If not a pre, comment this line.
+SUBLEVEL	= 88	# (0-255)
+PRE		= 1	# (0-255)	If not a pre, comment this line.
 
 # Specify the architecture we will use.
 
@@ -34,20 +34,23 @@ ELKSDIR		= .
 #########################################################################
 # Define variables directly dependant on the current ELKS version.
 
+VSNCODE1	= $(shell printf '0x%02X%02X%02X' \
+			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
+
 ifeq (x$(PRE), x)
 
 DIST		= $(shell printf '%u.%u.%u' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
 
-VSNCODE		= $(shell printf '0x%02X%02X%02X%02X' \
-			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) 0)
+VSNCODE		= $(VSNCODE1)00
+
 else
 
 DIST		= $(shell printf '%u.%u.%u-pre%u' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $(PRE))
 
-VSNCODE		= $(shell printf '0x%02X%02X%02X%02X' \
-			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $$[$(PRE)-16])
+VSNCODE		= $(shell printf '0x%06X%02X' $$[$(VSNCODE1)-1] $(PRE))
+
 endif
 
 #########################################################################
@@ -69,13 +72,23 @@ DISTDIR 	= elks-$(DIST)
 INCDIR		= $(TOPDIR)/include
 
 #########################################################################
+# Specify the standard definitions to be given to ELKS programs.
+
+CCDATE		= $(shell date | tr ' ' ' ')
+
+CCDEFS		= -DELKS_VERSION_CODE=$(VSNCODE)		\
+		  -DUTS_RELEASE=\"$(DIST)\"			\
+		  -DUTS_VERSION=\"\#$(DIST) $(CCDATE)\"		\
+		  -D__KERNEL__
+
+#########################################################################
 # Specify the tools to use, with their flags.
 
 CC		= bcc
-CFLBASE 	= -D__KERNEL__ -O
+CFLBASE 	= $(CCDEFS) -O
 CFLAGS		= $(CFLBASE) -i
-CPP		= $(CC) -I$(TOPDIR)/include -E -D__KERNEL__
-CC_PROTO	= gcc -I$(TOPDIR)/include -M -D__KERNEL__
+CPP		= $(CC) -I$(TOPDIR)/include -E $(CCDEFS)
+CC_PROTO	= gcc -I$(TOPDIR)/include -M $(CCDEFS)
 
 LINT		= lclint
 
@@ -102,7 +115,7 @@ CONFIG_SHELL	:= $(shell if [ -x "$$bash" ]; \
 	$(AS) -0 -I$(ELKSDIR)/include -c -o $*.o $<
 
 .S.s:
-	gcc -E -traditional -o $*.s $<
+	gcc -E -traditional $(CCDEFS) -o $*.s $<
 
 .c.o:
 	$(CC) $(CFLAGS) -0 -I$(ELKSDIR)/include -c -o $*.o $<
@@ -196,7 +209,7 @@ fs/minix/minixfs.a:
 fs/romfs/romfs.a:
 	make -C fs/romfs
 
-kernel/kernel.a: include/linuxmt/version.h include/linuxmt/compile.h
+kernel/kernel.a:
 	make -C kernel
 
 lib/lib.a:
@@ -218,37 +231,7 @@ lint:
 # Specification files for archives.
 
 elks.spec: Makefile
-	@echo -n "Creating elks.spec file: "
-	@echo  > .spec "Name:        elks"
-	@echo >> .spec "Version:     $(DIST)"
-	@echo >> .spec "Release:     `date +%Y-%m-%d`"
-	@echo >> .spec "Copyright:   GPL"
-	@echo >> .spec "Group:       System Environment/Kernel"
-	@echo >> .spec "Source:      http://sourceforge.net/projects/elks"
-	@echo >> .spec "Buildroot:   %{_tmppath}/elks/"
-	@echo >> .spec
-	@echo >> .spec "Summary:     Embedded Linux Kernel Subset"
-	@echo >> .spec
-	@echo >> .spec "%description"
-	@echo >> .spec "Welcome to the exciting world of Linux-8086, ELKS, or the Embeddable"
-	@echo >> .spec "Linux Kernel Subset! This is a project which will eventually produce"
-	@echo >> .spec "a Linux-like Operating System for the 8086 (186, 286) as well as for"
-	@echo >> .spec "the Psion series of processors."
-	@echo >> .spec
-	@echo >> .spec "%prep"
-	@echo >> .spec
-	@echo >> .spec "%build"
-	@echo >> .spec "make elks"
-	@echo >> .spec
-	@echo >> .spec "%clean"
-	@echo >> .spec 'rm -rf "$(DISTDIR).tar.gz"'
-	@echo >> .spec
-	@echo >> .spec "%files"
-	@echo >> .spec "%defattr(-,root,root,-)"
-	@echo >> .spec
-	@echo >> .spec "%changelog"
-	@mv -f .spec elks.spec
-	@echo Done.
+	@scripts/elksspec $(DISTDIR) $(DIST) $(shell date +%Y.%m.%d)
 
 #########################################################################
 # miscellaneous
@@ -316,7 +299,7 @@ dist:
 	@echo Directory $(DISTDIR) contains a clean ELKS distribution tree.
 	@echo
 
-dep:	include/linuxmt/version.h include/linuxmt/compile.h 
+dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in init/*.c; do echo -n "init/"; $(CC_PROTO) $$i; echo; done) >> tmp_make
 	mv tmp_make Makefile
@@ -370,20 +353,8 @@ menuconfig:
 	@echo COnfiguration complete.
 	@echo
 
-#########################################################################
-# Specify the current versions in the source code. Note that in kernel
-# 0.0.85-pre3, the method for calculating ELKS_VERSION_CODE changed.
-
-include/linuxmt/version.h: Makefile
-	@echo \#define UTS_RELEASE \"$(DIST)\" > .ver
-	@echo \#define ELKS_VERSION_CODE $(VSNCODE) >> .ver
-	@mv -f .ver $@
-	@sync
-
-include/linuxmt/compile.h:
-	@echo \#define UTS_VERSION \"\#$(VERSION) `date`\" > .ver
-	@mv -f .ver $@
-	@sync
+test:
+	@printf '\t%s\n' $(CCDEFS)
 
 #########################################################################
 ### Dependencies:

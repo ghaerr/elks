@@ -1,0 +1,42 @@
+#!/bin/bash
+
+if [ $# -ne 3 ]; then
+    echo Usage: `basename "$0"` distdir version release >&2
+    exit 255
+fi
+
+echo -n "Creating elks.spec file: "
+cat > elks.spec <<.EOF
+Name:        elks
+Version:     $2
+Release:     $3
+Copyright:   GPL
+Group:       System Environment/Kernel
+Source:      http://sourceforge.net/projects/elks
+Buildroot:   %{_tmppath}/elks/
+
+Summary:     Embedded Linux Kernel Subset
+
+%description
+Welcome to the exciting world of Linux-8086, ELKS, or the Embeddable Linux
+Kernel Subset! This is a project to eventually produce a Linux-compatible
+Operating System for 8086 (186, 286) processor based systems, including
+both IBM PC/XT and PC/AT compatible systems and the Psion SIxteen Bit
+Organiser (SIBO) systems.
+
+%prep
+
+%build
+make elks
+
+%clean
+rm -rf "$1.tar.gz"
+
+%files
+%defattr(-,root,root,-)
+
+%changelog
+.EOF
+N=$[`date +%Y`-1]
+sed -n '/-----/,$p' < CHANGELOG | fgrep -v '-----' | uniq | tr '`' '"' >> elks.spec
+echo Done.

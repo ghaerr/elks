@@ -38,7 +38,7 @@ CC_PROTO	= gcc -I$(ELKSDIR)/include -M
 #########################################################################
 # Objects to compile.
 
-OBJS  = socket.o protocols.o ipv4/af_inet.o unix/af_unix.o nano/af_nano.o
+OBJS  = socket.o protocols.o ipv4/af_inet.o nano/af_nano.o unix/af_unix.o
 
 #########################################################################
 # Rules.
@@ -55,12 +55,12 @@ clean:
 distdir:
 	cp -pf Config.in Makefile $(TOPDIR)/$(DISTDIR)/net
 	cp -pf *.c $(TOPDIR)/$(DISTDIR)/net
-	(mkdir $(TOPDIR)/$(DISTDIR)/net/nano)
-	(mkdir $(TOPDIR)/$(DISTDIR)/net/unix)
-	(mkdir $(TOPDIR)/$(DISTDIR)/net/ipv4)
-	cp -pf nano/Makefile nano/*.c nano/*.h $(TOPDIR)/$(DISTDIR)/net/nano
-	cp -pf unix/Makefile unix/*.c unix/*.h $(TOPDIR)/$(DISTDIR)/net/unix
+	mkdir $(TOPDIR)/$(DISTDIR)/net/ipv4
 	cp -pf ipv4/Makefile ipv4/*.c ipv4/*.h $(TOPDIR)/$(DISTDIR)/net/ipv4
+	mkdir $(TOPDIR)/$(DISTDIR)/net/nano
+	cp -pf nano/Makefile nano/*.c nano/*.h $(TOPDIR)/$(DISTDIR)/net/nano
+	mkdir $(TOPDIR)/$(DISTDIR)/net/unix
+	cp -pf unix/Makefile unix/*.c unix/*.h $(TOPDIR)/$(DISTDIR)/net/unix
 
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make

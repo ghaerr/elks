@@ -1,13 +1,12 @@
-------------------------------------------------------------------------------
 This file is used to record changes made to the CVS database. Please add to
 the top of this file before committing any changes. Please use the header
 format provided for each entry, noting that the text on each line should not
 be longer than the lines of dashes.
 
 Al
-------------------------------------------------------------------------------
-Contributors listed in this ChangeLog and their current email addresses:
 
+Contributor		Email address			Last CHANGELOG
+~~~~~~~~~~~~~~~~~~~~~~	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	~~~~~~~~~~~~~~
 Alan Cox		<alan@redhat.com>		20 Jun 2001
 Alastair Bridgewater	<nyef@softhome.net>		 6 Dec 1998
 Alistair Riddoch	<alriddoch@zepler.org>		17 Jun 2001
@@ -20,11 +19,23 @@ Riley Williams		<rhw@MemAlpha.cx>		22 Oct 2001
 Simon Weijgers		<simon@weijgers.com>		15 Nov 1998
 Thomas McWilliams	<tgm9999@yahoo.com>		 2 Apr 2001
 
-------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+Mon Oct 22 14:22:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* THIS IS ELKS RELEASE 0.0.88-pre1.
+
+	* Corrected ELKS_VERSION_CODE calculation - it didn't work when
+	  the SUBLEVEL was 0, a case I forgot to test :(((
+	* Removed requirement for compile.h and version.h as the relevant
+	  values are now provided as defaults to all source code during
+	  the compilation process.
+	* Simplified creation of elks.spec for `make rpm` command (but
+	  this command is not yet guaranteed to work).
 
 Mon Oct 22 10:49:00 EEST 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
-	* Fixed bug int net/Makefile spotted by Riley.
+	* Fixed bug in net/Makefile spotted by Riley.
 
 Mon Oct 22 02:06:53 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
@@ -35,12 +46,13 @@ Mon Oct 22 02:06:53 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 Fri Oct 19 11:35:00 EEST 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
 	* THIS IS ELKS RELEASE 0.0.87.
+
 	* Final changes for the release.
 
 Thu Oct 18 17:32:06 EEST 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
-	* Fixed make dist. It was stopping with error trying to create the
-	  arch/i86 directory twice.
+	* Fixed `make dist` as it was stopping with error trying to create
+	  the arch/i86 directory twice.
 	* Fixed `make dist` to include keymap headers in the distribution.
 	* Fixed `make dist` to include the net/ipv4 directory in the
 	  distribution.
@@ -127,7 +139,7 @@ Tue Oct  2 21:29:28 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 	  elks-0_0_85-pre3 in CVS, the latter being the standard used for
 	  most other releases from CVS as determined by inspection.
 
-------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 
 Sat Sep 29 13:47:47 EEST 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
@@ -406,7 +418,7 @@ Sun Jul  1 16:49:34 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
 	* Added inet_select()
 
-------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 
 Fri Jun 29 17:05:39 GMT 2001	Riley Williams <rhw@memalpha.cx>
 
@@ -503,7 +515,7 @@ Mon Apr  2 14:06 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 	* Generate 8254 timer constants directly from definition of HZ.
 	* Also some minor miscellaneous cleanups.
 
-------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 
 Wed Mar 28 08:37 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 
@@ -513,6 +525,8 @@ Mon Mar 26 16:29 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 
 	* Fix long standing file system bug: EBUSY when unmounting,
 	  and related sys_access() bug.
+
+=============================================================================
 
 Fri Mar  3 11:44 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -659,7 +673,7 @@ Wed Jan  5 17:23 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed typo bug in free_irq() by Vladimir Shamaev.
 
-------------------------------------------------------------------------------
+=============================================================================
 
 Fri Dec 17 16:37 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -731,7 +745,7 @@ Mon Oct 11 14:00 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	  code in ROM.
 	* Removed the inode hashing code.
 
-------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 
 Thu Sep 30 10:39 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -902,7 +916,7 @@ Mon Jul  5 14:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Sanitisation and enhancement of the rd driver by Blaz Antonic.
 
-------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 
 Thu Jun 24 14:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -965,7 +979,7 @@ Fri Apr 16 09:57 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	* Added support for the signal(2) system call, and support
 	  for signal handler functions.
 
-------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 
 Thu Feb 25 21:13 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -1001,6 +1015,8 @@ Sun Jan 31 17:50 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fix main.c so init is launched with a valid set of argvs.
 	* Fix ntty.c so tty driver ioctls are called.
+
+=============================================================================
 
 Sat Dec  6 00:24 GMT 1998   Alastair Bridgewater  <nyef@softhome.net>
 
@@ -1133,9 +1149,9 @@ Mon Oct  5 11:15 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	* Replaced functions cli() and sti() with single asm instruction
 	  macros icli() and isti(), which saves 96 bytes.
 	* Moved Makefile dependency cleaning to distclean as I was fed up
-	  of doing make dep so much.
+	  of doing `make dep` so much.
 
-------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 
 Sun Sep 25 12:37 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -1188,5 +1204,5 @@ Wed Sep 16 20:20 CET 1998   Simon Weijgers  <mbit@mbit.doa.org>
 	  infinite loop would occur when faulty ansi escape sequences
 	  were fed to the kernel.
 
-------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 END OF CHANGELOG
