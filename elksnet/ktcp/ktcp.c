@@ -15,6 +15,7 @@
 #include "slip.h"
 #include "tcpdev.h"
 #include "timer.h"
+#include "mylib.h"
 #include "ip.h"
 
 extern int tcp_timeruse;
