@@ -2,6 +2,7 @@
 #ifndef __TCP_H__
 #define __TCP_H__
 
+#include "config.h"
 #include <sys/types.h>
 
 #include "timer.h"
@@ -105,6 +106,10 @@ struct tcpcb_s {
 	__u16		datalen;
 
 };
+
+#ifdef CONFIG_INET_STATUS
+int tcpcb_num;
+#endif
 
 struct	tcpcb_list_s {
 	struct	tcpcb_s			tcpcb;

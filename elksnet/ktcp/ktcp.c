@@ -17,6 +17,7 @@
 #include "timer.h"
 #include "mylib.h"
 #include "ip.h"
+#include "netconf.h"
 
 extern int tcp_timeruse;
 
@@ -115,7 +116,9 @@ char **argv;
     icmp_init();
     tcp_init();
     
-    ktcp_run(); 
+    netconf_init();
+    
+    ktcp_run();
     
     return 0;       
 }

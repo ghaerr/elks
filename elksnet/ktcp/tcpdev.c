@@ -19,6 +19,7 @@
 #include "mylib.h"
 #include "tcp.h"
 #include "tcpdev.h"
+#include "netconf.h"
 
 #define TCPDEV_BUFSIZE	2046
 
@@ -174,9 +175,15 @@ static void tcpdev_connect()
 		printf("KTCP Panic in connect\n");
 		exit(1);
 	}
-	
+
 	n->tcpcb.remaddr = db->addr.sin_addr.s_addr;
 	n->tcpcb.remport = ntohs(db->addr.sin_port);
+
+	if(n->tcpcb.remport == NETCONF_PORT && n->tcpcb.remaddr == 0){
+		n->tcpcb.state = TS_ESTABLISHED;
+		retval_to_sock(n->tcpcb.sock, 0);
+		return;	
+	}
 	tcp_connect(&n->tcpcb);
 }
 
@@ -213,7 +220,7 @@ void tcpdev_read()
 		printf("KTCP Panic in read\n");
 		exit(1);
 	}
-	
+
 	cb = &n->tcpcb;
 	if(!cb->state & ( TS_ESTABLISHED
 					| TS_FIN_WAIT_1
@@ -222,8 +229,12 @@ void tcpdev_read()
 		return;
 	}
 
-	data_avail = CB_BUF_USED(cb);
+	if(cb->remport == NETCONF_PORT && cb->remaddr == 0){		
+		netconf_send(cb);	
+	}
 	
+	data_avail = CB_BUF_USED(cb);
+
 	if(data_avail == 0){
 		if(db->nonblock){
 			retval_to_sock(sock, -EAGAIN);
@@ -312,6 +323,14 @@ static void tcpdev_write()
 		retval_to_sock(sock, -EPIPE);/* FIXME : is this the right error? */
 		return;
 	}
+	
+	if(cb->remport == NETCONF_PORT && cb->remaddr == 0){
+		if(db->size == sizeof(struct stat_request_s)){
+			netconf_request(db->data);
+		}
+		retval_to_sock(sock, db->size);
+		return;	
+	}
 
 	cb->flags = TF_PSH|TF_ACK;
 	cb->datalen = db->size;
@@ -350,6 +369,11 @@ static void tcpdev_release()
 		break;
 	case TS_SYN_RECEIVED:
 	case TS_ESTABLISHED:
+		if(cb->remport == NETCONF_PORT && cb->remaddr == 0){		
+			tcpcb_remove(n);
+			retval_to_sock(db->sock, 0);
+			return;	
+		}
 		cb->state = TS_FIN_WAIT_1;
 		tcp_send_fin(cb);
 		/* Handle it as abort */

@@ -3,8 +3,8 @@
 SHELL = /bin/sh
 CC = bcc
 
-BASE_CFLAGS = -c -g 
-#BASE_CFLAGS = -c -O
+#BASE_CFLAGS = -c -g 
+BASE_CFLAGS = -c -O
 
 CFLAGS = -D__KERNEL__ $(BASE_CFLAGS)
 
@@ -17,7 +17,8 @@ CFILES = \
 	tcp_cb.c \
 	tcp_output.c \
 	timer.c \
-	tcpdev.c
+	tcpdev.c \
+	netconf.c
 
 
 OBJ = $(CFILES:.c=.o)

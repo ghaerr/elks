@@ -9,7 +9,7 @@
  *	2 of the License, or (at your option) any later version.
  */
 
-
+#include "config.h"
 #include "tcp.h"
 
 static struct	tcpcb_list_s	*tcpcbs;
@@ -18,6 +18,9 @@ int cbs_in_time_wait;
 void tcpcb_init()
 {
 	tcpcbs = NULL;
+#ifdef CONFIG_INET_STATUS
+	tcpcb_num = 0;
+#endif
 	cbs_in_time_wait = 0;
 }
 
@@ -33,6 +36,21 @@ void tcpcb_printall()
 		n = n->next;
 	}
 }
+
+#ifdef CONFIG_INET_STATUS
+struct tcpcb_s *tcpcb_getbynum(num)
+int num;
+{
+	struct tcpcb_list_s *n;
+	int i;
+	
+	if(num >= tcpcb_num)return NULL;
+	 	
+	for(n = tcpcbs, i = 0 ;; n = n->next,i++){		
+		if(i == num)return &n->tcpcb;
+	}
+}
+#endif
 
 struct tcpcb_list_s *
 tcpcb_new()
@@ -58,7 +76,9 @@ tcpcb_new()
 	else {
 		tcpcbs = n;
 	}
-	
+#ifdef CONFIG_INET_STATUS	
+	tcpcb_num++;
+#endif
 	return n;
 }
 
@@ -81,7 +101,9 @@ void tcpcb_remove(n)
 struct tcpcb_list_s *n;
 {
 	struct tcpcb_list_s *next;
-	
+#ifdef CONFIG_INET_STATUS	
+	tcpcb_num--;
+#endif	
 	next = n->next;
 	
 	if(n->prev){
