@@ -1,0 +1,49 @@
+.TH mount 8 "ELKS System Utilities" "ELKS" \" -*- nroff -*-
+.SH NAME
+mount \- mount a file system
+.SH SYNOPSIS
+.B mount
+[\-t fstype] device directory
+.SH DESCRIPTION
+This document describes the ELKS version of
+.BR mount .
+This version is extremely minimal and should not be used whenever using a
+better version is practical.
+.PP
+.BR mount
+takes as arguents the name of a 
+.I device
+and a 
+.I directory
+name to be used as a mount point. Once the filesystem on the
+.I device
+is mounted, its root directory replaces the 
+.I directory 
+given.
+.SS OPTIONS
+.TP
+.I "-t"
+Specify the type of filesystem to be mounted. Default is
+.B minix .
+.SH EXAMPLES
+.IP
+mount \-t minix /dev/bda1 /mnt
+.LP
+.SH EXIT STATUS
+.TP
+.B 0
+Filesystem mounted successfully.
+.TP
+.B 1
+Wrong number of arguments, or mount was unsuccessful.
+.SH BUGS
+Unlike more complex versions of mount, this one does not use an mtab file
+to keep track of mounted filesystems, or refer to an fstab file for details
+of filesystems and mount points.
+.SH AUTHORS
+David Bell
+.br
+Al Riddoch (ajr@ecs.soton.ac.uk) (this manpage)
+.SH SEE ALSO
+.BR umount (8),
+.BR mount (2)

@@ -1,0 +1,34 @@
+.TH reboot 1 "ELKS System Utilities" "ELKS" \" -*- nroff -*-
+.SH NAME
+reboot \- reboot the system
+.SH SYNOPSIS
+.B reboot
+.SH DESCRIPTION
+This document describes the ELKS version of
+.BR reboot .
+This version is extremely minimal and should not be used whenever using a
+better version is practical.
+.PP
+.BR reboot
+unmounts the root filesystem, and then requests a reboot from the kernel.
+.SH EXAMPLES
+.IP
+reboot
+.LP
+.SH EXIT STATUS
+<exit status info>
+.TP
+.B 0
+Kernel returned with no error.
+.TP
+.B >0
+unmount failed or reboot returned an error.
+.SH BUGS
+init does not yet support rebooting properly so the kernel reboot can only
+do a hard reset.
+.SH AUTHORS
+Al Riddoch (ajr@ecs.soton.ac.uk)
+.SH SEE ALSO
+.BR init (8),
+.BR reboot (2),
+.BR halt (8)

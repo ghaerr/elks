@@ -1,0 +1,42 @@
+.TH umount 8 "ELKS System Utilities" "ELKS" \" -*- nroff -*-
+.SH NAME
+umount \- unmount a file system
+.SH SYNOPSIS
+.B umount
+{device | directory}
+.SH DESCRIPTION
+This document describes the ELKS version of
+.BR umount .
+This version is extremely minimal and should not be used whenever using a
+better version is practical.
+.PP
+.BR umount
+takes as arguents the name of a 
+.I device
+or a 
+.I directory
+name used as a mount point.
+.SH EXAMPLES
+.IP
+umount /dev/bda1
+.IP
+umount /mnt
+.LP
+.SH EXIT STATUS
+.TP
+.B 0
+Filesystem unmounted successfully.
+.TP
+.B 1
+Wrong number of arguments, or umount was unsuccessful.
+.SH BUGS
+Unlike more complex versions of umount, this one does not use an mtab file
+to keep track of umounted filesystems, or refer to an fstab file for details
+of filesystems and umount points.
+.SH AUTHORS
+David Bell
+.br
+Al Riddoch (ajr@ecs.soton.ac.uk) (this manpage)
+.SH SEE ALSO
+.BR mount (8),
+.BR umount (2)

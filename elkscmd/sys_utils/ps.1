@@ -1,0 +1,45 @@
+.TH ps 1 "ELKS System Utilities" "ELKS" \" -*- nroff -*-
+.SH NAME
+ps \- list processes
+.SH SYNOPSIS
+.B ps
+.SH DESCRIPTION
+This document describes the ELKS version of
+.BR ps .
+This version is extremely minimal and should not be used whenever using a
+better version is practical. It is also uterly non-portable as it accesses
+the kernel task structure directly.
+.PP
+.BR ps
+prints a list of all the processes currently running on the system giving on
+a line for each process, its process id, process group, owner, state,
+the kernel inode address of the corresponding binary and the name of the
+process. The state is given either as R for running, or S for sleeping.
+The kernel inode address is included as an aid to debugging the kernel,
+and provides no other useful information. The name of the process
+is taken from its argv[0] as passed to its main function.
+.SH EXAMPLES
+.IP
+ps
+.LP
+.SH EXIT STATUS
+<exit status info>
+.TP
+.B 0
+Process table read successfully.
+.TP
+.B 1
+Unable to accesss 
+.I /dev/kmem
+or could not read task entries.
+.SH FILES
+.PD 0
+.TP
+.B /dev/kmem
+.PD
+.SH BUGS
+This is not really much like real UNIX ps yet.
+.SH AUTHORS
+Al Riddoch (ajr@ecs.soton.ac.uk)
+.br
+Greg Haerr (greg@censoft.com)

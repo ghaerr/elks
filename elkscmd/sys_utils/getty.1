@@ -1,0 +1,23 @@
+.TH getty 1 "ELKS System Utilities" "ELKS" \" -*- nroff -*-
+.SH NAME
+getty \- initialise a terminal for login
+.SH SYNOPSIS
+.B getty
+.SH DESCRIPTION
+Copy the /etc/issue file to the terminal, give a login prompt and run login
+once a user name has been given.
+.SH EXIT STATUS
+.TP
+.B 1
+Exec of /bin/login failed.
+.SH FILES
+.PD 0
+.TP
+.B /etc/issue
+.PD
+.SH BUGS
+Doesn't do most of the stuff normal UNIX getty does yet.
+.SH AUTHORS
+Al Riddoch (ajr@ecs.soton.ac.uk)
+.SH SEE ALSO
+.BR login (8)
