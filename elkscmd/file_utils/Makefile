@@ -36,7 +36,7 @@ include $(BASEDIR)/Make.rules
 
 CFLAGS = $(CFLBASE)
 
-PRGS=cat chgrp chmod chown cmp cp dd grep ln ls mkdir mkfifo mknod \
+PRGS=cat chgrp chmod chown cmp cp dd grep l ln ls mkdir mkfifo mknod \
 	more mv rm rmdir sync touch 
 
 MIN_PRGS=cat chgrp chmod chown cmp cp l ls mknod mkdir mv rm rmdir \
