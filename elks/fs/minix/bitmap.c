@@ -16,7 +16,7 @@
 
 #include <arch/bitops.h>
 
-static int nibblemap[] = { 0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4 };
+static char nibblemap[] = { 0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4 };
 
 #ifdef BLOAT_FS
 static unsigned short count_used(map,numblocks,numbits)
@@ -74,7 +74,7 @@ unsigned short block;
 	unsigned int bit,zone;
 
 	if (!sb) {
-		printk("trying to free block on nonexistent device\n");
+		printk("mfb: bad dev\n");
 		return;
 	}
 	if (block < sb->u.minix_sb.s_firstdatazone ||
@@ -91,12 +91,12 @@ unsigned short block;
 	zone >>= 13;
 	bh = sb->u.minix_sb.s_zmap[zone];
 	if (!bh) {
-		printk("minix_free_block: nonexistent bitmap buffer\n");
+		printk("mfb: bad bitbuf\n");
 		return;
 	}
 	map_buffer(bh);
 	if (!clear_bit(bit,bh->b_data))
-		printk("free_block (%s:%ld): bit already cleared\n",
+		printk("mfb (%s:%ld): already cleared\n",
 		       kdevname(sb->s_dev), block);
 	unmap_buffer(bh);
 	mark_buffer_dirty(bh, 1);
@@ -111,7 +111,7 @@ register struct super_block * sb;
 	unsigned short j;
 
 	if (!sb) {
-		printk("trying to get new block from nonexistent device\n");
+		printk("mnb: no sb\n");
 		return 0;
 	}
 repeat:
@@ -126,7 +126,7 @@ repeat:
 	if (i>=8 || !bh || j>=8192)
 		return 0;
 	if (set_bit(j,bh->b_data)) {
-		panic("new_block: bit already set %d %d\n", j, bh->b_data);
+		panic("mnb: already set %d %d\n", j, bh->b_data);
 		unmap_buffer(bh);
 		goto repeat;
 	}
@@ -140,7 +140,7 @@ repeat:
 		return 0;
 	/* WARNING: j is not converted, so we have to do it */
 	if (!(bh = getblk(sb->s_dev, (block_t)j))) {
-		printk("new_block: cannot get block");
+		printk("mnb: cannot get");
 		return 0;
 	}
 	map_buffer(bh);
@@ -163,28 +163,28 @@ register struct inode * inode;
 	if (!inode)
 		return;
 	if (!inode->i_dev) {
-		printk("%s: inode has no device\n",fi_name);
+		printk("%s: no dev\n",fi_name);
 		return;
 	}
 	if (inode->i_count != 1) {
-		printk("%s: inode has count=%d\n",fi_name,inode->i_count);
+		printk("%s: count=%d\n",fi_name,inode->i_count);
 		return;
 	}
 	if (inode->i_nlink) {
-		printk("%s: inode has nlink=%d\n",fi_name,inode->i_nlink);
+		printk("%s: nlink=%d\n",fi_name,inode->i_nlink);
 		return;
 	}
 	if (!inode->i_sb) {
-		printk("%s: inode on nonexistent device\n",fi_name);
+		printk("%s: no sb\n",fi_name);
 		return;
 	}
 	if (inode->i_ino < 1 || inode->i_ino > inode->i_sb->u.minix_sb.s_ninodes) {
-		printk("%s: inode 0 or nonexistent inode\n",fi_name);
+		printk("%s: 0 or nonexistent\n",fi_name);
 		return;
 	}
 	ino = inode->i_ino;
 	if (!(bh=inode->i_sb->u.minix_sb.s_imap[ino >> 13])) {
-		printk("%s: nonexistent imap in superblock\n",fi_name);
+		printk("%s: nonexistent imap\n",fi_name);
 		return;
 	}
 	map_buffer(bh);
@@ -221,7 +221,7 @@ struct inode * dir;
 		goto iputfail;	
 	}
 	if (set_bit(j,bh->b_data)) {	/* shouldn't happen */
-		printk("new_inode: bit already set");
+		printk("mni: already set\n");
 		goto iputfail;
 	}
 	mark_buffer_dirty(bh, 1);
@@ -246,7 +246,7 @@ struct inode * dir;
 	/* Oh no! It's 'Return of Goto' in a double feature with 'Mozilla vs.
 	   Internet Exploder :) */
 iputfail:
-	printk("new_inode: Ack ack!  This sucked...\n");
+	printk("new_inode: iput fail\n");
 	unmap_buffer(bh); 
 	iput(inode); 
 	return NULL;
