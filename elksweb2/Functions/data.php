@@ -1,15 +1,15 @@
 <?php
 $langitems = array(
-"de" => array(
+"en" => array(
 "title" => "ELKS: The Embeddable Linux Kernel System", 
-"language" => "Deutsch",
+"language" => "English",
 "meta" => array("A port of Linux for 16-bit Intel architecture."),
 "menu" => array ("Website History", "Download", "FAQ", "History", "Introduction", "Mailing Lists", "News", "Releases", "Home"), 
 "footer" => array ("This document is released under the terms of the <a href=\"http://www.fsf.org/licenses/gpl.html\">GNU General Public Licence</a>, version 2 only and validates as HTML 4.01 Transitional")
 ),
-"en" => array(
+"de" => array(
 "title" => "ELKS: The Embeddable Linux Kernel System", 
-"language" => "English",
+"language" => "Deutsch",
 "meta" => array("A port of Linux for 16-bit Intel architecture."),
 "menu" => array ("Website History", "Download", "FAQ", "History", "Introduction", "Mailing Lists", "News", "Releases", "Home"), 
 "footer" => array ("This document is released under the terms of the <a href=\"http://www.fsf.org/licenses/gpl.html\">GNU General Public Licence</a>, version 2 only and validates as HTML 4.01 Transitional")
