@@ -4,6 +4,12 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Sun Jan 31 17:50 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fix main.c so init is launched with a valid set of argvs.
+
+	* Fix ntty.c so tty driver ioctls are called.
+
 Sat Dec 06 00:24 GMT 1998   Alastair Bridgewater  <nyef@softhome.net>
 
 	* Fixed arch/i86/lib/Makefile to rebuild setup[bw].s when nessecary.

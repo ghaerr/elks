@@ -63,12 +63,20 @@ void start_kernel()
 	}
 }
 
-static char args[] = "/bin/init\0\0";
+static char args[] = "\0\0\0\0\0\0/bin/init\0\0";
+/*		      ^   ^   ^		     ^
+		      |   |   \sep	     \envp
+		      |	  \argv[0]
+		      \argc
+ */
 static char envp[] = "\0\0";
 
 static void init_task()
 {
 	int num;
+	/* Make sure the correct exec stack is in place for init. */
+	unsigned short * pip = args;
+	*++pip = &args[5];
 	
 /*	printk("Starting init...\n"); *//* Not true, init is started later. */
 
@@ -89,7 +97,7 @@ static void init_task()
 #endif
 
 	printk("Loading init\n");
-	if (sys_execve("/bin/init", args, 0 )) {
+	if (sys_execve("/bin/init", args, 18 )) {
 		if (sys_execve("/bin/sh", args, 0))
 			panic("No init or sh found");
 		if (sys_dup(0)!=1)

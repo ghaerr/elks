@@ -205,7 +205,11 @@ char *arg;
 			return verified_memcpy_fromfs(&tty->termios, arg, sizeof(struct termios));
 			break;
 		default:
-			return -EINVAL;
+			if (tty->ops->ioctl == NULL) {
+				return -EINVAL;
+			} else {
+				return tty->ops->ioctl(tty, cmd, arg);
+			}
 	}
 	return 0;
 }
