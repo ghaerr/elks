@@ -12,6 +12,8 @@ Riley Williams          <Riley@Williams.Name>           13 Aug 2001-20 Jan 2002
 Eduardo Pereira Habkost <ehabkost@conectiva.com.br>      9 Jun 2004-
 
 -------------------------------------------------------------------------------
+Wed Jun  9 15:47:34 BRT 2004	Eduardo Pereira Habkost <ehabkost@conectiva.com.br>
+	* screen now builds. It doesn't work, yet, but it builds, now
 
 Wed Jun  9 15:00:14 BRT 2004	Eduardo Pereira Habkost <ehabkost@conectiva.com.br>
 	* Don't build scren by default, until it is working

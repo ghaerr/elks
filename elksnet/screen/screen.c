@@ -20,7 +20,6 @@ static char ScreenVersion[] = "screen 2.0a.1 (ELKS) 19-Sep-2001";
 #include <signal.h>
 #include <errno.h>
 #include <ctype.h>
-#include <utmp.h>
 #include <pwd.h>
 #include <fcntl.h>
 #include <sys/types.h>
@@ -32,14 +31,20 @@ static char ScreenVersion[] = "screen 2.0a.1 (ELKS) 19-Sep-2001";
 
 #ifdef ELKS
 #include <termios.h>
-#include <bsd/sgtty.h>
 #include <linuxmt/un.h>
 #include <unistd.h>
+
+/*FIXME: check or add equivalent to elks libc */
+#define OPEN_MAX	256
 #else
 #include <sgtty.h>
 #include <nlist.h>
 #include <sys/un.h>
 #include <sys/dir.h>
+#endif
+
+#ifdef UTMP
+#include <utmp.h>
 #endif
 
 #ifdef SUNLOADAV
@@ -69,7 +74,6 @@ extern ISO2022;
 extern status;
 extern time_t TimeDisplayed;
 extern char AnsiVersion[];
-extern short ospeed;
 extern flowctl;
 extern errno;
 extern sys_nerr;
@@ -136,11 +140,15 @@ static DevTty;
 #endif
 
 struct mode {
+#ifdef BSD_TTY
     struct sgttyb m_ttyb;
     struct tchars m_tchars;
     struct ltchars m_ltchars;
     int m_ldisc;
     int m_lmode;
+#else
+    int dummy;
+#endif
 } OldMode, NewMode;
 
 static struct win *curr, *other;
@@ -313,7 +321,6 @@ char **av;
 	flowctl = 0;
     MakeNewEnv ();
     GetTTY (0, &OldMode);
-    ospeed = (short)OldMode.m_ttyb.sg_ospeed;
     InitUtmp ();
 #ifdef LOADAV
     InitKmem ();
@@ -822,7 +829,7 @@ nomem:
 	(void) dup2 (tf, 0);
 	(void) dup2 (tf, 1);
 	(void) dup2 (tf, 2);
-	for (f = getdtablesize () - 1; f > 2; f--)
+	for (f = OPEN_MAX-1; f > 2; f--)
 	    close (f);
 	ioctl (0, TIOCSPGRP, &mypid);
 	(void) setpgrp (0, mypid);
@@ -1016,23 +1023,28 @@ static OpenPTY () {
 }
 
 static SetTTY (fd, mp) struct mode *mp; {
+#ifdef BSD_TTY
     ioctl (fd, TIOCSETP, &mp->m_ttyb);
     ioctl (fd, TIOCSETC, &mp->m_tchars);
     ioctl (fd, TIOCSLTC, &mp->m_ltchars);
     ioctl (fd, TIOCLSET, &mp->m_lmode);
     ioctl (fd, TIOCSETD, &mp->m_ldisc);
+#endif
 }
 
 static GetTTY (fd, mp) struct mode *mp; {
+#ifdef BSD_TTY
     ioctl (fd, TIOCGETP, &mp->m_ttyb);
     ioctl (fd, TIOCGETC, &mp->m_tchars);
     ioctl (fd, TIOCGLTC, &mp->m_ltchars);
     ioctl (fd, TIOCLGET, &mp->m_lmode);
     ioctl (fd, TIOCGETD, &mp->m_ldisc);
+#endif
 }
 
 static SetMode (op, np) struct mode *op, *np; {
     *np = *op;
+#ifdef BSD_TTY
     np->m_ttyb.sg_flags &= ~(CRMOD|ECHO);
     np->m_ttyb.sg_flags |= CBREAK;
     np->m_tchars.t_intrc = -1;
@@ -1045,6 +1057,7 @@ static SetMode (op, np) struct mode *op, *np; {
     np->m_ltchars.t_dsuspc = -1;
     np->m_ltchars.t_flushc = -1;
     np->m_ltchars.t_lnextc = -1;
+#endif
 }
 
 static char *GetTtyName () {
@@ -1238,7 +1251,7 @@ static SendCreateMsg (s, ac, av, aflag) char **av; {
     }
     m.m.create.nargs = n;
     m.m.create.aflag = aflag;
-    if (getwd (m.m.create.dir) == 0)
+    if (getcwd (m.m.create.dir, sizeof(m.m.create.dir)) == 0)
 	Msg (0, "%s", m.m.create.dir);
     if (write (s, (char *)&m, sizeof (m)) != sizeof (m))
 	Msg (errno, "write");
@@ -1549,6 +1562,7 @@ static char *MakeBellMsg (n) {
     return buf;
 }
 
+#ifdef UTMP
 static InitUtmp () {
     struct passwd *p;
 
@@ -1599,6 +1613,23 @@ static RemoveUtmp (slot) {
 	(void) write (utmpf, (char *)&u, sizeof (u));
     }
 }
+
+#else
+static InitUtmp ()
+{
+}
+
+static SetUtmp (name)
+	char *name;
+{
+	return 0;
+}
+
+static RemoveUtmp (slot)
+{
+}
+
+#endif
 
 #ifndef GETTTYENT
 
@@ -1670,5 +1701,28 @@ bcopy (s1, s2, len) register char *s1, *s2; register len; {
 	    *s2++ = *s1++;
 	}
     }
+}
+#endif
+
+#ifndef GETHOSTNAME
+int gethostname (host, size)
+	char *host;
+	int size;
+{
+	strncpy (HostName, "elks", size);
+	return 0;
+}
+#endif
+
+#ifndef GETPGID
+gid_t getpgid(pid_t pid)
+{
+	return pid;
+}
+#endif
+
+#ifndef SETPGID
+void setpgid(pid_t pid)
+{
 }
 #endif
