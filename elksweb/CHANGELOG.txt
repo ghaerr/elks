@@ -15,6 +15,13 @@ Riley Williams          <rhw@MemAlpha.cx>                8 Nov 2001-20 Nov 2001
 
 -------------------------------------------------------------------------------
 
+
+Sat Nov 24 16:44:47 EET 2001 Harry Kalogirou <harkal@gmx.net>
+
+	* Wrote the download page
+	* Reformated the home page
+	* Added new release entry
+
 Tue Nov 20 20:42:09 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Moved old homepage to "Introduction to ELKS" subpage.

@@ -34,9 +34,55 @@ Download |
 <A HRef="../">Home</A> |
 </P>
 
+<CENTER>
 <HR Width=90%>
+</CENTER>
+<P Align=Justify>This is the download page. From here you can find out where
+to get the ELKS kernel, the development environment and programs that have
+been ported to ELKS.</P>
 
+<P Align=Justify>
+
+<B>HTTP and FTP</B><UL>
+<LI>Kernel and the elkscmd package
+<UL>
+<LI><A HRef="http://www.sf.net/projects/elks">http://www.sf.net/projects/elks</A>
+<LI><A href="ftp://ftp.ecs.soton.ac.uk/pub/elks/">ftp://ftp.ecs.soton.ac.uk/pub/elks/</A>
+</UL>
+<LI>Dev86
+<UL>
+<LI><A HRef="http://www.cix.co.uk/~mayday/">http://www.cix.co.uk/~mayday/</A> (Primary site) 
+<LI><A href="ftp://ftp.ecs.soton.ac.uk/pub/elks/">ftp://ftp.ecs.soton.ac.uk/pub/elks/</A>
+</UL>
+</UL>
+
+<B>CVS</B>
+
+<P Align=Justify>You can also use CVS to get the latest snapshot of varius 
+ELKS parts. This project's SourceForge CVS repository can be checked out through 
+anonymous (pserver) CVS with the following instruction set. The <i>module</i> you 
+wish to check out must be specified as the <i>modulename</i>. When prompted for a 
+password for <i>anonymous</i>, simply press the Enter key.
+</P>
+
+<p><tt>cvs -d:pserver:anonymous@cvs.elks.sourceforge.net:/cvsroot/elks login
+<br>
+cvs -z3 -d:pserver:anonymous@cvs.elks.sourceforge.net:/cvsroot/elks co <i>modulename</i>
+</tt></p>
+
+<P Align=Justify>The available <i>modules</i> are :
+<UL>
+<LI><tt><i>elks</i></tt> (The ELKS kernel)
+<LI><tt><i>elksnet</i></tt> (The ELKS ipv4 network code) 
+<LI><tt><i>elkscmd</i></tt> (Collection of userspace software for ELKS)
+</UL>
+</P>
+
+</P>
+
+<CENTER>
 <HR Width=90%>
+</CENTER>
 
 <P Align=Center>This document is released under the terms of the
 <A HRef="http://www.fsf.org/licenses/gpl.html">GNU General Public
