@@ -1,9 +1,13 @@
-include ../Make.defs
+BASEDIR=..
+
+include $(BASEDIR)/Make.defs
 
 PRGS=init getty login kill man mount reboot passwd umount clock \
-	exitemu ps who # insmod 
+	exitemu ps who
 
-NETPRGS = init getty login kill mount umount passwd reboot ps who
+# insmod 
+
+NETPRGS=init getty login kill mount umount passwd reboot ps who
 
 MIN_PRGS=init getty login kill mount reboot umount clock exitemu ps
 SMIN_PRGS=mount umount

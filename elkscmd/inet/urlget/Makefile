@@ -1,13 +1,12 @@
 # Makefile for urlget
 
-include ../../Make.defs
+BASEDIR=../..
 
-CC=bcc
+include $(BASEDIR)/Make.defs
 
-CFLAGS=	-O 
-#CFLAGS=  -D__LINUX__
+#CFLAGS=-O 
 
-LDFLAGS=-i
+#LDFLAGS=-i
 
 SRC=	net.c urlget.c
 

@@ -1,4 +1,6 @@
-include ../Make.defs
+BASEDIR=..
+
+include $(BASEDIR)/Make.defs
 
 DIRS=httpd telnet urlget
 DIRS2=nettools

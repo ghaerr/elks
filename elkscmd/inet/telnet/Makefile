@@ -1,13 +1,10 @@
 # Makefile for telnet
 
-include ../../Make.defs
+BASEDIR=../..
 
-CC=bcc
+include $(BASEDIR)/Make.defs
 
-CFLAGS=	-O 
-#CFLAGS=  -D__LINUX__ 
-
-LDFLAGS=-i
+#LDFLAGS=-i
 
 SRC=	ttn.c ttn_conf.c
 

@@ -37,6 +37,7 @@
 #	DOC	name of "doc" directory, with a trailing slash
 
 #---- These settings are recommended for System-V UNIX and SCO XENIX-386 ----
+
 O=	.o
 EXTRA=
 EXTRA2=

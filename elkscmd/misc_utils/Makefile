@@ -1,4 +1,6 @@
-include ../Make.defs
+BASEDIR=..
+
+include $(BASEDIR)/Make.defs
 
 PRGS=ed tar
 
@@ -14,4 +16,4 @@ min_rfs: rfs
 smin_rfs:
 
 clean:
-	rm -f $(PRGS)
+	rm -f core $(PRGS)

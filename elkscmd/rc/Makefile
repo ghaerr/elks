@@ -1,6 +1,8 @@
 # Makefile for rc.
 
-include ../Make.defs
+BASEDIR=..
+
+include $(BASEDIR)/Make.defs
 
 # Please check the configuration parameters in config.h (and if you want
 # to make sure, the definitions in proto.h) to make sure they are correct

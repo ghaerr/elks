@@ -6,28 +6,28 @@
 #  Make sure these have the correct directories for your machine.
 #
 #  LIBDIR and BINDIR are where bc and libmath.b will be put.
-#
+
 PREFIX = /usr
 LIBDIR = $(PREFIX)/lib
 BINDIR = $(PREFIX)/bin
-#
+
 # Programs definitions for use by make.
-#
+
 SHELL = /bin/sh
+
 YACC = yacc
 #YACC = bison -y
+
 LEX = flex -I8
 #LEX = lex
+
 CC = bcc
 CFLAGS = -0 -O -D_POSIX_SOURCE
 LDFLAGS = -0 -s
-#
-#
-OFILES = scan.o util.o main.o number.o storage.o load.o execute.o 
-#
-SUBDIRS = Examples Test
-#
 
+OFILES = scan.o util.o main.o number.o storage.o load.o execute.o 
+
+SUBDIRS = Examples Test
 
 all: bc
 

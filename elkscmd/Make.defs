@@ -1,11 +1,58 @@
-BASEDIR=/home/rhw/CVS/Source
+# ***** IMPORTANT NOTE *****
+#
+# This file has been revised to remove the requirement that the elkscmd
+# and elks trees are located under /usr/src on the developer's system.
+# This requires that the variable BASEDIR be defined in every Makefile
+# that includes this header file, prior to including it, and the value
+# given to BASEDIR is required to be the relative path from the directory
+# containing that Makefile to the directory containing this file. So as
+# to ensure this, it is recommended that the following two lines be used
+# as the first two lines of each Makefile including this file:
+#
+#	BASEDIR = ...
+#
+#	include $(BASEDIR)/Make.defs
+#
+# This ensures that the correct value is assigned by using it to include
+# this file.
+#
+##############################################################################
+#
+# Define type of target for creating boot file system on. Valid target types
+# are as follows:
+#
+#	DIRECT		Mount /dev/fd0 and create image thereon, then create
+#			the image file as an image of /dev/fd0 instead. This
+#			requires that a diskette of at least the necessary
+#			size is in the drive when the images are created.
+#
+#	LOOP		Mount a file as a loopback file system. This requires
+#			that the command is run as the superuser.
+#
+#	RAMDISK 	Mount /dev/ram0 and create image thereon, then create
+#			the image file as an image of /dev/fd0 instead. This
+#			requires that ramdisks are enabled in the kernel, and
+#			also that there be an entry in /etc/fstab that allows
+#			any user to mount this device, but otherwise avoids
+#			the limitations of the other two options.
+#
+# Each option has both advantages and disadvantages, and it is up to the
+# developer to determine the appropriate one to use.
 
-DEV86_DIR=$(BASEDIR)/linux-86
-ELKS_DIR=$(BASEDIR)/elks
-ELKSCMD_DIR=$(BASEDIR)/elkscmd
-ELKSNET_DIR=$(BASEDIR)/elksnet
+TARGET_MODE=LOOP
 
-INC_DIR=$(BASEDIR)/elks/include
+##############################################################################
+#
+# It is not normally necessary to make changes below this line.
+
+HOMEDIR=$(shell cd $(BASEDIR)/.. ; pwd)
+
+DEV86_DIR=$(HOMEDIR)/linux-86
+ELKS_DIR=$(HOMEDIR)/elks
+ELKSCMD_DIR=$(HOMEDIR)/elkscmd
+ELKSNET_DIR=$(HOMEDIR)/elksnet
+
+INC_DIR=$(HOMEDIR)/elks/include
 
 PLATFORM=i86-ELKS
 
@@ -44,22 +91,20 @@ MINIX_BOOT=$(DEV86_DIR)/bootblocks
 
 ####################################################################
 #
-# Define type of target for creating boot file system on.
-
-TARGET_MODE=loop
-
-####################################################################
-#
 # Select the target device depending on the above entry.
 
-ifeq ($(TARGET_MODE),loop)
-
-TARGET_MNT=/mnt/ef
-LOOP=-o loop
-
-else
-
+ifeq ($(TARGET_MODE),FLOPPY)
 TARGET_MNT=/dev/fd0
 LOOP=
-
 endif
+
+ifeq ($(TARGET_MODE),LOOP)
+TARGET_MNT=/mnt/elks
+LOOP=-o loop
+endif
+
+ifeq ($(TARGET_MODE),RAMDISK)
+TARGET_MNT=/dev/ram0
+LOOP=
+endif
+

@@ -1,4 +1,6 @@
 # Makefile for Berkeley yacc.
+
+BASEDIR = ..
     
 include ../Make.defs
 

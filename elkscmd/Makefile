@@ -1,4 +1,6 @@
-include Make.defs
+BASEDIR=.
+
+include $(BASEDIR)/Make.defs
 
 DIRS=disk_utils file_utils sh_utils sys_utils misc_utils sash \
 	levee ash minix1 minix2 bc byacc elvis
