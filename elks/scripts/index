@@ -1,0 +1,175 @@
+#!/bin/bash
+
+function archive() {
+    if printf '%s\n' bz2 gz Z z | grep "^${1}\$" > /dev/null ; then
+	return 0
+    else
+	return 1
+    fi
+}
+
+function desc() {
+    local DESC='data file' EXT EXTN STEM
+
+    EXTN=`basename "$1" | rev | cut -d . -f 1 | rev`
+    EXT=`echo "$EXTN" | tr A-Z a-z`
+    STEM=`basename "$1" ".$EXT"`
+
+    case ".echo $EXT" in
+	.arc)	DESC="arc'd archive"
+		;;
+	.arj)	DESC="arj'd archive"
+		;;
+	.bat)	DESC='MS-DOS batched command file'
+		;;
+	.bz2)	DESC=`desc "$STEM"`
+		DESC="bzip2'd $DESC"
+		;;
+	.com)	DESC='MS-DOS command file'
+		;;
+	.exe)	DESC='MS-DOS executable file'
+		;;
+	.gz)	DESC=`desc "$STEM"`
+		DESC="gzip'd $DESC"
+		;;
+	.htm)	DESC=`title "$2"`
+		;;
+	.html)	DESC=`title "$2"`
+		;;
+	.lha)	DESC="lha'd archive"
+		;;
+	.log)	DESC='Process log'
+		;;
+	.lst)	DESC='Listing file'
+		;;
+	.tar)	DESC="tar archive"
+		;;
+	.taz)	DESC="compress'd tar archive"
+		;;
+	.tbz)	DESC="bzip2'd tar archive"
+		;;
+	.tbz2)	DESC="bzip2'd tar archive"
+		;;
+	.tgz)	DESC="gzip'd tar archive"
+		;;
+	.txt)	DESC='text file'
+		;;
+	.[Zz])	DESC=`desc "$STEM"`
+		DESC="compress'd $DESC"
+		;;
+	.zip)	DESC="zip'd archive"
+		;;
+    esac
+}
+
+function describe() {
+    local DESC='' SIZE=$3 UNIT=1
+
+    case ".$1" in
+	.dir)	DESC=Subdirectory
+		;;
+	.file)	DESC=`desc "$2"`
+		while [ $UNIT -lt 17 -a $SIZE -gt 999 ]; do
+		    SIZE=$[$SIZE/1000]
+		    UNIT=$[$UNIT+4]
+		done
+		UNIT=`echo '    KiloMegaGigaTera' | cut -b $UNIT- | cut -b -4`bytes
+		DESC=`printf '%s (%u %s)' "$DESC" $SIZE $UNIT`
+		;;
+    esac
+    echo "$DESC"
+}
+
+function entry() {
+    /bin/ls -dl --full-time "$@" | tr -s ' ' | cut -d ' ' -f 5,7-10
+}
+
+function footer() {
+    local NOW=`TZ=UTC date '+Last updated on %A, %d %B %Y, at %T %Z.'`
+    declare -i N=$[`echo "${NOW}" | wc -c`/2]
+
+    cat >&3 <<-.EOF
+	</OL>
+
+	<HR Width=95%>
+
+	<P Align=Center>${NOW}</P>
+
+	</Body>
+	</HTML>
+.EOF
+	printf =========%s = = = = = = = '' >&4
+	printf "\n\n%$[40-$N]s%s\n" ' ' "${NOW}" >&4
+}
+
+function header() {
+    declare -i N=$[`echo "$@" | wc -c`/2]
+
+    cat >&3 <<-.EOF
+	<HTML>
+	<Head>
+
+	<Title>$*</Title>
+
+	</Head>
+	<Body BGColor=White Text=Black Link=Blue VLink=Magenta ALink=Red>
+
+	<H1 Align=Center>$*</H1>
+
+	<P Align=Justify>The following entries are to be found in this directory:</P>
+
+	<OL>
+
+.EOF
+    printf "%$[40-$N]s%s\n\n" ' ' "$*" >&4
+    printf 'The following entries are to be found in this directory:\n\n' >&4
+}
+
+function mkindex() {
+    local ITEM SIZE
+    declare -i N=0
+
+    header "$@"
+    for ITEM in `ls -1 | fgrep -vw CVS | sort | sort -f` ; do
+	N=$N+1
+	entry "$ITEM" | while read SIZE TIME ; do
+	    TIME=`TZ=UTC date -d "$TIME" '+%A, %d %B %Y at %T %Z' | sed 's/ 0/ /g'`
+	    if [ -f "$ITEM" ]; then
+		DESC=`describe file "$ITEM" $SIZE`
+		printf '<LI><A HRef="%s">%s</A>: %s last updated on %s.\n' \
+			"$ITEM" "$ITEM" "$TIME" >&3
+		printf '%5u.\t%s\n\tFile (%u bytes) last updated on %s.\n' \
+			$N "$ITEM" $SIZE "$TIME" >&4
+		echo ... "$ITEM" "($SIZE byte File)"
+	    elif [ -d "$ITEM" ]; then
+		DESC=`describe dir "$ITEM"`
+		printf '<LI><A HRef="%s/">%s/</A>: %s last updated on %s.\n' \
+			"$ITEM" "$ITEM" "$DESC" "$TIME" >&3
+		printf '%5u.\t%s/\n\t%s last updated on %s.\n' \
+			$N "$ITEM" "$DESC" "$TIME" >&4
+		echo ... "$ITEM/" '(Subdirectory)'
+	    fi
+	done
+    done
+    footer "$@"
+}
+
+function title() {
+    tr -s ' ' '\t' < "$1"				\
+	| sed 's.<. <.g;s.>.> .g'			\
+	| tr '\t /,' ' \n,/'				\
+	| sed 's/[Tt][Ii][Tt][Ll][Ee]>/TITLE>/' 	\
+	| sed '/^<TITLE>$/,/^<,TITLE>$/!d'		\
+	| sed '/TITLE>/d'				\
+	| tr ,/ /,
+}
+
+cat <<-.EOF
+	Directory indexer v1.0.0
+	Copyright (C) 2001, Memory Alpha,
+	Released under the GNU General Public Licence, version 2 only.
+
+Indexing `pwd` on this system:
+.EOF
+mkindex "$@" 3> 00-INDEX.html 4> 00-INDEX.txt
+echo Finished.

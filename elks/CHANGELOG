@@ -1,15 +1,28 @@
--------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 This file is used to record changes made to the CVS database. Please add to
 the top of this file before committing any changes. Please use the header
 format provided for each entry, noting that the text on each line should not
 be longer than the lines of dashes.
 
 Al
--------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
-Sun Sep  9 09:56:25 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+Wed Sep 26 23:36:17 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* Used `mkMake` script to initialise all missing Makefile's.
+	* Deleted redundant Makefile's from elks/Documentation subtree.
+
+Sun Sep  9 xx:xx:xx BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Accidentally committed Makefile tweaks as part of the Makefile
+	  rationalisation that I started on 30 Aug 2001 that appear to
+	  have broken the compilation of ELKS. This wasn't discovered
+	  until 26 Sep 2001.
+
+	  The part of the rationalisation that appears to have caused
+	  problems is that of ensuring that ld86 was used throughout to
+	  generate the *.a files from the collections of *.o files that
+	  were created by the earlier rationalisation, rather than using
+	  a mixture of ld for some and ld86 for others.
 
 Sat Sep  8 22:33:39 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
@@ -31,6 +44,14 @@ Thu Aug 30 19:16:22 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Rationalised ELKS Makefiles to use standard rule prototypes, with
 	  elks/Makefile-rules containing all of the standard prototypes.
+
+	  Basically, the rationalisation in question resulted in the ugly
+	  mixture of using gcc to compile some *.c sources to *.s and bcc
+	  to compile other *.c sources to *.s with either bcc or as86 used
+	  to compile *.s to *.o (and some using bcc to compile directly
+	  to *.o without going through the *.s intermediate stage) being
+	  changed to use bcc from *.c to *.s and as86 from *.s to *.o
+	  throughout.
 
 Tue Aug 28 11:43:35 BST 2001	Paul Nasrat <pnasrat@uk.now.com>
 
@@ -245,9 +266,11 @@ Sun Jul 29 19:44:58 BST 2001	Riley Williams <rhw@memalpha.cx>
 	  layout throughout.
 	* Corrected spelling in CHANGELOG.
 
-Sun Jul 01 16:49:34 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+Sun Jul  1 16:49:34 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
 	* Added inet_select()
+
+------------------------------------------------------------------------------
 
 Fri Jun 29 17:05:39 GMT 2001	Riley Williams <rhw@memalpha.cx>
 
@@ -337,10 +360,12 @@ Tue Apr 17 14:52 GMT 2001   Alistair Riddoch  <alriddoch@zepler.org>
 
 	* Added dist rule to Makefiles.
 
-Mon Apr 02 14:06 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
+Mon Apr  2 14:06 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 
 	* Generate 8254 timer constants directly from definition of HZ.
 	* Also some minor miscellaneous cleanups.
+
+------------------------------------------------------------------------------
 
 Wed Mar 28 08:37 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 
@@ -351,7 +376,9 @@ Mon Mar 26 16:29 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 	* Fix long standing file system bug: EBUSY when unmounting,
 	  and related sys_access() bug.
 
-Fri Mar 03 11:44 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+------------------------------------------------------------------------------
+
+Fri Mar  3 11:44 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Final changes for 0.0.83
 
@@ -394,17 +421,17 @@ Mon Feb 14 10:25 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	* Fix setting of effective uid and gid on suid and sgid
 	  executables. Fix by Mario Frasca.
 
-Fri Feb 04 18:37 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Feb  4 18:37 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Modified buffer cache code so external 64K buffer cache can be
 	  removed on systems with fast block device access and low RAM.
 
-Thu Feb 03 17:40 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu Feb  3 17:40 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Minor and cosmetic fixes to changes committed by Christoph
 	  Plattner.
 
-Wed Feb 02 2000  Christop Plattner  <Christoph.Plattner@dot.at>
+Wed Feb  2 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* init/main.c (init_task): use /dev/ttys0 instead of /dev/tty1
 	  if serial console is used.
@@ -415,7 +442,7 @@ Wed Feb 02 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 	* (init_console): beside the rs_init() also the tty termios are
 	  initialized und updated for the serial console port.
 
-Wed Feb 02 2000  Christop Plattner  <Christoph.Plattner@dot.at>
+Wed Feb  2 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* include/linuxmt/config.h (DEF_SETUPSEG): it should be defined
 	  as DEF_INITSEG + 0x20, otherwise two things are to edit.
@@ -426,7 +453,7 @@ Wed Feb 02 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 	  which ttys[0123] is setup has to use ttyno instead of i !
 	* include/linuxmt/ntty.h: added external definition to def_vals
 
-Tue Feb 01 2000  Christop Plattner  <Christoph.Plattner@dot.at>
+Tue Feb  1 2000  Christop Plattner  <Christoph.Plattner@dot.at>
 
 	* arch/i86/Makefile (clean): added Boot.map and Setup.map in the
 	  clean rule. Also crt0.s was not cleaned yet.
@@ -483,14 +510,16 @@ Mon Jan 10 17:07 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Final changes before 0.0.82.
 
-Thu Jan 06 14:36 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu Jan  6 14:36 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Merged code by Simon Wood to make ELKS work on the Psion
 	  SIxteen Bit Organiser (SIBO) architecture.
 
-Wed Jan 05 17:23 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jan  5 17:23 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed typo bug in free_irq() by Vladimir Shamaev.
+
+------------------------------------------------------------------------------
 
 Fri Dec 17 16:37 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -523,11 +552,11 @@ Wed Nov 10 14:51 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Replaced bulky timer mechanism with a simple one.
 
-Fri Nov 05 17:21 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Nov  5 17:21 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed inode finding bug which caused mount problems.
 
-Mon Nov 01 18:02 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Nov  1 18:02 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Final changes for 0.0.80.
 
@@ -557,6 +586,8 @@ Mon Oct 11 14:00 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	  to remove the complete filesystem, and execution in place of
 	  code in ROM.
 	* Removed the inode hashing code.
+
+------------------------------------------------------------------------------
 
 Thu Sep 30 10:39 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -668,58 +699,60 @@ Wed Jul 14 18:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	* Updates to memory allocation code by Greg Haerr which fixes
 	  environment truncation and brk() bug.
 
-Fri Jul 09 17:00 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 17:00 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Major updates to socket code. Addition of server socket
 	  capability, and addition of unix domain socket code (currently
 	  not functional), plus nano sockets.
 
-Fri Jul 09 16:59 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 16:59 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Late commit of changes for version 0.0.77 due to cvs outage.
 
-Fri Jul 09 16:54 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 16:54 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added support for very basic pseudo ttys. Initially to
 	  support terminal program for nano-X.
 
-Fri Jul 09 16:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 16:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Make exit send a SIGCHLD to parent.
 
-Fri Jul 09 16:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 16:21 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed the way the kernel handles loading sh if no init is found
 
-Fri Jul 09 16:15 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 16:15 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated signal code to make it clearer.
 
-Fri Jul 09 16:10 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 16:10 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated romfs to use byteorder functions.
 
-Fri Jul 09 15:45 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Fri Jul  9 15:45 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Tweaks to bioshd driver to fix problems with disabling hd
 	  support. Fix to Changelog times.
 
-Wed Jul 07 19:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Jul  7 19:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Updated build system to make it more arch independant. Makefile
 	  contributed by Simon Wood.
 
-Tue Jul 06 19:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Jul  6 19:17 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added byteorder functions for romfs.
 
-Tue Jul 06 14:23 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue Jul  6 14:23 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* More changes to the rd driver by Blaz Antonic.
 
-Mon Jul 05 14:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Jul  5 14:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Sanitisation and enhancement of the rd driver by Blaz Antonic.
+
+------------------------------------------------------------------------------
 
 Thu Jun 24 14:11 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -766,12 +799,12 @@ Mon May 17 12:29 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	* Added Documentation/cs_write which describes code that
 	  writes to the kernel code segment.
 
-Tue May 06 17:19 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue May  6 17:19 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed select code, including modifications to scheduler
 	  to fix timers.
 
-Tue May 06 16:39 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Tue May  6 16:39 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Minor fix to lp driver.
 
@@ -779,6 +812,8 @@ Fri Apr 16 09:57 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added support for the signal(2) system call, and support
 	  for signal handler functions.
+
+------------------------------------------------------------------------------
 
 Thu Feb 25 21:13 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -813,15 +848,17 @@ Sun Jan 31 17:50 GMT 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 	* Fix main.c so init is launched with a valid set of argvs.
 	* Fix ntty.c so tty driver ioctls are called.
 
-Sat Dec 06 00:24 GMT 1998   Alastair Bridgewater  <nyef@softhome.net>
+------------------------------------------------------------------------------
+
+Sat Dec  6 00:24 GMT 1998   Alastair Bridgewater  <nyef@softhome.net>
 
 	* Fixed arch/i86/lib/Makefile to rebuild setup[bw].s when nessecary.
 
-Wed Thu 03 17:12 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Dec  3 17:12 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Tweaked docs for 0.0.74
 
-Wed Thu 03 17:12 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Wed Dec  3 17:12 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Debugged minix filesystem, so that removing files now
 	  works correctly, and the filesystem no longer gets corrupted.
@@ -931,16 +968,18 @@ Sat Oct 10 09:18 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Moved dependency cleaning to its own rule.
 
-Thu Oct 08 20:40 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Thu Oct  8 20:40 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added very simple signal support.
 
-Mon Oct 05 11:15 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+Mon Oct  5 11:15 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Replaced functions cli() and sti() with single asm instruction
 	  macros icli() and isti(), which saves 96 bytes.
 	* Moved Makefile dependency cleaning to distclean as I was fed up
 	  of doing make dep so much.
+
+------------------------------------------------------------------------------
 
 Sun Sep 25 12:37 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
@@ -993,5 +1032,5 @@ Wed Sep 16 20:20 CET 1998   Simon Weijgers  <mbit@mbit.doa.org>
 	  infinite loop would occur when faulty ansi escape sequences
 	  were fed to the kernel.
 
--------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 END OF CHANGELOG

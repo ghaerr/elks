@@ -1,13 +1,19 @@
 #!/bin/bash
 
-function Makefile() {
+function create() {
     date '+# Basic Makefile, created on %A, %d %B %Y at %T %Z.' 
     cat <<.EOF
 #
-# Note that the standard Makefile rules and defines have been moved to
-# the file below.
+# Please note:
+#
+#  1. The standard Makefile rules and defines have been moved to the
+#     file below.
+#
+#  2. Standard dependencies are added by the \`make dep\` instruction.
+#     Only non-standard dependencies (ie, not *.c files) should be here.
+#
 
-ELKSDIR		= $2/..
+ELKSDIR		= $1/..
 
 include \$(ELKSDIR)/Makefile-rules
 
@@ -22,8 +28,44 @@ distdir:
 	@echo -n
 
 #########################################################################
-# EOF.
+### Dependencies:
+
 .EOF
+    ls -l | sed 's/^/# /'
 }
 
-Makefile "$@" > "$1"
+function process() {
+    local BASE="$1" DIR NEXT
+    declare -i N=99
+
+    if [ "$1" != "." ]; then
+	NEXT="$1/.."
+    else
+	NEXT=..
+    fi
+    shift
+    for DIR do
+	if [ -d "$DIR" ]; then
+	    echo ... Processing "`pwd`"
+	    cd "$DIR"
+	    process "$NEXT" *
+	    if [ -f Makefile ]; then
+		N=99
+		if [ -f Makefile.$N ]; then
+		    rm -f Makefile.$N
+		fi
+		while [ $N -gt 1 ]; do
+		    N=$N-1
+		    if [ -f Makefile.$N ]; then
+			mv -f Makefile.{$N,$[$N+1]}
+		    fi
+		done
+		mv Makefile{,.1}
+	    fi
+	    create "$BASE" > Makefile
+	    cd ..
+	fi
+    done
+}
+
+process . .
