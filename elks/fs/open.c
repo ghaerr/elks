@@ -20,6 +20,8 @@
 
 #include <arch/segment.h>
 
+#ifndef CONFIG_NOFS
+
 #if 0
 int sys_statfs(path,buf)
 char * path;
@@ -168,12 +170,19 @@ struct utimbuf * times;
 	error=namei(filename,&inode,0,0);
 	if (error)
 		return error;
+#ifdef CONFIG_ACTIME
 	if (times) {
 		actime = get_fs_long((unsigned long *) &times->actime);
 		modtime = get_fs_long((unsigned long *) &times->modtime);
 	} else
 		actime = modtime = CURRENT_TIME;
 	inode->i_atime = actime;
+#else
+	if (times) {
+		modtime = get_fs_long((unsigned long *) &times->modtime);
+	} else
+		modtime = CURRENT_TIME;
+#endif
 	inode->i_mtime = modtime;
 	inode->i_dirt = 1;
 	iput(inode);
@@ -244,6 +253,7 @@ int sys_chmod(filename,mode)
 char * filename;
 mode_t mode;
 {
+#ifdef USE_NOTIFY_CHANGE
 	struct inode * inode;
 	register struct inode * inodep;
 	int error;
@@ -266,6 +276,33 @@ mode_t mode;
 	error = notify_change(inodep, nap);
 	iput(inodep);
 	return error;
+#else
+	struct inode * inode;
+	register struct inode * inodep;
+	int error;
+
+	error = namei(filename,&inode,0,0);
+	inodep = inode;
+	if (error)
+		return error;
+	if (IS_RDONLY(inodep)) {
+		iput(inodep);
+		return -EROFS;
+	}
+	if (mode == (mode_t) -1)
+		mode = inodep->i_mode;
+	mode = (mode & S_IALLUGO) | (inodep->i_mode & ~S_IALLUGO);
+	if ((current->euid != inodep->i_uid) && !suser()) {
+		return -EPERM;
+	}
+	if (!suser() && !in_group_p(inodep->i_gid)) {
+		mode &= ~S_ISGID;
+	}
+	inodep->i_mode = mode;
+	inodep->i_dirt = 1;
+	iput(inodep);
+	return error;
+#endif
 }
 
 static int do_chown(inode, user, group)
@@ -273,12 +310,12 @@ register struct inode * inode;
 uid_t user;
 gid_t group;
 {
+#ifdef USE_NOTIFY_CHANGE
 	int error;
 	struct iattr newattrs;
 	register struct iattr * nap = &newattrs;
 
 	if (IS_RDONLY(inode)) {
-		iput(inode);
 		return -EROFS;
 	}
 	if (user == (uid_t) -1)
@@ -306,6 +343,24 @@ gid_t group;
 	inode->i_dirt = 1;
 	error = notify_change(inode, nap);
 	return(error);
+#else
+	if (IS_RDONLY(inode)) {
+		return -EROFS;
+	}
+	if (!suser() && (current->euid != inode->i_uid)) {
+		return -EROFS;
+	}
+	if (group != (gid_t) -1) {
+		inode->i_gid = group; 
+		inode->i_mode &= ~S_ISGID;
+	}
+	if (user != (uid_t) -1) {
+		inode->i_uid = user;
+		inode->i_mode &= ~S_ISUID;
+	}
+	inode->i_dirt = 1;
+	return(0);
+#endif
 }
 
 int sys_chown(filename,user,group)
@@ -338,6 +393,7 @@ gid_t group;
 	return do_chown(filp->f_inode, user, group);
 }
 
+#endif /* CONFIG_NOFS */
 
 /*
  * Note that while the flag value (low two bits) for sys_open means:

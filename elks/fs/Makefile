@@ -23,11 +23,18 @@ CC_PROTO =gcc -I../include -M
 .c.o:
 	$(CC) $(CFLAGS) \
 	-0 -c -o $*.o $<
-
+include ../.config
+ifeq ($(CONFIG_NOFS), y)
+OBJS  = devices.o fcntl.o \
+	inode.o file_table.o \
+	enamei.o ioctl.o open.o \
+	read_write.o exec.o select.o pipe.o
+else
 OBJS  = super.o bufops.o devices.o fcntl.o stat.o \
 	inode.o file_table.o buffer.o block_dev.o \
 	namei.o ioctl.o filesystems.o open.o \
 	read_write.o readdir.o exec.o select.o pipe.o
+endif
 
 fs.a: $(OBJS)
 	ar rcs fs.a $(OBJS)

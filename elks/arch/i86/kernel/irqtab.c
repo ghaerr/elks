@@ -521,6 +521,7 @@ noschedpop:
 	pop	bx
 	pop	es
 	pop	ds
+	seg	cs
 	mov	ax, stashed_irq
 	or 	ax,ax
 	jz	irq0_bios

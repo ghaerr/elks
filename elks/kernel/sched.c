@@ -196,7 +196,7 @@ void schedule()
 /*	if (intr_count)
 		goto scheduling_in_interrupt; */
 
-#ifdef USE_BH
+#ifdef NEED_BH
 #ifdef ENDIS_BH
 	if (bh_active & bh_mask) {
 #else
@@ -207,7 +207,9 @@ void schedule()
 /*		intr_count = 0; */
 	}
 #else
+#ifdef NEED_OLD_TIMERS
 	run_old_timers();
+#endif
 	run_timer_list();
 #endif
 
@@ -495,6 +497,11 @@ static /*inline*/ void run_timer_list()
 	isti();
 }
 
+#ifdef NEED_OLD_TIMERS
+
+unsigned long timer_active = 0;
+struct timer_struct timer_table[32];
+
 static /*inline*/ void run_old_timers()
 {
 	register struct timer_struct *tp;
@@ -512,6 +519,7 @@ static /*inline*/ void run_old_timers()
 		isti();
 	}
 }
+#endif
 
 #ifdef NEED_TQ_TIMER
 void tqueue_bh()
@@ -526,9 +534,6 @@ void immediate_bh()
 	run_task_queue(&tq_immediate);
 }
 #endif
-
-unsigned long timer_active = 0;
-struct timer_struct timer_table[32];
 
 /* maybe someday I'll implement these profiling things -PL */
 #if 0
@@ -587,14 +592,18 @@ static void update_times()
 }
 #endif /* OLD_SCHED */
 
+#ifdef NEED_BH
 static void timer_bh()
 {
 #ifdef OLD_SCHED
 	update_times();
 #endif /* OLD_SCHED */
+#ifdef NEED_OLD_TIMERS
 	run_old_timers();
+#endif
 	run_timer_list();
 }
+#endif
 
 void do_timer(regs)
 struct pt_regs * regs;
@@ -604,7 +613,9 @@ struct pt_regs * regs;
         lost_ticks++;
 #endif /* OLD_SCHED */
 
+#ifdef NEED_BH
         mark_bh(TIMER_BH);
+#endif
 
 #ifdef NEED_TQ_TIMER
         if (tq_timer)
@@ -612,6 +623,7 @@ struct pt_regs * regs;
 #endif
 }
 
+#ifdef NEED_BH
 void do_bottom_half()
 {
         unsigned active;
@@ -639,10 +651,13 @@ void do_bottom_half()
 bad_bh:
         printk ("irq.c:bad bottom half entry %08lx\n", mask);
 }
+#endif
 
 void sched_init()
 {
+#ifdef NEED_BH
 	init_bh(TIMER_BH, timer_bh);
+#endif
 #ifdef NEED_TQ_TIMER
 	init_bh(TQUEUE_BH, tqueue_bh);
 #endif

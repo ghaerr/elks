@@ -40,13 +40,17 @@ void start_kernel()
 /*	calibrate_delay(); */
 	setup_mm();		/* Architecture specifics */
 	tty_init();
+#ifndef CONFIG_NOFS
 	buffer_init();
+#endif
 #ifdef CONFIG_SOCKET
 	sock_init();
 #endif
 	device_setup();
 	inode_init();
+#ifndef CONFIG_NOFS
 	fs_init();
+#endif
 	sched_init();
 	printk("ELKS version %s\n", system_utsname.release );
 	task[0].t_kstackm = KSTACK_MAGIC;
@@ -81,7 +85,9 @@ static void init_task()
 
 	/* Root of /dev/fd0 */
 /*	ROOT_DEV=CONFIG_ROOTDEV; */
+#ifndef CONFIG_NOFS
 	mount_root();
+#endif
 	
 /*	printk("Root mounted.\n"); */
 	

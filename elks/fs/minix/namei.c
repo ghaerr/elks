@@ -250,7 +250,11 @@ struct minix_dir_entry ** res_dir;
 			}
 		} else {
 			unsigned int i;
+#ifdef CONFIG_ACTIME
 			dir->i_mtime = dir->i_ctime = CURRENT_TIME;
+#else
+			dir->i_mtime = CURRENT_TIME;
+#endif
 			dir->i_dirt = 1;
 			for (i = 0; i < info->s_namelen ; i++)
 				de->name[i] = (i < namelen) ? get_fs_byte(name + i) : 0;
@@ -578,7 +582,11 @@ int len;
 	mark_buffer_dirty(bh, 1);
 	inode->i_nlink=0;
 	inode->i_dirt=1;
+#ifdef CONFIG_ACTIME
 	inode->i_ctime = dir->i_ctime = dir->i_mtime = CURRENT_TIME;
+#else
+	dir->i_mtime = CURRENT_TIME;
+#endif
 	dir->i_nlink--;
 	dir->i_dirt=1;
 	retval = 0;
@@ -639,10 +647,16 @@ repeat:
 	dir->i_version = ++event;
 #endif
 	mark_buffer_dirty(bh, 1);
+#ifdef CONFIG_ACTIME
 	dir->i_ctime = dir->i_mtime = CURRENT_TIME;
+#else
+	dir->i_mtime = CURRENT_TIME;
+#endif
 	dir->i_dirt = 1;
 	inode->i_nlink--;
+#ifdef CONFIG_ACTIME
 	inode->i_ctime = dir->i_ctime;
+#endif
 	inode->i_dirt = 1;
 	retval = 0;
 end_unlink:
@@ -752,7 +766,9 @@ int len;
 	brelse(bh);
 	iput(dir);
 	oldinode->i_nlink++;
+#ifdef CONFIG_ACTIME
 	oldinode->i_ctime = CURRENT_TIME;
+#endif
 	oldinode->i_dirt = 1;
 	iput(oldinode);
 	return 0;

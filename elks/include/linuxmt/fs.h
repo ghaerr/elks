@@ -211,8 +211,10 @@ struct inode
 	ino_t		i_ino;
 	kdev_t		i_dev;
 	kdev_t		i_rdev;
+#ifdef CONFIG_ACTIME
 	time_t		i_atime;
 	time_t		i_ctime;
+#endif
 #ifdef BLOAT_FS
 	unsigned long	i_blksize;
 	unsigned long	i_blocks;
@@ -223,10 +225,10 @@ struct inode
 	struct super_block * i_sb;
 	struct wait_queue * i_wait;
 	struct inode * i_next, * i_prev;
-	struct inode * i_hash_next, *i_hash_prev;
 	struct inode * i_mount;
 	unsigned short i_count;
 #ifdef BLOAT_FS
+	struct inode * i_hash_next, *i_hash_prev;
 	struct inode * i_bound_to, * i_bound_by;
 	unsigned short i_wcount;
 #endif
@@ -454,9 +456,6 @@ extern int block_write();
 #define block_read NULL
 #define block_write NULL
 #endif
-
-extern int inode_change_ok();
-extern void inode_setattr();
 
 #endif /* __KERNEL__ */
 

@@ -240,12 +240,18 @@ struct inode * dir;
 	inode->i_gid = (dir->i_mode & S_ISGID) ? dir->i_gid : current->egid;
 	inode->i_dirt = 1;
 	inode->i_ino = j;
+#ifdef CONFIG_ACTIME
 	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
+#else
+	inode->i_mtime = CURRENT_TIME;
+#endif
 	inode->i_op = NULL;
 #ifdef BLOAT_FS
 	inode->i_blocks = inode->i_blksize = 0;
 #endif
+#ifdef HASH_INODES
 	insert_inode_hash(inode);
+#endif
 	return inode;
 	/* Oh no! It's 'Return of Goto' in a double feature with 'Mozilla vs.
 	   Internet Exploder :) */

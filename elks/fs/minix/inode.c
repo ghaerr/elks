@@ -288,7 +288,9 @@ int create;
 #ifndef CONFIG_FS_RO
 		if (create && !i_zone[block]) {
 			if (i_zone[block]=minix_new_block(inode->i_sb)) {
+#ifdef CONFIG_ACTIME
 				inode->i_ctime = CURRENT_TIME;
+#endif
 				inode->i_dirt = 1;
 			}
 		}
@@ -302,7 +304,9 @@ int create;
 			if (create) {
 				if (i_zone[7]=minix_new_block(inode->i_sb)) {
 					inode->i_dirt = 1;
+#ifdef CONFIG_ACTIME
 					inode->i_ctime = CURRENT_TIME;
+#endif
 				}
 			} else return 0;
 #else
@@ -399,7 +403,9 @@ register struct inode * inode;
 	raw_inode = ((struct minix_inode *) bh->b_data) +
 		    (ino-1)%MINIX_INODES_PER_BLOCK;
 	memcpy(inode, raw_inode, sizeof(struct minix_inode));
+#ifdef CONFIG_ACTIME
 	inode->i_ctime = inode->i_atime = inode->i_mtime; 
+#endif
 #ifdef BLOAT_FS
 	inode->i_blocks = inode->i_blksize = 0;
 #endif

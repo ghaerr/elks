@@ -241,7 +241,11 @@ int count;
 	}
 	if (pos > inode->i_size)
 		inode->i_size = pos;
+#ifdef CONFIG_ACTIME
 	inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+#else
+	inode->i_mtime = CURRENT_TIME;
+#endif
 	filp->f_pos = pos;
 	inode->i_dirt = 1;
 	return written;

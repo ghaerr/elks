@@ -22,11 +22,20 @@ comment 'Kernel hacking'
 bool 'Strace' CONFIG_STRACE
 bool 'Optimise for size rather than speed' CONFIG_OPT_SMALL
 endmenu
+
+mainmenu_option next_comment
+comment 'Embedded systems'
+comment 'Currently unimplemented features for use in embedded systems'
+bool 'Remove filesystem code' CONFIG_NOFS
+bool 'Exec code from ROM' CONFIG_EXEC_ROM
+endmenu
 endmenu 
 
 # The next lines are okay as we are already in arch/i86
 source arch/i86/drivers/char/Config.in
-source arch/i86/drivers/block/Config.in
-source fs/Config.in
+if [ "$CONFIG_NOFS" = "n" ]; then
+	source arch/i86/drivers/block/Config.in
+	source fs/Config.in
+fi
 source net/Config.in
 

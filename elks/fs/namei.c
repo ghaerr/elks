@@ -415,6 +415,7 @@ struct inode * base;
 			return error;
 		}
 #endif
+#ifdef USE_NOTIFY_CHANGE
 		newattrs.ia_size = 0;
 		newattrs.ia_valid = ATTR_SIZE;
 		if ((error = notify_change(inode, &newattrs))) {
@@ -422,6 +423,9 @@ struct inode * base;
 			iput(inode);
 			return error;
 		}
+#else
+		inode->i_size = 0L;
+#endif
 #ifdef NOT_YET		
 		down(&inode->i_sem);
 #endif		

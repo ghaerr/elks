@@ -21,23 +21,18 @@
 int event=0;
 #endif
 
+#ifdef HASH_INODES
 static struct inode_hash_entry {
 	struct inode * inode;
 	int updating;
 } hash_table[NR_IHASH];
+#endif
 
 static struct inode inode_block[NR_INODE];
 static struct inode * first_inode;
 static struct wait_queue * inode_wait = NULL;
 static int nr_inodes = 0;
 static int nr_free_inodes = 0;
-
-static struct inode_hash_entry *hash(dev,i)
-kdev_t dev;
-ino_t i;
-{
-	return hash_table + ((HASHDEV(dev) ^ i) % NR_IHASH);
-}
 
 static void insert_inode_free(inode)
 REGOPT struct inode *inode;
@@ -61,6 +56,14 @@ REGOPT struct inode *inode;
 	if (inode->i_prev)
 		inode->i_prev->i_next = inode->i_next;
 	inode->i_next = inode->i_prev = NULL;
+}
+
+#ifdef HAS_INODE
+static struct inode_hash_entry *hash(dev,i)
+kdev_t dev;
+ino_t i;
+{
+	return hash_table + ((HASHDEV(dev) ^ i) % NR_IHASH);
 }
 
 void insert_inode_hash(inode)
@@ -90,6 +93,7 @@ register struct inode *inode;
 		inode->i_hash_prev->i_hash_next = inode->i_hash_next;
 	inode->i_hash_prev = inode->i_hash_next = NULL;
 }
+#endif
 
 static void put_last_free(inode)
 REGOPT struct inode *inode;
@@ -123,7 +127,9 @@ static void setup_inodes()
 
 void inode_init()
 {
+#ifdef HASH_INODES
 	memset(hash_table, 0, sizeof(hash_table));
+#endif
 	first_inode = NULL;
 	setup_inodes();
 }
@@ -182,7 +188,9 @@ REGOPT struct inode * inode;
 	REGOPT struct wait_queue * wait;
 
 	wait_on_inode(inode);
+#ifdef HASH_INODES
 	remove_inode_hash(inode);
+#endif
 	remove_inode_free(inode);
 	wait = inode->i_wait;
 	if (inode->i_count)
@@ -192,6 +200,7 @@ REGOPT struct inode * inode;
 	insert_inode_free(inode);
 }
 
+#ifndef CONFIG_NOFS
 int fs_may_mount(dev)
 kdev_t dev;
 {
@@ -280,6 +289,7 @@ struct inode * inode;
 }
 
 /* POSIX UID/GID verification for setting inode attributes */
+#if USE_NOTIFY_CHANGE
 static int inode_change_ok(inode,attr)
 REGOPT struct inode *inode;
 REGOPT struct iattr *attr;
@@ -335,12 +345,14 @@ REGOPT struct iattr *attr;
 		inode->i_gid = attr->ia_gid;
 	if (attr->ia_valid & ATTR_SIZE)
 		inode->i_size = attr->ia_size;
-	if (attr->ia_valid & ATTR_ATIME)
-		inode->i_atime = attr->ia_atime;
 	if (attr->ia_valid & ATTR_MTIME)
 		inode->i_mtime = attr->ia_mtime;
+#ifdef CONFIG_ACTIME
+	if (attr->ia_valid & ATTR_ATIME)
+		inode->i_atime = attr->ia_atime;
 	if (attr->ia_valid & ATTR_CTIME)
 		inode->i_ctime = attr->ia_ctime;
+#endif
 	if (attr->ia_valid & ATTR_MODE) {
 		inode->i_mode = attr->ia_mode;
 		if (!suser() && !in_group_p(inode->i_gid))
@@ -382,6 +394,8 @@ REGOPT struct iattr *attr;
 	inode_setattr(inode, attr);
 	return 0;
 }
+#endif
+#endif /* USE_NOTIFY_CHANGE */
 
 #if 0
 #ifdef BLOAT_FS
@@ -410,6 +424,7 @@ int block;
 #endif
 #endif
 
+#ifndef CONFIG_NOFS
 void invalidate_inodes(dev)
 kdev_t dev;
 {
@@ -446,6 +461,7 @@ kdev_t dev;
 			write_inode(inode);
 	}
 }
+#endif
 
 void iput(inode)
 REGOPT struct inode * inode;
@@ -483,11 +499,13 @@ repeat:
 			return;
 	}
 
+#ifndef CONFIG_NOFS
 	if (inode->i_dirt) {
 		write_inode(inode);	/* we can sleep - so do again */
 		wait_on_inode(inode);
 		goto repeat;
 	}
+#endif
 
 	inode->i_count--;
 	nr_free_inodes++;
@@ -582,37 +600,60 @@ struct inode * get_pipe_inode()
 	inode->i_mode |= S_IFIFO | S_IRUSR | S_IWUSR;
 	inode->i_uid = current->euid;
 	inode->i_gid = current->egid;
+#ifdef CONFIG_ACTIME
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+#else
+	inode->i_mtime = CURRENT_TIME;
+#endif
 /*	inode->i_blksize = PAGE_SIZE; */
 	return inode;
 }
 #endif
 
+#ifndef CONFIG_NOFS
 struct inode *__iget(sb, inr/* ,crossmntp*/)
 REGOPT struct super_block * sb;
 ino_t inr;
 /*int crossmntp;*/
 {
+#ifdef HASH_INODES
 	static struct wait_queue * update_wait = NULL;
 	struct inode_hash_entry * h;
+#else
+	int i;
+#endif
 	REGOPT struct inode * inode;
 	REGOPT struct inode * empty = NULL;
 
 	printd_iget3("iget called(%x, %d, %d)\n", sb, inr, 0 /* crossmntp*/);
 	if (!sb)
 		panic("VFS: iget with sb==NULL");
+#ifdef HASH_INODES
 	h = hash(sb->s_dev, inr);
 repeat:
 	for (inode = h->inode; inode ; inode = inode->i_hash_next)
 		if (inode->i_dev == sb->s_dev && inode->i_ino == inr)
 			goto found_it;
+#else
+repeat:
+	for (i = NR_INODE ; i ; i--,inode++ ) {
+		if (inode->i_dev == sb->s_dev && inode->i_ino == inr) {
+			goto found_it;
+		}
+	}
+			
+#endif
 	if (!empty) {
+#ifdef HASH_INODES
 		h->updating++;
+#endif
 		printd_iget("iget: getting an empty inode...\n");
 		empty = get_empty_inode();
 		printd_iget1("iget: got one... (%x)!\n", empty);
+#ifdef HASH_INODES
 		if (!--h->updating)
 			wake_up(&update_wait);
+#endif
 		if (empty)
 			goto repeat;
 		return (NULL);
@@ -623,7 +664,9 @@ repeat:
 	inode->i_ino = inr;
 	inode->i_flags = sb->s_flags;
 	put_last_free(inode);
+#ifdef HASH_INODES
 	insert_inode_hash(inode);
+#endif
 	printd_iget("iget: Reading inode\n");
 	read_inode(inode);
 	printd_iget("iget: Read it\n");
@@ -650,10 +693,12 @@ found_it:
 		iput(empty);
 
 return_it:
+#ifdef HASH_INODES
 	while (h->updating) {
 		printd_iget("iget: sleeping\n");
 		sleep_on(&update_wait);
 	}
+#endif
 	return inode;
 }
-
+#endif /* CONFIG_NOFS */

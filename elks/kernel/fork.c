@@ -112,8 +112,10 @@ int virtual;
 			filp->f_count++;
 		}
 	}
+#ifndef CONFIG_NOFS
 	t->fs.root->i_count++;
 	t->fs.pwd->i_count++;
+#endif
 	/* Set up our family tree */
 	t->p_parent = currentp;
 	t->p_nextsib = NULL;

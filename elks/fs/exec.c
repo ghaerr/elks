@@ -41,7 +41,7 @@ static struct msdos_exec_hdr mshdr;
 /*
  *	FIXME: Semaphore on entry needed.
  */
- 
+#ifndef CONFIG_NOFS 
 int sys_execve(filename,sptr,slen)
 char *filename;
 char *sptr;
@@ -340,6 +340,15 @@ end_readexec:
 	printd_exec1("EXEC: Returning %d\n", retval);
 	return retval;
 }
+#else
+int sys_execve(filename,sptr,slen)
+char *filename;
+char *sptr;
+int slen;		/* Size of built stack */
+{
+	return -ENOSYS;
+}
+#endif
 
 #if CONFIG_SHLIB
 

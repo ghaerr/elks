@@ -1,9 +1,9 @@
 # Didn't check this file for CC and CFLAGS
 VERSION = 0
 PATCHLEVEL = 0
-SUBLEVEL = 79
+SUBLEVEL = 80
 # If we're not a pre, comment the following line
-# PRE = "2"
+PRE = "1"
 
 .EXPORT_ALL_VARIABLES:
 

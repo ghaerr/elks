@@ -57,7 +57,7 @@ register struct timezone *tz;
 
   /* only user running as root can set the time */
     if (current->euid != 0) {
-        return EPERM;
+        return -EPERM;
     }
 
   /* verify we have valid addresses to read from */
@@ -65,14 +65,14 @@ register struct timezone *tz;
         if (error = verified_memcpy_fromfs(&tmp_tv, tv, sizeof(struct timeval)))
 		return error;
 	if ((tmp_tv.tv_usec < 0) || (tmp_tv.tv_usec >= 1000000L)) {
-	    return EINVAL;
+	    return -EINVAL;
 	}
     }
     if (tz != NULL) {
         if (error = verified_memcpy_fromfs(&tmp_tz, tz, sizeof(struct timezone)))
 		return error;
 	if ((tmp_tz.tz_dsttime < DST_NONE) || (tmp_tz.tz_dsttime > DST_AUSTALT)) {
-	    return EINVAL;
+	    return -EINVAL;
 	}
     }
 

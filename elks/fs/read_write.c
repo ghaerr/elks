@@ -148,6 +148,7 @@ unsigned int count;
 	}
 	inode=file->f_inode;
 
+#ifndef CONFIG_NOFS
 	/*
 	 * If data has been written to the file, remove the setuid and
 	 * the setgid bits. We do it anyway otherwise there is an
@@ -156,11 +157,16 @@ unsigned int count;
 	 * Set ATTR_FORCE so it will always be changed.
 	 */
 	if (!suser() && (inode->i_mode & (S_ISUID | S_ISGID))) {
+#ifdef USE_NOTIFY_CHANGE
 		struct iattr newattrs;
 		newattrs.ia_mode = inode->i_mode & ~(S_ISUID | S_ISGID);
 		newattrs.ia_valid = ATTR_CTIME | ATTR_MODE | ATTR_FORCE;
 		notify_change(inode, &newattrs);
+#else
+		inode->i_mode = inode->i_mode & ~(S_ISUID | S_ISGID);
+#endif
 	}
+#endif
 
 	written = file->f_op->write(inode,file,buf,count);
 	schedule();

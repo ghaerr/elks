@@ -514,6 +514,7 @@ int len;
 }
 #endif
 
+#ifndef CONFIG_NOFS
 int sys_umask(mask)
 int mask;
 {
@@ -522,3 +523,4 @@ int mask;
 	current->fs.umask = mask & S_IRWXUGO;
 	return (old);
 }
+#endif

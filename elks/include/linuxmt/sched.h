@@ -59,7 +59,9 @@ struct task_struct
         __u32 timeout;                  /* for select() */
         struct task_struct *next_run, *prev_run;
 	struct file_struct files;	/* File system structure */
+#ifndef CONFIG_NOFS
 	struct fs_struct fs;		/* File roots */
+#endif
 	struct mm_struct mm;		/* Memory blocks */
 	pid_t pgrp;
 	struct tty * tty;

@@ -62,6 +62,19 @@ CONFIG_OPT_SMALL
   Where two versions of a function exist this will cause the smaller
   version rather than the faster version to be included.
 
+# Embedded systems
+# ~~~~~~~~~~~~~~~~
+
+Remove filesystem code
+CONFIG_NOFS
+  Remove the filesystem support for small embedded systems with no block
+  devices.
+
+Exec code from ROM
+CONFIG_EXEC_ROM
+  Add support for executing user processes in place from an image in ROM. Can
+  be used even if no filesystem code is included. CURRENTLY UNIMPLEMENTED.
+
 # Console display support
 # ~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -116,7 +116,9 @@ int count;
 	(inode->u.pipe_i.lock) --;
 	wake_up_interruptible(& (inode->u.pipe_i.wait) );
 	if (read) {
+#ifdef CONFIG_ACTIME
 		inode->i_atime = CURRENT_TIME;
+#endif
 		return read;
 	}
 	if ((inode->u.pipe_i.writers) )
@@ -173,7 +175,11 @@ int count;
 		wake_up_interruptible(& (inode->u.pipe_i.wait) );
 		free = 1;
 	}
+#ifdef CONFIG_ACTIME
 	inode->i_ctime = inode->i_mtime = CURRENT_TIME;
+#else
+	inode->i_mtime = CURRENT_TIME;
+#endif
 	return written;
 }
 

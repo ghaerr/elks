@@ -4,6 +4,37 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Tue Oct 26 14:24 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Increment version to 0.0.80-pre1
+
+	* Removed unused "old timer" code from sched.c
+
+	* Removed unused bottom half code from sched.c
+
+	* Fixed errno return codes to negative values in kernel/time.c
+	  as pointed out by James M. Lowery about 16 months ago. Sorry.
+
+	* Added CONFIG option to allow atime and ctime to be removed
+	  from kernel, and enable by default as it is unimplemented in
+	  minixfs.
+
+	* Removed bloated notify_change() code, and instead implement 
+	  inode changes directly in the required functions.
+
+	* Fix to irqtab.c which should solve problems with floppy not
+	  spinning down.
+
+Mon Oct 11 14:00 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Latest version of the rd driver by Blaz Antonic
+
+	* Added CONFIG options for embedded systems including option
+	  to remove the complete filesystem, and execution in place of
+	  code in ROM.
+
+	* Removed the inode hashing code.
+
 Thu Sep 30 10:39 BST 1999   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Added utime system call.

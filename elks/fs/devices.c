@@ -26,9 +26,11 @@ static struct device_struct chrdevs[MAX_CHRDEV] =
 	{ NULL, NULL },
 };
 
+#ifndef CONFIG_NOFS
 static struct device_struct blkdevs[MAX_BLKDEV] = {
 	{ NULL, NULL },
 };
+#endif
 
 #ifdef ONE_DAY_IN_THE_FUTURE
 int get_device_list(page)
@@ -53,6 +55,7 @@ register char *page;
 }
 #endif
 
+#ifndef CONFIG_NOFS
 struct file_operations * get_blkfops(major)
 unsigned int major;
 {
@@ -60,6 +63,7 @@ unsigned int major;
 		return NULL;
 	return blkdevs[major].fops;
 }
+#endif
 #if 0
 struct file_operations * get_chrfops(major)
 unsigned int major;
@@ -95,6 +99,7 @@ register struct file_operations *fops;
 	return 0;
 }
 
+#ifndef CONFIG_NOFS
 int register_blkdev(major,name,fops)
 unsigned int major;
 char * name;
@@ -120,6 +125,7 @@ register struct file_operations *fops;
 	dev->fops = fops;
 	return 0;
 }
+#endif
 #if 0
 int unregister_chrdev(major,name)
 unsigned int major;
@@ -192,6 +198,7 @@ kdev_t dev;
 /*
  * Called every time a block special file is opened
  */
+#ifndef CONFIG_NOFS
 int blkdev_open(inode,filp)
 register struct inode * inode;
 register struct file * filp;
@@ -243,6 +250,7 @@ struct inode_operations blkdev_inode_operations = {
 	NULL			/* permission */
 #endif
 };
+#endif
 
 /*
  * Called every time a character special file is opened
