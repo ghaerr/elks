@@ -287,7 +287,7 @@ config:
 # Specify the current versions in the source code. Note that in kernel
 # 0.0.85-pre3, the method for calculating ELKS_VERSION_CODE changed.
 
-include/linuxmt/version.h: ./Makefile
+include/linuxmt/version.h: Makefile
 	@echo \#define UTS_RELEASE \"$(DIST)\" > .ver
 	@echo \#define ELKS_VERSION_CODE $(VSN) >> .ver
 	@mv -f .ver $@

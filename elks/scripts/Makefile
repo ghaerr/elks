@@ -15,7 +15,7 @@ kconfig.tk: ${TOPDIR}/Makefile ${TOPDIR}/arch/${ARCH}/config.in \
 	else \
 		echo '#!'"/usr/bin/wish -f" > kconfig.tk; \
 	fi
-	cat ${HEADER} >> ./kconfig.tk
+	cat ${HEADER} >> kconfig.tk
 	./tkparse < ../arch/${ARCH}/config.in >> kconfig.tk
 	echo "set defaults \"arch/${ARCH}/defconfig\"" >> kconfig.tk
 	cat ${TAIL} >> kconfig.tk
@@ -44,3 +44,6 @@ distdir:
 
 clean:
 	rm -f *~ kconfig.tk *.o tkparse
+
+########################################
+### Dependencies:

@@ -3,7 +3,7 @@
 # Note that the standard Makefile rules and defines have been moved to
 # the file below.
 
-ELKSDIR		= ./../..
+ELKSDIR		= ../..
 
 include $(ELKSDIR)/Makefile-rules
 
@@ -18,4 +18,4 @@ distdir:
 	@echo -n
 
 #########################################################################
-# EOF.
+### Dependencies:

@@ -7,6 +7,11 @@ be longer than the lines of dashes.
 Al
 ------------------------------------------------------------------------------
 
+Tue Oct  2 23:22:12 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Added missing "### Dependencies:" tags to several Makefiles but
+	  still to revert remaining Makefiles.
+
 Tue Oct  2 21:29:28 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Reverted changes accidentally made to elks/Makefile previously.
@@ -23,7 +28,7 @@ Tue Oct  2 21:29:28 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 Sat Sep 29 13:47:47 EEST 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
-	* Added lefted out locking of sock.avail_data
+	* Added locking of sock.avail_data that was previously omitted.
 	* Changed unix and nano sockets to use semaphores. Saved around
 	  120 bytes of code.
 

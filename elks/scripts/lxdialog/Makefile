@@ -44,3 +44,6 @@ ncurses:
 
 clean:
 	rm -f core *.o *~ lxdialog
+
+###################################
+### Dependencies:
