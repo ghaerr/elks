@@ -161,7 +161,7 @@ repeat:
 	wait = NULL;
 	/*printk("count=%d, current->timeout = %d/%d, signal=%d/%d, ~blocked=%d/%d\n", 
 	       count, current->timeout, current->signal, ~current->blocked);*/
-	if (!count && current->timeout && !(current->signal & ~current->blocked)) {
+	if (!count && current->timeout && !(current->signal/* & ~current->blocked*/)) {
 		schedule();
 		goto repeat;
 	}
@@ -335,7 +335,7 @@ REGOPT struct timeval * tvp;
 		goto out;
 	if (!error) {
 		error = -ERESTARTNOHAND;
-		if (current->signal & ~current->blocked)
+		if (current->signal/* & ~current->blocked*/)
 			goto out;
 		error = 0;
 	}

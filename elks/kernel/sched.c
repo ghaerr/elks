@@ -188,7 +188,7 @@ void schedule()
 	switch (prev->state) {
 		case TASK_INTERRUPTIBLE:
 /*			printk("going to int task\n");*/
-			if (prev->signal & ~prev->blocked)
+			if (prev->signal/* & ~prev->blocked*/)
 				goto makerunnable;
 			timeout = prev->timeout;
 /*			printk("jiffies = %d/%d, timeout = %d/%d\n", jiffies, timeout);*/

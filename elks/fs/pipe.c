@@ -1,8 +1,8 @@
 /*
  *  elks/fs/pipe.c
  *
- * Copyright (C) 1998 Alistair Riddoch
- * 		 1991, 1992 Linux Torvalds
+ * Copyright (C) 1991, 1992 Linux Torvalds
+ * 		 1998 Alistair Riddoch
  */
 
 #include <linuxmt/config.h>
@@ -82,7 +82,7 @@ int count;
 			if (!PIPE_WRITERS(*inode))
 				return 0;
 		}
-		if (current->signal & ~current->blocked)
+		if (current->signal/* & ~current->blocked*/)
 			return -ERESTARTSYS;
 		interruptible_sleep_on(&PIPE_WAIT(*inode));
 	}
@@ -138,7 +138,7 @@ int count;
 				send_sig(SIGPIPE,current,0);
 				return written? written :-EPIPE;
 			}
-			if (current->signal & ~current->blocked)
+			if (current->signal/* & ~current->blocked*/)
 				return written? written :-ERESTARTSYS;
 			if (filp->f_flags & O_NONBLOCK)
 				return written? written :-EAGAIN;

@@ -28,14 +28,14 @@ struct task_struct * p;
 	unsigned long mask = 1 << (sig-1);
 	struct sigaction * sa = sig + p->sig.action - 1;
 
-	if (!(mask & p->blocked)) {
+/*	if (!(mask & p->blocked)) { */
 		if (sa->sa_handler == SIG_IGN && sig != SIGCHLD)
 			return;
 		if ((sa->sa_handler == SIG_DFL) &&
 		    (sig == SIGCONT || sig == SIGCHLD || 
 		     sig == SIGWINCH || sig == SIGURG))
 			return;
-	}
+/*	} */
 	printk("Generating sig %d.\n", sig);
 	p->signal |= mask;
 	if ((p->state == TASK_INTERRUPTIBLE) /* && (p->signal & ~p->blocked) */) {

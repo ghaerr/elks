@@ -64,7 +64,7 @@ struct task_struct
 /*	int dumpable;		/* Can core dump */
 	pid_t pgrp;
 	__u8 link_count;	/* Symlink loop counter */
-	__u32 signal,blocked;	/* Signal status */
+	__u32 signal/*,blocked*/;	/* Signal status */
 	/* only 1 child pntr is needed to get us into the sibling list */
 	struct task_struct *p_parent, *p_prevsib, *p_nextsib, *p_child;	 
   	struct wait_queue child_wait;
