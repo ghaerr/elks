@@ -9,7 +9,7 @@ Al
 Mon Aug 20 01:22:32 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Reformatted and spellchecked various documents.
-	* Added first draft of Documentation/HTML/VT-100.html which
+	* Added first draft of Documentation/HTML/vt100.html which
 	  will document the requirements of a VT-100 interface as
 	  extracted from the Digital VT100 User Guide.
 

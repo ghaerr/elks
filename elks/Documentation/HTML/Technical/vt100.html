@@ -1,0 +1,249 @@
+<HTML>
+<Head>
+
+<Title>VT-100 Control Sequences</Title>
+
+</Head>
+<Body BGColor=White Text=Black Link=Blue VLink=Magenta ALink=Red>
+
+<H1 Align=Center>VT-100 Control Sequences</H1>
+
+<H2 Align=Center>Taken from the "Digital VT100 User Guide</H2>
+
+<P Align=Center>The following notes, relating to the VT-100 control
+sequences, are taken from the official <I>Digital VT100 User Guide</I>,
+and specifically from the <I>Programming</I> section therein.</P>
+
+<H3>Control Characters</H3>
+
+<P Align=Justify>Control characters have values of 000 octal to 037 octal,
+and 177 octal. The control characters recognised by the VT100 are as
+follows, with all other control codes causing no action to be taken:</P>
+
+<Center>
+
+<Table Border=1 Width=75%>
+
+<TR>
+<TH Width=16%>Control<BR>Character</TH>
+<TH Width=7%>Octal<BR>Code</TH>
+<TH Width=7%>Hex<BR>Code</TH>
+<TH Width=70%>Action Taken</TH>
+</TR>
+
+<TR>
+<TD Align=Center>NUL</TD>
+<TD Align=Center>000</TD>
+<TD Align=Center>00</TD>
+<TD Align=Center>Ignored on input (not stored in buffer; see full duplex
+protocol)</TD>
+</TR>
+
+<TR>
+<TD Align=Center>ENQ</TD>
+<TD Align=Center>005</TD>
+<TD Align=Center>05</TD>
+<TD Align=Center>Transmit answerback message</TD>
+</TR>
+
+<TR>
+<TD Align=Center>BEL</TD>
+<TD Align=Center>007</TD>
+<TD Align=Center>07</TD>
+<TD Align=Center>Sound bell tone from keyboard</TD>
+</TR>
+
+<TR>
+<TD Align=Center>BS</TD>
+<TD Align=Center>010</TD>
+<TD Align=Center>08</TD>
+<TD Align=Center>Move the cursor to the left one character position,
+unless it is at the left margin, in which case no action occurs</TD>
+</TR>
+
+<TR>
+<TD Align=Center>HT</TD>
+<TD Align=Center>011</TD>
+<TD Align=Center>09</TD>
+<TD Align=Center>Move the cursor to the next tab stop, or to the right
+margin if no further tab stops arfe present on the line</TD>
+</TR>
+
+<TR>
+<TD Align=Center>LF</TD>
+<TD Align=Center>012</TD>
+<TD Align=Center>0A</TD>
+<TD Align=Center>This code causes a line feed or a new line operation (See
+new line mode)</TD>
+</TR>
+
+<TR>
+<TD Align=Center>VT</TD>
+<TD Align=Center>013</TD>
+<TD Align=Center>0B</TD>
+<TD Align=Center>Interpreted as LF</TD>
+</TR>
+
+<TR>
+<TD Align=Center>FF</TD>
+<TD Align=Center>014</TD>
+<TD Align=Center>0C</TD>
+<TD Align=Center>Interpreted as LF</TD>
+</TR>
+
+<TR>
+<TD Align=Center>CR</TD>
+<TD Align=Center>015</TD>
+<TD Align=Center>0D</TD>
+<TD Align=Center>Move cursor to left margin on the current line</TD>
+</TR>
+
+<TR>
+<TD Align=Center>SO</TD>
+<TD Align=Center>016</TD>
+<TD Align=Center>0E</TD>
+<TD Align=Center>Invoke G1 character set, as designated by <B>SCS</B>
+control sequence</TD>
+</TR>
+
+<TR>
+<TD Align=Center>SI</TD>
+<TD Align=Center>017</TD>
+<TD Align=Center>0F</TD>
+<TD Align=Center>Invoke G0 character set, as designated by <B>ESC (</B>
+control sequence</TD>
+</TR>
+
+<TR>
+<TD Align=Center>XON</TD>
+<TD Align=Center>021</TD>
+<TD Align=Center>11</TD>
+<TD Align=Center>Causes terminal to resume transmission</TD>
+</TR>
+
+<TR>
+<TD Align=Center>XOFF</TD>
+<TD Align=Center>022</TD>
+<TD Align=Center>12</TD>
+<TD Align=Center>Causes terminal to stop transmission of all codes except
+XOFF and XON</TD>
+</TR>
+
+<TR>
+<TD Align=Center>CAN</TD>
+<TD Align=Center>030</TD>
+<TD Align=Center>18</TD>
+<TD Align=Center>If sent during a control sequence, the sequence is
+immediately terminated and not executed. It also causes the error
+character to be displayed</TD>
+</TR>
+
+<TR>
+<TD Align=Center>SUB</TD>
+<TD Align=Center>032</TD>
+<TD Align=Center>1A</TD>
+<TD Align=Center>Interpreted as <B>CAN</B></TD>
+</TR>
+
+<TR>
+<TD Align=Center>ESC</TD>
+<TD Align=Center>033</TD>
+<TD Align=Center>1B</TD>
+<TD Align=Center>Introduces a control sequence</TD>
+</TR>
+
+<TR>
+<TD Align=Center>DEL</TD>
+<TD Align=Center>177</TD>
+<TD Align=Center>7F</TD>
+<TD Align=Center>Ignored on input, not stored in input buffer</TD>
+</TR>
+
+</Table>
+
+</Center>
+
+<P Align=Justify>Control character codes (codes 0 octal to 37 octal
+inclusive) are specifically excluded from the control sequence syntax, but
+may be embedded within a control sequence. Embedded control characters are
+executed as soon as they are encountered by the VT100. The processing of
+the control sequence then continues with the next character received. The
+exceptions are:</P>
+
+<OL>
+
+<LI><P Align=Justify>If the character <B>ESC</B> occurs, the current
+control sequence is aborted, and a new one commences beginning with the
+<B>ESC</B> just received.</P>
+
+<LI><P Align=Justify>If the character <B>CAN</B> or <B>SUB</B> occurs, the
+current control sequence is aborted.</P>
+
+</OL>
+
+<P Align=Justify>The ability to embed control characters allows the
+synchronisation characters <B>XON</B> and <B>XOFF</B> to be interpreted
+properly without affecting the control sequence.</P>
+
+<P Align=Justify>The VT100 terminal accepts and produces the following
+sequences, which are a subset of those specified in ANSI X-3.64 1977 and
+ANSI X-3.41 1974:</P>
+
+<Center>
+
+<Table Border=1 Width=95%>
+
+</Table>
+
+<TR>
+<TH Width=10%>Name</TH>
+<TH Width=10%>Host to<BR>VT100</TH>
+<TH Width=10%>VT100<BR>to Host</TH>
+<TH Width=60%>Description</TH>
+<TH Width=10%>Default<BR>Value</TH>
+</TR>
+
+<TR>
+<TH Align=Center>CPR</TH>
+<TH Align=Center>&nbsp;</TH>
+<TH Align=Center>*</TH>
+<TH Align=Center>Cursor Position Report</TH>
+<TH Align=Center>1</TH>
+</TR>
+
+<TR>
+<TD Align=Center>CUB</TD>
+<TD Align=Center>*</TD>
+<TD Align=Center>*</TD>
+<TD Align=Center>Cursor Backward</TD>
+<TD Align=Center>1</TD>
+</TR>
+
+<TR>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+<TR>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+<TD Align=Center></TD>
+</TR>
+
+</Center>
+
+</Body>
+</HTML>

@@ -1,43 +1,54 @@
-Direct console output driver
-version 0.01
+Notes relating to the direct console output driver, version 0.01:
 
-Completely replaces bioscon.c
-Old functions con_charout() and init_bioscon() are still there,
-but will go away. init_bioscon() becomes InitConsole(), and
-con_charout() is obsolete since Console_write() works now (*).
-When dircon.c is initialized, it loses the current bios cursor
-location, and sets the cursor to (0,0).
+Sun Aug 19 23:37:27 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-vt100 emulation is on the way, but currently only gotoxy, setattr (**)
-and clear exist. BTW, do we need vt100, or could a simpler terminal
-emulation be created? A simple terminal could be much smaller thar a full
-vt100 emulation. Since all well-behaving applications must use terminfo
-anyway, the emulation doesn't need to be complatible with anything.
+	* vt100 emulation does NOT need to be in the main kernel, and
+	  would be better as a usermode kernel helper that is enabled if
+	  needed, along the lines of MS-DOS's ANSI.SYS driver. This would
+	  be likely to free up a fair amount of kernel code and data space
+	  because of the nature of the VT100 (and ANSI) control sequences.
 
-Display scrolling when writing in the display bottom works, but could
-be optimized faster.
+Tue Jul  3 00:00:00 UTC 1996	Saku Airila <>
 
-Currently this is tested only on vga 80x25. As I don't have access
-to any other adapter, this will remain the case for now. If the
-cga snow-effect becomes a problem, I'll add code to check if writing
-to the display memory is ok.
+	* The original version of this document only stated that it was
+	  written in 1996, so middle day of year assumed. If anything
+	  better is known, please correct this entry.
 
-Should cli/sti pairs be in each function needing to be atomic
-or will the kernel be completely atomic?
+	* Completely replaces bioscon.c - old functions con_charout() and
+	  init_bioscon() are still there, but will go away. init_bioscon()
+	  becomes InitConsole(), and con_charout() is obsolete since
+	  Console_write() works now. When dircon.c is initialized, it
+	  loses the current bios cursor location, and sets the cursor to
+	  (0,0).
 
-How about writing some doc on the vfs functions so that the driver
-file_operations could be done?
+	  I think Console_write assumes that the buffer being written is
+	  in the kernel data segment. How otherwise could it be just a
+	  char * ? Anyway, it ignores the two first parms.
 
-I added buffering and functions for the vfs into xt_key, and renamed
-the new thing to 'new_key.c'. It is still compatible with the old
-one, and can be used instead of it.
+	* vt100 emulation is on the way, but currently only gotoxy,
+	  setattr and clear exist. BTW, do we need vt100, or could a
+	  simpler terminal emulation be created? A simple terminal could
+	  be much smaller than a full vt100 emulation. Since all
+	  well-behaving applications must use terminfo anyway, the
+	  emulation doesn't need to be complatible with anything.
 
-(*) I think Console_write assumes that the buffer being written
- is in the kernel data segment. How otherwise could it be
- just a char * ?
- Anyway, it ignores the two first parms.
+	  Only bold( == bright ) and blinking attributes are implemented
+	  for now.
 
-(**) Only bold( == bright ) and blinking attributes are implemented
- for now.
+	* Display scrolling when writing in the display bottom works, but
+	  could be optimized faster.
 
-Saku Airila 1996
+	* Currently this is tested only on vga 80x25. As I don't have
+	  access to any other adapter, this will remain the case for now.
+	  If the cga snow-effect becomes a problem, I'll add code to check
+	  if writing to the display memory is ok.
+
+	* Should cli/sti pairs be in each function needing to be atomic or
+	  will the kernel be completely atomic?
+
+	* How about writing some doc on the vfs functions so that the
+	  driver file_operations could be done?
+
+	* I added buffering and functions for the vfs into xt_key, and
+	  renamed the new thing to 'new_key.c'. It is still compatible
+	  with the old one, and can be used instead of it.

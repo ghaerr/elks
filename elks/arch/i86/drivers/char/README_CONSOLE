@@ -1,43 +1,48 @@
-Direct console driver
-version 0.10 MAR 31 1996
+Direct console driver, version 0.10, MAR 31 1996
 
-init_console() should be called absolutely first in init. Console
-output will _not_ work at all if it is not initialized. It's more
-likely to crash the whole thing.
+init_console() should be called absolutely first in init. Console output
+will _not_ work at all if it is not initialized. It's more likely to crash
+the whole thing.
 
-The vt52 emulation is implemented, and seems to work. There are
-some additions to the vt52 standard:
+The vt52 emulation is implemented, and seems to work. There are some
+additions to the vt52 standard:
+
    o 'ESC P f' inserts a line on cursor
    o 'ESC P d' deletes the current line and scrolls the bottom up.
    o 'ESC Q n' Sets/clears display attributes. n is numeric + ' '.
-      * 0 resets the attributes to default
-      * 1 bold ( ie. bright ) on
-      * 2 blink on
 
-Done some testing on EGA, too. It worked just as well as on my VGA. 
+	* 0 resets the attributes to default
+	* 1 bold ( ie. bright ) on
+	* 2 blink on
 
-Should cli/sti pairs be in each function needing to be atomic
-or will the kernel be completely atomic?
+R: This looks like the sort of emulation that a usermode helper could
+   build on to implement vt100 emulation. What vt100 functions are not
+   available in vt52, and how can they be logically added?
 
-A: Probably a good idea because printk() may come from anywhere if its
-a kernel fault/panic etc.
+Done some testing on EGA, too. It worked just as well as on my VGA.
 
-I see. But you seemed to have removed my asms from the previous rel.
-How?
+Should cli/sti pairs be in each function needing to be atomic or will the
+kernel be completely atomic?
+
+A: Probably a good idea because printk() may come from anywhere if its a
+   kernel fault/panic etc.
+
+I see. But you seemed to have removed my asms from the previous rel. How?
 --
 
 How about writing some doc on the vfs functions so that the driver
 file_operations could be done?
 
 A: They are the same as the Linux ones. They dont actually apply to the
-console since its a tty driver, but we don't yet have the tty layer.
+   console since its a tty driver, but we don't yet have the tty layer.
 
 Now did some major changes to new_key.c, now it even works (almost) right.
-key_pressed will be removed soon, and the keyboard input is to be
-done via GetQueue(), which returns the translated char, or -1 if
-there's none available.
-Now shift keys invert the capslock state, so a 'A' when in capslock
-mode will appear 'a' if a shift key is pressed.
+key_pressed will be removed soon, and the keyboard input is to be done via
+GetQueue(), which returns the translated char, or -1 if there's none
+available.
+
+Now shift keys invert the capslock state, so a 'A' when in capslock mode
+will appear 'a' if a shift key is pressed.
 
 Added translation table for capslock. Still we need loadable keymaps.
 
@@ -46,12 +51,16 @@ A: Prefer compilable...
 Ok, guess it will be smaller.
 --
 
-Now the AT keyboard separate arrow keys are translated to ESC[ABCD]
-like in vt52. Don't waste your time trying to test this under dosemu,
-it does something completely obscure in case of the arrow keys! It
-seemed to give something like 0x98 for the up arrow key, when the
-right scancode if 0xE0 0x48. 
+Now the AT keyboard separate arrow keys are translated to ESC[ABCD] like
+in vt52. Don't waste your time trying to test this under dosemu, it does
+something completely obscure in case of the arrow keys! It seemed to give
+something like 0x98 for the up arrow key, when the right scancode if 0xE0
+0x48.
 
 Saku Airila 1996
 
-[A: comments Alan Cox]
+==========================================================================
+
+A: comments by Alan Cox <alanCox@elks.sourceforge.net>
+
+R: comments by Riley Williams <rhw@MemAlpha.cx>
