@@ -222,7 +222,7 @@ CC_PROTO	= gcc -I$(INCDIR) -M -MG $(CCDEFS)
 CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) -ansi
 CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
 LINT		= splint
-LINTLEVEL	= -strict
+LINTLEVEL	= -weak
 LCFLAGS 	= -I$(INCDIR) $(CCDEFS)
 LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
 		  -exportheader -varuse -exporttype -exportconst \
@@ -355,7 +355,7 @@ indent-me:
 lint:	dolint
 	@echo
 	@echo " * All files in and under this directory have now been checked. Where problems"
-	@echo " * were found, they will be found in the relevant *.lint file in the same"
+	@echo " * were found, they are described in the relevant *.lint file in the same"
 	@echo " * directory. However, where no problems were found, this file is deleted."
 	@echo
 

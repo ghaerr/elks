@@ -16,16 +16,18 @@
 #include <linuxmt/wait.h>
 #include <linuxmt/debug.h>
 
+#include <linuxmt/init.h>
+
 #include <arch/segment.h>
 
 int do_signal(void)
 {
     register __ptask currentp = current;
     register struct sigaction *sa;
-    unsigned signr;
+    sig_t signr;
 
     while (currentp->signal) {
-	signr = find_first_non_zero_bit(&currentp->signal, NSIG);
+	signr = (sig_t) find_first_non_zero_bit(&currentp->signal, NSIG);
 	if (signr == NSIG)
 	    panic("No signal set!\n");
 

@@ -4,8 +4,8 @@
  * task state segment structure
  */
 
-#ifndef __TSS_H__
-#define __TSS_H__
+#ifndef TSS_H
+#define TSS_H
 
 /* this is the 286 TSS format */
 struct tss {

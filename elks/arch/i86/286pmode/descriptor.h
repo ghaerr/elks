@@ -4,8 +4,8 @@
  * descriptor structure and access macros
  */
 
-#ifndef __DESCRIPTOR_H__
-#define __DESCRIPTOR_H__
+#ifndef DESCRIPTOR_H
+#define DESCRIPTOR_H
 
 /* this is the 286 descriptor format */
 struct descriptor {

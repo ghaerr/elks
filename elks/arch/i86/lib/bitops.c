@@ -9,43 +9,43 @@
  
 unsigned char clear_bit(unsigned short int bit,void *addr)
 {
-    unsigned char *ptr = addr;
-    unsigned int r, mask, offset = (bit / 8);
+    unsigned char *ptr = addr, r, mask;
+    unsigned short int offset = (bit / 8);
     flag_t flags;
 
-    bit%=8;
-    mask = (1 << bit);
+    bit %= 8;
+    mask = (unsigned char) (1 << bit);
     save_flags(flags);
-    i_cli();
     r = ptr[offset] & mask;
+    i_cli();
     ptr[offset] &= ~mask;	/* xor bit with itself is 0 */
     restore_flags(flags);
-    return (r ? 1:0);
+    return (unsigned char) (r ? 1 : 0);
 }
 
 unsigned char set_bit(unsigned short int bit,void *addr)
 {
-    unsigned char *ptr = addr;
-    unsigned int r, mask, offset = (bit / 8);
+    unsigned char *ptr = addr, r, mask;
+    unsigned short int offset = (bit / 8);
     flag_t flags;
 
     bit %= 8;
-    mask = (1 << bit);
+    mask = (unsigned char) (1 << bit);
     save_flags(flags);
-    i_cli();
     r = ptr[offset] & mask;
+    i_cli();
     ptr[offset] |= mask;	/* xor bit with itself is 0 */
     restore_flags(flags);
-    return (r ? 1 : 0);
+    return (unsigned char) (r ? 1 : 0);
 }
 
 unsigned char test_bit(unsigned short int bit,void *addr)
 {
-    unsigned char *ptr = addr;
-    unsigned int mask, offset = bit / 8;
+    unsigned char *ptr = addr, mask;
+    unsigned short int offset = bit / 8;
 
     bit %= 8;
-    mask = 1 << bit;
+    mask = (unsigned char) (1 << bit);
     return ((mask & ptr[offset]) != 0);
 }
 

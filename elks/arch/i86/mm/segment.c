@@ -4,6 +4,7 @@
 
 #include <arch/segment.h>
 
+#ifndef S_SPLINT_S
 #asm
 
 	.globl  _get_bp
@@ -38,3 +39,4 @@ _get_ss:
 	ret
 
 #endasm
+#endif

@@ -5,46 +5,61 @@
  * Saku Airila 1996                                                *
  *******************************************************************/
 
-static void blt_back();
-static void blt_forth();
+#include <linuxmt/types.h>
 
-void far_memmove(unsigned sseg,unsigned soff,unsigned dseg,unsigned doff,
-		 int bytes)
+static void blt_back(__u16,__u16,__u16,__u16,__u16);
+static void blt_forth(__u16,__u16,__u16,__u16,__u16);
+
+void far_memmove(__u16 sseg,__u16 soff,__u16 dseg,__u16 doff,__u16 bytes)
 {
-    unsigned long slin, dlin;
+    __u32 slin, dlin;
 
-    slin = ( ( unsigned long )sseg << 4 ) + ( unsigned long )soff;
-    dlin = ( ( unsigned long )dseg << 4 ) + ( unsigned long )doff;
+    slin = ((__u32) sseg) << 4 + ((__u32) soff);
+    dlin = ((__u32) dseg) << 4 + ((__u32) doff);
+
     if( slin < dlin ) {
+
 	/* The idea is to get most of the ptr info in the offset part. The
 	 * number of bytes to transfer must be added to the pointers because
 	 * here we are copying in reverse order starting from the tail.
 	 */
+
 	slin += bytes;
 	dlin += bytes;
-	soff = slin & 0xFFFF;
-	doff = dlin & 0xFFFF;
-	sseg = ( slin >> 4 ) & 0xF000;
-	dseg = ( dlin >> 4 ) & 0xF000;
+
+	soff = (__u16) (slin & 0xFFFF);
+	doff = (__u16) (dlin & 0xFFFF);
+
+	sseg = (__u16) ((slin >> 4) & 0xF000);
+	dseg = (__u16) ((dlin >> 4) & 0xF000);
+
 	while( soff < bytes + 1 ) {
 	    soff += 0x1000;
 	    sseg -= 0x0100;
 	}
+
 	while( doff < bytes + 1 ) {
 	    doff += 0x1000;
 	    dseg -= 0x0100;
 	}
+
 	blt_forth( sseg, soff, dseg, doff, ++bytes );
+
     } else {
+
 	/* And here, we want most of it in the segment part */
-	soff = slin & 0x0F;
-	doff = dlin & 0x0F;
-	sseg = ( slin >> 4 ) & 0xFFFF;
-	dseg = ( dlin >> 4 ) & 0xFFFF;
+
+	soff = (__u16) (slin & 0x0F);
+	doff = (__u16) (dlin & 0x0F);
+
+	sseg = (__u16) ((slin >> 4) & 0xFFFF);
+	dseg = (__u16) ((dlin >> 4) & 0xFFFF);
+
 	blt_back( sseg, soff, dseg, doff, bytes );
     }
 }
 
+#ifndef S_SPLINT_S
 #asm
 
 				! blt_back( sseg, soff, dseg, doff, bytes )
@@ -120,3 +135,4 @@ _blt_forth:
 	ret
 
 #endasm
+#endif

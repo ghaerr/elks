@@ -1,14 +1,4 @@
-#include <linuxmt/autoconf.h>
-
 #ifdef CONFIG_STRACE
-
-#include <linuxmt/types.h>
-#include <linuxmt/kernel.h>
-#include <linuxmt/debug.h>
-#include <linuxmt/config.h>
-#include <linuxmt/strace.h>
-#include <linuxmt/wait.h>
-#include <linuxmt/sched.h>
 
 /* The table describing the system calls has been moved to a separate
  * header file, and is included by the following include line.

@@ -1,6 +1,7 @@
 /* Assorted initialisers */
 
 #include <linuxmt/types.h>
+#include <linuxmt/signal.h>
 
 extern int directhd_init(void);
 extern int rs_init(void);
@@ -31,3 +32,5 @@ extern void device_setup(void);
 
 extern void kfork_proc(struct task_struct *,void ());
 extern void arch_setup_kernel_stack(struct task_struct *);
+extern void arch_setup_sighandler_stack(struct task_struct *,
+					__sighandler_t,sig_t);

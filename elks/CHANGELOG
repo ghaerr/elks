@@ -16,7 +16,7 @@ Christoph Plattner    Christoph.Plattner@dot.at         31 Jan 2000- 2 Feb 2000
 David Murn            scuffer@hups.apana.org.au         11 Nov 1998-15 Nov 1999
 Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
-Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-29 Apr 2002
+Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-30 Apr 2002
 Jacek Lipkowski       sq5bpf@acid.ch.pw.edu.pl          20 Jan 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
@@ -31,6 +31,26 @@ Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Thu May  2 20:37:15 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Verified that all arch/i86/286pmode/*.[ch] files are clean as
+	  far as `splint -weak` is concerned.
+	* Verified that all arch/i86/kernel/*.[ch] files are clean as
+	  far as `splint -weak` is concerned.
+
+		THESE CHANGES NOT YET COMMITTED TO THE ELKS CVS
+
+Thu May  2 19:43:49 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Verified that all arch/i86/boot/tools/*.[ch] files are clean
+	  as far as `splint -weak` is concerned.
+	* Verified that all arch/i86/boot/*.[ch] files are clean as
+	  far as `splint -weak` is concerned.
+	* Verified that all arch/i86/lib/*.[ch] files are clean as
+	  far as `splint -weak` is concerned.
+	* Verified that all arch/i86/sibo/*.[ch] files are clean as
+	  far as `splint -weak` is concerned.
 
 Wed May  1 23:25:40 BST 2002	Riley Williams <Riley@Williams.Name>
 

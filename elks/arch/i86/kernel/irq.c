@@ -50,17 +50,17 @@ unsigned char cache_21 = 0xff, cache_A1 = 0xff;
  *	Low level interrupt handling for the SIBO platform
  */
  
-void disable_irq(unsigned int irq)
+void disable_irq(irq_t irq)
 {
     /* Not supported on SIBO */
 }
 
-void enable_irq(unsigned int irq)
+void enable_irq(irq_t irq)
 {
     /* Not supported on SIBO */
 }
 
-static int remap_irq(unsigned int irq)
+static irq_t remap_irq(irq_t irq)
 {
     return irq;
 }
@@ -79,7 +79,7 @@ static void arch_init_IRQ(void)
  
 #if 0
 
-void disable_irq(unsigned int irq)
+void disable_irq(irq_t irq)
 {
     flag_t flags;
     unsigned char mask = 1 << (irq & 7);
@@ -98,12 +98,11 @@ void disable_irq(unsigned int irq)
 
 #endif
 
-void enable_irq(unsigned int irq)
+void enable_irq(irq_t irq)
 {
     flag_t flags;
-    unsigned char mask;
+    unsigned char mask = (unsigned char) ~(1 << (irq & 7));
 
-    mask = ~(1 << (irq & 7));
     save_flags(flags);
     i_cli();
     if (irq < 8) {
@@ -117,7 +116,7 @@ void enable_irq(unsigned int irq)
 }
 
 
-static int remap_irq(int irq)
+static irq_t remap_irq(irq_t irq)
 {
     if (irq > 15)
 	return -EINVAL;
@@ -168,9 +167,9 @@ static void enable_timer_tick(void)
  *	Called by the assembler hooks
  */
 
-int lastirq;
+irq_t lastirq;
  
-void do_IRQ(int i,void *regs)
+void do_IRQ(irq_t i,void *regs)
 {
     register struct irqaction *irq = irq_action + i;
 
@@ -220,7 +219,7 @@ _restore_flags:
 #endasm
 #endif
 
-int request_irq(int irq, void (*handler)(), void *dev_id)
+irq_t request_irq(irq_t irq, void (*handler)(), void *dev_id)
 {
     register struct irqaction *action;
     flag_t flags;
@@ -251,7 +250,7 @@ int request_irq(int irq, void (*handler)(), void *dev_id)
 
 #if 0
 
-void free_irq(unsigned int irq)
+void free_irq(irq_t irq)
 {
     register struct irqaction * action = irq_action + irq;
     flag_t flags;

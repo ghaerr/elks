@@ -381,18 +381,18 @@ seg_t mm_dup(seg_t base)
 }
 
 /*
- * Returns memory usage information in KB's. 
- * "type" is either MM_MEM or MM_SWAP and "used"
- * selects if we request the used or free memory.
+ *  Returns memory usage information in KB's. "type" is either MM_MEM or
+ *  MM_SWAP and "used" selects whether we request the used or free memory.
  */
-unsigned int mm_get_usage(int type, int used)
+unsigned long int mm_get_usage(int type, int used)
 {
     register struct malloc_hole *m;
-    int ret = 0, flag;
+    unsigned long int ret = 0;
+    __u8 flag;
 
 #ifdef CONFIG_SWAP
 
-    m = type == MM_MEM ? memmap.holes : swapmap.holes;
+    m = (type == MM_MEM) ? memmap.holes : swapmap.holes;
 
 #else
 
@@ -400,7 +400,7 @@ unsigned int mm_get_usage(int type, int used)
 
 #endif
 
-    flag = used ? HOLE_USED : HOLE_FREE;
+    flag = (__u8) (used ? HOLE_USED : HOLE_FREE);
 
     while (m != NULL) {
 	if (m->flags == flag)
@@ -415,7 +415,7 @@ unsigned int mm_get_usage(int type, int used)
 
 #endif
 
-    return ret >> 6;
+    return (unsigned short int) (ret >> 6);
 }
 
 /* This is just to keep malloc et. al happy - it doesn't really do anything
@@ -444,8 +444,12 @@ int sys_brk(__pptr len)
  *	Initialise the memory manager.
  */
 
+#ifdef CONFIG_SWAP
+
 static struct buffer_head swap_buf;
 static dev_t swap_dev;
+
+#endif
 
 void mm_init(seg_t start, seg_t end)
 {

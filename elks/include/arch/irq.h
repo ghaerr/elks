@@ -25,20 +25,20 @@ enum {
     CM206_BH
 };
 
-extern void disable_irq(unsigned int);
-extern void enable_irq(unsigned int);
-extern void do_IRQ(int,void *);
+typedef unsigned short int irq_t;
+
+extern void disable_irq(irq_t);
+extern void enable_irq(irq_t);
+extern void do_IRQ(irq_t,void *);
 extern void restore_flags(flag_t);
-extern int request_irq(int,void (*),void *);
-extern void free_irq(unsigned int);
-
+extern void free_irq(irq_t);
 extern void init_IRQ(void);
-
 extern void do_bottom_half(void);
 
-extern int bh_mask_count[16];
-extern unsigned bh_active;
-extern unsigned bh_mask;
+extern irq_t request_irq(irq_t,void (*)(),void *);
+
+extern unsigned short int bh_mask_count[16], bh_active, bh_mask;
+
 extern void (*bh_base[16]) (void);
 
 /*@-namechecks@*/

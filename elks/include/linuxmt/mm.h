@@ -41,7 +41,7 @@ extern seg_t mm_dup(seg_t);
 
 extern void mm_free(seg_t);
 extern int do_swapper_run(struct task_struct *);
-extern unsigned int mm_get_usage(int,int);
+extern unsigned long int mm_get_usage(int,int);
 
 extern void fmemcpy();
 

@@ -19,6 +19,7 @@ void arch_boot(void)
 
 #else
 
+#ifndef S_SPLINT_S
 #asm
 
     .globl _arch_boot
@@ -38,5 +39,6 @@ _arch_boot:
     ret
 
 #endasm
+#endif
 
 #endif

@@ -40,6 +40,18 @@
 #ifndef __STRACE_H__
 #define __STRACE_H__
 
+#include <linuxmt/autoconf.h>
+
+#ifdef CONFIG_STRACE
+
+#include <linuxmt/types.h>
+#include <linuxmt/kernel.h>
+#include <linuxmt/debug.h>
+#include <linuxmt/config.h>
+#include <linuxmt/strace.h>
+#include <linuxmt/wait.h>
+#include <linuxmt/sched.h>
+
 struct syscall_info elks_table[] = {
     {  1, "sys_exit",            0, { P_NONE,     P_NONE,     P_NONE      } },
     {  2, "sys_fork",            0, { P_NONE,     P_NONE,     P_NONE      } },
@@ -119,5 +131,7 @@ struct syscall_info elks_table[] = {
 #endif
     {  0, "no_sys_call",         0, { P_NONE,     P_NONE,     P_NONE      } }
 };
+
+#endif
 
 #endif

@@ -25,6 +25,8 @@
  * use the ones here. 
  */
 
+/*@-namechecks@*/
+
 #ifdef CONFIG_SHORT_FILES
 
 #undef __NFDBITS
@@ -46,6 +48,8 @@ typedef __u16 __kernel_fd_set;
 typedef __u32 __kernel_fd_set;
 
 #endif
+
+/*@+namechecks@*/
 
 #include <arch/posix_types.h>
 
