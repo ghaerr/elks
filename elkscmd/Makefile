@@ -22,9 +22,9 @@ include $(BASEDIR)/Make.defs
 DIRS		= sys_utils ash bc byacc disk_utils file_utils levee \
 		  minix1 minix2 misc_utils sash sh_utils inet
 
-DONTWORK	= elvis
-
 DONTUSE 	= debug_utils lib m4 mtools prn-utils rc tools xvi
+
+DONTWORK	= elvis
 
 ###############################################################################
 #
@@ -42,12 +42,12 @@ all:
 	@for i in $(DIRS); do make -C $$i all ; done
 
 clean:
-	@for i in $(DIRS); do make -C $$i clean ; done
 	umount $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
 		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) || true
 	rm -f $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
-		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) boot images.zip
+		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) boot images.zip core
 	rm -rf rootfs_template $(ROOTDIR)
+	@for i in $(DIRS); do make -C $$i clean ; done
 	tar xf rootfs_template.tar
 
 ###############################################################################
@@ -59,6 +59,7 @@ MIN_LIB 	=
 MIN_SBIN	= 
 MIN_USR_BIN	= 
 MIN_USR_LIB	= 
+MIN_USR_MAN	= 
 MIN_USR_SBIN	= 
 
 NET_BIN 	= 
@@ -66,6 +67,7 @@ NET_LIB 	=
 NET_SBIN	= 
 NET_USR_BIN	= 
 NET_USR_LIB	= 
+NET_USR_MAN	= 
 NET_USR_SBIN	= 
 
 STD_BIN 	= 
@@ -73,6 +75,7 @@ STD_LIB 	=
 STD_SBIN	= 
 STD_USR_BIN	= 
 STD_USR_LIB	= 
+STD_USR_MAN	= 
 STD_USR_SBIN	= 
 
 include $(BASEDIR)/Make.rules

@@ -11,31 +11,35 @@
 # the current directory only:
 #
 #    MIN_BIN       Commands to be placed in /bin on all systems.
+#    MIN_LIB       Libraries to be placed in /lib on all systems.
 #    MIN_SBIN      Commands to be placed in /sbin on all systems.
 #    MIN_USR_BIN   Commands to be placed in /usr/bin on all systems.
 #    MIN_USR_LIB   Libraries to be placed in /usr/lib on all systems.
+#    MIN_USR_MAN   Manual pages included on all systems.
 #    MIN_USR_SBIN  Commands to be placed in /usr/sbin on all systems.
 #
 #    NET_BIN       Commands to be placed in /bin on networked systems.
+#    NET_LIB       Libraries to be placed in /lib on networked systems.
 #    NET_SBIN      Commands to be placed in /sbin on networked systems.
 #    NET_USR_BIN   Commands to be placed in /usr/bin on networked systems.
 #    NET_USR_LIB   Libraries to be placed in /usr/lib on networked systems.
+#    NET_USR_MAN   Manual pages included on networked installations.
 #    NET_USR_SBIN  Commands to be placed in /usr/sbin on networked systems.
 #
 #    STD_BIN       Commands to be placed in /bin on full installations.
+#    STD_LIB       Libraries to be placed in /lib on full installations.
 #    STD_SBIN      Commands to be placed in /sbin on full installations.
 #    STD_USR_BIN   Commands to be placed in /usr/bin on full installations.
 #    STD_USR_LIB   Libraries to be placed in /usr/lib on full installations.
+#    STD_USR_MAN   Manual pages included on full installations.
 #    STD_USR_SBIN  Commands to be placed in /usr/sbin on full installations.
 #
-#    USR_MAN       Manual pages included on full installations.
+# Note that manual pages are NOT automatically copied over when the relevant
+# program is copied, so need to be explicitly listed for copying over in the
+# relevant {MIN,NET,STD}_USR_MAN definition line.
 #
-# For each command that is copied across, any file matching *.? will also be
-# copied to /usr/man/man? (where the two ? characters are the same digit) if
-# a full installation is being done, but not otherwise.
-#
-# Note that the MIN_* values are implicitly included in the relevant NET_*
-# and STD_* values, so should be omitted from the latter.
+# Note also that the MIN_* values are implicitly included in the relevant
+# NET_* and STD_* values, so should be omitted from the latter.
 #
 ###############################################################################
 #
@@ -70,7 +74,7 @@ ROOTDIR=$(BASEDIR)/RootFS
 #
 # Command to copy the tree across.
 
-MKTREE	= $(BASEDIR)/tools/mktree $(TARGET_DIR)
+MKTREE	= $(BASEDIR)/tools/mktree $(TARGET_MNT)
 
 mkbase2:
 	$(MKTREE) /bin $(MIN_BIN)
@@ -78,6 +82,7 @@ mkbase2:
 	$(MKTREE) /sbin $(MIN_SBIN)
 	$(MKTREE) /usr/bin $(MIN_USR_BIN)
 	$(MKTREE) /usr/lib $(MIN_USR_LIB)
+	$(MKTREE) /usr/man $(MIN_USR_MAN)
 	$(MKTREE) /usr/sbin $(MIN_USR_SBIN)
 
 mkbase: mkbase2

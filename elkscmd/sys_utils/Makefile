@@ -6,33 +6,37 @@ include $(BASEDIR)/Make.defs
 #
 # Include standard packaging commands.
 
-MIN_BIN 	= getty init kill login mount passwd ps meminfo reboot umount
+MIN_BIN 	= kill login mount ps umount
 MIN_LIB 	= 
-MIN_SBIN	= clock exitemu
-MIN_USR_BIN	= 
+MIN_SBIN	= clock exitemu getty init reboot
+MIN_USR_BIN	= meminfo passwd
 MIN_USR_LIB	= 
-MIN_USR_SBIN	= 
+MIN_USR_MAN	= 
+MIN_USR_SBIN	= knl
 
 NET_BIN 	= 
 NET_LIB 	= 
 NET_SBIN	= 
 NET_USR_BIN	= 
 NET_USR_LIB	= 
+NET_USR_MAN	= 
 NET_USR_SBIN	= 
 
-STD_BIN 	= who
+STD_BIN 	= 
 STD_LIB 	= 
 STD_SBIN	= 
-STD_USR_BIN	= man
+STD_USR_BIN	= man who
 STD_USR_LIB	= 
+STD_USR_MAN	= clock.8 getty.1 kill.1 knl.8 login.1 man.1 mount.8 \
+		  passwd.1 ps.1 reboot.8 umount.8 who.1
 STD_USR_SBIN	= 
 
 include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS=getty kill man mount reboot umount clock exitemu who \
-	init login passwd ps
+PRGS=getty kill man mount reboot umount clock exitemu who init login passwd \
+	ps knl
 
 NETPRGS=init getty login kill mount umount passwd reboot ps meminfo who
 
@@ -74,7 +78,7 @@ getty: getty.c
 	$(CC) $(CFLAGS) $(LDFLAGS) getty.c -o getty -H 1800
 
 meminfo: meminfo.c
-	        $(CC) $(CFLAGS) $(LDFLAGS) meminfo.c -o meminfo -H 100
+	$(CC) $(CFLAGS) $(LDFLAGS) meminfo.c -o meminfo -H 100
 
 new_init: init.c utent.o
 	$(CC) $(CFLAGS) $(LDFLAGS) init.c utent.o -o init

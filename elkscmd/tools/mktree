@@ -8,17 +8,23 @@
 #
 ###############################################################################
 #
-# If no commands listed, then just exit - this is NOT an error.
+# Analyse the number of parameters supplied.
 
-if [ $# -lt 3 ]; then
-    exit 0
+if [ $# -lt 2 ]; then
+    echo Usage: `basename "$0"` base dir '[cmd]...' >&2
+    exit 255
+fi
+
+if [ $# -eq 2 ]; then
+    exit 0			# Empty command list - NOT an error.
 fi
 
 ###############################################################################
 #
 # Specify the directories to use.
 
-DIR=`echo "$1"/"$2" | tr -s /`
+DIR=`echo "$1"/"$2" | tr -s / | sed 's=/$=='`
+MAN=`echo "$1"/usr/man | tr -s /`
 shift 2
 
 ###############################################################################
@@ -30,11 +36,11 @@ if [ -e "${DIR}" -a ! -d "${DIR}" ]; then
 		`basename "$0"` "${DIR}"
     exit 1
 fi
-if [ "${DIR}" = "/usr/man" ]; then
-    for THIS in "${DIR}"/man{1,2,3,4,5,6,7,8,9} ; do
+if [ "${DIR}" = "${MAN}" ]; then
+    for THIS in "${MAN}"/man{1,2,3,4,5,6,7,8,9,n} ; do
 	if [ -e "${THIS}" -a ! -d "${THIS}" ]; then
 	    printf '%s: ERROR 2: Not a directory: %s\n' >&2 \
-		`basename "$0"` "${THIS}"
+			`basename "$0"` "${THIS}"
 	    exit 2
 	fi
     done
@@ -42,13 +48,9 @@ fi
 
 ###############################################################################
 #
-# Ensure they exist, along with all required parent directories.
+# Ensure the target directory exists.
 
-if [ "${DIR}" != "/usr/man" ]; then
-    mkdir -p "${DIR}"
-else
-    mkdir -p "${DIR}"/man{1,2,3,4,5,6,7,8,9}
-fi
+mkdir -p "${DIR}"
 
 ###############################################################################
 #
@@ -64,23 +66,35 @@ function needed() {
 #
 # Copy the commands as listed.
 
-if [ "${DIR}" != "/usr/man" -o "$1" != "ALL" ]; then
-    for CMD do
-	if [ -f "${CMD}" ]; then
-	    cp -fv "${CMD}" "${DIR}"
+if [ "${DIR}" != "${MAN}" ]; then
+    for FILE do
+	if [ -f "${FILE}" ]; then
+	    cp -fv "${FILE}" "${DIR}"/
 	else
 	    printf '%s: WARNING: Skipping missing command: %s\n' >&2 \
-		`basename "$0"` "${CMD}"
+		`basename "$0"` "${FILE}"
 	fi
     done
 else
-    for MAN in *.[1-9] . ; do
-	if [ -f "${MAN}" ] && needed "${DIR}" "${MAN}" ; then
-	    TGT=`echo "${MAN}" | rev | cut -b 1`
-	    cp -fv "${MAN}" "${MAN_DIR}"/man${TGT}
+    for FILE do
+	if [ -f "${FILE}" ]; then
+	    SUB=`echo "${FILE}" | rev | cut -b 1`
+	    if [ ! -e "${MAN}"/"man${SUB}" ]; then
+		mkdir "${MAN}"/"man${SUB}"
+	    fi
+	    cp -fv "${FILE}" "${MAN}"/"man${SUB}"/
+	else
+	    printf '%s: WARNING: Skipping missing manual page: %s\n' >&2 \
+		`basename "$0"` "${FILE}"
 	fi
     done
 fi
+
+###############################################################################
+#
+# Finished.
+
+echo 'Finished - at last!!'
 
 ###############################################################################
 # EOF #
