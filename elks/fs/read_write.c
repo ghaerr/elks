@@ -60,7 +60,7 @@ unsigned int origin;
 		file->f_version = ++event;
 #endif
 	}
-	return 0;
+	return tmp;
 }
 
 /* fd_check -- validate file descriptor

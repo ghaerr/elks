@@ -183,6 +183,36 @@ inet_socketpair()
 	printd_inet("inet_sockpair\n");
 }
 
+#ifndef CONFIG_SOCK_CLIENTONLY
+static int inet_listen(sock, backlog)
+struct socket *sock;
+int backlog;
+{	
+	struct tdb_return_data *ret_data;
+	struct tdb_listen cmd;
+	int ret;
+
+	printd_inet1("inet_listen(socket : 0x%x)\n", sock);		
+	cmd.cmd	= TDC_LISTEN;
+	cmd.sock = sock;
+	cmd.backlog = backlog;
+	
+	tcpdev_inetwrite(&cmd, sizeof(struct tdb_listen));
+	
+	/* Sleep until tcpdev has news */
+	while(bufin_sem == 0){
+		interruptible_sleep_on(sock->wait);
+		if(current->signal)
+			return -ERESTARTSYS;
+	}
+	
+	ret_data = tdin_buf;
+	ret = ret_data->ret_value;
+	tcpdev_clear_data_avail();
+	
+	return ret;
+}
+
 static int inet_accept(sock, newsock, flags)
 struct socket *sock;
 struct socket *newsock;
@@ -221,6 +251,8 @@ int flags;
 	
 	return 0;
 }
+
+#endif
 
 inet_getname()
 {
@@ -352,35 +384,6 @@ inet_ioctl()
 	printd_inet("inet_ioctl\n");
 }
 
-static int inet_listen(sock, backlog)
-struct socket *sock;
-int backlog;
-{	
-	struct tdb_return_data *ret_data;
-	struct tdb_listen cmd;
-	int ret;
-
-	printd_inet1("inet_listen(socket : 0x%x)\n", sock);		
-	cmd.cmd	= TDC_LISTEN;
-	cmd.sock = sock;
-	cmd.backlog = backlog;
-	
-	tcpdev_inetwrite(&cmd, sizeof(struct tdb_listen));
-	
-	/* Sleep until tcpdev has news */
-	while(bufin_sem == 0){
-		interruptible_sleep_on(sock->wait);
-		if(current->signal)
-			return -ERESTARTSYS;
-	}
-	
-	ret_data = tdin_buf;
-	ret = ret_data->ret_value;
-	tcpdev_clear_data_avail();
-	
-	return ret;
-}
-
 inet_shutdown()
 {
 	printd_inet("inet_shutdown\n");
@@ -446,13 +449,21 @@ static struct proto_ops inet_proto_ops = {
         inet_bind,
         inet_connect,
         inet_socketpair,
+#ifdef CONFIG_SOCK_CLIENTONLY
+	NULL,
+#else
         inet_accept,
+#endif
         inet_getname,
         inet_read,
         inet_write,
         inet_select,
         inet_ioctl,
-        inet_listen,
+#ifdef CONFIG_SOCK_CLIENTONLY
+        NULL,
+#else
+	inet_listen,
+#endif
 	inet_send,
 	inet_recv,
 	inet_sendto,

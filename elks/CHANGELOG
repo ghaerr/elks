@@ -29,6 +29,12 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Fri Nov 23 19:34:28 EET 2001 Harry Kalogirou <harkal@gmx.net>
+
+	* Fixed sys_lseek() to correctly return the resulting offset
+	  location.
+	* Made inet aware of CONFIG_SOCK_CLIENTONLY.
+
 Fri Nov 23 15:36:00 EET 2001 Harry Kalogirou <harkal@gmx.net>
 
 	* Fixed the "minix header" bug.
