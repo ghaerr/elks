@@ -8,19 +8,21 @@
 /* for reference
  * /dev/mem refers to physical memory
  * /dev/kmem refers to _virtual_ address space
- * Currently these will be the same, bu eventually, once ELKS has
+ * Currently these will be the same, but eventually, once ELKS has
  * EMS, etc, we'll want to change these.
  */
 
 #include <linuxmt/config.h>
 
 #ifdef CONFIG_CHAR_DEV_MEM
+
 #include <linuxmt/major.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/mem.h>
+
 #include <arch/segment.h>
 
 #define DEV_MEM_MINOR		1
@@ -28,6 +30,7 @@
 #define DEV_NULL_MINOR		3
 #define DEV_PORT_MINOR		4
 #define DEV_ZERO_MINOR		5
+
 #define DEV_FULL_MINOR		7
 #define DEV_RANDOM_MINOR	8
 #define DEV_URANDOM_MINOR	9
@@ -253,7 +256,7 @@ char *arg;
 			memcpy_tofs(arg, &i, 2);
 #if 0
 		/* Include this code to make ps dump memory info */
-		/* The dmem() function must also ne included in */
+		/* The dmem() function must also be included in */
 		/* arch/i86/mm/malloc.c */
 			dmem();
 #endif
@@ -310,13 +313,24 @@ register struct file * filp;
 			printd_mem("zero!\n");
 			return 0;
 		case DEV_KMEM_MINOR:
-		case DEV_MEM_MINOR: /* for now - assumes virt mem == phys mem */
+		case DEV_MEM_MINOR: /* assumes virt mem == phys mem */
 			filp->f_op = & kmem_fops;
 			printd_mem("kmem!\n");
 			return 0;
+#if 0
+		case DEV_PORT_MINOR:
+			printd_mem("port! (Not supported)\n");
+			return -ENXIO;
+		case DEV_RANDOM_MINOR:
+			printd_mem("random! (Not supported)\n");
+			return -ENXIO;
+		case DEV_URANDOM_MINOR:
+			printd_mem("urandom! (Not supported)\n");
+			return -ENXIO;
+#endif
 		default:
-	printd_mem("???\n");
-		return -ENXIO;
+			printd_mem("???\n");
+			return -ENXIO;
 	}
 }
 
