@@ -26,7 +26,10 @@ This seems to be due to the following line in V1_trunc_direct
 +               p = inode->i_zone[i];
 
 The botton version being the ELKS version, the top one is the Linux version.
-The two don't seem to bear any relation to each other.
+The two don't seem to bear any relation to each other. This has now nearly been fixed by chenging the above line to:-
+		p = &inode->i_zone[i];
+But blocks are still not freed when the fs is checked later, and neither is the inode! Looking through truncate.c, and minix_free_block, there is heavy use
+of longs which are just not necessary.
 
 
 Adding register variables to schedule causes a the chq wait queue to get 

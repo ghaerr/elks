@@ -324,7 +324,7 @@ REGOPT struct timeval * tvp;
 		(fd_set *) &res_in,
 		(fd_set *) &res_out,
 		(fd_set *) &res_ex);
-	/*printk("quack quack: sys_select called, timeout=%d.\n", timeout);*/
+	printk("quack quack: sys_select called, timeout=%d.\n", timeout);
 	timeout = current->timeout - jiffies - 1;
 	current->timeout = 0;
 	if ((long) timeout < 0)
@@ -347,7 +347,7 @@ REGOPT struct timeval * tvp;
 	set_fd_set(n, outp, &res_out);
 	set_fd_set(n, exp, &res_ex);
 out:
-	/*printk("returning %d\n", error);*/
+	printk("returning %d\n", error);
 	return error;
 }
 

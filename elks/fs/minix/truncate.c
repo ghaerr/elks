@@ -38,13 +38,13 @@ register struct inode * inode;
 {
 	unsigned short * p;
 	register struct buffer_head * bh;
-	int i, tmp;
+	unsigned int i, tmp;
 	int retry = 0;
 
 repeat:
 	for (i = DIRECT_BLOCK ; i < 7 ; i++) {
-		p = inode->i_zone[i];
-/*		printk("P = %x\n*P = %x\n", p, *p); */
+		p = &inode->i_zone[i];
+		printk("P = %x\n*P = %x\n", p, *p);
 		if (!(tmp = *p))
 			continue;
 		bh = get_hash_table(inode->i_dev,(unsigned long)tmp);
@@ -63,7 +63,7 @@ repeat:
 			mark_buffer_clean(bh);
 			brelse(bh);
 		}
-/*		printk("Freeing block %x\n", tmp); */
+		printk("Freeing block %x\n", tmp);
 		minix_free_block(inode->i_sb,(unsigned long)tmp);
 	}
 	return retry;
@@ -195,8 +195,8 @@ register struct inode * inode;
 		return;
 	while (1) {
 		retry = V1_trunc_direct(inode);
-		retry |= V1_trunc_indirect(inode, 7, inode->i_zone[7]);
-		retry |= V1_trunc_dindirect(inode, 7+512, inode->i_zone[8]);
+		retry |= V1_trunc_indirect(inode, 7, &inode->i_zone[7]);
+		retry |= V1_trunc_dindirect(inode, 7+512, &inode->i_zone[8]);
 		if (!retry)
 			break;
 		current->counter = 0;

@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Wed Nov 19 17:39 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fix to minix truncate code. See BUGS.
+
 Tue Nov 18 11:42 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Tweaked select so it now passes 5 parameters in the normal way.
