@@ -60,7 +60,7 @@ static struct msdos_exec_hdr mshdr;
 /*
  *	FIXME: Semaphore on entry needed.
  */
-#ifndef CONFIG_NOFS 
+
 int sys_execve(filename,sptr,slen)
 char *filename;
 char *sptr;
@@ -76,10 +76,8 @@ int slen;		/* Size of built stack */
 	size_t count;
 	int i;
 	seg_t stack_top = 0;
-#ifdef CONFIG_EXEC_SUGID
 	unsigned int effuid, effgid;
 	int suidfile, sgidfile;
-#endif
 	register struct file * filp = &file;
 	__registers * tregs;
 
@@ -129,14 +127,14 @@ int slen;		/* Size of built stack */
 	tregs = &current->t_regs;
 	tregs->ds=get_ds();
 	filp->f_pos=0; /* FIXME - should call lseek */
-#ifdef CONFIG_EXEC_SUGID
- /* can I trust the following fields?
-  */
+
+	/*
+	 *	can I trust the following fields?
+	 */
 	suidfile = inode->i_mode & S_ISUID;
 	sgidfile = inode->i_mode & S_ISGID;
 	effuid = inode->i_uid;
 	effgid = inode->i_gid;
-#endif
 
 	result=filp->f_op->read(inode, &file, &mh, sizeof(mh));
 	tregs->ds=ds;
@@ -300,30 +298,18 @@ blah:
 	 * right after argc.  This fixes them up so that the loaded program
 	 * gets the right strings. */
 
-#if 0
-	nzero = 0; i = ptr + 2;
-	while (nzero < 2) {
-		if ((tmp = peekw(dseg, i)) != 0) {
-			pokew(dseg, i, tmp + ptr);
-		} else {
-			nzero++;
-		}
-		i += 2;
-	}; 
-#else
 	{
-	int *p, nzero = 0, tmp;
-	p = (int *) ptr;
-	while (nzero < 2) {
-		p++;
-		if ((tmp = peekw(dseg, p)) != 0) {
-			pokew(dseg, p, tmp + (int)ptr);
-		} else {
-			nzero++; /* increments for each array traveresed */
+		int *p, nzero = 0, tmp;
+		p = (int *) ptr;
+		while (nzero < 2) {
+			p++;
+			if ((tmp = peekw(dseg, p)) != 0) {
+				pokew(dseg, p, tmp + (int)ptr);
+			} else {
+				nzero++; /* increments for each array traveresed */
+			}
 		}
-	};
 	}
-#endif
 
 	/*
 	 *	Now flush the old binary out.
@@ -363,29 +349,14 @@ blah:
 	tregs->ss=dseg;
 	tregs->sp=ptr;	/* Just below the arguments */ 
 	current->t_begstack=ptr;
-#if 0
-	current->t_endbrk=current->t_enddata=mh.dseg+mh.bseg;
-#endif
 	current->t_endbrk=(__pptr)(mh.dseg+mh.bseg+stack_top);
 	current->t_enddata=(__pptr)(mh.dseg + stack_top);	/* Needed for sys_brk() */
-#if 0
-	if (stack_top) {
-		current->t_endstack=(__pptr)stack_top;
-	} else {
-		current->t_endstack=(__pptr)len;	/* with 64K = 0000 but that's OK */
-	}
-#endif
 	current->t_endseg=(__pptr)len;
- 
-/* Decrease reference count of old text inode and assign the new one - tgm */
- 	iput(current->t_inode); 
 	current->t_inode=inode;
-
 	arch_setup_kernel_stack(current);
 
-#ifdef CONFIG_EXEC_SUGID
- /* this could be a good place to set the effective user identifier
-  * in case the suid bit of the executable had been set */
+	/* this could be a good place to set the effective user identifier
+	 * in case the suid bit of the executable had been set */
 
 	if(suidfile) {
 		current->euid = effuid;
@@ -393,8 +364,6 @@ blah:
 	if(sgidfile) {
 		current->egid = effgid;
 	}
-#endif
-
 
 	retval = 0;
 	wake_up(&current->p_parent->child_wait);
@@ -416,116 +385,10 @@ end_readexec:
 	printd_exec1("EXEC: Returning %d\n", retval);
 	return retval;
 }
-#else
-int sys_execve(filename,sptr,slen)
-char *filename;
-char *sptr;
-int slen;		/* Size of built stack */
-{
-	return -ENOSYS;
-}
-#endif
 
 #if CONFIG_SHLIB
 
 static struct dll_entry dll[MAX_DLLS];
-
-#if 0 /* Old bad way of loading dlls */
-unsigned short sys_dlload(filename)
-char * filename;
-{
-	int retval,i,dno=-1;
-	struct inode *inode;
-	struct file * filp = &file;
-	unsigned short size;
-	unsigned short cseg = 0;
-	unsigned short ds=current->t_regs.ds;
-	unsigned int result;
-	__registers * tregs;
-
-	printk("DLLOAD: opening dll file.\n");
-	
-	retval = open_namei(filename, 0, 0, &inode, NULL);
-
-	printk("DLLOAD: open returned %d\n", retval);
-	if (retval)
-		return retval;
-
-	printk("DLLOAD: building file handler\n");
-
-	filp->f_mode=1;
-	filp->f_flags=0;
-	filp->f_count=1;
-	filp->f_inode=inode;
-	filp->f_pos=0;
-	filp->f_op = inode->i_op->default_file_ops;
-	retval=-ENOEXEC;
-	if(!filp->f_op)
-		goto end_readexec;
-	if(filp->f_op->open)
-		if(filp->f_op->open(inode,&file))
-			goto end_readexec;
-	if(!filp->f_op->read)
-		goto close_readexec;
-
-	if (inode->i_size > 65535L) {
-		goto close_readexec;
-		printk("DLLOAD: Too big\n");
-	}
-	size = (unsigned short)inode->i_size;
-	printk("DLLOAD: The file is %d bytes.\n",size);
-
-
-	for (i = 0; i < MAX_DLLS; i++) {
-		printk("Found dll no. %d, %s.\n", i, dll[i].d_state ? "used" : "unused");
-		if ((dll[i].d_state == DLL_USED) && (dll[i].d_inode == inode)) {			printk("DLLOAD: dll no. %d is the one we want to load, leave it then.\n");
-			cseg = dll[i].d_cseg;
-			break;
-		}
-		if (dll[i].d_state != DLL_USED) {
-			dno = i;
-		}
-	}
-
-	if (dno == -1) {
-		printk("DLLOAD: No free lib slots.\n");
-		retval = -ENOMEM;
-		goto close_readexec;
-	}
-
-	if (!cseg) {
-		printk("DLLOAD: Mallocing some RAM for the dll.\n");
-		cseg = mm_alloc((segext_t)((size+15)>>4));
-		if (!cseg) {
-			printk("DLLOAD: No memory.\n");
-			retval=-ENOMEM;
-			goto close_readexec;
-		}
-		tregs = &current->t_regs;
-		tregs->ds=cseg;
-		result = filp->f_op->read(inode, &file, 0, size);
-		tregs->ds=ds;
-		if (result!=size) {
-			printk("DLLOAD: Bad read expected %d got %d.\n",size, result);
-			mm_free(cseg);
-			goto close_readexec;
-		}
-		dll[dno].d_state = DLL_USED;
-		dll[dno].d_cseg = cseg;
-		dll[dno].d_inode = inode;
-	}
-	printk("DLLOAD: Returning code seg %d.\n",cseg);
-	return cseg;
-
-close_readexec:
-	if(filp->f_op->release)
-		filp->f_op->release(inode,&file);
-end_readexec:
-
-	return retval;
-}
-
-#else /* New good way of loading text and data dlls */
 
 unsigned short sys_dlload(filename, dll_cseg)
 char * filename;
@@ -659,5 +522,4 @@ end_readexec:
 	return retval;
 }
 
-#endif /* 0 */
 #endif /* CONFIG_SHLIB */

@@ -32,7 +32,6 @@ static struct device_struct chrdevs[MAX_CHRDEV] =
 #endif
 };
 
-#ifndef CONFIG_NOFS
 static struct device_struct blkdevs[MAX_BLKDEV] = {
 #ifdef CONFIG_DEV_NAMES
 	{ NULL, NULL },
@@ -40,32 +39,7 @@ static struct device_struct blkdevs[MAX_BLKDEV] = {
 	{ NULL },
 #endif
 };
-#endif
 
-#ifdef ONE_DAY_IN_THE_FUTURE
-int get_device_list(page)
-register char *page;
-{
-	int i;
-	int len;
-
-	len = sprintf(page, "Character devices:\n");
-	for (i = 0; i < MAX_CHRDEV ; i++) {
-		if (chrdevs[i].ds_fops) {
-			len += sprintf(page+len, "%2d %s\n", i, chrdevs[i].ds_name);
-		}
-	}
-	len += sprintf(page+len, "\nBlock devices:\n");
-	for (i = 0; i < MAX_BLKDEV ; i++) {
-		if (blkdevs[i].ds_fops) {
-			len += sprintf(page+len, "%2d %s\n", i, blkdevs[i].ds_name);
-		}
-	}
-	return len;
-}
-#endif
-
-#ifndef CONFIG_NOFS
 struct file_operations * get_blkfops(major)
 unsigned int major;
 {
@@ -73,16 +47,7 @@ unsigned int major;
 		return NULL;
 	return blkdevs[major].ds_fops;
 }
-#endif
-#if 0
-struct file_operations * get_chrfops(major)
-unsigned int major;
-{
-	if (major >= MAX_CHRDEV)
-		return NULL;
-	return chrdevs[major].ds_fops;
-}
-#endif
+
 int register_chrdev(major,name, fops)
 unsigned int major;
 char * name;
@@ -90,20 +55,6 @@ register struct file_operations *fops;
 {
 	register struct device_struct * dev = &chrdevs[major];
 
-#ifdef CONFIG_DEV_ASSIGNMAJOR
-	if (major == 0) {
-		for (major = MAX_CHRDEV-1; major > 0; major--) {
-			if (dev->ds_fops == NULL) {
-#ifdef CONFIG_DEV_NAMES
-				dev->ds_name = name;
-#endif
-				dev->ds_fops = fops;
-				return major;
-			}
-		}
-		return -EBUSY;
-	}
-#endif /* CONFIG_DEV_ASSIGNMAJOR */
 	if (major >= MAX_CHRDEV) {
 		return -EINVAL;
 	}
@@ -117,7 +68,6 @@ register struct file_operations *fops;
 	return 0;
 }
 
-#ifndef CONFIG_NOFS
 int register_blkdev(major,name,fops)
 unsigned int major;
 char * name;
@@ -125,20 +75,6 @@ register struct file_operations *fops;
 {
 	register struct device_struct * dev = &blkdevs[major];
 
-#ifdef CONFIG_DEV_ASSIGNMAJOR
-	if (major == 0) {
-		for (major = MAX_BLKDEV-1; major > 0; major--) {
-			if (dev->ds_fops == NULL) {
-#ifdef CONFIG_DEV_NAMES
-				dev->ds_name = name;
-#endif
-				dev->ds_fops = fops;
-				return major;
-			}
-		}
-		return -EBUSY;
-	}
-#endif /* CONFIG_DEV_ASSIGNMAJOR */
 	if (major >= MAX_BLKDEV)
 		return -EINVAL;
 	if (dev->ds_fops && dev->ds_fops != fops)
@@ -149,42 +85,7 @@ register struct file_operations *fops;
 	dev->ds_fops = fops;
 	return 0;
 }
-#endif
-#if 0
-int unregister_chrdev(major,name)
-unsigned int major;
-char * name;
-{
-	if (major >= MAX_CHRDEV)
-		return -EINVAL;
-	if (!chrdevs[major].ds_fops)
-		return -EINVAL;
-#ifdef CONFIG_DEV_NAMES
-	if (strcmp(chrdevs[major].ds_name, name))
-		return -EINVAL;
-	chrdevs[major].ds_name = NULL;
-#endif
-	chrdevs[major].ds_fops = NULL;
-	return 0;
-}
 
-int unregister_blkdev(major,name)
-unsigned int major;
-char * name;
-{
-	if (major >= MAX_BLKDEV)
-		return -EINVAL;
-	if (!blkdevs[major].ds_fops)
-		return -EINVAL;
-#ifdef CONFIG_DEV_NAMES
-	if (strcmp(blkdevs[major].ds_name, name))
-		return -EINVAL;
-	blkdevs[major].ds_name = NULL;
-#endif
-	blkdevs[major].ds_fops = NULL;
-	return 0;
-}
-#endif
 /*
  * This routine checks whether a removable media has been changed,
  * and invalidates all buffer-cache-entries in that case. This
@@ -226,7 +127,7 @@ kdev_t dev;
 /*
  * Called every time a block special file is opened
  */
-#ifndef CONFIG_NOFS
+
 int blkdev_open(inode,filp)
 register struct inode * inode;
 register struct file * filp;
@@ -278,7 +179,6 @@ struct inode_operations blkdev_inode_operations = {
 	NULL			/* permission */
 #endif
 };
-#endif
 
 /*
  * Called every time a character special file is opened
