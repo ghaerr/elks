@@ -1,6 +1,18 @@
 
-VERSION 0.0.85 NOTES
+VERSION 0.0.87 NOTES
 --------------------
+
+	Fixes in V7 sleep-wake affected areas.
+	Added TCP/IP, SLIP support.
+	Added semaphores.
+	Upgraded "menuconfig" to the one used by our big brother.
+	Rearrangement of documentation.
+	New keymap system.
+	Changes in nano and unix sockets to use semaphores
+	General source and makefile rationalisations.
+	Code optimisations to reduce size.
+	And many, many more small bug fixes
+	
 
 VERSION 0.0.84 NOTES
 --------------------
