@@ -9,6 +9,7 @@
  *   [It also happened to remove the sizeof(char *) == sizeof(int)
  *   assumption introduced because of those /proc/dma patches. -- Hennus]
  */
+
 #include <linuxmt/config.h>
 
 #ifdef CONFIG_DMA
@@ -18,7 +19,6 @@
 #include <linuxmt/errno.h>
 #include <arch/dma.h>
 #include <arch/system.h>
-
 
 /* A note on resource allocation:
  *
@@ -35,96 +35,86 @@
  * in the kernel.
  */
 
-
-
 /* Channel n is busy iff dma_chan_busy[n].lock != 0.
  * DMA0 used to be reserved for DRAM refresh, but apparently not any more...
  * DMA4 is reserved for cascading.
  */
 
 struct dma_chan {
-	int  lock;
-	char *device_id;
+    int lock;
+    char *device_id;
 };
 
 static struct dma_chan dma_chan_busy[MAX_DMA_CHANNELS] = {
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 1, "cascade" },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 }
+    {0, 0},
+    {0, 0},
+    {0, 0},
+    {0, 0},
+    {1, "cascade"},
+    {0, 0},
+    {0, 0},
+    {0, 0}
 };
 
 #ifdef ONE_DAY
+
 int get_dma_list(char *buf)
 {
-	int i, len = 0;
+    int i, len = 0;
 
-	for (i = 0 ; i < MAX_DMA_CHANNELS ; i++) {
-		if (dma_chan_busy[i].lock) {
-		    len += sprintf(buf+len, "%2d: %s\n",
-				   i,
-				   dma_chan_busy[i].device_id);
-		}
-	}
-	return len;
-} /* get_dma_list */
+    for (i = 0; i < MAX_DMA_CHANNELS; i++)
+	if (dma_chan_busy[i].lock)
+	    len += sprintf(buf + len, "%2d: %s\n",
+			   i, dma_chan_busy[i].device_id);
+    return len;
+}				/* get_dma_list */
+
 #endif
 
-
-int request_dma(dmanr,device_id)
-unsigned int dmanr;
-char * device_id;
+int request_dma(unsigned int dmanr, char *device_id)
 {
-	if (dmanr >= MAX_DMA_CHANNELS)
-		return -EINVAL;
+    if (dmanr >= MAX_DMA_CHANNELS)
+	return -EINVAL;
 
-	if (xchg(&dma_chan_busy[dmanr].lock, 1) != 0)
-		return -EBUSY;
+    if (xchg(&dma_chan_busy[dmanr].lock, 1) != 0)
+	return -EBUSY;
 
-	dma_chan_busy[dmanr].device_id = device_id;
+    dma_chan_busy[dmanr].device_id = device_id;
 
-	/* old flag was 0, now contains 1 to indicate busy */
-	return 0;
-} /* request_dma */
+    /* old flag was 0, now contains 1 to indicate busy */
+    return 0;
+}				/* request_dma */
 
-
-void free_dma(dmanr)
-unsigned int dmanr;
+void free_dma(unsigned int dmanr)
 {
-	if (dmanr >= MAX_DMA_CHANNELS) {
-		printk("Trying to free DMA%u\n", dmanr);
-		return;
-	}
+    if (dmanr >= MAX_DMA_CHANNELS) {
+	printk("Trying to free DMA%u\n", dmanr);
+	return;
+    }
 
-	if (xchg(&dma_chan_busy[dmanr].lock, 0) == 0) {
-		printk("Trying to free free DMA%u\n", dmanr);
-		return;
-	}	
+    if (xchg(&dma_chan_busy[dmanr].lock, 0) == 0) {
+	printk("Trying to free free DMA%u\n", dmanr);
+	return;
+    }
 
-} /* free_dma */
+}				/* free_dma */
 
 /* enable/disable a specific DMA channel */
 
-void enable_dma(dmanr)
-unsigned int dmanr;
+void enable_dma(unsigned int dmanr)
 {
-	if (dmanr<=3)
-		dma_outb(dmanr,  DMA1_MASK_REG);
-	else
-		dma_outb(dmanr & 3,  DMA2_MASK_REG);
+    if (dmanr <= 3)
+	dma_outb(dmanr, DMA1_MASK_REG);
+    else
+	dma_outb(dmanr & 3, DMA2_MASK_REG);
 }
 
-void disable_dma(dmanr)
-unsigned int dmanr;
+void disable_dma(unsigned int dmanr)
 {
-	if (dmanr<=3)
-		dma_outb(dmanr | 4,  DMA1_MASK_REG);
-	else
-		dma_outb((dmanr & 3) | 4,  DMA2_MASK_REG);
+    if (dmanr <= 3)
+	dma_outb(dmanr | 4, DMA1_MASK_REG);
+    else
+	dma_outb((dmanr & 3) | 4, DMA2_MASK_REG);
 }
 
 /* Clear the 'DMA Pointer Flip Flop'.
@@ -135,24 +125,22 @@ unsigned int dmanr;
  * --- only be used while interrupts are disabled! ---
  */
 
-void clear_dma_ff(dmanr)
-unsigned int dmanr;
+void clear_dma_ff(unsigned int dmanr)
 {
-	if (dmanr<=3)
-		dma_outb(0,  DMA1_CLEAR_FF_REG);
-	else
-		dma_outb(0,  DMA2_CLEAR_FF_REG);
+    if (dmanr <= 3)
+	dma_outb(0, DMA1_CLEAR_FF_REG);
+    else
+	dma_outb(0, DMA2_CLEAR_FF_REG);
 }
 
 /* set mode (above) for a specific DMA channel */
-void set_dma_mode(dmanr,mode)
-unsigned int dmanr;
-char mode;
+
+void set_dma_mode(unsigned int dmanr, char mode)
 {
-	if (dmanr<=3)
-		dma_outb(mode | dmanr,  DMA1_MODE_REG);
-	else
-		dma_outb(mode | (dmanr&3),  DMA2_MODE_REG);
+    if (dmanr <= 3)
+	dma_outb(mode | dmanr, DMA1_MODE_REG);
+    else
+	dma_outb(mode | (dmanr & 3), DMA2_MODE_REG);
 }
 
 /* Set only the page register bits of the transfer address.
@@ -160,53 +148,49 @@ char mode;
  * the lower 16 bits of the DMA current address register, but a 64k boundary
  * may have been crossed.
  */
-void set_dma_page(dmanr,pagenr)
-unsigned int dmanr;
-char pagenr;
-{
-	switch(dmanr) {
-		case 0:
-			dma_outb(pagenr, DMA_PAGE_0);
-			break;
-		case 1:
-			dma_outb(pagenr, DMA_PAGE_1);
-			break;
-		case 2:
-			dma_outb(pagenr, DMA_PAGE_2);
-			break;
-		case 3:
-			dma_outb(pagenr, DMA_PAGE_3);
-			break;
-		case 5:
-			dma_outb(pagenr & 0xfe, DMA_PAGE_5);
-			break;
-		case 6:
-			dma_outb(pagenr & 0xfe, DMA_PAGE_6);
-			break;
-		case 7:
-			dma_outb(pagenr & 0xfe, DMA_PAGE_7);
-			break;
-	}
-}
 
+void set_dma_page(unsigned int dmanr, char pagenr)
+{
+    switch (dmanr) {
+    case 0:
+	dma_outb(pagenr, DMA_PAGE_0);
+	break;
+    case 1:
+	dma_outb(pagenr, DMA_PAGE_1);
+	break;
+    case 2:
+	dma_outb(pagenr, DMA_PAGE_2);
+	break;
+    case 3:
+	dma_outb(pagenr, DMA_PAGE_3);
+	break;
+    case 5:
+	dma_outb(pagenr & 0xfe, DMA_PAGE_5);
+	break;
+    case 6:
+	dma_outb(pagenr & 0xfe, DMA_PAGE_6);
+	break;
+    case 7:
+	dma_outb(pagenr & 0xfe, DMA_PAGE_7);
+	break;
+    }
+}
 
 /* Set transfer address & page bits for specific DMA channel.
  * Assumes dma flipflop is clear.
  */
-void set_dma_addr(dmanr,a)
-unsigned int dmanr;
-unsigned int a;
-{
-	set_dma_page(dmanr, a>>16);
-	if (dmanr <= 3)  {
-	    dma_outb( a & 0xff, ((dmanr&3)<<1) + IO_DMA1_BASE );
-            dma_outb( (a>>8) & 0xff, ((dmanr&3)<<1) + IO_DMA1_BASE );
-	}  else  {
-	    dma_outb( (a>>1) & 0xff, ((dmanr&3)<<2) + IO_DMA2_BASE );
-	    dma_outb( (a>>9) & 0xff, ((dmanr&3)<<2) + IO_DMA2_BASE );
-	}
-}
 
+void set_dma_addr(unsigned int dmanr, unsigned int addr)
+{
+    set_dma_page(dmanr, addr >> 16);
+    if (dmanr <= 3) {
+	dma_outb(addr & 0xff, ((dmanr & 3) << 1) + IO_DMA1_BASE);
+	dma_outb((addr >> 8) & 0xff, ((dmanr & 3) << 1) + IO_DMA1_BASE);
+    } else {
+	dma_outb((addr >> 1) & 0xff, ((dmanr & 3) << 2) + IO_DMA2_BASE);
+	dma_outb((addr >> 9) & 0xff, ((dmanr & 3) << 2) + IO_DMA2_BASE);
+    }
+}
 
 /* Set transfer size (max 64k for DMA1..3, 128k for DMA5..7) for
  * a specific DMA channel.
@@ -217,20 +201,17 @@ unsigned int a;
  * NOTE 2: "count" represents _bytes_ and must be even for channels 5-7.
  */
 
-void set_dma_count(dmanr,count)
-unsigned int dmanr;
-unsigned int count;
+void set_dma_count(unsigned int dmanr, unsigned int count)
 {
-        count--;
-	if (dmanr <= 3)  {
-	    dma_outb( count & 0xff, ((dmanr&3)<<1) + 1 + IO_DMA1_BASE );
-	    dma_outb( (count>>8) & 0xff, ((dmanr&3)<<1) + 1 + IO_DMA1_BASE );
-        } else {
-	    dma_outb( (count>>1) & 0xff, ((dmanr&3)<<2) + 2 + IO_DMA2_BASE );
-	    dma_outb( (count>>9) & 0xff, ((dmanr&3)<<2) + 2 + IO_DMA2_BASE );
-        }
+    count--;
+    if (dmanr <= 3) {
+	dma_outb(count & 0xff, ((dmanr & 3) << 1) + 1 + IO_DMA1_BASE);
+	dma_outb((count >> 8) & 0xff, ((dmanr & 3) << 1) + 1 + IO_DMA1_BASE);
+    } else {
+	dma_outb((count >> 1) & 0xff, ((dmanr & 3) << 2) + 2 + IO_DMA2_BASE);
+	dma_outb((count >> 9) & 0xff, ((dmanr & 3) << 2) + 2 + IO_DMA2_BASE);
+    }
 }
-
 
 /* Get DMA residue count. After a DMA transfer, this
  * should return zero. Reading this while a DMA transfer is
@@ -240,20 +221,19 @@ unsigned int count;
  *
  * Assumes DMA flip-flop is clear.
  */
- 
-int get_dma_residue(dmanr)
-unsigned int dmanr;
+
+int get_dma_residue(unsigned int dmanr)
 {
-	unsigned int io_port = (dmanr<=3)? ((dmanr&3)<<1) + 1 + IO_DMA1_BASE
-					 : ((dmanr&3)<<2) + 2 + IO_DMA2_BASE;
+    unsigned int io_port = (dmanr <= 3) ? ((dmanr & 3) << 1) + 1 + IO_DMA1_BASE
+	: ((dmanr & 3) << 2) + 2 + IO_DMA2_BASE;
 
-	/* using short to get 16-bit wrap around */
-	unsigned short count;
+    /* using short to get 16-bit wrap around */
+    unsigned short count;
 
-	count = 1 + dma_inb(io_port);
-	count += dma_inb(io_port) << 8;
-	
-	return (dmanr<=3)? count : (count<<1);
+    count = 1 + dma_inb(io_port);
+    count += dma_inb(io_port) << 8;
+
+    return (dmanr <= 3) ? count : (count << 1);
 }
 
 #endif

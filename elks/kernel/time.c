@@ -46,79 +46,76 @@ extern jiff_t jiffies;
 static struct timezone xzone;
 
 /* set the time of day */
-int sys_settimeofday(tv, tz)
-struct timeval *tv;
-register struct timezone *tz;
+int sys_settimeofday(struct timeval *tv, register struct timezone *tz)
 {
     int error;
     struct timeval tmp_tv;
     struct timezone tmp_tz;
     jiff_t now;
 
-  /* only user running as root can set the time */
-    if (current->euid != 0) {
-        return -EPERM;
-    }
+    /* only user running as root can set the time */
+    if (current->euid != 0)
+	return -EPERM;
 
-  /* verify we have valid addresses to read from */
+    /* verify we have valid addresses to read from */
     if (tv != NULL) {
-        if (error = verified_memcpy_fromfs(&tmp_tv, tv, sizeof(struct timeval)))
-		return error;
+	if (error =
+	    verified_memcpy_fromfs(&tmp_tv, tv, sizeof(struct timeval))) {
+	    return error;
+	}
 	if ((tmp_tv.tv_usec < 0) || (tmp_tv.tv_usec >= 1000000L)) {
 	    return -EINVAL;
 	}
     }
     if (tz != NULL) {
-        if (error = verified_memcpy_fromfs(&tmp_tz, tz, sizeof(struct timezone)))
-		return error;
-	if ((tmp_tz.tz_dsttime < DST_NONE) || (tmp_tz.tz_dsttime > DST_AUSTALT)) {
+	if (error =
+	    verified_memcpy_fromfs(&tmp_tz, tz,
+				   sizeof(struct timezone))) return error;
+	if ((tmp_tz.tz_dsttime < DST_NONE)
+	    || (tmp_tz.tz_dsttime > DST_AUSTALT)) {
 	    return -EINVAL;
 	}
     }
 
-  /* Setting time is a bit tricky, since we don't really keep the time in the xtime */
-  /* structure.  So we need to figure out the offset from the current time and */
-  /* set xtime based on that. */
+    /* Setting time is a bit tricky, since we don't really keep the time in the xtime
+     * structure.  So we need to figure out the offset from the current time and
+     * set xtime based on that.
+     */
     if (tv != NULL) {
-        now = jiffies;
-        xtime.tv_sec = tmp_tv.tv_sec - (now / HZ);
-        xtime.tv_usec = tmp_tv.tv_usec - ((now % HZ) * (1000000l / HZ));
+	now = jiffies;
+	xtime.tv_sec = tmp_tv.tv_sec - (now / HZ);
+	xtime.tv_usec = tmp_tv.tv_usec - ((now % HZ) * (1000000l / HZ));
     }
 
-  /* Setting the timezone is easier, just a straight copy */
+    /* Setting the timezone is easier, just a straight copy */
     if (tz != NULL) {
-        xzone = tmp_tz;
+	xzone = tmp_tz;
     }
 
-  /* success */
+    /* success */
     return 0;
 }
 
 /* return the time of day to the user */
-int sys_gettimeofday(tv, tz)
-register struct timeval *tv;
-struct timezone *tz;
+int sys_gettimeofday(register struct timeval *tv, struct timezone *tz)
 {
     int error;
     struct timeval tmp_tv;
     jiff_t now;
 
-  /* load the current time into the structures passed */
+    /* load the current time into the structures passed */
     if (tv != NULL) {
-        now = jiffies;
-        tmp_tv.tv_sec = xtime.tv_sec + (now / HZ);
-        tmp_tv.tv_usec = xtime.tv_usec + ((now % HZ) * (1000000l / HZ));
-        if (error = verified_memcpy_tofs(tv, &tmp_tv, sizeof(struct timeval)))
-		return error;
+	now = jiffies;
+	tmp_tv.tv_sec = xtime.tv_sec + (now / HZ);
+	tmp_tv.tv_usec = xtime.tv_usec + ((now % HZ) * (1000000l / HZ));
+	if (error = verified_memcpy_tofs(tv, &tmp_tv, sizeof(struct timeval)))
+	    return error;
     }
     if (tz != NULL) {
-        if (error = verified_memcpy_tofs(tz, &xzone, sizeof(struct timezone)))
-		return error;
+	if (error = verified_memcpy_tofs(tz, &xzone, sizeof(struct timezone)))
+	    return error;
     }
 
-  /* success */
+    /* success */
     return 0;
 }
-
-
-

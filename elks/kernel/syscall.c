@@ -1,6 +1,6 @@
 #include <linuxmt/errno.h>
 
-int syscall()
+int syscall(void)
 {
-	return -ENOSYS;
+    return -ENOSYS;
 }

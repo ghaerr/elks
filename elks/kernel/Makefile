@@ -56,3 +56,356 @@ distdir:
 
 #########################################################################
 ### Dependencies:
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ dma.c
+dma.o: dma.c /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ exit.c
+exit.o: exit.c /home/rhw/CVS/Source/elks-test/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/irq.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/statfs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/bitops.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/system.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/param.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/errno.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ fork.c
+fork.o: fork.c /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/irq.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/statfs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/bitops.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/system.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/param.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/debug.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ memdumpk.c
+memdumpk.o: memdumpk.c \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/kernel.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ printk.c
+printk.o: printk.c \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/irq.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/fcntl.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/statfs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/bitops.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/system.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/param.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/timex.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ sched.c
+sched.o: sched.c \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/irq.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/statfs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/bitops.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/system.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/param.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/timer.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ signal.c
+signal.o: signal.c \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/debug.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/irq.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/statfs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/bitops.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/system.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/param.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/kernel.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/mm.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/string.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/string.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/segment.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ sleepwake.c
+sleepwake.o: sleepwake.c \
+ /home/rhw/CVS/Source/elks-test/include/arch/irq.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/statfs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/bitops.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/system.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/param.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/timex.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ stubs.c
+stubs.o: stubs.c \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/irq.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/time.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ sys.c
+sys.o: sys.c /home/rhw/CVS/Source/elks-test/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/irq.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/statfs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/bitops.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/system.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/param.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/kernel.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/utsname.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/string.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/string.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/stat.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/stat.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/mm.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/segment.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/io.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ syscall.c
+syscall.o: syscall.c \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/errno.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ time.c
+time.o: time.c /home/rhw/CVS/Source/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/time.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/timex.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/errno.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/mm.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/sched.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/fs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/wait.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/irq.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/vfs.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/statfs.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/kdev_t.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/ioctl.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/pipe_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/net.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/socket.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/uio.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/bitops.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_i.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/minix_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/romfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/elksfs_fs_sb.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/signal.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/ntty.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/termios.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/chqueue.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/system.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/param.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/kernel.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/string.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/string.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/segment.h
+
+
+gcc -I/home/rhw/CVS/Source/elks-test/include -M -DELKS_VERSION_CODE=0x0000FF04 -DUTS_RELEASE="0.1.0-pre4" -D__KERNEL__ version.c
+version.o: version.c \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/compiler-generated.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/config.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/autoconf.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/types.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/posix_types.h \
+ /home/rhw/CVS/Source/elks-test/include/arch/irq.h \
+ /home/rhw/CVS/Source/elks-test/include/linuxmt/utsname.h
+
+

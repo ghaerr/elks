@@ -32,6 +32,12 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Fri Apr 19 21:35:25 BST 2002	Riley Williams <rhw@InfraDead.Org>
+
+	* ANSI'fied function prototypes in kernel subtree.
+	* Applied `make indent` rule to kernel subtree.
+	* Verified that kernel compiles with above changes applied.
+
 Fri Apr 19 17:38:04 BST 2002	Riley Williams <rhw@InfraDead.Org>
 
 	* ANSI'fied function prototypes in fs subtree.
