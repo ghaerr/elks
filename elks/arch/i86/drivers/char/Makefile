@@ -55,11 +55,6 @@ ser_asm.o: ser_asm.s
 #########################################################################
 # Standard commands.
 
-clean:
-	rm -f core *~ *.o *.a *.tmp
-	for i in *.c;do rm -f `basename $$i .c`.s;done
-	for i in *.S;do rm -f `basename $$i .S`.s;done
-
 distdir:
 	mkdir $(DISTDIR)/arch/i86/drivers/char/KeyMaps
 	make -C KeyMaps distdir
@@ -67,12 +62,6 @@ distdir:
 	cp -pf NOTES README_CONSOLE $(DISTDIR)/arch/i86/drivers/char
 	cp -pf Makefile Config.in $(DISTDIR)/arch/i86/drivers/char
 	cp -pf *.S *.h *.c $(DISTDIR)/arch/i86/drivers/char
-
-dep:
-	sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
-	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \
-		$(CC_PROTO) $$i;done) >> make.tmp
-	mv make.tmp Makefile
 
 #########################################################################
 ### Dependencies:

@@ -12,6 +12,11 @@
 ELKSDIR 	= ../../..
 
 #########################################################################
+# Variables used by standard rules.
+
+CLEANME 	= entry.c
+
+#########################################################################
 # Include standard commands.
 
 include $(ELKSDIR)/Makefile-rules
@@ -42,20 +47,10 @@ entry.c: syscall.dat mkentry.sh
 #########################################################################
 # Standard commands.
 
-clean:
-	rm -f core *~ *.o *.a *.tmp keyboard.s entry.c
-	for i in *.c;do rm -f `basename $$i .c`.s;done
-
 distdir:
 	cp -pf Makefile mkentry.sh $(DISTDIR)/arch/i86/kernel
 	cp -pf syscall.dat $(DISTDIR)/arch/i86/kernel
 	cp -pf *.c $(DISTDIR)/arch/i86/kernel
-
-dep:
-	sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
-	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \
-		$(CC_PROTO) $$i;done) >> make.tmp
-	mv make.tmp Makefile
 
 #########################################################################
 ### Dependencies:

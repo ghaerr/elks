@@ -5,17 +5,15 @@
 
 ELKSDIR		= ../..
 
-include $(ELKSDIR)/Makefile-rules
+#########################################################################
+# Variables used by the standard rules.
+
+CLEANME 	= compiler-generated.h
 
 #########################################################################
-# Define rules that are required to be present. Note that if these rules
-# have nothing to do, they need to have an action of `@echo -n` defined.
+# Include the standard rules.
 
-depclean:
-	@echo -n
-
-distdir:
-	@echo -n
+include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
 ### Dependencies:

@@ -134,43 +134,7 @@ elks.spec: Makefile
 	@scripts/elksspec $(DISTDIR) $(DIST) $(shell date +%Y.%m.%d)
 
 #########################################################################
-# miscellaneous
-
-clean:
-	rm -f *~ *.tmp Boot.map Setup.map System.map core
-	rm -f init/*~ init/*.o include/linuxmt/compiler-generated.h
-	make -C $(ARCH_DIR) clean
-	make -C fs clean
-	make -C fs/elksfs clean
-	make -C fs/minix clean
-	make -C fs/romfs clean
-	make -C kernel clean
-	make -C lib clean
-	make -C net clean
-	make -C scripts clean
-	@echo
-	@echo The ELKS source tree has been cleaned.
-	@echo
-
-nodep:
-	@for i in `find -name Makefile`; do \
-		sed '/\#\#\# Dependencies/q' < $$i > make.tmp ; \
-		if ! diff Makefile make.tmp > /dev/null ; then \
-			mv make.tmp $$i ; \
-		else \
-			rm -f make.tmp ; \
-		fi ; \
-	done
-	@echo
-	@echo All dependencies have been removed.
-	@echo
-
-distclean: clean nodep
-	rm -f .config* .menuconfig*
-	rm -f scripts/lxdialog/*.o scripts/lxdialog/lxdialog
-	@echo
-	@echo This ELKS source tree has been cleaned ready for distribution.
-	@echo
+# Standard commands.
 
 dist:
 	-rm -rf $(DISTDIR)
@@ -199,20 +163,11 @@ dist:
 	@echo Directory $(DISTDIR) contains a clean ELKS distribution tree.
 	@echo
 
-dep:	include/linuxmt/compiler-generated.h
-	sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
-	(for i in init/*.c; do echo -n "init/"; $(CC_PROTO) $$i; echo; done) >> make.tmp
-	mv make.tmp Makefile
-	make -C $(ARCH_DIR) dep
-	make -C fs dep
-	make -C fs/minix dep
-	make -C fs/romfs dep
-	make -C fs/elksfs dep
-	make -C kernel dep
-	make -C lib dep
-	make -C net dep
+distclean: clean nodep
+	rm -f .config* .menuconfig*
+	rm -f scripts/lxdialog/*.o scripts/lxdialog/lxdialog
 	@echo
-	@echo All ELKS dependencies are now configured.
+	@echo This ELKS source tree has been cleaned ready for distribution.
 	@echo
 
 #########################################################################
@@ -268,7 +223,7 @@ menuconfig:
 	@echo Configuration complete.
 	@echo
 
-test:	nodep
+test:
 	rm -fr ../elks-test
 	mkdir ../elks-test
 	tar c * | ( cd ../elks-test ; tar xv )

@@ -10,14 +10,4 @@ ELKSDIR		= ../../../..
 include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
-# Define rules that are required to be present. Note that if these rules
-# have nothing to do, they need to have an action of `@echo -n` defined.
-
-depclean:
-	@echo -n
-
-distdir:
-	@echo -n
-
-#########################################################################
 ### Dependencies:

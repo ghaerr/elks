@@ -17,11 +17,6 @@ ELKSDIR 	= ..
 include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
-# What to compile.
-
-include $(ELKSDIR)/.config
-
-#########################################################################
 # Objects to be compiled.
 
 OBJS  = super.o bufops.o devices.o fcntl.o stat.o inode.o file_table.o \
@@ -39,18 +34,8 @@ fs.a:	$(OBJS)
 #########################################################################
 # Standard commands.
 
-clean:
-	rm -f core *~ *.o *.a *.tmp keyboard.s
-	for i in *.c;do rm -f `basename $$i .c`.s;done
-
 distdir:
 	cp -pf Config.in Makefile *.c $(DISTDIR)/fs
-
-dep:
-	sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
-	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \
-		$(CC_PROTO) $$i;done) >> make.tmp
-	mv make.tmp Makefile
 
 #########################################################################
 ### Dependencies

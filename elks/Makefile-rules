@@ -132,4 +132,53 @@ elks:
 	make -C $(ELKSDIR) all
 
 #########################################################################
+# Standard commands.
+
+clean:	$(CLEANDEP)
+	rm -f *~ *.o *.map *.tmp core $(CLEANME)
+	@for FILE in *.s ; do \
+		BASE=`basename "$$FILE" .s` ; \
+		if [ -f "$$BASE.c" -o -f "$$BASE.S" ]; then \
+			rm -f "$$FILE" ; \
+		fi ; \
+	done
+	@for DIR in */ ; do \
+		if [ -f "$$DIR/Makefile" ]; then \
+			make -C "$$DIR" clean ; \
+		fi ; \
+	done
+
+dep:	$(DEPEND)
+	@if \ls *.c > /dev/null ; then \
+		sed '/\#\#\# Dependencies/q' < Makefile > make.tmp ; \
+		for i in *.c; do \
+			$(CC_PROTO) $$i >> make.tmp ; \
+			echo >> make.tmp ; \
+		done ; \
+		if ! diff Makefile make.tmp > /dev/null ; then \
+			mv make.tmp Makefile ; \
+		else \
+			rm -f make.tmp ; \
+		fi ; \
+	fi
+	@for DIR in */ ; do \
+		if [ -f "$$DIR/Makefile" ]; then \
+			make -C "$$DIR" dep ; \
+		fi ; \
+	done
+
+nodep:
+	sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
+	@if ! diff Makefile make.tmp > /dev/null ; then \
+		mv make.tmp $$i ; \
+	else \
+		rm -f make.tmp ; \
+	fi
+	@for DIR in */ ; do \
+		if [ -f "$$DIR/Makefile" ]; then \
+			make -C "$$DIR" nodep ; \
+		fi ; \
+	done
+
+#########################################################################
 # End of standard rules file.

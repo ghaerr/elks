@@ -172,20 +172,6 @@ drivers/block/blk_drv.a:
 #########################################################################
 # commands.
 
-clean:
-	rm -f boot/bootsect boot/setup boot/bootsect.s boot/setup.s
-	rm -f boot/netbootsect boot/netbootsect.s *.tmp boot/*.tmp
-	rm -f boot/*~ boot/*.o boot/system boot/Image boot/system.app
-	rm -f boot/nbImage boot/nbImage.rd Netboot.map
-	rm -f tools/*~ tools/*.o tools/build
-	rm -f Boot.map Setup.map boot/crt0.s
-	make -C 286pmode clean
-	make -C drivers/block clean
-	make -C drivers/char clean
-	make -C kernel clean
-	make -C lib clean
-	make -C mm clean
-
 distdir:
 	mkdir $(DISTDIR)/arch/i86
 	(cd $(DISTDIR)/arch/i86 ; \
@@ -203,14 +189,6 @@ distdir:
 	make -C kernel distdir
 	make -C lib distdir
 	make -C mm distdir
-
-dep:
-	make -C 286pmode dep
-	make -C drivers/block dep
-	make -C drivers/char dep
-	make -C kernel dep
-	make -C lib dep
-	make -C mm dep
 
 #########################################################################
 ### Dependencies:

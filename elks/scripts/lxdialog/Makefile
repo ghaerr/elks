@@ -43,7 +43,7 @@ ncurses:
 	fi
 
 clean:
-	rm -f core *.o *~ lxdialog
+	rm -f core *.o *~ *.tmp *.bak lxdialog
 
 ###################################
 ### Dependencies:

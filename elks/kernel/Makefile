@@ -33,18 +33,8 @@ kernel.a: $(OBJS)
 #########################################################################
 # Standard commands.
 
-clean:
-	rm -f core *~ *.o *.a *.tmp keyboard.s
-	for i in *.c;do rm -f `basename $$i .c`.s;done
-
 distdir:
 	cp -pf Makefile *.c $(DISTDIR)/kernel
-
-dep:
-	sed '/\#\#\# Dependencies/q' < Makefile > make.tmp
-	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \
-		$(CC_PROTO) $$i;done) >> make.tmp
-	mv make.tmp Makefile
 
 #########################################################################
 ### Dependencies:

@@ -43,7 +43,13 @@ distdir:
 	cp -pf lxdialog/*.c lxdialog/*.h $(DISTDIR)/scripts/lxdialog
 
 clean:
-	rm -f *~ kconfig.tk *.o tkparse
+	rm -f *~ *.bak *.o *.tmp core kconfig.tk tkparse
+
+dep:
+	@echo -n
+
+nodep:
+	@echo -n
 
 ########################################
 ### Dependencies:

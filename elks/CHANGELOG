@@ -34,6 +34,7 @@ Wed Nov 14 13:26:39 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 	* THIS IS ELKS RELEASE 0.0.89 !!!
 
 	* ELKS now compiles with the SAME compilation commands throughout!
+	  Rationalisation of the ELKS makefiles is complete as a result.
 
 Tue Nov 13 23:57:42 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 

@@ -71,9 +71,12 @@ imgconv: imgconv.c
 	gcc -o imgconv imgconv.c
 
 clean:
-	rm -f *.o *.out *.img imgconv mkurlader
+	rm -f *.img *.out build imgconv mkurlader
 
 dep:
+	@echo -n
+
+nodep:
 	@echo -n
 
 ###########################################################################
