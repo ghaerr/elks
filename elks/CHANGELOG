@@ -20,6 +20,7 @@ Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-15 May 2002
 Jacek Lipkowski       sq5bpf@acid.ch.pw.edu.pl          20 Jan 2002
 Ken Martwick          kenm@efn.org                      12 May 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
+Manuel Novoa III      mjn3@codepoet.org                 18 Jun 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
@@ -39,6 +40,21 @@ Fri Jun 21 00:27:05 BST 2002	Riley Williams <Riley@Williams.Name>
 	  more user-friendly output format.
 	* Removed redundant line from kernel/Makefile as it is appended
 	  to the said file by the `make dep` step anyway.
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop, with the exception that ktcp still fails.
+
+		*** NOTE - KTCP DOES NOT CURRENTLY WORK ***
+
+Tue Jun 18 13:12:30 EST 2002	Manuel Novoa III <mjn3@codepoet.org>
+
+	* Found and reverted bug introduced by Riley when splinting the
+	  ELKS kernel. This does NOT fix the KTCP problem.
+	* Optimised ELKS source, reducing the compiled codesize for the
+	  standard `make defconfig` configuration from its previous size
+	  of 61,488 bytes code, 7,940 bytes data and 51,276 bytes BSS
+	  to 59,568 bytes code, 7,664 bytes data and 51,268 bytes BSS.
+
+		*** NOTE - KTCP DOES NOT CURRENTLY WORK ***
 
 Thu Jun  6 22:17:00 BST 2002	Riley Williams <Riley@Williams.Name>
 
