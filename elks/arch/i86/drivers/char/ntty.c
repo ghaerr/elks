@@ -319,7 +319,7 @@ void tty_init()
 #ifdef CONFIG_CONSOLE_DIRECT
 	for (i = 0; i < 3; i++) {
 		ttyp = &ttys[i];
-		if (i = 0) {
+		if (i == 0) {
 			chq_init(&ttyp->inq, ttyp->inq_buf, INQ_SIZE);
 		}
 		ttyp->ops = &dircon_ops;
