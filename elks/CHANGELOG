@@ -29,6 +29,23 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Fri Nov 16 09:28:55 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Created testing commands in elks/Makefile:
+
+	    make me	Creates a test copy of the current tree.
+			This is NOT the same as `make dist`.
+
+	    make set	Displays a list of all environment variables
+			as currently set.
+
+	    make test	Performs `make defconfig` to create a config
+			identical to the default configuration, then
+			runs through all of the standard non-config
+			commands to ensure they all work.
+
+	* Updated TODO document.
+
 Wed Nov 14 13:26:39 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* THIS IS ELKS RELEASE 0.0.89 !!!

@@ -208,13 +208,12 @@ defconfig:
 	@echo
 
 me:
-	make defconfig
-	@printf '\n%079u\n\n' 0 | tr 0 =
-	make dep
-	@printf '\n%079u\n\n' 0 | tr 0 =
-	make clean
-	@printf '\n%079u\n\n' 0 | tr 0 =
-	make Image
+	rm -fr ../elks-test
+	mkdir ../elks-test
+	tar c * | ( cd ../elks-test ; tar xv )
+	@echo
+	@echo Created backup tree for testing.
+	@echo
 
 menuconfig:
 	make -C scripts/lxdialog all
@@ -223,18 +222,23 @@ menuconfig:
 	@echo Configuration complete.
 	@echo
 
-test:
-	rm -fr ../elks-test
-	mkdir ../elks-test
-	tar c * | ( cd ../elks-test ; tar xv )
-	@echo
-	@echo Created backup tree for testing.
-	@echo
-
-testme:
+set:
 	@echo
 	@set
 	@echo
+
+test:
+	make defconfig
+	@printf '\n%079u\n\n' 0 | tr 0 =
+	make dep
+	@printf '\n%079u\n\n' 0 | tr 0 =
+	make clean
+	@printf '\n%079u\n\n' 0 | tr 0 =
+	make Image
+	@printf '\n%079u\n\n' 0 | tr 0 =
+	make nbImage
+	@printf '\n%079u\n\n' 0 | tr 0 =
+	make dist
 
 #########################################################################
 ### Dependencies:

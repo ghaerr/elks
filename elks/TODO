@@ -9,13 +9,16 @@ at the appropriate point in this list.
 
  *  Before 0.1.0 is released:
 
-    *	Complete and test parallel drivers.
-
-    *	Complete and test serial drivers.
+    *	Ensure parallel and serial drivers work, even if some of their
+	functionality is missing.
 
     *	Reduce code size.
 
  *  Before 0.2.0 is released:
+
+    *	Complete and test parallel drivers.
+
+    *	Complete and test serial drivers.
 
     *	Ensure ELKS is fully ROMable and embeddable.
 
