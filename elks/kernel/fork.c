@@ -85,6 +85,7 @@ int virtual;
 	} else {
 		t->mm.dseg = mm_dup(currentp->mm.dseg);
 		if (t->mm.dseg == NULL) {
+			mm_free(currentp->mm.cseg);
 			return -ENOMEM;
 		}
 

@@ -29,6 +29,13 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Fri Nov 23 02:32:35 EET 2001 Harry Kalogirou <harkal@gmx.net>
+
+	* Fixed zero tcp window issues
+	* Fixed do_fork(). It was not freeing the previously
+	  allocated code segment when the allocation of the
+	  data segment was failing.
+
 Wed Nov 21 01:37:32 EET 2001 Harry Kalogirou <harkal@gmx.net>
 
 	* Major fix in inet code.
