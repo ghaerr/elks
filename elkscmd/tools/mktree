@@ -18,54 +18,70 @@ fi
 #
 # Specify the directories to use.
 
-CMD_DIR=`echo "$1"/"$2" | tr -s /`
-MAN_DIR=`echo "$1"/usr/man | tr -s /`
+DIR=`echo "$1"/"$2" | tr -s /`
 shift 2
 
 ###############################################################################
 #
 # Check they're not non-directories.
 
-if [ -e "${CMD_DIR}" -a ! -d "${CMD_DIR}" ]; then
+if [ -e "${DIR}" -a ! -d "${DIR}" ]; then
     printf '%s: ERROR 1: Not a directory: %s\n' >&2 \
-		`basename "$0"` "${CMD_DIR}"
+		`basename "$0"` "${DIR}"
     exit 1
 fi
-
-if [ -e "${MAN_DIR}" -a ! -d "${MAN_DIR}" ]; then
-    printf '%s: ERROR 2: Not a directory: %s\n' >&2 \
-		`basename "$0"` "${MAN_DIR}"
-    exit 2
+if [ "${DIR}" = "/usr/man" ]; then
+    for THIS in "${DIR}"/man{1,2,3,4,5,6,7,8,9} ; do
+	if [ -e "${THIS}" -a ! -d "${THIS}" ]; then
+	    printf '%s: ERROR 2: Not a directory: %s\n' >&2 \
+		`basename "$0"` "${THIS}"
+	    exit 2
+	fi
+    done
 fi
-for DIR in "${MAN_DIR}"/man{1,2,3,4,5,6,7,8,9} ; do
-    if [ -e "${DIR}" -a ! -d "${DIR}" ]; then
-	printf '%s: ERROR 2: Not a directory: %s\n' >&2 \
-		`basename "$0"` "${DIR}"
-	exit 2
-    fi
-done
 
 ###############################################################################
 #
 # Ensure they exist, along with all required parent directories.
 
-mkdir -p "${CMD_DIR}" "${MAN_DIR}"/man{1,2,3,4,5,6,7,8,9}
+if [ "${DIR}" != "/usr/man" ]; then
+    mkdir -p "${DIR}"
+else
+    mkdir -p "${DIR}"/man{1,2,3,4,5,6,7,8,9}
+fi
+
+###############################################################################
+#
+# Function to determine if a particular command has been copied across.
+
+function needed() {
+    local X=`echo "$2" | rev | cut -b 3- | rev`
+
+    find $1/../.. -name "$X" > /dev/null
+}
 
 ###############################################################################
 #
 # Copy the commands as listed.
 
-for CMD do
-    if [ -f "${CMD}" ]; then
-	cp -fv "${CMD}" "${CMD_DIR}"
-	for MAN in "${CMD}".? . ; do
-	    if [ -f "${MAN}" ]; then
-		TGT=`echo "${MAN}" | rev | cut -b 1`
-		cp -fv "${MAN}" "${MAN_DIR}"/man${TGT}
-	    fi
-	done
-    else
-	printf '%s: WARNING: Skipping missing command: %s\n' >&2 \
+if [ "${DIR}" != "/usr/man" -o "$1" != "ALL" ]; then
+    for CMD do
+	if [ -f "${CMD}" ]; then
+	    cp -fv "${CMD}" "${DIR}"
+	else
+	    printf '%s: WARNING: Skipping missing command: %s\n' >&2 \
 		`basename "$0"` "${CMD}"
-    fi
-done
+	fi
+    done
+else
+    for MAN in *.[1-9] . ; do
+	if [ -f "${MAN}" ] && needed "${DIR}" "${MAN}" ; then
+	    TGT=`echo "${MAN}" | rev | cut -b 1`
+	    cp -fv "${MAN}" "${MAN_DIR}"/man${TGT}
+	fi
+    done
+fi
+
+###############################################################################
+# EOF #
+#######

@@ -13,20 +13,26 @@
 #    MIN_BIN       Commands to be placed in /bin on all systems.
 #    MIN_SBIN      Commands to be placed in /sbin on all systems.
 #    MIN_USR_BIN   Commands to be placed in /usr/bin on all systems.
+#    MIN_USR_LIB   Libraries to be placed in /usr/lib on all systems.
 #    MIN_USR_SBIN  Commands to be placed in /usr/sbin on all systems.
 #
 #    NET_BIN       Commands to be placed in /bin on networked systems.
 #    NET_SBIN      Commands to be placed in /sbin on networked systems.
 #    NET_USR_BIN   Commands to be placed in /usr/bin on networked systems.
+#    NET_USR_LIB   Libraries to be placed in /usr/lib on networked systems.
 #    NET_USR_SBIN  Commands to be placed in /usr/sbin on networked systems.
 #
 #    STD_BIN       Commands to be placed in /bin on full installations.
 #    STD_SBIN      Commands to be placed in /sbin on full installations.
 #    STD_USR_BIN   Commands to be placed in /usr/bin on full installations.
+#    STD_USR_LIB   Libraries to be placed in /usr/lib on full installations.
 #    STD_USR_SBIN  Commands to be placed in /usr/sbin on full installations.
 #
+#    USR_MAN       Manual pages included on full installations.
+#
 # For each command that is copied across, any file matching *.? will also be
-# copied to /usr/man/man? where the two ? characters are the same digit.
+# copied to /usr/man/man? (where the two ? characters are the same digit) if
+# a full installation is being done, but not otherwise.
 #
 # Note that the MIN_* values are implicitly included in the relevant NET_*
 # and STD_* values, so should be omitted from the latter.
@@ -56,58 +62,66 @@
 #
 ###############################################################################
 #
+# Directory to create the target tree in.
+
+ROOTDIR=$(BASEDIR)/RootFS
+
+###############################################################################
+#
 # Command to copy the tree across.
 
 MKTREE	= $(BASEDIR)/tools/mktree $(TARGET_DIR)
 
-basepkg:
+mkbase2:
 	$(MKTREE) /bin $(MIN_BIN)
+	$(MKTREE) /lib $(MIN_LIB)
 	$(MKTREE) /sbin $(MIN_SBIN)
 	$(MKTREE) /usr/bin $(MIN_USR_BIN)
+	$(MKTREE) /usr/lib $(MIN_USR_LIB)
 	$(MKTREE) /usr/sbin $(MIN_USR_SBIN)
+
+mkbase: mkbase2
 	@for DIR in */ ; do \
 	    if [ -f $(DIR)/Makefile ]; then \
-		make -C $(DIR) basepkg ; \
+		make -C $(DIR) mkbase ; \
 	    fi ; \
 	done
 
-stdpkg: basepkg
+mkstd2: mkbase2
 	$(MKTREE) /bin $(STD_BIN)
+	$(MKTREE) /lib $(STD_LIB)
 	$(MKTREE) /sbin $(STD_SBIN)
 	$(MKTREE) /usr/bin $(STD_USR_BIN)
+	$(MKTREE) /usr/lib $(STD_USR_LIB)
 	$(MKTREE) /usr/sbin $(STD_USR_SBIN)
+	$(MKTREE) /usr/man ALL
+
+mkstd:	mkstd2
 	@for DIR in */ ; do \
 	    if [ -f $(DIR)/Makefile ]; then \
-		make -C $(DIR) stdpkg ; \
+		make -C $(DIR) mkstd ; \
 	    fi ; \
 	done
 
-mknet:
+mknet2: mkbase2
 	$(MKTREE) /bin $(NET_BIN)
+	$(MKTREE) /lib $(NET_LIB)
 	$(MKTREE) /sbin $(NET_SBIN)
 	$(MKTREE) /usr/bin $(NET_USR_BIN)
+	$(MKTREE) /usr/lib $(NET_USR_LIB)
 	$(MKTREE) /usr/sbin $(NET_USR_SBIN)
 
-netpkg: basepkg mknet
+mknet: mknet2
 	@for DIR in */ ; do \
 	    if [ -f $(DIR)/Makefile ]; then \
-		make -C $(DIR) netpkg ; \
+		make -C $(DIR) mknet ; \
 	    fi ; \
 	done
 
-maxpkg: stdpkg mknet
+mkmax: mkstd2 mknet2
 	@for DIR in */ ; do \
 	    if [ -f $(DIR)/Makefile ]; then \
-		make -C $(DIR) netpkg ; \
-	    fi ; \
-	done
-	$(MKTREE) /bin $(STD_BIN)
-	$(MKTREE) /sbin $(STD_SBIN)
-	$(MKTREE) /usr/bin $(STD_USR_BIN)
-	$(MKTREE) /usr/sbin $(STD_USR_SBIN)
-	@for DIR in */ ; do \
-	    if [ -f $(DIR)/Makefile ]; then \
-		make -C $(DIR) maxpkg ; \
+		make -C $(DIR) mkmax ; \
 	    fi ; \
 	done
 
