@@ -4,10 +4,8 @@ SHELL		= /bin/sh
 
 CC		= bcc
 
-INCDIR		= `pwd`/../../elks/include
-
-#BASE_CFLAGS	= -c -g -I$(INCDIR)
-BASE_CFLAGS	= -c -O -I$(INCDIR)
+#BASE_CFLAGS	= -c -g
+BASE_CFLAGS	= -c -O 
 
 CFLAGS		= -D__KERNEL__ $(BASE_CFLAGS)
 
@@ -25,7 +23,7 @@ ktcp:	$(OBJ)
 	$(CC) $(OPT) -o ktcp $(OBJ) $(BASELIBS)
 
 clean: 
-	rm *.o ktcp *.o core *~
+	rm -f *.o ktcp core 
 
 dep:
 	makedepend $(CFILES)
