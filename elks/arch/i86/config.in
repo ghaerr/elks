@@ -11,7 +11,8 @@ choice 'Select system architecture'            \
        "Auto           CONFIG_ARCH_PC_AUTO     \
 	SIBO           CONFIG_ARCH_SIBO        \
         PC/XT          CONFIG_ARCH_PC_XT       \
-        PC/AT          CONFIG_ARCH_PC_AT" CONFIG_ARCH_PC_AUTO
+        PC/AT          CONFIG_ARCH_PC_AT       \
+        Microchannel   CONFIG_ARCH_PC_MCA" CONFIG_ARCH_PC_AUTO
 bool 'Support for loadable modules' CONFIG_MODULE
 bool 'Support for shared libraries' CONFIG_SHLIB
 
