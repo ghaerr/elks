@@ -1,13 +1,14 @@
 #ifndef LX86_ARCH_IRQ_H
 #define LX86_ARCH_IRQ_H
 
-#include <arch/types.h>
+#include <linuxmt/types.h>
 
 #define save_flags(x)	x=__save_flags()
 
-/* Who gets which entry in bh_base. Things which will occur most often
-   should come first - in which case NET should be up the top with
-   SERIAL/TQUEUE! */
+/*	FIXME:	Who gets which entry in bh_base. Things which will occur
+ *		most often should come first - in which case NET should
+ *		be up the top with SERIAL/TQUEUE!
+ */
 
 enum {
     TIMER_BH = 0,
@@ -31,14 +32,14 @@ extern void do_IRQ(int,void *);
 extern void restore_flags(flag_t);
 extern int request_irq(int,void (*),void *);
 extern void free_irq(unsigned int);
-
 extern void init_IRQ(void);
-
 extern void do_bottom_half(void);
 
 extern int bh_mask_count[16];
+
 extern unsigned bh_active;
 extern unsigned bh_mask;
+
 extern void (*bh_base[16]) (void);
 
 /*@-namechecks@*/
@@ -46,7 +47,9 @@ extern void (*bh_base[16]) (void);
 extern flag_t __save_flags(void);
 
 #ifdef S_SPLINT_S
+
 extern void asm(char *);
+
 #endif
 
 /*@+namechecks@*/

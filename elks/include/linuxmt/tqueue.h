@@ -12,10 +12,11 @@
  * The original comment follows below.
  */
 
-#include <arch/bitops.h>
-
 #define __inline__
 
+#include <linuxmt/types.h>
+
+#include <arch/bitops.h>
 #include <arch/irq.h>
 #include <arch/system.h>
 
@@ -46,10 +47,10 @@
  */
 
 struct tq_struct {
-    struct tq_struct *next;	/* linked list of active bh's */
-    int sync;			/* must be initialized to zero */
-    void (*routine) ();		/* function to call */
-    void *data;			/* argument to function */
+    struct tq_struct	*next;		/* linked list of active bh's */
+    int 		sync;		/* must be initialized to zero */
+    void		(*routine) ();	/* function to call */
+    void		*data;		/* argument to function */
 };
 
 typedef struct tq_struct *task_queue;
@@ -112,6 +113,7 @@ extern __inline__ void queue_task_irq_off(struct tq_struct *bh_pointer,
  * queue_task: as queue_task_irq, but can be called from anywhere.
  */
 #if 0
+
 extern __inline__ void queue_task(struct tq_struct *bh_pointer,
 				  task_queue *bh_list)
 #endif
@@ -120,6 +122,7 @@ extern __inline__ void queue_task(struct tq_struct *bh_pointer,
 { \
 	if (!set_bit(0,&bh_pointer->sync)) { \
 		flag_t flags; \
+\
 		save_flags(flags); \
 		i_cli(); \
 		bh_pointer->next = *bh_list; \
@@ -132,7 +135,9 @@ extern __inline__ void queue_task(struct tq_struct *bh_pointer,
  * Call all "bottom halfs" on a given list.
  */
 #if 0
+
 extern __inline__ void run_task_queue(task_queue *list)
+
 #endif
 
 #define run_task_queue(list) \

@@ -107,7 +107,7 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
     if (left > (size_t) count)
 	left = (size_t) count;
     if (left <= 0) {
-	printd_mfs("MFSREAD: EOF reached.\n");
+	debug("MFSREAD: EOF reached.\n");
 	return 0;					/* EOF */
     }
     if (!inode) {
@@ -129,12 +129,11 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
 
     while (blocks) {
 	--blocks;
-	printd_mfs1("MINREAD: Reading block #%d\n", block);
+	debug1("MINREAD: Reading block #%d\n", block);
 	if ((bh = minix_getblk(inode, block++, 0))) {
-	    printd_mfs2("MINREAD: block %d = buffer %d\n", block - 1,
-			bh->b_num);
+	    debug2("MINREAD: block %d = buffer %d\n", block - 1, bh->b_num);
 	    if (!readbuf(bh)) {
-		printd_mfs("MINREAD: readbuf failed\n");
+		debug("MINREAD: readbuf failed\n");
 		left = 0;
 		break;
 	    }
@@ -150,9 +149,8 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
 	read += chars;
 	if (bh) {
 	    map_buffer(bh);
-	    printd_mfs2
-		("MINREAD: Copying data for block #%d, buffer #%d\n",
-		 block - 1, bh->b_num);
+	    debug2("MINREAD: Copying data for block #%d, buffer #%d\n",
+		   block - 1, bh->b_num);
 	    memcpy_tofs(buf, offset + bh->b_data, chars);
 	    unmap_brelse(bh);
 	    buf += chars;

@@ -249,13 +249,9 @@ static int romfs_copyfrom(struct inode *i, void *dest, loff_t offset,
     struct buffer_head *bh;
     size_t avail, maxsize, res;
 
-#if 0
-    printd_rfs("romfs: copyfrom called\n");
-    printd_rfs("romfs:     offset = 0x%x%x\n",
-	       (int) (offset >> 16), (int) offset);
-    printd_rfs("romfs:     count = 0x%x%x\n",
-	       (int) (count >> 16), (int) count);
-#endif
+    debug("romfs: copyfrom called\n");
+    debug2("romfs:     offset = 0x%x%x\n", (int) (offset >> 16), (int) offset);
+    debug2("romfs:     count  = 0x%x%x\n", (int) (count  >> 16), (int) count);
 
     maxsize = i->i_sb->u.romfs_sb.s_maxsize;
 
@@ -263,11 +259,9 @@ static int romfs_copyfrom(struct inode *i, void *dest, loff_t offset,
 				   || offset + count > maxsize)
 	return -1;
 
-#if 0
-    printd_rfs("romfs:     offset>>ROMBSBITS = 0x%x%x\n",
-	       (int) ((offset >> ROMBSBITS) >> 16),
-	       (int) (offset >> ROMBSBITS));
-#endif
+    debug2("romfs:     offset>>ROMBSBITS = 0x%x%x\n",
+	   (int) ((offset >> ROMBSBITS) >> 16),
+	   (int) (offset >> ROMBSBITS));
 
     bh = bread(i->i_dev, (block_t) (offset >> ROMBSBITS));
 
@@ -315,7 +309,7 @@ static int romfs_readdir(struct inode *i, struct file *filp,
     ino_t ino;
     int stored = 0;
 
-    printd_rfs("romfs: readdir called\n");
+    debug("romfs: readdir called\n");
 
     if (!i || !S_ISDIR(i->i_mode))
 	return -EBADF;
@@ -371,7 +365,7 @@ static int romfs_lookup(struct inode *dir, char *name, size_t len,
     size_t fslen;
     int res;
 
-    printd_rfs("romfs: entered lookup\n");
+    debug("romfs: entered lookup\n");
 
     *result = NULL;
     if (!dir || !S_ISDIR(dir->i_mode)) {
@@ -670,7 +664,7 @@ static void romfs_read_inode(struct inode *i)
 	i->i_rdev = (kdev_t) MKDEV(ino >> 16, ino & 0xffff);
     }
 
-    printd_rfs("romfs: got inode\n");
+    debug("romfs: got inode\n");
 }
 
 struct file_system_type romfs_fs_type = {

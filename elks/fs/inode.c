@@ -491,7 +491,7 @@ struct inode *__iget(REGOPT struct super_block *sb,
     REGOPT struct inode *inode;
     REGOPT struct inode *empty = NULL;
 
-    printd_iget3("iget called(%x, %d, %d)\n", sb, inr, 0 /* crossmntp */ );
+    debug3("iget called(%x, %d, %d)\n", sb, inr, 0 /* crossmntp */ );
     if (!sb)
 	panic("VFS: iget with sb==NULL");
   repeat:
@@ -503,9 +503,9 @@ struct inode *__iget(REGOPT struct super_block *sb,
     }
 
     if (!empty) {
-	printd_iget("iget: getting an empty inode...\n");
+	debug("iget: getting an empty inode...\n");
 	empty = get_empty_inode();
-	printd_iget1("iget: got one... (%x)!\n", empty);
+	debug1("iget: got one... (%x)!\n", empty);
 	if (empty)
 	    goto repeat;
 	return (NULL);
@@ -516,9 +516,9 @@ struct inode *__iget(REGOPT struct super_block *sb,
     inode->i_ino = inr;
     inode->i_flags = ((unsigned short int) sb->s_flags);
     put_last_free(inode);
-    printd_iget("iget: Reading inode\n");
+    debug("iget: Reading inode\n");
     read_inode(inode);
-    printd_iget("iget: Read it\n");
+    debug("iget: Read it\n");
     goto return_it;
 
   found_it:

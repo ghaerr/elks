@@ -1,5 +1,4 @@
-/* doshd.c
- * Copyright (C) 1994 Yggdrasil Computing, Incorporated
+/* doshd.c copyright (C) 1994 Yggdrasil Computing, Incorporated
  * 4880 Stevens Creek Blvd. Suite 205
  * San Jose, CA 95129-1034
  * USA
@@ -37,6 +36,7 @@
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/config.h>
+
 #include <arch/segment.h>
 #include <arch/system.h>
 
@@ -414,7 +414,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	int count;
 	int i;
 
-	printk("hd: probing disc in /dev/fd%d\n", target % 2);
+	printk("fd: probing disc in /dev/fd%d\n", target % 2);
 
 /* The area between 32-64K is a 'scratch' area - we need a semaphore for it
  */
@@ -482,21 +482,27 @@ static int bioshd_open(struct inode *inode, struct file *filp)
  */
 
 	if (drivep->cylinders == 0 || drivep->sectors == 0)
-	    printk("hd: Floppy drive autoprobe failed!\n");
+	    printk("fd: Floppy drive autoprobe failed!\n");
 	else
-	    printk("hd: /dev/fd%d probably has %d sectors and %d cylinders\n",
+	    printk("fd: /dev/fd%d probably has %d sectors and %d cylinders\n",
 		   target % 2, drivep->sectors, drivep->cylinders);
 
-/*	This is not a bugfix, hence no code, but coders should be aware
- *	that multi-sector reads from this point on depend on bootsect
- *	modifying the default Disk Parameter Block in BIOS.
- *	dpb[4] should be set to a high value such as 36 so that reads
- *	can go past what is hardwired in the BIOS.
- *	36 is the number of sectors in a 2.88 floppy track.
- *	If you are booting ELKS with anything other than bootsect you
- *	have to make equivalent arrangements.
- *	0:0x78 contains address of dpb (char dpb[12]), and dpb[4] is the End of
- *	Track parameter for the 765 Floppy Disk Controller.
+/*	This is not a bugfix, hence no code, but coders should be aware that
+ *	multi-sector reads from this point on depend on bootsect modifying
+ *	the default Disk Parameter Block in BIOS.
+ *
+ *	dpb[4]	should be set to a high value such as 36 so that reads can
+ *		go past what is hardwired in the BIOS. 36 is the number of
+ *		sectors in a 2.88 floppy track.
+ *
+ *		If you are booting ELKS with anything other than bootsect,
+ *		you have to make equivalent arrangements.
+ *
+ *	0:0x78	contains the address of dpb (char dpb[12]).
+ *
+ *	dpb[4]	is the End of Track parameter for the 765 Floppy Disk
+ *		Controller.
+ *
  *	You may have to copy dpb to RAM as the original is in ROM.
  */
 
@@ -505,6 +511,14 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 
     return 0;
 }
+
+#ifdef DOSHD_VERBOSE_DRIVES
+#define TEMP_PRINT_DRIVES_MAX		4
+#else
+#ifdef CONFIG_BLK_DEV_BHD
+#define TEMP_PRINT_DRIVES_MAX		2
+#endif
+#endif
 
 void init_bioshd(void)
 {
@@ -524,19 +538,18 @@ void init_bioshd(void)
 #ifdef CONFIG_BLK_DEV_BFD
     bioshd_getfdinfo();
 #endif
+
 #ifdef CONFIG_BLK_DEV_BHD
     bioshd_gethdinfo();
 #endif
 
-    for (i = 0; i <= 3; i++)
+    for (i = 0; i < 4; i++)
 	if (drive_info[i].heads) {
 	    count++;
 
 #ifdef CONFIG_BLK_DEV_BHD
-
 	    if (i <= 1)
 		hdcount++;
-
 #endif
 
 	}
@@ -551,50 +564,42 @@ void init_bioshd(void)
 
 #endif
 
-#ifdef DOSHD_VERBOSE_DRIVES
-
-    for (i = 0; i < 4; i++) {
-	drivep = &drive_info[i];
+#ifdef TEMP_PRINT_DRIVES_MAX
+    for (i = 0; i < TEMP_PRINT_DRIVES_MAX; i++) {
+	drivep = drive_info + i;
 	if (drivep->heads != 0) {
-	    printk("/dev/%cd%c: %d heads, %d cylinders, %d sectors = %ld %s\n",
+	    char *unit = "kMGT";
+	    __u32 size = ((__u32) drivep->sectors) * 5 /* 0.1 kB units */;
+
+	    size *= ((__u32) drivep->cylinders) * drivep->heads;
+	    printk("/dev/%cd%c: %d cylinders, %d heads, %d sectors = ",
 		   (i < 2 ? 'h' : 'f'), (i % 2) + (i < 2 ? 'a' : '0'),
-		   drivep->heads,
-		   drivep->cylinders,
-		   drivep->sectors,
-		   (sector_t) drivep->heads * drivep->cylinders *
-		   drivep->sectors * 512L / (1024L * (i < 2 ? 1024L : 1L)),
-		   (i < 2 ? "MB" : "kB"));
+		   drivep->cylinders, drivep->heads, drivep->sectors);
+
+	    /* Select appropriate unit */
+	    while (size > 99999 && unit[1]) {
+		size /= ((__u32) 1024);
+		unit++;
+	    }
+	    printk("%lu.%u %cb\n", (size/10), (size%10), *unit);
 	}
     }
-
-#else
-#ifdef CONFIG_BLK_DEV_BHD
-
-    for (i = 0; i < 2; i++) {
-	drivep = &drive_info[i];
-	if (drivep->heads != 0) {
-	    printk("/dev/bd%c: %d heads, %d cylinders, %d sectors = %ld MB\n",
-		   (i + 'a'),
-		   drivep->heads,
-		   drivep->cylinders,
-		   drivep->sectors,
-		   (sector_t) drivep->heads * drivep->cylinders *
-		   drivep->sectors * 512L / (1024L * (i < 2 ? 1024L : 1L)));
-	}
-    }
-    bioshd_gendisk.nr_real = hdcount;
-
 #endif
+
+#ifdef CONFIG_BLK_DEV_BHD
+    bioshd_gendisk.nr_real = hdcount;
 #endif
 
     i = register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops);
 
     if (i == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
+
 #if 0
 	blksize_size[MAJOR_NR] = 1024;	/* Currently unused */
 	read_ahead[MAJOR_NR] = 2;	/* Currently unused */
 #endif
+
 	if (gendisk_head == NULL) {
 	    bioshd_gendisk.next = gendisk_head;
 	    gendisk_head = &bioshd_gendisk;
@@ -671,9 +676,11 @@ static void do_bioshd_request(void)
 	    continue;
 	}
 	minor = MINOR(req->rq_dev);
+
 #if 0
 	part = minor & ((1 << 6) - 1);
 #endif
+
 	drive = minor >> 6;
 
 /* make sure it's a disk that we are dealing with. */
@@ -683,6 +690,7 @@ static void do_bioshd_request(void)
 	    end_request(0);
 	    continue;
 	}
+
 #ifdef MULT_SECT_RQ
 	count = req->rq_nr_sectors;
 #else
@@ -728,11 +736,9 @@ static void do_bioshd_request(void)
 	    BD_FL = 0;
 
 #if 0
-
 	    printk("cylinder=%d head=%d sector=%d drive=%d CMD=%d\n",
 		   cylinder, head, sector, drive, req->cmd);
 	    printk("blocks %d\n", this_pass);
-
 #endif
 
 	    i_sti();
@@ -778,7 +784,8 @@ static void do_bioshd_request(void)
 #define CAPACITY ((sector_t)drive_info[target].heads*drive_info[target].sectors*drive_info[target].cylinders)
 
 /* We assume that the the bios parameters do not change,
- * so the disk capacity will not change */
+ * so the disk capacity will not change
+ */
 
 #undef MAYBE_REINIT
 #define GENDISK_STRUCT bioshd_gendisk
@@ -791,7 +798,7 @@ static void do_bioshd_request(void)
  * this is our limit.
  */
 
-#if 0				/* Currently not used, removing for size. */
+#if 0			/* Currently not used, removing for size. */
 
 static int revalidate_hddisk(int dev, int maxusage)
 {
@@ -853,9 +860,11 @@ static void bioshd_geninit(void)
 	    hdp->start_sect = -1;
 	}
     }
+
 #if 0
     blksize_size[MAJOR_NR] = 1024;	/* Currently unused */
 #endif
+
 }
 
 #endif

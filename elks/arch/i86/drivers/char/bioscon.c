@@ -18,10 +18,6 @@
 
 #ifdef CONFIG_CONSOLE_BIOS 
 
-#ifndef printd_tty		/* This should go in debug.h */
-#define printd_tty(_a,_b)
-#endif
-
 int read_kbd(void);
 
 #ifdef CONFIG_BIOS_VT52
@@ -142,7 +138,7 @@ int bioscon_open(struct tty * tty)
 {
     int minor = tty->minor;
 
-    printd_tty("BIOSCON: open %d\n", minor);
+    debug1("BIOS CONSOLE: open %d\n", minor);
     if (minor)
 	return -ENODEV;
     return 0;

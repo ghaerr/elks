@@ -5,8 +5,8 @@
  * This file has definitions for some important file table structures etc.
  */
 
-#include <linuxmt/wait.h>
 #include <linuxmt/types.h>
+#include <linuxmt/wait.h>
 #include <linuxmt/vfs.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/ioctl.h>

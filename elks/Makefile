@@ -233,7 +233,7 @@ config:	arch/i86/drivers/char/KeyMaps/Config.in
 	@echo ' * Configuration complete. You need to run `make dep` next.'
 	@echo
 
-dep:	include/linuxmt/autoconf.h
+dep:	.config include/linuxmt/autoconf.h
 	@make dodep
 	@echo
 	@echo ' * Dependencies configured. Next, you need to run one of the'
@@ -245,6 +245,9 @@ dep:	include/linuxmt/autoconf.h
 	@echo ' *    `make nbImage`   to create a kernel image ready to boot'
 	@echo ' *                     across a network connection.'
 	@echo
+
+.config:
+	make defconfig
 
 defconfig:
 	@yes '' | ${MAKE} config

@@ -138,10 +138,10 @@ int elksfs_lookup(register struct inode *dir, char *name, size_t len,
 	iput(dir);
 	return -ENOENT;
     }
-    printd_namei("elksfs_lookup: Entering elksfs_find_entry\n");
+    debug("elksfs_lookup: Entering elksfs_find_entry\n");
     bh = elksfs_find_entry(dir, name, len, &de);
-    printd_namei2("elksfs_lookup: elksfs_find_entry returned %x %d\n", bh,
-		  bh->b_mapcount);
+    debug2("elksfs_lookup: elksfs_find_entry returned %x %d\n", bh,
+	   bh->b_mapcount);
     if (!bh) {
 	iput(dir);
 	return -ENOENT;
@@ -218,8 +218,7 @@ static int elksfs_add_entry(register struct inode *dir, char *name,
 	if (de->inode) {
 	    if (namecompare(namelen, (size_t) info->s_namelen, name,
 			    de->name)) {
-		printd_mfs2
-		    ("ELKSFSadd_entry: file %t==%s (already exists)\n",
+		debug2("ELKSFSadd_entry: file %t==%s (already exists)\n",
 		     name, de->name);
 		unmap_brelse(bh);
 		return -EEXIST;
@@ -385,10 +384,10 @@ int elksfs_mkdir(register struct inode *dir, char *name, size_t len, int mode)
 	iput(dir);
 	return -ENOSPC;
     }
-    printd_fsmkdir("m_mkdir: new_inode succeeded\n");
+    debug("m_mkdir: new_inode succeeded\n");
     inode->i_op = &elksfs_dir_inode_operations;
     inode->i_size = 2 * info->s_dirsize;
-    printd_fsmkdir("m_mkdir: starting elksfs_bread\n");
+    debug("m_mkdir: starting elksfs_bread\n");
     dir_block = elksfs_bread(inode, 0, 1);
     if (!dir_block) {
 	iput(dir);
@@ -397,7 +396,7 @@ int elksfs_mkdir(register struct inode *dir, char *name, size_t len, int mode)
 	iput(inode);
 	return -ENOSPC;
     }
-    printd_fsmkdir("m_mkdir: read succeeded\n");
+    debug("m_mkdir: read succeeded\n");
     map_buffer(dir_block);
     de = (struct elksfs_dir_entry *) dir_block->b_data;
     de->inode = inode->i_ino;
@@ -408,7 +407,7 @@ int elksfs_mkdir(register struct inode *dir, char *name, size_t len, int mode)
     inode->i_nlink = 2;
     mark_buffer_dirty(dir_block, 1);
     unmap_brelse(dir_block);
-    printd_fsmkdir("m_mkdir: dir_block update succeeded\n");
+    debug("m_mkdir: dir_block update succeeded\n");
     inode->i_mode = S_IFDIR | (mode & 0777 & ~current->fs.umask);
     if (dir->i_mode & S_ISGID)
 	inode->i_mode |= S_ISGID;
@@ -428,7 +427,7 @@ int elksfs_mkdir(register struct inode *dir, char *name, size_t len, int mode)
     iput(dir);
     iput(inode);
     unmap_brelse(bh);
-    printd_fsmkdir("m_mkdir: done!\n");
+    debug("m_mkdir: done!\n");
     return 0;
 }
 

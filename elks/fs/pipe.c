@@ -44,7 +44,7 @@ int get_unused_fd(void)
 loff_t pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
 		  int orig)
 {
-    printd_pipe("PIPE lseek called.\n");
+    debug("PIPE: lseek called.\n");
     return -ESPIPE;
 }
 
@@ -69,7 +69,7 @@ char *get_pipe_mem(void)
 	    return pipe_base[i];
 	}
     }
-    printd_pipe("PIPE: No more buffers.\n");	/* FIXME */
+    debug("PIPE: No more buffers.\n");		/* FIXME */
     return NULL;
 }
 
@@ -80,7 +80,7 @@ static int pipe_read(register struct inode *inode, struct file *filp,
     int chars = 0, size = 0, read = 0;
     register char *pipebuf;
 
-    printd_pipe("PIPE read called.\n");
+    debug("PIPE: read called.\n");
     if (filp->f_flags & O_NONBLOCK) {
 	if ((inode->u.pipe_i.lock))
 	    return -EAGAIN;
@@ -132,7 +132,7 @@ static int pipe_write(register struct inode *inode, struct file *filp,
     int chars = 0, free = 0, written = 0;
     register char *pipebuf;
 
-    printd_pipe("PIPE write called.\n");
+    debug("PIPE: write called.\n");
     if (!(inode->u.pipe_i.readers)) {
 	send_sig(SIGPIPE, current, 0);
 	return -EPIPE;
@@ -187,14 +187,14 @@ static int pipe_write(register struct inode *inode, struct file *filp,
 
 static void pipe_read_release(register struct inode *inode, struct file *filp)
 {
-    printd_pipe("PIPE read_release called.\n");
+    debug("PIPE: read_release called.\n");
     (inode->u.pipe_i.readers)--;
     wake_up_interruptible(&(inode->u.pipe_i.wait));
 }
 
 static void pipe_write_release(register struct inode *inode, struct file *filp)
 {
-    printd_pipe("PIPE write_release called.\n");
+    debug("PIPE: write_release called.\n");
     (inode->u.pipe_i.writers)--;
     wake_up_interruptible(&(inode->u.pipe_i.wait));
 }
@@ -202,7 +202,7 @@ static void pipe_write_release(register struct inode *inode, struct file *filp)
 static void pipe_rdwr_release(register struct inode *inode,
 			      register struct file *filp)
 {
-    printd_pipe("PIPE rdwr_release called.\n");
+    debug("PIPE: rdwr_release called.\n");
 
     if (filp->f_mode & FMODE_READ)
 	(inode->u.pipe_i.readers)--;
@@ -215,7 +215,7 @@ static void pipe_rdwr_release(register struct inode *inode,
 
 static int pipe_read_open(struct inode *inode, struct file *filp)
 {
-    printd_pipe("PIPE read_open called.\n");
+    debug("PIPE: read_open called.\n");
     (inode->u.pipe_i.readers)++;
 
     return 0;
@@ -223,7 +223,7 @@ static int pipe_read_open(struct inode *inode, struct file *filp)
 
 static int pipe_write_open(struct inode *inode, struct file *filp)
 {
-    printd_pipe("PIPE write_open called.\n");
+    debug("PIPE: write_open called.\n");
     (inode->u.pipe_i.writers)++;
 
     return 0;
@@ -232,7 +232,7 @@ static int pipe_write_open(struct inode *inode, struct file *filp)
 static int pipe_rdwr_open(register struct inode *inode,
 			  register struct file *filp)
 {
-    printd_pipe("PIPE rdwr called.\n");
+    debug("PIPE: rdwr called.\n");
 
     if (filp->f_mode & FMODE_READ)
 	(inode->u.pipe_i.readers)++;
@@ -246,7 +246,7 @@ static int pipe_rdwr_open(register struct inode *inode,
 static int bad_pipe_rw(struct inode *inode, struct file *filp,
 		       char *buf, int count)
 {
-    printd_pipe("PIPE bad rw called.\n");
+    debug("PIPE: bad rw called.\n");
 
     return -EBADF;
 }
@@ -373,12 +373,12 @@ int sys_pipe(unsigned int *filedes)
     int fd[2];
     int error;
 
-    printd_pipe("PIPE called.\n");
+    debug("PIPE: called.\n");
 
     if ((error = do_pipe(fd)))
 	return error;
 
-    printd2_pipe("PIPE worked %d %d.\n", fd[0], fd[1]);
+    debug2("PIPE: Returned %d %d.\n", fd[0], fd[1]);
 
     return verified_memcpy_tofs(filedes, fd, 2 * sizeof(int));
 }

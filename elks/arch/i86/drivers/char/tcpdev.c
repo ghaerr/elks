@@ -30,10 +30,10 @@ static struct wait_queue tcpdevp;
 
 static char tcpdev_inuse;
 
-static int tcpdev_read(struct inode *inode,
-		       struct file *filp, char *data, int len)
+static int tcpdev_read(struct inode *inode, struct file *filp,
+		       char *data, int len)
 {
-    printd_td("tcpdev : read()\n");
+    debug1("TCPDEV: read called with room for %d bytes of data.\n",len);
 
     while (tdout_tail == 0) {
 	if (filp->f_flags & O_NONBLOCK)
@@ -64,12 +64,13 @@ int tcpdev_inetwrite(char *data, int len)
 {
     unsigned int ds;
 
-    printd_td("tcpdev : inetwrite()\n");
+    debug1("TCPDEV: inetwrite called with %d bytes of data.\n", len);
+
     if (len > TCPDEV_OUTBUFFERSIZE)
-	return -EINVAL;		/* FIXME: make sure this never happen */
+	return -EINVAL;		/* FIXME: make sure this never happens */
 
     down(&bufout_sem);
-    printd_td("tcpdev : inetwrite() writing\n");
+    debug("TCPDEV: inetwrite() writing.\n");
 
     /* Copy the data to the buffer */
     ds = get_ds();
@@ -93,7 +94,7 @@ static int tcpdev_write(struct inode *inode,
 {
     int ret;
 
-    printd_td("tcpdev : write()\n");
+    debug1("TCPDEV: write called with %d bytes of data.\n", len);
     if (len <= 0)
 	ret = 0;
     else {
@@ -129,7 +130,7 @@ int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
 
 static int tcpdev_open(struct inode *inode, struct file *file)
 {
-    printd_td("tcpdev : open()\n");
+    debug("TCPDEV: open called.\n");
 
     if(!suser())
     	return -EPERM;
@@ -145,6 +146,8 @@ static int tcpdev_open(struct inode *inode, struct file *file)
 
 int tcpdev_release(struct inode *inode, struct file *file)
 {
+    debug("TCPDEV: release called.\n");
+
     tcpdev_inuse = 0;
     return 0;
 }
@@ -168,6 +171,8 @@ static struct file_operations tcpdev_fops = {
 void tcpdev_init(void)
 {
     register_chrdev(TCPDEV_MAJOR, "tcpdev", &tcpdev_fops);
+
+    debug("TCPDEV: init called.\n");
 
     bufin_sem = bufout_sem = 0;
     tcpdev_inuse = 0;

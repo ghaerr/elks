@@ -7,6 +7,8 @@
  * filesystem (aka V2) with bigger inodes and 32-bit block pointers.
  */
 
+#include <linuxmt/types.h>
+
 #define MINIX_ROOT_INO 1
 
 /* Not the same as the bogus LINK_MAX in <linux/limits.h>. Oh well. */

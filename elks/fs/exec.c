@@ -82,19 +82,19 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      *      Open the image
      */
 
-    printd_exec("EXEC: opening file");
+    debug1("EXEC: opening file: %s\n", filename);
 
     retval = open_namei(filename, 0, 0, &inode, NULL);
 
-    printd_exec1("EXEC: open returned %d", retval);
+    debug1("EXEC: open returned %d\n", retval);
     if (retval)
 	goto end_readexec;
 
-    printd_exec("EXEC: start building a file handle");
+    debug("EXEC: start building a file handle\n");
+
     /*
      *      Build a reading file handle
      */
-
     filp->f_mode = 1;
     filp->f_flags = 0;
     filp->f_count = 1;
@@ -115,7 +115,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if (!filp->f_op->read)
 	goto close_readexec;
 
-    printd_exec1("EXEC: Opened ok inode dev = 0x%x", inode->i_dev);
+    debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
 
 #ifdef CONFIG_EXEC_MINIX
 
@@ -143,10 +143,11 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     if (result != sizeof(mh) ||
 	(mh.type != MINIX_SPLITID) || mh.chmem < 1024 || mh.tseg == 0) {
-	printd_exec1("EXEC: bad header, result %d", result);
+	debug1("EXEC: bad header, result %d\n", result);
 	retval = -ENOEXEC;
 	goto close_readexec;
     }
+
     /* I am so far unsure about whether we need this, or the S_SPLITID format
      */
     if ((unsigned int) mh.hlen == 0x30) {
@@ -155,7 +156,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	result = filp->f_op->read(inode, &file, &msuph, sizeof(msuph));
 	tregs->ds = ds;
 	if (result != sizeof(msuph)) {
-	    printd_exec1("EXEC: bad secondary header, result %d", result);
+	    debug1("EXEC: Bad secondary header, result %d\n", result);
 	    retval = -ENOEXEC;
 	    goto close_readexec;
 	}
@@ -181,7 +182,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     tregs->ds = ds;
 
     if ((result != sizeof(mshdr)) || (mshdr.magic != MSDOS_MAGIC)) {
-	printd_exec1("EXEC: bad header, result %d", result);
+	debug1("EXEC: bad header, result %d\n", result);
 	retval = -ENOEXEC;
 	goto close_readexec;
     }
@@ -192,7 +193,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
   blah:
 #endif
-    printd_exec("EXEC: Malloc time\n");
+
+    debug("EXEC: Malloc time\n");
+
     /*
      *      Looks good. Get the memory we need
      */
@@ -230,7 +233,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	goto close_readexec;
     }
 
-    printd_exec1("Allocating %d bytes for data segment", len);
+    debug1("EXEC: Allocating %d bytes for data segment\n", len);
 
     dseg = mm_alloc((segext_t) (len >> 4));
     if (!dseg) {
@@ -239,13 +242,13 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	goto close_readexec;
     }
 
-    printd_exec2("EXEC: Malloc succeeded - cs=%x ds=%x", cseg, dseg);
+    debug2("EXEC: Malloc succeeded - cs=%x ds=%x", cseg, dseg);
     tregs->ds = cseg;
     result = filp->f_op->read(inode, &file, 0, mh.tseg);
     tregs->ds = ds;
     if (result != mh.tseg) {
-	printd_exec2("EXEC(tseg read): bad result %d, expected %d", result,
-		     mh.tseg);
+	debug2("EXEC(tseg read): bad result %d, expected %d\n",
+	       result, mh.tseg);
 	retval = -ENOEXEC;
 	mm_free(cseg);
 	mm_free(dseg);
@@ -256,8 +259,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     result = filp->f_op->read(inode, &file, (char *) stack_top, mh.dseg);
     tregs->ds = ds;
     if (result != mh.dseg) {
-	printd_exec2("EXEC(dseg read): bad result %d, expected %d", result,
-		     mh.dseg);
+	debug2("EXEC(dseg read): bad result %d, expected %d\n",
+	       result, mh.dseg);
 	retval = -ENOEXEC;
 	mm_free(cseg);
 	mm_free(dseg);
@@ -317,7 +320,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	mm_free(current->mm.dseg);
     current->mm.cseg = cseg;
     current->mm.dseg = dseg;
-    printd_exec("EXEC: old binary flushed.");
+    debug("EXEC: old binary flushed.\n");
 
     /*
      *      Clear signal handlers..
@@ -366,6 +369,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
   close_readexec:
     if (filp->f_op->release)
 	filp->f_op->release(inode, &file);
+
   end_readexec:
 
     /*
@@ -373,7 +377,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      *      the user process.
      */
 
-    printd_exec1("EXEC: Returning %d\n", retval);
+    debug1("EXEC: Returning %d\n", retval);
     return retval;
 
 }

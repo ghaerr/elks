@@ -221,15 +221,15 @@ int _namei(char *pathname, struct inode *base, int follow_links,
     size_t namelen;
     struct inode *inode;
 
-    printd_namei("_namei: calling dir_namei\n");
+    debug("_namei: calling dir_namei\n");
     *res_inode = NULL;
     error = dir_namei(pathname, &namelen, &basename, base, &base);
-    printd_namei1("_namei: dir_namei returned %d\n", error);
+    debug1("_namei: dir_namei returned %d\n", error);
     if (!error) {
 	base->i_count++;	/* lookup uses up base */
-	printd_namei("_namei: calling lookup\n");
+	debug("_namei: calling lookup\n");
 	error = lookup(base, basename, namelen, &inode);
-	printd_namei1("_namei: lookup returned %d\n", error);
+	debug1("_namei: lookup returned %d\n", error);
 	if (!error) {
 	    if (follow_links) {
 		error = follow_link(base, inode, 0, 0, &inode);
@@ -477,9 +477,9 @@ int sys_mkdir(char *pathname, int mode)
     register struct inode *dirp;
     register struct inode_operations *iop;
 
-    printd_fsmkdir("mkdir: calling dir_namei\n");
+    debug("mkdir: calling dir_namei\n");
     error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
-    printd_fsmkdir1("mkdir: finished dir_namei (ret : %d)\n", error);
+    debug1("mkdir: finished dir_namei (ret : %d)\n", error);
     dirp = dir;
     if (!error) {
 	if (!namelen) {
@@ -491,7 +491,7 @@ int sys_mkdir(char *pathname, int mode)
 	    } else {
 		dirp->i_count++;
 		down(&dirp->i_sem);
-		printd_fsmkdir("mkdir: calling dir->i_op->mkdir...\n");
+		debug("mkdir: calling dir->i_op->mkdir...\n");
 		error =
 		    iop->mkdir(dir, basename, namelen,
 			       mode & 0777 & ~current->fs.umask);
@@ -499,9 +499,9 @@ int sys_mkdir(char *pathname, int mode)
 	    }
 	}
 	iput(dirp);
-	printd_fsmkdir("mkdir: complete\n");
+	debug("mkdir: complete\n");
     }
-    printd_fsmkdir1("mkdir: error %d\n", error);
+    debug1("mkdir: error %d\n", error);
     return error;
 }
 

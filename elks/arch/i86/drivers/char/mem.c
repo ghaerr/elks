@@ -44,7 +44,7 @@ loff_t memory_lseek(struct inode *inode, register struct file *filp,
 {
     loff_t tmp = -1;
 
-    printd_mem("mem_lseek()\n");
+    debugmem("mem_lseek()\n");
     switch (origin) {
     case 0:
 	tmp = offset;
@@ -72,22 +72,22 @@ loff_t memory_lseek(struct inode *inode, register struct file *filp,
 /*
  * /dev/null code
  */
-loff_t null_lseek(struct inode *inode,
-	       struct file *filp, off_t offset, int origin)
+loff_t null_lseek(struct inode *inode, struct file *filp,
+		  off_t offset, int origin)
 {
-    printd_mem("null_lseek()\n");
+    debugmem("null_lseek()\n");
     return (filp->f_pos = 0);
 }
 
 int null_read(struct inode *inode, struct file *filp, char *data, int len)
 {
-    printd_mem("null_read()\n");
+    debugmem("null_read()\n");
     return 0;
 }
 
 int null_write(struct inode *inode, struct file *filp, char *data, int len)
 {
-    printd_mem1("null write: ignoring %d bytes!\n", len);
+    debugmem1("null write: ignoring %d bytes!\n", len);
     return len;
 }
 
@@ -113,14 +113,14 @@ static struct file_operations null_fops = {
  */
 int full_read(struct inode *inode, struct file *filp, char *data, int len)
 {
-    printd_mem("full_read()\n");
+    debugmem("full_read()\n");
     filp->f_pos += len;
     return len;
 }
 
 int full_write(struct inode *inode, struct file *filp, char *data, int len)
 {
-    printd_mem1("full_write: objecting to %d bytes!\n", len);
+    debugmem1("full_write: objecting to %d bytes!\n", len);
     return -ENOSPC;
 }
 
@@ -147,7 +147,7 @@ static struct file_operations full_fops = {
  */
 int zero_read(struct inode *inode, struct file *filp, char *data, int len)
 {
-    printd_mem("zero_read()\n");
+    debugmem("zero_read()\n");
     fmemset(data, current->mm.dseg, 0, len);
     filp->f_pos += len;
     return len;
@@ -185,9 +185,9 @@ loff_t kmem_read(struct inode *inode, register struct file *filp,
 {
     unsigned short int sseg, soff;
 
-    printd_mem("[k]mem_read()\n");
+    debugmem("[k]mem_read()\n");
     split_seg_off(&sseg, &soff, filp->f_pos);
-    printd_mem3("Reading %u %p %p.\n", len, sseg, soff);
+    debugmem3("Reading %u %p %p.\n", len, sseg, soff);
     fmemcpy(current->mm.dseg, data, sseg, soff, len);
     filp->f_pos += len;
 
@@ -199,10 +199,10 @@ int kmem_write(struct inode *inode, register struct file *filp,
 {
     unsigned short int dseg, doff;
 
-    printd_mem("[k]mem_write()\n");
+    debugmem("[k]mem_write()\n");
 
     split_seg_off(&dseg, &doff, filp->f_pos);
-    printd_mem2("Writing to %d:%d\n", dseg, doff);
+    debugmem2("Writing to %d:%d\n", dseg, doff);
     fmemcpy(dseg, doff, current->mm.dseg, data, len);
     filp->f_pos += len;
 
@@ -218,7 +218,7 @@ unsigned int kmem_ioctl(struct inode *inode,
 #endif
     char *i;
 
-    printd_mem1("[k]mem_ioctl() %d\n", cmd);
+    debugmem1("[k]mem_ioctl() %d\n", cmd);
     switch (cmd) {
 
 #ifdef CONFIG_MODULE
@@ -305,22 +305,22 @@ int memory_open(struct inode *inode, register struct file *filp)
 {
     int err=0;
 
-    printd_mem1("memory_open: minor = %d; it's /dev/",
-		(int) MINOR(inode->i_rdev));
+    debugmem1("memory_open: minor = %d; it's /dev/",
+	      (int) MINOR(inode->i_rdev));
     switch (MINOR(inode->i_rdev)) {
 
     case DEV_NULL_MINOR:
-	printd_mem("null");
+	debugmem("null");
 	filp->f_op = &null_fops;
 	break;
 
     case DEV_FULL_MINOR:
-	printd_mem("full");
+	debugmem("full");
 	filp->f_op = &full_fops;
 	break;
 
     case DEV_ZERO_MINOR:
-	printd_mem("zero");
+	debugmem("zero");
 	filp->f_op = &zero_fops;
 	break;
 
@@ -329,11 +329,11 @@ int memory_open(struct inode *inode, register struct file *filp)
      */
 
     case DEV_KMEM_MINOR:
-	printd_mem("k");
+	debugmem("k");
 	/* Fallthru */
 
     case DEV_MEM_MINOR: 
-	printd_mem("mem");
+	debugmem("mem");
 	filp->f_op = &kmem_fops;
 	break;
 
@@ -345,28 +345,28 @@ int memory_open(struct inode *inode, register struct file *filp)
      */
 
     case DEV_PORT_MINOR:
-	printd_mem("port");
+	debugmem("port");
 	err = -ENXIO;
 	break;
 
     case DEV_RANDOM_MINOR:
-	printd_mem("random");
+	debugmem("random");
 	err = -ENXIO;
 	break;
 
     case DEV_URANDOM_MINOR:
-	printd_mem("urandom");
+	debugmem("urandom");
 	err = -ENXIO;
 	break;
 
 #endif
 
     default:
-	printd_mem("???");
+	debugmem("???");
 	err = -ENXIO;
 	break;
     }
-    printd_mem(" !!!\n");
+    debugmem(" !!!\n");
     if (err)
 	printk("Device minor %d not supported.\n", MINOR(inode->i_rdev));
     return err;
@@ -392,7 +392,7 @@ static struct file_operations memory_fops = {
 void mem_dev_init(void)
 {
     if (register_chrdev(MEM_MAJOR, "mem", &memory_fops))
-	printd_mem1("unable to get major %d for memory devices\n", MEM_MAJOR);
+	printk("MEM: Unable to get major %d for memory devices\n", MEM_MAJOR);
 }
 
 #endif

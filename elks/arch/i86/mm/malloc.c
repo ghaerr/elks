@@ -351,7 +351,7 @@ seg_t mm_dup(seg_t base)
     register struct malloc_hole *o, *m;
     size_t i;
 
-    printd_mm("mm_dup()\n");
+    debug("MALLOC: mm_dup()\n");
     o = find_hole(&memmap, base);
     if (o->flags != HOLE_USED)
 	panic("bad/swapped hole");
@@ -531,14 +531,14 @@ static int swap_out(seg_t base)
 	if (t->mm.cseg == base && !(c & CS_SWAP)) {
 	    t->mm.cseg = so->page_base;
 	    t->mm.flags |= CS_SWAP;
-	    printd_mm2("swaping out code of pid %d blocks %d\n", t->pid,
-		       blocks);
+	    debug2("MALLOC: swaping out code of pid %d blocks %d\n",
+		   t->pid, blocks);
 	}
 	if (t->mm.dseg == base && !(c & DS_SWAP)) {
 	    t->mm.dseg = so->page_base;
 	    t->mm.flags |= DS_SWAP;
-	    printd_mm2("swaping out data of pid %d blocks %d\n", t->pid,
-		       blocks);
+	    debug2("MALLOC: swaping out data of pid %d blocks %d\n",
+		   t->pid, blocks);
 	}
     }
 
@@ -598,14 +598,14 @@ static int swap_in(seg_t base, int chint)
     for_each_task(t) {
 	int c = t->mm.flags;
 	if (t->mm.cseg == base && c & CS_SWAP) {
-	    printd_mm2("swaping in code of pid %d seg %x\n", t->pid,
-		       t->mm.cseg);
+	    debug2("MALLOC: swapping in code of pid %d seg %x\n",
+		   t->pid, t->mm.cseg);
 	    t->mm.cseg = o->page_base;
 	    t->mm.flags &= ~CS_SWAP;
 	}
 	if (t->mm.dseg == base && c & DS_SWAP) {
-	    printd_mm2("swaping in data of pid %d seg %x\n", t->pid,
-		       t->mm.dseg);
+	    debug2("MALLOC: swapping in data of pid %d seg %x\n",
+		   t->pid, t->mm.dseg);
 	    t->mm.dseg = o->page_base;
 	    t->mm.flags &= ~DS_SWAP;
 	}
@@ -660,7 +660,7 @@ static seg_t swap_strategy(register struct task_struct *swapin_target)
     int best_rate = -1;
     int best_pid;
 
-    printd_mm1("swap_strategy(pid %d)\n", swapin_target->pid);
+    debug1("swap_strategy(pid %d)\n", swapin_target->pid);
     for_each_task(t) {
 	if (   t->state == TASK_UNUSED
 	    || t->pid == 0
@@ -696,7 +696,7 @@ static seg_t swap_strategy(register struct task_struct *swapin_target)
 	}
     }
 
-    printd_mm2("Choose pid %d rate %d\n", best_pid, best_rate);
+    debug2("Choose pid %d rate %d\n", best_pid, best_rate);
 
     return best_ret;
 }

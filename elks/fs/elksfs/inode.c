@@ -311,9 +311,9 @@ unsigned long _elksfs_bmap(register struct inode *inode, block_t block,
 		return 0;
 
 	}
-	printd_mfs1("MFSbmap: About to read indirect block #%d\n", i_zone[7]);
+	debug1("MFSbmap: About to read indirect block #%d\n", i_zone[7]);
 	if (!(bh = bread(inode->i_dev, i_zone[7]))) {
-	    printd_mfs("MFSbmap: Bread of zone 7 failed\n");
+	    debug("MFSbmap: Bread of zone 7 failed\n");
 	    return 0;
 	}
 	map_buffer(bh);
@@ -329,7 +329,7 @@ unsigned long _elksfs_bmap(register struct inode *inode, block_t block,
 #endif
 
 	unmap_brelse(bh);
-	printd_mfs1("MFSbmap: Returning #%ld\n", i);
+	debug1("MFSbmap: Returning #%ld\n", i);
 	return i;
     }
     printk("ELKSFS-fs: bmap cannot handle > 519K files yet!\n");
@@ -342,11 +342,10 @@ struct buffer_head *elksfs_getblk(register struct inode *inode,
     struct buffer_head *bh;
     block_t blknum = (block_t) _elksfs_bmap(inode, block, create);
 
-    printd_mfs2("ELKSFSfs: file block #%ld -> disk block #%ld\n", block,
-		blknum);
+    debug2("ELKSFSfs: file block #%ld -> disk block #%ld\n", block, blknum);
     if (blknum != 0) {
 	bh = getblk(inode->i_dev, blknum);
-	printd_mfs2("ELKSFSfs: m_getblk returning %x for blk %d\n", bh, block);
+	debug2("ELKSFSfs: m_getblk returning %x for blk %d\n", bh, block);
 	return bh;
     } else
 	return NULL;
@@ -356,10 +355,10 @@ struct buffer_head *elksfs_bread(struct inode *inode, block_t block, int create)
 {
     register struct buffer_head *bh;
 
-    printd_mfs3("mfs: elksfs_bread(%d, %d, %d)\n", inode, block, create);
+    debug3("mfs: elksfs_bread(%d, %d, %d)\n", inode, block, create);
     if (!(bh = elksfs_getblk(inode, block, create)))
 	return NULL;
-    printd_mfs2("ELKSFSfs: Reading block #%d with buffer #%x\n", block, bh);
+    debug2("ELKSFSfs: Reading block #%d with buffer #%x\n", block, bh);
     return readbuf(bh);
 }
 

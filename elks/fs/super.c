@@ -477,10 +477,10 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
      */
 
 #ifdef CONFIG_FULL_VFS
-    printd_mount("MOUNT: performing type check\n");
+    debug("MOUNT: performing type check\n");
 
     if ((retval = strlen_fromfs(type)) >= 16) {
-	printd_mount("MOUNT: type size exceeds 16 characters, trunctating\n");
+	debug("MOUNT: type size exceeds 16 characters, trunctating\n");
 	retval = 15;
     }
 
@@ -490,7 +490,7 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
     fstype = get_fs_type(ltype);
     if (!fstype)
 	return -ENODEV;
-    printd_mount("MOUNT: type check okay\n");
+    debug("MOUNT: type check okay\n");
 #else
     fstype = file_systems[0];
 #endif
@@ -505,7 +505,7 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 	retval = namei(dev_name, &inode, 0, 0);
 	if (retval)
 	    return retval;
-	printd_mount("MOUNT: made it through namei\n");
+	debug("MOUNT: made it through namei\n");
 	if (!S_ISBLK(inode->i_mode)) {
 	    iput(inode);
 	    return -ENOTBLK;

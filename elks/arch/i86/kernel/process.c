@@ -459,17 +459,16 @@ void arch_setup_kernel_stack(register struct task_struct *t)
 void arch_setup_sighandler_stack(register struct task_struct *t,
 				 __sighandler_t addr,unsigned signr)
 {
-    printd_sig4("Stack %x was %x %x %x\n",addr,get_ustack(t, 0),
-		get_ustack(t, 2),get_ustack(t, 4));
-    put_ustack(t, 2, get_ustack(t, 0));
-    put_ustack(t, 0, get_ustack(t, 4));
+    debug4("Stack %x was %x %x %x\n", addr, get_ustack(t,0), get_ustack(t,2),
+	   get_ustack(t,4));
+    put_ustack(t, 2, get_ustack(t,0));
+    put_ustack(t, 0, get_ustack(t,4));
     put_ustack(t, 4, signr);
     put_ustack(t, -2, t->t_regs.cs);
     put_ustack(t, -4, ((int) addr));
     t->t_regs.sp -= 4;
-    printd_sig5("Stack is %x %x %x %x %x\n",get_ustack(t, 0),
-		get_ustack(t, 2),get_ustack(t, 4),get_ustack(t, 6),
-		get_ustack(t, 8));
+    debug5("Stack is %x %x %x %x %x\n", get_ustack(t,0), get_ustack(t,2),
+	   get_ustack(t,4),get_ustack(t,6), get_ustack(t,8));
 }
 
 /*

@@ -30,7 +30,7 @@ int chq_erase(register struct ch_queue *q)
 
 int chq_init(register struct ch_queue *q, unsigned char *buf, int size)
 {
-    printd_chq3("CHQ: chq_init(%d, %d, %d)\n", q, buf, size);
+    debug3("CHQ: chq_init(%d, %d, %d)\n", q, buf, size);
     q->buf = buf;
     q->size = size;
     chq_erase(q);
@@ -41,14 +41,14 @@ int chq_addch(register struct ch_queue *q, unsigned char c, int wait)
 {
     unsigned int nhead;
 
-    printd_chq5("CHQ: chq_addch(%d, %c, %d) q->len=%d q->tail=%d\n", q, c, 0,
-		q->len, q->tail);
+    debug5("CHQ: chq_addch(%d, %c, %d) q->len=%d q->tail=%d\n", q, c, 0,
+	   q->len, q->tail);
 
     if (q->len == q->size) {
 	if (wait) {
-	    printd_chq("CHQ: addch sleeping\n");
+	    debug("CHQ: addch sleeping\n");
 	    interruptible_sleep_on(&q->wq);
-	    printd_chq("CHQ: addch waken up\n");
+	    debug("CHQ: addch waken up\n");
 	}
     }
 
@@ -78,14 +78,14 @@ int chq_getch(register struct ch_queue *q, register unsigned char *c, int wait)
 {
     int ntail, retval;
 
-    printd_chq6("CHQ: chq_getch(%d, %d, %d) q->len=%d q->tail=%d q->size=%d\n",
-		q, c, wait, q->len, q->tail, q->size);
+    debug6("CHQ: chq_getch(%d, %d, %d) q->len=%d q->tail=%d q->size=%d\n",
+	   q, c, wait, q->len, q->tail, q->size);
 
     if (q->len == 0) {
 	if (wait) {
-	    printd_chq("CHQ: getch sleeping\n");
+	    debug("CHQ: getch sleeping\n");
 	    interruptible_sleep_on(&q->wq);
-	    printd_chq("CHQ: getch wokeup\n");
+	    debug("CHQ: getch wokeup\n");
 	}
     }
     if (q->len == 0)

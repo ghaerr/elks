@@ -29,15 +29,15 @@ int do_signal(void)
 	if (signr == NSIG)
 	    panic("No signal set!\n");
 
-	printd_sig2("Process %d has signal %d.\n", currentp->pid, signr);
+	debug2("Process %d has signal %d.\n", currentp->pid, signr);
 	sa = &currentp->sig.action[signr];
 	signr++;
 	if (sa->sa_handler == SIG_IGN) {
-	    printd_sig("Ignore\n");
+	    debug("Ignore\n");
 	    continue;
 	}
 	if (sa->sa_handler == SIG_DFL) {
-	    printd_sig("Default\n");
+	    debug("Default\n");
 	    if (currentp->pid == 1)
 		continue;
 	    switch (signr) {
@@ -75,11 +75,10 @@ int do_signal(void)
 		do_exit(signr);
 	    }
 	}
-	printd_sig1("Setting up return stack for sig handler %x.\n",
-		    sa->sa_handler);
-	printd_sig1("Stack at %x\n", current->t_regs.sp);
+	debug1("Setting up return stack for sig handler %x.\n", sa->sa_handler);
+	debug1("Stack at %x\n", current->t_regs.sp);
 	arch_setup_sighandler_stack(current, sa->sa_handler, signr);
-	printd_sig1("Stack at %x\n", current->t_regs.sp);
+	debug1("Stack at %x\n", current->t_regs.sp);
 	sa->sa_handler = SIG_DFL;
 
 	return 1;

@@ -410,16 +410,17 @@ void map_buffer(register struct buffer_head *bh)
 
     /* If buffer is already mapped, just increase the refcount and return
      */
-    printd_bufmap2("mapping buffer %d (%d)\n", bh->b_num, bh->b_mapcount);
+    debug2("mapping buffer %d (%d)\n", bh->b_num, bh->b_mapcount);
 
     if (bh->b_data || bh->b_seg != get_ds()) {
-#if 0				/* debugging only */
+
+#ifdef DEBUG
 	if (!bh->b_mapcount) {
-	    printd_bufmap2
-		("BUFMAP: Buffer %d (block %d) `remapped' into L1.\n",
-		 bh->b_num, bh->b_blocknr);
+	    debug("BUFMAP: Buffer %d (block %d) `remapped' into L1.\n",
+		  bh->b_num, bh->b_blocknr);
 	}
 #endif
+
 	bh->b_mapcount++;
 	return;
     }
@@ -437,7 +438,7 @@ void map_buffer(register struct buffer_head *bh)
 		bh->b_mapcount++;
 		fmemcpy(get_ds(), bh->b_data,
 			_buf_ds, (char *) (bh->b_num * 0x400), 0x400);
-		printd_bufmap3
+		debug3
 		    ("BUFMAP: Buffer %d (block %ld) mapped into L1 slot %d.\n",
 		     bh->b_num, bh->b_blocknr, i);
 		return;
@@ -449,10 +450,10 @@ void map_buffer(register struct buffer_head *bh)
 	for (i = (lastumap + 1) % NR_MAPBUFS;
 	     i != lastumap; i = ((i + 1) % NR_MAPBUFS)) {
 
-	    printd_bufmap1("BUFMAP: trying slot %d\n", i);
+	    debug1("BUFMAP: trying slot %d\n", i);
 
 	    if (!bufmem_map[i]->b_mapcount) {
-		printd_bufmap1("BUFMAP: Buffer %d unmapped from L1\n",
+		debug1("BUFMAP: Buffer %d unmapped from L1\n",
 			       bufmem_map[i]->b_num);
 		/* Now unmap it */
 		fmemcpy(_buf_ds,
@@ -467,10 +468,10 @@ void map_buffer(register struct buffer_head *bh)
 	/* The last case is to wait until unmap gets a b_mapcount down to 0 */
 	if (i == lastumap) {
 	    /* previous loop failed */
-	    printd_bufmap1("BUFMAP: buffer #%d waiting on L1 slot\n",
+	    debug1("BUFMAP: buffer #%d waiting on L1 slot\n",
 			   bh->b_num);
 	    sleep_on(&bufmapwait);
-	    printd_bufmap("BUFMAP: wait queue woken up...\n");
+	    debug("BUFMAP: wait queue woken up...\n");
 	} else {
 	    /* success */
 	    lastumap = i;
@@ -486,17 +487,14 @@ void map_buffer(register struct buffer_head *bh)
 void unmap_buffer(register struct buffer_head *bh)
 {
     if (bh) {
-	printd_bufmap1("unmapping buffer %d\n", bh->b_num);
+	debug1("unmapping buffer %d\n", bh->b_num);
 	if (bh->b_mapcount <= 0) {
 	    printk("unmap_buffer: buffer #%x's b_mapcount<=0 already\n",
 		   bh->b_num);
 	    bh->b_mapcount = 0;
 	} else {
 	    if (!(--bh->b_mapcount)) {
-#if 0
-		printd_bufmap1("BUFMAP: buffer %d released from L1.\n",
-			       bh->b_num);
-#endif
+		debug1("BUFMAP: buffer %d released from L1.\n", bh->b_num);
 		wake_up(&bufmapwait);
 	    }
 	}

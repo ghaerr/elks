@@ -1,6 +1,8 @@
 #ifndef LX86_LINUXMT_ELKSFS_FS_H
 #define LX86_LINUXMT_ELKSFS_FS_H
 
+#include <linuxmt/types.h>
+
 /*
  * The elksfs filesystem constants/structures
  *

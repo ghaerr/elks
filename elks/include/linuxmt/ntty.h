@@ -17,6 +17,7 @@
 
 #ifdef __KERNEL__
 
+#include <linuxmt/types.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/termios.h>
 #include <linuxmt/chqueue.h>

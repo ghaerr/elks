@@ -1,6 +1,7 @@
 #ifndef LX86_LINUXMT_NET_H
 #define LX86_LINUXMT_NET_H
 
+#include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/socket.h>

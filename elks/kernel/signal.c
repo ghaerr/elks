@@ -30,10 +30,10 @@ static void generate(int sig, register struct task_struct *p)
 #endif
 	))
 	return;
-    printd_sig1("Generating sig %d.\n", sig);
+    debug1("SIGNAL: Generating sig %d.\n", sig);
     p->signal |= mask;
     if ((p->state == TASK_INTERRUPTIBLE) /* && (p->signal & ~p->blocked) */ ) {
-	printd_sig("and wakig up\n");
+	debug("SIGNAL: Waking up.\n");
 	wake_up_process(p);
     }
 }
@@ -41,7 +41,7 @@ static void generate(int sig, register struct task_struct *p)
 int send_sig(pid_t sig, register struct task_struct *p, int priv)
 {
     register __ptask currentp = current;
-    printd_sig1("Killing with sig %d.\n", sig);
+    debug1("SIGNAL: Killing with sig %d.\n", sig);
     if (!priv && ((sig != SIGCONT) || (currentp->session != p->session)) &&
 	(currentp->euid ^ p->suid) && (currentp->euid ^ p->uid) &&
 	(currentp->uid ^ p->suid) && (currentp->uid ^ p->uid) && !suser())
@@ -71,7 +71,7 @@ int kill_pg(pid_t pgrp, sig_t sig, int priv)
     register struct task_struct *p;
     int err = -ESRCH;
 
-    printd_sig1("Killing pg %d\n", pgrp);
+    debug1("SIGNAL: Killing pg %d\n", pgrp);
     for_each_task(p)
 	if (p->pgrp == pgrp)
 	    err = send_sig(sig, p, priv);
@@ -82,7 +82,7 @@ int kill_process(pid_t pid, sig_t sig, int priv)
 {
     register struct task_struct *p;
 
-    printd_sig2("Killing PID %d with sig %d.\n", pid, sig);
+    debug2("SIGNAL: Killing PID %d with sig %d.\n", pid, sig);
     for_each_task(p)
 	if (p->pid == pid)
 	    return send_sig(sig, p, 0);
@@ -116,7 +116,7 @@ int sys_signal(int signr, __sighandler_t handler)
 {
     struct sigaction *sa;
 
-    printd_sig2("Registering action %x for signal %d.\n", handler, signr);
+    debug2("SIGNAL: Registering action %x for signal %d.\n", handler, signr);
     if (signr < 1 || signr > NSIG || signr == SIGKILL || signr == SIGSTOP)
 	return -EINVAL;
     sa = &current->sig.action[signr - 1];

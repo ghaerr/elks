@@ -1,6 +1,7 @@
 #ifndef LX86_LINUXMT_SOCKET_H
 #define LX86_LINUXMT_SOCKET_H
 
+#include <linuxmt/types.h>
 #include <linuxmt/uio.h>
 
 struct sockaddr {
@@ -9,13 +10,13 @@ struct sockaddr {
 };
 
 struct msghdr {
-    void *msg_name;
-    int msg_namelen;
-    struct iovec *msg_iov;
-    int msg_iovlen;
-    void *msg_control;
-    int msg_controllen;
-    int msg_flags;
+    void *		msg_name;
+    int 		msg_namelen;
+    struct iovec *	msg_iov;
+    int 		msg_iovlen;
+    void *		msg_control;
+    int 		msg_controllen;
+    int 		msg_flags;
 };
 
 #define AF_INET	0		/* Only implemented type */

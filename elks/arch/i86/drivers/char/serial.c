@@ -163,7 +163,7 @@ int rs_open(struct tty *tty)
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
     int count, divisor;
 
-    printd_rs("RS_OPEN called\n");
+    debug("SERIAL: rs_open called\n");
 
     if (!(port->flags & SERF_EXIST))
 	return -ENODEV;
@@ -207,7 +207,7 @@ void rs_release(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
 
-    printd_rs("RS_RELEASE called\n");
+    debug("SERIAL: rs_release called\n");
     port->flags &= ~SERF_INUSE;
     outb_p(0, port->io + UART_IER);
 }
@@ -282,7 +282,7 @@ int rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     int status;
     unsigned char ch;
 
-    printd_rs1("Serial interrupt %d recieved.\n", irq);
+    debug1("SERIAL: Interrupt %d recieved.\n", irq);
     sp = &ports[irq_port[irq - 2]];
     do {
 	status = inb_p(sp->io + UART_LSR);

@@ -84,11 +84,12 @@ static int ssd_release(struct inode *inode, struct file *filp)
 static int ssd_ioctl(register struct inode *inode,
 		     struct file *file, unsigned int cmd, unsigned int arg)
 {
-    int target = DEVICE_NR(inode->i_rdev);
 #if 0
+    int target = DEVICE_NR(inode->i_rdev);
+
     if (!suser())
 	return -EPERM;
-    printd_ssd2("SSD_IOCTL %d %s\n", target, (cmd ? "kill" : "make"));
+    debug2("SSD_IOCTL %d %s\n", target, (cmd ? "kill" : "make"));
     switch (cmd) {
     case SSDCREATE:
 	if (rd_segment[target])
