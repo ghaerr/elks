@@ -32,7 +32,7 @@ int wr;
 	int chars;
 	int written = 0;
 	kdev_t dev;
-	struct buffer_head * bh;
+	register struct buffer_head * bh;
 	char * p;
 
 	write_error = 0;
