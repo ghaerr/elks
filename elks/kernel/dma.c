@@ -236,7 +236,7 @@ int get_dma_residue(unsigned char dma)
 
     count += dma_inb(io_port) << 8;
 
-    return (dmanr <= 3) ? count : (count << 1);
+    return (dma <= 3) ? count : (count << 1);
 }
 
 #endif
