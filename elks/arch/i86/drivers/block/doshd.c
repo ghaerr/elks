@@ -81,7 +81,7 @@ static struct file_operations bioshd_fops =
 #endif
 };
 
-/* static struct wait_queue *busy_wait = NULL; */
+/* static struct wait_queue busy_wait; */
 static struct wait_queue dma_wait;
 static int dma_avail = 1;
 

@@ -63,7 +63,7 @@ int move_addr_to_user(kaddr, klen, uaddr, ulen)
 char * kaddr;
 int klen;
 char * uaddr;
-int * ulen;
+register int * ulen;
 {
 	int err;
 	int len;
