@@ -7,16 +7,20 @@
  *
  */
 
-#ifdef linux
 #include <stdio.h>
+#include <ctype.h>
+
+#ifdef linux
+
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <linux/hdreg.h>
+
 #else
-#include <stdio.h>
+
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/genhd.h>
@@ -26,7 +30,9 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/string.h>
 #include <linuxmt/fcntl.h>
+
 #endif
+
 #include "fdisk.h"
 
 #define die { printf("Usage %s [-l] <device-name>\n",argv[0]); fflush(stdout); exit(1); }
@@ -222,6 +228,8 @@ char *s;
     int n, r;
 
     n = 0;
+    if (!isxdigit(*s))
+	return -1;
     while (*s) {
 	if (*s >= '0' && *s <= '9')
 	    r = *s - '0';
@@ -253,18 +261,27 @@ void set_type()  /* FIXME - Should make this more flexible */
 
     a=(0x1ae)+(part*16)+4;
     for (type=0;;) {
-	printf("Set partition type to what? (l for list): ");
+	printf("Set partition type to what? (l for list, q to quit): ");
 	fflush(stdout);
 	fgets(buf,8,stdin);
-	if (*buf=='l')
-	    list_types();
-	else {
+	if (isxdigit(*buf)) {
 	    type=atoint(buf) % 256;
 	    if (valid(type) == 'Y')
 		break;
-	    if (*buf=='\n')
-		return;
-	}
+	} else
+	    switch (*buf) {
+
+		case 'l':
+		    list_types();
+		    break;
+
+		case 'q':
+		    return;
+
+		default:
+		    printf("Invalid: %c\n", *buf);
+		    break;
+	    }
     }
 
     partitiontable[a]=type;
@@ -435,10 +452,10 @@ char *argv[];
       printf("WARNING!  Read disk geometry as 0/0/0.  Things may break.\n");
     }
 
-    printf("c/h/s=%d/%d/%d",geometry.cylinders,geometry.heads,geometry.sectors);
+    printf("c/h/s=%d/%d/%d\n\n",geometry.cylinders,geometry.heads,geometry.sectors);
     fflush(stdout);
 
-    for(;;) {
+    while(!feof(stdin)) {
       printf("Command%s:",flag==0?" (? for help)":""); flag=1;
       fflush(stdout);
       *buf = 0;
