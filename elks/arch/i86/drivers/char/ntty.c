@@ -275,16 +275,17 @@ int sel_type;
 
 	switch (sel_type) {
 		case SEL_IN:
-			if (chq_peekch(&tty->inq)) {
+			if (chq_peekch(&tty->inq))
 				return 1;
-			}
+			break;
+		case SEL_OUT:
+			if (!chq_full(&tty->outq))
+				return 1;
 		case SEL_EX: /* fall thru! */
-			select_wait(&tty->inq.wq);
-			return 0;
-		case SEL_OUT: /* Hm.  We can always write to a tty?  (not really) */
-		default:
-			return 1;
+			;
 	}
+	select_wait(&tty->inq.wq);
+	return 0;
 }
 
 static struct file_operations tty_fops =
