@@ -10,34 +10,15 @@
 ELKSDIR 	= ../../../..
 
 #########################################################################
-# Standard commands.
+# Include standard commands.
 
-AR		= ar
-AS		= as86 
-LD		= ld86 
-LDFLAGS 	= -0 -s -x
-CC		= bcc
-CFLAGS		= -0 -I$(ELKSDIR)/include  $(CFLBASE)
-CPP		= bcc -E -nostdinc -I$(ELKSDIR)/include
-CC_PROTO	= gcc -I$(ELKSDIR)/include -M
-
-#########################################################################
-# Standard prototypes.
-
-.c.s:
-	$(CC) $(CFLAGS) \
-	-0 -S -o $*.s $<
-.s.o:
-	$(AS) -0 -o $*.o $<
-.S.s:
-	$(CC) $(CFLAGS) -P -o $*.s $<
-.c.o:
-	$(CC) $(CFLAGS) -0 -c -o $*.o $<
+include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
 # Objects to be compiled.
 
-OBJS  = genhd.o doshd.o ll_rw_blk.o rd.o floppy.o directhd.o init.o sibo_ssd.o ssd_asm.o
+OBJS  = genhd.o doshd.o ll_rw_blk.o rd.o floppy.o directhd.o init.o \
+	sibo_ssd.o ssd_asm.o
 
 #########################################################################
 # Commands.
@@ -47,24 +28,27 @@ all:	blk_drv.a
 blk_drv.a: $(OBJS)
 	ar rcs blk_drv.a $(OBJS)
 
+ssd_asm.o: ssd_asm.s
+
+ssd_asm.s: ssd_asm.S
+
+#########################################################################
+# Standard commands.
+
 clean:
 	rm -f core *~ *.o *.a tmp_make keyboard.s
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 	for i in *.S;do rm -f `basename $$i .S`.s;done
 
 distdir:
-	cp -pf Config.in Makefile $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/block
-	cp -pf *.S *.h *.c $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/block
+	cp -pf Config.in Makefile $(DISTDIR)/arch/i86/drivers/block
+	cp -pf *.S *.h *.c $(DISTDIR)/arch/i86/drivers/block
 
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
 	(for i in *.c;do echo -n `echo $$i | sed 's,\.c,\.s,'`" "; \
 		$(CC_PROTO) $$i;done) >> tmp_make
 	mv tmp_make Makefile
-
-ssd_asm.o: ssd_asm.s
-
-ssd_asm.s: ssd_asm.S
 
 #########################################################################
 ### Dependencies:

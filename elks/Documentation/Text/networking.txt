@@ -84,6 +84,10 @@ The above command will set the first serial line at 1200 bps.
 
 This is it. Ping ELKS from the gateway to see if everything is fine.
 
+* Note that if you use the disks that are created from the elkscmd package
+with "make images.zip", the networking setup is much easier. Just edit the
+/etc/rc.d/rc.sysinit file to enter the machine's IP and serial baud rate.
+
 
   3. Status
 -------------

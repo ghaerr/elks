@@ -37,7 +37,7 @@ int wr;
 
 	write_error = 0;
 	dev = inode->i_rdev;
-
+	
 	/*
 	 *	Offset to block/offset
 	 */

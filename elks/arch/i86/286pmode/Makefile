@@ -10,28 +10,9 @@
 ELKSDIR 	= ../../..
 
 #########################################################################
-# Standard commands.
+# Include standard commands.
 
-AR		= ar
-AS		= as86 
-LD		= ld86 
-LDFLAGS 	= -0 -s -x
-CC		= bcc
-CFLAGS		= -0 -I$(ELKSDIR)/include  $(CFLBASE)
-CPP		= bcc -E -nostdinc -I$(ELKSDIR)/include
-CC_PROTO	= gcc -I$(ELKSDIR)/include -M
-
-#########################################################################
-# Standard prototypes.
-
-.c.s:
-	$(CC) $(CFLAGS) \
-	-0 -S -o $*.s $<
-.s.o:
-	$(AS) -0 -o $*.o $<
-.c.o:
-	$(CC) $(CFLAGS) \
-	-0 -c -o $*.o $<
+include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
 # Objects to be compiled. crt0.o should be first.
@@ -51,9 +32,8 @@ clean:
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 
 distdir:
-	cp -pf Makefile Config.in $(TOPDIR)/$(DISTDIR)/arch/i86/286pmode
-	cp -pf crt0.s descriptor.h irq.s $(TOPDIR)/$(DISTDIR)/arch/i86/286pmode
-	cp -pf main.c tss.h $(TOPDIR)/$(DISTDIR)/arch/i86/286pmode
+	cp -pf Makefile Config.in *.c *.h $(DISTDIR)/arch/i86/286pmode
+	cp -pf crt0.s irq.s $(DISTDIR)/arch/i86/286pmode
 
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make

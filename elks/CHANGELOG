@@ -5,29 +5,59 @@ than the lines of dashes.
 
 Al
 
-Contributor		Email address			CHANGELOG entries found
-~~~~~~~~~~~~~~~~~~~~~~	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	~~~~~~~~~~~~~~~~~~~~~~~
-Alan Cox		<alan@redhat.com>		17 Jun 2001-18 Jun 2001
-Alastair Bridgewater	<nyef@softhome.net>		19 Nov 1998-06 Dec 1998
-Alistair Riddoch	<alriddoch@zepler.org>		25 Sep 1998-17 Jun 2001
-Arnaud Launay		<asl@launay.org>		15 Jul 1999-17 Oct 2001
-Christian Mardmuller	<chm@kdt.de>			10 Nov 1999-29 Feb 2000
-Christoph Plattner	<Christoph.Plattner@dot.at>	31 Jan 2000-02 Feb 2000
-David Murn		<scuffer@hups.apana.org.au>	11 Nov 1998-15 Nov 1999
-Giles Russell						22 Nov 1999
-Greg Haerr						14 Jul 1999-20 Jul 1999
-Harry Kalogirou 	<HarKal@rainbow.cs.unipi.gr>	20 Jun 2001-22 Oct 2001
-Mario Frasca						20 Jan 2000-14 Feb 2000
-Paul Nasrat		<pnasrat@uk.now.com>		29 Oct 2001
-Per Olofsson		<MagerValp@cling.gu.se> 	25 Feb 2000
-Peter L Vachuska	<pvachusk@nconnect.net> 	13 Aug 2001
-Riley Williams		<rhw@MemAlpha.cx>		16 Nov 1998- 5 Nov 2001
-Roman Festchook 	<roma@polesye.net>		27 Oct 2001
-Simon Weijgers		<simon@weijgers.com>		16 Sep 1998-15 Nov 1999
-Simon Wood						06 Jan 2000-12 Jan 2000
-Thomas McWilliams	<tgm9999@yahoo.com>		27 Aug 1999-02 Apr 2001
+Contributor             Email address                   CHANGELOG entries found
+~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~
+Alan Cox                <alan@redhat.com>               17 Jun 2001-18 Jun 2001
+Alastair Bridgewater    <nyef@softhome.net>             19 Nov 1998-06 Dec 1998
+Alistair Riddoch        <alriddoch@zepler.org>          25 Sep 1998-17 Jun 2001
+Arnaud Launay           <asl@launay.org>                15 Jul 1999-17 Oct 2001
+Christian Mardmuller    <chm@kdt.de>                    10 Nov 1999-29 Feb 2000
+Christoph Plattner      <Christoph.Plattner@dot.at>     31 Jan 2000-02 Feb 2000
+David Murn              <scuffer@hups.apana.org.au>     11 Nov 1998-15 Nov 1999
+Giles Russell                                           22 Nov 1999
+Greg Haerr                                              14 Jul 1999-20 Jul 1999
+Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>    20 Jun 2001-22 Oct 2001
+Mario Frasca                                            20 Jan 2000-14 Feb 2000
+Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001
+Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
+Peter L Vachuska        <pvachusk@nconnect.net>         13 Aug 2001
+Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998- 5 Nov 2001
+Roman Festchook         <roma@polesye.net>              27 Oct 2001
+Simon Weijgers          <simon@weijgers.com>            16 Sep 1998-15 Nov 1999
+Simon Wood                                              06 Jan 2000-12 Jan 2000
+Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Sun Nov 11 19:50:43 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Reverted change that moved definition of UTS_RELEASE to command
+	  line as this resulted in the command line being too long. This is
+	  still a work in progress, not yet 100% complete.
+
+Sun Nov 11 12:35:14 EET 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* Fix in inet_write().
+	* Fixed case when a process writes to a closed pipe from the other
+	  end of the connection. Now returns EPIPE.
+	* Fixes in the tcp state machine concerning LAST_ACK state.
+	* More "RFC" behavior of inet_read(). 
+
+Sat Nov 10 18:27:17 EET 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* Made System.map sorted by address.
+	* Replaced tabs with spaces on the contributor list at the top of
+	  CHANGELOG file. This make's it readable from everyone, whatever
+	  tab width someone uses.
+	* Better tcp ISN selection.
+
+Sat Nov 10 00:05:18 EET 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* Did some more fixes to the inet sockets.
+
+Mon Nov  5 22:07:17 EET 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* Updated the networking.txt
 
 Mon Nov  5 20:17:15 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 

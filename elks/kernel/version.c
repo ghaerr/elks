@@ -1,6 +1,7 @@
+#include <linuxmt/compiler-generated.h>
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/utsname.h>
-#include <linuxmt/config.h>
 
 struct utsname system_utsname=
 {

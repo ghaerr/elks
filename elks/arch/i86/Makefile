@@ -6,6 +6,11 @@
 ELKSDIR 	= ../..
 
 #########################################################################
+# Include standard commands.
+
+include $(ELKSDIR)/Makefile-rules
+
+#########################################################################
 # SIBO specific options.
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
@@ -17,16 +22,6 @@ else
 SIBOFLAGS	=
 
 endif
-
-#########################################################################
-# Standard commands.
-
-AS86		= as86 -0
-LD86		= ld86 -0
-
-AS		= as
-CC		= bcc
-LD		= ld86
 
 LDFLAGS 	= -0 -i $(SIBOFLAGS)
 
@@ -43,19 +38,6 @@ ADRIVERS = drivers/char/chr_drv.a drivers/block/blk_drv.a
 
 DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 	$(ARCH_DIR)/drivers/block/blk_drv.a
-
-#########################################################################
-# Standard prototypes.
-
-.c.s:
-	$(CC) $(CFLAGS) -0 -nostdinc -I$(TOPDIR)/include -S -o $*.s $<
-.s.o:
-	$(AS) -C -o -I$(TOPDIR)/include -o $*.o $<
-.S.s:
-	gcc -E -traditional -o $*.s $<
-.c.o:
-	$(CC) $(CFLAGS) \
-	2 -nostdinc -I$(TOPDIR)/include -c -o $*.o $<
 
 #########################################################################
 # Commands.
@@ -105,7 +87,8 @@ boot/system: $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
 		init/main.o \
 		$(ARCHIVES) \
 		$(DRIVERS) \
-		-t -M -o $(ARCH_DIR)/boot/system > System.map)
+		-t -M -o $(ARCH_DIR)/boot/system > System.tmp ; \ 
+		sort -k4 System.tmp > System.map ; rm -f System.tmp ) 
 
 #SIBO image build
 Image: boot/system tools
@@ -121,7 +104,8 @@ boot/system: $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 		init/main.o \
 		$(ARCHIVES) \
 		$(DRIVERS) \
-		-t -M -o $(ARCH_DIR)/boot/system > System.map)
+		-t -M -o $(ARCH_DIR)/boot/system > System.tmp ; \
+		sort -k4 System.tmp > System.map ; rm -f System.tmp ) 
 
 #PC image build
 
@@ -217,16 +201,16 @@ clean:
 	make -C mm clean
 
 distdir:
-#	mkdir $(TOPDIR)/$(DISTDIR)/arch/i86
-	(cd $(TOPDIR)/$(DISTDIR)/arch/i86 ; \
+	mkdir $(DISTDIR)/arch/i86
+	(cd $(DISTDIR)/arch/i86 ; \
 		mkdir 286pmode boot drivers kernel lib mm tools)
-	(cd $(TOPDIR)/$(DISTDIR)/arch/i86/drivers ; \
+	(cd $(DISTDIR)/arch/i86/drivers ; \
 		mkdir block char)
-	cp -pf config.in defconfig Makefile $(TOPDIR)/$(DISTDIR)/arch/i86
-	cp -pf boot/*.S boot/*.c boot/tux.pic $(TOPDIR)/$(DISTDIR)/arch/i86/boot
-	cp -pf tools/Makefile tools/*.h $(TOPDIR)/$(DISTDIR)/arch/i86/tools
-	cp -pf tools/mknbi-elks tools/*.c $(TOPDIR)/$(DISTDIR)/arch/i86/tools
-	cp -pf tools/*.s tools/*.1 $(TOPDIR)/$(DISTDIR)/arch/i86/tools
+	cp -pf config.in defconfig Makefile $(DISTDIR)/arch/i86
+	cp -pf boot/*.S boot/*.c boot/tux.pic $(DISTDIR)/arch/i86/boot
+	cp -pf tools/Makefile tools/*.h $(DISTDIR)/arch/i86/tools
+	cp -pf tools/mknbi-elks tools/*.c $(DISTDIR)/arch/i86/tools
+	cp -pf tools/*.s tools/*.1 $(DISTDIR)/arch/i86/tools
 	make -C 286pmode distdir
 	make -C drivers/block distdir
 	make -C drivers/char distdir

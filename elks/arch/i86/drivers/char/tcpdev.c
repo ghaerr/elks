@@ -88,6 +88,7 @@ int len;
 
 void tcpdev_clear_data_avail(){
 	up(&bufin_sem);
+	if(bufin_sem > 0)panic("bufin_sem tragedy");
 }
 
 static int tcpdev_write(inode, filp, data, len)

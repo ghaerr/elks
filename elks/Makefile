@@ -1,29 +1,8 @@
-# State the current ELKS kernel version.
-
-VERSION 	= 0	# (0-255)
-PATCHLEVEL	= 0	# (0-255)
-SUBLEVEL	= 89	# (0-255)
-PRE		= 1	# (0-255)	If not a pre, comment this line.
-
-# Specify the architecture we will use.
-
-ARCH		= i86
-
-# ROOT_DEV specifies the default root-device when making the image.
-# This does not yet work under ELKS. See include/linuxmt/config.h to
-# change the root device.
-
-ROOT_DEV	= FLOPPY
-
-# Specify the target for the netboot image.
-
-TARGET_NB_IMAGE	= $(TOPDIR)/nbImage
-
-#########################################################################
-#									#
-#   From here onwards, it is not normally necessary to edit this file   #
-#									#
-#########################################################################
+#########################################################
+#							#
+#    It is not normally necessary to edit this file.    #
+#							#
+#########################################################
 
 # Specify the relative path from here to the root of the ELKS tree.
 # Several other variables are defined based on the definition of this
@@ -32,101 +11,12 @@ TARGET_NB_IMAGE	= $(TOPDIR)/nbImage
 ELKSDIR		= .
 
 #########################################################################
-# Define variables directly dependant on the current ELKS version.
+# Include the standard ruleset.
 
-VSNCODE1	= $(shell printf '0x%02X%02X%02X' \
-			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
-
-ifeq (x$(PRE), x)
-
-DIST		= $(shell printf '%u.%u.%u' \
-			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
-
-VSNCODE		= $(VSNCODE1)00
-
-else
-
-DIST		= $(shell printf '%u.%u.%u-pre%u' \
-			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $(PRE))
-
-VSNCODE		= $(shell printf '0x%06X%02X' $$[$(VSNCODE1)-1] $(PRE))
-
-endif
+include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
-# Specify the root directory.
-
-TOPDIR		= $(shell cd "$(ELKSDIR)" ; \
-			  if [ -n "$$PWD" ]; \
-				then echo $$PWD ; \
-				else pwd ; \
-			  fi)
-
-#########################################################################
-# Specify the various directories.
-
-ARCH_DIR	= arch/$(ARCH)
-
-DISTDIR 	= elks-$(DIST)
-
-INCDIR		= $(TOPDIR)/include
-
-#########################################################################
-# Specify the standard definitions to be given to ELKS programs. We use
-# ASCII code 160 decimal for spaces in the date and UTS_VERSION strings
-# to avoid the shell splitting them up as separate 'words'.
-
-CCDATE		= $(shell date | tr ' ' ' ')
-
-CCDEFS		= -DELKS_VERSION_CODE=$(VSNCODE)		\
-		  -DUTS_RELEASE=\"$(DIST)\"			\
-		  -DUTS_VERSION=\"\#$(DIST) $(CCDATE)\"		\
-		  -D__KERNEL__
-
-#########################################################################
-# Specify the tools to use, with their flags.
-
-CC		= bcc
-CFLBASE 	= $(CCDEFS) -O
-CFLAGS		= $(CFLBASE) -i
-CPP		= $(CC) -I$(TOPDIR)/include -E $(CCDEFS)
-CC_PROTO	= gcc -I$(TOPDIR)/include -M $(CCDEFS)
-
-LINT		= lclint
-
-CONFIG_SHELL	:= $(shell if [ -x "$$bash" ]; \
-				then echo $$bash ; \
-				else if [ -x /bin/bash ]; \
-					then echo /bin/bash ; \
-					else echo sh ; \
-				     fi ; \
-			   fi)
-
-#########################################################################
-# Export all variables.
-
-.EXPORT_ALL_VARIABLES:
-
-#########################################################################
-# general construction rules
-
-.c.s:
-	$(CC) $(CFLAGS) -0 -nostdinc -I$(ELKSDIR)/include -S -o $*.s $<
-
-.s.o:
-	$(AS) -0 -I$(ELKSDIR)/include -c -o $*.o $<
-
-.S.s:
-	gcc -E -traditional $(CCDEFS) -o $*.s $<
-
-.c.o:
-	$(CC) $(CFLAGS) -0 -I$(ELKSDIR)/include -c -o $*.o $<
-
-#########################################################################
-# Targets
-
-elks:
-	make -C $(ELKSDIR) all
+# Targets local to this directory.
 
 all:	do-it-all
 
@@ -219,6 +109,13 @@ lib/lib.a:
 
 net/net.a:
 	make -C net
+
+#########################################################################
+# Compiler-generated definitions not given as command arguments.
+
+include/linuxmt/compiler-generated.h:
+	printf > $< '#define $s "%s"\n' \
+		UTS_VERSION	"#$(DIST) $(shell date)"
 
 #########################################################################
 # lint rule
@@ -362,6 +259,14 @@ menuconfig:
 	@echo
 
 test:
+	rm -fr ../elks-test
+	mkdir ../elks-test
+	tar c * | ( cd ../elks-test ; tar xv )
+	@echo
+	@echo Created backup tree for testing.
+	@echo
+
+testme:
 	@echo
 	@set
 	@echo

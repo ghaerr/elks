@@ -15,7 +15,7 @@ depclean:
 	@echo -n
 
 distdir:
-	cp -pf Makefile keys-*.h $(TOPDIR)/$(DISTDIR)/arch/i86/drivers/char/KeyMaps
+	cp -pf Makefile keys-*.h $(DISTDIR)/arch/i86/drivers/char/KeyMaps
 
 #########################################################################
 ### Dependencies:

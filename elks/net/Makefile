@@ -12,28 +12,9 @@
 ELKSDIR 	= ..
 
 #########################################################################
-# Standard commands.
+# Include standard commands.
 
-AR		= ar
-AS		= as86
-LD		= ld86
-LDFLAGS 	= -0 -s -x
-CC		= bcc
-CFLAGS		= $(CFLBASE) -I$(ELKSDIR)/include 
-CPP		= bcc -E -nostdinc -I$(ELKSDIR)/include
-CC_PROTO	= gcc -I$(ELKSDIR)/include -M
-
-#########################################################################
-# Standard prototypes.
-
-.c.s:
-	$(CC) $(CFLAGS) -0 -S -o $*.s $<
-
-.s.o:
-	$(AS) -0 -c -o $*.o $<
-
-.c.o:
-	$(CC) $(CFLAGS) -0 -c -o $*.o $<
+include $(ELKSDIR)/Makefile-rules
 
 #########################################################################
 # Objects to compile.
@@ -48,19 +29,21 @@ all:	net.a
 net.a: $(OBJS)
 	ar rcs net.a $(OBJS)
 
+#########################################################################
+# Standard commands.
+
 clean:
 	rm -f core *~ *.o *.a tmp_make */*.o
 	for i in *.c;do rm -f `basename $$i .c`.s;done
 
 distdir:
-	cp -pf Config.in Makefile $(TOPDIR)/$(DISTDIR)/net
-	cp -pf *.c $(TOPDIR)/$(DISTDIR)/net
-	mkdir $(TOPDIR)/$(DISTDIR)/net/ipv4
-	cp -pf ipv4/Makefile ipv4/*.c ipv4/*.h $(TOPDIR)/$(DISTDIR)/net/ipv4
-	mkdir $(TOPDIR)/$(DISTDIR)/net/nano
-	cp -pf nano/Makefile nano/*.c nano/*.h $(TOPDIR)/$(DISTDIR)/net/nano
-	mkdir $(TOPDIR)/$(DISTDIR)/net/unix
-	cp -pf unix/Makefile unix/*.c unix/*.h $(TOPDIR)/$(DISTDIR)/net/unix
+	cp -pf Config.in Makefile *.c $(DISTDIR)/net
+	mkdir $(DISTDIR)/net/ipv4
+	cp -pf ipv4/Makefile ipv4/*.c ipv4/*.h $(DISTDIR)/net/ipv4
+	mkdir $(DISTDIR)/net/nano
+	cp -pf nano/Makefile nano/*.c nano/*.h $(DISTDIR)/net/nano
+	mkdir $(DISTDIR)/net/unix
+	cp -pf unix/Makefile unix/*.c unix/*.h $(DISTDIR)/net/unix
 
 dep:
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make

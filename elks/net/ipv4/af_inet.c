@@ -1,7 +1,7 @@
 /*
  * net/ipv4/af_inet.c
  *
- * (C) 2001 Harry Kalogiroy (harkal@rainbow.cs.unipi.gr)
+ * (C) 2001 Harry Kalogirou (harkal@rainbow.cs.unipi.gr)
  *
  * The kernel side part of the ELKS TCP/IP stack. It uses tcpdev.c
  * to communicate with the actual TCP/IP stack that resides in
@@ -60,8 +60,6 @@ static int inet_create(sock, protocol)
 register struct socket *sock;
 int protocol;
 {
-    register struct inet_proto_data *upd;
-        
 	printd_inet1("inet_create(sock: 0x%x)\n", sock);
 	if(protocol != 0)
 		return -EINVAL;
@@ -87,20 +85,14 @@ struct socket *peer;
 	int ret;
 
 	printd_inet1("inet_release(sock: 0x%x)\n",sock);	
+	
 	cmd.cmd  = TDC_RELEASE;
 	cmd.sock = sock;
 
 	ret = tcpdev_inetwrite(&cmd, sizeof(struct tdb_release));
 	if(ret < 0)return ret;
-	
-	/* Sleep until tcpdev has news */
-	interruptible_sleep_on(sock->wait);
-	
-	ret_data = tdin_buf;
-	ret = ret_data->ret_value;
-	tcpdev_clear_data_avail();
 
-	return ret;
+	return 0;
 }
 
 static int inet_bind(sock, addr, sockaddr_len)
@@ -208,6 +200,8 @@ int flags;
 		
 	/* Sleep until tcpdev has news */
 	interruptible_sleep_on(sock->wait);
+	if(current->signal)
+		return(-ERESTARTSYS);
 	
 	sock->flags &= ~SO_WAITDATA;
 
@@ -238,7 +232,6 @@ int nonblock;
 	struct tdb_return_data *r;
 	struct tdb_read	cmd;
 	int ret;
-	static sum = 0;
 
 	printd_inet3("inet_read(socket: 0x%x size:%d nonblock: %d)\n", sock, size, nonblock);	
 	
@@ -253,7 +246,7 @@ int nonblock;
 	/* Sleep until tcpdev has news and we have a lock on the buffer */
 	while(bufin_sem == 0)
 		interruptible_sleep_on(sock->wait);
-
+	
 	down(&sock->sem);
 	
 	r = tdin_buf;
@@ -268,10 +261,7 @@ int nonblock;
 	
 	tcpdev_clear_data_avail();
 
-	sum += ret;	
-/*	printk("sum:%d\n",sum);*/
-	return ret;
-	
+	return ret;	
 }
 
 static int inet_write(sock, ubuf, size, nonblock)
@@ -289,9 +279,11 @@ int nonblock;
 	if(size <= 0)
 		return 0;
 		
-	if(sock->state != SS_CONNECTED){
+	if(sock->state == SS_DISCONNECTING)
+		return -EPIPE;	
+		
+	if(sock->state != SS_CONNECTED)
 		return -EINVAL;
-	}
 	
 	cmd.cmd	= TDC_WRITE;
 	cmd.sock = sock;
@@ -306,8 +298,9 @@ int nonblock;
 		tcpdev_inetwrite(&cmd, sizeof(struct tdb_write));
 		todo -= cmd.size;
 	
-		/* Sleep until tcpdev has news */
-		interruptible_sleep_on(sock->wait);
+		/* Sleep until tcpdev has news and we have a lock on the buffer */
+		while(bufin_sem == 0)
+			interruptible_sleep_on(sock->wait);
 
 		r = tdin_buf;
 		ret = r->ret_value;
@@ -361,7 +354,7 @@ int backlog;
 	struct tdb_listen cmd;
 	int ret;
 
-	printd_inet("inet_listen()\n");		
+	printd_inet1("inet_listen(socket : 0x%x)\n", sock);		
 	cmd.cmd	= TDC_LISTEN;
 	cmd.sock = sock;
 	cmd.backlog = backlog;
@@ -376,7 +369,6 @@ int backlog;
 	tcpdev_clear_data_avail();
 	
 	return ret;
-
 }
 
 inet_shutdown()
@@ -428,9 +420,8 @@ int len;
 int nonblock;
 unsigned flags;
 {
-	if (flags != 0) {
+	if (flags != 0)
 		return(-EINVAL);
-	}
 	return(inet_read(sock, (char *) buff, len, nonblock));
 }
 
