@@ -74,7 +74,7 @@
 
 #ifndef CONFIG_ROMCODE
   INITSEG  = DEF_INITSEG	! (DATASEG) we move boot here - out of the way
-  SYSSEG   = DEF_SYSSEG	! system loaded at 0x10000 (65536).
+  SYSSEG   = DEF_SYSSEG 	! system loaded at 0x10000 (65536).
   SETUPSEG = DEF_SETUPSEG	! this is the current code segment
 #else
   INITSEG  = CONFIG_ROM_SETUP_DATA
