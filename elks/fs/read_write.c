@@ -103,6 +103,7 @@ unsigned int count;
 	register struct inode * inode;
 	int written;
 
+/*	printk("{WRITE: %d %x %d, %x:%x.}", fd, buf, count, current->t_regs.cs, current->t_regs.ip); /* */
 	if (fd>=NR_OPEN || !(file=current->files.fd[fd]) || !(inode=file->f_inode))
 		return -EBADF;
 	if (!(file->f_mode & 2))

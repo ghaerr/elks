@@ -302,7 +302,7 @@ gid_t group;
 }
 
 int sys_fchown(fd, user, group)
-int fd;
+unsigned int fd;
 uid_t user;
 gid_t group;
 {

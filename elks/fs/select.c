@@ -291,6 +291,7 @@ REGOPT struct timeval * tvp;
 
 #if 1 /* JUST TESTING */
 	printk("SELECT: %d %d %d %d %d\n", n, inp, outp, exp, tvp);
+	printk("SELECT: %d\n", strlen_fromfs(inp));
 	return 0;
 #endif
 
