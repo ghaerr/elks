@@ -29,7 +29,7 @@
 
 static unsigned char 	sbuf[SERIAL_BUFFER_SIZE];
 static unsigned char	lastchar;
-static unsigned char 	packet[512];
+static unsigned char 	packet[SLIP_MTU];
 static unsigned int	packpos;
 static int devfd;
 
@@ -50,8 +50,7 @@ char *fdev;
     ioctl(devfd, TCGETS, &tios);
     tios.c_lflag &= ~(ICANON|ECHO);
     tios.c_oflag &= ~ONLCR;
-/*	tios.c_cflag &= ~017;
-	tios.c_cflag |= 0xd;*/
+
     ioctl(devfd, TCSETS, &tios);
     
     /* Init some variables 
@@ -67,54 +66,53 @@ char *fdev;
  * slip_process()
  *  Called when we have new data waiting 
  *  at the serial port
+ *	FIXME : Handle the buffer overrun when out
+ *          MTU is not honored.
  */
 void slip_process()
 {
-    int i, len;
-    int packet_num = 0;
+	int i, len;
+	int packet_num = 0;
 
-    while(packet_num < 3){
-	len = read(devfd, &sbuf, SERIAL_BUFFER_SIZE);
-	if(len <= 0)break;
+	while(packet_num < 3){
+		len = read(devfd, &sbuf, SERIAL_BUFFER_SIZE);
+		if(len <= 0)break;
 
-	for( i = 0 ; i < len ; i++ ){
-	    if(lastchar == ESC){
-		switch (sbuf[i]){    
-		case ESC_END:
-		    packet[packpos++] = END; 
-		    break;
-		case ESC_ESC:
-		    packet[packpos++] = ESC;
-		    break;
-		default:
-		    /* Protocol error ??! */
-		    packet[packpos++] = sbuf[i];
-		} /* switch */
-	    } 
-	    else {
-		switch (sbuf[i]){
-		case ESC:
-		    break;
+		for( i = 0 ; i < len ; i++ ){
+			if(lastchar == ESC){
+				switch (sbuf[i]){    
+				case ESC_END:
+				    packet[packpos++] = END; 
+				    break;
+				case ESC_ESC:
+				    packet[packpos++] = ESC;
+				    break;
+				default:
+				    /* Protocol error ??! */
+				    packet[packpos++] = sbuf[i];
+				} /* switch */
+			} else {
+				switch (sbuf[i]){
+				case ESC:
+			    break;
 		    
-		case END:
-		    if(packpos == 0)
-			break;
+				case END:
+			    if(packpos == 0)
+					break;
 
-		    ip_recvpacket(&packet, packpos);
-		    packet_num++;
-		    /* Reset */
-		    packpos = 0;
-		    lastchar = 0;
-		    break;
-		default:
-		    packet[packpos++] = sbuf[i];
-		} /* switch */	
-	    }
-	    lastchar = sbuf[i];
-	} /* for */
-	
-		
-    }
+			    ip_recvpacket(&packet, packpos);
+			    packet_num++;
+			    /* Reset */
+			    packpos = 0;
+			    lastchar = 0;
+			    break;
+				default:
+			    packet[packpos++] = sbuf[i];
+				} /* switch */	
+			}
+			lastchar = sbuf[i];
+		} /* for */
+	}
 }
 
 void send_char(ch)

@@ -226,6 +226,9 @@ struct tcpcb_s	*cb;
 {
 	struct tcphdr_s *th;
 	struct addr_pair apair;
+	__u8 header_len;
+	__u8 option_len;
+	__u8* options;
 	__u16 len;
 	
 	th = (struct tcphdr_s *)&buf;
@@ -242,11 +245,22 @@ struct tcpcb_s	*cb;
 	th->window = htons(len);
 	th->urgpnt = 0;
 	th->flags = cb->flags;	
+
+	header_len = 20;		
+	option_len = 0;
+	options = &th->options;	
+	if(cb->flags & TF_SYN){
+		header_len += 4;
+		option_len += 4;
+		options[0] = 2; /* MSS */
+		options[1] = 4;
+		*(__u16 *)(options + 2) = htons(SLIP_MTU - 40);
+	}
 	
-	TCP_SETHDRSIZE(th, 5);
+	TCP_SETHDRSIZE(th, header_len);
 	
-	len = cb->datalen + 20; /* FIXME : Options */
-	memcpy(&th->options, cb->data, cb->datalen); /* Since no options yet */
+	len = cb->datalen + header_len;
+	memcpy((char *)th + header_len, cb->data, cb->datalen);
 
 	th->chksum = 0;
 	th->chksum = tcp_chksumraw(th, cb->localaddr, cb->remaddr, len);
