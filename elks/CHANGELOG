@@ -18,6 +18,7 @@ Giles Russell                                           22 Nov 1999
 Greg Haerr                                              14 Jul 1999-20 Jul 1999
 Harry Kalogirou       HarKal@rainbow.cs.unipi.gr        20 Jun 2001-30 Apr 2002
 Jacek Lipkowski       sq5bpf@acid.ch.pw.edu.pl          20 Jan 2002
+Ken Martwick          kenm@efn.org                      12 May 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
@@ -31,6 +32,12 @@ Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Sun May 12 08:32:51 PDT 2002	Ken Martwick <kenm@efn.org>
+
+	* Reverted removal of '#include <sys/sysmacros.h>' header line
+	  from arch/i86/tools/build.c that stopped it from compiling
+	  on Slackware systems.
 
 Sun May  5 23:28:40 BST 2002	Riley Williams <Riley@Williams.Name>
 

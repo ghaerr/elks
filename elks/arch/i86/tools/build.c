@@ -21,20 +21,26 @@
  * Changes by tytso to allow root device specification
  */
 
-#include <stdio.h>		/* fprintf */
-#include <string.h>
-#include <stdlib.h>		/* contains exit */
-#include <sys/types.h>		/* unistd.h needs this */
+#include <stdio.h>			/* fprintf */
+
+#include <sys/sysmacros.h>		/* We NEED these macros */
 #include <sys/stat.h>
-#include <unistd.h>		/* contains read/write */
+#include <sys/types.h>			/* unistd.h needs this */
+
+#include <string.h>
+#include <stdlib.h>			/* contains exit */
+#include <unistd.h>			/* contains read/write */
 #include <fcntl.h>
-#include "a.out.h"
+
 #include <linuxmt/errno.h>
 #include <linuxmt/config.h>
+
+#include "a.out.h"
 
 #define MINIX_HEADER 32
 
 #define N_MAGIC_OFFSET 1024
+
 #ifndef __BFD__
 static int GCC_HEADER = sizeof(struct exec);
 #endif
@@ -44,8 +50,7 @@ static int GCC_HEADER = sizeof(struct exec);
 #define DEFAULT_MAJOR_ROOT 0
 #define DEFAULT_MINOR_ROOT 0
 
-/* max nr of sectors of setup: don't change unless you also change
- * bootsect etc
+/* max nr of sectors of setup: don't change unless you also change bootsect etc
  */
 #define SETUP_SECTS 4
 
@@ -103,24 +108,24 @@ int main(int argc, char **argv)
     int i, c, id, sz;
     unsigned long sys_size;
     char buf[1024];
+
 #ifndef __BFD__
     struct exec *ex = (struct exec *) buf;
 #endif
+
     char major_root, minor_root;
     struct stat sb;
     unsigned char setup_sectors;
 
 #ifdef CONFIG_286PMODE
-    if ((argc < 5) || (argc > 6))
-	usage();
-    if (argc > 5) {
 #define ROOTDEV_ARG 5
 #else
-    if ((argc < 4) || (argc > 5))
-	usage();
-    if (argc > 4) {
 #define ROOTDEV_ARG 4
 #endif
+
+    if ((argc < ROOTDEV_ARG) || (argc > ROOTDEV_ARG + 1))
+	usage();
+    if (argc > ROOTDEV_ARG) {
 	if (!strcmp(argv[ROOTDEV_ARG], "CURRENT")) {
 	    if (stat("/", &sb)) {
 		perror("/");
