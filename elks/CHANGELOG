@@ -29,6 +29,11 @@ Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Thu Nov 29 00:44:13 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Fixed error in comments in Makefile-rules to match what the
+	  `make clean` command actually does.
+
 Tue Nov 27 14:18:57 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* This is ELKS 0.1.0-pre3

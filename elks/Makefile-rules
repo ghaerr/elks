@@ -20,7 +20,9 @@
 #	CLEANME 	Any files in the current directory to be removed
 #			by the `make clean` command that are not in the
 #			standard list of files matching "*~", "*.bak",
-#			"*.o", "*.map" or "*.tmp", or named "core".
+#			"*.o", "*.map" or "*.tmp", or named "core". Also
+#			removed are any files matching "*.s" for which a
+#			"*.c" or "*.S" file also exists.
 #
 #	DEPEND		Any files in the current directory that the
 #			`make dep` command is dependent on.
