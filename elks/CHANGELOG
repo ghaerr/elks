@@ -6,6 +6,10 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Tue Aug 21 12:23:14 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Documented VT52 sequences listed in the VT100 User Guide.
+
 Tue Aug 21 11:33:28 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Created separate video directory for standalone video drivers.

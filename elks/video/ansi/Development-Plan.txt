@@ -8,3 +8,12 @@ At the moment, there is a VT52 driver included in the kernel. I plan to
 start by abstracting this out into a separate usermode driver that talks
 to the kernel to perform the required functions, and also to register
 itself as an available video driver.
+
+Note that the ansi.c driver in this directory is written for GCC and not
+BCC. This is simply so I can use prototypes to ensure the function calls
+match what the functions expect whilst I am developing it. I require it to
+compile without either errors or warnings using...
+
+	gcc -Wall -pedantic -o ansi ansi.c
+
+...before I will accept it.

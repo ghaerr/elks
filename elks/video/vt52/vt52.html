@@ -1,0 +1,325 @@
+<HTML>
+<Head>
+
+<Title>VT-52 Mode Control Sequences</Title>
+
+</Head>
+<Body BGColor=White Text=Black Link=Blue VLink=Magenta ALink=Red>
+
+<H1 Align=Center>VT-52 Mode Control Sequences</H1>
+
+<H2 Align=Center>Taken from the "Digital VT100 User Guide"</H2>
+
+<P Align=Justify>The following notes, relating to the VT-52 mode control
+sequences, are taken from the <I>Programming</I> section of the official
+<I>Digital VT100 User Guide</I>.</P>
+
+<H3>Control Characters</H3>
+
+<P Align=Justify><I>(The control character section as listed below refers
+to the VT100 terminal, but is assumed at this stage to be identical for
+the VT52 terminal as I don't have access to any documentation for the
+latter)</I></P>
+
+<P Align=Justify>Control characters have values of 000 octal to 037 octal,
+and 177 octal. The control characters recognised by the VT100 are as
+follows, with all other control codes causing no action to be taken:</P>
+
+<Center>
+
+<Table Border=1 Width=75%>
+
+<TR>
+<TH Width=16%>Control<BR>Character</TH>
+<TH Width=7%>Octal<BR>Code</TH>
+<TH Width=7%>Hex<BR>Code</TH>
+<TH Width=70%>Action Taken</TH>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="NUL">NUL</TD>
+<TD Align=Center>000</TD>
+<TD Align=Center>00</TD>
+<TD><P Align=Justify>Ignored on input (not stored in buffer; see full
+duplex protocol)</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="ENQ">ENQ</TD>
+<TD Align=Center>005</TD>
+<TD Align=Center>05</TD>
+<TD><P Align=Justify>Transmit answerback message</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="BEL">BEL</TD>
+<TD Align=Center>007</TD>
+<TD Align=Center>07</TD>
+<TD><P Align=Justify>Sound bell tone from keyboard</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="BS">BS</TD>
+<TD Align=Center>010</TD>
+<TD Align=Center>08</TD>
+<TD><P Align=Justify>Move the cursor to the left one character position,
+unless it is at the left margin, in which case no action occurs</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="HT">HT (TAB)</TD>
+<TD Align=Center>011</TD>
+<TD Align=Center>09</TD>
+<TD><P Align=Justify>Move the cursor to the next tab stop, or to the right
+margin if no further tab stops are present on the line</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="LF">LF</TD>
+<TD Align=Center>012</TD>
+<TD Align=Center>0A</TD>
+<TD><P Align=Justify>This code causes a line feed or a new line operation
+(See new line mode)</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="VT">VT</TD>
+<TD Align=Center>013</TD>
+<TD Align=Center>0B</TD>
+<TD><P Align=Justify>Interpreted as <A HRef="#LF">LF</A></P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="FF">FF</TD>
+<TD Align=Center>014</TD>
+<TD Align=Center>0C</TD>
+<TD><P Align=Justify>Interpreted as <A HRef="#LF">LF</A></P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="CR">CR</TD>
+<TD Align=Center>015</TD>
+<TD Align=Center>0D</TD>
+<TD><P Align=Justify>Move cursor to left margin on the current
+line</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="SO">SO</TD>
+<TD Align=Center>016</TD>
+<TD Align=Center>0E</TD>
+<TD><P Align=Justify>Invoke G1 character set, as designated by <A
+HRef="#SCS">SCS</A> control sequence</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="SI">SI</TD>
+<TD Align=Center>017</TD>
+<TD Align=Center>0F</TD>
+<TD><P Align=Justify>Invoke G0 character set, as designated by <A
+Href="#ESC">ESC</A> control sequence</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="XON">XON</TD>
+<TD Align=Center>021</TD>
+<TD Align=Center>11</TD>
+<TD><P Align=Justify>Causes terminal to resume transmission</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="XOFF">XOFF</TD>
+<TD Align=Center>022</TD>
+<TD Align=Center>12</TD>
+<TD><P Align=Justify>Causes terminal to stop transmission of all codes
+except <A HRef="#XOFF">XOFF</A> and <A HRef="#XON">XON</A></P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="CAN">CAN</TD>
+<TD Align=Center>030</TD>
+<TD Align=Center>18</TD>
+<TD><P Align=Justify>If sent during a control sequence, the sequence is
+immediately terminated and not executed. It also causes the error
+character to be displayed</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="SUB">SUB</TD>
+<TD Align=Center>032</TD>
+<TD Align=Center>1A</TD>
+<TD><P Align=Justify>Interpreted as <A HRef="#CAN">CAN</A></P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="ESC">ESC</TD>
+<TD Align=Center>033</TD>
+<TD Align=Center>1B</TD>
+<TD><P Align=Justify>Aborts any control sequence in progress, and
+introduces a control sequence</P></TD>
+</TR>
+
+<TR>
+<TD Align=Center><A Name="DEL">DEL</TD>
+<TD Align=Center>177</TD>
+<TD Align=Center>7F</TD>
+<TD><P Align=Justify>Ignored on input, not stored in input buffer</P></TD>
+</TR>
+
+</Table>
+
+</Center>
+
+<P Align=Justify>Control character codes (codes 0 octal to 37 octal
+inclusive) are specifically excluded from the control sequence syntax, but
+may be embedded within a control sequence. Embedded control characters are
+executed as soon as they are encountered by the VT100. The processing of
+the control sequence then continues with the next character received. The
+exceptions are:</P>
+
+<OL>
+
+<LI><P Align=Justify>If the character <B>ESC</B> occurs, the current
+control sequence is aborted, and a new one commences beginning with the
+<B>ESC</B> just received.</P>
+
+<LI><P Align=Justify>If the character <B>CAN</B> or <B>SUB</B> occurs, the
+current control sequence is aborted.</P>
+
+</OL>
+
+<P Align=Justify>The ability to embed control characters allows the
+synchronisation characters <B>XON</B> and <B>XOFF</B> to be interpreted
+properly without affecting the control sequence.</P>
+
+<H3>Mode Control Sequences</H3>
+
+<P Align=Justify><I>(Although the following is taken from the VT100 User
+Guide, it appears to be correct for the VT52 terminal)</I></P>
+
+<P Align=Justify>The VT52 terminal accepts and produces the following
+sequences:</P>
+
+<Center>
+
+<Table Border=1 Width=90%>
+
+<TR>
+<TH Align=Center Width=20%>Name</TH>
+<TH Align=Center Width=20%>Sequence</TH>
+<TH Align=Center Width=60%>Description</TH>
+</TR>
+
+<TR>
+<TD Align=Center>Enter ANSI Mode</TD>
+<TD Align=Center>ESC &lt;</TD>
+<TD><P Align=Justify>All subsequent escape sequences will be interpreted
+according to ANSI STandards X3.64-1977 and X3.41-1974. The VT52 escape
+sequences designated in this section will not be recognised.</P>
+</TR>
+
+<TR>
+<TD Align=Center>Cursor Up</TD>
+<TD Align=Center>ESC A</TD>
+<TD><P Align=Justify>Moves the active position upward one line without
+altering the column position. If an attempt is made to move the cursor
+above the top margin, the cursor stops at the top margin.</P>
+</TR>
+
+<TR>
+<TD Align=Center>Cursor Down</TD>
+<TD Align=Center>ESC B</TD>
+<TD><P Align=Justify>Moves the active position downward one line without
+altering the column position. If an attempt is made to move the cursor
+below the bottom margin, the cursor stops at the bottom margin.</P>
+</TR>
+
+<TR>
+<TD Align=Center>Cursor Right</TD>
+<TD Align=Center>ESC C</TD>
+<TD><P Align=Justify>Moves the active position to the right. If an attempt
+is made to move the cursor to the right of the right margin, the cursor
+stops at the right margin.</P>
+</TR>
+
+<TR>
+<TD Align=Center>Cursor Left</TD>
+<TD Align=Center>ESC D</TD>
+<TD><P Align=Justify>Moves the active position to the left. If an attempt
+is made to move the cursor to the left of the left margin, the cursor
+stops at the left margin.</P>
+</TR>
+
+<TR>
+<TD Align=Center>Enter Graphics Mode</TD>
+<TD Align=Center>ESC F</TD>
+<TD><P Align=Justify>Causes the special graphics character set to be used.
+Note that the special graphics character sets on the VT52 and VT100 are
+different.</P>
+</TR>
+
+<TR>
+<TD Align=Center>Exit Graphics Mode</TD>
+<TD Align=Center>ESC G</TD>
+<TD><P Align=Justify>Causes the standard ASCII character set to be
+used.</P>
+</TR>
+
+<TR>
+<TD Align=Center>Cursor Home</TD>
+<TD Align=Center>ESC H</TD>
+<TD><P Align=Justify>Move the cursor to the home position</P>
+</TR>
+
+<TR>
+<TD Align=Center>Reverse Line Feed</TD>
+<TD Align=Center>ESC I</TD>
+<TD><P Align=Justify>Move the active position upward one position without
+altering the column position. If the active position is at the top margin,
+a scroll down is performed.</P>
+</TR>
+
+<TR>
+<TD Align=Center>Erase to End of Screen</TD>
+<TD Align=Center>ESC J</TD>
+<TD><P Align=Justify>Erase all characters from the active position to the
+end of the screen. The active position is not changed.</P>
+</TR>
+
+<TR>
+<TD Align=Center>Erase to End of Line</TD>
+<TD Align=Center>ESC K</TD>
+<TD><P Align=Justify>Erase all characters from the active position to the
+end of the current line. The active position is not changed.</P>
+</TR>
+
+<TR>
+<TD Align=Center>Direct Cursor Address</TD>
+<TD Align=Center>ESC Y <I>Line Column</I></TD>
+<TD><P Align=Justify>Move the cursor to the specified line and column. The
+line and column numbers are sent as ASCII codes whose values are the
+number plus 037 octal (31 decimal); 040 octal (32 decimal) refers to the
+first line or column, 050 octal (40 decimal) refers to the eighth line or
+column, etc.</P>
+</TR>
+
+<TR>
+<TD Align=Center>Idenitfy</TD>
+<TD Align=Center>ESC Z</TD>
+<TD><P Align=Justify>Causes the terminal to send its identifier escape
+sequence to the host. This sequence is <B><I>ESC / Z</I></B>.</P>
+</TR>
+
+</Table>
+
+</Center>
+
+<HR Width=95%>
+
+<P Align=Center>This document last updated on Tuesday 21st August 2001.</P>
+
+</Body>
+</HTML>
+
+
+

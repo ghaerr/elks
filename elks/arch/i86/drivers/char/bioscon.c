@@ -1,7 +1,7 @@
 /*
  *	Moronic BIOS console
- *	
- *	11th Nov 98	Re-wrote to work with ntty code
+ *
+ *	11th Nov 1998	Re-wrote to work with ntty code
  *			Al - (ajr@ecs.soton.ac.uk)
  *	19th May 1999   Re-wrote with modified ntty iface
  *			Al - (ajr@ecs.soton.ac.uk)
@@ -18,7 +18,7 @@
 
 #ifdef CONFIG_CONSOLE_BIOS 
 
-#ifndef printd_tty /* This should go in debug.h */
+#ifndef printd_tty		/* This should go in debug.h */
 #define printd_tty(_a,_b)
 #endif
 
