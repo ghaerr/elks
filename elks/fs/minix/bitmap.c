@@ -49,9 +49,23 @@ unsigned int numbits;
 	}
 	return(sum);
 }
+
+unsigned short minix_count_free_blocks(sb)
+register struct super_block *sb;
+{
+	return (sb->u.minix_sb.s_nzones - count_used(sb->u.minix_sb.s_zmap,sb->u.minix_sb.s_zmap_blocks,sb->u.minix_sb.s_nzones))
+		 << sb->u.minix_sb.s_log_zone_size;
+}
+
+
+unsigned short minix_count_free_inodes(sb)
+register struct super_block *sb;
+{
+	return sb->u.minix_sb.s_ninodes - count_used(sb->u.minix_sb.s_imap,sb->u.minix_sb.s_imap_blocks,sb->u.minix_sb.s_ninodes);
+}
+
 #endif
 
-#ifndef CONFIG_FS_RO
 void minix_free_block(sb,block)
 register struct super_block * sb;
 unsigned short block;
@@ -81,13 +95,9 @@ unsigned short block;
 		return;
 	}
 	map_buffer(bh);
-#if 1
 	if (!clear_bit(bit,bh->b_data))
 		printk("free_block (%s:%ld): bit already cleared\n",
 		       kdevname(sb->s_dev), block);
-#else
-	clear_bit(bit, bh->b_data);
-#endif
 	unmap_buffer(bh);
 	mark_buffer_dirty(bh, 1);
 	return;
@@ -140,24 +150,13 @@ repeat:
 	unmap_brelse(bh);
 	return j;
 }
-#endif /* CONFIG_FS_RO */
 
-#ifdef BLOAT_FS
-unsigned short minix_count_free_blocks(sb)
-register struct super_block *sb;
-{
-	return (sb->u.minix_sb.s_nzones - count_used(sb->u.minix_sb.s_zmap,sb->u.minix_sb.s_zmap_blocks,sb->u.minix_sb.s_nzones))
-		 << sb->u.minix_sb.s_log_zone_size;
-}
-#endif
 
 static char *fi_name = "free_inode";
+
 void minix_free_inode(inode)
 register struct inode * inode;
 {
-#ifdef CONFIG_FS_RO
-	clear_inode(inode);
-#else
 	register struct buffer_head * bh;
 	ino_t ino;
 
@@ -195,10 +194,8 @@ register struct inode * inode;
 	}
 	mark_buffer_dirty(bh, 1);
 	unmap_buffer(bh);
-#endif
 }
 
-#ifndef CONFIG_FS_RO
 struct inode * minix_new_inode(dir)
 struct inode * dir;
 {
@@ -240,31 +237,17 @@ struct inode * dir;
 	inode->i_gid = (dir->i_mode & S_ISGID) ? dir->i_gid : current->egid;
 	inode->i_dirt = 1;
 	inode->i_ino = j;
-#ifdef CONFIG_ACTIME
 	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
-#else
-	inode->i_mtime = CURRENT_TIME;
-#endif
 	inode->i_op = NULL;
 #ifdef BLOAT_FS
 	inode->i_blocks = inode->i_blksize = 0;
 #endif
-#ifdef HASH_INODES
-	insert_inode_hash(inode);
-#endif
 	return inode;
 	/* Oh no! It's 'Return of Goto' in a double feature with 'Mozilla vs.
 	   Internet Exploder :) */
-	iputfail:
+iputfail:
 	printk("new_inode: Ack ack!  This sucked...\n");
-	unmap_buffer(bh); iput(inode); return NULL;
+	unmap_buffer(bh); 
+	iput(inode); 
+	return NULL;
 }
-#endif /* CONFIG_FS_RO */
-
-#ifdef BLOAT_FS
-unsigned short minix_count_free_inodes(sb)
-register struct super_block *sb;
-{
-	return sb->u.minix_sb.s_ninodes - count_used(sb->u.minix_sb.s_imap,sb->u.minix_sb.s_imap_blocks,sb->u.minix_sb.s_ninodes);
-}
-#endif
