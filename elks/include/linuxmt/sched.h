@@ -66,14 +66,19 @@ struct task_struct
     pid_t pgrp;
     struct tty *tty;
 /*	__u8 link_count;		/* Symlink loop counter, now global */
-    struct task_struct *p_parent, *p_prevsib, *p_nextsib, *p_child;
-    struct wait_queue child_wait;
-    pid_t child_lastend;
-    int lastend_status;
-    struct inode *t_inode;
-    sigset_t signal;		/* Signal status */
-    struct signal_struct sig;	/* Signal block */
-    int dumpable;		/* Can core dump */
+	struct task_struct *p_parent, *p_prevsib, *p_nextsib, *p_child;	 
+	struct wait_queue child_wait;
+	pid_t child_lastend;
+	int lastend_status;
+	struct inode * t_inode;
+	sigset_t signal;		/* Signal status */
+	struct signal_struct sig;	/* Signal block */
+	int dumpable;			/* Can core dump */
+	
+#ifdef CONFIG_SWAP
+	jiff_t last_running;
+#endif
+
 #ifdef CONFIG_OLD_SCHED
     __uint t_count, t_priority;	/* priority scheduling elements */
     __s32 counter;		/* Time counter (unused so far) */

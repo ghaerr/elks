@@ -30,7 +30,7 @@
 #define P_SIZE 16 /* 16 B pages */
 #define DIVISOR 32 /* SECTOR_SIZE / P_SIZE */
 #define MAX_ENTRIES 8
-
+/*#define DEBUG*/
 typedef __u16 rd_sector_t;
 
 static int rd_initialised = 0;
@@ -343,16 +343,17 @@ static void do_rd_request()
 			segnum = rd_segment[segnum].next; /* point to next segment in linked list */
 		}
 #ifdef DEBUG
-		printk("do_rd_request(): entry = %d, segment = 0x%x, offset = %d\n", segnum, rd_segment[segnum].segment, offset);
+		printk("do_rd_request(): entry = %d, segment = 0x%x, offset = %d (%x %x)\n", 
+				segnum, rd_segment[segnum].segment, offset, CURRENT->rq_seg, buff);
 #endif
 		if (CURRENT->rq_cmd == WRITE) {
 			printd_rd1("RD_REQUEST writing to %ld\n", start);
 			fmemcpy(rd_segment[segnum].segment, 
-				offset * SECTOR_SIZE, get_ds(), buff, 1024);
+				offset * SECTOR_SIZE, CURRENT->rq_seg, buff, 1024);
 		}
 		if (CURRENT->rq_cmd == READ) {
 			printd_rd1("RD_REQUEST reading from %ld\n", start);
-			fmemcpy(get_ds(), buff, rd_segment[segnum].segment, 
+			fmemcpy(CURRENT->rq_seg, buff, rd_segment[segnum].segment, 
 				offset * SECTOR_SIZE, 1024);
 		}
 		end_request(1, CURRENT->rq_dev);

@@ -13,6 +13,11 @@ extern unsigned long high_memory;
 #define VERIFY_READ 0
 #define VERIFY_WRITE 1
 
+#define MM_MEM	0
+#ifdef CONFIG_SWAP
+#define MM_SWAP	1
+#endif
+
 #define verify_area(mode, point, size) verfy_area(point, size)
 
 extern int verfy_area();
@@ -32,6 +37,8 @@ extern int verified_memcpy_fromfs();
 extern seg_t mm_alloc();
 extern seg_t mm_realloc();
 extern void mm_free();
+extern int do_swapper_run();
+extern unsigned int mm_get_usage();
 extern void fmemcpy();
 extern void pokeb();
 extern char peekb();

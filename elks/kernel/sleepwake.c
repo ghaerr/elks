@@ -65,14 +65,14 @@ void interruptible_sleep_on(struct wait_queue *p)
 
 void wake_up_process(register struct task_struct *p)
 {
-    flag_t flags;
-
-    save_flags(flags);
-    icli();
-    p->state = TASK_RUNNING;
-    if (!p->next_run)
-	add_to_runqueue(p);
-    restore_flags(flags);
+	flag_t flags;
+	save_flags(flags);
+	icli();
+	p->state = TASK_RUNNING;
+	if (!p->next_run){
+		add_to_runqueue(p);
+	}
+	restore_flags(flags);
 }
 
 /*

@@ -38,7 +38,19 @@
 #endif
 
 #if 0
-#define printd_rfs printk
+#define printd_mm printk 
+#define printd_mm1 printk 
+#define printd_mm2 printk 
+#define printd_mm3 printk 
+#else
+#define printd_mm(_a)
+#define printd_mm1(_a,_b)
+#define printd_mm2(_a,_b,_c)
+#define printd_mm3(_a,_b,_c,_d)
+#endif
+
+#if 0
+#define printd_rfs printk 
 #else
 #define printd_rfs(_a)
 #endif

@@ -32,17 +32,24 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Fri Apr 19 22:24:28 BST 2002	Riley Williams <rhw@InfraDead.Org>
+Sun Apr 21 12:31:22 EEST 2002 Harry Kalogirou <harkal@gmx.net>
 
-	* ANSI'fied function prototypes in lib subtree.
-	* Applied `make indent` rule to lib subtree.
-	* Verified that kernel compiles with above changes applied.
+	* Added mm_get_usage() to mm.c
+	* Added a new ioctl to /dev/mem responding with memory information.
+	* Changed next and prev in schedule() to register. Also removed the
+	  warning comment about corrupting the wait queues.
+	* Some changes to the swapper code.
 
-Fri Apr 19 21:35:25 BST 2002	Riley Williams <rhw@InfraDead.Org>
+Sat Apr 20 16:28:30 EEST 2002 Harry Kalogirou <harkal@gmx.net>
 
-	* ANSI'fied function prototypes in kernel subtree.
-	* Applied `make indent` rule to kernel subtree.
-	* Verified that kernel compiles with above changes applied.
+	* Added swap support. Currently the code is only for "developers"
+	  since swap devices, sizes are hardcoded and. The swapping strategy
+	  also needs tweaking.
+
+Fri Apr 19 22:44:45 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Fixed ramdisk driver to read/write to buffers anywhere is
+	  RAM.
 
 Fri Apr 19 17:38:04 BST 2002	Riley Williams <rhw@InfraDead.Org>
 
@@ -85,6 +92,11 @@ Thu Apr 18 23:15:09 BST 2002	Riley Williams <rhw@InfraDead.Org>
 	  no guarantee that this takes place.
 
 	NOTE: The ELKS source has NOT been reformatted at this point.
+
+Wed Apr 17 14:40:58 EEST 2002 Harry Kalogirou <harkal@gmx.net>
+
+	* Optimization of the serial interrupt code.
+	* Saved 135 bytes by using register variables in af_inet.c
 
 Sun Apr 14 12:41:54 BST 2002	Riley Williams <rhw@InfraDead.Org>
 

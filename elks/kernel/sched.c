@@ -51,7 +51,6 @@ void add_to_runqueue(register struct task_struct *p)
     (p->prev_run = init_task.prev_run)->next_run = p;
     p->next_run = &init_task;
     init_task.prev_run = p;
-
 }
 
 void del_from_runqueue(struct task_struct *p)
@@ -72,10 +71,14 @@ void del_from_runqueue(struct task_struct *p)
 #if 0
     nr_running--;
 #endif
-    next->prev_run = prev;
-    prev->next_run = next;
-    p->next_run = NULL;
-    p->prev_run = NULL;
+        next->prev_run = prev;
+        prev->next_run = next;
+        p->next_run = NULL;
+        p->prev_run = NULL;
+#ifdef CONFIG_SWAP
+        p->last_running = jiffies;
+#endif
+
 }
 
 
@@ -124,26 +127,22 @@ static /* inline */ int goodness(
 
 void schedule(void)
 {
-    /* Including the two registers below saves lots of code, *
-     * but corrupts wait queue. */
-
 #ifdef OLD_SCHED
     __uint c;
     __ptask p;
 #endif
-    /* register */ __ptask prev;
-    /* Subscript calculation is *very* expensive in bcc */
-    __ptask next;
-    __ptask currentp = current;
-    jiff_t timeout = 0L;
+	register __ptask prev; 	/* Subscript calculation is *very* expensive in bcc */
+	register __ptask next;
+	__ptask currentp = current;
+	jiff_t timeout = 0L;
 
-    if (currentp->t_kstackm != KSTACK_MAGIC)
-	panic("Process %d exceeded kernel stack limit! magic %x\n",
-	      currentp->pid, currentp->t_kstackm);
+	if (currentp->t_kstackm != KSTACK_MAGIC)
+		panic("Process %d exceeded kernel stack limit! magic %x\n", 
+			currentp->pid, currentp->t_kstackm);
 
-    /* We have to let a task exit! */
-    if (currentp->state == TASK_EXITING)
-	return;
+	/* We have to let a task exit! */
+	if (currentp->state == TASK_EXITING)
+		return;
 
     run_timer_list();
 
@@ -238,29 +237,28 @@ void schedule(void)
 	    timer.tl_function = process_timeout;
 	    add_timer(&timer);
 	}
-	/* The code below has been changed as the old task switching code did not return
-	 * here, which meant that defunct timers were not getting deleted which caused
-	 * a kernel panic when the timer ran out.
-	 * The new switcher consists of one function which switches from the task pointed
-	 * to by previous, to that pointed to by current, instead of the old save_regs() 
-	 * current = next load_regs() arrangement. Th is new arrangement allows us to return
-	 * to the same point, except with a new task.
-	 * Al <ajr@ecs.soton.ac.uk> 4th May 1999 */
-
 #if 0
 	save_regs();		/* */
 #endif
 	if ((!can_tswitch) && (lastirq != -1))
 	    goto scheduling_in_interrupt;
 
+#ifdef CONFIG_SWAP
+		if(do_swapper_run(current) == -1){
+			printk("Can't become runnable\n");
+			return;
+		}
+#endif
+
 	previous = current;	/* */
 	current = next;
 
-	tswitch();		/* Won't return for a new task */
-
-	if (timeout) {
-	    del_timer(&timer);
-	}
+				
+		tswitch();	/* Won't return for a new task */
+		
+		if (timeout) {
+			del_timer(&timer);
+		}
     }
     return;
 

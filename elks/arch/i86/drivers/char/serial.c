@@ -268,25 +268,27 @@ void receive_chars(sp)
 register struct serial_info *sp;
 {
 	unsigned char ch;
+	int size;
+	register struct ch_queue * q;
+
+	q = &sp->tty->inq;
+	size = q->size - 1;
 
 	do {
 		ch = inb_p(sp->io + UART_RX);
 		if (!tty_intcheck(sp->tty, ch)) {
-			chq_addch(&sp->tty->inq, ch, 0);
+				
+			if(q->len == size)
+				break;
+				
+			q->buf[(q->tail + q->len) & size] = ch;
+			q->len++;
 		}
 	} while (inb_p(sp->io + UART_LSR) & UART_LSR_DR);
+	
+	wake_up(&q->wq);
 }
-/*
-void transmit_chars(sp)
-struct serial_info *sp;
-{
-	char ch;
 
-	if (chq_getch(&sp->tty->outq, &ch, 0) != -1)
-		outb(ch, sp->io + UART_TX);
-		
-}
-*/
 int rs_irq(irq,regs,dev_id)
 int irq;
 struct pt_regs *regs;
@@ -390,13 +392,13 @@ int rs_init()
 	register struct serial_info *sp=ports;
 	int i;
 	int ttyno = 4;
-	printk("Serial driver version 0.01 with no serial options enabled\n");
+	printk("Serial driver version 0.02\n");
 	for(i=0;i<4;i++) {
 		if (sp->tty != NULL) {
 			/*
 			* if rs_init is called twice, because of serial console
 			*/
-			printk("ttys%d at 0x%x (irq = %d)",
+			printk("ttyS%d at 0x%x (irq = %d)",
 			ttyno-4,sp->io,sp->irq);
 			switch(sp->flags&SERF_TYPE) {
 				case ST_8250:

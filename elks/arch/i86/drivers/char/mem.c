@@ -236,6 +236,7 @@ struct file *file;
 int cmd;
 char *arg;
 {
+	struct mem_usage mu;
 	char *i;
 	printd_mem1("[k]mem_ioctl() %d\n",cmd);
 	switch(cmd) {
@@ -269,6 +270,19 @@ char *arg;
 		case MEM_GETDS:
 			i = get_ds();
 			memcpy_tofs(arg, &i, 2);
+			return 0;
+		break;
+		case MEM_GETUSAGE:
+			mu.free_memory = mm_get_usage(MM_MEM, 0);
+			mu.used_memory = mm_get_usage(MM_MEM, 1);
+#ifdef CONFIG_SWAP
+			mu.free_swap = mm_get_usage(MM_SWAP, 0);
+			mu.used_swap = mm_get_usage(MM_SWAP, 1);
+#else
+			mu.free_swap = 0;
+			mu.used_swap = 0;
+#endif
+			memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
 			return 0;
 		break;
 	}

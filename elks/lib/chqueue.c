@@ -122,5 +122,5 @@ int chq_peekch(register struct ch_queue *q)
 
 int chq_full(register struct ch_queue *q)
 {
-    return (q->len == q->size)
+    return (q->len == q->size);
 }

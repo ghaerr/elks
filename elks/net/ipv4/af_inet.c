@@ -31,9 +31,8 @@ int inet_process_tcpdev(buf, len)
 char *buf;
 int len;
 {
-	struct tdb_return_data *r;
-	struct socket *sock;
-	int i;
+	register struct tdb_return_data *r;
+	register struct socket *sock;
 	
 	r = buf;
 
@@ -57,7 +56,7 @@ int len;
 }
 
 static int inet_create(sock, protocol)
-register struct socket *sock;
+struct socket *sock;
 int protocol;
 {
 	printd_inet1("inet_create(sock: 0x%x)\n", sock);
@@ -81,7 +80,6 @@ struct socket *sock;
 struct socket *peer;
 {
 	struct tdb_release cmd;
-	struct tdb_return_data	*ret_data;
 	int ret;
 
 	printd_inet1("inet_release(sock: 0x%x)\n",sock);	
@@ -96,11 +94,11 @@ struct socket *peer;
 }
 
 static int inet_bind(sock, addr, sockaddr_len)
-struct socket *sock;
+register struct socket *sock;
 struct sockaddr *addr;
 int sockaddr_len;
 {
-	struct inet_proto_data *upd = sock->data;
+	register struct inet_proto_data *upd = sock->data;
 	struct tdb_bind cmd;
 	unsigned char *tdret;
 	int	len;
@@ -133,13 +131,13 @@ int sockaddr_len;
 }
 
 static int inet_connect(sock, uservaddr, sockaddr_len, flags)
-struct socket *sock;
+register struct socket *sock;
 struct sockaddr *uservaddr;
 int sockaddr_len;
 int flags;
 {
 	struct sockaddr_in	*sockin;
-	struct tdb_return_data *r;
+	register struct tdb_return_data *r;
 	struct tdb_connect cmd;
 	int ret;
 
@@ -185,10 +183,10 @@ inet_socketpair()
 
 #ifndef CONFIG_SOCK_CLIENTONLY
 static int inet_listen(sock, backlog)
-struct socket *sock;
+register struct socket *sock;
 int backlog;
 {	
-	struct tdb_return_data *ret_data;
+	register struct tdb_return_data *ret_data;
 	struct tdb_listen cmd;
 	int ret;
 
@@ -214,12 +212,12 @@ int backlog;
 }
 
 static int inet_accept(sock, newsock, flags)
-struct socket *sock;
+register struct socket *sock;
 struct socket *newsock;
 int flags;
 {
 	struct tdb_accept cmd;
-	struct tdb_accept_ret *ret_data;
+	register struct tdb_accept_ret *ret_data;
 	int ret;
 
 	printd_inet2("inet_accept(sock: 0x%x newsock: 0x%x)\n",sock,newsock);	
@@ -260,13 +258,12 @@ inet_getname()
 }
 
 static int inet_read(sock, ubuf, size, nonblock)
-struct socket *sock;
+register struct socket *sock;
 char *ubuf;
 int size;
 int nonblock;
 {
-	struct inet_proto_data *upd;
-	struct tdb_return_data *r;
+	register struct tdb_return_data *r;
 	struct tdb_read	cmd;
 	int ret;
 
@@ -302,13 +299,13 @@ int nonblock;
 }
 
 static int inet_write(sock, ubuf, size, nonblock)
-struct socket *sock;
+register struct socket *sock;
 char *ubuf;
 int size;
 int nonblock;
 {
 	struct inet_proto_data *upd;
-	struct tdb_return_data *r;
+	register struct tdb_return_data *r;
 	struct tdb_write cmd;
 	int ret,todo;
 
@@ -358,7 +355,7 @@ int nonblock;
 
 
 static int inet_select(sock, sel_type, wait)
-struct socket *sock;
+register struct socket *sock;
 int sel_type;
 select_table * wait;
 {
