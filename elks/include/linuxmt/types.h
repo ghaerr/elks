@@ -16,7 +16,7 @@
 #define _FUNCTION(function, params) function()
 #define _VFUNCTION(functiom, params) (*function) ()
 
-typedef __u32 off_t;
+typedef __s32 off_t;
 typedef __s16 pid_t;
 typedef __u16 uid_t;
 typedef __u16 gid_t;
