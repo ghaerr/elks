@@ -132,6 +132,8 @@
  */
 
 /*
+ * $Id$
+ *
  * 2004-05-27 Claudio Matsuoka <claudio@conectiva.com>
  * - initial ELKS port
  * - some source code reformatting
