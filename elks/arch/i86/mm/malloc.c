@@ -363,7 +363,7 @@ static int swap_out(base)
 seg_t base;
 {
 	register struct task_struct *t;
-	struct malloc_hole *o=find_hole(&memmap,base);
+	register struct malloc_hole *o=find_hole(&memmap,base);
 	struct malloc_hole *so;
 	int ct, blocks;
 	/* We can hit disk this time. Allocate a hole in 1K increments */
@@ -418,7 +418,7 @@ static int swap_in(base, chint)
 seg_t base;
 int chint;
 {
-	struct malloc_hole *o;
+	register struct malloc_hole *o;
 	struct malloc_hole *so=find_hole(&swapmap,base);
 	int ct, blocks;
 	register struct task_struct *t;
@@ -490,7 +490,7 @@ int chint;
  *	work. On failure we return -1
  */
 static int make_runnable(t)
-struct task_struct *t;
+register struct task_struct *t;
 {
 	if(t->mm.flags&CS_SWAP)
 		if(swap_in(t->mm.cseg, 1)==-1)
