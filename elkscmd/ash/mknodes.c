@@ -88,7 +88,7 @@ struct str str[MAXTYPES];	/* the structures */
 struct str *curstr;		/* current structure */
 
 
-FILE *infp = stdin;
+FILE *infp;
 char line[1024];
 int linno;
 char *linep;
