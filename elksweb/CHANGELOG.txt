@@ -16,6 +16,12 @@ Riley Williams          <Riley@Williams.Name>            8 Nov 2001-12 Jun 2002
 
 -------------------------------------------------------------------------------
 
+
+Sun Oct 20 12:21:27 BST 2002	Paul Nasrat <pauln@truemesh.com>
+	
+	* Added Italian FAQ
+
+
 Wed Jun 12 18:28:40 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Corrected faulty base href tags in various FAQ's.
