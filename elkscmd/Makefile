@@ -46,6 +46,8 @@ clean:
 		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) || true
 	rm -f $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
 		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) boot images.zip core
+	-echo FIXME: make clean is temporarily broken, because there is no
+	-echo rootfs_template.tar anymore
 	rm -rf rootfs_template $(ROOTDIR)
 	@for i in $(DIRS); do make -C $$i clean ; done
 	tar xf rootfs_template.tar
@@ -146,9 +148,6 @@ $(ROOT_NET_TARGET_FS):
 
 $(SIBO_TARGET_FS):
 	dd if=/dev/zero of=$(SIBO_TARGET_FS) bs=1024 count=$(SIBO_TARGET_BLKS)
-
-$(ELKSCMD_DIR)/rootfs_template/etc/passwd: rootfs_template.tar
-	tar xpf rootfs_template.tar
 
 $(ELKSCMD_DIR)/rootfs_template/etc/issue: $(ELKSCMD_DIR)/rootfs_template/etc/passwd $(ELKS_DIR)/Makefile
 	$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile > $(ELKSCMD_DIR)/rootfs_template/etc/issue

@@ -6,13 +6,22 @@ should not be longer than the lines of dashes.
 Miguel Bolanos.
 
 Contributor			Email
------------------------------------------------------------------
+---------------------------------------------------------------------------
 
 Claudio Matsuoka		claudio@conectiva.com
+Eduardo Habkost			ehabkost@conectiva.com.br
 Miguel Bolanos			mike@linuxlabs.com
 Tommy McCabe			rocketjet314@yahoo.com
 
------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+Sat Jun  5 17:44:06 BRT 2004	Eduardo Habkost <ehabkost@conectiva.com.br>
+
+	* rootfs_template/etc/passwd doesn't depend on rootfs_template.tar
+	  anymore
+	* Added warning about broken make clean
+	* People didn't respected the above line of dashes. Making it
+	  bigger  ;)
 
 Fri Jun 04 05:26:48 CST 2004	Claudio Matsuoka <claudio@conectiva.com>
 
