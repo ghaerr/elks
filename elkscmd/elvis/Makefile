@@ -380,7 +380,8 @@ inst.os9: $(DUMMY)
 
 ##############################################################################
 clean: $(DUMMY)
-	$(RM) *.o $(DOC)*.1 elvis?.uue elvis?.sh core
+	$(RM) *.o $(DOC)*.1 elvis?.uue elvis?.sh core elvis ctags ref virec refont
+
 
 clobber: clean
 	$(RM) tags refs $(PROGS)
