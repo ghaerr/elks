@@ -7,7 +7,7 @@
  *	Messy as we lack atomic bit operations on an 8086.
  */
  
-unsigned char clear_bit(unsigned short int bit,void *addr)
+unsigned char clear_bit(unsigned int bit,void *addr)
 {
     unsigned char *ptr = addr;
     unsigned int r, mask, offset = (bit / 8);
@@ -23,7 +23,7 @@ unsigned char clear_bit(unsigned short int bit,void *addr)
     return (r ? 1:0);
 }
 
-unsigned char set_bit(unsigned short int bit,void *addr)
+unsigned char set_bit(unsigned int bit,void *addr)
 {
     unsigned char *ptr = addr;
     unsigned int r, mask, offset = (bit / 8);
@@ -39,7 +39,7 @@ unsigned char set_bit(unsigned short int bit,void *addr)
     return (r ? 1 : 0);
 }
 
-unsigned char test_bit(unsigned short int bit,void *addr)
+unsigned char test_bit(unsigned int bit,void *addr)
 {
     unsigned char *ptr = addr;
     unsigned int mask, offset = bit / 8;
@@ -56,7 +56,7 @@ unsigned char test_bit(unsigned short int bit,void *addr)
  */
 
 /* Use the old faithful version */
-unsigned short int find_first_non_zero_bit(void *addr, unsigned short int len)
+unsigned int find_first_non_zero_bit(void *addr, unsigned int len)
 {
     unsigned short int i;
 
@@ -67,7 +67,7 @@ unsigned short int find_first_non_zero_bit(void *addr, unsigned short int len)
 }
 
 /* Use the old faithful version */
-unsigned short int find_first_zero_bit(void *addr,unsigned short int len)
+unsigned int find_first_zero_bit(void *addr,unsigned int len)
 {
     unsigned short int i;
 

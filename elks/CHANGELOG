@@ -35,6 +35,7 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 Wed May 29 23:27:51 BST 2002	Riley Williams <Riley@Williams.Name>
 
+	* Modified {get,put}_fs_{byte,word,long} to use void * pointers.
 	* Updated debug() messages.
 
 Tue May 28 18:30:02 BST 2002	Riley Williams <Riley@Williams.Name>

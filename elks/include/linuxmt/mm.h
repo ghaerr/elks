@@ -18,24 +18,24 @@ extern unsigned long high_memory;
 #define MM_SWAP	1
 #endif
 
-#define verify_area(mode, point, size) verfy_area(point, size)
+#define verify_area(mode,point,size) verfy_area(point,size)
 
 /*@-namechecks@*/
 
 extern void memcpy_fromfs(void *,void *,size_t);
 extern void memcpy_tofs(void *,void *,size_t);
 
-extern int strlen_fromfs(char *);
+extern int strlen_fromfs(void *);
 
 /*@+namechecks@*/
 
 extern int verfy_area(void *,size_t);
-extern void put_fs_long(unsigned long int,unsigned long int *);
-extern void put_fs_byte(unsigned char,unsigned char *);
-extern void put_fs_word(unsigned short int,unsigned short int *);
-extern unsigned long get_fs_long(unsigned long int *);
-extern unsigned char get_fs_byte(unsigned char *);
-extern unsigned int get_fs_word(unsigned short int *);
+extern void put_fs_long(unsigned long int,void *);
+extern void put_fs_byte(unsigned char,void *);
+extern void put_fs_word(unsigned short int,void *);
+extern unsigned long int get_fs_long(void *);
+extern unsigned char get_fs_byte(void *);
+extern unsigned short int get_fs_word(void *);
 extern int fs_memcmp(void *,void *,size_t);
 extern int verified_memcpy_tofs(void *,void *,size_t);
 extern int verified_memcpy_fromfs(void *,void *,size_t);
