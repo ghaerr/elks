@@ -1,0 +1,85 @@
+The following article from James A. Woods, one of the earlier
+authors of compress, explains its relationship to the Unisys
+patent on the LZW compression method:
+
+From uunet!zephyr.ens.tek.com!uw-beaver!mit-eddie!wuarchive!usc!ucsd!ucbvax!agate!riacs!jaw Wed Aug  1 15:06:59 EDT 1990
+Article: 1282 of gnu.misc.discuss
+Path: alembic!uunet!zephyr.ens.tek.com!uw-beaver!mit-eddie!wuarchive!usc!ucsd!ucbvax!agate!riacs!jaw
+From: jaw@riacs.edu (James A. Woods)
+Newsgroups: gnu.misc.discuss
+Subject: Sperry patent #4,558,302 does *not* affect 'compress'
+Keywords: data compression, algorithm, patent
+Message-ID: <1990Jul31.220935.1424@riacs.edu>
+Date: 31 Jul 90 22:09:35 GMT
+Organization: RIACS, NASA Ames Research Center
+Lines: 69
+
+#  "The chief defect of Henry King
+    Was chewing little bits of string."
+
+        -- Hilaire Belloc, Cautionary Tales [1907]
+
+     As a co-author of 'compress' who has had contact with an attorney for
+Unisys (nee Sperry), I would like to relay a very basic admission from Unisys
+that noncommercial use of 'compress' is perfectly legal.  'Compress' is also
+commercially distributed by AT&T as part of Unix System 5 release 4,
+with no further restrictions placed upon the use of the binary, as far
+as I am aware.
+
+     From conversations with Professor Abraham Lempel and others, it 
+appears that neither AT&T, Sun Microsystems, Hewlett Packard, nor IBM
+are paying any sort of license fees to Unisys in conjunction with patent
+#4,558,302.  It may be true that some organizations are paying fees for
+data compression technology licensed from one or more of the many holders
+of compression patents, but this is all independent from 'compress'.
+
+     In particular, I received a letter at NASA dated October 1, 1987 from
+John B. Sowell of the Unisys law department, informing me for the first
+time that some form of LZW was patented.  I naturally expressed
+skepticism that an algorithm could be patented (a murky legal area
+which remains so), stated that 'compress' is not identical to LZW,
+and in fact was designed, developed, and distributed before the ink
+on the patent was dry.  Several telephone conversations later, Mr. Sowell
+intimated that they would *not* seek any fees from users of 'compress'
+but instead were signing licensees for hardware implementations of LZW.
+
+     So, regardless of what you believe about a shady legal area, if anyone
+from Unisys contacts you to extract tribute for the use of 'compress', please
+tell them that, first, it is not theirs to begin with, and, second, there is
+someone who will testify in court about the conversation above.
+It is not even clear if anyone can "own" 'compress', since original developer
+Spencer Thomas, myself, and others placed the code in the public domain
+long before the adoption of the Berne copyright convention.
+
+     In light of the events above, it seems that the Free Software
+Foundation is being unduly paranoid about the use of 'compress'.
+Now I can well believe that FSF is more likely to be a legal target
+than a behemoth like AT&T, but if they are simply redistributing
+untouched free software developed years ago in the public sector,
+I see no problem.
+
+     Aside:  I am investigating, possibly for a case history to be
+recycled to USENET, the particulars of data compression patents.
+I am aware of the following patents: IBM's Miller-Wegman LZ variant,
+those of Telcor and ACT [losing candidates for the British Telecom modem
+standard], James A. Storer's work on limited lookahead as explicated in his
+text "Data Compression (methods and theory)", Computer Science Press, 1988,
+and the various patents pending associated with the Fiala and Greene
+CACM article of April, 1989 on textual substitution methods.
+If you have any lore, send it this way.
+
+
+
+                    Sincerely,
+
+                    James A. Woods
+                    NASA Ames Research Center (RIACS)
+                    jaw@riacs.edu (or ames!jaw)
+
+
+P.S.  The algorithm patent issue certainly is a "topic A" at the moment.
+One useful reference is the review article by Anthony and Colwell --
+"Litigating the Validity and Infringement of Software Patents" in
+Washington and Lee Law Review, volume 41, fall 1984.  I know Robert Colwell
+personally.  As a practicing patent attorney, he tells me that, at a minimum,
+use of an invention "for research purposes" is legitimate.

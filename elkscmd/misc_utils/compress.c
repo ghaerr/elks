@@ -136,6 +136,9 @@
  * - initial ELKS port
  * - some source code reformatting
  * - worked around bcc bugs
+ *
+ * 2004-06-03 Claudio Matsuoka <claudio@conectiva.com>
+ * - placing tables back in BSS, build with bcc -X-H0xe000
  */ 
 #define ELKS
 #define LSTAT
@@ -602,12 +605,7 @@ long 		bytes_out;	/* Total number of byte to output	*/
 #	define	clear_tab_prefixof()	memset(code0tab, 0, 256);
 #else	/* Normal machine */
 	count_int	htab[HSIZE];
-#ifdef ELKS
-	/* FIXME: CM: workaround for BSS limits in ELKS */
-	unsigned short *codetab;
-#else
 	unsigned short	codetab[HSIZE];
-#endif
 
 #	define	htabof(i)		htab[i]
 #	define	codetabof(i)		codetab[i]
@@ -734,14 +732,6 @@ main(argc, argv)
     	filelist = fileptr = (char **)malloc(argc*sizeof(char *));
     	*filelist = NULL;
 
-#ifdef ELKS
-	/* FIXME: CM: workaround for BSS problems in ELKS */
-	if ((codetab = malloc(HSIZE * sizeof(unsigned short))) == NULL) {
-		fprintf(stderr, "Not enough memory\n");
-		exit (-1);
-	}
-		
-#endif
     	if((progname = rindex(argv[0], '/')) != 0)
 		progname++;
 	else
