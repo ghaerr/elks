@@ -36,9 +36,10 @@ extern unsigned short _enddata;
 extern unsigned short _endbss;
 extern unsigned short _elksheader;
 extern unsigned char arch_cpu;
-extern int bootstack; /* this really wants to be extern void, but bcc sucks. */
 
-unsigned short realmode_ds; /* used for calculating the address of the IDT */
+extern int bootstack;		/* this really wants to be extern void, but bcc sucks. */
+
+unsigned short realmode_ds;	/* used for calculating the address of the IDT */
 
 /* 0x20 processor exceptions, 0x10 hardware ints */
 struct descriptor idt[0x30];
@@ -46,21 +47,21 @@ struct descriptor idt[0x30];
 #define IDT_LIMIT 0x17f
 
 struct descriptor initial_gdt[10] = {
-    {0x0000, 0x0000, 0x00, 0x00, 0x0000}, /* NULL segment */
-    {0xffff, 0x0020, 0x01, 0x9b, 0x0000}, /* ring 0 code segment (ours) */
-    {0xffff, 0x0020, 0x01, 0x93, 0x0000}, /* ring 0 data segment (ours) */
-    {0xffff, 0x0000, 0x00, 0x93, 0x0000}, /* ring 0 screen data segment */
-    {0xffff, 0x0000, 0x00, 0x93, 0x0000}, /* ring 0 temporary data segment */
-    {0x002b, 0x0000, 0x00, 0x81, 0x0000}, /* initial TSS */
-    {0x0000, 0x0000, 0x00, 0x82, 0x0000}, /* 0-length LDT for TSS */
+    {0x0000, 0x0000, 0x00, 0x00, 0x0000},	/* NULL segment */
+    {0xffff, 0x0020, 0x01, 0x9b, 0x0000},	/* ring 0 code segment (ours) */
+    {0xffff, 0x0020, 0x01, 0x93, 0x0000},	/* ring 0 data segment (ours) */
+    {0xffff, 0x0000, 0x00, 0x93, 0x0000},	/* ring 0 screen data segment */
+    {0xffff, 0x0000, 0x00, 0x93, 0x0000},	/* ring 0 temporary data segment */
+    {0x002b, 0x0000, 0x00, 0x81, 0x0000},	/* initial TSS */
+    {0x0000, 0x0000, 0x00, 0x82, 0x0000},	/* 0-length LDT for TSS */
 #ifdef ELKS_AT_RING_1
-    {0x0000, 0x0000, 0x00, 0xbb, 0x0000}, /* ring 1 code segment (ELKSs) */
-    {0xffff, 0x0000, 0x00, 0xb3, 0x0000}, /* ring 1 data segment (ELKSs) */
-    {0xffff, 0x1000, 0x00, 0xb3, 0x0000}, /* ring 1 data segment (setup) */
+    {0x0000, 0x0000, 0x00, 0xbb, 0x0000},	/* ring 1 code segment (ELKSs) */
+    {0xffff, 0x0000, 0x00, 0xb3, 0x0000},	/* ring 1 data segment (ELKSs) */
+    {0xffff, 0x1000, 0x00, 0xb3, 0x0000},	/* ring 1 data segment (setup) */
 #else
-    {0x0000, 0x0000, 0x00, 0x9b, 0x0000}, /* ring 0 code segment (ELKSs) */
-    {0xffff, 0x0000, 0x00, 0x93, 0x0000}, /* ring 0 data segment (ELKSs) */
-    {0xffff, 0x1000, 0x00, 0x93, 0x0000}, /* ring 0 data segment (setup) */
+    {0x0000, 0x0000, 0x00, 0x9b, 0x0000},	/* ring 0 code segment (ELKSs) */
+    {0xffff, 0x0000, 0x00, 0x93, 0x0000},	/* ring 0 data segment (ELKSs) */
+    {0xffff, 0x1000, 0x00, 0x93, 0x0000},	/* ring 0 data segment (setup) */
 #endif
 };
 
@@ -68,15 +69,15 @@ struct descriptor initial_gdt[10] = {
 
 /* most of these fields can be nil without affecting anything. */
 struct tss initial_tss = {
-    0x0000, /* backlink */
-    0x0000, PMODE_DATASEL, /* cpl0 sp, cpl0 ss */
-    0x0000, 0x0000, /* cpl1 sp, cpl1 ss */
-    0x0000, 0x0000, /* cpl2 sp, cpl2 ss */
-    0x0000, 0x0000, /* ip, flags */
-    0x0000, 0x0000, 0x0000, 0x0000, /* ax, cx, dx, bx */
-    0x0000, 0x0000, 0x0000, 0x0000, /* sp, bp, si, di */
-    0x0000, 0x0000, 0x0000, 0x0000, /* es, cs, ss, ds */
-    PMODE_LDTSEL, /* ldt */
+    0x0000,				/* backlink */
+    0x0000, PMODE_DATASEL,		/* cpl0 sp, cpl0 ss */
+    0x0000, 0x0000,			/* cpl1 sp, cpl1 ss */
+    0x0000, 0x0000,			/* cpl2 sp, cpl2 ss */
+    0x0000, 0x0000,			/* ip, flags */
+    0x0000, 0x0000, 0x0000, 0x0000,	/* ax, cx, dx, bx */
+    0x0000, 0x0000, 0x0000, 0x0000,	/* sp, bp, si, di */
+    0x0000, 0x0000, 0x0000, 0x0000,	/* es, cs, ss, ds */
+    PMODE_LDTSEL,			/* ldt */
 };
 
 char hexchars[0x10] = {
@@ -85,16 +86,12 @@ char hexchars[0x10] = {
 };
 
 /* these all want to be extern void, but you saw my previous comment. */
-extern int exc_00; extern int exc_01; extern int exc_02; extern int exc_03;
-extern int exc_04; extern int exc_05; extern int exc_06; extern int exc_07;
-extern int exc_08; extern int exc_09; extern int exc_0a; extern int exc_0b;
-extern int exc_0c; extern int exc_0d; extern int exc_0e; extern int exc_10;
-extern int exc_11; extern int exc_xx;
+extern int exc_00, exc_01, exc_02, exc_03, exc_04, exc_05, exc_06, exc_07;
+extern int exc_08, exc_09, exc_0a, exc_0b, exc_0c, exc_0d, exc_0e, exc_10;
+extern int exc_11, exc_xx;
 
-extern int irq_0; extern int irq_1; extern int irq_2; extern int irq_3;
-extern int irq_4; extern int irq_5; extern int irq_6; extern int irq_7;
-extern int irq_8; extern int irq_9; extern int irq_a; extern int irq_b;
-extern int irq_c; extern int irq_d; extern int irq_e; extern int irq_f;
+extern int irq_0, irq_1, irq_2, irq_3, irq_4, irq_5, irq_6, irq_7;
+extern int irq_8, irq_9, irq_a, irq_b, irq_c, irq_d, irq_e, irq_f;
 
 unsigned short irqhandlers[0x30] = {
     &exc_00, &exc_01, &exc_02, &exc_03, &exc_04, &exc_05, &exc_06, &exc_07,
@@ -105,34 +102,38 @@ unsigned short irqhandlers[0x30] = {
     &irq_8, &irq_9, &irq_a, &irq_b, &irq_c, &irq_d, &irq_e, &irq_f,
 };
 
-#if 0 /* old versions */
-void cli()
+#if 0				/* old versions */
+
+void cli(void)
 {
 #asm
     cli
 #endasm
 }
 
-void sti()
+void sti(void)
 {
 #asm
     sti
 #endasm
 }
+
 #else
+
 /* new versions. 4 bytes saved on overhead, and 2 bytes per call. */
 #define cli() asm("cli")
 #define sti() asm("sti")
+
 #endif
 
-unsigned short get_ds()
+unsigned short get_ds(void)
 {
 #asm
     mov ax, ds
 #endasm
 }
 
-unsigned short get_flags()
+unsigned short get_flags(void)
 {
 #asm
     pushf
@@ -140,8 +141,7 @@ unsigned short get_flags()
 #endasm
 }
 
-void set_flags(flags)
-     unsigned short flags;
+void set_flags(unsigned short flags)
 {
 #asm
     pop bx
@@ -153,7 +153,7 @@ void set_flags(flags)
 #endasm
 }
 
-void load_gdtr()
+void load_gdtr(void)
 {
 #asm
 #ifdef DEBUG_2ND_MONITOR
@@ -165,7 +165,6 @@ void load_gdtr()
     mov [0x24], ax
     pop es
 #endif
-	
     push bp
     mov bp, sp
     mov ax, #_initial_gdt
@@ -177,13 +176,11 @@ void load_gdtr()
     mov dx, ds
     shr dx, #0xc
     add bx, dx
-
     mov cx, #GDT_LIMIT
     push bx
     push ax
     push cx
-    lgdt [bp-6]
-
+    lgdt [bp - 6]
 #ifdef DEBUG_2ND_MONITOR
 #if 0
     push es
@@ -197,83 +194,77 @@ void load_gdtr()
     xor bx, bx
     mov bl, dh
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dh
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
-
     mov al, #0x20
     stosw
-
-    mov dx, [bp-2]
+    mov dx,[bp - 2]
     mov bl, dl
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
-
-    mov dx, [bp-4]
+    mov dx,[bp - 4]
 
     mov bl, dh
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dh
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
-
     mov al, #0x20
     stosw
-
     mov dx, #_initial_gdt
-
     mov bl, dh
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dh
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
-
     pop di
     pop es
-/*     db 0xeb, 0xfe */
+#if 0
+    db 0xeb, 0xfe
+#endif
 #endif
 #endif
     add sp, #6
     pop bp
-
 #ifdef DEBUG_2ND_MONITOR
     push es
     mov ax, #0xb000
@@ -286,7 +277,7 @@ void load_gdtr()
 #endasm
 }
 
-void load_idtr()
+void load_idtr(void)
 {
 #asm
     push bp
@@ -304,8 +295,7 @@ void load_idtr()
     push bx
     push ax
     push cx
-    lidt [bp-6]
-
+    lidt [bp - 6]
 #ifdef DEBUG_2ND_MONITOR
 #if 0
     push es
@@ -319,78 +309,72 @@ void load_idtr()
     xor bx, bx
     mov bl, dh
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dh
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
-
     mov al, #0x20
     stosw
-
-    mov dx, [bp-2]
+    mov dx,[bp - 2]
     mov bl, dl
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
-
-    mov dx, [bp-4]
-
+    mov dx,[bp - 4]
     mov bl, dh
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dh
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
-
     mov al, #0x20
     stosw
-
     mov dx, #_idt
-
     mov bl, dh
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dh
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
-
     pop di
     pop es
-/*     db 0xeb, 0xfe */
+#if 0
+    db 0xeb, 0xfe
+#endif
 #endif
 #endif
     add sp, #6
@@ -398,7 +382,7 @@ void load_idtr()
 #endasm
 }
 
-void load_tr()
+void load_tr(void)
 {
 #asm
     mov ax, #PMODE_TSSSEL
@@ -406,14 +390,13 @@ void load_tr()
 #endasm
 }
 
-void set_idt_entry(interrupt, cs, ip, type)
-     unsigned short interrupt, cs, ip, type;
+void set_idt_entry(unsigned short interrupt,unsigned short cs,
+                   unsigned short ip,unsigned short type)
 {
-    unsigned short flags;
+    unsigned short flags = get_flags();
 
-    flags = get_flags();
     cli();
-    
+
     idt[interrupt].limit = ip;
     idt[interrupt].baseaddr0 = cs;
     idt[interrupt].flags = type;
@@ -423,13 +406,12 @@ void set_idt_entry(interrupt, cs, ip, type)
     set_flags(flags);
 }
 
-void idt_init()
+void idt_init(void)
 {
     int i;
 
-    for (i = 0; i < 0x30; i++) {
-        set_idt_entry(i, PMODE_CODESEL, irqhandlers[i], GATE_INTERRUPT);
-    }
+    for (i = 0; i < 0x30; i++)
+	set_idt_entry(i, PMODE_CODESEL, irqhandlers[i], GATE_INTERRUPT);
 }
 
 char irq_mesg[] = "received irq ";
@@ -440,7 +422,6 @@ void do_irq(irqnum, es, ds, di, si, bp, ignore, bx, dx, cx, ax)
 #asm
     push bp
     mov bp, sp
-
 #ifdef DEBUG_2ND_MONITOR
     push es
     mov ax, #PMODE_SCRNSEL
@@ -448,39 +429,44 @@ void do_irq(irqnum, es, ds, di, si, bp, ignore, bx, dx, cx, ax)
     mov di, #0x280
     cld
     mov ah, #0x07
-
     mov si, #_irq_mesg
+
 do_irq_print_loop:
     lodsb
     or al, al
     jz do_irq_done_print
     stosw
     jmp do_irq_print_loop
+
 do_irq_done_print:
-
     xor bh, bh
-    mov dx, [bp+4]
-
+    mov dx,[bp + 4]
     mov bl, dh
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dh
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
-
     pop es
 #endif
-    dw 0xfeeb /* foo: jmp foo */
+    dw 0xfeeb
+
+#if 0
+
+foo:
+    jmp foo
+
+#endif
 
     pop bp
 #endasm
@@ -494,7 +480,6 @@ void do_exc(excnum, es, ds, di, si, bp, ignore, bx, dx, cx, ax)
 #asm
     push bp
     mov bp, sp
-
 #ifdef DEBUG_2ND_MONITOR
     push es
     mov ax, #PMODE_SCRNSEL
@@ -502,93 +487,91 @@ void do_exc(excnum, es, ds, di, si, bp, ignore, bx, dx, cx, ax)
     mov di, #0x280
     cld
     mov ah, #0x07
-
     mov si, #_exc_mesg
+
 do_exc_print_loop:
     lodsb
     or al, al
     jz do_exc_done_print
     stosw
     jmp do_exc_print_loop
+
 do_exc_done_print:
-
     xor bh, bh
-    mov dx, [bp+4]
-
+    mov dx,[bp + 4]
     mov bl, dh
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dh
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     shr bl, #4
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
     mov bl, dl
     and bl, #0x0f
-    mov al, [bx+_hexchars]
+    mov al,[bx + _hexchars]
     stosw
-
     pop es
 #endif
     db 0xeb, 0xfe
-
     pop bp
 #endasm
 }
 
-void revector_8259s(where)
-     unsigned short where;
+void revector_8259s(unsigned short where)
 {
 #asm
-   pop dx /* cheap trick to get the parameter into bx */
-   pop bx
-   push bx
-   push dx
-   mov al, #0x11
-   out 0x20, al
-   db 0xeb, 0x00 /* this code may not require quite so much delay for I/O, */
-   db 0xeb, 0x00 /* any opinions? */
-   db 0xeb, 0x00
-   mov al, bl
-   out 0x21, al
-   db 0xeb, 0x00
-   db 0xeb, 0x00
-   db 0xeb, 0x00
-   mov al, #0x4
-   out 0x21, al
-   db 0xeb, 0x00
-   db 0xeb, 0x00
-   db 0xeb, 0x00
-   mov al, #0x1
-   out 0x21, al
-   db 0xeb, 0x00
-   db 0xeb, 0x00
-   db 0xeb, 0x00
-   mov al, #0x11
-   out 0xa0, al
-   db 0xeb, 0x00
-   db 0xeb, 0x00
-   db 0xeb, 0x00
-   mov al, bh
-   out 0xa1, al
-   db 0xeb, 0x00
-   db 0xeb, 0x00
-   db 0xeb, 0x00
-   mov al, #0x2
-   out 0xa1, al
-   db 0xeb, 0x00
-   db 0xeb, 0x00
-   db 0xeb, 0x00
-   mov al, #0x1
-   out 0xa1, al
+    pop dx	/* cheap trick to get the parameter into bx */
+    pop bx
+    push bx
+    push dx
+    mov al, #0x11
+    out 0x20, al
+    db 0xeb, 0x00
+
+    /* this code may not require quite so much delay for I/O, */
+    db 0xeb, 0x00	/* any opinions? */
+    db 0xeb, 0x00
+    mov al, bl
+    out 0x21, al
+    db 0xeb, 0x00
+    db 0xeb, 0x00
+    db 0xeb, 0x00
+    mov al, #0x4
+    out 0x21, al
+    db 0xeb, 0x00
+    db 0xeb, 0x00
+    db 0xeb, 0x00
+    mov al, #0x1
+    out 0x21, al
+    db 0xeb, 0x00
+    db 0xeb, 0x00
+    db 0xeb, 0x00
+    mov al, #0x11
+    out 0xa0, al
+    db 0xeb, 0x00
+    db 0xeb, 0x00
+    db 0xeb, 0x00
+    mov al, bh
+    out 0xa1, al
+    db 0xeb, 0x00
+    db 0xeb, 0x00
+    db 0xeb, 0x00
+    mov al, #0x2
+    out 0xa1, al
+    db 0xeb, 0x00
+    db 0xeb, 0x00
+    db 0xeb, 0x00
+    mov al, #0x1
+    out 0xa1, al
 #endasm
 }
 
-void disable_irqs()
+void disable_irqs(void)
 {
 #asm
     mov al, #0xff
@@ -597,28 +580,28 @@ void disable_irqs()
 #endasm
 }
 
-void fix_flags_for_pmode()
+void fix_flags_for_pmode(void)
 {
     if (arch_cpu > 6) {
 #asm
-    pushfd
-    pop eax
-    and eax, #0x00000fff
-    push eax
-    popfd
+	pushfd
+	pop eax
+	and eax, #0x00000fff
+	push eax
+	popfd
 #endasm
     } else {
 #asm
-    pushf
-    pop ax
-    and ax, #0x0fff
-    push ax
-    popf
+	pushf
+	pop ax
+	and ax, #0x0fff
+	push ax
+	popf
 #endasm
     }
 }
 
-void switch_to_pmode()
+void switch_to_pmode(void)
 {
 #asm
     call _fix_flags_for_pmode
@@ -628,6 +611,7 @@ void switch_to_pmode()
     db 0xea
     dw stpm_pmode
     dw PMODE_CODESEL
+
 stpm_pmode:
     mov ax, #PMODE_DATASEL
     mov ss, ax
@@ -639,24 +623,23 @@ stpm_pmode:
 /*
  * FIXME: I don't trust this compiler to generate accurate code for this.
  * either prove that it doesn't, or change it.
- */
-
-/*
+ *
  * FIXME: bcc doesn't generate anything like efficient code for this.
  * I'm not sure what the reason is, but the code looks amazingly repetitive.
  */
-void init_ksegs(textlen)
-     unsigned short textlen;
+void init_ksegs(unsigned short textlen)
 {
-    initial_gdt[7].baseaddr0 = ((long)_elksheader + 2) << 4;
-    initial_gdt[7].baseaddr1 = (((long)_elksheader + 2) >> 0xc) &0xff;
+    initial_gdt[7].baseaddr0 = ((long) _elksheader + 2) << 4;
+    initial_gdt[7].baseaddr1 = (((long) _elksheader + 2) >> 0xc) & 0xff;
     initial_gdt[7].limit = textlen;
 
-    initial_gdt[8].baseaddr0 = ((((long)_elksheader + 2) << 4) + textlen) & 0xffff;
-    initial_gdt[8].baseaddr1 = (((((long)_elksheader + 2) << 4) + textlen) >> 0x10) & 0xff;
+    initial_gdt[8].baseaddr0 =
+	((((long) _elksheader + 2) << 4) + textlen) & 0xffff;
+    initial_gdt[8].baseaddr1 =
+	(((((long) _elksheader + 2) << 4) + textlen) >> 0x10) & 0xff;
 }
 
-void bogus_magic()
+void bogus_magic(void)
 {
 #ifdef DEBUG_2ND_MONITOR
 #asm
@@ -665,14 +648,13 @@ void bogus_magic()
     mov ax, #0x0736
     mov di, #0x580
     mov cx, #42
-    repz
-    stosw
+    repz stosw
     dw 0xfeeb
 #endasm
 #endif
 }
 
-void boot_kernel()
+void boot_kernel(void)
 {
     initial_gdt[4].baseaddr0 = _elksheader << 4;
     initial_gdt[4].baseaddr1 = (_elksheader >> 0xc) & 0xff;
@@ -681,12 +663,13 @@ void boot_kernel()
     mov ax, #PMODE_TEMPSEL
     mov es, ax
     seg es
-    cmp [0], #0x0301
+    cmp[0], #0x0301
     jz boot_kernel_good_sig
     call _bogus_magic
+
 boot_kernel_good_sig:
     seg es
-    mov dx, [8]
+    mov dx,[8]
     mov ax, ds
     mov es, ax
     push dx
@@ -694,28 +677,32 @@ boot_kernel_good_sig:
     pop dx
     mov ax, #PMODE_TEMPSEL
     mov ds, ax
-    mov bx, [8]
-    mov si, [12]
-    mov dx, [16]
+    mov bx,[8]
+    mov si,[12]
+    mov dx,[16]
     mov ax, #ELKS_DATASEL
     mov ds, ax
     mov es, ax
 
-#if 1 /* this can be left in even if ELKS is running at ring 0. */
+#if 1				/* this can be left in even if ELKS is running at ring 0. */
+
     push #ELKS_DATASEL
     push #0xfffe
+
 #endif
-	
+
     push #ELKS_CODESEL
     push #0x0003
+
     retf
+
 #endasm
 }
 
-void pmodekern_init()
+void pmodekern_init(void)
 {
     realmode_ds = get_ds();
-    
+
     initial_gdt[1].limit = _endtext;
     initial_gdt[2].limit = _enddata + _endbss;
     initial_gdt[2].baseaddr0 += _endtext;
@@ -723,28 +710,33 @@ void pmodekern_init()
 
     cli();
     switch_to_pmode();
-    
+
     initial_gdt[3].baseaddr0 = 0x0000;
     initial_gdt[3].baseaddr1 = 0x0b;
     initial_gdt[3].limit = 0xffff;
 
     revector_8259s(0x2820);
-    
+
     idt_init();
 
     load_idtr();
 
     disable_irqs();
-	
+
     sti();
+
 #if 1
+
     initial_tss.cpl0_sp = (unsigned short) &bootstack;
     initial_gdt[4].baseaddr0 = initial_gdt[2].baseaddr0;
     initial_gdt[4].baseaddr1 = initial_gdt[2].baseaddr1;
+
     /* FIXME: should carry into baseaddr1 */
+
     initial_gdt[4].baseaddr0 += (unsigned short) &initial_tss;
 
     load_tr();
+
 #endif
 
 #if 0
@@ -752,10 +744,11 @@ void pmodekern_init()
     xor ax, ax
     mov es, ax
     seg es
-    mov[0], ax /* this SIGSEGVs quite nicely. :-) */
+    mov[0], ax		/* this SIGSEGVs quite nicely. :-) */
 #endasm
 #endif
     boot_kernel();
-    
-    while(1);
+
+    while (1)
+	/* Do nothing */;
 }

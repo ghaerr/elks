@@ -1,5 +1,4 @@
-/*
- *  util.c
+/*  util.c
  *
  *  ORIGINAL AUTHOR: Savio Lam (lam836@cs.cuhk.hk)
  *  MODIFIED FOR LINUX KERNEL CONFIG BY: William Roadcap (roadcap@cfw.com)
@@ -21,7 +20,6 @@
 
 #include "dialog.h"
 
-
 /* use colors by default? */
 bool use_colors = 1;
 
@@ -32,8 +30,7 @@ const char *dialog_result;
 /* 
  * Attribute values, default is for mono display
  */
-chtype attributes[] =
-{
+chtype attributes[] = {
     A_NORMAL,			/* screen_attr */
     A_NORMAL,			/* shadow_attr */
     A_NORMAL,			/* dialog_attr */
@@ -65,14 +62,12 @@ chtype attributes[] =
     A_BOLD			/* darrow_attr */
 };
 
-
 #include "colors.h"
 
 /*
  * Table of color values
  */
-int color_table[][3] =
-{
+int color_table[][3] = {
     {SCREEN_FG, SCREEN_BG, SCREEN_HL},
     {SHADOW_FG, SHADOW_BG, SHADOW_HL},
     {DIALOG_FG, DIALOG_BG, DIALOG_HL},
@@ -108,83 +103,80 @@ int color_table[][3] =
 /*
  * Set window to attribute 'attr'
  */
-void
-attr_clear (WINDOW * win, int height, int width, chtype attr)
+void attr_clear(WINDOW * win, int height, int width, chtype attr)
 {
     int i, j;
 
-    wattrset (win, attr);
+    wattrset(win, attr);
     for (i = 0; i < height; i++) {
-	wmove (win, i, 0);
+	wmove(win, i, 0);
 	for (j = 0; j < width; j++)
-	    waddch (win, ' ');
+	    waddch(win, ' ');
     }
-    touchwin (win);
+    touchwin(win);
 }
 
-void dialog_clear (void)
+void dialog_clear(void)
 {
-    attr_clear (stdscr, LINES, COLS, screen_attr);
+    attr_clear(stdscr, LINES, COLS, screen_attr);
+
     /* Display background title if it exists ... - SLH */
     if (backtitle != NULL) {
-        int i;
+	int i;
 
-        wattrset (stdscr, screen_attr);
-        mvwaddstr (stdscr, 0, 1, (char *)backtitle);
-        wmove (stdscr, 1, 1);
-        for (i = 1; i < COLS - 1; i++)
-            waddch (stdscr, ACS_HLINE);
+	wattrset(stdscr, screen_attr);
+	mvwaddstr(stdscr, 0, 1, (char *) backtitle);
+	wmove(stdscr, 1, 1);
+	for (i = 1; i < COLS - 1; i++)
+	    waddch(stdscr, ACS_HLINE);
     }
-    wnoutrefresh (stdscr);
+    wnoutrefresh(stdscr);
 }
 
 /*
  * Do some initialization for dialog
  */
-void
-init_dialog (void)
+void init_dialog(void)
 {
-    initscr ();			/* Init curses */
-    keypad (stdscr, TRUE);
-    cbreak ();
-    noecho ();
+    initscr();			/* Init curses */
+    keypad(stdscr, TRUE);
+    cbreak();
+    noecho();
 
 
-    if (use_colors)	/* Set up colors */
-	color_setup ();
+    if (use_colors)		/* Set up colors */
+	color_setup();
 
 
-    dialog_clear ();
+    dialog_clear();
 }
 
 /*
  * Setup for color display
  */
-void
-color_setup (void)
+void color_setup(void)
 {
     int i;
 
-    if (has_colors ()) {	/* Terminal supports color? */
-	start_color ();
+    if (has_colors()) {		/* Terminal supports color? */
+	start_color();
 
 	/* Initialize color pairs */
 	for (i = 0; i < ATTRIBUTE_COUNT; i++)
-	    init_pair (i + 1, color_table[i][0], color_table[i][1]);
+	    init_pair(i + 1, color_table[i][0], color_table[i][1]);
 
 	/* Setup color attributes */
 	for (i = 0; i < ATTRIBUTE_COUNT; i++)
-	    attributes[i] = C_ATTR (color_table[i][2], i + 1);
+	    attributes[i] = C_ATTR(color_table[i][2], i + 1);
     }
 }
 
 /*
  * End using dialog functions.
  */
-void
-end_dialog (void)
+void end_dialog(void)
 {
-    endwin ();
+    endwin();
 }
 
 
@@ -194,27 +186,25 @@ end_dialog (void)
  * characters '\n' are replaced by spaces.  We start on a new line
  * if there is no room for at least 4 nonblanks following a double-space.
  */
-void
-print_autowrap (WINDOW * win, const char *prompt, int width, int y, int x)
+void print_autowrap(WINDOW * win, const char *prompt, int width, int y, int x)
 {
-    int newl, cur_x, cur_y;
-    int i, prompt_len, room, wlen;
     char tempstr[MAX_LEN + 1], *word, *sp, *sp2;
+    int newl, cur_x, cur_y, i, prompt_len, room, wlen;
 
-    strcpy (tempstr, prompt);
+    strcpy(tempstr, prompt);
 
     prompt_len = strlen(tempstr);
-	
+
     /*
      * Remove newlines
      */
-    for(i=0; i<prompt_len; i++) {
-	if(tempstr[i] == '\n') tempstr[i] = ' ';
-    }
+    for (i = 0; i < prompt_len; i++)
+	if (tempstr[i] == '\n')
+	    tempstr[i] = ' ';
 
     if (prompt_len <= width - x * 2) {	/* If prompt is short */
-	wmove (win, y, (width - prompt_len) / 2);
-	waddstr (win, tempstr);
+	wmove(win, y, (width - prompt_len) / 2);
+	waddstr(win, tempstr);
     } else {
 	cur_x = x;
 	cur_y = y;
@@ -223,29 +213,29 @@ print_autowrap (WINDOW * win, const char *prompt, int width, int y, int x)
 	while (word && *word) {
 	    sp = index(word, ' ');
 	    if (sp)
-	        *sp++ = 0;
+		*sp++ = 0;
 
 	    /* Wrap to next line if either the word does not fit,
-	       or it is the first word of a new sentence, and it is
-	       short, and the next word does not fit. */
+	     * or it is the first word of a new sentence, and it is
+	     * short, and the next word does not fit. */
 	    room = width - cur_x;
 	    wlen = strlen(word);
 	    if (wlen > room ||
-	       (newl && wlen < 4 && sp && wlen+1+strlen(sp) > room
-		     && (!(sp2 = index(sp, ' ')) || wlen+1+(sp2-sp) > room))) {
+		(newl && wlen < 4 && sp && wlen + 1 + strlen(sp) > room
+		 && (!(sp2 = index(sp, ' ')) || wlen + 1 + (sp2 - sp) > room))) {
 		cur_y++;
 		cur_x = x;
 	    }
-	    wmove (win, cur_y, cur_x);
-	    waddstr (win, word);
-	    getyx (win, cur_y, cur_x);
+	    wmove(win, cur_y, cur_x);
+	    waddstr(win, word);
+	    getyx(win, cur_y, cur_x);
 	    cur_x++;
 	    if (sp && *sp == ' ') {
-	        cur_x++;	/* double space */
+		cur_x++;	/* double space */
 		while (*++sp == ' ');
 		newl = 1;
 	    } else
-	        newl = 0;
+		newl = 0;
 	    word = sp;
 	}
     }
@@ -254,62 +244,60 @@ print_autowrap (WINDOW * win, const char *prompt, int width, int y, int x)
 /*
  * Print a button
  */
-void
-print_button (WINDOW * win, const char *label, int y, int x, int selected)
+void print_button(WINDOW * win, const char *label, int y, int x, int selected)
 {
     int i, temp;
 
-    wmove (win, y, x);
-    wattrset (win, selected ? button_active_attr : button_inactive_attr);
-    waddstr (win, "<");
-    temp = strspn (label, " ");
+    wmove(win, y, x);
+    wattrset(win, selected ? button_active_attr : button_inactive_attr);
+    waddstr(win, "<");
+    temp = strspn(label, " ");
     label += temp;
-    wattrset (win, selected ? button_label_active_attr
-	      : button_label_inactive_attr);
+    wattrset(win, selected ? button_label_active_attr
+	     : button_label_inactive_attr);
     for (i = 0; i < temp; i++)
-	waddch (win, ' ');
-    wattrset (win, selected ? button_key_active_attr
-	      : button_key_inactive_attr);
-    waddch (win, label[0]);
-    wattrset (win, selected ? button_label_active_attr
-	      : button_label_inactive_attr);
-    waddstr (win, (char *)label + 1);
-    wattrset (win, selected ? button_active_attr : button_inactive_attr);
-    waddstr (win, ">");
-    wmove (win, y, x + temp + 1);
+	waddch(win, ' ');
+    wattrset(win, selected ? button_key_active_attr
+	     : button_key_inactive_attr);
+    waddch(win, label[0]);
+    wattrset(win, selected ? button_label_active_attr
+	     : button_label_inactive_attr);
+    waddstr(win, (char *) label + 1);
+    wattrset(win, selected ? button_active_attr : button_inactive_attr);
+    waddstr(win, ">");
+    wmove(win, y, x + temp + 1);
 }
 
 /*
  * Draw a rectangular box with line drawing characters
  */
-void
-draw_box (WINDOW * win, int y, int x, int height, int width,
-	  chtype box, chtype border)
+void draw_box(WINDOW * win, int y, int x, int height, int width,
+	      chtype box, chtype border)
 {
     int i, j;
 
-    wattrset (win, 0);
+    wattrset(win, 0);
     for (i = 0; i < height; i++) {
-	wmove (win, y + i, x);
+	wmove(win, y + i, x);
 	for (j = 0; j < width; j++)
 	    if (!i && !j)
-		waddch (win, border | ACS_ULCORNER);
+		waddch(win, border | ACS_ULCORNER);
 	    else if (i == height - 1 && !j)
-		waddch (win, border | ACS_LLCORNER);
+		waddch(win, border | ACS_LLCORNER);
 	    else if (!i && j == width - 1)
-		waddch (win, box | ACS_URCORNER);
+		waddch(win, box | ACS_URCORNER);
 	    else if (i == height - 1 && j == width - 1)
-		waddch (win, box | ACS_LRCORNER);
+		waddch(win, box | ACS_LRCORNER);
 	    else if (!i)
-		waddch (win, border | ACS_HLINE);
+		waddch(win, border | ACS_HLINE);
 	    else if (i == height - 1)
-		waddch (win, box | ACS_HLINE);
+		waddch(win, box | ACS_HLINE);
 	    else if (!j)
-		waddch (win, border | ACS_VLINE);
+		waddch(win, border | ACS_VLINE);
 	    else if (j == width - 1)
-		waddch (win, box | ACS_VLINE);
+		waddch(win, box | ACS_VLINE);
 	    else
-		waddch (win, box | ' ');
+		waddch(win, box | ' ');
     }
 }
 
@@ -317,43 +305,42 @@ draw_box (WINDOW * win, int y, int x, int height, int width,
  * Draw shadows along the right and bottom edge to give a more 3D look
  * to the boxes
  */
-void
-draw_shadow (WINDOW * win, int y, int x, int height, int width)
+void draw_shadow(WINDOW * win, int y, int x, int height, int width)
 {
     int i;
 
-    if (has_colors ()) {	/* Whether terminal supports color? */
-	wattrset (win, shadow_attr);
-	wmove (win, y + height, x + 2);
+    if (has_colors()) {		/* Whether terminal supports color? */
+	wattrset(win, shadow_attr);
+	wmove(win, y + height, x + 2);
 	for (i = 0; i < width; i++)
-	    waddch (win, winch (win) & A_CHARTEXT);
+	    waddch(win, winch(win) & A_CHARTEXT);
 	for (i = y + 1; i < y + height + 1; i++) {
-	    wmove (win, i, x + width);
-	    waddch (win, winch (win) & A_CHARTEXT);
-	    waddch (win, winch (win) & A_CHARTEXT);
+	    wmove(win, i, x + width);
+	    waddch(win, winch(win) & A_CHARTEXT);
+	    waddch(win, winch(win) & A_CHARTEXT);
 	}
-	wnoutrefresh (win);
+	wnoutrefresh(win);
     }
 }
 
 /*
  *  Return the position of the first alphabetic character in a string.
  */
-int
-first_alpha(const char *string, const char *exempt)
+int first_alpha(const char *string, const char *exempt)
 {
-	int i, in_paren=0, c;
+    int i, in_paren = 0, c;
 
-	for (i = 0; i < strlen(string); i++) {
-		c = tolower(string[i]);
+    for (i = 0; i < strlen(string); i++) {
+	c = tolower(string[i]);
 
-		if (strchr("<[(", c)) ++in_paren;
-		if (strchr(">])", c)) --in_paren;
+	if (strchr("<[(", c))
+	    ++in_paren;
+	if (strchr(">])", c))
+	    --in_paren;
 
-		if ((! in_paren) && isalpha(c) && 
-		     strchr(exempt, c) == 0)
-			return i;
-	}
+	if ((!in_paren) && isalpha(c) && strchr(exempt, c) == 0)
+	    return i;
+    }
 
-	return 0;
+    return 0;
 }

@@ -1,6 +1,4 @@
-
-/*
- *  dialog.h -- common declarations for all dialog modules
+/*  dialog.h -- common declarations for all dialog modules
  *
  *  AUTHOR: Savio Lam (lam836@cs.cuhk.hk)
  *
@@ -34,7 +32,6 @@
 #define BUF_SIZE (10*1024)
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
-
 
 #ifndef ACS_ULCORNER
 #define ACS_ULCORNER '+'
@@ -116,39 +113,37 @@ extern const char *backtitle;
 /*
  * Function prototypes
  */
-extern void create_rc (const char *filename);
-extern int parse_rc (void);
+extern void create_rc(const char *filename);
+extern int parse_rc(void);
 
+void init_dialog(void);
+void end_dialog(void);
+void attr_clear(WINDOW * win, int height, int width, chtype attr);
+void dialog_clear(void);
+void color_setup(void);
+void print_autowrap(WINDOW * win, const char *prompt, int width, int y, int x);
+void print_button(WINDOW * win, const char *label, int y, int x, int selected);
+void draw_box(WINDOW * win, int y, int x, int height, int width, chtype box,
+	      chtype border);
+void draw_shadow(WINDOW * win, int y, int x, int height, int width);
 
-void init_dialog (void);
-void end_dialog (void);
-void attr_clear (WINDOW * win, int height, int width, chtype attr);
-void dialog_clear (void);
-void color_setup (void);
-void print_autowrap (WINDOW * win, const char *prompt, int width, int y, int x);
-void print_button (WINDOW * win, const char *label, int y, int x, int selected);
-void draw_box (WINDOW * win, int y, int x, int height, int width, chtype box,
-		chtype border);
-void draw_shadow (WINDOW * win, int y, int x, int height, int width);
-
-int first_alpha (const char *string, const char *exempt);
-int dialog_yesno (const char *title, const char *prompt, int height, int width);
-int dialog_msgbox (const char *title, const char *prompt, int height,
-		int width, int pause);
-int dialog_textbox (const char *title, const char *file, int height, int width);
-int dialog_menu (const char *title, const char *prompt, int height, int width,
-		int menu_height, const char *choice, int item_no, 
-		const char * const * items);
-int dialog_checklist (const char *title, const char *prompt, int height,
-		int width, int list_height, int item_no,
-		const char * const * items, int flag);
+int first_alpha(const char *string, const char *exempt);
+int dialog_yesno(const char *title, const char *prompt, int height, int width);
+int dialog_msgbox(const char *title, const char *prompt, int height,
+		  int width, int pause);
+int dialog_textbox(const char *title, const char *file, int height, int width);
+int dialog_menu(const char *title, const char *prompt, int height, int width,
+		int menu_height, const char *choice, int item_no,
+		const char *const *items);
+int dialog_checklist(const char *title, const char *prompt, int height,
+		     int width, int list_height, int item_no,
+		     const char *const *items, int flag);
 extern unsigned char dialog_input_result[];
-int dialog_inputbox (const char *title, const char *prompt, int height,
-		int width, const char *init);
+int dialog_inputbox(const char *title, const char *prompt, int height,
+		    int width, const char *init);
 
 /*
- * This is the base for fictitious keys, which activate
- * the buttons.
+ * This is the base for fictitious keys, which activate the buttons.
  *
  * Mouse-generated keys are the following:
  *   -- the first 32 are used as numbers, in addition to '0'-'9'
@@ -156,7 +151,6 @@ int dialog_inputbox (const char *title, const char *prompt, int height,
  *   -- uppercase chars are used to invoke the button (M_EVENT + 'O')
  */
 #define M_EVENT (KEY_MAX+1)
-
 
 /*
  * The `flag' parameter in checklist is used to select between

@@ -1,5 +1,4 @@
-/*
- *  colors.h -- color attribute definitions
+/*  colors.h -- color attribute definitions
  *
  *  AUTHOR: Savio Lam (lam836@cs.cuhk.hk)
  *
@@ -17,7 +16,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 
 /*
  *   Default color definitions

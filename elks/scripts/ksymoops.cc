@@ -1,36 +1,36 @@
 // ksymoops.cc v1.7 -- A simple filter to resolve symbols in Linux Oops-logs
 // Copyright (C) 1995 Greg McGary <gkm@magilla.cichlid.com>
 // compile like so: g++ -o ksymoops ksymoops.cc -liostream
-
+//
 // Update to binutils 2.8 and handling of header text on oops lines by
 // Keith Owens <kaos@ocs.com.au>
-
+//
 //////////////////////////////////////////////////////////////////////////////
-
+//
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 2, or (at your option)
 // any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; see the file COPYING.  If not, write to the
 // Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
+//
 // This is a simple filter to resolve EIP and call-trace symbols from
 // a Linux kernel "Oops" log.  Supply the symbol-map file name as a
 // command-line argument, and redirect the oops-log into stdin.  Out
 // will come the EIP and call-trace in symbolic form.
-
+//
 // Changed by Andreas Schwab <schwab@issan.informatik.uni-dortmund.de>
 // adapted to Linux/m68k
-
+//
 //////////////////////////////////////////////////////////////////////////////
-
+//
 // BUGS:
 // * Only resolves operands of jump and call instructions.
 

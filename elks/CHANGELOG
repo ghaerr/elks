@@ -1,4 +1,4 @@
-7This file is used to record changes made to the CVS database. Please add to
+This file is used to record changes made to the CVS database. Please add to
 the top of this file before committing any changes. Please use the header
 format provided for each entry, noting that the text on each line should not
 be longer than the lines of dashes.
@@ -24,7 +24,7 @@ Paul Nasrat           pauln@truemesh.com                29 Oct 2001-14 Apr 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
-Riley Williams        Riley@Williams.Name               16 Nov 1998-21 Apr 2002
+Riley Williams        Riley@Williams.Name               16 Nov 1998-22 Apr 2002
 Roman Festchook       roma@polesye.net                  27 Oct 2001
 Simon Weijgers        simon@weijgers.com                16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
@@ -32,15 +32,42 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Mon Apr 22 18:22:01 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* ANSI'fied function prototypes in the arch/i86/286pmode subtree.
+	* Applied `make indent` rule to the arch/i86/286pmode subtree.
+	* ANSI'fied function prototypes in the arch/i86/boot subtree.
+	* Applied `make indent` rule to the arch/i86/boot subtree.
+	* Split system call table out of arch/i86/kernel/strace.c into
+	  separate header file arch/i86/kernel/strace.h and labelled this
+	  not to be reformatted by the `make indent` command.
+	* ANSI'fied function prototypes in the arch/i86/kernel subtree.
+	* Applied `make indent` rule to the arch/i86/kernel subtree.
+	* Verified that the kernel compiles with the above changes applied.
+
+Mon Apr 22 11:50:00 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* ANSI'fied function prototypes in the scripts subtree, with the sole
+	  exception being the ksymoops.cc code as that code is written in C++
+	  which I am not familiar enough with to touch.
+	* Applied `make indent` rule to the scripts subtree. This also omits
+	  the ksymoops.cc code for the simple reason that the indent program
+	  only understands C and not C++.
+	* Verified that the kernel compiles with the above changes applied.
+
 Sun Apr 21 22:54:03 BST 2002	Riley Williams <Riley@Williams.Name>
 
-	* ANSI'fied function prototypes in init and net subtrees.
-	* Applied `make indent` rule to init and net subtrees.
-	* Verified that kernel compiles with above changes applied.
+	* ANSI'fied function prototypes in the init subtree.
+	* Applied `make indent` rule to the init subtree.
+	* ANSI'fied function prototypes in the net subtree.
+	* Applied `make indent` rule to the net subtree.
+	* Verified that the kernel compiles with the above changes applied.
 
 Sun Apr 21 20:54:00 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Fixed failure of `make indent` when run in the base directory.
+	  Many thanks to HarKal for pointing this problem out, as it
+	  was not apparent on my system.
 
 Sun Apr 21 12:31:22 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
@@ -53,27 +80,30 @@ Sun Apr 21 12:31:22 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 Sat Apr 20 16:28:30 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Added swap support. Currently the code is only for "developers"
-	  since swap devices, sizes are hardcoded and. The swapping strategy
+	  since swap devices and sizes are hardcoded. The swapping strategy
 	  also needs tweaking.
 
 Fri Apr 19 22:44:45 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
-	* Fixed ramdisk driver to read/write to buffers anywhere is
-	  RAM.
+	* Fixed ramdisk driver to read/write to buffers anywhere in RAM.
 
-Fri Apr 19 22:24:28 BST 2002	Riley Williams <rhw@InfraDead.Org>
+Fri Apr 19 22:24:28 BST 2002	Riley Williams <Riley@Williams.Name>
 
-	* ANSI'fied function prototypes in kernel and lib subtrees.
-	* Applied `make indent` rule to kernel and lib subtrees.
-	* Verified that kernel compiles with above changes applied.
+	* ANSI'fied function prototypes in the kernel subtree.
+	* Applied `make indent` rule to the kernel subtree.
+	* ANSI'fied function prototypes in the lib subtree.
+	* Applied `make indent` rule to the lib subtree.
+	* Verified that the kernel compiles with the above changes applied.
 
-Fri Apr 19 17:38:04 BST 2002	Riley Williams <rhw@InfraDead.Org>
+Fri Apr 19 17:38:04 BST 2002	Riley Williams <Riley@Williams.Name>
 
-	* ANSI'fied function prototypes in fs subtree.
-	* Applied `make indent` rule to fs and include subtrees.
-	* Verified that kernel compiles with above changes applied.
+	* ANSI'fied function prototypes in the fs subtree.
+	* Applied `make indent` rule to the fs subtree.
+	* ANSI'fied function prototypes in the include subtree.
+	* Applied `make indent` rule to the include subtree.
+	* Verified that the kernel compiles with above changes applied.
 
-Thu Apr 18 23:15:09 BST 2002	Riley Williams <rhw@InfraDead.Org>
+Thu Apr 18 23:15:09 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Added scripts/reindent to reindent all *.c files in current
 	  directory that are NOT listed on the command line, using a
@@ -114,7 +144,7 @@ Wed Apr 17 14:40:58 EEST 2002 Harry Kalogirou <harkal@gmx.net>
 	* Optimization of the serial interrupt code.
 	* Saved 135 bytes by using register variables in af_inet.c
 
-Sun Apr 14 12:41:54 BST 2002	Riley Williams <rhw@InfraDead.Org>
+Sun Apr 14 12:41:54 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Patch to give temporary file .tmp extension.
 
@@ -127,7 +157,9 @@ Tue Apr  2 21:11:14 BST 2002	Richard Wallman <murkygoth@murkygoth.uklinux.net>
 	* Applied workaround for apparent ordering requirement to
 	  $DIALOG command in Menuconfig script.
 
-Thu Mar 28 23:06:53 GMT 2002	Riley Williams <rhw@MemAlpha.FSlife.Co.UK>
+-------------------------------------------------------------------------------
+
+Thu Mar 28 23:06:53 GMT 2002	Riley Williams <Riley@Williams.Name>
 
 	* Add options to select root device.
 
@@ -136,6 +168,8 @@ Thu Mar  7 14:47:03 EET 2002	Harry Kalogirou <harkal@gmx.net>
 	* Added MSS tcp option transmition.
 	* Fixed do_fork() bug, it was leaving dummy tasks on the
 	  task table under memory shortage.
+
+===============================================================================
 
 Mon Mar  4 01:04:28 EET 2002	Harry Kalogirou <harkal@gmx.net>
 
@@ -146,7 +180,7 @@ Mon Mar  4 01:04:28 EET 2002	Harry Kalogirou <harkal@gmx.net>
 	  This helps keep down the number of active TCP control blocks.
 	* Fixed final "write config file" dialog in menuconfig.
 
-Sun Feb 24 14:50:29 GMT 2002	Riley Williams <rhw@memalpha.cx>
+Sun Feb 24 14:50:29 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
 	* Made ELKS not rely on the Linux kernel source being present for
 	  the error values, by importing the Linux 2.5.5 errno.h files
@@ -259,6 +293,8 @@ Sun Jan 13 22:37:14 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 	* Fixed warning in scripts/lxdialog/dialog.c about invalid syntax
 	  of #include line.
 
+-------------------------------------------------------------------------------
+
 Wed Dec 26 17:09:16 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Brought include/linuxmt/autoconf.h in the repository up to date
@@ -301,6 +337,8 @@ Thu Nov 29 00:44:13 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 	* Added wish-list for software we'd like to see ported to ELKS to
 	  the end of the ELKS TODO list.
 
+===============================================================================
+
 Tue Nov 27 14:18:57 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* This is ELKS 0.1.0-pre3
@@ -319,13 +357,16 @@ Mon Nov 26 15:19:36 EET 2001	Harry Kalogirou <harkal@gmx.net>
 	* Fixed back the fixed sys_lseek(). It seems that libc expects
 	  the return value to be passed through one of the parameters.
 
+===============================================================================
+
 Fri Nov 24 02:31:18 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* This is ELKS 0.1.0-pre2 !!!
 
 Fri Nov 23 19:34:28 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
-	* Fixed sys_lseek() to correctly return the resulting offset location.
+	* Fixed sys_lseek() to correctly return the resulting offset
+	  location.
 	* Made inet aware of CONFIG_SOCK_CLIENTONLY.
 
 Fri Nov 23 15:36:00 EET 2001	Harry Kalogirou <harkal@gmx.net>
@@ -336,17 +377,17 @@ Fri Nov 23 02:32:35 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* Fixed do_fork(). It was not freeing the previously allocated code
 	  segment when the allocation of the data segment was failing.
-	* Fixed zero tcp window issues
+	* Fixed zero tcp window issues.
 
 Wed Nov 21 01:37:32 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
 	* Major fix in inet code.
-	* Removed the CONFIG_SOCK_STREAMONLY config variable
-	* Updated the help for CONFIG_SOCK_CLIENTONLY
-	* Fixed the CONFIG_SOCK_CLIENT effect
-	* Made inet sockets the default config
-	* Made inet status report default
-	* Updated the help for CONFIG_CHAR_DEV_RS
+	* Removed the CONFIG_SOCK_STREAMONLY config variable.
+	* Updated the help for CONFIG_SOCK_CLIENTONLY variable.
+	* Fixed the CONFIG_SOCK_CLIENT effect.
+	* Made inet sockets the default config.
+	* Made inet status report the default.
+	* Updated the help for CONFIG_CHAR_DEV_RS variable.
 
 Sat Nov 19 17:26:40 EET 2001	Harry Kalogirou <harkal@gmx.net>
 
@@ -355,6 +396,8 @@ Sat Nov 19 17:26:40 EET 2001	Harry Kalogirou <harkal@gmx.net>
 Tue Nov 20 21:39:03 GMT 2001	Paul Nasrat <pnasrat@uk.now.com>
 
 	* Removed rogue space that stopped compile.
+
+===============================================================================
 
 Tue Nov 20 00:34:21 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
@@ -377,6 +420,8 @@ Sun Nov 18 18:55:53 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 	  itself.
 	* Verified that all config variable renames stated in this CHANGELOG
 	  document had actually been committed to the CVS archive.
+
+===============================================================================
 
 Sat Nov 17 18:03:45 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
@@ -418,6 +463,8 @@ Fri Nov 16 09:28:55 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Updated TODO document.
 
+===============================================================================
+
 Wed Nov 14 13:26:39 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* THIS IS ELKS RELEASE 0.0.89 !!!
@@ -432,7 +479,7 @@ Tue Nov 13 23:57:42 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
 Tue Nov 13 23:52:18 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* Fixed bug in elks/Makefile that stopped compiles- I'd missed a
+	* Fixed bug in elks/Makefile that stopped compiles: I'd missed a
 	  dependency :(
 
 Tue Nov 13 17:40:00 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
@@ -486,7 +533,7 @@ Sat Nov 10 00:05:18 EET 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
 Mon Nov  5 22:07:17 EET 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
-	* Updated the networking.txt
+	* Updated the networking.txt file.
 
 Mon Nov  5 20:17:15 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
@@ -504,7 +551,6 @@ Mon Oct 29 18:26:24 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 Mon Oct 29 13:12:49 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Completed contributors table from CHANGELOG entries.
-	* Corrected mis-spelt email for Harry Kalogirou in CHANGELOG entry.
 	* Spellchecked CHANGELOG using British English spellings throughout.
 	* Updated TODO document to reflect targets for various releases.
 
@@ -597,12 +643,12 @@ Tue Oct 16 21:59:27 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 	  previously assumed. Also allowed up to 255 PRE's between PATCHLEVEL
 	  increments.
 	* Bumped version to 0.0.87-pre1 in case anything is using the above
-	  field.
+	  field. Don't think anything is, but better to be safe than sorry.
 
 Tue Oct  9 16:03:21 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* Reformatted CHANGELOG to make it easier to find contributor's current
-	  email addresses.
+	* Reformatted CHANGELOG to make it easier to find contributor's
+	  current email addresses.
 	* Created list of standard Makefile rules where all rules perform
 	  exactly as documented.
 
