@@ -14,7 +14,6 @@ choice 'Select system architecture'            \
         PC/AT          CONFIG_ARCH_PC_AT       \
         Microchannel   CONFIG_ARCH_PC_MCA" CONFIG_ARCH_PC_AUTO
 bool 'Support for loadable modules' CONFIG_MODULE
-bool 'Support for shared libraries' CONFIG_SHLIB
 
 if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 bool 'Switch COMPAQ DeskPro into fast mode' CONFIG_COMPAQ_FAST
@@ -101,13 +100,6 @@ comment 'Kernel hacking'
 bool 'Strace' CONFIG_STRACE
 bool 'Optimise for size rather than speed' CONFIG_OPT_SMALL
 endmenu
-
-mainmenu_option next_comment
-comment 'Embedded systems'
-comment 'Currently unimplemented features for use in embedded systems'
-bool 'Exec code from ROM' CONFIG_EXEC_ROM
-endmenu
-endmenu 
 
 # The next lines are okay as we are already in arch/i86
 source arch/i86/drivers/char/Config.in
