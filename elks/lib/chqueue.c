@@ -28,7 +28,6 @@ int size;
 	q->len = 0;
 	q->tail = 0;
 	q->size = size;
-	q->wq = NULL;
 }
 
 #if 0
