@@ -105,7 +105,6 @@ endmenu
 mainmenu_option next_comment
 comment 'Embedded systems'
 comment 'Currently unimplemented features for use in embedded systems'
-bool 'Remove filesystem code' CONFIG_NOFS
 bool 'Exec code from ROM' CONFIG_EXEC_ROM
 endmenu
 endmenu 
