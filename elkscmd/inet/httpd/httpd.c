@@ -1,7 +1,6 @@
 /*
  * An nano-http server. Part of the linux-86 project
- * Only text/html supported.
- *
+ * 
  * Copyright (c) 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
  *
  */
@@ -47,6 +46,33 @@ int conn_sock;
 #define BUF_SIZE	2048
 char buf[BUF_SIZE];
 char doc_base[64];
+
+#if 1
+char* get_mime_type(name)
+char* name;
+{
+    char* dot;
+
+    dot = strrchr( name, '.' );
+    if ( dot == (char*) 0 )
+	return "text/plain";
+    if ( strcmp( dot, ".html" ) == 0 || strcmp( dot, ".htm" ) == 0 )
+	return "text/html";
+    if ( strcmp( dot, ".jpg" ) == 0 || strcmp( dot, ".jpeg" ) == 0 )
+	return "image/jpeg";
+    if ( strcmp( dot, ".gif" ) == 0 )
+	return "image/gif";
+    if ( strcmp( dot, ".png" ) == 0 )
+	return "image/png";
+    if ( strcmp( dot, ".css" ) == 0 )
+	return "text/css";
+    if ( strcmp( dot, ".vrml" ) == 0 || strcmp( dot, ".wrl" ) == 0 )
+	return "model/vrml";
+    if ( strcmp( dot, ".midi" ) == 0 || strcmp( dot, ".mid" ) == 0 )
+	return "audio/midi";
+    return "text/plain";
+}
+#endif
 
 void send_header(ct)
 char *ct;
@@ -114,7 +140,7 @@ void process_request()
 	}
 	size = lseek(fin, 0, SEEK_END);
 	lseek(fin, 0, SEEK_SET);
-	send_header(DEF_CONTENT);
+	send_header(get_mime_type(fullpath));
 	buf[0] = 0;
 	sprintf(buf,"Content-Length: %d\r\n\r\n",size);
 	write(conn_sock, buf, strlen(buf));
