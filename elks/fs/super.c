@@ -82,22 +82,17 @@ char *name;
 void wait_on_super(sb)
 register struct super_block * sb;
 {
-	struct wait_queue wait;
-
 	if (!sb->s_lock)
 		return;
-	
-	wait.task=current;
-	wait.next=NULL;
 
-	add_wait_queue(&sb->s_wait, &wait);
+	wait_set(&sb->s_wait);
 repeat:
 	current->state = TASK_UNINTERRUPTIBLE;
 	if (sb->s_lock) {
 		schedule();
 		goto repeat;
 	}
-	remove_wait_queue(&sb->s_wait, &wait);
+	wait_clear(&sb->s_wait);
 	current->state = TASK_RUNNING;
 }
 
