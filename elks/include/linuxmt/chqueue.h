@@ -7,9 +7,7 @@
 struct ch_queue {
 	char *buf;
 	int size, tail, len;
-/*	struct wait_queue wa_qu;
-	struct wait_queue * wq; */
-	struct wait_queue * wq;
+	struct wait_queue wq;
 };
 
 int chq_init();
