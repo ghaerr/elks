@@ -1,6 +1,3 @@
-#ifndef LX86_LINUXMT_INIT_H
-#define LX86_LINUXMT_INIT_H
-
 /* Assorted initialisers */
 
 #include <linuxmt/types.h>
@@ -33,5 +30,3 @@ extern void device_setup(void);
 
 extern void kfork_proc(struct task_struct *,void ());
 extern void arch_setup_kernel_stack(struct task_struct *);
-
-#endif

@@ -20,15 +20,10 @@ extern int kill_pg(pid_t,sig_t,int);
 
 extern int kill_sl(void);
 
-#ifdef S_SPLINT_S
+#if 0
 
-/*@ignore@*/
-
-/*@printflike@*/ extern void panic();
-
-/*@printflike@*/ extern int printk();
-
-/*@end@*/
+extern void panic();
+extern int printk();
 
 #endif
 

@@ -13,14 +13,11 @@
 
 #include <linuxmt/types.h>
 
-/*@-namechecks@*/
-
 #ifdef SMALLSIG
 
 typedef unsigned short sigset_t;	/* at least 16 bits */
 
-#define _NSIG             16
-#define NSIG		_NSIG
+/*@-namechecks@*/
 
 #define SIGHUP		 1
 #define SIGINT		 2
@@ -38,12 +35,15 @@ typedef unsigned short sigset_t;	/* at least 16 bits */
 #define SIGALRM		14
 #define SIGTERM		15
 
+#define _NSIG		16
+
+/*@+namechecks@*/
+
 #else
 
 typedef unsigned long sigset_t;	/* at least 32 bits */
 
-#define _NSIG             32
-#define NSIG		_NSIG
+/*@-namechecks@*/
 
 #define SIGHUP		 1
 #define SIGINT		 2
@@ -79,9 +79,13 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 #define SIGPWR		30
 #define	SIGUNUSED	31
 
+#define _NSIG		32
+
+/*@+naamechecks@*/
+
 #endif
 
-/*@+namechecks@*/
+#define NSIG		_NSIG
 
 /*
  * sa_flags values: SA_STACK is not supported
@@ -116,7 +120,7 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 /* Type of a signal handler.  */
 typedef void (*__sighandler_t) ();
 
-/*@-namechecks@*/ /*@ignore@*/
+/*@+namechecks@*/ /*@ignore@*/
 
 #define SIG_DFL	((__sighandler_t) 0)	/* default signal handling */
 #define SIG_IGN	((__sighandler_t) 1)	/* ignore signal */
@@ -126,11 +130,13 @@ typedef void (*__sighandler_t) ();
 
 struct sigaction {
     __sighandler_t sa_handler;
+
 #if 0
     sigset_t sa_mask;
     unsigned long sa_flags;
     void (*sa_restorer)();
 #endif
+
 };
 
 extern int send_sig(pid_t,struct task_struct *,int);

@@ -35,17 +35,16 @@
  */
 static int V1_trunc_direct(register struct inode *inode)
 {
-    unsigned short *p;
     register struct buffer_head *bh;
-    int i, tmp;
-    int retry = 0;
+    __u16 *p, i, retry = 0;
+    block_t tmp;
 
   repeat:
     for (i = DIRECT_BLOCK; i < 7; i++) {
-	p = inode->i_zone[i];
+	p = (__u16 *) inode->i_zone[i];
 	if (!(tmp = *p))
 	    continue;
-	bh = get_hash_table(inode->i_dev, (unsigned long) tmp);
+	bh = get_hash_table(inode->i_dev, (block_t) tmp);
 	if (i < DIRECT_BLOCK) {
 	    brelse(bh);
 	    goto repeat;
