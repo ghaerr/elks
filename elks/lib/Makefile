@@ -54,23 +54,3 @@ distdir:
 
 #########################################################################
 ### Dependencies:
-
-chqueue.o: chqueue.c /X/elks/include/linuxmt/config.h \
- /X/elks/include/linuxmt/autoconf.h /X/elks/include/linuxmt/kdev_t.h \
- /X/elks/include/linuxmt/major.h /X/elks/include/linuxmt/wait.h \
- /X/elks/include/linuxmt/chqueue.h /X/elks/include/linuxmt/debug.h \
- /X/elks/include/linuxmt/types.h /X/elks/include/arch/types.h \
- /X/elks/include/linuxmt/posix_types.h \
- /X/elks/include/arch/posix_types.h /X/elks/include/arch/irq.h \
- /X/elks/include/arch/asm.h
-
-
-string.o: string.c /X/elks/include/linuxmt/types.h \
- /X/elks/include/arch/types.h /X/elks/include/linuxmt/config.h \
- /X/elks/include/linuxmt/autoconf.h /X/elks/include/linuxmt/kdev_t.h \
- /X/elks/include/linuxmt/major.h /X/elks/include/linuxmt/posix_types.h \
- /X/elks/include/arch/posix_types.h /X/elks/include/arch/irq.h \
- /X/elks/include/arch/asm.h /X/elks/include/linuxmt/string.h \
- /X/elks/include/arch/string.h
-
-

@@ -33,6 +33,10 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Mon Jun  3 10:59:54 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Killed dependencies accidentally committed in previous tweak.
+
 Mon Jun  3 00:43:09 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Oops - Committed tweaks from previous patch that somehow
