@@ -1,3 +1,4 @@
+//Note that "en" (English) MUST be listed first here.
 <?php
 $langitems = array(
 "en" => array(
