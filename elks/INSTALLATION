@@ -203,6 +203,10 @@ Psion3 SIBO
    please refer to the section on the ELKS website at
    
                [20]http://www.elks.ecs.soton.ac.uk/sibo.php3
+   
+   WARNING - the SIBO port will wipe the SSD disk in slot B and the
+   ramdisk of your Psion 3c. Backup your data/applications and to be safe
+   remove the SSD from slot A
      __________________________________________________________________
    
 Installing and booting ELKS
@@ -252,22 +256,22 @@ References
    1. mailto:gs25mrb@panther.gsu.edu
    2. mailto:ajr@ecs.soton.ac.uk
    3. mailto:rhw@MemAlpha.cx
-   4. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#1
-   5. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2
-   6. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#3
-   7. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#4
+   4. file://localhost/home/pauln/src/elks/INSTALLATION.html#1
+   5. file://localhost/home/pauln/src/elks/INSTALLATION.html#2
+   6. file://localhost/home/pauln/src/elks/INSTALLATION.html#3
+   7. file://localhost/home/pauln/src/elks/INSTALLATION.html#4
    8. http://www.elks.ecs.soton.ac.uk/maillist.php3
-   9. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.1
-  10. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.2
-  11. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.3
-  12. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.4
-  13. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#3
+   9. file://localhost/home/pauln/src/elks/INSTALLATION.html#2.1
+  10. file://localhost/home/pauln/src/elks/INSTALLATION.html#2.2
+  11. file://localhost/home/pauln/src/elks/INSTALLATION.html#2.3
+  12. file://localhost/home/pauln/src/elks/INSTALLATION.html#2.4
+  13. file://localhost/home/pauln/src/elks/INSTALLATION.html#3
   14. ftp://ftp.cdrom.com/pub/linux/slackware-7.0/bootdsks.144/
-  15. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.1.1
-  16. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.1.2
-  17. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.1
-  18. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.3.1
-  19. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#2.3.2
+  15. file://localhost/home/pauln/src/elks/INSTALLATION.html#2.1.1
+  16. file://localhost/home/pauln/src/elks/INSTALLATION.html#2.1.2
+  17. file://localhost/home/pauln/src/elks/INSTALLATION.html#2.1
+  18. file://localhost/home/pauln/src/elks/INSTALLATION.html#2.3.1
+  19. file://localhost/home/pauln/src/elks/INSTALLATION.html#2.3.2
   20. http://www.elks.ecs.soton.ac.uk/sibo.php3
-  21. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#3.1
-  22. file://localhost/home/rhw/CVS/Source/elks/INSTALLATION.html#3.2
+  21. file://localhost/home/pauln/src/elks/INSTALLATION.html#3.1
+  22. file://localhost/home/pauln/src/elks/INSTALLATION.html#3.2
