@@ -21,7 +21,7 @@ Mario Frasca						20 Jan 2000-14 Feb 2000
 Paul Nasrat		<pnasrat@uk.now.com>		29 Oct 2001
 Per Olofsson		<MagerValp@cling.gu.se> 	25 Feb 2000
 Peter L Vachuska	<pvachusk@nconnect.net> 	13 Aug 2001
-Riley Williams		<rhw@MemAlpha.cx>		16 Nov 1998-29 Oct 2001
+Riley Williams		<rhw@MemAlpha.cx>		16 Nov 1998- 5 Nov 2001
 Roman Festchook 	<roma@polesye.net>		27 Oct 2001
 Simon Weijgers		<simon@weijgers.com>		16 Sep 1998-15 Nov 1999
 Simon Wood						06 Jan 2000-12 Jan 2000
@@ -29,10 +29,14 @@ Thomas McWilliams	<tgm9999@yahoo.com>		27 Aug 1999-02 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Fri Nov 02 16:06:39 EET 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+Mon Nov  5 20:17:15 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* Rolled back Riley's changes to the ktcp Makefile that caused
-	  problems.
+	* Rationalised networking section of configuration system.
+
+Wed Oct 31 22:29:50 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Removed details of two fixed bugs from BUGS.html file.
+	* Regenerated BUGS file from revised BUGS.html file.
 
 Mon Oct 29 18:26:24 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 

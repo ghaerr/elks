@@ -34,7 +34,9 @@ mainmenu_option next_comment
     fi
 endmenu
 
-if [ "$CONFIG_ARCH_PC" = "y" ]; then
+if [ "$CONFIG_ARCH_PC" != "y" ]; then
+    define_bool CONFIG_ARCH_PC_CLONE y
+else
     mainmenu_option next_comment
 	comment 'Model-specific features'
 
@@ -46,9 +48,7 @@ if [ "$CONFIG_ARCH_PC" = "y" ]; then
 	    bool 'Switch Compaq DeskPro to fast mode'		CONFIG_COMPAQ_FAST
 	fi
     endmenu
-fi
 
-if [ "$CONFIG_ARCH_PC" = "y" ]; then
     mainmenu_option next_comment
 	comment 'Hardware Facilities'
 
@@ -73,10 +73,10 @@ if [ "$CONFIG_ARCH_PC" = "y" ]; then
 	    bool 'System has no floppy drive'			CONFIG_HW_NO_FLOPPY_DRIVE n
 	    bool 'System has no hard drive'			CONFIG_HW_NO_HARD_DRIVE y
 	endmenu
-	mainmenu_option next_comment
-	    comment 'Character Devices'
-
-	endmenu
+#	mainmenu_option next_comment
+#	    comment 'Character Devices'
+#
+#	endmenu
 	mainmenu_option next_comment
 	    comment 'BIOS Facilities'
 

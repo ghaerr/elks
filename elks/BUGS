@@ -1,68 +1,85 @@
-
                                  ELKS BUGS
                                       
    This is a list of reported bugs with ELKS, together with the current
-   status thereof. Please update this file as and when you discover new
-   bugs, or fix bugs listed herein.
+   status thereof.
+   
+   As and when you discover new bugs, please report them to the [1]ELKS
+   Bugzilla System on the [2]ELKS website. This file will be updated from
+   there.
+
      __________________________________________________________________
+
    
                                   CONTENTS
                                       
-    1. Bugs reported [1]prior to June 2001 that may not still be present.
-    2. [2]Latest Bugs.
+    1. Bugs reported [3]prior to June 2001 that may not still exist.
+    2. [4]Latest Bugs.
+
      __________________________________________________________________
    
-    1.
-       
-Bugs reported prior to June 2001 that may or may not still exist.
+
+    1. Bugs reported prior to June 2001 that may or may not still exist.
+
        The ELKS source tree contained details of the following bugs when
        the bug reporting system was moved over to HTML format in June
        2001:
+
         This is a list of things I have noticed go wrong. Please submit
-            additions to this file if you find any kernel related bugs.
-            [3]Al Riddoch
+        additions to this file if you find any kernel related bugs.
+
+            [5]Al Riddoch
+
                ______________________________________________________
+
             
          1. Sometimes unmounting a non-root filesystem returns EBUSY when
             nothing is using, and nothing seems to rectify it.
-            On 26th March 2001, [4]Thomas McWilliam reported that his
+
+            On 26th March 2001, [6]Thomas McWilliam reported that his
             bugfix for this bug had finally been committed to the ELKS
             development tree.
+
          2. Sometimes for no aparent reason the umount command gives a
             STACK collided with BSS error without unmounting the
             filesystem.
+
          3. Deleting data from the filesystem results almost always with
             a "Deleting block not in data zone" type error message, and
             sometimes crashes.
+
             This seems to be due to the following line in V1_trunc_direct
+
         -               p = i + inode->u.minix_i.u.i1_data;
         +               p = inode->i_zone[i];
+
             The botton version being the ELKS version, the top one is the
             Linux version. The two don't seem to bear any relation to
             each other. This has now nearly been fixed by chenging the
             above line to
+
                         p = &inode->i_zone[i];
+
             But blocks are still not freed when the fs is checked later,
             and neither is the inode! Looking through truncate.c, and
             minix_free_block, there is heavy use of longs which are just
             not necessary.
+
             Fixed excessive use of longs, and got fs to the stage where
             some blocks are freed, and deleting large files no longer
             results in a system crash.
+
          4. Adding register variables to schedule causes the chq wait
             queue to get corrupted.
+
             See comments at the top of schedule() in kernel/sched.c. I
             occasionly get the same wait_queue corruption message when
             heavily testing the multitasking.
+
          5. Shell sometimes reports "No such file or directory" when it
             means "Out of memory".
-         6. fchown function seems to corrupt inode table. (See login
-            source code).
-            This was caused by iput() being called in do_chown()
-            releasing the inode passwd by sys_chown() and sys_fchown(),
-            but this should only happen for chown(), so the call to iput
-            is moved to sys_chown().
-         7. Long command lines cause programs to crash.
+
+         6. Long command lines cause programs to crash.
+
             When copying files from the /bin directory of a floppy onto
             the harddisk when installing, the cp process often crashes
             before it has finished and frequently displays unexpected
@@ -72,50 +89,47 @@ Bugs reported prior to June 2001 that may or may not still exist.
             data between files. The bug occurs irespective of whether the
             commandline was typed in by hand, or automacally constructed
             using wildcards.
-         8. Renaming long filenames causes problems.
-            I have observed from my (admittedly brief) fiddling that elks
-            has a 14 character filename limit. Is there a reason that 14
-            chars was picked? Big enough to be descriptive, but small
-            enough for memory reasons?
-            Also, I've found a strange quirk: Take any file, we'll call
-            it "test"
-        cp test 12345678901234567890
-        mv 12345678901234 12345.12345
-        ls
-            Will return
-        "12345678901234: no such file or directory"
-        12345.12345
-        test
-            This is caused by a bug in namecompare which has been fixed
-            by Blaz Antonic which meant that 14 character filenames did
-            not match under certain circumstances.
+
          ______________________________________________________________
+
        
     2. Recent Bugs
+
        The following bugs have been reported since 1st June 2001:
+
          1. 24th June 2001: Signals not checked when needed.
+
             Currently signals are only checked when returning from system
             calls. They should also be checked when returning from a
             context switch.
+
             Consider an ELKS program containing this infinite loop:
-        for (;;) {
-                i++;
-        }
+
+	        for (;;) {
+	                i++;
+	        }
+
             There is no way that this program can be interrupted. Hitting
             Control-C will not work. No system calls are made, so the
             signal is never received. The program will run forever.
+
             What *should* happen is that the kernel *also* checks for
             signals on return from a context switch, then eventually the
             signal will be received.
-            [5]Thomas McWilliams
+
+            [7]Thomas McWilliams
+
      __________________________________________________________________
    
+
    This document was last updated on 13th August 2001.
 
 References
 
-   1. file://localhost/home/rhw/CVS/Source/elks/BUGS.html#Early
-   2. file://localhost/home/rhw/CVS/Source/elks/BUGS.html#Latest
-   3. mailto:ajr@ecs.soton.ac.uk
-   4. mailto:tgm9999@Yahoo.com
-   5. mailto:tgm9999@Yahoo.com
+   1. http://www.sf.net/projects/elks
+   2. http://elks.sf.net/
+   3. file://localhost/home/rhw/CVS/Source/elks/BUGS.html#Early
+   4. file://localhost/home/rhw/CVS/Source/elks/BUGS.html#Latest
+   5. mailto:ajr@ecs.soton.ac.uk
+   6. mailto:tgm9999@Yahoo.com
+   7. mailto:tgm9999@Yahoo.com

@@ -1,24 +1,18 @@
 #
 # Networking configuration
 #
-mainmenu_option next_comment
-comment 'Networking'
 
 bool 'Socket support' CONFIG_SOCKET
 
 if [ "$CONFIG_SOCKET" = "y" ]; then
-	bool '  UNIX sockets' CONFIG_UNIX
-	bool '  NANO sockets' CONFIG_NANO
-	bool '  INET sockets (TCP/IP)' CONFIG_INET
+    bool '  NANO sockets'				CONFIG_NANO
+    bool '  TCP/IP sockets'				CONFIG_INET
+    if [ "$CONFIG_INET" = "y" ]; then
+	bool '    Enable status report' 		CONFIG_INET_STATUS
+    fi
+    bool '  UNIX sockets'				CONFIG_UNIX
 
-	if [ "$CONFIG_INET" = "y" ]; then
-		bool '  Enable status report' CONFIG_INET_STATUS
-	fi
-
-	comment '  Advance socket options'
-	bool '  Only include support for client sockets (MUST)' CONFIG_SOCK_CLIENTONLY
-	bool '  Only include support for STREAM type sockets (MUST)' CONFIG_SOCK_STREAMONLY
+    comment '  Advanced socket options'
+    bool '  Client socket support only (REQUIRED)'	CONFIG_SOCK_CLIENTONLY
+    bool '  STREAM type socket support only (REQUIRED)'	CONFIG_SOCK_STREAMONLY
 fi
-
-endmenu
-

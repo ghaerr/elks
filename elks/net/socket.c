@@ -6,9 +6,9 @@
  * Author:	Alistair Riddoch, <ajr@ecs.soton.ac.uk>
  *
  * 		Based on code from the Linux kernel by
- *		Orest Zborowski, <obz@Kodak.COM>
- *		Ross Biro, <bir7@leland.Stanford.Edu>
- *		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
+ *		Orest Zborowski <obz@Kodak.COM>
+ *		Ross Biro <bir7@leland.Stanford.Edu>
+ *		Fred N. van Kempen <waltje@uWalt.NL.Mugnet.ORG>
  */
 
 #include <linuxmt/config.h>
@@ -26,12 +26,14 @@
 
 #include <arch/segment.h>
 
-/*#define CONFIG_SOCK_CLIENTONLY 1
-#define CONFIG_SOCK_STREAMONLY 1 */
+/*
+#define CONFIG_SOCK_CLIENTONLY 1
+#define CONFIG_SOCK_STREAMONLY 1
+ */
 
 /*#define find_protocol_family(_a) 0*/
 
-#define MAX_SOCK_ADDR 16 /* Must be much bigger for AF_UNIX */
+#define MAX_SOCK_ADDR 16		/* Must be much bigger for AF_UNIX */
 
 static struct proto_ops *pops[NPROTO]= { NULL };
 
@@ -54,6 +56,7 @@ struct inode *inode;
 	return &inode->u.socket_i;
 }
 /* FIXME - Could above be replaced by
+ *
  * 	#define socki_lookup(_a) (&_a->u.sock_i)
  */
 
@@ -91,7 +94,12 @@ register int * ulen;
 		if (err = verified_memcpy_tofs(uaddr,kaddr,len))
 			return err;
 	}
-/*	put_user(len,ulen); */ /* This is pointless isn't it */
+
+/* This is pointless isn't it
+ *
+ *	put_user(len,ulen);
+ */
+
 	return 0;
 }
 
@@ -122,10 +130,10 @@ struct socket *sock_alloc()
 	sock->conn = NULL;
 	sock->iconn = NULL;
 	sock->next = NULL;
-#endif /* CONFIG_UNIX || CONFIG_NANO */
+#endif /* CONFIG_UNIX || CONFIG_NANO || CONFIG_INET */
 	sock->file = NULL;
 	sock->wait = &inode->i_wait;
-	sock->inode = inode;            /* "backlink": we could use pointer arithmetic instead */
+	sock->inode = inode;	/* "backlink" use pointer arithmetic instead */
 	sock->fasync_list = NULL;
 /*	sockets_in_use++; */ /* Maybe we'll find a use for this */
 	return sock;
@@ -264,8 +272,13 @@ int flags;
 	 * Wake up server, then await connection. server will set state to
 	 * SS_CONNECTED if we're connected.
 	 */
+
 	wake_up_interruptible(servsock->wait);
-/*	sock_wake_async(servsock, 0); */ /* I don't think we need this */
+
+/* I don't think we need this
+ *
+ *	sock_wake_async(servsock, 0);
+ */
 
 	if (mysock->state != SS_CONNECTED) 
 	{
@@ -312,16 +325,17 @@ struct socket * peer;
 	wake_up_interruptible(peer->wait);
 /*	sock_wake_async(peer, 1); */
 }
-#endif /* CONFIG_UNIX || CONFIG_NANO */
+#endif /* CONFIG_UNIX || CONFIG_NANO || CONFIG_INET */
 
 void sock_release(sock)
 register struct socket * sock;
 {
 	int oldstate;
 	register struct socket * peersock;
+
 #if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 	struct socket * nextsock;
-#endif
+#endif /* CONFIG_UNIX || CONFIG_NANO || CONFIG_INET */
 
 	if ((oldstate = sock->state) != SS_UNCONNECTED) {
 		sock->state = SS_DISCONNECTING;
@@ -334,15 +348,15 @@ register struct socket * sock;
 	}
 
 	peersock = (oldstate == SS_CONNECTED) ? sock->conn : NULL;
-#else /* CONFIG_UNIX || CONFIG_NANO */
+#else  /* CONFIG_UNIX || CONFIG_NANO || CONFIG_INET */
 	peersock = NULL; /* sock-conn is always NULL for an INET socket */
-#endif /* CONFIG_UNIX || CONFIG_NANO */
+#endif /* CONFIG_UNIX || CONFIG_NANO || CONFIG_INET */
 	if (sock->ops)
 		sock->ops->release(sock, peersock);
 #if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 	if (peersock)
 		sock_release_peer(peersock);
-#endif
+#endif /* CONFIG_UNIX || CONFIG_NANO || CONFIG_INET */
 /*	--sockets_in_use; */ /* maybe we'll find a use for this */
 	sock->file = NULL;
 	iput(SOCK_INODE(sock));
@@ -486,10 +500,12 @@ int addrlen;
 	char address[MAX_SOCK_ADDR];
 	int err;
 
-/* 	All this is done in sockfd_lookup */
-/*	if (fd < 0 || fd >= NR_OPEN || (file=current->files.fd[fd]) == NULL) {
-		return -EBADF;
-	} */
+/* 	All this is done in sockfd_lookup
+ *
+ *	if (fd < 0 || fd >= NR_OPEN || (file=current->files.fd[fd]) == NULL) {
+ *		return -EBADF;
+ *	}
+ */
 
 	if (!(sock = sockfd_lookup(fd, &file))) {
 		return -ENOTSOCK;
@@ -505,22 +521,28 @@ int addrlen;
 			break;
 		case SS_CONNECTED:
 			/* Socket is already connected */
+
 #ifndef CONFIG_SOCK_STREAMONLY
-			if(sock->type == SOCK_DGRAM) /* Hack for now - move this
- all into the protocol */
+
+/* Hack for now - move this all into the protocol */
+
+			if(sock->type == SOCK_DGRAM)
 				break;
+
 #endif
+
 			return -EISCONN;
 		case SS_CONNECTING:
 			/* Not yet connected... we will check this. */
 		
 			/*
-			 *      FIXME:  for all protocols what happens if you st
-art
-			 *      an async connect fork and both children connect.
- Clean
-			 *      this up in the protocols!
+			 *	FIXME:	For all protocols what happens if you
+			 *		start an async connect fork and both
+			 *		children connect.
+			 *
+			 *		Clean this up in the protocols!
 			 */
+
 			break;
 		default:
 			return -EINVAL;
@@ -624,7 +646,9 @@ int protocol;
 	register struct proto_ops *ops;
 
 /*	find_protocol_family() is a macro which gives 0 while only
- *	AF_INET sockets are supported */
+ *	AF_INET sockets are supported
+ */
+
 	if ((i = find_protocol_family(family)) < 0) {
 		printk("fail family : %d\n",-i);
 		panic("Socket family unknown");
@@ -659,6 +683,5 @@ int protocol;
 
 	return(fd);
 }
-
 
 #endif

@@ -13,8 +13,8 @@ the current status thereof.</P>
 
 <P Align=Justify>As and when you discover new bugs, please report them to
 the <A HRef="http://www.sf.net/projects/elks">ELKS Bugzilla System</A> on
-the <A HRef="http://elks.sf.net</A>ELKS website. This file will be updated
-from there.</P>
+the <A HRef="http://elks.sf.net">ELKS website</A>. This file will be
+updated from there.</P>
 
 <HR Width=95%>
 
@@ -22,8 +22,8 @@ from there.</P>
 
 <OL>
 
-<LI><P Align=Justify>Bugs reported <A HRef="#Early">prior to June
-2001</A> that may not still exist.</P>
+<LI><P Align=Justify>Bugs reported <A HRef="#Early">prior to June 2001</A>
+that may not still exist.</P>
 
 <LI><P Align=Justify><A HRef="#Latest">Latest Bugs</A>.</P>
 
@@ -100,14 +100,6 @@ testing the multitasking.</P>
 <LI><H3 Align=Justify>Shell sometimes reports "No such file or directory"
 when it means "Out of memory".</H3>
 
-<LI><H3 Align=Justify>fchown function seems to corrupt inode table. (See
-login source code).</H3>
-
-<P Align=Justify>This was caused by iput() being called in do_chown()
-releasing the inode passwd by sys_chown() and sys_fchown(), but this
-should only happen for chown(), so the call to iput is moved to
-sys_chown().</P>
-
 <LI><H3 Align=Justify>Long command lines cause programs to crash.</H3>
 
 <P Align=Justify>When copying files from the /bin directory of a floppy
@@ -118,34 +110,6 @@ couple of hundred bytes, or it could be a problem that comes up after
 copying lots of data between files. The bug occurs irespective of whether
 the commandline was typed in by hand, or automacally constructed using
 wildcards.</P>
-
-<LI><H3 Align=Justify>Renaming long filenames causes problems.</H3>
-
-<P Align=Justify>I have observed from my (admittedly brief) fiddling that
-elks has a 14 character filename limit. Is there a reason that 14 chars
-was picked? Big enough to be descriptive, but small enough for memory
-reasons?</P>
-
-<P Align=Justify>Also, I've found a strange quirk: Take any file, we'll
-call it "test"</P>
-
-<P><Pre>
-	cp test 12345678901234567890
-	mv 12345678901234 12345.12345
-	ls
-</Pre></P>
-
-<P Align=Justify>Will return</P>
-
-<P><Pre>
-	"12345678901234: no such file or directory"
-	12345.12345
-	test
-</P></Pre>
-
-<P Align=Justify>This is caused by a bug in namecompare which has been
-fixed by Blaz Antonic which meant that 14 character filenames did not
-match under certain circumstances.</P>
 
 </OL>
 
