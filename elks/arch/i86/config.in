@@ -175,6 +175,7 @@ endmenu
 mainmenu_option next_comment
     comment 'Kernel hacking'
 
-    bool 'Strace'					CONFIG_STRACE
+    bool 'Include kernel version system call'		CONFIG_SYS_VERSION
     bool 'Optimise for size rather than speed'		CONFIG_OPT_SMALL
+    bool 'System Trace' 				CONFIG_STRACE
 endmenu

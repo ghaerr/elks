@@ -6,13 +6,14 @@
  *	Illegal format strings will break it. Only the
  *	following simple subset is supported
  *
+ *	%%	-	literal % sign
  *	%c	-	char
  *	%d	-	signed decimal
  *	%o	-	octal
  *	%p	-	pointer (printed in hex)
  *	%s	-	string
  *	%u	-	unsigned decimal
- *	%x	-	hexadecimal
+ *	%x/%X	-	hexadecimal
  *
  *	And the h/l length specifiers for %d/%x
  *
@@ -133,6 +134,7 @@ int a1;
 				case 'o':
 				case 'p':
 				case 'x':
+				case 'X':
 					numout(p,len,(c=='o')?8:16,0);
 					p+=len;
 					break;
@@ -158,6 +160,9 @@ int a1;
 					con_write(p,1);
 					p+=2;
 					break;
+				case '%':
+					con_write("%",1);
+					break;
 				default:
 					con_write("?",1);
 			}
@@ -167,7 +172,7 @@ int a1;
 
 void panic(error,a1,a2,a3,a4)
 char *error;
-int a1,a2,a3,a4;	/* VARARGS.. */
+int a1,a2,a3,a4;	/* VARARGS... */
 {
 	register int *bp = (int*)&error - 2;
 	int i, j;

@@ -48,7 +48,9 @@ void start_kernel()
 	inode_init();
 	fs_init();
 	sched_init();
+#ifndef CONFIG_SYS_VERSION
 	printk("ELKS version %s\n", system_utsname.release );
+#endif
 	task[0].t_kstackm = KSTACK_MAGIC;
 	task[0].next_run = task[0].prev_run = &task[0];
 	kfork_proc(&task[1],init_task);

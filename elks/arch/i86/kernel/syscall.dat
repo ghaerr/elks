@@ -4,10 +4,11 @@
 # ELKSemu and elks itself. Changes to this may require changes in
 # all three of those packages.
 #
-#	. = Ok, with comment
-#	* = Needs libc code (Prefix __)
-#	- = Obsolete/not required
-#	@ = May be required later
+#	'.' = Ok, with comment
+#	'*' = Needs libc code (Prefix __)
+#	'-' = Obsolete/not required
+#	'@' = May be required later
+#	'=' = Depends on stated config variable
 #
 #	An initial plus on the call number specifies that this call is
 #	implemented in the kernel.
@@ -69,7 +70,7 @@ signal		+48	2	* have put the despatch table in user space.
 getinfo		49	1	@ possible? gets pid,ppid,uid,euid etc
 fcntl		+50	3	 
 acct		51	1	@ Accounting to named file (off if null)
-phys		52	3	- Replaced my mmap()
+phys		52	3	- Replaced by mmap()
 lock		53	1	@ Prevent swapping for this proc if flg!=0
 ioctl		+54	3	. make this and fcntl the same ?
 reboot		+55	3	. the magic number is 0xfee1,0xdead,...
@@ -91,6 +92,7 @@ bind		+70	3
 listen		+71	2
 accept		+72	3
 connect		+73	3
+knlvsn          +74     1	= CONFIG_SYS_VERSION
 #
 # Name			No	Args	Flag&comment
 #

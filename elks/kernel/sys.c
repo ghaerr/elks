@@ -8,10 +8,14 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/utsname.h>
+
 #ifdef NOT_YET
+
 #include <linuxmt/times.h>
 #include <linuxmt/param.h>
+
 #endif
+
 #include <linuxmt/signal.h>
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
@@ -19,8 +23,9 @@
 
 #include <arch/segment.h>
 #include <arch/io.h>
+
 /*
- * this indicates whether you can reboot with ctrl-alt-del: the default is yes
+ * Indicates whether you can reboot with ctrl-alt-del: the default is yes
  */
 
 static int C_A_D = 1;
@@ -29,9 +34,10 @@ extern void hard_reset_now();
 extern int sys_kill();
 
 /*
- * Reboot system call: for obvious reasons only root may call it,
- * and even root needs to set up some magic numbers in the registers
- * so that some mistake won't make this reboot the whole machine.
+ * Reboot system call: for obvious reasons only root may call it, and even
+ * root needs to set up some magic numbers in the registers so that some
+ * mistake won't make this reboot the whole machine.
+ *
  * You can also set the meaning of the ctrl-alt-del-key here.
  *
  * reboot doesn't sync: do that yourself before calling this.
@@ -74,7 +80,24 @@ void ctrl_alt_del()
 	else
 		kill_proc(1, SIGINT, 1);
 }
-	
+
+#ifdef CONFIG_SYS_VERSION
+
+/*
+ * This function returns the version number associated with this kernel.	
+ */
+
+int sys_knlvsn(vsn)
+char **vsn;
+{
+    if (vsn && *vsn) {
+	strcpy(*vsn,system_utsname.release);
+	return 0;
+    } else
+	return -1;
+}
+
+#endif
 
 /*
  * setgid() is implemented like SysV w/ SAVED_IDS 

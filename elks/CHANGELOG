@@ -1,9 +1,9 @@
-This file is used to record changes made to the CVS database. Please add to the
-top of this file before committing any changes. Please use the header format
-provided for each entry, noting that the text on each line should not be longer
-than the lines of dashes.
+This file is used to record changes made to the CVS database. Please add to
+the top of this file before committing any changes. Please use the header
+format provided for each entry, noting that the text on each line should not
+be longer than the lines of dashes.
 
-Al
+Al Riddoch.
 
 Contributor             Email address                   CHANGELOG entries found
 ~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~
@@ -23,13 +23,33 @@ Mario Frasca                                            20 Jan 2000-14 Feb 2000
 Paul Nasrat             <pnasrat@uk.now.com>            29 Oct 2001-20 Nov 2001
 Per Olofsson            <MagerValp@cling.gu.se>         25 Feb 2000
 Peter L Vachuska        <pvachusk@nconnect.net>         13 Aug 2001
-Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998- 7 Feb 2002
+Riley Williams          <rhw@MemAlpha.cx>               16 Nov 1998-20 Feb 2002
 Roman Festchook         <roma@polesye.net>              27 Oct 2001
 Simon Weijgers          <simon@weijgers.com>            16 Sep 1998-15 Nov 1999
 Simon Wood                                               6 Jan 2000-12 Jan 2000
 Thomas McWilliams       <tgm9999@yahoo.com>             27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
+
+Wed Feb 20 12:27:08 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+
+	* Added syscall to return kernel version string. This can be
+	  omitted by using a configuration option, but only enlarges
+	  the kernel by 16 bytes if included. The configuration option
+	  defaults to NOT including this support. When it is disabled,
+	  the kernel prints its version during system boot, but when
+	  it is enabled, that no longer happens and the startup script
+	  is expected to do this if required.
+
+	  For those interested in the configuration option, it can be
+	  found under "Kernel Hacking" and is easily identifiable.
+
+Tue Feb 19 22:04:46 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+
+	* Added support for printk format using %% to print % chars.
+	* Allowed master syscall table to include conditional entries.
+	  This is a tweak to the arch/i86/kernel/mkentry.sh script.
+	* Updated strace's idea of syscall table to match reality.
 
 Thu Feb  7 00:03:17 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
@@ -71,8 +91,8 @@ Wed Jan 23 00:56:51 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
 Sun Jan 20 06:45:50 MST 2002	M Warner Losh <imp@village.org>
 
-	* Allow elks to build on systems where gnumake isn't installed as
-	  make and bash isn't installed as /bin/bash or /bin/sh !!!
+	* Allow elks to build on systems where gnumake isn't installed
+	  as make and bash isn't installed as /bin/bash or /bin/sh !!!
 
 Sun Jan 20 12:15:18 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 

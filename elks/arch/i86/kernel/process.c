@@ -6,10 +6,10 @@
 /*
  *	This function can only be called with SS=DS=ES=kernel DS
  *	CS=kernel CS. SS:SP is the relevant kernel stack (IRQ's are
- *	take on 'current' kernel stack.
+ *	taken on 'current' kernel stack.
  *
  *	load_regs can also only be called from such a situation, thus
- *	we don't need to arse about with segment registers. The kernel isnt
+ *	we don't need to arse about with segment registers. The kernel isn't
  *	relocating.
  *
  *	To understand this you need to know how the compilers generate 8086
@@ -25,22 +25,20 @@
  *	ret		! Return address is top of stack now
  *
  *	save_regs() saves the callers registers and state then returns to
- *	the caller. It in effect freezes a copy of the caller context but doesnt
- *	prevent it being used temporarily beyond that as we do. 
+ *	the caller. It in effect freezes a copy of the caller context but
+ *	doesn't prevent it being used temporarily beyond that as we do. 
  *
  *	load_regs() restores the callers context and returns skipping out of 
- *	schedule() [our the faked setup] back to the right place. 
+ *	schedule() [our faked setup] back to the right place. 
  *
  *	fake_save_regs builds a stack frame that returns a new task to a
  *	kernel address of our choice using its own stack/context.
  *
  */
  
- 
- 
- /* ELKS 0.76 7/1999  Fixed for ROMCODE-Version
- /  Christian Mardm”ller  (chm@kdt.de)
- / */
+/* ELKS 0.76 7/1999  Fixed for ROMCODE-Version
+ * Christian Mardm”ller  (chm@kdt.de)
+ */
 
 
 #ifdef CONFIG_ROMCODE 
@@ -58,7 +56,7 @@
   
 ! This is from irqtab.c
 /*
- *  This code is either in codesegment or CONFIG_ROM_IRQ_DATA 
+ *  This code is either in code segment or CONFIG_ROM_IRQ_DATA 
  *  The CS-Code must always placed in irqtab.c, because the
  *  linker doesnt store them on block.
  */
@@ -66,8 +64,7 @@
 	.extern cseg_stashed_ds
 	.extern cseg_stashed_si  ;now in irqtab.c
 	.extern cseg_sc_tmp       
-        
-        
+
 /* and now code */
 #endasm
 #endif
@@ -167,15 +164,12 @@ _load_regs:
 
 	.globl _syscall_int
 
-
-
-
-
 !
 !	System calls enter here with ax as function and bx,cx,dx as
 !	parameters (and di,si if elks_syscall in elksemu is to be believed)
 !	syscall returns a value in ax
 !
+
 _syscall_int:
 !
 !	We know the process DS, we can discard it (indeed may change it)
@@ -398,11 +392,11 @@ char *addr;
 
 
 /*
- *	Build a user return stack for exec*(). This is quite easy, especially
- *	as our syscall entry doesnt use the user stack. 
+ *	Build a user return stack for exec*(). This is quite easy,
+ *	especially as our syscall entry doesnt use the user stack. 
  */
 
-#define USER_FLAGS 0x3200	/* IPL 3, interrupt enabled */
+#define USER_FLAGS 0x3200		/* IPL 3, interrupt enabled */
 void put_ustack(t, off, val)
 register struct task_struct *t;
 int off, val;
@@ -428,8 +422,7 @@ register struct task_struct *t;
 }
 
 /* We need to make the program return to another point - to the signal
- * handler.
- * The stack currently looks like this:-
+ * handler. The stack currently looks like this:-
  *
  *              ip cs  f
  *
@@ -513,4 +506,3 @@ struct task_struct *t;
 #endasm
 	*(void**)(kstktop-4) = saved_bp;
 }
-
