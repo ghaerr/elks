@@ -32,6 +32,7 @@ char ** argv;
 		fprintf(stdout, "\033E\033&k2g\033(0N");
 		/* feed printer with unmodified data */
 		while (!feof(stdin)) {
+			buffer[0] = '\000';
 			fgets(buffer, BUFFER_SIZE, stdin);
 			fputs(buffer, stdout);
 			}
@@ -48,6 +49,7 @@ char ** argv;
 		fprintf(stdout, "\033R0");
 		while (!feof(stdin)) {
 			/* we need extra sapce at the end of buffer should the input string be too long */
+			buffer[0] = '\000';
 			fgets(buffer, BUFFER_SIZE - 3, stdin);
 			/* substitute LF#0/FF#0 sequence for CRLF#0/CRFF#0 */
 			for (pos = 0; pos <= BUFFER_SIZE - 3; pos++) {
