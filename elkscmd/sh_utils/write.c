@@ -71,7 +71,8 @@ int main(int argc, char ** argv)
 		struct utmp * utmp;
 		setutent();
 		while ((utmp = getutent()) != NULL) {
-			if (strcmp(pwdent->pw_name, utmp->ut_user) == 0) {
+			if ((strcmp(pwdent->pw_name, utmp->ut_user) == 0) &&
+			    (utmp->ut_type == USER_PROCESS)) {
 				strncpy(ttyname, TTYPREFIX, 6);
 				strncat(ttyname, utmp->ut_line, 6);
 				ttyname[11] = '\0';
