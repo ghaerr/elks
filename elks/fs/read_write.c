@@ -21,6 +21,7 @@ unsigned int origin;
 {
 	off_t offset = get_fs_long(p_offset);
 	register struct file * file;
+	register struct file_operations * fop;
 	off_t tmp = -1;
 	
 /*	printk("%d lseek1\n",origin); */
@@ -29,8 +30,9 @@ unsigned int origin;
 		return -EBADF;
 	if (origin > 2)
 		return -EINVAL;
-	if (file->f_op && file->f_op->lseek)
-		return file->f_op->lseek(file->f_inode,file,offset,origin);
+	fop = file->f_op;
+	if (fop && fop->lseek)
+		return fop->lseek(file->f_inode,file,offset,origin);
 
 /* this is the default handler if no lseek handler is present */
 	switch (origin) {
@@ -67,13 +69,15 @@ unsigned int count;
 {
 	int error, retval;
 	register struct file * file;
-	register struct inode * inode;
+	struct inode * inode;
+	register struct file_operations * fop;
 
 	if (fd>=NR_OPEN || !(file=current->files.fd[fd]) || !(inode=file->f_inode))
 		return -EBADF;
 	if (!(file->f_mode & 1))
 		return -EBADF;
-	if (!file->f_op || !file->f_op->read)
+	fop = file->f_op;
+	if (!fop || !fop->read)
 	{
 		printk("readwrite: we're analphabetic\n");
 		return -EINVAL;
@@ -84,7 +88,7 @@ unsigned int count;
 	error = verify_area(VERIFY_WRITE,buf,count);
 	if (error)
 		return error;
-	retval = file->f_op->read(inode,file,buf,count);
+	retval = fop->read(inode,file,buf,count);
 	schedule();
 	return retval;
 }

@@ -44,9 +44,11 @@ int slen;		/* Size of built stack */
 	unsigned short cseg,dseg;
 	unsigned long len;
 	struct inode *inode;
-	register char *ptr;
+	char *ptr;
 	unsigned short count;
 	int i, nzero, tmp;
+	register struct file * filp = &file;
+	__registers * tregs;
 
 	/*
 	 *	Open the image
@@ -65,22 +67,22 @@ int slen;		/* Size of built stack */
 	 *	Build a reading file handle
 	 */	
 	 
-	file.f_mode=1;
-	file.f_flags=0;
-	file.f_count=1;
-	file.f_inode=inode;
-	file.f_pos=0;
+	filp->f_mode=1;
+	filp->f_flags=0;
+	filp->f_count=1;
+	filp->f_inode=inode;
+	filp->f_pos=0;
 #ifdef BLOAT_FS
-	file.f_reada=0;
+	filp->f_reada=0;
 #endif
-	file.f_op = inode->i_op->default_file_ops;
+	filp->f_op = inode->i_op->default_file_ops;
 	retval=-ENOEXEC;
-	if(!file.f_op)
+	if(!filp->f_op)
 		goto end_readexec;
-	if(file.f_op->open)
-		if(file.f_op->open(inode,&file))
+	if(filp->f_op->open)
+		if(filp->f_op->open(inode,&file))
 			goto end_readexec;
-	if(!file.f_op->read)
+	if(!filp->f_op->read)
 		goto close_readexec;
 		
 	printd_exec1("EXEC: Opened ok inode dev = 0x%x\n", inode->i_dev);
@@ -90,11 +92,11 @@ int slen;		/* Size of built stack */
 	/*
 	 *	Read the header.
 	 */
-	 
-	current->t_regs.ds=get_ds();
-	file.f_pos=0; /* FIXME - should call lseek */
-	result=file.f_op->read(inode, &file, &mh, sizeof(mh));
-	current->t_regs.ds=ds;
+	tregs = &current->t_regs;
+	tregs->ds=get_ds();
+	filp->f_pos=0; /* FIXME - should call lseek */
+	result=filp->f_op->read(inode, &file, &mh, sizeof(mh));
+	tregs->ds=ds;
 
 	/*
 	 *	Sanity check it.
@@ -120,10 +122,10 @@ int slen;		/* Size of built stack */
 
 #ifdef CONFIG_EXEC_MSDOS
 	/* Read header */
-	current->t_regs.ds=get_ds();
-	file.f_pos=0;
-	result=file.f_op->read(inode, &file, &mshdr, sizeof(mshdr));
-	current->t_regs.ds=ds;
+	tregs->ds=get_ds();
+	filp->f_pos=0;
+	result=filp->f_op->read(inode, &file, &mshdr, sizeof(mshdr));
+	tregs->ds=ds;
 
 	if( (result != sizeof(mshdr)) ||
 		(mshdr.magic!=MSDOS_MAGIC) )
@@ -180,9 +182,9 @@ blah:
 	}
 	
 	printd_exec2("EXEC: Malloc succeeded - cs=%x ds=%x\n", cseg, dseg);
-	current->t_regs.ds=cseg;
-	result=file.f_op->read(inode, &file, 0, mh.tseg);
-	current->t_regs.ds=ds;
+	tregs->ds=cseg;
+	result=filp->f_op->read(inode, &file, 0, mh.tseg);
+	tregs->ds=ds;
 	if(result!=mh.tseg)
 	{
 		printd_exec2("EXEC(tseg read): bad result %d, expected %d\n",result,mh.tseg);
@@ -192,9 +194,9 @@ blah:
 		goto close_readexec;
 	}
 
-	current->t_regs.ds=dseg;
-	result=file.f_op->read(inode, &file, 0, mh.dseg);
-	current->t_regs.ds=ds;
+	tregs->ds=dseg;
+	result=filp->f_op->read(inode, &file, 0, mh.dseg);
+	tregs->ds=ds;
 	if(result!=mh.dseg)
 	{
 		printd_exec2("EXEC(dseg read): bad result %d, expected %d\n",result,mh.dseg);
@@ -257,10 +259,10 @@ blah:
 	 *	(better to use the entry offset in the header)
 	 */
 	
-	current->t_regs.cs=cseg;
-	current->t_regs.ds=dseg;
-	current->t_regs.ss=dseg;
-	current->t_regs.sp=len-slen;	/* Just below the arguments */ 
+	tregs->cs=cseg;
+	tregs->ds=dseg;
+	tregs->ss=dseg;
+	tregs->sp=len-slen;	/* Just below the arguments */ 
 	current->t_begstack=len-slen;
 	current->t_endtext=mh.dseg;	/* Needed for sys_brk() */
 	current->t_endbrk=current->t_enddata=mh.dseg+mh.bseg;
@@ -275,8 +277,8 @@ blah:
 	 */
 
 close_readexec:
-	if(file.f_op->release)
-		file.f_op->release(inode,&file);
+	if(filp->f_op->release)
+		filp->f_op->release(inode,&file);
 end_readexec:	 
 			   
 	/*

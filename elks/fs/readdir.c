@@ -60,23 +60,25 @@ ino_t ino;
 
 int sys_readdir(fd,dirent,count)
 unsigned int fd;
-register char * dirent;
+char * dirent;
 unsigned int count;
 {
 	int error;
 	register struct file * file;
+	register struct file_operations * fop;
 	struct readdir_callback buf;
 
 	if (fd >= NR_OPEN || !(file = current->files.fd[fd]))
 		return -EBADF;
-	if (!file->f_op || !file->f_op->readdir)
+	fop=file->f_op;
+	if (!fop || !fop->readdir)
 		return -ENOTDIR;
 	error = verify_area(VERIFY_WRITE, dirent, sizeof(struct linux_dirent));
 	if (error)
 		return error;
 	buf.count = 0;
 	buf.dirent = dirent;
-	error = file->f_op->readdir(file->f_inode, file, &buf, fillonedir);
+	error = fop->readdir(file->f_inode, file, &buf, fillonedir);
 	if (error < 0)
 		return error;
 	return buf.count;

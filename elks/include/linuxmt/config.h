@@ -3,7 +3,7 @@
 
 #include <linuxmt/autoconf.h>
 
-#define REGOPT 
+#define REGOPT register
 
 /*
  * Set this to 0x380 to have /dev/fd0 be the root device, or 0x3c0 for /dev/fd1 

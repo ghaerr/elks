@@ -21,14 +21,15 @@ unsigned int arg;
 {
 	long val;
 	int block;
+	register struct file_operations * fop = filp->f_op;
 
 	switch (cmd) {
 		case FIONREAD:
 			val = filp->f_inode->i_size - filp->f_pos;
 			return verified_memcpy_tofs(arg, &val, sizeof(long));
 	}
-	if (filp->f_op && filp->f_op->ioctl)
-		return filp->f_op->ioctl(filp->f_inode, filp, cmd, arg);
+	if (fop && fop->ioctl)
+		return fop->ioctl(filp->f_inode, filp, cmd, arg);
 	return -EINVAL;
 }
 
@@ -40,10 +41,13 @@ unsigned int arg;
 {	
 /*	unsigned long arg = get_fs_long(parg); */
 	register struct file * filp;
+	register struct file_operations * fop;
 	int on;
 
 	if (fd >= NR_OPEN || !(filp = current->files.fd[fd]))
 		return -EBADF;
+	fop = filp->f_op;
+	filp->f_inode = filp->f_inode;
 	switch (cmd) {
 		case FIOCLEX:
 			FD_SET(fd, &current->files.close_on_exec);
@@ -66,8 +70,8 @@ unsigned int arg;
 			if (filp->f_inode && S_ISREG(filp->f_inode->i_mode))
 				return file_ioctl(filp, cmd, arg);
 
-			if (filp->f_op && filp->f_op->ioctl)
-				return filp->f_op->ioctl(filp->f_inode, filp, cmd, arg);
+			if (fop && fop->ioctl)
+				return fop->ioctl(filp->f_inode, filp, cmd, arg);
 
 			return -EINVAL;
 	}

@@ -118,6 +118,7 @@ register char * buf;
 int bufsiz;
 {
 	struct inode * inode;
+	register struct inode_operations * iop;
 	int error;
 
 	if (bufsiz <= 0)
@@ -128,9 +129,10 @@ int bufsiz;
 	error = lnamei(path,&inode);
 	if (error)
 		return error;
-	if (!inode->i_op || !inode->i_op->readlink) {
+	iop = inode->i_op;
+	if (!iop || !iop->readlink) {
 		iput(inode);
 		return -EINVAL;
 	}
-	return inode->i_op->readlink(inode,buf,bufsiz);
+	return iop->readlink(inode,buf,bufsiz);
 }

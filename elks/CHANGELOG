@@ -6,6 +6,19 @@ Al
 ------------------------------------------------------------------------------
 Thu Oct 13 20:20 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
+	* Heavily optimised fs code adding new register varables in
+	  carefully selected places.
+
+	* Re-wrote block device code so it now only deals with single block
+	  accesses, but much more cleanly
+
+	* Fixed comment in kernel/sched.c
+
+	* Removed alot of checking code from get_empty_inode() in
+	  fs/inode.c. I don't think this should cause a problem. opinions?
+
+Thu Oct 13 20:20 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
 	* Added new BUGS entries.
 
 Tue Oct 13 18:07 BST 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>

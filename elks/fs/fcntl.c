@@ -18,19 +18,21 @@ int dupfd(fd,arg)
 unsigned int fd;
 unsigned int arg;
 {
-	if (fd >= NR_OPEN || !current->files.fd[fd])
+	register struct file_struct * fils = &current->files;
+
+	if (fd >= NR_OPEN || !fils->fd[fd])
 		return -EBADF;
 	if (arg >= NR_OPEN)
 		return -EINVAL;
 	while (arg < NR_OPEN)
-		if (current->files.fd[arg])
+		if (fils->fd[arg])
 			arg++;
 		else
 			break;
 	if (arg >= NR_OPEN)
 		return -EMFILE;
-	clear_bit(arg, &current->files.close_on_exec);
-	(current->files.fd[arg] = current->files.fd[fd])->f_count++;
+	clear_bit(arg, &fils->close_on_exec);
+	(fils->fd[arg] = fils->fd[fd])->f_count++;
 	return arg;
 }
 
@@ -61,21 +63,22 @@ unsigned int cmd;
 unsigned long arg;
 {	
 	register struct file * filp;
+	register struct file_struct * fils = &current->files;
 	struct task_struct *p;
 	int task_found = 0;
 
-	if (fd >= NR_OPEN || !(filp = current->files.fd[fd]))
+	if (fd >= NR_OPEN || !(filp = fils->fd[fd]))
 		return -EBADF;
 	switch (cmd) {
 		case F_DUPFD:
 			return dupfd(fd,arg);
 		case F_GETFD:
-			return test_bit(fd, &current->files.close_on_exec);
+			return test_bit(fd, &fils->close_on_exec);
 		case F_SETFD:
 			if (arg&1)
-				set_bit(fd, &current->files.close_on_exec);
+				set_bit(fd, &fils->close_on_exec);
 			else
-				clear_bit(fd, &current->files.close_on_exec);
+				clear_bit(fd, &fils->close_on_exec);
 			return 0;
 		case F_GETFL:
 			return filp->f_flags;

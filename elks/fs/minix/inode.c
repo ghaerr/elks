@@ -475,7 +475,7 @@ register struct inode * inode;
 	bh = minix_update_inode(inode);
 	if (bh && buffer_dirty(bh))
 	{
-		ll_rw_block(WRITE, 1, &bh);
+		ll_rw_blk(WRITE, bh);
 		wait_on_buffer(bh);
 		if (!buffer_uptodate(bh))
 		{

@@ -151,7 +151,7 @@ struct task_struct * prev;
 
 void schedule()
 {
-	/* Including the two registers below saves lots of code, but corrupts *
+	/* Including the two registers below saves lots of code, *
 	 * but corrupts wait queue. */
         __uint c; 
 	/* register */ __ptask prev; 	/* Subscript calculation is *very* expensive in bcc */

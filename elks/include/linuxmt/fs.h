@@ -166,11 +166,11 @@ struct buffer_head
 #define buffer_uptodate(bh) ((bh)->b_uptodate)
 #define buffer_locked(bh) ((bh)->b_lock)
 
-#define ll_rw_block(rw,nr,bh) ll_rw_blk(rw,bh)
-	
+#define iget(_a, _b) __iget(_a, _b)
+
 extern void brelse();
 extern void bforget();
-extern struct inode *iget();
+/*extern struct inode *iget();*/
 
 /*
  * Attribute flags.  These should be or-ed together to figure out what

@@ -104,6 +104,7 @@ fd_set *res_ex;
 {
 	int count;
 	REGOPT select_table wait_table, *wait;
+	register __ptask currentp = current;
 	struct select_table_entry entry;
 	unsigned long set;
 	int i,j;
@@ -122,9 +123,9 @@ fd_set *res_ex;
 				goto end_check;
 			if (!(set & 1))
 				continue;
-			if (!current->files.fd[i])
+			if (!currentp->files.fd[i])
 				return -EBADF;
-			if (!current->files.fd[i]->f_inode)
+			if (!currentp->files.fd[i]->f_inode)
 				return -EBADF;
 			max = i;
 		}
@@ -136,9 +137,9 @@ end_check:
 	wait_table.entry = &entry;
 	wait = &wait_table;
 repeat:
-	current->state = TASK_INTERRUPTIBLE;
+	currentp->state = TASK_INTERRUPTIBLE;
 	for (i = 0 ; i < n ; i++) {
-		struct file * file = current->files.fd[i];
+		struct file * file = currentp->files.fd[i];
 		if (!file)
 			continue;
 		if (FD_ISSET(i,in) && check(SEL_IN,wait,file)) {
@@ -161,13 +162,13 @@ repeat:
 	wait = NULL;
 	/*printk("count=%d, current->timeout = %d/%d, signal=%d/%d, ~blocked=%d/%d\n", 
 	       count, current->timeout, current->signal, ~current->blocked);*/
-	if (!count && current->timeout && !(current->signal/* & ~current->blocked*/)) {
+	if (!count && currentp->timeout && !(currentp->signal/* & ~currentp->blocked*/)) {
 		schedule();
 		goto repeat;
 	}
 	/*printk("leaving select\n");*/
 	free_wait(&wait_table);
-	current->state = TASK_RUNNING;
+	currentp->state = TASK_RUNNING;
 	return count;
 }
 

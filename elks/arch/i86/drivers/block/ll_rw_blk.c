@@ -371,8 +371,10 @@ register struct buffer_head * bh;
    device. Currently the only restriction is that all buffers must belong to
    the same device */
 
-void ll_rw_blk(rw,bh)
+#ifdef MULTI_BH
+void ll_rw_block(rw,nr,bh)
 int rw;
+int nr;
 register struct buffer_head * bh[];
 {
 	unsigned int major;
@@ -381,18 +383,14 @@ register struct buffer_head * bh[];
 	int correct_size;
 #endif
 	struct blk_dev_struct * dev;
-#ifdef MULTI_BH
 	int i;
-#endif
 
-#ifdef MULTI_BH
 	/* Make sure that the first block contains something reasonable */
 	while (!*bh) {
 		bh++;
 		if (--nr <= 0)
 			return;
 	};
-#endif
 
 	dev = NULL;
 	if ((major = MAJOR(bh[0]->b_dev)) < MAX_BLKDEV)
@@ -422,7 +420,6 @@ register struct buffer_head * bh[];
 	   a dummy request for that device.  This will prevent the request
 	   from starting until we have shoved all of the blocks into the
 	   queue, and then we let it rip.  */
-#ifdef MULTI_BH
 	if (nr > 1)
 		plug_device(dev, &plug);
 	for (i = 0; i < nr; i++) {
@@ -441,14 +438,55 @@ sorry:
 		}
 	}
 	return;
-#else
-	make_request(major, rw, bh[0]);
+}
+#endif
+
+/* This function can be used to request a single buffer from a block
+   device. */
+
+void ll_rw_blk(rw,bh)
+int rw;
+register struct buffer_head * bh;
+{
+	unsigned int major;
+	struct request plug;
+#ifdef BLOAT_FS
+	int correct_size;
+#endif
+	struct blk_dev_struct * dev;
+
+	dev = NULL;
+	if ((major = MAJOR(bh->b_dev)) < MAX_BLKDEV)
+		dev = blk_dev + major;
+	if (!dev || !dev->request_fn) {
+		printk("ll_rw_blk: Trying to read nonexistent block-device %s (%ld)\n",
+		kdevname(bh->b_dev), bh->b_blocknr);
+		goto sorry;
+	}
+
+#ifdef BLOAT_FS
+	/* Determine correct block size for this device.  */
+	correct_size = BLOCK_SIZE;
+
+	/* Verify requested block sizes.  */
+	if (bh && bh->b_size != correct_size) {
+		printk("ll_rw_blk: device %s: only %d-char blocks implemented (%d)\n",
+		       kdevname(bh->b_dev),
+		       correct_size, bh->b_size);
+		goto sorry;
+	}
+#endif
+
+	/* If there are no pending requests for this device, then we insert
+	   a dummy request for that device.  This will prevent the request
+	   from starting until we have shoved all of the blocks into the
+	   queue, and then we let it rip.  */
+	make_request(major, rw, bh);
 	return;
 sorry:
-	bh[0]->b_dirty = 0;
-	bh[0]->b_uptodate = 0;
+	bh->b_dirty = 0;
+	bh->b_uptodate = 0;
 	return;
-#endif
 }
 
 

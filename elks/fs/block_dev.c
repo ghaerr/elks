@@ -92,7 +92,7 @@ int wr;
 			/*
 			 *	Writing: queue physical I/O
 			 */
-			ll_rw_block(WRITE, 1, &bh);
+			ll_rw_blk(WRITE, bh);
 			wait_on_buffer(bh);
 			if (!bh->b_uptodate)
 				write_error=1;

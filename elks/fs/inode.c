@@ -42,9 +42,10 @@ int i;
 static void insert_inode_free(inode)
 REGOPT struct inode *inode;
 {
-	inode->i_next = first_inode;
+	register struct inode * in;
+	in = inode->i_next = first_inode;
 	inode->i_prev = first_inode->i_prev;
-	inode->i_next->i_prev = inode;
+	in->i_prev = inode;
 	inode->i_prev->i_next = inode;
 	first_inode = inode;
 }
@@ -52,19 +53,20 @@ REGOPT struct inode *inode;
 static void remove_inode_free(inode)
 REGOPT struct inode *inode;
 {
+	register struct inode * in;
 	if (first_inode == inode)
 		first_inode = first_inode->i_next;
-	if (inode->i_next)
-		inode->i_next->i_prev = inode->i_prev;
+	if (in = inode->i_next)
+		in->i_prev = inode->i_prev;
 	if (inode->i_prev)
 		inode->i_prev->i_next = inode->i_next;
 	inode->i_next = inode->i_prev = NULL;
 }
 
 void insert_inode_hash(inode)
-REGOPT struct inode *inode;
+register struct inode *inode;
 {
-	REGOPT struct inode_hash_entry *h;
+	register struct inode_hash_entry *h;
 	h = hash(inode->i_dev, inode->i_ino);
 
 	inode->i_hash_next = h->inode;
@@ -75,9 +77,9 @@ REGOPT struct inode *inode;
 }
 
 static void remove_inode_hash(inode)
-REGOPT struct inode *inode;
+register struct inode *inode;
 {
-	REGOPT struct inode_hash_entry *h;
+	register struct inode_hash_entry *h;
 	h = hash(inode->i_dev, inode->i_ino);
 
 	if (h->inode == inode)
@@ -204,14 +206,16 @@ int fs_may_remount_ro(dev)
 kdev_t dev;
 {
 	REGOPT struct file * file;
+	register struct inode * inode;
 	int i;
 
 	/* Check that no files are currently opened for writing. */
 	for (file = file_array, i=0; i<nr_files; i++, file++) {
-		if (!file->f_count || !file->f_inode ||
-		    file->f_inode->i_dev != dev)
+		inode = file->f_inode;
+		if (!file->f_count || !inode ||
+		    inode->i_dev != dev)
 			continue;
-		if (S_ISREG(file->f_inode->i_mode) && (file->f_mode & 2))
+		if (S_ISREG(inode->i_mode) && (file->f_mode & 2))
 			return 0;
 	}
 	return 1;
@@ -220,26 +224,31 @@ kdev_t dev;
 static void write_inode(inode)
 REGOPT struct inode * inode;
 {
+	register struct super_block * sb = inode->i_sb;
 	if (!inode->i_dirt)
 		return;
 	wait_on_inode(inode);
 	if (!inode->i_dirt)
 		return;
-	if (!inode->i_sb || !inode->i_sb->s_op || !inode->i_sb->s_op->write_inode) {
+	if (!sb || !sb->s_op || !sb->s_op->write_inode) {
 		inode->i_dirt = 0;
 		return;
 	}
 	inode->i_lock = 1;	
-	inode->i_sb->s_op->write_inode(inode);
+	sb->s_op->write_inode(inode);
 	unlock_inode(inode);
 }
+/* I GOT TO HERE FIXME */
 
 static void read_inode(inode)
-REGOPT struct inode * inode;
+struct inode * inode;
 {
+	register struct super_block * sb = inode->i_sb;
+	register struct super_operations * sop = sb->s_op;
+
 	lock_inode(inode);
-	if (inode->i_sb && inode->i_sb->s_op && inode->i_sb->s_op->read_inode)
-		inode->i_sb->s_op->read_inode(inode);
+	if (sb && sop && sop->read_inode)
+		sop->read_inode(inode);
 	unlock_inode(inode);
 }
 
@@ -365,8 +374,9 @@ int bmap(inode,block)
 REGOPT struct inode * inode;
 int block;
 {
-	if (inode->i_op && inode->i_op->bmap)
-		return inode->i_op->bmap(inode,block);
+	register struct inode_operations * iop = inode->i_op;
+	if (iop && iop->bmap)
+		return iop->bmap(inode,block);
 	return 0;
 }
 
@@ -413,6 +423,7 @@ kdev_t dev;
 void iput(inode)
 REGOPT struct inode * inode;
 {
+	register struct super_operations * sop = inode->i_sb->s_op;
 	if (!inode)
 		return;
 	wait_on_inode(inode);
@@ -441,8 +452,8 @@ repeat:
 	}
 #endif	
 
-	if (inode->i_sb && inode->i_sb->s_op && inode->i_sb->s_op->put_inode) {
-		inode->i_sb->s_op->put_inode(inode);
+	if (inode->i_sb && sop && sop->put_inode) {
+		sop->put_inode(inode);
 		if (!inode->i_nlink)
 			return;
 	}
@@ -480,17 +491,21 @@ repeat:
 	for (inode = inode_block, i = 0; i<nr_inodes; inode++, i++) {
 		if (!inode->i_count && !inode->i_lock && !inode->i_dirt) {
 			best = inode;
-			if (!inode->i_lock && !inode->i_dirt) break;
+/* Is it really necessary to check this again? - Al */
+/*			if (!inode->i_lock && !inode->i_dirt) */
+				break;
 		}
 	}
-	inode = best;	
-	if (!inode) {
+/*	inode = best; */ /* If best is non-zero, inode == best already */
+	if (!best) {
 		printk("VFS: No free inodes - contact somebody other than Linus\n");
 		list_inode_status();
 		sleep_on(&inode_wait);
 		goto repeat;
 	}
-	if (inode->i_lock) {
+/* Here we are doing the same checks again. There cannot be a significant *
+ * race condition here - no time has passed */
+/*	if (inode->i_lock) {
 		wait_on_inode(inode);
 		goto repeat;
 	}
@@ -499,7 +514,7 @@ repeat:
 		goto repeat;
 	}
 	if (inode->i_count)
-		goto repeat;
+		goto repeat; */
 	clear_inode(inode);
 	inode->i_count = 1;
 	inode->i_nlink = 1;
@@ -548,17 +563,17 @@ struct inode * get_pipe_inode()
 }
 #endif
 
-struct inode *__iget(sb,nr,crossmntp)
+struct inode *__iget(sb,nr/* ,crossmntp*/)
 REGOPT struct super_block * sb;
 long nr;
-int crossmntp;
+/*int crossmntp;*/
 {
 	static struct wait_queue * update_wait = NULL;
-	REGOPT struct inode_hash_entry * h;
+	struct inode_hash_entry * h;
 	REGOPT struct inode * inode;
 	REGOPT struct inode * empty = NULL;
 
-	printd_iget3("iget called(%x, %d, %d)\n", sb, nr, crossmntp);
+	printd_iget3("iget called(%x, %d, %d)\n", sb, nr, 0 /* crossmntp*/);
 	if (!sb)
 		panic("VFS: iget with sb==NULL");
 	h = hash(sb->s_dev, nr);
@@ -599,7 +614,7 @@ found_it:
 		iput(inode);
 		goto repeat;
 	}
-	if (crossmntp && inode->i_mount) {
+	if (/*crossmntp &&*/ inode->i_mount) {
 		struct inode * tmp = inode->i_mount;
 		tmp->i_count++;
 		iput(inode);

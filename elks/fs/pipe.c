@@ -60,106 +60,106 @@ char * get_pipe_mem()
 
 
 static int pipe_read(inode, filp, buf, count)
-struct inode * inode;
+register struct inode * inode;
 struct file * filp;
 char * buf;
 int count;
 {
 	int chars = 0, size = 0, read = 0;
-	char *pipebuf;
+	register char *pipebuf;
 
 	printd_pipe("PIPE read called.\n");
 	if (filp->f_flags & O_NONBLOCK) {
-		if (PIPE_LOCK(*inode))
+		if ((inode->u.pipe_i.lock) )
 			return -EAGAIN;
-		if (PIPE_EMPTY(*inode))
-			if (PIPE_WRITERS(*inode))
+		if (((inode->u.pipe_i.len)  ==0) )
+			if ((inode->u.pipe_i.writers) )
 				return -EAGAIN;
 			else
 				return 0;
-	} else while (PIPE_EMPTY(*inode) || PIPE_LOCK(*inode)) {
-		if (PIPE_EMPTY(*inode)) {
-			if (!PIPE_WRITERS(*inode))
+	} else while (((inode->u.pipe_i.len)  ==0)  || (inode->u.pipe_i.lock) ) {
+		if (((inode->u.pipe_i.len)  ==0) ) {
+			if (! (inode->u.pipe_i.writers) )
 				return 0;
 		}
-		if (current->signal/* & ~current->blocked*/)
+		if (current->signal )
 			return -ERESTARTSYS;
-		interruptible_sleep_on(&PIPE_WAIT(*inode));
+		interruptible_sleep_on(& (inode->u.pipe_i.wait) );
 	}
-	PIPE_LOCK(*inode)++;
-	while (count>0 && (size = PIPE_SIZE(*inode))) {
-		chars = PIPE_MAX_RCHUNK(*inode);
+	(inode->u.pipe_i.lock) ++;
+	while (count>0 && (size = (inode->u.pipe_i.len)  )) {
+		chars = (PIPE_BUF - (inode->u.pipe_i.start) ) ;
 		if (chars > count)
 			chars = count;
 		if (chars > size)
 			chars = size;
 		read += chars;
-		pipebuf = PIPE_BASE(*inode)+PIPE_START(*inode);
-		PIPE_START(*inode) += chars;
-		PIPE_START(*inode) &= (PIPE_BUF-1);
-		PIPE_LEN(*inode) -= chars;
+		pipebuf = (inode->u.pipe_i.base) + (inode->u.pipe_i.start) ;
+		(inode->u.pipe_i.start)  += chars;
+		(inode->u.pipe_i.start)  &= (PIPE_BUF-1);
+		(inode->u.pipe_i.len)  -= chars;
 		count -= chars;
 		memcpy_tofs(buf, pipebuf, chars );
 		buf += chars;
 	}
-	PIPE_LOCK(*inode)--;
-	wake_up_interruptible(&PIPE_WAIT(*inode));
+	(inode->u.pipe_i.lock) --;
+	wake_up_interruptible(& (inode->u.pipe_i.wait) );
 	if (read) {
 		inode->i_atime = CURRENT_TIME;
 		return read;
 	}
-	if (PIPE_WRITERS(*inode))
+	if ((inode->u.pipe_i.writers) )
 		return -EAGAIN;
 	return 0;
 }
 
 static int pipe_write(inode, filp, buf, count)
-struct inode * inode;
+register struct inode * inode;
 struct file * filp;
 char * buf;
 int count;
 {
 	int chars = 0, free = 0, written = 0;
-	char *pipebuf;
+	register char *pipebuf;
 
 	printd_pipe("PIPE write called.\n");
-	if (!PIPE_READERS(*inode)) { /* no readers */
+	if (! (inode->u.pipe_i.readers) ) {  
 		send_sig(SIGPIPE,current,0);
 		return -EPIPE;
 	}
-	/* if count <= PIPE_BUF, we have to make it atomic */
+	 
 	if (count <= PIPE_BUF)
 		free = count;
 	else
-		free = 1; /* can't do it atomically, wait for any free space */
+		free = 1;  
 	while (count>0) {
-		while ((PIPE_FREE(*inode) < free) || PIPE_LOCK(*inode)) {
-			if (!PIPE_READERS(*inode)) { /* no readers */
+		while (((PIPE_BUF - (inode->u.pipe_i.len) )  < free) || (inode->u.pipe_i.lock) ) {
+			if (! (inode->u.pipe_i.readers) ) {  
 				send_sig(SIGPIPE,current,0);
 				return written? written :-EPIPE;
 			}
-			if (current->signal/* & ~current->blocked*/)
+			if (current->signal )
 				return written? written :-ERESTARTSYS;
 			if (filp->f_flags & O_NONBLOCK)
 				return written? written :-EAGAIN;
-			interruptible_sleep_on(&PIPE_WAIT(*inode));
+			interruptible_sleep_on(& (inode->u.pipe_i.wait) );
 		}
-		PIPE_LOCK(*inode)++;
-		while (count>0 && (free = PIPE_FREE(*inode))) {
-			chars = PIPE_MAX_WCHUNK(*inode);
+		(inode->u.pipe_i.lock) ++;
+		while (count>0 && (free = (PIPE_BUF - (inode->u.pipe_i.len) ) )) {
+			chars = (PIPE_BUF - (((inode->u.pipe_i.start) + (inode->u.pipe_i.len) )&	(PIPE_BUF-1)) ) ;
 			if (chars > count)
 				chars = count;
 			if (chars > free)
 				chars = free;
-			pipebuf = PIPE_BASE(*inode)+PIPE_END(*inode);
+			pipebuf = (inode->u.pipe_i.base) + (((inode->u.pipe_i.start) + (inode->u.pipe_i.len) )&	(PIPE_BUF-1)) ;
 			written += chars;
-			PIPE_LEN(*inode) += chars;
+			(inode->u.pipe_i.len)  += chars;
 			count -= chars;
 			memcpy_fromfs(pipebuf, buf, chars );
 			buf += chars;
 		}
-		PIPE_LOCK(*inode)--;
-		wake_up_interruptible(&PIPE_WAIT(*inode));
+		(inode->u.pipe_i.lock) --;
+		wake_up_interruptible(& (inode->u.pipe_i.wait) );
 		free = 1;
 	}
 	inode->i_ctime = inode->i_mtime = CURRENT_TIME;
@@ -167,33 +167,33 @@ int count;
 }
 
 static void pipe_read_release(inode, filp)
-struct inode * inode;
+register struct inode * inode;
 struct file * filp;
 {
 	printd_pipe("PIPE read_release called.\n");
-        PIPE_READERS(*inode)--;
-        wake_up_interruptible(&PIPE_WAIT(*inode));
+        (inode->u.pipe_i.readers) --;
+        wake_up_interruptible(& (inode->u.pipe_i.wait) );
 }
 
 static void pipe_write_release(inode, filp)
-struct inode * inode;
+register struct inode * inode;
 struct file * filp;
 {
 	printd_pipe("PIPE write_release called.\n");
-	PIPE_WRITERS(*inode)--;
-	wake_up_interruptible(&PIPE_WAIT(*inode));
+	(inode->u.pipe_i.writers) --;
+	wake_up_interruptible(& (inode->u.pipe_i.wait) );
 }
 
 static void pipe_rdwr_release(inode, filp)
-struct inode * inode;
-struct file * filp;
+register struct inode * inode;
+register struct file * filp;
 {
 	printd_pipe("PIPE rdwr_release called.\n");
 	if (filp->f_mode & FMODE_READ)
-		PIPE_READERS(*inode)--;
+		(inode->u.pipe_i.readers) --;
 	if (filp->f_mode & FMODE_WRITE)
-		PIPE_WRITERS(*inode)--;
-	wake_up_interruptible(&PIPE_WAIT(*inode));
+		(inode->u.pipe_i.writers) --;
+	wake_up_interruptible(& (inode->u.pipe_i.wait) );
 }
 
 static int pipe_read_open(inode, filp)
@@ -201,7 +201,7 @@ struct inode * inode;
 struct file * filp;
 {
 	printd_pipe("PIPE read_open called.\n");
-	PIPE_READERS(*inode)++;
+	(inode->u.pipe_i.readers) ++;
 	return 0;
 }
 
@@ -210,19 +210,19 @@ struct inode * inode;
 struct file * filp;
 {
 	printd_pipe("PIPE write_open called.\n");
-        PIPE_WRITERS(*inode)++;
+        (inode->u.pipe_i.writers) ++;
         return 0;
 }
 
 static int pipe_rdwr_open(inode, filp)
-struct inode * inode;
-struct file * filp;
+register struct inode * inode;
+register struct file * filp;
 {
 	printd_pipe("PIPE rdwr called.\n");
 	if (filp->f_mode & FMODE_READ)
-		PIPE_READERS(*inode)++;
+		(inode->u.pipe_i.readers) ++;
 	if (filp->f_mode & FMODE_WRITE)
-		PIPE_WRITERS(*inode)++;
+		(inode->u.pipe_i.writers) ++;
         return 0;
 }
 
@@ -307,7 +307,8 @@ int do_pipe(fd)
 int * fd;
 {
 	struct inode * inode;
-	struct file * f1, * f2;
+	register struct file * f1;
+	register struct file * f2;
 	int error;
 	int i,j;
 

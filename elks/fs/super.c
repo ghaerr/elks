@@ -119,6 +119,7 @@ void sync_supers(dev)
 kdev_t dev;
 {
 	register struct super_block * sb;
+	register struct super_operations * sop;
 
 	for (sb = super_blocks + 0 ; sb < super_blocks + NR_SUPER ; sb++) 
 	{
@@ -131,8 +132,9 @@ kdev_t dev;
 			continue;
 		if (dev && (dev != sb->s_dev))
 			continue;
-		if (sb->s_op && sb->s_op->write_super)
-			sb->s_op->write_super(sb);
+		sop = sb->s_op;
+		if (sop && sop->write_super)
+			sop->write_super(sb);
 	}
 }
 
@@ -159,6 +161,7 @@ void put_super(dev)
 kdev_t dev;
 {
 	register struct super_block * sb;
+	register struct super_operations * sop;
 
 	if (dev == ROOT_DEV) {
 		panic("put_super: root\n");
@@ -171,8 +174,9 @@ kdev_t dev;
 		       kdevname(dev));
 		return;
 	}
-	if (sb->s_op && sb->s_op->put_super)
-		sb->s_op->put_super(sb);
+	sop = sb->s_op;
+	if (sop && sop->put_super)
+		sop->put_super(sb);
 }
 #if 0
 int sys_ustat(dev,ubuf)
@@ -257,6 +261,7 @@ static int do_umount(dev)
 kdev_t dev;
 {
 	register struct super_block * sb;
+	register struct super_operations * sop;
 	int retval;
 	
 	if (dev==ROOT_DEV) {
@@ -283,8 +288,9 @@ kdev_t dev;
 	sb->s_covered = NULL;
 	iput(sb->s_mounted);
 	sb->s_mounted = NULL;
-	if (sb->s_op && sb->s_op->write_super && sb->s_dirt)
-		sb->s_op->write_super(sb);
+	sop = sb->s_op;
+	if (sop && sop->write_super && sb->s_dirt)
+		sop->write_super(sb);
 	put_super(dev);
 	return 0;
 }
@@ -301,13 +307,13 @@ kdev_t dev;
  */
 
 int sys_umount(name)
-register char * name;
+char * name;
 {
 	struct inode * inode;
+	register struct inode * inodep;
 	kdev_t dev;
 	int retval;
 	struct inode dummy_inode;
-	register struct file_operations * fops;
 
 	if (!suser())
 		return -EPERM;
@@ -317,38 +323,41 @@ register char * name;
 		if (retval)
 			return retval;
 	}
-	if (S_ISBLK(inode->i_mode)) {
-		dev = inode->i_rdev;
-		if (IS_NODEV(inode)) {
-			iput(inode);
+	inodep = inode;
+	if (S_ISBLK(inodep->i_mode)) {
+		dev = inodep->i_rdev;
+		if (IS_NODEV(inodep)) {
+			iput(inodep);
 			return -EACCES;
 		}
 	} else {
-		if (!inode->i_sb || inode != inode->i_sb->s_mounted) {
-			iput(inode);
+		register struct super_block * sb = inodep->i_sb;
+		if (!sb || inodep != sb->s_mounted) {
+			iput(inodep);
 			return -EINVAL;
 		}
-		dev = inode->i_sb->s_dev;
-		iput(inode);
+		dev = sb->s_dev;
+		iput(inodep);
 		memset(&dummy_inode, 0, sizeof(dummy_inode));
 		dummy_inode.i_rdev = dev;
-		inode = &dummy_inode;
+		inodep = &dummy_inode;
 	}
 	if (MAJOR(dev) >= MAX_BLKDEV) {
-		iput(inode);
+		iput(inodep);
 		return -ENXIO;
 	}
 	if (!(retval = do_umount(dev)) && dev != ROOT_DEV) {
+		register struct file_operations * fops;
 		fops = get_blkfops(MAJOR(dev));
 		if (fops && fops->release)
-			fops->release(inode,NULL);
+			fops->release(inodep,NULL);
 #ifdef NOT_YET
 		if (MAJOR(dev) == UNNAMED_MAJOR)
 			put_unnamed_dev(dev);
 #endif			
 	}
-	if (inode != &dummy_inode)
-		iput(inode);
+	if (inodep != &dummy_inode)
+		iput(inodep);
 	if (retval)
 		return retval;
 	fsync_dev(dev);
@@ -373,31 +382,33 @@ int flags;
 char * data;
 {
 	struct inode * dir_i;
+	register struct inode * dirp;
 	register struct super_block * sb;
 	int error;
 
 	error = namei(dir,&dir_i, IS_DIR, 0);
+	dirp = dir_i;
 	if (error)
 		return error;
-	if (dir_i->i_count != 1 || dir_i->i_mount) {
-		iput(dir_i);
+	if (dirp->i_count != 1 || dirp->i_mount) {
+		iput(dirp);
 		return -EBUSY;
 	}
 	if (!fs_may_mount(dev)) {
-		iput(dir_i);
+		iput(dirp);
 		return -EBUSY;
 	}
 	sb = read_super(dev,type,flags,data,0);
 	if (!sb) {
-		iput(dir_i);
+		iput(dirp);
 		return -EINVAL;
 	}
 	if (sb->s_covered) {
-		iput(dir_i);
+		iput(dirp);
 		return -EBUSY;
 	}
-	sb->s_covered = dir_i;
-	dir_i->i_mount = sb->s_mounted;
+	sb->s_covered = dirp;
+	dirp->i_mount = sb->s_mounted;
 	return 0;		/* we don't iput(dir_i) - see umount */
 }
 
@@ -414,6 +425,7 @@ int flags;
 char *data;
 {
 	int retval;
+	register struct super_operations * sop = sb->s_op;
 	
 	if (!(flags & MS_RDONLY) && sb->s_dev)
 		return -EACCES;
@@ -422,8 +434,8 @@ char *data;
 	if ((flags & MS_RDONLY) && !(sb->s_flags & MS_RDONLY))
 		if (!fs_may_remount_ro(sb->s_dev))
 			return -EBUSY;
-	if (sb->s_op && sb->s_op->remount_fs) {
-		retval = sb->s_op->remount_fs(sb, &flags, data);
+	if (sop && sop->remount_fs) {
+		retval = sop->remount_fs(sb, &flags, data);
 		if (retval)
 			return retval;
 	}

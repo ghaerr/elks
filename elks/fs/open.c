@@ -52,14 +52,15 @@ unsigned long length;
 {
 	int error;
 	struct iattr newattrs;
+	register struct inode_operations * iop = inode->i_op;
 
 /*	down(&inode->i_sem);*/
 	newattrs.ia_size = length;
 	newattrs.ia_valid = ATTR_SIZE | ATTR_CTIME;
 	error = notify_change(inode, &newattrs);
 	if (!error) {
-		if (inode->i_op && inode->i_op->truncate)
-			inode->i_op->truncate(inode);
+		if (iop && iop->truncate)
+			iop->truncate(inode);
 	}
 /*	up(&inode->i_sem);*/
 	return error;
@@ -70,25 +71,27 @@ char * path;
 unsigned long length;
 {
 	struct inode * inode;
+	register struct inode * inodep;
 	int error;
 
 	error = namei(path,&inode, NOT_DIR, MAY_WRITE);
+	inodep = inode;
 	if (error)
 		return error;
-	if (IS_RDONLY(inode)) {
-		iput(inode);
+	if (IS_RDONLY(inodep)) {
+		iput(inodep);
 		return -EROFS;
 	}
 #ifdef BLOAT_FS
-	error = get_write_access(inode);
+	error = get_write_access(inodep);
 	if (error) {
-		iput(inode);
+		iput(inodep);
 		return error;
 	}
 #endif
-	error = do_truncate(inode, length);
-	put_write_access(inode);
-	iput(inode);
+	error = do_truncate(inodep, length);
+	put_write_access(inodep);
+	iput(inodep);
 	return error;
 }
 
@@ -120,13 +123,15 @@ struct timeval * utimes;
 {
 	int error;
 	struct inode * inode;
+	register struct inode * inodep;
 	struct iattr newattrs;
 
 	error = namei(filename,&inode,0,0);
+	inodep = inode;
 	if (error)
 		return error;
-	if (IS_RDONLY(inode)) {
-		iput(inode);
+	if (IS_RDONLY(inodep)) {
+		iput(inodep);
 		return -EROFS;
 	}
 	/* Don't worry, the checks are done in inode_change_ok() */
@@ -134,20 +139,20 @@ struct timeval * utimes;
 	if (utimes) {
 		struct timeval times[2];
 		if (error = verified_memcpy_fromfs(&times, utimes, sizeof(times))) {
-			iput(inode);
+			iput(inodep);
 			return error;
 		}
 		newattrs.ia_atime = times[0].tv_sec;
 		newattrs.ia_mtime = times[1].tv_sec;
 		newattrs.ia_valid |= ATTR_ATIME_SET | ATTR_MTIME_SET;
 	} else {
-		if ((error = permission(inode,MAY_WRITE)) != 0) {
-			iput(inode);
+		if ((error = permission(inodep,MAY_WRITE)) != 0) {
+			iput(inodep);
 			return error;
 		}
 	}
-	error = notify_change(inode, &newattrs);
-	iput(inode);
+	error = notify_change(inodep, &newattrs);
+	iput(inodep);
 	return error;
 }
 #endif /* 0 */
@@ -162,18 +167,19 @@ char * filename;
 int mode;
 {
 	struct inode * inode;
+	register __ptask currentp = current;
 	int old_euid, old_egid;
 	int res;
 
 	if (mode != (mode & S_IRWXO))	/* where's F_OK, X_OK, W_OK, R_OK? */
 		return -EINVAL;
-	old_euid = current->euid;
-	old_egid = current->egid;
-	current->euid = current->uid;
-	current->egid = current->gid;
+	old_euid = currentp->euid;
+	old_egid = currentp->egid;
+	currentp->euid = currentp->uid;
+	currentp->egid = currentp->gid;
 	res = namei(filename,&inode, 0, mode);
-	current->euid = old_euid;
-	current->egid = old_egid;
+	currentp->euid = old_euid;
+	currentp->egid = old_egid;
 	return res;
 }
 
@@ -214,33 +220,37 @@ char * filename;
 mode_t mode;
 {
 	struct inode * inode;
+	register struct inode * inodep;
 	int error;
 	struct iattr newattrs;
+	register struct iattr * nap = &newattrs;
 
 	error = namei(filename,&inode,0,0);
+	inodep = inode;
 	if (error)
 		return error;
-	if (IS_RDONLY(inode)) {
-		iput(inode);
+	if (IS_RDONLY(inodep)) {
+		iput(inodep);
 		return -EROFS;
 	}
 	if (mode == (mode_t) -1)
-		mode = inode->i_mode;
-	newattrs.ia_mode = (mode & S_IALLUGO) | (inode->i_mode & ~S_IALLUGO);
-	newattrs.ia_valid = ATTR_MODE | ATTR_CTIME;
-	inode->i_dirt = 1;
-	error = notify_change(inode, &newattrs);
-	iput(inode);
+		mode = inodep->i_mode;
+	nap->ia_mode = (mode & S_IALLUGO) | (inodep->i_mode & ~S_IALLUGO);
+	nap->ia_valid = ATTR_MODE | ATTR_CTIME;
+	inodep->i_dirt = 1;
+	error = notify_change(inodep, nap);
+	iput(inodep);
 	return error;
 }
 
 int do_chown(inode, user, group)
-struct inode * inode;
+register struct inode * inode;
 uid_t user;
 gid_t group;
 {
-int error;
-struct iattr newattrs;
+	int error;
+	struct iattr newattrs;
+	register struct iattr * nap = &newattrs;
 
 	if (IS_RDONLY(inode)) {
 		iput(inode);
@@ -250,26 +260,26 @@ struct iattr newattrs;
 		user = inode->i_uid;
 	if (group == (gid_t) -1)
 		group = inode->i_gid;
-	newattrs.ia_mode = inode->i_mode;
-	newattrs.ia_uid = user;
-	newattrs.ia_gid = group;
-	newattrs.ia_valid =  ATTR_UID | ATTR_GID | ATTR_CTIME;
+	nap->ia_mode = inode->i_mode;
+	nap->ia_uid = user;
+	nap->ia_gid = group;
+	nap->ia_valid =  ATTR_UID | ATTR_GID | ATTR_CTIME;
 	/*
 	 * If the owner has been changed, remove the setuid bit
 	 */
 	if (user != inode->i_uid && (inode->i_mode & S_ISUID)) {
-		newattrs.ia_mode &= ~S_ISUID;
-		newattrs.ia_valid |= ATTR_MODE;
+		nap->ia_mode &= ~S_ISUID;
+		nap->ia_valid |= ATTR_MODE;
 	}
 	/*
 	 * If the group has been changed, remove the setgid bit
 	 */
 	if (group != inode->i_gid && (inode->i_mode & S_ISGID)) {
-		newattrs.ia_mode &= ~S_ISGID;
-		newattrs.ia_valid |= ATTR_MODE;
+		nap->ia_mode &= ~S_ISGID;
+		nap->ia_valid |= ATTR_MODE;
 	}
 	inode->i_dirt = 1;
-	error = notify_change(inode, &newattrs);
+	error = notify_change(inode, nap);
 	iput(inode);
 	return(error);
 }
@@ -294,7 +304,7 @@ int fd;
 uid_t user;
 gid_t group;
 {
-struct file * filp;
+	register struct file * filp;
 
 	if (fd >= NR_OPEN || !(filp=current->files.fd[fd]) || !(filp->f_inode))
 		return -EBADF;
@@ -357,10 +367,15 @@ int mode;
 	f->f_reada = 0;
 #endif
 	f->f_op = NULL;
-	if (inode->i_op)
-		f->f_op = inode->i_op->default_file_ops;
-	if (f->f_op && f->f_op->open) {
-		error = f->f_op->open(inode,f);
+	{
+	register struct inode_operations * iop = inode->i_op;
+	if (iop)
+		f->f_op = iop->default_file_ops;
+	}
+	{
+	register struct file_operations * fop = f->f_op;
+	if (fop && fop->open) {
+		error = fop->open(inode,f);
 		if (error) {
 			goto cleanup_all;
 		}
@@ -385,8 +400,9 @@ int mode;
 		return fd;
 	}
 	error = -EMFILE;
-	if (f->f_op && f->f_op->release)
-		f->f_op->release(inode,f);
+	if (fop && fop->release)
+		fop->release(inode,f);
+	}
 cleanup_all:
 #ifdef BLOAT_FS
 	if (f->f_mode & FMODE_WRITE)
@@ -457,13 +473,14 @@ int sys_close(fd)
 unsigned int fd;
 {	
 	register struct file * filp;
+	register struct file_struct * cfiles = &current->files;
 
 	if (fd >= NR_OPEN)
 		return -EBADF;
-	clear_bit(fd, &current->files.close_on_exec);
-	if (!(filp = current->files.fd[fd]))
+	clear_bit(fd, &cfiles->close_on_exec);
+	if (!(filp = cfiles->fd[fd]))
 		return -EBADF;
-	current->files.fd[fd] = NULL;
+	cfiles->fd[fd] = NULL;
 	return (close_fp (filp));
 }
 

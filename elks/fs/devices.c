@@ -71,14 +71,16 @@ unsigned int major;
 #endif
 int register_chrdev(major,name, fops)
 unsigned int major;
-register char * name;
+char * name;
 register struct file_operations *fops;
 {
+	register struct device_struct * dev = &chrdevs[major];
+
 	if (major == 0) {
 		for (major = MAX_CHRDEV-1; major > 0; major--) {
-			if (chrdevs[major].fops == NULL) {
-				chrdevs[major].name = name;
-				chrdevs[major].fops = fops;
+			if (dev->fops == NULL) {
+				dev->name = name;
+				dev->fops = fops;
 				return major;
 			}
 		}
@@ -86,23 +88,25 @@ register struct file_operations *fops;
 	}
 	if (major >= MAX_CHRDEV)
 		return -EINVAL;
-	if (chrdevs[major].fops && chrdevs[major].fops != fops)
+	if (dev->fops && dev->fops != fops)
 		return -EBUSY;
-	chrdevs[major].name = name;
-	chrdevs[major].fops = fops;
+	dev->name = name;
+	dev->fops = fops;
 	return 0;
 }
 
 int register_blkdev(major,name,fops)
 unsigned int major;
-register char * name;
+char * name;
 register struct file_operations *fops;
 {
+	register struct device_struct * dev = &blkdevs[major];
+
 	if (major == 0) {
 		for (major = MAX_BLKDEV-1; major > 0; major--) {
-			if (blkdevs[major].fops == NULL) {
-				blkdevs[major].name = name;
-				blkdevs[major].fops = fops;
+			if (dev->fops == NULL) {
+				dev->name = name;
+				dev->fops = fops;
 				return major;
 			}
 		}
@@ -110,10 +114,10 @@ register struct file_operations *fops;
 	}
 	if (major >= MAX_BLKDEV)
 		return -EINVAL;
-	if (blkdevs[major].fops && blkdevs[major].fops != fops)
+	if (dev->fops && dev->fops != fops)
 		return -EBUSY;
-	blkdevs[major].name = name;
-	blkdevs[major].fops = fops;
+	dev->name = name;
+	dev->fops = fops;
 	return 0;
 }
 #if 0

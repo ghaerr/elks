@@ -71,20 +71,21 @@ struct buffer_head *bh;
 void put_last_lru(bh)
 register struct buffer_head *bh;
 {
+	register struct buffer_head * bhn;
 	if(bh_llru==bh)
 		return;
 	/*
 	 *	Unhook
 	 */
+	if(bhn = bh->b_next_lru)
+		bhn->b_prev_lru=bh->b_prev_lru;
 	if(bh->b_prev_lru)
-		bh->b_prev_lru->b_next_lru=bh->b_next_lru;
-	if(bh->b_next_lru)
-		bh->b_next_lru->b_prev_lru=bh->b_prev_lru;
+		bh->b_prev_lru->b_next_lru=bhn;
 	/*
 	 *	Alter head
 	 */
 	if(bh==bh_lru)
-		bh_lru=bh->b_next_lru;
+		bh_lru=bhn;
 	/*
 	 *	Put on lru end
 	 */
@@ -98,7 +99,8 @@ static void sync_buffers(dev,wait)
 kdev_t dev;
 int wait;
 {
-	struct buffer_head * bh;
+	register struct buffer_head * bh;
+	
 
 	for(bh=bh_chain;bh!=NULL;bh=bh->b_next)
 	{
@@ -122,7 +124,7 @@ int wait;
 		 *	Do the stuff
 		 */
 		bh->b_count++;
-		ll_rw_block(WRITE, 1, &bh);
+		ll_rw_blk(WRITE, bh);
 		bh->b_count--;
 	}
 	return;
@@ -190,7 +192,7 @@ static struct buffer_head *get_free_buffer()
 {
 	do
 	{
-		struct buffer_head *bh=bh_lru;
+		register struct buffer_head *bh=bh_lru;
 		while(bh)
 		{
 			if(bh->b_count==0 && !bh->b_dirty && !bh->b_lock && !bh->b_data)
@@ -328,10 +330,10 @@ struct buffer_head * buf;
  * it's own... */
 
 struct buffer_head * readbuf(bh)
-struct buffer_head * bh;
+register struct buffer_head * bh;
 {
 	if (buffer_uptodate(bh)) return bh;
-	ll_rw_block(READ, 1, &bh);
+	ll_rw_blk(READ, bh);
 	wait_on_buffer(bh);
 	if (buffer_uptodate(bh)) return bh;
 	brelse(bh);
@@ -347,7 +349,7 @@ struct buffer_head * bread(dev,block)
 kdev_t dev;
 unsigned long block;
 {
-#ifdef BLOAT_FS /* getblk never returns non-null */
+#ifdef BLOAT_FS /* getblk never returns null */
 	register struct buffer_head * bh;
 
 	if (!(bh = getblk(dev, block))) {
@@ -394,7 +396,7 @@ unsigned int filesize;
 	else
 	{
 		/* Request the read for these buffers, and then release them */
-		ll_rw_block(READ, 1, &bha);
+		ll_rw_blk(READ, bha);
 		brelse(bha);
 	}
 	/* Wait for this buffer, and then continue on */
