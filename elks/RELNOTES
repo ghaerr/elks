@@ -3,6 +3,9 @@ VERSION 0.0.82 NOTES
 
 	Update to irq handling code which allows a parameter to be passed
 	to the handler contributed by David Murn.
+	Code optimisation of filesystem.
+	Merge of code for booting ELKS on the SIBO (Psion series 3)
+	architecture.
 
 VERSION 0.0.81 NOTES
 --------------------
