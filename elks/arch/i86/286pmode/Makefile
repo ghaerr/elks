@@ -53,13 +53,3 @@ distdir:
 
 #########################################################################
 ### Dependencies:
-
-main.o: main.c /X/elks/include/arch/irq.h \
- /X/elks/include/linuxmt/types.h /X/elks/include/arch/types.h \
- /X/elks/include/linuxmt/config.h /X/elks/include/linuxmt/autoconf.h \
- /X/elks/include/linuxmt/kdev_t.h /X/elks/include/linuxmt/major.h \
- /X/elks/include/linuxmt/posix_types.h \
- /X/elks/include/arch/posix_types.h /X/elks/include/arch/asm.h \
- descriptor.h tss.h
-
-
