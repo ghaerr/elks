@@ -466,7 +466,6 @@ kdev_t dev;
 void iput(inode)
 REGOPT struct inode * inode;
 {
-	register struct super_operations * sop = inode->i_sb->s_op;
 	if (inode) {
 		wait_on_inode(inode);
 		if (!inode->i_count) {
@@ -492,10 +491,13 @@ repeat:
 		}
 #endif	
 
-		if (inode->i_sb && sop && sop->put_inode) {
+		if (inode->i_sb) {
+			struct super_operations *sop = inode->i_sb->s_op;
+			if (sop && sop->put_inode) {
 			sop->put_inode(inode);
 			if (!inode->i_nlink)
 				return;
+		}
 		}
 
 #ifndef CONFIG_NOFS
@@ -504,7 +506,6 @@ repeat:
 			wait_on_inode(inode);
 			goto repeat;
 		}
-#else
 #endif
 		inode->i_count--;
 		nr_free_inodes++;

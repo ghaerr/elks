@@ -112,6 +112,10 @@ int virtual;
 			filp->f_count++;
 		}
 	}
+
+	/* Increase the reference count for program text inode - tgm */
+	t->t_inode->i_count++;
+
 #ifndef CONFIG_NOFS
 	t->fs.root->i_count++;
 	t->fs.pwd->i_count++;

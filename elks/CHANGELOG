@@ -6,6 +6,11 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Mon Mar 26 16:29 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
+
+	* Fix long standing file system bug: EBUSY when unmounting,
+	and related sys_access() bug.
+
 Fri Mar 03 11:44 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Final changes for 0.0.83

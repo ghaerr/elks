@@ -212,6 +212,8 @@ int mode;
 	currentp->euid = currentp->uid;
 	currentp->egid = currentp->gid;
 	res = namei(filename,&inode, 0, mode);
+	if (0 == res)
+	    iput(inode);
 	currentp->euid = old_euid;
 	currentp->egid = old_egid;
 	return res;

@@ -376,7 +376,11 @@ blah:
 	}
 #endif
 	current->t_endseg=(__pptr)len;
+ 
+/* Decrease reference count of old text inode and assign the new one - tgm */
+ 	iput(current->t_inode); 
 	current->t_inode=inode;
+
 	arch_setup_kernel_stack(current);
 
 #ifdef CONFIG_EXEC_SUGID

@@ -81,7 +81,9 @@ int status;
 	/* Send control back to the parent */
 	parent->child_lastend = current->pid;
 	parent->lastend_status = status;
-	/* Free the pwd and root inodes */
+
+	/* Free the text, pwd, and root inodes */
+	iput(current->t_inode);
 #ifndef CONFIG_NOFS
 	iput(current->fs.root);
 	iput(current->fs.pwd);
