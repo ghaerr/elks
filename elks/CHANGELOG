@@ -39,7 +39,8 @@ Sun Dec  9 10:54:34 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 	  simplify testing of patches. They were originally included as
 	  part of my testing the harmonisation of the compilation tools,
 	  and were committed by mistake, but have been left in as they
-	  are so useful.
+	  are so useful. Refer to Documentation/Development-notes.txt for
+	  notes for new developers.
 	* Simplified elks/scripts/lxdialog/Makefile where it locates the
 	  curses or ncurses include headers.
 	* Confirmed that updating from the CVS archive and immediately
