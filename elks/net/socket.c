@@ -13,6 +13,8 @@
 
 #include <linuxmt/config.h>
 
+#ifdef SYS_SOCKET
+
 #include <linuxmt/errno.h>
 #include <linuxmt/socket.h>
 #include <linuxmt/net.h>
@@ -493,3 +495,5 @@ int protocol;
 	return(fd);
 }
 
+
+#endif

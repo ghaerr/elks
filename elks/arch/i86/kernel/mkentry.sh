@@ -70,7 +70,7 @@ sys_call_table_end:
 	.globl _syscall
 _syscall:
 	cmp  ax,#((sys_call_table_end - sys_call_table)/2)
-	ja   _no_syscall
+	ja   _nsyscall
 	! look up address and jump to function
 	mov  bx,ax
 	shl  bx,#1		! multiply by 2
@@ -79,8 +79,7 @@ _syscall:
 *
 *	Unimplemented calls
 *	
-_no_syscall:
-	mov	ax,#-38
-	ret
+_nsyscall:
+	br  _no_syscall
 #endasm
 Trailer

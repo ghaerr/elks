@@ -75,3 +75,15 @@ int *end;
 	*start += ((unsigned int)(_endbss+15))>>4;
 }
 
+#asm
+#ifndef CONFIG_SOCKET
+export _sys_socket
+_sys_socket:
+#endif
+export _no_syscall
+_no_syscall:
+	mov ax,#-38
+	ret
+#endasm
+
+
