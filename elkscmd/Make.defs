@@ -1,0 +1,29 @@
+DEV86_DIR=/usr/src/linux-86
+ELKSCMD_DIR=/usr/src/elkscmd
+ELKS_DIR=/usr/src/elks
+
+PLATFORM=i86-ELKS
+
+ifeq ($(PLATFORM),i86-ELKS)
+	CC=bcc
+	CFLAGS=-0 -O -ansi
+	LDFLAGS=-s
+	CHECK=gcc -c -o .null.o -Wall -pedantic
+endif
+
+ifeq ($(PLATFORM),default)
+	CC=cc
+	CFLAGS=
+	CHECK=cc -c -o .null.o
+endif
+
+
+TARGET_FS=/usr/src/elkscmd/root
+TARGET_MNT=/elks
+TARGET_BLKS=720
+MKFS=/sbin/mkfs.minix
+MKFS_OPTS=-n14
+#Include the line below if TARGET_FS is a file, not a device
+LOOP=-o loop
+
+MINIX_BOOT=$(DEV86_DIR)/bootblocks

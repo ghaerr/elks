@@ -1,0 +1,13 @@
+April 14, 1993
+
+This is release 1.0 of sash, my stand-alone shell for Linux.
+
+The purpose of this program is to make replacing of shared libraries
+easy and safe.  It does this by firstly being linked statically, and
+secondly by including many of the standard utilities within itself.
+Read the sash.1 documentation for more details.
+
+Type "make install" to build and install the program and man page.
+
+David I. Bell
+dbell@pdact.pd.necisa.oz.au

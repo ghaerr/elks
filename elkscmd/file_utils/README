@@ -1,0 +1,58 @@
+This is version 0.1 of my port of the the GNU fileutils. This package
+consists of clones of some of the file utilities rewritten to be as compact
+as possible for use in the elks project. Included in this version are pretty
+complete versions of mkdir, mkfifo mknod, rmdir, sync and touch and partly
+complete but usable versions of rm and mv.
+
+While the code is based around the GNU fileutils 3.14, with inspiration from
+tiny-utils, I have re-written alot of code, and this should not be
+considered to be a version of fileutils.
+
+To compile all the utilities type make, and they will be built and copied
+into the bin directory. From here, install where you want to use them.
+
+Almost all of the utilities have had features removed to make them smaller.
+All of them no longer recognise the --help and --version switches and many
+have had other switches removed. Switches must be specified in the form -s,
+not --switch as they can be in the GNU utils. The options available for each
+util are as follows. Please view the relevant man pages for info on what
+these options do. (Eventually I will write man pages for these, if noone
+else does it first.) If I have removed an option which you think is vital,
+please E-mail ajr@ecs.soton.ac.uk me letting me know why and I may add it, 
+or better still send me a patch.
+
+mkdir [-p] dir...
+
+mkfifo file-name...
+
+mknod filename {bcu} major minor
+mknod filename p
+
+rmdir [-p] dir...
+
+sync
+
+The following two are incomplete and should be used with great care. They
+have no switches and virtually no error checking, but are usable if you need
+them.
+
+mv source dest
+
+rm file-name..
+
+Please note above, mv will only move one file, and then destination must
+also be a filename, and it does not check to see if destination already
+exists. rm can only remove files, and does not check anything about them.
+
+I will be releasing better versions of these very soon. The reason these
+simples versions are being releases is that I decided to release what I had
+done as soon as minish started working on elks.
+
+If you think that there is anything wrong or missing about any of this
+package please let me know and I will fix it, but remember that the purpose
+fo the package is a set of very small utilities to be used on low poweres
+machines running elks, and features that carry alot of bulk will need a very
+good reason to be included.
+
+Alistair Riddoch
+ajr@ecs.soton.ac.uk

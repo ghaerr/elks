@@ -1,0 +1,93 @@
+
+This is an experimental port of the Almquist shell (ash) for ELKS and bcc.
+It was ported from the MINIX version found in ftp.funet.fi:/pub/minix/src.
+
+Copyright (C) 1989 Kenneth Almquist.
+Copyright (C) 1991 The Regents of the University of California.
+
+Ash is distributed under the terms of the BSD License and the Ash General
+Public License. See the file bltin/LICENSE for more information.
+
+
+
+Change log:
+
+--------------------------------------------------------------
+19980209 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
+
+(*) Initial port (quite trivial).
+    Adjusted makefiles for bcc, defined sig_t as int, kicked out some
+    stuff not supported by bcc (look for FIXME in comments).
+
+--------------------------------------------------------------
+19980216 Vincent Zweije <zweije@xs4all.nl>
+
+FIXES:
+
+(*) waitpid() does not modify the status parameter.
+    Initialised status to 0 to fake successful command completion.
+
+(*) waitpid() does not obey the WNOHANG flag.
+    Return -1 with EINVAL if WNOHANG requested.
+
+(*) ioctl() does not support the TCGETS operation.
+    Therefore, bcc's libc's isatty() does not work well.
+    Added a substitute eisatty() for an extra check: assume
+        that a character device is a tty (probably okay on elks)
+
+(*) signal() is not supported.
+    Made arrangements for ash not to abort on failed signal setting.
+    Consequently, signals are just left alone if not available.
+
+TODO:
+
+(*) Extend waitpid() (wait4() system call)
+    to handle status and non-blocking.
+    Status is necessary for reliable script programming.
+    Non-blocking is necessary for job control (probably not that
+        important).
+
+(*) Extend ioctl() to handle the TCGETS operation.
+    Possibly temporarily move the eisatty() fix to bcc's libc.
+    Very useful for interactive programs.
+
+(*) Implement signal handling.
+    Necessary for tty signals (^C,^Z) (or the trap builtin).
+
+(*) Implement pipes.
+    Ash handled their lack reasonably gracefully.
+    Very important for some powerful but easy to use IPC.
+
+--------------------------------------------------------------
+19980218 Claudio Matsuoka <claudio@pos.inf.ufpr.br>
+
+(*) Workaround for bcc miscompilation in bltin/expr.c.
+    bcc complained about "invalid indirect to indirect" and "invalid label"
+    errors.
+
+(*) Workaround for bcc miscompilation in bltin/regexp.c.
+    bcc complained about "invalid indirect to indirect" errors.
+
+--------------------------------------------------------------
+19980225 Vincent Zweije <zweije@xs4all.nl>
+
+FIXES:
+
+(*) elks now supports the TCGETS ioctl(), so libc's isatty() works again.
+    Removed the eisatty() substitute again.
+
+(*) system call read() clobbers register SI containing register variable
+    p in preadbuffer() in input.c.  Made workaround.
+
+TODO:
+
+(*) Find out where the read()-clobbers-SI bug originates.
+
+--------------------------------------------------------------
+19980603
+
+(*) Optimised using register variables. Code is now about 5K smaller.
+
+(*) Added #define _SMALL_ in shell.h, which when defined removes some
+    features that are no use to elks, such as checking for new mail.
+--------------------------------------------------------------
