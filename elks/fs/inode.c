@@ -505,9 +505,9 @@ repeat:
 			goto repeat;
 		}
 #else
+#endif
 		inode->i_count--;
 		nr_free_inodes++;
-#endif
 	}
 	return;
 }
@@ -517,7 +517,7 @@ static void list_inode_status()
 	int i;
 
 	for (i = 0; i < nr_inodes ; i++) {
-	   printk("#%d: count=%d device=%d inode_nr=%ld\n", i,
+	   printk("[#%d: c=%d d=%x nr=%ld]", i,
 	   inode_block[i].i_count, inode_block[i].i_dev, inode_block[i].i_ino);
 	}
 }

@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Wed Jan 12 18:43 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Fixed problem with inodes not released.
+
 Wed Jan 12 18:27 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Important fix to SIBO keyboard driver by Simon Wood.
