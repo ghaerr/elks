@@ -10,7 +10,30 @@
  */
 
 #ifndef CONFIG_ROOTDEV
-#define CONFIG_ROOTDEV 0x380
+/* 
+ * 0x0380 /dev/fd0   bios floppy
+ * 0x0100 /dev/ram0  ramdisk ram0      
+ * 0x0301 /dev/bda1  bios disk0, part 1
+ */
+#define CONFIG_ROOTDEV 0x0302
+#endif
+
+/*
+ * Use this option to download a ramdisk (/dev/ram0) with the netboot
+ * protocol. This ramdisk can be used as mini root disk (128KB) or
+ * as auxilary disk.
+ */
+#undef CONFIG_PRELOAD_RAMDISK
+
+/* 
+ * The ramdisk is placed in the seg 0x6000 and 0x7000. So the ram is 
+ * reduced to 384KB main memory. This is only for test and experimental
+ * use.
+ */
+#ifdef CONFIG_PRELOAD_RAMDISK
+#define RAM_REDUCE 0x4000L
+#else
+#define RAM_REDUCE 0x0000L
 #endif
 
 /*
@@ -38,9 +61,14 @@
  */
 
 /* Don't touch these, unless you really know what your doing. */
-#define DEF_INITSEG	0x0100
+#define DEF_INITSEG	0x0100   /* original 0x0100
+				  * for netboot use for example 
+				  * 0x5000, as 0x0100 cannot be used
+				  * in connection to the netboot
+				  * loader
+				  */
 #define DEF_SYSSEG	0x1000
-#define DEF_SETUPSEG	0x0120
+#define DEF_SETUPSEG	DEF_INITSEG + 0x20
 #define DEF_SYSSIZE	0x2F00
 
 /* internal svga startup constants */
