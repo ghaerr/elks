@@ -20,6 +20,8 @@
 #include "timer.h"
 #include "mylib.h"
 
+timeq_t Now;
+
 extern int cbs_in_time_wait;
 extern int cbs_in_user_timeout;
 
@@ -232,10 +234,10 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	/* TODO: Check seqnum for security */
 	rmv_all_retrans(cb);
-	if (cb->state == TS_CLOSE_WAIT)
+	if (cb->state == TS_CLOSE_WAIT) {
 	    ENTER_TIME_WAIT(cb);
-	else
-	    	cb->state = TS_CLOSED;
+	} else
+	    cb->state = TS_CLOSED;
 	tcpdev_sock_state(cb, SS_UNCONNECTED);
 	return;
     }

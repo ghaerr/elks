@@ -100,7 +100,7 @@ static void tcpdev_accept(void)
     struct tdb_accept *db = sbuf;
     struct tdb_accept_ret *ret_data;
     struct tcpcb_s *cb;
-    __u16  sock = sbuf->sock;
+    __u16  sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state != TS_LISTEN) {
@@ -285,7 +285,7 @@ static void tcpdev_write(void)
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
     struct tdb_return_data *ret_data;
-    __u16  sock = sbuf->sock;
+    __u16  sock = db->sock;
 
     db = sbuf;
     sock = db->sock;
@@ -331,7 +331,7 @@ static void tcpdev_release(void)
     struct tdb_release *db = sbuf;
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
-    __u16 sock = sbuf->sock;
+    __u16 sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
     if (n) {

@@ -64,12 +64,13 @@ void ktcp_run(void)
 	FD_ZERO(&fdset);
 	FD_SET(sfd, &fdset);
 	FD_SET(tcpdevfd, &fdset);
-	select(sfd > tcpdevfd ? sfd + 1 : tcpdevfd + 1, &fdset, NULL, NULL, tv);
-		
+	select(sfd > tcpdevfd ? sfd + 1 : tcpdevfd + 1,
+	       &fdset, NULL, NULL, tv);
+
 	Now = timer_get_time();
 
 	tcp_update();
-			
+
 	if (FD_ISSET(sfd, &fdset))
 	    slip_process();
 
@@ -82,6 +83,7 @@ void ktcp_run(void)
 #ifdef DEBUG
 	tcpcb_printall();
 #endif
+
     }
 }
 
@@ -97,7 +99,7 @@ int main(int argc,char **argv)
     if((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)
 	exit(1);
 
-    if ((sfd = slip_init(argv[2])) < 0) {
+    if ((sfd = slip_init(argv[2])) < 0)
 	exit(2);
 
     ip_init();

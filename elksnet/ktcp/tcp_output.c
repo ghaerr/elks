@@ -25,7 +25,7 @@ static struct tcp_retrans_list_s *retrans_list;
 
 __u16 tcp_chksum(struct iptcp_s *h)
 {
-    __u32 sum = htons(len);
+    __u32 sum = htons(h->tcplen);
     __u16 *data = (__u16) h->tcph, len = h->tcplen;
 
     /* I will optimize this for 8086 later */
