@@ -299,15 +299,13 @@ int del_timer(register struct timer_list *timer)
     return ret;
 }
 
-#if 0
-
-static void init_timer(struct timer_list *timer)
+void init_timer(struct timer_list *timer)
 {
     timer->tl_next = NULL;
     timer->tl_prev = NULL;
 }
 
-static void add_timer(register struct timer_list *timer)
+void add_timer(register struct timer_list *timer)
 {
     flag_t flags;
     struct timer_list *next = tl_list.tl_next;
@@ -328,14 +326,14 @@ static void add_timer(register struct timer_list *timer)
 	next = next->tl_next;
     }
     timer->tl_prev = prev;
+
 #if 0
     timer->tl_next = NULL;
 #endif
+
     prev->tl_next = timer;
     restore_flags(flags);
 }
-
-#endif
 
 static void run_timer_list(void)
 {
@@ -358,6 +356,7 @@ static void run_timer_list(void)
 }
 
 /* maybe someday I'll implement these profiling things -PL */
+
 #if 0
 
 static void do_it_prof(struct task_struct *p, jiff_t ticks)
@@ -401,6 +400,7 @@ static void update_times(void)
 	calc_load(ticks);	/* don't care for now */
 	update_wall_time(ticks);	/* this either */
 #endif
+
 	if (p->pid) {
 	    p->counter -= ticks;
 	    if (p->counter < 0) {
@@ -410,6 +410,7 @@ static void update_times(void)
 	}
     }
 }
+
 #endif
 
 void do_timer(struct pt_regs *regs)
