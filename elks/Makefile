@@ -118,6 +118,7 @@ fs/romfs/romfs.a:
 	${MAKE} -C fs/romfs romfs.a
 
 kernel/kernel.a:	include/linuxmt/compiler-generated.h
+	@sed 's/^/ Q> /' < include/linuxmt/compiler-generated.h
 	${MAKE} -C kernel kernel.a
 
 lib/lib.a:

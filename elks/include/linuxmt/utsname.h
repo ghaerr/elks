@@ -2,11 +2,11 @@
 #define LX86_LINUXMT_UTSNAME_H
 
 struct utsname {
-    char sysname[9];
-    char nodename[65];
-    char release[15];
-    char version[42];
-    char machine[9];
+    char sysname[16];
+    char nodename[80];
+    char release[16];
+    char version[48];
+    char machine[16];
 };
 
 extern struct utsname system_utsname;

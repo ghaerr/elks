@@ -33,6 +33,16 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
+Thu Jun  6 22:17:00 BST 2002	Riley Williams <Riley@Williams.Name>
+
+	* Redid fix to deal with over-long kernel version names, and
+	  made sure there is plenty of room for future expansion in
+	  all of the fields in that structure.
+	* Verified that current codebase both compiles and boots on my
+	  286 based laptop, with the exception that ktcp still fails.
+
+		*** NOTE - KTCP DOES NOT CURRENTLY WORK ***
+
 Tue Jun  4 21:10:13 BST 2002	Riley Williams <Riley@Williams.Name>
 
 	* Updated Documentation/function.lst to reflect the current
