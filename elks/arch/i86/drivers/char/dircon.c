@@ -474,6 +474,8 @@ char Ch;
                  p++;
                  continue;
                  }
+                 C->Attr=A_DEFAULT;
+                 break;
              }	
              /* C->Attr = 0x92; TEST should print blinking blue bg and green fg*/ 
   }
