@@ -65,8 +65,8 @@ _ip_calc_chksum:
 	push	di
 	
 	mov	cx, 6[bp]
-	sar	cx, 1
-	sar	cx, 1
+	shr	cx, 1
+	shr	cx, 1
 	mov	di, 4[bp]
 	xor	ax, ax
 loop1:

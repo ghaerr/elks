@@ -150,14 +150,14 @@ loop2:
 	adc	ax, [si]
         inc si
         inc si
-        dec	cx
-        jg	loop2
+        loop	loop2
 
 	adc	ax, 6[bp]
 	adc	ax, 8[bp]
 	adc	ax, $A[bp]
 	adc	ax, $C[bp]	
 	adc	ax, #$600
+        adc     ax, 0
 
         not	ax
 	
