@@ -119,7 +119,6 @@ int key;
          		AddQueue( ESC );
          		AddQueue( 'D' );
          		return;
-			return;
       		default :
          		AddQueue( key );
          		return;
