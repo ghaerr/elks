@@ -236,8 +236,10 @@ struct tcpcb_s	*cb;
 	th->acknum = htonl(cb->rcv_nxt);
 	
 	cb->send_nxt += cb->datalen;
-	
-	th->window = htons((__u16)CB_BUF_SPACE(cb));
+
+	len = (__u16)CB_BUF_SPACE(cb);
+	if(len == 0)len == 1;	/* Never advertise zero window size */
+	th->window = htons(len);
 	th->urgpnt = 0;
 	th->flags = cb->flags;	
 	
