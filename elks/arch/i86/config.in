@@ -100,14 +100,14 @@ mainmenu_option next_comment
 	endmenu
     fi
 
-#    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
+    if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 	mainmenu_option next_comment
 	    comment 'Block Devices'
 
 	    bool 'System has a floppy drive'	CONFIG_HW_FLOPPY_DRIVE   y
 	    bool 'System has a hard drive'	CONFIG_HW_HARD_DRIVE     y
 	endmenu
-#    fi
+    fi
 
 #    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 #	mainmenu_option next_comment
