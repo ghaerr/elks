@@ -7,8 +7,8 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/serial_reg.h>
 #include <linuxmt/ntty.h>
-#include <linuxmt/debug.h>
 #include <linuxmt/termios.h>
+#include <linuxmt/debug.h>
 
 #include <arch/io.h>
 
@@ -220,9 +220,7 @@ int rs_ioctl(struct tty *tty, int cmd, char *arg)
     register char *retvalp = 0;
 
     /* few sanity checks should be here */
-#if 0
-    printk("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd);
-#endif
+    debug2("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd);
     switch (cmd) {
 	/* Unlike Linux we use verified_memcpy*fs() which calls verify_area() for us */
     case TCSETS:
@@ -441,4 +439,3 @@ struct tty_ops rs_ops = {
     NULL,
     rs_ioctl
 };
-

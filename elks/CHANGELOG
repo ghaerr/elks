@@ -22,7 +22,7 @@ Ken Martwick          kenm@efn.org                      12 May 2002
 M Warner Losh         imp@village.org                   20 Jan 2002
 Manuel Novoa III      mjn3@codepoet.org                 18 Jun 2002-25 Jun 2002
 Mario Frasca                                            20 Jan 2000-14 Feb 2000
-Paul Nasrat           pauln@truemesh.com                29 Oct 2001-24 Apr 2002
+Paul Nasrat           pauln@truemesh.com                29 Oct 2001-12 Jul 2002
 Per Olofsson          MagerValp@cling.gu.se             25 Feb 2000
 Peter L Vachuska      pvachusk@nconnect.net             13 Aug 2001
 Richard Wallman       murkygoth@murkygoth.uklinux.net    2 Apr 2002
@@ -34,11 +34,14 @@ Thomas McWilliams     tgm9999@yahoo.com                 27 Aug 1999- 2 Apr 2001
 
 -------------------------------------------------------------------------------
 
-Fri Jul 12 19:32:16 EEST 2002 Paul Nasrat <pauln@truemesh.com>
+Fri Jul 12 19:32:16 EEST 2002	Paul Nasrat <pauln@truemesh.com>
 
-	* undefined symbol: _rs_ops 
-	  This was defined in a #ifdef for CONFIG_CONSOLE_SERIAL and a patch is
-	  attached which moves it outside.
+	* This is ELKS 0.1.1-pre3
+
+	* Moved the definition of _rs_ops outside of a block excluded
+	  by #ifdef CONFIG_CONSOLE_SERIAL command.
+
+	* KTCP NOW WORKS !!!
 
 Wed Jun 26 04:11:35 BST 2002	Riley Williams <Riley@Williams.Name>
 
