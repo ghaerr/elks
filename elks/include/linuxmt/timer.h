@@ -91,5 +91,7 @@ struct timer_list {
 extern void init_timer();
 extern void add_timer();
 extern int  del_timer();
+extern void timer_tick (/*struct pt_regs * regs*/);
+extern void enable_timer_tick(/* void */);
 
 #endif /* _LINUXMT_TIMER_H */

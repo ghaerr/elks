@@ -1,8 +1,8 @@
 /*
- *	linux/arch/i86/kernel/irq.c
+ *  linux/arch/i86/kernel/irq.c
  *
- *	Copyright (C) 1992 Linus Torvalds
- *	Modified for Linux/8086 by Alan Cox Nov 1995.
+ *  Copyright (C) 1992 Linus Torvalds
+ *  Modified for Linux/8086 by Alan Cox Nov 1995.
  *
  * This file contains the code used by various IRQ handling routines:
  * asking for different IRQ's should be done through these routines
@@ -13,7 +13,11 @@
  * 9/1999 For ROM debuggers you can configure that not all interrupts
  *        disable.
  * 9/1999 The 100 Hz system timer 0 can configure for variable input
- *        frequentcy. Christian Mardm"oller (chm@kdt.de)
+ *        frequency. Christian Mardm"oller (chm@kdt.de)
+ *
+ * 4/2001 Use macros to directly generate timer constants based on the 
+ *        value of HZ macro. This works the same for both the 8253 and 
+ *        8254 timers. - Thomas McWilliams  <tmwo@users.sourceforge.net> 
  */
 
 #include <linuxmt/config.h>
@@ -22,6 +26,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/timex.h>
+#include <linuxmt/timer.h>
 #include <linuxmt/hdreg.h>
 
 #include <arch/system.h>
@@ -29,19 +34,12 @@
 #include <arch/io.h>
 #include <arch/keyboard.h>
 
-extern void timer_tick();
-extern void enable_timer_tick();
-
-
 struct irqaction 
 {
 	void (*handler)();
-/*	unsigned long mask; */ /* Mask unused so removed to save space */
 	void *dev_id;
 };
 
-#define IRQF_BAD	1		/* This IRQ is bad if it occurs */
-	
 static struct irqaction irq_action[32];
 
 unsigned char cache_21 = 0xff;
@@ -165,23 +163,7 @@ _restore_flags:
 #endasm
 #endif
 
-#if 0
-void icli()
-{
-#asm
-	cli
-#endasm
-}
 
-void isti()
-{
-#asm
-	sti
-#endasm
-}
-#endif
-
-		
 int request_irq(irq, handler, dev_id)
 int irq;
 void (*handler);
@@ -216,8 +198,6 @@ void *dev_id;
 	icli();
 	action->handler = handler;
 	action->dev_id = dev_id;
-/*	action->mask = 0; */ /* Mask unused, so removed to save space */
-/*	action->name = devname; */ /* name unsed - ditto */
 	enable_irq(irq);
 	restore_flags(flags);
 	return 0;
@@ -250,7 +230,6 @@ unsigned int irq;
 	action->handler = NULL;
 	action->dev_id = NULL;
 	action->flags = 0;
-/*	action->mask = 0; */ /* Mask unused so removed to save space */
 	action->name = NULL;
 	restore_flags(flags);
 }
@@ -258,10 +237,28 @@ unsigned int irq;
 
 /*
  *	IRQ setup.
- *
  */
 
-          
+/*
+These 8253/8254 macros generate proper timer constants based on the timer
+tick macro HZ which is defined in timex.h (usually 100 Hz).
+
+The PC timer chip can be programmed to divide its reference frequency by 
+a 16 bit unsigned number. The reference frequency of 1193181.8 Hz happens 
+to be 1/3 of the NTSC color burst frequency.  In fact, the hypothetical 
+exact reference frequency for the timer is 39375000/33 Hz. The macros
+use scaled fixed point arithmetic for greater accuracy. 
+*/
+
+#define TIMER_CMDS_PORT 0x43  /* command port */
+#define TIMER_DATA_PORT 0x40  /* data port    */
+
+#define TIMER_MODE0 0x30   /* timer 0, binary count, mode 0, lsb/msb */
+#define TIMER_MODE2 0x34   /* timer 0, binary count, mode 2, lsb/msb */ 
+
+#define TIMER_LO_BYTE (__u8)(((5+(11931818L/(HZ)))/10)%256)
+#define TIMER_HI_BYTE (__u8)(((5+(11931818L/(HZ)))/10)/256)
+
 void init_IRQ()
 {
 	register struct irqaction *irq = irq_action + 16;
@@ -272,55 +269,40 @@ void init_IRQ()
 
 #ifndef CONFIG_ARCH_SIBO
 	/* Stop the timer */
-	outb_p(0x30,0x43);
-	outb_p(0,0x40);
-	outb_p(0,0x40);
+	outb (TIMER_MODE0, TIMER_CMDS_PORT);
+	outb (0, TIMER_DATA_PORT);
+	outb (0, TIMER_DATA_PORT);
 #endif
 
 	/* Old IRQ 8 handler is nuked in this routine */
 	irqtab_init();			/* Store DS */
 
-	/*
-	 *	Set off the initial timer interrupt handler
-	 */
-	 
-	if(request_irq(0, timer_tick,NULL))
+	/* Set off the initial timer interrupt handler */
+	if (request_irq(0, timer_tick,NULL))
 		panic("Unable to get timer");
 
-	/*
-	 *	Re-start the timer only after irq is set
-	 */
- 
+	/* Re-start the timer only after irq is set */
 #ifdef CONFIG_ARCH_SIBO
 	enable_timer_tick();
-#else /* CONFIG_ARCH_SIBO */
-	/* set the clock to 100 Hz */
-	outb_p(0x36,0x43);		/* binary, mode 2, LSB/MSB, ch 0 */
-#ifdef ROM_8253_100HZ
-	outb_p(ROM_8253_100HZ&0xff,0x40);	/* LSB */
-	outb_p(ROM_8253_100HZ>>8,0x40);		/* MSB */
 #else
-	outb_p(156,0x40);		/* LSB */
-	outb_p(46,0x40);		/* MSB */
-#endif
-
+	/* set the clock frequency */
+	outb (TIMER_MODE2, TIMER_CMDS_PORT);   
+	outb (TIMER_LO_BYTE, TIMER_DATA_PORT); /* LSB */
+	outb (TIMER_HI_BYTE, TIMER_DATA_PORT); /* MSB */
+	
 #ifdef CONFIG_CONSOLE_DIRECT
-
-	/*
-	 *	Set off the initial keyboard interrupt handler
-	 */
+	/* Set off the initial keyboard interrupt handler */
 
 	if (request_irq(1, keyboard_irq,NULL)) {
 		panic("Unable to get keyboard");
 	}
 
 #else /* CONFIG_CONSOLE_DIRECT */
-	enable_irq(1);		/* Cascade */
+	enable_irq(1);		/* Keyboard */
 #endif /* CONFIG_CONSOLE_DIRECT */
 
-	/*
-	 *	Enable the drop through interrupts.
-	 */
+	/* Enable the drop through interrupts. */
+
 #ifndef CONFIG_ARCH_PC_XT	 	
 	enable_irq(HD_IRQ);	/* AT ST506 */
 	enable_irq(15);		/* AHA1542 */

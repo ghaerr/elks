@@ -6,6 +6,11 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Mon Apr 02 14:06 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
+
+	* Generate 8254 timer constants directly from definition of HZ.
+	Also some minor miscellaneous cleanups.
+
 Wed Mar 28 08:37 UTC 2001   Thomas McWilliams <tgm9999@yahoo.com>
 
 	* Change broken definition of pid_t from unsigned to signed.

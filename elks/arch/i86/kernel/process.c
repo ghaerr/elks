@@ -57,16 +57,15 @@
   .text
   
 ! This is from irqtab.c
-/* This code is either in codesegment or ROM_KERNEL_IRQDATA 
-/  The CS-Code must always placed in irqtab.c, because the
-/  linker doesnt store them on block
-/ */
+/*
+ *  This code is either in codesegment or ROM_KERNEL_IRQDATA 
+ *  The CS-Code must always placed in irqtab.c, because the
+ *  linker doesnt store them on block.
+ */
 
-	.extern IRQdata_offs
 	.extern cseg_stashed_ds
-	
 	.extern cseg_stashed_si  ;now in irqtab.c
-        .extern cseg_sc_tmp       
+	.extern cseg_sc_tmp       
         
         
 /* and now code */

@@ -65,7 +65,6 @@ struct task_struct
 	struct mm_struct mm;		/* Memory blocks */
 	pid_t pgrp;
 	struct tty * tty;
-/*	__u8 link_count;		/* Symlink loop counter, now global */
 	struct task_struct *p_parent, *p_prevsib, *p_nextsib, *p_child;	 
   	struct wait_queue * child_wait;
 	pid_t child_lastend;

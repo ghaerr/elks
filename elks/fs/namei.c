@@ -395,7 +395,6 @@ struct inode * base;
 	}
 	if (!error) {
 		if (flag & O_TRUNC) {
-			struct iattr newattrs;
 
 #ifndef get_write_access
 			if ((error = get_write_access(inode))) {
@@ -404,12 +403,15 @@ struct inode * base;
 			}
 #endif
 #ifdef USE_NOTIFY_CHANGE
-			newattrs.ia_size = 0;
-			newattrs.ia_valid = ATTR_SIZE;
-			if ((error = notify_change(inode, &newattrs))) {
-				put_write_access(inode);
-				iput(inode);
-				return error;
+			{
+			    struct iattr newattrs;
+    			newattrs.ia_size = 0;
+    			newattrs.ia_valid = ATTR_SIZE;
+    			if ((error = notify_change(inode, &newattrs))) {
+    				put_write_access(inode);
+    				iput(inode);
+    				return error;
+    			}
 			}
 #else
 			inode->i_size = 0L;
@@ -517,7 +519,6 @@ int mode;
 		iput(dirp);
 		printd_fsmkdir("mkdir: complete\n");
 	}
-mkdir_end:
 	return error;
 #endif /* CONFIG_FS_RO */
 }

@@ -1,4 +1,6 @@
 #include <linuxmt/config.h>
+#include <linuxmt/timer.h>
+
 /*
  *	Test timer tick routine
  */
