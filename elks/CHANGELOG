@@ -6,11 +6,15 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Mon Aug 20 08:22:34 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Second draft of Documentation/HTML/Technical/vt100.html
+
 Mon Aug 20 01:22:32 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Reformatted and spellchecked various documents.
-	* Added first draft of Documentation/HTML/vt100.html which
-	  will document the requirements of a VT-100 interface as
+	* Added first draft of Documentation/HTML/Technical/vt100.html
+	  which will document the requirements of a VT100 driver as
 	  extracted from the Digital VT100 User Guide.
 
 Fri Aug 17 17:43:14 GMT 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
