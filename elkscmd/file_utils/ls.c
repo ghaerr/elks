@@ -491,23 +491,19 @@ int main(argc, argv)
   if (argv[1])
     flags |= LSF_MULT;
 
-
-  if(argc == 1 && recursive){
+  for(;*argv; argv++)
+  {
   	if (LSTAT(*argv, &statbuf) < 0) {
     	perror(*argv);
     	exit(1);
   	}
-  	if (S_ISDIR(statbuf.st_mode))
-		{
-    	recursive--;
-    	getfiles( *argv, &files );
+  	if (recursive && S_ISDIR(statbuf.st_mode))
+    	pushStack(&dirs, strdup(*argv) );
+    else
+      pushStack(&files, strdup(*argv) );
 		}
 		if(recursive)
-			printf("%s:\n", *argv);
-  }
-  else
-  while(*argv)
-    pushStack(&files, strdup(*argv++) );
+    recursive--;
 	 
   sortStack(&files);
   
@@ -519,7 +515,7 @@ int main(argc, argv)
 
     while(!isEmptyStack(&files)){
       name = popStack(&files);
-      TRACESTRING(name);
+      TRACESTRING(name)
 
       if (LSTAT(name, &statbuf) < 0) {
         perror(name);
@@ -544,6 +540,7 @@ int main(argc, argv)
       }
       printf("\n%s:\n", name);
       free(name);
+      if(recursive)
       recursive--;
     }
   } while(!isEmptyStack(&files) || !isEmptyStack(&dirs));
