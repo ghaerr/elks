@@ -146,7 +146,7 @@ load_setup:
 	int 	0x13	
 
 	xor	dx, dx			! drive 0, head 0
-	mov	cl,#0x02		! sector 2, track 0
+	mov	cx,#0x0002		! sector 2, track 0
 	mov	bx,#0x0200		! address = 512, in INITSEG
 	mov	ah,#0x02		! service 2, nr of sectors
 	mov	al,setup_sects		! (assume all on head 0, track 0)
@@ -187,7 +187,7 @@ probe_loop:
 	lodsb
 	cbw				! extend to word
 	mov	sectors, ax
-	cmp	si,#disksizes+4
+	cmp	si,#disksizes_end
 	jae	got_sectors		! if all else fails, try 9
 	xchg	ax, cx			! cx = track and sector
 	xor	dx, dx			! drive 0, head 0
@@ -496,19 +496,21 @@ kill_motor:
 	pop dx
 	ret
 
+.org 0x1DD
 sectors:
 	.word 0
 
 disksizes:
 	.byte 36,18,15,9
+disksizes_end:
 
-.org 495-11
+.org 0x1E3
 msg1:
-	.byte 13,10
+	.byte 13,10,7
 	.ascii "ELKS Boot"
 msg1end:
 
-.org 495
+.org 0x1EF
 	.word SETUPSEG
 setup_sects:
 	.byte SETUPSECS
@@ -526,4 +528,4 @@ root_dev:
 	.word ROOT_DEV
 boot_flag:
 	.word 0xAA55
-.org 512
+.org 0x200

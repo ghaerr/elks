@@ -15,3 +15,7 @@ Reduce code size.
 
 Re-write wait queues so they don't sit on the kernel stack, but sit on the task
 structure instead.
+
+Simplify device request functions as they can only be asked to get 1 block.
+
+Fix select.
