@@ -7,6 +7,11 @@ be longer than the lines of dashes.
 Al
 ------------------------------------------------------------------------------
 
+Sun Oct  7 20:28:37 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Added `make tar` and skeletons for `make rpm` and `make deb` to
+	  base Makefile.
+
 Fri Oct  5 01:08:14 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Removed files created in compilation from CVS archive, and thus

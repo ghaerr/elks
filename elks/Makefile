@@ -214,6 +214,42 @@ lint:
 	@echo
 
 #########################################################################
+# Specification files for archives.
+
+elks.spec: Makefile
+	@echo -n "Creating elks.spec file: "
+	@echo  > .spec "Name:        elks"
+	@echo >> .spec "Version:     $(DIST)"
+	@echo >> .spec "Release:     `date +%Y-%m-%d`"
+	@echo >> .spec "Copyright:   GPL"
+	@echo >> .spec "Group:       System Environment/Kernel"
+	@echo >> .spec "Source:      http://sourceforge.net/projects/elks"
+	@echo >> .spec "Buildroot:   %{_tmppath}/elks/"
+	@echo >> .spec
+	@echo >> .spec "Summary:     Embedded Linux Kernel Subset"
+	@echo >> .spec
+	@echo >> .spec "%description"
+	@echo >> .spec "Welcome to the exciting world of Linux-8086, ELKS, or the Embeddable"
+	@echo >> .spec "Linux Kernel Subset! This is a project which will eventually produce"
+	@echo >> .spec "a Linux-like Operating System for the 8086 (186, 286) as well as for"
+	@echo >> .spec "the Psion series of processors."
+	@echo >> .spec
+	@echo >> .spec "%prep"
+	@echo >> .spec
+	@echo >> .spec "%build"
+	@echo >> .spec "make elks"
+	@echo >> .spec
+	@echo >> .spec "%clean"
+	@echo >> .spec 'rm -rf "$(DISTDIR).tar.gz"'
+	@echo >> .spec
+	@echo >> .spec "%files"
+	@echo >> .spec "%defattr(-,root,root,-)"
+	@echo >> .spec
+	@echo >> .spec "%changelog"
+	@mv -f .spec elks.spec
+	@echo Done.
+
+#########################################################################
 # miscellaneous
 
 clean:
@@ -252,22 +288,14 @@ distclean: clean nodep
 	@echo This ELKS source tree has been cleaned ready for distribution.
 	@echo
 
-dist: distdir
-	-chmod -R a+r $(DISTDIR)
-	tar chozf $(DISTDIR).tar.gz $(DISTDIR)
-	-rm -rf $(DISTDIR)
-	@echo
-	@echo The ELKS source tarball $(DISTDIR).tar.gz can be distributed.
-	@echo
-
-distdir:
+dist:
 	-rm -rf $(DISTDIR)
 	mkdir $(DISTDIR)
 	-chmod 777 $(DISTDIR)
 	cp -pf BUGS CHANGELOG COPYING Makefile $(DISTDIR)
 	cp -pf nodeps README RELNOTES TODO $(DISTDIR)
 	(cd $(DISTDIR); mkdir Documentation fs include init kernel lib net)
-	(cd $(DISTDIR); mkdir $(ARCH_DIR) scripts)
+	(cd $(DISTDIR); mkdir -p $(ARCH_DIR) scripts)
 	(cd $(DISTDIR)/fs; mkdir elksfs minix romfs)
 	(cd $(DISTDIR)/include; mkdir arch linuxmt)
 	make -C $(ARCH_DIR) distdir
@@ -302,6 +330,25 @@ dep:
 	@echo
 	@echo All ELKS dependencies are now configured.
 	@echo
+
+#########################################################################
+# Create distribution archives.
+
+deb:	tar
+	@echo
+	@echo I do not yet know how to create *.deb archives, sorry.
+	@echo
+
+rpm:	tar rpm.spec
+	@echo
+	@echo I do not yet know how to create *.rpm archives, sorry.
+	@echo I have, however, created the spec file required to do so.
+	@echo
+
+tar:	dist
+	-chmod -R a+r $(DISTDIR)
+	tar chozf $(DISTDIR).tar.gz $(DISTDIR)
+	-rm -rf $(DISTDIR)
 
 #########################################################################
 # Configuration stuff
