@@ -48,9 +48,6 @@ int wait;
 
 	printd_chq5("CHQ: chq_addch(%d, %c, %d) q->len=%d q->tail=%d\n", q, c, 0, q->len, q->tail);
 
-/* If waiting is required then the code below must be put back in */
-/* And the wait argument put back */
-#if 1
 	if (q->len == q->size) {
 		if (wait) {
 			printd_chq("CHQ: addch sleeping\n");
@@ -58,7 +55,7 @@ int wait;
 			printd_chq("CHQ: addch waken up\n");
 		}
 	}
-#endif
+
 	if (q->len == q->size) {
 		return -1;
 	}
@@ -123,4 +120,12 @@ register struct ch_queue *q;
 		return 0;
 
 	return 1;
+}
+
+int chq_full(q)
+register struct ch_queue *q;
+{
+	if(q->len == q->size)
+		return 1;
+	return 0;
 }
