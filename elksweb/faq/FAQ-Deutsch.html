@@ -3,10 +3,10 @@
 
 <Title>ELKS FAQ - Deutsch</Title>
 
-<Base HRef="http://elks.sf.net/faq/">
+<base href="http://elks.sf.net/faq/">
 
-<Meta Name="description" Description="German FAQ for ELKS, a port of Linux for 16-bit Intel architectures">
-<Meta Name="keywords" Keywords="Linux,linux-86,linux-8086,16-bit,UNIX,ELKS,FAQ">
+<meta name="description" content="German FAQ for ELKS, a port of Linux for 16-bit Intel architectures">
+<meta name="keywords" content="Linux,linux-86,linux-8086,16-bit,UNIX,ELKS,FAQ">
 
 </Head>
 <Body BGColor=White Text=Black Link=Blue VLink=Magenta ALink=Red>
@@ -131,9 +131,9 @@ Boot-Image?</A>
 
 <HR Width=90%>
 
-<A Name="1"><H2>Abschnitt 1 - Allgemeines</H2>
+<a name="1"><H2>Abschnitt 1 - Allgemeines</H2>
 
-<A Name="1.1"><H3>F1.1. Was ist ELKS?</H3>
+<a name="1.1"><H3>F1.1. Was ist ELKS?</H3>
 
 <P Align=Justify>ELKS ist das 'Embeddable Linux Kernel Subset', ein
 Projekt um eine kleine Kernel-Untermenge von Linux (welche im Kernel mehr
@@ -149,7 +149,7 @@ den Gebrauch auf verschiedenen Palmtops.</P>
 Ziele und den aktuellen Zustand des Projekts koennen auf der ELKS homepage
 gefunden werden.</P>
 
-<A Name="1.2"><H3>F1.2. Wie laesst sich ELKS mit dem 'normalen Linux'
+<a name="1.2"><H3>F1.2. Wie laesst sich ELKS mit dem 'normalen Linux'
 vergleichen?</H3>
 
 <P Align=Justify>ELKS soll eine Untermenge des echten Linux sein, und
@@ -161,7 +161,7 @@ Trotzdem ist es bereits in der Lage zu booten, bietet virtuelle Konsolen,
 kann ein minix root Dateisystem auf Disketten laden, und verschiedene
 kleine Programme starten.</P>
 
-<A Name="1.3"><H3>F1.3. Gibt es einfach zu installierende Distributionen
+<a name="1.3"><H3>F1.3. Gibt es einfach zu installierende Distributionen
 von ELKS?</H3>
 
 <P Align=Justify>Noch nicht. Sie muessen einen ueblichen Computer mit
@@ -172,7 +172,7 @@ Testplattform fuer das System und sonst kann damit nur wenig erreicht
 werden. Version 0.1 ist nicht mehr fern, und wenn sie veroeffentlicht
 werden wird, wird auch eine Art Distribution erhaeltlich sein.</P>
 
-<A Name="1.4"><H3>F1.4. Laeuft ELKS auf einem Intel 8088 Prozessor?</H3>
+<a name="1.4"><H3>F1.4. Laeuft ELKS auf einem Intel 8088 Prozessor?</H3>
 
 <P Align=Justify>Der 8088er ist identisch zum 8086er, ausser dass er einen
 externen Datenbus mit nur 8-bit hat, anstatt 16-bit (und deshalb langsamer
@@ -180,9 +180,9 @@ ist). Folglich laeuft ELKS mit diesem Prozessor.</P>
 
 <HR Width=90%>
 
-<A Name="2"><H2>Abschnitt 2 - Uebersetzen und Installieren</H2>
+<a name="2"><H2>Abschnitt 2 - Uebersetzen und Installieren</H2>
 
-<A Name="2.1"><H3>F2.1. Wo finde ich die Quelldateien?</H3>
+<a name="2.1"><H3>F2.1. Wo finde ich die Quelldateien?</H3>
 
 <P Align=Justify>Der Haupt-FTP-Server <A
 HRef="ftp://linux.mit.edu/pub/ELKS/">ftp://linux.mit.edu/pub/ELKS/</A> ist
@@ -216,7 +216,7 @@ Verantwortlichen.</P>
 
 <HR Width=90%>
 
-<A Name="2.2"><H3>F2.2. Wie uebersetze ich einen ELKS Kernel?</H3>
+<a name="2.2"><H3>F2.2. Wie uebersetze ich einen ELKS Kernel?</H3>
 
 <P Align=Justify>Laden Sie <TT>dev86/Dev86-0.0.13.tar.gz</TT> und
 <TT>kernel/elks-0.0.66/elks-0.0.66.tar.gz</TT> (bzw. die neuesten
@@ -279,14 +279,14 @@ booten, aber Sie werden nicht weit kommen ohne eine root Diskette. Sie
 muessen mit bcc ein 'init' Programm und ein minix Dateisystem uebersetzen.
 Wie wird weiter unten erklaert.</P>
 
-<A Name="2.3"><H3>F2.3. Ich erhalte eine Fehlermeldung, dass
+<a name="2.3"><H3>F2.3. Ich erhalte eine Fehlermeldung, dass
 /usr/include/linux/vm86.h nicht existiert.</H3>
 
 <P Align=Justify>Editieren Sie <TT>/usr/include/sys/vm86.h</TT>, und
 aendern Sie <TT>'#include &lt;linux/vm86.h&gt;'</TT> in <TT>'#include
 &lt;asm/vm86.h&gt;'</TT></P>
 
-<A Name="2.4"><H3>F2.4. Wie mache ich ein 'Init' fuer ELKS?</H3>
+<a name="2.4"><H3>F2.4. Wie mache ich ein 'Init' fuer ELKS?</H3>
 
 <P Align=Justify>Nachdem der ELKS kernel gebootet hat wird er /bin/init
 starten. Weil wichtige Dinge wie exit() und signal() noch nicht
@@ -331,7 +331,7 @@ standard Linux Distribution auf der root Diskette, damit ls -l richtig
 funktioniert, und /usr/lib/liberror.txt damit die Bash Fehlermeldungen
 richtig funktionieren.</P>
 
-<A Name="2.5"><H3>F2.5. Wie erstelle ich eine root
+<a name="2.5"><H3>F2.5. Wie erstelle ich eine root
 Dateisystem-Diskette?</H3>
 
 <P Align=Justify>Sie muessen eine minix Disketten erstellen die die
@@ -383,7 +383,7 @@ Weise wie 360K Disketten von 1.2M Diskettenlaufwerken beschrieben werden,
 muessen die folgenden Anweisungen befolgt werden wenn Sie von einem
 Computer mit einem 360K Laufwerk booten wollen.</P>
 
-<A Name="2.6"><H3>F2.6. Und was wenn ich einen XT mit einem 360K
+<a name="2.6"><H3>F2.6. Und was wenn ich einen XT mit einem 360K
 Diskettenlaufwerk besitze?</H3>
 
 <P Align=Justify>Boot und Root Disketten zu erstellen die auf einem
@@ -431,7 +431,7 @@ ein Diskettenabbild davon:</P>
 Probleme mit DEF_INITSEG und DEF_SETUPSEG wurden jedoch behoben, so dass
 Sie nichts aendern muessen falls Sie nicht ueber 640K RAM verfuegen.</P>
 
-<A Name="2.7"><H3>F2.7. Wie aendere ich das root Device eines
+<a name="2.7"><H3>F2.7. Wie aendere ich das root Device eines
 Boot-Image?</H3>
 	
 <P Align=Justify>Die Bootdiskette Version 0.0.62 wurde dahingehend
@@ -452,9 +452,9 @@ die zwei zu aendernden Bytes in Version 0.0.62 0adf und 0ade seien.</P>
 
 <HR Width=90%>
 
-<A Name="3"><H2>Abschnitt 3 - Benuetzung von ELKS</H2>
+<a name="3"><H2>Abschnitt 3 - Benuetzung von ELKS</H2>
 
-<A Name="3.1"><H3>F3.1. Sind bcc Binaries unter Linux lauffaehig?</H3>
+<a name="3.1"><H3>F3.1. Sind bcc Binaries unter Linux lauffaehig?</H3>
 
 <P Align=Justify>Ja - indem Sie ein Kernel Modul laden koennen Sie ELKS
 Binaries direkt starten. Dies vereinfacht die Entwicklung von Programmen
@@ -484,7 +484,7 @@ Makefile editieren um den Verweis auf diese Datei zu entfernen, also:</P>
 		-m486 -DCPU=486 -DMODULE -DMODVERSIONS
 </Pre>
 
-<A Name="3.2"><H3>F3.2. Kann ich ELKS unter DOSEMU booten?</H3>
+<a name="3.2"><H3>F3.2. Kann ich ELKS unter DOSEMU booten?</H3>
 
 <P Align=Justify>Ja. ELKS kann unter DOSEMU 0.63.1.36 und Linux 2.0.7
 aufstarten, und wahrscheinlich auch mit anderen Kombinationen der beiden.
@@ -499,7 +499,7 @@ zu erreichen.</P>
 
 <HR Width=90%>
 
-<A Name="2"><H2>Abschnitt 4 - Unbeantwortete Fragen</H2>
+<a name="2"><H2>Abschnitt 4 - Unbeantwortete Fragen</H2>
 
 <P Align=Justify>Wir bitten Sie um Antworten auf die folgenden Fragen!</P>
 
