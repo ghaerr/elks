@@ -11,9 +11,13 @@ Contributor             Current Email address           CHANGELOG entries found
 Alistair Riddoch        <AlRiddoch@zepler.org>           1 Jan 1995-20 Oct 1999
 Harry Kalogirou         <HarKal@rainbow.cs.unipi.gr>     7 Nov 2001-24 Nov 2001
 Michael McConnell       <Soruk@Eridani.co.uk>           11 Nov 2001-12 Nov 2001
-Riley Williams          <rhw@MemAlpha.cx>                8 Nov 2001-29 Nov 2001
+Riley Williams          <rhw@MemAlpha.cx>                8 Nov 2001- 9 Jan 2002
 
 -------------------------------------------------------------------------------
+
+Wed Jan  9 23:36:32 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
+
+	* Prepared for addition of images.zip links to download index.
 
 Thu Nov 29 01:34:48 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
