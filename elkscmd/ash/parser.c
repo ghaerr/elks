@@ -66,7 +66,7 @@ static char sccsid[] = "@(#)parser.c	5.3 (Berkeley) 4/12/91";
 
 struct heredoc {
 	struct heredoc *next;	/* next here document in list */
-	union node *here;		/* redirection node */
+	union node *here;	/* redirection node */
 	char *eofmark;		/* string indicating end of input */
 	int striptabs;		/* if set, strip leading tabs */
 };
@@ -79,13 +79,13 @@ int doprompt;			/* if set, prompt the user */
 int needprompt;			/* true if interactive and at start of line */
 int lasttoken;			/* last token read */
 MKINIT int tokpushback;		/* last token pushed back */
-char *wordtext;			/* text of last word returned by readtoken */
-int checkkwd;               /* 1 == check for kwds, 2 == also eat newlines */
+char *wordtext; 		/* text of last word returned by readtoken */
+int checkkwd;			/* 1 == check for kwds, 2 == also eat newlines */
 struct nodelist *backquotelist;
 union node *redirnode;
 struct heredoc *heredoc;
 int quoteflag;			/* set if (part of) last token was quoted */
-int startlinno;			/* line # where last token started */
+int startlinno; 		/* line # where last token started */
 
 
 #define GDB_HACK 1 /* avoid local declarations which gdb can't handle */
@@ -718,7 +718,8 @@ xxreadtoken() {
 		case ' ': case '\t':
 			continue;
 		case '#':
-			while ((c = pgetc()) != '\n' && c != PEOF);
+			while ((c = pgetc()) != '\n' && c != PEOF)
+				/* Do nothing */;
 			pungetc();
 			continue;
 		case '\\':

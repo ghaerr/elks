@@ -14,11 +14,11 @@ rfs: all
 
 min_rfs: all
 	cp -p $(MIN_PRGS) $(TARGET_MNT)/bin
+	ln $(TARGET_MNT)/bin/ls $(TARGET_MNT)/bin/dir
 
 net_rfs: min_rfs
 
-smin_rfs: all
-	cp -p $(SMIN_PRGS) $(TARGET_MNT)/bin
+smin_rfs: min_rfs
 
 clean:
 	rm -f $(PRGS)
