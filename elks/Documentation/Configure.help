@@ -3,9 +3,96 @@
 # General Setup
 # ~~~~~~~~~~~~~
 
+Auto detect PC architecture
+CONFIG_ARCH_AUTO
+  Use this option to build the default kernel which will run on any PC.
+
+Support AT architecture only
+CONFIG_AT
+  Use this option to build a smaller kernel that only runs on AT type systems.
+
+Support XT architecture only
+CONFIG_XT
+  Use this option to build a smaller kernel that only runs on XT type systems.
+
 Support loadable modules
 CONFIG_MODULE
   Saying yes includes experimental support for loadable modules.
+
+# Model-specific options
+# ~~~~~~~~~~~~~~~~~~~~~~
+
+Switch COMPAQ DeskPro into fast mode
+CONFIG_COMPAQ_FAST
+  Saying yes includes code to switch COMPAQ Deskpro machines that
+  default to slow speed, into fast speed.
+
+# 286 Protected Mode support
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Support for 286+ features
+
+286 Protected Mode support
+CONFIG_286PMODE
+  Include support for 286 Protected Mode. Experimental. Use at your own
+  risk. (This option will probably not interact well with the BIOS disk
+  drivers)
+
+# Support for 386+ features
+
+Support more than 16 Megs of RAM
+CONFIG_386RAM
+  Add support for RAM beyond 16 megs on 386+ systems. Currently
+  nonexistant.
+
+# Kernel hacking
+# ~~~~~~~~~~~~~~
+
+Strace
+CONFIG_STRACE
+  Strace displays a trace of all system calls made to the kernel. Only
+  kernel hackers need this option.
+
+Optimise for size rather than speed
+CONFIG_OPT_SMALL
+  Where two versions of a function exist this will cause the smaller
+  version rather than the faster version to be included.
+
+# Console display support
+# ~~~~~~~~~~~~~~~~~~~~~~~
+
+Direct console writes
+CONFIG_CONSOLE_DIRECT
+  A direct console driver. This is currently the only console driver
+  available for ELKS.
+
+Direct console VT52 emulation
+CONFIG_DCON_VT52
+  Saying no removes some of the intelligent features from the console 
+  code leaving a dumb text console which is much smaller.
+
+Direct console ANSI emulation
+CONFIG_DCON_ANSI
+  Provide direct console support for ANSI (VT-102) terminals.
+
+Use ANSI codes in printk()
+CONFIG_DCON_ANSI_PRINTK
+  When the kernel reports something using printk(), the reports will
+  be coloured.
+
+BIOS console writes
+CONFIG_CONSOLE_BIOS
+  The newly implemented BIOS based console driver.
+
+BIOS console VT-52 emulation
+CONFIG_BIOS_VT52
+  This enables the use of VT-52 codes when using the BIOS console
+  driver.
+
+Serial console writes
+CONFIG_CONSOLE_SERIAL
+  The serial console driver. Currently minimal support for console output over
+  a serial line.
 
 # Keyboard support
 # ~~~~~~~~~~~~~~~~
@@ -48,72 +135,6 @@ Select XT keyboard support for Spanish (ES) keyboards
 CONFIG_ES_KEYMAP
   This option specifies that support be provided for XT keyboards with
   the Spanish key layout and associated dead keys.
-
-# Console display support
-# ~~~~~~~~~~~~~~~~~~~~~~~
-
-Direct console writes
-CONFIG_CONSOLE_DIRECT
-  A direct console driver. This is currently the only console driver
-  available for ELKS.
-
-Direct console VT52 emulation
-CONFIG_DCON_VT52
-  Saying no removes some of the intelligent features from the console 
-  code leaving a dumb text console which is much smaller.
-
-Direct console ANSI emulation
-CONFIG_DCON_ANSI
-  Provide direct console support for ANSI (VT-102) terminals.
-
-Use ANSI codes in printk()
-CONFIG_DCON_ANSI_PRINTK
-  When the kernel reports something using printk(), the reports will
-  be coloured.
-
-BIOS console writes
-CONFIG_CONSOLE_BIOS
-  The newly implemented BIOS based console driver.
-
-BIOS console VT-52 emulation
-CONFIG_BIOS_VT52
-  This enables the use of VT-52 codes when using the BIOS console
-  driver.
-
-Serial console writes
-CONFIG_CONSOLE_SERIAL
-  The serial console driver. Currently minimal support for console output over
-  a serial line.
-
-# 286 Protected Mode support
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Support XT architecture only
-CONFIG_XT
-  Use this option to build a smaller kernel that only runs on XT type systems.
-
-# Support for 286+ features
-
-286 Protected Mode support
-CONFIG_286PMODE
-  Include support for 286 Protected Mode. Experimental. Use at your own
-  risk. (This option will probably not interact well with the BIOS disk
-  drivers)
-
-# Support for 386+ features
-
-Support more than 16 Megs of RAM
-CONFIG_386RAM
-  Add support for RAM beyond 16 megs on 386+ systems. Currently
-  nonexistant.
-
-# Model-specific options
-# ~~~~~~~~~~~~~~~~~~~~~~
-
-Switch COMPAQ DeskPro into fast mode
-CONFIG_COMPAQ_FAST
-  Saying yes includes code to switch COMPAQ Deskpro machines that
-  default to slow speed, into fast speed.
 
 # Character devices
 # ~~~~~~~~~~~~~~~~~
@@ -172,6 +193,30 @@ CONFIG_BLK_DEV_XD
 # File systems
 # ~~~~~~~~~~~~
 
+# Select available file systems
+
+Minix file system support
+CONFIG_MINIX_FS
+  Support for the basic Minix filesystem. The only currently working 
+  filesystem. Until another filesystem is working this is required.
+
+ELKS file system support
+CONFIG_ELKSFS_FS
+  Support for the new ELKSFS native fs. Includes Minix fs emulation.
+
+#MS-DOS file system support
+#CONFIG_MSDOS_FS
+#  Support for standard MS-DOS style partitions. Currently non-existant
+#
+#Include VFAT style long name support
+#CONFIG_VFAT_FS
+#  Extension to standard MS-DOS fs support to permit Win95 style long
+#  file names. Currently non-existant.
+
+ROM file system support
+CONFIG_ROMFS_FS
+  Incomplete support for the Read Only filesystem.
+
 Full VFS support
 CONFIG_FULL_VFS
   If you say no to this then the vfs will only support one filesystem 
@@ -188,30 +233,6 @@ CONFIG_FS_RO
   Support for system calls that modify the filesystem is removed. This
   option allows a considerable amount of code space to be saved, thus
   allowing other features into the kernel.
-
-# Select available file systems
-
-Minix file system support
-CONFIG_MINIX_FS
-  Support for the basic Minix filesystem. The only currently working 
-  filesystem. Until another filesystem is working this is required.
-
-ELKS file system support
-CONFIG_ELKSFS_FS
-  Support for the new ELKSFS native fs. Includes Minix fs emulation.
-
-MS-DOS file system support
-CONFIG_MSDOS_FS
-  Support for standard MS-DOS style partitions. Currently non-existant
-
-Include VFAT style long name support
-CONFIG_VFAT_FS
-  Extension to standard MS-DOS fs support to permit Win95 style long
-  file names. Currently non-existant.
-
-ROM file system support
-CONFIG_ROMFS_FS
-  Incomplete support for the Read Only filesystem.
 
 # Executable file formats
 # ~~~~~~~~~~~~~~~~~~~~~~~
@@ -241,7 +262,6 @@ UNIX sockets
 CONFIG_UNIX
   Include support for AF_UNIX sockets. Currently non existant.
 
-INET sockets (TCP/IP)
 CONFIG_INET
   Include support for AF_INET TCP/IP sockets.
 
@@ -254,18 +274,5 @@ Only support STREAM type sockets (MUST)
 CONFIG_SOCK_STREAMONLY
   Only include support for STREAM type socket connections. Currently
   the only type supported.
-
-# Kernel hacking
-# ~~~~~~~~~~~~~~
-
-Strace
-CONFIG_STRACE
-  Strace displays a trace of all system calls made to the kernel. Only
-  kernel hackers need this option.
-
-Optimise for size rather than speed
-CONFIG_OPT_SMALL
-  Where two versions of a function exist this will cause the smaller
-  version rather than the faster version to be included.
 
 # EOF

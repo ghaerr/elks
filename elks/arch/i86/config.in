@@ -4,12 +4,18 @@
 #
 mainmenu_name "Linux ELKS Kernel Configuration"
 comment 'Just accept the defaults unless you know what you are doing'
+
 mainmenu_option next_comment
 comment 'General setup'
-bool 'Support only for XT architecture' CONFIG_XT
+choice 'Select system architecture'            \
+       "Auto           CONFIG_ARCH_AUTO        \
+        PC/XT          CONFIG_XT               \
+        PC/AT          CONFIG_AT"      CONFIG_ARCH_AUTO
 bool 'Support for loadable modules' CONFIG_MODULE
 bool 'Switch COMPAQ DeskPro into fast mode' CONFIG_COMPAQ_FAST
+
 source arch/i86/286pmode/Config.in
+
 mainmenu_option next_comment
 comment 'Kernel hacking'
 bool 'Strace' CONFIG_STRACE

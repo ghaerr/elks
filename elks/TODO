@@ -12,3 +12,6 @@ Complete and test serial and parallel drivers.
 Debug filesystem.
 
 Reduce code size.
+
+Re-write wait queues so they don't sit on the kernel stack, but sit on the task
+structure instead.

@@ -4,6 +4,11 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Thu Nov 18 15:00 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Some more updates to config scripts made in conjunction with
+	  Riley Williams.
+
 Thu Nov 18 14:31 GMT 1998   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed typo in hdisk reporting.
