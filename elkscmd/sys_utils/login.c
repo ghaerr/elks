@@ -100,7 +100,7 @@ char ** argv;
 	struct utmp newentry;
 	char lbuf[UT_NAMESIZE], * pbuf, salt[3];
 	char * tty_name;
-	int n;
+	char * p;
 
 	
 	for (;;) {
@@ -109,10 +109,8 @@ char ** argv;
 			if (read(STDIN_FILENO, lbuf, sizeof(lbuf)) < 1) {
 				exit(1);
 			}
-			n = strlen(lbuf)-1;
-			if (lbuf[n] == '\n') {
-			    lbuf[n] = 0;
-			}
+			p=strchr(lbuf,'\n');
+			if(p) *p='\0';
 		} else {
 			strncpy(lbuf, argv[1], UT_NAMESIZE);
 			lbuf[UT_NAMESIZE - 1] = '\0';
