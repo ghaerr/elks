@@ -21,6 +21,8 @@ Thu May 16 06:24:36 BST 2002	Riley Williams <rhw@InfraDead.Org>
 	* Release history brought up to date. The 0.1.0 kernel release
 	  has now been issued, and a source of early ELKS kernels has
 	  been found and announced.
+	* Corrected links to /download.html that should point to
+	  /download/ instead.
 
 Sat Apr 13 19:42:16 BST 2002	Riley Williams <rhw@InfraDead.Org>
 
