@@ -5,15 +5,16 @@
  *	Illegal format strings will break it. Only the following simple
  *	printf() subset is supported:
  *
- *		%%	-	literal % sign
+ *		%%	literal % sign
  *
- *		%c	-	char
- *		%d	-	signed decimal
- *		%o	-	octal
- *		%p	-	pointer (printed in hex)
- *		%s	-	string
- *		%u	-	unsigned decimal
- *		%x/%X	-	hexadecimal
+ *		%c	char
+ *		%d	signed decimal
+ *		%o	octal
+ *		%p	pointer (printed in hex)
+ *		%s	string
+ *		%t	pointer to string
+ *		%u	unsigned decimal
+ *		%x/%X	hexadecimal
  *
  *	All except %% can be followed by a width specifier 1 -> 31 only
  *	and the h/l length specifiers also work.
@@ -113,7 +114,7 @@ void printk(register char *fmt,int a1)
 {
     register char *p = (char *) &a1;
     int len, width = 0;
-    char c, tmp;
+    char c, tmp, *cp;
 
     while ((c = *fmt++)) {
 	if (c != '%')
@@ -158,29 +159,35 @@ void printk(register char *fmt,int a1)
 		p += len;
 		break;
 	    case 's':
-		{
-		    char *cp = *((char **) p);
-		    p += sizeof(char *);
-		    while (*cp)
-			con_write(cp++, 1);
-		    break;
+		cp = *((char **) p);
+		p += sizeof(char *);
+		while (*cp) {
+		    con_write(cp++, 1);
+		    width--;
 		}
+		while (width-- > 0)
+		    con_write(" ", 1);
+		break;
 	    case 't':
-		{
-		    char *cp = *((char **) p);
-		    p += sizeof(char *);
-		    while ((tmp = (char) get_fs_byte(cp))) {
-			con_charout(tmp);
-			cp++;
-		    }
-		    break;
+		cp = *((char **) p);
+		p += sizeof(char *);
+		while ((tmp = (char) get_fs_byte(cp))) {
+		    con_charout(tmp);
+		    cp++;
+		    width--;
 		}
+		while (width-- > 0)
+		    con_write(" ", 1);
+		break;
 	    case 'c':
+		while (width-- > 1)
+		    con_write(" ", 1);
 		con_write(p, 1);
 		p += 2;
 		break;
 	    default:
 		con_write( "?", 1);
+		break;
 	    }
 	}
     }
