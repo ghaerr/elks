@@ -1,0 +1,246 @@
+<HTML>
+<HEAD>
+<TITLE>ELKS Processes</TITLE>
+<META NAME="Author" CONTENT="Brian Candler">
+</HEAD>
+
+<BODY>
+<H1 ALIGN="CENTER">ELKS Processes</H1>
+
+<PRE>
+( work in progress while I try to understand it )
+( also, much of the following is incomplete in ELKS )
+( add info on fork and exec )
+</PRE>
+
+<H2>The Process Table</H2>
+
+Each process is represented by a record in <var>task[]</var>, an array of
+<code>struct task_struct</code>, declared in
+<code>&lt;linuxmt/sched.h&gt;</code>
+
+<p>
+The currently-executing task is pointed to by <var>current</var>
+<p>
+The most important members of <var>task[]</var> are:
+<p>
+<dl>
+<dt>t_regs;<br>
+    t_kstack;
+<dd>
+   A complete stored register set and a kernel stack, for context switching
+   between processes.<P>
+   <p>
+   <b>Q.</b> Why have separate kernel and user stacks?<br>
+   <b>A.</b> Because when kernel code executes it assumes SS = DS = its
+      own data segment. Any modern processor has a separate system stack
+      pointer; the 8086 doesn't, so the switch has to be done in software.
+   <p>
+   <b>Q.</b> Why do we have a separate kernel stack per task?<br>
+   <b>A.</b> Because a context switch can occur in kernel code, if it
+      calls schedule() - although preemptive timeslicing does not occur
+      when kernel code is executing, nor during interrupts.
+   <p>
+   <b>Q.</b> When does timeslicing occur?<br>
+   <b>A.</b> At the moment, on return from an interrupt, if we were in
+      userland when the interrupt occurred. In Linux, it can also occur
+      when returning from a system call.
+<p>
+<dt>state;
+<dd>
+The task's state. This can be one of:
+
+<p>
+<TABLE BORDER=1 CELLPADDING=4>
+  <CAPTION ALIGN=BOTTOM>Values of <CODE>task[].state</CODE></CAPTION>
+  <TR>
+    <TD>
+	TASK_RUNNING
+    </TD>
+    <TD>
+	The task is eligible to run. It might not
+	actually <I>be</I> running because of timeslicing, but
+	it will continue when its turn comes again.
+    </TD>
+  </TR>
+
+  <TR>
+    <TD>
+	TASK_INTERRUPTIBLE<BR>
+	TASK_UNINTERRUPTIBLE
+    </TD>
+    <TD>
+	The task is "sleeping", and won't wake up until another
+	process puts it back to TASK_RUNNING, usually as a result
+	of some external condition changing.
+	The difference between the two is that a TASK_INTERRUPTIBLE will
+	also be woken up if a signal arrives.
+    </TD>
+  </TR>
+
+  <TR>
+    <TD>
+	TASK_STOPPED
+    </TD>
+    <TD>
+	A process is stopped when it receives a certain
+	signal (SIGSTOP, SIGTSTP, SIGTTIN or SIGTTOUT).
+	It is restarted by sending it a SIGCONT.
+    </TD>
+  </TR>
+
+  <TR>
+    <TD>
+	TASK_UNUSED
+    </TD>
+    <TD>
+	Indicates an empty slot in the task[] table
+    </TD>
+  </TR>
+</TABLE>
+<p>
+
+<dt>pid, ppid;
+<dd>
+   The task's process id (a number from 1 to 32767), and its parent's pid.
+   pid=0 is reserved for the 'idle' process task[0], which is run when
+   there's nothing else to do. pids are allocated cyclicly, so when a
+   process dies it's likely to be a long time before the same pid is
+   reused.
+<p>
+<dt>pgrp;
+<dd>
+   A process group number. "Process groups are used for distribution
+   of signals, and by terminals to arbitrate requests for their input:
+   processes that have the same process group as the terminal are
+   foreground and may read, while others will block with a signal if
+   they attempt to read" <cite>[taken from man 2 setpgid]</cite>
+<p>
+<dt>session;
+<dd>
+   A session number. As far as I can tell, the main idea is that
+   the kernel is a bit more relaxed about permissions between tasks in
+   the same session (e.g. they can send signals to each other). The
+   session number is the pid of the 'session leader' which receives
+   a SIGHUP and a SIGCONT when its controlling tty goes away (e.g. modem
+   drops carrier)
+   <p>
+   If someone can give a more lucid and/or accurate description of the
+   above please submit it!
+<p>
+<dt>uid, euid, suid;<br>
+    gid, egid, sgid;
+<dd>The task's user and group ids (real, effective and stored). The
+   effective uid/gid gives the task's actual privileges at the moment,
+   which may be different to the real id of the user who started the
+   task (e.g. for a suid program). The stored ids let a process give
+   up privileges yet reclaim them later.
+<p>
+<dt>groups[NGROUPS];
+<dd>An array of supplementary groups,
+   which are used when accessing files. The user is permitted group
+   access if any of these gids matches the file's gid. See function
+   in_group_p in kernel/sys.c
+<p>
+<dt>files;
+<dd>The task's files, containing an array of struct file's, indexed by the fd number
+   which open() returns. Also includes a bitmap indicating which ones must
+   be closed when the task uses exec() to become another program.
+<p>
+<dt>fs;
+<dd>Master filesystem information: the inode of the root of the filetree
+   (which may be a subset of the full filetree if you want to limit its
+   scope to roam), the inode of its current working directory, and the
+   'umask' which gives the default permissions when creating a file
+   (actually, each '1' bit indicates a permission NOT granted)
+<p>
+<dt>t_count, t_priority;
+<dd>Process priority information, used to decide when this process has
+   had more than its fair share of processor time
+<p>
+<dt>sig;<br>
+    signal, blocked;
+<dd>Signal information: pointers to handlers for each possible signal which
+   might be received, and bitmaps of signals outstanding and signals
+   blocked (i.e. which the process doesn't want to receive at the moment)
+</dl>
+
+<H2>Context Switching</H2>
+
+Switching between processes is performed by the function schedule() in
+kernel/sched.c. The actual context switch is remarkably simple:
+
+<PRE>
+	save_regs(current);
+	current = &task[curnum];	/* choose a new task */
+	load_regs(current);
+</PRE>
+
+save_regs saves the exact state which the kernel was in when it called this
+function. load_regs doesn't return to that point (because the program flow
+would cause load_regs to be run again, ad infinitum) - rather it pops enough
+items off the stack to return to whoever called schedule().
+<p>
+schedule() can be called whenever the kernel wants to 'give up' its current
+timeslice - normally it would have set current-&gt;state=TASK_(UN)INTERRUPTIBLE
+first, otherwise it will be rescheduled at the next opportunity.
+<p>
+schedule() is also called at the end of the timer interrupt routine if the
+global flag need_resched is set (see arch/i86/kernel/irqtab.c). This is a
+bit hair-raising: the user's process is left hanging mid-timer-interrupt
+while another one continues! But when its turn comes again, the return from
+the timer interrupt completes.
+<p>
+need_resched is set if a process has used up its allotted time, which should
+also be calculated in the timer interrupt routine [not yet implemented].
+<blockquote>
+  <b>Q.</b> What if schedule() is called from a timer interrupt while the
+     kernel is already executing schedule()?<br>
+  <b>A.</b> This can't happen; the timer interrupt won't check need_resched
+     unless user-level code is executing.
+</blockquote>
+<p>
+Note that hardware interrupt handlers are NOT allowed to call schedule! This
+means they can't sleep - they must run to completion and return.
+
+<H2>Wait Queues</H2>
+
+A common thing a process must do is to sleep until a resource it needs
+becomes available (such as buffer space, or input from disk or terminal).
+Functions in kernel/sleepwake.c are provided for this purpose.
+<p>
+The process which needs a resource calls sleep_on(q). sleep_on adds this
+process to the "wait queue" q, sets its state = TASK_UNINTERRUPTIBLE, and
+calls schedule(). This causes the process to sleep.
+<p>
+Later, another process which makes the resource available calls wake_up(q),
+which sets state=TASK_RUNNING for the sleeping process. This allows it to
+run; it continues at the point it got to in the sleep_on function (i.e. just
+after the call to schedule), where it removes itself from q and returns.
+Because q is actually a linked list, many processes can be asleep waiting
+for the same resource.
+<p>
+The functions that manipulate the wait queues protect themselves from being
+timesliced, by disabling interrupts. This prevents corruption of the queue.
+<p>
+Cunningly, no malloc-style storage allocation is needed to create objects
+for a wait queue. sleep_on defines a local variable of type struct
+wait_queue - i.e. it is allocated on the kernel stack for that process. When
+sleep_on returns, which is when we don't need it any more, it vanishes. If
+multiple tasks are sleeping for the same resource, q will be a linked list
+of objects, one on each kernel stack.
+<p>
+
+<HR>
+<ADDRESS>
+<FONT SIZE=-2>
+This document may be freely distributed as long as this copyright notice is
+kept intact and any changes or additions are marked with your name
+</FONT>
+<BR>
+Copyright &copy; <A HREF="mailto:B.Candler@pobox.com">Brian Candler</A> 1996
+</ADDRESS>
+<P>
+Last updated: 1 September 1996
+</BODY>
+</HTML>

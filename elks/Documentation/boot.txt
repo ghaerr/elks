@@ -1,0 +1,59 @@
+The finished Image file consists of the boot sector, setup code, and kernel
+concatenated together. Each is rounded up to a multiple of 512 bytes (i.e.
+starts on a fresh sector)
+
+	Sector 1:	boot sector
+	Sector 2..n:	setup
+	Sector n+1..m:	kernel
+
+Note that sectors are counted from 1 but tracks from 0, just to be
+confusing :-)
+
+BOOT SECTOR:
+
+arch/i86/boot/
+bootsect.S	(first 512 bytes on disk; loaded by the PC's BIOS at 07C0:0)
+		moves itself to 9000:0 and jumps there
+		loads setup.S at 9020:0
+		loads kernel at 1000:0
+		jumps to setup.S
+
+SETUP CODE:
+
+setup.S		gets some system params, stores them over the boot block
+		sets up code and data segments for kernel
+		jumps to 1002:0
+
+(Note: .S files are preprocessed to .s before being assembled)
+
+KERNEL:
+
+crt0.s		(This module must be linked first. Because the
+		kernel is loaded at 1000:0, and there's a 32-byte
+		a.out header, that makes the kernel start 1002:0)
+		puts parameters passed on stack from setup into global
+		  storage, calls arch_boot and start_kernel
+crt1.c		arch_boot, just wipes the bss
+init/main.c	start_kernel, immediately calls...
+arch/i86/kernel/
+system.c	setup_arch. Stores initial settings into arch_segs
+.		(which doesn't appear to be used elsewhere)
+.
+arch/i86/mm/
+init.c		init memory manager, uses info which setup stored over
+		the boot block (9000:0)
+
+----------------------------------------------------------------------------
+The boot sector contains some parameters at the end:
+
+497      *number of sectors in setup.S
+498,499   root_flags
+500,501  *size of kernel in 16-byte chunks
+502,503   swap device
+504,505   ramdisk size
+506,507   video mode
+508,509  *root device
+510,511   constant flag 0xAA55
+
+*patched by arch/i86/tools/build when the kernel is being built.
+Only 497 and 500,501 are used at present.

@@ -1,0 +1,80 @@
+#
+# Misc buttons to save/restore state and so forth.
+# 
+frame .f0_bot
+frame .f0_bot.r
+frame .f0_bot.l
+
+#
+# Read the user's settings from .config.  These will override whatever is
+# in config.in.  Don't do this if the user specified a -D to force
+# the defaults.
+#
+if { [file readable .config] == 1} then {
+	if { $argc > 0 } then {
+		if { [lindex $argv 0] != "-D" } then {
+			read_config .config
+		}
+		else
+		{
+			read_config $defaults
+		}
+	} else {
+		read_config .config
+	}
+} else {
+	read_config $defaults
+}
+
+update_mainmenu .f0
+
+button .f0_bot.r.save -text "Save and Exit" -width 25 -command {
+	writeconfig .config include/linux/autoconf.h; wrapup .wrap }
+
+button .f0_bot.r.quit -text "Quit Without Saving" -width 25 \
+	-command { maybe_exit .maybe }
+
+button .f0_bot.l.store -text "Store Configuration to File" -width 25 -command {
+	load_configfile .load "Save Configuration in file" write_config_file
+}
+
+button .f0_bot.l.load -text "Load Configuration from File" -width 25 -command {
+	load_configfile .load "Load Configuration from file" read_config_file
+}
+
+#
+# Now pack everything, important things first because of small screens.
+#
+pack  .f0_bot.r.save .f0_bot.r.quit -padx 25 -ipadx 10 -expand on
+pack  .f0_bot.l.load .f0_bot.l.store -padx 25 -ipadx 10 -expand on
+
+pack .f0_bot.r -side left -padx 15 -expand on -fill y
+pack .f0_bot.l -side right -padx 15 -expand on -fill y
+
+pack .f0_bot -side bottom -fill both -expand on -pady 4
+pack .f0 -side bottom -padx 15 -pady 0 -fill y -expand on
+pack .header -padx 10 -pady 7 -expand on
+
+
+#
+# If we cannot write our config files, disable the write button.
+#
+if { [file exists .config] == 1 } then {
+		if { [file writable .config] == 0 } then {
+			.f0_bot.r.save configure -state disabled
+		}
+	} else {
+		if { [file writable .] == 0 } then {
+			.f0_bot.r.save configure -state disabled
+		}
+	}
+
+if { [file exists include/linux/autoconf.h] == 1 } then {
+		if { [file writable include/linux/autoconf.h] == 0 } then {
+			.f0_bot.r.save configure -state disabled
+		}
+	} else {
+		if { [file writable include/linux/] == 0 } then {
+			.f0_bot.r.save configure -state disabled
+		}
+	}

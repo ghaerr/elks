@@ -1,0 +1,822 @@
+VERSION 0.0.73-pre2 NOTES
+-------------------------
+
+	Updated menuconfig from Linux 2.1.113 (page down problem corrected).
+	Introduced more Documentation/ changes (spelling fixes, french faq
+update, suppression of Documentation/template).
+	Added "patch" for colorized printk.
+	Also clean up Makefile dependencies.
+	(Arnaud Launay <zoro@mygale.org>)
+
+VERSION 0.0.73-pre1 NOTES
+-------------------------
+
+	Added patches for French and German keyboards.
+	Added patch to correct menuconfig parsing errors.
+	(Matthew D. Pitts <mpitts@suite224.net>)
+
+VERSION 0.0.72 NOTES
+--------------------
+
+	Added patch which adds fchown to simplify login.
+	Added patch to docs files, and scripts.
+	Added David Murns patch to add support for MS-DOS EXEs, partially
+implemented yet. Also a few other simple patches, including a new top level
+target in the Makefile, called boot which creates a boot image for dosemu.
+	Added patch by Patrick LAM to fix inode corruption bug. Kernel is now
+much more stable.
+	Added code for pipes, which seem to work, but have not been heavily
+tested.
+	Fixed bug which meant that forked processes did not inherit files
+correctly.
+	
+
+VERSION 0.0.71 NOTES
+--------------------
+
+	Added new non-working bios console from David Murn.
+	Added latest patch to directhd driver Alastair Bridgewater.
+	Added patch to make menuconfig so it now works from Vincent Zweije.
+	Added new working bios console from Pat Lam. David Murns version
+moved to bioscon.c.dmurn.
+	Added David Murns ansi colour patch.
+	Added additional colour patch from s.weijgers@net.HCC.nl
+	Added assortment of small changes by Alastair Bridgewater including
+a new smaller version of restore_flags().
+	Added a patch to cleanup the socket code sent in by
+s.weijgers@net.HCC.nl.
+	Added Alastair Bridgewater's protected mode code which does not work
+correctly yet, but is included for reference.
+	Sorted out arch/i86/include as a symlink to include/arch, and cleaned 
+out a few old files.
+
+
+VERSION 0.0.70 NOTES
+--------------------
+
+	Added latest version of directhd driver which should now work.
+	Fixed partition code so that it is included. Renamed BIOS HD devices
+from hda.. to bda..
+	Put in patch by Michael.Mueller4@post.rwth-aachen.de that fixes scroll
+echoeing in the console driver.
+	Changed some of the irq code so that if CONFIG_XT is specified, only
+support for 8 IRQs is compiled in.
+	Fixed bug with initialisation of first_inode in fs/inode.c.
+	See comments in mount_root() in fs/super.c for details of a bug I 
+have not been able to find, which causes the kernel to lock up.
+	Added new kernel/signal.c with the start of the sys_kill code.
+(Work in progress)
+
+VERSION 0.0.69 NOTES
+--------------------
+
+	Added Blaz Antonics directhd driver which currently supports IDE 
+drives. This code is untested. Do not use it on adisk you cannot afford to lose.
+	Added Erik ???'s patch to the console driver for hercules cards, and
+two other small fixes, on which disables memorycheck on C-A-D.
+	Added Rob de Baths patch which allows a single boot/root floppy to work.
+
+VERSION 0.0.69-pre2 NOTES
+-------------------------
+
+	Fixed syscall calls so they no longer corrupt si and di.
+	Changed kernel code so it makes heavy use of register variables for
+pointers. The has reduced the size of the kernel by more than 3K.
+	Changed code again so register is now used on function parameters. 
+Kernel is now a futher 3k smaller.
+	Removed some more unused code from the filesystem.
+
+VERSION 0.0.69-pre1 NOTES
+-------------------------
+
+	Added support to mem char device for a ps command to read the data
+structures from kernel memory.
+	Fixed a bug in the default lseek that was causing mkfs to break.
+	Fixed a really evil bug in wait4. Shells may now work.
+	Fixed inw.
+	Changed terminal ioctls to POSIX version.
+	Added patch to Makefiles to allow optimisation flags to be included.
+	Added support for foreign keyboard layouts - this is not yet entirely
+correct as I don not have access to all keyboards. If you spot a problem
+with your keyboard, please report it.
+	Fixed terminal code to accept <CTRL>-D.
+	Patched build.c so it can now build kernels of Sparc, and hopefully
+other non Intel endian processors.
+
+
+VERSION 0.0.68 NOTES
+--------------------
+
+	Most of the timer bugs should now be gone.
+	Fixed reported number of harddrives.
+	Put in select code as converted from Linux by Patrick Lam. 
+	Made a change to malloc code to remove hole[1], which is below the
+kernel code in RAM. Now all user memory is above the kernel. This patch as
+described by Alan Cox removed his occurence of the timer bug..
+	Added the stack backtrace to panic, and the code to redirect the 
+kernel if it gets restarted - no more cryptic "unable to get timer". Removed
+old verbose code from irq.c. Patch submitted by Jay Kulpinski.
+	Put in support for TCGETA and TCSETA ioctls in the tty code.
+	Fixed small bug in irq.c that reported the irq pointer for unexpected
+irqs instead of the irq number.
+        Re-wrote some of the code that manages copying to and from user space.
+Some code reduced. New verified_memcpy...() functions now used instead of
+using verify_area() separatly.
+	Added Blaz Antonic's new more generic probing code for floppies. 
+Got rid of the bufseg parameter to save space.
+	Added and fixed Blaz Antonics changes to lp driver so it now uses the
+BIOS to find out where the ports are.
+	#ifdefd out the immediate bottom half and its run queue as nothing uses
+it.
+	Removed some redundant code from schedule().
+	Cut down ll_rw_block so it only handles single block requests, which is
+okay, as this is all it was doing anyway. Cut out lots of other code related
+to request. Code now panics if it can't get a request.
+	#ifdefd out the task queue code as nothing was using it.
+	Added some support to tty code for non canonical mode, and non-echoing 
+mode. Currently minimal support for vi only.
+
+
+VERSION 0.0.68-pre5 NOTES
+-------------------------
+
+	This really should fix at least one problem now. (The last one didn't
+work because of a typo).
+
+VERSION 0.0.68-pre4 NOTES
+-------------------------
+
+	Another very small change to arch/i86/lib/bitops.c.
+
+VERSION 0.0.68-pre3 NOTES
+-------------------------
+
+	Very small change to arch/i86/lib/bitops.c to put back in the old
+code.
+
+VERSION 0.0.68-pre2 NOTES
+-------------------------
+
+	Integrated Shane Kerr's time code patch. This may solve the timer bug.
+
+VERSION 0.0.68-pre1 NOTES
+-------------------------
+
+	Removed lots of code from fs using the BLOAT_FS #ifdef.
+	Fixed infinite loop in buffer.c.
+	Added base level socket code.
+	Changed code that uses save_flags/restore_flags so they use an int
+instead of a long, and saved several bytes!!
+	Fixed bug in lp.c pointed out by Patrick Lam.
+	Re-sorted the code that deals with timer. Timer is now stopped,
+the table is initialised, the irq is requested, then the timer is started.
+	Added code so that BIOS irq 0 routine is called every five ELKS
+interrupts (100Hz). The means BIOS is called at 20HZ which is close to the 
+18.2Hz that the BIOS needs.
+	Removed references to need_resched and can_tswitch as they are 
+currently unused by the scheduler.
+	Removed redundant code from do_fork(). Added panic to find_hole
+as all code that called find_hole panics if it returns NULL. Added code
+so that split_hole checks hole is too big to reduce wasted code elsewhere.
+	Cleaned up some excessive boot time messages, mostly from doshd.
+	Put workaround for compiler bug in the end of init_task().
+
+VERSION 0.0.67 NOTES
+--------------------
+
+	Changed Makfile to make include dependencies location independant.
+	Fixed floppy.c so that it it is configured in there is no link error.
+	Fixed bug in fs/buffer.c which was making get_free_buffer() wait
+indefinitly and corrupting the filesystem.
+	Added Rob de Bath's patch to force use of syscall.dat.
+	Added Blaz Antonic's lp driver. Tweaked it to make it more compact, and
+fix errors.
+	Added module code.
+	Fixed problem with ioctl trying to return long int.
+	Fixed kernel include file in linuxmt/ and arch/ directories so they can
+be linked to from /usr/bcc/include, and bcc will still work.
+	Changed tty code to speed up and remove redundant code and arguments.
+	Added required irq's to irq table code and removed useless 
+unimplemented ones.
+	Took unused field Console.InUse out of the direct console code.
+	Added CONFIG_DCON_VT52 to allow VT52 console support to be left out
+to save space.
+	Removed several functions from lib/string.c to save space.
+	Added Shane Kerr's patch to implement time functions.
+	Fixed backspace with <TAB> bug
+	Added heavy debugging output to try and solve the "unable to get timer"
+panic problem.
+
+VERSION 0.0.66 NOTES
+--------------------
+
+	Removed unused functions print_bufmap_status(), refile_buffer(), 
+set_writetime() taska(), taskb(), interruptible_sleep_on(), sys_uname(),
+sys_sethostname(), GetQueue(), SetLeds(), get_request_wait(), and unused
+global variables busy[] busy_wait force_bioshd blksize_size[] read_ahead[] 
+and hardsect_size[].
+	Fixed rs_probe() so serial ports are now correctly probed, and started
+work on a full serial tty driver. Written interupt service routine, + routine
+to receive character into the chq. Writing to serial now works, but the
+interrupt service routine rquired for reads is currently not called when
+characters are sent. Why anyone?
+	Altered tty code so that tty driver inserts \r before \n, rather than
+it being done in the console and serial drivers directly. If anyone thinks this
+is the wrong way round, please let me know, together with your reasons.
+	Implemented Blaz Antonics change to speed up floppy probe.
+	Added code to doshd_release() so that floppy changes don't cause
+corruption from old buffers.
+	Small change to stack_check() %d changed to %ld for t_endbrk.
+	Implemented Rob. de Bath changes for Dev86v13.
+	Added a simple ramdisk driver which can access up to 8 64K ramdisks.
+See elks/Documentation/ramdisk.txt.
+	Re-organised the way printd_??? debugging macros work, so they now
+have paramater numbers. This cut out 2656 bytes of initialised data.
+
+Al
+
+	PATCHES BY Matthew Kirkwood (weejock@ferret.lmh.ox.ac.uk)
+
+	I am going through these implementing one at a time as they are against
+an old version.
+	Patch to crt1.c to cope with the possibility of an odd number of bytes
+in kernel BSS.
+	Added Memory character device to support /dev/zero, /dev/null and 
+/dev/full. This has been fixed by me so it now works.
+	New faster version of find_first_zero_bit().
+	Other small cosemetic or code reduction changes.
+
+VERSION 0.0.65 NOTES
+--------------------
+
+	Clean up patch to doshd.c by Blaz Antonic. Fix bug in the dma_avail
+code.
+	Add CONFIG_FS_RO config option which allows all filesystem write code
+to be removed from the kernel, making root mount read-only and saving huge
+ammounts of kernel space.
+	Removed unused syscalls truncate(2) ftruncate(2) statfs(2) utimes(2)
+	Added the doshd.c patch adding ioctl GETGEOM to support fdisk, by David
+Murn.
+	Fixed sys_ioctl() so that ioctl now works correctly. fdisk now reads
+partition tables correctly on my test machine, but I cannot currently test its
+writing capability.
+	Added Blaz Antonic's second patch which properlly fixes autoprobing,
+especially for 1.2Mb drive users, and adds the capability to hard code floppy
+type.
+	Addes CONFIG_XT option, which currently does nothing.
+
+Al
+
+VERSION 0.0.65pre1 (patch release) NOTES
+----------------------------------------
+
+	Very quick and easy two line patch to fix floppy autoprobe.
+
+VERSION 0.0.64 NOTES
+--------------------
+
+	Further fixes and code reduction to block_dev.c.
+	Fixed the way the system_utsname structure is implemented. Now no files
+should use the information in version.h, but should instead use the appropriate
+entry in system_utsname.
+	Added two new configure options so that floppy or HDD code can be left
+out of doshd.c, the BIOS device driver.
+	Re-integrated Chad Page's patch to doshd.c which was introduced in 62
+but left out of 63, with a bug fix which solves the problems caused when an
+XT pretends it is an AT. #if'd out some unused code in doshd.c (revalidate
+function) to save about 400 bytes, added #ifdef's for the floppy and HDD 
+options. Removing HDD support frees up 2K of code space!!
+	Minor bug fixes in fs code involving map_buffer()/unmap_buffer() use.
+
+Al
+
+VERSION 0.0.64-pre1 (internal) NOTES
+------------------------------------
+
+	Fixed bug in FULL_VFS support (second try, lost 1st one) The filesystem
+type check in sys_mount uses a local type string now. Needed for get_fs_type.
+	Changed wait_for_keypress to blocking. Fixes PRESS RETURN in mounting
+root during boot.
+	Integrated my patches based on 0.0.63pre1 with final release for 
+0.0.63
+	Further ported ROMFS, compiles and mounts.. though still not useable.
+
+Michel
+
+VERSION 0.0.63 NOTES
+--------------------
+
+	Some tweaks to make config including adding help.
+	Removed the following functions  with "#if 0..":
+fstrlen, puf_fs_word, print_tasks, sys_ni_syscall, sys_setregid, sys_setreuid,
+sys_getpgid, sys_getpgrp, sys_getsid, sys_setgroups, sys_getgroups, sys_uname,
+sys_sethostname, sys_gethostname, get_chrfops, unregister_blkdev, 
+unregister_chrdev,
+	as none of them were implemented. This reduces the kernel code by 2000
+bytes.
+	Removed about 150 bytes of code which did nothing from cp_stat(). See
+comments for details
+
+Al
+
+VERSION 0.0.63-pre3 (internal) NOTES
+------------------------------------
+
+	Integrated pre1 patch into main kernel sources so make config,
+multiple filesystem support, and the beginnings of romfs are now there.
+	Remove lock_buffer() function and replace with inline code as it is 
+only used once.
+	Remove size parameter from bread() and getblk() as for both functions
+size is always 1024, and cannot be anything else. This saves about 300 bytes.
+Also remove paramater from find_buffer() and get_hash_table().
+	Large changes to blk_rw() to make file access to block devices work
+Bugs were caused because the function misused the bh_data field of a buffer
+bh_data is only a valid pointer AFTER map_buffer() has been called. This code
+has been tested slightly and appears to work.
+
+Al
+
+VERSION 0.0.63-pre2 (internal) NOTES
+------------------------------------
+
+	Backed off change made to arch/i86/kernel/bios16.c as it caused setup
+data to be corrupted. Backed of change made to arch/i86/drivers/block/doshd.c
+as the new code did not work on any test machines. Code is now very similar
+to pre0.0.61A.
+
+Al
+
+VERSION 0.0.63-pre1 NOTES
+-------------------------
+
+	Added the make config to the kernel tree. It should allow easier
+configuration of the kernel. Did some cleanups/preparations for multiple
+filesystem support and root devices other than minixfs. Started porting
+ROMFS from linux to ELKS. It is in a very premature state, meaning, it
+doesn't link yet. 
+
+Michel
+
+VERSION 0.0.62 NOTES
+--------------------
+
+	There are some slight kernel tweaks, although the main diff. is
+that the rootdisk now uses Alastair J. Riddoch's userland sources.  Note
+that there is a data segment corruption bug that hits the init code, so
+this kernel can be considered buggy. 
+
+VERSION pre0.0.61A NOTES
+-------------------------
+
+	This is a bug-fixed version of 0.0.59, and should be the most stable
+kernel yet*.  It turned out the multitasking bug was a feedback bug in the
+console driver which only crops up in VC's... commented that out and fixed
+things up a bit.  Also, after every read/write schedule() is called to make
+sure multitasking is quite smooth.
+
+	[* - Okay, it's not *that* stable :) ]
+
+	I still haven't tested it outside of dosemu, so YMMV... :)
+
+VERSION 0.0.59 NOTES
+--------------------
+
+	(crunch)
+
+	The sound you just heard was ELKS' memory requirements (not code size)
+being scrunched.  Without init, you can now run sash and small utilities like
+'cat' in 256K of memory, and a whole lotta sashes in 384K.
+
+	(Note that that may go up 32-48K in .60 though, if I implement 
+kernel stacks outside of DS)
+
+	What I did was put the setup.S stuff and the 2-sector buffer for doshd
+lower in the first 64K, and open up about 48K below the kernel loading area.
+I also implemented shared code segments, and a VERY crude version of chmem.
+(found in elkscmd/chmem.  It's really really terse though :)
+
+	Also, it turned out that the kernel was functional with 1K kernel
+stacks, so I was able to shrink that down and set the process limit to 16.
+
+	I also put in L Saku's memmove patch (thanks for the quick response!)
+- there are still a few speed opts I'd like to get in, but I wanted to get
+0.0.59 out quickly (especially after trying to get outside kernel stacks 
+working, which turned futile.)
+
+	Also, thanks to James Wells for pruning the directory tree...
+
+VERSION 0.0.58 NOTES
+--------------------
+
+	What a release... there are so many changes I don't think I can
+remember them all!  The kernel is a lot more stressed now BTW (more processes,
+more memory use, etc) so there may be more crashes.  However, for the same
+tasks I think .58 is more stable because of a couple of major bug fixes. 
+
+	VC support now mostly works - some MDA support added but there's a
+screen garbage problem right now, so it's not too useful.  The init/login 
+sources that Alastair Riddoch (sp - it's late :) have been changed to use 
+all three virtual consoles!  (Yes, you can now have 3 logins on an XT :) 
+
+	Also, I've banged on the doshd and fs code to make hard disks and
+larger (in terms of files) partitions usable.  (I don't like the inode.c hack
+though) 
+
+	I've fixed the mount code to make it work for now, although I'm going
+to reorganize the code in the libraries and remove the mount type from it.
+
+	The timer is no longer set to 100 times/sec, because I suspect that
+might have been causing some floppy timing problems on some systems (no
+confirmation though, and it can be turned back on)  I've also 'covered up'
+all of the error messages unless it's hit MAX_RETRYS.
+
+	In arch/i86/kernel/system.h, replaced hard coded 640K with a check
+in the setup block.
+	
+	Whoops!  wait4 can only have three parameters, and we only use status
+anyway :)
+
+---
+
+	This is pretty much the feature set I intend for 0.01, with a couple
+of more features added.  There's a lot of fine-tuning left to be done before
+then, since it's now a bit more ambitious than before (r.e. more features :)
+
+VERSION 0.0.57a (internal) NOTES			4/22/97 12:10AM
+--------------------------------
+
+	Ayeee... I did a lot of hacking tonight :)  I worked on the tty layer
+some more (still not done, but we now handle output too), and in the process
+of debugging things found a 'better' way to do the queue stuff (instead of
+having a head and tail, we now have head and length.  This was *much* easier
+to implement :) 
+
+	Combined with some other cuts, .57a is pretty close to .57 in size,
+which is nice.  My worry right now is about how much the queue stuff will
+affect performance on an XT - I think I can counter it, but then I'll be worried
+about how much space the changes will take (I can't win!)
+
+	I've fine-tuned sash to use less stack and memory, so it should be
+much more stable now.
+
+	Added CAD stuff to keyboard.c, but untested on virtue of it being 
+12:30AM last night :)  (.58 note: I don't think it works, but you can try
+the /bin/reboot program out!) 
+
+VERSION 0.0.57 NOTES
+--------------------
+
+	Started work on the tty driver - backspace actually works now!  I 
+haven't done anything with the arrow stuff yet, since I need to figure
+out the best way to deal with them (the keyboard driver already converts it
+to VT52 escape sequences - I suspect handling those is readline's job)  
+There's a lot of work left to be done on the driver though, and the output
+interface hasn't even been touched yet!
+
+	(Interestingly enough the rewrite actually made things a few hundred
+bytes smaller - a non-strace kernel is ~63,900 bytes now, although that'll
+grow when ntty.c is fleshed out more.)
+
+	I also hacked up sash a bit more - the crashes involving vfork were
+caused by using the system() library call which uses vfork() which dosen't
+exist (I tried to implement it, but couldn't get it right darnit!)
+
+	I also found a whopper bug in the minix/namei.c stuff... name 
+comparisons weren't being handled right (comparing R to RELNOTES matched for
+instance)  I fixed this with a 2-line hack to namecompare (assuming that
+the files can't match if the name of the file on-disk isn't null-terminated
+at the same place the other name is :)
+
+VERSION 0.0.56 NOTES
+--------------------
+
+	Lotsa bug fixes, but there are still a lot more to be done.
+
+	Fixed sash 'bug' in cp which made it overrun it's stack (it allocated
+8,192 bytes - okay in regular Linux but not here :)
+
+	Implemented stack checking (relative to current bss) whenever a syscall
+is made.  Shouldn't slow things down *too* much, since it's a very short 
+routine.  If the stack grows too long, sys_exit is called immediately to kill
+the process.
+
+	stat() now sets the file size properly (it didn't copy it over) 
+(TODO : Change the stat+inode stuff to match to save code space)  ls in 
+sash now prints sizes properly.
+
+	Wrote a six-line implementation of sys_rename.  It probably doesn't
+do it the right way, but we don't have space to write another big function or
+two... :)  So, I decided to just call sys_link and if that works sys_unlink 
+the old file.
+
+	sys_vfork has been mapped to do_fork.  I don't think this works right.
+(If the parameters are long enough, sash chooses to do vfork!)
+
+
+VERSION 0.0.55 NOTES
+--------------------
+
+	The drivers directory has been rolled into the arch/ directory, and
+I've started work on paring down the kernel to run under DOS (it'll be released
+when it's done :)
+
+	I've made some tweaks to the keyboard driver, which makes it a bit more
+like a real tty (although backspaces still aren't handled right)
+
+	sash is now the default shell... I've mostly gotten it to work (added
+a few fflush-es & stuff)  Hopefully we can use this to figure out everything
+else that's borken :)
+
+VERSION 0.0.54 NOTES
+--------------------
+
+	The fmemcpy routine is now in assembler, and makes the entire kernel
+*MUCH* faster on my test IBM XT!  fork is now much faster, and '/bin/cat
+RELNOTES' is much faster and more even now. 
+
+	I worked on mkdir() some - it's not finished but it won't cause
+a panic anymore :)
+
+	I added a print_regs() function which safely prints out all current
+registers (except ss), so we can check what the registers are just before
+we have a failure.
+
+VERSION 0.0.53(.1) NOTES
+------------------------
+
+	I've put together a usable version of sys_brk() so malloc in libc
+will now work correctly.  As a result the POSIX-style readdir() routines now
+work.  minish (not uptodate with what Stephan has done) has been changed to 
+work with the `new' libc readdir functions... 
+
+	I also fixed the doshd.c bug, and ELKS now works on 360K disks again.
+(I suspect the bug predates bug reports though)... instead of going to the
+next track/head it was going back one sector, which was bad.
+
+	If you don't know already, this release is meant to install over/into
+Dev86 0.0.11, so if you haven't gotten it already *get it now!!!*  To get
+everything working you have to unpack Dev86, then unpack elks, build the
+(slightly-modified) Dev86, and then build the kernel with it.  This is done
+so that you don't have to manually change dev86, and it dosen't really change
+anything except the libc/syscall directory and the rules.86 file.
+
+	(minish unpacks into the tests/ directory, along with a new makefile)
+
+	Optimization is turned off, since there appears to be something else
+wrong with it.
+
+VERSION 0.0.52copt1 NOTES
+-------------------------
+
+	This is identical to 0.0.52, except that the makefiles are changed to
+use bccopt.  The kernel is 1300 bytes smaller, and should be faster as well
+as a lot of the instructions optimized out are redundant.  A new rootdisk
+image is provided so that you can check out the effects of the optimization.
+
+	Special thanks to Gero who rewrote/fixed the copt optimizer to make
+it work effectively with bcc!
+
+VERSION 0.0.52 NOTES
+--------------------
+
+	(Note: the kernel looks for /bin/sh rather than /sbin/init!)
+
+	I have a very simplistic group of readdir functions in here...
+they're not finely-tuned, but they work with the minish which is included. 
+They're not POSIX-compliant either, and I'll probably work on a different 
+interface (don't expect open/closedir in 0.0.53) for future versions.
+
+	do_exec() now corrects the pre-built stack so parameters are passed
+correctly (minish can now call programs with parameters...)  I tried to do
+execve, but I didn't get it to work right before my patience ran out, and
+it added 3-400 bytes to the code anyway :)
+
+	I also tweaked a couple of things in the fs/* - sb->s_flags is now
+16-bit, and I did a little bit of tightening in fs/inode.c... the next thing
+will be to exorcise inode.c's hash tables.
+
+	Special thanks to Christoph for the new memcpy_*fs routines, and
+Stephan for the enhanced version of minish.c which I worked on for
+Linux/8086 0.0.52.
+
+	Finally, don't forget to copy the files in linux.86/patches/libc.syscall
+to your libc's syscall directory, and rebuild your libc again... be ready to
+do it for 0.0.53 too :)	
+
+VERSION 0.0.51 NOTES
+--------------------
+
+	This version includes the first version of minish, the "World's 
+Smallest Shell"  It executes what you tell it to do, and that's about all it
+can do... basically it's to test the ability of fork/exec/wait/exit at this
+point, and it took a while to get the kernel to do *that* right... 
+
+	I had to implement sys_exit() and sys_wait4() (barely), and I'm not
+sure I got exit right, and I really don't have wait4 right at all (it only
+remembers 1 exited process!)
+
+	Also, in the next kernel series (0.1.x or 0.2.x), I'm considering
+rewriting some parts in assembler, which would replace the C versions if
+they exist... the kernel is now about 65,050 bytes, which is Way Too Big
+if we want to put things like signals in here... 
+
+VERSION 0.0.50 NOTES
+--------------------
+
+	File writes (at least sequential ones) now work!  There are still
+a couple of bugs that I don't like (file permissions aren't set right, etc),
+but writing now seems to work correctly (after fixing quite a few bugs) 
+
+	The bitmap code is quite different now, mostly because I thought
+it was buggy because of another problem (I wish bcc checked types going into
+functions...) 
+
+	There are still quite a few bugs to fix, but hopefully the file write
+feature will be useful... I changed the code on the rootdisk to read /sbin/
+txtfile and write it to /newfile.  This appears to work okay except the file
+permissions are wrong, and it will perpetually be unchecked afterwards (those
+were 'minor' bugs to me, compared to how many there were before :)
+
+VERSION pre-0.0.50 (not released) NOTES 
+---------------------------------------
+
+	I've been working on the file write code (which was completely
+borken before).  I had to write the find_first_zero routine, which I'm 
+not even totally sure works right, but looks okay.  To get this far, I had
+to overcome what appeared to be compounding bugs...
+
+	I've fixed enough bugs so that it *looks* from the kernel standpoint
+that everything's okay.  There were quite a few bugs - I'll see if I can't
+make a diff so I can list them all!  Right now the directory code still looks
+broken.
+
+	At this point I'd like to say 'thank goodness for dosemu and disk
+images!' - if it weren't for those I'd probably have had a much tougher time
+getting this far. 
+
+	BTW, make clean the kernel after changing the strace option.  
+process.c does not recompile for some reason after changing it.  Should 
+fix that for 0.0.50...
+
+VERSION 0.0.49a NOTES
+---------------------
+
+	(This pretty much does what I said I'd do for 0.0.50, but something
+tells me that I haven't done enough to bump up the version number...
+
+	doshd now reads/writes from 0x0800:0x0000 (in other words, 32K :)
+I also am now loading setup at 8K, assuming that it won't get overwritten there.
+If I've screwed up here, I'm gonna have to think of something else though.
+
+	The keyboard_read() routine has been optimized a bit and moved into
+xt_key.c.  Still no wouldblock or ^C handling of any sort though.
+
+VERSION 0.0.49 NOTES
+--------------------
+
+	Keyboard support should now REALLY work, since I was able to make
+xt_key.c and dircon.c work together.  I tested it under my P/133 with and 
+without dosemu, and on a 5150... it will hopefully work on most other 
+systems now.  'non-blocking I/O' is not handled differently than regular
+I/O yet though, and wait queues for good multitasking aren't implemented 
+yet.  That's for 0.0.50 :) 
+
+	Also, I changed the way buffers are unmapped so that in a straight 
+file read, the indirect block and the file data don't keep swapping in and
+out... it was fine under dosemu on my P/133, but the 5150 slowed down 
+A LOT when it went into the indirect block as it copied 2K every sys_read. 
+
+	(I think the real problem is that the fmemcpy code makes about 4,000
+call/ret sequences to copy those two buffers.  With each call/ret sequence
+eating up at least 36 cycles, that's a good 120,000 cycles we're wasting)
+
+	In addition, I made the first part of the inode structure match
+that of the minix inode, shaving off some more memory.  Note that group 
+comparisons *might* be borken now because of bcc bugs, although I just
+thought of that (I'll fix that in 0.0.50 too :)  This kinda makes it a bit
+more minix-fs specific, but saves 200-300 bytes, and I think we'll need each
+and every one of them to make all of this work.
+
+	Also for 0.0.50 (maybe) are more efficent memcpy_tofs-type routines.
+Since I have a 5150 up now, it might be a good idea to tighten the code a bit
+so that it'll be tolerable when we actually run programs on it.  CGA 
+snow-checking may become a #define RSN too, since it annoys me :) 
+
+	I forgot to mention that strace needed to be enabled in autoconf.h,
+so if you're going 'where's the strace', look there and make sure it gets
+#defined.
+
+VERSION pre-0.0.49 NOTES
+------------------------
+
+	NOTE: the system call # ordering has changed, so you have to copy
+syscall.dat (in this directory) to (*)linux-86/libc/syscall/syscall.dat
+and rebuild and reinstall the library and elksemu.  Most of the simple 
+programs which actually work at this point don't use any of the changed
+system calls (much :), but it's a good idea to update your libc anyway...
+
+	An in-kernel strace has now been implemented which will allow us to
+track system call usage better (once libc has been changed :)  Right now,
+it dosen't print parameters for most functions, but it uses a table scheme
+making that rather easy to fix (once you know the types, and look at strace.h) 
+
+	sys_getuid() and sys_getpid() have now been implemented rather simply,
+returning their respective uid and pid variables directly from current.
+
+VERSION 0.0.48a NOTES
+---------------------
+
+	A few more bugs fixed.  There were two bad bugs in fs/minix/file.c
+- one of which was caused by comparing an int16 to an int32, which is borken
+in bcc.  The other was that buffers were not being brelsed like they should
+have been, which meant that all the buffers filled up...
+
+	I also have keyboard handling working, but only with the BIOS console,
+which is compiled in right now... it's a half-broken implementation though.
+If someone has any ideas on how to do this better, feel free to put them in
+code and send them to me (please :)  Right now keyboard I/O blocks everything,
+because I don't think querying keys works right under dosemu, but it should
+work on most machines...  
+
+	ash does not work yet, but it does start - freezeing after it goes into
+cmdloop() for some reason.  We need smaller tests where we can confirm 
+breakage points easier, and still run them as /sbin/init, which rules out
+some of the tests in libc-86 as they are 'out of the box'. 
+
+	The test directory is still evolving.  Trying to get fork/exec working
+in code okay...
+
+VERSION 0.0.48 NOTES
+--------------------
+
+	Reading files past 6K is no longer broken!  YES! :)  Supplied with this
+is a compressed 1.44MB disk image which contains the program used to copy this,
+and a suitable 12K file (the Linux 1.2.x readme) to display, just to prove I'm
+not making this up :)
+
+	Basically, this fixes many bugs in pre-0.0.48 involving the new buffer
+cache setup and the fs system.  There was also a nasty bug in the block device
+subsystem which involved ended requests not being reset right (limiting the
+number of requests to 20...) which I fixed.  I also replaced minix_getblk with
+something based on the 0.0.12 bmap stuff (>519K files are not yet supported,
+since I was too lazy to write the code)i
+
+	There are probably a few bad bugs left, and a few kludges to fix (e.g.
+the one I just put into the console driver which treats '\n' like '\n\r'...)
+, and a keyboard driver to add before we can even consider bumping this up
+to 0.1.0 though... but this version is a step in that direction.
+
+VERSION pre-0.0.48 NOTES
+------------------------
+
+	This version features a new two-tier buffer cache design, which I
+was able to graft onto the existing one.  Basically, what I've done is set
+up a 64K segment in which we can stick in 64 buffers (the L2 cache).  When
+we need to access their data, we map them into the L1 cache for a while.  After
+it's done, unmap_buffer() is called, allowing the buffer to be unmapped.
+The actual unmapping is only done in map_buffer so that a buffer can be 
+'remapped' with no performance penalty.
+
+	(Also, buffers are automagically mapped when lock_buffer() is called,
+making any modifiation to the block devices unnecessary.)
+
+	This is a 'first cut' at the new design.  It somehow worked on the 
+first sucessful compile (even though I forgot to reserve space for the buffers,
+which implies no swapping to L2 was ever done...) but there are probably bugs
+in here somewhere... I've just tested it on loading and running 'hello, world!' 
+which works... finally, there are many unmap_buffer calls followed by brelse,
+which can be optimized by making them one function in some cases. 
+
+	The reason why this is pre-0.0.48 is that I'm not sure if this is
+the right way to go, and I would like feedback on it.  New test programs 
+for /sbin/init would be nice too...
+
+VERSION 0.0.47 NOTES
+--------------------
+
+	The attack on fs bloat continues, with some functions rearranged and
+all Minix V2 fs support dropped.  The code size has been knocked down another
+500 bytes from 0.0.46, and it still runs hello world...
+	
+	The number of buffers has been bumped up to 16.  Now the kernel's really
+stuffed with herring :)  Seriously, I think it might be a good idea to break the
+buffers out into their own ds, but that won't be in this version...
+
+	I also reorganized the comment structure for exec.c into the new one,
+although I didn't do anything else yet.
+
+VERSION 0.0.46 NOTES
+--------------------
+
+The root disk is now set to the second floppy drive.  Not too much has changed,
+except for the setup and disk driver code's floppy detection.  The buffer cache
+has been modified to bring down the total code size by 600 bytes compared to
+pre-0.0.45a by changing the way the flags are handled.  This is lightly tested,
+but it can still start /sbin/init, and it still has most of the same bugs 
+anyway :) 
+
+(There were three different pre-0.0.45 releases - the final one is 0.0.46 to
+avoid confusion - Chad) 
+
+If your floppy drive is other than 3.5" 1.44MB, you will have to change the
+constants in drivers/block/doshd.c (search for "hardcode")

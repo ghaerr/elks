@@ -1,0 +1,19 @@
+BUGS
+----
+
+This is a list of things I have noticed go wrong. Please submit additions to
+this file if you find any kernel related bugs.
+
+	Al
+--
+
+The interrupt routine for the serial driver rs_irq() is currently not called 
+when the serial port should be generating an interrupt. It is not clear why,
+but it is probable there is a bug somewhere in the serial port configuration
+code
+
+Sometimes unmounting a non-root filesystem returns EBUSY when nothing is using,
+and nothing seems to rectify it.
+
+Sometimes for no aparent reason the umount command gives a STACK collided with
+BSS error without unmounting the filesystem.

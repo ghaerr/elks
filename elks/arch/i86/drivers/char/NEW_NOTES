@@ -1,0 +1,48 @@
+The virtual consoles are there, and seem to work quite well.
+
+memmove.c
+^^^^^^^^^
+The console driver now uses a new function, far_memmove().
+I hope that this function gets into the kernels lib, since
+it is useful for any memory copying. It has a small driver
+in C, but most of the work is done in plain assembly.
+
+void far_memmove( sseg, soff, dseg, doff, bytes );
+unsigned sseg, soff;  ....  The source segment and offset
+unsigned dseg, doff;  ....  The target segment and offset
+int bytes;  ..............  Number of bytes to transfer.
+
+It works for overlapping regions too. Note that the count of
+bytes to transfer is expressed as an int, not unsigned. This 
+is to prevent problems caused by the segmentation.
+Sorry for that.
+
+This file, 'memmove.c', will be distributed here until it gets
+into the build tree.
+
+The virtual consoles
+^^^^^^^^^^^^^^^^^^^^
+The virtual consoles are implemented in the display memory for now.
+This means that MDA users are just out of luck, because it has no
+extra memory.
+On the other adapters, the max number of vcs is:
+   bytes_of_videomem / ( width * height * 2 ) - 1
+This gives, for example, on the CGA
+   16384 / ( 80 * 25 * 2 ) - 1 = 3.096 = 3
+
+The currently visible screen contents are copied to the address
+which is displayed by the 6845. The stored screens are at addresses
+starting from the end of the visible page, rounded up to the nearest
+2048 ( 40x25 ) or 4096 ( 80x25 ) bytes.
+When writing on the visible screen, the writes go through it to the
+other copy of it as well, so no need to copy back the current screen
+when switching to another.
+
+It is possible to write to a non-visible screen using Console_write().
+The screen to write to is determined by the minor number in inode,
+ie MINOR( inode->i_rdev ) == 0 writes to the first vc.
+Everything done with con_charout() will be written to the currently
+visible screen.
+
+A new function, Console_set_vc( int new_vc ), is exported to do the task.
+xt_key.c was modified to use this new func, when alt-fn is pressed.

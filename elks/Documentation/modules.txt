@@ -1,0 +1,34 @@
+Module code
+
+Copyright 1997 Robert de Bath and Alistair Riddoch
+
+I have implemented a simple module implementation in the kernel based on code
+sent to me by Rob de Bath. It allows drivers to be loaded into and unloaded
+from a slot in the kernel. The module text is loaded into the kernel at
+module_init(), and the data at module_data both of which are defined in
+kernel/module.c.
+
+An example module and the tools required to build it are found in the
+modules directory. The key files in this directory are:
+
+serial.c	- The module. Slightly modified arch/i86/driver/char/serial.c
+
+symchop.ask	- Script that is used to generate modlink.s which defines all
+		  the kernel symbols, to be linked to the module.
+
+objchop.c	- Program that takes the compiled, linked module and splits it
+		  into text and data images to be directly loaded into the
+		  kernel.
+
+vals.c		- Program that chops the empty bits off the text and data 
+		  images.
+
+Because the module is linked to the kernel symbols at compile time, the module
+must be recompiled if the kernel is changed in such a way that the symbols
+module_init and module_data are diferent. If in doubt, re-compile.
+
+The utility insmod used to load modules into the kernel is found in the
+elkscmd packages in elkscmd/sysutils. It uses the new insmod(2) system call
+to load and initialise the module. To keep the amount of kernel code
+required to a minimum, the /dev/mem device is used to copy the module
+images into kernel memory.

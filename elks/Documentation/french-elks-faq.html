@@ -1,0 +1,354 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+
+<html lang=fr>
+
+<head>
+<title>Elks French Faq</title>
+</head>
+
+<style type="text/css">
+BODY { background: white }
+</style>
+
+<body>
+
+<div align=center>
+
+<table>
+<tr>
+<td valign=middle><img src="ELKS-Logo.gif" alt="[Elks Logo]">
+<td valign=middle><h1>Elks French Faq</h1>
+</tr>
+</table>
+
+<br><br>
+<hr size=5 noshade>
+<br><br>
+
+</div>
+
+<div align=justify>
+
+<p>
+Le document présent est destiné à répondre aux questions les plus
+fréquentes concernant l'ELKS (Embeddable Linux Kernel Subset), aussi appelé
+Linux-8086. Ce nouveau noyau est en effet destiné à tourner sur les plus
+petits PC fonctionnels existants, les XT (principalement 8086 et 8088).
+
+<p>
+Cette FAQ (Foire Aux Questions), maintenue par <a
+href="mailto:zoro@mygale.org">Arnaud Launay</a>, est basée sur la FAQ
+d'<a href="mailto:ajr93@ecs.soton.ac.uk">Alistair J. Riddoch</a>, elle-même
+dérivée de la FAQ originale de Brian Candler. La
+dernière version de la Faq originale (en anglais) est accessible sur <a
+href="http://www.ecs.soton.ac.uk/elks/"> http://www.ecs.soton.ac.uk/elks</a>.
+
+<p>
+Des informations complémentaires peuvent être trouvées sur l'<a
+href=" http://www.linux.org.uk/ELKS-Home/index.html">ELKS Home Page</a>.
+
+<p>
+Il existe par ailleurs une liste de diffusion en anglais. Pour s'y abonner,
+envoyez un message (sans sujet et sans signature) à
+<b>majordomo@vger.rutgers.edu</b> , contenant dans le corps les mots
+<b>subscribe linux-8086</b> . Les archives de cette liste peuvent être
+trouvées sur <a href="http://lemur.ecs.soton.ac.uk/~threader/LEMUR_lists.cgi">
+http://lemur.ecs.soton.ac.uk/~threader/LEMUR_lists.cgi</a>.
+
+<p>Pour se désabonner de la liste et ne plus recevoir les nombreux messages
+des usagers, envoyez un message (sans sujet et sans signature) à
+<b>majordomo@vger.rutgers.edu</b> , contenant dans le corps les mots
+<b>unsubscribe linux-8086</b> .
+
+<p>
+ELKS n'est pas Linux, et la liste de diffusion, malgré son nom, n'est pas
+le bon endroit pour poser des questions sur Linux. Voyez plutôt des
+groupes de discussion comme <a
+href="news:comp.os.linux.answers">comp.os.linux.answers</a> ou <a
+href="news:fr.comp.os.linux">fr.comp.os.linux</a>.
+
+</div>
+
+<br><br>
+<div align=center>
+<hr size=5 noshade>
+</div>
+<br><br>
+
+<H2>Section 1 - Général</H2>
+<UL>
+<LI><A HREF="#11">Q1.1. Qu'est ce que l' ELKS ?</a>
+<LI><A HREF="#12">Q1.2. Comment l'ELKS peut-il être comparé au Linux Standard
+?</a>
+<LI><A HREF="#13">Q1.3. Existe-t-il une version "prête à
+l'emploi" (ready-to-run) de l'ELKS ? </a>
+<LI><A HREF="#14">Q1.4. ELKS peut-il tourner sur un 8088 ?</a>
+</UL>
+<H2>Section 2 - Compilation et Installation</H2>
+<UL>
+<LI><A HREF="#21">Q2.1. Où puis-je trouver les sources ?</a>
+<LI><A HREF="#22">Q2.2. Comment créer un noyau ELKS ?</a>
+<LI><A HREF="#23">Q2.3. J'obtiens une erreur m'affirmant que /usr/include/linux/vm86.h
+n'existe pas ?</a>
+<LI><A HREF="#24">Q2.4. Comment créer un 'init' pour ELKS ?</a>
+<LI><A HREF="#25">Q2.5. Comment créer un 'root filesystem disk' ?</a>
+<LI><A HREF="#26">Q2.6. Que faire si mon XT a un lecteur 360k ?</a>
+<li><a href="#27">Q2.7. Le programme rawrite</a>
+</UL>
+
+<H2>Section 3 - Utiliser ELKS</H2>
+<UL>
+<LI><A HREF="#31">Q3.1. Puis-je utiliser des binaires bcc sous Linux ?</A>
+<LI><A HREF="#32">Q3.2. Puis-je booter l'ELKS sous DOSEMU ?</A>
+</UL>
+
+<br>
+<hr size=4 noshade>
+<br>
+
+<div align=justify>
+
+<H3><A NAME="11">Q1.1. Qu'est ce que l' ELKS ?</A></H3>
+
+<p>L'<b>ELKS</b> est le <i>Embeddable Linux Kernel Subset</i>, un projet de
+construction d'un petit noyau correspondant à Linux (qui aura plus
+ou moins les fonctionnalités d'UNIX V7 dans le noyau) qui peut tourner
+sur des machines dont les ressources processeur et mémoire sont
+limitées. Les cibles initiales sont les Intel 8086 et
+éventuellement les 286 en mode 16 bits protégé. Un
+noyau pouvant tourner sur ce type de machine peut être utile pour les
+systèmes intégrés, pour le déploiement
+informatique du Tiers-Monde où les
+machines 80x86 x>0 ne sont pas facilement disponibles, et pour l'utilisation
+sur divers portables.
+<p>Plus d'informations sur l'arrière-plan, les buts et le status
+actuel du projet peuvent être trouvés sur l' <a
+href="http://www.linux.org.uk/ELKS-Home/index.html">ELKS Home Page</a>.
+
+<h3><a name="12">Q1.2. Comment l'ELKS peut-il être comparé au
+Linux Standard ?</a></h3>
+
+<p>ELKS est développé comme un noyau de substitution au vrai
+Linux, et doit être suffisamment petit pour être compris par une
+seule personne, pour ainsi devenir un inévaluable moyen
+d'apprentissage. Il en est pour l'instant aux premiers stades de
+développement, et de gros morceaux sont manquants, comme:
+
+<ul>
+<li>le swapping;
+<li>les librairies dynamiques;
+<li>la gestion des ports de communication, série et parallèle;
+<li>la gestion du réseau et de la couche tcp/ip (en cours).
+</ul>
+
+<p>Ceci étant dit, le système peut déjà être
+lancé, donne des consoles virtuelles, monter un lecteur de disquette
+en système de fichiers minix, et permet de lancer un petit programme;
+les derniers développements permettent le lancement de <b>sash</b>, un
+petit shell.
+
+<h3><a name="13">Q1.3. Existe-t-il une version "prête à
+l'emploi" (ready-to-run) de l'ELKS ? </a></h3>
+<p>Pas pour le moment. Vous devrez utiliser une machine Linux standard,
+charger les sources, et cross-compiler pour générer le code
+8086. Les images disques boot et root sont fournies avec la version actuelle
+de l' ELKS, mais elles sont uniquement prévues comme plateformes de
+tests pour le système, et leur utilisation est assez limitée.
+Cependant, il devrait probablement y avoir une
+distribution d'une sorte ou d'une autre dans quelques mois.
+<p><a href="mailto:mstrates@croftj.net">Michael Strates</a> prépare
+actuellement la distribution Bluebell, mais rien n'est encore fait. Si vous
+désirez rejoindre l'équipe de développement, contactez-le: le recrutement
+est en cours.
+
+<h3><a name="14">Q1.4. ELKS peut-il tourner sur un 8088 ?</a></h3>
+<p>Le 8088 est identique au 8086, sauf qu'il a un bus de données
+externe en 8 bits, au lieu de 16 bits; il est donc plus lent. Ainsi, oui,
+l'ELKS peut tourner sur un 8088.
+
+<br>
+<hr size=3 noshade>
+<br>
+
+<h2>Section 2 - Compilation et Installation</h2>
+
+<h3><a name="21">Q2.1. Où puis-je trouver les sources ?</a></h3>
+
+<p>L'environnement de développement Dev86 se trouve sur la <a
+href="http://www.cix.co.uk/~mayday">page de Robert de Bath</a>.
+<p>Le site de base du développement se trouve sur
+<a href="ftp://linux.mit.edu/pub/ELKS">ftp://linux.mit.edu/pub/ELKS/</a>.
+Les autres sites où l'ELKS et Dev86 peuvent être trouvés
+sont:
+<ul>
+<li><a href="ftp://titiz.dyn.ml.org/pub/elks/">ftp://titiz.dyn.ml.org/pub/elks/</a> (miroir français)
+<li><a href="ftp://ftp.ecs.soton.ac.uk/pub/elks/">ftp://ftp.ecs.soton.ac.uk/pub/elks/</a> (site anglais)
+<li><a href="ftp://cam053212.student.utwente.nl/pub/8086-nix/ELKS/">ftp://cam053212.student.utwente.nl/pub/8086-nix/ELKS/</a> (miroir néerlandais)
+<li><a href="ftp://ftp.amscons.com/pub/mirrors/ELKS/">ftp://ftp.amscons.com/pub/mirrors/ELKS/</a>
+</ul>
+
+Si vous connaissez d'autres sites, ou désirez en créer un,
+contactez le responsable : <a href="mailto:ajr@ecs.soton.ac.uk">Alistair J. Riddoch</a>.
+
+<h3><a name="22">Q2.2. Comment créer un noyau ELKS ?</a></h3>
+<p>Chargez dev86/Dev86src-0.14.5.tar.gz et elks/elks-0.0.73.tar.gz (ou les
+dernières versions) de linux.mit, ou l'un des autres sites.
+Décompressez les, par exemple, dans /usr/src :
+<pre>
+	tar -xvzf Dev86src-0.14.5.tar.gz -C /usr/src
+	tar -xvzf elks-0.0.73.tar.gz -C /usr/src
+</pre>
+L'environnement de développement sera décompressé dans
+/usr/src/linux-86, et les sources du noyau dans /usr/src/elks.
+Vous devrez ensuite compiler les outils de développement, incluant le
+compilateur spécifique bcc:
+<pre>
+	cd /usr/src/linux-86
+	make
+</pre>
+<p>
+Ceci fait, attaquez vous à la compilation du noyau:
+<pre>
+	cd /usr/src/elks
+	make dep
+	make config
+	make
+</pre>
+(Si vous êtes habitués à compiler des noyaux Linux par
+gcc, vous serez amusés par la rapidité à laquelle
+celle-ci se fait !) Le résultat en est une image
+nommée Image, que vous pouvez copier sur une disquette
+formatée, ce qui vous permettra de lancer le noyau:
+<pre>
+	dd if=Image of=/dev/fd0
+ou bien
+	make disk
+</pre>
+
+<p>Vous devriez maintenant pouvoir lancer le système par la disquette,
+mais vous n'obtiendrez pas beaucoup plus sans disquette root à
+mounter. Pour celà, vous avez sur le site ftp de l'elks un fichier nommé
+images.zip; il contient un noyau (boot), une disquette principale (root) et
+une disquette 720k complète (comb) permettant de booter avec une seule
+disquette.
+<p>Vous pouvez également créer votre propre disquette principale; ceci sera
+développé en <a href="#25">question 2.5</a>.
+
+<h3><a name="23">Q2.3. J'obtiens une erreur m'affirmant que
+/usr/include/linux/vm86.h n'existe pas ?</a></h3>
+<p>Editez <b>/usr/include/sys/vm86.h</b> , et remplacez <b>#include
+&lt;linux/vm86.h&gt;</b> par <b>#include
+&lt;asm/vm86.h&gt;</b> .
+
+<h3><a name="24">Q2.4. Comment créer un 'init' pour ELKS ?</a></h3>
+
+<p>Une fois le noyau ELKS booté, il lance /bin/init. Les sources
+d'un init pour l'ELKS peuvent être trouvées dans le paquetage elkscmd.
+
+<p>A partir du noyau 0.0.56, sash fonctionne et est utilisé comme /bin/sh
+par la plupart des gens. Il peut être trouvé dans le paquetage elkscmd.
+
+<p>Pour de meilleurs résultats, copiez /etc/passwd et /etc/group d'une
+distribution Linux standard sur la disquette root; ainsi, ls -l fonctionnera
+proprement, et /usr/lib/liberror.txt pour que sash puisse reporter les
+erreurs.
+
+<h3><a name="25">Q2.5. Comment créer un 'root filesystem disk' ?</a></h3>
+<p>Vous devrez créer une disquette minix contenant les fichiers et
+octets appropriés. Pour l'instant, 2 fichiers seulement sont
+nécessaires - /dev/tty (4,0) et /bin/init, qui lancera le getty, qui
+a son tour lancera un shell. Vous pourrez egalement trouver les commandes
+classiques - mount, cp, cat, rm, ... Mais n'attendez pas beaucoup plus de l'elks pour
+l'instant... Il y a beaucoup de travail à faire.<br>
+<i>Note: /dev/tty est différent de celui que le Linux normal utilise
+(5,0) .</i>
+
+<p>Alternativement, si vous avez un noyau >= 2.0.x et mount >= 2.5k, vous pouvez
+utiliser le système de fichiers loopback pour créer une image
+disque sur votre disque dur, et ensuite la basculer sur la disquette.</p>
+<pre>
+	dd if=/dev/zero of=root.image bs=1k count=80
+	mkfs -t minix root.image
+	mount -o loop root.image -t minix /mnt	# /mnt est le mount point
+	...
+	umount /disk
+	dd if=root.image of=/dev/fd0
+						# surtout ne pas compresser
+						# l'image de la disquette root !
+						# cette fonction n'est pas
+						# encore implémentée
+						# dans l'elks.
+</pre>
+
+<h3><a name="26">Q2.6. Que faire si mon XT a un lecteur 360k ?</a></h3>
+<p>Préparer les images boot et root devant tourner sur une autre
+machine requiert un peu d'attention, spécialement si la machine a un
+lecteur 360k. Les lecteurs 5'1/4 360k comportent des têtes à 40
+tracks, alors que les lecteur 1,2 Mo ont 80 tracks. Ainsi, un lecteur 1,2 Mo
+peut lire des disquettes 360k mais pas forcément les écrire,
+car le lecteur 1,2Mo écrira des tracks de taille moitié
+moindre que celle attendue par le lecteur 360ko.</p>
+<p>Une solution peut être de placer le lecteur 360ko comme 2nd lecteur
+de votre PC - ce qui vous permettra de formater les disquettes 360ko avec
+fdformat /dev/fd1d360 et créer un système tel celui
+décrit ci-dessus.</p>
+<p>Une autre solution consiste à créer une image de la disquette,
+puis à la transférer sur le PC
+contenant le lecteur 360ko (avec un câble série), et utiliser
+ensuite "<a href="#27">rawrite</a>" pour construire la disquette à
+partir de l'image.</p>
+
+<h3><a name="27">Q2.7. Le programme rawrite</a></h3>
+<p>Rawrite est un programme permettant d'écrire une image sur
+une disquette. Il permet de transcrire les
+images du noyau ELKS et de sa root image associée sur 2 disquettes
+360ko. Programmes nécessaires:
+<li><a href="ftp://tsx-11.mit.edu/pub/linux/dos_utils/rawrite.exe">rawrite</a></li>
+<li><a href="ftp://tsx-11.mit.edu/pub/linux/dos_utils/rawrite.c">Sources de rawrite</a></li></ul>
+
+<br>
+<hr size=3 noshade>
+<br>
+
+<h2>Section 3 - Utiliser ELKS</h2>
+
+<h3><a name="31">Q3.1. Puis-je utiliser des binaires bcc sous Linux ?</a></h3>
+<p>Oui - en chargeant un module dans le noyau vous pourrez directement
+exécuter des binaires ELKS. Celà rend le
+développement de programmes destinés à tourner sous
+ELKS bien moins pénible, puisque vous pouvez directement les tester
+sur un système Linux normal (avec cependant comme réserve le
+fait qu'ils peuvent ne pas fonctionner sous ELKS, si le programme utilise
+des implants du noyau qui n'existeraient pas encore dans ELKS).
+<pre>
+	cd /usr/src/linux-86/elksemu
+	make module
+	insmod binfmt_elks.o
+</pre>
+A noter, vous devrez relancer 'insmod' à chaque lancement.
+<br>Si, lors de la compilation du module, vous obtenez une erreur indiquant
+"modversions.h: no such file or directory" , alors vous devrez éditer
+le Makefile pour retirer la référence à ce fichier,
+c'est-à-dire:
+<pre>
+MODCFLAGS=-D__KERNEL__ -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer \
+          -fno-strength-reduce -pipe -m486 -DCPU=486 -DMODULE -DMODVERSIONS
+</pre>
+
+<h3><a name="32">Q3.2. Puis-je booter l'ELKS sous DOSEMU ?</a></h3>
+<p>Oui. ELKS peut se lancer avec dosemu > 0.63 et linux > 2.0.7.
+Vérifiez que votre lecteur de disquette est
+configuré correctement dans /etc/dosemu.conf, et utilisez
+l'option -A pour forcer le lancement sur la disquette.
+
+</div>
+
+<br><br>
+<hr size=5 noshade>
+<br><br>
+
+<h4>Page maintenue par: <a href="mailto:zoro@mygale.org">Arnaud Launay</a>.
+<br>Dernières modifications: <i>Août 98</i>.</h4>
+
+</body>
+</html>

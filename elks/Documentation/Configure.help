@@ -1,0 +1,154 @@
+Direct console writes
+CONFIG_CONSOLE_DIRECT
+  A direct console driver, currently the only console driver available for 
+  ELKS.
+
+Direct console VT52 emulation
+CONFIG_DCON_VT52
+  Saying no removes some of the intelligent features from the console code
+  leaving a dumb text console which is much smaller.
+
+BIOS console writes
+CONFIG_CONSOLE_BIOS
+  The currently not working BIOS based console driver.
+
+Support only for XT architecture
+CONFIG_XT
+  Saying yes removes all support for additional features of AT architecture
+  machines.
+
+Support for loadable modules
+CONFIG_MODULE
+  Saying yes includes experimental support for loadable modules.
+
+Switch COMPAQ DeskPro into fast mode
+CONFIG_COMPAQ_FAST
+  Saying yes includes code to switch COMPAQ Deskpro machines that default to
+  slow speed, into fast speed.
+
+Memory character devices /dev/zero /dev/null etc.
+CONFIG_CHAR_DEV_MEM
+  Saying yes include support currently only /dev/zero, /dev/null and
+  /dev/full.
+
+Serial device driver
+CONFIG_CHAR_DEV_RS
+  Include support for serial port devices. Currently broken, only output
+  works.
+
+Parallel device driver
+CONFIG_CHAR_DEV_LP
+  Include support for parallel port devices. Currently broken, only detects
+  parallel ports.
+
+Minix fs support
+CONFIG_MINIX_FS
+  Support for the basic Minix filesystem. The only currently working 
+  filesystem. Until another filesystem is working this is required.
+
+ROMFS fs support
+CONFIG_ROMFS_FS
+  Incomplete support for the Read Only filesystem.
+
+ELKSFS fs support
+CONFIG_ELKSFS_FS
+ Support for the new ELKSFS native fs. Includes Minix fs emulation.
+
+Full VFS support
+CONFIG_FULL_VFS
+  If you say no to this then the vfs will only support one filesystem 
+  type. You do not need to say yes currently as only minixfs is available.
+
+Make all FS read-only
+CONFIG_FS_RO
+  Saying yes this option makes all access to the filesystem read only. Support
+  for system calls that modify the filesystem is removed. This option allows
+  a considerable ammount of code space to be saved allowing other features
+  into the kernel.
+
+Minix file format
+CONFIG_EXEC_MINIX
+  This lets you run Minix binaries compiled with bcc.  This is the only
+  real format allowed at the moment.
+
+MSDOS (EXE) file format
+CONFIG_EXEC_MSDOS
+  This lets you run MSDOS .EXE files under ELKS.  This support is VERY
+  ALPHA at the moment, and may not work.  Use with caution. ie. If you
+  compile this in, and something breaks, then remove it, and try again.
+  In particluar, you might find you can't run any programs, including
+  init and login.
+
+Socket support
+CONFIG_SOCKET
+  Include support for BSD style socket system calls. Currently under
+  development.
+
+UNIX sockets
+CONFIG_UNIX
+  Include support for AF_UNIX sockets. Currently non existant.
+
+INET sockets (TCP/IP)
+CONFIG_INET
+  Include support for AF_INET TCP/IP sockets.
+
+Only include support for client sockets (MUST)
+CONFIG_SOCK_CLIENTONLY
+  Only include support for outgoing connections. Currently the only type
+  supported.
+
+Only include support for STREAM type sockets (MUST)
+CONFIG_SOCK_STREAMONLY
+  Only include support for STREAM type socket connections. Currently the only
+  type supported.
+
+Support for 286 protected mode
+CONFIG_286PMODE
+  Include support for 286 protected mode. Experimental. Use at your own risk.
+  (This option will probably not interact well with the BIOS disk drivers)
+
+Support for memory beyond 16M on 386+ systems
+CONFIG_386RAM
+  Add support for ram beyond 16 megs on 386+ systems. Currently nonexistant.
+
+BIOS block device support
+CONFIG_BLK_DEV_BIOS
+  Device driver that allows access to floppy and hard drives through BIOS.
+  Currently required.
+
+BIOS block device floppy support
+CONFIG_BLK_DEV_BFD
+  Option to allow floppy code to be left out of BIOS device driver.
+
+BIOD block device HDD support
+CONFIG_BLK_DEV_BHD
+  Option to allow HDD code to be left out of BIOS device driver.
+
+Normal floppy disk support
+CONFIG_BLK_DEV_FD
+  Device driver that provides direct support for floppy drives. Currently
+  does not work.
+
+Hardisk support
+CONFIG_BLK_DEV_HD
+  Device driver that provides direct access to IDE hard disks by Blaz Antonic.
+  Currently not tested. Use at you own risk.
+
+RAM disk support
+CONFIG_BLK_DEV_RAM
+  Support for a RAM disk device driver which allows up to 8 64K ram drives
+  to be implemented.
+
+Old XT hardisk support
+CONFIG_BLK_DEV_XD
+  None existant device driver.
+
+Strace
+CONFIG_STRACE
+  Strace displays a trace of all system calls made to the kernel. Hackers only
+  require this option.
+
+Optimise for size rather than speed
+CONFIG_OPT_SMALL
+  Where two versions of a function exist this will cause the smaller version
+  rather than the faster version to be included.

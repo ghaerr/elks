@@ -1,0 +1,48 @@
+The code is written in K&R C, although header files do provide function
+prototypes if __STDC__ is defined. See <linuxmt/types.h>
+
+Header files can be found as follows:
+
+<linuxmt/xxx.h>	[source]/include/linuxmt/xxx.h
+<arch/xxx.h>	[source]/include/arch/xxx.h	(arch/i86/include is a symlink
+						to this directory)
+
+ints are 2 bytes. To work with K&R compilers you can't assume that type
+conversion of function arguments will take place - so you must cast ints to
+longs and vice versa if necessary.
+
+CALLING CONVENTIONS
+
+bcc pushes parameters right-to-left. Hence when a function is entered the
+stack looks like this:
+
+               ---+-----+-----+-----+-----+-----+-----+-----
+                  | ret addr  |  param 1  |  param 2  | ...
+               ---+-----+-----+-----+-----+-----+-----+-----
+                     ^
+                    sp
+
+The normal entry code would then do PUSH BP; MOV BP,SP which leaves:
+
+   ---+-----+-----+-----+-----+-----+-----+-----+-----+-----
+      |  old bp   | ret addr  |  param 1  |  param 2  | ...
+   ---+-----+-----+-----+-----+-----+-----+-----+-----+-----
+         ^
+       sp,bp
+
+so parameters can be accessed as [bp+4], [bp+6] etc. (The 8086 does not have
+an [sp+const] addressing mode)
+
+*** THE FOLLOWING NEEDS TO BE CHECKED! ***
+
+The function return value is in AX. Functions are expected to preserve only
+the following registers when they return:
+
+        BP, DI, SI
+
+Additionally, BCC assumes that DS=ES=SS, so any function which alters these
+needs to restore them before returning.
+
+BCC _can_ be switched (-Mf) so that the first parameter is in AX, and that
+SI/DI are saved by the caller not the callee. However since there is much
+machine code which assumes the default behaviour, this should be left alone.

@@ -1,0 +1,47 @@
+			List of maintainers
+
+Maintainers List (try to look for most precise areas first)
+
+P: Person
+M: Mail patches to
+S: Status, one of the following:
+
+	Maintained:	Someone actually looks after it.
+	Orphan:		No current maintainer [but maybe you could take the
+			role as you write your new code].
+	Stalled:	Someone was looking after it but there is no news.
+
+COMPILER (BCC)
+P:	Robert de Bath
+M:	robert@mayday.cix.co.uk
+S:	Maintained
+
+DOCUMENTATION/ & SCRIPTS/
+P:	Arnaud Launay
+M:	zoro@mygale.org
+S:	Maintained
+
+HD DRIVER
+P:	Blaz Antonic
+M:	blaz.antonic@guest.arnes.si
+S:	Maintained
+
+ELKSFS Filesystem
+P:	Matthew D. Pitts
+M:	mpitts@suite224.net
+S:	Maintained
+
+KERNEL
+P:	Alistair J. Riddoch
+M:	ajr@ecs.soton.ac.uk
+S:	Maintained
+
+NETWORKING
+P:	Beau Kuiper
+M:	ekuiperba@alpha2.curtin.edu.au
+S:	Maintained
+
+ROMFS
+P:	Michel Onstein
+M:	michel@livid.cistron.nl
+S:	Stalled

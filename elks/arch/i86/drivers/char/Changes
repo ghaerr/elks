@@ -1,0 +1,79 @@
+MAR 01 1996
+dircon.c : Fixed bug in insertline
+dircon.c : Made cursor positioning be more like vt52
+dircon.c : Fixed bug in clear to eol
+new_key.c : Capslock is now more like it should be. No loadable maps
+            yet.
+dircon.c : Little optimization on scrolling funcs
+
+MAR 03 1996
+dircon.c : Imported the keyboard buffering queue in dircon.c.
+dircon.c : Add register_chrdev() call. Some rewrite on Console_read().
+           Someone who knows the return values expected and the scheduling
+           please check it.
+
+MAR 04 1996
+new_key.c : Some support for AT extended scancodes added. Now the separate
+            arrow key should produce the same ESC[ABCD] sequences as
+            a real vt52.
+
+MAR 05 1996
+new_key.c : AT numberpad enter acts like the other enter.
+new_key.c : Add empty function stub to set the kbd leds.
+dircon.c : Add a ifdef for console config.
+
+--- RELEASE ---
+
+MAR 06 1996
+new_key.c : Function keys 1-10 now generate ESC a - ESC j.
+
+MAR 07 1996
+dircon.c : Created function to quickly move a word from a place to another
+           within the same segment.
+dircon.c : Optimized the scrolling functions to use movew() instead of
+           a pokew()/peekw() pair.
+dircon.c : Console_gotoxy() isn't exported anymore.
+
+MAR 30 1996
+new_key.c : Modified to be compatible with the one in 0.0.34
+dircon.c : Modified to be compatible with the one in 0.0.34
+new_key.c : Named to xt_key.c.
+xt_key.c : Added ifdef for keymap selection at compile time.
+
+--- RELEASE ---
+
+APR 14 1996
+xt_key.c : Fixed bug that caused my xt-ish laptop to hang at keyboard irq.
+
+APR 18 1996
+dircon.c : Created asm functions to quickly move data in the same seg.
+           Made scrolling use them.
+dircon.c : Some minor optimizations. Changed Scr.w - 1 -> Scr.width
+           and Scr.h - 1 -> Scr.height
+
+APR 23 1996
+dircon.c : Size optimization... made it 18 bytes smaller :)
+
+--- RELEASE ---
+
+JUN 22 1996 
+dircon.c : Cleaned up scrolling funcs. Now they won't hopefully break
+           anything. At least my Amstrad PPC now works ok in both mda
+           and cga mode.
+
+--- RELEASE ---
+
+JUN 23 1996
+dircon.c : Added basic stuff for multiple virtual consoles.
+
+JUN 24 1996
+dircon.c : Got the vcs mostly working.
+
+JUN 25 1996
+memmove.c : Created and written.
+dircon.c : Now using far_memmove() for scrolling.
+
+JUN 27 1996
+dircon.c : The virtual consoles are there.
+xt_key.c : Alt-Fn now changes the vc like in the real Linux.
+           Also fixed a bug with the function keys.

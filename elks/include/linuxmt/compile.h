@@ -1,0 +1,1 @@
+#define UTS_VERSION "#0 Wed Jan 21 19:58:41 GMT 1998"

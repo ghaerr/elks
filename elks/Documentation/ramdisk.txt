@@ -1,0 +1,18 @@
+RAMdisk driver
+
+Copyright 1997 Alistair Riddoch
+
+This is a very simple block devices driver. At bootup it is not initialised.
+ioctl(fd,RDCREATE,..) will allocate 64K of RAM to be used as a ramdisk for
+the device reffered to by fd. Minor numbers 0-7 can be used for 8 separate
+ramdisks. The ioctl(fd,RDDESTROY,...) call frees up the memory. Only the
+superuser can currently make these calls. A utility "ramdisk" has been
+provided with the standard elks commands package and on the last root
+disk to install and remove ramdisks. I see this as a way of having temporary
+space on a system which uses a root filesystem stored in ROM, and could be used
+to hold a filesystem image copied from ROM. The code could also be easily
+adapted for a ROMdisk.
+
+Al (ajr@ecs.soton.ac.uk)
+
+13th Oct 1997

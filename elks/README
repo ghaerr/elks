@@ -1,0 +1,19 @@
+
+You are looking at a development snapshot of ELKS. Some things work -
+many things don't. Feedback is always welcome via the ELKS mailing list.
+To join, send "subscribe linux-8086" to "majordomo@vger.rutgers.edu"
+
+You can find more information in Documentation/elks-faq.html; please read
+this before posting questions.
+
+The boot and root images are gzipped in this directory... however the root
+image, although 360K, did not work correctly this time (maybe I should mkfs
+it on a real floppy first :) possibly because of the doshd detection code...
+They work fine under dosemu though.
+
+I'm a bit of a random hacker, so what I actually wind up doing could be
+completely different from what I put on the TODO list... :)
+
+	- Chad Page,
+	cpage@ee0.sjsu.edu
+	cpage@comp3244.resnet.sjsu.edu, et al...	

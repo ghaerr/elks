@@ -1,0 +1,161 @@
+#
+# WARNING!
+# This file is used to generate the system call lists for Dev86(elks)
+# ELKSemu and elks itself. Changes to this may require changes in
+# all three of those packages.
+#
+#	. = Ok, with comment
+#	* = Needs libc code (Prefix __)
+#	- = Obsolete/not required
+#	@ = May be required later
+#
+#	An initial plus on the call number specifies that this call is
+#	implemented in the kernel.
+#
+# Package versions are matched.
+# Dev86/Elksemu version - 0.13.1
+# Elks version          - 0.0.66
+#
+# Name		No	Args	Flag, comment
+#
+exit		+1	1	* c exit does stdio, _exit in crt0
+fork		+2	0	 
+read		+3	3	 
+write		+4	3	 
+open		+5	3	 
+close		+6	1	 
+wait4		+7	4
+creat		8	0	- Not needed alias for open
+link		+9	2	 
+unlink		+10	1	 
+execve		+11	3	* execve minix style
+chdir		+12	1	 
+time		13	1	- Use settimeofday
+mknod		+14	3	 
+chmod		+15	2	 
+chown		+16	3	 
+brk		+17	1	* This is only to tell the system
+stat		+18	2	 
+lseek		+19	3	* nb 2nd arg is an io ptr to long not a long.
+getpid		+20	1	* this gets both pid & ppid
+mount		+21	5	 
+umount		+22	1	 
+setuid		+23	1	 
+getuid		+24	1	* this gets both uid and euid
+stime		25	2	- this must not exist - even as a libc.
+ptrace		26	4	@ adb/sdb/dbx need this.
+alarm		27	2
+fstat		+28	2	 
+pause		29	0	 
+utime		30	2	 
+chroot		+31	1
+vfork		32	0
+access		+33	2	 
+nice		34	1
+sleep		35	1
+sync		+36	0	 
+kill		37	2	 
+rename		+38	2	 
+mkdir		+39	2	 
+rmdir		+40	1	 
+dup		+41	1	. There is a fcntl lib function too.
+pipe		+42	1	 
+times		43	2	* 2nd arg is pointer for long ret val.
+profil		44	4	@
+dup2		+45	2
+setgid		+46	1	 
+getgid		47	1	* this gets both gid and egid
+signal		48	2	* have put the despatch table in user space.
+getinfo		49	1	@ possible? gets pid,ppid,uid,euid etc
+fcntl		+50	3	 
+acct		51	1	@ Accounting to named file (off if null)
+phys		52	3	- Replaced my mmap()
+lock		53	1	@ Prevent swapping for this proc if flg!=0
+ioctl		+54	3	. make this and fcntl the same ?
+reboot		+55	3	. the magic number is 0xfee1,0xdead,...
+mpx		56	2	- Replaced by fifos and select.
+lstat		+57	2
+symlink		+58	2
+readlink	+59	3
+umask		+60	1	 
+settimeofday	+61	2
+gettimeofday	+62	2
+select          +63     3	* 5 paramaters is just not possible
+readdir		+64	3	*
+insmod		+65	1
+fchown		+66	3
+#
+# Name			No	Args	Flag&comment
+#
+# ( awk '{$2=NR+500;OFS="\t";print ;}'| expand -24,32,40 | unexpand ) <<!
+#
+ADJTIMEX                501     X       @
+FCHDIR                  502     1       @
+FCHMOD                  503     2       @
+FCHOWN                  504     3       @
+FDATASYNC               505     X       @
+FLOCK                   506     2       - Use fcntl
+FSTATFS                 507     2       @
+FSYNC                   508     1       @
+FTIME                   509     1       - Use gettimeofday
+FTRUNCATE               510     3       @
+GETDENTS                511     X       @
+GETGROUPS               512     2       @
+GETITIMER               513     2       @
+GETPGID                 514     1       @
+GETPGRP                 515     0       - Use getpgid(0)
+GETPRIORITY             516     2       @
+GETRLIMIT               517     2       @
+GETRUSAGE               518     2       @
+GETSID                  519     X       @
+IPC                     520     5       @ This is for all SYSV IPC (c/f mpx)
+LLSEEK                  521     3       @ 2nd arg is ptr to two longs
+MPROTECT                522     X       @
+MSYNC                   523     X       @
+MUNLOCK                 524     X       @
+MUNLOCKALL              525     X       @
+MUNMAP                  526     X       @
+PERSONALITY             527     X       @
+QUOTACTL                528     X       @
+READV                   529     3       @
+SCHED_GETPARAM          530     X       @
+SCHED_GETSCHEDULER      531     X       @
+SCHED_GET_PRIORITY_MAX  532     X       @
+SCHED_GET_PRIORITY_MIN  533     X       @
+SCHED_RR_GET_INTERVAL   534     X       @
+SCHED_SETPARAM          535     X       @
+SCHED_SETSCHEDULER      536     X       @
+SCHED_YIELD             537     X       @
+SETDOMAINNAME           538     X       @
+SETFSGID                539     1       @
+SETFSUID                540     1       @
+SETGROUPS               541     2       @
+SETHOSTNAME             542     2       @
+SETITIMER               543     3       @
+SETPGID                 544     2       @
+SETPRIORITY             545     3       @
+SETREGID                546     2       @
+SETREUID                547     2       @
+SETRLIMIT               548     2       @
+SETSID                  549     0       @
+SGETMASK                550     X       @
+SIGACTION               551     X       @
+SIGPENDING              552     X       @
+SIGPROCMASK             553     X       @
+SIGRETURN               554     X       @
+SIGSUSPEND              555     X       @
+SOCKETCALL              556     X       @
+SSETMASK                557     X       @
+STATFS                  558     2       @
+SWAPOFF                 559     X       @
+SWAPON                  560     X       @
+SYSCTL                  561     X       @
+SYSFS                   562     X       @
+SYSINFO                 563     X       - Use /proc
+SYSLOG                  564     X       @ Poss fifo & libc implementation.
+TRUNCATE                565     3       @
+ULIMIT                  566     2       @
+UNAME                   567     1       @
+USTAT                   568     2       @
+VHANGUP                 569     0       @
+WRITEV                  570     3       @

@@ -1,0 +1,41 @@
+
+   [Previous] [Next] [Hitlist] [Get Thread] [Author Profile] [Post]
+   [Post] [Reply]
+     _________________________________________________________________
+                                      
+  Article 4 of 58
+  
+Subject:      Re: question about horizontal retrace on pc.
+From:         human@inf.utfsm.cl (Franco Catrin)
+Date:         1995/07/26
+Message-Id:   <3v5pni$g6@manutara.inf.utfsm.cl>
+References:   <3v39e3$gdo@mn5.swip.net>
+Organization: Universidad Tecnica Federico Santa Maria
+Newsgroups:   comp.lang.asm.x86
+
+
+Chris Rossall (chris.rossall@mailbox.swipnet.se) wrote:
+: I wonder if anyone could tell me if there is a bit in the vga that
+: signals a horizontal retrace.I know that there was one on the cga and a
+: lot of programs checked this before writing to screen mem to avoid 'snow'
+: on old cga cards.
+
+: Thanks..
+
+: -Chris
+
+Read port 03dah bit 0 and bit 3 for vertical retrace.  I think it's the same
+of CGA.  Anyway you haven't to check it to avoid 'snow' on a VGA card.
+
+                                                  Human
+
+     _________________________________________________________________
+                                      
+   [Previous] [Next] [Hitlist] [Get Thread] [Author Profile] [Post]
+   [Post] [Reply]
+     _________________________________________________________________
+                                      
+   Home   Power Search   Post to Usenet   Ask DN Wizard   Help
+   Why use DN?  |  Advertising Info  |  New Features!  |  Jobs  |  Policy
+   Stuff
+   Copyright © 1996 Deja News, Inc. All rights reserved.

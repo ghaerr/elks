@@ -1,0 +1,23 @@
+#
+# Filesystem configuration
+#
+mainmenu_option next_comment
+comment 'Filesystems'
+
+bool 'Minix fs support' CONFIG_MINIX_FS
+bool 'ROMFS fs support' CONFIG_ROMFS_FS
+bool 'elksfs fs support' CONFIG_ELKSFS_FS
+
+comment 'General filesystem settings'
+
+bool 'Full VFS support' CONFIG_FULL_VFS
+bool 'Pipe support' CONFIG_PIPE
+bool 'Make all FS read-only' CONFIG_FS_RO
+
+comment 'Executable file formats'
+
+bool 'Minix file format' CONFIG_EXEC_MINIX
+bool 'MSDOS (EXE) file format' CONFIG_EXEC_MSDOS
+
+endmenu
+

@@ -1,0 +1,67 @@
+NOTES ON 8086 PROCESSOR ARCHITECTURE
+
+An 8088 is just an 8086 with an 8-bit external bus.
+
+The stack pointer points to the last item pushed; a push decrements the
+stack pointer before storing. Hence it's OK for SP to point to the byte
+AFTER the top of the stack.
+
+After an interrupt the stack looks like this:
+
+      +---+---+---+---+---+---+
+      |   IP  |   CS  | Flags |
+      +---+---+---+---+---+---+
+        ^
+       SP
+
+See also 'source.txt' for bcc function calling conventions.
+
+The register model of the 8086 is rather asymmetrical. There are eight
+16-bit registers:
+
+        AX   = AH AL
+  (DS:) BX   = BH BL
+        CX   = CH CL
+        DX   = DH DL
+  (SS:) BP
+  (DS:) SI
+  (ES:) DI
+  (SS:) SP
+
+The 8086 has 20 address lines (1MB address space). Addresses are formed by
+taking a 16-bit segment register, shifting it left 4 bits, and adding an
+offset. The segment registers are CS (code), SS (stack), DS (data) and ES
+(extra). The table above shows the default segment used for indexed
+instructions; this can be overridden by a segment prefix (e.g. "seg es")
+
+CX has special powers as a loop counter; DX is used for to give addresses in
+I/O space. String instructions use DS:SI as source and ES:DI as destination.
+
+Available effective addressing modes for indexed instructions:
+	(BX) + (SI) + disp
+	(BX) + (DI) + disp
+	(BP) + (SI) + disp
+	(BP) + (DI) + disp
+	(SI) + disp
+	(DI) + disp
+	(BP) + disp
+	(BX) + disp
+
+Flags word:
+
+	15	-
+	14	-
+	13	-
+	12	-
+	11	OF	Overflow
+	10	DF	Direction (0=autoinc, 1=autodec for string insts)
+	 9	IF	Interrupt enable
+	 8	TF	Trace (single step)
+	 7	SF	Sign
+	 6	ZF	Zero
+	 5	-
+	 4	AF	Carry/borrow from low 4 bits of AL
+	 3	-
+	 2	PF	Parity
+	 1	-
+	 0	CF	Carry/borrow

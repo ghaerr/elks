@@ -1,0 +1,191 @@
+OPENING AND ACCESSING FILES
+
+The calling chain for filesystem operations is very complex, because the VFS
+layer isolates the filesystem-specific parts by calls through pointers to
+functions. These FS-specific functions then call back to the VFS buffer
+cache management functions, which in turn call the device functions for
+block I/O.
+
+The inode structure contains a pointer (i_op) to a struct inode_operations,
+which contains pointers to various functions to do with creating and
+deleting files and directories on that filesystem. In addition, it contains
+another pointer (default_file_ops) to a struct file_operations which
+contains pointers to those operations you can do on one specific file, such
+as read() and write(). default_file_ops is copied into the "file" structure
+when you open a file, so the pointers to the functions you need to process
+that file are readily to hand.
+
+Here is the sequence of function calls when a user process calls open() to
+open a file for reading. All source filenames are relative to linuxmt/fs.
+Structures are declared in <linuxmt/fs.h>, i.e. linuxmt/include/linuxmt/fs.h
+
+Function			Source file	Notes
+----------------------------------------------------------------------
+sys_open			open.c
++ do_open			open.c
+  + get_empty_filp		file_table.c	Gets a new "struct file"
+  + open_namei			namei.c		Open inode for this file
+  | + dir_namei			namei.c		Get inode of enclosing
+  | | |                                           directory + rest of name
+  | | + lookup			namei.c		Repeatedly called to locate
+  | |   |					  inode of each subdirectory
+  | |	|					  (also follow_link, ignored)
+  | |   + dir->i_op->lookup			FS-specific dir lookup func.
+  | |     minix_lookup		minix/namei.c	e.g. this one
+  | |     + minix_find_entry	minix/namei.c	get directory entry, contains
+  | |     |					  inode number
+  | |     | + minix_bread	minix/inode.c	read in a block of the dir [*]
+  | |     + iget		bufops.c	read in the subdir's inode [*]
+  | + lookup			namei.c		Get inode of file itself from
+  | | + dir->i_op->lookup			  the directory
+  | + follow_link		namei.c		Follow symbolic links
+  |   + inode->i_op->follow_link		It's FS-specific
+  |     minix_follow_link	minix/symlink.c	e.g. this one
+  |     + minix_bread				(see below) get the link text
+  |     + open_namei		namei.c		Yeah, recursion!
+  + f->f_op->open				f->f_op==default_file_ops
+    (nothing)			minix/file.c	but open is NULL for Minix,
+						  nothing extra to do
+
+[*] function expanded below
+
+Function			Source file	Notes
+----------------------------------------------------------------------
+iget				bufops.c	We want to read in an inode
++ __iget			inode.c
+  + hash			inode.c		If in the inode cache, use it
+  + get_empty_inode		inode.c		else get new inode structure
+  + put_last_free		inode.c		Inode cache management
+  + insert_inode_hash		inode.c
+  + read_inode			inode.c		Read it in from disk
+    + ...->read_inode				Use FS-specific inode-read fn
+      |						(one of superblock functions)
+      minix_read_inode		minix/inode.c	e.g. this one
+      + V1_minix_read_inode	minix/inode.c	Choice of two minix fs's
+        + bread			buffer.c	Read blk containing the inode
+        | + getblk		buffer.c	Get cache blocke
+        | + buffer_uptodate	bufops.c	If it's in cache don't need
+        | |					  to read it
+        | + ll_rw_block		[ll_rw_blk.c]	That's another story :-)
+	+					Copy data into fields of
+						  struct inode
+
+Note the two different functions to read blocks:
+
+bread()		Reads absolute blocks from the disk. Used when reading
+		superblocks and inodes themselves, e.g. in 'minix_read_inode'
+
+minix_bread()	Reads the n'th block of a particular file or directory, e.g.
+		in 'minix_find_entry'. The file's inode contains the mapping
+		between the block number within the file and the absolute
+		block on the disk.
+
+Function			Source file	Notes
+----------------------------------------------------------------------
+minix_bread			minix/inode.c	Read block #n of a file
+  + minix_getblk		minix/inode.c	Get a cache block
+  | + V1_minix_getblk		minix/inode.c
+  |   + V1_inode_getblk		minix/inode.c	Get block pointed to by n'th
+  |   | |					  ptr in inode
+  |   | + getblk		buffer.c	Get the cache block
+  |   + V1_block_getblk		minix/inode.c	Get block pointed to by n'th
+  |     |					  entry in indirect block
+  |     + buffer_uptodate	bufops.c	Is indirect block in cache?
+  |     + ll_rw_block		[ll_rw_blk.c]	If not, read it in
+  |     +					Look up # in indirect block
+  |     + getblk		buffer.c	Get the cache block
+  + buffer_uptodate 		bufops.c	Check if cache data is valid
+  + ll_rw_block			../drivers/block/ll_rw_blk.c
+
+If you understood all that, the sys_read() call is easy:
+
+Function			Source file	Notes
+----------------------------------------------------------------------
+sys_read			read_write.c
+  + file->f_op->read				It's FS-specific
+    minix_file_read		minix/file.c	e.g. this one
+    |						Decide which block(s) we need
+    + minix_getblk		minix/inode.c	See above for expansion
+    + buffer_uptodate		bufops.c	Valid cached block? If not...
+    + ll_rw_block		../drivers/block/ll_rw_blk.c
+
+Note that the VFS's "struct inode" is different to the inode structure on
+the disk, so the relevant members have to be copied when the inode is read
+and written. They may even have to be entirely synthesised, if the
+filesystem doesn't use inodes (e.g. MS-DOS/FAT)
+
+If a file needs to be extended, minix_new_block (minix/bitmap.c) is called.
+This is responsible for finding an unused block on the disk and marking it
+as used. The opposite is done in minix/truncate.c.
+
+When you unlink a file and its nlink counter decrements to zero, the actual
+freeing of the file's blocks (and the inode itself) is performed in
+minix_put_inode (minix/inode.c), which in turn is called from iput (inode.c)
+when all processes have finished using the inode.
+
+BLOCK CACHE
+
+All block I/O goes via the cache, including writes. This ensures that the
+data is available for subsequent reads, and also allows the actual physical
+write to be deferred until later.
+
+Function getblk returns a pointer to a block in the cache - the one you
+wanted if it's there, or a free block if it isn't. The function doesn't
+automatically read it in, because you might only be interested in
+overwriting it with new data, in which case the read would be wasted. So if
+you want the contents, you must explicitly call buffer_uptodate to check,
+and ll_rw_block if necessary to read it in.
+
+When a fresh block is obtained the b_count field in its header is set to 1,
+and when getblk is called for a block which is already in the cache, b_count
+is incremented (this is hidden in get_hash_table()). This indicates that the
+block is in use and is therefore ineligible for dropping from the cache when
+another process needs a new block. When you've finished with it you must
+call brelse() which decrements b_count; when it becomes 0 the buffer is free
+to be reused.
+
+Before you access the buffer data, you must use map_buffer() to load the buffer
+from the buffer data segment into the kernel data segment.  This is to allow
+a larger buffer cache, while working within the limitations of bcc (which does
+not have far data pointers).  When you are done working with the buffer, you
+must call unmap_buffer() or unmap_brelse() (which also calls brelse, as the
+name implies) to allow the buffer to be unloaded from the kernel ds.
+
+ACCESSING DEVICES
+
+The inode->i_op pointer is initialised in the function which reads in an
+inode (e.g. V1_minix_read_inode), and its contents depend on the type of
+file. If the node is a character or block device, i_op points to
+chrdev_inode_operations or blkdev_inode_operations respectively. These
+tables are declared in devices.c and contain pointers just to the respective
+"open" functions, chrdev_open and blkdev_open.
+
+When the user opens one of these inodes, the kernel calls the open function
+and passes in pointer to the relevant "struct file" record. The fops pointer
+in this record is copied from chrdevs[major].fops or blkdevs[major].fops,
+which was set up when the device was initialised and registered itself.
+
+So, in the case of the console for example, the file record will now contain
+a pointer to ConOps (see drivers/char/dircon.c), which has pointers to the
+functions to perform I/O to the console.
+
+In the case of block devices, the read() and write() functions *don't* point
+to device-specific read and write functions; rather, they point to the
+generic functions block_read() and block_write() in block_dev.c. These take
+care of caching blocks, part-block reads and writes etc.
+
+Whole-block I/O requests then go though ll_rw_block which handles
+multi-threaded I/O. Devices have queues (ll = linked lists) of outstanding
+requests, so individual processes don't have to tie up the processor while
+waiting for requests to complete. Actual I/O is done by calling
+blk_dev[major].request_fn, which is set up for each device when it is
+initialised and points to its "request function".
+
+Function make_request, called from ll_rw_block, is responsible for queueing
+I/O requests. The policy is that reads take priority over writes (since
+writes are only copying cache back to disk, they're not stopping a user
+process from continuing). To help enforce this, only the first two-thirds of
+the queue of outstanding requests can include writes.
+
+The kernel works with 1K blocks (BLOCK_SIZE). However in make_request
+transfers are converted to sectors of 512 bytes, which is hard-coded in.

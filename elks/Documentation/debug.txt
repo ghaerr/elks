@@ -1,0 +1,33 @@
+							Chad Page
+							3/2/97
+
+Here's a little document about how to build and debug the ELKS kernel... it's
+probably going to be missing things for quite a while :)  
+
+part 1: Setting up the build environment
+----------------------------------------
+
+	First, you should have the source tar for Dev86-0.14.5 or later.
+Once you have both Dev86 and the latest ELKS sources, you're ready to start.
+
+	You should untar Dev86, and the ELKS files (use
+tar -xvzf _filename_ to unpack the tarfiles).
+
+	Then, build the Dev86 libraries (all the defaults are fine), and
+after you install it, go into the elks directory and enter 'make'.  If
+all goes well, you will have your first ELKS kernel, configured identically
+to the one provided as the bootdisk. 
+
+part 2: Configuring your new ELKS kernel
+----------------------------------------
+
+	Usually, all you have to change is $/include/linuxmt/config.h to set
+the rootdisk device.  For our purposes, set the rootdisk to 0x3c0 so you can
+use the second floppy drive as the root device (this makes it fast).  Then 
+rebuild the kernel.
+
+part 3: MAKE (and run) ELKS FAST!
+        (or, better hacking through dosemu)
+-----------------------------------
+
+	dosemu is extremely useful for shortening the edit/build/run cycle.

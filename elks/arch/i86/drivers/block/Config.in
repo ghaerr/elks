@@ -1,0 +1,26 @@
+#
+# Block device driver configuration
+#
+mainmenu_option next_comment
+comment 'Floppy, IDE, and other block devices'
+
+bool 'BIOS block device support' CONFIG_BLK_DEV_BIOS
+if [ "$CONFIG_BLK_DEV_BIOS" = "y" ]; then
+  bool '  BIOS floppy drive support' CONFIG_BLK_DEV_BFD
+  bool '  BIOS hard drive support' CONFIG_BLK_DEV_BHD
+fi
+
+bool 'Normal floppy disk support' CONFIG_BLK_DEV_FD
+bool 'Hardisk support' CONFIG_BLK_DEV_HD
+
+if [ "$CONFIG_BLK_DEV_FD" = "y" ]; then
+	define_bool CONFIG_DMA y
+else
+	define_bool CONFIG_DMA n
+fi
+
+comment 'Additional block devices'
+bool 'RAM disk support' CONFIG_BLK_DEV_RAM
+bool 'Old XT hardisk support' CONFIG_BLK_DEV_XD
+
+endmenu

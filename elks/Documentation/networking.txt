@@ -1,0 +1,40 @@
+Notes on networking code
+------------------------
+
+The networking code is currently being developed by Beau Kuiper
+<ekuiperba@alpha2.curtin.edu.au>.
+
+Current development model is based around using a user process to be the
+actual TCP/IP stack with socket file descriptors and device drivers dealt with
+by the kernel. The diagram below show how things should work.
+
+
+                 ___________________        ____________________
+                |                   |      |                    |
+                |Network Application|      |TCP/IP stack process|
+                |___________________|      |____________________|
+                            |               /           |
+                            |              /            |
+           _________________|_____________/_____________|________________
+          |                 |            /              |                |
+          | KERNEL          |           /               |                |
+          |            _____|__________/_     __________|________        |
+          |           |                  |   |                   |       |
+          |           |  Socket code     |   | RAW Driver        |       |
+          |           |__________________|   |___________________|       |
+          |                                             |                |
+          |                                             |                |
+          |_____________________________________________|________________|
+                                                        |
+                                              __________|________
+                                             |                   |
+                                             | Network Hardware  |
+                                             |___________________|
+
+
+The Network Application uses the standard BSD socket interface to open and
+read and write to sockets. The socket code passes the data on to the TCP/IP
+stack process, through a file descriptor. (char device or socket).
+
+The TCP/IP stack process then constructs TCP/IP packets and writes them to
+the network device driver including all the necessary hardware headers.

@@ -1,0 +1,14 @@
+TODO
+----
+
+This is firstly a list of things that need to be done for 0.1, and then a list
+of more general things. Please let me know what you think should be in here.
+
+	Al
+--
+
+Complete and test serial and parallel drivers.
+
+Debug filesystem.
+
+Reduce code size.

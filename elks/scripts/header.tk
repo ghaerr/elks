@@ -1,0 +1,459 @@
+#
+# This is a handy replacement for ".widget cget" that requires neither tk4
+# nor additional source code uglification.
+#
+proc cget { w option } {
+	return "[lindex [$w configure $option] 4]"
+}
+
+#
+# Function to compensate for broken config.in scripts like the sound driver,
+# which make dependencies on variables that are never even conditionally
+# defined.
+#
+proc vfix { var } {
+	global $var
+	if [ catch {eval concat $$var} ] {
+		puts stdout "WARNING - broken Config.in!  $var was not declared!"
+		set $var 0
+	}
+}
+
+#
+# Create a "reference" object to steal colors from.
+#
+button .ref
+#
+# On monochrome displays, -disabledforeground is blank by default; that's
+# bad.  Fill it with -foreground instead.
+#
+if { [cget .ref -disabledforeground] == "" } {
+	.ref configure -disabledforeground [cget .ref -foreground]
+}
+
+
+#
+# Define some macros we will need to parse the config.in file.
+#
+proc mainmenu_name { text } {
+	message .header.message -width 400 -text "$text"
+	pack .header.message -side left -padx 15
+	wm title . "$text"
+}
+
+proc menu_option { w menu_num text } {
+	button .f0.x$menu_num -text "$text" -width 50 -command "$w .$w \"$text\""
+	pack .f0.x$menu_num -pady 0 -expand on
+}
+
+#
+# Not used at the moment, but this runs a command in a subprocess and
+# displays the result in a window with a scrollbar.
+#
+proc do_cmd { w command } {
+	catch {destroy $w}
+	toplevel $w -class Dialog
+	frame $w.tb
+	text $w.tb.text -relief raised -bd 2 -yscrollcommand "$w.tb.scroll set"
+	scrollbar $w.tb.scroll -command "$w.tb.text yview"
+	pack $w.tb.scroll -side right -fill y
+	pack $w.tb.text -side left
+
+	set oldFocus [focus]
+	frame $w.back
+	button $w.back.ok -text "OK" -width 20 \
+		-command "destroy $w; focus $oldFocus" -state disabled
+	button $w.back.ccl -text "Cancel" -width 20 \
+		-command "destroy $w; focus $oldFocus"
+	pack $w.tb -side top
+	pack $w.back.ok $w.back.ccl -side left
+	pack $w.back -side bottom -pady 10
+
+	focus $w
+	wm geometry $w +30+35
+
+	$w.tb.text delete 1.0 end
+	set f [open |$command]
+	while {![eof $f]} {
+		$w.tb.text insert end [read $f 256]
+	}
+	close $f
+	$w.back.ok configure -state normal
+}
+
+proc load_configfile { w title func } {
+	catch {destroy $w}
+	toplevel $w -class Dialog
+	global loadfile
+	frame $w.x
+	label $w.bm -bitmap questhead
+	pack  $w.bm -pady 10 -side top -padx 10
+	label $w.x.l -text "Enter filename:" -relief raised
+	entry $w.x.x -width 35 -relief sunken -borderwidth 2 \
+		-textvariable loadfile
+	pack $w.x.l $w.x.x -anchor w -side left
+	pack $w.x -side top -pady 10
+	wm title $w "$title" 
+
+	set oldFocus [focus]
+	frame $w.f
+	button $w.f.back -text "OK" -width 20 \
+		-command "destroy $w; focus $oldFocus;$func .fileio"
+	button $w.f.canc -text "Cancel" \
+		-width 20 -command "destroy $w; focus $oldFocus"
+	pack $w.f.back $w.f.canc -side left -pady 10 -padx 45
+	pack $w.f -pady 10 -side bottom -padx 10 -anchor w
+	focus $w
+	global winx; global winy
+	set winx [expr [winfo x .]+30]; set winy [expr [winfo y .]+30]
+	wm geometry $w +$winx+$winy
+}
+
+proc maybe_exit { w } {
+	catch {destroy $w}
+	toplevel $w -class Dialog
+	label $w.bm -bitmap questhead
+	pack  $w.bm -pady 10 -side top -padx 10
+	message $w.m -width 400 -aspect 300 \
+		-text "Changes will be lost.  Are you sure?" -relief flat
+	pack  $w.m -pady 10 -side top -padx 10
+	wm title $w "Are you sure?" 
+
+	set oldFocus [focus]
+	frame $w.f
+	button $w.f.back -text "OK" -width 20 \
+		-command "exit"
+	button $w.f.canc -text "Cancel" \
+		-width 20 -command "destroy $w; focus $oldFocus"
+	pack $w.f.back $w.f.canc -side left -pady 10 -padx 45
+	pack $w.f -pady 10 -side bottom -padx 10 -anchor w
+	focus $w
+	global winx; global winy
+	set winx [expr [winfo x .]+30]; set winy [expr [winfo y .]+30]
+	wm geometry $w +$winx+$winy
+}
+
+proc read_config_file { w } {
+	global loadfile
+	if { [string length $loadfile] != 0 && [file readable $loadfile] == 1 } then {
+		read_config $loadfile
+	} else {
+		catch {destroy $w}
+		toplevel $w -class Dialog
+		message $w.m -width 400 -aspect 300 -text \
+			"Unable to read file $loadfile" \
+			 -relief raised 
+		label $w.bm -bitmap error
+		pack $w.bm $w.m -pady 10 -side top -padx 10
+		wm title $w "Oops" 
+
+		set oldFocus [focus]
+		frame $w.f
+		button $w.f.back -text "Bummer" \
+			-width 10 -command "destroy $w; focus $oldFocus"
+		pack $w.f.back -side bottom -pady 10 -anchor s
+		pack $w.f -pady 10 -side top -padx 10 -anchor s
+		focus $w
+		global winx; global winy
+		set winx [expr [winfo x .]+30]; set winy [expr [winfo y .]+30]
+		wm geometry $w +$winx+$winy
+	}
+}
+
+proc write_config_file  { w } {
+	global loadfile
+	if { [string length $loadfile] != 0 
+    		&& ([file writable $loadfile] == 1 || ([file exists $loadfile] == 0 && [file writable [file dirname $loadfile]] == 1)) } then {
+		writeconfig $loadfile /dev/null
+	} else {
+		catch {destroy $w}
+		toplevel $w -class Dialog
+		message $w.m -width 400 -aspect 300 -text \
+			"Unable to write file $loadfile" \
+			 -relief raised 
+		label $w.bm -bitmap error
+		pack $w.bm $w.m -pady 10 -side top -padx 10
+		wm title $w "Oops" 
+
+		set oldFocus [focus]
+		frame $w.f
+		button $w.f.back -text "OK" \
+			-width 10 -command "destroy $w; focus $oldFocus"
+		pack $w.f.back -side bottom -pady 10 -anchor s
+		pack $w.f -pady 10 -side top -padx 10 -anchor s
+		focus $w
+		global winx; global winy
+		set winx [expr [winfo x .]+30]; set winy [expr [winfo y .]+30]
+		wm geometry $w +$winx+$winy
+	}
+}
+
+proc read_config { filename } {
+	set file1 [open $filename r]
+	clear_choices
+	while { [gets $file1 line] >= 0} {
+		if [regexp {([0-9A-Za-z_]+)=([ynm])} $line foo var value] {
+			if { $value == "y" } then { set cmd "global $var; set $var 1" }
+			if { $value == "n" } then { set cmd "global $var; set $var 0" }
+			if { $value == "m" } then { set cmd "global $var; set $var 2" }
+			eval $cmd
+		}
+		if [regexp {# ([0-9A-Za-z_]+) is not set} $line foo var] {
+			set cmd "global $var; set $var 0"
+			eval $cmd
+		}
+		if [regexp {([0-9A-Za-z_]+)=([0-9A-Fa-f]+)} $line foo var value] {
+			set cmd "global $var; set $var $value"
+			eval $cmd
+		}
+		if [regexp {([0-9A-Za-z_]+)="([^"]*)"} $line foo var value] {
+			set cmd "global $var; set $var $value"
+			eval $cmd
+		}
+	}
+	close $file1
+	update_choices
+	update_mainmenu .rdupd
+}
+proc write_comment { file1 file2 text } {
+    	puts $file1 ""
+	puts $file1 "#"
+	puts $file1 "# $text"
+	puts $file1 "#"
+	puts $file2 "/*"
+	puts $file2 " * $text"
+	puts $file2 " */"
+}
+
+proc write_tristate { file1 file2 varname variable dep } {
+	if { $variable == 0 } \
+		then { puts $file1 "# $varname is not set"; \
+		       puts $file2 "#undef  $varname"} \
+	elseif { $variable == 2 || ($dep == 2 && $variable == 1) } \
+		then { puts $file1 "$varname=m"; \
+		       puts $file2 "#undef  $varname"; \
+		       puts $file2 "#define ${varname}_MODULE 1" } \
+	elseif { $variable == 1 && $dep != 2 } \
+		then { puts $file1 "$varname=y"; \
+		       puts $file2 "#define $varname 1" } \
+	else { \
+	    puts stdout "ERROR - Attempting to write value for unconfigured variable ($varname)." \
+	}
+}
+
+proc write_int { file1 file2 varname variable dep } {
+	if { $dep == 0 } \
+		then { puts $file1 "# $varname is not set"; \
+		       puts $file2 "#undef  $varname"} \
+	else {
+		puts $file1 "$varname=$variable"; \
+		puts $file2 "#define $varname $variable"; \
+	}
+}
+
+proc write_hex { file1 file2 varname variable dep } {
+	if { $dep == 0 } \
+		then { puts $file1 "# $varname is not set"; \
+		       puts $file2 "#undef  $varname"} \
+	else {
+		puts $file1 "$varname=$variable"; \
+		puts $file2 "#define $varname 0x$variable"; \
+	}
+}
+
+proc write_string { file1 file2 varname variable dep } {
+	if { $dep == 0 } \
+		then { puts $file1 "# $varname is not set"; \
+		       puts $file2 "#undef  $varname"} \
+	else {
+		puts $file1 "$varname=\"$variable\""; \
+		puts $file2 "#define $varname \"$variable\""; \
+	}
+}
+
+proc option_name {w mnum line text helpidx} {
+	button $w.x$line.l -text "$text" -relief groove -anchor w
+	$w.x$line.l configure -activefore [cget $w.x$line.l -fg] \
+				-activeback [cget $w.x$line.l -bg]
+	button $w.x$line.help -text "Help" -relief raised \
+		-command "dohelp .dohelp $helpidx"
+	pack $w.x$line.help -side right -fill y
+	pack $w.x$line.l -side right -fill both -expand on
+}
+
+proc toggle_switch2 {w mnum line text variable} {
+	frame $w.x$line -relief sunken
+	radiobutton $w.x$line.y -text "y" -variable $variable -value 1 \
+		-relief groove -width 2 -command "update_menu$mnum .menu$mnum"
+	radiobutton $w.x$line.m -text "-"  -variable $variable -value 2 \
+		-relief groove -width 2 -command "update_menu$mnum .menu$mnum"
+	radiobutton $w.x$line.n -text "n"  -variable $variable -value 0 \
+		-relief groove -width 2 -command "update_menu$mnum .menu$mnum"
+		
+	option_name $w $mnum $line $text $variable
+		
+	pack $w.x$line.n $w.x$line.m $w.x$line.y -side right -fill y
+}
+
+proc toggle_switch3 {w mnum line text variable} {
+	frame $w.x$line -relief sunken
+	radiobutton $w.x$line.y -text "y" -variable $variable -value 1 \
+		-relief groove -width 2 -command "update_menu$mnum .menu$mnum"
+	radiobutton $w.x$line.m -text "m"  -variable $variable -value 2 \
+		-relief groove -width 2 -command "update_menu$mnum .menu$mnum"
+	radiobutton $w.x$line.n -text "n"  -variable $variable -value 0 \
+		-relief groove -width 2 -command "update_menu$mnum .menu$mnum"
+		
+	option_name $w $mnum $line $text $variable
+		
+	pack $w.x$line.n $w.x$line.m $w.x$line.y -side right -fill y
+}
+
+proc bool {w mnum line text variable} {
+	toggle_switch2 $w $mnum $line $text $variable
+	$w.x$line.m configure -state disabled
+	pack $w.x$line -anchor w -fill both -expand on
+}
+
+proc tristate {w mnum line text variable } {
+	toggle_switch3 $w $mnum $line $text $variable
+	pack $w.x$line -anchor w -fill both -expand on
+}
+
+proc dep_tristate {w mnum line text variable depend } {
+	tristate $w $mnum $line $text $variable
+}
+
+proc int { w mnum line text variable } {
+	frame $w.x$line
+	entry $w.x$line.x -width 18 -relief sunken -borderwidth 2 \
+		-textvariable $variable
+	option_name $w $mnum $line $text $variable
+	pack $w.x$line.x -anchor w -side right -fill y
+	pack $w.x$line -anchor w -fill both -expand on
+}
+
+proc hex { w mnum line text variable } {
+	int $w $mnum $line $text $variable
+}
+
+proc istring { w mnum line text variable } {
+	frame $w.x$line
+	entry $w.x$line.x -width 18 -relief sunken -borderwidth 2 \
+		-textvariable $variable
+	option_name $w $mnum $line $text $variable
+	pack $w.x$line.x -anchor w -side right -fill y
+	pack $w.x$line -anchor w -fill both -expand on
+}
+
+proc minimenu { w mnum line text variable helpidx } {
+	frame $w.x$line
+	menubutton $w.x$line.x -textvariable $variable -menu \
+		$w.x$line.x.menu -relief raised \
+		-anchor w
+	option_name $w $mnum $line $text $helpidx
+	pack $w.x$line.x -anchor w -side right -fill y
+	pack $w.x$line -anchor w -fill both -expand on
+}
+
+proc comment {w line text } {
+#nothing done for comments now.
+}
+
+proc dohelp {w var }  {
+	catch {destroy $w}
+	toplevel $w -class Dialog
+
+	set filefound 0
+	set found 0
+	set lineno 0
+
+	if { [file readable Documentation/Configure.help] == 1} then {
+		set filefound 1
+		# First escape sed regexp special characters in var:
+		set var [exec echo "$var" | sed s/\[\]\[\/.^$*\]/\\\\&/g]
+		# Now pick out right help text:
+		set message [exec sed -n "
+			/^$var\[ 	\]*\$/,\${
+				/^$var\[ 	\]*\$/c\\
+${var}:\\
+
+				/^#/b
+				/^\[^ 	\]/q
+				s/^  //
+				p
+			}
+			" Documentation/Configure.help]
+		set found [expr [string length "$message"] > 0]
+	}
+	
+	frame $w.f1
+
+	if { $found == 0 } then {
+		if { $filefound == 0 } then {
+		message $w.f1.m -width 750 -aspect 300 -relief flat -text \
+			"No help available - unable to open file Documentation/Configure.help.  This file should have come with your kernel."
+		} else {
+		message $w.f1.m -width 400 -aspect 300 -relief flat -text \
+			"No help available for $var"
+		}
+		label $w.f1.bm -bitmap error
+		wm title $w "RTFM"
+	} else {
+		text $w.f1.m -width 73 -relief flat -wrap word
+		$w.f1.m insert 0.0 $message
+		$w.f1.m conf -state disabled  -height [$w.f1.m index end]
+
+		label $w.f1.bm -bitmap info
+		wm title $w "Configuration help" 
+	}
+	pack $w.f1.bm $w.f1.m -side left -padx 10
+	pack $w.f1 -side top
+	set oldFocus [focus]
+	
+	# Do the OK button
+	#
+	frame $w.f2
+	button $w.f2.ok -text "OK" \
+		-width 10 -command "destroy $w; focus $oldFocus"
+	pack $w.f2.ok -side bottom -pady 6 -anchor n
+	pack $w.f2 -side bottom -padx 10 -anchor s
+
+	# Finish off the window
+	#
+	focus $w
+	global winx; global winy
+	set winx [expr [winfo x .]+30]; set winy [expr [winfo y .]+30]
+	wm geometry $w +$winx+$winy
+}
+
+proc wrapup {w }  {
+	catch {destroy $w}
+	toplevel $w -class Dialog
+	message $w.m -width 400 -aspect 300 -text \
+		"The Linux ELKS Kernel is now hopefully configured for your setup. Check the top-level Makefile for additional configuration, and do a 'make dep ; make clean' if you want to be sure all the files are correctly re-made."  -relief raised 
+	label $w.bm -bitmap info
+	pack $w.bm $w.m -pady 10 -side top -padx 10
+	wm title $w "Kernel build instructions" 
+
+	set oldFocus [focus]
+	frame $w.f
+	button $w.f.back -text "OK" \
+		-width 10 -command "exit"
+	pack $w.f.back -side bottom -pady 10 -anchor s
+	pack $w.f -pady 10 -side top -padx 10 -anchor s
+	focus $w
+	global winx; global winy
+	set winx [expr [winfo x .]+30]; set winy [expr [winfo y .]+30]
+	wm geometry $w +$winx+$winy
+
+}
+
+#
+# Next set up the particulars for the top level menu, and define a few
+# buttons which we will stick down at the bottom.
+#
+frame .header
+
+frame .f0 
+
