@@ -83,9 +83,6 @@ static void setup_inodes()
 
 void inode_init()
 {
-#ifdef HASH_INODES
-	memset(hash_table, 0, sizeof(hash_table));
-#endif
 	first_inode = NULL;
 	setup_inodes();
 }
