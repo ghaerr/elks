@@ -6,6 +6,37 @@ be longer than the lines of dashes.
 
 Al
 ------------------------------------------------------------------------------
+Contributors listed in this ChangeLog and their current email addresses:
+
+Alan Cox		<alan@redhat.com>		20 Jun 2001
+Alastair Bridgewater	<nyef@softhome.net>		 6 Dec 1998
+Alistair Riddoch	<alriddoch@zepler.org>		17 Jun 2001
+Arnaud Launay		<zoro@multimania.com>		26 Aug 1999
+Christop Plattner	<Christoph.Plattner@dot.at>	 2 Feb 2000
+Harry Kalogirou 	<harkal@rainbow.cs.unipi.gr>	 3 Oct 2001
+Paul Nasrat		<pnasrat@uk.now.com>		28 Aug 2001
+Peter L Vachuska	<pvachusk@nconnect.net>		13 Aug 2001
+Riley Williams		<rhw@MemAlpha.cx>		 9 Oct 2001
+Simon Weijgers		<simon@weijgers.com>		15 Nov 1998
+Thomas McWilliams	<tgm9999@yahoo.com>		 2 Apr 2001
+
+------------------------------------------------------------------------------
+
+Tue Oct 16 21:59:27 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Reformatted ELKS_VERSION_CODE to reflect the actual use made of
+	  the PRE's as being BEFORE the non-PRE version rather than after
+	  as was previously assumed. Also allowed up to 255 PRE's between
+	  PATCHLEVEL increments.
+	* Bumped version to 0.0.87-pre1 in case anything is using the
+	  above field.
+
+Tue Oct  9 16:03:21 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Reformatted CHANGELOG to make it easier to find contributor's
+	  current email addresses.
+	* Created list of standard Makefile rules where all rules perform
+	  exactly as documented.
 
 Sun Oct  7 20:28:37 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 

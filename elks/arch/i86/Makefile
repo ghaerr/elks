@@ -182,16 +182,16 @@ endif
 	drivers/block/blk_drv.a 286pmode/pmode286
 
 kernel/akernel.a:
-	make -C kernel
+	make -C kernel akernel.a
 
 lib/lib86.a:
-	make -C lib
+	make -C lib lib86.a
 
 mm/mm.a:
-	make -C mm
+	make -C mm mm.a
 
 drivers/char/chr_drv.a:
-	make -C drivers/char
+	make -C drivers/char 
 
 drivers/block/blk_drv.a:
 	make -C drivers/block

@@ -1,9 +1,9 @@
 # State the current ELKS kernel version.
 
-VERSION 	= 0	# (0-4095)
+VERSION 	= 0	# (0-255)
 PATCHLEVEL	= 0	# (0-255)
-SUBLEVEL	= 85	# (0-255)
-PRE		= 3	# (0-15)	If not a pre, comment this line.
+SUBLEVEL	= 87	# (0-255)
+PRE		= 1	# (0-255)	If not a pre, comment this line.
 
 # Specify the architecture we will use.
 
@@ -39,15 +39,16 @@ ifeq (x$(PRE), x)
 DIST		= $(shell printf '%u.%u.%u' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
 
+VSNCODE		= $(shell printf '0x%02X%02X%02X%02X' \
+			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) 0)
 else
 
 DIST		= $(shell printf '%u.%u.%u-pre%u' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $(PRE))
 
+VSNCODE		= $(shell printf '0x%02X%02X%02X%02X' \
+			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $$[$(PRE)-16])
 endif
-
-VSNCODE		= $(shell printf '0x%03X%02X%02X%X' \
-			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $$[$(PRE)+0])
 
 #########################################################################
 # Specify the linuxMT root directory.

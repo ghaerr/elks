@@ -14,7 +14,7 @@
 # In addition to the above, the following rules MUST be defined in each
 # Makefile in the ELKS source tree:
 #
-#	depclean	Does anything needed to clean up that directory
+#	cleandir	Does anything needed to clean up that directory
 #			that is not done by the standard rules, which
 #			delete any files with names matching *~ *.a or
 #			*.o or called core or tmp_make and additionally
@@ -149,21 +149,22 @@ endif
 AR		= ar
 
 AS86		= as86
-AFLAGS		= -0 -j -j $(ASIBO)
+AFLAGS		= $(ASIBO) -0 -j -j
 
 CC		= bcc
-CFLAGS	 	= -D__KERNEL__ -I$(INCDIR) -0 -O -i $(CSIBO)
+CFLAGS	 	= $(CSIBO) -I$(INCDIR) -D__KERNEL__ -0 -O -i
 
 CPP		= bcc
-CPFLAGS 	= -D__KERNEL__ -I$(INCDIR) -E $(CPSIBO)
+CPFLAGS 	= $(CPSIBO) -I$(INCDIR) -D__KERNEL__ -E
 
 LD		= ld
 LDFLAGS 	= $(LDSIBO)
 
 LD86		= ld86
-L8FLAGS 	= -0 -i $(L8SIBO)
+L8FLAGS 	= $(L8SIBO) -0 -i
 
 LINT		= lclint
+LTFLAGS 	= $(CSIBO) -I$(INCDIR) -D__KERNEL__
 
 #########################################################################
 # Export all of these variables.
@@ -174,13 +175,20 @@ LINT		= lclint
 # General construction rules.
 
 .c.s:
-	$(CC) $(CFLAGS) -0 -nostdinc -S -o $*.s $<
+	$(CC) $(CFLAGS) -0 -S -o $*.s $<
+
 .cpp.o:
 	$(CPP) $(CPFLAGS) -o $*.o $<
+
+.htm.txt:
+	lynx -dump $< > $*.txt
+
 .html.txt:
 	lynx -dump $< > $*.txt
+
 .s.o:
 	$(AS86) $(AFLAGS) -o $*.o $<
+
 .S.s:
 	gcc -D__KERNEL__ -I$(INCDIR) -E -traditional -o $*.s $<
 
@@ -191,17 +199,24 @@ elks:
 	make -C $(ELKSDIR) all
 
 #########################################################################
-# Specify rule to clean all unwanted files from this tree.
+# Specify rule to clean all unwanted files from this tree. The standard
+# rules delete any files with names matching *~ *.a or *.o or called core
+# or tmp_make and additionally deletes any *.s files where there is a
+# matching *.c or *.S file in the same directory.
 
-clean:	dirclean
+clean:	cleandir
+	rm -f *~ *.a *.o core tmp_make
+	for FILE in *.s ; do \
+		NAME=`basename $$FILE .s` ; \
+		if [ -f $$NAME.c -o -f $$NAME.S ]; then \
+			rm -f $$FILE ; \
+		fi ; \
+	done
 	for DIR in */ ; do \
 		if [ -f $$DIR/Makefile ]; then \
 			make -C $$DIR clean ; \
 		fi ; \
 	done
-	@echo
-	@echo Tree cleaning completed.
-	@echo
 
 #########################################################################
 # Specify a rule to create a default configuration from any directory.
@@ -215,36 +230,35 @@ defconfig:
 
 dep:
 	sed '/^\#\#\# Dependencies:/q' < Makefile > tmp_make
-	(for FILE in *.c ; do echo ; $(CC_PROTO) $$FILE ; done) >> tmp_make
+	(for FILE in *.c ; do $(CC_PROTO) $$FILE ; done) >> tmp_make
 	for DIR in */ ; do \
 		if [ -f $$DIR/Makefile ]; then \
 			make -C $$DIR dep ; \
 		fi ; \
 	done
 	mv -f tmp_make Makefile
-	@echo
-	@echo Dependency configuration complete.
-	@echo
 
 #########################################################################
-# Specify a rule to create a separate distribution tree.
+# Specify a rule to create a separate distribution tree. The standard
+# rules copy all files matching *.[1chSs] or named Makefile or README*
+# to the correct directory in the distribution tree.
 
-dist:	clean nodep
+dist:	clean nodep distdir
+	for FILE in *.1 *.c *.h *.S *.s Makefile README* ; do \
+		cp -fp $$FILE $(DISTDIR)/$(RELPATH)/$$FILE ; \
+	done
 	for DIR in */ ; do \
 		if [ -f $$DIR/Makefile ]; then \
 			make -C $$DIR dist ; \
 		fi ; \
 	done
-	@echo
-	@echo Distribution tree created.
-	@echo
 
 #########################################################################
 # Specify a rule to run LINT through the C source files in this tree.
 
 lint:
 	for FILE in *.c ; do \
-		$(LINT) -I$(INCDIR) -c $$FILE ; \
+		$(LINT) $(LTFLAGS) -c $$FILE ; \
 		echo ; \
 	done
 	for DIR in */ ; do
@@ -252,9 +266,6 @@ lint:
 			make -C $$DIR lint ; \
 		fi ; \
 	done
-	@echo
-	@echo End of C source checking with LINT.
-	@echo
 
 #########################################################################
 
@@ -270,9 +281,6 @@ nodep:
 			make -C $$DIR nodep ; \
 		fi ; \
 	done
-	@echo
-	@echo Dependency configuration removed.
-	@echo
 
 #########################################################################
 # End of standard rules
