@@ -13,30 +13,39 @@ Alastair Bridgewater	<nyef@softhome.net>		 6 Dec 1998
 Alistair Riddoch	<alriddoch@zepler.org>		17 Jun 2001
 Arnaud Launay		<asl@launay.org>		17 Oct 2001
 Christop Plattner	<Christoph.Plattner@dot.at>	 2 Feb 2000
-Harry Kalogirou 	<harkal@rainbow.cs.unipi.gr>	 3 Oct 2001
+Harry Kalogirou 	<harkal@rainbow.cs.unipi.gr>	19 Oct 2001
 Paul Nasrat		<pnasrat@uk.now.com>		28 Aug 2001
 Peter L Vachuska	<pvachusk@nconnect.net>		13 Aug 2001
-Riley Williams		<rhw@MemAlpha.cx>		16 Oct 2001
+Riley Williams		<rhw@MemAlpha.cx>		22 Oct 2001
 Simon Weijgers		<simon@weijgers.com>		15 Nov 1998
 Thomas McWilliams	<tgm9999@yahoo.com>		 2 Apr 2001
 
 ------------------------------------------------------------------------------
 
-Fri Oct 19 11:35:00 EEST 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+Mon Oct 22 02:06:53 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* THIS IS ELKS RELEASE 0.0.87
+	* Fixed typos in recent CHANGELOG entries.
+	* Thanks are due to HarKal for sorting out the bug in the Makefiles
+	  that I was unable to track down.
+
+Fri Oct 19 11:35:00 EEST 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+
+	* THIS IS ELKS RELEASE 0.0.87.
 	* Final changes for the release.
 
-Thu Oct 18 17:32:06 EEST 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+Thu Oct 18 17:32:06 EEST 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
-	* Fixed make dist. Was stoping with error trying to create arch/i86 twice
-	* Fixed make dist to include the keymap headers in the distribution
-	* Fixed make dist to include the net/ipv4 directory in the distribution
+	* Fixed make dist. It was stopping with error trying to create the
+	  arch/i86 directory twice.
+	* Fixed `make dist` to include keymap headers in the distribution.
+	* Fixed `make dist` to include the net/ipv4 directory in the
+	  distribution.
 
-Thu Oct 18 16:53:02 EEST 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
+Thu Oct 18 16:53:02 EEST 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
-	* Fix in makefiles. version.h and compile.h are needed by "make dep"
-	* Fixed arch/i86/mm/Makefile to make the tree compilable
+	* Fix in makefiles. The `make dep` command needs version.h and
+	  compile.h to work.
+	* Fixed arch/i86/mm/Makefile to make the tree compilable.
 
 Wed Oct 17 11:32:57 CEST 2001	Arnaud Launay <asl@launay.org>
 
