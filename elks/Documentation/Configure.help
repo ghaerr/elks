@@ -442,6 +442,11 @@ CONFIG_FS_RO
 # Executable file formats
 # ~~~~~~~~~~~~~~~~~~~~~~~
 
+Suport for suid/sgid executables
+CONFIG_EXEC_SUGID
+  This allows support for the suid and sgid bits for binaries.
+
+
 Minix file format
 CONFIG_EXEC_MINIX
   This lets you run Minix binaries compiled with bcc. This is the only

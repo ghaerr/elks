@@ -16,6 +16,7 @@ bool 'Make all FS read-only' CONFIG_FS_RO
 
 comment 'Executable file formats'
 
+bool 'Allow suid/sgid executables' CONFIG_EXEC_SUGID
 bool 'Minix file format' CONFIG_EXEC_MINIX
 bool 'MSDOS (EXE) file format' CONFIG_EXEC_MSDOS
 

@@ -4,6 +4,10 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+Thu Jan 20 12:30 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
+
+	* Support for suid/sgid exec by Mario Frasca.
+
 Wed Jan 19 14:05 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Fixed hole diagnostic function so it now works.

@@ -56,8 +56,13 @@ int slen;		/* Size of built stack */
 	char *ptr;
 	size_t count;
 	int i;
+#ifdef CONFIG_EXEC_SUGID
+	unsigned int effuid, effgid;
+	int suidfile, sgidfile;
+#endif
 	register struct file * filp = &file;
 	__registers * tregs;
+
 
 	/*
 	 *	Open the image
@@ -104,6 +109,15 @@ int slen;		/* Size of built stack */
 	tregs = &current->t_regs;
 	tregs->ds=get_ds();
 	filp->f_pos=0; /* FIXME - should call lseek */
+#ifdef CONFIG_EXEC_SUGID
+ /* can I trust the following fields?
+  */
+	suidfile = inode->i_mode & S_ISUID;
+	sgidfile = inode->i_mode & S_ISGID;
+	effuid = inode->i_uid;
+	effgid = inode->i_gid;
+#endif
+
 	result=filp->f_op->read(inode, &file, &mh, sizeof(mh));
 	tregs->ds=ds;
 
@@ -132,7 +146,7 @@ int slen;		/* Size of built stack */
  * but bcc can't handle a goto xyz; and a subsequent xyz:
  * -- simon weijgers
  */
-#ifdef CONFIG_EXE_MSDOS
+#ifdef CONFIG_EXEC_MSDOS
 	goto blah;
 #endif
 #endif
@@ -319,7 +333,20 @@ blah:
 	current->t_endstack=(__pptr)len;	/* with 64K = 0000 but that's OK */
 	current->t_inode=inode;
 	arch_setup_kernel_stack(current);
-	
+
+#ifdef CONFIG_EXEC_SUGID
+ /* this could be a good place to set the effective user identifier
+  * in case the suid bit of the executable had been set */
+
+	if(suidfile) {
+		current->uid = effuid;
+	}
+	if(sgidfile) {
+		current->gid = effgid;
+	}
+#endif
+
+
 	retval = 0;
 	wake_up(&current->p_parent->child_wait);
 
