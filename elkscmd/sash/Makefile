@@ -16,6 +16,9 @@ rfs: install
 
 min_rfs: install
 
+smin_rfs: sash
+	cp -p sash $(TARGET_MNT)/bin/sh
+
 install: sash
 	cp -p sash $(TARGET_MNT)/bin/sash
 

@@ -18,6 +18,8 @@ rfs: install
 
 min_rfs: install
 
+smin_rfs:
+
 install: lev
 	cp -p lev $(TARGET_MNT)/bin/vi
 

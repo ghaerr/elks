@@ -24,5 +24,7 @@ rfs: all
 
 min_rfs: all
 
+smin_rfs: all
+
 clean:
 	rm -f $(PRGS)

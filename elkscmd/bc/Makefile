@@ -61,6 +61,8 @@ rfs: all
 
 min_rfs: all
 
+smin_rfs: all
+
 clean:
 	rm -f *.o *.bak core math.h bc sbc
 

@@ -38,6 +38,8 @@ rfs: install
 
 min_rfs: install
 
+smin_rfs:
+
 install: sh
 	cp -p sh $(TARGET_MNT)/bin/sh
 

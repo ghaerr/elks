@@ -56,6 +56,8 @@ rfs: install
 
 min_rfs: all
 
+smin_rfs: all
+
 install: $(PROGRAM)
 	cp -p $(PROGRAM) $(TARGET_MNT)/usr/bin
 

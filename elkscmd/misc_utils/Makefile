@@ -9,5 +9,7 @@ rfs: all
 
 min_rfs: rfs
 
+smin_rfs:
+
 clean:
 	rm -f $(PRGS)

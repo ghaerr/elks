@@ -3,7 +3,8 @@ include ../Make.defs
 PRGS=init getty login kill man mount reboot passwd umount clock \
 	exitemu ps who new_init # insmod 
 
-MIN_PRGS=init getty login kill mount reboot umount clock exitemu ps who
+MIN_PRGS=init getty login kill mount reboot umount clock exitemu ps
+SMIN_PRGS=mount umount
 
 all: $(PRGS)
 
@@ -12,6 +13,9 @@ rfs: all
 
 min_rfs: all
 	cp -p $(MIN_PRGS) $(TARGET_MNT)/bin
+
+smin_rfs: all
+	cp -p $(SMIN_PRGS) $(TARGET_MNT)/bin
 
 clean:
 	rm -f $(PRGS) *.o

@@ -2,11 +2,18 @@ include ../Make.defs
 
 PRGS=fdisk ramdisk mkfs fsck
 
+SPRGS=mkfs
+
 all: $(PRGS)
 
 rfs: install
 
 min_rfs: install
+
+smin_rfs: install_sibo
+
+install_sibo: all
+	cp -p $(SPRGS) $(TARGET_MNT)/bin
 
 install: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin

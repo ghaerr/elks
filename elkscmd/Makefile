@@ -16,6 +16,9 @@ $(COMB_TARGET_FS):
 $(ROOT_TARGET_FS):
 	dd if=/dev/zero of=$(ROOT_TARGET_FS) bs=1024 count=$(ROOT_TARGET_BLKS)
 
+$(SIBO_TARGET_FS):
+	dd if=/dev/zero of=$(SIBO_TARGET_FS) bs=1024 count=$(SIBO_TARGET_BLKS)
+
 $(ELKSCMD_DIR)/rootfs_template/etc/passwd: rootfs_template.tar
 	tar xpf rootfs_template.tar
 
@@ -35,6 +38,15 @@ mount_rootfs: $(ROOT_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
 	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
 		(cd $(TARGET_MNT) ; tar xpvf -)
 	(cd $(TARGET_MNT)/dev ; ./MAKEDEV)
+	
+mount_sibofs: $(SIBO_TARGET_FS) $(ELKSCMD_DIR)/rootfs_template/etc/issue
+	$(MKFS) $(MKFS_OPTS) $(SIBO_TARGET_FS) $(SIBO_TARGET_BLKS)
+	mount $(SIBO_TARGET_FS) $(TARGET_MNT) $(LOOP)
+	(cd $(ELKSCMD_DIR)/rootfs_template ; tar cf - --exclude CVS *) | \
+		(cd $(TARGET_MNT) ; tar xpvf -)
+	(cd $(TARGET_MNT) ; rm -rf home boot root var)
+	cp SIBODEV $(TARGET_MNT)/dev/SIBODEV
+	(cd $(TARGET_MNT)/dev ; ./SIBODEV ; rm -f MAKEDEV SIBODEV )
 	
 
 #rfs: mount_rfs
@@ -80,8 +92,11 @@ root: mount_rootfs
 	done
 	umount $(ROOT_TARGET_FS)
 
-boot: $(ELKS_DIR)/arch/i86/boot/Image
-	cp $(ELKS_DIR)/arch/i86/boot/Image boot
+sibo: mount_sibofs
+	@for i in $(DIRS); do \
+	(cd $$i; make smin_rfs) ; \
+	done
+	umount $(SIBO_TARGET_FS)
 
 images.zip: boot comb root
 	zip images.zip boot root comb
