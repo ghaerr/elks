@@ -35,14 +35,16 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS=getty kill man mount reboot umount clock exitemu who init login passwd \
-	ps knl
+PRGS		= getty kill man mount reboot umount clock exitemu who ps \
+		  init login passwd knl
 
-NETPRGS=init getty login kill mount umount passwd reboot ps meminfo who
+NETPRGS 	= init getty login kill mount umount passwd reboot ps who \
+		  meminfo
 
-MIN_PRGS=init getty login kill mount reboot umount clock exitemu ps meminfo
+MIN_PRGS	= init getty login kill mount reboot umount clock exitemu \
+		  ps meminfo
 
-SMIN_PRGS=mount umount
+SMIN_PRGS	= mount umount
 
 all: $(PRGS)
 
