@@ -6,6 +6,15 @@ format provided for each entry.
 Al
 ------------------------------------------------------------------------------
 
+Mon Aug 20 09:01:05 BST 2001	Riley Williams <rhw@MemAlpha.cx>
+
+	* Prepare for writing of ANSI / VT100 druver as usermode by
+	  creating directory ansi to do it in. This will compile as
+	  a separate program, but is best kept in sync with the elks
+	  kernel by being part of the same package.
+	* Move Documentation/HTML/Technical/vt100.html to the ANSI
+	  directory.
+
 Mon Aug 20 08:22:34 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Second draft of Documentation/HTML/Technical/vt100.html
