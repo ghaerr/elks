@@ -31,6 +31,9 @@ int KeyboardInit();
 
 int Current_VCminor = 0;
 
+/* for key repeat */
+int last_key, key_repeat = 0;
+
 /* from console.c */
 extern char power_state;
 
@@ -53,7 +56,22 @@ int key;
    	modifiers = psiongetchar();
    	key = (modifiers & 0x00FF);
 
-	/* FIXME: Need to add some form of Key repeat.. */
+	/* no key pressed */
+	if (key == 0){
+		key_repeat = 0;
+		last_key = 0;
+		return;
+	}
+
+	if (key == last_key){
+		if (key_repeat < 5){
+			key_repeat ++;
+			return;
+		}
+	}
+
+	last_key = key;
+	key_repeat = 0;
 
 	if( modifiers & PSION)
 	{
@@ -101,6 +119,7 @@ int key;
          		AddQueue( ESC );
          		AddQueue( 'D' );
          		return;
+			return;
       		default :
          		AddQueue( key );
          		return;

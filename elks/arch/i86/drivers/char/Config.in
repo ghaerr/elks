@@ -10,7 +10,7 @@ if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 	choice 'Select console driver'                  \
 		"Direct         CONFIG_CONSOLE_DIRECT   \
 		 BIOS           CONFIG_CONSOLE_BIOS     \
-		 Serial         CONFIG_CONSOLE_SERIAL"  CONFIG_CONSOLE_DIRECT
+		 Serial         CONFIG_CONSOLE_SERIAL"  Direct
 	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
 		bool 'Direct console VT52 emulation' CONFIG_DCON_VT52
 		if [ "$CONFIG_DCON_VT52" = "y" ]; then
