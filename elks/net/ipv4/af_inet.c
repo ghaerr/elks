@@ -49,10 +49,14 @@ int len;
 
 	sock = (struct socket *)r->sock;
 	
-	if(r->type == TDT_CHG_STATE){
-		sock->state = r->ret_value;
-	} else { 	
-		wake_up(sock->wait);
+	switch (r->type) {
+		case TDT_CHG_STATE:
+			sock->state = r->ret_value;
+			break;
+		case TDT_AVAIL_DATA:
+			sock->avail_data = r->ret_value;
+		default: 	
+			wake_up(sock->wait);
 	}
 	
 	return 1;
@@ -258,6 +262,7 @@ int nonblock;
 	
 	if(ret > 0){
 		memcpy_tofs(ubuf, &r->data, ret);
+		sock->avail_data = 0;
 	}
 	tcpdev_clear_data_avail();
 	
@@ -322,7 +327,21 @@ struct socket *sock;
 int sel_type;
 select_table * wait;
 {
-	printk("inet_select\n");
+	int ret;
+	
+	printd_inet("inet_select\n");
+	if (sel_type == SEL_IN) {
+		if (sock->avail_data) {
+			return(1);
+		} else if (sock->state != SS_CONNECTED) {
+			return(1);
+		}
+		select_wait(sock->wait);
+		return(0);
+	} else 
+	if (sel_type == SEL_OUT){
+		return(1);
+	}
 }
 
 inet_ioctl()

@@ -24,6 +24,9 @@ struct socket {
 	long			flags;
 	struct proto_ops	*ops;
 	void			*data;
+#if defined(CONFIG_INET)
+	int	avail_data;	/* I added this here for smaller code and memory use - HarKal */
+#endif
 #if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 	struct socket		*conn;
 	struct socket		*iconn;

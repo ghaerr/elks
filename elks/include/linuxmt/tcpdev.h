@@ -70,6 +70,7 @@ struct tdb_write {
 
 struct tdb_return_data {
 #define	TDT_CHG_STATE	2
+#define	TDT_AVAIL_DATA		3	
 	char	type;
 	int		ret_value;
 	unsigned short sock;

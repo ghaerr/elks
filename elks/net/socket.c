@@ -115,6 +115,9 @@ struct socket *sock_alloc()
 	sock->flags = 0;
 	sock->ops = NULL;
 	sock->data = NULL;
+#if defined(CONFIG_INET)
+	sock->avail_data = 0;
+#endif	
 #if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 	sock->conn = NULL;
 	sock->iconn = NULL;
@@ -627,7 +630,7 @@ int protocol;
 		panic("fuc");
 		return -EINVAL;
 	}
-	printk("family : %d\n",i);
+
 	ops = pops[i];	/* Initially pops is not an array. */
 
 #ifdef CONFIG_SOCK_STREAMONLY
