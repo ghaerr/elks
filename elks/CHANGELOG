@@ -4,6 +4,69 @@ the top of this file before committing any changes.
 
 Al
 ------------------------------------------------------------------------------
+
+2000-02-02    <Christoph.Plattner@dot.at>
+
+	* init/main.c (init_task): use /dev/ttys0 instead of /dev/tty1
+	if serial console is used.
+
+	* arch/i86/drivers/char/serial.c (port;): added function to setup
+	tty termios for the serial console.
+	(rs_init): rs_init checks now, if a serial port has been already
+	checked and setup by serial console initialization
+	(init_console): beside the rs_init() also the tty termios are
+	initialized und updated for the serial console port.
+
+2000-02-02    <Christoph.Plattner@dot.at>
+
+	* include/linuxmt/config.h (DEF_SETUPSEG): it should be defined
+	as DEF_INITSEG + 0x20, otherwise two things are to edit.
+
+	* init/main.c (init_task): use serial console as default output
+
+	* Makefile (include/linuxmt/version.h): added sync against nfs
+	race problems on the host machines
+
+	* arch/i86/drivers/char/serial.c (rs_init): the printk saying
+	which ttys[0123] is setup has to use ttyno instead of i !
+
+	* include/linuxmt/ntty.h: added external definition to def_vals
+
+2000-02-01    <Christoph.Plattner@dot.at>
+
+	* arch/i86/Makefile (clean): added Boot.map and Setup.map in the
+	clean rule. Also crt0.s was not cleaned yet.
+
+2000-01-31    <Christoph.Plattner@dot.at>
+
+	* include/arch/debug_disp.h: added display port to output debug
+	messages to LED, hex-display or logic analysator.
+
+	* arch/i86/mm/init.c (setup_mm): reduse ram for ramdisk.
+
+	* arch/i86/kernel/system.c: reducing the main memory for ramdisk.
+
+	* arch/i86/boot/netbootsect.S: added netboot sector for 
+	netboot-0.8.1 (c) Gero Kuhlmann
+
+	* include/linuxmt/config.h (CONFIG_PRELOAD_RAMDISK): new macro
+	to embed a ram disk, downloaded by netboot. This disk can be used
+	as mini root disk or as auxilary partition to transport new files
+	over net into the elks system. RAM_REDUCE reserves memory for that
+	(at the moment the seg 0x6000 & 0x7000 is used as disk to test
+	this option. This is defined in rd.c)
+
+	* arch/i86/Makefile (nbImage): added rule to create netboot image
+	(also delete netboot files in the clean section)
+
+	* Makefile (nbImage): added rule to create netboot image
+
+	* arch/i86/drivers/block/rd.c(do_rd_request): fixed the mix up
+	of sector offset address and byte offset address at fmemcpy.
+	In rd_info and rd_segment a fix preloaded disk can be defined
+	(CONFIG_PRELOAD_DISK, the values are hard coded for test
+	purpose).
+	
 Thu Jan 20 12:30 GMT 2000   Alistair Riddoch  <ajr@ecs.soton.ac.uk>
 
 	* Support for suid/sgid exec by Mario Frasca.
