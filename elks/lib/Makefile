@@ -44,3 +44,14 @@ dep:
 	mv tmp_make Makefile
 
 ### Dependencies:
+chqueue.s chqueue.o: chqueue.c ../include/linuxmt/config.h \
+ ../include/linuxmt/autoconf.h ../include/linuxmt/wait.h \
+ ../include/linuxmt/chqueue.h ../include/linuxmt/debug.h \
+ ../include/linuxmt/types.h ../include/arch/types.h \
+ ../include/linuxmt/posix_types.h ../include/arch/posix_types.h \
+ ../include/arch/irq.h
+string.s string.o: string.c ../include/linuxmt/types.h ../include/arch/types.h \
+ ../include/linuxmt/posix_types.h ../include/linuxmt/config.h \
+ ../include/linuxmt/autoconf.h ../include/arch/posix_types.h \
+ ../include/arch/irq.h ../include/linuxmt/string.h \
+ ../include/arch/string.h

@@ -127,7 +127,7 @@ int it;
 void up(s)
 short *s;
 {
-	if(++*s==0)	/* Gone non negative */
+	if(++(*s)==0)	/* Gone non negative */
 		wake_up((void *)s);
 }
 
@@ -139,6 +139,6 @@ short *s;
 		sleep_on((void *)s);
 	}
 	/* Take it */
-	--*s;
+	--(*s);
 }
 

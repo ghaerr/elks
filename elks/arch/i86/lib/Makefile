@@ -65,3 +65,7 @@ setupb.s: setupb.S
 setupw.s: setupw.S
 
 ### Dependencies:
+bitops.s bitops.o: bitops.c ../../../include/arch/bitops.h \
+ ../../../include/arch/types.h ../../../include/arch/irq.h \
+ ../../../include/linuxmt/kernel.h
+memmove.s memmove.o: memmove.c
