@@ -3,11 +3,11 @@
 # 19980209 Claudio Matsuoka <claudio@conectiva.com>
 # Modified for ELKS and bcc
 
-BASEDIR=..
-
-LOCALFLAGS= -DSHELL -I. -D_MINIX -D_POSIX_SOURCE
+BASEDIR = ..
 
 include $(BASEDIR)/Make.defs
+
+LOCALFLAGS = -DSHELL -I. -D_MINIX -D_POSIX_SOURCE
 
 ###############################################################################
 #

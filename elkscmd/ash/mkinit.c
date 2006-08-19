@@ -61,6 +61,9 @@ static char sccsid[] = "@(#)mkinit.c	5.3 (Berkeley) 3/13/91";
 #include <sys/types.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 
 /*
@@ -518,7 +521,7 @@ ckfopen(file, mode)
 void *
 ckmalloc(nbytes) {
 	register char *p;
-	char *malloc();
+	/* char *malloc(); */
 
 	if ((p = malloc(nbytes)) == NULL)
 		error("Out of space");

@@ -50,6 +50,8 @@ static char sccsid[] = "@(#)mknodes.c	5.1 (Berkeley) 3/7/91";
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 #define MAXTYPES 50		/* max number of node types */
@@ -422,7 +424,7 @@ savestr(s)
 	char *s;
 	{
 	register char *p;
-	char *malloc();
+	/* char *malloc(); */
 
 	if ((p = malloc(strlen(s) + 1)) == NULL)
 		error("Out of space");

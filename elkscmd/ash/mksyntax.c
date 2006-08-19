@@ -49,6 +49,8 @@ static char sccsid[] = "@(#)mksyntax.c	5.2 (Berkeley) 3/8/91";
  */
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "parser.h"
 
 

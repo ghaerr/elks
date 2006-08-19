@@ -49,8 +49,8 @@ static char sccsid[] = "@(#)mksignames.c	5.1 (Berkeley) 3/7/91";
  */
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
-
 
 
 struct sig {
