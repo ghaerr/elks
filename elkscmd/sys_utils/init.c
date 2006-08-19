@@ -252,7 +252,7 @@ void makefork()
 	close(1);
 	close(2);
 #endif
-	fd = open("/dev/tty1",O_RDWR);
+	fd = open(DEVTTY, O_RDWR);
         dup2(fd ,STDIN_FILENO);
 	dup2(fd ,STDOUT_FILENO);
         dup2(fd ,STDERR_FILENO);
@@ -499,7 +499,7 @@ int argc;
 
 	argv[0] = "init";
 #ifdef DEBUG
-	fd = open(DEVTTY, 2);
+	fd = open(DEVTTY, O_RDWR);
 	dup2(fd, 0);
 	dup2(fd, 1);
 	dup2(fd, 2);

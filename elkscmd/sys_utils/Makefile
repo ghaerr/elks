@@ -2,6 +2,8 @@ BASEDIR=..
 
 include $(BASEDIR)/Make.defs
 
+LOCALFLAGS =
+
 ###############################################################################
 #
 # Include standard packaging commands.
