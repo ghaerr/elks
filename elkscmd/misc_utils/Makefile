@@ -38,8 +38,8 @@ PRGS=ed tar compress uncompress zcat
 
 all: $(PRGS)
 
-compress: compress.c
-	$(CC) $(CFLAGS) -X-H0xe000 -s $@.c -o $@
+compress: compress.c Makefile
+	$(CC) $(CFLAGS) -H35000 -s $@.c -o $@
 
 uncompress: compress
 	ln -sf compress uncompress
