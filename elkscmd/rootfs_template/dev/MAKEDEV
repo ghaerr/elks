@@ -109,7 +109,14 @@ fi
 # used to use the node numbers these now use. However, it is expected that
 # this restriction can be removed in the near future.
 
-	$MKSET  0 3  $MKDEV tty c 4	# Currently
+# CM: ELKS wants tty1 to be minor 0, so we can't use $MKSET
+
+	mknod tty1 c 4 0
+	mknod tty2 c 4 1
+	mknod tty3 c 4 2
+	mknod tty4 c 4 3
+
+#	$MKSET  0 3  $MKDEV tty c 4	# Currently
 #	$MKSET  0 15 $MKDEV tty c 4	# Soon to be
 
 # Serial ports, as detected by the ROM BIOS.
@@ -132,6 +139,11 @@ fi
 # Loopback devices. These are not yet supported.
 
 #	$MKSET  0 15 $MKDEV loop c 7
+
+##############################################################################
+# TCPDEV, used by ktcp
+
+	mknod tcpdev c 8 0
 
 ##############################################################################
 # SCSI disks. These are not yet supported.

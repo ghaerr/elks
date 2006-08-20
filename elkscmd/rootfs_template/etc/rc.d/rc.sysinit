@@ -9,7 +9,7 @@ export PATH
 #
 
 localip=192.168.1.100
-sliptty=/dev/ttys0
+sliptty=/dev/ttyS0
 ttybaud=4800
 
 if test -f /bin/ktcp
