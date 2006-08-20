@@ -87,8 +87,8 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
 			   char *buf, size_t icount)
 {
     struct buffer_head *bh;
-    loff_t offset, size;
-    size_t chars, count = (icount % 65536), left;
+    loff_t offset, size, left;
+    size_t chars, count = (icount % 65536);
     int read;
     block_t block, blocks;
 
@@ -99,7 +99,7 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
      *      Amount we can do I/O over
      */
 
-    left = (offset > size) ? 0 : (size_t) (size - offset);
+    left = (offset > size) ? 0 : size - offset;
 
     if (left > count)
 	left = count;

@@ -72,7 +72,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /*
      *      Open the image
      */
-    debug1("EXEC: opening file: %s\n", filename);
+    /*debug1("EXEC: opening file: %s\n", filename);*/
+    debug1("EXEC: slen = %d\n", slen);
 
     retval = open_namei(filename, 0, 0, &inode, NULL);
 
@@ -130,7 +131,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     if (result != sizeof(mh) ||
 	(mh.type != MINIX_SPLITID) || mh.chmem < 1024 || mh.tseg == 0) {
-	debug1("EXEC: bad header, result %d\n", result);
+	debug1("EXEC: bad header, result %u\n", result);
 	retval = -ENOEXEC;
 	goto close_readexec;
     }
@@ -142,7 +143,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	result = filp->f_op->read(inode, &file, &msuph, sizeof(msuph));
 	tregs->ds = ds;
 	if (result != sizeof(msuph)) {
-	    debug1("EXEC: Bad secondary header, result %d\n", result);
+	    debug1("EXEC: Bad secondary header, result %u\n", result);
 	    retval = -ENOEXEC;
 	    goto close_readexec;
 	}
@@ -213,14 +214,14 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	goto close_readexec;
     }
 
-    debug2("EXEC: Malloc succeeded - cs=%x ds=%x", cseg, dseg);
+    debug2("EXEC: Malloc succeeded - cs=%x ds=%x\n", cseg, dseg);
 
     if(load_code){
         tregs->ds = cseg;
         result = filp->f_op->read(inode, &file, 0, mh.tseg);
         tregs->ds = ds;
         if (result != mh.tseg) {
-            debug2("EXEC(tseg read): bad result %d, expected %d\n",
+            debug2("EXEC(tseg read): bad result %u, expected %u\n",
 	       result, mh.tseg);
 	    retval = -ENOEXEC;
 	    mm_free(cseg);

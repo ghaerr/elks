@@ -40,6 +40,19 @@ Tommy McCabe 	      rocketjet314@yahoo.com		31 May 2004
 
 -------------------------------------------------------------------------------
 
+
+Sun Aug 20 21:51:25 UTC 2006	Claudio Matsuoka <claudio@mandriva.com>
+
+	* Allow loading Minix executables with total size larger than
+	  64KB, such as ash (70140 bytes). Currently the total size
+	  minus 32 bytes of header was limited to 16-bit.
+
+	* Set tty1 back to minor 0. This is different from Linux
+	  numbering, but it's necessary to have current ELKS virtual
+	  terminals working. This and the executable size change put
+	  ELKS back in usable state, allowing logins in the first VT
+	  and executing a shell.
+
 Mon Sep 20 23:27:23 CST 2004	Daniele Giacomini <daniele@swlibero.org>
 
 	* Added italian keys support, Miguel Bolanos cleaned the original
