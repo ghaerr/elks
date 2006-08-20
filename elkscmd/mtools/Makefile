@@ -49,6 +49,14 @@ CMNOBJ	= init.o search.o unixname.o subdir.o getfat.o devices.o
 
 all:	$(PROGS)
 
+rfs: install
+
+min_rfs: install
+
+net_rfs: install
+
+smin_rfs:
+
 mkdfs:	mkdfs.o
 mdir:	mdir.o match.o convdate.o isdir.o $(CMNOBJ)
 mread:	mread.o match.o convdate.o $(CMNOBJ)
