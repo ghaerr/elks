@@ -1,6 +1,13 @@
 #
 #       Makefile for MSDOS tools
 #
+
+BASEDIR = ..
+
+include $(BASEDIR)/Make.defs
+
+LOCALFLAGS =
+
 ###############################################################################
 #
 # Include standard packaging commands.
@@ -34,63 +41,24 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-CC = bcc
-
-CFLAGS	= -g
-LDFLAGS	= 
-LINT	= lint -p
-#
-# Rich Salz's excelent cshar package.
-# Available from comp.sources.unix archives.
-#
-SHAR	= makekit -m
-BINDIR	= /u/viktor/bin/sun4
-MANDIR  = /u/viktor/man/man1
+PREFIX	= /usr
+BINDIR	= $(PREFIX)/bin
+MANDIR  = $(PREFIX)/man/man1
 PROGS	= mdir mread mwrite mdel mtype mmd mrd mren mcopy mkdfs
-CMNOBJ = init.o search.o unixname.o subdir.o getfat.o devices.o
-
-MKDFS   = mkdfs.o
-MDIR	= mdir.o match.o convdate.o isdir.o $(CMNOBJ)
-MREAD	= mread.o match.o convdate.o $(CMNOBJ)
-MWRITE	= mwrite.o fixname.o putfat.o mkentry.o isdir.o $(CMNOBJ)
-MDEL	= mdel.o match.o putfat.o $(CMNOBJ)
-MTYPE	= mtype.o match.o $(CMNOBJ)
-MMD	= mmd.o fixname.o putfat.o mkentry.o $(CMNOBJ)
-MRD	= mrd.o putfat.o $(CMNOBJ)
-MREN	= mren.o fixname.o putfat.c isdir.o $(CMNOBJ)
-MCOPY	= mcopy.o
+CMNOBJ	= init.o search.o unixname.o subdir.o getfat.o devices.o
 
 all:	$(PROGS)
 
-mkdfs:  $(MKDFS)
-	$(CC) $(LDFLAGS) $(MKDFS) -o mkdfs
-
-mdir:	$(MDIR)
-	$(CC) $(LDFLAGS) $(MDIR) -o mdir
-
-mread:	$(MREAD)
-	$(CC) $(LDFLAGS) $(MREAD) -o mread
-
-mwrite:	$(MWRITE)
-	$(CC) $(LDFLAGS) $(MWRITE) -o mwrite
-
-mdel:	$(MDEL)
-	$(CC) $(LDFLAGS) $(MDEL) -o mdel
-
-mtype:	$(MTYPE)
-	$(CC) $(LDFLAGS) $(MTYPE) -o mtype
-
-mmd:	$(MMD)
-	$(CC) $(LDFLAGS) $(MMD) -o mmd
-
-mrd:	$(MRD)
-	$(CC) $(LDFLAGS) $(MRD) -o mrd
-
-mren:	$(MREN)
-	$(CC) $(LDFLAGS) $(MREN) -o mren
-
-mcopy:	$(MCOPY)
-	$(CC) $(LDFLAGS) $(MCOPY) -o mcopy
+mkdfs:	mkdfs.o
+mdir:	mdir.o match.o convdate.o isdir.o $(CMNOBJ)
+mread:	mread.o match.o convdate.o $(CMNOBJ)
+mwrite:	mwrite.o fixname.o putfat.o mkentry.o isdir.o $(CMNOBJ)
+mdel:	mdel.o match.o putfat.o $(CMNOBJ)
+mtype:	mtype.o match.o $(CMNOBJ)
+mmd:	mmd.o fixname.o putfat.o mkentry.o $(CMNOBJ)
+mrd:	mrd.o putfat.o $(CMNOBJ)
+mren:	mren.o fixname.o putfat.c isdir.o $(CMNOBJ)
+mcopy:	mcopy.o
 
 install: all
 	cp mdir $(BINDIR)/mdir
@@ -115,7 +83,7 @@ install-man:
 	cp Mcopy.1 $(MANDIR)/mcopy.1
 
 clean:
-	rm $(PROGS) *.o
+	rm -f $(PROGS) *.o
 
 lint:
 	$(LINT) mdir.c getfat.c init.c search.c match.c convdate.c subdir.c \
@@ -132,8 +100,5 @@ lint:
 	$(LINT) mren.c getfat.c init.c search.c fixname.c unixname.c putfat.c \
 	subdir.c
 	$(LINT) mcopy.c
-
-shar:
-	$(SHAR) MANIFEST Customize Makefile Readme *.[1ch]
 
 init.o:	msdos.h devices.h
