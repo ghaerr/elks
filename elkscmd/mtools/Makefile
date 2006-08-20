@@ -75,7 +75,7 @@ install-man:
 	@for i in $(PROGS); do \
 		M=`echo $$i | sed 's/\(.\)/\u\1/'`.1; \
 		echo Installing $$M; \
-		compress < $$M > $(TARGET_MNT)/$(MANDIR)/$$M.Z; \
+		compress -b12 < $$M > $(TARGET_MNT)/$(MANDIR)/$$M.Z; \
 	done
 
 clean:
