@@ -61,26 +61,14 @@ mren:	mren.o fixname.o putfat.c isdir.o $(CMNOBJ)
 mcopy:	mcopy.o
 
 install: all
-	cp mdir $(BINDIR)/mdir
-	cp mread $(BINDIR)/mread
-	cp mwrite $(BINDIR)/mwrite
-	cp mdel $(BINDIR)/mdel
-	cp mtype $(BINDIR)/mtype
-	cp mmd $(BINDIR)/mmd
-	cp mrd $(BINDIR)/mrd
-	cp mren $(BINDIR)/mren
-	cp mcopy $(BINDIR)/mcopy
+	cp $(PROGS) $(TARGET_MNT)/$(BINDIR)/
 
 install-man:
-	cp Mread.1 $(MANDIR)/mread.1
-	cp Mdir.1 $(MANDIR)/mdir.1
-	cp Mwrite.1 $(MANDIR)/mwrite.1
-	cp Mdel.1 $(MANDIR)/mdel.1
-	cp Mtype.1 $(MANDIR)/mtype.1
-	cp Mmd.1 $(MANDIR)/mmd.1
-	cp Mrd.1 $(MANDIR)/mrd.1
-	cp Mren.1 $(MANDIR)/mren.1
-	cp Mcopy.1 $(MANDIR)/mcopy.1
+	@for i in $(PROGS); do \
+		M=`echo $$i | sed 's/\(.\)/\u\1/'`.1; \
+		echo Installing $$M; \
+		compress < $$M > $(TARGET_MNT)/$(MANDIR)/$$M.Z; \
+	done
 
 clean:
 	rm -f $(PROGS) *.o

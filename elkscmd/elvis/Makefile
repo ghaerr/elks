@@ -1,6 +1,16 @@
 # combined Makefile for ELVIS - a clone of `vi`
 #
 ###############################################################################
+
+BASEDIR = ..
+
+include $(BASEDIR)/Make.defs
+
+LOCALFLAGS=-O -DM_SYSV -DCRUNCH -DNO_MKEXRC -DNO_CURSORSHAPE -DNO_CHARATTR \
+	-DNO_SHOWMODE -DNO_MODELINE -DNO_OPTCOLS -DNO_DIGRAPH -DNO_ABBR \
+	-DNO_AT -DNO_SENTENCE -DNO_ERRLIST -DNO_EXTENSIONS -DNO_RECYCLE \
+	-DNO_MAGIC -DNO_CHARSEARCH -DNO_NONEX -DDATE=\"`date +%D`\"
+
 #
 # Include standard packaging commands.
 
@@ -27,8 +37,6 @@ STD_USR_BIN	= elvis ctags ref virec refont
 STD_USR_LIB	= 
 STD_USR_MAN	= 
 STD_USR_SBIN	= 
-
-include $(BASEDIR)/Make.rules
 
 ###############################################################################
 #
@@ -76,15 +84,11 @@ EXTRA2=
 LIBS=
 BIN=	/usr/local/bin
 
-CC= bcc
-xCC=gcc -DUNIX=1
+#CC= bcc
+#xCC=gcc -DUNIX=1
 xLIBS=-ltermcap
 xEXTRA=tinytcap.o
 
-CFLAGS=	-O -DM_SYSV -DCRUNCH -DNO_MKEXRC -DNO_CURSORSHAPE -DNO_CHARATTR \
-	-DNO_SHOWMODE -DNO_MODELINE -DNO_OPTCOLS -DNO_DIGRAPH -DNO_ABBR \
-	-DNO_AT -DNO_SENTENCE -DNO_ERRLIST -DNO_EXTENSIONS -DNO_RECYCLE \
-	-DNO_MAGIC -DNO_CHARSEARCH -DNO_NONEX
 OF=	-o 
 RF=	-c
 DATE=	-DDATE=\'\"`date`\"\'
@@ -336,8 +340,10 @@ smin_rfs: all
 net_rfs:
 
 elvis: $(OBJS) $(EXTRA) $(EXTRA2)
-	$(CC) -s $(CFLAGS) $(OF)elvis $(OBJS) $(EXTRA) $(EXTRA2) $(LIBS)
-	$(CHMEM)
+
+
+#	$(CC) -s $(CFLAGS) $(OF)elvis $(OBJS) $(EXTRA) $(EXTRA2) $(LIBS)
+#	$(CHMEM)
 
 ctags: ctags.c
 	$(CC) $(CFLAGS) $(SORT) $(OF)ctags ctags.c
@@ -372,8 +378,8 @@ refont: refont.c
 ##############################################################################
 
 # The file cmd1.c is compiled with the extra flag -DDATE="today's date".
-cmd1.o: cmd1.c vi.h config.h
-	$(EVAL) $(CC) $(CFLAGS) $(RF) $(DATE) cmd1.c
+#cmd1.o: cmd1.c vi.h config.h
+#	$(EVAL) $(CC) $(CFLAGS) $(RF) $(DATE) cmd1.c
 
 # "It all depends..."
 $(OBJS): vi.h curses.h config.h
