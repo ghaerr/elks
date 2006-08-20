@@ -4,7 +4,7 @@
 #
 # Include standard rules.
 
-BASEDIR=.
+BASEDIR = .
 
 include $(BASEDIR)/Make.defs
 
@@ -20,9 +20,10 @@ include $(BASEDIR)/Make.defs
 #
 
 DIRS		= sys_utils ash bc byacc disk_utils file_utils levee \
-		  minix1 minix2 minix3 misc_utils sash sh_utils inet
+		  m4 minix1 minix2 minix3 misc_utils mtools sash sh_utils \
+		  inet
 
-DONTUSE 	= debug_utils lib m4 mtools prn-utils rc tools xvi
+DONTUSE 	= debug_utils lib prn-utils rc tools xvi
 
 DONTWORK	= elvis
 
