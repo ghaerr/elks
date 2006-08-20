@@ -20,6 +20,7 @@ Sun Aug 20 10:59:20 UTC 2006	Claudio Matsuoka <claudio@mandriva.com>
 	* Fixed build and install rules in mtools Makefile
 	* Added m4 Makefile
 	* Added m4 and mtools to DIRS
+	* Updates to elvis Makefile
 
 Sat Aug 19 17:44:45 UTC 2006	Claudio Matsuoka <claudio@mandriva.com>
 	* Set heap top to 35000 when linking compress
