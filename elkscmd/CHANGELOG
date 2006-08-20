@@ -15,6 +15,14 @@ Tommy McCabe			rocketjet314@yahoo.com
 
 ---------------------------------------------------------------------------
 
+Sat Aug 19 17:44:45 UTC 2006	Claudio Matsuoka <claudio@mandriva.com>
+	* Set heap top to 35000 when linking compress
+	* Cleanup: using macros instead of magic numbers in init.c
+	* Cleanup: removed unused qsort.c in sys_utils/
+
+Sat Aug 19 12:02:08 UTC 2006	Claudio Matsuoka <claudio@mandriva.com>
+	* Addressed ash compiler warnings when building with HOSTCC,
+	  mostly by including proper headers
 
 Sat Sep 18 13:29:26 BRT 2004	Claudio Matsuoka <claudio@conectiva.com>
 
