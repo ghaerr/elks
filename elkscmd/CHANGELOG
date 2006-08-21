@@ -19,6 +19,7 @@ Sun Aug 20 22:16:43 UTC 2006	Claudio Matsuoka <claudio@mandriva.com>
 	* Fixed tty creation in MAKEDEV
 	* Fixed ttyS0 name typo in rc.sysinit in the rootfs template
 	* Added /dev/tcpdev creation in MAKEDEV
+	* Fixed location of liberror.txt in rootfs template
 
 Sun Aug 20 10:59:20 UTC 2006	Claudio Matsuoka <claudio@mandriva.com>
 	* Fixed build and install rules in mtools Makefile
