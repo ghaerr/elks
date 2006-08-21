@@ -111,10 +111,10 @@ fi
 
 # CM: ELKS wants tty1 to be minor 0, so we can't use $MKSET
 
-	mknod tty1 c 4 0
-	mknod tty2 c 4 1
-	mknod tty3 c 4 2
-	mknod tty4 c 4 3
+	$MKDEV tty1	c 4 0
+	$MKDEV tty2	c 4 1
+	$MKDEV tty3	c 4 2
+	$MKDEV tty4	c 4 3
 
 #	$MKSET  0 3  $MKDEV tty c 4	# Currently
 #	$MKSET  0 15 $MKDEV tty c 4	# Soon to be
@@ -126,7 +126,7 @@ fi
 ##############################################################################
 # Alternate TTY devices. These are not yet supported.
 
-#	$MKDEV tty	c 5 0
+	$MKDEV tty	c 5 0
 #	$MKDEV console	c 5 1
 #	$MKDEV ptmx	c 5 2
 
