@@ -102,29 +102,52 @@ static void init_task()
 
     printk("Loading init\n");
 
-    if ((num = sys_execve("/bin/init", args, 18))) {
+    /* The Linux kernel traditionally attempts to start init from 4 locations,
+     * as indicated by this code:
+     *
+     * run_init_process("/sbin/init");
+     * run_init_process("/etc/init");
+     * run_init_process("/bin/init");
+     * run_init_process("/bin/sh");
+     *
+     * So, I've modified the ELKS kernel to follow this tradition.
+     */
 
-	printk("sys_execve(\"/bin/init\",args,18) => %d.\n",num);
+    if ((num = sys_execve("/sbin/init", args, 18))) {
+    	
+	printk("sys_execve(\"/sbin/init\",args,18) => %d.\n",num);
+
+	if ((num = sys_execve("/etc/init", args, 18))) {
+	 
+	    printk("sys_execve(\"/etc/init\",args,18) => %d.\n",num);
+
+	    if ((num = sys_execve("/bin/init", args, 18))) {
+	 		
+		printk("sys_execve(\"/bin/init\",args,18) => %d.\n",num);
+
 
 #ifdef CONFIG_CONSOLE_SERIAL
-	num = sys_open("/dev/ttyS0", 2, 0);
+		num = sys_open("/dev/ttyS0", 2, 0);
 #else
-	num = sys_open("/dev/tty1", 2, 0);
+		num = sys_open("/dev/tty1", 2, 0);
 #endif
 
-	if (num < 0)
-	    printk("Unable to open /dev/tty (error %u)\n", -num);
+		if (num < 0)
+		    printk("Unable to open /dev/tty (error %u)\n", -num);
 
-	if (sys_dup(0) != 1)
-	    printk("dup failed\n");
+		if (sys_dup(0) != 1)
+	    	printk("dup failed\n");
 
-	sys_dup(0);
+		sys_dup(0);
 
-	printk("No init - running /bin/sh\n");
+		printk("No init - running /bin/sh\n");
 
-	if (sys_execve("/bin/sh", args, 0))
-	    panic("No init or sh found");
+		if (sys_execve("/bin/sh", args, 0))
+	    	    panic("No init or sh found");
+    	    }
+	}
     }
+   
 
 #ifndef S_SPLINT_S
 
