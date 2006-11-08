@@ -1,3 +1,6 @@
+/* $Header$ 
+ */
+
 #include <linuxmt/config.h>
 #include <linuxmt/init.h>
 #include <linuxmt/mm.h>
