@@ -41,6 +41,12 @@ Tommy McCabe 	      rocketjet314@yahoo.com		31 May 2004
 -------------------------------------------------------------------------------
 
 
+Wed Nov  8 17:49:52 EST 2006	Segin <segin2005@gmail.com>
+
+	* Changed ELKS init sequence to check all locations for 'init'
+	  that the Linux kernel does. This is to follow more 
+	  "traditional" behaviour.
+
 Sun Aug 20 21:51:25 UTC 2006	Claudio Matsuoka <claudio@mandriva.com>
 
 	* Allow loading Minix executables with total size larger than
