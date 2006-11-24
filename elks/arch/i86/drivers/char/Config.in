@@ -3,7 +3,7 @@
 #
 
 mainmenu_option next_comment
-    comment 'Character device drivers'
+    comment 'Character device drivers (SUBMENU IS CURRENT BROKEN!)'
 
     if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 	choice 'Select console driver'			\
