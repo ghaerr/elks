@@ -25,18 +25,14 @@
  *	MTK:	Sep 97 - Misc hacks to shrink generated code
  */
 
-#include <linuxmt/fcntl.h>
-#include <linuxmt/mm.h>
-#include <linuxmt/sched.h>
-#include <linuxmt/types.h>
-
 #include <arch/segment.h>
+#include <linuxmt/mm.h>
 
 /*
  *	Just to make it work for now
  */
 
-extern void con_charout();
+extern void con_charout(char);
 
 static void con_write(register char *buf, int len)
 {
@@ -48,11 +44,10 @@ static void con_write(register char *buf, int len)
 
     static char colour[8] = { 27, '[', '3', '0', ';', '4', '0', 'm' };
 
+    if (++(colour[3]) == '8')
+	colour[3] = '1';
+
     p = colour;
-
-    if (++(p[3]) == '8')
-	p[3] = '1';
-
     do
 	con_charout(*p);
     while (*p++ != 'm');
@@ -81,42 +76,51 @@ char *hex_lower  = "0123456789abcdef";
 static void numout(char *ptr, int len, int width, int base, int useSign,
 		   int Upper, int Zero)
 {
-    long int vs;
     unsigned long int v;
-    register char *bp, *bp2;
-    char buf[32];
+    register char *bp;
+    char buf[12];
 
-    if (width > 31)			/* Error-check width specified */
-	width = 31;
+    if (width > sizeof(buf))		/* Error-check width specified */
+	width = sizeof(buf);
 
-    bp = bp2 = buf + 31;
-
-    if (useSign) {
-	vs = (len == 2) ? *((short *) ptr) : *((long *) ptr);
-	if (vs < 0) {
-	    v = - vs;
-	    *bp = '-';
-	    con_write(bp, 1);
-	} else
-	    v = vs;
-    } else
 	v = (len == 2) ? *((unsigned short *) ptr) : *((unsigned long *) ptr);
-
-    *bp = 0;
-    do {
-	if (Upper)
-	    *--bp = hex_string[v % base]; 	/* Store digit */
+    if (useSign) {
+	if (len == 2)
+	    v = ((long)(*((short *) ptr)));
+	if ((long)v < 0)
+	    v = (-(long)v);
 	else
-	    *--bp = hex_lower[v % base]; 	/* Store digit */
-    } while ((v /= base) && (bp > buf));
+	    useSign = 0;
+    }
 
-    while (bp2 - bp < width)			/* Process width */
+    bp = buf + sizeof(buf);
+
+    {
+	register char *bp2;
+
+	bp2 = Upper ? hex_string : hex_lower;
+    do {
+	    *--bp = *(bp2 + (v % base));	/* Store digit */
+	} while ((v /= base));
+    }
+
+    if (useSign && !Zero)
+	*--bp = '-';
+
+    width -= buf - bp + sizeof(buf);
+    while (--width >= 0)			/* Process width */
 	if (Zero)
 	    *--bp = '0';
 	else
 	    *--bp = ' ';
 
-    con_write(bp, buf - bp + sizeof(buf) - 1);
+    if (useSign && Zero) {
+	if (*bp != '0')
+	    bp--;
+	*bp = '-';
+    }
+
+    con_write(bp, buf + sizeof(buf) - bp);
 }
 
 void printk(register char *fmt,int a1)
@@ -180,7 +184,7 @@ void printk(register char *fmt,int a1)
 		    con_write(cp++, 1);
 		    width--;
 		}
-		while (width-- > 0)
+		while (--width >= 0)
 		    con_write(" ", 1);
 		break;
 	    case 't':
@@ -191,11 +195,11 @@ void printk(register char *fmt,int a1)
 		    cp++;
 		    width--;
 		}
-		while (width-- > 0)
+		while (--width >= 0)
 		    con_write(" ", 1);
 		break;
 	    case 'c':
-		while (width-- > 1)
+		while (--width >= 1)
 		    con_write(" ", 1);
 		con_write(p, 1);
 		p += 2;
@@ -224,7 +228,7 @@ void panic(char *error, int a1 /* VARARGS... */ )
 	for (j = 2; j <= 8; j++)
 	    printk(" %04X", bp[j]);
 	printk("\n");
-    } while (++i > 9);
+    } while (++i < 9);
 
     /* Lock up with infinite loop */
 

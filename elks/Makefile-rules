@@ -91,7 +91,7 @@ else
 DIST		= $(shell printf '%u.%u.%u-pre%u' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $(PRE))
 
-VSNCODE		= $(shell printf '0x%06X%02X' $$[$(VSNCODE1)-1] $(PRE))
+VSNCODE		= $(shell printf '0x%06X%02X' $$(($(VSNCODE1)-1)) $(PRE))
 
 endif
 

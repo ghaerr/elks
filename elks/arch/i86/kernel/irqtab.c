@@ -36,6 +36,11 @@
    #define bios_call_cnt    cseg_bios_call_cnt
 #endif
 
+#ifdef CONFIG_ROMCODE
+ #define SEG_IRQ_DATA es
+#else
+ #define SEG_IRQ_DATA cs
+#endif
 
 #ifndef S_SPLINT_S
 #asm
@@ -105,27 +110,27 @@ void irqtab_init()
         mov dx,ds      ;the original value
         cli            ;just here
         
+#ifdef CONFIG_ROMCODE
+        mov ax,#CONFIG_ROM_IRQ_DATA
+        mov es,ax
+#endif        
+        
+        seg SEG_IRQ_DATA
+	mov stashed_ds,ds
+	mov bios_call_cnt_l,#5
+
         xor ax,ax
         mov es,ax      ;intr table
 
-#ifdef CONFIG_ROMCODE
-        mov ax,#CONFIG_ROM_IRQ_DATA
-#else
-        mov ax,cs
-#endif        
-        mov ds,ax
-        
-	mov stashed_ds,dx	
-
 	seg es                     ;insert new timer intr 
 	mov bx,[32]
-	mov off_stashed_irq0, bx   ; the old one
+	mov off_stashed_irq0_l, bx   ; the old one
 	lea ax,_irq0
 	seg es
 	mov [32],ax
 	seg es
 	mov bx,[34]
-	mov seg_stashed_irq0, bx
+	mov seg_stashed_irq0_l, bx
 	mov ax,cs
 	seg es
 	mov [34],ax
@@ -430,7 +435,7 @@ _irqit:
 !	Save all registers
 !
 
-	cli		! Might not be disabled on an exception
+!	cli		! Might not be disabled on an exception
 	push	ds
 	push	es
 	push	bx
@@ -445,23 +450,19 @@ _irqit:
 !
 #ifdef CONFIG_ROMCODE
         mov bx,#CONFIG_ROM_IRQ_DATA
-#else
-        mov bx,cs
+        mov es,bx
 #endif        
-        mov ds,bx
-        
-	mov	stashed_irq,ax	! Save IRQ number
-	mov	ax,ss		! Get current SS
-	mov	bx,ax		! Save for later
-	mov	stashed_ss, ax	! Save SS:SP
-	mov	ax,sp
-	mov	stashed_sp, ax
 !
 !	Switch segments
 !
-	mov	ax,stashed_ds   ! Recover the data segment
-	mov	ds,ax
-	mov	es,ax
+        seg SEG_IRQ_DATA
+	mov	bx,stashed_ds		! Recover the data segment
+	mov	ds,bx
+	mov	es,bx
+
+	mov	dx,ss			! Get current SS
+	mov	bp,sp			! Get current SP
+	movb	cl,bios_call_cnt_l
 !
 !	Set up task switch controller
 !
@@ -469,14 +470,13 @@ _irqit:
 !
 !	See where we were (BX holds the SS on entry)
 !
-	cmp	ax,bx		! SS = kernel SS ?
+	cmp	dx,bx		! SS = kernel SS ?
 	je	ktask		! Kernel - no work
 !
 !	User or BIOS etc
 !
-	mov	ax,bx
 	mov	bx,_current
-	cmp	ax,4[bx]	! entry ss = current->t_regs.ss?
+	cmp	dx,4[bx]	! entry ss = current->t_regs.ss?
 	je	utask		! Switch to kernel
 !
 !	Bios etc - switch to interrupt stack
@@ -488,37 +488,23 @@ _irqit:
 !	User task. Extract kernel SP. (BX already holds current)
 !
 utask:
-	mov	ax,[bx]		! kernel stack ptr
-	mov	sp,ax		! switch to kernel stack
+	mov	sp,[bx]		! switch to kernel stack ptr
 	inc	ch		! Switch allowable
-	j	switched
-ktask:
 !
 !	In ktask state we have a suitable stack. It might be 
 !	better to use the intstack..
 !
 switched:
-	mov	ax,ds
-	mov	ss,ax		! /* Set SS: right */
+	mov	bx,ds
+	mov	ss,bx		! /* Set SS: right */
+ktask:
 ! /*
 !	Put the old SS;SP on the top of the stack. We can't
 !	leave them in stashed_ss/sp as we could re-enter the
 !	routine on a reschedule.
 ! */
-#ifdef CONFIG_ROMCODE
-        mov ax,#CONFIG_ROM_IRQ_DATA
-        mov es,ax
-        seg es
-	push	stashed_sp
-	seg es
-	push	stashed_ss
-        
-#else
-	seg 	cs
-	push	stashed_sp
-	seg	cs
-	push	stashed_ss
-#endif
+	push	bp		! push entry SP
+	push	dx		! push entry SS
 !
 !	We are on a suitable stack and cx says whether we can	
 !	switch afterwards. The C code will want to eat CX so
@@ -530,19 +516,9 @@ switched:
 	mov	bp,sp
 	mov	_can_tswitch, ch
 	push	cx		! Save ch
-#ifdef CONFIG_ROMCODE
-        seg	es
-#else        
-	seg	cs		! Recover the IRQ we saved
-#endif	
-	mov	ax,stashed_irq
 	push	ax		! IRQ for later
 	push	bp		! Register base
 	push	ax		! IRQ number
-#ifdef CONFIG_ROMCODE
-        mov ax,ds
-        mov es,ax        ;es back to dataseg
-#endif        
 !
 !	Call the C code
 !
@@ -557,48 +533,22 @@ switched:
 !
 !	Restore any chips
 !
-	cmp	ax,#15
+	cmp	ax,#16
 	jge	was_trap	! Traps need no reset
-	cmp	ax,#8
-	jge	sec_8259	! IRQ on low chip
-!
-!	Reset primary 8259
-!
+	or	ax,ax		! Is int #0?
+	jnz	a4
+	dec	cl		! Will call bios int?
+	je	was_trap
+a4:
 	mov	cl,al		! Save the IRQ number
-	inb	al,0x21		! The chip line state
-	jmp	a7
-a7:	jmp	a8
-a8:
-!	movb	al,#1
-!	shl	al,cl		! Shift the irq (saved in cl) to a mask
-!	orb	al,_cache_21
-!	movb	_cache_21, al	
-	movb	al,_cache_21	! Extract the IRQ mask register
-	outb	0x21,al		! Now ack the IRQ
-	jmp	a9
-a9:	jmp	a10
-a10:	movb	al,#0x20	! EOI
-	outb	0x20,al
-	jmp	was_trap
-	
+	movb	al,#0x20	! EOI
+	cmp	cl,#8
+	jb	a6		! IRQ on low chip
 !
 !	Reset secondary 8259 if we have taken an AT rather
 !	than XT irq. We also have to prod the primay
 !	controller EOI..
 !
-sec_8259:
-	mov	cl,al		! Save the IRQ for making masks
-	inb	al,0xA1
-	jmp	a1
-a1:	jmp	a2
-a2:	movb	al,#1
-	shl	al,cl
-	orb	al,_cache_A1
-	movb	_cache_A1, al
-	outb	0xA1,al		! Now ack the IRQ
-	jmp	a3
-a3:	jmp	a4
-a4:	movb	al,#0x20
 	outb	0xA0,al
 	jmp	a5
 a5:	jmp	a6
@@ -609,6 +559,17 @@ a6:	outb	0x20,al		! Ack on primary controller
 !
 
 was_trap:
+	orb	cl,cl
+	jnz	no_bios_call
+!
+!	IRQ 0 (timer) has to go on to the bios for some systems
+!
+	dec	bios_call_cnt_l
+	jne	no_bios_call
+	mov	bios_call_cnt_l,#5
+	pushf
+	callf	[off_stashed_irq0_l]
+no_bios_call:
 !
 !	Now look at rescheduling
 !
@@ -655,83 +616,25 @@ noschedpop:
 	pop	cx
 	pop	bx
 	pop	es
-#ifdef CONFIG_ROMCODE
-	mov	ax,#CONFIG_ROM_IRQ_DATA
-	mov	ds,ax
-#else
-	seg	cs
-#endif
-	mov	ax, stashed_irq
-	or 	ax,ax
-	jz	irq0_bios
 	pop	ds
 	pop	ax
 !
 !	Iret restores CS:IP and F (thus including the interrupt bit)
 !
 	iret
-!
-!	IRQ 0 (timer) has to go on to the bios for some systems
-!	
-!	FIXME: should call the bios only every fifth event.
-!
-irq0_bios:
-    pop     ds  
-	pop	ax           ;now the stack empty
-
-;------------------------------------------------
-;Build new Stack
-;
-;  SP    ->  RET seg
-;            RET offs
-;  SP-4  ->  BP
-;  SP-4  ->  BX   
-;            DS
-;  SP-8  ->  free                     ;sp
-
-label1:
-
-	sub sp,#4                     ;space for retf
-	push bp
-	mov bp,sp 
-
-	push	bx
-	push    ds                 
-#ifdef CONFIG_ROMCODE
-	mov bx,#CONFIG_ROM_IRQ_DATA
-#else
-	mov bx,cs 
-#endif
-	mov ds,bx
-	mov	bx,bios_call_cnt
-	inc	bx
-	cmp	bx,#5
-	jne	no_bios_call
-
-	xor	bx,bx
-	mov	bios_call_cnt,bx
-	mov bx, seg_stashed_irq0
-	mov	[bp+4], bx
-	mov bx, off_stashed_irq0
-	mov [bp+2], bx
-
-	pop ds
-	pop	bx       
-	pop bp
-	retf                          
-
-no_bios_call:                          ;sp-8 
-	mov	bios_call_cnt,bx
-	pop	ds
-	pop	bx                     ;sp-4              
-	pop bp
-	add sp,#4
-	iret
 
 	.data
 .globl	_can_tswitch
 _can_tswitch:
 	.byte 0
+
+off_stashed_irq0_l:
+	.word	0
+seg_stashed_irq0_l:
+	.word	0
+bios_call_cnt_l:
+	.word	0
+
 	.zerow	256		! (was) 128 byte interrupt stack
 _intstack:
 
