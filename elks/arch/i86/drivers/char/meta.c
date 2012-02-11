@@ -67,11 +67,11 @@ int post_request(struct ud_driver *driver, struct ud_request *request)
 
 static void do_meta_request(kdev_t device)
 {
+    int major = MAJOR(device);
     struct ud_driver *driver = get_driver(major);
     struct ud_request *udr;
     struct request *req;
     char *buff;
-    int major = MAJOR(device);
 
     printk("do_meta_request %d %x\n", major, blk_dev[major].current_request);
     if (NULL == driver) {
