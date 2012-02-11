@@ -243,7 +243,7 @@ static int romfs_strnlen(struct inode *i, loff_t offset, size_t count)
     return res;
 }
 
-static int romfs_copyfrom(struct inode *i, void *dest, loff_t offset,
+static int romfs_copyfrom(struct inode *i, char *dest, loff_t offset,
 			  size_t count)
 {
     struct buffer_head *bh;
@@ -279,7 +279,7 @@ static int romfs_copyfrom(struct inode *i, void *dest, loff_t offset,
 
     while (res < count) {
 	offset += maxsize;
-	((char *) dest) += maxsize;
+	*dest += maxsize;
 
 	bh = bread(i->i_dev, (block_t) (offset >> ROMBSBITS));
 
