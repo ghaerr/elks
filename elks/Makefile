@@ -197,7 +197,7 @@ dist.old:
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 
 distclean: clean nodep
-	rm -f .config* .menuconfig*
+	rm -f .config* .menuconfig* arch/i86/Image
 
 #########################################################################
 # Create distribution archives.
