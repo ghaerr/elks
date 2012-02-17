@@ -594,19 +594,6 @@ CONFIG_MINIX_FS
   Support for the basic Minix filesystem. The only currently working 
   filesystem. Until another filesystem is working this is required.
 
-MS-DOS file system support
-CONFIG_MSDOS_FS
-  Support for standard MS-DOS style partitions. 
-
-  ~~~~~~~~~~~~~~~~Currently non-existant~~~~~~~~~~~~~~
-
-Include VFAT style long name support
-CONFIG_VFAT_FS
-  Extension to standard MS-DOS fs support to permit Win95 style long
-  file names. 
-
-  ~~~~~~~~~~~~~~~~Currently non-existant~~~~~~~~~~~~~
-
 ROM file system support
 CONFIG_ROMFS_FS
   Incomplete support for the Read Only filesystem.
