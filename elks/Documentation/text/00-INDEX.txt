@@ -12,6 +12,8 @@ ELKS-Logo.gif
 	- full colour GIF image of ELKS logo.
 boot.txt
 	- description of boot and boot files.
+compile-on-winnt.txt
+	- how to build ELKS on Windows NT.
 debug.txt
 	- how to build and debug the ELKS kernel.
 elks-faq.html
