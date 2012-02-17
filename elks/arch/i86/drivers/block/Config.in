@@ -34,9 +34,6 @@ mainmenu_option next_comment
 	    bool 'Normal floppy disk support'	CONFIG_BLK_DEV_FD	n
 	    bool 'Normal IDE hardisk support'	CONFIG_BLK_DEV_HD	n
 	fi
-	if [ "$CONFIG_NOT_YET" = "y" ]; then
-	    bool 'Old XT hardisk support'	CONFIG_BLK_DEV_XD	n
-	fi
 	if [ "$CONFIG_BLK_DEV_FD" = "y" ]; then
 	    define_bool CONFIG_DMA y
 	else

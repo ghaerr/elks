@@ -492,10 +492,6 @@ int blk_dev_init(void)
     directhd_init();
 #endif
 
-#ifdef CONFIG_BLK_DEV_XD
-    xd_init();
-#endif
-
 #ifdef CONFIG_BLK_DEV_FD
     floppy_init();
 #else

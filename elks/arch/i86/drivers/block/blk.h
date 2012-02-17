@@ -77,8 +77,6 @@ extern void resetup_one_dev();
 extern void rd_load();
 extern void rd_init();
 
-extern void xd_init();
-
 #ifdef MAJOR_NR
 
 /*
