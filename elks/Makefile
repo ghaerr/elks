@@ -67,10 +67,6 @@ ARCHIVES=kernel/kernel.a fs/fs.a lib/lib.a net/net.a
 #########################################################################
 # Check what filesystems to include
 
-ifeq ($(CONFIG_ELKSFS_FS), y)
-	ARCHIVES := $(ARCHIVES) fs/elksfs/elksfs.a
-endif
-
 ifeq ($(CONFIG_MINIX_FS), y)
 	ARCHIVES := $(ARCHIVES) fs/minix/minixfs.a
 endif
@@ -108,14 +104,11 @@ setup: $(ARCH_DIR)/boot/setup
 #########################################################################
 # library rules (all these are built even if they aren't used).
 
-.PHONY: fs/fs.a fs/minix/minixfs.a fs/romfs/romfs.a fs/elksfs/elksfs.a \
+.PHONY: fs/fs.a fs/minix/minixfs.a fs/romfs/romfs.a \
         kernel/kernel.a lib/lib.a net/net.a
 
 fs/fs.a:
 	${MAKE} -C fs fs.a
-
-fs/elksfs/elksfs.a:
-	${MAKE} -C fs/elksfs elksfs.a
 
 fs/minix/minixfs.a:
 	${MAKE} -C fs/minix minixfs.a
@@ -176,11 +169,10 @@ dist.old:
 	cp -pf INSTALLATION INSTALLATION.html TODO $(DISTDIR)
 	(cd $(DISTDIR); mkdir Documentation fs include init kernel lib net)
 	(cd $(DISTDIR); mkdir -p $(ARCH_DIR) scripts)
-	(cd $(DISTDIR)/fs; mkdir elksfs minix romfs)
+	(cd $(DISTDIR)/fs; mkdir minix romfs)
 	(cd $(DISTDIR)/include; mkdir arch linuxmt)
 	${MAKE} -C $(ARCH_DIR) distdir
 	${MAKE} -C fs distdir
-	${MAKE} -C fs/elksfs distdir
 	${MAKE} -C fs/minix distdir
 	${MAKE} -C fs/romfs distdir
 	${MAKE} -C kernel distdir

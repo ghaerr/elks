@@ -40,6 +40,10 @@ Tommy McCabe 	      rocketjet314@yahoo.com		31 May 2004
 
 -------------------------------------------------------------------------------
 
+Thu Feb 16 17:03:00 EST 2012	Jody Bruchon <jody@jodybruchon.com>	
+	* Removed elksfs. It was a copy of the MINIX fs and no tools
+	  exist to make such a filesystem.
+
 Thu Nov 23 21:35:28 EST 2006	Segin <segin2005@gmail.com>
 	* Changed name for the submenu for selecting charater
 	  device drivers to note the fact that that submenu is broken;

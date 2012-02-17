@@ -45,19 +45,12 @@ extern struct file_system_type minix_fs_type;
 extern struct file_system_type romfs_fs_type;
 #endif
 
-#ifdef CONFIG_ELKSFS_FS
-extern struct file_system_type elksfs_fs_type;
-#endif
-
 static struct file_system_type *file_systems[] = {
 #ifdef CONFIG_MINIX_FS
     &minix_fs_type,
 #endif
 #ifdef CONFIG_ROMFS_FS
     &romfs_fs_type,
-#endif
-#ifdef CONFIG_ELKSFS_FS
-    &elksfs_fs_type,
 #endif
     NULL
 };

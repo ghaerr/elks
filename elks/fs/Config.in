@@ -5,7 +5,6 @@ mainmenu_option next_comment
 comment 'File systems'
 
 bool 'All file systems are READ-ONLY'	CONFIG_FS_RO			n
-bool 'Elks file system' 		CONFIG_ELKSFS_FS		n
 bool 'Minix file system'		CONFIG_MINIX_FS 		y
 if [ "$CONFIG_NOT_YET" = "y" ]; then
     bool 'MS-DOS file system'		CONFIG_MSDOS_FS 		n

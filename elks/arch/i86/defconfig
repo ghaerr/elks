@@ -190,7 +190,6 @@ CONFIG_BLK_DEV_CHAR=y
 #
 CONFIG_MINIX_FS=y
 CONFIG_ROMFS_FS=n
-CONFIG_ELKSFS_FS=n
 
 #
 # General filesystem settings

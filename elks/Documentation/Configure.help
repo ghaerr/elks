@@ -602,10 +602,6 @@ CONFIG_MINIX_FS
   Support for the basic Minix filesystem. The only currently working 
   filesystem. Until another filesystem is working this is required.
 
-ELKS file system support
-CONFIG_ELKSFS_FS
-  Support for the new ELKSFS native fs. Includes Minix fs emulation.
-
 MS-DOS file system support
 CONFIG_MSDOS_FS
   Support for standard MS-DOS style partitions. 

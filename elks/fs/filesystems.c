@@ -12,7 +12,6 @@
 
 #include <linuxmt/minix_fs.h>
 #include <linuxmt/romfs_fs.h>
-#include <linuxmt/elksfs_fs.h>
 #include <linuxmt/major.h>
 
 void fs_init(void)
@@ -22,8 +21,5 @@ void fs_init(void)
 #endif
 #ifdef CONFIG_ROMFS_FS
     init_romfs_fs();
-#endif
-#ifdef CONFIG_ELKSFS_FS
-    init_elksfs_fs();
 #endif
 }
