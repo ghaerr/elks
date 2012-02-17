@@ -34,10 +34,6 @@ void setup_mm(void)
     __u16 basemem = setupw(0x2a);
     __u16 xms = setupw(2);		/* Fetched by boot code */
 
-#ifdef CONFIG_EMS
-    __u16 ems = 0;			/* Fetched by boot code */
-#endif
-
     arch_cpu = setupb(0x20);
 
     for (pi = 0; ((int)pi) < 16; pi++) {
@@ -58,10 +54,6 @@ void setup_mm(void)
 	   arch_cpu > 5 ? 'A' : 'X', proc_name, basemem);
     if (arch_cpu < 6)
 	xms = 0;		/* XT bios hasn't got xms interrupt */
-#ifdef CONFIG_EMS
-    if (ems)
-	printk(", %dK expanded memory (EMS)", ems);
-#endif
     if (xms)
 	printk(", %dK extended memory (XMS)", xms);
     if (*cpuid)

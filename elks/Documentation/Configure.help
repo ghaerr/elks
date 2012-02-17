@@ -299,10 +299,6 @@ CONFIG_MEM_PAGES
   system is required to have. The default is 8 pages (512k) and this
   can be set between 4 pages (256k) and 10 pages (640k).
 
-Expanded (EMS) Memory Support
-CONFIG_EMS
-  Includes support for EMS hardware. Currently not implemented.
-
 Extended (XMS) Memory Support
 CONFIG_XMS
   Includes support for XMS memory. This is memory that is mapped above

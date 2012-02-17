@@ -122,9 +122,6 @@ mainmenu_option next_comment
 	    comment 'Memory Configuration'
 
 	    int 'Base memory size (64k pages)'  	CONFIG_MEM_PAGES 8 4 10
-	    if [ "$CONFIG_NOT_YET" = "y" ]; then
-		bool 'Expanded (EMS) memory support'	CONFIG_EMS	  n
-	    fi
 	    bool 'Extended (XMS) memory support'	CONFIG_XMS	  n
 	    if [ "$CONFIG_XMS" = "y" ]; then
 		bool '  Use interrupt 15 for XMS size'	CONFIG_XMS_INT15  n
