@@ -232,7 +232,7 @@ static char *parse_choices(struct kconfig *choice_kcfg, char *pnt)
 /*
  * This function grabs one text token from the input buffer and returns a
  * pointer to a copy of just the identifier. This can be either a variable
- * name (i.e. CONFIG_NOT_YET) or the default value for the option.
+ * name (i.e. CONFIG_FOO_BAR) or the default value for the option.
  */
 static char *get_string(char *pnt, char **labl)
 {

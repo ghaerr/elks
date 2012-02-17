@@ -10,10 +10,7 @@ mainmenu_option next_comment
 
     bool 'Include development code/drivers'	CONFIG_EXPERIMENTAL	n
     bool 'Include obsolete drivers'		CONFIG_OBSOLETE		n
-    bool 'Include unimplemented drivers'	CONFIG_NOT_YET		n
-    if [ "$CONFIG_NOT_YET" = "y" ]; then
-	bool '  Include support for modules'	CONFIG_MODULES		n
-    fi
+    bool 'Modular kernel (NOT IMPLEMENTED)'	CONFIG_MODULES		n
 endmenu
 
 mainmenu_option next_comment
@@ -121,7 +118,7 @@ mainmenu_option next_comment
 	mainmenu_option next_comment
 	    comment 'Memory Configuration'
 
-	    int 'Base memory size (64k pages)'  	CONFIG_MEM_PAGES 8 4 10
+	    int 'Base memory size (64K pages)'  	CONFIG_MEM_PAGES  8 4 10
 	    bool 'Extended (XMS) memory support'	CONFIG_XMS	  n
 	    if [ "$CONFIG_XMS" = "y" ]; then
 		bool '  Use interrupt 15 for XMS size'	CONFIG_XMS_INT15  n

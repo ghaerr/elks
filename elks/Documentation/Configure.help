@@ -39,17 +39,7 @@ CONFIG_OBSOLETE
 
   Just say N and live in peace.
 
-Prompt for unimplemented options
-CONFIG_NOT_YET
-  In several cases, options are included in the ELKS configuration tree
-  that have no corresponding code in the source tree, usually as a result
-  of planned development that has yet to take place. Whilst playing with
-  these options will not damage the compiled kernel in any way, neither
-  will it do anything constructive at this time.
-
-  Just say N and live in peace.
-
-Allow modules to be used.
+Modular kernel
 CONFIG_MODULES
   This facility is not currently present in the ELKS kernel, so can be
   ignored at this time.
