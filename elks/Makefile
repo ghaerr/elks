@@ -135,7 +135,7 @@ arch/i86/drivers/char/KeyMaps/Config.in:
 include/linuxmt/compiler-generated.h:
 	printf > include/linuxmt/compiler-generated.h		\
 		'#define %s %s\n'				\
-		UTS_VERSION "\"#$(DIST) $(shell date)\""
+		UTS_VERSION "\"#$(DIST) $(shell date +%Y-%m-%d)\""
 
 #########################################################################
 # lint rule

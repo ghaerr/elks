@@ -15,6 +15,7 @@
 #include <linuxmt/major.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/ntty.h>
+#include <linuxmt/debug.h>
 
 #ifdef CONFIG_CONSOLE_BIOS 
 
