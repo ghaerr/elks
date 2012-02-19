@@ -1,9 +1,3 @@
-VERSION 	= 0
-PATCHLEVEL 	= 1
-SUBLEVEL 	= 3
-EXTRAVERSION	= -pre1
-NAME 		= We are too lame to add a name
-
 #########################################################
 #							#
 #    It is not normally necessary to edit this file.    #
