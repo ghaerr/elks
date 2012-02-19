@@ -48,7 +48,7 @@ clean:
 	rm -f $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
 		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) boot images.zip core
 	rm -rf $(ROOTDIR)
-	@for i in $(DIRS); do make -C $$i clean ; done
+	@for i in $(DIRS) $(DONTUSE) $(DONTWORK); do make -C $$i clean ; done
 
 ###############################################################################
 #

@@ -66,7 +66,7 @@ CLEANFILES= $(OBJS) \
 all:	ash
 
 ash:	$(OBJS)
-	$(CC) $(CFLAGS) -o ash $(OBJS) $(LIBS)
+	$(CC) $(CFLAGS) -s -o ash $(OBJS) $(LIBS)
 
 rfs: install
 
