@@ -61,7 +61,7 @@ DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 .PHONY: 		boot/system toolkit
 
 boot/bootsect:		boot/bootsect.o
-	$(LD) -0 $(ARCH_LD) -s -o boot/bootsect -M boot/bootsect.o > Boot.map
+	$(LD) -0 -M $(ARCH_LD) -s -o boot/bootsect boot/bootsect.o > Boot.map
 
 boot/bootsect.o:	boot/bootsect.s
 
@@ -70,12 +70,12 @@ boot/crt0.o:		boot/crt0.s
 boot/crt1.o:		boot/crt1.c
 
 boot/netbootsect:	boot/netbootsect.o
-	$(LD) $(LDFLAGS) $(ARCH_LD) -s -o boot/netbootsect -M boot/netbootsect.o > Netboot.map
+	$(LD) $(LDFLAGS) -M $(ARCH_LD) -s -o boot/netbootsect boot/netbootsect.o > Netboot.map
 
 boot/netbootsect.o:	boot/netbootsect.s
 
 boot/setup:		boot/setup.o
-	$(LD) -0 $(ARCH_LD) -s -o boot/setup -M boot/setup.o > Setup.map
+	$(LD) -0 -M $(ARCH_LD) -s -o boot/setup boot/setup.o > Setup.map
 
 
 boot/setup.o:		boot/setup.s
@@ -89,10 +89,10 @@ toolkit:
 ifeq ($(CONFIG_ARCH_SIBO), y)
 
 boot/system: $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
-	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) $(ARCH_LD) \
+	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -t -M $(ARCH_LD) \
 		$(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
-		-t -M -o $(ARCH_DIR)/boot/system > System.tmp ; \
+		-o $(ARCH_DIR)/boot/system > System.tmp ; \
 		sort -k4 System.tmp > System.map ; rm -f System.tmp ) 
 
 #SIBO image build
@@ -104,11 +104,10 @@ Image: boot/system toolkit
 else
 
 boot/system:	$(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
-	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) $(ARCH_LD) \
-		-t -M -o $(ARCH_DIR)/boot/system \
+	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -t -M $(ARCH_LD) \
 		$(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
-		> System.tmp ; \
+		-o $(ARCH_DIR)/boot/system > System.tmp ; \
 		sort -k4 System.tmp > System.map ; rm -f System.tmp ) 
 
 #PC image build

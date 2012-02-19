@@ -168,7 +168,7 @@ unsigned short int bioshd_gethdinfo(void)
 	if ((BD_AX != 0x100) && (!CARRY_SET)) {
 	    drivep->cylinders = ((BD_CX >> 8) & 255);
 	    drivep->cylinders += (((BD_CX >> 6) & 3) * 256);
-	    drivep->heads = ((BD_DX >> 8) & 63) + 1;
+	    drivep->heads = (BD_DX >> 8) + 1;
 	    drivep->sectors = (BD_CX & 63);
 	    drivep->fdtype = -1;
 	}
@@ -461,8 +461,9 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	BD_DX = hd_drive_map[target];	/* Head 0, drive number */
 	call_bios();
 	if (!CARRY_SET) {
-	    drivep->sectors = (BD_CX & 0xff) + 1;
-	    drivep->cylinders = (BD_CX >> 8) + 1;
+	    drivep->sectors = (BD_CX & 0x3f);
+	    drivep->cylinders = ((BD_CX >> 8) | ((BD_CX & 0xC0) << 2)) + 1;
+	    drivep->heads = (BD_DX >> 8)  + 1;
 	} else
 	    printk("bioshd_open: no diskinfo %d\n", hd_drive_map[target]);
 
