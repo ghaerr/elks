@@ -28,7 +28,7 @@ CFLAGS	= -ansi -I$(INCDIR) $(OPTIONS)
 all:	screen
 
 screen:	ansi.o screen.o
-	$(CC) $(CFLAGS) -o screen screen.o ansi.o
+	$(CC) $(CFLAGS) -s -o screen screen.o ansi.o
 
 screen.o: screen.c screen.h
 	$(CC) $(CFLAGS) -c screen.c

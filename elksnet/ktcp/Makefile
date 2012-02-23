@@ -5,7 +5,7 @@ SHELL		= /bin/sh
 CC		= bcc
 
 #BASE_CFLAGS	= -c -g
-BASE_CFLAGS	= -ansi -c -O 
+BASE_CFLAGS	= -ansi -c -O -0
 
 LOCALFLAGS	= -D__KERNEL__
 
@@ -24,7 +24,7 @@ all:	ktcp
 	$(CC) $(CFLAGS) -o $@ $<
 
 ktcp:	$(OBJ)
-	$(CC) $(OPT) -o ktcp $(OBJ) $(BASELIBS)
+	$(CC) $(OPT) -s -o ktcp $(OBJ) $(BASELIBS)
 
 lint:
 	@for FILE in *.c ; do \
