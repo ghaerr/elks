@@ -260,7 +260,7 @@ void receive_chars(register struct serial_info *sp)
     wake_up(&q->wq);
 }
 
-int rs_irq(int irq, struct pt_regs *regs, void *dev_id)
+void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
     register struct serial_info *sp;
     register char *statusp;

@@ -30,6 +30,11 @@ struct _registers {
 
 typedef struct _registers		__registers,	*__pregisters;
 
+struct pt_regs {
+    __u16	bp, di, si, dx, cx, bx,
+		es, ds, ax, ip, cs, flags;
+};
+
 /* Changed to unsigned short int as that is what it is here.
  */
 

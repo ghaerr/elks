@@ -8,8 +8,9 @@
 unsigned long jiffies=0;
 
 extern void do_timer(struct pt_regs *);
+extern void keyboard_irq(int, struct pt_regs *, void *);
 
-void timer_tick(struct pt_regs * regs)
+void timer_tick(int irq, struct pt_regs *regs, void *data)
 {
 #ifndef CONFIG_ARCH_SIBO
 
@@ -75,7 +76,7 @@ void timer_tick(struct pt_regs * regs)
 
 #endif
 
-    keyboard_irq();
+    keyboard_irq(1, regs, NULL);
 
 #endif
 }

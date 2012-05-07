@@ -100,12 +100,9 @@ void disable_irq(unsigned int irq)
 
 void enable_irq(unsigned int irq)
 {
-    flag_t flags;
     unsigned char mask;
 
     mask = ~(1 << (irq & 7));
-    save_flags(flags);
-    clr_irq();
     if (irq < 8) {
 	cache_21 &= mask;
 	outb(cache_21,((void *) 0x21));
@@ -113,7 +110,6 @@ void enable_irq(unsigned int irq)
 	cache_A1 &= mask;
 	outb(cache_A1,((void *) 0xA1));
     }
-    restore_flags(flags);
 }
 
 
@@ -125,6 +121,7 @@ static int remap_irq(int irq)
 	return -EINVAL;			/* AT interrupt line on an XT */
     if (irq == 2 && arch_cpu>1)
 	irq = 9;			/* Map IRQ 9/2 over */
+    return irq;
 }
 
 /*  These 8253/8254 macros generate proper timer constants based on the
@@ -220,7 +217,7 @@ _restore_flags:
 #endasm
 #endif
 
-int request_irq(int irq, void (*handler)(), void *dev_id)
+int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev_id)
 {
     register struct irqaction *action;
     flag_t flags;
@@ -285,6 +282,7 @@ void free_irq(unsigned int irq)
 
 void init_IRQ(void)
 {
+    flag_t flags;
 
 #ifdef CONFIG_HW_259_USE_ORIGINAL_MASK       /* for example Debugger :-) */
     cache_21 = inb_p(0x21);
@@ -312,7 +310,12 @@ void init_IRQ(void)
     if (request_irq(1, keyboard_irq, NULL))
 	panic("Unable to get keyboard");
 
-#else
+#endif
+
+    save_flags(flags);
+    clr_irq();
+
+#ifndef CONFIG_CONSOLE_DIRECT
     enable_irq(1);		/* BIOS Keyboard */
 #endif
 
@@ -326,6 +329,8 @@ void init_IRQ(void)
     enable_irq(5);		/* XT ST506 */
     enable_irq(2);		/* Cascade */
     enable_irq(6);		/* Floppy */
+
+    restore_flags(flags);
 
 #endif
 }

@@ -87,7 +87,7 @@ struct timer_list {
 extern void init_timer(struct timer_list *);
 extern void add_timer(struct timer_list *);
 extern int del_timer(struct timer_list *);
-extern void timer_tick(struct pt_regs *);
+extern void timer_tick(int, struct pt_regs *, void *);
 extern void enable_timer_tick(void);
 
 #endif

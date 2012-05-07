@@ -32,7 +32,7 @@ extern void disable_irq(unsigned int);
 extern void enable_irq(unsigned int);
 extern void do_IRQ(int,void *);
 extern void restore_flags(flag_t);
-extern int request_irq(int,void (*)(),void *);
+extern int request_irq(int,void (*)(int,struct pt_regs *,void *),void *);
 extern void free_irq(unsigned int);
 extern void init_IRQ(void);
 extern void do_bottom_half(void);
