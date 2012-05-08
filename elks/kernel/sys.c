@@ -95,7 +95,7 @@ int sys_knlvsn(char *vsn)
 {
     register char *p = system_utsname.release;
 
-    verified_memcpy_tofs(vsn, p, strlen(p) + 1);
+    return verified_memcpy_tofs(vsn, p, strlen(p) + 1);
 }
 
 #endif

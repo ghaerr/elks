@@ -89,7 +89,7 @@ extern block_t minix_new_block(register struct super_block *);
 extern struct inode *minix_new_inode(struct inode *);
 extern void minix_put_inode(register struct inode *);
 extern void minix_put_super(register struct super_block *);
-extern void minix_read_inode(register struct inode *);
+/*extern void minix_read_inode(register struct inode *);*/
 extern struct super_block *minix_read_super(register struct super_block *,
 					    char *,int);
 extern int minix_remount(register struct super_block *,int *,char *);

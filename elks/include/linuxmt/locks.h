@@ -7,6 +7,6 @@ extern void unlock_buffer(struct buffer_head *);
 
 extern void wait_on_super(register struct super_block *);
 extern void lock_super(register struct super_block *);
-extern void unlock_super(register struct super_blocak *);
+extern void unlock_super(register struct super_block *);
 
 #endif

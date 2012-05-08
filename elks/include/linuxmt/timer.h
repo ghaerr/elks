@@ -84,6 +84,7 @@ struct timer_list {
     void (*tl_function) ();
 };
 
+struct pt_regs;
 extern void init_timer(struct timer_list *);
 extern void add_timer(struct timer_list *);
 extern int del_timer(struct timer_list *);

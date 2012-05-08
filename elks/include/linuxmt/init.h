@@ -5,6 +5,9 @@
 
 #include <linuxmt/types.h>
 
+struct task_struct;
+struct gendisk;
+
 extern int directhd_init(void);
 extern int rs_init(void);
 

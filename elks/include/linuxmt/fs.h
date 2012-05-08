@@ -401,7 +401,7 @@ extern struct inode_operations blkdev_inode_operations;
 
 extern int register_chrdev(unsigned int,char *,struct file_operations *);
 extern int unregister_chrdev(void);
-extern int chrdev_open(struct inode *,struct file *);
+/* extern int chrdev_open(struct inode *,struct file *); */
 
 extern struct file_operations def_chr_fops;
 extern struct inode_operations chrdev_inode_operations;

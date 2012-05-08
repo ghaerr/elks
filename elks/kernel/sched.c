@@ -172,7 +172,7 @@ scheduling_in_interrupt:
            lastirq, currentp->pid, prev->pid);
 }
 
-struct timer_list tl_list = { NULL, NULL, NULL, NULL, NULL };
+struct timer_list tl_list = { NULL, NULL, 0L, 0, NULL };
 
 static int detach_timer(struct timer_list *timer)
 {
