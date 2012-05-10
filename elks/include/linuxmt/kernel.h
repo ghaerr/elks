@@ -20,12 +20,8 @@ extern int kill_pg(pid_t,sig_t,int);
 
 extern int kill_sl(void);
 
-#ifdef S_SPLINT_S
-
-/*@printflike@*/ extern void panic();
-/*@printflike@*/ extern int printk();
-
-#endif
+extern void panic(char *, ...);
+extern void printk(char *, ...);
 
 extern int wait_for_keypress(void);
 

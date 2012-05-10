@@ -25,7 +25,7 @@ DEPEND  	=
 
 DISTFILES	= 
 
-NOINDENT	= memdumpk.c stubs.c
+NOINDENT	= memdumpk.c
 
 #########################################################################
 # Include standard commands.
@@ -35,7 +35,7 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to compile.
 
-OBJS  = sched.o printk.o sleepwake.o dma.o version.o sys.o stubs.o fork.o \
+OBJS  = sched.o printk.o sleepwake.o dma.o version.o sys.o fork.o \
 	exit.o time.o signal.o
 
 #########################################################################

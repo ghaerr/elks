@@ -268,8 +268,8 @@ void free_irq(unsigned int irq)
 
     action->handler = NULL;
     action->dev_id = NULL;
-    action->flags = 0;
-    action->name = NULL;
+/*    action->flags = 0;
+    action->name = NULL;*/
 
     restore_flags(flags);
 }

@@ -372,6 +372,36 @@ _fake_save_regs:
 #endasm
 #endif
 
+int run_init_process(char *cmd, char *ar)
+{
+    int num;
+    unsigned short int *pip = (unsigned short int *)ar;
+
+    *pip++ = 0;
+    *pip++ = (unsigned short int) &ar[6];
+    *pip++ = 0;
+    if(num = sys_execve(cmd, ar, 18))
+	return num;
+#ifndef S_SPLINT_S
+    /* Brackets round the following code are required as a work around
+     * for a bug in the compiler which causes it to jump past the asm
+     * code if they are not there.
+     */
+    {
+#asm
+	cli
+	mov bx, _current
+	mov sp, 2[bx]		! user stack offset
+	mov ax, 4[bx]		! user stack segment
+	mov ss, ax
+	mov ds, ax
+	mov es, ax
+	iret			! reloads flags = >reenables interrupts
+#endasm
+    }
+#endif
+}
+
 /*
  * We only need to do this as long as we support old format binaries
  * that grow stack and heap towards each other

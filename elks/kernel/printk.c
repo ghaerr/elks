@@ -25,18 +25,26 @@
  *	MTK:	Sep 97 - Misc hacks to shrink generated code
  */
 
+#include <linuxmt/autoconf.h>
 #include <arch/segment.h>
 #include <linuxmt/mm.h>
+#include <stdarg.h>
 
 /*
  *	Just to make it work for now
  */
-
 extern void con_charout(char);
 
-static void con_write(register char *buf, int len)
+static void kputchar(register char ch)
 {
-    register char *p;
+    if (ch == '\n')
+	con_charout('\r');
+    con_charout(ch);
+}
+
+static void kputs(register char *buf)
+{
+    char ch, *p;
 
 #ifdef CONFIG_DCON_ANSI_PRINTK
 
@@ -56,13 +64,8 @@ static void con_write(register char *buf, int len)
 
 #endif
 
-    p = (char *) len;
-
-    while (p--) {
-	if (*buf == '\n')
-	    con_charout('\r');
-	con_charout(*buf++);
-    }
+    while ((ch = *buf++))
+	kputchar(ch);
 }
 
 /************************************************************************
@@ -71,22 +74,18 @@ static void con_write(register char *buf, int len)
  */
 
 char *hex_string = "0123456789ABCDEF";		/* Also used by devices. */
-char *hex_lower  = "0123456789abcdef";
+static char *hex_lower = "0123456789abcdef";
 
-static void numout(char *ptr, int len, int width, int base, int useSign,
+static void numout(unsigned long v, int width, int base, int useSign,
 		   int Upper, int Zero)
 {
-    unsigned long int v;
-    register char *bp;
+    char *bp, *bp2;
     char buf[12];
 
     if (width > sizeof(buf))		/* Error-check width specified */
 	width = sizeof(buf);
 
-	v = (len == 2) ? *((unsigned short *) ptr) : *((unsigned long *) ptr);
     if (useSign) {
-	if (len == 2)
-	    v = ((long)(*((short *) ptr)));
 	if ((long)v < 0)
 	    v = (-(long)v);
 	else
@@ -94,49 +93,40 @@ static void numout(char *ptr, int len, int width, int base, int useSign,
     }
 
     bp = buf + sizeof(buf);
-
-    {
-	register char *bp2;
+    *--bp = '\x00';
 
 	bp2 = Upper ? hex_string : hex_lower;
     do {
 	    *--bp = *(bp2 + (v % base));	/* Store digit */
 	} while ((v /= base));
-    }
 
     if (useSign && !Zero)
 	*--bp = '-';
 
     width -= buf - bp + sizeof(buf);
     while (--width >= 0)			/* Process width */
-	if (Zero)
-	    *--bp = '0';
-	else
-	    *--bp = ' ';
+	*--bp = Zero ? '0' : ' ';
 
-    if (useSign && Zero) {
-	if (*bp != '0')
-	    bp--;
+    if (useSign && Zero && (*bp == '0'))
 	*bp = '-';
-    }
 
-    con_write(bp, buf + sizeof(buf) - bp);
+    kputs(bp);
 }
 
-void printk(register char *fmt,int a1)
+static void vprintk(char *fmt, va_list p)
 {
-    register char *p = (char *) &a1;
-    int len, width, zero;
+    unsigned long v;
+    int width, zero;
     char c, tmp, *cp;
 
     while ((c = *fmt++)) {
 	if (c != '%')
-	    con_write(fmt - 1, 1);
+	    kputchar(c);
 	else {
 	    c = *fmt++;
 
 	    if (c == '%') {
-		con_write("%", 1);
+		con_charout(c);
 		continue;
 	    }
 
@@ -149,90 +139,99 @@ void printk(register char *fmt,int a1)
 		c = *fmt++;
 	    }
 
-	    len = 2;
-	    if (c == 'h')
+	    if ((c == 'h') || (c == 'l'))
 		c = *fmt++;
-	    else if (c == 'l') {
-		len = 4;
-		c = *fmt++;
-	    }
-
+	    tmp = 16;
 	    switch (c) {
-	    case 'o':
-		tmp = 8;
-		goto NUMOUT;
 	    case 'i':
 		c = 'd';
 	    case 'd':
-	    case 'u':
 		tmp = 10;
+		if(*(fmt-2) == 'l')
+		    v = va_arg(p, unsigned long);
+		else
+		    v = (long)(va_arg(p, short));
 		goto NUMOUT;
+	    case 'o':
+		tmp -= 2;
+	    case 'u':
+		tmp -= 6;
 	    case 'P':
 	    case 'p':
 		c += 'X' - 'P';
 	    case 'X':
 	    case 'x':
-		tmp = 16;
+		if(*(fmt-2) == 'l')
+		    v = va_arg(p, unsigned long);
+		else
+		    v = (unsigned long)(va_arg(p, unsigned short));
 	    NUMOUT:
-		numout(p, len, width, tmp, (c == 'd'), (c == 'X'), zero);
-		p += len;
+		numout(v, width, tmp, (c == 'd'), (c == 'X'), zero);
 		break;
 	    case 's':
-		cp = *((char **) p);
-		p += sizeof(char *);
-		while (*cp) {
-		    con_write(cp++, 1);
+		cp = va_arg(p, char*);
+		while ((c == *cp++)) {
+		    kputchar(c);
 		    width--;
 		}
-		while (--width >= 0)
-		    con_write(" ", 1);
-		break;
+		goto FILLSP;
 	    case 't':
-		cp = *((char **) p);
-		p += sizeof(char *);
-		while ((tmp = (char) get_fs_byte(cp))) {
-		    con_charout(tmp);
+		cp = va_arg(p, char*);
+		while ((c = (char) get_fs_byte(cp))) {
+		    kputchar(c);
 		    cp++;
 		    width--;
 		}
+	    FILLSP:
 		while (--width >= 0)
-		    con_write(" ", 1);
+		    con_charout(' ');
 		break;
 	    case 'c':
-		while (--width >= 1)
-		    con_write(" ", 1);
-		con_write(p, 1);
-		p += 2;
+		while (--width > 0)
+		    con_charout(' ');
+		kputchar(va_arg(p, int));
 		break;
 	    default:
-		con_write( "?", 1);
+		con_charout('?');
 		break;
 	    }
 	}
     }
 }
 
-void panic(char *error, int a1 /* VARARGS... */ )
+void printk(char *fmt, ...)
 {
-    register int *bp = (int *) &error - 2, i = 0, j;
+    va_list p;
 
-    printk("\npanic: ");
-    printk(error, a1);
-    printk("\napparent call stack:\n");
-    printk("Line: Addr    Parameters\n");
-    printk("~~~~: ~~~~    ~~~~~~~~~~\n");
+    va_start(p, fmt);
+    vprintk(fmt, p);
+    va_end(p);
+}
+
+void panic(char *error, ...)
+{
+    va_list p;
+    int *bp = (int *) &error - 2, i = 0, j;
+
+    kputs("\npanic: ");
+    va_start(p, error);
+    vprintk(error, p);
+    va_end(p);
+    kputs("\napparent call stack:\n");
+    kputs("Line: Addr    Parameters\n");
+    kputs("~~~~: ~~~~    ~~~~~~~~~~\n");
 
     do {
 	printk("%4u: %04P =>", i, bp[1]);
 	bp = (int *) bp[0];
 	for (j = 2; j <= 8; j++)
 	    printk(" %04X", bp[j]);
-	printk("\n");
+	kputchar('\n');
     } while (++i < 9);
 
     /* Lock up with infinite loop */
 
-    printk("\nSYSTEM LOCKED - Press CTRL-ALT-DEL to reboot: ");
+    kputs("\nSYSTEM LOCKED - Press CTRL-ALT-DEL to reboot: ");
 
     while (1)
 	/* Do nothing */;
