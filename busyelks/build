@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Generates Makefile and code from every file in the folder
+MF=Makefile
+CF=config.def
+AH=applets.h
+AC=applets.c
+test ! -d "$DESTDIR" && DESTDIR=_install
+make clean
+rm -f $MF $CF $AH $AC
+
+output_stuff () {
+    LC="$(basename $X | sed 's/\.c$//g')"
+    UC="$(echo $LC | tr '[:lower:]' '[:upper:]')"
+    echo "#define CONFIG_APPLET_$UC " >> $CF;
+    echo "#ifdef CONFIG_APPLET_$UC" >> $AH
+    echo "extern int ${LC}_main(int, char**);" >> $AH;
+    echo "#endif" >> $AH;
+    echo "#ifdef CONFIG_APPLET_$UC" >> $AC
+    echo "if(strcmp(progname, \"$LC\") == 0) ${LC}_main(argc, argv);" >> $AC
+    echo "#endif" >> $AC;
+}
+
+echo -en "\nCFILES1 = " >> $MF
+echo be1/*.c >> $MF
+echo -en "\nCFILES2 = " >> $MF
+echo be2/*.c >> $MF
+echo -en "\nCFILES3 = " >> $MF
+echo be3/*.c >> $MF
+echo -en "\nL1CFILES = " >> $MF
+echo lib1/*.c >> $MF
+echo -en "\nLIBCFILES = " >> $MF
+echo lib/*.c >> $MF
+
+echo -en "\nOBJS1 = " >> $MF
+for X in be1/*.c; do echo -n "$(echo $X | sed 's/\.c$/\.o/g') " >> $MF; done
+echo -en "\nOBJS2 = " >> $MF
+for X in be2/*.c; do echo -n "$(echo $X | sed 's/\.c$/\.o/g') " >> $MF; done
+echo -en "\nOBJS3 = " >> $MF
+for X in be3/*.c; do echo -n "$(echo $X | sed 's/\.c$/\.o/g') " >> $MF; done
+echo -en "\nL1OBJS = " >> $MF
+for X in lib1/*.c; do echo -n "$(echo $X | sed 's/\.c$/\.o/g') " >> $MF; done
+echo -en "\nLIBOBJS = " >> $MF
+for X in lib/*.c; do echo -n "$(echo $X | sed 's/\.c$/\.o/g') " >> $MF; done
+
+cat Makefile.inc >> $MF
+
+echo "#define CONFIG_USAGE" >> $CF
+
+echo "#ifdef BUSYELKS1" >> $AH
+echo "#ifdef BUSYELKS1" >> $AC
+for X in be1/*.c
+  do output_stuff
+done
+echo "#endif" >> $AH
+echo "#endif" >> $AC
+
+echo "#ifdef BUSYELKS2" >> $AH
+echo "#ifdef BUSYELKS2" >> $AC
+for X in be2/*.c
+  do output_stuff
+done
+echo "#endif" >> $AH
+echo "#endif" >> $AC
+
+echo "#ifdef BUSYELKS3" >> $AH
+echo "#ifdef BUSYELKS3" >> $AC
+for X in be3/*.c
+  do output_stuff
+done
+echo "#endif" >> $AH
+echo "#endif" >> $AC
+
+make $@
+
+test ! -e busyelks3 && exit 1
+
+rm -rf _install
+mkdir -p "$DESTDIR/bin" "$DESTDIR/sbin"
+
+cp busyelks1 busyelks2 busyelks3 "$DESTDIR/bin"
+for X in be1/*.c; do ln -s busyelks1 "$DESTDIR/bin/$(basename $X | sed 's/\.c$//g')"; done
+for X in be2/*.c; do ln -s busyelks2 "$DESTDIR/bin/$(basename $X | sed 's/\.c$//g')"; done
+for X in be3/*.c; do ln -s busyelks3 "$DESTDIR/bin/$(basename $X | sed 's/\.c$//g')"; done
+ln -s ../bin/init "$DESTDIR/sbin/init"
+ls -l "$DESTDIR/bin/busyelks"*
+echo "Directory tree installed to $DESTDIR"
+
