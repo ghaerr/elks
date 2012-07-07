@@ -10,6 +10,9 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
 
+extern int task_slots_unused;
+extern struct task_struct *next_task_slot;
+
 /* Note: sys_wait only keeps *one* task in the task_struct right now...
  * this is different than V7 symantics I think, but good enough for 0.0.51
  * Whoops - we have to do wait3 for now :) 
@@ -109,6 +112,8 @@ void do_exit(int status)
     /* Now the task should never run again... - I hope this can still
      * be used outside of an int... :) */
     current->state = TASK_UNUSED;
+    next_task_slot = current;
+    task_slots_unused++;
     wake_up(&parent->child_wait);
     schedule();
     panic("Returning from sys_exit!\n");

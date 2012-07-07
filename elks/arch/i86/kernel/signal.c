@@ -24,10 +24,9 @@ int do_signal(void)
     register struct sigaction *sa;
     unsigned signr;
 
-    while (currentp->signal) {
+    while ((currentp->signal &= ((1 << NSIG) - 1))) {
 	signr = find_first_non_zero_bit(&currentp->signal, NSIG);
-	if (signr == NSIG)
-	    panic("No signal set!\n");
+        clear_bit(signr, &currentp->signal);
 
 	debug2("Process %d has signal %d.\n", currentp->pid, signr);
 	sa = &currentp->sig.action[signr];
@@ -81,6 +80,7 @@ int do_signal(void)
 	arch_setup_sighandler_stack(current, sa->sa_handler, signr);
 	debug1("Stack at %x\n", current->t_regs.sp);
 	sa->sa_handler = SIG_DFL;
+        currentp->signal = 0;
 
 	return 1;
     }

@@ -29,8 +29,6 @@ int root_mountflags = 0;
 static void init_task(void);
 extern int run_init_process(char *, char *);
 
-extern __ptask _reglasttask, _regnexttask;
-
 jiff_t loops_per_sec = 1;
 
 /*
@@ -43,6 +41,7 @@ void start_kernel(void)
 
 /* We set the scheduler up as task #0, and this as task #1 */
 
+    sched_init();
     setup_arch(&base, &end);
     mm_init(base, end);
     init_IRQ();
@@ -63,12 +62,9 @@ void start_kernel(void)
     device_setup();
     inode_init();
     fs_init();
-    sched_init();
 
     printk("ELKS version %s\n", system_utsname.release);
 
-    task[0].t_kstackm = KSTACK_MAGIC;
-    task[0].next_run = task[0].prev_run = &task[0];
     kfork_proc(&task[1], init_task);
 
     /* 
@@ -117,17 +113,18 @@ static void init_task()
 #ifdef CONFIG_CONSOLE_SERIAL
 		num = sys_open("/dev/ttyS0", 2, 0);
 #else
-		num = sys_open("/dev/tty1", 2, 0);
+		num = sys_open("/dev/tty0", 2, 0);
 #endif
 		if (num < 0)
 		    printk("Unable to open /dev/tty (error %u)\n", -num);
 
-		if (sys_dup(0) != 1)
+		if (sys_dup(num) != 1)
 	    	printk("dup failed\n");
-		sys_dup(0);
+		sys_dup(num);
+		sys_dup(num);
 		printk("No init - running /bin/sh\n");
 
-		num = run_init_process("/bin/sh", args);
+		num = run_init_process("/bin/sash", args);
 		printk("sys_execve(\"/bin/sh\",args,18) => %d.\n",num);
 	    	    panic("No init or sh found");
 }
@@ -141,7 +138,7 @@ static void delay(jiff_t loops)
     do {
    	do {
     	} while((*((unsigned int *)(&loops)))--);
-    } while((*(((unsigned int *)(&loops))+1))--)
+    } while((*(((unsigned int *)(&loops))+1))--);
 }
 
 int calibrate_delay(void)

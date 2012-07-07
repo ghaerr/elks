@@ -5,31 +5,29 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
 
+int task_slots_unused = MAX_TASKS - 2;
+struct task_struct *next_task_slot = &task[2];
+
 /*
  *	Find a free task slot.
  */
-static pid_t find_empty_process(void)
+static struct task_struct *find_empty_process(void)
 {
-/*      register pid_t i, unused = 0; */
-    register char *pi;
-    register char *punused;
-    pid_t n;
+    register struct task_struct *t;
 
-    pi = punused = 0;
-    do {
-	if (task[(int)pi].state == TASK_UNUSED) {
-	    punused++;
-	    n = (int)pi;
+    if (task_slots_unused <= 1) {
+        printk("Only %d slots\n", task_slots_unused);
+        if (!task_slots_unused || current->uid)
+            return NULL;
 	}
-    } while (((int)(++pi)) < MAX_TASKS);
-
-    if (((int)punused) <= 1) {
-	printk("Only %d slots\n", (int)punused);
-	if (!punused || current->uid)
-	    return -EAGAIN;
+    t = next_task_slot;
+    while (t->state != TASK_UNUSED) {
+        if (++t >= &task[MAX_TASKS])
+            t = &task[1];
     }
-
-    return n;
+    next_task_slot = t;
+    task_slots_unused--;
+    return t;
 }
 
 
@@ -37,21 +35,20 @@ pid_t get_pid(void)
 {
     register struct task_struct *p;
     static pid_t last_pid = 0;
-/*      register int i; */
-    register char *pi;
 
 repeat:
-    if ( (++last_pid & 0x7fff) == 0 )
+    if (++last_pid < 0)
         last_pid = 1;
                 
-    pi = 0;
+    p = &task[0];
     do {
-	p = &task[(int)pi];
+        if (p->state == TASK_UNUSED)
+            continue;
 	if (p->pid == last_pid || p->pgrp == last_pid ||
 	    p->session == last_pid) {
 	    goto repeat;
 	}
-    } while (((int)(++pi)) < MAX_TASKS);
+    } while (++p < &task[MAX_TASKS]);
     return last_pid;
 }
 
@@ -62,14 +59,12 @@ repeat:
 pid_t do_fork(int virtual)
 {
     register struct task_struct *t;
-    pid_t i = find_empty_process(), j;
+    pid_t j;
     struct file *filp;
     register __ptask currentp = current;
 
-    if (i < 0)
-	return i;
-
-    t = &task[i];
+    if((t = find_empty_process()) == NULL)
+        return -EAGAIN;
 
     /* Copy everything */
 
@@ -90,6 +85,8 @@ pid_t do_fork(int virtual)
 	if (t->mm.dseg == NULL) {
 	    mm_free(currentp->mm.cseg);
 	    t->state = TASK_UNUSED;
+            task_slots_unused++;
+            next_task_slot = t;
 	    return -ENOMEM;
 	}
 

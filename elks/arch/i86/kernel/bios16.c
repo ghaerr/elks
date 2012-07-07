@@ -58,8 +58,6 @@ _call_bios:
 
 ! We have to save DS carefully.	
 
-	mov ax, ds		
-
 #ifdef CONFIG_ROMCODE
         mov bx,#CONFIG_ROM_IRQ_DATA
         mov es,bx       ;es is already stored
@@ -68,63 +66,29 @@ _call_bios:
    ! We can find our DS from CS now.
 	seg cs		
 #endif
-	mov our_ds, ax
+	mov our_ds, ds
 
 	mov bx, _bios_data_table
 
 !	Load the register block from the table	
 
+	mov ax,2[bx]
 	mov cx,6[bx]
 	mov dx,8[bx]
 	mov si,10[bx]
 	mov di,12[bx]
 	mov bp,14[bx]
-
-!	ES in 16
-
-	mov ax,16[bx]
-	mov es,ax
-
-!	Flags in 20
-
-	mov ax,20[bx]	
-
-!	Flags to end up with	
-
-	push ax
-
-!	AX final 	
-
-	mov ax, 2[bx]	
-
-!	Stack is now Flags, AX
-
-	push ax		
-
-!	DS value final
-
-	mov ax, 18[bx]  
-
-!	Load BX	
-
-	mov bx, 4[bx]	
-
-!	Stack now holds stuff to restore followed by the call values 
-!	for flags,AX
+	mov es,16[bx]
+	push 18[bx]        ! DS in stack
+	push 20[bx]
+	popf
+	mov bx, 4[bx]      ! Load BX
+!
+!	Stack now holds the call value for DS
+!
+	pop ds             ! DS desired
 
 ! ***** DS is now wrong we cannot load from the array again *****
-
-!	DS desired
-
-	mov ds,ax
-
-!	AX desired	
-
-	pop ax
-
-!	Flags desired
-
-	popf
 
 !	Do a disk interrupt.
 
@@ -136,56 +100,35 @@ _call_bios:
 
  	pushf
  	push bx
- 	push ax
- 	mov  ax,ds
+	push ds
 
-!	Stack is now returned FL, BX, AX, DS
+!	Stack is now returned FL, BX, DS
 
- 	push ax 
+!	Recover our DS segment
 
 #ifdef CONFIG_ROMCODE
-        mov ax,#CONFIG_ROM_IRQ_DATA
-        mov ds,ax       ;we can use ds for one fetch
+        mov bx,#CONFIG_ROM_IRQ_DATA
+        mov ds,bx       ;we can use ds for one fetch
 #else
    ! We can find our DS from CS now.
 	seg cs		
 #endif
- 	mov  ax, our_ds
-
-!	Recover our DS segment 	
-
- 	mov  ds, ax
- 	mov  bx, _bios_data_table
+ 	mov  ds, our_ds
 
 ! ***** We can now use the bios data table again *****
 
-  	pop ax
+ 	mov  bx, _bios_data_table
 
-!	Save the old DS 
-
-  	mov 18[bx], ax
- 	pop ax
-
-!	Save the old AX 	
-
- 	mov 2[bx], ax
-	pop ax
-
-!	Save the old BX	
-
-	mov 4[bx], ax
+ 	pop 18[bx]         ! Save the old DS
+ 	mov 2[bx],ax       ! Save the old AX
+	pop 4[bx]          ! Save the old BX
 	mov 6[bx], cx
 	mov 8[bx], dx
 	mov 10[bx], si
 	mov 12[bx], di
 	mov 14[bx], bp
-	mov ax,es
-	mov 16[bx], ax
-	pop ax
-
-!	Pop the returned flags off
-
-	mov 20[bx], ax
+	mov 16[bx], es
+	pop 20[bx]         ! Pop the returned flags off
 
 !	Restore things we must save
 

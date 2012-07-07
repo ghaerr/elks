@@ -34,8 +34,6 @@ void setup_mm(void)
     __u16 basemem = setupw(0x2a);
     __u16 xms = setupw(2);		/* Fetched by boot code */
 
-    arch_cpu = setupb(0x20);
-
     for (pi = 0; ((int)pi) < 16; pi++) {
 	proc_name[(int)pi] = setupb(0x30 + (int)pi);
 	cpuid[(int)pi] = setupb(0x50 + (int)pi);

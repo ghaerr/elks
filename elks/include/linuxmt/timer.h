@@ -90,5 +90,6 @@ extern void add_timer(struct timer_list *);
 extern int del_timer(struct timer_list *);
 extern void timer_tick(int, struct pt_regs *, void *);
 extern void enable_timer_tick(void);
+extern void stop_timer(void);
 
 #endif

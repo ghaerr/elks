@@ -96,9 +96,8 @@ _syscall:
 	ja   _nsyscall
 	! look up address and jump to function
 	mov  bx,ax
-	shl  bx,#1		! multiply by 2
-	add  bx,#sys_call_table
-	j    [bx]
+        add  bx,ax              ! multiply by 2
+        j    sys_call_table[bx]
 
 !	All unimplemented calls
 	

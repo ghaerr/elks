@@ -13,7 +13,7 @@ USEBCC  	= Y
 
 CLEANDEP	= 
 
-CLEANME 	= 
+CLEANME 	= $(BASEDIR)/include/arch/asm-offsets.h
 
 DEPEND  	= 
 
@@ -55,6 +55,8 @@ ADRIVERS = drivers/char/chr_drv.a drivers/block/blk_drv.a
 DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
 	$(ARCH_DIR)/drivers/block/blk_drv.a
 
+XINCLUDE = $(BASEDIR)/include/arch/asm-offsets.h
+
 #########################################################################
 # Things to make.
 
@@ -83,12 +85,27 @@ boot/setup.o:		boot/setup.s
 toolkit:
 	${MAKE} -C tools all
 
+$(BASEDIR)/include/arch/asm-offsets.h: kernel/asm-offsets.c
+	$(CC) $(CFLAGS) -S -o asm-offsets.s kernel/asm-offsets.c
+	echo '#ifndef ASM_OFFSETS_H' > $(BASEDIR)/include/arch/asm-offsets.h
+	echo '#define ASM_OFFSETS_H\n' >> $(BASEDIR)/include/arch/asm-offsets.h
+	sed -e '/^[^m].*/ d' \
+	-e 's/\],/  /' \
+	-e 's/ #/ /' \
+	-e 's/ \*/ /' \
+	-e 's/ \$$/0x/' \
+	-e 's/^.*\[_/#define /' \
+	-e 's/ax/0/' \
+	< asm-offsets.s | grep -e define >> $(BASEDIR)/include/arch/asm-offsets.h
+	echo '\n#endif' >> $(BASEDIR)/include/arch/asm-offsets.h
+	rm asm-offsets.s
+
 #########################################################################
 # Image selection.
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
 
-boot/system: $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
+boot/system: $(XINCLUDE) $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
 	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -t -M $(ARCH_LD) \
 		$(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
@@ -103,7 +120,7 @@ Image: boot/system toolkit
 
 else
 
-boot/system:	$(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
+boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -t -M $(ARCH_LD) \
 		$(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \

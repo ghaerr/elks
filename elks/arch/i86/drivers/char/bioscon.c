@@ -17,6 +17,8 @@
 #include <linuxmt/ntty.h>
 #include <linuxmt/debug.h>
 
+#include <arch/segment.h>
+
 #ifdef CONFIG_CONSOLE_BIOS 
 
 int read_kbd(void);

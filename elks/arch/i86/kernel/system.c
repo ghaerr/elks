@@ -29,7 +29,6 @@ void hard_reset_now(void)
 void setup_arch(seg_t *start, seg_t *end)
 {
     register __ptask taskp;
-    int ct;
 
 #ifndef S_SPLINT_S
 /*
@@ -37,17 +36,14 @@ void setup_arch(seg_t *start, seg_t *end)
  */
 #asm
 	mov bx, #_arch_segs
-	mov ax, cs
-	mov [bx], ax
+        mov [bx], cs
 	mov [bx+2], di
-	mov ax, ss
-	mov [bx+8], ax
+        mov [bx+8], ss
 	mov [bx+6], si
 
 !	This is out of order to save a segment load and a few bytes :)
 
-	mov ax, ds
-	mov [bx+4], ax
+        mov [bx+4], ds
 	mov [bx+10], dx
 
 !	mov ds, ax
@@ -58,19 +54,14 @@ void setup_arch(seg_t *start, seg_t *end)
     arch_segs.lowss = arch_segs.endss;
 
 /*
- *	Now create task 0 to be ourself. Set the kernel SP,
+ *	arch dependent sched init. Set the kernel SP,
  *	as we will need this in interrupts.
  */	
-
     taskp = &task[0];
-     taskp->state = TASK_RUNNING;
-
-    taskp->t_regs.ksp = ((__u16) taskp->t_kstack) + KSTACK_BYTES;
-
     taskp->t_regs.cs = get_cs();
-    taskp->t_regs.ds = get_ds();	/* Run in kernel space */
-	
-    current = taskp;
+    taskp->t_regs.ds = taskp->t_regs.ss = get_ds(); /* Run in kernel space */
+    taskp->t_regs.ksp = ((__u16) taskp->t_kstack) + KSTACK_BYTES;
+    taskp->t_kstackm = KSTACK_MAGIC;
 	
 #ifdef CONFIG_COMPAQ_FAST
 
@@ -83,29 +74,12 @@ void setup_arch(seg_t *start, seg_t *end)
 #endif
 
 /*
- *	Mark tasks 1-31 as not in use.
- */
-
-    for (ct=1; ct < MAX_TASKS; ct++) {
-
-#if 0
-	taskp = &task[ct];
-#endif
-
-	taskp++;
-	taskp->state=TASK_UNUSED;
-	taskp->t_kstackm = KSTACK_MAGIC;
-    }
-
-/*
  *	Fill in the MM numbers - really ought to be in mm not kernel ?
  */
 
 #ifndef CONFIG_ARCH_SIBO	
 
-    /* FIXME: setupw expects TWO parameters */
-
-    /*@i1@*/	*end = setupw(0x2a) << 6 - RAM_REDUCE; 
+    *end = setupw(0x2a) << 6 - RAM_REDUCE;
 
     /* XXX plac: free root ram disk */
 
@@ -121,6 +95,8 @@ void setup_arch(seg_t *start, seg_t *end)
 #endif
 
     ROOT_DEV = setupw(0x1fc);
+
+    arch_cpu = setupb(0x20);
 
 }
 

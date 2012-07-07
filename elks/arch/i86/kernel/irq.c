@@ -12,12 +12,6 @@
  *
  * 9/1999 For ROM debuggers you can configure that not all interrupts
  *        disable.
- * 9/1999 The 100 Hz system timer 0 can configure for variable input
- *        frequency. Christian Mardm"oller (chm@kdt.de)
- *
- * 4/2001 Use macros to directly generate timer constants based on the 
- *        value of HZ macro. This works the same for both the 8253 and 
- *        8254 timers. - Thomas McWilliams  <tmwo@users.sourceforge.net> 
  */
 
 #include <linuxmt/config.h>
@@ -27,7 +21,6 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/timer.h>
-#include <linuxmt/timex.h>
 #include <linuxmt/types.h>
 
 #include <arch/io.h>
@@ -63,11 +56,6 @@ void enable_irq(unsigned int irq)
 static int remap_irq(unsigned int irq)
 {
     return irq;
-}
-
-static void arch_init_IRQ(void)
-{
-    /* Do nothing */
 }
 
 #else
@@ -124,54 +112,15 @@ static int remap_irq(int irq)
     return irq;
 }
 
-/*  These 8253/8254 macros generate proper timer constants based on the
- *  timer tick macro HZ which is defined in timex.h (usually 100 Hz).
- *
- *  The PC timer chip can be programmed to divide its reference frequency
- *  by a 16 bit unsigned number. The reference frequency of 1193181.8 Hz
- *  happens to be 1/3 of the NTSC color burst frequency. In fact, the
- *  hypothetical exact reference frequency for the timer is 39375000/33 Hz.
- *  The macros use scaled fixed point arithmetic for greater accuracy. 
- */
-
-#define TIMER_CMDS_PORT ((void *) 0x43) 	/* command port */
-#define TIMER_DATA_PORT ((void *) 0x40) 	/* data port    */
-
-#define TIMER_MODE0 0x30   /* timer 0, binary count, mode 0, lsb/msb */
-#define TIMER_MODE2 0x34   /* timer 0, binary count, mode 2, lsb/msb */ 
-
-#define TIMER_LO_BYTE (__u8)(((5+(11931818L/(HZ)))/10)%256)
-#define TIMER_HI_BYTE (__u8)(((5+(11931818L/(HZ)))/10)/256)
-
-static void arch_init_IRQ(void)
-{
-	/* Stop the timer */
-	outb (TIMER_MODE0, TIMER_CMDS_PORT);
-	outb (0, TIMER_DATA_PORT);
-	outb (0, TIMER_DATA_PORT);
-}
-
-void enable_timer_tick(void)
-{
-	/* set the clock frequency */
-	outb (TIMER_MODE2, TIMER_CMDS_PORT);
-	outb (TIMER_LO_BYTE, TIMER_DATA_PORT);	/* LSB */
-	outb (TIMER_HI_BYTE, TIMER_DATA_PORT);	/* MSB */
-}
-
 #endif
 
 /*
  *	Called by the assembler hooks
  */
 
-int lastirq;
- 
 void do_IRQ(int i,void *regs)
 {
     register struct irqaction *irq = irq_action + i;
-
-    lastirq = i;	
 
     if (irq->handler != NULL)
 	irq->handler(i,regs,irq->dev_id);
@@ -180,7 +129,6 @@ void do_IRQ(int i,void *regs)
 	    printk("Unexpected trap: %u\n", i-16);
 	else
 	    printk("Unexpected interrupt: %u\n", i);
-    lastirq = -1;
 }
 
 /*
@@ -201,6 +149,8 @@ ___save_flags:
 
 /* this version is smaller than the functionally equivalent C version
  * at 7 bytes vs. 21 or thereabouts :-) --Alastair Bridgewater
+ *
+ * Further reduced to 5 bytes  --Juan Perez
  */
 #ifndef S_SPLINT_S
 #asm
@@ -209,10 +159,8 @@ ___save_flags:
 
 _restore_flags:
 	pop ax
-	pop cx
-	push cx
-	push cx
 	popf
+        pushf
 	jmp ax
 #endasm
 #endif
@@ -288,7 +236,7 @@ void init_IRQ(void)
     cache_21 = inb_p(0x21);
 #endif
 
-    arch_init_IRQ();
+    stop_timer();
 
     /* Old IRQ 8 handler is nuked in this routine */
     irqtab_init();			/* Store DS */

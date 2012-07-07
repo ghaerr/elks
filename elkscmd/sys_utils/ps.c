@@ -79,6 +79,7 @@ char ** argv;
 	struct task_struct task_table;
 	struct passwd * pwent;
 
+	printf("  PID   GRP USER  STAT INODE COMMAND\n");
 	if ((fd = open("/dev/kmem", O_RDONLY)) < 0) {
 		perror("ps");
 		exit(1);
@@ -92,18 +93,20 @@ char ** argv;
 		exit(1);
 	}
 
-	for (j = off, i = 0; i < 20; j += sizeof(struct task_struct), i++) {
-		if (read_task(fd, j, ds, &task_table) == -1) {
+	for (j = 1; j < MAX_TASKS; j++) {
+		if (read_task(fd, off + j*sizeof(struct task_struct), ds, &task_table) == -1) {
 			perror("ps");
 			exit(1);
 		}
+                if (task_table.state == TASK_UNUSED) {
+                        continue;
+                }
 		if (task_table.t_kstackm != KSTACK_MAGIC) {
 			break;
 		}
 		if (task_table.t_regs.ss == 0) {
 			continue;
 		}
-		if (task_table.state != TASK_UNUSED) {
 			pwent = (getpwuid(task_table.uid));
 			printf("%5d %5d %-8s %c %5u ", 
 				task_table.pid,
@@ -117,7 +120,6 @@ char ** argv;
 				get_name(fd, task_table.t_regs.ss, task_table.t_begstack + 2);
 			fflush(stdout);
 		}
-	}
 	exit(0);
 }
 

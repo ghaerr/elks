@@ -1,114 +1,54 @@
 #include <arch/irq.h>
+#include <arch/asm-offsets.h>
 #include <linuxmt/config.h>
 
 /*
  *	Easy way to store our kernel DS
  */
 
-
 /* moving variables from code segment to an extra segment
 /  CONFIG_ROM_IRQ_DATA for the ROM_CODE-Version
 /  ELKS 0.76 7/1999 Christian Mard”ller  (chm@kdt.de)
 /  */
 
-
-
 #ifdef CONFIG_ROMCODE 
-   #define stashed_ds       [0]
-   #define off_stashed_irq0 [2]
-   #define seg_stashed_irq0 [4]
-   #define stashed_ss       [6]
-   #define stashed_sp       [8]
-   #define stashed_irq      [10]  
-   #define bios_call_cnt    [12] 
-   /*      stashed_di       [14]   process.c */
-   /*      cs_tmp           [16]   process.c */
-   /*      _our_ds          [18]   bios16.c  */
-
-#else
-   #define stashed_ds       cseg_stashed_ds
-   #define seg_stashed_irq0 cseg_seg_stashed_irq0
-   #define off_stashed_irq0 cseg_off_stashed_irq0
-
-   #define stashed_ss       cseg_stashed_ss
-   #define stashed_sp       cseg_stashed_sp
-   #define stashed_irq      cseg_stashed_irq
-   #define bios_call_cnt    cseg_bios_call_cnt
-#endif
-
-#ifdef CONFIG_ROMCODE
- #define SEG_IRQ_DATA es
-#else
- #define SEG_IRQ_DATA cs
-#endif
-
-#ifndef S_SPLINT_S
-#asm
-/* In ROM-Mode we must generate a physical 3th segment :-) 
+/* In ROM-Mode we must generate a physical 3th segment :-)
 /  The segmentaddress is given by CONFIG_ROM_IRQ_DATA,
 /  the offset is constant per #define
 /-------------------------------------------------------*/
 
+   #define SEG_IRQ_DATA es
+   #define stashed_ds       [0]
 
+#else
+ #define SEG_IRQ_DATA cs
 
-#ifndef CONFIG_ROMCODE
-	.globl cseg_stashed_ds
-	.globl cseg_stashed_si
-	.globl cseg_sc_tmp
-	.globl IRQdata_offs
+#ifndef S_SPLINT_S
+#asm
+        .globl stashed_ds
 
         .even
 
-cseg_stashed_ds:
+stashed_ds:
 	.word	0
-cseg_seg_stashed_irq0:
-	.word	0
-cseg_off_stashed_irq0:
-	.word	0
-
-
-cseg_stashed_ss:
-	.word 	0
-cseg_stashed_sp:
-	.word 	0
-cseg_stashed_irq:
-	.word	0
-cseg_bios_call_cnt:
-	.word	0
-
-
-;from process.c
-
-cseg_stashed_si:
-	.word 	0
-cseg_sc_tmp:
-	.word	0
-IRQdata_offs:
-        .word   0
-
-
-#endif	
-	
 
 #endasm
 #endif
 
+#endif
 
+extern void sig_check(void);
 
-
- 
-void irqtab_init()
+void irqtab_init(void)
 {
 #ifndef S_SPLINT_S
 #asm
 
 ; CS points to this kernel code segment
 ; ES points to page 0  (interrupt table)
-; DS points to the irqdataseg (cs or CONFIG_ROM_IRQ_DATA)
+; DS points to the kernel data segment
 
-        push ds
-        mov dx,ds      ;the original value
-        cli            ;just here
+        cli
         
 #ifdef CONFIG_ROMCODE
         mov ax,#CONFIG_ROM_IRQ_DATA
@@ -118,6 +58,7 @@ void irqtab_init()
         seg SEG_IRQ_DATA
 	mov stashed_ds,ds
 	mov bios_call_cnt_l,#5
+        mov _intr_count,#0
 
         xor ax,ax
         mov es,ax      ;intr table
@@ -137,12 +78,10 @@ void irqtab_init()
 
 
 #ifndef CONFIG_CONSOLE_BIOS
-	lea ax,_irq1      ;keyboard  
 	seg es
-	mov [36],ax
-	mov ax,cs
+        mov [36],#_irq1   ;keyboard
 	seg es
-	mov [38],ax
+        mov [38],cs
 #endif
 
 #if 0	
@@ -154,12 +93,10 @@ void irqtab_init()
 	mov [42],ax
 #endif	
 
-	lea ax,_irq3      ;com2
 	seg es
-	mov [44],ax
-	mov ax,cs
+        mov [44],#_irq3   ;com2
 	seg es
-	mov [46],ax
+        mov [46],cs
 	
 	lea ax,_irq4     ;com1
 	seg es
@@ -178,9 +115,8 @@ void irqtab_init()
 	mov [514],ax
 ! Tidy up
 
-	pop ds           ;the org segments
-	mov ax,ds
-	mov es,ax
+        mov dx,ds      ;the original value
+        mov es,dx      ;just here
 	sti
         
 #endasm
@@ -218,11 +154,9 @@ void irqtab_init()
 	.data
 	.extern _cache_A1
 	.extern _cache_21
-	.extern _jiffies
 
 	.text 
 			
-
 _irq1:                   ;keyboard  
 	push	ax
 	mov	ax,#1
@@ -434,8 +368,6 @@ _irqit:
 !
 !	Save all registers
 !
-
-!	cli		! Might not be disabled on an exception
 	push	ds
 	push	es
 	push	bx
@@ -444,78 +376,79 @@ _irqit:
 	push	si
 	push	di
 	push	bp
-		
 !
 !	Recover segments
 !
 #ifdef CONFIG_ROMCODE
         mov bx,#CONFIG_ROM_IRQ_DATA
-        mov es,bx
+        mov ds,bx
+#else
+        seg     cs
 #endif        
-!
-!	Switch segments
-!
-        seg SEG_IRQ_DATA
 	mov	bx,stashed_ds		! Recover the data segment
 	mov	ds,bx
 	mov	es,bx
 
 	mov	dx,ss			! Get current SS
 	mov	bp,sp			! Get current SP
-	movb	cl,bios_call_cnt_l
 !
 !	Set up task switch controller
 !
 	xor	ch,ch		! Assume we are not allowed to switch
 !
-!	See where we were (BX holds the SS on entry)
+!       See where we were (DX holds the SS on entry)
 !
 	cmp	dx,bx		! SS = kernel SS ?
 	je	ktask		! Kernel - no work
 !
 !	User or BIOS etc
 !
+        mov     ss,bx           ! /* Set SS: right */
 	mov	bx,_current
-	cmp	dx,4[bx]	! entry ss = current->t_regs.ss?
-	je	utask		! Switch to kernel
+	cmp	dx,TASK_USER_SS[bx] ! entry ss = current->t_regs.ss?
+	jne	btask		! Switch to interrupt stack
+!
+!	User task. Extract kernel SP. (BX already holds current)
+!	At this point, the kernel stack is empty. Thus, we can load
+!       the kernel stack pointer without accesing memory
+!
+        mov     TASK_USER_SP[bx],sp
+        lea     sp,TASK_KSTKTOP[bx] ! switch to kernel stack ptr
+        lea     bp,TASK_USER_SP[bx]
+	inc	ch		! Switch allowable
+        j       updct
 !
 !	Bios etc - switch to interrupt stack
 !
+btask:
 	mov	sp,#_intstack
-!	lea	sp, _intstack
-	j	switched
-!
-!	User task. Extract kernel SP. (BX already holds current)
-!
-utask:
-	mov	sp,[bx]		! switch to kernel stack ptr
-	inc	ch		! Switch allowable
 !
 !	In ktask state we have a suitable stack. It might be 
 !	better to use the intstack..
 !
-switched:
-	mov	bx,ds
-	mov	ss,bx		! /* Set SS: right */
 ktask:
 ! /*
 !	Put the old SS;SP on the top of the stack. We can't
 !	leave them in stashed_ss/sp as we could re-enter the
 !	routine on a reschedule.
 ! */
-	push	bp		! push entry SP
 	push	dx		! push entry SS
-!
-!	We are on a suitable stack and cx says whether we can	
-!	switch afterwards. The C code will want to eat CX so
-!	we have to hide it
-!
+	push	bp		! push entry SP
 !
 !	The registers are now stored. Remember where
 !
 	mov	bp,sp
-	mov	_can_tswitch, ch
-	push	cx		! Save ch
+!
+!   Update intr_count
+!
+updct:
+        inc     _intr_count
+!
+!       We are on a suitable stack and ch says whether
+!       we can switch afterwards.
+!
+        sti                     ! Reenable interrupts
+        push    cx              ! Switch flag
 	push	ax		! IRQ for later
 	push	bp		! Register base
 	push	ax		! IRQ number
@@ -533,16 +466,23 @@ ktask:
 !
 !	Restore any chips
 !
+        cli                     ! Disable interrupts to avoid reentering ISR
 	cmp	ax,#16
 	jge	was_trap	! Traps need no reset
 	or	ax,ax		! Is int #0?
 	jnz	a4
-	dec	cl		! Will call bios int?
-	je	was_trap
+!
+!        IRQ 0 (timer) has to go on to the bios for some systems
+!
+        dec     bios_call_cnt_l	! Will call bios int?
+        jne     a4
+        mov     bios_call_cnt_l,#5
+        pushf
+        callf   [off_stashed_irq0_l]
+        jmp     was_trap
 a4:
-	mov	cl,al		! Save the IRQ number
+        cmp     ax,#8
 	movb	al,#0x20	! EOI
-	cmp	cl,#8
 	jb	a6		! IRQ on low chip
 !
 !	Reset secondary 8259 if we have taken an AT rather
@@ -553,62 +493,56 @@ a4:
 	jmp	a5
 a5:	jmp	a6
 a6:	outb	0x20,al		! Ack on primary controller
-
 !
 !	And a trap does no hardware work	
 !
-
 was_trap:
-	orb	cl,cl
-	jnz	no_bios_call
 !
-!	IRQ 0 (timer) has to go on to the bios for some systems
+!   Restore intr_count
 !
-	dec	bios_call_cnt_l
-	jne	no_bios_call
-	mov	bios_call_cnt_l,#5
-	pushf
-	callf	[off_stashed_irq0_l]
-no_bios_call:
+        dec     _intr_count
 !
 !	Now look at rescheduling
 !
-	cmp	ch,#0			! Schedule allowed ?
+        orb     ch,ch                   ! Schedule allowed ?
 	je	nosched			! No
 !	mov	bx,_need_resched	! Schedule needed
 !	cmp	bx,#0			! 
 !	je	nosched			! No
+!
+! This path will return directly to user space
+!
 	call	_schedule		! Task switch
+        mov     bx,_current
+        mov     8[bx],#1
+        call    _sig_check              ! Check signals
 !
-! Fix current->ksp (_schedule messes it up).
+!	At this point, the kernel stack is empty. Thus, there is no
+!       need to save the kernel stack pointer.
 !
-	pop	ax	! stacked SS
-	pop	cx	! stacked SP
-	mov	bx,_current
-#ifdef CONFIG_ADVANCED_MM
-	mov ax, 4[bx]	! user ds
-	mov bp, sp		
+        mov     bx,_current
+        mov     sp,TASK_USER_SP[bx]
+#ifndef CONFIG_ADVANCED_MM
+        mov     ss,TASK_USER_SS[bx]
+#else
+	mov ax, TASK_USER_SS[bx] ! user ds
+	mov bp, sp
+        mov ss, ax
 	mov 12[bp], ax	! change the es in the stack
 	mov 14[bp], ax	! change the ds in the stack
 #endif
-	mov	[bx],sp
 	j	noschedpop
-	
-nosched:
 !
 !	Now we have to rescue our stack pointer/segment.
 !
-	pop	ax	! SS
+nosched:
 	pop	cx	! SP
-!
-!	Switch stacks to the interrupting stack
-!
-noschedpop:
-	mov	ss,ax
+	pop	ss	! SS
 	mov	sp,cx
 !
 !	Restore registers and return
 !
+noschedpop:
 	pop	bp
 	pop 	di
 	pop	si
@@ -624,9 +558,9 @@ noschedpop:
 	iret
 
 	.data
-.globl	_can_tswitch
-_can_tswitch:
-	.byte 0
+        .globl  _intr_count
+_intr_count:
+        .word 0
 
 off_stashed_irq0_l:
 	.word	0

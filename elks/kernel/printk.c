@@ -44,9 +44,9 @@ static void kputchar(register char ch)
 
 static void kputs(register char *buf)
 {
-    char ch, *p;
-
 #ifdef CONFIG_DCON_ANSI_PRINTK
+
+    char *p;
 
     /* Colourizing */
 
@@ -64,8 +64,8 @@ static void kputs(register char *buf)
 
 #endif
 
-    while ((ch = *buf++))
-	kputchar(ch);
+    while (*buf)
+	kputchar(*buf++);
 }
 
 /************************************************************************

@@ -20,12 +20,9 @@
 __task task[MAX_TASKS];
 unsigned char nr_running;
 
-__ptask current, next, previous;
+__ptask current, previous;
 
-extern unsigned char can_tswitch;
-extern int lastirq;
-
-extern int do_signal(void);
+extern int intr_count;
 
 static void run_timer_list();
 
@@ -82,7 +79,6 @@ void schedule(void)
 {
     register __ptask prev;
     register __ptask next;
-    __ptask currentp = current;
     jiff_t timeout = 0L;
 
     prev = current;
@@ -90,7 +86,7 @@ void schedule(void)
 
     if (prev->t_kstackm != KSTACK_MAGIC)
         panic("Process %d exceeded kernel stack limit! magic %x\n", 
-            currentp->pid, currentp->t_kstackm);
+            prev->pid, prev->t_kstackm);
 
     /* We have to let a task exit! */
     if (prev->state == TASK_EXITING)
@@ -125,7 +121,7 @@ makerunnable:
         next = next->next_run;
     }
 
-    if (next != currentp) {
+    if (next != prev) {
         struct timer_list timer;
 
         if (timeout) {
@@ -136,7 +132,7 @@ makerunnable:
             add_timer(&timer);
         }
 
-        if ((!can_tswitch) && (lastirq != -1))
+        if (intr_count > 0)
             goto scheduling_in_interrupt;
 
 #ifdef CONFIG_SWAP
@@ -151,11 +147,6 @@ makerunnable:
 
         tswitch();  /* Won't return for a new task */
 
-        if(current->signal){
-            do_signal();
-            current->signal = 0;
-        }
-                
         if (timeout) {
             del_timer(&timer);
         }
@@ -167,9 +158,9 @@ scheduling_in_interrupt:
 
     /* Taking a timer IRQ during another IRQ or while in kernel space is
      * quite legal. We just dont switch then */
-    if (lastirq > 0)
+/*     if (intr_count > 0) */
         printk("Aiee: scheduling in interrupt %d - %d %d\n",
-           lastirq, currentp->pid, prev->pid);
+           intr_count, next->pid, prev->pid);
 }
 
 struct timer_list tl_list = { NULL, NULL, 0L, 0, NULL };
@@ -286,10 +277,35 @@ static void update_one_process(struct taks_struct *p,
 
 void do_timer(struct pt_regs *regs)
 {
-    (*(jiff_t *) & jiffies)++;
+    jiffies++;
+
+#ifdef NEED_RESCHED		/* need_resched is not checked anywhere */
+    if (!((int) jiffies & 7))
+	need_resched = 1;	/* how primitive can you get? */
+#endif
+
 }
 
 void sched_init(void)
 {
-    /* Do nothing */ ;
+    register struct task_struct *taskp;
+
+/*
+ *	Now create task 0 to be ourself.
+ */
+    taskp = &init_task;
+    memset(taskp, 0, sizeof(struct task_struct));
+    taskp->state = TASK_RUNNING;
+    taskp->next_run = taskp->prev_run = taskp;
+
+    current = taskp;
+/*    nr_running = 0;*/
+
+/*
+ *	Mark tasks 1-31 as not in use.
+ */
+
+    while(++taskp < &task[MAX_TASKS])
+	taskp->state=TASK_UNUSED;
+
 }

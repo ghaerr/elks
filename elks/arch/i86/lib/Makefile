@@ -46,7 +46,7 @@ JOBJS		=inport.o inportb.o outport.o outportb.o \
 
 LLOBJS  	=laddl.o landl.o lcmpl.o lcoml.o ldecl.o ldivl.o ldivul.o \
 		 leorl.o lincl.o lmodl.o lmodul.o lmull.o lnegl.o lorl.o \
-		 lsll.o lsrl.o lsrul.o lsubl.o ltstl.o setupw.o setupb.o
+		 lsll.o lsrl.o lsrul.o lsubl.o ltstl.o setupw.o
 
 # compiler support for long arithmetic on all longs
 
@@ -61,7 +61,7 @@ lib86.a: $(OBJS)
 	ar rcs lib86.a $(OBJS)
 	sync
 
-setupb.s: setupb.S
+#setupb.s: setupb.S
 
 setupw.s: setupw.S
 

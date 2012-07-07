@@ -20,7 +20,9 @@ extern __u16 get_bp(void);
 
 #endif
 
-extern __u16 setupw(/*unsigned short int, */unsigned short int *);
+extern __u16 setupw(unsigned short int *);
+
+#define setupb(p) ((char)setupw(p))
 
 extern pid_t get_pid(void);
 
