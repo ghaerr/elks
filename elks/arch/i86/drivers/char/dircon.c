@@ -192,19 +192,17 @@ void WriteChar(register Console * C, char c)
 	    --C->cx;
 	    WriteChar(C, ' ');
 	    --C->cx;
-	    PositionCursor(C);
 	}
 	return;
     case NL:
 	++C->cy;
-	/* fall thru for now: fixme when ONLCR complete */
+	break;
     case CR:
 	C->cx = 0;
 	break;
     default:
 	offset = ((unsigned int) (C->cx + C->cy * Width)) << 1;
-	pokeb((__u16) C->vseg, (__u16) offset++, (__u8) c);
-	pokeb((__u16) C->vseg, (__u16) offset, C->attr);
+	pokew((__u16) C->vseg, (__u16) offset, ((__u16)C->attr << 8) | ((__u16)c));
 	C->cx++;
     }
 
@@ -221,6 +219,8 @@ void WriteChar(register Console * C, char c)
 
 void con_charout(char Ch)
 {
+    if (Ch == '\n')
+	WriteChar(Visible, '\r');
     WriteChar(Visible, Ch);
     PositionCursor(Visible);
 }
@@ -526,7 +526,6 @@ static void Console_gotoxy(register Console * C, int x, int y)
 	register char *yp = (char *)y;
 	C->cy = ((((int) yp) >= MaxRow) ? MaxRow : ((((int)yp) < 0) ? 0 : (int)y));
     }
-    PositionCursor(C);
 }
 
 #endif
@@ -572,12 +571,6 @@ int Console_write(register struct tty *tty)
 
     while (tty->outq.len != 0) {
 	chq_getch(&tty->outq, &ch, 0);
-
-#if 0
-	if (ch == '\n')
-	    WriteChar(C, '\r');
-#endif
-
 	WriteChar(C, (char) ch);
 	cnt++;
     }

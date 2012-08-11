@@ -68,16 +68,13 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
 
 struct tty *determine_tty(dev_t dev)
 {
-    register struct tty *ttyp;
-    register char *pi = 0;
-    unsigned short int minor = MINOR(dev);
+    register struct tty *ttyp = &ttys[0];
+    register char *minor = (char *)MINOR(dev);
 
     do {
-	ttyp = &ttys[(int)pi];
-	if (ttyp->minor == minor)
+	if (ttyp->minor == (unsigned short int)minor)
 	    return ttyp;
-	++pi;
-    } while (((int) pi) < MAX_TTYS);
+    } while (++ttyp < &ttys[MAX_TTYS]);
 
     return 0;
 }
@@ -151,7 +148,7 @@ void tty_charout(register struct tty *tty, unsigned char ch)
 	break;
     case '\n':
 	if (tty->termios.c_oflag & ONLCR)
-	    tty_charout(tty, '\r');
+	    tty_charout_raw(tty, '\r');
     }
     tty_charout_raw(tty, ch);
 }
@@ -174,16 +171,14 @@ int tty_write(struct inode *inode, struct file *file, char *data, int len)
 #if 0
     int blocking = (file->f_flags & O_NONBLOCK) ? 0 : 1;
 #endif
-    __u16 tmp;
 
-    pi = 0;
-    while (((int)pi) < len) {
-	tmp = peekb(current->t_regs.ds, (__u16) (data + ((int)pi)));
-	tty_charout(tty, (unsigned char) tmp /* , blocking */ );
-	++pi;
+    pi = (char *)len;
+    while ((int)(pi--)) {
+	tty_charout(tty,
+	   (unsigned char) peekb(current->t_regs.ds, (__u16)(data++))
+	   /* , blocking */ );
     }
-    tty->ops->write(tty);
-    return (int)pi;
+    return len;
 }
 
 int tty_read(struct inode *inode, struct file *file, char *data, int len)

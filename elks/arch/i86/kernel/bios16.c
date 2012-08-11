@@ -28,7 +28,7 @@ struct biosparms *bios_data_table=&bdt;
 #asm
 	.text
 /*
- *	our_ds lives in the kernel cs or we can never recover it...
+ *	stashed_ds lives in the kernel cs or we can never recover it...
  */
 
 /* In ROM we cant store anything! The space for the extrasegment
@@ -36,12 +36,10 @@ struct biosparms *bios_data_table=&bdt;
  * ChM 10/99
  */
 
-#ifndef CONFIG_ROMCODE
-cseg_our_ds: 
-	.word	0
-   #define our_ds    cseg_our_ds
+#ifdef CONFIG_ROMCODE
+ #define stashed_ds	[0]
 #else 
-   #define our_ds    [18]
+    .extern    stashed_ds
 #endif	
 	
 	.globl  _call_bios
@@ -56,17 +54,7 @@ _call_bios:
 	push si
 	push di
 
-! We have to save DS carefully.	
-
-#ifdef CONFIG_ROMCODE
-        mov bx,#CONFIG_ROM_IRQ_DATA
-        mov es,bx       ;es is already stored
-        seg es
-#else
-   ! We can find our DS from CS now.
-	seg cs		
-#endif
-	mov our_ds, ds
+! DS already saved in stashed_ds
 
 	mov bx, _bios_data_table
 
@@ -110,10 +98,9 @@ _call_bios:
         mov bx,#CONFIG_ROM_IRQ_DATA
         mov ds,bx       ;we can use ds for one fetch
 #else
-   ! We can find our DS from CS now.
 	seg cs		
 #endif
- 	mov  ds, our_ds
+        mov ds,stashed_ds  ! the org DS of kernel
 
 ! ***** We can now use the bios data table again *****
 

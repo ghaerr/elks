@@ -13,11 +13,10 @@
  */
 static void sound(unsigned freq)
 {
+    int es;
 #ifndef S_SPLINT_S
 #asm
-	push	bp
-	mov	bp,sp
-	mov	bx, [bp+4]		! frequency
+	mov	bx, [bp+.sound.freq]	! frequency
 	mov	ax, #$34dd
 	mov	dx, #$0012
 	cmp	dx, bx
@@ -29,17 +28,16 @@ static void sound(unsigned freq)
 	jne	j1
 	or	al, #3
 	out	$61, al
-	mov	al, #$b6
-	out	$43, al
 
 j1:
+	mov	al, #$b6
+	out	$43, al
 	mov	al, bl
 	out	$42, al
 	mov	al, bh
 	out	$42, al
 
 none:
-	pop	bp
 
 #endasm
 #endif

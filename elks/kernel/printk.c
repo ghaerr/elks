@@ -35,12 +35,7 @@
  */
 extern void con_charout(char);
 
-static void kputchar(register char ch)
-{
-    if (ch == '\n')
-	con_charout('\r');
-    con_charout(ch);
-}
+#define kputchar(ch) con_charout(ch)
 
 static void kputs(register char *buf)
 {

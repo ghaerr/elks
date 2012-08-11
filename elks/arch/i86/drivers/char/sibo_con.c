@@ -210,6 +210,8 @@ void WriteChar(register Console * C, char c)
 
 void con_charout(char Ch)
 {
+    if (Ch == '\n')
+	WriteChar(Visible, '\r');
     WriteChar(Visible, Ch);
 }
 
