@@ -79,7 +79,7 @@ void schedule(void)
 {
     register __ptask prev;
     register __ptask next;
-    jiff_t timeout = 0L;
+    jiff_t timeout = 0UL;
 
     prev = current;
     next = prev->next_run;
@@ -92,8 +92,6 @@ void schedule(void)
     if (prev->state == TASK_EXITING)
         return;
 
-    run_timer_list();
-    
     clr_irq();
     switch (prev->state) {
     case TASK_INTERRUPTIBLE:
@@ -102,8 +100,8 @@ void schedule(void)
         
         timeout = prev->timeout;
     
-        if (timeout && (timeout <= jiffies)) {
-           prev->timeout = timeout = 0;
+        if (prev->timeout && (prev->timeout <= jiffies)) {
+            prev->timeout = timeout = 0UL;
 makerunnable:
             prev->state = TASK_RUNNING;
             break;
@@ -117,9 +115,11 @@ makerunnable:
     }
     set_irq();
     
-    while(next == &init_task && nr_running > 0){
+    if(next == &init_task)
         next = next->next_run;
-    }
+
+    if (intr_count > 0)
+        goto scheduling_in_interrupt;
 
     if (next != prev) {
         struct timer_list timer;
@@ -132,9 +132,6 @@ makerunnable:
             add_timer(&timer);
         }
 
-        if (intr_count > 0)
-            goto scheduling_in_interrupt;
-
 #ifdef CONFIG_SWAP
         if(do_swapper_run(next) == -1){
             printk("Can't become runnable %d\n", next->pid);
@@ -142,7 +139,7 @@ makerunnable:
         }
 #endif
 
-        previous = current; 
+        previous = prev;
         current = next;
 
         tswitch();  /* Won't return for a new task */
@@ -167,7 +164,6 @@ struct timer_list tl_list = { NULL, NULL, 0L, 0, NULL };
 
 static int detach_timer(struct timer_list *timer)
 {
-    int ret = 0;
     register struct timer_list *next;
     register struct timer_list *prev;
     next = timer->tl_next;
@@ -176,10 +172,10 @@ static int detach_timer(struct timer_list *timer)
         next->tl_prev = prev;
     }
     if (prev) {
-        ret = 1;
         prev->tl_next = next;
+	return 1;
     }
-    return ret;
+    return 0;
 }
 
 int del_timer(register struct timer_list *timer)
@@ -202,49 +198,37 @@ void init_timer(register struct timer_list *timer)
 void add_timer(register struct timer_list *timer)
 {
     flag_t flags;
-    register struct timer_list *next = tl_list.tl_next;
-    struct timer_list *prev = &tl_list;
+    register struct timer_list *next = &tl_list;
+    struct timer_list *prev;
 
     save_flags(flags);
     clr_irq();
 
-    while (next) {
-        if (next->tl_expires > timer->tl_expires) {
-            timer->tl_prev = next->tl_prev;
-            timer->tl_next = next;
-            timer->tl_prev->tl_next = timer;
-            next->tl_prev = timer;
-            restore_flags(flags);
-            return;
-        }
+    do {
         prev = next;
-        next = next->tl_next;
-    }
+        if (!(next = next->tl_next))
+            goto link_tmr;
+    } while(next->tl_expires < timer->tl_expires);
+
+    (timer->tl_next = next)->tl_prev = timer;
+
+ link_tmr:
     (timer->tl_prev = prev)->tl_next = timer;
-
-#if 0
-    timer->tl_next = NULL;
-#endif
-
     restore_flags(flags);
 }
 
 static void run_timer_list(void)
 {
-    register struct timer_list *timer = tl_list.tl_next;
+    register struct timer_list *timer;
 
     clr_irq();
-    while (timer && timer->tl_expires < jiffies) {
-        void (*fn) () = timer->tl_function;
-        int data = timer->tl_data;
+    while ((timer = tl_list.tl_next) && timer->tl_expires <= jiffies) {
         detach_timer(timer);
         timer->tl_next = timer->tl_prev = NULL;
         set_irq();
-        fn(data);
+        timer->tl_function(timer->tl_data);
         clr_irq();
-        timer = timer->tl_next;
     }
-
     set_irq();
 }
 
@@ -283,6 +267,8 @@ void do_timer(struct pt_regs *regs)
     if (!((int) jiffies & 7))
 	need_resched = 1;	/* how primitive can you get? */
 #endif
+
+    run_timer_list();
 
 }
 

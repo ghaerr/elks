@@ -224,7 +224,7 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
 		      /*(fd_set *) */ &res_out,
 		      /*(fd_set *) */ &res_ex);
 
-    current->timeout = 0L;
+    current->timeout = 0UL;
     if (error < 0)
 	goto out;
     if (!error) {

@@ -63,19 +63,17 @@ void irqtab_init(void)
         xor ax,ax
         mov es,ax      ;intr table
 
-	seg es                     ;insert new timer intr 
-	mov bx,[32]
-	mov off_stashed_irq0_l, bx   ; the old one
-	lea ax,_irq0
 	seg es
-	mov [32],ax
+	mov ax,[32]
+	mov off_stashed_irq0_l, ax   ; the old timer intr
 	seg es
-	mov bx,[34]
-	mov seg_stashed_irq0_l, bx
-	mov ax,cs
-	seg es
-	mov [34],ax
+	mov ax,[34]
+	mov seg_stashed_irq0_l, ax
 
+	seg es
+	mov [32],#_irq0   ;timer
+	seg es
+	mov [34],cs
 
 #ifndef CONFIG_CONSOLE_BIOS
 	seg es
@@ -98,21 +96,17 @@ void irqtab_init(void)
 	seg es
         mov [46],cs
 	
-	lea ax,_irq4     ;com1
 	seg es
-	mov [48],ax
-	mov ax,cs
+	mov [48],#_irq4   ;com1
 	seg es
-	mov [50],ax
+	mov [50],cs
 	
 
 ! Setup INT 0x80 (for syscall)
-	lea ax,_syscall_int
 	seg es
-	mov [512],ax
-	mov ax,cs
+	mov [512],#_syscall_int
 	seg es
-	mov [514],ax
+	mov [514],cs
 ! Tidy up
 
         mov dx,ds      ;the original value
