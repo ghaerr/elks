@@ -109,7 +109,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     while (bufin_sem == 0)
         interruptible_sleep_on(sock->wait);
 
-    ret_data = tdin_buf;
+    ret_data = (struct tdb_return_data *)tdin_buf;
     ret = ret_data->ret_value;
     tcpdev_clear_data_avail();
     if (ret < 0)
@@ -152,7 +152,7 @@ static int inet_connect(register struct socket *sock,
     while (bufin_sem == 0)
         interruptible_sleep_on(sock->wait);
 
-    r = tdin_buf;
+    r = (struct tdb_return_data *)tdin_buf;
     ret = r->ret_value;
     tcpdev_clear_data_avail();
 
@@ -191,7 +191,7 @@ static int inet_listen(register struct socket *sock, int backlog)
             return -ERESTARTSYS;
     }
 
-    ret_data = tdin_buf;
+    ret_data = (struct tdb_return_data *)tdin_buf;
     ret = ret_data->ret_value;
     tcpdev_clear_data_avail();
 
@@ -223,7 +223,7 @@ static int inet_accept(register struct socket *sock,
 	    }
     }
 
-    ret_data = tdin_buf;
+    ret_data = (struct tdb_accept_ret *)tdin_buf;
     ret = ret_data->ret_value;
     tcpdev_clear_data_avail();
 
@@ -266,7 +266,7 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
 
     down(&sock->sem);
 
-    r = tdin_buf;
+    r = (struct tdb_return_data *)tdin_buf;
     ret = r->ret_value;
 
     if (ret > 0) {
@@ -317,7 +317,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
             interruptible_sleep_on(sock->wait);
 	    }
 
-        r = tdin_buf;
+        r = (struct tdb_return_data *)tdin_buf;
         ret = r->ret_value;
 	    tcpdev_clear_data_avail();
         if (ret < 0) {

@@ -60,7 +60,7 @@ struct minix_super_block {
 
 struct minix_dir_entry {
     __u16	inode;
-    char	name[0];
+    char	name[];
 };
 
 #ifdef __KERNEL__

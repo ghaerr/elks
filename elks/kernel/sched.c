@@ -12,6 +12,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/timer.h>
+#include <linuxmt/string.h>
 
 #include <arch/irq.h>
 

@@ -527,12 +527,12 @@ int __do_rmthing(char *pathname, int opnum)
 
 int sys_rmdir(char *pathname)
 {
-    __do_rmthing(pathname, 0);
+    return __do_rmthing(pathname, 0);
 }
 
 int sys_unlink(char *pathname)
 {
-    __do_rmthing(pathname, 1);
+    return __do_rmthing(pathname, 1);
 }
 
 int sys_symlink(char *oldname, char *newname)

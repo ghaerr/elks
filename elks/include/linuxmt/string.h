@@ -35,6 +35,7 @@ extern char *strstr(char *,char *);
  */
 
 extern void *memscan(void *,int,size_t);
+extern int atoi(char *);
 
 /*@+namechecks@*/
 

@@ -27,11 +27,10 @@ struct file file_array[NR_FILE];
 
 struct file *get_empty_filp(void)
 {
-    register struct file *f = file_array;
-    register char *pi = nr_files;
+    register struct file *f;
 
-    while (pi) {		/* TODO: is nr_file const? */
-	if (!f->f_count) {
+    for(f = file_array; f < &file_array[NR_FILE]; f++) {
+	if (!f->f_count) {	/* TODO: is nr_file const? */
 	    memset(f, 0, sizeof(*f));
 	    f->f_count = 1;
 #ifdef BLOAT_FS
@@ -39,8 +38,6 @@ struct file *get_empty_filp(void)
 #endif
 	    return f;
 	}
-	++f;
-	--pi;
     }
 
     return NULL;

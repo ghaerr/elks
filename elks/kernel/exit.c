@@ -56,7 +56,7 @@ void do_exit(int status)
     if (current->mm.dseg)
 	mm_free(current->mm.dseg);
 
-    current->mm.cseg = current->mm.dseg = NULL;
+    current->mm.cseg = current->mm.dseg = 0;
 
     /* Keep all of the family stuff straight */
     if ((task = current->p_prevsib)) {

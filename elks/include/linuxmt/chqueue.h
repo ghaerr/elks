@@ -9,8 +9,8 @@ struct ch_queue {
     int 		size, tail, len;
 };
 
-extern int chq_init(register struct ch_queue *,unsigned char *,int);
-extern int chq_erase(register struct ch_queue *);
+extern void chq_init(register struct ch_queue *,unsigned char *,int);
+extern void chq_erase(register struct ch_queue *);
 extern int chq_addch(register struct ch_queue *,unsigned char,int);
 extern int chq_delch(register struct ch_queue *);
 extern int chq_peekch(register struct ch_queue *);

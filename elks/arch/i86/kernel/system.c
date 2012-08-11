@@ -79,7 +79,7 @@ void setup_arch(seg_t *start, seg_t *end)
 
 #ifndef CONFIG_ARCH_SIBO	
 
-    *end = setupw(0x2a) << 6 - RAM_REDUCE;
+    *end = (seg_t)(setupw(0x2a) << 6 - RAM_REDUCE);
 
     /* XXX plac: free root ram disk */
 

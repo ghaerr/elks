@@ -24,7 +24,7 @@ static int access_count[LP_PORTS] = {0,};
 #endif
 
 struct lp_info {
-    unsigned short io;
+    char *io;
     char irq;
     char flags;
 };
@@ -142,7 +142,7 @@ int lp_char_polled(char c, unsigned int target)
     }
 
     /* send character to port */
-    outb_p((unsigned char) c, (void *) lpp->io);
+    outb_p((unsigned char) c, lpp->io);
 
     {
 	register char *waitp;
@@ -251,7 +251,7 @@ int lp_probe(register struct lp_info *lp)
     register char *waitp;
 
     /* send 0 to port */
-    outb_p((unsigned char) (LP_DUMMY), (void *) lp->io);
+    outb_p((unsigned char) (LP_DUMMY), lp->io);
 
     /* 5 us delay */
     while (((int)waitp) != LP_WAIT)
@@ -299,7 +299,7 @@ void lp_init(void)
     /* only ports 0, 1, 2 and 3 may exist according to RB's intlist */
     for (ip = 0; ((int)ip) < LP_PORTS; ip++) {
 	/* 8 is offset for LPT info, 2 bytes for each entry */
-	lp->io = peekw(0x40, (__u16) (2 * ((int)ip) + 8));
+	lp->io = (char *)peekw(0x40, (__u16) (2 * ((int)ip) + 8));
 	/* returns 0 if port wasn't detected by BIOS at bootup */
 	if (!lp->io)
 	    break;		/* there can be no more ports */

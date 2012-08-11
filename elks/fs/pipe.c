@@ -79,7 +79,7 @@ char *get_pipe_mem(void)
 }
 
 
-static int pipe_read(register struct inode *inode, struct file *filp,
+static size_t pipe_read(register struct inode *inode, struct file *filp,
 		     char *buf, int count)
 {
     size_t chars = 0, size = 0, read = 0;
@@ -128,7 +128,7 @@ static int pipe_read(register struct inode *inode, struct file *filp,
     return 0;
 }
 
-static int pipe_write(register struct inode *inode, struct file *filp,
+static size_t pipe_write(register struct inode *inode, struct file *filp,
 		      char *buf, int count)
 {
     register char *pipebuf;
@@ -181,7 +181,7 @@ static int pipe_write(register struct inode *inode, struct file *filp,
     }
     inode->i_ctime = inode->i_mtime = CURRENT_TIME;
 
-    return (int) written;
+    return written;
 }
 
 static void pipe_read_release(register struct inode *inode, struct file *filp)
@@ -242,7 +242,7 @@ static int pipe_rdwr_open(register struct inode *inode,
     return 0;
 }
 
-static int bad_pipe_rw(struct inode *inode, struct file *filp,
+static size_t bad_pipe_rw(struct inode *inode, struct file *filp,
 		       char *buf, int count)
 {
     debug("PIPE: bad rw called.\n");

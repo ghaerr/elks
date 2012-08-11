@@ -24,12 +24,12 @@
 #include <linuxmt/types.h>
 #include <linuxmt/debug.h>
 
-int chq_erase(register struct ch_queue *q)
+void chq_erase(register struct ch_queue *q)
 {
     q->len = q->tail = 0;
 }
 
-int chq_init(register struct ch_queue *q, unsigned char *buf, int size)
+void chq_init(register struct ch_queue *q, unsigned char *buf, int size)
 {
     debug3("CHQ: chq_init(%d, %d, %d)\n", q, buf, size);
     q->buf = (char *) buf;

@@ -119,7 +119,7 @@ pid_t do_fork(int virtual)
 
     /* Set up our family tree */
     t->p_parent = currentp;
-    t->p_nextsib = t->p_child = /* NULL; */
+    t->p_nextsib = t->p_child = NULL;
     t->child_lastend = t->lastend_status = 0;
     if ((t->p_prevsib = currentp->p_child) != NULL) {
 	currentp->p_child->p_nextsib = t;

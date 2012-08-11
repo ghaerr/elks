@@ -16,6 +16,10 @@
 #define INCLUDE_OK
 #endif
 
+#ifdef __WATCOMC__
+#define INCLUDE_OK
+#endif
+
 #ifdef S_SPLINT_S
 #define INCLUDE_OK
 #endif

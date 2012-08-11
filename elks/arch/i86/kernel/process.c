@@ -344,7 +344,7 @@ void kfork_proc(register struct task_struct *t,char *addr)
     memset(t, 0, sizeof(struct task_struct));
     t->t_regs.ds = t->t_regs.ss = get_ds();
     t->t_regs.ksp = ((__u16) t->t_kstack) + KSTACK_BYTES;
-    t->t_regs.ksp -= fake_save_regs((FsR)t->t_regs.ksp,(FsR)addr);
+    t->t_regs.ksp -= fake_save_regs((__u16)t->t_regs.ksp,(__u16)addr);
 
     t->state = TASK_UNINTERRUPTIBLE;
     t->pid = get_pid();

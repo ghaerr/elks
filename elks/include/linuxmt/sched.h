@@ -158,9 +158,7 @@ extern void up(short int *);
 
 extern void wake_up_process(struct task_struct *);
 
-#ifdef S_SPLINT_S
-extern void kill_process(pid_t,sig_t,int);
-#endif
+extern int kill_process(pid_t,sig_t,int);
 
 extern void add_to_runqueue(struct task_struct *);
 
