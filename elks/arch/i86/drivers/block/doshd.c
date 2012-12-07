@@ -43,8 +43,6 @@
 
 #define MAJOR_NR BIOSHD_MAJOR
 #define BIOSDISK
-#define NR_HD ((drive_info[1].heads)?2:((drive_info[0].heads)?1:0))
-#define put_user(val,ptr) pokew(current->t_regs.ds,ptr,val)
 
 #include "blk.h"
 
@@ -130,6 +128,12 @@ static unsigned char hd_drive_map[4] = {
     0x00, 0x01			/* fd0, fd1 */
 };
 
+#ifdef CONFIG_BLK_DEV_BHD
+
+static int hdcount = 0;
+
+#endif
+
 static int bioshd_sizes[4 << 6] = { 0, };
 
 static void bioshd_geninit(void);
@@ -154,26 +158,24 @@ static struct gendisk bioshd_gendisk = {
 
 #ifdef CONFIG_BLK_DEV_BHD
 
-unsigned short int bioshd_gethdinfo(void)
+static unsigned short int bioshd_gethdinfo(void)
 {
     unsigned short int drive, ndrives = 0;
+    register struct drive_infot *drivep = &drive_info[0];
 
     for (drive = 0; drive <= 1; drive++) {
-	register struct drive_infot *drivep = &drive_info[drive];
-	ndrives++;
 	BD_AX = BIOSHD_DRIVE_PARMS;
 	BD_DX = drive + 0x80;
 	BD_IRQ = BIOSHD_INT;
 	call_bios();
-	if ((BD_AX != 0x100) && (!CARRY_SET)) {
-	    drivep->cylinders = ((BD_CX >> 8) & 255);
-	    drivep->cylinders += (((BD_CX >> 6) & 3) * 256);
+	if (!CARRY_SET) {
+	    drivep->cylinders = ((BD_CX >> 8) | ((BD_CX & 0xC0) << 2)) + 1;
 	    drivep->heads = (BD_DX >> 8) + 1;
 	    drivep->sectors = (BD_CX & 63);
 	    drivep->fdtype = -1;
+	    ndrives++;
 	}
-	if ((BD_DX & 255) < 2)
-	    break;
+	drivep++;
     }
     return ndrives;
 }
@@ -182,7 +184,7 @@ unsigned short int bioshd_gethdinfo(void)
 
 #ifdef CONFIG_BLK_DEV_BFD
 
-unsigned short int bioshd_getfdinfo(void)
+static unsigned short int bioshd_getfdinfo(void)
 {
 
 #ifdef CONFIG_BLK_DEV_BFD_HARD
@@ -243,9 +245,6 @@ unsigned short int bioshd_getfdinfo(void)
     ndrives = (peekb(0x40, 0x10) >> 6) + 1;
 
 #endif
-
-    printk("doshd: found %d floppy drive%c\n",
-	   ndrives, ndrives == 1 ? ' ' : 's');
 
     for (drive = 0; drive < ndrives; drive++) {
 	BD_AX = BIOSHD_DRIVE_PARMS;
@@ -398,7 +397,6 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 
 #ifdef CONFIG_BLK_DEV_BFD
     if (target >= 2) {		/* 2,3 are the floppydrives */
-#endif
 
 /* probing range can be easily extended by adding more values to these
  * two lists and adjusting for loop' parameters in line 420 and 435 (or
@@ -407,9 +405,6 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 
 	static char sector_probe[5] = { 8, 9, 15, 18, 36 };
 	static char track_probe[2] = { 40, 80 };
-
-#ifdef CONFIG_BLK_DEV_BFD
-
 	int count;
 
 	printk("fd: probing disc in /dev/fd%d\n", target % 2);
@@ -420,7 +415,6 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	while (!dma_avail)
 	    sleep_on(&dma_wait);
 	dma_avail = 0;
-#endif
 
 /* First probe for cylinder number. We probe on sector 1, which is
  * safe for all formats, and if we get a seek error, we assume that
@@ -429,9 +423,9 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 
 #ifndef CONFIG_HW_USE_INT13_FOR_DISKPARMS
 
+	drivep->cylinders = 0;
 	for (count = 0; count < 2; count++) {
 	    if (seek_sector(hd_drive_map[target], track_probe[count], 1)) {
-		drivep->cylinders = track_probe[count - 1];
 		break;
 	    }
 	    drivep->cylinders = track_probe[count];
@@ -443,9 +437,9 @@ static int bioshd_open(struct inode *inode, struct file *filp)
  * format is the correct one.
  */
 
+	drivep->sectors = 0;
 	for (count = 0; count < 5; count++) {
 	    if (seek_sector(hd_drive_map[target], 40, sector_probe[count])) {
-		drivep->sectors = sector_probe[count - 1];
 		break;
 	    }
 	    drivep->sectors = sector_probe[count];
@@ -468,8 +462,6 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	    printk("bioshd_open: no diskinfo %d\n", hd_drive_map[target]);
 
 #endif
-
-#ifdef CONFIG_BLK_DEV_BFD
 
 /* DMA code belongs out of the loop. */
 
@@ -519,49 +511,29 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 #endif
 #endif
 
-void init_bioshd(void)
+int init_bioshd(void)
 {
     register struct gendisk *ptr;
     register struct drive_infot *drivep;
     int count = 0, i;
 
-#ifdef CONFIG_BLK_DEV_BHD
-
-    int hdcount = 0;
-
-#endif
-
     printk("hd Driver Copyright (C) 1994 Yggdrasil Computing, Inc.\n"
 	   "Extended and modified for Linux 8086 by Alan Cox.\n");
 
 #ifdef CONFIG_BLK_DEV_BFD
-    bioshd_getfdinfo();
+    count = bioshd_getfdinfo();
+    printk("doshd: found %d floppy drive%c\n",
+	   count, count == 1 ? ' ' : 's');
 #endif
 
 #ifdef CONFIG_BLK_DEV_BHD
-    bioshd_gethdinfo();
-#endif
-
-    for (i = 0; i < 4; i++)
-	if (drive_info[i].heads) {
-	    count++;
-
-#ifdef CONFIG_BLK_DEV_BHD
-	    if (i <= 1)
-		hdcount++;
-#endif
-
-	}
-
-    if (!count)
-	return;
-
-#ifdef CONFIG_BLK_DEV_BHD
-
+    hdcount = bioshd_gethdinfo();
     printk("doshd: found %d hard drive%c\n", hdcount,
 	   hdcount == 1 ? ' ' : 's');
-
 #endif
+
+    if (!(count + hdcount))
+	return 0;
 
 #ifdef TEMP_PRINT_DRIVES_MAX
     for (i = 0; i < TEMP_PRINT_DRIVES_MAX; i++) {
@@ -612,8 +584,11 @@ void init_bioshd(void)
 	    bioshd_gendisk.next = NULL;
 	}
 	bioshd_initialized = 1;
-    } else
+    } else {
 	printk("hd: unable to register\n");
+	return -1;
+    }
+    return 0;
 }
 
 static int bioshd_ioctl(struct inode *inode,
@@ -627,7 +602,7 @@ static int bioshd_ioctl(struct inode *inode,
 	return -EINVAL;
     dev = DEVICE_NR(inode->i_rdev);
     drivep = &drive_info[dev];
-    if (dev >= NR_HD)
+    if (dev >= hdcount)
 	return -ENODEV;
     switch (cmd) {
     case HDIO_GETGEO:
@@ -648,9 +623,9 @@ static void do_bioshd_request(void)
 {
     register struct request *req;
     char *buff;
-    sector_t count, start, this_pass;
-    int drive, errs, tmp;
-    short cylinder, head, sector;
+    sector_t start, count, tmp;
+    int drive, errs;
+    unsigned int cylinder, head, sector, this_pass;
     unsigned short int minor;
 
 #if 0
@@ -713,15 +688,13 @@ static void do_bioshd_request(void)
 
 	while (count > 0) {
 	    register struct drive_infot *drivep = &drive_info[drive];
-	    sector = (start % drivep->sectors) + 1;
-	    tmp = start / drivep->sectors;
-	    head = (short int) (tmp % drivep->heads);
-	    cylinder = (short int) (tmp / drivep->heads);
-	    this_pass = count;
-	    if (count <= (sector_t) (drivep->sectors - sector + 1))
-		this_pass = count;
-	    else
-		this_pass = (sector_t) (drivep->sectors - sector + 1);
+	    sector = (unsigned int) ((start % (sector_t)drivep->sectors) + 1);
+	    tmp = start / (sector_t)drivep->sectors;
+	    head = (unsigned int) (tmp % (sector_t)drivep->heads);
+	    cylinder = (unsigned int) (tmp / (sector_t)drivep->heads);
+	    this_pass = drivep->sectors - sector + 1;
+	    if ((sector_t)this_pass > count)
+		this_pass = (unsigned int) count;
 	    while (!dma_avail)
 		sleep_on(&dma_wait);
 	    dma_avail = 0;
@@ -838,12 +811,11 @@ static int revalidate_hddisk(int dev, int maxusage)
 static void bioshd_geninit(void)
 {
     register struct drive_infot *drivep;
-    register struct hd_struct *hdp;
+    register struct hd_struct *hdp = hd;
     int i;
 
     for (i = 0; i < 4 << 6; i++) {
 	drivep = &drive_info[i >> 6];
-	hdp = &hd[i];
 	if ((i & ((1 << 6) - 1)) == 0) {
 	    hdp->nr_sects = (sector_t) drivep->sectors *
 		drivep->heads * drivep->cylinders;
@@ -852,6 +824,7 @@ static void bioshd_geninit(void)
 	    hdp->nr_sects = 0;
 	    hdp->start_sect = -1;
 	}
+	hdp++;
     }
 
 #if 0

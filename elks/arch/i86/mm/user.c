@@ -39,9 +39,8 @@ void memcpy_fromfs(void *daddr, void *saddr, size_t len)
 	mov	dx,es
 	mov	bx,ds
 	mov	es,bx
-	mov	ax,[bp+.memcpy_fromfs.ds]	! source segment (local variable)
-	mov	ds,ax
 	mov	di,[bp+.memcpy_fromfs.daddr]	! destination address
+	mov	ds,[bp+.memcpy_fromfs.ds]	! source segment (local variable)
 	mov	si,[bp+.memcpy_fromfs.saddr]	! source address
 	mov	cx,[bp+.memcpy_fromfs.len]	! number of bytes to copy
 	cld
@@ -77,8 +76,7 @@ void memcpy_tofs(void *daddr, void *saddr, size_t len)
 	push	si
 	push	di
 	mov	dx,es
-	mov	ax,[bp+.memcpy_tofs.es]	! source segment (local variable)
-	mov	es,ax
+	mov	es,[bp+.memcpy_tofs.es]	! destination segment (local variable)
 	mov	di,[bp+.memcpy_tofs.daddr]	! destination address
 	mov	si,[bp+.memcpy_tofs.saddr]	! source address
 	mov	cx,[bp+.memcpy_tofs.len]	! number of bytes to copy
@@ -119,14 +117,11 @@ _fmemcpy:
 	push	ds
 	push	es
 	pushf
-	mov	ds, ax
-	mov	si, $A[bp]
+	mov	es, 4[bp]
 	mov	di, 6[bp]	
-	mov	cx, $C[bp]
-	mov	ax, 4[bp]
-	mov	es, ax
-	mov	ax, 8[bp]
-	mov	ds, ax
+	mov	ds, 8[bp]
+	mov	si, 10[bp]
+	mov	cx, 12[bp]
 	cld			! Must move upwards...
 	rep
 	movsb
@@ -169,8 +164,8 @@ int strlen_fromfs(void *saddr)
 
 	push	di
 	push	si
-	mov	ax,[bp+.strlen_fromfs.ds]	! source segment (local variable)
-	mov	es,ax
+	mov	dx,es
+	mov	es,[bp+.strlen_fromfs.ds]	! source segment (local variable)
 	mov	di,[bp+.strlen_fromfs.saddr]	! source address
 	cld
 	xor	al,al		! search for NULL byte
@@ -180,6 +175,7 @@ int strlen_fromfs(void *saddr)
 	sub	di,[bp+.strlen_fromfs.saddr]	! calc len +1
 	dec	di
 	mov	[bp+.strlen_fromfs.ds],di	! save in local var ds
+	mov	es,dx
 	pop	si
 	pop	di
 #endasm
@@ -189,7 +185,7 @@ int strlen_fromfs(void *saddr)
 }
 #endif
 
-unsigned long int get_fs_long(void *dv)
+unsigned long int get_user_long(void *dv)
 {
     unsigned long retv;
 
@@ -198,16 +194,12 @@ unsigned long int get_fs_long(void *dv)
     return retv;
 }
 
-#if 0
-
-void put_fs_long(unsigned long int dv, void *dp)
+void put_user_long(unsigned long int dv, void *dp)
 {
     memcpy_tofs(dp,&dv,4);
 }
 
-#endif
-
-unsigned char get_fs_byte(void *dv)
+unsigned char get_user_char(void *dv)
 {
     unsigned char retv;
 
@@ -215,14 +207,14 @@ unsigned char get_fs_byte(void *dv)
     return retv;
 }
 
-#if 0
-
-void put_fs_byte(unsigned char dv, void *dp)
+void put_user_char(unsigned char dv, void *dp)
 {
     memcpy_tofs(dp,&dv,1);
 }
 
-unsigned short int get_fs_word(void *dv)
+#if 0
+
+unsigned short int get_user(void *dv)
 {
     unsigned short int retv;
 
@@ -230,12 +222,12 @@ unsigned short int get_fs_word(void *dv)
     return retv;
 }
 
-void put_fs_word(unsigned short int dv, void *dp)
+#endif
+
+void put_user(unsigned short int dv, void *dp)
 {
     memcpy_tofs(dp,&dv,2);
 }
-
-#endif
 
 int fs_memcmp(void *s, void *d, size_t len)
 {

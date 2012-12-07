@@ -295,10 +295,6 @@ static void make_request(unsigned short int major, int rw,
 #endif
 
     case READ:
-	if (buffer_uptodate(bh)) {
-	    unlock_buffer(bh);	/* Hmmph! Already have it */
-	    return;
-	}
 	max_req = NR_REQUEST;	/* reads take precedence */
 	break;
 
@@ -309,10 +305,6 @@ static void make_request(unsigned short int major, int rw,
 #endif
 
     case WRITE:
-	if (buffer_clean(bh)) {
-	    unlock_buffer(bh);	/* Hmmph! Nothing to write */
-	    return;
-	}
 	/* We don't allow the write-requests to fill up the
 	 * queue completely:  we want some room for reads,
 	 * as they take precedence. The last third of the
@@ -452,19 +444,10 @@ void ll_rw_blk(int rw, register struct buffer_head *bh)
     if (!dev || !dev->request_fn) {
 	printk("ll_rw_blk: Trying to read nonexistent block-device %s (%lu)\n",
 	       kdevname(bh->b_dev), bh->b_blocknr);
-	goto sorry;
-    }
-
-    /* If there are no pending requests for this device, then we insert
-     * a dummy request for that device.  This will prevent the request
-     * from starting until we have shoved all of the blocks into the
-     * queue, and then we let it rip.  */
-    make_request(major, rw, bh);
-    return;
-
-  sorry:
     bh->b_dirty = 0;
     bh->b_uptodate = 0;
+    } else
+	make_request(major, rw, bh);
     return;
 }
 

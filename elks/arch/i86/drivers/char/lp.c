@@ -16,9 +16,6 @@
 
 #include <arch/io.h>
 
-/* byte-wide put_user() */
-#define put_user(offset) peekb(current->t_regs.ds, offset)
-
 #if 0
 static int access_count[LP_PORTS] = {0,};
 #endif
@@ -178,7 +175,7 @@ int lp_write(struct inode *inode, struct file *file, char *buf, int count)
 
     chrsp = 0;
     while (((int)chrsp) < count) {
-	if (!lp_char_polled((int) put_user((__u16) (buf + (int)chrsp)),
+	if (!lp_char_polled((int)get_user_char((void *)(buf + (int)chrsp)),
 			    MINOR(inode->i_rdev)))
 	    break;
 	chrsp++;

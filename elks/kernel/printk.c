@@ -165,14 +165,14 @@ static void vprintk(char *fmt, va_list p)
 		break;
 	    case 's':
 		cp = va_arg(p, char*);
-		while ((c == *cp++)) {
+		while ((c = *cp++)) {
 		    kputchar(c);
 		    width--;
 		}
 		goto FILLSP;
 	    case 't':
 		cp = va_arg(p, char*);
-		while ((c = (char) get_fs_byte(cp))) {
+		while ((c = (char) get_user_char(cp))) {
 		    kputchar(c);
 		    cp++;
 		    width--;

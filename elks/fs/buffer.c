@@ -327,17 +327,7 @@ struct buffer_head *readbuf(register struct buffer_head *bh)
 
 struct buffer_head *bread(kdev_t dev, block_t block)
 {
-#ifdef BLOAT_FS			/* getblk never returns null */
-    register struct buffer_head *bh;
-
-    if (!(bh = getblk(dev, block))) {
-	printk("VFS: bread: READ error on %s\n", kdevname(dev));
-	return NULL;
-    }
-    return readbuf(bh);
-#else
     return readbuf(getblk(dev, block));
-#endif
 }
 
 #if 0
@@ -355,8 +345,9 @@ struct buffer_head *breada(kdev_t dev,
     if (pos >= filesize)
 	return NULL;
 
-    if (block < 0 || !(bh = getblk(dev, block)))
+    if (block < 0)
 	return NULL;
+    bh = getblk(dev, block);
 
     if (buffer_uptodate(bh))
 	return bh;
@@ -436,9 +427,10 @@ void map_buffer(register struct buffer_head *bh)
 		bufmem_map[i] = bh;
 		bh->b_data = bufmem[i];
 		bh->b_mapcount++;
+		if(bh->b_uptodate)
 		fmemcpy(get_ds(), (__u16) bh->b_data, _buf_ds,
-			(__u16) (bh->b_num * 0x400), 0x400);
-		debug3("BUFMAP: Buffer %d (block %ld) mapped into L1 slot %d.\n",
+			(__u16) (bh->b_num * BLOCK_SIZE), BLOCK_SIZE);
+		debug3("BUFMAP: Buffer %d (block %d) mapped into L1 slot %d.\n",
 			bh->b_num, bh->b_blocknr, i);
 		return;
 	    }
@@ -455,8 +447,8 @@ void map_buffer(register struct buffer_head *bh)
 		debug1("BUFMAP: Buffer %d unmapped from L1\n",
 			       bufmem_map[i]->b_num);
 		/* Now unmap it */
-		fmemcpy(_buf_ds, (__u16) (bufmem_map[i]->b_num * 0x400),
-			get_ds(), (__u16) bufmem_map[i]->b_data, 0x400);
+		fmemcpy(_buf_ds, (__u16) (bufmem_map[i]->b_num * BLOCK_SIZE),
+			get_ds(), (__u16) bufmem_map[i]->b_data, BLOCK_SIZE);
 		bufmem_map[i]->b_data = 0;
 		bufmem_map[i] = 0;
 		break;

@@ -67,7 +67,7 @@ void print_syscall(register struct syscall_params *p, int retval)
 	    case P_STR:
 		con_charout('\"');
 		tmpa = p->s_param[i];
-		while ((tmpb = get_fs_byte(tmpa++)))
+		while ((tmpb = get_user_char(tmpa++)))
 		    con_charout(tmpb);
 		con_charout('\"');
 		break;
@@ -76,7 +76,7 @@ void print_syscall(register struct syscall_params *p, int retval)
 		con_charout('&');
 		con_charout('\"');
 		tmpa = p->s_param[i];
-		while ((tmpb = get_fs_byte(tmpa++)))
+		while ((tmpb = get_user_char(tmpa++)))
 		    con_charout(tmpb);
 		con_charout('\"');
 		break;
@@ -106,11 +106,11 @@ void print_syscall(register struct syscall_params *p, int retval)
 		break;
 
 	    case P_PSLONG:
-		printk("%ld", get_fs_long(p->s_param[i]));
+		printk("%ld", get_user_long(p->s_param[i]));
 		break;
 
 	    case P_PULONG:
-		printk("%lu", get_fs_long(p->s_param[i]));
+		printk("%lu", get_user_long(p->s_param[i]));
 		break;
 
 	    default:

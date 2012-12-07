@@ -29,9 +29,9 @@ static int nr_free_inodes = 0;
 
 static void insert_inode_free(register struct inode *inode)
 {
-    register struct inode *in;
-    in = inode->i_next = first_inode;
-    inode->i_prev = first_inode->i_prev;
+    register struct inode *in = first_inode;
+    inode->i_next = in;
+    inode->i_prev = in->i_prev;
     in->i_prev = inode;
     inode->i_prev->i_next = inode;
     first_inode = inode;
@@ -42,9 +42,7 @@ static void remove_inode_free(register struct inode *inode)
     register struct inode *in;
     if (first_inode == inode)
 	first_inode = first_inode->i_next;
-    if ((in = inode->i_next))
-	in->i_prev = inode->i_prev;
-    if (inode->i_prev)
+    inode->i_next->i_prev = inode->i_prev;
 	inode->i_prev->i_next = inode->i_next;
     inode->i_next = inode->i_prev = NULL;
 }
@@ -52,31 +50,21 @@ static void remove_inode_free(register struct inode *inode)
 static void put_last_free(register struct inode *inode)
 {
     remove_inode_free(inode);
-    if (first_inode) {
+    inode->i_next = first_inode;
 	inode->i_prev = first_inode->i_prev;
 	inode->i_prev->i_next = inode;
-    } else
-	inode->i_prev = NULL;
-    inode->i_next = first_inode;
     inode->i_next->i_prev = inode;
-}
-
-static void setup_inodes(void)
-{
-    register struct inode *inode = inode_block;
-    register char *pi;
-
-    pi = (char *)(nr_inodes = nr_free_inodes = NR_INODE);
-
-    do {
-	insert_inode_free(inode++);
-    } while (--pi);
 }
 
 void inode_init(void)
 {
-    first_inode = NULL;
-    setup_inodes();
+    register struct inode *inode = inode_block;
+
+    nr_inodes = nr_free_inodes = NR_INODE;
+    first_inode = inode->i_next = inode->i_prev = inode;
+    do {
+	insert_inode_free(++inode);
+    } while (inode < &inode_block[NR_INODE-1]);
 }
 
 /*
@@ -125,7 +113,7 @@ void clear_inode(register struct inode *inode)
     remove_inode_free(inode);
     if (inode->i_count)
 	nr_free_inodes++;
-    memset(inode, 0, sizeof(*inode));
+    memset(inode, 0, sizeof(struct inode));
     insert_inode_free(inode);
 }
 
@@ -135,7 +123,8 @@ int fs_may_mount(kdev_t dev)
     int i;
 
     next = first_inode;
-    for (i = nr_inodes; i > 0; i--) {
+    i = nr_inodes;
+    do {
 	inode = next;
 	next = inode->i_next;	/* clear_inode() changes the queues.. */
 	if (inode->i_dev != dev)
@@ -143,7 +132,7 @@ int fs_may_mount(kdev_t dev)
 	if (inode->i_count || inode->i_dirt || inode->i_lock)
 	    return 0;
 	clear_inode(inode);
-    }
+    } while(--i);
     return 1;
 }
 
@@ -153,7 +142,7 @@ int fs_may_umount(kdev_t dev, register struct inode *mount_rooti)
     int i;
 
     inode = first_inode;
-    for (i = 0; i < nr_inodes; i++, inode = inode->i_next) {
+    for (i = nr_inodes; i > 0; i--, inode = inode->i_next) {
 	if (inode->i_dev != dev || !inode->i_count)
 	    continue;
 	if (inode == mount_rooti && inode->i_count == 1)
@@ -315,7 +304,8 @@ void invalidate_inodes(kdev_t dev)
     int i;
 
     next = first_inode;
-    for (i = nr_inodes; i > 0; i--) {
+    i = nr_inodes;
+    do {
 	inode = next;
 	next = inode->i_next;	/* clear_inode() changes the queues.. */
 	if (inode->i_dev != dev)
@@ -325,7 +315,7 @@ void invalidate_inodes(kdev_t dev)
 	    continue;
 	}
 	clear_inode(inode);
-    }
+    } while(--i);
 }
 
 void sync_inodes(kdev_t dev)

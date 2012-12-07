@@ -56,7 +56,7 @@ _call_bios:
 
 ! DS already saved in stashed_ds
 
-	mov bx, _bios_data_table
+	mov bx, #_bdt
 
 !	Load the register block from the table	
 
@@ -104,7 +104,7 @@ _call_bios:
 
 ! ***** We can now use the bios data table again *****
 
- 	mov  bx, _bios_data_table
+	mov bx, #_bdt
 
  	pop 18[bx]         ! Save the old DS
  	mov 2[bx],ax       ! Save the old AX

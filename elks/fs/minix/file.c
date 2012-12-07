@@ -154,9 +154,8 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
 	    unmap_brelse(bh);
 	    buf += chars;
 	} else {
-	    char zero = 0;
 	    while (chars-- > 0)
-		memcpy_tofs(buf++, &zero, 1);
+		put_user_char((unsigned char)0, (void *)(buf++));
 	}
 	offset = 0;
     }

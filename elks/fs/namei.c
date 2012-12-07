@@ -98,8 +98,8 @@ int lookup(register struct inode *dir, char *name, size_t len,
     if (dir) {
 	/* check permissions before traversing mount-points */
 	perm = permission(dir, MAY_EXEC);
-	if (len == 2 && get_fs_byte(name) == '.'
-		     && get_fs_byte(name + 1) == '.') {
+	if (len == 2 && get_user_char(name) == '.'
+		     && get_user_char(name + 1) == '.') {
 	    if (dir == current->fs.root) {
 		*result = dir;
 		goto lkp_end;
@@ -178,7 +178,7 @@ static int dir_namei(register char *pathname, size_t * namelen,
 	base = current->fs.pwd;
 	base->i_count++;
     }
-    if ((c = get_fs_byte(pathname)) == '/') {
+    if ((c = get_user_char(pathname)) == '/') {
 	iput(base);
 	base = current->fs.root;
 	pathname++;
@@ -186,8 +186,9 @@ static int dir_namei(register char *pathname, size_t * namelen,
     }
     while (1) {
 	thisname = pathname;
-	for (len = 0; (c = get_fs_byte(pathname++)) && (c != '/'); len++)
+	while ((c = get_user_char(pathname++)) && (c != '/'))
 	    /* Do nothing */ ;
+	len = pathname - thisname - 1;
 	if (!c)
 	    break;
 	base->i_count++;

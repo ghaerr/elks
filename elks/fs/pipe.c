@@ -34,7 +34,7 @@ int get_unused_fd(void)
 
     do {
 	if (!current->files.fd[(unsigned int) pfd]) {
-	    (void) clear_bit((unsigned int) pfd,
+	    clear_bit((unsigned int) pfd,
 			     &current->files.close_on_exec);
 	    return (int) pfd;
 	}

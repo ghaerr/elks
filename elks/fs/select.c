@@ -207,8 +207,8 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
 	if (error)
 	    goto out;
 
-	timeout = ROUND_UP(get_fs_long(&tvp->tv_usec), (1000000 / HZ));
-	timeout += get_fs_long(&tvp->tv_sec) * (jiff_t) HZ;
+	timeout = ROUND_UP(get_user_long(&tvp->tv_usec), (1000000 / HZ));
+	timeout += get_user_long(&tvp->tv_sec) * (jiff_t) HZ;
 	if (timeout)
 	    timeout += jiffies + 1UL;
     }

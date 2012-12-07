@@ -172,18 +172,18 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 
     case MEM_GETMODTEXT:
 	i = (char *) module_init;
-	memcpy_tofs(arg, &i, 2);
+	put_user((unsigned short int)i, (void *)arg);
 	return 0;
     case MEM_GETMODDATA:
 	i = (char *) module_data;
-	memcpy_tofs(arg, &i, 2);
+	put_user((unsigned short int)i, (void *)arg);
 	return 0;
 
 #endif
 
     case MEM_GETTASK:
 	i = (char *) task;
-	memcpy_tofs(arg, &i, 2);
+	put_user((unsigned short int)i, (void *)arg);
 
 #if 0
 
@@ -197,11 +197,11 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 	return 0;
     case MEM_GETCS:
 	i = (char *) get_cs();
-	memcpy_tofs(arg, &i, 2);
+	put_user((unsigned short int)i, (void *)arg);
 	return 0;
     case MEM_GETDS:
 	i = (char *) get_ds();
-	memcpy_tofs(arg, &i, 2);
+	put_user((unsigned short int)i, (void *)arg);
 	return 0;
     case MEM_GETUSAGE:
 	mu.free_memory = mm_get_usage(MM_MEM, 0);

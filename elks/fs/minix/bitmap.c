@@ -136,10 +136,7 @@ block_t minix_new_block(register struct super_block *sb)
     if (j < sb->u.minix_sb.s_firstdatazone || j >= sb->u.minix_sb.s_nzones)
 	return 0;
     /* WARNING: j is not converted, so we have to do it */
-    if (!(bh = getblk(sb->s_dev, (block_t) j))) {
-	printk("mnb: cannot get");
-	return 0;
-    }
+    bh = getblk(sb->s_dev, (block_t) j);
     map_buffer(bh);
     memset(bh->b_data, 0, BLOCK_SIZE);
     mark_buffer_uptodate(bh, 1);

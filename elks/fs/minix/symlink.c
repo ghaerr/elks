@@ -89,8 +89,7 @@ static int minix_readlink(struct inode *inode,
 	register char *pi = 0;
 	while (((int)pi) < buflen && (c = bh->b_data[(int)pi])) {
 	    pi++;
-	    memcpy_tofs(buffer++, &c, 1);
-	    /* put_fs_byte(c,buffer++); */
+	    put_user_char(c,buffer++);
 	}
 	unmap_brelse(bh);
 	return (int)pi;

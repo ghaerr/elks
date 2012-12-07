@@ -21,7 +21,7 @@ loff_t sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
     register struct file_operations *fop;
     loff_t offset, tmp;
 
-    offset = (loff_t) get_fs_long(p_offset);
+    offset = (loff_t) get_user_long(p_offset);
     if (fd >= NR_OPEN || !(file = current->files.fd[fd])
 	|| !(file->f_inode))
 	return -EBADF;
@@ -53,7 +53,7 @@ loff_t sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
 
     }
 
-    memcpy_tofs(p_offset, &tmp, 4);
+    put_user_long((unsigned long int)tmp, (void *)p_offset);
 
     return 0;
 }

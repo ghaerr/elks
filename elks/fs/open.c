@@ -155,8 +155,8 @@ int sys_utime(char *filename, register struct utimbuf *times)
 	return error;
     pinode = inode;
     if (times) {
-	pinode->i_atime = get_fs_long((unsigned long *) &times->actime);
-	pinode->i_mtime = get_fs_long((unsigned long *) &times->modtime);
+	pinode->i_atime = get_user_long((void *) &times->actime);
+	pinode->i_mtime = get_user_long((void *) &times->modtime);
     } else
 	pinode->i_atime = pinode->i_mtime = CURRENT_TIME;
     pinode->i_dirt = 1;

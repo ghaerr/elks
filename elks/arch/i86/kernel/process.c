@@ -116,8 +116,8 @@ _tswitch:
 	.globl _syscall_int
 
 !
-!	System calls enter here with ax as function and bx,cx,dx as
-!	parameters (and di,si if elks_syscall in elksemu is to be believed)
+!	System calls enter here with ax as function and bx,cx,dx,di and si
+!	as parameters.
 !	syscall returns a value in ax
 !
 

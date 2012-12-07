@@ -18,6 +18,10 @@
 #include <utime.h>
 #include <errno.h>
 
+#define BUF_SIZE 1024
+
+char *buf;
+
 void
 main(argc, argv)
 	char	**argv;
@@ -36,6 +40,7 @@ main(argc, argv)
 		exit(1);
 	}
 
+	buf = malloc(BUF_SIZE);
 	while (argc-- > 2) {
 		srcname = argv[1];
 		destname = lastarg;
@@ -44,10 +49,9 @@ main(argc, argv)
 
 		(void) copyfile(*++argv, destname, FALSE);
 	}
+	free(buf);
 	exit(0);
 }
-
-#define BUF_SIZE 1024 
 
 typedef	struct	chunk	CHUNK;
 #define	CHUNKINITSIZE	4
@@ -93,7 +97,6 @@ copyfile(srcname, destname, setmodes)
 	int		rcc;
 	int		wcc;
 	char		*bp;
-	char		*buf;
 	struct	stat	statbuf1;
 	struct	stat	statbuf2;
 	struct	utimbuf	times;
@@ -128,7 +131,6 @@ copyfile(srcname, destname, setmodes)
 		return FALSE;
 	}
 
-	buf = malloc(BUF_SIZE);
 	while ((rcc = read(rfd, buf, BUF_SIZE)) > 0) {
 		bp = buf;
 		while (rcc > 0) {

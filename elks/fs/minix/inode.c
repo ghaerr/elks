@@ -377,14 +377,12 @@ unsigned short _minix_bmap(register struct inode *inode,
 struct buffer_head *minix_getblk(register struct inode *inode,
 				 unsigned short block, int create)
 {
-    struct buffer_head *bh;
     unsigned short blknum;
 
     blknum = _minix_bmap(inode, block, create);
-    if (blknum != 0) {
-	bh = getblk(inode->i_dev, (block_t) blknum);
-	return bh;
-    } else
+    if (blknum != 0)
+	return getblk(inode->i_dev, (block_t) blknum);
+    else
 	return NULL;
 }
 

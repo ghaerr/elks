@@ -1172,14 +1172,8 @@ static int fd_ioctl(struct inode *inode,
 	    this_floppy = &floppy_type[drive >> 2];
 	else if ((this_floppy = current_type[drive & 3]) == NULL)
 	    return -ENODEV;
-	i =
-	    verify_area(VERIFY_WRITE, (void *) param,
-			sizeof(struct floppy_struct));
-	if (i)
-	    return i;
-	for (cnt = 0; cnt < sizeof(struct floppy_struct); cnt++)
-	    put_fs_byte(((char *) this_floppy)[cnt], (char *) param + cnt);
-	return 0;
+	return verified_memcpy_tofs((char *)param,
+		    (char *)this_floppy, sizeof(struct floppy_struct));
     case FDFMTTRK:
 	if (!suser())
 	    return -EPERM;
@@ -1188,8 +1182,8 @@ static int fd_ioctl(struct inode *inode,
 	clr_irq();
 	while (format_status != FORMAT_NONE)
 	    sleep_on(&format_done);
-	for (cnt = 0; cnt < sizeof(struct format_descr); cnt++)
-	    ((char *) &format_req)[cnt] = get_fs_byte((char *) param + cnt);
+	memcpy_fromfs((char *)(&format_req),
+		    (char *)param, sizeof(struct format_descr));
 	format_req.device = drive;
 	format_status = FORMAT_WAIT;
 	format_errors = 0;

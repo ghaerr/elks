@@ -25,7 +25,7 @@
 
 static int namecompare(size_t len, size_t max, char *name, register char *buf)
 {
-    return ((len > max) || ((len < max) && (buf[len] != 0)))
+    return ((len < max) && (buf[len] != 0))
 	? 0 : !fs_memcmp(name, buf, len);
 }
 
@@ -216,7 +216,7 @@ static int minix_add_entry(register struct inode *dir,
 	    dir->i_mtime = dir->i_ctime = CURRENT_TIME;
 	    dir->i_dirt = 1;
 	    for (i = 0; i < info->s_namelen; i++)
-		de->name[i] = (i < namelen) ? (char) get_fs_byte(name + i)
+		de->name[i] = (i < namelen) ? (char) get_user_char(name + i)
 					    : '\0';
 
 #ifdef BLOAT_FS

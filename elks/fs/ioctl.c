@@ -56,7 +56,7 @@ int sys_ioctl(int fd, unsigned int cmd, unsigned int arg)
     case FIONBIO:
 	memcpy_fromfs(&on, (unsigned int *) arg, 2);
 #if 0
-	on = get_fs_word((unsigned int *) arg);
+	on = get_user((void *) arg);
 #endif
 	filp->f_flags = (on)
 	    ? filp->f_flags | O_NONBLOCK
