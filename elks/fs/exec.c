@@ -59,8 +59,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     struct inode *inode;
     register struct file *filp = &file;
     __registers *tregs;
-    unsigned int suidfile, sgidfile, i;
-    int retval, execformat;
+    unsigned int suidfile, sgidfile;
+    int retval;
     __u16 ds = current->t_regs.ds;
     seg_t cseg, dseg, stack_top = 0;
     uid_t effuid;
@@ -87,7 +87,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      *      Build a reading file handle
      */
     filp->f_mode = filp->f_count = 1;
-    filp->f_pos = filp->f_flags = 0;
+    filp->f_flags = 0;
+    filp->f_pos = 0;		/* FIXME - should call lseek */
     filp->f_inode = inode;
 
 #ifdef BLOAT_FS
@@ -108,7 +109,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      */
     tregs = &current->t_regs;
     tregs->ds = get_ds();
-    filp->f_pos = 0;		/* FIXME - should call lseek */
 
     /*
      *      can I trust the following fields?
@@ -150,14 +150,14 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	stack_top = msuph.msh_dbase;
 	if(stack_top & 0xf){
 	     retval = -ENOEXEC;
-	     goto close_readexec;        
+	     goto close_readexec;
 	}
 	debug1("EXEC: New type executable stack = %x\n", stack_top);
     }
 #else
     if((unsigned int) mh.hlen != 0x20){
         retval = -ENOEXEC;
-        goto close_readexec;       
+        goto close_readexec;
     }
 #endif
 
@@ -169,15 +169,14 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     cseg = 0;
     {
-	register char *pi = 0;
+        register struct task_struct *p = &task[0];
+
 	do {
-	    if ((task[(int)pi].state != TASK_UNUSED)
-		&& (task[(int)pi].t_inode == inode)) {
-		cseg = mm_realloc(task[(int)pi].mm.cseg);
+	    if ((p->state != TASK_UNUSED) && (p->t_inode == inode)) {
+		cseg = mm_realloc(p->mm.cseg);
 		break;
 	    }
-	    ++pi;
-	} while (((int)pi) < MAX_TASKS);
+	} while (++p < &task[MAX_TASKS]);
     }
 
     if (!cseg) {
@@ -190,7 +189,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     }
 
     /*
-     * mh.chmem is "total size" requested by ld. Note that ld used to ask 
+     * mh.chmem is "total size" requested by ld. Note that ld used to ask
      * for (at least) 64K
      */
     if (stack_top) {
@@ -229,7 +228,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    goto close_readexec;
         }
     } else {
-        filp->f_pos += mh.tseg;       
+        filp->f_pos += mh.tseg;
     }
 
     tregs->ds = dseg;
@@ -243,7 +242,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	mm_free(dseg);
 	goto close_readexec;
     }
-    
+
     /*
      *      Wipe the BSS.
      */
@@ -257,7 +256,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	: (char *) (len - slen);
     count = slen;
     fmemcpy(dseg, (__u16) ptr, current->mm.dseg, (__u16) sptr, (__u16) count);
-     
+
     /* argv and envp are two NULL-terminated arrays of pointers, located
      * right after argc.  This fixes them up so that the loaded program
      * gets the right strings. */
@@ -338,7 +337,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    currentp->euid = effuid;
 	if (sgidfile)
 	    currentp->egid = effgid;
-    
+
 	retval = 0;
 	wake_up(&currentp->p_parent->child_wait);
     }

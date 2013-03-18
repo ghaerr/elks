@@ -41,6 +41,8 @@
 #include <arch/segment.h>
 #include <arch/system.h>
 
+#ifdef CONFIG_BLK_DEV_BIOS
+
 #define MAJOR_NR BIOSHD_MAJOR
 #define BIOSDISK
 
@@ -50,39 +52,12 @@
 
 #define BUFSEG 0x800
 
-#ifdef CONFIG_BLK_DEV_BIOS
-
 static int bioshd_ioctl(struct inode *, struct file *, unsigned int,
 			unsigned int);
 
 static int bioshd_open(struct inode *, struct file *);
 
 static void bioshd_release(struct inode *, struct file *);
-
-/*@-type@*/
-
-static struct file_operations bioshd_fops = {
-    NULL,			/* lseek - default */
-    block_read,			/* read - general block-dev read */
-    block_write,		/* write - general block-dev write */
-    NULL,			/* readdir - bad */
-    NULL,			/* select */
-    bioshd_ioctl,		/* ioctl */
-    bioshd_open,		/* open */
-    bioshd_release		/* release */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
-};
-
-/*@+type@*/
-
-static struct wait_queue dma_wait;
-
-static int dma_avail = 1;
 
 static int bioshd_initialized = 0;
 
@@ -102,14 +77,6 @@ static struct drive_infot {
     int fdtype;			/* matches fd_types or -1 if hd */
 } drive_info[4];
 
-struct drive_infot fd_types[] = {
-    {40, 9, 2, 0},
-    {80, 15, 2, 1},
-    {80, 9, 2, 2},
-    {80, 18, 2, 3},
-    {80, 36, 2, 4},
-};
-
 /* This makes probing order more logical and
  * avoids a few senseless seeks in some cases
  */
@@ -123,6 +90,20 @@ static char busy[4] = { 0, 0, 0, 0 };
 
 static int access_count[4] = { 0, 0, 0, 0 };
 
+static int bioshd_sizes[4 << 6] = { 0, };
+
+static struct wait_queue dma_wait;
+
+static int dma_avail = 1;
+
+struct drive_infot fd_types[] = {
+    {40, 9, 2, 0},
+    {80, 15, 2, 1},
+    {80, 9, 2, 2},
+    {80, 18, 2, 3},
+    {80, 36, 2, 4},
+};
+
 static unsigned char hd_drive_map[4] = {
     0x80, 0x81,			/* hda, hdb */
     0x00, 0x01			/* fd0, fd1 */
@@ -133,8 +114,6 @@ static unsigned char hd_drive_map[4] = {
 static int hdcount = 0;
 
 #endif
-
-static int bioshd_sizes[4 << 6] = { 0, };
 
 static void bioshd_geninit(void);
 
@@ -503,6 +482,23 @@ static int bioshd_open(struct inode *inode, struct file *filp)
     return 0;
 }
 
+static struct file_operations bioshd_fops = {
+    NULL,			/* lseek - default */
+    block_read,			/* read - general block-dev read */
+    block_write,		/* write - general block-dev write */
+    NULL,			/* readdir - bad */
+    NULL,			/* select */
+    bioshd_ioctl,		/* ioctl */
+    bioshd_open,		/* open */
+    bioshd_release		/* release */
+#ifdef BLOAT_FS
+	,
+    NULL,			/* fsync */
+    NULL,			/* check_media_change */
+    NULL			/* revalidate */
+#endif
+};
+
 #ifdef DOSHD_VERBOSE_DRIVES
 #define TEMP_PRINT_DRIVES_MAX		4
 #else
@@ -699,14 +695,12 @@ static void do_bioshd_request(void)
 		sleep_on(&dma_wait);
 	    dma_avail = 0;
 	    BD_IRQ = BIOSHD_INT;
-	    if (req->rq_cmd == WRITE) {
+	    if (req->rq_cmd == WRITE)
 		BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
-		fmemcpy(BUFSEG, 0, req->rq_seg, (__u16) buff,
-			(this_pass * 512));
-	    } else
+	    else
 		BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
-	    BD_BX = 0;
-	    BD_ES = BUFSEG;
+	    BD_BX = (__u16) buff;
+	    BD_ES = req->rq_seg;
 	    BD_CX = (unsigned short int)
 			((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
 	    BD_DX = (head << 8) | hd_drive_map[drive];
@@ -728,9 +722,6 @@ static void do_bioshd_request(void)
 		}
 		continue;	/* try again */
 	    }
-	    if (req->rq_cmd == READ)
-		fmemcpy(req->rq_seg, (__u16) buff, BUFSEG, 0,
-			(this_pass * 512));
 
 	    /* In case it's already been freed */
 	    if (!dma_avail) {

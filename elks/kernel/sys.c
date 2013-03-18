@@ -50,20 +50,20 @@ int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
     }
 
     if ((magic == 0x1D1E) && (magic_too == 0xC0DE)) {
-	register int *pflag = &flag;
+	register int *pflag = (int *)flag;
 
-	if (*pflag == 0x0123) {
+	if ((int)pflag == 0x0123) {
 	    hard_reset_now();
 	}
 
-	if (*pflag == 0x6789) {
+	if ((int)pflag == 0x6789) {
 	    printk("System halted\n");
 	    sys_kill(-1, SIGKILL);
 	    do_exit(0);
 	}
 
-	if ((*pflag == 0x4567) || !*pflag) {
-	    C_A_D = (*pflag ? 1 : 0);
+	if (((int)pflag == 0x4567) || !(int)pflag) {
+	    C_A_D = ((int)pflag ? 1 : 0);
 	    return 0;
 	}
     }
@@ -88,7 +88,7 @@ void ctrl_alt_del(void)
 #ifdef CONFIG_SYS_VERSION
 
 /*
- * This function returns the version number associated with this kernel.	
+ * This function returns the version number associated with this kernel.
  */
 
 int sys_knlvsn(char *vsn)
@@ -101,7 +101,7 @@ int sys_knlvsn(char *vsn)
 #endif
 
 /*
- * setgid() is implemented like SysV w/ SAVED_IDS 
+ * setgid() is implemented like SysV w/ SAVED_IDS
  */
 
 int sys_setgid(gid_t gid)
@@ -141,15 +141,15 @@ unsigned short int sys_umask(unsigned short int mask)
 }
 
 /*
- * setuid() is implemented like SysV w/ SAVED_IDS 
- * 
+ * setuid() is implemented like SysV w/ SAVED_IDS
+ *
  * Note that SAVED_ID's is deficient in that a setuid root program
- * like sendmail, for example, cannot set its uid to be a normal 
+ * like sendmail, for example, cannot set its uid to be a normal
  * user and then switch back, because if you're root, setuid() sets
  * the saved uid too.  If you don't like this, blame the bright people
  * in the POSIX committee and/or USG.  Note that the BSD-style setreuid()
  * will allow a root program to temporarily drop privileges and be able to
- * regain them by swapping the real and effective uid.  
+ * regain them by swapping the real and effective uid.
  */
 
 int sys_setuid(uid_t uid)
@@ -325,7 +325,7 @@ int sys_getgroups(int gidsetsize, gid_t * grouplist)
 	}
 	if (verified_memcpy_tofs(grouplist, pg, ((int)pi) * sizeof(gid_t)) != 0)
 	    return -EFAULT;
-							  
+
     }
 
     return (int)pi;
