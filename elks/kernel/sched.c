@@ -48,8 +48,7 @@ void del_from_runqueue(register struct task_struct *p)
         return;
     }
     nr_running--;
-    p->next_run->prev_run = p->prev_run;
-    p->prev_run->next_run = p->next_run;
+    (p->next_run->prev_run = p->prev_run)->next_run = p->next_run;
     p->next_run = p->prev_run = NULL;
 #ifdef CONFIG_SWAP
     p->last_running = jiffies;
@@ -207,14 +206,12 @@ void add_timer(register struct timer_list *timer)
 
     do {
         prev = next;
-        if (!(next = next->tl_next))
-            goto link_tmr;
-    } while(next->tl_expires < timer->tl_expires);
+    } while((next = next->tl_next) && (next->tl_expires < timer->tl_expires));
 
-    (timer->tl_next = next)->tl_prev = timer;
-
- link_tmr:
     (timer->tl_prev = prev)->tl_next = timer;
+    if((timer->tl_next = next))
+        next->tl_prev = timer;
+
     restore_flags(flags);
 }
 

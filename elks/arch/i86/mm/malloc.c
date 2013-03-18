@@ -161,7 +161,7 @@ static struct malloc_hole *best_fit_hole(struct malloc_head *mh, segext_t size)
     register struct malloc_hole *best = NULL;
 
     while (m) {
-	if (m->extent >= size && m->flags == HOLE_FREE)
+	if (m->flags == HOLE_FREE && m->extent >= size)
 	    if (!best || best->extent > m->extent)
 		best = m;
 	m = m->next;
@@ -483,14 +483,14 @@ brk_return:
 
 void mm_init(seg_t start, seg_t end)
 {
-    register struct malloc_hole *holep = &holes[0];
-    register char *pct;
+    register struct malloc_hole *holep = &holes[MAX_SEGMENTS - 1];
 
     /*
      *      Mark pages free.
      */
-    for (pct = (char *) 1 ; ((int) pct) < MAX_SEGMENTS ; pct++)
-	holes[(int)pct].flags = HOLE_SPARE;
+    do {
+	holep->flags = HOLE_SPARE;
+    } while(--holep > holes);
 
     /*
      *      Single hole containing all user memory.

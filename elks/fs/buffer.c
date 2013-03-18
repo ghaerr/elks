@@ -204,15 +204,14 @@ struct buffer_head *get_hash_table(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh;
 
-    for (;;) {
-	if (!(bh = find_buffer(dev, block)))
-	    return NULL;
+    while((bh = find_buffer(dev, block))) {
 	bh->b_count++;
 	wait_on_buffer(bh);
 	if (bh->b_dev == dev && bh->b_blocknr == block)
-	    return bh;
+	    break;
 	bh->b_count--;
     }
+    return bh;
 }
 
 /*
@@ -235,11 +234,10 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
      * now so as to ensure that there are still clean buffers available
      * for user processes to use (and dirty) */
 
-    for (;;) {
+    do {
 	bh = get_hash_table(dev, block);
 	if (bh != NULL) {
-	    if (buffer_clean(bh))
-		if (buffer_uptodate(bh))
+	    if (buffer_clean(bh) && buffer_uptodate(bh))
 		    put_last_lru(bh);
 	    return bh;
 	}
@@ -248,9 +246,7 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
 	 * So I will remove it for now
 	 */
 
-	if (!find_buffer(dev, block))
-	    break;
-    }
+    } while(find_buffer(dev, block));
 
     /*
      *      Create a buffer for this job.

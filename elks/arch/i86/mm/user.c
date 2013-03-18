@@ -228,7 +228,8 @@ void put_user(unsigned short int dv, void *dp)
 
 int fs_memcmp(void *s, void *d, size_t len)
 {
-    unsigned char *p1 = s, *p2 = d;
+    register unsigned char *p1 = s;
+    register unsigned char *p2 = d;
     int c = 0;
 
     while (len-- && !c)

@@ -74,7 +74,8 @@ static char *hex_lower = "0123456789abcdef";
 static void numout(unsigned long v, int width, int base, int useSign,
 		   int Upper, int Zero)
 {
-    char *bp, *bp2;
+    register char *bp;
+    char *bp2;
     char buf[12];
 
     if (width > sizeof(buf))		/* Error-check width specified */
@@ -206,7 +207,8 @@ void printk(char *fmt, ...)
 void panic(char *error, ...)
 {
     va_list p;
-    int *bp = (int *) &error - 2, i = 0, j;
+    register int *bp = (int *) &error - 2;
+    int i = 0, j;
 
     kputs("\npanic: ");
     va_start(p, error);

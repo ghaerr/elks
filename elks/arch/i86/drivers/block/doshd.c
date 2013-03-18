@@ -532,8 +532,8 @@ int init_bioshd(void)
 	return 0;
 
 #ifdef TEMP_PRINT_DRIVES_MAX
-    for (i = 0; i < TEMP_PRINT_DRIVES_MAX; i++) {
-	drivep = drive_info + i;
+    drivep = drive_info;
+    for (i = 0; i < TEMP_PRINT_DRIVES_MAX; i++, drivep++) {
 	if (drivep->heads != 0) {
 	    char *unit = "kMGT";
 	    __u32 size = ((__u32) drivep->sectors) * 5 /* 0.1 kB units */;

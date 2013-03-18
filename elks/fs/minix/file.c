@@ -195,7 +195,7 @@ static int minix_file_write(register struct inode *inode,
 		written = -ENOSPC;
 	    break;
 	}
-	if (chars != BLOCK_SIZE && !buffer_uptodate(bh)) {
+	if (chars != BLOCK_SIZE) {
 	    if (!readbuf(bh)) {
 		if (!written)
 		    written = -EIO;

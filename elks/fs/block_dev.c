@@ -23,13 +23,11 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 		  char *buf, size_t count, int wr)
 {
     register struct buffer_head *bh;
-    block_t block;
     kdev_t dev;
     unsigned int offset;
     size_t chars;
-    int written;
+    int written = 0;
 
-    written = 0;
     dev = inode->i_rdev;
 
     while (count > 0) {
@@ -37,7 +35,6 @@ static int blk_rw(struct inode *inode, register struct file *filp,
     /*
      *      Offset to block/offset
      */
-    block = (block_t) (filp->f_pos >> BLOCK_SIZE_BITS);
 	offset = ((unsigned int)filp->f_pos) & (BLOCK_SIZE - 1);
 
 	/*
@@ -50,15 +47,13 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	 *      Read the block in - use getblk on a write
 	 *      of a whole block to avoid a read of the data.
 	 */
-	if(wr == BLOCK_WRITE && chars == BLOCK_SIZE) {
-	    bh = getblk(dev, block);
-	    map_buffer(bh);
-	} else {
-	    bh = bread(dev, block);
-	if (!bh)
-	    return written ? written : -EIO;
+	bh = getblk(dev, (block_t)(filp->f_pos >> BLOCK_SIZE_BITS));
+	if((wr == BLOCK_READ) || (chars != BLOCK_SIZE)) {
+		if (!readbuf(bh))
+			return written ? written : -EIO;
 	}
 
+	map_buffer(bh);
 	if (wr == BLOCK_WRITE) {
 	    /*
 	     *      Alter buffer, mark dirty

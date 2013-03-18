@@ -34,10 +34,11 @@ void setup_mm(void)
     __u16 basemem = setupw(0x2a);
     __u16 xms = setupw(2);		/* Fetched by boot code */
 
-    for (pi = 0; ((int)pi) < 16; pi++) {
+    pi = 0;
+    do {
 	proc_name[(int)pi] = setupb(0x30 + (int)pi);
 	cpuid[(int)pi] = setupb(0x50 + (int)pi);
-    }
+    } while((int)(++pi) < 16);
     proc_name[16] = cpuid[16] = '\0';
 
 #ifdef CONFIG_ARCH_SIBO
@@ -52,7 +53,7 @@ void setup_mm(void)
 	   arch_cpu > 5 ? 'A' : 'X', proc_name, basemem);
     if (arch_cpu < 6)
 	xms = 0;		/* XT bios hasn't got xms interrupt */
-    if (xms)
+    else
 	printk(", %dK extended memory (XMS)", xms);
     if (*cpuid)
 	printk(", CPUID `%s'", cpuid);
