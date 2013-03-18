@@ -82,8 +82,8 @@ char *get_pipe_mem(void)
 static size_t pipe_read(register struct inode *inode, struct file *filp,
 		     char *buf, int count)
 {
-    size_t chars = 0, size = 0, read = 0;
-    register char *pipebuf;
+    size_t size, read = 0;
+    register char *chars;
 
     debug("PIPE: read called.\n");
     if (filp->f_flags & O_NONBLOCK) {
@@ -103,19 +103,17 @@ static size_t pipe_read(register struct inode *inode, struct file *filp,
 	}
     (inode->u.pipe_i.lock)++;
     while (count > 0 && (size = (size_t) (inode->u.pipe_i.len))) {
-	chars = (PIPE_BUF - (inode->u.pipe_i.start));
-	if (chars > (size_t) count)
-	    chars = (size_t) count;
-	if (chars > size)
-	    chars = size;
-	read += chars;
-	pipebuf = (inode->u.pipe_i.base) + (inode->u.pipe_i.start);
-	(inode->u.pipe_i.start) += chars;
-	(inode->u.pipe_i.start) &= (PIPE_BUF - 1);
-	(inode->u.pipe_i.len) -= chars;
-	count -= chars;
-	memcpy_tofs(buf, pipebuf, chars);
-	buf += chars;
+	chars = (char *)(PIPE_BUF - (inode->u.pipe_i.start));
+	if ((size_t)chars > (size_t) count)
+	    chars = (char *)count;
+	if ((size_t)chars > size)
+	    chars = (char *)size;
+	memcpy_tofs(buf, (inode->u.pipe_i.base+inode->u.pipe_i.start), (size_t)chars);
+	buf += (size_t)chars;
+        inode->u.pipe_i.start = (inode->u.pipe_i.start + (size_t)chars)&(PIPE_BUF-1);
+	(inode->u.pipe_i.len) -= (size_t)chars;
+	read += (size_t)chars;
+	count -= (int)chars;
     }
     (inode->u.pipe_i.lock)--;
     wake_up_interruptible(&(inode->u.pipe_i.wait));
@@ -131,8 +129,8 @@ static size_t pipe_read(register struct inode *inode, struct file *filp,
 static size_t pipe_write(register struct inode *inode, struct file *filp,
 		      char *buf, int count)
 {
-    register char *pipebuf;
-    size_t chars = 0, free = 0, written = 0;
+    size_t free, tmp, written = 0;
+    register char *chars;
 
     debug("PIPE: write called.\n");
     if (!(inode->u.pipe_i.readers)) {
@@ -157,23 +155,18 @@ static size_t pipe_write(register struct inode *inode, struct file *filp,
 	(inode->u.pipe_i.lock)++;
 	while (count > 0 && (free = (PIPE_BUF - (inode->u.pipe_i.len)))) {
 
-	    chars = -(((inode->u.pipe_i.start) + (inode->u.pipe_i.len))
-		      & (PIPE_BUF - 1)) + PIPE_BUF;
+            tmp = (inode->u.pipe_i.start + inode->u.pipe_i.len)&(PIPE_BUF-1);
+	    chars = (char *)(PIPE_BUF - tmp);
+	    if ((size_t)chars > (size_t) count)
+		chars = (char *) count;
+	    if ((size_t)chars > free)
+		chars = (char *)free;
 
-	    if (chars > (size_t) count)
-		chars = (size_t) count;
-
-	    if (chars > free)
-		chars = free;
-
-	    pipebuf = (((inode->u.pipe_i.start) + (inode->u.pipe_i.len))
-		       & (PIPE_BUF - 1)) + (inode->u.pipe_i.base);
-
-	    written += chars;
-	    (inode->u.pipe_i.len) += chars;
-	    count -= chars;
-	    memcpy_fromfs(pipebuf, buf, chars);
-	    buf += chars;
+	    memcpy_fromfs((inode->u.pipe_i.base + tmp), buf, (size_t)chars);
+	    buf += (size_t)chars;
+	    (inode->u.pipe_i.len) += (size_t)chars;
+	    written += (size_t)chars;
+	    count -= (int)chars;
 	}
 	(inode->u.pipe_i.lock)--;
 	wake_up_interruptible(&(inode->u.pipe_i.wait));

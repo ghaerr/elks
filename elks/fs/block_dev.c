@@ -37,7 +37,7 @@ static int blk_rw(struct inode *inode, register struct file *filp,
     /*
      *      Offset to block/offset
      */
-    block = (block_t) (filp->f_pos >> 10);
+    block = (block_t) (filp->f_pos >> BLOCK_SIZE_BITS);
 	offset = ((unsigned int)filp->f_pos) & (BLOCK_SIZE - 1);
 
 	/*

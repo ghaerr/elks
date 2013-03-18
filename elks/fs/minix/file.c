@@ -28,7 +28,7 @@
 #include <linuxmt/minix_fs.h>
 
 static int minix_file_read(struct inode *inode, register struct file *filp,
-			   char *buf, size_t icount);
+			    char *buf, size_t count);
 
 static int minix_file_write(register struct inode *inode, struct file *filp,
 			    char *buf, size_t count);
@@ -84,29 +84,12 @@ static char inode_equal_NULL[] = "inode = NULL\n";
 static char mode_equal_val[] = "mode = %07o\n";
 
 static int minix_file_read(struct inode *inode, register struct file *filp,
-			   char *buf, size_t icount)
+			    char *buf, size_t count)
 {
     struct buffer_head *bh;
-    loff_t offset, size, left;
-    size_t chars, count = (icount % 65536);
-    int read;
-    block_t block, blocks;
-
-    offset = filp->f_pos;
-    size = (loff_t) inode->i_size;
-
-    /*
-     *      Amount we can do I/O over
-     */
-
-    left = (offset > size) ? 0 : size - offset;
-
-    if (left > count)
-	left = count;
-    if (left <= 0) {
-	debug("MFSREAD: EOF reached.\n");
-	return 0;		/* EOF */
-    }
+    loff_t offset;
+    size_t chars;
+    int read = 0;
 
     {
 	register char *s;
@@ -122,42 +105,42 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
 	}
     }
 
-    read = 0;
+    /*
+     *      Amount we can do I/O over
+     */
+    offset = ((loff_t)inode->i_size) - filp->f_pos;
+    if (offset <= 0) {
+	debug("MFSREAD: EOF reached.\n");
+	return 0;		/* EOF */
+    }
+    if (offset < (loff_t)count)
+        count = (size_t)offset;
+
+    while (count > 0) {
     /*
      *      Block, offset pair from the byte offset
      */
-    block = (block_t) (offset >> BLOCK_SIZE_BITS);
-    offset &= BLOCK_SIZE - 1;
-    blocks = (block_t) ((offset + left + (BLOCK_SIZE - 1)) >> BLOCK_SIZE_BITS);
+	offset = filp->f_pos & (BLOCK_SIZE - 1);
+        chars = BLOCK_SIZE - (size_t)offset;
+        if (chars > count)
+            chars = count;
 
-    while (blocks--) {
-	debug1("MINREAD: Reading block #%d\n", block);
-	if ((bh = minix_getblk(inode, block++, 0))) {
-	    debug2("MINREAD: block %d = buffer %d\n", block - 1, bh->b_num);
+        bh = minix_getblk(inode, (block_t)(filp->f_pos >> BLOCK_SIZE_BITS), 0);
+	if (bh) {
 	    if (!readbuf(bh)) {
 		debug("MINREAD: readbuf failed\n");
-		left = 0;
 		break;
 	    }
-	}
-
-	chars = (left < (BLOCK_SIZE - offset)) ? left : (BLOCK_SIZE - offset);
-
-	filp->f_pos += chars;
-	left -= chars;
-	read += chars;
-	if (bh) {
 	    map_buffer(bh);
-	    debug2("MINREAD: Copying data for block #%d, buffer #%d\n",
-		 block - 1, bh->b_num);
-	    memcpy_tofs(buf, offset + bh->b_data, (size_t) chars);
+	    memcpy_tofs(buf, bh->b_data + offset, chars);
 	    unmap_brelse(bh);
-	    buf += chars;
 	} else {
-	    while (chars-- > 0)
-		put_user_char((unsigned char)0, (void *)(buf++));
+            fmemset(buf, current->t_regs.ds, 0, chars);
 	}
-	offset = 0;
+	buf += chars;
+        filp->f_pos += chars;
+        read += chars;
+        count -= chars;
     }
     if (!read)
 	return -EIO;
@@ -175,9 +158,9 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
 static int minix_file_write(register struct inode *inode,
 			    struct file *filp, char *buf, size_t count)
 {
-    char *p;
     loff_t pos;
-    size_t c, written;
+    size_t chars, offset;
+    size_t written = 0;
 
     {
 	register char *s;
@@ -198,20 +181,21 @@ static int minix_file_write(register struct inode *inode,
 	? (loff_t) inode->i_size
 	: filp->f_pos;
 
-    written = 0;
-    while (written < count) {
+    while (count > 0) {
 	register struct buffer_head *bh;
 
-	bh = minix_getblk(inode, (unsigned short) (pos >> BLOCK_SIZE_BITS), 1);
+        offset = (size_t)pos & (BLOCK_SIZE - 1);
+	chars = BLOCK_SIZE - offset;
+	if (chars > count)
+	    chars = count;
+
+	bh = minix_getblk(inode, (block_t) (pos >> BLOCK_SIZE_BITS), 1);
 	if (!bh) {
 	    if (!written)
 		written = -ENOSPC;
 	    break;
 	}
-	c = BLOCK_SIZE - (pos % BLOCK_SIZE);
-	if (c > count - written)
-	    c = count - written;
-	if (c != BLOCK_SIZE && !buffer_uptodate(bh)) {
+	if (chars != BLOCK_SIZE && !buffer_uptodate(bh)) {
 	    if (!readbuf(bh)) {
 		if (!written)
 		    written = -EIO;
@@ -219,19 +203,19 @@ static int minix_file_write(register struct inode *inode,
 	    }
 	}
 	map_buffer(bh);
-	p = (pos % BLOCK_SIZE) + bh->b_data;
-	memcpy_fromfs(p, buf, c);
+	memcpy_fromfs((bh->b_data + offset), buf, chars);
 	mark_buffer_uptodate(bh, 1);
 	mark_buffer_dirty(bh, 1);
 	unmap_brelse(bh);
-	pos += c;
-	written += c;
-	buf += c;
+	buf += chars;
+	pos += chars;
+	written += chars;
+        count -= chars;
     }
     if (pos > (loff_t) inode->i_size)
 	inode->i_size = (__u32) pos;
-    inode->i_mtime = inode->i_ctime = CURRENT_TIME;
     filp->f_pos = pos;
+    inode->i_mtime = inode->i_ctime = CURRENT_TIME;
     inode->i_dirt = 1;
     return (int) written;
 }
