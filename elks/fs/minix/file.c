@@ -86,7 +86,6 @@ static char mode_equal_val[] = "mode = %07o\n";
 static int minix_file_read(struct inode *inode, register struct file *filp,
 			    char *buf, size_t count)
 {
-    struct buffer_head *bh;
     loff_t offset;
     size_t chars;
     int read = 0;
@@ -117,6 +116,7 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
         count = (size_t)offset;
 
     while (count > 0) {
+        register struct buffer_head *bh;
     /*
      *      Block, offset pair from the byte offset
      */

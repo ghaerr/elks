@@ -24,43 +24,36 @@ int event = 0;
 static struct inode inode_block[NR_INODE];
 static struct inode *first_inode;
 static struct wait_queue inode_wait;
-static int nr_inodes = 0;
-static int nr_free_inodes = 0;
+static int nr_free_inodes;
 
 static void insert_inode_free(register struct inode *inode)
 {
     register struct inode *in = first_inode;
-    inode->i_next = in;
-    inode->i_prev = in->i_prev;
-    in->i_prev = inode;
-    inode->i_prev->i_next = inode;
-    first_inode = inode;
+
+    inode->i_prev = in;
+    (inode->i_next = in->i_next)->i_prev = inode;
+    in->i_next = inode;
 }
 
 static void remove_inode_free(register struct inode *inode)
 {
-    register struct inode *in;
     if (first_inode == inode)
-	first_inode = first_inode->i_next;
-    inode->i_next->i_prev = inode->i_prev;
-	inode->i_prev->i_next = inode->i_next;
-    inode->i_next = inode->i_prev = NULL;
+        first_inode = inode->i_prev;
+    (inode->i_next->i_prev = inode->i_prev)->i_next = inode->i_next;
 }
 
 static void put_last_free(register struct inode *inode)
 {
     remove_inode_free(inode);
-    inode->i_next = first_inode;
-	inode->i_prev = first_inode->i_prev;
-	inode->i_prev->i_next = inode;
-    inode->i_next->i_prev = inode;
+    insert_inode_free(inode);
+    first_inode = inode;
 }
 
 void inode_init(void)
 {
     register struct inode *inode = inode_block;
 
-    nr_inodes = nr_free_inodes = NR_INODE;
+    nr_free_inodes = NR_INODE;
     first_inode = inode->i_next = inode->i_prev = inode;
     do {
 	insert_inode_free(++inode);
@@ -119,36 +112,31 @@ void clear_inode(register struct inode *inode)
 
 int fs_may_mount(kdev_t dev)
 {
-    register struct inode *inode, *next;
-    int i;
+    register struct inode *next;
+    register struct inode *inode = first_inode;
 
-    next = first_inode;
-    i = nr_inodes;
     do {
-	inode = next;
-	next = inode->i_next;	/* clear_inode() changes the queues.. */
+        next = inode->i_prev;	/* clear_inode() changes the queues.. */
 	if (inode->i_dev != dev)
 	    continue;
 	if (inode->i_count || inode->i_dirt || inode->i_lock)
 	    return 0;
 	clear_inode(inode);
-    } while(--i);
+    } while((inode = next) != first_inode);
     return 1;
 }
 
 int fs_may_umount(kdev_t dev, register struct inode *mount_rooti)
 {
-    register struct inode *inode;
-    int i;
+    register struct inode *inode = first_inode;
 
-    inode = first_inode;
-    for (i = nr_inodes; i > 0; i--, inode = inode->i_next) {
+    do {
 	if (inode->i_dev != dev || !inode->i_count)
 	    continue;
 	if (inode == mount_rooti && inode->i_count == 1)
 	    continue;
 	return 0;
-    }
+    } while((inode = inode->i_prev) != first_inode);
     return 1;
 }
 
@@ -188,7 +176,7 @@ static void write_inode(register struct inode *inode)
 
 static void read_inode(register struct inode *inode)
 {
-    register struct super_block *sb = inode->i_sb;
+    struct super_block *sb = inode->i_sb;
     register struct super_operations *sop = sb->s_op;
 
     lock_inode(inode);
@@ -300,14 +288,11 @@ int notify_change(register struct inode *inode, register struct iattr *attr)
 
 void invalidate_inodes(kdev_t dev)
 {
-    register struct inode *inode, *next;
-    int i;
+    register struct inode *next;
+    register struct inode *inode = first_inode;
 
-    next = first_inode;
-    i = nr_inodes;
     do {
-	inode = next;
-	next = inode->i_next;	/* clear_inode() changes the queues.. */
+        next = inode->i_prev;	/* clear_inode() changes the queues.. */
 	if (inode->i_dev != dev)
 	    continue;
 	if (inode->i_count || inode->i_dirt || inode->i_lock) {
@@ -315,22 +300,20 @@ void invalidate_inodes(kdev_t dev)
 	    continue;
 	}
 	clear_inode(inode);
-    } while(--i);
+    } while((inode = next) != first_inode);
 }
 
 void sync_inodes(kdev_t dev)
 {
-    register struct inode *inode;
-    register char *pi;
+    register struct inode *inode = first_inode;
 
-    inode = first_inode;
-    for (pi = 0; ((int) pi) < nr_inodes * 2; pi++, inode = inode->i_next) {
+    do {
 	if (dev && inode->i_dev != dev)
 	    continue;
 	wait_on_inode(inode);
 	if (inode->i_dirt)
 	    write_inode(inode);
-    }
+    } while((inode = inode->i_prev) != first_inode);
 }
 
 void iput(register struct inode *inode)
@@ -383,35 +366,38 @@ void iput(register struct inode *inode)
 
 static void list_inode_status(void)
 {
-    register char * pi;
+    register char *pi = 0;
+    register struct inode *inode = first_inode;
 
-    for (pi = 0; ((int)pi) < nr_inodes; pi++)
-	printk("[#%u: c=%u d=%x nr=%lu]",
-	       ((int)pi), inode_block[(int)pi].i_count,
-	       inode_block[(int)pi].i_dev, inode_block[(int)pi].i_ino);
+    do {
+        printk("[#%u: c=%u d=%x nr=%lu]",
+	       ((int)(pi++)), inode->i_count,
+	       inode->i_dev, inode->i_ino);
+    } while((inode = inode->i_prev) != first_inode);
 }
 
 struct inode *get_empty_inode(void)
 {
     static ino_t ino = 0;
-    register struct inode *inode, *best;
-    int i;
+    register struct inode *inode;
+    register struct inode *best;
 
-  repeat:
-    inode = first_inode;
     best = 0;
-    for (inode = inode_block, i = 0; i < nr_inodes; inode++, i++) {
-	if (!inode->i_count && !inode->i_lock && !inode->i_dirt) {
-	    best = inode;
-	    break;
-	}
-    }
-    if (!best) {
-	printk("VFS: No free inodes - contact somebody other than Linus\n");
-	list_inode_status();
-	sleep_on(&inode_wait);
-	goto repeat;
-    }
+    goto startl;
+    do {
+        printk("VFS: No free inodes - contact somebody other than Linus\n");
+        list_inode_status();
+        sleep_on(&inode_wait);
+  startl:
+        inode = first_inode->i_next;
+        do {
+            if (!inode->i_count && !inode->i_lock && !inode->i_dirt) {
+                best = inode;
+                break;
+            }
+        } while((inode = inode->i_next) != first_inode->i_next);
+    } while(!best);
+
 /* Here we are doing the same checks again. There cannot be a significant *
  * race condition here - no time has passed */
 #if 0
@@ -477,28 +463,25 @@ struct inode *get_pipe_inode(void)
 struct inode *__iget(register struct super_block *sb,
 		     ino_t inr /*,int crossmntp */ )
 {
-    int i;
     register struct inode *inode;
-    register struct inode *empty = NULL;
+    struct inode *empty = NULL;
 
     debug3("iget called(%x, %d, %d)\n", sb, inr, 0 /* crossmntp */ );
     if (!sb)
 	panic("VFS: iget with sb==NULL");
   repeat:
-    inode = inode_block;
-    for (i = NR_INODE; i; i--, inode++) {
+    inode = first_inode;
+    do {
 	if (inode->i_dev == sb->s_dev && inode->i_ino == inr) {
 	    goto found_it;
 	}
-    }
+    } while((inode = inode->i_prev) != first_inode);
 
     if (!empty) {
 	debug("iget: getting an empty inode...\n");
 	empty = get_empty_inode();
 	debug1("iget: got one... (%x)!\n", empty);
-	if (empty)
-	    goto repeat;
-	return NULL;
+        goto repeat;
     }
     inode = empty;
     inode->i_sb = sb;
