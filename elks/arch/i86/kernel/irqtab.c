@@ -2,6 +2,10 @@
 #include <arch/asm-offsets.h>
 #include <linuxmt/config.h>
 
+static int bios_call_cnt_l = 5;
+static long stashed_irq0_l;
+int intr_count = 0;
+
 /*
  *	Easy way to store our kernel DS
  */
@@ -17,18 +21,15 @@
 /  the offset is constant per #define
 /-------------------------------------------------------*/
 
-   #define SEG_IRQ_DATA es
    #define stashed_ds       [0]
 
 #else
- #define SEG_IRQ_DATA cs
 
 #ifndef S_SPLINT_S
 #asm
+        .text
         .globl stashed_ds
-
         .even
-
 stashed_ds:
 	.word	0
 
@@ -45,72 +46,57 @@ void irqtab_init(void)
 #asm
 
 ; CS points to this kernel code segment
-; ES points to page 0  (interrupt table)
-; DS points to the kernel data segment
+; DS points to page 0  (interrupt table)
+; ES points to the kernel data segment
 
         cli
         
+        mov bx,ds
 #ifdef CONFIG_ROMCODE
         mov ax,#CONFIG_ROM_IRQ_DATA
-        mov es,ax
+        mov ds,ax
+#else
+        seg cs
 #endif        
-        
-        seg SEG_IRQ_DATA
-	mov stashed_ds,ds
-	mov bios_call_cnt_l,#5
-        mov _intr_count,#0
+        mov stashed_ds,bx
+        mov es,bx
 
         xor ax,ax
-        mov es,ax      ;intr table
+        mov ds,ax      ;intr table
 
-	seg es
 	mov ax,[32]
-	mov off_stashed_irq0_l, ax   ; the old timer intr
 	seg es
+        mov _stashed_irq0_l, ax  ; the old timer intr
 	mov ax,[34]
-	mov seg_stashed_irq0_l, ax
+	seg es
+        mov [_stashed_irq0_l+2], ax
 
-	seg es
 	mov [32],#_irq0   ;timer
-	seg es
 	mov [34],cs
 
 #ifndef CONFIG_CONSOLE_BIOS
-	seg es
         mov [36],#_irq1   ;keyboard
-	seg es
         mov [38],cs
 #endif
 
 #if 0	
-	lea ax,_irq2
-	seg es
-	mov [40],ax
-	mov ax,cs
-	seg es
-	mov [42],ax
+        mov [40],#_irq2
+        mov [42],cs
 #endif	
 
-	seg es
         mov [44],#_irq3   ;com2
-	seg es
         mov [46],cs
 	
-	seg es
 	mov [48],#_irq4   ;com1
-	seg es
 	mov [50],cs
 	
 
 ! Setup INT 0x80 (for syscall)
-	seg es
 	mov [512],#_syscall_int
-	seg es
 	mov [514],cs
 ! Tidy up
 
-        mov dx,ds      ;the original value
-        mov es,dx      ;just here
+        mov ds,bx      ;the original value just here
 	sti
         
 #endasm
@@ -468,11 +454,11 @@ updct:
 !
 !        IRQ 0 (timer) has to go on to the bios for some systems
 !
-        dec     bios_call_cnt_l	! Will call bios int?
+        dec     _bios_call_cnt_l ! Will call bios int?
         jne     a4
-        mov     bios_call_cnt_l,#5
+        mov     _bios_call_cnt_l,#5
         pushf
-        callf   [off_stashed_irq0_l]
+        callf   [_stashed_irq0_l]
         jmp     was_trap
 a4:
         cmp     ax,#8
@@ -552,17 +538,7 @@ noschedpop:
 	iret
 
 	.data
-        .globl  _intr_count
-_intr_count:
-        .word 0
-
-off_stashed_irq0_l:
-	.word	0
-seg_stashed_irq0_l:
-	.word	0
-bios_call_cnt_l:
-	.word	0
-
+        .even
 	.zerow	256		! (was) 128 byte interrupt stack
 _intstack:
 

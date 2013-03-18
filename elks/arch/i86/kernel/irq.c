@@ -33,7 +33,21 @@ struct irqaction {
 	void *dev_id;
 };
 
-static struct irqaction irq_action[32];
+static void default_handler(int i, void *regs, void *dev);
+
+static struct irqaction irq_action[32] = {
+    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
+    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
+    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
+    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
+    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
+    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
+    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
+    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
+    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
+    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
+    {default_handler, NULL}, {default_handler, NULL},
+};
 
 unsigned char cache_21 = 0xff, cache_A1 = 0xff;
 
@@ -122,9 +136,11 @@ void do_IRQ(int i,void *regs)
 {
     register struct irqaction *irq = irq_action + i;
 
-    if (irq->handler != NULL)
-	irq->handler(i,regs,irq->dev_id);
-    else
+    irq->handler(i, regs, irq->dev_id);
+}
+
+static void default_handler(int i, void *regs, void *dev)
+{
 	if(i > 15)
 	    printk("Unexpected trap: %u\n", i-16);
 	else
@@ -175,7 +191,7 @@ int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev
 	return -EINVAL;
 		
     action = irq_action + irq;
-    if (action->handler)
+    if (action->handler != default_handler)
 	return -EBUSY;
 
     if (!handler)
@@ -205,7 +221,7 @@ void free_irq(unsigned int irq)
 	printk("Trying to free IRQ%u\n",irq);
 	return;
     }
-    if (!action->handler) {
+    if (action->handler == default_handler) {
 	printk("Trying to free free IRQ%u\n",irq);
 	return;
     }
@@ -214,7 +230,7 @@ void free_irq(unsigned int irq)
 
     disable_irq(irq);
 
-    action->handler = NULL;
+    action->handler = default_handler;
     action->dev_id = NULL;
 /*    action->flags = 0;
     action->name = NULL;*/
