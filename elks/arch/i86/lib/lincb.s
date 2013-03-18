@@ -9,11 +9,7 @@ lincb:
 
 lincub:
 	inc	2(bx)
-	je	LINC_HIGH_WORD
-	ret
-
-	.even
-
-LINC_HIGH_WORD:
+	jne	LINC_END
 	inc	(bx)
+LINC_END:
 	ret

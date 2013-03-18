@@ -10,12 +10,7 @@ lcmpl:
 
 lcmpul:
 	sub	bx,2[di]	! don't need to preserve bx
-	je	LCMP_NOT_SURE
-	ret
-
-	.even
-
-LCMP_NOT_SURE:
+	jne	LCMP_EXIT
 	cmp	ax,[di]
 	jb	LCMP_B_AND_LT	! b (below) becomes lt (less than) as well
 	jge	LCMP_EXIT	! ge and already ae

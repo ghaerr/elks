@@ -20,7 +20,7 @@ void far_memmove(unsigned sseg, unsigned soff, unsigned dseg, unsigned doff,
 
 	if ((sseg < dseg) || ((sseg == dseg) && (soff < doff))) {
 	    --bytes;
-	    blt_forth(sseg, soff+bytes, dseg, doff+bytes, bytes+1);
+	    blt_forth(soff+bytes, sseg, doff+bytes, dseg, bytes+1);
 	} else {
 	    fmemcpy(dseg, doff, sseg, soff, bytes );
 	}
@@ -30,26 +30,20 @@ void far_memmove(unsigned sseg, unsigned soff, unsigned dseg, unsigned doff,
 #ifndef S_SPLINT_S
 #asm
 	.text
-				! blt_forth( sseg, soff, dseg, doff, bytes )
-				! for to > from 
+				! blt_forth( soff, sseg, doff, dseg, bytes )
+				! for to > from
 	.even
 
 _blt_forth:
 	push	bp
 	mov	bp, sp
-	push	ax
 	push	es
 	push	ds
-	push	cx	
 	push	si
 	push	di
 	pushf
-	mov	ax, [bp+4]
-	mov	ds, ax
-	mov	si, [bp+6]
-	mov	ax, [bp+8]
-	mov	es, ax
-	mov	di, [bp+10]
+	lds	si, [bp+4]
+	les	di, [bp+8]
 	mov	cx, [bp+12]
 	std
 	rep
@@ -57,10 +51,8 @@ _blt_forth:
 	popf
 	pop	di
 	pop	si
-	pop	cx
 	pop	ds
 	pop	es
-	pop	ax
 	pop	bp
 	ret
 

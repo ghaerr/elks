@@ -7,14 +7,11 @@
 
 _htonl:
 _ntohl:
-	push	bp
-	mov	bp,sp
-	mov     bx,4[bp]
-	mov     ax,6[bp]
-	mov	cl,#8
-	ror	ax,cl
-	ror	bx,cl
-	mov	dx,bx
-	pop	bp
-	ret
+	pop	bx
+	pop	dx
+	pop	ax
+	sub	sp,#4
+	xchg	ah,al
+	xchg	dh,dl
+	jmp	bx
 

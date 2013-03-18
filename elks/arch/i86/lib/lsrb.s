@@ -9,7 +9,8 @@ lsrb:
 	mov	cx,di
 	jcxz	LSR_EXIT
 	cmp	cx,*32
-	jae	LSR_SIGNBIT
+	jb	LSR_LOOP
+	mov	cx,*32		! equivalent to +infinity in this context
 
 LSR_LOOP:
 	sar	ax,*1
@@ -19,8 +20,3 @@ LSR_LOOP:
 LSR_EXIT:
 	ret
 
-	.even
-
-LSR_SIGNBIT:
-	mov	cx,*32		! equivalent to +infinity in this context
-	j	LSR_LOOP

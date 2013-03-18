@@ -118,8 +118,7 @@ _fmemcpy:
 	push	es
 	pushf
 	mov	es, 4[bp]
-	mov	di, 6[bp]	
-	mov	ds, 8[bp]
+	lds     di, 6[bp]	
 	mov	si, 10[bp]
 	mov	cx, 12[bp]
 	cld			! Must move upwards...
@@ -163,7 +162,6 @@ int strlen_fromfs(void *saddr)
 #asm
 
 	push	di
-	push	si
 	mov	dx,es
 	mov	es,[bp+.strlen_fromfs.ds]	! source segment (local variable)
 	mov	di,[bp+.strlen_fromfs.saddr]	! source address
@@ -176,7 +174,6 @@ int strlen_fromfs(void *saddr)
 	dec	di
 	mov	[bp+.strlen_fromfs.ds],di	! save in local var ds
 	mov	es,dx
-	pop	si
 	pop	di
 #endasm
 #endif

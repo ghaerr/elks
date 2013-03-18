@@ -9,18 +9,9 @@
 ltstl:
 ltstul:
 	test	bx,bx
-	je	LTST_NOT_SURE
-	ret
-
-	.even
-
-LTST_NOT_SURE:
+	jne	LTSTL_RET
 	test	ax,ax
-	js	LTST_FIX_SIGN
-	ret
-
-	.even
-
-LTST_FIX_SIGN:
+	jns	LTSTL_RET
 	inc	bx		! clear ov and mi, set ne for greater than
+LTSTL_RET:
 	ret

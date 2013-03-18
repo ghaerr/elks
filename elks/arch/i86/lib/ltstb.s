@@ -10,18 +10,9 @@ ltstb:
 
 ltstub:
 	test	ax,ax
-	je	LTST_NOT_SURE
-	ret
-
-	.even
-
-LTST_NOT_SURE:
+	jne	LTSTB_RET
 	test	bx,bx
-	js	LTST_FIX_SIGN
-	ret
-
-	.even
-
-LTST_FIX_SIGN:
+	jns	LTST_RET
 	inc	ax		! clear ov and mi, set ne for greater than
+LTSTB_RET:
 	ret

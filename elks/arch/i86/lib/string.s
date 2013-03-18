@@ -17,8 +17,6 @@
 _strlen:			! needs more testing!
 	push	bp
 	mov	bp,sp
-	push	dx
-	push	cx
 	push	di
 	mov	dx,[bp+4]
 	mov	di,dx
@@ -31,8 +29,6 @@ _strlen:			! needs more testing!
 	mov	ax,di
 	dec	ax
 	pop	di
-	pop	cx
-	pop	dx
 	pop	bp
 	ret
 
@@ -49,15 +45,13 @@ _strcpy:
 	push	si
 	mov	di,[bp+4]	! address of the destination string
 	mov	si,[bp+6]	! address of the source string
-	mov	ax,di
-	push	ax		! _strcpy returns a pointer to the destination string
 	cld
 
 copyon:	lodsb			! al = [ds:si++]
 	stosb			! [es:di++] = al
 	test	al,al
 	jnz	copyon
-	pop	ax
+	mov	ax,[bp+4]	! _strcpy returns a pointer to the destination string
 	pop	si
 	pop	di
 	pop	bp
@@ -102,16 +96,13 @@ _memset:
 	push	bp
 	mov	bp,sp
 	push	di
-	push	cx
 	mov	di,[bp+4]	! address of the memory block
-	push	di		! return value = start addr of block
 	mov	ax,[bp+6]	! byte to write
 	mov	cx,[bp+8]	! loop count
 	cld
 	rep			! while(cx)
 	stosb			! 	cx--, [es:di++] = al
-	pop	ax
-	pop	cx
+	mov	ax,[bp+4]	! return value = start addr of block
 	pop	di
 	pop	bp
 	ret
