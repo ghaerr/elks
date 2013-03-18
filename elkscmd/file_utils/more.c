@@ -23,14 +23,16 @@ main(argc, argv)
 	char	**argv;
 {
 	FILE	*fp;
-	int	fd;
+	int	fd, cin;
 	char	*name;
 	char	ch;
 	int	line;
 	int	col;
 	char	buf[80];
 
-	while (argc-- > 1) {
+	cin = 0;
+	do {
+		if(argc >= 2) {
 		name = *(++argv);
 
 		fd = open(name, O_RDONLY);
@@ -42,6 +44,13 @@ main(argc, argv)
 		write(STDOUT_FILENO,"<< ",3);
 		write(STDOUT_FILENO,name,strlen(name));
 		write(STDOUT_FILENO," >>\n",4);
+		} else {
+			fd = 0;
+			cin = open("/dev/tty0", "r");
+			if (!cin)
+				cin = fopen("/dev/console", "r");
+			write(STDOUT_FILENO,"<< stdin >>\n",12);
+		}
 		line = 1;
 		col = 0;
 
@@ -75,7 +84,7 @@ main(argc, argv)
 				line++;
 			}
 
-			if (line < 24)
+			if (line < 25)
 				continue;
 
 			if (col > 0)
@@ -84,7 +93,8 @@ main(argc, argv)
 			write(STDOUT_FILENO,"--More--",8);
 			fflush(stdout);
 
-			if ((read(0, buf, sizeof(buf)) < 0)) {
+			if (read(cin, buf, sizeof(buf)) < 1) {
+				perror("more: ");
 				if (fd > -1)
 					close(fd);
 				exit(0);
@@ -112,6 +122,6 @@ main(argc, argv)
 		}
 		if (fd)
 			close(fd);
-	}
+	} while(--argc > 1);
 	exit(0);
 }
