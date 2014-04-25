@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #define MAXQ  10
 
@@ -18,27 +19,27 @@
 //
 struct t_source {
     char *daten;
-    unsigned long skipaout;
-    unsigned long offs, lg;
+    uint32_t skipaout;
+    uint32_t offs, lg;
 };
 
 // information about the checksum area
 //
 struct t_check {
     int gefordert;
-    unsigned long start, ende;
+    uint32_t start, ende;
 };
 
 //----------------------------------------------------
 // calculate the size of an a.out binary
 //
-unsigned long aoutsize(char *aout, unsigned long lg)
+uint32_t aoutsize(char *aout, uint32_t lg)
 {
-    unsigned long gr;
+    uint32_t gr;
 
     gr = *(unsigned char *) &(aout[0x04])
-	+ *(unsigned long *) &(aout[0x08])
-	+ *(unsigned long *) &(aout[0x0c]);
+	+ *(uint32_t *) &(aout[0x08])
+	+ *(uint32_t *) &(aout[0x0c]);
     if (gr > lg) {
 	gr = lg;
 	printf("  Wrong a.out table?\n");
@@ -52,16 +53,16 @@ unsigned long aoutsize(char *aout, unsigned long lg)
 int main(int argcnt, char **arg)
 {
     FILE *ff;
-    unsigned long romgr;	// size of target binary
-    unsigned long offs;		// base address of eprom in memory space
+    uint32_t romgr;	// size of target binary
+    uint32_t offs;		// base address of eprom in memory space
     char *rom;			// buffer for target date
     struct t_source source[MAXQ];	// data of the source files 
     struct t_check check;	// info about the checksum area
-    unsigned long l, i, nr;
+    uint32_t l, i, nr;
     unsigned firstname;		// nummber of first source in argument string
     int strip;			// local bool: strip the symbol table form a.out
     int skip;			// local bool: skip a.out header
-    signed long init;		// if > 0 address of reset vector
+    int32_t init;		// if > 0 address of reset vector
 
     if (argcnt < 5) {
 	printf
@@ -157,7 +158,7 @@ int main(int argcnt, char **arg)
 	source[i].offs *= 0x10;
 	l = source[i].offs + (source[i].lg - source[i].skipaout) - offs;
 	//printf("%ld: qoffs %lx + lg %lx - skip %lx - offs %lx = l %lx\n",i,source[i].offs,source[i].lg,source[i].skipaout, offs,l);
-	if ((signed long) l < 0) {
+	if ((int32_t) l < 0) {
 	    printf("Bereichsfehler in Nr. %ld (offs < basis)!\n", i);
 	    fclose(ff);
 	    return -1;
@@ -235,7 +236,7 @@ int main(int argcnt, char **arg)
 	rom[0xffff0 - offs] = 0xea;	// jmpf
 	l = offs + init;
 	l = ((l & 0xfff00) << 12) + (l & 0x000ff);
-	*(long *) &(rom[0xffff1 - offs]) = l;
+	*(uint32_t *) &(rom[0xffff1 - offs]) = l;
 	printf("  RESET nach %04x:%04x (%05lx)\n", (unsigned) l >> 16,
 	       (unsigned) l & 0xffff, offs + init);
     }
