@@ -88,7 +88,7 @@ toolkit:
 $(BASEDIR)/include/arch/asm-offsets.h: kernel/asm-offsets.c
 	$(CC) $(CFLAGS) -S -o asm-offsets.s kernel/asm-offsets.c
 	echo '#ifndef ASM_OFFSETS_H' > $(BASEDIR)/include/arch/asm-offsets.h
-	echo '#define ASM_OFFSETS_H\n' >> $(BASEDIR)/include/arch/asm-offsets.h
+	echo '#define ASM_OFFSETS_H' >> $(BASEDIR)/include/arch/asm-offsets.h
 	sed -e '/^[^m].*/ d' \
 	-e 's/\],/  /' \
 	-e 's/ #/ /' \
@@ -97,7 +97,7 @@ $(BASEDIR)/include/arch/asm-offsets.h: kernel/asm-offsets.c
 	-e 's/^.*\[_/#define /' \
 	-e 's/ax/0/' \
 	< asm-offsets.s | grep -e define >> $(BASEDIR)/include/arch/asm-offsets.h
-	echo '\n#endif' >> $(BASEDIR)/include/arch/asm-offsets.h
+	echo '#endif' >> $(BASEDIR)/include/arch/asm-offsets.h
 	rm asm-offsets.s
 
 #########################################################################
