@@ -42,7 +42,7 @@ SRC=	net.c urlget.c
 all:	urlget
 
 urlget:	$(SRC)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o urlget $(SRC)
+	$(CC) $(CFLAGS) $(LDFLAGS) -I$(INC_DIR) -o urlget $(SRC)
 
 net_rfs: all
 

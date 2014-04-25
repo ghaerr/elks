@@ -10,18 +10,18 @@ struct exec {			/* a.out header */
     unsigned char a_hdrlen;	/* length of header */
     unsigned char a_unused;	/* reserved for future use */
     unsigned short a_version;	/* version stamp (not used at present) */
-    long a_text;		/* size of text segement in bytes */
-    long a_data;		/* size of data segment in bytes */
-    long a_bss;			/* size of bss segment in bytes */
-    long a_entry;		/* entry point */
-    long a_total;		/* total memory allocated */
-    long a_syms;		/* size of symbol table */
+    int32_t a_text;		/* size of text segement in bytes */
+    int32_t a_data;		/* size of data segment in bytes */
+    int32_t a_bss;			/* size of bss segment in bytes */
+    int32_t a_entry;		/* entry point */
+    int32_t a_total;		/* total memory allocated */
+    int32_t a_syms;		/* size of symbol table */
 
     /* SHORT FORM ENDS HERE */
-    long a_trsize;		/* text relocation size */
-    long a_drsize;		/* data relocation size */
-    long a_tbase;		/* text relocation base */
-    long a_dbase;		/* data relocation base */
+    int32_t a_trsize;		/* text relocation size */
+    int32_t a_drsize;		/* data relocation size */
+    int32_t a_tbase;		/* text relocation base */
+    int32_t a_dbase;		/* data relocation base */
 };
 
 #define A_MAGIC0      (unsigned char) 0x01
@@ -50,7 +50,7 @@ struct exec {			/* a.out header */
 
 /* Offsets of various things. */
 #define A_HEADERSIZ	32
-#define	A_TEXTPOS(X)	((long)(X).a_hdrlen)
+#define	A_TEXTPOS(X)	((int32_t)(X).a_hdrlen)
 #define A_DATAPOS(X)	(A_TEXTPOS(X) + (X).a_text)
 #define	A_HASRELS(X)	((X).a_hdrlen > (unsigned char) A_MINHDR)
 #define A_HASEXT(X)	((X).a_hdrlen > (unsigned char) (A_MINHDR +  8))
@@ -62,7 +62,7 @@ struct exec {			/* a.out header */
   			((X).a_trsize + (X).a_drsize) : 0))
 
 struct reloc {
-    long r_vaddr;		/* virtual address of reference */
+    int32_t r_vaddr;		/* virtual address of reference */
     unsigned short r_symndx;	/* internal segnum or extern symbol num */
     unsigned short r_type;	/* relocation type */
 };
@@ -86,7 +86,7 @@ struct reloc {
 
 struct nlist {			/* symbol table entry */
     char n_name[8];		/* symbol name */
-    long n_value;		/* value */
+    int32_t n_value;		/* value */
     unsigned char n_sclass;	/* storage class */
     unsigned char n_numaux;	/* number of auxiliary entries (not used) */
     unsigned short n_type;	/* language base and derived type (not used) */

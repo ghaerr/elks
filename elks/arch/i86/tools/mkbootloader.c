@@ -1,44 +1,41 @@
-// merge binaries into a rom boot image 
-//
-// Christian Mardm"oller  (chm@kdt.de) 
-//
-// Version 1.0 
-// Version 1.1  11/99   correction of checksum code
-//----------------------------------------------------------
+/* merge binaries into a rom boot image 
+ *
+ * Written by Christian Mardm"oller  (chm@kdt.de) 
+ * Some German->English edits by Jody Bruchon <jody@jodybruchon.com>
+//------------------------------------------------------------------*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #define MAXQ  10
 
 #define im(a,u,o)  (((a)>=(u)) && ((a)<=(o)))
 
-// structure with data and information of the source files
-//
+/* structure with data and information of the source files */
 struct t_source {
-    char *daten;
-    unsigned long skipaout;
-    unsigned long offs, lg;
+    char *data;
+    uint32_t skipaout;
+    uint32_t offs, lg;
 };
 
-// information about the checksum area
-//
+/* information about the checksum area */
 struct t_check {
-    int gefordert;
-    unsigned long start, ende;
+    int sum;
+    uint32_t start, end;
 };
 
 //----------------------------------------------------
 // calculate the size of an a.out binary
 //
-unsigned long aoutsize(char *aout, unsigned long lg)
+uint32_t aoutsize(char *aout, uint32_t lg)
 {
-    unsigned long gr;
+    uint32_t gr;
 
     gr = *(unsigned char *) &(aout[0x04])
-	+ *(unsigned long *) &(aout[0x08])
-	+ *(unsigned long *) &(aout[0x0c]);
+	+ *(uint32_t *) &(aout[0x08])
+	+ *(uint32_t *) &(aout[0x0c]);
     if (gr > lg) {
 	gr = lg;
 	printf("  Wrong a.out table?\n");
@@ -52,34 +49,34 @@ unsigned long aoutsize(char *aout, unsigned long lg)
 int main(int argcnt, char **arg)
 {
     FILE *ff;
-    unsigned long romgr;	// size of target binary
-    unsigned long offs;		// base address of eprom in memory space
+    uint32_t romgr;	// size of target binary
+    uint32_t offs;		// base address of eprom in memory space
     char *rom;			// buffer for target date
     struct t_source source[MAXQ];	// data of the source files 
     struct t_check check;	// info about the checksum area
-    unsigned long l, i, nr;
+    uint32_t l, i, nr;
     unsigned firstname;		// nummber of first source in argument string
     int strip;			// local bool: strip the symbol table form a.out
     int skip;			// local bool: skip a.out header
-    signed long init;		// if > 0 address of reset vector
+    int32_t init;		// if > 0 address of reset vector
 
     if (argcnt < 5) {
 	printf
-	    ("mkurlader [-r init] [-c start size] target.bin basis_rom [-s][-a] *.bin adr [*.bin adr]\n");
+	    ("mkbootloader [-r init] [-c start size] target.bin basis_rom [-s][-a] *.bin adr [*.bin adr]\n");
 	printf("   -a  skip a.out header (0x20 Bytes)\n");
-	printf("   -c  insert checksumme at start(seg)+size(kBytes)\n");
+	printf("   -c  insert checksum at start(seg)+size(kBytes)\n");
 	printf
 	    ("   -r  add resetvector \"jmpf basis_rom*0x10+init\" to target finle at ffff0\n");
 	printf("   -s  strips symbols from a.out file\n");
 	printf("  adr must above basis_rom\n");
-	printf("  mkurlader -p 0000 003ff  rom.bin e000  arch/i86/boot/setup e000 arch/i86/tools/system e040\n");
+	printf("  mkbootloader -p 0000 003ff  rom.bin e000  arch/i86/boot/setup e000 arch/i86/tools/system e040\n");
 	return -1;
     }
 
     for (l = 0; l < MAXQ; l++)
-	source[l].daten = NULL;
+	source[l].data = NULL;
     init = -1;
-    check.gefordert = 0;
+    check.sum = 0;
 
 // load sources
     i = 1;
@@ -90,9 +87,9 @@ int main(int argcnt, char **arg)
     if (strcmp(arg[i], "-c") == 0) {
 	sscanf(arg[i + 1], "%lx", &check.start);
 	check.start *= 0x10;
-	sscanf(arg[i + 2], "%ld", &check.ende);
-	check.ende *= 1024;
-	check.gefordert = 1000;
+	sscanf(arg[i + 2], "%ld", &check.end);
+	check.end *= 1024;
+	check.sum = 1000;
 	i += 3;
     }
     firstname = i;
@@ -119,8 +116,8 @@ int main(int argcnt, char **arg)
 	fseek(ff, 0, SEEK_SET);
 	source[nr].skipaout = (skip) ? 0x20 : 0;
 	//printf("%lx\n",source[nr].lg);
-	source[nr].daten = (char *) malloc(source[nr].lg);
-	fread(source[nr].daten, 1, source[nr].lg, ff);
+	source[nr].data = (char *) malloc(source[nr].lg);
+	fread(source[nr].data, 1, source[nr].lg, ff);
 	fclose(ff);
 	if (arg[i + 1] == NULL) {
 	    printf("ERROR: No base address for %s!\n", arg[i]);
@@ -128,7 +125,7 @@ int main(int argcnt, char **arg)
 	}
 	sscanf(arg[i + 1], "%lx", &source[nr].offs);
 	if (strip) {
-	    source[nr].lg = aoutsize(source[nr].daten, source[nr].lg);
+	    source[nr].lg = aoutsize(source[nr].data, source[nr].lg);
 	}
 	printf("  %s: %lxh Bytes %s%s @%04lx\n", arg[i],
 	       source[nr].lg - source[nr].skipaout, (strip) ? "(strip)" : "",
@@ -153,11 +150,11 @@ int main(int argcnt, char **arg)
 // calculate size of target file
     romgr = 0;
     i = 0;
-    while (source[i].daten != NULL) {
+    while (source[i].data != NULL) {
 	source[i].offs *= 0x10;
 	l = source[i].offs + (source[i].lg - source[i].skipaout) - offs;
 	//printf("%ld: qoffs %lx + lg %lx - skip %lx - offs %lx = l %lx\n",i,source[i].offs,source[i].lg,source[i].skipaout, offs,l);
-	if ((signed long) l < 0) {
+	if ((int32_t) l < 0) {
 	    printf("Bereichsfehler in Nr. %ld (offs < basis)!\n", i);
 	    fclose(ff);
 	    return -1;
@@ -176,12 +173,12 @@ int main(int argcnt, char **arg)
     if (init >= 0) {
 	romgr = 0xffff5 - offs;
     }
-    if (check.gefordert) {
-	i = check.ende + check.start - offs;
+    if (check.sum) {
+	i = check.end + check.start - offs;
 	if (i > romgr)
 	    romgr = i;
     }
-// merge the binarys
+// merge the binaries
     rom = NULL;
     //printf("romgr: %lx\n",romgr);
     if (romgr < 0x100000)
@@ -190,17 +187,17 @@ int main(int argcnt, char **arg)
 	printf("malloc: no %ld Bytes RAM\n", romgr);
 	return -1;
     }
-    for (l = 0; l < romgr; rom[l++] = 0xff);	// Speicher initialisieren
+    for (l = 0; l < romgr; rom[l++] = 0xff);	// storage initialization
 
     nr = 0;
-    while (source[nr].daten != NULL) {
-	if (check.gefordert && (check.start == source[nr].offs))
-	    check.gefordert = nr + 1;
+    while (source[nr].data != NULL) {
+	if (check.sum && (check.start == source[nr].offs))
+	    check.sum = nr + 1;
 	i = 0;
-	l = 0;			// kein fehler
+	l = 0;			// this is duplicated on purpose
 	if ((init >= 0) && (source[nr].offs + source[nr].lg >= 0xffff0))
 	    l = 1000;
-	while (!l && (source[i].daten != NULL)) {
+	while (!l && (source[i].data != NULL)) {
 	    if (i != nr) {
 		if (im
 		    (source[nr].offs, source[i].offs,
@@ -217,13 +214,13 @@ int main(int argcnt, char **arg)
 	if (l) {
 	    printf("\x1b[7;34m");
 	    if (l == 1000)
-		printf("!! Segmentoverrun (%ld <-> Resetvektor)!\x1b[0m\n",
+		printf("Segment overrun (%ld <-> Resetvektor)!\x1b[0m\n",
 		       nr);
 	    else
-		printf("!! Segmentoverrun (%ld <-> %ld)!\x1b[0m\n", nr, l - 1);
+		printf("Segment overrun (%ld <-> %ld)!\x1b[0m\n", nr, l - 1);
 	} else {
 	    l = source[nr].offs - offs;
-	    memcpy(&(rom[l]), source[nr].daten + source[nr].skipaout,
+	    memcpy(&(rom[l]), source[nr].data + source[nr].skipaout,
 		   source[nr].lg - source[nr].skipaout);
 	}
 	nr++;
@@ -235,71 +232,71 @@ int main(int argcnt, char **arg)
 	rom[0xffff0 - offs] = 0xea;	// jmpf
 	l = offs + init;
 	l = ((l & 0xfff00) << 12) + (l & 0x000ff);
-	*(long *) &(rom[0xffff1 - offs]) = l;
+	*(uint32_t *) &(rom[0xffff1 - offs]) = l;
 	printf("  RESET nach %04x:%04x (%05lx)\n", (unsigned) l >> 16,
 	       (unsigned) l & 0xffff, offs + init);
     }
 // calculate the checksum
-    if (check.gefordert) {
-	check.ende += check.start - 1;
-	//printf("%lx %lx\n",check.start, check.ende);
+    if (check.sum) {
+	check.end += check.start - 1;
+	//printf("%lx %lx\n",check.start, check.end);
 	check.start -= offs;
-	check.ende -= offs;
-	if (check.ende > romgr) {
-	    printf("!! checksumme not in image file\n");
+	check.end -= offs;
+	if (check.end > romgr) {
+	    printf("checksum not in image file\n");
 	    return -1;
 	} else {
 	    if ((rom[check.start] != 0x55)
 		|| (rom[check.start + 1] != (char) 0xaa)) {
-		printf("!! No ROM-Signature at %05lx\n", check.start);
+		printf("No ROM-Signature at %05lx\n", check.start);
 	    } else {
 		i = 0;
-		while (source[i].daten != NULL) {
-		    if (i + 1 != check.gefordert) {
+		while (source[i].data != NULL) {
+		    if (i + 1 != check.sum) {
 			if (im
 			    (check.start + offs, source[i].offs,
 			     source[i].offs + source[i].lg -
 			     source[i].skipaout)
-			    || im(check.ende + offs, source[i].offs,
+			    || im(check.end + offs, source[i].offs,
 				  source[i].offs + source[i].lg -
 				  source[i].skipaout)) {
-			    printf("!! checksum over more then one file\n");
+			    printf("checksum over more then one file\n");
 			    break;
 			}
 		    }
 		    i++;
 		}
-		if (((check.ende - check.start + 1) % 512) != 0)
+		if (((check.end - check.start + 1) % 512) != 0)
 		    printf
-			("!!  Area of checksum use half paragraphs (Start: %lx, End: %lx => %lx)\n",
-			 check.start, check.ende + 1,
-			 check.ende - check.start + 1);
+			("Area of checksum use half paragraphs (Start: %lx, End: %lx => %lx)\n",
+			 check.start, check.end + 1,
+			 check.end - check.start + 1);
 		else {
 		    rom[check.start + 2] =
-			(unsigned char) ((check.ende - check.start + 511L) /
+			(unsigned char) ((check.end - check.start + 511L) /
 					 512L);
 		    printf
 			("  Chksum Nr %d - Length in 512 bytes blocks: %02x   ",
-			 check.gefordert - 1, rom[check.start + 2] & 0xff);
+			 check.sum - 1, rom[check.start + 2] & 0xff);
 		    l = 0;
-		    rom[check.ende] = 0;
-		    for (i = check.start; i < check.ende; i++)
+		    rom[check.end] = 0;
+		    for (i = check.start; i < check.end; i++)
 			l += rom[i] & 0xff;
-		    rom[check.ende] = -l;
-		    printf("[%02x @%05lx]\n", rom[check.ende] & 0xff,
-			   check.ende);
+		    rom[check.end] = -l;
+		    printf("[%02x @%05lx]\n", rom[check.end] & 0xff,
+			   check.end);
 		    if ((unsigned char) rom[check.start + 2] < 3)
 			printf
-			    ("!! Some BIOSes have problems with so small devices\n");
+			    ("Some BIOSes have problems with so small devices\n");
 		    i = 0;
-		    while (source[i].daten != NULL) {
-			//printf("%lx %lx %lx\n",check.ende, source[i].offs - offs, source[i].lg - source[i].skipaout);
+		    while (source[i].data != NULL) {
+			//printf("%lx %lx %lx\n",check.end, source[i].offs - offs, source[i].lg - source[i].skipaout);
 			if (im
-			    (check.ende, source[i].offs - offs,
+			    (check.end, source[i].offs - offs,
 			     source[i].lg - source[i].skipaout)) {
 			    printf("\x1b[7;34m");
 			    printf
-				("!! checksum is in changed values of image %d.\x1b[0m\n",
+				("checksum is in changed values of image %d.\x1b[0m\n",
 				 i);
 			    break;
 			}

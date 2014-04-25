@@ -3,7 +3,7 @@
 ###############################################################################
 # Compile everything present.
 
-DIRS = ktcp # screen
+DIRS = ktcp screen
 
 all: $(DIRS)
 	@for DIR in $(DIRS) ; do \

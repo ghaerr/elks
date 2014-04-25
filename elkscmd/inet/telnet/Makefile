@@ -40,7 +40,7 @@ SRC=	ttn.c ttn_conf.c
 all:	telnet
 
 telnet:	$(SRC)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SRC)
+	$(CC) $(CFLAGS) -I$(INC_DIR) $(LDFLAGS) -o $@ $(SRC)
 
 net_rfs: all
 

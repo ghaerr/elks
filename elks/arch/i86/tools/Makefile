@@ -13,7 +13,7 @@ USEBCC  	= Y
 
 CLEANDEP	= 
 
-CLEANME 	= build imgconv mkurlader wrt_disk.img
+CLEANME 	= build imgconv mkbootloader wrt_disk.img
 
 DEPEND  	= 
 
@@ -40,11 +40,11 @@ HEAP_SEG	= 0x800 	# Segment address
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
 
-all: wrt_disk.img build mkurlader imgconv
+all: wrt_disk.img build mkbootloader imgconv
 
 else
 
-all: build mkurlader
+all: build mkbootloader
 
 endif
 
@@ -67,8 +67,8 @@ wrt_disk.img: wrt_disk.tmp imgconv
 build: build.c
 	gcc -I $(BASEDIR)/include -o build build.c
 
-mkurlader: mkurlader.c
-	gcc -I $(BASEDIR)/include -o mkurlader mkurlader.c
+mkbootloader: mkbootloader.c
+	gcc -I $(BASEDIR)/include -o mkbootloader mkbootloader.c
 
 imgconv: imgconv.c
 	gcc -o imgconv imgconv.c

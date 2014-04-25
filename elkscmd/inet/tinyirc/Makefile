@@ -7,6 +7,10 @@
 SERVER = irc.freenode.net
 PORT = 7000
 #
+
+BASEDIR=../..
+include $(BASEDIR)/Make.defs
+
 all: elks
 
 default:
@@ -24,7 +28,7 @@ generic:
 	$(MAKE) tinyirc CFLAGS=-O LDFLAGS=-s LIBS=-ltermcap
 
 elks:
-	$(MAKE) tinyirc CFLAGS="-0 -O -ansi -DPOSIX -DELKS" LDFLAGS= LIBS= CC=bcc
+	$(MAKE) tinyirc CFLAGS="-0 -O -ansi -DPOSIX -DELKS -I$(INC_DIR)" LDFLAGS= LIBS= CC=bcc
 
 aix:
 	$(MAKE) tinyirccv CFLAGS="-O -D_AIX_" \
