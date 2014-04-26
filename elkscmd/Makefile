@@ -40,6 +40,8 @@ KHELPER 	= $(MINIX_BOOT)/minix_elks.bin
 # Compile everything.
 
 all:
+	@test -e $(ELKS_DIR)/include/linuxmt/config.h && \
+		echo -e "\n*** ERROR: You must build the ELKS kernel first ***\n" >&2 && exit 1
 	@for i in $(DIRS); do make -C $$i all ; done
 
 clean:
@@ -133,6 +135,7 @@ $(KHELPER):
 kernel_image: $(ELKS_DIR)/arch/i86/boot/Image
 
 boot_blocks: $(FD_BSECT) $(KHELPER)
+	make -C $(MINIX_BOOT)/bootblocks
 
 _build_bootable_target: _build_target kernel_image boot_blocks
 	mkdir -p $(TARGET_MNT)/boot
