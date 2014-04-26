@@ -104,14 +104,14 @@ ifeq ($(PLATFORM),DEFAULT)
 	CHECK=cc -c -o .null.o
 endif
 
-CFLAGS=$(CFLBASE) $(LOCALFLAGS) "-DELKS_VERSION=\"$(ELKS_VSN)\""
+CFLAGS=$(CFLBASE) $(LOCALFLAGS) -I$(INC_DIR) "-DELKS_VERSION=\"$(ELKS_VSN)\""
 
 ##############################################################################
 #
 # Standard compilation rules.
 
 .c.s:
-	$(CC) $(CFLAGS) -I$(INC_DIR) -S -o $*.o $<
+	$(CC) $(CFLAGS) -S -o $*.o $<
 
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<
@@ -120,7 +120,7 @@ CFLAGS=$(CFLBASE) $(LOCALFLAGS) "-DELKS_VERSION=\"$(ELKS_VSN)\""
 	gcc -E -traditional -I$(INC_DIR) $(CCDEFS) -o $*.s $<
 
 .c.o:
-	$(CC) $(CFLAGS) -I$(INC_DIR) -c -o $*.o $<
+	$(CC) $(CFLAGS) -c -o $*.o $<
 
 ##############################################################################
 #
