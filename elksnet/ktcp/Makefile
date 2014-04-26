@@ -1,11 +1,13 @@
 # Makefile for ktcp
+BASEDIR=..
+include $(BASEDIR)/Make.defs
 
 SHELL		= /bin/sh
 
 CC		= bcc
 
-#BASE_CFLAGS	= -c -g
-BASE_CFLAGS	= -ansi -c -O -0
+#BASE_CFLAGS	= -g
+BASE_CFLAGS	= -ansi -O -0
 
 LOCALFLAGS	= -D__KERNEL__
 
@@ -19,9 +21,6 @@ OBJ		= $(CFILES:.c=.o)
 ##############################################################################
 
 all:	ktcp
-
-.c.o:
-	$(CC) $(CFLAGS) -o $@ $<
 
 ktcp:	$(OBJ)
 	$(CC) $(OPT) -s -o ktcp $(OBJ) $(BASELIBS)

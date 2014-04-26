@@ -1,0 +1,183 @@
+# ***** IMPORTANT NOTE *****
+#
+# This file has been revised to remove the requirement that the elkscmd
+# and elks trees are located under /usr/src on the developer's system.
+# This requires that the variable BASEDIR be defined in every Makefile
+# that includes this header file, prior to including it, and the value
+# given to BASEDIR is required to be the relative path from the directory
+# containing that Makefile to the directory containing this file.
+#
+# In addition, if there are any local definitions that need including in
+# the CFLAGS value, those should be assigned to LOCALFLAGS before including
+# this file.
+#
+# So as to ensure this, it is recommended that the following three lines
+# be used as the first three lines of each Makefile including this file:
+#
+#	BASEDIR = ...
+#
+#	LOCALFLAGS = ...
+#
+#	include $(BASEDIR)/Make.defs
+#
+# This ensures that the correct value is assigned by using it to include
+# this file.
+#
+##############################################################################
+#
+# Define type of target for creating boot file system on. Valid target types
+# are as follows:
+#
+#	DIRECT		Mount /dev/fd0 and create image thereon, then create
+#			the image file as an image of /dev/fd0 instead. This
+#			requires that a diskette of at least the necessary
+#			size is in the drive when the images are created.
+#
+#	LOOP		Mount a file as a loopback file system. This requires
+#			that the command is run as the superuser.
+#
+#	RAMDISK 	Mount /dev/ram0 and create image thereon, then create
+#			the image file as an image of /dev/fd0 instead. This
+#			requires that ramdisks are enabled in the kernel, and
+#			also that there be an entry in /etc/fstab that allows
+#			any user to mount this device, but otherwise avoids
+#			the limitations of the other two options.
+#
+# Each option has both advantages and disadvantages, and it is up to the
+# developer to determine the appropriate one to use.
+
+TARGET_MODE=LOOP
+
+##############################################################################
+#
+# Specify platform to compile for. The following platforms are defined:
+#
+#	i86-ELKS	ELKS on an ix86 processor.
+#
+#	DEFAULT 	Anything not otherwise defined above.
+#
+# Select the relevant option here.
+
+PLATFORM=i86-ELKS
+
+##############################################################################
+#
+# It is not normally necessary to make changes below this line.
+#
+# Specify directories.
+
+HOMEDIR=$(shell cd $(BASEDIR)/.. ; pwd)
+
+DEV86_DIR=$(HOMEDIR)/linux-86
+ELKS_DIR=$(HOMEDIR)/elks
+ELKSCMD_DIR=$(HOMEDIR)/elkscmd
+ELKSNET_DIR=$(HOMEDIR)/elksnet
+
+INC_DIR=$(HOMEDIR)/elks/include
+
+##############################################################################
+#
+# Determine the ELKS kernel version.
+
+E_V=$(shell if [ -f $(ELKS_DIR)/Makefile-rules ]; then \
+		grep -v '^\#' $(ELKS_DIR)/Makefile-rules \
+		    | fgrep = | head -4 | tr '\#' = | cut -d = -f 2 ;\
+	    else echo Version not known ; fi)
+
+ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre$$//')
+
+##############################################################################
+#
+# Determine compiler variables for this target.
+
+ifeq ($(PLATFORM),i86-ELKS)
+	CC=bcc
+	CFLBASE=-0 -O -ansi
+	LDFLAGS=-s -ansi
+	CHECK=gcc -c -o .null.o -Wall -pedantic
+endif
+
+ifeq ($(PLATFORM),DEFAULT)
+	CC=cc
+	CFLBASE=
+	LDFLAGS=
+	CHECK=cc -c -o .null.o
+endif
+
+CFLAGS=$(CFLBASE) $(LOCALFLAGS) "-DELKS_VERSION=\"$(ELKS_VSN)\""
+
+##############################################################################
+#
+# Standard compilation rules.
+
+.c.s:
+	$(CC) $(CFLAGS) -I$(INC_DIR) -S -o $*.o $<
+
+.s.o:
+	$(AS) $(ASFLAGS) -o $*.o $<
+
+.S.s:
+	gcc -E -traditional -I$(INC_DIR) $(CCDEFS) -o $*.s $<
+
+.c.o:
+	$(CC) $(CFLAGS) -I$(INC_DIR) -c -o $*.o $<
+
+##############################################################################
+#
+# Standard targets.
+
+COMB_TARGET_FS=$(ELKSCMD_DIR)/comb
+COMB_TARGET_BLKS=720
+
+FULL3_TARGET_FS=$(ELKSCMD_DIR)/full3
+FULL3_TARGET_BLKS=1440
+
+FULL5_TARGET_FS=$(ELKSCMD_DIR)/full5
+FULL5_TARGET_BLKS=1200
+
+ROOT_TARGET_FS=$(ELKSCMD_DIR)/root
+ROOT_TARGET_BLKS=360
+
+ROOT_NET_TARGET_FS=$(ELKSCMD_DIR)/comb_net
+ROOT_NET_TARGET_BLKS=720
+
+SIBO_TARGET_FS=$(ELKSCMD_DIR)/sibo
+SIBO_TARGET_BLKS=128
+
+MKFS=/sbin/mkfs.minix
+MKFS_OPTS=-n14
+
+MINIX_BOOT=$(DEV86_DIR)/bootblocks
+
+##############################################################################
+#
+# Select the target device depending on the above entry.
+
+ifeq ($(TARGET_MODE),FLOPPY)
+TARGET_MNT=/dev/fd0
+LOOP=
+endif
+
+ifeq ($(TARGET_MODE),LOOP)
+TARGET_MNT=/mnt/elks
+LOOP=-o loop
+endif
+
+ifeq ($(TARGET_MODE),RAM)
+TARGET_MNT=$(ELKSCMD_DIR)/x
+LOOP=
+endif
+
+##############################################################################
+#
+# Include standard rules.
+
+me:
+	make -C $(BASEDIR) all
+
+$(ELKS_DIR)/include/linuxmt/autoconf.h:
+	make -C $(ELKS_DIR) include/linuxmt/autoconf.h
+
+##############################################################################
+# EOF #
+#######
