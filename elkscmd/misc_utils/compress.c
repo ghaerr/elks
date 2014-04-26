@@ -150,16 +150,20 @@
 #define DIRENT
 #define RINDEX
 #define UTIME_H
+#include <ctype.h>
 #include "mutils.h"
 
 #include <stdio.h>
 #include <fcntl.h>
-#include <ctype.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
-
+#ifdef __GNUC__
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#endif
 
 #ifdef DIRENT
 #  include <dirent.h>
@@ -655,7 +659,7 @@ long 		bytes_out;	/* Total number of byte to output	*/
 	};
 #endif
 
-void  	main		ARGS((int,char **));
+int  	main		ARGS((int,char **));
 void  	Usage		ARGS((void));
 void  	comprexx	ARGS((char **));
 void  	compdir		ARGS((char *));
@@ -710,7 +714,7 @@ void  	about		ARGS((void));
  *   deterministic, and can be done on the fly.  Thus, the decompression
  *   procedure needs no input table, but tracks the way the table was built.
  */ 
-void
+int
 main(argc, argv)
 	REG1	int 	 argc;
 	REG2	char	*argv[];
@@ -981,7 +985,7 @@ comprexx(fileptr)
 
 				if (infstat.st_nlink > 1 && (!force)) {
 			  		fprintf(stderr, "%s has %d other links: unchanged\n",
-						tempname, infstat.st_nlink - 1);
+						tempname, (int)(infstat.st_nlink - 1));
 						exit_code = 1;
 			  			return;
 				}
