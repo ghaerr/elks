@@ -43,12 +43,13 @@ all:
 	@for i in $(DIRS); do make -C $$i all ; done
 
 clean:
-	umount $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
+	-umount $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
 		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) || true
-	rm -f $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
+	-rm -f $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
 		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) boot images.zip core
-	rm -rf $(ROOTDIR)
-	@for i in $(DIRS) $(DONTUSE) $(DONTWORK); do make -C $$i clean ; done
+	-rm -rf $(ROOTDIR)
+	-rm -f *~
+	-@for i in $(DIRS) $(DONTUSE) $(DONTWORK); do make -C $$i clean ; done
 
 ###############################################################################
 #
