@@ -135,12 +135,13 @@ $(KHELPER):
 kernel_image: $(ELKS_DIR)/arch/i86/boot/Image
 
 boot_blocks: $(FD_BSECT) $(KHELPER)
-	make -C $(MINIX_BOOT)/bootblocks
+	@if [[ ! -e $(MINIX_BOOT)/minix.bin || ! -e $(MINIX_BOOT)/minix_elks.bin ]]; \
+	then echo -e "\n\n *** Do builds in dev86 and dev86/bootblocks first *** \n\n"; exit 1; fi
 
-_build_bootable_target: _build_target kernel_image boot_blocks
+_build_bootable_target: boot_blocks _build_target kernel_image
 	mkdir -p $(TARGET_MNT)/boot
 	cp $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
-	-cp $(KHELPER) $(TARGET_MNT)/boot/boot || \
+	-@cp $(KHELPER) $(TARGET_MNT)/boot/boot || \
 	echo -e "\n\n *** WARNING: Failed to copy boot binary ***\n\n"
 	umount $(TARGET_FS)
 	dd if=$(FD_BSECT) of=$(TARGET_FS) bs=512 count=2 conv=notrunc 2>/dev/null
