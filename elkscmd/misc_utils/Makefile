@@ -32,14 +32,20 @@ STD_USR_SBIN	=
 
 include $(BASEDIR)/Make.rules
 
+HOSTCC = gcc
+HOST_CFLAGS = -O2
+
 ###############################################################################
 
-PRGS=ed tar compress uncompress zcat
+PRGS=ed tar compress compress.host uncompress zcat
 
 all: $(PRGS)
 
 compress: compress.c Makefile
 	$(CC) $(CFLAGS) -H35000 -s $@.c -o $@
+
+compress.host: compress.c
+	$(HOSTCC) $(HOST_CFLAGS) -s compress.c -o $@
 
 uncompress: compress
 	ln -sf compress uncompress
@@ -57,5 +63,5 @@ min_rfs:
 smin_rfs:
 
 clean:
-	rm -f core $(PRGS)
+	rm -f core $(PRGS) *~ *.o
 

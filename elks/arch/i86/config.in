@@ -69,24 +69,7 @@ mainmenu_option next_comment
 	     80286	CONFIG_CPU_80286	\
 	     80386	CONFIG_CPU_80386	\
 	     80486+	CONFIG_CPU_80486"		8086
-	if [ "$CONFIG_CPU_8086" != "y" ]; then
-	    if [ "$CONFIG_CPU_80186" != "y" ]; then
-		define_bool CONFIG_CPU_SUB_80286 n
-		define_bool CONFIG_CPU_80286_PLUS y
-		if [ "$CONFIG_CPU_80286" != "y" ]; then
-		    define_bool CONFIG_CPU_80386_PLUS y
-		else
-		    define_bool CONFIG_CPU_80386_PLUS n
-		fi
-	    fi
-	fi
-	if [ "$CONFIG_CPU_SUB_80286" != "n" ]; then
-	    define_bool CONFIG_CPU_SUB_80286 y
-	    define_bool CONFIG_CPU_80286_PLUS n
-	    define_bool CONFIG_CPU_80386_PLUS n
-	fi
     fi
-
     if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 	mainmenu_option next_comment
 	    comment 'System Hardware'
@@ -119,13 +102,18 @@ mainmenu_option next_comment
 	    comment 'Memory Configuration'
 
 	    int 'Base memory size (64K pages)'  	CONFIG_MEM_PAGES  8 4 10
-	    bool 'Extended (XMS) memory support'	CONFIG_XMS	  n
-	    if [ "$CONFIG_XMS" = "y" ]; then
-		bool '  Use interrupt 15 for XMS size'	CONFIG_XMS_INT15  n
-		if [ "$CONFIG_XMS_INT15" != "y" ]; then
-		    int '  Extended memory size in kB'	CONFIG_XMS_SIZE   0
+	    if [[ "$CONFIG_CPU_8086" != "y" && "$CONFIG_CPU_80186" != "y" ]]; then
+		bool 'Extended (XMS) memory support'	CONFIG_XMS	  n
+		if [ "$CONFIG_XMS" = "y" ]; then
+		    bool '  Use interrupt 15 for XMS size'	CONFIG_XMS_INT15  n
+		    if [ "$CONFIG_XMS_INT15" != "y" ]; then
+			int '  Extended memory size in kB'	CONFIG_XMS_SIZE   0
+		    else
+			define_int CONFIG_XMS_SIZE 0
+		    fi
 		else
-		    define_int CONFIG_XMS_SIZE 0
+		    define_bool CONFIG_XMS_INT15 n
+		    define_int  CONFIG_XMS_SIZE  0
 		fi
 	    else
 		define_bool CONFIG_XMS_INT15 n

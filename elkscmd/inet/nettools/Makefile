@@ -35,7 +35,7 @@ PRGS=netstat
 
 SPRGS=
 
-CFLAGS=-0 -O -ansi -I$(ELKSNET_DIR)
+CFLAGS=-0 -O -ansi -I$(ELKSNET_DIR) -I$(ELKS_DIR)/include
 
 all: $(PRGS)
 
@@ -53,14 +53,8 @@ install_sibo: all
 install: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin
 
-#fsck: fsck.c
-#	$(CC) $(CFLAGS) $(LDFLAGS) -ansi fsck.c -o fsck -Hffff
-
 netstat: netstat.o
-	$(CC) $(LDFLAGS) netstat.o -o netstat
-
-#.c.o:
-#	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) $(LDFLAGS) netstat.o -o netstat
 
 clean:
 	rm -f core *.o $(PRGS) $(SPRGS)

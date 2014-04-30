@@ -265,7 +265,7 @@ function dep_mbool () {
 function int () {
     set_x_info "$2" "$3"
     echo -ne "'$2' '($x) $1$info' " >>MCmenu
-    echo -e "function $2 () { l_int '$1' '$2' '$3' '$x' ;}" >>MCradiolists
+    echo -e "function $2 () { l_int '$1' '$2' '$3' '$x' '$4' '$5' ;}" >>MCradiolists
 }
 
 # Add a menu item which will call our local hex function.
@@ -481,14 +481,31 @@ function l_tristate () {
 
 function l_int () {
     while true ; do
-	if $DIALOG --title "$1" --inputbox "$inputbox_instructions_int" \
-		   --backtitle "$backtitle" 10 75 "$4" 2>MCdialog.out
+	if $DIALOG --title "$1" --backtitle "$backtitle" \
+		--inputbox "$inputbox_instructions_int" \
+		10 75 "$4" 2>MCdialog.out
 	then
 	    answer="`cat MCdialog.out`"
 	    answer="${answer:-$3}"
 	    # Semantics of + and ? in GNU expr changed, so we avoid them:
 	    if expr "$answer" : '0$' '|' "$answer" : '[1-9][0-9]*$' '|' "$answer" : '-[1-9][0-9]*$' >/dev/null
 	    then
+		# Ugly but effective
+		if [ ! -z "$5" ]
+		  then if [ "$answer" -lt $5 ]
+		    then ${DIALOG} --backtitle "$backtitle" \
+			--infobox "Entry out of range." 3 43
+		    sleep 2; break
+		    else if [ ! -z "$6" ]
+		      then if [ "$answer" -gt $6 ]
+		        then ${DIALOG} --backtitle "$backtitle" \
+			    --infobox "Entry out of range." 3 43
+			sleep 2; break
+		      fi
+		    fi
+		  fi
+		fi
+		# End the ugly stuff
 		eval $2="$answer"
 	    else
 		eval $2="$3"

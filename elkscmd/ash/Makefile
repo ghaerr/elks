@@ -79,7 +79,7 @@ smin_rfs:
 install: ash
 	cp -p ash $(TARGET_MNT)/bin/ash
 	rm -f $(TARGET_MNT)/bin/sh
-	ln $(TARGET_MNT)/bin/ash $(TARGET_MNT)/bin/sh
+	ln -s ash $(TARGET_MNT)/bin/sh
 
 clean:
 	rm -f core ash $(CLEANFILES)

@@ -41,6 +41,8 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
+COMPRESS=../misc_utils/compress.host
+
 PREFIX	= /usr
 BINDIR	= $(PREFIX)/bin
 MANDIR  = $(PREFIX)/man/man1
@@ -75,7 +77,7 @@ install-man:
 	@for i in $(PROGS); do \
 		M=`echo $$i | sed 's/\(.\)/\u\1/'`.1; \
 		echo Installing $$M; \
-		compress -b12 < $$M > $(TARGET_MNT)/$(MANDIR)/$$M.Z; \
+		$(COMPRESS) -b12 < $$M > $(TARGET_MNT)/$(MANDIR)/$$M.Z; \
 	done
 
 clean:

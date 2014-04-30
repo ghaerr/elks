@@ -32,8 +32,9 @@ void setup_mm(void)
     long memstart, memend;
     register char *pi;
     __u16 basemem = setupw(0x2a);
+#ifdef CONFIG_XMS
     __u16 xms = setupw(2);		/* Fetched by boot code */
-
+#endif
     pi = 0;
     do {
 	proc_name[(int)pi] = setupb(0x30 + (int)pi);
@@ -51,10 +52,12 @@ void setup_mm(void)
 
     printk("PC/%cT class machine, %s CPU\n%dK base RAM",
 	   arch_cpu > 5 ? 'A' : 'X', proc_name, basemem);
+#ifdef CONFIG_XMS
     if (arch_cpu < 6)
 	xms = 0;		/* XT bios hasn't got xms interrupt */
     else
 	printk(", %dK extended memory (XMS)", xms);
+#endif
     if (*cpuid)
 	printk(", CPUID `%s'", cpuid);
 

@@ -91,7 +91,7 @@ $(LIBDIR)/libmath.b:	libmath.b
 
 rfs: all
 	cp -p bc $(TARGET_MNT)/bin
-	cp -p fbc $(TARGET_MNT)/bin
+#	cp -p fbc $(TARGET_MNT)/bin
 
 min_rfs: all
 
