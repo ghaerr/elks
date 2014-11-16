@@ -37,15 +37,13 @@ void wait_clear(struct wait_queue *p)
     pcurrent->waitpt = NULL;
 }
 
-int marker;
-
 static void __sleep_on(register struct wait_queue *p, __s16 state)
 {
     register __ptask pcurrent = current;
 
     if (pcurrent == &task[0]) {
 	printk("task[0] trying to sleep ");
-	panic("from %x", marker);
+	panic("from %x", (int)p);
     }
     pcurrent->state = state;
     wait_set(p);
@@ -55,7 +53,6 @@ static void __sleep_on(register struct wait_queue *p, __s16 state)
 
 void sleep_on(struct wait_queue *p)
 {
-    marker = (int) peekw(get_ds(), get_bp() + 2);
     __sleep_on(p, TASK_UNINTERRUPTIBLE);
 }
 

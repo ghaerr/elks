@@ -6,7 +6,6 @@
 #if 1
 
 extern __u16 get_cs(void), get_ds(void), get_es(void), get_ss(void);
-extern __u16 get_bp(void);
 
 #else
 
@@ -16,7 +15,6 @@ extern __u16 get_bp(void);
 #define get_ds()	asm("mov ax,ds")
 #define get_es()	asm("mov ax,es")
 #define get_ss()	asm("mov ax,ss")
-#define get_bp()	asm("mov ax,bp")
 
 #endif
 

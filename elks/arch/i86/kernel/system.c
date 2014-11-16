@@ -7,7 +7,6 @@
 
 #include <arch/segment.h>
 
-__arch_mminit arch_segs;
 int arch_cpu;			/* Processor type */
 extern long int basmem;
 
@@ -28,29 +27,6 @@ void hard_reset_now(void)
 
 void setup_arch(seg_t *start, seg_t *end)
 {
-#ifndef S_SPLINT_S
-/*
- *	Save segments
- */
-#asm
-	mov bx, #_arch_segs
-        mov [bx], cs
-	mov [bx+2], di
-        mov [bx+8], ss
-	mov [bx+6], si
-
-!	This is out of order to save a segment load and a few bytes :)
-
-        mov [bx+4], ds
-	mov [bx+10], dx
-
-!	mov ds, ax
-
-#endasm
-#endif
-
-    arch_segs.lowss = arch_segs.endss;
-
 #ifdef CONFIG_COMPAQ_FAST
 
 /*

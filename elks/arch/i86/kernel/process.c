@@ -222,8 +222,10 @@ int run_init_process(char *cmd, char *ar)
     *pip++ = 0;
     *pip++ = (unsigned short int) &ar[6];
     *pip++ = 0;
-    if(num = sys_execve(cmd, ar, 18))
+    if(num = sys_execve(cmd, ar, 18)) {
+	printk("sys_execve(\"%s\", args, 18) => %d.\n", cmd, -num);
 	return num;
+    }
 #ifndef S_SPLINT_S
     /* Brackets round the following code are required as a work around
      * for a bug in the compiler which causes it to jump past the asm
@@ -244,16 +246,17 @@ int run_init_process(char *cmd, char *ar)
 void stack_check(void)
 {
     register __ptask currentp = current;
-    register segext_t end;
+/*    register segext_t end;*/ /* Unused variable "end" */
+
     if ((currentp->t_begstack > currentp->t_enddata) &&
 	(currentp->t_regs.sp < currentp->t_endbrk)) {
-	end = currentp->t_endbrk;
+/*	end = currentp->t_endbrk;*/
 	goto stack_overflow;
     }
-#ifdef CONFIG_EXEC_ELKS 
-    else if (currentp->t_regs.sp > currentp->t_endseg){
-        end = 0xffff;
-	goto stack_overflow; 
+#ifdef CONFIG_EXEC_ELKS
+    else if(currentp->t_regs.sp > currentp->t_endseg) {
+/*        end = 0xffff;*/
+	goto stack_overflow;
     }
 #endif
     return;

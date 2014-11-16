@@ -1,4 +1,4 @@
-/* $Header$ 
+/* $Header$
  */
 
 #include <linuxmt/config.h>
@@ -68,7 +68,7 @@ void start_kernel(void)
     kfork_proc(init_task);
     wake_up_process(&task[1]);
 
-    /* 
+    /*
      * We are now the idle task. We won't run unless no other process can run.
      */
     while (1){
@@ -103,30 +103,26 @@ static void init_task()
      * So, I've modified the ELKS kernel to follow this tradition.
      */
 
-    num = run_init_process("/sbin/init", args);
-	printk("sys_execve(\"/sbin/init\",args,18) => %d.\n",num);
-	num = run_init_process("/etc/init", args);
-	    printk("sys_execve(\"/etc/init\",args,18) => %d.\n",num);
-	    num = run_init_process("/bin/init", args);
-		printk("sys_execve(\"/bin/init\",args,18) => %d.\n",num);
+    run_init_process("/etc/init", args);
+    run_init_process("/sbin/init", args);
+    run_init_process("/bin/init", args);
 
 #ifdef CONFIG_CONSOLE_SERIAL
-		num = sys_open("/dev/ttyS0", 2, 0);
+	num = sys_open("/dev/ttyS0", 2, 0);
 #else
-		num = sys_open("/dev/tty0", 2, 0);
+	num = sys_open("/dev/tty0", 2, 0);
 #endif
-		if (num < 0)
-		    printk("Unable to open /dev/tty (error %u)\n", -num);
+	if (num < 0)
+	    printk("Unable to open /dev/tty (error %u)\n", -num);
 
-		if (sys_dup(num) != 1)
-	    	printk("dup failed\n");
-		sys_dup(num);
-		sys_dup(num);
-		printk("No init - running /bin/sh\n");
+	if (sys_dup(num) != 1)
+	    printk("dup failed\n");
+	sys_dup(num);
+	sys_dup(num);
+	printk("No init - running /bin/sh\n");
 
-		num = run_init_process("/bin/sash", args);
-		printk("sys_execve(\"/bin/sh\",args,18) => %d.\n",num);
-	    	    panic("No init or sh found");
+    run_init_process("/bin/sash", args);
+    panic("No init or sh found");
 }
 
 /*

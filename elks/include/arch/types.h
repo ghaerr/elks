@@ -40,15 +40,6 @@ struct pt_regs {
 
 typedef __u16			__pptr;
 
-struct _mminit {
-    __u16	cs, endcs,
-		ds, endds,
-		ss, endss,
-		    lowss;
-};
-
-typedef struct _mminit		__arch_mminit, *__parch_mminit;
-
 /*@+namechecks@*/
 
 #ifndef NULL

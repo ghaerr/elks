@@ -175,7 +175,7 @@ int tty_write(struct inode *inode, struct file *file, char *data, int len)
     pi = (char *)len;
     while ((int)(pi--)) {
 	tty_charout(tty,
-	   (unsigned char) peekb(current->t_regs.ds, (__u16)(data++))
+	    get_user_char((void *)(data++))
 	   /* , blocking */ );
     }
     return len;
@@ -207,12 +207,12 @@ int tty_read(struct inode *inode, struct file *file, char *data, int len)
 	    if (!rawmode && (j == 04))	/* CTRL-D */
 		break;
 	    if (rawmode || (j != '\b')) {
-		pokeb(current->t_regs.ds, (__u16) (data + ((int)pi)), ch);
+		put_user_char(ch, (void *)(data++));
 		++pi;
 		tty_echo(tty, ch);
 	    } else if (((int)pi) > 0) {
 		--pi;
-		k = ((peekb(current->t_regs.ds, (__u16) (data + ((int)pi)))
+		k = ((get_user_char((void *)(data++))
 		      == '\t') ? TAB_SPACES : 1);
 		do {
 		    tty_echo(tty, ch);
@@ -248,10 +248,10 @@ int tty_read(struct inode *inode, struct file *file, char *data, int len)
 	if (!rawmode && (j == 04))	/* CTRL-D */
 	    break;
 	if (rawmode || (j != '\b')) {
-	    pokeb(current->t_regs.ds, (__u16) (data + i++), ch);
+	    put_user_char(ch, (void *)(data + i++));
 	    tty_echo(tty, ch);
 	} else if (i > 0) {
-	    lch = ((peekb(current->t_regs.ds, (__u16) (data + --i)) == '\t')
+	    lch = ((get_user_char((void *)(data + --i)) == '\t')
 			? TAB_SPACES : 1);
 	    for (k = 0; k < lch; k++)
 		tty_echo(tty, ch);

@@ -49,13 +49,10 @@ extern void mm_free(seg_t);
 extern int do_swapper_run(struct task_struct *);
 extern unsigned int mm_get_usage(int,int);
 
-extern void pokeb(__u16,__u16,__u8);
 extern void pokew(__u16,__u16,__u16);
-extern void poked(__u16,__u16,__u32);
 
 extern __u8  peekb(__u16,__u16);
 extern __u16 peekw(__u16,__u16);
-extern __u32 peekd(__u16,__u16);
 
 extern void fmemcpy(__u16,__u16,__u16,__u16,__u16);
 extern void fmemset(__u16,__u16,__u16,__u16);

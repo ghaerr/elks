@@ -38,7 +38,7 @@ IOBJS		=idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o
 # miscellaneous
 
 JOBJS		=inport.o inportb.o outport.o outportb.o \
-		 peekb.o peekw.o peekd.o pokeb.o pokew.o poked.o bitops.o \
+		 peekb.o peekw.o pokew.o bitops.o \
 		 memmove.o string.o fmemset.o border.o
 #		 ntohl.o ntohs.o
 

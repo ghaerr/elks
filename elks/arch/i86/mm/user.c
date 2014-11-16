@@ -233,7 +233,7 @@ int fs_memcmp(void *s, void *d, size_t len)
     int c = 0;
 
     while (len-- && !c)
-	c = peekb(current->t_regs.ds, (__u16) p1++) - *p2++;
+	c = get_user_char((void *)(p1++)) - *p2++;
 
     return c;
 }

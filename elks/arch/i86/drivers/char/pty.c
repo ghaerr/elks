@@ -110,7 +110,7 @@ int pty_read(struct inode *inode, struct file *file, char *data, int len)
 	    } else
 		break;
 	debug2(" rc[%u,%u]", (int)pi, len);
-	pokeb(current->t_regs.ds, (__u16) (data + ((int)pi)), ch);
+	put_user_char(ch, (void *)(data++));
 	++pi;
     }
     debug1("{%u}\n", (int)pi);
@@ -132,7 +132,7 @@ int pty_write(struct inode *inode, struct file *file, char *data, int len)
     l = (file->f_flags & O_NONBLOCK) ? 0 : 1;
     pi = 0;
     while (((int)pi) < len) {
-	ch = (unsigned char) peekb(current->t_regs.ds, (__u16) (data + ((int)pi)));
+	ch = get_user_char((void *)(data++));
 	if (chq_addch(&tty->inq, ch, l) == -1)
 	    if (l) {
 		debug("failed: INTR\n");
