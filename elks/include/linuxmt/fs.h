@@ -423,7 +423,6 @@ extern int fs_may_umount(kdev_t,struct inode *);
 extern int fs_may_remount_ro(kdev_t);
 
 extern struct file file_array[];
-extern int nr_files;
 extern struct super_block super_blocks[];
 
 extern void invalidate_inodes(kdev_t);
@@ -462,7 +461,7 @@ extern struct inode *get_empty_inode(void);
 extern void insert_inode_hash(struct inode *);
 extern void clear_inode(struct inode *);
 extern struct inode *get_pipe_inode(void);
-extern struct file *get_empty_filp(void);
+extern struct file *get_empty_filp(unsigned short);
 
 extern struct buffer_head *get_hash_table(kdev_t,block_t);
 extern struct buffer_head *getblk(kdev_t,block_t);

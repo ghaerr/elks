@@ -372,13 +372,12 @@ int sys_open(char *filename, int flags, int mode)
     register struct file *f;
     int error, fd, flag;
 
-    f = get_empty_filp();
+    f = get_empty_filp(flags);
     if (!f) {
 	printk("\nNo filps\n");
 	return -ENFILE;
     }
-    f->f_flags = (unsigned short int) (flag = flags);
-    f->f_mode = (mode_t) ((flag + 1) & O_ACCMODE);
+    flag = flags;
     if (f->f_mode)
 	flag++;
     if (flag & (O_TRUNC | O_CREAT))
@@ -396,7 +395,6 @@ int sys_open(char *filename, int flags, int mode)
 #endif
 
 	f->f_inode = inode;
-	f->f_pos = 0;
 
 #ifdef BLOAT_FS
 	f->f_reada = 0;

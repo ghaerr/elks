@@ -60,24 +60,21 @@ loff_t pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
 
 char pipe_base[MAX_PIPES][PIPE_BUF];
 
-int pipe_in_use[MAX_PIPES] = /*@i1@*/ { 0, };
+int pipe_in_use[(MAX_PIPES + 15)/16];
 
 char *get_pipe_mem(void)
 {
-    register char *pi = 0;
+    int i = 0;
 
-    do {
-	if (!pipe_in_use[(int)pi]) {
-	    pipe_in_use[(int)pi] = 1;
-	    return pipe_base[(int)pi];
-	}
-	++pi;
-    } while (((int)pi) < MAX_PIPES);
+    i = find_first_zero_bit(pipe_in_use, MAX_PIPES);
+    if(i < MAX_PIPES) {
+	set_bit(i, pipe_in_use);
+	return pipe_base[i];
+    }
 
     debug("PIPE: No more buffers.\n");		/* FIXME */
     return NULL;
 }
-
 
 static size_t pipe_read(register struct inode *inode, struct file *filp,
 		     char *buf, int count)
@@ -302,66 +299,60 @@ int do_pipe(int *fd)
     register struct file *f1;
     register struct file *f2;
     int error = ENFILE;
-    int i, j;
+    int i;
 
-    f1 = get_empty_filp();
+    /* read file */
+    f1 = get_empty_filp(O_RDONLY);
     if (!f1)
 	goto no_files;
+    f1->f_op = &read_pipe_fops;
 
-    f2 = get_empty_filp();
+    /* write file */
+    f2 = get_empty_filp(O_WRONLY);
     if (!f2)
 	goto close_f1;
+    f2->f_op = &write_pipe_fops;
 
     inode = get_pipe_inode();
     if (!inode)
 	goto close_f12;
+    f1->f_inode = f2->f_inode = inode;
 
     error = get_unused_fd();
     if (error < 0)
 	goto close_f12_inode;
-
     i = error;
-    current->files.fd[i] = f1;
 
     error = get_unused_fd();
     if (error < 0)
 	goto close_f12_inode_i;
 
-    j = error;
-    f1->f_inode = f2->f_inode = inode;
-
-    /* read file */
-    f1->f_pos = f2->f_pos = 0;
-    f1->f_flags = O_RDONLY;
-    f1->f_op = &read_pipe_fops;
-    f1->f_mode = 1;
-
-    /* write file */
-    f2->f_flags = O_WRONLY;
-    f2->f_op = &write_pipe_fops;
-    f2->f_mode = 2;
-
-    current->files.fd[j] = f2;
+    current->files.fd[i] = f1;
+    current->files.fd[error] = f2;
     fd[0] = i;
-    fd[1] = j;
+    fd[1] = error;
 
     return 0;
 
   close_f12_inode_i:
 #if 0
+    put_unused_fd(error);	/* Not sure this is needed */
+#endif
+  close_f12_inode:
+#if 0
     put_unused_fd(i);		/* Not sure this is needed */
 #endif
-
-    current->files.fd[i] = NULL;
-
-  close_f12_inode:inode->i_count--;
+    inode->i_count--;
     iput(inode);
 
-  close_f12:f2->f_count--;
+  close_f12:
+    f2->f_count--;
 
-  close_f1:f1->f_count--;
+  close_f1:
+    f1->f_count--;
 
-  no_files:return error;
+  no_files:
+    return error;
 }
 
 int sys_pipe(unsigned int *filedes)

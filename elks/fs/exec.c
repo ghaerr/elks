@@ -54,10 +54,9 @@ static struct minix_supl_hdr msuph;
 
 int sys_execve(char *filename, char *sptr, size_t slen)
 {
-    struct file file;	/* We can push this to stack its now only 20 bytes */
     void *ptr;
     struct inode *inode;
-    register struct file *filp = &file;
+    register struct file *filp;
     __registers *tregs;
     unsigned int suidfile, sgidfile;
     int retval;
@@ -84,11 +83,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     debug("EXEC: start building a file handle\n");
 
     /*
-     *      Build a reading file handle
+     *      Get a reading file handle
      */
-    filp->f_mode = filp->f_count = 1;
-    filp->f_flags = 0;
-    filp->f_pos = 0;		/* FIXME - should call lseek */
+    filp = get_empty_filp(O_RDONLY);
     filp->f_inode = inode;
 
 #ifdef BLOAT_FS
@@ -98,7 +95,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     filp->f_op = inode->i_op->default_file_ops;
     retval = -ENOEXEC;
     if ((!filp->f_op)
-	|| ((filp->f_op->open) && (filp->f_op->open(inode, &file)))
+	|| ((filp->f_op->open) && (filp->f_op->open(inode, filp)))
 	|| (!filp->f_op->read))
 	goto close_readexec;
 
@@ -121,7 +118,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	effuid = pinode->i_uid;
 	effgid = pinode->i_gid;
 
-	result = filp->f_op->read(pinode, &file, &mh, sizeof(mh));
+	result = filp->f_op->read(pinode, filp, &mh, sizeof(mh));
     }
     tregs->ds = ds;
 
@@ -140,7 +137,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if ((unsigned int) mh.hlen == 0x30) {
 	/* BIG HEADER */
 	tregs->ds = get_ds();
-	result = filp->f_op->read(inode, &file, &msuph, sizeof(msuph));
+	result = filp->f_op->read(inode, filp, &msuph, sizeof(msuph));
 	tregs->ds = ds;
 	if (result != sizeof(msuph)) {
 	    debug1("EXEC: Bad secondary header, result %u\n", result);
@@ -217,7 +214,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     if(load_code){
         tregs->ds = cseg;
-        result = filp->f_op->read(inode, &file, 0, mh.tseg);
+        result = filp->f_op->read(inode, filp, 0, mh.tseg);
         tregs->ds = ds;
         if (result != mh.tseg) {
             debug2("EXEC(tseg read): bad result %u, expected %u\n",
@@ -232,7 +229,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     }
 
     tregs->ds = dseg;
-    result = filp->f_op->read(inode, &file, (char *)stack_top, mh.dseg);
+    result = filp->f_op->read(inode, filp, (char *)stack_top, mh.dseg);
     tregs->ds = ds;
     if (result != mh.dseg) {
 	debug2("EXEC(dseg read): bad result %d, expected %d\n",
@@ -348,7 +345,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
   close_readexec:
     if (filp->f_op->release)
-	filp->f_op->release(inode, &file);
+	filp->f_op->release(inode, filp);
+    filp->f_count--;
 
   end_readexec:
 

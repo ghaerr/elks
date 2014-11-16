@@ -232,7 +232,7 @@ int sock_awaitconn(register struct socket *mysock,
 	return -EINVAL;
 
     /*
-     *      Put ourselves on the server's incomplete connection queue. 
+     *      Put ourselves on the server's incomplete connection queue.
      */
     mysock->next = NULL;
 
@@ -410,20 +410,16 @@ int get_fd(register struct inode *inode)
 
     fd = get_unused_fd();
     if (fd >= 0) {
-	struct file *file = get_empty_filp();
+	struct file *file = get_empty_filp(O_RDWR);
 	if (!file) {
 	    return -ENFILE;
 	}
 
-	current->files.fd[fd] = file;
-	file->f_op = &socket_file_ops;
-	file->f_mode = 3;
-	file->f_flags = O_RDWR;
-	file->f_count = 1;
 	file->f_inode = inode;
+	file->f_op = &socket_file_ops;
 	if (inode)
 	    inode->i_count++;
-	file->f_pos = 0;
+	current->files.fd[fd] = file;
     }
     return fd;
 }

@@ -142,18 +142,17 @@ int fs_may_umount(kdev_t dev, register struct inode *mount_rooti)
 
 int fs_may_remount_ro(kdev_t dev)
 {
-    register struct file *file;
+    register struct file *file = file_array;
     register struct inode *inode;
-    int i;
 
     /* Check that no files are currently opened for writing. */
-    for (file = file_array, i = 0; i < nr_files; i++, file++) {
+    do {
 	inode = file->f_inode;
 	if (!file->f_count || !inode || inode->i_dev != dev)
 	    continue;
 	if (S_ISREG(inode->i_mode) && (file->f_mode & 2))
 	    return 0;
-    }
+    } while(++file < &file_array[NR_FILE]);
     return 1;
 }
 

@@ -7,16 +7,15 @@
 #include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/fcntl.h>
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
 
 /*
  * first_file points to a doubly linked list of all file structures in
  *            the system.
- * nr_files   holds the length of this list.
  */
 
-int nr_files = NR_FILE;
 struct file file_array[NR_FILE];
 
 /*
@@ -25,20 +24,23 @@ struct file file_array[NR_FILE];
  * we run out of memory.
  */
 
-struct file *get_empty_filp(void)
+struct file *get_empty_filp(unsigned short flags)
 {
-    register struct file *f;
+    register struct file *f = file_array;
 
-    for(f = file_array; f < &file_array[NR_FILE]; f++) {
+    do {
 	if (!f->f_count) {	/* TODO: is nr_file const? */
-	    memset(f, 0, sizeof(*f));
+	    memset(f, 0, sizeof(struct file));
+	    f->f_flags = flags;
+	    f->f_mode = (mode_t) ((flags + 1) & O_ACCMODE);
 	    f->f_count = 1;
+	    f->f_pos = 0;	/* FIXME - should call lseek */
 #ifdef BLOAT_FS
 	    f->f_version = ++event;
 #endif
 	    return f;
 	}
-    }
+    } while(++f < &file_array[NR_FILE]);
 
     return NULL;
 }
