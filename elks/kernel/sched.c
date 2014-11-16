@@ -1,9 +1,9 @@
 /*
  *  kernel/sched.c
- *  (C) 1995 Chad Page 
- *  
+ *  (C) 1995 Chad Page
+ *
  *  This is the main scheduler - hopefully simpler than Linux's at present.
- * 
+ *
  *
  */
 
@@ -278,7 +278,6 @@ void sched_init(void)
  *	Now create task 0 to be ourself.
  */
     taskp = &init_task;
-    memset(taskp, 0, sizeof(struct task_struct));
     taskp->state = TASK_RUNNING;
     taskp->next_run = taskp->prev_run = taskp;
 

@@ -94,7 +94,7 @@ static void numout(unsigned long v, int width, int base, int useSign,
 	bp2 = Upper ? hex_string : hex_lower;
     do {
 	    *--bp = *(bp2 + (v % base));	/* Store digit */
-	} while ((v /= base));
+    } while ((v /= base));
 
     if (useSign && !Zero)
 	*--bp = '-';
@@ -237,10 +237,4 @@ void panic(char *error, ...)
 void kernel_restarted(void)
 {
     panic("kernel restarted\n");
-}
-
-void redirect_main(void)
-{
-    pokeb(get_cs(), 0, 0xe9);
-    pokew(get_cs(), 1, ((__u16) kernel_restarted) - 3);
 }
