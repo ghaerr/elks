@@ -5,42 +5,19 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
 
-int task_slots_unused = MAX_TASKS - 2;
-struct task_struct *next_task_slot = &task[2];
-
-/*
- *	Find a free task slot.
- */
-static struct task_struct *find_empty_process(void)
-{
-    register struct task_struct *t;
-
-    if (task_slots_unused <= 1) {
-        printk("Only %d slots\n", task_slots_unused);
-        if (!task_slots_unused || current->uid)
-            return NULL;
-	}
-    t = next_task_slot;
-    while (t->state != TASK_UNUSED) {
-        if (++t >= &task[MAX_TASKS])
-            t = &task[1];
-    }
-    next_task_slot = t;
-    task_slots_unused--;
-    return t;
-}
-
+int task_slots_unused = MAX_TASKS;
+struct task_struct *next_task_slot = task;
 
 pid_t get_pid(void)
 {
     register struct task_struct *p;
-    static pid_t last_pid = 0;
+    static pid_t last_pid = -1;
 
 repeat:
     if (++last_pid < 0)
         last_pid = 1;
-                
-    p = &task[0];
+
+    p = &task[1];
     do {
         if (p->state == TASK_UNUSED)
             continue;
@@ -50,6 +27,33 @@ repeat:
 	}
     } while (++p < &task[MAX_TASKS]);
     return last_pid;
+}
+
+/*
+ *	Find a free task slot.
+ */
+struct task_struct *find_empty_process(void)
+{
+    register struct task_struct *t;
+
+    if (task_slots_unused <= 1) {
+        printk("Only %d slots\n", task_slots_unused);
+        if (!task_slots_unused || current->uid)
+            return NULL;
+    }
+    t = next_task_slot;
+    while (t->state != TASK_UNUSED) {
+        if (++t >= &task[MAX_TASKS])
+            t = &task[1];
+    }
+    next_task_slot = t;
+    task_slots_unused--;
+    *t = *current;
+    t->state = TASK_UNINTERRUPTIBLE;
+    t->pid = get_pid();
+    t->t_kstackm = KSTACK_MAGIC;
+    t->next_run = t->prev_run = NULL;
+    return t;
 }
 
 /*
@@ -66,13 +70,9 @@ pid_t do_fork(int virtual)
     if((t = find_empty_process()) == NULL)
         return -EAGAIN;
 
-    /* Copy everything */
-
-    *t = *currentp;
-
     /* Fix up what's different */
 
-    /* 
+    /*
      * We do shared text.
      */
     (void) mm_realloc(currentp->mm.cseg);
@@ -92,19 +92,12 @@ pid_t do_fork(int virtual)
 
 	t->t_regs.ds = t->t_regs.ss = t->mm.dseg;
     }
-    t->t_regs.ksp = ((__u16) t->t_kstack) + KSTACK_BYTES;
-
-    t->state = TASK_UNINTERRUPTIBLE;
-    t->pid = get_pid();
-    t->ppid = currentp->pid;
-    t->t_kstackm = KSTACK_MAGIC;
-    t->next_run = t->prev_run = NULL;
 
     /*
      *      Build a return stack for t.
      */
 
-    arch_build_stack(t);
+    arch_build_stack(t, NULL);
 
     /* Increase the reference count to all open files */
 
@@ -118,6 +111,7 @@ pid_t do_fork(int virtual)
     t->fs.pwd->i_count++;
 
     /* Set up our family tree */
+    t->ppid = currentp->pid;
     t->p_parent = currentp;
     t->p_nextsib = t->p_child = NULL;
     t->child_lastend = t->lastend_status = 0;

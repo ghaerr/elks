@@ -65,7 +65,8 @@ void start_kernel(void)
 
     printk("ELKS version %s\n", system_utsname.release);
 
-    kfork_proc(&task[1], init_task);
+    kfork_proc(init_task);
+    wake_up_process(&task[1]);
 
     /* 
      * We are now the idle task. We won't run unless no other process can run.
@@ -73,7 +74,6 @@ void start_kernel(void)
     while (1){
         schedule();
     }
-
 }
 
 static char args[] = "\0\0\0\0\0\0/bin/init\0\0";

@@ -11,6 +11,7 @@
 
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
+#include <linuxmt/init.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/string.h>
 
@@ -21,7 +22,8 @@
 __task task[MAX_TASKS];
 unsigned char nr_running;
 
-__ptask current, previous;
+__ptask current = task;
+__ptask previous;
 
 extern int intr_count;
 
@@ -272,23 +274,21 @@ void do_timer(struct pt_regs *regs)
 
 void sched_init(void)
 {
-    register struct task_struct *taskp;
+    register struct task_struct *t = task;
+
+/*
+ *	Mark tasks 0-(MAX_TASKS-1) as not in use.
+ */
+    do {
+	t->state = TASK_UNUSED;
+    } while(++t < &task[MAX_TASKS]);
 
 /*
  *	Now create task 0 to be ourself.
  */
-    taskp = &init_task;
-    taskp->state = TASK_RUNNING;
-    taskp->next_run = taskp->prev_run = taskp;
+    kfork_proc(NULL);
 
-    current = taskp;
-/*    nr_running = 0;*/
-
-/*
- *	Mark tasks 1-31 as not in use.
- */
-
-    while(++taskp < &task[MAX_TASKS])
-	taskp->state=TASK_UNUSED;
-
+    t = task;
+    t->state = TASK_RUNNING;
+    t->next_run = t->prev_run = t;
 }

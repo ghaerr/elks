@@ -56,7 +56,7 @@ _main:
 
 #ifndef CONFIG_ROMCODE
 	mov	ss,dx		! in ROMCODE stack is ready placed
-	mov	sp,#(_task + TASK_KSTKTOP)
+	mov	sp,#(_task + TASK_KSTKTOP - 10)
 #endif
 
 ! Space for temporary stack space _bootstack removed!!

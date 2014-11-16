@@ -9,42 +9,7 @@
 #include <arch/segment.h>
 #include <arch/asm-offsets.h>
 
-/*
- *	This function can only be called with SS=DS=ES=kernel DS
- *	CS=kernel CS. SS:SP is the relevant kernel stack (IRQ's are
- *	taken on 'current' kernel stack.
- *
- *	load_regs can also only be called from such a situation, thus
- *	we don't need to arse about with segment registers. The kernel isn't
- *	relocating.
- *
- *	To understand this you need to know how the compilers generate 8086
- *	stack frames. Functions normally start
- *
- *	push bp		! Save callers BP
- *	mov  bp,sp	! BP so we can use it to index registers
- *
- *	and end
- *
- *	mov sp,bp	! Fastest way to destroy local variables
- *	pop bp		! Restore callers BP
- *	ret		! Return address is top of stack now
- *
- *	save_regs() saves the callers registers and state then returns to
- *	the caller. It in effect freezes a copy of the caller context but
- *	doesn't prevent it being used temporarily beyond that as we do. 
- *
- *	load_regs() restores the callers context and returns skipping out of 
- *	schedule() [our faked setup] back to the right place. 
- *
- *	fake_save_regs builds a stack frame that returns a new task to a
- *	kernel address of our choice using its own stack/context.
- *
- * ELKS 0.76 7/1999  Fixed for ROMCODE-Version
- * Christian Mardm”ller  (chm@kdt.de)
- */
-
-#ifdef CONFIG_ROMCODE 
+#ifdef CONFIG_ROMCODE
 
 #define stashed_ds	[0]
 
@@ -70,10 +35,7 @@
 
 #endif
 
-typedef unsigned short int FsR;
-
 extern int do_signal(void);
-extern int fake_save_regs(FsR,FsR);
 
 void sig_check(void)
 {
@@ -81,6 +43,33 @@ void sig_check(void)
         do_signal();
 }
 
+/*
+ *	tswitch();
+ *
+ *	This function can only be called with SS=DS=ES=kernel DS and
+ *	CS=kernel CS. SS:SP is the relevant kernel stack (IRQ's are
+ *	taken on 'current' kernel stack. Thus we don't need to arse about
+ *	with segment registers. The kernel isn't relocating.
+ *
+ *	To understand this you need to know how the compilers generate 8086
+ *	stack frames. Functions normally start
+ *
+ *	push bp		! Save callers BP
+ *	mov  bp,sp	! BP so we can use it to index registers
+ *
+ *	and end
+ *
+ *	mov sp,bp	! Fastest way to destroy local variables
+ *	pop bp		! Restore callers BP
+ *	ret		! Return address is top of stack now
+ *
+ *	tswitch() saves the "previous" task registers and state. It in effect
+ *	freezes a copy of the caller context. Then restores the "current"
+ *	context and returns running the current task.
+ *
+ * ELKS 0.76 7/1999  Fixed for ROMCODE-Version
+ * Christian Mardm”ller  (chm@kdt.de)
+ */
 #ifndef S_SPLINT_S
 #asm
 	.text
@@ -92,14 +81,10 @@ _tswitch:
 	pushf
 	push di
 	push si
-	push bx
-	push dx
 	mov bx,_previous
 	mov TASK_KRNL_SP[bx],sp
 	mov bx,_current
 	mov sp,TASK_KRNL_SP[bx]
-	pop dx
-	pop bx
 	pop si
 	pop di
 	popf
@@ -226,63 +211,6 @@ _ret_from_syscall:
 !
 !	Done.
 !
-
-	.globl _fake_save_regs
-!
-!	int used=fake_save_regs(sp,addr);
-!
-!	Build a fake return stack in kernel space so that
-!	we can have a new task start at a chosen kernel 
-!	function while on its kernel stack. We push the
-!	registers suitably for
-!
-_fake_save_regs:
-#if 0
-	push 	bp
-	mov	bp,sp
-	mov     bx,4[bp]	! new task ksp
-	mov	ax,6[bp]	! new task start address
-!
-!	Build a dummy stack return frame
-!
-	mov	-2[bx],ax	! Return address
-	mov	ax,[bp]		! Caller BP
-	mov	-4[bx],ax	! Save caller BP
-	mov	ax,bx		! Firstly get bx
-	sub	ax,#4		! This is the apparent BP. It points
-				! to caller BP and above it caller return
-	mov	-6[bx],ax	! goes here.
-!
-!	Register State
-!
-	pushf
-	pop	ax
-	mov	-8[bx],ax	! Flags
-	mov	-10[bx],di
-	mov 	-12[bx],si
-	mov	-14[bx],bx
-	mov	-16[bx],dx
-	mov	ax,#16
-	pop	bp
-	ret
-#else
-	push	bp
-	mov	bp,sp
-	mov     bx,4[bp]	! new task ksp
-	mov	ax,6[bp]	! new task start address
-	pop	bp
-
-	mov	-2[bx],ax	! Return address
-	mov	-4[bx],bp	! Save caller BP
-	pushf
-	pop	-6[bx]		! Flags
-	mov	-8[bx],di
-	mov 	-10[bx],si
-	mov	-12[bx],bx
-	mov	-14[bx],dx
-	mov	ax,#14
-	ret
-#endif
 #endasm
 #endif
 
@@ -338,26 +266,21 @@ stack_overflow:
  *	Make task t fork into kernel space. We are in kernel mode
  *	so we fork onto our kernel stack.
  */
- 
-void kfork_proc(register struct task_struct *t,char *addr)
+
+void kfork_proc(char *addr)
 {
-    memset(t, 0, sizeof(struct task_struct));
-    t->t_regs.ds = t->t_regs.ss = get_ds();
-    t->t_regs.ksp = ((__u16) t->t_kstack) + KSTACK_BYTES;
-    t->t_regs.ksp -= fake_save_regs((__u16)t->t_regs.ksp,(__u16)addr);
+    register struct task_struct *t;
 
-    t->state = TASK_UNINTERRUPTIBLE;
-    t->pid = get_pid();
-    t->t_kstackm = KSTACK_MAGIC;
-    t->prev_run = t->next_run = NULL;
+    t = find_empty_process();
 
-    wake_up_process(t);
-    schedule();
+    t->t_regs.cs = get_cs();
+    t->t_regs.ds = t->t_regs.ss = get_ds(); /* Run in kernel space */
+    arch_build_stack(t, addr);
 }
 
 /*
  *	Build a user return stack for exec*(). This is quite easy,
- *	especially as our syscall entry doesnt use the user stack. 
+ *	especially as our syscall entry doesnt use the user stack.
  */
 
 #define USER_FLAGS 0x3200		/* IPL 3, interrupt enabled */
@@ -447,26 +370,28 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
  * we need to do to recover the user's bp.
  */
 
+/*
+ *	arch_build_stack(t, addr);
+ *
+ * Build a fake return stack in kernel space so that
+ * we can have a new task start at a chosen kernel
+ * function while on its kernel stack. We push the
+ * registers suitably for
+ */
+
 extern void ret_from_syscall();		/* our return address */
 
-static void* saved_bp;			/* we have to recover user's bp */
-
-void arch_build_stack(struct task_struct *t)
+void arch_build_stack(struct task_struct *t, char *addr)
 {
-    char *kstktop = (char *) t->t_kstack+KSTACK_BYTES;
+    register __u16 *tsp = (__u16 *)(t->t_kstack + KSTACK_BYTES - 10);
+    register __u16 *csp = (__u16 *)(current->t_kstack + KSTACK_BYTES - 14);
 
-/*@i3@*/ t->t_regs.ksp = kstktop - fake_save_regs(kstktop, ret_from_syscall);
-
-{
-#ifndef S_SPLINT_S
-#asm
-	mov	bx,[bp]	! bx = bp on entry to arch_build_stack
-	mov	bx,[bx]	! ax = bp on entry to do_fork = users bp (hopefully!)
-	mov	ax,[bx]	! ax = bp on entry to do_fork = users bp (hopefully!)
-	mov	_saved_bp,ax
-#endasm
-#endif
-}
-
-    *(void**) (kstktop-4) = saved_bp;
+    t->t_regs.ksp = (__u16)tsp;
+    *tsp++ = *(csp + 6);	/* Initial value for SI register */
+    *tsp++ = *(csp + 5);	/* Initial value for DI register */
+    *tsp++ = 0x3202;		/* Initial value for FLAGS register */
+    *tsp++ = *csp;		/* Initial value for BP register */
+    if(addr == NULL)
+	addr = ret_from_syscall;
+    *tsp = addr;		/* Start execution address */
 }

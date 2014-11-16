@@ -28,8 +28,6 @@ void hard_reset_now(void)
 
 void setup_arch(seg_t *start, seg_t *end)
 {
-    register __ptask taskp;
-
 #ifndef S_SPLINT_S
 /*
  *	Save segments
@@ -53,16 +51,6 @@ void setup_arch(seg_t *start, seg_t *end)
 
     arch_segs.lowss = arch_segs.endss;
 
-/*
- *	arch dependent sched init. Set the kernel SP,
- *	as we will need this in interrupts.
- */	
-    taskp = &task[0];
-    taskp->t_regs.cs = get_cs();
-    taskp->t_regs.ds = taskp->t_regs.ss = get_ds(); /* Run in kernel space */
-    taskp->t_regs.ksp = ((__u16) taskp->t_kstack) + KSTACK_BYTES;
-    taskp->t_kstackm = KSTACK_MAGIC;
-	
 #ifdef CONFIG_COMPAQ_FAST
 
 /*

@@ -87,7 +87,7 @@ struct task_struct {
     sigset_t			signal;		/* Signal status */
     struct signal_struct	sig;		/* Signal block */
     int 			dumpable;	/* Can core dump */
-	
+
 #ifdef CONFIG_SWAP
     jiff_t			last_running;
 #endif
@@ -162,7 +162,8 @@ extern int kill_process(pid_t,sig_t,int);
 
 extern void add_to_runqueue(struct task_struct *);
 
-extern void arch_build_stack(struct task_struct *);
+extern struct task_struct *find_empty_process(void);
+extern void arch_build_stack(struct task_struct *, char *);
 extern unsigned int get_ustack(struct task_struct *,int);
 extern void put_ustack(register struct task_struct *,int,int);
 
