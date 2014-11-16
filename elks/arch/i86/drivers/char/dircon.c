@@ -518,14 +518,11 @@ void Console_set_vc(unsigned int N)
 
 static void Console_gotoxy(register Console * C, int x, int y)
 {
-    {
-	register char *xp = (char *)x;
-	C->cx = ((((int) xp) >= MaxCol) ? MaxCol : ((((int)xp) < 0) ? 0 : (int)x));
-    }
-    {
-	register char *yp = (char *)y;
-	C->cy = ((((int) yp) >= MaxRow) ? MaxRow : ((((int)yp) < 0) ? 0 : (int)y));
-    }
+    register char *xp = (char *)x;
+
+    C->cx = ((((int) xp) >= MaxCol) ? MaxCol : ((((int)xp) < 0) ? 0 : (int)xp));
+    xp = (char *)y;
+    C->cy = ((((int) xp) >= MaxRow) ? MaxRow : ((((int)xp) < 0) ? 0 : (int)xp));
 }
 
 #endif
@@ -619,8 +616,8 @@ void init_console(void)
 
     {
 	register char *pi;
+	C = Con;
 	for (pi = 0; ((unsigned int)pi) < NumConsoles; pi++) {
-	    C = &Con[(unsigned int)pi];
 	    C->cx = C->cy = 0;
 	    C->state = ST_NORMAL;
 	    C->vseg = VideoSeg + (PageSize >> 4) * ((unsigned int)pi);
@@ -635,10 +632,11 @@ void init_console(void)
 
 	    if (pi)
 		ClearRange(C, 0, 0, Width, Height);
+	    C++;
 	}
     }
 
-    C = &Con[0];
+    C = Con;
     C->cx = peekb(0x40, 0x50);
     C->cy = peekb(0x40, 0x51);
     Visible = C;

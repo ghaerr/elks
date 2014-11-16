@@ -13,19 +13,19 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 
+static struct buffer_head buffers[NR_BUFFERS];
+static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
+
 /*
  *	STUBS for the buffer cache when we put it in
  */
-static struct buffer_head *bh_chain = NULL;
-static struct buffer_head *bh_lru = NULL;
+static struct buffer_head *bh_chain = buffers;
+static struct buffer_head *bh_lru = buffers;
 static struct buffer_head *bh_llru = NULL;
 
 #if 0
 struct wait_queue bufwait;	/* Wait for a free buffer */
 #endif
-
-static struct buffer_head buffers[NR_BUFFERS];
-static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 static struct wait_queue bufmapwait;	/* Wait for a free L1 buffer area */
@@ -45,13 +45,12 @@ void wait_on_buffer(register struct buffer_head *bh)
 
 	wait_set(&bh->b_wait);
 
-	for (;;) {
-	    current->state = TASK_UNINTERRUPTIBLE;
-	    if (!buffer_locked(bh)) {
-		break;
-	    }
+	goto chk_buf;
+	do {
 	    schedule();
-	}
+    chk_buf:
+	    current->state = TASK_UNINTERRUPTIBLE;
+	} while(buffer_locked(bh));
 
 	wait_clear(&bh->b_wait);
 	bh->b_count--;
@@ -238,7 +237,7 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
 	bh = get_hash_table(dev, block);
 	if (bh != NULL) {
 	    if (buffer_clean(bh) && buffer_uptodate(bh))
-		    put_last_lru(bh);
+		put_last_lru(bh);
 	    return bh;
 	}
 
@@ -388,8 +387,8 @@ void mark_buffer_uptodate(struct buffer_head *bh, int on)
 
 static int lastumap;
 
-/* map_buffer forces a buffer into L1 buffer space. It will freeze forever 
- * before failing, so it can return void.  This is mostly 8086 dependant, 
+/* map_buffer forces a buffer into L1 buffer space. It will freeze forever
+ * before failing, so it can return void.  This is mostly 8086 dependant,
  * although the interface is not. */
 
 void map_buffer(register struct buffer_head *bh)
@@ -432,7 +431,7 @@ void map_buffer(register struct buffer_head *bh)
 	    }
 	}
 
-	/* Now, we check for a mapped buffer with no count and then 
+	/* Now, we check for a mapped buffer with no count and then
 	 * hopefully find one to send back to L2 */
 	for (i = (lastumap + 1) % NR_MAPBUFS;
 	     i != lastumap; i = ((i + 1) % NR_MAPBUFS)) {
@@ -524,9 +523,10 @@ void buffer_init(void)
     _buf_ds = mm_alloc(NR_BUFFERS * 0x40);
     lastumap = 0;
     for (i = 0; i < NR_MAPBUFS; i++)
-	bufmem_map[i] = 0;
+	bufmem_map[i] = NULL;
 #endif
 
+    buffers[0].b_prev_lru = NULL;
     for (i = 0; i < NR_BUFFERS; i++) {
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 	bh->b_data = 0;		/* L1 buffer cache is reserved! */
@@ -535,11 +535,7 @@ void buffer_init(void)
 #else
 	bh->b_data = bufmem[i];
 #endif
-	if (i == 0) {
-	    bh_chain = bh;
-	    bh_lru = bh;
-	    bh->b_prev_lru = NULL;
-	} else {
+	if (i > 0) {
 	    bh->b_prev_lru = bh - 1;
 	}
 	if (i == NR_BUFFERS - 1) {

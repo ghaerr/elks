@@ -29,23 +29,26 @@ struct ud_request requests[MAX_UDR];
 
 static struct ud_driver *get_driver(int major)
 {
-    int i;
+    register struct ud_driver *d = drivers;
 
-    for (i = 0; i < MAX_UDD; i++)
-	if (drivers[i].udd_major == major)
-	    return &drivers[i];
+    do {
+	if(d->udd_major == major)
+	    return d;
+    } while(++d < &drivers[MAX_UDD]);
     return NULL;
 }
 
 struct ud_request *new_request(void)
 {
     int i;
+    register struct ud_request *r = requests;
 
-    for (i = 0; i < MAX_UDR; i++)
-	if (requests[i].udr_status == 0) {
-	    requests[i].udr_status = 1;
-	    return &requests[i];
+    do {
+	if(r->udr_status == 0) {
+	    r->udr_status = 1;
+	    return r;
 	}
+    } while(++r < &requests[MAX_UDR]);
     panic("Out of requests\n");
     return NULL;
 }

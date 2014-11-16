@@ -99,24 +99,24 @@ void schedule(void)
     case TASK_INTERRUPTIBLE:
         if (prev->signal /* & ~prev->blocked */ )
             goto makerunnable;
-        
+
         timeout = prev->timeout;
-    
+
         if (prev->timeout && (prev->timeout <= jiffies)) {
             prev->timeout = timeout = 0UL;
 makerunnable:
             prev->state = TASK_RUNNING;
             break;
         }
-    
+
     default:
         del_from_runqueue(prev);
         /*break; */
     case TASK_RUNNING:
-        break;
+        ;
     }
     set_irq();
-    
+
     if(next == &init_task)
         next = next->next_run;
 

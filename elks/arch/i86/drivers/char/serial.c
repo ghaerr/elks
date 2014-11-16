@@ -211,8 +211,8 @@ int rs_write(register struct tty *tty)
 
     i = 0;
     while (chq_getch(&tty->outq, &ch, 0) != -1) {
-	while (!(inb_p(port->io + UART_LSR) & UART_LSR_TEMT))
-	    /* Do nothing */ ;
+	do {	/* Do nothing */
+	} while(!(inb_p(port->io + UART_LSR) & UART_LSR_TEMT));
 	outb(ch, port->io + UART_TX);
 	i++;
     }
@@ -375,37 +375,32 @@ static void print_serial_type(int st)
 int rs_init(void)
 {
     register struct serial_info *sp = ports;
-    register char *pi;
-    int ttyno = 4;
+    int ttyno = 0;
 
     printk("Serial driver version 0.02\n");
-    pi = (char *) 4;
     do {
-	--pi;
-
 	if (sp->tty != NULL) {
 	    /*
 	     * if rs_init is called twice, because of serial console
 	     */
-	    printk("ttyS%d at 0x%x (irq = %d)", ttyno - 4, sp->io, sp->irq);
+	    printk("ttyS%d at 0x%x (irq = %d)", ttyno, sp->io, sp->irq);
 	    print_serial_type(sp->flags & SERF_TYPE);
 	    printk(", fetched\n");
 	    ttyno++;
 	} else {
 	    if ((rs_probe(sp) == 0) && (!request_irq(sp->irq, rs_irq, NULL))) {
 		printk("ttyS%d at 0x%x (irq = %d)",
-		       ttyno - 4, sp->io, sp->irq);
+		       ttyno, sp->io, sp->irq);
 		print_serial_type(sp->flags & SERF_TYPE);
 		printk("\n");
-		sp->tty = &ttys[ttyno++];
+		sp->tty = &ttys[4 + ttyno++];
 		update_port(sp);
 #if 0
 		outb_p(? ? ? ?, sp->io + UART_MCR);
 #endif
 	    }
 	}
-	sp++;
-    } while (pi);
+    } while(++sp < &ports[4]);
     return 0;
 }
 

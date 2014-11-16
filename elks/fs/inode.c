@@ -24,7 +24,7 @@ int event = 0;
 static struct inode inode_block[NR_INODE];
 static struct inode *first_inode;
 static struct wait_queue inode_wait;
-static int nr_free_inodes;
+static int nr_free_inodes = NR_INODE;
 
 static void insert_inode_free(register struct inode *inode)
 {
@@ -53,7 +53,6 @@ void inode_init(void)
 {
     register struct inode *inode = inode_block;
 
-    nr_free_inodes = NR_INODE;
     first_inode = inode->i_next = inode->i_prev = inode;
     do {
 	insert_inode_free(++inode);
@@ -73,12 +72,12 @@ static void wait_on_inode(register struct inode *inode)
 	return;
 
     wait_set(&inode->i_wait);
-  repeat:
-    current->state = TASK_UNINTERRUPTIBLE;
-    if (inode->i_lock) {
+    goto lwi;
+    do {
 	schedule();
-	goto repeat;
-    }
+  lwi:
+	current->state = TASK_UNINTERRUPTIBLE;
+    } while(inode->i_lock);
     wait_clear(&inode->i_wait);
     current->state = TASK_RUNNING;
 }

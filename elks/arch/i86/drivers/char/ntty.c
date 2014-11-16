@@ -338,15 +338,16 @@ void tty_init(void)
 /*      unsigned short int i; */
     register char *pi;
 
-    for (pi = 0 ; ((int)pi) < NUM_TTYS ; pi++) {
-	ttyp = &ttys[(int)pi];
+    ttyp = &ttys[0];
+    while(ttyp < &ttys[NUM_TTYS]) {
 	ttyp->minor -= (ttyp->minor + 1);	/* set unsigned to -1 */
 	memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
+	ttyp++;
     }
 
 #ifdef CONFIG_CONSOLE_BIOS
 
-    ttyp = &ttys[0];
+    ttyp = ttys;
     ttyp->ops = &bioscon_ops;
     ttyp->minor = 0;
 
@@ -354,33 +355,31 @@ void tty_init(void)
 
 #if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT)
 
+    chq_init(ttys[0].inq, ttys[0].inq_buf, INQ_SIZE);
+    ttyp = ttys;
     for (pi = 0 ; ((int)pi) < NUM_TTYS ; pi++) {
-	ttyp = &ttys[(int)pi];
-	if (!pi) {
-	    chq_init(&ttyp->inq, ttyp->inq_buf, INQ_SIZE);
-	}
 	ttyp->ops = &dircon_ops;
-	ttyp->minor = (int)pi;
+	(ttyp++)->minor = (int)pi;
     }
 
 #endif
 
 #ifdef CONFIG_CHAR_DEV_RS
 
+    ttyp = &ttys[4];
     for (pi = (char *)4; ((int)pi) < 8; pi++) {
-	ttyp = &ttys[(int)pi];
 	ttyp->ops = &rs_ops;
-	ttyp->minor = ((int)pi) + 60;
+	(ttyp++)->minor = ((int)pi) + 60;
     }
 
 #endif
 
 #ifdef CONFIG_PSEUDO_TTY
 
+    ttyp = &ttys[8];
     for (pi = 8; ((int)pi) < 8 + NR_PTYS; pi++) {
-	ttyp = &ttys[(int)pi];
 	ttyp->ops = &ttyp_ops;
-	ttyp->minor = (int)pi;
+	(ttyp++)->minor = (int)pi;
     }
     pty_init();
 

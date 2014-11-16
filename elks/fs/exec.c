@@ -65,7 +65,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     uid_t effuid;
     gid_t effgid;
     lsize_t len;
-    size_t count, result;
+    size_t result;
     char load_code = 0;
 
     /*
@@ -78,14 +78,19 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     debug1("EXEC: open returned %d\n", -retval);
     if (retval)
-	goto end_readexec;
+	goto error_exec1;
 
     debug("EXEC: start building a file handle\n");
 
     /*
      *      Get a reading file handle
      */
+    retval = -ENFILE;
     filp = get_empty_filp(O_RDONLY);
+    if(!filp) {
+	debug("\nNo filps\n");
+	goto error_exec1;
+    }
     filp->f_inode = inode;
 
 #ifdef BLOAT_FS
@@ -97,7 +102,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if ((!filp->f_op)
 	|| ((filp->f_op->open) && (filp->f_op->open(inode, filp)))
 	|| (!filp->f_op->read))
-	goto close_readexec;
+	goto error_exec2;
 
     debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
 
@@ -129,8 +134,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if (result != sizeof(mh) ||
 	(mh.type != MINIX_SPLITID) || mh.chmem < 1024 || mh.tseg == 0) {
 	debug1("EXEC: bad header, result %u\n", result);
-	retval = -ENOEXEC;
-	goto close_readexec;
+	goto error_exec2;
     }
 
 #ifdef CONFIG_EXEC_ELKS
@@ -141,20 +145,17 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	tregs->ds = ds;
 	if (result != sizeof(msuph)) {
 	    debug1("EXEC: Bad secondary header, result %u\n", result);
-	    retval = -ENOEXEC;
-	    goto close_readexec;
+	    goto error_exec2;
 	}
 	stack_top = msuph.msh_dbase;
 	if(stack_top & 0xf){
-	     retval = -ENOEXEC;
-	     goto close_readexec;
+	     goto error_exec2;
 	}
 	debug1("EXEC: New type executable stack = %x\n", stack_top);
     }
 #else
     if((unsigned int) mh.hlen != 0x20){
-        retval = -ENOEXEC;
-        goto close_readexec;
+        goto error_exec2;
     }
 #endif
 
@@ -176,11 +177,11 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	} while (++p < &task[MAX_TASKS]);
     }
 
+    retval = -ENOMEM;
     if (!cseg) {
         cseg = mm_alloc((segext_t) ((mh.tseg + 15) >> 4));
         if (!cseg) {
-            retval = -ENOMEM;
-            goto close_readexec;
+            goto error_exec2;
         }
         load_code = 1;
     }
@@ -196,22 +197,19 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     }
     len = (len + 15) & ~15L;
     if (len > (lsize_t) 0x10000L) {
-	retval = -ENOMEM;
-	mm_free(cseg);
-	goto close_readexec;
+	goto error_exec3;
     }
 
     debug1("EXEC: Allocating %ld bytes for data segment\n", len);
 
     dseg = mm_alloc((segext_t) (len >> 4));
     if (!dseg) {
-	retval = -ENOMEM;
-	mm_free(cseg);
-	goto close_readexec;
+	goto error_exec3;
     }
 
     debug2("EXEC: Malloc succeeded - cs=%x ds=%x\n", cseg, dseg);
 
+    retval = -ENOEXEC;
     if(load_code){
         tregs->ds = cseg;
         result = filp->f_op->read(inode, filp, 0, mh.tseg);
@@ -219,10 +217,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
         if (result != mh.tseg) {
             debug2("EXEC(tseg read): bad result %u, expected %u\n",
 	       result, mh.tseg);
-	    retval = -ENOEXEC;
-	    mm_free(cseg);
-	    mm_free(dseg);
-	    goto close_readexec;
+	    goto error_exec4;
         }
     } else {
         filp->f_pos += mh.tseg;
@@ -234,10 +229,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if (result != mh.dseg) {
 	debug2("EXEC(dseg read): bad result %d, expected %d\n",
 	       result, mh.dseg);
-	retval = -ENOEXEC;
-	mm_free(cseg);
-	mm_free(dseg);
-	goto close_readexec;
+	goto error_exec4;
     }
 
     /*
@@ -251,8 +243,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     ptr = (stack_top)
 	? (char *) (stack_top - slen)
 	: (char *) (len - slen);
-    count = slen;
-    fmemcpy(dseg, (__u16) ptr, current->mm.dseg, (__u16) sptr, (__u16) count);
+    fmemcpy(dseg, (__u16) ptr, current->mm.dseg, (__u16) sptr, (__u16) slen);
 
     /* argv and envp are two NULL-terminated arrays of pointers, located
      * right after argc.  This fixes them up so that the loaded program
@@ -335,7 +326,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	if (sgidfile)
 	    currentp->egid = effgid;
 
-	retval = 0;
 	wake_up(&currentp->p_parent->child_wait);
     }
 
@@ -343,19 +333,27 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      *      Done
      */
 
-  close_readexec:
-    if (filp->f_op->release)
-	filp->f_op->release(inode, filp);
-    filp->f_count--;
-
-  end_readexec:
-
     /*
      *      This will return onto the new user stack and to cs:0 of
      *      the user process.
      */
 
+    retval = 0;
+    goto normal_out;
+
+  error_exec4:
+    mm_free(dseg);
+
+  error_exec3:
+    mm_free(cseg);
+
+  normal_out:
+  error_exec2:
+    if(filp->f_op->release)
+	filp->f_op->release(inode, filp);
+    filp->f_count--;
+
+  error_exec1:
     debug1("EXEC: Returning %d\n", retval);
     return retval;
-
 }

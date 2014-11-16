@@ -75,10 +75,10 @@ pid_t do_fork(int virtual)
     /*
      * We do shared text.
      */
-    (void) mm_realloc(currentp->mm.cseg);
+    mm_realloc(currentp->mm.cseg);
 
     if (virtual) {
-	(void) mm_realloc(currentp->mm.dseg);
+	mm_realloc(currentp->mm.dseg);
     } else {
 	t->mm.dseg = mm_dup(currentp->mm.dseg);
 
@@ -101,9 +101,11 @@ pid_t do_fork(int virtual)
 
     /* Increase the reference count to all open files */
 
-    for (j = 0; j < NR_OPEN; j++)
-	if ((filp = currentp->files.fd[j]))
+    j = 0;
+    do {
+	if ((filp = t->files.fd[j]))
 	    filp->f_count++;
+    } while(++j < NR_OPEN);
 
     /* Increase the reference count for program text inode - tgm */
     t->t_inode->i_count++;

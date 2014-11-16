@@ -403,12 +403,13 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 #ifndef CONFIG_HW_USE_INT13_FOR_DISKPARMS
 
 	drivep->cylinders = 0;
-	for (count = 0; count < 2; count++) {
+	count = 0;
+	do {
 	    if (seek_sector(hd_drive_map[target], track_probe[count], 1)) {
 		break;
 	    }
 	    drivep->cylinders = track_probe[count];
-	}
+	} while(++count < 2);
 
 /* Next, probe for sector number. We probe on track 0 (40-40 in
  * seek_sector), which is safe for all formats, and if we get a
@@ -417,12 +418,13 @@ static int bioshd_open(struct inode *inode, struct file *filp)
  */
 
 	drivep->sectors = 0;
-	for (count = 0; count < 5; count++) {
+	count = 0;
+	do {
 	    if (seek_sector(hd_drive_map[target], 40, sector_probe[count])) {
 		break;
 	    }
 	    drivep->sectors = sector_probe[count];
-	}
+	} while(++count < 5);
 
 #else
 
@@ -526,7 +528,9 @@ int init_bioshd(void)
     hdcount = bioshd_gethdinfo();
     printk("doshd: found %d hard drive%c\n", hdcount,
 	   hdcount == 1 ? ' ' : 's');
+    bioshd_gendisk.nr_real = hdcount;
 #endif
+
 
     if (!(count + hdcount))
 	return 0;
@@ -554,10 +558,6 @@ int init_bioshd(void)
 		   (size/10), (int) (size%10), *unit);
 	}
     }
-#endif
-
-#ifdef CONFIG_BLK_DEV_BHD
-    bioshd_gendisk.nr_real = hdcount;
 #endif
 
     i = register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops);
