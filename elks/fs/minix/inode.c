@@ -301,15 +301,15 @@ void minix_statfs(register struct super_block *sb, struct statfs *buf,
 static unsigned short map_izone(register struct inode *inode, block_t block,
 				int create)
 {
-    register unsigned short *i_zone = inode->i_zone;
+    register __u16 *i_zone = &(inode->i_zone[block]);
 
-    if (create && !i_zone[block]) {
-	if ((i_zone[block] = minix_new_block(inode->i_sb))) {
+    if (create && !(*i_zone)) {
+	if ((*i_zone = minix_new_block(inode->i_sb))) {
 	    inode->i_ctime = CURRENT_TIME;
 	    inode->i_dirt = 1;
 	}
     }
-    return i_zone[block];
+    return *i_zone;
 }
 
 static unsigned short map_iblock(register struct inode *inode, block_t i,

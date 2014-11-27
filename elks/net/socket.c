@@ -103,9 +103,8 @@ struct socket *sock_alloc(void)
 	return NULL;
 
     inode->i_mode = S_IFSOCK;
+    inode->i_gid = (__u8) current->egid;
     inode->i_sock = 1;
-    inode->i_uid = current->uid;
-    inode->i_gid = (__u8) current->gid;
 
     sock = &inode->u.socket_i;
     sock->state = SS_UNCONNECTED;

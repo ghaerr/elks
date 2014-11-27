@@ -215,9 +215,9 @@ static int minix_add_entry(register struct inode *dir,
 
 	    dir->i_mtime = dir->i_ctime = CURRENT_TIME;
 	    dir->i_dirt = 1;
-	    for (i = 0; i < info->s_namelen; i++)
-		de->name[i] = (i < namelen) ? (char) get_user_char(name + i)
-					    : '\0';
+	    memcpy_fromfs(de->name, name, namelen);
+	    if((i = info->s_namelen - namelen) > 0)
+		memset(de->name + namelen, 0, i);
 
 #ifdef BLOAT_FS
 	    dir->i_version = ++event;
@@ -250,14 +250,11 @@ int minix_create(register struct inode *dir, char *name, size_t len,
     *result = NULL;
     if (!dir)
 	return -ENOENT;
-    inode = minix_new_inode(dir);
+    inode = minix_new_inode(dir, (__u16)mode);
     if (!inode) {
 	iput(dir);
 	return -ENOSPC;
     }
-    inode->i_op = &minix_file_inode_operations;
-    inode->i_mode = (__u16) mode;
-    inode->i_dirt = 1;
     error = minix_add_entry(dir, name, len, &bh, &de);
     if (error) {
 	inode->i_nlink--;
@@ -290,24 +287,16 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
 	iput(dir);
 	return -EEXIST;
     }
-    inode = minix_new_inode(dir);
+
+    inode = minix_new_inode(dir, (__u16)mode);
     if (!inode) {
 	iput(dir);
 	return -ENOSPC;
     }
-    inode->i_uid = current->euid;
-    inode->i_mode = (__u16) mode;
-    inode->i_op = NULL;
-
-    minix_set_ops(inode);
-
-    if (S_ISDIR(inode->i_mode))
-	if (dir->i_mode & S_ISGID)
-	    inode->i_mode |= S_ISGID;
 
     if (S_ISBLK(mode) || S_ISCHR(mode))
 	inode->i_rdev = to_kdev_t(rdev);
-    inode->i_dirt = 1;
+
     error = minix_add_entry(dir, name, len, &bh, &de);
 #if 1
     if (error) {
@@ -360,20 +349,19 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
 	iput(dir);
 	return -EMLINK;
     }
-    inode = minix_new_inode(dir);
+
+    inode = minix_new_inode(dir, (__u16)(S_IFDIR|(mode & 0777 & ~current->fs.umask)));
     if (!inode) {
 	iput(dir);
 	return -ENOSPC;
     }
     debug("m_mkdir: new_inode succeeded\n");
-    inode->i_op = &minix_dir_inode_operations;
     inode->i_size = 2 * dir->i_sb->u.minix_sb.s_dirsize;
     debug("m_mkdir: starting minix_bread\n");
     dir_block = minix_bread(inode, 0, 1);
     if (!dir_block) {
 	iput(dir);
 	inode->i_nlink--;
-	inode->i_dirt = 1;
 	iput(inode);
 	return -ENOSPC;
     }
@@ -391,10 +379,6 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
     mark_buffer_dirty(dir_block, 1);
     unmap_brelse(dir_block);
     debug("m_mkdir: dir_block update succeeded\n");
-    inode->i_mode = S_IFDIR | (mode & 0777 & ~current->fs.umask);
-    if (dir->i_mode & S_ISGID)
-	inode->i_mode |= S_ISGID;
-    inode->i_dirt = 1;
     error = minix_add_entry(dir, name, len, &bh, &de);
     if (error) {
 	iput(dir);
@@ -543,25 +527,24 @@ int minix_unlink(struct inode *dir, char *name, size_t len)
     struct buffer_head *bh;
     struct minix_dir_entry *de;
 
-  repeat:
-    retval = -ENOENT;
-    inode = NULL;
-    bh = minix_find_entry(dir, name, len, &de);
-    if (!bh)
-	goto end_unlink;
-    map_buffer(bh);
-    if (!(inode = iget(dir->i_sb, (ino_t) de->inode)))
-	goto end_unlink;
-    retval = -EPERM;
-    if (S_ISDIR(inode->i_mode))
-	goto end_unlink;
-    if (de->inode != inode->i_ino) {
+    goto init_loop;
+    do {
 	iput(inode);
 	unmap_brelse(bh);
-
 	schedule();
-	goto repeat;
-    }
+  init_loop:
+	retval = -ENOENT;
+	inode = NULL;
+	bh = minix_find_entry(dir, name, len, &de);
+	if (!bh)
+	    goto end_unlink;
+	map_buffer(bh);
+	if (!(inode = iget(dir->i_sb, (ino_t) de->inode)))
+	    goto end_unlink;
+	retval = -EPERM;
+	if (S_ISDIR(inode->i_mode))
+	    goto end_unlink;
+    } while(de->inode != inode->i_ino);
     if ((dir->i_mode & S_ISVTX) && !suser() &&
 	current->euid != inode->i_uid && current->euid != dir->i_uid)
 	goto end_unlink;
@@ -603,17 +586,14 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     register struct buffer_head *name_block;
     int i;
 
-    if (!(inode = minix_new_inode(dir))) {
+    if (!(inode = minix_new_inode(dir, S_IFLNK | 0777))) {
 	iput(dir);
 	return -ENOSPC;
     }
-    inode->i_mode = (__u16) (S_IFLNK | 0777);
-    inode->i_op = &minix_symlink_inode_operations;
     name_block = minix_bread(inode, 0, 1);
     if (!name_block) {
 	iput(dir);
 	inode->i_nlink--;
-	inode->i_dirt = 1;
 	iput(inode);
 	return -ENOSPC;
     }
@@ -625,19 +605,16 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     inode->i_size = (__u32) i;
     mark_buffer_dirty(name_block, 1);
     unmap_brelse(name_block);
-    inode->i_dirt = 1;
     bh = minix_find_entry(dir, name, len, &de);
     map_buffer(bh);
     if (bh) {
-	inode->i_nlink--;
-	inode->i_dirt = 1;
-	iput(inode);
 	unmap_brelse(bh);
-	iput(dir);
-	return -EEXIST;
+	i = -EEXIST;
+	goto err_symlink;
     }
     i = minix_add_entry(dir, name, len, &bh, &de);
     if (i) {
+      err_symlink:
 	inode->i_nlink--;
 	inode->i_dirt = 1;
 	iput(inode);

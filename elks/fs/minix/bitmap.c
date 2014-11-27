@@ -198,7 +198,7 @@ void minix_free_inode(register struct inode *inode)
     unmap_buffer(bh);
 }
 
-struct inode *minix_new_inode(struct inode *dir)
+struct inode *minix_new_inode(struct inode *dir, __u16 mode)
 {
     register struct inode *inode;
     register struct buffer_head *bh;
@@ -209,6 +209,10 @@ struct inode *minix_new_inode(struct inode *dir)
 	return NULL;
     inode->i_sb = dir->i_sb;
     inode->i_flags = inode->i_sb->s_flags;
+    if((S_ISDIR(mode)) && (dir->i_mode & S_ISGID))
+	mode |= S_ISGID;
+    inode->i_mode = mode;
+    minix_set_ops(inode);
     j = 8192;
     for (i = 0; i < 8; i++)
 	if ((bh = inode->i_sb->u.minix_sb.s_imap[i]) != NULL) {
@@ -232,15 +236,12 @@ struct inode *minix_new_inode(struct inode *dir)
 	goto iputfail;
     }
     unmap_buffer(bh);
-    inode->i_nlink = inode->i_count = 1;
     inode->i_dev = inode->i_sb->s_dev;
-    inode->i_uid = current->euid;
     inode->i_gid = (dir->i_mode & S_ISGID) ? dir->i_gid
 					   : (__u8) current->egid;
     inode->i_dirt = 1;
     inode->i_ino = j;
     inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
-    inode->i_op = NULL;
 
 #ifdef BLOAT_FS
     inode->i_blocks = inode->i_blksize = 0;
