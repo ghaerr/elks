@@ -598,11 +598,10 @@ int minix_unlink(struct inode *dir, char *name, size_t len)
 int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
 {
     struct minix_dir_entry *de;
-    register struct inode *inode = NULL;
-    struct buffer_head *bh = NULL;
-    register struct buffer_head *name_block = NULL;
+    register struct inode *inode;
+    struct buffer_head *bh;
+    register struct buffer_head *name_block;
     int i;
-    char c;
 
     if (!(inode = minix_new_inode(dir))) {
 	iput(dir);
@@ -619,13 +618,13 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
 	return -ENOSPC;
     }
     map_buffer(name_block);
-    i = 0;
-    while (i < 1023 && (c = *(symname++)))
-	name_block->b_data[i++] = c;
+    if((i = strlen_fromfs(symname)) > 1023)
+	i = 1023;
+    memcpy_fromfs(name_block->b_data, symname, i);
     name_block->b_data[i] = 0;
+    inode->i_size = (__u32) i;
     mark_buffer_dirty(name_block, 1);
     unmap_brelse(name_block);
-    inode->i_size = (__u32) i;
     inode->i_dirt = 1;
     bh = minix_find_entry(dir, name, len, &de);
     map_buffer(bh);

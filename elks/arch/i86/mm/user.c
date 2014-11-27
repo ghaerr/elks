@@ -10,7 +10,6 @@
 
 int verfy_area(void *p, size_t len)
 {
-    register char *ptr = p;
     register __ptask currentp = current;
 
     /*
@@ -22,7 +21,7 @@ int verfy_area(void *p, size_t len)
     /*
      *	User process boundaries
      */
-    if ((__pptr)(ptr + len) > currentp->t_endseg)
+    if ((__pptr)((char *)p + len) > currentp->t_endseg)
 	return -EFAULT;
 
     return 0;
@@ -131,7 +130,7 @@ _fmemcpy:
 	pop	di
 	pop	bp
 	ret
-#endasm	
+#endasm
 #endif
 
 #if 0
@@ -168,7 +167,7 @@ int strlen_fromfs(void *saddr)
 	cld
 	xor	al,al		! search for NULL byte
 	mov	cx,#-1
-	rep
+	repne
 	scasb
 	sub	di,[bp+.strlen_fromfs.saddr]	! calc len +1
 	dec	di

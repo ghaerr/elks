@@ -26,6 +26,7 @@ static unsigned short map_izone(register struct inode *,block_t,int);
 static void minix_commit_super(register struct super_block *);
 static void minix_read_inode(register struct inode *);
 static struct buffer_head *minix_update_inode(register struct inode *);
+extern struct inode_operations pipe_inode_operations;
 
 /* Function definitions */
 
@@ -293,7 +294,7 @@ void minix_statfs(register struct super_block *sb, struct statfs *buf,
 
 #endif
 
-/* Adapted from Linux 0.12's inode.c.  _bmap() is a big function, I know 
+/* Adapted from Linux 0.12's inode.c.  _bmap() is a big function, I know
 
    Rewritten 2001 by Alan Cox based on newer kernel code + my own plans */
 
@@ -400,20 +401,22 @@ struct buffer_head *minix_bread(struct inode *inode,
 
 void minix_set_ops(struct inode *inode)
 {
-    if (S_ISREG(inode->i_mode))
-	inode->i_op = &minix_file_inode_operations;
-    else if (S_ISDIR(inode->i_mode))
-	inode->i_op = &minix_dir_inode_operations;
-    else if (S_ISLNK(inode->i_mode))
-	inode->i_op = &minix_symlink_inode_operations;
-    else if (S_ISCHR(inode->i_mode))
-	inode->i_op = &chrdev_inode_operations;
-    else if (S_ISBLK(inode->i_mode))
-	inode->i_op = &blkdev_inode_operations;
-#ifdef NOT_YET
-    else if (S_ISFIFO(inode->i_mode))
-	init_fifo(inode);
-#endif
+    static unsigned char tabc[] = {
+	0, 1, 2, 0, 3, 0, 4, 0,
+	5, 0, 6, 0, 7, 0, 0, 0,
+    };
+    static struct inode_operations *inop[] = {
+	NULL,				/* Invalid */
+	&pipe_inode_operations,		/* FIFO (init_fifo(inode);) */
+	&chrdev_inode_operations,
+	&minix_dir_inode_operations,
+	&blkdev_inode_operations,
+	&minix_file_inode_operations,
+	&minix_symlink_inode_operations,
+	NULL,				/* Socket */
+    };
+
+    inode->i_op = inop[(int)tabc[(inode->i_mode & S_IFMT) >> 12]];
 }
 
 /*

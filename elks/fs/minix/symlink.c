@@ -29,6 +29,7 @@ static int minix_follow_link(register struct inode *dir,
     int error;
     struct buffer_head *bh;
     static int link_count = 0;
+    __u16 ds, *pds;
 
     *res_inode = NULL;
     if (!dir) {
@@ -57,7 +58,11 @@ static int minix_follow_link(register struct inode *dir,
     iput(inode);
     /* current-> */ link_count++;
     map_buffer(bh);
+    pds = &current->t_regs.ds;
+    ds = *pds;
+    *pds = get_ds();
     error = open_namei(bh->b_data, flag, mode, res_inode, dir);
+    *pds = ds;
     /* current-> */ link_count--;
     unmap_brelse(bh);
     return error;
@@ -67,7 +72,7 @@ static int minix_readlink(struct inode *inode,
 			  char *buffer, int buflen)
 {
     register struct buffer_head *bh;
-    char c;
+    size_t len;
 
     {
 	register struct inode *inodep = inode;
@@ -75,8 +80,6 @@ static int minix_readlink(struct inode *inode,
 	    iput(inodep);
 	    return -EINVAL;
 	}
-	if (buflen > 1023)
-	    buflen = 1023;
 	bh = minix_bread(inodep, 0, 0);
 	iput(inodep);
     }
@@ -85,15 +88,13 @@ static int minix_readlink(struct inode *inode,
 	return 0;
     map_buffer(bh);
 
-    {
-	register char *pi = 0;
-	while (((int)pi) < buflen && (c = bh->b_data[(int)pi])) {
-	    pi++;
-	    put_user_char(c,buffer++);
-	}
-	unmap_brelse(bh);
-	return (int)pi;
-    }
+    if((len = strlen(bh->b_data) + 1) > buflen)
+	len = buflen;
+    if (len > 1023)
+	len = 1023;
+    memcpy_tofs(buffer, bh->b_data, len);
+    unmap_brelse(bh);
+    return len;
 }
 
 /*

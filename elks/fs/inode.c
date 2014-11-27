@@ -415,9 +415,7 @@ struct inode *get_empty_inode(void)
 #ifdef BLOAT_FS
     inode->i_version = ++event;
 #endif
-    inode->i_sem = 0;
     inode->i_ino = ++ino;
-    inode->i_dev = 0;
     nr_free_inodes--;
     if (nr_free_inodes < 0) {
 	printk("VFS: get_empty_inode: bad free inode count.\n");
@@ -462,30 +460,26 @@ struct inode *__iget(register struct super_block *sb,
 		     ino_t inr /*,int crossmntp */ )
 {
     register struct inode *inode;
-    struct inode *empty = NULL;
 
     debug3("iget called(%x, %d, %d)\n", sb, inr, 0 /* crossmntp */ );
     if (!sb)
 	panic("VFS: iget with sb==NULL");
-  repeat:
-    inode = first_inode;
-    do {
-	if (inode->i_dev == sb->s_dev && inode->i_ino == inr) {
-	    goto found_it;
-	}
-    } while((inode = inode->i_prev) != first_inode);
 
-    if (!empty) {
+  repeat:
+    do {
+	inode = first_inode;
+	do {
+	    if (inode->i_dev == sb->s_dev && inode->i_ino == inr)
+		goto found_it;
+	} while((inode = inode->i_prev) != first_inode);
 	debug("iget: getting an empty inode...\n");
-	empty = get_empty_inode();
-	debug1("iget: got one... (%x)!\n", empty);
-        goto repeat;
-    }
-    inode = empty;
+    } while(!(inode = get_empty_inode()));
+    debug1("iget: got one... (%x)!\n", empty);
+
     inode->i_sb = sb;
     inode->i_dev = sb->s_dev;
-    inode->i_ino = inr;
     inode->i_flags = ((unsigned short int) sb->s_flags);
+    inode->i_ino = inr;
     put_last_free(inode);
     debug("iget: Reading inode\n");
     read_inode(inode);
@@ -509,8 +503,6 @@ struct inode *__iget(register struct super_block *sb,
 	inode = tmp;
 	wait_on_inode(inode);
     }
-    if (empty)
-	iput(empty);
 
   return_it:
     return inode;
