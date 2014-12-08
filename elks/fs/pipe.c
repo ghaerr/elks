@@ -31,15 +31,15 @@
 int get_unused_fd(void)
 {
     register char *pfd = 0;
+    register struct file_struct *cfs = &current->files;
 
     do {
-	if (!current->files.fd[(unsigned int) pfd]) {
+	if (!cfs->fd[(unsigned int) pfd]) {
 	    clear_bit((unsigned int) pfd,
-			     &current->files.close_on_exec);
+			     &cfs->close_on_exec);
 	    return (int) pfd;
 	}
-	++pfd;
-    } while (((int)pfd) < NR_OPEN);
+    } while (((int)(++pfd)) < NR_OPEN);
 
     return -EMFILE;
 }
@@ -76,10 +76,19 @@ char *get_pipe_mem(void)
     return NULL;
 }
 
-static size_t pipe_read(register struct inode *inode, struct file *filp,
-		     char *buf, int count)
+void free_pipe_mem(char *buf)
 {
-    size_t size, read = 0;
+    int i;
+
+    i = ((unsigned int)pipe_base - (unsigned int)buf)/PIPE_BUF;
+    if(i < MAX_PIPES)
+	clear_bit(i, pipe_in_use);
+}
+
+static size_t pipe_read(register struct inode *inode, struct file *filp,
+		     char *buf, size_t count)
+{
+    size_t read = 0;
     register char *chars;
 
     debug("PIPE: read called.\n");
@@ -99,18 +108,18 @@ static size_t pipe_read(register struct inode *inode, struct file *filp,
 	    interruptible_sleep_on(&(inode->u.pipe_i.wait));
 	}
     (inode->u.pipe_i.lock)++;
-    while (count > 0 && (size = (size_t) (inode->u.pipe_i.len))) {
+    while (count > 0 && inode->u.pipe_i.len) {
 	chars = (char *)(PIPE_BUF - (inode->u.pipe_i.start));
-	if ((size_t)chars > (size_t) count)
+	if ((size_t)chars > count)
 	    chars = (char *)count;
-	if ((size_t)chars > size)
-	    chars = (char *)size;
+	if ((size_t)chars > inode->u.pipe_i.len)
+	    chars = (char *)(inode->u.pipe_i.len);
 	memcpy_tofs(buf, (inode->u.pipe_i.base+inode->u.pipe_i.start), (size_t)chars);
 	buf += (size_t)chars;
         inode->u.pipe_i.start = (inode->u.pipe_i.start + (size_t)chars)&(PIPE_BUF-1);
 	(inode->u.pipe_i.len) -= (size_t)chars;
 	read += (size_t)chars;
-	count -= (int)chars;
+	count -= (size_t)chars;
     }
     (inode->u.pipe_i.lock)--;
     wake_up_interruptible(&(inode->u.pipe_i.wait));
@@ -124,7 +133,7 @@ static size_t pipe_read(register struct inode *inode, struct file *filp,
 }
 
 static size_t pipe_write(register struct inode *inode, struct file *filp,
-		      char *buf, int count)
+		      char *buf, size_t count)
 {
     size_t free, tmp, written = 0;
     register char *chars;
@@ -135,7 +144,7 @@ static size_t pipe_write(register struct inode *inode, struct file *filp,
 	return -EPIPE;
     }
 
-    free = (count <= PIPE_BUF) ? (size_t) count : 1;
+    free = (count <= PIPE_BUF) ? count : 1;
     while (count > 0) {
 	while (((PIPE_BUF - (inode->u.pipe_i.len)) < free)
 	       || (inode->u.pipe_i.lock)) {
@@ -150,11 +159,11 @@ static size_t pipe_write(register struct inode *inode, struct file *filp,
 	    interruptible_sleep_on(&(inode->u.pipe_i.wait));
 	}
 	(inode->u.pipe_i.lock)++;
-	while (count > 0 && (free = (PIPE_BUF - (inode->u.pipe_i.len)))) {
+	while (count > 0 && (free = (PIPE_BUF - inode->u.pipe_i.len))) {
 
             tmp = (inode->u.pipe_i.start + inode->u.pipe_i.len)&(PIPE_BUF-1);
 	    chars = (char *)(PIPE_BUF - tmp);
-	    if ((size_t)chars > (size_t) count)
+	    if ((size_t)chars > count)
 		chars = (char *) count;
 	    if ((size_t)chars > free)
 		chars = (char *)free;
@@ -163,7 +172,7 @@ static size_t pipe_write(register struct inode *inode, struct file *filp,
 	    buf += (size_t)chars;
 	    (inode->u.pipe_i.len) += (size_t)chars;
 	    written += (size_t)chars;
-	    count -= (int)chars;
+	    count -= (size_t)chars;
 	}
 	(inode->u.pipe_i.lock)--;
 	wake_up_interruptible(&(inode->u.pipe_i.wait));
@@ -298,60 +307,60 @@ int do_pipe(int *fd)
     struct inode *inode;
     register struct file *f1;
     register struct file *f2;
-    int error = ENFILE;
+    int error;
     int i;
-
-    /* read file */
-    f1 = get_empty_filp(O_RDONLY);
-    if (!f1)
-	goto no_files;
-    f1->f_op = &read_pipe_fops;
-
-    /* write file */
-    f2 = get_empty_filp(O_WRONLY);
-    if (!f2)
-	goto close_f1;
-    f2->f_op = &write_pipe_fops;
 
     inode = get_pipe_inode();
     if (!inode)
-	goto close_f12;
-    f1->f_inode = f2->f_inode = inode;
+	goto no_inodes;
+
+    /* read file */
+    error = -ENFILE;
+    f1 = get_empty_filp(O_RDONLY);
+    if (!f1)
+	goto no_files;
+
+    f1->f_inode = inode;
+    f1->f_op = &read_pipe_fops;
 
     error = get_unused_fd();
     if (error < 0)
-	goto close_f12_inode;
+	goto close_f1;
+    current->files.fd[error] = f1;
+    fd[0] = error;
     i = error;
 
+    /* write file */
+    error = -ENFILE;
+    f2 = get_empty_filp(O_WRONLY);
+    if (!f2)
+	goto close_f1_i;
+
+    f2->f_inode = inode;
+    f2->f_op = &write_pipe_fops;
+
     error = get_unused_fd();
     if (error < 0)
-	goto close_f12_inode_i;
-
-    current->files.fd[i] = f1;
+	goto close_f12;
     current->files.fd[error] = f2;
-    fd[0] = i;
     fd[1] = error;
 
     return 0;
 
-  close_f12_inode_i:
-#if 0
-    put_unused_fd(error);	/* Not sure this is needed */
-#endif
-  close_f12_inode:
-#if 0
-    put_unused_fd(i);		/* Not sure this is needed */
-#endif
-    inode->i_count--;
-    iput(inode);
-
   close_f12:
     f2->f_count--;
+
+  close_f1_i:
+    current->files.fd[i] = NULL;
 
   close_f1:
     f1->f_count--;
 
   no_files:
+    inode->i_count--;
+    iput(inode);
+
+  no_inodes:
     return error;
 }
 

@@ -510,6 +510,7 @@ extern int sys_dup(unsigned int);
 extern struct buffer_head *bread(dev_t,block_t);
 
 extern char *get_pipe_mem(void);
+extern void free_pipe_mem(char *buf);
 
 extern void mark_buffer_uptodate(struct buffer_head *,int);
 

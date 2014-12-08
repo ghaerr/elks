@@ -121,7 +121,7 @@ block_t minix_new_block(register struct super_block *sb)
 		break;
 	    unmap_buffer(bh);
 	}
-    if (i >= 8 || !bh || j >= 8192)
+    if (i >= 8)
 	return 0;
     if (set_bit(j, bh->b_data)) {
 	panic("mnb: already set %d %d\n", j, bh->b_data);
@@ -150,7 +150,6 @@ void minix_free_inode(register struct inode *inode)
     struct buffer_head *bh;
     register char *s;
     int n = 0;
-    ino_t ino;
 
     if (!inode)
 	return;
@@ -180,8 +179,7 @@ void minix_free_inode(register struct inode *inode)
 	s = "nonexistent inode\n";
 	goto OUTPUT;
     }
-    ino = inode->i_ino;
-    if (!(bh = inode->i_sb->u.minix_sb.s_imap[ino >> 13])) {
+    if (!(bh = inode->i_sb->u.minix_sb.s_imap[inode->i_ino >> 13])) {
 	s = "nonexistent imap\n";
 
       OUTPUT:
@@ -191,7 +189,7 @@ void minix_free_inode(register struct inode *inode)
     }
     map_buffer(bh);
     clear_inode(inode);
-    if (!clear_bit((unsigned int) (ino & 8191), bh->b_data)) {
+    if (!clear_bit((unsigned int) (inode->i_ino & 8191), bh->b_data)) {
 	debug1("%s: bit %ld already cleared.\n",ino);
     }
     mark_buffer_dirty(bh, 1);

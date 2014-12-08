@@ -637,24 +637,22 @@ int minix_link(register struct inode *oldinode, register struct inode *dir,
     struct buffer_head *bh;
 
     if (S_ISDIR(oldinode->i_mode)) {
-	iput(oldinode);
-	iput(dir);
-	return -EPERM;
+	error = -EPERM;
+	goto mlink_err;
     }
     if (oldinode->i_nlink >= MINIX_LINK_MAX) {
-	iput(oldinode);
-	iput(dir);
-	return -EMLINK;
+	error = -EMLINK;
+	goto mlink_err;
     }
     bh = minix_find_entry(dir, name, len, &de);
     if (bh) {
 	brelse(bh);
-	iput(dir);
-	iput(oldinode);
-	return -EEXIST;
+	error = -EEXIST;
+	goto mlink_err;
     }
     error = minix_add_entry(dir, name, len, &bh, &de);
     if (error) {
+      mlink_err:
 	iput(dir);
 	iput(oldinode);
 	return error;

@@ -480,8 +480,7 @@ void _close_allfiles(void)
 	    current->files.fd[(int) pi] = NULL;
 	    close_fp(filp);
 	}
-	++pi;
-    } while (((int)pi) < NR_OPEN);
+    } while (((int)(++pi)) < NR_OPEN);
 }
 
 int sys_close(unsigned int fd)

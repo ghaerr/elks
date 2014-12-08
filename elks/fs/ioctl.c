@@ -42,8 +42,6 @@ int sys_ioctl(int fd, unsigned int cmd, unsigned int arg)
 
     if (fd >= NR_OPEN || !(filp = current->files.fd[fd]))
 	return -EBADF;
-    fop = filp->f_op;
-    filp->f_inode = filp->f_inode;
     switch (cmd) {
     case FIOCLEX:
 	FD_SET(fd, &current->files.close_on_exec);
@@ -67,6 +65,7 @@ int sys_ioctl(int fd, unsigned int cmd, unsigned int arg)
 	if (filp->f_inode && S_ISREG(filp->f_inode->i_mode))
 	    return file_ioctl(filp, cmd, arg);
 
+	fop = filp->f_op;
 	if (fop && fop->ioctl)
 	    return fop->ioctl(filp->f_inode, filp, cmd, arg);
 

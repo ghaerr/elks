@@ -462,9 +462,6 @@ static void minix_read_inode(register struct inode *inode)
 
     if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
 	inode->i_rdev = to_kdev_t(raw_inode->i_zone[0]);
-    else
-	for (block = 0; block < 9; block++)
-	    inode->i_zone[block] = raw_inode->i_zone[block];
     unmap_brelse(bh);
     minix_set_ops(inode);
 }

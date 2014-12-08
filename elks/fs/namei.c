@@ -411,7 +411,6 @@ int do_mknod(char *filename, int mode, dev_t dev)
     size_t namelen;
     int error;
 
-    mode &= ~current->fs.umask;
     error = dir_namei(filename, &namelen, &basename, NULL, &dir);
     dirp = dir;
     if (error)
@@ -427,7 +426,7 @@ int do_mknod(char *filename, int mode, dev_t dev)
 	} else {
 	    dirp->i_count++;
 	    down(&dirp->i_sem);
-	    error = iop->mknod(dirp, basename, namelen, mode, dev);
+	    error = iop->mknod(dirp, basename, namelen, (mode & ~current->fs.umask), dev);
 	    up(&dirp->i_sem);
 	}
     }

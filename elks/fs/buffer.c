@@ -31,6 +31,7 @@ struct wait_queue bufwait;	/* Wait for a free buffer */
 static struct wait_queue bufmapwait;	/* Wait for a free L1 buffer area */
 static struct buffer_head *bufmem_map[NR_MAPBUFS]; /* Array of bufmem's allocation */
 static __u16 _buf_ds;			/* Segment(s?) of L2 buffer cache */
+static int lastumap;
 #endif
 
 /*
@@ -176,9 +177,11 @@ static struct buffer_head *find_buffer(kdev_t dev, block_t block)
 
 static struct buffer_head *get_free_buffer(void)
 {
+    register struct buffer_head *bh;
+
     for (;;) {
-	register struct buffer_head *bh = bh_lru;
-	while (bh) {
+	bh = bh_lru;
+	do {
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 	    if (bh->b_count == 0 && !bh->b_dirty && !bh->b_lock && !bh->b_data)
 #else
@@ -188,8 +191,7 @@ static struct buffer_head *get_free_buffer(void)
 		put_last_lru(bh);
 		return bh;
 	    }
-	    bh = bh->b_next_lru;
-	}
+	} while((bh = bh->b_next_lru) != NULL);
 #if 0
 	fsync_dev(0);
 	/* This causes a sleep until another process brelse's */
@@ -385,8 +387,6 @@ void mark_buffer_uptodate(struct buffer_head *bh, int on)
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 
-static int lastumap;
-
 /* map_buffer forces a buffer into L1 buffer space. It will freeze forever
  * before failing, so it can return void.  This is mostly 8086 dependant,
  * although the interface is not. */
@@ -521,7 +521,6 @@ void buffer_init(void)
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     _buf_ds = mm_alloc(NR_BUFFERS * 0x40);
-    lastumap = 0;
     for (i = 0; i < NR_MAPBUFS; i++)
 	bufmem_map[i] = NULL;
 #endif

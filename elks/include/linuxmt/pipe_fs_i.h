@@ -5,7 +5,7 @@ struct pipe_inode_info {
     struct wait_queue wait;
     char *base;
     unsigned int start;
-    unsigned int len;
+	  size_t len;
     unsigned int lock;
     unsigned int rd_openers;
     unsigned int wr_openers;

@@ -90,9 +90,10 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
     int count;
     register __ptask currentp = current;
     fd_set set;
-    int j;
     int max = -1;
     register char *pi;
+/*
+    int j;
 
     j = 0;
     for (;;) {
@@ -115,6 +116,18 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 	}
     }
   end_check:
+*/
+
+    set = *in | *out | *ex;
+    for(pi = 0; set && ((int)pi < n); pi++, set >>= 1) {
+	if(!(set & 1))
+	    continue;
+	if (!currentp->files.fd[(int)pi])
+	    return -EBADF;
+	if (!currentp->files.fd[(int)pi]->f_inode)
+	    return -EBADF;
+	max = (int)pi;
+    }
     n = max + 1;
     count = 0;
   repeat:

@@ -22,7 +22,7 @@ int event = 0;
 #endif
 
 static struct inode inode_block[NR_INODE];
-static struct inode *first_inode;
+static struct inode *first_inode = &inode_block[0];
 static struct wait_queue inode_wait;
 static int nr_free_inodes = NR_INODE;
 
@@ -53,7 +53,7 @@ void inode_init(void)
 {
     register struct inode *inode = inode_block;
 
-    first_inode = inode->i_next = inode->i_prev = inode;
+    inode->i_next = inode->i_prev = inode;
     do {
 	insert_inode_free(++inode);
     } while (inode < &inode_block[NR_INODE-1]);
@@ -328,33 +328,33 @@ void iput(register struct inode *inode)
 	if (inode->i_pipe)
 	    wake_up_interruptible(&PIPE_WAIT(*inode));
 #endif
-      repeat:
-	if (inode->i_count > 1) {
-	    inode->i_count--;
-	    return;
-	}
-
-	wake_up(&inode_wait);
-#ifdef NOT_YET
-	if (inode->i_pipe) {
-	    /* Free up any memory allocated to the pipe */
-	}
-#endif
-
-	if (inode->i_sb) {
-	    struct super_operations *sop = inode->i_sb->s_op;
-	    if (sop && sop->put_inode) {
-		sop->put_inode(inode);
-		if (!inode->i_nlink)
-		    return;
-	    }
-	}
-
-	if (inode->i_dirt) {
+	goto ini_loop;
+	do {
 	    write_inode(inode);	/* we can sleep - so do again */
 	    wait_on_inode(inode);
-	    goto repeat;
-	}
+      ini_loop:
+	    if (inode->i_count > 1) {
+		inode->i_count--;
+		return;
+	    }
+
+	    wake_up(&inode_wait);
+	    if (inode->i_pipe && inode->u.pipe_i.base) {
+	    /* Free up any memory allocated to the pipe */
+		free_pipe_mem(inode->u.pipe_i.base);
+		inode->u.pipe_i.base = NULL;
+	    }
+
+	    if (inode->i_sb) {
+		struct super_operations *sop = inode->i_sb->s_op;
+		if (sop && sop->put_inode) {
+		    sop->put_inode(inode);
+		    if (!inode->i_nlink)
+			return;
+		}
+	    }
+
+	} while(inode->i_dirt);
 	inode->i_count--;
 	nr_free_inodes++;
     }
