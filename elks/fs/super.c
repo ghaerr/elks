@@ -75,12 +75,12 @@ void wait_on_super(register struct super_block *sb)
 	return;
 
     wait_set(&sb->s_wait);
-  repeat:
-    current->state = TASK_UNINTERRUPTIBLE;
-    if (sb->s_lock) {
+    goto ini_loop;
+    do {
 	schedule();
-	goto repeat;
-    }
+  ini_loop:
+	current->state = TASK_UNINTERRUPTIBLE;
+    } while(sb->s_lock);
     wait_clear(&sb->s_wait);
     current->state = TASK_RUNNING;
 }
@@ -102,7 +102,7 @@ void sync_supers(kdev_t dev)
     register struct super_block *sb;
     register struct super_operations *sop;
 
-    for (sb = super_blocks + 0; sb < super_blocks + NR_SUPER; sb++) {
+    for (sb = super_blocks; sb < super_blocks + NR_SUPER; sb++) {
 
 	if ((!sb->s_dev)
 	    || (dev && sb->s_dev != dev))
@@ -126,7 +126,7 @@ static struct super_block *get_super(kdev_t dev)
     register struct super_block *s;
 
     if (dev) {
-	s = 0 + super_blocks;
+	s = super_blocks;
 	while (s < super_blocks + NR_SUPER)
 	    if (s->s_dev == dev) {
 		wait_on_super(s);
@@ -212,11 +212,9 @@ static struct super_block *read_super(kdev_t dev, char *name, int flags,
     type = file_systems[0];
 #endif
 
-    for (s = super_blocks;; s++) {
+    for (s = super_blocks; s->s_dev; s++) {
 	if (s >= super_blocks + NR_SUPER)
 	    return NULL;
-	if (!(s->s_dev))
-	    break;
     }
     s->s_dev = dev;
     s->s_flags = (unsigned short int) flags;
@@ -362,10 +360,9 @@ int do_mount(kdev_t dev, char *dir, char *type, int flags, char *data)
     register struct super_block *sb;
     int error;
 
-    error = namei(dir, &dir_i, IS_DIR, 0);
-    dirp = dir_i;
-    if (error)
+    if((error = namei(dir, &dir_i, IS_DIR, 0)))
 	return error;
+    dirp = dir_i;
     if ((dirp->i_count != 1 || dirp->i_mount)
 	|| (!fs_may_mount(dev))
 	) {

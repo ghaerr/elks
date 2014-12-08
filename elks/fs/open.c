@@ -489,7 +489,7 @@ int sys_close(unsigned int fd)
     register struct file_struct *cfiles = &current->files;
 
     if (fd < NR_OPEN) {
-	(void) clear_bit(fd, &cfiles->close_on_exec);
+	clear_bit(fd, &cfiles->close_on_exec);
 	if ((filp = cfiles->fd[fd])) {
 	    cfiles->fd[fd] = NULL;
 	    return close_fp(filp);

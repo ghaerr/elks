@@ -58,6 +58,46 @@ int kraw = 0;
 
 #define ANYSHIFT (LSHIFT | RSHIFT)
 
+#define SSC 0xC0
+
+static unsigned char tb_state[] = {
+    0x80, CTRL, SSC, SSC,			/*1C->1F*/
+    SSC, SSC, SSC, SSC, SSC, SSC, SSC, SSC,	/*20->27*/
+    SSC, SSC, LSHIFT, SSC, SSC, SSC, SSC, SSC,	/*28->2F*/
+    SSC, SSC, SSC, SSC, SSC, SSC, RSHIFT, SSC,	/*30->37*/
+    SSC, SSC, CAPS,				/*38->3A*/
+    'a', 'b', 'c', 'd', 'e',			/*3B->3F, Function Keys*/
+    'f', 'g', 'h', 'i', 'j',			/*40->44, Function Keys*/
+    NUM, SSC, SSC,				/*45->47*/
+    0xB7, SSC, SSC, 0xBA, SSC, 0xB9, SSC, SSC,	/*48->4F*/
+    0xB8, SSC, SSC, SSC, SSC, SSC, ALT, SSC,	/*50->57*/
+};
+
+static unsigned char state_code[] = {
+    0,	/* All status are 0 */
+    1,	/* SHIFT */
+    0,	/* CTRL */
+    1,	/* SHIFT CTRL */
+    0,	/* ALT */
+    1,	/* SHIFT ALT */
+    3,	/* CTRL ALT */
+    1,	/* SHIFT CTRL ALT */
+    2,	/* CAPS */
+    0,	/* CAPS SHIFT */
+    2,	/* CAPS CTRL */
+    0,	/* CAPS SHIFT CTRL */
+    2,	/* CAPS ALT */
+    0,	/* CAPS SHIFT ALT */
+    2,	/* CAPS CTRL ALT */
+    3,	/* CAPS SHIFT CTRL ALT */
+};
+static unsigned char *scan_tabs[] = {
+    xtkb_scan,
+    xtkb_scan_shifted,
+    xtkb_scan_caps,
+    xtkb_scan_ctrl_alt,
+};
+
 /* Ack.  We can't add a character until the queue's ready
  */
 
@@ -117,87 +157,25 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	E0Prefix = 0;
     }
     IsReleasep = (char *)(code & 0x80);
-    switch (code & 0x7F) {
-    case 29:
-	IsReleasep ? (ModeState &= ~CTRL) : (ModeState |= CTRL);
-	return;
-    case 42:
-	IsReleasep ? (ModeState &= ~LSHIFT) : (ModeState |= LSHIFT);
-	return;
-    case 54:
-	IsReleasep ? (ModeState &= ~RSHIFT) : (ModeState |= RSHIFT);
-	return;
-    case 56:
+    code &= 0x7F;
+    mode = (code >= 0x1C) ? tb_state[code - 0x1C] : SSC;
 
+    /* --------------Process status keys-------------- */
+
+    if(!(mode & 0xC0)) {
 #if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE)
-
-	if (E0 == 0) {
-	    IsReleasep ? (ModeState &= ~ALT) : (ModeState |= ALT);
-	} else {
-	    IsReleasep ? (ModeState &= ~ALT_GR) : (ModeState |= ALT_GR);
-	}
-
-#else
-
-	IsReleasep ? (ModeState &= ~ALT) : (ModeState |= ALT);
-
+	if((mode == ALT) && (E0 != 0))
+	    mode = ALT_GR;
 #endif
-
+	IsReleasep ? (ModeState &= ~mode) : (ModeState |= mode);
 	return;
-    case 58:
-	ModeState ^= IsReleasep ? 0 : CAPS;
-	return;
-    case 69:
-	ModeState ^= IsReleasep ? 0 : NUM;
-	return;
-    default:
-	if (IsReleasep)
-	    return;
-	break;
     }
+    if(IsReleasep)
+	return;
 
-    /*      Handle CTRL-ALT-DEL     */
-
-    if ((code == 0x53) && (ModeState & CTRL) && (ModeState & ALT))
-	ctrl_alt_del();
-
-    /*
-     *      Pick the right keymap
-     */
-    if (ModeState & CAPS && !(ModeState & ANYSHIFT))
-	keyp = (char *) xtkb_scan_caps[code];
-    else if (ModeState & ANYSHIFT && !(ModeState & CAPS))
-	keyp = (char *) xtkb_scan_shifted[code];
-
-    /* added for belgian keyboard (Stefke) */
-
-    else if ((ModeState & CTRL) && (ModeState & ALT))
-	keyp = (char *) xtkb_scan_ctrl_alt[code];
-
-    /* end belgian                                  */
-
-    /* added for German keyboard (Klaus Syttkus) */
-
-    else if (ModeState & ALT_GR)
-	keyp = (char *) xtkb_scan_ctrl_alt[code];
-    /* end German */
-    else
-	keyp = (char *) xtkb_scan[code];
-
-    if (ModeState & CTRL && code < 14 && !(ModeState & ALT))
-	keyp = (char *) xtkb_scan_shifted[code];
-    if (code < 70 && ModeState & NUM)
-	keyp = (char *) xtkb_scan_shifted[code];
-    /*
-     *      Apply special modifiers
-     */
-    if (ModeState & ALT && !(ModeState & CTRL))	/* Changed to support CTRL-ALT */
-	keyp = (char *)(((int) keyp) | 0x80); /* META-.. */
-    if (!keyp)			/* non meta-@ is 64 */
-	keyp = (char *) '@';
-    if (ModeState & CTRL && !(ModeState & ALT))	/* Changed to support CTRL-ALT */
-	keyp = (char *)(((int) keyp) & 0x1F); /* CTRL-.. */
-    if (code < 0x45 && code > 0x3A) {	/* F1 .. F10 */
+    switch(mode & 0xC0) {
+    case 0x40:	/* F1 .. F10 */
+    /* --------------Handle Function keys-------------- */
 
 #ifdef CONFIG_CONSOLE_DIRECT
 
@@ -208,34 +186,51 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 #endif
 
 	AddQueue(ESC);
-	AddQueue((unsigned char) (code - 0x3B + 'a'));
+	AddQueue((unsigned char)mode);
 	return;
-    }
-    if (E0)			/* Is extended scancode */
-	switch (code) {
-	case 0x48:		/* Arrow up */
-	    AddQueue(ESC);
-	    AddQueue('A');
-	    return;
-	case 0x50:		/* Arrow down */
-	    AddQueue(ESC);
-	    AddQueue('B');
-	    return;
-	case 0x4D:		/* Arrow right */
-	    AddQueue(ESC);
-	    AddQueue('C');
-	    return;
-	case 0x4B:		/* Arrow left */
-	    AddQueue(ESC);
-	    AddQueue('D');
-	    return;
-	case 0x1c:		/* keypad enter */
-	    AddQueue('\n');
+
+    /* --------------Handle extended scancodes-------------- */
+    case 0x80:
+	if(E0) {			/* Is extended scancode? */
+	    mode &= 0x3F;
+	    if(mode)
+		AddQueue(ESC);
+	    AddQueue(mode + 0x0A);
 	    return;
 	}
-    if (((int)keyp) == '\r')
-	keyp = (char *) '\n';
-    AddQueue((unsigned char) keyp);
+
+    default:
+    /* --------------Handle CTRL-ALT-DEL-------------- */
+
+	if ((code == 0x53) && (ModeState & CTRL) && (ModeState & ALT))
+	    ctrl_alt_del();
+
+    /*
+     *      Pick the right keymap
+     */
+	mode = ((ModeState & ~(NUM | ALT_GR)) >> 1) | (ModeState & 0x01);
+	mode = state_code[mode];
+	if(!mode && (ModeState & ALT_GR))
+	    mode = 3;
+	keyp = (char *)(*(scan_tabs[mode] + code));
+
+	if (ModeState & CTRL && code < 14 && !(ModeState & ALT))
+	    keyp = (char *) xtkb_scan_shifted[code];
+	if (code < 70 && ModeState & NUM)
+	    keyp = (char *) xtkb_scan_shifted[code];
+    /*
+     *      Apply special modifiers
+     */
+	if (ModeState & ALT && !(ModeState & CTRL))	/* Changed to support CTRL-ALT */
+	    keyp = (char *)(((int) keyp) | 0x80); /* META-.. */
+	if (!keyp)			/* non meta-@ is 64 */
+	    keyp = (char *) '@';
+	if (ModeState & CTRL && !(ModeState & ALT))	/* Changed to support CTRL-ALT */
+	    keyp = (char *)(((int) keyp) & 0x1F); /* CTRL-.. */
+	if (((int)keyp) == '\r')
+	    keyp = (char *) '\n';
+	AddQueue((unsigned char) keyp);
+    }
 }
 
 /*

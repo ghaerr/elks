@@ -19,7 +19,6 @@
 static void generate(int sig, register struct task_struct *p)
 {
     register struct sigaction *sa = &(p->sig.action[sig - 1]);
-    sigset_t mask = ((sigset_t) 1) << (sig - 1);
 
     if (sa->sa_handler == SIG_IGN)
 	return;
@@ -31,7 +30,7 @@ static void generate(int sig, register struct task_struct *p)
 	))
 	return;
     debug1("SIGNAL: Generating sig %d.\n", sig);
-    p->signal |= mask;
+    p->signal |= (((sigset_t) 1) << (sig - 1));
     if ((p->state == TASK_INTERRUPTIBLE) /* && (p->signal & ~p->blocked) */ ) {
 	debug("SIGNAL: Waking up.\n");
 	wake_up_process(p);

@@ -30,7 +30,7 @@ static int dupfd(unsigned int fd, unsigned int arg)
     if (arg >= NR_OPEN)
 	return -EMFILE;
 
-    (void) clear_bit(arg, &fils->close_on_exec);
+    clear_bit(arg, &fils->close_on_exec);
     (fils->fd[arg] = fils->fd[fd])->f_count++;
 
     return (int) arg;
@@ -73,9 +73,9 @@ int sys_fcntl(unsigned int fd, unsigned int cmd, unsigned int arg)
 	break;
     case F_SETFD:
 	if (arg & 1)
-	    (void) set_bit(fd, &fils->close_on_exec);
+	    set_bit(fd, &fils->close_on_exec);
 	else
-	    (void) clear_bit(fd, &fils->close_on_exec);
+	    clear_bit(fd, &fils->close_on_exec);
 	result = 0;
 	break;
     case F_GETFL:

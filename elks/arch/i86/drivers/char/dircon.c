@@ -105,7 +105,6 @@ static unsigned AttrArry[MAX_ATTR] = {
 };
 #endif
 
-static void ScrollUp(register Console * C, int st, int en);
 static void ClearRange(register Console * C, int x, int y, int xx, int yy);
 
 #ifdef CONFIG_DCON_VT52
@@ -136,6 +135,19 @@ static void PositionCursor(register Console * C)
 	outb((unsigned char) ((Pos >> 8) & 0xFF), CCBasep + 1);
 	outb(15, CCBasep);
 	outb((unsigned char) (Pos & 0xFF), CCBasep + 1);
+    }
+}
+
+static void ScrollUp(register Console * C, int st, int en)
+{
+    unsigned rdofs, wrofs;
+
+    if (st >= 1 && st < en) {
+	wrofs = (rdofs = (unsigned int) ((Width << 1) * st)) - (Width << 1);
+	far_memmove(C->vseg, rdofs, C->vseg, wrofs,
+		    ((unsigned) (Width * (en - st))) << 1);
+	en--;
+	ClearRange(C, 0, en, Width, en);
     }
 }
 
@@ -223,19 +235,6 @@ void con_charout(char Ch)
 	WriteChar(Visible, '\r');
     WriteChar(Visible, Ch);
     PositionCursor(Visible);
-}
-
-static void ScrollUp(register Console * C, int st, int en)
-{
-    unsigned rdofs, wrofs;
-
-    if (st >= 1 && st < en) {
-	wrofs = (rdofs = (unsigned int) ((Width << 1) * st)) - (Width << 1);
-	far_memmove(C->vseg, rdofs, C->vseg, wrofs,
-		    ((unsigned) (Width * (en - st))) << 1);
-	en--;
-	ClearRange(C, 0, en, Width, en);
-    }
 }
 
 #ifdef CONFIG_DCON_VT52

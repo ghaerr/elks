@@ -212,7 +212,7 @@ int tty_read(struct inode *inode, struct file *file, char *data, int len)
 		tty_echo(tty, ch);
 	    } else if (((int)pi) > 0) {
 		--pi;
-		k = ((get_user_char((void *)(data++))
+		k = ((get_user_char((void *)(--data))
 		      == '\t') ? TAB_SPACES : 1);
 		do {
 		    tty_echo(tty, ch);
