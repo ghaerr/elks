@@ -50,7 +50,7 @@ endif
 
 CC = gcc
 CPP = gcc -E
-OPTIM = -O2 -Wall -fomit-frame-pointer
+OPTIM = -std=c99 -O2 -Wall -pedantic
 
 CFLAGS = $(OPTIM) -DLOCALE $(CURSES_INC)
 LDFLAGS = -s -L .
