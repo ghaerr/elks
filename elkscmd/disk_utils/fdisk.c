@@ -314,12 +314,15 @@ void write_out()
 
     if (lseek(pFd,0L,SEEK_SET)!=0)
 	printf("ERROR!  Cannot seek to offset 0.\n");
-    else
+    else {
+        partitiontable[510] = 0x55;
+        partitiontable[511] = 0xAA;
 	if ((i=write(pFd,partitiontable,512))!=512) {
 	    printf("ERROR!  Only wrote %d of 512 bytes to the partition table.\n",i);
 	    printf("        Table possibly corrupted.\n");
 	} else
 	    printf("Successfully wrote %d bytes to %s\n",i,dev);
+    }
     fflush(stdout);
 }
 
