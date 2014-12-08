@@ -30,7 +30,7 @@ extern struct inode_operations pipe_inode_operations;
 
 /* Function definitions */
 
-void minix_put_inode(register struct inode *inode)
+static void minix_put_inode(register struct inode *inode)
 {
     if (!inode->i_nlink) {
 	inode->i_size = 0;
@@ -420,50 +420,59 @@ void minix_set_ops(struct inode *inode)
 }
 
 /*
+ * The minix V1 function to read an inode into a buffer.
+ */
+
+static struct buffer_head *minix_get_inode(register struct inode *inode,
+					   struct minix_inode **raw_inode)
+{
+    register struct buffer_head *bh = NULL;
+    unsigned short block;
+    unsigned int ino;
+
+    ino = inode->i_ino;
+    if (!ino || ino > inode->i_sb->u.minix_sb.s_ninodes) {
+	printk("Bad inode number on dev %s: %d is out of range\n",
+		kdevname(inode->i_dev), ino);
+    }
+    else {
+	block = inode->i_sb->u.minix_sb.s_imap_blocks + 2 +
+	    inode->i_sb->u.minix_sb.s_zmap_blocks + (ino - 1) / MINIX_INODES_PER_BLOCK;
+	if (!(bh = bread(inode->i_dev, (block_t) block))) {
+	    printk("unable to read i-node block\n");
+	}
+	else {
+	    map_buffer(bh);
+	    *raw_inode = ((struct minix_inode *) bh->b_data) +
+		(ino - 1) % MINIX_INODES_PER_BLOCK;
+	}
+    }
+    return bh;
+}
+
+/*
  * The minix V1 function to read an inode.
  */
 
 static void minix_read_inode(register struct inode *inode)
 {
-    struct buffer_head *bh;
+    register struct buffer_head *bh;
     struct minix_inode *raw_inode;
-    unsigned short block;
-    unsigned int ino;
 
-    ino = inode->i_ino;
-    inode->i_op = NULL;
-    inode->i_mode = 0;
-    {
-	/* Isolate register variable */
-	register struct super_block *isb = inode->i_sb;
-
-	if (!ino || ino > isb->u.minix_sb.s_ninodes) {
-	    printk("Bad inode number on dev %s: %d is out of range\n",
-		   kdevname(inode->i_dev), ino);
-	    return;
-	}
-	block = isb->u.minix_sb.s_imap_blocks + 2 +
-	    isb->u.minix_sb.s_zmap_blocks + (ino - 1) / MINIX_INODES_PER_BLOCK;
-    }
-    if (!(bh = bread(inode->i_dev, (block_t) block))) {
-	printk("Major problem: unable to read inode from dev %s\n",
-	       kdevname(inode->i_dev));
-	return;
-    }
-    map_buffer(bh);
-    raw_inode = ((struct minix_inode *) bh->b_data) +
-	(ino - 1) % MINIX_INODES_PER_BLOCK;
-    memcpy(inode, raw_inode, sizeof(struct minix_inode));
-    inode->i_ctime = inode->i_atime = inode->i_mtime;
+    bh = minix_get_inode(inode, &raw_inode);
+    if(bh) {
+	memcpy(inode, raw_inode, sizeof(struct minix_inode));
+	inode->i_ctime = inode->i_atime = inode->i_mtime;
 
 #ifdef BLOAT_FS
-    inode->i_blocks = inode->i_blksize = 0;
+	inode->i_blocks = inode->i_blksize = 0;
 #endif
 
-    if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
-	inode->i_rdev = to_kdev_t(raw_inode->i_zone[0]);
-    unmap_brelse(bh);
-    minix_set_ops(inode);
+	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
+	    inode->i_rdev = to_kdev_t(raw_inode->i_zone[0]);
+	unmap_brelse(bh);
+	minix_set_ops(inode);
+    }
 }
 
 /*
@@ -472,36 +481,17 @@ static void minix_read_inode(register struct inode *inode)
 
 static struct buffer_head *minix_update_inode(register struct inode *inode)
 {
-    register struct buffer_head *bh;
+    register struct buffer_head *bh = NULL;
     struct minix_inode *raw_inode;
-    unsigned int ino;
-    unsigned short block;
 
-    ino = inode->i_ino;
-    if (!ino || ino > inode->i_sb->u.minix_sb.s_ninodes) {
-	printk("Bad inode number on dev %s: %d is out of range\n",
-	       kdevname(inode->i_dev), ino);
+    bh = minix_get_inode(inode, &raw_inode);
+    if(bh) {
+	memcpy(raw_inode, inode, sizeof(struct minix_inode));
+	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
+	    raw_inode->i_zone[0] = kdev_t_to_nr(inode->i_rdev);
 	inode->i_dirt = 0;
-	bh = 0;
-    } else {
-	block = inode->i_sb->u.minix_sb.s_imap_blocks + 2 +
-	    inode->i_sb->u.minix_sb.s_zmap_blocks + (ino - 1)
-	    / MINIX_INODES_PER_BLOCK;
-
-	if (!(bh = bread(inode->i_dev, (block_t) block))) {
-	    printk("unable to read i-node block\n");
-	    inode->i_dirt = 0;
-	} else {
-	    map_buffer(bh);
-	    raw_inode = ((struct minix_inode *) bh->b_data) +
-		(ino - 1) % MINIX_INODES_PER_BLOCK;
-	    memcpy(raw_inode, inode, sizeof(struct minix_inode));
-	    if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
-		raw_inode->i_zone[0] = kdev_t_to_nr(inode->i_rdev);
-	    inode->i_dirt = 0;
-	    mark_buffer_dirty(bh, 1);
-	    unmap_buffer(bh);
-	}
+	mark_buffer_dirty(bh, 1);
+	unmap_buffer(bh);
     }
     return bh;
 }

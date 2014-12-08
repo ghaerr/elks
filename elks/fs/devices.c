@@ -241,7 +241,7 @@ char *kdevname(kdev_t dev)
 {
 #if (MINORBITS == 8) && (MINORMASK == 255)
     static char buffer[5];
-    register char *bp = buffer + 5;
+    register char *bp = buffer + 4;
     *bp = 0;
     do {
 	*--bp = hex_string[dev & 0xf];

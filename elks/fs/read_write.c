@@ -19,7 +19,7 @@ loff_t sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
 {
     register struct file *file;
     register struct file_operations *fop;
-    loff_t offset, tmp;
+    loff_t offset;
 
     offset = (loff_t) get_user_long(p_offset);
     if (fd >= NR_OPEN || !(file = current->files.fd[fd])
@@ -33,27 +33,23 @@ loff_t sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
 
     /* this is the default handler if no lseek handler is present */
     /* Note: We already determined above that origin is in range. */
-    if (origin == 2) {
-	if (!file->f_inode)
-	    return -EINVAL;
-	tmp = file->f_inode->i_size + offset;
-    } else {
-	tmp = (!origin) ? offset : file->f_pos + offset;
-    }
+    if(origin == 1)
+	offset += file->f_pos;
+    else if(origin == 2)
+	offset += file->f_inode->i_size;
 
-    if (tmp < 0)
+    if(offset < 0)
 	return -EINVAL;
-    if (tmp != file->f_pos) {
-	file->f_pos = tmp;
 
 #ifdef BLOAT_FS
+    if(offset != file->f_pos) {
 	file->f_reada = 0;
 	file->f_version = ++event;
+    }
 #endif
 
-    }
-
-    put_user_long((unsigned long int)tmp, (void *)p_offset);
+    file->f_pos = offset;
+    put_user_long((unsigned long int)offset, (void *)p_offset);
 
     return 0;
 }

@@ -66,7 +66,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     gid_t effgid;
     lsize_t len;
     size_t result;
-    char load_code = 0;
 
     /*
      *      Open the image
@@ -183,7 +182,18 @@ int sys_execve(char *filename, char *sptr, size_t slen)
         if (!cseg) {
             goto error_exec2;
         }
-        load_code = 1;
+        tregs->ds = cseg;
+        result = filp->f_op->read(inode, filp, 0, mh.tseg);
+        tregs->ds = ds;
+        if (result != mh.tseg) {
+            debug2("EXEC(tseg read): bad result %u, expected %u\n",
+	       result, mh.tseg);
+	    retval = -ENOEXEC;
+	    goto error_exec3;
+        }
+    }
+    else {
+        filp->f_pos += mh.tseg;
     }
 
     /*
@@ -210,19 +220,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     debug2("EXEC: Malloc succeeded - cs=%x ds=%x\n", cseg, dseg);
 
     retval = -ENOEXEC;
-    if(load_code){
-        tregs->ds = cseg;
-        result = filp->f_op->read(inode, filp, 0, mh.tseg);
-        tregs->ds = ds;
-        if (result != mh.tseg) {
-            debug2("EXEC(tseg read): bad result %u, expected %u\n",
-	       result, mh.tseg);
-	    goto error_exec4;
-        }
-    } else {
-        filp->f_pos += mh.tseg;
-    }
-
     tregs->ds = dseg;
     result = filp->f_op->read(inode, filp, (char *)stack_top, mh.dseg);
     tregs->ds = ds;

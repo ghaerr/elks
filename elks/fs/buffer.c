@@ -167,12 +167,12 @@ void invalidate_buffers(kdev_t dev)
 
 static struct buffer_head *find_buffer(kdev_t dev, block_t block)
 {
-    register struct buffer_head *tmp;
+    register struct buffer_head *bh;
 
-    for (tmp = bh_chain; tmp != NULL; tmp = tmp->b_next)
-	if (tmp->b_blocknr == block && tmp->b_dev == dev)
+    for (bh = bh_chain; bh != NULL; bh = bh->b_next)
+	if (bh->b_blocknr == block && bh->b_dev == dev)
 	    break;
-    return tmp;
+    return bh;
 }
 
 static struct buffer_head *get_free_buffer(void)
@@ -521,8 +521,10 @@ void buffer_init(void)
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     _buf_ds = mm_alloc(NR_BUFFERS * 0x40);
-    for (i = 0; i < NR_MAPBUFS; i++)
+    i = 0;
+    do {
 	bufmem_map[i] = NULL;
+    } while(++i < NR_MAPBUFS);
 #endif
 
     buffers[0].b_prev_lru = NULL;

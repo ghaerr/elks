@@ -16,11 +16,7 @@
 
 #include <arch/segment.h>
 
-static int minix_dir_read(inode, filp, buf, count)
-     struct inode *inode;
-     struct file *filp;
-     char *buf;
-     int count;
+static int minix_dir_read(struct inode *inode, struct file *filp, char *buf, int count)
 {
     return -EISDIR;
 }
