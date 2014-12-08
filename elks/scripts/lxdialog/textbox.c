@@ -35,11 +35,8 @@ static char *buf, *page;
  */
 int dialog_textbox(const char *title, const char *file, int height, int width)
 {
-    char search_term[MAX_LEN + 1];
     WINDOW *dialog, *text;
     int i, x, y, cur_x, cur_y, fpos, key = 0, passed_end;
-
-    search_term[0] = '\0';	/* no search term entered yet */
 
     /* Open input file for reading */
     if ((fd = open(file, O_RDONLY)) == -1) {
