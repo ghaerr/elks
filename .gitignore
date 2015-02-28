@@ -9,6 +9,7 @@
 *.1.gz
 Kbuild
 Config.in
+dev86
 
 #
 # Never ignore these
