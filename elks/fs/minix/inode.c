@@ -26,7 +26,6 @@ static unsigned short map_izone(register struct inode *,block_t,int);
 static void minix_commit_super(register struct super_block *);
 static void minix_read_inode(register struct inode *);
 static struct buffer_head *minix_update_inode(register struct inode *);
-extern struct inode_operations pipe_inode_operations;
 
 /* Function definitions */
 
@@ -413,7 +412,7 @@ void minix_set_ops(struct inode *inode)
 	&blkdev_inode_operations,
 	&minix_file_inode_operations,
 	&minix_symlink_inode_operations,
-	NULL,				/* Socket */
+	&sock_inode_operations,		/* Socket */
     };
 
     inode->i_op = inop[(int)tabc[(inode->i_mode & S_IFMT) >> 12]];

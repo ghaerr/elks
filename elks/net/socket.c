@@ -103,6 +103,7 @@ struct socket *sock_alloc(void)
 	return NULL;
 
     inode->i_mode = S_IFSOCK;
+    inode->i_op = &sock_inode_operations;
     inode->i_gid = (__u8) current->egid;
     inode->i_sock = 1;
 
@@ -401,25 +402,42 @@ static struct file_operations socket_file_ops = {
 #endif
 };
 
+struct inode_operations sock_inode_operations = {
+    &socket_file_ops, NULL,	/* create */
+    NULL,			/* lookup */
+    NULL,			/* link */
+    NULL,			/* unlink */
+    NULL,			/* symlink */
+    NULL,			/* mkdir */
+    NULL,			/* rmdir */
+    NULL,			/* mknod */
+    NULL,			/* readlink */
+    NULL,			/* follow_link */
+#ifdef BLOAT_FS
+    NULL,			/* bmap */
+#endif
+    NULL,			/* truncate */
+#ifdef BLOAT_FS
+    NULL			/* permission */
+#endif
+};
+
 /*@+type@*/
 
-int get_fd(register struct inode *inode)
+static int get_fd(register struct inode *inode)
 {
     int fd;
+    struct file *file;
 
-    fd = get_unused_fd();
-    if (fd >= 0) {
-	struct file *file = get_empty_filp(O_RDWR);
-	if (!file) {
-	    return -ENFILE;
-	}
-
-	file->f_inode = inode;
-	file->f_op = &socket_file_ops;
-	if (inode)
-	    inode->i_count++;
-	current->files.fd[fd] = file;
+    if((fd = open_filp(O_RDWR, inode, &file)))
+	goto no_files;
+    if ((fd = get_unused_fd(file)) > -1) {
+	inode->i_count++;		/*FIXME: Really needed?*/
+	goto no_files;
     }
+
+    close_filp(inode, file);
+  no_files:
     return fd;
 }
 

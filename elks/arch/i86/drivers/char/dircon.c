@@ -105,8 +105,6 @@ static unsigned AttrArry[MAX_ATTR] = {
 };
 #endif
 
-static void ClearRange(register Console * C, int x, int y, int xx, int yy);
-
 #ifdef CONFIG_DCON_VT52
 
 static void ScrollDown(register Console * C, int st, int en);
@@ -135,6 +133,20 @@ static void PositionCursor(register Console * C)
 	outb((unsigned char) ((Pos >> 8) & 0xFF), CCBasep + 1);
 	outb(15, CCBasep);
 	outb((unsigned char) (Pos & 0xFF), CCBasep + 1);
+    }
+}
+
+static void ClearRange(register Console * C, int x, int y, int xx, int yy)
+{
+    __u16 en, ClrW;
+    register char *ofsp;
+
+    ClrW = (__u16) ((A_DEFAULT << 8) + ' ');
+    en = (__u16) ((xx + yy * Width) << 1);
+    ofsp = (char *)((__u16) ((x + y * Width) << 1));
+    while (((__u16)ofsp) < en) {
+	pokew((__u16) C->vseg, (__u16) ofsp, ClrW);
+	ofsp += 2;
     }
 }
 
@@ -252,20 +264,6 @@ static void ScrollDown(register Console * C, int st, int en)
 }
 
 #endif
-
-static void ClearRange(register Console * C, int x, int y, int xx, int yy)
-{
-    __u16 en, ClrW;
-    register char *ofsp;
-
-    ClrW = (__u16) ((A_DEFAULT << 8) + ' ');
-    en = (__u16) ((xx + yy * Width) << 1);
-    ofsp = (char *)((__u16) ((x + y * Width) << 1));
-    while (((__u16)ofsp) < en) {
-	pokew((__u16) C->vseg, (__u16) ofsp, ClrW);
-	ofsp += 2;
-    }
-}
 
 #ifdef CONFIG_DCON_VT52
 

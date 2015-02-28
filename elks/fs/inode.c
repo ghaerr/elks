@@ -432,7 +432,7 @@ struct inode *get_pipe_inode(void)
     extern struct inode_operations pipe_inode_operations;
 
     if ((inode = get_empty_inode())) {
-	inode->i_mode |= S_IFIFO | S_IRUSR | S_IWUSR;
+	inode->i_mode = S_IFIFO | S_IRUSR | S_IWUSR;
 	inode->i_op = &pipe_inode_operations;
 	inode->i_gid = (__u8) current->egid;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
@@ -444,7 +444,7 @@ struct inode *get_pipe_inode(void)
 	inode->i_pipe = 1;
 	PIPE_START(*inode) = PIPE_LEN(*inode) = 0;
 	PIPE_RD_OPENERS(*inode) = PIPE_WR_OPENERS(*inode) = 0;
-	PIPE_READERS(*inode) = PIPE_WRITERS(*inode) = 1;
+	PIPE_READERS(*inode) = PIPE_WRITERS(*inode) = 0;
 	PIPE_LOCK(*inode) = 0;
 
 #if 0

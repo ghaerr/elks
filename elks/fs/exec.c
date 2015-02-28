@@ -56,8 +56,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 {
     void *ptr;
     struct inode *inode;
-    register struct file *filp;
-    __registers *tregs;
+    struct file *filp;
+    register __registers *tregs;
     unsigned int suidfile, sgidfile;
     int retval;
     __u16 ds;
@@ -84,24 +84,11 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /*
      *      Get a reading file handle
      */
-    retval = -ENFILE;
-    filp = get_empty_filp(O_RDONLY);
-    if(!filp) {
-	debug("\nNo filps\n");
+    if((retval = open_filp(O_RDONLY, inode, &filp)))
 	goto error_exec2;
-    }
-    filp->f_inode = inode;
-
-#ifdef BLOAT_FS
-    filp->f_reada = 0;
-#endif
-
-    filp->f_op = inode->i_op->default_file_ops;
     retval = -ENOEXEC;
-    if ((!filp->f_op)
-	|| ((filp->f_op->open) && (filp->f_op->open(inode, filp)))
-	|| (!filp->f_op->read))
-	goto normal_out;
+    if(!(filp->f_op) || !(filp->f_op->read))
+	goto error_exec3;
 
     debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
 
@@ -348,9 +335,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
   error_exec3:
     tregs->ds = ds;
   normal_out:
-    if(filp->f_op->release)
-	filp->f_op->release(inode, filp);
-    filp->f_count--;
+    close_filp(inode, filp);
 
   error_exec2:
     if(retval)

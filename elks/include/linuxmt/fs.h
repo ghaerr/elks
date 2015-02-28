@@ -415,6 +415,10 @@ extern struct file_operations rdwr_fifo_fops;
 extern struct file_operations read_pipe_fops;
 extern struct file_operations write_pipe_fops;
 extern struct file_operations rdwr_pipe_fops;
+extern struct inode_operations pipe_inode_operations;
+
+extern struct file_operations socket_file_ops;
+extern struct inode_operations sock_inode_operations;
 
 extern struct file_system_type *get_fs_type(char *);
 
@@ -461,7 +465,8 @@ extern struct inode *get_empty_inode(void);
 extern void insert_inode_hash(struct inode *);
 extern void clear_inode(struct inode *);
 extern struct inode *get_pipe_inode(void);
-extern struct file *get_empty_filp(unsigned short);
+extern int open_filp(unsigned short, struct inode *, struct file **);
+extern void close_filp(struct inode *, struct file *);
 
 extern struct buffer_head *get_hash_table(kdev_t,block_t);
 extern struct buffer_head *getblk(kdev_t,block_t);
@@ -509,7 +514,7 @@ extern int sys_dup(unsigned int);
 
 extern struct buffer_head *bread(dev_t,block_t);
 
-extern int get_unused_fd(void);
+extern int get_unused_fd(struct file *);
 extern char *get_pipe_mem(void);
 extern void free_pipe_mem(char *buf);
 

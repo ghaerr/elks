@@ -28,13 +28,14 @@
 
 #define MAX_PIPES 8
 
-int get_unused_fd(void)
+int get_unused_fd(struct file *f)
 {
     register char *pfd = 0;
     register struct file_struct *cfs = &current->files;
 
     do {
 	if (!cfs->fd[(unsigned int) pfd]) {
+	    cfs->fd[(unsigned int) pfd] = f;
 	    clear_bit((unsigned int) pfd,
 			     &cfs->close_on_exec);
 	    return (int) pfd;
@@ -183,6 +184,7 @@ static size_t pipe_write(register struct inode *inode, struct file *filp,
     return written;
 }
 
+#ifdef STRICT_PIPES
 static void pipe_read_release(register struct inode *inode, struct file *filp)
 {
     debug("PIPE: read_release called.\n");
@@ -196,6 +198,7 @@ static void pipe_write_release(register struct inode *inode, struct file *filp)
     (inode->u.pipe_i.writers)--;
     wake_up_interruptible(&(inode->u.pipe_i.wait));
 }
+#endif
 
 static void pipe_rdwr_release(register struct inode *inode,
 			      register struct file *filp)
@@ -211,6 +214,7 @@ static void pipe_rdwr_release(register struct inode *inode,
     wake_up_interruptible(&(inode->u.pipe_i.wait));
 }
 
+#ifdef STRICT_PIPES
 static int pipe_read_open(struct inode *inode, struct file *filp)
 {
     debug("PIPE: read_open called.\n");
@@ -226,6 +230,7 @@ static int pipe_write_open(struct inode *inode, struct file *filp)
 
     return 0;
 }
+#endif
 
 static int pipe_rdwr_open(register struct inode *inode,
 			  register struct file *filp)
@@ -241,6 +246,7 @@ static int pipe_rdwr_open(register struct inode *inode,
     return 0;
 }
 
+#ifdef STRICT_PIPES
 static size_t bad_pipe_rw(struct inode *inode, struct file *filp,
 		       char *buf, int count)
 {
@@ -268,6 +274,7 @@ struct file_operations write_pipe_fops = {
     pipe_write_open,
     pipe_write_release,
 };
+#endif
 
 struct file_operations rdwr_pipe_fops = {
     pipe_lseek,
@@ -304,9 +311,9 @@ struct inode_operations pipe_inode_operations = {
 
 int do_pipe(int *fd)
 {
-    struct inode *inode;
-    register struct file *f1;
-    register struct file *f2;
+    register struct inode *inode;
+    struct file *f1;
+    struct file *f2;
     int error = -ENOMEM;
     int i;
 
@@ -315,48 +322,34 @@ int do_pipe(int *fd)
 	goto no_inodes;
 
     /* read file */
-    error = -ENFILE;
-    f1 = get_empty_filp(O_RDONLY);
-    if (!f1)
+    if((error = open_filp(O_RDONLY, inode, &f1)))
 	goto no_files;
 
-    f1->f_inode = inode;
-    f1->f_op = &read_pipe_fops;
-
-    error = get_unused_fd();
-    if (error < 0)
+    if ((error = get_unused_fd(f1)) < 0)
 	goto close_f1;
-    current->files.fd[error] = f1;
     fd[0] = error;
     i = error;
 
     (inode->i_count)++;		/* Increase inode usage count */
     /* write file */
-    error = -ENFILE;
-    f2 = get_empty_filp(O_WRONLY);
-    if (!f2)
+    if((error = open_filp(O_WRONLY, inode, &f2)))
 	goto close_f1_i;
 
-    f2->f_inode = inode;
-    f2->f_op = &write_pipe_fops;
-
-    error = get_unused_fd();
-    if (error < 0)
+    if ((error = get_unused_fd(f2)) < 0)
 	goto close_f12;
-    current->files.fd[error] = f2;
     fd[1] = error;
 
     return 0;
 
   close_f12:
-    f2->f_count--;
+    close_filp(inode, f2);
 
   close_f1_i:
     current->files.fd[i] = NULL;
     inode->i_count--;
 
   close_f1:
-    f1->f_count--;
+    close_filp(inode, f1);
 
   no_files:
     iput(inode);

@@ -369,76 +369,36 @@ int sys_fchown(unsigned int fd, uid_t user, gid_t group)
 int sys_open(char *filename, int flags, int mode)
 {
     struct inode *inode;
-    register struct file *f;
-    int error, fd, flag;
+    struct file *f;
+    int error, flag;
 
-    f = get_empty_filp(flags);
-    if (!f) {
-	printk("\nNo filps\n");
-	return -ENFILE;
-    }
     flag = flags;
-    if (f->f_mode)
+    if ((mode_t)((flags + 1) & O_ACCMODE))
 	flag++;
     if (flag & (O_TRUNC | O_CREAT))
-	flag |= 2;
+	flag |= FMODE_WRITE;
+
     error = open_namei(filename, flag, mode, &inode, NULL);
+    if(error)
+	goto exit_open;
 
-    if (!error) {
+    error = open_filp(flags, inode, &f);
+    if(error)
+	goto cleanup_inode;
+    f->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
 
-#ifdef BLOAT_FS
-	if (f->f_mode & FMODE_WRITE) {
-	    error = get_write_access(inode);
-	    if (error)
-		goto cleanup_inode;
-	}
-#endif
+    /*
+     * We have to do this last, because we mustn't export
+     * an incomplete fd to other processes which may share
+     * the same file table with us.
+     */
+    if ((error = get_unused_fd(f)) > -1)
+	goto exit_open;
+    close_filp(inode, f);
 
-	f->f_inode = inode;
-
-#ifdef BLOAT_FS
-	f->f_reada = 0;
-#endif
-
-	f->f_op = NULL;
-	{
-	    register struct inode_operations *iop = inode->i_op;
-	    if (iop)
-		f->f_op = iop->default_file_ops;
-	}
-	{
-	    register struct file_operations *fop = f->f_op;
-	    if (fop && fop->open) {
-		error = fop->open(inode, f);
-		if (error) {
-		    goto cleanup_all;
-		}
-	    }
-	    f->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
-
-	    /*
-	     * We have to do this last, because we mustn't export
-	     * an incomplete fd to other processes which may share
-	     * the same file table with us.
-	     */
-	    if ((fd = get_unused_fd()) > -1) {
-		current->files.fd[fd] = f;
-		return fd;
-	    }
-	    error = -EMFILE;
-	    if (fop && fop->release)
-		fop->release(inode, f);
-	}
-      cleanup_all:
-#ifdef BLOAT_FS
-	if (f->f_mode & FMODE_WRITE)
-	    put_write_access(inode);
-      cleanup_inode:
-#endif
-	iput(inode);
-    }
-  cleanup_file:
-    f->f_count--;
+  cleanup_inode:
+    iput(inode);
+  exit_open:
     return error;
 }
 
@@ -446,25 +406,16 @@ static int close_fp(register struct file *filp)
 {
     register struct inode *inode;
 
-    if (filp->f_count == 0) {
+    if (filp->f_count < 1)
 	printk("VFS: Close: file count is 0\n");
-	goto cfp_end;
-    }
-    if (filp->f_count > 1) {
+    else if (filp->f_count > 1)
 	filp->f_count--;
-	goto cfp_end;
+    else {
+	inode = filp->f_inode;
+	close_filp(inode, filp);
+	filp->f_inode = NULL;
+	iput(inode);
     }
-    inode = filp->f_inode;
-    if (filp->f_op && filp->f_op->release)
-	filp->f_op->release(inode, filp);
-    filp->f_count--;
-    filp->f_inode = NULL;
-#ifdef BLOAT_FS
-    if (filp->f_mode & FMODE_WRITE)
-	put_write_access(inode);
-#endif
-    iput(inode);
-  cfp_end:
     return 0;
 }
 
