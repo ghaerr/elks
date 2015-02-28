@@ -60,7 +60,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     __registers *tregs;
     unsigned int suidfile, sgidfile;
     int retval;
-    __u16 ds = current->t_regs.ds;
+    __u16 ds;
     seg_t cseg, dseg, stack_top = 0;
     uid_t effuid;
     gid_t effgid;
@@ -88,7 +88,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     filp = get_empty_filp(O_RDONLY);
     if(!filp) {
 	debug("\nNo filps\n");
-	goto error_exec1;
+	goto error_exec2;
     }
     filp->f_inode = inode;
 
@@ -101,7 +101,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if ((!filp->f_op)
 	|| ((filp->f_op->open) && (filp->f_op->open(inode, filp)))
 	|| (!filp->f_op->read))
-	goto error_exec2;
+	goto normal_out;
 
     debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
 
@@ -109,7 +109,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      *      Read the header.
      */
     tregs = &current->t_regs;
-    tregs->ds = get_ds();
+    ds = tregs->ds;
 
     /*
      *      can I trust the following fields?
@@ -122,9 +122,10 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	effuid = pinode->i_uid;
 	effgid = pinode->i_gid;
 
+	tregs->ds = get_ds();
 	result = filp->f_op->read(pinode, filp, &mh, sizeof(mh));
+	/*tregs->ds = ds;*/
     }
-    tregs->ds = ds;
 
     /*
      *      Sanity check it.
@@ -133,28 +134,28 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if (result != sizeof(mh) ||
 	(mh.type != MINIX_SPLITID) || mh.chmem < 1024 || mh.tseg == 0) {
 	debug1("EXEC: bad header, result %u\n", result);
-	goto error_exec2;
+	goto error_exec3;
     }
 
 #ifdef CONFIG_EXEC_ELKS
     if ((unsigned int) mh.hlen == 0x30) {
 	/* BIG HEADER */
-	tregs->ds = get_ds();
+	/*tregs->ds = get_ds();*/
 	result = filp->f_op->read(inode, filp, &msuph, sizeof(msuph));
-	tregs->ds = ds;
+	/*tregs->ds = ds;*/
 	if (result != sizeof(msuph)) {
 	    debug1("EXEC: Bad secondary header, result %u\n", result);
-	    goto error_exec2;
+	    goto error_exec3;
 	}
 	stack_top = msuph.msh_dbase;
 	if(stack_top & 0xf){
-	     goto error_exec2;
+	     goto error_exec3;
 	}
 	debug1("EXEC: New type executable stack = %x\n", stack_top);
     }
 #else
     if((unsigned int) mh.hlen != 0x20){
-        goto error_exec2;
+        goto error_exec3;
     }
 #endif
 
@@ -180,16 +181,16 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if (!cseg) {
         cseg = mm_alloc((segext_t) ((mh.tseg + 15) >> 4));
         if (!cseg) {
-            goto error_exec2;
+            goto error_exec3;
         }
         tregs->ds = cseg;
         result = filp->f_op->read(inode, filp, 0, mh.tseg);
-        tregs->ds = ds;
+        /*tregs->ds = ds;*/
         if (result != mh.tseg) {
             debug2("EXEC(tseg read): bad result %u, expected %u\n",
 	       result, mh.tseg);
 	    retval = -ENOEXEC;
-	    goto error_exec3;
+	    goto error_exec4;
         }
     }
     else {
@@ -207,14 +208,14 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     }
     len = (len + 15) & ~15L;
     if (len > (lsize_t) 0x10000L) {
-	goto error_exec3;
+	goto error_exec4;
     }
 
     debug1("EXEC: Allocating %ld bytes for data segment\n", len);
 
     dseg = mm_alloc((segext_t) (len >> 4));
     if (!dseg) {
-	goto error_exec3;
+	goto error_exec4;
     }
 
     debug2("EXEC: Malloc succeeded - cs=%x ds=%x\n", cseg, dseg);
@@ -226,7 +227,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if (result != mh.dseg) {
 	debug2("EXEC(dseg read): bad result %d, expected %d\n",
 	       result, mh.dseg);
-	goto error_exec4;
+	goto error_exec5;
     }
 
     /*
@@ -338,18 +339,22 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     retval = 0;
     goto normal_out;
 
-  error_exec4:
+  error_exec5:
     mm_free(dseg);
 
-  error_exec3:
+  error_exec4:
     mm_free(cseg);
 
+  error_exec3:
+    tregs->ds = ds;
   normal_out:
-  error_exec2:
     if(filp->f_op->release)
 	filp->f_op->release(inode, filp);
     filp->f_count--;
 
+  error_exec2:
+    if(retval)
+	iput(inode);
   error_exec1:
     debug1("EXEC: Returning %d\n", retval);
     return retval;

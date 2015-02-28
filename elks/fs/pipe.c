@@ -307,10 +307,10 @@ int do_pipe(int *fd)
     struct inode *inode;
     register struct file *f1;
     register struct file *f2;
-    int error;
+    int error = -ENOMEM;
     int i;
 
-    inode = get_pipe_inode();
+    inode = get_pipe_inode();	/* Create inode */
     if (!inode)
 	goto no_inodes;
 
@@ -330,6 +330,7 @@ int do_pipe(int *fd)
     fd[0] = error;
     i = error;
 
+    (inode->i_count)++;		/* Increase inode usage count */
     /* write file */
     error = -ENFILE;
     f2 = get_empty_filp(O_WRONLY);
@@ -352,12 +353,12 @@ int do_pipe(int *fd)
 
   close_f1_i:
     current->files.fd[i] = NULL;
+    inode->i_count--;
 
   close_f1:
     f1->f_count--;
 
   no_files:
-    inode->i_count--;
     iput(inode);
 
   no_inodes:

@@ -441,7 +441,6 @@ struct inode *get_pipe_inode(void)
 	    iput(inode);
 	    return NULL;
 	}
-	(inode->i_count)++;	/* sum of readers/writers */
 	inode->i_pipe = 1;
 	PIPE_START(*inode) = PIPE_LEN(*inode) = 0;
 	PIPE_RD_OPENERS(*inode) = PIPE_WR_OPENERS(*inode) = 0;

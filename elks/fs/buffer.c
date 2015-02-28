@@ -74,9 +74,8 @@ static void put_last_lru(register struct buffer_head *bh)
 	/*
 	 *      Unhook
 	 */
-	if ((bhn = bh->b_next_lru))
-	    bhn->b_prev_lru = bh->b_prev_lru;
-	if (bh->b_prev_lru)
+	bhn = bh->b_next_lru;
+	if((bhn->b_prev_lru = bh->b_prev_lru))
 	    bh->b_prev_lru->b_next_lru = bhn;
 	/*
 	 *      Alter head
@@ -167,11 +166,12 @@ void invalidate_buffers(kdev_t dev)
 
 static struct buffer_head *find_buffer(kdev_t dev, block_t block)
 {
-    register struct buffer_head *bh;
+    register struct buffer_head *bh = bh_llru;
 
-    for (bh = bh_chain; bh != NULL; bh = bh->b_next)
+    do {
 	if (bh->b_blocknr == block && bh->b_dev == dev)
 	    break;
+    } while((bh = bh->b_prev_lru) != NULL);
     return bh;
 }
 

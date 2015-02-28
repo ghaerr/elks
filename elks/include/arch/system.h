@@ -9,6 +9,5 @@ extern void arch_setuptasks(void);
 extern void setup_arch(seg_t *,seg_t *);
 
 extern int in_group_p(gid_t);
-extern int get_unused_fd(void);
 
 #endif

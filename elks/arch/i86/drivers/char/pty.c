@@ -91,7 +91,7 @@ int pty_read(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
     register char *pi;
-    int j, l;
+    int l;
     unsigned char ch;
 
     debug("PTY: read ");
@@ -102,8 +102,7 @@ int pty_read(struct inode *inode, struct file *file, char *data, int len)
     l = (file->f_flags & O_NONBLOCK) ? 0 : 1;
     pi = 0;
     while (((int)pi) < len) {
-	j = chq_getch(&tty->outq, &ch, l);
-	if (j == -1)
+	if(chq_getch(&tty->outq, &ch, l) == -1)
 	    if (l) {
 		debug("failed: INTR\n");
 		return -EINTR;

@@ -509,6 +509,7 @@ extern int sys_dup(unsigned int);
 
 extern struct buffer_head *bread(dev_t,block_t);
 
+extern int get_unused_fd(void);
 extern char *get_pipe_mem(void);
 extern void free_pipe_mem(char *buf);
 
