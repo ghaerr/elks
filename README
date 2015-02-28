@@ -1,0 +1,37 @@
+               ELKS, the Embeddable Linux Kernel Subset
+               ----------------------------------------
+
+This is a project to write a Linux-like operating system for ancient
+computers running an Intel 8086-compatible processor. To build ELKS, you
+will need to obtain a copy of Dev86, currently available at:
+
+https://github.com/lkundrak/dev86
+
+When you build dev86, you need to move, copy, or symlink to it in the
+ELKS source code root. For a Dev86 source at /usr/src/dev86 do this:
+
+user:/usr/src/elks$ ln -s /usr/src/dev86 dev86
+
+The general build procedure is as follows:
+
+* Build Dev86, usually with default options
+* Make sure 'dev86' is beside 'elks' 'elkscmd' etc.
+* 'cd elks'
+* 'make menuconfig' and configure the kernel
+* Run 'make' to build the kernel
+* 'cd ../elkscmd'
+* 'make' (builds the core command line utilities)
+* 'cd ../elksnet'
+* 'make' (builds the networking components)
+* 'cd ../elkscmd'
+* As root, run 'make [imagetype]' where image type is one of these:
+  - full3: 1.44MB 3.5" floppy image, all-inclusive
+  - full5: 1.2MB 5.25" floppy image, all-inclusive
+  - comb: 720K floppy image, ELKS kernel plus minimal root filesystem
+  - comb_net: Same as 'comb' but with 'elksnet' components included
+  - boot: 360K floppy image, ELKS kernel only
+  - root: 360K floppy image, minimal root filesystem only
+  - images.zip: make every image type and zip them all into "images.zip"
+
+Questions? Problems? Patches? Join and email the Linux-8086 mailing list at
+linux-8086@vger.kernel.org or email the maintainer at jody@jodybruchon.com
