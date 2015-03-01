@@ -34,6 +34,9 @@
  * SUCH DAMAGE.
  */
 
+/* Modified 2015-03-01 by Jody Bruchon <jody@jodybruchon.com> to comply with
+ * ANSI C and satisfy compiler warnings. */
+
 #ifndef lint
 char copyright[] =
 "@(#) Copyright (c) 1991 The Regents of the University of California.\n\
@@ -57,7 +60,6 @@ static char sccsid[] = "@(#)mkinit.c	5.3 (Berkeley) 3/13/91";
 
 
 #include <sys/cdefs.h>
-
 #include <sys/types.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -65,6 +67,11 @@ static char sccsid[] = "@(#)mkinit.c	5.3 (Berkeley) 3/13/91";
 #include <string.h>
 #include <unistd.h>
 
+/* Function prototypes */
+int file_changed(void);
+int touch(char *file);
+int match(char *name, char *line);
+int gooddefine(char *line);
 
 /*
  * OUTFILE is the name of the output file.  Output is initially written
@@ -161,9 +168,8 @@ char *savestr();
 void *ckmalloc __P((int));
 void error();
 
-main(argc, argv)
-	char **argv;
-	{
+int main(int argc, char **argv)
+{
 	char **ap;
 	int fd;
 	char c;
@@ -194,10 +200,8 @@ main(argc, argv)
  * Parse an input file.
  */
 
-void
-readfile(fname)
-	char *fname;
-	{
+void readfile(char *fname)
+{
 	FILE *fp;
 	char line[1024];
 	struct event *ep;
@@ -225,11 +229,8 @@ readfile(fname)
 }
 
 
-int
-match(name, line)
-	char *name;
-	char *line;
-	{
+int match(char *name, char *line)
+{
 	register char *p, *q;
 
 	p = name, q = line;
@@ -243,10 +244,8 @@ match(name, line)
 }
 
 
-int
-gooddefine(line)
-	char *line;
-	{
+int gooddefine(char *line)
+{
 	register char *p;
 
 	if (! match("#define", line))
@@ -267,12 +266,8 @@ gooddefine(line)
 }
 
 
-void
-doevent(ep, fp, fname)
-	register struct event *ep;
-	FILE *fp;
-	char *fname;
-	{
+void doevent(register struct event *ep, FILE *fp, char *fname)
+{
 	char line[1024];
 	int indent;
 	char *p;
@@ -307,10 +302,8 @@ doevent(ep, fp, fname)
 }
 
 
-void
-doinclude(line)
-	char *line;
-	{
+void doinclude(char *line)
+{
 	register char *p;
 	char *name;
 	register char **pp;
@@ -332,11 +325,8 @@ doinclude(line)
 }
 
 
-void
-dodecl(line1, fp)
-	char *line1;
-	FILE *fp;
-	{
+void dodecl(char *line1, FILE *fp)
+{
 	char line[1024];
 	register char *p, *q;
 
@@ -378,8 +368,8 @@ dodecl(line1, fp)
  * Write the output to the file OUTTEMP.
  */
 
-void
-output() {
+void output(void)
+{
 	FILE *fp;
 	char **pp;
 	struct event *ep;
@@ -407,8 +397,8 @@ output() {
  * Return true if the new output file is different from the old one.
  */
 
-int
-file_changed() {
+int file_changed(void)
+{
 	register FILE *f1, *f2;
 	register int c;
 
@@ -427,10 +417,8 @@ file_changed() {
  * Touch a file.  Returns 0 on failure, 1 on success.
  */
 
-int
-touch(file)
-	char *file;
-	{
+int touch(char *file)
+{
 	int fd;
 	char c;
 
@@ -454,11 +442,8 @@ touch(file)
  * character.
  */
 
-void
-addstr(s, text)
-	register char *s;
-	register struct text *text;
-	{
+void addstr(register char *s, register struct text *text)
+{
 	while (*s) {
 		if (--text->nleft < 0)
 			addchar(*s++, text);
@@ -468,10 +453,8 @@ addstr(s, text)
 }
 
 
-void
-addchar(c, text)
-	register struct text *text;
-	{
+void addchar(int c, register struct text *text)
+{
 	struct block *bp;
 
 	if (--text->nleft < 0) {
@@ -490,11 +473,8 @@ addchar(c, text)
 /*
  * Write the contents of a text structure to a file.
  */
-void
-writetext(text, fp)
-	struct text *text;
-	FILE *fp;
-	{
+void writetext(struct text *text, FILE *fp)
+{
 	struct block *bp;
 
 	if (text->start != NULL) {
@@ -504,11 +484,8 @@ writetext(text, fp)
 	}
 }
 
-FILE *
-ckfopen(file, mode)
-	char *file;
-	char *mode;
-	{
+FILE *ckfopen(char *file, char *mode)
+{
 	FILE *fp;
 
 	if ((fp = fopen(file, mode)) == NULL) {
@@ -518,8 +495,8 @@ ckfopen(file, mode)
 	return fp;
 }
 
-void *
-ckmalloc(nbytes) {
+void *ckmalloc(int nbytes)
+{
 	register char *p;
 	/* char *malloc(); */
 
@@ -528,10 +505,8 @@ ckmalloc(nbytes) {
 	return p;
 }
 
-char *
-savestr(s)
-	char *s;
-	{
+char *savestr(char *s)
+{
 	register char *p;
 
 	p = ckmalloc(strlen(s) + 1);
@@ -539,10 +514,8 @@ savestr(s)
 	return p;
 }
 
-void
-error(msg)
-	char *msg;
-	{
+void error(char *msg)
+{
 	if (curfile != NULL)
 		fprintf(stderr, "%s:%d: ", curfile, linno);
 	fprintf(stderr, "%s\n", msg);
