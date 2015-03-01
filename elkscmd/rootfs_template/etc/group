@@ -8,7 +8,7 @@ disk::6:root,adm
 lp::7:lp
 mem::8:
 kmem::9:
-wheel::10:root,rhw
+wheel::10:root
 floppy::11:root
 mail::12:mail,postmaster
 news::13:news
@@ -16,14 +16,10 @@ uucp::14:uucp
 man::15:man
 ftp::50:ftp
 nobody::99:nobody
-users::100:root,user0,user1,user2,user3,user4,user5,user6,user7,user8,user9
+users::100:root,user0,user1,user2,user3,user4,user5
 user0::500:user0
 user1::501:user1
 user2::502:user2
 user3::503:user3
 user4::504:user4
 user5::505:user5
-user6::506:user6
-user7::507:user7
-user8::508:user8
-user9::509:user9
