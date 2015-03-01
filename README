@@ -44,13 +44,15 @@ The general build procedure for ELKS is as follows:
 
   - full3: 1.44MB 3.5" floppy image, all-inclusive
 
-  - full1722: same as full3 but on a 1.722MB 3.5" "extended format" floppy
+  - full1680: same as full3 but on a 1.68MB 3.5" "extended format" floppy
 
   - full5: 1.2MB 5.25" floppy image, all-inclusive
 
   - comb: 720K floppy image, ELKS kernel plus minimal root filesystem
 
   - comb_net: Same as 'comb' but with 'elksnet' components included
+
+  - comb360: 360K bootable floppy image with very minimal root filesystem
 
   - boot: 360K floppy image, ELKS kernel only
 
