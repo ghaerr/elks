@@ -41,6 +41,9 @@ DIRS2=
 all:
 	@for i in $(DIRS); do make -C $$i all ; done
 
+max_rfs:
+	@for i in $(DIRS); do make -C $$i max_rfs install ; done
+
 rfs:
 
 net_rfs:

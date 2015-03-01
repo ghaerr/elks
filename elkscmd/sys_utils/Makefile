@@ -51,6 +51,9 @@ SMIN_PRGS	= init mount umount
 
 all: $(PRGS)
 
+max_rfs: all
+	cp -p $(PRGS) $(TARGET_MNT)/bin
+
 rfs: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin
 	

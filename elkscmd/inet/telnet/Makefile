@@ -42,6 +42,8 @@ all:	telnet
 telnet:	$(SRC)
 	$(CC) $(CFLAGS) -I$(INC_DIR) $(LDFLAGS) -o $@ $(SRC)
 
+max_rfs: all
+
 net_rfs: all
 
 install: all

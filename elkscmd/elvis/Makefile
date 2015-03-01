@@ -330,6 +330,8 @@ SRC8=	vars.c vcmd.c vi.c vi.h refont.c
 all: $(PROGS)
 	@echo done.
 
+max_rfs: all
+
 rfs: all
 	cp -p $(PROGS) $(TARGET_MNT)/bin
 

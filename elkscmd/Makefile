@@ -37,18 +37,22 @@ KHELPER 	= $(MINIX_BOOT)/minix_elks.bin
 
 ###############################################################################
 #
+# Names of all possible image files.
+
+IMAGES		= boot root comb comb_net full5 full3 full1722
+
+###############################################################################
+#
 # Compile everything.
 
 all:
 	if [ ! -e $(ELKS_DIR)/include/linuxmt/config.h ]; \
 	then echo -e "\n*** ERROR: You must build the ELKS kernel first ***\n" >&2; exit 1; fi
-	@for i in $(DIRS); do make -C $$i all ; done
+	+@for i in $(DIRS); do make -C $$i all ; done
 
 clean:
-	-umount $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
-		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) || true
-	-rm -f $(COMB_TARGET_FS) $(ROOT_TARGET_FS) $(ROOT_NET_TARGET_FS) \
-		$(FULL3_TARGET_FS) $(FULL5_TARGET_FS) boot images.zip core
+	-umount $(IMAGES) || true
+	-rm -f $(IMAGES) core images.zip images.tar.*
 	-rm -rf $(ROOTDIR)
 	-rm -f *~
 	-@for i in $(DIRS) $(DONTUSE) $(DONTWORK); do make -C $$i clean ; done
@@ -152,7 +156,9 @@ _build_nonbootable_target: _build_target
 _build_target: all banner check_id _populate_target
 
 _populate_target: _mount_target
-	-for i in $(DIRS); do make -C $$i $(TARGET_RFS); done >/dev/null
+	for i in $(DIRS); do make -C $$i $(TARGET_RFS); done >/dev/null
+	[ -e $(TARGET_MNT)/bin/ash ] && ln -sf ash $(TARGET_MNT)/bin/sh || \
+		ln -sf sash $(TARGET_MNT)/bin/sh
 	$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile > $(TARGET_MNT)/etc/issue
 	[ "$(INSTALL_KTCP)" = "yes" ] && \
 	cp -p $(ELKSNET_DIR)/ktcp/ktcp $(TARGET_MNT)/bin || true
@@ -162,7 +168,7 @@ _mount_target:
 	then echo -e "\n\n *** Only root can build disk images *** \n\n"; exit 1; fi
 	umount $(TARGET_FS) >/dev/null 2>&1 || true
 	dd if=/dev/zero of=$(TARGET_FS) bs=1024 count=$(TARGET_BLKS) 2>/dev/null
-	$(MKFS) $(MKFS_OPTS) $(TARGET_FS) $(TARGET_BLKS) >/dev/null
+	$(MKFS) $(MKFS_OPTS) $(TARGET_FS) >/dev/null
 	mkdir -p $(TARGET_MNT)
 	mount $(LOOP) $(TARGET_FS) $(TARGET_MNT)
 	(cd $(ELKSCMD_DIR)/rootfs_template; \
@@ -181,6 +187,14 @@ check_id:
 	exit 1; \
 	fi
 
+full1722:
+	@if [ "$(shell id -u)" != "0" ]; \
+	then echo -e "\n\n *** Only root can build disk images *** \n\n"; exit 1; fi
+	@$(MAKE) _build_bootable_target \
+		TARGET_FS=$(FULL1722_TARGET_FS) \
+		TARGET_RFS=rfs \
+		TARGET_BLKS=$(FULL1722_TARGET_BLKS) \
+		INSTALL_KTCP=yes
 full3:
 	@if [ "$(shell id -u)" != "0" ]; \
 	then echo -e "\n\n *** Only root can build disk images *** \n\n"; exit 1; fi
@@ -195,7 +209,7 @@ full5:
 	then echo -e "\n\n *** Only root can build disk images *** \n\n"; exit 1; fi
 	@$(MAKE) _build_bootable_target \
 		TARGET_FS=$(FULL5_TARGET_FS) \
-		TARGET_RFS=rfs \
+		TARGET_RFS=max_rfs \
 		TARGET_BLKS=$(FULL5_TARGET_BLKS) \
 		INSTALL_KTCP=yes
 
@@ -211,9 +225,9 @@ comb_net:
 	@if [ "$(shell id -u)" != "0" ]; \
 	then echo -e "\n\n *** Only root can build disk images *** \n\n"; exit 1; fi
 	@$(MAKE) _build_bootable_target \
-		TARGET_FS=$(ROOT_NET_TARGET_FS) \
-		TARGET_RFS=net_rfs \
-		TARGET_BLKS=$(ROOT_NET_TARGET_BLKS) \
+		TARGET_FS=$(COMB_NET_TARGET_FS) \
+		TARGET_RFS=min_rfs \
+		TARGET_BLKS=$(COMB_NET_TARGET_BLKS) \
 		INSTALL_KTCP=yes
 
 boot: $(ELKS_DIR)/arch/i86/boot/Image
@@ -235,8 +249,19 @@ sibo:
 		TARGET_RFS=smin_rfs \
 		TARGET_BLKS=$(SIBO_TARGET_BLKS)
 
-images.zip: boot comb root comb_net full3 full5
-	zip images.zip boot root comb comb_net full3 full5
+images: $(IMAGES)
+
+images.zip: $(IMAGES)
+	zip -9q images.zip $(IMAGES)
+	-@stat -c "%s %n" images.zip
+
+images.tar.gz: $(IMAGES)
+	tar -c $(IMAGES) | gzip -9 > images.tar.gz
+	-@stat -c "%s %n" images.tar.gz
+
+images.tar.xz: $(IMAGES)
+	tar -c $(IMAGES) | xz -e > images.tar.xz
+	-@stat -c "%s %n" images.tar.xz
 
 #######
 # EOF #

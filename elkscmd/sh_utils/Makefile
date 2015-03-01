@@ -47,6 +47,9 @@ write: write.o ../sys_utils/utent.o
 
 all: $(PRGS)
 
+max_rfs: all
+	cp -p $(PRGS) $(TARGET_MNT)/bin
+
 rfs: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin
 

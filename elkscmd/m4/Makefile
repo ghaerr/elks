@@ -49,9 +49,11 @@ all:	m4
 m4:	$(OBJS)
 	$(CC) $(CFLAGS) -o m4 $(OBJS) $(LIBS)
 
+max_rfs: install
+
 rfs: install
 
-min_rfs: install
+min_rfs:
 
 net_rfs: install
 

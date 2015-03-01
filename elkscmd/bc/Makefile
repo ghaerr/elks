@@ -89,6 +89,8 @@ $(BINDIR)/bc:	bc
 $(LIBDIR)/libmath.b:	libmath.b
 	install -c -o bin $? $@
 
+max_rfs: all
+
 rfs: all
 	cp -p bc $(TARGET_MNT)/bin
 #	cp -p fbc $(TARGET_MNT)/bin

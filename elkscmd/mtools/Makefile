@@ -51,9 +51,11 @@ CMNOBJ	= init.o search.o unixname.o subdir.o getfat.o devices.o
 
 all:	$(PROGS)
 
+max_rfs: install
+
 rfs: install
 
-min_rfs: install
+min_rfs:
 
 net_rfs: install
 

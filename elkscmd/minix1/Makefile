@@ -45,6 +45,9 @@ NETPRGS = decomp16 du grep wc
 
 all: $(PRGS)
 
+max_rfs: all
+	cp -p $(PRGS) $(TARGET_MNT)/bin
+
 rfs: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin
 

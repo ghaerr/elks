@@ -39,6 +39,8 @@ CFLAGS=-0 -O -ansi -I$(ELKSNET_DIR) -I$(ELKS_DIR)/include
 
 all: $(PRGS)
 
+max_rfs: install
+
 rfs:
 
 net_rfs: install

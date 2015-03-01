@@ -42,6 +42,9 @@ all: xvi
 xvi: xvi.o
 	$(CC) $(LFLAGS) xvi.o -o xvi
 
+max_rfs: xvi
+	cp -p xvi $(TARGET_MNT)/bin$
+
 rfs: xvi
 	cp -p xvi $(TARGET_MNT)/bin$
 	

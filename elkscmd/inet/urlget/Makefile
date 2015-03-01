@@ -44,6 +44,8 @@ all:	urlget
 urlget:	$(SRC)
 	$(CC) $(CFLAGS) $(LDFLAGS) -I$(INC_DIR) -o urlget $(SRC)
 
+max_rfs: all
+
 net_rfs: all
 
 install: all

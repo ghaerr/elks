@@ -86,9 +86,11 @@ all:		$(PROGRAM)
 $(PROGRAM):     $(OBJS) $(LIBS)
 		$(LINKER) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
 
+max_rfs: install
+
 rfs: install
 
-min_rfs: all
+min_rfs:
 
 net_rfs:
 

@@ -72,16 +72,16 @@ endif
 #########################################################################
 # Define commands.
 
-Image: include/linuxmt/autoconf.h $(ARCHIVES) init/main.o
+Image: defconfig include/linuxmt/autoconf.h $(ARCHIVES) init/main.o
 	${MAKE} -C $(ARCH_DIR) Image
 
-nbImage: include/linuxmt/autoconf.h $(ARCHIVES) init/main.o
+nbImage: defconfig include/linuxmt/autoconf.h $(ARCHIVES) init/main.o
 	${MAKE} -C $(ARCH_DIR) nbImage
 
-nb_install: nbImage
+nb_install: defconfig nbImage
 	cp -f $(ARCH_DIR)/boot/nbImage $(TARGET_NB_IMAGE)
 
-nbrd_install: nbImage
+nbrd_install: defconfig nbImage
 	cp -f $(ARCH_DIR)/boot/nbImage $(ARCH_DIR)/boot/nbImage.rd
 	cat $(ARCH_DIR)/boot/nbRamdisk >> $(ARCH_DIR)/boot/nbImage.rd
 	cp -f $(ARCH_DIR)/boot/nbImage.rd $(TARGET_NB_IMAGE)

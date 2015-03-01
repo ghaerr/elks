@@ -53,6 +53,9 @@ uncompress: compress
 zcat: compress
 	ln -sf compress zcat
 
+max_rfs: all
+	cp -p $(STD_USR_BIN) $(TARGET_MNT)/usr/bin
+
 rfs: all
 	cp -p $(STD_USR_BIN) $(TARGET_MNT)/usr/bin
 

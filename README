@@ -12,26 +12,54 @@ ELKS source code root. For a Dev86 source at /usr/src/dev86 do this:
 
 user:/usr/src/elks$ ln -s /usr/src/dev86 dev86
 
-The general build procedure is as follows:
+A script that attempts to automate the build process and make it easier
+for ELKS newbies has been provided. Simply run:
+
+./build.sh
+
+If you want to clean everything up afterwards, run './build.sh clean'
+and it will run 'make clean' in the build directories for you.
+
+The general build procedure for ELKS is as follows:
 
 * Build Dev86, usually with default options
+
 * Make sure 'dev86' is beside 'elks' 'elkscmd' etc.
+
 * 'cd elks'
+
 * 'make menuconfig' and configure the kernel
+
 * Run 'make' to build the kernel
-* 'cd ../elkscmd'
-* 'make' (builds the core command line utilities)
+
 * 'cd ../elksnet'
+
 * 'make' (builds the networking components)
+
 * 'cd ../elkscmd'
+
+* 'make' (builds the core command line utilities)
+
 * As root, run 'make [imagetype]' where image type is one of these:
+
   - full3: 1.44MB 3.5" floppy image, all-inclusive
+
+  - full1722: same as full3 but on a 1.722MB 3.5" "extended format" floppy
+
   - full5: 1.2MB 5.25" floppy image, all-inclusive
+
   - comb: 720K floppy image, ELKS kernel plus minimal root filesystem
+
   - comb_net: Same as 'comb' but with 'elksnet' components included
+
   - boot: 360K floppy image, ELKS kernel only
+
   - root: 360K floppy image, minimal root filesystem only
-  - images.zip: make every image type and zip them all into "images.zip"
+
+  - images: make all images but don't create an archive of them
+  - images.zip: make all images, pack into a Zip-compress archive
+  - images.tar.gz: make all images, pack into Gzip-compressed tar archive
+  - images.tar.xz: make all images, pack into XZ-compressed tar archive
 
 Questions? Problems? Patches? Join and email the Linux-8086 mailing list at
 linux-8086@vger.kernel.org or email the maintainer at jody@jodybruchon.com

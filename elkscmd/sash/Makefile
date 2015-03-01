@@ -46,6 +46,8 @@ sash:	$(OBJS)
 clean:
 	rm -f core sash $(OBJS)
 
+max_rfs: install
+
 rfs: install
 
 net_rfs: rfs

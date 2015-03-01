@@ -68,9 +68,11 @@ all:	ash
 ash:	$(OBJS)
 	$(CC) $(CFLAGS) -s -o ash $(OBJS) $(LIBS)
 
+max_rfs: install
+
 rfs: install
 
-min_rfs: install
+min_rfs:
 
 net_rfs: install
 
@@ -78,8 +80,6 @@ smin_rfs:
 
 install: ash
 	cp -p ash $(TARGET_MNT)/bin/ash
-	rm -f $(TARGET_MNT)/bin/sh
-	ln -s ash $(TARGET_MNT)/bin/sh
 
 clean:
 	rm -f core ash $(CLEANFILES)

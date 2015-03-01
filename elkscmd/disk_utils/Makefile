@@ -40,6 +40,8 @@ SPROGS=mkfs
 
 all: $(PROGS)
 
+max_rfs: install
+
 rfs: install
 
 min_rfs: install
