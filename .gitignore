@@ -10,6 +10,8 @@
 Kbuild
 Config.in
 dev86
+.config
+.config.old
 
 #
 # Never ignore these
@@ -19,6 +21,21 @@ dev86
 #
 # Normal output and testing dirs
 #
+elks/System.map
+elks/arch/i86/Boot.map
+elks/arch/i86/Setup.map
+elks/arch/i86/boot/Image
+elks/arch/i86/boot/bootsect
+elks/arch/i86/boot/setup
+elks/arch/i86/boot/system
+elks/arch/i86/drivers/char/KeyMaps/keymaps.h
+elks/arch/i86/kernel/entry.c
+elks/arch/i86/tools/build
+elks/arch/i86/tools/mkbootloader
+elks/include/arch/asm-offsets.h
+elks/include/linuxmt/autoconf.h
+elks/include/linuxmt/compiler-generated.h
+
 
 #
 # Backups / patches
