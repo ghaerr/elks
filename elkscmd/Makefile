@@ -39,7 +39,10 @@ KHELPER 	= $(MINIX_BOOT)/minix_elks.bin
 #
 # Names of all possible image files.
 
-IMAGES		= boot root comb comb_net full5 full3 full1722
+IMAGES		= boot root comb360 comb comb_net full5 full3 full1680
+
+# Populated items to delete for special combined 360K boot+root disk
+COMB360_DEL	= sbin/partype sbin/ramdisk bin/clock
 
 ###############################################################################
 #
@@ -160,6 +163,8 @@ _populate_target: _mount_target
 	[ -e $(TARGET_MNT)/bin/ash ] && ln -sf ash $(TARGET_MNT)/bin/sh || \
 		ln -sf sash $(TARGET_MNT)/bin/sh
 	$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile > $(TARGET_MNT)/etc/issue
+	[ "$(COMB360)" = "yes" ] && \
+	for DEL in $(COMB360_DEL); do rm $(TARGET_MNT)/$$DEL; done || true
 	[ "$(INSTALL_KTCP)" = "yes" ] && \
 	cp -p $(ELKSNET_DIR)/ktcp/ktcp $(TARGET_MNT)/bin || true
 
@@ -187,13 +192,13 @@ check_id:
 	exit 1; \
 	fi
 
-full1722:
+full1680:
 	@if [ "$(shell id -u)" != "0" ]; \
 	then echo -e "\n\n *** Only root can build disk images *** \n\n"; exit 1; fi
 	@$(MAKE) _build_bootable_target \
-		TARGET_FS=$(FULL1722_TARGET_FS) \
+		TARGET_FS=$(FULL1680_TARGET_FS) \
 		TARGET_RFS=rfs \
-		TARGET_BLKS=$(FULL1722_TARGET_BLKS) \
+		TARGET_BLKS=$(FULL1680_TARGET_BLKS) \
 		INSTALL_KTCP=yes
 full3:
 	@if [ "$(shell id -u)" != "0" ]; \
@@ -212,6 +217,15 @@ full5:
 		TARGET_RFS=max_rfs \
 		TARGET_BLKS=$(FULL5_TARGET_BLKS) \
 		INSTALL_KTCP=yes
+
+comb360:
+	@if [ "$(shell id -u)" != "0" ]; \
+	then echo -e "\n\n *** Only root can build disk images *** \n\n"; exit 1; fi
+	@$(MAKE) _build_bootable_target \
+		TARGET_FS=$(COMB360_TARGET_FS) \
+		TARGET_RFS=min_rfs \
+		COMB360=yes \
+		TARGET_BLKS=$(COMB360_TARGET_BLKS)
 
 comb:
 	@if [ "$(shell id -u)" != "0" ]; \

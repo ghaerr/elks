@@ -3,7 +3,7 @@
 # Show misc. statistics for ELKS disk images
 
 MTPT=/mnt/elks
-IMAGES="root comb comb_net full5 full3 full1722"
+IMAGES="root comb360 comb comb_net full5 full3 full1680"
 
 echo
 echo "  ELKS disk image file statistics"
