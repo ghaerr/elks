@@ -22,10 +22,10 @@ clean:
 # Compile named subsystems. Add entries as appropriate.
 
 ktcp:
-	@make -C ktcp all
+	+@make -C ktcp all
 
 screen:
-	@make -C screen all
+	+@make -C screen all
 
 ###############################################################################
 # EOF.
