@@ -107,9 +107,21 @@ static void init_task()
     run_init_process("/sbin/init", args);
     run_init_process("/bin/init", args);
 
-    printk("No init - running /bin/sh\n");
+#ifdef CONFIG_CONSOLE_SERIAL
+	num = sys_open("/dev/ttyS0", 2, 0);
+#else
+	num = sys_open("/dev/tty0", 2, 0);
+#endif
+	if (num < 0)
+	    printk("Unable to open /dev/tty (error %u)\n", -num);
 
-    run_init_process("/bin/sh", args);
+	if (sys_dup(num) != 1)
+	    printk("dup failed\n");
+	sys_dup(num);
+	sys_dup(num);
+	printk("No init - running /bin/sh\n");
+
+    run_init_process("/bin/sash", args);
     panic("No init or sh found");
 }
 
