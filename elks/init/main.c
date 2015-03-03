@@ -26,6 +26,7 @@ int root_mountflags = 0;
 
 /**************************************/
 
+static void init_userspace_console(void);
 static void init_task(void);
 extern int run_init_process(char *, char *);
 
@@ -85,6 +86,23 @@ static char args[] = "\0\0\0\0\0\0/bin/init\0\0";
 
 /*@unused@*/ static char envp[] = "\0\0";
 
+static void init_userspace_console()
+{
+#ifdef CONFIG_CONSOLE_SERIAL
+    num = sys_open("/dev/ttyS0", 2, 0);
+#else
+    num = sys_open("/dev/tty0", 2, 0);
+#endif
+    if (num < 0)
+       printk("Unable to open /dev/tty (error %u)\n", -num);
+
+    if (sys_dup(num) != 1)
+       printk("dup failed\n");
+    sys_dup(num);
+    sys_dup(num);
+}
+
+
 static void init_task()
 {
     int num;
@@ -102,7 +120,8 @@ static void init_task()
      *
      * So, I've modified the ELKS kernel to follow this tradition.
      */
-
+    init_userspace_console();
+    
     run_init_process("/etc/init", args);
     run_init_process("/sbin/init", args);
     run_init_process("/bin/init", args);
