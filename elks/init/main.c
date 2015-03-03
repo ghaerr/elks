@@ -121,7 +121,7 @@ static void init_task()
 	sys_dup(num);
 	printk("No init - running /bin/sh\n");
 
-    run_init_process("/bin/sash", args);
+    run_init_process("/bin/sh", args);
     panic("No init or sh found");
 }
 
