@@ -85,7 +85,7 @@ local-curses.h:
 # Check that ncurses is available.
 
 ncurses: local-curses.h
-	@x=`find /lib/ /usr/lib/ /usr/local/lib/ -maxdepth 1 -name 'libncurses.*'` ;\
+	@x=`find /lib/ /usr/lib/ /usr/local/lib/ -maxdepth 2 -name 'libncurses.*'` ;\
 	if [ ! "$$x" ]; then \
 		echo -e "\007" ;\
 		echo ">> Unable to find the Ncurses libraries." ;\
