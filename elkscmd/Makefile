@@ -53,6 +53,8 @@ all:
 	then echo -e "\n*** ERROR: You must build the ELKS kernel first ***\n" >&2; exit 1; fi
 	+@for i in $(DIRS); do make -C $$i all ; done
 
+images_clean:
+	-rm -f $(IMAGES) images.zip images.tar.*
 clean:
 	-umount $(IMAGES) || true
 	-rm -f $(IMAGES) core images.zip images.tar.*

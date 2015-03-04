@@ -443,12 +443,25 @@ int sys_brk(__pptr len)
 {
     register __ptask currentp = current;
 
+#if 0
+    printk("sbrk: l %d, endd %x, bstack %x, endbrk %x, endseg %x, mem %x/%x\n",
+		    len, currentp->t_enddata, currentp->t_begstack,
+		    currentp->t_endbrk, currentp->t_endseg,
+		    mm_get_usage(MM_MEM, 1),
+		    mm_get_usage(MM_MEM, 0));
+#endif
+
     if (len < currentp->t_enddata)
         return -ENOMEM;
-        
     if (currentp->t_begstack > currentp->t_endbrk)
-        if(len > currentp->t_endseg - 0x1000)
+	    /* Why is the 0x1000 here? It makes stuff fail that otherwise works.
+	     * Let's remove it for now and add it back if it's actually needed.
+	     */
+/*        if(len > currentp->t_endseg - 0x1000) { */
+        if(len > currentp->t_endseg) {
+		printk("sys_brk failed: %d > %d\n", len, (currentp->t_endseg));
             return -ENOMEM;
+	}
 
 #ifdef CONFIG_EXEC_ELKS
     if(len > currentp->t_endseg){
