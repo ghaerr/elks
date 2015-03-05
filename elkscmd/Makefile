@@ -144,7 +144,9 @@ $(KHELPER):
 kernel_image: $(ELKS_DIR)/arch/i86/boot/Image
 
 boot_blocks: $(FD_BSECT) $(KHELPER)
-	@if [[ ! -e $(MINIX_BOOT)/minix.bin || ! -e $(MINIX_BOOT)/minix_elks.bin ]]; \
+	@if [ ! -e $(MINIX_BOOT)/minix.bin ]; \
+	then echo -e "\n\n *** Do builds in dev86 and dev86/bootblocks first *** \n\n"; exit 1; fi
+	@if [ ! -e $(MINIX_BOOT)/minix_elks.bin ]; \
 	then echo -e "\n\n *** Do builds in dev86 and dev86/bootblocks first *** \n\n"; exit 1; fi
 
 _build_bootable_target: boot_blocks _build_target kernel_image
