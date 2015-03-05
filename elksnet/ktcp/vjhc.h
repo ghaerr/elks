@@ -88,33 +88,6 @@ Created:	Nov 15, 1993 by Philip Homburg <philip@cs.vu.nl>
 
 #endif /* __NET__GEN__VJHC_H__ */
 
-/*
-ansi.h
-
-Created:	Aug 21, 1992 by Philip Homburg <philip@cs.vu.nl>
-*/
-
-#ifndef ANSI_H
-#define ANSI_H
-
-#if __STDC__
-
-#define ARGS(x)	x
-#define DEFUN(f, alist, adecl)	f (adecl)
-#define	AND	,
-#define DEFUN_VOID(f)		f (void)
-
-#else
-
-#define ARGS(x)	()
-#define DEFUN(f, alist, adecl)	f alist adecl ;
-#define AND	;
-#define DEFUN_VOID(f)		f ()
-
-#endif /* __STDC__ */
-
-#endif /* ANSI_H */
-
 
 /*
 pkt.h
@@ -152,10 +125,10 @@ extern int ip_rcv_vjhc;
 extern int ip_rcv_vjhc_state_nr;
 extern int ip_rcv_vjhc_compress_cid;
 
-void ip_vjhc_init ARGS(( void ));
-int ip_vjhc_compress ARGS(( pkt_ut *pkt ));
-void ip_vjhc_arr_uncompr ARGS(( pkt_ut *pkt ));
-void ip_vjhc_arr_compr ARGS(( pkt_ut *pkt ));
+void ip_vjhc_init(void);
+int ip_vjhc_compress(pkt_ut *pkt);
+void ip_vjhc_arr_uncompr(pkt_ut *pkt);
+void ip_vjhc_arr_compr(pkt_ut *pkt);
 
 #endif /* VJHC_H */
 

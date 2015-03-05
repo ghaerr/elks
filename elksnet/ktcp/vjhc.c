@@ -74,7 +74,7 @@ static int rcv_toss;
 static rcv_state_ut *rcv_state;
 static rcv_state_ut *rcv_last;
 
-DEFUN_VOID( void ip_vjhc_init )
+void ip_vjhc_init(void)
 {
 	int i;
 
@@ -113,10 +113,7 @@ DEFUN_VOID( void ip_vjhc_init )
 	}
 }
 
-DEFUN
-(int ip_vjhc_compress, (pkt),
-	pkt_ut *pkt
-)
+int ip_vjhc_compress(pkt_ut *pkt)
 {
 	iphdr_t *ip_hdr, *oip_hdr;
 	tcphdr_t *tcp_hdr, *otcp_hdr;
@@ -388,10 +385,7 @@ DEFUN
 	return PPP_TYPE_VJHC_COMPR;
 }
 
-DEFUN
-(void ip_vjhc_arr_uncompr, (pkt),
-	pkt_ut *pkt
-)
+void ip_vjhc_arr_uncompr(pkt_ut *pkt)
 {
 	rcv_state_ut *state;
 	iphdr_t *ip_hdr;
@@ -430,10 +424,7 @@ DEFUN
 
 }
 
-DEFUN
-(void ip_vjhc_arr_compr, (pkt),
-	pkt_ut *pkt
-)
+void ip_vjhc_arr_compr(pkt_ut *pkt)
 {
 	iphdr_t *ip_hdr;
 	tcphdr_t *tcp_hdr;
