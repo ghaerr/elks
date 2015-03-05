@@ -24,11 +24,11 @@
 
 struct exec_struct {
 	char tty_name[12];
-	pid_t tty_pid;	
+	pid_t tty_pid;
 };
 
 #define NUM_TTYS 3
-/* #define DEBUG /* */
+/* #define DEBUG */
 
 struct exec_struct tty_list[] = {
 	{"/dev/tty1", 0},
@@ -37,7 +37,7 @@ struct exec_struct tty_list[] = {
 	{"/dev/tty3", 0}
 };
 
-char * nargv[2] = {"/bin/getty", NULL};
+char *nargv[2] = {"/bin/getty", NULL};
 
 int determine_tty(int pid)
 {
@@ -64,7 +64,7 @@ int spawn_tty(int num)
 		return pid;
 	}
 	setsid();
-	
+
 #ifdef DEBUG
 	close(0);
 	close(1);
@@ -96,7 +96,7 @@ void main(int argc,char ** argv)
 	fd = open("/dev/tty1", 2);
 	dup2(fd, 0);
 	dup2(fd, 1);
-	dup2(fd, 2); 
+	dup2(fd, 2);
 #endif
 
 	memset(&entry, 0, sizeof(struct utmp));

@@ -19,9 +19,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-int main(argc,argv)
-int argc;
-char ** argv;
+int main(int argc, char **argv)
 {
 	sync();
 	if (umount("/")) {
@@ -34,4 +32,4 @@ char ** argv;
 		exit(1);
 	}
 }
-	
+

@@ -20,9 +20,9 @@ There are quite a few versions of rdev:
   - Peter MacDonald added video mode and RAM disk setting and included
     this version on SLS, called rdev again. I've attached his rdev.c to
     this mail.
-    
+
 -------------------------------------------------------------------------
-    
+
 Date: 11 Mar 92 21:37:37 GMT
 Subject: rdev - query/set root device
 From: almesber@nessie.cs.id.ethz.ch (Werner Almesberger)
@@ -72,8 +72,7 @@ Sat Jul 13 2002 : Ported to ELKS(by removing native language support)
 # define _(Text) (Text)
 # define N_(Text) (Text)
 
-static void
-usage(void) {
+static void usage(void) {
 
     puts(_("usage: rdev [ -rv ] [ -o OFFSET ] [ IMAGE [ VALUE [ OFFSET ] ] ]"));
     puts(_("  rdev /dev/fd0  (or rdev /linux, etc.) displays the current ROOT device"));
@@ -104,8 +103,8 @@ usage(void) {
 #define DEFAULT_OFFSET 508
 #define PATH_MAX 128
 
-static void
-die(char *msg) {
+static void die(char *msg)
+{
 	perror(msg);
 	exit(1);
 }
@@ -114,8 +113,8 @@ die(char *msg) {
    recursion in /dev. -- Paul Clements */
 /* In fact devfs needs deep recursion. */
 
-static int
-find_dev_recursive(char *dirnamebuf, int number) {
+static int find_dev_recursive(char *dirnamebuf, int number)
+{
 	DIR *dp;
 	struct dirent *dir;
 	struct stat s;
@@ -144,8 +143,8 @@ find_dev_recursive(char *dirnamebuf, int number) {
 	return 0;
 }
 
-static char *
-find_dev(int number) {
+static char *find_dev(int number)
+{
 	static char name[PATH_MAX+1];
 
 	if (!number)
@@ -160,14 +159,14 @@ find_dev(int number) {
 /* The enum values are significant, things are stored in this order,
    see bootsect.S */
 enum { RDEV, VIDMODE, RAMSIZE, __swapdev__, __syssize__, ROOTFLAGS };
-char *cmdnames[6] = { "rdev", "vidmode",  "ramsize", "", 
+char *cmdnames[6] = { "rdev", "vidmode",  "ramsize", "",
 		      "", "rootflags"};
 char *desc[6] = { "Root device", "Video mode",  "Ramsize",  "",
 		  "", "Root flags"};
 #define shift(n) argv+=n,argc-=n
 
-int
-main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 	int image, offset, dev_nr, i, newoffset=-1;
 	char *ptr;
 	unsigned short val, have_val;
@@ -176,10 +175,9 @@ main(int argc, char **argv) {
 
 	/* use the command name to figure out what we have to do - ugly */
 	cmd = RDEV;
-	if ((ptr = strrchr(argv[0],'/')) != NULL)
-		ptr++;
-	else
-		ptr = argv[0];
+	if ((ptr = strrchr(argv[0],'/')) != NULL) ptr++;
+	else ptr = argv[0];
+
 	for (i=0; i<=5; i++) {
 		if (!strcmp(ptr,cmdnames[i])) {
 			cmd = i;
@@ -187,7 +185,7 @@ main(int argc, char **argv) {
 		}
 	}
 
-	while (argc > 1) { 
+	while (argc > 1) {
 		if (argv[1][0] != '-')
 			break;
 		switch (argv[1][1]) {
@@ -195,7 +193,7 @@ main(int argc, char **argv) {
 			cmd = ROOTFLAGS;
 			shift(1);
 			break;
-		case 'r': 
+		case 'r':
 			cmd = RAMSIZE;
 			shift(1);
 			break;
@@ -229,15 +227,12 @@ main(int argc, char **argv) {
 		usage();
 	}
 
-	if (argc > 4)
-		usage();
+	if (argc > 4) usage();
 
 	/* Ancient garbage.. */
 	offset = DEFAULT_OFFSET-cmd*2;
-	if (newoffset >= 0)
-		offset = newoffset;
-	if (argc == 4)
-		offset = atoi(argv[3]);
+	if (newoffset >= 0) offset = newoffset;
+	if (argc == 4) offset = atoi(argv[3]);
 
 	have_val = 0;
 

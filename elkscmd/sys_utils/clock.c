@@ -10,7 +10,7 @@
 
 /* V1.0
  * CMOS clock manipulation - Charles Hedrick, hedrick@cs.rutgers.edu, Apr 1992
- * 
+ *
  * clock [-u] -r  - read cmos clock
  * clock [-u] -w  - write cmos clock from system time
  * clock [-u] -s  - set system time from cmos clock
@@ -31,20 +31,20 @@
  * Changed some exit codes. Made 'gcc 2.3 -Wall' happy.
  *
  * I think a small explanation of the adjustment routine should be given
- * here. The problem with my machine is that its CMOS clock is 10 seconds 
- * per day slow. With this version of clock.c, and my '/etc/rc.local' 
- * reading '/etc/clock -au' instead of '/etc/clock -u -s', this error 
- * is automatically corrected at every boot. 
+ * here. The problem with my machine is that its CMOS clock is 10 seconds
+ * per day slow. With this version of clock.c, and my '/etc/rc.local'
+ * reading '/etc/clock -au' instead of '/etc/clock -u -s', this error
+ * is automatically corrected at every boot.
  *
- * To do this job, the program reads and writes the file '/etc/adjtime' 
- * to determine the correction, and to save its data. In this file are 
- * three numbers: 
+ * To do this job, the program reads and writes the file '/etc/adjtime'
+ * to determine the correction, and to save its data. In this file are
+ * three numbers:
  *
- * 1) the correction in seconds per day (So if your clock runs 5 
+ * 1) the correction in seconds per day (So if your clock runs 5
  *    seconds per day fast, the first number should read -5.0)
  * 2) the number of seconds since 1/1/1970 the last time the program was
  *    used.
- * 3) the remaining part of a second which was leftover after the last 
+ * 3) the remaining part of a second which was leftover after the last
  *    adjustment
  *
  * Installation and use of this program:
@@ -65,19 +65,19 @@
  *
  * Applied patches by Harald Koenig (koenig@nova.tat.physik.uni-tuebingen.de)
  * Patched and indented by Rob Hooft (hooft@EMBL-Heidelberg.DE)
- * 
+ *
  * A free quote from a MAIL-message (with spelling corrections):
  *
  * "I found the explanation and solution for the CMOS reading 0xff problem
  *  in the 0.99pl13c (ALPHA) kernel: the RTC goes offline for a small amount
- *  of time for updating. Solution is included in the kernel source 
+ *  of time for updating. Solution is included in the kernel source
  *  (linux/kernel/time.c)."
  *
  * "I modified clock.c to fix this problem and added an option (now default,
  *  look for USE_INLINE_ASM_IO) that I/O instructions are used as inline
  *  code and not via /dev/port (still possible via #undef ...)."
  *
- * With the new code, which is partially taken from the kernel sources, 
+ * With the new code, which is partially taken from the kernel sources,
  * the CMOS clock handling looks much more "official".
  * Thanks Harald (and Torsten for the kernel code)!
  *
@@ -114,17 +114,17 @@
  * V1.4.ELKS
  *
  * Converted by Shane Kerr <kerr@wizard.net>, 1998-01-03
- * 
+ *
  * Removed the adjustment option, because it used floating
  * point math, and because I don't use it.  If necessary,
  * it can certainly be added back in.
- * 
+ *
  * Deleted the commented out options for debug code, because
  * they were cluttering up this already cluttered source file.
  *
  * Switched from using mktime(), with the associated time zone
  * baggage, to the hand-crafted utc_mktime(), getting time
- * zone information from gettimeofday() rather than the 
+ * zone information from gettimeofday() rather than the
  * environment variables.
  *
  * Removed the code to set the timezone with settimeofday.
@@ -143,7 +143,7 @@ int writeit = 0;
 int setit = 0;
 int universal = 0;
 
-void usage()
+int usage(void)
 {
     fprintf(stderr, "clock [-u] -r|w|s|v\n");
     fprintf(stderr, "  r: read and print CMOS clock\n");
@@ -183,8 +183,7 @@ _outb:
     ret
 #endasm
 
-unsigned char cmos_read(reg)
-unsigned char reg;
+unsigned char cmos_read(unsigned char reg)
 {
   register unsigned char ret;
 #asm
@@ -215,9 +214,7 @@ int addr;
   return (b & 15) + (b >> 4) * 10;
 }
 
-void cmos_write_bcd (addr, value)
-int addr; 
-int value;
+void cmos_write_bcd(int addr, int value)
 {
   cmos_write (addr, ((value / 10) << 4) + value % 10);
 }
@@ -267,9 +264,7 @@ struct tm *t;
     return ret;
 }
 
-int main (argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
   struct tm tm;
   time_t systime;
@@ -317,13 +312,13 @@ char **argv;
 /* read RTC exactly on falling edge of update flag */
 /* Wait for rise.... (may take upto 1 second) */
 
-      for (i = 0; i < 10000000L; i++)	
+      for (i = 0; i < 10000000L; i++)
 	if (cmos_read (10) & 0x80)
 	  break;
 
 /* Wait for fall.... (must try at least 2.228 ms) */
 
-      for (i = 0; i < 1000000L; i++)	
+      for (i = 0; i < 1000000L; i++)
 	if (!(cmos_read (10) & 0x80))
 	  break;
 #endif /* 0 */
@@ -331,7 +326,7 @@ char **argv;
 /* The purpose of the "do" loop is called "low-risk programming" */
 /* In theory it should never run more than once */
       do
-	{ 
+	{
 	  tm.tm_sec = cmos_read_bcd (0);
 	  tm.tm_min = cmos_read_bcd (2);
 	  tm.tm_hour = cmos_read_bcd (4);
@@ -350,15 +345,15 @@ char **argv;
 
   if (readit || setit)
     {
-/* 
- * utc_mktime() assumes we're in Greenwich, England.  If the CMOS 
+/*
+ * utc_mktime() assumes we're in Greenwich, England.  If the CMOS
  * clock isn't in GMT, we need to adjust.  We'll just use the
  * time zone information returned in gettimeofday().
  */
       systime = utc_mktime(&tm);
       if (!universal) {
           struct timezone tz;
-          
+
           gettimeofday(NULL, &tz);
           systime += tz.tz_minuteswest * 60L;
       }
@@ -413,7 +408,7 @@ char **argv;
 /* program is designed to run setuid, be secure! */
 
       if (getuid () != 0)
-	{			
+	{
 	  fprintf (stderr, "Sorry, must be root to set time\n");
 	  exit (2);
 	}
@@ -434,10 +429,10 @@ char **argv;
 		   "Unable to set time -- probably you are not root\n");
 	  exit (1);
 	}
-      
+
 #endif
     }
-  
+
   if (writeit)
     {
       struct tm *tmp;

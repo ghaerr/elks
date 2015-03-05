@@ -15,9 +15,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-int main(argc, argv)
-int argc;
-char ** argv;
+int main(int argc, char **argv)
 {
 	int fd, sd;
 	struct mem_swap_info si;
@@ -27,26 +25,27 @@ char ** argv;
 		printf("syntax :\n   %s swap_device size\n", argv[0]);
 		exit(1);
 	}
+
 	if ((fd = open("/dev/kmem", O_RDONLY)) < 0 || stat(argv[1], &statbuf) < 0) {
 		perror(*argv);
 		exit(1);
 	}
-	
+
 	if (!S_ISBLK(statbuf.st_mode)){
 		printf("%s not a block device\n", argv[1]);
 		exit(1);
 	}
-		
+
 	si.major = statbuf.st_rdev >> 8;
 	si.minor = statbuf.st_rdev & 0xff;
 	sscanf(argv[2], "%d", &si.size);
 
-	printf("Adding swap device (%d, %d) size %d\n", si.major, si.minor, si.size); 
+	printf("Adding swap device (%d, %d) size %d\n", si.major, si.minor, si.size);
 
 	if(ioctl(fd, MEM_SETSWAP, &si)){
 		perror(*argv);
 		exit(1);
-	}	
+	}
 
 	return 0;
 }

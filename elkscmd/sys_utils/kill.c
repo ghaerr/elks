@@ -18,9 +18,7 @@
 
 #define isdecimal(ch)	(((ch) >= '0') && ((ch) <= '9'))
 
-void
-main(argc, argv)
-	char	**argv;
+int main(int argc, char **argv)
 {
 	char	*cp;
 	int	sig;

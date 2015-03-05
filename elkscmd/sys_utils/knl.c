@@ -50,9 +50,9 @@
  */
 
 /*
-
 #define DEBUG
 #define TRACE
+*/
 
 /* Settings for splint to ignore problems that don't apply here
  */
@@ -178,9 +178,9 @@ static void delay(void)
 
 #define delay()
 
-#endif
+#endif /* __BCC__ */
 
-#endif
+#endif /* MKDELAY */
 
 static int posn(char *s, char c)
 {

@@ -36,9 +36,9 @@ char **argv;
 		exit(errno);
 	}
 	/* Get the addresses in kernel space to copy the module to */
-	if (((ioctl(md, MEM_GETMODTEXT, &text)) == -1) || 
+	if (((ioctl(md, MEM_GETMODTEXT, &text)) == -1) ||
 	    ((ioctl(md, MEM_GETMODDATA, &data)) == -1) ||
-	    ((ioctl(md, MEM_GETDS, &doff)) == -1) || 
+	    ((ioctl(md, MEM_GETDS, &doff)) == -1) ||
 	    ((ioctl(md, MEM_GETCS, &coff)) == -1)) {
 		write(STDERR_FILENO, failed, F_LEN);
 		write(STDERR_FILENO, "Kernel does not support modules.\n",33);
@@ -70,7 +70,7 @@ char **argv;
 		exit(errno);
 	}
 	/* Copy <module>.T into the kernel */
-	if ((read(od, modbuf, len)) != len) { 
+	if ((read(od, modbuf, len)) != len) {
 		write(STDERR_FILENO, failed, F_LEN);
 		exit(errno);
 	}
@@ -101,7 +101,7 @@ char **argv;
 		exit(errno);
 	}
 	/* Copy <module>.D into the kernel */
-	if ((read(od, modbuf, len)) != len) { 
+	if ((read(od, modbuf, len)) != len) {
 		write(STDERR_FILENO, failed, F_LEN);
 		exit(errno);
 	}

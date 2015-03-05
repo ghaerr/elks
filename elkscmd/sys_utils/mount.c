@@ -16,9 +16,7 @@
 #include <utime.h>
 #include <errno.h>
 
-void
-main(argc, argv)
-	char	**argv;
+int main(int argc, char **argv)
 {
 	char	*str;
 	char	*type;

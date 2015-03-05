@@ -16,9 +16,7 @@
 #include <utime.h>
 #include <errno.h>
 
-void
-main(argc, argv)
-	char	**argv;
+int main(int argc, char **argv)
 {
 	if (umount(argv[1]) < 0) {
 		perror(argv[1]);

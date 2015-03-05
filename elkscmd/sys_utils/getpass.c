@@ -12,8 +12,7 @@
 #include <unistd.h>
 #include <termios.h>
 
-char *getpass(prompt)
-char *prompt;
+char *getpass(char *prompt)
 {
     static char result[128];
     FILE *in;

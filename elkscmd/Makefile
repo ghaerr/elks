@@ -49,7 +49,7 @@ COMB360_DEL	= sbin/partype sbin/ramdisk bin/clock
 # Compile everything.
 
 all:
-	if [ ! -e $(ELKS_DIR)/include/linuxmt/config.h ]; \
+	@if [ ! -e $(ELKS_DIR)/include/linuxmt/config.h ]; \
 	then echo -e "\n*** ERROR: You must build the ELKS kernel first ***\n" >&2; exit 1; fi
 	+@for i in $(DIRS); do make -C $$i all ; done
 

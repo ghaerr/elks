@@ -22,11 +22,8 @@
 #include <stdio.h>
 #include <pwd.h>
 
-int read_task(fd, off, ds, task_table)
-int fd;
-unsigned int off;
-unsigned int ds;
-struct task_struct * task_table;
+int read_task(int fd, unsigned int off, unsigned int ds,
+		struct task_struct *task_table)
 {
 	unsigned int i;
 	off_t addr;
@@ -40,10 +37,7 @@ struct task_struct * task_table;
 	}
 }
 
-int get_name(fd, seg, off)
-int fd;
-unsigned int seg;
-unsigned int off;
+int get_name(int fd, unsigned int seg, unsigned int off)
 {
 	int i, j;
 	unsigned int strptr;
@@ -52,26 +46,16 @@ unsigned int off;
 	char dbuf[64];
 
 	addr = (off_t) (((off_t)seg << 4) + (off_t)off);
-	if (!(addr = lseek(fd, addr, SEEK_SET))) {
-		return -1;
-	}
-	if ((i = read(fd, &strptr, 2 )) != 2) {
-		return -1;
-	}
+	if (!(addr = lseek(fd, addr, SEEK_SET))) return -1;
+	if ((i = read(fd, &strptr, 2 )) != 2) return -1;
 	addr = (off_t) (((off_t)seg << 4) + (off_t)strptr);
-	if (!lseek(fd, addr, SEEK_SET)) {
-		return -1;
-	}
-	if ((i = read(fd, dbuf, 64 )) != 64) {
-		return -1;
-	}
+	if (!lseek(fd, addr, SEEK_SET)) return -1;
+	if ((i = read(fd, dbuf, 64 )) != 64) return -1;
 	printf("%s \n",dbuf);
 }
 
 
-int main(argc, argv)
-int argc;
-char ** argv;
+int main(int argc, char **argv)
 {
 	int i, fd;
 	unsigned int j, ds, off;
@@ -98,23 +82,17 @@ char ** argv;
 			perror("ps");
 			exit(1);
 		}
-                if (task_table.state == TASK_UNUSED) {
-                        continue;
-                }
-		if (task_table.t_kstackm != KSTACK_MAGIC) {
-			break;
-		}
-		if (task_table.t_regs.ss == 0) {
-			continue;
-		}
+                if (task_table.state == TASK_UNUSED) continue;
+		if (task_table.t_kstackm != KSTACK_MAGIC) break;
+		if (task_table.t_regs.ss == 0) continue;
 			pwent = (getpwuid(task_table.uid));
-			printf("%5d %5d %-8s %c %5u ", 
+			printf("%5d %5d %-8s %c %5u ",
 				task_table.pid,
 				task_table.pgrp,
 				(pwent ? pwent->pw_name : "unknown"),
 				((task_table.state == TASK_RUNNING) ? 'R' : 'S'),
 				task_table.t_inode);
-			if(task_table.mm.flags & DS_SWAP)
+			if (task_table.mm.flags & DS_SWAP)
 				printf("[data swapped] \n");
 			else
 				get_name(fd, task_table.t_regs.ss, task_table.t_begstack + 2);

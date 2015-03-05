@@ -63,7 +63,7 @@ struct utmp *
 getutid(struct utmp * utmp_entry)
 {
   struct utmp * utmp;
-  
+
   if (ut_fd==-1)
     setutent();
   if (ut_fd==-1)

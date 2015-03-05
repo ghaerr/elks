@@ -1,4 +1,4 @@
-/* 
+/*
  * file:	 login.c
  * descripton:	 login into a user account
  * author:	 Alistair Riddoch <ajr@ecs.soton.ac.uk>
@@ -28,25 +28,24 @@
 
 /*#define USE_UTMP*/	/* Disabled until we fix the "utmp file corrupt" */
 			/* issue. 17/4/2002 Harry Kalogirou */
-			
+
 #define PATHLEN 256
 #define STR_SIZE (PATHLEN + 7)
 
 char ** environ;
 
-void login(pwd, ut_ent)
-register struct passwd * pwd;
-struct utmp * ut_ent;
+void login(register struct passwd * pwd, struct utmp * ut_ent)
 {
-	char user_env[STR_SIZE], shell_env[STR_SIZE], home_env[STR_SIZE];
+	char user_env[STR_SIZE];
+	char shell_env[STR_SIZE];
+	char home_env[STR_SIZE];
 	char sh_name[STR_SIZE];
 	int envno = 0;
 	char * renv[5];
 	environ = renv;
 
 
-	if (fchown(0,pwd->pw_uid,pwd->pw_gid)<0)
-		perror("fchown");
+	if (fchown(0,pwd->pw_uid,pwd->pw_gid)<0) perror("fchown");
 #ifdef USE_UTMP
 	ut_ent->ut_type = USER_PROCESS;
 	strncpy(ut_ent->ut_user, pwd->pw_name, UT_NAMESIZE);
@@ -92,19 +91,17 @@ struct utmp * ut_ent;
 	exit(1);
 }
 
-void main(argc,argv)
-int argc;
-char ** argv;
+int main(int argc, char ** argv)
 {
 	struct passwd *pwd;
 	struct utmp entry;
-	struct utmp * entryp;
+	struct utmp *entryp;
 	struct utmp newentry;
-	char lbuf[UT_NAMESIZE], * pbuf, salt[3];
-	char * tty_name;
-	char * p;
+	char lbuf[UT_NAMESIZE], *pbuf, salt[3];
+	char *tty_name;
+	char *p;
 
-	
+
 	for (;;) {
 		if (argc == 1) {
 			write(STDOUT_FILENO,"login: ",7);
@@ -119,7 +116,7 @@ char ** argv;
 			argc = 1;
 		}
 		pwd = getpwnam(lbuf);
-#ifdef USE_UTMP	
+#ifdef USE_UTMP
 		if ((tty_name = ttyname(0)) == NULL) {
 			goto not_tty;
 		}
@@ -154,6 +151,6 @@ not_tty:
 				login(pwd, entryp);
 			}
 		}
-		write(STDOUT_FILENO,"Login incorrect\n\n",17); 
+		write(STDOUT_FILENO,"Login incorrect\n\n",17);
 	}
 }
