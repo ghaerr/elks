@@ -26,7 +26,7 @@
 #include <utmp.h>
 #include <limits.h>
 
-/*#define USE_UTMP*/	/* Disabled until we fix the "utmp file currupt" */
+/*#define USE_UTMP*/	/* Disabled until we fix the "utmp file corrupt" */
 			/* issue. 17/4/2002 Harry Kalogirou */
 			
 #define PATHLEN 256
@@ -127,7 +127,7 @@ char ** argv;
 		entry.ut_id[0] = *(tty_name + 8);
 		entry.ut_id[1] = *(tty_name + 9);
 		if ((entryp = getutid(&entry)) == NULL) {
-			write(STDERR_FILENO, "utmp file currupt\n", 18);
+			write(STDERR_FILENO, "utmp file corrupt\n", 18);
 			endutent();
 			exit(1);
 		}

@@ -30,7 +30,7 @@ void setup_arch(seg_t *start, seg_t *end)
 #ifdef CONFIG_COMPAQ_FAST
 
 /*
- *	Switch COMPAQ Deskpto to high speed
+ *	Switch COMPAQ Deskpro to high speed
  */
 
     outb_p(1,0xcf);

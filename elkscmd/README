@@ -5,10 +5,10 @@ Note that inclusion of code in this package does not imply any kind of
 right to distribute the code. Please check the license for each program
 before modifying or distributing it.
 
-More contributions are required under a GPL compatable license. Please see
+More contributions are required under a GPL compitable license. Please see
 the CONTRIBUTING file for more details.
 
-This package has been put together for two main purposes:-
+This package has been put together for two main purposes:
 
 1. To make it as easy as possible to put together a working binary release
    of a complete ELKS system.
@@ -26,8 +26,8 @@ CAUTION: Building images must be done as root as it needs to mount and unmount
 loopback filesystems. It is essential that TARGET_MNT is set in Make.defs, or
 running these rules could render your system inoperable.
 
-The main rule used in building a release is called images.zip, can is envoked
-as follows:-
+The main rule used in building a release is called images.zip and is invoked
+as follows:
 
 make images.zip
 
@@ -47,6 +47,13 @@ comb_net - A 720K combined boot/root image. Minimal networking elks disk.
 
 comb	- A 720K combined boot/root image. Includes a kernel, everything on
 	  root, and installs the minixfs bootloader from the Dev86 package.
+
+comb360	- A 360K combined boot/root image. Includes a kernel, everything on
+	  root, and installs the minixfs bootloader from the Dev86 package.
+
+full5	- A 1.2MB boot/root disk image with almost all available programs.
+
+full3	- A 1.44MB boot/root disk image with everything installed.
 
 sibo	- A 128K very minimal root image suitable for a 128K Solid State Disk
 	  as used in SIBO architecture machines such as the Psion series 3

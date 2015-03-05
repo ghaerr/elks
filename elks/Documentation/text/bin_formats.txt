@@ -17,7 +17,7 @@ Here is the diagram from memory.txt
 
 As of now I have implemented a new format which locates the stack below
 the data and bss in reserved space at the bottom of the data segment,
-and allows the heap to grow up indefinitlu providing support for growing
+and allows the heap to grow up indefinitely providing support for growing
 holes is available in the mm code. This format uses already existing
 features of the minix header to indicate the ammount of reserved space,
 and should be possible to add to the compiler tool chain with only minor
