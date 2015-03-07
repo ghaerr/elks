@@ -80,22 +80,22 @@ passwd: getpass.o passwd.o putpwent.o
 # call malloc will need much more than this.
 
 getty: getty.c
-	$(CC) $(CFLAGS) $(LDFLAGS) getty.c -o getty -H 1800
+	$(CC) $(CFLAGS) $(LDFLAGS) getty.c -o getty -H 0x1800
 
 meminfo: meminfo.c
-	$(CC) $(CFLAGS) $(LDFLAGS) meminfo.c -o meminfo -H 100
+	$(CC) $(CFLAGS) $(LDFLAGS) meminfo.c -o meminfo -H 0x100
 
 swapon: swapon.c
-	$(CC) $(CFLAGS) $(LDFLAGS) swapon.c -o swapon -H 100
+	$(CC) $(CFLAGS) $(LDFLAGS) swapon.c -o swapon -H 0x100
 
 new_init: init.c
 	$(CC) $(CFLAGS) $(LDFLAGS) init.c -o init
 
 init: init.c 
-	$(CC) $(CFLAGS) $(LDFLAGS) init.c -o init -H 2000
+	$(CC) $(CFLAGS) $(LDFLAGS) init.c -o init -H 0x2000
 
 rdev: rdev.c 
 	$(CC) $(CFLAGS) $(LDFLAGS) rdev.c -o rdev
 
 login: getpass.o login.o
-	$(CC) $(CFLAGS) $(LDFLAGS) getpass.o login.o -o login -H 2000
+	$(CC) $(CFLAGS) $(LDFLAGS) getpass.o login.o -o login -H 0x8000

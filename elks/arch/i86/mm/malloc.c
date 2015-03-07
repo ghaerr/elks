@@ -454,12 +454,8 @@ int sys_brk(__pptr len)
     if (len < currentp->t_enddata)
         return -ENOMEM;
     if (currentp->t_begstack > currentp->t_endbrk)
-	    /* Why is the 0x1000 here? It makes stuff fail that otherwise works.
-	     * Let's remove it for now and add it back if it's actually needed.
-	     */
-/*        if(len > currentp->t_endseg - 0x1000) { */
-        if(len > currentp->t_endseg) {
-		printk("sys_brk failed: %d > %d\n", len, (currentp->t_endseg));
+        if(len > currentp->t_endseg - 0x1000) {
+		printk("sys_brk failed: len %d > endseg %d\n", len, (currentp->t_endseg - 0x1000));
             return -ENOMEM;
 	}
 
