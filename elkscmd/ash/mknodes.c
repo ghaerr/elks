@@ -100,25 +100,12 @@ char *savestr();
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 
 
-main(argc, argv)
-	char **argv;
-	{
-	if (argc != 3)
-		error("usage: mknodes file\n");
-	if ((infp = fopen(argv[1], "r")) == NULL)
-		error("Can't open %s", argv[1]);
-	while (readline()) {
-		if (line[0] == ' ' || line[0] == '\t')
-			parsefield();
-		else if (line[0] != '\0')
-			parsenode();
-	}
-	output(argv[2]);
+int skipbl(void) {
+	while (*linep == ' ' || *linep == '\t') linep++;
 }
 
 
-
-parsenode() {
+void parsenode(void) {
 	char name[BUFLEN];
 	char tag[BUFLEN];
 	struct str *sp;
@@ -146,7 +133,19 @@ parsenode() {
 }
 
 
-parsefield() {
+void indent(int amount, FILE *fp)
+{
+	while (amount >= 8) {
+		putc('\t', fp);
+		amount -= 8;
+	}
+	while (--amount >= 0) {
+		putc(' ', fp);
+	}
+}
+
+
+void parsefield(void) {
 	char name[BUFLEN];
 	char type[BUFLEN];
 	char decl[2 * BUFLEN];
@@ -197,9 +196,8 @@ char writer[] = "\
  */\n\
 \n";
 
-output(file)
-	char *file;
-	{
+void output(char *file)
+{
 	FILE *hfile;
 	FILE *cfile;
 	FILE *patfile;
@@ -259,9 +257,8 @@ output(file)
 
 
 
-outsizes(cfile)
-	FILE *cfile;
-	{
+void outsizes(FILE *cfile)
+{
 	int i;
 
 	fprintf(cfile, "static const short nodesize[%d] = {\n", ntypes);
@@ -272,9 +269,8 @@ outsizes(cfile)
 }
 
 
-outfunc(cfile, calcsize)
-	FILE *cfile;
-	{
+void outfunc(FILE *cfile, int calcsize)
+{
 	struct str *sp;
 	struct field *fp;
 	int i;
@@ -352,23 +348,8 @@ outfunc(cfile, calcsize)
 }
 
 
-indent(amount, fp)
-	FILE *fp;
-	{
-	while (amount >= 8) {
-		putc('\t', fp);
-		amount -= 8;
-	}
-	while (--amount >= 0) {
-		putc(' ', fp);
-	}
-}
-
-
-int
-nextfield(buf)
-	char *buf;
-	{
+int nextfield(char *buf)
+{
 	register char *p, *q;
 
 	p = linep;
@@ -383,14 +364,7 @@ nextfield(buf)
 }
 
 
-skipbl() {
-	while (*linep == ' ' || *linep == '\t')
-		linep++;
-}
-
-
-int
-readline() {
+int readline(void) {
 	register char *p;
 
 	if (fgets(line, 1024, infp) == NULL)
@@ -408,9 +382,9 @@ readline() {
 
 
 
-error(msg, a1, a2, a3, a4, a5, a6)
+int error(msg, a1, a2, a3, a4, a5, a6)
 	char *msg;
-	{
+{
 	fprintf(stderr, "line %d: ", linno);
 	fprintf(stderr, msg, a1, a2, a3, a4, a5, a6);
 	putc('\n', stderr);
@@ -419,10 +393,8 @@ error(msg, a1, a2, a3, a4, a5, a6)
 
 
 
-char *
-savestr(s)
-	char *s;
-	{
+char * savestr(char *s)
+{
 	register char *p;
 	/* char *malloc(); */
 
@@ -430,4 +402,21 @@ savestr(s)
 		error("Out of space");
 	strcpy(p, s);
 	return p;
+}
+
+
+int main(int argc, char **argv)
+{
+	if (argc != 3)
+		error("usage: mknodes file\n");
+	if ((infp = fopen(argv[1], "r")) == NULL)
+		error("Can't open %s", argv[1]);
+	while (readline()) {
+		if (line[0] == ' ' || line[0] == '\t')
+			parsefield();
+		else if (line[0] != '\0')
+			parsenode();
+	}
+	output(argv[2]);
+	return 0;
 }
