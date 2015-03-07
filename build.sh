@@ -3,10 +3,19 @@
 # Quick and dirty build script for ELKS
 # Probably buggy, but makes from-scratch builds easier
 
+DELAY=7
+
 pause () {
 	echo
-	echo -n "Press a key to continue... "
-	read -n 1 -s
+	# 'read -n/-s' are bashisms, so work around them
+	if [ -z "$BASH_VERSION" ]
+		then
+		echo "Starting in $DELAY seconds."
+		sleep $DELAY
+		else
+		echo -n "Press a key to continue... "
+		read -n 1 -s 2>/dev/null || sleep $DELAY
+fi
 	echo
 }
 
