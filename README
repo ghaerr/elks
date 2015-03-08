@@ -5,7 +5,7 @@ This is a project to write a Linux-like operating system for ancient
 computers running an Intel 8086-compatible processor. To build ELKS, you
 will need to obtain a copy of Dev86, currently available at:
 
-https://github.com/lkundrak/dev86
+https://github.com/jbruchon/dev86
 
 When you build dev86, you need to move, copy, or symlink to it in the
 ELKS source code root. For a Dev86 source at /usr/src/dev86 do this:
@@ -61,3 +61,5 @@ The general build procedure for ELKS is as follows:
 
 Questions? Problems? Patches? Join and email the Linux-8086 mailing list at
 linux-8086@vger.kernel.org or email the maintainer at jody@jodybruchon.com
+
+* Note: official Dev86 is hosted at https://github.com/lkundrak/dev86
