@@ -301,6 +301,14 @@ static unsigned char fdc_version = FDC_TYPE_STD;	/* FDC version code */
 
 static void floppy_ready();
 
+static void delay_loop(int cnt)
+{
+    while (cnt > 0) {
+	__asm__("nop");
+	cnt--;
+    }
+}
+
 #ifdef TRP_ASM
 #define copy_buffer(from,to) \
 __asm__("cld ; rep ; movsl" \
@@ -907,8 +915,7 @@ static void reset_floppy(void)
 	printk("Reset-floppy called\n");
     clr_irq();
     outb_p(current_DOR & ~0x04, FD_DOR);
-    for (i = 0; i < 1000; i++)
-	__asm__("nop");
+    delay_loop(1000);
     outb(current_DOR, FD_DOR);
     set_irq();
 }
@@ -1237,8 +1244,7 @@ static int fd_ioctl(struct inode *inode,
 	    fdc_busy = 1;
 	    set_irq();
 	    outb_p((current_DOR & 0xfc) | drive | (0x10 << drive), FD_DOR);
-	    for (cnt = 0; cnt < 1000; cnt++)
-		__asm__("nop");
+	    delay_loop(1000);
 	    if (inb(FD_DIR) & 0x80)
 		keep_data[drive] = 1;
 	    else
