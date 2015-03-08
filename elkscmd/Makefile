@@ -21,11 +21,11 @@ include $(BASEDIR)/Make.defs
 
 DIRS		= sys_utils misc_utils byacc disk_utils file_utils levee \
 		  m4 minix1 minix2 minix3 ash bc mtools sash sh_utils \
-		  inet
+		  inet ktcp
 
 DONTUSE 	= debug_utils lib prn-utils rc tools xvi
 
-DONTWORK	= elvis
+DONTWORK	= elvis screen
 
 ###############################################################################
 #
@@ -170,7 +170,7 @@ _populate_target: _mount_target
 	[ "$(COMB360)" = "yes" ] && \
 	for DEL in $(COMB360_DEL); do rm $(TARGET_MNT)/$$DEL; done || true
 	[ "$(INSTALL_KTCP)" = "yes" ] && \
-	cp -p $(ELKSNET_DIR)/ktcp/ktcp $(TARGET_MNT)/bin || true
+	cp -p $(ELKSCMD_DIR)/ktcp/ktcp $(TARGET_MNT)/bin || true
 
 _mount_target:
 	@if [ "$(shell id -u)" != "0" ]; \

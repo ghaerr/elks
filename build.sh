@@ -61,7 +61,7 @@ if [ "$1" = "clean" ]
 	then echo
 	echo "Cleaning up. Please wait."
 	sleep 1
-	for X in elks elkscmd elksnet
+	for X in elks elkscmd
 		do cd $X; make clean; cd "$WD"
 	done
 	clean_exit 0
@@ -88,15 +88,6 @@ echo "Verifying dev86 is built."
 sleep 1
 cd dev86 || clean_exit 5
 make || clean_exit 5
-cd "$WD"
-
-
-### elksnet build
-echo "Building 'elksnet'"
-sleep 1
-cd elksnet || clean_exit 6
-make clean
-make || clean_exit 6
 cd "$WD"
 
 

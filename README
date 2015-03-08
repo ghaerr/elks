@@ -32,13 +32,9 @@ The general build procedure for ELKS is as follows:
 
 * Run 'make' to build the kernel
 
-* 'cd ../elksnet'
-
-* 'make' (builds the networking components)
-
 * 'cd ../elkscmd'
 
-* 'make' (builds the core command line utilities)
+* 'make' (builds the core command line utilities and network stack)
 
 * As root, run 'make [imagetype]' where image type is one of these:
 
@@ -50,7 +46,7 @@ The general build procedure for ELKS is as follows:
 
   - comb: 720K floppy image, ELKS kernel plus minimal root filesystem
 
-  - comb_net: Same as 'comb' but with 'elksnet' components included
+  - comb_net: Same as 'comb' but with network components included
 
   - comb360: 360K bootable floppy image with very minimal root filesystem
 

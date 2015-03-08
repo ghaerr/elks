@@ -35,7 +35,7 @@ PRGS=netstat
 
 SPRGS=
 
-CFLAGS=-0 -O -ansi -I$(ELKSNET_DIR) -I$(ELKS_DIR)/include
+CFLAGS=-0 -O -ansi -I$(ELKSCMD_DIR) -I$(ELKS_DIR)/include
 
 all: $(PRGS)
 

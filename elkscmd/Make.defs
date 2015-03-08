@@ -71,7 +71,6 @@ HOMEDIR=$(shell cd $(BASEDIR)/.. ; pwd)
 DEV86_DIR=$(HOMEDIR)/dev86
 ELKS_DIR=$(HOMEDIR)/elks
 ELKSCMD_DIR=$(HOMEDIR)/elkscmd
-ELKSNET_DIR=$(HOMEDIR)/elksnet
 
 INC_DIR=$(HOMEDIR)/elks/include
 
