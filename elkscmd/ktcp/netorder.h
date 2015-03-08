@@ -1,5 +1,5 @@
-#ifndef MYLIB_H
-#define MYLIB_H
+#ifndef NETORDER_H
+#define NETORDER_H
 
 #ifndef ntohs
 
@@ -14,4 +14,4 @@
 
 #define	htonl(x)	ntohl(x)
 
-#endif
+#endif	/* NETORDER_H */

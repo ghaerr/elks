@@ -17,7 +17,7 @@
 #include <linuxmt/in.h>
 #include <linuxmt/errno.h>
 
-#include "mylib.h"
+#include "netorder.h"
 #include "tcp.h"
 #include "tcpdev.h"
 #include "netconf.h"

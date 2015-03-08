@@ -18,7 +18,7 @@
 #include "ip.h"
 #include "tcp.h"
 #include "timer.h"
-#include "mylib.h"
+#include "netorder.h"
 
 timeq_t Now;
 

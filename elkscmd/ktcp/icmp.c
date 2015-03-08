@@ -15,7 +15,7 @@
 #include "slip.h"
 #include "icmp.h"
 #include "ip.h"
-#include "mylib.h"
+#include "netorder.h"
 
 int icmp_init(void)
 {

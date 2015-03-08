@@ -16,7 +16,7 @@
 #include "slip.h"
 #include "ip.h"
 #include "tcp.h"
-#include "mylib.h"
+#include "netorder.h"
 #include "timer.h"
 
 char buf[128];
