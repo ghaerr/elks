@@ -248,27 +248,29 @@ int minix_create(register struct inode *dir, char *name, size_t len,
     int error;
 
     *result = NULL;
+    error = -ENOENT;
     if (!dir)
-	return -ENOENT;
+	goto create2;
+    error = -ENOSPC;
     inode = minix_new_inode(dir, (__u16)mode);
-    if (!inode) {
-	iput(dir);
-	return -ENOSPC;
-    }
+    if (!inode)
+	goto create1;
     error = minix_add_entry(dir, name, len, &bh, &de);
-    if (error) {
+    if(!error) {
+	de->inode = inode->i_ino;
+	mark_buffer_dirty(bh, 1);
+	brelse(bh);
+	*result = inode;
+    }
+    else {
 	inode->i_nlink--;
 	inode->i_dirt = 1;
 	iput(inode);
-	iput(dir);
-	return error;
     }
-    de->inode = inode->i_ino;
-    *result = inode;
-    mark_buffer_dirty(bh, 1);
-    brelse(bh);
+ create1:
     iput(dir);
-    return 0;
+ create2:
+    return error;
 }
 
 int minix_mknod(register struct inode *dir, char *name, size_t len,
@@ -284,31 +286,30 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
     bh = minix_find_entry(dir, name, len, &de);
     if (bh) {
 	brelse(bh);
-	iput(dir);
-	return -EEXIST;
+	error = -EEXIST;
+	goto mknod1;
     }
 
+    error = -ENOSPC;
     inode = minix_new_inode(dir, (__u16)mode);
-    if (!inode) {
-	iput(dir);
-	return -ENOSPC;
-    }
+    if (!inode)
+	goto mknod1;
 
     if (S_ISBLK(mode) || S_ISCHR(mode))
 	inode->i_rdev = to_kdev_t(rdev);
 
     error = minix_add_entry(dir, name, len, &bh, &de);
-    if (error) {
+    if(!error) {
+	de->inode = inode->i_ino;
+	mark_buffer_dirty(bh, 1);
+	brelse(bh);
+    }
+    else {
 	inode->i_nlink--;
 	inode->i_dirt = 1;
-	iput(inode);
-	iput(dir);
-	return error;
     }
-    de->inode = inode->i_ino;
-    mark_buffer_dirty(bh, 1);
-    brelse(bh);
     iput(inode);
+ mknod1:
     iput(dir);
     return error;
 }
@@ -321,35 +322,31 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
     struct buffer_head *bh;
     struct minix_dir_entry *de;
 
-    if (!dir || !dir->i_sb) {
-	iput(dir);
-	return -EINVAL;
-    }
+    error = -EINVAL;
+    if (!dir || !dir->i_sb)
+	goto mkdir2;
+
+    error = -EEXIST;
     bh = minix_find_entry(dir, name, len, &de);
     if (bh) {
 	brelse(bh);
-	iput(dir);
-	return -EEXIST;
+	goto mkdir2;
     }
-    if (dir->i_nlink >= MINIX_LINK_MAX) {
-	iput(dir);
-	return -EMLINK;
-    }
+    error = -EMLINK;
+    if (dir->i_nlink >= MINIX_LINK_MAX)
+	goto mkdir2;
 
+    error = -ENOSPC;
     inode = minix_new_inode(dir, (__u16)(S_IFDIR|(mode & 0777 & ~current->fs.umask)));
-    if (!inode) {
-	iput(dir);
-	return -ENOSPC;
-    }
+    if (!inode)
+	goto mkdir2;
     debug("m_mkdir: new_inode succeeded\n");
     inode->i_size = 2 * dir->i_sb->u.minix_sb.s_dirsize;
     debug("m_mkdir: starting minix_bread\n");
     dir_block = minix_bread(inode, 0, 1);
     if (!dir_block) {
 	inode->i_nlink--;
-	iput(inode);
-	iput(dir);
-	return -ENOSPC;
+	goto mkdir1;
     }
     debug("m_mkdir: read succeeded\n");
     map_buffer(dir_block);
@@ -368,9 +365,7 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
     error = minix_add_entry(dir, name, len, &bh, &de);
     if (error) {
 	inode->i_nlink = 0;
-	iput(inode);
-	iput(dir);
-	return error;
+	goto mkdir1;
     }
     map_buffer(bh);
     de->inode = inode->i_ino;
@@ -378,9 +373,11 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
     dir->i_nlink++;
     dir->i_dirt = 1;
     unmap_brelse(bh);
-    debug("m_mkdir: done!\n");
+ mkdir1:
     iput(inode);
+ mkdir2:
     iput(dir);
+    debug("m_mkdir: done!\n");
     return 0;
 }
 
@@ -572,17 +569,12 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     register struct buffer_head *name_block;
     int i;
 
-    if (!(inode = minix_new_inode(dir, S_IFLNK | 0777))) {
-	iput(dir);
-	return -ENOSPC;
-    }
+    i = -ENOSPC;
+    if (!(inode = minix_new_inode(dir, S_IFLNK | 0777)))
+	goto symlink3;
     name_block = minix_bread(inode, 0, 1);
-    if (!name_block) {
-	inode->i_nlink--;
-	iput(inode);
-	iput(dir);
-	return -ENOSPC;
-    }
+    if (!name_block)
+	goto symlink1;
     map_buffer(name_block);
     if((i = strlen_fromfs(symname)) > 1023)
 	i = 1023;
@@ -601,18 +593,19 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     i = minix_add_entry(dir, name, len, &bh, &de);
     if (i) {
       err_symlink:
-	inode->i_nlink--;
 	inode->i_dirt = 1;
-	iput(inode);
-	iput(dir);
-	return i;
+      symlink1:
+	inode->i_nlink--;
+	goto symlink2;
     }
     de->inode = inode->i_ino;
     mark_buffer_dirty(bh, 1);
     brelse(bh);
+ symlink2:
     iput(inode);
+ symlink3:
     iput(dir);
-    return 0;
+    return i;
 }
 
 int minix_link(register struct inode *oldinode, register struct inode *dir,
@@ -622,14 +615,12 @@ int minix_link(register struct inode *oldinode, register struct inode *dir,
     struct minix_dir_entry *de;
     struct buffer_head *bh;
 
-    if (S_ISDIR(oldinode->i_mode)) {
-	error = -EPERM;
+    error = -EPERM;
+    if (S_ISDIR(oldinode->i_mode))
 	goto mlink_err;
-    }
-    if (oldinode->i_nlink >= MINIX_LINK_MAX) {
-	error = -EMLINK;
+    error = -EMLINK;
+    if (oldinode->i_nlink >= MINIX_LINK_MAX)
 	goto mlink_err;
-    }
     bh = minix_find_entry(dir, name, len, &de);
     if (bh) {
 	brelse(bh);
@@ -637,19 +628,16 @@ int minix_link(register struct inode *oldinode, register struct inode *dir,
 	goto mlink_err;
     }
     error = minix_add_entry(dir, name, len, &bh, &de);
-    if (error) {
-      mlink_err:
-	iput(dir);
-	iput(oldinode);
-	return error;
-    }
+    if (error)
+	goto mlink_err;
     de->inode = oldinode->i_ino;
     mark_buffer_dirty(bh, 1);
     brelse(bh);
     oldinode->i_nlink++;
     oldinode->i_ctime = CURRENT_TIME;
     oldinode->i_dirt = 1;
+ mlink_err:
     iput(dir);
     iput(oldinode);
-    return 0;
+    return error;
 }
