@@ -234,11 +234,6 @@ struct inode {
     unsigned char		i_lock;
     unsigned char		i_dirt;
 
-#ifdef CONFIG_PIPE
-    unsigned char		i_pipe;
-#endif
-
-    unsigned char		i_sock;
     short			i_sem;
 
     union {

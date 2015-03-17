@@ -103,14 +103,14 @@ static void init_task()
      * So, I've modified the ELKS kernel to follow this tradition.
      */
 
-    run_init_process("/etc/init", args);
     run_init_process("/sbin/init", args);
+    run_init_process("/etc/init", args);
     run_init_process("/bin/init", args);
 
 #ifdef CONFIG_CONSOLE_SERIAL
-	num = sys_open("/dev/ttyS0", 2, 0);
+    num = sys_open("/dev/ttyS0", 2, 0);
 #else
-	num = sys_open("/dev/tty0", 2, 0);
+    num = sys_open("/dev/tty1", 2, 0);
 #endif
 	if (num < 0)
 	    printk("Unable to open /dev/tty (error %u)\n", -num);

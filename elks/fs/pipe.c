@@ -243,6 +243,17 @@ static int pipe_rdwr_open(register struct inode *inode,
     if (filp->f_mode & FMODE_WRITE)
 	(inode->u.pipe_i.writers)++;
 
+    if(!PIPE_BASE(*inode)) {
+	if(!(PIPE_BASE(*inode) = get_pipe_mem()))
+	    return -ENOMEM;
+#if 0
+	/* next fields already set to zero by get_empty_inode() */
+	PIPE_START(*inode) = PIPE_LEN(*inode) = 0;
+	PIPE_RD_OPENERS(*inode) = PIPE_WR_OPENERS(*inode) = 0;
+	PIPE_READERS(*inode) = PIPE_WRITERS(*inode) = 0;
+	PIPE_LOCK(*inode) = 0;
+#endif
+    }
     return 0;
 }
 

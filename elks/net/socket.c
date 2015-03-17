@@ -105,7 +105,6 @@ struct socket *sock_alloc(void)
     inode->i_mode = S_IFSOCK;
     inode->i_op = &sock_inode_operations;
     inode->i_gid = (__u8) current->egid;
-    inode->i_sock = 1;
 
     sock = &inode->u.socket_i;
     sock->state = SS_UNCONNECTED;
@@ -145,7 +144,7 @@ struct socket *sockfd_lookup(int fd, struct file **pfile)
 	return NULL;
 
     inode = file->f_inode;
-    if (!inode || !inode->i_sock)
+    if (!inode || ((inode->i_mode & S_IFMT) != S_IFSOCK))
 	return NULL;
 
     if (pfile)

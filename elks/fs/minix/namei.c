@@ -264,10 +264,10 @@ int minix_create(register struct inode *dir, char *name, size_t len,
 	return error;
     }
     de->inode = inode->i_ino;
+    *result = inode;
     mark_buffer_dirty(bh, 1);
     brelse(bh);
     iput(dir);
-    *result = inode;
     return 0;
 }
 
@@ -298,7 +298,6 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
 	inode->i_rdev = to_kdev_t(rdev);
 
     error = minix_add_entry(dir, name, len, &bh, &de);
-#if 1
     if (error) {
 	inode->i_nlink--;
 	inode->i_dirt = 1;
@@ -309,22 +308,9 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
     de->inode = inode->i_ino;
     mark_buffer_dirty(bh, 1);
     brelse(bh);
-    iput(dir);
     iput(inode);
-    return 0;
-#else  /* MJN3: If the ordering of the iput()s isn't important, do this. */
-    if (error) {
-	inode->i_nlink--;
-	inode->i_dirt = 1;
-    } else {
-	de->inode = inode->i_ino;
-	mark_buffer_dirty(bh, 1);
-	brelse(bh);
-    }
     iput(dir);
-    iput(inode);
     return error;
-#endif
 }
 
 int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
@@ -360,9 +346,9 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
     debug("m_mkdir: starting minix_bread\n");
     dir_block = minix_bread(inode, 0, 1);
     if (!dir_block) {
-	iput(dir);
 	inode->i_nlink--;
 	iput(inode);
+	iput(dir);
 	return -ENOSPC;
     }
     debug("m_mkdir: read succeeded\n");
@@ -381,9 +367,9 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
     debug("m_mkdir: dir_block update succeeded\n");
     error = minix_add_entry(dir, name, len, &bh, &de);
     if (error) {
-	iput(dir);
 	inode->i_nlink = 0;
 	iput(inode);
+	iput(dir);
 	return error;
     }
     map_buffer(bh);
@@ -391,10 +377,10 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
     mark_buffer_dirty(bh, 1);
     dir->i_nlink++;
     dir->i_dirt = 1;
-    iput(dir);
-    iput(inode);
     unmap_brelse(bh);
     debug("m_mkdir: done!\n");
+    iput(inode);
+    iput(dir);
     return 0;
 }
 
@@ -592,9 +578,9 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     }
     name_block = minix_bread(inode, 0, 1);
     if (!name_block) {
-	iput(dir);
 	inode->i_nlink--;
 	iput(inode);
+	iput(dir);
 	return -ENOSPC;
     }
     map_buffer(name_block);
@@ -624,8 +610,8 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     de->inode = inode->i_ino;
     mark_buffer_dirty(bh, 1);
     brelse(bh);
-    iput(dir);
     iput(inode);
+    iput(dir);
     return 0;
 }
 
@@ -660,10 +646,10 @@ int minix_link(register struct inode *oldinode, register struct inode *dir,
     de->inode = oldinode->i_ino;
     mark_buffer_dirty(bh, 1);
     brelse(bh);
-    iput(dir);
     oldinode->i_nlink++;
     oldinode->i_ctime = CURRENT_TIME;
     oldinode->i_dirt = 1;
+    iput(dir);
     iput(oldinode);
     return 0;
 }

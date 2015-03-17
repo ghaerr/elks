@@ -175,10 +175,10 @@ static void write_inode(register struct inode *inode)
 static void read_inode(register struct inode *inode)
 {
     struct super_block *sb = inode->i_sb;
-    register struct super_operations *sop = sb->s_op;
+    register struct super_operations *sop;
 
     lock_inode(inode);
-    if (sb && sop && sop->read_inode)
+    if (sb && (sop = sb->s_op) && sop->read_inode)
 	sop->read_inode(inode);
     unlock_inode(inode);
 }
@@ -325,7 +325,7 @@ void iput(register struct inode *inode)
 	    return;
 	}
 #ifdef NOT_YET
-	if (inode->i_pipe)
+	if((inode->i_mode & S_IFMT) == S_IFIFO)
 	    wake_up_interruptible(&PIPE_WAIT(*inode));
 #endif
 	goto ini_loop;
@@ -339,7 +339,7 @@ void iput(register struct inode *inode)
 	    }
 
 	    wake_up(&inode_wait);
-	    if (inode->i_pipe && inode->u.pipe_i.base) {
+	    if (((inode->i_mode & S_IFMT) == S_IFIFO) && inode->u.pipe_i.base) {
 	    /* Free up any memory allocated to the pipe */
 		free_pipe_mem(inode->u.pipe_i.base);
 		inode->u.pipe_i.base = NULL;
@@ -436,16 +436,6 @@ struct inode *get_pipe_inode(void)
 	inode->i_op = &pipe_inode_operations;
 	inode->i_gid = (__u8) current->egid;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-
-	if (!(PIPE_BASE(*inode) = get_pipe_mem())) {
-	    iput(inode);
-	    return NULL;
-	}
-	inode->i_pipe = 1;
-	PIPE_START(*inode) = PIPE_LEN(*inode) = 0;
-	PIPE_RD_OPENERS(*inode) = PIPE_WR_OPENERS(*inode) = 0;
-	PIPE_READERS(*inode) = PIPE_WRITERS(*inode) = 0;
-	PIPE_LOCK(*inode) = 0;
 
 #if 0
 	inode->i_blksize = PAGE_SIZE;
