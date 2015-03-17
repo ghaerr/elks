@@ -203,13 +203,9 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
     /* Adding an sb here does not make the code smaller */
     block_t i, j;
 
-    if (!dir || !(inode = get_empty_inode()))
+    if(!dir || !(inode = new_inode(dir, mode)))
 	return NULL;
-    inode->i_sb = dir->i_sb;
-    inode->i_flags = inode->i_sb->s_flags;
-    if((S_ISDIR(mode)) && (dir->i_mode & S_ISGID))
-	mode |= S_ISGID;
-    inode->i_mode = mode;
+
     minix_set_ops(inode);
     j = 8192;
     for (i = 0; i < 8; i++)
@@ -234,12 +230,8 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
 	goto iputfail;
     }
     unmap_buffer(bh);
-    inode->i_dev = inode->i_sb->s_dev;
-    inode->i_gid = (dir->i_mode & S_ISGID) ? dir->i_gid
-					   : (__u8) current->egid;
-    inode->i_dirt = 1;
     inode->i_ino = j;
-    inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
+    inode->i_dirt = 1;
 
 #ifdef BLOAT_FS
     inode->i_blocks = inode->i_blksize = 0;

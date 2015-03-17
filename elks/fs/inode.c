@@ -172,14 +172,34 @@ static void write_inode(register struct inode *inode)
     unlock_inode(inode);
 }
 
+static void set_ops(register struct inode *inode)
+{
+    static unsigned char tabc[] = {
+	0, 1, 2, 0, 0, 0, 3, 0,
+	0, 0, 0, 0, 4, 0, 0, 0,
+    };
+    static struct inode_operations *inop[] = {
+	NULL,				/* Invalid */
+	&pipe_inode_operations,		/* FIFO */
+	&chrdev_inode_operations,
+	&blkdev_inode_operations,
+	&sock_inode_operations,		/* Socket */
+    };
+
+    inode->i_op = inop[(int)tabc[(inode->i_mode & S_IFMT) >> 12]];
+}
+
 static void read_inode(register struct inode *inode)
 {
     struct super_block *sb = inode->i_sb;
     register struct super_operations *sop;
 
     lock_inode(inode);
-    if (sb && (sop = sb->s_op) && sop->read_inode)
+    if (sb && (sop = sb->s_op) && sop->read_inode) {
 	sop->read_inode(inode);
+	if(inode->i_op == NULL)
+	    set_ops(inode);
+    }
     unlock_inode(inode);
 }
 
@@ -425,26 +445,34 @@ struct inode *get_empty_inode(void)
     return inode;
 }
 
-#if CONFIG_PIPE
-struct inode *get_pipe_inode(void)
+struct inode *new_inode(register struct inode *dir, __u16 mode)
 {
     register struct inode *inode;
-    extern struct inode_operations pipe_inode_operations;
 
-    if ((inode = get_empty_inode())) {
-	inode->i_mode = S_IFIFO | S_IRUSR | S_IWUSR;
-	inode->i_op = &pipe_inode_operations;
-	inode->i_gid = (__u8) current->egid;
-	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+    if(!(inode = get_empty_inode()))
+	return NULL;
+    inode->i_gid =(__u8) current->egid;
+    if(dir) {
+	inode->i_sb = dir->i_sb;
+	inode->i_dev = inode->i_sb->s_dev;
+	inode->i_flags = inode->i_sb->s_flags;
+	if(dir->i_mode & S_ISGID) {
+	    inode->i_gid = dir->i_gid;
+	    if(S_ISDIR(mode))
+		mode |= S_ISGID;
+	}
+    }
 
-#if 0
-	inode->i_blksize = PAGE_SIZE;
+    inode->i_mode = mode;
+    inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
+
+#ifdef BLOAT_FS
+    inode->i_blocks = inode->i_blksize = 0;
 #endif
 
-    }
+    set_ops(inode);
     return inode;
 }
-#endif
 
 struct inode *__iget(register struct super_block *sb,
 		     ino_t inr /*,int crossmntp */ )

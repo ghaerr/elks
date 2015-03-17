@@ -401,21 +401,18 @@ struct buffer_head *minix_bread(struct inode *inode,
 void minix_set_ops(struct inode *inode)
 {
     static unsigned char tabc[] = {
-	0, 1, 2, 0, 3, 0, 4, 0,
-	5, 0, 6, 0, 7, 0, 0, 0,
+	0, 0, 0, 0, 1, 0, 0, 0,
+	2, 0, 3, 0, 0, 0, 0, 0,
     };
     static struct inode_operations *inop[] = {
 	NULL,				/* Invalid */
-	&pipe_inode_operations,		/* FIFO (init_fifo(inode);) */
-	&chrdev_inode_operations,
 	&minix_dir_inode_operations,
-	&blkdev_inode_operations,
 	&minix_file_inode_operations,
 	&minix_symlink_inode_operations,
-	&sock_inode_operations,		/* Socket */
     };
 
-    inode->i_op = inop[(int)tabc[(inode->i_mode & S_IFMT) >> 12]];
+    if(inode->i_op == NULL)
+	inode->i_op = inop[(int)tabc[(inode->i_mode & S_IFMT) >> 12]];
 }
 
 /*

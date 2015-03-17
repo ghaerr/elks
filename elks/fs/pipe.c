@@ -328,8 +328,7 @@ int do_pipe(int *fd)
     int error = -ENOMEM;
     int i;
 
-    inode = get_pipe_inode();	/* Create inode */
-    if (!inode)
+    if(!(inode = new_inode(NULL, S_IFIFO | S_IRUSR | S_IWUSR)))	/* Create inode */
 	goto no_inodes;
 
     /* read file */

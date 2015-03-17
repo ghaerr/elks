@@ -98,13 +98,8 @@ struct socket *sock_alloc(void)
     register struct inode *inode;
     register struct socket *sock;
 
-    inode = get_empty_inode();
-    if (!inode)
+    if(!(inode = new_inode(NULL, S_IFSOCK)))
 	return NULL;
-
-    inode->i_mode = S_IFSOCK;
-    inode->i_op = &sock_inode_operations;
-    inode->i_gid = (__u8) current->egid;
 
     sock = &inode->u.socket_i;
     sock->state = SS_UNCONNECTED;

@@ -457,9 +457,9 @@ extern int do_pipe(int *);
 extern void iput(struct inode *);
 
 extern struct inode *get_empty_inode(void);
+extern struct inode *new_inode(struct inode *dir, __u16 mode);
 extern void insert_inode_hash(struct inode *);
 extern void clear_inode(struct inode *);
-extern struct inode *get_pipe_inode(void);
 extern int open_filp(unsigned short, struct inode *, struct file **);
 extern void close_filp(struct inode *, struct file *);
 
