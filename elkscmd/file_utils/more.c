@@ -46,7 +46,7 @@ main(argc, argv)
 		write(STDOUT_FILENO," >>\n",4);
 		} else {
 			fd = 0;
-			cin = open("/dev/tty0", "r");
+			cin = open("/dev/tty1", "r");
 			if (!cin)
 				cin = fopen("/dev/console", "r");
 			write(STDOUT_FILENO,"<< stdin >>\n",12);
