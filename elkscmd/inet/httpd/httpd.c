@@ -29,7 +29,7 @@
 #ifndef __LINUX__
 #include <linuxmt/in.h>
 #include <linuxmt/net.h>
-#include "mylib.h"
+#include "netorder.h"
 #else
 #include <netinet/in.h>
 #include <arpa/inet.h>

@@ -315,7 +315,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 	/* Sleep until tcpdev has news and we have a lock on the buffer */
         while (bufin_sem == 0) {
             interruptible_sleep_on(sock->wait);
-	    }
+	}
 
         r = (struct tdb_return_data *)tdin_buf;
         ret = r->ret_value;

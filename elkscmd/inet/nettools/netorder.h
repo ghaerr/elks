@@ -1,5 +1,5 @@
-#ifndef __MYLIB_H__
-#define __MYLIB_H__
+#ifndef NETORDER_H
+#define NETORDER_H
 
 #ifdef __ELKS__
 

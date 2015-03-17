@@ -1,6 +1,6 @@
 /* net.c Copyright 2000 by Michael Temari All Rights Reserved */
 /* 04/05/2000 Michael Temari <Michael@TemWare.Com> */
-/* 09/29/2001 Ported to ELKS(and linux) (Harry Kalogiroy <harkal@rainbow.cs.unipi.gr>)  */
+/* 09/29/2001 Ported to ELKS(and linux) (Harry Kalogirou <harkal@rainbow.cs.unipi.gr>)  */
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -17,7 +17,7 @@
 #include <linuxmt/in.h>
 #include <linuxmt/net.h>
 #include <linuxmt/time.h>
-#include "../httpd/mylib.h"
+#include "../httpd/netorder.h"
 #else
 #include <sys/time.h>
 #include <netinet/in.h>

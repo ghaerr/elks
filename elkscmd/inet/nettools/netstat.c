@@ -24,7 +24,7 @@
 #include <linuxmt/in.h>
 #include <ktcp/tcp.h>
 #include <ktcp/netconf.h>
-#include "mylib.h"
+#include "netorder.h"
 
 char tcp_states[11][13] = {
 	"CLOSED",
@@ -45,7 +45,8 @@ int ret,size;
 struct sockaddr_in localadr,remaddr;
 char buf[100];
 
-int main(){
+int main(void)
+{
 	struct general_stats_s *gstats;
 	struct cb_stats_s *cbstats;
 	struct stat_request_s sr;

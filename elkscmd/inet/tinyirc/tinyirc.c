@@ -57,7 +57,7 @@
 #include <linuxmt/in.h>
 #include <linuxmt/net.h>
 #include <linuxmt/time.h>
-#include "../httpd/mylib.h"
+#include "../httpd/netorder.h"
 #else
 #include <netinet/in.h>
 #include <netdb.h>
