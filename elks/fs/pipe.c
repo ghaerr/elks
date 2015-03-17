@@ -59,11 +59,11 @@ loff_t pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
  *	V7, and they should be buffers
  */
 
-char pipe_base[MAX_PIPES][PIPE_BUF];
+static char pipe_base[MAX_PIPES][PIPE_BUF];
 
-int pipe_in_use[(MAX_PIPES + 15)/16];
+static int pipe_in_use[(MAX_PIPES + 15)/16];
 
-char *get_pipe_mem(void)
+static char *get_pipe_mem(void)
 {
     int i = 0;
 
@@ -77,7 +77,7 @@ char *get_pipe_mem(void)
     return NULL;
 }
 
-void free_pipe_mem(char *buf)
+static void free_pipe_mem(char *buf)
 {
     int i;
 
@@ -211,7 +211,15 @@ static void pipe_rdwr_release(register struct inode *inode,
     if (filp->f_mode & FMODE_WRITE)
 	(inode->u.pipe_i.writers)--;
 
-    wake_up_interruptible(&(inode->u.pipe_i.wait));
+    if(!(inode->u.pipe_i.readers + inode->u.pipe_i.writers)) {
+	if(inode->u.pipe_i.base) {
+	/* Free up any memory allocated to the pipe */
+	    free_pipe_mem(inode->u.pipe_i.base);
+	    inode->u.pipe_i.base = NULL;
+	}
+    }
+    else
+	wake_up_interruptible(&(inode->u.pipe_i.wait));
 }
 
 #ifdef STRICT_PIPES
@@ -237,12 +245,6 @@ static int pipe_rdwr_open(register struct inode *inode,
 {
     debug("PIPE: rdwr called.\n");
 
-    if (filp->f_mode & FMODE_READ)
-	(inode->u.pipe_i.readers)++;
-
-    if (filp->f_mode & FMODE_WRITE)
-	(inode->u.pipe_i.writers)++;
-
     if(!PIPE_BASE(*inode)) {
 	if(!(PIPE_BASE(*inode) = get_pipe_mem()))
 	    return -ENOMEM;
@@ -253,6 +255,32 @@ static int pipe_rdwr_open(register struct inode *inode,
 	PIPE_READERS(*inode) = PIPE_WRITERS(*inode) = 0;
 	PIPE_LOCK(*inode) = 0;
 #endif
+    }
+    if (filp->f_mode & FMODE_READ) {
+	(inode->u.pipe_i.readers)++;
+	if(inode->u.pipe_i.writers > 0) {
+	    if(inode->u.pipe_i.readers < 2)
+		wake_up_interruptible(&(inode->u.pipe_i.wait));
+	}
+	else {
+	    if(!(filp->f_flags & O_NONBLOCK) && (inode->i_sb))
+		while(!(inode->u.pipe_i.writers))
+		    interruptible_sleep_on(&(inode->u.pipe_i.wait));
+	}
+    }
+
+    if (filp->f_mode & FMODE_WRITE) {
+	(inode->u.pipe_i.writers)++;
+	if(inode->u.pipe_i.readers > 0) {
+	    if(inode->u.pipe_i.writers < 2)
+		wake_up_interruptible(&(inode->u.pipe_i.wait));
+	}
+	else {
+	    if(filp->f_flags & O_NONBLOCK)
+		return -ENXIO;
+	    while(!(inode->u.pipe_i.readers))
+		interruptible_sleep_on(&(inode->u.pipe_i.wait));
+	}
     }
     return 0;
 }
@@ -320,7 +348,7 @@ struct inode_operations pipe_inode_operations = {
 
 /*@+type@*/
 
-int do_pipe(int *fd)
+static int do_pipe(int *fd)
 {
     register struct inode *inode;
     struct file *f1;

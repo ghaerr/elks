@@ -453,7 +453,6 @@ extern __s16 link_count;
 
 extern int open_namei(char *,int,int,struct inode **,struct inode *);
 extern int do_mknod(char *,int,dev_t);
-extern int do_pipe(int *);
 extern void iput(struct inode *);
 
 extern struct inode *get_empty_inode(void);
@@ -510,8 +509,6 @@ extern int sys_dup(unsigned int);
 extern struct buffer_head *bread(dev_t,block_t);
 
 extern int get_unused_fd(struct file *);
-extern char *get_pipe_mem(void);
-extern void free_pipe_mem(char *buf);
 
 extern void mark_buffer_uptodate(struct buffer_head *,int);
 

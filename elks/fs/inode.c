@@ -359,11 +359,6 @@ void iput(register struct inode *inode)
 	    }
 
 	    wake_up(&inode_wait);
-	    if (((inode->i_mode & S_IFMT) == S_IFIFO) && inode->u.pipe_i.base) {
-	    /* Free up any memory allocated to the pipe */
-		free_pipe_mem(inode->u.pipe_i.base);
-		inode->u.pipe_i.base = NULL;
-	    }
 
 	    if (inode->i_sb) {
 		struct super_operations *sop = inode->i_sb->s_op;
