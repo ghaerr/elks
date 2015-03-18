@@ -8,6 +8,9 @@
 
 #include "futils.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -20,44 +23,32 @@
 
 #define BUF_SIZE 1024 
 
-typedef	struct	chunk	CHUNK;
-#define	CHUNKINITSIZE	4
-struct	chunk	{
-	CHUNK	*next;
-	char	data[CHUNKINITSIZE];	/* actually of varying length */
-};
-
-
-static	CHUNK *	chunklist;
-
 
 /*
- * Return TRUE if a filename is a directory.
- * Nonexistant files return FALSE.
+ * Return 1 if a filename is a directory.
+ * Nonexistant files return 0.
  */
-BOOL
-isadir(name)
+int isadir(name)
 	char	*name;
 {
 	struct	stat	statbuf;
 
 	if (stat(name, &statbuf) < 0)
-		return FALSE;
+		return 0;
 
 	return S_ISDIR(statbuf.st_mode);
 }
 
 /*
  * Copy one file to another, while possibly preserving its modes, times,
- * and modes.  Returns TRUE if successful, or FALSE on a failure with an
+ * and modes.  Returns 1 if successful, or 0 on a failure with an
  * error message output.  (Failure is not indicted if the attributes cannot
  * be set.)
  */
-BOOL
-copyfile(srcname, destname, setmodes)
+int copyfile(srcname, destname, setmodes)
 	char	*srcname;
 	char	*destname;
-	BOOL	setmodes;
+	int	setmodes;
 {
 	int		rfd;
 	int		wfd;
@@ -71,7 +62,7 @@ copyfile(srcname, destname, setmodes)
 
 	if (stat(srcname, &statbuf1) < 0) {
 		perror(srcname);
-		return FALSE;
+		return 0;
 	}
 
 	if (stat(destname, &statbuf2) < 0) {
@@ -85,20 +76,20 @@ copyfile(srcname, destname, setmodes)
 		write(STDERR_FILENO, "Copying file \"", 14);
 		write(STDERR_FILENO, srcname, strlen(srcname));
 		write(STDERR_FILENO, "\" to itself\n", 12);
-		return FALSE;
+		return 0;
 	}
 
 	rfd = open(srcname, 0);
 	if (rfd < 0) {
 		perror(srcname);
-		return FALSE;
+		return 0;
 	}
 
 	wfd = creat(destname, statbuf1.st_mode);
 	if (wfd < 0) {
 		perror(destname);
 		close(rfd);
-		return FALSE;
+		return 0;
 	}
 
 	buf = malloc(BUF_SIZE);
@@ -123,7 +114,7 @@ copyfile(srcname, destname, setmodes)
 	close(rfd);
 	if (close(wfd) < 0) {
 		perror(destname);
-		return FALSE;
+		return 0;
 	}
 
 	if (setmodes) {
@@ -137,14 +128,14 @@ copyfile(srcname, destname, setmodes)
 		(void) utime(destname, &times);
 	}
 
-	return TRUE;
+	return 1;
 
 
 error_exit:
 	close(rfd);
 	close(wfd);
 
-	return FALSE;
+	return 0;
 }
 
 /*
@@ -208,7 +199,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		if (!copyfile(srcname, destname, TRUE))
+		if (!copyfile(srcname, destname, 1))
 			continue;
 
 		if (unlink(srcname) < 0)

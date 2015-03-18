@@ -1,14 +1,14 @@
 #include <unistd.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
 
+#ifndef makedev
 #define makedev(maj, min)  (((maj) << 8) | (min))
+#endif
 
-int
-main (argc,argv)
-	int argc;
-	char **argv;
+int main(int argc, char **argv)
 {
 	unsigned short newmode;
 	unsigned short filetype;

@@ -9,6 +9,8 @@
 #include "futils.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 
 #define BUF_SIZE 4096

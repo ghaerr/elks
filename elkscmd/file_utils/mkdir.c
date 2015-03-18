@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -5,10 +6,7 @@
 
 unsigned short newmode;
 
-int
-make_dir(name,f)
-	char *name;
-	int f;
+int make_dir(char *name, int f)
 {
 	char iname[256];
 	char *line;
@@ -28,10 +26,7 @@ make_dir(name,f)
 }
 	
 
-int
-main (argc,argv)
-	int argc;
-	char **argv;
+int main(int argc, char **argv)
 {
 	int i, parent = 0, er = 0;
 	

@@ -8,9 +8,12 @@
 
 #include "futils.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <pwd.h>
@@ -26,9 +29,6 @@ int main(int argc, char **argv)
 	int		cc1;
 	int		cc2;
 	long		pos;
-	char		*srcname;
-	char		*destname;
-	char		*lastarg;
 	char		*bp1;
 	char		*bp2;
 	char		buf1[512];

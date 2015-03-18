@@ -8,6 +8,9 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -18,7 +21,6 @@
 
 int main(int argc, char **argv)
 {
-	FILE	*fp;
 	int	fd, cin;
 	char	*name;
 	char	ch;
