@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 	long	intotal = 0;
 	long	outtotal = 0;
 	char	*buf;
-	int	retval = -1;
+	int	retval = 1;
 
 	infile = NULL;
 	outfile = NULL;
