@@ -8,9 +8,10 @@
 
 #include "futils.h"
 
+#include <stdio.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <pwd.h>
@@ -18,25 +19,13 @@
 #include <utime.h>
 #include <errno.h>
 
-#define BUF_SIZE 1024 
-
-typedef	struct	chunk	CHUNK;
-#define	CHUNKINITSIZE	4
-struct	chunk	{
-	CHUNK	*next;
-	char	data[CHUNKINITSIZE];	/* actually of varying length */
-};
-
-static	CHUNK *	chunklist;
-
-
 /*
  * Return TRUE if a filename is a directory.
  * Nonexistant files return FALSE.
  */
-BOOL isadir(char *name)
+BOOL isadir(const char *name)
 {
-	struct stat statbuf;
+	static struct stat statbuf;
 
 	if (stat(name, &statbuf) < 0)
 		return FALSE;
@@ -49,17 +38,16 @@ BOOL isadir(char *name)
  * If the directory name is NULL, then the original filename is returned.
  * The built path is in a static area, and is overwritten for each call.
  */
-char *buildname(char *dirname, char *filename)
+char *buildname(const char * const dirname, char *filename)
 {
-	char		*cp;
-	static	char	buf[PATHLEN];
+	char *cp;
+	static char buf[PATHLEN];
 
-	if ((dirname == NULL) || (*dirname == '\0'))
-		return filename;
+
+	if ((dirname == NULL) || (*dirname == '\0')) return filename;
 
 	cp = strrchr(filename, '/');
-	if (cp)
-		filename = cp + 1;
+	if (cp) filename = cp + 1;
 
 	strcpy(buf, dirname);
 	strcat(buf, "/");
@@ -76,16 +64,12 @@ int main(int argc, char **argv)
 	char	*destname;
 	char	*lastarg;
 
-	if (argv[1][0] == '-') {
-		if (strcmp(argv[1], "-s")) {
-			write(STDERR_FILENO, "Unknown option\n", 15);
-			exit(1);
-		}
+	if (argc < 3) goto usage;
 
-		if (argc != 4) {
-			write(STDERR_FILENO, "Wrong number of arguments for symbolic link\n", 44);
-			exit(1);
-		}
+	if (argv[1][0] == '-') {
+		if (strcmp(argv[1], "-s")) goto usage;
+
+		if (argc != 4) goto usage;
 
 		if (symlink(argv[2], argv[3]) < 0) {
 			perror(argv[3]);
@@ -101,9 +85,8 @@ int main(int argc, char **argv)
 	dirflag = isadir(lastarg);
 
 	if ((argc > 3) && !dirflag) {
-		write(STDERR_FILENO, lastarg, strlen(lastarg));
-		write(STDERR_FILENO, ": not a directory\n", 18);
-		exit(1);
+		fprintf(stderr, "%s: not a directory\n", lastarg);
+		goto usage;
 	}
 
 	while (argc-- > 2) {
@@ -123,5 +106,11 @@ int main(int argc, char **argv)
 		}
 	}
 	exit(0);
+
+usage:
+	fprintf(stderr, "usage: %s [-s] link_target link_name\n", argv[0]);
+	fprintf(stderr, "Hard links are made by default. The -s option creates symbolic links instead.\n");
+	fprintf(stderr, "Creating hard links to directories is not allowed and will return an error.\n");
+	exit(1);
 }
 
