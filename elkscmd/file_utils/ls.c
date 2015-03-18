@@ -71,8 +71,8 @@
 
 static void lsfile();
 static void setfmt();
-char *modestring(int mode);
-char *timestring(long t);
+static char *modestring(int mode);
+static char *timestring(long t);
 
 
 struct stack
@@ -84,7 +84,7 @@ struct stack
 static int cols = 0, col = 0, reverse = 1;
 static char fmt[16] = "%s";
 
-int namesort(const char **a, const char **b)
+static int namesort(const char **a, const char **b)
 {
     return reverse * strcmp(*a, *b);
 }
@@ -101,7 +101,7 @@ static char *popstack(struct stack *pstack)
     return (pstack->size)?pstack->buf[--(pstack->size)]:NULL;
 }
 
-void pushstack(struct stack *pstack, char *entry)
+static void pushstack(struct stack *pstack, char *entry)
 {
     if ( pstack->size == pstack->allocd ) {
 	(pstack->allocd) += 8;
@@ -110,7 +110,7 @@ void pushstack(struct stack *pstack, char *entry)
   pstack->buf[(pstack->size)++] = entry;
 }
 
-void printstack(struct stack *pstack)
+static void printstack(struct stack *pstack)
 {
     int i;
 
@@ -118,14 +118,9 @@ void printstack(struct stack *pstack)
 	printf("%d : %s\n", i, pstack->buf[i]);
 }
 
-void sortstack(struct stack *pstack)
+static void sortstack(struct stack *pstack)
 {
     qsort(pstack->buf, pstack->size, sizeof(char*), namesort);
-}
-
-int is_empty_stack(struct stack *pstack)
-{
-    return !(pstack->size);
 }
 
 static void getfiles(char *name, struct stack *pstack, int flags)
@@ -286,7 +281,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
  * Return the standard ls-like mode string from a file mode.
  * This is static and so is overwritten on each call.
  */
-char *modestring(int mode)
+static char *modestring(int mode)
 {
     static char buf[12];
 
@@ -355,7 +350,7 @@ char *modestring(int mode)
  * The string is returned from a static buffer, and so is overwritten for
  * each call.
  */
-char *timestring(long t)
+static char *timestring(long t)
 {
     long  now;
     char  *str;
@@ -381,7 +376,7 @@ char *timestring(long t)
  * If the directory name is NULL, then the original filename is returned.
  * The built path is in a static area, and is overwritten for each call.
  */
-char *buildname(char *dirname, char *filename)
+static char *buildname(char *dirname, char *filename)
 {
     char  *cp;
     static char buf[PATHLEN];
@@ -508,7 +503,7 @@ int main(int argc, char **argv)
 /*	if (flags & LSF_MULT)
 	    printf("\n%s:\n", name);
  */
-	while (!is_empty_stack(&files)) {
+	while (files.size) {
 	    name = popstack(&files);
 	    TRACESTRING(name)
 	    if (LSTAT(name, &statbuf) < 0) {
@@ -524,7 +519,7 @@ int main(int argc, char **argv)
 	    else
 		free(name);
 	}
-	if (!is_empty_stack(&dirs)) {
+	if (dirs.size) {
 	    getfiles( name = popstack(&dirs), &files, flags );
 	    if (strcmp(name,".")) {
 		if (col) {
@@ -537,7 +532,7 @@ int main(int argc, char **argv)
 	    if (recursive)
 		recursive--;
 	}
-    } while (!is_empty_stack(&files) || !is_empty_stack(&dirs));
+    } while (files.size || dirs.size);
     if (~flags & LSF_LONG)
 	fputc('\n', stdout);
     return 0;

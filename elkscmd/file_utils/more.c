@@ -2,8 +2,6 @@
  * Copyright (c) 1993 by David I. Bell
  * Permission is granted to use, distribute, or modify this source,
  * provided that this copyright notice remains intact.
- *
- * Most simple built-in commands are here.
  */
 
 #include "futils.h"
@@ -18,9 +16,7 @@
 #include <utime.h>
 #include <errno.h>
 
-void
-main(argc, argv)
-	char	**argv;
+int main(int argc, char **argv)
 {
 	FILE	*fp;
 	int	fd, cin;

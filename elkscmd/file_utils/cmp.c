@@ -19,9 +19,7 @@
 #include <errno.h>
 
 
-void
-main(argc, argv)
-	char	**argv;
+int main(int argc, char **argv)
 {
 	int		fd1;
 	int		fd2;
