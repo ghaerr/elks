@@ -23,14 +23,19 @@ int main(int argc, char **argv)
 	char	*cp;
 	int	mode;
 
+	if (argc < 3) {
+		fprintf(stderr, "You must specify a mode number and at least one file or directory.\n");
+		goto usage;
+	}
+
 	mode = 0;
 	cp = argv[1];
 	while (isoctal(*cp))
 		mode = mode * 8 + (*cp++ - '0');
 
 	if (*cp) {
-		fprintf(stderr, "Mode must be octal\n");
-		exit(1);
+		fprintf(stderr, "Mode must be an octal number\n");
+		goto usage;
 	}
 	argc--;
 	argv++;
@@ -41,4 +46,9 @@ int main(int argc, char **argv)
 		argv++;
 	}
 	exit(0);
+
+usage:
+	fprintf(stderr, "usage: %s mode file1 [file2] ...\n", argv[0]);
+	fprintf(stderr, "Mode must be specified as an octal number (i.e. 755 is 'rwxr-xr-x')\n");
+	exit(1);
 }
