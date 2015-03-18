@@ -42,7 +42,7 @@ PRGS=ed tar compress compress.host uncompress zcat
 all: $(PRGS)
 
 compress: compress.c Makefile
-	$(CC) $(CFLAGS) -H35000 -s $@.c -o $@
+	$(CC) $(CFLAGS) -H0xe000 -s $@.c -o $@
 
 compress.host: compress.c
 	$(HOSTCC) $(HOST_CFLAGS) -s compress.c -o $@

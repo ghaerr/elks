@@ -53,9 +53,7 @@ static	void	dodata();
 static	void	createpath();
 static	long	getoctal();
 
-void
-main(argc, argv)
-	char	**argv;
+int main(int argc, char **argv)
 {
 	char	*str;
 	char	*devname;

@@ -104,7 +104,7 @@ static char super_block_buffer[BLOCK_SIZE];
 static char inode_map[BLOCK_SIZE * 8];
 static char zone_map[BLOCK_SIZE * 8];
 
-unsigned char set_bit(unsigned int nr,void * add)
+unsigned char set_bit(unsigned int nr, void * add)
 {
 	unsigned int * addr = add;
 	int	mask, retval;
