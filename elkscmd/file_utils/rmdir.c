@@ -21,19 +21,18 @@ int remove_dir(char *name, int f)
 }
 	
 
-int
-main (argc,argv)
-	int argc;
-	char **argv;
+int main (int argc, char **argv)
 {
 	int i, parent = 0, er = 0;
 	
+	if (argc < 2) goto usage;
+
 	if ((argv[1][0] == '-') && (argv[1][1] == 'p'))	
 		parent = 1;
 	
 	newmode = 0666 & ~umask(0);
 
-	for(i=parent+1;i<argc;i++) {
+	for(i = parent + 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
 			while (argv[i][strlen(argv[i])-1] == '/')
 				argv[i][strlen(argv[i])-1] = '\0';
@@ -43,10 +42,11 @@ main (argc,argv)
 				write(STDERR_FILENO,"\n",1);
 				er = 1;
 			}
-		} else {
-			write(STDERR_FILENO,"rmdir: usage error.\n",20);
-			exit(1);
-		}
+		} else goto usage;
 	}
 	exit(er);
+
+usage:
+	fprintf(stderr, "usage: %s remove_dir1 [remove_dir2] ...\n", argv[0]);
+	exit(1);
 }

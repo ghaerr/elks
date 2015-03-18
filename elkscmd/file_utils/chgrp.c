@@ -28,6 +28,7 @@ int main(int argc, char **argv)
 	struct group *grp;
 	struct stat statbuf;
 
+	if (argc < 3) goto usage;
 
 	cp = argv[1];
 	if (isdecimal(*cp)) {
@@ -37,13 +38,13 @@ int main(int argc, char **argv)
 
 		if (*cp) {
 			fprintf(stderr, "Bad gid value\n");
-			exit(1);
+			goto usage;
 		}
 	} else {
 		grp = getgrnam(cp);
 		if (grp == NULL) {
 			fprintf(stderr, "Unknown group name\n");
-			exit(1);
+			goto usage;
 		}
 
 		gid = grp->gr_gid;
@@ -59,4 +60,8 @@ int main(int argc, char **argv)
 				perror(*argv);
 	}
 	exit(0);
+
+usage:
+	fprintf(stderr, "usage: %s group_name file1 [file2] ...\n", argv[0]);
+	exit(1);
 }

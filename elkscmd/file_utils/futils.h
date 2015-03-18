@@ -4,21 +4,8 @@
  * provided that this copyright notice remains intact.
  *
  * Definitions for stand-alone shell for system maintainance for Linux.
+ * Stripped down and inlined for ELKS file_utils
  */
 
 #define	PATHLEN		256	
-#define	MAXARGS		500	
-#define	ALIASALLOC	20
-#define	STDIN		0
-#define	STDOUT		1
-#define	MAXSOURCE	10
-
 #define	isdecimal(ch)	(((ch) >= '0') && ((ch) <= '9'))
-#define	isoctal(ch)	(((ch) >= '0') && ((ch) <= '7'))
-
-
-typedef	int	BOOL;
-
-#define	FALSE	((BOOL) 0)
-#define	TRUE	((BOOL) 1)
-

@@ -36,6 +36,8 @@ int main(int argc, char **argv)
 	struct	stat	statbuf1;
 	struct	stat	statbuf2;
 
+	if (argc < 3) goto usage;
+
 	if (stat(argv[1], &statbuf1) < 0) {
 		perror(argv[1]);
 		exit(2);
@@ -72,7 +74,7 @@ int main(int argc, char **argv)
 	}
 
 	pos = 0;
-	while (TRUE) {
+	while (1) {
 		cc1 = read(fd1, buf1, sizeof(buf1));
 		if (cc1 < 0) {
 			perror(argv[1]);
@@ -115,6 +117,9 @@ int main(int argc, char **argv)
 	}
 same:
 	exit(0);
+
+usage:
+	fprintf(stderr, "usage: %s file1 file2\n", argv[0]);
 differ:
 	exit(1);
 }

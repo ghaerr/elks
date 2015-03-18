@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 
-unsigned short newmode;
+static unsigned short newmode;
 
-int make_dir(char *name, int f)
+static int make_dir(char *name, int f)
 {
 	char iname[256];
 	char *line;
@@ -29,27 +29,28 @@ int make_dir(char *name, int f)
 int main(int argc, char **argv)
 {
 	int i, parent = 0, er = 0;
+
+	if (argc < 2) goto usage;
 	
 	if ((argv[1][0] == '-') && (argv[1][1] == 'p'))	
 		parent = 1;
 	
 	newmode = 0777 & ~umask(0);
 
-	for(i=parent+1;i<argc;i++) {
+	for (i = parent + 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
 			if (argv[i][strlen(argv[i])-1] == '/')
 				argv[i][strlen(argv[i])-1] = '\0';
 
 			if (make_dir(argv[i],parent)) {
-				write(STDERR_FILENO,"mkdir: cannot create directory ",31);
-				write(STDERR_FILENO,argv[i],strlen(argv[i]));
-				write(STDERR_FILENO,"\n",1);
+				fprintf(stderr, "mkdir: cannot create directory: %s\n", argv[i]);
 				er = 1;
 			}
-		} else {
-			write(STDERR_FILENO,"mkdir: usage error.\n",20);
-			exit(1);
-		}
+		} else goto usage;
 	}
 	exit(er);
+
+usage:
+	fprintf(stderr, "usage: %s new_dir1 [new_dir2] ...\n", argv[0]);
+	exit(1);
 }

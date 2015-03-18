@@ -22,7 +22,7 @@
 #include <errno.h>
 
 /*
- * Return TRUE if a filename is a directory.
+ * Return 1 if a filename is a directory.
  * Nonexistant files return 0.
  */
 int isadir(const char *name)

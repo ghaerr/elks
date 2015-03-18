@@ -28,6 +28,8 @@ int main(int argc, char **argv)
 	struct passwd	*pwd;
 	struct stat	statbuf;
 
+	if (argc < 3) goto usage;
+
 	cp = argv[1];
 	if (isdecimal(*cp)) {
 		uid = 0;
@@ -36,13 +38,13 @@ int main(int argc, char **argv)
 
 		if (*cp) {
 			fprintf(stderr, "Bad uid value\n");
-			exit(1);
+			goto usage;
 		}
 	} else {
 		pwd = getpwnam(cp);
 		if (pwd == NULL) {
 			fprintf(stderr, "Unknown user name\n");
-			exit(1);
+			goto usage;
 		}
 
 		uid = pwd->pw_uid;
@@ -58,4 +60,8 @@ int main(int argc, char **argv)
 				perror(*argv);
 	}
 	exit(0);
+
+usage:
+	fprintf(stderr, "usage: %s new_owner file1 [file2] ...\n", argv[0]);
+	exit(1);
 }

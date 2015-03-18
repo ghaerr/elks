@@ -21,6 +21,9 @@
 #include <utime.h>
 #include <errno.h>
 
+#define isoctal(ch) (((ch) >= '0') && ((ch) <= '7'))
+
+
 int main(int argc, char **argv)
 {
 	char	*cp;
@@ -33,8 +36,7 @@ int main(int argc, char **argv)
 
 	mode = 0;
 	cp = argv[1];
-	while (isoctal(*cp))
-		mode = mode * 8 + (*cp++ - '0');
+	while (isoctal(*cp)) mode = mode * 8 + (*cp++ - '0');
 
 	if (*cp) {
 		fprintf(stderr, "Mode must be an octal number\n");

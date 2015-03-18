@@ -61,4 +61,4 @@ smin_rfs: all
 	cp -p $(SMIN_PRGS) $(TARGET_MNT)/bin
 
 clean:
-	rm -f $(PRGS)
+	rm -f $(PRGS) *~

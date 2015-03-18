@@ -31,23 +31,19 @@ int main(int argc, char **argv)
 	cin = 0;
 	do {
 		if(argc >= 2) {
-		name = *(++argv);
-
-		fd = open(name, O_RDONLY);
-		if (fd == -1) {
-			perror(name);
-			exit(1);
-		}
-
-		write(STDOUT_FILENO,"<< ",3);
-		write(STDOUT_FILENO,name,strlen(name));
-		write(STDOUT_FILENO," >>\n",4);
+			name = *(++argv);
+			fd = open(name, O_RDONLY);
+			if (fd == -1) {
+				perror(name);
+				exit(1);
+			}
+			printf("<< %s >>\n", name);
 		} else {
 			fd = 0;
-			cin = open("/dev/tty1", "r");
-			if (!cin)
-				cin = fopen("/dev/console", "r");
-			write(STDOUT_FILENO,"<< stdin >>\n",12);
+			/* FIXME: these open commands are not the way to open stdin */
+			cin = open("/dev/tty1", O_RDONLY);
+			if (!cin) cin = fopen("/dev/console", "r");
+			printf("<< stdin >>\n");
 		}
 		line = 1;
 		col = 0;
@@ -88,8 +84,7 @@ int main(int argc, char **argv)
 			if (col > 0)
 				putchar('\n');
 
-			write(STDOUT_FILENO,"--More--",8);
-			fflush(stdout);
+			printf("--More--");
 
 			if (read(cin, buf, sizeof(buf)) < 1) {
 				perror("more: ");

@@ -83,7 +83,7 @@ struct stack
     char **buf;
 };
 
-static int cols = 0, col = 0, reverse = 1;
+static int cols = 0, col = 0, reverse = 0;
 static char fmt[16] = "%s";
 
 static int namesort(const char **a, const char **b)
@@ -434,17 +434,10 @@ int main(int argc, char **argv)
 			reverse = -reverse;
 			break;
 		default:
-			if (~flags)
-			    fputs("Unknown option: ", stderr);
-			fputc(*cp, stderr);
-			flags = -1;
-			break;
+			if (~flags) fprintf(stderr, "unknown option '%c'\n", *cp);
+			goto usage;
 	    }
 	}
-    }
-    if (flags == -1) {
-	fputc('\n', stderr);
-	exit(1);
     }
     if (!argc) {
 	argv = def;
@@ -504,5 +497,17 @@ int main(int argc, char **argv)
     } while (files.size || dirs.size);
     if (~flags & LSF_LONG)
 	fputc('\n', stdout);
-    return 0;
+    exit(0);
+
+usage:
+    fprintf(stderr, "usage: %s [-aAdFilrR] [file1] [file2] ...\n", argv[0]);
+    fprintf(stderr, "  -a: list all files (including '.' and '..')\n");
+    fprintf(stderr, "  -A: list hidden files too\n");
+    fprintf(stderr, "  -d: list directory entries instead of contents (not implemented)\n");
+    fprintf(stderr, "  -F: add character to displayed name based on entry type\n");
+    fprintf(stderr, "  -i: show inode numbers beside names\n");
+    fprintf(stderr, "  -l: show files in long (detailed) format\n");
+    fprintf(stderr, "  -r: reverse sort order\n");
+    fprintf(stderr, "  -R: recursively list directory contents\n");
+    exit(1);
 }
