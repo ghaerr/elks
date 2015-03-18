@@ -7,6 +7,9 @@
  */
 
 #include "futils.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #define	PAR_NONE	0
@@ -18,231 +21,33 @@
 #define	PAR_SKIP	6
 
 
-typedef	struct {
+struct param {
 	char	*name;
 	int	value;
-} PARAM;
+};
 
-
-static PARAM	params[] = {
-	"if",		PAR_IF,
-	"of",		PAR_OF,
-	"bs",		PAR_BS,
-	"count",	PAR_COUNT,
-	"seek",		PAR_SEEK,
-	"skip",		PAR_SKIP,
-	NULL,		PAR_NONE
+static struct param params[] = {
+	{ "if",		PAR_IF },
+	{ "of",		PAR_OF },
+	{ "bs",		PAR_BS },
+	{ "count",	PAR_COUNT },
+	{ "seek",	PAR_SEEK },
+	{ "skip",	PAR_SKIP },
+	{ NULL,		PAR_NONE }
 };
 
 
-static long getnum(char *cp);
-
 /* Fixed buffer */
 static char localbuf[4096];
-
-int main(int argc, char **argv)
-{
-	char	*str;
-	char	*cp;
-	PARAM	*par;
-	char	*infile;
-	char	*outfile;
-	int	infd;
-	int	outfd;
-	int	incc;
-	int	outcc;
-	int	blocksize;
-	long	count = 0x7fffffff;
-	long	seekval;
-	long	skipval;
-	long	intotal;
-	long	outtotal;
-	char	*buf;
-
-	infile = NULL;
-	outfile = NULL;
-	blocksize = 512;
-	skipval = 0;
-	seekval = 0;
-
-	while (--argc > 0) {
-		str = *++argv;
-		cp = strchr(str, '=');
-		if (cp == NULL) {
-			write(STDERR_FILENO, "Bad dd argument\n", 16);
-			return -1;
-		}
-		*cp++ = '\0';
-
-		for (par = params; par->name; par++) {
-			if (strcmp(str, par->name) == 0)
-				break;
-		}
-
-		switch (par->value) {
-			case PAR_IF:
-				if (infile) {
-					write(STDERR_FILENO, "Multiple input files illegal\n", 29);
-					return -1;
-				}
-	
-				infile = cp;
-				break;
-
-			case PAR_OF:
-				if (outfile) {
-					write(STDERR_FILENO, "Multiple output files illegal\n", 30);
-					return -1;
-				}
-
-				outfile = cp;
-				break;
-
-			case PAR_BS:
-				blocksize = getnum(cp);
-				if (blocksize <= 0) {
-					write(STDERR_FILENO, "Bad block size value\n", 21);
-					return -1;
-				}
-				break;
-
-			case PAR_COUNT:
-				count = getnum(cp);
-				if (count < 0) {
-					write(STDERR_FILENO, "Bad count value\n", 16);
-					return -1;
-				}
-				break;
-
-			case PAR_SEEK:
-				seekval = getnum(cp);
-				if (seekval < 0) {
-					write(STDERR_FILENO, "Bad seek value\n", 15);
-					return -1;
-				}
-				break;
-
-			case PAR_SKIP:
-				skipval = getnum(cp);
-				if (skipval < 0) {
-					write(STDERR_FILENO, "Bad skip value\n", 15);
-					return -1;
-				}
-				break;
-
-			default:
-				write(STDERR_FILENO, "Unknown dd parameter\n", 21);
-				return -1;
-		}
-	}
-
-	if (infile == NULL) {
-		write(STDERR_FILENO, "No input file specified\n", 24);
-		return -1;
-	}
-
-	if (outfile == NULL) {
-		write(STDERR_FILENO, "No output file specified\n", 25);
-		return -1;
-	}
-
-	buf = localbuf;
-	if (blocksize > sizeof(localbuf)) {
-		buf = malloc(blocksize);
-		if (buf == NULL) {
-			write(STDERR_FILENO, "Cannot allocate buffer\n", 23);
-			return -1;
-		}
-	}
-
-	intotal = 0;
-	outtotal = 0;
-
-	infd = open(infile, 0);
-	if (infd < 0) {
-		perror(infile);
-		if (buf != localbuf)
-			free(buf);
-		return -1;
-	}
-
-	outfd = creat(outfile, 0666);
-	if (outfd < 0) {
-		perror(outfile);
-		close(infd);
-		if (buf != localbuf)
-			free(buf);
-		return -1;
-	}
-
-	if (skipval) {
-		if (lseek(infd, skipval * blocksize, 0) < 0) {
-			while (skipval-- > 0) {
-				incc = read(infd, buf, blocksize);
-				if (incc < 0) {
-					perror(infile);
-					goto cleanup;
-				}
-
-				if (incc == 0) {
-					write(STDERR_FILENO, "End of file while skipping\n", 27);
-					goto cleanup;
-				}
-			}
-		}
-	}
-
-	if (seekval) {
-		if (lseek(outfd, seekval * blocksize, 0) < 0) {
-			perror(outfile);
-			goto cleanup;
-		}
-	}
-
-	while ((incc = read(infd, buf, blocksize)) > 0) {
-		intotal += incc;
-		cp = buf;
-
-		while (incc > 0) {
-			outcc = write(outfd, cp, incc);
-			if (outcc < 0) {
-				perror(outfile);
-				goto cleanup;
-			}
-
-			outtotal += outcc;
-			cp += outcc;
-			incc -= outcc;
-		}
-	}
-
-	if (incc < 0)
-		perror(infile);
-
-cleanup:
-	close(infd);
-
-	if (close(outfd) < 0)
-		perror(outfile);
-
-	if (buf != localbuf)
-		free(buf);
-
-	printf("%d+%d records in\n", intotal / blocksize,
-		(intotal % blocksize) != 0);
-
-	printf("%d+%d records out\n", outtotal / blocksize,
-		(outtotal % blocksize) != 0);
-}
 
 
 /*
  * Read a number with a possible multiplier.
  * Returns -1 if the number format is illegal.
  */
-static long getnum(char *cp)
+static long getnum(const char *cp)
 {
-	long	value;
+	long value;
 
 	if (!isdecimal(*cp))
 		return -1;
@@ -271,8 +76,210 @@ static long getnum(char *cp)
 			return -1;
 	}
 
-	if (*cp)
-		return -1;
+	if (*cp) return -1;
 
 	return value;
+}
+
+
+int main(int argc, char **argv)
+{
+	char	*str;
+	char	*cp;
+	struct param	*par;
+	char	*infile;
+	char	*outfile;
+	int	infd;
+	int	outfd;
+	int	incc;
+	int	outcc;
+	int	blocksize;
+	long	count = -1;
+	long	seekval;
+	long	skipval;
+	long	intotal = 0;
+	long	outtotal = 0;
+	char	*buf;
+	int	retval = -1;
+
+	infile = NULL;
+	outfile = NULL;
+	blocksize = 512;
+	skipval = 0;
+	seekval = 0;
+
+	while (--argc > 0) {
+		str = *++argv;
+		cp = strchr(str, '=');
+		if (cp == NULL) {
+			write(STDERR_FILENO, "Missing or invalid argument(s)\n", 31);
+			goto usage;
+		}
+		*cp++ = '\0';
+
+		for (par = params; par->name; par++) {
+			if (strcmp(str, par->name) == 0)
+				break;
+		}
+
+		switch (par->value) {
+			case PAR_IF:
+				if (infile) {
+					write(STDERR_FILENO, "Multiple input files illegal\n", 29);
+					goto usage;
+				}
+	
+				infile = cp;
+				break;
+
+			case PAR_OF:
+				if (outfile) {
+					write(STDERR_FILENO, "Multiple output files illegal\n", 30);
+					goto usage;
+				}
+
+				outfile = cp;
+				break;
+
+			case PAR_BS:
+				blocksize = getnum(cp);
+				if (blocksize <= 0) {
+					write(STDERR_FILENO, "Bad block size value\n", 21);
+					goto usage;
+				}
+				break;
+
+			case PAR_COUNT:
+				count = getnum(cp);
+				if (count < 0) {
+					write(STDERR_FILENO, "Bad count value\n", 16);
+					goto usage;
+				}
+				break;
+
+			case PAR_SEEK:
+				seekval = getnum(cp);
+				if (seekval < 0) {
+					write(STDERR_FILENO, "Bad seek value\n", 15);
+					goto usage;
+				}
+				break;
+
+			case PAR_SKIP:
+				skipval = getnum(cp);
+				if (skipval < 0) {
+					write(STDERR_FILENO, "Bad skip value\n", 15);
+					goto usage;
+				}
+				break;
+
+			default:
+				write(STDERR_FILENO, "Unknown dd parameter\n", 21);
+				goto usage;
+		}
+	}
+
+	if (infile == NULL) {
+		write(STDERR_FILENO, "No input file specified\n", 24);
+		goto usage;
+	}
+
+	if (outfile == NULL) {
+		write(STDERR_FILENO, "No output file specified\n", 25);
+		goto usage;
+	}
+
+	buf = localbuf;
+	if (blocksize > sizeof(localbuf)) {
+		buf = malloc(blocksize);
+		if (buf == NULL) {
+			write(STDERR_FILENO, "Cannot allocate buffer\n", 23);
+			goto usage;
+		}
+	}
+
+	infd = open(infile, 0);
+	if (infd < 0) {
+		perror(infile);
+		if (buf != localbuf) free(buf);
+		goto usage;
+	}
+
+	outfd = creat(outfile, 0666);
+	if (outfd < 0) {
+		perror(outfile);
+		close(infd);
+		if (buf != localbuf) free(buf);
+		goto cleanup2;
+	}
+
+	if (skipval) {
+		if (lseek(infd, skipval * blocksize, 0) < 0) {
+			while (skipval-- > 0) {
+				incc = read(infd, buf, blocksize);
+				if (incc < 0) {
+					perror(infile);
+					goto cleanup;
+				}
+
+				if (incc == 0) {
+					write(STDERR_FILENO, "Skipped beyond end of file\n", 27);
+					goto cleanup;
+				}
+			}
+		}
+	}
+
+	if (seekval) {
+		if (lseek(outfd, seekval * blocksize, 0) < 0) {
+			perror(outfile);
+			goto cleanup;
+		}
+	}
+
+	/* If count is specified, only copy that many blocks */
+	if (count > 0) count *= blocksize;
+	else if (count < 0) count = 0x7fffffff;
+	else goto cleanup;	/* exit immediately if count == 0 */
+
+	while ((count > intotal) && (incc = read(infd, buf, blocksize)) > 0) {
+		intotal += incc;
+		cp = buf;
+
+		while (incc > 0) {
+			outcc = write(outfd, cp, incc);
+			if (outcc < 0) {
+				perror(outfile);
+				goto cleanup;
+			}
+
+			outtotal += outcc;
+			cp += outcc;
+			incc -= outcc;
+		}
+	}
+
+	/* Exit status can only become 0 (no error) at this point */
+	if (incc < 0) perror(infile);
+	else retval = 0;
+
+cleanup:
+	if (close(outfd) < 0) perror(outfile);
+cleanup2:
+	close(infd);
+	if (buf != localbuf) free(buf);
+	printf("%ld+%d records in\n", intotal / blocksize,
+		(intotal % blocksize) != 0);
+	printf("%ld+%d records out\n", outtotal / blocksize,
+		(outtotal % blocksize) != 0);
+	printf("%ld bytes (%ld%c KiB) copied\n", outtotal, outtotal >> 10, (outtotal & 0x3ff) ? '+' : '\0');
+	exit(retval);
+
+usage:
+	write(STDERR_FILENO, "\nUsage: dd if=<inflie> of=<outfile> [optional_params ...]\n\n", 59);
+	write(STDERR_FILENO, "Optional parameters:\n", 21);
+	write(STDERR_FILENO, "bs=<blocksize>  seek=<count>  skip=<count>  count=<count>\n", 58);
+	write(STDERR_FILENO, "seek/skip skips <count> blocks in input/output files, respectively\n", 67);
+	write(STDERR_FILENO, "count copies only <count> blocks (default is until end of file)\n\n", 65);
+	exit(retval);
 }
