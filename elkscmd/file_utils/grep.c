@@ -8,12 +8,17 @@
 
 #include "futils.h"
 
+#include <stdio.h>
 #include <ctype.h>
+
+#define BUF_SIZE 4096
+
+static char buf[BUF_SIZE];
 
 /*
  * See if the specified word is found in the specified string.
  */
-static BOOL search(char *string, char *word, BOOL ignorecase)
+static int search(char *string, char *word, int ignorecase)
 {
 	char	*cp1;
 	char	*cp2;
@@ -25,13 +30,13 @@ static BOOL search(char *string, char *word, BOOL ignorecase)
 	len = strlen(word);
 
 	if (!ignorecase) {
-		while (TRUE) {
+		while (1) {
 			string = strchr(string, word[0]);
 			if (string == NULL)
-				return FALSE;
+				return 0;
 
 			if (memcmp(string, word, len) == 0)
-				return TRUE;
+				return 1;
 
 			string++;
 		}
@@ -45,20 +50,20 @@ static BOOL search(char *string, char *word, BOOL ignorecase)
 	if (isupper(lowfirst))
 		lowfirst = tolower(lowfirst);
 
-	while (TRUE) {
+	while (1) {
 		while (*string && (*string != lowfirst) &&
 			(!isupper(*string) || (tolower(*string) != lowfirst)))
 				string++;
 
 		if (*string == '\0')
-			return FALSE;
+			return 0;
 
 		cp1 = string;
 		cp2 = word;
 
 		do {
 			if (*cp2 == '\0')
-				return TRUE;
+				return 1;
 
 			ch1 = *cp1++;
 			if (isupper(ch1))
@@ -81,14 +86,15 @@ int main(int argc, char **argv)
 	char	*word;
 	char	*name;
 	char	*cp;
-	BOOL	tellname;
-	BOOL	ignorecase;
-	BOOL	tellline;
+	int	tellname;
+	int	ignorecase;
+	int	tellline;
 	long	line;
-	char	buf[8192];
 
-	ignorecase = FALSE;
-	tellline = FALSE;
+	if (argc < 2) goto usage;
+
+	ignorecase = 0;
+	tellline = 0;
 
 	argc--;
 	argv++;
@@ -99,11 +105,11 @@ int main(int argc, char **argv)
 
 		while (*++cp) switch (*cp) {
 			case 'i':
-				ignorecase = TRUE;
+				ignorecase = 1;
 				break;
 
 			case 'n':
-				tellline = TRUE;
+				tellline = 1;
 				break;
 
 			default:
@@ -128,17 +134,16 @@ int main(int argc, char **argv)
 
 		line = 0;
 
-		while (fgets(buf, sizeof(buf), fp)) {
-
+		while (fgets(buf, BUF_SIZE, fp)) {
+			/* Make sure the data is text and didn't overflow */
 			cp = &buf[strlen(buf) - 1];
-			if (*cp != '\n')
-				fprintf(stderr, "%s: Line too long\n", name);
+			if (*cp != '\n') goto error_line_length;
 
 			if (search(buf, word, ignorecase)) {
 				if (tellname)
 					printf("%s: ", name);
 				if (tellline)
-					printf("%d: ", line);
+					printf("%ld: ", line);
 
 				fputs(buf, stdout);
 			}
@@ -150,4 +155,13 @@ int main(int argc, char **argv)
 		fclose(fp);
 	}
 	exit(0);
+
+error_line_length:
+	fprintf(stderr, "%s: Line too long (is this really a text file?)\n", name);
+	exit(1);
+usage:
+	fprintf(stderr, "usage: %s [-i][-n] string file1 [file2] ...\n", argv[0]);
+	fprintf(stderr, "  -i: ignore upper/lower case ('z' and 'Z' match)\n");
+	fprintf(stderr, "  -n: show line numbers in output\n");
+	exit(1);
 }
