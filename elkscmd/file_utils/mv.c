@@ -170,14 +170,15 @@ int main(int argc, char **argv)
 	char	*destname;
 	char	*lastarg;
 
+	if (argc < 3) goto usage;
+
 	lastarg = argv[argc - 1];
 
 	dirflag = isadir(lastarg);
 
 	if ((argc > 3) && !dirflag) {
-		write(STDERR_FILENO, lastarg, strlen(lastarg));
-		write(STDERR_FILENO, ": not a directory\n", 18);
-		exit(1);
+		fprintf(stderr, "%s: not a directory\n", lastarg);
+		goto usage;
 	}
 
 	while (argc-- > 2) {
@@ -206,4 +207,9 @@ int main(int argc, char **argv)
 			perror(srcname);
 	}
 	exit(0);
+
+usage:
+	fprintf(stderr, "usage: %s source_file dest_file\n", argv[0]);
+	fprintf(stderr, "       %s file1 [file2] ... dest_dir\n", argv[0]);
+	exit(1);
 }

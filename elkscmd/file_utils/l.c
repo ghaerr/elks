@@ -24,12 +24,6 @@
 #define __P(x)
 #endif
 
-/* Prototypes */
-void		lsfile		__P((char *));
-int		namesort	__P((char **, char **));
-char *		buildname	__P((char *, char *));
-
-
 #define COLS 80			/* Hardcoded number of columns (Yuck!) */
 
 
@@ -228,7 +222,6 @@ int main(int argc, char **argv)
 
 		listused = 0;
 	}
-	fputs ("\n", stdout);
+	fputs("\n", stdout);
 	exit(0);
 }
-
