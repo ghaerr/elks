@@ -18,18 +18,9 @@
 #include <utime.h>
 #include <errno.h>
 
-#define BUF_SIZE 1024
+#define BUF_SIZE 4096
 
 static char *buf;
-
-typedef	struct	chunk	CHUNK;
-#define	CHUNKINITSIZE	4
-struct	chunk	{
-	CHUNK	*next;
-	char	data[CHUNKINITSIZE];	/* actually of varying length */
-};
-
-static	CHUNK *	chunklist;
 
 
 /*
@@ -46,8 +37,7 @@ char *buildname(char *dirname, char *filename)
 		return filename;
 
 	cp = strrchr(filename, '/');
-	if (cp)
-		filename = cp + 1;
+	if (cp) filename = cp + 1;
 
 	strcpy(buf, dirname);
 	strcat(buf, "/");
@@ -58,26 +48,24 @@ char *buildname(char *dirname, char *filename)
 
 
 /*
- * Return TRUE if a filename is a directory.
- * Nonexistant files return FALSE.
+ * Return 1 if a filename is a directory.
+ * Nonexistant files return 0.
  */
-BOOL isadir(char *name)
+int isadir(char *name)
 {
 	struct	stat	statbuf;
 
-	if (stat(name, &statbuf) < 0)
-		return FALSE;
-
+	if (stat(name, &statbuf) < 0) return 0;
 	return S_ISDIR(statbuf.st_mode);
 }
 
 /*
  * Copy one file to another, while possibly preserving its modes, times,
- * and modes.  Returns TRUE if successful, or FALSE on a failure with an
- * error message output.  (Failure is not indicted if the attributes cannot
+ * and modes.  Returns 1 if successful, or 0 on a failure with an
+ * error message output.  (Failure is not indicated if the attributes cannot
  * be set.)
  */
-BOOL copyfile(char *srcname, char *destname, BOOL setmodes)
+int copyfile(char *srcname, char *destname, int setmodes)
 {
 	int		rfd;
 	int		wfd;
@@ -90,7 +78,7 @@ BOOL copyfile(char *srcname, char *destname, BOOL setmodes)
 
 	if (stat(srcname, &statbuf1) < 0) {
 		perror(srcname);
-		return FALSE;
+		return 0;
 	}
 
 	if (stat(destname, &statbuf2) < 0) {
@@ -102,20 +90,20 @@ BOOL copyfile(char *srcname, char *destname, BOOL setmodes)
 		(statbuf1.st_ino == statbuf2.st_ino))
 	{
 		fprintf(stderr, "Copying file \"%s\" to itself\n", srcname);
-		return FALSE;
+		return 0;
 	}
 
 	rfd = open(srcname, 0);
 	if (rfd < 0) {
 		perror(srcname);
-		return FALSE;
+		return 0;
 	}
 
 	wfd = creat(destname, statbuf1.st_mode);
 	if (wfd < 0) {
 		perror(destname);
 		close(rfd);
-		return FALSE;
+		return 0;
 	}
 
 	while ((rcc = read(rfd, buf, BUF_SIZE)) > 0) {
@@ -139,12 +127,11 @@ BOOL copyfile(char *srcname, char *destname, BOOL setmodes)
 	close(rfd);
 	if (close(wfd) < 0) {
 		perror(destname);
-		return FALSE;
+		return 0;
 	}
 
 	if (setmodes) {
 		(void) chmod(destname, statbuf1.st_mode);
-
 		(void) chown(destname, statbuf1.st_uid, statbuf1.st_gid);
 
 		times.actime = statbuf1.st_atime;
@@ -153,23 +140,25 @@ BOOL copyfile(char *srcname, char *destname, BOOL setmodes)
 		(void) utime(destname, &times);
 	}
 
-	return TRUE;
+	return 1;
 
 
 error_exit:
 	close(rfd);
 	close(wfd);
 
-	return FALSE;
+	return 0;
 }
 
 
 int main(int argc, char **argv)
 {
-	BOOL	dirflag;
+	int	dirflag;
 	char	*srcname;
 	char	*destname;
 	char	*lastarg;
+
+	if (argc < 3) goto usage;
 
 	lastarg = argv[argc - 1];
 
@@ -184,11 +173,18 @@ int main(int argc, char **argv)
 	while (argc-- > 2) {
 		srcname = argv[1];
 		destname = lastarg;
-		if (dirflag)
-			destname = buildname(destname, srcname);
+		if (dirflag) destname = buildname(destname, srcname);
 
-		(void) copyfile(*++argv, destname, FALSE);
+		if (!copyfile(*++argv, destname, 0)) goto error_copy;
 	}
 	free(buf);
 	exit(0);
+
+error_copy:
+	fprintf(stderr, "Failed to copy %s -> %s\n", srcname, destname);
+	exit(1);
+usage:
+	fprintf(stderr, "usage: %s source_file dest_file\n", argv[0]);
+	fprintf(stderr, "       %s file1 file2 ... dest_directory\n", argv[0]);
+	exit(1);
 }
