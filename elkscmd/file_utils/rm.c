@@ -2,9 +2,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-char *
-basename (name)
-	char *name;
+char *basename(char *name)
 {
 	char *base;
 	
@@ -13,12 +11,9 @@ basename (name)
 }
                                 
 
-int
-main (argc,argv)
-	int argc;
-	char **argv;
+int main(int argc, char **argv)
 {
-	int i/*, recurse = 0, interact =0*/;
+	int i;	/*, recurse = 0, interact =0 */
 	struct stat sbuf;
 	int fd,er;
 	

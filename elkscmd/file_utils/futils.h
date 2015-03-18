@@ -35,28 +35,4 @@ typedef	int	BOOL;
 #define	TRUE	((BOOL) 1)
 
 
-extern	void	do_alias(), do_cd(), do_exec(), do_exit(), do_prompt();
-extern	void	do_source(), do_umask(), do_unalias(), do_help(), do_ln();
-extern	void	do_cp(), do_mv(), do_rm(), do_chmod(), do_mkdir(), do_rmdir();
-extern	void	do_mknod(), do_chown(), do_chgrp(), do_sync(), do_printenv();
-extern	void	do_more(), do_cmp(), do_touch(), do_ls(), do_dd(), do_tar();
-extern	void	do_mount(), do_umount(), do_setenv(), do_pwd(), do_echo();
-extern	void	do_kill(), do_grep(), do_ed();
-
-
-extern	char	*buildname();
-extern	char	*modestring();
-extern	char	*timestring();
-extern	BOOL	isadir();
-extern	BOOL	copyfile();
-extern	BOOL	match();
-extern	BOOL	makestring();
-extern	BOOL	makeargs();
-extern	int	expandwildcards();
-extern	int	namesort();
-extern	char	*getchunk();
-extern	void	freechunks();
-
-extern	BOOL	intflag;
-
 /* END CODE */

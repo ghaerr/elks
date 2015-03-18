@@ -45,12 +45,11 @@
 #include <grp.h>
 #include <time.h>
 
-
 #define LISTSIZE 256
+#define BUF_SIZE 1024
 
 /* klugde */
 #define COLS 80
-
 
 #ifdef S_ISLNK
 #    define LSTAT lstat
@@ -58,10 +57,7 @@
 #    define LSTAT stat
 #endif
 
-
-/*
- * Flags for the LS command.
- */
+/* Flags for the LS command */
 #define LSF_LONG	0x01
 #define LSF_DIR 	0x02
 #define LSF_INODE	0x04
@@ -73,43 +69,39 @@
 #define isntDotDir(name) *name!='.' || \
 			( (c=name[1]) && (c!='.') ) || (name[2]&&c)
 
-
-static int cols = 0, col = 0, reverse = 1;
-static char fmt[16] = "%s";
-
-
 static void lsfile();
 static void setfmt();
+char *modestring(int mode);
+char *timestring(long t);
 
-int namesort(a, b)
-const char **a, **b;
-{
-    return reverse * strcmp(*a, *b);
-}
 
-struct Stack
+struct stack
 {
     int size, allocd;
     char **buf;
 };
 
-void initStack( pstack )
-struct Stack *pstack;
+static int cols = 0, col = 0, reverse = 1;
+static char fmt[16] = "%s";
+
+int namesort(const char **a, const char **b)
+{
+    return reverse * strcmp(*a, *b);
+}
+
+static void initstack(struct stack *pstack)
 {
     pstack->size = 0;
     pstack->allocd = 0;
     pstack->buf = NULL;
 }
 
-char * popStack( pstack )
-struct Stack * pstack;
+static char *popstack(struct stack *pstack)
 {
     return (pstack->size)?pstack->buf[--(pstack->size)]:NULL;
 }
 
-void pushStack( pstack, entry )
-struct Stack * pstack;
-char * entry;
+void pushstack(struct stack *pstack, char *entry)
 {
     if ( pstack->size == pstack->allocd ) {
 	(pstack->allocd) += 8;
@@ -118,8 +110,7 @@ char * entry;
   pstack->buf[(pstack->size)++] = entry;
 }
 
-void printStack(pstack)
-struct Stack *pstack;
+void printstack(struct stack *pstack)
 {
     int i;
 
@@ -127,22 +118,17 @@ struct Stack *pstack;
 	printf("%d : %s\n", i, pstack->buf[i]);
 }
 
-void sortStack( pstack )
-struct Stack *pstack;
+void sortstack(struct stack *pstack)
 {
-    qsort( pstack->buf, pstack->size, sizeof(char*), namesort );
+    qsort(pstack->buf, pstack->size, sizeof(char*), namesort);
 }
 
-int isEmptyStack( pstack )
-struct Stack *pstack;
+int is_empty_stack(struct stack *pstack)
 {
     return !(pstack->size);
 }
 
-void getfiles(name, pstack, flags)
-char * name;
-struct Stack *pstack;
-int flags;
+static void getfiles(char *name, struct stack *pstack, int flags)
 {
     BOOL endslash, valid;
     DIR *dirp;
@@ -174,21 +160,18 @@ int flags;
 	    if (!endslash)
 		strcat(fullname, "/");
 	    strcat(fullname, dp->d_name);
-	    pushStack(pstack,strdup(fullname));
+	    pushstack(pstack,strdup(fullname));
 	}
     }
     closedir(dirp);
-    sortStack(pstack);
+    sortstack(pstack);
 }
 
 
 /*
  * Do an LS of a particular file name according to the flags.
  */
-static void
-lsfile(name, statbuf, flags)
-char *name;
-struct stat *statbuf;
+static void lsfile(char *name, struct stat *statbuf, int flags)
 {
     char		*cp;
     struct passwd	*pwd;
@@ -299,14 +282,11 @@ struct stat *statbuf;
     }
 }
 
-#define BUF_SIZE 1024
-
 /*
  * Return the standard ls-like mode string from a file mode.
  * This is static and so is overwritten on each call.
  */
-char *
-modestring(mode)
+char *modestring(int mode)
 {
     static char buf[12];
 
@@ -375,9 +355,7 @@ modestring(mode)
  * The string is returned from a static buffer, and so is overwritten for
  * each call.
  */
-char *
-timestring(t)
-long t;
+char *timestring(long t)
 {
     long  now;
     char  *str;
@@ -403,10 +381,7 @@ long t;
  * If the directory name is NULL, then the original filename is returned.
  * The built path is in a static area, and is overwritten for each call.
  */
-char *
-buildname(dirname, filename)
-char *dirname;
-char *filename;
+char *buildname(char *dirname, char *filename)
 {
     char  *cp;
     static char buf[PATHLEN];
@@ -426,8 +401,7 @@ char *filename;
 }
 
 
-void setfmt(pstack, flags)
-struct Stack *pstack;
+static void setfmt(struct stack *pstack, int flags)
 {
     int maxlen, i, len;
     char * cp;
@@ -448,19 +422,17 @@ struct Stack *pstack;
 }
 
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
     char  *cp;
     char  *name;
     int  flags, recursive, isDir;
     struct stat statbuf;
     static char *def[] = {".", 0};
-    struct Stack files, dirs;
+    struct stack files, dirs;
 
-    initStack(&files);
-    initStack(&dirs);
+    initstack(&files);
+    initstack(&dirs);
 
     flags = 0;
     recursive = 1;
@@ -524,20 +496,20 @@ char **argv;
 	    exit(1);
 	}
 	if (recursive && S_ISDIR(statbuf.st_mode))
-	    pushStack(&dirs, strdup(*argv) );
+	    pushstack(&dirs, strdup(*argv) );
 	else
-	    pushStack(&files, strdup(*argv) );
+	    pushstack(&files, strdup(*argv) );
     }
     if (recursive)
 	recursive--;
-    sortStack(&files);
+    sortstack(&files);
     do {
 	setfmt(&files, flags);
 /*	if (flags & LSF_MULT)
 	    printf("\n%s:\n", name);
  */
-	while (!isEmptyStack(&files)) {
-	    name = popStack(&files);
+	while (!is_empty_stack(&files)) {
+	    name = popstack(&files);
 	    TRACESTRING(name)
 	    if (LSTAT(name, &statbuf) < 0) {
 		perror(name);
@@ -548,12 +520,12 @@ char **argv;
 	    if (!isDir || !recursive || (flags&LSF_LONG))
 		lsfile(name, &statbuf, flags);
 	    if (isDir && recursive)
-		pushStack( &dirs, name);
+		pushstack( &dirs, name);
 	    else
 		free(name);
 	}
-	if (!isEmptyStack(&dirs)) {
-	    getfiles( name = popStack(&dirs), &files, flags );
+	if (!is_empty_stack(&dirs)) {
+	    getfiles( name = popstack(&dirs), &files, flags );
 	    if (strcmp(name,".")) {
 		if (col) {
 		    col=0;
@@ -565,7 +537,7 @@ char **argv;
 	    if (recursive)
 		recursive--;
 	}
-    } while (!isEmptyStack(&files) || !isEmptyStack(&dirs));
+    } while (!is_empty_stack(&files) || !is_empty_stack(&dirs));
     if (~flags & LSF_LONG)
 	fputc('\n', stdout);
     return 0;

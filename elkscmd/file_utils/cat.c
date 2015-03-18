@@ -17,8 +17,7 @@ int cat_read_size = 1;
 char colon[2] = { ':', ' ' };
 char nl = '\n';
 
-void dumpfile(fd)
-int fd;
+void dumpfile(int fd)
 {
 	int nred;
 	char readbuf[CAT_BUF_SIZE];
@@ -28,9 +27,7 @@ int fd;
 	}
 }
 
-int main(argc,argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 	int i, fd;
 

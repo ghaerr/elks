@@ -18,9 +18,58 @@
 #include <utime.h>
 #include <errno.h>
 
-void
-main(argc, argv)
-	char	**argv;
+#define BUF_SIZE 1024 
+
+typedef	struct	chunk	CHUNK;
+#define	CHUNKINITSIZE	4
+struct	chunk	{
+	CHUNK	*next;
+	char	data[CHUNKINITSIZE];	/* actually of varying length */
+};
+
+static	CHUNK *	chunklist;
+
+
+/*
+ * Return TRUE if a filename is a directory.
+ * Nonexistant files return FALSE.
+ */
+BOOL isadir(char *name)
+{
+	struct stat statbuf;
+
+	if (stat(name, &statbuf) < 0)
+		return FALSE;
+
+	return S_ISDIR(statbuf.st_mode);
+}
+
+/*
+ * Build a path name from the specified directory name and file name.
+ * If the directory name is NULL, then the original filename is returned.
+ * The built path is in a static area, and is overwritten for each call.
+ */
+char *buildname(char *dirname, char *filename)
+{
+	char		*cp;
+	static	char	buf[PATHLEN];
+
+	if ((dirname == NULL) || (*dirname == '\0'))
+		return filename;
+
+	cp = strrchr(filename, '/');
+	if (cp)
+		filename = cp + 1;
+
+	strcpy(buf, dirname);
+	strcat(buf, "/");
+	strcat(buf, filename);
+
+	return buf;
+}
+
+
+int main(int argc, char **argv)
 {
 	int	dirflag;
 	char	*srcname;
@@ -76,59 +125,3 @@ main(argc, argv)
 	exit(0);
 }
 
-#define BUF_SIZE 1024 
-
-typedef	struct	chunk	CHUNK;
-#define	CHUNKINITSIZE	4
-struct	chunk	{
-	CHUNK	*next;
-	char	data[CHUNKINITSIZE];	/* actually of varying length */
-};
-
-
-static	CHUNK *	chunklist;
-
-
-
-/*
- * Return TRUE if a filename is a directory.
- * Nonexistant files return FALSE.
- */
-BOOL
-isadir(name)
-	char	*name;
-{
-	struct	stat	statbuf;
-
-	if (stat(name, &statbuf) < 0)
-		return FALSE;
-
-	return S_ISDIR(statbuf.st_mode);
-}
-
-/*
- * Build a path name from the specified directory name and file name.
- * If the directory name is NULL, then the original filename is returned.
- * The built path is in a static area, and is overwritten for each call.
- */
-char *
-buildname(dirname, filename)
-	char	*dirname;
-	char	*filename;
-{
-	char		*cp;
-	static	char	buf[PATHLEN];
-
-	if ((dirname == NULL) || (*dirname == '\0'))
-		return filename;
-
-	cp = strrchr(filename, '/');
-	if (cp)
-		filename = cp + 1;
-
-	strcpy(buf, dirname);
-	strcat(buf, "/");
-	strcat(buf, filename);
-
-	return buf;
-}

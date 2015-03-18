@@ -5,12 +5,9 @@
 
 unsigned short newmode;
 
-int
-remove_dir(name,f)
-	char *name;
-	int f;
+int remove_dir(char *name, int f)
 {
-	int er,era=2;
+	int er, era=2;
 	char *line;
 	
 	while (((er = rmdir(name)) == 0) && ((line = rindex(name,'/')) != NULL) && f) {

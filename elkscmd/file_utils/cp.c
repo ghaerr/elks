@@ -20,38 +20,7 @@
 
 #define BUF_SIZE 1024
 
-char *buf;
-
-void
-main(argc, argv)
-	char	**argv;
-{
-	BOOL	dirflag;
-	char	*srcname;
-	char	*destname;
-	char	*lastarg;
-
-	lastarg = argv[argc - 1];
-
-	dirflag = isadir(lastarg);
-
-	if ((argc > 3) && !dirflag) {
-		fprintf(stderr, "%s: not a directory\n", lastarg);
-		exit(1);
-	}
-
-	buf = malloc(BUF_SIZE);
-	while (argc-- > 2) {
-		srcname = argv[1];
-		destname = lastarg;
-		if (dirflag)
-			destname = buildname(destname, srcname);
-
-		(void) copyfile(*++argv, destname, FALSE);
-	}
-	free(buf);
-	exit(0);
-}
+static char *buf;
 
 typedef	struct	chunk	CHUNK;
 #define	CHUNKINITSIZE	4
@@ -60,17 +29,39 @@ struct	chunk	{
 	char	data[CHUNKINITSIZE];	/* actually of varying length */
 };
 
-
 static	CHUNK *	chunklist;
+
+
+/*
+ * Build a path name from the specified directory name and file name.
+ * If the directory name is NULL, then the original filename is returned.
+ * The built path is in a static area, and is overwritten for each call.
+ */
+char *buildname(char *dirname, char *filename)
+{
+	char		*cp;
+	static	char	buf[PATHLEN];
+
+	if ((dirname == NULL) || (*dirname == '\0'))
+		return filename;
+
+	cp = strrchr(filename, '/');
+	if (cp)
+		filename = cp + 1;
+
+	strcpy(buf, dirname);
+	strcat(buf, "/");
+	strcat(buf, filename);
+
+	return buf;
+}
 
 
 /*
  * Return TRUE if a filename is a directory.
  * Nonexistant files return FALSE.
  */
-BOOL
-isadir(name)
-	char	*name;
+BOOL isadir(char *name)
 {
 	struct	stat	statbuf;
 
@@ -86,11 +77,7 @@ isadir(name)
  * error message output.  (Failure is not indicted if the attributes cannot
  * be set.)
  */
-BOOL
-copyfile(srcname, destname, setmodes)
-	char	*srcname;
-	char	*destname;
-	BOOL	setmodes;
+BOOL copyfile(char *srcname, char *destname, BOOL setmodes)
 {
 	int		rfd;
 	int		wfd;
@@ -176,29 +163,32 @@ error_exit:
 	return FALSE;
 }
 
-/*
- * Build a path name from the specified directory name and file name.
- * If the directory name is NULL, then the original filename is returned.
- * The built path is in a static area, and is overwritten for each call.
- */
-char *
-buildname(dirname, filename)
-	char	*dirname;
-	char	*filename;
+
+int main(int argc, char **argv)
 {
-	char		*cp;
-	static	char	buf[PATHLEN];
+	BOOL	dirflag;
+	char	*srcname;
+	char	*destname;
+	char	*lastarg;
 
-	if ((dirname == NULL) || (*dirname == '\0'))
-		return filename;
+	lastarg = argv[argc - 1];
 
-	cp = strrchr(filename, '/');
-	if (cp)
-		filename = cp + 1;
+	dirflag = isadir(lastarg);
 
-	strcpy(buf, dirname);
-	strcat(buf, "/");
-	strcat(buf, filename);
+	if ((argc > 3) && !dirflag) {
+		fprintf(stderr, "%s: not a directory\n", lastarg);
+		exit(1);
+	}
 
-	return buf;
+	buf = malloc(BUF_SIZE);
+	while (argc-- > 2) {
+		srcname = argv[1];
+		destname = lastarg;
+		if (dirflag)
+			destname = buildname(destname, srcname);
+
+		(void) copyfile(*++argv, destname, FALSE);
+	}
+	free(buf);
+	exit(0);
 }

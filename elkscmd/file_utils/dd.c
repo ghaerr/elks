@@ -35,11 +35,9 @@ static PARAM	params[] = {
 };
 
 
-static	long	getnum();
+static long getnum();
 
-void
-main(argc, argv)
-	char	**argv;
+int main(int argc, char **argv)
 {
 	char	*str;
 	char	*cp;
@@ -241,9 +239,7 @@ cleanup:
  * Read a number with a possible multiplier.
  * Returns -1 if the number format is illegal.
  */
-static long
-getnum(cp)
-	char	*cp;
+static long getnum(char *cp)
 {
 	long	value;
 

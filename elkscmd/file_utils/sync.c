@@ -1,9 +1,8 @@
+#include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 
 
-void
-main ()
+int main(void)
 {
 	sync();
 	exit(0);

@@ -25,7 +25,6 @@
 #endif
 
 /* Prototypes */
-void		main		__P((int, char **));
 void		lsfile		__P((char *));
 int		namesort	__P((char **, char **));
 char *		buildname	__P((char *, char *));
@@ -41,9 +40,56 @@ static	int	comma = 0, col = 0, len;
 static	char	*err_mem = "out of memory\n";
 
 
-void
-main(argc, argv)
-	char	**argv;
+/* Do an LS of a particular file name */
+void lsfile(char *cp)
+{
+	if (*cp != '.') {
+		len = strlen (cp);
+		if ((col += len) >= (COLS - 3)) {
+			fputs (",\n", stdout);
+			col = len;
+		} else if (comma) {
+			fputs (", ", stdout);
+			col += 2;
+		} else comma = 1;
+		fputs (cp, stdout);
+	}
+}
+
+
+/*
+ * Build a path name from the specified directory name and file name.
+ * If the directory name is NULL, then the original filename is returned.
+ * The built path is in a static area, and is overwritten for each call.
+ */
+char *buildname(char *dirname, char *filename)
+{
+	char		*cp;
+	static	char	buf[PATHLEN];
+
+	if ((dirname == NULL) || (*dirname == '\0'))
+		return filename;
+
+	cp = strrchr (filename, '/');
+	if (cp)
+		filename = cp + 1;
+
+	strcpy (buf, dirname);
+	strcat (buf, "/");
+	strcat (buf, filename);
+
+	return buf;
+}
+
+
+/* Sort routine for list of filenames. This only exists for qsort() */
+int namesort(char **p1, char **p2)
+{
+	return strcmp(*p1, *p2);
+}
+
+
+int main(int argc, char **argv)
 {
 	char		*cp;
 	char		*name = NULL;
@@ -185,63 +231,3 @@ main(argc, argv)
 	fputs ("\n", stdout);
 }
 
-
-/*
- * Do an LS of a particular file name
- */
-void
-lsfile (cp)
-	char *cp;
-{
-	if (*cp != '.') {
-		len = strlen (cp);
-		if ((col += len) >= (COLS - 3)) {
-			fputs (",\n", stdout);
-			col = len;
-		} else if (comma) {
-			fputs (", ", stdout);
-			col += 2; 
-		} else comma = 1;
-		fputs (cp, stdout);
-	}
-}
-
-
-/*
- * Build a path name from the specified directory name and file name.
- * If the directory name is NULL, then the original filename is returned.
- * The built path is in a static area, and is overwritten for each call.
- */
-char *
-buildname(dirname, filename)
-	char	*dirname;
-	char	*filename;
-{
-	char		*cp;
-	static	char	buf[PATHLEN];
-
-	if ((dirname == NULL) || (*dirname == '\0'))
-		return filename;
-
-	cp = strrchr (filename, '/');
-	if (cp)
-		filename = cp + 1;
-
-	strcpy (buf, dirname);
-	strcat (buf, "/");
-	strcat (buf, filename);
-
-	return buf;
-}
-
-
-/*
- * Sort routine for list of filenames.
- */
-int
-namesort(p1, p2)
-	char	**p1;
-	char	**p2;
-{
-	return strcmp(*p1, *p2);
-}
