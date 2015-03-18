@@ -6,10 +6,11 @@
  *	way.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdio.h>
 
 int error;
 
@@ -78,10 +79,8 @@ _PROTOTYPE(unsigned long strncrc, (unsigned char *b, int n, unsigned long s));
 static int aux;
 
 /* Routine straight out of 4.9.10 */
-unsigned long strncrc(b, n, s)
-register unsigned char *b;	/* byte sequence to checksum */
-register int n;			/* length of sequence */
-register unsigned long s;	/* initial checksum value */
+unsigned long strncrc(register unsigned char *b,
+		register int n, register unsigned long s)
 {
   register int i;
 
@@ -103,9 +102,7 @@ register unsigned long s;	/* initial checksum value */
 }
 
 /* Compute crc and size of input file descriptor. */
-void crc(fd, name)
-int fd;
-char *name;
+static void crc(int fd, char *name)
 {
   off_t f_size;
   unsigned long crc;
@@ -141,9 +138,7 @@ char *name;
 }
 
 /* Main module. No options switches allowed, none parsed. */
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char **argv)
 {
   argc--;
   error = 0;
@@ -151,6 +146,6 @@ char *argv[];
 	crc(0, (char *) 0);
   else
 	for (argv++; argc--; argv++) crc(open(*argv, O_RDONLY), *argv);
-  return(error);
+  exit(error);
 }
 

@@ -39,17 +39,41 @@ long ltotal;			/* Total count of lines */
 long wtotal;			/* Total count of words */
 long ctotal;			/* Total count of characters */
 
-int main();
-void count();
-void usage();
 
-int main(argc, argv)
-int argc;
-char *argv[];
+void count(FILE *f)
+{
+  register int c;
+  register int word = 0;
+
+  lcount = 0L;
+  wcount = 0L;
+  ccount = 0L;
+
+  while ((c = getc(f)) != EOF) {
+	ccount++;
+
+	if (isspace(c)) {
+		if (word) wcount++;
+		word = 0;
+	} else {
+		word = 1;
+	}
+
+	if (c == '\n' || c == '\f') lcount++;
+  }
+  ltotal += lcount;
+  wtotal += wcount;
+  ctotal += ccount;
+}
+
+
+int main(int argc, char **argv)
 {
   int k;
   char *cp;
   int tflag, files;
+
+  if (argc < 2) goto usage;
 
   /* Get flags. */
   files = argc - 1;
@@ -63,7 +87,7 @@ char *argv[];
 		    case 'l':	lflag++;	break;
 		    case 'w':	wflag++;	break;
 		    case 'c':	cflag++;	break;
-		    default:	usage();
+		    default:	goto usage;
 		}
 		cp++;
 	}
@@ -114,38 +138,10 @@ char *argv[];
 	printf(" total\n");
   }
   fflush(stdout);
-  return(0);
-}
+  exit(0);
 
-void count(f)
-FILE *f;
-{
-  register int c;
-  register int word = 0;
-
-  lcount = 0;
-  wcount = 0;
-  ccount = 0L;
-
-  while ((c = getc(f)) != EOF) {
-	ccount++;
-
-	if (isspace(c)) {
-		if (word) wcount++;
-		word = 0;
-	} else {
-		word = 1;
-	}
-
-	if (c == '\n' || c == '\f') lcount++;
-  }
-  ltotal += lcount;
-  wtotal += wcount;
-  ctotal += ccount;
-}
-
-void usage()
-{
-  fprintf(stderr, "Usage: wc [-lwc] [name ...]\n");
-  exit(1);
+usage:
+	fprintf(stderr, "Usage: wc [-lwc] [file] ...\n");
+	fprintf(stderr, "Switches show line, word, and char totals, respectively\n");
+	exit(1);
 }

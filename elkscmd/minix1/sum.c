@@ -29,32 +29,7 @@ void error();
 void sum();
 void putd();
 
-int main(argc, argv)
-int argc;
-char *argv[];
-{
-  register int fd;
-
-  if (*++argv == 0) argv = defargv;
-  for (; *argv; argv++) {
-	if (argv[0][0] == '-' && argv[0][1] == '\0')
-		fd = 0;
-	else
-		fd = open(*argv, O_RDONLY);
-
-	if (fd == -1) {
-		error("can't open ", *argv);
-		rc = 1;
-		continue;
-	}
-	sum(fd, (argc > 2) ? *argv : (char *) 0);
-	if (fd != 0) close(fd);
-  }
-  return(rc);
-}
-
-void error(s, f)
-char *s, *f;
+void error(char *s, char *f)
 {
 
   write(STDERR_FILENO,"sum: ", 5);
@@ -64,9 +39,7 @@ char *s, *f;
   write(STDERR_FILENO, "\n", 1);
 }
 
-void sum(fd, fname)
-int fd;
-char *fname;
+void sum(int fd, char *fname)
 {
   char buf[BUFFER_SIZE];
   register int i, n;
@@ -99,8 +72,7 @@ char *fname;
   printf("\n");
 }
 
-void putd(number, fw, zeros)
-int number, fw, zeros;
+void putd(int number, int fw, int zeros)
 {
 /* Put a decimal number, in a field width, to stdout. */
 
@@ -118,4 +90,27 @@ int number, fw, zeros;
   }
   buf[fw] = 0;
   printf("%s", buf);
+}
+
+
+int main(int argc, char **argv)
+{
+  register int fd;
+
+  if (*++argv == 0) argv = defargv;
+  for (; *argv; argv++) {
+	if (argv[0][0] == '-' && argv[0][1] == '\0')
+		fd = 0;
+	else
+		fd = open(*argv, O_RDONLY);
+
+	if (fd == -1) {
+		error("can't open ", *argv);
+		rc = 1;
+		continue;
+	}
+	sum(fd, (argc > 2) ? *argv : (char *) 0);
+	if (fd != 0) close(fd);
+  }
+  return(rc);
 }

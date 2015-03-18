@@ -82,11 +82,7 @@ int alc;
  *	directory entry, placing it in out. If this would overflow,
  *	return 0, otherwise 1.
  */
-int makedname(d, f, out, outlen)
-char *d;
-char *f;
-char *out;
-int outlen;
+int makedname(char *d, char *f, char *out, int outlen)
 {
   char *cp;
   int length;
@@ -104,10 +100,7 @@ int outlen;
  *	done - have we encountered (dev, inum) before? Returns 1 for yes,
  *	0 for no, and remembers (dev, inum, nlink).
  */
-int done(dev, inum, nlink)
-int dev;
-ino_t inum;
-nlink_t nlink;
+int done(int dev, ino_t inum, nlink_t nlink)
 {
   register ALREADY **pap, *ap;
 
@@ -207,5 +200,5 @@ char **argv;
 	alc = 0;
 	(void) dodir(startdir, levels);
   } while (optind < argc);
-  return(0);
+  exit(0);
 }
