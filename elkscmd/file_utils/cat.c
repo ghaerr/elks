@@ -4,7 +4,8 @@
  * 1997 MTK, other insignificant people
  */
 
-#define __USE_BSD
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
@@ -13,40 +14,42 @@
 
 #define CAT_BUF_SIZE 4096
 
-int cat_read_size = 1;
-char colon[2] = { ':', ' ' };
-char nl = '\n';
+static char readbuf[CAT_BUF_SIZE];
 
-void dumpfile(int fd)
+static int dumpfile(int fd)
 {
 	int nred;
-	char readbuf[CAT_BUF_SIZE];
 
-	while ((nred=read(fd,readbuf,cat_read_size)) > 0) {
-		write(STDOUT_FILENO,readbuf,nred);
+	while ((nred = read(fd, readbuf, CAT_BUF_SIZE)) > 0) {
+		write(STDOUT_FILENO, readbuf, nred);
 	}
+	if (nred < 0) return -1;
+	return 0;
 }
 
 int main(int argc, char **argv)
 {
 	int i, fd;
 
-	if(argc <= 1) {
-		dumpfile(STDIN_FILENO);
+	if (argc <= 1) {
+		if (dumpfile(STDIN_FILENO)) goto error_read;
 	} else {
-		for(i=1;i<argc;i++) {
+		for (i = 1; i < argc; i++) {
+			errno = 0;
 			fd = open(argv[i], O_RDONLY);
-			if(fd == -1) {
-				write(STDERR_FILENO, argv[0], strlen(argv[0]));
-				write(STDERR_FILENO, colon, 2);
-				write(STDERR_FILENO, argv[i], strlen(argv[i]));
-				write(STDERR_FILENO, colon, 2);
-				write(STDERR_FILENO, sys_errlist[errno], strlen(sys_errlist[errno]));
-				write(STDERR_FILENO, &nl, 1);
+			if (fd == -1) {
+				goto error_read;
 			} else {
-				dumpfile(fd);
+				if (dumpfile(fd)) goto error_read;
 				close(fd);
 			}
 		}
 	}
+	exit(0);
+
+error_read:
+	fprintf(stderr, "%s: %s: %s\n",
+		argv[0], argv[i], strerror(errno));
+	close(fd);
+	exit(1);
 }
