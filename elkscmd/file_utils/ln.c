@@ -21,14 +21,14 @@
 
 /*
  * Return TRUE if a filename is a directory.
- * Nonexistant files return FALSE.
+ * Nonexistant files return 0.
  */
-BOOL isadir(const char *name)
+int isadir(const char *name)
 {
 	static struct stat statbuf;
 
 	if (stat(name, &statbuf) < 0)
-		return FALSE;
+		return 0;
 
 	return S_ISDIR(statbuf.st_mode);
 }

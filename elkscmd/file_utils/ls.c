@@ -110,14 +110,6 @@ static void pushstack(struct stack *pstack, char *entry)
   pstack->buf[(pstack->size)++] = entry;
 }
 
-static void printstack(struct stack *pstack)
-{
-    int i;
-
-    for (i=0; i<pstack->size; i++)
-	printf("%d : %s\n", i, pstack->buf[i]);
-}
-
 static void sortstack(struct stack *pstack)
 {
     qsort(pstack->buf, pstack->size, sizeof(char*), namesort);
@@ -125,11 +117,10 @@ static void sortstack(struct stack *pstack)
 
 static void getfiles(char *name, struct stack *pstack, int flags)
 {
-    BOOL endslash, valid;
+    int endslash, valid;
     DIR *dirp;
     struct dirent *dp;
     char fullname[PATHLEN];
-    char c;
 
     endslash = name[strlen(name)-1] == '/';
 
@@ -175,10 +166,10 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
     char		buf[PATHLEN];
     static char		username[12];
     static int		userid;
-    static BOOL		useridknown;
+    static int		useridknown;
     static char		groupname[12];
     static int		groupid;
-    static BOOL		groupidknown;
+    static int		groupidknown;
     char		*class;
 
     cp = buf;
@@ -193,7 +184,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
 	strcpy(cp, modestring(statbuf->st_mode));
 	cp += strlen(cp);
 
-	sprintf(cp, "%3d ", statbuf->st_nlink);
+	sprintf(cp, "%3lu ", (unsigned long)statbuf->st_nlink);
 	cp += strlen(cp);
 
 	if (!useridknown || (statbuf->st_uid != userid)) {
@@ -203,7 +194,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
 	    else
 		sprintf(username, "%d", statbuf->st_uid);
 	    userid = statbuf->st_uid;
-	    useridknown = TRUE;
+	    useridknown = 1;
 	}
 
 	sprintf(cp, "%-8s ", username);
@@ -216,17 +207,17 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
 	    else
 		sprintf(groupname, "%d", statbuf->st_gid);
 	    groupid = statbuf->st_gid;
-	    groupidknown = TRUE;
+	    groupidknown = 1;
 	}
 
 	sprintf(cp, "%-8s ", groupname);
 	cp += strlen(cp);
 
 	if (S_ISBLK(statbuf->st_mode) || S_ISCHR(statbuf->st_mode))
-	    sprintf(cp, "%3d, %3d ", statbuf->st_rdev >> 8,
-				     statbuf->st_rdev & 0xff);
+	    sprintf(cp, "%3lu, %3lu ", (unsigned long)(statbuf->st_rdev >> 8),
+				     (unsigned long)(statbuf->st_rdev & 0xff));
 	else
-	    sprintf(cp, "%8ld ", statbuf->st_size);
+	    sprintf(cp, "%8lu ", (unsigned long)statbuf->st_size);
 	cp += strlen(cp);
 
 	sprintf(cp, " %-12s ", timestring(statbuf->st_mtime));
@@ -367,30 +358,6 @@ static char *timestring(long t)
 	strcpy(&buf[7], &str[20]);
 	buf[11] = '\0';
     }
-
-    return buf;
-}
-
-/*
- * Build a path name from the specified directory name and file name.
- * If the directory name is NULL, then the original filename is returned.
- * The built path is in a static area, and is overwritten for each call.
- */
-static char *buildname(char *dirname, char *filename)
-{
-    char  *cp;
-    static char buf[PATHLEN];
-
-    if ((dirname == NULL) || (*dirname == '\0'))
-	return filename;
-
-    cp = strrchr(filename, '/');
-    if (cp)
-	filename = cp + 1;
-
-    strcpy(buf, dirname);
-    strcat(buf, "/");
-    strcat(buf, filename);
 
     return buf;
 }
