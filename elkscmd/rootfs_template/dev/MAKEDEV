@@ -97,7 +97,9 @@ fi
 ##############################################################################
 # Direct IDE disks, Primary channel.
 
+	$MKDEV hda b 5 0 		# Currently.
 	$MKSET   0 15 $MKDEV hda b 5	# Currently.
+	$MKDEV hdb b 5 64 		# Currently.
 	$MKSET  64 15 $MKDEV hdb b 5	# Currently.
 
 #	$MKSET   0 63 $MKDEV hda b 3	# Ought to be.
@@ -201,7 +203,9 @@ fi
 ##############################################################################
 # BIOS hard disks.
 
+	$MKDEV bda b 3 0 		# Currently.
 	$MKSET   0 15 $MKDEV bda b 3	# Currently
+	$MKDEV bdb b 3 64 		# Currently.
 	$MKSET  64 15 $MKDEV bdb b 3	# Currently
 #	$MKSET 128 15 $MKDEV bdc b 3	# Currently
 #	$MKSET 192 15 $MKDEV bdd b 3	# Currently
