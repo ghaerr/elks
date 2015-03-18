@@ -35,7 +35,10 @@ static PARAM	params[] = {
 };
 
 
-static long getnum();
+static long getnum(char *cp);
+
+/* Fixed buffer */
+static char localbuf[4096];
 
 int main(int argc, char **argv)
 {
@@ -49,27 +52,25 @@ int main(int argc, char **argv)
 	int	incc;
 	int	outcc;
 	int	blocksize;
-	long	count;
+	long	count = 0x7fffffff;
 	long	seekval;
 	long	skipval;
 	long	intotal;
 	long	outtotal;
 	char	*buf;
-	char	localbuf[8192];
 
 	infile = NULL;
 	outfile = NULL;
-	seekval = 0;
-	skipval = 0;
 	blocksize = 512;
-	count = 0x7fffffff;
+	skipval = 0;
+	seekval = 0;
 
 	while (--argc > 0) {
 		str = *++argv;
 		cp = strchr(str, '=');
 		if (cp == NULL) {
 			write(STDERR_FILENO, "Bad dd argument\n", 16);
-			return;
+			return -1;
 		}
 		*cp++ = '\0';
 
@@ -82,7 +83,7 @@ int main(int argc, char **argv)
 			case PAR_IF:
 				if (infile) {
 					write(STDERR_FILENO, "Multiple input files illegal\n", 29);
-					return;
+					return -1;
 				}
 	
 				infile = cp;
@@ -91,7 +92,7 @@ int main(int argc, char **argv)
 			case PAR_OF:
 				if (outfile) {
 					write(STDERR_FILENO, "Multiple output files illegal\n", 30);
-					return;
+					return -1;
 				}
 
 				outfile = cp;
@@ -101,7 +102,7 @@ int main(int argc, char **argv)
 				blocksize = getnum(cp);
 				if (blocksize <= 0) {
 					write(STDERR_FILENO, "Bad block size value\n", 21);
-					return;
+					return -1;
 				}
 				break;
 
@@ -109,7 +110,7 @@ int main(int argc, char **argv)
 				count = getnum(cp);
 				if (count < 0) {
 					write(STDERR_FILENO, "Bad count value\n", 16);
-					return;
+					return -1;
 				}
 				break;
 
@@ -117,7 +118,7 @@ int main(int argc, char **argv)
 				seekval = getnum(cp);
 				if (seekval < 0) {
 					write(STDERR_FILENO, "Bad seek value\n", 15);
-					return;
+					return -1;
 				}
 				break;
 
@@ -125,24 +126,24 @@ int main(int argc, char **argv)
 				skipval = getnum(cp);
 				if (skipval < 0) {
 					write(STDERR_FILENO, "Bad skip value\n", 15);
-					return;
+					return -1;
 				}
 				break;
 
 			default:
 				write(STDERR_FILENO, "Unknown dd parameter\n", 21);
-				return;
+				return -1;
 		}
 	}
 
 	if (infile == NULL) {
 		write(STDERR_FILENO, "No input file specified\n", 24);
-		return;
+		return -1;
 	}
 
 	if (outfile == NULL) {
 		write(STDERR_FILENO, "No output file specified\n", 25);
-		return;
+		return -1;
 	}
 
 	buf = localbuf;
@@ -150,7 +151,7 @@ int main(int argc, char **argv)
 		buf = malloc(blocksize);
 		if (buf == NULL) {
 			write(STDERR_FILENO, "Cannot allocate buffer\n", 23);
-			return;
+			return -1;
 		}
 	}
 
@@ -162,7 +163,7 @@ int main(int argc, char **argv)
 		perror(infile);
 		if (buf != localbuf)
 			free(buf);
-		return;
+		return -1;
 	}
 
 	outfd = creat(outfile, 0666);
@@ -171,7 +172,7 @@ int main(int argc, char **argv)
 		close(infd);
 		if (buf != localbuf)
 			free(buf);
-		return;
+		return -1;
 	}
 
 	if (skipval) {
@@ -275,6 +276,3 @@ static long getnum(char *cp)
 
 	return value;
 }
-
-
-/* END CODE */

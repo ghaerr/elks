@@ -31,10 +31,8 @@ static int match();
 
 
 
-char *
-re_compile(pattern)
-	char *pattern;
-	{
+char *re_compile(char *pattern)
+{
 	register char *p;
 	register char c;
 	char *comp;

@@ -86,7 +86,7 @@ typedef char *pointer;
 #define NULL 0
 #endif
 #endif /*  not __STDC__ */
-#define STATIC	/* empty */
+#define STATIC static	/* empty */
 #define MKINIT	/* empty */
 
 #include <sys/cdefs.h>

@@ -20,10 +20,6 @@
 #define	STDOUT		1
 #define	MAXSOURCE	10
 
-#ifndef	isblank
-#define	isblank(ch)	(((ch) == ' ') || ((ch) == '\t'))
-#endif
-
 #define	isquote(ch)	(((ch) == '"') || ((ch) == '\''))
 #define	isdecimal(ch)	(((ch) >= '0') && ((ch) <= '9'))
 #define	isoctal(ch)	(((ch) >= '0') && ((ch) <= '7'))

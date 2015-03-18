@@ -9,15 +9,8 @@
 char *commandname;
 
 
-void
-#ifdef __STDC__
-error(char *msg, ...) {
-#else
-error(msg)
-      char *msg;
-      {
-#endif
-
+void error(char *msg, ...)
+{
       fprintf(stderr, "%s: %s\n", commandname, msg);
       exit(2);
 }

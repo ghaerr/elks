@@ -26,7 +26,8 @@
 #endif
 
 
-main(argc, argv)  char **argv; {
+int main(int argc, char **argv)
+{
       char *filename;
       char *buf = stalloc(BUFSIZE());
       int fd;

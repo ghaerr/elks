@@ -132,8 +132,8 @@ INIT {
  * shell is initialized and again when a shell procedure is spawned.
  */
 
-void
-initvar() {
+void initvar(void)
+{
 	register const struct varinit *ip;
 	register struct var *vp;
 	struct var **vpp;
@@ -164,11 +164,8 @@ initvar() {
  * flags of the variable.  If val is NULL, the variable is unset.
  */
 
-void
-setvar(name, val, flags)
-	char *name;
-	char *val;
-	{
+void setvar(char *name, char *val, int flags)
+{
 	register char *p;
 	register char *q;
 	int len;
@@ -217,10 +214,8 @@ setvar(name, val, flags)
  * will go away.
  */
 
-void
-setvareq(s, flags)
-	char *s;
-	{
+void setvareq(char *s, int flags)
+{
 	register struct var *vp;
 	register struct var **vpp;
 

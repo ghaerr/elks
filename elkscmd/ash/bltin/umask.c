@@ -7,7 +7,8 @@
 #include <stdio.h>
 
 
-main(argc, argv)  char **argv; {
+int main(int argc, char **argv)
+{
       int mask;
 
       if (argc > 1) {

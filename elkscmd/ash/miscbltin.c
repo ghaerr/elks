@@ -142,7 +142,7 @@ readcmd(argc, argv)  char **argv; {
 
 
 
-umaskcmd(argc, argv)  register char **argv; {
+int umaskcmd(int argc, register char **argv) {
 	int mask;
 	register char *p;
 	int i;

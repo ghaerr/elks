@@ -20,10 +20,11 @@
 
 int main(int argc, char **argv)
 {
-	char		*cp;
-	int		gid;
-	struct group	*grp;
-	struct stat	statbuf;
+	char *cp;
+	int gid;
+	struct group *grp;
+	struct stat statbuf;
+
 
 	cp = argv[1];
 	if (isdecimal(*cp)) {

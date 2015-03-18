@@ -117,14 +117,21 @@ STATIC void putprompt __P((char *));
 
 
 
+STATIC int peektoken(void) {
+	int t;
+
+	t = readtoken();
+	tokpushback++;
+	return (t);
+}
+
 
 /*
  * Read and parse a command.  Returns NEOF on end of file.  (NULL is a
  * valid parse tree indicating a blank line.)
  */
 
-union node *
-parsecmd(interact) {
+union node *parsecmd(int interact) {
 	int t;
 	extern int exitstatus;
 
@@ -142,8 +149,7 @@ parsecmd(interact) {
 }
 
 
-STATIC union node *
-list(nlflag) {
+STATIC union node *list(int nlflag) {
 	union node *n1;
 	union node *n2;
 	register union node *n3;
@@ -209,8 +215,7 @@ tsemi:		case TSEMI:
 
 
 
-STATIC union node *
-andor() {
+STATIC union node *andor(void) {
 	register union node *n1;
 	union node *n2;
 	register union node *n3;
@@ -237,8 +242,7 @@ andor() {
 
 
 
-STATIC union node *
-pipeline() {
+STATIC union node *pipeline(void) {
 	union node *n1;
 	register union node *pipenode;
 	register struct nodelist *lp;
@@ -267,8 +271,7 @@ pipeline() {
 
 
 
-STATIC union node *
-command() {
+STATIC union node *command(void) {
 	register union node *n1;
 	register union node *n2;
 	union node *ap;
@@ -477,11 +480,8 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 }
 
 
-STATIC union node *
-simplecmd(rpp, redir)
-	register union node **rpp;
-	union node *redir;
-	{
+STATIC union node *simplecmd(register union node **rpp, union node *redir)
+{
 	union node *args;
 	union node **app;
 	union node **orig_rpp = rpp;
@@ -538,8 +538,7 @@ simplecmd(rpp, redir)
 }
 
 
-STATIC void
-parsefname() {
+STATIC void parsefname(void) {
 	register union node *n = redirnode;
 
 	if (readtoken() != TWORD)
@@ -593,8 +592,7 @@ bad:
  * Input any here documents.
  */
 
-STATIC void
-parseheredoc() {
+STATIC void parseheredoc(void) {
 	register struct heredoc *here;
 	register union node *n;
 
@@ -616,19 +614,9 @@ parseheredoc() {
 	}
 }
 
-STATIC int
-peektoken() {
-	int t;
-
-	t = readtoken();
-	tokpushback++;
-	return (t);
-}
-
 STATIC int xxreadtoken();
 
-STATIC int
-readtoken() {
+STATIC int readtoken(void) {
 	int t;
 #if DEBUG
 	int alreadyseen = tokpushback;
@@ -669,7 +657,7 @@ readtoken() {
 	else
 	    TRACE(("reread token %s %s\n", tokname[t], t == TWORD ? wordtext : ""));
 #endif
-	return (t);
+	return t;
 }
 
 
@@ -697,8 +685,7 @@ readtoken() {
  */
 #define RETURN(token)	{ lasttoken = token; return token; }
 
-STATIC int
-xxreadtoken() {
+STATIC int xxreadtoken(void) {
 	register c;
 
 	if (tokpushback) {
@@ -785,13 +772,9 @@ breakloop:
 #define PARSEBACKQOLD()	{oldstyle = 1; goto parsebackq; parsebackq_oldreturn:;}
 #define PARSEBACKQNEW()	{oldstyle = 0; goto parsebackq; parsebackq_newreturn:;}
 
-STATIC int
-readtoken1(firstc, syntax, eofmark, striptabs)
-	int firstc;
-	char const *syntax;
-	char *eofmark;
-	int striptabs;
-	{
+STATIC int readtoken1(int firstc, const char *syntax,
+		char *eofmark, int striptabs)
+{
 	int c = firstc;
 	register char *out;
 	int len;
@@ -1201,15 +1184,10 @@ RESET {
  * Remember a prompt for use with readline if input and output is a terminal.
  */
 
-STATIC void
-putprompt(s)
-	char *s;
-	{
-	if (editable) {
-		r_use_prompt = s;
-	} else {
-		out2str(s);
-	}
+STATIC void putprompt(char *s)
+{
+	if (editable) r_use_prompt = s;
+	else out2str(s);
 }
 #endif
 

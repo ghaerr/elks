@@ -7,8 +7,6 @@
  */
 
 
-#define main exprcmd
-
 #include "bltin.h"
 #include "operators.h"
 #include <sys/types.h>
@@ -74,7 +72,8 @@ long atol();
 #endif
 
 
-main(argc, argv)  char **argv; {
+int exprcmd(int argc, char **argv)
+{
       char **ap;
       char *opname;
       char c;

@@ -14,7 +14,8 @@
 #include "bltin.h"
 
 
-main(argc, argv)  char **argv; {
+int nlechocmd(int argc, char **argv)
+{
       register char **ap;
 
       for (ap = argv + 1 ; *ap ; ap++) {

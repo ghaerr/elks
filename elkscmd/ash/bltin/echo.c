@@ -6,14 +6,13 @@
  * by the Ash General Public License.  See the file named LICENSE.
  */
 
-#define main echocmd
-
 #include "bltin.h"
 
 #undef eflag
 
 
-main(argc, argv)  char **argv; {
+int echocmd(int argc, char **argv)
+{
       register char **ap;
       register char *p;
       register char c;
