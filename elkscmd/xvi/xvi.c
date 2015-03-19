@@ -1,7 +1,7 @@
 /*
  *								xvi(H)
  *
- *	This program implements a screen oriented hexadecimal/octal editor 
+ *	This program implements a screen oriented hexadecimal/octal editor
  *	whose commands are a subset of those of "vi".
  *
  *
@@ -45,9 +45,7 @@
  */
 
 #include	<sys/types.h>
-#ifdef M_XENIX
 #include	<sys/ioctl.h>
-#endif
 #include        <termios.h>
 /* #include	<sgtty.h>                                           tjp*/
 #include	<ctype.h>
@@ -652,7 +650,7 @@ static void scrolldown();
 static void scrollup();
 static int scrrefresh();
 static long search();
-static void select();
+static void b_select();
 #ifdef PC
 static void setparam();
 #endif
@@ -859,7 +857,7 @@ static void backward()
  *
  */
 
-static void changefield(mode) 
+static void changefield(mode)
 
  int	mode;
 
@@ -1214,7 +1212,7 @@ static void display(fr,addr)
 			/*
 			** rem <> 0
 			*/
-	
+
 			lastrow = curfield.lr = l/nbytes + fr;
 			field1.lconlr = field1.fc + (rem-1)*field1.step;
 			field2.lconlr = field2.fc + rem - 1;
@@ -1225,17 +1223,17 @@ static void display(fr,addr)
 			field1.lconlr = field1.lcmax;
 			field2.lconlr = field2.lcmax;
 		}
-	
+
 		for (rowcnt=fr; rowcnt<lastrow; rowcnt++) {
-	
+
 			printf(pmask[MASK(4)],addr);
 			mvcur(rowcnt,field1.fc);
-	
+
 			j = i = (rowcnt-fr) * nbytes;
-	
+
 			for (n = 1; n <= nbytes; n++)
 				printf (pmask[MASK(3)],rbuffer[i++]&255);
-	
+
 			mvcur(rowcnt,field2.fc-1);
 			putchar('"');
 			for (n = 1; n <= nbytes;n++)
@@ -1245,25 +1243,25 @@ static void display(fr,addr)
 				}
 				else
 					putchar (rbuffer[j++]);
-	
+
 			printf ("\"\n\r");
-	
+
 			addr += nbytes;
 		}
-	
+
 		if ( rem != 0) {
-	
+
 			printf(pmask[MASK(4)],addr);
 			mvcur(rowcnt,field1.fc);
-	
+
 			j = i = (rowcnt-fr) * nbytes;
-	
+
 			for (n = 1; n <= rem; n++)
 				printf (pmask[MASK(3)],rbuffer[i++]&255);
-	
+
 			mvcur(rowcnt,field2.fc-1);
 			putchar('"');
-	
+
 			for (n = 1; n <= rem; n++)
 				if (ISCTRL(rbuffer[j])) {
 					j++;
@@ -1271,9 +1269,9 @@ static void display(fr,addr)
 				}
 				else
 					putchar (rbuffer[j++]);
-	
+
 			printf ("\"\n\r");
-	
+
 			addr += rem;
 		}
 
@@ -1324,7 +1322,7 @@ static void error(code)
 }
 
 /*
- *								index(L)
+ *								c_index(L)
  *
  *	NAME
  *		index -- Compute the address of a character inside a string.
@@ -1342,7 +1340,7 @@ static void error(code)
  *
  */
 
-char *index(string, c)
+char *c_index(string, c)
 
  char	*string;
  char	c;
@@ -1567,7 +1565,7 @@ static void getcmd() {
 			help();
 		break;
 
-	case '!':	
+	case '!':
 
 		if (cmd[1] == '!')
 			if (lastcmd[0] == '\0') {
@@ -1579,7 +1577,7 @@ static void getcmd() {
 			}
 			else
 				strcat(lastcmd,&cmd[2]);
-		else 
+		else
 			if (i == 1) {
 				mvcur(statusline,1);
 				cleareos();
@@ -1642,11 +1640,11 @@ static void getcmd() {
 			if (strncmp(&cmd[j], "base=", 5) == 0) {
 				switch(cmd[j+5]) {
 				case '8':
-					select(OCT);
+					b_select(OCT);
 					break;
 				case '1':
 					if (cmd[j+6] == '6') {
-						select(HEX);
+						b_select(HEX);
 						break;
 					}
 				default:
@@ -1707,7 +1705,7 @@ static void getcmd() {
 			return;
 		}
 
-		cptr = index(cmd,',');
+		cptr = c_index(cmd,',');
 		if (cptr == 0) {
 
 			/* goto or ".=" command	*/
@@ -1955,7 +1953,7 @@ static void gotoaddr(c)
  char	address[12];
  long	actualaddr;
  int	i;
-	
+
 	address[0] = c;
 	i = 1;
 	for (;;) {
@@ -2025,7 +2023,7 @@ static void help() {
 			printf("%s\n\r",qref[i]);
 		printf("choose: ");
 		switch(GETACHAR) {
-	
+
 			case '1':
 				ip = qref_cm;
 				max = sizeof(qref_cm)/sizeof(*qref_cm);
@@ -2229,7 +2227,7 @@ static void insert(mode,fd)
 			break;
 
 		case BS:
-			
+
 			putchar(BELL);
 			break;
 
@@ -2283,7 +2281,7 @@ static void insert(mode,fd)
 				i = auxfd;
 				auxfd = tmpfd;
 				tmpfd = i;
-	
+
 				lseek(auxfd,0L,FSEEK_ABSOLUTE);
 			}
 		}
@@ -2842,10 +2840,10 @@ char	**argv;
 		case '\t':
 			changefield(1);
 			break;
-		case 'H': 
+		case 'H':
 			loghome();
 			break;
-		case 'L': 
+		case 'L':
 			logbottom();
 			break;
 		case 'M':
@@ -2858,20 +2856,20 @@ char	**argv;
 		case '$':
 			logendrow();
 			break;
-		case 'r': 
+		case 'r':
 			sreplace();
 			break;
-		case 'R': 
+		case 'R':
 			mreplace();
 			break;
 		case 'f':
-		case 'F': 
+		case 'F':
 		case CTRL_F:
 			if (forward() != OK)
 				putchar(BELL);
 			break;
 		case 'b':
-		case 'B': 
+		case 'B':
 		case CTRL_B:
 			backward();
 			break;
@@ -2896,7 +2894,7 @@ char	**argv;
 		case CTRL_L:
 			redraw();
 			break;
-		case ':': 
+		case ':':
 			getcmd();
 			break;
 		case 'G':
@@ -2933,7 +2931,7 @@ char	**argv;
 			else
 				help();
 			break;
-		default:  
+		default:
 			if (isdigit(c))
 				gotoaddr(c);
 			else
@@ -3067,7 +3065,7 @@ static void movel() {
 		*/
 
 		if (x > curfield.fc) {
-			
+
 			/*
 			** not on the first column
 			*/
@@ -3107,7 +3105,7 @@ static void movel() {
  *		LRXC:	last row, any column except the last one
  *		LRLC:	last row, last column
  *		XRLC:	any row except the last one, last column
- *		  	
+ *
  */
 
 static int mover() {
@@ -3141,7 +3139,7 @@ static int mover() {
 		*/
 
 		if (x < curfield.lcmax) {
-		
+
 			/*
 			** not on the last column
 			*/
@@ -3321,7 +3319,7 @@ static void mvcur(y,x)
 {
  register char	*mov;
  char *tgoto();
-	
+
         mov = tgoto(cm,x-1,y-1);
 	tputs(mov,1,putch);
 	fflush(stdout);
@@ -3511,12 +3509,10 @@ static void pattmatch(direction,whichpattern)
 		mvcur(y,x);
 		i = 0;
 		eoi = FALSE;
-	
+
 		while (~eoi)
 			switch(readtty(&c,spec_match)) {
-	
 			case NORM:
-	
 				if (x < curfield.lcmax) {
 					curpattern[i++] = c;
 					x += curfield.step;
@@ -3526,30 +3522,26 @@ static void pattmatch(direction,whichpattern)
 					putchar(BELL);
 					mvcur(y,field2.lcmax+1);
 				}
-
 				putchar('"');
 				mvcur(y,x);
 				break;
-	
+
 			case MATCH:
-	
 				switch(c) {
-	
 				case '\t':
-					
+
 					changefield(1);
 					break;
-	
+
 				case '\n':
 				case ESC:
 					eoi = TRUE;
 					break;
 				}
-	
 				break;
-	
+
 			case BS:
-	
+
 				if (i) {
 					mvcur(y,i+field2.fc-1);
 					printf("\"  ");
@@ -3562,10 +3554,7 @@ static void pattmatch(direction,whichpattern)
 				else
 					eoi = TRUE;
 				break;
-	
-					
 			}
-	
 		if (i == 0) {
 			if (patlen == 0) {
 				mvcur(statusline, 1);
@@ -3587,8 +3576,7 @@ static void pattmatch(direction,whichpattern)
 		mvcur(y,1);
 	}
 	else
-		/* search for last pattern entered	*/
-
+		/* search for last pattern entered */
 		if (patlen == 0) {
 			printf(mesg[40]);
 			if (actfield != oldfield)
@@ -3609,11 +3597,11 @@ static void pattmatch(direction,whichpattern)
 	for (;;)
 		if ((b = search(base+actpos,pattern,patlen,direction)) >= 0)
 			if (b >= base && (b-base) < pagesz) {
-	
+
 				/*
 				** the occurrence is on this page
 				*/
-	
+
 				actpos = (int)(b-base);
 				curcoords(actpos,&y,&x);
 				mvcur(y,x);
@@ -4027,7 +4015,7 @@ static void scrolldown() {
 	addr = actpos + pagesz/2;
 	if (base + addr >= curflength)
 		addr = curflength - (base + actpos + 1);
-	else 
+	else
 		addr -= addr%nbytes;
 
 	base += addr - addr%nbytes;
@@ -4094,7 +4082,7 @@ static void scrollup() {
 static int scrrefresh(address)
 
  long	address;
- 
+
 {
 
 	if (curflength > 0L)
@@ -4176,12 +4164,12 @@ static long search(fptr,patt,pl,dir)
 }
 
 /*
- *								select(L)
+ *								b_select(L)
  *	NAME
  *		select -- Change numeric base.
  *
  *	SYNOPSIS
- *		void select(reprtype)
+ *		void b_select(reprtype)
  *		int reprtype;
  *
  *	DESCRIPTION
@@ -4193,7 +4181,7 @@ static long search(fptr,patt,pl,dir)
  *		None.
  */
 
-static void select(reprtype)
+static void b_select(reprtype)
 
  int	reprtype;
 
@@ -4307,7 +4295,7 @@ static int setterm() {
 /* This function as originally coded using Version 7 screen handling is tjp */
 /* now replaced by the System V screen handling                         tjp */
 /*
-	if (ioctl(2, TIOCGETP, &ttyb) == -1)                   
+	if (ioctl(2, TIOCGETP, &ttyb) == -1)
 		return(-1);
 	flag = ttyb.sg_flags;
 
@@ -4319,7 +4307,7 @@ static int setterm() {
 		signal(SIGINT,intrproc);
 
 	ttyb.sg_flags = ttyb.sg_flags & ~ECHO & ~XTABS |
-	
+
 #ifdef CBREAK
 				CBREAK;
 #else
@@ -4471,7 +4459,7 @@ static int startup (count,par)
 	}
 
 	nrows = maxrow - (FIRSTROW - 1) - 2;
-	select(repr);
+	b_select(repr);
 
 	field2.step = ASCSTEP;
 
@@ -4537,7 +4525,7 @@ static int startup (count,par)
 		printf (mesg[29],par[0]);
 		return (STOP);
 	}
-		
+
 	if (~newfile)
 		copyblk(inpfd,tmpfd,0L,curflength-1,0L);
 
@@ -4772,7 +4760,7 @@ static void toeosrefresh(address)
  long	address; /* it MUST be the address of the beginning of a line */
 
 {
-	
+
 	lseek(tmpfd,address,FSEEK_ABSOLUTE);
 	l = read(tmpfd,rbuffer,pagesz-(actpos- actpos%nbytes));
 	if (address + l > curflength)
