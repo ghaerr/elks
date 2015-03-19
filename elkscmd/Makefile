@@ -166,7 +166,7 @@ _populate_target: _mount_target
 	for i in $(DIRS); do make -C $$i $(TARGET_RFS); done >/dev/null
 	[ -e $(TARGET_MNT)/bin/ash ] && ln -sf ash $(TARGET_MNT)/bin/sh || \
 		ln -sf sash $(TARGET_MNT)/bin/sh
-	$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile > $(TARGET_MNT)/etc/issue
+	$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(TARGET_MNT)/etc/issue
 	[ "$(COMB360)" = "yes" ] && \
 	for DEL in $(COMB360_DEL); do rm $(TARGET_MNT)/$$DEL; done || true
 	[ "$(INSTALL_KTCP)" = "yes" ] && \
