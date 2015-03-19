@@ -29,16 +29,16 @@
 #include <stdio.h>
 
 #define MAX_FIELD	80	/* Pointers to the beginning of each field
-			 * are stored in columns[], if a line holds
-			 * more than MAX_FIELD columns the array
-			 * boundary is exceed. But unlikely at 80 */
+				 * are stored in columns[], if a line holds
+				 * more than MAX_FIELD columns the array
+				 * boundary is exceed. But unlikely at 80 */
 
 #define MAX_ARGS	32	/* Maximum number of fields following -f or
-			 * -c switches												  	  */
+				 * -c switches */
 int args[MAX_ARGS * 2];
 int num_args;
 
-/* Lots of new defines, should easen maintainance...			*/
+/* Lots of new defines, should ease maintainance */
 #define DUMP_STDIN	0	/* define for mode: no options	 */
 #define OPTIONF		1	/* define for mode: option -f 	 */
 #define OPTIONC		2	/* define for mode: option -c	 */
@@ -46,14 +46,14 @@ int num_args;
 #define NOTSET		0	/* option not selected		 */
 #define SET		1	/* option selected		 */
 
-/* Defines for the warnings						*/
+/* Defines for the warnings */
 #define DELIMITER_NOT_APPLICABLE	0
 #define OVERRIDING_PREVIOUS_MODE	1
 #define OPTION_NOT_APPLICABLE		2
 #define UNKNOWN_OPTION			3
 #define FILE_NOT_READABLE		4
 
-/* Defines for the fatal errors						*/
+/* Defines for the fatal errors	*/
 #define SYNTAX_ERROR			101
 #define POSITION_ERROR			102
 #define USAGE				103
@@ -63,14 +63,14 @@ int num_args;
 #define MAX_ARGS_EXEEDED_ERROR		107
 
 
-int mode;			/* 0 = dump stdin to stdout, 1=-f, 2=-c   */
-int flag_i;			/* SET = -i set on command line	 */
-int flag_s;			/* SET = -s set on command line	 */
-char delim = '\t';		/* default delimiting character	  */
-FILE *fd;
-char *name;
-char line[BUFSIZ];
-int exit_status;
+static int mode;		/* 0 = dump stdin to stdout, 1=-f, 2=-c   */
+static int flag_i;		/* SET = -i set on command line	 */
+static int flag_s;		/* SET = -s set on command line	 */
+static char delim = '\t';	/* default delimiting character	  */
+static FILE *fd;
+static char *name;
+static char line[BUFSIZ];
+static int exit_status;
 
 
 void warn(warn_number, option)
@@ -199,9 +199,7 @@ void cut()
 }
 
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char **argv)
 {
   int i = 1;
   int numberFilenames = 0;
@@ -301,5 +299,5 @@ char *argv[];
 	cut();
   }
 
-  return(exit_status);
+  exit(exit_status);
 }

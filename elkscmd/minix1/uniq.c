@@ -17,24 +17,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-char buffer[BUFSIZ];
-int uflag = 1;			/* default is union of -d and -u outputs */
-int dflag = 1;			/* flags are mutually exclusive */
-int cflag = 0;
-int fields = 0;
-int chars = 0;
+static char buffer[BUFSIZ];
+static int uflag = 1;			/* default is union of -d and -u outputs */
+static int dflag = 1;			/* flags are mutually exclusive */
+static int cflag = 0;
+static int fields = 0;
+static int chars = 0;
 
-int main();
-FILE *xfopen();
-char *skip();
-int equal();
-void show();
-int uniq();
-void usage();
-int getline();
+/* The meat of the whole affair */
+static char *nowline, *prevline, buf1[1024], buf2[1024];
 
-FILE *xfopen(fn, mode)
-char *fn, *mode;
+static FILE *xfopen(const char *fn, const char *mode)
 {
   FILE *p;
 
@@ -46,62 +39,7 @@ char *fn, *mode;
   return(p);
 }
 
-int main(argc, argv)
-int argc;
-char *argv[];
-{
-  char *p;
-  int inf = -1, outf;
-
-  setbuf(stdout, buffer);
-  for (--argc, ++argv; argc > 0 && (**argv == '-' || **argv == '+');
-       --argc, ++argv) {
-	if (**argv == '+')
-		chars = atoi(*argv + 1);
-	else if (isdigit(argv[0][1]))
-		fields = atoi(*argv + 1);
-	else if (argv[0][1] == '\0')
-		inf = 0;	/* - is stdin */
-	else
-		for (p = *argv + 1; *p; p++) {
-			switch (*p) {
-			    case 'd':
-				dflag = 1;
-				uflag = 0;
-				break;
-			    case 'u':
-				uflag = 1;
-				dflag = 0;
-				break;
-			    case 'c':	cflag = 1;	break;
-			    default:	usage();
-			}
-		}
-  }
-
-  /* Input file */
-  if (argc == 0)
-	inf = 0;
-  else if (inf == -1) {		/* if - was not given */
-	fclose(stdin);
-	xfopen(*argv++, "r");
-	argc--;
-  }
-  if (argc == 0)
-	outf = 1;
-  else {
-	fclose(stdout);
-	xfopen(*argv++, "w");
-	argc--;
-  }
-
-  uniq();
-  fflush(stdout);
-  return(0);
-}
-
-char *skip(s)
-char *s;
+static char *skip(const char *s)
 {
   int n;
 
@@ -122,15 +60,12 @@ char *s;
   return s;
 }
 
-int equal(s1, s2)
-char *s1, *s2;
+static int equal(char *s1, char *s2)
 {
   return !strcmp(skip(s1), skip(s2));
 }
 
-void show(line, count)
-char *line;
-int count;
+static void show(char *line, int count)
 {
   if (cflag)
 	printf("%4d %s", count, line);
@@ -140,10 +75,7 @@ int count;
   }
 }
 
-/* The meat of the whole affair */
-char *nowline, *prevline, buf1[1024], buf2[1024];
-
-int uniq()
+static int uniq(void)
 {
   char *p;
   int seen;
@@ -170,14 +102,8 @@ int uniq()
   return 0;
 }
 
-void usage()
-{
-  fprintf(stderr, "Usage: uniq [-udc] [+n] [-n] [input [output]]\n");
-}
 
-int getline(buf, count)
-char *buf;
-int count;
+static int getline(char *buf, int count)
 {
   int c;
   int ct = 0;
@@ -192,4 +118,60 @@ int count;
 	}
   }
   return(ct);
+}
+
+int main(int argc, char **argv)
+{
+  char *p;
+  int inf = -1, outf;
+
+  setbuf(stdout, buffer);
+  for (--argc, ++argv; argc > 0 && (**argv == '-' || **argv == '+');
+       --argc, ++argv) {
+	if (**argv == '+')
+		chars = atoi(*argv + 1);
+	else if (isdigit(argv[0][1]))
+		fields = atoi(*argv + 1);
+	else if (argv[0][1] == '\0')
+		inf = 0;	/* - is stdin */
+	else
+		for (p = *argv + 1; *p; p++) {
+			switch (*p) {
+			    case 'd':
+				dflag = 1;
+				uflag = 0;
+				break;
+			    case 'u':
+				uflag = 1;
+				dflag = 0;
+				break;
+			    case 'c':	cflag = 1;	break;
+			    default:	goto usage;
+			}
+		}
+  }
+
+  /* Input file */
+  if (argc == 0)
+	inf = 0;
+  else if (inf == -1) {		/* if - was not given */
+	fclose(stdin);
+	xfopen(*argv++, "r");
+	argc--;
+  }
+  if (argc == 0)
+	outf = 1;
+  else {
+	fclose(stdout);
+	xfopen(*argv++, "w");
+	argc--;
+  }
+
+  uniq();
+  fflush(stdout);
+  exit(0);
+
+usage:
+	fprintf(stderr, "Usage: uniq [-udc] [+n] [-n] [input [output]]\n");
+	exit(1);
 }
