@@ -19,16 +19,19 @@
  *
  */
 
-#include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <utmp.h>
 #include <fcntl.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <assert.h>
 #include <memory.h>
 #include <errno.h>
+#include <time.h>
 
 /*#define DEBUG*/
 
@@ -66,9 +69,9 @@
 #define SYSINIT      398
 #define KBREQUEST    622
 
-int hash(char *string)
+int hash(const char *string)
 {
-	char *p;
+	const char *p;
 	int result = 0, i=1;
 
 	p = string;
@@ -80,8 +83,8 @@ int hash(char *string)
 
 /* `gently' exit */
 #if 1
-# define PANIC0 fputs("init panic\n", stderr),fflush(stderr),exit(1)
-# define PANIC(a) fputs("init panic\n", stderr),fputs(a, stderr),exit(1)
+# define PANIC0 fprintf(stderr, "init panic\n"),exit(1)
+# define PANIC(a) fprintf(stderr, "init panic: %s\n", a),exit(1)
 
 #else
 # define PANIC(a) exit(1)
@@ -114,18 +117,16 @@ struct tabentry {
 	pid_t pid;
 };
 
-struct tabentry
- children[MAXCHILD],
- *nextchild=children, *thisOne;
-char runlevel;
-char prevRunlevel;
+static struct tabentry children[MAXCHILD], *nextchild=children, *thisOne;
+static char runlevel;
+static char prevRunlevel;
 
-struct utmp utentry;
+static struct utmp utentry;
 
 void parseLine(const char* line, void func())
 {
 	char *a[4];
-	int k = 0, action;
+	int k = 0;
 	char buf[256], *p;
 
 	strcpy(buf, line);
@@ -135,7 +136,7 @@ void parseLine(const char* line, void func())
 		p++;
 	}
 	if (*p == '#') return;
-	while (k<4) {
+	while (k < 4) {
 		/* looking for the k-th ':' */
 		while (*p && *p != ':') p++;
 		*p = 0;
@@ -186,9 +187,9 @@ struct tabentry *matchPid(pid_t pid)
 }
 
 /* returns a pointer to the child or NULL */
-struct tabentry *matchId(char *id)
+struct tabentry *matchId(const char *id)
 {
-	struct tabentry * i=nextchild;
+	struct tabentry *i = nextchild;
 	while (i!=children)
 		if (!strcmp((--i)->id, id)) return i;
 	return 0;
@@ -196,7 +197,7 @@ struct tabentry *matchId(char *id)
 
 
 /* appends child information in the array */
-void appendChild (char *id, pid_t pid)
+void appendChild (const char *id, pid_t pid)
 {
 	if (MAXCHILD == nextchild-children)
 		PANIC("too many children");
@@ -207,7 +208,7 @@ void appendChild (char *id, pid_t pid)
 }
 
 /* removes child information from the array */
-void removeChild(struct tabentry * pos)
+void removeChild(struct tabentry *pos)
 {
 	if (pos-children >= nextchild-children)
 		PANIC("unexistent child");
@@ -227,11 +228,13 @@ void doSleep(int sec)
  */
 }
 
+/* Unused function */
+#if 0
 void makefork(void)
 {
     int pid;
     int fd;
-    char **argv;
+    const static char **argv = { "/bin/ps", NULL };
 
     pid = fork();
     if (pid == 0) {
@@ -245,16 +248,15 @@ void makefork(void)
         dup2(fd ,STDIN_FILENO);
 	dup2(fd ,STDOUT_FILENO);
         dup2(fd ,STDERR_FILENO);
-        argv[0] = "/bin/ps";
-        argv[1] = NULL;
 	execv(argv[0], argv);
     }
     while (pid != wait(NULL));
 }
+#endif
 
 pid_t respawn(const char **a)
 {
-    int pid, status;
+    int pid;
     char *argv[4], buf[128];
     int fd;
     char *devtty;
@@ -321,7 +323,7 @@ pid_t respawn(const char **a)
     return pid;
 }
 
-void passOne(char **a)
+void passOne(const char **a)
 {
 	pid_t pid;
 
@@ -353,7 +355,6 @@ void exitRunlevel(char **a)
 	FPUTS(a[3]);
 
 	if (a[1][0] && !strchr(a[1], runlevel)) {
-		pid_t pid;
 		struct tabentry *child;
 
 		FPUTS(" stop it!");
@@ -381,7 +382,7 @@ void exitRunlevel(char **a)
 	FPUTC('\n');
 }
 
-void enterRunlevel(char **a)
+void enterRunlevel(const char **a)
 {
 	pid_t pid;
 
@@ -412,7 +413,7 @@ void enterRunlevel(char **a)
 	}
 }
 
-void spawnThisOne(char **a)
+void spawnThisOne(const char **a)
 {
 	if (!strncmp(a[0], thisOne->id, 2)) {
 		switch (hash(a[2])) {
@@ -458,9 +459,7 @@ void handle_signal(int sig)
 
 int main(int argc, char **argv)
 {
-	int fd;
 	pid_t pid;
-	struct tabentry *entry;
 
 	argv[0] = "init";
 #ifdef DEBUG
