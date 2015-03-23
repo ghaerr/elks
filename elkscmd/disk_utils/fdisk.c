@@ -37,14 +37,15 @@
 #define isxdigit(x)	( ((x)>='0' && (x)<='9') || ((x)>='A' && (x)<='F') \
 						 || ((x)>='a' && (x)<='f') )
 
-#define die { printf("Usage %s [-l] <device-name>\n",argv[0]); fflush(stdout); exit(1); }
 #define spc ((unsigned long)(geometry.heads*geometry.sectors))
 
+
+/* Available commands and their respective functions */
 static Funcs funcs[] = {
-    { 'a',"Add partion",           add_part },
-    { 'b',"Set bootable flag",     set_boot },
+    { 'a',"Set bootable flag",     set_boot },
     { 'd',"Delete partition",      del_part },
     { 'l',"List partition types",  list_types },
+    { 'n',"Create new partion",    add_part },
     { 'p',"Print partition table", list_part },
     { 'q',"Quit fdisk",            quit },
     { 't',"Set partition type",    set_type },
@@ -53,38 +54,8 @@ static Funcs funcs[] = {
     {  0,  NULL,                   NULL }
 };
 
-/* Table indexing the valid partition types.
- *
- * Any value of 'Y' indicates a valid partition type, and
- * any other value says otherwise.
- *
- * The types in this list are those recognised by the fdisk
- * command that is distributed with Red Hat Linux 6.2.
- */
 
-char partOK[257] = {   /*	'0123456789ABCDEF'		*/
-
-				"YYYYYYYYYYYYY.YY"	/*  0x	*/
-				"YYY.Y.YYY..YY.Y."	/*  1x	*/
-				"....Y..........."	/*  2x	*/
-				"............Y..."	/*  3x	*/
-				"YYY..........YYY"	/*  4x	*/
-				"YYYYYYY.....Y..."	/*  5x	*/
-				".Y.YYY.........."	/*  6x	*/
-				"Y....Y.........."	/*  7x	*/
-				"YYYYYYYY........"	/*  8x	*/
-				"...YY..........."	/*  9x	*/
-				"Y....YYY........"	/*  Ax	*/
-				".......YY......."	/*  Bx	*/
-				".Y..Y.YY........"	/*  Cx	*/
-				"...........Y...."	/*  Dx	*/
-				".Y.YY......Y...."	/*  Ex	*/
-				".YY.Y........YYY"	/*  Fx	*/
-};
-
-#define valid(n)	(partOK[n] == 'Y')
-
-void list_types()	/* FIXME - Should make this more flexible */
+void list_types(void)	/* FIXME - Should make this more flexible */
 {
     printf(
 	" 0 Empty                  3c PartitionMagic recovery 85 Linux extended\n"
@@ -114,21 +85,20 @@ void list_types()	/* FIXME - Should make this more flexible */
 	"1e Hide Win9x FAT16 (LBA) 83 New Linux               fe LANstep\n"
 	"24 NEC DOS                84 OS/2 Hide C:            ff BBT\n"
     );
-    fflush(stdout);
 }
 
-void quit()
+void quit(void)
 {
     exit(1);
 }
 
-void list_part()
+void list_part(void)
 {
-    if(*dev!=0)
+    if(*dev != 0)
 	list_partition(NULL);
 }
 
-void add_part()
+void add_part(void)
 {
     unsigned char pentry[16];
     char buf[8];
@@ -136,97 +106,94 @@ void add_part()
     unsigned char *oset;
     int part, scyl, ecyl;
 
-    pentry[0]=0;
-    printf("Add partition:\n\n");
-    for (part=0;part<1 || part>4;) {
-	printf("Which partition to add(1-4): ");
+    pentry[0] = 0;
+    printf("Create new partition:\n");
+    for (part = 0; part < 1 || part > 4;) {
+	printf("Enter partition number (1-4): ");
 	fflush(stdout);
-	fgets(buf,8,stdin);
-	part=atoi(buf);
+	fgets(buf, 8, stdin);
+	part = atoi(buf);
 	if (*buf=='\n')
 	    return;
     }
 
-    oset=partitiontable+(0x1be)+((part-1)*16);
+    oset = partitiontable + (0x1be) + ((part - 1) * 16);
 
-    printf("geo.cyl=%d\n",geometry.cylinders);
-    for (scyl=geometry.cylinders+1;scyl<0 || scyl>geometry.cylinders;) {
-	printf("First cylinder(%d-%d):",0,geometry.cylinders);
+    printf("Total cylinders: %d\n", geometry.cylinders);
+    for (scyl = geometry.cylinders + 1; scyl < 0 || scyl > geometry.cylinders;) {
+	printf("First cylinder (%d-%d): ", 0, geometry.cylinders);
 	fflush(stdout);
-	fgets(buf,8,stdin);
-	scyl=atoi(buf);
-	if (*buf=='\n')
+	fgets(buf, 8, stdin);
+	scyl = atoi(buf);
+	if (*buf == '\n')
 	    return;
     }
 
-    pentry[1]=scyl==0?1:0;
-    pentry[2]=1+((scyl >> 2) & 0xc0);
-    pentry[3]=(scyl&0xff);
+    pentry[1] = scyl == 0 ? 1 : 0;
+    pentry[2] = 1 + ((scyl >> 2) & 0xc0);
+    pentry[3] = (scyl & 0xff);
 
 #ifdef PART_TYPE
-    pentry[4]=PART_TYPE;
+    pentry[4] = PART_TYPE;
 #else
-    pentry[4]=0x80;
+    pentry[4] = 0x80;
 #endif
 
-    for (ecyl=geometry.cylinders+1;ecyl<scyl || ecyl>geometry.cylinders;) {
-	printf("Ending cylinder(%d-%d):",0,geometry.cylinders);
+    for (ecyl = geometry.cylinders + 1; ecyl < scyl || ecyl > geometry.cylinders;) {
+	printf("Ending cylinder (%d-%d): ", 0, geometry.cylinders);
 	fflush(stdout);
-	fgets(buf,8,stdin);
-	ecyl=atoi(buf);
-	if(*buf=='\n')
+	fgets(buf, 8, stdin);
+	ecyl = atoi(buf);
+	if(*buf == '\n')
 	    return;
     }
 
-    pentry[5]=geometry.heads-1;
-    pentry[6]=geometry.sectors+((ecyl >> 2) & 0xc0);
-    pentry[7]=(ecyl&0xff);
+    pentry[5] = geometry.heads - 1;
+    pentry[6] = geometry.sectors + ((ecyl >> 2) & 0xc0);
+    pentry[7] = (ecyl & 0xff);
 
-    tmp=spc*(unsigned long)scyl;
-    if (scyl==0)
-	tmp=(unsigned long)geometry.sectors;
+    tmp = spc * (unsigned long)scyl;
+    if (scyl == 0)
+	tmp = (unsigned long)geometry.sectors;
 
-    pentry[11]=(unsigned char)((tmp>>24uL)&0x000000ffuL);
-    pentry[10]=(unsigned char)((tmp>>16uL)&0x000000ffuL);
-    pentry[ 9]=(unsigned char)((tmp>> 8uL)&0x000000ffuL);
-    pentry[ 8]=(unsigned char)((tmp      )&0x000000fful);
+    pentry[11] = (unsigned char)((tmp>>24uL)&0x000000ffuL);
+    pentry[10] = (unsigned char)((tmp>>16uL)&0x000000ffuL);
+    pentry[ 9] = (unsigned char)((tmp>> 8uL)&0x000000ffuL);
+    pentry[ 8] = (unsigned char)((tmp      )&0x000000fful);
 
-    tmp=spc*(unsigned long)(ecyl-scyl+1);
-    if (scyl==0)
-	tmp-=(unsigned long)geometry.sectors;
+    tmp = spc * (unsigned long)(ecyl - scyl + 1);
+    if (scyl == 0)
+	tmp -= (unsigned long)geometry.sectors;
 
-    pentry[15]=(unsigned char)((tmp>>24uL)&0x000000ffuL);
-    pentry[14]=(unsigned char)((tmp>>16uL)&0x000000ffuL);
-    pentry[13]=(unsigned char)((tmp>> 8uL)&0x000000ffuL);
-    pentry[12]=(unsigned char)((tmp      )&0x000000ffuL);
+    pentry[15] = (unsigned char)((tmp>>24uL)&0x000000ffuL);
+    pentry[14] = (unsigned char)((tmp>>16uL)&0x000000ffuL);
+    pentry[13] = (unsigned char)((tmp>> 8uL)&0x000000ffuL);
+    pentry[12] = (unsigned char)((tmp      )&0x000000ffuL);
 
-    printf("Adding partition");
-    memcpy(oset,pentry,16);
-    printf("\n");
-    fflush(stdout);
+    printf("Adding partition %d\n", part);
+    memcpy(oset, pentry, 16);
 }
 
-void set_boot()
+void set_boot(void)
 {
     char buf[8];
     int part, a;
 
-    printf("Toggle bootable flag:\n\n");
-    for(part=0;part<1 || part>4;) {
-	printf("Which partition to toggle(1-4): ");
+    printf("Toggle bootable flag\n");
+    for(part = 0; part < 1 || part > 4;) {
+	printf("Which partition (1-4): ");
 	fflush(stdout);
-	fgets(buf,8,stdin);
-	part=atoi(buf);
+	fgets(buf, 8, stdin);
+	part = atoi(buf);
 	if (*buf=='\n')
 	    return;
     }
 
-    a=(0x1ae)+(part*16);
-    partitiontable[a]=(partitiontable[a]==0x00?0x80:0x00);
+    a = (0x1ae) + (part * 16);
+    partitiontable[a] = (partitiontable[a] == 0x00 ? 0x80 : 0x00);
 }
 
-int atohex(s)
-char *s;
+int atohex(char *s)
 {
     int n, r;
 
@@ -264,13 +231,14 @@ void set_type()  /* FIXME - Should make this more flexible */
     }
     a=(0x1ae)+(part*16)+4;
     type=256;
-    while (!valid(type)) {
+    while (1) {
 	printf("Set partition type (l for list, q to quit): ");
 	fflush(stdout);
 	fgets(buf,8,stdin);
-	if (isxdigit(*buf))
+	if (isxdigit(*buf)) {
 	    type=atohex(buf) % 256;
-	else
+	    break;
+	} else {
 	    switch (*buf) {
 
 		case 'l':
@@ -284,6 +252,7 @@ void set_type()  /* FIXME - Should make this more flexible */
 		    printf("Invalid: %c\n", *buf);
 		    break;
 	    }
+	}
     }
     partitiontable[a]=type;
 }
@@ -293,37 +262,33 @@ void del_part()
     char buf[8];
     int part;
 
-    printf("Delete partition:\n\n");
-    for (part=0;part<1 || part>4;) {
-	printf("Which partition to delete(1-4): ");
+    printf("Delete partition\n");
+    for (part = 0; part<1 || part>4;) {
+	printf("Which partition (1-4): ");
 	fflush(stdout);
-	fgets(buf,8,stdin);
-	part=atoi(buf);
-	if (*buf=='\n')
+	fgets(buf, 8, stdin);
+	part = atoi(buf);
+	if (*buf == '\n')
 	    return;
     }
-    printf("Deleting partition %d...",part);
-    memset(partitiontable+(0x1be)+((part-1)*16),0,16);
-    printf("Done\n");
-    fflush(stdout);
+    printf("Deleting partition %d\n",part);
+    memset(partitiontable + (0x1be) + ((part - 1) * 16), 0, 16);
 }
 
 void write_out()
 {
     int i;
 
-    if (lseek(pFd,0L,SEEK_SET)!=0)
-	printf("ERROR!  Cannot seek to offset 0.\n");
+    if (lseek(pFd, 0L, SEEK_SET) != 0)
+	printf("error: cannot seek to offset 0\n");
     else {
         partitiontable[510] = 0x55;
         partitiontable[511] = 0xAA;
 	if ((i=write(pFd,partitiontable,512))!=512) {
-	    printf("ERROR!  Only wrote %d of 512 bytes to the partition table.\n",i);
-	    printf("        Table possibly corrupted.\n");
+	    printf("error: wrote %d of 512 bytes to the partition table.\n", i);
 	} else
-	    printf("Successfully wrote %d bytes to %s\n",i,dev);
+	    printf("Partition table written to %s\n",dev);
     }
-    fflush(stdout);
 }
 
 void help()
@@ -331,13 +296,11 @@ void help()
     Funcs *tmp;
 
     printf("Key Description\n");
-    for (tmp=funcs;tmp->cmd;tmp++)
-	printf("%c   %s\n",tmp->cmd,tmp->help);
-    fflush(stdout);
+    for (tmp = funcs; tmp->cmd; tmp++)
+	printf("%c   %s\n", tmp->cmd, tmp->help);
 }
 
-void list_partition(devname)
-char *devname;
+void list_partition(char *devname)
 {
     unsigned char ptbl[512],*partition;
     unsigned long seccnt;
@@ -381,81 +344,78 @@ char *devname;
     fflush(stdout);
 }
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char **argv)
 {
-    int i, mode=MODE_EDIT;
+    int i;
+    int mode = MODE_EDIT;
 
-    dev[0]=0;
-    for (i=1;i<argc;i++) {
-	if (*argv[i]=='/') {
-	    if (*dev!=0) {
-		printf("Can only specify one device on the command line.\n");
-		exit(1);
-	    } else
-		strncpy(dev,argv[i],256); /* FIXME - Should be some value from a header */
-	} else
-	    if (*argv[i]=='-')
-		switch(*(argv[i]+1)) {
+    dev[0] = 0;
+    for (i = 1; i < argc; i++) {
+	if (*argv[i] == '/') {
+	    if (*dev != 0) goto usage;
+	    else strncpy(dev, argv[i], 256); /* FIXME - Should be some value from a header */
+	} else {
+	    if (*argv[i] == '-')
+		switch(*(argv[i] + 1)) {
 		    case 'l':
-			mode=MODE_LIST;
+			mode = MODE_LIST;
 			break;
 		    default:
-			printf("Unknown command: %s\n",argv[i]);
-			exit(1);
+			goto usage;
 		}
-	    else
-		die;
+	    else goto usage;
+	}
     }
 
-    if(argc==1)
+    if(argc == 1)
 #ifdef DEFAULT_DEV
 	strncpy(dev,DEFAULT_DEV,256);
 #else
-	die;
+	goto usage;
 #endif
 
 
-    if (mode==MODE_LIST) {
-	if (*dev!=0)
+    if (mode == MODE_LIST) {
+	if (*dev != 0) {
 	    list_partition(dev);
-	else {
-	    list_partition("/dev/hda");
-	    list_partition("/dev/hdb");
-	    /* Other drives */
+	    exit(0);
+	} else {
+	    goto usage;
 	}
-	return(1);
     }
 
-    if (mode==MODE_EDIT) {
+    if (mode == MODE_EDIT) {
 	char buf[CMDLEN];
 	Funcs *tmp;
-	int flag=0;
+	int flag = 0;
 
-	if ((pFd=open(dev,O_RDWR))==-1) {
-	    printf("Error opening %s (%d)\n",dev,-pFd);
+	if ((pFd = open(dev, O_RDWR)) == -1) {
+	    printf("Error opening %s (%d)\n", dev, -pFd);
 	    exit(1);
 	}
 
-	if ((i=read(pFd,partitiontable,512))!=512) {
-	    printf("Unable to read first 512 bytes from %s, only read %d bytes\n",
-		   dev,i);
+	if ((i=read(pFd,partitiontable,512)) != 512) {
+	    printf("Unable to read boot sector from %s\n", dev);
 	    exit(1);
 	}
 
 	if (ioctl(pFd, HDIO_GETGEO, &geometry)) {
-	    printf("Error getting geometry of disk, exiting.\n");
+	    printf("Error reading geometry for %s\n", dev);
 	    exit(1);
 	}
-	if (geometry.heads==0 && geometry.cylinders==0 && geometry.sectors==0)
-	    printf("WARNING!  Read disk geometry as 0/0/0.  Things may break.\n");
-	printf("\nGeometry: %d cylinders, %d heads, %d sectors.\n\n",
+
+	printf("Geometry: %d cylinders, %d heads, %d sectors.\n",
 		geometry.cylinders,geometry.heads,geometry.sectors);
-	fflush(stdout);
+
+	/* Don't proceed if any geometry component is bad */
+	if (geometry.heads == 0 || geometry.cylinders == 0
+			|| geometry.sectors == 0) {
+	    printf("Error: geometry is invalid, aborting.\n");
+	    exit(1);
+	}
+
 	while(!feof(stdin)) {
-	    printf("Command%s:",flag==0?" (? for help)":"");
-	    flag=1;
+	    printf("Command (? for help): ");
 	    fflush(stdout);
 	    *buf = 0;
 	    if (fgets(buf,CMDLEN-1,stdin)) {
@@ -469,4 +429,9 @@ char *argv[];
 	}
     }
     exit(0);
+
+usage:
+    fprintf(stderr, "usage: %s [-l] /dev/device\n", argv[0]);
+    fprintf(stderr, "  -l: lists partition table and exits\n");
+    exit(1);
 }

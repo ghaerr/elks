@@ -88,11 +88,8 @@ meminfo: meminfo.c
 swapon: swapon.c
 	$(CC) $(CFLAGS) $(LDFLAGS) swapon.c -o swapon -H 0x100
 
-new_init: init.c
-	$(CC) $(CFLAGS) $(LDFLAGS) init.c -o init
-
 init: init.c 
-	$(CC) $(CFLAGS) $(LDFLAGS) init.c -o init -H 0x2000
+	$(CC) $(CFLAGS) $(LDFLAGS) init.c -o init -H 0x8000
 
 rdev: rdev.c 
 	$(CC) $(CFLAGS) $(LDFLAGS) rdev.c -o rdev
