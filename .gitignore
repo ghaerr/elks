@@ -35,6 +35,8 @@ elks/arch/i86/tools/mkbootloader
 elks/include/arch/asm-offsets.h
 elks/include/linuxmt/autoconf.h
 elks/include/linuxmt/compiler-generated.h
+elks/scripts/lxdialog/local-curses.h
+elks/scripts/lxdialog/lxdialog
 
 
 #
@@ -51,6 +53,18 @@ elks/include/linuxmt/compiler-generated.h
 core
 .gdb_history
 .gdbinit
+
+#
+# Image files
+#
+elkscmd/boot
+elkscmd/root
+elkscmd/comb
+elkscmd/comb_net
+elkscmd/comb360
+elkscmd/full3
+elkscmd/full5
+elkscmd/full1680
 
 #
 # elkscmd build output
