@@ -118,7 +118,7 @@ static int unix_release(struct socket *sock, struct socket *peer)
 	return 0;
 
     if (upd->socket != sock) {
-	printk("UNIX: release: socket link mismatch!\n");
+	printk("UNIX: release: socket link mismatch\n");
 	return -EINVAL;
     }
 
@@ -357,7 +357,7 @@ static int unix_read(struct socket *sock, char *ubuf, int size, int nonblock)
 	int part, cando;
 
 	if (avail <= 0) {
-	    printk("UNIX: read: AVAIL IS NEGATIVE (%d)!!!\n", avail);
+	    printk("UNIX: read: avail is negative (%d)\n", avail);
 	    send_sig(SIGKILL, current, 1);
 	    return -EPIPE;
 	}
@@ -433,7 +433,7 @@ static int unix_write(struct socket *sock, char *ubuf, int size, int nonblock)
 	int part, cando;
 
 	if (space <= 0) {
-	    printk("UNIX: write: SPACE IS NEGATIVE (%d)!!!\n", space);
+	    printk("UNIX: write: space is negative (%d)\n", space);
 	    send_sig(SIGKILL, current, 1);
 	    return -EPIPE;
 	}
@@ -588,7 +588,9 @@ struct proto_ops unix_proto_ops = {
 
 void unix_proto_init(struct net_proto *pro)
 {
-    printk("ELKS UNIX domain Sockets\n");
+#ifndef CONFIG_SMALL_KERNEL
+    printk("ELKS UNIX domain sockets\n");
+#endif
     sock_register(AF_UNIX, &unix_proto_ops);
 }
 

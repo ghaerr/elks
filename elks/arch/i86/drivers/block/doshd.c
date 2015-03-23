@@ -509,28 +509,39 @@ static struct file_operations bioshd_fops = {
 #endif
 #endif
 
+/* Reduced code size option */
+#ifdef CONFIG_SMALL_KERNEL
+#undef TEMP_PRINT_DRIVES_MAX
+#endif
+
 int init_bioshd(void)
 {
     register struct gendisk *ptr;
     register struct drive_infot *drivep;
     int count = 0, i;
 
+#ifndef CONFIG_SMALL_KERNEL
     printk("hd Driver Copyright (C) 1994 Yggdrasil Computing, Inc.\n"
 	   "Extended and modified for Linux 8086 by Alan Cox.\n");
+#endif /* CONFIG_SMALL_KERNEL */
 
+    printk("doshd: ");
 #ifdef CONFIG_BLK_DEV_BFD
     count = bioshd_getfdinfo();
-    printk("doshd: found %d floppy drive%c\n",
-	   count, count == 1 ? ' ' : 's');
+    printk("%d floppy drive%s",
+	   count, count == 1 ? "" : "s");
 #endif
 
 #ifdef CONFIG_BLK_DEV_BHD
+# ifdef CONFIG_BLK_DEV_BFD
+    printk(" and ");
+# endif
     hdcount = bioshd_gethdinfo();
-    printk("doshd: found %d hard drive%c\n", hdcount,
-	   hdcount == 1 ? ' ' : 's');
+    printk("%d hard drive%s", hdcount,
+	   hdcount == 1 ? " " : "s");
     bioshd_gendisk.nr_real = hdcount;
 #endif
-
+    printk("\n");
 
     if (!(count + hdcount))
 	return 0;
@@ -558,7 +569,7 @@ int init_bioshd(void)
 		   (size/10), (int) (size%10), *unit);
 	}
     }
-#endif
+#endif /* TEMP_PRINT_DRIVES_MAX */
 
     i = register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops);
 
@@ -605,11 +616,11 @@ static int bioshd_ioctl(struct inode *inode,
 	err = verify_area(VERIFY_WRITE, (void *) arg, sizeof(*loc));
 	if (err)
 	    return err;
-	put_user((__u16) drivep->heads, (__u16) &loc->heads);
-	put_user((__u16) drivep->sectors, (__u16) &loc->sectors);
-	put_user((__u16) drivep->cylinders, (__u16) &loc->cylinders);
+	put_user((__u16) drivep->heads, (__u16 *) &loc->heads);
+	put_user((__u16) drivep->sectors, (__u16 *) &loc->sectors);
+	put_user((__u16) drivep->cylinders, (__u16 *) &loc->cylinders);
 	put_user((__u16) hd[MINOR(inode->i_rdev)].start_sect,
-		 (__u16) &loc->start);
+		 (__u16 *) &loc->start);
 	return 0;
     }
     return -EINVAL;

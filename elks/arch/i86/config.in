@@ -9,7 +9,6 @@ mainmenu_option next_comment
     comment 'Advanced - for Developers and Hackers only'
 
     bool 'Include development code/drivers'	CONFIG_EXPERIMENTAL	n
-    bool 'Include obsolete drivers'		CONFIG_OBSOLETE		n
     bool 'Modular kernel (NOT IMPLEMENTED)'	CONFIG_MODULES		n
 endmenu
 
@@ -32,6 +31,8 @@ mainmenu_option next_comment
     else
 	define_bool CONFIG_ROMCODE n
     fi
+
+    bool 'Minimize kernel size'			CONFIG_SMALL_KERNEL	n
 endmenu
 
 if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
@@ -74,7 +75,7 @@ mainmenu_option next_comment
 	mainmenu_option next_comment
 	    comment 'System Hardware'
 
-	    bool 'System has a maths coprocessor'	CONFIG_HW_FPU        y
+	    bool 'System has a math coprocessor'	CONFIG_HW_FPU        y
 	    bool 'System has a PS/2 pointing device'	CONFIG_HW_PS2_MOUSE  y
 	    bool 'System has a VGA adapter'		CONFIG_HW_VGA        y
 	endmenu
@@ -204,6 +205,5 @@ mainmenu_option next_comment
     comment 'Kernel hacking'
 
     bool 'Include kernel version system call'	CONFIG_SYS_VERSION	n
-    bool 'Optimise for size rather than speed'	CONFIG_OPT_SMALL	n
     bool 'System Trace' 			CONFIG_STRACE		n
 endmenu

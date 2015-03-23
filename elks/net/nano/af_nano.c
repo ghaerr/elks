@@ -125,7 +125,7 @@ static int nano_release(register struct socket *sock, struct socket *peer)
 	return 0;
 
     if (upd->npd_socket != sock) {
-	printk("NANO: release: socket link mismatch!\n");
+	printk("NANO: release: socket link mismatch\n");
 	return -EINVAL;
     }
 
@@ -335,7 +335,7 @@ static int nano_read(register struct socket *sock,
 	int part, cando;
 
 	if (avail <= 0) {
-	    printk("NANO: read: AVAIL IS NEGATIVE!!!\n");
+	    printk("NANO: read: avail is negative\n");
 	    send_sig(SIGKILL, current, 1);
 	    return -EPIPE;
 	}
@@ -417,7 +417,7 @@ static int nano_write(register struct socket *sock,
 	int part, cando;
 
 	if (space <= 0) {
-	    printk("NANO: write: SPACE IS NEGATIVE!!!\n");
+	    printk("NANO: write: space is negative\n");
 	    send_sig(SIGKILL, current, 1);
 	    return -EPIPE;
 	}
@@ -574,7 +574,9 @@ struct proto_ops nano_proto_ops = {
 
 void nano_proto_init(struct net_proto *pro)
 {
-    printk("ELKS NANO domain Sockets\n");
+#ifndef CONFIG_SMALL_KERNEL
+    printk("ELKS NANO domain sockets\n");
+#endif
     sock_register(AF_NANO, &nano_proto_ops);
 }
 

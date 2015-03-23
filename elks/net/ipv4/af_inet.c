@@ -444,7 +444,9 @@ static struct proto_ops inet_proto_ops = {
 
 void inet_proto_init(struct net_proto *pro)
 {
-    printk("ELKS TCP/IP by Harry Kalogirou\n");
+#ifndef CONFIG_SMALL_KERNEL
+    printk("TCP/IP stack by Harry Kalogirou\n");
+#endif
     sock_register(inet_proto_ops.family, &inet_proto_ops);
 }
 

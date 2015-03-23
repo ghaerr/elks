@@ -613,8 +613,9 @@ void proto_init(void)
 
 void sock_init(void)
 {
-    printk("ELKS Sockets.\n");
-
+#ifndef CONFIG_SMALL_KERNEL
+    printk("ELKS network sockets\n");
+#endif
     proto_init();
 }
 

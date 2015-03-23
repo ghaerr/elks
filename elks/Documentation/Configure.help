@@ -29,16 +29,6 @@ CONFIG_EXPERIMENTAL
 
   Just say N and live in peace.
 
-Prompt for obsolete drivers
-CONFIG_OBSOLETE
-  Some of the drivers that ELKS supports have been superceded by later
-  drivers with more general support, but have been left in the source
-  tree for various reasons. However, the kernel developers discourage
-  use of the obsolete drivers, at least partly because they are likely
-  to vanish without further warning in a forthcoming kernel release.
-
-  Just say N and live in peace.
-
 Modular kernel
 CONFIG_MODULES
   This facility is not currently present in the ELKS kernel, so can be
@@ -99,6 +89,19 @@ CONFIG_ROMCODE
   Saying yes will allow the kernel to be programmed into an EPROM for
   use as a replacement boot ROM.
 
+Minimize kernel size
+CONFIG_SMALL_KERNEL
+  Reduces the overall size of the kernel by removing or changing some
+  code and messages. This option does not significantly alter the way
+  that the kernel functions. Some of the extraneous informational
+  messages emitted by the kernel are not compiled in (such as various
+  driver initialization banners during boot) as well as code that is
+  used to produce them. This has the side effect of making the kernel
+  much quieter during the boot process with no ill effects.
+
+  It should generally be safe to say Y here. If you say N, you will
+  see more informational messages and your kernel will be larger.
+
 Select the processor architecture
 CONFIG_CPU_8086
   Select the target processor for which this kernel image is to be
@@ -114,23 +117,23 @@ CONFIG_CPU_8086
 
 	80486+	The 80486 and later processors.
 
-System has a maths coprocessor.
+System has a math coprocessor
 CONFIG_HW_FPU
   Saying no will compile the code for use in systems without
   a maths coprocessor.
 
-System has no keyboard BIOS support.
+System has keyboard BIOS support
 CONFIG_HW_KEYBOARD_BIOS
   Saying no will compile the code for systems that do not support
   the Keyboard BIOS interrupt 16.
 
-System has no VGA video adapter
+System has VGA video adapter
 CONFIG_HW_VGA
   Saying no will compile the code without support for VGA video
   adapters, but will still allow use on systems with MDA, CGA or
   EGA adapters.
 
-System has no PS/2 pointing device
+System has PS/2 pointing device
 CONFIG_HW_PS2_MOUSE
   Saying no will compile the code without PS/2 pointing device
   support.

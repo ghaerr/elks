@@ -90,7 +90,9 @@ static void init_task()
     int num;
 
     mount_root();
+#ifndef CONFIG_SMALL_KERNEL
     printk("Loading init\n");
+#endif
 
     /* The Linux kernel traditionally attempts to start init from 4 locations,
      * as indicated by this code:
