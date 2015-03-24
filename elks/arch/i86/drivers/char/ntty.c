@@ -40,12 +40,18 @@ struct termios def_vals = { BRKINT,
 
 #define MAX_TTYS NUM_TTYS
 struct tty ttys[MAX_TTYS];
+#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT)
 extern struct tty_ops dircon_ops;
+#endif
+#ifdef CONFIG_CONSOLE_BIOS
 extern struct tty_ops bioscon_ops;
+#endif
 #ifdef CONFIG_CHAR_DEV_RS
 extern struct tty_ops rs_ops;
 #endif
+#ifdef CONFIG_PSEUDO_TTY
 extern struct tty_ops ttyp_ops;
+#endif
 
 int tty_intcheck(register struct tty *ttyp, unsigned char key)
 {

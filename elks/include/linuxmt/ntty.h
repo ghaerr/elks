@@ -8,6 +8,8 @@
 #define INQ_SIZE 512
 #define OUTQ_SIZE 64
 
+/* This value is a bit of a problem because ntty.c hard-codes some
+ * array indices that go up as high as 8 + NR_PTYS (below). */
 #define NUM_TTYS	6
 
 #define DCGET_GRAPH	(('D'<<8)+0x01)

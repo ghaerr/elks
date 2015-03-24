@@ -16,6 +16,8 @@
 #include <linuxmt/major.h>
 #include <linuxmt/debug.h>
 
+#ifdef CONFIG_PSEUDO_TTY
+
 int pty_open(struct inode *inode, struct file *file)
 {
     register struct tty *otty;
@@ -184,3 +186,5 @@ void pty_init(void)
 {
     register_chrdev(PTY_MASTER_MAJOR, "pty", &pty_fops);
 }
+
+#endif	/* CONFIG_PSEUDO_TTY */
