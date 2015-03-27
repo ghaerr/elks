@@ -61,8 +61,6 @@ elks/net/Makefile
 elks/net/ipv4/Makefile
 elks/net/nano/Makefile
 elks/net/unix/Makefile
-elks/scripts/Makefile
-elks/scripts/lxdialog/Makefile
 elks/video/ansi/Makefile
 
 #
