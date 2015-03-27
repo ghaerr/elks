@@ -23,7 +23,7 @@
 
 #define BUF_SIZE 4096
 
-static char *buf;
+static char buf[BUF_SIZE];
 
 
 /*
@@ -172,7 +172,6 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	buf = malloc(BUF_SIZE);
 	while (argc-- > 2) {
 		srcname = argv[1];
 		destname = lastarg;
@@ -180,7 +179,6 @@ int main(int argc, char **argv)
 
 		if (!copyfile(*++argv, destname, 0)) goto error_copy;
 	}
-	free(buf);
 	exit(0);
 
 error_copy:

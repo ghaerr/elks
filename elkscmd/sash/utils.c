@@ -164,7 +164,7 @@ copyfile(srcname, destname, setmodes)
 	int		rcc;
 	int		wcc;
 	char		*bp;
-	char		*buf;
+	static char buf[BUF_SIZE];
 	struct	stat	statbuf1;
 	struct	stat	statbuf2;
 	struct	utimbuf	times;
@@ -199,7 +199,6 @@ copyfile(srcname, destname, setmodes)
 		return FALSE;
 	}
 
-	buf = malloc(BUF_SIZE);
 	while ((rcc = read(rfd, buf, BUF_SIZE)) > 0) {
 		if (intflag) {
 			close(rfd);
