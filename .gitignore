@@ -39,31 +39,6 @@ elks/scripts/lxdialog/local-curses.h
 elks/scripts/lxdialog/lxdialog
 
 #
-# Automatically generated Makefiles
-#
-elks/arch/i86/286pmode/Makefile
-elks/arch/i86/boot/Makefile
-elks/arch/i86/drivers/block/Makefile
-elks/arch/i86/drivers/char/Makefile
-elks/arch/i86/kernel/Makefile
-elks/arch/i86/lib/Makefile
-elks/arch/i86/mm/Makefile
-elks/arch/i86/sibo/Makefile
-elks/arch/i86/tools/Makefile
-elks/fs/Makefile
-elks/fs/minix/Makefile
-elks/fs/namei.c
-elks/fs/romfs/Makefile
-elks/init/Makefile
-elks/kernel/Makefile
-elks/lib/Makefile
-elks/net/Makefile
-elks/net/ipv4/Makefile
-elks/net/nano/Makefile
-elks/net/unix/Makefile
-elks/video/ansi/Makefile
-
-#
 # Backups / patches
 #
 *~
