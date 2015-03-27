@@ -84,8 +84,7 @@ void put_write_access(struct inode *inode)
 
 /*
  * lookup() looks up one part of a pathname, using the fs-dependent
- * routines (currently minix_lookup) for it. It also checks for
- * fathers (pseudo-roots, mount-points)
+ * routines for it. It also checks for fathers (pseudo-roots, mount-points)
  */
 
 int lookup(register struct inode *dir, char *name, size_t len,
