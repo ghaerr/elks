@@ -398,7 +398,7 @@ struct inode *get_empty_inode(void)
     best = 0;
     goto startl;
     do {
-        printk("VFS: No free inodes - contact somebody other than Linus\n");
+        printk("VFS: No free inodes\n");
         list_inode_status();
         sleep_on(&inode_wait);
   startl:
