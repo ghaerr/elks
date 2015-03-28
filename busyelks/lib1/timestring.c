@@ -10,17 +10,13 @@
 #include <grp.h>
 #include <time.h>
 
-#define BUF_SIZE 1024
-
 /*
  * Get the time to be used for a file.
  * This is down to the minute for new files, but only the date for old files.
  * The string is returned from a static buffer, and so is overwritten for
  * each call.
  */
-char *
-timestring(t)
-long t;
+char *timestring(long t)
 {
     long  now;
     char  *str;

@@ -14,19 +14,6 @@
 #include <time.h>
 #include <utime.h>
 
-#define BUF_SIZE 1024 
-
-typedef	struct	chunk	CHUNK;
-#define	CHUNKINITSIZE	4
-struct	chunk	{
-	CHUNK	*next;
-	char	data[CHUNKINITSIZE];	/* actually of varying length */
-};
-
-
-static	CHUNK *	chunklist;
-
-
 
 /*
  * Expand the wildcards in a filename, if any.
@@ -38,11 +25,7 @@ static	CHUNK *	chunklist;
  * matched or too many filenames matched (with an error output).
  */
 
-int
-expandwildcards(name, maxargc, retargv)
-	char	*name;
-	int	maxargc;
-	char	*retargv[];
+int expandwildcards(char *name, int maxargc, char **retargv)
 {
 	char	*last;
 	char	*cp1, *cp2, *cp3;
@@ -53,10 +36,8 @@ expandwildcards(name, maxargc, retargv)
 	char	dirname[PATHLEN];
 
 	last = strrchr(name, '/');
-	if (last)
-		last++;
-	else
-		last = name;
+	if (last) last++;
+	else last = name;
 
 	cp1 = strchr(name, '*');
 	cp2 = strchr(name, '?');

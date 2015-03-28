@@ -1,30 +1,24 @@
 /* tee - pipe fitting			Author: Paul Polderman */
 
+#include "../sash.h"
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
-#if 0
-#include <minix/minlib.h>
-#endif
 #include "../defs.h"
 
 #define	MAXFD	18
-#define CHUNK_SIZE	4096
 
-int fd[MAXFD];
-
-_PROTOTYPE(int tee_main, (int argc, char **argv));
-
-int tee_main(argc, argv)
-int argc;
-char **argv;
+int tee_main(int argc, char **argv)
 {
   char iflag = 0, aflag = 0;
-  char buf[CHUNK_SIZE];
+  char buf[BUF_SIZE];
   int i, s, n;
+  int fd[MAXFD];
+
 
   argv++;
   --argc;
@@ -60,7 +54,7 @@ char **argv;
 
   if (iflag) signal(SIGINT, SIG_IGN);
 
-  while ((n = read(0, buf, CHUNK_SIZE)) > 0) {
+  while ((n = read(0, buf, BUF_SIZE)) > 0) {
 	for (i = 0; i < s; i++) write(fd[i], buf, n);
   }
 

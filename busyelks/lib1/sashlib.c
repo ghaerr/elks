@@ -14,18 +14,6 @@
 #include <time.h>
 #include <utime.h>
 
-#define BUF_SIZE 1024 
-
-typedef	struct	chunk	CHUNK;
-#define	CHUNKINITSIZE	4
-struct	chunk	{
-	CHUNK	*next;
-	char	data[CHUNKINITSIZE];	/* actually of varying length */
-};
-
-
-static	CHUNK *	chunklist;
-
 
 void do_exit() {
 	exit(0);

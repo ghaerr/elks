@@ -10,8 +10,6 @@
 #include <grp.h>
 #include <time.h>
 
-#define BUF_SIZE 1024
-
 /*
  * Return the standard ls-like mode string from a file mode.
  * This is static and so is overwritten on each call.

@@ -14,18 +14,7 @@
 #include <time.h>
 #include <utime.h>
 
-#define BUF_SIZE 1024 
-
-typedef	struct	chunk	CHUNK;
-#define	CHUNKINITSIZE	4
-struct	chunk	{
-	CHUNK	*next;
-	char	data[CHUNKINITSIZE];	/* actually of varying length */
-};
-
-
 static	CHUNK *	chunklist;
-
 
 /*
  * Allocate a chunk of memory (like malloc).
@@ -33,8 +22,7 @@ static	CHUNK *	chunklist;
  * list of chunks which can be freed all at one time.  You CAN NOT free
  * an individual chunk.
  */
-char *
-getchunk(size)
+char *getchunk(int size)
 {
 	CHUNK	*chunk;
 
@@ -56,8 +44,7 @@ getchunk(size)
  * Free all chunks of memory that had been allocated since the last
  * call to this routine.
  */
-void
-freechunks()
+void freechunks(void)
 {
 	CHUNK	*chunk;
 

@@ -18,25 +18,13 @@
 #include <utime.h>
 #include <errno.h>
 
-#define BUF_SIZE 1024 
-
-typedef	struct	chunk	CHUNK;
-#define	CHUNKINITSIZE	4
-struct	chunk	{
-	CHUNK	*next;
-	char	data[CHUNKINITSIZE];	/* actually of varying length */
-};
-
-static	CHUNK *	chunklist;
-
 /*
  * Copy one file to another, while possibly preserving its modes, times,
  * and modes.  Returns TRUE if successful, or FALSE on a failure with an
  * error message output.  (Failure is not indicted if the attributes cannot
  * be set.)
  */
-BOOL
-copyfile(srcname, destname, setmodes)
+BOOL copyfile(srcname, destname, setmodes)
 	char	*srcname;
 	char	*destname;
 	BOOL	setmodes;
@@ -46,7 +34,7 @@ copyfile(srcname, destname, setmodes)
 	int		rcc;
 	int		wcc;
 	char		*bp;
-	char		*buf;
+	static char buf[BUF_SIZE];
 	struct	stat	statbuf1;
 	struct	stat	statbuf2;
 	struct	utimbuf	times;
@@ -83,7 +71,6 @@ copyfile(srcname, destname, setmodes)
 		return FALSE;
 	}
 
-	buf = malloc(BUF_SIZE);
 	while ((rcc = read(rfd, buf, BUF_SIZE)) > 0) {
 		bp = buf;
 		while (rcc > 0) {

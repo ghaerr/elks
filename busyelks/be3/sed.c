@@ -152,7 +152,7 @@ char bits[] = {1, 2, 4, 8, 16, 32, 64, 128};
 
 /***** module common stuff *****/
 
-#define POOLSIZE	20000	/* size of string-pool space */
+#define POOLSIZE	10000	/* size of string-pool space */
 #define WFILES		10	/* max # w output files that can be compiled */
 #define RELIMIT		256	/* max chars in compiled RE */
 #define MAXDEPTH	20	/* maximum {}-nesting level */

@@ -1,9 +1,7 @@
 #include <unistd.h>
 #include <string.h>
 
-void
-strip_trailing_slashes (path)
-char *path;
+void strip_trailing_slashes(char *path)
 {
 	int last;
 

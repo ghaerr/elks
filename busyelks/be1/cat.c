@@ -5,32 +5,30 @@
  */
 
 #define __USE_BSD
+
+#include "../sash.h"
+
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
 
-#define CAT_BUF_SIZE 4096
-
 int cat_read_size = 1;
 char colon[2] = { ':', ' ' };
 char nl = '\n';
 
-void dumpfile(fd)
-int fd;
+void dumpfile(int fd)
 {
 	int nred;
-	char readbuf[CAT_BUF_SIZE];
+	char readbuf[BUF_SIZE];
 
 	while ((nred=read(fd,readbuf,cat_read_size)) > 0) {
 		write(STDOUT_FILENO,readbuf,nred);
 	}
 }
 
-int cat_main(argc,argv)
-int argc;
-char **argv;
+int cat_main(int argc, char **argv)
 {
 	int i, fd;
 

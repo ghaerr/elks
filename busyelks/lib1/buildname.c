@@ -14,9 +14,6 @@
 #include <time.h>
 #include <utime.h>
 
-#define BUF_SIZE 1024 
-
-
 /*
  * Build a path name from the specified directory name and file name.
  * If the directory name is NULL, then the original filename is returned.

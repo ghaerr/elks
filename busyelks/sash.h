@@ -29,12 +29,20 @@
 #define	isdecimal(ch)	(((ch) >= '0') && ((ch) <= '9'))
 #define	isoctal(ch)	(((ch) >= '0') && ((ch) <= '7'))
 
+typedef struct  chunk   CHUNK;
+#define CHUNKINITSIZE   4
+struct  chunk   {
+	CHUNK   *next;
+	char    data[CHUNKINITSIZE];    /* actually of varying length */
+};
+
 
 typedef	int	BOOL;
 
 #define	FALSE	((BOOL) 0)
 #define	TRUE	((BOOL) 1)
 
+#define BUF_SIZE 4096
 
 extern	void	do_alias(), do_cd(), do_exec(), do_exit(), do_prompt();
 extern	void	do_source(), do_umask(), do_unalias(), do_help(), do_ln();
