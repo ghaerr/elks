@@ -1,6 +1,6 @@
 
 CC = bcc
-CFLAGS = -ansi -O -0
+CFLAGS = -ansi -O -0 -I../elks/include
 
 all: busyelks1 busyelks2 busyelks3
 

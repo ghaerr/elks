@@ -8,6 +8,7 @@ AC=applets.c
 test ! -d "$DESTDIR" && DESTDIR=_install
 make clean
 rm -f $MF $CF $AH $AC
+test "$1" = "clean" && echo "Clean complete" && exit
 
 output_stuff () {
     LC="$(basename $X | sed 's/\.c$//g')"
@@ -20,6 +21,12 @@ output_stuff () {
     echo "if(strcmp(progname, \"$LC\") == 0) ${LC}_main(argc, argv);" >> $AC
     echo "#endif" >> $AC;
 }
+
+if [ ! -e ../elks/include/linuxmt/config.h ]
+	then
+	echo "error: you must build the ELKS kernel first"
+	exit 1
+fi
 
 echo -en "\nCFILES1 = " >> $MF
 echo be1/*.c >> $MF
