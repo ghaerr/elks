@@ -1,26 +1,9 @@
 This is an attempt at creating a BusyBox-like set of binaries
 for ELKS.
 
-To build it, you will need to copy your existing ELKS include
-headers to the bcc include directory. bcc uses severely out of
-date header files, and it turns out that some of these tools
-require newer headers to function. Mine was located at
-/usr/lib/bcc/include but your location will vary.
-
 I am awful at Makefiles, so I wrote a rudimentary Makefile and 
 wrote a shell script to oversee the build process. Run ./build 
 and wait for it. When it's finished, you will have three
 BusyELKS binaries and a series of symbolic links for them.
 They will be set up under the _install/ directory exactly as
-they need to appear in the ELKS system's root.
-
-These compile and work under "elksemu," but I have not tested 
-them under ELKS itself yet, because of one major bug I ran into: 
-
-THE INIT PROGRAM DOES NOT WORK IN BUSYELKS FOR SOME REASON.
-
-If someone can figure out why, it would be appreciated.
-
-Please compile and test this out, perhaps substituting the normal 
-/sbin/init to at least get a bootable system.
-
+they need to appear in a root filesystem.
