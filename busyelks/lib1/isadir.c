@@ -5,14 +5,9 @@
  * Return TRUE if a filename is a directory.
  * Nonexistant files return FALSE.
  */
-BOOL
-isadir(name)
-	char	*name;
+int isadir(char *name)
 {
-	struct	stat	statbuf;
-
-	if (stat(name, &statbuf) < 0)
-		return FALSE;
-
+	struct stat statbuf;
+	if (stat(name, &statbuf) < 0) return 0;
 	return S_ISDIR(statbuf.st_mode);
 }

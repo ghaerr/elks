@@ -37,13 +37,13 @@ union hblock {
 } dblock;
 
 
-static	BOOL	inheader;
-static	BOOL	badheader;
-static	BOOL	badwrite;
-static	BOOL	extracting;
-static	BOOL	warnedroot;
-static	BOOL	eof;
-static	BOOL	verbose;
+static	int	inheader;
+static	int	badheader;
+static	int	badwrite;
+static	int	extracting;
+static	int	warnedroot;
+static	int	eof;
+static	int	verbose;
 static	long	datacc;
 static	int	outfd;
 static	char	outname[NAMSIZ];
@@ -64,9 +64,9 @@ tar_main(argc, argv)
 	int	cc;
 	long	incc;
 	int	blocksize;
-	BOOL	createflag;
-	BOOL	listflag;
-	BOOL	fileflag;
+	int	createflag;
+	int	listflag;
+	int	fileflag;
 	char	buf[8192];
 
 	if (argc < 2) {
@@ -74,16 +74,16 @@ tar_main(argc, argv)
 		exit(1);
 	}
 
-	createflag = FALSE;
-	extracting = FALSE;
-	listflag = FALSE;
-	fileflag = FALSE;
-	verbose = FALSE;
-	badwrite = FALSE;
-	badheader = FALSE;
-	warnedroot = FALSE;
-	eof = FALSE;
-	inheader = TRUE;
+	createflag = 0;
+	extracting = 0;
+	listflag = 0;
+	fileflag = 0;
+	verbose = 0;
+	badwrite = 0;
+	badheader = 0;
+	warnedroot = 0;
+	eof = 0;
+	inheader = 1;
 	incc = 0;
 	datacc = 0;
 	outfd = -1;
@@ -91,10 +91,10 @@ tar_main(argc, argv)
 
 	for (str = argv[1]; *str; str++) {
 		switch (*str) {
-			case 'f':	fileflag = TRUE; break;
-			case 't':	listflag = TRUE; break;
-			case 'x':	extracting = TRUE; break;
-			case 'v':	verbose = TRUE; break;
+			case 'f':	fileflag = 1; break;
+			case 't':	listflag = 1; break;
+			case 'x':	extracting = 1; break;
+			case 'v':	verbose = 1; break;
 
 			case 'c':
 			case 'a':
@@ -129,7 +129,7 @@ tar_main(argc, argv)
 		exit(1);
 	}
 
-	while (TRUE) {
+	while (1) {
 		if ((incc == 0) && !eof) {
 			while (incc < blocksize) {
 				cc = read(devfd, &buf[incc], blocksize - incc);
@@ -194,8 +194,8 @@ doheader(hp)
 	long	mtime;
 	char	*name;
 	int	cc;
-	BOOL	hardlink;
-	BOOL	softlink;
+	int	hardlink;
+	int	softlink;
 
 	/*
 	 * If the block is completely empty, then this is the end of the
@@ -208,7 +208,7 @@ doheader(hp)
 				return;
 		}
 
-		eof = TRUE;
+		eof = 1;
 		return;
 	}
 
@@ -222,12 +222,12 @@ doheader(hp)
 	if ((mode < 0) || (uid < 0) || (gid < 0) || (size < 0)) {
 		if (!badheader)
 			fprintf(stderr, "Bad tar header, skipping\n");
-		badheader = TRUE;
+		badheader = 1;
 		return;
 	}
 
-	badheader = FALSE;
-	badwrite = FALSE;
+	badheader = 0;
+	badwrite = 0;
 
 	hardlink = ((hp->linkflag == 1) || (hp->linkflag == '1'));
 	softlink = ((hp->linkflag == 2) || (hp->linkflag == '2'));
@@ -243,7 +243,7 @@ doheader(hp)
 
 		if (!warnedroot)
 			fprintf(stderr, "Absolute paths detected, removing leading slashes\n");
-		warnedroot = TRUE;
+		warnedroot = 1;
 	}
 
 	if (!extracting) {
@@ -301,7 +301,7 @@ doheader(hp)
 	outfd = creat(name, mode);
 	if (outfd < 0) {
 		perror(name);
-		badwrite = TRUE;
+		badwrite = 1;
 		return;
 	}
 
@@ -324,7 +324,7 @@ dodata(cp, count)
 
 	datacc -= count;
 	if (datacc <= 0)
-		inheader = TRUE;
+		inheader = 1;
 
 	if (badwrite || !extracting)
 		return;
@@ -335,7 +335,7 @@ dodata(cp, count)
 			perror(outname);
 			close(outfd);
 			outfd = -1;
-			badwrite = TRUE;
+			badwrite = 1;
 			return;
 		}
 		count -= cc;

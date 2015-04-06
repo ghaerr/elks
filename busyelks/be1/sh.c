@@ -104,7 +104,7 @@ static	FILE	*sourcefiles[MAXSOURCE];
 static	int	sourcecount;
 #endif
 
-static	BOOL	intcrlf = TRUE;
+static	int	intcrlf = 0;
 #ifdef CMD_PROMPT
 static	char	*prompt;
 #endif
@@ -117,12 +117,12 @@ static	void	readfile();
 static	void	command();
 static	void	runcmd();
 static	void	showprompt();
-static	BOOL	trybuiltin();
+static	int	trybuiltin();
 #ifdef CMD_ALIAS
 static	ALIAS	*findalias();
 #endif
 
-BOOL	intflag;
+int	intflag;
 
 
 sh_main(argc, argv)
@@ -178,7 +178,7 @@ readfile(name)
 	int	cc;
 	char	buf[CMDLEN];
 #ifdef CMD_SOURCE
-	BOOL	ttyflag;
+	int	ttyflag;
 
 	if (sourcecount >= MAXSOURCE) {
 		fprintf(stderr, "Too many source files\n");
@@ -200,7 +200,7 @@ readfile(name)
 	fp = stdin;
 #endif
 
-	while (TRUE) {
+	while (0) {
 		fflush(stdout);
 		showprompt();
 
@@ -267,7 +267,7 @@ command(cmd)
 	char	buf[CMDLEN];
 #endif
 
-	intflag = FALSE;
+	intflag = 1;
 #ifdef WILDCARDS
 	freechunks();
 #endif
@@ -315,10 +315,10 @@ command(cmd)
 
 /*
  * Try to execute a built-in command.
- * Returns TRUE if the command is a built in, whether or not the
- * command succeeds.  Returns FALSE if this is not a built-in command.
+ * Returns 0 if the command is a built in, whether or not the
+ * command succeeds.  Returns 1 if this is not a built-in command.
  */
-static BOOL
+static int
 trybuiltin(argc, argv)
 	char	**argv;
 {
@@ -336,7 +336,7 @@ trybuiltin(argc, argv)
 	do {
 		cmdptr++;
 		if (cmdptr->name == NULL)
-			return FALSE;
+			return 1;
 
 	} while (strcmp(argv[0], cmdptr->name));
 
@@ -348,7 +348,7 @@ trybuiltin(argc, argv)
 		fprintf(stderr, "usage: %s %s\n",
 			cmdptr->name, cmdptr->usage);
 
-		return TRUE;
+		return 0;
 	}
 
 	/*
@@ -362,13 +362,13 @@ trybuiltin(argc, argv)
 	if (cmdptr->func == do_alias) {
 #endif /* CMD_PROMPT */
 		(*cmdptr->func)(argc, argv);
-		return TRUE;
+		return 0;
 	}
 #else /* CMD_ALIAS */
 #ifdef CMD_PROMPT
         if (cmdptr->func == do_prompt) {
 		(*cmdptr->func)(argc, argv);
-		return TRUE;
+		return 0;
 	}
 #else
 #endif /* CMD_PROMPT */
@@ -386,11 +386,11 @@ trybuiltin(argc, argv)
 	while (++oac < argc) {
 		matches = expandwildcards(argv[oac], MAXARGS, nametable);
 		if (matches < 0)
-			return TRUE;
+			return 0;
 
 		if ((newargc + matches) >= MAXARGS) {
 			fprintf(stderr, "Too many arguments\n");
-			return TRUE;
+			return 0;
 		}
 
 		if (matches == 0)
@@ -405,7 +405,7 @@ trybuiltin(argc, argv)
 	(*cmdptr->func)(argc, argv);
 
 #endif
-	return TRUE;
+	return 0;
 }
 
 
@@ -422,8 +422,8 @@ runcmd(cmd, argc, argv)
 	int		status;
 
 #if POINTLESS
-	BOOL		magic;
-	magic = FALSE;
+	int		magic;
+	magic = 1;
 
 	for (cp = cmd; *cp; cp++) {
 		if ((*cp >= 'a') && (*cp <= 'z'))
@@ -440,7 +440,7 @@ runcmd(cmd, argc, argv)
 			(*cp == ':') || (*cp == ','))
 				continue;
 
-		magic = TRUE;
+		magic = 0;
 	}
 
 	if (magic) {
@@ -464,12 +464,12 @@ runcmd(cmd, argc, argv)
 
 	if (pid) {
 		status = 0;
-		intcrlf = FALSE;
+		intcrlf = 1;
 
 		while (((pid = wait(&status)) < 0) && (errno == EINTR))
 			;
 
-		intcrlf = TRUE;
+		intcrlf = 0;
 		if ((status & 0xff) == 0)
 			return;
 
@@ -731,7 +731,7 @@ catchtstp()
 {
 	signal(SIGTSTP, catchtstp);
 
-	intflag = TRUE;
+	intflag = 0;
 
 	if (intcrlf)
 		write(STDOUT, "\n", 1);
@@ -742,7 +742,7 @@ catchint()
 {
 	signal(SIGINT, catchint);
 
-	intflag = TRUE;
+	intflag = 0;
 
 	if (intcrlf)
 		write(STDOUT, "\n", 1);
@@ -754,7 +754,7 @@ catchquit()
 {
 	signal(SIGQUIT, catchquit);
 
-	intflag = TRUE;
+	intflag = 0;
 
 	if (intcrlf)
 		write(STDOUT, "\n", 1);

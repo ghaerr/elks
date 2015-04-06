@@ -17,7 +17,7 @@
 
 /*
  * Routine to see if a text string is matched by a wildcard pattern.
- * Returns TRUE if the text is matched, or FALSE if it is not matched
+ * Returns 1 if the text is matched, or 0 if it is not matched
  * or if the pattern is invalid.
  *  *		matches zero or more characters
  *  ?		matches a single character
@@ -25,7 +25,7 @@
  *  \c		quotes character c
  *  Adapted from code written by Ingo Wilken.
  */
-BOOL
+int
 match(text, pattern)
 	char	*text;
 	char	*pattern;
@@ -33,7 +33,7 @@ match(text, pattern)
 	char	*retrypat;
 	char	*retrytxt;
 	int	ch;
-	BOOL	found;
+	int	found;
 
 	retrypat = NULL;
 	retrytxt = NULL;
@@ -48,14 +48,14 @@ match(text, pattern)
 				break;
 
 			case '[':  
-				found = FALSE;
+				found = 0;
 				while ((ch = *pattern++) != ']') {
 					if (ch == '\\')
 						ch = *pattern++;
 					if (ch == '\0')
-						return FALSE;
+						return 0;
 					if (*text == ch)
-						found = TRUE;
+						found = 1;
 				}
 				if (!found) {
 					pattern = retrypat;
@@ -65,13 +65,13 @@ match(text, pattern)
 
 			case '?':  
 				if (*text++ == '\0')
-					return FALSE;
+					return 0;
 				break;
 
 			case '\\':  
 				ch = *pattern++;
 				if (ch == '\0')
-					return FALSE;
+					return 0;
 				/* fall into next case */
 
 			default:        
@@ -85,12 +85,12 @@ match(text, pattern)
 					text = ++retrytxt;
 					break;
 				}
-				return FALSE;
+				return 0;
 		}
 
 		if (pattern == NULL)
-			return FALSE;
+			return 0;
 	}
-	return TRUE;
+	return 1;
 }
 

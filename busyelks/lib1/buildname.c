@@ -19,20 +19,15 @@
  * If the directory name is NULL, then the original filename is returned.
  * The built path is in a static area, and is overwritten for each call.
  */
-char *
-buildname(dirname, filename)
-	char	*dirname;
-	char	*filename;
+char *buildname(char *dirname, char *filename)
 {
-	char		*cp;
-	static	char	buf[PATHLEN];
+	char *cp;
+	static char buf[PATHLEN];
 
-	if ((dirname == NULL) || (*dirname == '\0'))
-		return filename;
+	if ((dirname == NULL) || (*dirname == '\0')) return filename;
 
 	cp = strrchr(filename, '/');
-	if (cp)
-		filename = cp + 1;
+	if (cp) filename = cp + 1;
 
 	strcpy(buf, dirname);
 	strcat(buf, "/");
@@ -40,4 +35,3 @@ buildname(dirname, filename)
 
 	return buf;
 }
-

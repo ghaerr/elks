@@ -23,10 +23,10 @@ void do_exit() {
  * Take a command string, and break it up into an argc, argv list.
  * The returned argument list and strings are in static memory, and so
  * are overwritten on each call.  The argument array is ended with an
- * extra NULL pointer for convenience.  Returns TRUE if successful,
- * or FALSE on an error with a message already output.
+ * extra NULL pointer for convenience.  Returns 1 if successful,
+ * or 0 on an error with a message already output.
  */
-BOOL
+int
 makeargs(cmd, argcptr, argvptr)
 	char	*cmd;
 	int	*argcptr;
@@ -48,7 +48,7 @@ makeargs(cmd, argcptr, argvptr)
 	while (*cp) {
 		if (argc >= MAXARGS) {
 			fprintf(stderr, "Too many arguments\n");
-			return FALSE;
+			return 0;
 		}
 
 		argtable[argc++] = cp;
@@ -65,16 +65,16 @@ makeargs(cmd, argcptr, argvptr)
 	*argcptr = argc;
 	*argvptr = argtable;
 
- 	return TRUE;
+ 	return 1;
 }
 
 /*
  * Make a NULL-terminated string out of an argc, argv pair.
- * Returns TRUE if successful, or FALSE if the string is too long,
+ * Returns 1 if successful, or 0 if the string is too long,
  * with an error message given.  This does not handle spaces within
  * arguments correctly.
  */
-BOOL
+int
 makestring(argc, argv, buf, buflen)
 	char	**argv;
 	char	*buf;
@@ -85,7 +85,7 @@ makestring(argc, argv, buf, buflen)
 		len = strlen(*argv);
 		if (len >= buflen) {
 			fprintf(stderr, "Argument string too long\n");
-			return FALSE;
+			return 0;
 		}
 
 		strcpy(buf, *argv++);
@@ -100,7 +100,7 @@ makestring(argc, argv, buf, buflen)
 
 	*buf = '\0';
 
-	return TRUE;
+	return 1;
 }
 
 

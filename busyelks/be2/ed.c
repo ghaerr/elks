@@ -29,7 +29,7 @@ static	LINE	*curline;
 static	NUM	curnum;
 static	NUM	lastnum;
 static	NUM	marks[26];
-static	BOOL	dirty;
+static	int	dirty;
 static	char	*filename;
 static	char	searchstring[USERSIZE];
 
@@ -41,16 +41,16 @@ static	LEN	bufsize;
 
 static	void	docommands();
 static	void	subcommand();
-static	BOOL	getnum();
-static	BOOL	setcurnum();
-static	BOOL	initedit();
+static	int	getnum();
+static	int	setcurnum();
+static	int	initedit();
 static	void	termedit();
 static	void	addlines();
-static	BOOL	insertline();
-static	BOOL	deletelines();
-static	BOOL	printlines();
-static	BOOL	writelines();
-static	BOOL	readlines();
+static	int	insertline();
+static	int	deletelines();
+static	int	printlines();
+static	int	writelines();
+static	int	readlines();
 static	NUM	searchlines();
 static	LEN	findstring();
 static	LINE	*findline();
@@ -78,7 +78,7 @@ ed_main(argc, argv)
 		if (lastnum)
 			setcurnum(1);
 
-		dirty = FALSE;
+		dirty = 0;
 	}
 
 	docommands();
@@ -98,11 +98,11 @@ docommands()
 	int	len;
 	NUM	num1;
 	NUM	num2;
-	BOOL	have1;
-	BOOL	have2;
+	int	have1;
+	int	have2;
 	char	buf[USERSIZE];
 
-	while (TRUE) {
+	while (1) {
 		printf(": ");
 		fflush(stdout);
 
@@ -131,8 +131,8 @@ docommands()
 		while (isblank(*cp))
 			*cp++;
 
-		have1 = FALSE;
-		have2 = FALSE;
+		have1 = 0;
+		have2 = 0;
 
 		if ((curnum == 0) && (lastnum > 0)) {
 			curnum = 1;
@@ -156,8 +156,8 @@ docommands()
 			if (!have2)
 				num2 = lastnum;
 
-			have1 = TRUE;
-			have2 = TRUE;
+			have1 = 1;
+			have2 = 1;
 		}
 
 		if (!have1)
@@ -224,11 +224,11 @@ docommands()
 				break;
 
 			case 'l':
-				printlines(num1, num2, TRUE);
+				printlines(num1, num2, 1);
 				break;
 
 			case 'p':
-				printlines(num1, num2, FALSE);
+				printlines(num1, num2, 0);
 				break;
 
 			case 'q':
@@ -307,13 +307,13 @@ docommands()
 			case 'z':
 				switch (*cp) {
 				case '-':
-					printlines(curnum-21, curnum, FALSE);
+					printlines(curnum-21, curnum, 0);
 					break;
 				case '.':
-					printlines(curnum-11, curnum+10, FALSE);
+					printlines(curnum-11, curnum+10, 0);
 					break;
 				default:
-					printlines(curnum, curnum+21, FALSE);
+					printlines(curnum, curnum+21, 0);
 					break;
 				}
 				break;
@@ -323,12 +323,12 @@ docommands()
 					fprintf(stderr, "No arguments allowed\n");
 					break;
 				}
-				printlines(curnum, curnum, FALSE);
+				printlines(curnum, curnum, 0);
 				break;
 	
 			case '-':
 				if (setcurnum(curnum - 1))
-					printlines(curnum, curnum, FALSE);
+					printlines(curnum, curnum, 0);
 				break;
 
 			case '=':
@@ -337,12 +337,12 @@ docommands()
 
 			case '\0':
 				if (have1) {
-					printlines(num2, num2, FALSE);
+					printlines(num2, num2, 0);
 					break;
 				}
 
 				if (setcurnum(curnum + 1))
-					printlines(curnum, curnum, FALSE);
+					printlines(curnum, curnum, 0);
 				break;
 
 			default:
@@ -372,20 +372,20 @@ subcommand(cp, num1, num2)
 	LEN	offset;
 	LINE	*lp;
 	LINE	*nlp;
-	BOOL	globalflag;
-	BOOL	printflag;
-	BOOL	didsub;
-	BOOL	needprint;
+	int	globalflag;
+	int	printflag;
+	int	didsub;
+	int	needprint;
 
 	if ((num1 < 1) || (num2 > lastnum) || (num1 > num2)) {
 		fprintf(stderr, "Bad line range for substitute\n");
 		return;
 	}
 
-	globalflag = FALSE;
-	printflag = FALSE;
-	didsub = FALSE;
-	needprint = FALSE;
+	globalflag = 0;
+	printflag = 0;
+	didsub = 0;
+	needprint = 0;
 
 	if (isblank(*cp) || (*cp == '\0')) {
 		fprintf(stderr, "Bad delimiter for substitute\n");
@@ -411,11 +411,11 @@ subcommand(cp, num1, num2)
 
 	while (*cp) switch (*cp++) {
 		case 'g':
-			globalflag = TRUE;
+			globalflag = 1;
 			break;
 
 		case 'p':
-			printflag = TRUE;
+			printflag = 1;
 			break;
 
 		default:
@@ -447,8 +447,8 @@ subcommand(cp, num1, num2)
 		offset = findstring(lp, oldstr, oldlen, offset);
 		if (offset < 0) {
 			if (needprint) {
-				printlines(num1, num1, FALSE);
-				needprint = FALSE;
+				printlines(num1, num1, 0);
+				needprint = 0;
 			}
 
 			offset = 0;
@@ -458,8 +458,8 @@ subcommand(cp, num1, num2)
 		}
 
 		needprint = printflag;
-		didsub = TRUE;
-		dirty = TRUE;
+		didsub = 1;
+		dirty = 1;
 
 		/*
 		 * If the replacement string is the same size or shorter
@@ -481,8 +481,8 @@ subcommand(cp, num1, num2)
 				continue;
 
 			if (needprint) {
-				printlines(num1, num1, FALSE);
-				needprint = FALSE;
+				printlines(num1, num1, 0);
+				needprint = 0;
 			}
 
 			lp = nlp->next;
@@ -527,8 +527,8 @@ subcommand(cp, num1, num2)
 			continue;
 
 		if (needprint) {
-			printlines(num1, num1, FALSE);
-			needprint = FALSE;
+			printlines(num1, num1, 0);
+			needprint = 0;
 		}
 
 		lp = lp->next;
@@ -617,42 +617,42 @@ addlines(num)
 /*
  * Parse a line number argument if it is present.  This is a sum
  * or difference of numbers, '.', '$', 'x, or a search string.
- * Returns TRUE if successful (whether or not there was a number). 
- * Returns FALSE if there was a parsing error, with a message output.
+ * Returns 1 if successful (whether or not there was a number). 
+ * Returns 0 if there was a parsing error, with a message output.
  * Whether there was a number is returned indirectly, as is the number.
  * The character pointer which stopped the scan is also returned.
  */
-static BOOL
+static int
 getnum(retcp, rethavenum, retnum)
 	char	**retcp;
-	BOOL	*rethavenum;
+	int	*rethavenum;
 	NUM	*retnum;
 {
 	char	*cp;
 	char	*str;
-	BOOL	havenum;
+	int	havenum;
 	NUM	value;
 	NUM	num;
 	NUM	sign;
 
 	cp = *retcp;
-	havenum = FALSE;
+	havenum = 0;
 	value = 0;
 	sign = 1;
 
-	while (TRUE) {
+	while (1) {
 		while (isblank(*cp))
 			cp++;
 
 		switch (*cp) {
 			case '.':
-				havenum = TRUE;
+				havenum = 1;
 				num = curnum;
 				cp++;
 				break;
 
 			case '$':
-				havenum = TRUE;
+				havenum = 1;
 				num = lastnum;
 				cp++;
 				break;
@@ -661,10 +661,10 @@ getnum(retcp, rethavenum, retnum)
 				cp++;
 				if ((*cp < 'a') || (*cp > 'z')) {
 					fprintf(stderr, "Bad mark name\n");
-					return FALSE;
+					return 0;
 				}
 
-				havenum = TRUE;
+				havenum = 1;
 				num = marks[*cp++ - 'a'];
 				break;
 
@@ -677,9 +677,9 @@ getnum(retcp, rethavenum, retnum)
 					cp = "";
 				num = searchlines(str, curnum, lastnum);
 				if (num == 0)
-					return FALSE;
+					return 0;
 
-				havenum = TRUE;
+				havenum = 1;
 				break;
 
 			default:
@@ -687,13 +687,13 @@ getnum(retcp, rethavenum, retnum)
 					*retcp = cp;
 					*rethavenum = havenum;
 					*retnum = value;
-					return TRUE;
+					return 1;
 				}
 
 				num = 0;
 				while (isdecimal(*cp))
 					num = num * 10 + *cp++ - '0';
-				havenum = TRUE;
+				havenum = 1;
 				break;
 		}
 
@@ -716,7 +716,7 @@ getnum(retcp, rethavenum, retnum)
 				*retcp = cp;
 				*rethavenum = havenum;
 				*retnum = value;
-				return TRUE;
+				return 1;
 		}
 	}
 }
@@ -725,7 +725,7 @@ getnum(retcp, rethavenum, retnum)
 /*
  * Initialize everything for editing.
  */
-static BOOL
+static int
 initedit()
 {
 	int	i;
@@ -734,7 +734,7 @@ initedit()
 	bufbase = malloc(bufsize);
 	if (bufbase == NULL) {
 		fprintf(stderr, "No memory for buffer\n");
-		return FALSE;
+		return 0;
 	}
 
 	bufptr = bufbase;
@@ -746,7 +746,7 @@ initedit()
 	curline = NULL;
 	curnum = 0;
 	lastnum = 0;
-	dirty = FALSE;
+	dirty = 0;
 	filename = NULL;
 	searchstring[0] = '\0';
 
@@ -785,9 +785,9 @@ termedit()
 
 /*
  * Read lines from a file at the specified line number.
- * Returns TRUE if the file was successfully read.
+ * Returns 1 if the file was successfully read.
  */
-static BOOL
+static int
 readlines(file, num)
 	char	*file;
 	NUM	num;
@@ -801,13 +801,13 @@ readlines(file, num)
 
 	if ((num < 1) || (num > lastnum + 1)) {
 		fprintf(stderr, "Bad line for read\n");
-		return FALSE;
+		return 0;
 	}
 
 	fd = open(file, 0);
 	if (fd < 0) {
 		perror(file);
-		return FALSE;
+		return 0;
 	}
 
 	bufptr = bufbase;
@@ -824,7 +824,7 @@ readlines(file, num)
 			len = (cp - bufptr) + 1;
 			if (!insertline(num, bufptr, len)) {
 				close(fd);
-				return FALSE;
+				return 0;
 			}
 
 			bufptr += len;
@@ -846,7 +846,7 @@ readlines(file, num)
 			if (cp == NULL) {
 				fprintf(stderr, "No memory for buffer\n");
 				close(fd);
-				return FALSE;
+				return 0;
 			}
 
 			bufbase = cp;
@@ -863,7 +863,7 @@ readlines(file, num)
 	if (cc < 0) {
 		perror(file);
 		close(fd);
-		return FALSE;
+		return 0;
 	}
 
 	if (bufused) {
@@ -880,15 +880,15 @@ readlines(file, num)
 	printf("%d lines%s, %d chars\n", linecount,
 		(bufused ? " (incomplete)" : ""), charcount);
 
-	return TRUE;
+	return 1;
 }
 
 
 /*
  * Write the specified lines out to the specified file.
- * Returns TRUE if successful, or FALSE on an error with a message output.
+ * Returns 1 if successful, or 0 on an error with a message output.
  */
-static BOOL
+static int
 writelines(file, num1, num2)
 	char	*file;
 	NUM	num1;
@@ -901,7 +901,7 @@ writelines(file, num1, num2)
 
 	if ((num1 < 1) || (num2 > lastnum) || (num1 > num2)) {
 		fprintf(stderr, "Bad line range for write\n");
-		return FALSE;
+		return 0;
 	}
 
 	linecount = 0;
@@ -910,7 +910,7 @@ writelines(file, num1, num2)
 	fd = creat(file, 0666);
 	if (fd < 0) {
 		perror(file);
-		return FALSE;
+		return 0;
 	}
 
 	printf("\"%s\", ", file);
@@ -919,14 +919,14 @@ writelines(file, num1, num2)
 	lp = findline(num1);
 	if (lp == NULL) {
 		close(fd);
-		return FALSE;
+		return 0;
 	}
 
 	while (num1++ <= num2) {
 		if (write(fd, lp->data, lp->len) != lp->len) {
 			perror(file);
 			close(fd);
-			return FALSE;
+			return 0;
 		}
 
 		charcount += lp->len;
@@ -936,26 +936,26 @@ writelines(file, num1, num2)
 
 	if (close(fd) < 0) {
 		perror(file);
-		return FALSE;
+		return 0;
 	}
 
 	printf("%d lines, %d chars\n", linecount, charcount);
 
-	return TRUE;
+	return 1;
 }
 
 
 /*
  * Print lines in a specified range.
  * The last line printed becomes the current line.
- * If expandflag is TRUE, then the line is printed specially to
+ * If expandflag is 1, then the line is printed specially to
  * show magic characters.
  */
-static BOOL
+static int
 printlines(num1, num2, expandflag)
 	NUM	num1;
 	NUM	num2;
-	BOOL	expandflag;
+	int	expandflag;
 {
 	LINE	*lp;
 	unsigned char	*cp;
@@ -964,12 +964,12 @@ printlines(num1, num2, expandflag)
 
 	if ((num1 < 1) || (num2 > lastnum) || (num1 > num2)) {
 		fprintf(stderr, "Bad line range for print\n");
-		return FALSE;
+		return 0;
 	}
 
 	lp = findline(num1);
 	if (lp == NULL)
-		return FALSE;
+		return 0;
 
 	while (num1 <= num2) {
 		if (!expandflag) {
@@ -1010,7 +1010,7 @@ printlines(num1, num2, expandflag)
 		lp = lp->next;
 	}
 
-	return TRUE;
+	return 1;
 }
 
 
@@ -1019,9 +1019,9 @@ printlines(num1, num2, expandflag)
  * The line is inserted so as to become the specified line,
  * thus pushing any existing and further lines down one.
  * The inserted line is also set to become the current line.
- * Returns TRUE if successful.
+ * Returns 1 if successful.
  */
-static BOOL
+static int
 insertline(num, data, len)
 	NUM	num;
 	char	*data;
@@ -1032,13 +1032,13 @@ insertline(num, data, len)
 
 	if ((num < 1) || (num > lastnum + 1)) {
 		fprintf(stderr, "Inserting at bad line number\n");
-		return FALSE;
+		return 0;
 	}
 
 	newlp = (LINE *) malloc(sizeof(LINE) + len - 1);
 	if (newlp == NULL)  {
 		fprintf(stderr, "Failed to allocate memory for line\n");
-		return FALSE;
+		return 0;
 	}
 
 	memcpy(newlp->data, data, len);
@@ -1050,7 +1050,7 @@ insertline(num, data, len)
 		lp = findline(num);
 		if (lp == NULL) {
 			free((char *) newlp);
-			return FALSE;
+			return 0;
 		}
 	}
 
@@ -1060,7 +1060,7 @@ insertline(num, data, len)
 	lp->prev = newlp;
 
 	lastnum++;
-	dirty = TRUE;
+	dirty = 1;
 
 	return setcurnum(num);
 }
@@ -1069,7 +1069,7 @@ insertline(num, data, len)
 /*
  * Delete lines from the given range.
  */
-static BOOL
+static int
 deletelines(num1, num2)
 	NUM	num1;
 	NUM	num2;
@@ -1081,12 +1081,12 @@ deletelines(num1, num2)
 
 	if ((num1 < 1) || (num2 > lastnum) || (num1 > num2)) {
 		fprintf(stderr, "Bad line numbers for delete\n");
-		return FALSE;
+		return 0;
 	}
 
 	lp = findline(num1);
 	if (lp == NULL)
-		return FALSE;
+		return 0;
 
 	if ((curnum >= num1) && (curnum <= num2)) {
 		if (num2 < lastnum)
@@ -1116,9 +1116,9 @@ deletelines(num1, num2)
 		lp = nlp;
 	}
 
-	dirty = TRUE;
+	dirty = 1;
 
-	return TRUE;
+	return 1;
 }
 
 
@@ -1225,9 +1225,9 @@ findline(num)
 
 /*
  * Set the current line number.
- * Returns TRUE if successful.
+ * Returns 1 if successful.
  */
-static BOOL
+static int
 setcurnum(num)
 	NUM	num;
 {
@@ -1235,12 +1235,12 @@ setcurnum(num)
 
 	lp = findline(num);
 	if (lp == NULL)
-		return FALSE;
+		return 0;
 
 	curnum = num;
 	curline = lp;
 
-	return TRUE;
+	return 1;
 }
 
 /* END CODE */

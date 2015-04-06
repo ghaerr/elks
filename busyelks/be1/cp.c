@@ -8,9 +8,12 @@
 
 #include "../sash.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <pwd.h>
@@ -18,14 +21,14 @@
 #include <utime.h>
 #include <errno.h>
 
-void
-cp_main(argc, argv)
-	char	**argv;
+int cp_main(int argc, char **argv)
 {
-	BOOL	dirflag;
+	int	dirflag;
 	char	*srcname;
 	char	*destname;
 	char	*lastarg;
+
+	if (argc < 3) goto usage;
 
 	lastarg = argv[argc - 1];
 
@@ -39,12 +42,17 @@ cp_main(argc, argv)
 	while (argc-- > 2) {
 		srcname = argv[1];
 		destname = lastarg;
-		if (dirflag)
-			destname = buildname(destname, srcname);
+		if (dirflag) destname = buildname(destname, srcname);
 
-		(void) copyfile(*++argv, destname, FALSE);
+		if (!copyfile(*++argv, destname, 0)) goto error_copy;
 	}
 	exit(0);
+
+error_copy:
+	fprintf(stderr, "Failed to copy %s -> %s\n", srcname, destname);
+	exit(1);
+usage:
+	fprintf(stderr, "usage: %s source_file dest_file\n", argv[0]);
+	fprintf(stderr, "       %s file1 file2 ... dest_directory\n", argv[0]);
+	exit(1);
 }
-
-

@@ -37,10 +37,8 @@ struct  chunk   {
 };
 
 
-typedef	int	BOOL;
-
-#define	FALSE	((BOOL) 0)
-#define	TRUE	((BOOL) 1)
+#define	FALSE	0
+#define	TRUE	1
 
 #define BUF_SIZE 4096
 
@@ -56,16 +54,16 @@ extern	void	do_kill(), do_grep(), do_ed();
 extern	char	*buildname();
 extern	char	*modestring();
 extern	char	*timestring();
-extern	BOOL	isadir();
-extern	BOOL	copyfile();
-extern	BOOL	match();
-extern	BOOL	makestring();
-extern	BOOL	makeargs();
+extern	int	isadir();
+extern	int	copyfile();
+extern	int	match();
+extern	int	makestring();
+extern	int	makeargs();
 extern	int	expandwildcards();
 extern	int	namesort();
 extern	char	*getchunk();
 extern	void	freechunks();
 
-extern	BOOL	intflag;
+extern	int	intflag;
 
 /* END CODE */

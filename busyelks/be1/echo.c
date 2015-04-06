@@ -19,14 +19,12 @@
 #include <errno.h>
 
 
-void
-echo_main(argc, argv)
-	char	**argv;
+void echo_main(int argc, char **argv)
 {
-	BOOL	first;
-	char *	sptr;
+	int first;
+	char *sptr;
 
-	first = TRUE;
+	first = 0;
 	while (argc-- > 1) {
 		if (!first)
 			write(STDOUT_FILENO, " ", 1);

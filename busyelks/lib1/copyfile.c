@@ -24,10 +24,7 @@
  * error message output.  (Failure is not indicted if the attributes cannot
  * be set.)
  */
-BOOL copyfile(srcname, destname, setmodes)
-	char	*srcname;
-	char	*destname;
-	BOOL	setmodes;
+int copyfile(char *srcname, char *destname, int setmodes)
 {
 	int		rfd;
 	int		wfd;
@@ -41,7 +38,7 @@ BOOL copyfile(srcname, destname, setmodes)
 
 	if (stat(srcname, &statbuf1) < 0) {
 		perror(srcname);
-		return FALSE;
+		return 0;
 	}
 
 	if (stat(destname, &statbuf2) < 0) {
@@ -55,20 +52,20 @@ BOOL copyfile(srcname, destname, setmodes)
 		write(STDERR_FILENO, "Copying file \"", 14);
 		write(STDERR_FILENO, srcname, strlen(srcname));
 		write(STDERR_FILENO, "\" to itself\n", 12);
-		return FALSE;
+		return 0;
 	}
 
 	rfd = open(srcname, 0);
 	if (rfd < 0) {
 		perror(srcname);
-		return FALSE;
+		return 0;
 	}
 
 	wfd = creat(destname, statbuf1.st_mode);
 	if (wfd < 0) {
 		perror(destname);
 		close(rfd);
-		return FALSE;
+		return 0;
 	}
 
 	while ((rcc = read(rfd, buf, BUF_SIZE)) > 0) {
@@ -92,7 +89,7 @@ BOOL copyfile(srcname, destname, setmodes)
 	close(rfd);
 	if (close(wfd) < 0) {
 		perror(destname);
-		return FALSE;
+		return 0;
 	}
 
 	if (setmodes) {
@@ -106,11 +103,11 @@ BOOL copyfile(srcname, destname, setmodes)
 		(void) utime(destname, &times);
 	}
 
-	return TRUE;
+	return 1;
 
 error_exit:
 	close(rfd);
 	close(wfd);
 
-	return FALSE;
+	return 0;
 }
