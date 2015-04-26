@@ -52,6 +52,7 @@ static char sccsid[] = "@(#)mknodes.c	5.1 (Berkeley) 3/7/91";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 
 #define MAXTYPES 50		/* max number of node types */
@@ -100,12 +101,16 @@ char *savestr();
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 
 
-int skipbl(void) {
-	while (*linep == ' ' || *linep == '\t') linep++;
-}
+/*** Prototypes ***/
+int nextfield(char *buf);
+int readline(void);
+void outsizes(FILE *cfile);
+void outfunc(FILE *cfile, int calcsize);
+int error(char *msg, ...);
 
 
-void parsenode(void) {
+void parsenode(void)
+{
 	char name[BUFLEN];
 	char tag[BUFLEN];
 	struct str *sp;
@@ -145,7 +150,8 @@ void indent(int amount, FILE *fp)
 }
 
 
-void parsefield(void) {
+void parsefield(void)
+{
 	char name[BUFLEN];
 	char type[BUFLEN];
 	char decl[2 * BUFLEN];
@@ -179,7 +185,8 @@ void parsefield(void) {
 		error("Unknown type %s", type);
 	}
 	if (fp->type == T_OTHER || fp->type == T_TEMP) {
-		skipbl();
+		/* skipbl() one-line func inlined here */
+		while (*linep == ' ' || *linep == '\t') linep++;
 		fp->decl = savestr(linep);
 	} else {
 		if (*linep)
@@ -284,7 +291,7 @@ void outfunc(FILE *cfile, int calcsize)
 		fputs("      funcblocksize += nodesize[n->type];\n", cfile);
 	else {
 		fputs("      new = funcblock;\n", cfile);
-		fputs("      *(char **)&funcblock += nodesize[n->type];\n", 
+		fputs("      *(char **)&funcblock += nodesize[n->type];\n",
 									cfile);
 	}
 	fputs("      switch (n->type) {\n", cfile);
@@ -364,7 +371,8 @@ int nextfield(char *buf)
 }
 
 
-int readline(void) {
+int readline(void)
+{
 	register char *p;
 
 	if (fgets(line, 1024, infp) == NULL)
@@ -382,11 +390,15 @@ int readline(void) {
 
 
 
-int error(msg, a1, a2, a3, a4, a5, a6)
-	char *msg;
+int error(char *msg, ...)
 {
+	va_list args;
+
 	fprintf(stderr, "line %d: ", linno);
-	fprintf(stderr, msg, a1, a2, a3, a4, a5, a6);
+	va_start(args, msg);
+	vfprintf(stderr, msg, args);
+	va_end(args);
+
 	putc('\n', stderr);
 	exit(2);
 }
@@ -408,7 +420,7 @@ char * savestr(char *s)
 int main(int argc, char **argv)
 {
 	if (argc != 3)
-		error("usage: mknodes file\n");
+		error("usage: mknodes file");
 	if ((infp = fopen(argv[1], "r")) == NULL)
 		error("Can't open %s", argv[1]);
 	while (readline()) {

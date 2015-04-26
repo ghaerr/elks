@@ -158,7 +158,8 @@ char writer[] = "\
 
 
 
-main(argc, argv)  char **argv; {
+int main(int argc, char **argv)
+{
 	FILE *cfile, *hfile;	
 	struct sig *sigp;
 	int maxsig;
@@ -174,11 +175,9 @@ main(argc, argv)  char **argv; {
 	}
 	maxsig = 0;
 	for (sigp = sigtab ; sigp->signo != 0 ; sigp++) {
-		if (sigp->signo < 0 || sigp->signo > MAXSIG)
-			continue;
+		if (sigp->signo < 0 || sigp->signo > MAXSIG) continue;
 		sigmesg[sigp->signo] = sigp->mesg;
-		if (maxsig < sigp->signo)
-			maxsig = sigp->signo;
+		if (maxsig < sigp->signo) maxsig = sigp->signo;
 	}
 
 	fputs(writer, hfile);
