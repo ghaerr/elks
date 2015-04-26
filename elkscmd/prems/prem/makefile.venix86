@@ -1,0 +1,178 @@
+DEST          = ..
+
+EXTHDRS       =
+
+HDRS          = ../H/arbo.h ../H/bit.h
+
+ELHDRS        = $(HDRS) ../H/elarbo.h ../H/elbit.h
+
+ENHDRS        = $(HDRS) ../H/enarbo.h ../H/enbit.h
+
+LIBRARY       = prem.a
+
+MAKEFILE      = makefile
+
+OBJS          = ela_komun.o \
+		elbit.o \
+		eli_komun.o \
+		elig.o \
+		ellit.o \
+		ena_komun.o \
+		enbit.o \
+		eni_komun.o \
+		enig.o \
+		enlit.o \
+		kre_hfoli.o \
+		kre_nod.o \
+		mkre_foli.o \
+		mkre_litf.o \
+		mkre_nod.o \
+		sekv_niv.o \
+		serch.o \
+		x_kod.o \
+		x_malkod.o \
+		b_prem.o \
+		b_malpre.o
+
+PRINT         = pr
+
+SRCS          =
+
+all:            $(LIBRARY)
+
+$(LIBRARY):     $(OBJS)
+		@echo -n "Loading $(LIBRARY) ... "
+		@ar cru $(LIBRARY) $(OBJS)
+		@echo "done"
+
+ela_komun.o:    ../ELARBO/ela_komun.c $(ELHDRS)
+		cp ../ELARBO/ela_komun.c .
+		cc -O -c -I../H ela_komun.c
+		ld -r -X ela_komun.o && mv a.out ela_komun.o
+
+kre_hfoli.o:    ../ELARBO/kre_hfoli.c $(ELHDRS)
+		cp ../ELARBO/kre_hfoli.c .
+		cc -O -c -I../H kre_hfoli.c
+		ld -r -X kre_hfoli.o && mv a.out kre_hfoli.o
+
+kre_nod.o:      ../ELARBO/kre_nod.c $(ELHDRS)
+		cp ../ELARBO/kre_nod.c .
+		cc -O -c -I../H kre_nod.c
+		ld -r -X kre_nod.o && mv a.out   kre_nod.o
+
+sekv_niv.o:     ../ELARBO/sekv_niv.c $(ELHDRS)
+		cp ../ELARBO/sekv_niv.c .
+		cc -O -c -I../H sekv_niv.c
+		ld -r -X sekv_niv.o && mv a.out  sekv_niv.o
+
+serch.o:        ../ELARBO/serch.c $(ELHDRS)
+		cp ../ELARBO/serch.c .
+		cc -O -c -I../H serch.c
+		ld -r -X serch.o && mv a.out     serch.o
+
+elbit.o:        ../ELIG/elbit.c $(ELHDRS)
+		cp ../ELIG/elbit.c .
+		cc -O -c -I../H elbit.c
+		ld -r -X elbit.o && mv a.out     elbit.o
+
+eli_komun.o:    ../ELIG/eli_komun.c $(ELHDRS)
+		cp ../ELIG/eli_komun.c .
+		cc -O -c -I../H eli_komun.c
+		ld -r -X eli_komun.o && mv a.out eli_komun.o
+
+elig.o:         ../ELIG/elig.c $(ELHDRS)
+		cp ../ELIG/elig.c .
+		cc -O -c -I../H elig.c
+		ld -r -X elig.o && mv a.out      elig.o
+
+ellit.o:        ../ELIG/ellit.c $(ELHDRS)
+		cp ../ELIG/ellit.c .
+		cc -O -c -I../H ellit.c
+		ld -r -X ellit.o && mv a.out     ellit.o
+
+x_kod.o:        ../ELIG/x_kod.c $(ELHDRS)
+		cp ../ELIG/x_kod.c .
+		cc -O -c -I../H x_kod.c
+		ld -r -X x_kod.o && mv a.out     x_kod.o
+
+ena_komun.o:    ../ENARBO/ena_komun.c $(ENHDRS)
+		cp ../ENARBO/ena_komun.c .
+		cc -O -c -I../H ena_komun.c
+		ld -r -X ena_komun.o && mv a.out ena_komun.o
+
+mkre_foli.o:    ../ENARBO/mkre_foli.c $(ENHDRS)
+		cp ../ENARBO/mkre_foli.c .
+		cc -O -c -I../H mkre_foli.c
+		ld -r -X mkre_foli.o && mv a.out mkre_foli.o
+
+mkre_litf.o:    ../ENARBO/mkre_litf.c $(ENHDRS)
+		cp ../ENARBO/mkre_litf.c .
+		cc -O -c -I../H mkre_litf.c
+		ld -r -X mkre_litf.o && mv a.out mkre_litf.o
+
+mkre_nod.o:     ../ENARBO/mkre_nod.c $(ENHDRS)
+		cp ../ENARBO/mkre_nod.c .
+		cc -O -c -I../H mkre_nod.c
+		ld -r -X mkre_nod.o && mv a.out  mkre_nod.o
+
+enbit.o:        ../ENIG/enbit.c $(ENHDRS)
+		cp ../ENIG/enbit.c .
+		cc -O -c -I../H enbit.c
+		ld -r -X enbit.o && mv a.out     enbit.o
+
+eni_komun.o:    ../ENIG/eni_komun.c $(ENHDRS)
+		cp ../ENIG/eni_komun.c .
+		cc -O -c -I../H eni_komun.c
+		ld -r -X eni_komun.o && mv a.out eni_komun.o
+
+enig.o:         ../ENIG/enig.c $(ENHDRS)
+		cp ../ENIG/enig.c .
+		cc -O -c -I../H enig.c
+		ld -r -X enig.o && mv a.out      enig.o
+
+enlit.o:        ../ENIG/enlit.c $(ENHDRS)
+		cp ../ENIG/enlit.c .
+		cc -O -c -I../H enlit.c
+		ld -r -X enlit.o && mv a.out     enlit.o
+
+x_malkod.o:     ../ENIG/x_malkod.c $(ENHDRS)
+		cp ../ENIG/x_malkod.c .
+		cc -O -c -I../H x_malkod.c
+		ld -r -X x_malkod.o && mv a.out  x_malkod.o
+
+b_prem.o:       ../b_prem.c $(ELHDRS)
+		cp ../b_prem.c .
+		cc -O -c -I../H b_prem.c
+		ld -r -X b_prem.o && mv a.out  b_prem.o
+
+b_malpre.o:     ../b_malpre.c $(ENHDRS)
+		cp ../b_malpre.c .
+		cc -O -c -I../H b_malpre.c
+		ld -r -X b_malpre.o && mv a.out  b_malpre.o
+
+clean:;         @rm -f $(OBJS)
+
+depend:;        @mkmf -f $(MAKEFILE) LIBRARY=$(LIBRARY) DEST=$(DEST)
+
+extract:;       @ar xo $(DEST)/$(LIBRARY)
+		@rm -f __.SYMDEF
+
+index:;         @ctags -wx $(HDRS) $(SRCS)
+
+install:        $(LIBRARY)
+		@echo Installing $(LIBRARY) in $(DEST)
+		@mv $(LIBRARY) $(DEST)
+		@ranlib $(DEST)/$(LIBRARY)
+
+library:        $(LIBRARY)
+
+print:;         @$(PRINT) $(HDRS) $(SRCS)
+
+tags:           $(HDRS) $(SRCS); @ctags $(HDRS) $(SRCS)
+
+update:         $(DEST)/$(LIBRARY)
+
+$(DEST)/$(LIBRARY): $(SRCS) $(HDRS) $(EXTHDRS)
+		@-ar xo $(DEST)/$(LIBRARY)
+		@make -f $(MAKEFILE) DEST=$(DEST) install clean
+###

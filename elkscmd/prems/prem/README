@@ -1,0 +1,2 @@
+linux86:
+ make CC=bcc AR=ar86 LD=ld86 LINKER=bcc

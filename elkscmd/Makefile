@@ -21,7 +21,7 @@ include $(BASEDIR)/Make.defs
 
 DIRS		= sys_utils misc_utils byacc disk_utils file_utils levee \
 		  m4 minix1 minix2 minix3 ash bc mtools sash sh_utils \
-		  inet ktcp
+		  inet ktcp prems
 
 DONTUSE 	= debug_utils lib prn-utils rc tools xvi
 
@@ -201,7 +201,7 @@ full1680:
 	then echo -e "\n\n *** Only root can build disk images *** \n\n"; exit 1; fi
 	@$(MAKE) _build_bootable_target \
 		TARGET_FS=$(FULL1680_TARGET_FS) \
-		TARGET_RFS=rfs \
+		TARGET_RFS=max_rfs \
 		TARGET_BLKS=$(FULL1680_TARGET_BLKS) \
 		INSTALL_KTCP=yes
 full3:
@@ -209,7 +209,7 @@ full3:
 	then echo -e "\n\n *** Only root can build disk images *** \n\n"; exit 1; fi
 	@$(MAKE) _build_bootable_target \
 		TARGET_FS=$(FULL3_TARGET_FS) \
-		TARGET_RFS=rfs \
+		TARGET_RFS=max_rfs \
 		TARGET_BLKS=$(FULL3_TARGET_BLKS) \
 		INSTALL_KTCP=yes
 
@@ -218,7 +218,7 @@ full5:
 	then echo -e "\n\n *** Only root can build disk images *** \n\n"; exit 1; fi
 	@$(MAKE) _build_bootable_target \
 		TARGET_FS=$(FULL5_TARGET_FS) \
-		TARGET_RFS=max_rfs \
+		TARGET_RFS=rfs \
 		TARGET_BLKS=$(FULL5_TARGET_BLKS) \
 		INSTALL_KTCP=yes
 

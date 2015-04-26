@@ -1,0 +1,29 @@
+/*
+ * Funkcioj por eligi kodojn pobite
+ *
+ * ek_elbit()                  /* iniciati eligon
+ * fin_elbit()                 /* eligi la bitan bufron
+ * el_lit( komenc )            /* eligi literalon, redonas
+ *                             /* (n_l - komenc) % MAKSLITLON
+ *
+ * $Header$
+ * $Log$
+ */
+
+#include "bit.h"
+#include "elarbo.h"
+
+/* eligi unu biton */ /* chiam makro */
+#define EL_BIT( bit ) el_bit( bit )
+#define EL_B_0() el_bit( 0 );
+#define EL_B_1() el_bit( 1 );
+void el_llon(), el_flon(), el_min_kod(), el_fnum();
+#define EL_LLON( val ) el_llon( val ) /* por longecoj de literaloj */
+#define EL_FLON( val ) el_flon( val ) /* por longecoj de folioj */
+#define EL_MIN_KOD( val, diap ) el_min_kod( val, diap )
+#ifdef DIAP_KOD
+#define EL_FNUM( num, dia ) \
+        el_fnum( num, dia ) /* relativa numero de folio */
+#else  DIAP_KOD
+#define EL_FNUM( num, dia ) el_min_kod( num, dia )
+#endif DIAP_KOD

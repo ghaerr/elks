@@ -1,0 +1,27 @@
+/*
+ * Funkcioj por enigi kodojn pobite
+ *
+ * ek_enbit()             /* iniciati enigon
+ * en_lit()               /* enigi literalon, redonas 1,
+ *                        /* se ne maksimume longa, alie 0
+ * $Header$
+ * $Log$
+ */
+
+#include "bit.h"
+#include "enarbo.h"
+
+/* enigi unu biton */ /* chiam makro */
+#define EN_BIT() en_bit()
+NIVEL en_llon(), en_flon();
+unsigned int en_min_kod();
+NODNUM en_fnum();
+#define EN_LLON( val ) val = en_llon() /* enigi longecon de literalo */
+#define EN_FLON( val ) val = en_flon() /* enigi longecon de folio */
+#define EN_MIN_KOD( val, dia ) val = en_min_kod( dia )
+#ifdef DIAP_KOD
+#define EN_FNUM( val, dia ) \
+          val = en_fnum( dia ) /* enigi relativan numeron de folio */
+#else  DIAP_KOD
+#define EN_FNUM( val, dia ) val = en_min_kod( dia )
+#endif DIAP_KOD

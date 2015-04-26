@@ -1,0 +1,70 @@
+PREM/PRES
+
+2015-04-26
+
+This is a straightforward compression library written from scratch
+and a compress/gzip lookalike front end using the library, both
+created back in 1990.
+
+This suite was specifically developed for use under 16-bit Unix,
+namely Venix/86. It has very modest and tunable memory requirements.
+
+The algorithm uses a simplified approach based on
+ Fiala,E.R., and Greene,D.H. Data compression with finite windows,
+   Comm.of the ACM, 32(4), 490-505, April 1989.
+
+Any possible related patents should be void by now (2015).
+
+The code has been compiled and used on several platforms,
+including Venix-2.0/8086, SUN Solaris 2.x/SPARC, Linux/i386.
+
+This suite largely outperforms the "compress" utility compiled for
+ELKS. Testing on a Debian i386 Linux:
+
+$ cat /bin/* | time elksemu compress -v >/dev/null
+Compression: 17.11%
+real    0m 3.45s
+user    0m 0.02s
+sys     0m 3.41s
+$ cat /bin/* | time elksemu pres >/dev/null
+Compression: 49%
+real    0m 1.74s
+user    0m 0.02s
+sys     0m 1.69s
+
+The B_PREM directory contains some old test code pieces, not needed
+otherwise.
+
+PREM contains the library, PRES contains a couple of front ends, one
+is a "compress" lookalike for file/stream compression, the other is for
+writing/reading large archives on floppy-like media.
+
+I release the code included in this archive under the following terms:
+
+Copyright (c) 1990-2015 RL @ Aetey Global Technologies AB
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+

@@ -1,0 +1,4 @@
+linux86:
+ make CC=bcc AR=ar86 LD=ld86 LINKER=bcc
+
+MAXFNAMEC was 14 on Venix/86

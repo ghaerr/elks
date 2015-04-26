@@ -62,7 +62,7 @@ smin_rfs:
 install: m4
 	cp -p m4 $(TARGET_MNT)/usr/bin
 	mkdir -p $(TARGET_MNT)/usr/man/man1/
-	$(COMPRESS) -b12 < m4.1 > $(TARGET_MNT)/usr/man/man1/m4.1.Z
+#	$(COMPRESS) -b12 < m4.1 > $(TARGET_MNT)/usr/man/man1/m4.1.Z
 
 test: m4
 	m4 < test.m4 > test_host_m4.txt

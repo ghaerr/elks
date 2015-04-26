@@ -1,7 +1,5 @@
 BASEDIR=..
 
-LOCALFLAGS=-D_POSIX_SOURCE
-
 include $(BASEDIR)/Make.defs
 
 ###############################################################################
@@ -11,7 +9,7 @@ include $(BASEDIR)/Make.defs
 MIN_BIN 	= 
 MIN_LIB 	= 
 MIN_SBIN	= 
-MIN_USR_BIN	= 
+MIN_USR_BIN	=
 MIN_USR_LIB	= 
 MIN_USR_MAN	= 
 MIN_USR_SBIN	= 
@@ -19,49 +17,44 @@ MIN_USR_SBIN	=
 NET_BIN 	= 
 NET_LIB 	= 
 NET_SBIN	= 
-NET_USR_BIN	= lp tget
+NET_USR_BIN	=
 NET_USR_LIB	= 
 NET_USR_MAN	= 
-NET_USR_SBIN	= lpd
+NET_USR_SBIN	= 
 
-STD_BIN 	= 
+STD_BIN		= pres/pres
 STD_LIB 	= 
 STD_SBIN	= 
-STD_USR_BIN	= env pwdauth remsync synctree
+STD_USR_BIN	= 
 STD_USR_LIB	= 
 STD_USR_MAN	= 
-STD_USR_SBIN	= install mt
+STD_USR_SBIN	= 
 
 include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS=env install lp pwdauth remsync synctree tget
-RFS_PRGS=env install lp pwdauth tget
+CFLAGS	= $(CFLBASE)
 
-# lpd mt	# Do not compile.
+PRGS =	pres/pres
 
-NETPRGS=env
+NETPRGS =
 
-all: $(PRGS)
-
-lpd: lpd.o ../lib/mktemp.o
-
-../lib/mktemp.o:
-	make -C ../lib mktemp.o
+all:
+	make -C prem all
+	make -C pres all
 
 max_rfs: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin
 
 rfs: all
-	cp -p $(RFS_PRGS) $(TARGET_MNT)/bin
 
 net_rfs: all
-	cp -p $(NETPRGS) $(TARGET_MNT)/bin
 
 min_rfs: all
 
 smin_rfs: all
 
 clean:
-	rm -f core *.o $(PRGS)
+	make -C pres clean
+	make -C prem clean
