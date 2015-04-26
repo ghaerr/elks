@@ -93,21 +93,17 @@ static size_t pipe_read(register struct inode *inode, struct file *filp,
     register char *chars;
 
     debug("PIPE: read called.\n");
-    if (filp->f_flags & O_NONBLOCK) {
-	if ((inode->u.pipe_i.lock))
-	    return -EAGAIN;
-	if (((inode->u.pipe_i.len) == 0))
-	    return ((inode->u.pipe_i.writers)) ? -EAGAIN : 0;
-    } else
-	while (((inode->u.pipe_i.len) == 0) || (inode->u.pipe_i.lock)) {
-	    if (((inode->u.pipe_i.len) == 0)) {
-		if (!(inode->u.pipe_i.writers))
-		    return 0;
-	    }
-	    if (current->signal)
-		return -ERESTARTSYS;
-	    interruptible_sleep_on(&(inode->u.pipe_i.wait));
+    while(!(inode->u.pipe_i.len) || (inode->u.pipe_i.lock)) {
+	if(!(inode->u.pipe_i.lock) && !(inode->u.pipe_i.writers)) {
+	    return 0;
 	}
+	if(filp->f_flags & O_NONBLOCK) {
+	    return -EAGAIN;
+	}
+	if(current->signal)
+	    return -ERESTARTSYS;
+	interruptible_sleep_on(&(inode->u.pipe_i.wait));
+    }
     (inode->u.pipe_i.lock)++;
     while (count > 0 && inode->u.pipe_i.len) {
 	chars = (char *)(PIPE_BUF - (inode->u.pipe_i.start));

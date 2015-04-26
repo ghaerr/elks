@@ -244,7 +244,7 @@ void out_hd(unsigned int drive,unsigned int nsect,unsigned int sect,
     return;
 }
 
-int directhd_init()
+int directhd_init(void)
 {
     unsigned int buffer[256];
     struct gendisk *ptr;
@@ -380,11 +380,8 @@ int directhd_init()
 /* why is arg unsigned int here if it's used as hd_geometry later ?
  * one of joys of K&R ? Someone please answer ...
  */
-static int directhd_ioctl(
-     struct inode *inode,
-     struct file *filp,
-     unsigned int cmd,
-     unsigned int arg)
+static int directhd_ioctl(struct inode *inode, struct file *filp,
+		unsigned int cmd, unsigned int arg)
 {
     struct hd_geometry *loc = (struct hd_geometry *) arg;
     int dev, err;
@@ -415,13 +412,15 @@ static int directhd_ioctl(
     return -EINVAL;
 }
 
-static int directhd_open(
-     struct inode *inode,
-     struct file *filp)
+static int directhd_open(struct inode *inode, struct file *filp)
 {
+    unsigned int minor;
     int target = DEVICE_NR(inode->i_rdev);
 
     if (target >= 4 || !directhd_initialized)
+	return -ENXIO;
+    minor = MINOR(inode->i_rdev);
+    if (((int) hd[minor].start_sect) == -1)
 	return -ENXIO;
 
     access_count[target]++;
@@ -433,12 +432,11 @@ static int directhd_open(
      * any clues ?
      */
 
+    inode->i_size = (hd[minor].nr_sects) << 9;
     return 0;
 }
 
-static void directhd_release(
-     struct inode *inode,
-     struct file *filp)
+static void directhd_release(struct inode *inode, struct file *filp)
 {
     int target = DEVICE_NR(inode->i_rdev);
 

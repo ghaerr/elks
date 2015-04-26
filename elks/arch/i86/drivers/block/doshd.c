@@ -341,10 +341,12 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 {
     register struct drive_infot *drivep;
     int fdtype, target;
+    unsigned int minor;
 
     target = DEVICE_NR(inode->i_rdev);	/* >> 6 */
     drivep = &drive_info[target];
     fdtype = drivep->fdtype;
+    minor = MINOR(inode->i_rdev);
 
 /* Bounds testing */
 
@@ -352,7 +354,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	return -ENXIO;
     if (target >= 4)
 	return -ENXIO;
-    if (((int) hd[MINOR(inode->i_rdev)].start_sect) == -1)
+    if (((int) hd[minor].start_sect) == -1)
 	return -ENXIO;
 
 #if 0
@@ -426,6 +428,8 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	    drivep->sectors = sector_probe[count];
 	} while(++count < 5);
 
+	drivep->heads = 2;
+
 #else
 
 /* We can get the Geometry of the floppy from the BIOS.
@@ -477,10 +481,14 @@ static int bioshd_open(struct inode *inode, struct file *filp)
  *
  *	You may have to copy dpb to RAM as the original is in ROM.
  */
+	hd[minor].start_sect = 0;
+	hd[minor].nr_sects = ((sector_t)(drivep->sectors * drivep->heads))
+				* ((sector_t)drivep->cylinders);
 
     }
 #endif
 
+    inode->i_size = (hd[minor].nr_sects) << 9;
     return 0;
 }
 

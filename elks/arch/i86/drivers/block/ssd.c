@@ -1,7 +1,5 @@
 #include <linuxmt/config.h>
-#if 0
-#include <linuxmt/rd.h>
-#endif
+/*#include <linuxmt/rd.h>*/
 #include <linuxmt/major.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/debug.h>
@@ -9,7 +7,7 @@
 
 #ifdef CONFIG_BLK_DEV_SSD
 
-#define MAJOR_NR 3
+#define MAJOR_NR 3	/* FLOPPY_MAJOR as the're fairly similar in practice */
 
 #define SSDDISK
 #include "blk.h"
@@ -72,6 +70,7 @@ static int ssd_open(struct inode *inode, struct file *filp)
     if (rd_busy[target])
 	return (-EBUSY);
 #endif
+    inode->i_size = NUM_SECTS << 9;
     return 0;
 }
 
@@ -170,8 +169,9 @@ ssd_read_blk(int target,
 	     unsigned long start, register char *buff, unsigned long count)
 {
     /* read a number of sectors from ssd */
-    char *destination = buff;
     unsigned int address_high, address_low, loop;
+
+    char *destination = buff;
 
     address_high = (unsigned int) (start >> 7);	/* Start * 512/65536 */
     address_low = (unsigned int) ((start & 0x7F) << 9);
@@ -180,10 +180,9 @@ ssd_read_blk(int target,
     printk("SSD high = %x, low %x\n", address_high, address_low);
 #endif
 
-    for (loop = 0; loop < (count * 512); loop++) {
-	*destination = ssd_read4(address_high, (address_low + loop));
-	destination++;
-    }
+    for (loop = 0; loop < (count << 9); loop++)
+	*destination++ = ssd_read4(address_high, (address_low + loop));
+
 }
 
 #endif

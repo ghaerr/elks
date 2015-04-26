@@ -214,6 +214,14 @@ static int dir_namei(register char *pathname, size_t * namelen,
     return error;
 }
 
+/*
+ *	_namei()
+ *
+ * Get the inode of 'pathname'.
+ *
+ * follow_links != 0 means can follow links
+ *
+ */
 int _namei(char *pathname, struct inode *base, int follow_links,
 	   register struct inode **res_inode)
 {
@@ -253,6 +261,10 @@ int _namei(char *pathname, struct inode *base, int follow_links,
  * is used by most simple commands to get the inode of a specified name.
  * Open, link etc use their own routines, but this is enough for things
  * like 'chmod' etc.
+ *
+ * dir can be: IS_DIR, pathname must be a directory
+ *             NOT_DIR, pathname must not be a directory
+ *             0,       pathname may be any
  */
 int namei(char *pathname, register struct inode **res_inode, int dir, int perm)
 {
@@ -612,5 +624,5 @@ int sys_rename(register char *oldname, char *newname)
     return !(err = sys_link(oldname, newname))
 	? sys_unlink(oldname)
 	: err;
-	    
+
 }

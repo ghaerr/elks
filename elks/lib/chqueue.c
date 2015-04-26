@@ -1,5 +1,5 @@
 /* lib/chqueue.c
- * (C) 1997 Chad Page 
+ * (C) 1997 Chad Page
  *
  * (Based on the original character queue code by Alan Cox(?))
  *
@@ -64,6 +64,7 @@ int chq_addch(register struct ch_queue *q, unsigned char c, int wait)
     return 0;
 }
 
+#if 0
 /* Deletes last character in list */
 int chq_delch(register struct ch_queue *q)
 {
@@ -73,6 +74,7 @@ int chq_delch(register struct ch_queue *q)
     }
     return 0;
 }
+#endif
 
 /* Gets tail character, waiting for one if wait != 0 */
 int chq_getch(register struct ch_queue *q, register unsigned char *c, int wait)

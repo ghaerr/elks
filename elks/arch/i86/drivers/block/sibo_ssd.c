@@ -7,7 +7,7 @@
 
 #ifdef CONFIG_BLK_DEV_SSD
 
-#define MAJOR_NR 3		/* FLOPPY_MAJOR as the're fairly similar in practice */
+#define MAJOR_NR 3	/* FLOPPY_MAJOR as the're fairly similar in practice */
 
 #define SSDDISK
 #include "blk.h"
@@ -73,6 +73,7 @@ static int ssd_open(struct inode *inode, struct file *filp)
     if (rd_busy[target])
 	return (-EBUSY);
 #endif
+    inode->i_size = NUM_SECTS << 9;
     return 0;
 }
 
@@ -118,8 +119,7 @@ static int ssd_ioctl(register struct inode *inode,
 static void do_ssd_request(void)
 {
     register char *buff;
-    unsigned long count;
-    unsigned long start;
+    unsigned long count, start;
     int target;
 
     while (1) {
@@ -192,7 +192,7 @@ ssd_read_blk(int target,
     for (loop = 0; loop < (count << 9); loop = loop + 0x10)
 	ssd_readblk4(address_high, (address_low + loop), (buff + loop));
 #else
-    for (loop = 0; loop < (count * 512); loop++)
+    for (loop = 0; loop < (count << 9); loop++)
 	*destination++ = ssd_read4(address_high, (address_low + loop));
 #endif
 

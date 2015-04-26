@@ -36,26 +36,3 @@ void memdumpk(__u16 seg,__u16 off,size_t len)
 	len -= 8;
     }
 }
-
-void printsp(void)
-{
-#ifndef S_SPLINT_S
-#asm
-
-    .data
-msg:	.ascii	"SP=%x:%x\n"
-	.byte	0
-
-    .text
-	push sp
-	push ss
-	push #msg
-	call _printk
-	pop ax
-	pop ax
-	pop ax
-	ret
-
-#endasm
-#endif
-}

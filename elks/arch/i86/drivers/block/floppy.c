@@ -275,7 +275,7 @@ static unsigned short min_report_error_cnt[4] = { 2, 2, 2, 2 };
 extern char tmp_floppy_area[BLOCK_SIZE];
 extern char floppy_track_buffer[512 * 2 * MAX_BUFFER_SECTORS];
 
-static void redo_fd_request();
+static void redo_fd_request(void);
 
 /*
  * These are global variables, as that's the easiest way to give
@@ -299,7 +299,7 @@ static unsigned char current_track = NO_TRACK;
 static unsigned char command = 0;
 static unsigned char fdc_version = FDC_TYPE_STD;	/* FDC version code */
 
-static void floppy_ready();
+static void floppy_ready(void);
 
 static void delay_loop(int cnt)
 {
@@ -316,7 +316,7 @@ __asm__("cld ; rep ; movsl" \
 	:"c" (BLOCK_SIZE/4),"S" ((long)(from)),"D" ((long)(to)) \
 	:"cx","di","si")
 #else
-static void copy_buffer(from, to)
+static void copy_buffer(void *from, void *to)
 {
     memcpy(to, from, BLOCK_SIZE);
 }
@@ -829,7 +829,7 @@ static void transfer(void)
 	redo_fd_request();
 }
 
-static void recalibrate_floppy()
+static void recalibrate_floppy(void)
 {
     recalibrate = 0;
     current_track = 0;
@@ -857,7 +857,7 @@ static void recal_interrupt(void)
 	redo_fd_request();
 }
 
-static void unexpected_floppy_interrupt()
+static void unexpected_floppy_interrupt(void)
 {
     current_track = NO_TRACK;
     output_byte(FD_SENSEI);
@@ -939,10 +939,8 @@ static void shake_done(void)
     redo_fd_request();
 }
 
-/* FIXME: How does one ANSI'fy the following function? */
 
-static int retry_recal(proc)
-     void (*proc) ();
+static int retry_recal(void (*proc)())
 {
     output_byte(FD_SENSEI);
     if (result() == 2 && (ST0 & 0x10) != 0x10)
@@ -1316,7 +1314,7 @@ static void config_types(void)
  */
 static int floppy_open(struct inode *inode, struct file *filp)
 {
-    int drive, old_dev;
+    int drive, old_dev, device;
 
     drive = inode->i_rdev & 3;
     old_dev = fd_device[drive];
@@ -1330,6 +1328,22 @@ static int floppy_open(struct inode *inode, struct file *filp)
 	invalidate_buffers(old_dev);
     if (filp && filp->f_mode)
 	check_disk_change(inode->i_rdev);
+
+/* FIXME: Put the correct value for inode->i_size */
+    device = MINOR(inode->i_rdev);
+    if (device > 3)
+	floppy = (device >> 2) + floppy_type;
+    else {			/* Auto-detection */
+	floppy = current_type[device & 3];
+	if (!floppy) {
+	    probing = 1;
+	    floppy = base_type[device & 3];
+	    if (!floppy)
+		return -ENXIO;
+	}
+    }
+    inode->i_size = ((sector_t)(floppy->size)) << 9;
+
     return 0;
 }
 

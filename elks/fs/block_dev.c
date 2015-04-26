@@ -23,23 +23,14 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 		  char *buf, size_t count, int wr)
 {
     register struct buffer_head *bh;
-    kdev_t dev;
-    unsigned int offset;
-    size_t chars;
+    size_t chars, offset;
     int written = 0;
 
-    dev = inode->i_rdev;
-
     while (count > 0) {
-
     /*
      *      Offset to block/offset
      */
-	offset = ((unsigned int)filp->f_pos) & (BLOCK_SIZE - 1);
-
-	/*
-	 *      Bytes to do
-	 */
+	offset = ((size_t)filp->f_pos) & (BLOCK_SIZE - 1);
 	chars = BLOCK_SIZE - offset;
 	if (chars > count)
 	    chars = count;
@@ -47,10 +38,13 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	 *      Read the block in - use getblk on a write
 	 *      of a whole block to avoid a read of the data.
 	 */
-	bh = getblk(dev, (block_t)(filp->f_pos >> BLOCK_SIZE_BITS));
+	bh = getblk(inode->i_rdev, (block_t)(filp->f_pos >> BLOCK_SIZE_BITS));
 	if((wr == BLOCK_READ) || (chars != BLOCK_SIZE)) {
-		if (!readbuf(bh))
-			return written ? written : -EIO;
+	    if (!readbuf(bh)) {
+		if(!written)
+		    written = -EIO;
+		break;
+	    }
 	}
 
 	map_buffer(bh);
@@ -67,7 +61,9 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	    wait_on_buffer(bh);
 	    if (!bh->b_uptodate) { /* Write error. */
 		unmap_brelse(bh);
-		return -EIO;
+		if(!written)
+		    written = -EIO;
+		break;
 	    }
 	} else {
 	    /*
@@ -86,7 +82,7 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	written += chars;
 	count -= chars;
     }
-    return ((wr == BLOCK_WRITE) && !written) ? -ENOSPC : written;
+    return written;
 }
 
 int block_read(struct inode *inode, register struct file *filp,
