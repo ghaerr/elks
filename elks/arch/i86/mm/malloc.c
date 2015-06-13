@@ -455,7 +455,7 @@ int sys_brk(__pptr len)
         return -ENOMEM;
     if (currentp->t_begstack > currentp->t_endbrk)
         if(len > currentp->t_endseg - 0x1000) {
-		printk("sys_brk failed: len %d > endseg %d\n", len, (currentp->t_endseg - 0x1000));
+		printk("sys_brk failed: len %u > endseg %u\n", len, (currentp->t_endseg - 0x1000));
             return -ENOMEM;
 	}
 

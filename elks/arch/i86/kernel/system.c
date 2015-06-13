@@ -8,7 +8,9 @@
 #include <arch/segment.h>
 
 int arch_cpu;			/* Processor type */
+#ifdef CONFIG_ARCH_SIBO
 extern long int basmem;
+#endif
 
 /* Stubs for functions needed elsewhere */
 
@@ -39,6 +41,10 @@ void setup_arch(seg_t *start, seg_t *end)
 
 /*
  *	Fill in the MM numbers - really ought to be in mm not kernel ?
+ */
+
+/*
+ *      This computes the 640K - _endbss
  */
 
 #ifndef CONFIG_ARCH_SIBO

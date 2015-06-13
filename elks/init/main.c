@@ -51,7 +51,7 @@ void start_kernel(void)
     calibrate_delay();
 #endif
 
-    setup_mm();			/* Architecture specifics */
+    setup_mm(base, end);		/* Architecture specifics */
     tty_init();
     buffer_init();
 

@@ -1,8 +1,10 @@
 #include <linuxmt/config.h>
+#include <linuxmt/mm.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/timex.h>
 
 #include <arch/io.h>
+#include <arch/irq.h>
 
 /*
  *	Timer tick routine
@@ -49,18 +51,8 @@ void timer_tick(int irq, struct pt_regs *regs, void *data)
 
 #ifndef CONFIG_ARCH_SIBO
 
-#ifndef S_SPLINT_S
 #if 0
-#asm
-	! rotate the 20th character on the 3rd screen line
-	push es
-	mov ax,#0xb80a
-	mov es,ax
-	seg es
-	inc 40
-	pop es
-#endasm
-#endif
+    pokew(0xb80a, 40, peekw(0xb80a, 40)+1);
 #endif
 
 #ifdef CONFIG_DEBUG_TIMER
@@ -69,19 +61,14 @@ void timer_tick(int irq, struct pt_regs *regs, void *data)
 
 #else
 
-	/* As we are now responsible for clearing interrupt */
-#ifndef S_SPLINT_S
-#asm
-	cli
-	mov ax, #0x0000
+    /* As we are now responsible for clearing interrupt */
+    clr_irq();
 
-	out 0x0a, al
-	out 0x0c, al
-	
-	out 0x10, al
-	sti
-#endasm
-#endif
+    outb(0x0, 0x0A);
+    outb(0x0, 0x0C);
+    outb(0x0, 0x10);
+
+    set_irq();
 
     keyboard_irq(1, regs, NULL);
 

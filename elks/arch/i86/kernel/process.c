@@ -19,9 +19,9 @@
 #asm
 
     .text
-  
+
 /*
- *  This code is either in code segment or CONFIG_ROM_IRQ_DATA 
+ *  This code is either in code segment or CONFIG_ROM_IRQ_DATA
  *  The CS-Code must always be placed in irqtab.c, because the
  *  linker doesnt store them in block.
  */
@@ -222,21 +222,11 @@ int run_init_process(char *cmd, char *ar)
     *pip++ = 0;
     *pip++ = (unsigned short int) &ar[6];
     *pip++ = 0;
-    if(num = sys_execve(cmd, ar, 18)) {
-	printk("sys_execve(\"%s\", args, 18) => %d.\n", cmd, -num);
-	return num;
+    if(!(num = sys_execve(cmd, ar, 18))) {
+	ret_from_syscall();
     }
-#ifndef S_SPLINT_S
-    /* Brackets round the following code are required as a work around
-     * for a bug in the compiler which causes it to jump past the asm
-     * code if they are not there.
-     */
-    {
-#asm
-        br  _ret_from_syscall
-#endasm
-    }
-#endif
+    printk("sys_execve(\"%s\", args, 18) => %d.\n", cmd, -num);
+    return num;
 }
 
 /*
@@ -381,8 +371,6 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
  * function while on its kernel stack. We push the
  * registers suitably for
  */
-
-extern void ret_from_syscall();		/* our return address */
 
 void arch_build_stack(struct task_struct *t, char *addr)
 {

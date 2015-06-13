@@ -28,14 +28,13 @@
 char cpuid[17], proc_name[17];
 __u16 kernel_cs, kernel_ds;
 
-void setup_mm(void)
+void setup_mm(seg_t start, seg_t end)
 {
-    long memstart, memend;
     register char *pi;
-    __u16 basemem = setupw(0x2a);
 #ifdef CONFIG_XMS
     __u16 xms = setupw(2);		/* Fetched by boot code */
 #endif
+
     pi = 0;
     do {
 	proc_name[(int)pi] = setupb(0x30 + (int)pi);
@@ -45,19 +44,19 @@ void setup_mm(void)
 
 #ifdef CONFIG_ARCH_SIBO
 
-    printk("Psion Series 3a machine, %s CPU\n%dK base"
+    printk("Psion Series 3a machine, %s CPU\n%uK base"
 	   ", CPUID `NEC V30'",
 	   proc_name, basemem, cpuid);
 
 #else
 
-    printk("PC/%cT class machine, %s CPU\n%dK base RAM",
-	   arch_cpu > 5 ? 'A' : 'X', proc_name, basemem);
+    printk("PC/%cT class machine, %s CPU\n%uK base RAM",
+	   arch_cpu > 5 ? 'A' : 'X', proc_name, setupw(0x2a));
 #ifdef CONFIG_XMS
     if (arch_cpu < 6)
 	xms = 0;		/* XT bios hasn't got xms interrupt */
     else
-	printk(", %dK extended memory (XMS)", xms);
+	printk(", %uK extended memory (XMS)", xms);
 #endif
     if (*cpuid)
 	printk(", CPUID `%s'", cpuid);
@@ -70,25 +69,8 @@ void setup_mm(void)
 	   (unsigned)_endbss - (unsigned)_enddata,
 	   kernel_cs, kernel_ds);
 
-    /*
-     *      This computes the 640K - _endbss
-     */
-
-#ifdef CONFIG_ARCH_SIBO
-
-    memend = ((long) basemem) << 10;
-
-#else
-
-    memend = (((long) basemem) << 10L) - (RAM_REDUCE << 4L);
-
-#endif
-
-    memstart = ((long) kernel_ds) << 4;
-    memstart += (unsigned int) _endbss + 15;
-
-    printk("%d K of memory for user processes.\n",
-	   (int) ((memend - memstart) >> 10));
+    printk("%u K of memory for user processes.\n",
+	   (int) ((end - start) >> 6));
 
     if (setupb(0x1ff) == 0xAA && arch_cpu > 5)
 	printk("ps2: PS/2 pointing device detected\n");

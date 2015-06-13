@@ -17,15 +17,15 @@ BASEDIR 	= ../../..
 
 USEBCC 		= Y
 
-CLEANDEP	= 
+CLEANDEP	=
 
-CLEANME 	= 
+CLEANME 	=
 
-DEPEND  	= 
+DEPEND  	=
 
-DISTFILES	= 
+DISTFILES	=
 
-NOINDENT	= segment.c user.c
+NOINDENT	= user.c
 
 #########################################################################
 # Include the standard commands.
@@ -35,7 +35,7 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-OBJS  = init.o segment.o malloc.o user.o
+OBJS  = init.o malloc.o user.o
 
 #########################################################################
 # Commands.
