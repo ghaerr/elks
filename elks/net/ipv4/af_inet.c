@@ -164,11 +164,6 @@ static int inet_connect(register struct socket *sock,
     return 0;
 }
 
-void inet_socketpair(void)
-{
-    debug("inet_sockpair\n");
-}
-
 #ifndef CONFIG_SOCK_CLIENTONLY
 
 static int inet_listen(register struct socket *sock, int backlog)
@@ -236,11 +231,6 @@ static int inet_accept(register struct socket *sock,
 }
 
 #endif
-
-void inet_getname(void)
-{
-    debug("inet_getname\n");
-}
 
 static int inet_read(register struct socket *sock, char *ubuf, int size,
 		     int nonblock)
@@ -349,41 +339,6 @@ static int inet_select(register struct socket *sock,
     return 0;
 }
 
-void inet_ioctl(void)
-{
-    debug("inet_ioctl\n");
-}
-
-void inet_shutdown(void)
-{
-    debug("inet_shutdown\n");
-}
-
-void inet_setsockopt(void)
-{
-    debug("setsockopt\n");
-}
-
-void inet_getsockopt(void)
-{
-    debug("inet_getsockopt\n");
-}
-
-void inet_fcntl(void)
-{
-    debug("inet_fcntl\n");
-}
-
-void inet_sendto(void)
-{
-    debug("inet_sendto\n");
-}
-
-void inet_recvfrom(void)
-{
-    debug("inet_recvfrom\n");
-}
-
 static int inet_send(struct socket *sock, void *buff, int len, int nonblock,
 		     unsigned int flags)
 {
@@ -402,6 +357,12 @@ static int inet_recv(struct socket *sock, void *buff, int len, int nonblock,
     return inet_read(sock, (char *) buff, len, nonblock);
 }
 
+int not_implemented(void)	/* Originally returned void */
+{
+    debug("not_implemented\n");
+    return 0;
+}
+
 /*@-type@*/
 
 static struct proto_ops inet_proto_ops = {
@@ -411,7 +372,7 @@ static struct proto_ops inet_proto_ops = {
     inet_release,
     inet_bind,
     inet_connect,
-    inet_socketpair,
+    not_implemented,	/* inet_socketpair */
 
 #ifdef CONFIG_SOCK_CLIENTONLY
     NULL,
@@ -419,11 +380,11 @@ static struct proto_ops inet_proto_ops = {
     inet_accept,
 #endif
 
-    inet_getname,
+    not_implemented,	/* inet_getname */
     inet_read,
     inet_write,
     inet_select,
-    inet_ioctl,
+    not_implemented,	/* inet_ioctl */
 
 #ifdef CONFIG_SOCK_CLIENTONLY
     NULL,
@@ -433,12 +394,12 @@ static struct proto_ops inet_proto_ops = {
 
     inet_send,
     inet_recv,
-    inet_sendto,
-    inet_recvfrom,
-    inet_shutdown,
-    inet_setsockopt,
-    inet_getsockopt,
-    inet_fcntl,
+    not_implemented,	/* inet_sendto */
+    not_implemented,	/* inet_recvfrom */
+    not_implemented,	/* inet_shutdown */
+    not_implemented,	/* inet_setsockopt */
+    not_implemented,	/* inet_getsockopt */
+    not_implemented,	/* inet_fcntl */
 };
 
 /*@+type@*/

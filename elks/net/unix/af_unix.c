@@ -162,7 +162,7 @@ static int unix_bind(struct socket *sock,
     fname[sockaddr_len] = '\0';
 
     old_ds = current->t_regs.ds;
-    current->t_regs.ds = get_ds();
+    current->t_regs.ds = kernel_ds;
 
     i = do_mknod(fname, S_IFSOCK | S_IRWXUGO, 0);
 
@@ -218,7 +218,7 @@ static int unix_connect(struct socket *sock,
     fname[sockaddr_len] = '\0';
 
     old_ds = current->t_regs.ds;
-    current->t_regs.ds = get_ds();
+    current->t_regs.ds = kernel_ds;
 
     i = open_namei(fname, 2, S_IFSOCK, &inode, NULL);
     current->t_regs.ds = old_ds;
@@ -548,7 +548,7 @@ static int unix_send(struct socket *sock,
     return unix_write(sock, (char *) buff, len, nonblock);
 }
 
-/* 
+/*
  *      Receive data. This version of AF_UNIX also lacks MSG_PEEK 8(
  */
 

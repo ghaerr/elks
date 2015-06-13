@@ -66,27 +66,22 @@ _restore_flags:
 	popf
 	pushf
 	jmp ax
-#endasm
-#endif
-
-void irqtab_init(void)
-{
-#ifndef S_SPLINT_S
-#asm
 
 ; CS points to this kernel code segment
 ; DS points to page 0  (interrupt table)
 ; ES points to the kernel data segment
 
-        cli
-        
+	.globl _irqtab_init
+_irqtab_init:
+	cli
+
         mov bx,ds
 #ifdef CONFIG_ROMCODE
         mov ax,#CONFIG_ROM_IRQ_DATA
         mov ds,ax
 #else
         seg cs
-#endif        
+#endif
         mov stashed_ds,bx
         mov es,bx
 
@@ -127,17 +122,11 @@ void irqtab_init(void)
 
         mov ds,bx      ;the original value just here
 	sti
-        
-#endasm
-#endif
-}	
- 
+	ret
+
 /*
  *	IRQ and IRQ return paths for Linux 8086
  */
-
-#ifndef S_SPLINT_S
-#asm
 !
 !	Other IRQs (see IRQ 0 at the bottom for the
 !	main code).
@@ -471,7 +460,7 @@ a4:
 a5:	jmp	a6
 a6:	outb	0x20,al		! Ack on primary controller
 !
-!	And a trap does no hardware work	
+!	And a trap does no hardware work
 !
 was_trap:
 !

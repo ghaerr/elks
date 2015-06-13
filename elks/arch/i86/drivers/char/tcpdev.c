@@ -64,8 +64,6 @@ static int tcpdev_read(struct inode *inode, struct file *filp, char *data,
 
 int tcpdev_inetwrite(char *data, unsigned int len)
 {
-    __u16 ds;
-
     debug2("TCPDEV: inetwrite( %p, %u )\n",data,len);
     if (len > TCPDEV_OUTBUFFERSIZE)
 	return -EINVAL;		/* FIXME: make sure this never happens */
@@ -73,8 +71,7 @@ int tcpdev_inetwrite(char *data, unsigned int len)
     down(&bufout_sem);
 
     /* Copy the data to the buffer */
-    ds = get_ds();
-    fmemcpy(ds, (__u16) tdout_buf, ds, (__u16) data, (__u16) len);
+    fmemcpy(kernel_ds, (__u16) tdout_buf, kernel_ds, (__u16) data, (__u16) len);
     tdout_tail = len;
     wake_up(&tcpdevq);
     debug("TCPDEV: inetwrite() returning\n");

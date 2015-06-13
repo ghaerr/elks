@@ -41,19 +41,19 @@ void setup_arch(seg_t *start, seg_t *end)
  *	Fill in the MM numbers - really ought to be in mm not kernel ?
  */
 
-#ifndef CONFIG_ARCH_SIBO	
+#ifndef CONFIG_ARCH_SIBO
 
     *end = (seg_t)(setupw(0x2a) << 6 - RAM_REDUCE);
 
     /* XXX plac: free root ram disk */
 
-    *start = get_ds();
+    *start = kernel_ds;
     *start += ((unsigned int) (_endbss+15)) >> 4;
 
 #else
 
     *end = (basmem)<<6;
-    *start = get_ds();
+    *start = kernel_ds;
     *start += (unsigned int) 0x1000;
 
 #endif

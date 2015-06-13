@@ -109,7 +109,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	effuid = pinode->i_uid;
 	effgid = pinode->i_gid;
 
-	tregs->ds = get_ds();
+	tregs->ds = kernel_ds;
 	result = filp->f_op->read(pinode, filp, &mh, sizeof(mh));
 	/*tregs->ds = ds;*/
     }
@@ -127,7 +127,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 #ifdef CONFIG_EXEC_ELKS
     if ((unsigned int) mh.hlen == 0x30) {
 	/* BIG HEADER */
-	/*tregs->ds = get_ds();*/
+	/*tregs->ds = kernel_ds;*/
 	result = filp->f_op->read(inode, filp, &msuph, sizeof(msuph));
 	/*tregs->ds = ds;*/
 	if (result != sizeof(msuph)) {

@@ -196,11 +196,11 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 
 	return 0;
     case MEM_GETCS:
-	i = (char *) get_cs();
+	i = (char *) kernel_cs;
 	put_user((unsigned short int)i, (void *)arg);
 	return 0;
     case MEM_GETDS:
-	i = (char *) get_ds();
+	i = (char *) kernel_ds;
 	put_user((unsigned short int)i, (void *)arg);
 	return 0;
     case MEM_GETUSAGE:

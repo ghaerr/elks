@@ -121,7 +121,7 @@ _syscall_int:
         mov ds,si
 #else
         seg cs
-#endif        
+#endif
 	mov ds,stashed_ds	! the org DS of kernel
 !
 !	At this point, the kernel stack is empty. Thus, we can push
@@ -276,8 +276,8 @@ void kfork_proc(char *addr)
 
     t = find_empty_process();
 
-    t->t_regs.cs = get_cs();
-    t->t_regs.ds = t->t_regs.ss = get_ds(); /* Run in kernel space */
+    t->t_regs.cs = kernel_cs;
+    t->t_regs.ds = t->t_regs.ss = kernel_ds; /* Run in kernel space */
     arch_build_stack(t, addr);
 }
 

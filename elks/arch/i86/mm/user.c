@@ -15,7 +15,7 @@ int verfy_area(void *p, size_t len)
     /*
      *	Kernel tasks can always access
      */
-    if (get_ds() == currentp->t_regs.ds)
+    if (kernel_ds == currentp->t_regs.ds)
 	return 0;
 
     /*
@@ -143,7 +143,7 @@ int fstrlen(unsigned short int dseg, unsigned short int doff)
 	i++;
 
     return i;
-} 
+}
 
 #endif
 

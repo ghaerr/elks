@@ -54,6 +54,9 @@ _main:
 
 ! End cleaning BSS
 
+	mov	_kernel_cs, cs
+	mov	_kernel_ds, ds
+
 #ifndef CONFIG_ROMCODE
 	mov	ss,dx		! in ROMCODE stack is ready placed
 	mov	sp,#(_task + TASK_KSTKTOP - 10)
@@ -81,6 +84,8 @@ _main:
 	.globl __endtext
 	.globl __enddata
 	.globl __endbss
+	.extern	_kernel_cs
+	.extern	_kernel_ds
 	.extern _task
 
 __endtext:

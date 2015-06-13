@@ -65,17 +65,13 @@ _restore_flags:
 	popf
 	pushf
 	jmp ax
-#endasm
-#endif
-
-void irqtab_init(void)
-{
-#ifndef S_SPLINT_S
-#asm
 
 ; CS points to this kernel code segment
 ; ES points to page 0  (interrupt table)
 ; DS points to the irqdataseg (cs or CONFIG_ROM_IRQ_DATA)
+
+	.globl _irqtab_init
+_irqtab_init:
 
 	mov	al, #0x00	! disable psion hardware interrupt sources
 	out	0x15, al
@@ -156,17 +152,11 @@ void irqtab_init(void)
         mov dx,ds      ;the original value
         mov	es,dx  ;just here
 	sti
+	ret
 
-#endasm
-#endif
-}	
- 
 /*
  *	IRQ and IRQ return paths for Linux 8086
  */
-
-#ifndef S_SPLINT_S
-#asm
 !
 !	Other IRQs (see IRQ 0 at the bottom for the
 !	main code).
@@ -423,7 +413,7 @@ _irqit:
 btask:
 	mov	sp,#_intstack
 !
-!	In ktask state we have a suitable stack. It might be 
+!	In ktask state we have a suitable stack. It might be
 !	better to use the intstack..
 !
 ktask:

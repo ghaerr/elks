@@ -264,7 +264,7 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
     bh->b_uptodate = 0;
     bh->b_dev = dev;
     bh->b_blocknr = block;
-    bh->b_seg = get_ds();
+    bh->b_seg = kernel_ds;
 
     return bh;
 }
@@ -287,7 +287,7 @@ void __brelse(register struct buffer_head *buf)
 }
 
 /*
- * bforget() is like brelse(), except it removes the buffer 
+ * bforget() is like brelse(), except it removes the buffer
  * data validity.
  */
 #if 0
@@ -398,7 +398,7 @@ void map_buffer(register struct buffer_head *bh)
      */
     debug2("mapping buffer %d (%d)\n", bh->b_num, bh->b_mapcount);
 
-    if (bh->b_data || bh->b_seg != get_ds()) {
+    if (bh->b_data || bh->b_seg != kernel_ds) {
 
 #ifdef DEBUG
 	if (!bh->b_mapcount) {
@@ -423,7 +423,7 @@ void map_buffer(register struct buffer_head *bh)
 		bh->b_data = bufmem[i];
 		bh->b_mapcount++;
 		if(bh->b_uptodate)
-		fmemcpy(get_ds(), (__u16) bh->b_data, _buf_ds,
+		fmemcpy(kernel_ds, (__u16) bh->b_data, _buf_ds,
 			(__u16) (bh->b_num * BLOCK_SIZE), BLOCK_SIZE);
 		debug3("BUFMAP: Buffer %d (block %d) mapped into L1 slot %d.\n",
 			bh->b_num, bh->b_blocknr, i);
@@ -443,7 +443,7 @@ void map_buffer(register struct buffer_head *bh)
 			       bufmem_map[i]->b_num);
 		/* Now unmap it */
 		fmemcpy(_buf_ds, (__u16) (bufmem_map[i]->b_num * BLOCK_SIZE),
-			get_ds(), (__u16) bufmem_map[i]->b_data, BLOCK_SIZE);
+			kernel_ds, (__u16) bufmem_map[i]->b_data, BLOCK_SIZE);
 		bufmem_map[i]->b_data = 0;
 		bufmem_map[i] = 0;
 		break;

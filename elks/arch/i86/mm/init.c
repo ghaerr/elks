@@ -26,6 +26,7 @@
  */
 
 char cpuid[17], proc_name[17];
+__u16 kernel_cs, kernel_ds;
 
 void setup_mm(void)
 {
@@ -67,10 +68,10 @@ void setup_mm(void)
 	   "Kernel text at %x:0000, data at %x:0000 \n",
 	   (unsigned)_endtext, (unsigned)_enddata,
 	   (unsigned)_endbss - (unsigned)_enddata,
-	   get_cs(), get_ds());
+	   kernel_cs, kernel_ds);
 
     /*
-     *      This computes the 640K - _endbss 
+     *      This computes the 640K - _endbss
      */
 
 #ifdef CONFIG_ARCH_SIBO
@@ -83,7 +84,7 @@ void setup_mm(void)
 
 #endif
 
-    memstart = ((long) get_ds()) << 4;
+    memstart = ((long) kernel_ds) << 4;
     memstart += (unsigned int) _endbss + 15;
 
     printk("%d K of memory for user processes.\n",

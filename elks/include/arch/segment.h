@@ -3,20 +3,7 @@
 
 #include <linuxmt/types.h>
 
-#if 1
-
-extern __u16 get_cs(void), get_ds(void), get_es(void), get_ss(void);
-
-#else
-
-#include <arch/asm.h>
-
-#define get_cs()	asm("mov ax,cs")
-#define get_ds()	asm("mov ax,ds")
-#define get_es()	asm("mov ax,es")
-#define get_ss()	asm("mov ax,ss")
-
-#endif
+extern __u16 kernel_cs, kernel_ds;
 
 extern __u16 setupw(unsigned short int);
 
