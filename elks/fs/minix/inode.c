@@ -140,8 +140,8 @@ struct super_block *minix_read_super(register struct super_block *s,
     unsigned short block;
     kdev_t dev = s->s_dev;
 
-    if (32 != sizeof(struct minix_inode))
-	panic("bad i-node size");
+/*    if (32 != sizeof(struct minix_inode))
+	panic("bad i-node size");*/
     lock_super(s);
     if (!(bh = bread(dev, (block_t) 1))) {
 	s->s_dev = 0;

@@ -52,8 +52,15 @@ extern flag_t __save_flags(void);
 
 #ifdef __KERNEL__
 
+#ifdef __BCC__
 #define clr_irq()	asm("cli")
 #define set_irq()	asm("sti")
+#endif
+
+#ifdef __WATCOMC__
+#define clr_irq()	_asm {cli}
+#define set_irq()	_asm {sti}
+#endif
 
 #else
 

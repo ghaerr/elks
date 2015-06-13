@@ -34,7 +34,7 @@ int inet_process_tcpdev(char *buf, int len)
 
     r = (struct tdb_return_data *) buf;
 
-    sock = (struct socket *) r->sock;
+    sock = r->sock;
 
     switch (r->type) {
     case TDT_CHG_STATE:
@@ -61,7 +61,7 @@ static int inet_create(struct socket *sock, int protocol)
 
     if (protocol != 0 || !tcpdev_inuse)
         return -EINVAL;
-    
+
 
     return 0;
 }
@@ -94,7 +94,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     int ret;
 
     debug1("inet_bind(sock: 0x%x)\n", sock);
-    if (sockaddr_len <= 0 || sockaddr_len > sizeof(struct sockaddr_in))
+    if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
         return -EINVAL;
 
     /* TODO : Check if the user has permision to bind the port */
@@ -129,10 +129,10 @@ static int inet_connect(register struct socket *sock,
 
     debug1("inet_connect(sock: 0x%x)\n", sock);
 
-    if (sockaddr_len <= 0 || sockaddr_len > sizeof(struct sockaddr_in))
+    if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
         return -EINVAL;
 
-    sockin = uservaddr;
+    sockin = (struct sockaddr_in *)uservaddr;
     if (sockin->sin_family != AF_INET)
         return -EINVAL;
 
@@ -346,6 +346,7 @@ static int inet_select(register struct socket *sock,
         }
     } else if (sel_type == SEL_OUT)
 	return 1;
+    return 0;
 }
 
 void inet_ioctl(void)

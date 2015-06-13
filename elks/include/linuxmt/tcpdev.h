@@ -6,6 +6,7 @@
  */
 
 #include <linuxmt/in.h>
+#include <linuxmt/net.h>
 
 #define TCP_DEVICE_NAME	"tcpdev"
 
@@ -24,44 +25,44 @@
 
 struct tdb_release {
     unsigned char cmd;
-    unsigned short sock;
+    struct socket *sock;
 };
 
 struct tdb_accept {
     unsigned char cmd;
-    unsigned short sock;
-    unsigned short newsock;
+    struct socket *sock;
+    struct socket *newsock;
     int nonblock;
 };
 
 struct tdb_listen {
     unsigned char cmd;
-    unsigned short sock;
+    struct socket *sock;
     int backlog;
 };
 
 struct tdb_bind {
     unsigned char cmd;
-    unsigned short sock;
+    struct socket *sock;
     struct sockaddr_in addr;
 };
 
 struct tdb_connect {
     unsigned char cmd;
-    unsigned short sock;
+    struct socket *sock;
     struct sockaddr_in addr;
 };
 
 struct tdb_read {
     unsigned char cmd;
-    unsigned short sock;
+    struct socket *sock;
     int size;
     int nonblock;
 };
 
 struct tdb_write {
     unsigned char cmd;
-    unsigned short sock;
+    struct socket *sock;
     int size;
     int nonblock;
 #define	TDB_WRITE_MAX	100
@@ -75,7 +76,7 @@ struct tdb_write {
 struct tdb_return_data {
     char type;
     int ret_value;
-    unsigned short sock;
+    struct socket *sock;
     int size;
     unsigned char data;
 };
@@ -83,7 +84,7 @@ struct tdb_return_data {
 struct tdb_accept_ret {
     char type;
     int ret_value;
-    unsigned short sock;
+    struct socket *sock;
     __u32 addr_ip;
     __u16 addr_port;
 };

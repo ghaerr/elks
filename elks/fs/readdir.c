@@ -42,11 +42,11 @@ static int fillonedir(char *__buf, char *name, size_t namlen, off_t offset,
 	return -EINVAL;
     buf->count++;
     dirent = buf->dirent;
-    put_user_long(ino, (__u16) &dirent->d_ino);
-    put_user_long((__u32) offset, (__u16) &dirent->d_offset);
-    put_user((__u16) namlen, (__u16) &dirent->d_namlen);
+    put_user_long((__u32)ino, &dirent->d_ino);
+    put_user_long((__u32) offset, &dirent->d_offset);
+    put_user((__u16) namlen, &dirent->d_namlen);
     memcpy_tofs(dirent->d_name, name, namlen);
-    put_user_char(0, (__u16) (dirent->d_name + namlen));
+    put_user_char(0, dirent->d_name + namlen);
     return 0;
 }
 

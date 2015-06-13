@@ -59,7 +59,7 @@ struct socket *socki_lookup(struct inode *inode)
 
 int move_addr_to_kernel(char *uaddr, size_t ulen, char *kaddr)
 {
-    if (ulen < 0 || ulen > MAX_SOCK_ADDR)
+    if (ulen > MAX_SOCK_ADDR)
 	return -EINVAL;
 
     if (ulen == 0)
@@ -79,7 +79,7 @@ int move_addr_to_user(char *kaddr, size_t klen, char *uaddr, register int *ulen)
     if (len > klen)
 	len = klen;
 
-    if (len < 0 || len > MAX_SOCK_ADDR)
+    if (len > MAX_SOCK_ADDR)
 	return -EINVAL;
 
     if (len)
@@ -148,7 +148,7 @@ struct socket *sockfd_lookup(int fd, struct file **pfile)
     return socki_lookup(inode);
 }
 
-static int sock_read(struct inode *inode, struct file *file,
+static size_t sock_read(struct inode *inode, struct file *file,
 		     register char *ubuf, size_t size)
 {
     struct socket *sock;
@@ -162,9 +162,6 @@ static int sock_read(struct inode *inode, struct file *file,
     if (sock->flags & SO_ACCEPTCON)
 	return -EINVAL;
 
-    if (size < 0)
-	return -EINVAL;
-
     if (size == 0)
 	return 0;
 
@@ -174,7 +171,7 @@ static int sock_read(struct inode *inode, struct file *file,
     return sock->ops->read(sock, ubuf, size, (file->f_flags & O_NONBLOCK));
 }
 
-static int sock_write(struct inode *inode, struct file *file,
+static size_t sock_write(struct inode *inode, struct file *file,
 		      register char *ubuf, size_t size)
 {
     struct socket *sock;
@@ -186,9 +183,6 @@ static int sock_write(struct inode *inode, struct file *file,
     }
 
     if (sock->flags & SO_ACCEPTCON)
-	return -EINVAL;
-
-    if (size < 0)
 	return -EINVAL;
 
     if (size == 0)

@@ -39,6 +39,35 @@ stashed_ds:
 
 extern void sig_check(void);
 
+/*
+ *	Low level IRQ control.
+ */
+
+#ifndef S_SPLINT_S
+#asm
+	.globl ___save_flags
+	.globl _restore_flags
+	.text
+
+___save_flags:
+	pushf
+	pop ax
+	ret
+
+! this version is smaller than the functionally equivalent C version
+! at 7 bytes vs. 21 or thereabouts :-) --Alastair Bridgewater
+!
+! Further reduced to 5 bytes  --Juan Perez
+!
+
+_restore_flags:
+	pop ax
+	popf
+	pushf
+	jmp ax
+#endasm
+#endif
+
 void irqtab_init(void)
 {
 #ifndef S_SPLINT_S
@@ -143,29 +172,14 @@ void irqtab_init(void)
 !	main code).
 !
 	.text
-	.globl	_irq1
-!	.globl	_irq2
-!	.globl	_irq3
-!	.globl	_irq4
-!	.globl	_irq5
-!	.globl	_irq6
-!	.globl	_irq7
-!	.globl	_irq8
-!	.globl	_irq9
-!	.globl	_irq10
-!	.globl	_irq11
-!	.globl	_irq12
-!	.globl	_irq13
-!	.globl	_irq14
-!	.globl	_irq15
 	.extern	_do_IRQ
 
 	.data
 	.extern	_cache_A1
 	.extern	_cache_21
 
-	.text 
-			
+	.text
+
 _irq1:
 	push	ax
 	mov	ax,#1
@@ -234,55 +248,46 @@ _irq15:
 !
 !	Currently not used so removed for space.
 #if 0
-	.globl	_div0
 _div0:
 	push	ax
 	mov	ax,#16
 	jmp	_irqit
 
-	.globl _dbugtrap
 _dbugtrap:
 	push	ax
 	mov	ax,#17
 	jmp	_irqit
 
-	.globl _nmi
 _nmi:
 	push	ax
 	mov	ax,#18
 	jmp	_irqit
 
-	.globl	_brkpt
 _brkpt:
 	push 	ax
 	mov	ax,#19
 	jmp	_irqit
 
-	.globl	_oflow
 _oflow:
 	push	ax
 	mov	ax,#20
 	jmp	_irqit
 
-	.globl	_bounds
 _bounds:
 	push	ax
 	mov	ax,#21
 	jmp	_irqit
-	
-	.globl	_invop
+
 _invop:
 	push	ax
 	mov	ax,#22
 	jmp	_irqit
-	
-	.globl _devnp
+
 _devnp:
 	push	ax
 	mov	ax,#23
 	jmp	_irqit
 
-	.globl	_dfault
 _dfault:
 	push	ax
 	mov	ax,#24
@@ -290,31 +295,26 @@ _dfault:
 ;
 ;	trap 9 is reserved
 ;
-	.globl _itss
 _itss:
 	push	ax
 	mov	ax,#26
 	jmp	_irqit
 
-	.globl _nseg
 _nseg:
 	push	ax
 	mov	ax,#27
 	jmp	_irqit
-	
-	.globl _stkfault
+
 _stkfault:
 	push 	ax
 	mov	ax,#28
 	jmp	_irqit
 
-	.globl	_segovr
 _segovr:
 	push	ax
 	mov	ax,#29
 	jmp	_irqit
-	
-	.globl _pfault
+
 _pfault:
 	push	ax
 	mov	ax,#30
@@ -322,13 +322,11 @@ _pfault:
 ;
 ;	trap 15 is reserved
 ;
-	.globl	_fpetrap
 _fpetrap:
 	push	ax
 	mov	ax,#32
 	jmp	_irqit
 
-	.globl	_algn
 _algn:
 	push	ax
 	mov	ax,#33
@@ -356,11 +354,10 @@ _algn:
 !		Switch to int_stack
 !		No task switch allowed.
 !
-!	We do all of this to avoid per process interrupt stacks and 
+!	We do all of this to avoid per process interrupt stacks and
 !	related nonsense. This way we need only one dedicted int stack
 !
 !
-	.globl	_irq0
 _irq0:
 !
 !	Save AX and load it with the IRQ number
@@ -481,7 +478,7 @@ updct:
         orb     ch,ch                   ! Schedule allowed ?
 	je	nosched			! No
 !	mov	bx,_need_resched	! Schedule needed
-!	cmp	bx,#0			! 
+!	cmp	bx,#0			!
 !	je	nosched			! No
 !
 ! This path will return directly to user space

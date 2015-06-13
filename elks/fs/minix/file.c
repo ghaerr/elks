@@ -22,10 +22,10 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/minix_fs.h>
 
-static int minix_file_read(struct inode *inode, register struct file *filp,
+static size_t minix_file_read(struct inode *inode, register struct file *filp,
 			    char *buf, size_t count);
 
-static int minix_file_write(register struct inode *inode, struct file *filp,
+static size_t minix_file_write(register struct inode *inode, struct file *filp,
 			    char *buf, size_t count);
 
 /*
@@ -77,7 +77,7 @@ static char inode_equal_NULL[] = "inode = NULL\n";
 static char mode_equal_val[] = "mode = %07o\n";
 #endif
 
-static int minix_file_read(struct inode *inode, register struct file *filp,
+static size_t minix_file_read(struct inode *inode, register struct file *filp,
 			    char *buf, size_t count)
 {
     register struct buffer_head *bh;
@@ -155,7 +155,7 @@ static int minix_file_read(struct inode *inode, register struct file *filp,
     return read;
 }
 
-static int minix_file_write(register struct inode *inode,
+static size_t minix_file_write(register struct inode *inode,
 			    struct file *filp, char *buf, size_t count)
 {
     register struct buffer_head *bh;

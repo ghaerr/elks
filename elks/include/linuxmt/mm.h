@@ -55,7 +55,7 @@ extern __u8  peekb(__u16,__u16);
 extern __u16 peekw(__u16,__u16);
 
 extern void fmemcpy(__u16,__u16,__u16,__u16,__u16);
-extern void fmemset(__u16,__u16,__u16,__u16);
+extern void fmemset(char *,__u16,__u16,size_t);
 
 extern void far_memmove(unsigned,unsigned,unsigned,unsigned,unsigned);
 

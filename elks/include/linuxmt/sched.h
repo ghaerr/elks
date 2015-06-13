@@ -121,11 +121,6 @@ struct task_struct {
 /* We use typedefs to avoid using struct foobar (*) */
 typedef struct task_struct __task, *__ptask;
 
-/*@+namechecks@*/
-
-extern load_regs(__ptask);
-extern save_regs(__ptask);
-
 extern __task task[MAX_TASKS];
 
 extern jiff_t jiffies;

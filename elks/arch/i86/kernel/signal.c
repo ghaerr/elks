@@ -24,7 +24,7 @@ int do_signal(void)
     register struct sigaction *sa;
     unsigned signr;
 
-    while ((currentp->signal &= ((1 << NSIG) - 1))) {
+    while ((currentp->signal &= ((1L << NSIG) - 1))) {
 	signr = find_first_non_zero_bit(&currentp->signal, NSIG);
         clear_bit(signr, &currentp->signal);
 

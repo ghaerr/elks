@@ -147,40 +147,6 @@ static void default_handler(int i, void *regs, void *dev)
 	    printk("Unexpected interrupt: %u\n", i);
 }
 
-/*
- *	Low level IRQ control.
- */
- 
-#ifndef S_SPLINT_S
-#asm
-	.globl ___save_flags
-	.text
-
-___save_flags:
-	pushf
-	pop ax
-	ret
-#endasm
-#endif
-
-/* this version is smaller than the functionally equivalent C version
- * at 7 bytes vs. 21 or thereabouts :-) --Alastair Bridgewater
- *
- * Further reduced to 5 bytes  --Juan Perez
- */
-#ifndef S_SPLINT_S
-#asm
-        .globl _restore_flags
-	.text
-
-_restore_flags:
-	pop ax
-	popf
-        pushf
-	jmp ax
-#endasm
-#endif
-
 int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev_id)
 {
     register struct irqaction *action;
