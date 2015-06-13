@@ -27,7 +27,7 @@
 #include <arch/system.h>
 
 extern void rd_load();
-extern int chr_dev_init();
+extern void chr_dev_init();
 extern int blk_dev_init();
 
 void device_setup(void)

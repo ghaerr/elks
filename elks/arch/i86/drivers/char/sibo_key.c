@@ -1,13 +1,14 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
-#include <arch/io.h>
-#include <arch/keyboard.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/config.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
+
+#include <arch/io.h>
+#include <arch/keyboard.h>
 
 #ifdef CONFIG_SIBO_CONSOLE_DIRECT
 
@@ -22,7 +23,7 @@ extern struct tty ttys[];
 #define MENU	0x1000
 #define PSION   0x8000
 
-#define ANYSHIFT LSHIFT|RSHIFT
+#define ANYSHIFT (LSHIFT|RSHIFT)
 
 void AddQueue(unsigned char Key);
 
@@ -46,11 +47,8 @@ int KeyboardInit(void)
 
 void keyboard_irq(int irq, struct pt_regs *regs, void *data)
 {
-    int modifiers;
-    int key;
-
-    modifiers = psiongetchar();
-    key = (modifiers & 0x00FF);
+    int modifiers = psiongetchar();
+    int key = (modifiers & 0x00FF);
 
     /* no key pressed */
     if (key == 0) {

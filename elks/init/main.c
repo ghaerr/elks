@@ -83,7 +83,7 @@ static char args[] = "\0\0\0\0\0\0/bin/init\0\0";
  *		      \argc
  */
 
-/*@unused@*/ static char envp[] = "\0\0";
+/*static char envp[] = "\0\0";*/
 
 static void init_task()
 {

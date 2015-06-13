@@ -25,7 +25,7 @@ int do_signal(void)
     unsigned signr;
 
     while ((currentp->signal &= ((1L << NSIG) - 1))) {
-	signr = find_first_non_zero_bit(&currentp->signal, NSIG);
+	signr = find_first_non_zero_bit((void *)(&currentp->signal), NSIG);
         clear_bit(signr, &currentp->signal);
 
 	debug2("Process %d has signal %d.\n", currentp->pid, signr);

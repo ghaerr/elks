@@ -319,7 +319,7 @@ static int romfs_readdir(struct inode *i, struct file *filp,
     offset = filp->f_pos;
     if (!offset) {
 	offset = (loff_t) (i->i_ino & ROMFH_MASK);
-	if (romfs_copyfrom(i, &ri, offset, (size_t) ROMFH_SIZE) <= 0)
+	if (romfs_copyfrom(i, (char *)(&ri), offset, (size_t) ROMFH_SIZE) <= 0)
 	    return stored;
 	offset = (loff_t) ntohl(ri.spec) & ROMFH_MASK;
     }
@@ -334,7 +334,7 @@ static int romfs_readdir(struct inode *i, struct file *filp,
 	filp->f_pos = offset;
 
 	/* Fetch inode info */
-	if (romfs_copyfrom(i, &ri, offset, (size_t) ROMFH_SIZE) <= 0)
+	if (romfs_copyfrom(i, (char *)(&ri), offset, (size_t) ROMFH_SIZE) <= 0)
 	    return stored;
 
 	j = romfs_strnlen(i, offset + ROMFH_SIZE, (size_t) sizeof(fsname) - 1);
@@ -375,7 +375,7 @@ static int romfs_lookup(struct inode *dir, char *name, size_t len,
 
     offset = ((loff_t) dir->i_ino) & ROMFH_MASK;
 
-    if (romfs_copyfrom(dir, &ri, offset, (size_t) ROMFH_SIZE) <= 0) {
+    if (romfs_copyfrom(dir, (char *)(&ri), offset, (size_t) ROMFH_SIZE) <= 0) {
 	res = -ENOENT;
 	goto out;
     }
@@ -385,7 +385,7 @@ static int romfs_lookup(struct inode *dir, char *name, size_t len,
 
     for (;;) {
 	if (!offset || offset >= maxoff
-	    || romfs_copyfrom(dir, &ri, offset, (size_t) ROMFH_SIZE) <= 0) {
+	    || romfs_copyfrom(dir, (char *)(&ri), offset, (size_t) ROMFH_SIZE) <= 0) {
 	    res = -ENOENT;
 	    goto out;
 	}
@@ -614,7 +614,7 @@ static void romfs_read_inode(struct inode *i)
 
     /* Loop for finding the real hard link */
     for (;;) {
-	if (romfs_copyfrom(i, &ri, (loff_t) ino, (size_t) ROMFH_SIZE) <= 0) {
+	if (romfs_copyfrom(i, (char *)(&ri), (loff_t) ino, (size_t) ROMFH_SIZE) <= 0) {
 	    printk("romfs: read error for inode 0x%x%x\n",
 		   (int) (ino >> 16), (int) ino);
 	    return;

@@ -119,7 +119,7 @@ static int V1_trunc_indirect(register struct inode *inode,
     for (i = 0; i < 512; i++)
 	if (*(ind++))
 	    break;
-    if (i >= 512)
+    if (i >= 512) {
 	if (ind_bh->b_count != 1)
 	    retry = 1;
 	else {
@@ -127,6 +127,7 @@ static int V1_trunc_indirect(register struct inode *inode,
 	    *p = 0;
 	    minix_free_block(inode->i_sb, tmp);
 	}
+    }
     unmap_brelse(ind_bh);
     return retry;
 }
@@ -166,7 +167,7 @@ static int V1_trunc_dindirect(register struct inode *inode,
     for (i = 0; i < 512; i++)
 	if (*(dind++))
 	    break;
-    if (i >= 512)
+    if (i >= 512) {
 	if (dind_bh->b_count != 1)
 	    retry = 1;
 	else {
@@ -175,6 +176,7 @@ static int V1_trunc_dindirect(register struct inode *inode,
 	    inode->i_dirt = 1;
 	    minix_free_block(inode->i_sb, tmp);
 	}
+    }
     unmap_brelse(dind_bh);
     return retry;
 }

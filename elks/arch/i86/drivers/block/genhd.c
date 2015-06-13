@@ -28,7 +28,6 @@
 #define NR_SECTS(p)	p->nr_sects
 #define START_SECT(p)	p->start_sect
 
-extern int chr_dev_init();
 extern int blk_dev_init();
 
 struct gendisk *gendisk_head = NULL;

@@ -20,6 +20,10 @@
 #define INCLUDE_OK
 #endif
 
+#ifdef __ia16__
+#define INCLUDE_OK
+#endif
+
 #ifdef S_SPLINT_S
 #define INCLUDE_OK
 #endif

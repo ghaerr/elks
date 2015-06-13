@@ -8,9 +8,22 @@
 #define INQ_SIZE 512
 #define OUTQ_SIZE 64
 
+/*
+ * Note: don't mess with NR_PTYS until you understand the tty minor
+ * number allocation game...
+ * (Note: the *_driver.minor_start values 1, 64, 128, 192 are
+ * hardcoded at present.)
+ */
+
+#define NR_PTYS		4
+
 /* This value is a bit of a problem because ntty.c hard-codes some
  * array indices that go up as high as 8 + NR_PTYS (below). */
+#ifdef CONFIG_PSEUDO_TTY
+#define NUM_TTYS	6/*8+NR_PTYS*/ /* FIXME: For the time being, will leave as before */
+#else
 #define NUM_TTYS	6
+#endif
 
 #define DCGET_GRAPH	(('D'<<8)+0x01)
 #define DCREL_GRAPH	(('D'<<8)+0x02)
@@ -25,15 +38,6 @@
 #include <linuxmt/chqueue.h>
 
 #include <arch/system.h>
-
-/*
- * Note: don't mess with NR_PTYS until you understand the tty minor 
- * number allocation game...
- * (Note: the *_driver.minor_start values 1, 64, 128, 192 are
- * hardcoded at present.)
- */
-
-#define NR_PTYS		4
 
 /* Most likely, not all of these will get used */
 

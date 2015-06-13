@@ -146,7 +146,7 @@ static void vprintk(char *fmt, va_list p)
 		if(*(fmt-2) == 'l')
 		    v = va_arg(p, unsigned long);
 		else
-		    v = (long)(va_arg(p, short));
+		    v = (long)(va_arg(p, int));
 		goto NUMOUT;
 	    case 'o':
 		tmp -= 2;
@@ -160,7 +160,7 @@ static void vprintk(char *fmt, va_list p)
 		if(*(fmt-2) == 'l')
 		    v = va_arg(p, unsigned long);
 		else
-		    v = (unsigned long)(va_arg(p, unsigned short));
+		    v = (unsigned long)(va_arg(p, unsigned int));
 	    NUMOUT:
 		numout(v, width, tmp, (c == 'd'), (c == 'X'), zero);
 		break;

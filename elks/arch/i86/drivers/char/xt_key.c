@@ -114,14 +114,9 @@ void AddQueue(unsigned char Key)
  * There needs to be many buffers if we implement virtual consoles...... *
  *************************************************************************/
 
-int KeyboardInit(void)
-{
-    /* Do nothing */ ;
-}
-
 void xtk_init(void)
 {
-    KeyboardInit();
+    /* Do nothing */;
 }
 
 /*

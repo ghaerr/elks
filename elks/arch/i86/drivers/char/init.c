@@ -2,7 +2,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/init.h>
 
-int chr_dev_init(void)
+void chr_dev_init(void)
 {
 #ifdef CONFIG_CHAR_DEV_RS
     rs_init();

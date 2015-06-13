@@ -86,17 +86,17 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      */
     if((retval = open_filp(O_RDONLY, inode, &filp)))
 	goto error_exec2;
-    retval = -ENOEXEC;
-    if(!(filp->f_op) || !(filp->f_op->read))
-	goto error_exec3;
-
-    debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
-
     /*
      *      Read the header.
      */
     tregs = &current->t_regs;
     ds = tregs->ds;
+
+    retval = -ENOEXEC;
+    if(!(filp->f_op) || !(filp->f_op->read))
+	goto error_exec3;
+
+    debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
 
     /*
      *      can I trust the following fields?
@@ -220,14 +220,14 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /*
      *      Wipe the BSS.
      */
-    fmemset((__u16) mh.dseg + stack_top, dseg, 0, (__u16) mh.bseg);
+    fmemset((char *)((seg_t)mh.dseg + stack_top), dseg, 0, (__u16) mh.bseg);
 
     /*
      *      Copy the stack
      */
     ptr = (stack_top)
 	? (char *) (stack_top - slen)
-	: (char *) (len - slen);
+	: (char *) ((size_t)len - slen);
     fmemcpy(dseg, (__u16) ptr, current->mm.dseg, (__u16) sptr, (__u16) slen);
 
     /* argv and envp are two NULL-terminated arrays of pointers, located

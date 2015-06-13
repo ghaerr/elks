@@ -82,7 +82,7 @@ pid_t do_fork(int virtual)
     } else {
 	t->mm.dseg = mm_dup(currentp->mm.dseg);
 
-	if (t->mm.dseg == NULL) {
+	if (t->mm.dseg == 0) {
 	    mm_free(currentp->mm.cseg);
 	    t->state = TASK_UNUSED;
             task_slots_unused++;

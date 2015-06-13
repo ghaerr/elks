@@ -116,7 +116,7 @@ block_t minix_new_block(register struct super_block *sb)
     for (i = 0; i < 8; i++)
 	if ((bh = sb->u.minix_sb.s_zmap[i]) != NULL) {
 	    map_buffer(bh);
-	    j = (block_t) find_first_zero_bit(bh->b_data, 8192);
+	    j = (block_t) find_first_zero_bit((void *)(bh->b_data), 8192);
 	    if (j < 8192)
 		break;
 	    unmap_buffer(bh);
@@ -128,7 +128,7 @@ block_t minix_new_block(register struct super_block *sb)
 	unmap_buffer(bh);
 	goto repeat;
     }
-    if (j == (block_t) find_first_zero_bit(bh->b_data, 8192))
+    if (j == (block_t) find_first_zero_bit((void *)(bh->b_data), 8192))
 	panic("still zero bit!%d\n", j);
     unmap_buffer(bh);
     mark_buffer_dirty(bh, 1);
@@ -211,7 +211,7 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
     for (i = 0; i < 8; i++)
 	if ((bh = inode->i_sb->u.minix_sb.s_imap[i]) != NULL) {
 	    map_buffer(bh);
-	    j = (block_t) find_first_zero_bit(bh->b_data, 8192);
+	    j = (block_t) find_first_zero_bit((void *)(bh->b_data), 8192);
 	    if (j < 8192)
 		break;
 	    unmap_buffer(bh);
