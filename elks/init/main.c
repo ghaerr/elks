@@ -5,7 +5,6 @@
 #include <linuxmt/init.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
-#include <linuxmt/timex.h>
 #include <linuxmt/types.h>
 #include <linuxmt/utsname.h>
 

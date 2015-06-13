@@ -1,6 +1,10 @@
 #include <linuxmt/config.h>
-#include <arch/irq.h>
 #include <arch/asm-offsets.h>
+
+#ifndef S_SPLINT_S
+#asm
+
+	.text
 
 /*
  *	Easy way to store our kernel DS
@@ -17,14 +21,8 @@
  *  the offset is constant per #define
  */
    #define stashed_ds       [0]
-#endif
 
-#ifndef S_SPLINT_S
-#asm
-
-	.text
-
-#ifndef CONFIG_ROMCODE
+#else
 /*
  Kernel is in RAM. Reserve space in the
  code segment to save the kernel DS
@@ -337,12 +335,12 @@ _irqit:
 #else
         seg     cs
 #endif        
-	mov	bx,stashed_ds		! Recover the data segment
+	mov	bx,stashed_ds	! Recover the data segment
 	mov	ds,bx
 	mov	es,bx
 
-	mov	dx,ss			! Get current SS
-	mov	bp,sp			! Get current SP
+	mov	dx,ss		! Get current SS
+	mov	bp,sp		! Get current SP
 !
 !	Set up task switch controller
 !
@@ -450,13 +448,13 @@ a6:	outb	0x20,al		! Ack on primary controller
 !
 was_trap:
 !
-!   Restore intr_count
+!	Restore intr_count
 !
-        dec     _intr_count
+	dec	_intr_count
 !
 !	Now look at rescheduling
 !
-        orb     ch,ch                   ! Schedule allowed ?
+	orb	ch,ch			! Schedule allowed ?
 	je	nosched			! No
 !	mov	bx,_need_resched	! Schedule needed
 !	cmp	bx,#0			!
@@ -506,8 +504,178 @@ noschedpop:
 !
 	iret
 
+/*
+ *	tswitch();
+ *
+ *	This function can only be called with SS=DS=ES=kernel DS and
+ *	CS=kernel CS. SS:SP is the relevant kernel stack (IRQ's are
+ *	taken on 'current' kernel stack. Thus we don't need to arse about
+ *	with segment registers. The kernel isn't relocating.
+ *
+ *	To understand this you need to know how the compilers generate 8086
+ *	stack frames. Functions normally start
+ *
+ *	push bp		! Save callers BP
+ *	mov  bp,sp	! BP so we can use it to index registers
+ *
+ *	and end
+ *
+ *	mov sp,bp	! Fastest way to destroy local variables
+ *	pop bp		! Restore callers BP
+ *	ret		! Return address is top of stack now
+ *
+ *	tswitch() saves the "previous" task registers and state. It in effect
+ *	freezes a copy of the caller context. Then restores the "current"
+ *	context and returns running the current task.
+ *
+ * ELKS 0.76 7/1999  Fixed for ROMCODE-Version
+ * Christian Mardm”ller  (chm@kdt.de)
+ */
+
+	.globl _tswitch
+
+_tswitch:
+	push	bp	! /* schedule()'s bp */
+	pushf
+	push	di
+	push	si
+	mov	bx,_previous
+	mov	TASK_KRNL_SP[bx],sp
+	mov	bx,_current
+	mov	sp,TASK_KRNL_SP[bx]
+	pop	si
+	pop	di
+	popf
+	pop	bp	! BP of schedule()
+	xor	ax,ax	! Set ax=0, as this may be fork() return from child
+	ret		! thus to caller of schedule()
+
+!
+!	System Call Vector
+!
+!	On entry we are on the wrong stack, DS, ES are wrong
+!
+	.globl	_syscall_int
+	.globl	_ret_from_syscall
+	.extern	_stack_check
+	.extern	_syscall
+
+!
+!	System calls enter here with ax as function and bx,cx,dx,di and si
+!	as parameters.
+!	syscall returns a value in ax
+!
+
+_syscall_int:
+!
+!	We know the process DS, we can discard it (indeed may change it)
+!
+!	Save si and free an index register
+!
+	push	si
+!
+!	Load kernel data segment
+!
+#ifdef CONFIG_ROMCODE
+	mov	si,#CONFIG_ROM_IRQ_DATA
+	mov	ds,si
+#else
+	seg	cs
+#endif
+	mov	ds,stashed_ds		! the org DS of kernel
+!
+!	At this point, the kernel stack is empty. Thus, we can push
+!       data into the kernel stack by writing directly to memory
+!
+	mov	si,_current		! pops SI from user stack and pushes
+	pop	TASK_KSTKT_SI[si]	! it directly into kernel stack
+!
+!	Stash user mode stack - needed for stack checking!
+!
+	mov	TASK_USER_SP[si],sp
+!
+!	load kernel stack pointer
+!
+	lea	sp,TASK_KSTKT_SI[si]
+!
+!	Finish switching to the right things
+!
+	mov	si,ds			! ds=es=ss
+	mov	es,si
+	mov	ss,si
+	cld
+!
+!	Stack is now right, we can take interrupts OK
+!
+	sti				! SI already on top of stack
+	push	di
+	push	dx
+	push	cx
+	push	bx
+
+#ifdef CONFIG_STRACE
+!
+!	strace(syscall#, params...)
+!
+	push	ax
+	call	_strace
+	pop	ax
+#endif
+!
+!	syscall(params...)
+!
+	push	ax
+	call	_stack_check
+	pop	ax
+	call	_syscall
+	push	ax
+	mov	bx,_current
+	mov	8[bx],#0
+	call	_sig_check
+	pop	ax
+	pop	bx
+	pop	cx
+	pop	dx
+	pop	di
+	pop	si
+#ifdef CONFIG_STRACE
+!
+!	ret_strace(retval)
+!
+	push	ax
+	call	_ret_strace
+	pop	ax
+#endif
+!
+!	Now mend everything
+!
+_ret_from_syscall:
+	cli
+	mov	bx,_current
+!
+!	At this point, the kernel stack is empty. Thus, there is no
+!       need to save the kernel stack pointer.
+!
+	mov	sp,TASK_USER_SP[bx]
+	mov	bx,TASK_USER_SS[bx]
+!
+!	User segment recovery
+!
+	mov	ds,bx
+	mov	es,bx
+	mov	ss,bx
+!
+!	return with error info.
+!
+	iret
+!
+!	Done.
+!
+
 	.data
 	.globl	_intr_count
+	.extern	_current
+	.extern	_previous
 
 	.even
 

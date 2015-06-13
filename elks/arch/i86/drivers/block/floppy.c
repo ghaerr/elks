@@ -61,6 +61,7 @@
 #define FLOPPY_IRQ 6
 #define FLOPPY_DMA 2
 
+#include <linuxmt/config.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/kernel.h>
@@ -70,7 +71,6 @@
 #include <linuxmt/fdreg.h>
 #include <linuxmt/fd.h>
 #include <linuxmt/errno.h>
-#include <linuxmt/config.h>
 
 #include <arch/dma.h>
 #include <arch/system.h>

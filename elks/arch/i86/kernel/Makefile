@@ -19,7 +19,7 @@ USEBCC 		= Y
 
 CLEANDEP	= 
 
-CLEANME 	= entry.c
+CLEANME 	= entry.S entry.s
 
 DEPEND  	= 
 
@@ -47,14 +47,17 @@ endif
 #########################################################################
 # Commands.
 
+entry.o: entry.s
+	as86 -0 -u -o entry.o entry.s
+
 all:	akernel.a
 
 akernel.a: $(OBJS)
 	ar rcs akernel.a $(OBJS)
 
-entry.c: syscall.dat mkentry.sh
+entry.S: syscall.dat mkentry.sh
 	sh mkentry.sh > entry.tmp
-	mv entry.tmp entry.c
+	mv entry.tmp entry.S
 
 #########################################################################
 # Standard commands.
