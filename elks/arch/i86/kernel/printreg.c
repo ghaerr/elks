@@ -1,21 +1,16 @@
 #include <linuxmt/config.h>
-#include <linuxmt/kernel.h>
-#include <linuxmt/types.h>
 
 /* This file contains print_regs, which will dump out all of the registers
  * and print them out.  This is probably one of the sickest routines ever
  * written :) - Chad
  */
 
-void print_regs2(__u16 ax,__u16 bx,__u16 cx,__u16 dx,__u16 di,__u16 si,
-		 __u16 cs,__u16 ds,__u16 es,__u16 ss,__u16 bp)
-{
-    printk("AX=%x BX=%x CX=%x DX=%x DI=%x SI=%x\n", ax, bx, cx, dx, di, si);
-    printk("CS=%x DS=%x ES=%x SS=%x BP=%x\n", cs, ds, es, ss, bp);
-}
+/*void print_regs(void);*/
+/*void printsp(void);*/
 
 #ifndef S_SPLINT_S
 #asm
+	.extern	_printk
 	.globl _print_regs
 
 _print_regs:
@@ -30,7 +25,9 @@ _print_regs:
 	push cx
 	push bx
 	push ax
-	call _print_regs2
+	push #fmtprg
+	call _printk
+	pop ax
 	pop ax
 	pop bx
 	pop cx
@@ -58,6 +55,8 @@ _printsp:
 
 	.data
 msg:	.ascii	"SP=%x:%x\n"
+	.byte	0
+fmtprg:	.ascii	"AX=%x BX=%x CX=%x DX=%x DI=%x SI=%x\nCS=%x DS=%x ES=%x SS=%x BP=%x\n"
 	.byte	0
 
 #endasm

@@ -43,25 +43,7 @@ struct biosparms {
     unsigned short fl;		/* 20 */
 };
 
-/* Useful defines for accessing the above structure. */
-
-#define CARRY_SET (bios_data_table->fl & 0x1)
-#define SEGMENT(addr) (((unsigned long)addr) >> 4)
-#define OFFSET(addr) (((unsigned long)addr) & 0xf)
-#define BD_IRQ bios_data_table->irq
-#define BD_AX bios_data_table->ax
-#define BD_BX bios_data_table->bx
-#define BD_CX bios_data_table->cx
-#define BD_DX bios_data_table->dx
-#define BD_SI bios_data_table->si
-#define BD_DI bios_data_table->di
-#define BD_ES bios_data_table->es
-#define BD_FL bios_data_table->fl
-
 /* exported functions */
-extern void call_bios(void);
-
-/* Some globals that we need */
-extern struct biosparms *bios_data_table;
+extern void call_bios(struct biosparms *);
 
 #endif

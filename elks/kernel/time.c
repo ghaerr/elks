@@ -26,7 +26,7 @@
 
 #include <arch/types.h>
 #include <linuxmt/time.h>
-#include <linuxmt/timex.h>
+#include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
 
@@ -34,7 +34,6 @@
 #include <arch/system.h>
 #include <arch/segment.h>
 
-#include <linuxmt/sched.h>
 
 /* this is the structure holding the base time (in UTC, of course) */
 struct timeval xtime;

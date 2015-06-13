@@ -8,16 +8,6 @@
  */
 
 #include <linuxmt/config.h>
-#include <linuxmt/types.h>
-#include <linuxmt/biosparm.h>
-
-static struct biosparms bdt;
-
-/*
- *	The external interface is a pointer..
- */
-
-struct biosparms *bios_data_table=&bdt;
 
 /*
  *	Quick drop into assembler for this one.
@@ -37,24 +27,25 @@ struct biosparms *bios_data_table=&bdt;
 #ifdef CONFIG_ROMCODE
  #define stashed_ds	[0]
 #else 
-    .extern    stashed_ds
+	.extern stashed_ds
 #endif	
 	
 	.globl  _call_bios
 
 _call_bios:
-	pushf			
+	push bp
+	mov  bp,sp
 
 ! Things we want to save - direction flag BP ES
 
-	push bp		
-	push es	
+	pushf
+	push es
 	push si
 	push di
 
 ! DS already saved in stashed_ds
 
-	mov bx, #_bdt
+	mov bx,4[bp]
 
 !	Load the register block from the table	
 
@@ -84,9 +75,9 @@ _call_bios:
 
 !	Make some breathing room
 
- 	pushf
- 	push bx
+	pushf
 	push ds
+	push bx
 
 !	Stack is now returned FL, BX, DS
 
@@ -102,10 +93,11 @@ _call_bios:
 
 ! ***** We can now use the bios data table again *****
 
-	mov bx, #_bdt
+	mov bx,sp
+	seg ss
+	mov bx,18[bx]
 
- 	pop 18[bx]         ! Save the old DS
- 	mov 2[bx],ax       ! Save the old AX
+	mov 2[bx],ax       ! Save the old AX
 	pop 4[bx]          ! Save the old BX
 	mov 6[bx], cx
 	mov 8[bx], dx
@@ -113,6 +105,7 @@ _call_bios:
 	mov 12[bx], di
 	mov 14[bx], bp
 	mov 16[bx], es
+	pop 18[bx]         ! Save the old DS
 	pop 20[bx]         ! Pop the returned flags off
 
 !	Restore things we must save
@@ -120,8 +113,8 @@ _call_bios:
 	pop di
 	pop si
 	pop es
-	pop bp
 	popf
+	pop bp
 	ret
 
 #endasm

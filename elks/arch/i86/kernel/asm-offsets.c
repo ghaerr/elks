@@ -12,7 +12,7 @@
 #endif
 #endif
 
-extern int TASK_KRNL_SP, TASK_USER_SP, TASK_USER_SS;
+extern int TASK_KRNL_SP, TASK_USER_SP, TASK_USER_SS, TASK_USER_DS;
 extern int TASK_KSTKTOP, TASK_KSTKT_SI;
 
 void asm_offsets(void)
@@ -20,6 +20,7 @@ void asm_offsets(void)
     TASK_KRNL_SP = offsetof(struct task_struct, t_regs.ksp);
     TASK_USER_SP = offsetof(struct task_struct, t_regs.sp);
     TASK_USER_SS = offsetof(struct task_struct, t_regs.ss);
+    TASK_USER_DS = offsetof(struct task_struct, t_regs.ds);
     TASK_KSTKTOP = offsetof(struct task_struct, t_kstack) + KSTACK_BYTES;
     TASK_KSTKT_SI = offsetof(struct task_struct, t_kstack) + KSTACK_BYTES - 2;
 }

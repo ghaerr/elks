@@ -57,16 +57,21 @@ void setup_arch(seg_t *start, seg_t *end)
 
 /* Stubs for functions needed elsewhere */
 
-#ifndef S_SPLINT_S
-#asm
-	export _hard_reset_now
-
-_hard_reset_now:
-
-	mov ax,#0x40		! No memory check on reboot
-	mov ds, ax
-	mov [0x72],#0x1234
-	jmp #0xffff:0
-
-#endasm
+void hard_reset_now(void)
+{
+#ifdef __BCC__
+    asm(\
+	"\tmov ax,#0x40\n" \
+	"\tmov ds, ax\n" \
+	"\tmov [0x72],#0x1234\n" \
+	"\tjmp #0xffff:0\n" \
+	);
 #endif
+#ifdef __ia16__
+    asm("movw $64,%ax\n\t"
+	"movw %ax,%ds\n\t"
+	"movw $4660,114\n\t"
+	"jmp 65535:0\n\t"
+	);
+#endif
+}

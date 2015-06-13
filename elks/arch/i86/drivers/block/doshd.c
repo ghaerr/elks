@@ -70,6 +70,21 @@ static int force_bioshd;
 static int revalidate_hddisk(int, int);
 #endif
 
+static struct biosparms bdt;
+
+/* Useful defines for accessing the above structure. */
+
+#define CARRY_SET (bdt.fl & 0x1)
+#define BD_IRQ bdt.irq
+#define BD_AX bdt.ax
+#define BD_BX bdt.bx
+#define BD_CX bdt.cx
+#define BD_DX bdt.dx
+#define BD_SI bdt.si
+#define BD_DI bdt.di
+#define BD_ES bdt.es
+#define BD_FL bdt.fl
+
 static struct drive_infot {
     int cylinders;
     int sectors;
@@ -146,7 +161,7 @@ static unsigned short int bioshd_gethdinfo(void)
 	BD_AX = BIOSHD_DRIVE_PARMS;
 	BD_DX = drive + 0x80;
 	BD_IRQ = BIOSHD_INT;
-	call_bios();
+	call_bios(&bdt);
 	if (!CARRY_SET) {
 	    drivep->cylinders = ((BD_CX >> 8) | ((BD_CX & 0xC0) << 2)) + 1;
 	    drivep->heads = (BD_DX >> 8) + 1;
@@ -216,7 +231,7 @@ static unsigned short int bioshd_getfdinfo(void)
     BD_AX = BIOSHD_DRIVE_PARMS;
     BD_DX = 0;			/* only the number of floppies */
     BD_IRQ = BIOSHD_INT;
-    call_bios();
+    call_bios(&bdt);
     ndrives = (CARRY_SET) ? 0 : BD_DX & 0xff;
 
 #else
@@ -233,7 +248,7 @@ static unsigned short int bioshd_getfdinfo(void)
 
 #ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
 
-	call_bios();
+	call_bios(&bdt);
 	if ((!CARRY_SET) && ((BD_AX & 0xff00) == 0))
 	    drive_info[drive + 2] = fd_types[BD_BX - 1];
 	else
@@ -241,7 +256,7 @@ static unsigned short int bioshd_getfdinfo(void)
 
 #else
 
-	if ((arch_cpu > 1) && (call_bios(), (!CARRY_SET)) && (BD_AX != 0x100)) {
+	if ((arch_cpu > 1) && (call_bios(&bdt), (!CARRY_SET)) && (BD_AX != 0x100)) {
 
 /* Some XT's return strange results - Al
  * The arch_cpu is a safety check
@@ -292,7 +307,7 @@ static void reset_bioshd(unsigned short int minor)
     BD_IRQ = BIOSHD_INT;
     BD_AX = BIOSHD_RESET;
     BD_DX = hd_drive_map[DEVICE_NR(minor)];
-    call_bios();
+    call_bios(&bdt);
 
 /* Dont log this fail - its fine
  */
@@ -326,7 +341,7 @@ int seek_sector(unsigned short int drive, char track, char sector)
 	BD_FL = 0;
 
 	set_irq();
-	call_bios();
+	call_bios(&bdt);
 	if (CARRY_SET) {
 	    if (((BD_AX >> 8) == 0x04) && (count == MAX_ERRS - 1))
 		break;		/* Sector not found */
@@ -438,7 +453,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	BD_IRQ = BIOSHD_INT;
 	BD_AX = BIOSHD_DRIVE_PARMS;
 	BD_DX = hd_drive_map[target];	/* Head 0, drive number */
-	call_bios();
+	call_bios(&bdt);
 	if (!CARRY_SET) {
 	    drivep->sectors = (BD_CX & 0x3f);
 	    drivep->cylinders = ((BD_CX >> 8) | ((BD_CX & 0xC0) << 2)) + 1;
@@ -728,7 +743,7 @@ static void do_bioshd_request(void)
 		   cylinder, head, sector, drive, req->rq_cmd);
 	    debug1("blocks %d\n", this_pass);
 	    set_irq();
-	    call_bios();
+	    call_bios(&bdt);
 	    if (CARRY_SET) {
 		reset_bioshd(MINOR(req->rq_dev));
 		dma_avail = 1;

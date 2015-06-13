@@ -70,7 +70,7 @@ END{
 
       if( depends_on[callno] != "" )
       {
-         if( callno < maxstd )
+         if( callno < maxno )
          {
             str = "\t.word _no_syscall";
             printf "#else\n%-25s ! %3d - %s\n", str, callno, assigned_to[callno]
