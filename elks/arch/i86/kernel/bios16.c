@@ -6,32 +6,30 @@
  *   9/1999  place the CS-Variable in a seperated RAM-Segment for
  *           ROM version. Christian Mardm"oller (chm@kdt.de)
  */
- 
-#include <linuxmt/types.h>
-#include <arch/segment.h>
-#include <linuxmt/biosparm.h>
+
 #include <linuxmt/config.h>
+#include <linuxmt/types.h>
+#include <linuxmt/biosparm.h>
 
 static struct biosparms bdt;
 
 /*
  *	The external interface is a pointer..
  */
- 
+
 struct biosparms *bios_data_table=&bdt;
 
 /*
  *	Quick drop into assembler for this one.
  */
- 
+
 #ifndef S_SPLINT_S
 #asm
 	.text
 /*
  *	stashed_ds lives in the kernel cs or we can never recover it...
- */
-
-/* In ROM we cant store anything! The space for the extrasegment
+ *
+ * In ROM we cant store anything! The space for the extrasegment
  * is managed in irqtab.c where I've found this mode first
  * ChM 10/99
  */

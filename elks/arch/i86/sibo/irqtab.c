@@ -1,53 +1,45 @@
+#include <linuxmt/config.h>
 #include <arch/irq.h>
 #include <arch/asm-offsets.h>
-#include <linuxmt/config.h>
 
 /*
  *	Easy way to store our kernel DS
+ *
+ * moving variables from code segment to an extra segment
+ * CONFIG_ROM_IRQ_DATA for the ROM_CODE-Version
+ * ELKS 0.76 7/1999 Christian Mard”ller  (chm@kdt.de)
  */
 
-/* moving variables from code segment to an extra segment
-/  CONFIG_ROM_IRQ_DATA for the ROM_CODE-Version
-/  ELKS 0.76 7/1999 Christian Mard”ller  (chm@kdt.de)
-/  */
-
 #ifdef CONFIG_ROMCODE
-/* In ROM-Mode we must generate a physical 3th segment :-)
-/  The segmentaddress is given by CONFIG_ROM_IRQ_DATA,
-/  the offset is constant per #define
-/-------------------------------------------------------*/
-
-   #define SEG_IRQ_DATA es
+/*
+ *  In ROM-Mode we must generate a physical 3th segment :-)
+ *  The segmentaddress is given by CONFIG_ROM_IRQ_DATA,
+ *  the offset is constant per #define
+ */
    #define stashed_ds       [0]
-
-#else
- #define SEG_IRQ_DATA cs
+#endif
 
 #ifndef S_SPLINT_S
 #asm
-        .globl	stashed_ds
 
-        .even
+	.text
 
+#ifndef CONFIG_ROMCODE
+/*
+ Kernel is in RAM. Reserve space in the
+ code segment to save the kernel DS
+*/
+	.globl	stashed_ds
+	.even
 stashed_ds:
 	.word	0
-
-#endasm
 #endif
-
-#endif
-
-extern void sig_check(void);
 
 /*
  *	Low level IRQ control.
  */
-
-#ifndef S_SPLINT_S
-#asm
 	.globl ___save_flags
 	.globl _restore_flags
-	.text
 
 ___save_flags:
 	pushf
@@ -72,85 +64,57 @@ _restore_flags:
 
 	.globl _irqtab_init
 _irqtab_init:
-
 	mov	al, #0x00	! disable psion hardware interrupt sources
 	out	0x15, al
 	mov	al, #0x00
 	out	0x08, al
         cli
 
+	mov	bx,ds
 #ifdef CONFIG_ROMCODE
-        mov ax,#CONFIG_ROM_IRQ_DATA
-	mov	es,ax
+	mov	ax,#CONFIG_ROM_IRQ_DATA
+	mov	ds,ax
+#else
+	seg	cs
 #endif
-
-        seg SEG_IRQ_DATA
-	mov stashed_ds,ds
-        mov _intr_count,#0
+	mov	stashed_ds,bx
+	mov	es,bx
 
         xor ax,ax
-        mov es,ax      ;intr table
+	mov	ds,ax	;intr table
 
 	out	0x15, al	! memory protection
-	mov	ax, cs
-	seg	es
-	mov	0x01e6, ax
-	mov	ax, #_irq0
-	seg	es
-	mov	0x01e4, ax
+	mov	[0x01e6],cs
+	mov	[0x01e4],#_irq0
 #if 0
 	mov	ax, cs
+	seg	es
 	mov	0x01c2, ax
 #endif
 #if 0
-	lea	ax,_irq0
-	seg	es
-	mov	[0xe4],ax
-	mov	ax,cs
-	seg	es
-	mov	[0x02],ax
+	mov	[0xe4],#_irq0
+	mov	[0x02],cs
 
-	lea	ax,_irq1
-	seg	es
-	mov	[0x04],ax
-	mov	ax,cs
-	seg	es
-	mov	[0x06],ax
-	
-	lea	ax,_irq2
-	seg	es
-	mov	[0x08],ax
-	mov	ax,cs
-	seg	es
-	mov	[0x0A],ax
+	mov	[0x04],#_irq1
+	mov	[0x06],cs
 
-	lea	ax,_irq3
-	seg	es
-	mov	[0x0C],ax
-	mov	ax,cs
-	seg	es
-	mov	[0x0E],ax
+	mov	[0x08],#_irq2
+	mov	[0x0A],cs
 
-	lea	ax,_irq4
-	seg	es
-	mov	[0x10],ax
-	mov	ax,cs
-	seg	es
-	mov	[0x12],ax
-	
+	mov	[0x0C],#_irq3
+	mov	[0x0E],cs
+
+	mov	[0x10],#_irq4
+	mov	[0x12],cs
+
 #endif
 
 ! Setup INT 0x80 (for syscall)
-	lea	ax,_syscall_int
-	seg	es
-	mov	[512],ax
-	mov	ax,cs
-	seg	es
-	mov	[514],ax
+	mov	[512],#_syscall_int
+	mov	[514],cs
 ! Tidy up
 
-        mov dx,ds      ;the original value
-        mov	es,dx  ;just here
+	mov	ds,bx	;the original value just here
 	sti
 	ret
 
@@ -161,14 +125,9 @@ _irqtab_init:
 !	Other IRQs (see IRQ 0 at the bottom for the
 !	main code).
 !
-	.text
+	.extern	_schedule
+	.extern	_sig_check
 	.extern	_do_IRQ
-
-	.data
-	.extern	_cache_A1
-	.extern	_cache_21
-
-	.text
 
 _irq1:
 	push	ax
@@ -519,13 +478,15 @@ noschedpop:
 	iret
 
 	.data
-        .globl  _intr_count
-_intr_count:
-        .word 0
+	.globl	_intr_count
+
+	.even
 
 off_stashed_irq0_l:
 	.word	0
 seg_stashed_irq0_l:
+	.word	0
+_intr_count:
 	.word	0
 
 	.zerow	256		! (was) 128 byte interrupt stack

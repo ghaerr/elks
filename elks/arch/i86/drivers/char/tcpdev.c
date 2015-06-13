@@ -22,8 +22,6 @@
 
 #ifdef CONFIG_INET
 
-extern inet_process_tcpdev();
-
 unsigned char tdin_buf[TCPDEV_INBUFFERSIZE];
 unsigned char tdout_buf[TCPDEV_OUTBUFFERSIZE];
 
@@ -35,7 +33,7 @@ static struct wait_queue tcpdevq;
 
 char tcpdev_inuse;
 
-static int tcpdev_read(struct inode *inode, struct file *filp, char *data,
+static size_t tcpdev_read(struct inode *inode, struct file *filp, char *data,
 		       unsigned int len)
 {
     debug4("TCPDEV: read( %p, %p, %p, %u )\n",inode,filp,data,len);
@@ -86,13 +84,13 @@ void tcpdev_clear_data_avail(void)
 	panic("bufin_sem tragedy");
 }
 
-static int tcpdev_write(struct inode *inode, struct file *filp,
+static size_t tcpdev_write(struct inode *inode, struct file *filp,
 			char *data, size_t len)
 {
     int ret;
 
     debug4("TCPDEV: write( %p, %p, %p, %u )\n",inode,filp,data,len);
-    if (len <= 0)
+    if (!len)
 	ret = 0;
     else {
 	down(&bufin_sem);
@@ -106,7 +104,7 @@ static int tcpdev_write(struct inode *inode, struct file *filp,
 	ret = (int) len;
     }
     debug1("TCPDEV: write() returning %d\n",ret);
-    return ret;
+    return (size_t)ret;
 }
 
 int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
@@ -154,11 +152,10 @@ static int tcpdev_open(struct inode *inode, struct file *file)
     return 0;
 }
 
-int tcpdev_release(struct inode *inode, struct file *file)
+void tcpdev_release(struct inode *inode, struct file *file)
 {
     debug2("TCPDEV: release( %p, %p )\n",inode,file);
     tcpdev_inuse = 0;
-    return 0;
 }
 
 /*@-type@*/

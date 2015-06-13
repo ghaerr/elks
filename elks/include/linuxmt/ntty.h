@@ -39,7 +39,7 @@
 
 struct tty_ops {
     int (*open) ();
-    int (*release) ();
+    void (*release) ();
     int (*write) ();
     int (*read) ();
     int (*ioctl) ();

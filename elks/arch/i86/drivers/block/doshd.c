@@ -652,7 +652,7 @@ static void do_bioshd_request(void)
       next_block:
 
 	/* make sure we have a valid request - Done by INIT_REQUEST */
-	if (!CURRENT || CURRENT->rq_dev < 0)
+	if (!CURRENT)
 	    return;
 
 	/* now initialize it */

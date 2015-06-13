@@ -1,54 +1,45 @@
+#include <linuxmt/config.h>
 #include <arch/irq.h>
 #include <arch/asm-offsets.h>
-#include <linuxmt/config.h>
-
-static int bios_call_cnt_l = 5;
-static long stashed_irq0_l;
-int intr_count = 0;
 
 /*
  *	Easy way to store our kernel DS
+ *
+ * moving variables from code segment to an extra segment
+ * CONFIG_ROM_IRQ_DATA for the ROM_CODE-Version
+ * ELKS 0.76 7/1999 Christian Mard”ller  (chm@kdt.de)
  */
 
-/* moving variables from code segment to an extra segment
-/  CONFIG_ROM_IRQ_DATA for the ROM_CODE-Version
-/  ELKS 0.76 7/1999 Christian Mard”ller  (chm@kdt.de)
-/  */
-
-#ifdef CONFIG_ROMCODE 
-/* In ROM-Mode we must generate a physical 3th segment :-)
-/  The segmentaddress is given by CONFIG_ROM_IRQ_DATA,
-/  the offset is constant per #define
-/-------------------------------------------------------*/
-
+#ifdef CONFIG_ROMCODE
+/*
+ *  In ROM-Mode we must generate a physical 3th segment :-)
+ *  The segmentaddress is given by CONFIG_ROM_IRQ_DATA,
+ *  the offset is constant per #define
+ */
    #define stashed_ds       [0]
-
-#else
+#endif
 
 #ifndef S_SPLINT_S
 #asm
-        .text
-        .globl stashed_ds
-        .even
+
+	.text
+
+#ifndef CONFIG_ROMCODE
+/*
+ Kernel is in RAM. Reserve space in the
+ code segment to save the kernel DS
+*/
+	.globl	stashed_ds
+	.even
 stashed_ds:
 	.word	0
-
-#endasm
 #endif
-
-#endif
-
-extern void sig_check(void);
 
 /*
  *	Low level IRQ control.
  */
-
-#ifndef S_SPLINT_S
-#asm
 	.globl ___save_flags
 	.globl _restore_flags
-	.text
 
 ___save_flags:
 	pushf
@@ -131,14 +122,9 @@ _irqtab_init:
 !	Other IRQs (see IRQ 0 at the bottom for the
 !	main code).
 !
-	.text
-	.extern _do_IRQ
-
-	.data
-	.extern _cache_A1
-	.extern _cache_21
-
-	.text
+	.extern	_schedule
+	.extern	_sig_check
+	.extern	_do_IRQ
 
 _irq1:			;keyboard
 	push	ax
@@ -479,23 +465,20 @@ was_trap:
 ! This path will return directly to user space
 !
 	call	_schedule		! Task switch
-        mov     bx,_current
-        mov     8[bx],#1
-        call    _sig_check              ! Check signals
+	mov	bx,_current
+	mov	8[bx],#1
+	call	_sig_check		! Check signals
 !
 !	At this point, the kernel stack is empty. Thus, there is no
 !       need to save the kernel stack pointer.
 !
-        mov     bx,_current
-        mov     sp,TASK_USER_SP[bx]
-#ifndef CONFIG_ADVANCED_MM
-        mov     ss,TASK_USER_SS[bx]
-#else
-	mov ax, TASK_USER_SS[bx] ! user ds
-	mov bp, sp
-        mov ss, ax
-	mov 12[bp], ax	! change the es in the stack
-	mov 14[bp], ax	! change the ds in the stack
+	mov	bx,_current
+	mov	sp,TASK_USER_SP[bx]
+	mov	ss,TASK_USER_SS[bx]	! user ds
+#ifdef CONFIG_ADVANCED_MM
+	mov	bp,sp
+	mov	12[bp],ss		! change the es in the stack
+	mov	14[bp],ss		! change the ds in the stack
 #endif
 	j	noschedpop
 !
@@ -524,7 +507,17 @@ noschedpop:
 	iret
 
 	.data
-        .even
+	.globl	_intr_count
+
+	.even
+
+_bios_call_cnt_l:
+	.word	5
+_stashed_irq0_l:
+	.long	0
+_intr_count:
+	.word	0
+
 	.zerow	256		! (was) 128 byte interrupt stack
 _intstack:
 

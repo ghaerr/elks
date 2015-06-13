@@ -90,5 +90,6 @@ struct tdb_accept_ret {
 };
 
 extern void tcpdev_clear_data_avail(void);
+extern int inet_process_tcpdev(char *buf, int len);
 
 #endif

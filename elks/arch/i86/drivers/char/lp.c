@@ -162,7 +162,7 @@ int lp_char_polled(char c, unsigned int target)
     return 1;
 }
 
-int lp_write(struct inode *inode, struct file *file, char *buf, int count)
+size_t lp_write(struct inode *inode, struct file *file, char *buf, int count)
 {
     register char *chrsp;
 
@@ -180,7 +180,7 @@ int lp_write(struct inode *inode, struct file *file, char *buf, int count)
 	    break;
 	chrsp++;
     }
-    return (int) chrsp;
+    return (size_t)chrsp;
 }
 
 int lp_open(struct inode *inode, struct file *file)

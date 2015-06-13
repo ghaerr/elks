@@ -35,13 +35,12 @@ int pty_open(struct inode *inode, struct file *file)
     return -ENODEV;
 }
 
-int pty_release(struct inode *inode, struct file *file)
+void pty_release(struct inode *inode, struct file *file)
 {
     register struct tty *otty;
 
     if ((otty = determine_tty(inode->i_rdev)))
 	kill_pg(otty->pgrp, SIGHUP, 1);
-    return 0;
 }
 
 int pty_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
@@ -89,7 +88,7 @@ int pty_select(struct inode *inode, struct file *file, int sel_type)
 #endif
 }
 
-int pty_read(struct inode *inode, struct file *file, char *data, int len)
+size_t pty_read(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
     register char *pi;
@@ -115,10 +114,10 @@ int pty_read(struct inode *inode, struct file *file, char *data, int len)
 	++pi;
     }
     debug1("{%u}\n", (int)pi);
-    return (int)pi;
+    return (size_t)pi;
 }
 
-int pty_write(struct inode *inode, struct file *file, char *data, int len)
+size_t pty_write(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
     register char *pi;
@@ -144,13 +143,14 @@ int pty_write(struct inode *inode, struct file *file, char *data, int len)
 	debug(" wc");
     }
     debug("\n");
-    return (int)pi;
+    return (size_t)pi;
 }
 
 int ttyp_write(register struct tty *tty)
 {
     if (tty->outq.len == tty->outq.size)
 	interruptible_sleep_on(&tty->outq.wq);
+    return 0;
 }
 
 /*@-type@*/

@@ -272,7 +272,7 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 
 
     debug1("SERIAL: Interrupt %d recieved.\n", irq);
-    sp = &ports[irq_port[irq - 2]];
+    sp = &ports[(int)irq_port[irq - 2]];
     do {
 	statusp = (char *)inb_p(sp->io + UART_LSR);
 	if ((int)statusp & UART_LSR_DR)

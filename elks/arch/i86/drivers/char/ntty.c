@@ -117,20 +117,20 @@ int ttynull_openrelease(struct tty *tty)
     return 0;
 }
 
-int tty_release(struct inode *inode, struct file *file)
+void tty_release(struct inode *inode, struct file *file)
 {
     register struct tty *rtty;
 
     rtty = determine_tty(inode->i_rdev);
     if (!rtty)
-	return -ENODEV;
+	return;
 
     if (current->pid == rtty->pgrp) {
 	kill_pg(rtty->pgrp, SIGHUP, 1);
-	rtty->pgrp = NULL;
+	rtty->pgrp = 0;
     }
     rtty->flags &= ~TTY_OPEN;
-    return rtty->ops->release(rtty);
+    rtty->ops->release(rtty);
 }
 
 static void tty_charout_raw(register struct tty *tty, unsigned char ch)
@@ -170,7 +170,7 @@ void tty_echo(register struct tty *tty, unsigned char ch)
  *
  */
 
-int tty_write(struct inode *inode, struct file *file, char *data, int len)
+size_t tty_write(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
     register char *pi;
@@ -187,7 +187,7 @@ int tty_write(struct inode *inode, struct file *file, char *data, int len)
     return len;
 }
 
-int tty_read(struct inode *inode, struct file *file, char *data, int len)
+size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 {
 #if 1
     register struct tty *tty = determine_tty(inode->i_rdev);
@@ -361,7 +361,7 @@ void tty_init(void)
 
 #if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT)
 
-    chq_init(ttys[0].inq, ttys[0].inq_buf, INQ_SIZE);
+    chq_init(&ttys[0].inq, ttys[0].inq_buf, INQ_SIZE);
     ttyp = ttys;
     for (pi = 0 ; ((int)pi) < NUM_TTYS ; pi++) {
 	ttyp->ops = &dircon_ops;
@@ -383,7 +383,7 @@ void tty_init(void)
 #ifdef CONFIG_PSEUDO_TTY
 
     ttyp = &ttys[8];
-    for (pi = 8; ((int)pi) < 8 + NR_PTYS; pi++) {
+    for (pi = (char *)8; ((int)pi) < 8 + NR_PTYS; pi++) {
 	ttyp->ops = &ttyp_ops;
 	(ttyp++)->minor = (int)pi;
     }

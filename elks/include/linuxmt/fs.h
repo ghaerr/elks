@@ -484,8 +484,8 @@ extern int char_read(struct inode *,struct file *,char *,int);
 
 #ifdef CONFIG_BLK_DEV_CHAR
 
-extern int block_read(struct inode *,struct file *,char *,size_t);
-extern int block_write(struct inode *,struct file *,char *,size_t);
+extern size_t block_read(struct inode *,struct file *,char *,size_t);
+extern size_t block_write(struct inode *,struct file *,char *,size_t);
 
 #else
 
