@@ -38,6 +38,7 @@ elks/arch/i86/boot/setup
 elks/arch/i86/boot/system
 elks/arch/i86/drivers/char/KeyMaps/keymaps.h
 elks/arch/i86/kernel/entry.c
+elks/arch/i86/kernel/entry.s
 elks/arch/i86/tools/build
 elks/arch/i86/tools/mkbootloader
 elks/include/arch/asm-offsets.h
