@@ -8,39 +8,30 @@
 
 #include <arch/io.h>
 
+#define BELL_FREQUENCY 800
+#define BELL_PERIOD (1193181/BELL_FREQUENCY)
+#define BELL_PERIOD_L (BELL_PERIOD & 0xFF)
+#define BELL_PERIOD_H (BELL_PERIOD / 256)
+#define SPEAKER_PORT (0x61)
+#define TIMER2_PORT (0x42)
+#define TIMER_CONTROL_PORT (0x43)
+
 /*
  * Turn PC speaker on at specified frequency.
  */
-static void sound(unsigned freq)
+static void sound(void)
 {
-    int es;
-#ifndef S_SPLINT_S
-#asm
-	mov	bx, [bp+.sound.freq]	! frequency
-	mov	ax, #$34dd
-	mov	dx, #$0012
-	cmp	dx, bx
-	jnb	none
-	div	bx
-	mov	bx, ax
-	in	al, $61
-	test	al, #3
-	jne	j1
-	or	al, #3
-	out	$61, al
-
-j1:
-	mov	al, #$b6
-	out	$43, al
-	mov	al, bl
-	out	$42, al
-	mov	al, bh
-	out	$42, al
-
-none:
-
-#endasm
-#endif
+    asm(\
+	"\tin	al,0x61\n" \
+	"\tor	al,#3\n" \
+	"\tout	0x61,al\n" \
+	"\tmov	al,#0xB6\n" \
+	"\tout	0x43,al\n" \
+	"\tmov	al,#0xD3\n" \
+	"\tout	0x42,al\n" \
+	"\tmov	al,#0x05\n" \
+	"\tout	0x42,al\n" \
+	);
 }
 
 /*
@@ -48,13 +39,11 @@ none:
  */
 static void nosound(void)
 {
-#ifndef S_SPLINT_S
-#asm
-	in	al, $61
-	and	al, #$fc
-	out	$61, al
-#endasm
-#endif
+    asm(\
+	"\tin	al,0x61\n" \
+	"\tand	al,#0xFC\n" \
+	"\tout	0x61,al\n" \
+	);
 }
 
 /*
@@ -64,8 +53,8 @@ void bell(void)
 {
     register char *pi = (char *) 60000U;
 
-    sound(800);
-	while (--pi)
+    sound();
+    while (--pi)
 	/* Do nothing */ ;
     nosound();
 }

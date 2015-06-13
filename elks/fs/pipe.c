@@ -407,11 +407,4 @@ int sys_pipe(unsigned int *filedes)
     return verified_memcpy_tofs(filedes, fd, 2 * sizeof(int));
 }
 
-#else
-
-int sys_pipe(unsigned int *filedes)
-{
-    return -ENOSYS;
-}
-
 #endif

@@ -1,6 +1,8 @@
 #ifndef LX86_ARCH_IO_H
 #define LX86_ARCH_IO_H
 
+extern void bell(void);
+
 #ifdef __BCC__
 extern void outb(unsigned char, void *);
 extern void outb_p(unsigned char, void *);
@@ -12,8 +14,55 @@ extern unsigned char inb_p(void *);
 
 extern unsigned short int inw(void *);
 extern unsigned short int inw_p(void *);
+#endif
 
-extern void bell(void);
+#ifdef __ia16__
+#define outb(value,port) \
+__asm__ ("outb %%al,%%dx"::"a" (value),"d" (port))
+
+
+#define inb(port) ({ \
+unsigned char _v; \
+__asm__ volatile ("inb %%dx,%%al":"=a" (_v):"d" (port)); \
+_v; \
+})
+
+#define outw(value,port) \
+__asm__ ("outw %%ax,%%dx"::"a" (value),"d" (port))
+
+
+#define inw(port) ({ \
+unsigned char _v; \
+__asm__ volatile ("inw %%dx,%%ax":"=a" (_v):"d" (port)); \
+_v; \
+})
+
+#define outb_p(value,port) \
+__asm__ volatile ("outb %%al,%%dx\n" \
+        "outb %%al,$0x80\n" \
+        ::"a" (value),"d" (port))
+
+#define inb_p(port) ({ \
+unsigned char _v; \
+__asm__ volatile ("inb %%dx,%%al\n" \
+        "outb %%al,$0x80\n" \
+        :"=a" (_v):"d" (port)); \
+_v; \
+})
+
+#define outw_p(value,port) \
+__asm__ volatile ("outw %%ax,%%dx\n" \
+        "outb %%al,$0x80\n" \
+        ::"a" (value),"d" (port))
+
+#define inw_p(port) ({ \
+unsigned char _v; \
+__asm__ volatile ("inw %%dx,%%ax\n" \
+        "outb %%al,$0x80\n" \
+        :"=a" (_v):"d" (port)); \
+_v; \
+})
+
 #endif
 
 #ifdef __WATCOMC__

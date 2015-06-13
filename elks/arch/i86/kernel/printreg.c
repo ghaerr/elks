@@ -43,19 +43,10 @@ _print_regs:
 	pop ss
 	pop bp
 	ret
-#endasm
-#endif
 
-void printsp(void)
-{
-#ifndef S_SPLINT_S
-#asm
+	.globl _printsp
 
-    .data
-msg:	.ascii	"SP=%x:%x\n"
-	.byte	0
-
-    .text
+_printsp:
 	push sp
 	push ss
 	push #msg
@@ -65,6 +56,9 @@ msg:	.ascii	"SP=%x:%x\n"
 	pop ax
 	ret
 
+	.data
+msg:	.ascii	"SP=%x:%x\n"
+	.byte	0
+
 #endasm
 #endif
-}

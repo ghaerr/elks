@@ -101,7 +101,7 @@ int tty_open(struct inode *inode, struct file *file)
     err = otty->ops->open(otty);
     if (err)
 	return err;
-    if (otty->pgrp == NULL && currentp->session == currentp->pid
+    if (otty->pgrp == 0 && currentp->session == currentp->pid
 	&& currentp->tty == NULL) {
 	otty->pgrp = currentp->pgrp;
 	currentp->tty = otty;

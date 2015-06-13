@@ -3,6 +3,7 @@
 # This program generates entry.c from syscall.dat
 
 cat << .eof
+#include <linuxmt/config.h>
 /* Switched to V7 system call layout... Chad - 1/5/96
  */
 #ifndef S_SPLINT_S
@@ -69,7 +70,7 @@ END{
 
       if( depends_on[callno] != "" )
       {
-         if( callno <= maxstd )
+         if( callno < maxstd )
          {
             str = "\t.word _no_syscall";
             printf "#else\n%-25s ! %3d - %s\n", str, callno, assigned_to[callno]
@@ -90,10 +91,11 @@ sys_call_table_end:
 
 	.text
 	.globl _syscall
+	.globl _no_syscall
 
 _syscall:
 	cmp  ax,#((sys_call_table_end - sys_call_table)/2)
-	ja   _nsyscall
+	ja   _no_syscall
 	! look up address and jump to function
 	mov  bx,ax
         add  bx,ax              ! multiply by 2
@@ -101,8 +103,9 @@ _syscall:
 
 !	All unimplemented calls
 	
-_nsyscall:
-	br  _no_syscall
+_no_syscall:
+	mov	ax,#-38
+	ret
 
 #endasm
 #endif

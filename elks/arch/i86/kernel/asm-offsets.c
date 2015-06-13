@@ -7,7 +7,8 @@
 #ifdef __WATCOMC__
 #define offsetof(__typ,__id) ((size_t)((char *)&(((__typ*)0)->__id) - (char *)0))
 #else
-#include <stddef.h>
+#define offsetof(s,m) (size_t)&(((s *)0)->m)
+/*#include <stddef.h>*/
 #endif
 #endif
 

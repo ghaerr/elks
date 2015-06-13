@@ -16,7 +16,7 @@
 
 #include <arch/segment.h>
 
-static size_t minix_dir_read(struct inode *inode, struct file *filp, char *buf, int count)
+static size_t minix_dir_read(struct inode *inode,struct file *filp,char *buf,size_t count)
 {
     return -EISDIR;
 }
