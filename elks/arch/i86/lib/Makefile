@@ -29,7 +29,13 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
+ifeq ($(USEIA16), y)
+OBJS		=peekb.o peekw.o pokew.o bitops.o \
+		 memmove.o string.o fmemset.o border.o setupw.o \
+		 ldivmod.o divmodsi3.o
+else
 OBJS		= $(IOBJS) $(JOBJS) $(LLOBJS) $(LXOBJS)
+endif
 
 # compiler support for integer arithmetic
 
@@ -39,14 +45,14 @@ IOBJS		=idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o
 
 JOBJS		=inport.o inportb.o outport.o outportb.o \
 		 peekb.o peekw.o pokew.o bitops.o \
-		 memmove.o string.o fmemset.o border.o
+		 memmove.o string.o fmemset.o border.o setupw.o
 #		 ntohl.o ntohs.o
 
 # compiler support for long arithmetic on little-endian (normal) longs
 
 LLOBJS  	=laddl.o landl.o lcmpl.o lcoml.o ldecl.o ldivl.o ldivul.o \
 		 leorl.o lincl.o lmodl.o lmodul.o lmull.o lnegl.o lorl.o \
-		 lsll.o lsrl.o lsrul.o lsubl.o ltstl.o setupw.o
+		 lsll.o lsrl.o lsrul.o lsubl.o ltstl.o
 
 # compiler support for long arithmetic on all longs
 

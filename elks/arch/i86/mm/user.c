@@ -4,9 +4,9 @@
  
 #include <linuxmt/types.h>
 #include <linuxmt/sched.h>
-#include <arch/segment.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/errno.h>
+#include <arch/segment.h>
 
 int verfy_area(void *p, size_t len)
 {
@@ -27,33 +27,6 @@ int verfy_area(void *p, size_t len)
     return 0;
 }
 
-void memcpy_fromfs(void *daddr, void *saddr, size_t len)
-{
-    /*@unused@*/ unsigned short int ds = current->t_regs.ds;
-
-#ifndef S_SPLINT_S
-#asm
-	push	si
-	push	di
-	mov	dx,es
-	mov	bx,ds
-	mov	es,bx
-	mov	di,[bp+.memcpy_fromfs.daddr]	! destination address
-	mov	ds,[bp+.memcpy_fromfs.ds]	! source segment (local variable)
-	mov	si,[bp+.memcpy_fromfs.saddr]	! source address
-	mov	cx,[bp+.memcpy_fromfs.len]	! number of bytes to copy
-	cld
-	rep
-	movsb
-	mov	ds,bx
-	mov	es,dx
-	pop	di
-	pop	si
-#endasm
-#endif
-
-}
-
 int verified_memcpy_fromfs(void *daddr, void *saddr, size_t len)
 {
     int err = verify_area(VERIFY_READ, saddr, len);
@@ -64,29 +37,6 @@ int verified_memcpy_fromfs(void *daddr, void *saddr, size_t len)
     memcpy_fromfs(daddr, saddr, len);
 
     return 0;
-}
-
-void memcpy_tofs(void *daddr, void *saddr, size_t len)
-{
-    /*@unused@*/ unsigned short int es = current->t_regs.ds;
-
-#ifndef S_SPLINT_S
-#asm
-	push	si
-	push	di
-	mov	dx,es
-	mov	es,[bp+.memcpy_tofs.es]	! destination segment (local variable)
-	mov	di,[bp+.memcpy_tofs.daddr]	! destination address
-	mov	si,[bp+.memcpy_tofs.saddr]	! source address
-	mov	cx,[bp+.memcpy_tofs.len]	! number of bytes to copy
-	cld
-	rep
-	movsb
-	mov	es,dx
-	pop	di
-	pop	si
-#endasm
-#endif
 }
 
 int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
@@ -101,38 +51,6 @@ int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
     return 0;
 }
 
-/* fmemcpy(dseg, dest, sseg, src, size); */
-
-#ifndef S_SPLINT_S
-#asm	
-
-	.globl	_fmemcpy
-
-_fmemcpy:
-	push	bp
-	mov	bp, sp
-	push	di
-	push	si
-	push	ds
-	push	es
-	pushf
-	mov	es, 4[bp]
-	lds     di, 6[bp]	
-	mov	si, 10[bp]
-	mov	cx, 12[bp]
-	cld			! Must move upwards...
-	rep
-	movsb
-	popf
-	pop	es
-	pop	ds
-	pop	si
-	pop	di
-	pop	bp
-	ret
-#endasm
-#endif
-
 #if 0
 
 int fstrlen(unsigned short int dseg, unsigned short int doff)
@@ -145,40 +63,6 @@ int fstrlen(unsigned short int dseg, unsigned short int doff)
     return i;
 }
 
-#endif
-
-#if 1
-
-int strlen_fromfs(void *saddr)
-{
-    int ds = (int) current->t_regs.ds;
-
-    /*  scasb uses es:di, not ds:si, so it is not necessary
-     *  to save and restore ds
-     */
-
-#ifndef S_SPLINT_S
-#asm
-
-	push	di
-	mov	dx,es
-	mov	es,[bp+.strlen_fromfs.ds]	! source segment (local variable)
-	mov	di,[bp+.strlen_fromfs.saddr]	! source address
-	cld
-	xor	al,al		! search for NULL byte
-	mov	cx,#-1
-	repne
-	scasb
-	sub	di,[bp+.strlen_fromfs.saddr]	! calc len +1
-	dec	di
-	mov	[bp+.strlen_fromfs.ds],di	! save in local var ds
-	mov	es,dx
-	pop	di
-#endasm
-#endif
-
-    return ds;
-}
 #endif
 
 unsigned long int get_user_long(void *dv)
