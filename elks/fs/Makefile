@@ -36,8 +36,8 @@ include $(BASEDIR)/Makefile-rules
 # Objects to be compiled.
 
 OBJS  = super.o bufops.o devices.o fcntl.o stat.o inode.o file_table.o \
-	buffer.o block_dev.o namei.o ioctl.o filesystems.o open.o \
-	read_write.o readdir.o exec.o select.o pipe.o
+	block_dev.o namei.o ioctl.o filesystems.o open.o read_write.o \
+	readdir.o exec.o select.o pipe.o buffer.o
 
 #########################################################################
 # Commands.

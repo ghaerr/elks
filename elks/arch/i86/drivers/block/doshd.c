@@ -729,12 +729,23 @@ static void do_bioshd_request(void)
 		sleep_on(&dma_wait);
 	    dma_avail = 0;
 	    BD_IRQ = BIOSHD_INT;
+#ifdef DMA_OVR
+	    if (req->rq_cmd == WRITE) {
+		BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
+		fmemcpy(BUFSEG, 0, req->rq_seg, (__u16)buff, this_pass * 512);
+	    }
+	    else
+		BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
+	    BD_BX = 0;
+	    BD_ES = BUFSEG;
+#else
 	    if (req->rq_cmd == WRITE)
 		BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
 	    else
 		BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
 	    BD_BX = (__u16) buff;
 	    BD_ES = req->rq_seg;
+#endif
 	    BD_CX = (unsigned short int)
 			((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
 	    BD_DX = (head << 8) | hd_drive_map[drive];
@@ -757,6 +768,10 @@ static void do_bioshd_request(void)
 		}
 		continue;	/* try again */
 	    }
+#ifdef DMA_OVR
+	    if (req->rq_cmd == READ)
+		fmemcpy(req->rq_seg, (__u16)buff, BUFSEG, 0, this_pass * 512);
+#endif
 
 	    /* In case it's already been freed */
 	    if (!dma_avail) {

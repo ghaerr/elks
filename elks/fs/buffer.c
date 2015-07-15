@@ -14,7 +14,12 @@
 #include <arch/irq.h>
 
 static struct buffer_head buffers[NR_BUFFERS];
+#ifdef DMA_ALN
+static char bufmem[(NR_MAPBUFS+1)*BLOCK_SIZE-1];	/* L1 buffer area */
+static char *bufmem_i;
+#else
 static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
+#endif
 
 /*
  *	STUBS for the buffer cache when we put it in
@@ -420,7 +425,11 @@ void map_buffer(register struct buffer_head *bh)
 	    if (!bufmem_map[i]) {
 		/* We can just map here! */
 		bufmem_map[i] = bh;
-		bh->b_data = bufmem[i];
+#ifdef DMA_ALN
+		bh->b_data = bufmem_i + (i << BLOCK_SIZE_BITS);
+#else
+		bh->b_data = (char *)bufmem + (i << BLOCK_SIZE_BITS);
+#endif
 		bh->b_mapcount++;
 		if(bh->b_uptodate)
 		fmemcpy(kernel_ds, (__u16) bh->b_data, _buf_ds,
@@ -517,8 +526,12 @@ void print_bufmap_status(void)
 void buffer_init(void)
 {
     register struct buffer_head *bh = buffers;
-    unsigned char i;
+    unsigned int i;
 
+#ifdef DMA_ALN
+    i = (-(((int)kernel_ds << 4) + (int)bufmem)) & (BLOCK_SIZE - 1);
+    bufmem_i = (char *)bufmem + i;
+#endif
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     _buf_ds = mm_alloc(NR_BUFFERS * 0x40);
     i = 0;
@@ -534,7 +547,11 @@ void buffer_init(void)
 	bh->b_mapcount = 0;
 	bh->b_num = i;		/* Used to compute L2 location */
 #else
-	bh->b_data = bufmem[i];
+#ifdef DMA_ALN
+	bh->b_data = bufmem_i + (i << BLOCK_SIZE_BITS);
+#else
+	bh->b_data = (char *)bufmem + (i << BLOCK_SIZE_BITS);
+#endif
 #endif
 	if (i > 0) {
 	    bh->b_prev_lru = bh - 1;
