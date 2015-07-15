@@ -745,11 +745,12 @@ static void do_bioshd_request(void)
 	    set_irq();
 	    call_bios(&bdt);
 	    if (CARRY_SET) {
+		minor = BD_AX;
 		reset_bioshd(MINOR(req->rq_dev));
 		dma_avail = 1;
 		errs++;
 		if (errs > MAX_ERRS) {
-		    printk("hd: error: AX=0x%x\n", BD_AX);
+		    printk("hd: error: AX=0x%x\n", minor >> 8);
 		    end_request(0);
 		    wake_up(&dma_wait);
 		    goto next_block;

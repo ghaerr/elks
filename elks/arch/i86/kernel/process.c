@@ -54,7 +54,7 @@ void stack_check(void)
 #endif
     return;
 stack_overflow:
-    printk("STACK OVERFLOW BY %d BYTES\n", 0xffff - currentp->t_regs.sp);
+    printk("STACK OVERFLOW BY %u BYTES\n", 0xffff - currentp->t_regs.sp);
     do_exit(SIGSEGV);
 }
 
@@ -91,6 +91,9 @@ unsigned get_ustack(register struct task_struct *t,int off)
     return peekw(t->t_regs.ss, t->t_regs.sp+off);
 }
 
+/*
+ * Called by sys_execve()
+ */
 void arch_setup_kernel_stack(register struct task_struct *t)
 {
     put_ustack(t, -2, USER_FLAGS);			/* Flags */
@@ -100,7 +103,9 @@ void arch_setup_kernel_stack(register struct task_struct *t)
     t->t_kstackm = KSTACK_MAGIC;
 }
 
-/* We need to make the program return to another point - to the signal
+/* Called by do_signal()
+ *
+ * We need to make the program return to another point - to the signal
  * handler. The stack currently looks like this:-
  *
  *              ip cs  f
@@ -136,43 +141,43 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
 }
 
 /*
- * There are two cases when a process could be switched out:
+ * To start a child process we need to craft for it a kernel stack. The
+ * child user stack must be the same than the caller user stack. The stack
+ * state inside do_fork for the CALLER of sys_fork() looks like this:
  *
- *  (1) an interrupt occurred, and schedule() was called at the end.
- *  (2) a system call was made, and schedule() was called during it.
- *
- * In our case we are dealing with (2) since we the user called the fork()
- * system call. The stack state inside do_fork looks like this:
- *
- *                 Kernel Stack                               User Stack
- *               bp ip bx cx dx                                  ip cs f
- *                     --------
- *                     syscall params
+ *             Kernel Stack                               User Stack
+ *     ?? ip bx cx dx di si                                  ip cs f
+ *           --------------
+ *           syscall params
  *
  * The user ss(=ds,es) and sp are stored in current->t_regs by the
  * int code, before changing to kernel stack
  *
- * Our child process needs to look as if we had called schedule(), and
- * when it goes back into userland give ax=0. This is conveniently
- * achieved by making load_regs return ax=0. Stack must look like this:
+ * Our child process needs to look as if it had called tswitch(), and
+ * when it goes back into userland give ax = 0. This is conveniently
+ * achieved by making tswitch() return ax=0. Stack for the CHILD must look
+ * like this:
  *
- *                  Kernel Stack                               User Stack
- *       dx bx si di f bp bp IP                                  ip cs f
+ *           Kernel Stack                               User Stack
+ *          si di f bp IP                                  ip cs f
  *
- * with IP pointing to ret_from_syscall, sensible values for bp, and
- * current->t_regs.ksp pointing to dx on the kernel stack
+ * with IP pointing to ret_from_syscall, and current->t_regs.ksp pointing
+ * to si on the kernel stack. Values for the child stack si, di are taken
+ * from the caller's stack and bp is taken from caller->t_regs.bp.
  *
- * P.S. this is very similar to fake_save_regs, apart from the fiddling
- * we need to do to recover the user's bp.
  */
 
 /*
  *	arch_build_stack(t, addr);
  *
- * Build a fake return stack in kernel space so that
- * we can have a new task start at a chosen kernel
- * function while on its kernel stack. We push the
- * registers suitably for
+ * Called by do_fork() and kfork_proc().
+ *
+ * Build a fake return stack in kernel space so that we can
+ * have a new task start at a chosen kernel function while on
+ * its kernel stack. The new task comes into life in the middle
+ * of tswitch() function. We push the registers suitably for
+ * the new task to return from tswitch() into the function
+ * addr().
  */
 
 void arch_build_stack(struct task_struct *t, char *addr)
@@ -184,7 +189,7 @@ void arch_build_stack(struct task_struct *t, char *addr)
     *tsp++ = *(csp + 6);	/* Initial value for SI register */
     *tsp++ = *(csp + 5);	/* Initial value for DI register */
     *tsp++ = 0x3202;		/* Initial value for FLAGS register */
-    *tsp++ = *csp;		/* Initial value for BP register */
+    *tsp++ = current->t_regs.bp;/* Initial value for BP register */
     if(addr == NULL)
 	addr = ret_from_syscall;
     *tsp = addr;		/* Start execution address */

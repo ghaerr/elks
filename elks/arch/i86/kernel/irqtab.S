@@ -373,7 +373,7 @@ _irqit:
 btask:
 	mov	sp,#_intstack
 !
-!	In ktask state we have a suitable stack. It might be 
+!	In ktask state we have a suitable stack. It might be
 !	better to use the intstack..
 !
 ktask:
@@ -509,20 +509,8 @@ noschedpop:
  *
  *	This function can only be called with SS=DS=ES=kernel DS and
  *	CS=kernel CS. SS:SP is the relevant kernel stack (IRQ's are
- *	taken on 'current' kernel stack. Thus we don't need to arse about
+ *	taken on 'current' kernel stack). Thus we don't need to arse about
  *	with segment registers. The kernel isn't relocating.
- *
- *	To understand this you need to know how the compilers generate 8086
- *	stack frames. Functions normally start
- *
- *	push bp		! Save callers BP
- *	mov  bp,sp	! BP so we can use it to index registers
- *
- *	and end
- *
- *	mov sp,bp	! Fastest way to destroy local variables
- *	pop bp		! Restore callers BP
- *	ret		! Return address is top of stack now
  *
  *	tswitch() saves the "previous" task registers and state. It in effect
  *	freezes a copy of the caller context. Then restores the "current"
@@ -589,6 +577,7 @@ _syscall_int:
 !
 	mov	si,_current		! pops SI from user stack and pushes
 	pop	TASK_KSTKT_SI[si]	! it directly into kernel stack
+	mov	TASK_USER_BP[si],bp	! Save user BP
 !
 !	Stash user mode stack - needed for stack checking!
 !
@@ -656,6 +645,7 @@ _ret_from_syscall:
 !	At this point, the kernel stack is empty. Thus, there is no
 !       need to save the kernel stack pointer.
 !
+	mov	bp,TASK_USER_BP[bx]	! Restore user BP
 	mov	sp,TASK_USER_SP[bx]
 	mov	bx,TASK_USER_SS[bx]
 !
