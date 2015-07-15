@@ -334,7 +334,7 @@ _irqit:
         mov ds,bx
 #else
         seg     cs
-#endif        
+#endif
 	mov	bx,stashed_ds	! Recover the data segment
 	mov	ds,bx
 	mov	es,bx
@@ -547,7 +547,10 @@ _tswitch:
 	.globl	_ret_from_syscall
 	.extern	_stack_check
 	.extern	_syscall
-
+#ifdef CONFIG_STRACE
+	.extern	_strace
+	.extern	_ret_strace
+#endif
 !
 !	System calls enter here with ax as function and bx,cx,dx,di and si
 !	as parameters.
