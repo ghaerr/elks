@@ -64,7 +64,7 @@ static int minix_match(size_t len,
  * returns the cache buffer in which the entry was found, and the entry
  * itself (as a parameter - res_dir). It does NOT read the inode of the
  * entry - you'll have to do that yourself if you want to.
- * 
+ *
  */
 
 static struct buffer_head *minix_find_entry(register struct inode *dir,
@@ -503,7 +503,7 @@ int minix_rmdir(register struct inode *dir, char *name, size_t len)
     return retval;
 }
 
-int minix_unlink(struct inode *dir, char *name, size_t len)
+int minix_unlink(register struct inode *dir, char *name, size_t len)
 {
     int retval;
     register struct inode *inode;

@@ -109,7 +109,7 @@ static void numout(unsigned long v, int width, int base, int useSign,
     kputs(bp);
 }
 
-static void vprintk(char *fmt, va_list p)
+static void vprintk(register char *fmt, va_list p)
 {
     unsigned long v;
     int width, zero;
