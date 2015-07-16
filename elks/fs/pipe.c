@@ -45,7 +45,7 @@ int get_unused_fd(struct file *f)
     return -EMFILE;
 }
 
-loff_t pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
+int pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
 		  int orig)
 {
     debug("PIPE: lseek called.\n");

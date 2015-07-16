@@ -15,7 +15,7 @@
 #include <arch/segment.h>
 #include <linuxmt/debug.h>
 
-loff_t sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
+int sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
 {
     register struct file *file;
     register struct file_operations *fop;

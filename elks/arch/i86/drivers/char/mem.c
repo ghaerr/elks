@@ -39,18 +39,16 @@
 /*
  * generally useful code...
  */
-loff_t memory_lseek(struct inode *inode, register struct file *filp,
+int memory_lseek(struct inode *inode, register struct file *filp,
 		    loff_t offset, unsigned int origin)
 {
-    loff_t tmp = -1;
+    loff_t tmp = offset;
 
     debugmem("mem_lseek()\n");
     switch (origin) {
-    case 0:
-	tmp = offset;
-	break;
     case 1:
-	tmp = filp->f_pos + offset;
+	tmp += filp->f_pos;
+    case 0:
 	break;
     default:
 	return -EINVAL;
@@ -72,11 +70,12 @@ loff_t memory_lseek(struct inode *inode, register struct file *filp,
 /*
  * /dev/null code
  */
-loff_t null_lseek(struct inode *inode, struct file *filp,
+int null_lseek(struct inode *inode, struct file *filp,
 		  off_t offset, int origin)
 {
     debugmem("null_lseek()\n");
-    return (filp->f_pos = 0);
+    filp->f_pos = 0;
+    return 0;
 }
 
 size_t null_read(struct inode *inode, struct file *filp, char *data, int len)
