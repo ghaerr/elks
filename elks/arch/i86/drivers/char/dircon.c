@@ -54,8 +54,8 @@ void init_console(void);
 #define NL		'\n'
 #define CR		'\r'
 #define TAB		'\t'
-#define ESC		27
-#define BEL		0x07
+#define ESC		'\x1B'
+#define BEL		'\x07'
 
 /* console states*/
 #define ST_NORMAL	0	/* no ESC seen */
@@ -105,21 +105,6 @@ static unsigned AttrArry[MAX_ATTR] = {
 };
 #endif
 
-#ifdef CONFIG_DCON_VT52
-
-static void ScrollDown(register Console * C, int st, int en);
-void Vt52Cmd(register Console * C, char c);
-void Vt52CmdEx(register Console * C, char c);
-static void Console_gotoxy(register Console * C, int x, int y);
-
-#ifdef CONFIG_DCON_ANSI
-
-static void AnsiCmd(register Console * C, char c);
-
-#endif
-
-#endif
-
 extern void AddQueue(unsigned char Key);	/* From xt_key.c */
 
 static void PositionCursor(register Console * C)
@@ -138,15 +123,13 @@ static void PositionCursor(register Console * C)
 
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 {
-    __u16 en, ClrW;
-    register char *ofsp;
+    __u16 en;
+    register __u16 *ofsp;
 
-    ClrW = (__u16) ((A_DEFAULT << 8) + ' ');
     en = (__u16) ((xx + yy * Width) << 1);
     ofsp = (char *)((__u16) ((x + y * Width) << 1));
     while (((__u16)ofsp) < en) {
-	pokew((__u16) C->vseg, (__u16) ofsp, ClrW);
-	ofsp += 2;
+	pokew((__u16) C->vseg, (__u16)ofsp++, (((__u16)A_DEFAULT << 8) + ' '));
     }
 }
 
@@ -163,92 +146,6 @@ static void ScrollUp(register Console * C, int st, int en)
     }
 }
 
-void WriteChar(register Console * C, char c)
-{
-    unsigned int offset;
-
-    /* check for graphics lock */
-    while (glock) {
-	if (glock == C)
-	    return;
-	sleep_on(&glock_wait);
-    }
-
-#ifdef CONFIG_DCON_ANSI
-    /* ANSI param gathering and processing */
-    if (C->state == ST_ANSI) {
-	if (C->parmptr < &C->params[MAXPARMS])
-	    *C->parmptr++ = (unsigned char) c;
-	if (isalpha(c)) {
-	    *C->parmptr = 0;
-	    AnsiCmd(C, c);
-	}
-	return;
-    }
-#endif
-
-#ifdef CONFIG_DCON_VT52
-    /* VT52 command processing */
-    if (C->state >= ST_ESCSEEN) {
-#ifdef CONFIG_DCON_ANSI
-	if (c == '[') {
-	    C->state = ST_ANSI;
-	    C->parmptr = C->params;
-	} else
-#endif
-	    Vt52Cmd(C, c);
-	return;
-    }
-#endif
-
-    /* normal character processing */
-    switch (c) {
-    case BEL:
-	bell();
-	return;
-#ifdef CONFIG_DCON_VT52
-    case ESC:
-	C->state = ST_ESCSEEN;
-	return;
-#endif
-    case BS:
-	if (C->cx > 0) {
-	    --C->cx;
-	    WriteChar(C, ' ');
-	    --C->cx;
-	}
-	return;
-    case NL:
-	++C->cy;
-	break;
-    case CR:
-	C->cx = 0;
-	break;
-    default:
-	offset = ((unsigned int) (C->cx + C->cy * Width)) << 1;
-	pokew((__u16) C->vseg, (__u16) offset, ((__u16)C->attr << 8) | ((__u16)c));
-	C->cx++;
-    }
-
-    /* autowrap and/or scroll */
-    if (C->cx > MaxCol) {
-	C->cx = 0;
-	C->cy++;
-    }
-    if (C->cy >= Height) {
-	ScrollUp(C, 1, Height);
-	C->cy--;
-    }
-}
-
-void con_charout(char Ch)
-{
-    if (Ch == '\n')
-	WriteChar(Visible, '\r');
-    WriteChar(Visible, Ch);
-    PositionCursor(Visible);
-}
-
 #ifdef CONFIG_DCON_VT52
 
 static void ScrollDown(register Console * C, int st, int en)
@@ -263,9 +160,49 @@ static void ScrollDown(register Console * C, int st, int en)
     }
 }
 
+static void Console_gotoxy(register Console * C, int x, int y)
+{
+    register char *xp = (char *)x;
+
+    C->cx = ((((int) xp) >= MaxCol) ? MaxCol : ((((int)xp) < 0) ? 0 : (int)xp));
+    xp = (char *)y;
+    C->cy = ((((int) xp) >= MaxRow) ? MaxRow : ((((int)xp) < 0) ? 0 : (int)xp));
+}
+
 #endif
 
 #ifdef CONFIG_DCON_VT52
+
+void Vt52CmdEx(register Console * C, char c)
+{
+    switch (C->state) {
+    case ST_ESCY:
+	C->tmp = (unsigned char) (c - ' ');
+	C->state = ST_ESCY2;
+	return;
+    case ST_ESCY2:
+	Console_gotoxy(C, c - ' ', C->tmp);
+	break;
+    case ST_ESCP:
+	switch (c) {
+	case 'f':		/* insert line at crsr */
+	    ScrollDown(C, C->cy, MaxRow);
+	    break;
+	case 'd':		/* delete line at crsr */
+	    ScrollUp(C, C->cy + 1, Height);
+	    break;
+	}
+	break;
+    case ST_ESCQ:
+	c -= ' ';
+	if (c > 0 && c < MAX_ATTR)
+	    C->attr |= AttrArry[c - 1];
+	if (c == 0)
+	    C->attr = A_DEFAULT;
+	break;
+    }
+    C->state = ST_NORMAL;
+}
 
 void Vt52Cmd(register Console * C, char c)
 {
@@ -325,37 +262,6 @@ void Vt52Cmd(register Console * C, char c)
 
 #endif
 
-    }
-    C->state = ST_NORMAL;
-}
-
-void Vt52CmdEx(register Console * C, char c)
-{
-    switch (C->state) {
-    case ST_ESCY:
-	C->tmp = (unsigned char) (c - ' ');
-	C->state = ST_ESCY2;
-	return;
-    case ST_ESCY2:
-	Console_gotoxy(C, c - ' ', C->tmp);
-	break;
-    case ST_ESCP:
-	switch (c) {
-	case 'f':		/* insert line at crsr */
-	    ScrollDown(C, C->cy, MaxRow);
-	    break;
-	case 'd':		/* delete line at crsr */
-	    ScrollUp(C, C->cy + 1, Height);
-	    break;
-	}
-	break;
-    case ST_ESCQ:
-	c -= ' ';
-	if (c > 0 && c < MAX_ATTR)
-	    C->attr |= AttrArry[c - 1];
-	if (c == 0)
-	    C->attr = A_DEFAULT;
-	break;
     }
     C->state = ST_NORMAL;
 }
@@ -484,8 +390,94 @@ static void AnsiCmd(register Console * C, char c)
 
 #endif
 
+void WriteChar(register Console * C, char c)
+{
+    unsigned int offset;
+
+    /* check for graphics lock */
+    while (glock) {
+	if (glock == C)
+	    return;
+	sleep_on(&glock_wait);
+    }
+
+#ifdef CONFIG_DCON_ANSI
+    /* ANSI param gathering and processing */
+    if (C->state == ST_ANSI) {
+	if (C->parmptr < &C->params[MAXPARMS])
+	    *C->parmptr++ = (unsigned char) c;
+	if (isalpha(c)) {
+	    *C->parmptr = 0;
+	    AnsiCmd(C, c);
+	}
+	return;
+    }
+#endif
+
+#ifdef CONFIG_DCON_VT52
+    /* VT52 command processing */
+    if (C->state >= ST_ESCSEEN) {
+#ifdef CONFIG_DCON_ANSI
+	if (c == '[') {
+	    C->state = ST_ANSI;
+	    C->parmptr = C->params;
+	} else
+#endif
+	    Vt52Cmd(C, c);
+	return;
+    }
+#endif
+
+    /* normal character processing */
+    switch (c) {
+    case BEL:
+	bell();
+	return;
+#ifdef CONFIG_DCON_VT52
+    case ESC:
+	C->state = ST_ESCSEEN;
+	return;
+#endif
+    case BS:
+	if (C->cx > 0) {
+	    --C->cx;
+	    WriteChar(C, ' ');
+	    --C->cx;
+	}
+	return;
+    case NL:
+	++C->cy;
+	break;
+    case CR:
+	C->cx = 0;
+	break;
+    default:
+	offset = ((unsigned int) (C->cx + C->cy * Width)) << 1;
+	pokew((__u16) C->vseg, (__u16) offset, ((__u16)C->attr << 8) | ((__u16)c));
+	C->cx++;
+    }
+
+    /* autowrap and/or scroll */
+    if (C->cx > MaxCol) {
+	C->cx = 0;
+	C->cy++;
+    }
+    if (C->cy >= Height) {
+	ScrollUp(C, 1, Height);
+	C->cy--;
+    }
+}
+
+void con_charout(char Ch)
+{
+    if (Ch == '\n')
+	WriteChar(Visible, '\r');
+    WriteChar(Visible, Ch);
+    PositionCursor(Visible);
+}
+
 /* This also tells the keyboard driver which tty to direct it's output to...
- * CAUTION: It *WILL* break if the console driver doesn't get tty0-X. 
+ * CAUTION: It *WILL* break if the console driver doesn't get tty0-X.
  */
 
 void Console_set_vc(unsigned int N)
@@ -510,19 +502,6 @@ void Console_set_vc(unsigned int N)
     PositionCursor(Visible);
     Current_VCminor = (int) N;
 }
-
-#ifdef CONFIG_DCON_VT52
-
-static void Console_gotoxy(register Console * C, int x, int y)
-{
-    register char *xp = (char *)x;
-
-    C->cx = ((((int) xp) >= MaxCol) ? MaxCol : ((((int)xp) < 0) ? 0 : (int)xp));
-    xp = (char *)y;
-    C->cy = ((((int) xp) >= MaxRow) ? MaxRow : ((((int)xp) < 0) ? 0 : (int)xp));
-}
-
-#endif
 
 int Console_ioctl(register struct tty *tty, int cmd, char *arg)
 {
