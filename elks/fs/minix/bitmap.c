@@ -70,7 +70,7 @@ unsigned short minix_count_free_inodes(register struct super_block *sb)
 void minix_free_block(register struct super_block *sb, unsigned short block)
 {
     register struct buffer_head *bh;
-    unsigned int bit, zone;
+    unsigned int zone;
 
     if (!sb) {
 	printk("mfb: bad dev\n");
@@ -86,15 +86,13 @@ void minix_free_block(register struct super_block *sb, unsigned short block)
 	bh->b_dirty = 0;
     brelse(bh);
     zone = block - sb->u.minix_sb.s_firstdatazone + 1;
-    bit = zone & 8191;
-    zone >>= 13;
-    bh = sb->u.minix_sb.s_zmap[zone];
+    bh = sb->u.minix_sb.s_zmap[zone >> 13];
     if (!bh) {
 	printk("mfb: bad bitbuf\n");
 	return;
     }
     map_buffer(bh);
-    if (!clear_bit(bit, bh->b_data))
+    if (!clear_bit(zone & 8191, bh->b_data))
 	printk("mfb (%s:%ld): already cleared\n", kdevname(sb->s_dev), block);
     unmap_buffer(bh);
     mark_buffer_dirty(bh, 1);

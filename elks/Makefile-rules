@@ -57,6 +57,8 @@ SUBLEVEL	= 0	# (0-255)
 
 ARCH		= i86
 
+#USEIA16  	= y
+
 #########################################################################
 # ROOT_DEV specifies the default root-device when making the image.
 # This does not yet work under ELKS. See include/linuxmt/config.h to
@@ -177,33 +179,63 @@ endif
 # Define CPU-specific flags.
 
 ifeq ($(MK_CPU), 8086)
+ifeq ($(USEIA16), y)
+    CPU_AS	= -0
+    CPU_CC	= -mtune=i8086 -fno-inline -fdata-sections -ffunction-sections -mseparate-code-segment -Wl,--gc-sections
+    CPU_LD	= -0
+else
     CPU_AS	= -0
     CPU_CC	= -0
     CPU_LD	= -0
 endif
+endif
 
 ifeq ($(MK_CPU), 80186)
+ifeq ($(USEIA16), y)
+    CPU_AS	= -1
+    CPU_CC	= -mtune=i80186 -fno-inline -fdata-sections -ffunction-sections -mseparate-code-segment -Wl,--gc-sections
+    CPU_LD	= -0
+else
     CPU_AS	= -1
     CPU_CC	= -0
     CPU_LD	= -0
 endif
+endif
 
 ifeq ($(MK_CPU), 80286)
+ifeq ($(USEIA16), y)
+    CPU_AS	= -2
+    CPU_CC	= -mtune=i80286 -fno-inline -fdata-sections -ffunction-sections -mseparate-code-segment -Wl,--gc-sections
+    CPU_LD	= -0
+else
     CPU_AS	= -2
     CPU_CC	= -0
     CPU_LD	= -0
 endif
+endif
 
 ifeq ($(MK_CPU), 80386)
+ifeq ($(USEIA16), y)
+    CPU_AS	= -3
+    CPU_CC	= -3
+    CPU_LD	= -3
+else
     CPU_AS	= -3
     CPU_CC	= -3
     CPU_LD	= -3
 endif
+endif
 
 ifeq ($(MK_CPU), 80486)
+ifeq ($(USEIA16), y)
     CPU_AS	= -3
     CPU_CC	= -3
     CPU_LD	= -3
+else
+    CPU_AS	= -3
+    CPU_CC	= -3
+    CPU_LD	= -3
+endif
 endif
 
 #########################################################################
@@ -219,8 +251,8 @@ endif
 
 AR		= ar
 CC_PROTO	= gcc -I$(INCDIR) -M -MG $(CCDEFS)
-CFLBASE 	= -O -I$(INCDIR) $(CCDEFS) -ansi
-CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS)
+CFLBASE 	= -I$(INCDIR) $(CCDEFS)
+CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS) -ansi
 LINT		= splint
 LINTLEVEL	= -weak
 LCFLAGS 	= -I$(INCDIR) $(CCDEFS)
@@ -230,15 +262,29 @@ LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
 
 ifneq ($(USEBCC), N)
 
+ifeq ($(USEIA16), y)
+################################
+# Definitions using ia16-unknown-elks-gcc compiler
+
+AS		= as86
+ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
+CC		= ia16-unknown-elks-gcc
+CFLAGS		= $(CPU_CC) $(ARCH_CC) -Os $(CFLBASE) -Wall
+LD		= ld86
+LDFLAGS 	= $(CPU_LD) -s
+
+else
 ################################
 # Definitions using BCC compiler
 
 AS		= as86
 ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
 CC		= bcc
-CFLAGS		= $(CPU_CC) $(ARCH_CC) $(CFLBASE)
+CFLAGS		= $(CPU_CC) $(ARCH_CC) -O $(CFLBASE) -ansi
 LD		= ld86
 LDFLAGS 	= $(CPU_LD) -s
+
+endif
 
 else
 
@@ -248,7 +294,7 @@ else
 AS		= as
 ASFLAGS 	= 
 CC		= gcc
-CFLAGS		= -i $(CFLBASE)
+CFLAGS		= -i -O $(CFLBASE) -ansi
 LD		= ld
 LDFLAGS 	= -s -x
 
@@ -266,8 +312,18 @@ endif
 .S.s:
 	gcc -E -traditional -I$(INCDIR) $(CCDEFS) -o $*.s $<
 
+ifeq ($(USEIA16), y)
+.c.o:
+	$(CC) $(CFLAGS) -S -o $*.s $<
+	att2as86 < $*.s > $*.asm
+	$(AS) $(ASFLAGS) -u -o $*.o $*.asm
+	rm $*.s $*.asm
+
+else
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
+
+endif
 
 #########################################################################
 # Default target, to allow standard targets to be included. This simply

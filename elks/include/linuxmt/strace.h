@@ -16,10 +16,8 @@
 
 struct syscall_info
 {
-    __u8 s_num;
     char *s_name;		/* Name of syscall (e.g. sys_fork or nosys_voodoo) */
-    __u8 s_params;		/* # of parameters */
-    __u8 t_param[3];		/* Type of parameters, defined after this */
+    __u16 s_params;		/* # and type of parameters */
 };
 
 struct syscall_params

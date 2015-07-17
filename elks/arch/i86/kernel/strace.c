@@ -15,107 +15,60 @@
 
 #include "strace.h"
 
+static char *fmtspec[] = {
+    NULL,   "&0x%X", "0x%X",  "0x%X",
+    "'%c'", "'%c'",  "\"%t\"","&\"%t\"",
+    "%u",   "%d",    "&%u",   "&%d",
+    "%lu",  "%ld",   NULL,    NULL,
+};
+
 void print_syscall(register struct syscall_params *p, int retval)
 {
-    int tmpa, tent = 0;
-    unsigned char i, tmpb;
+    register struct syscall_info *s;
+    unsigned int tmpa;
+    int i;
 
-    /* Scan elks_syscalls for the system call info */
-
-    while ((elks_table[tent].s_num != 0) &&
-	   (elks_table[tent].s_num != p->s_num))
-	tent++;
-
-    if (!elks_table[tent].s_num)
+    if(p->s_num >= sizeof(elks_table)/sizeof(struct syscall_info))
 	printk("Syscall not recognised: %u\n", p->s_num);
+    else if((((s = &elks_table[p->s_num])->s_params) & 0xf) > 5) {
+	printk("Syscall not supported: nosys_%s\n", p->s_name);
+    }
     else {
 
 #ifdef STRACE_PRINTSTACK
 
-	printk("[%d/%p: %d %s(", current->pid, current->t_regs.sp, p->s_num,
-	       elks_table[tent].s_name);
+	printk("[%d/%p: %d %12s(", current->pid, current->t_regs.sp,
+	       p->s_num, s->s_name);
 
 #else
 
-	printk("[%d: %s(", current->pid, elks_table[tent].s_name);
+	printk("[%d: %12s(", current->pid, s->s_name);
 
 #endif
 
-	for (i = 0; i < elks_table[tent].s_params; i++) {
+	i = 0;
+	tmpa = s->s_params;
+	goto pscl;
+	while(tmpa >>= 4) {
+	    printk(", ");
 
-	    if (i)
-		printk(", ");
-
-	    switch (elks_table[tent].t_param[i]) {
-
-	    case P_DATA:
-		printk("&0x%X", p->s_param[i]);
-
-	    case P_NONE:
-		break;
-
-	    case P_POINTER:
-	    case P_PDATA:
-		printk("0x%X", p->s_param[i]);
-		break;
-
-	    case P_UCHAR:
-	    case P_SCHAR:
-		printk("'%c'", p->s_param[i]);
-		break;
-
-	    case P_STR:
-		con_charout('\"');
-		tmpa = p->s_param[i];
-		while ((tmpb = get_user_char(tmpa++)))
-		    con_charout(tmpb);
-		con_charout('\"');
-		break;
-
-	    case P_PSTR:
-		con_charout('&');
-		con_charout('\"');
-		tmpa = p->s_param[i];
-		while ((tmpb = get_user_char(tmpa++)))
-		    con_charout(tmpb);
-		con_charout('\"');
-		break;
-
-	    case P_USHORT:
-		printk("%u", p->s_param[i]);
-		break;
-
-	    case P_SSHORT:
-		printk("%d", p->s_param[i]);
-		break;
-
-	    case P_PUSHORT:
-		printk("&%u", p->s_param[i]);
-		break;
-
-	    case P_PSSHORT:
-		printk("&%d", p->s_param[i]);
-		break;
-
-	    case P_SLONG:
-		printk("%ld", p->s_param[i]);
-		break;
-
-	    case P_ULONG:
-		printk("%lu", p->s_param[i]);
-		break;
-
-	    case P_PSLONG:
-		printk("%ld", get_user_long(p->s_param[i]));
-		break;
+	 pscl:
+	    if(fmtspec[tmpa & 0xf] != NULL) {
+		printk(fmtspec[tmpa & 0xf], p->s_param[i]);
+	    }
+	    else switch (tmpa & 0xf) {
 
 	    case P_PULONG:
 		printk("%lu", get_user_long(p->s_param[i]));
 		break;
 
+	    case P_PSLONG:
+		printk("%ld", get_user_long(p->s_param[i]));
+
 	    default:
 		break;
 	    }
+	    i++;
 
 	}
 
@@ -123,7 +76,7 @@ void print_syscall(register struct syscall_params *p, int retval)
 #ifdef STRACE_RETWAIT
     printk(") = %d]\n", retval);
 #else
-    p->s_name = elks_table[tent].s_name;
+    p->s_name = s->s_name;
     printk(")]");
 #endif
 }
@@ -132,18 +85,17 @@ void print_syscall(register struct syscall_params *p, int retval)
  * call paramters on the stack, isn't it? :)
  */
 
-int strace(struct syscall_params p)
+void strace(struct syscall_params p)
 {
+    /* First we check the kernel stack magic */
+    if (current->t_kstackm != KSTACK_MAGIC)
+	panic("Process %d had kernel stack overflow before syscall\n",
+	      current->pid);
     /* set up cur_sys */
     current->sc_info = p;
 #ifndef STRACE_RETWAIT
     print_syscall(&current->sc_info, 0);
 #endif
-    /* First we check the kernel stack magic */
-    if (current->t_kstackm != KSTACK_MAGIC)
-	panic("Process %d had kernel stack overflow before syscall\n",
-	      current->pid);
-    return p.s_num;
 }
 
 void ret_strace(unsigned int retval)

@@ -170,9 +170,9 @@ static struct file_operations ubd_fops = {
 #endif
 };
 
-void ucd_lseek()
+int ucd_lseek()
 {
-/* Do nothing */
+    return 0;
 }
 
 void ucd_read()

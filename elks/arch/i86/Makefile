@@ -85,10 +85,23 @@ boot/setup.o:		boot/setup.s
 toolkit:
 	${MAKE} -C tools all
 
+ifeq ($(USEIA16), y)
 $(BASEDIR)/include/arch/asm-offsets.h: kernel/asm-offsets.c
-	$(CC) $(CFLAGS) -S -o asm-offsets.s kernel/asm-offsets.c
 	echo '#ifndef ASM_OFFSETS_H' > $(BASEDIR)/include/arch/asm-offsets.h
 	echo '#define ASM_OFFSETS_H' >> $(BASEDIR)/include/arch/asm-offsets.h
+	$(CC) $(CFLAGS) -S -o asm-offsets.s kernel/asm-offsets.c
+	sed -e '/^\tm/ !d' \
+	-e "s/\(.*\t\\$$\)/\#define /" \
+	-e "s/\([0-9][0-9]*\),\t_\([a-zA-Z][_0-9a-zA-Z]*\)/\2 \1/" \
+	< asm-offsets.s >> $(BASEDIR)/include/arch/asm-offsets.h
+	echo '#endif' >> $(BASEDIR)/include/arch/asm-offsets.h
+	rm asm-offsets.s
+
+else
+$(BASEDIR)/include/arch/asm-offsets.h: kernel/asm-offsets.c
+	echo '#ifndef ASM_OFFSETS_H' > $(BASEDIR)/include/arch/asm-offsets.h
+	echo '#define ASM_OFFSETS_H' >> $(BASEDIR)/include/arch/asm-offsets.h
+	$(CC) $(CFLAGS) -S -o asm-offsets.s kernel/asm-offsets.c
 	sed -e '/^[^m].*/ d' \
 	-e 's/\],/  /' \
 	-e 's/ #/ /' \
@@ -99,6 +112,8 @@ $(BASEDIR)/include/arch/asm-offsets.h: kernel/asm-offsets.c
 	< asm-offsets.s | grep -e define >> $(BASEDIR)/include/arch/asm-offsets.h
 	echo '#endif' >> $(BASEDIR)/include/arch/asm-offsets.h
 	rm asm-offsets.s
+
+endif
 
 #########################################################################
 # Image selection.

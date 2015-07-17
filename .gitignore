@@ -5,7 +5,6 @@
 *.o
 *.o.*
 *.a
-*.s
 *.1.gz
 Kbuild
 Config.in

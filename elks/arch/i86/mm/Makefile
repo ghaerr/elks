@@ -35,10 +35,12 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-OBJS  = init.o malloc.o user.o
+OBJS  = init.o malloc.o user.o segment.o
 
 #########################################################################
 # Commands.
+
+segment.o:	segment.s
 
 all:	mm.a
 

@@ -302,7 +302,7 @@ struct super_block {
 typedef int (*filldir_t) ();
 
 struct file_operations {
-    loff_t			(*lseek) ();
+    int				(*lseek) ();
     size_t			(*read)(struct inode *,struct file *,char *,size_t);
     size_t			(*write)(struct inode *,struct file *,char *,size_t);
     int 			(*readdir) ();
