@@ -26,7 +26,7 @@ int root_mountflags = 0;
 /**************************************/
 
 static void init_task(void);
-extern int run_init_process(char *, char *);
+extern int run_init_process(char *);
 
 jiff_t loops_per_sec = 1;
 
@@ -75,15 +75,6 @@ void start_kernel(void)
     }
 }
 
-static char args[] = "\0\0\0\0\0\0/bin/init\0\0";
-/*		      ^   ^   ^		     ^
- *		      |   |   \sep	     \envp
- *		      |	  \argv[0]
- *		      \argc
- */
-
-/*static char envp[] = "\0\0";*/
-
 static void init_task()
 {
     int num;
@@ -104,17 +95,17 @@ static void init_task()
      * So, I've modified the ELKS kernel to follow this tradition.
      */
 
-    run_init_process("/sbin/init", args);
-    run_init_process("/etc/init", args);
-    run_init_process("/bin/init", args);
+    run_init_process("/sbin/init");
+    run_init_process("/etc/init");
+    run_init_process("/bin/init");
 
 #ifdef CONFIG_CONSOLE_SERIAL
     num = sys_open("/dev/ttyS0", 2, 0);
 #else
     num = sys_open("/dev/tty1", 2, 0);
 #endif
-	if (num < 0)
-	    printk("Unable to open /dev/tty (error %u)\n", -num);
+    if (num < 0)
+	printk("Unable to open /dev/tty (error %u)\n", -num);
 
 	if (sys_dup(num) != 1)
 	    printk("dup failed\n");
@@ -122,7 +113,7 @@ static void init_task()
 	sys_dup(num);
 	printk("No init - running /bin/sh\n");
 
-    run_init_process("/bin/sh", args);
+    run_init_process("/bin/sh");
     panic("No init or sh found");
 }
 

@@ -379,11 +379,9 @@ struct buffer_head *minix_getblk(register struct inode *inode,
 {
     unsigned short blknum;
 
-    blknum = _minix_bmap(inode, block, create);
-    if (blknum != 0)
-	return getblk(inode->i_dev, (block_t) blknum);
-    else
+    if(!(blknum = _minix_bmap(inode, block, create)))
 	return NULL;
+    return getblk(inode->i_dev, (block_t) blknum);
 }
 
 struct buffer_head *minix_bread(struct inode *inode,
