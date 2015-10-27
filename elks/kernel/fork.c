@@ -132,27 +132,6 @@ pid_t do_fork(int virtual)
      *      Return the created task.
      */
     if (virtual) {
-	/* When the parent returns, the stack frame will have gone so
-	 * save enough stack state that we will be able to return to
-	 * the point where vfork() was called in the code, not to the
-	 * point in the library code where the actual syscall int was
-	 * done - ajr 16th August 1999
-	 *
-	 * Stack was
-	 *         ip cs f ret
-	 * and will be
-	 *            ret cs f
-	 */
-/*	int ip, cs, fl;
-
-	ip = (int) get_ustack(currentp, 6);
-	cs = (int) get_ustack(currentp, 2);
-	fl = (int) get_ustack(currentp, 4);
-	currentp->t_regs.sp += 2;
-	sleep_on(&currentp->child_wait);
-	put_ustack(currentp, 0, ip);
-	put_ustack(currentp, 2, cs);
-	put_ustack(currentp, 4, fl);*/
 	int sc[4];
 
 	/* Parent and child are sharing the user stack at this point.

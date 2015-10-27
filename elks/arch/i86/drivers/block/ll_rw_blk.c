@@ -43,12 +43,6 @@
 
 static struct request all_requests[NR_REQUEST];
 
-/*
- * used to wait on when there are no free requests
- */
-
-int foo_foo_bar;
-
 #ifdef MULTI_BH
 struct wait_queue wait_for_request = NULL;
 #endif

@@ -74,12 +74,13 @@ static void wait_on_inode(register struct inode *inode)
     wait_set(&inode->i_wait);
     goto lwi;
     do {
-	schedule();
-  lwi:
 	current->state = TASK_UNINTERRUPTIBLE;
+	schedule();
+	current->state = TASK_RUNNING;
+  lwi:
+	;
     } while(inode->i_lock);
     wait_clear(&inode->i_wait);
-    current->state = TASK_RUNNING;
 }
 
 static void lock_inode(register struct inode *inode)

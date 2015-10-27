@@ -12,8 +12,8 @@
  *		%i	signed decimal
  *		%o	octal
  *		%p/%P	pointer - same as %x/%X respectively
- *		%s	string
- *		%t	pointer to string
+ *		%s	string in kernel space
+ *		%t	string in user space
  *		%u	unsigned decimal
  *		%x/%X	hexadecimal with lower/upper case letters
  *
@@ -30,6 +30,7 @@
 #include <linuxmt/mm.h>
 #include <stdarg.h>
 
+#define BUFFER_SIZE 12
 /*
  *	Just to make it work for now
  */
@@ -52,7 +53,7 @@ static void kputs(register char *buf)
 
     p = colour;
     do
-	con_charout(*p);
+	kputchar(*p);
     while (*p++ != 'm');
 
     /* END Colourizing */
@@ -76,10 +77,10 @@ static void numout(unsigned long v, int width, int base, int useSign,
 {
     register char *bp;
     char *bp2;
-    char buf[12];
+    char buf[BUFFER_SIZE];
 
-    if (width > sizeof(buf))		/* Error-check width specified */
-	width = sizeof(buf);
+    if (width > BUFFER_SIZE)		/* Error-check width specified */
+	width = BUFFER_SIZE;
 
     if (useSign) {
 	if ((long)v < 0)
@@ -88,18 +89,18 @@ static void numout(unsigned long v, int width, int base, int useSign,
 	    useSign = 0;
     }
 
-    bp = buf + sizeof(buf);
+    bp = buf + BUFFER_SIZE;
     *--bp = '\x00';
 
-	bp2 = Upper ? hex_string : hex_lower;
+    bp2 = Upper ? hex_string : hex_lower;
     do {
-	    *--bp = *(bp2 + (v % base));	/* Store digit */
+	*--bp = *(bp2 + (v % base));	/* Store digit */
     } while ((v /= base));
 
     if (useSign && !Zero)
 	*--bp = '-';
 
-    width -= buf - bp + sizeof(buf);
+    width -= buf + BUFFER_SIZE - bp;
     while (--width >= 0)			/* Process width */
 	*--bp = Zero ? '0' : ' ';
 
@@ -122,7 +123,7 @@ static void vprintk(register char *fmt, va_list p)
 	    c = *fmt++;
 
 	    if (c == '%') {
-		con_charout(c);
+		kputchar(c);
 		continue;
 	    }
 
@@ -165,30 +166,21 @@ static void vprintk(register char *fmt, va_list p)
 		numout(v, width, tmp, (c == 'd'), (c == 'X'), zero);
 		break;
 	    case 's':
-		cp = va_arg(p, char*);
-		while ((c = *cp++)) {
-		    kputchar(c);
-		    width--;
-		}
-		goto FILLSP;
 	    case 't':
 		cp = va_arg(p, char*);
-		while ((c = (char) get_user_char(cp))) {
-		    kputchar(c);
+		while ((tmp = (c == 's' ? *cp : (char)get_user_char(cp)))) {
+		    kputchar(tmp);
 		    cp++;
 		    width--;
 		}
-	    FILLSP:
-		while (--width >= 0)
-		    con_charout(' ');
-		break;
 	    case 'c':
-		while (--width > 0)
-		    con_charout(' ');
-		kputchar(va_arg(p, int));
+		while (--width >= 0)
+		    kputchar(' ');
+		if(c == 'c')
+		    kputchar(va_arg(p, int));
 		break;
 	    default:
-		con_charout('?');
+		kputchar('?');
 		break;
 	    }
 	}

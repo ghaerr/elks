@@ -19,7 +19,7 @@
  *	not Linux needs
  */
 
-void wait_set(register struct wait_queue *p)
+void wait_set(struct wait_queue *p)
 {
     register __ptask pcurrent = current;
 
@@ -77,7 +77,7 @@ void wake_up_process(register struct task_struct *p)
 	clr_irq();
 	p->state = TASK_RUNNING;
 	if (!p->next_run){
-		add_to_runqueue(p);
+	    add_to_runqueue(p);
 	}
 	restore_flags(flags);
 }

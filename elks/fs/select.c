@@ -70,13 +70,10 @@ void select_wait(struct wait_queue *q)
 
 static int check(int flag, register struct file *file)
 {
-    struct inode *inode;
     register struct file_operations *fops;
 
-    inode = file->f_inode;
-
     if ((fops = file->f_op) && fops->select)
-	return (fops->select(inode, file, flag));
+	return (fops->select(file->f_inode, file, flag));
 
     if (flag != SEL_EX)
 	return 1;

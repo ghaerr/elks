@@ -32,16 +32,15 @@ struct readdir_callback {
     int count;
 };
 
-static int fillonedir(char *__buf, char *name, size_t namlen, off_t offset,
+static int fillonedir(register char *__buf, char *name, size_t namlen, off_t offset,
 		      ino_t ino)
 {
-    register struct readdir_callback *buf = (struct readdir_callback *) __buf;
     register struct linux_dirent *dirent;
 
-    if (buf->count)
+    if (((struct readdir_callback *)__buf)->count)
 	return -EINVAL;
-    buf->count++;
-    dirent = buf->dirent;
+    ((struct readdir_callback *)__buf)->count++;
+    dirent = ((struct readdir_callback *)__buf)->dirent;
     put_user_long((__u32)ino, &dirent->d_ino);
     put_user_long((__u32) offset, &dirent->d_offset);
     put_user((__u16) namlen, &dirent->d_namlen);

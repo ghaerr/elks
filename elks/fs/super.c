@@ -77,12 +77,13 @@ void wait_on_super(register struct super_block *sb)
     wait_set(&sb->s_wait);
     goto ini_loop;
     do {
-	schedule();
-  ini_loop:
 	current->state = TASK_UNINTERRUPTIBLE;
+	schedule();
+	current->state = TASK_RUNNING;
+  ini_loop:
+	;
     } while(sb->s_lock);
     wait_clear(&sb->s_wait);
-    current->state = TASK_RUNNING;
 }
 
 void lock_super(register struct super_block *sb)

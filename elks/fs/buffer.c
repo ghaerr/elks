@@ -53,14 +53,15 @@ void wait_on_buffer(register struct buffer_head *bh)
 
 	goto chk_buf;
 	do {
-	    schedule();
-    chk_buf:
 	    current->state = TASK_UNINTERRUPTIBLE;
+	    schedule();
+	    current->state = TASK_RUNNING;
+    chk_buf:
+	    ;
 	} while(buffer_locked(bh));
 
 	wait_clear(&bh->b_wait);
 	bh->b_count--;
-	current->state = TASK_RUNNING;
     }
 }
 
