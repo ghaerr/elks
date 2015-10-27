@@ -27,28 +27,22 @@ int verfy_area(void *p, size_t len)
     return 0;
 }
 
-int verified_memcpy_fromfs(void *daddr, void *saddr, size_t len)
+int verified_memcpy_fromfs(void *daddr, register void *saddr, size_t len)
 {
     int err = verify_area(VERIFY_READ, saddr, len);
 
-    if (err)
-	return err;
-
-    memcpy_fromfs(daddr, saddr, len);
-
-    return 0;
+    if (!err)
+	memcpy_fromfs(daddr, saddr, len);
+    return err;
 }
 
-int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
+int verified_memcpy_tofs(register void *daddr, void *saddr, size_t len)
 {
     int err = verify_area(VERIFY_WRITE, daddr, len);
 
-    if (err)
-	return err;
-
-    memcpy_tofs(daddr, saddr, len);
-
-    return 0;
+    if (!err)
+	memcpy_tofs(daddr, saddr, len);
+    return err;
 }
 
 #if 0

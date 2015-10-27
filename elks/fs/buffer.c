@@ -64,7 +64,7 @@ void wait_on_buffer(register struct buffer_head *bh)
     }
 }
 
-void lock_buffer(struct buffer_head *bh)
+void lock_buffer(register struct buffer_head *bh)
 {
     wait_on_buffer(bh);
     bh->b_lock = 1;

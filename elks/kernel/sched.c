@@ -87,48 +87,45 @@ void schedule(void)
     next = prev->next_run;
 
     if (prev->t_kstackm != KSTACK_MAGIC)
-        panic("Process %d exceeded kernel stack limit! magic %x\n", 
+        panic("Process %d exceeded kernel stack limit! magic %x\n",
             prev->pid, prev->t_kstackm);
+
+    if (intr_count > 0) {
+    /* Taking a timer IRQ during another IRQ or while in kernel space is
+     * quite legal. We just dont switch then */
+	printk("Aiee: scheduling in interrupt %d - %d %d\n",
+	    intr_count, next->pid, prev->pid);
+	goto no_sched;
+    }
 
     /* We have to let a task exit! */
     if (prev->state == TASK_EXITING)
-        return;
+	goto no_sched;
 
     clr_irq();
-    switch (prev->state) {
-    case TASK_INTERRUPTIBLE:
-        if (prev->signal /* & ~prev->blocked */ )
-            goto makerunnable;
-
-        timeout = prev->timeout;
-
-        if (prev->timeout && (prev->timeout <= jiffies)) {
-            prev->timeout = timeout = 0UL;
-makerunnable:
+    if(prev->state == TASK_INTERRUPTIBLE) {
+        if(prev->signal || (prev->timeout && (prev->timeout <= jiffies))) {
+            prev->timeout = 0UL;
             prev->state = TASK_RUNNING;
-            break;
         }
-
-    default:
-        del_from_runqueue(prev);
-        /*break; */
-    case TASK_RUNNING:
-        ;
+        else {
+	    timeout = prev->timeout;
+	}
+    }
+    if(prev->state != TASK_RUNNING) {
+	del_from_runqueue(prev);
     }
     set_irq();
 
     if(next == &init_task)
         next = next->next_run;
 
-    if (intr_count > 0)
-        goto scheduling_in_interrupt;
-
     if (next != prev) {
         struct timer_list timer;
 
         if (timeout) {
             init_timer(&timer);
-            timer.tl_expires = timeout; 
+            timer.tl_expires = timeout;
             timer.tl_data = (int) prev;
             timer.tl_function = process_timeout;
             add_timer(&timer);
@@ -151,23 +148,19 @@ makerunnable:
         }
     }
 
-    return;
-
-scheduling_in_interrupt:
-
-    /* Taking a timer IRQ during another IRQ or while in kernel space is
-     * quite legal. We just dont switch then */
-/*     if (intr_count > 0) */
-        printk("Aiee: scheduling in interrupt %d - %d %d\n",
-           intr_count, next->pid, prev->pid);
+  no_sched:
+    ;
 }
 
 struct timer_list tl_list = { NULL, NULL, 0L, 0, NULL };
 
 static int detach_timer(struct timer_list *timer)
 {
+    int ret;
     register struct timer_list *next;
     register struct timer_list *prev;
+
+    ret = 0;
     next = timer->tl_next;
     prev = timer->tl_prev;
     if (next) {
@@ -175,19 +168,20 @@ static int detach_timer(struct timer_list *timer)
     }
     if (prev) {
         prev->tl_next = next;
-	return 1;
+	ret = 1;
     }
-    return 0;
+    timer->tl_next = timer->tl_prev = NULL;
+    return ret;
 }
 
 int del_timer(register struct timer_list *timer)
 {
     int ret;
     flag_t flags;
+
     save_flags(flags);
     clr_irq();
     ret = detach_timer(timer);
-    timer->tl_next = timer->tl_prev = 0;
     restore_flags(flags);
     return ret;
 }
@@ -224,7 +218,6 @@ static void run_timer_list(void)
     clr_irq();
     while ((timer = tl_list.tl_next) && timer->tl_expires <= jiffies) {
         detach_timer(timer);
-        timer->tl_next = timer->tl_prev = NULL;
         set_irq();
         timer->tl_function(timer->tl_data);
         clr_irq();
