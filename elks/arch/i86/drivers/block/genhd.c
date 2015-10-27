@@ -66,7 +66,7 @@ static void add_partition(register struct gendisk *hd,
     print_minor_name(hd, minor);
 }
 
-static int is_extended_partition(struct partition *p)
+static int is_extended_partition(register struct partition *p)
 {
     return (p->sys_ind == DOS_EXTENDED_PARTITION ||
 	    p->sys_ind == LINUX_EXTENDED_PARTITION);
@@ -303,7 +303,7 @@ void resetup_one_dev(struct gendisk *dev, int drive)
 void setup_dev(register struct gendisk *dev)
 {
     register struct hd_struct *hdp;
-    int i, drive, end_minor = dev->max_nr * dev->max_p;
+    int i, end_minor = dev->max_nr * dev->max_p;
 
 #ifdef BDEV_SIZE_CHK
     blk_size[dev->major] = NULL;
@@ -317,8 +317,8 @@ void setup_dev(register struct gendisk *dev)
     dev->init(dev);
 
 #ifdef CONFIG_BLK_DEV_BHD
-    for (drive = 0; drive < dev->nr_real; drive++) {
-	int first_minor = drive << dev->minor_shift;
+    for (i = 0; i < dev->nr_real; i++) {
+	int first_minor = i << dev->minor_shift;
 
 	current_minor = (unsigned short int) (first_minor + 1);
 	check_partition(dev, MKDEV(dev->major, first_minor));

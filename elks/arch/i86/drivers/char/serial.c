@@ -207,7 +207,7 @@ int rs_write(register struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
     unsigned char ch;
-    register char *i;
+    int i;
 
     i = 0;
     while (chq_getch(&tty->outq, &ch, 0) != -1) {
@@ -216,7 +216,7 @@ int rs_write(register struct tty *tty)
 	outb(ch, port->io + UART_TX);
 	i++;
     }
-    return (int)i;
+    return i;
 }
 
 int rs_ioctl(struct tty *tty, int cmd, char *arg)
@@ -312,7 +312,7 @@ int rs_probe(register struct serial_info *sp)
     case 0:
 	sp->flags = (unsigned char) (SERF_EXIST | ST_16450);
 	break;
-    case 1:			/* [*] this denotes broken 16550 UART, 
+    case 1:			/* [*] this denotes broken 16550 UART,
 				 * not 16550A or any newer type */
 	sp->flags = (unsigned char) (ST_UNKNOWN);
 	break;

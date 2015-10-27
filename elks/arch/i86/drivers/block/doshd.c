@@ -154,12 +154,13 @@ static struct gendisk bioshd_gendisk = {
 
 static unsigned short int bioshd_gethdinfo(void)
 {
-    unsigned short int drive, ndrives = 0;
+    unsigned short int ndrives = 0;
+    register char *drive;
     register struct drive_infot *drivep = &drive_info[0];
 
-    for (drive = 0; drive <= 1; drive++) {
+    for (drive = 0; (int)drive <= 1; drive++) {
 	BD_AX = BIOSHD_DRIVE_PARMS;
-	BD_DX = drive + 0x80;
+	BD_DX = (int)drive + 0x80;
 	BD_IRQ = BIOSHD_INT;
 	call_bios(&bdt);
 	if (!CARRY_SET) {
@@ -352,15 +353,14 @@ int seek_sector(unsigned short int drive, char track, char sector)
     return 1;			/* error */
 }
 
-static int bioshd_open(struct inode *inode, struct file *filp)
+static int bioshd_open(register struct inode *inode, struct file *filp)
 {
     register struct drive_infot *drivep;
-    int fdtype, target;
+    int target;
     unsigned int minor;
 
     target = DEVICE_NR(inode->i_rdev);	/* >> 6 */
     drivep = &drive_info[target];
-    fdtype = drivep->fdtype;
     minor = MINOR(inode->i_rdev);
 
 /* Bounds testing */
@@ -541,7 +541,7 @@ int init_bioshd(void)
 {
     register struct gendisk *ptr;
     register struct drive_infot *drivep;
-    int count = 0, i;
+    int count = 0;
 
 #ifndef CONFIG_SMALL_KERNEL
     printk("hd Driver Copyright (C) 1994 Yggdrasil Computing, Inc.\n"
@@ -571,7 +571,7 @@ int init_bioshd(void)
 
 #ifdef TEMP_PRINT_DRIVES_MAX
     drivep = drive_info;
-    for (i = 0; i < TEMP_PRINT_DRIVES_MAX; i++, drivep++) {
+    for (count = 0; count < TEMP_PRINT_DRIVES_MAX; count++, drivep++) {
 	if (drivep->heads != 0) {
 	    char *unit = "kMGT";
 	    __u32 size = ((__u32) drivep->sectors) * 5 /* 0.1 kB units */;
@@ -587,16 +587,16 @@ int init_bioshd(void)
 	    }
 	    debug3("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
 	    printk("/dev/%cd%c: %d cylinders, %d heads, %d sectors = %lu.%u %cb\n",
-		   (i < 2 ? 'h' : 'f'), (i % 2) + (i < 2 ? 'a' : '0'),
+		   (count < 2 ? 'h' : 'f'), (count % 2) + (count < 2 ? 'a' : '0'),
 		   drivep->cylinders, drivep->heads, drivep->sectors,
 		   (size/10), (int) (size%10), *unit);
 	}
     }
 #endif /* TEMP_PRINT_DRIVES_MAX */
 
-    i = register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops);
+    count = register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops);
 
-    if (i == 0) {
+    if (count == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 
 #if 0
@@ -718,6 +718,7 @@ static void do_bioshd_request(void)
 
 	while (count > 0) {
 	    register struct drive_infot *drivep = &drive_info[drive];
+
 	    sector = (unsigned int) ((start % (sector_t)drivep->sectors) + 1);
 	    tmp = start / (sector_t)drivep->sectors;
 	    head = (unsigned int) (tmp % (sector_t)drivep->heads);

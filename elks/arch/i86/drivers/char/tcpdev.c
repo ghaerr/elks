@@ -109,21 +109,21 @@ static size_t tcpdev_write(struct inode *inode, struct file *filp,
 
 int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
 {
-    int ret = 0;
+    register char *ret = (char *)0;
 
     debug3("TCPDEV: select( %p, %p, %d )\n",inode,filp,sel_type);
     switch (sel_type) {
     case SEL_OUT:
 	debug("TCPDEV: select() chose SEL_OUT\n");
 	if (bufin_sem == 0)
-	    ret = 1;
+	    ret = (char *)1;
 	else
 	    select_wait(&tcpdevq);
 	break;
     case SEL_IN:
 	debug("TCPDEV: select() chose SEL_IN\n");
 	if (tdout_tail != 0)
-	    ret = 1;
+	    ret = (char *)1;
 	else
 	    select_wait(&tcpdevq);
 	break;
@@ -132,7 +132,7 @@ int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
 	break;
     }
     debug1("TCPDEV: select() returning %d\n",ret);
-    return ret;
+    return (int)ret;
 }
 
 static int tcpdev_open(struct inode *inode, struct file *file)
