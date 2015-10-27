@@ -508,6 +508,7 @@ extern int sys_dup(unsigned int);
 extern struct buffer_head *bread(dev_t,block_t);
 
 extern int get_unused_fd(struct file *);
+extern int open_fd(int flags, struct inode *inode);
 
 extern void mark_buffer_uptodate(struct buffer_head *,int);
 

@@ -410,22 +410,12 @@ struct inode_operations sock_inode_operations = {
 #endif
 };
 
-/*@+type@*/
-
 static int get_fd(register struct inode *inode)
 {
     int fd;
-    struct file *file;
 
-    if((fd = open_filp(O_RDWR, inode, &file)))
-	goto no_files;
-    if ((fd = get_unused_fd(file)) > -1) {
+    if((fd = open_fd(O_RDWR, inode)) >= 0)
 	inode->i_count++;		/*FIXME: Really needed?*/
-	goto no_files;
-    }
-
-    close_filp(inode, file);
-  no_files:
     return fd;
 }
 

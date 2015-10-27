@@ -411,7 +411,7 @@ int open_namei(char *pathname, int flag, int mode,
     return error;
 }
 
-int do_mknod(char *filename, int mode, dev_t dev)
+int do_mknod(char *pathname, int mode, dev_t dev)
 {
 #ifdef CONFIG_FS_RO
     return -EROFS;
@@ -421,7 +421,7 @@ int do_mknod(char *filename, int mode, dev_t dev)
     struct inode *dir;
     char *basename;
     size_t namelen;
-    int error = dir_namei(filename, &namelen, &basename, NULL, &dir);
+    int error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
 
     if (!error) {
 	if (!namelen)
@@ -446,7 +446,7 @@ int do_mknod(char *filename, int mode, dev_t dev)
 #endif
 }
 
-int sys_mknod(char *filename, int mode, dev_t dev)
+int sys_mknod(char *pathname, int mode, dev_t dev)
 {
 #ifdef CONFIG_FS_RO
     return -EROFS;
@@ -468,7 +468,7 @@ int sys_mknod(char *filename, int mode, dev_t dev)
 	return -EINVAL;
     }
 
-    return do_mknod(filename, mode, dev);
+    return do_mknod(pathname, mode, dev);
 #endif
 }
 
@@ -512,13 +512,13 @@ int sys_mkdir(char *pathname, int mode)
 
 int __do_rmthing(char *pathname, int opnum)
 {
-    struct inode *dir;
     register struct inode *dirp;
     register struct inode_operations *iop;
+    struct inode *dir;
     char *basename;
-    int (*op) ();
     size_t namelen;
     int error;
+    int (*op) ();
 
     error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
     dirp = dir;
@@ -546,7 +546,7 @@ int sys_unlink(char *pathname)
     return __do_rmthing(pathname, 1);
 }
 
-int sys_symlink(char *oldname, char *newname)
+int sys_symlink(char *pathname, char *newname)
 {
     register struct inode *dirp;
     register struct inode_operations *iop;
@@ -567,7 +567,7 @@ int sys_symlink(char *oldname, char *newname)
 		else {
 		    dirp->i_count++;
 		    down(&dirp->i_sem);
-		    error = iop->symlink(dirp, basename, namelen, oldname);
+		    error = iop->symlink(dirp, basename, namelen, pathname);
 		    up(&dirp->i_sem);
 		}
 	    }
@@ -577,17 +577,17 @@ int sys_symlink(char *oldname, char *newname)
     return error;
 }
 
-int sys_link(char *oldname, char *newname)
+int sys_link(char *pathname, char *newname)
 {
     register struct inode *oldinodep;
-    register struct inode *dirp;
     struct inode *oldinode;
+    register struct inode *dirp;
     struct inode *dir;
     char *basename;
     size_t namelen;
     int error;
 
-    error = namei(oldname, &oldinode, 0, 0);
+    error = namei(pathname, &oldinode, 0, 0);
     oldinodep = oldinode;
     if (!error) {
 	error = dir_namei(newname, &namelen, &basename, NULL, &dir);
@@ -619,12 +619,12 @@ int sys_link(char *oldname, char *newname)
  *  make a simple 6-line version like this one :) - Chad
  */
 
-int sys_rename(register char *oldname, char *newname)
+int sys_rename(register char *pathname, char *newname)
 {
     int err;
 
-    return !(err = sys_link(oldname, newname))
-	? sys_unlink(oldname)
+    return !(err = sys_link(pathname, newname))
+	? sys_unlink(pathname)
 	: err;
 
 }
