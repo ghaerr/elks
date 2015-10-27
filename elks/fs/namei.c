@@ -310,8 +310,7 @@ int open_namei(char *pathname, int flag, int mode,
     register struct inode_operations *iop;
 
     debug("NAMEI: open namei entered\n");
-    mode &= S_IALLUGO & ~current->fs.umask;
-    mode |= S_IFREG;
+    mode = S_IFREG | (mode & S_IALLUGO);
     error = dir_namei(pathname, &namelen, &basename, base, &dir);
     if (error)
 	goto onamei_end;
@@ -437,7 +436,7 @@ int do_mknod(char *filename, int mode, dev_t dev)
 	} else {
 	    dirp->i_count++;
 	    down(&dirp->i_sem);
-	    error = iop->mknod(dirp, basename, namelen, (mode & ~current->fs.umask), dev);
+	    error = iop->mknod(dirp, basename, namelen, mode, dev);
 	    up(&dirp->i_sem);
 	}
     }
@@ -498,8 +497,7 @@ int sys_mkdir(char *pathname, int mode)
 		down(&dirp->i_sem);
 		debug("mkdir: calling dir->i_op->mkdir...\n");
 		error =
-		    iop->mkdir(dir, basename, namelen,
-			       mode & 0777 & ~current->fs.umask);
+		    iop->mkdir(dirp, basename, namelen, (mode & 0777)|S_IFDIR);
 		up(&dirp->i_sem);
 	    }
 	}

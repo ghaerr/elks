@@ -68,9 +68,9 @@ void select_wait(struct wait_queue *q)
  * and we aren't going to sleep on the select_table.  -- jrs
  */
 
-static int check(int flag, struct file *file)
+static int check(int flag, register struct file *file)
 {
-    register struct inode *inode;
+    struct inode *inode;
     register struct file_operations *fops;
 
     inode = file->f_inode;

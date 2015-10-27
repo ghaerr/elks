@@ -398,6 +398,7 @@ void mark_buffer_uptodate(struct buffer_head *bh, int on)
 
 void map_buffer(register struct buffer_head *bh)
 {
+    int i;
 
     /* If buffer is already mapped, just increase the refcount and return
      */
@@ -418,8 +419,6 @@ void map_buffer(register struct buffer_head *bh)
 
     /* else keep trying till we succeed */
     for (;;) {
-	int i;
-
 	/* First check for the trivial case */
 	for (i = 0; i < NR_MAPBUFS; i++) {
 	    if (!bufmem_map[i]) {

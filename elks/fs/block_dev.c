@@ -85,13 +85,13 @@ static int blk_rw(struct inode *inode, register struct file *filp,
     return written;
 }
 
-size_t block_read(struct inode *inode, register struct file *filp,
+size_t block_read(struct inode *inode, struct file *filp,
 	       char *buf, size_t count)
 {
     return blk_rw(inode, filp, buf, count, BLOCK_READ);
 }
 
-size_t block_write(struct inode *inode, register struct file *filp,
+size_t block_write(struct inode *inode, struct file *filp,
 		char *buf, size_t count)
 {
     return blk_rw(inode, filp, buf, count, BLOCK_WRITE);

@@ -78,7 +78,7 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
     return result;
 }
 
-void close_filp(struct inode *inode, struct file *f)
+void close_filp(struct inode *inode, register struct file *f)
 {
     register struct file_operations *fop;
 

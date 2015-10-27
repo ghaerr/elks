@@ -125,7 +125,7 @@ int fs_may_mount(kdev_t dev)
     return 1;
 }
 
-int fs_may_umount(kdev_t dev, register struct inode *mount_rooti)
+int fs_may_umount(kdev_t dev, struct inode *mount_rooti)
 {
     register struct inode *inode = first_inode;
 
@@ -458,6 +458,10 @@ struct inode *new_inode(register struct inode *dir, __u16 mode)
 	}
     }
 
+    if(S_ISLNK(mode))
+	mode |= 0777;
+    else
+	mode &= ~(current->fs.umask & 0777);
     inode->i_mode = mode;
     inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
 

@@ -2,7 +2,7 @@
  *  linux/fs/devices.c
  *
  * (C) 1993 Matthias Urlichs -- collected common code and tables.
- * 
+ *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
@@ -123,7 +123,7 @@ int check_disk_change(kdev_t dev)
  * Called every time a block special file is opened
  */
 
-int blkdev_open(register struct inode *inode, register struct file *filp)
+int blkdev_open(struct inode *inode, register struct file *filp)
 {
     unsigned int i;
 
@@ -177,7 +177,7 @@ struct inode_operations blkdev_inode_operations = {
  * Called every time a character special file is opened.
  */
 
-static int chrdev_open(register struct inode *inode,
+static int chrdev_open(struct inode *inode,
 			register struct file *filp)
 {
     unsigned int i;

@@ -55,7 +55,7 @@ static int cp_stat(register struct inode *inode, struct stat *statbuf)
 #define I_B   (BLOCK_SIZE / sizeof(unsigned short))
 
 /* This code does nothing useful. The results of the calculations below
- * are stored in local variables and nothing is done with them. 
+ * are stored in local variables and nothing is done with them.
  * Al
  */
 

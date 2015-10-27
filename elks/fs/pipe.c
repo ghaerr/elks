@@ -344,7 +344,7 @@ struct inode_operations pipe_inode_operations = {
 
 /*@+type@*/
 
-static int do_pipe(int *fd)
+static int do_pipe(register int *fd)
 {
     register struct inode *inode;
     struct file *f1;
