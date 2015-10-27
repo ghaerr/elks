@@ -34,23 +34,20 @@ char *strcpy(char *dest, char *src)
 
 int atoi(register char *number)
 {
-    int n;
+    int n = 0;
     char neg;
 
 /*      if (!number) */
 /*  	return 0; */
     while (*number <= ' ') {
-	if (!*number)
+	if (!*number++)
 	    return 0;
-	++number;
     }
     if (((neg = *number) == '-') || (*number == '+')) {
 	++number;
     }
-    n = 0;
     while ((*number - '0') <= 9) {
-	n = (n * 10) + (*number - '0');
-	++number;
+	n = (n * 10) + (*number++ - '0');
     }
     return (neg == '-' ? -n : n);
 }

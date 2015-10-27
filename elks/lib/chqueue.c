@@ -40,8 +40,6 @@ void chq_init(register struct ch_queue *q, unsigned char *buf, int size)
 /* Adds character c, waiting if wait=1 (or otherwise throws out new char) */
 int chq_addch(register struct ch_queue *q, unsigned char c, int wait)
 {
-    unsigned int nhead;
-
     debug5("CHQ: chq_addch(%d, %c, %d) q->len=%d q->tail=%d\n", q, c, 0,
 	   q->len, q->tail);
 
@@ -56,8 +54,7 @@ int chq_addch(register struct ch_queue *q, unsigned char c, int wait)
     if (q->len == q->size)
 	return -1;
 
-    nhead = (unsigned int) ((q->tail + q->len) & (q->size - 1));
-    q->buf[nhead] = (char) c;
+    q->buf[(unsigned int)((q->tail + q->len) & (q->size - 1))] = (char) c;
     q->len++;
     wake_up(&q->wq);
 
@@ -106,7 +103,7 @@ int chq_getch(register struct ch_queue *q, register unsigned char *c, int wait)
     return retval;
 }
 
-int chq_peekch(register struct ch_queue *q)
+int chq_peekch(struct ch_queue *q)
 {
     return (q->len != 0);
 }

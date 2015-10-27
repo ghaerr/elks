@@ -57,7 +57,7 @@ struct socket *socki_lookup(struct inode *inode)
  * 	#define socki_lookup(_a) (&_a->u.sock_i)
  */
 
-int move_addr_to_kernel(char *uaddr, size_t ulen, char *kaddr)
+static int move_addr_to_kernel(char *uaddr, size_t ulen, char *kaddr)
 {
     if (ulen > MAX_SOCK_ADDR)
 	return -EINVAL;
@@ -68,7 +68,7 @@ int move_addr_to_kernel(char *uaddr, size_t ulen, char *kaddr)
     return verified_memcpy_fromfs(kaddr, uaddr, ulen);
 }
 
-int move_addr_to_user(char *kaddr, size_t klen, char *uaddr, register int *ulen)
+static int move_addr_to_user(char *kaddr, size_t klen, char *uaddr, register int *ulen)
 {
     size_t len;
     int err;
@@ -95,6 +95,26 @@ int move_addr_to_user(char *kaddr, size_t klen, char *uaddr, register int *ulen)
 
 struct socket *sock_alloc(void)
 {
+    static struct socket ini_sock = {
+	0,		/* type */
+	SS_UNCONNECTED, /* state */
+	0,		/* flags */
+	NULL,		/* ops */
+	NULL,		/* data */
+#if defined(CONFIG_INET)
+	0,		/* avail_data */
+	0,		/* sem */
+#endif
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
+	NULL,		/* conn */
+	NULL,		/* iconn */
+	NULL,		/* next */
+#endif
+	NULL,		/* wait */
+	NULL,		/* inode */
+	NULL,		/* fasync_list */
+	NULL,		/* file */
+    };
     register struct inode *inode;
     register struct socket *sock;
 
@@ -102,24 +122,11 @@ struct socket *sock_alloc(void)
 	return NULL;
 
     sock = &inode->u.socket_i;
-    sock->state = SS_UNCONNECTED;
-    sock->flags = 0;
-    sock->ops = NULL;
-    sock->data = NULL;
 
-#if defined(CONFIG_INET)
-    sock->avail_data = 0;
-#endif
-
-    sock->file = NULL;
-
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
-    sock->conn = sock->iconn = sock->next = NULL;
-#endif
+    *sock = ini_sock;
 
     sock->wait = &inode->i_wait;
     sock->inode = inode;	/* "backlink" use pointer arithmetic instead */
-    sock->fasync_list = NULL;
 
 #if 0
 
@@ -145,7 +152,7 @@ struct socket *sockfd_lookup(int fd, struct file **pfile)
     if (pfile)
 	*pfile = file;
 
-    return socki_lookup(inode);
+    return &inode->u.socket_i;
 }
 
 static size_t sock_read(struct inode *inode, struct file *file,
@@ -282,7 +289,7 @@ int sock_awaitconn(register struct socket *mysock,
 
 
 #if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
-static void sock_release_peer(struct socket *peer)
+static void sock_release_peer(register struct socket *peer)
 {
     /* FIXME - some of these are not implemented */
     peer->state = SS_DISCONNECTING;
@@ -343,7 +350,7 @@ void sock_close(register struct inode *inode, struct file *filp)
     sock_fasync(inode, filp, 0);
 #endif
 
-    sock_release(socki_lookup(inode));
+    sock_release(&inode->u.socket_i);
 }
 
 int sys_bind(int fd, struct sockaddr *umyaddr, int addrlen)

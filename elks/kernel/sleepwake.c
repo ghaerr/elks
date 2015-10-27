@@ -94,13 +94,11 @@ void wake_up_process(register struct task_struct *p)
 void _wake_up(struct wait_queue *q, unsigned short int it)
 {
     register struct task_struct *p;
-    unsigned short int phash = (unsigned short int) q;
+    unsigned short int phash;
 
     extern struct wait_queue select_poll;
 
-    phash >>= 8;
-    phash &= 0x0F;
-    phash = ((unsigned short int) 1) << phash;
+    phash = ((unsigned short int)1) << (((unsigned short int)q >> 8) & 0x0F);
 
     for_each_task(p) {
 	if ((p->waitpt == q)

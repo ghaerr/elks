@@ -54,6 +54,7 @@ int sys_readdir(unsigned int fd, char *dirent, unsigned int count
 {
     int error;
     struct file *file;
+    register struct file *filp;
     register struct file_operations *fop;
     struct readdir_callback buf;
 
@@ -61,11 +62,12 @@ int sys_readdir(unsigned int fd, char *dirent, unsigned int count
 			  FMODE_READ, &file))
 	>= 0) {
 	error = -ENOTDIR;
-	fop = file->f_op;
+	filp = file;
+	fop = filp->f_op;
 	if (fop && fop->readdir) {
 	    buf.count = 0;
 	    buf.dirent = (struct linux_dirent *) dirent;
-	    if ((error = fop->readdir(file->f_inode, file,
+	    if ((error = fop->readdir(filp->f_inode, filp,
 				      &buf, fillonedir))
 		>= 0)
 		return buf.count;

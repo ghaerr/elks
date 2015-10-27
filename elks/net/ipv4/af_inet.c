@@ -180,7 +180,7 @@ static int inet_listen(register struct socket *sock, int backlog)
 }
 
 static int inet_accept(register struct socket *sock,
-		       struct socket *newsock, int flags)
+		       register struct socket *newsock, int flags)
 {
     struct tdb_accept cmd;
     int ret;

@@ -76,12 +76,12 @@ static int pipe_in_use[(MAX_PIPES + 15)/16];
 
 static char *get_pipe_mem(void)
 {
-    int i = 0;
+    register char *i = 0;
 
-    i = find_first_zero_bit(pipe_in_use, MAX_PIPES);
-    if(i < MAX_PIPES) {
-	set_bit(i, pipe_in_use);
-	return pipe_base[i];
+    i = (char *)find_first_zero_bit(pipe_in_use, MAX_PIPES);
+    if((int)i < MAX_PIPES) {
+	set_bit((int)i, pipe_in_use);
+	return pipe_base[(int)i];
     }
 
     debug("PIPE: No more buffers.\n");		/* FIXME */
@@ -90,11 +90,11 @@ static char *get_pipe_mem(void)
 
 static void free_pipe_mem(char *buf)
 {
-    int i;
+    register char *i;
 
-    i = ((unsigned int)pipe_base - (unsigned int)buf)/PIPE_BUF;
-    if(i < MAX_PIPES)
-	clear_bit(i, pipe_in_use);
+    i = (char *)(((unsigned int)pipe_base - (unsigned int)buf)/PIPE_BUF);
+    if((int)i < MAX_PIPES)
+	clear_bit((int)i, pipe_in_use);
 }
 
 static size_t pipe_read(register struct inode *inode, struct file *filp,

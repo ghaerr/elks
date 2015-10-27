@@ -369,6 +369,7 @@ int sys_fchown(unsigned int fd, uid_t user, gid_t group)
 int sys_open(char *filename, int flags, int mode)
 {
     struct inode *inode;
+    register struct inode *pinode;
     struct file *f;
     int error, flag;
 
@@ -382,7 +383,8 @@ int sys_open(char *filename, int flags, int mode)
     if(error)
 	goto exit_open;
 
-    error = open_filp(flags, inode, &f);
+    pinode = inode;
+    error = open_filp(flags, pinode, &f);
     if(error)
 	goto cleanup_inode;
     f->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
@@ -394,10 +396,10 @@ int sys_open(char *filename, int flags, int mode)
      */
     if ((error = get_unused_fd(f)) > -1)
 	goto exit_open;
-    close_filp(inode, f);
+    close_filp(pinode, f);
 
   cleanup_inode:
-    iput(inode);
+    iput(pinode);
   exit_open:
     return error;
 }
