@@ -36,15 +36,15 @@ static struct proto_ops *pops[NPROTO] = { NULL, NULL, NULL };
 
 extern struct net_proto protocols[];	/* Network protocols */
 
-static int find_protocol_family(int family)
+static struct proto_ops *find_protocol_family(int family)
 {
-    int i;
+    register struct proto_ops **props;
 
-    for (i = 0; i < NPROTO; i++)
-	if (pops[i]->family == family)
-	    return i;
+    for (props = pops; props < &pops[NPROTO]; props++)
+	if((*props != NULL) && ((*props)->family == family))
+	    return *props;
 
-    return -1;
+    return NULL;
 }
 
 struct socket *socki_lookup(struct inode *inode)
@@ -151,7 +151,7 @@ struct socket *sockfd_lookup(int fd, struct file **pfile)
 static size_t sock_read(struct inode *inode, struct file *file,
 		     register char *ubuf, size_t size)
 {
-    struct socket *sock;
+    register struct socket *sock;
     int err;
 
     if (!(sock = socki_lookup(inode))) {
@@ -174,7 +174,7 @@ static size_t sock_read(struct inode *inode, struct file *file,
 static size_t sock_write(struct inode *inode, struct file *file,
 		      register char *ubuf, size_t size)
 {
-    struct socket *sock;
+    register struct socket *sock;
     int err;
 
     if (!(sock = socki_lookup(inode))) {
@@ -350,7 +350,7 @@ int sys_bind(int fd, struct sockaddr *umyaddr, int addrlen)
 {
     register struct socket *sock;
     char address[MAX_SOCK_ADDR];
-    int err, i;
+    int err;
 
 #if 0
     /* This is done in sockfd_lookup, so can be scrubbed later */
@@ -365,8 +365,8 @@ int sys_bind(int fd, struct sockaddr *umyaddr, int addrlen)
     if (err < 0)
 	return err;
 
-    if ((i = sock->ops->bind(sock, (struct sockaddr *) address, addrlen)) < 0)
-	return i;
+    if ((err = sock->ops->bind(sock, (struct sockaddr *) address, addrlen)) < 0)
+	return err;
 
     return 0;
 }
@@ -533,7 +533,7 @@ int sys_connect(int fd, struct sockaddr *uservaddr, int addrlen)
     register struct socket *sock;
     struct file *file;
     char address[MAX_SOCK_ADDR];
-    int err, i;
+    int err;
 
 #if 0
 /* All this is done in sockfd_lookup */
@@ -570,31 +570,30 @@ int sys_connect(int fd, struct sockaddr *uservaddr, int addrlen)
     default:
 	return -EINVAL;
     }
-    i = sock->ops->connect(sock, (struct sockaddr *) address, addrlen,
+    err = sock->ops->connect(sock, (struct sockaddr *) address, addrlen,
 			   file->f_flags);
-    if (i < 0)
-	return i;
+    if (err < 0)
+	return err;
 
     return 0;
 }
 
-int sock_register(int family, struct proto_ops *ops)
+int sock_register(int family, register struct proto_ops *ops)
 {
-    int i;
+    register struct proto_ops **props;
 
-    for (i = 0; i < NPROTO; i++) {
-	if (pops[i] != NULL)
-	    continue;
-	pops[i] = ops;
-	pops[i]->family = family;
-	return i;
-    }
+    for (props = pops; props < &pops[NPROTO]; props++)
+	if(*props == NULL) {
+	    *props = ops;
+	    ops->family = family;
+	    return (props - pops)/sizeof(struct proto_ops *);
+	}
     return -ENOMEM;
 }
 
 void proto_init(void)
 {
-    struct net_proto *pro;
+    register struct net_proto *pro;
 
     /* Kick all configured protocols. */
     pro = protocols;
@@ -617,16 +616,15 @@ int sys_socket(int family, int type, int protocol)
 {
     register struct socket *sock;
     register struct proto_ops *ops;
-    int i, fd;
+    int fd;
 
 /*	find_protocol_family() is a macro which gives 0 while only
  *	AF_INET sockets are supported
  */
-    if ((i = find_protocol_family(family)) < 0) {
+    ops = find_protocol_family(family);	/* Initially pops is not an array. */
+    if(ops == NULL) {
 	return -EINVAL;
     }
-
-    ops = pops[i];		/* Initially pops is not an array. */
 
     if (type != SOCK_STREAM)
 	return -EINVAL;
@@ -636,9 +634,9 @@ int sys_socket(int family, int type, int protocol)
 
     sock->type = (short int) type;
     sock->ops = ops;
-    if ((i = sock->ops->create(sock, protocol)) < 0) {
+    if ((fd = sock->ops->create(sock, protocol)) < 0) {
 	sock_release(sock);
-	return i;
+	return fd;
     }
 
     if ((fd = get_fd(SOCK_INODE(sock))) < 0) {
