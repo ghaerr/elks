@@ -7,36 +7,34 @@
  *	Messy as we lack atomic bit operations on an 8086.
  */
 
-unsigned char clear_bit(unsigned int bit,void *addr)
+unsigned char clear_bit(unsigned int bit, register void *addr)
 {
-    register unsigned char *ptr;
     flag_t flags;
     unsigned int mask;
 
-    ptr = ((unsigned char *)addr) + (bit >> 3);
+    addr = (void *)(((unsigned char *)addr) + (bit >> 3));
     bit &= 0x07;
     mask = (1 << bit);
     save_flags(flags);
     clr_irq();
-    mask &= *ptr;
-    *ptr &= ~mask;
+    mask &= *((unsigned char *)addr);
+    *((unsigned char *)addr) &= ~mask;
     restore_flags(flags);
     return mask >> bit;
 }
 
-unsigned char set_bit(unsigned int bit,void *addr)
+unsigned char set_bit(unsigned int bit, register void *addr)
 {
-    register unsigned char *ptr;
     flag_t flags;
     unsigned int mask, r;
 
-    ptr = ((unsigned char *)addr) + (bit >> 3);
+    addr = (void *)(((unsigned char *)addr) + (bit >> 3));
     bit &= 0x07;
     mask = (1 << bit);
     save_flags(flags);
     clr_irq();
-    r = *ptr & mask;
-    *ptr |= mask;
+    r = *((unsigned char *)addr) & mask;
+    *((unsigned char *)addr) |= mask;
     restore_flags(flags);
     return r >> bit;
 }

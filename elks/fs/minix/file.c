@@ -155,10 +155,9 @@ static size_t minix_file_read(struct inode *inode, register struct file *filp,
     return read;
 }
 
-static size_t minix_file_write(register struct inode *inode,
-			    struct file *filp, char *buf, size_t count)
+static size_t minix_file_write(struct inode *inode,
+			    register struct file *filp, char *buf, size_t count)
 {
-    register struct buffer_head *bh;
     size_t chars, offset;
     int written = 0;
 
@@ -183,6 +182,7 @@ static size_t minix_file_write(register struct inode *inode,
 	filp->f_pos = (loff_t)inode->i_size;
 
     while (count > 0) {
+	register struct buffer_head *bh;
     /*
      *      Offset to block/offset
      */
@@ -217,9 +217,12 @@ static size_t minix_file_write(register struct inode *inode,
 	written += chars;
 	count -= chars;
     }
-    if ((loff_t)inode->i_size < filp->f_pos)
-	inode->i_size = (__u32) filp->f_pos;
-    inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-    inode->i_dirt = 1;
+    {
+	register struct inode *pinode = inode;
+	if ((loff_t)pinode->i_size < filp->f_pos)
+	    pinode->i_size = (__u32) filp->f_pos;
+	pinode->i_mtime = pinode->i_ctime = CURRENT_TIME;
+	pinode->i_dirt = 1;
+    }
     return written;
 }

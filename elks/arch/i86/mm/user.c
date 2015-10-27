@@ -1,7 +1,7 @@
 /*
  *	User access routines for the kernel.
  */
- 
+
 #include <linuxmt/types.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/mm.h>
@@ -15,19 +15,14 @@ int verfy_area(void *p, size_t len)
     /*
      *	Kernel tasks can always access
      */
-    if (kernel_ds == currentp->t_regs.ds)
+    if((kernel_ds == currentp->t_regs.ds) /* Kernel tasks can always access */
+	  || ((__pptr)((char *)p + len) <= currentp->t_endseg)) /* User process boundaries */
 	return 0;
 
-    /*
-     *	User process boundaries
-     */
-    if ((__pptr)((char *)p + len) > currentp->t_endseg)
-	return -EFAULT;
-
-    return 0;
+    return -EFAULT;
 }
 
-int verified_memcpy_fromfs(void *daddr, register void *saddr, size_t len)
+int verified_memcpy_fromfs(void *daddr, void *saddr, size_t len)
 {
     int err = verify_area(VERIFY_READ, saddr, len);
 
@@ -36,7 +31,7 @@ int verified_memcpy_fromfs(void *daddr, register void *saddr, size_t len)
     return err;
 }
 
-int verified_memcpy_tofs(register void *daddr, void *saddr, size_t len)
+int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
 {
     int err = verify_area(VERIFY_WRITE, daddr, len);
 

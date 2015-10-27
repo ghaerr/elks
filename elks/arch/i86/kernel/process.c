@@ -20,7 +20,7 @@ static char *args[] = {
     NULL,
     NULL,
 };
-    
+
 extern int do_signal(void);
 extern void ret_from_syscall(void);
 
@@ -30,7 +30,7 @@ void sig_check(void)
         do_signal();
 }
 
-int run_init_process(char *cmd)
+int run_init_process(register char *cmd)
 {
     int num;
 

@@ -490,7 +490,7 @@ static struct buffer_head *minix_update_inode(register struct inode *inode)
     return bh;
 }
 
-void minix_write_inode(register struct inode *inode)
+void minix_write_inode(struct inode *inode)
 {
     brelse(minix_update_inode(inode));
 }

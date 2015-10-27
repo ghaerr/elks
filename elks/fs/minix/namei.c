@@ -123,7 +123,6 @@ static struct buffer_head *minix_find_entry(register struct inode *dir,
 int minix_lookup(register struct inode *dir, char *name, size_t len,
 		 register struct inode **result)
 {
-    unsigned int ino;
     struct minix_dir_entry *de;
     struct buffer_head *bh;
 
@@ -136,9 +135,8 @@ int minix_lookup(register struct inode *dir, char *name, size_t len,
 	    debug2("minix_lookup: minix_find_entry returned %x %d\n", bh,
 		   bh->b_mapcount);
 	    if (bh) {
-		ino = de->inode;
 		unmap_brelse(bh);
-		*result = iget(dir->i_sb, (ino_t) ino);
+		*result = iget(dir->i_sb, (ino_t) de->inode);
 		iput(dir);
 		return (!*result) ? -EACCES : 0;
 	    }
