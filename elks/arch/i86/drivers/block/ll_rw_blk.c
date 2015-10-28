@@ -43,12 +43,6 @@
 
 static struct request all_requests[NR_REQUEST];
 
-/*
- * used to wait on when there are no free requests
- */
-
-int foo_foo_bar;
-
 #ifdef MULTI_BH
 struct wait_queue wait_for_request = NULL;
 #endif
@@ -431,7 +425,7 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
 
 void ll_rw_blk(int rw, register struct buffer_head *bh)
 {
-    struct blk_dev_struct *dev;
+    register struct blk_dev_struct *dev;
     unsigned short int major;
 
 #ifdef BLOAT_FS

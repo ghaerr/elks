@@ -9,8 +9,7 @@ _pokew:
 	pop	dx
 	pop	ds
 	pop	bx
-	pop	ax
+	pop	[bx]
 	sub	sp,*6
-	mov	[bx],ax
 	mov	ds,cx
 	jmp	dx

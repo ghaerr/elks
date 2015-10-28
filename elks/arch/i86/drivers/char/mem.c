@@ -42,21 +42,18 @@
 int memory_lseek(struct inode *inode, register struct file *filp,
 		    loff_t offset, unsigned int origin)
 {
-    loff_t tmp = offset;
-
     debugmem("mem_lseek()\n");
     switch (origin) {
     case 1:
-	tmp += filp->f_pos;
+	offset += filp->f_pos;
     case 0:
+	if(offset >= 0)
 	break;
     default:
 	return -EINVAL;
     }
-    if (tmp < 0)
-	return -EINVAL;
-    if (tmp != filp->f_pos) {
-	filp->f_pos = tmp;
+    if (offset != filp->f_pos) {
+	filp->f_pos = offset;
 
 #ifdef BLOAT_FS
 	filp->f_reada = 0;
@@ -117,12 +114,11 @@ size_t zero_read(struct inode *inode, struct file *filp, char *data, int len)
     return (size_t)len;
 }
 
-static void split_seg_off(unsigned short int *segment,
-			  unsigned short int *offset,
+static unsigned short int split_seg_off(unsigned short int *offset,
 			  long int posn)
 {
-    *segment = (unsigned short int) (((unsigned long int) posn) >> 4);
-    *offset  = (unsigned short int) (((unsigned long int) posn) & 0xF);
+    *offset = (unsigned short int) (((unsigned long int) posn) & 0xF);
+    return (unsigned short int) (((unsigned long int) posn) >> 4);
 }
 
 /*
@@ -134,7 +130,7 @@ size_t kmem_read(struct inode *inode, register struct file *filp,
     unsigned short int sseg, soff;
 
     debugmem("[k]mem_read()\n");
-    split_seg_off(&sseg, &soff, filp->f_pos);
+    sseg = split_seg_off(&soff, filp->f_pos);
     debugmem3("Reading %u %p %p.\n", len, sseg, soff);
     fmemcpy(current->mm.dseg, (__u16) data, sseg, soff, (__u16) len);
     filp->f_pos += len;
@@ -148,16 +144,15 @@ size_t kmem_write(struct inode *inode, register struct file *filp,
 
     debugmem("[k]mem_write()\n");
 
-    split_seg_off(&dseg, &doff, filp->f_pos);
+    dseg = split_seg_off(&doff, filp->f_pos);
     debugmem2("Writing to %d:%d\n", dseg, doff);
     fmemcpy(dseg, doff, current->mm.dseg, (__u16) data, (__u16) len);
     filp->f_pos += len;
     return len;
 }
 
-int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
+int kmem_ioctl(struct inode *inode, struct file *file, int cmd, register char *arg)
 {
-    char *i;
     struct mem_usage mu;
 
 #ifdef CONFIG_SWAP
@@ -170,19 +165,16 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 #ifdef CONFIG_MODULES
 
     case MEM_GETMODTEXT:
-	i = (char *) module_init;
-	put_user((unsigned short int)i, (void *)arg);
+	put_user((unsigned short int)module_init, (void *)arg);
 	return 0;
     case MEM_GETMODDATA:
-	i = (char *) module_data;
-	put_user((unsigned short int)i, (void *)arg);
+	put_user((unsigned short int)module_data, (void *)arg);
 	return 0;
 
 #endif
 
     case MEM_GETTASK:
-	i = (char *) task;
-	put_user((unsigned short int)i, (void *)arg);
+	put_user((unsigned short int)task, (void *)arg);
 
 #if 0
 
@@ -195,12 +187,10 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 
 	return 0;
     case MEM_GETCS:
-	i = (char *) kernel_cs;
-	put_user((unsigned short int)i, (void *)arg);
+	put_user((unsigned short int)kernel_cs, (void *)arg);
 	return 0;
     case MEM_GETDS:
-	i = (char *) kernel_ds;
-	put_user((unsigned short int)i, (void *)arg);
+	put_user((unsigned short int)kernel_ds, (void *)arg);
 	return 0;
     case MEM_GETUSAGE:
 	mu.free_memory = mm_get_usage(MM_MEM, 0);

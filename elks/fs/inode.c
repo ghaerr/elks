@@ -74,12 +74,13 @@ static void wait_on_inode(register struct inode *inode)
     wait_set(&inode->i_wait);
     goto lwi;
     do {
-	schedule();
-  lwi:
 	current->state = TASK_UNINTERRUPTIBLE;
+	schedule();
+	current->state = TASK_RUNNING;
+  lwi:
+	;
     } while(inode->i_lock);
     wait_clear(&inode->i_wait);
-    current->state = TASK_RUNNING;
 }
 
 static void lock_inode(register struct inode *inode)
@@ -125,7 +126,7 @@ int fs_may_mount(kdev_t dev)
     return 1;
 }
 
-int fs_may_umount(kdev_t dev, register struct inode *mount_rooti)
+int fs_may_umount(kdev_t dev, struct inode *mount_rooti)
 {
     register struct inode *inode = first_inode;
 
@@ -458,6 +459,10 @@ struct inode *new_inode(register struct inode *dir, __u16 mode)
 	}
     }
 
+    if(S_ISLNK(mode))
+	mode |= 0777;
+    else
+	mode &= ~(current->fs.umask & 0777);
     inode->i_mode = mode;
     inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
 

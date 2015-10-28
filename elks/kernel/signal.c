@@ -18,14 +18,12 @@
 
 static void generate(int sig, register struct task_struct *p)
 {
-    register struct sigaction *sa = &(p->sig.action[sig - 1]);
+    __sighandler_t sa = p->sig.action[sig - 1].sa_handler;
 
-    if (sa->sa_handler == SIG_IGN)
-	return;
-    if ((sa->sa_handler == SIG_DFL) &&
-	(sig == SIGCONT || sig == SIGCHLD || sig == SIGWINCH
+    if((sa == SIG_IGN) || (sa == SIG_DFL) && (sig == SIGCONT
+	|| sig == SIGCHLD || sig == SIGWINCH
 #ifndef SMALLSIG
-	 || sig == SIGURG
+	|| sig == SIGURG
 #endif
 	))
 	return;

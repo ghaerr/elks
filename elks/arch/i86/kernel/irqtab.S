@@ -288,7 +288,7 @@ _algn:
 !
 !	There are three possible cases to cope with
 !
-!	SS = kernel DS. 
+!	SS = kernel DS.
 !		Interrupted kernel mode code.
 !		No task switch allowed
 !		Running on a kernel process stack anyway.
@@ -429,7 +429,7 @@ updct:
         mov     _bios_call_cnt_l,#5
         pushf
         callf   [_stashed_irq0_l]
-        jmp     was_trap
+	jmp	was_trap	! EOI already sent by bios int
 a4:
         cmp     ax,#8
 	movb	al,#0x20	! EOI

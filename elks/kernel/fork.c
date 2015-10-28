@@ -4,6 +4,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
+#include <arch/segment.h>
 
 int task_slots_unused = MAX_TASKS;
 struct task_struct *next_task_slot = task;
@@ -131,28 +132,25 @@ pid_t do_fork(int virtual)
      *      Return the created task.
      */
     if (virtual) {
-	/* When the parent returns, the stack frame will have gone so
-	 * save enough stack state that we will be able to return to
-	 * the point where vfork() was called in the code, not to the
-	 * point in the library code where the actual syscall int was
-	 * done - ajr 16th August 1999
-	 *
-	 * Stack was
-	 *         ip cs f ret
-	 * and will be
-	 *            ret cs f
+	int sc[4];
+
+	/* Parent and child are sharing the user stack at this point.
+	 * The child will go first, returning from this function and
+	 * from the library code where the actual syscall was done
+	 * and then will issue an exec syscall, destroying the first
+	 * few bytes at the top of the user stack. Save those bytes
+	 * in the parent's kernel stack.
 	 */
-	int ip, cs, fl;
-
-	ip = (int) get_ustack(currentp, 6);
-	cs = (int) get_ustack(currentp, 2);
-	fl = (int) get_ustack(currentp, 4);
-	currentp->t_regs.sp += 2;
+	fmemcpy(kernel_ds, sc, currentp->t_regs.ss, currentp->t_regs.sp, 8);
+	/*
+	 * Let the child go on first.
+	 */
 	sleep_on(&currentp->child_wait);
-	put_ustack(currentp, 0, ip);
-	put_ustack(currentp, 2, cs);
-	put_ustack(currentp, 4, fl);
-
+	/*
+	 * By now, the child should have its own user stack. Restore
+	 * the parent's user stack.
+	 */
+	fmemcpy(currentp->t_regs.ss, currentp->t_regs.sp, kernel_ds, sc, 8);
     }
 
     /*

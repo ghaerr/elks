@@ -45,7 +45,7 @@ extern jiff_t jiffies;
 static struct timezone xzone;
 
 /* set the time of day */
-int sys_settimeofday(struct timeval *tv, register struct timezone *tz)
+int sys_settimeofday(register struct timeval *tv, struct timezone *tz)
 {
     struct timeval tmp_tv;
     struct timezone tmp_tz;

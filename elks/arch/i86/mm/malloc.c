@@ -2,7 +2,7 @@
  *	Memory management support for a swapping rather than paging kernel.
  *
  *	Memory allocator for ELKS. We keep a hole list so we can keep the
- *	malloc arena data in the kernel npot scattered into hard to read 
+ *	malloc arena data in the kernel not scattered into hard to read
  *	user memory.
  *
  *	20th Jan 2000	Alistair Riddoch (ajr@ecs.soton.ac.uk)
@@ -70,11 +70,11 @@ static struct malloc_hole *alloc_hole(struct malloc_head *mh)
     register struct malloc_hole *m = mh->holes;
     register char *ct = (char *)(mh->size);
 
-    while (ct--) {
+    do {
 	if (m->flags == HOLE_SPARE)
 	    return m;
 	m++;
-    }
+    } while (--ct);
     panic("mm: too many holes");
 }
 
@@ -99,8 +99,9 @@ static void split_hole(struct malloc_head *mh,
     n->page_base = m->page_base + len;
     n->extent = spare;
     n->next = m->next;
-    m->next = n;
     n->flags = HOLE_FREE;
+    m->next = n;
+    m->flags = HOLE_USED;
 }
 
 /*
@@ -223,14 +224,13 @@ seg_t mm_alloc(segext_t pages)
      */
 
     split_hole(&memmap, m, pages);
-    m->flags = HOLE_USED;
     m->refcount = 1;
 
     return m->page_base;
 }
 
 /*
- * This function will swapin the whole process. After 
+ * This function will swapin the whole process. After
  * there are exact ideas on the implementation of the swap cache
  * this sould change
  */
@@ -307,8 +307,7 @@ void mm_free(seg_t base)
 
     if ((m->flags & 3) != HOLE_USED)
 	panic("double free");
-    m->refcount--;
-    if (!m->refcount) {
+    if (!(--m->refcount)) {
 	m->flags = HOLE_FREE;
 	sweep_holes(mh);
     }
@@ -321,7 +320,6 @@ void mm_free(seg_t base)
 seg_t mm_dup(seg_t base)
 {
     register struct malloc_hole *o, *m;
-    size_t i;
 
     debug("MALLOC: mm_dup()\n");
     o = find_hole(&memmap, base);
@@ -345,15 +343,13 @@ seg_t mm_dup(seg_t base)
 #endif
 
     split_hole(&memmap, m, o->extent);
-    m->flags = HOLE_USED;
     m->refcount = 1;
-    i = (o->extent << 4);
-    fmemcpy(m->page_base, 0, o->page_base, 0, (__u16) i);
+    fmemcpy(m->page_base, 0, o->page_base, 0, (__u16)(o->extent << 4));
     return m->page_base;
 }
 
 /*
- * Returns memory usage information in KB's. 
+ * Returns memory usage information in KB's.
  * "type" is either MM_MEM or MM_SWAP and "used"
  * selects if we request the used or free memory.
  */
@@ -394,19 +390,19 @@ unsigned int mm_get_usage(int type, int used)
 /*
  * Resize a hole
  */
-struct malloc_hole *mm_resize(struct malloc_hole *m, segext_t pages)
+struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
 {
     register struct malloc_hole *next;
-    register segext_t ext;
+    segext_t ext;
     seg_t base;
     if(m->extent >= pages){
-        /* for now don't reduce holes */           
+        /* for now don't reduce holes */
         return m;
-    } 
-    
+    }
+
     next = m->next;
     ext = pages - m->extent;
-    if(next->flags == HOLE_FREE && next->extent >= ext){    
+    if(next->flags == HOLE_FREE && next->extent >= ext){
         m->extent += ext;
         next->extent -= ext;
         next->page_base += ext;
@@ -421,14 +417,14 @@ struct malloc_hole *mm_resize(struct malloc_hole *m, segext_t pages)
 
     base = mm_alloc(pages);
     if(!next){
-        return NULL; /* Out of luck */    
+        return NULL; /* Out of luck */
     }
     fmemcpy(base, 0, m->page_base, 0, (__u16)(m->extent << 4));
     next = find_hole(&memmap, base);
     next->refcount = m->refcount;
     m->flags = HOLE_FREE;
     sweep_holes(&memmap);
-    
+
     return next;
 
 #else
@@ -463,17 +459,17 @@ int sys_brk(__pptr len)
     if(len > currentp->t_endseg){
         /* Resize time */
         register struct malloc_hole *h;
-        
-        h = find_hole(&memmap, currentp->mm.dseg);    
-        
+
+        h = find_hole(&memmap, currentp->mm.dseg);
+
         h = mm_resize(h, (len + 15) >> 4);
         if(!h){
             return -ENOMEM;
         }
-        if(h->refcount != 1){   
+        if(h->refcount != 1){
             panic("Relocated shared hole");
         }
-        
+
         currentp->mm.dseg = h->page_base;
         currentp->t_regs.ds = h->page_base;
         currentp->t_regs.ss = h->page_base;
@@ -525,7 +521,7 @@ void mm_init(seg_t start, seg_t end)
 /*
  *	Push a segment to disk if possible
  */
- 
+
 int mm_swap_on(struct mem_swap_info *si)
 {
     register struct malloc_hole *holep;
@@ -538,7 +534,7 @@ int mm_swap_on(struct mem_swap_info *si)
 
     if(!si)
     	return 0;
-  
+
     holep = &swap_holes[0];
     holep->flags = HOLE_FREE;
     holep->page_base = 0;
@@ -547,8 +543,8 @@ int mm_swap_on(struct mem_swap_info *si)
     holep->next = NULL;
 
     swap_dev = (si->major << 8) + si->minor;
-    
-    return 0;	
+
+    return 0;
 }
 
 static int swap_out(seg_t base)
@@ -566,7 +562,6 @@ static int swap_out(seg_t base)
 	return -1;
     }
     split_hole(&swapmap, so, blocks);
-    so->flags = HOLE_USED;
     so->refcount = o->refcount;
 
     for_each_task(t) {
@@ -617,7 +612,6 @@ static int swap_in(seg_t base, int chint)
 
     /* Now read the segment in */
     split_hole(&memmap, o, so->extent << 6);
-    o->flags = HOLE_USED;
     o->refcount = so->refcount;
 
     blocks = so->extent;

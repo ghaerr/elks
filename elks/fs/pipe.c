@@ -45,6 +45,17 @@ int get_unused_fd(struct file *f)
     return -EMFILE;
 }
 
+int open_fd(int flags, register struct inode *inode)
+{
+    int fd;
+    struct file *filp;
+
+    if(!(fd = open_filp(flags, inode, &filp))
+	&& ((fd = get_unused_fd(filp)) < 0))
+	close_filp(inode, filp);
+    return fd;
+}
+
 int pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
 		  int orig)
 {
@@ -65,12 +76,12 @@ static int pipe_in_use[(MAX_PIPES + 15)/16];
 
 static char *get_pipe_mem(void)
 {
-    int i = 0;
+    register char *i = 0;
 
-    i = find_first_zero_bit(pipe_in_use, MAX_PIPES);
-    if(i < MAX_PIPES) {
-	set_bit(i, pipe_in_use);
-	return pipe_base[i];
+    i = (char *)find_first_zero_bit(pipe_in_use, MAX_PIPES);
+    if((int)i < MAX_PIPES) {
+	set_bit((int)i, pipe_in_use);
+	return pipe_base[(int)i];
     }
 
     debug("PIPE: No more buffers.\n");		/* FIXME */
@@ -79,11 +90,11 @@ static char *get_pipe_mem(void)
 
 static void free_pipe_mem(char *buf)
 {
-    int i;
+    register char *i;
 
-    i = ((unsigned int)pipe_base - (unsigned int)buf)/PIPE_BUF;
-    if(i < MAX_PIPES)
-	clear_bit(i, pipe_in_use);
+    i = (char *)(((unsigned int)pipe_base - (unsigned int)buf)/PIPE_BUF);
+    if((int)i < MAX_PIPES)
+	clear_bit((int)i, pipe_in_use);
 }
 
 static size_t pipe_read(register struct inode *inode, struct file *filp,
@@ -137,8 +148,7 @@ static size_t pipe_write(register struct inode *inode, struct file *filp,
 
     debug("PIPE: write called.\n");
     if (!(inode->u.pipe_i.readers)) {
-	send_sig(SIGPIPE, current, 0);
-	return -EPIPE;
+	goto snd_signal;
     }
 
     free = (count <= PIPE_BUF) ? count : 1;
@@ -146,6 +156,7 @@ static size_t pipe_write(register struct inode *inode, struct file *filp,
 	while (((PIPE_BUF - (inode->u.pipe_i.len)) < free)
 	       || (inode->u.pipe_i.lock)) {
 	    if (!(inode->u.pipe_i.readers)) {
+	      snd_signal:
 		send_sig(SIGPIPE, current, 0);
 		return written ? (int) written : -EPIPE;
 	    }
@@ -344,52 +355,35 @@ struct inode_operations pipe_inode_operations = {
 
 /*@+type@*/
 
-static int do_pipe(int *fd)
+static int do_pipe(register int *fd)
 {
     register struct inode *inode;
-    struct file *f1;
-    struct file *f2;
+    struct file *f;
     int error = -ENOMEM;
-    int i;
 
     if(!(inode = new_inode(NULL, S_IFIFO | S_IRUSR | S_IWUSR)))	/* Create inode */
 	goto no_inodes;
 
     /* read file */
-    if((error = open_filp(O_RDONLY, inode, &f1)))
+    if((error = open_fd(O_RDONLY, inode)) < 0)
 	goto no_files;
 
-    if ((error = get_unused_fd(f1)) < 0)
-	goto close_f1;
-    fd[0] = error;
-    i = error;
+    *fd = error;
 
-    (inode->i_count)++;		/* Increase inode usage count */
     /* write file */
-    if((error = open_filp(O_WRONLY, inode, &f2)))
-	goto close_f1_i;
-
-    if ((error = get_unused_fd(f2)) < 0)
-	goto close_f12;
+    if((error = open_fd(O_WRONLY, inode)) < 0) {
+	f = current->files.fd[*fd];
+	current->files.fd[*fd] = NULL;
+	close_filp(inode, f);
+      no_files:
+	iput(inode);
+      no_inodes:
+	return error;
+    }
+    (inode->i_count)++;		/* Increase inode usage count */
     fd[1] = error;
 
     return 0;
-
-  close_f12:
-    close_filp(inode, f2);
-
-  close_f1_i:
-    current->files.fd[i] = NULL;
-    inode->i_count--;
-
-  close_f1:
-    close_filp(inode, f1);
-
-  no_files:
-    iput(inode);
-
-  no_inodes:
-    return error;
 }
 
 int sys_pipe(unsigned int *filedes)

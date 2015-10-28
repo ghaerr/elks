@@ -12,7 +12,7 @@ int arch_cpu;			/* Processor type */
 extern long int basmem;
 #endif
 
-void setup_arch(seg_t *start, seg_t *end)
+void setup_arch(register seg_t *start, seg_t *end)
 {
 #ifdef CONFIG_COMPAQ_FAST
 

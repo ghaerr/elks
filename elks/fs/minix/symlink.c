@@ -68,21 +68,18 @@ static int minix_follow_link(register struct inode *dir,
     return error;
 }
 
-static int minix_readlink(struct inode *inode,
+static int minix_readlink(register struct inode *inode,
 			  char *buffer, int buflen)
 {
     register struct buffer_head *bh;
     size_t len;
 
-    {
-	register struct inode *inodep = inode;
-	if (!S_ISLNK(inodep->i_mode)) {
-	    iput(inodep);
-	    return -EINVAL;
-	}
-	bh = minix_bread(inodep, 0, 0);
-	iput(inodep);
+    if (!S_ISLNK(inode->i_mode)) {
+	iput(inode);
+	return -EINVAL;
     }
+    bh = minix_bread(inode, 0, 0);
+    iput(inode);
 
     if (!bh)
 	return 0;

@@ -77,12 +77,13 @@ void wait_on_super(register struct super_block *sb)
     wait_set(&sb->s_wait);
     goto ini_loop;
     do {
-	schedule();
-  ini_loop:
 	current->state = TASK_UNINTERRUPTIBLE;
+	schedule();
+	current->state = TASK_RUNNING;
+  ini_loop:
+	;
     } while(sb->s_lock);
     wait_clear(&sb->s_wait);
-    current->state = TASK_RUNNING;
 }
 
 void lock_super(register struct super_block *sb)
@@ -443,8 +444,9 @@ static int do_remount(char *dir, int flags, char *data)
 
 int sys_mount(char *dev_name, char *dir_name, char *type)
 {
-    register struct file_system_type *fstype;
+    struct file_system_type *fstype;
     struct inode *inode;
+    register struct inode *inodep;
     register struct file_operations *fops;
     kdev_t dev;
     int retval;
@@ -499,19 +501,20 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 	retval = namei(dev_name, &inode, 0, 0);
 	if (retval)
 	    return retval;
+	inodep = inode;
 	debug("MOUNT: made it through namei\n");
-	if (!S_ISBLK(inode->i_mode)) {
+	if (!S_ISBLK(inodep->i_mode)) {
 	NOTBLK:
-	    iput(inode);
+	    iput(inodep);
 	    return -ENOTBLK;
 	}
-	if (IS_NODEV(inode)) {
-	    iput(inode);
+	if (IS_NODEV(inodep)) {
+	    iput(inodep);
 	    return -EACCES;
 	}
-	dev = inode->i_rdev;
+	dev = inodep->i_rdev;
 	if (MAJOR(dev) >= MAX_BLKDEV) {
-	    iput(inode);
+	    iput(inodep);
 	    return -ENXIO;
 	}
 	fops = get_blkfops(MAJOR(dev));
@@ -521,12 +524,12 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 	if (fops->open) {
 	    struct file dummy;	/* allows read-write or read-only flag */
 	    memset(&dummy, 0, sizeof(dummy));
-	    dummy.f_inode = inode;
+	    dummy.f_inode = inodep;
 	    dummy.f_mode = (new_flags & MS_RDONLY) ? ((mode_t) 1)
 						   : ((mode_t) 3);
-	    retval = fops->open(inode, &dummy);
+	    retval = fops->open(inodep, &dummy);
 	    if (retval) {
-		iput(inode);
+		iput(inodep);
 		return retval;
 	    }
 	}
@@ -538,8 +541,8 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 
     retval = do_mount(dev, dir_name, t, new_flags, NULL);
     if (retval && fops && fops->release)
-	fops->release(inode, NULL);
-    iput(inode);
+	fops->release(inodep, NULL);
+    iput(inodep);
 
     return retval;
 }
@@ -554,13 +557,10 @@ void mount_root(void)
 
   retry_floppy:
     memset(&filp, 0, sizeof(filp));
+    filp.f_inode = &d_inode;
+    filp.f_mode = ((root_mountflags & MS_RDONLY) ? 1 : 3);
     memset(&d_inode, 0, sizeof(d_inode));
     d_inode.i_rdev = ROOT_DEV;
-    filp.f_inode = &d_inode;
-    if (root_mountflags & MS_RDONLY)
-	filp.f_mode = 1;	/* read only */
-    else
-	filp.f_mode = 3;	/* read write */
 
     retval = blkdev_open(&d_inode, &filp);
     if (retval == -EROFS) {

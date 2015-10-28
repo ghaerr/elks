@@ -32,16 +32,15 @@ struct readdir_callback {
     int count;
 };
 
-static int fillonedir(char *__buf, char *name, size_t namlen, off_t offset,
+static int fillonedir(register char *__buf, char *name, size_t namlen, off_t offset,
 		      ino_t ino)
 {
-    register struct readdir_callback *buf = (struct readdir_callback *) __buf;
     register struct linux_dirent *dirent;
 
-    if (buf->count)
+    if (((struct readdir_callback *)__buf)->count)
 	return -EINVAL;
-    buf->count++;
-    dirent = buf->dirent;
+    ((struct readdir_callback *)__buf)->count++;
+    dirent = ((struct readdir_callback *)__buf)->dirent;
     put_user_long((__u32)ino, &dirent->d_ino);
     put_user_long((__u32) offset, &dirent->d_offset);
     put_user((__u16) namlen, &dirent->d_namlen);
@@ -55,6 +54,7 @@ int sys_readdir(unsigned int fd, char *dirent, unsigned int count
 {
     int error;
     struct file *file;
+    register struct file *filp;
     register struct file_operations *fop;
     struct readdir_callback buf;
 
@@ -62,11 +62,12 @@ int sys_readdir(unsigned int fd, char *dirent, unsigned int count
 			  FMODE_READ, &file))
 	>= 0) {
 	error = -ENOTDIR;
-	fop = file->f_op;
+	filp = file;
+	fop = filp->f_op;
 	if (fop && fop->readdir) {
 	    buf.count = 0;
 	    buf.dirent = (struct linux_dirent *) dirent;
-	    if ((error = fop->readdir(file->f_inode, file,
+	    if ((error = fop->readdir(filp->f_inode, filp,
 				      &buf, fillonedir))
 		>= 0)
 		return buf.count;

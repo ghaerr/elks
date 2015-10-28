@@ -8,6 +8,19 @@
 
 #include <arch/segment.h>
 
+static char *args[] = {
+    NULL,	/* argc     */
+    0x08,	/* &argv[0] */
+    NULL,	/* end argv */
+    NULL,	/* envp     */
+    NULL,	/* argv[0]     */
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+};
+
 extern int do_signal(void);
 extern void ret_from_syscall(void);
 
@@ -17,15 +30,12 @@ void sig_check(void)
         do_signal();
 }
 
-int run_init_process(char *cmd, char *ar)
+int run_init_process(register char *cmd)
 {
     int num;
-    unsigned short int *pip = (unsigned short int *)ar;
 
-    *pip++ = 0;
-    *pip++ = (unsigned short int) &ar[6];
-    *pip++ = 0;
-    if(!(num = sys_execve(cmd, ar, 18))) {
+    strcpy((char *)(&args[4]), cmd);
+    if(!(num = sys_execve(cmd, args, 20))) {
 	ret_from_syscall();
     }
     printk("sys_execve(\"%s\", args, 18) => %d.\n", cmd, -num);

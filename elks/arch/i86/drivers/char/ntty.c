@@ -75,10 +75,9 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
 struct tty *determine_tty(dev_t dev)
 {
     register struct tty *ttyp = &ttys[0];
-    register char *minor = (char *)MINOR(dev);
 
     do {
-	if (ttyp->minor == (unsigned short int)minor)
+	if (ttyp->minor == (unsigned short int)MINOR(dev))
 	    return ttyp;
     } while (++ttyp < &ttys[MAX_TTYS]);
 
@@ -268,30 +267,30 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 #endif
 }
 
-int tty_ioctl(struct inode *inode, struct file *file, int cmd, register char *arg)
+int tty_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
-    int ret;
+    register char *ret;
 
     switch (cmd) {
     case TCGETS:
-	ret = verified_memcpy_tofs(arg, &tty->termios, sizeof(struct termios));
+	ret = (char *)verified_memcpy_tofs(arg, &tty->termios, sizeof(struct termios));
 	break;
     case TCSETS:
     case TCSETSW:
     case TCSETSF:
-	ret = verified_memcpy_fromfs(&tty->termios, arg, sizeof(struct termios));
+	ret = (char *)verified_memcpy_fromfs(&tty->termios, arg, sizeof(struct termios));
 
 	/* Inform driver that things have changed */
 	if (tty->ops->ioctl != NULL)
 	    tty->ops->ioctl(tty, cmd, arg);
 	break;
     default:
-	ret = (tty->ops->ioctl == NULL)
+	ret = (char *)((tty->ops->ioctl == NULL)
 	    ? -EINVAL
-	    : tty->ops->ioctl(tty, cmd, arg);
+	    : tty->ops->ioctl(tty, cmd, arg));
     }
-    return ret;
+    return (int)ret;
 }
 
 int tty_select(struct inode *inode,	/* how revolting, K&R style defs */
@@ -344,9 +343,9 @@ void tty_init(void)
 /*      unsigned short int i; */
     register char *pi;
 
-    ttyp = &ttys[0];
+    ttyp = ttys;
     while(ttyp < &ttys[NUM_TTYS]) {
-	ttyp->minor -= (ttyp->minor + 1);	/* set unsigned to -1 */
+	ttyp->minor = (unsigned short int)(-1L); /* set unsigned to -1 */
 	memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
 	ttyp++;
     }
@@ -361,8 +360,8 @@ void tty_init(void)
 
 #if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT)
 
-    chq_init(&ttys[0].inq, ttys[0].inq_buf, INQ_SIZE);
     ttyp = ttys;
+    chq_init(&ttyp->inq, ttyp->inq_buf, INQ_SIZE);
     for (pi = 0 ; ((int)pi) < NUM_TTYS ; pi++) {
 	ttyp->ops = &dircon_ops;
 	(ttyp++)->minor = (int)pi;

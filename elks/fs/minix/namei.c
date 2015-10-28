@@ -73,7 +73,7 @@ static struct buffer_head *minix_find_entry(register struct inode *dir,
 					    char *name, size_t namelen,
 					    struct minix_dir_entry **res_dir)
 {
-    struct buffer_head *bh;
+    register struct buffer_head *bh;
     struct minix_sb_info *info;
     block_t block;
     loff_t offset;
@@ -123,7 +123,6 @@ static struct buffer_head *minix_find_entry(register struct inode *dir,
 int minix_lookup(register struct inode *dir, char *name, size_t len,
 		 register struct inode **result)
 {
-    unsigned int ino;
     struct minix_dir_entry *de;
     struct buffer_head *bh;
 
@@ -136,9 +135,8 @@ int minix_lookup(register struct inode *dir, char *name, size_t len,
 	    debug2("minix_lookup: minix_find_entry returned %x %d\n", bh,
 		   bh->b_mapcount);
 	    if (bh) {
-		ino = de->inode;
 		unmap_brelse(bh);
-		*result = iget(dir->i_sb, (ino_t) ino);
+		*result = iget(dir->i_sb, (ino_t) de->inode);
 		iput(dir);
 		return (!*result) ? -EACCES : 0;
 	    }
@@ -320,7 +318,7 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
 	goto mkdir2;
     }
     error = -ENOSPC;
-    inode = minix_new_inode(dir, (__u16)(S_IFDIR|(mode & 0777 & ~current->fs.umask)));
+    inode = minix_new_inode(dir, (__u16)mode);
     if (!inode)
 	goto mkdir2;
 /*--------------------------------------------------------------------------------*/
@@ -344,21 +342,20 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
     debug("m_mkdir: dir_block update succeeded\n");
 /*--------------------------------------------------------------------------------*/
     error = minix_add_entry(dir, name, len, inode->i_ino);
-    if (!error) {
-	inode->i_nlink++;
-	dir->i_nlink++;
-	dir->i_dirt = 1;
-    }
-    else {
+    if (error) {
       mkdir1:
 	inode->i_nlink--;
+    }
+    else {
+	inode->i_nlink++;
+	dir->i_nlink++;
     }
     inode->i_dirt = 1;
     iput(inode);
  mkdir2:
     iput(dir);
     debug("m_mkdir: done!\n");
-    return 0;
+    return error;
 }
 
 /*
@@ -483,7 +480,7 @@ int minix_rmdir(register struct inode *dir, char *name, size_t len)
     return retval;
 }
 
-int minix_unlink(struct inode *dir, char *name, size_t len)
+int minix_unlink(register struct inode *dir, char *name, size_t len)
 {
     int retval;
     register struct inode *inode;
@@ -554,7 +551,7 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
 	goto symlink2;
     }
     error = -ENOSPC;
-    inode = minix_new_inode(dir, S_IFLNK | 0777);
+    inode = minix_new_inode(dir, S_IFLNK);
     if (!inode)
 	goto symlink2;
 /*----------------------------------------------------------------------*/

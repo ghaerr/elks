@@ -334,7 +334,7 @@ static unsigned short map_iblock(register struct inode *inode, block_t i,
 unsigned short _minix_bmap(register struct inode *inode,
 			   unsigned short block, int create)
 {
-    register block_t i;
+    register char *i;
 
 #if 0
 /* I do not understand what this bit means, it cannot be this big,
@@ -349,7 +349,7 @@ unsigned short _minix_bmap(register struct inode *inode,
 	return map_izone(inode, block, create);
     block -= 7;
     if (block < 512) {
-	i = map_izone(inode, 7, create);
+	i = (char *)map_izone(inode, 7, create);
 	goto map1;
     }
 
@@ -358,10 +358,10 @@ unsigned short _minix_bmap(register struct inode *inode,
      */
 
     block -= 512;
-    i = map_izone(inode, 8, create);
+    i = (char *)map_izone(inode, 8, create);
     if (i != 0) {
 	/* Two layer indirection */
-	i = map_iblock(inode, i, (block_t) (block >> 9), create);
+	i = (char *)map_iblock(inode, (block_t)i, (block_t) (block >> 9), create);
 
   map1:
 	/*
@@ -369,9 +369,9 @@ unsigned short _minix_bmap(register struct inode *inode,
 	 */
 	if (i != 0)
 	    /* Ok now load the second indirect block */
-	    i = map_iblock(inode, i, (block_t) (block & 511), create);
+	    i = (char *)map_iblock(inode, (block_t)i, (block_t) (block & 511), create);
     }
-    return i;
+    return (unsigned short)i;
 }
 
 struct buffer_head *minix_getblk(register struct inode *inode,
@@ -379,11 +379,9 @@ struct buffer_head *minix_getblk(register struct inode *inode,
 {
     unsigned short blknum;
 
-    blknum = _minix_bmap(inode, block, create);
-    if (blknum != 0)
-	return getblk(inode->i_dev, (block_t) blknum);
-    else
+    if(!(blknum = _minix_bmap(inode, block, create)))
 	return NULL;
+    return getblk(inode->i_dev, (block_t) blknum);
 }
 
 struct buffer_head *minix_bread(struct inode *inode,
@@ -398,7 +396,7 @@ struct buffer_head *minix_bread(struct inode *inode,
  *	Set the ops on a minix inode
  */
 
-void minix_set_ops(struct inode *inode)
+void minix_set_ops(register struct inode *inode)
 {
     static unsigned char tabc[] = {
 	0, 0, 0, 0, 1, 0, 0, 0,
@@ -492,7 +490,7 @@ static struct buffer_head *minix_update_inode(register struct inode *inode)
     return bh;
 }
 
-void minix_write_inode(register struct inode *inode)
+void minix_write_inode(struct inode *inode)
 {
     brelse(minix_update_inode(inode));
 }

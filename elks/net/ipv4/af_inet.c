@@ -27,23 +27,20 @@ extern char tdin_buf[];
 extern short bufin_sem, bufout_sem;
 extern int tcpdev_inetwrite();
 
-int inet_process_tcpdev(char *buf, int len)
+int inet_process_tcpdev(register char *buf, int len)
 {
-    register struct tdb_return_data *r;
     register struct socket *sock;
 
-    r = (struct tdb_return_data *) buf;
+    sock = ((struct tdb_return_data *)buf)->sock;
 
-    sock = r->sock;
-
-    switch (r->type) {
+    switch (((struct tdb_return_data *)buf)->type) {
     case TDT_CHG_STATE:
-        sock->state = (unsigned char) r->ret_value;
+        sock->state = (unsigned char) ((struct tdb_return_data *)buf)->ret_value;
         tcpdev_clear_data_avail();
         break;
     case TDT_AVAIL_DATA:
         down(&sock->sem);
-        sock->avail_data = r->ret_value;
+        sock->avail_data = ((struct tdb_return_data *)buf)->ret_value;
         up(&sock->sem);
         tcpdev_clear_data_avail();
     default:
@@ -61,7 +58,6 @@ static int inet_create(struct socket *sock, int protocol)
 
     if (protocol != 0 || !tcpdev_inuse)
         return -EINVAL;
-
 
     return 0;
 }
@@ -81,15 +77,14 @@ static int inet_release(struct socket *sock, struct socket *peer)
     cmd.cmd = TDC_RELEASE;
     cmd.sock = sock;
     ret = tcpdev_inetwrite(&cmd, sizeof(struct tdb_release));
-    if (ret < 0)
-        return ret;
-    return 0;
+    if(ret >= 0)
+	ret = 0;
+    return ret;
 }
 
 static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 		     size_t sockaddr_len)
 {
-    struct tdb_return_data *ret_data;
     struct tdb_bind cmd;
     int ret;
 
@@ -109,21 +104,17 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     while (bufin_sem == 0)
         interruptible_sleep_on(sock->wait);
 
-    ret_data = (struct tdb_return_data *)tdin_buf;
-    ret = ret_data->ret_value;
+    ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
-    if (ret < 0)
-        return ret;
-
-    return 0;
+    if(ret >= 0)
+	ret = 0;
+    return ret;
 }
 
 static int inet_connect(register struct socket *sock,
-			struct sockaddr *uservaddr,
+			register struct sockaddr *uservaddr,
 			size_t sockaddr_len, int flags)
 {
-    struct sockaddr_in *sockin;
-    register struct tdb_return_data *r;
     struct tdb_connect cmd;
     int ret;
 
@@ -132,8 +123,7 @@ static int inet_connect(register struct socket *sock,
     if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
         return -EINVAL;
 
-    sockin = (struct sockaddr_in *)uservaddr;
-    if (sockin->sin_family != AF_INET)
+    if (((struct sockaddr_in *)uservaddr)->sin_family != AF_INET)
         return -EINVAL;
 
     if (sock->state == SS_CONNECTING)
@@ -152,23 +142,20 @@ static int inet_connect(register struct socket *sock,
     while (bufin_sem == 0)
         interruptible_sleep_on(sock->wait);
 
-    r = (struct tdb_return_data *)tdin_buf;
-    ret = r->ret_value;
+    ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
 
-    if (ret < 0) {
-        return ret;
+    if(ret >= 0) {
+	sock->state = SS_CONNECTED;
+	ret = 0;
     }
-
-    sock->state = SS_CONNECTED;
-    return 0;
+    return ret;
 }
 
 #ifndef CONFIG_SOCK_CLIENTONLY
 
 static int inet_listen(register struct socket *sock, int backlog)
 {
-    register struct tdb_return_data *ret_data;
     struct tdb_listen cmd;
     int ret;
 
@@ -186,18 +173,16 @@ static int inet_listen(register struct socket *sock, int backlog)
             return -ERESTARTSYS;
     }
 
-    ret_data = (struct tdb_return_data *)tdin_buf;
-    ret = ret_data->ret_value;
+    ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
 
     return ret;
 }
 
 static int inet_accept(register struct socket *sock,
-		       struct socket *newsock, int flags)
+		       register struct socket *newsock, int flags)
 {
     struct tdb_accept cmd;
-    register struct tdb_accept_ret *ret_data;
     int ret;
 
     debug2("inet_accept(sock: 0x%x newsock: 0x%x)\n", sock, newsock);
@@ -215,19 +200,17 @@ static int inet_accept(register struct socket *sock,
         sock->flags &= ~SO_WAITDATA;
         if (current->signal) {
             return -ERESTARTSYS;
-	    }
+	}
     }
 
-    ret_data = (struct tdb_accept_ret *)tdin_buf;
-    ret = ret_data->ret_value;
+    ret = ((struct tdb_accept_ret *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
 
-    if (ret < 0)
-        return ret;
-
-    newsock->state = SS_CONNECTED;
-
-    return 0;
+    if(ret >= 0) {
+	newsock->state = SS_CONNECTED;
+	ret = 0;
+    }
+    return ret;
 }
 
 #endif
@@ -274,7 +257,6 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
 static int inet_write(register struct socket *sock, char *ubuf, int size,
 		      int nonblock)
 {
-    register struct tdb_return_data *r;
     struct tdb_write cmd;
     int ret, todo;
 
@@ -307,10 +289,9 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
             interruptible_sleep_on(sock->wait);
 	}
 
-        r = (struct tdb_return_data *)tdin_buf;
-        ret = r->ret_value;
-	    tcpdev_clear_data_avail();
-        if (ret < 0) {
+	ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
+	tcpdev_clear_data_avail();
+	if (ret < 0) {
             if (ret == -ERESTARTSYS) {
                 schedule();
                 todo += cmd.size;

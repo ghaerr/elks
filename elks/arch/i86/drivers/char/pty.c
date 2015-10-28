@@ -106,9 +106,9 @@ size_t pty_read(struct inode *inode, struct file *file, char *data, int len)
 	if(chq_getch(&tty->outq, &ch, l) == -1) {
 	    if (l) {
 		debug("failed: INTR\n");
-		return -EINTR;
-	    } else
-		break;
+		pi = (char *)(-EINTR);
+	    }
+	    break;
 	}
 	debug2(" rc[%u,%u]", (int)pi, len);
 	put_user_char(ch, (void *)(data++));
@@ -137,9 +137,9 @@ size_t pty_write(struct inode *inode, struct file *file, char *data, int len)
 	if (chq_addch(&tty->inq, ch, l) == -1) {
 	    if (l) {
 		debug("failed: INTR\n");
-		return -EINTR;
-	    } else
-		break;
+		pi = (char *)(-EINTR);
+	    }
+	    break;
 	}
 	pi++;
 	debug(" wc");

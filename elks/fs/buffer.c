@@ -53,18 +53,19 @@ void wait_on_buffer(register struct buffer_head *bh)
 
 	goto chk_buf;
 	do {
-	    schedule();
-    chk_buf:
 	    current->state = TASK_UNINTERRUPTIBLE;
+	    schedule();
+	    current->state = TASK_RUNNING;
+    chk_buf:
+	    ;
 	} while(buffer_locked(bh));
 
 	wait_clear(&bh->b_wait);
 	bh->b_count--;
-	current->state = TASK_RUNNING;
     }
 }
 
-void lock_buffer(struct buffer_head *bh)
+void lock_buffer(register struct buffer_head *bh)
 {
     wait_on_buffer(bh);
     bh->b_lock = 1;
@@ -398,6 +399,7 @@ void mark_buffer_uptodate(struct buffer_head *bh, int on)
 
 void map_buffer(register struct buffer_head *bh)
 {
+    int i;
 
     /* If buffer is already mapped, just increase the refcount and return
      */
@@ -418,8 +420,6 @@ void map_buffer(register struct buffer_head *bh)
 
     /* else keep trying till we succeed */
     for (;;) {
-	int i;
-
 	/* First check for the trivial case */
 	for (i = 0; i < NR_MAPBUFS; i++) {
 	    if (!bufmem_map[i]) {
