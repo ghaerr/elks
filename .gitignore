@@ -33,11 +33,20 @@ elks/arch/i86/Boot.map
 elks/arch/i86/Setup.map
 elks/arch/i86/boot/Image
 elks/arch/i86/boot/bootsect
+elks/arch/i86/boot/bootsect.s
+elks/arch/i86/boot/crt0.s
 elks/arch/i86/boot/setup
+elks/arch/i86/boot/setup.s
 elks/arch/i86/boot/system
 elks/arch/i86/drivers/char/KeyMaps/keymaps.h
+elks/arch/i86/kernel/bios16.s
 elks/arch/i86/kernel/entry.c
 elks/arch/i86/kernel/entry.s
+elks/arch/i86/kernel/entry.S
+elks/arch/i86/kernel/irqtab.s
+elks/arch/i86/kernel/printreg.s
+elks/arch/i86/lib/setupw.s
+elks/arch/i86/mm/segment.s
 elks/arch/i86/tools/build
 elks/arch/i86/tools/mkbootloader
 elks/include/arch/asm-offsets.h
@@ -53,6 +62,7 @@ elks/scripts/lxdialog/lxdialog
 *.orig
 *.rej
 /*.patch
+elks_todo
 
 #
 # debugging stuff
