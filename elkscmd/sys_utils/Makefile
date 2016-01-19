@@ -45,7 +45,7 @@ NETPRGS		= init getty login kill mount umount passwd reboot shutdown ps \
 		  swapon meminfo who
 
 MIN_PRGS	= init getty login kill mount umount passwd ps clock \
-		  exitemu swapon meminfo
+		  exitemu meminfo
 
 SMIN_PRGS	= init mount umount
 
