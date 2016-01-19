@@ -82,6 +82,9 @@ elkscmd/comb360
 elkscmd/full3
 elkscmd/full5
 elkscmd/full1680
+elkscmd/images.tar.gz
+elkscmd/images.tar.xz
+elkscmd/images.zip
 
 #
 # elkscmd build output
@@ -186,6 +189,8 @@ elkscmd/mtools/mread
 elkscmd/mtools/mren
 elkscmd/mtools/mtype
 elkscmd/mtools/mwrite
+elkscmd/prems/pres/flparc
+elkscmd/prems/pres/pres
 elkscmd/sash/sash
 elkscmd/sh_utils/basename
 elkscmd/sh_utils/date
@@ -217,6 +222,7 @@ elkscmd/sys_utils/mount
 elkscmd/sys_utils/passwd
 elkscmd/sys_utils/ps
 elkscmd/sys_utils/reboot
+elkscmd/sys_utils/shutdown
 elkscmd/sys_utils/swapon
 elkscmd/sys_utils/umount
 elkscmd/sys_utils/who
