@@ -50,9 +50,8 @@ static void print_minor_name(register struct gendisk *hd,
 
     printk(" %s%c", hd->major_name, 'a' + unit);
     if (part)
-	printk("%d:", part);
-    else
-	printk(":");
+	printk("%d", part);
+    printk(":");
 }
 
 static void add_partition(register struct gendisk *hd,

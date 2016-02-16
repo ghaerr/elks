@@ -87,12 +87,8 @@ void tcpdev_clear_data_avail(void)
 static size_t tcpdev_write(struct inode *inode, struct file *filp,
 			char *data, size_t len)
 {
-    int ret;
-
     debug4("TCPDEV: write( %p, %p, %p, %u )\n",inode,filp,data,len);
-    if (!len)
-	ret = 0;
-    else {
+    if(len > 0) {
 	down(&bufin_sem);
 
 	tdin_tail = (unsigned) len;
@@ -100,11 +96,9 @@ static size_t tcpdev_write(struct inode *inode, struct file *filp,
 
 	/* Call the af_inet code to handle the data */
 	inet_process_tcpdev(tdin_buf, len);
-
-	ret = (int) len;
     }
-    debug1("TCPDEV: write() returning %d\n",ret);
-    return (size_t)ret;
+    debug1("TCPDEV: write() returning %u\n", len);
+    return len;
 }
 
 int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
