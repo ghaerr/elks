@@ -71,19 +71,16 @@ struct file_system_type *get_fs_type(char *name)
 
 void wait_on_super(register struct super_block *sb)
 {
-    if (!sb->s_lock)
-	return;
+    register __ptask currentp = current;
 
-    wait_set(&sb->s_wait);
-    goto ini_loop;
-    do {
-	current->state = TASK_UNINTERRUPTIBLE;
-	schedule();
-	current->state = TASK_RUNNING;
-  ini_loop:
-	;
-    } while(sb->s_lock);
-    wait_clear(&sb->s_wait);
+    if (sb->s_lock) {
+	wait_set(&sb->s_wait);
+	currentp->state = TASK_UNINTERRUPTIBLE;
+	while(sb->s_lock)
+	    schedule();
+	currentp->state = TASK_RUNNING;
+	wait_clear(&sb->s_wait);
+    }
 }
 
 void lock_super(register struct super_block *sb)
@@ -111,7 +108,7 @@ void sync_supers(kdev_t dev)
 
 	wait_on_super(sb);
 
-	if ((!sb->s_dev || !sb->s_dirt)
+	if (!sb->s_dev || !sb->s_dirt
 	    || (dev && (dev != sb->s_dev)))
 	    continue;
 
@@ -240,24 +237,23 @@ static int do_umount(kdev_t dev)
 {
     register struct super_block *sb;
     register struct super_operations *sop;
-    int retval;
+    int retval = -ENOENT;
 
+    if(!(sb = get_super(dev)))
+	return retval;
     if (dev == ROOT_DEV) {
 	/* Special case for "unmounting" root.  We just try to remount
 	 * it readonly, and sync() the device.
 	 */
-	if (!(sb = get_super(dev)))
-	    return -ENOENT;
+	retval = 0;
 	if (!(sb->s_flags & MS_RDONLY)) {
 	    fsync_dev(dev);
 	    retval = do_remount_sb(sb, MS_RDONLY, 0);
-	    if (retval)
-		return retval;
 	}
-	return 0;
+	return retval;
     }
-    if (!(sb = get_super(dev)) || !(sb->s_covered))
-	return -ENOENT;
+    if (!(sb->s_covered))
+	return retval;
     if (!sb->s_covered->i_mount)
 	panic("umount: i_mount=NULL\n");
     if (!fs_may_umount(dev, sb->s_mounted))

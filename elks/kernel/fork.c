@@ -14,17 +14,16 @@ pid_t get_pid(void)
     register struct task_struct *p;
     static pid_t last_pid = -1;
 
-repeat:
-    if (++last_pid < 0)
-        last_pid = 1;
-
-    p = &task[1];
+    goto startgp;
     do {
         if (p->state == TASK_UNUSED)
             continue;
 	if (p->pid == last_pid || p->pgrp == last_pid ||
 	    p->session == last_pid) {
-	    goto repeat;
+	  startgp:
+	    if (++last_pid < 0)
+		last_pid = 1;
+	    p = &task[0];
 	}
     } while (++p < &task[MAX_TASKS]);
     return last_pid;
@@ -36,10 +35,11 @@ repeat:
 struct task_struct *find_empty_process(void)
 {
     register struct task_struct *t;
+    register struct task_struct *currentp = current;
 
     if (task_slots_unused <= 1) {
         printk("Only %d slots\n", task_slots_unused);
-        if (!task_slots_unused || current->uid)
+        if (!task_slots_unused || currentp->uid)
             return NULL;
     }
     t = next_task_slot;
@@ -49,7 +49,7 @@ struct task_struct *find_empty_process(void)
     }
     next_task_slot = t;
     task_slots_unused--;
-    *t = *current;
+    *t = *currentp;
     t->state = TASK_UNINTERRUPTIBLE;
     t->pid = get_pid();
     t->t_kstackm = KSTACK_MAGIC;
@@ -67,6 +67,7 @@ pid_t do_fork(int virtual)
     pid_t j;
     struct file *filp;
     register __ptask currentp = current;
+    int sc[4];
 
     if((t = find_empty_process()) == NULL)
         return -EAGAIN;
@@ -94,12 +95,6 @@ pid_t do_fork(int virtual)
 	t->t_regs.ds = t->t_regs.ss = t->mm.dseg;
     }
 
-    /*
-     *      Build a return stack for t.
-     */
-
-    arch_build_stack(t, NULL);
-
     /* Increase the reference count to all open files */
 
     j = 0;
@@ -124,15 +119,13 @@ pid_t do_fork(int virtual)
     currentp->p_child = t;
 
     /*
-     *      Wake our new process
+     *      Build a return stack for t.
      */
+    arch_build_stack(t, NULL);
+    /* Wake our new process */
     wake_up_process(t);
 
-    /*
-     *      Return the created task.
-     */
     if (virtual) {
-	int sc[4];
 
 	/* Parent and child are sharing the user stack at this point.
 	 * The child will go first, returning from this function and
@@ -152,7 +145,6 @@ pid_t do_fork(int virtual)
 	 */
 	fmemcpy(currentp->t_regs.ss, currentp->t_regs.sp, kernel_ds, sc, 8);
     }
-
     /*
      *      Return the created task.
      */

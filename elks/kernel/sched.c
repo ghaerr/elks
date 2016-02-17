@@ -81,10 +81,10 @@ void schedule(void)
 {
     register __ptask prev;
     register __ptask next;
+    struct timer_list timer;
     jiff_t timeout = 0UL;
 
     prev = current;
-    next = prev->next_run;
 
     if (prev->t_kstackm != KSTACK_MAGIC)
         panic("Process %d exceeded kernel stack limit! magic %x\n",
@@ -93,8 +93,8 @@ void schedule(void)
     if (intr_count > 0) {
     /* Taking a timer IRQ during another IRQ or while in kernel space is
      * quite legal. We just dont switch then */
-	printk("Aiee: scheduling in interrupt %d - %d %d\n",
-	    intr_count, next->pid, prev->pid);
+	printk("Aiee: scheduling in interrupt %d - %d\n",
+	    intr_count, prev->pid);
 	goto no_sched;
     }
 
@@ -112,16 +112,16 @@ void schedule(void)
 	    timeout = prev->timeout;
 	}
     }
-    if(prev->state != TASK_RUNNING) {
+    /* Choose a task to run next */
+    next = prev->next_run;
+    if(prev->state != TASK_RUNNING)
 	del_from_runqueue(prev);
-    }
-    set_irq();
-
     if(next == &init_task)
         next = next->next_run;
 
+    set_irq();
+
     if (next != prev) {
-        struct timer_list timer;
 
         if (timeout) {
             init_timer(&timer);
@@ -156,25 +156,23 @@ struct timer_list tl_list = { NULL, NULL, 0L, 0, NULL };
 
 static int detach_timer(struct timer_list *timer)
 {
-    int ret;
     register struct timer_list *next;
     register struct timer_list *prev;
 
-    ret = 0;
     next = timer->tl_next;
     prev = timer->tl_prev;
+    timer->tl_next = timer->tl_prev = NULL;
     if (next) {
         next->tl_prev = prev;
     }
     if (prev) {
         prev->tl_next = next;
-	ret = 1;
+	return 1;
     }
-    timer->tl_next = timer->tl_prev = NULL;
-    return ret;
+    return 0;
 }
 
-int del_timer(register struct timer_list *timer)
+int del_timer(struct timer_list *timer)
 {
     int ret;
     flag_t flags;

@@ -85,10 +85,10 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 		     fd_set * res_in, fd_set * res_out, fd_set * res_ex)
 {
     int count;
-    register __ptask currentp = current;
     fd_set set;
     int max = -1;
     register char *pi;
+    register struct file **filp;
 /*
     int j;
 
@@ -116,47 +116,47 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 */
 
     set = *in | *out | *ex;
+    filp = current->files.fd;
     for(pi = 0; set && ((int)pi < n); pi++, set >>= 1) {
-	if(!(set & 1))
-	    continue;
-	if (!currentp->files.fd[(int)pi])
-	    return -EBADF;
-	if (!currentp->files.fd[(int)pi]->f_inode)
-	    return -EBADF;
-	max = (int)pi;
+	if(set & 1) {
+	    if ((*filp == NULL) || ((*filp)->f_inode == NULL))
+		return -EBADF;
+	    max = (int)pi;
+	}
+	filp++;
     }
     n = max + 1;
     count = 0;
-  repeat:
-    currentp->state = TASK_INTERRUPTIBLE;
-    currentp->pollhash = 0;
     wait_set(&select_poll);
-    for (pi = 0; ((int)pi) < n; pi++) {
-	struct file *file = currentp->files.fd[(int)pi];
-	if (file) {
-	    if (FD_ISSET(((int)pi), in) && check(SEL_IN, file)) {
+    current->state = TASK_INTERRUPTIBLE;
+  repeat:
+    current->pollhash = 0;
+    filp = current->files.fd;
+    for (pi = 0; ((int)pi) < n; pi++, filp++) {
+	if (*filp) {
+	    if (FD_ISSET(((int)pi), in) && check(SEL_IN, *filp)) {
 		FD_SET(((int)pi), res_in);
 		count++;
 	    }
-	    if (FD_ISSET(((int)pi), out) && check(SEL_OUT, file)) {
+	    if (FD_ISSET(((int)pi), out) && check(SEL_OUT, *filp)) {
 		FD_SET(((int)pi), res_out);
 		count++;
 	    }
-	    if (FD_ISSET(((int)pi), ex) && check(SEL_EX, file)) {
+	    if (FD_ISSET(((int)pi), ex) && check(SEL_EX, *filp)) {
 		FD_SET(((int)pi), res_ex);
 		count++;
 	    }
 	}
     }
-    if (!count && currentp->timeout
-	&& !(currentp->signal /* & ~currentp->blocked */ )) {
+    if (!count && current->timeout
+	&& !(current->signal /* & ~currentp->blocked */ )) {
 	schedule();
-	wait_clear(&select_poll);
 	goto repeat;
     }
-    currentp->pollhash = 0;
     wait_clear(&select_poll);
-    currentp->state = TASK_RUNNING;
+    current->pollhash = 0;
+    current->state = TASK_RUNNING;
+    wait_clear(&select_poll);
     return count;
 }
 
