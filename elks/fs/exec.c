@@ -54,16 +54,14 @@ static struct minix_supl_hdr msuph;
 
 int sys_execve(char *filename, char *sptr, size_t slen)
 {
+    register __ptask currentp;
     void *ptr;
     struct inode *inode;
     struct file *filp;
-    register __registers *tregs;
-    unsigned int suidfile, sgidfile;
+    __registers *tregs;
     int retval;
     __u16 ds;
     seg_t cseg, dseg, stack_top = 0;
-    uid_t effuid;
-    gid_t effgid;
     lsize_t len;
     size_t result;
 
@@ -86,38 +84,38 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      */
     if((retval = open_filp(O_RDONLY, inode, &filp)))
 	goto error_exec2;
+
+    /*
+     *      Look for the binary in memory
+     */
+    cseg = 0;
+    currentp = &task[0];
+    do {
+	if ((currentp->state != TASK_UNUSED) && (currentp->t_inode == inode)) {
+	    cseg = currentp->mm.cseg;
+	    break;
+	}
+    } while (++currentp < &task[MAX_TASKS]);
+
     /*
      *      Read the header.
      */
-    tregs = &current->t_regs;
+    currentp = current;
+    tregs = &(currentp->t_regs);
     ds = tregs->ds;
 
     retval = -ENOEXEC;
     if(!(filp->f_op) || !(filp->f_op->read))
-	goto error_exec3;
+	goto normal_out;
 
     debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
 
-    /*
-     *      can I trust the following fields?
-     */
-    {
-	register struct inode *pinode = inode;
-
-	suidfile = pinode->i_mode & S_ISUID;
-	sgidfile = pinode->i_mode & S_ISGID;
-	effuid = pinode->i_uid;
-	effgid = pinode->i_gid;
-
-	tregs->ds = kernel_ds;
-	result = filp->f_op->read(pinode, filp, &mh, sizeof(mh));
-	/*tregs->ds = ds;*/
-    }
+    tregs->ds = kernel_ds;
+    result = filp->f_op->read(inode, filp, &mh, sizeof(mh));
 
     /*
      *      Sanity check it.
      */
-
     if (result != sizeof(mh) ||
 	(mh.type != MINIX_SPLITID) || mh.chmem < 1024 || mh.tseg == 0) {
 	debug1("EXEC: bad header, result %u\n", result);
@@ -127,22 +125,20 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 #ifdef CONFIG_EXEC_ELKS
     if ((unsigned int) mh.hlen == 0x30) {
 	/* BIG HEADER */
-	/*tregs->ds = kernel_ds;*/
 	result = filp->f_op->read(inode, filp, &msuph, sizeof(msuph));
-	/*tregs->ds = ds;*/
 	if (result != sizeof(msuph)) {
 	    debug1("EXEC: Bad secondary header, result %u\n", result);
 	    goto error_exec3;
 	}
 	stack_top = msuph.msh_dbase;
 	if(stack_top & 0xf){
-	     goto error_exec3;
+	    goto error_exec3;
 	}
 	debug1("EXEC: New type executable stack = %x\n", stack_top);
     }
 #else
     if((unsigned int) mh.hlen != 0x20){
-        goto error_exec3;
+	goto error_exec3;
     }
 #endif
 
@@ -151,37 +147,24 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /*
      *      Looks good. Get the memory we need
      */
-
-    cseg = 0;
-    {
-        register struct task_struct *p = &task[0];
-
-	do {
-	    if ((p->state != TASK_UNUSED) && (p->t_inode == inode)) {
-		cseg = mm_realloc(p->mm.cseg);
-		break;
-	    }
-	} while (++p < &task[MAX_TASKS]);
-    }
-
     retval = -ENOMEM;
     if (!cseg) {
-        cseg = mm_alloc((segext_t) ((mh.tseg + 15) >> 4));
-        if (!cseg) {
-            goto error_exec3;
-        }
-        tregs->ds = cseg;
-        result = filp->f_op->read(inode, filp, 0, mh.tseg);
-        /*tregs->ds = ds;*/
-        if (result != mh.tseg) {
-            debug2("EXEC(tseg read): bad result %u, expected %u\n",
-	       result, mh.tseg);
+	cseg = mm_alloc((segext_t) ((mh.tseg + 15) >> 4));
+	if (!cseg) {
+	    goto error_exec3;
+	}
+	tregs->ds = cseg;
+	result = filp->f_op->read(inode, filp, 0, mh.tseg);
+	if (result != mh.tseg) {
+	    debug2("EXEC(tseg read): bad result %u, expected %u\n",
+	    result, mh.tseg);
 	    retval = -ENOEXEC;
 	    goto error_exec4;
-        }
+	}
     }
     else {
-        filp->f_pos += mh.tseg;
+	cseg = mm_realloc(cseg);
+	filp->f_pos += mh.tseg;
     }
 
     /*
@@ -210,7 +193,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     retval = -ENOEXEC;
     tregs->ds = dseg;
     result = filp->f_op->read(inode, filp, (char *)stack_top, mh.dseg);
-    tregs->ds = ds;
+
     if (result != mh.dseg) {
 	debug2("EXEC(dseg read): bad result %d, expected %d\n",
 	       result, mh.dseg);
@@ -228,91 +211,86 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     ptr = (stack_top)
 	? (char *) (stack_top - slen)
 	: (char *) ((size_t)len - slen);
-    fmemcpy(dseg, (__u16) ptr, current->mm.dseg, (__u16) sptr, (__u16) slen);
-
-    /* argv and envp are two NULL-terminated arrays of pointers, located
-     * right after argc.  This fixes them up so that the loaded program
-     * gets the right strings. */
-
-    {
-	register __u16 *p = (__u16 *) ptr, nzero = 0, tmp;
-
-	while (nzero < 2) {
-	    p++;
-	    if ((tmp = peekw(dseg, (__u16) p)) != 0) {
-		pokew(dseg, (__u16) p, (__u16) (((char *) ptr) + tmp));
-	    } else
-		nzero++;	/* increments for each array traversed */
-	}
-    }
+    fmemcpy(dseg, (__u16) ptr, ds, (__u16) sptr, (__u16) slen);
 
     /*
-     *      Now flush the old binary out.
+     * From this point, the old code and data segments are not needed anymore
      */
-
     {
-	register __ptask currentp = current;
-	if (currentp->mm.cseg)
-	    mm_free(currentp->mm.cseg);
-	if (currentp->mm.dseg)
-	    mm_free(currentp->mm.dseg);
-	currentp->mm.cseg = cseg;
-	currentp->mm.dseg = dseg;
-    }
-    debug("EXEC: old binary flushed.\n");
+	register char *pi = (char *) ptr;
 
-    {
-	register char *pi;
+	/* argv and envp are two NULL-terminated arrays of pointers, located
+	 * right after argc.  This fixes them up so that the loaded program
+	 * gets the right strings. */
+
+	result = 0;
+	do {
+	    pi = (char *)(((__u16 *)pi) + 1);
+	    if ((retval = (int)peekw(dseg, (__u16) pi)) != 0) {
+		pokew(dseg, (__u16) pi, (__u16) (((char *) ptr) + retval));
+	    } else
+		result++;	/* increments for each array traversed */
+	} while(result < 2);
+	retval = 0;
+
 	/*
 	 *      Clear signal handlers..
 	 */
-	pi = (char *) NSIG;
+	pi = (char *) (NSIG - 1);
 	do {
-	    --pi;
-	    current->sig.action[(int)pi].sa_handler = NULL;
-	} while (pi);
+	    currentp->sig.action[(int)pi].sa_handler = NULL;
+	} while (pi--);
 
 	/*
 	 *      Close required files..
 	 */
-	pi = (char *) NR_OPEN;
+	pi = (char *) (NR_OPEN - 1);
 	do {
-	    --pi;
-	    if (FD_ISSET(((int)pi), &current->files.close_on_exec))
+	    if (FD_ISSET(((int)pi), &currentp->files.close_on_exec))
 		sys_close((int)pi);
-	} while (pi);
-    }
-    /*
-     *      Arrange our return to be to CS:0
-     *      (better to use the entry offset in the header)
-     */
-
-    tregs->ss = dseg;
-    tregs->sp = ((__u16) ptr);		/* Just below the arguments */
-    tregs->cs = cseg;
-    tregs->ds = dseg;
-
-    {
-	register __ptask currentp = current;
-
-	currentp->t_begstack = ((__pptr) ptr);
-	currentp->t_endbrk = (__pptr) (mh.dseg + mh.bseg + stack_top);
-	currentp->t_enddata = (__pptr) (mh.dseg + stack_top);
-	/* Needed for sys_brk() */
-	currentp->t_endseg = (__pptr) len;
-	currentp->t_inode = inode;
-	arch_setup_kernel_stack(currentp);
+	} while (pi--);
 
     /* this could be a good place to set the effective user identifier
      * in case the suid bit of the executable had been set */
 
-	if (suidfile)
-	    currentp->euid = effuid;
-	if (sgidfile)
-	    currentp->egid = effgid;
+	pi = (char *)inode;
+	currentp->t_inode = (struct inode *)pi;
 
-	wake_up(&currentp->p_parent->child_wait);
+    /*
+     *      can I trust the following fields?
+     */
+	if (((struct inode *)pi)->i_mode & S_ISUID)
+	    currentp->euid = ((struct inode *)pi)->i_uid;
+	if (((struct inode *)pi)->i_mode & S_ISGID)
+	    currentp->egid = ((struct inode *)pi)->i_gid;
     }
+
+    /*
+     *  Flush the old binary out.
+     */
+    if (currentp->mm.cseg)
+	mm_free(currentp->mm.cseg);
+    if (currentp->mm.dseg)
+	mm_free(currentp->mm.dseg);
+    debug("EXEC: old binary flushed.\n");
+
+    tregs->cs = currentp->mm.cseg = cseg;
+    tregs->ss = tregs->ds = currentp->mm.dseg = dseg;
+
+    currentp->t_begstack = ((__pptr) ptr);	/* Just below the arguments */
+    tregs->sp = (__u16)(currentp->t_begstack);
+    currentp->t_enddata = (__pptr) (mh.dseg + stack_top);
+    currentp->t_endbrk =  currentp->t_enddata + (__pptr)mh.bseg;
+    /* Needed for sys_brk() */
+    currentp->t_endseg = (__pptr) len;
+
+    /*
+     *      Arrange our return to be to CS:0
+     *      (better to use the entry offset in the header)
+     */
+    arch_setup_kernel_stack(currentp);
+
+    wake_up(&currentp->p_parent->child_wait);
 
     /*
      *      Done
@@ -322,8 +300,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      *      This will return onto the new user stack and to cs:0 of
      *      the user process.
      */
-
-    retval = 0;
     goto normal_out;
 
   error_exec5:
@@ -337,8 +313,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
   normal_out:
     close_filp(inode, filp);
 
-  error_exec2:
     if(retval)
+  error_exec2:
 	iput(inode);
   error_exec1:
     debug1("EXEC: Returning %d\n", retval);
