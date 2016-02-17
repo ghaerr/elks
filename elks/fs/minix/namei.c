@@ -46,7 +46,6 @@ static int minix_match(size_t len,
     register struct minix_dir_entry *de;
 
     de = (struct minix_dir_entry *) (bh->b_data + *offset);
-    *offset += info->s_dirsize;
     if (!de->inode || len > info->s_namelen) {
 	return 0;
     }
@@ -103,11 +102,12 @@ static struct buffer_head *minix_find_entry(register struct inode *dir,
 	    }
 	    map_buffer(bh);
 	}
-	*res_dir = (struct minix_dir_entry *) (bh->b_data + offset);
 
 	if (minix_match(namelen, name, bh, &offset, info)) {
+	    *res_dir = (struct minix_dir_entry *) (bh->b_data + offset);
 	    return bh;
 	}
+	offset += info->s_dirsize;
 	if (offset >= BLOCK_SIZE) {
 	    unmap_brelse(bh);
 	    bh = NULL;
@@ -116,7 +116,6 @@ static struct buffer_head *minix_find_entry(register struct inode *dir,
 	}
     }
     unmap_brelse(bh);
-    *res_dir = NULL;
     return NULL;
 }
 
@@ -267,9 +266,9 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
     struct buffer_head *bh;
     struct minix_dir_entry *de;
 
-    error = -ENOENT;
+/*    error = -ENOENT;
     if (!dir)
-	goto mknod2;
+	goto mknod2;*/	/* Already checked by do_mknod() */
 
     error = -EEXIST;
     bh = minix_find_entry(dir, name, len, &de);
@@ -592,6 +591,7 @@ int minix_link(register struct inode *oldinode, register struct inode *dir,
     error = -EMLINK;
     if (oldinode->i_nlink >= MINIX_LINK_MAX)
 	goto mlink_err;
+
     error = -EEXIST;
     bh = minix_find_entry(dir, name, len, &de);
     if (bh) {

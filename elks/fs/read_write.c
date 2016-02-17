@@ -106,14 +106,16 @@ int sys_read(unsigned int fd, char *buf, size_t count)
 
 int sys_write(unsigned int fd, char *buf, size_t count)
 {
+    register struct file_operations *fop;
     struct file *file;
     register struct inode *inode;
     int written;
 
     if (((written = fd_check(fd, buf, count, FMODE_WRITE, &file)) == 0)
-	&& (0 != count)) {
+	&& (count != 0)) {
 	written = -EINVAL;
-	if (file->f_op->write) {
+	fop = file->f_op;
+	if (fop->write) {
 	    inode = file->f_inode;
 
 	    /*
@@ -135,7 +137,7 @@ int sys_write(unsigned int fd, char *buf, size_t count)
 #endif
 
 	    }
-	    written = (int) file->f_op->write(inode, file, buf, count);
+	    written = (int) fop->write(inode, file, buf, count);
 	    schedule();
 	}
     }
