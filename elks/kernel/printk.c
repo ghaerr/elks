@@ -77,7 +77,7 @@ static void numout(unsigned long v, int width, int base, int useSign,
 {
     register char *bp;
     char *bp2;
-    char buf[BUFFER_SIZE];
+    char buf[BUFFER_SIZE+1];
 
     if (width > BUFFER_SIZE)		/* Error-check width specified */
 	width = BUFFER_SIZE;
@@ -90,7 +90,7 @@ static void numout(unsigned long v, int width, int base, int useSign,
     }
 
     bp = buf + BUFFER_SIZE;
-    *--bp = '\x00';
+    *bp = '\x00';
 
     bp2 = Upper ? hex_string : hex_lower;
     do {
@@ -100,8 +100,8 @@ static void numout(unsigned long v, int width, int base, int useSign,
     if (useSign && !Zero)
 	*--bp = '-';
 
-    width -= buf + BUFFER_SIZE - bp;
-    while (--width >= 0)			/* Process width */
+    width -= buf - bp + BUFFER_SIZE;
+    while (--width >= 0)		/* Process width */
 	*--bp = Zero ? '0' : ' ';
 
     if (useSign && Zero && (*bp == '0'))
@@ -114,7 +114,9 @@ static void vprintk(register char *fmt, va_list p)
 {
     unsigned long v;
     int width, zero;
-    char c, tmp, *cp;
+    char c;
+    register char *cp;
+    unsigned char tmp;
 
     while ((c = *fmt++)) {
 	if (c != '%')
@@ -130,9 +132,8 @@ static void vprintk(register char *fmt, va_list p)
 	    width = zero = 0;
 	    if (c == '0')
 		zero++;
-	    while (c >= '0' && c <= '9') {
-		width *= 10;
-		width += c - '0';
+	    while ((tmp = c - '0') <= 9) {
+		width = width*10 + tmp;
 		c = *fmt++;
 	    }
 
@@ -144,10 +145,6 @@ static void vprintk(register char *fmt, va_list p)
 		c = 'd';
 	    case 'd':
 		tmp = 10;
-		if(*(fmt-2) == 'l')
-		    v = va_arg(p, unsigned long);
-		else
-		    v = (long)(va_arg(p, int));
 		goto NUMOUT;
 	    case 'o':
 		tmp -= 2;
@@ -158,11 +155,15 @@ static void vprintk(register char *fmt, va_list p)
 		c += 'X' - 'P';
 	    case 'X':
 	    case 'x':
+	    NUMOUT:
 		if(*(fmt-2) == 'l')
 		    v = va_arg(p, unsigned long);
-		else
-		    v = (unsigned long)(va_arg(p, unsigned int));
-	    NUMOUT:
+		else {
+		    if(c == 'd')
+			v = (long)(va_arg(p, int));
+		    else
+			v = (unsigned long)(va_arg(p, unsigned int));
+		}
 		numout(v, width, tmp, (c == 'd'), (c == 'X'), zero);
 		break;
 	    case 's':

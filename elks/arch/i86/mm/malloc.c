@@ -88,6 +88,7 @@ static void split_hole(struct malloc_head *mh,
     register struct malloc_hole *n;
     seg_t spare = m->extent - len;
 
+    m->flags = HOLE_USED;
     if (!spare)
 	return;
     /*
@@ -101,7 +102,6 @@ static void split_hole(struct malloc_head *mh,
     n->next = m->next;
     n->flags = HOLE_FREE;
     m->next = n;
-    m->flags = HOLE_USED;
 }
 
 /*
@@ -305,9 +305,9 @@ void mm_free(seg_t base)
 
     }
 
-    if ((m->flags & 3) != HOLE_USED)
+    if (m->flags != HOLE_USED)
 	panic("double free");
-    if (!(--m->refcount)) {
+    if (!(--(m->refcount))) {
 	m->flags = HOLE_FREE;
 	sweep_holes(mh);
     }
@@ -438,6 +438,9 @@ struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
 int sys_brk(__pptr len)
 {
     register __ptask currentp = current;
+#ifdef CONFIG_EXEC_ELKS
+    register struct malloc_hole *h;
+#endif
 
 #if 0
     printk("sbrk: l %d, endd %x, bstack %x, endbrk %x, endseg %x, mem %x/%x\n",
@@ -458,7 +461,6 @@ int sys_brk(__pptr len)
 #ifdef CONFIG_EXEC_ELKS
     if(len > currentp->t_endseg){
         /* Resize time */
-        register struct malloc_hole *h;
 
         h = find_hole(&memmap, currentp->mm.dseg);
 

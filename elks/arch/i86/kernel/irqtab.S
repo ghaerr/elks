@@ -121,7 +121,7 @@ _irqtab_init:
 !	main code).
 !
 	.extern	_schedule
-	.extern	_sig_check
+	.extern	_do_signal
 	.extern	_do_IRQ
 
 _irq1:			;keyboard
@@ -158,7 +158,7 @@ _irq7:
 	br	_irqit
 !
 !	AT interrupts
-!	
+!
 _irq8:
 	push	ax
 	mov	ax,#8
@@ -465,7 +465,7 @@ was_trap:
 	call	_schedule		! Task switch
 	mov	bx,_current
 	mov	8[bx],#1
-	call	_sig_check		! Check signals
+	call	_do_signal		! Check signals
 !
 !	At this point, the kernel stack is empty. Thus, there is no
 !       need to save the kernel stack pointer.
@@ -623,7 +623,7 @@ _syscall_int:
 	push	ax
 	mov	bx,_current
 	mov	8[bx],#0
-	call	_sig_check
+	call	_do_signal
 	pop	ax
 	pop	bx
 	pop	cx

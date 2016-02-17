@@ -21,7 +21,7 @@
 int do_signal(void)
 {
     register __ptask currentp = current;
-    register struct sigaction *sa;
+    register __sighandler_t *sah;
     unsigned signr;
 
     while ((currentp->signal &= ((1L << NSIG) - 1))) {
@@ -29,13 +29,13 @@ int do_signal(void)
         clear_bit(signr, &currentp->signal);
 
 	debug2("Process %d has signal %d.\n", currentp->pid, signr);
-	sa = &currentp->sig.action[signr];
+	sah = &currentp->sig.action[signr].sa_handler;
 	signr++;
-	if (sa->sa_handler == SIG_IGN) {
+	if (*sah == SIG_IGN) {
 	    debug("Ignore\n");
 	    continue;
 	}
-	if (sa->sa_handler == SIG_DFL) {
+	if (*sah == SIG_DFL) {
 	    debug("Default\n");
 	    if (currentp->pid == 1)
 		continue;
@@ -76,10 +76,10 @@ int do_signal(void)
 	    }
 	}
 	debug1("Setting up return stack for sig handler %x.\n", sa->sa_handler);
-	debug1("Stack at %x\n", current->t_regs.sp);
-	arch_setup_sighandler_stack(current, sa->sa_handler, signr);
-	debug1("Stack at %x\n", current->t_regs.sp);
-	sa->sa_handler = SIG_DFL;
+	debug1("Stack at %x\n", currentp->t_regs.sp);
+	arch_setup_sighandler_stack(currentp, *sah, signr);
+	debug1("Stack at %x\n", currentp->t_regs.sp);
+	*sah = SIG_DFL;
         currentp->signal = 0;
 
 	return 1;
@@ -87,3 +87,4 @@ int do_signal(void)
 
     return 0;
 }
+

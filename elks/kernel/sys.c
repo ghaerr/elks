@@ -52,19 +52,18 @@ int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
     if ((magic == 0x1D1E) && (magic_too == 0xC0DE)) {
 	register int *pflag = (int *)flag;
 
-	if ((int)pflag == 0x0123) {
-	    hard_reset_now();
-	}
-
-	if ((int)pflag == 0x6789) {
-	    printk("System halted\n");
-	    sys_kill(-1, SIGKILL);
-	    do_exit(0);
-	}
-
-	if (((int)pflag == 0x4567) || !(int)pflag) {
-	    C_A_D = ((int)pflag ? 1 : 0);
-	    return 0;
+	switch((int)pflag) {
+	    case 0x4567:
+		pflag = (int *)1;
+	    case 0:
+		C_A_D = (int)pflag;
+		return 0;
+	    case 0x0123:
+		hard_reset_now();
+	    case 0x6789:
+		printk("System halted\n");
+		sys_kill(-1, SIGKILL);
+		do_exit(0);
 	}
     }
 

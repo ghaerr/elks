@@ -12,7 +12,7 @@ int arch_cpu;			/* Processor type */
 extern long int basmem;
 #endif
 
-void setup_arch(register seg_t *start, seg_t *end)
+void setup_arch(seg_t *start, seg_t *end)
 {
 #ifdef CONFIG_COMPAQ_FAST
 
@@ -38,14 +38,12 @@ void setup_arch(register seg_t *start, seg_t *end)
 
     /* XXX plac: free root ram disk */
 
-    *start = kernel_ds;
-    *start += ((unsigned int) (_endbss+15)) >> 4;
+    *start = kernel_ds + (((unsigned int) (_endbss+15)) >> 4);
 
 #else
 
     *end = (basmem)<<6;
-    *start = kernel_ds;
-    *start += (unsigned int) 0x1000;
+    *start = kernel_ds + (unsigned int) 0x1000;
 
 #endif
 

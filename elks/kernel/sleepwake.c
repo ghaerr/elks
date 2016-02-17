@@ -41,10 +41,8 @@ static void __sleep_on(register struct wait_queue *p, __s16 state)
 {
     register __ptask pcurrent = current;
 
-    if (pcurrent == &task[0]) {
-	printk("task[0] trying to sleep ");
-	panic("from %x", (int)p);
-    }
+    if (pcurrent == &task[0])
+	panic("task[0] trying to sleep from %x", (int)p);
     pcurrent->state = state;
     wait_set(p);
     schedule();
@@ -91,7 +89,7 @@ void wake_up_process(register struct task_struct *p)
  * a process. The process itself must remove the queue once it has woken.
  */
 
-void _wake_up(struct wait_queue *q, unsigned short int it)
+void _wake_up(register struct wait_queue *q, unsigned short int it)
 {
     register struct task_struct *p;
     unsigned short int phash;
