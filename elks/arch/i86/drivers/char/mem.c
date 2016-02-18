@@ -48,7 +48,7 @@ int memory_lseek(struct inode *inode, register struct file *filp,
 	offset += filp->f_pos;
     case 0:
 	if(offset >= 0)
-	break;
+	    break;
     default:
 	return -EINVAL;
     }

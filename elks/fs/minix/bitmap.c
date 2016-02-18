@@ -216,7 +216,7 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
 	}
     if (!bh || j >= 8192) {
 	printk("No new inodes found!\n");
-	goto iputfail;
+	goto iputfail1;
     }
     if (set_bit(j, bh->b_data)) {	/* shouldn't happen */
 	printk("mni: already set\n");
@@ -240,9 +240,10 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
     /*  Oh no! We have 'Return of Goto' in a double feature with
      *  'Mozilla v Internet Exploder' :) */
 
-  iputfail:
     printk("new_inode: iput fail\n");
+  iputfail:
     unmap_buffer(bh);
+  iputfail1:
     iput(inode);
     return NULL;
 }

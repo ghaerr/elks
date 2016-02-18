@@ -44,7 +44,7 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
     f->f_flags = flags;
     f->f_mode = (mode_t) ((flags + 1) & O_ACCMODE);
     f->f_count = 1;
-    f->f_pos = 0;	/* FIXME - should call lseek */
+/*    f->f_pos = 0;*/	/* FIXME - should call lseek *//* Set to zero by memset() */
 #ifdef BLOAT_FS
     f->f_version = ++event;
 #endif
@@ -58,7 +58,7 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
 #endif
 
 #ifdef BLOAT_FS
-    f->f_reada = 0;
+/*    f->f_reada = 0;*/ /* Set to zero by memset() */
 #endif
 
     if(inode->i_op)

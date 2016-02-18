@@ -451,7 +451,7 @@ extern void put_write_access(struct inode *);
 extern __s16 link_count;
 
 extern int open_namei(char *,int,int,struct inode **,struct inode *);
-extern int do_mknod(char *,int,dev_t);
+extern int do_mknod(char *,int,int,dev_t);
 extern void iput(struct inode *);
 
 extern struct inode *get_empty_inode(void);

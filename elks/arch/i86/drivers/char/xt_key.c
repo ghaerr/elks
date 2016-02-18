@@ -129,7 +129,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
     static unsigned int ModeState = 0;
     static int E0Prefix = 0;
     int code, mode;
-    register char *keyp_E0 = (char *)0;
+    register char *keyp_E0 = (char *)0;	/*[char *keyp; int E0]*/
     register char *IsReleasep;
 
     code = inb_p((void *) KBD_IO);
@@ -148,7 +148,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	return;
     }
     if (E0Prefix) {
-	keyp_E0 = (char *)1;
+	keyp_E0 = (char *)1;	/*[ E0 ]*/
 	E0Prefix = 0;
     }
     IsReleasep = (char *)(code & 0x80);
@@ -159,7 +159,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 
     if(!(mode & 0xC0)) {
 #if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE)
-	if((mode == ALT) && ((int)keyp_E0 != 0))
+	if((mode == ALT) && ((int)keyp_E0 != 0))	/*[ E0 ]*/
 	    mode = ALT_GR;
 #endif
 	IsReleasep ? (ModeState &= ~mode) : (ModeState |= mode);
@@ -186,7 +186,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 
     /* --------------Handle extended scancodes-------------- */
     case 0x80:
-	if((int)keyp_E0) {		/* Is extended scancode? */
+	if((int)keyp_E0) {		/* Is extended scancode? */	/*[ E0 ]*/
 	    mode &= 0x3F;
 	    if(mode)
 		AddQueue(ESC);
@@ -207,23 +207,23 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	mode = state_code[mode];
 	if(!mode && (ModeState & ALT_GR))
 	    mode = 3;
-	keyp_E0 = (char *)(*(scan_tabs[mode] + code));
+	keyp_E0 = (char *)(*(scan_tabs[mode] + code));	/*[ keyp ]*/
 
 	if (ModeState & CTRL && code < 14 && !(ModeState & ALT))
-	    keyp_E0 = (char *) xtkb_scan_shifted[code];
+	    keyp_E0 = (char *) xtkb_scan_shifted[code];	/*[ keyp ]*/
 	if (code < 70 && ModeState & NUM)
-	    keyp_E0 = (char *) xtkb_scan_shifted[code];
+	    keyp_E0 = (char *) xtkb_scan_shifted[code];	/*[ keyp ]*/
     /*
      *      Apply special modifiers
      */
 	if (ModeState & ALT && !(ModeState & CTRL))	/* Changed to support CTRL-ALT */
-	    keyp_E0 = (char *)(((int) keyp_E0) | 0x80); /* META-.. */
-	if (!keyp_E0)			/* non meta-@ is 64 */
-	    keyp_E0 = (char *) '@';
+	    keyp_E0 = (char *)(((int) keyp_E0) | 0x80); /* META-.. */	/*[ keyp ]*/
+	if (!keyp_E0)			/* non meta-@ is 64 */	/*[ keyp ]*/
+	    keyp_E0 = (char *) '@';	/*[ keyp ]*/
 	if (ModeState & CTRL && !(ModeState & ALT))	/* Changed to support CTRL-ALT */
-	    keyp_E0 = (char *)(((int) keyp_E0) & 0x1F); /* CTRL-.. */
-	if (((int)keyp_E0) == '\r')
-	    keyp_E0 = (char *) '\n';
+	    keyp_E0 = (char *)(((int) keyp_E0) & 0x1F); /* CTRL-.. */	/*[ keyp ]*/
+	if (((int)keyp_E0) == '\r')	/*[ keyp ]*/
+	    keyp_E0 = (char *) '\n';	/*[ keyp ]*/
 	AddQueue((unsigned char) keyp_E0);
     }
 }

@@ -45,22 +45,19 @@ static int lastumap;
 
 void wait_on_buffer(register struct buffer_head *bh)
 {
+    register __ptask currentp = current;
+
     if (buffer_locked(bh)) {
 
 	bh->b_count++;
 
 	wait_set(&bh->b_wait);
-
-	goto chk_buf;
-	do {
-	    current->state = TASK_UNINTERRUPTIBLE;
+	currentp->state = TASK_UNINTERRUPTIBLE;
+	while(buffer_locked(bh))
 	    schedule();
-	    current->state = TASK_RUNNING;
-    chk_buf:
-	    ;
-	} while(buffer_locked(bh));
-
+	currentp->state = TASK_RUNNING;
 	wait_clear(&bh->b_wait);
+
 	bh->b_count--;
     }
 }
@@ -399,7 +396,7 @@ void mark_buffer_uptodate(struct buffer_head *bh, int on)
 
 void map_buffer(register struct buffer_head *bh)
 {
-    int i;
+    register char *pi;
 
     /* If buffer is already mapped, just increase the refcount and return
      */
@@ -421,46 +418,46 @@ void map_buffer(register struct buffer_head *bh)
     /* else keep trying till we succeed */
     for (;;) {
 	/* First check for the trivial case */
-	for (i = 0; i < NR_MAPBUFS; i++) {
-	    if (!bufmem_map[i]) {
+	for (pi = (char *)0; (int)pi < NR_MAPBUFS; pi++) {
+	    if (!bufmem_map[(int)pi]) {
 		/* We can just map here! */
-		bufmem_map[i] = bh;
+		bufmem_map[(int)pi] = bh;
 #ifdef DMA_ALN
-		bh->b_data = bufmem_i + (i << BLOCK_SIZE_BITS);
+		bh->b_data = bufmem_i + ((int)pi << BLOCK_SIZE_BITS);
 #else
-		bh->b_data = (char *)bufmem + (i << BLOCK_SIZE_BITS);
+		bh->b_data = (char *)bufmem + ((int)pi << BLOCK_SIZE_BITS);
 #endif
 		bh->b_mapcount++;
 		if(bh->b_uptodate)
 		fmemcpy(kernel_ds, (__u16) bh->b_data, _buf_ds,
 			(__u16) (bh->b_num * BLOCK_SIZE), BLOCK_SIZE);
 		debug3("BUFMAP: Buffer %d (block %d) mapped into L1 slot %d.\n",
-			bh->b_num, bh->b_blocknr, i);
+			bh->b_num, bh->b_blocknr, (int)pi);
 		return;
 	    }
 	}
 
 	/* Now, we check for a mapped buffer with no count and then
 	 * hopefully find one to send back to L2 */
-	for (i = (lastumap + 1) % NR_MAPBUFS;
-	     i != lastumap; i = ((i + 1) % NR_MAPBUFS)) {
+	for (pi = (char *)((lastumap + 1) % NR_MAPBUFS);
+	     (int)pi != lastumap; pi = (char *)(((int)pi + 1) % NR_MAPBUFS)) {
 
-	    debug1("BUFMAP: trying slot %d\n", i);
+	    debug1("BUFMAP: trying slot %d\n", (int)pi);
 
-	    if (!bufmem_map[i]->b_mapcount) {
+	    if (!bufmem_map[(int)pi]->b_mapcount) {
 		debug1("BUFMAP: Buffer %d unmapped from L1\n",
-			       bufmem_map[i]->b_num);
+			       bufmem_map[(int)pi]->b_num);
 		/* Now unmap it */
-		fmemcpy(_buf_ds, (__u16) (bufmem_map[i]->b_num * BLOCK_SIZE),
-			kernel_ds, (__u16) bufmem_map[i]->b_data, BLOCK_SIZE);
-		bufmem_map[i]->b_data = 0;
-		bufmem_map[i] = 0;
+		fmemcpy(_buf_ds, (__u16) (bufmem_map[(int)pi]->b_num * BLOCK_SIZE),
+			kernel_ds, (__u16) bufmem_map[(int)pi]->b_data, BLOCK_SIZE);
+		bufmem_map[(int)pi]->b_data = 0;
+		bufmem_map[(int)pi] = 0;
 		break;
 	    }
 	}
 
 	/* The last case is to wait until unmap gets a b_mapcount down to 0 */
-	if (i == lastumap) {
+	if ((int)pi == lastumap) {
 	    /* previous loop failed */
 	    debug1("BUFMAP: buffer #%d waiting on L1 slot\n",
 			   bh->b_num);
@@ -468,7 +465,7 @@ void map_buffer(register struct buffer_head *bh)
 	    debug("BUFMAP: wait queue woken up...\n");
 	} else {
 	    /* success */
-	    lastumap = i;
+	    lastumap = (int)pi;
 	}
     }
 }
@@ -526,37 +523,37 @@ void print_bufmap_status(void)
 void buffer_init(void)
 {
     register struct buffer_head *bh = buffers;
-    unsigned int i;
+    register char *pi;
 
 #ifdef DMA_ALN
-    i = (-(((int)kernel_ds << 4) + (int)bufmem)) & (BLOCK_SIZE - 1);
-    bufmem_i = (char *)bufmem + i;
+    pi = (char *)((-(((int)kernel_ds << 4) + (int)bufmem)) & (BLOCK_SIZE - 1));
+    bufmem_i = (char *)bufmem + (unsigned int)pi;
 #endif
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     _buf_ds = mm_alloc(NR_BUFFERS * 0x40);
-    i = 0;
+    pi = (char *)0;
     do {
-	bufmem_map[i] = NULL;
-    } while(++i < NR_MAPBUFS);
+	bufmem_map[(unsigned int)pi] = NULL;
+    } while((unsigned int)(++pi) < NR_MAPBUFS);
 #endif
 
     buffers[0].b_prev_lru = NULL;
-    for (i = 0; i < NR_BUFFERS; i++) {
+    for (pi = (char *)0; (unsigned int)pi < NR_BUFFERS; pi++) {
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 	bh->b_data = 0;		/* L1 buffer cache is reserved! */
 	bh->b_mapcount = 0;
-	bh->b_num = i;		/* Used to compute L2 location */
+	bh->b_num = (unsigned int)pi;		/* Used to compute L2 location */
 #else
 #ifdef DMA_ALN
-	bh->b_data = bufmem_i + (i << BLOCK_SIZE_BITS);
+	bh->b_data = bufmem_i + ((unsigned int)pi << BLOCK_SIZE_BITS);
 #else
-	bh->b_data = (char *)bufmem + (i << BLOCK_SIZE_BITS);
+	bh->b_data = (char *)bufmem + ((unsigned int)pi << BLOCK_SIZE_BITS);
 #endif
 #endif
-	if (i > 0) {
+	if ((unsigned int)pi > 0) {
 	    bh->b_prev_lru = bh - 1;
 	}
-	if (i == NR_BUFFERS - 1) {
+	if ((unsigned int)pi == NR_BUFFERS - 1) {
 	    bh->b_next_lru = NULL;
 	    bh->b_next = NULL;
 	    bh_llru = bh;

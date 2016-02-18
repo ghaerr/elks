@@ -25,8 +25,8 @@
 static size_t minix_file_read(struct inode *inode, register struct file *filp,
 			    char *buf, size_t count);
 
-static size_t minix_file_write(register struct inode *inode, struct file *filp,
-			    char *buf, size_t count);
+static size_t minix_file_write(struct inode *inode,
+			    register struct file *filp, char *buf, size_t count);
 
 /*
  * We have mostly NULL's here: the current defaults are ok for

@@ -158,9 +158,9 @@ static unsigned short int bioshd_gethdinfo(void)
     register char *drive;
     register struct drive_infot *drivep = &drive_info[0];
 
-    for (drive = 0; (int)drive <= 1; drive++) {
+    for (drive = (char *)0x80; (int)drive <= 0x81; drive++) {
 	BD_AX = BIOSHD_DRIVE_PARMS;
-	BD_DX = (int)drive + 0x80;
+	BD_DX = (int)drive;
 	BD_IRQ = BIOSHD_INT;
 	call_bios(&bdt);
 	if (!CARRY_SET) {
@@ -222,6 +222,7 @@ static unsigned short int bioshd_getfdinfo(void)
 
 #else
 
+    register struct drive_infot *drivep = &drive_info[2];
     unsigned short int drive, ndrives;
 
 /* We get the # of drives from the BPB, which is PC-friendly
@@ -251,7 +252,7 @@ static unsigned short int bioshd_getfdinfo(void)
 
 	call_bios(&bdt);
 	if ((!CARRY_SET) && ((BD_AX & 0xff00) == 0))
-	    drive_info[drive + 2] = fd_types[BD_BX - 1];
+	    *drivep++ = fd_types[BD_BX - 1];
 	else
 	    printk("error in drivetype %d\n", drive);
 
@@ -264,15 +265,15 @@ static unsigned short int bioshd_getfdinfo(void)
  * AT archecture, drive type in DX
  * Set to type 3 as this is less drastic
  */
-	    drive_info[drive + 2] = fd_types[BD_BX - 1];
+	    *drivep = fd_types[BD_BX - 1];
 	} else {
 
 /* Cannot be determined correctly
  * Type 4 should work on all systems
  */
-	    drive_info[drive + 2] = fd_types[4];
+	    *drivep = fd_types[4];
 	}
-
+	drivep++;
 #endif
 
     }
@@ -353,15 +354,15 @@ int seek_sector(unsigned short int drive, char track, char sector)
     return 1;			/* error */
 }
 
-static int bioshd_open(register struct inode *inode, struct file *filp)
+static int bioshd_open(struct inode *inode, struct file *filp)
 {
     register struct drive_infot *drivep;
     int target;
-    unsigned int minor;
+    register struct hd_struct *hdp;
 
     target = DEVICE_NR(inode->i_rdev);	/* >> 6 */
     drivep = &drive_info[target];
-    minor = MINOR(inode->i_rdev);
+    hdp = &hd[MINOR(inode->i_rdev)];
 
 /* Bounds testing */
 
@@ -369,7 +370,7 @@ static int bioshd_open(register struct inode *inode, struct file *filp)
 	return -ENXIO;
     if (target >= 4)
 	return -ENXIO;
-    if (((int) hd[minor].start_sect) == -1)
+    if (((int) hdp->start_sect) == -1)
 	return -ENXIO;
 
 #if 0
@@ -496,14 +497,14 @@ static int bioshd_open(register struct inode *inode, struct file *filp)
  *
  *	You may have to copy dpb to RAM as the original is in ROM.
  */
-	hd[minor].start_sect = 0;
-	hd[minor].nr_sects = ((sector_t)(drivep->sectors * drivep->heads))
+	hdp->start_sect = 0;
+	hdp->nr_sects = ((sector_t)(drivep->sectors * drivep->heads))
 				* ((sector_t)drivep->cylinders);
 
     }
 #endif
 
-    inode->i_size = (hd[minor].nr_sects) << 9;
+    inode->i_size = (hdp->nr_sects) << 9;
     return 0;
 }
 
@@ -540,7 +541,6 @@ static struct file_operations bioshd_fops = {
 int init_bioshd(void)
 {
     register struct gendisk *ptr;
-    register struct drive_infot *drivep;
     int count = 0;
 
 #ifndef CONFIG_SMALL_KERNEL
@@ -570,26 +570,30 @@ int init_bioshd(void)
 	return 0;
 
 #ifdef TEMP_PRINT_DRIVES_MAX
-    drivep = drive_info;
-    for (count = 0; count < TEMP_PRINT_DRIVES_MAX; count++, drivep++) {
-	if (drivep->heads != 0) {
-	    char *unit = "kMGT";
-	    __u32 size = ((__u32) drivep->sectors) * 5 /* 0.1 kB units */;
+    {
+	register struct drive_infot *drivep;
 
-	    size *= ((__u32) drivep->cylinders) * drivep->heads;
+	drivep = drive_info;
+	for (count = 0; count < TEMP_PRINT_DRIVES_MAX; count++, drivep++) {
+	    if (drivep->heads != 0) {
+		char *unit = "kMGT";
+		__u32 size = ((__u32) drivep->sectors) * 5 /* 0.1 kB units */;
 
-	    /* Select appropriate unit */
-	    while (size > 99999 && unit[1]) {
-		debug3("DBG: Size = %lu (%X/%X)\n", size, *unit, unit[1]);
-		size += 512U;
-		size /= 1024U;
-		unit++;
+		size *= ((__u32) drivep->cylinders) * drivep->heads;
+
+		/* Select appropriate unit */
+		while (size > 99999 && unit[1]) {
+		    debug3("DBG: Size = %lu (%X/%X)\n", size, *unit, unit[1]);
+		    size += 512U;
+		    size /= 1024U;
+		    unit++;
+		}
+		debug3("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
+		printk("/dev/%cd%c: %d cylinders, %d heads, %d sectors = %lu.%u %cb\n",
+		    (count < 2 ? 'h' : 'f'), (count % 2) + (count < 2 ? 'a' : '0'),
+		    drivep->cylinders, drivep->heads, drivep->sectors,
+		    (size/10), (int) (size%10), *unit);
 	    }
-	    debug3("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
-	    printk("/dev/%cd%c: %d cylinders, %d heads, %d sectors = %lu.%u %cb\n",
-		   (count < 2 ? 'h' : 'f'), (count % 2) + (count < 2 ? 'a' : '0'),
-		   drivep->cylinders, drivep->heads, drivep->sectors,
-		   (size/10), (int) (size%10), *unit);
 	}
     }
 #endif /* TEMP_PRINT_DRIVES_MAX */

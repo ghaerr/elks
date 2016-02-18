@@ -164,7 +164,7 @@ static int unix_bind(struct socket *sock,
     old_ds = current->t_regs.ds;
     current->t_regs.ds = kernel_ds;
 
-    i = do_mknod(fname, S_IFSOCK | S_IRWXUGO, 0);
+    i = do_mknod(fname, 0, S_IFSOCK | S_IRWXUGO, 0);
 
     if (i == 0)
 	i = open_namei(fname, 0, S_IFSOCK, &upd->inode, NULL);

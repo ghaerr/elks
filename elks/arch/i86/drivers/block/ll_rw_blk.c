@@ -186,20 +186,21 @@ static struct request *__get_request_wait(int n, kdev_t dev)
     printk("Waiting for request...\n");
 
     wait_set(&wait_for_request);
-    for (;;) {
+    current->state = TASK_UNINTERRUPTIBLE;
+    goto startgrw;
+    do {
+	schedule();
+      startgrw:
 #if 0
 	unplug_device(MAJOR(dev) + blk_dev);	/* Device can't be plugged */
 #endif
-	current->state = TASK_UNINTERRUPTIBLE;
 	clr_irq();
 	req = get_request(n, dev);
 	set_irq();
-	if (req)
-	    break;
-	schedule();
-    }
-    wait_clear(&wait_for_request);
+    } while(req);
     current->state = TASK_RUNNING;
+    wait_clear(&wait_for_request);
+
     return req;
 }
 #endif
@@ -438,8 +439,8 @@ void ll_rw_blk(int rw, register struct buffer_head *bh)
     if (!dev || !dev->request_fn) {
 	printk("ll_rw_blk: Trying to read nonexistent block-device %s (%lu)\n",
 	       kdevname(bh->b_dev), bh->b_blocknr);
-    bh->b_dirty = 0;
-    bh->b_uptodate = 0;
+	bh->b_dirty = 0;
+	bh->b_uptodate = 0;
     } else
 	make_request(major, rw, bh);
     return;

@@ -357,48 +357,37 @@ int rs_probe(register struct serial_info *sp)
     return 0;
 }
 
-static void print_serial_type(int st)
-{
-    switch (st) {
-    case ST_8250:
-	printk(" is an 8250");
-	break;
-    case ST_16450:
-	printk(" is a 16450");
-	break;
-    case ST_16550:
-	printk(" is a 16550");
-/*  	break; */
-    }
-}
-
 int rs_init(void)
 {
     register struct serial_info *sp = ports;
     int ttyno = 0;
+    static char *serial_type[] = {
+	"n 8250",
+	" 16450",
+	" 16550",
+	" UNKNOWN",
+    };
 
     printk("Serial driver version 0.02\n");
     do {
-	if (sp->tty != NULL) {
+	if((sp->tty != NULL) || (!rs_probe(sp) && !request_irq(sp->irq, rs_irq, NULL))) {
+	    printk("ttyS%d at 0x%x (irq = %d) is a%s", ttyno,
+		       sp->io, sp->irq, serial_type[sp->flags & 0x3]);
+	    if(sp->tty != NULL) {
 	    /*
 	     * if rs_init is called twice, because of serial console
 	     */
-	    printk("ttyS%d at 0x%x (irq = %d)", ttyno, sp->io, sp->irq);
-	    print_serial_type(sp->flags & SERF_TYPE);
-	    printk(", fetched\n");
-	    ttyno++;
-	} else {
-	    if ((rs_probe(sp) == 0) && (!request_irq(sp->irq, rs_irq, NULL))) {
-		printk("ttyS%d at 0x%x (irq = %d)",
-		       ttyno, sp->io, sp->irq);
-		print_serial_type(sp->flags & SERF_TYPE);
-		printk("\n");
+		printk(", fetched");
+		ttyno++;
+	    }
+	    else {
 		sp->tty = &ttys[4 + ttyno++];
 		update_port(sp);
 #if 0
 		outb_p(? ? ? ?, sp->io + UART_MCR);
 #endif
 	    }
+	    printk("\n");
 	}
     } while(++sp < &ports[4]);
     return 0;

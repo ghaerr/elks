@@ -94,7 +94,7 @@ void do_exit(int status)
 #endif
 
     /* UN*X process take their children out with them...
-     * I'm not going to implement that for 0.0.51 becuase we don't 
+     * I'm not going to implement that for 0.0.51 because we don't
      * have signals and we don't need them *yet*. */
 
     /* Let the parent know */

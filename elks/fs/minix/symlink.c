@@ -50,12 +50,12 @@ static int minix_follow_link(register struct inode *dir,
 	iput(dir);
 	return -ELOOP;
     }
-    if (!(bh = minix_bread(inode, 0, 0))) {
-	iput(inode);
+    bh = minix_bread(inode, 0, 0);
+    iput(inode);
+    if (!bh) {
 	iput(dir);
 	return -EIO;
     }
-    iput(inode);
     /* current-> */ link_count++;
     map_buffer(bh);
     pds = &current->t_regs.ds;

@@ -9,7 +9,7 @@
 #include <arch/segment.h>
 
 static char *args[] = {
-    NULL,	/* argc     */
+    0x01,	/* argc     */
     0x08,	/* &argv[0] */
     NULL,	/* end argv */
     NULL,	/* envp     */
@@ -21,14 +21,7 @@ static char *args[] = {
     NULL,
 };
 
-extern int do_signal(void);
 extern void ret_from_syscall(void);
-
-void sig_check(void)
-{
-    if (current->signal)
-        do_signal();
-}
 
 int run_init_process(register char *cmd)
 {
@@ -51,19 +44,12 @@ void stack_check(void)
     register __ptask currentp = current;
 /*    register segext_t end;*/ /* Unused variable "end" */
 
-    if ((currentp->t_begstack > currentp->t_enddata) &&
-	(currentp->t_regs.sp < currentp->t_endbrk)) {
-/*	end = currentp->t_endbrk;*/
-	goto stack_overflow;
+    if(currentp->t_begstack > currentp->t_enddata) {
+	if(currentp->t_regs.sp > currentp->t_endbrk)
+	    return;
     }
-#ifdef CONFIG_EXEC_ELKS
-    else if(currentp->t_regs.sp > currentp->t_endseg) {
-/*        end = 0xffff;*/
-	goto stack_overflow;
-    }
-#endif
-    return;
-stack_overflow:
+    else if(currentp->t_regs.sp < currentp->t_endseg)
+	return;
     printk("STACK OVERFLOW BY %u BYTES\n", 0xffff - currentp->t_regs.sp);
     do_exit(SIGSEGV);
 }

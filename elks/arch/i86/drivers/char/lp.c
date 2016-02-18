@@ -175,7 +175,7 @@ size_t lp_write(struct inode *inode, struct file *file, char *buf, int count)
 
     chrsp = 0;
     while (((int)chrsp) < count) {
-	if (!lp_char_polled((int)get_user_char((void *)(buf + (int)chrsp)),
+	if (!lp_char_polled((int)get_user_char((void *)(buf++)),
 			    MINOR(inode->i_rdev)))
 	    break;
 	chrsp++;
@@ -303,8 +303,8 @@ void lp_init(void)
 	printk("lp%d at 0x%x, using polling driver\n", (int)ip, lp->io);
 	lp->flags = LP_EXIST;
 	lp++;
-	count++;
     }
+    count = (int)ip;
 
 #else
 

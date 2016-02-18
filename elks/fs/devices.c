@@ -123,16 +123,18 @@ int check_disk_change(kdev_t dev)
  * Called every time a block special file is opened
  */
 
-int blkdev_open(struct inode *inode, register struct file *filp)
+int blkdev_open(struct inode *inode, struct file *filp)
 {
-    unsigned int i;
+    register struct file_operations *fop;
+    register char *pi;
 
-    i = MAJOR(inode->i_rdev);
-    if (i >= MAX_BLKDEV || !blkdevs[i].ds_fops)
+    pi = (char *)MAJOR(inode->i_rdev);
+    fop = blkdevs[(unsigned int)pi].ds_fops;
+    if ((unsigned int)pi >= MAX_BLKDEV || !fop)
 	return -ENODEV;
-    filp->f_op = blkdevs[i].ds_fops;
-    return (filp->f_op->open)
-	? filp->f_op->open(inode, filp)
+    filp->f_op = fop;
+    return (fop->open)
+	? fop->open(inode, filp)
 	: 0;
 }
 
@@ -177,17 +179,18 @@ struct inode_operations blkdev_inode_operations = {
  * Called every time a character special file is opened.
  */
 
-static int chrdev_open(struct inode *inode,
-			register struct file *filp)
+static int chrdev_open(struct inode *inode, struct file *filp)
 {
-    unsigned int i;
+    register struct file_operations *fop;
+    register char *pi;
 
-    i = MAJOR(inode->i_rdev);
-    if (i >= MAX_CHRDEV || !chrdevs[i].ds_fops)
+    pi = (char *)MAJOR(inode->i_rdev);
+    fop = chrdevs[(unsigned int)pi].ds_fops;
+    if ((unsigned int)pi >= MAX_CHRDEV || !fop)
 	return -ENODEV;
-    filp->f_op = chrdevs[i].ds_fops;
-    return (filp->f_op->open)
-	? filp->f_op->open(inode, filp)
+    filp->f_op = fop;
+    return (fop->open)
+	? fop->open(inode, filp)
 	: 0;
 }
 

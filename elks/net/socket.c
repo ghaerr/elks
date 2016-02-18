@@ -142,7 +142,7 @@ struct socket *sockfd_lookup(int fd, struct file **pfile)
     register struct file *file;
     register struct inode *inode;
 
-    if (fd < 0 || fd >= NR_OPEN || !(file = current->files.fd[fd]))
+    if (((unsigned int)fd >= NR_OPEN) || !(file = current->files.fd[fd]))
 	return NULL;
 
     inode = file->f_inode;
@@ -205,12 +205,14 @@ static int sock_select(struct inode *inode,
 		       struct file *file, int sel_type, select_table * wait)
 {
     register struct socket *sock;
+    register struct proto_ops *ops;
 
     if (!(sock = socki_lookup(inode)))
 	return -EBADF;
 
-    if (sock->ops && sock->ops->select)
-	return sock->ops->select(sock, sel_type, wait);
+    ops = sock->ops;
+    if (ops && ops->select)
+	return ops->select(sock, sel_type, wait);
 
     return 0;
 }
@@ -443,6 +445,7 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
 int sys_listen(int fd, int backlog)
 {
     register struct socket *sock;
+    register struct proto_ops *ops;
 
 #if 0
 
@@ -458,8 +461,9 @@ int sys_listen(int fd, int backlog)
     if (sock->state != SS_UNCONNECTED)
 	return -EINVAL;
 
-    if (sock->ops && sock->ops->listen)
-	sock->ops->listen(sock, backlog);
+    ops = sock->ops;
+    if (ops && ops->listen)
+	ops->listen(sock, backlog);
 
     sock->flags |= SO_ACCEPTCON;
     return 0;

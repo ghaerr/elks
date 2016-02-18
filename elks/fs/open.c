@@ -191,13 +191,14 @@ int sys_access(char *filename, int mode)
 
 int sys_chdir(char *filename)
 {
+    register __ptask currentp = current;
     struct inode *inode;
     int error;
 
     error = namei(filename, &inode, IS_DIR, MAY_EXEC);
     if (!error) {
-	iput(current->fs.pwd);
-	current->fs.pwd = inode;
+	iput(currentp->fs.pwd);
+	currentp->fs.pwd = inode;
     }
     return error;
 }
@@ -371,6 +372,7 @@ int sys_open(char *filename, int flags, int mode)
     struct inode *inode;
     register struct inode *pinode;
     struct file *f;
+    register struct file *filp;
     int error, flag;
 
     flag = flags;
@@ -385,18 +387,19 @@ int sys_open(char *filename, int flags, int mode)
 
     pinode = inode;
     error = open_filp(flags, pinode, &f);
+    filp = f;
     if(error)
 	goto cleanup_inode;
-    f->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
+    filp->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
 
     /*
      * We have to do this last, because we mustn't export
      * an incomplete fd to other processes which may share
      * the same file table with us.
      */
-    if ((error = get_unused_fd(f)) > -1)
+    if ((error = get_unused_fd(filp)) > -1)
 	goto exit_open;
-    close_filp(pinode, f);
+    close_filp(pinode, filp);
 
   cleanup_inode:
     iput(pinode);
@@ -425,14 +428,16 @@ static int close_fp(register struct file *filp)
 
 void _close_allfiles(void)
 {
-    register struct file *filp;
+    register struct file **filp;
     register char *pi = 0;
 
+    filp = current->files.fd;
     do {
-	if ((filp = current->files.fd[(int) pi])) {
-	    current->files.fd[(int) pi] = NULL;
-	    close_fp(filp);
+	if (*filp != NULL) {
+	    close_fp(*filp);
+	    *filp = NULL;
 	}
+	filp++;
     } while (((int)(++pi)) < NR_OPEN);
 }
 

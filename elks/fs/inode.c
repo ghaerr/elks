@@ -68,19 +68,16 @@ void inode_init(void)
 
 static void wait_on_inode(register struct inode *inode)
 {
-    if (!inode->i_lock)
-	return;
+    register __ptask currentp = current;
 
-    wait_set(&inode->i_wait);
-    goto lwi;
-    do {
-	current->state = TASK_UNINTERRUPTIBLE;
-	schedule();
-	current->state = TASK_RUNNING;
-  lwi:
-	;
-    } while(inode->i_lock);
-    wait_clear(&inode->i_wait);
+    if (inode->i_lock) {
+	wait_set(&inode->i_wait);
+	currentp->state = TASK_UNINTERRUPTIBLE;
+	while(inode->i_lock)
+	    schedule();
+	currentp->state = TASK_RUNNING;
+	wait_clear(&inode->i_wait);
+    }
 }
 
 static void lock_inode(register struct inode *inode)
@@ -337,6 +334,8 @@ void sync_inodes(kdev_t dev)
 
 void iput(register struct inode *inode)
 {
+    register struct super_operations *sop;
+
     if (inode) {
 	wait_on_inode(inode);
 	if (!inode->i_count) {
@@ -362,7 +361,7 @@ void iput(register struct inode *inode)
 	    wake_up(&inode_wait);
 
 	    if (inode->i_sb) {
-		struct super_operations *sop = inode->i_sb->s_op;
+		sop = inode->i_sb->s_op;
 		if (sop && sop->put_inode) {
 		    sop->put_inode(inode);
 		    if (!inode->i_nlink)

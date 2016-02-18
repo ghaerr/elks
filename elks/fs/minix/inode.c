@@ -246,8 +246,8 @@ struct super_block *minix_read_super(register struct super_block *s,
 	    return NULL;
 	}
     }
-    (void) set_bit(0, s->u.minix_sb.s_imap[0]->b_data);
-    (void) set_bit(0, s->u.minix_sb.s_zmap[0]->b_data);
+    set_bit(0, s->u.minix_sb.s_imap[0]->b_data);
+    set_bit(0, s->u.minix_sb.s_zmap[0]->b_data);
     unlock_super(s);
     /* set up enough so that it can read an inode */
     s->s_dev = dev;

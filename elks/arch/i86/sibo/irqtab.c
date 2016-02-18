@@ -126,7 +126,7 @@ _irqtab_init:
 !	main code).
 !
 	.extern	_schedule
-	.extern	_sig_check
+	.extern	_do_signal
 	.extern	_do_IRQ
 
 _irq1:
@@ -287,7 +287,7 @@ _algn:
 !
 !	There are three possible cases to cope with
 !
-!	SS = kernel DS. 
+!	SS = kernel DS.
 !		Interrupted kernel mode code.
 !		No task switch allowed
 !		Running on a kernel process stack anyway.
@@ -435,7 +435,7 @@ updct:
 	call	_schedule		! Task switch
         mov     bx,_current
         mov     8[bx],#1
-        call    _sig_check              ! Check signals
+        call    _do_signal              ! Check signals
 !
 !	At this point, the kernel stack is empty. Thus, there in no
 !       need to save the kernel stack pointer.

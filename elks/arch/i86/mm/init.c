@@ -46,7 +46,7 @@ void setup_mm(seg_t start, seg_t end)
 
     printk("Psion Series 3a machine, %s CPU\n%uK base"
 	   ", CPUID `NEC V30'",
-	   proc_name, basemem, cpuid);
+	   proc_name, basemem);
 
 #else
 
