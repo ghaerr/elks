@@ -31,7 +31,6 @@
 char termcap[200] = "Ansi subset:CM=\033[%d;%dH,Y,1,1:\
 CE=\033[K:CL=\033[H\033[J:LINES=24:COLS=79:HO=\033[H:FkL=\033:\
 CurR=C:CurL=D:CurU=A:CurD=B";
-#endif
 
 char *
 parseit(ptr,savearea)
@@ -121,6 +120,7 @@ char *tc, *what, **savearea;
 
 /* internal variables just for termcap */
 static int _Xfirst, _xpad, _ypad;
+#endif
 
 tc_init()
 /* get the termcap stuff and go berserk parsing it */
@@ -130,7 +130,12 @@ tc_init()
     char *p = termcap;
 #else
     char *getenv();
+#if MSDOS
     char *p = getenv("TERMCAP");
+#else
+    char *buffer, **caps;
+    char *p = getenv("TERM");
+#endif
 #endif
     char *lp, *ptr;
 
@@ -140,16 +145,20 @@ tc_init()
 #endif
 #if !(RMX|MSDOS)
     if (!p) {
-	puts("lv: no termcap\n");
+	puts("lv: no TERM\n");
 	exit(1);
     }
-#endif
+    TERMNAME = p;
+    lp = malloc(1024);
+#else
     lp = Malloc(strlen(p)+1);
+#endif
     if (!lp) {
 	puts("lv: out of memory\n");
 	exit(1);
     }
 
+#if RMX | MSDOS
     TERMNAME = xtract(p,NULL,&lp);
     CM   = xtract(p,"CM",&lp);
     HO   = xtract(p,"HO",&lp);
@@ -205,7 +214,53 @@ tc_init()
     ++p;
     while (*p)
 	_ypad = (_ypad*10) + (*p++ - '0');
+
+#else
+
+    if(tgetent(lp, p) < 1) {
+	puts("lv: no termcap for %s\n", p);
+	exit(1);
+    }
+    if ((LINES=tgetnum("li")) <= 0) {
+	puts("lv: bad termcap");
+	exit(1);
+    }
+    dofscroll = LINES/2;
+    if ((COLS=tgetnum("co")-1) <= 0 || COLS >= MAXCOLS) {
+	puts("lv: bad termcap");
+	exit(1);
+    }
+    buffer = (char *)malloc(strlen(lp));
+    caps = &buffer;
+
+    HO   = tgetstr("ho", caps);/*cursor home*/
+    UP   = tgetstr("up", caps);/*move cursor up one line*/
+    BC   = tgetstr("le", caps);/*move cursor left one col*/
+    CE   = tgetstr("ce", caps);/*clear to end of line*/
+    CL   = tgetstr("cl", caps);/*clear screen*/
+    BELL = tgetstr("bl", caps);/*bell*/
+    if (!BELL)
+	BELL = "\007";
+    OL   = tgetstr("al", caps);/*insert a line*/
+    UpS  = tgetstr("sr", caps);/*reverse scroll*/
+    canUPSCROLL = (UpS != NULL);
+    CURon= tgetstr("ve", caps);/*cursor normal*/
+    CURoff=tgetstr("vi", caps);/*cursor invisible*/
+
+    CM   = tgetstr("cm", caps);
+    CA = (CM != NULL);
+
+    functionkeys[0] = tgetstr("kr", caps);/*arrow keys*/
+    functionkeys[1] = tgetstr("kl", caps);
+    functionkeys[2] = tgetstr("ku", caps);
+    functionkeys[3] = tgetstr("kd", caps);
+    functionkeys[4] = 0;
+
+    free(lp);
+#endif
 }
 
+#if RMX | MSDOS
 #define tgoto(s,y,x)	(_Xfirst?sprintf(s,CM,x+_xpad,y+_ypad):\
 				sprintf(s,CM,y+_ypad,x+_xpad))
+#endif

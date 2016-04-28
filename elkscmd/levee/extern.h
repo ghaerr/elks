@@ -85,15 +85,20 @@ extern int LINES, COLS;
 #endif
 #if TERMCAP
 extern bool CA, canUPSCROLL;
+#if RMX
 extern char FkL,
 	    CurRT,
 	    CurLT,
 	    CurDN,
 	    CurUP;
+#else
+extern char *functionkeys[];
+#endif /*RMX*/
 #endif /*TERMCAP*/
 extern char *TERMNAME,
 	    *HO,
 	    *UP,
+	    *BC,
 	    *CE,
 	    *CL,
 	    *OL,

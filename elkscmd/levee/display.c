@@ -39,7 +39,9 @@ PROC
 mvcur(y,x)
 int y,x;
 {
+#if ANSI
     static char gt[30];
+#endif
    
     if (y == -1)
 	y = curpos.y;
@@ -77,8 +79,7 @@ int y,x;
 #endif
 
 #if TERMCAP
-    tgoto(gt,y,x);
-    strput(gt);
+    strput(tgoto(CM,x,y));
 #endif
 }
 

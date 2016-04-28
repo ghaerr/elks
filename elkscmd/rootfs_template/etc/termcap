@@ -1,7 +1,7 @@
 elks|vt52|vt-52|ELKS VT-52 console:\
-	:am:bs:co#80:it#8:li#25:\
+	:al=\EL:am:bs:co#80:it#8:li#25:\
 	:ce=\EK:cl=\EH\EJ:cm=\EY%+ %+ :do=\EB:ho=\EH:\
-	:le=\ED:nd=\EC:ta=^I:up=\EA:
+	:le=\ED:nd=\EC:sr=\EM:ta=^I:up=\EA:
 
 ansi|vt100|vt-100|ELKS ANSI (VT-100) console:\
 	:am:bs:co#80:it#8:li#25:\
