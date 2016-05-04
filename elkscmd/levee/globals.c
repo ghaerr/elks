@@ -154,11 +154,16 @@ char *TERMNAME = "hardwired vt52",
 
 #if TERMCAP
 bool CA, canUPSCROLL;
+#if RMX
 char FkL, CurRT, CurLT, CurUP, CurDN;
+#else
+char *functionkeys[5];
+#endif
 
 char *TERMNAME,		/* will be set in termcap handling */
      *HO,
      *UP,
+     *BC,
      *CE,
      *CL,
      *OL,
