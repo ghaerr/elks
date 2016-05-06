@@ -11,12 +11,12 @@ mainmenu_option next_comment
 		 BIOS           CONFIG_CONSOLE_BIOS	\
 		 Serial         CONFIG_CONSOLE_SERIAL"		Direct
 	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
-	    bool 'Direct console VT52 emulation'	CONFIG_DCON_VT52    y
-	    if [ "$CONFIG_DCON_VT52" = "y" ]; then
-		bool 'Direct console ANSI emulation'	CONFIG_DCON_ANSI    y
-		if [ "$CONFIG_DCON_ANSI" = "y" ]; then
-		    bool 'ANSI Colourized printk'	CONFIG_DCON_ANSI_PRINTK n
-		fi
+	    choice 'Direct console emulation'			\
+		    "ANSI           CONFIG_DCON_ANSI	\
+		     VT52           CONFIG_DCON_VT52	\
+		     None           CONFIG_DCON_NONE"		ANSI
+	    if [ "$CONFIG_DCON_ANSI" = "y" ]; then
+		bool 'ANSI Colourized printk'	CONFIG_DCON_ANSI_PRINTK n
 	    fi
 	    source arch/i86/drivers/char/KeyMaps/Config.in
 	fi
