@@ -13,30 +13,26 @@
 /*@-namechecks@*/
 
 #undef	__FD_SET
-#if 0
+#ifndef __KERNEL__
 #define __FD_SET(fd,fdsetp) {				\
 		int mask, addr = ((int) fdsetp);	\
 							\
 		addr += fd >> 4;			\
 		mask = 1 << (fd & 0xf); 		\
-		clr_irq();					\
 		*(int*)addr |= mask;			\
-		set_irq();					\
 	}
 #else
 #define __FD_SET(fd,fdsetp) set_bit(fd, fdsetp)
 #endif
 
 #undef	__FD_CLR
-#if 0
+#ifndef __KERNEL__
 #define __FD_CLR(fd,fdsetp) {				\
 		int mask, addr = ((int) fdsetp);	\
 							\
 		addr += fd >> 4;			\
 		mask = 1 << (fd & 0xf); 		\
-		clr_irq();					\
 		*(int*)addr &= ~mask;			\
-		set_irq();					\
 	}
 #else
 #define __FD_CLR(fd,fdsetp) clear_bit(fd, fdsetp)

@@ -52,5 +52,6 @@ typedef __u32 __kernel_fd_set;
 /*@+namechecks@*/
 
 #include <arch/posix_types.h>
+#include <linuxmt/time.h>
 
 #endif
