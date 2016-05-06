@@ -42,7 +42,6 @@ struct tty_ops dircon_ops;
 void init_console(void);
 #endif
 
-#define MAX_ATTR 	5
 #define A_DEFAULT 	0x07
 #define A_BOLD 		0x08
 #define A_BLINK 	0x80
@@ -70,11 +69,11 @@ struct console {
     unsigned char attr;		/* current attribute */
 #ifdef CONFIG_DCON_VT52
     unsigned char tmp;		/* ESC Y ch save */
+#endif
 #ifdef CONFIG_DCON_ANSI
     int savex, savey;		/* saved cursor position */
     unsigned char *parmptr;	/* ptr to params */
     unsigned char params[MAXPARMS];	/* ANSI params */
-#endif
 #endif
 };
 
@@ -90,14 +89,12 @@ static unsigned short int NumConsoles = MAX_CONSOLES;
 extern int Current_VCminor;
 extern int kraw;
 
-#ifdef CONFIG_DCON_VT52
-static unsigned AttrArry[MAX_ATTR] = {
-    A_DEFAULT,
-    A_BOLD,
-    A_BLINK,
-    A_REVERSE,
-    A_BLANK
-};
+#ifdef CONFIG_DCON_ANSI
+#define TERM_TYPE " emulating ANSI "
+#elif CONFIG_DCON_VT52
+#define TERM_TYPE " emulating vt52 "
+#else
+#define TERM_TYPE " dumb "
 #endif
 
 static void std_char(register Console *, char);
@@ -154,8 +151,7 @@ static void ScrollUp(register Console * C, int x, int y, int xx, int yy)
     ClearRange(C, x, yy, xx, yy);
 }
 
-#ifdef CONFIG_DCON_VT52
-
+#if defined (CONFIG_DCON_VT52) || defined (CONFIG_DCON_ANSI)
 static void ScrollDown(register Console * C, int x, int y, int xx, int yy)
 {
     register __u16 *vp;
@@ -164,11 +160,9 @@ static void ScrollDown(register Console * C, int x, int y, int xx, int yy)
 	fmemcpy((__u16)C->vseg, vp, (__u16)C->vseg, vp - Width, ((xx - x + 1) << 1));
     ClearRange(C, x, y, xx, y);
 }
-
 #endif
 
 #if defined (CONFIG_DCON_VT52) || defined (CONFIG_DCON_ANSI)
-
 static void Console_gotoxy(register Console * C, int x, int y)
 {
     register char *xp = (char *)x;
@@ -177,11 +171,9 @@ static void Console_gotoxy(register Console * C, int x, int y)
     xp = (char *)y;
     C->cy = ((((int) xp) >= MaxRow) ? MaxRow : ((((int)xp) < 0) ? 0 : (int)xp));
 }
-
 #endif
 
 #ifdef CONFIG_DCON_ANSI
-
 static int parm1(register unsigned char *buf)
 {
     register char *np;
@@ -210,7 +202,7 @@ static void AnsiCmd(register Console * C, char c)
     if (!isalpha(c)) {
 	return;
     }
-    *C->parmptr = 0;
+    *(C->parmptr) = 0;
 
     switch (c) {
     case 's':			/* Save the current location */
@@ -251,6 +243,12 @@ static void AnsiCmd(register Console * C, char c)
     case 'K':			/* Clear to EOL */
 	ClearRange(C, C->cx, C->cy, MaxCol, C->cy);
 	break;
+    case 'L':			/* insert line */
+	ScrollDown(C, 0, C->cy, MaxCol, MaxRow);
+	break;
+    case 'M':			/* remove line */
+	ScrollUp(C, 0, C->cy, MaxCol, MaxRow);
+	break;
     case 'm':			/* ansi color */
 	p = C->params;
 	for (;;) {
@@ -273,7 +271,7 @@ static void AnsiCmd(register Console * C, char c)
 		C->attr = A_BLANK;
 		continue;
 
-	    case '4':
+	    case '4':				/* Set background color */
 		if (*p >= '0' && *p <= '7') {
 		    C->attr &= 0x8f;
 		    C->attr |= (*p++ << 4) & 0x70;
@@ -283,7 +281,7 @@ static void AnsiCmd(register Console * C, char c)
 	    case 'm':
 		if (p != &C->params[1])
 		    break;
-	    case '3':
+	    case '3':				/* Set foreground color */
 		if (*p >= '0' && *p <= '7') {
 		    C->attr &= 0xf8;
 		    C->attr |= *p++ & 0x07;
@@ -298,42 +296,38 @@ static void AnsiCmd(register Console * C, char c)
     C->fsm = std_char;
 }
 
+/* Escape character processing */
+static void esc_char(register Console * C, char c)
+{
+    /* Parse CSI sequence */
+    C->parmptr = C->params;
+    C->fsm = (c == '[' ? AnsiCmd : std_char);
+}
 #endif
 
-#if defined (CONFIG_DCON_VT52) || defined (CONFIG_DCON_ANSI)
-
+#ifdef CONFIG_DCON_VT52
 static void esc_Y2(register Console * C, char c)
 {
     Console_gotoxy(C, c - ' ', C->tmp);
     C->fsm = std_char;
 }
 
-static void esc_PQY(register Console * C, char c)
+static void esc_YS(register Console * C, char c)
 {
-    C->fsm = std_char;
     switch(C->tmp) {
-    case 'P':
-	if(c == 'f')		/* insert line at crsr */
-	    ScrollDown(C, 0, C->cy, MaxCol, MaxRow);
-	else if(c == 'd')	/* delete line at crsr */
-	    ScrollUp(C, 0, C->cy, MaxCol, MaxRow);
-	break;
-    case 'Q':
-	c -= ' ';
-	if(c == 0)
-	    c++;
-	if(c > 0 && c < MAX_ATTR)
-	    C->attr |= AttrArry[c - 1];
-	break;
     case 'Y':
 	C->tmp = (unsigned char) (c - ' ');
 	C->fsm = esc_Y2;
+	break;
+    case '/':
+	C->tmp = 'Z';		/* Discard next char */
+	break;
+    case 'Z':
+	C->fsm = std_char;
+	break;
     }
 }
 
-#endif
-
-#if defined (CONFIG_DCON_VT52) || defined (CONFIG_DCON_ANSI)
 /* Escape character processing */
 static void esc_char(register Console * C, char c)
 {
@@ -369,26 +363,21 @@ static void esc_char(register Console * C, char c)
     case 'K':			/* clear to eol */
 	ClearRange(C, C->cx, C->cy, MaxCol, C->cy);
 	break;
-    case 'P':			/* NOT VT52. insert/delete line */
-    case 'Q':			/* NOT VT52. My own additions. Attributes... */
+    case 'L':			/* insert line */
+	ScrollDown(C, 0, C->cy, MaxCol, MaxRow);
+	break;
+    case 'M':			/* remove line */
+	ScrollUp(C, 0, C->cy, MaxCol, MaxRow);
+	break;
+    case '/':			/* Remove echo for identify response */
     case 'Y':			/* cursor move */
 	C->tmp = c;
-	C->fsm = esc_PQY;
+	C->fsm = esc_YS;
 	break;
-
-#if 0
-    case 'Z':			/* identify */
-    /* Problem here */
-	AddQueue(27);
-	AddQueue('Z');
-	break;
-#endif
-#ifdef CONFIG_DCON_ANSI
-    case '[':			/* Ansi command */
-	C->parmptr = C->params;
-	C->fsm = AnsiCmd;
-	break;
-#endif
+    case 'Z':			/* identify as VT52 */
+	AddQueue(ESC);
+	AddQueue('/');
+	AddQueue('K');
     }
 }
 #endif
@@ -396,42 +385,50 @@ static void esc_char(register Console * C, char c)
 /* Normal character processing */
 static void std_char(register Console * C, char c)
 {
-    unsigned int offset;
-
-    switch (c) {
+    switch(c) {
     case BEL:
 	bell();
-	return;
-    case ESC:
-#if defined (CONFIG_DCON_VT52) || defined (CONFIG_DCON_ANSI)
-	C->fsm = esc_char;
-#endif
-	return;
-    case BS:
+	break;
+    case '\b':
 	if (C->cx > 0) {
 	    --C->cx;
 	    VideoWrite(C, ' ');
 	}
-	return;
-    case NL:
+	break;
+    case '\t':
+	C->cx = (C->cx | 0x07) + 1;
+	goto linewrap;
+    case '\n':
 	++C->cy;
 	break;
-    case CR:
+    case '\r':
 	C->cx = 0;
 	break;
+
+#if defined (CONFIG_DCON_VT52) || defined (CONFIG_DCON_ANSI)
+    case ESC:
+	C->fsm = esc_char;
+	break;
+#endif
+
     default:
 	VideoWrite(C, c);
 	C->cx++;
-    }
+      linewrap:
+	if(C->cx > MaxCol) {
 
-    /* autowrap and/or scroll */
-    if (C->cx > MaxCol) {
-	C->cx = 0;
-	C->cy++;
+#ifdef CONFIG_DCON_VT52
+	    C->cx = MaxCol;
+#else
+	    C->cx = 0;
+	    C->cy++;
+#endif
+
+	}
     }
     if (C->cy > MaxRow) {
 	ScrollUp(C, 0, 0, MaxCol, MaxRow);
-	C->cy--;
+	C->cy = MaxRow;
     }
 }
 
@@ -529,8 +526,6 @@ int Console_open(register struct tty *tty)
     return (tty->minor >= NumConsoles) ? -ENODEV : 0;
 }
 
-/*@-type@*/
-
 struct tty_ops dircon_ops = {
     Console_open,
     Console_release,
@@ -538,8 +533,6 @@ struct tty_ops dircon_ops = {
     NULL,
     Console_ioctl,
 };
-
-/*@+type@*/
 
 void init_console(void)
 {
@@ -565,6 +558,10 @@ void init_console(void)
 
     for (pi = 0; ((unsigned int)pi) < NumConsoles; pi++) {
 	C->cx = C->cy = 0;
+	if(!pi) {
+	    C->cx = peekb(0x40, 0x50);
+	    C->cy = peekb(0x40, 0x51);
+	}
 	C->fsm = std_char;
 	C->vseg = VideoSeg;
 	C->pageno = (int) pi;
@@ -576,26 +573,13 @@ void init_console(void)
 
 #endif
 
+	ClearRange(C, C->cx, C->cy, MaxCol, MaxRow);
 	C++;
 	VideoSeg += (PageSize >> 4);
     }
 
-    C = Con;
-    C->cx = peekb(0x40, 0x50);
-    C->cy = peekb(0x40, 0x51);
-    ClearRange(C, C->cx, C->cy, MaxCol, MaxRow);
-
-#ifdef CONFIG_DCON_VT52
-
-    printk("Console: Direct %ux%u emulating vt52 (%u virtual consoles)\n",
+    printk("Console: Direct %ux%u"TERM_TYPE"(%u virtual consoles)\n",
 	   Width, Height, NumConsoles);
-
-#else
-
-    printk("Console: Direct %ux%u dumb (%u virtual consoles)\n",
-	   Width, Height, NumConsoles);
-
-#endif
 }
 
 #endif

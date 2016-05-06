@@ -103,14 +103,18 @@ fixcon()
     }
 }
 
+#if NOTYET
+static char buffer[6], *cp;
+static int npc = 0;
+#endif
+
 getKey()
 {
-    static char functioncode[] = {
-	'l', 'h', 'k', 'j',
-    };
-    static char buffer[6], *cp;
-    static int npc = 0;
     unsigned char c;
+#if NOTYET
+    static char functioncode[] = {
+	12, 8, 11, 10,
+    };
     unsigned char *p, *q;
     int i;
 
@@ -120,7 +124,9 @@ getKey()
 	    npc = 0;
 	return c;
     }
+#endif
     read(0, &c, 1);
+#if NOTYET
     if(c == '\033') {	/* (single character) function key lead-in */
 	cp = buffer;
 	*cp++ = c;
@@ -143,18 +149,19 @@ getKey()
 	    if(*q == '\000')
 		break;
 	}
-	if(*q == '\000') {
+	if(functionkeys[i] == NULL) {
+	    npc = 1;
+	    cp = buffer;
+	    c = *cp++;
+	}
+	else {
 	    if(c != '\000') {
 		npc = 1;
 		cp = p;
 	    }
 	    c = functioncode[i];
 	}
-	else {
-	    npc = 1;
-	    cp = buffer;
-	    c = *cp++;
-	}
     }
+#endif
     return c;
 }

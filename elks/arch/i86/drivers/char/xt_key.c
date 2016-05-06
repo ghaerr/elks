@@ -188,8 +188,12 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
     case 0x80:
 	if((int)keyp_E0) {		/* Is extended scancode? */	/*[ E0 ]*/
 	    mode &= 0x3F;
-	    if(mode)
+	    if(mode) {
 		AddQueue(ESC);
+#ifdef CONFIG_DCON_ANSI
+		AddQueue('[');
+#endif
+	    }
 	    AddQueue(mode + 0x0A);
 	    return;
 	}
