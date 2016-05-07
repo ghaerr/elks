@@ -342,10 +342,8 @@ smin_rfs: all
 net_rfs:
 
 elvis: $(OBJS) $(EXTRA) $(EXTRA2)
-
-
-#	$(CC) -s $(CFLAGS) $(OF)elvis $(OBJS) $(EXTRA) $(EXTRA2) $(LIBS)
-#	$(CHMEM)
+	$(CC) -s $(CFLAGS) $(OF)elvis $(OBJS) $(EXTRA) $(EXTRA2) $(LIBS)
+	$(CHMEM)
 
 ctags: ctags.c
 	$(CC) $(CFLAGS) $(SORT) $(OF)ctags ctags.c
