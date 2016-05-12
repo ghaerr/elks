@@ -9,6 +9,8 @@
  *	2 of the License, or (at your option) any later version.
  */
 
+#define __KERNEL__
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
