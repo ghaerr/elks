@@ -350,20 +350,16 @@ void tty_init(void)
 	ttyp++;
     }
 
+#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
+
+    ttyp = ttys;
+    for (pi = 0 ; ((int)pi) < 4 ; pi++) {
 #ifdef CONFIG_CONSOLE_BIOS
-
-    ttyp = ttys;
-    ttyp->ops = &bioscon_ops;
-    ttyp->minor = 0;
-
-#endif
-
-#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT)
-
-    ttyp = ttys;
-    chq_init(&ttyp->inq, ttyp->inq_buf, INQ_SIZE);
-    for (pi = 0 ; ((int)pi) < NUM_TTYS ; pi++) {
+	ttyp->ops = &bioscon_ops;
+#else
 	ttyp->ops = &dircon_ops;
+#endif
+	chq_init(&ttyp->inq, ttyp->inq_buf, INQ_SIZE);
 	(ttyp++)->minor = (int)pi;
     }
 

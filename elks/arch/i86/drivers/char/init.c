@@ -10,6 +10,9 @@ void chr_dev_init(void)
 #ifdef CONFIG_CHAR_DEV_LP
     lp_init();
 #endif
+#ifdef CONFIG_CONSOLE_BIOS
+    xtk_init();
+#endif
 #ifdef CONFIG_CONSOLE_DIRECT
 #if 0
     xtk_init();
