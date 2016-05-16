@@ -190,7 +190,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	    mode &= 0x3F;
 	    if(mode) {
 		AddQueue(ESC);
-#ifdef CONFIG_DCON_ANSI
+#ifdef CONFIG_EMUL_ANSI
 		AddQueue('[');
 #endif
 	    }

@@ -375,16 +375,16 @@ CONFIG_CONSOLE_DIRECT
   available for ELKS.
 
 Direct console VT52 emulation
-CONFIG_DCON_VT52
+CONFIG_EMUL_VT52
   Saying no removes some of the intelligent features from the console 
   code leaving a dumb text console which is much smaller.
 
 Direct console ANSI emulation
-CONFIG_DCON_ANSI
+CONFIG_EMUL_ANSI
   Provide direct console support for ANSI (VT-102) terminals.
 
 Use ANSI codes in printk()
-CONFIG_DCON_ANSI_PRINTK
+CONFIG_EMUL_ANSI_PRINTK
   When the kernel reports something using printk(), the reports will
   be coloured.
 
@@ -393,11 +393,6 @@ CONFIG_DCON_ANSI_PRINTK
 BIOS console writes
 CONFIG_CONSOLE_BIOS
   The newly implemented BIOS based console driver.
-
-BIOS console VT-52 emulation
-CONFIG_BIOS_VT52
-  This enables the use of VT-52 codes when using the BIOS console
-  driver.
 
 Serial console writes
 CONFIG_CONSOLE_SERIAL

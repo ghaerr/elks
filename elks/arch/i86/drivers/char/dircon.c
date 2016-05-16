@@ -67,10 +67,10 @@ struct console {
     unsigned int vseg;		/* video segment for page */
     int pageno;			/* video ram page # */
     unsigned char attr;		/* current attribute */
-#ifdef CONFIG_DCON_VT52
+#ifdef CONFIG_EMUL_VT52
     unsigned char tmp;		/* ESC Y ch save */
 #endif
-#ifdef CONFIG_DCON_ANSI
+#ifdef CONFIG_EMUL_ANSI
     int savex, savey;		/* saved cursor position */
     unsigned char *parmptr;	/* ptr to params */
     unsigned char params[MAXPARMS];	/* ANSI params */
@@ -89,9 +89,9 @@ static unsigned short int NumConsoles = MAX_CONSOLES;
 extern int Current_VCminor;
 extern int kraw;
 
-#ifdef CONFIG_DCON_ANSI
+#ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "
-#elif CONFIG_DCON_VT52
+#elif CONFIG_EMUL_VT52
 #define TERM_TYPE " emulating vt52 "
 #else
 #define TERM_TYPE " dumb "
@@ -149,7 +149,7 @@ static void ScrollUp(register Console * C, int y)
     ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
-#if defined (CONFIG_DCON_VT52) || defined (CONFIG_DCON_ANSI)
+#if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
 static void ScrollDown(register Console * C, int y)
 {
     register __u16 *vp;
@@ -161,7 +161,7 @@ static void ScrollDown(register Console * C, int y)
 }
 #endif
 
-#if defined (CONFIG_DCON_VT52) || defined (CONFIG_DCON_ANSI)
+#if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
 static void Console_gotoxy(register Console * C, int x, int y)
 {
     register char *xp = (char *)x;
@@ -172,7 +172,7 @@ static void Console_gotoxy(register Console * C, int x, int y)
 }
 #endif
 
-#ifdef CONFIG_DCON_ANSI
+#ifdef CONFIG_EMUL_ANSI
 static int parm1(register unsigned char *buf)
 {
     register char *np;
@@ -304,7 +304,7 @@ static void esc_char(register Console * C, char c)
 }
 #endif
 
-#ifdef CONFIG_DCON_VT52
+#ifdef CONFIG_EMUL_VT52
 static void esc_Y2(register Console * C, char c)
 {
     Console_gotoxy(C, c - ' ', C->tmp);
@@ -404,7 +404,7 @@ static void std_char(register Console * C, char c)
 	C->cx = 0;
 	break;
 
-#if defined (CONFIG_DCON_VT52) || defined (CONFIG_DCON_ANSI)
+#if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
     case ESC:
 	C->fsm = esc_char;
 	break;
@@ -416,7 +416,7 @@ static void std_char(register Console * C, char c)
       linewrap:
 	if(C->cx > MaxCol) {
 
-#ifdef CONFIG_DCON_VT52
+#ifdef CONFIG_EMUL_VT52
 	    C->cx = MaxCol;
 #else
 	    C->cx = 0;
@@ -567,7 +567,7 @@ void init_console(void)
 	C->pageno = (int) pi;
 	C->attr = A_DEFAULT;
 
-#ifdef CONFIG_DCON_ANSI
+#ifdef CONFIG_EMUL_ANSI
 
 	C->savex = C->savey = 0;
 
