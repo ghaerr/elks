@@ -15,15 +15,23 @@
  * hardcoded at present.)
  */
 
-#define NR_PTYS		4
-
-/* This value is a bit of a problem because ntty.c hard-codes some
- * array indices that go up as high as 8 + NR_PTYS (below). */
 #ifdef CONFIG_PSEUDO_TTY
-#define NUM_TTYS	6/*8+NR_PTYS*/ /* FIXME: For the time being, will leave as before */
+#define NR_PTYS		4
 #else
-#define NUM_TTYS	6
+#define NR_PTYS		0
 #endif
+
+#ifdef CONFIG_CHAR_DEV_RS
+ #ifdef CONFIG_PSEUDO_TTY
+ #define NR_SERIAL	4
+ #else
+ #define NR_SERIAL	2
+ #endif
+#else
+#define NR_SERIAL	0
+#endif
+
+#define NUM_TTYS	4+NR_SERIAL+NR_PTYS
 
 #define DCGET_GRAPH	(('D'<<8)+0x01)
 #define DCREL_GRAPH	(('D'<<8)+0x02)

@@ -12,6 +12,8 @@
 
 #include <arch/io.h>
 
+#ifdef CONFIG_CHAR_DEV_RS
+
 extern struct tty ttys[];
 
 struct serial_info {
@@ -428,3 +430,5 @@ struct tty_ops rs_ops = {
     NULL,
     rs_ioctl
 };
+
+#endif

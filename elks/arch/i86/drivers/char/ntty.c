@@ -368,7 +368,7 @@ void tty_init(void)
 #ifdef CONFIG_CHAR_DEV_RS
 
     ttyp = &ttys[4];
-    for (pi = (char *)4; ((int)pi) < 8; pi++) {
+    for (pi = (char *)4; ((int)pi) < 4+NR_SERIAL; pi++) {
 	ttyp->ops = &rs_ops;
 	(ttyp++)->minor = ((int)pi) + 60;
     }
@@ -377,8 +377,8 @@ void tty_init(void)
 
 #ifdef CONFIG_PSEUDO_TTY
 
-    ttyp = &ttys[8];
-    for (pi = (char *)8; ((int)pi) < 8 + NR_PTYS; pi++) {
+    ttyp = &ttys[4+NR_SERIAL];
+    for (pi = 4+(char *)NR_SERIAL; ((int)pi) < 4+NR_SERIAL+NR_PTYS; pi++) {
 	ttyp->ops = &ttyp_ops;
 	(ttyp++)->minor = (int)pi;
     }

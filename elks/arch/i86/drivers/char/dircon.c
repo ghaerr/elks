@@ -573,7 +573,7 @@ void init_console(void)
 
 #endif
 
-	ClearRange(C, C->cx, C->cy, MaxCol, MaxRow);
+	ClearRange(C, 0, C->cy, MaxCol, MaxRow);
 	C++;
 	VideoSeg += (PageSize >> 4);
     }
