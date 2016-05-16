@@ -118,14 +118,23 @@ static void AddQueue(unsigned char Key)
 
 static void kbd_timer(int __data);
 /*
- * Start Bios Keyboard. Restart timer
+ * Restart timer
  */
-void xtk_init(void)
+static void restart_timer(void)
 {
     init_timer(&timer);
     timer.tl_expires = jiffies + 8;
     timer.tl_function = kbd_timer;
     add_timer(&timer);
+}
+
+/*
+ * Start Bios Keyboard.
+ */
+void xtk_init(void)
+{
+    enable_irq(1);		/* enable BIOS Keyboard interrupts */
+    restart_timer();
 }
 
 /*
@@ -141,20 +150,21 @@ static void kbd_timer(int __data)
     pokew(0xB800, (79+0*80)*2, clk[(c++)&0x03]);
 #endif
 #asm
+    jmp		nhp
+savekey:
+    xor		ah,ah
+    int		0x16
+    push	ax
+    call	_AddQueue
+    add		sp,#2
+nhp:
     mov		ah, #0x01
     int		0x16
     xor		ah,ah
-    mov		[bp + .kbd_timer.dav],ax
+    cmp		al,#6
+    jge		savekey
 #endasm
-    if(dav > 6) {
-#asm
-    mov		ah, #0x0
-    int		0x16
-    mov		[bp + .kbd_timer.dav],ax
-#endasm
-	AddQueue((unsigned char)dav);
-    }
-    xtk_init();
+    restart_timer();
 }
 
 /*

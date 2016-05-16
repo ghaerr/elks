@@ -14,10 +14,9 @@ void chr_dev_init(void)
     xtk_init();
 #endif
 #ifdef CONFIG_CONSOLE_DIRECT
-#if 0
+#ifndef CONFIG_ARCH_SIBO
     xtk_init();
-#endif
-#ifdef CONFIG_ARCH_SIBO
+#else
     KeyboardInit();
 #endif
 #endif

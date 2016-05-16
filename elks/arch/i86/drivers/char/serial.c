@@ -12,7 +12,7 @@
 
 #include <arch/io.h>
 
-#ifdef CONFIG_CHAR_DEV_RS
+#if defined (CONFIG_CHAR_DEV_RS) || defined (CONFIG_CONSOLE_SERIAL)
 
 extern struct tty ttys[];
 
@@ -57,7 +57,9 @@ static struct serial_info ports[4] = {
     {(char *)0x2e8, 2, 0, DEFAULT_LCR, DEFAULT_MCR, NULL},
 };
 
-static unsigned int divisors[16] = {
+static char irq_port[4] = { 3, 1, 0, 2 };
+
+static unsigned int divisors[] = {
     0,				/*  0 = B0      */
     2304,			/*  1 = B50     */
     1536,			/*  2 = B75     */
@@ -73,38 +75,97 @@ static unsigned int divisors[16] = {
     24,				/* 12 = B4800   */
     12,				/* 13 = B9600   */
     6,				/* 14 = B19200  */
-    3				/* 15 = B38400  */
+    3,				/* 15 = B38400  */
+    2,				/* 16 = B57600  */
+    1,				/* 17 = B115200 */
+    0				/*  0 = B230400 */
 };
 
 /* Flow control buffer markers */
 #define	RS_IALLMOSTFULL 	(3 * INQ_SIZE / 4)
 #define	RS_IALLMOSTEMPTY	(    INQ_SIZE / 4)
 
-#ifdef CONFIG_CONSOLE_SERIAL
-
-void console_setdefault(register struct serial_info *port)
+static int rs_probe(register struct serial_info *sp)
 {
-    register struct tty *tty = port->tty;
+    int status1, status2;
+    register char *scratch;
 
-    memcpy((void *) &(tty->termios), &def_vals, sizeof(struct termios));
+    inb(sp->io + UART_IER);
+    outb_p(0, sp->io + UART_IER);
+    scratch = (char *)inb_p(sp->io + UART_IER);
+    outb_p((unsigned char)scratch, sp->io + UART_IER);
+    if ((unsigned char)scratch)
+	return -1;
+
+    /* this code is weird, IMO */
+    scratch = (char *)inb_p(sp->io + UART_LCR);
+    outb_p((unsigned char)scratch | UART_LCR_DLAB, sp->io + UART_LCR);
+    outb_p(0, sp->io + UART_EFR);
+    outb_p((unsigned char)scratch, sp->io + UART_LCR);
+
+    outb_p(UART_FCR_ENABLE_FIFO, sp->io + UART_FCR);
+
+    /* upper two bits of IIR define UART type, but according to both RB's
+     * intlist and HelpPC this code is wrong, see comments marked with [*]
+     */
+    scratch = (char *)(inb_p(sp->io + UART_IIR) >> 6);
+    switch ((unsigned char)scratch) {
+    case 0:
+	sp->flags = (unsigned char) (SERF_EXIST | ST_16450);
+	break;
+    case 1:			/* [*] this denotes broken 16550 UART,
+				 * not 16550A or any newer type */
+	sp->flags = (unsigned char) (ST_UNKNOWN);
+	break;
+    case 2:			/* invalid combination */
+    case 3:			/* Could be a 16650.. we dont care */
+	/* [*] 16550A or newer with enabled FIFO buffers
+	 */
+	sp->flags = (unsigned char) (SERF_EXIST | ST_16550);
+	break;
+    }
+
+    /* 8250 UART if scratch register isn't present */
+    if (!(unsigned char)scratch) {
+	scratch = (char *)inb_p(sp->io + UART_SCR);
+	outb_p(0xA5, sp->io + UART_SCR);
+	status1 = inb_p(sp->io + UART_SCR);
+	outb_p(0x5A, sp->io + UART_SCR);
+	status2 = inb_p(sp->io + UART_SCR);
+	outb_p((unsigned char)scratch, sp->io + UART_SCR);
+	if ((status1 != 0xA5) || (status2 != 0x5A))
+	    sp->flags = (unsigned char) (SERF_EXIST | ST_8250);
+    }
+
+    /*
+     *      Reset the chip
+     */
+
+    outb_p(0x00, sp->io + UART_MCR);
+
+    /* clear RX and TX FIFOs */
+    outb_p((unsigned char) (UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT),
+			sp->io + UART_FCR);
+
+    /* clear RX register */
+    scratch = (char *) MAX_RX_BUFFER_SIZE;
+    do {
+	inb_p(sp->io + UART_RX);
+    } while (--scratch && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
+
+    return 0;
 }
 
-#endif
-
-void update_port(register struct serial_info *port)
+static void update_port(register struct serial_info *port)
 {
     tcflag_t cflags;
     unsigned divisor;
 
     /* set baud rate divisor, first lower, then higher byte */
     cflags = port->tty->termios.c_cflag & CBAUD;
-    divisor = divisors[cflags & 017];
-
-    /* Support for this additional bauds */
-    if (cflags == B57600)
-	divisor = 2;
-    if (cflags == B115200)
-	divisor = 1;
+    if(cflags & CBAUDEX)
+	cflags = B38400 + cflags & 03;
+    divisor = divisors[cflags];
 
     clr_irq();
 
@@ -112,8 +173,8 @@ void update_port(register struct serial_info *port)
     outb_p(port->lcr | UART_LCR_DLAB, port->io + UART_LCR);
 
     /* Set the divisor low and high byte */
-    outb_p(divisor & 0xff, port->io + UART_DLL);
-    outb_p((divisor >> 8) & 0xff, port->io + UART_DLM);
+    outb_p((unsigned char)divisor, port->io + UART_DLL);
+    outb_p((unsigned char)(divisor >> 8), port->io + UART_DLM);
 
     /* Clear the divisor latch bit */
     outb_p(port->lcr, port->io + UART_LCR);
@@ -121,9 +182,46 @@ void update_port(register struct serial_info *port)
     set_irq();
 }
 
-static char irq_port[4] = { 3, 1, 0, 2 };
+static void receive_chars(register struct serial_info *sp)
+{
+    register struct ch_queue *q;
+    int size;
+    unsigned char ch;
 
-void rs_release(struct tty *tty)
+    q = &sp->tty->inq;
+    size = q->size - 1;
+    do {
+	ch = inb_p(sp->io + UART_RX);
+	if (!tty_intcheck(sp->tty, ch)) {
+	    if (q->len == size)
+		break;
+	    q->buf[(q->tail + q->len) & size] = (char) ch;
+	    q->len++;
+	}
+    } while (inb_p(sp->io + UART_LSR) & UART_LSR_DR);
+    wake_up(&q->wq);
+}
+
+void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
+{
+    register struct serial_info *sp;
+    register char *statusp;
+
+
+    debug1("SERIAL: Interrupt %d recieved.\n", irq);
+    sp = &ports[(int)irq_port[irq - 2]];
+    do {
+	statusp = (char *)inb_p(sp->io + UART_LSR);
+	if ((int)statusp & UART_LSR_DR)
+	    receive_chars(sp);
+#if 0
+	if (((int)statusp) & UART_LSR_THRE)
+	    transmit_chars(sp);
+#endif
+    } while (!(inb_p(sp->io + UART_IIR) & UART_IIR_NO_INT));
+}
+
+static void rs_release(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
 
@@ -132,13 +230,7 @@ void rs_release(struct tty *tty)
     outb_p(0, port->io + UART_IER);
 }
 
-static int get_serial_info(struct serial_info *info,
-			   struct serial_info *ret_info)
-{
-    return verified_memcpy_tofs(ret_info, info, sizeof(struct serial_info));
-}
-
-int rs_open(struct tty *tty)
+static int rs_open(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
     register char *countp;
@@ -205,23 +297,13 @@ static int set_serial_info(struct serial_info *info,
     return (int) errp;
 }
 
-int rs_write(register struct tty *tty)
+static int get_serial_info(struct serial_info *info,
+			   struct serial_info *ret_info)
 {
-    register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
-    unsigned char ch;
-    int i;
-
-    i = 0;
-    while (chq_getch(&tty->outq, &ch, 0) != -1) {
-	do {	/* Do nothing */
-	} while(!(inb_p(port->io + UART_LSR) & UART_LSR_TEMT));
-	outb(ch, port->io + UART_TX);
-	i++;
-    }
-    return i;
+    return verified_memcpy_tofs(ret_info, info, sizeof(struct serial_info));
 }
 
-int rs_ioctl(struct tty *tty, int cmd, char *arg)
+static int rs_ioctl(struct tty *tty, int cmd, char *arg)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
     register char *retvalp = 0;
@@ -247,116 +329,20 @@ int rs_ioctl(struct tty *tty, int cmd, char *arg)
     return (int) retvalp;
 }
 
-void receive_chars(register struct serial_info *sp)
+static int rs_write(struct tty *tty)
 {
-    register struct ch_queue *q;
-    int size;
+    register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
     unsigned char ch;
+    register char *i;
 
-    q = &sp->tty->inq;
-    size = q->size - 1;
-    do {
-	ch = inb_p(sp->io + UART_RX);
-	if (!tty_intcheck(sp->tty, ch)) {
-	    if (q->len == size)
-		break;
-	    q->buf[(q->tail + q->len) & size] = (char) ch;
-	    q->len++;
-	}
-    } while (inb_p(sp->io + UART_LSR) & UART_LSR_DR);
-    wake_up(&q->wq);
-}
-
-void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
-{
-    register struct serial_info *sp;
-    register char *statusp;
-
-
-    debug1("SERIAL: Interrupt %d recieved.\n", irq);
-    sp = &ports[(int)irq_port[irq - 2]];
-    do {
-	statusp = (char *)inb_p(sp->io + UART_LSR);
-	if ((int)statusp & UART_LSR_DR)
-	    receive_chars(sp);
-#if 0
-	if (((int)statusp) & UART_LSR_THRE)
-	    transmit_chars(sp);
-#endif
-    } while (!(inb_p(sp->io + UART_IIR) & UART_IIR_NO_INT));
-}
-
-int rs_probe(register struct serial_info *sp)
-{
-    int status1, status2;
-    unsigned char scratch;
-
-    scratch = inb(sp->io + UART_IER);
-    outb_p(0, sp->io + UART_IER);
-    scratch = inb_p(sp->io + UART_IER);
-    outb_p(scratch, sp->io + UART_IER);
-    if (scratch)
-	return -1;
-
-    /* this code is weird, IMO */
-    scratch = inb_p(sp->io + UART_LCR);
-    outb_p(scratch | UART_LCR_DLAB, sp->io + UART_LCR);
-    outb_p(0, sp->io + UART_EFR);
-    outb_p(scratch, sp->io + UART_LCR);
-
-    outb_p(UART_FCR_ENABLE_FIFO, sp->io + UART_FCR);
-
-    /* upper two bits of IIR define UART type, but according to both RB's
-     * intlist and HelpPC this code is wrong, see comments marked with [*]
-     */
-    scratch = inb_p(sp->io + UART_IIR) >> 6;
-    switch (scratch) {
-    case 0:
-	sp->flags = (unsigned char) (SERF_EXIST | ST_16450);
-	break;
-    case 1:			/* [*] this denotes broken 16550 UART,
-				 * not 16550A or any newer type */
-	sp->flags = (unsigned char) (ST_UNKNOWN);
-	break;
-    case 2:			/* invalid combination */
-    case 3:			/* Could be a 16650.. we dont care */
-	/* [*] 16550A or newer with enabled FIFO buffers
-	 */
-	sp->flags = (unsigned char) (SERF_EXIST | ST_16550);
-	break;
+    i = 0;
+    while (chq_getch(&tty->outq, &ch, 0) != -1) {
+	do {	/* Do nothing */
+	} while(!(inb_p(port->io + UART_LSR) & UART_LSR_TEMT));
+	outb(ch, port->io + UART_TX);
+	i++;
     }
-
-    /* 8250 UART if scratch register isn't present */
-    if (!scratch) {
-	scratch = inb_p(sp->io + UART_SCR);
-	outb_p(0xA5, sp->io + UART_SCR);
-	status1 = inb_p(sp->io + UART_SCR);
-	outb_p(0x5A, sp->io + UART_SCR);
-	status2 = inb_p(sp->io + UART_SCR);
-	outb_p(scratch, sp->io + UART_SCR);
-	if ((status1 != 0xA5) || (status2 != 0x5A))
-	    sp->flags = (unsigned char) (SERF_EXIST | ST_8250);
-    }
-
-    /*
-     *      Reset the chip
-     */
-
-    outb_p(0x00, sp->io + UART_MCR);
-
-    /* clear RX and TX FIFOs */
-    outb_p((unsigned char) (UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT),
-			sp->io + UART_FCR);
-
-    /* clear RX register */
-    {
-	register char *countp = (char *) MAX_RX_BUFFER_SIZE;
-	do {
-	    inb_p(sp->io + UART_RX);
-	} while (--countp && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
-    }
-
-    return 0;
+    return (int)i;
 }
 
 int rs_init(void)
@@ -373,23 +359,17 @@ int rs_init(void)
     printk("Serial driver version 0.02\n");
     do {
 	if((sp->tty != NULL) || (!rs_probe(sp) && !request_irq(sp->irq, rs_irq, NULL))) {
-	    printk("ttyS%d at 0x%x (irq = %d) is a%s", ttyno,
-		       sp->io, sp->irq, serial_type[sp->flags & 0x3]);
-	    if(sp->tty != NULL) {
-	    /*
-	     * if rs_init is called twice, because of serial console
-	     */
-		printk(", fetched");
-		ttyno++;
-	    }
-	    else {
-		sp->tty = &ttys[4 + ttyno++];
+	    printk("ttyS%d at 0x%x (irq = %d) is a%s%s\n", ttyno,
+		       sp->io, sp->irq, serial_type[sp->flags & 0x3],
+		       (sp->tty != NULL ? ", fetched" : ""));
+	    if(sp->tty == NULL) {
+		sp->tty = &ttys[4 + ttyno];
 		update_port(sp);
 #if 0
 		outb_p(? ? ? ?, sp->io + UART_MCR);
 #endif
 	    }
-	    printk("\n");
+	    ttyno++;
 	}
     } while(++sp < &ports[4]);
     return 0;
@@ -398,6 +378,13 @@ int rs_init(void)
 #ifdef CONFIG_CONSOLE_SERIAL
 
 static int con_init = 0;
+
+static void console_setdefault(register struct serial_info *port)
+{
+    register struct tty *tty = port->tty;
+
+    memcpy((void *) &(tty->termios), &def_vals, sizeof(struct termios));
+}
 
 void init_console(void)
 {
