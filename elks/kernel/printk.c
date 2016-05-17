@@ -40,7 +40,7 @@ extern void con_charout(char);
 
 static void kputs(register char *buf)
 {
-#ifdef CONFIG_DCON_ANSI_PRINTK
+#ifdef CONFIG_EMUL_ANSI_PRINTK
 
     char *p;
 

@@ -116,7 +116,10 @@ void AddQueue(unsigned char Key)
 
 void xtk_init(void)
 {
-    /* Do nothing */;
+    /* Set off the initial keyboard interrupt handler */
+
+    if (request_irq(1, keyboard_irq, NULL))
+	panic("Unable to get keyboard");
 }
 
 /*
@@ -133,9 +136,9 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
     register char *IsReleasep;
 
     code = inb_p((void *) KBD_IO);
-    mode = inb_p((void *) KBD_CTL);
 
     /* Necessary for the XT. */
+    mode = inb_p((void *) KBD_CTL);
     outb_p((unsigned char) (mode | 0x80), (void *) KBD_CTL);
     outb_p((unsigned char) mode, (void *) KBD_CTL);
 
@@ -153,6 +156,13 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
     }
     IsReleasep = (char *)(code & 0x80);
     code &= 0x7F;
+    /*
+     * Clasify scancode such that
+     *  mode = 00xx xxxxB, Status key
+     *         01xx xxxxB, Function key
+     *         10xx xxxxB, Control key
+     *         11xx xxxxB, Simple Scan Code
+     */
     mode = (code >= 0x1C) ? tb_state[code - 0x1C] : SSC;
 
     /* --------------Process status keys-------------- */
@@ -190,7 +200,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	    mode &= 0x3F;
 	    if(mode) {
 		AddQueue(ESC);
-#ifdef CONFIG_DCON_ANSI
+#ifdef CONFIG_EMUL_ANSI
 		AddQueue('[');
 #endif
 	    }
@@ -211,12 +221,12 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	mode = state_code[mode];
 	if(!mode && (ModeState & ALT_GR))
 	    mode = 3;
-	keyp_E0 = (char *)(*(scan_tabs[mode] + code));	/*[ keyp ]*/
 
-	if (ModeState & CTRL && code < 14 && !(ModeState & ALT))
-	    keyp_E0 = (char *) xtkb_scan_shifted[code];	/*[ keyp ]*/
-	if (code < 70 && ModeState & NUM)
-	    keyp_E0 = (char *) xtkb_scan_shifted[code];	/*[ keyp ]*/
+	if((ModeState & CTRL && code < 14 && !(ModeState & ALT))
+		|| (code < 70 && ModeState & NUM))
+	    mode = 1;
+
+	keyp_E0 = (char *)(*(scan_tabs[mode] + code));	/*[ keyp ]*/
     /*
      *      Apply special modifiers
      */

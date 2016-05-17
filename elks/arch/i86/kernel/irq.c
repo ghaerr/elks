@@ -56,7 +56,7 @@ unsigned char cache_21 = 0xff, cache_A1 = 0xff;
 /*
  *	Low level interrupt handling for the SIBO platform
  */
- 
+
 void disable_irq(unsigned int irq)
 {
     /* Not supported on SIBO */
@@ -78,7 +78,7 @@ static int remap_irq(unsigned int irq)
  *	Low level interrupt handling for the X86 PC/XT and PC/AT
  *	platform
  */
- 
+
 #if 0
 
 void disable_irq(unsigned int irq)
@@ -151,11 +151,11 @@ int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev
 {
     register struct irqaction *action;
     flag_t flags;
-	
+
     irq = remap_irq(irq);
     if (irq < 0)
 	return -EINVAL;
-		
+
     action = irq_action + irq;
     if (action->handler != default_handler)
 	return -EBUSY;
@@ -233,21 +233,8 @@ void init_IRQ(void)
 
 #ifndef CONFIG_ARCH_SIBO
 
-#ifdef CONFIG_CONSOLE_DIRECT
-
-    /* Set off the initial keyboard interrupt handler */
-
-    if (request_irq(1, keyboard_irq, NULL))
-	panic("Unable to get keyboard");
-
-#endif
-
     save_flags(flags);
     clr_irq();
-
-#ifndef CONFIG_CONSOLE_DIRECT
-    enable_irq(1);		/* BIOS Keyboard */
-#endif
 
     /* Enable the drop through interrupts. */
 

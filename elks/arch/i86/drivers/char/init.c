@@ -10,11 +10,13 @@ void chr_dev_init(void)
 #ifdef CONFIG_CHAR_DEV_LP
     lp_init();
 #endif
-#ifdef CONFIG_CONSOLE_DIRECT
-#if 0
+#ifdef CONFIG_CONSOLE_BIOS
     xtk_init();
 #endif
-#ifdef CONFIG_ARCH_SIBO
+#ifdef CONFIG_CONSOLE_DIRECT
+#ifndef CONFIG_ARCH_SIBO
+    xtk_init();
+#else
     KeyboardInit();
 #endif
 #endif

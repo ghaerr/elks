@@ -67,10 +67,10 @@ struct console {
     unsigned int vseg;		/* video segment for page */
     int pageno;			/* video ram page # */
     unsigned char attr;		/* current attribute */
-#ifdef CONFIG_DCON_VT52
+#ifdef CONFIG_EMUL_VT52
     unsigned char tmp;		/* ESC Y ch save */
 #endif
-#ifdef CONFIG_DCON_ANSI
+#ifdef CONFIG_EMUL_ANSI
     int savex, savey;		/* saved cursor position */
     unsigned char *parmptr;	/* ptr to params */
     unsigned char params[MAXPARMS];	/* ANSI params */
@@ -89,9 +89,9 @@ static unsigned short int NumConsoles = MAX_CONSOLES;
 extern int Current_VCminor;
 extern int kraw;
 
-#ifdef CONFIG_DCON_ANSI
+#ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "
-#elif CONFIG_DCON_VT52
+#elif CONFIG_EMUL_VT52
 #define TERM_TYPE " emulating vt52 "
 #else
 #define TERM_TYPE " dumb "
@@ -116,13 +116,11 @@ static void PositionCursor(register Console * C)
     register char *CCBasep = (char *) CCBase;
     int Pos;
 
-    if (C == Visible) {
-	Pos = C->cx + Width * C->cy + (C->pageno * PageSize >> 1);
-	outb(14, CCBasep);
-	outb((unsigned char) ((Pos >> 8) & 0xFF), CCBasep + 1);
-	outb(15, CCBasep);
-	outb((unsigned char) (Pos & 0xFF), CCBasep + 1);
-    }
+    Pos = C->cx + Width * C->cy + (C->pageno * PageSize >> 1);
+    outb(14, CCBasep);
+    outb((unsigned char) ((Pos >> 8) & 0xFF), CCBasep + 1);
+    outb(15, CCBasep);
+    outb((unsigned char) (Pos & 0xFF), CCBasep + 1);
 }
 
 static void VideoWrite(register Console * C, char c)
@@ -142,27 +140,28 @@ static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 	    pokew((__u16)C->vseg, (__u16)(vp++), (((__u16)C->attr << 8) | ' '));
 }
 
-static void ScrollUp(register Console * C, int x, int y, int xx, int yy)
+static void ScrollUp(register Console * C, int y)
 {
     register __u16 *vp;
 
-    for(vp = (__u16 *)((__u16)(x + y * Width) << 1); y < yy; y++, vp += Width)
-	fmemcpy((__u16)C->vseg, vp, (__u16)C->vseg, vp + Width, ((xx - x + 1) << 1));
-    ClearRange(C, x, yy, xx, yy);
+    for(vp = (__u16 *)((__u16)(y * Width) << 1); y < MaxRow; y++, vp += Width)
+	fmemcpy((__u16)C->vseg, vp, (__u16)C->vseg, vp + Width, (Width << 1));
+    ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
-#if defined (CONFIG_DCON_VT52) || defined (CONFIG_DCON_ANSI)
-static void ScrollDown(register Console * C, int x, int y, int xx, int yy)
+#if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
+static void ScrollDown(register Console * C, int y)
 {
     register __u16 *vp;
+    int yy = MaxRow;
 
-    for(vp = (__u16 *)((__u16)(x + yy * Width) << 1); y < yy; yy--, vp -= Width)
-	fmemcpy((__u16)C->vseg, vp, (__u16)C->vseg, vp - Width, ((xx - x + 1) << 1));
-    ClearRange(C, x, y, xx, y);
+    for(vp = (__u16 *)((__u16)(yy * Width) << 1); y < yy; yy--, vp -= Width)
+	fmemcpy((__u16)C->vseg, vp, (__u16)C->vseg, vp - Width, (Width << 1));
+    ClearRange(C, 0, y, MaxCol, y);
 }
 #endif
 
-#if defined (CONFIG_DCON_VT52) || defined (CONFIG_DCON_ANSI)
+#if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
 static void Console_gotoxy(register Console * C, int x, int y)
 {
     register char *xp = (char *)x;
@@ -173,7 +172,7 @@ static void Console_gotoxy(register Console * C, int x, int y)
 }
 #endif
 
-#ifdef CONFIG_DCON_ANSI
+#ifdef CONFIG_EMUL_ANSI
 static int parm1(register unsigned char *buf)
 {
     register char *np;
@@ -244,10 +243,10 @@ static void AnsiCmd(register Console * C, char c)
 	ClearRange(C, C->cx, C->cy, MaxCol, C->cy);
 	break;
     case 'L':			/* insert line */
-	ScrollDown(C, 0, C->cy, MaxCol, MaxRow);
+	ScrollDown(C, C->cy);
 	break;
     case 'M':			/* remove line */
-	ScrollUp(C, 0, C->cy, MaxCol, MaxRow);
+	ScrollUp(C, C->cy);
 	break;
     case 'm':			/* ansi color */
 	p = C->params;
@@ -305,7 +304,7 @@ static void esc_char(register Console * C, char c)
 }
 #endif
 
-#ifdef CONFIG_DCON_VT52
+#ifdef CONFIG_EMUL_VT52
 static void esc_Y2(register Console * C, char c)
 {
     Console_gotoxy(C, c - ' ', C->tmp);
@@ -336,7 +335,7 @@ static void esc_char(register Console * C, char c)
     switch (c) {
     case 'I':			/* linefeed reverse */
 	if (!C->cy) {
-	    ScrollDown(C, 0, 0, MaxCol, MaxRow);
+	    ScrollDown(C, 0);
 	    break;
 	}
     case 'A':			/* up */
@@ -364,10 +363,10 @@ static void esc_char(register Console * C, char c)
 	ClearRange(C, C->cx, C->cy, MaxCol, C->cy);
 	break;
     case 'L':			/* insert line */
-	ScrollDown(C, 0, C->cy, MaxCol, MaxRow);
+	ScrollDown(C, C->cy);
 	break;
     case 'M':			/* remove line */
-	ScrollUp(C, 0, C->cy, MaxCol, MaxRow);
+	ScrollUp(C, C->cy);
 	break;
     case '/':			/* Remove echo for identify response */
     case 'Y':			/* cursor move */
@@ -405,7 +404,7 @@ static void std_char(register Console * C, char c)
 	C->cx = 0;
 	break;
 
-#if defined (CONFIG_DCON_VT52) || defined (CONFIG_DCON_ANSI)
+#if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
     case ESC:
 	C->fsm = esc_char;
 	break;
@@ -417,7 +416,7 @@ static void std_char(register Console * C, char c)
       linewrap:
 	if(C->cx > MaxCol) {
 
-#ifdef CONFIG_DCON_VT52
+#ifdef CONFIG_EMUL_VT52
 	    C->cx = MaxCol;
 #else
 	    C->cx = 0;
@@ -427,12 +426,12 @@ static void std_char(register Console * C, char c)
 	}
     }
     if (C->cy > MaxRow) {
-	ScrollUp(C, 0, 0, MaxCol, MaxRow);
+	ScrollUp(C, 0);
 	C->cy = MaxRow;
     }
 }
 
-void WriteChar(register Console * C, char c)
+static void WriteChar(register Console * C, char c)
 {
     /* check for graphics lock */
     while (glock) {
@@ -468,7 +467,7 @@ void Console_set_vc(unsigned int N)
     Current_VCminor = (int) N;
 }
 
-int Console_ioctl(register struct tty *tty, int cmd, char *arg)
+static int Console_ioctl(register struct tty *tty, int cmd, char *arg)
 {
     switch (cmd) {
     case DCGET_GRAPH:
@@ -501,7 +500,7 @@ int Console_ioctl(register struct tty *tty, int cmd, char *arg)
     return -EINVAL;
 }
 
-int Console_write(register struct tty *tty)
+static int Console_write(register struct tty *tty)
 {
     register Console *C = &Con[tty->minor];
     int cnt = 0;
@@ -512,16 +511,17 @@ int Console_write(register struct tty *tty)
 	WriteChar(C, (char) ch);
 	cnt++;
     }
-    PositionCursor(C);
+    if(C == Visible)
+	PositionCursor(C);
     return cnt;
 }
 
-void Console_release(struct tty *tty)
+static void Console_release(struct tty *tty)
 {
 /* Do nothing */
 }
 
-int Console_open(register struct tty *tty)
+static int Console_open(register struct tty *tty)
 {
     return (tty->minor >= NumConsoles) ? -ENODEV : 0;
 }
@@ -567,13 +567,13 @@ void init_console(void)
 	C->pageno = (int) pi;
 	C->attr = A_DEFAULT;
 
-#ifdef CONFIG_DCON_ANSI
+#ifdef CONFIG_EMUL_ANSI
 
 	C->savex = C->savey = 0;
 
 #endif
 
-	ClearRange(C, C->cx, C->cy, MaxCol, MaxRow);
+	ClearRange(C, 0, C->cy, MaxCol, MaxRow);
 	C++;
 	VideoSeg += (PageSize >> 4);
     }
