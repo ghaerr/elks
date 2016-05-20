@@ -4,7 +4,7 @@
 # the currently available keyboard code sets when configuring ELKS.
 
 function codes() {
-    grep '^/\* Keymap:' keys-*.h | cut -d : -f 1,3,4 | tr : ' '
+    grep -a '^/\* Keymap:' keys-*.h | cut -d : -f 1,3,4 | tr : ' '
 }
 
 function process() {
