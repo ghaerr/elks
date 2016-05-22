@@ -25,7 +25,7 @@
  */
 
 #ifdef CONFIG_ROMCODE
- #define stashed_ds	[0]
+#define stashed_ds	[0]
 #else 
 	.extern stashed_ds
 #endif	

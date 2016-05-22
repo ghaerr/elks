@@ -20,7 +20,7 @@
  *  The segmentaddress is given by CONFIG_ROM_IRQ_DATA,
  *  the offset is constant per #define
  */
-   #define stashed_ds       [0]
+#define stashed_ds       [0]
 
 #else
 /*
