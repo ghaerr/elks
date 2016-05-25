@@ -39,7 +39,7 @@ if [ ! -e "./dev86" ]
 	then
 	echo "ERROR: You must copy or symlink 'dev86' to the root of the"
 	echo "       ELKS source tree. If you don't have dev86, you can obtain"
-	echo "       a copy at:       https://github.com/lkundrak/dev86"
+	echo "       a copy at:       https://github.com/jbruchon/dev86"
 	echo "Cannot build without dev86 in the source tree. Aborting."
 	exit 1
 fi
