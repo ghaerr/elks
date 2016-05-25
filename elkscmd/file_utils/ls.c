@@ -153,10 +153,9 @@ static void getfiles(char *name, struct stack *pstack, int flags)
 	if (valid) {
 	    *fullname = '\0';
 	    strcpy(fullname, name);
-	    if (!endslash)
-		strcat(fullname, "/");
+	    if (!endslash) strcat(fullname, "/");
 	    strcat(fullname, dp->d_name);
-	    pushstack(pstack,strdup(fullname));
+	    pushstack(pstack, strdup(fullname));
 	}
     }
     closedir(dirp);
@@ -394,6 +393,20 @@ static void setfmt(struct stack *pstack, int flags)
 }
 
 
+int not_dotdir(char *name)
+{
+	short len;
+	char *p;
+
+	len = strlen(name);
+	p = name + len - 2;
+	if (strcmp(p, "/.") == 0) return 0;
+	p--;
+	if (strcmp(p, "/..") == 0) return 0;
+	return 1;
+}
+
+
 int main(int argc, char **argv)
 {
     char  *cp;
@@ -484,7 +497,7 @@ int main(int argc, char **argv)
 	    is_dir = S_ISDIR(statbuf.st_mode);
 	    if (!is_dir || !recursive || (flags & LSF_LONG))
 		lsfile(name, &statbuf, flags);
-	    if (is_dir && recursive)
+	    if (is_dir && recursive && not_dotdir(name))
 		pushstack(&dirs, name);
 	    else
 		free(name);
