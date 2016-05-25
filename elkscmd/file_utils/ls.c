@@ -83,7 +83,7 @@ struct stack
     char **buf;
 };
 
-static int cols = 0, col = 0, reverse = 0;
+static int cols = 0, col = 0, reverse = 1;
 static char fmt[16] = "%s";
 
 static int namesort(const char **a, const char **b)
