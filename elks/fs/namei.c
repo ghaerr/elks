@@ -504,13 +504,16 @@ int __do_rmthing(char *pathname, int opnum)
 	    error = -ENOENT;
 	else {
 	    dirp = dir;
-	    if (!iop || !(op = (opnum) ? iop->unlink : iop->rmdir)) {
-		error = -EPERM;
-	    } else {
-/*		dirp->i_count++;
-		down(&dirp->i_sem);*/
-		return op(dirp, basename, namelen);
-/*		up(&dirp->i_sem);*/
+	    if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0) {
+		iop = dirp->i_op;
+		if (!iop || !(op = (opnum) ? iop->unlink : iop->rmdir)) {
+		    error = -EPERM;
+		} else {
+/*			dirp->i_count++;
+		    down(&dirp->i_sem);*/
+		    return op(dirp, basename, namelen);
+/*			up(&dirp->i_sem);*/
+		}
 	    }
 	}
 	iput(dirp);
