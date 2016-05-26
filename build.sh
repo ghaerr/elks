@@ -23,7 +23,7 @@ clean_exit () {
 	E="$1"
 	test -z $1 && E=0
 	if [ $E -eq 0 ]
-		then echo "Build terminated successfully."
+		then echo "Build script has terminated successfully."
 		else echo "Build script has terminated with error $E"
 	fi
 	exit $E
