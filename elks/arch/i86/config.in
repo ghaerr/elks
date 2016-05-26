@@ -138,6 +138,7 @@ mainmenu_option next_comment
 	    int 'Ticks for BogoMIPS (0 = check at boottime)'	CONFIG_BOGOMIPS 0
 	    bool 'Use int 13 for floppy count'			CONFIG_HW_USE_INT13_FOR_FLOPPY n
 	    bool 'Use int 13 for disk parameters'		CONFIG_HW_USE_INT13_FOR_DISKPARMS y
+	    bool 'Advanced Power Management support'		CONFIG_APM y
 	endmenu
     fi
 endmenu

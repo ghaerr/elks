@@ -283,6 +283,14 @@ CONFIG_HW_USE_INT13_FOR_DISKPARMS
 
   On the PC/XT this only works on Hard Drives.
 
+Advanced Power Management support
+CONFIG_APM
+  If you have Advanced Power Management (APM) available in your BIOS
+  and turn this on, you will be able to use the "poweroff" command
+  to shut off the machine. If this is enabled but the machine does
+  not support APM, it won't hurt anything outside of adding a little
+  extra code.
+
 # Memory configuration
 # ~~~~~~~~~~~~~~~~~~~~
 

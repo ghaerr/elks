@@ -74,8 +74,11 @@ void hard_reset_now(void)
 #endif
 }
 
-/* Use Advanced Power Management to power off system
- * For details on how this code works, see http://wiki.osdev.org/APM
+#ifdef CONFIG_APM
+/*
+ *	Use Advanced Power Management to power off system
+ *	For details on how this code works, see
+ *	http://wiki.osdev.org/APM
  */
 void apm_shutdown_now(void)
 {
@@ -99,3 +102,4 @@ void apm_shutdown_now(void)
     printk("Cannot power off: APM not supported\n");
     return;
 }
+#endif
