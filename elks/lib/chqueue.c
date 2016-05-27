@@ -22,6 +22,7 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
+#include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 
 void chq_erase(register struct ch_queue *q)
@@ -43,16 +44,17 @@ int chq_addch(register struct ch_queue *q, unsigned char c, int wait)
     debug5("CHQ: chq_addch(%d, %c, %d) q->len=%d q->tail=%d\n", q, c, 0,
 	   q->len, q->tail);
 
-    if (q->len == q->size) {
-	if (wait) {
+    if(q->len == q->size) {
+	if(!wait)
+	    return -EAGAIN;
+	else {
 	    debug("CHQ: addch sleeping\n");
 	    interruptible_sleep_on(&q->wq);
 	    debug("CHQ: addch waken up\n");
 	}
+	if(q->len == q->size)
+	    return -EINTR;
     }
-
-    if (q->len == q->size)
-	return -1;
 
     q->buf[(unsigned int)((q->tail + q->len) & (q->size - 1))] = (char) c;
     q->len++;
@@ -81,17 +83,19 @@ int chq_getch(register struct ch_queue *q, register unsigned char *c, int wait)
     debug6("CHQ: chq_getch(%d, %d, %d) q->len=%d q->tail=%d q->size=%d\n",
 	   q, c, wait, q->len, q->tail, q->size);
 
-    if (q->len == 0) {
-	if (wait) {
+    if(q->len == 0) {
+	if(!wait)
+	    return -EAGAIN;
+	else {
 	    debug("CHQ: getch sleeping\n");
 	    interruptible_sleep_on(&q->wq);
 	    debug("CHQ: getch wokeup\n");
 	}
+	if(q->len == 0)
+	    return -EINTR;
     }
-    if (q->len == 0)
-	return -1;
 
-    retval = q->buf[q->tail];
+    retval = (int)(q->buf[q->tail]) & 0xFF;
     q->tail++;
     q->tail &= q->size - 1;
     q->len--;

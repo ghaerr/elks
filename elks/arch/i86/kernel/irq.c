@@ -117,11 +117,9 @@ void enable_irq(unsigned int irq)
 
 static int remap_irq(int irq)
 {
-    if (irq > 15)
+    if((irq > 15) || ((irq > 7) && (arch_cpu < 2)))
 	return -EINVAL;
-    if (irq > 7 && arch_cpu<2)
-	return -EINVAL;			/* AT interrupt line on an XT */
-    if (irq == 2 && arch_cpu>1)
+    if (irq == 2 && arch_cpu > 1)
 	irq = 9;			/* Map IRQ 9/2 over */
     return irq;
 }

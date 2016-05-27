@@ -192,8 +192,8 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
     register struct tty *tty = determine_tty(inode->i_rdev);
     register char *pi = 0;
     int j, k;
-    int rawmode = (tty->termios.c_lflag & ICANON) ? 0 : 1;
-    int blocking = (file->f_flags & O_NONBLOCK) ? 0 : 1;
+    int rawmode = !(tty->termios.c_lflag & ICANON);
+    int blocking = !(file->f_flags & O_NONBLOCK);
     unsigned char ch;
 
     if (len != 0) {
@@ -204,10 +204,10 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 	    }
 	    j = chq_getch(&tty->inq, &ch, blocking);
 
-	    if (j == -1) {
-		if (!blocking)
-		    break;
-		return -EINTR;
+	    if (j < 0) {
+		if(pi == NULL)
+		    pi = (char *)j;
+		break;
 	    }
 	    if (!rawmode && (j == 04))	/* CTRL-D */
 		break;
@@ -231,8 +231,8 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 #else
     register struct tty *tty = determine_tty(inode->i_rdev);
     int i = 0, j = 0, k, lch;
-    int rawmode = (tty->termios.c_lflag & ICANON) ? 0 : 1;
-    int blocking = (file->f_flags & O_NONBLOCK) ? 0 : 1;
+    int rawmode = !(tty->termios.c_lflag & ICANON);
+    int blocking = !(file->f_flags & O_NONBLOCK);
     unsigned char ch;
 
     if (len == 0)
@@ -245,11 +245,11 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 	}
 	j = chq_getch(&tty->inq, &ch, blocking);
 
-	if (j == -1)
-	    if (blocking)
-		return -EINTR;
-	    else
-		break;
+	if (j < 0) {
+	    if(i == 0)
+		i = j;
+	    break;
+	}
 	if (!rawmode && (j == 04))	/* CTRL-D */
 	    break;
 	if (rawmode || (j != '\b')) {
