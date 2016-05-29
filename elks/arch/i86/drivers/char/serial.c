@@ -150,7 +150,7 @@ static int rs_probe(register struct serial_info *sp)
     /* clear RX register */
     scratch = (char *) MAX_RX_BUFFER_SIZE;
     do {
-	inb_p(sp->io + UART_RX);
+	inb_p(sp->io + UART_RX);		/* Flush input fifo */
     } while (--scratch && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
 
     return 0;
@@ -182,6 +182,22 @@ static void update_port(register struct serial_info *port)
     set_irq();
 }
 
+static int rs_write(struct tty *tty)
+{
+    register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
+    unsigned char ch;
+    register char *i;
+
+    i = 0;
+    while (chq_getch(&tty->outq, &ch, 0) >= 0) {
+	do {	/* Do nothing */	/* Wait until transmitter buffer empty */
+	} while(!(inb_p(port->io + UART_LSR) & UART_LSR_TEMT));
+	outb(ch, port->io + UART_TX);	/* Write data to transmitter buffer */
+	i++;
+    }
+    return (int)i;
+}
+
 static void receive_chars(register struct serial_info *sp)
 {
     register struct ch_queue *q;
@@ -191,11 +207,11 @@ static void receive_chars(register struct serial_info *sp)
     q = &sp->tty->inq;
     size = q->size - 1;
     do {
-	ch = inb_p(sp->io + UART_RX);
+	ch = inb_p(sp->io + UART_RX);		/* Read received data */
 	if (!tty_intcheck(sp->tty, ch)) {
-	    if (q->len == size)
+	    if (q->len == size)			/* Queue full? */
 		break;
-	    q->buf[(q->tail + q->len) & size] = (char) ch;
+	    q->buf[(q->tail + q->len) & size] = (char) ch; /* Save data in queue */
 	    q->len++;
 	}
     } while (inb_p(sp->io + UART_LSR) & UART_LSR_DR);
@@ -212,10 +228,10 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     sp = &ports[(int)irq_port[irq - 2]];
     do {
 	statusp = (char *)inb_p(sp->io + UART_LSR);
-	if ((int)statusp & UART_LSR_DR)
+	if ((int)statusp & UART_LSR_DR)		/* Receiver buffer full? */
 	    receive_chars(sp);
 #if 0
-	if (((int)statusp) & UART_LSR_THRE)
+	if (((int)statusp) & UART_LSR_THRE)	/* Transmitter buffer empty? */
 	    transmit_chars(sp);
 #endif
     } while (!(inb_p(sp->io + UART_IIR) & UART_IIR_NO_INT));
@@ -227,7 +243,7 @@ static void rs_release(struct tty *tty)
 
     debug("SERIAL: rs_release called\n");
     port->flags &= ~SERF_INUSE;
-    outb_p(0, port->io + UART_IER);
+    outb_p(0, port->io + UART_IER);	/* Disable all interrupts */
 }
 
 static int rs_open(struct tty *tty)
@@ -252,7 +268,7 @@ static int rs_open(struct tty *tty)
 
     countp = (char *) MAX_RX_BUFFER_SIZE;
     do
-	inb_p(port->io + UART_RX);
+	inb_p(port->io + UART_RX);		/* Flush input fifo */
     while (--countp && (inb_p(port->io + UART_LSR)) & UART_LSR_DR);
 
     inb_p(port->io + UART_IIR);
@@ -327,22 +343,6 @@ static int rs_ioctl(struct tty *tty, int cmd, char *arg)
     }
 
     return (int) retvalp;
-}
-
-static int rs_write(struct tty *tty)
-{
-    register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
-    unsigned char ch;
-    register char *i;
-
-    i = 0;
-    while (chq_getch(&tty->outq, &ch, 0) != -1) {
-	do {	/* Do nothing */
-	} while(!(inb_p(port->io + UART_LSR) & UART_LSR_TEMT));
-	outb(ch, port->io + UART_TX);
-	i++;
-    }
-    return (int)i;
 }
 
 int rs_init(void)

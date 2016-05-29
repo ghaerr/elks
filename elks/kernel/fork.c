@@ -128,11 +128,12 @@ pid_t do_fork(int virtual)
     if (virtual) {
 
 	/* Parent and child are sharing the user stack at this point.
-	 * The child will go first, returning from this function and
-	 * from the library code where the actual syscall was done
-	 * and then will issue an exec syscall, destroying the first
-	 * few bytes at the top of the user stack. Save those bytes
-	 * in the parent's kernel stack.
+	 * The child will go first, coming into life in the middle of
+	 * the tswitch() function, returning to user space, then will
+	 * return from the library code where the actual syscall was
+	 * done and then will issue an exec syscall, destroying the
+	 * first few bytes at the top of the user stack. Save those
+	 * bytes in the parent's kernel stack.
 	 */
 	fmemcpy(kernel_ds, sc, currentp->t_regs.ss, currentp->t_regs.sp, 8);
 	/*
