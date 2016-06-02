@@ -27,9 +27,11 @@
 ! index 0:	cursor position, 2 bytes
 !	2:	extended memory size in K, 2 bytes
 !	4:	display page
-!	6:	video mode, window width
+!	6:	video mode, 1 byte
+!	7:	window width, 1 byte
 !	8,10,12	video data
-!	14,16	video data
+!	14: window height, 1 byte
+!	16	video data
 !	0x20:	Processor type, 1 byte
 !			0  = 8088
 !			1  = 8086
@@ -339,6 +341,7 @@ err_loop:
 
 
 load_kernel:    .ascii "Loading kernel image..."
+                .byte 13,10
                 .byte 0
 kernel_aouterr: .byte 13,10
                 .ascii "--> ERROR: wrong kernel a.out Format!"

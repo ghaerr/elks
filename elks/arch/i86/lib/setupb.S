@@ -11,8 +11,14 @@ _setupb:
 	mov	cx,ds
 	pop	dx
 
+#ifndef CONFIG_ROMCODE
+  INITSEG = DEF_INITSEG
+#else
+  INITSEG = CONFIG_ROM_SETUP_DATA
+#endif
+
 #ifndef CONFIG_286PMODE
-	mov	ax,#DEF_INITSEG
+	mov	ax,#INITSEG
 #else
 	mov	ax,#0x0048
 #endif
