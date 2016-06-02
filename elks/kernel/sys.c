@@ -64,6 +64,11 @@ int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
 		printk("System halted\n");
 		sys_kill(-1, SIGKILL);
 		do_exit(0);
+#ifdef CONFIG_APM
+	    case 0xDEAD:
+		apm_shutdown_now();
+		printk("APM shutdown failed\n");
+#endif
 	}
     }
 

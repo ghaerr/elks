@@ -131,13 +131,11 @@ static size_t pipe_read(register struct inode *inode, struct file *filp,
     }
     (inode->u.pipe_i.lock)--;
     wake_up_interruptible(&(inode->u.pipe_i.wait));
-    if (read) {
+    if(read)
 	inode->i_atime = CURRENT_TIME;
-	return (int) read;
-    }
-    if ((inode->u.pipe_i.writers))
-	return -EAGAIN;
-    return 0;
+    else if((inode->u.pipe_i.writers))
+	read = (size_t)(-EAGAIN);
+    return read;
 }
 
 static size_t pipe_write(register struct inode *inode, struct file *filp,

@@ -39,10 +39,10 @@ include $(BASEDIR)/Make.rules
 ###############################################################################
 
 PRGS		= init getty login kill mount umount passwd reboot shutdown ps \
-		  swapon meminfo who clock exitemu knl man
+		  swapon meminfo who clock exitemu knl man poweroff
 
 NETPRGS		= init getty login kill mount umount passwd reboot shutdown ps \
-		  swapon meminfo who
+		  swapon meminfo who poweroff
 
 MIN_PRGS	= init getty login kill mount umount passwd ps clock \
 		  exitemu meminfo

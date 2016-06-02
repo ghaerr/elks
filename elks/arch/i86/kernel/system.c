@@ -73,3 +73,33 @@ void hard_reset_now(void)
 	);
 #endif
 }
+
+#ifdef CONFIG_APM
+/*
+ *	Use Advanced Power Management to power off system
+ *	For details on how this code works, see
+ *	http://wiki.osdev.org/APM
+ */
+void apm_shutdown_now(void)
+{
+#ifdef __BCC__
+    asm(\
+        "\tmov ax,#0x5301\n" \
+        "\txor bx,bx\n" \
+        "\tint #0x15\n" \
+        "\tjc apm_error\n" \
+        "\tmov ax,#0x5308\n" \
+        "\tmov bx,#0x0001\n" \
+        "\tmov cx,#0x0001\n" \
+        "\tint #0x15\n" \
+        "\tjc apm_error\n" \
+        "\tmov ax,#0x5307\n" \
+        "\tmov bx,#0x0001\n" \
+        "\tmov cx,#0x0003\n" \
+        "\tint #0x15\n" \
+        "\tapm_error:\n"
+        );
+    printk("Cannot power off: APM not supported\n");
+    return;
+}
+#endif

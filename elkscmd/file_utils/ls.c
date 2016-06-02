@@ -68,9 +68,6 @@
 #define LSF_ALLX	0x20	/* List . files except . and .. */
 #define LSF_CLASS	0x40	/* Classify files (append symbol) */
 
-#define isntDotDir(name) *name!='.' || \
-			( (c=name[1]) && (c!='.') ) || (name[2]&&c)
-
 static void lsfile();
 static void setfmt();
 static char *modestring(int mode);
@@ -153,10 +150,9 @@ static void getfiles(char *name, struct stack *pstack, int flags)
 	if (valid) {
 	    *fullname = '\0';
 	    strcpy(fullname, name);
-	    if (!endslash)
-		strcat(fullname, "/");
+	    if (!endslash) strcat(fullname, "/");
 	    strcat(fullname, dp->d_name);
-	    pushstack(pstack,strdup(fullname));
+	    pushstack(pstack, strdup(fullname));
 	}
     }
     closedir(dirp);
@@ -180,7 +176,8 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
     static char		groupname[12];
     static int		groupid;
     static int		groupidknown;
-    char		*class;
+    char		class;
+    char		*classp;
 
     cp = buf;
     *cp = '\0';
@@ -235,30 +232,44 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
 
     fputs(buf, stdout);
 
-    class = name + strlen(name);
-    *class = 0;
+    class = '\0';
     if (flags & LSF_CLASS) {
-	if (S_ISLNK (statbuf->st_mode))
-	    *class = '@';
-	else if (S_ISDIR (statbuf->st_mode))
-	    *class = '/';
+	if (S_ISLNK(statbuf->st_mode))
+	    class = '@';
+	else if (S_ISDIR(statbuf->st_mode))
+	    class = '/';
 	else if (S_IEXEC & statbuf->st_mode)
-	    *class = '*';
-	else if (S_ISFIFO (statbuf->st_mode))
-	    *class = '|';
+	    class = '*';
+	else if (S_ISFIFO(statbuf->st_mode))
+	    class = '|';
 #ifdef S_ISSOCK
-	else if (S_ISSOCK (statbuf->st_mode))
-	    *class = '=';
+	else if (S_ISSOCK(statbuf->st_mode))
+	    class = '=';
 #endif
     }
+
+/* If a class character exists for the file name, add it on */
+    if (class != '\0') {
+	    len = strlen(name);
+	    classp = (char *)realloc(name, len + 2);
+	    if (!classp) {
+		    free(name);
+		    fprintf(stderr, "ls: out of memory\n");
+		    exit(EXIT_FAILURE);
+	    }
+	    name = classp;
+	    classp += len;
+	    *classp = class;
+	    classp++;
+	    *classp = '\0';
+    }
+
     {
 	char *cp;
 
 	cp = strrchr(name, '/');
-	if (!cp)
-	    cp = name;
-	else
-	    cp++;
+	if (!cp) cp = name;
+	else cp++;
 	printf(fmt, cp);
     }
 
@@ -394,6 +405,20 @@ static void setfmt(struct stack *pstack, int flags)
 }
 
 
+int not_dotdir(char *name)
+{
+	int len;
+	char *p;
+
+	len = strlen(name);
+	p = name + len - 2;
+	if (strcmp(p, "/.") == 0) return 0;
+	p--;
+	if (strcmp(p, "/..") == 0) return 0;
+	return 1;
+}
+
+
 int main(int argc, char **argv)
 {
     char  *cp;
@@ -484,7 +509,7 @@ int main(int argc, char **argv)
 	    is_dir = S_ISDIR(statbuf.st_mode);
 	    if (!is_dir || !recursive || (flags & LSF_LONG))
 		lsfile(name, &statbuf, flags);
-	    if (is_dir && recursive)
+	    if (is_dir && recursive && not_dotdir(name))
 		pushstack(&dirs, name);
 	    else
 		free(name);

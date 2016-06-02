@@ -92,7 +92,7 @@ size_t pty_read(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
     register char *pi;
-    int l;
+    int s;
     unsigned char ch;
 
     debug("PTY: read ");
@@ -100,14 +100,12 @@ size_t pty_read(struct inode *inode, struct file *file, char *data, int len)
 	debug("failed: NODEV\n");
 	return -ENODEV;
     }
-    l = (file->f_flags & O_NONBLOCK) ? 0 : 1;
     pi = 0;
     while (((int)pi) < len) {
-	if(chq_getch(&tty->outq, &ch, l) == -1) {
-	    if (l) {
-		debug("failed: INTR\n");
-		pi = (char *)(-EINTR);
-	    }
+	s = chq_getch(&tty->outq, &ch, !(file->f_flags & O_NONBLOCK));
+	if(s < 0) {
+	    if(pi == NULL)
+		pi = (char *)s;
 	    break;
 	}
 	debug2(" rc[%u,%u]", (int)pi, len);
@@ -122,7 +120,7 @@ size_t pty_write(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
     register char *pi;
-    int l;
+    int s;
     unsigned char ch;
 
     debug("PTY: write ");
@@ -130,15 +128,13 @@ size_t pty_write(struct inode *inode, struct file *file, char *data, int len)
 	debug("failed: NODEV\n");
 	return -ENODEV;
     }
-    l = (file->f_flags & O_NONBLOCK) ? 0 : 1;
     pi = 0;
     while (((int)pi) < len) {
 	ch = get_user_char((void *)(data++));
-	if (chq_addch(&tty->inq, ch, l) == -1) {
-	    if (l) {
-		debug("failed: INTR\n");
-		pi = (char *)(-EINTR);
-	    }
+	s = chq_addch(&tty->inq, ch, !(file->f_flags & O_NONBLOCK));
+	if(s < 0) {
+	    if(pi == NULL)
+		pi = (char *)s;
 	    break;
 	}
 	pi++;
