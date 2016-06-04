@@ -1,4 +1,5 @@
-/* merge binaries into a rom boot image 
+/* Merge a.out object files into a ROM boot "Image"
+ * (typically "setup" & "system")
  *
  * Written by Christian Mardm"oller  (chm@kdt.de) 
  * Some German->English edits by Jody Bruchon <jody@jodybruchon.com>
@@ -8,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+
 
 #define MAXQ  10
 
@@ -81,13 +83,13 @@ int main(int argcnt, char **arg)
 // load sources
     i = 1;
     if (strcmp(arg[i], "-r") == 0) {
-	sscanf(arg[i + 1], "%lx", &init);
+	sscanf(arg[i + 1], "%x", &init);
 	i += 2;
     }
     if (strcmp(arg[i], "-c") == 0) {
-	sscanf(arg[i + 1], "%lx", &check.start);
+	sscanf(arg[i + 1], "%x", &check.start);
 	check.start *= 0x10;
-	sscanf(arg[i + 2], "%ld", &check.end);
+	sscanf(arg[i + 2], "%d", &check.end);
 	check.end *= 1024;
 	check.sum = 1000;
 	i += 3;
@@ -115,7 +117,6 @@ int main(int argcnt, char **arg)
 	source[nr].lg = ftell(ff);
 	fseek(ff, 0, SEEK_SET);
 	source[nr].skipaout = (skip) ? 0x20 : 0;
-	//printf("%lx\n",source[nr].lg);
 	source[nr].data = (char *) malloc(source[nr].lg);
 	fread(source[nr].data, 1, source[nr].lg, ff);
 	fclose(ff);
@@ -123,11 +124,11 @@ int main(int argcnt, char **arg)
 	    printf("ERROR: No base address for %s!\n", arg[i]);
 	    return -1;
 	}
-	sscanf(arg[i + 1], "%lx", &source[nr].offs);
+	sscanf(arg[i + 1], "%x", &source[nr].offs);
 	if (strip) {
 	    source[nr].lg = aoutsize(source[nr].data, source[nr].lg);
 	}
-	printf("  %s: %lxh Bytes %s%s @%04lx\n", arg[i],
+	printf("  %s: %xh Bytes %s%s @%04x\n", arg[i],
 	       source[nr].lg - source[nr].skipaout, (strip) ? "(strip)" : "",
 	       (skip) ? "(- a.out)" : "", source[nr].offs);
 	i += 2;			// n"achste Quelle
@@ -141,11 +142,8 @@ int main(int argcnt, char **arg)
 	printf("Can't generate file %s\n", arg[i]);
 	return -1;
     }
-    sscanf(arg[i + 1], "%lx", &offs);
+    sscanf(arg[i + 1], "%x", &offs);
     offs *= 0x10;
-#if 0
-    printf("%lx\n", offs);
-#endif
 
 // calculate size of target file
     romgr = 0;
@@ -155,7 +153,7 @@ int main(int argcnt, char **arg)
 	l = source[i].offs + (source[i].lg - source[i].skipaout) - offs;
 	//printf("%ld: qoffs %lx + lg %lx - skip %lx - offs %lx = l %lx\n",i,source[i].offs,source[i].lg,source[i].skipaout, offs,l);
 	if ((int32_t) l < 0) {
-	    printf("Bereichsfehler in Nr. %ld (offs < basis)!\n", i);
+	    printf("Out of bound in #%u (offset < base)!\n", i);
 	    fclose(ff);
 	    return -1;
 	}
@@ -164,7 +162,7 @@ int main(int argcnt, char **arg)
 	i++;
     }
 
-    printf("--> %s: %lxh Bytes @%04lx\n", arg[firstname], romgr, offs / 0x10);
+    printf("--> %s: %xh Bytes @%04x\n", arg[firstname], romgr, offs / 0x10);
     if ((offs + romgr > 0xfffff) || ((init >= 0) && (offs + romgr >= 0xffff0))) {
 	printf("ERROR: ROM-Image too big!\n");
 	fclose(ff);
@@ -180,11 +178,10 @@ int main(int argcnt, char **arg)
     }
 // merge the binaries
     rom = NULL;
-    //printf("romgr: %lx\n",romgr);
     if (romgr < 0x100000)
 	rom = (char *) malloc(romgr);
     if (rom == NULL) {
-	printf("malloc: no %ld Bytes RAM\n", romgr);
+	printf("malloc: no %u Bytes RAM\n", romgr);
 	return -1;
     }
     for (l = 0; l < romgr; rom[l++] = 0xff);	// storage initialization
@@ -214,10 +211,10 @@ int main(int argcnt, char **arg)
 	if (l) {
 	    printf("\x1b[7;34m");
 	    if (l == 1000)
-		printf("Segment overrun (%ld <-> Resetvektor)!\x1b[0m\n",
+		printf("Segment overrun (%u <-> Resetvektor)!\x1b[0m\n",
 		       nr);
 	    else
-		printf("Segment overrun (%ld <-> %ld)!\x1b[0m\n", nr, l - 1);
+		printf("Segment overrun (%u <-> %u)!\x1b[0m\n", nr, l - 1);
 	} else {
 	    l = source[nr].offs - offs;
 	    memcpy(&(rom[l]), source[nr].data + source[nr].skipaout,
@@ -233,13 +230,13 @@ int main(int argcnt, char **arg)
 	l = offs + init;
 	l = ((l & 0xfff00) << 12) + (l & 0x000ff);
 	*(uint32_t *) &(rom[0xffff1 - offs]) = l;
-	printf("  RESET nach %04x:%04x (%05lx)\n", (unsigned) l >> 16,
-	       (unsigned) l & 0xffff, offs + init);
+	printf("  RESET nach %04x:%04x (%05x)\n", l >> 16,
+	       l & 0xffff, offs + init);
     }
+
 // calculate the checksum
     if (check.sum) {
 	check.end += check.start - 1;
-	//printf("%lx %lx\n",check.start, check.end);
 	check.start -= offs;
 	check.end -= offs;
 	if (check.end > romgr) {
@@ -248,7 +245,7 @@ int main(int argcnt, char **arg)
 	} else {
 	    if ((rom[check.start] != 0x55)
 		|| (rom[check.start + 1] != (char) 0xaa)) {
-		printf("No ROM-Signature at %05lx\n", check.start);
+		printf("No ROM-Signature at %05x\n", check.start);
 	    } else {
 		i = 0;
 		while (source[i].data != NULL) {
@@ -268,7 +265,7 @@ int main(int argcnt, char **arg)
 		}
 		if (((check.end - check.start + 1) % 512) != 0)
 		    printf
-			("Area of checksum use half paragraphs (Start: %lx, End: %lx => %lx)\n",
+			("Area of checksum use half paragraphs (Start: %x, End: %x => %x)\n",
 			 check.start, check.end + 1,
 			 check.end - check.start + 1);
 		else {
@@ -283,14 +280,13 @@ int main(int argcnt, char **arg)
 		    for (i = check.start; i < check.end; i++)
 			l += rom[i] & 0xff;
 		    rom[check.end] = -l;
-		    printf("[%02x @%05lx]\n", rom[check.end] & 0xff,
+		    printf("[%02hhx @%05x]\n", rom[check.end] & 0xff,
 			   check.end);
 		    if ((unsigned char) rom[check.start + 2] < 3)
 			printf
 			    ("Some BIOSes have problems with so small devices\n");
 		    i = 0;
 		    while (source[i].data != NULL) {
-			//printf("%lx %lx %lx\n",check.end, source[i].offs - offs, source[i].lg - source[i].skipaout);
 			if (im
 			    (check.end, source[i].offs - offs,
 			     source[i].lg - source[i].skipaout)) {
@@ -306,6 +302,7 @@ int main(int argcnt, char **arg)
 	    }
 	}
     }
+
 // write the target file
     fwrite(rom, 1, romgr, ff);
     fclose(ff);
