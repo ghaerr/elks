@@ -29,7 +29,7 @@
  * XXX plac: setting default to B9600 instead of B1200
  */
 struct termios def_vals = { BRKINT,
-    ONLCR,
+    OPOST|ONLCR,
     (tcflag_t) (B9600 | CS8),
     (tcflag_t) (ECHO | ICANON | ISIG),
     0,
@@ -62,12 +62,10 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
 	    psig = (char *) SIGINT;
 	if (key == ttyp->termios.c_cc[VSUSP])
 	    psig = (char *) SIGTSTP;
-	if (psig) {
+	if (psig)
 	    kill_pg(ttyp->pgrp, (sig_t) psig, 1);
-	    return 1;
-	}
     }
-    return 0;
+    return (int)psig;
 }
 
 /* Turns a dev_t variable into its tty, or NULL if it's not valid */
@@ -132,36 +130,70 @@ void tty_release(struct inode *inode, struct file *file)
     rtty->ops->release(rtty);
 }
 
-static void tty_charout_raw(register struct tty *tty, unsigned char ch)
+/*
+ * Gets 1 byte from tty output buffer, with processing
+ * Used by the function reading bytes from the output
+ * buffer to send them to the tty device, using the
+ * construct:
+ *
+ * while(tty->outq.len > 0) {
+ * 	ch = tty_outproc(tty);
+ * 	write_char_to_device(device, (char)ch);
+ * 	cnt++;
+ * }
+ *
+ */
+int tty_outproc(register struct tty *tty)
 {
-    chq_addch(&tty->outq, ch, 1);	/* Will block */
-    tty->ops->write(tty);
-}
+    register char *t_oflag;	/* WARNING: highly arch dependent! */
+    int ch;
 
-/* Write 1 byte to a terminal, with processing */
-void tty_charout(register struct tty *tty, unsigned char ch)
-{
-    switch (ch) {
-    case '\t':
-	if (tty->termios.c_lflag & ICANON) {
-	    register char *pi = (char *) TAB_SPACES;
-	    do {
-		tty_charout_raw(tty, ' ');
-	    } while (--pi);
-	    return;
+    ch = tty->outq.buf[tty->outq.tail];
+    if((int)(t_oflag = (char *)tty->termios.c_oflag) & OPOST) {
+	switch(tty->ostate & ~0x0F) {
+	case 0x20:		/* Expand tabs to spaces */
+	    ch = ' ';
+	    if(--tty->ostate & 0xF)
+		break;
+	case 0x10:		/* Expand NL -> CR NL */
+	    tty->ostate = 0;
+	    break;
+	default:
+	    switch(ch) {
+	    case '\n':
+		if((unsigned)t_oflag & ONLCR) {
+		    ch = '\r';				/* Expand NL -> CR NL */
+		    tty->ostate = 0x10;
+		}
+		break;
+#if 0
+	    case '\r':
+		if((unsigned)t_oflag & OCRNL)
+		    ch = '\n';				/* Map CR to NL */
+		break;
+#endif
+	    case '\t':
+		if(((unsigned)t_oflag & TABDLY) == TAB3) {
+		    ch = ' ';				/* Expand tabs to spaces */
+		    tty->ostate = 0x20 + TAB_SPACES - 1;
+		}
+	    }
 	}
-	break;
-    case '\n':
-	if (tty->termios.c_oflag & ONLCR)
-	    tty_charout_raw(tty, '\r');
     }
-    tty_charout_raw(tty, ch);
+    if(!tty->ostate) {
+	tty->outq.tail++;
+	tty->outq.tail &= (tty->outq.size - 1);
+	tty->outq.len--;
+    }
+    return ch;
 }
 
 void tty_echo(register struct tty *tty, unsigned char ch)
 {
-    if (tty->termios.c_lflag & ECHO)
-	tty_charout(tty, ch);
+    if (tty->termios.c_lflag & ECHO) {
+	chq_addch(&tty->outq, ch, 0);
+	tty->ops->write(tty);
+    }
 }
 
 /*
@@ -173,17 +205,22 @@ size_t tty_write(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
     register char *pi;
-#if 0
-    int blocking = (file->f_flags & O_NONBLOCK) ? 0 : 1;
-#endif
+    int s;
 
-    pi = (char *)len;
-    while ((int)(pi--)) {
-	tty_charout(tty,
-	    get_user_char((void *)(data++))
-	   /* , blocking */ );
+    pi = 0;
+    while(((int)pi) < len) {
+	s = chq_addch(&tty->outq,
+		      get_user_char((void *)(data++)),
+		      !(file->f_flags & O_NONBLOCK));
+	tty->ops->write(tty);
+	if(s < 0) {
+	    if((int)pi == 0)
+		pi = (char *)s;
+	    break;
+	}
+	pi++;
     }
-    return len;
+    return (size_t)pi;
 }
 
 size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
@@ -191,10 +228,9 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 #if 1
     register struct tty *tty = determine_tty(inode->i_rdev);
     register char *pi = 0;
-    int j, k;
+    int ch, k;
     int rawmode = !(tty->termios.c_lflag & ICANON);
     int blocking = !(file->f_flags & O_NONBLOCK);
-    unsigned char ch;
 
     if (len != 0) {
 	do {
@@ -202,38 +238,43 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 		tty->ops->read(tty);
 		blocking = 0;
 	    }
-	    j = chq_getch(&tty->inq, &ch, blocking);
+	    ch = chq_getch(&tty->inq, blocking);
 
-	    if (j < 0) {
-		if(pi == NULL)
-		    pi = (char *)j;
+	    if (ch < 0) {
+		if((int)pi == 0)
+		    pi = (char *)ch;
 		break;
 	    }
-	    if (!rawmode && (j == 04))	/* CTRL-D */
-		break;
-	    if (rawmode || (j != '\b')) {
-		put_user_char(ch, (void *)(data++));
-		++pi;
-		tty_echo(tty, ch);
-	    } else if (((int)pi) > 0) {
-		--pi;
-		k = ((get_user_char((void *)(--data))
-		      == '\t') ? TAB_SPACES : 1);
-		do {
-		    tty_echo(tty, ch);
-		} while (--k);
+	    if(!rawmode) {
+		if(ch == 04)		/* tty->termios.c_cc[VEOF] CTRL-D */
+		    break;
+		if(ch == '\r')		/* tty->termios.c_iflag & ICRNL */
+		    ch = '\n';
+		if(ch == '\b') {	/* tty->termios.c_cc[VERASE] DEL */
+		    if((int)pi > 0) {
+			--pi;
+			k = ((get_user_char((void *)(--data))
+			    == '\t') ? TAB_SPACES : 1);
+			do {
+			    tty_echo(tty, ch);
+			} while (--k);
+		    }
+		    continue;
+		}
 	    }
-	} while (((int)pi) < len && (rawmode || j != '\n'));
+	    put_user_char(ch, (void *)(data++));
+	    ++pi;
+	    tty_echo(tty, ch);
+	} while (((int)pi) < len && (rawmode || ch != '\n'));
     }
     return (int) pi;
 
 
 #else
     register struct tty *tty = determine_tty(inode->i_rdev);
-    int i = 0, j = 0, k, lch;
+    int i = 0, ch, k, lch;
     int rawmode = !(tty->termios.c_lflag & ICANON);
     int blocking = !(file->f_flags & O_NONBLOCK);
-    unsigned char ch;
 
     if (len == 0)
 	return 0;
@@ -243,16 +284,16 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 	    tty->ops->read(tty);
 	    blocking = 0;
 	}
-	j = chq_getch(&tty->inq, &ch, blocking);
+	ch = chq_getch(&tty->inq, blocking);
 
-	if (j < 0) {
+	if (ch < 0) {
 	    if(i == 0)
-		i = j;
+		i = ch;
 	    break;
 	}
-	if (!rawmode && (j == 04))	/* CTRL-D */
+	if (!rawmode && (ch == 04))	/* CTRL-D */
 	    break;
-	if (rawmode || (j != '\b')) {
+	if (rawmode || (ch != '\b')) {
 	    put_user_char(ch, (void *)(data + i++));
 	    tty_echo(tty, ch);
 	} else if (i > 0) {
@@ -261,7 +302,7 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 	    for (k = 0; k < lch; k++)
 		tty_echo(tty, ch);
 	}
-    } while (i < len && (rawmode || j != '\n'));
+    } while (i < len && (rawmode || ch != '\n'));
 
     return i;
 #endif

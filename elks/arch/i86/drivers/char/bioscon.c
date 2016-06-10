@@ -110,9 +110,7 @@ static void AddQueue(unsigned char Key)
 {
     register struct tty *ttyp = &ttys[Current_VCminor];
 
-    if(Key == '\r')
-	Key = '\n';
-    if (!tty_intcheck(ttyp, Key) && (ttyp->inq.size != 0))
+    if (!tty_intcheck(ttyp, Key))
 	chq_addch(&ttyp->inq, Key, 0);
 }
 
@@ -156,7 +154,7 @@ savekey:
     int		0x16
     push	ax
     call	_AddQueue
-    add		sp,#2
+    pop		ax
 nhp:
     mov		ah, #0x01
     int		0x16
@@ -174,7 +172,7 @@ nhp:
 int wait_for_keypress(void)
 {
     set_irq();
-    return chq_getch(&ttys[0].inq, 0, 1);
+    return chq_getch(&ttys[0].inq, 1);
 }
 
 static void SetDisplayPage(unsigned int n)
@@ -617,11 +615,9 @@ static int Console_write(register struct tty *tty)
 {
     register Console *C = &Con[tty->minor];
     int cnt = 0;
-    unsigned char ch;
 
-    while (tty->outq.len != 0) {
-	chq_getch(&tty->outq, &ch, 0);
-	WriteChar(C, (char) ch);
+    while((tty->outq.len > 0) && !glock) {
+	WriteChar(C, (char)tty_outproc(tty));
 	cnt++;
     }
     if(C == Visible)

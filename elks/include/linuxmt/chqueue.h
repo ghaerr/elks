@@ -16,7 +16,6 @@ extern int chq_delch(register struct ch_queue *);
 extern int chq_peekch(register struct ch_queue *);
 extern int chq_full(register struct ch_queue *);
 
-extern int chq_getch(register struct ch_queue *,
-		     register unsigned char *,int);
+extern int chq_getch(register struct ch_queue *,int);
 
 #endif

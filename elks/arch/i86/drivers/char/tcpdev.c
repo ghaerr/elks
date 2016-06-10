@@ -69,7 +69,8 @@ int tcpdev_inetwrite(char *data, unsigned int len)
     down(&bufout_sem);
 
     /* Copy the data to the buffer */
-    fmemcpy(kernel_ds, (__u16) tdout_buf, kernel_ds, (__u16) data, (__u16) len);
+/*    fmemcpy(kernel_ds, (__u16) tdout_buf, kernel_ds, (__u16) data, (__u16) len);*/
+    memcpy(tdout_buf, data, len);
     tdout_tail = len;
     wake_up(&tcpdevq);
     debug("TCPDEV: inetwrite() returning\n");

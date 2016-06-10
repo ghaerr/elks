@@ -69,6 +69,7 @@ struct tty {
 
     struct ch_queue inq, outq;
     struct termios termios;
+    int ostate;
     pid_t pgrp;
 };
 
@@ -80,6 +81,9 @@ extern int tty_intcheck(struct tty *,unsigned char);
 
 extern int pipe_lseek(struct inode *,struct file *,off_t,int);
 		/* Empty function, returns -ESPIPE. useful */
+
+extern int tty_outproc(register struct tty *);
+		/* TTY postprocessing */
 
 extern struct termios def_vals;
 		/* global use of def_vals */

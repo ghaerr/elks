@@ -185,15 +185,14 @@ static void update_port(register struct serial_info *port)
 static int rs_write(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
-    unsigned char ch;
     register char *i;
 
     i = 0;
-    while (chq_getch(&tty->outq, &ch, 0) >= 0) {
-	do {	/* Do nothing */	/* Wait until transmitter buffer empty */
+    while (tty->outq.len > 0) {
+	do {				/* Wait until transmitter buffer empty */
 	} while(!(inb_p(port->io + UART_LSR) & UART_LSR_TEMT));
-	outb(ch, port->io + UART_TX);	/* Write data to transmitter buffer */
-	i++;
+	outb((char)tty_outproc(tty), port->io + UART_TX);
+	i++;				/* Write data to transmit buffer */
     }
     return (int)i;
 }
@@ -209,10 +208,7 @@ static void receive_chars(register struct serial_info *sp)
     do {
 	ch = inb_p(sp->io + UART_RX);		/* Read received data */
 	if (!tty_intcheck(sp->tty, ch)) {
-	    if (q->len == size)			/* Queue full? */
-		break;
-	    q->buf[(q->tail + q->len) & size] = (char) ch; /* Save data in queue */
-	    q->len++;
+	    chq_addch(q, ch, 0);		/* Save data in queue */
 	}
     } while (inb_p(sp->io + UART_LSR) & UART_LSR_DR);
     wake_up(&q->wq);

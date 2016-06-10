@@ -103,9 +103,6 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *data)
 	AddQueue(ESC);
 	AddQueue('D');
 	return;
-    case '\r':
-	AddQueue('\n');
-	return;
     default:
 	AddQueue(key);
 	return;
@@ -118,8 +115,7 @@ void AddQueue(unsigned char Key)
 {
     register struct tty *ttyp = &ttys[Current_VCminor];
 
-    if (ttyp->inq.size != 0)
-	chq_addch(&ttyp->inq, Key, 0);
+    chq_addch(&ttyp->inq, Key, 0);
 }
 
 /*
@@ -128,7 +124,7 @@ void AddQueue(unsigned char Key)
 
 int wait_for_keypress(void)
 {
-    return chq_getch(&ttys[0].inq, 0, 1);
+    return chq_getch(&ttys[0].inq, 1);
 }
 
 #endif

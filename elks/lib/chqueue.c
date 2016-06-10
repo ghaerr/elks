@@ -76,7 +76,7 @@ int chq_delch(register struct ch_queue *q)
 #endif
 
 /* Gets tail character, waiting for one if wait != 0 */
-int chq_getch(register struct ch_queue *q, register unsigned char *c, int wait)
+int chq_getch(register struct ch_queue *q, int wait)
 {
     int retval;
 
@@ -101,8 +101,6 @@ int chq_getch(register struct ch_queue *q, register unsigned char *c, int wait)
     q->len--;
 
     wake_up(&q->wq);
-    if (c != 0)
-	*c = (unsigned char) retval;
 
     return retval;
 }
