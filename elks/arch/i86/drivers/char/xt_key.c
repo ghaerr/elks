@@ -61,7 +61,7 @@ int kraw = 0;
 #define SSC 0xC0
 
 static unsigned char tb_state[] = {
-    0x80, CTRL, SSC, SSC,			/*1C->1F*/
+    SSC, CTRL, SSC, SSC,			/*1C->1F*/
     SSC, SSC, SSC, SSC, SSC, SSC, SSC, SSC,	/*20->27*/
     SSC, SSC, LSHIFT, SSC, SSC, SSC, SSC, SSC,	/*28->2F*/
     SSC, SSC, SSC, SSC, SSC, SSC, RSHIFT, SSC,	/*30->37*/
@@ -105,7 +105,7 @@ void AddQueue(unsigned char Key)
 {
     register struct tty *ttyp = &ttys[Current_VCminor];
 
-    if (!tty_intcheck(ttyp, Key) && (ttyp->inq.size != 0))
+    if (!tty_intcheck(ttyp, Key))
 	chq_addch(&ttyp->inq, Key, 0);
 }
 
@@ -249,7 +249,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 int wait_for_keypress(void)
 {
     set_irq();
-    return chq_getch(&ttys[0].inq, 0, 1);
+    return chq_getch(&ttys[0].inq, 1);
 }
 
 #endif

@@ -504,11 +504,9 @@ static int Console_write(register struct tty *tty)
 {
     register Console *C = &Con[tty->minor];
     int cnt = 0;
-    unsigned char ch;
 
-    while (tty->outq.len != 0) {
-	chq_getch(&tty->outq, &ch, 0);
-	WriteChar(C, (char) ch);
+    while((tty->outq.len > 0) && !glock) {
+	WriteChar(C, (char)tty_outproc(tty));
 	cnt++;
     }
     if(C == Visible)

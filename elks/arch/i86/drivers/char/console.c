@@ -216,7 +216,6 @@ int Console_write(register struct tty *tty)
 {
     Console *C;
     int cnt = 0;
-    unsigned char ch;
 
 #ifdef CONFIG_VIRTUAL_CONSOLE
     C = &Con[tty->minor];
@@ -224,9 +223,8 @@ int Console_write(register struct tty *tty)
     C = &Con[0];		/* use default console: This is probably wrong */
 #endif
 
-    while (tty->outq.len != 0) {
-	chq_getch(&tty->outq, &ch, 0);
-	WriteChar(C, (char) ch);
+    while(tty->outq.len > 0) {
+	WriteChar(C, (char)tty_outproc(tty));
 	cnt++;
     }
 
