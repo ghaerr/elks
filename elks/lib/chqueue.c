@@ -25,17 +25,18 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 
-void chq_erase(register struct ch_queue *q)
+/*void chq_erase(register struct ch_queue *q)
 {
     q->len = q->tail = 0;
-}
+}*/
 
 void chq_init(register struct ch_queue *q, unsigned char *buf, int size)
 {
     debug3("CHQ: chq_init(%d, %d, %d)\n", q, buf, size);
     q->buf = (char *) buf;
     q->size = size;
-    chq_erase(q);
+    q->len = q->tail = 0;
+/*    chq_erase(q);*/
 }
 
 /* Adds character c, waiting if wait=1 (or otherwise throws out new char) */

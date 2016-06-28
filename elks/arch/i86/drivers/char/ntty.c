@@ -28,12 +28,12 @@
 /*
  * XXX plac: setting default to B9600 instead of B1200
  */
-struct termios def_vals = { BRKINT,
+struct termios def_vals = { BRKINT|ICRNL,
     OPOST|ONLCR,
     (tcflag_t) (B9600 | CS8),
-    (tcflag_t) (ECHO | ICANON | ISIG),
+    (tcflag_t) (ISIG | ICANON | ECHO | ECHOE | ECHONL),
     0,
-    {3, 28, 127, 21, 4, 0, 1, 0, 17, 19, 26, 0, 18, 15, 23, 22, 0, 0, 0}
+    {3, 28, /*127*/010, 21, 4, 0, 1, 0, 17, 19, 26, 0, 18, 15, 23, 22, 0, 0, 0}
 };
 
 #define TAB_SPACES 8
@@ -190,8 +190,13 @@ int tty_outproc(register struct tty *tty)
 
 void tty_echo(register struct tty *tty, unsigned char ch)
 {
-    if (tty->termios.c_lflag & ECHO) {
+    if((tty->termios.c_lflag & ECHO)
+		/*|| ((tty->termios.c_lflag & ECHONL) && (ch == '\n'))*/) {
 	chq_addch(&tty->outq, ch, 0);
+/*	if((ch == '\b') && (tty->termios.c_lflag & ECHOE)) {
+	    chq_addch(&tty->outq, ' ', 0);
+	    chq_addch(&tty->outq, '\b', 0);
+	}*/
 	tty->ops->write(tty);
     }
 }
@@ -225,14 +230,13 @@ size_t tty_write(struct inode *inode, struct file *file, char *data, int len)
 
 size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 {
-#if 1
     register struct tty *tty = determine_tty(inode->i_rdev);
     register char *pi = 0;
-    int ch, k;
-    int rawmode = !(tty->termios.c_lflag & ICANON);
+    int ch, k, icanon;
     int blocking = !(file->f_flags & O_NONBLOCK);
 
-    if (len != 0) {
+    if(len > 0) {
+	icanon = tty->termios.c_lflag & ICANON;
 	do {
 	    if (tty->ops->read) {
 		tty->ops->read(tty);
@@ -240,19 +244,15 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 	    }
 	    ch = chq_getch(&tty->inq, blocking);
 
-	    if (ch < 0) {
+	    if(ch < 0) {
 		if((int)pi == 0)
 		    pi = (char *)ch;
 		break;
 	    }
-	    if(!rawmode) {
-		if(ch == 04)		/* tty->termios.c_cc[VEOF] CTRL-D */
-		    break;
-		if(ch == '\r')		/* tty->termios.c_iflag & ICRNL */
-		    ch = '\n';
-		if(ch == '\b') {	/* tty->termios.c_cc[VERASE] DEL */
+	    if(icanon) {
+		if(ch == /*tty->termios.c_cc[VERASE]*/'\b') {
 		    if((int)pi > 0) {
-			--pi;
+			pi--;
 			k = ((get_user_char((void *)(--data))
 			    == '\t') ? TAB_SPACES : 1);
 			do {
@@ -261,51 +261,20 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 		    }
 		    continue;
 		}
+		if(/*(tty->termios.c_iflag & ICRNL) && */(ch == '\r'))
+		    ch = '\n';
+
+		if(ch == 04/*tty->termios.c_cc[VEOF]*/)
+		    break;
 	    }
 	    put_user_char(ch, (void *)(data++));
-	    ++pi;
 	    tty_echo(tty, ch);
-	} while (((int)pi) < len && (rawmode || ch != '\n'));
+	    if((int)(++pi) >= len)
+		break;
+	} while((icanon && (ch != '\n') /*&& (ch != tty->termios.c_cc[VEOL])*/)
+		    || (!icanon && (pi < tty->termios.c_cc[VMIN])));
     }
-    return (int) pi;
-
-
-#else
-    register struct tty *tty = determine_tty(inode->i_rdev);
-    int i = 0, ch, k, lch;
-    int rawmode = !(tty->termios.c_lflag & ICANON);
-    int blocking = !(file->f_flags & O_NONBLOCK);
-
-    if (len == 0)
-	return 0;
-
-    do {
-	if (tty->ops->read) {
-	    tty->ops->read(tty);
-	    blocking = 0;
-	}
-	ch = chq_getch(&tty->inq, blocking);
-
-	if (ch < 0) {
-	    if(i == 0)
-		i = ch;
-	    break;
-	}
-	if (!rawmode && (ch == 04))	/* CTRL-D */
-	    break;
-	if (rawmode || (ch != '\b')) {
-	    put_user_char(ch, (void *)(data + i++));
-	    tty_echo(tty, ch);
-	} else if (i > 0) {
-	    lch = ((get_user_char((void *)(data + --i)) == '\t')
-			? TAB_SPACES : 1);
-	    for (k = 0; k < lch; k++)
-		tty_echo(tty, ch);
-	}
-    } while (i < len && (rawmode || ch != '\n'));
-
-    return i;
-#endif
+    return (int)pi;
 }
 
 int tty_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)

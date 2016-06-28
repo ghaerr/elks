@@ -100,7 +100,6 @@ static void free_pipe_mem(char *buf)
 static size_t pipe_read(register struct inode *inode, struct file *filp,
 		     char *buf, size_t count)
 {
-    size_t read = 0;
     register char *chars;
 
     debug("PIPE: read called.\n");
@@ -116,32 +115,29 @@ static size_t pipe_read(register struct inode *inode, struct file *filp,
 	interruptible_sleep_on(&(inode->u.pipe_i.wait));
     }
     (inode->u.pipe_i.lock)++;
-    while (count > 0 && inode->u.pipe_i.len) {
-	chars = (char *)(PIPE_BUF - (inode->u.pipe_i.start));
-	if ((size_t)chars > count)
-	    chars = (char *)count;
-	if ((size_t)chars > inode->u.pipe_i.len)
-	    chars = (char *)(inode->u.pipe_i.len);
-	memcpy_tofs(buf, (inode->u.pipe_i.base+inode->u.pipe_i.start), (size_t)chars);
-	buf += (size_t)chars;
-        inode->u.pipe_i.start = (inode->u.pipe_i.start + (size_t)chars)&(PIPE_BUF-1);
-	(inode->u.pipe_i.len) -= (size_t)chars;
-	read += (size_t)chars;
-	count -= (size_t)chars;
-    }
+    if(count > inode->u.pipe_i.len)
+	count = inode->u.pipe_i.len;
+    chars = (char *)(PIPE_BUF - inode->u.pipe_i.start);
+    if((size_t)chars > count)
+	chars = (char *)count;
+    memcpy_tofs(buf, (inode->u.pipe_i.base+inode->u.pipe_i.start), (size_t)chars);
+    if((size_t)chars < count)
+	memcpy_tofs(buf + (size_t)chars, inode->u.pipe_i.base, count - (size_t)chars);
+    inode->u.pipe_i.start = (inode->u.pipe_i.start + count) & (PIPE_BUF - 1);
+    inode->u.pipe_i.len -= count;
     (inode->u.pipe_i.lock)--;
     wake_up_interruptible(&(inode->u.pipe_i.wait));
-    if(read)
+    if(count)
 	inode->i_atime = CURRENT_TIME;
     else if((inode->u.pipe_i.writers))
-	read = (size_t)(-EAGAIN);
-    return read;
+	count = (size_t)(-EAGAIN);
+    return count;
 }
 
 static size_t pipe_write(register struct inode *inode, struct file *filp,
 		      char *buf, size_t count)
 {
-    size_t free, tmp, written = 0;
+    size_t free, end, written = 0;
     register char *chars;
 
     debug("PIPE: write called.\n");
@@ -167,14 +163,14 @@ static size_t pipe_write(register struct inode *inode, struct file *filp,
 	(inode->u.pipe_i.lock)++;
 	while (count > 0 && (free = (PIPE_BUF - inode->u.pipe_i.len))) {
 
-            tmp = (inode->u.pipe_i.start + inode->u.pipe_i.len)&(PIPE_BUF-1);
-	    chars = (char *)(PIPE_BUF - tmp);
+	    end = (inode->u.pipe_i.start + inode->u.pipe_i.len)&(PIPE_BUF-1);
+	    chars = (char *)(PIPE_BUF - end);
 	    if ((size_t)chars > count)
 		chars = (char *) count;
 	    if ((size_t)chars > free)
 		chars = (char *)free;
 
-	    memcpy_fromfs((inode->u.pipe_i.base + tmp), buf, (size_t)chars);
+	    memcpy_fromfs((inode->u.pipe_i.base + end), buf, (size_t)chars);
 	    buf += (size_t)chars;
 	    (inode->u.pipe_i.len) += (size_t)chars;
 	    written += (size_t)chars;

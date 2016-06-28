@@ -200,11 +200,9 @@ static int rs_write(struct tty *tty)
 static void receive_chars(register struct serial_info *sp)
 {
     register struct ch_queue *q;
-    int size;
     unsigned char ch;
 
     q = &sp->tty->inq;
-    size = q->size - 1;
     do {
 	ch = inb_p(sp->io + UART_RX);		/* Read received data */
 	if (!tty_intcheck(sp->tty, ch)) {
@@ -375,18 +373,14 @@ int rs_init(void)
 
 static int con_init = 0;
 
-static void console_setdefault(register struct serial_info *port)
-{
-    register struct tty *tty = port->tty;
-
-    memcpy((void *) &(tty->termios), &def_vals, sizeof(struct termios));
-}
-
 void init_console(void)
 {
+    register struct serial_info *sp = &ports[CONSOLE_PORT];
+
     rs_init();
-    console_setdefault(&ports[CONSOLE_PORT]);
-    update_port(&ports[CONSOLE_PORT]);
+    memcpy((void *)&(sp->tty->termios),
+		    &def_vals, sizeof(struct termios));
+    update_port(sp);
     con_init = 1;
     printk("Console: Serial\n");
 }
