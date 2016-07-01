@@ -148,7 +148,7 @@ int tty_outproc(register struct tty *tty)
     register char *t_oflag;	/* WARNING: highly arch dependent! */
     int ch;
 
-    ch = tty->outq.buf[tty->outq.tail];
+    ch = tty->outq.base[tty->outq.start];
     if((int)(t_oflag = (char *)tty->termios.c_oflag) & OPOST) {
 	switch(tty->ostate & ~0x0F) {
 	case 0x20:		/* Expand tabs to spaces */
@@ -181,8 +181,8 @@ int tty_outproc(register struct tty *tty)
 	}
     }
     if(!tty->ostate) {
-	tty->outq.tail++;
-	tty->outq.tail &= (tty->outq.size - 1);
+	tty->outq.start++;
+	tty->outq.start &= (tty->outq.size - 1);
 	tty->outq.len--;
     }
     return ch;
@@ -192,10 +192,10 @@ void tty_echo(register struct tty *tty, unsigned char ch)
 {
     if((tty->termios.c_lflag & ECHO)
 		/*|| ((tty->termios.c_lflag & ECHONL) && (ch == '\n'))*/) {
-	chq_addch(&tty->outq, ch, 0);
+	chq_addch(&tty->outq, ch);
 /*	if((ch == '\b') && (tty->termios.c_lflag & ECHOE)) {
-	    chq_addch(&tty->outq, ' ', 0);
-	    chq_addch(&tty->outq, '\b', 0);
+	    chq_addch(&tty->outq, ' ');
+	    chq_addch(&tty->outq, '\b');
 	}*/
 	tty->ops->write(tty);
     }
@@ -214,15 +214,14 @@ size_t tty_write(struct inode *inode, struct file *file, char *data, int len)
 
     pi = 0;
     while(((int)pi) < len) {
-	s = chq_addch(&tty->outq,
-		      get_user_char((void *)(data++)),
-		      !(file->f_flags & O_NONBLOCK));
-	tty->ops->write(tty);
+	s = chq_wait_wr(&tty->outq, file->f_flags & O_NONBLOCK);
 	if(s < 0) {
 	    if((int)pi == 0)
 		pi = (char *)s;
 	    break;
 	}
+	chq_addch(&tty->outq, get_user_char((void *)(data++)));
+	tty->ops->write(tty);
 	pi++;
     }
     return (size_t)pi;
@@ -233,22 +232,23 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
     register struct tty *tty = determine_tty(inode->i_rdev);
     register char *pi = 0;
     int ch, k, icanon;
-    int blocking = !(file->f_flags & O_NONBLOCK);
+    int nonblock = (file->f_flags & O_NONBLOCK);
 
     if(len > 0) {
 	icanon = tty->termios.c_lflag & ICANON;
 	do {
 	    if (tty->ops->read) {
 		tty->ops->read(tty);
-		blocking = 0;
+		nonblock = 1;
 	    }
-	    ch = chq_getch(&tty->inq, blocking);
-
+	    ch = chq_wait_rd(&tty->inq, nonblock);
 	    if(ch < 0) {
 		if((int)pi == 0)
 		    pi = (char *)ch;
 		break;
 	    }
+	    ch = chq_getch(&tty->inq);
+
 	    if(icanon) {
 		if(ch == /*tty->termios.c_cc[VERASE]*/'\b') {
 		    if((int)pi > 0) {
@@ -311,14 +311,14 @@ int tty_select(struct inode *inode,	/* how revolting, K&R style defs */
 
     switch (sel_type) {
     case SEL_IN:
-	if (chq_peekch(&tty->inq))
+	if (tty->inq.len != 0)
 	    return 1;
-	select_wait(&tty->inq.wq);
+	select_wait(&tty->inq.wait);
 	break;
     case SEL_OUT:
-	ret = (char *)(!chq_full(&tty->outq));
+	ret = (char *)(tty->outq.len != tty->outq.size);
 	if (!ret)
-	    select_wait(&tty->outq.wq);
+	    select_wait(&tty->outq.wait);
 	    /*@fallthrough@*/
 /*      case SEL_EX: */
 /*  	break; */

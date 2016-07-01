@@ -115,7 +115,7 @@ void AddQueue(unsigned char Key)
 {
     register struct tty *ttyp = &ttys[Current_VCminor];
 
-    chq_addch(&ttyp->inq, Key, 0);
+    chq_addch(&ttyp->inq, Key);
 }
 
 /*
@@ -124,7 +124,7 @@ void AddQueue(unsigned char Key)
 
 int wait_for_keypress(void)
 {
-    return chq_getch(&ttys[0].inq, 1);
+    return chq_wait_rd(&ttys[0].inq, 0);
 }
 
 #endif
