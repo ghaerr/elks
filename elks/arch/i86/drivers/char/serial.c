@@ -206,10 +206,10 @@ static void receive_chars(register struct serial_info *sp)
     do {
 	ch = inb_p(sp->io + UART_RX);		/* Read received data */
 	if (!tty_intcheck(sp->tty, ch)) {
-	    chq_addch(q, ch, 0);		/* Save data in queue */
+	    chq_addch(q, ch);			/* Save data in queue */
 	}
     } while (inb_p(sp->io + UART_LSR) & UART_LSR_DR);
-    wake_up(&q->wq);
+    wake_up(&q->wait);
 }
 
 void rs_irq(int irq, struct pt_regs *regs, void *dev_id)

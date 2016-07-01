@@ -323,7 +323,6 @@ static void esc_YS(register Console * C, char c)
 	break;
     case 'Z':
 	C->fsm = std_char;
-	break;
     }
 }
 
