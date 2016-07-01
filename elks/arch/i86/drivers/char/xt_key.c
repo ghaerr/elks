@@ -106,7 +106,7 @@ void AddQueue(unsigned char Key)
     register struct tty *ttyp = &ttys[Current_VCminor];
 
     if (!tty_intcheck(ttyp, Key))
-	chq_addch(&ttyp->inq, Key, 0);
+	chq_addch(&ttyp->inq, Key);
 }
 
 /*************************************************************************
@@ -249,7 +249,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 int wait_for_keypress(void)
 {
     set_irq();
-    return chq_getch(&ttys[0].inq, 1);
+    return chq_wait_rd(&ttys[0].inq, 0);
 }
 
 #endif
