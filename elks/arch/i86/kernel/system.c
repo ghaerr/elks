@@ -29,7 +29,7 @@ void setup_arch(seg_t *start, seg_t *end)
  */
 
 /*
- *      This computes the 640K - _endbss
+ *	This computes the 640K - _endbss
  */
 
 #ifndef CONFIG_ARCH_SIBO
@@ -99,6 +99,24 @@ void apm_shutdown_now(void)
         "\tint #0x15\n" \
         "\tapm_error:\n"
         );
+#endif
+#ifdef __ia16__
+    asm("movw $21249,%ax\n\t"
+	"xorw %bx,%bx\n\t"
+	"int $21\n\t"
+	"jc apm_error\n\t"
+	"movw $21256,%ax\n\t"
+	"movw $1,%bx\n\t"
+	"movw $1,%cx\n\t"
+	"int $21\n\t"
+	"jc apm_error\n\t"
+	"movw $21255,%ax\n\t"
+	"movw $1,%bx\n\t"
+	"movw $3,%cx\n\t"
+	"int $21\n\t"
+	"apm_error:\n\t"
+	);
+#endif
     printk("Cannot power off: APM not supported\n");
     return;
 }
