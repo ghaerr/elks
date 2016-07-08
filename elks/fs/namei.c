@@ -21,6 +21,16 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 
+#ifdef __WATCOMC__
+#define offsetof(__typ,__id) ((size_t)((char *)&(((__typ*)0)->__id) - (char *)0))
+#else
+#ifdef __ia16__
+#define offsetof(TYPE, MEMBER) __builtin_offsetof (TYPE, MEMBER)
+#else
+#define offsetof(s,m) ((size_t)&(((s *)0)->m))
+#endif
+#endif
+
 #define ACC_MODE(x) ("\000\004\002\006"[(x)&O_ACCMODE])
 
 /*
@@ -414,11 +424,9 @@ int open_namei(char *pathname, int flag, int mode,
     return error;
 }
 
-int do_mknod(char *pathname, int opnum, int mode, dev_t dev)
+int do_mknod(char *pathname, size_t offst, int mode, dev_t dev)
 {
-#ifdef CONFIG_FS_RO
-    return -EROFS;
-#else
+#ifndef CONFIG_FS_RO
     register struct inode *dirp;
     register struct inode_operations *iop;
     struct inode *dir;
@@ -427,28 +435,24 @@ int do_mknod(char *pathname, int opnum, int mode, dev_t dev)
     int (*op) ();
     int error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
 
-    if (!error) {
-	if (!namelen)
+    if(!error) {
+	dirp = dir;
+	if(!namelen)
 	    error = -ENOENT;
-	else {
-	    dirp = dir;
-	    if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0) {
-		iop = dirp->i_op;
-		if (!iop || !(op = (opnum
-					? ((opnum > 1)
-						? iop->symlink
-						: iop->mkdir)
-					: iop->mknod))) {
-		    error = -EPERM;
-		} else {
-		    dirp->i_count++;
-		    down(&dirp->i_sem);
-		    error = (opnum
+/*	else if(IS_RDONLY(dirp))
+	    error = -EROFS;*/
+	else if(!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
+	    iop = dirp->i_op;
+	    if(!iop || !(op = (*(int (**)())((char *)iop + offst))))
+		error = -EPERM;
+	    else {
+		dirp->i_count++;
+		down(&dirp->i_sem);
+		error = (offst != offsetof(struct inode_operations,mknod)
 				? op(dirp, basename, namelen, mode)
 				: op(dirp, basename, namelen, mode, dev)
 			    );
-		    up(&dirp->i_sem);
-		}
+		up(&dirp->i_sem);
 	    }
 	}
 	iput(dirp);
@@ -479,41 +483,46 @@ int sys_mknod(char *pathname, int mode, dev_t dev)
 	return -EINVAL;
     }
 
-    return do_mknod(pathname, 0, mode, dev);
+    return do_mknod(pathname, offsetof(struct inode_operations,mknod), mode, dev);
 #endif
 }
 
 int sys_mkdir(char *pathname, int mode)
 {
-    return do_mknod(pathname, 1, (mode & 0777)|S_IFDIR, 0);
+#ifdef CONFIG_FS_RO
+    return -EROFS;
+#else
+    return do_mknod(pathname, offsetof(struct inode_operations,mkdir), (mode & 0777)|S_IFDIR, 0);
+#endif
 }
 
-int __do_rmthing(char *pathname, int opnum)
+int __do_rmthing(char *pathname, size_t offst)
 {
     register struct inode *dirp;
     register struct inode_operations *iop;
     struct inode *dir;
     char *basename;
     size_t namelen;
-    int error;
     int (*op) ();
+    int error;
 
     error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
-    if (!error) {
-	if (!namelen)
-	    error = -ENOENT;
-	else {
-	    dirp = dir;
-	    if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0) {
-		iop = dirp->i_op;
-		if (!iop || !(op = (opnum) ? iop->unlink : iop->rmdir)) {
-		    error = -EPERM;
-		} else {
-/*			dirp->i_count++;
-		    down(&dirp->i_sem);*/
-		    return op(dirp, basename, namelen);
-/*			up(&dirp->i_sem);*/
-		}
+    if(!error) {
+	dirp = dir;
+	if(!namelen)
+	    error = -ENOENT; /*(offst == offsetof(struct inode_operations,unlink)
+				    ? -EPERM : -ENOENT);*/
+/*	else if(IS_RDONLY(dirp))
+	    error = -EROFS;*/
+	else if(!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
+	    iop = dirp->i_op;
+	    if(!iop || !(op = (*(int (**)())((char *)iop + offst))))
+		error = -EPERM;
+	    else {
+/*		dirp->i_count++;
+		down(&dirp->i_sem);*/
+		return op(dirp, basename, namelen);
+/*		up(&dirp->i_sem);*/
 	    }
 	}
 	iput(dirp);
@@ -523,22 +532,25 @@ int __do_rmthing(char *pathname, int opnum)
 
 int sys_rmdir(char *pathname)
 {
-    return __do_rmthing(pathname, 0);
+    return __do_rmthing(pathname, offsetof(struct inode_operations,rmdir));
 }
 
 int sys_unlink(char *pathname)
 {
-    return __do_rmthing(pathname, 1);
+    return __do_rmthing(pathname, offsetof(struct inode_operations,unlink));
 }
 
 int sys_symlink(char *oldname, char *pathname)
 {
-    return do_mknod(pathname, 2, (int)oldname, 0);
+#ifdef CONFIG_FS_RO
+    return -EROFS;
+#else
+    return do_mknod(pathname, offsetof(struct inode_operations,symlink), (int)oldname, 0);
+#endif
 }
 
-int sys_link(char *oldname, char *pathname)
+static int do_link(char *pathname, struct inode *oldinode)
 {
-    struct inode *oldinode;
     register struct inode *dirp;
     register struct inode_operations *iop;
     struct inode *dir;
@@ -546,32 +558,46 @@ int sys_link(char *oldname, char *pathname)
     size_t namelen;
     int error;
 
-    error = namei(oldname, &oldinode, 0, 0);
+    error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
     if (!error) {
-	error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
-	if (!error) {
-	    dirp = dir;
-	    if (!namelen)
+	dirp = dir;
+	if(!namelen)
+	    error = -EPERM;
+/*	else if(IS_RDONLY(dirp))
+	    error = -EROFS;*/
+	else if(dirp->i_dev != oldinode->i_dev)
+	    error = -EXDEV;
+	else if(!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
+	    iop = dirp->i_op;
+	    if(!iop || !iop->link)
 		error = -EPERM;
-	    else if (dirp->i_dev != oldinode->i_dev)
-		error = -EXDEV;
-	    else if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) == 0) {
-		iop = dirp->i_op;
-		if (!iop || !iop->link)
-		    error = -EPERM;
-	    }
-	    if (!error) {
+	    else {
 		dirp->i_count++;
 		down(&dirp->i_sem);
 		error = iop->link(oldinode, dirp, basename, namelen);
 		up(&dirp->i_sem);
-	    } else
-		iput(oldinode);
+	    }
 	}
 	iput(dirp);
-    } else
-	iput(oldinode);
+    }
     return error;
+}
+
+int sys_link(char *oldname, char *pathname)
+{
+#ifdef CONFIG_FS_RO
+    return -EROFS;
+#else
+    struct inode *oldinode;
+    int error;
+
+    error = namei(oldname, &oldinode, 0, 0);
+    if(!error) {
+	error = do_link(pathname, oldinode);
+	iput(oldinode);
+    }
+    return error;
+#endif
 }
 
 /*  This probably isn't a proper implementation of sys_rename, but we

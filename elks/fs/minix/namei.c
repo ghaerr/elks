@@ -41,11 +41,11 @@ static int namecompare(size_t len, size_t max, char *name, register char *buf)
 static int minix_match(size_t len,
 		       char *name,
 		       struct buffer_head *bh,
-		       loff_t * offset, register struct minix_sb_info *info)
+		       loff_t offset, register struct minix_sb_info *info)
 {
     register struct minix_dir_entry *de;
 
-    de = (struct minix_dir_entry *) (bh->b_data + *offset);
+    de = (struct minix_dir_entry *) (bh->b_data + offset);
     if (!de->inode || len > info->s_namelen) {
 	return 0;
     }
@@ -103,7 +103,7 @@ static struct buffer_head *minix_find_entry(register struct inode *dir,
 	    map_buffer(bh);
 	}
 
-	if (minix_match(namelen, name, bh, &offset, info)) {
+	if (minix_match(namelen, name, bh, offset, info)) {
 	    *res_dir = (struct minix_dir_entry *) (bh->b_data + offset);
 	    return bh;
 	}
@@ -124,7 +124,9 @@ int minix_lookup(register struct inode *dir, char *name, size_t len,
 {
     struct minix_dir_entry *de;
     struct buffer_head *bh;
+    int error;
 
+    error = -ENOENT;
     *result = NULL;
 
     if (dir) {
@@ -136,13 +138,12 @@ int minix_lookup(register struct inode *dir, char *name, size_t len,
 	    if (bh) {
 		unmap_brelse(bh);
 		*result = iget(dir->i_sb, (ino_t) de->inode);
-		iput(dir);
-		return (!*result) ? -EACCES : 0;
+		error = (!*result) ? -EACCES : 0;
 	    }
 	}
 	iput(dir);
     }
-    return -ENOENT;
+    return error;
 }
 
 /*
@@ -234,26 +235,21 @@ int minix_create(register struct inode *dir, char *name, size_t len,
     register struct inode *inode = NULL;
     int error;
 
-    error = -ENOENT;
-    if (!dir)
-	goto create2;
-
-    error = -ENOSPC;
-    inode = minix_new_inode(dir, (__u16)mode);
-    if (!inode)
-	goto create1;
+    if(!dir)
+	error = -ENOENT;
+    else if(!(inode = minix_new_inode(dir, (__u16)mode)))
+	error = -ENOSPC;
+    else {
 /*----------------------------------------------------------------------*/
 /*----------------------------------------------------------------------*/
-    error = minix_add_entry(dir, name, len, inode->i_ino);
-    if(error) {
-	inode->i_nlink--;
-	inode->i_dirt = 1;
-	iput(inode);
-	inode = NULL;
+	if((error = minix_add_entry(dir, name, len, inode->i_ino))) {
+	    inode->i_nlink--;
+	    inode->i_dirt = 1;
+	    iput(inode);
+	    inode = NULL;
+	}
+	iput(dir);
     }
- create1:
-    iput(dir);
- create2:
     *result = inode;
     return error;
 }
@@ -266,20 +262,19 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
     struct buffer_head *bh;
     struct minix_dir_entry *de;
 
-/*    error = -ENOENT;
-    if (!dir)
-	goto mknod2;*/	/* Already checked by do_mknod() */
+/*    if (!dir)
+	return -ENOENT;*/	/* Already checked by do_mknod() */
 
     error = -EEXIST;
     bh = minix_find_entry(dir, name, len, &de);
     if (bh) {
 	unmap_brelse(bh);
-	goto mknod1;
+	goto mknod2;
     }
     error = -ENOSPC;
     inode = minix_new_inode(dir, (__u16)mode);
     if (!inode)
-	goto mknod1;
+	goto mknod2;
 /*----------------------------------------------------------------------*/
     if (S_ISBLK(mode) || S_ISCHR(mode))
 	inode->i_rdev = to_kdev_t(rdev);
@@ -290,9 +285,8 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
 	inode->i_dirt = 1;
     }
     iput(inode);
- mknod1:
-    iput(dir);
  mknod2:
+    iput(dir);
     return error;
 }
 
@@ -557,12 +551,12 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     bh = minix_bread(inode, 0, 1);
     if (!bh)
 	goto symlink1;
-    map_buffer(bh);
     if((error = strlen_fromfs(symname)) > 1023)
 	error = 1023;
+    inode->i_size = (__u32) error;
+    map_buffer(bh);
     memcpy_fromfs(bh->b_data, symname, error);
     bh->b_data[error] = 0;
-    inode->i_size = (__u32) error;
     mark_buffer_dirty(bh, 1);
     unmap_brelse(bh);
 /*----------------------------------------------------------------------*/
@@ -585,27 +579,20 @@ int minix_link(register struct inode *oldinode, register struct inode *dir,
     struct buffer_head *bh;
     struct minix_dir_entry *de;
 
-    error = -EPERM;
-    if (S_ISDIR(oldinode->i_mode))
-	goto mlink_err;
-    error = -EMLINK;
-    if (oldinode->i_nlink >= MINIX_LINK_MAX)
-	goto mlink_err;
-
-    error = -EEXIST;
-    bh = minix_find_entry(dir, name, len, &de);
-    if (bh) {
+    if(S_ISDIR(oldinode->i_mode))
+	error = -EPERM;
+    else if(oldinode->i_nlink >= MINIX_LINK_MAX)
+	error = -EMLINK;
+    else if((bh = minix_find_entry(dir, name, len, &de))) {
 	unmap_brelse(bh);
-	goto mlink_err;
+	error = -EEXIST;
     }
-    error = minix_add_entry(dir, name, len, oldinode->i_ino);
-    if (!error) {
+    else if(!(error = minix_add_entry(dir, name, len, oldinode->i_ino))) {
 	oldinode->i_nlink++;
 	oldinode->i_ctime = CURRENT_TIME;
 	oldinode->i_dirt = 1;
     }
- mlink_err:
-    iput(oldinode);
     iput(dir);
+    iput(oldinode);
     return error;
 }
