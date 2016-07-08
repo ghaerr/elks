@@ -1,14 +1,13 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 
-#ifdef __BCC__
-#define offsetof(s,m) (size_t)&(((s *)0)->m)
-#else
 #ifdef __WATCOMC__
 #define offsetof(__typ,__id) ((size_t)((char *)&(((__typ*)0)->__id) - (char *)0))
 #else
-#define offsetof(s,m) (size_t)&(((s *)0)->m)
-/*#include <stddef.h>*/
+#ifdef __ia16__
+#define offsetof(TYPE, MEMBER) __builtin_offsetof (TYPE, MEMBER)
+#else
+#define offsetof(s,m) ((size_t)&(((s *)0)->m))
 #endif
 #endif
 

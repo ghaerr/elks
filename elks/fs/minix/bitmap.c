@@ -147,51 +147,41 @@ void minix_free_inode(register struct inode *inode)
 {
     struct buffer_head *bh;
     register char *s;
-    int n = 0;
+    int n;
 
-    if (!inode)
-	return;
-    if (!inode->i_dev) {
+    s = 0;
+    n = 0;
+    if(!inode->i_dev)
 	s = "no device\n";
-	goto OUTPUT;
-    }
-    if (inode->i_count != 1) {
+    else if(inode->i_count != 1) {
 	n = inode->i_count;
 	s = "count=%d\n";
-	goto OUTPUT;
     }
-    if (inode->i_nlink) {
+    else if(inode->i_nlink) {
 	n = inode->i_nlink;
 	s = "nlink=%d\n";
-	goto OUTPUT;
     }
-    if (!inode->i_sb) {
+    else if(!inode->i_sb)
 	s = "no sb\n";
-	goto OUTPUT;
-    }
-    if (inode->i_ino < 1) {
+    else if(inode->i_ino < 1)
 	s = "inode 0\n";
-	goto OUTPUT;
-    }
-    if (inode->i_ino > inode->i_sb->u.minix_sb.s_ninodes) {
+    else if(inode->i_ino > inode->i_sb->u.minix_sb.s_ninodes)
 	s = "nonexistent inode\n";
-	goto OUTPUT;
-    }
-    if (!(bh = inode->i_sb->u.minix_sb.s_imap[inode->i_ino >> 13])) {
+    else if(!(bh = inode->i_sb->u.minix_sb.s_imap[inode->i_ino >> 13]))
 	s = "nonexistent imap\n";
-
-      OUTPUT:
+    else {
+	map_buffer(bh);
+	clear_inode(inode);
+	if (!clear_bit((unsigned int) (inode->i_ino & 8191), bh->b_data)) {
+	    debug1("%s: bit %ld already cleared.\n",ino);
+	}
+	mark_buffer_dirty(bh, 1);
+	unmap_buffer(bh);
+    }
+    if(s) {
 	printk("free_inode: ");
 	printk(s, n);
-	return;
     }
-    map_buffer(bh);
-    clear_inode(inode);
-    if (!clear_bit((unsigned int) (inode->i_ino & 8191), bh->b_data)) {
-	debug1("%s: bit %ld already cleared.\n",ino);
-    }
-    mark_buffer_dirty(bh, 1);
-    unmap_buffer(bh);
 }
 
 struct inode *minix_new_inode(struct inode *dir, __u16 mode)
