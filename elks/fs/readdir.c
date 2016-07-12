@@ -70,7 +70,7 @@ int sys_readdir(unsigned int fd, char *dirent, unsigned int count
 	    if ((error = fop->readdir(filp->f_inode, filp,
 				      &buf, fillonedir))
 		>= 0)
-		return buf.count;
+		error = buf.count;
 	}
     }
 

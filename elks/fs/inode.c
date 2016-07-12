@@ -156,18 +156,18 @@ int fs_may_remount_ro(kdev_t dev)
 static void write_inode(register struct inode *inode)
 {
     register struct super_block *sb = inode->i_sb;
-    if (!inode->i_dirt)
-	return;
-    wait_on_inode(inode);
-    if (!inode->i_dirt)
-	return;
-    if (!sb || !sb->s_op || !sb->s_op->write_inode) {
-	inode->i_dirt = 0;
-	return;
+    if(inode->i_dirt) {
+	wait_on_inode(inode);
+	if(inode->i_dirt) {
+	    if(!sb || !sb->s_op || !sb->s_op->write_inode)
+		inode->i_dirt = 0;
+	    else {
+		inode->i_lock = 1;
+		sb->s_op->write_inode(inode);
+		unlock_inode(inode);
+	    }
+	}
     }
-    inode->i_lock = 1;
-    sb->s_op->write_inode(inode);
-    unlock_inode(inode);
 }
 
 static void set_ops(register struct inode *inode)
@@ -373,8 +373,6 @@ void iput(register struct inode *inode)
 	inode->i_count--;
 	nr_free_inodes++;
     }
-
-    return;
 }
 
 static void list_inode_status(void)
@@ -393,24 +391,19 @@ struct inode *get_empty_inode(void)
 {
     static ino_t ino = 0;
     register struct inode *inode;
-    register struct inode *best;
 
-    best = 0;
-    goto startl;
     do {
-        printk("VFS: No free inodes\n");
-        list_inode_status();
-        sleep_on(&inode_wait);
-  startl:
         inode = first_inode->i_next;
         do {
             if (!inode->i_count && !inode->i_lock && !inode->i_dirt) {
-                best = inode;
-                break;
+                goto found_empty_inode;
             }
         } while((inode = inode->i_next) != first_inode->i_next);
-    } while(!best);
-
+        printk("VFS: No free inodes\n");
+        list_inode_status();
+        sleep_on(&inode_wait);
+    } while(1);
+  found_empty_inode:
 /* Here we are doing the same checks again. There cannot be a significant *
  * race condition here - no time has passed */
 #if 0

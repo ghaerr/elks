@@ -151,17 +151,17 @@ int sys_utime(char *filename, register struct utimbuf *times)
     int error;
 
     error = namei(filename, &inode, 0, 0);
-    if (error)
-	return error;
-    pinode = inode;
-    if (times) {
-	pinode->i_atime = get_user_long((void *) &times->actime);
-	pinode->i_mtime = get_user_long((void *) &times->modtime);
-    } else
-	pinode->i_atime = pinode->i_mtime = CURRENT_TIME;
-    pinode->i_dirt = 1;
-    iput(pinode);
-    return 0;
+    if (!error) {
+	pinode = inode;
+	if (times) {
+	    pinode->i_atime = get_user_long((void *) &times->actime);
+	    pinode->i_mtime = get_user_long((void *) &times->modtime);
+	} else
+	    pinode->i_atime = pinode->i_mtime = CURRENT_TIME;
+	pinode->i_dirt = 1;
+	iput(pinode);
+    }
+    return error;
 }
 
 /*
@@ -178,14 +178,16 @@ int sys_access(char *filename, int mode)
     int res;
 
     if (mode != (mode & S_IRWXO))	/* where's F_OK, X_OK, W_OK, R_OK? */
-	return -EINVAL;
-    old_euid = currentp->euid;
-    old_egid = currentp->egid;
-    currentp->euid = currentp->uid;
-    currentp->egid = currentp->gid;
-    res = namei(filename, &inode, 0, mode);
-    currentp->euid = old_euid;
-    currentp->egid = old_egid;
+	res = -EINVAL;
+    else {
+	old_euid = currentp->euid;
+	old_egid = currentp->egid;
+	currentp->euid = currentp->uid;
+	currentp->egid = currentp->gid;
+	res = namei(filename, &inode, 0, mode);
+	currentp->euid = old_euid;
+	currentp->egid = old_egid;
+    }
     return res;
 }
 
@@ -345,11 +347,9 @@ int sys_fchown(unsigned int fd, uid_t user, gid_t group)
 {
     register struct file *filp;
 
-    if (fd >= NR_OPEN || !(filp = current->files.fd[fd])
-	|| !(filp->f_inode))
-	return -EBADF;
-
-    return do_chown(filp->f_inode, user, group);
+    return ((fd >= NR_OPEN || !(filp = current->files.fd[fd]) || !(filp->f_inode))
+	    ? -EBADF
+	    : do_chown(filp->f_inode, user, group));
 }
 
 /*
@@ -382,27 +382,24 @@ int sys_open(char *filename, int flags, int mode)
 	flag |= FMODE_WRITE;
 
     error = open_namei(filename, flag, mode, &inode, NULL);
-    if(error)
-	goto exit_open;
+    if(!error) {
+	pinode = inode;
+	error = open_filp(flags, pinode, &f);
+	filp = f;
+	if(!error) {
+	    filp->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
 
-    pinode = inode;
-    error = open_filp(flags, pinode, &f);
-    filp = f;
-    if(error)
-	goto cleanup_inode;
-    filp->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
-
-    /*
-     * We have to do this last, because we mustn't export
-     * an incomplete fd to other processes which may share
-     * the same file table with us.
-     */
-    if ((error = get_unused_fd(filp)) > -1)
-	goto exit_open;
-    close_filp(pinode, filp);
-
-  cleanup_inode:
-    iput(pinode);
+	/*
+	 * We have to do this last, because we mustn't export
+	 * an incomplete fd to other processes which may share
+	 * the same file table with us.
+	 */
+	    if ((error = get_unused_fd(filp)) > -1)
+		goto exit_open;
+	    close_filp(pinode, filp);
+	}
+	iput(pinode);
+    }
   exit_open:
     return error;
 }

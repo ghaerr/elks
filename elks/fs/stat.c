@@ -105,13 +105,14 @@ int sys_lstat(char *filename, struct stat *statbuf)
     return error;
 }
 
-int sys_fstat(unsigned int fd, struct stat *statbuf)
+int sys_fstat(unsigned int fd, register struct stat *statbuf)
 {
     struct file *f;
-    int error = fd_check(fd, (char *) statbuf, sizeof(struct stat),
-			 FMODE_WRITE | FMODE_READ, &f);
 
-    return (!error) ? 0 /* error */ : cp_stat(f->f_inode, statbuf);
+    return (fd_check(fd, (char *) statbuf, sizeof(struct stat),
+				FMODE_WRITE | FMODE_READ, &f)
+		? cp_stat(f->f_inode, statbuf)
+		: 0);
 }
 
 int sys_readlink(char *path, char *buf, size_t bufsiz)

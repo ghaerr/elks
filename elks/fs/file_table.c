@@ -31,15 +31,12 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
     register struct file *f = file_array;
     register struct file_operations *fop;
 
-    do {
-	if (!f->f_count)
-	    goto found_unused_fp;
-    } while(++f < &file_array[NR_FILE]);	/* TODO: is nr_file const? */
-    result = -ENFILE;
-    printk("\nNo filps\n");
-    goto exit_open_filp;
-
-  found_unused_fp:
+    while(f->f_count) {
+	if(++f >= &file_array[NR_FILE]) {	/* TODO: is nr_file const? */
+	    printk("\nNo filps\n");
+	    return -ENFILE;
+	}
+    }
     memset(f, 0, sizeof(struct file));
     f->f_flags = flags;
     f->f_mode = (mode_t) ((flags + 1) & O_ACCMODE);
@@ -74,7 +71,6 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
     }
     *fp = f;
 
-  exit_open_filp:
     return result;
 }
 

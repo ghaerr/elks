@@ -20,7 +20,6 @@ static int minix_follow_link(register struct inode *dir,
 			     register struct inode *inode,
 			     int flag, int mode, struct inode **res_inode)
 {
-
     /*
      *      FIXME: #1 Stack use is too high
      *             #2 Needs to be current->link_count as this is blocking
@@ -36,35 +35,35 @@ static int minix_follow_link(register struct inode *dir,
 	dir = current->fs.root;
 	dir->i_count++;
     }
-    if (!inode) {
-	iput(dir);
-	return -ENOENT;
-    }
-    if (!S_ISLNK(inode->i_mode)) {
-	iput(dir);
+    if(!inode)
+	error = -ENOENT;
+    else if(!S_ISLNK(inode->i_mode)) {
 	*res_inode = inode;
-	return 0;
+	error = 0;
     }
-    if ( /* current-> */ link_count > 5) {
+    else if( /* current-> */ link_count > 5) {
 	iput(inode);
-	iput(dir);
-	return -ELOOP;
+	error = -ELOOP;
     }
-    bh = minix_bread(inode, 0, 0);
-    iput(inode);
-    if (!bh) {
-	iput(dir);
-	return -EIO;
+    else {
+	bh = minix_bread(inode, 0, 0);
+	iput(inode);
+	if(!bh)
+	    error = -EIO;
+	else {
+	    /* current-> */ link_count++;
+	    map_buffer(bh);
+	    pds = &current->t_regs.ds;
+	    ds = *pds;
+	    *pds = kernel_ds;
+	    error = open_namei(bh->b_data, flag, mode, res_inode, dir);
+	    *pds = ds;
+	    /* current-> */ link_count--;
+	    unmap_brelse(bh);
+	    return error;
+	}
     }
-    /* current-> */ link_count++;
-    map_buffer(bh);
-    pds = &current->t_regs.ds;
-    ds = *pds;
-    *pds = kernel_ds;
-    error = open_namei(bh->b_data, flag, mode, res_inode, dir);
-    *pds = ds;
-    /* current-> */ link_count--;
-    unmap_brelse(bh);
+    iput(dir);
     return error;
 }
 
@@ -74,23 +73,23 @@ static int minix_readlink(register struct inode *inode,
     register struct buffer_head *bh;
     size_t len;
 
-    if (!S_ISLNK(inode->i_mode)) {
-	iput(inode);
-	return -EINVAL;
+    if(!S_ISLNK(inode->i_mode))
+	len = -EINVAL;
+    else {
+	bh = minix_bread(inode, 0, 0);
+	if(!bh)
+	    len = 0;
+	else {
+	    map_buffer(bh);
+	    if((len = strlen(bh->b_data) + 1) > buflen)
+		len = buflen;
+	    if(len > 1023)
+		len = 1023;
+	    memcpy_tofs(buffer, bh->b_data, len);
+	    unmap_brelse(bh);
+	}
     }
-    bh = minix_bread(inode, 0, 0);
     iput(inode);
-
-    if (!bh)
-	return 0;
-    map_buffer(bh);
-
-    if((len = strlen(bh->b_data) + 1) > buflen)
-	len = buflen;
-    if (len > 1023)
-	len = 1023;
-    memcpy_tofs(buffer, bh->b_data, len);
-    unmap_brelse(bh);
     return len;
 }
 

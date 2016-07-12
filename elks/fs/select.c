@@ -235,18 +235,13 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
 		      /*(fd_set *) */ &res_ex);
 
     current->timeout = 0UL;
-    if (error < 0)
-	goto out;
-    if (!error) {
+    if(!error && (current->signal /* & ~current->blocked */ ))
 	error = -ERESTARTNOHAND;
-	if (current->signal /* & ~current->blocked */ )
-	    goto out;
-	error = 0;
+    else if(error > 0) {
+	set_fd_set(inp, &res_in);
+	set_fd_set(outp, &res_out);
+	set_fd_set(exp, &res_ex);
     }
-    set_fd_set(inp, &res_in);
-    set_fd_set(outp, &res_out);
-    set_fd_set(exp, &res_ex);
-
   out:
     return error;
 }
