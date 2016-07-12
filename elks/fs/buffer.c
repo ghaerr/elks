@@ -483,14 +483,11 @@ void unmap_buffer(register struct buffer_head *bh)
 	    printk("unmap_buffer: buffer #%x's b_mapcount<=0 already\n",
 		   bh->b_num);
 	    bh->b_mapcount = 0;
-	} else {
-	    if (!(--bh->b_mapcount)) {
+	} else if (!(--bh->b_mapcount)) {
 		debug1("BUFMAP: buffer %d released from L1.\n", bh->b_num);
 		wake_up(&bufmapwait);
-	    }
 	}
     }
-    return;
 }
 
 void unmap_brelse(register struct buffer_head *bh)

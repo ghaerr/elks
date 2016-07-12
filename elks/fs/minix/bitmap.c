@@ -72,31 +72,28 @@ void minix_free_block(register struct super_block *sb, unsigned short block)
     register struct buffer_head *bh;
     unsigned int zone;
 
-    if (!sb) {
+    if(!sb)
 	printk("mfb: bad dev\n");
-	return;
-    }
-    if (block < sb->u.minix_sb.s_firstdatazone ||
-	block >= sb->u.minix_sb.s_nzones) {
+    else if(block < sb->u.minix_sb.s_firstdatazone ||
+	    block >= sb->u.minix_sb.s_nzones)
 	printk("trying to free block %lx not in datazone\n", block);
-	return;
+    else {
+	bh = get_hash_table(sb->s_dev, (block_t) block);
+	if(bh)
+	    bh->b_dirty = 0;
+	brelse(bh);
+	zone = block - sb->u.minix_sb.s_firstdatazone + 1;
+	bh = sb->u.minix_sb.s_zmap[zone >> 13];
+	if(!bh)
+	    printk("mfb: bad bitbuf\n");
+	else {
+	    map_buffer(bh);
+	    if(!clear_bit(zone & 8191, bh->b_data))
+		printk("mfb (%s:%ld): already cleared\n", kdevname(sb->s_dev), block);
+	    unmap_buffer(bh);
+	    mark_buffer_dirty(bh, 1);
+	}
     }
-    bh = get_hash_table(sb->s_dev, (block_t) block);
-    if (bh)
-	bh->b_dirty = 0;
-    brelse(bh);
-    zone = block - sb->u.minix_sb.s_firstdatazone + 1;
-    bh = sb->u.minix_sb.s_zmap[zone >> 13];
-    if (!bh) {
-	printk("mfb: bad bitbuf\n");
-	return;
-    }
-    map_buffer(bh);
-    if (!clear_bit(zone & 8191, bh->b_data))
-	printk("mfb (%s:%ld): already cleared\n", kdevname(sb->s_dev), block);
-    unmap_buffer(bh);
-    mark_buffer_dirty(bh, 1);
-    return;
 }
 
 block_t minix_new_block(register struct super_block *sb)
