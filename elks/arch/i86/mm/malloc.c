@@ -62,23 +62,6 @@ static dev_t swap_dev;
 #endif
 
 /*
- *	Find a spare hole.
- */
-
-static struct malloc_hole *alloc_hole(struct malloc_head *mh)
-{
-    register struct malloc_hole *m = mh->holes;
-    register char *ct = (char *)(mh->size);
-
-    do {
-	if (m->flags == HOLE_SPARE)
-	    return m;
-	m++;
-    } while (--ct);
-    panic("mm: too many holes");
-}
-
-/*
  *	Split a hole into two
  */
 
@@ -87,6 +70,7 @@ static void split_hole(struct malloc_head *mh,
 {
     register struct malloc_hole *n;
     seg_t spare = m->extent - len;
+    int ct;
 
     m->flags = HOLE_USED;
     if (!spare)
@@ -96,11 +80,22 @@ static void split_hole(struct malloc_head *mh,
      */
 
     m->extent = len;
-    n = alloc_hole(mh);
+
+/*
+ *	Find a spare hole.
+ */
+    ct = mh->size;
+    n = mh->holes;
+    while(n->flags != HOLE_SPARE) {
+	n++;
+	if(!--ct)
+	    panic("mm: too many holes");
+    }
+
     n->page_base = m->page_base + len;
     n->extent = spare;
-    n->next = m->next;
     n->flags = HOLE_FREE;
+    n->next = m->next;
     m->next = n;
 }
 
@@ -108,18 +103,21 @@ static void split_hole(struct malloc_head *mh,
  *	Merge adjacent free holes
  */
 
-static void sweep_holes(struct malloc_head *mh)
+static void free_hole(struct malloc_head *mh, register struct malloc_hole *m)
 {
-    register struct malloc_hole *m = mh->holes;
+    register struct malloc_hole *n = mh->holes;
 
-    while (m != NULL && m->next != NULL) {
-	if (m->flags == HOLE_FREE && m->next->flags == HOLE_FREE &&
-	    m->page_base + m->extent == m->next->page_base) {
-	    m->extent += m->next->extent;
-	    m->next->flags = HOLE_SPARE;
-	    m->next = m->next->next;
-	} else
-	    m = m->next;
+    m->flags = HOLE_FREE;
+    if(m != n) {
+	while(n->next != m)
+	    n = n->next;
+	if(n->flags != HOLE_FREE)
+	    n = m;
+    }
+    while((m = n->next) != NULL && m->flags == HOLE_FREE) {
+	n->extent += m->extent;
+	m->flags = HOLE_SPARE;
+	n->next = m->next;
     }
 }
 
@@ -161,12 +159,11 @@ static struct malloc_hole *best_fit_hole(struct malloc_head *mh, segext_t size)
     register struct malloc_hole *m = mh->holes;
     register struct malloc_hole *best = NULL;
 
-    while (m) {
-	if (m->flags == HOLE_FREE && m->extent >= size)
-	    if (!best || best->extent > m->extent)
+    do {
+	if((m->flags == HOLE_FREE && m->extent >= size) &&
+	    (!best || best->extent > m->extent))
 		best = m;
-	m = m->next;
-    }
+    } while((m = m->next));
     return best;
 }
 
@@ -307,10 +304,8 @@ void mm_free(seg_t base)
 
     if (m->flags != HOLE_USED)
 	panic("double free");
-    if (!(--(m->refcount))) {
-	m->flags = HOLE_FREE;
-	sweep_holes(mh);
-    }
+    if (!(--(m->refcount)))
+	free_hole(mh, m);
 }
 
 /*
@@ -319,33 +314,17 @@ void mm_free(seg_t base)
 
 seg_t mm_dup(seg_t base)
 {
-    register struct malloc_hole *o, *m;
+    register struct malloc_hole *o;
+    register char *mbase;
 
     debug("MALLOC: mm_dup()\n");
     o = find_hole(&memmap, base);
     if (o->flags != HOLE_USED)
 	panic("bad/swapped hole");
 
-#ifdef CONFIG_SWAP
-
-    while ((m = best_fit_hole(&memmap, o->extent)) == NULL) {
-	seg_t s = swap_strategy(NULL);
-	if (!s || swap_out(s) == -1)
-	    return NULL;
-    }
-
-#else
-
-    m = best_fit_hole(&memmap, o->extent);
-    if (m == NULL)
-	return NULL;
-
-#endif
-
-    split_hole(&memmap, m, o->extent);
-    m->refcount = 1;
-    fmemcpy(m->page_base, 0, o->page_base, 0, (__u16)(o->extent << 4));
-    return m->page_base;
+    if((mbase = (char *)mm_alloc(o->extent)) != NULL)
+	fmemcpy((seg_t)mbase, 0, o->page_base, 0, (__u16)(o->extent << 4));
+    return (seg_t)mbase;
 }
 
 /*
@@ -371,11 +350,10 @@ unsigned int mm_get_usage(int type, int used)
 
     flag = used ? HOLE_USED : HOLE_FREE;
 
-    while (m != NULL) {
-	if ((int) m->flags == flag)
+    do {
+	if((int)m->flags == flag)
 	    ret += m->extent;
-	m = m->next;
-    }
+    } while((m = m->next));
 
 #ifdef CONFIG_SWAP
 
@@ -394,7 +372,7 @@ struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
 {
     register struct malloc_hole *next;
     segext_t ext;
-    seg_t base;
+
     if(m->extent >= pages){
         /* for now don't reduce holes */
         return m;
@@ -404,9 +382,8 @@ struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
     ext = pages - m->extent;
     if(next->flags == HOLE_FREE && next->extent >= ext){
         m->extent += ext;
-        next->extent -= ext;
         next->page_base += ext;
-        if(next->extent == 0){
+        if((next->extent -= ext) == 0){
             next->flags == HOLE_SPARE;
             m->next = next->next;
         }
@@ -415,16 +392,12 @@ struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
 
 #ifdef CONFIG_ADVANCED_MM
 
-    base = mm_alloc(pages);
-    if(!next){
-        return NULL; /* Out of luck */
+    if((next = (struct malloc_hole *)mm_alloc(pages)) != NULL) {
+	fmemcpy((seg_t)next, 0, m->page_base, 0, (__u16)(m->extent << 4));
+	next = find_hole(&memmap, (seg_t)next);
+	next->refcount = m->refcount;
+	free_hole(&memmap, m);
     }
-    fmemcpy(base, 0, m->page_base, 0, (__u16)(m->extent << 4));
-    next = find_hole(&memmap, base);
-    next->refcount = m->refcount;
-    m->flags = HOLE_FREE;
-    sweep_holes(&memmap);
-
     return next;
 
 #else
@@ -478,7 +451,6 @@ int sys_brk(__pptr len)
         currentp->t_endseg = len;
     }
 #endif
-brk_return:
     currentp->t_endbrk = len;
 
     return 0;
@@ -593,18 +565,17 @@ static int swap_out(seg_t base)
 	ll_rw_blk(WRITE, &swap_buf);
 	wait_on_buffer(&swap_buf);
     }
-    o->flags = HOLE_FREE;
-    sweep_holes(&memmap);
+    free_hole(&memmap, o);
 
     return 1;
 }
 
 static int swap_in(seg_t base, int chint)
 {
+    register struct task_struct *t;
     register struct malloc_hole *o;
     struct malloc_hole *so;
     int ct, blocks;
-    register struct task_struct *t;
 
     so = find_hole(&swapmap, base);
     /* Find memory for this segment */
@@ -666,8 +637,7 @@ static int swap_in(seg_t base, int chint)
 #endif
     {
 	so->refcount = 0;
-	so->flags = HOLE_FREE;
-	sweep_holes(&swapmap);
+	free_hole(&swapmap, so);
     }
 
     return 0;
