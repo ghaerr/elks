@@ -31,9 +31,6 @@ __u16 kernel_cs, kernel_ds;
 void setup_mm(seg_t start, seg_t end)
 {
     register char *pi;
-#ifdef CONFIG_XMS
-    __u16 xms = setupw(2);		/* Fetched by boot code */
-#endif
 
     pi = 0;
     do {
@@ -53,10 +50,8 @@ void setup_mm(seg_t start, seg_t end)
     printk("PC/%cT class machine, %s CPU\n%uK base RAM",
 	   arch_cpu > 5 ? 'A' : 'X', proc_name, setupw(0x2a));
 #ifdef CONFIG_XMS
-    if (arch_cpu < 6)
-	xms = 0;		/* XT bios hasn't got xms interrupt */
-    else
-	printk(", %uK extended memory (XMS)", xms);
+    if (arch_cpu >= 6)		/* XT bios hasn't got xms interrupt */
+	printk(", %uK extended memory (XMS)", setupw(2)); /* Fetched by boot code */
 #endif
     if (*cpuid)
 	printk(", CPUID `%s'", cpuid);
@@ -64,7 +59,7 @@ void setup_mm(seg_t start, seg_t end)
 #endif
 
     printk(".\nELKS kernel (%u text + %u data + %u bss)\n"
-	   "Kernel text at %x:0000, data at %x:0000 \n",
+	   "Kernel text at %x:0000, data at %x:0000\n",
 	   (unsigned)_endtext, (unsigned)_enddata,
 	   (unsigned)_endbss - (unsigned)_enddata,
 	   kernel_cs, kernel_ds);

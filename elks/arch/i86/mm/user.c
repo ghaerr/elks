@@ -70,10 +70,7 @@ void put_user_long(unsigned long int dv, void *dp)
 
 unsigned char get_user_char(void *dv)
 {
-    unsigned char retv;
-
-    memcpy_fromfs(&retv,dv,1);
-    return retv;
+    return peekb(current->t_regs.ds, (__u16)dv);
 }
 
 void put_user_char(unsigned char dv, void *dp)
