@@ -12,8 +12,6 @@
 #include <errno.h>
 #include <sys/wait.h>
 
-#define PATH_MAX 256;
-
 char LPD1[] = "/usr/sbin/lpd";		/* Proper place of lpd */
 char LPD2[] = "/usr/bin/lpd";		/* Minix has no sbin directories. */
 
