@@ -220,6 +220,7 @@ elkscmd/sys_utils/man
 elkscmd/sys_utils/meminfo
 elkscmd/sys_utils/mount
 elkscmd/sys_utils/passwd
+elkscmd/sys_utils/poweroff
 elkscmd/sys_utils/ps
 elkscmd/sys_utils/reboot
 elkscmd/sys_utils/shutdown
