@@ -33,7 +33,7 @@ main (argc, argv)
 
 	toprint = 0;
 
-	for(i=1;i<argc;i++)
+	for (i=1;i<argc;i++)
 	{
 		switch(argv[i][1])
 		{

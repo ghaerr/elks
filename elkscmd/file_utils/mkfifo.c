@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 
 	if (argc < 2) goto usage;
 	newmode = 0666 & ~umask(0);
-	for(i = 1; i < argc; i++) {
+	for (i = 1; i < argc; i++) {
 /* The first line below mith mkfifo is used in the GNU version but there
    is no mkfifo call in elks libc yet */
 /*		if (mkfifo (argv[i],newmode)) */

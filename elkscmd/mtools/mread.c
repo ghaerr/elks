@@ -195,7 +195,7 @@ long mod_date;
 #ifdef LOWERCASE
 	char *c;
 	c = target;
-	while(*c) {
+	while (*c) {
 		if (isupper(*c))
 			*c = tolower(*c);
 		c++;
@@ -229,12 +229,12 @@ long mod_date;
 
 	current = 0L;
 	readpos = -1;
-	for(;;) {
+	for (;;) {
 		/*
 		 * Find chain of contiguous clusters
 		 * curfat -> last in chain + 1
 		 */
-		for(curfat=fat;
+		for (curfat=fat;
 		    ++curfat < fat + maxcontig &&
 		    getfat(curfat-1)==curfat;) ;
 

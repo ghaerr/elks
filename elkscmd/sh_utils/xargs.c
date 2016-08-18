@@ -71,9 +71,9 @@ int do_args(int argc, char ** argv)
 {
 	int i = 1, j, k;
 
-	while(i < argc && argv[i][0] == '-') {
+	while (i < argc && argv[i][0] == '-') {
 		k = 0;
-		for(j = 1; j < strlen(argv[i]); j++) {
+		for (j = 1; j < strlen(argv[i]); j++) {
 			switch (argv[i][j]) {
 				case 'n':
 					k++;
@@ -123,7 +123,7 @@ void build_cmd(int argc, char ** argv)
 		fprintf(stderr, "%s: Too many initial arguments.\n", progname);
 		exit(1);
 	}
-	for(i = 0; i < argc; i++) {
+	for (i = 0; i < argc; i++) {
 		nargv[i] = argv[i];
 	}
 	nargc += argc;
@@ -149,7 +149,7 @@ char * next_token()
 	if (buf == NULL) {
 		out_of_mem();
 	}
-	for(;;) {
+	for (;;) {
 		int inp = fgetc(stdin);
 		switch (inp) {
 			case EOF:
@@ -236,7 +236,7 @@ int main(int argc, char ** argv)
 		int i;
 
 		new_argc = nargc;
-		while(new_argc < (nargc + max_args) &&
+		while (new_argc < (nargc + max_args) &&
 		     (tok = next_token()) != NULL) {
 			nargv[new_argc++] = tok;
 		}
@@ -244,7 +244,7 @@ int main(int argc, char ** argv)
 		if (nargc != new_argc) {
 			run(nargv[0], nargv);
 		}
-		for(i = nargc; i < new_argc; i++) {
+		for (i = nargc; i < new_argc; i++) {
 			free(nargv[i]);
 		}
 	} while (tok != NULL);

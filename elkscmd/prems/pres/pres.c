@@ -154,16 +154,16 @@ int pres(void)
     /*
      * tell the result
      */
-    if(wcat_flg == 0 && !quiet) {
+    if (wcat_flg == 0 && !quiet) {
         fprintf(stderr, "Compression: %d%%",
                 enk > 0 ?
                 ((100 * (enk - elk)) / enk) :
                 0);
     }
     /* exit(2) if no compression */
-    if(elk > enk) exit_stat = 2;
+    if (elk > enk) exit_stat = 2;
     fflush(stdout);
-    if(ferror(stdout)) writeerr();
+    if (ferror(stdout)) writeerr();
 }
 
 /*
@@ -312,7 +312,7 @@ int unpres(void)
     }
     free((char *)elb);
     fflush( stdout);
-    if(ferror(stdout)) writeerr();
+    if (ferror(stdout)) writeerr();
 }
 
 /* Handling an uncompressed block */
@@ -340,12 +340,12 @@ void copystat(char *ifname, char *ofname)
 	return;
     }
     if ((statbuf.st_mode & S_IFMT/*0170000*/) != S_IFREG/*0100000*/) {
-	if(quiet)
+	if (quiet)
 		fprintf(stderr, "%s: ", ifname);
         fprintf(stderr, " -- not a file: skipped");
 	exit_stat = 1;
     } else if (statbuf.st_nlink > 1) {
-	if(quiet)
+	if (quiet)
 		fprintf(stderr, "%s: ", ifname);
         fprintf(stderr, " -- there are %d other hard links: skipped",
                 statbuf.st_nlink - 1);
@@ -363,7 +363,7 @@ void copystat(char *ifname, char *ofname)
         utime(ofname, timep);   /* timestamps */
         if (unlink(ifname))     /* remove the input file */
             perror(ifname);
-        if(!quiet)
+        if (!quiet)
                 fprintf(stderr, " -- replaced by %s", ofname);
         /* Success */
         return;
@@ -378,10 +378,10 @@ void copystat(char *ifname, char *ofname)
  */
 int foreground(void)
 {
-        if(bgnd_flag == SIG_IGN) { /* background? */
+        if (bgnd_flag == SIG_IGN) { /* background? */
                 return 0;
         } else {                        /* foreground */
-                if(isatty(2)) {         /* and stderr is a terminal */
+                if (isatty(2)) {         /* and stderr is a terminal */
 			return 1;
 		} else {
 			return 0;
@@ -412,14 +412,14 @@ int main(register int argc, char **argv)
     filelist = fileptr = (char **)(malloc(argc * sizeof(*argv)));
     *filelist = NULL;
 
-    if((cp = strrchr(argv[0], '/')) != 0) {
+    if ((cp = strrchr(argv[0], '/')) != 0) {
 	cp++;
     } else {
 	cp = argv[0];
     }
-    if(strcmp(cp, "unpres") == 0) {
+    if (strcmp(cp, "unpres") == 0) {
         do_decomp = 1;
-    } else if(strcmp(cp, "wcat") == 0) {
+    } else if (strcmp(cp, "wcat") == 0) {
         do_decomp = 1;
         wcat_flg = 1;
     }
@@ -528,28 +528,28 @@ int main(register int argc, char **argv)
                     }
                 }
             }
-            if(wcat_flg == 0) {         /* Open the output file */
+            if (wcat_flg == 0) {         /* Open the output file */
                 if (freopen(ofname, "w", stdout) == NULL) {
                     perror(ofname);
                     continue;
                 }
-                if(!quiet)
+                if (!quiet)
                         fprintf(stderr, "%s: ", *fileptr);
             }
 
             /* the actual compressing/decompressing */
             if (do_decomp == 0) pres();
             else                unpres();
-            if(wcat_flg == 0) {
+            if (wcat_flg == 0) {
                 copystat(*fileptr, ofname); /* preserve the state */
-                if(exit_stat || (!quiet))
+                if (exit_stat || (!quiet))
                         putc('\n', stderr);
             }
         }
     } else {            /* stdio */
         if (do_decomp == 0) {
                 pres();
-                if(!quiet)
+                if (!quiet)
                         putc('\n', stderr);
         } else {
             unpres();

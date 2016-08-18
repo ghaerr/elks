@@ -217,7 +217,7 @@ char *pfile;
         register int c;
  
         if ((pf = fopen(pfile, "r")) != NULL) {
-                while((c = getc(pf)) != EOF)
+                while ((c = getc(pf)) != EOF)
                         putc(c, active);
                 (void) fclose(pf);
                 return(1);

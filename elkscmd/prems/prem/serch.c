@@ -33,21 +33,21 @@ serch()
     register FRAZ       f; /* fina pozicio en la nuna nodo */
     register FRAZ       l; /* litero */
 
-    if( nod_d[onod = HDIM + *n_l] == 0 ) /* se necesas, tuj kreu */
+    if ( nod_d[onod = HDIM + *n_l] == 0 ) /* se necesas, tuj kreu */
         nod_d[onod] = n_l;               /* la komencan nodon    */
-    if( (n=n_l+1) < fin ) for( ;
+    if ( (n=n_l+1) < fin ) for ( ;
                                (nod=sekv_niv(onod,*n)) >= 0;
                                oonod = onod, onod = nod ){
         /* koincidis unu vica litero */
         on = n; /* memorfiksu la komencon de noda frazparto */
-        if( ++n == fin ) break; /* al la sekva litero */
-        if( nod_nivel[nod] == n-n_l ) continue; /* unulitera nodo */
+        if ( ++n == fin ) break; /* al la sekva litero */
+        if ( nod_nivel[nod] == n-n_l ) continue; /* unulitera nodo */
         /* eble estas plia koincido */
         l = nod_d[nod] + (n - n_l);
         f = nod_d[nod] + nod_nivel[nod];
-        for( ; l != f && n != fin && *n == *l ; ++n, ++l ) ;
-        if( n == fin ) break;
-        if( l == f ) continue; /* plena koincido */
+        for ( ; l != f && n != fin && *n == *l ; ++n, ++l ) ;
+        if ( n == fin ) break;
+        if ( l == f ) continue; /* plena koincido */
         /* 3. ne plena koincido en chi nodo */
         nod_lon = n - on;
         maks_lon = nod_nivel[nod] - nod_nivel[onod];
@@ -58,14 +58,14 @@ serch()
     /* 1. elcherpighis la eniraj literoj */
     /*   aw                              */
     /* 2. ne estas sekva nodo            */
-    if( n == fin ){ /* elcherpighis la eniraj literoj */
-        if( n - n_l > 1 ){ /* estas kion kodigi */
+    if ( n == fin ){ /* elcherpighis la eniraj literoj */
+        if ( n - n_l > 1 ){ /* estas kion kodigi */
             kod_nod = nod;
             maks_lon = nod_nivel[nod] - nod_nivel[onod];
-            if( (nod_lon=n-on) == maks_lon ) nod_lon = 0;
+            if ( (nod_lon=n-on) == maks_lon ) nod_lon = 0;
         }
     } else { /* ne estas la sekva nodo */
-        if( n - n_l > 1 ){ /* estas kion kodigi */
+        if ( n - n_l > 1 ){ /* estas kion kodigi */
             kod_nod = onod;
             maks_lon = nod_nivel[onod] - nod_nivel[oonod];
             nod_lon = 0;

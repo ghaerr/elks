@@ -62,7 +62,7 @@ int mode;
 	  fd = -1;
 	  continue ;
 	}
-	if( read_boot() ) {
+	if ( read_boot() ) {
 	  close(fd) ;
 	  fd = -1;
 	  continue ;
@@ -87,7 +87,7 @@ int mode;
 
   /* Set the parameters if needed */
   if ( try->drv_ifunc )
-    if( (*(try->drv_ifunc))(fd,NCYL(bb.sb),NTRACK(bb.sb),NSECT(bb.sb)) )
+    if ( (*(try->drv_ifunc))(fd,NCYL(bb.sb),NTRACK(bb.sb),NSECT(bb.sb)) )
       exit(1) ;
   
   buflen = fat_len * MSECSIZ;

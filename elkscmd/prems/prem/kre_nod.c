@@ -17,17 +17,17 @@ register HASHNUM post;
     register HASHNUM i;
              HASHNUM novpost;
 
-    if( maksintern + maksfoli == MAKSNOD ) return( post );
+    if ( maksintern + maksfoli == MAKSNOD ) return( post );
     /* ni metos la novan nodon anstataw `post' */
     /* serchu la lokon en la hash-tabelo por la posta */
-    if( nod_d[ nod=
+    if ( nod_d[ nod=
              (((*(nod_d[post]+niv)+12347)*(int)n_l)&077777)%HDIM
              ] != 0 ){
         /* Ne estas libera, serchu plu */
         i = (nod) ? HDIM-nod : 1;
-        while( 1 ){
-            if( (nod -= i) < 0 ) nod += HDIM;
-            if( nod_d[nod] == 0 ) break; /* liberas */
+        while ( 1 ){
+            if ( (nod -= i) < 0 ) nod += HDIM;
+            if ( nod_d[nod] == 0 ) break; /* liberas */
         }
     }
     /* trovis liberan lokon */
@@ -43,17 +43,17 @@ register HASHNUM post;
     nod_num[post] = maksintern++;
 
     /* kreu novan folion post la kreita nodo */
-    if( maksintern + maksfoli == MAKSNOD ) return( nod );
+    if ( maksintern + maksfoli == MAKSNOD ) return( nod );
     novpost = nod;
     /* serchu la liberan lokon */
-    if( nod_d[ nod=
+    if ( nod_d[ nod=
              (((*(n_l+niv)+12347)*(int)n_l)&077777)%HDIM
              ] != 0 ){
         /* Ne estas libera, serchu plu */
         i = (nod) ? HDIM-nod : 1;
-        while( 1 ){
-            if( (nod -= i) < 0 ) nod += HDIM;
-            if( nod_d[nod] == 0 ) break; /* liberas */
+        while ( 1 ){
+            if ( (nod -= i) < 0 ) nod += HDIM;
+            if ( nod_d[nod] == 0 ) break; /* liberas */
         }
     }
     nod_d[nod] = n_l;

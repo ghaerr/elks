@@ -274,7 +274,7 @@ extern void	cutend();
 /*------------------------------------------------------------------------*/
 /* macros that are used as control structures                             */
 
-#define BeforeAfter(before, after) for((before),bavar=1;bavar;(after),bavar=0)
+#define BeforeAfter(before, after) for ((before),bavar=1;bavar;(after),bavar=0)
 #define ChangeText	BeforeAfter(beforedo(FALSE),afterdo())
 
 extern int	bavar;		/* used only in BeforeAfter macros */

@@ -105,18 +105,18 @@ void process_request()
 	ret = read(conn_sock, buf, BUF_SIZE);
 	
 	c = buf;
-	while(*c && !WS(*c) && c < (buf + sizeof(buf))){
+	while (*c && !WS(*c) && c < (buf + sizeof(buf))){
 		c++;
 	}
 	*c = 0;
 	
-	if(strcasecmp(buf, "get")){
+	if (strcasecmp(buf, "get")){
 		send_error(404, "Method not supported");
 		return;		
 	}
 	
 	file = ++c;
-	while(*c && !WS(*c) && c < (buf + sizeof(buf))){
+	while (*c && !WS(*c) && c < (buf + sizeof(buf))){
 		c++;
 	}
 	*c = 0;
@@ -126,15 +126,15 @@ void process_request()
 	strcat(fullpath, file);
 	stat(fullpath, &st);
 	
-	if((st.st_mode & S_IFMT) == S_IFDIR){
-		if(file[strlen(fullpath) - 1] != '/'){
+	if ((st.st_mode & S_IFMT) == S_IFDIR){
+		if (file[strlen(fullpath) - 1] != '/'){
 			strcat(fullpath, "/");
 		}
 		strcat(fullpath, "index.html");
 	}
 	
 	fin = open(fullpath, O_RDONLY);
-	if(fin < 0){
+	if (fin < 0){
 		send_error(404, "Document (probably) not found");
 		return;
 	}
@@ -164,7 +164,7 @@ char** argv;
 	struct sockaddr_in localadr;
 
 	ret = fork();
-	if(ret > 0 || ret == -1){
+	if (ret > 0 || ret == -1){
 		exit(0);	
 	}
 	ret = open("/dev/null", O_RDWR); /* our log file! */
@@ -188,14 +188,14 @@ char** argv;
 
 	ret = listen(listen_sock, 5);
 
-	while(1){
+	while (1){
 		conn_sock = accept(listen_sock, NULL, NULL);
 		
-		if(conn_sock < 0)
+		if (conn_sock < 0)
 			continue;
 
 		ret = fork();
-		if(ret == 0){
+		if (ret == 0){
 			close(listen_sock);
 			process_request();
 			close(conn_sock);

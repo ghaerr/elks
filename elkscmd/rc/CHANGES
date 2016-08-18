@@ -81,7 +81,7 @@ some dead code was removed from input.c
 
 a race condition in the signal handler was fixed.
 
-the variable in for() was getting evaluated each time through the loop
+the variable in for () was getting evaluated each time through the loop
 (e.g., for (`{echo i;date>[1=2]} in 1 2 3)echo $i would print the date
 three times). This was cleaned up.
 
@@ -148,7 +148,7 @@ in rc-1.4beta, notably the shell sometimes spawned background jobs
 with SIGTERM ignored. I took the opportunity to make things a little
 cleaner here.
 
-a quasi-memory leak in the code for while() was fixed: a long-running
+a quasi-memory leak in the code for while () was fixed: a long-running
 while that had rc commands allocating memory in it could cause the
 shell to grow without bounds. I fixed this by placing the while loop
 (*and* test!) inside a new allocation arena each time through the loop.

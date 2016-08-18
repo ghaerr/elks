@@ -57,7 +57,7 @@ void shan_fl(void)
     char c, d;
 
     ++flp;
-    if( premado && verb && flp > 0 ){
+    if ( premado && verb && flp > 0 ){
 	fprintf( stderr, ediag(
 	    " Currently compressed %d%%\n",
 	    " Nuntempa premado %d%%\n"),
@@ -72,9 +72,9 @@ void shan_fl(void)
                      flp+1 );
     read( 2, &c, 1 );
     d = c;
-    while( c != '\n' )
+    while ( c != '\n' )
 	read( 2, &c, 1 );
-    if( d == 'n' || d == 'N' ){
+    if ( d == 'n' || d == 'N' ){
 	fprintf( stderr, ediag(
 	    " Aborted by user\n",
 	    " Finita fare de uzanto\n") );
@@ -86,15 +86,15 @@ void shan_fl(void)
 /* Blocking buffer flush */
 void ell_fin(void)
 {
-    if( skp/B_LON >= dlon ) shan_fl(); /* Change the media */
+    if ( skp/B_LON >= dlon ) shan_fl(); /* Change the media */
     lseek( fd, skp, 0 );
-    if( write( fd, b, bimaks ) < bimaks ){ /* The whole buffer */
+    if ( write( fd, b, bimaks ) < bimaks ){ /* The whole buffer */
 	fprintf( stderr, ediag(
 	    " Write error! Block %d\n",
 	    " Skriberaro! Bloko %d\n"), skp/B_LON );
 	    exit_stat = 5;
     }
-    if( num > 0 && verb ) fprintf( stderr, ediag(
+    if ( num > 0 && verb ) fprintf( stderr, ediag(
 	" Compressed: %d%%\n",
 	" Kunpremite: %d%%\n"),
 	(100*(num-((long)flp*dlon*B_LON+skp+bi)))/num );
@@ -129,27 +129,27 @@ void tdefa(char c)
     register char *p;
     char *estas(char*, char);
 
-    if( (deffil=fopen(DEFFIL,"r")) == NULL ) return; /* no such file */
+    if ( (deffil=fopen(DEFFIL,"r")) == NULL ) return; /* no such file */
     do{
-        if( fgets( buf, BUFSIZ, deffil ) == NULL ){
+        if ( fgets( buf, BUFSIZ, deffil ) == NULL ){
             fclose( deffil );
             return; /* not found */
         }
-    } while( !(p=estas( buf, c )) ); /* unsuitable line in the buffer */
+    } while ( !(p=estas( buf, c )) ); /* unsuitable line in the buffer */
     fclose( deffil );
     /* found a line, p points to the archive file name */
     /* set the missing defaults */
-    if( !afn ){                   /* beginning of the name */
+    if ( !afn ){                   /* beginning of the name */
         afn = archfn;
-        while( *p > ' ' ) *afn++ = *p++;  /* copy the name */
+        while ( *p > ' ' ) *afn++ = *p++;  /* copy the name */
         *afn = 0;
         afn = archfn;
-    } else while( *p > ' ' ) ++p;         /* skip the name */
-    while( *p && *p <= ' ') ++p;  /* skip the delimiter */
-    if( !bkf ) bkf = atoi( p );   /* beginning of the blocking factor */
-    while( *p > ' ' ) ++p;        /* skip the blocking factor */
-    while( *p && *p <= ' ') ++p;  /* skip the delimiter */
-    if( !dlon ) dlon = atoi( p ); /* beginning of the media size (KB!) */
+    } else while ( *p > ' ' ) ++p;         /* skip the name */
+    while ( *p && *p <= ' ') ++p;  /* skip the delimiter */
+    if ( !bkf ) bkf = atoi( p );   /* beginning of the blocking factor */
+    while ( *p > ' ' ) ++p;        /* skip the blocking factor */
+    while ( *p && *p <= ' ') ++p;  /* skip the delimiter */
+    if ( !dlon ) dlon = atoi( p ); /* beginning of the media size (KB!) */
 }
 
 char *estas(char *b, char c) /* look for a pattern */
@@ -164,15 +164,15 @@ char *estas(char *b, char c) /* look for a pattern */
 /* Output a byte with multiblock buffering */
 static void elll(int l)
 {
-    if( bi >= bimaks ){
-	if( skp/B_LON >= dlon ) shan_fl(); /* Change the media */
+    if ( bi >= bimaks ){
+	if ( skp/B_LON >= dlon ) shan_fl(); /* Change the media */
 	lseek( fd, skp, 0 );
-	if( write( fd, b, bimaks ) < bimaks ){
+	if ( write( fd, b, bimaks ) < bimaks ){
 	    fprintf( stderr, ediag(
 		" Write error! Block %d\n",
 		" Skriberaro! Bloko %d\n"), skp/B_LON );
 	    exit_stat = 5;
-	    if( !ignore ) exit( exit_stat );
+	    if ( !ignore ) exit( exit_stat );
         }
 	skp += bimaks;
 	bi = 0;
@@ -183,15 +183,15 @@ static void elll(int l)
 /* Read one byte for decompression */
 int en_l(void)
 {
-    if( bi >= bimaks ){
-	if( skp/B_LON >= dlon ) shan_fl(); /* Change the media */
+    if ( bi >= bimaks ){
+	if ( skp/B_LON >= dlon ) shan_fl(); /* Change the media */
 	lseek( fd, skp, 0 );
-	if( read( fd, b, bimaks ) < bimaks ){
+	if ( read( fd, b, bimaks ) < bimaks ){
 	    fprintf( stderr, ediag(
 		" Read error! Block %d\n",
 		" Legeraro! Bloko %d\n"), skp/B_LON );
 	    exit_stat = 5;
-	    if( !ignore ) exit( exit_stat );
+	    if ( !ignore ) exit( exit_stat );
 	}
 	skp += bimaks;
 	bi = 0;
@@ -211,7 +211,7 @@ void pres(void)
     int ellon;  /* output block length */
     unsigned int b_n;    /* current block number */
 
-    if( (enb=(LITER *)malloc((unsigned int)BLON)) == NULL
+    if ( (enb=(LITER *)malloc((unsigned int)BLON)) == NULL
      || (elb=(LITER *)malloc((unsigned int)BLON)) == NULL ){
         fprintf( stderr, ediag(
             "pres: no memory\n",
@@ -219,17 +219,17 @@ void pres(void)
         exit_stat = 5;
         return;
     }
-    for( ;; ){
+    for ( ;; ){
         d = enb;
         b_n = num / BLON; /* the future block number */
         /* fill the input buffer */
-        while( d - enb < BLON && (c=getchar()) != EOF ){
+        while ( d - enb < BLON && (c=getchar()) != EOF ){
             ++num;
             *d++ = c; /* fill the input buffer */
         }
         /* EOF or buffer is full */
         /* the actual compression */
-        if( (ellon=b_prem( enb, (enlon=d-enb), elb )) > 0 ){
+        if ( (ellon=b_prem( enb, (enlon=d-enb), elb )) > 0 ){
             /* success */
             /* the magic byte */
             c = BMARK | (enlon<BLON ? LASTA : 0) | PREMITA;
@@ -247,13 +247,13 @@ void pres(void)
         elll( b_n&0377 );
         elll( (b_n>>8)&0377 );
         /* possibly block length */
-        if( enlon<BLON ){
+        if ( enlon<BLON ){
             elll( enlon&0377 );
             elll( (enlon>>8)&0377 );
         }
-        while( d < fin ) /* output the block */
+        while ( d < fin ) /* output the block */
             elll( *d++ );
-        if( enlon != BLON ) break; /* it was the last one */
+        if ( enlon != BLON ) break; /* it was the last one */
     }
     free( (char *)enb );
     free( (char *)elb );
@@ -275,23 +275,23 @@ static int serch()
     int msg = 0;
 
     i = en_l();
-    for( ;; ){
-        while( (i & ~(LASTA|PREMITA)) != BMARK ) i = en_l();
+    for ( ;; ){
+        while ( (i & ~(LASTA|PREMITA)) != BMARK ) i = en_l();
         /* found something */
-        if( i == ((~(j=en_l()))&0377) ){
+        if ( i == ((~(j=en_l()))&0377) ){
             it_blk = en_l();
             it_blk += en_l()<<8; /* block number */
-            if( i & LASTA ){
+            if ( i & LASTA ){
                 it_lon = en_l();
                 it_lon += en_l()<<8; /* block length */
-                if( it_lon < BLON ) return( i );
+                if ( it_lon < BLON ) return( i );
             } else {
                 it_lon = BLON;
                 return( i );
             }
         }
         /* wrong! */
-        if( !msg ){
+        if ( !msg ){
             ++msg;
             fprintf( stderr, ediag(
                 " *** Bad block header, ",
@@ -304,7 +304,7 @@ static int serch()
                              "aborted ***\n",
                              "fino ***\n") );
         }
-        if( ignore ){
+        if ( ignore ){
                 i = j;
                 continue;
         }
@@ -329,7 +329,7 @@ void unpres(void)
     unsigned int b_blk; /* expected block number after the decompressed one */
     int lon; /* decompressed block length */
 
-    if( (elb=(LITER *)malloc((unsigned int)BLON)) == NULL ){
+    if ( (elb=(LITER *)malloc((unsigned int)BLON)) == NULL ){
         fprintf( stderr, ediag(
             "unpres: no memory\n",
             "unpres: ne suficxas memoro\n")  );
@@ -338,15 +338,15 @@ void unpres(void)
     }
     b_blk = oblk = 0;
     i = serch();
-    for( ;; ){
-        if( i == EOF ){ /* not ignored error */
+    for ( ;; ){
+        if ( i == EOF ){ /* not ignored error */
             fprintf( stderr, ediag(
 " *** Erroneous data, finished ***\n",
 " *** Datumeraro, fino ***\n") );
             exit_stat = 5;
             break;
         }
-        if( it_blk != oblk ){  /* some blocks are missing */
+        if ( it_blk != oblk ){  /* some blocks are missing */
             fprintf( stderr, ediag(
             " *** Expected block # %u, really # %u, ",
             " *** Anstataux bloko %u venis %u, "),
@@ -358,13 +358,13 @@ void unpres(void)
                              ediag(
                              "aborted ***\n",
                              "fino ***\n") );
-            if( !ignore ){
+            if ( !ignore ){
                 exit_stat = 5;
                 break;
             }
         }
         stato = (i & PREMITA) ? b_malprem : kopir;
-        if( (*stato)( elb, it_lon ) ){
+        if ( (*stato)( elb, it_lon ) ){
             fprintf( stderr, ediag(
             " *** Wrong data found, ",
             " *** Maltauxgaj datumoj, ") );
@@ -375,7 +375,7 @@ void unpres(void)
                              ediag(
                              "aborted ***\n",
                              "fino ***\n") );
-            if( !ignore ){
+            if ( !ignore ){
                 exit_stat = 5;
                 break;
             } else {
@@ -385,12 +385,12 @@ void unpres(void)
         }
         oblk = it_blk + 1;
         lon = it_lon;
-        if( lon == BLON ){ /* not the last block */
-            if( (i=serch()) == EOF    /* error */
+        if ( lon == BLON ){ /* not the last block */
+            if ( (i=serch()) == EOF    /* error */
              || it_blk != oblk )  /* out of order */
                     continue; /* don't trust this block */
         } else { /* looks like the last block */
-            if( ignore ){
+            if ( ignore ){
                 /* not the last, we may need to look further! */
                 fprintf( stderr, ediag(
 " *** There are some data after END-OF-DATA, ",
@@ -402,28 +402,28 @@ void unpres(void)
                                  ediag(
                                  "ignored ***\n",
                                  "sed ignoritas ***\n")  );
-                if( ignore > 1 ){
+                if ( ignore > 1 ){
                     i = serch();
                     continue; /* ignore the "last block" impression */
                 }
             }
         }
-        if( (j=oblk-b_blk-1) != 0 ){
+        if ( (j=oblk-b_blk-1) != 0 ){
             /* the next block number in order, but here there was a skip */
-            if( fseek( stdout, (long)oblk*(long)BLON, 0 ) < 0 )
+            if ( fseek( stdout, (long)oblk*(long)BLON, 0 ) < 0 )
                 /* can not seek (pipe) */
-                if( j > 0 && j <= 10 ) /* skipped blocks
+                if ( j > 0 && j <= 10 ) /* skipped blocks
                                           are not too many */
-                    while( j-- ) /* fill with garbage */
-                        for( k=BLON; k--; ) putchar( 'U' );
+                    while ( j-- ) /* fill with garbage */
+                        for ( k=BLON; k--; ) putchar( 'U' );
         }
         b_blk = oblk;
-        for( fin=(d=elb)+lon; d<fin; putchar( *d++ ) ) ;
-        if( lon < BLON ) break; /* this was the last block */
+        for ( fin=(d=elb)+lon; d<fin; putchar( *d++ ) ) ;
+        if ( lon < BLON ) break; /* this was the last block */
     }
     free( (char *)elb );
     fflush( stdout );
-    if( ferror(stdout) ){
+    if ( ferror(stdout) ){
         perror( "stdout" );
         exit_stat = 5;
     }
@@ -434,7 +434,7 @@ static int kopir(register LITER *b, register unsigned int lon)
 {
     register int kod;
 
-    while( lon-- ){
+    while ( lon-- ){
         kod = en_l();
         *b++ = kod;
     }
@@ -446,7 +446,7 @@ int main(int argc, char **argv)
     register int i;
     register char c;
 
-    if(argc < 2){
+    if (argc < 2){
 	fprintf(stderr, ediag( "\
    Backup stdin onto removable media with data compression,\n\
 	   restore to stdout; (c) RL 1990-2015\n",
@@ -461,7 +461,7 @@ Uzo:    fprintf( stderr, ediag( "\
 	exit(1);
     }
     argc--, argv++, i = 1;
-    while( c = *(*argv)++ ){ /* process all flags */
+    while ( c = *(*argv)++ ){ /* process all flags */
 	switch( c ){
 	    case 'x':
 		premado += 2; /* must become 0 */
@@ -488,7 +488,7 @@ Uzo:    fprintf( stderr, ediag( "\
 		verb = 1;
 		break;
 	    case 'f':
-		if( i >= argc ){
+		if ( i >= argc ){
 		    fprintf( stderr, ediag(
 			" archive file name is needed\n",
 			" mankas arkiva dosiero\n") );
@@ -498,7 +498,7 @@ Uzo:    fprintf( stderr, ediag( "\
 		tdefa( 'f' ); /* Figure out defaults */
 		break;
 	    case 'b':
-		if( i >= argc ){
+		if ( i >= argc ){
 		    fprintf( stderr, ediag(
 			" blocking factor is needed\n",
 			" mankas blokumopo\n") );
@@ -507,7 +507,7 @@ Uzo:    fprintf( stderr, ediag( "\
 		bkf = atoi( argv[i++] );
 		break;
 	    case 'k':
-		if( i >= argc ){
+		if ( i >= argc ){
 		    fprintf( stderr, ediag(
 			" media size is needed\n",
 			" mankas grandeco de la disko(j)\n") );
@@ -522,21 +522,21 @@ Uzo:    fprintf( stderr, ediag( "\
 		goto Uzo;
 	}
     }
-    if( premado < 0 ){
+    if ( premado < 0 ){
 	fprintf( stderr, ediag(
 	    " flag `x' or `c' is needed!\n",
 	    " mankas `x' aux `c'!\n") );
 	goto Uzo;
     }
-    if( premado > 1 ){
+    if ( premado > 1 ){
 	fprintf( stderr, ediag(
 	    " should be only one flag `x' or `c'!\n",
 	    " `x' aux `c' devas esti sola!\n") );
 	goto Uzo;
     }
-    if( !(afn&&dlon&&bkf) ){ /* Not enough parameters */
+    if ( !(afn&&dlon&&bkf) ){ /* Not enough parameters */
 	tdefa( '0' ); /* look in the defaults file */
-	if( !(afn&&dlon&&bkf) ){ /* no such file */
+	if ( !(afn&&dlon&&bkf) ){ /* no such file */
 	    fprintf( stderr, ediag(
 		"\
  Insufficient parameters! (default file `%s' does not exist)\n",
@@ -545,27 +545,27 @@ Uzo:    fprintf( stderr, ediag( "\
 	    goto Uzo;
 	}
     }
-    if( (fd=open(afn,premado)) < 0 ){
+    if ( (fd=open(afn,premado)) < 0 ){
 	fprintf( stderr, ediag(
 	    " Can't open archive file %s\n",
 	    " Ne povas malfermi arkivdosieron %s\n"),
 					    afn );
 	exit( 2 );
     }
-    if( dlon <= 0 ){
+    if ( dlon <= 0 ){
 	fprintf( stderr, ediag(
 	    " wrong media size: %d\n",
 	    " maltauxga grandeco: %d\n"), dlon );
 	exit( 3 );
     }
-    if( bkf <= 0  || bkf > 32 ){
+    if ( bkf <= 0  || bkf > 32 ){
 	fprintf( stderr, ediag(
 	    " wrong blocking: %d\n",
 	    " maltauxga blokumopo: %d\n"), bkf );
 	exit( 4 );
     }
     dlon *= 2; /* Translate KB to blocks */
-    if( dlon%bkf ){
+    if ( dlon%bkf ){
 	fprintf( stderr, ediag(
 	    "\
  The size must be a multiple of blocking factor,\n\
@@ -575,7 +575,7 @@ Uzo:    fprintf( stderr, ediag( "\
  blokumopo estos: %d\n"), bkf=1 );
 /*      exit( 4 ); */
     }
-    if( (b=(unsigned char *)malloc(bimaks=bkf*B_LON)) == 0 ){
+    if ( (b=(unsigned char *)malloc(bimaks=bkf*B_LON)) == 0 ){
 	fprintf( stderr, ediag(
 	    "\
  insufficient memory for %d blocks buffer\n",
@@ -583,7 +583,7 @@ Uzo:    fprintf( stderr, ediag( "\
  ne suficxas memoro por blokumado je %d blokoj\n"), bkf );
 	exit( 5 );
     }
-    if( verb ){
+    if ( verb ){
 	fprintf( stderr, premado ?
 	    ediag(
  " Writing onto %s, size = %d KB, blocking = %d\n",
@@ -593,7 +593,7 @@ Uzo:    fprintf( stderr, ediag( "\
  " Lego el %s, grandece %d KB, blokumante je %d blokoj\n"),
 	 afn,      dlon/2,               bkf );
     }
-    if( premado )
+    if ( premado )
 	rikor();
     else
 	leg();

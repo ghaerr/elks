@@ -111,7 +111,7 @@ void ip_print(struct iphdr_s *head)
     printf("check sum = %d\n",ip_calc_chksum(head, 4 * IP_IHL(head)));
     
     addr = (__u8 *)head + 4 * IP_IHL(head);
-    for( i = 0 ; i < ntohs(head->tot_len) - 20 ; i++ ) 
+    for ( i = 0 ; i < ntohs(head->tot_len) - 20 ; i++ ) 
 	printf("%x ",addr[i]);
 
     printf("\n");
@@ -128,14 +128,14 @@ void ip_recvpacket(char *packet,int size)
     /*printf("IP: Got packet of size : %d \n",size,*packet);
     ip_print(iphdr);*/
 
-    if(IP_VERSION(iphdr) != 4){
+    if (IP_VERSION(iphdr) != 4){
 #ifdef DEBUG
         printf("IP : Bad IP version\n");
 #endif
 	return;
     }
 
-    if(IP_IHL(iphdr) < 5){
+    if (IP_IHL(iphdr) < 5){
 #ifdef DEBUG
         printf("IP : Bad IHL\n");
 #endif
@@ -190,7 +190,7 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     memcpy(&ipbuf[tlen], packet, len);
 
     /* "route" */
-    if(iph->daddr == local_ip && iph->daddr == 0x0100007f) {
+    if (iph->daddr == local_ip && iph->daddr == 0x0100007f) {
 	/* 127.0.0.1 */
 	/* TODO */
     } else

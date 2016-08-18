@@ -258,7 +258,7 @@ makepat(string,delim)
     char *start = string;
     int inarg = FALSE;
 
-    for(arg=0;arg<9;++arg)
+    for (arg=0;arg<9;++arg)
 	RE_start[arg] = RE_size[arg] = (-1);
     arg = 0;
     p = pattern;
@@ -351,7 +351,7 @@ int start, endp;
 	 if ((j = REmatch(pattern, ep, start)) <= start)
              {
              i = j;
-             while((j=REmatch(pattern, i+1, start)) <= start)
+             while ((j=REmatch(pattern, i+1, start)) <= start)
                  {
                  i = j;
                  }

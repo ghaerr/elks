@@ -67,7 +67,7 @@ int port;
 	in_adr.sin_addr.s_addr = INADDR_ANY;
 
     ret = bind(netfd, (struct sockaddr *)&in_adr, sizeof(struct sockaddr_in));
-	if(ret < 0){
+	if (ret < 0){
 		perror("Bind failed");
 		exit(1);
 	}
@@ -77,7 +77,7 @@ int port;
 	in_adr.sin_addr.s_addr = in_aton(host);
 
 	ret = connect(netfd, (struct sockaddr *)&in_adr, sizeof(struct sockaddr_in));
-	if(ret < 0){
+	if (ret < 0){
 		perror("Connection failed");
 		exit(1);
 	}

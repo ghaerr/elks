@@ -20,11 +20,11 @@ NIVEL lon;
     f =
      (el=mnod_d[old]) +
      ( lon ? mnod_nivel[mnod_patro[old]]+lon : mnod_nivel[old] );
-    for( en=mn_l; el < f && en < mfin;
+    for ( en=mn_l; el < f && en < mfin;
         *en++ = *el++ ) ;
-    if( el != f ) longjmp( meraro, -1 );
-    if( mmaksintern + mmaksfoli < MAKSNOD ){
-        if( lon ){ /* bezonatas intera nodo */
+    if ( el != f ) longjmp( meraro, -1 );
+    if ( mmaksintern + mmaksfoli < MAKSNOD ){
+        if ( lon ){ /* bezonatas intera nodo */
             /* kreu la internan nodon */
             nod = MAKSNOD - 1 - mmaksintern++;
             mnod_d[nod] = mn_l;
@@ -34,7 +34,7 @@ NIVEL lon;
             old = nod; /* patro por la kreota folio */
         }
         /* kreu la folion */
-        if( mmaksintern + mmaksfoli < MAKSNOD ){
+        if ( mmaksintern + mmaksfoli < MAKSNOD ){
             nod = mmaksfoli++;
             mnod_d[nod] = mn_l;
             mnod_nivel[nod] = FOLIO;

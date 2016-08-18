@@ -87,23 +87,23 @@ struct timeval *tv;
 
 	do{
 		tm.tm_year = atoi(p);
-		if(!(p = strtok(NULL, "-"))) return -1;
+		if (!(p = strtok(NULL, "-"))) return -1;
 		tm.tm_mon = atoi(p);tm.tm_mon--;
-		if(!(p = strtok(NULL, "T"))) return -1;
+		if (!(p = strtok(NULL, "T"))) return -1;
 		tm.tm_mday = atoi(p);
 		p = strtok(NULL, ":");
-		if(!p) break;
+		if (!p) break;
 		tm.tm_hour = atoi(p);
 		p = strtok(NULL, ":");
-		if(!p) break;
+		if (!p) break;
 		tm.tm_min = atoi(p);
 		p = strtok(NULL, "\n");
-		if(!p) break;
+		if (!p) break;
 		tm.tm_sec = atoi(p);
 	}while(0);	/* only to have that 'break' */
-	if(tm.tm_year<70) tm.tm_year+=2000;
-	else if(tm.tm_year<100)tm.tm_year+=1900;
-	else if(tm.tm_year<1970) 
+	if (tm.tm_year<70) tm.tm_year+=2000;
+	else if (tm.tm_year<100)tm.tm_year+=1900;
+	else if (tm.tm_year<1970) 
 		usage();
 	systime = utc_mktime(&tm);
    tv->tv_sec = systime;
@@ -119,7 +119,7 @@ int argc;
 	time_t systime;
 	time(&systime);
 
-	if(argc==1)
+	if (argc==1)
 	{
 		fputs(ctime(&systime), stdout);
 	}
@@ -129,22 +129,22 @@ int argc;
 		struct timeval tv;
 		int param = 1;
 
-		if(argv[param][0] != '-')
+		if (argv[param][0] != '-')
 			usage();
 			
 		switch(argv[param][1]){
 		case 'c':
-			if(decodedatestring(argv[++param], &tv)) usage();
-			if(systime > tv.tv_sec)
+			if (decodedatestring(argv[++param], &tv)) usage();
+			if (systime > tv.tv_sec)
 			return 0;
 		case 'i':
 			fputs("insert current date: ", stdout);
 			fgets(buf, 31, stdin);
-			if(decodedatestring(buf, &tv)) usage();
+			if (decodedatestring(buf, &tv)) usage();
 			break;
 
 		case 's':
-			if(decodedatestring(argv[++param], &tv)) usage();
+			if (decodedatestring(argv[++param], &tv)) usage();
 			break;
 
 		default:
@@ -159,7 +159,7 @@ int argc;
 		}
 /*		
  *	trailing parameters simply ignored
- *		if(++param < argc) usage(); 
+ *		if (++param < argc) usage(); 
  */
 
 	}

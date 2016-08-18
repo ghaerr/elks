@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 
 	cin = 0;
 	do {
-		if(argc >= 2) {
+		if (argc >= 2) {
 			name = *(++argv);
 			fd = open(name, O_RDONLY);
 			if (fd == -1) {
@@ -115,6 +115,6 @@ int main(int argc, char **argv)
 		}
 		if (fd)
 			close(fd);
-	} while(--argc > 1);
+	} while (--argc > 1);
 	exit(0);
 }

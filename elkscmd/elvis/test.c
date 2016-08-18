@@ -8,10 +8,10 @@ main()
 	char	buf[256];
 
 	setraw(0);
-	for(;;) {
+	for (;;) {
 		n = read(0, buf, sizeof(buf));
-		if(n > 0) {
-			if(buf[0] == '!')
+		if (n > 0) {
+			if (buf[0] == '!')
 				break;
 			write(1, buf, n);
 		}

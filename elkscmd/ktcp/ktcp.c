@@ -103,7 +103,7 @@ int main(int argc,char **argv)
     local_ip = in_aton(argv[1]);
 
     debug("KTCP: Mark 2.\n");
-    if((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)
+    if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)
 	exit(1);
 
     debug("KTCP: Mark 3.\n");

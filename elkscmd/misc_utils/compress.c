@@ -737,7 +737,7 @@ main(argc, argv)
     	filelist = fileptr = (char **)malloc(argc*sizeof(char *));
     	*filelist = NULL;
 
-    	if((progname = rindex(argv[0], '/')) != 0)
+    	if ((progname = rindex(argv[0], '/')) != 0)
 		progname++;
 	else
 		progname = argv[0];
@@ -1109,7 +1109,7 @@ comprexx(fileptr)
 				ofname[s-1] = (char)c;
 			}
 
-			if(!quiet)
+			if (!quiet)
 				fprintf(stderr, "%s: ", tempname);
 
 			remove_ofname = 1;
@@ -1155,7 +1155,7 @@ comprexx(fileptr)
 				remove_ofname = 0;
 				exit_code = 2;
 		    	} else {	/* ***** Successful Compression ***** */
-				if(!quiet) {
+				if (!quiet) {
 					fprintf(stderr, " -- replaced with %s",ofname);
 
 					if (!do_decomp) {

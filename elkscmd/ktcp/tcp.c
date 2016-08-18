@@ -156,7 +156,7 @@ void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     cb->seg_seq = ntohl(h->seqnum);
     cb->seg_ack = ntohl(h->acknum);
 
-    if(!(h->flags & TF_SYN)){
+    if (!(h->flags & TF_SYN)){
 
 #ifdef DEBUG
 	printf("not sync message in listen state\n");

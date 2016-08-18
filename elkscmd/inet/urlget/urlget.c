@@ -70,23 +70,23 @@ unsigned char c;
 
    p = s;
    p2 = s;
-   while(*p) {
-   	if(*p != '%') {
+   while (*p) {
+   	if (*p != '%') {
    		*p2++ = *p++;
    		continue;
    	}
    	p++;
-   	if(*p == '%') {
+   	if (*p == '%') {
    		*p2++ = *p++;
    		continue;
    	}
-   	if(*p >= '0' && *p <= '9') c = *p++ - '0'; else
-   	if(*p >= 'a' && *p <= 'f') c = *p++ - 'a' + 10; else
-   	if(*p >= 'A' && *p <= 'F') c = *p++ - 'A' + 10; else
+   	if (*p >= '0' && *p <= '9') c = *p++ - '0'; else
+   	if (*p >= 'a' && *p <= 'f') c = *p++ - 'a' + 10; else
+   	if (*p >= 'A' && *p <= 'F') c = *p++ - 'A' + 10; else
    		break;
-   	if(*p >= '0' && *p <= '9') c = c << 4 | (*p++ - '0'); else
-   	if(*p >= 'a' && *p <= 'f') c = c << 4 | (*p++ - 'a') + 10; else
-   	if(*p >= 'A' && *p <= 'F') c = c << 4 | (*p++ - 'A') + 10; else
+   	if (*p >= '0' && *p <= '9') c = c << 4 | (*p++ - '0'); else
+   	if (*p >= 'a' && *p <= 'f') c = c << 4 | (*p++ - 'a') + 10; else
+   	if (*p >= 'A' && *p <= 'F') c = c << 4 | (*p++ - 'A') + 10; else
    		break;
    	*p2++ = c;
    }
@@ -111,7 +111,7 @@ static char e64[64] = {
 
    p = *pp;
    len = strlen(s);
-   for(i=0; i < len; i += 3) {
+   for (i=0; i < len; i += 3) {
    	c[0] = *s++;
    	c[1] = *s++;
    	c[2] = *s++;
@@ -120,10 +120,10 @@ static char e64[64] = {
    	*p++ = e64[((c[1] << 2) & 0x3c) | ((c[2] >> 6) & 0x03)];
    	*p++ = e64[  c[2]       & 0x3f];
    }
-   if(i == len+1)
+   if (i == len+1)
    	p[-1] = '=';
    else
-   if(i == len+2) {
+   if (i == len+2) {
    	p[-1] = '=';
    	p[-2] = '=';
    }
@@ -159,19 +159,19 @@ char *p;
 
    p = buf;
 
-   while(--len >= 0) {
-   	if((crlf == 0 || crlf == 2) && *p == '\r')
+   while (--len >= 0) {
+   	if ((crlf == 0 || crlf == 2) && *p == '\r')
    		crlf++;
    	else
-   	if((crlf == 1 || crlf == 3) && *p == '\n')
+   	if ((crlf == 1 || crlf == 3) && *p == '\n')
    		crlf++;
    	else
    		crlf = 0;
-   	if(*p == '\n')
+   	if (*p == '\n')
    		lf++;
    	else
    		lf = 0;
-   	if(crlf == 4 || lf == 2) {
+   	if (crlf == 4 || lf == 2) {
    		*skip = 0;
    		return(len);
    	}
@@ -199,25 +199,25 @@ char *a;
 char *qs;
 int len;
 
-   if(port == 0)
+   if (port == 0)
    	port = 80;
 
    fd = net_connect(host, port);
-   if(fd < 0) {
+   if (fd < 0) {
    	fprintf(stderr, "httpget: Could not connect to %s:%d\n", host, port);
    	return(-1);
    }
 
-   if(post) {
+   if (post) {
    	qs = strrchr(path, '?');
-   	if(qs != (char *)NULL) {
+   	if (qs != (char *)NULL) {
    		*qs++ = '\0';
    		len = strlen(qs);
    	} else
    		len = 0;
    }
 
-   if(post && len > 0)
+   if (post && len > 0)
 	write(fd, "POST ", 5);
    else
 	write(fd, "GET ", 4);
@@ -225,13 +225,13 @@ int len;
    write(fd, " HTTP/1.0\r\n", 11);
    write(fd, "User-Agent: urlget\r\n", 20);
    write(fd, "Connection: Close\r\n", 19);
-   if(*user) {
+   if (*user) {
    	write(fd, "Authorization: ", 15);
    	a = auth(user, pass);
    	write(fd, a, strlen(a));
    	write(fd, "\r\n", 2);
    }
-   if(post && len > 0) {
+   if (post && len > 0) {
    	sprintf(buffer, "Content-Length: %u\r\n", len);
    	write(fd, buffer, strlen(buffer));
    }
@@ -239,19 +239,19 @@ int len;
    write(fd, host, strlen(host));
    write(fd, "\r\n", 2);
    write(fd, "\r\n", 2);
-   if(post && len > 0)
+   if (post && len > 0)
    	write(fd, qs, len);
 
    skip = 1;
-   while((s = read(fd, buffer, sizeof(buffer))) > 0) {
-   	if(skip) {
+   while ((s = read(fd, buffer, sizeof(buffer))) > 0) {
+   	if (skip) {
    		s2 = skipit(buffer, s, &skip);
-   		if(headers)
+   		if (headers)
    			write(1, buffer, s - s2);
    	} else
    		s2 = s;
-   	if(s2 && !discard)
-		if(write(1, &buffer[s - s2], s2) != s2) {
+   	if (s2 && !discard)
+		if (write(1, &buffer[s - s2], s2) != s2) {
 			perror("write");
 			return(-1);
 		}
@@ -272,15 +272,15 @@ int i;
    ftppport = 0;
 
    p = reply;
-   while(*p && *p != '(') p++;
-   if(!*p) return;
+   while (*p && *p != '(') p++;
+   if (!*p) return;
    p++;
    i = 0;
-   while(1) {
+   while (1) {
    	n[i++] = atoi(p);
-   	if(i == 6) break;
+   	if (i == 6) break;
    	p = strchr(p, ',');
-   	if(p == (char *)NULL) return;
+   	if (p == (char *)NULL) return;
    	p++;
    }
    sprintf(ftpphost, "%d.%d.%d.%d", n[0], n[1], n[2], n[3]);
@@ -299,17 +299,17 @@ int ft;
    do {
    	ft = 1;
    	do {
-   		if(fgets(reply, sizeof(reply), fpr) == (char *)NULL)
+   		if (fgets(reply, sizeof(reply), fpr) == (char *)NULL)
    			return(-1);
-   		if(ft) {
+   		if (ft) {
    			ft = 0;
    			strncpy(code, reply, 3);
    			code[3] = '\0';
    		}
-   	} while(strncmp(reply, code, 3) || reply[3] == '-');
+   	} while (strncmp(reply, code, 3) || reply[3] == '-');
    	s = atoi(code);
-   } while(s < 200 && s != 125 && s != 150);
-   if(s == 227) ftppasv(reply);
+   } while (s < 200 && s != 125 && s != 150);
+   if (s == 227) ftppasv(reply);
    return(s);
 }
 
@@ -342,14 +342,14 @@ char *p;
 char *p2;
 char typec[2];
 
-   if(port == 0)
+   if (port == 0)
    	port = 21;
 
-   if(type == '\0')
+   if (type == '\0')
    	type = 'i';
 
    fd = connect(host, port);
-   if(fd < 0) {
+   if (fd < 0) {
    	fprintf(stderr, "ftpget: Could not connect to %s:%d\n", host, port);
    	return(-1);
    }
@@ -357,38 +357,38 @@ char typec[2];
    fpw = fdopen(fd, "w");
 
    s = ftpreply(fpr);
-   if(s / 100 != 2) goto error;
+   if (s / 100 != 2) goto error;
    s = ftpcmd(fpw, fpr, "USER", *user ? user : "ftp");
-   if(s / 100 == 3)
+   if (s / 100 == 3)
    	s = ftpcmd(fpw, fpr, "PASS", *pass ? pass : "urlget@");
 
-   if(s / 100 != 2) goto error;
+   if (s / 100 != 2) goto error;
 
    p = path;
-   if(*p == '/') p++;
-   while((p2 = strchr(p, '/')) != (char *)NULL) {
+   if (*p == '/') p++;
+   while ((p2 = strchr(p, '/')) != (char *)NULL) {
    	*p2++ = '\0';
    	s = ftpcmd(fpw, fpr, "CWD", unesc(p));
    	p = p2;
    }
    sprintf(typec, "%c", type == 'd' ? 'A' : type);
    s = ftpcmd(fpw, fpr, "TYPE", typec);
-   if(s / 100 != 2) goto error;
+   if (s / 100 != 2) goto error;
    s = ftpcmd(fpw, fpr, "PASV", "");
-   if(s != 227) goto error;
+   if (s != 227) goto error;
    fd2 = connect(ftpphost, ftppport);
-   if(fd2 < 0) goto error;
+   if (fd2 < 0) goto error;
    s = ftpcmd(fpw, fpr, type == 'd' ? "NLST" : "RETR", unesc(p));
-   if(s / 100 != 1) goto error;
-   while((s = read(fd2, buffer, sizeof(buffer))) > 0) {
+   if (s / 100 != 1) goto error;
+   while ((s = read(fd2, buffer, sizeof(buffer))) > 0) {
    	s2 = write(1, buffer, s);
-   	if(s2 != s) break;
+   	if (s2 != s) break;
    }
-   if(s2 != s && s != 0) s = -1;
+   if (s2 != s && s != 0) s = -1;
    close(fd2);
 
    s = ftpreply(fpr);
-   if(s / 100 == 2) s = 0;
+   if (s / 100 == 2) s = 0;
 
 error:
    (void) ftpcmd(fpw, fpr, "QUIT", "");
@@ -411,24 +411,24 @@ int fd;
 int s;
 int s2;
 
-   if(port == 0) {
+   if (port == 0) {
    	fprintf(stderr, "tcpget: No port specified\n");
    	return(-1);
    }
 
    fd = connect(host, port);
-   if(fd < 0) {
+   if (fd < 0) {
    	fprintf(stderr, "httpget: Could not connect to %s:%d\n", host, port);
    	return(-1);
    }
-   if(*path == '/')
+   if (*path == '/')
    	path++;
 
    write(fd, path, strlen(path));
    write(fd, "\n", 1);
-   while((s = read(fd, buffer, sizeof(buffer))) > 0) {
+   while ((s = read(fd, buffer, sizeof(buffer))) > 0) {
    	s2 = write(1, buffer, s);
-   	if(s2 != s) break;
+   	if (s2 != s) break;
    }
    close(fd);
    return(0);
@@ -456,43 +456,43 @@ int opt_d = 0;
 int opt_p = 0;
 
    prog = strrchr(*argv, '/');
-   if(prog == (char *)NULL)
+   if (prog == (char *)NULL)
    	prog = *argv;
    argv++;
    argc--;
 
-   if(argc){
-   	if(strcmp(*argv, "-h") == 0) {
+   if (argc){
+   	if (strcmp(*argv, "-h") == 0) {
    		opt_h = -1;
    		argv++;
    		argc--;
    	}
-   	if(strcmp(*argv, "-d") == 0) {
+   	if (strcmp(*argv, "-d") == 0) {
    		opt_d = -1;
    		argv++;
    		argc--;
    	}
-   	if(strcmp(*argv, "-p") == 0) {
+   	if (strcmp(*argv, "-p") == 0) {
    		opt_p = -1;
    		argv++;
    		argc--;
    	}
    }
 
-   if(strcmp(prog, "ftpget") == 0) {
-   	if(argc < 2 || argc > 4) {
+   if (strcmp(prog, "ftpget") == 0) {
+   	if (argc < 2 || argc > 4) {
    		fprintf(stderr, "Usage: %s host path [user [pass]]\n", prog);
    		return(-1);
    	}
    	strncpy(host, *argv++, sizeof(host));
    	port = 21;
    	path = *argv++;
-   	if(argc) {
+   	if (argc) {
    		strncpy(user, *argv++, sizeof(user));
    		argc++;
    	} else
    		*user = '\0';
-   	if(argc) {
+   	if (argc) {
    		strncpy(pass, *argv++, sizeof(pass));
    		argc++;
    	} else
@@ -500,8 +500,8 @@ int opt_p = 0;
 	s = ftpget(host, port, user, path, path, 'i');
 	return(s);
    }
-   if(strcmp(prog, "httpget") == 0) {
-   	if(argc != 2) {
+   if (strcmp(prog, "httpget") == 0) {
+   	if (argc != 2) {
    		fprintf(stderr, "Usage: %s [-h] [-d] [-p] host path\n", prog);
    		return(-1);
    	}
@@ -512,7 +512,7 @@ int opt_p = 0;
 	return(s);
    }
 
-   if(argc != 1) {
+   if (argc != 1) {
    	fprintf(stderr, "Usage: %s [-h] [-p] url\n", prog);
    	return(-1);
    }
@@ -520,15 +520,15 @@ int opt_p = 0;
    url = *argv++;
    argc--;
 
-   if(strncasecmp(url, "http://", 7) == 0) {
+   if (strncasecmp(url, "http://", 7) == 0) {
    	scheme = SCHEME_HTTP;
    	ps = url + 7;
    } else
-   if(strncasecmp(url, "ftp://", 6) == 0) {
+   if (strncasecmp(url, "ftp://", 6) == 0) {
    	scheme = SCHEME_FTP;
    	ps = url + 6;
    } else 
-   if(strncasecmp(url, "tcp://", 6) == 0) {
+   if (strncasecmp(url, "tcp://", 6) == 0) {
    	scheme = SCHEME_TCP;
    	ps = url + 6;
    } else {
@@ -542,16 +542,16 @@ int opt_p = 0;
    port = 0;
 
    p = ps;
-   while(*p && *p != '/') p++;
+   while (*p && *p != '/') p++;
    path = p;
    *path = '\0';
 
    at = strchr(ps, '@');
-   if(at != (char *)NULL) {
+   if (at != (char *)NULL) {
    	*at = '\0';
    	p = ps;
-   	while(*p && *p != ':') p++;
-   	if(*p)
+   	while (*p && *p != ':') p++;
+   	if (*p)
    		*p++ = '\0';
 	strcpy(user, ps);
    	strcpy(pass, p);
@@ -560,27 +560,27 @@ int opt_p = 0;
 
    *path = '/';
    p = ps;
-   while(*p && *p != '/' && *p != ':') p++;
-   if(*p) {
+   while (*p && *p != '/' && *p != ':') p++;
+   if (*p) {
    	strncpy(host, ps, p - ps);
    	host[p - ps] = '\0';
    }
-   if(*p == ':') {
+   if (*p == ':') {
    	p++;
    	ps = p;
-   	while(*p && *p != '/')
+   	while (*p && *p != '/')
    		port = port * 10 + (*p++ - '0');
    }
-   if(*p == '/')
+   if (*p == '/')
 	path = p;
    else
    	path = "/";
-   if(scheme == SCHEME_FTP) {
+   if (scheme == SCHEME_FTP) {
    	p = path;
-   	while(*p && *p != ';') p++;
-   	if(*p) {
+   	while (*p && *p != ';') p++;
+   	if (*p) {
    		*p++ = '\0';
-   		if(strncasecmp(p, "type=", 5) == 0) {
+   		if (strncasecmp(p, "type=", 5) == 0) {
    			p += 5;
    			type = tolower(*p);
    		}

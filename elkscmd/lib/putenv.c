@@ -39,7 +39,7 @@ char * var;
 	char *	rp;
 
 	/* figure environment variable name length*/
-	if( (rp = strchr(var, '=')) == NULL)
+	if ( (rp = strchr(var, '=')) == NULL)
 		namelen = strlen(var);
 	else namelen = rp - var;
 
@@ -47,16 +47,16 @@ char * var;
 again:
 	envp_len = 0;
 	env = environ;
-	while(*env) {
+	while (*env) {
 		/* check for variable in current environment*/
-		if(ENVNAME(var, *env, namelen)) {
+		if (ENVNAME(var, *env, namelen)) {
 
 			/* match, delete it and copy remaining up*/
-			while( (env[0] = env[1]) != NULL)
+			while ( (env[0] = env[1]) != NULL)
 				++env;
 
 			/* if requested to delete, we're done*/
-			if(rp == NULL)
+			if (rp == NULL)
 				return 0;
 
 			goto again;
@@ -72,7 +72,7 @@ again:
 	heap_bytes = envp_count * sizeof(char *) + envp_len;
 
 	/* allocate new environment*/
-	if( (newenv = malloc(heap_bytes)) == NULL) {
+	if ( (newenv = malloc(heap_bytes)) == NULL) {
 		errno = ENOMEM;
 		return -1;
 	}
@@ -81,7 +81,7 @@ again:
 	nextarg = newenv;
 	nextstr = &newenv[envp_count];
 	env = environ;
-	while(*env) {
+	while (*env) {
 		*nextarg++ = nextstr;
 		strcpy(nextstr, *env);
 		nextstr += strlen(nextstr) + 1;
@@ -94,7 +94,7 @@ again:
 	*nextarg = NULL;
 
 	/* free previous environment*/
-	if(putenv_environ)
+	if (putenv_environ)
 		free(putenv_environ);
 
 	/* set new global environment*/

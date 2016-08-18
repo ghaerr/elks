@@ -59,16 +59,16 @@ LITER * komenc;
 {
     register LITER * d, * f;
 
-    while( n_l - komenc > MAKSLITLON ){
+    while ( n_l - komenc > MAKSLITLON ){
         el_bit( FOLIKOP );
         el_flon( 0 );
         printf( "%d\n", MAKSLITLON-1 );
-        for( d=komenc, f=komenc+MAKSLITLON; d < f; putchar(*d++) ) ;
+        for ( d=komenc, f=komenc+MAKSLITLON; d < f; putchar(*d++) ) ;
         komenc += MAKSLITLON;
     }
     el_bit( FOLIKOP );
     el_flon( 0 );
     printf( "%d\n", n_l - komenc - 1 );
-    for( d=komenc; d<n_l; putchar(*d++) ) ;
+    for ( d=komenc; d<n_l; putchar(*d++) ) ;
     return( n_l - komenc );
 }

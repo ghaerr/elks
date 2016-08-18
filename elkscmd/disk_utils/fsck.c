@@ -242,7 +242,7 @@ void inode_dump(struct minix_inode * ptr)
 
 	printf("Mode %d %d %d %d\n", mode & 7, (mode>>4) & 7, (mode>>4) & 7, (mode>>12) & 7);
 	printf("uid %d size %ld gid %d links %d\n", ptr->i_uid, ptr->i_size, ptr->i_gid, ptr->i_nlinks);
-	for(i=0;i<9;i++){
+	for (i = 0; i < 9; i++) {
 		printf("Z%d ", ptr->i_zone[i]);
 	}
 	printf("\n");
@@ -302,7 +302,7 @@ void print_current_name(void)
 {
 	int i=0;
 
-	while (i<name_depth)
+	while (i < name_depth)
 		printf("/%.*s",14,name_list[i++]);
 		/* FIXME 14 can be integrated */
 }
@@ -325,7 +325,7 @@ int ask(const char * string,int def)
 	printf(def?"%s (y/n)? ":"%s (n/y)? ",string);
 	for (;;) {
 		fflush(stdout);
-		if ((c=getchar())==EOF) {
+		if ((c = getchar()) == EOF) {
 		        if (!def)
 			      errors_uncorrected = 1;
 			return def;
@@ -367,7 +367,7 @@ int check_zone_nr(unsigned short * nr, int * corrected)
 		return *nr;
 	print_current_name();
 	printf("'.");
-	if (ask("Remove block",1)) {
+	if (ask("Remove block", 1)) {
 		*nr = 0;
 		*corrected = 1;
 	}
@@ -400,7 +400,7 @@ void read_block(unsigned int nr, char * addr)
 		memset(addr,0,BLOCK_SIZE);
 		errors_uncorrected = 1;
 	}
-	for(i = 0; i < 16; i++) {
+	for (i = 0; i < 16; i++) {
 		printd("%x ", addr[i]);
 	}
 	printd("\n");
@@ -443,15 +443,15 @@ unsigned int map_block(struct minix_inode * inode, unsigned int blknr)
 	int i;
 
 	printd("map_block %x %d (", inode, blknr);
-	for(i = 0; i < 7; i++) {
+	for (i = 0; i < 7; i++) {
 		printd("%x ", inode->i_zone[i]);
 	}
-	if (blknr<7) {
+	if (blknr < 7) {
 		printd(")direct\n");
 		return check_zone_nr(inode->i_zone + blknr, &changed);
 	}
 	blknr -= 7;
-	if (blknr<512) {
+	if (blknr < 512) {
 		printd(")ind\n");
 		block = check_zone_nr(inode->i_zone + 7, &changed);
 		read_block(block, (char *) ind);
@@ -486,7 +486,7 @@ void write_super_block(void)
 	 * unconditionally set if we get this far.
 	 */
 	SupeP->s_state |= MINIX_VALID_FS;
-	if ( errors_uncorrected )
+	if (errors_uncorrected)
 		SupeP->s_state |= MINIX_ERROR_FS;
 	else
 		SupeP->s_state &= ~MINIX_ERROR_FS;
@@ -503,12 +503,12 @@ void write_tables(void)
 {
 	write_super_block();
 
-	if (IMAPS*BLOCK_SIZE != write(IN,inode_map,IMAPS*BLOCK_SIZE))
+	if ((IMAPS * BLOCK_SIZE) != write(IN, inode_map, (IMAPS * BLOCK_SIZE)))
 		die("Unable to write inode map");
-	if (ZMAPS*BLOCK_SIZE != write(IN,zone_map,ZMAPS*BLOCK_SIZE))
+	if ((ZMAPS * BLOCK_SIZE) != write(IN, zone_map, (ZMAPS * BLOCK_SIZE)))
 		die("Unable to write zone map");
 	unmap_inode_buffer();		
-/*	if (INODE_BUFFER_SIZE != write(IN,inode_buffer,INODE_BUFFER_SIZE))
+/*	if (INODE_BUFFER_SIZE != write(IN, inode_buffer, (INODE_BUFFER_SIZE))
 		die("Unable to write inodes"); RUBOUT */
 }
 
@@ -548,11 +548,11 @@ void read_tables(void)
 	zone_count = malloc(ZONES);
 	if (!zone_count)
 		die("Unable to allocate buffer for zone count");
-	if (IMAPS*BLOCK_SIZE != read(IN,inode_map,IMAPS*BLOCK_SIZE))
+	if ((IMAPS * BLOCK_SIZE) != read(IN, inode_map, (IMAPS * BLOCK_SIZE)))
 		die("Unable to read inode map");
-	if (ZMAPS*BLOCK_SIZE != read(IN,zone_map,ZMAPS*BLOCK_SIZE))
+	if ((ZMAPS * BLOCK_SIZE) != read(IN, zone_map, (ZMAPS * BLOCK_SIZE)))
 		die("Unable to read zone map");
-/*	if (inode_buffer_size != (foo = read(IN,inode_buffer,inode_buffer_size))) {
+/*	if (inode_buffer_size != (foo = read(IN, inode_buffer, inode_buffer_size))) {
 		die("Unable to read inodes");
 	} RUBOUT */
 	if (NORM_FIRSTZONE != FIRSTZONE) {
@@ -645,7 +645,7 @@ static int add_zone(unsigned short * znr, int * corrected)
 		printf("Block has been used before. Now in file `");
 		print_current_name();
 		printf("'.");
-		if (ask("Clear",1)) {
+		if (ask("Clear", 1)) {
 			*znr = 0;
 			block = 0;
 			*corrected = 1;
@@ -934,9 +934,9 @@ int main(int argc, char ** argv)
 	 * command line.
 	 */
 	printf("%s, %s\n", program_name, program_version);
-	if ( !(SupeP->s_state & MINIX_ERROR_FS) && 
+	if (!(SupeP->s_state & MINIX_ERROR_FS) && 
 	      (SupeP->s_state & MINIX_VALID_FS) && 
-	      !force ) {
+	      !force) {
 		if (repair)
 			printf("%s is clean, no check.\n", device_name);
 		if (repair && !automatic)
@@ -983,7 +983,7 @@ int main(int argc, char ** argv)
 		for (count=0 ; count<3 ; count++)
 			sync();
 	}
-	else if ( repair )
+	else if (repair)
 		write_super_block();
 	
 	if (repair && !automatic)

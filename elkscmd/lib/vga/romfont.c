@@ -34,11 +34,11 @@ pcrom_init(PSD psd)
 	 * as the returned font isn't always 14 high
 	 */
 	ROM_CHAR_HEIGHT = GETBYTE_FP(MK_FP(0x0040, 0x0085));
-	if(ROM_CHAR_HEIGHT > MAX_ROM_HEIGHT)
+	if (ROM_CHAR_HEIGHT > MAX_ROM_HEIGHT)
 		ROM_CHAR_HEIGHT = MAX_ROM_HEIGHT;
 #endif
 	p = getenv("CHARHEIGHT");
-	if(p)
+	if (p)
 		ROM_CHAR_HEIGHT = atoi(p);
 }
 
@@ -86,7 +86,7 @@ pcrom_gettextbits(PSD psd,UCHAR ch,IMAGEBITS *retmap,COORD *retwd, COORD *retht,
 
 	/* read character bits from rom*/
 	bits = rom_char_addr + ch * ROM_CHAR_HEIGHT;
-	for(n=0; n<ROM_CHAR_HEIGHT; ++n)
+	for (n=0; n<ROM_CHAR_HEIGHT; ++n)
 		*retmap++ = GETBYTE_FP(bits++) << 8;
 
 	*retwd = ROM_CHAR_WIDTH;

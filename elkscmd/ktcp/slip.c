@@ -76,8 +76,8 @@ void cslip_decompress(__u8 **packet, size_t *len){
     p.p_maxsize = SLIP_MTU;
     
     c = *(*packet + 128) & 0xf0;
-    if( c != TYPE_IP){   	
-        if(c & 0x80){
+    if ( c != TYPE_IP){   	
+        if (c & 0x80){
             c = TYPE_COMPRESSED_TCP;
             ip_vjhc_arr_compr(&p);
 #ifdef DEBUG
@@ -91,7 +91,7 @@ void cslip_decompress(__u8 **packet, size_t *len){
             printf("CSLIP : Uncompressed TCP packet offset %d size %d (%d)\n", p.p_offset, p.p_size, *len);
 #endif
         }
-        if((p.p_size > 0)){
+        if ((p.p_size > 0)){
             *packet += p.p_offset;
         }
     } else {
@@ -157,7 +157,7 @@ void slip_process(void)
 #else
 			p = packet + 128;
 #endif
-		        if(p_size > 0)
+		        if (p_size > 0)
 			    ip_recvpacket(p, p_size);
 
 			packet_num++;
@@ -202,7 +202,7 @@ void cslip_compress(__u8 **packet, int *len)
     
     type = ip_vjhc_compress(&p);
     
-    if(type != TYPE_IP){
+    if (type != TYPE_IP){
         *packet += p.p_offset;
         *len = p.p_size;
         *packet[0] |= type;

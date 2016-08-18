@@ -121,7 +121,7 @@ void main(int argc,char ** argv)
 	fflush(stdout);
 #endif
 
-	while(1) {
+	while (1) {
 		pid = wait(NULL);
 		if (-1 == pid)
 			continue;

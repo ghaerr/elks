@@ -13,7 +13,7 @@ register FRAZ d;
 {
     register NODNUM nod;
 
-    if( mmaksintern + mmaksfoli == MAKSNOD ) return;
+    if ( mmaksintern + mmaksfoli == MAKSNOD ) return;
     /* necesas aldoni folion */
     nod = mmaksfoli++;
     mnod_d[nod] = d;

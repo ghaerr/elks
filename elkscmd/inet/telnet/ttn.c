@@ -190,12 +190,12 @@ char *argv[];
     ret = bind(	tcp_fd,
     			(struct sockaddr *)&locadr,
     			sizeof(struct sockaddr_in));
-	if(ret < 0){
+	if (ret < 0){
 		perror("Bind failed");
 		exit(1);
 	}
 
-	if(argc == 3){
+	if (argc == 3){
 		sscanf(argv[2],"%d", &port);
 	} else {
 		port = 23;	
@@ -208,7 +208,7 @@ char *argv[];
 	printf("Connecting to %s port %u\n",argv[1], port);
 	ret = connect(tcp_fd, (struct sockaddr *)&remadr,
     			sizeof(struct sockaddr_in));
-	if(ret < 0){
+	if (ret < 0){
 		perror("Connection failed");
 		exit(1);
 	}
@@ -219,18 +219,18 @@ char *argv[];
 	nonblock = 1;
 	ioctl(0, FIONBIO, &nonblock);
 
-	for(;;){
+	for (;;){
 		FD_ZERO(&fdset);
         FD_SET(0, &fdset);
         FD_SET(tcp_fd, &fdset);
 
 		select(tcp_fd + 1, &fdset, NULL, NULL, NULL);
 
-		if(FD_ISSET(tcp_fd, &fdset)){
+		if (FD_ISSET(tcp_fd, &fdset)){
 			scrn();
 		}
 
-		if(FD_ISSET(0, &fdset)){
+		if (FD_ISSET(0, &fdset)){
 			keybd();
 		}			
 	}

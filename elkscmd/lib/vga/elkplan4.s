@@ -1393,12 +1393,12 @@ and	al,*1
 xor	ah,ah
 mov	-8[bp],ax
 ! 433 
-! 434 	if(srcvga) {
+! 434 	if (srcvga) {
 mov	ax,-6[bp]
 test	ax,ax
 je  	.1
 .2:
-! 435 		if(dstvga)
+! 435 		if (dstvga)
 mov	ax,-8[bp]
 test	ax,ax
 je  	.3
@@ -1436,7 +1436,7 @@ add	sp,*$12
 .5:
 jmp .6
 .1:
-! 442 		if(dstvga)
+! 442 		if (dstvga)
 mov	ax,-8[bp]
 test	ax,ax
 je  	.7

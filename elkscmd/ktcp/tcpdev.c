@@ -349,7 +349,7 @@ static void tcpdev_release(void)
 		break;
 	    case TS_SYN_RECEIVED:
 	    case TS_ESTABLISHED:
-		if(cb->remport == NETCONF_PORT && cb->remaddr == 0){		
+		if (cb->remport == NETCONF_PORT && cb->remaddr == 0){		
 			tcpcb_remove(n);
 			return;	
 		}

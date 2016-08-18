@@ -44,7 +44,7 @@ main(argc,argv)
 
   progname = argv[0] ;
 
-  while( (c=getopt(argc,argv,"hf")) != EOF ) {
+  while ( (c=getopt(argc,argv,"hf")) != EOF ) {
     switch(c) {
     case 'f' :
       fflag++ ;
@@ -80,13 +80,13 @@ main(argc,argv)
   bcopy(hdflag?hdboot:ldboot,buf,MSECSIZ) ;   /* Create the boot block */
   Write(fd,buf,MSECSIZ) ;   /* Dump the boot block */
   bzero(buf,sizeof(buf)) ;
-  for( c=0; c < 2 ; ++c ) {
+  for ( c=0; c < 2 ; ++c ) {
     buf[0] = fat ;
     buf[1] = 0xff ;
     buf[2] = 0xff ;
     Write(fd,buf,MSECSIZ) ;    /* First block of FAT */
     bzero(buf,3) ;
-    for( sec=fat_len; --sec ; )
+    for ( sec=fat_len; --sec ; )
       Write(fd,buf,MSECSIZ) ;  /* Rest of FAT */
   }
   strcpy(((struct directory *)buf)->name,disklabel) ;
@@ -94,7 +94,7 @@ main(argc,argv)
   Write(fd,buf,MSECSIZ) ;  /* Root dir */
   bzero(buf,strlen(disklabel)) ;
   ((struct directory *)buf)->attr= 0 ;
-  for( ; --dir_len ; )
+  for ( ; --dir_len ; )
     Write(fd,buf,MSECSIZ) ;  /* Root dir */
 }
 
@@ -138,7 +138,7 @@ formatit(hdq)
   struct wait w;
   int retval;
 
-  if( (pid=vfork()) == -1 ) {
+  if ( (pid=vfork()) == -1 ) {
     fprintf(stderr,"%s: ",progname) ;
     perror("fork") ;
     exit(1) ;

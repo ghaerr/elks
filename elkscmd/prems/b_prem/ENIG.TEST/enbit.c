@@ -24,8 +24,8 @@ en_bit()
     char b[80];
 
     gets( b );
-    if( !strcmp( b, "NODKOP" ) ) return( NODKOP );
-    if( !strcmp( b, "FOLIKOP" ) ) return( FOLIKOP );
+    if ( !strcmp( b, "NODKOP" ) ) return( NODKOP );
+    if ( !strcmp( b, "FOLIKOP" ) ) return( FOLIKOP );
     fprintf( stderr, "en_bit: MALVERA BITO <%s>\n", b );
 }
 
@@ -38,7 +38,7 @@ int makskod;
 
     gets( _b_ );
     sscanf( _b_, "%d %d ", &k, &mk );
-    if( mk == makskod && k < mk ) return( k );
+    if ( mk == makskod && k < mk ) return( k );
     fprintf( stderr,
 "en_min_kod: MALVERA MAKSKODO: %d el %d anstataw NN el %d\n",
                                 k,   mk,          makskod );
@@ -64,7 +64,7 @@ int diapazon;
 
     gets( _b_ );
     sscanf( _b_, "%d %d ", &k, &mk );
-    if( mk == diapazon && k < mk ) return( k );
+    if ( mk == diapazon && k < mk ) return( k );
     fprintf( stderr,
 "en_fnum: MALVERA DIAPAZONO: %d el %d anstataw NN el %d\n",
                               k,   mk,         diapazon );
@@ -81,16 +81,16 @@ en_lit()
     gets( _b_ );
     sscanf( _b_, "%d ", &lon );
     ++lon;
-    if( lon > MAKSLITLON ) fprintf( stderr,
+    if ( lon > MAKSLITLON ) fprintf( stderr,
         "en_lit: MALVERA LONGECO DE LITERALO: %d\n", lon );
-    for( d=mn_l; d<mfin && d-mn_l<lon && (c=getchar()) != EOF; d++ ){
+    for ( d=mn_l; d<mfin && d-mn_l<lon && (c=getchar()) != EOF; d++ ){
         *d = c;
         mkre_litf( d );
     }
-    if( d-mn_l < lon ){
-        if( d == mfin ) fprintf( stderr,
+    if ( d-mn_l < lon ){
+        if ( d == mfin ) fprintf( stderr,
             "en_lit: NEATENDITA FINO DE LA PLENIGATA BLOKO\n" );
-        if( c == EOF ) fprintf( stderr,
+        if ( c == EOF ) fprintf( stderr,
             "en_lit: NEATENDITA FINO DE LA ENIRA FAJLO\n" );
     }
     mn_l = d;

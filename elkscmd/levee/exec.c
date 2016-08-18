@@ -137,7 +137,7 @@ setcmd()
 		    else
 			no = YES;
 		}
-		for(vp=vars;vp->u && strcmp(arg,vp->v_name)
+		for (vp=vars;vp->u && strcmp(arg,vp->v_name)
 				  && strcmp(arg,vp->v_abbr); vp++)
 		    ;
 		if (!vp->u || vp->v_flags & V_CONST) {
@@ -172,7 +172,7 @@ setcmd()
     }
     else {
 	version(); exprintln();
-	for(vp=vars;vp->u;vp++) {
+	for (vp=vars;vp->u;vp++) {
 	    switch (vp->v_tipe) {
 		case VBOOL:
 		    if (!vp->u->valu)

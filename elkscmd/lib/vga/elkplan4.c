@@ -431,15 +431,15 @@ ega_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 	srcvga = srcpsd->flags & PSF_SCREEN;
 	dstvga = dstpsd->flags & PSF_SCREEN;
 
-	if(srcvga) {
-		if(dstvga)
+	if (srcvga) {
+		if (dstvga)
 			vga_to_vga_blit(dstpsd, dstx, dsty, w, h,
 				srcpsd, srcx, srcy, op);
 		else
 			vga_to_mempl4_blit(dstpsd, dstx, dsty, w, h,
 				srcpsd, srcx, srcy, op);
 	} else {
-		if(dstvga)
+		if (dstvga)
 			mempl4_to_vga_blit(dstpsd, dstx, dsty, w, h,
 				srcpsd, srcx, srcy, op);
 		else

@@ -25,7 +25,7 @@ int main(int argc, char **argv)
         if (((argv[1][0] == '-') && (argv[1][1] == 'i')) || ((argv[2][0] == '-') && (argv[2][1] == 'i')))
 		interact = 1;        
  */	
-	for(i = /*recurse+interact+*/1; i < argc; i++) {
+	for (i = /*recurse+interact+*/1; i < argc; i++) {
 		if (argv[i][0] != '-') {	
 			if (!lstat(argv[i],&sbuf)) {
 				if (unlink(argv[i])) {

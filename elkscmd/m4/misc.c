@@ -117,7 +117,7 @@ getdiv(ind) {
         if ((dfil = fopen(m4temp, "r")) == NULL)
                 error("m4: cannot undivert.");
         else
-                while((c = getc(dfil)) != EOF)
+                while ((c = getc(dfil)) != EOF)
                         putc(c, active);
         (void) fclose(dfil);
 

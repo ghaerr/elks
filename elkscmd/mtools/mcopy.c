@@ -103,7 +103,7 @@ char *argv[];
 	 */
 	nargv = (char **) malloc((argc+1) * sizeof(*argv));
 	nargv[argc] = NULL;
-	for(;--argc>=0;)
+	for (;--argc>=0;)
 		nargv[argc] = argv[argc];
 
 	if (destination == MWRITE) {

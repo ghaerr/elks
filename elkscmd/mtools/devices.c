@@ -46,7 +46,7 @@ unixpc_fd_init(fd,ncyl,ntrack,nsect)
 {
   struct gdctl gdbuf;
 
-  if( ! ncyl && ! nsect && ! ntrack ) {
+  if ( ! ncyl && ! nsect && ! ntrack ) {
     ncyl = 40;
     /* Default to 1 track, will reset to 2 later if needed */
     ntrack = 1;

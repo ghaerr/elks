@@ -264,7 +264,7 @@ int p;
     char srcchar, dstchar;
     int lev, step;
     
-    while((lev = scan(6,'=',core[p],srcpatt)) >= 6 && core[p] != EOL)
+    while ((lev = scan(6,'=',core[p],srcpatt)) >= 6 && core[p] != EOL)
 	p++;
     if (lev < 6) {
 	srcchar = srcpatt[lev];
@@ -276,7 +276,7 @@ int p;
 	    if (core[p] == srcchar)
 		lev++;
 	    else if (core[p] == dstchar)
-		if(--lev < 0)
+		if (--lev < 0)
 		    return p;
 	}
     }

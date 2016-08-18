@@ -120,7 +120,7 @@
  
 #define TRUE            1
 #define FALSE           0
-#define cycle           for(;;)
+#define cycle           for (;;)
 
 #ifdef VOID
 #define void            int             /* define if void is void. */

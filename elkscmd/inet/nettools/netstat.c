@@ -76,12 +76,12 @@ int main(void)
 	printf(" no        State    RTT lport        raddress  rport\n");
 	printf("-----------------------------------------------------\n");
 	sr.type = NS_CB;
-	for(i = 0 ;; i++){
+	for (i = 0 ;; i++){
 		sr.extra = i;
 		write(s, &sr, sizeof(sr));	
 		read(s, buf, sizeof(buf));
 		cbstats = buf;
-		if(cbstats->valid == 0)break;
+		if (cbstats->valid == 0)break;
 		addrbytes = &cbstats->remaddr;
 		sprintf(addr,"%d.%d.%d.%d",addrbytes[0],addrbytes[1],addrbytes[2],addrbytes[3]);
 		printf("%3d %12s %4dms", i+1, tcp_states[cbstats->state], cbstats->rtt);

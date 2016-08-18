@@ -93,7 +93,7 @@ void regerror(txt)
 void	pfetch(l)
 	long	l;	/* line number of line to fetch */
 {
-	if(l != pline || changes != pchgs)
+	if (l != pline || changes != pchgs)
 	{
 		pline = (l);
 		ptext = fetchline(pline);

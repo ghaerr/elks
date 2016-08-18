@@ -16,20 +16,20 @@ int en_lit(void)
 
     EN_LLON( lon );
     ++lon;
-    for( d=mn_l; d<mfin && d-mn_l<lon; d++ ){
+    for ( d=mn_l; d<mfin && d-mn_l<lon; d++ ){
 #ifdef X_KOD
         *d = x_malkod();
 #else 
         { register int i, j = 0;
-            for( i=0x80; i; i >>= 1 ){
-                if( EN_BIT() ) j += i;
+            for ( i=0x80; i; i >>= 1 ){
+                if ( EN_BIT() ) j += i;
             }
             *d = j;
         }
 #endif /* X_KOD */
         mkre_litf( d );
     }
-    if( d-mn_l < lon ) longjmp( meraro, -1 );
+    if ( d-mn_l < lon ) longjmp( meraro, -1 );
     mn_l = d;
     return( lon < MAKSLITLON );
 }

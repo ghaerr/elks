@@ -217,7 +217,7 @@ tc_init()
 
 #else
 
-    if(tgetent(lp, p) < 1) {
+    if (tgetent(lp, p) < 1) {
 	puts("lv: no termcap for %s\n", p);
 	exit(1);
     }

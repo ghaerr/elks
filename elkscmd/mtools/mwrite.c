@@ -125,7 +125,7 @@ char *argv[];
 	maxcontig = (bufsiz += clus_size - (--bufsiz) % clus_size) / clus_size;
 	bufsiz *= MSECSIZ;
 
-	if( (outbuf = (char *)malloc(bufsiz)) == NULL ||
+	if ( (outbuf = (char *)malloc(bufsiz)) == NULL ||
 	    ( inbuf = (char *)malloc(bufsiz)) == NULL) {
 		fprintf(stderr,
 			"mwrite: Cannot allocate I/O buffers\n");
@@ -303,10 +303,10 @@ int verbose, mod_time;
 #endif
 
 	fat = oldfat = firstfat = nextfat(size=0); 
-	for(;;) {
+	for (;;) {
 		if (fat == -1) {
 			full = 1;
-			if(size) 
+			if (size) 
 				zapit(firstfat) ;
 			return(NULL) ;
 		}
@@ -323,11 +323,11 @@ int verbose, mod_time;
 		 * In mread this may even be a win!  (Also see comments
 		 * in putclusters() )
 		 */
-		for(curfat=fat; 
+		for (curfat=fat; 
 		    ++curfat < fat + maxcontig  &&
 		    nextfat(curfat-1) == curfat;) ;
 			
-		if((oldfat=putclusters(oldfat,fat, curfat, fp)) == 0)
+		if ((oldfat=putclusters(oldfat,fat, curfat, fp)) == 0)
 			break ;
 
 		fat = nextfat(oldfat);
@@ -421,7 +421,7 @@ FILE *fp;
 	 * chain the clusters, we are about to overwrite
 	 * making sure to terminate the chain.
 	 */
-	for(end=start; current > clus_len ; ++end) {
+	for (end=start; current > clus_len ; ++end) {
 		putfat(end,end+1);
 		current -= clus_len ;
 	}

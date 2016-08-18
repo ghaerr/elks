@@ -1178,7 +1178,7 @@ char *opt;
 	}
 	ospeed= num;
 
-	for(i=0; i<NCCS; i++)
+	for (i=0; i<NCCS; i++)
 	{
 		num= strtol(check+1, &check, 16);
 		if (check[0] != ':')
@@ -1201,7 +1201,7 @@ char *opt;
 	cfsetispeed(&termios, ispeed);
 	cfsetospeed(&termios, ospeed);
 
-	for(i=0; i<NCCS; i++)
+	for (i=0; i<NCCS; i++)
 		termios.c_cc[i]= c_cc[i];
 }
 

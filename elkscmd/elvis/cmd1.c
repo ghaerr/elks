@@ -506,7 +506,7 @@ void cmd_next(frommark, tomark, cmd, bang, extra)
 	/* find & isolate the name of the file to edit */
 	for (j = i, scan = args; j > 0; j--)
 	{
-		while(!isascii(*scan) || !isspace(*scan))
+		while (!isascii(*scan) || !isspace(*scan))
 		{
 			scan++;
 		}
@@ -789,7 +789,7 @@ void cmd_tag(frommark, tomark, cmd, bang, extra)
 	/* Hmmm... this would have been a lot easier with <stdio.h> */
 
 	/* find the line with our tag in it */
-	for(scan = end = tmpblk.c, cmp = extra; ; scan++)
+	for (scan = end = tmpblk.c, cmp = extra; ; scan++)
 	{
 		/* read a block, if necessary */
 		if (scan >= end)
@@ -1034,7 +1034,7 @@ static char *parse_errmsg(text)
 
 	/* copy over the filename */
 	cpy = errfile;
-	while(isascii(*text) && isalnum(*text) || *text == '.')
+	while (isascii(*text) && isalnum(*text) || *text == '.')
 	{
 		*cpy++ = *text++;
 	}

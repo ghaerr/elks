@@ -115,10 +115,10 @@ static char manorcat[] = "man:cat";
    }
 
    /* SEARCH!! */
-   for(mc=nmc=manorcat,step(&mc,&nmc); mc; step(&mc, &nmc))
-      for(ms=nms=mansect,step(&ms,&nms); ms; step(&ms, &nms))
-	 for(mp=nmp=manpath,step(&mp,&nmp); mp; step(&mp, &nmp))
-	    for(su=nsu=mansuff,step(&su,&nsu); su; step(&su, &nsu)) {
+   for (mc=nmc=manorcat,step(&mc,&nmc); mc; step(&mc, &nmc))
+      for (ms=nms=mansect,step(&ms,&nms); ms; step(&ms, &nms))
+	 for (mp=nmp=manpath,step(&mp,&nmp); mp; step(&mp, &nmp))
+	    for (su=nsu=mansuff,step(&su,&nsu); su; step(&su, &nsu)) {
 	       sprintf(fbuf, "%s/%s%s/%s.%s%s", mp, mc, ms, name, ms, su);
 
 	       /* Got it ? */
@@ -135,8 +135,8 @@ static char manorcat[] = "man:cat";
 	       {
 		  char * p;
 		  strcpy(man_file, fbuf);
-		  p = strrchr(man_file, '/'); if(p) *p = 0;
-		  p = strrchr(man_file, '/'); if(p) p[1] = 0;
+		  p = strrchr(man_file, '/'); if (p) *p = 0;
+		  p = strrchr(man_file, '/'); if (p) p[1] = 0;
 		  return 0;
 	       }
 	    }
@@ -304,7 +304,7 @@ void do_file(void)
       }
       else
       {
-         if(keep_nl && nl && !no_nl)
+         if (keep_nl && nl && !no_nl)
 	 {
 	    if (optional_keep)
 	    {
@@ -319,7 +319,7 @@ void do_file(void)
 	       }
 	    }
 	    else line_break();
-	    if(keep_nl>0) keep_nl--;
+	    if (keep_nl>0) keep_nl--;
 	 }
 
          if (nl == 1 && ( word[0] == '.' ||
@@ -365,19 +365,19 @@ int fetch_word(void)
 	 return 1;
       }
       nl = (ch == '\n' || ch == '\r');
-      if(nl) col=0; else col++;
+      if (nl) col=0; else col++;
 
       if (no_fill && nl && *whitespace) {
          *word=0; ungetc(ch, ifd); return 0;
       }
 
-      if(p<whitespace+sizeof(whitespace)-1 && (!nl || catmode))
+      if (p<whitespace+sizeof(whitespace)-1 && (!nl || catmode))
          *p++ = ch;
 
-      if(ch == '\t' && !catmode) {
+      if (ch == '\t' && !catmode) {
 	 p[-1] = ' ';
          while (col % input_tab) {
-            if(p<whitespace+sizeof(whitespace)-1)
+            if (p<whitespace+sizeof(whitespace)-1)
                *p++ = ' ';
 	    col++;
 	 }
@@ -401,11 +401,11 @@ int fetch_word(void)
    ungetc(ch, ifd);
 
    while ((ch=fgetc(ifd)) != EOF && !isspace(ch)) {
-      if(p<word+sizeof(word)-1) *p++ = ch; col++;
+      if (p<word+sizeof(word)-1) *p++ = ch; col++;
       if (ch == '\\') {
-         if((ch=fgetc(ifd)) == EOF) break;
+         if ((ch=fgetc(ifd)) == EOF) break;
 	 /* if (ch == ' ') ch = ' ' + 0x80;	/* XXX Is this line needed? */
-         if(p<word+sizeof(word)-1) *p++ = ch; col++;
+         if (p<word+sizeof(word)-1) *p++ = ch; col++;
       }
    }
    *p = 0;
@@ -425,7 +425,7 @@ int do_command(void)
    /* Comments don't need the space */
    if (strncmp(cmd, "\\\"", 2) == 0) cmd="\\\"";
 
-   for(i=0; cmd_list[i].cmd[0]; i++) {
+   for (i=0; cmd_list[i].cmd[0]; i++) {
       if (strcmp(cmd_list[i].cmd, cmd) == 0) break;
    }
 
@@ -489,7 +489,7 @@ int do_fontwords(int this_font, int other_font, int early_exit)
    int in_quote = 0;
 
    no_nl=0;	/* Line is effectivly been reprocessed so NL is visable */
-   for(;;)
+   for (;;)
    {
       if (p == word) {
          strcpy(p, "\\f"); p[2]=ftab[this_font]; p+=3;
@@ -563,7 +563,7 @@ int cmd_id;
 
    case 10: right_adjust=1; break;
    case 11: right_adjust=0; break;
-   case 12: input_tab=atoi(word); if(input_tab<=0) input_tab=8; break;
+   case 12: input_tab=atoi(word); if (input_tab<=0) input_tab=8; break;
    }
    return 0;
 }
@@ -635,10 +635,10 @@ build_headers()
    int  strno=0, stroff=0;
    int  last_ch = 0, ch, in_quote=0;
 
-   for(ch=0; ch<5; ch++)
+   for (ch=0; ch<5; ch++)
       buffer[ch][0] = 0;
 
-   for(;;)
+   for (;;)
    {
       if ((ch=fgetc(ifd)) == EOF || ch == '\n') break;
       if (ch == '"')
@@ -661,7 +661,7 @@ build_headers()
       {
          strno++;
 	 stroff=0;
-	 if(strno == 5) break;
+	 if (strno == 5) break;
       }
    }
    if (strno < 5)
@@ -714,16 +714,16 @@ void print_word(char *pword)
    int sp_font = cur_font;
 
    /* Eat and translate characters. */
-   for(s=pword,d=wword; *s; s++)
+   for (s=pword,d=wword; *s; s++)
    {
       ch=0;
       if (*s == '\n') continue;
       if (*s != '\\') { *d++ = (ch= *s) + cur_font; length++; }
       else
       {
-         if(s[1] == 0) break;
+         if (s[1] == 0) break;
 	 s++;
-	 if(*s == 'f')
+	 if (*s == 'f')
 	 {
 	    if (s[1]) {
 	       static char fnt[] = " RBI";
@@ -733,13 +733,13 @@ void print_word(char *pword)
 	    }
 	    continue;
 	 }
-	 else if(*s == 's')
+	 else if (*s == 's')
 	 {
 	    /* Font size adjusts - strip */
 	    while (s[1] && strchr("+-0123456789", s[1])) s++;
 	    continue;
 	 }
-	 else if(isalpha(*s) || strchr("!&^[]|~", *s)) continue;
+	 else if (isalpha(*s) || strchr("!&^[]|~", *s)) continue;
 	 else if (*s == '(' || *s == '*')
 	 {
 	    /* XXX Humm character xlate */
@@ -761,7 +761,7 @@ void print_word(char *pword)
    {
       int *x;
       fprintf(ofd, ">WORD:");
-      for(x=wword; *x; x++) fputc(*x, ofd);
+      for (x=wword; *x; x++) fputc(*x, ofd);
       fprintf(ofd, ":\n");
    }
 #endif
@@ -806,7 +806,7 @@ void line_break(void)
    }
 
    if (current_line) current_line += 1+pending_nl;
-   for(;pending_nl>0; pending_nl--)
+   for (;pending_nl>0; pending_nl--)
       fprintf(ofd, "\n");
 
    if (right_adjust<0)
@@ -836,15 +836,15 @@ void line_break(void)
 
    *line_ptr = 0;
    if (*line)
-      for(ch=left_indent; ch>0; ch--)
+      for (ch=left_indent; ch>0; ch--)
          fputc(' ', ofd);
 
-   for(d=line; *d; d++) {
+   for (d=line; *d; d++) {
       ch = *d;
       if ((ch & 0xFF) == 0) {
          int i;
          if (gap++ < spgs) i=spg; else i=rspg;
-	 for(;i>0;i--)
+	 for (;i>0;i--)
 	    fputc(' ', ofd);
       }
       else switch (ch >> 8) {
@@ -913,9 +913,9 @@ int main(int argc, char **argv)
    char * mansect = 0;
    char * manname = 0;
 
-   for(ar=1; ar<argc; ar++) if (argv[ar][0] == '-') {
+   for (ar=1; ar<argc; ar++) if (argv[ar][0] == '-') {
       char * p;
-      for(p=argv[ar]+1; *p; p++) switch (*p) {
+      for (p=argv[ar]+1; *p; p++) switch (*p) {
 	      case 'w': flg_w=1; break;
 	      case 'v': verbose=1; break;
 	      case 'q': verbose=0; break;

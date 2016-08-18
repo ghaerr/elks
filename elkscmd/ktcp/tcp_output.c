@@ -31,7 +31,7 @@ __u16 tcp_chksum(struct iptcp_s *h)
     __u32 sum = htons(h->tcplen);
     __u16 *data = (__u16) h->tcph, len = h->tcplen;
 
-    for(; len > 1 ; len -= 2)
+    for (; len > 1 ; len -= 2)
 	sum += *data++;
 
     if (len == 1)
@@ -104,7 +104,7 @@ __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len)
     __u32 sum = htons(len);
     __u16 *data = (__u16 *) h;
 
-    for(; len > 1 ; len -= 2)
+    for (; len > 1 ; len -= 2)
 	sum += *data++;
 
     if (len == 1)
@@ -286,7 +286,7 @@ int tcp_retrans(void)
 	if (SEQ_LEQ(ntohl(n->tcph->seqnum) + datalen ,n->cb->send_una)) {
 	    if (n->retrans_num == 0) {
 		rtt = Now - n->first_trans;
-		if(rtt > 0)
+		if (rtt > 0)
 			n->cb->rtt = (TCP_RTT_ALPHA * n->cb->rtt
 				   + (100 - TCP_RTT_ALPHA) * rtt) / 100;
 	    }

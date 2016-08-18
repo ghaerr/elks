@@ -773,7 +773,7 @@ MARK input(from, to, when)
 					}
 #endif
 				} /* end switch(*key) */
-			} /* end for(;;) */
+			} /* end for (;;) */
 BreakBreak:;
 
 			/* delete any excess characters */

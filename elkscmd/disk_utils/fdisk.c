@@ -94,7 +94,7 @@ void quit(void)
 
 void list_part(void)
 {
-    if(*dev != 0)
+    if (*dev != 0)
 	list_partition(NULL);
 }
 
@@ -144,7 +144,7 @@ void add_part(void)
 	fflush(stdout);
 	fgets(buf, 8, stdin);
 	ecyl = atoi(buf);
-	if(*buf == '\n')
+	if (*buf == '\n')
 	    return;
     }
 
@@ -180,7 +180,7 @@ void set_boot(void)
     int part, a;
 
     printf("Toggle bootable flag\n");
-    for(part = 0; part < 1 || part > 4;) {
+    for (part = 0; part < 1 || part > 4;) {
 	printf("Which partition (1-4): ");
 	fflush(stdout);
 	fgets(buf, 8, stdin);
@@ -367,7 +367,7 @@ int main(int argc, char **argv)
 	}
     }
 
-    if(argc == 1)
+    if (argc == 1)
 #ifdef DEFAULT_DEV
 	strncpy(dev,DEFAULT_DEV,256);
 #else
@@ -414,7 +414,7 @@ int main(int argc, char **argv)
 	    exit(1);
 	}
 
-	while(!feof(stdin)) {
+	while (!feof(stdin)) {
 	    printf("Command (? for help): ");
 	    fflush(stdout);
 	    *buf = 0;

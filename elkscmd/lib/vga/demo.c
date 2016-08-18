@@ -38,20 +38,20 @@ main(
 		psleep(1);
 	}
 
-	for(i = 0; i < 600; i++) {
-		for(j = 0; j < 200; j++) {
+	for (i = 0; i < 600; i++) {
+		for (j = 0; j < 200; j++) {
 			VGA_drawpixel(&device, i, j+200,
 					VGA_readpixel(&device, i, j));
 		}
 	}
 
-	for(i = 0; i < 100; i++) {
-		for(j = 0; j < 100; j++) {
+	for (i = 0; i < 100; i++) {
+		for (j = 0; j < 100; j++) {
 			VGA_drawpixel(&device, i, j, i + j & 0xf);
 		}
 	}
-	for(i = 100; i < 600; i += 100) {
-		for(j = 100; j < 400; j += 100) {
+	for (i = 100; i < 600; i += 100) {
+		for (j = 100; j < 400; j += 100) {
 			ega_blit(&device, i, j, 100, 100, &device, 0, 0, 1);
 		}
 	}

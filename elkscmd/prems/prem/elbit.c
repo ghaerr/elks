@@ -25,9 +25,9 @@ ek_elbit()
 void
 fin_elbit()
 {
-    if( elb_nb ){
+    if ( elb_nb ){
         elb_bb.bb_i <<= 16-elb_nb;
         el_l( elb_bb.bb_c.su );
-        if( elb_nb > 8 ) el_l( elb_bb.bb_c.ms );
+        if ( elb_nb > 8 ) el_l( elb_bb.bb_c.ms );
     }
 }

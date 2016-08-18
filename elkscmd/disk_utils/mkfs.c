@@ -181,7 +181,7 @@ void write_tables(void)
 		die("Unable to write zone map");
 	if (BLOCK_SIZE != write(DEV,inode_buffer,BLOCK_SIZE))
 		die("Unable to write inodes");
-	for(ikl=1;ikl<INODE_BLOCKS;ikl++) {
+	for (ikl=1;ikl<INODE_BLOCKS;ikl++) {
 		if (BLOCK_SIZE != write(DEV,inode_buffer + BLOCK_SIZE,BLOCK_SIZE))
 			die("Unable to write inodes");
 	}
@@ -240,8 +240,8 @@ void setup_tables(void)
 	MAXSIZE = (7+512+512L*512L)*1024L;
 	ZONES = BLOCKS;
 	INODES = BLOCKS/3;
-	if( BLOCKS > 32768L ) INODES += (BLOCKS-32768)*4/3;
-	if( INODES > 63424L ) INODES = 63424L;
+	if ( BLOCKS > 32768L ) INODES += (BLOCKS-32768)*4/3;
+	if ( INODES > 63424L ) INODES = 63424L;
 	if ((INODES & 8191) > 8188)
 		INODES -= 5;
 	if ((INODES & 8191) < 10)

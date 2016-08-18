@@ -74,12 +74,12 @@ register char *src;
     else
 	inc = 1;
     if (tst == '!') {
-	for(l = ((int)inc)*length; l > 0; l--,src += (long)inc)
+	for (l = ((int)inc)*length; l > 0; l--,src += (long)inc)
 	    if (*src != ch)
 		break;
     }
     else {
-	for(l = ((int)inc)*length; l > 0; l--,src += (long)inc)
+	for (l = ((int)inc)*length; l > 0; l--,src += (long)inc)
 	    if (*src == ch)
 		break;
     }
