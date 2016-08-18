@@ -135,8 +135,8 @@ static void ClearRange(register Console * C, int x, int y, int xx, int yy)
     register __u16 *vp;
 
     xx = xx - x + 1;
-    for(vp = (__u16 *)((__u16)(x + y * Width) << 1); y <= yy; y++, vp += (Width - xx))
-	for(x = 0; x < xx; x++)
+    for (vp = (__u16 *)((__u16)(x + y * Width) << 1); y <= yy; y++, vp += (Width - xx))
+	for (x = 0; x < xx; x++)
 	    pokew((__u16)C->vseg, (__u16)(vp++), (((__u16)C->attr << 8) | ' '));
 }
 
@@ -144,7 +144,7 @@ static void ScrollUp(register Console * C, int y)
 {
     register __u16 *vp;
 
-    for(vp = (__u16 *)((__u16)(y * Width) << 1); y < MaxRow; y++, vp += Width)
+    for (vp = (__u16 *)((__u16)(y * Width) << 1); y < MaxRow; y++, vp += Width)
 	fmemcpy((__u16)C->vseg, vp, (__u16)C->vseg, vp + Width, (Width << 1));
     ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
@@ -155,7 +155,7 @@ static void ScrollDown(register Console * C, int y)
     register __u16 *vp;
     int yy = MaxRow;
 
-    for(vp = (__u16 *)((__u16)(yy * Width) << 1); y < yy; yy--, vp -= Width)
+    for (vp = (__u16 *)((__u16)(yy * Width) << 1); y < yy; yy--, vp -= Width)
 	fmemcpy((__u16)C->vseg, vp, (__u16)C->vseg, vp - Width, (Width << 1));
     ClearRange(C, 0, y, MaxCol, y);
 }
@@ -413,7 +413,7 @@ static void std_char(register Console * C, char c)
 	VideoWrite(C, c);
 	C->cx++;
       linewrap:
-	if(C->cx > MaxCol) {
+	if (C->cx > MaxCol) {
 
 #ifdef CONFIG_EMUL_VT52
 	    C->cx = MaxCol;
@@ -504,11 +504,11 @@ static int Console_write(register struct tty *tty)
     register Console *C = &Con[tty->minor];
     int cnt = 0;
 
-    while((tty->outq.len > 0) && !glock) {
+    while ((tty->outq.len > 0) && !glock) {
 	WriteChar(C, (char)tty_outproc(tty));
 	cnt++;
     }
-    if(C == Visible)
+    if (C == Visible)
 	PositionCursor(C);
     return cnt;
 }
@@ -555,7 +555,7 @@ void init_console(void)
 
     for (pi = 0; ((unsigned int)pi) < NumConsoles; pi++) {
 	C->cx = C->cy = 0;
-	if(!pi) {
+	if (!pi) {
 	    C->cx = peekb(0x40, 0x50);
 	    C->cy = peekb(0x40, 0x51);
 	}

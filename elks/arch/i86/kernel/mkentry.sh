@@ -20,46 +20,46 @@ awk '/^#/{next;}
 /^[	 ]$/{next;}
 {
    callno = 0+$2;
-   if( $4 != "-" )
+   if ( $4 != "-" )
       assigned_to[callno] = $1;
 
-   if( $4 == "=" )
+   if ( $4 == "=" )
       depends_on[callno] = toupper($5);
 
-   if( $3 == "x" || $3 == "" ) next;
-   else if( $4 == "@" || $4 == "-" ) next;
+   if ( $3 == "x" || $3 == "" ) next;
+   else if ( $4 == "@" || $4 == "-" ) next;
 
    # Not implemented yet
-   if( substr($2, 1, 1) != "+" ) next;
+   if ( substr($2, 1, 1) != "+" ) next;
 
-   if( maxno < callno ) maxno = callno;
+   if ( maxno < callno ) maxno = callno;
 
    str = "\t.word _sys_" $1;
    line[callno] = sprintf("%-25s ! %3d", str, callno);
 }
 END{
-   for(maxstd=maxno; depends_on[maxstd]!=""; maxstd--)
+   for (maxstd=maxno; depends_on[maxstd]!=""; maxstd--)
    {
       X = X;
    }
-   for(callno=0; callno<=maxno; callno++)
+   for (callno=0; callno<=maxno; callno++)
    {
-#      if( assigned_to[callno] == "fork" )
+#      if ( assigned_to[callno] == "fork" )
 #        gsub("_sys_fork", "_do_fork ", line[callno]);
 
-      if( assigned_to[callno] == "insmod" )
+      if ( assigned_to[callno] == "insmod" )
          gsub("_sys_insmod", "_module_init", line[callno]);
 
-      if( depends_on[callno] != "" )
+      if ( depends_on[callno] != "" )
          printf "#ifdef %s\n", depends_on[callno]
 
-      if( callno in line )
+      if ( callno in line )
          print line[callno];
       else
       {
-         if( assigned_to[callno] == "" )
+         if ( assigned_to[callno] == "" )
             assigned_to[callno] = "unassigned";
-#        if( assigned_to[callno] == "vfork" )
+#        if ( assigned_to[callno] == "vfork" )
 # {
 #           str = "\t.word _do_fork";
 # }
@@ -68,9 +68,9 @@ END{
          printf "%-25s ! %3d - %s\n", str, callno, assigned_to[callno];
       }
 
-      if( depends_on[callno] != "" )
+      if ( depends_on[callno] != "" )
       {
-         if( callno < maxno )
+         if ( callno < maxno )
          {
             str = "\t.word _no_syscall";
             printf "#else\n%-25s ! %3d - %s\n", str, callno, assigned_to[callno]

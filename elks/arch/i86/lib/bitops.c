@@ -58,17 +58,17 @@ unsigned int find_first_non_zero_bit(register int *addr, unsigned int len)
     unsigned int mask;
 
     do {
-	if(*addr) {
+	if (*addr) {
 	    mask = 1;
-	    while(!(*addr & mask)) {
+	    while (!(*addr & mask)) {
 		mask <<= 1;
 		bit++;
 	    }
 	    break;
 	}
 	addr++;
-    } while((unsigned int)(bit += 16) < len);
-    if((unsigned int)bit > len)
+    } while ((unsigned int)(bit += 16) < len);
+    if ((unsigned int)bit > len)
 	bit = (char *)len;
     return (unsigned int)bit;
 }
@@ -80,17 +80,17 @@ unsigned int find_first_zero_bit(register int *addr, unsigned int len)
     unsigned int mask;
 
     do {
-	if(~(*addr)) {
+	if (~(*addr)) {
 	    mask = 1;
-	    while(*addr & mask) {
+	    while (*addr & mask) {
 		mask <<= 1;
 		bit++;
 	    }
 	    break;
 	}
 	addr++;
-    } while((unsigned int)(bit += 16) < len);
-    if((unsigned int)bit > len)
+    } while ((unsigned int)(bit += 16) < len);
+    if ((unsigned int)bit > len)
 	bit = (char *)len;
     return (unsigned int)bit;
 }

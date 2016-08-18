@@ -77,7 +77,7 @@ static int inet_release(struct socket *sock, struct socket *peer)
     cmd.cmd = TDC_RELEASE;
     cmd.sock = sock;
     ret = tcpdev_inetwrite(&cmd, sizeof(struct tdb_release));
-    if(ret >= 0)
+    if (ret >= 0)
 	ret = 0;
     return ret;
 }
@@ -106,7 +106,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
-    if(ret >= 0)
+    if (ret >= 0)
 	ret = 0;
     return ret;
 }
@@ -145,7 +145,7 @@ static int inet_connect(register struct socket *sock,
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
 
-    if(ret >= 0) {
+    if (ret >= 0) {
 	sock->state = SS_CONNECTED;
 	ret = 0;
     }
@@ -206,7 +206,7 @@ static int inet_accept(register struct socket *sock,
     ret = ((struct tdb_accept_ret *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
 
-    if(ret >= 0) {
+    if (ret >= 0) {
 	newsock->state = SS_CONNECTED;
 	ret = 0;
     }

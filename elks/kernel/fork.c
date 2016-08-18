@@ -69,7 +69,7 @@ pid_t do_fork(int virtual)
     register __ptask currentp = current;
     int sc[4];
 
-    if((t = find_empty_process()) == NULL)
+    if ((t = find_empty_process()) == NULL)
         return -EAGAIN;
 
     /* Fix up what's different */
@@ -101,7 +101,7 @@ pid_t do_fork(int virtual)
     do {
 	if ((filp = t->files.fd[j]))
 	    filp->f_count++;
-    } while(++j < NR_OPEN);
+    } while (++j < NR_OPEN);
 
     /* Increase the reference count for program text inode - tgm */
     t->t_inode->i_count++;

@@ -103,8 +103,8 @@ void schedule(void)
 	goto no_sched;
 
     clr_irq();
-    if(prev->state == TASK_INTERRUPTIBLE) {
-        if(prev->signal || (prev->timeout && (prev->timeout <= jiffies))) {
+    if (prev->state == TASK_INTERRUPTIBLE) {
+        if (prev->signal || (prev->timeout && (prev->timeout <= jiffies))) {
             prev->timeout = 0UL;
             prev->state = TASK_RUNNING;
         }
@@ -114,9 +114,9 @@ void schedule(void)
     }
     /* Choose a task to run next */
     next = prev->next_run;
-    if(prev->state != TASK_RUNNING)
+    if (prev->state != TASK_RUNNING)
 	del_from_runqueue(prev);
-    if(next == &init_task)
+    if (next == &init_task)
         next = next->next_run;
 
     set_irq();
@@ -132,7 +132,7 @@ void schedule(void)
         }
 
 #ifdef CONFIG_SWAP
-        if(do_swapper_run(next) == -1){
+        if (do_swapper_run(next) == -1){
             printk("Can't become runnable %d\n", next->pid);
             panic("");
         }
@@ -200,10 +200,10 @@ void add_timer(register struct timer_list *timer)
 
     do {
         prev = next;
-    } while((next = next->tl_next) && (next->tl_expires < timer->tl_expires));
+    } while ((next = next->tl_next) && (next->tl_expires < timer->tl_expires));
 
     (timer->tl_prev = prev)->tl_next = timer;
-    if((timer->tl_next = next))
+    if ((timer->tl_next = next))
         next->tl_prev = timer;
 
     restore_flags(flags);
@@ -272,7 +272,7 @@ void sched_init(void)
  */
     do {
 	t->state = TASK_UNUSED;
-    } while(++t < &task[MAX_TASKS]);
+    } while (++t < &task[MAX_TASKS]);
 
 /*
  *	Now create task 0 to be ourself.

@@ -100,7 +100,7 @@ _memset:
 	mov	ax,[bp+6]	! byte to write
 	mov	cx,[bp+8]	! loop count
 	cld
-	rep			! while(cx)
+	rep			! while (cx)
 	stosb			! 	cx--, [es:di++] = al
 	mov	ax,[bp+4]	! return value = start addr of block
 	pop	di

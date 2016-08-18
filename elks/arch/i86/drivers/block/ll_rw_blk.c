@@ -197,7 +197,7 @@ static struct request *__get_request_wait(int n, kdev_t dev)
 	clr_irq();
 	req = get_request(n, dev);
 	set_irq();
-    } while(req);
+    } while (req);
     current->state = TASK_RUNNING;
     wait_clear(&wait_for_request);
 

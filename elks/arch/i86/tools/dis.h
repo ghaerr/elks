@@ -117,7 +117,7 @@ extern ImgHeader HDR;		/* Holds the .img file's header   */
 			/* Macro for byte input primitive   */
 /* #define FETCH(p)  ++PC; p = getchar() & 0xff; objbuf[objptr++] = p */
 static int _F_;
-#define FETCH(p)  (p)=_F_ = Fetch(); if(_F_<0) {printf("???\n"); return FRV; }
+#define FETCH(p)  (p)=_F_ = Fetch(); if (_F_<0) {printf("???\n"); return FRV; }
 #define FRV
 
 /* disfp.c */

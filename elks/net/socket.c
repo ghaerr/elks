@@ -41,7 +41,7 @@ static struct proto_ops *find_protocol_family(int family)
     register struct proto_ops **props;
 
     for (props = pops; props < &pops[NPROTO]; props++)
-	if((*props != NULL) && ((*props)->family == family))
+	if ((*props != NULL) && ((*props)->family == family))
 	    return *props;
 
     return NULL;
@@ -118,7 +118,7 @@ struct socket *sock_alloc(void)
     register struct inode *inode;
     register struct socket *sock;
 
-    if(!(inode = new_inode(NULL, S_IFSOCK)))
+    if (!(inode = new_inode(NULL, S_IFSOCK)))
 	return NULL;
 
     sock = &inode->u.socket_i;
@@ -423,7 +423,7 @@ static int get_fd(register struct inode *inode)
 {
     int fd;
 
-    if((fd = open_fd(O_RDWR, inode)) >= 0)
+    if ((fd = open_fd(O_RDWR, inode)) >= 0)
 	inode->i_count++;		/*FIXME: Really needed?*/
     return fd;
 }
@@ -584,7 +584,7 @@ int sock_register(int family, register struct proto_ops *ops)
     register struct proto_ops **props;
 
     for (props = pops; props < &pops[NPROTO]; props++)
-	if(*props == NULL) {
+	if (*props == NULL) {
 	    *props = ops;
 	    ops->family = family;
 	    return (props - pops)/sizeof(struct proto_ops *);
@@ -623,7 +623,7 @@ int sys_socket(int family, int type, int protocol)
  *	AF_INET sockets are supported
  */
     ops = find_protocol_family(family);	/* Initially pops is not an array. */
-    if(ops == NULL) {
+    if (ops == NULL) {
 	return -EINVAL;
     }
 

@@ -33,16 +33,16 @@ int sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
 
     /* this is the default handler if no lseek handler is present */
     /* Note: We already determined above that origin is in range. */
-    if(origin == 1)
+    if (origin == 1)
 	offset += file->f_pos;
-    else if(origin == 2)
+    else if (origin == 2)
 	offset += file->f_inode->i_size;
 
-    if(offset < 0)
+    if (offset < 0)
 	return -EINVAL;
 
 #ifdef BLOAT_FS
-    if(offset != file->f_pos) {
+    if (offset != file->f_pos) {
 	file->f_reada = 0;
 	file->f_version = ++event;
     }

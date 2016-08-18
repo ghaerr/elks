@@ -28,9 +28,9 @@ void print_syscall(register struct syscall_params *p, int retval)
     unsigned int tmpa;
     int i;
 
-    if(p->s_num >= sizeof(elks_table)/sizeof(struct syscall_info))
+    if (p->s_num >= sizeof(elks_table)/sizeof(struct syscall_info))
 	printk("Syscall not recognised: %u\n", p->s_num);
-    else if((((s = &elks_table[p->s_num])->s_params) & 0xf) > 5) {
+    else if ((((s = &elks_table[p->s_num])->s_params) & 0xf) > 5) {
 	printk("Syscall not supported: nosys_%s\n", p->s_name);
     }
     else {
@@ -49,11 +49,11 @@ void print_syscall(register struct syscall_params *p, int retval)
 	i = 0;
 	tmpa = s->s_params;
 	goto pscl;
-	while(tmpa >>= 4) {
+	while (tmpa >>= 4) {
 	    printk(", ");
 
 	 pscl:
-	    if(fmtspec[tmpa & 0xf] != NULL) {
+	    if (fmtspec[tmpa & 0xf] != NULL) {
 		printk(fmtspec[tmpa & 0xf], p->s_param[i]);
 	    }
 	    else switch (tmpa & 0xf) {

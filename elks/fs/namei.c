@@ -435,15 +435,15 @@ int do_mknod(char *pathname, size_t offst, int mode, dev_t dev)
     int (*op) ();
     int error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
 
-    if(!error) {
+    if (!error) {
 	dirp = dir;
-	if(!namelen)
+	if (!namelen)
 	    error = -ENOENT;
-/*	else if(IS_RDONLY(dirp))
+/*	else if (IS_RDONLY(dirp))
 	    error = -EROFS;*/
-	else if(!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
+	else if (!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
 	    iop = dirp->i_op;
-	    if(!iop || !(op = (*(int (**)())((char *)iop + offst))))
+	    if (!iop || !(op = (*(int (**)())((char *)iop + offst))))
 		error = -EPERM;
 	    else {
 		dirp->i_count++;
@@ -507,16 +507,16 @@ int __do_rmthing(char *pathname, size_t offst)
     int error;
 
     error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
-    if(!error) {
+    if (!error) {
 	dirp = dir;
-	if(!namelen)
+	if (!namelen)
 	    error = -ENOENT; /*(offst == offsetof(struct inode_operations,unlink)
 				    ? -EPERM : -ENOENT);*/
-/*	else if(IS_RDONLY(dirp))
+/*	else if (IS_RDONLY(dirp))
 	    error = -EROFS;*/
-	else if(!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
+	else if (!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
 	    iop = dirp->i_op;
-	    if(!iop || !(op = (*(int (**)())((char *)iop + offst))))
+	    if (!iop || !(op = (*(int (**)())((char *)iop + offst))))
 		error = -EPERM;
 	    else {
 /*		dirp->i_count++;
@@ -561,15 +561,15 @@ static int do_link(char *pathname, struct inode *oldinode)
     error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
     if (!error) {
 	dirp = dir;
-	if(!namelen)
+	if (!namelen)
 	    error = -EPERM;
-/*	else if(IS_RDONLY(dirp))
+/*	else if (IS_RDONLY(dirp))
 	    error = -EROFS;*/
-	else if(dirp->i_dev != oldinode->i_dev)
+	else if (dirp->i_dev != oldinode->i_dev)
 	    error = -EXDEV;
-	else if(!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
+	else if (!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
 	    iop = dirp->i_op;
-	    if(!iop || !iop->link)
+	    if (!iop || !iop->link)
 		error = -EPERM;
 	    else {
 		dirp->i_count++;
@@ -592,7 +592,7 @@ int sys_link(char *oldname, char *pathname)
     int error;
 
     error = namei(oldname, &oldinode, 0, 0);
-    if(!error) {
+    if (!error) {
 	error = do_link(pathname, oldinode);
 	iput(oldinode);
     }

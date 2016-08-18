@@ -36,7 +36,7 @@ void setup_mm(seg_t start, seg_t end)
     do {
 	proc_name[(int)pi] = setupb(0x30 + (int)pi);
 	cpuid[(int)pi] = setupb(0x50 + (int)pi);
-    } while((int)(++pi) < 16);
+    } while ((int)(++pi) < 16);
     proc_name[16] = cpuid[16] = '\0';
 
 #ifdef CONFIG_ARCH_SIBO

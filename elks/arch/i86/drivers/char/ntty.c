@@ -136,7 +136,7 @@ void tty_release(struct inode *inode, struct file *file)
  * buffer to send them to the tty device, using the
  * construct:
  *
- * while(tty->outq.len > 0) {
+ * while (tty->outq.len > 0) {
  * 	ch = tty_outproc(tty);
  * 	write_char_to_device(device, (char)ch);
  * 	cnt++;
@@ -149,11 +149,11 @@ int tty_outproc(register struct tty *tty)
     int ch;
 
     ch = tty->outq.base[tty->outq.start];
-    if((int)(t_oflag = (char *)tty->termios.c_oflag) & OPOST) {
+    if ((int)(t_oflag = (char *)tty->termios.c_oflag) & OPOST) {
 	switch(tty->ostate & ~0x0F) {
 	case 0x20:		/* Expand tabs to spaces */
 	    ch = ' ';
-	    if(--tty->ostate & 0xF)
+	    if (--tty->ostate & 0xF)
 		break;
 	case 0x10:		/* Expand NL -> CR NL */
 	    tty->ostate = 0;
@@ -161,26 +161,26 @@ int tty_outproc(register struct tty *tty)
 	default:
 	    switch(ch) {
 	    case '\n':
-		if((unsigned)t_oflag & ONLCR) {
+		if ((unsigned)t_oflag & ONLCR) {
 		    ch = '\r';				/* Expand NL -> CR NL */
 		    tty->ostate = 0x10;
 		}
 		break;
 #if 0
 	    case '\r':
-		if((unsigned)t_oflag & OCRNL)
+		if ((unsigned)t_oflag & OCRNL)
 		    ch = '\n';				/* Map CR to NL */
 		break;
 #endif
 	    case '\t':
-		if(((unsigned)t_oflag & TABDLY) == TAB3) {
+		if (((unsigned)t_oflag & TABDLY) == TAB3) {
 		    ch = ' ';				/* Expand tabs to spaces */
 		    tty->ostate = 0x20 + TAB_SPACES - 1;
 		}
 	    }
 	}
     }
-    if(!tty->ostate) {
+    if (!tty->ostate) {
 	tty->outq.start++;
 	tty->outq.start &= (tty->outq.size - 1);
 	tty->outq.len--;
@@ -190,10 +190,10 @@ int tty_outproc(register struct tty *tty)
 
 void tty_echo(register struct tty *tty, unsigned char ch)
 {
-    if((tty->termios.c_lflag & ECHO)
+    if ((tty->termios.c_lflag & ECHO)
 		/*|| ((tty->termios.c_lflag & ECHONL) && (ch == '\n'))*/) {
 	chq_addch(&tty->outq, ch);
-/*	if((ch == '\b') && (tty->termios.c_lflag & ECHOE)) {
+/*	if ((ch == '\b') && (tty->termios.c_lflag & ECHOE)) {
 	    chq_addch(&tty->outq, ' ');
 	    chq_addch(&tty->outq, '\b');
 	}*/
@@ -213,10 +213,10 @@ size_t tty_write(struct inode *inode, struct file *file, char *data, int len)
     int s;
 
     pi = 0;
-    while(((int)pi) < len) {
+    while (((int)pi) < len) {
 	s = chq_wait_wr(&tty->outq, file->f_flags & O_NONBLOCK);
-	if(s < 0) {
-	    if((int)pi == 0)
+	if (s < 0) {
+	    if ((int)pi == 0)
 		pi = (char *)s;
 	    break;
 	}
@@ -234,7 +234,7 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
     int ch, k, icanon;
     int nonblock = (file->f_flags & O_NONBLOCK);
 
-    if(len > 0) {
+    if (len > 0) {
 	icanon = tty->termios.c_lflag & ICANON;
 	do {
 	    if (tty->ops->read) {
@@ -242,16 +242,16 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 		nonblock = 1;
 	    }
 	    ch = chq_wait_rd(&tty->inq, nonblock);
-	    if(ch < 0) {
-		if((int)pi == 0)
+	    if (ch < 0) {
+		if ((int)pi == 0)
 		    pi = (char *)ch;
 		break;
 	    }
 	    ch = chq_getch(&tty->inq);
 
-	    if(icanon) {
-		if(ch == /*tty->termios.c_cc[VERASE]*/'\b') {
-		    if((int)pi > 0) {
+	    if (icanon) {
+		if (ch == /*tty->termios.c_cc[VERASE]*/'\b') {
+		    if ((int)pi > 0) {
 			pi--;
 			k = ((get_user_char((void *)(--data))
 			    == '\t') ? TAB_SPACES : 1);
@@ -261,17 +261,17 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 		    }
 		    continue;
 		}
-		if(/*(tty->termios.c_iflag & ICRNL) && */(ch == '\r'))
+		if (/*(tty->termios.c_iflag & ICRNL) && */(ch == '\r'))
 		    ch = '\n';
 
-		if(ch == 04/*tty->termios.c_cc[VEOF]*/)
+		if (ch == 04/*tty->termios.c_cc[VEOF]*/)
 		    break;
 	    }
 	    put_user_char(ch, (void *)(data++));
 	    tty_echo(tty, ch);
-	    if((int)(++pi) >= len)
+	    if ((int)(++pi) >= len)
 		break;
-	} while((icanon && (ch != '\n') /*&& (ch != tty->termios.c_cc[VEOL])*/)
+	} while ((icanon && (ch != '\n') /*&& (ch != tty->termios.c_cc[VEOL])*/)
 		    || (!icanon && (pi < tty->termios.c_cc[VMIN])));
     }
     return (int)pi;
@@ -354,7 +354,7 @@ void tty_init(void)
     register char *pi;
 
     ttyp = ttys;
-    while(ttyp < &ttys[NUM_TTYS]) {
+    while (ttyp < &ttys[NUM_TTYS]) {
 	ttyp->minor = (unsigned short int)(-1L); /* set unsigned to -1 */
 	memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
 	ttyp++;

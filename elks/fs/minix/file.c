@@ -178,7 +178,7 @@ static size_t minix_file_write(struct inode *inode,
     }
 #endif
 
-    if(filp->f_flags & O_APPEND)
+    if (filp->f_flags & O_APPEND)
 	filp->f_pos = (loff_t)inode->i_size;
 
     while (count > 0) {

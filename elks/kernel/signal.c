@@ -23,7 +23,7 @@ static void generate(int sig, register struct task_struct *p)
 
     sa = p->sig.action[--sig].sa_handler;
     msksig = (((sigset_t)1) << sig);
-    if((sa == SIG_IGN) || (sa == SIG_DFL) && (msksig &
+    if ((sa == SIG_IGN) || (sa == SIG_DFL) && (msksig &
 	((((sigset_t) 1) << (SIGCONT - 1)) | (((sigset_t) 1) << (SIGCHLD - 1))
 	| (((sigset_t) 1) << (SIGWINCH - 1))
 #ifndef SMALLSIG
@@ -110,7 +110,7 @@ int sys_kill(pid_t pid, sig_t sig)
 	    }
 	return (count ? retval : -ESRCH);
     }
-    if(pid < 1)
+    if (pid < 1)
 	return kill_pg((!pid ? pcurrent->pgrp : -pid), sig, 0);
     return kill_process(pid, sig, 0);
 }

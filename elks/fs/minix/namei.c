@@ -207,7 +207,7 @@ static int minix_add_entry(register struct inode *dir,
 	    dir->i_mtime = dir->i_ctime = CURRENT_TIME;
 	    dir->i_dirt = 1;
 	    memcpy_fromfs(de->name, name, namelen);
-	    if((i = info->s_namelen - namelen) > 0)
+	    if ((i = info->s_namelen - namelen) > 0)
 		memset(de->name + namelen, 0, i);
 
 #ifdef BLOAT_FS
@@ -235,14 +235,14 @@ int minix_create(register struct inode *dir, char *name, size_t len,
     register struct inode *inode = NULL;
     int error;
 
-    if(!dir)
+    if (!dir)
 	error = -ENOENT;
-    else if(!(inode = minix_new_inode(dir, (__u16)mode)))
+    else if (!(inode = minix_new_inode(dir, (__u16)mode)))
 	error = -ENOSPC;
     else {
 /*----------------------------------------------------------------------*/
 /*----------------------------------------------------------------------*/
-	if((error = minix_add_entry(dir, name, len, inode->i_ino))) {
+	if ((error = minix_add_entry(dir, name, len, inode->i_ino))) {
 	    inode->i_nlink--;
 	    inode->i_dirt = 1;
 	    iput(inode);
@@ -280,7 +280,7 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
 	inode->i_rdev = to_kdev_t(rdev);
 /*----------------------------------------------------------------------*/
     error = minix_add_entry(dir, name, len, inode->i_ino);
-    if(error) {
+    if (error) {
 	inode->i_nlink--;
 	inode->i_dirt = 1;
     }
@@ -496,7 +496,7 @@ int minix_unlink(register struct inode *dir, char *name, size_t len)
 	retval = -EPERM;
 	if (S_ISDIR(inode->i_mode))
 	    goto end_unlink;
-    } while(de->inode != inode->i_ino);
+    } while (de->inode != inode->i_ino);
     if ((dir->i_mode & S_ISVTX) && !suser() &&
 	current->euid != inode->i_uid && current->euid != dir->i_uid)
 	goto end_unlink;
@@ -551,7 +551,7 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     bh = minix_bread(inode, 0, 1);
     if (!bh)
 	goto symlink1;
-    if((error = strlen_fromfs(symname)) > 1023)
+    if ((error = strlen_fromfs(symname)) > 1023)
 	error = 1023;
     inode->i_size = (__u32) error;
     map_buffer(bh);
@@ -579,15 +579,15 @@ int minix_link(register struct inode *oldinode, register struct inode *dir,
     struct buffer_head *bh;
     struct minix_dir_entry *de;
 
-    if(S_ISDIR(oldinode->i_mode))
+    if (S_ISDIR(oldinode->i_mode))
 	error = -EPERM;
-    else if(oldinode->i_nlink >= MINIX_LINK_MAX)
+    else if (oldinode->i_nlink >= MINIX_LINK_MAX)
 	error = -EMLINK;
-    else if((bh = minix_find_entry(dir, name, len, &de))) {
+    else if ((bh = minix_find_entry(dir, name, len, &de))) {
 	unmap_brelse(bh);
 	error = -EEXIST;
     }
-    else if(!(error = minix_add_entry(dir, name, len, oldinode->i_ino))) {
+    else if (!(error = minix_add_entry(dir, name, len, oldinode->i_ino))) {
 	oldinode->i_nlink++;
 	oldinode->i_ctime = CURRENT_TIME;
 	oldinode->i_dirt = 1;

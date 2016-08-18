@@ -50,7 +50,7 @@ int open_fd(int flags, register struct inode *inode)
     int fd;
     struct file *filp;
 
-    if(!(fd = open_filp(flags, inode, &filp))
+    if (!(fd = open_filp(flags, inode, &filp))
 	&& ((fd = get_unused_fd(filp)) < 0))
 	close_filp(inode, filp);
     return fd;
@@ -79,7 +79,7 @@ static char *get_pipe_mem(void)
     register char *i = 0;
 
     i = (char *)find_first_zero_bit(pipe_in_use, MAX_PIPES);
-    if((int)i < MAX_PIPES) {
+    if ((int)i < MAX_PIPES) {
 	set_bit((int)i, pipe_in_use);
 	return pipe_base[(int)i];
     }
@@ -93,7 +93,7 @@ static void free_pipe_mem(char *buf)
     register char *i;
 
     i = (char *)(((unsigned int)pipe_base - (unsigned int)buf)/PAGE_SIZE);
-    if((int)i < MAX_PIPES)
+    if ((int)i < MAX_PIPES)
 	clear_bit((int)i, pipe_in_use);
 }
 
@@ -103,33 +103,33 @@ static size_t pipe_read(register struct inode *inode, struct file *filp,
     register char *chars;
 
     debug("PIPE: read called.\n");
-    while(!(inode->u.pipe_i.q.len) || (inode->u.pipe_i.lock)) {
-	if(!(inode->u.pipe_i.lock) && !(inode->u.pipe_i.writers)) {
+    while (!(inode->u.pipe_i.q.len) || (inode->u.pipe_i.lock)) {
+	if (!(inode->u.pipe_i.lock) && !(inode->u.pipe_i.writers)) {
 	    return 0;
 	}
-	if(filp->f_flags & O_NONBLOCK) {
+	if (filp->f_flags & O_NONBLOCK) {
 	    return -EAGAIN;
 	}
-	if(current->signal)
+	if (current->signal)
 	    return -ERESTARTSYS;
 	interruptible_sleep_on(&(inode->u.pipe_i.q.wait));
     }
     (inode->u.pipe_i.lock)++;
-    if(count > inode->u.pipe_i.q.len)
+    if (count > inode->u.pipe_i.q.len)
 	count = inode->u.pipe_i.q.len;
     chars = (char *)(PIPE_BUF - inode->u.pipe_i.q.start);
-    if((size_t)chars > count)
+    if ((size_t)chars > count)
 	chars = (char *)count;
     memcpy_tofs(buf, (inode->u.pipe_i.q.base+inode->u.pipe_i.q.start), (size_t)chars);
-    if((size_t)chars < count)
+    if ((size_t)chars < count)
 	memcpy_tofs(buf + (size_t)chars, inode->u.pipe_i.q.base, count - (size_t)chars);
     inode->u.pipe_i.q.start = (inode->u.pipe_i.q.start + count) & (PIPE_BUF - 1);
     inode->u.pipe_i.q.len -= count;
     (inode->u.pipe_i.lock)--;
     wake_up_interruptible(&(inode->u.pipe_i.q.wait));
-    if(count)
+    if (count)
 	inode->i_atime = CURRENT_TIME;
-    else if((inode->u.pipe_i.writers))
+    else if ((inode->u.pipe_i.writers))
 	count = (size_t)(-EAGAIN);
     return count;
 }
@@ -212,8 +212,8 @@ static void pipe_rdwr_release(register struct inode *inode,
     if (filp->f_mode & FMODE_WRITE)
 	(inode->u.pipe_i.writers)--;
 
-    if(!(inode->u.pipe_i.readers + inode->u.pipe_i.writers)) {
-	if(inode->u.pipe_i.q.base) {
+    if (!(inode->u.pipe_i.readers + inode->u.pipe_i.writers)) {
+	if (inode->u.pipe_i.q.base) {
 	/* Free up any memory allocated to the pipe */
 	    free_pipe_mem(inode->u.pipe_i.q.base);
 	    inode->u.pipe_i.q.base = NULL;
@@ -246,8 +246,8 @@ static int pipe_rdwr_open(register struct inode *inode,
 {
     debug("PIPE: rdwr called.\n");
 
-    if(!PIPE_BASE(*inode)) {
-	if(!(PIPE_BASE(*inode) = get_pipe_mem()))
+    if (!PIPE_BASE(*inode)) {
+	if (!(PIPE_BASE(*inode) = get_pipe_mem()))
 	    return -ENOMEM;
 #if 0
 	inode->u.pipe_i.q.size = PAGE_SIZE;
@@ -260,27 +260,27 @@ static int pipe_rdwr_open(register struct inode *inode,
     }
     if (filp->f_mode & FMODE_READ) {
 	(inode->u.pipe_i.readers)++;
-	if(inode->u.pipe_i.writers > 0) {
-	    if(inode->u.pipe_i.readers < 2)
+	if (inode->u.pipe_i.writers > 0) {
+	    if (inode->u.pipe_i.readers < 2)
 		wake_up_interruptible(&(inode->u.pipe_i.q.wait));
 	}
 	else {
-	    if(!(filp->f_flags & O_NONBLOCK) && (inode->i_sb))
-		while(!(inode->u.pipe_i.writers))
+	    if (!(filp->f_flags & O_NONBLOCK) && (inode->i_sb))
+		while (!(inode->u.pipe_i.writers))
 		    interruptible_sleep_on(&(inode->u.pipe_i.q.wait));
 	}
     }
 
     if (filp->f_mode & FMODE_WRITE) {
 	(inode->u.pipe_i.writers)++;
-	if(inode->u.pipe_i.readers > 0) {
-	    if(inode->u.pipe_i.writers < 2)
+	if (inode->u.pipe_i.readers > 0) {
+	    if (inode->u.pipe_i.writers < 2)
 		wake_up_interruptible(&(inode->u.pipe_i.q.wait));
 	}
 	else {
-	    if(filp->f_flags & O_NONBLOCK)
+	    if (filp->f_flags & O_NONBLOCK)
 		return -ENXIO;
-	    while(!(inode->u.pipe_i.readers))
+	    while (!(inode->u.pipe_i.readers))
 		interruptible_sleep_on(&(inode->u.pipe_i.q.wait));
 	}
     }
@@ -356,17 +356,17 @@ static int do_pipe(register int *fd)
     struct file *f;
     int error = -ENOMEM;
 
-    if(!(inode = new_inode(NULL, S_IFIFO | S_IRUSR | S_IWUSR)))	/* Create inode */
+    if (!(inode = new_inode(NULL, S_IFIFO | S_IRUSR | S_IWUSR)))	/* Create inode */
 	goto no_inodes;
 
     /* read file */
-    if((error = open_fd(O_RDONLY, inode)) < 0)
+    if ((error = open_fd(O_RDONLY, inode)) < 0)
 	goto no_files;
 
     *fd = error;
 
     /* write file */
-    if((error = open_fd(O_WRONLY, inode)) < 0) {
+    if ((error = open_fd(O_WRONLY, inode)) < 0) {
 	f = current->files.fd[*fd];
 	current->files.fd[*fd] = NULL;
 	close_filp(inode, f);

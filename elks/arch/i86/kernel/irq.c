@@ -117,7 +117,7 @@ void enable_irq(unsigned int irq)
 
 static int remap_irq(int irq)
 {
-    if((irq > 15) || ((irq > 7) && (arch_cpu < 2)))
+    if ((irq > 15) || ((irq > 7) && (arch_cpu < 2)))
 	return -EINVAL;
     if (irq == 2 && arch_cpu > 1)
 	irq = 9;			/* Map IRQ 9/2 over */
@@ -139,7 +139,7 @@ void do_IRQ(int i,void *regs)
 
 static void default_handler(int i, void *regs, void *dev)
 {
-	if(i > 15)
+	if (i > 15)
 	    printk("Unexpected trap: %u\n", i-16);
 	else
 	    printk("Unexpected interrupt: %u\n", i);
@@ -236,7 +236,7 @@ void init_IRQ(void)
 
     /* Enable the drop through interrupts. */
 
-    if(arch_cpu > 1) {
+    if (arch_cpu > 1) {
 	enable_irq(HD_IRQ);	/* AT ST506 */
 	enable_irq(15);		/* AHA1542 */
     }

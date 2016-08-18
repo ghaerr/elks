@@ -89,7 +89,7 @@ static size_t tcpdev_write(struct inode *inode, struct file *filp,
 			char *data, size_t len)
 {
     debug4("TCPDEV: write( %p, %p, %p, %u )\n",inode,filp,data,len);
-    if(len > 0) {
+    if (len > 0) {
 	down(&bufin_sem);
 
 	tdin_tail = (unsigned) len;
@@ -133,7 +133,7 @@ int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
 static int tcpdev_open(struct inode *inode, struct file *file)
 {
     debug2("TCPDEV: open( %p, %p )\n",inode,file);
-    if(!suser()) {
+    if (!suser()) {
 	debug("TCPDEV: open() returning -EPERM\n");
     	return -EPERM;
     }

@@ -73,7 +73,7 @@ static void wait_on_inode(register struct inode *inode)
     if (inode->i_lock) {
 	wait_set(&inode->i_wait);
 	currentp->state = TASK_UNINTERRUPTIBLE;
-	while(inode->i_lock)
+	while (inode->i_lock)
 	    schedule();
 	currentp->state = TASK_RUNNING;
 	wait_clear(&inode->i_wait);
@@ -119,7 +119,7 @@ int fs_may_mount(kdev_t dev)
 	if (inode->i_count || inode->i_dirt || inode->i_lock)
 	    return 0;
 	clear_inode(inode);
-    } while((inode = next) != first_inode);
+    } while ((inode = next) != first_inode);
     return 1;
 }
 
@@ -133,7 +133,7 @@ int fs_may_umount(kdev_t dev, struct inode *mount_rooti)
 	if (inode == mount_rooti && inode->i_count == 1)
 	    continue;
 	return 0;
-    } while((inode = inode->i_prev) != first_inode);
+    } while ((inode = inode->i_prev) != first_inode);
     return 1;
 }
 
@@ -149,17 +149,17 @@ int fs_may_remount_ro(kdev_t dev)
 	    continue;
 	if (S_ISREG(inode->i_mode) && (file->f_mode & 2))
 	    return 0;
-    } while(++file < &file_array[NR_FILE]);
+    } while (++file < &file_array[NR_FILE]);
     return 1;
 }
 
 static void write_inode(register struct inode *inode)
 {
     register struct super_block *sb = inode->i_sb;
-    if(inode->i_dirt) {
+    if (inode->i_dirt) {
 	wait_on_inode(inode);
-	if(inode->i_dirt) {
-	    if(!sb || !sb->s_op || !sb->s_op->write_inode)
+	if (inode->i_dirt) {
+	    if (!sb || !sb->s_op || !sb->s_op->write_inode)
 		inode->i_dirt = 0;
 	    else {
 		inode->i_lock = 1;
@@ -195,7 +195,7 @@ static void read_inode(register struct inode *inode)
     lock_inode(inode);
     if (sb && (sop = sb->s_op) && sop->read_inode) {
 	sop->read_inode(inode);
-	if(inode->i_op == NULL)
+	if (inode->i_op == NULL)
 	    set_ops(inode);
     }
     unlock_inode(inode);
@@ -316,7 +316,7 @@ void invalidate_inodes(kdev_t dev)
 	    continue;
 	}
 	clear_inode(inode);
-    } while((inode = next) != first_inode);
+    } while ((inode = next) != first_inode);
 }
 
 void sync_inodes(kdev_t dev)
@@ -329,7 +329,7 @@ void sync_inodes(kdev_t dev)
 	wait_on_inode(inode);
 	if (inode->i_dirt)
 	    write_inode(inode);
-    } while((inode = inode->i_prev) != first_inode);
+    } while ((inode = inode->i_prev) != first_inode);
 }
 
 void iput(register struct inode *inode)
@@ -345,7 +345,7 @@ void iput(register struct inode *inode)
 	    return;
 	}
 #ifdef NOT_YET
-	if((inode->i_mode & S_IFMT) == S_IFIFO)
+	if ((inode->i_mode & S_IFMT) == S_IFIFO)
 	    wake_up_interruptible(&PIPE_WAIT(*inode));
 #endif
 	goto ini_loop;
@@ -369,7 +369,7 @@ void iput(register struct inode *inode)
 		}
 	    }
 
-	} while(inode->i_dirt);
+	} while (inode->i_dirt);
 	inode->i_count--;
 	nr_free_inodes++;
     }
@@ -384,7 +384,7 @@ static void list_inode_status(void)
         printk("[#%u: c=%u d=%x nr=%lu]",
 	       ((int)(pi++)), inode->i_count,
 	       inode->i_dev, inode->i_ino);
-    } while((inode = inode->i_prev) != first_inode);
+    } while ((inode = inode->i_prev) != first_inode);
 }
 
 struct inode *get_empty_inode(void)
@@ -398,11 +398,11 @@ struct inode *get_empty_inode(void)
             if (!inode->i_count && !inode->i_lock && !inode->i_dirt) {
                 goto found_empty_inode;
             }
-        } while((inode = inode->i_next) != first_inode->i_next);
+        } while ((inode = inode->i_next) != first_inode->i_next);
         printk("VFS: No free inodes\n");
         list_inode_status();
         sleep_on(&inode_wait);
-    } while(1);
+    } while (1);
   found_empty_inode:
 /* Here we are doing the same checks again. There cannot be a significant *
  * race condition here - no time has passed */
@@ -437,21 +437,21 @@ struct inode *new_inode(register struct inode *dir, __u16 mode)
 {
     register struct inode *inode;
 
-    if(!(inode = get_empty_inode()))
+    if (!(inode = get_empty_inode()))
 	return NULL;
     inode->i_gid =(__u8) current->egid;
-    if(dir) {
+    if (dir) {
 	inode->i_sb = dir->i_sb;
 	inode->i_dev = inode->i_sb->s_dev;
 	inode->i_flags = inode->i_sb->s_flags;
-	if(dir->i_mode & S_ISGID) {
+	if (dir->i_mode & S_ISGID) {
 	    inode->i_gid = dir->i_gid;
-	    if(S_ISDIR(mode))
+	    if (S_ISDIR(mode))
 		mode |= S_ISGID;
 	}
     }
 
-    if(S_ISLNK(mode))
+    if (S_ISLNK(mode))
 	mode |= 0777;
     else
 	mode &= ~(current->fs.umask & 0777);
@@ -481,9 +481,9 @@ struct inode *__iget(register struct super_block *sb,
 	do {
 	    if (inode->i_dev == sb->s_dev && inode->i_ino == inr)
 		goto found_it;
-	} while((inode = inode->i_prev) != first_inode);
+	} while ((inode = inode->i_prev) != first_inode);
 	debug("iget: getting an empty inode...\n");
-    } while(!(inode = get_empty_inode()));
+    } while (!(inode = get_empty_inode()));
     debug1("iget: got one... (%x)!\n", empty);
 
     inode->i_sb = sb;

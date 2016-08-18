@@ -47,7 +47,7 @@ int memory_lseek(struct inode *inode, register struct file *filp,
     case 1:
 	offset += filp->f_pos;
     case 0:
-	if(offset >= 0)
+	if (offset >= 0)
 	    break;
     default:
 	return -EINVAL;
@@ -209,7 +209,7 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, register char *a
 
 #ifdef CONFIG_SWAP
     case MEM_SETSWAP:
-    	if(!suser())
+    	if (!suser())
     	   return -EPERM;
     	memcpy_fromfs(&si, arg, sizeof(struct mem_swap_info));
     	return mm_swap_on(&si);

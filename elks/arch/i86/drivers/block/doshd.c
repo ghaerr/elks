@@ -427,7 +427,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 		break;
 	    }
 	    drivep->cylinders = track_probe[count];
-	} while(++count < 2);
+	} while (++count < 2);
 
 /* Next, probe for sector number. We probe on track 0 (40-40 in
  * seek_sector), which is safe for all formats, and if we get a
@@ -442,7 +442,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 		break;
 	    }
 	    drivep->sectors = sector_probe[count];
-	} while(++count < 5);
+	} while (++count < 5);
 
 	drivep->heads = 2;
 

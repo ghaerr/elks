@@ -86,9 +86,9 @@ static void split_hole(struct malloc_head *mh,
  */
     ct = mh->size;
     n = mh->holes;
-    while(n->flags != HOLE_SPARE) {
+    while (n->flags != HOLE_SPARE) {
 	n++;
-	if(!--ct)
+	if (!--ct)
 	    panic("mm: too many holes");
     }
 
@@ -108,13 +108,13 @@ static void free_hole(struct malloc_head *mh, register struct malloc_hole *m)
     register struct malloc_hole *n = mh->holes;
 
     m->flags = HOLE_FREE;
-    if(m != n) {
-	while(n->next != m)
+    if (m != n) {
+	while (n->next != m)
 	    n = n->next;
-	if(n->flags != HOLE_FREE)
+	if (n->flags != HOLE_FREE)
 	    n = m;
     }
-    while((m = n->next) != NULL && m->flags == HOLE_FREE) {
+    while ((m = n->next) != NULL && m->flags == HOLE_FREE) {
 	n->extent += m->extent;
 	m->flags = HOLE_SPARE;
 	n->next = m->next;
@@ -127,7 +127,7 @@ void dmem(struct malloc_head *mh)
 {
     register struct malloc_hole *m;
     char *status;
-        if(mh)m = mh->holes;else m = memmap.holes;
+        if (mh)m = mh->holes;else m = memmap.holes;
     do {
 	switch (m->flags) {
 	case HOLE_SPARE:
@@ -160,10 +160,10 @@ static struct malloc_hole *best_fit_hole(struct malloc_head *mh, segext_t size)
     register struct malloc_hole *best = NULL;
 
     do {
-	if((m->flags == HOLE_FREE && m->extent >= size) &&
+	if ((m->flags == HOLE_FREE && m->extent >= size) &&
 	    (!best || best->extent > m->extent))
 		best = m;
-    } while((m = m->next));
+    } while ((m = m->next));
     return best;
 }
 
@@ -322,7 +322,7 @@ seg_t mm_dup(seg_t base)
     if (o->flags != HOLE_USED)
 	panic("bad/swapped hole");
 
-    if((mbase = (char *)mm_alloc(o->extent)) != NULL)
+    if ((mbase = (char *)mm_alloc(o->extent)) != NULL)
 	fmemcpy((seg_t)mbase, 0, o->page_base, 0, (__u16)(o->extent << 4));
     return (seg_t)mbase;
 }
@@ -351,9 +351,9 @@ unsigned int mm_get_usage(int type, int used)
     flag = used ? HOLE_USED : HOLE_FREE;
 
     do {
-	if((int)m->flags == flag)
+	if ((int)m->flags == flag)
 	    ret += m->extent;
-    } while((m = m->next));
+    } while ((m = m->next));
 
 #ifdef CONFIG_SWAP
 
@@ -373,17 +373,17 @@ struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
     register struct malloc_hole *next;
     segext_t ext;
 
-    if(m->extent >= pages){
+    if (m->extent >= pages){
         /* for now don't reduce holes */
         return m;
     }
 
     next = m->next;
     ext = pages - m->extent;
-    if(next->flags == HOLE_FREE && next->extent >= ext){
+    if (next->flags == HOLE_FREE && next->extent >= ext){
         m->extent += ext;
         next->page_base += ext;
-        if((next->extent -= ext) == 0){
+        if ((next->extent -= ext) == 0){
             next->flags == HOLE_SPARE;
             m->next = next->next;
         }
@@ -392,7 +392,7 @@ struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
 
 #ifdef CONFIG_ADVANCED_MM
 
-    if((next = (struct malloc_hole *)mm_alloc(pages)) != NULL) {
+    if ((next = (struct malloc_hole *)mm_alloc(pages)) != NULL) {
 	fmemcpy((seg_t)next, 0, m->page_base, 0, (__u16)(m->extent << 4));
 	next = find_hole(&memmap, (seg_t)next);
 	next->refcount = m->refcount;
@@ -426,22 +426,22 @@ int sys_brk(__pptr len)
     if (len < currentp->t_enddata)
         return -ENOMEM;
     if (currentp->t_begstack > currentp->t_endbrk)
-        if(len > currentp->t_endseg - 0x1000) {
+        if (len > currentp->t_endseg - 0x1000) {
 		printk("sys_brk failed: len %u > endseg %u\n", len, (currentp->t_endseg - 0x1000));
             return -ENOMEM;
 	}
 
 #ifdef CONFIG_EXEC_ELKS
-    if(len > currentp->t_endseg){
+    if (len > currentp->t_endseg){
         /* Resize time */
 
         h = find_hole(&memmap, currentp->mm.dseg);
 
         h = mm_resize(h, (len + 15) >> 4);
-        if(!h){
+        if (!h){
             return -ENOMEM;
         }
-        if(h->refcount != 1){
+        if (h->refcount != 1){
             panic("Relocated shared hole");
         }
 
@@ -469,7 +469,7 @@ void mm_init(seg_t start, seg_t end)
      */
     do {
 	holep->flags = HOLE_SPARE;
-    } while(--holep > holes);
+    } while (--holep > holes);
 
     /*
      *      Single hole containing all user memory.
@@ -500,13 +500,13 @@ int mm_swap_on(struct mem_swap_info *si)
 {
     register struct malloc_hole *holep;
     int ct;
-    if(swap_dev)
+    if (swap_dev)
     	return -EPERM;
 
     for (ct = 1; ct < MAX_SWAP_SEGMENTS; ct++)
 	swap_holes[ct].flags = HOLE_SPARE;
 
-    if(!si)
+    if (!si)
     	return 0;
 
     holep = &swap_holes[0];
@@ -676,7 +676,7 @@ static seg_t swap_strategy(register struct task_struct *swapin_target)
 	    || t->mm.cseg == current->mm.cseg
 	    )
 	    continue;
-	if(swapin_target != NULL && t->mm.cseg == swapin_target->mm.cseg)
+	if (swapin_target != NULL && t->mm.cseg == swapin_target->mm.cseg)
 	    continue;
 
 	ret = 0;

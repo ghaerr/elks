@@ -223,7 +223,7 @@ static void genscro(register Console * C, int n, int x, int y, int xx, int yy)
 
     a = C->attr;
     p = C->pageno;
-    if(C != Visible) {
+    if (C != Visible) {
 #asm
     mov		ah, #0x05
     mov		al, [bp + .genscro.p]
@@ -245,7 +245,7 @@ scrup:
     mov		dl, [bp + .genscro.xx]
     int		#0x10
 #endasm
-    if(C != Visible) {
+    if (C != Visible) {
 	p = Visible->pageno;
 #asm
     mov		ah, #0x05
@@ -525,7 +525,7 @@ static void std_char(register Console * C, char c)
 	VideoWrite(C, c);
 	C->cx++;
       linewrap:
-	if(C->cx > MaxCol) {
+	if (C->cx > MaxCol) {
 
 #ifdef CONFIG_EMUL_VT52
 	    C->cx = MaxCol;
@@ -616,11 +616,11 @@ static int Console_write(register struct tty *tty)
     register Console *C = &Con[tty->minor];
     int cnt = 0;
 
-    while((tty->outq.len > 0) && !glock) {
+    while ((tty->outq.len > 0) && !glock) {
 	WriteChar(C, (char)tty_outproc(tty));
 	cnt++;
     }
-    if(C == Visible)
+    if (C == Visible)
 	PositionCursor(C);
     return cnt;
 }
@@ -661,7 +661,7 @@ void init_console(void)
 
     for (pi = 0; ((unsigned int)pi) < NumConsoles; pi++) {
 	C->cx = C->cy = 0;
-	if(!pi) {
+	if (!pi) {
 	    C->cx = peekb(0x40, 0x50);
 	    C->cy = peekb(0x40, 0x51);
 	}

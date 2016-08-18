@@ -53,7 +53,7 @@ void wait_on_buffer(register struct buffer_head *bh)
 
 	wait_set(&bh->b_wait);
 	currentp->state = TASK_UNINTERRUPTIBLE;
-	while(buffer_locked(bh))
+	while (buffer_locked(bh))
 	    schedule();
 	currentp->state = TASK_RUNNING;
 	wait_clear(&bh->b_wait);
@@ -78,7 +78,7 @@ static void put_last_lru(register struct buffer_head *bh)
 	 *      Unhook
 	 */
 	bhn = bh->b_next_lru;
-	if((bhn->b_prev_lru = bh->b_prev_lru))
+	if ((bhn->b_prev_lru = bh->b_prev_lru))
 	    bh->b_prev_lru->b_next_lru = bhn;
 	/*
 	 *      Alter head
@@ -174,7 +174,7 @@ static struct buffer_head *find_buffer(kdev_t dev, block_t block)
     do {
 	if (bh->b_blocknr == block && bh->b_dev == dev)
 	    break;
-    } while((bh = bh->b_prev_lru) != NULL);
+    } while ((bh = bh->b_prev_lru) != NULL);
     return bh;
 }
 
@@ -194,7 +194,7 @@ static struct buffer_head *get_free_buffer(void)
 		put_last_lru(bh);
 		return bh;
 	    }
-	} while((bh = bh->b_next_lru) != NULL);
+	} while ((bh = bh->b_next_lru) != NULL);
 #if 0
 	fsync_dev(0);
 	/* This causes a sleep until another process brelse's */
@@ -208,7 +208,7 @@ struct buffer_head *get_hash_table(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh;
 
-    while((bh = find_buffer(dev, block))) {
+    while ((bh = find_buffer(dev, block))) {
 	bh->b_count++;
 	wait_on_buffer(bh);
 	if (bh->b_dev == dev && bh->b_blocknr == block)
@@ -250,7 +250,7 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
 	 * So I will remove it for now
 	 */
 
-    } while(find_buffer(dev, block));
+    } while (find_buffer(dev, block));
 
     /*
      *      Create a buffer for this job.
@@ -428,7 +428,7 @@ void map_buffer(register struct buffer_head *bh)
 		bh->b_data = (char *)bufmem + ((int)pi << BLOCK_SIZE_BITS);
 #endif
 		bh->b_mapcount++;
-		if(bh->b_uptodate)
+		if (bh->b_uptodate)
 		fmemcpy(kernel_ds, (__u16) bh->b_data, _buf_ds,
 			(__u16) (bh->b_num * BLOCK_SIZE), BLOCK_SIZE);
 		debug3("BUFMAP: Buffer %d (block %d) mapped into L1 slot %d.\n",
@@ -531,7 +531,7 @@ void buffer_init(void)
     pi = (char *)0;
     do {
 	bufmem_map[(unsigned int)pi] = NULL;
-    } while((unsigned int)(++pi) < NR_MAPBUFS);
+    } while ((unsigned int)(++pi) < NR_MAPBUFS);
 #endif
 
     buffers[0].b_prev_lru = NULL;

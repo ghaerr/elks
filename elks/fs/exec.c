@@ -82,7 +82,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /*
      *      Get a reading file handle
      */
-    if((retval = open_filp(O_RDONLY, inode, &filp)))
+    if ((retval = open_filp(O_RDONLY, inode, &filp)))
 	goto error_exec2;
 
     /*
@@ -105,7 +105,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     ds = tregs->ds;
 
     retval = -ENOEXEC;
-    if(!(filp->f_op) || !(filp->f_op->read))
+    if (!(filp->f_op) || !(filp->f_op->read))
 	goto normal_out;
 
     debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
@@ -131,13 +131,13 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    goto error_exec3;
 	}
 	stack_top = msuph.msh_dbase;
-	if(stack_top & 0xf){
+	if (stack_top & 0xf){
 	    goto error_exec3;
 	}
 	debug1("EXEC: New type executable stack = %x\n", stack_top);
     }
 #else
-    if((unsigned int) mh.hlen != 0x20){
+    if ((unsigned int) mh.hlen != 0x20){
 	goto error_exec3;
     }
 #endif
@@ -230,7 +230,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 		pokew(dseg, (__u16) pi, (__u16) (((char *) ptr) + retval));
 	    } else
 		result++;	/* increments for each array traversed */
-	} while(result < 2);
+	} while (result < 2);
 	retval = 0;
 
 	/*
@@ -313,7 +313,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
   normal_out:
     close_filp(inode, filp);
 
-    if(retval)
+    if (retval)
   error_exec2:
 	iput(inode);
   error_exec1:

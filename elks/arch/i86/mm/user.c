@@ -15,7 +15,7 @@ int verfy_area(void *p, size_t len)
     /*
      *	Kernel tasks can always access
      */
-    if((kernel_ds == currentp->t_regs.ds) /* Kernel tasks can always access */
+    if ((kernel_ds == currentp->t_regs.ds) /* Kernel tasks can always access */
 	  || ((__pptr)((char *)p + len) <= currentp->t_endseg)) /* User process boundaries */
 	return 0;
 

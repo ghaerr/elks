@@ -28,7 +28,7 @@ int run_init_process(register char *cmd)
     int num;
 
     strcpy((char *)(&args[4]), cmd);
-    if(!(num = sys_execve(cmd, args, 20))) {
+    if (!(num = sys_execve(cmd, args, 20))) {
 	ret_from_syscall();
     }
     printk("sys_execve(\"%s\", args, 18) => %d.\n", cmd, -num);
@@ -44,11 +44,11 @@ void stack_check(void)
     register __ptask currentp = current;
 /*    register segext_t end;*/ /* Unused variable "end" */
 
-    if(currentp->t_begstack > currentp->t_enddata) {
-	if(currentp->t_regs.sp > currentp->t_endbrk)
+    if (currentp->t_begstack > currentp->t_enddata) {
+	if (currentp->t_regs.sp > currentp->t_endbrk)
 	    return;
     }
-    else if(currentp->t_regs.sp < currentp->t_endseg)
+    else if (currentp->t_regs.sp < currentp->t_endseg)
 	return;
     printk("STACK OVERFLOW BY %u BYTES\n", 0xffff - currentp->t_regs.sp);
     do_exit(SIGSEGV);
@@ -120,8 +120,8 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
     register char *i;
 
     i = 0;
-    if(t->t_regs.bx != 0) {
-        for(; (int)i < 18; i += 2)
+    if (t->t_regs.bx != 0) {
+        for (; (int)i < 18; i += 2)
             put_ustack(t, (int)i-4, (int)get_ustack(t,(int)i));
     }
     debug4("Stack %x was %x %x %x\n", addr, get_ustack(t,(int)i), get_ustack(t,(int)i+2),
@@ -186,7 +186,7 @@ void arch_build_stack(struct task_struct *t, char *addr)
     *tsp++ = *(csp + 5);	/* Initial value for DI register */
     *tsp++ = 0x3202;		/* Initial value for FLAGS register */
     *tsp++ = current->t_regs.bp;/* Initial value for BP register */
-    if(addr == NULL)
+    if (addr == NULL)
 	addr = ret_from_syscall;
     *tsp = addr;		/* Start execution address */
 }

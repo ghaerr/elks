@@ -167,15 +167,15 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 
     /* --------------Process status keys-------------- */
 
-    if(!(mode & 0xC0)) {
+    if (!(mode & 0xC0)) {
 #if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE)
-	if((mode == ALT) && ((int)keyp_E0 != 0))	/*[ E0 ]*/
+	if ((mode == ALT) && ((int)keyp_E0 != 0))	/*[ E0 ]*/
 	    mode = ALT_GR;
 #endif
 	IsReleasep ? (ModeState &= ~mode) : (ModeState |= mode);
 	return;
     }
-    if(IsReleasep)
+    if (IsReleasep)
 	return;
 
     switch(mode & 0xC0) {
@@ -196,9 +196,9 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 
     /* --------------Handle extended scancodes-------------- */
     case 0x80:
-	if((int)keyp_E0) {		/* Is extended scancode? */	/*[ E0 ]*/
+	if ((int)keyp_E0) {		/* Is extended scancode? */	/*[ E0 ]*/
 	    mode &= 0x3F;
-	    if(mode) {
+	    if (mode) {
 		AddQueue(ESC);
 #ifdef CONFIG_EMUL_ANSI
 		AddQueue('[');
@@ -219,10 +219,10 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
      */
 	mode = ((ModeState & ~(NUM | ALT_GR)) >> 1) | (ModeState & 0x01);
 	mode = state_code[mode];
-	if(!mode && (ModeState & ALT_GR))
+	if (!mode && (ModeState & ALT_GR))
 	    mode = 3;
 
-	if((ModeState & CTRL && code < 14 && !(ModeState & ALT))
+	if ((ModeState & CTRL && code < 14 && !(ModeState & ALT))
 		|| (code < 70 && ModeState & NUM))
 	    mode = 1;
 

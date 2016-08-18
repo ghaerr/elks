@@ -31,8 +31,8 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
     register struct file *f = file_array;
     register struct file_operations *fop;
 
-    while(f->f_count) {
-	if(++f >= &file_array[NR_FILE]) {	/* TODO: is nr_file const? */
+    while (f->f_count) {
+	if (++f >= &file_array[NR_FILE]) {	/* TODO: is nr_file const? */
 	    printk("\nNo filps\n");
 	    return -ENFILE;
 	}
@@ -58,12 +58,12 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
 /*    f->f_reada = 0;*/ /* Set to zero by memset() */
 #endif
 
-    if(inode->i_op)
+    if (inode->i_op)
 	f->f_op = inode->i_op->default_file_ops;
     fop = f->f_op;
-    if(fop && fop->open && (result = fop->open(inode, f))) {
+    if (fop && fop->open && (result = fop->open(inode, f))) {
 #ifdef BLOAT_FS
-	if(f->f_mode & FMODE_WRITE)
+	if (f->f_mode & FMODE_WRITE)
 	    put_write_access(inode);
       cleanup_file:
 #endif
@@ -79,11 +79,11 @@ void close_filp(struct inode *inode, register struct file *f)
     register struct file_operations *fop;
 
     fop = f->f_op;
-    if(fop && fop->release)
+    if (fop && fop->release)
 	fop->release(inode, f);
 
 #ifdef BLOAT_FS
-    if(f->f_mode & FMODE_WRITE)
+    if (f->f_mode & FMODE_WRITE)
 	put_write_access(inode);
 #endif
     f->f_count--;

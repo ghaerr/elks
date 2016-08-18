@@ -163,7 +163,7 @@ static void update_port(register struct serial_info *port)
 
     /* set baud rate divisor, first lower, then higher byte */
     cflags = port->tty->termios.c_cflag & CBAUD;
-    if(cflags & CBAUDEX)
+    if (cflags & CBAUDEX)
 	cflags = B38400 + cflags & 03;
     divisor = divisors[cflags];
 
@@ -190,7 +190,7 @@ static int rs_write(struct tty *tty)
     i = 0;
     while (tty->outq.len > 0) {
 	do {				/* Wait until transmitter buffer empty */
-	} while(!(inb_p(port->io + UART_LSR) & UART_LSR_TEMT));
+	} while (!(inb_p(port->io + UART_LSR) & UART_LSR_TEMT));
 	outb((char)tty_outproc(tty), port->io + UART_TX);
 	i++;				/* Write data to transmit buffer */
     }
@@ -352,11 +352,11 @@ int rs_init(void)
 
     printk("Serial driver version 0.02\n");
     do {
-	if((sp->tty != NULL) || (!rs_probe(sp) && !request_irq(sp->irq, rs_irq, NULL))) {
+	if ((sp->tty != NULL) || (!rs_probe(sp) && !request_irq(sp->irq, rs_irq, NULL))) {
 	    printk("ttyS%d at 0x%x (irq = %d) is a%s%s\n", ttyno,
 		       sp->io, sp->irq, serial_type[sp->flags & 0x3],
 		       (sp->tty != NULL ? ", fetched" : ""));
-	    if(sp->tty == NULL) {
+	    if (sp->tty == NULL) {
 		sp->tty = &ttys[4 + ttyno];
 		update_port(sp);
 #if 0
@@ -365,7 +365,7 @@ int rs_init(void)
 	    }
 	    ttyno++;
 	}
-    } while(++sp < &ports[4]);
+    } while (++sp < &ports[4]);
     return 0;
 }
 

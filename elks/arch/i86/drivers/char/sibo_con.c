@@ -274,7 +274,7 @@ int Console_write(register struct tty *tty)
     C = &Con[0];		/* use default console: This is probably wrong */
 #endif
 
-    while(tty->outq.len > 0) {
+    while (tty->outq.len > 0) {
 	WriteChar(C, (char)tty_outproc(tty));
 	cnt++;
     }

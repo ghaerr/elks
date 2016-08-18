@@ -44,12 +44,12 @@ int chq_wait_wr(register struct ch_queue *q, int nonblock)
     register char *pi;
 
     pi = 0;
-    if(q->len == q->size) {
-	if(nonblock)
+    if (q->len == q->size) {
+	if (nonblock)
 	    pi = (char *)(-EAGAIN);
 	else {
 	    interruptible_sleep_on(&q->wait);
-	    if(q->len == q->size)
+	    if (q->len == q->size)
 		pi = (char *)(-EINTR);
 	}
     }
@@ -62,7 +62,7 @@ int chq_addch(register struct ch_queue *q, unsigned char c)
     debug5("CHQ: chq_addch(%d, %c, %d) q->len=%d q->start=%d\n", q, c, 0,
 	   q->len, q->start);
 
-    if(q->len < q->size) {
+    if (q->len < q->size) {
 	q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = (char)c;
 	q->len++;
 	wake_up(&q->wait);
@@ -86,12 +86,12 @@ int chq_wait_rd(register struct ch_queue *q, int nonblock)
     register char *pi;
 
     pi = 0;
-    if(!q->len) {
-	if(nonblock)
+    if (!q->len) {
+	if (nonblock)
 	    pi = (char *)(-EAGAIN);
 	else {
 	    interruptible_sleep_on(&q->wait);
-	    if(!q->len)
+	    if (!q->len)
 		pi = (char *)(-EINTR);
 	}
     }
@@ -106,7 +106,7 @@ int chq_getch(register struct ch_queue *q)
     debug6("CHQ: chq_getch(%d, %d, %d) q->len=%d q->start=%d q->size=%d\n",
 	   q, c, wait, q->len, q->start, q->size);
 
-    if(!q->len)
+    if (!q->len)
 	retval = (char *)(-EAGAIN);
     else {
 	retval = (char *)((int)(q->base[q->start]) & 0xFF);

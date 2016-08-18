@@ -32,9 +32,9 @@ static struct ud_driver *get_driver(int major)
     register struct ud_driver *d = drivers;
 
     do {
-	if(d->udd_major == major)
+	if (d->udd_major == major)
 	    return d;
-    } while(++d < &drivers[MAX_UDD]);
+    } while (++d < &drivers[MAX_UDD]);
     return NULL;
 }
 
@@ -44,11 +44,11 @@ struct ud_request *new_request(void)
     register struct ud_request *r = requests;
 
     do {
-	if(r->udr_status == 0) {
+	if (r->udr_status == 0) {
 	    r->udr_status = 1;
 	    return r;
 	}
-    } while(++r < &requests[MAX_UDR]);
+    } while (++r < &requests[MAX_UDR]);
     panic("Out of requests\n");
     return NULL;
 }

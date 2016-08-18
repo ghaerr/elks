@@ -382,11 +382,11 @@ int sys_open(char *filename, int flags, int mode)
 	flag |= FMODE_WRITE;
 
     error = open_namei(filename, flag, mode, &inode, NULL);
-    if(!error) {
+    if (!error) {
 	pinode = inode;
 	error = open_filp(flags, pinode, &f);
 	filp = f;
-	if(!error) {
+	if (!error) {
 	    filp->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
 
 	/*

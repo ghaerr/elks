@@ -156,10 +156,10 @@ static void vprintk(register char *fmt, va_list p)
 	    case 'X':
 	    case 'x':
 	    NUMOUT:
-		if(*(fmt-2) == 'l')
+		if (*(fmt-2) == 'l')
 		    v = va_arg(p, unsigned long);
 		else {
-		    if(c == 'd')
+		    if (c == 'd')
 			v = (long)(va_arg(p, int));
 		    else
 			v = (unsigned long)(va_arg(p, unsigned int));
@@ -177,7 +177,7 @@ static void vprintk(register char *fmt, va_list p)
 	    case 'c':
 		while (--width >= 0)
 		    kputchar(' ');
-		if(c == 'c')
+		if (c == 'c')
 		    kputchar(va_arg(p, int));
 		break;
 	    default:

@@ -117,8 +117,8 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 
     set = *in | *out | *ex;
     filp = current->files.fd;
-    for(pi = 0; set && ((int)pi < n); pi++, set >>= 1) {
-	if(set & 1) {
+    for (pi = 0; set && ((int)pi < n); pi++, set >>= 1) {
+	if (set & 1) {
 	    if ((*filp == NULL) || ((*filp)->f_inode == NULL))
 		return -EBADF;
 	    max = (int)pi;
@@ -235,9 +235,9 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
 		      /*(fd_set *) */ &res_ex);
 
     current->timeout = 0UL;
-    if(!error && (current->signal /* & ~current->blocked */ ))
+    if (!error && (current->signal /* & ~current->blocked */ ))
 	error = -ERESTARTNOHAND;
-    else if(error > 0) {
+    else if (error > 0) {
 	set_fd_set(inp, &res_in);
 	set_fd_set(outp, &res_out);
 	set_fd_set(exp, &res_ex);

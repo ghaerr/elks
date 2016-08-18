@@ -125,8 +125,8 @@ static void delay(jiff_t loops)
 {
     do {
    	do {
-    	} while((*((unsigned int *)(&loops)))--);
-    } while((*(((unsigned int *)(&loops))+1))--);
+    	} while ((*((unsigned int *)(&loops)))--);
+    } while ((*(((unsigned int *)(&loops))+1))--);
 }
 
 int calibrate_delay(void)

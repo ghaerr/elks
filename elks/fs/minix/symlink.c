@@ -35,20 +35,20 @@ static int minix_follow_link(register struct inode *dir,
 	dir = current->fs.root;
 	dir->i_count++;
     }
-    if(!inode)
+    if (!inode)
 	error = -ENOENT;
-    else if(!S_ISLNK(inode->i_mode)) {
+    else if (!S_ISLNK(inode->i_mode)) {
 	*res_inode = inode;
 	error = 0;
     }
-    else if( /* current-> */ link_count > 5) {
+    else if ( /* current-> */ link_count > 5) {
 	iput(inode);
 	error = -ELOOP;
     }
     else {
 	bh = minix_bread(inode, 0, 0);
 	iput(inode);
-	if(!bh)
+	if (!bh)
 	    error = -EIO;
 	else {
 	    /* current-> */ link_count++;
@@ -73,17 +73,17 @@ static int minix_readlink(register struct inode *inode,
     register struct buffer_head *bh;
     size_t len;
 
-    if(!S_ISLNK(inode->i_mode))
+    if (!S_ISLNK(inode->i_mode))
 	len = -EINVAL;
     else {
 	bh = minix_bread(inode, 0, 0);
-	if(!bh)
+	if (!bh)
 	    len = 0;
 	else {
 	    map_buffer(bh);
-	    if((len = strlen(bh->b_data) + 1) > buflen)
+	    if ((len = strlen(bh->b_data) + 1) > buflen)
 		len = buflen;
-	    if(len > 1023)
+	    if (len > 1023)
 		len = 1023;
 	    memcpy_tofs(buffer, bh->b_data, len);
 	    unmap_brelse(bh);

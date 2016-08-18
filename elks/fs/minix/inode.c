@@ -379,7 +379,7 @@ struct buffer_head *minix_getblk(register struct inode *inode,
 {
     unsigned short blknum;
 
-    if(!(blknum = _minix_bmap(inode, block, create)))
+    if (!(blknum = _minix_bmap(inode, block, create)))
 	return NULL;
     return getblk(inode->i_dev, (block_t) blknum);
 }
@@ -409,7 +409,7 @@ void minix_set_ops(register struct inode *inode)
 	&minix_symlink_inode_operations,
     };
 
-    if(inode->i_op == NULL)
+    if (inode->i_op == NULL)
 	inode->i_op = inop[(int)tabc[(inode->i_mode & S_IFMT) >> 12]];
 }
 
@@ -454,7 +454,7 @@ static void minix_read_inode(register struct inode *inode)
     struct minix_inode *raw_inode;
 
     bh = minix_get_inode(inode, &raw_inode);
-    if(bh) {
+    if (bh) {
 	memcpy(inode, raw_inode, sizeof(struct minix_inode));
 	inode->i_ctime = inode->i_atime = inode->i_mtime;
 
@@ -479,7 +479,7 @@ static struct buffer_head *minix_update_inode(register struct inode *inode)
     struct minix_inode *raw_inode;
 
     bh = minix_get_inode(inode, &raw_inode);
-    if(bh) {
+    if (bh) {
 	memcpy(raw_inode, inode, sizeof(struct minix_inode));
 	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
 	    raw_inode->i_zone[0] = kdev_t_to_nr(inode->i_rdev);
