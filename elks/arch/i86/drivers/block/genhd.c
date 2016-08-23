@@ -45,11 +45,10 @@ extern void rd_load();
 static void print_minor_name(register struct gendisk *hd,
 			     unsigned short int minor)
 {
-    unsigned int unit = (unsigned) (minor >> hd->minor_shift);
-    unsigned int part = (unsigned) (minor & ((1 << hd->minor_shift) - 1));
+    unsigned int part;
 
-    printk(" %s%c", hd->major_name, 'a' + unit);
-    if (part)
+    printk(" %s%c", hd->major_name, 'a' + (unsigned char)(minor >> hd->minor_shift));
+    if ((part = (unsigned) (minor & ((1 << hd->minor_shift) - 1))))
 	printk("%d", part);
     printk(":");
 }
@@ -95,9 +94,7 @@ static void extended_partition(register struct gendisk *hd, kdev_t dev)
     this_sector = first_sector;
 
     while (1) {
-	if ((current_minor & mask) == 0)
-	    return;
-	if (!(bh = bread(dev, (block_t) 0)))
+	if (((current_minor & mask) == 0) || !(bh = bread(dev, (block_t) 0)))
 	    return;
 	/*
 	 * This block is from a device that we're about to stomp on.
@@ -184,7 +181,6 @@ static int msdos_partition(struct gendisk *hd,
     struct buffer_head *bh;
     register struct partition *p;
     register struct hd_struct *hdp;
-    char *data;
     unsigned short int i, minor = current_minor;
 
 #if 0
@@ -196,18 +192,16 @@ static int msdos_partition(struct gendisk *hd,
 	return -1;
     }
     map_buffer(bh);
-    data = bh->b_data;
 
     /* In some cases we modify the geometry of the drive (below), so ensure
      * that nobody else tries to re-use this data.
      */
-    if (*(unsigned short *) (data + 0x1fe) != 0xAA55) {
+    if (*(unsigned short *) (bh->b_data + 0x1fe) != 0xAA55) {
 	printk(" bad magic number\n");
-	unmap_buffer(bh);
-	brelse(bh);
+	unmap_brelse(bh);
 	return 0;
     }
-    p = (struct partition *) (0x1be + data);
+    p = (struct partition *) (bh->b_data + 0x1be);
 
     /* first "extra" minor (for extended partitions) */
     current_minor += 4;
@@ -301,18 +295,13 @@ void resetup_one_dev(struct gendisk *dev, int drive)
 
 void setup_dev(register struct gendisk *dev)
 {
-    register struct hd_struct *hdp;
-    int i, end_minor = dev->max_nr * dev->max_p;
+    int i;
 
 #ifdef BDEV_SIZE_CHK
     blk_size[dev->major] = NULL;
 #endif
 
-    for (i = 0; i < end_minor; i++) {
-	hdp = &dev->part[i];
-	hdp->start_sect = 0;
-	hdp->nr_sects = 0;
-    }
+    memset((void *)dev->part, 0, sizeof(struct hd_struct)*dev->max_nr*dev->max_p);
     dev->init(dev);
 
 #ifdef CONFIG_BLK_DEV_BHD

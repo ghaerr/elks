@@ -181,6 +181,7 @@ static unsigned short int bioshd_gethdinfo(void)
 
 static unsigned short int bioshd_getfdinfo(void)
 {
+    unsigned short int ndrives;
 
 #ifdef CONFIG_BLK_DEV_BFD_HARD
 
@@ -192,7 +193,7 @@ static unsigned short int bioshd_getfdinfo(void)
  * ndrives is number of drives in your system (either 0, 1 or 2)
  */
 
-    int ndrives = 2;
+    ndrives = 2;
 
 /* drive_info[] should be set *only* for existing drives;
  * comment out drive_info lines if you don't need them
@@ -223,7 +224,7 @@ static unsigned short int bioshd_getfdinfo(void)
 #else
 
     register struct drive_infot *drivep = &drive_info[2];
-    unsigned short int drive, ndrives;
+    unsigned short int drive;
 
 /* We get the # of drives from the BPB, which is PC-friendly
  */
@@ -243,43 +244,36 @@ static unsigned short int bioshd_getfdinfo(void)
 #endif
 
     for (drive = 0; drive < ndrives; drive++) {
-	BD_AX = BIOSHD_DRIVE_PARMS;
-	BD_DX = drive;
-	BD_BX = 0;
-	BD_IRQ = BIOSHD_INT;
-
-#ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
-
-	call_bios(&bdt);
-	if ((!CARRY_SET) && ((BD_AX & 0xff00) == 0))
-	    *drivep++ = fd_types[BD_BX - 1];
-	else
-	    printk("error in drivetype %d\n", drive);
-
-#else
-
-	if ((arch_cpu > 1) && (call_bios(&bdt), (!CARRY_SET)) && (BD_AX != 0x100)) {
-
-/* Some XT's return strange results - Al
- * The arch_cpu is a safety check
- * AT archecture, drive type in DX
- * Set to type 3 as this is less drastic
- */
-	    *drivep = fd_types[BD_BX - 1];
-	} else {
-
-/* Cannot be determined correctly
+#ifndef CONFIG_HW_USE_INT13_FOR_FLOPPY
+/* If type cannot be determined correctly,
  * Type 4 should work on all systems
  */
-	    *drivep = fd_types[4];
-	}
-	drivep++;
+	*drivep = fd_types[4];
+/* Some XT's return strange results - Al
+ * The arch_cpu is a safety check
+ */
+	if(arch_cpu > 1) {
 #endif
-
+	    BD_AX = BIOSHD_DRIVE_PARMS;
+	    BD_DX = drive;
+	    BD_BX = 0;
+	    BD_IRQ = BIOSHD_INT;
+	    call_bios(&bdt);
+	    if(!CARRY_SET && !(BD_AX & 0xff00))
+/*
+ * AT archecture, drive type in BX
+ */
+		*drivep = fd_types[BD_BX - 1];
+#ifndef CONFIG_HW_USE_INT13_FOR_FLOPPY
+	}
+#else
+	    else
+		printk("error in drivetype %d\n", drive);
+#endif
+	drivep++;
     }
 
 #endif
-
     return ndrives;
 }
 
@@ -297,7 +291,6 @@ static void bioshd_release(struct inode *inode, struct file *filp)
 	invalidate_inodes(dev);
 	invalidate_buffers(dev);
     }
-    return;
 }
 
 /* As far as I can tell this doesn't actually work, but we might
@@ -317,8 +310,6 @@ static void reset_bioshd(unsigned short int minor)
     if (CARRY_SET || (BD_AX & 0xff00) != 0)
 	printk("hd: unable to reset.\n");
 #endif
-
-    return;
 }
 
 int seek_sector(unsigned short int drive, char track, char sector)
@@ -328,40 +319,35 @@ int seek_sector(unsigned short int drive, char track, char sector)
  * when new floppy probe is used
  */
 
-    int count;
+    register char *count = (char *)MAX_ERRS;
 
-    for (count = 0; count < MAX_ERRS; count++) {
-
+    do {
 	/* BIOS read sector */
 
 	BD_IRQ = BIOSHD_INT;
 	BD_AX = (unsigned short int) (BIOSHD_READ | 1); /* Read 1 sector  */
 	BD_BX = 0;					/* Seg offset = 0 */
 	BD_ES = BUFSEG;					/* Target segment */
-	BD_CX = (unsigned short int) (((track - 40) << 8) | sector);
+	BD_CX = (unsigned short int) (((int)track << 8) | sector);
 	BD_DX = drive;
 	BD_FL = 0;
 
 	set_irq();
 	call_bios(&bdt);
-	if (CARRY_SET) {
-	    if (((BD_AX >> 8) == 0x04) && (count == MAX_ERRS - 1))
-		break;		/* Sector not found */
-	    reset_bioshd(drive);
-	} else
+	if(!CARRY_SET)
 	    return 0;		/* everything is OK */
-    }
+	if (((BD_AX & 0xFF00) != 0x400) || ((int)count != 1)) /* Sector not found */
+	    reset_bioshd(drive);
+    } while((int)(--count) > 0);
     return 1;			/* error */
 }
 
 static int bioshd_open(struct inode *inode, struct file *filp)
 {
-    register struct drive_infot *drivep;
     int target;
     register struct hd_struct *hdp;
 
     target = DEVICE_NR(inode->i_rdev);	/* >> 6 */
-    drivep = &drive_info[target];
     hdp = &hd[MINOR(inode->i_rdev)];
 
 /* Bounds testing */
@@ -394,9 +380,27 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 
 #ifdef CONFIG_BLK_DEV_BFD
     if (target >= 2) {		/* 2,3 are the floppydrives */
+	register struct drive_infot *drivep = &drive_info[target];
 
+#ifdef CONFIG_HW_USE_INT13_FOR_DISKPARMS
+
+/* We can get the Geometry of the floppy from the BIOS.
+ */
+
+	BD_IRQ = BIOSHD_INT;
+	BD_AX = BIOSHD_DRIVE_PARMS;
+	BD_DX = hd_drive_map[target];	/* Head 0, drive number */
+	call_bios(&bdt);
+	if (!CARRY_SET) {
+	    drivep->sectors = (BD_CX & 0x3f);
+	    drivep->cylinders = ((BD_CX >> 8) | ((BD_CX & 0xC0) << 2)) + 1;
+	    drivep->heads = (BD_DX >> 8)  + 1;
+	} else
+	    printk("bioshd_open: no diskinfo %d\n", hd_drive_map[target]);
+
+#else
 /* probing range can be easily extended by adding more values to these
- * two lists and adjusting for loop' parameters in line 420 and 435 (or
+ * two lists and adjusting for loop' parameters in line 433 and 446 (or
  * somewhere near)
  */
 
@@ -418,52 +422,28 @@ static int bioshd_open(struct inode *inode, struct file *filp)
  * the previous successfully probed format is the correct one.
  */
 
-#ifndef CONFIG_HW_USE_INT13_FOR_DISKPARMS
-
 	drivep->cylinders = 0;
 	count = 0;
 	do {
-	    if (seek_sector(hd_drive_map[target], track_probe[count], 1)) {
+	    if (seek_sector(hd_drive_map[target], track_probe[count] - 1, 1))
 		break;
-	    }
 	    drivep->cylinders = track_probe[count];
 	} while (++count < 2);
 
-/* Next, probe for sector number. We probe on track 0 (40-40 in
- * seek_sector), which is safe for all formats, and if we get a
- * seek error, we assume that the previous successfully probed
- * format is the correct one.
+/* Next, probe for sector number. We probe on track 0, which is
+ * safe for all formats, and if we get a seek error, we assume that
+ * the previous successfully probed format is the correct one.
  */
 
 	drivep->sectors = 0;
 	count = 0;
 	do {
-	    if (seek_sector(hd_drive_map[target], 40, sector_probe[count])) {
+	    if (seek_sector(hd_drive_map[target], 0, sector_probe[count]))
 		break;
-	    }
 	    drivep->sectors = sector_probe[count];
 	} while (++count < 5);
 
 	drivep->heads = 2;
-
-#else
-
-/* We can get the Geometry of the floppy from the BIOS.
- */
-
-	BD_IRQ = BIOSHD_INT;
-	BD_AX = BIOSHD_DRIVE_PARMS;
-	BD_DX = hd_drive_map[target];	/* Head 0, drive number */
-	call_bios(&bdt);
-	if (!CARRY_SET) {
-	    drivep->sectors = (BD_CX & 0x3f);
-	    drivep->cylinders = ((BD_CX >> 8) | ((BD_CX & 0xC0) << 2)) + 1;
-	    drivep->heads = (BD_DX >> 8)  + 1;
-	} else
-	    printk("bioshd_open: no diskinfo %d\n", hd_drive_map[target]);
-
-#endif
-
 /* DMA code belongs out of the loop. */
 
 	dma_avail = 1;
@@ -478,6 +458,8 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	else
 	    printk("fd: /dev/fd%d probably has %d sectors and %d cylinders\n",
 		   target % 2, drivep->sectors, drivep->cylinders);
+
+#endif
 
 /*	This is not a bugfix, hence no code, but coders should be aware that
  *	multi-sector reads from this point on depend on bootsect modifying
@@ -561,7 +543,7 @@ int init_bioshd(void)
 # endif
     hdcount = bioshd_gethdinfo();
     printk("%d hard drive%s", hdcount,
-	   hdcount == 1 ? " " : "s");
+	   hdcount == 1 ? "" : "s");
     bioshd_gendisk.nr_real = hdcount;
 #endif
     printk("\n");
@@ -572,11 +554,11 @@ int init_bioshd(void)
 #ifdef TEMP_PRINT_DRIVES_MAX
     {
 	register struct drive_infot *drivep;
+	static char *unit = "kMGT";
 
 	drivep = drive_info;
 	for (count = 0; count < TEMP_PRINT_DRIVES_MAX; count++, drivep++) {
 	    if (drivep->heads != 0) {
-		char *unit = "kMGT";
 		__u32 size = ((__u32) drivep->sectors) * 5 /* 0.1 kB units */;
 
 		size *= ((__u32) drivep->cylinders) * drivep->heads;
@@ -635,26 +617,27 @@ static int bioshd_ioctl(struct inode *inode,
     if ((!inode) || !(inode->i_rdev))
 	return -EINVAL;
     dev = DEVICE_NR(inode->i_rdev);
-    drivep = &drive_info[dev];
     if (dev >= hdcount)
 	return -ENODEV;
+    drivep = &drive_info[dev];
+    err = -EINVAL;
     switch (cmd) {
     case HDIO_GETGEO:
 	err = verify_area(VERIFY_WRITE, (void *) arg, sizeof(*loc));
-	if (err)
-	    return err;
-	put_user((__u16) drivep->heads, (__u16 *) &loc->heads);
-	put_user((__u16) drivep->sectors, (__u16 *) &loc->sectors);
-	put_user((__u16) drivep->cylinders, (__u16 *) &loc->cylinders);
-	put_user((__u16) hd[MINOR(inode->i_rdev)].start_sect,
-		 (__u16 *) &loc->start);
-	return 0;
+	if(!err) {
+	    put_user((__u16) drivep->heads, (__u16 *) &loc->heads);
+	    put_user((__u16) drivep->sectors, (__u16 *) &loc->sectors);
+	    put_user((__u16) drivep->cylinders, (__u16 *) &loc->cylinders);
+	    put_user((__u16) hd[MINOR(inode->i_rdev)].start_sect,
+		    (__u16 *) &loc->start);
+	}
     }
-    return -EINVAL;
+    return err;
 }
 
 static void do_bioshd_request(void)
 {
+    register struct drive_infot *drivep;
     register struct request *req;
     char *buff;
     sector_t start, count, tmp;
@@ -693,10 +676,11 @@ static void do_bioshd_request(void)
 #endif
 
 	drive = minor >> 6;
+	drivep = &drive_info[drive];
 
 /* make sure it's a disk that we are dealing with. */
 
-	if (drive > 3 || drive < 0 || drive_info[drive].heads == -0) {
+	if ((unsigned int)drive > 3 || drivep->heads == 0) {
 	    printk("hd: non-existent drive\n");
 	    end_request(0);
 	    continue;
@@ -721,8 +705,6 @@ static void do_bioshd_request(void)
 	errs = 0;
 
 	while (count > 0) {
-	    register struct drive_infot *drivep = &drive_info[drive];
-
 	    sector = (unsigned int) ((start % (sector_t)drivep->sectors) + 1);
 	    tmp = start / (sector_t)drivep->sectors;
 	    head = (unsigned int) (tmp % (sector_t)drivep->heads);
@@ -860,12 +842,13 @@ static void bioshd_geninit(void)
     register struct hd_struct *hdp = hd;
     int i;
 
+    drivep = drive_info;
     for (i = 0; i < 4 << 6; i++) {
-	drivep = &drive_info[i >> 6];
 	if ((i & ((1 << 6) - 1)) == 0) {
 	    hdp->nr_sects = (sector_t) drivep->sectors *
 		drivep->heads * drivep->cylinders;
 	    hdp->start_sect = 0;
+	    drivep++;
 	} else {
 	    hdp->nr_sects = 0;
 	    hdp->start_sect = -1;
