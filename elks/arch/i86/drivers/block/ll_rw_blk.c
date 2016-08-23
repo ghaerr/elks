@@ -162,17 +162,16 @@ static struct request *get_request(int n, kdev_t dev)
 	prev_found = all_requests;
     }
     req = prev_found;
-    for (;;) {
+    do {
 	req = ((req > all_requests) ? req : limit) - 1;
-	if (req->rq_status == RQ_INACTIVE)
-	    break;
-	if (req == prev_found)
-	    return NULL;
-    }
-    prev_found = req;
-    req->rq_status = RQ_ACTIVE;
-    req->rq_dev = dev;
-    return req;
+	if(req->rq_status == RQ_INACTIVE) {
+	    prev_found = req;
+	    req->rq_status = RQ_ACTIVE;
+	    req->rq_dev = dev;
+	    return req;
+	}
+    } while(req != prev_found);
+    return NULL;
 }
 
 /*
@@ -197,7 +196,7 @@ static struct request *__get_request_wait(int n, kdev_t dev)
 	clr_irq();
 	req = get_request(n, dev);
 	set_irq();
-    } while (req);
+    } while (req == NULL);
     current->state = TASK_RUNNING;
     wait_clear(&wait_for_request);
 
@@ -235,16 +234,16 @@ static void add_request(struct blk_dev_struct *dev,
     if (!(tmp = dev->current_request)) {
 	dev->current_request = req;
 	(dev->request_fn) ();
-	set_irq();
-	return;
     }
-    for (; tmp->rq_next; tmp = tmp->rq_next) {
-	if ((IN_ORDER(tmp, req) ||
-	     !IN_ORDER(tmp, tmp->rq_next)) && IN_ORDER(req, tmp->rq_next))
-	    break;
+    else {
+	for (; tmp->rq_next; tmp = tmp->rq_next) {
+	    if ((IN_ORDER(tmp, req) ||
+		!IN_ORDER(tmp, tmp->rq_next)) && IN_ORDER(req, tmp->rq_next))
+		break;
+	}
+	req->rq_next = tmp->rq_next;
+	tmp->rq_next = req;
     }
-    req->rq_next = tmp->rq_next;
-    tmp->rq_next = req;
     set_irq();
 }
 
@@ -443,7 +442,6 @@ void ll_rw_blk(int rw, register struct buffer_head *bh)
 	bh->b_uptodate = 0;
     } else
 	make_request(major, rw, bh);
-    return;
 }
 
 int blk_dev_init(void)
