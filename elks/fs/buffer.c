@@ -24,7 +24,7 @@ static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
 /*
  *	STUBS for the buffer cache when we put it in
  */
-static struct buffer_head *bh_chain = buffers;
+/*static struct buffer_head *bh_chain = buffers; */
 static struct buffer_head *bh_lru = buffers;
 static struct buffer_head *bh_llru = NULL;
 
@@ -38,6 +38,75 @@ static struct buffer_head *bufmem_map[NR_MAPBUFS]; /* Array of bufmem's allocati
 static __u16 _buf_ds;			/* Segment(s?) of L2 buffer cache */
 static int lastumap;
 #endif
+
+static void put_last_lru(register struct buffer_head *bh)
+{
+    register struct buffer_head *bhn;
+
+    if (bh_llru != bh) {
+	/*
+	 *      Unhook
+	 */
+	bhn = bh->b_next_lru;
+	if ((bhn->b_prev_lru = bh->b_prev_lru))
+	    bh->b_prev_lru->b_next_lru = bhn;
+	/*
+	 *      Alter head
+	 */
+	if (bh == bh_lru)
+	    bh_lru = bhn;
+	/*
+	 *      Put on lru end
+	 */
+	bh->b_next_lru = NULL;
+	bh->b_prev_lru = bh_llru;
+	bh_llru->b_next_lru = bh;
+	bh_llru = bh;
+    }
+}
+
+void buffer_init(void)
+{
+    register struct buffer_head *bh = buffers;
+    register char *pi;
+
+#ifdef DMA_ALN
+    pi = (char *)((-(((int)kernel_ds << 4) + (int)bufmem)) & (BLOCK_SIZE - 1));
+    bufmem_i = (char *)bufmem + (unsigned int)pi;
+#endif
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
+    _buf_ds = mm_alloc(NR_BUFFERS * 0x40);
+    pi = (char *)0;
+    do {
+	bufmem_map[(unsigned int)pi] = NULL;
+    } while ((unsigned int)(++pi) < NR_MAPBUFS);
+#endif
+
+    do {
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
+	bh->b_data = 0;		/* L1 buffer cache is reserved! */
+	bh->b_mapcount = 0;
+	bh->b_num = (unsigned int)pi;		/* Used to compute L2 location */
+#else
+#ifdef DMA_ALN
+	bh->b_data = bufmem_i + ((unsigned int)pi << BLOCK_SIZE_BITS);
+#else
+	bh->b_data = (char *)bufmem + ((unsigned int)pi << BLOCK_SIZE_BITS);
+#endif
+#endif
+	if ((unsigned int)pi == NR_BUFFERS - 1) {
+	    bh->b_next_lru = NULL;
+/*	    bh->b_next = NULL; */
+	    bh_llru = bh;
+	} else {
+	    bh->b_prev_lru = bh - 1;
+	    bh->b_next_lru = bh + 1;
+/*	    bh->b_next = bh + 1; */
+	}
+	pi++;
+    } while(++bh < &buffers[NR_BUFFERS]);
+    buffers[0].b_prev_lru = NULL;
+}
 
 /*
  *	Wait on a buffer
@@ -69,37 +138,36 @@ void lock_buffer(register struct buffer_head *bh)
     map_buffer(bh);
 }
 
-static void put_last_lru(register struct buffer_head *bh)
+void unlock_buffer(register struct buffer_head *bh)
 {
-    register struct buffer_head *bhn;
+    bh->b_lock = 0;
+    unmap_buffer(bh);
+    wake_up(&bh->b_wait);
+}
 
-    if (bh_llru != bh) {
-	/*
-	 *      Unhook
-	 */
-	bhn = bh->b_next_lru;
-	if ((bhn->b_prev_lru = bh->b_prev_lru))
-	    bh->b_prev_lru->b_next_lru = bhn;
-	/*
-	 *      Alter head
-	 */
-	if (bh == bh_lru)
-	    bh_lru = bhn;
-	/*
-	 *      Put on lru end
-	 */
-	bh->b_next_lru = NULL;
-	bh->b_prev_lru = bh_llru;
-	bh_llru->b_next_lru = bh;
-	bh_llru = bh;
-    }
+void invalidate_buffers(kdev_t dev)
+{
+    register struct buffer_head *bh = bh_llru;
+
+    do {
+	if (bh->b_dev != dev)
+	    continue;
+	wait_on_buffer(bh);
+	if (bh->b_dev != dev)
+	    continue;
+	if (bh->b_count)
+	    continue;
+	bh->b_uptodate = 0;
+	bh->b_dirty = 0;
+	bh->b_lock = 0;
+    } while ((bh = bh->b_prev_lru) != NULL);
 }
 
 static void sync_buffers(kdev_t dev, int wait)
 {
-    register struct buffer_head *bh;
+    register struct buffer_head *bh = bh_llru;
 
-    for (bh = bh_chain; bh != NULL; bh = bh->b_next) {
+    do {
 	if (dev && bh->b_dev != dev)
 	    continue;
 	/*
@@ -123,8 +191,7 @@ static void sync_buffers(kdev_t dev, int wait)
 	bh->b_count++;
 	ll_rw_blk(WRITE, bh);
 	bh->b_count--;
-    }
-    return;
+    } while ((bh = bh->b_prev_lru) != NULL);
 }
 
 void fsync_dev(kdev_t dev)
@@ -149,35 +216,6 @@ int sys_sync(void)
     return 0;
 }
 
-void invalidate_buffers(kdev_t dev)
-{
-    register struct buffer_head *bh;
-
-    for (bh = bh_chain; bh != NULL; bh = bh->b_next) {
-	if (bh->b_dev != dev)
-	    continue;
-	wait_on_buffer(bh);
-	if (bh->b_dev != dev)
-	    continue;
-	if (bh->b_count)
-	    continue;
-	bh->b_uptodate = 0;
-	bh->b_dirty = 0;
-	bh->b_lock = 0;
-    }
-}
-
-static struct buffer_head *find_buffer(kdev_t dev, block_t block)
-{
-    register struct buffer_head *bh = bh_llru;
-
-    do {
-	if (bh->b_blocknr == block && bh->b_dev == dev)
-	    break;
-    } while ((bh = bh->b_prev_lru) != NULL);
-    return bh;
-}
-
 static struct buffer_head *get_free_buffer(void)
 {
     register struct buffer_head *bh;
@@ -186,11 +224,10 @@ static struct buffer_head *get_free_buffer(void)
 	bh = bh_lru;
 	do {
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-	    if (bh->b_count == 0 && !bh->b_dirty && !bh->b_lock && !bh->b_data)
+	    if (bh->b_count == 0 && !bh->b_dirty && !bh->b_lock && !bh->b_data) {
 #else
-	    if (bh->b_count == 0 && !bh->b_dirty && !bh->b_lock)
+	    if (bh->b_count == 0 && !bh->b_dirty && !bh->b_lock) {
 #endif
-	    {
 		put_last_lru(bh);
 		return bh;
 	    }
@@ -202,6 +239,49 @@ static struct buffer_head *get_free_buffer(void)
 #endif
 	sync_buffers(0, 0);
     }
+}
+
+/*
+ * Release a buffer head
+ */
+
+void __brelse(register struct buffer_head *buf)
+{
+    wait_on_buffer(buf);
+
+    if (buf->b_count) {
+	buf->b_count--;
+#if 0
+	wake_up(&bufwait);
+#endif
+    } else
+	panic("brelse");
+}
+
+/*
+ * bforget() is like brelse(), except it removes the buffer
+ * data validity.
+ */
+#if 0
+void __bforget(struct buffer_head *buf)
+{
+    wait_on_buffer(buf);
+    buf->b_dirty = 0;
+    buf->b_count--;
+    buf->b_dev = NODEV;
+    wake_up(&bufwait);
+}
+#endif
+
+static struct buffer_head *find_buffer(kdev_t dev, block_t block)
+{
+    register struct buffer_head *bh = bh_llru;
+
+    do {
+	if (bh->b_blocknr == block && bh->b_dev == dev)
+	    break;
+    } while ((bh = bh->b_prev_lru) != NULL);
+    return bh;
 }
 
 struct buffer_head *get_hash_table(kdev_t dev, block_t block)
@@ -262,8 +342,6 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
  */
 
     bh->b_count = 1;
-    bh->b_dirty = 0;
-    bh->b_lock = 0;
     bh->b_uptodate = 0;
     bh->b_dev = dev;
     bh->b_blocknr = block;
@@ -271,38 +349,6 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
 
     return bh;
 }
-
-/*
- * Release a buffer head
- */
-
-void __brelse(register struct buffer_head *buf)
-{
-    wait_on_buffer(buf);
-
-    if (buf->b_count) {
-	buf->b_count--;
-#if 0
-	wake_up(&bufwait);
-#endif
-    } else
-	panic("brelse");
-}
-
-/*
- * bforget() is like brelse(), except it removes the buffer
- * data validity.
- */
-#if 0
-void __bforget(struct buffer_head *buf)
-{
-    wait_on_buffer(buf);
-    buf->b_dirty = 0;
-    buf->b_count--;
-    buf->b_dev = NODEV;
-    wake_up(&bufwait);
-}
-#endif
 
 /* Turns out both minix_bread and bread do this, so I made this a function
  * of it's own... */
@@ -371,13 +417,6 @@ struct buffer_head *breada(kdev_t dev,
 
 #endif
 
-void unlock_buffer(register struct buffer_head *bh)
-{
-    bh->b_lock = 0;
-    unmap_buffer(bh);
-    wake_up(&bh->b_wait);
-}
-
 void mark_buffer_uptodate(struct buffer_head *bh, int on)
 {
     flag_t flags;
@@ -402,7 +441,7 @@ void map_buffer(register struct buffer_head *bh)
      */
     debug2("mapping buffer %d (%d)\n", bh->b_num, bh->b_mapcount);
 
-    if (bh->b_data || bh->b_seg != kernel_ds) {
+    if (bh->b_data /*|| bh->b_seg != kernel_ds*/) {
 
 #ifdef DEBUG
 	if (!bh->b_mapcount) {
@@ -418,56 +457,55 @@ void map_buffer(register struct buffer_head *bh)
     /* else keep trying till we succeed */
     for (;;) {
 	/* First check for the trivial case */
-	for (pi = (char *)0; (int)pi < NR_MAPBUFS; pi++) {
-	    if (!bufmem_map[(int)pi]) {
-		/* We can just map here! */
-		bufmem_map[(int)pi] = bh;
-#ifdef DMA_ALN
-		bh->b_data = bufmem_i + ((int)pi << BLOCK_SIZE_BITS);
-#else
-		bh->b_data = (char *)bufmem + ((int)pi << BLOCK_SIZE_BITS);
-#endif
-		bh->b_mapcount++;
-		if (bh->b_uptodate)
-		fmemcpy(kernel_ds, (__u16) bh->b_data, _buf_ds,
-			(__u16) (bh->b_num * BLOCK_SIZE), BLOCK_SIZE);
-		debug3("BUFMAP: Buffer %d (block %d) mapped into L1 slot %d.\n",
-			bh->b_num, bh->b_blocknr, (int)pi);
-		return;
-	    }
-	}
+	pi = (char *)0;
+	do {
+	    if (!bufmem_map[(int)pi])
+		goto do_map_buffer;
+	} while((int)(++pi) < NR_MAPBUFS);
 
 	/* Now, we check for a mapped buffer with no count and then
 	 * hopefully find one to send back to L2 */
-	for (pi = (char *)((lastumap + 1) % NR_MAPBUFS);
-	     (int)pi != lastumap; pi = (char *)(((int)pi + 1) % NR_MAPBUFS)) {
-
+	pi = (char *)lastumap;
+	goto init_while;
+	do {
 	    debug1("BUFMAP: trying slot %d\n", (int)pi);
 
 	    if (!bufmem_map[(int)pi]->b_mapcount) {
 		debug1("BUFMAP: Buffer %d unmapped from L1\n",
 			       bufmem_map[(int)pi]->b_num);
 		/* Now unmap it */
-		fmemcpy(_buf_ds, (__u16) (bufmem_map[(int)pi]->b_num * BLOCK_SIZE),
+		fmemcpy(_buf_ds, (__u16)(bufmem_map[(int)pi]->b_num << BLOCK_SIZE_BITS),
 			kernel_ds, (__u16) bufmem_map[(int)pi]->b_data, BLOCK_SIZE);
 		bufmem_map[(int)pi]->b_data = 0;
-		bufmem_map[(int)pi] = 0;
-		break;
+		/* success */
+		lastumap = (int)pi;
+		goto do_map_buffer;
 	    }
-	}
+	  init_while:
+	    if((char *)(++pi) >= NR_MAPBUFS)
+		pi = (char *)0;
+	} while ((int)pi != lastumap);
 
+	/* previous loop failed */
 	/* The last case is to wait until unmap gets a b_mapcount down to 0 */
-	if ((int)pi == lastumap) {
-	    /* previous loop failed */
-	    debug1("BUFMAP: buffer #%d waiting on L1 slot\n",
-			   bh->b_num);
-	    sleep_on(&bufmapwait);
-	    debug("BUFMAP: wait queue woken up...\n");
-	} else {
-	    /* success */
-	    lastumap = (int)pi;
-	}
+	debug1("BUFMAP: buffer #%d waiting on L1 slot\n", bh->b_num);
+	sleep_on(&bufmapwait);
+	debug("BUFMAP: wait queue woken up...\n");
     }
+  do_map_buffer:
+    /* We can just map here! */
+    bufmem_map[(int)pi] = bh;
+#ifdef DMA_ALN
+    bh->b_data = bufmem_i + ((int)pi << BLOCK_SIZE_BITS);
+#else
+    bh->b_data = (char *)bufmem + ((int)pi << BLOCK_SIZE_BITS);
+#endif
+    bh->b_mapcount++;
+    if (bh->b_uptodate)
+	fmemcpy(kernel_ds, (__u16) bh->b_data, _buf_ds,
+	    (__u16) (bh->b_num << BLOCK_SIZE_BITS), BLOCK_SIZE);
+    debug3("BUFMAP: Buffer %d (block %d) mapped into L1 slot %d.\n",
+	bh->b_num, bh->b_blocknr, (int)pi);
 }
 
 /* unmap_buffer decreases bh->b_mapcount, and wakes up anyone waiting over
@@ -516,48 +554,3 @@ void print_bufmap_status(void)
     }
 }
 #endif
-
-void buffer_init(void)
-{
-    register struct buffer_head *bh = buffers;
-    register char *pi;
-
-#ifdef DMA_ALN
-    pi = (char *)((-(((int)kernel_ds << 4) + (int)bufmem)) & (BLOCK_SIZE - 1));
-    bufmem_i = (char *)bufmem + (unsigned int)pi;
-#endif
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
-    _buf_ds = mm_alloc(NR_BUFFERS * 0x40);
-    pi = (char *)0;
-    do {
-	bufmem_map[(unsigned int)pi] = NULL;
-    } while ((unsigned int)(++pi) < NR_MAPBUFS);
-#endif
-
-    buffers[0].b_prev_lru = NULL;
-    for (pi = (char *)0; (unsigned int)pi < NR_BUFFERS; pi++) {
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
-	bh->b_data = 0;		/* L1 buffer cache is reserved! */
-	bh->b_mapcount = 0;
-	bh->b_num = (unsigned int)pi;		/* Used to compute L2 location */
-#else
-#ifdef DMA_ALN
-	bh->b_data = bufmem_i + ((unsigned int)pi << BLOCK_SIZE_BITS);
-#else
-	bh->b_data = (char *)bufmem + ((unsigned int)pi << BLOCK_SIZE_BITS);
-#endif
-#endif
-	if ((unsigned int)pi > 0) {
-	    bh->b_prev_lru = bh - 1;
-	}
-	if ((unsigned int)pi == NR_BUFFERS - 1) {
-	    bh->b_next_lru = NULL;
-	    bh->b_next = NULL;
-	    bh_llru = bh;
-	} else {
-	    bh->b_next_lru = bh + 1;
-	    bh->b_next = bh + 1;
-	}
-	bh++;
-    }
-}
