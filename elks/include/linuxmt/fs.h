@@ -125,15 +125,15 @@ struct buffer_head {
     char			*b_data;	/* Address in L1 buffer area */
     block_t			b_blocknr;
     kdev_t			b_dev;
-    struct buffer_head		*b_next;
+/*     struct buffer_head		*b_next; */
     struct buffer_head		*b_next_lru;
-    block_t			b_count;
     struct buffer_head		*b_prev_lru;
     struct wait_queue		b_wait;
-    char			b_uptodate;
-    char			b_dirty;
-    char			b_lock;
+    block_t			b_count;
     seg_t			b_seg;
+    char			b_lock;
+    char			b_dirty;
+    char			b_uptodate;
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     unsigned char		b_num;		/* Used to lookup L2 area */
@@ -225,10 +225,10 @@ struct inode {
 
     struct inode_operations	*i_op;
     struct super_block		*i_sb;
-    struct wait_queue		i_wait;
     struct inode		*i_next;
     struct inode		*i_prev;
     struct inode		*i_mount;
+    struct wait_queue		i_wait;
     unsigned short		i_count;
     unsigned short		i_flags;
     unsigned char		i_lock;
@@ -454,7 +454,7 @@ extern int open_namei(char *,int,int,struct inode **,struct inode *);
 extern int do_mknod(char *,int,int,dev_t);
 extern void iput(struct inode *);
 
-extern struct inode *get_empty_inode(void);
+/*extern struct inode *get_empty_inode(void); */
 extern struct inode *new_inode(struct inode *dir, __u16 mode);
 extern void insert_inode_hash(struct inode *);
 extern void clear_inode(struct inode *);

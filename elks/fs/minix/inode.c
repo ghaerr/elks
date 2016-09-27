@@ -139,15 +139,18 @@ struct super_block *minix_read_super(register struct super_block *s,
     struct buffer_head *bh;
     unsigned short block;
     kdev_t dev = s->s_dev;
+    char *msgerr;
+    static char *err0 = "";
+    static char *err1 = "minix: unable to read sb\n";
+    static char *err2 = "minix: bad superblock or bitmaps\n";
+    static char *err3 = "minix: get root inode failed\n";
 
 /*    if (32 != sizeof(struct minix_inode))
 	panic("bad i-node size");*/
     lock_super(s);
     if (!(bh = bread(dev, (block_t) 1))) {
-	s->s_dev = 0;
-	unlock_super(s);
-	printk("minix: unable to read sb\n");
-	return NULL;
+	msgerr = err1;
+	goto err_read_super_2;
     }
     map_buffer(bh);
     {				/* Localise register variable */
@@ -170,16 +173,14 @@ struct super_block *minix_read_super(register struct super_block *s,
 
 	if (ms->s_magic == MINIX_SUPER_MAGIC) {
 	    s->u.minix_sb.s_version = MINIX_V1;
-	    s->u.minix_sb.s_nzones = s->u.minix_sb.s_ms->s_nzones;
+	    s->u.minix_sb.s_nzones = ms->s_nzones;
 	    s->u.minix_sb.s_dirsize = 16;
 	    s->u.minix_sb.s_namelen = 14;
 	} else {
-	    s->s_dev = 0;
-	    unlock_super(s);
-	    unmap_brelse(bh);
 	    if (!silent)
 		printk("VFS: dev %s is not minixfs.\n", kdevname(dev));
-	    return NULL;
+	    msgerr = err0;
+	    goto err_read_super_1;
 	}
     }
     {
@@ -239,11 +240,8 @@ struct super_block *minix_read_super(register struct super_block *s,
 		brelse(s->u.minix_sb.s_zmap[(unsigned short) pi]);
 	    } while (pi);
 #endif
-	    s->s_dev = 0;
-	    unlock_super(s);
-	    unmap_brelse(bh);
-	    printk("minix: bad superblock or bitmaps\n");
-	    return NULL;
+	    msgerr = err2;
+	    goto err_read_super_1;
 	}
     }
     set_bit(0, s->u.minix_sb.s_imap[0]->b_data);
@@ -254,10 +252,9 @@ struct super_block *minix_read_super(register struct super_block *s,
     s->s_op = &minix_sops;
     s->s_mounted = iget(s, (ino_t) MINIX_ROOT_INO);
     if (!s->s_mounted) {
-	s->s_dev = 0;
-	unmap_brelse(bh);
-	printk("minix: get root inode failed\n");
-	return NULL;
+	lock_super(s);
+	msgerr = err3;
+	goto err_read_super_1;
     }
     if (!(s->s_flags & MS_RDONLY)) {
 	s->u.minix_sb.s_ms->s_state &= ~MINIX_VALID_FS;
@@ -265,10 +262,18 @@ struct super_block *minix_read_super(register struct super_block *s,
 	s->s_dirt = 1;
     }
 
-    minix_mount_warning(s, "");
+    minix_mount_warning(s, err0);
 
     unmap_buffer(bh);
     return s;
+
+  err_read_super_1:
+    unmap_brelse(bh);
+  err_read_super_2:
+    s->s_dev = 0;
+    unlock_super(s);
+    printk(msgerr);
+    return NULL;
 }
 
 #ifdef BLOAT_FS
