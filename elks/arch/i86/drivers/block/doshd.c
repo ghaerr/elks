@@ -297,11 +297,11 @@ static void bioshd_release(struct inode *inode, struct file *filp)
  * as well try it -- Some XT controllers are happy with it.. [AC]
  */
 
-static void reset_bioshd(unsigned short int minor)
+static void reset_bioshd(int drive)
 {
     BD_IRQ = BIOSHD_INT;
     BD_AX = BIOSHD_RESET;
-    BD_DX = hd_drive_map[DEVICE_NR(minor)];
+    BD_DX = hd_drive_map[drive];
     call_bios(&bdt);
 
 /* Dont log this fail - its fine
@@ -312,7 +312,7 @@ static void reset_bioshd(unsigned short int minor)
 #endif
 }
 
-int seek_sector(unsigned short int drive, char track, char sector)
+int seek_sector(int drive, char track, char sector)
 {
 
 /* i took this code from bioshd_open() where it replicates code used
@@ -329,7 +329,7 @@ int seek_sector(unsigned short int drive, char track, char sector)
 	BD_BX = 0;					/* Seg offset = 0 */
 	BD_ES = BUFSEG;					/* Target segment */
 	BD_CX = (unsigned short int) (((int)track << 8) | sector);
-	BD_DX = drive;
+	BD_DX =  hd_drive_map[drive];
 	BD_FL = 0;
 
 	set_irq();
@@ -425,7 +425,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	drivep->cylinders = 0;
 	count = 0;
 	do {
-	    if (seek_sector(hd_drive_map[target], track_probe[count] - 1, 1))
+	    if (seek_sector(target, track_probe[count] - 1, 1))
 		break;
 	    drivep->cylinders = track_probe[count];
 	} while (++count < 2);
@@ -438,7 +438,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	drivep->sectors = 0;
 	count = 0;
 	do {
-	    if (seek_sector(hd_drive_map[target], 0, sector_probe[count]))
+	    if (seek_sector(target, 0, sector_probe[count]))
 		break;
 	    drivep->sectors = sector_probe[count];
 	} while (++count < 5);
@@ -744,7 +744,7 @@ static void do_bioshd_request(void)
 	    call_bios(&bdt);
 	    if (CARRY_SET) {
 		minor = BD_AX;
-		reset_bioshd(MINOR(req->rq_dev));
+		reset_bioshd(drive);
 		dma_avail = 1;
 		errs++;
 		if (errs > MAX_ERRS) {
