@@ -244,16 +244,15 @@ static unsigned short int bioshd_getfdinfo(void)
 #endif
 
     for (drive = 0; drive < ndrives; drive++) {
-#ifndef CONFIG_HW_USE_INT13_FOR_FLOPPY
 /* If type cannot be determined correctly,
- * Type 4 should work on all systems
+ * Type 4 should work on all AT systems
  */
-	*drivep = fd_types[4];
+	*drivep = fd_types[arch_cpu > 5 ? 4 : 2];
+#ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
 /* Some XT's return strange results - Al
  * The arch_cpu is a safety check
  */
-	if(arch_cpu > 1) {
-#endif
+	if(arch_cpu > 5) {
 	    BD_AX = BIOSHD_DRIVE_PARMS;
 	    BD_DX = drive;
 	    BD_BX = 0;
@@ -264,11 +263,7 @@ static unsigned short int bioshd_getfdinfo(void)
  * AT archecture, drive type in BX
  */
 		*drivep = fd_types[BD_BX - 1];
-#ifndef CONFIG_HW_USE_INT13_FOR_FLOPPY
 	}
-#else
-	    else
-		printk("error in drivetype %d\n", drive);
 #endif
 	drivep++;
     }
@@ -408,7 +403,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	static char track_probe[2] = { 40, 80 };
 	int count;
 
-	printk("fd: probing disc in /dev/fd%d\n", target % 2);
+	printk("fd: probing disc in /dev/fd%d\n", target & 1);
 
 /* The area between 32-64K is a 'scratch' area - we need a semaphore for it
  */
@@ -453,8 +448,10 @@ static int bioshd_open(struct inode *inode, struct file *filp)
  * with seducing (repeating) probe messages about disk types
  */
 
-	if (drivep->cylinders == 0 || drivep->sectors == 0)
+	if (drivep->cylinders == 0 || drivep->sectors == 0) {
+	    *drivep = fd_types[drivep->fdtype];
 	    printk("fd: Floppy drive autoprobe failed!\n");
+	}
 	else
 	    printk("fd: /dev/fd%d probably has %d sectors and %d cylinders\n",
 		   target % 2, drivep->sectors, drivep->cylinders);
@@ -710,6 +707,10 @@ static void do_bioshd_request(void)
 	    head = (unsigned int) (tmp % (sector_t)drivep->heads);
 	    cylinder = (unsigned int) (tmp / (sector_t)drivep->heads);
 	    this_pass = drivep->sectors - sector + 1;
+	/* Fix for weird BIOS behavior with 720K floppy */
+	    if(this_pass < 3)
+		this_pass = 1;
+	/* End of fix */
 	    if ((sector_t)this_pass > count)
 		this_pass = (unsigned int) count;
 	    while (!dma_avail)
@@ -748,7 +749,7 @@ static void do_bioshd_request(void)
 		dma_avail = 1;
 		errs++;
 		if (errs > MAX_ERRS) {
-		    printk("hd: error: AX=0x%x\n", minor >> 8);
+		    printk("hd: error: AX=0x%02X\n", minor >> 8);
 		    end_request(0);
 		    wake_up(&dma_wait);
 		    goto next_block;
