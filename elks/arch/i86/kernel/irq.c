@@ -114,12 +114,11 @@ void enable_irq(unsigned int irq)
     }
 }
 
-
 static int remap_irq(int irq)
 {
-    if ((irq > 15) || ((irq > 7) && (arch_cpu < 2)))
+    if ((irq > 15) || ((irq > 7) && (arch_cpu < 6)))
 	return -EINVAL;
-    if (irq == 2 && arch_cpu > 1)
+    if (irq == 2 && arch_cpu > 5)
 	irq = 9;			/* Map IRQ 9/2 over */
     return irq;
 }
@@ -139,10 +138,10 @@ void do_IRQ(int i,void *regs)
 
 static void default_handler(int i, void *regs, void *dev)
 {
-	if (i > 15)
-	    printk("Unexpected trap: %u\n", i-16);
-	else
-	    printk("Unexpected interrupt: %u\n", i);
+    if (i > 15)
+	printk("Unexpected trap: %u\n", i-16);
+    else
+	printk("Unexpected interrupt: %u\n", i);
 }
 
 int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev_id)
@@ -212,7 +211,7 @@ void init_IRQ(void)
 {
     flag_t flags;
 
-#ifdef CONFIG_HW_259_USE_ORIGINAL_MASK       /* for example Debugger :-) */
+#ifdef CONFIG_HW_259_USE_ORIGINAL_MASK	/* for example Debugger :-) */
     cache_21 = inb_p(0x21);
 #endif
 
@@ -236,13 +235,13 @@ void init_IRQ(void)
 
     /* Enable the drop through interrupts. */
 
-    if (arch_cpu > 1) {
+    if (arch_cpu > 5) {		/* PC-AT or greater */
+	enable_irq(2);		/* Cascade slave PIC */
 	enable_irq(HD_IRQ);	/* AT ST506 */
 	enable_irq(15);		/* AHA1542 */
     }
 
     enable_irq(5);		/* XT ST506 */
-    enable_irq(2);		/* Cascade */
     enable_irq(6);		/* Floppy */
 
     restore_flags(flags);
