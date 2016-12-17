@@ -28,17 +28,13 @@ struct lp_info {
 
 #ifdef BIOS_PORTS
 
-/*@-type@*/
-
 /* We'll get port info from BIOS. There are 4 ports max. */
 static struct lp_info ports[LP_PORTS] = { 0, 0, 0, 0 };
-
-/*@+type@*/
 
 #else
 
 /* extended to support some unusual ports; not used if BIOS_PORTS works */
-static struct lp_info ports[LP_PORTS] = {
+static struct lp_info ports[] = {
     0x3BC, 0, 0,
     0x378, 0, 0,
     0x278, 0, 0,
@@ -51,42 +47,40 @@ static struct lp_info ports[LP_PORTS] = {
     0x3E8, 0, 0
 };
 
-#endif
-
-#ifndef BIOS_PORTS
 static int port_order[LP_PORTS] = { 0, };
+
 #endif
 
-int lp_reset(int target)
+static int lp_reset(int target)
 {
     register struct lp_info *lpp;
     register char *tmpp;
 
-#ifndef BIOS_PORTS
-    target = port_order[target];
+#ifdef BIOS_PORTS
+    lpp = &ports[target];
+#else
+    lpp = &ports[port_order[target]];
 #endif
 
-    lpp = &ports[target];
-
     LP_CONTROL(LP_SELECT, lpp);
-    tmpp = 0;
-    while (((int)tmpp) != LP_RESET_WAIT)
-	tmpp++;
+    tmpp = (char *)LP_RESET_WAIT;
+    do {
+    } while((int)(--tmpp));
     LP_CONTROL(LP_SELECT | LP_INIT, lpp);
 
     return LP_STATUS(lpp);
 }
 
-int lp_char_polled(char c, unsigned int target)
+static int lp_char_polled(char c, unsigned int target)
 {
     int wait;
     register struct lp_info *lpp;
 
-#ifndef BIOS_PORTS
-    target = port_order[target];
-#endif
-
+#ifdef BIOS_PORTS
     lpp = &ports[target];
+#else
+    lpp = &ports[port_order[target]];
+#endif
 
     {
 	register char *statusp;
@@ -111,13 +105,15 @@ int lp_char_polled(char c, unsigned int target)
 
 #else
 
-	wait = 0;
+	wait = LP_CHAR_WAIT + 1;
 
-	while (!(((int)statusp) & LP_SELECTED) && (wait < LP_CHAR_WAIT))
+	while (!(((int)(statusp = (char *)LP_STATUS(lpp))) & LP_SELECTED))
 	    /* while not ready do busy loop */
 	    {
-		statusp = (char *) LP_STATUS(lpp);
-		wait++;
+		if(!--wait) {
+		    printk("lp%d: timed out\n", target);
+		    return 0;
+		}
 
 #if NEED_RESCHED
 		if (need_resched)
@@ -125,11 +121,6 @@ int lp_char_polled(char c, unsigned int target)
 #endif
 
 	    }
-	if (wait == LP_CHAR_WAIT) {
-	    printk("lp%d: timed out\n", target);
-	    return 0;
-	}
-
 #endif
 
 	if (!(((int)statusp) & LP_ERROR)) { /* printer error */
@@ -162,7 +153,7 @@ int lp_char_polled(char c, unsigned int target)
     return 1;
 }
 
-size_t lp_write(struct inode *inode, struct file *file, char *buf, int count)
+static size_t lp_write(struct inode *inode, struct file *file, char *buf, int count)
 {
     register char *chrsp;
 
@@ -183,7 +174,7 @@ size_t lp_write(struct inode *inode, struct file *file, char *buf, int count)
     return (size_t)chrsp;
 }
 
-int lp_open(struct inode *inode, struct file *file)
+static int lp_open(struct inode *inode, struct file *file)
 {
     register struct lp_info *lpp;
     register char *statusp;
@@ -194,11 +185,11 @@ int lp_open(struct inode *inode, struct file *file)
 
     target = MINOR(inode->i_rdev);
 
-#ifndef BIOS_PORTS
-    target = port_order[target];
-#endif
-
+#ifdef BIOS_PORTS
     lpp = &ports[target];
+#else
+    lpp = &ports[port_order[target]];
+#endif
 
     statusp = (char *)((short int)(lpp->flags));
 
@@ -218,24 +209,24 @@ int lp_open(struct inode *inode, struct file *file)
     lpp->flags = LP_EXIST | LP_BUSY;
 
 #if 0
-    access_count[port_order[target]]++;
+    access_count[target]++;
 #endif
 
     return 0;
 }
 
-void lp_release(struct inode *inode, struct file *file)
+static void lp_release(struct inode *inode, struct file *file)
 {
     unsigned short int target = MINOR(inode->i_rdev);
 
-#ifndef BIOS_PORTS
-    target = port_order[target];
+#ifdef BIOS_PORTS
+    ports[target].flags = LP_EXIST;	/* not busy */
+#else
+    ports[port_order[target]].flags = LP_EXIST;	/* not busy */
 #endif
 
-    ports[target].flags = LP_EXIST;	/* not busy */
-
 #if 0
-    access_count[port_order[target]]--;
+    access_count[target]--;
 #endif
 
     return;
@@ -243,7 +234,7 @@ void lp_release(struct inode *inode, struct file *file)
 
 #ifndef BIOS_PORTS
 
-int lp_probe(register struct lp_info *lp)
+static int lp_probe(register struct lp_info *lp)
 {
     register char *waitp;
 
@@ -251,7 +242,7 @@ int lp_probe(register struct lp_info *lp)
     outb_p((unsigned char) (LP_DUMMY), lp->io);
 
     /* 5 us delay */
-    while (((int)waitp) != LP_WAIT)
+    while (((int)waitp) != LP_CHAR_WAIT)
 	waitp++;
 
     /* 0 expected; 255 returned if nonexistent port */
