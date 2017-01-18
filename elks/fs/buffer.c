@@ -26,7 +26,7 @@ static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
  */
 /*static struct buffer_head *bh_chain = buffers; */
 static struct buffer_head *bh_lru = buffers;
-static struct buffer_head *bh_llru = NULL;
+static struct buffer_head *bh_llru = &buffers[NR_BUFFERS - 1];
 
 #if 0
 struct wait_queue bufwait;	/* Wait for a free buffer */
@@ -76,36 +76,29 @@ void buffer_init(void)
 #endif
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     _buf_ds = mm_alloc(NR_BUFFERS * 0x40);
-    pi = (char *)0;
+    pi = (char *)NR_MAPBUFS;
     do {
-	bufmem_map[(unsigned int)pi] = NULL;
-    } while ((unsigned int)(++pi) < NR_MAPBUFS);
+	bufmem_map[(unsigned int)(--pi)] = NULL;
+    } while ((unsigned int)pi > 0);
 #endif
 
     do {
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 	bh->b_data = 0;		/* L1 buffer cache is reserved! */
 	bh->b_mapcount = 0;
-	bh->b_num = (unsigned int)pi;		/* Used to compute L2 location */
+	bh->b_num = (unsigned int)(pi++);	/* Used to compute L2 location */
 #else
 #ifdef DMA_ALN
-	bh->b_data = bufmem_i + ((unsigned int)pi << BLOCK_SIZE_BITS);
+	bh->b_data = bufmem_i + ((unsigned int)(pi++) << BLOCK_SIZE_BITS);
 #else
-	bh->b_data = (char *)bufmem + ((unsigned int)pi << BLOCK_SIZE_BITS);
+	bh->b_data = (char *)bufmem + ((unsigned int)(pi++) << BLOCK_SIZE_BITS);
 #endif
 #endif
-	if ((unsigned int)pi == NR_BUFFERS - 1) {
-	    bh->b_next_lru = NULL;
-/*	    bh->b_next = NULL; */
-	    bh_llru = bh;
-	} else {
-	    bh->b_prev_lru = bh - 1;
-	    bh->b_next_lru = bh + 1;
-/*	    bh->b_next = bh + 1; */
-	}
-	pi++;
+	bh->b_next_lru = bh + 1;
+	bh->b_prev_lru = bh - 1;
     } while(++bh < &buffers[NR_BUFFERS]);
     buffers[0].b_prev_lru = NULL;
+    buffers[NR_BUFFERS - 1].b_next_lru = NULL;
 }
 
 /*
@@ -178,13 +171,15 @@ static void sync_buffers(kdev_t dev, int wait)
 	/*
 	 *      Locked buffers..
 	 *
-	 *      Buffer is locked; skip it unless wait is requested
+	 *      If buffer is locked; skip it unless wait is requested
 	 *      AND pass > 0.
 	 */
-	if (buffer_locked(bh) && wait)
-	    continue;
-	else
-	    wait_on_buffer(bh);
+	if(buffer_locked(bh)) {
+	    if(wait)
+		continue;
+	    else
+		wait_on_buffer(bh);
+	}
 	/*
 	 *      Do the stuff
 	 */
@@ -192,28 +187,6 @@ static void sync_buffers(kdev_t dev, int wait)
 	ll_rw_blk(WRITE, bh);
 	bh->b_count--;
     } while ((bh = bh->b_prev_lru) != NULL);
-}
-
-void fsync_dev(kdev_t dev)
-{
-    sync_buffers(dev, 0);
-    sync_supers(dev);
-    sync_inodes(dev);
-    sync_buffers(dev, 1);
-}
-
-void sync_dev(kdev_t dev)
-{
-    sync_buffers(dev, 0);
-    sync_supers(dev);
-    sync_inodes(dev);
-    sync_buffers(dev, 0);
-}
-
-int sys_sync(void)
-{
-    fsync_dev(0);
-    return 0;
 }
 
 static struct buffer_head *get_free_buffer(void)
@@ -273,6 +246,22 @@ void __bforget(struct buffer_head *buf)
 }
 #endif
 
+/* Turns out both minix_bread and bread do this, so I made this a function
+ * of it's own... */
+
+struct buffer_head *readbuf(register struct buffer_head *bh)
+{
+    if (!buffer_uptodate(bh)) {
+	ll_rw_blk(READ, bh);
+	wait_on_buffer(bh);
+	if (!buffer_uptodate(bh)) {
+	    brelse(bh);
+	    bh = NULL;
+	}
+    }
+    return bh;
+}
+
 static struct buffer_head *find_buffer(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh = bh_llru;
@@ -288,13 +277,15 @@ struct buffer_head *get_hash_table(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh;
 
-    while ((bh = find_buffer(dev, block))) {
+    goto ini_get_hash;
+    do {
+	bh->b_count--;
+      ini_get_hash:
+	if((bh = find_buffer(dev, block)) == NULL)
+	    break;
 	bh->b_count++;
 	wait_on_buffer(bh);
-	if (bh->b_dev == dev && bh->b_blocknr == block)
-	    break;
-	bh->b_count--;
-    }
+    } while(bh->b_blocknr != block || bh->b_dev != dev);
     return bh;
 }
 
@@ -347,22 +338,6 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
     bh->b_blocknr = block;
     bh->b_seg = kernel_ds;
 
-    return bh;
-}
-
-/* Turns out both minix_bread and bread do this, so I made this a function
- * of it's own... */
-
-struct buffer_head *readbuf(register struct buffer_head *bh)
-{
-    if (!buffer_uptodate(bh)) {
-	ll_rw_blk(READ, bh);
-	wait_on_buffer(bh);
-	if (!buffer_uptodate(bh)) {
-	    brelse(bh);
-	    bh = NULL;
-	}
-    }
     return bh;
 }
 
@@ -425,6 +400,28 @@ void mark_buffer_uptodate(struct buffer_head *bh, int on)
     clr_irq();
     bh->b_uptodate = on;
     restore_flags(flags);
+}
+
+void fsync_dev(kdev_t dev)
+{
+    sync_buffers(dev, 0);
+    sync_supers(dev);
+    sync_inodes(dev);
+    sync_buffers(dev, 1);
+}
+
+void sync_dev(kdev_t dev)
+{
+    sync_buffers(dev, 0);
+    sync_supers(dev);
+    sync_inodes(dev);
+    sync_buffers(dev, 0);
+}
+
+int sys_sync(void)
+{
+    fsync_dev(0);
+    return 0;
 }
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
