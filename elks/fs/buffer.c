@@ -193,25 +193,26 @@ static struct buffer_head *get_free_buffer(void)
 {
     register struct buffer_head *bh;
 
-    for (;;) {
-	bh = bh_lru;
-	do {
+    bh = bh_lru;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-	    if (bh->b_count == 0 && !bh->b_dirty && !bh->b_lock && !bh->b_data) {
+    while(bh->b_count || bh->b_dirty || bh->b_lock || bh->b_data) {
 #else
-	    if (bh->b_count == 0 && !bh->b_dirty && !bh->b_lock) {
+    while(bh->b_count || bh->b_dirty || bh->b_lock) {
 #endif
-		put_last_lru(bh);
-		return bh;
-	    }
-	} while ((bh = bh->b_next_lru) != NULL);
+	if((bh = bh->b_next_lru) == NULL) {
 #if 0
-	fsync_dev(0);
-	/* This causes a sleep until another process brelse's */
-	sleep_on(&bufwait);
+	    fsync_dev(0);
+	    /* This causes a sleep until another process brelse's */
+	    sleep_on(&bufwait);
 #endif
-	sync_buffers(0, 0);
+	    sync_buffers(0, 0);
+	    bh = bh_lru;
+	}
     }
+    put_last_lru(bh);
+    bh->b_uptodate = 0;
+    bh->b_count = 1;
+    return bh;
 }
 
 /*
@@ -277,15 +278,13 @@ struct buffer_head *get_hash_table(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh;
 
-    goto ini_get_hash;
-    do {
-	bh->b_count--;
-      ini_get_hash:
-	if((bh = find_buffer(dev, block)) == NULL)
-	    break;
+    while((bh = find_buffer(dev, block)) != NULL) {
 	bh->b_count++;
 	wait_on_buffer(bh);
-    } while(bh->b_blocknr != block || bh->b_dev != dev);
+	if (bh->b_blocknr == block && bh->b_dev == dev)
+	    break;
+	bh->b_count--;
+    }
     return bh;
 }
 
@@ -304,40 +303,30 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh;
 
-
     /* If there are too many dirty buffers, we wake up the update process
      * now so as to ensure that there are still clean buffers available
      * for user processes to use (and dirty) */
 
-    do {
-	bh = get_hash_table(dev, block);
-	if (bh != NULL) {
-	    if (buffer_clean(bh) && buffer_uptodate(bh))
-		put_last_lru(bh);
-	    return bh;
-	}
-
-	/* I think the following check is redundant
-	 * So I will remove it for now
+    while((bh = get_hash_table(dev, block)) == NULL) {
+	/*
+	 * Block not found. Create a buffer for this job.
 	 */
-
-    } while (find_buffer(dev, block));
-
-    /*
-     *      Create a buffer for this job.
-     */
-    bh = get_free_buffer();
-
+	bh = get_free_buffer();	/* This function may sleep and someone else */
+				/* can create the block */
+	if(find_buffer(dev, block) == NULL) {
 /* OK, FINALLY we know that this buffer is the only one of its kind,
  * and that it's unused (b_count=0), unlocked (buffer_locked=0), and clean
  */
-
-    bh->b_count = 1;
-    bh->b_uptodate = 0;
-    bh->b_dev = dev;
-    bh->b_blocknr = block;
-    bh->b_seg = kernel_ds;
-
+	    bh->b_dev = dev;
+	    bh->b_blocknr = block;
+	    bh->b_seg = kernel_ds;
+	    break;
+	}
+	bh->b_count = 0;	/* Release previously created buffer head */
+    }
+/* found it */
+    if (buffer_clean(bh) && buffer_uptodate(bh))
+	put_last_lru(bh);
     return bh;
 }
 

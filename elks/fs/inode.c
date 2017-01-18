@@ -173,18 +173,16 @@ static struct inode *get_empty_inode(void)
     static ino_t ino = 0;
     register struct inode *inode;
 
-    do {
-        inode = first_inode->i_next;
-        do {
-            if (!inode->i_count && !inode->i_dirt && !inode->i_lock) {
-                goto found_empty_inode;
-            }
-        } while ((inode = inode->i_next) != first_inode->i_next);
-        printk("VFS: No free inodes\n");
-        list_inode_status();
-        sleep_on(&inode_wait);
-    } while (1);
-  found_empty_inode:
+    inode = first_inode->i_next;
+    while(inode->i_count || inode->i_dirt || inode->i_lock) {
+	if(inode == first_inode) {
+	    printk("VFS: No free inodes\n");
+	    list_inode_status();
+	    sleep_on(&inode_wait);
+	}
+	inode = inode->i_next;
+    }
+	    
 /* Here we are doing the same checks again. There cannot be a significant *
  * race condition here - no time has passed */
 #if 0
@@ -200,14 +198,14 @@ static struct inode *get_empty_inode(void)
 	goto repeat;
 #endif
     clear_inode(inode);
+    put_last_lru(inode);
     inode->i_count = inode->i_nlink = 1;
     inode->i_uid = current->euid;
 #ifdef BLOAT_FS
     inode->i_version = ++event;
 #endif
     inode->i_ino = ++ino;
-    nr_free_inodes--;
-    if (nr_free_inodes < 0) {
+    if (--nr_free_inodes < 0) {
 	printk("VFS: get_empty_inode: bad free inode count.\n");
 	nr_free_inodes = 0;
     }
@@ -292,8 +290,8 @@ struct inode *new_inode(register struct inode *dir, __u16 mode)
 {
     register struct inode *inode;
 
-    if (!(inode = get_empty_inode()))
-	return inode;
+/*    if (!(inode = get_empty_inode()))*/ /* get_empty_inode() never returns NULL */
+/*	return inode;*/
     inode->i_gid =(__u8) current->egid;
     if (dir) {
 	inode->i_sb = dir->i_sb;
@@ -345,16 +343,14 @@ struct inode *__iget(register struct super_block *sb,
     inode->i_dev = sb->s_dev;
     inode->i_flags = ((unsigned short int) sb->s_flags);
     inode->i_ino = inr;
-    put_last_lru(inode);
     debug("iget: Reading inode\n");
     read_inode(inode);
     debug("iget: Read it\n");
     goto return_it;
 
   found_it:
-    if (!inode->i_count)
+    if (inode->i_count++ == 0)
 	nr_free_inodes--;
-    inode->i_count++;
     wait_on_inode(inode);
     if (inode->i_dev != sb->s_dev || inode->i_ino != inr) {
 	printk("Whee.. inode changed from under us. Tell _.\n");
