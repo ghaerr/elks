@@ -26,7 +26,7 @@ static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
  */
 /*static struct buffer_head *bh_chain = buffers; */
 static struct buffer_head *bh_lru = buffers;
-static struct buffer_head *bh_llru = NULL;
+static struct buffer_head *bh_llru = &buffers[NR_BUFFERS - 1];
 
 #if 0
 struct wait_queue bufwait;	/* Wait for a free buffer */
@@ -76,36 +76,29 @@ void buffer_init(void)
 #endif
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     _buf_ds = mm_alloc(NR_BUFFERS * 0x40);
-    pi = (char *)0;
+    pi = (char *)NR_MAPBUFS;
     do {
-	bufmem_map[(unsigned int)pi] = NULL;
-    } while ((unsigned int)(++pi) < NR_MAPBUFS);
+	bufmem_map[(unsigned int)(--pi)] = NULL;
+    } while ((unsigned int)pi > 0);
 #endif
 
     do {
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 	bh->b_data = 0;		/* L1 buffer cache is reserved! */
 	bh->b_mapcount = 0;
-	bh->b_num = (unsigned int)pi;		/* Used to compute L2 location */
+	bh->b_num = (unsigned int)(pi++);	/* Used to compute L2 location */
 #else
 #ifdef DMA_ALN
-	bh->b_data = bufmem_i + ((unsigned int)pi << BLOCK_SIZE_BITS);
+	bh->b_data = bufmem_i + ((unsigned int)(pi++) << BLOCK_SIZE_BITS);
 #else
-	bh->b_data = (char *)bufmem + ((unsigned int)pi << BLOCK_SIZE_BITS);
+	bh->b_data = (char *)bufmem + ((unsigned int)(pi++) << BLOCK_SIZE_BITS);
 #endif
 #endif
-	if ((unsigned int)pi == NR_BUFFERS - 1) {
-	    bh->b_next_lru = NULL;
-/*	    bh->b_next = NULL; */
-	    bh_llru = bh;
-	} else {
-	    bh->b_prev_lru = bh - 1;
-	    bh->b_next_lru = bh + 1;
-/*	    bh->b_next = bh + 1; */
-	}
-	pi++;
+	bh->b_next_lru = bh + 1;
+	bh->b_prev_lru = bh - 1;
     } while(++bh < &buffers[NR_BUFFERS]);
     buffers[0].b_prev_lru = NULL;
+    buffers[NR_BUFFERS - 1].b_next_lru = NULL;
 }
 
 /*
@@ -178,13 +171,15 @@ static void sync_buffers(kdev_t dev, int wait)
 	/*
 	 *      Locked buffers..
 	 *
-	 *      Buffer is locked; skip it unless wait is requested
+	 *      If buffer is locked; skip it unless wait is requested
 	 *      AND pass > 0.
 	 */
-	if (buffer_locked(bh) && wait)
-	    continue;
-	else
-	    wait_on_buffer(bh);
+	if(buffer_locked(bh)) {
+	    if(wait)
+		continue;
+	    else
+		wait_on_buffer(bh);
+	}
 	/*
 	 *      Do the stuff
 	 */
@@ -194,51 +189,30 @@ static void sync_buffers(kdev_t dev, int wait)
     } while ((bh = bh->b_prev_lru) != NULL);
 }
 
-void fsync_dev(kdev_t dev)
-{
-    sync_buffers(dev, 0);
-    sync_supers(dev);
-    sync_inodes(dev);
-    sync_buffers(dev, 1);
-}
-
-void sync_dev(kdev_t dev)
-{
-    sync_buffers(dev, 0);
-    sync_supers(dev);
-    sync_inodes(dev);
-    sync_buffers(dev, 0);
-}
-
-int sys_sync(void)
-{
-    fsync_dev(0);
-    return 0;
-}
-
 static struct buffer_head *get_free_buffer(void)
 {
     register struct buffer_head *bh;
 
-    for (;;) {
-	bh = bh_lru;
-	do {
+    bh = bh_lru;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-	    if (bh->b_count == 0 && !bh->b_dirty && !bh->b_lock && !bh->b_data) {
+    while(bh->b_count || bh->b_dirty || bh->b_lock || bh->b_data) {
 #else
-	    if (bh->b_count == 0 && !bh->b_dirty && !bh->b_lock) {
+    while(bh->b_count || bh->b_dirty || bh->b_lock) {
 #endif
-		put_last_lru(bh);
-		return bh;
-	    }
-	} while ((bh = bh->b_next_lru) != NULL);
+	if((bh = bh->b_next_lru) == NULL) {
 #if 0
-	fsync_dev(0);
-	/* This causes a sleep until another process brelse's */
-	sleep_on(&bufwait);
+	    fsync_dev(0);
+	    /* This causes a sleep until another process brelse's */
+	    sleep_on(&bufwait);
 #endif
-	sync_buffers(0, 0);
+	    sync_buffers(0, 0);
+	    bh = bh_lru;
+	}
     }
+    put_last_lru(bh);
+    bh->b_uptodate = 0;
+    bh->b_count = 1;
+    return bh;
 }
 
 /*
@@ -273,6 +247,22 @@ void __bforget(struct buffer_head *buf)
 }
 #endif
 
+/* Turns out both minix_bread and bread do this, so I made this a function
+ * of it's own... */
+
+struct buffer_head *readbuf(register struct buffer_head *bh)
+{
+    if (!buffer_uptodate(bh)) {
+	ll_rw_blk(READ, bh);
+	wait_on_buffer(bh);
+	if (!buffer_uptodate(bh)) {
+	    brelse(bh);
+	    bh = NULL;
+	}
+    }
+    return bh;
+}
+
 static struct buffer_head *find_buffer(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh = bh_llru;
@@ -288,10 +278,10 @@ struct buffer_head *get_hash_table(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh;
 
-    while ((bh = find_buffer(dev, block))) {
+    while((bh = find_buffer(dev, block)) != NULL) {
 	bh->b_count++;
 	wait_on_buffer(bh);
-	if (bh->b_dev == dev && bh->b_blocknr == block)
+	if (bh->b_blocknr == block && bh->b_dev == dev)
 	    break;
 	bh->b_count--;
     }
@@ -313,56 +303,30 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh;
 
-
     /* If there are too many dirty buffers, we wake up the update process
      * now so as to ensure that there are still clean buffers available
      * for user processes to use (and dirty) */
 
-    do {
-	bh = get_hash_table(dev, block);
-	if (bh != NULL) {
-	    if (buffer_clean(bh) && buffer_uptodate(bh))
-		put_last_lru(bh);
-	    return bh;
-	}
-
-	/* I think the following check is redundant
-	 * So I will remove it for now
+    while((bh = get_hash_table(dev, block)) == NULL) {
+	/*
+	 * Block not found. Create a buffer for this job.
 	 */
-
-    } while (find_buffer(dev, block));
-
-    /*
-     *      Create a buffer for this job.
-     */
-    bh = get_free_buffer();
-
+	bh = get_free_buffer();	/* This function may sleep and someone else */
+				/* can create the block */
+	if(find_buffer(dev, block) == NULL) {
 /* OK, FINALLY we know that this buffer is the only one of its kind,
  * and that it's unused (b_count=0), unlocked (buffer_locked=0), and clean
  */
-
-    bh->b_count = 1;
-    bh->b_uptodate = 0;
-    bh->b_dev = dev;
-    bh->b_blocknr = block;
-    bh->b_seg = kernel_ds;
-
-    return bh;
-}
-
-/* Turns out both minix_bread and bread do this, so I made this a function
- * of it's own... */
-
-struct buffer_head *readbuf(register struct buffer_head *bh)
-{
-    if (!buffer_uptodate(bh)) {
-	ll_rw_blk(READ, bh);
-	wait_on_buffer(bh);
-	if (!buffer_uptodate(bh)) {
-	    brelse(bh);
-	    bh = NULL;
+	    bh->b_dev = dev;
+	    bh->b_blocknr = block;
+	    bh->b_seg = kernel_ds;
+	    break;
 	}
+	bh->b_count = 0;	/* Release previously created buffer head */
     }
+/* found it */
+    if (buffer_clean(bh) && buffer_uptodate(bh))
+	put_last_lru(bh);
     return bh;
 }
 
@@ -425,6 +389,28 @@ void mark_buffer_uptodate(struct buffer_head *bh, int on)
     clr_irq();
     bh->b_uptodate = on;
     restore_flags(flags);
+}
+
+void fsync_dev(kdev_t dev)
+{
+    sync_buffers(dev, 0);
+    sync_supers(dev);
+    sync_inodes(dev);
+    sync_buffers(dev, 1);
+}
+
+void sync_dev(kdev_t dev)
+{
+    sync_buffers(dev, 0);
+    sync_supers(dev);
+    sync_inodes(dev);
+    sync_buffers(dev, 0);
+}
+
+int sys_sync(void)
+{
+    fsync_dev(0);
+    return 0;
 }
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
