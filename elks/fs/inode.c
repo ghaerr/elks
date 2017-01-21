@@ -220,7 +220,7 @@ void iput(register struct inode *inode)
 	wait_on_inode(inode);
 	if (!inode->i_count) {
 	    printk("VFS: iput: trying to free free inode\n");
-	    printk("VFS: device %s, inode %lu, mode=0%07o\n",
+	    printk("VFS: device %s, inode %u, mode=0%06o\n",
 		   kdevname(inode->i_rdev), inode->i_ino, inode->i_mode);
 	    return;
 	}
@@ -290,8 +290,7 @@ struct inode *new_inode(register struct inode *dir, __u16 mode)
 {
     register struct inode *inode;
 
-/*    if (!(inode = get_empty_inode()))*/ /* get_empty_inode() never returns NULL */
-/*	return inode;*/
+    inode = get_empty_inode();	/* get_empty_inode() never returns NULL */
     inode->i_gid =(__u8) current->egid;
     if (dir) {
 	inode->i_sb = dir->i_sb;

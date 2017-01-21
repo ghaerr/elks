@@ -36,12 +36,12 @@ stashed_ds:
 /*
  *	Low level IRQ control.
  */
-	.globl ___save_flags
-	.globl _restore_flags
+	.globl	___save_flags
+	.globl	_restore_flags
 
 ___save_flags:
 	pushf
-	pop ax
+	pop	ax
 	ret
 
 ! this version is smaller than the functionally equivalent C version
@@ -51,16 +51,16 @@ ___save_flags:
 !
 
 _restore_flags:
-	pop ax
+	pop	ax
 	popf
 	pushf
-	jmp ax
+	jmp	ax
 
 ; CS points to this kernel code segment
 ; DS points to page 0  (interrupt table)
 ; ES points to the kernel data segment
 
-	.globl _irqtab_init
+	.globl	_irqtab_init
 _irqtab_init:
 	cli
 
@@ -120,10 +120,6 @@ _irqtab_init:
 !	Other IRQs (see IRQ 0 at the bottom for the
 !	main code).
 !
-	.extern	_schedule
-	.extern	_do_signal
-	.extern	_do_IRQ
-
 _irq1:			;keyboard
 	push	ax
 	mov	ax,#1
@@ -307,7 +303,10 @@ _algn:
 !	We do all of this to avoid per process interrupt stacks and
 !	related nonsense. This way we need only one dedicted int stack
 !
-!
+	.extern	_schedule
+	.extern	_do_signal
+	.extern	_do_IRQ
+
 _irq0:
 !
 !	Save AX and load it with the IRQ number
@@ -330,10 +329,10 @@ _irqit:
 !	Recover segments
 !
 #ifdef CONFIG_ROMCODE
-        mov bx,#CONFIG_ROM_IRQ_DATA
-        mov ds,bx
+	mov	bx,#CONFIG_ROM_IRQ_DATA
+	mov	ds,bx
 #else
-        seg     cs
+	seg	cs
 #endif
 	mov	bx,stashed_ds	! Recover the data segment
 	mov	ds,bx
