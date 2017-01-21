@@ -237,12 +237,17 @@ void init_IRQ(void)
 
     if (arch_cpu > 5) {		/* PC-AT or greater */
 	enable_irq(2);		/* Cascade slave PIC */
+#ifdef CONFIG_BLK_DEV_BHD
 	enable_irq(HD_IRQ);	/* AT ST506 */
 	enable_irq(15);		/* AHA1542 */
     }
-
-    enable_irq(5);		/* XT ST506 */
+    else {
+	enable_irq(5);		/* XT ST506 */
+#endif
+    }
+#ifdef CONFIG_BLK_DEV_BFD
     enable_irq(6);		/* Floppy */
+#endif
 
     restore_flags(flags);
 
