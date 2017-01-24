@@ -211,13 +211,10 @@ int sys_chroot(char *filename)
     struct inode *inode;
     int error;
 
-    error = -EPERM;
-    if (suser()) {
-	error = namei(filename, &inode, IS_DIR, 0);
-	if (!error) {
-	    iput(currentp->fs.root);
-	    currentp->fs.root = inode;
-	}
+    error = (suser() ? namei(filename, &inode, IS_DIR, 0) : -EPERM);
+    if (!error) {
+	iput(currentp->fs.root);
+	currentp->fs.root = inode;
     }
     return error;
 }
