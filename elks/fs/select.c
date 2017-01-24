@@ -84,9 +84,8 @@ static int check(int flag, register struct file *file)
 static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 		     fd_set * res_in, fd_set * res_out, fd_set * res_ex)
 {
-    int count;
     fd_set set;
-    int max = -1;
+    int count = -1;
     register char *pi;
     register struct file **filp;
 /*
@@ -109,7 +108,7 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 		return -EBADF;
 	    if (!currentp->files.fd[(int)pi]->f_inode)
 		return -EBADF;
-	    max = (int)pi;
+	    count = (int)pi;
 	}
     }
   end_check:
@@ -121,11 +120,11 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 	if (set & 1) {
 	    if ((*filp == NULL) || ((*filp)->f_inode == NULL))
 		return -EBADF;
-	    max = (int)pi;
+	    count = (int)pi;
 	}
 	filp++;
     }
-    n = max + 1;
+    n = count + 1;
     count = 0;
     wait_set(&select_poll);
     current->state = TASK_INTERRUPTIBLE;
@@ -203,12 +202,10 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
     fd_set res_ex, ex;
     jiff_t timeout;
 
-    error = -EINVAL;
-    if (n < 0)
-	goto out;
     if (n > NR_OPEN)
 	n = NR_OPEN;
-    if ((error = get_fd_set(inp, &in)) ||
+    error = -EINVAL;
+    if ((n < 0) || (error = get_fd_set(inp, &in)) ||
 	(error = get_fd_set(outp, &out)) || (error = get_fd_set(exp, &ex)))
 	goto out;
     timeout = ~0UL;
