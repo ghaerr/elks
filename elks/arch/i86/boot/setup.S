@@ -426,10 +426,12 @@ size_ok:
 	push	si	! Data size
 	push	bx	! Text size
 
- #ifdef CONFIG_ROM_DEBUG
-        int 3               ;break for debugger
- #endif
-        jmp far SYSSEG+2:3
+#ifdef CONFIG_ROM_DEBUG
+	int     3               ! break for debugger just before kernel
+#endif
+
+	jmp     far SYSSEG+2:3
+
 #else
 ! changed jmpi 0,0x1002 to 3,0x1002 for kernel restart fix -AJB
 	jmpi	0x00003,SYSSEG+2   !jmp offset 0 of segment 0x1002 (cs)
