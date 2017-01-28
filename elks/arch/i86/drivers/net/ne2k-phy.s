@@ -3,6 +3,8 @@
 ;-------------------------------------------------------------------------------
 
 
+; TODO: move definitions to ne2k.h
+
 ; I/O base @ 300h
 
 io_eth_mdio     EQU $314
@@ -38,7 +40,7 @@ phy_mode_duplex  EQU $0100
 delay_2:
 
 	push    cx
-	mov     cx,#2
+	mov     cx, #2
 
 d2_loop:
 
@@ -62,31 +64,31 @@ mdio_tx_word:
 	push    cx
 	push    dx
 
-	mov     bx,ax
+	mov     bx, ax
 
 mtb_loop:
 
 	; align MSB to data out bit
 
-	mov     ax,bx
-	shr     ax,12
-	and     al,#mdio_out
+	mov     ax, bx
+	shr     ax, 12
+	and     al, #mdio_out
 
 	; output the data bit
 	; with clock low
 
-	out     dx,al
+	out     dx, al
 	call    delay_2
 
 	; now rise the clock
 
-	or	al,#mdio_clock
-	out     dx,al
+	or	al, #mdio_clock
+	out     dx, al
 	call    delay_2
 
 	; next data bit
 
-	shl     bx,1
+	shl     bx, 1
 	loop    mtb_loop
 
 	pop     dx
@@ -114,20 +116,20 @@ mdio_tx_frame:
 
 	; could be optimized there...
 
-	mov     bx,dx
-	mov     dx,#io_eth_mdio
+	mov     bx, dx
+	mov     dx, #io_eth_mdio
 	push    ax
-	mov     ax,bx
+	mov     ax, bx
 
 	; send begin of frame
 
-	mov     si,#0
-	cmp     cx,#16
+	mov     si, #0
+	cmp     cx, #16
 	jbe     mtf_next
 
-	sub     cx,#16
-	mov     si,cx
-	mov     cx,#16
+	sub     cx, #16
+	mov     si, cx
+	mov     cx, #16
 
 mtf_next:
 
@@ -136,8 +138,8 @@ mtf_next:
 	; send remaining frame
 
 	pop     ax
-	mov     cx,si
-	or      cx,cx
+	mov     cx, si
+	or      cx, cx
 	jz      mtf_exit
 	call    mdio_tx_word
 
@@ -160,13 +162,13 @@ mdio_tx_rx:
 	push    ax
 	push    dx
 
-	mov     dx,#io_eth_mdio
-	mov     al,#mdio_dir
-	out     dx,al                   ; clock low
+	mov     dx, #io_eth_mdio
+	mov     al, #mdio_dir
+	out     dx, al                   ; clock low
 	call    delay_2
 
-	mov     al,#(mdio_dir | mdio_clock)
-	out     dx,al
+	mov     al, #(mdio_dir | mdio_clock)
+	out     dx, al
 	call    delay_2
 
 	pop     dx
@@ -193,10 +195,10 @@ mdio_write:
 	; align register address
 	; 5002h for head (start + write) & tail
 
-	shl     cx,7
-	shl     dx,2
-	or      dx,cx
-	or      dx,#$5002
+	shl     cx, 7
+	shl     dx, 2
+	or      dx, cx
+	or      dx, #$5002
 
 	; send preamble
 	; first 16 low bits are really needed ?
@@ -204,16 +206,16 @@ mdio_write:
 	push    ax
 	push    dx
 
-	xor     dx,dx
-	xor     ax,ax
-	mov     cx,#16                   ; 16 bits low
+	xor     dx, dx
+	xor     ax, ax
+	mov     cx, #16                   ; 16 bits low
 	call    mdio_tx_frame
 
 	; second 32 high bits are standard
 
-	mov     dx,#$FFFF
-	mov     ax,#$FFFF
-	mov     cx,#32
+	mov     dx, #$FFFF
+	mov     ax, #$FFFF
+	mov     cx, #32
 	call    mdio_tx_frame
 
 	; send frame
@@ -223,7 +225,7 @@ mdio_write:
 
 	; 32 bits - control & data words
 
-	mov     cx,#32
+	mov     cx, #32
 	call    mdio_tx_frame
 
 	; is this really needed ?
@@ -259,10 +261,10 @@ mdio_read:
 	; align register address
 	; 6000h for head (start + read)
 
-	shl     cx,#7
-	shl     dx,#2
-	or      dx,cx
-	or      dx,#$6000
+	shl     cx, #7
+	shl     dx, #2
+	or      dx, cx
+	or      dx, #$6000
 
 	; send preamble
 	; first 16 low bits are really needed ?
@@ -270,16 +272,16 @@ mdio_read:
 	push    ax
 	push    dx
 
-	xor     dx,dx
-	xor     ax,ax
-	mov     cx,#16
+	xor     dx, dx
+	xor     ax, ax
+	mov     cx, #16
 	call    mdio_tx_frame
 
 	; second 32 low bits are standard
 
-	mov     dx,#$FFFF
-	mov     ax,#$FFFF
-	mov     cx,#32
+	mov     dx, #$FFFF
+	mov     ax, #$FFFF
+	mov     cx, #32
 	call    mdio_tx_frame
 
 	; send MAC turn frame
@@ -287,20 +289,20 @@ mdio_read:
 	pop     dx
 	pop     ax
 
-	mov     cx,#14
+	mov     cx, #14
 	call    mdio_tx_frame
 
 	; turn around
 	; and wait for PHY to drive data down
 
-	mov     cx,#2
+	mov     cx, #2
 
 mr_wait:
 
 	call    mdio_tx_rx
-	mov     dx,#io_eth_mdio
-	in      al,dx
-	test    al,#mdio_in
+	mov     dx, #io_eth_mdio
+	in      al, dx
+	test    al, #mdio_in
 	jz      mr_next
 	loop    mr_wait
 	stc
@@ -308,23 +310,23 @@ mr_wait:
 
 mr_next:
 
-	mov     cx,#16
-	xor     bx,bx
+	mov     cx, #16
+	xor     bx, bx
 
 mr_loop:
 
-	mov     al,#mdio_dir
-	out     dx,al
+	mov     al, #mdio_dir
+	out     dx, al
 	call    delay_2
-	mov     al,#(mdio_dir | mdio_clock)
-	out     dx,al
+	mov     al, #(mdio_dir | mdio_clock)
+	out     dx, al
 	call    delay_2
-	in      al,dx
+	in      al, dx
 	call    delay_2
-	shr     al,#2
-	and     al,#1
-	shl     bx,#1
-	or      bl,al
+	shr     al, #2
+	and     al, #1
+	shl     bx, #1
+	or      bl, al
 	loop    mr_loop
 
 	; is this really needed ?
@@ -336,7 +338,7 @@ mr_loop:
 
 mr_exit:
 
-	mov     ax,bx
+	mov     ax, bx
 	pop     dx
 	pop     cx
 	pop     bx
@@ -347,7 +349,7 @@ mr_exit:
 ; PHY - Get status
 ;-------------------------------------------------------------------------------
 
-; AX = PHY status (bit 0 = link, bit 1 = duplex, bit 2 = speed)
+; AX = PHY status (bit 0 = link,  bit 1 = duplex,  bit 2 = speed)
 
 phy_stat:
 
@@ -356,11 +358,11 @@ phy_stat:
 	; get internal PHY status
 	; from linked GPIO pins
 
-	xor     ax,ax
+	xor     ax, ax
 
-	mov     dx,#io_eth_gpio
-	in      al,dx
-	and     al,#7
+	mov     dx, #io_eth_gpio
+	in      al, dx
+	and     al, #7
 
 	pop     dx
 	ret
@@ -370,10 +372,10 @@ phy_stat:
 ; PHY - Set speed and duplex mode
 ;-------------------------------------------------------------------------------
 
-; AX : speed (0 = low, 1 = high)
-; DX : duplex (0 = half, 1 = full)
+; AX : speed (0 = low,  1 = high)
+; DX : duplex (0 = half,  1 = full)
 
-phy_set_mode:
+phy_mode:
 
 	push    ax
 	push    cx
@@ -381,17 +383,17 @@ phy_set_mode:
 
 	; align bits to register
 
-	and     ax,#1
-	shl     ax,13
-	and     dx,#1
-	shl     dx,8
-	or      ax,dx
+	and     ax, #1
+	shl     ax, 13
+	and     dx, #1
+	shl     dx, 8
+	or      ax, dx
 
 	; set control register
 	; of internal PHY (address = 10h)
 
-	mov     cx,#$10
-	mov     dx,#0
+	mov     cx, #$10
+	mov     dx, #0
 	call    mdio_write
 
 	pop     dx
@@ -399,14 +401,10 @@ phy_set_mode:
 	pop     ax
 	ret
 
+
 ;-------------------------------------------------------------------------------
 
-_entry:
-
-	retf
-
-	ENTRY  _entry
-
 	END
+
 
 ;-------------------------------------------------------------------------------
