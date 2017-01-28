@@ -241,9 +241,13 @@ mdio_write:
 ; MDIO - Read frame (32 bits)
 ;-------------------------------------------------------------------------------
 
-; AX : register value (returned)
 ; CX : PHY identifier (10h for internal)
 ; DX : register address
+
+returns
+
+; CF : 0=success 1=no response
+; AX : register value (returned)
 
 mdio_read:
 
@@ -299,7 +303,8 @@ mr_wait:
 	test    al,#mdio_in
 	jz      mr_next
 	loop    mr_wait
-	jmp     mr_fail
+	stc
+	jmp     mr_exit
 
 mr_next:
 
@@ -325,12 +330,9 @@ mr_loop:
 	; is this really needed ?
 
 	call    mdio_tx_rx
+
 	clc
 	jmp     mr_exit
-
-mr_fail:
-
-	stc
 
 mr_exit:
 
