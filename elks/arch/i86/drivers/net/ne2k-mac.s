@@ -1,6 +1,6 @@
-;-------------------------------------------------------------------------------
+;------------------------------------------------------------------------------
 ; NE2K driver - low part - MAC routines
-;-------------------------------------------------------------------------------
+;------------------------------------------------------------------------------
 
 ; TODO: move definitions to ne2k.h
 
@@ -39,6 +39,11 @@ io_eth_multicast  EQU $308  ; page 1 - 8 bytes
 io_eth_data_io    EQU $310  ; 2 bytes
 
 
+tx_first          EQU $40
+rx_first          EQU $46
+rx_last           EQU $80
+
+
 	.TEXT
 
 ;-------------------------------------------------------------------------------
@@ -47,24 +52,17 @@ io_eth_data_io    EQU $310  ; 2 bytes
 
 ; Temporary location in code segment
 
-rx_first          DB $46
-rx_last           DB $80
-
-rx_put_count      DW 0
-rx_get_count      DW 0
-
-tx_first          DB $40
-
-unicast_addr      DB 1, 2, 3, 4, 5, 6  ; dummy one
+rx_put_count:  DW 0
+rx_get_count:  DW 0
 
 
 ;-------------------------------------------------------------------------------
 ; Select register page
 ;-------------------------------------------------------------------------------
 
-; AL = page number (0 or 1)
+; AL : page number (0 or 1)
 
-eth_page_sel:
+ne2k_page_sel:
 
 	push    ax
 	push    dx
@@ -88,10 +86,10 @@ eth_page_sel:
 ; Internal DMA initialization
 ;-------------------------------------------------------------------------------
 
-; BX = chip memory address
-; CX = byte count
+; BX : chip memory address
+; CX : byte count
 
-eth_dma_init:
+ne2k_dma_init:
 
 	push    ax
 	push    bx
@@ -101,7 +99,9 @@ eth_dma_init:
 	; select page 0
 
 	xor     al, al
-	call    eth_page_sel
+	call    ne2k_page_sel
+
+	; TODO: abort any previous DMA
 
 	; set DMA start address
 
@@ -109,17 +109,17 @@ eth_dma_init:
 	mov     al, bl
 	out     dx, al
 
-	mov     dx, #io_eth_dma_addr2
+	inc     dx
 	mov     al, bh
 	out     dx, al
 
 	; set DMA byte count
 
-	mov     dx, #io_eth_dma_len1
+	inc     dx
 	mov     al, cl
 	out     dx, al
 
-	mov     dx, #io_eth_dma_len1
+	inc     dx
 	mov     al, ch
 	out     dx, al
 
@@ -134,15 +134,15 @@ eth_dma_init:
 ; Write block to chip with internal DMA
 ;-------------------------------------------------------------------------------
 
-; BX    = chip memory (to write to)
-; CX    = byte count
-; DS:SI = host memory (to read from)
+; BX    : chip memory (to write to)
+; CX    : byte count
+; DS:SI : host memory (to read from)
 
-eth_block_write:
+ne2k_dma_write:
 
 	push    ax
 
-	call    eth_dma_init
+	call    ne2k_dma_init
 
 	; start DMA write
 
@@ -176,18 +176,18 @@ emw_loop:
 ; Read block from chip with internal DMA
 ;------------------------------------------------------------------------------
 
-; BX    = chip memory to read from
-; CX    = byte count
-; ES:DI = host memory to write to
+; BX    : chip memory to read from
+; CX    : byte count
+; ES:DI : host memory to write to
 
-eth_block_read:
+ne2k_dma_read:
 
 	push    ax
 	push    cx
 	push    dx
 	push    di
 
-	call    eth_dma_init
+	call    ne2k_dma_init
 
 	; start DMA read
 
@@ -220,20 +220,20 @@ emr_loop:
 ; Get packet
 ;------------------------------------------------------------------------------
 
-; ES:DI = packet buffer to fill
+; ES:DI : packet buffer to fill
 
 ; returns:
 
-; CX = packet size (0 : no packet)
+; CX : packet size (0 = no packet)
 
-eth_pack_get:
+_ne2k_pack_get:
 
 	push    ax
 	push    bx
 	push    dx
 
 	xor     al,al
-	call    eth_page_sel
+	call    ne2k_page_sel
 
 	; get RX pointers
 	; compute available length
@@ -258,15 +258,17 @@ epg_nowrap:
 	; get packet header
 
 	mov     cx, #4
-	call    eth_block_read
+	call    ne2k_dma_read
 
-	add     bx, #4
-	mov     ax, [es:di + 0]  ; AH = next record, AL = status
-	mov     cx, [es:di + 2]  ; packet size
+	eseg
+	mov     ax, [di + 0]  ; AH : next record, AL : status
+	eseg
+	mov     cx, [di + 2]  ; packet size
 
 	; get packet body
 
-	call    eth_block_read
+	add     bx, #4
+	call    ne2k_dma_read
 
 	; update RX get pointer
 
@@ -335,7 +337,7 @@ ie_next1:
 	; end of interrupt handling
 
 	mov     ax, #$0C
-	mov     dx, #io_int_end  ; $FF22
+	mov     dx, #$FF22
 	out     dx, ax
 
 	pop     ds
@@ -349,7 +351,7 @@ ie_next1:
 ; Start MAC
 ;-------------------------------------------------------------------------------
 
-eth_start:
+_ne2k_mac_start:
 
 	push    ax
 	push    dx
@@ -369,15 +371,28 @@ eth_start:
 ; Stop MAC
 ;-------------------------------------------------------------------------------
 
-eth_stop:
+_ne2k_mac_stop:
 
 	push    ax
 	push    dx
 
+	; select page 0
+
+	xor     al, al
+	call    ne2k_page_sel
+
+	; internal loopback to insulate
+	; from any external packet
+	; and ensure finally the TX end
+
+	; TBC
+
+	; then stop the transceiver
+
 	mov     dx, #io_eth_command
 	in      al, dx
 	and     al, #$FC
-	or      al, #$21
+	or      al, #$01
 	out     dx, al
 
 	pop     dx
@@ -386,16 +401,49 @@ eth_stop:
 
 
 ;-------------------------------------------------------------------------------
-; Configure MAC
+; NE2K termination
 ;-------------------------------------------------------------------------------
 
-eth_init:
+_ne2k_term:
+
+	push    ax
+	push    dx
+
+	; select page 0
+
+	xor     al, al
+	call    ne2k_page_sel
+
+	; internal loopback to insulate
+	; from any external packet
+	; and ensure finally the TX end
+
+	; TODO
+
+	; then stop the transceiver
+
+	call _ne2k_mac_stop
+
+	; and wait for chip get stable
+
+	; TODO
+
+	pop     dx
+	pop     ax
+	ret
+
+
+;-------------------------------------------------------------------------------
+; NE2K initialization
+;-------------------------------------------------------------------------------
+
+_ne2k_init:
 
 	push    ax
 	push    dx
 
 	xor     al,al
-	call    eth_page_sel
+	call    ne2k_page_sel
 
 	; data I/O in single bytes for 80188
 
@@ -425,21 +473,21 @@ eth_init:
 	; except one TX frame at beginning (6 x 256B)
 
 	mov     dx, #io_eth_rx_first
-	mov     al, [rx_first]
+	mov     al, #rx_first
 	out     dx, al
 
 	mov     dx, #io_eth_rx_last
-	mov     al, [rx_last]
+	mov     al, #rx_last
 	out     dx, al
 
 	mov     dx, #io_eth_tx_start
-	mov     al, [tx_start]
+	mov     al, #tx_first
 	out     dx, al
 
-	; set RX get pointer to start
+	; set RX get pointer
 
 	mov     dx, #io_eth_rx_get
-	mov     al, [rx_start]
+	mov     al, #rx_first
 	out     dx, al
 
 	; clear all interrupt flags
@@ -457,7 +505,7 @@ eth_init:
 	; select page 1
 
 	mov     al, #1
-	call    eth_page_sel
+	call    ne2k_page_sel
 
 	; clear unicast address
 
@@ -486,7 +534,7 @@ ei_loop_m:
 	; set RX put pointer to start
 
 	mov     dx, #io_eth_rx_put2
-	mov     al, [rx_start]
+	mov     al, #rx_first
 	out     dx, al
 
 	pop     dx
@@ -498,9 +546,9 @@ ei_loop_m:
 ; Set unicast address (aka MAC address)
 ;-------------------------------------------------------------------------------
 
-; DS:SI = unicast address (6 bytes)
+; DS:SI : unicast address (6 bytes)
 
-eth_unicast_set:
+_ne2k_addr_set:
 
 	push ax
 	push cx
@@ -510,7 +558,7 @@ eth_unicast_set:
 	; select page 1
 
 	mov     al, #1
-	call    eth_page_sel
+	call    ne2k_page_sel
 
 	; load MAC address
 
@@ -533,71 +581,25 @@ ems_loop:
 
 
 ;------------------------------------------------------------------------------
-; Wait for RX packet
+; Get RX state
 ;------------------------------------------------------------------------------
 
-eth_rx_wait:
-
-	push    ax
-
-erw_loop:
+_ne2k_rx_stat:
 
 	mov     ax, [rx_put_count]
-	cmp     ax, [rx_get_count]
-	jae     erw_exit
-	hlt
-	jmp     erw_loop
-
-erw_exit:
-
-	pop     ax
+	xor     ax, [rx_get_count]
 	ret
 
 
 ;------------------------------------------------------------------------------
 
-_entry:
-
-	; assume CS=DS=ES=DS
-
-	; temporary unit test code
-
-	; TODO: insert INT0 handler
-
-	call    eth_init
-	jc      e_exit
-
-	mov     si, #unicast_addr
-	call    eth_unicast_set
-
-	call    eth_start
-
-	call    eth_rx_wait
-
-	mov     di, #packet_buf
-	call    eth_pack_get
-
-	call    eth_stop
-
-	; TODO: remove INT0 handler
-
-e_exit:
-
-	retf
-
-
-;------------------------------------------------------------------------------
-
-; placeholder for RX packet
-
-	ORG $8000
-
-packet_buf        DB 0
-
-
-;------------------------------------------------------------------------------
-
-	ENTRY  _entry
+	EXPORT  _ne2k_mac_start
+	EXPORT  _ne2k_mac_stop
+	EXPORT  _ne2k_init
+	EXPORT  _ne2k_term
+	EXPORT  _ne2k_addr_set
+	EXPORT  _ne2k_pack_get
+	EXPORT  _ne2k_rx_stat
 
 	END
 

@@ -246,7 +246,7 @@ mdio_write:
 ; CX : PHY identifier (10h for internal)
 ; DX : register address
 
-returns
+; returns
 
 ; CF : 0=success 1=no response
 ; AX : register value (returned)
@@ -405,6 +405,5 @@ phy_mode:
 ;-------------------------------------------------------------------------------
 
 	END
-
 
 ;-------------------------------------------------------------------------------
