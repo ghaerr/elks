@@ -64,6 +64,9 @@ mdio_tx_word:
 	push    cx
 	push    dx
 
+	; TODO: optimize with BX as word to send
+	; TODO: to free AX for I/O data
+
 	mov     bx, ax
 
 mtb_loop:
@@ -346,26 +349,66 @@ mr_exit:
 
 
 ;-------------------------------------------------------------------------------
-; PHY - Get status
+; Get PHY register
 ;-------------------------------------------------------------------------------
 
-; AX = PHY status (bit 0 = link,  bit 1 = duplex,  bit 2 = speed)
+; arg1 : register number (0...31)
+; arg2 : pointer to register value
 
-phy_stat:
+; returns:
 
+; AX : error code (0 = success)
+
+
+_ne2k_phy_get:
+
+	push    bp
+	mov     bp, sp
+
+	push    bx
+	push    cx
 	push    dx
+
+	; internal PHY (address = 10h)
+
+	mov     cx, #$10
+	mov     dx, [bp + $4]
+	call    mdio_read
+	jc      pg_err
+
+	; save value in *arg2
+
+	mov     bx, [bp + $6]
+	mov     [bx], ax
+
+	; success
+
+	xor     ax,ax
+	jmp     pg_exit
+
+pg_err:
+
+	mov     ax,1
+
+pg_exit:
+
+	pop     dx
+	pop     cx
+	pop     bx
+
+	pop     bp
+	ret
+
+;-------------------------------------------------------------------------------
+; PHY - Get speed and duplex mode
+;-------------------------------------------------------------------------------
 
 	; get internal PHY status
 	; from linked GPIO pins
 
-	xor     ax, ax
-
-	mov     dx, #io_eth_gpio
-	in      al, dx
-	and     al, #7
-
-	pop     dx
-	ret
+	;mov     dx, #io_eth_gpio
+	;in      al, dx
+	;and     al, #7
 
 
 ;-------------------------------------------------------------------------------
@@ -403,6 +446,8 @@ phy_mode:
 
 
 ;-------------------------------------------------------------------------------
+
+	EXPORT  _ne2k_phy_get
 
 	END
 
