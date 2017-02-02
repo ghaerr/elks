@@ -46,6 +46,8 @@ extern word_t ne2k_stat ();
 
 static word_t phy_regs [32];
 
+static word_t link_stat;
+
 // MAC address (first byte, bit 0 : broadcast, bit 1 : local)
 // so use any address with first bits = 10b
 
@@ -127,8 +129,10 @@ word_t main ()
 		err = test_phy_read ();
 		if (err) break;
 
-		err = test_rx_single ();
-		if (err) break;
+		link_stat = ne2k_link_stat ();
+
+		//err = test_rx_single ();
+		//if (err) break;
 
 		break;
 		}

@@ -349,7 +349,7 @@ mr_exit:
 
 
 ;-------------------------------------------------------------------------------
-; Get PHY register
+; PHY - Get register
 ;-------------------------------------------------------------------------------
 
 ; arg1 : register number (0...31)
@@ -388,7 +388,7 @@ _ne2k_phy_get:
 
 pg_err:
 
-	mov     ax,1
+	mov     ax,#1
 
 pg_exit:
 
@@ -399,16 +399,31 @@ pg_exit:
 	pop     bp
 	ret
 
+
 ;-------------------------------------------------------------------------------
-; PHY - Get speed and duplex mode
+; PHY - Get link status
 ;-------------------------------------------------------------------------------
 
-	; get internal PHY status
-	; from linked GPIO pins
+; returns:
 
-	;mov     dx, #io_eth_gpio
-	;in      al, dx
-	;and     al, #7
+; AX : link status (see NE2K_LINK_* constants)
+
+
+_ne2k_link_stat:
+
+	push    dx
+
+	; get internal PHY status from linked GPIO pins
+	; rather than reading PHY status register
+
+	mov     dx, #io_eth_gpio
+	in      al, dx
+	and     al, #7
+
+	xor     ah,ah
+
+	pop     dx
+	ret
 
 
 ;-------------------------------------------------------------------------------
@@ -448,6 +463,8 @@ phy_mode:
 ;-------------------------------------------------------------------------------
 
 	EXPORT  _ne2k_phy_get
+
+	EXPORT  _ne2k_link_stat
 
 	END
 
