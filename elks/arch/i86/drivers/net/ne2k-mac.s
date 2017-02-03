@@ -149,14 +149,6 @@ dma_init:
 	xor     al, al
 	call    page_select
 
-	; stop DMA
-
-	mov     dx, #io_eth_command
-	in      al, dx
-	and     al, #$C7
-	or      al, #$20
-	out     dx, al
-
 	; set DMA start address
 
 	mov     dx, #io_eth_dma_addr1
@@ -213,6 +205,7 @@ dma_write:
 	; I/O write loop
 
 	mov     dx, #io_eth_data_io
+	cld
 
 emw_loop:
 
@@ -257,6 +250,7 @@ dma_read:
 	; I/O read loop
 
 	mov     dx, #io_eth_data_io
+	cld
 
 emr_loop:
 
@@ -264,12 +258,84 @@ emr_loop:
 	stosb
 	loop    emr_loop
 
-	; maybe check DMA stopped ?
+	; maybe check DMA completed ?
 
 	pop     di
 	pop     dx
 	pop     cx
 	pop     ax
+	ret
+
+
+;------------------------------------------------------------------------------
+; Test DMA read / write
+;------------------------------------------------------------------------------
+
+; arg1 = buffer to be used
+; arg2 = buffer size
+
+; returns:
+
+; AX = error code
+
+_ne2k_mem_test:
+
+	push    bp
+	mov     bp, sp
+	push    bx
+	push    cx
+	push    si
+	push    di
+
+	; step 1 : fill the buffer with test pattern
+
+	mov     cx, [bp + 6]
+	mov     di, [bp + 4]
+	cld
+
+nmt_loop1:
+
+	mov     al, cl
+	stosb
+	loop    nmt_loop1
+
+	; step 2 : write the buffer to chip
+
+	mov     bx, #$4000  ; internal memory first
+	mov     cx, [bp + 6]
+	mov     si, [bp + 4]
+	call    dma_write
+
+	; step 3 : read the buffer from chip
+
+	mov     di, si
+	call    dma_read
+
+	; step 4 : compare with test pattern
+
+	cld
+
+nmt_loop2:
+
+	lodsb
+	cmp     al,cl
+	jnz     nmt_err
+	loop    nmt_loop2
+
+	xor     ax, ax
+	jmp     nmt_end
+
+nmt_err:
+
+	mov     ax, #1
+
+nmt_end:
+
+	pop     di
+	pop     si
+	pop     cx
+	pop     bx
+	pop     bp
 	ret
 
 
@@ -464,17 +530,21 @@ _ne2k_init:
 	xor     al,al
 	call    page_select
 
+	; DMA and tranceiver stopped
+
+	; TODO
+
 	; data I/O in single bytes for 80188
 
 	mov     dx, #io_eth_data_conf
 	mov     al, #$48
 	out     dx, al
 
-	; accept all packet without error
-	; broadcast, multicast and promiscuous
+	; accept packet without error
+	; unicast & broadcast only
 
 	mov     dx, #io_eth_rx_conf
-	mov     al, #$5C
+	mov     al, #$44
 	out     dx, al
 
 	; half-duplex and internal loopback
@@ -513,9 +583,10 @@ _ne2k_init:
 
 	; set interrupt mask
 	; TX & RX without error and overflow
+	; TEMP: no interrupt for DMA testing
 
 	mov     dx, #io_eth_int_mask
-	mov     al, #$13
+	mov     al, #$0  ; TEMP: 13
 	out     dx, al
 
 	; select page 1
@@ -571,11 +642,13 @@ _ne2k_start:
 	push    dx
 
 	; TODO: read PHY status to update the TX mode
-	; TODO: return error on link down
+	; TODO: return error on link down ?
 
 	; call phy_stat
 
 	; TODO: out of loopback
+
+	; start the transceiver
 
 	mov     dx, #io_eth_command
 	in      al, dx
@@ -603,6 +676,14 @@ _ne2k_stop:
 	in      al, dx
 	and     al, #$FC
 	or      al, #$01
+	out     dx, al
+
+	; stop DMA
+
+	mov     dx, #io_eth_command
+	in      al, dx
+	and     al, #$C7
+	or      al, #$20
 	out     dx, al
 
 	; select page 0
@@ -634,7 +715,16 @@ _ne2k_term:
 	push    ax
 	push    dx
 
-	; maybe mask all interrrupts ?
+	; select page 0
+
+	xor     al, al
+	call    page_select
+
+	; mask all interrrupts
+
+	mov     dx, #io_eth_int_mask
+	xor     al,al
+	out     dx, al
 
 	pop     dx
 	pop     ax
@@ -644,6 +734,7 @@ _ne2k_term:
 ;------------------------------------------------------------------------------
 
 	EXPORT  _ne2k_addr_set
+	EXPORT  _ne2k_mem_test
 	EXPORT  _ne2k_pack_get
 	EXPORT  _ne2k_stat
 

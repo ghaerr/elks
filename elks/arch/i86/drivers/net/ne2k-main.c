@@ -15,6 +15,8 @@ typedef unsigned short word_t;
 #define NE2K_STAT_TX    0x0002
 #define NE2K_STAT_ERR   0x8000
 
+#define MAX_PACK        256 * 6
+
 
 //-----------------------------------------------------------------------------
 // Low-level routines
@@ -33,6 +35,8 @@ extern word_t ne2k_start ();
 extern void   ne2k_stop ();
 
 extern void   ne2k_addr_set (byte_t *addr);
+
+extern word_t ne2k_mem_test (byte_t * pack, word_t len);
 
 extern word_t ne2k_pack_get (byte_t * pack, word_t * len);
 extern word_t ne2k_pack_put (byte_t * pack, word_t len);
@@ -53,8 +57,10 @@ static word_t link_stat;
 
 static byte_t mac_address [6] = {2, 0, 0, 0, 0, 1};
 
-static byte_t rx_packet [6 * 256];
-static byte_t tx_packet [6 * 256];
+static byte_t rx_packet [MAX_PACK];
+static byte_t tx_packet [MAX_PACK];
+
+static word_t mem_stat;
 
 
 //-----------------------------------------------------------------------------
@@ -76,6 +82,23 @@ static word_t test_phy_read ()
 	}
 
 
+//-----------------------------------------------------------------------------
+// Test TX internal memory
+//-----------------------------------------------------------------------------
+
+static word_t test_tx_mem ()
+	{
+	word_t err;
+
+	err = ne2k_mem_test (tx_packet, MAX_PACK);
+	mem_stat = err;
+
+	return err;
+	}
+
+
+//-----------------------------------------------------------------------------
+// Receive a single frame
 //-----------------------------------------------------------------------------
 
 static word_t test_rx_single ()
@@ -126,10 +149,13 @@ word_t main ()
 
 	while (1)
 		{
-		err = test_phy_read ();
-		if (err) break;
+		//err = test_phy_read ();
+		//if (err) break;
 
-		link_stat = ne2k_link_stat ();
+		//link_stat = ne2k_link_stat ();
+
+		err = test_tx_mem ();
+		if (err) break;
 
 		//err = test_rx_single ();
 		//if (err) break;
