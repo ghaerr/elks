@@ -38,10 +38,13 @@ io_eth_multicast  EQU $308  ; page 1 - 8 bytes
 
 io_eth_data_io    EQU $310  ; 2 bytes
 
-
 tx_first          EQU $40
 rx_first          EQU $46
 rx_last           EQU $80
+
+; On Advantech SNMP-1000 SBC, the ethernet interrupt is INT0 (0Ch)
+
+int_vect          EQU $0C
 
 
 ;-------------------------------------------------------------------------------
@@ -271,12 +274,12 @@ emr_loop:
 ; Test DMA read / write
 ;------------------------------------------------------------------------------
 
-; arg1 = buffer to be used
-; arg2 = buffer size
+; arg1 : buffer to be used
+; arg2 : buffer size
 
 ; returns:
 
-; AX = error code
+; AX : error code
 
 _ne2k_mem_test:
 
@@ -301,7 +304,8 @@ nmt_loop1:
 
 	; step 2 : write the buffer to chip
 
-	mov     bx, #$4000  ; internal memory first
+	mov     bh, #tx_first
+	xor     bl, bl
 	mov     cx, [bp + 6]
 	mov     si, [bp + 4]
 	call    dma_write
@@ -343,17 +347,22 @@ nmt_end:
 ; Get packet
 ;------------------------------------------------------------------------------
 
-; ES:DI : packet buffer to fill
+; arg1 : packet buffer to fill
+; arg2 : pointer to byte count
 
 ; returns:
 
-; CX : packet size (0 = no packet)
+; AX : error code
 
 _ne2k_pack_get:
 
-	push    ax
+	push    bp
+	mov     bp,sp
+
 	push    bx
+	push    cx
 	push    dx
+	push    di
 
 	xor     al,al
 	call    page_select
@@ -368,8 +377,9 @@ _ne2k_pack_get:
 
 	mov     dx, #io_eth_rx_get
 	in      al, dx
+	inc     al
 	sub     ch, al
-	jz      epg_exit
+	jz      epg_err
 	jnc     epg_nowrap
 	add     ch, #rx_first
 
@@ -380,21 +390,21 @@ epg_nowrap:
 
 	; get packet header
 
+	mov     di, [bp + 4]
 	mov     cx, #4
 	call    dma_read
 
-	eseg
 	mov     ax, [di + 0]  ; AH : next record, AL : status
-	eseg
 	mov     cx, [di + 2]  ; packet size
 
 	; get packet body
 
-	; *** BUG ***
+	; **** BUG ****
 	; Add wrap case
-	; ***********
+	; *************
 
 	add     bx, #4
+	add     di, #4
 	call    dma_read
 
 	; update RX get pointer
@@ -409,11 +419,88 @@ epg_nowrap:
 	inc     ax
 	mov     [rx_get_count], ax
 
+	xor     ax, ax
+	jmp     epg_exit
+
+epg_err:
+
+	mov     ax, #1
+
 epg_exit:
 
+	pop     di
 	pop     dx
+	pop     cx
 	pop     bx
-	pop     ax
+	pop     bp
+	ret
+
+
+;------------------------------------------------------------------------------
+; Put packet to send
+;------------------------------------------------------------------------------
+
+; arg1 : packet buffer to read from
+; arg2 : size in bytes
+
+; returns:
+
+; AX : error code
+
+_ne2k_pack_put:
+
+	push    bp
+	mov     bp,sp
+
+	push    bx
+	push    cx
+	push    dx
+	push    si
+
+	xor     al,al
+	call    page_select
+
+	; write packet to chip memory
+
+	mov     cx, [bp + 6]
+	xor     bl,bl
+	mov     bh, #tx_first
+	mov     si, [bp + 4]
+	call    dma_write
+
+	; set TX pointer and length
+
+	mov     dx, #io_eth_tx_start
+	mov     al, #tx_first
+	out     dx, al
+
+	mov     dx, #io_eth_tx_len1
+	mov     al, cl
+	out     dx, al
+	inc     dx  ; = io_eth_tx_len2
+	mov     al, ch
+	out     dx, al
+
+	; start TX
+
+	mov     dx, #io_eth_command
+	in      al, dx
+	or      al, #$04
+	out     dx, al
+
+	; increment TX put counter
+
+	mov     ax, [tx_put_count]
+	inc     ax
+	mov     [tx_put_count], ax
+
+	xor     ax, ax
+
+	pop     si
+	pop     dx
+	pop     cx
+	pop     bx
+	pop     bp
 	ret
 
 
@@ -421,9 +508,7 @@ epg_exit:
 ; Interrupt handler
 ;-------------------------------------------------------------------------------
 
-; On Advantech SNMP-1000 SBC, the ethernet interrupt is INT0 (0Ch)
-
-int_eth:
+int_hand:
 
 	push    ax
 	push    bx
@@ -469,7 +554,7 @@ ie_next1:
 	test    al, #$02
 	jz      ie_next2
 
-	; increment RX put count
+	; increment TX get count
 
 	inc     word [tx_get_count]
 
@@ -483,7 +568,7 @@ ie_next2:
 
 	; end of interrupt handling
 
-	mov     ax, #$0C
+	mov     ax, #int_vect
 	mov     dx, #$FF22
 	out     dx, ax
 
@@ -495,26 +580,70 @@ ie_next2:
 
 
 ;------------------------------------------------------------------------------
-; Get NE2K state
+; Interrupt setup
 ;------------------------------------------------------------------------------
 
-; NE2K_STAT_RX   = 1
-; NE2K_STAT_TX   = 2
-; NE2K_STAT_ERR  = 3
+_ne2k_int_setup:
 
-_ne2k_stat:
+	push    ax
+	push    bx
+	push    ds
+
+	xor     ax, ax
+	mov     ds, ax
+
+	mov     bx, #int_vect * 4
+
+	mov     ax, #int_hand
+	mov     [bx], ax
+	mov     [bx + 2], cs
+
+	pop     ds
+	pop     bx
+	pop     ax
+	ret
+
+
+;------------------------------------------------------------------------------
+; Get NE2K status
+;------------------------------------------------------------------------------
+
+; returns:
+
+; AX : status
+;   1 = packet received
+;   2 = packet sent
+
+_ne2k_status:
 
 	push    dx
-	xor     dx, dx
 
-	mov     ax, [rx_put_count]
-	xor     ax, [rx_get_count]
+	int     #$03  ; breakpoint
+
+	; TEMP: check status directly
+	; by shortcut interrupt handler
+
+	xor     al, al
+	call    page_select
+
+	xor     ah, ah
+
+	mov     dx, #io_eth_int_stat
+	in      al, dx
+	test    al, #$3F  ; #$01  ; packet received without error
 	jz      ns_next1
-	or      dx, #$0001  ; NE2K_STAT_RX
+
+	int     #$03  ; breakpoint
+
+	;xor     dx, dx
+	;mov     ax, [rx_put_count]
+	;xor     ax, [rx_get_count]
+	;jz      ns_next1
+	;or      dx, #$0001  ; NE2K_STAT_RX
 
 ns_next1:
 
-	mov     ax, dx
+	;mov     ax, dx
 	pop     dx
 	ret
 
@@ -525,16 +654,25 @@ ns_next1:
 
 _ne2k_init:
 
+	push    cx
 	push    dx
+
+	; select page 0
 
 	xor     al,al
 	call    page_select
 
-	; DMA and tranceiver stopped
+	; Stop DMA and MAC
 
-	; TODO
+	mov     dx, #io_eth_command
+	in      al, dx
+	and     al, #$C0
+	or      al, #$21
+	out     dx, al
 
-	; data I/O in single bytes for 80188
+	; data I/O in single bytes
+	; and low endian for 80188
+	; plus magical stuff (48h)
 
 	mov     dx, #io_eth_data_conf
 	mov     al, #$48
@@ -548,9 +686,10 @@ _ne2k_init:
 	out     dx, al
 
 	; half-duplex and internal loopback
+	; to insulate the MAC while stopped
 
 	mov     dx, #io_eth_tx_conf
-	mov     al, #2
+	mov     al, #0  ; 2
 	out     dx, al
 
 	; set RX ring limits
@@ -575,6 +714,15 @@ _ne2k_init:
 	mov     al, #rx_first
 	out     dx, al
 
+	; clear DMA length
+
+	xor     al, al
+	mov     dx, #io_eth_dma_len1
+	out     dx, al
+	;mov     dx, #io_eth_dma_len2
+	inc     dx
+	out     dx, al
+
 	; clear all interrupt flags
 
 	mov     dx, #io_eth_int_stat
@@ -583,10 +731,9 @@ _ne2k_init:
 
 	; set interrupt mask
 	; TX & RX without error and overflow
-	; TEMP: no interrupt for DMA testing
 
 	mov     dx, #io_eth_int_mask
-	mov     al, #$0  ; TEMP: 13
+	mov     al, #$13
 	out     dx, al
 
 	; select page 1
@@ -618,10 +765,11 @@ ei_loop_m:
 	inc     dx
 	loop    ei_loop_m
 
-	; set RX put pointer to start
+	; set RX put pointer to start + 1
 
 	mov     dx, #io_eth_rx_put2
 	mov     al, #rx_first
+	inc     al
 	out     dx, al
 
 	; return no error
@@ -629,6 +777,7 @@ ei_loop_m:
 	xor     ax,ax
 
 	pop     dx
+	pop     cx
 	ret
 
 
@@ -638,15 +787,15 @@ ei_loop_m:
 
 _ne2k_start:
 
-	push    ax
 	push    dx
 
-	; TODO: read PHY status to update the TX mode
-	; TODO: return error on link down ?
+	; TODO: read PHY status to update the duplex mode ?
 
-	; call phy_stat
+	; move out of internal loopback
 
-	; TODO: out of loopback
+	mov     dx, #io_eth_tx_conf
+	xor     al, al
+	out     dx, al
 
 	; start the transceiver
 
@@ -656,13 +805,14 @@ _ne2k_start:
 	or      al, #$02
 	out     dx, al
 
+	xor     ax, ax
+
 	pop     dx
-	pop     ax
 	ret
 
 
 ;-------------------------------------------------------------------------------
-; NE2K shutdown
+; NE2K stop
 ;-------------------------------------------------------------------------------
 
 _ne2k_stop:
@@ -670,20 +820,12 @@ _ne2k_stop:
 	push    ax
 	push    dx
 
-	; stop the transceiver
+	; Stop the DMA and the transceiver
 
 	mov     dx, #io_eth_command
 	in      al, dx
-	and     al, #$FC
-	or      al, #$01
-	out     dx, al
-
-	; stop DMA
-
-	mov     dx, #io_eth_command
-	in      al, dx
-	and     al, #$C7
-	or      al, #$20
+	and     al, #$C0
+	or      al, #$21
 	out     dx, al
 
 	; select page 0
@@ -691,11 +833,22 @@ _ne2k_stop:
 	xor     al, al
 	call    page_select
 
-	; internal loopback to insulate
-	; from any external packet
-	; and ensure finally the TX end
+	; half-duplex and internal loopback
+	; to insulate the MAC while stopped
+	; and ensure TX finally ends
 
-	; TODO
+	mov     dx, #io_eth_tx_conf
+	mov     al, #2
+	out     dx, al
+
+	; clear DMA length
+
+	xor     al, al
+	mov     dx, #io_eth_dma_len1
+	out     dx, al
+	;mov     dx, #io_eth_dma_len2
+	inc     dx
+	out     dx, al
 
 	; and wait for chip get stable
 
@@ -709,6 +862,8 @@ _ne2k_stop:
 ;-------------------------------------------------------------------------------
 ; NE2K termination
 ;-------------------------------------------------------------------------------
+
+; call ne2k_stop() before
 
 _ne2k_term:
 
@@ -732,16 +887,44 @@ _ne2k_term:
 
 
 ;------------------------------------------------------------------------------
+; Reset chip
+;------------------------------------------------------------------------------
+
+_ne2k_reset:
+
+	push    ax
+	push    dx
+
+	; reset the chip
+
+	mov     dx,#$31F  ; reset register
+	in      al, dx
+	out     dx, al
+
+	; manual wait for reset
+
+	int     #3
+
+	pop     dx
+	pop     ax
+	ret
+
+
+;------------------------------------------------------------------------------
 
 	EXPORT  _ne2k_addr_set
 	EXPORT  _ne2k_mem_test
 	EXPORT  _ne2k_pack_get
-	EXPORT  _ne2k_stat
+	EXPORT  _ne2k_pack_put
+	EXPORT  _ne2k_status
 
 	EXPORT  _ne2k_init
 	EXPORT  _ne2k_start
 	EXPORT  _ne2k_stop
 	EXPORT  _ne2k_term
+	EXPORT  _ne2k_reset
+
+	EXPORT  _ne2k_int_setup
 
 	END
 
