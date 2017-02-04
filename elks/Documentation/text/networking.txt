@@ -1,38 +1,36 @@
 
+ELKS Networking
+---------------
 
- ELKS TCP/IP
--------------
-
+ 
 Table of contents
 -----------------
 
-1. Notes on networing code
+1. Notes on networking code
 2. Setup
 3. Status
 
 
-  1. Notes on networking code
--------------------------------
+1. Notes on networking code
+---------------------------
 
 The current development model is based around using a user process as the
 actual TCP/IP stack with socket file descriptors and device drivers dealt
 with by the kernel. The diagram below shows how things should work.
 
 
-            ___________________        ____________________
-           |                   |      |                    |
-           |Network Application|      |TCP/IP stack process|
-           |___________________|      |____________________|
+            ___________________      ____________________
+           |                   |    |                    |
+           |Network Application|    |TCP/IP stack process|
+           |___________________|    |____________________|
                        |               /           |
-                       |              /            |
-      _________________|_____________/_____________|________________
-     |                 |            /              |                |
-     | KERNEL          |           /               |                |
-     |            _____|__________/_     __________|________        |
+      _________________|______________/____________|________________
+     |                 |             /             |                |
+     | KERNEL          |            /              |                |
+     |            _____|___________/_    __________|________        |
      |           |                  |   |                   |       |
      |           |  TCPDEV device   |   | RAW Driver        |       |
      |           |__________________|   |___________________|       |
-     |                                             |                |
      |                                             |                |
      |_____________________________________________|________________|
                                                    |
@@ -44,14 +42,66 @@ with by the kernel. The diagram below shows how things should work.
 
 The Network Application uses the standard BSD socket interface to open,
 read and write sockets. The socket code passes the data on to the TCP/IP
-stack process, through the /dev/tcpdev device.
+stack process (= ktcp), through the /dev/tcpdev device.
 
-The TCP/IP stack process then constructs TCP/IP packets and writes them to
-the network device driver, including all the necessary hardware headers.
+ktcp then constructs TCP/IP packets and writes them to the network device
+driver, including all the necessary hardware headers.
+
+At system boot the code in "init/main.c" is run which calls sock_init() in
+"socket.c". This initializes, depending on the kernel configuration, the kernel
+interfaces in the files "af_init.c" (internet), "af_unix.c" (unix domain
+sockets) and "af_nano.c".
+
+These again call "sock_register()" in socket.c passing a structure with the
+functions they have implemented and their family name, e.g. "AF_INET".
+
+The common socket commands that ELKS supports i.e. socket, accept, bind,
+connect and listen are implemented in libc. In libc there are wrappers around
+kernel system calls which are implemented in "socket.c". These system calls
+are sys_socket, sys_accept,  sys_bind, sys_connect and sys_listen.
+
+The application passes the family name with the command and this selects which
+of the kernel interfaces above will execute the command.
+
+You can also use the read, write, select and close commands with the socket
+handle. These are executed with the sock_read, sock_write, sock_select and
+sock_close functions in socket.c.
+
+So if the application executes a "write" with the family "AF_INET" the
+sock_write function in socket.c will translate this via structures of pointers
+into the function inet_write() in "af_inet.c" and execute that. This calls the
+function tcpdev_inetwrite() in our char/tcpdev driver which writes it into the
+"tdout_buf" buffer.
+
+This buffer is then copied to memory in the tcpdev_read() function for the ktcp
+user space driver to pick up and send. On the other hand, the char/tcpdev
+driver will use the tcpdev_write() function to copy received data to the kernel
+interface "af_inet.c" by calling the function inet_process_tcpdev() in that
+code.
+
+There are two tcpdev.c files in the code. One, the "char/tcpdev", is linked as
+a kernel driver, and the other, "ktcp/tcpdev", handles the tcp part for the
+ktcp user mode driver.
+
+When ktcp is started, it initializes several modules, first it calls
+tcpdev_init() which is implemented in ktcp/tcpdev.c. This opens the dev/tcpdev
+device that the kernel mode char/tcpdev driver has provided and receives the
+"tcpdevfd" handle. Then the slip interface, ip, icmp, tcp and netconf are
+initialized. At the end ktcp calls its ktcp_run() function which does a while
+loop frequently calling tcp_process() in ktcp/tcpdev.
+
+The tcp_process() function queries the tcpdev device of the "char/tcpdev"
+driver for tasks to execute. In case of a write task, the function calls
+tcpdev_write which again calls tcp_output that implements retransmissions if
+necessary. It calls the function ip_sendpacket() in "ip.c". This function
+again uses the function slip_send() in "slip.c".
+
+The loop in ktcp_run() also calls slip_process() in slip.c which handles the
+data received by calling ip_recvpacket() in "ip.c".
 
 
-  2. Setup
-------------
+2. Setup
+--------
 
 At the moment, ELKS supports only SLIP connections so you have to connect
 the machine running ELKS with another machine using a serial cable. The
@@ -89,13 +139,12 @@ with "make images.zip", the networking setup is much easier. Just edit the
 /etc/rc.d/rc.sysinit file to enter the machine's IP and serial baud rate.
 
 
-  3. Status
--------------
+3. Status
+---------
 
-  This section desribes the current state of the networking code. It's
+This section desribes the current state of the networking code. It's
 purpose is to give users an idea of what is done and what to expect of
 the ELKS networking.
 
--- To be writen --
 
-		Harry
+Harry / Georg Potthass
