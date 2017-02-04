@@ -42,31 +42,13 @@ tx_first          EQU $40
 rx_first          EQU $46
 rx_last           EQU $80
 
-; On Advantech SNMP-1000 SBC, the ethernet interrupt is INT0 (0Ch)
 
-int_vect          EQU $0C
-
-
-;-------------------------------------------------------------------------------
-; Local data
-;-------------------------------------------------------------------------------
-
-	.DATA
-
-overflow_count:  DW 0
-
-rx_put_count:	 DW 0
-rx_get_count:    DW 0
-
-tx_put_count:	 DW 0
-tx_get_count:    DW 0
+	.TEXT
 
 
 ;-------------------------------------------------------------------------------
 ; Select register page
 ;-------------------------------------------------------------------------------
-
-	.TEXT
 
 ; AL : page number (0 or 1)
 
@@ -271,84 +253,10 @@ emr_loop:
 
 
 ;------------------------------------------------------------------------------
-; Test DMA read / write
+; Get received packet
 ;------------------------------------------------------------------------------
 
-; arg1 : buffer to be used
-; arg2 : buffer size
-
-; returns:
-
-; AX : error code
-
-_ne2k_mem_test:
-
-	push    bp
-	mov     bp, sp
-	push    bx
-	push    cx
-	push    si
-	push    di
-
-	; step 1 : fill the buffer with test pattern
-
-	mov     cx, [bp + 6]
-	mov     di, [bp + 4]
-	cld
-
-nmt_loop1:
-
-	mov     al, cl
-	stosb
-	loop    nmt_loop1
-
-	; step 2 : write the buffer to chip
-
-	mov     bh, #tx_first
-	xor     bl, bl
-	mov     cx, [bp + 6]
-	mov     si, [bp + 4]
-	call    dma_write
-
-	; step 3 : read the buffer from chip
-
-	mov     di, si
-	call    dma_read
-
-	; step 4 : compare with test pattern
-
-	cld
-
-nmt_loop2:
-
-	lodsb
-	cmp     al,cl
-	jnz     nmt_err
-	loop    nmt_loop2
-
-	xor     ax, ax
-	jmp     nmt_end
-
-nmt_err:
-
-	mov     ax, #1
-
-nmt_end:
-
-	pop     di
-	pop     si
-	pop     cx
-	pop     bx
-	pop     bp
-	ret
-
-
-;------------------------------------------------------------------------------
-; Get packet
-;------------------------------------------------------------------------------
-
-; arg1 : packet buffer to fill
-; arg2 : pointer to byte count
+; arg1 : packet buffer to write to
 
 ; returns:
 
@@ -367,23 +275,27 @@ _ne2k_pack_get:
 	xor     al,al
 	call    page_select
 
-	; get RX pointers
-	; compute available length
+	; get RX put pointer
 
 	mov     dx, #io_eth_rx_put1
 	in      al, dx
-	mov     ch, al
-	xor     cl, cl
+	mov     cl, al
+
+	; get RX get pointer
 
 	mov     dx, #io_eth_rx_get
 	in      al, dx
 	inc     al
-	sub     ch, al
-	jz      epg_err
-	jnc     epg_nowrap
-	add     ch, #rx_first
+	cmp     al, #rx_last
+	jnz     npg_nowrap1
+	mov     al, #rx_first
 
-epg_nowrap:
+npg_nowrap1:
+
+	; check ring is not empty
+
+	cmp     cl, al
+	jz      npg_err
 
 	xor     bl, bl
 	mov     bh, al
@@ -395,38 +307,65 @@ epg_nowrap:
 	call    dma_read
 
 	mov     ax, [di + 0]  ; AH : next record, AL : status
-	mov     cx, [di + 2]  ; packet size
-
-	; get packet body
-
-	; **** BUG ****
-	; Add wrap case
-	; *************
+	mov     cx, [di + 2]  ; packet size (without CRC)
 
 	add     bx, #4
 	add     di, #4
+
+	push    ax
+	push    cx
+
+	mov     ax, bx
+	add     ax, cx
+	cmp     ax, #$8000
+	jbe     npg_nowrap2
+
+	mov     ax, #$8000
+	sub     ax, bx
+	mov     cx, ax
+
+npg_nowrap2:
+
+	; get packet body (first segment)
+
 	call    dma_read
+
+	add     di, cx
+
+	mov     ax, cx
+	pop     cx
+	sub     cx, ax
+	jz      npg_nowrap3
+
+	; get packet body (second segment)
+
+	mov     bx, #$4000
+	call    dma_read
+
+npg_nowrap3:
 
 	; update RX get pointer
 
+	pop     ax
 	xchg    ah, al
+	dec     al
+	cmp     al, #rx_first
+	jae     npg_next
+	mov     al, #rx_last - 1
+
+npg_next:
+
 	mov     dx, #io_eth_rx_get
 	out     dx, al
 
-	; increment RX get counter
-
-	mov     ax, [rx_get_count]
-	inc     ax
-	mov     [rx_get_count], ax
-
 	xor     ax, ax
-	jmp     epg_exit
+	jmp     npg_exit
 
-epg_err:
+npg_err:
 
-	mov     ax, #1
+	mov     ax, #$FFFF
 
-epg_exit:
+npg_exit:
 
 	pop     di
 	pop     dx
@@ -488,12 +427,6 @@ _ne2k_pack_put:
 	or      al, #$04
 	out     dx, al
 
-	; increment TX put counter
-
-	mov     ax, [tx_put_count]
-	inc     ax
-	mov     [tx_put_count], ax
-
 	xor     ax, ax
 
 	pop     si
@@ -504,106 +437,6 @@ _ne2k_pack_put:
 	ret
 
 
-;-------------------------------------------------------------------------------
-; Interrupt handler
-;-------------------------------------------------------------------------------
-
-int_hand:
-
-	push    ax
-	push    bx
-	push    dx
-	push    ds
-
-	; get data segment
-	; assume CS=DS=ES
-
-	mov     ax, cs
-	mov     ds, ax
-
-	; read interrupt status
-
-	mov     dx, #io_eth_int_stat
-	in      al, dx
-	push    ax
-
-	; ring overflow ?
-
-	test    al, #$10
-	jz      ie_next0
-
-	; TODO: manage overflow
-
-	inc     word [overflow_count]
-
-ie_next0:
-
-	; packet received without error ?
-
-	test    al, #$01
-	jz      ie_next1
-
-	; increment RX put count
-
-	inc     word [rx_put_count]
-
-ie_next1:
-
-	; packet transmitted without error ?
-
-	test    al, #$02
-	jz      ie_next2
-
-	; increment TX get count
-
-	inc     word [tx_get_count]
-
-ie_next2:
-
-	; clear interrupt flags
-
-	pop     ax
-	mov     dx, #io_eth_int_stat
-	out     dx, al
-
-	; end of interrupt handling
-
-	mov     ax, #int_vect
-	mov     dx, #$FF22
-	out     dx, ax
-
-	pop     ds
-	pop     dx
-	pop     bx
-	pop     ax
-	iret
-
-
-;------------------------------------------------------------------------------
-; Interrupt setup
-;------------------------------------------------------------------------------
-
-_ne2k_int_setup:
-
-	push    ax
-	push    bx
-	push    ds
-
-	xor     ax, ax
-	mov     ds, ax
-
-	mov     bx, #int_vect * 4
-
-	mov     ax, #int_hand
-	mov     [bx], ax
-	mov     [bx + 2], cs
-
-	pop     ds
-	pop     bx
-	pop     ax
-	ret
-
-
 ;------------------------------------------------------------------------------
 ; Get NE2K status
 ;------------------------------------------------------------------------------
@@ -611,39 +444,34 @@ _ne2k_int_setup:
 ; returns:
 
 ; AX : status
-;   1 = packet received
-;   2 = packet sent
+;   01h = packet received
+;   02h = packet sent
+;   10h = RX ring overflow
 
 _ne2k_status:
 
 	push    dx
 
-	int     #$03  ; breakpoint
-
-	; TEMP: check status directly
-	; by shortcut interrupt handler
+	; select page 0
 
 	xor     al, al
 	call    page_select
+
+	; get interrupt status
 
 	xor     ah, ah
 
 	mov     dx, #io_eth_int_stat
 	in      al, dx
-	test    al, #$3F  ; #$01  ; packet received without error
+	test    al, #$3F
 	jz      ns_next1
 
-	int     #$03  ; breakpoint
+	; acknowledge interrupt
 
-	;xor     dx, dx
-	;mov     ax, [rx_put_count]
-	;xor     ax, [rx_get_count]
-	;jz      ns_next1
-	;or      dx, #$0001  ; NE2K_STAT_RX
+	out     dx, al
 
 ns_next1:
 
-	;mov     ax, dx
 	pop     dx
 	ret
 
@@ -663,6 +491,7 @@ _ne2k_init:
 	call    page_select
 
 	; Stop DMA and MAC
+	; TODO: is this really needed after a reset ?
 
 	mov     dx, #io_eth_command
 	in      al, dx
@@ -687,6 +516,7 @@ _ne2k_init:
 
 	; half-duplex and internal loopback
 	; to insulate the MAC while stopped
+	; TODO: loopback cannot be turned off later !
 
 	mov     dx, #io_eth_tx_conf
 	mov     al, #0  ; 2
@@ -715,12 +545,12 @@ _ne2k_init:
 	out     dx, al
 
 	; clear DMA length
+	; TODO: is this really needed after a reset ?
 
 	xor     al, al
 	mov     dx, #io_eth_dma_len1
 	out     dx, al
-	;mov     dx, #io_eth_dma_len2
-	inc     dx
+	inc     dx  ; = io_eth_dma_len2
 	out     dx, al
 
 	; clear all interrupt flags
@@ -765,7 +595,7 @@ ei_loop_m:
 	inc     dx
 	loop    ei_loop_m
 
-	; set RX put pointer to start + 1
+	; set RX put pointer to first bloc + 1
 
 	mov     dx, #io_eth_rx_put2
 	mov     al, #rx_first
@@ -789,20 +619,20 @@ _ne2k_start:
 
 	push    dx
 
-	; TODO: read PHY status to update the duplex mode ?
-
-	; move out of internal loopback
-
-	mov     dx, #io_eth_tx_conf
-	xor     al, al
-	out     dx, al
-
 	; start the transceiver
 
 	mov     dx, #io_eth_command
 	in      al, dx
 	and     al, #$FC
 	or      al, #$02
+	out     dx, al
+
+	; move out of internal loopback
+
+	; TODO: read PHY status to update the duplex mode ?
+
+	mov     dx, #io_eth_tx_conf
+	xor     al, al
 	out     dx, al
 
 	xor     ax, ax
@@ -820,7 +650,7 @@ _ne2k_stop:
 	push    ax
 	push    dx
 
-	; Stop the DMA and the transceiver
+	; Stop the DMA and the MAC
 
 	mov     dx, #io_eth_command
 	in      al, dx
@@ -846,13 +676,10 @@ _ne2k_stop:
 	xor     al, al
 	mov     dx, #io_eth_dma_len1
 	out     dx, al
-	;mov     dx, #io_eth_dma_len2
-	inc     dx
+	inc     dx  ; = io_eth_dma_len2
 	out     dx, al
 
-	; and wait for chip get stable
-
-	; TODO
+	; TODO: wait for the chip to get stable
 
 	pop     dx
 	pop     ax
@@ -887,7 +714,7 @@ _ne2k_term:
 
 
 ;------------------------------------------------------------------------------
-; Reset chip
+; NE2K reset
 ;------------------------------------------------------------------------------
 
 _ne2k_reset:
@@ -902,6 +729,7 @@ _ne2k_reset:
 	out     dx, al
 
 	; manual wait for reset
+	; TODO: replace by wait function
 
 	int     #3
 
@@ -913,18 +741,17 @@ _ne2k_reset:
 ;------------------------------------------------------------------------------
 
 	EXPORT  _ne2k_addr_set
-	EXPORT  _ne2k_mem_test
 	EXPORT  _ne2k_pack_get
 	EXPORT  _ne2k_pack_put
 	EXPORT  _ne2k_status
 
 	EXPORT  _ne2k_init
+	EXPORT  _ne2k_term
+
 	EXPORT  _ne2k_start
 	EXPORT  _ne2k_stop
-	EXPORT  _ne2k_term
-	EXPORT  _ne2k_reset
 
-	EXPORT  _ne2k_int_setup
+	EXPORT  _ne2k_reset
 
 	END
 
