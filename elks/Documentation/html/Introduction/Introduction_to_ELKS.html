@@ -1,0 +1,2931 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice 4.1.2  (Win32)">
+	<META NAME="AUTHOR" CONTENT="Georg Potthast">
+	<META NAME="CREATED" CONTENT="20170105;19172240">
+	<META NAME="CHANGEDBY" CONTENT="Georg Potthast">
+	<META NAME="CHANGED" CONTENT="20170208;20432751">
+	<STYLE TYPE="text/css">
+	<!--
+		@page { margin: 2cm }
+		TD P { margin-bottom: 0cm }
+		H1 { margin-bottom: 0.21cm }
+		H1.western { font-family: "Liberation Serif", serif }
+		H1.cjk { font-family: "Droid Sans Fallback" }
+		H1.ctl { font-family: "Droid Sans Devanagari" }
+		P { margin-bottom: 0.21cm }
+		PRE.cjk { font-family: "NSimSun", monospace }
+		H2 { margin-bottom: 0.21cm }
+		H2.western { font-family: "Arial", sans-serif; font-size: 14pt; font-style: italic }
+		H2.cjk { font-family: "Microsoft YaHei"; font-size: 14pt; font-style: italic }
+		H2.ctl { font-family: "Lucida Sans"; font-size: 14pt; font-style: italic }
+		A:link { so-language: zxx }
+		CODE.western { font-family: "Liberation Mono", monospace }
+		CODE.cjk { font-family: "Nimbus Mono L", monospace }
+		CODE.ctl { font-family: "Liberation Mono", monospace }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="de-DE" DIR="LTR">
+<TABLE WIDTH=718 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-before: always">
+	<COL WIDTH=710>
+	<TR>
+		<TD WIDTH=710 VALIGN=TOP>
+			<H1 CLASS="western" ALIGN=CENTER><FONT FACE="Arial, sans-serif"><FONT SIZE=7>Introduction
+			to ELKS </FONT></FONT>
+			</H1>
+			<H2 CLASS="western" ALIGN=CENTER>&ndash; <FONT SIZE=6><SPAN STYLE="font-style: normal">the
+			Embeddable Linux Kernel Subset -</SPAN></FONT></H2>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><U>Contents</U></FONT></P>
+			<OL>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">What
+				is ELKS?</FONT></P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">First
+				steps with ELKS </FONT>
+				</P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Development
+				tools for ELKS</FONT></P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Writing
+				applications for ELKS</FONT></P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Compiling
+				ELKS and building disk images</FONT></P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Configuring
+				a hard disk and installing a hard disk boot loader</FONT></P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Writing
+				kernel mode drivers for ELKS</FONT></P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Using
+				Unix domain sockets</FONT></P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">TCP/IP
+				networking with SLIP and Qemu</FONT></P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Overview
+				of the ELKS network code</FONT></P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Links
+				to ELKS sites</FONT></P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">ELKS
+				commands and system utilities</FONT></P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+				Minix file system</FONT></P>
+				<LI><P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+				ELKS One Page Manual</FONT></P>
+			</OL>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<H2 CLASS="western" STYLE="font-style: normal"><B>1. What is ELKS?</B></H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>ELKS
+			is a Linux-like system for 16-bit x86 PCs and embedded systems.
+			The entire system fits on a single floppy disk image. ELKS is free
+			software and available under the GNU General Public License (GPL).</FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>ELKS
+			was named Linux-8086, when its development started in 1995 by
+			Linux kernel developers Alan Cox and Chad Page as a fork of the
+			standard Linux. By early 1996 the project was already renamed
+			ELKS.</FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>More
+			than 30 developers have contributed to this project since 1995. In
+			2012 ELKS migrated to GIT and numerous patches from the Linux-8086
+			mailing list were committed to the new repository. The current
+			maintainer is Jody Bruchon living in Siler City, North Carolina. </FONT></FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>ELKS
+			was also ported to the Psion 3a palmtop computer:
+			<A HREF="https://en.wikipedia.org/wiki/Psion_Series_3">https://en.wikipedia.org/wiki/Psion_Series_3</A></FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>The
+			goal of the ELKS project is to create a Linux option for 8086
+			class PC's since Linux itself requires a 32 bit processor.
+			However, there is only very few hardware for embeddable systems
+			available now which would require a system like ELKS. Most
+			hardware platforms have got far more powerful since the beginning
+			of ELKS. The ELKS concept is very similar to Linux so that you can
+			use a lot of the available information for Linux to get to know
+			ELKS. The design follows closely along the lines of Linux.
+			Therefore a lot of the documentation that is available for Linux
+			on the internet can be used to explain the ELKS source code.
+			However, some parts are based on the Minix operating system, for
+			example the format of executable files and the use of the Minix
+			file system. The entire code is still so small that one person can
+			overlook it and provides plenty of opportunities for enhancements.
+			So ELKS provides great hacking value.<BR></FONT></FONT><BR><BR>
+			</P>
+			<H2 CLASS="western" STYLE="font-style: normal"><FONT SIZE=4>2.
+			First steps with ELKS</FONT></H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			easiest way to get to know ELKS is to use the ELKS disk images you
+			can download here:
+			<A HREF="https://github.com/jbruchon/elks/releases/tag/v0.2.0">https://github.com/jbruchon/elks/releases/tag/v0.2.0</A></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">I
+			recommend to use the full3 image file provided, which I prefer to
+			rename to full3.img. However, I will stay with full3 in this
+			paper. On Linux you can run that using Qemu with the following
+			command: </FONT>
+			</P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">qemu-system-i386 -fda full3</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">This paper is based on ELKS version
+			0.2.0, also the description for compiling the kernel. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">To
+			run ELKS on Windows you can use the Qemu Manager. This can be
+			downloaded from many sites e.g. here:
+			<A HREF="http://qemu-manager.en.lo4d.com/">http://qemu-manager.en.lo4d.com/</A>
+			In Qemu Manager configure the full3 image file as the floppy to
+			boot from and it will run.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">After
+			ELKS has booted log in as &bdquo;root&ldquo; without entering a
+			password. Then you are in the empty root directory which is the
+			home directory for the root user. From there get into the ELKS
+			root directory by entering &bdquo;cd /&ldquo;. If you then enter
+			&bdquo;ls&ldquo; you see the directory structure. The programs you
+			can run are placed in the directories etc/bin and usr/bin. See the
+			command reference and the One Page Manual below.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">ELKS
+			is designed to boot from a floppy disk. You can access a hard disk
+			too if you make a hard disk image.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">If
+			you want to test ELKS on a real PC you can write the full3 image
+			file to a floppy disk. Check first what the device name for the
+			floppy disk is on your PC, it may be /dev/fd0, /dev/sdb or
+			/dev/sdd. The command &bdquo;df&ldquo; will tell you that - as
+			long as a floppy is inserted in the drive. Use &bdquo;dd&ldquo; to
+			copy the image file to the floppy: </FONT>
+			</P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">dd if=full3 of=/dev/sdd bs=2048</FONT></PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">ELKS has the following default
+			directory structure:</FONT></P>
+			<PRE CLASS="western">/       = root
+\-bin   = binary executables providing common linux commands such as ls, cp, ps.
+\-boot  = kernel and boot files
+\-dev   = device files such as fd0, hda0, tty1 (floppy, hard disk, terminal)
+\-etc   = configuration files  such as inittab, passwd, rc.d, termcap
+\-home  = home directories of users
+\-lib   = library files
+\-mnt   = mount directory to mount filesystems
+\-root  = root user&rsquo;s home directory
+\-sbin  = system binaries such as fdisk, fsck, mkfs, partype, ramdisk
+\-usr---        
+        \-bin   = application programs and user binaries
+        \-man   = man pages
+\-var--- 
+        \- run  = run-time variable data containing system information</PRE><P STYLE="margin-bottom: 0.5cm; font-style: normal; font-weight: normal; text-decoration: none">
+			<FONT COLOR="#000000"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>If
+			you want to terminate your ELKS session you should not just turn
+			your PC off or terminate the Qemu emulation. ELKS keeps files in
+			its internal buffers and these get lost this way. Typically new
+			files you generated will be missing next time you start ELKS.</FONT></FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-style: normal; font-weight: normal; text-decoration: none">
+			<FONT COLOR="#000000"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>To
+			avoid this use the &ldquo;shutdown&rdquo;, &ldquo;poweroff&rdquo;
+			or &ldquo;reboot&rdquo; commands. The shutdown and poweroff
+			commands are kernel options which may not be compiled in. Poweroff
+			supports APM. </FONT></FONT></FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm; font-style: normal; font-weight: normal; text-decoration: none">
+			<FONT COLOR="#000000"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>These
+			commands will execute the &bdquo;sync&ldquo; command to write the
+			buffers to the disk, &ldquo;umount /&rdquo; to unmount the root
+			file system to avoid data loss. If the shutdown command is not
+			available you have to enter the commands &bdquo;sync&ldquo; and
+			&bdquo;umount /&ldquo; on the command line before switching off
+			the power of your PC.</FONT></FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<H2 CLASS="western" STYLE="font-style: normal">3. Development
+			tools for ELKS</H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">ELKS
+			and application programs for ELKS are cross-compiled on a standard
+			Linux system with the dev86 package. This contains the bcc C
+			compiler, the ld86 linker, the as86 assembler and the ar86
+			archiver. You can download the dev86 package from the repository
+			of your Linux distribution or download it here:
+			<A HREF="https://github.com/jbruchon/dev86">https://github.com/jbruchon/dev86</A>
+			and compile and install it from this source code.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			package also includes the elksemu program which allows 8086 ELKS
+			programs to be run under Linux-i386. These programs can be
+			compiled using the bcc compiler. However, elksemu will not run on
+			64bit Linux distributions. Therefore test the programs using Qemu
+			instead as described in the next chapter.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<H2 CLASS="western" STYLE="font-style: normal">4. Writing
+			applications for ELKS</H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">For
+			a start let's compile a &bdquo;hello world&ldquo; program and run
+			that in ELKS. Here is the code:</FONT></P>
+			<PRE CLASS="western">#include&lt;stdio.h&gt;
+
+int main() {
+        printf(&quot;Hello World\n&quot;);
+        return 0;
+}</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Copy and save this as hello.c with
+			a text editor. Then enter </FONT>
+			</P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">bcc -ansi hello.c -o hello</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">We will always use the -ansi switch
+			because otherwise bcc will assume K&amp;R style. Now that we have
+			generated the hello executable we have to put it e.g. into the
+			directory usr/bin on the ELKS disk image, let's use the full3
+			image file. We mount the full3 image file as a loop device to do
+			so. For this you can make a script with the following lines:</FONT></P>
+			<PRE CLASS="western">set -x
+cd ..
+mount -o loop full3 floppy1
+cp bccdev/hello floppy1/usr/bin
+umount floppy1
+cd bccdev</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">This assumes that you are
+			developing in the directory &bdquo;bccdev&ldquo; and that the
+			full3 image file is in the directory above that. Also in the
+			directory above there has to be the floppy1 directory which will
+			be used for the loop device. You have to execute the script with
+			&bdquo;sudo&ldquo; !</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">You
+			may wonder why Linux can access this floppy image since it is
+			using the Minix file system which is the only file system ELKS
+			supports. The reason is that Linux uses the Minix file system for
+			floppy disks as well.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Then
+			call qemu to run ELKS and call your program:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">qemu-system-i386 -fda ../full3</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Log in as &bdquo;root&ldquo; and
+			type cd /usr/bin and execute the hello program in there. If you
+			have to repeat this frequently while developing your program, you
+			can put these commands into the &bdquo;.profile&ldquo; script for
+			root. Then your program will be run as soon as you log in as root.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">bcc
+			generates programs with either up to 64k or 128k in size.
+			Currently ELKS can only load programs generated for 128k. In the
+			case of 64k both the code and data are in the same segment while
+			if you select 128k it will be up to 64k of code and up to 64k of
+			data and stack in two separate segments. This is determined with
+			the -i switch. If you do not use that, bcc will pass this to the
+			linker as default and generate 128k programs. The programs that
+			are included in ELKS therefore are 128k programs. However, if you
+			enter &bdquo;bcc -i&ldquo; then bcc will not pass &bdquo;-i&ldquo;
+			to the linker and thus generate 64k programs. There is also the -H
+			switch which bcc will pass on to the linker. This shall determine
+			the top of the heap address which is the initial stack address.
+			You can enter this in hex as e.g. 0xF800.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">If
+			you want to compile an assembler program with as86 here is an
+			example:</FONT></P>
+			<PRE CLASS="western">.text
+.global _main
+_main:
+push es
+push ax
+!write ABC at the left border of line 20
+      mov ax,#0xb800
+      mov es,ax
+      seg es
+      mov [3200],#0x41
+      seg es
+      mov [3201],#0x4B
+      seg es
+      mov [3202],#0x42
+      seg es
+      mov [3203],#0x2E
+      seg es
+      mov [3204],#0x43
+      seg es
+      mov [3205],#0x1f
+pop ax      
+pop es   
+
+xor bx,bx
+ret
+.data
+.bss</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Save this code as the file abc.s.
+			Then you can compile it with these commands:</FONT></P>
+			<PRE CLASS="western">as86 -o abc.o abc.s
+bcc -o abc abc.o</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Instead of the command &bdquo;bcc
+			-o abc abc.o&ldquo; you can also invoke the ld86 linker and enter:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">ld86 -i -o abc abc.o</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">You can reduce the memory
+			requirements of a program a lot if you modify the total program
+			size (chmem) in the header with a hex editor. The abc.s program
+			above is linked to require 32.752 bytes by bcc/ld86. If you set
+			the size to 1.024 bytes instead it will run just as well. ELKS
+			considers a memory requirement below 1.024 bytes invalid and will
+			refuse to load the program with the message &bdquo;out of space&ldquo;.
+			See the check in fs/exec.c. The c program hello.c above is linked
+			to require 33.520 bytes and can be reduced to 3.984 bytes instead.
+			Just add the code, data and bss sections together and add 256
+			bytes for the stack. You will have to increase the stack size for
+			a larger program.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Unlike
+			gas the as86 assembler has Intel syntax like masm or tasm. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">It
+			is also possible to use NASM with the -f 86 switch to generate an
+			object file for ELKS. Here is an example:</FONT></P>
+			<PRE CLASS="western">section .text                   ;section declaration
+global _main                            ;ELKS needs main
+_main:
+                                ;write our string to stdout
+
+    mov     dx,len              ;3rd arg: message length
+    mov     cx,msg              ;2nd arg: pointer to message to write
+    mov     bx,1                ;1st arg: file handle (stdout)
+    mov     ax,4                ;system call number (sys_write)
+    int     0x80                ;call kernel
+
+                                ;exit now
+    mov     bx,0                ;1st syscall arg: exit code
+    mov     ax,1                ;system call number (sys_exit)
+    int     0x80                ;call kernel
+
+section .data                   ;section declaration
+
+msg db      &quot;Hello, world!&quot;,0xa ;the message string
+len equ     $ - msg             ;length of string</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Save this code as the file hello.s.
+			Then you can compile it with these commands:</FONT></P>
+			<PRE CLASS="western">nasm -f as86 -o hello.o hello.s
+bcc -o hello hello.o</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Transfer the executable hello to
+			ELKS as described above and see the message on the screen.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">You
+			cannot just bang any assembler program for NASM with the switch -f
+			as86 to ELKS, you need to make a few modifications. See the
+			e3-16.asm code for details.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			system calls implemented by ELKS are listed in
+			elks/Documentation/function.lst. The system call numbers are
+			apparently identical to Linux. So you will find these numbers on
+			this page: <A HREF="http://asm.sourceforge.net/syscall.html">http://asm.sourceforge.net/syscall.html</A>
+			and further details here:
+			<A HREF="https://www.tutorialspoint.com/assembly_programming/assembly_system_calls.htm">https://www.tutorialspoint.com/assembly_programming/assembly_system_calls.htm</A></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">If
+			an error number is returned you can look that up in the file
+			&bdquo;elks\include\arch\errno.h&ldquo;.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			bcc compiler has been ported to DOS so you can also develop ELKS
+			applications in DOS or a Windows 32bit DOS box:
+			<A HREF="https://ftp.gwdg.de/pub/misc/freedos/files/devel/c/bcc/">https://ftp.gwdg.de/pub/misc/freedos/files/devel/c/bcc/</A></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">This
+			includes doselks.com to run the compiled programs. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Alfonso
+			Martone found a way to convert DOS Turbo-C programs to enable
+			these to run with ELKS:
+			<A HREF="http://www.alfonsomartone.itb.it/fhlvnr.html">http://www.alfonsomartone.itb.it/fhlvnr.html</A></FONT>
+			<FONT FACE="Arial, sans-serif">For that he developed the exe2elks
+			DOS utility program and a small libc without DOS system calls. The
+			exe2elks program may work for DOS TASM assembler programs as well
+			if you get TLINK to generate a map file.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<H2 CLASS="western" STYLE="font-style: normal">5. Compiling ELKS</H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Once
+			you have the dev86 package and bcc running, it is easy to compile
+			ELKS. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">I
+			suggest to download the latest version from GitHub. Select &bdquo;clone
+			or download&ldquo; from this page:
+			<A HREF="https://github.com/jbruchon/elks">https://github.com/jbruchon/elks</A>
+			and click on &bdquo;download zip&ldquo;. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Then
+			unpack the downloaded elks-master.zip archive into your ELKS
+			directory and you will get an elks-master directory with all the
+			source code. Within this directory there will be a directory
+			called 'elks' for the kernel files, a directory called 'elkscmd'
+			containing user space files, i.e. the core command line utilities,
+			and 'elksnet' which contains the tcp/ip network stack.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">You
+			can now either execute the build.sh script which will do it all
+			for you. If you want to have more control you can follow the
+			following steps.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Get
+			into the elks directory first, e.g. 'cd elks', and enter 'make
+			menuconfig' to configure the kernel. The options you can choose
+			from to configure the kernel are explained in the file
+			'elks/Documentation/Configure.help'. For the first time you can
+			just use the defaults. The selected options will be saved in the
+			file 'elks/elks/arch/i86/defconfig'.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">However,
+			if you require a non-US keyboard driver you should 'make
+			menuconfig' to configure this here. Also check that networking and
+			unix domain sockets are enabled if you think you may use them.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Then
+			run 'make' to build the kernel. Following that get into the
+			elksnet directory and enter 'make'. After that get into the
+			elkscmd directory to build the files in there and enter 'make'.
+			When this terminates, ELKS is compiled successfully.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">To
+			generate bootable floppy disk image files of the ELKS operating
+			system you have to compile dev86 in your ELKS directory. The
+			makefile in elkscmd requires this. To build the image files ELKS
+			needs the bootblocks in the dev86 directory. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Select
+			&bdquo;clone or download&ldquo; on this page:
+			<A HREF="https://github.com/jbruchon/dev86">https://github.com/jbruchon/dev86</A>
+			and click on &bdquo;download zip&ldquo;. Then unpack the
+			downloaded dev86-master directory within the zip archive into your
+			ELKS directory and rename it to &bdquo;dev86&ldquo;. After that
+			get into this dev86 directory and enter &bdquo;make&ldquo; to
+			build this package.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Then
+			get into the elkscmd directory again and enter 'make full3' which
+			will build a 1.44 MB 3.5&ldquo; floppy image called full3 with all
+			the required files. This is the image we have been using in
+			chapter two above.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">If
+			you want to change kernel code, look at the file
+			&bdquo;elks/include/linuxmt/debug.h&ldquo; which explains how to
+			use and enable debug messages in the kernel code.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<H2 CLASS="western" STYLE="font-style: normal">6. Configuring a
+			hard disk and installing a hard disk boot loader</H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			images you generated so far were floppy disk images which are very
+			limited in size. However, you can also make a hard disk image and
+			use that with ELKS.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">ELKS
+			supports hard disks up to 32 Megabytes in size only.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Using
+			the qemu-img utility, we generate a flat hard disk image named
+			full3hd with the size of 20 Megabytes:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">qemu-img create full3hd 20M</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">qemu-img reports:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">Formatting 'full3hd', fmt=raw size=20971520 </PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">You can check this image with
+			fdisk:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">sudo fdisk -l full3hd</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">fdisk then reports:</FONT></P>
+			<PRE CLASS="western">Disk full3hd: 20 MB, 20971520 bytes, 40960 sektors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Now we call &quot;sudo fdisk
+			full3hd&quot; to make a partition on the hard disk image.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">After
+			fdisk has loaded, we select the &bdquo;m&ldquo; command to show
+			the help text:</FONT></P>
+			<PRE CLASS="western">Command action
+   a   toggle a bootable flag
+   b   edit bsd disklabel
+   c   toggle the dos compatibility flag
+   d   delete a partition
+   l   list known partition types
+   m   print this menu
+   n   add a new partition
+   o   create a new empty DOS partition table
+   p   print the partition table
+   q   quit without saving changes
+   s   create a new empty Sun disklabel
+   t   change a partition's system id
+   u   change display/entry units
+   v   verify the partition table
+   w   write table to disk and exit
+   x   extra functionality (experts only)</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">First we execute the &bdquo;o&ldquo;
+			command to generate an MS-DOS partition table.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Then
+			we enter the command &quot;n&quot; to generate a new primary
+			partition with the number 1 and accepting the suggested first and
+			last sectors. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Then
+			we use the command &quot;t&quot; to set the partition type to 80
+			(in hex, i.e. 0x80) which is &quot;Old Minix&quot;.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Finally
+			we use the command &quot;a&quot; to make this partition bootable
+			and view the generated partition table with the &bdquo;p&ldquo;
+			command. Then we enter &quot;w&quot; to write the specified
+			partition table to the hard disk image.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			&bdquo;l&ldquo; command displayed the following partition table:</FONT></P>
+			<PRE CLASS="western">Device     Boot Start   End Sectors Size Id Type
+full3hd1         2048 40959   38912  19M 80 Old Minix</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Now lets start ELKS with this new
+			hard disk present (a=floppy,c=hard disk):</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">qemu-system-i386 -boot order=ac -fda full3 -hda full3hd</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">ELKS boots and reports:</FONT></P>
+			<PRE CLASS="western">doshd: found 1 floppy drive
+doshd: found 1 hard drive
+/dev/hda: 39 cylinders, 16 heads, 63 sectors = 19.2 Mb
+Partition check:
+  bda: bda1:</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">ELKS uses &bdquo;bda..&ldquo; for
+			block device as names for hard disks. This is different to &bdquo;hda..&ldquo;
+			on Linux and the hda name used in the boot messages.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">After
+			logging in as root, we make a file system on the hard disk with
+			19.000 blocks using the &bdquo;mkfs&ldquo; command :</FONT></P>
+			<PRE CLASS="western">mkfs /dev/bda1 19000
+6333 inodes
+19000 blocks
+Firstdatazone=204 (204)
+Zonesize=1024
+Maxsize=268966912</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Now we can mount the new hard disk
+			using &bdquo;/mnt&ldquo; as the mount point:</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Courier New, monospace"><FONT SIZE=2>mount
+			/dev/bda1 /mnt</FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">You
+			can put the root file system on the new hard disk and specify on
+			the floppy disk that boots ELKS that it will find the root file
+			system on the hard disk. For this you have to patch the ROOT_DEV
+			entry in the kernel changing the value 0x8003 to 0x0003 at
+			location 0x1FC. This is the value if there is no partition table
+			on the hard disk. If you have a real floppy and a real hard disk,
+			this setup will boot much faster.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">If
+			you then boot ELKS and mount the hard disk again, you may get the
+			following warning:</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Courier New, monospace"><FONT SIZE=2>MINIX-fs:
+			mounting unchecked file system, running fsck is recommended</FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Do
+			not follow this recommendation, it seems to destroy the file
+			system! This message is apparently caused since unmounting the
+			file system is not properly indicated by ELKS in the superblock
+			mount status byte in memory.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">However,
+			I will now explain, how to make a bootable harddisk for ELKS. This
+			is more straightforward than booting from floppy disk and having
+			the root file system on the hard disk.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">I
+			have prepared the following script for this which I run in the
+			elks-0.2.0/elkscmd directory. The script assumes that you compiled
+			the kernel before and a full3 disk image file can be found in this
+			directory.</FONT></P>
+			<PRE CLASS="western">set -x
+#templateHD is a 32 Mb hard disk image formatted with one partition
+cp templateHD full3HD
+
+#add first partition to the loopback driver
+#1.048.576 is block 2048 times 512 blocksize
+losetup -o 1048576 --sizelimit 32767488 /dev/loop1 full3HD
+
+#make minix file system on this hard disk image partition
+mkfs.minix -n14 -1 /dev/loop1
+
+#make mountpoint for full3HD called elksHD
+mkdir -p /mnt/elksHD
+
+#mount first partition as a loop device
+mount /dev/loop1 /mnt/elksHD
+
+#mount full3 floppy as loop device
+mount -o loop /home/georg/elks-dev/elks-os/elks-0.2.0/elkscmd/full3 \ 
+/mnt/elks
+
+#copy all files from the full3 floppy image to the hard disk image full3HD
+#parameter -dpR needed for /dev files
+shopt -s dotglob
+cp -dpR /mnt/elks/* /mnt/elksHD/
+
+#write ROOT_DEV as 0301 (0103 little endian) at position 
+#0x1FC=508 into the file boot/linux
+#byte0x01 is a file which contains the byte 0x01 only, done 
+#with a hex editor
+dd if=/home/georg/elks-dev/elks-os/elks-0.2.0/elkscmd/byte0x01 \
+of=/mnt/elksHD/boot/linux bs=1 count=1 seek=508 conv=notrunc 
+
+#make file to indicate the mounted file system
+echo 'The hard disk is mounted' &gt; /mnt/elksHD/HardDisk
+
+#show files on the hard disk image
+ls /mnt/elksHD
+
+#unmount /mnt/elks again
+umount /mnt/elks
+
+#unmount /mnt/elksHD again
+umount /mnt/elksHD
+losetup -d /dev/loop1
+
+#write hard disk boot block to sector 0 in partition 1 of the hard disk image
+#this does not enable to boot though yet
+dd if=/home/georg/elks-dev/elks-os/elks-0.2.0/dev86/bootblocks/minixhd.bin \
+of=/home/georg/elks-dev/elks-os/elks-0.2.0/elkscmd/full3HD \ 
+seek=2048 bs=512 count=2 conv=notrunc 
+
+#write mbr.bin to disk sector zero. Length is 0x1B5 or 437dec = 19*23
+dd if=/home/georg/elks-dev/elks-os/elks-0.2.0/dev86/bootblocks/mbr.bin \
+of=/home/georg/elks-dev/elks-os/elks-0.2.0/elkscmd/full3HD \
+bs=23 count=19 conv=notrunc </PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">This script assumes that you
+			already made a partitioned hard disk image called templateHD using
+			fdisk before. This image can be used unmodified then for each
+			execution of the script. The use of fdisk is described above. You
+			could also use sfdisk which allows to partition the disk from a
+			script.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Please
+			see the comments in the script for further explanations. The files
+			are copied from the full3 disk image to the full3HD disk image
+			after mounting these as loop devices. Then the bootblock
+			minixhd.bin is copied to the first two sectors of the partition
+			and the mbr.bin boot loader code to sector zero of the hard disk.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">You
+			can then boot ELKS from the hard disk image with this command:</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Courier New, monospace"><FONT SIZE=2>qemu-system-i386
+			-boot order=c -hda ../elks-os/elks-0.2.0/elkscmd/full3HD</FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Please
+			adjust the path to the full3HD image as required on your PC.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">You
+			can also write this hard disk image onto a flash disk and boot
+			from that. This is how you do this:</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Plug
+			in a flash disk which you can clear and enter &bdquo;sudo fdisk
+			-l&ldquo; which will allow you to determine the device name of the
+			flash disk. You can e.g. check the disk size for that. If you have
+			only one hard disk the flash disk will usually be called &bdquo;sdb&ldquo;.
+			On my PC I have two hard disks and the flash disk is called &bdquo;sdc&ldquo;.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Then
+			check if this flash disk is mounted with &bdquo;findmnt /dev/sdc&ldquo;.
+			If there is no output, the flash disk is not mounted. Otherwise
+			you will find the mount point in the TARGET column. Unmount it
+			then with e.g. &bdquo;sudo umount /mnt/flashdisk&ldquo;. Then
+			write the hard disk image onto the flash disk with the &bdquo;dd&ldquo;
+			command:</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Courier New, monospace"><FONT SIZE=2>dd
+			if=./full3HD of=/dev/sdc bs=512k</FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Do
+			not specify a partition with e.g. &bdquo;sdc1&ldquo;. Then restart
+			the PC and select the flash disk from the BIOS boot menu. You may
+			not be able to boot successfully from every PC but I could do so
+			from one of my PCs.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">You
+			can also run ELKS in a browser using a Javascript or Java based PC
+			emulator. For example I made a bootable CD image (El Torito) of
+			ELKS and could load and run it in virtual x86 on this page:
+			<A HREF="http://copy.sh/v86/">http://copy.sh/v86/</A></FONT> <FONT FACE="Arial, sans-serif">The
+			full3 floppy image did not work though.There are further emulators
+			like JPC <A HREF="http://jpc.sourceforge.net/home_home.html">http://jpc.sourceforge.net/home_home.html</A></FONT>
+			<FONT FACE="Arial, sans-serif">or PCjs <A HREF="http://www.pcjs.org/">http://www.pcjs.org/</A></FONT>
+			<FONT FACE="Arial, sans-serif">which may work as well.</FONT> 
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<H2 CLASS="western" STYLE="font-style: normal">7. Writing kernel
+			mode drivers for ELKS</H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Like
+			most alternative operating systems, ELKS is missing drivers for
+			many peripherals. Therefore it is explained now how you can write
+			additional drivers.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">As
+			a proof of concept, we will implement a 'hellodev' driver:</FONT></P>
+			<PRE CLASS="western">/*
+ * hello driver for ELKS kernel
+ */
+
+#include &lt;linuxmt/kernel.h&gt; /* printk() */
+#include &lt;linuxmt/fs.h&gt;     /* file_operations struct */
+#include &lt;string.h&gt;
+
+#define HELLO_DEVICE_NAME       &quot;hellodev&quot;
+#define HELLO_MAJOR     9
+
+static char message[256];
+char *msgptr = message;
+
+static int hello_write(struct inode *inode, struct file *file, char* buf, int len)
+{
+    memcpy_fromfs(message,buf,len);
+    printk(&quot;hellodev: hello_write() called\n&quot;);
+    return 0;
+}
+
+static int hello_read(struct inode *inode, struct file *file, char* buf, int len)
+{
+    memcpy_tofs(buf, message, len);
+    printk(&quot;hellodev: hello_read() called\n&quot;);
+    return len;
+}
+
+static int hello_open(struct inode *inode, struct file *file)
+{
+    printk(&quot;hellodev: hello_open() called\n&quot;);
+    return 0;
+}
+
+static void hello_release(struct inode *inode, struct file *file)
+{
+    printk(&quot;hellodev: hello_release() called\n&quot;);
+    return;
+}
+
+static struct file_operations hello_fops = {
+    NULL,                       /* lseek */
+    hello_read,                 /* read */
+    hello_write,                /* write */
+    NULL,                       /* readdir */
+    NULL,                       /* select */
+    NULL,                       /* ioctl */
+    hello_open,                 /* open */
+    hello_release               /* release */
+    
+#ifdef BLOAT_FS
+        ,
+    NULL,                       /* fsync */
+    NULL,                       /* check_media_type */
+    NULL                        /* revalidate */
+#endif
+};
+
+void hello_init(void)
+{
+        printk(&quot;hellodev: hello_init() called\n&quot;);
+
+    /* register device */
+    if (register_chrdev(HELLO_MAJOR, HELLO_DEVICE_NAME, &amp;hello_fops))
+        printk(&quot;hellodev: unable to register\n&quot;);
+}</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">This driver just implements the
+			functions hello_init(), hello_open(), hello_read(), hello_write()
+			and hello_release(). When these functions are called it outputs a
+			message using the printk() statement. This is the equivalent for
+			printf() in kernel code. Also we use the functions memcpy_fromfs()
+			and memcpy_tofs(). The kernel will for security reasons not accept
+			pointers from userspace which may be faulty. Therefore you have to
+			use these functions. For single chars there are equivalent
+			functions available called get_user_char() and put_user_char().
+			You will also not be able to use inportb() and outportb()
+			functions, use the inb() and inb_p() or out() and out_p()
+			functions instead. The &bdquo;_p&ldquo; versions insert a small
+			pause or delay before returning to support slower devices.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">When
+			the driver is loaded the kernel will call hello_init() and the
+			hellodev driver will execute the register_chrdev() function. This
+			function contains the device name which will appear in the /dev
+			directory and a pointer to the file_operations structure called
+			hello_ops. In there the kernel will find the addresses of the
+			functions defined in the driver.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			kernel identifies the driver by its unique the major number. In
+			our demo driver we have included these macros in the code: </FONT>
+			</P>
+			<PRE CLASS="western">#define HELLO_DEVICE_NAME       &quot;hellodev&quot;
+#define HELLO_MAJOR     9</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Usually in ELKS these are defined
+			in the elks/include/linuxmt/major.h file which the drivers
+			include. However, we still have to change that file and increase
+			the maximum number of char devices to 10:</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">#define
+			MAX_CHRDEV 10</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">We
+			put the driver source code above as a hellodev.c file into the
+			elks/arch/i86/drivers/char/ directory and add it to the Makefile
+			in this directory:</FONT></P>
+			<PRE CLASS="western">else
+OBJS  = bioscon.o common.o serial.o lp.o xt_key.o init.o dircon.o mem.o \
+        <B>hellodev.o </B>ntty.o meta.o tcpdev.o pty.o bell.o # clist.o tty.o</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">We also edit the init.c file:</FONT></P>
+			<PRE CLASS="western">void chr_dev_init(void)
+{
+#if 1
+hello_init();
+#endif
+#ifdef CONFIG_CHAR_DEV_RS
+rs_init();</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif"><FONT SIZE=3>Normally we would
+			define a macro in the elks/arch/i86/defconfig file which can be
+			modified with &bdquo;menuconfig&ldquo; and modify the files
+			elks/arch/i86/drivers/char/config.in plus
+			elks/Documentation/Configure.help.</FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>Further,
+			the hello_init() function has to be declared in the
+			elks/include/linuxmt/init.h file:</FONT></FONT></P>
+			<PRE CLASS="western">extern void xtk_init(void);
+extern void hello_init(void);
+
+extern void init_console(void);</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif"><FONT SIZE=3>To load the driver we
+			add it simply after the tcpdev device in the
+			elkscmd/rootfs_template/dev/MAKEDEV script. In this script there
+			is a macro for the mknod() function called MAKEDEV:</FONT></FONT></P>
+			<PRE CLASS="western"># TCPDEV, used by ktcp
+
+        mknod tcpdev c 8 0
+        $MKDEV hellodev c 9 0</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif"><FONT SIZE=3>The letter &bdquo;c&ldquo;
+			stands for character driver while the number 9 is the major number
+			and zero the minor number. </FONT></FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>To
+			sum it up, you added hellodev.c into the
+			elks/arch/i86/drivers/char directory and modified init.c and the
+			Makefile in there. Also you modified major.h and init.h in the
+			elks/include/linuxmt directory and the file MAKEDEV in the
+			elkscmd/rootfs_template/dev directory.</FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Now
+			you can compile ELKS again and it will include the hellodev driver
+			and load it. If you enter &bdquo;ls /dev&ldquo; you will see a
+			device node called hellodev.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">To
+			test our driver we use this program which we call drvtest.c:</FONT></P>
+			<PRE CLASS="western">#include&lt;stdio.h&gt;
+#include&lt;stdlib.h&gt;
+#include&lt;errno.h&gt;
+#include&lt;fcntl.h&gt;
+ 
+#define BUFFER_LENGTH 256               
+static char receive[BUFFER_LENGTH];     
+ 
+int main(){
+   int ret, fd;
+   char stringToSend[BUFFER_LENGTH];
+
+   printf(&quot;Starting device test code example...\n&quot;);
+
+   fd = open(&quot;/dev/hellodev&quot;, O_RDWR);  
+
+   if (fd &lt; 0){
+      perror(&quot;Failed to open the device...&quot;);
+      return errno;
+   }
+
+   printf(&quot;Type in a short string to send to the kernel module:\n&quot;);
+   scanf(&quot;%s&quot;, stringToSend);                // Read in a string
+   printf(&quot;Writing message to the device [%s].\n&quot;, stringToSend);
+
+   ret = write(fd, stringToSend, strlen(stringToSend)); 
+   if (ret &lt; 0){
+      perror(&quot;Failed to write the message to the device.&quot;);
+      return errno;
+   }
+ 
+   printf(&quot;Now reading the string back from the device...\n&quot;);
+   ret = read(fd, &amp;receive[0], BUFFER_LENGTH);        
+   if (ret &lt; 0){
+      perror(&quot;Failed to read the message from the device.&quot;);
+      return errno;
+   }
+
+   printf(&quot;The received message is: [%s]\n&quot;, receive);
+
+   return 0;
+}</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">To compile this program enter &bdquo;bcc
+			-ansi -o drvtest drvtest.c&ldquo; and copy the executable drvtest
+			to the full3 image file as described in chapter 4.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Here
+			are some additional notes how ELKS drivers work describing the
+			concepts used above taken from the fs.txt file:<BR><BR>The
+			inode-&gt;i_op pointer is initialised in the function which reads
+			in an inode, e.g. V1_minix_read_inode, and its contents depend on
+			the type of file. If the node is a character or block device, i_op
+			points to chrdev_inode_operations or blkdev_inode_operations
+			respectively. These tables are declared in devices.c and contain
+			pointers just to the respective &quot;open&quot; functions,
+			chrdev_open and blkdev_open. <BR><BR>When the user opens one of
+			these inodes, the kernel calls the open function and passes in a
+			pointer to the relevant &quot;struct file&quot; record. The fops
+			pointer in this record is copied from chrdevs[major].fops or
+			blkdevs[major].fops, which was set up when the device was
+			initialised and registered itself.<BR><BR>So, in the case of the
+			console for example, the file record defined as dircon_ops (see
+			drivers/char/dircon.c) has pointers to the functions to perform
+			I/O to the console. <BR><BR>In the case of block devices, the
+			read() and write() functions *don't* point to device-specific read
+			and write functions; rather, they point to the generic functions
+			block_read() and block_write() in block_dev.c. These take care of
+			caching blocks, part-block reads and writes etc.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<H2 CLASS="western" STYLE="font-style: normal">8. Using Unix
+			domain sockets</H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><SPAN STYLE="font-weight: normal">A
+			Unix domain socket o</SPAN>r inter-process communication socket is
+			a data communications endpoint for exchanging data between
+			processes executing on the same host. These are implemented in
+			ELKS.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			Unix domain sockets are not enabled in the default kernel
+			configuration. Therefore you have to run &bdquo;make menuconfig&ldquo;
+			in the elks directory, select &bdquo;Driver support&ldquo; then
+			&bdquo;Network support&ldquo; and in there enable &bdquo;Unix
+			sockets&ldquo;.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Then,
+			at the time of this writing, you have to change the following line
+			in elks/net/socket.c:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">#define MAX_SOCK_ADDR 110       /* for AF_UNIX */</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif"><FONT SIZE=3>and in
+			elks/include/linuxmt/socket.h:</FONT></FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">char sa_data[110]; /*110 for AF_UNIX */</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif"><FONT SIZE=3>Then compile ELKS with
+			these changes and make a new full3 image.</FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>To
+			test the Unix domain sockets here are two test programs:</FONT></FONT></P>
+			<PRE CLASS="western">#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;linuxmt/socket.h&gt;
+#include &lt;linuxmt/un.h&gt;
+#include &lt;stdlib.h&gt;
+
+char *socket_path = &quot;/var/uds&quot;;
+
+int main(int argc, char *argv[]) {
+  struct sockaddr_un addr;
+  char buf[100];
+  int fd,cl,rc;
+
+  if ( (fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+    perror(&quot;socket error&quot;);
+    exit(-1);
+  }
+
+  memset(&amp;addr, 0, sizeof(addr));
+  addr.sun_family = AF_UNIX; 
+  if (*socket_path == '\0') {
+    *addr.sun_path = '\0';
+    strncpy(addr.sun_path+1, socket_path+1, sizeof(addr.sun_path)-2);
+  } else {
+    strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path)-1);
+    unlink(socket_path);
+  }
+
+  if (bind(fd, (struct sockaddr*)&amp;addr, sizeof(addr)) == -1) {
+    perror(&quot;bind error&quot;);
+    exit(-1);
+  }
+
+  if (listen(fd, 5) == -1) {
+    perror(&quot;listen error&quot;);
+    exit(-1);
+  }
+
+  printf(&quot;&quot;); /* show prompt again */
+  while (1) {
+    if ( (cl = accept(fd, NULL, NULL)) == -1) {
+      perror(&quot;accept error&quot;);
+      continue;
+    }
+
+    while ( (rc=read(cl,buf,sizeof(buf))) &gt; 0) {
+      printf(&quot;Server: got %u chars: %.*s\n&quot;, rc-1, rc, buf);
+    }
+    if (rc == -1) {
+      perror(&quot;read&quot;);
+      exit(-1);
+    }
+    else if (rc == 0) {
+      printf(&quot;EOF\n&quot;);
+      close(cl);
+    }
+  }
+
+
+  return 0;
+}</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Save this code as socket_server.c.
+			The client for this server is:</FONT></P>
+			<PRE CLASS="western">#include &lt;sys/socket.h&gt;
+#include &lt;linuxmt/un.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+char *socket_path = &quot;/var/uds&quot;;
+
+int main(int argc, char *argv[]) {
+  struct sockaddr_un addr;
+  char buf[100];
+  int fd,rc;
+
+  if ( (fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+    perror(&quot;socket error&quot;);
+    exit(-1);
+  }
+
+  memset(&amp;addr, 0, sizeof(addr));
+  addr.sun_family = AF_UNIX;
+  if (*socket_path == '\0') {
+    *addr.sun_path = '\0';
+    strncpy(addr.sun_path+1, socket_path+1, sizeof(addr.sun_path)-2);
+  } else {
+    strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path)-1);
+  }
+  if (connect(fd, (struct sockaddr*)&amp;addr, sizeof(addr)) == -1) {
+    perror(&quot;connect error&quot;);
+    exit(-1);
+  }
+  printf(&quot;\nType any string and press enter to send it to the server.\n&quot;);
+  printf(&quot;ESC and enter to quit.\n&quot;);
+  while( (rc=read(STDIN_FILENO, buf, sizeof(buf))) &gt; 0) {
+    if (buf[0]==27) exit (0);
+    if (write(fd, buf, rc) != rc) {
+      if (rc &gt; 0) fprintf(stderr,&quot;partial write&quot;);
+      else {
+        perror(&quot;write error&quot;);
+        exit(-1);
+      }
+    }
+  }
+  return 0;
+}</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Save this code as socket_client.c.
+			Now compile both programs and, using the loop device as described
+			above, copy them to the full3 image. Then start ELKS e.g. using
+			Qemu.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">After
+			logging in as root, enter &bdquo;socket_server &amp;&ldquo; at the
+			command line to start the server running in the background. Then
+			enter &bdquo;socket_client&ldquo; to start the client. You can
+			then enter a string at the keyboard and send it to the server
+			which will print it to the screen.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			line: &bdquo;char *socket_path = &quot;/var/uds&quot;;&ldquo; has
+			to be absolutely identical in both programs or it will not work.
+			Do not specify a non-existant directory like &bdquo;/tmp&ldquo;.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<H2 CLASS="western" STYLE="font-style: normal">9. TCP/IP
+			networking with SLIP and Qemu</H2>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">The
+			tcp/ip communication is implemented via serial lines using the
+			slip protocol. This works as long as there are serial ports
+			available with the PCs used. You can connect ELKS via a &bdquo;point
+			to point&ldquo; slip connection with a different Linux system and
+			configure that as a gateway for the ELKS PC. This way ELKS can
+			connect to the internet, provided the gateway itself is connected
+			to that. Since there is no name resolution implemented with ELKS
+			you need to know the IP address required.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">If
+			you do not want to use a cross-over cable between your ELKS PC and
+			a different Linux PC, you can run ELKS using Qemu on your host and
+			configure a serial connection with Qemu to that host. This way you
+			can connect your host and the ELKS system running within Qemu via
+			a SLIP connection.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">To
+			enable a serial connection from Qemu to your host, start Qemu with
+			these parameters:</FONT></P>
+			<PRE CLASS="western">qemu-system-i386 \
+      -chardev pty,id=chardev1 \
+      -device isa-serial,chardev=chardev1,id=serial1 \
+      -fda full3</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">Qemu will report e.g. &quot;char
+			device redirected to /dev/pts/4 (label chardev1)&quot; after
+			loading. Make a note of this pty since you will need that for the
+			host configuration.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">You
+			could also simply specifiy the &bdquo;-serial pty&ldquo; parameter
+			but if you use &bdquo;-chardev pty&ldquo; instead you can specify
+			that this serial device (with the id=chardev1) will emulate an isa
+			bus serial card so you get the interrupt and i/o address required
+			for direct hardware access.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">After
+			ELKS has booted, login with &quot;root&quot; and check that ktcp
+			is running with the command &quot;ps&quot;. Then use vi to look at
+			the &quot;/etc/rc.d/rc.sysinit&quot; file and check the ttybaud
+			and localip entries in there.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">This
+			is my setting in the file rc.sysinit:</FONT></P>
+			<PRE CLASS="western">#
+# Network initialization
+#
+
+localip=192.168.1.10
+sliptty=/dev/ttyS0
+ttybaud=9600</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">If you want to change these
+			settings, modify this file in &quot;elkscmd/rootfs_template/etc/rc.d&quot;
+			and compile ELKS again. Or modify the file in ELKS and enter the
+			&quot;reboot&quot; command. This is all that is required on the
+			ELKS side of the slip connection.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><A NAME="result_box"></A><FONT FACE="Arial, sans-serif"><SPAN STYLE="font-weight: normal">Now
+			on the host check the </SPAN></FONT><FONT FACE="Arial, sans-serif"><SPAN LANG="en">presence</SPAN></FONT>
+			<FONT FACE="Arial, sans-serif"><SPAN STYLE="font-weight: normal">of
+			the new PTY: &quot;ls -l /dev/pts&quot;.</SPAN></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">Then
+			use the slattach command to start slip on your host. Slattach can
+			be used to put a normal terminal (&quot;serial&quot;) line into
+			one of several &quot;network&quot; modes, thus allowing you to </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">use
+			it for point-to-point links to other computers.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">I
+			have made the following script to start the slip interface on the
+			host. Run this script with &bdquo;sudo&ldquo;. It takes the number
+			of the PTY generated by Qemu as a parameter (using $1 in the
+			script):</FONT></P>
+			<PRE CLASS="western">slattach -p slip -L -s 9600 /dev/pts/$1 &amp;
+ps
+ifconfig -a
+ifconfig sl0 192.168.1.9 pointopoint 192.168.1.10 netmask 255.255.255.0 mtu 296
+ifconfig -a
+route add 192.168.1.10 sl0
+route -n</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">The first command is the mentioned
+			slattach command. Since this does not return you have to run that
+			in the background with &quot;&amp;&quot; or you cannot continue on
+			your command line.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">The
+			parameters used with slattach are: &quot;-p slip&quot; which
+			selects the slip protocol, &quot;-L&quot; enables 3 wire
+			operation, i.e. no hardware flow control, &quot;-s 9600&quot;
+			specifies the line speed of 9600 baud and finally the PTY
+			generated by Qemu is specified.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">Now
+			the script checks if slattach is running in the background:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">sudo ps</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">and if the network interface has
+			been generated:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">ifconfig -a</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">You will see a new interface called
+			&quot;sl0&quot;. The interface name is &quot;sl&quot; for serial
+			plus a zero.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">Now
+			we have to assign an IP address to this serial interface.</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">ifconfig sl0 192.168.1.9 pointopoint 192.168.1.10 netmask 255.255.255.0 mtu 296</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">Here 192.168.1.9 is the address we
+			will assign to the serial interface, next we establish a
+			pointopoint connection, 192.168.1.10 is the ip address of the ELKS
+			system within Qemu and ELKS uses an mtu of 296 for slip.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">Now
+			&bdquo;ifconfig -a&ldquo; will tell us that the sl0 interface got
+			the ip address 192.168.1.9 and</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">it
+			has a point to point connection to the ip address 192.168.1.10,
+			which is ip address for ELKS that we configured.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">Next
+			we have to tell the host that it can reach the address
+			192.168.1.10 via the address of the serial inferface. So we
+			configure a static route for this:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">route add 192.168.1.10 sl0</PRE><P STYLE="margin-bottom: 0.5cm">
+			&bdquo;<FONT FACE="Arial, sans-serif"><SPAN STYLE="font-weight: normal">route
+			-n&ldquo; shows this routing table:</SPAN></FONT></P>
+			<PRE CLASS="western">Destination     Gateway         Genmask       Flags Metric  Ref    Use Iface
+0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0       0 eno1
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0       0 eno1
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0       0 sl0
+192.168.1.10    0.0.0.0         255.255.255.255 UH    0      0       0 sl0</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">Now you have to disable or
+			configure the firewall on your host system so that it will not
+			drop the packets from ELKS for security reasons. Usually you will
+			have a firewall running and that will not accept data from ELKS.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">If
+			you then enter &quot;ping 192.168.1.10&quot; now, it will report a
+			response from the ELKS system.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">In
+			case you have to restart ELKS you can remove the slattach process
+			on the host with &bdquo;sudo pkill -f slattach&ldquo;. This
+			releases the PTY generated by Qemu.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">However,
+			in case ELKS does not respond to the ping request, this is what
+			you can do to debug the slip connection.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">First
+			check if you have a working serial connection to the host. For
+			that stop ktcp to have that release the serial port on ELKS.
+			Determine with the &bdquo;ps&ldquo; command the process number
+			assigned to ktcp and enter e.g. &bdquo;kill 5 &amp;&ldquo; if the
+			PID is 5. Then enter &bdquo;cat /dev/ttyS0&ldquo;. If you then
+			start &bdquo;ping 192.168.1.10&ldquo; on your host, you should see
+			the slip packets from the host on the screen.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">Then
+			you can check if you can send slip packets from ELKS to the host.
+			I use cutecom on the host and open the device &bdquo;/dev/pts/2&ldquo;
+			provided Qemu generated the PTY 2. If you then enter on ELKS
+			&bdquo;urlget http://192.168.1.7&ldquo;, provided the host has the
+			ip address 192.168.1.7, the slip packets from ELKS can be seen
+			with cutecom.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">If
+			this works, you can use &bdquo;tcpdump&ldquo; on the host to
+			monitor the tcp/ip traffic between the host and ELKS. Enter
+			&bdquo;tcpdump -n -i sl0&ldquo; to monitor the traffic via the
+			slip interface &bdquo;sl0&ldquo;.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">You
+			will see that the host sends icmp requests to ELKS and receives
+			them from there.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">If
+			ping still does not receive an answer, it is likely that the host
+			drops the packets for security reasons. Most likely the firewall
+			will do that.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><SPAN STYLE="font-weight: normal">Another
+			reason can be </SPAN></FONT><FONT FACE="Arial, sans-serif">reverse-path
+			filtering. The command &bdquo;</FONT><CODE CLASS="western"><FONT FACE="Arial, sans-serif">sysctl
+			-a | grep \\.rp_filter&ldquo; will show if these filters are set
+			and you can disable them with </FONT></CODE>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><CODE CLASS="western">&bdquo;</CODE><CODE CLASS="western"><FONT FACE="Courier New, monospace"><FONT SIZE=2>sysctl
+			-w net.ipv4.conf.sl0.rp_filter=0&ldquo; </FONT></FONT></CODE><CODE CLASS="western"><FONT FACE="Arial, sans-serif">and
+			reboot. The command </FONT></CODE>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><CODE CLASS="western">&bdquo;</CODE><CODE CLASS="western"><FONT FACE="Courier New, monospace"><FONT SIZE=2>sysctl
+			-w net.ipv4.conf.all.log_martians=1&ldquo; </FONT></FONT></CODE><CODE CLASS="western"><FONT FACE="Arial, sans-serif">will
+			write into the syslog if a packet has been dropped. If you enter
+			this command and execute ping again, you can use &bdquo;dmesg |
+			grep -i 192.168.1.10&ldquo; to see the dropped packets from this
+			ip address in the syslog.</FONT></CODE></P>
+			<P STYLE="margin-bottom: 0.5cm"><CODE CLASS="western"><FONT FACE="Arial, sans-serif">You
+			could use the urlget program on ELKS to retrieve a web page on the
+			host or start the httpd web server on ELKS to retrieve a web page
+			from ELKS. I could not test this yet though.</FONT></CODE></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">You
+			can also connect two instances of ELKS running within two Qemu
+			instances using two named pipes. First set up the pipes like this:</FONT></P>
+			<PRE CLASS="western">mkfifo /tmp/fifoA.in /tmp/fifoA.out
+ln -s /tmp/fifoA.out /tmp/fifoB.in
+ln -s /tmp/fifoA.in /tmp/fifoB.out</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">Then start two instances of Qemu as
+			a background process:</FONT></P>
+			<PRE CLASS="western">qemu-system-i386 -serial pipe:/tmp/fifoA -fda ../full3 &amp;
+qemu-system-i386 -serial pipe:/tmp/fifoB -fda ../full3 &amp;</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">The serial ports ttyS0 of each of
+			the two ELKS instances are connected this way with a virtual
+			cross-over cable. However, you have to clear the local echo in
+			termios otherwise you have generated an endless loop.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">I
+			have not tried to make a slip connection this way yet.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<H2 CLASS="western" STYLE="font-style: normal">10. Overview of the
+			ELKS network code</H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">There
+			is quite a lot of networking code in ELKS. However, there is no
+			driver for a network card yet. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">There
+			are several network applications you can use. ELKS has a netstat
+			program to show the IP addresses and the connections, a telnet
+			client, an IRC server and client, the urlget program to retrieve
+			web pages and finally a tiny web server called httpd which expects
+			its web pages in the &bdquo;/usr/lib/httpd&ldquo; directory.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			internet socket interface currently just supports one concurrent
+			socket only.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">There
+			are also UNIX domain sockets implemented to allow two programs
+			running on the ELKS system to communicate. The nano socket
+			interface is very similar and was intended to be used with the
+			Microwindows/Nano-X graphics package. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">In
+			the source code there is the following illustration how tcp/ip is
+			implemented in ELKS:</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><IMG SRC="elks-introduction14_html_73704f13.png" NAME="Grafik2" ALIGN=LEFT WIDTH=471 HEIGHT=439 BORDER=0><BR CLEAR=LEFT><FONT FACE="Arial, sans-serif">This
+			shows that an application will call the socket interface which is
+			implemented in the kernel. This interface communicates with the
+			the kernel mode device driver tcpdev via the fifo node
+			/dev/tcpdev. The tcpdev module will communicate with the tcp/ip
+			stack which is implemented in user space. This stack is
+			implemented with the user mode ktcp driver. If ELKS is not
+			configured to load that driver during boot, it can be loaded from
+			the command line as a background process adding &bdquo;&amp;&ldquo;
+			at the end of the line. E.g. for slip this would be done with this
+			line: </FONT>
+			</P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm"># ktcp 192.168.1.2 /dev/ttyS0 &amp;</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">This command line tells ELKS to use
+			your first serial line for slip and that the local IP is
+			192.168.1.2. The &bdquo;raw driver&ldquo; in the image above is
+			&bdquo;slip&ldquo; and the network hardware is the serial
+			interface of the PC.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">To
+			overlook the entire networking code is difficult. Therefore here
+			is a little tour of the ELKS networking system code. Hopefully
+			this provides a start for people interested to improve this. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">At
+			system boot the code in &bdquo;init/main.c&ldquo; is run which
+			calls sock_init() in socket.c. This initializes, depending on the
+			kernel configuration, the kernel interfaces in the files af_init.c
+			(internet), af_unix.c (unix domain sockets) and af_nano.c.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">These
+			again call sock_register() in socket.c passing a structure with
+			the functions they have implemented and their family name, e.g.
+			&bdquo;AF_INET&ldquo;.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			common socket commands that ELKS supports i.e. socket, accept,
+			bind, connect and listen are implemented in libc. In libc there
+			are wrappers around kernel system calls which are implemented in
+			socket.c. These system calls are sys_socket, sys_accept, sys_bind,
+			sys_connect and sys_listen. The application passes the family name
+			with the command and this selects which of the kernel interfaces
+			above will execute the command.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">You
+			can also use the read, write, select and close commands with the
+			socket handle. These are executed with the sock_read, sock_write,
+			sock_select and sock_close functions in socket.c.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">So
+			if the application executes a &bdquo;write&ldquo; with the family
+			&bdquo;AF_INET&ldquo; the sock_write function in socket.c will
+			translate this via structures of pointers into the function
+			inet_write() in af_inet.c and execute that. This calls the
+			function tcpdev_inetwrite() in our char/tcpdev driver which writes
+			it into the &bdquo;tdout_buf&ldquo; buffer. This buffer is then
+			copied to memory in the tcpdev_read() function for the ktcp user
+			space driver to pick up and send. On the other hand, the
+			char/tcpdev driver will use the tcpdev_write function to copy
+			received data to the kernel interface af_inet.c by calling the
+			function inet_process_tcpdev() in that code.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">There
+			are two tcpdev.c files in the code. One, the &bdquo;char/tcpdev&ldquo;,
+			is linked as a kernel driver and the other, &bdquo;ktcp/tcpdev&ldquo;,
+			handles the tcp part for the ktcp user mode driver.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">When
+			ktcp is started, it initializes several modules, first it calls
+			tcpdev_init() which is implemented in ktcp/tcpdev.c. This opens
+			the dev/tcpdev device that the kernel mode char/tcpdev driver has
+			provided and receives the &bdquo;tcpdevfd&ldquo; handle. Then the
+			slip interface, ip, icmp, tcp and netconf are initialized. At the
+			end ktcp calls its ktcp_run() function which does a while loop
+			frequently calling tcp_process() in ktcp/tcpdev. The tcp_process()
+			function queries the tcpdev device of the char/tcpdev driver for
+			tasks to execute. In case of a write task, the function calls
+			tcpdev_write which again calls tcp_output that implements
+			retransmissions if necessary. It calls the function
+			ip_sendpacket() in ip.c. This function again uses the function
+			slip_send() in slip.c. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			loop in ktcp_run() also calls slip_process() in slip.c which
+			handles the data received by calling ip_recvpacket() in ip.c. The
+			select call used here queries the ntty device driver which calls
+			functions in serial.c which handles the serial ports.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Remarks:
+			The implemented sockets use semaphores to communicate. The
+			frequently used functions up() and down() are implemented in the
+			file kernel/sleepwake.c.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<H2 CLASS="western" STYLE="font-style: normal">11. Links to ELKS
+			sites</H2>
+			<TABLE WIDTH=100% BORDER=0 CELLPADDING=4 CELLSPACING=0>
+				<COL WIDTH=142*>
+				<COL WIDTH=114*>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="http://elks.sourceforge.net/"><FONT FACE="Arial, sans-serif">http://elks.sourceforge.net/</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">ELKS Homepage</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="https://github.com/jbruchon/elks"><FONT FACE="Arial, sans-serif">https://github.com/jbruchon/elks</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">ELKS GitHub</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="https://github.com/jbruchon/elks/network/members"><FONT FACE="Arial, sans-serif">https://github.com/jbruchon/elks/network/members</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">ELKS forks on GitHub</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="https://github.com/jbruchon/dev86"><FONT FACE="Arial, sans-serif">https://github.com/jbruchon/dev86</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">DEV86 fork by Jody Bruchon</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P STYLE="margin-bottom: 0.5cm"><A HREF="http://nctritech.com/"><FONT FACE="Arial, sans-serif">http://nctritech.com/</FONT></A></P>
+						<P STYLE="margin-bottom: 0.5cm"><A HREF="http://mw2.google.com/mw-panoramio/photos/medium/127932187.jpg"><FONT FACE="Arial, sans-serif">http://mw2.google.com/mw-panoramio/photos/medium/127932187.jpg</FONT></A></P>
+						<P><A HREF="https://www.linkedin.com/in/jody-bruchon-58b880a6"><FONT FACE="Arial, sans-serif">https://www.linkedin.com/in/jody-bruchon-58b880a6</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">Jody's place</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="https://groups.google.com/forum/?hl=de#!searchin/comp.os.linux.announce/linux$208086%7Csort:relevance/comp.os.linux.announce/qD3bZ0BUuIY/vBTMD4vOqysJ"><FONT FACE="Arial, sans-serif">https://groups.google.com/forum/?hl=de#!searchin/comp.os.linux.announce/linux$208086|sort:relevance/comp.os.linux.announce/qD3bZ0BUuIY/vBTMD4vOqysJ</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">Allan Cox - Announcing ELKS</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="http://www.spinics.net/lists/linux-8086/"><FONT FACE="Arial, sans-serif">http://www.spinics.net/lists/linux-8086/</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">ELKS forum archive &ndash;
+						spinics.net</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="https://www.mail-archive.com/linux-8086@vger.kernel.org/"><FONT FACE="Arial, sans-serif">https://www.mail-archive.com/linux-8086@vger.kernel.org/</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">ELKS forum archive &ndash;
+						the MailArchive</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="http://web.archive.org/web/20040606191035/http://rainbow.cs.unipi.gr/linux-8086-list/"><FONT FACE="Arial, sans-serif">http://web.archive.org/web/20040606191035/http://rainbow.cs.unipi.gr/linux-8086-list/</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">Old ELKS mailing list entries</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="http://web.archive.org/web/20000607042110/http://www.cyberpass.net/~dummy/robert/archives/linux-8086/index.old.shtml"><FONT FACE="Arial, sans-serif">http://web.archive.org/web/20000607042110/http://www.cyberpass.net/~dummy/robert/archives/linux-8086/index.old.shtml</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">Old ELKS mailing list</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="http://web.archive.org/web/20010620052302/http://www.elks.ecs.soton.ac.uk/doc/boot_sequence.php3"><FONT FACE="Arial, sans-serif">http://web.archive.org/web/20010620052302/http://www.elks.ecs.soton.ac.uk/doc/boot_sequence.php3</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">ELKS boot sequence</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="http://ftp.linux.org.uk/pub/linux/8086/Kernel/"><FONT FACE="Arial, sans-serif">http://ftp.linux.org.uk/pub/linux/8086/Kernel/</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">Old versions of ELKS</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="http://web.archive.org/web/20120118053706/http://homepage.ntlworld.com/robert.debath/"><FONT FACE="Arial, sans-serif">http://web.archive.org/web/20120118053706/http://homepage.ntlworld.com/robert.debath/</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">Old home page of Robert de
+						Bath</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="http://web.archive.org/web/20070328032634/http://www.valug.it/listing/~pctips/elks/apps/"><FONT FACE="Arial, sans-serif">http://web.archive.org/web/20070328032634/http://www.valug.it/listing/~pctips/elks/apps/</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">A few apps for ELKS</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="http://ohm.hgesser.de/sp-ss2012/Intro-MinixFS.pdf"><FONT FACE="Arial, sans-serif">http://ohm.hgesser.de/sp-ss2012/Intro-MinixFS.pdf</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">Introduction to the Minix
+						file system</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P><A HREF="http://web.archive.org/web/20050327202617/http://www.mungewell.ndirect.co.uk/linux/"><FONT FACE="Arial, sans-serif">http://web.archive.org/web/20050327202617/http://www.mungewell.ndirect.co.uk/linux/</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P><FONT FACE="Arial, sans-serif">Simon Wood about the Psion
+						port</FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=56%>
+						<P STYLE="margin-bottom: 0.5cm"><A HREF="http://www.linuxjournal.com/article/2820"><FONT FACE="Arial, sans-serif">http://www.linuxjournal.com/article/2820</FONT></A></P>
+						<P><A HREF="http://www.oreilly.com/openbook/linag2/book/ch07.html"><FONT FACE="Arial, sans-serif">http://www.oreilly.com/openbook/linag2/book/ch07.html</FONT></A></P>
+					</TD>
+					<TD WIDTH=44%>
+						<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">SLIP
+						instructions</FONT></P>
+						<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+						</P>
+						<P><BR>
+						</P>
+					</TD>
+				</TR>
+			</TABLE>
+			<TABLE WIDTH=742 BORDER=0 CELLPADDING=4 CELLSPACING=0>
+				<COL WIDTH=109>
+				<COL WIDTH=617>
+				<TR>
+					<TD COLSPAN=2 WIDTH=734 VALIGN=TOP>
+						<H2 CLASS="western" STYLE="font-style: normal">12. ELKS
+						commands and system utilities</H2>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>ash </B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>a version of sh with features similar to  those  of the  System  V shell</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>banner</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>print large banner to stdout</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western"><EM><FONT FACE="Arial, sans-serif"><FONT SIZE=3><SPAN STYLE="font-style: normal"><B>basename</B></SPAN></FONT></FONT></EM></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>strip directory and suffix from filenames </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>bc</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>is a language that supports arbitrary precision numbers with interactive execution of statements</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western"><EM><FONT FACE="Arial, sans-serif"><FONT SIZE=3><SPAN STYLE="font-style: normal"><B>cal</B></SPAN></FONT></FONT></EM></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>displays a calendar </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>cat</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>concatenate files and write them to stdout</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western"><EM><FONT FACE="Arial, sans-serif"><FONT SIZE=3><SPAN STYLE="font-style: normal"><B>chgrp</B></SPAN></FONT></FONT></EM></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>change group ownership </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>chmod</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>change
+						access mode for files</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>chown</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>change file owner and group </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>cksum</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>computes a cyclic redundancy check (CRC) for each named file,  or the standard input</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western"><EM><FONT FACE="Arial, sans-serif"><FONT SIZE=3><SPAN STYLE="font-style: normal"><B>clock</B></SPAN></FONT></FONT></EM></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>determine processor time</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western"><EM><FONT FACE="Arial, sans-serif"><FONT SIZE=3><SPAN STYLE="font-style: normal"><B>cmp</B></SPAN></FONT></FONT></EM></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>compare two files</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>cut</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>remove sections from each line of files</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>date</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>print or set the system date and time</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>dd</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>device dump, convert and copy a file</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>diff</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>compare files line by line</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>dirname</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>strip non-directory suffix from file name</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>du</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>estimate file space usage</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>echo</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>display a line of text</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>env</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>run a program in a modified environment</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>exitemu</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>quit if running ELKS in DOSEMU</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>false</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>exit with a status code indicating failure</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>fgrep</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>print lines matching a pattern</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>file</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>guess
+						a file's type based on contents</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>find</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>find
+						files meeting a given condition</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>getty</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>set terminal type, modes, speed, and line discipline </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>grep</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>search
+						a file for lines containing a given pattern</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>head</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>print
+						the first few lines of a file</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>init</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>Upstart process management daemon - responsible for starting all other processes</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>install</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>copy
+						files and set attributes </FONT></FONT>
+						</P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>kill</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>terminate a process </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>knl</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>program to configure the initial kernel settings</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>ktcp</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>ELKS tcp/ip stack</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>l</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>a short version of &bdquo;ls&ldquo;</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>ln</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>make links between files </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>login</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>log
+						into the computer</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>logname</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>print user's login name </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>lp</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>copy
+						a file to the line printer</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>ls</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>list
+						the contents of a directory</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>man</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>display
+						online manual pages</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>meminfo</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>display the memory usage on the system</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>mesg</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>permit
+						or deny messages</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>mkdir</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>make
+						a directory</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>mkfifo</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>make
+						a named pipe</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>mknod</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>creates a file system node </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>more</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>file perusal filter for crt viewing </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>mount</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>mount
+						a file system</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>mv</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>move and rename files</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>passwd</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>change
+						a login password</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>printenv</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>print all or part of environment </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>proto</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>extract function declarations from C source code</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>ps</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>show
+						current process status</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>pwd</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>print
+						working directory</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>pwdauth</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>check a shadow password</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>reboot</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>reboot system</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>remsync</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>remotely
+						synchronize file trees</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>rm</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>remove files or directories </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>rmdir</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>remove
+						a directory</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>sash</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P><FONT FACE="Arial, sans-serif"><FONT SIZE=3><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">stand-alone
+						shell (</SPAN></SPAN></FONT></FONT><EM><FONT FACE="Arial, sans-serif"><FONT SIZE=3><SPAN STYLE="font-weight: normal">sash</SPAN></FONT></FONT></EM><FONT FACE="Arial, sans-serif"><FONT SIZE=3><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">)
+						is a Unix shell designed for use in recovering from certain
+						types of </SPAN></SPAN></FONT></FONT><FONT FACE="Arial, sans-serif">system
+						failures </FONT>
+						</P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>sed</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>the
+						stream editor &ndash; very old version</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>sh</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>bash - GNU Bourne-Again SHell </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>sort</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>sort
+						a file of ASCII lines</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>stty</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>set
+						terminal parameters</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>sum</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>compute
+						the checksum and block count of a file</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>swapon</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>start swapping to file/device </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>sync</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>writes any data buffered in memory out to disk </FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>synctree</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>synchronize
+						directory trees</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>tail</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>print
+						the last few lines of a file</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>tee</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>divert
+						stdin to one or several files</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>test</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>test conditions</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>tget</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>get
+						termcap values</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>touch</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>update
+						a file's time of last modification</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>tr</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>translate
+						character codes</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>true</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>exit
+						with the value true - do nothing, successfully </FONT></FONT>
+						</P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>umount</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>unmount
+						a mounted file system</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>uniq</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>delete
+						consecutive identical lines in a file</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>vi</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<PRE CLASS="western" STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>editor</FONT></FONT></PRE>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>wc</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>word
+						count - count characters, words, and lines in a file</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>which</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>examine
+						$PATH to see which file will be executed</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>who</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>print
+						list of currently logged in users</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>whoami</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>print
+						current user name</FONT></FONT></P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>xargs</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>construct
+						argument list(s) and execute </FONT></FONT>
+						</P>
+					</TD>
+				</TR>
+				<TR VALIGN=TOP>
+					<TD WIDTH=109>
+						<PRE CLASS="western" STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>yes</B></FONT></FONT></PRE>
+					</TD>
+					<TD WIDTH=617>
+						<P STYLE="font-style: normal; font-weight: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>an
+						endless stream of the same word</FONT></FONT></P>
+					</TD>
+				</TR>
+			</TABLE>
+			<H2 CLASS="western"><BR><BR>
+			</H2>
+			<H2 CLASS="western" STYLE="font-style: normal">13. The Minix file
+			system</H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">ELKS
+			uses the Minix file system. There are three versions of the Minix
+			file system. The first one, implemented in ELKS, features a
+			maximum disk size of 64 Mb and a maximum file size of 64 Mb. The
+			other two versions have the same maximum file size but support
+			disks up to 2 GB or 2 TB respectively. The maximum file name
+			length is 14 bytes in the file system version ELKS implemented.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			structure of a Minix file system consists of six sections:</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><B>Boot
+			Block</B> first block, reserved for boot loader code.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><B>Super
+			Block</B></FONT> <FONT FACE="Arial, sans-serif">second block,
+			stores the Super Block with information about the Minix File
+			System. This is e.g.</FONT><FONT FACE="Arial, sans-serif"><SPAN STYLE="font-style: normal">the
+			number of inodes and zones, the size of the inode and zone bitmaps
+			and the starting block of the data area.</SPAN></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><B>Inode
+			Map</B> section made up of bits, where one bit represents one
+			inode. Tracks used and unused inodes. A &lsquo;1&rsquo; is used to
+			represent a used block and a &lsquo;0&rsquo; is for a free block.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><B>Zone
+			Map</B> section made up of bits to track used and unused zones in
+			the data area. A &lsquo;1&rsquo; is used to represent a used zone
+			and a &lsquo;0&rsquo; is for a free zone.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><B>Inode
+			area</B></FONT> <FONT FACE="Arial, sans-serif">e</FONT><FONT FACE="Arial, sans-serif"><SPAN STYLE="font-style: normal">ach
+			file or directory is represented as an inode, which records
+			metadata including type (file, directory, block, char, pipe), IDs
+			for user and group, three timestamps that record the date and time
+			of last access, last modification and last status change. An inode
+			also contains a list of addresses that point to the zones in the
+			data area where the file or directory data is actually stored.</SPAN></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><B>Data
+			area</B></FONT> <FONT FACE="Arial, sans-serif">majority of volume
+			which contains the files and directories data.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			directory and file entries containing the file names are in the
+			data area. First, read the root inode (which is inode #1), then
+			traverse its zones to find directory entries. Each directory entry
+			contains the inode index of the directory, so you recursively
+			proceed.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Now
+			here is a tour of the Minix file system. It was included as a note
+			by Al Woodhull within the documentation of the mintools package. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">This
+			is a guided tour of a Minix 1.6.30 empty 360K file system. This
+			file system will initially have 127 i-nodes (of 128 total), and
+			348 blocks (of 360 total) available. The basic data was generated
+			using xd, a hex dump program.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			bootblock occupies the first 1024 byte block, it is all zeros
+			initially:</FONT></P>
+			<PRE CLASS="western">000000000  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+(snip)
+0000003F0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">The second block is the superblock.
+			Only a small part of the block is needed to hold the necessary
+			information. The definition is in /usr/src/fs/super.h.</FONT></P>
+			<PRE CLASS="western">EXTERN struct super_block {
+  ino_t s_ninodes;              /* # usable inodes on the minor device */
+  zone1_t  s_nzones;            /* total device size, including bit maps etc */
+  short s_imap_blocks;          /* # of blocks used by inode bit map */
+  short s_zmap_blocks;          /* # of blocks used by zone bit map */
+  zone1_t s_firstdatazone;      /* number of first data zone */
+  short s_log_zone_size;        /* log2 of blocks/zone */
+  off_t s_max_size;             /* maximum file size on this device */
+  short s_magic;                /* magic number to recognize super-blocks */
+  short s_pad;                  /* try to avoid compiler-dependent padding */
+  zone_t s_zones;               /* number of zones (replaces s_nzones in V2) */
+... additional fields are added to the structure in memory.
+} super_block[NR_SUPERS];</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">This is an example of a super
+			block:</FONT></P>
+			<PRE CLASS="western">000000400  80 00 00 00 01 00 01 00  0c 00 00 00 00 1c 04 04 ................
+000000410  68 24 00 00 68 01 00 00  00 00 00 00 00 00 00 00 h$..h...........
+(snip)
+0000007F0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Here is an explanation of the data
+			in this hex dump:</FONT></P>
+			<PRE CLASS="western">400-401: 0x0080 = 128 inodes
+402-403: 0x0000 ???? total size (zero for V2, but look here if f.s. is V1)
+404-405: 0x0001 = 1 i-node map block
+406-407: 0x0001 = 1 zone map block
+408-409: 0x000c = 12 first data zone
+40a-40b: 0      = 1 block/zone
+40c-40f: 0x04041c00 max file size on this device (?)
+410-411: 0x2468  magic number for V2 f.s. ; defined in /usr/src/fs/const.h
+412-413: 0x0000  padding (why?)
+414-417: 0x00000168 = 360 blocks total size (number used by V2)</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">The next block is the i-node bit
+			map. Note that in this newly created file system the first byte
+			shows two i-nodes already in use. One of the bits corresponds to
+			the root directory i-node. The other bit is for i-node zero, which
+			is always marked as used, since it doesn't exist -- an inode
+			pointer of zero in a directory entry indicates an available
+			directory entry. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Although
+			this 360K file system was created with space for 128 nodes
+			reserved, which would require 16 bytes in the bit map (actually 17
+			bytes, since the bit map maps 129 i-nodes including the
+			non-existent, never-available i-node zero) the whole block is
+			zeroed out. The file system can read the maximum extent of the
+			i-node bitmap from the superblock, and so doesn't need to have
+			excess bits in the block mapped out. See the discussion below of
+			the the zone bit map.</FONT></P>
+			<PRE CLASS="western">000000800  03 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+000000810  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+(snip)
+000000BF0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">The next block holds the the zone
+			bit map. Here again, two zones are shown as used. One corresponds
+			to the block in which the root directory is located, and the other
+			corresponds to zone zero, which, like i-node zero, doesn't exist
+			and is thus marked as never available.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">A
+			zero-valued pointer in a list of zones will always be treated as a
+			nil pointer. A zero-valued pointer does not necessarily indicate
+			the end of a file has been found, however, Minix can have sparse
+			files.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">As
+			with the i-node bit map, the total number of zones can be found
+			from the superblock. In this example, a 360K file system requires
+			43 bytes for the zone bit map, but the additional bits in the zone
+			bit map block are not mapped out. This makes it easy to copy from
+			a small floppy disk to a larger ramdisk. For instance, this 360K
+			file system could be copied directly to a ramdisk of up to 8192K.
+			After copying all that would be necessary would be to patch the
+			superblock to reflect the expanded number of zones available. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Note
+			that, although the i-node bit map could also be expanded to handle
+			8192 i-nodes, in fact the space allocated to i-nodes in this 360K
+			file system is only 8192 bytes, and thus the 128 i-nodes already
+			provided for, each requiring 64 bytes, already require the full
+			space available. </FONT>
+			</P>
+			<PRE CLASS="western">000000C00  03 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+000000C10  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+000000C20  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+(snip)
+000000FF0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">I-nodes: definition from
+			/usr/src/fs/type.h:</FONT></P>
+			<PRE CLASS="western">typedef struct {                /* V2.x disk inode */
+  mode_t d2_mode;               /* file type, protection, etc. */
+  u16_t d2_nlinks;              /* how many links to this file. HACK! */
+  uid_t d2_uid;                 /* user id of the file's owner. */
+  u16_t d2_gid;                 /* group number HACK! */
+  off_t d2_size;                /* current file size in bytes */
+  time_t d2_atime;              /* when was file data last accessed */
+  time_t d2_mtime;              /* when was file data last changed */
+  time_t d2_ctime;              /* when was inode data last changed */
+  zone_t d2_zone[V2_NR_TZONES]; /* block nums for direct, ind, and dbl ind */
+} d2_inode;</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Example: The i-nodes in Minix
+			1.6.30 each require 64 bytes, and thus a single 1024 byte block
+			can hold 16 i-nodes. In this example of a 360K file system the
+			next 8 blocks are reserved for 128 inodes. The first one is
+			already filled in, it is the i-node of the root directory. Note,
+			however, that the last part of the i-node, the block list, is
+			mostly filled with zeros, since only one block is in use by the
+			root directory file.</FONT></P>
+			<PRE CLASS="western">1000-1001: 0x41ff mode drwxrwxrwx
+1002-1003: 0x0002 number of links
+1004-1005: 0x0002 owner id (daemon)
+1006-1007: 0x0002 group id (daemon)
+1008-100b: 0x00000020 file size
+100c-100f: 0x2f9d205c access time         (the order is different from OSDI 
+1010-1013: 0x2f9d1fed modification time    1st ed fig 5-7, although this fig
+1014-1017: 0x00000000 inode change time    is not in 2nd ed. But see fig 5-4)
+1018-101b: 0x0000000c 1st block used
+101c-1033: 0x00000000 2nd through 7th direct blocks
+1034-1037: 0x00000000 indirect block
+1038-103b: 0x00000000 double indirect block
+103c-103f: 0x00000000 triple indirect block
+000001000  ff 41 02 00 02 00 02 00  20 00 00 00 5c 20 9d 2f   .A...... ...\ ./
+000001010  ed 1f 9d 2f 00 00 00 00  0c 00 00 00 00 00 00 00 .../............
+000001020  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+000001030  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+(snip)
+000002FF0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Following the i-nodes are the data
+			blocks. Only one is in use in this empty file system, it contains
+			the root directory. The structure of a directory entry is defined
+			in /usr/include/sys/dir.h:</FONT></P>
+			<PRE CLASS="western">struct direct {
+  ino_t d_ino;
+  char d_name[DIRSIZ];
+};</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">The root directory, of a newly
+			created file system contains &quot;.&quot; and &quot;..&quot;
+			entries. (Because this dump uses the &quot;.&quot; character to
+			represent non-ASCII characters in the ASCII part of the dump this
+			is hard to see, but note that the hexadecimal representation of
+			the ASCII &quot;.&quot; is 0x2e).</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">In
+			Minix 1.6.30 the i-node pointers are 16 bit values and precede the
+			file names, which may have up to 14 characters. Since the root
+			directory is its own parent, both the &quot;.&quot; and &quot;..&quot;
+			entries point to i-node one.</FONT></P>
+			<PRE CLASS="western">000003000  01 00 2e 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+000003010  01 00 2e 2e 00 00 00 00  00 00 00 00 00 00 00 00 ................
+000003020  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+(snip)
+0000033F0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">The second block is the first one
+			available, and will be the first block used for the first file or
+			directory created in the root directory. In this case it is
+			initially filled with 0xf6 bytes, since this pattern was written
+			by the disk formatting program. If this disk had been recycled,
+			with a new file system created on a previously used disk, the data
+			on the rest of the disk could be any kind of garbage left over
+			from the previous use.</FONT></P>
+			<PRE CLASS="western">000003400  f6 f6 f6 f6 f6 f6 f6 f6  f6 f6 f6 f6 f6 f6 f6 f6 ................
+(snip)</PRE><H2 CLASS="western" STYLE="margin-top: 0cm; margin-bottom: 0.5cm">
+			<BR><BR>
+			</H2>
+			<H2 CLASS="western" STYLE="margin-top: 0cm; margin-bottom: 0.5cm; font-style: normal">
+			14. The ELKS One Page Manual</H2>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<CENTER>
+				<TABLE WIDTH=643 BORDER=1 BORDERCOLOR="#000000" CELLPADDING=4 CELLSPACING=0>
+					<COL WIDTH=273>
+					<COL WIDTH=352>
+					<TR>
+						<TD COLSPAN=2 WIDTH=633 VALIGN=TOP>
+							<P ALIGN=CENTER><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>ELKS
+							One Page Manual</B></FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="sans-serif"><FONT SIZE=4 STYLE="font-size: 15pt"><B>File
+							Commands</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352></TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>ls</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>directory listing</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>ls -al</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>formatted listing with
+							hidden files</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>cd dir</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>change directory to
+							dir</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>cd</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>change to home</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>pwd</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>show current directory</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>mkdir dir</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>create a directory dir</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>rm file</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>delete file</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>rm -r dir</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>delete directory dir</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>rm -f file</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>force remove file</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>rm -rf dir</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>force remove directory
+							dir*</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>cp file1 file2</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>copy file1 to file2</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>cp -r dir1 dir2</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>copy dir1 to dir2;
+							create dir2 if it doesn't exist</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>mv file1 file2</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>rename or move file1
+							to file2; if file2 is an existing directory, moves file1 into
+							directory file2</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>ln -s file link</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="Arial, sans-serif"><FONT FACE="sans-serif"><FONT SIZE=3>create
+							symbolic link named </FONT></FONT><FONT FACE="sans-serif"><FONT SIZE=3><I>link</I></FONT></FONT>
+							<FONT FACE="sans-serif"><FONT SIZE=3>to file </FONT></FONT></FONT>
+							</P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>touch file</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>create or update file</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>cat &gt; file</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>places standard input
+							into file</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>more file</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>output the contents of
+							file</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>head file</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>output the first 10
+							lines of file</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>tail file</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>output the last 10
+							lines of file</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>tail -f file</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>output the contents of
+							file as it grows, starting with the last 10 lines</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="sans-serif"><FONT SIZE=4 STYLE="font-size: 15pt"><B>Process
+							Management</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352></TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>ps</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>display your currently
+							active processes</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>kill pid</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>kill process id pid
+							(add a &amp; for ELKS)</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="sans-serif"><FONT SIZE=4 STYLE="font-size: 15pt"><B>File
+							Permissions</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352></TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>chmod octal file</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>change the permissions
+							of file to octal, which can be found separately for user,
+							group, and world by adding: 4 &ndash; read (r), 2 &ndash;
+							write (w),</FONT></FONT> <FONT FACE="sans-serif"><FONT SIZE=3>1
+							&ndash; execute (x)</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3><B>Examples:</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352></TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>chmod 777</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>read, write, execute
+							(rwx) for all</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>chmod 755</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>rwx for owner, rx for
+							group and world</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>chmod 666</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>read and write for all</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>chmod 644</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>read+write for owner,
+							read for group+world</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="sans-serif"><FONT SIZE=4 STYLE="font-size: 15pt"><B>Searching</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352></TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>grep pattern files</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>search for pattern in
+							files</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>grep -r pattern dir</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>search recursively for
+							pattern in dir</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>command | grep
+							pattern</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>search for pattern in
+							the output of command</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="sans-serif"><FONT SIZE=4 STYLE="font-size: 15pt"><B>Compression</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352></TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>tar cf file.tar
+							files</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>create a tar named
+							file.tar containing files</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>tar xf file.tar</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>extract the files from
+							file.tar</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>tar czf file.tar.gz
+							files</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>create a tar with gzip
+							compression</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>tar xzf file.tar.gz</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>extract a tar using
+							gzip</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>tar cjf file.tar.bz2</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>create a tar with
+							bzip2 compression</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>tar xjf file.tar.bz2</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>extract a tar using
+							bzip2</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>zat &gt; file </B></FONT></FONT>
+							</P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>extract a zip archive
+							to stdout; redirect to file here</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>compress, uncompress</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>compress and expand
+							data</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="sans-serif"><FONT SIZE=4 STYLE="font-size: 15pt"><B>Editors</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352></TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>vi</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>Visual Editor - switch
+							to command mode: &bdquo;Q&ldquo; <BR>quit without saving :q!</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>elvis</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>vi/ex clone editor</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>e3-16</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>full-screen text
+							editor with WordStar interface</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>ed</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>editor for use in
+							shell scripts</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="sans-serif"><FONT SIZE=4 STYLE="font-size: 15pt"><B>Misc</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352></TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>yacc</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>Parser generator,
+							executes yacc grammar file</FONT></FONT></P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>mcopy, mdir, mdel,
+							mren, mtype, mwrite, mrd, mmd</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>Mtools: each program
+							attempts to emulate the MS-DOS equivalent command </FONT></FONT>
+							</P>
+						</TD>
+					</TR>
+					<TR VALIGN=TOP>
+						<TD WIDTH=273>
+							<P><FONT FACE="monospace"><FONT SIZE=3><B>mkdfs</B></FONT></FONT></P>
+						</TD>
+						<TD WIDTH=352>
+							<P><FONT FACE="sans-serif"><FONT SIZE=3>make DOS file system</FONT></FONT></P>
+						</TD>
+					</TR>
+				</TABLE>
+			</CENTER>
+		</TD>
+	</TR>
+</TABLE>
+<P><BR><BR>
+</P>
+</BODY>
+</HTML>
