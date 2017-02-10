@@ -9,4 +9,4 @@ as86 -0 -o ne2k-mac.o ne2k-mac.s
 
 bcc -ansi -0 -c -o ne2k-main.o ne2k-main.c
 
-ld86 -0 -d -M -o ne2k.bin ne2k-low.o ne2k-phy.o ne2k-mac.o ne2k-main.o | sort -k4 > ne2k.map
+ld86 -0 -d -M -o ne2k.bin ne2k-low.o ne2k-phy.o ne2k-mac.o ne2k-test.o | sort -k4 > ne2k.map

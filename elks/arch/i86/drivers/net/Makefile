@@ -26,3 +26,10 @@ include $(BASEDIR)/Makefile-rules
 
 #########################################################################
 ### Dependencies:
+
+OBJS        = ne2k-main.o
+
+all: net_drv.a
+
+net_drv.a: $(OBJS)
+	ar rcs net_drv.a $(OBJS)

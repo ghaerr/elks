@@ -438,7 +438,7 @@ _ne2k_pack_put:
 
 
 ;------------------------------------------------------------------------------
-; Get NE2K status
+; Get NE2K interrupt status
 ;------------------------------------------------------------------------------
 
 ; returns:
@@ -448,7 +448,7 @@ _ne2k_pack_put:
 ;   02h = packet sent
 ;   10h = RX ring overflow
 
-_ne2k_status:
+_ne2k_int_stat:
 
 	push    dx
 
@@ -743,7 +743,7 @@ _ne2k_reset:
 	EXPORT  _ne2k_addr_set
 	EXPORT  _ne2k_pack_get
 	EXPORT  _ne2k_pack_put
-	EXPORT  _ne2k_status
+	EXPORT  _ne2k_int_stat
 
 	EXPORT  _ne2k_init
 	EXPORT  _ne2k_term

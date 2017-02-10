@@ -1,284 +1,189 @@
 //-----------------------------------------------------------------------------
-// NE2K driver - high part - test program
+// Ethernet driver
 //-----------------------------------------------------------------------------
 
-typedef unsigned char  byte_t;
-typedef unsigned short word_t;
+#include <linuxmt/errno.h>
+#include <linuxmt/major.h>
+#include <linuxmt/fs.h>
 
 
-#define NE2K_LINK_UP    0x0001  // link up
-#define NE2K_LINK_FD    0x0002  // full duplex
-#define NE2K_LINK_HI    0x0004  // high speed (100 Mbps)
-#define NE2K_LINK_LB    0x0008  // loop back
-
-#define NE2K_STAT_RX    0x0001  // packet received
-#define NE2K_STAT_TX    0x0002  // packet sent
-#define NE2K_STAT_OF    0x0010  // RX ring overflow
-
-#define MAX_PACK        256 * 6
+#define PACKET_MAX (6 * 256)
 
 
-//-----------------------------------------------------------------------------
-// Low-level routines
-//-----------------------------------------------------------------------------
+// Static data
 
-// From low level test
+static byte_t eth_inuse = 0;
 
-extern void idle ();
-extern void int_setup ();
+//static struct wait_queue rx_queue;
+//static struct wait_queue tx_queue;
 
-extern void strncpy (byte_t * dst, byte_t * src, word_t len);
-extern word_t strncmp (byte_t * s1, byte_t * s2, word_t len);
+//static byte_t recv_buf [PACKET_MAX];
+//static byte_t send_buf [PACKET_MAX];
 
-// From low level NE2K
-
-extern word_t ne2k_phy_get (word_t reg, word_t * val);
-extern word_t ne2k_phy_set (word_t reg, word_t val);
-
-extern word_t ne2k_link_stat ();
-//extern word_t ne2k_link_mode (word_t mode);
-
-extern word_t ne2k_init ();
-extern void   ne2k_term ();
-
-extern void   ne2k_reset ();
-
-extern word_t ne2k_start ();
-extern void   ne2k_stop ();
-
-extern void   ne2k_addr_set (byte_t *addr);
-
-extern word_t ne2k_pack_get (byte_t * pack);
-extern word_t ne2k_pack_put (byte_t * pack, word_t len);
-
-extern word_t ne2k_status ();
+static byte_t echo_buf [PACKET_MAX];
 
 
-//-----------------------------------------------------------------------------
-// Local data
-//-----------------------------------------------------------------------------
+// Get packet
 
-//static word_t phy_regs [32];
+static size_t eth_read (struct inode * inode, struct file * filp,
+	char * data, unsigned int len)
 
-//static word_t link_stat;
-
-// MAC address (first byte, bit 0 : broadcast, bit 1 : local)
-// so use any address with first bits = 10b
-
-//static byte_t mac_broad [6] = {255, 255, 255, 255, 255, 255};
-static byte_t mac_addr  [6] = {2, 0, 0, 0, 0, 1};
-
-static byte_t ip_addr [4] = {192, 168, 0, 200};
-
-static byte_t rx_packet [MAX_PACK];
-//static byte_t tx_packet [MAX_PACK];
-
-//static word_t test1;
-//static word_t test2;
-
-struct arp_s
 	{
-	byte_t eth_to   [6];
-	byte_t eth_from [6];
+	size_t res;
 
-	byte_t head     [10];
-
-	byte_t mac_from [6];
-	byte_t ip_from  [4];
-
-	byte_t mac_to   [6];
-	byte_t ip_to    [4];
-	};
-
-typedef struct arp_s arp_t;
-
-static byte_t arp_req [10] = {8, 6, 0, 1, 8, 0, 6, 4, 0, 1};
-
-
-//-----------------------------------------------------------------------------
-// Read all PHY registers
-//-----------------------------------------------------------------------------
-/*
-static word_t test_phy_read ()
-	{
-	word_t err;
-	word_t r;
-
-	for (r = 0; r < 32; r++)
-		{
-		err = ne2k_phy_get (r, phy_regs + r);
-		if (err) break;
-		}
-
-	return err;
-	}
-*/
-
-//-----------------------------------------------------------------------------
-// Send a single packet
-//-----------------------------------------------------------------------------
-/*
-static word_t test_tx_single ()
-	{
-	word_t err;
+	size_t size;  // actual packet size
 
 	while (1)
 		{
-		int_setup ();
-
-		err = ne2k_init ();
-		if (err) break;
-
-		ne2k_addr_set (mac_addr);
-
-		err = ne2k_start ();
-		if (err) break;
-
-		tx_packet [0 + 0] = 0xFF;
-		tx_packet [0 + 1] = 0xFF;
-		tx_packet [0 + 2] = 0xFF;
-		tx_packet [0 + 3] = 0xFF;
-		tx_packet [0 + 4] = 0xFF;
-		tx_packet [0 + 5] = 0xFF;
-
-		tx_packet [6 + 0] = mac_addr [0];
-		tx_packet [6 + 1] = mac_addr [1];
-		tx_packet [6 + 2] = mac_addr [2];
-		tx_packet [6 + 3] = mac_addr [3];
-		tx_packet [6 + 4] = mac_addr [4];
-		tx_packet [6 + 5] = mac_addr [5];
-
-		tx_packet [12 + 0] = 0x00;
-		tx_packet [12 + 1] = 0x55;
-		tx_packet [12 + 2] = 0xAA;
-		tx_packet [12 + 3] = 0xFF;
-
-		err = ne2k_pack_put (tx_packet, 16);
-		if (err) break;
-
-		while (1)
+		/*
+		res = ne2k_pack_get (recv_buf);
+		if (res)
 			{
-			err = ne2k_status ();
-			if (err & NE2K_STAT_TX) break;
-			idle ();
-			}
+			// No packet received
 
-		ne2k_stop ();
-		ne2k_term ();
-
-		break;
-		}
-
-	return err;
-	}
-*/
-
-//-----------------------------------------------------------------------------
-// Receive a single packet
-//-----------------------------------------------------------------------------
-/*
-static word_t test_rx_single ()
-	{
-	word_t err;
-
-	while (1)
-		{
-		int_setup ();
-
-		err = ne2k_init ();
-		if (err) break;
-
-		ne2k_addr_set (mac_addr);
-
-		err = ne2k_start ();
-		if (err) break;
-
-		while (1)
-			{
-			err = ne2k_status ();
-			if (err & NE2K_STAT_RX) break;
-			idle ();
-			}
-
-		err = ne2k_pack_get (rx_packet);
-		if (err) break;
-
-		ne2k_stop ();
-		ne2k_term ();
-
-		break;
-		}
-
-	return err;
-	}
-*/
-
-//-----------------------------------------------------------------------------
-// ARP responder
-//-----------------------------------------------------------------------------
-
-static word_t test_arp ()
-	{
-	word_t err;
-
-	while (1)
-		{
-		word_t count = 0;
-		arp_t * arp;
-
-		int_setup ();
-
-		err = ne2k_init ();
-		if (err) break;
-
-		ne2k_addr_set (mac_addr);
-
-		err = ne2k_start ();
-		if (err) break;
-
-		while (count < 100)
-			{
-			while (1)
+			if (filp->f_flags & O_NONBLOCK)
 				{
-				err = ne2k_status ();
-				if (err & NE2K_STAT_RX) break;
-				idle ();
+				res = -EAGAIN;
+				break;
 				}
 
-			err = ne2k_pack_get (rx_packet);
-			if (err) break;
+			interruptible_sleep_on (&rx_queue);
+			if (current->signal)
+				{
+				// Interrupted by signal
 
-			// Filter ARP request
+				res = -ERESTARTSYS;
+				break;
+				}
 
-			arp = (arp_t *) (rx_packet + 4);
-			err = strncmp (arp->head, arp_req, 10);
-			if (err) continue;
+			// Try again
 
-			err = strncmp  (arp->ip_to, ip_addr, 4);
-			if (err) continue;
+			continue;
+			}
+			*/
 
-			// Fill ARP reply
+		// Client should request at least PACKET_MAX bytes
+		// otherwise end of packet will be lost
 
-			arp->head [9] = 2;
+		//size = *((word_t *) (recv_packet + 2));
+		size = PACKET_MAX;
+		len = len > size ? size : len;
+		//memcpy_tofs (data, recv_packet, len);
+		memcpy_tofs (data, echo_buf, len);
 
-			strncpy (arp->eth_to, arp->eth_from, 6);
-			strncpy (arp->eth_from, mac_addr, 6);
+		res = len;
+		break;
+		}
 
-			strncpy (arp->ip_to, arp->ip_from, 4);
-			strncpy (arp->ip_from, ip_addr, 4);
+    return res;
+	}
 
-			strncpy (arp->mac_to, arp->mac_from, 6);
-			strncpy (arp->mac_from, mac_addr, 6);
 
-			err = ne2k_pack_put (rx_packet + 4, sizeof (arp_t));
-			if (err) break;
+// Put packet
 
-			count++;
+static size_t eth_write (struct inode * inode, struct file * filp,
+	char * data, size_t len)
+
+	{
+	size_t res;
+
+	size_t size;  // actual packet size
+
+	// Client should write packet once
+	// otherwise end of packet will be lost
+
+	size = PACKET_MAX;
+	len = len > size ? size : len;
+	memcpy_fromfs (echo_buf, data, len);
+
+	res = len;
+    return res;
+	}
+
+
+// Test for readiness
+
+int eth_select (struct inode * inode, struct file * filp, int sel_type)
+	{
+    int err = 0;
+
+    switch (sel_type)
+    	{
+    	case SEL_OUT:
+    	    //select_wait (&tx_queue);
+    		err = 1;
+    		break;
+
+    	case SEL_IN:
+    	    //select_wait (&rx_queue);
+    		err = 1;
+    		break;
+
+    	default:
+    		err = -EINVAL;
+
+    	}
+
+    return err;
+	}
+
+
+// Interrupt handler
+
+static void eth_irq (int irq, struct pt_regs * regs, void * dev_id)
+	{
+	/*
+    word_t stat = ne2k_int_stat ();
+
+    if (stat & NE2K_STAT_RD)
+    	{
+    	wake_up (&rx_queue);
+    	}
+
+    if (stat & NE2K_STAT_WR)
+    	{
+    	wake_up (&tx_queue);
+    	}
+    */
+    }
+
+
+// I/O control
+
+static int eth_ioctl ()
+	{
+	return 0;
+	}
+
+
+// Open
+
+static int eth_open (struct inode * inode, struct file * file)
+	{
+	int err;
+
+	while (1)
+		{
+		if (eth_inuse)
+			{
+			err = -EBUSY;
+			break;
 			}
 
-		ne2k_stop ();
-		ne2k_term ();
+		/*
+		err = request_irq (NE2K_IRQ, eth_int, NULL);
+		if (err) break;
 
+		ne2k_reset ();
+
+		err = ne2k_init ();
+		if (err) break;
+
+		err = ne2k_start ();
+		if (err) break;
+		*/
+
+		err = 0;
 		break;
 		}
 
@@ -286,40 +191,41 @@ static word_t test_arp ()
 	}
 
 
-//-----------------------------------------------------------------------------
-// Program main procedure
-//-----------------------------------------------------------------------------
+// Release (close)
 
-word_t main ()
+static void eth_release (struct inode * inode, struct file * file)
 	{
-	word_t err;
+	eth_inuse = 0;
+	}
 
-	while (1)
-		{
-		ne2k_reset ();
 
-		//err = test_phy_read ();
-		//if (err) break;
+// Ethernet operations
 
-		//link_stat = ne2k_link_stat ();
+static struct file_operations eth_fops =
+	{
+	NULL,         /* lseek */
+    eth_read,
+    eth_write,
+    NULL,         /* readdir */
+    eth_select,
+    eth_ioctl,
+    eth_open,
+    eth_release
 
-		//err = test_tx_single ();
-		//if (err) break;
+#ifdef BLOAT_FS
+    NULL,         /* fsync */
+    NULL,         /* check_media_type */
+    NULL          /* revalidate */
+#endif
 
-		//err = test_rx_single ();
-		//if (err) break;
+	};
 
-		//strncpy (rx_packet, mac_addr, 6);
-		//test1 = strncmp (rx_packet, mac_broad, 6);
-		//test2 = strncmp (rx_packet, mac_addr, 6);
 
-		err = test_arp ();
-		if (err) break;
+// Ethernet main initialization
 
-		break;
-		}
-
-	return err;
+void eth_init ()
+	{
+	register_chrdev (ETH_MAJOR, "eth", &eth_fops);
 	}
 
 

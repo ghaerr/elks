@@ -50,10 +50,12 @@ ARCHIVES := $(ARCHIVES) $(ARCH_DIR)/kernel/akernel.a \
 	$(ARCH_DIR)/lib/lib86.a \
 	$(ARCH_DIR)/mm/mm.a
 
-ADRIVERS = drivers/char/chr_drv.a drivers/block/blk_drv.a
+ADRIVERS = drivers/char/chr_drv.a drivers/block/blk_drv.a drivers/net/net_drv.a
 
-DRIVERS := $(DRIVERS) $(ARCH_DIR)/drivers/char/chr_drv.a \
-	$(ARCH_DIR)/drivers/block/blk_drv.a
+DRIVERS := $(DRIVERS) \
+	$(ARCH_DIR)/drivers/char/chr_drv.a \
+	$(ARCH_DIR)/drivers/block/blk_drv.a \
+	$(ARCH_DIR)/drivers/net/net_drv.a
 
 XINCLUDE = $(BASEDIR)/include/arch/asm-offsets.h
 
@@ -210,6 +212,9 @@ drivers/char/chr_drv.a:
 
 drivers/block/blk_drv.a:
 	${MAKE} -C drivers/block blk_drv.a
+
+drivers/net/net_drv.a:
+	${MAKE} -C drivers/net net_drv.a
 
 286pmode/pmode286:
 	${MAKE} -C 286pmode pmode286

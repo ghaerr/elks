@@ -1,7 +1,7 @@
 #ifndef LX86_LINUXMT_INIT_H
 #define LX86_LINUXMT_INIT_H
 
-/* Assorted initialisers */
+/* Assorted initializers */
 
 #include <linuxmt/types.h>
 
@@ -28,6 +28,7 @@ extern void sched_init(void);
 extern void sock_init(void);
 extern void ssd_init(void);
 extern void tcpdev_init(void);
+extern void eth_init (void);
 extern void tty_init(void);
 extern void xtk_init(void);
 
