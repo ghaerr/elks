@@ -1,8 +1,6 @@
 #
 # File system configuration
 #
-mainmenu_option next_comment
-comment 'File systems'
 
 bool 'All file systems are READ-ONLY'	CONFIG_FS_RO			n
 bool 'Minix file system'		CONFIG_MINIX_FS 		y
@@ -17,6 +15,3 @@ bool 'Pipe support'			CONFIG_PIPE			y
 comment 'Executable file formats'
 
 bool 'Support ELKS file format'         CONFIG_EXEC_ELKS		y
-
-endmenu
-

@@ -198,7 +198,18 @@ mainmenu_option next_comment
 
     source arch/i86/drivers/block/Config.in
     source arch/i86/drivers/char/Config.in
+    source arch/i86/drivers/net/Config.in
+endmenu
+
+mainmenu_option next_comment
+    comment 'Filesystem Support'
+
     source fs/Config.in
+endmenu
+
+mainmenu_option next_comment
+    comment 'Networking Support'
+
     source net/Config.in
 endmenu
 

@@ -2,9 +2,6 @@
 # Networking configuration
 #
 
-mainmenu_option next_comment
-    comment 'Network support'
-
     bool 'Socket support'			CONFIG_SOCKET		y
 
     if [ "$CONFIG_SOCKET" = "y" ]; then
@@ -19,4 +16,3 @@ mainmenu_option next_comment
 	comment '  Advanced socket options'
 	bool '  Client socket support only'	CONFIG_SOCK_CLIENTONLY	n
     fi
-endmenu

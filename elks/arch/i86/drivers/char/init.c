@@ -30,7 +30,8 @@ void chr_dev_init(void)
     tcpdev_init();
 #endif
 
-    // To be wrapped into CONFIG_ETH
+#ifdef CONFIG_ETH
     eth_init ();
+#endif
 
 }

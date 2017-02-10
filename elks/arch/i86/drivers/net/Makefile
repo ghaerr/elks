@@ -27,7 +27,11 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 ### Dependencies:
 
-OBJS        = ne2k-main.o
+ifeq ($(CONFIG_ETH), y)
+OBJS = net_drv.o ne2k-main.o
+else
+OBJS = net_drv.o
+endif
 
 all: net_drv.a
 

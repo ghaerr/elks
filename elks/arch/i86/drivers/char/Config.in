@@ -44,6 +44,7 @@ mainmenu_option next_comment
     fi
     bool 'Memory character devices'		CONFIG_CHAR_DEV_MEM	  y
     bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y
+
     if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
 	bool 'Meta device driver'		CONFIG_DEV_META		  n
     fi
