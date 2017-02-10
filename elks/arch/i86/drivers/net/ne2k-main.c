@@ -225,7 +225,13 @@ static struct file_operations eth_fops =
 
 void eth_init ()
 	{
-	register_chrdev (ETH_MAJOR, "eth", &eth_fops);
+	int err;
+
+	err = register_chrdev (ETH_MAJOR, "eth", &eth_fops);
+	if (err)
+		{
+		printk ("Failed to register ethernet driver: %i\n", err);
+		}
 	}
 
 
