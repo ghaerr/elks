@@ -28,9 +28,6 @@ busyelks/busyelks1
 busyelks/busyelks2
 busyelks/busyelks3
 busyelks/config.def
-elks/System.map
-elks/arch/i86/Boot.map
-elks/arch/i86/Setup.map
 elks/arch/i86/boot/Image
 elks/arch/i86/boot/bootsect
 elks/arch/i86/boot/bootsect.s

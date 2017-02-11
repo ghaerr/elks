@@ -25,7 +25,7 @@ NOINDENT	=
 include $(BASEDIR)/Makefile-rules
 
 #########################################################################
-### Dependencies:
+# Specific rules.
 
 ifeq ($(CONFIG_ETH), y)
 OBJS = net_drv.o ne2k-main.o
@@ -37,3 +37,6 @@ all: net_drv.a
 
 net_drv.a: $(OBJS)
 	ar rcs net_drv.a $(OBJS)
+
+#########################################################################
+### Dependencies:

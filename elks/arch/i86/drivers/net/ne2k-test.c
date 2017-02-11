@@ -51,7 +51,7 @@ extern void   ne2k_addr_set (byte_t *addr);
 extern word_t ne2k_pack_get (byte_t * pack);
 extern word_t ne2k_pack_put (byte_t * pack, word_t len);
 
-extern word_t ne2k_status ();
+extern word_t ne2k_int_stat ();
 
 
 //-----------------------------------------------------------------------------
@@ -240,7 +240,7 @@ static word_t test_arp ()
 			{
 			while (1)
 				{
-				err = ne2k_status ();
+				err = ne2k_int_stat ();
 				if (err & NE2K_STAT_RX) break;
 				idle ();
 				}

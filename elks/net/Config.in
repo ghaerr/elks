@@ -2,17 +2,24 @@
 # Networking configuration
 #
 
-    bool 'Socket support'			CONFIG_SOCKET		y
+mainmenu_option next_comment
+    comment 'Networking Support'
+
+    bool 'Socket support'                              CONFIG_SOCKET           y
 
     if [ "$CONFIG_SOCKET" = "y" ]; then
-	bool '  NANO sockets'			CONFIG_NANO		n
-	bool '  TCP/IP sockets'			CONFIG_INET		y
-	if [ "$CONFIG_INET" = "y" ]; then
-	    bool '    CSLIP TCP/IP header compression' CONFIG_CSLIP	n
-	    bool '    Enable status report'	CONFIG_INET_STATUS	y
-	fi
-	bool '  UNIX sockets'			CONFIG_UNIX		n
+        bool '  NANO sockets'                          CONFIG_NANO             n
+        bool '  TCP/IP sockets'                        CONFIG_INET             y
+        if [ "$CONFIG_INET" = "y" ]; then
+            bool '    CSLIP TCP/IP header compression' CONFIG_CSLIP            n
+            bool '    Enable status report'            CONFIG_INET_STATUS      y
+            fi
 
-	comment '  Advanced socket options'
-	bool '  Client socket support only'	CONFIG_SOCK_CLIENTONLY	n
-    fi
+        bool '  UNIX sockets'                          CONFIG_UNIX             n
+
+        comment '  Advanced socket options'
+
+        bool '  Client socket support only'            CONFIG_SOCK_CLIENTONLY  n
+        fi
+
+endmenu

@@ -65,7 +65,7 @@ XINCLUDE = $(BASEDIR)/include/arch/asm-offsets.h
 .PHONY: 		boot/system toolkit
 
 boot/bootsect:		boot/bootsect.o
-	$(LD) -0 -M $(ARCH_LD) -s -o boot/bootsect boot/bootsect.o > Boot.map
+	$(LD) -0 -M $(ARCH_LD) -s -o boot/bootsect boot/bootsect.o > boot/bootsect.map
 
 boot/bootsect.o:	boot/bootsect.s
 
@@ -74,12 +74,12 @@ boot/crt0.o:		boot/crt0.s
 boot/crt1.o:		boot/crt1.c
 
 boot/netbootsect:	boot/netbootsect.o
-	$(LD) $(LDFLAGS) -M $(ARCH_LD) -s -o boot/netbootsect boot/netbootsect.o > Netboot.map
+	$(LD) $(LDFLAGS) -M $(ARCH_LD) -s -o boot/netbootsect boot/netbootsect.o > boot/netbootsect.map
 
 boot/netbootsect.o:	boot/netbootsect.s
 
 boot/setup:		boot/setup.o
-	$(LD) -0 -M $(ARCH_LD) -s -o boot/setup boot/setup.o > Setup.map
+	$(LD) -0 -M $(ARCH_LD) -s -o boot/setup boot/setup.o > boot/setup.map
 
 
 boot/setup.o:		boot/setup.s
@@ -122,29 +122,32 @@ endif
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
 
+# Begin SIBO image build
+
 boot/system: $(XINCLUDE) $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
 	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -t -M $(ARCH_LD) \
 		$(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
-		-o $(ARCH_DIR)/boot/system > System.tmp ; \
-		sort -k4 System.tmp > System.map ; rm -f System.tmp ) 
+		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.tmp ; \
+		sort -k4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
+		rm -f $(ARCH_DIR)/boot/system.tmp )
 
-#SIBO image build
 Image: boot/system toolkit
 	(cd boot; ../tools/imgconv system system.app -S192 -H72 -V)
 
-#End SIBO image section
+# End SIBO image build
 
 else
+
+# Begin PC image build
 
 boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -t -M $(ARCH_LD) \
 		$(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
-		-o $(ARCH_DIR)/boot/system > System.tmp ; \
-		sort -k4 System.tmp > System.map ; rm -f System.tmp ) 
-
-#PC image build
+		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.tmp ; \
+		sort -k4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
+		rm -f $(ARCH_DIR)/boot/system.tmp )
 
 ifneq ($(CONFIG_ROMCODE), y)
 
@@ -174,6 +177,8 @@ Image:	toolkit boot/setup boot/system
 	sync
 	$(CONFIG_ROM_SIMULATOR_PROGRAM)
 
+# End PC image build
+
 endif
 
 #########################################################################
@@ -196,7 +201,7 @@ endif
 # Build archives and add them to the list of things to link into kernel image
 
 .PHONY: kernel/akernel.a lib/lib86.a mm/mm.a drivers/char/chr_drv.a \
-	drivers/block/blk_drv.a 286pmode/pmode286
+	drivers/block/blk_drv.a drivers/net/net_drv.a 286pmode/pmode286
 
 kernel/akernel.a:
 	${MAKE} -C kernel akernel.a
