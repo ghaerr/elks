@@ -28,7 +28,7 @@ include $(BASEDIR)/Makefile-rules
 # Specific rules.
 
 ifeq ($(CONFIG_ETH), y)
-OBJS = net_drv.o ne2k-main.o
+OBJS = net_drv.o ne2k-mac.o ne2k-main.o
 else
 OBJS = net_drv.o
 endif

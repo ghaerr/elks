@@ -5,6 +5,8 @@
 typedef unsigned char  byte_t;
 typedef unsigned short word_t;
 
+#include "ne2k.h"
+
 
 #define NE2K_LINK_UP    0x0001  // link up
 #define NE2K_LINK_FD    0x0002  // full duplex
@@ -16,7 +18,6 @@ typedef unsigned short word_t;
 #define NE2K_STAT_OF    0x0010  // RX ring overflow
 
 #define MAX_PACK        256 * 6
-
 
 //-----------------------------------------------------------------------------
 // Low-level routines
@@ -30,28 +31,6 @@ extern void int_setup ();
 extern void strncpy (byte_t * dst, byte_t * src, word_t len);
 extern word_t strncmp (byte_t * s1, byte_t * s2, word_t len);
 
-// From low level NE2K
-
-extern word_t ne2k_phy_get (word_t reg, word_t * val);
-extern word_t ne2k_phy_set (word_t reg, word_t val);
-
-extern word_t ne2k_link_stat ();
-//extern word_t ne2k_link_mode (word_t mode);
-
-extern word_t ne2k_init ();
-extern void   ne2k_term ();
-
-extern void   ne2k_reset ();
-
-extern word_t ne2k_start ();
-extern void   ne2k_stop ();
-
-extern void   ne2k_addr_set (byte_t *addr);
-
-extern word_t ne2k_pack_get (byte_t * pack);
-extern word_t ne2k_pack_put (byte_t * pack, word_t len);
-
-extern word_t ne2k_int_stat ();
 
 
 //-----------------------------------------------------------------------------

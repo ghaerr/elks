@@ -54,4 +54,4 @@
 #define ATHD_MAJOR        5
 
 
-#endif  // !LX86_LINUXMT_MAJOR_H
+#endif  /* !LX86_LINUXMT_MAJOR_H */
