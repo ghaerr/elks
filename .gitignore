@@ -7,7 +7,6 @@
 *.a
 *.1.gz
 Kbuild
-Config.in
 dev86
 .config
 .config.old
