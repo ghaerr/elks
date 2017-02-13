@@ -1,5 +1,5 @@
 #
-# Character device driver configuration
+# Network device driver configuration
 #
 
 mainmenu_option next_comment

@@ -19,7 +19,7 @@
 
 static byte_t eth_inuse = 0;
 
-static byte_t mac_addr [6] = {2, 0, 0, 0, 0, 1};
+static byte_t mac_addr [6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};  // QEMU default
 
 static struct wait_queue rx_queue;
 static struct wait_queue tx_queue;
