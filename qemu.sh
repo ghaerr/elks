@@ -6,12 +6,12 @@
 qemu=qemu-system-i386
 
 # Specify your keyboard mapping here:
-# keyb=-k en-us
-# keyb=-k fr
+# keyb="-k en-us"
+# keyb="-k fr"
 keyb=
 
 # Specify network debugging here:
-# netdebug=-net dump
+# netdebug="-net dump"
 netdebug=
 
 # Configure QEMU as pure ISA system

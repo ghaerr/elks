@@ -56,8 +56,7 @@ int main ()
 
 	while (1)
 		{
-		arp_t * arp;
-		int m;
+		int count = 0;
 
 		// Open Ethernet device
 
@@ -71,76 +70,112 @@ int main ()
 			break;
 			}
 
-		// Send ARP request
+		// Let us cycle
 
-		arp = (arp_t *) arp_buf;
-
-		memcpy (arp->eth_to, mac_broad, 6);
-		memcpy (arp->eth_from, mac_addr, 6);
-
-		memcpy (arp->head, arp_head, 10);
-
-		memcpy (arp->ip_to, ip_host, 4);
-		memcpy (arp->ip_from, ip_guest, 4);
-
-		memcpy (arp->mac_to, mac_zero, 6);
-		memcpy (arp->mac_from, mac_addr, 6);
-
-		puts ("Send ARP request...");
-
-		res = write (fd, arp_buf, sizeof (arp_t));
-		if (res < 0)
+		while (count < 1000)
 			{
-			perror ("write /dev/eth");
-			res = 1;
-			break;
-			}
+			arp_t * arp;
+			int m;
 
-		// Get ARP reply
+			fd_set rx_fds;
+			fd_set tx_fds;
 
-		puts ("Receive ARP reply...");
+			FD_ZERO (&rx_fds);
+			FD_ZERO (&tx_fds);
 
-		res = read (fd, arp_buf, PACKET_MAX);
-		if (res < 0)
-			{
-			perror ("read /dev/eth");
-			res = 1;
-			break;
-			}
+			FD_SET  (fd, &rx_fds);
+			FD_SET  (fd, &tx_fds);
 
-		// Filter ARP reply
+			res = select (fd + 1, &rx_fds, &tx_fds, NULL, NULL);
+			if (res < 0)
+				{
+				perror ("select /dev/eth");
+				res = 1;
+				break;
+				}
 
-		arp_head [9] = 2;
+			if (FD_ISSET (fd, &rx_fds))
+				{
+				// Get ARP reply
 
-		res = memcmp (arp->head, arp_head, 10);
-		if (res)
-			{
-			printf ("Not an ARP reply\n");
-			res = 1;
-			break;
-			}
+				puts ("Receive ARP reply...");
 
-		res = memcmp  (arp->ip_to, ip_guest, 4);
-		if (res)
-			{
-			printf ("Other destination IP\n");
-			res = 1;
-			break;
-			}
+				res = read (fd, arp_buf, PACKET_MAX);
+				if (res < 0)
+					{
+					perror ("read /dev/eth");
+					res = 1;
+					break;
+					}
 
-		res = memcmp  (arp->ip_from, ip_host, 4);
-		if (res)
-			{
-			printf ("Other source IP\n");
-			res = 1;
-			break;
-			}
+				// Filter ARP reply
 
-		printf ("MAC of host is: ");
+				arp_head [9] = 2;
 
-		for (m = 0; m < 7; m++)
-			{
-			printf ("%x ", arp->mac_from [m]);
+				arp = (arp_t *) arp_buf;
+
+				res = memcmp (arp->head, arp_head, 10);
+				if (res)
+					{
+					printf ("Not an ARP reply\n");
+					continue;
+					}
+
+				res = memcmp  (arp->ip_to, ip_guest, 4);
+				if (res)
+					{
+					printf ("Other destination IP\n");
+					continue;
+					}
+
+				res = memcmp  (arp->ip_from, ip_host, 4);
+				if (res)
+					{
+					printf ("Other source IP\n");
+					continue;
+					}
+
+				printf ("MAC of host is: ");
+
+				for (m = 0; m < 7; m++)
+					{
+					printf ("%x ", arp->mac_from [m]);
+					}
+
+				putchar ('\n');
+				}
+
+			if (FD_ISSET (fd, &tx_fds))
+				{
+				// Send ARP request
+
+				arp_head [9] = 1;
+
+				arp = (arp_t *) arp_buf;
+
+				memcpy (arp->eth_to, mac_broad, 6);
+				memcpy (arp->eth_from, mac_addr, 6);
+
+				memcpy (arp->head, arp_head, 10);
+
+				memcpy (arp->ip_to, ip_host, 4);
+				memcpy (arp->ip_from, ip_guest, 4);
+
+				memcpy (arp->mac_to, mac_zero, 6);
+				memcpy (arp->mac_from, mac_addr, 6);
+
+				puts ("Send ARP request...");
+
+				res = write (fd, arp_buf, sizeof (arp_t));
+				if (res < 0)
+					{
+					perror ("write /dev/eth");
+					res = 1;
+					break;
+					}
+				}
+
+			count++;
 			}
 
 		res = 0;
