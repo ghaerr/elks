@@ -1,22 +1,22 @@
 #
 # File system configuration
 #
+
 mainmenu_option next_comment
-comment 'File systems'
+	comment 'Filesystem Support'
 
-bool 'All file systems are READ-ONLY'	CONFIG_FS_RO			n
-bool 'Minix file system'		CONFIG_MINIX_FS 		y
-bool 'ROM file system'  		CONFIG_ROMFS_FS 		n
+	bool 'All file systems are READ-ONLY'  CONFIG_FS_RO               n
+	bool 'Minix file system'               CONFIG_MINIX_FS            y
+	bool 'ROM file system'                 CONFIG_ROMFS_FS            n
 
-comment 'General filesystem settings'
+	comment 'General filesystem settings'
 
-bool 'Full VFS support' 		CONFIG_FULL_VFS 		n
-bool 'Extra external buffer cache'	CONFIG_FS_EXTERNAL_BUFFER	y
-bool 'Pipe support'			CONFIG_PIPE			y
+	bool 'Full VFS support'                CONFIG_FULL_VFS            n
+	bool 'Extra external buffer cache'     CONFIG_FS_EXTERNAL_BUFFER  y
+	bool 'Pipe support'                    CONFIG_PIPE                y
 
-comment 'Executable file formats'
+	comment 'Executable file formats'
 
-bool 'Support ELKS file format'         CONFIG_EXEC_ELKS		y
+	bool 'Support ELKS file format'        CONFIG_EXEC_ELKS           y
 
 endmenu
-

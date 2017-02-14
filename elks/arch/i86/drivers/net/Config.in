@@ -1,0 +1,12 @@
+#
+# Network device driver configuration
+#
+
+mainmenu_option next_comment
+    comment 'Network device drivers'
+
+    comment 'Ethernet device drivers'
+    if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
+	bool 'NE2K device driver' CONFIG_ETH n
+    fi
+endmenu

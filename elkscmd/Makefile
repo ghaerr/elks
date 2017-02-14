@@ -21,7 +21,7 @@ include $(BASEDIR)/Make.defs
 
 DIRS		= sys_utils misc_utils byacc disk_utils file_utils levee \
 		  m4 minix1 minix2 minix3 ash bc mtools sash sh_utils \
-		  inet ktcp prems
+		  inet ktcp prems eth
 
 DONTUSE 	= debug_utils lib prn-utils rc tools xvi
 
@@ -55,6 +55,7 @@ all:
 
 images_clean:
 	-rm -f $(IMAGES) images.zip images.tar.*
+
 clean:
 	-umount $(IMAGES) || true
 	-rm -f $(IMAGES) core images.zip images.tar.*

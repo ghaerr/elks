@@ -3,6 +3,10 @@
 
 #include <arch/types.h>
 
+
+typedef __u8            byte_t;
+typedef __u16           word_t;
+
 typedef __s32			loff_t;
 typedef __s32			off_t;
 

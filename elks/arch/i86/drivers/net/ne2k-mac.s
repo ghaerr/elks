@@ -12,7 +12,8 @@ io_eth_rx_first   EQU $301  ; page 0
 io_eth_rx_last    EQU $302  ; page 0
 io_eth_rx_get     EQU $303  ; page 0
 
-io_eth_rx_put1    EQU $306  ; page 0 - read
+; This is not a true NE2K register
+;io_eth_rx_put1    EQU $306  ; page 0 - read
 
 io_eth_tx_start   EQU $304  ; page 0 - write
 io_eth_tx_len1    EQU $305  ; page 0 - write
@@ -33,10 +34,15 @@ io_eth_data_conf  EQU $30E  ; page 0 - write
 io_eth_int_mask   EQU $30F  ; page 0 - write
 
 io_eth_unicast    EQU $301  ; page 1 - 6 bytes
-io_eth_rx_put2    EQU $307  ; page 1
+io_eth_rx_put     EQU $307  ; page 1
 io_eth_multicast  EQU $308  ; page 1 - 8 bytes
 
 io_eth_data_io    EQU $310  ; 2 bytes
+
+io_eth_reset      EQU $31F
+
+
+; Ring segmentation
 
 tx_first          EQU $40
 rx_first          EQU $46
@@ -253,6 +259,62 @@ emr_loop:
 
 
 ;------------------------------------------------------------------------------
+; Get RX status
+;------------------------------------------------------------------------------
+
+; returns:
+
+; AX: status
+;   01h = packet received
+
+_ne2k_rx_stat:
+
+	push    cx
+	push    dx
+
+	; get RX put pointer
+
+	mov     al, #1
+	call    page_select
+
+	mov     dx, #io_eth_rx_put
+	in      al, dx
+	mov     cl, al
+
+	; get RX get pointer
+
+	xor     al, al
+	call    page_select
+
+	mov     dx, #io_eth_rx_get
+	in      al, dx
+	inc     al
+	cmp     al, #rx_last
+	jnz     nrs_nowrap
+	mov     al, #rx_first
+
+nrs_nowrap:
+
+	; check ring is not empty
+
+	cmp     cl, al
+	jz      nrs_empty
+
+	mov     ax, #1
+	jmp     nrs_exit
+
+nrs_empty:
+
+	xor     ax, ax
+
+nrs_exit:
+
+	pop     dx
+	pop     cx
+	ret
+
+
+;------------------------------------------------------------------------------
 ; Get received packet
 ;------------------------------------------------------------------------------
 
@@ -272,16 +334,19 @@ _ne2k_pack_get:
 	push    dx
 	push    di
 
-	xor     al,al
-	call    page_select
-
 	; get RX put pointer
 
-	mov     dx, #io_eth_rx_put1
+	mov     al, #1
+	call    page_select
+
+	mov     dx, #io_eth_rx_put
 	in      al, dx
 	mov     cl, al
 
 	; get RX get pointer
+
+	xor     al, al
+	call    page_select
 
 	mov     dx, #io_eth_rx_get
 	in      al, dx
@@ -308,6 +373,14 @@ npg_nowrap1:
 
 	mov     ax, [di + 0]  ; AH : next record, AL : status
 	mov     cx, [di + 2]  ; packet size (without CRC)
+
+	; check packet size
+
+	or      cx, cx
+	jz      npg_err
+
+	cmp     cx, #1528  ; max - head - crc
+	jnc     npg_err
 
 	add     bx, #4
 	add     di, #4
@@ -376,6 +449,37 @@ npg_exit:
 
 
 ;------------------------------------------------------------------------------
+; Get TX status
+;------------------------------------------------------------------------------
+
+; returns:
+
+; AX:
+;   02h = ready to send
+
+_ne2k_tx_stat:
+
+	push    dx
+
+	mov     dx, #io_eth_command
+	in      al, dx
+	and     al, #$04
+	jz      nts_ready
+
+	xor     ax, ax
+	jmp     nts_exit
+
+nts_ready:
+
+	mov     ax, #2
+
+nts_exit:
+
+	pop     dx
+	ret
+
+
+;------------------------------------------------------------------------------
 ; Put packet to send
 ;------------------------------------------------------------------------------
 
@@ -423,8 +527,7 @@ _ne2k_pack_put:
 	; start TX
 
 	mov     dx, #io_eth_command
-	in      al, dx
-	or      al, #$04
+	mov     al, #$26
 	out     dx, al
 
 	xor     ax, ax
@@ -438,7 +541,7 @@ _ne2k_pack_put:
 
 
 ;------------------------------------------------------------------------------
-; Get NE2K status
+; Get NE2K interrupt status
 ;------------------------------------------------------------------------------
 
 ; returns:
@@ -448,7 +551,7 @@ _ne2k_pack_put:
 ;   02h = packet sent
 ;   10h = RX ring overflow
 
-_ne2k_status:
+_ne2k_int_stat:
 
 	push    dx
 
@@ -463,14 +566,14 @@ _ne2k_status:
 
 	mov     dx, #io_eth_int_stat
 	in      al, dx
-	test    al, #$3F
-	jz      ns_next1
+	test    al, #$03
+	jz      nis_next
 
 	; acknowledge interrupt
 
 	out     dx, al
 
-ns_next1:
+nis_next:
 
 	pop     dx
 	ret
@@ -508,10 +611,10 @@ _ne2k_init:
 	out     dx, al
 
 	; accept packet without error
-	; unicast & broadcast only
+	; unicast & broadcast & promiscuous
 
 	mov     dx, #io_eth_rx_conf
-	mov     al, #$44
+	mov     al, #$54
 	out     dx, al
 
 	; half-duplex and internal loopback
@@ -556,14 +659,14 @@ _ne2k_init:
 	; clear all interrupt flags
 
 	mov     dx, #io_eth_int_stat
-	mov     al, #$FF
+	mov     al, #$7F
 	out     dx, al
 
 	; set interrupt mask
 	; TX & RX without error and overflow
 
 	mov     dx, #io_eth_int_mask
-	mov     al, #$13
+	mov     al, #$03
 	out     dx, al
 
 	; select page 1
@@ -597,7 +700,7 @@ ei_loop_m:
 
 	; set RX put pointer to first bloc + 1
 
-	mov     dx, #io_eth_rx_put2
+	mov     dx, #io_eth_rx_put
 	mov     al, #rx_first
 	inc     al
 	out     dx, al
@@ -705,11 +808,52 @@ _ne2k_term:
 	; mask all interrrupts
 
 	mov     dx, #io_eth_int_mask
-	xor     al,al
+	xor     al, al
 	out     dx, al
 
 	pop     dx
 	pop     ax
+	ret
+
+
+;------------------------------------------------------------------------------
+; NE2K probe
+;------------------------------------------------------------------------------
+
+; Read few registers at supposed I/O addresses
+; and check their values for NE2K presence
+
+; returns:
+
+; AX: 0=found 1=not found
+
+_ne2k_probe:
+
+	push    dx
+
+	; query command register
+	; MAC & DMA should be stopped
+	; and no TX in progress
+
+	; register not initialized in QEMU
+	; so do not rely on this one
+
+	;mov     dx, #io_eth_command
+	;in      al, dx
+	;and     al, #$3F
+	;cmp     al, #$21
+	;jnz     np_err
+
+	xor     ax, ax
+	jmp     np_exit
+
+np_err:
+
+	mov     ax, #1
+
+np_exit:
+
+	pop     dx
 	ret
 
 
@@ -722,16 +866,30 @@ _ne2k_reset:
 	push    ax
 	push    dx
 
-	; reset the chip
+	; reset device
+	; with pulse on reset port
 
-	mov     dx,#$31F  ; reset register
+	mov     dx, #io_eth_reset
 	in      al, dx
 	out     dx, al
 
-	; manual wait for reset
-	; TODO: replace by wait function
+	; stop all and select page 0
 
-	int     #3
+	mov     dx, #io_eth_command
+	mov     al, #$21
+	out     dx, al
+
+nr_loop:
+
+	; wait for reset
+	; without too much CPU
+
+	hlt
+
+	mov     dx, #io_eth_int_stat
+	in      al, dx
+	test    al, #$80
+	jz      nr_loop
 
 	pop     dx
 	pop     ax
@@ -739,11 +897,32 @@ _ne2k_reset:
 
 
 ;------------------------------------------------------------------------------
+; NE2K test
+;------------------------------------------------------------------------------
+
+_ne2k_test:
+
+	push    dx
+
+	; TODO: test sequence
+
+	mov     ax, #1
+
+	pop     dx
+	ret
+
+
+;------------------------------------------------------------------------------
 
 	EXPORT  _ne2k_addr_set
+
+	EXPORT  _ne2k_rx_stat
+	EXPORT  _ne2k_tx_stat
+
 	EXPORT  _ne2k_pack_get
 	EXPORT  _ne2k_pack_put
-	EXPORT  _ne2k_status
+
+	EXPORT  _ne2k_int_stat
 
 	EXPORT  _ne2k_init
 	EXPORT  _ne2k_term
@@ -751,7 +930,9 @@ _ne2k_reset:
 	EXPORT  _ne2k_start
 	EXPORT  _ne2k_stop
 
+	EXPORT  _ne2k_probe
 	EXPORT  _ne2k_reset
+	EXPORT  _ne2k_test
 
 	END
 

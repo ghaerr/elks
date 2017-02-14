@@ -152,7 +152,7 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 	schedule();
 	goto repeat;
     }
-    wait_clear(&select_poll);
+
     current->pollhash = 0;
     current->state = TASK_RUNNING;
     wait_clear(&select_poll);
