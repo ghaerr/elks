@@ -339,7 +339,7 @@ struct inode *__iget(struct super_block *sb,
     do {
 	if(inode->i_ino == inr && inode->i_dev == sb->s_dev)
 	    goto found_it;
-    } while((inode = inode->i_prev) == first_inode);
+    } while((inode = inode->i_prev) != first_inode);
 
     if(n_ino == NULL) {
 	debug("iget: getting an empty inode...\n");
