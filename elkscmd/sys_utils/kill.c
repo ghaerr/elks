@@ -20,20 +20,17 @@
 
 static void usage()
 {
-	printf("Send signal to process\n\nusage: kill [signal] PID\n\n");
-	printf("  default  send TERM signal\n");
-	printf("  -HUP     tell a process to shutdown and restart\n");
-	printf("  -INT     send ctrl+c signal to process\n");
-	printf("  -QUIT    stop process and tell it to create a core dump file\n");
-	printf("  -KILL    stop process\n");
-	printf("  -H       print this message\n");
-	printf("\n  e.g. kill KILL 5\n");
+	write(STDOUT_FILENO, "Send signal to process\n\nusage: kill [signal] PID\n\n",50);
+	write(STDOUT_FILENO, "  default  send TERM signal\n",28);
+	write(STDOUT_FILENO, "  -HUP     tell a process to shutdown and restart\n",50);
+	write(STDOUT_FILENO, "  -INT     send ctrl+c signal to process\n",41);
+	write(STDOUT_FILENO, "  -QUIT    stop process and tell it to create a core dump file\n",63);
+	write(STDOUT_FILENO, "  -KILL    stop process\n",24);
+	write(STDOUT_FILENO, "  -H       print this message\n",30);
+	write(STDOUT_FILENO, "\n  e.g. kill -KILL 5\n\n",22);
 }
 
-void
-main(argc, argv)
-	char	**argv;
-{
+void main ( int argc, char **argv ) {  
 	char	*cp;
 	int	sig;
 	int	pid;
@@ -58,7 +55,7 @@ main(argc, argv)
 				sig = sig * 10 + *cp++ - '0';
 
 			if (*cp) {
-				printf("Unknown signal\n", 15);
+				write(STDERR_FILENO, "Unknown signal\n", 15);
 				exit(1);
 			}
 		}
@@ -76,7 +73,7 @@ main(argc, argv)
 
 		if (*cp) {
 			usage();	
-			printf("\n  Error: non-numeric pid!\n\n", 16);			
+			write(STDERR_FILENO, "\n  Error: non-numeric pid!\n\n", 27);			
 			exit(1);
 		}
 
