@@ -1,4 +1,4 @@
-BASEDIR=../..
+BASEDIR=../../..
 
 include $(BASEDIR)/Make.defs
 
@@ -35,8 +35,6 @@ PRGS=echo_server echo_client
 
 SPRGS=
 
-CFLAGS=-0 -O -ansi -I$(ELKSCMD_DIR) -I$(ELKS_DIR)/include
-
 all: $(PRGS)
 
 max_rfs: install
@@ -53,10 +51,8 @@ install: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin
 
 echo_server: echo_server.o
-	$(CC) $(CFLAGS) $(LDFLAGS) echo_server.o -o echo_server
 
 echo_client: echo_client.o
-	$(CC) $(CFLAGS) $(LDFLAGS) echo_client.o -o echo_client
 
 clean:
 	rm -f core *.o $(PRGS)

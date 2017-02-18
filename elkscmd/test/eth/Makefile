@@ -1,6 +1,6 @@
 # Makefile for eth
 
-BASEDIR=..
+BASEDIR=../..
 
 include $(BASEDIR)/Make.defs
 

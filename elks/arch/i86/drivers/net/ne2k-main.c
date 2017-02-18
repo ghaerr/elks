@@ -8,11 +8,12 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/sched.h>
+#include <linuxmt/limits.h>
+
+
+// Shared declarations between low and high parts
 
 #include "ne2k.h"
-
-
-#define PACKET_MAX (6 * 256)
 
 
 // Static data
@@ -24,8 +25,8 @@ static byte_t mac_addr [6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};  // QEMU defa
 static struct wait_queue rx_queue;
 static struct wait_queue tx_queue;
 
-static byte_t recv_buf [PACKET_MAX];
-static byte_t send_buf [PACKET_MAX];
+static byte_t recv_buf [MAX_PACKET_ETH];
+static byte_t send_buf [MAX_PACKET_ETH];
 
 
 // Get packet
@@ -74,7 +75,7 @@ static size_t eth_read (struct inode * inode, struct file * filp,
 			break;
 			}
 
-		// Client should request at least PACKET_MAX bytes
+		// Client should request at least MAX_PACKET_ETH bytes
 		// otherwise end of packet will be lost
 
 		size = *((word_t *) (recv_buf + 2));
@@ -127,7 +128,7 @@ static size_t eth_write (struct inode * inode, struct file * file,
 		// Client should write packet once
 		// otherwise end of packet will be lost
 
-		len = len > PACKET_MAX ? PACKET_MAX : len;
+		len = len > MAX_PACKET_ETH ? MAX_PACKET_ETH : len;
 		memcpy_fromfs (send_buf, data, len);
 
 		res = ne2k_pack_put (send_buf, len);
@@ -208,12 +209,21 @@ static int eth_ioctl (struct inode * inode, struct file * file,
 	unsigned int cmd, unsigned int arg)
 
 	{
-	int err;
+	int err = 0;
 
 	switch (cmd)
 		{
 		case IOCTL_ETH_TEST:
 			err = ne2k_test ();
+			break;
+
+		case IOCTL_ETH_ADDR_GET:
+			memcpy_tofs ((char *) arg, mac_addr, 6);
+			break;
+
+		case IOCTL_ETH_ADDR_SET:
+			memcpy_fromfs (mac_addr, (char *) arg, 6);
+			ne2k_addr_set (mac_addr);
 			break;
 
 		default:
