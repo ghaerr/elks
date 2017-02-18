@@ -7,6 +7,8 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <linuxmt/ioctl.h>
+
 
 // TODO: move to limits.h
 
@@ -16,8 +18,10 @@
 // These settings are for testing under QEMU
 
 static byte_t mac_zero  [6] = {0, 0, 0, 0, 0, 0};
-static byte_t mac_addr  [6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};
+static byte_t mac_addr  [6] = {0x52, 0x55, 10, 0, 2, 15};
 static byte_t mac_broad [6] = {255, 255, 255, 255, 255, 255};
+
+static byte_t mac_test  [6];
 
 static byte_t ip_guest [4] = {10, 0, 2, 15};
 static byte_t ip_host  [4] = {10, 0, 2, 2};
@@ -52,6 +56,7 @@ static byte_t arp_buf [PACKET_MAX];
 int main ()
 	{
 	int res;
+
 	int fd = -1;
 
 	while (1)
@@ -70,7 +75,29 @@ int main ()
 			break;
 			}
 
-		// Let us cycle
+		// Test set & get MAC address
+
+		res = ioctl (fd, IOCTL_ETH_ADDR_SET, mac_addr);
+		if (res)
+			{
+			perror ("ioctl /dev/eth addr_set");
+			break;
+			}
+
+		res = ioctl (fd, IOCTL_ETH_ADDR_GET, mac_test);
+		if (res)
+			{
+			perror ("ioctl /dev/eth addr_get");
+			break;
+			}
+
+		if (!memcmp (mac_addr, mac_test, 6))
+			{
+			puts ("address mismatch");
+			res = 1;
+			}
+
+		// Cycle on ARP request & reply
 
 		while (count < 1000)
 			{
@@ -137,7 +164,7 @@ int main ()
 
 				printf ("MAC of host is: ");
 
-				for (m = 0; m < 7; m++)
+				for (m = 0; m < 6; m++)
 					{
 					printf ("%x ", arp->mac_from [m]);
 					}

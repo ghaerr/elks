@@ -12,6 +12,7 @@
 #include "ne2k.h"
 
 
+// TODO: to be moved to limits.h
 #define PACKET_MAX (6 * 256)
 
 
@@ -19,7 +20,7 @@
 
 static byte_t eth_inuse = 0;
 
-static byte_t mac_addr [6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};  // QEMU default
+static byte_t mac_addr [6] = {0x02, 0x0, 0x0, 0x0, 0x0, 0x01};  // local MAC
 
 static struct wait_queue rx_queue;
 static struct wait_queue tx_queue;
@@ -208,12 +209,21 @@ static int eth_ioctl (struct inode * inode, struct file * file,
 	unsigned int cmd, unsigned int arg)
 
 	{
-	int err;
+	int err = 0;
 
 	switch (cmd)
 		{
 		case IOCTL_ETH_TEST:
 			err = ne2k_test ();
+			break;
+
+		case IOCTL_ETH_ADDR_GET:
+			memcpy_tofs ((char *) arg, mac_addr, 6);
+			break;
+
+		case IOCTL_ETH_ADDR_SET:
+			memcpy_fromfs (mac_addr, (char *) arg, 6);
+			ne2k_addr_set (mac_addr);
 			break;
 
 		default:
