@@ -30,7 +30,7 @@
 #define find_protocol_family(_a)	0
 #endif
 
-#define MAX_SOCK_ADDR 16	/* Must be much bigger for AF_UNIX */
+#define MAX_SOCK_ADDR 110	/* Sufficient size for AF_UNIX */
 
 static struct proto_ops *pops[NPROTO] = { NULL, NULL, NULL };
 

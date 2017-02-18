@@ -6,7 +6,7 @@
 
 struct sockaddr {
     unsigned short sa_family;
-    char sa_data[14];
+    char sa_data[110];
 };
 
 struct msghdr {
