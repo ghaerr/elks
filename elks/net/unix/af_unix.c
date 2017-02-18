@@ -15,6 +15,7 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/fcntl.h>
 
+#include <arch/segment.h>
 #include "af_unix.h"
 
 #ifdef CONFIG_UNIX
