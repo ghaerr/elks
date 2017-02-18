@@ -58,3 +58,6 @@ full3	- A 1.44MB boot/root disk image with everything installed.
 sibo	- A 128K very minimal root image suitable for a 128K Solid State Disk
 	  as used in SIBO architecture machines such as the Psion series 3
 	  organiser.
+
+
+More information in the [Documentation](elks/Documentation/index.html).

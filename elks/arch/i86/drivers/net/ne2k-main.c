@@ -8,25 +8,25 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/sched.h>
+#include <linuxmt/limits.h>
+
+
+// Shared declarations between low and high parts
 
 #include "ne2k.h"
-
-
-// TODO: to be moved to limits.h
-#define PACKET_MAX (6 * 256)
 
 
 // Static data
 
 static byte_t eth_inuse = 0;
 
-static byte_t mac_addr [6] = {0x02, 0x0, 0x0, 0x0, 0x0, 0x01};  // local MAC
+static byte_t mac_addr [6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};  // QEMU default
 
 static struct wait_queue rx_queue;
 static struct wait_queue tx_queue;
 
-static byte_t recv_buf [PACKET_MAX];
-static byte_t send_buf [PACKET_MAX];
+static byte_t recv_buf [MAX_PACKET_ETH];
+static byte_t send_buf [MAX_PACKET_ETH];
 
 
 // Get packet
@@ -75,7 +75,7 @@ static size_t eth_read (struct inode * inode, struct file * filp,
 			break;
 			}
 
-		// Client should request at least PACKET_MAX bytes
+		// Client should request at least MAX_PACKET_ETH bytes
 		// otherwise end of packet will be lost
 
 		size = *((word_t *) (recv_buf + 2));
@@ -128,7 +128,7 @@ static size_t eth_write (struct inode * inode, struct file * file,
 		// Client should write packet once
 		// otherwise end of packet will be lost
 
-		len = len > PACKET_MAX ? PACKET_MAX : len;
+		len = len > MAX_PACKET_ETH ? MAX_PACKET_ETH : len;
 		memcpy_fromfs (send_buf, data, len);
 
 		res = ne2k_pack_put (send_buf, len);

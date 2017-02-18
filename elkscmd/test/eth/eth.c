@@ -8,11 +8,7 @@
 #include <fcntl.h>
 
 #include <linuxmt/ioctl.h>
-
-
-// TODO: move to limits.h
-
-#define PACKET_MAX (6 * 256)
+#include <linuxmt/limits.h>
 
 
 // These settings are for testing under QEMU
@@ -46,7 +42,7 @@ struct arp_s
 
 typedef struct arp_s arp_t;
 
-static byte_t arp_buf [PACKET_MAX];
+static byte_t arp_buf [MAX_PACKET_ETH];
 
 
 //-----------------------------------------------------------------------------
@@ -127,7 +123,7 @@ int main ()
 
 				puts ("Receive ARP reply...");
 
-				res = read (fd, arp_buf, PACKET_MAX);
+				res = read (fd, arp_buf, MAX_PACKET_ETH);
 				if (res < 0)
 					{
 					perror ("read /dev/eth");
@@ -166,7 +162,8 @@ int main ()
 
 				for (m = 0; m < 6; m++)
 					{
-					printf ("%x ", arp->mac_from [m]);
+					printf ("%x", arp->mac_from [m]);
+					if (m < 5) putchar (':');
 					}
 
 				putchar ('\n');
@@ -216,5 +213,6 @@ int main ()
 
 	return res;
 	}
+
 
 //-----------------------------------------------------------------------------
