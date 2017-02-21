@@ -52,8 +52,8 @@
 
 #define BUFSEG 0x800
 
-static int bioshd_ioctl(struct inode *, struct file *, unsigned int,
-			unsigned int);
+static int bioshd_ioctl(struct inode *, struct file *,
+	unsigned int, unsigned int);
 
 static int bioshd_open(struct inode *, struct file *);
 
@@ -124,11 +124,8 @@ static unsigned char hd_drive_map[4] = {
     0x00, 0x01			/* fd0, fd1 */
 };
 
-#ifdef CONFIG_BLK_DEV_BHD
-
-static int hdcount = 0;
-
-#endif
+// Total number of disks (FD + HD)
+static int _disk_count = 0;
 
 static void bioshd_geninit(void);
 
@@ -528,25 +525,28 @@ int init_bioshd(void)
 #endif /* CONFIG_SMALL_KERNEL */
 
     printk("doshd: ");
+
 #ifdef CONFIG_BLK_DEV_BFD
     count = bioshd_getfdinfo();
     printk("%d floppy drive%s",
 	   count, count == 1 ? "" : "s");
+    _disk_count += count;
 #endif
 
 #ifdef CONFIG_BLK_DEV_BHD
-# ifdef CONFIG_BLK_DEV_BFD
+#ifdef CONFIG_BLK_DEV_BFD
     printk(" and ");
-# endif
-    hdcount = bioshd_gethdinfo();
-    printk("%d hard drive%s", hdcount,
-	   hdcount == 1 ? "" : "s");
-    bioshd_gendisk.nr_real = hdcount;
 #endif
+    count = bioshd_gethdinfo();
+    printk("%d hard drive%s",
+       count, count == 1 ? "" : "s");
+    bioshd_gendisk.nr_real = count;
+    _disk_count += count;
+#endif /* CONFIG_BLK_DEV_BHD */
+
     printk("\n");
 
-    if (!(count + hdcount))
-	return 0;
+    if (!_disk_count) return 0;
 
 #ifdef TEMP_PRINT_DRIVES_MAX
     {
@@ -614,7 +614,7 @@ static int bioshd_ioctl(struct inode *inode,
     if ((!inode) || !(inode->i_rdev))
 	return -EINVAL;
     dev = DEVICE_NR(inode->i_rdev);
-    if (dev >= hdcount)
+    if (dev >= _disk_count)
 	return -ENODEV;
     drivep = &drive_info[dev];
     err = -EINVAL;
