@@ -203,13 +203,13 @@ mainmenu_option next_comment
     source arch/i86/drivers/net/Config.in
 endmenu
 
-# Filesystem support
-
-source fs/Config.in
-
 # Generic networking support
 
 source net/Config.in
+
+# Filesystem support
+
+source fs/Config.in
 
 # Kernel hacking
 

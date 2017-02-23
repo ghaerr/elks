@@ -52,8 +52,8 @@
 
 #define BUFSEG 0x800
 
-static int bioshd_ioctl(struct inode *, struct file *, unsigned int,
-			unsigned int);
+static int bioshd_ioctl(struct inode *, struct file *,
+	unsigned int, unsigned int);
 
 static int bioshd_open(struct inode *, struct file *);
 
@@ -98,11 +98,6 @@ static struct drive_infot {
 
 static struct hd_struct hd[4 << 6];
 
-#if 0						/* Currently not used */
-static int probe_order[5] = { 0, 2, 1, 3, 4 };
-static char busy[4] = { 0, 0, 0, 0 };
-#endif
-
 static int access_count[4] = { 0, 0, 0, 0 };
 
 static int bioshd_sizes[4 << 6] = { 0, };
@@ -112,9 +107,9 @@ static struct wait_queue dma_wait;
 static int dma_avail = 1;
 
 struct drive_infot fd_types[] = {
-    {40, 9, 2, 0},
+    {40,  9, 2, 0},
     {80, 15, 2, 1},
-    {80, 9, 2, 2},
+    {80,  9, 2, 2},
     {80, 18, 2, 3},
     {80, 36, 2, 4},
 };
@@ -124,11 +119,10 @@ static unsigned char hd_drive_map[4] = {
     0x00, 0x01			/* fd0, fd1 */
 };
 
-#ifdef CONFIG_BLK_DEV_BHD
 
-static int hdcount = 0;
+static int _fd_count = 0;  /* number of floppy disks */
+static int _hd_count = 0;  /* number of hard disks */
 
-#endif
 
 static void bioshd_geninit(void);
 
@@ -528,25 +522,28 @@ int init_bioshd(void)
 #endif /* CONFIG_SMALL_KERNEL */
 
     printk("doshd: ");
+
 #ifdef CONFIG_BLK_DEV_BFD
-    count = bioshd_getfdinfo();
+    _fd_count = bioshd_getfdinfo();
     printk("%d floppy drive%s",
-	   count, count == 1 ? "" : "s");
+	   _fd_count, _fd_count == 1 ? "" : "s");
+    count += _fd_count;
 #endif
 
 #ifdef CONFIG_BLK_DEV_BHD
-# ifdef CONFIG_BLK_DEV_BFD
+#ifdef CONFIG_BLK_DEV_BFD
     printk(" and ");
-# endif
-    hdcount = bioshd_gethdinfo();
-    printk("%d hard drive%s", hdcount,
-	   hdcount == 1 ? "" : "s");
-    bioshd_gendisk.nr_real = hdcount;
 #endif
+    _hd_count = bioshd_gethdinfo();
+    printk("%d hard drive%s",
+       _hd_count, _hd_count == 1 ? "" : "s");
+    bioshd_gendisk.nr_real = _hd_count;
+    count += _hd_count;
+#endif /* CONFIG_BLK_DEV_BHD */
+
     printk("\n");
 
-    if (!(count + hdcount))
-	return 0;
+    if (!count) return 0;
 
 #ifdef TEMP_PRINT_DRIVES_MAX
     {
@@ -613,9 +610,11 @@ static int bioshd_ioctl(struct inode *inode,
 
     if ((!inode) || !(inode->i_rdev))
 	return -EINVAL;
+
     dev = DEVICE_NR(inode->i_rdev);
-    if (dev >= hdcount)
-	return -ENODEV;
+    if (dev >= ((dev < 2) ? _hd_count : (2 + _fd_count)))
+    	return -ENODEV;
+
     drivep = &drive_info[dev];
     err = -EINVAL;
     switch (cmd) {
