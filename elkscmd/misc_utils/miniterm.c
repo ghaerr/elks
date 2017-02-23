@@ -232,7 +232,7 @@ static speed_t convert_baudrate(unsigned int baudrate)
  * \param old Pointer to termios structure for storing previous settings (may be \c NULL)
  * \return File descriptor
  */
-static int serial_open(const char *device, int baudrate, bool rtscts, struct termios *old)
+static int serial_open(const char *device, unsigned int baudrate, bool rtscts, struct termios *old)
 {
 	struct termios new;
 	int fd;
@@ -379,7 +379,7 @@ int main(int argc, char **argv)
 {
 	struct termios stdin_termio, stdout_termio, serial_termio;
 	int fd, retval = 0, ch;
-	int baudrate = 9600;
+	unsigned int baudrate = 9600;
 	enum terminal_mode mode = MODE_TEXT;
 	bool escape = false, rtscts = false;
 	bool enable_rts = false, enable_dtr = false;
@@ -455,7 +455,7 @@ int main(int argc, char **argv)
 #if ELKS
 	usage(argv[0]);
 #endif
-	fprintf(stderr, "Connected to %s at %dbps. Press '%c%c' to exit, '%c%c' for help.\n\n", device, baudrate, ESCAPE_CHARACTER, EXIT_CHARACTER, ESCAPE_CHARACTER, HELP_CHARACTER);
+	fprintf(stderr, "Connected to %s at %ubps. Press '%c%c' to exit, '%c%c' for help.\n\n", device, baudrate, ESCAPE_CHARACTER, EXIT_CHARACTER, ESCAPE_CHARACTER, HELP_CHARACTER);
 	
 	if (mode == MODE_TEXT) {
 		struct termios new;
