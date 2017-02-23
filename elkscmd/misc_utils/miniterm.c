@@ -63,14 +63,15 @@ typedef int bool;
 #include <linux/serial.h>
 #endif
 
-#define ESCAPE_CHARACTER '~'	/**< Escape character */
-#define HELP_CHARACTER '?'	/**< Help character */
-#define BREAK_CHARACTER 'B'	/**< Break character */
-#define DTR_ON_CHARACTER 'D'	/**< DTR on character */
-#define DTR_OFF_CHARACTER 'd'	/**< DTR off character */
-#define RTS_ON_CHARACTER 'R'	/**< RTS on character */
-#define RTS_OFF_CHARACTER 'r'	/**< RTS off character */
-#define EXIT_CHARACTER '.'	/**< Exit character */
+#define ESCAPE_CHARACTER '~'	    /**< Escape character */
+#define HELP_CHARACTER '?'	    /**< Help character */
+#define BREAK_CHARACTER 'B'	    /**< Break character */
+#define DTR_ON_CHARACTER 'D'	    /**< DTR on character */
+#define DTR_OFF_CHARACTER 'd'	    /**< DTR off character */
+#define RTS_ON_CHARACTER 'R'	    /**< RTS on character */
+#define RTS_OFF_CHARACTER 'r'	    /**< RTS off character */
+#define EXIT_CHARACTER '.'	    /**< Exit character */
+#define EXIT_NO_RST_CHARACTER 'x'   /**< Exit with no reset character */
 
 #define SLIP_END	0300    /**< End of packet marker */
 #define SLIP_ESC	0333    /**< Escape sequence marker */
@@ -385,6 +386,7 @@ int main(int argc, char **argv)
 	bool enable_rts = false, enable_dtr = false;
 	const char *device = "/dev/ttyS0";
 	int flags;
+	bool no_reset = false;
 
 	while ((ch = getopt(argc, argv, "s:SrdRxh")) != -1) {
 		switch (ch) {
@@ -550,7 +552,8 @@ int main(int argc, char **argv)
 						printf("\r\n%c%c  Disable DTR", ESCAPE_CHARACTER, DTR_OFF_CHARACTER);
 						printf("\r\n%c%c  Enable RTS", ESCAPE_CHARACTER, RTS_ON_CHARACTER);
 						printf("\r\n%c%c  Disable RTS", ESCAPE_CHARACTER, RTS_OFF_CHARACTER);
-						printf("\r\n%c%c  Exit program\r\n", ESCAPE_CHARACTER, EXIT_CHARACTER);
+						printf("\r\n%c%c  Exit program", ESCAPE_CHARACTER, EXIT_CHARACTER);
+						printf("\r\n%c%c  Exit program (no reset)\r\n", ESCAPE_CHARACTER, EXIT_NO_RST_CHARACTER);
 					} else if (ibuf[i] == BREAK_CHARACTER) {
 						tcsendbreak(fd, 0);
 					} else if (ibuf[i] == DTR_ON_CHARACTER) {
@@ -574,7 +577,11 @@ int main(int argc, char **argv)
 						flags &= ~TIOCM_RTS;
 						ioctl(fd, TIOCMSET, &flags);
 					} else if (ibuf[i] == EXIT_CHARACTER) {
-						quit = 1;
+						quit = true;
+						break;
+					} else if (ibuf[i] == EXIT_NO_RST_CHARACTER) {
+						quit = true;
+						no_reset = true;
 						break;
 					} else {
 						obuf[olen++] = ESCAPE_CHARACTER;
@@ -637,8 +644,11 @@ int main(int argc, char **argv)
 		tcsetattr(1, TCSANOW, &stdout_termio);
 	}
 
-	if (fd != -1)
+	if (no_reset) {
+		printf("Exit without reset");
+	} else if (fd != -1) {
 		serial_close(fd, &serial_termio);
+	}
 
 	fprintf(stderr, "\nConnection closed.\n");
 
