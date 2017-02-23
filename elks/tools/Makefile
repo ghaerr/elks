@@ -35,7 +35,7 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-OBJS  = mkromfs.o
+OBJS  = mkromfs.o list.o
 
 #########################################################################
 # Commands.

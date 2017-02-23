@@ -9,86 +9,118 @@
 #include <errno.h>
 #include <unistd.h>
 
+#include "list.h"
 
-typedef unsigned short word_t;
 
 
-/* Node on disk (actually in ROM) */
+/* INode on disk (actually in ROM) */
 
-#define NODE_FILE 0x0001
-#define NODE_DIR  0x0002
+#define INODE_FILE 0x0001
+#define INODE_DIR  0x0002
 
-struct node_disk_s
+struct super_disk_s
+	{
+	};
+
+struct inode_disk_s
 	{
 	word_t flags;
-	word_t offset;
-	word_t size;
+	addr_t offset;
+	addr_t size;
 	};
 
+typedef struct inode_disk_s inode_disk_t;
 
-/* Node to build */
+static addr_t _offset = 0;
 
-struct node_build_s
+/* INode to build */
+
+struct inode_build_s
 	{
+	list_node_t node;
+	list_root_t entries;  /* list of entries for directory */
 	char * path;
-	word_t offset;
-	word_t size;
+
+	word_t flags;
+	addr_t offset;
+	addr_t size;
 	};
 
-typedef struct node_build_s node_build_t;
+typedef struct inode_build_s inode_build_t;
+
+static list_root_t _inodes;  /* list of inodes */
 
 
-/* Array of build nodes */
-
-#define MAX_NODES 1000
-
-static node_build_t _nodes [MAX_NODES];
-static word_t _node_count = 0;
-
-
-static node_build_t * node_alloc (node_build_t * parent, char * name)
+static inode_build_t * inode_alloc (inode_build_t * parent, char * path)
 	{
-	node_build_t * node = NULL;
+	inode_build_t * inode;
 
 	while (1)
 		{
-		if (_node_count >= MAX_NODES) break;
+		inode = (inode_build_t *) malloc (sizeof (inode_build_t));
+		assert (inode);
 
-		node = &_nodes [_node_count++];
+		list_init (&inode->entries);
 
-		int len = strlen (name) + 1;
-		if (parent) len += strlen (parent->path) + 1;
+		inode->path = strdup (path);
+		assert (inode->path);
 
-		node->path = malloc (len);
-		assert (node->path);
-
-		if (parent)
-			{
-			strcpy (node->path, parent->path);
-			strcat (node->path, "/");
-			strcat (node->path, name);
-			}
-		else
-			{
-			strcpy (node->path, name);
-			}
-
+		list_add_tail (&_inodes, &inode->node);
 		break;
 		}
 
-	return node;
+	return inode;
 	}
 
-static void node_free (node_build_t * node)
+
+static void inode_free (inode_build_t * inode)
 	{
-	if (node->path) free (node->path);
+	if (inode->path) free (inode->path);
+	/* TODO: empty entries */
 	}
 
+
+/* Entry to build */
+
+struct entry_build_s
+	{
+	list_node_t node;
+	inode_build_t * inode;
+	char * name;
+	};
+
+typedef struct entry_build_s entry_build_t;
+
+
+static entry_build_t * entry_alloc (inode_build_t * inode, char * name)
+	{
+	entry_build_t * entry;
+
+	while (1)
+		{
+		entry = (entry_build_t *) malloc (sizeof (entry_build_t));
+		assert (entry);
+
+		entry->name = strdup (name);
+		assert (entry->name);
+
+		list_add_tail (&inode->entries, &entry->node);
+		break;
+		}
+
+	return entry;
+	}
+
+
+static void entry_free (entry_build_t * entry)
+	{
+	if (entry->name) free (entry->name);
+	}
 
 
 /* Recursive directory parsing */
 
-int parse_dir (node_build_t * parent_node, char * parent_path)
+int parse_dir (inode_build_t * grand_parent_inode, inode_build_t * parent_inode, char * parent_path)
 	{
 	int err;
 
@@ -112,27 +144,41 @@ int parse_dir (node_build_t * parent_node, char * parent_path)
 				break;
 				}
 
-			node_build_t * child_node = node_alloc (parent_node, ent->d_name);
-			if (!child_node)
+			char * name = ent->d_name;
+			entry_build_t * child_ent = entry_alloc (parent_inode, name);
+			if (!child_ent)
 				{
 				err = -1;
 				break;
 				}
 
-			if (!strcmp (ent->d_name, "."))
+			char * child_path = malloc (strlen (parent_path) + 1 + strlen (name) + 1);
+			strcpy (child_path, parent_path);
+			strcat (child_path, "/");
+			strcat (child_path, name);
+
+			if (!strcmp (name, "."))
 				{
+				printf ("Pseudo: %s\n", child_path);
+				child_ent->inode = parent_inode;
 				}
 
-			else if (!strcmp (ent->d_name, ".."))
+			else if (!strcmp (name, ".."))
 				{
+				printf ("Pseudo: %s\n", child_path);
+				child_ent->inode = grand_parent_inode;
 				}
 
 			else
 				{
-				char child_path [256];
-				strcpy (child_path, parent_path);
-				strcat (child_path, "/");
-				strcat (child_path, ent->d_name);
+				inode_build_t * child_inode = inode_alloc (parent_inode, child_path);
+				if (!child_inode)
+					{
+					err = -1;
+					break;
+					}
+
+				child_ent->inode = child_inode;
 
 				struct stat child_stat;
 				err = lstat (child_path, &child_stat);
@@ -144,13 +190,16 @@ int parse_dir (node_build_t * parent_node, char * parent_path)
 
 				if (S_ISREG (child_stat.st_mode))
 					{
-					printf ("file: %s\n", child_path);
+					printf ("File:   %s\n", child_path);
+					child_inode->flags = INODE_FILE;
+					child_inode->size = child_stat.st_size;
 					}
 
 				else if (S_ISDIR (child_stat.st_mode))
 					{
-					printf ("dir: %s\n", child_path);
-					err = parse_dir (child_node, child_path);
+					printf ("Dir:    %s\n", child_path);
+					child_inode->flags = INODE_DIR;
+					err = parse_dir (parent_inode, child_inode, child_path);
 					if (err) break;
 					}
 
@@ -159,15 +208,15 @@ int parse_dir (node_build_t * parent_node, char * parent_path)
 					assert (0);
 					}
 				}
+
+			if (child_path) free (child_path);
 			}
 
 		if (err != 0)
 			{
 			perror ("Read directory");
-			break;
 			}
 
-		err = 0;
 		break;
 		}
 
@@ -183,10 +232,28 @@ void main ()
 	{
 	while (1)
 		{
-		node_build_t * root_node = node_alloc (NULL, "");
+		int err;
+
+		puts ("Parsing file system starting from . directory...");
+
+		list_init (&_inodes);
+
+		inode_build_t * root_node = inode_alloc (NULL, ".");
 		if (!root_node) break;
 
-		parse_dir (root_node, ".");
+		root_node->flags = INODE_DIR;
+
+		err = parse_dir (NULL, root_node, ".");
+		if (err) break;
+
+		printf ("Total inodes: %u\n", _inodes.count);
+		puts ("End of parsing.");
+
+		puts ("Compiling file system...");
+
+		/*err = compile_fs ();*/
+
+		puts ("End of compilation.");
 		break;
 		}
 	}
