@@ -11,7 +11,7 @@
  *
  * moving variables from code segment to an extra segment
  * CONFIG_ROM_IRQ_DATA for the ROM_CODE-Version
- * ELKS 0.76 7/1999 Christian Mard”ller  (chm@kdt.de)
+ * ELKS 0.76 7/1999 Christian Mardï¿½ller  (chm@kdt.de)
  */
 
 #ifdef CONFIG_ROMCODE
@@ -102,7 +102,13 @@ _irqtab_init:
 	
 	mov [48],#_irq4   ;com1
 	mov [50],cs
-	
+
+! IRQ 8-15 are mapped to vectors INT 70h-77h
+
+#ifdef CONFIG_ETH
+	mov     [452], #_irq9
+	mov     [454], cs
+#endif
 
 ! Setup INT 0x80 (for syscall)
 	mov [512],#_syscall_int
@@ -159,10 +165,18 @@ _irq8:
 	push	ax
 	mov	ax,#8
 	br	_irqit
+#endif
+
+! IRQ9 is used by the Ethernet device
+
+#ifdef CONFIG_ETH
 _irq9:
-	push	ax
-	mov	ax,#9
-	br	_irqit
+	push    ax
+	mov     ax, #9
+	br      _irqit
+#endif
+
+#if 0
 _irq10:
 	push	ax
 	mov	ax,#10
@@ -516,7 +530,7 @@ noschedpop:
  *	context and returns running the current task.
  *
  * ELKS 0.76 7/1999  Fixed for ROMCODE-Version
- * Christian Mardm”ller  (chm@kdt.de)
+ * Christian Mardmï¿½ller  (chm@kdt.de)
  */
 
 	.globl _tswitch

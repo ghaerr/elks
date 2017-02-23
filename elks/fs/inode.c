@@ -88,12 +88,18 @@ static void wait_on_inode(register struct inode *inode)
     register __ptask currentp = current;
 
     if (inode->i_lock) {
+	if (inode->i_count++ == 0)
+	    nr_free_inodes--;
+
 	wait_set(&inode->i_wait);
 	currentp->state = TASK_UNINTERRUPTIBLE;
 	while (inode->i_lock)
 	    schedule();
 	currentp->state = TASK_RUNNING;
 	wait_clear(&inode->i_wait);
+
+	if (!(--inode->i_count))
+	    nr_free_inodes++;
     }
 }
 
@@ -162,9 +168,8 @@ static void list_inode_status(void)
     register struct inode *inode = first_inode;
 
     do {
-        printk("[#%u: c=%u d=%x nr=%lu]",
-	       ((int)(pi++)), inode->i_count,
-	       inode->i_dev, inode->i_ino);
+        printk("[#%u: c=%u d=%x nr=%u]", ((int)(pi++)),
+		inode->i_count, inode->i_dev, inode->i_ino);
     } while ((inode = inode->i_prev) != first_inode);
 }
 
@@ -186,7 +191,7 @@ static struct inode *get_empty_inode(void)
 /* Here we are doing the same checks again. There cannot be a significant *
  * race condition here - no time has passed */
 #if 0
-    if (inode->i_lock) {
+    if (inode->i_lock) {	/* This will never happen */
 	wait_on_inode(inode);
 	goto repeat;
     }
@@ -318,24 +323,30 @@ struct inode *new_inode(register struct inode *dir, __u16 mode)
     return inode;
 }
 
-struct inode *__iget(register struct super_block *sb,
+struct inode *__iget(struct super_block *sb,
 		     ino_t inr /*,int crossmntp */ )
 {
     register struct inode *inode;
+    register struct inode *n_ino;
 
     debug3("iget called(%x, %d, %d)\n", sb, inr, 0 /* crossmntp */ );
     if (!sb)
 	panic("VFS: iget with sb==NULL");
 
+    n_ino = NULL;
   repeat:
+    inode = first_inode;
     do {
-	inode = first_inode;
-	do {
-	    if (inode->i_dev == sb->s_dev && inode->i_ino == inr)
-		goto found_it;
-	} while ((inode = inode->i_prev) != first_inode);
+	if(inode->i_ino == inr && inode->i_dev == sb->s_dev)
+	    goto found_it;
+    } while((inode = inode->i_prev) != first_inode);
+
+    if(n_ino == NULL) {
 	debug("iget: getting an empty inode...\n");
-    } while (!(inode = get_empty_inode()));
+	n_ino = get_empty_inode();	/* get_empty_inode will never return NULL*/
+	goto repeat;
+    }
+    inode = n_ino;
     debug1("iget: got one... (%x)!\n", empty);
 
     inode->i_sb = sb;
@@ -348,22 +359,25 @@ struct inode *__iget(register struct super_block *sb,
     goto return_it;
 
   found_it:
+    if(n_ino != NULL)
+	iput(n_ino);
     if (inode->i_count++ == 0)
 	nr_free_inodes--;
-    wait_on_inode(inode);
+#if 0
+    /* This will never happen */
     if (inode->i_dev != sb->s_dev || inode->i_ino != inr) {
 	printk("Whee.. inode changed from under us. Tell _.\n");
 	iput(inode);
 	goto repeat;
     }
+#endif
     if ( /* crossmntp && */ inode->i_mount) {
-	struct inode *tmp = inode->i_mount;
-	tmp->i_count++;
-	iput(inode);
-	inode = tmp;
-	wait_on_inode(inode);
+	n_ino = inode;
+	inode = inode->i_mount;
+	inode->i_count++;
+	iput(n_ino);
     }
-
+    wait_on_inode(inode);
   return_it:
     return inode;
 }

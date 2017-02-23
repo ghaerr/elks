@@ -580,6 +580,15 @@ CONFIG_BLK_DEV_CHAR
 
   Recommended.
 
+# Network devices
+# ~~~~~~~~~~~~~~~
+
+Ethernet device (NE2K)
+CONFIG_ETH
+  Ethernet driver (/dev/eth)
+  Only for NE2000 on ISA bus
+
+
 # File systems
 # ~~~~~~~~~~~~
 

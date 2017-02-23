@@ -18,8 +18,19 @@
 
 #define isdecimal(ch)	(((ch) >= '0') && ((ch) <= '9'))
 
-int main(int argc, char **argv)
+static void usage()
 {
+	write(STDOUT_FILENO, "Send signal to process\n\nusage: kill [signal] PID\n\n",50);
+	write(STDOUT_FILENO, "  default  send TERM signal\n",28);
+	write(STDOUT_FILENO, "  -HUP     tell a process to shutdown and restart\n",50);
+	write(STDOUT_FILENO, "  -INT     send ctrl+c signal to process\n",41);
+	write(STDOUT_FILENO, "  -QUIT    stop process and tell it to create a core dump file\n",63);
+	write(STDOUT_FILENO, "  -KILL    stop process\n",24);
+	write(STDOUT_FILENO, "  -H       print this message\n",30);
+	write(STDOUT_FILENO, "\n  e.g. kill -KILL 5\n\n",22);
+}
+
+void main ( int argc, char **argv ) {  
 	char	*cp;
 	int	sig;
 	int	pid;
@@ -36,20 +47,24 @@ int main(int argc, char **argv)
 			sig = SIGQUIT;
 		else if (strcmp(cp, "KILL") == 0)
 			sig = SIGKILL;
+		else if ((strcmp(cp, "H") == 0) || (strcmp(cp, "h") == 0))
+			usage();
 		else {
 			sig = 0;
 			while (isdecimal(*cp))
 				sig = sig * 10 + *cp++ - '0';
 
 			if (*cp) {
-				write(stderr, "Unknown signal\n", 15);
+				write(STDERR_FILENO, "Unknown signal\n", 15);
 				exit(1);
 			}
 		}
 		argc--;
 		argv++;
+	} else {	
+		if (argc == 1) usage();
 	}
-
+	
 	while (argc-- > 1) {
 		cp = *++argv;
 		pid = 0;
@@ -57,7 +72,8 @@ int main(int argc, char **argv)
 			pid = pid * 10 + *cp++ - '0';
 
 		if (*cp) {
-			write(STDERR_FILENO, "Non-numeric pid\n", 16);
+			usage();	
+			write(STDERR_FILENO, "\n  Error: non-numeric pid!\n\n", 27);			
 			exit(1);
 		}
 

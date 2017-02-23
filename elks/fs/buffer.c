@@ -146,8 +146,8 @@ void invalidate_buffers(kdev_t dev)
 	if (bh->b_dev != dev)
 	    continue;
 	wait_on_buffer(bh);
-	if (bh->b_dev != dev)
-	    continue;
+/*	if (bh->b_dev != dev)*/	/* This will never happen */
+/*	    continue;*/
 	if (bh->b_count)
 	    continue;
 	bh->b_uptodate = 0;
@@ -161,12 +161,10 @@ static void sync_buffers(kdev_t dev, int wait)
     register struct buffer_head *bh = bh_llru;
 
     do {
-	if (dev && bh->b_dev != dev)
-	    continue;
 	/*
 	 *      Skip clean buffers.
 	 */
-	if (buffer_clean(bh))
+	if ((dev && (bh->b_dev != dev)) || (buffer_clean(bh)))
 	    continue;
 	/*
 	 *      Locked buffers..
@@ -223,13 +221,14 @@ void __brelse(register struct buffer_head *buf)
 {
     wait_on_buffer(buf);
 
-    if (buf->b_count) {
-	buf->b_count--;
-#if 0
-	wake_up(&bufwait);
-#endif
-    } else
+    if (buf->b_count <= 0)
 	panic("brelse");
+#if 0
+    if(!--buf->b_count)
+	wake_up(&bufwait);
+#else
+    buf->b_count--;
+#endif
 }
 
 /*
@@ -278,12 +277,9 @@ struct buffer_head *get_hash_table(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh;
 
-    while((bh = find_buffer(dev, block)) != NULL) {
+    if((bh = find_buffer(dev, block)) != NULL) {
 	bh->b_count++;
 	wait_on_buffer(bh);
-	if (bh->b_blocknr == block && bh->b_dev == dev)
-	    break;
-	bh->b_count--;
     }
     return bh;
 }
@@ -302,31 +298,41 @@ struct buffer_head *get_hash_table(kdev_t dev, block_t block)
 struct buffer_head *getblk(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh;
+    register struct buffer_head *n_bh;
 
     /* If there are too many dirty buffers, we wake up the update process
      * now so as to ensure that there are still clean buffers available
      * for user processes to use (and dirty) */
 
-    while((bh = get_hash_table(dev, block)) == NULL) {
+    n_bh = NULL;
+  repeat:
+    if((bh = find_buffer(dev, block)) != NULL)
+	goto found_it;
+    if(n_bh == NULL) {
 	/*
 	 * Block not found. Create a buffer for this job.
 	 */
-	bh = get_free_buffer();	/* This function may sleep and someone else */
-				/* can create the block */
-	if(find_buffer(dev, block) == NULL) {
+	n_bh = get_free_buffer();	/* This function may sleep and someone else */
+	goto repeat;			/* can create the block */
+    }
+    bh = n_bh;
 /* OK, FINALLY we know that this buffer is the only one of its kind,
  * and that it's unused (b_count=0), unlocked (buffer_locked=0), and clean
  */
-	    bh->b_dev = dev;
-	    bh->b_blocknr = block;
-	    bh->b_seg = kernel_ds;
-	    break;
-	}
-	bh->b_count = 0;	/* Release previously created buffer head */
-    }
-/* found it */
+    bh->b_dev = dev;
+    bh->b_blocknr = block;
+    bh->b_seg = kernel_ds;
+    goto return_it;
+
+  found_it:
+    if(n_bh != NULL)
+	n_bh->b_count = 0;	/* Release previously created buffer head */
+    bh->b_count++;
+    wait_on_buffer(bh);
     if (buffer_clean(bh) && buffer_uptodate(bh))
 	put_last_lru(bh);
+
+  return_it:
     return bh;
 }
 
@@ -508,8 +514,8 @@ void unmap_buffer(register struct buffer_head *bh)
 		   bh->b_num);
 	    bh->b_mapcount = 0;
 	} else if (!(--bh->b_mapcount)) {
-		debug1("BUFMAP: buffer %d released from L1.\n", bh->b_num);
-		wake_up(&bufmapwait);
+	    debug1("BUFMAP: buffer %d released from L1.\n", bh->b_num);
+	    wake_up(&bufmapwait);
 	}
     }
 }

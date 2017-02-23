@@ -25,7 +25,7 @@ NET_USR_SBIN	=
 STD_BIN 	= 
 STD_LIB 	= 
 STD_SBIN	= 
-STD_USR_BIN	= ed tar compress uncompress zcat
+STD_USR_BIN	= ed tar compress uncompress zcat miniterm
 STD_USR_LIB	= 
 STD_USR_MAN	= compress.1 uncompress.1 zcat.1
 STD_USR_SBIN	= 
@@ -37,7 +37,7 @@ HOST_CFLAGS = -O2
 
 ###############################################################################
 
-PRGS=ed tar compress compress.host uncompress zcat
+PRGS=ed tar compress compress.host uncompress zcat miniterm
 
 all: $(PRGS)
 

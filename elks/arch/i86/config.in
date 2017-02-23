@@ -193,14 +193,25 @@ if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
     endmenu
 fi
 
+# Drivers configuration
+
 mainmenu_option next_comment
     comment 'Driver Support'
 
     source arch/i86/drivers/block/Config.in
     source arch/i86/drivers/char/Config.in
-    source fs/Config.in
-    source net/Config.in
+    source arch/i86/drivers/net/Config.in
 endmenu
+
+# Generic networking support
+
+source net/Config.in
+
+# Filesystem support
+
+source fs/Config.in
+
+# Kernel hacking
 
 mainmenu_option next_comment
     comment 'Kernel hacking'

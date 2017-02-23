@@ -29,4 +29,9 @@ void chr_dev_init(void)
 #ifdef CONFIG_INET
     tcpdev_init();
 #endif
+
+#ifdef CONFIG_ETH
+    eth_init ();
+#endif
+
 }

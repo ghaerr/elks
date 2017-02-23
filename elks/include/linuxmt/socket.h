@@ -4,9 +4,11 @@
 #include <linuxmt/types.h>
 #include <linuxmt/uio.h>
 
+#define MAX_SOCK_ADDR 110  /* Sufficient size for AF_UNIX */
+
 struct sockaddr {
     unsigned short sa_family;
-    char sa_data[14];
+    char sa_data [MAX_SOCK_ADDR];
 };
 
 struct msghdr {

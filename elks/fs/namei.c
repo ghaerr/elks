@@ -443,9 +443,12 @@ int do_mknod(char *pathname, size_t offst, int mode, dev_t dev)
 	    error = -EROFS;*/
 	else if (!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
 	    iop = dirp->i_op;
-	    if (!iop || !(op = (*(int (**)())((char *)iop + offst))))
+		if (!iop || !(op = (offst ? ((offst > 1)
+						? iop->symlink
+						: iop->mkdir)
+					: iop->mknod))) {	      
 		error = -EPERM;
-	    else {
+	   } else {
 		dirp->i_count++;
 		down(&dirp->i_sem);
 		error = (offst != offsetof(struct inode_operations,mknod)

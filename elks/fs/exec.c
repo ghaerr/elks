@@ -40,7 +40,6 @@
 #include <linuxmt/time.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/minix.h>
-#include <linuxmt/dll.h>
 #include <linuxmt/msdos.h>
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
