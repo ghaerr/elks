@@ -19,7 +19,7 @@
 #include <linuxmt/in.h>
 #include <linuxmt/errno.h>
 
-#include "netorder.h"
+#include <linuxmt/arpa/inet.h>
 #include "tcp.h"
 #include "tcpdev.h"
 #include "netconf.h"

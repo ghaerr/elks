@@ -20,7 +20,7 @@
 #include "ip.h"
 #include "icmp.h"
 #include "tcp.h"
-#include "netorder.h"
+#include <linuxmt/arpa/inet.h>
 
 #if 0
 #define IP_VERSION(s)	((s)->version_ihl>>4&0xf)

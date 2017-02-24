@@ -16,7 +16,7 @@
 #include "slip.h"
 #include "tcpdev.h"
 #include "timer.h"
-#include "netorder.h"
+#include <linuxmt/arpa/inet.h>
 #include "ip.h"
 #include "tcp.h"
 #include "netconf.h"

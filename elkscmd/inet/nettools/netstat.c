@@ -24,7 +24,7 @@
 #include <linuxmt/in.h>
 #include <ktcp/tcp.h>
 #include <ktcp/netconf.h>
-#include "netorder.h"
+#include <linuxmt/arpa/inet.h>
 
 char tcp_states[11][13] = {
 	"CLOSED",

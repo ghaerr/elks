@@ -26,7 +26,7 @@ ttn.c
 #include <linuxmt/in.h>
 #include <linuxmt/net.h>
 #include <linuxmt/time.h>
-#include "../httpd/netorder.h"
+#include <linuxmt/arpa/inet.h>
 
 /*#define assert(a)*/
 #else

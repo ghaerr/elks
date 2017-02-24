@@ -26,10 +26,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#ifndef __LINUX__
+#ifndef __linux__
 #include <linuxmt/in.h>
 #include <linuxmt/net.h>
-#include "netorder.h"
+#include <linuxmt/arpa/inet.h>
 #else
 #include <netinet/in.h>
 #include <arpa/inet.h>
