@@ -13,11 +13,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifndef __LINUX__
+#ifndef __linux__
 #include <linuxmt/in.h>
 #include <linuxmt/net.h>
 #include <linuxmt/time.h>
-#include "../httpd/netorder.h"
+#include <linuxmt/arpa/inet.h>
 #else
 #include <sys/time.h>
 #include <netinet/in.h>

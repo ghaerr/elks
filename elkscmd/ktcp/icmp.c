@@ -15,7 +15,7 @@
 #include "slip.h"
 #include "icmp.h"
 #include "ip.h"
-#include "netorder.h"
+#include <linuxmt/arpa/inet.h>
 
 int icmp_init(void)
 {

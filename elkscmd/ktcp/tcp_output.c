@@ -16,7 +16,7 @@
 #include "slip.h"
 #include "ip.h"
 #include "tcp.h"
-#include "netorder.h"
+#include <linuxmt/arpa/inet.h>
 #include "timer.h"
 
 char buf[128];

@@ -18,7 +18,7 @@
 #include "ip.h"
 #include "tcp.h"
 #include "timer.h"
-#include "netorder.h"
+#include <linuxmt/arpa/inet.h>
 
 timeq_t Now;
 

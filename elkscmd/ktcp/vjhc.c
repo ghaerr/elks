@@ -28,7 +28,7 @@ Created:	Nov 11, 1993 by Philip Homburg <philip@cs.vu.nl>
 #include "slip.h"
 #include "vjhc.h"
 
-#include "netorder.h"
+#include <linuxmt/arpa/inet.h>
 
 #define IP_MIN_HDR_SIZE 20
 #define IP_MAX_HDR_SIZE 60
