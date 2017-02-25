@@ -25,13 +25,13 @@ STD_LIB 	=
 STD_SBIN	= 
 STD_USR_BIN	= 
 STD_USR_LIB	= 
-STD_USR_SBIN	= echo_server echo_client
+STD_USR_SBIN	= echoserver_un echoserver_in echoclient_un echoclient_in
 
 include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS=echo_server echo_client
+PRGS=echoserver_un echoserver_in echoclient_un echoclient_in
 
 SPRGS=
 
@@ -50,9 +50,14 @@ smin_rfs:
 install: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin
 
-echo_server: echo_server.o
+echoserver_un: echoserver_un.o
 
-echo_client: echo_client.o
+echoclient_un: echoclient_un.o
+
+echoserver_in: echoserver_in.o
+
+echoclient_in: echoclient_in.o
+
 
 clean:
 	rm -f core *.o $(PRGS)

@@ -1,0 +1,36 @@
+#ifndef ARP_H
+#define ARP_H
+
+#include "ip.h"
+
+#define ARP_ETHER            1
+
+#define ARP_REQUEST          1
+#define ARP_REPLY            2
+#define RARP_REQUEST         3
+#define RARP_REPLY           4
+
+typedef struct arp_addr {
+	ipaddr_t daddr;		/* IP destination address */
+	ipaddr_t saddr;		/* IP source address */
+	__u8  eth_dest[6]; 	/* MAC destination address */
+	__u8  eth_src[6]; 	/* MAC source address */
+};
+
+typedef struct arp
+{
+         __u8  ll_eth_dest[6]; 	/* link layer MAC destination address */
+         __u8  ll_eth_src[6]; 	/* link layer MAC source address */
+         __u16 ll_type_len;
+         __u16 hard_type;
+         __u16 proto_type;
+         __u8  hard_len;
+         __u8  proto_len;
+         __u16 op; 		/* ARP operation code (command) */
+         __u8  eth_src[6]; 	/* MAC source address */
+         __u32 ip_src; 		/* IP source address */
+         __u8  eth_dest[6]; 	/* MAC destination address */
+         __u32 ip_dest; 	/* IP destination address */
+};
+
+#endif

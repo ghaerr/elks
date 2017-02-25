@@ -20,6 +20,13 @@
 #include "timer.h"
 #include <linuxmt/arpa/inet.h>
 
+//#define DEBUG2
+
+#ifdef DEBUG2
+#define debug	printf
+#else
+#define debug(s)
+#endif
 timeq_t Now;
 
 extern int cbs_in_time_wait;
@@ -145,44 +152,42 @@ void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
 
 #ifdef DEBUG
     if (h->flags & TF_ACK){
-	printf("Implement me ACK in listen\n");
+	printf("Implement me ACK in listen\n"); }
 #endif
 
-    n = tcpcb_clone(lcb);
-    cb = &n->tcpcb;
-    cb->unaccepted = 1; 		/* Mark as unaccepted */
-    cb->newsock = lcb->sock;
+    n = tcpcb_clone(lcb);    /*copy (struct tcpcb_s)*lcb into linked list tcpcb_list_s*/
+    cb = &n->tcpcb;          /*tcp control block in linked list*/
+    cb->unaccepted = 1;      /* Mark as unaccepted */
+    cb->newsock = lcb->sock; /* lcb-> is the socket in kernel space */
 
-    cb->seg_seq = ntohl(h->seqnum);
-    cb->seg_ack = ntohl(h->acknum);
-
+    cb->seg_seq = ntohl(h->seqnum); /*read sequence number got*/
+    cb->seg_ack = ntohl(h->acknum); /*read ack number got*/
+    
     if (!(h->flags & TF_SYN)){
-
 #ifdef DEBUG
-	printf("not sync message in listen state\n");
+	printf("no sync message in listen state\n");
 #endif
-
-	tcpcb_remove(n);
+	tcpcb_remove(n); /*remove from linked list again*/
 	return;
     }
 
-    cb->remaddr = iptcp->iph->saddr;
-    cb->remport = ntohs(h->sport);
-    cb->irs = cb->seg_seq;
-    cb->rcv_nxt = cb->irs + 1;
+    cb->remaddr = iptcp->iph->saddr; /*sender's ip address*/
+    cb->remport = ntohs(h->sport);   /*sender's port*/
+    cb->irs = cb->seg_seq;           /*sender's sequence number*/
+    cb->rcv_nxt = cb->irs + 1;       /*ktcp's acknum */
     cb->rcv_wnd = ntohs(h->window);
 
-    cb->iss = choose_seq();
-    cb->send_nxt = cb->iss;
+    cb->iss = choose_seq(); /*our arbitrary sequence number*/
+    cb->send_nxt = cb->iss; /*put that into send_nxt*/
 
-    cb->state = TS_SYN_RECEIVED;
-    cb->flags = TF_SYN|TF_ACK;
+    cb->state = TS_SYN_RECEIVED; /*update state*/
+    cb->flags = TF_SYN|TF_ACK;   /*set SYN + ACK flag*/
 
-    cb->datalen = 0;	
-    tcp_output(cb);
+    cb->datalen = 0;  /* no data yet */
+    tcp_output(cb);   /*send the tcp part of the packet*/
 
-    cb->send_nxt = cb->iss + 1;
-    cb->send_una = cb->iss;	
+    cb->send_nxt = cb->iss + 1; /* save these numbers*/
+    cb->send_una = cb->iss;	/* ack number */
 }
 
 /*
@@ -222,9 +227,9 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	    cb->bytes_to_push = CB_BUF_USED(cb);
 	}
 	tcpdev_checkread(cb);
-    }
+    } /* datasize != 0 */
 
-    if (h->flags & TF_ACK) {
+    if (h->flags & TF_ACK) { /*update una*/
 	acknum = ntohl(h->acknum);
 	if (SEQ_LT(cb->send_una, acknum))
 	    cb->send_una = acknum;
@@ -249,7 +254,7 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 
     if (datasize == 0 && ((h->flags & TF_ALL) == TF_ACK))
-	return;
+	return; /* ACK with no data received - so don't answer*/
 
     cb->rcv_nxt += datasize;
     cb->flags = TF_ACK;	
@@ -426,35 +431,43 @@ void tcp_process(struct iphdr_s *iph)
     switch (cb->state) {
 
 	case TS_LISTEN:
+	    debug("TS_LISTEN\n");
 	    tcp_listen(&iptcp, cb);
 	    break;
 
 	case TS_SYN_SENT:
+	    debug("TS_SYN_SENT\n");
 	    tcp_syn_sent(&iptcp, cb);
 	    break;
 
 	case TS_SYN_RECEIVED:
+	    debug("TS_SYN_RECEIVED\n");
 	    tcp_synrecv(&iptcp, cb);
 	    break;
 
 	case TS_ESTABLISHED:
 	case TS_CLOSE_WAIT:
+	    debug("TS_ESTABLISHED-TS_CLOSE_WAIT\n");
 	    tcp_established(&iptcp, cb);
 	    break;
 
 	case TS_FIN_WAIT_1:
+	    debug("TS_FIN_WAIT_1\n");
 	    tcp_fin_wait_1(&iptcp, cb);
 	    break;
 
 	case TS_FIN_WAIT_2:
+	    debug("TS_FIN_WAIT_2\n");
 	    tcp_fin_wait_2(&iptcp, cb);
 	    break;
 
 	case TS_LAST_ACK:
+	    debug("TS_LAST_ACK\n");
 	    tcp_last_ack(&iptcp, cb);
 	    break;
 
 	case TS_CLOSING:
+	    debug("TS_CLOSING\n");
 	    tcp_closing(&iptcp, cb);
 	    break;	
     }
