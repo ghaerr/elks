@@ -3,7 +3,7 @@
 
 
 typedef unsigned short word_t;
-typedef unsigned long  addr_t;
+typedef unsigned int addr_t;
 
 
 struct list_node_s

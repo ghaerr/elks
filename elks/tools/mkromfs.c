@@ -1,3 +1,6 @@
+/*---------------------------------------------------------------------------*/
+/* Make ROM file system from existing tree                                   */
+/*---------------------------------------------------------------------------*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -8,9 +11,23 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "list.h"
 
+
+/* Super block on disk (actually in ROM) */
+
+#define SUPER_MAGIC "ROMFS.0"
+
+struct super_disk_s
+	{
+	char magic [8];
+	word_t icount;
+	char pad [6];
+	};
+
+typedef struct super_disk_s super_disk_t;
 
 
 /* INode on disk (actually in ROM) */
@@ -18,20 +35,16 @@
 #define INODE_FILE 0x0001
 #define INODE_DIR  0x0002
 
-struct super_disk_s
-	{
-	};
-
 struct inode_disk_s
 	{
-	word_t flags;
 	addr_t offset;
 	addr_t size;
+	word_t flags;
+	char pad [6];
 	};
 
 typedef struct inode_disk_s inode_disk_t;
 
-static addr_t _offset = 0;
 
 /* INode to build */
 
@@ -40,6 +53,7 @@ struct inode_build_s
 	list_node_t node;
 	list_root_t entries;  /* list of entries for directory */
 	char * path;
+	word_t index;
 
 	word_t flags;
 	addr_t offset;
@@ -66,6 +80,7 @@ static inode_build_t * inode_alloc (inode_build_t * parent, char * path)
 		assert (inode->path);
 
 		list_add_tail (&_inodes, &inode->node);
+		inode->index = _inodes.count;
 		break;
 		}
 
@@ -118,9 +133,12 @@ static void entry_free (entry_build_t * entry)
 	}
 
 
-/* Recursive directory parsing */
+/*---------------------------------------------------------------------------*/
+/* Recursive directory parsing                                               */
+/*---------------------------------------------------------------------------*/
 
-int parse_dir (inode_build_t * grand_parent_inode, inode_build_t * parent_inode, char * parent_path)
+static int parse_dir (inode_build_t * grand_parent_inode,
+	inode_build_t * parent_inode, char * parent_path)
 	{
 	int err;
 
@@ -226,35 +244,153 @@ int parse_dir (inode_build_t * grand_parent_inode, inode_build_t * parent_inode,
 	}
 
 
-/* Main */
+/*---------------------------------------------------------------------------*/
+/* File system compilation                                                   */
+/*---------------------------------------------------------------------------*/
 
-void main ()
+static int compile_fs ()
+	{
+	int err;
+
+	int fd = -1;
+
+	while (1)
+		{
+		int fd = open ("romfs.bin", O_WRONLY | O_CREAT | O_TRUNC);
+		if (fd < 0)
+			{
+			err = errno;
+			break;
+			}
+
+		/* Write super block first */
+
+		super_disk_t super;
+		memset (&super, 0xFF, sizeof (super_disk_t));
+
+		strcpy (super.magic, SUPER_MAGIC);
+		super.icount = _inodes.count;
+
+		int count = write (fd, &super, sizeof (super_disk_t));
+		if (count != sizeof (super_disk_t))
+			{
+			err = errno;
+			break;
+			}
+
+		/* Skip the table of inodes */
+
+		off_t offset = _inodes.count * sizeof (inode_disk_t);
+
+		offset = lseek (fd, offset, SEEK_CUR);
+		if (offset < 0)
+			{
+			err = errno;
+			break;
+			}
+
+		/* Compile the inodes, directories and files */
+
+		inode_build_t * inode_build = (inode_build_t *) _inodes.node.next;
+		while (inode_build != (inode_build_t *) &_inodes.node)
+			{
+			if (inode_build->flags & INODE_DIR)
+				{
+				printf ("Dir:    %s\n", inode_build->path);
+				/*err = compile_dir (inode_build, &offset);*/
+				}
+			else if (inode_build->flags & INODE_FILE)
+				{
+				printf ("File:   %s\n", inode_build->path);
+				/*err = compile_file (inode_build, &offset);*/
+				}
+
+			if (err) break;
+
+			inode_build = (inode_build_t *) inode_build->node.next;
+			}
+
+		/* Now write table of inodes */
+
+		offset = sizeof (super_disk_t);
+
+		offset = lseek (fd, offset, SEEK_SET);
+		if (offset < 0)
+			{
+			err = errno;
+			break;
+			}
+
+		inode_build = (inode_build_t *) _inodes.node.next;
+		while (inode_build != (inode_build_t *) &_inodes.node)
+			{
+			inode_disk_t inode_disk;
+			memset (&inode_disk, 0xFF, sizeof (inode_disk_t));
+
+			inode_disk.flags = inode_build->flags;
+			inode_disk.offset = inode_build->offset;
+			inode_disk.size = inode_build->size;
+
+			int count = write (fd, &inode_disk, sizeof (inode_disk_t));
+			if (count != sizeof (inode_disk_t))
+				{
+				err = errno;
+				break;
+				}
+
+			inode_build = (inode_build_t *) inode_build->node.next;
+			}
+
+		break;
+		}
+
+	if (fd >= 0) close (fd);
+
+	return err;
+	}
+
+
+/*---------------------------------------------------------------------------*/
+/* Main                                                                      */
+/*---------------------------------------------------------------------------*/
+
+void main (int argc, char ** argv)
 	{
 	while (1)
 		{
 		int err;
 
-		puts ("Parsing file system starting from . directory...");
+		if (argc != 2)
+			{
+			puts ("usage: mkromfs <dir>");
+			err = 1;
+			break;
+			}
+
+		printf ("Parsing file system starting from %s directory...\n", argv [1]);
 
 		list_init (&_inodes);
 
-		inode_build_t * root_node = inode_alloc (NULL, ".");
+		inode_build_t * root_node = inode_alloc (NULL, argv [1]);
 		if (!root_node) break;
 
 		root_node->flags = INODE_DIR;
 
-		err = parse_dir (NULL, root_node, ".");
+		err = parse_dir (NULL, root_node, argv [1]);
 		if (err) break;
 
 		printf ("Total inodes: %u\n", _inodes.count);
 		puts ("End of parsing.");
 
-		puts ("Compiling file system...");
+		puts ("\nCompiling file system...");
 
-		/*err = compile_fs ();*/
+		err = compile_fs ();
+		if (err) break;
 
 		puts ("End of compilation.");
 		break;
 		}
 	}
 
+
+/*---------------------------------------------------------------------------*/
