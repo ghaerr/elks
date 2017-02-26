@@ -7,20 +7,22 @@
  *	2 of the License, or (at your option) any later version.
  */
 
-#include "config.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "deveth.h"
-#include "arp.h"
-#include "tcpdev.h"
+
+#include <linuxmt/limits.h>
 #include <arch/ioctl.h>
+
+#include "config.h"
+#include "deveth.h"
+#include "tcpdev.h"
+#include "arp.h"
+
 
 /*#define DEBUG*/
 
-#define MTU 2048
-
-static unsigned char sbuf[TCPDEV_BUFSIZE];
+static unsigned char sbuf [MAX_PACKET_ETH];
 static int devfd;
 
 
@@ -96,27 +98,35 @@ int deveth_init(char *fdev, int argc, char **argv)
 /*
  *  Called when select in ktcp indicates we have new data waiting 
  */
-void deveth_process(void)
+
+void deveth_process ()
 {
   int len;
-  struct arp *arp_r;
+  int head_size;
+  eth_head_t * eth_head;
 
-  len = read(devfd, &sbuf, TCPDEV_BUFSIZE);
-  if (len==-1) return;
-  
-  arp_r = (struct arp *)&sbuf;
-  if (arp_r->proto_type == 8) { /* =0x800 big endian */
-    if (arp_r->op == 0x0100) { /*Request big endian */
-      arp_reply(&sbuf, len);
-    } else if (arp_r->op == 0x0200) { /*Reply big endian */
-      arp_write_cache(&sbuf, len);
-    }
-    
-  } else {
-    memmove(&sbuf,&sbuf[14], TCPDEV_BUFSIZE); /*strip link layer*/
-    ip_recvpacket(&sbuf,len); 
-  }
+  head_size = sizeof (eth_head_t);
+
+  len = read (devfd, sbuf, MAX_PACKET_ETH);
+  if (len < head_size) return;
+
+  /* Decode Ethernet II header */
+  /* and dispatch to protocols */
+
+  eth_head = (eth_head_t *) sbuf;
+  switch (eth_head->eth_type)
+	  {
+	  case ETH_TYPE_IPV4:
+		  ip_recvpacket (sbuf + head_size, len - head_size);  /* strip link layer */
+		  break;
+
+	  case ETH_TYPE_ARP:
+		  arp_proc (sbuf, len);
+		  break;
+
+	  }
 }
+
 
 void deveth_send(char *packet, int len)
 { 
@@ -125,6 +135,3 @@ void deveth_send(char *packet, int len)
     //deveth_printhex(packet,len);  
     i = write(devfd, packet, len);
 }
-
-
-

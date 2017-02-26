@@ -140,3 +140,24 @@ selectagain:
 
     return 0;
 }
+
+
+/* Process incoming ARP packets */
+
+void arp_proc (char * packet, int size)
+	{
+	struct arp * arp_r;
+
+	arp_r = (struct arp *) packet;
+	switch (arp_r->op)
+		{
+		case 0x0100:  /* Request big endian */
+			arp_reply (packet, size);
+			break;
+
+		case 0x0200:  /* Reply big endian */
+			arp_write_cache (packet, size);
+			break;
+
+		}
+	}
