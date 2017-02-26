@@ -1,5 +1,3 @@
-# Makefile for httpd
-
 BASEDIR=../..
 
 include $(BASEDIR)/Make.defs
@@ -33,31 +31,33 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-SHELL = /bin/sh
+PRGS=httpd
 
-#CFLAGS = -c -O
+SPRGS=
 
-CFILES = httpd.c
+CFLAGS=-0 -O -ansi -I$(ELKSCMD_DIR) -I$(ELKS_DIR)/include
 
-OBJ = $(CFILES:.c=.o)
+all: $(PRGS)
 
-all: httpd
+max_rfs: install
 
-#.c.o:
-#	$(CC) $(CFLAGS) -o $@ $<
+rfs:
 
-httpd: $(OBJ)
-	$(CC) $(OPT) -o httpd $(OBJ) $(BASELIBS)
+net_rfs: install
 
-net_rfs: all
+min_rfs:
+
+smin_rfs:
+
+install_sibo: all
+	cp -p $(SPRGS) $(TARGET_MNT)/bin
 
 install: all
-	mkdir $(TARGET_MNT)/usr/lib/httpd
+	cp -p $(PRGS) $(TARGET_MNT)/bin
 	cp -f -p sample_index.html $(TARGET_MNT)/usr/lib/httpd/index.html
-	cp -p httpd $(TARGET_MNT)/bin
 
-clean: 
-	rm -f core httpd $(OBJ)
+netstat: httpd.o
+	$(CC) $(CFLAGS) $(LDFLAGS) httpd.o -o httpd
 
-dep:
-	makedepend $(CFILES)
+clean:
+	rm -f core *.o $(PRGS) $(SPRGS)

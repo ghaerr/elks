@@ -313,11 +313,19 @@ void tcp_output(struct tcpcb_s *cb)
     struct addr_pair apair;
     __u16 len;
     __u8 *options, header_len, option_len;
+    __u8 addr[4], *addr2;
+    __u32 temp;
 
     th->sport = htons(cb->localport);
     th->dport = htons(cb->remport);
     th->seqnum = htonl(cb->send_nxt);
     th->acknum = htonl(cb->rcv_nxt);
+/*
+    memcpy(&addr,&th->seqnum,4);
+    printf("sequence: %2X,%2X,%2X,%2X ",addr[0],addr[1],addr[2],addr[3]);
+    memcpy(&addr,&th->acknum,4);
+    printf("acknum: %2X,%2X,%2X,%2X\n",addr[0],addr[1],addr[2],addr[3]);
+*/
 
     cb->send_nxt += cb->datalen;
 
@@ -351,6 +359,12 @@ void tcp_output(struct tcpcb_s *cb)
     apair.daddr = cb->remaddr;
     apair.protocol = PROTO_TCP;
 
+/*
+    memcpy(addr,apair.saddr,4);
+    printf("saddr: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);
+    memcpy(addr,apair.daddr,4);
+    printf("daddr: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);
+*/    
     add_for_retrans(cb, th, len, &apair);
     ip_sendpacket(th, len, &apair);
 }

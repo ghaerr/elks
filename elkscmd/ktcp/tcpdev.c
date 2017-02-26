@@ -24,8 +24,6 @@
 #include "tcpdev.h"
 #include "netconf.h"
 
-#define TCPDEV_BUFSIZE	2046
-
 static unsigned char sbuf[TCPDEV_BUFSIZE];
 
 static int tcpdevfd;

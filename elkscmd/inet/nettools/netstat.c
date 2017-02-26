@@ -18,6 +18,9 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <linuxmt/net.h>
@@ -47,45 +50,56 @@ char buf[100];
 
 int main(void)
 {
-	struct general_stats_s *gstats;
-	struct cb_stats_s *cbstats;
-	struct stat_request_s sr;
-	int i;
-	char addr[16];
-	__u8 *addrbytes;
+    struct general_stats_s *gstats;
+    struct cb_stats_s *cbstats;
+    struct stat_request_s sr;
+    int i;
+    char addr[16];
+    __u8 *addrbytes;
 	    
-    s = socket(AF_INET, SOCK_STREAM, 0);	
+    if ( (s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+	perror("socket error");
+	exit(-1);
+    }
 
     localadr.sin_family = AF_INET;
     localadr.sin_port = 0;
     localadr.sin_addr.s_addr = INADDR_ANY;  
     ret = bind(s, &localadr, sizeof(struct sockaddr_in));
+    if ( ret == -1) {
+	perror("bind error");
+	exit(-1);
+    }
 
-	remaddr.sin_family = AF_INET;
-	remaddr.sin_port = htons(NETCONF_PORT);
-	remaddr.sin_addr.s_addr = 0;
-	ret = connect(s, &remaddr, sizeof(struct sockaddr_in));
+    remaddr.sin_family = AF_INET;
+    remaddr.sin_port = htons(NETCONF_PORT);
+    remaddr.sin_addr.s_addr = 0;
+    ret = connect(s, &remaddr, sizeof(struct sockaddr_in));
+    if ( ret == -1) {
+	perror("connect error");
+	exit(-1);
+    }
 
-	sr.type = NS_GENERAL;
-	write(s, &sr, sizeof(sr));	
-	ret = read(s, buf, sizeof(buf));
-	gstats = buf;	
-	printf("Retransmition memory     : %d bytes\n", gstats->retrans_memory);
-	printf("Number of control blocks : %d\n\n", gstats->cb_num);
+    sr.type = NS_GENERAL;
+    write(s, &sr, sizeof(sr));	
+    ret = read(s, buf, sizeof(buf));
+    gstats = buf;	
+    printf("Retransmition memory     : %d bytes\n", gstats->retrans_memory);
+    printf("Number of control blocks : %d\n\n", gstats->cb_num);
 
-	printf(" no        State    RTT lport        raddress  rport\n");
-	printf("-----------------------------------------------------\n");
-	sr.type = NS_CB;
-	for (i = 0 ;; i++){
+    printf(" no        State    RTT lport        raddress  rport\n");
+    printf("-----------------------------------------------------\n");
+    sr.type = NS_CB;
+    for (i = 0 ;; i++){
 		sr.extra = i;
 		write(s, &sr, sizeof(sr));	
 		read(s, buf, sizeof(buf));
 		cbstats = buf;
 		if (cbstats->valid == 0)break;
-		addrbytes = &cbstats->remaddr;
+		addrbytes = (__u8 *)&cbstats->remaddr;
 		sprintf(addr,"%d.%d.%d.%d",addrbytes[0],addrbytes[1],addrbytes[2],addrbytes[3]);
 		printf("%3d %12s %4dms", i+1, tcp_states[cbstats->state], cbstats->rtt);
 		printf(" %5d %15s  %5d\n", cbstats->localport, addr, cbstats->remport);
-	}
+    }
 }
 

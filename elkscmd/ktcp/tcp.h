@@ -6,6 +6,9 @@
 #include "config.h"
 #include "timer.h"
 #include "ip.h"
+#include <linuxmt/arpa/inet.h>
+
+/* #define DEBUG */
 
 #define PROTO_TCP	0x06
 
@@ -152,5 +155,7 @@ void tcpcb_remove();
 __u16 tcp_chksum(struct iptcp_s *h);
 __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len);
 void tcp_output();
+
+unsigned long int in_aton(const char *str);
 
 #endif

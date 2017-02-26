@@ -20,7 +20,9 @@
 #include "ip.h"
 #include "icmp.h"
 #include "tcp.h"
+#include "tcpdev.h"
 #include <linuxmt/arpa/inet.h>
+#include "deveth.h"
 
 #if 0
 #define IP_VERSION(s)	((s)->version_ihl>>4&0xf)
@@ -31,7 +33,7 @@
 /*#define DEBUG*/
 #define USE_ASM
 
-static char ipbuf[1024];
+static char ipbuf[TCPDEV_BUFSIZE]; 
 
 int ip_init(void)
 {
@@ -97,16 +99,16 @@ void ip_print(struct iphdr_s *head)
     int i;
     __u8 *addr;
     
-    printf("Version/IHL :  %d/%d\n",IP_VERSION(head),IP_IHL(head));
-    printf("TypeOfService/Length :  %d/%d\n",head->tos,ntohs(head->tot_len));
-    printf("Id/flags/fragment offset :  %d/%d\n",head->id,head->frag_off);
-    printf("ttl : %d\n",head->ttl);
-    printf("Protocol : %d\n",head->protocol);
+    printf("Version/IHL: %d/%d ",IP_VERSION(head),IP_IHL(head));
+    printf("TypeOfService/Length: %d/%d\n",head->tos,ntohs(head->tot_len));
+    printf("Id/flags/fragment offset: %d/%d ",head->id,head->frag_off);
+    printf("ttl: %d ",head->ttl);
+    printf("Protocol: %d\n",head->protocol);
 
     addr = (__u8 *)&head->saddr;
-    printf("saddr : %d.%d.%d.%d \n",addr[0],addr[1],addr[2],addr[3]);
+    printf("saddr : %d.%d.%d.%d ",addr[0],addr[1],addr[2],addr[3]);
     addr = (__u8 *)&head->daddr;
-    printf("daddr : %d.%d.%d.%d \n",addr[0],addr[1],addr[2],addr[3]);
+    printf("daddr : %d.%d.%d.%d ",addr[0],addr[1],addr[2],addr[3]);
     
     printf("check sum = %d\n",ip_calc_chksum(head, 4 * IP_IHL(head)));
     
@@ -170,7 +172,46 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
 {
     struct iphdr_s *iph = (struct iphdr_s *)&ipbuf;
     __u16 tlen;
+    __u8 *addr;
+    ipaddr_t tmpaddress;
+    char llbuf[15];    
+    struct ip_ll *ipll = (struct ip_ll *)&llbuf;
+    if (dev->type == 1){ /*build link layer*/
 
+    /* check if destination address has changed - make ARP request if required */
+    if (acache.ipaddr != apair->daddr) {
+
+       if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip)) { /*different network?*/
+	  acache.ipaddr=apair->daddr; /*use the requested IP address with the gateway mac */
+          memcpy(acache.remotemac,gateway_mac, 6); /*need to use gateway*/
+       } else {
+          printf("Requesting mac address\n");
+          arp_request(apair->daddr); /*updates ARP cache*/
+          if (strlen(acache.remotemac)==0) { /*none retrieved*/
+	     acache.ipaddr=apair->daddr; /*use the requested IP address with the gateway mac */
+             memcpy(acache.remotemac,gateway_mac, 6); /*need to use gateway*/
+          }
+       } //else
+    }
+
+/*
+    addr = (__u8 *)&acache.ipaddr;
+    printf("\nacache.ipaddr: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);    
+    addr = (__u8 *)&acache.remotemac;
+    printf("acache.remotemac: %2X.%2X.%2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3],addr[4],addr[5]);
+*/	
+/*    
+    addr = (__u8 *)&apair->daddr;
+    printf("daddr: %2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3]);
+*/
+
+    /*link layer*/
+    memcpy(ipll->ll_eth_dest,acache.remotemac, 6);
+    memcpy(ipll->ll_eth_src,local_mac, 6);
+    ipll->ll_type_len=0x08; /*=0x0800 bigendian*/
+    } //if (dev->type == 1)
+    
+    /*ip layer*/
     iph->version_ihl	= 0x45;
 
     tlen = 4 * IP_IHL(iph);
@@ -181,18 +222,32 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     iph->frag_off 	= 0;
     iph->ttl		= 64;
     iph->protocol	= apair->protocol;
-    iph->daddr		= apair->daddr;
-    iph->saddr		= apair->saddr;
+    if (dev->type == 1){
+      iph->daddr		= acache.ipaddr;
+      iph->saddr		= local_ip;
+    } else {
+      iph->daddr		= apair->daddr;
+      iph->saddr		= apair->saddr;
+    }    
 
     iph->check		= 0;
-    iph->check		= ip_calc_chksum((char *)iph, tlen);    
-
-    memcpy(&ipbuf[tlen], packet, len);
+    iph->check		= ip_calc_chksum((char *)iph, tlen);   
+ 
+    //ip_print(iph);
+    
+    memcpy(&ipbuf[tlen], packet, len);    
+    if (dev->type == 1){ /*add link layer*/
+      memmove(&ipbuf[14],&ipbuf, TCPDEV_BUFSIZE-14);
+      memcpy(&ipbuf,&llbuf,14);
+    }
 
     /* "route" */
-    if (iph->daddr == local_ip && iph->daddr == 0x0100007f) {
+    /* if (iph->daddr == local_ip && iph->daddr == 0x0100007f) { */
 	/* 127.0.0.1 */
 	/* TODO */
-    } else
-	slip_send(&ipbuf, tlen + len);   
+	if (dev->type == 1){
+		deveth_send(&ipbuf, tlen + len +14); /*add link layer lenght*/
+        } else {
+		slip_send(&ipbuf, tlen + len);  
+	} 
 }

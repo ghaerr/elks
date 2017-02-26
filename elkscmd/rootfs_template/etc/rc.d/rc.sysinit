@@ -8,20 +8,28 @@ export PATH
 # Network initialization
 #
 
-localip=192.168.1.100
-sliptty=/dev/ttyS0
+#localip=192.168.1.100
+localip=10.0.2.15
+#interface=/dev/ttyS0
+interface=/dev/eth
 ttybaud=4800
 
 if test -f /bin/ktcp
 then
 	echo -n 'Starting kernel network facilities:'
-	stty $ttybaud < $sliptty
-	echo -n ' stty'
-	ktcp $localip $sliptty &
+	if test "$interface" != "/dev/eth" 
+	then stty $ttybaud < $interface
+	echo -n ' stty slip'
+	else
+	echo -n ' eth'
+	fi
+	
+	ktcp $localip $interface &
 	echo ' ktcp'
 	
 	echo -n "Starting network daemons: "
-	for daemon in ftpd httpd
+	for daemon in ftpd httpd 
+	#echoserver
 	do
 		if test -f /bin/$daemon 
 		then

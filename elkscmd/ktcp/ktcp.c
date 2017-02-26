@@ -20,6 +20,7 @@
 #include "ip.h"
 #include "tcp.h"
 #include "netconf.h"
+#include "deveth.h"
 
 #ifdef DEBUG
 #define debug	printf
@@ -29,7 +30,8 @@
 
 extern int tcp_timeruse;
 
-static int sfd, tcpdevfd;
+//static int tcpdevfd; /* defined in ip.h */
+static int intfd;
 
 unsigned long int in_aton(const char *str)
 {
@@ -67,18 +69,23 @@ void ktcp_run(void)
 	    tv = NULL;
 
 	FD_ZERO(&fdset);
-	FD_SET(sfd, &fdset);
+	FD_SET(intfd, &fdset);
 	FD_SET(tcpdevfd, &fdset);
-	select(sfd > tcpdevfd ? sfd + 1 : tcpdevfd + 1,
+	select(intfd > tcpdevfd ? intfd + 1 : tcpdevfd + 1,
 	       &fdset, NULL, NULL, tv);
 
 	Now = timer_get_time();
 
 	tcp_update();
 
-	if (FD_ISSET(sfd, &fdset))
-	    slip_process();
-
+	if (FD_ISSET(intfd, &fdset)){
+		if (dev->type == 0){
+		    slip_process();
+		} else {
+		    /*read eth*/
+		    deveth_process();
+		}
+	}
 	if (FD_ISSET(tcpdevfd, &fdset))
 	    tcpdev_process();
 
@@ -94,37 +101,67 @@ void ktcp_run(void)
 
 int main(int argc,char **argv)
 {
+    const char dname[9];
+    sprintf(dname,"/dev/eth");
+	
     if (argc < 3) {
-	printf("Syntax :\n    %s local_ip slip_tty\n",argv[0]);
+	printf("Syntax :\n    %s local_ip [interface] [gateway] [netmask] [nameserver]\n",argv[0]);
 	exit(3);
     }
 
-    debug("KTCP: Mark 1.\n");
+    debug("KTCP: 1. local_ip \n");
     local_ip = in_aton(argv[1]);
+    
+    if (argc>3){
+      gateway_ip = in_aton(argv[3]);
+    } else {
+      gateway_ip = in_aton("10.0.2.2"); /* use dhcp when implemented */
+    }
+    
+    if (argc>4) {
+      netmask_ip = in_aton(argv[4]);
+    } else { /* default */
+      netmask_ip = in_aton("255.255.255.0");
+    }
 
-    debug("KTCP: Mark 2.\n");
+    if (argc>5) {
+      nameserver_ip = in_aton(argv[5]);
+    } else { /* default */
+      nameserver_ip = in_aton("8.8.8.8"); /*google*/
+    }
+    
+    debug("\nKTCP: 2. init tcpdev\n");
     if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)
 	exit(1);
 
-    debug("KTCP: Mark 3.\n");
-    if ((sfd = slip_init(argv[2])) < 0)
-	exit(2);
+    debug("KTCP: 3. init interface\n");
+    if (strcmp(argv[2],dname) == 0){
+	debug("Init /dev/eth\n");
+    	dev->type=1;
+	if ((intfd = deveth_init(dname,argc,argv)) < 0){
+	      printf("failed to open /dev/eth\n");
+	      exit(1);}
+	} else { /* fall back to slip */
+	      dev->type=0;
+    	      if ((intfd = slip_init(argv[2])) < 0)
+	      exit(2);
+	}
 
-    debug("KTCP: Mark 4.\n");
+    debug("KTCP: 4. ip_init()\n");
     ip_init();
 
-    debug("KTCP: Mark 5.\n");
+    debug("KTCP: 5. icmp_init()\n");
     icmp_init();
 
-    debug("KTCP: Mark 6.\n");
+    debug("KTCP: 6. tcp_init()\n");
     tcp_init();
 
-    debug("KTCP: Mark 7.\n");
+    debug("KTCP: 7. netconf_init()\n");
     netconf_init();
 
-    debug("KTCP: Mark 8.\n");
+    debug("KTCP: 8. ktcp_run()\n");
     ktcp_run();
 
-    debug("KTCP: Mark 9.\n");
+    debug("KTCP: 9. exit(0)\n");
     exit(0);
 }

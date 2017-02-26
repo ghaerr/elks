@@ -14,7 +14,7 @@ LOCALFLAGS	=
 CFLAGS		= $(BASE_CFLAGS) $(LOCALFLAGS) -I$(ELKS_DIR)/include
 
 CFILES		= ktcp.c slip.c ip.c icmp.c tcp.c tcp_cb.c tcp_output.c \
-		  timer.c tcpdev.c netconf.c vjhc.c
+		  timer.c tcpdev.c netconf.c vjhc.c deveth.c arp.c
 
 OBJ		= $(CFILES:.c=.o)
 
