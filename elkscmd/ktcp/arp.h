@@ -7,8 +7,7 @@
 
 #define ARP_REQUEST          1
 #define ARP_REPLY            2
-#define RARP_REQUEST         3
-#define RARP_REPLY           4
+
 
 typedef struct arp_addr {
 	ipaddr_t daddr;		/* IP destination address */
@@ -33,4 +32,8 @@ typedef struct arp
          __u32 ip_dest; 	/* IP destination address */
 };
 
-#endif
+
+void arp_proc (char * packet, int size);
+
+
+#endif /* !ARP_H */
