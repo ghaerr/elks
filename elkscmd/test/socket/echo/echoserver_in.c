@@ -1,12 +1,19 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
+#ifndef __linux__ 
 #include <linuxmt/socket.h>
 #include <linuxmt/un.h>
 #include <linuxmt/in.h>
-#include <stdlib.h>
 #include <linuxmt/arpa/inet.h>
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include<string.h>
+#endif
 
-#define INTERNET
+#define INTERNET /* remove to test unix domain sockets on elks */
 
 char *socket_path = "/var/uds";
 
@@ -24,7 +31,7 @@ int main(int argc, char *argv[]) {
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htons(INADDR_ANY);
-  addr.sin_port = htons(23);
+  addr.sin_port = htons(2323);
 #else
   struct sockaddr_un addr;
   if ( (fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {

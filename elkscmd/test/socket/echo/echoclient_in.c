@@ -1,12 +1,20 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#ifndef __linux__ 
 #include <linuxmt/socket.h>
 #include <linuxmt/un.h>
 #include <linuxmt/in.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <linuxmt/arpa/inet.h>
+#include "linuxmt/arpa/inet.h"
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include<string.h>
+#endif
 
-#define INTERNET
+
+#define INTERNET  /* remove to test unix domain sockets on elks */
 
 char *socket_path = "/var/uds";
 
@@ -54,9 +62,14 @@ if (bind(fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in))==-1) {
 }
   
   addr.sin_family = AF_INET;
+#ifndef __linux__   
   addr.sin_addr.s_addr = in_aton("10.0.2.2");
+#else  
+  inet_pton(AF_INET,"127.0.0.1",&(addr.sin_addr));
+#endif  
   addr.sin_port = htons(2323);
-#else
+
+#else /* #ifdef INTERNET */
   struct sockaddr_un addr;
   if ( (fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
     perror("socket error");

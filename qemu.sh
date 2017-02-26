@@ -15,7 +15,7 @@ netdebug="-net dump"
 # no forwarding, just ELKS to host
 hostfwd="-net user"
 # telnet port forwarding
-#hostfwd="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
+#hostfwd="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:2323"
 # telnet and http forwarding, call ELKS web server with 'http://localhost:8080'
 #hostfwd="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23,hostfwd=tcp::8080-:80"
 serialdev="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
