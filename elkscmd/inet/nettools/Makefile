@@ -25,13 +25,13 @@ STD_LIB 	=
 STD_SBIN	= 
 STD_USR_BIN	= 
 STD_USR_LIB	= 
-STD_USR_SBIN	= netstat
+STD_USR_SBIN	= netstat nslookup
 
 include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS=netstat
+PRGS=netstat nslookup
 
 SPRGS=
 
@@ -57,6 +57,9 @@ install: all
 
 netstat: netstat.o
 	$(CC) $(CFLAGS) $(LDFLAGS) netstat.o -o netstat
+
+nslookup: nslookup.o
+	$(CC) $(CFLAGS) $(LDFLAGS) nslookup.o -o nslookup
 
 clean:
 	rm -f core *.o $(PRGS) $(SPRGS)
