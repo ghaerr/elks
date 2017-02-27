@@ -54,6 +54,7 @@ install_sibo: all
 
 install: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin
+	mkdir -p $(TARGET_MNT)/usr/lib/httpd
 	cp -f -p sample_index.html $(TARGET_MNT)/usr/lib/httpd/index.html
 
 netstat: httpd.o
