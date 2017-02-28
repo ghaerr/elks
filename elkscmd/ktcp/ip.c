@@ -180,20 +180,16 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     ipaddr_t ip_local_addr;
     eth_addr_t eth_addr;
 
-    if (dev->type == 1)  /* Ethernet */
-        {
+    if (dev->type == 1) {  /* Ethernet */
         /* Is this the best place for the IP routing to happen ? */
         /* I think no, because actual sending interface is coming from the routing */
 
-        if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip))
-            {
+        if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip)) {
             /* Not on the same local network */
             /* Route to the gateway as local destination */
 
             ip_local_addr = gateway_ip;
-            }
-        else
-            {
+            } else {
             /* On the same local network */
             /* Route to the local destination */
 
@@ -202,9 +198,9 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
 
         /* The ARP transaction should occur before sending the IP packet */
         /* So this part should be moved upward in the IP protocol automaton */
+        /* to avoid this dangerous unlimited try again loop */
 
-        if (!arp_cache_get (ip_local_addr, eth_addr))
-            {
+        while (arp_cache_get (ip_local_addr, eth_addr)) {
             /* MAC not in cache */
             /* Issue an ARP request to get it */
             /* Until issue jbruchon#67 fixed, we block until ARP reply */

@@ -29,8 +29,8 @@ typedef struct arp
 
 int arp_init ();
 
-void arp_cache_add (arp_cache_t * pair);
-int arp_cache_get (ipaddr_t * ip_addr, eth_addr_t * eth_addr);
+void arp_cache_add (ipaddr_t ip_addr, eth_addr_t * eth_addr);
+int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr);
 
 void arp_proc (char * packet, int size);
 
