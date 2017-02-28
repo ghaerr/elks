@@ -33,19 +33,19 @@ include $(BASEDIR)/Make.rules
 
 PRGS=echoserver_un echoserver_in echoclient_un echoclient_in
 
-SPRGS=
-
 all: $(PRGS)
 
-max_rfs: install
 
-rfs:
-
-net_rfs: install
+smin_rfs:
 
 min_rfs:
 
-smin_rfs:
+rfs:
+
+max_rfs:
+
+net_rfs:
+
 
 install: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin

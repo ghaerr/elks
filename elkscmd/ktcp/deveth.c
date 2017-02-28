@@ -59,24 +59,15 @@ int deveth_init(char *fdev, int argc, char **argv)
     /* read mac of nic */
     if (ioctl (devfd, IOCTL_ETH_ADDR_GET, local_mac)<0) {
 	perror ("ioctl /dev/eth addr_get local_mac");
-	memcpy(local_mac,default_mac, 6);
+
+	/* MAC not available is a fatal error */
+	/* because it means the driver cannot work */
+
+	return -1;
     }    
     
     //printf("argc:%d,argv[2]:%s\n",argc,argv[2]);
-
-    arp_request(gateway_ip); /*updates ARP cache*/
-    memcpy(gateway_mac,acache.remotemac, 6);
-    /*clear cache again*/
-    for (i=0;i<6;i++) acache.remotemac[i]=0x00;
-    acache.ipaddr = 0;
     
-    arp_request(nameserver_ip); /*updates ARP cache*/
-    memcpy(nameserver_mac,acache.remotemac, 6);
-    /*clear cache again*/
-    for (i=0;i<6;i++) acache.remotemac[i]=0x00;
-    acache.ipaddr = 0;
-    if (strlen(nameserver_mac)==0)
-       memcpy(nameserver_mac,gateway_mac, 6); /*need to use gateway*/
 /*    
     addr = (__u8 *)&local_ip;
     printf("\nlocal_ip: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);    
@@ -84,12 +75,6 @@ int deveth_init(char *fdev, int argc, char **argv)
     printf("local_mac: %2X.%2X.%2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3],addr[4],addr[5]);
     addr = (__u8 *)&gateway_ip;
     printf("\ngateway_ip: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);
-    addr = (__u8 *)&gateway_mac;
-    printf("gateway_mac: %2X.%2X.%2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3],addr[4],addr[5]);
-    addr = (__u8 *)&nameserver_ip;
-    printf("nameserver_ip: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);
-    addr = (__u8 *)&nameserver_mac;
-    printf("nameserver_mac: %2X.%2X.%2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3],addr[4],addr[5]);
 */    
     return devfd;
 }

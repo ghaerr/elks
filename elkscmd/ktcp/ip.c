@@ -176,37 +176,53 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     ipaddr_t tmpaddress;
     char llbuf[15];    
     struct ip_ll *ipll = (struct ip_ll *)&llbuf;
-    if (dev->type == 1){ /*build link layer*/
 
-    /* check if destination address has changed - make ARP request if required */
-    if (acache.ipaddr != apair->daddr) {
+    ipaddr_t ip_local_addr;
+    eth_addr_t eth_addr;
 
-       if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip)) { /*different network?*/
-	  acache.ipaddr=apair->daddr; /*use the requested IP address with the gateway mac */
-          memcpy(acache.remotemac,gateway_mac, 6); /*need to use gateway*/
-       } else {
-          printf("Requesting mac address\n");
-          arp_request(apair->daddr); /*updates ARP cache*/
-          if (strlen(acache.remotemac)==0) { /*none retrieved*/
-	     acache.ipaddr=apair->daddr; /*use the requested IP address with the gateway mac */
-             memcpy(acache.remotemac,gateway_mac, 6); /*need to use gateway*/
-          }
-       } //else
-    }
+    if (dev->type == 1)  /* Ethernet */
+        {
+        /* Is this the best place for the IP routing to happen ? */
+        /* I think no, because actual sending interface is coming from the routing */
 
-/*
-    addr = (__u8 *)&acache.ipaddr;
-    printf("\nacache.ipaddr: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);    
-    addr = (__u8 *)&acache.remotemac;
-    printf("acache.remotemac: %2X.%2X.%2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3],addr[4],addr[5]);
-*/	
+        if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip))
+            {
+            /* Not on the same local network */
+            /* Route to the gateway as local destination */
+
+            ip_local_addr = gateway_ip;
+            }
+        else
+            {
+            /* On the same local network */
+            /* Route to the local destination */
+
+            ip_local_addr = apair->daddr;
+            }
+
+        /* The ARP transaction should occur before sending the IP packet */
+        /* So this part should be moved upward in the IP protocol automaton */
+
+        if (!arp_cache_get (ip_local_addr, eth_addr))
+            {
+            /* MAC not in cache */
+            /* Issue an ARP request to get it */
+            /* Until issue jbruchon#67 fixed, we block until ARP reply */
+
+            arp_request (apair->daddr);
+            }
+
 /*    
     addr = (__u8 *)&apair->daddr;
     printf("daddr: %2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3]);
 */
 
     /*link layer*/
-    memcpy(ipll->ll_eth_dest,acache.remotemac, 6);
+
+    /* The Ethernet header should be built by the Ethernet module */
+    /* So this part should be moved downward */
+
+    memcpy(ipll->ll_eth_dest, eth_addr, 6);
     memcpy(ipll->ll_eth_src,local_mac, 6);
     ipll->ll_type_len=0x08; /*=0x0800 bigendian*/
     } //if (dev->type == 1)
@@ -223,7 +239,7 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     iph->ttl		= 64;
     iph->protocol	= apair->protocol;
     if (dev->type == 1){
-      iph->daddr		= acache.ipaddr;
+      iph->daddr		= apair->daddr;
       iph->saddr		= local_ip;
     } else {
       iph->daddr		= apair->daddr;

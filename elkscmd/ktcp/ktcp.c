@@ -105,7 +105,7 @@ int main(int argc,char **argv)
     sprintf(dname,"/dev/eth");
 	
     if (argc < 3) {
-	printf("Syntax :\n    %s local_ip [interface] [gateway] [netmask] [nameserver]\n",argv[0]);
+	printf("Syntax :\n    %s local_ip [interface] [gateway] [netmask]\n", argv[0]);
 	exit(3);
     }
 
@@ -124,12 +124,6 @@ int main(int argc,char **argv)
       netmask_ip = in_aton("255.255.255.0");
     }
 
-    if (argc>5) {
-      nameserver_ip = in_aton(argv[5]);
-    } else { /* default */
-      nameserver_ip = in_aton("8.8.8.8"); /*google*/
-    }
-    
     debug("\nKTCP: 2. init tcpdev\n");
     if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)
 	exit(1);
@@ -146,6 +140,8 @@ int main(int argc,char **argv)
     	      if ((intfd = slip_init(argv[2])) < 0)
 	      exit(2);
 	}
+
+    arp_init ();
 
     debug("KTCP: 4. ip_init()\n");
     ip_init();

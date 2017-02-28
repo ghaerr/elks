@@ -10,10 +10,86 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "ip.h"
+
 #include <linuxmt/arpa/inet.h>
+
+#include "deveth.h"
+#include "ip.h"
 #include "arp.h"
 
+
+/* ARP operations */
+/* as big endian values */
+
+#define ARP_REQUEST  0x0100
+#define ARP_REPLY    0x0200
+
+
+/* Local ARP cache */
+
+#define ARP_CACHE_MAX 5
+
+struct arp_cache_s
+	{
+	ipaddr_t   ip_addr;   /* IPv4 address */
+	eth_addr_t eth_addr;  /* MAC address */
+	};
+
+typedef struct arp_cache_s arp_cache_t;
+
+static arp_cache_t _arp_cache [ARP_CACHE_MAX];
+
+
+static int arp_cache_init ()
+	{
+	memset (_arp_cache, 0, ARP_CACHE_MAX * sizeof (arp_cache_t));
+	}
+
+
+int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr)
+	{
+	int err = -1;
+
+	/* First pair is the more recent */
+
+	arp_cache_t * entry = _arp_cache;
+	while (entry < _arp_cache + ARP_CACHE_MAX)
+		{
+		if (!entry->ip_addr) break;
+
+		if (entry->ip_addr == ip_addr)
+			{
+			memcpy (eth_addr, entry->eth_addr, sizeof (eth_addr_t));
+			err = 0;
+			break;
+			}
+
+		entry++;
+		}
+
+	return err;
+	}
+
+
+void arp_cache_add (ipaddr_t ip_addr, eth_addr_t * eth_addr)
+	{
+	if (arp_cache_get (ip_addr, eth_addr))
+		{
+		/* Shift the whole cache */
+
+		arp_cache_t * entry = _arp_cache + ARP_CACHE_MAX - 1;
+		while (entry > _arp_cache)
+			{
+			memcpy (entry, entry - 1, sizeof (arp_cache_t));
+			entry--;
+			}
+
+		/* Set the first pair as the more recent */
+
+		entry->ip_addr = ip_addr;
+		memcpy (entry->eth_addr, eth_addr, sizeof (eth_addr_t));
+		}
+	}
 
 
 void arp_print(struct arp *arp_r)
@@ -37,10 +113,11 @@ void arp_print(struct arp *arp_r)
     printf("eth_dest: %2X.%2X.%2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3],addr[4],addr[5]);
 }
 
-int arp_init(void)
-{
+int arp_init ()
+	{
+	arp_cache_init ();
     return 0;
-}
+	}
 
 void arp_reply(char *packet,int size)
 {
@@ -50,13 +127,10 @@ void arp_reply(char *packet,int size)
   
     arp_r = (struct arp *)packet;
 
-    //arp_print(arp_r);
+    /* arp_print(arp_r); */
 
-    /* save mac of remote host */
-    memcpy(remote_mac, arp_r->eth_src, 6);
-    memcpy(acache.remotemac, arp_r->eth_src, 6);
-    /* save ip address of remote host */
-    acache.ipaddr = arp_r->ip_src;
+    /* Cache remote MAC and IP addresses */
+    arp_cache_add (&arp_r->ip_src, arp_r->eth_src);
 
     /* swap ip addresses and mac addresses */
     apair.daddr = arp_r->ip_src;
@@ -77,23 +151,6 @@ void arp_reply(char *packet,int size)
     deveth_send(packet, size);
 }
 
-void arp_write_cache(char *packet,int size){
-    struct arp *arp_r;
-    __u8 *addr;
-
-    arp_r = (struct arp *)packet;
-    acache.ipaddr = arp_r->ip_src;  
-    memcpy(acache.remotemac, arp_r->eth_src, 6);
-/*
-    addr = (__u8 *)&acache.ipaddr;
-    printf("\nacache.ipaddr: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);
-    addr = (__u8 *)&acache.remotemac;
-    printf("acache.remotemac: %2X.%2X.%2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3],addr[4],addr[5]);
-*/    
-    
-    return;
-}
-
 int arp_request(ipaddr_t ipaddress)
 {
     int i;
@@ -104,10 +161,6 @@ int arp_request(ipaddr_t ipaddress)
     arp_r = (struct arp *)packet;
     
     addr = &ipaddress;
-    
-    /*clear cache*/
-    for (i=0;i<6;i++) acache.remotemac[i]=0x00;
-    acache.ipaddr = 0;
     
     /* build arp request */
     for (i=0;i<6;i++) arp_r->ll_eth_dest[i]=0xFF; /*broadcast*/
@@ -151,12 +204,12 @@ void arp_proc (char * packet, int size)
 	arp_r = (struct arp *) packet;
 	switch (arp_r->op)
 		{
-		case 0x0100:  /* Request big endian */
+		case ARP_REQUEST:  /* big endian */
 			arp_reply (packet, size);
 			break;
 
-		case 0x0200:  /* Reply big endian */
-			arp_write_cache (packet, size);
+		case ARP_REPLY:  /* big endian */
+			arp_cache_add (arp_r->ip_src, arp_r->eth_src);
 			break;
 
 		}
