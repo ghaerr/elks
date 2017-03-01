@@ -101,6 +101,8 @@ void ktcp_run(void)
 
 int main(int argc,char **argv)
 {
+    __u8 * addr;
+
     const char dname[9];
     sprintf(dname,"/dev/eth");
 	
@@ -123,6 +125,15 @@ int main(int argc,char **argv)
     } else { /* default */
       netmask_ip = in_aton("255.255.255.0");
     }
+
+    /*
+    addr = (__u8 *) &local_ip;
+    printf ("local_ip: %2X.%2X.%2X.%2X\n", addr [0], addr [1], addr [2], addr[3]);
+    addr = (__u8 *) &gateway_ip;
+    printf ("gateway_ip: %2X.%2X.%2X.%2X\n", addr [0], addr [1], addr [2], addr [3]);
+    addr = (__u8 *) &netmask_ip;
+    printf ("netmask_ip: %2X.%2X.%2X.%2X\n", addr [0], addr [1], addr [2], addr [3]);
+    */
 
     debug("\nKTCP: 2. init tcpdev\n");
     if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)

@@ -54,6 +54,4 @@ typedef struct ip_ll
 
 static int tcpdevfd;
 
-char local_mac [6];
-
 #endif

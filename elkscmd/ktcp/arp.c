@@ -131,7 +131,7 @@ void arp_reply(char *packet,int size)
     apair.daddr = arp_r->ip_src;
     apair.saddr = arp_r->ip_dest;
     memcpy(apair.eth_dest, arp_r->eth_src, 6);
-    memcpy(apair.eth_src, local_mac, 6);
+    memcpy(apair.eth_src, eth_local_addr, 6);
 
     /* build arp reply */
     arp_r->op=0x200; /*response - big endian*/
@@ -159,7 +159,7 @@ int arp_request(ipaddr_t ipaddress)
     
     /* build arp request */
     for (i=0;i<6;i++) arp_r->ll_eth_dest[i]=0xFF; /*broadcast*/
-    memcpy(arp_r->ll_eth_src, local_mac, 6);
+    memcpy(arp_r->ll_eth_src, eth_local_addr, 6);
     /*specify below in big endian*/
     arp_r->ll_type_len=0x0608;
     arp_r->hard_type=0x0100;
@@ -167,7 +167,7 @@ int arp_request(ipaddr_t ipaddress)
     arp_r->hard_len=6;
     arp_r->proto_len=4;
     arp_r->op=0x0100; /*request - big endian*/
-    memcpy(arp_r->eth_src, local_mac, 6);
+    memcpy(arp_r->eth_src, eth_local_addr, 6);
     arp_r->ip_src=local_ip;
     for (i=0;i<6;i++) arp_r->eth_dest[i]=0; 
     arp_r->ip_dest=ipaddress;

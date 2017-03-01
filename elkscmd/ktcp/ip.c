@@ -180,6 +180,11 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     ipaddr_t ip_local_addr;
     eth_addr_t eth_addr;
 
+    /*
+    addr = (__u8 *) &apair->daddr;
+    printf ("daddr: %2X.%2X.%2X.%2X\n", addr [0], addr [1], addr [2], addr [3]);
+    */
+
     if (dev->type == 1) {  /* Ethernet */
         /* Is this the best place for the IP routing to happen ? */
         /* I think no, because actual sending interface is coming from the routing */
@@ -201,12 +206,7 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
             /* MAC not in cache */
             /* Issue an ARP request to get it */
             /* Until issue jbruchon#67 fixed, we block until ARP reply */
-            arp_request (apair->daddr);
-
-/*    
-    addr = (__u8 *)&apair->daddr;
-    printf("daddr: %2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3]);
-*/
+            arp_request (ip_local_addr);
 
     /*link layer*/
 
@@ -214,7 +214,7 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     /* So this part should be moved downward */
 
     memcpy(ipll->ll_eth_dest, eth_addr, 6);
-    memcpy(ipll->ll_eth_src,local_mac, 6);
+    memcpy(ipll->ll_eth_src,eth_local_addr, 6);
     ipll->ll_type_len=0x08; /*=0x0800 bigendian*/
     } //if (dev->type == 1)
     
