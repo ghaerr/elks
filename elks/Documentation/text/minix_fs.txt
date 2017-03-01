@@ -18,11 +18,11 @@ the Minix File System. This is e.g.the number of inodes and zones, the size
 of the inode and zone bitmaps and the starting block of the data area.
 
 *Inode Map* section made up of bits, where one bit represents one inode. 
-Tracks used and unused inodes. A ‘1’ is used to represent a used block and 
-a ‘0’ is for a free block.
+Tracks used and unused inodes. A "1" is used to represent a used block and 
+a "0" is for a free block.
 
 *Zone Map* section made up of bits to track used and unused zones in the data 
-area. A ‘1’ is used to represent a used zone and a ‘0’ is for a free zone.
+area. A "1" is used to represent a used zone and a "0" is for a free zone.
 
 *Inode area* each file or directory is represented as an inode, which records 
 metadata including type (file, directory, block, char, pipe), IDs for user 
