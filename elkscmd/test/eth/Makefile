@@ -1,4 +1,4 @@
-# Makefile for eth
+# Makefile for ethernet driver test
 
 BASEDIR=../..
 
@@ -16,18 +16,20 @@ all:	eth
 
 eth:	$(OBJS)
 
-min_rfs:
 
 smin_rfs:
 
-max_rfs: install
+min_rfs:
 
-rfs: install
+rfs:
 
-net_rfs: install
+max_rfs:
 
-install: eth
-	cp -p eth $(TARGET_MNT)/bin/eth
+net_rfs:
+
+
+install: all
+	cp -p eth $(TARGET_MNT)/bin
 
 clean: 
 	rm -f *.o eth

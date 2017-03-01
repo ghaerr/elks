@@ -3,11 +3,6 @@
 
 #include "ip.h"
 
-#define ARP_ETHER            1
-
-#define ARP_REQUEST          1
-#define ARP_REPLY            2
-
 
 typedef struct arp_addr {
 	ipaddr_t daddr;		/* IP destination address */
@@ -32,6 +27,10 @@ typedef struct arp
          __u32 ip_dest; 	/* IP destination address */
 };
 
+int arp_init (void);
+
+void arp_cache_add (ipaddr_t ip_addr, eth_addr_t * eth_addr);
+int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr);
 
 void arp_proc (char * packet, int size);
 

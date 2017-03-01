@@ -42,7 +42,7 @@ __u16 ip_calc_chksum(char *data, int len);
 ipaddr_t local_ip;
 ipaddr_t gateway_ip;
 ipaddr_t netmask_ip;
-ipaddr_t nameserver_ip;
+
 __u16	next_port;
 
 typedef struct ip_ll
@@ -52,19 +52,8 @@ typedef struct ip_ll
          __u16 ll_type_len;	/* 0x800 big endian for IP */
 };
 
-typedef struct arp_cache {
-	ipaddr_t ipaddr;	/* IP remote address */
-	__u8  remotemac[6]; 	/* MAC remote address */
-};
-
 static int tcpdevfd;
 
-struct arp_cache acache;
-static char default_mac [6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};  // QEMU default
-static char local_mac [6];
-char remote_mac [6];
-char gateway_mac [6];
-char netmask_mac [6];
-char nameserver_mac [6];
+char local_mac [6];
 
 #endif
