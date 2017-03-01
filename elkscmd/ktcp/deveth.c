@@ -62,7 +62,6 @@ int deveth_init(char *fdev, int argc, char **argv)
 
 	/* MAC not available is a fatal error */
 	/* because it means the driver cannot work */
-
 	return -1;
     }    
     

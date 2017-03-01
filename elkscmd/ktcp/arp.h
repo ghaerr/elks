@@ -27,7 +27,7 @@ typedef struct arp
          __u32 ip_dest; 	/* IP destination address */
 };
 
-int arp_init ();
+int arp_init (void);
 
 void arp_cache_add (ipaddr_t ip_addr, eth_addr_t * eth_addr);
 int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr);

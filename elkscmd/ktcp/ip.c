@@ -184,29 +184,24 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
         /* Is this the best place for the IP routing to happen ? */
         /* I think no, because actual sending interface is coming from the routing */
 
-        if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip)) {
+        if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip))
             /* Not on the same local network */
             /* Route to the gateway as local destination */
-
             ip_local_addr = gateway_ip;
-            } else {
+        else
             /* On the same local network */
             /* Route to the local destination */
-
             ip_local_addr = apair->daddr;
-            }
 
         /* The ARP transaction should occur before sending the IP packet */
         /* So this part should be moved upward in the IP protocol automaton */
         /* to avoid this dangerous unlimited try again loop */
 
-        while (arp_cache_get (ip_local_addr, eth_addr)) {
+        while (arp_cache_get (ip_local_addr, eth_addr))
             /* MAC not in cache */
             /* Issue an ARP request to get it */
             /* Until issue jbruchon#67 fixed, we block until ARP reply */
-
             arp_request (apair->daddr);
-            }
 
 /*    
     addr = (__u8 *)&apair->daddr;
@@ -234,7 +229,8 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     iph->frag_off 	= 0;
     iph->ttl		= 64;
     iph->protocol	= apair->protocol;
-    if (dev->type == 1){
+
+    if (dev->type == 1) {
       iph->daddr		= apair->daddr;
       iph->saddr		= local_ip;
     } else {
@@ -248,7 +244,7 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     //ip_print(iph);
     
     memcpy(&ipbuf[tlen], packet, len);    
-    if (dev->type == 1){ /*add link layer*/
+    if (dev->type == 1) { /*add link layer*/
       memmove(&ipbuf[14],&ipbuf, TCPDEV_BUFSIZE-14);
       memcpy(&ipbuf,&llbuf,14);
     }
@@ -257,9 +253,9 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     /* if (iph->daddr == local_ip && iph->daddr == 0x0100007f) { */
 	/* 127.0.0.1 */
 	/* TODO */
-	if (dev->type == 1){
-		deveth_send(&ipbuf, tlen + len +14); /*add link layer lenght*/
-        } else {
+
+	if (dev->type == 1)
+		deveth_send(&ipbuf, tlen + len + 14);  /* add link layer length */
+        else
 		slip_send(&ipbuf, tlen + len);  
-	} 
 }

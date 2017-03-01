@@ -39,12 +39,14 @@ typedef struct arp_cache_s arp_cache_t;
 static arp_cache_t _arp_cache [ARP_CACHE_MAX];
 
 
-static int arp_cache_init () {
+static int arp_cache_init (void)
+{
 	memset (_arp_cache, 0, ARP_CACHE_MAX * sizeof (arp_cache_t));
-	}
+}
 
 
-int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr) {
+int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr)
+{
 	int err = -1;
 
 	/* First pair is the more recent */
@@ -57,16 +59,17 @@ int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr) {
 			memcpy (eth_addr, entry->eth_addr, sizeof (eth_addr_t));
 			err = 0;
 			break;
-			}
-
-		entry++;
 		}
 
-	return err;
+		entry++;
 	}
 
+	return err;
+}
 
-void arp_cache_add (ipaddr_t ip_addr, eth_addr_t * eth_addr) {
+
+void arp_cache_add (ipaddr_t ip_addr, eth_addr_t * eth_addr)
+{
 	if (arp_cache_get (ip_addr, eth_addr)) {
 		/* Shift the whole cache */
 
@@ -74,14 +77,14 @@ void arp_cache_add (ipaddr_t ip_addr, eth_addr_t * eth_addr) {
 		while (entry > _arp_cache) {
 			memcpy (entry, entry - 1, sizeof (arp_cache_t));
 			entry--;
-			}
+		}
 
 		/* Set the first pair as the more recent */
 
 		entry->ip_addr = ip_addr;
 		memcpy (entry->eth_addr, eth_addr, sizeof (eth_addr_t));
-		}
 	}
+}
 
 
 void arp_print(struct arp *arp_r)
@@ -105,11 +108,11 @@ void arp_print(struct arp *arp_r)
     printf("eth_dest: %2X.%2X.%2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3],addr[4],addr[5]);
 }
 
-int arp_init ()
-	{
+int arp_init (void)
+{
 	arp_cache_init ();
 	return 0;
-	}
+}
 
 void arp_reply(char *packet,int size)
 {
@@ -190,19 +193,17 @@ selectagain:
 /* Process incoming ARP packets */
 
 void arp_proc (char * packet, int size)
-	{
+{
 	struct arp * arp_r;
 
 	arp_r = (struct arp *) packet;
-	switch (arp_r->op)
-		{
-		case ARP_REQUEST:  /* big endian */
-			arp_reply (packet, size);
-			break;
+	switch (arp_r->op) {
+	case ARP_REQUEST:  /* big endian */
+		arp_reply (packet, size);
+		break;
 
-		case ARP_REPLY:  /* big endian */
-			arp_cache_add (arp_r->ip_src, arp_r->eth_src);
-			break;
-
-		}
+	case ARP_REPLY:  /* big endian */
+		arp_cache_add (arp_r->ip_src, arp_r->eth_src);
+		break;
 	}
+}
