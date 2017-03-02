@@ -19,14 +19,6 @@ dev86
 #
 # Normal output and testing dirs
 #
-busyelks/_install
-busyelks/Makefile
-busyelks/applets.c
-busyelks/applets.h
-busyelks/busyelks1
-busyelks/busyelks2
-busyelks/busyelks3
-busyelks/config.def
 
 #
 # Backups / patches
