@@ -1,0 +1,17 @@
+basename
+date
+dirname
+echo
+false
+logname
+mesg
+printenv
+pwd
+stty
+test
+tr
+true
+which
+whoami
+xargs
+yes

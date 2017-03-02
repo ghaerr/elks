@@ -1,0 +1,15 @@
+ash
+builtins.c
+builtins.h
+init.c
+mkinit
+mknodes
+mksignames
+mksyntax
+nodes.c
+nodes.h
+signames.c
+signames.h
+syntax.c
+syntax.h
+token.def
