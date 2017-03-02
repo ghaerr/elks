@@ -32,15 +32,37 @@ to explain the most useful options.<p>
 
 <h2>ELKS networking in QEMU</h2>
 
-<p>The simplest way to do networking in QEMU is the "user" mode. Outgoing
-connections work without additional configuration. For incoming connections,
-use the "host-to-guest" forwarding of the user VLAN. In the following example,
-we tell QEMU to listen on port 2323 on the host local address 127.0.0.1, and
-to redirect to port 23 on ELKS, so that we can telnet to ELKS:</p>
+<p>The <strong>ktcp</strong> network process and the <strong>NE2K</strong>
+Ethernet driver run well on QEMU.</p>
+
+<p>The simplest way to do networking in QEMU is the "user" mode. In this mode,
+QEMU connects the ELKS Ethernet interface (default address 10.0.2.15) to a
+guest VLAN, with a router at default address 10.0.2.2. That router acts as
+a gateway that performs outgoing and incoming NAT.</p>
+
+<p>That router does not forward ICMP packets, so you cannot ping ELKS from the
+host and ELKS cannot ping ip addresses beyond the 10.0.2.0 network. However,
+there is no ping utility on ELKS yet.</p>
+
+<p>Outgoing connections work without additional configuration. For incoming
+connections, use the "host-to-guest" forwarding of the guest VLAN.</p>
+
+<p>In the following example, we tell QEMU to listen on port 2323 on the host
+local address 127.0.0.1, and to redirect to port 23 on ELKS, so that we can
+telnet to ELKS:</p>
 
 <pre>
 qemu.sh: -net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23
 telnet 127.0.0.1 2323
+</pre>
+
+<p>In the following example, we tell QEMU to listen on port 8080 on the host
+local address 127.0.0.1, and to redirect to port 80 on ELKS, so that we can
+query the httpd process on ELKS:</p>
+
+<pre>
+qemu.sh: -net user,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80
+wget 127.0.0.1:8080
 </pre>
 
 <p>To capture and dump the packets from the user VLAN, use the option:</p>

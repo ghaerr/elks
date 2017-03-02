@@ -12,42 +12,6 @@ ntohl() / htonl() in linuxmt/arpa/inet.h. Plus several small changes here and th
 As a result you can now use the ne2k driver for ethernet communication.
 
 
----------------------
-Networking with Qemu
----------------------
-
-So far the new ktcp and ne2k drivers have been tested with Qemu on a Linux host.
-There is a "qemu.sh" script in the elks directory which will run Qemu with the
-required settings.
-
-Qemu is used with "user mode networking". In this mode Qemu provides NATed access 
-for ELkS to the host network by providing a router and a firewall. So if your host 
-has the ip address 192.168.1.1, ELKS will have the ip address 10.0.2.15 and the
-ne2k driver as the gateway the ip address 10.0.2.2.
-
-A feature of "user mode networking" is that you cannot ping ELKS from the host and
-ELKS cannot ping ip addresses beyond the 10.0.0.0 network. However, there is no
-ping utility on ELKS yet.
-
-If you look at the "qemu.sh" script, the parameter "-net nic,model=ne2k_isa" enables 
-the ne2k driver written by Marc-F. The parameter "-net user" sets up the virtual NATed
-subnet for ELKS.
-
-To access services on ELKS you have to specify the "hostfwd" parameter, otherwise the 
-Qemu firewall will not allow applications on the host to access ip addresses on ELKS.
-
-"hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23" will allow applications on the host to send
-data to the 127.0.0.1:2323 ip address and that will be redirected by Qemu to the 
-ip address 10.0.0.15:23 on ELKS. The port number 23 is usually used by Telnet.
-
-If you want to use http, e.g. to access the web server on ELKS, you can specify 
-"hostfwd=tcp::8080-:80" as an additional redirection directive.
-
-The "-net dump" parameter will generate a "qemu-vlan0.pcap" file which you can open
-with Wireshark. In there you can select each single packet and drop down each level
-to analyse the details.
-
-
 ----------------------
 Loading ne2k and ktcp
 ----------------------
