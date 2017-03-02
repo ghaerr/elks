@@ -113,7 +113,7 @@ ARCH_DIR	= arch/$(ARCH)
 
 INCDIR		= $(TOPDIR)/include
 
-MYDIR		= $(shell pwd | sed 's¬^$(TOPDIR)¬.¬')
+MYDIR		= $(shell pwd | sed 's:^$(TOPDIR):.:')
 
 #########################################################################
 # Specify the directory we are to create the distribution copy of this
@@ -294,9 +294,9 @@ else
 AS		= as
 ASFLAGS 	= 
 CC		= gcc
-CFLAGS		= -i -O $(CFLBASE) -ansi
+CFLAGS		= -g $(CFLBASE) -ansi
 LD		= ld
-LDFLAGS 	= -s -x
+LDFLAGS 	=
 
 endif
 
