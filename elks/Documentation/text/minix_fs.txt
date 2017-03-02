@@ -1,0 +1,212 @@
+---------------------
+The Minix file system
+---------------------
+
+ELKS uses the Minix file system. There are three versions of the Minix file 
+system. The first one, implemented in ELKS, features a maximum disk size of 
+64 Mb and a maximum file size of 64 Mb. The other two versions have the same 
+maximum file size but support disks up to 2 GB or 2 TB respectively. The 
+maximum file name length is 14 bytes in the file system version ELKS 
+implemented.
+
+The structure of a Minix file system consists of six sections:
+
+*Boot Block* first block, reserved for boot loader code.
+
+*Super Block* second block, stores the Super Block with information about 
+the Minix File System. This is e.g.the number of inodes and zones, the size 
+of the inode and zone bitmaps and the starting block of the data area.
+
+*Inode Map* section made up of bits, where one bit represents one inode. 
+Tracks used and unused inodes. A "1" is used to represent a used block and 
+a "0" is for a free block.
+
+*Zone Map* section made up of bits to track used and unused zones in the data 
+area. A "1" is used to represent a used zone and a "0" is for a free zone.
+
+*Inode area* each file or directory is represented as an inode, which records 
+metadata including type (file, directory, block, char, pipe), IDs for user 
+and group, three timestamps that record the date and time of last access, last 
+modification and last status change. An inode also contains a list of addresses 
+that point to the zones in the data area where the file or directory data is 
+actually stored.
+
+*Data area* majority of volume which contains the files and directories data.
+
+The directory and file entries containing the file names are in the data area. 
+First, read the root inode (which is inode #1), then traverse its zones to 
+find directory entries. Each directory entry contains the inode index of the 
+directory, so you recursively proceed.
+
+
+Now here is a tour of the Minix file system. It was included as a note by 
+Al Woodhull within the documentation of the mintools package.
+
+This is a guided tour of a Minix 1.6.30 empty 360K file system. This file 
+system will initially have 127 i-nodes (of 128 total), and 348 blocks 
+(of 360 total) available. The basic data was generated using xd, a hex 
+dump program.
+
+The bootblock occupies the first 1024 byte block, it is all zeros initially:
+
+000000000  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+(snip)
+0000003F0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+
+The second block is the superblock. Only a small part of the block is needed 
+to hold the necessary information. The definition is in /usr/src/fs/super.h.
+
+EXTERN struct super_block {
+  ino_t s_ninodes;              /* # usable inodes on the minor device */
+  zone1_t  s_nzones;            /* total device size, including bit maps etc */
+  short s_imap_blocks;          /* # of blocks used by inode bit map */
+  short s_zmap_blocks;          /* # of blocks used by zone bit map */
+  zone1_t s_firstdatazone;      /* number of first data zone */
+  short s_log_zone_size;        /* log2 of blocks/zone */
+  off_t s_max_size;             /* maximum file size on this device */
+  short s_magic;                /* magic number to recognize super-blocks */
+  short s_pad;                  /* try to avoid compiler-dependent padding */
+  zone_t s_zones;               /* number of zones (replaces s_nzones in V2) */
+... additional fields are added to the structure in memory.
+} super_block[NR_SUPERS];
+
+This is an example of a super block:
+
+000000400  80 00 00 00 01 00 01 00  0c 00 00 00 00 1c 04 04 ................
+000000410  68 24 00 00 68 01 00 00  00 00 00 00 00 00 00 00 h$..h...........
+(snip)
+0000007F0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+
+Here is an explanation of the data in this hex dump:
+
+400-401: 0x0080 = 128 inodes
+402-403: 0x0000 ???? total size (zero for V2, but look here if f.s. is V1)
+404-405: 0x0001 = 1 i-node map block
+406-407: 0x0001 = 1 zone map block
+408-409: 0x000c = 12 first data zone
+40a-40b: 0      = 1 block/zone
+40c-40f: 0x04041c00 max file size on this device (?)
+410-411: 0x2468  magic number for V2 f.s. ; defined in /usr/src/fs/const.h
+412-413: 0x0000  padding (why?)
+414-417: 0x00000168 = 360 blocks total size (number used by V2)
+
+The next block is the i-node bit map. Note that in this newly created file 
+system the first byte shows two i-nodes already in use. One of the bits 
+corresponds to the root directory i-node. The other bit is for i-node zero, 
+which is always marked as used, since it doesn't exist -- an inode pointer 
+of zero in a directory entry indicates an available directory entry.
+
+Although this 360K file system was created with space for 128 nodes reserved, 
+which would require 16 bytes in the bit map (actually 17 bytes, since the bit 
+map maps 129 i-nodes including the non-existent, never-available i-node zero) 
+the whole block is zeroed out. The file system can read the maximum extent of 
+the i-node bitmap from the superblock, and so doesn't need to have excess bits 
+in the block mapped out. See the discussion below of the the zone bit map.
+
+000000800  03 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+000000810  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+(snip)
+000000BF0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+
+The next block holds the the zone bit map. Here again, two zones are shown as 
+used. One corresponds to the block in which the root directory is located, and 
+the other corresponds to zone zero, which, like i-node zero, doesn't exist and 
+is thus marked as never available.
+
+A zero-valued pointer in a list of zones will always be treated as a nil 
+pointer. A zero-valued pointer does not necessarily indicate the end of a file 
+has been found, however, Minix can have sparse files.
+
+As with the i-node bit map, the total number of zones can be found from the 
+superblock. In this example, a 360K file system requires 43 bytes for the zone 
+bit map, but the additional bits in the zone bit map block are not mapped out. 
+This makes it easy to copy from a small floppy disk to a larger ramdisk. For 
+instance, this 360K file system could be copied directly to a ramdisk of up to 
+8192K. After copying all that would be necessary would be to patch the 
+superblock to reflect the expanded number of zones available.
+
+Note that, although the i-node bit map could also be expanded to handle 8192 
+i-nodes, in fact the space allocated to i-nodes in this 360K file system is 
+only 8192 bytes, and thus the 128 i-nodes already provided for, each requiring 
+64 bytes, already require the full space available.
+
+000000C00  03 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+000000C10  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+000000C20  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+(snip)
+000000FF0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+
+I-nodes: definition from /usr/src/fs/type.h:
+
+typedef struct {                /* V2.x disk inode */
+  mode_t d2_mode;               /* file type, protection, etc. */
+  u16_t d2_nlinks;              /* how many links to this file. HACK! */
+  uid_t d2_uid;                 /* user id of the file's owner. */
+  u16_t d2_gid;                 /* group number HACK! */
+  off_t d2_size;                /* current file size in bytes */
+  time_t d2_atime;              /* when was file data last accessed */
+  time_t d2_mtime;              /* when was file data last changed */
+  time_t d2_ctime;              /* when was inode data last changed */
+  zone_t d2_zone[V2_NR_TZONES]; /* block nums for direct, ind, and dbl ind */
+} d2_inode;
+
+Example: The i-nodes in Minix 1.6.30 each require 64 bytes, and thus a single 
+1024 byte block can hold 16 i-nodes. In this example of a 360K file system the 
+next 8 blocks are reserved for 128 inodes. The first one is already filled in, 
+it is the i-node of the root directory. Note, however, that the last part of the 
+i-node, the block list, is mostly filled with zeros, since only one block is in 
+use by the root directory file.
+
+1000-1001: 0x41ff mode drwxrwxrwx
+1002-1003: 0x0002 number of links
+1004-1005: 0x0002 owner id (daemon)
+1006-1007: 0x0002 group id (daemon)
+1008-100b: 0x00000020 file size
+100c-100f: 0x2f9d205c access time         (the order is different from OSDI 
+1010-1013: 0x2f9d1fed modification time    1st ed fig 5-7, although this fig
+1014-1017: 0x00000000 inode change time    is not in 2nd ed. But see fig 5-4)
+1018-101b: 0x0000000c 1st block used
+101c-1033: 0x00000000 2nd through 7th direct blocks
+1034-1037: 0x00000000 indirect block
+1038-103b: 0x00000000 double indirect block
+103c-103f: 0x00000000 triple indirect block
+000001000  ff 41 02 00 02 00 02 00  20 00 00 00 5c 20 9d 2f   .A...... ...\ ./
+000001010  ed 1f 9d 2f 00 00 00 00  0c 00 00 00 00 00 00 00 .../............
+000001020  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+000001030  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+(snip)
+000002FF0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+
+Following the i-nodes are the data blocks. Only one is in use in this empty file 
+system, it contains the root directory. The structure of a directory entry is 
+defined in /usr/include/sys/dir.h:
+
+struct direct {
+  ino_t d_ino;
+  char d_name[DIRSIZ];
+};
+
+The root directory, of a newly created file system contains "." and ".." entries. 
+(Because this dump uses the "." character to represent non-ASCII characters in 
+the ASCII part of the dump this is hard to see, but note that the hexadecimal 
+representation of the ASCII "." is 0x2e).
+
+In Minix 1.6.30 the i-node pointers are 16 bit values and precede the file names, 
+which may have up to 14 characters. Since the root directory is its own parent, 
+both the "." and ".." entries point to i-node one.
+
+000003000  01 00 2e 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+000003010  01 00 2e 2e 00 00 00 00  00 00 00 00 00 00 00 00 ................
+000003020  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+(snip)
+0000033F0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................
+
+The second block is the first one available, and will be the first block used 
+for the first file or directory created in the root directory. In this case it 
+is initially filled with 0xf6 bytes, since this pattern was written by the disk 
+formatting program. If this disk had been recycled, with a new file system 
+created on a previously used disk, the data on the rest of the disk could be 
+any kind of garbage left over from the previous use.
+
+000003400  f6 f6 f6 f6 f6 f6 f6 f6  f6 f6 f6 f6 f6 f6 f6 f6 ................
+(snip)
