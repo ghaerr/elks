@@ -22,9 +22,10 @@
 
 struct super_disk_s
 	{
-	char magic [8];
-	word_t icount;
-	char pad [6];
+	byte_t magic [8];
+	byte_t ssize;    /* size of super block */
+	byte_t isize;    /* size of inode */
+	word_t icount;   /* number of inodes */
 	};
 
 typedef struct super_disk_s super_disk_t;
@@ -40,7 +41,6 @@ struct inode_disk_s
 	addr_t offset;
 	addr_t size;
 	word_t flags;
-	char pad [6];
 	};
 
 typedef struct inode_disk_s inode_disk_t;
@@ -184,7 +184,11 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 			else if (!strcmp (name, ".."))
 				{
 				printf ("Pseudo: %s\n", child_path);
-				child_ent->inode = grand_parent_inode;
+				if (grand_parent_inode)
+					child_ent->inode = grand_parent_inode;
+					else
+					child_ent->inode = parent_inode;  /* self for root */
+
 				}
 
 			else
@@ -248,6 +252,139 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 /* File system compilation                                                   */
 /*---------------------------------------------------------------------------*/
 
+#define BLOCK_SIZE 256
+
+static int compile_file (int fdout, inode_build_t * inode)
+	{
+	int err;
+
+	int fdin = -1;
+
+	while (1)
+		{
+		fdin = open (inode->path, O_RDONLY);
+		if (fdin < 0)
+			{
+			err = errno;
+			break;
+			}
+
+		word_t size = 0;
+
+		while (1)
+			{
+			byte_t buf [BLOCK_SIZE];
+
+			int count_in = read (fdin, buf, BLOCK_SIZE);
+			if (count_in < 0)
+				{
+				err = errno;
+				break;
+				}
+
+			if (!count_in)
+				{
+				err = 0;
+				break;
+				}
+
+			int count_out = write (fdout, buf, count_in);
+			if (count_out != count_in)
+				{
+				err = 1;
+				break;
+				}
+
+			size += count_out;
+			}
+
+		if (err) break;
+
+		inode->size = size;
+		break;
+		}
+
+	if (fdin >= 0) close (fdin);
+
+	return err;
+	}
+
+
+static int compile_dir (int fd, inode_build_t * inode)
+	{
+	int err;
+
+	while (1)
+		{
+		word_t size = 0;
+		int count;
+
+		/* Number of directory entries */
+
+		count = write (fd, &inode->entries.count, sizeof (word_t));
+		if (count != sizeof (word_t))
+			{
+			err = errno;
+			break;
+			}
+
+		size += count;
+
+		entry_build_t * entry = (entry_build_t *) inode->entries.node.next;
+		while (entry != (entry_build_t *) &inode->entries.node)
+			{
+			/* Entry inode index */
+
+			count = write (fd, &entry->inode->index, sizeof (word_t));
+			if (count != sizeof (word_t))
+				{
+				err = errno;
+				break;
+				}
+
+			size += count;
+
+			/* Entry string */
+			/* First byte is string length */
+
+			int len = strlen (entry->name);
+			if (len >= 256)
+				{
+				err = 1;
+				break;
+				}
+
+			count = write (fd, &len, sizeof (byte_t));
+			if (count != sizeof (byte_t))
+				{
+				err = errno;
+				break;
+				}
+
+			size += count;
+
+			count = write (fd, entry->name, len);
+			if (count != len)
+				{
+				err = errno;
+				break;
+				}
+
+			size += count;
+
+			entry = (entry_build_t *) entry->node.next;
+			}
+
+		inode->size = size;
+
+		err = 0;
+		break;
+		}
+
+	return err;
+	}
+
+
 static int compile_fs ()
 	{
 	int err;
@@ -269,6 +406,8 @@ static int compile_fs ()
 		memset (&super, 0xFF, sizeof (super_disk_t));
 
 		strcpy (super.magic, SUPER_MAGIC);
+		super.ssize = sizeof (super_disk_t);
+		super.isize = sizeof (inode_disk_t);
 		super.icount = _inodes.count;
 
 		int count = write (fd, &super, sizeof (super_disk_t));
@@ -294,18 +433,22 @@ static int compile_fs ()
 		inode_build_t * inode_build = (inode_build_t *) _inodes.node.next;
 		while (inode_build != (inode_build_t *) &_inodes.node)
 			{
+			inode_build->offset = offset;
+
 			if (inode_build->flags & INODE_DIR)
 				{
 				printf ("Dir:    %s\n", inode_build->path);
-				/*err = compile_dir (inode_build, &offset);*/
+				err = compile_dir (fd, inode_build);
 				}
 			else if (inode_build->flags & INODE_FILE)
 				{
 				printf ("File:   %s\n", inode_build->path);
-				/*err = compile_file (inode_build, &offset);*/
+				err = compile_file (fd, inode_build);
 				}
 
 			if (err) break;
+
+			offset += inode_build->size;
 
 			inode_build = (inode_build_t *) inode_build->node.next;
 			}
@@ -367,7 +510,9 @@ void main (int argc, char ** argv)
 			break;
 			}
 
-		printf ("Parsing file system starting from %s directory...\n", argv [1]);
+		printf ("Starting from %s directory.\n", argv [1]);
+
+		puts ("\nParsing file system...");
 
 		list_init (&_inodes);
 
@@ -379,8 +524,9 @@ void main (int argc, char ** argv)
 		err = parse_dir (NULL, root_node, argv [1]);
 		if (err) break;
 
-		printf ("Total inodes: %u\n", _inodes.count);
 		puts ("End of parsing.");
+
+		printf ("\nTotal inodes: %u\n", _inodes.count);
 
 		puts ("\nCompiling file system...");
 

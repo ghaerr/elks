@@ -2,6 +2,7 @@
 #define _LIST_H
 
 
+typedef unsigned char byte_t;
 typedef unsigned short word_t;
 typedef unsigned int addr_t;
 
