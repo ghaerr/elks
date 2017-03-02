@@ -19,11 +19,12 @@
 #include "tcpdev.h"
 #include "arp.h"
 
-
-/*#define DEBUG*/
+eth_addr_t eth_local_addr;
 
 static unsigned char sbuf [MAX_PACKET_ETH];
 static int devfd;
+
+static eth_addr_t broad_addr = {255, 255, 255, 255, 255, 255};
 
 
 void deveth_printhex(char* packet, int len)
@@ -57,24 +58,21 @@ int deveth_init(char *fdev, int argc, char **argv)
     }
     
     /* read mac of nic */
-    if (ioctl (devfd, IOCTL_ETH_ADDR_GET, local_mac)<0) {
-	perror ("ioctl /dev/eth addr_get local_mac");
+    if (ioctl (devfd, IOCTL_ETH_ADDR_GET, eth_local_addr) < 0) {
+        perror ("ioctl /dev/eth addr_get");
 
-	/* MAC not available is a fatal error */
-	/* because it means the driver cannot work */
-	return -1;
+        /* MAC not available is a fatal error */
+        /* because it means the driver does not work */
+
+        return -1;
     }    
+
+    /*
+    addr = (__u8 *) &eth_local_addr;
+    printf ("eth_local_addr: %2X.%2X.%2X.%2X.%2X.%2X \n",
+        addr [0], addr [1], addr [2], addr [3], addr [4],addr [5]);
+    */
     
-    //printf("argc:%d,argv[2]:%s\n",argc,argv[2]);
-    
-/*    
-    addr = (__u8 *)&local_ip;
-    printf("\nlocal_ip: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);    
-    addr = (__u8 *)&local_mac;
-    printf("local_mac: %2X.%2X.%2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3],addr[4],addr[5]);
-    addr = (__u8 *)&gateway_ip;
-    printf("\ngateway_ip: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);
-*/    
     return devfd;
 }
 
@@ -94,21 +92,27 @@ void deveth_process ()
   len = read (devfd, sbuf, MAX_PACKET_ETH);
   if (len < head_size) return;
 
+  eth_head = (eth_head_t *) sbuf;
+
+  /* Filter on MAC addresses */
+  /* in case of promiscuous mode */
+
+  if (memcmp (eth_head->eth_dst, broad_addr, sizeof (eth_addr_t))
+    && memcmp (eth_head->eth_dst, eth_local_addr, sizeof (eth_addr_t)))
+      return;
+
   /* Decode Ethernet II header */
   /* and dispatch to protocols */
 
-  eth_head = (eth_head_t *) sbuf;
-  switch (eth_head->eth_type)
-	  {
-	  case ETH_TYPE_IPV4:
-		  ip_recvpacket (sbuf + head_size, len - head_size);  /* strip link layer */
-		  break;
+  switch (eth_head->eth_type) {
+  case ETH_TYPE_IPV4:
+	  ip_recvpacket (sbuf + head_size, len - head_size);  /* strip link layer */
+	  break;
 
-	  case ETH_TYPE_ARP:
-		  arp_proc (sbuf, len);
-		  break;
-
-	  }
+  case ETH_TYPE_ARP:
+	  arp_proc (sbuf, len);
+	  break;
+  }
 }
 
 

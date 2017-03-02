@@ -177,8 +177,13 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     char llbuf[15];    
     struct ip_ll *ipll = (struct ip_ll *)&llbuf;
 
-    ipaddr_t ip_local_addr;
+    ipaddr_t ip_addr;
     eth_addr_t eth_addr;
+
+    /*
+    addr = (__u8 *) &apair->daddr;
+    printf ("daddr: %2X.%2X.%2X.%2X\n", addr [0], addr [1], addr [2], addr [3]);
+    */
 
     if (dev->type == 1) {  /* Ethernet */
         /* Is this the best place for the IP routing to happen ? */
@@ -187,26 +192,21 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
         if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip))
             /* Not on the same local network */
             /* Route to the gateway as local destination */
-            ip_local_addr = gateway_ip;
+            ip_addr = gateway_ip;
         else
             /* On the same local network */
             /* Route to the local destination */
-            ip_local_addr = apair->daddr;
+            ip_addr = apair->daddr;
 
         /* The ARP transaction should occur before sending the IP packet */
         /* So this part should be moved upward in the IP protocol automaton */
         /* to avoid this dangerous unlimited try again loop */
 
-        while (arp_cache_get (ip_local_addr, eth_addr))
+        while (arp_cache_get (ip_addr, eth_addr))
             /* MAC not in cache */
             /* Issue an ARP request to get it */
             /* Until issue jbruchon#67 fixed, we block until ARP reply */
-            arp_request (apair->daddr);
-
-/*    
-    addr = (__u8 *)&apair->daddr;
-    printf("daddr: %2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3]);
-*/
+            arp_request (ip_addr);
 
     /*link layer*/
 
@@ -214,7 +214,7 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     /* So this part should be moved downward */
 
     memcpy(ipll->ll_eth_dest, eth_addr, 6);
-    memcpy(ipll->ll_eth_src,local_mac, 6);
+    memcpy(ipll->ll_eth_src,eth_local_addr, 6);
     ipll->ll_type_len=0x08; /*=0x0800 bigendian*/
     } //if (dev->type == 1)
     

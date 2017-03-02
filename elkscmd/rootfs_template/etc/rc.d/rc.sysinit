@@ -16,7 +16,7 @@ ttybaud=4800
 
 if test -f /bin/ktcp
 then
-	echo -n 'Starting kernel network facilities:'
+	echo -n 'Starting network process:'
 	if test "$interface" != "/dev/eth" 
 	then stty $ttybaud < $interface
 	echo -n ' stty slip'
@@ -27,9 +27,8 @@ then
 	ktcp $localip $interface &
 	echo ' ktcp'
 	
-	echo -n "Starting network daemons: "
-	for daemon in ftpd httpd 
-	#echoserver
+	echo -n "Starting network services: "
+	for daemon in telnetd ftpd httpd
 	do
 		if test -f /bin/$daemon 
 		then

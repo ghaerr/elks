@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<meta charset="utf-8">
+<title>ELKS in QEMU</title>
+</head>
+
+<body>
+
+<h1>Running ELKS in QEMU</h1>
+
+<p>Last QEMU version tested: 2.7.0</p>
+
+<p>QEMU is the prefered emulator to test ELKS, as it is mainstream, is able to
+emulate a pure ISA machine, and provides some useful debug facilities, like
+the guest network dump.</p>
+
+<p>Another emulator is <a href="https://github.com/jbruchon/dev86/tree/master/emu86">
+EMU86</a> (part of the DEV86 project), but is more intended
+for low level debugging for the ELKS developers.</p>
+
+<p>To run ELKS in QEMU, use the launcher script in:</p>
+<pre>
+cd .../elks
+./qemu.sh
+</pre>
+
+<p>Edit this script to customize your QEMU configuration. It contains some comments
+to explain the most useful options.<p>
+
+<h2>ELKS networking in QEMU</h2>
+
+<p>The simplest way to do networking in QEMU is the "user" mode. Outgoing
+connections work without additional configuration. For incoming connections,
+use the "host-to-guest" forwarding of the user VLAN. In the following example,
+we tell QEMU to listen on port 2323 on the host local address 127.0.0.1, and
+to redirect to port 23 on ELKS, so that we can telnet to ELKS:</p>
+
+<pre>
+qemu.sh: -net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23
+telnet 127.0.0.1 2323
+</pre>
+
+<p>To capture and dump the packets from the user VLAN, use the option:</p>
+<pre>
+qemu.sh: -net dump
+</pre>
+
+<p>Then use TcpDump or Wireshark to display the network trafic:</p>
+<pre>
+tcpdump -r qemu-vlan0.pcap
+</pre>
+
+</body>
+</html>

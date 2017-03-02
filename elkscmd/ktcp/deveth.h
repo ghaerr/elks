@@ -13,15 +13,16 @@
 
 typedef __u8 eth_addr_t [6];
 
-struct eth_head_s
-	{
-	__u8  eth_dst [6]; 	/* MAC destination address */
-	__u8  eth_src [6]; 	/* MAC source address */
+struct eth_head_s {
+	eth_addr_t eth_dst;  /* MAC destination address */
+	eth_addr_t eth_src;  /* MAC source address */
 
-	__u16 eth_type;     /* Ethernet II type */
+	__u16 eth_type;      /* Ethernet II type */
 	};
 
 typedef struct eth_head_s eth_head_t;
+
+extern eth_addr_t eth_local_addr;
 
 
 void deveth_printhex(char* packet, int len);
