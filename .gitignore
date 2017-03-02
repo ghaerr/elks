@@ -8,8 +8,6 @@
 *.1.gz
 Kbuild
 dev86
-.config
-.config.old
 
 #
 # Never ignore these

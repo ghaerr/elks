@@ -1,3 +1,8 @@
+# Configuration files
+.config
+.config.old
+
+# Generated files
 arch/i86/boot/Image
 arch/i86/boot/bootsect
 arch/i86/boot/bootsect.s
