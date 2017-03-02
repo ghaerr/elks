@@ -177,7 +177,7 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     char llbuf[15];    
     struct ip_ll *ipll = (struct ip_ll *)&llbuf;
 
-    ipaddr_t ip_local_addr;
+    ipaddr_t ip_addr;
     eth_addr_t eth_addr;
 
     /*
@@ -192,21 +192,21 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
         if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip))
             /* Not on the same local network */
             /* Route to the gateway as local destination */
-            ip_local_addr = gateway_ip;
+            ip_addr = gateway_ip;
         else
             /* On the same local network */
             /* Route to the local destination */
-            ip_local_addr = apair->daddr;
+            ip_addr = apair->daddr;
 
         /* The ARP transaction should occur before sending the IP packet */
         /* So this part should be moved upward in the IP protocol automaton */
         /* to avoid this dangerous unlimited try again loop */
 
-        while (arp_cache_get (ip_local_addr, eth_addr))
+        while (arp_cache_get (ip_addr, eth_addr))
             /* MAC not in cache */
             /* Issue an ARP request to get it */
             /* Until issue jbruchon#67 fixed, we block until ARP reply */
-            arp_request (ip_local_addr);
+            arp_request (ip_addr);
 
     /*link layer*/
 
