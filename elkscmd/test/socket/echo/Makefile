@@ -25,27 +25,29 @@ STD_LIB 	=
 STD_SBIN	= 
 STD_USR_BIN	= 
 STD_USR_LIB	= 
-STD_USR_SBIN	= echoserver_un echoserver_in echoclient_un echoclient_in
+#STD_USR_SBIN	= echoserver_un echoserver_in echoclient_un echoclient_in
+STD_USR_SBIN	= echoserver echoclient
 
 include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS=echoserver_un echoserver_in echoclient_un echoclient_in
+#PRGS=echoserver_un echoserver_in echoclient_un echoclient_in
+PRGS=echoserver echoclient
+
+SPRGS=
 
 all: $(PRGS)
 
-
-smin_rfs:
-
-min_rfs:
+max_rfs: install
 
 rfs:
 
-max_rfs:
+net_rfs: install
 
-net_rfs:
+min_rfs:
 
+smin_rfs:
 
 install: all
 	cp -p $(PRGS) $(TARGET_MNT)/bin

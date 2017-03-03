@@ -12,42 +12,6 @@ ntohl() / htonl() in linuxmt/arpa/inet.h. Plus several small changes here and th
 As a result you can now use the ne2k driver for ethernet communication.
 
 
----------------------
-Networking with Qemu
----------------------
-
-So far the new ktcp and ne2k drivers have been tested with Qemu on a Linux host.
-There is a "qemu.sh" script in the elks directory which will run Qemu with the
-required settings.
-
-Qemu is used with "user mode networking". In this mode Qemu provides NATed access 
-for ELkS to the host network by providing a router and a firewall. So if your host 
-has the ip address 192.168.1.1, ELKS will have the ip address 10.0.2.15 and the
-ne2k driver as the gateway the ip address 10.0.2.2.
-
-A feature of "user mode networking" is that you cannot ping ELKS from the host and
-ELKS cannot ping ip addresses beyond the 10.0.0.0 network. However, there is no
-ping utility on ELKS yet.
-
-If you look at the "qemu.sh" script, the parameter "-net nic,model=ne2k_isa" enables 
-the ne2k driver written by Marc-F. The parameter "-net user" sets up the virtual NATed
-subnet for ELKS.
-
-To access services on ELKS you have to specify the "hostfwd" parameter, otherwise the 
-Qemu firewall will not allow applications on the host to access ip addresses on ELKS.
-
-"hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23" will allow applications on the host to send
-data to the 127.0.0.1:2323 ip address and that will be redirected by Qemu to the 
-ip address 10.0.0.15:23 on ELKS. The port number 23 is usually used by Telnet.
-
-If you want to use http, e.g. to access the web server on ELKS, you can specify 
-"hostfwd=tcp::8080-:80" as an additional redirection directive.
-
-The "-net dump" parameter will generate a "qemu-vlan0.pcap" file which you can open
-with Wireshark. In there you can select each single packet and drop down each level
-to analyse the details.
-
-
 ----------------------
 Loading ne2k and ktcp
 ----------------------
@@ -133,14 +97,16 @@ Using the echo server and client for testing
 
 You can also use an echo server on ELKS and access that with an echo client on the host
 or vice versa for testing. These programs are in the elkscmd/test/socket/echo directory. 
-Use the echoserver_in.c and echoclient_in.c code. 
+Use the echoserver.c and echoclient.c code. 
 
-The other versions are for unix domain sockets on ELKS. If you enable unix domain sockets 
-plus the ne2k driver the kernel will exceed 64k and cannot be compiled.
+You can also test the unix domain sockets on ELKS with these programs. If you enable 
+unix domain sockets plus the ne2k driver the kernel will exceed 64k and cannot be compiled. 
+To test the unix domain sockets, start both programs with the "-u" option. This is
+"echoserver -u &" and "echoclient -u".
 
-First copy echoclient_in to the host and compile it with gcc. Then start the server
-with "echoserver_in &" on ELKS. Check with "ps" it has been loaded successfully. If you 
-then run echoclient_in on the host, you can enter something on the keyboard and that will 
+First copy the echoclient to the host and compile it with gcc. Then start the server
+with "echoserver &" on ELKS. Check with "ps" if it has been loaded successfully. If you 
+then run the echoclient on the host, you can enter something on the keyboard and that will 
 be returned. Terminate the echoserver again with the kill command or loading Qemu again 
 with new parameters may fail.
 
@@ -149,10 +115,44 @@ Then change the qemu.sh file in the elks directory again to:
 # no forwarding, just ELKS to host
 hostfwd="-net user"
 
-Then copy echoserver_in to the host and compile it with gcc. Then start it with
-"./echoserver_in &" on the host. Run "qemu.sh" and enter "echoclient_in" in ELKS.
+Then copy the echoserver to the host and compile it with gcc. Then start it with
+"./echoserver &" on the host. Run "qemu.sh" and enter "echoclient" in ELKS.
 Again you can type anything on the keyboard and that will be returned by the server
 on the host.
 
+---------------------------------------------------
+Connect to the host with the telnet client on ELKS
+---------------------------------------------------
 
-26th February 2017 Georg Potthast
+There is a telnet client on ELKS called "telnet". To use that you first have to install
+the telnetd server on your host.
+
+The telnet server telnetd is part of xinetd on current Linux distributions. You can usually 
+configure xinetd from your system manager. This will only work if xinetd is running. So enter 
+"chkconfig xinetd on" on the command line and reboot your system. As a superuser you may by 
+able to start xinetd from the command line with "xinetd" or "xinetd start".
+
+After that the system manager will show the configured services with xinetd. Search the 
+telnetd line and try to enable that. This will usually cause that telnetd is downloaded and 
+installed. Then you set the status to "ON". You can also change the owner of "/usr/sbin/in.telnetd" 
+to your name and the group to "users". This will make your system unsecure so you should disable 
+telnet after you tested ELKS.
+
+Then set the qemu.sh file in the elks directory again to:
+
+# no forwarding, just ELKS to host
+hostfwd="-net user"
+
+and run the qemu.sh script to load ELKS. If you then log in and enter "telnet 192.168.1.5" on the 
+command line - provided your host has the ip-address 192.168.1.5. After a while you will get the 
+welcome message from the telnet server on your host.
+
+You can also configure your host manually. This is different on the available distros, so here are 
+some hints: 
+edit the /etc/xinetd.d/telnet file and change the line disabled = yes to disabled = no. Sometimes 
+there is no separate telnet file but a /etc/xinetd.conf file you have to edit. Instead of editing 
+that you may be able to enter "chkconfig telnetd on" on the command line to enable telnetd. 
+The command "chkconfig --list telnet" will display if telnetd is running.
+
+
+4th of March 2017 Georg Potthast
