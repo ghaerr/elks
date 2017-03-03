@@ -445,9 +445,8 @@ int sys_brk(__pptr len)
             panic("Relocated shared hole");
         }
 
-        currentp->mm.dseg = h->page_base;
-        currentp->t_regs.ds = h->page_base;
-        currentp->t_regs.ss = h->page_base;
+	currentp->t_regs.ds = currentp->t_regs.es\
+		= currentp->t_regs.ss = currentp->mm.dseg = h->page_base;
         currentp->t_endseg = len;
     }
 #endif
@@ -621,8 +620,7 @@ static int swap_in(seg_t base, int chint)
 	}
 	if (c && !t->mm.flags) {
 	    t->t_regs.cs = t->mm.cseg;
-	    t->t_regs.ds = t->mm.dseg;
-	    t->t_regs.ss = t->mm.dseg;
+	    t->t_regs.ds = t->t_regs.es = t->t_regs.ss = t->mm.dseg;
 
 	    put_ustack(t, 2, t->t_regs.cs);
 	}
