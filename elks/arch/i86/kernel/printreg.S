@@ -44,12 +44,9 @@ _print_regs:
 	.globl _printsp
 
 _printsp:
-	mov ax,sp
-	add ax,#2
-	push ax
+	push sp
 	push ss
-	mov ax,#msg
-	push ax
+	push #msg
 	call _printk
 	pop ax
 	pop ax

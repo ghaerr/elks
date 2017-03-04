@@ -64,10 +64,10 @@ struct task_struct *find_empty_process(void)
 pid_t do_fork(int virtual)
 {
     register struct task_struct *t;
-    int j;
+    pid_t j;
     struct file *filp;
     register __ptask currentp = current;
-    int sc[5];
+    int sc[4];
 
     if ((t = find_empty_process()) == NULL)
         return -EAGAIN;
@@ -92,7 +92,7 @@ pid_t do_fork(int virtual)
 	    return -ENOMEM;
 	}
 
-	t->t_regs.ds = t->t_regs.es = t->t_regs.ss = t->mm.dseg;
+	t->t_regs.ds = t->t_regs.ss = t->mm.dseg;
     }
 
     /* Increase the reference count to all open files */
@@ -135,7 +135,7 @@ pid_t do_fork(int virtual)
 	 * first few bytes at the top of the user stack. Save those
 	 * bytes in the parent's kernel stack.
 	 */
-	fmemcpy(kernel_ds, sc, currentp->t_regs.ss, currentp->t_regs.sp, 10);
+	fmemcpy(kernel_ds, sc, currentp->t_regs.ss, currentp->t_regs.sp, 8);
 	/*
 	 * Let the child go on first.
 	 */
@@ -144,7 +144,7 @@ pid_t do_fork(int virtual)
 	 * By now, the child should have its own user stack. Restore
 	 * the parent's user stack.
 	 */
-	fmemcpy(currentp->t_regs.ss, currentp->t_regs.sp, kernel_ds, sc, 10);
+	fmemcpy(currentp->t_regs.ss, currentp->t_regs.sp, kernel_ds, sc, 8);
     }
     /*
      *      Return the created task.
