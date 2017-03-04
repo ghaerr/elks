@@ -1,0 +1,199 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice 4.1.2  (Win32)">
+	<META NAME="AUTHOR" CONTENT="Georg Potthast">
+	<META NAME="CREATED" CONTENT="20170105;19172240">
+	<META NAME="CHANGEDBY" CONTENT="Georg Potthast">
+	<META NAME="CHANGED" CONTENT="20170304;11234607">
+	<STYLE TYPE="text/css">
+	<!--
+		@page { margin: 2cm }
+		TD P { margin-bottom: 0cm }
+		P { margin-bottom: 0.21cm }
+		PRE.cjk { font-family: "NSimSun", monospace }
+		H2 { margin-bottom: 0.21cm }
+		H2.western { font-family: "Arial", sans-serif; font-size: 14pt; font-style: italic }
+		H2.cjk { font-family: "Microsoft YaHei"; font-size: 14pt; font-style: italic }
+		H2.ctl { font-family: "Lucida Sans"; font-size: 14pt; font-style: italic }
+		A:link { so-language: zxx }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="de-DE" DIR="LTR">
+<TABLE WIDTH=718 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-before: always">
+	<COL WIDTH=710>
+	<TR>
+		<TD WIDTH=710 VALIGN=TOP>
+			<H2 CLASS="western"><SPAN STYLE="font-style: normal">Networking
+			with SLIP and Qemu</SPAN></H2>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">The
+			tcp/ip communication is implemented via serial lines using the
+			slip protocol. This works as long as there are serial ports
+			available with the PCs used. You can connect ELKS via a &bdquo;point
+			to point&ldquo; slip connection with a different Linux system and
+			configure that as a gateway for the ELKS PC. This way ELKS can
+			connect to the internet, provided the gateway itself is connected
+			to that. Since there is no name resolution implemented with ELKS
+			you need to know the IP address required.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">If
+			you do not want to use a cross-over cable between your ELKS PC and
+			a different Linux PC, you can run ELKS using Qemu on your host and
+			configure a serial connection with Qemu to that host. This way you
+			can connect your host and the ELKS system running within Qemu via
+			a SLIP connection.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">To
+			enable a serial connection from Qemu to your host, start Qemu with
+			these parameters:</FONT></P>
+			<PRE CLASS="western">qemu-system-i386 \
+      -chardev pty,id=chardev1 \
+      -device isa-serial,chardev=chardev1,id=serial1 \
+      -fda full3</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">Qemu will report e.g. &quot;char
+			device redirected to /dev/pts/4 (label chardev1)&quot; after
+			loading. Make a note of this pty since you will need that for the
+			host configuration.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">You
+			could also simply specifiy the &bdquo;-serial pty&ldquo; parameter
+			but if you use &bdquo;-chardev pty&ldquo; instead you can specify
+			that this serial device (with the id=chardev1) will emulate an isa
+			bus serial card so you get the interrupt and i/o address required
+			for direct hardware access.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">After
+			ELKS has booted, login with &quot;root&quot; and check that ktcp
+			is running with the command &quot;ps&quot;. Then use vi to look at
+			the &quot;/etc/rc.d/rc.sysinit&quot; file and check the ttybaud
+			and localip entries in there.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">This
+			is my setting in the file rc.sysinit:</FONT></P>
+			<PRE CLASS="western">#
+# Network initialization
+#
+
+localip=192.168.1.10
+sliptty=/dev/ttyS0
+ttybaud=9600</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">If you want to change these
+			settings, modify this file in &quot;elkscmd/rootfs_template/etc/rc.d&quot;
+			and compile ELKS again. Or modify the file in ELKS and enter the
+			&quot;reboot&quot; command. This is all that is required on the
+			ELKS side of the slip connection.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><A NAME="result_box"></A><FONT FACE="Arial, sans-serif"><SPAN STYLE="font-weight: normal">Now
+			on the host check the </SPAN></FONT><FONT FACE="Arial, sans-serif"><SPAN LANG="en">presence</SPAN></FONT>
+			<FONT FACE="Arial, sans-serif"><SPAN STYLE="font-weight: normal">of
+			the new PTY: &quot;ls -l /dev/pts&quot;.</SPAN></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">Then
+			use the slattach command to start slip on your host. Slattach can
+			be used to put a normal terminal (&quot;serial&quot;) line into
+			one of several &quot;network&quot; modes, thus allowing you to </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">use
+			it for point-to-point links to other computers.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">I
+			have made the following script to start the slip interface on the
+			host. Run this script with &bdquo;sudo&ldquo;. It takes the number
+			of the PTY generated by Qemu as a parameter (using $1 in the
+			script):</FONT></P>
+			<PRE CLASS="western">slattach -p slip -L -s 9600 /dev/pts/$1 &amp;
+ps
+ifconfig -a
+ifconfig sl0 192.168.1.9 pointopoint 192.168.1.10 netmask 255.255.255.0 mtu 296
+ifconfig -a
+route add 192.168.1.10 sl0
+route -n</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">The first command is the mentioned
+			slattach command. Since this does not return you have to run that
+			in the background with &quot;&amp;&quot; or you cannot continue on
+			your command line.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">The
+			parameters used with slattach are: &quot;-p slip&quot; which
+			selects the slip protocol, &quot;-L&quot; enables 3 wire
+			operation, i.e. no hardware flow control, &quot;-s 9600&quot;
+			specifies the line speed of 9600 baud and finally the PTY
+			generated by Qemu is specified.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">Now
+			the script checks if slattach is running in the background:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">sudo ps</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">and if the network interface has
+			been generated:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">ifconfig -a</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">You will see a new interface called
+			&quot;sl0&quot;. The interface name is &quot;sl&quot; for serial
+			plus a zero.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">Now
+			we have to assign an IP address to this serial interface.</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">ifconfig sl0 192.168.1.9 pointopoint 192.168.1.10 netmask 255.255.255.0 mtu 296</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">Here 192.168.1.9 is the address we
+			will assign to the serial interface, next we establish a
+			pointopoint connection, 192.168.1.10 is the ip address of the ELKS
+			system within Qemu and ELKS uses an mtu of 296 for slip.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">Now
+			&bdquo;ifconfig -a&ldquo; will tell us that the sl0 interface got
+			the ip address 192.168.1.9 and</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">it
+			has a point to point connection to the ip address 192.168.1.10,
+			which is ip address for ELKS that we configured.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">Next
+			we have to tell the host that it can reach the address
+			192.168.1.10 via the address of the serial inferface. So we
+			configure a static route for this:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">route add 192.168.1.10 sl0</PRE><P STYLE="margin-bottom: 0.5cm">
+			&bdquo;<FONT FACE="Arial, sans-serif"><SPAN STYLE="font-weight: normal">route
+			-n&ldquo; shows this routing table:</SPAN></FONT></P>
+			<PRE CLASS="western">Destination     Gateway         Genmask       Flags Metric  Ref    Use Iface
+0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0       0 eno1
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0       0 eno1
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0       0 sl0
+192.168.1.10    0.0.0.0         255.255.255.255 UH    0      0       0 sl0</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
+			<FONT FACE="Arial, sans-serif">Now you have to disable or
+			configure the firewall on your host system so that it will not
+			drop the packets from ELKS for security reasons. Usually you will
+			have a firewall running and that will not accept data from ELKS.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">If
+			you then enter &quot;ping 192.168.1.10&quot; now, it will report a
+			response from the ELKS system.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">In
+			case you have to restart ELKS you can remove the slattach process
+			on the host with &bdquo;sudo pkill -f slattach&ldquo;. This
+			releases the PTY generated by Qemu.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">However,
+			in case ELKS does not respond to the ping request, this is what
+			you can do to debug the slip connection.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">First
+			check if you have a working serial connection to the host. For
+			that stop ktcp to have that release the serial port on ELKS.
+			Determine with the &bdquo;ps&ldquo; command the process number
+			assigned to ktcp and enter e.g. &bdquo;kill 5 &amp;&ldquo; if the
+			PID is 5. Then enter &bdquo;cat /dev/ttyS0&ldquo;. If you then
+			start &bdquo;ping 192.168.1.10&ldquo; on your host, you should see
+			the slip packets from the host on the screen.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">Then
+			you can check if you can send slip packets from ELKS to the host.
+			I use cutecom on the host and open the device &bdquo;/dev/pts/2&ldquo;
+			provided Qemu generated the PTY 2. If you then enter on ELKS
+			&bdquo;urlget http://192.168.1.7&ldquo;, provided the host has the
+			ip address 192.168.1.7, the slip packets from ELKS can be seen
+			with cutecom.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">If
+			this works, you can use &bdquo;tcpdump&ldquo; on the host to
+			monitor the tcp/ip traffic between the host and ELKS. Enter
+			&bdquo;tcpdump -n -i sl0&ldquo; to monitor the traffic via the
+			slip interface &bdquo;sl0&ldquo;.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">You
+			will see that the host sends icmp requests to ELKS and receives
+			them from there.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">4<SUP>th</SUP>
+			of March 2017 Georg Potthast</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-style: normal"><BR><BR>
+			</P>
+			<P><BR>
+			</P>
+		</TD>
+	</TR>
+</TABLE>
+<P><BR><BR>
+</P>
+</BODY>
+</HTML>
