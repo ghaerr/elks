@@ -1302,7 +1302,7 @@ then
 
 	 * End of ELKS kernel configuration.
 	 *
-	 * You need to run \`make dep\` next.
+	 * You may now run \`make\` to build.
 
 .EOM
 else
