@@ -20,7 +20,7 @@
 # script.
 #
 # William Roadcap was the original author of Menuconfig.
-# Michael Elizabeth Chastain (mec@shout.net) is the current maintainer.
+# Jody Bruchon (jody@jodybruchon.com) is the current maintainer.
 #
 # 07 Apr 1997 Bernhard Kaindl <bkaindl@netway.at>
 #	- get default values for new bool, tristate and dep_tristate
@@ -749,8 +749,7 @@ function activate_menu () {
 	    sed 's/^/ Q> /' MCerror
 	    cat <<-.EOM
 
-	Please report this to the maintainer <mec@shout.net>.  You may also
-	send a problem report to <linux-8086@vger.kernel.org>.
+	Please report this to the mailing list: linux-8086@vger.kernel.org
 
 	Please indicate the kernel version you are trying to configure and
 	which menu you were trying to enter when this error occurred.
