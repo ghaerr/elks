@@ -72,8 +72,10 @@ endif
 #########################################################################
 # Define commands.
 
-Image: include/linuxmt/autoconf.h $(ARCHIVES) init/main.o
-	${MAKE} -C $(ARCH_DIR) Image
+Image: include/linuxmt/autoconf.h
+	$(MAKE) $(ARCHIVES)
+	$(MAKE) init/main.o
+	cd $(ARCH_DIR) && $(MAKE) Image
 
 nbImage: defconfig include/linuxmt/autoconf.h $(ARCHIVES) init/main.o
 	${MAKE} -C $(ARCH_DIR) nbImage

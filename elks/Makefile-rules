@@ -477,7 +477,7 @@ nodep:
 # Recreate autoconf.h if it's missing.
 
 $(BASEDIR)/include/linuxmt/autoconf.h:
-	@yes '' | make -C $(BASEDIR) config
+	@cd $(BASEDIR) && yes '' | $(MAKE) config
 
 #########################################################################
 # Sub-command used by the `make dist` command in the toplevel Makefile.

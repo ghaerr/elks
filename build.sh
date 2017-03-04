@@ -67,6 +67,16 @@ if [ "$1" = "clean" ]
 	clean_exit 0
 fi
 
+# CPU count detection (Linux w/sysfs only) for parallel make
+THREADS=$(test -e /sys/devices/system/cpu/cpu0 && echo /sys/devices/system/cpu/cpu? 2>/dev/null | wc -w)
+THREADS=$(echo "$THREADS" | sed 's/[^0-9]//g')
+test -z "$THREADS" && THREADS=2
+test $THREADS -lt 1 && THREADS=2
+THREADS=$((THREADS * 2))
+# Allow passing -j1 to force single-threaded make
+test "$1" = "-j1" && THREADS=1 
+echo "Using $THREADS threads for make"
+
 ### Kernel build
 echo
 echo "Preparing to build the ELKS kernel. This will invoke 'make menuconfig'"
@@ -78,7 +88,7 @@ make clean
 make menuconfig || clean_exit 2
 test -e .config || clean_exit 3
 make defconfig || clean_exit 4
-make -j4 || clean_exit 4
+make -j$THREADS || clean_exit 4
 test -e arch/i86/boot/Image || clean_exit 4
 cd "$WD"
 
@@ -87,7 +97,7 @@ cd "$WD"
 echo "Verifying dev86 is built."
 sleep 1
 cd dev86 || clean_exit 5
-make || clean_exit 5
+make -j1 || clean_exit 5
 cd "$WD"
 
 
@@ -96,7 +106,7 @@ echo "Building 'elkscmd'"
 sleep 1
 cd elkscmd || clean_exit 7
 make clean
-make || clean_exit 7
+make -j$THREADS || clean_exit 7
 
 
 ### Make image files
