@@ -1,4 +1,3 @@
-MIN_USR_BIN	= e3
 PREFIX		= /usr
 ASOURCES=e3-16.asm
 AFLAGS	= -w+orphan-labels -f as86
