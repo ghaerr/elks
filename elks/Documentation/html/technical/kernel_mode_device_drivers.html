@@ -1,0 +1,270 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice 4.1.2  (Win32)">
+	<META NAME="AUTHOR" CONTENT="Georg Potthast">
+	<META NAME="CREATED" CONTENT="20170105;19172240">
+	<META NAME="CHANGEDBY" CONTENT="Georg Potthast">
+	<META NAME="CHANGED" CONTENT="20170304;11433543">
+	<STYLE TYPE="text/css">
+	<!--
+		@page { margin: 2cm }
+		TD P { margin-bottom: 0cm }
+		P { margin-bottom: 0.21cm }
+		PRE.cjk { font-family: "NSimSun", monospace }
+		H2 { margin-bottom: 0.21cm }
+		H2.western { font-family: "Arial", sans-serif; font-size: 14pt; font-style: italic }
+		H2.cjk { font-family: "Microsoft YaHei"; font-size: 14pt; font-style: italic }
+		H2.ctl { font-family: "Lucida Sans"; font-size: 14pt; font-style: italic }
+		A:link { so-language: zxx }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="de-DE" DIR="LTR">
+<TABLE WIDTH=718 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-before: always">
+	<COL WIDTH=710>
+	<TR>
+		<TD WIDTH=710 VALIGN=TOP>
+			<H2 CLASS="western" STYLE="font-style: normal">Writing kernel mode
+			drivers for ELKS</H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Like
+			most alternative operating systems, ELKS is missing drivers for
+			many peripherals. Therefore this text describes to write
+			additional drivers.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">As
+			a proof of concept, the 'hellodev' driver will be implemented now:</FONT></P>
+			<PRE CLASS="western">/*
+ * hello driver for ELKS kernel
+ */
+
+#include &lt;linuxmt/kernel.h&gt; /* printk() */
+#include &lt;linuxmt/fs.h&gt;     /* file_operations struct */
+#include &lt;string.h&gt;
+
+#define HELLO_DEVICE_NAME       &quot;hellodev&quot;
+#define HELLO_MAJOR     9
+
+static char message[256];
+char *msgptr = message;
+
+static int hello_write(struct inode *inode, struct file *file, char* buf, int len)
+{
+    memcpy_fromfs(message,buf,len);
+    printk(&quot;hellodev: hello_write() called\n&quot;);
+    return 0;
+}
+
+static int hello_read(struct inode *inode, struct file *file, char* buf, int len)
+{
+    memcpy_tofs(buf, message, len);
+    printk(&quot;hellodev: hello_read() called\n&quot;);
+    return len;
+}
+
+static int hello_open(struct inode *inode, struct file *file)
+{
+    printk(&quot;hellodev: hello_open() called\n&quot;);
+    return 0;
+}
+
+static void hello_release(struct inode *inode, struct file *file)
+{
+    printk(&quot;hellodev: hello_release() called\n&quot;);
+    return;
+}
+
+static struct file_operations hello_fops = {
+    NULL,                       /* lseek */
+    hello_read,                 /* read */
+    hello_write,                /* write */
+    NULL,                       /* readdir */
+    NULL,                       /* select */
+    NULL,                       /* ioctl */
+    hello_open,                 /* open */
+    hello_release               /* release */
+    
+#ifdef BLOAT_FS
+        ,
+    NULL,                       /* fsync */
+    NULL,                       /* check_media_type */
+    NULL                        /* revalidate */
+#endif
+};
+
+void hello_init(void)
+{
+        printk(&quot;hellodev: hello_init() called\n&quot;);
+
+    /* register device */
+    if (register_chrdev(HELLO_MAJOR, HELLO_DEVICE_NAME, &amp;hello_fops))
+        printk(&quot;hellodev: unable to register\n&quot;);
+}</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">This driver just implements the
+			functions hello_init(), hello_open(), hello_read(), hello_write()
+			and hello_release(). When these functions are called it outputs a
+			message using the printk() statement. This is the equivalent for
+			printf() in kernel code. Also the functions memcpy_fromfs() and
+			memcpy_tofs() are used. The kernel will for security reasons not
+			accept pointers from userspace which may be faulty. Therefore you
+			have to use these functions. For single chars there are equivalent
+			functions available called get_user_char() and put_user_char().
+			You will also not be able to use inportb() and outportb()
+			functions, use the inb() and inb_p() or out() and out_p()
+			functions instead. The &bdquo;_p&ldquo; versions insert a small
+			pause or delay before returning to support slower devices.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">When
+			the driver is loaded the kernel will call hello_init() and the
+			hellodev driver will execute the register_chrdev() function. This
+			function contains the device name which will appear in the /dev
+			directory and a pointer to the file_operations structure called
+			hello_ops. In there the kernel will find the addresses of the
+			functions defined in the driver.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			kernel identifies the driver by its unique the major number. In
+			our demo driver we have included these macros in the code: </FONT>
+			</P>
+			<PRE CLASS="western">#define HELLO_DEVICE_NAME       &quot;hellodev&quot;
+#define HELLO_MAJOR     9</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Usually in ELKS these are defined
+			in the elks/include/linuxmt/major.h file which the drivers
+			include. However, that file still needs to be changed. Increase
+			the maximum number of char devices to 10:</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">#define
+			MAX_CHRDEV 10</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Put
+			the code above as the hellodev.c file into the
+			elks/arch/i86/drivers/char/ directory and add it to the Makefile
+			in this directory:</FONT></P>
+			<PRE CLASS="western">else
+OBJS  = bioscon.o common.o serial.o lp.o xt_key.o init.o dircon.o mem.o \
+        <B>hellodev.o </B>ntty.o meta.o tcpdev.o pty.o bell.o # clist.o tty.o</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Also edit the init.c file:</FONT></P>
+			<PRE CLASS="western">void chr_dev_init(void)
+{
+#if 1
+hello_init();
+#endif
+#ifdef CONFIG_CHAR_DEV_RS
+rs_init();</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif"><FONT SIZE=3>Normally, you would
+			define a macro in the elks/arch/i86/defconfig file which can be
+			modified with &bdquo;menuconfig&ldquo; and modify the files
+			elks/arch/i86/drivers/char/config.in plus
+			elks/Documentation/Configure.help.</FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>Further,
+			the hello_init() function has to be declared in the
+			elks/include/linuxmt/init.h file:</FONT></FONT></P>
+			<PRE CLASS="western">extern void xtk_init(void);
+extern void hello_init(void);
+
+extern void init_console(void);</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif"><FONT SIZE=3>To load the driver
+			simply add it after the tcpdev device in the
+			elkscmd/rootfs_template/dev/MAKEDEV script. In this script there
+			is a macro for the mknod() function called MAKEDEV:</FONT></FONT></P>
+			<PRE CLASS="western"># TCPDEV, used by ktcp
+
+        mknod tcpdev c 8 0
+        $MKDEV hellodev c 9 0</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif"><FONT SIZE=3>The letter &bdquo;c&ldquo;
+			stands for character driver while the number 9 is the major number
+			and zero the minor number. </FONT></FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>To
+			sum it up, you added hellodev.c into the
+			elks/arch/i86/drivers/char directory and modified init.c and the
+			Makefile in there. Also you modified major.h and init.h in the
+			elks/include/linuxmt directory and the file MAKEDEV in the
+			elkscmd/rootfs_template/dev directory.</FONT></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Now
+			you can compile ELKS again and it will include the hellodev driver
+			and load it. If you enter &bdquo;ls /dev&ldquo; you will see a
+			device node called hellodev.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">To
+			test this driver use this program which you may drvtest.c:</FONT></P>
+			<PRE CLASS="western">#include&lt;stdio.h&gt;
+#include&lt;stdlib.h&gt;
+#include&lt;errno.h&gt;
+#include&lt;fcntl.h&gt;
+ 
+#define BUFFER_LENGTH 256               
+static char receive[BUFFER_LENGTH];     
+ 
+int main(){
+   int ret, fd;
+   char stringToSend[BUFFER_LENGTH];
+
+   printf(&quot;Starting device test code example...\n&quot;);
+
+   fd = open(&quot;/dev/hellodev&quot;, O_RDWR);  
+
+   if (fd &lt; 0){
+      perror(&quot;Failed to open the device...&quot;);
+      return errno;
+   }
+
+   printf(&quot;Type in a short string to send to the kernel module:\n&quot;);
+   scanf(&quot;%s&quot;, stringToSend);                // Read in a string
+   printf(&quot;Writing message to the device [%s].\n&quot;, stringToSend);
+
+   ret = write(fd, stringToSend, strlen(stringToSend)); 
+   if (ret &lt; 0){
+      perror(&quot;Failed to write the message to the device.&quot;);
+      return errno;
+   }
+ 
+   printf(&quot;Now reading the string back from the device...\n&quot;);
+   ret = read(fd, &amp;receive[0], BUFFER_LENGTH);        
+   if (ret &lt; 0){
+      perror(&quot;Failed to read the message from the device.&quot;);
+      return errno;
+   }
+
+   printf(&quot;The received message is: [%s]\n&quot;, receive);
+
+   return 0;
+}</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">To compile this program enter &bdquo;bcc
+			-ansi -o drvtest drvtest.c&ldquo; and e.g. copy the executable
+			drvtest to the full3 image file using a loop device.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Here
+			are some additional notes how ELKS drivers work describing the
+			concepts used above taken from the fs.txt file:<BR><BR>The
+			inode-&gt;i_op pointer is initialised in the function which reads
+			in an inode, e.g. V1_minix_read_inode, and its contents depend on
+			the type of file. If the node is a character or block device, i_op
+			points to chrdev_inode_operations or blkdev_inode_operations
+			respectively. These tables are declared in devices.c and contain
+			pointers just to the respective &quot;open&quot; functions,
+			chrdev_open and blkdev_open. <BR><BR>When the user opens one of
+			these inodes, the kernel calls the open function and passes in a
+			pointer to the relevant &quot;struct file&quot; record. The fops
+			pointer in this record is copied from chrdevs[major].fops or
+			blkdevs[major].fops, which was set up when the device was
+			initialised and registered itself.<BR><BR>So, in the case of the
+			console for example, the file record defined as dircon_ops (see
+			drivers/char/dircon.c) has pointers to the functions to perform
+			I/O to the console. <BR><BR>In the case of block devices, the
+			read() and write() functions *don't* point to device-specific read
+			and write functions; rather, they point to the generic functions
+			block_read() and block_write() in block_dev.c. These take care of
+			caching blocks, part-block reads and writes etc.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Since
+			the ELKS kernel is almost 64k in size now, currently there is only
+			very limited space available for additional device drivers. User
+			mode device drivers should be considered as an alternative.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">4<SUP>th</SUP>
+			of March 2017 Georg Potthast</FONT></P>
+			<P><BR>
+			</P>
+		</TD>
+	</TR>
+</TABLE>
+<P><BR><BR>
+</P>
+</BODY>
+</HTML>

@@ -74,10 +74,14 @@ function tcpdev_inetwrite() in our char/tcpdev driver which writes it into the
 "tdout_buf" buffer.
 
 This buffer is then copied to memory in the tcpdev_read() function for the ktcp
-user space driver to pick up and send. On the other hand, the char/tcpdev
-driver will use the tcpdev_write() function to copy received data to the kernel
-interface "af_inet.c" by calling the function inet_process_tcpdev() in that
-code.
+user space driver to pick up and send. The ktcp driver will use the select() 
+command to query if any data is available to send and call tcp_process() in "tcp.c" 
+which handles the tcp connection status and calls tcp_syn_sent() which again calls 
+tcp_output() in "tcp_output.c" which sends the data via ip_sendpacket() in "ip.c".
+
+On the other hand, the char/tcpdev driver will use the tcpdev_write() function 
+to copy received data to the kernel interface "af_inet.c" by calling the function 
+inet_process_tcpdev() in that code.
 
 There are two tcpdev.c files in the code. One, the "char/tcpdev", is linked as
 a kernel driver, and the other, "ktcp/tcpdev", handles the tcp part for the
@@ -98,6 +102,10 @@ again uses the function slip_send() in "slip.c".
 
 The loop in ktcp_run() also calls slip_process() in slip.c which handles the
 data received by calling ip_recvpacket() in "ip.c".
+
+If an icmp packet is received by ip_recvpacket() in "ip.c" it will call
+icmp_process() in "icmp.c". This function just supports icmp echo to allow
+ELKS to reply to a ping command on the remote host.
 
 
 2. Setup
@@ -147,4 +155,4 @@ purpose is to give users an idea of what is done and what to expect of
 the ELKS networking.
 
 
-Harry / Georg Potthass
+Harry / Georg Potthast
