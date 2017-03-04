@@ -4,9 +4,10 @@
 
 mainmenu_option next_comment
     comment 'Network device drivers'
-
-    comment 'Ethernet device drivers'
     if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
-	bool 'NE2K device driver' CONFIG_ETH n
+	bool 'Ethernet device support' CONFIG_ETH y
+	if [ "$CONFIG_ETH" = "y" ]; then
+	    bool 'NE2K device driver' CONFIG_ETH_NE2K y
+	fi
     fi
 endmenu

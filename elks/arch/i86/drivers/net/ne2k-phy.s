@@ -7,8 +7,8 @@
 
 ; I/O base @ 300h
 
-io_eth_mdio     EQU $314
-io_eth_gpio     EQU $317
+io_ne2k_mdio     EQU $314
+io_ne2k_gpio     EQU $317
 
 ; MDIO register
 
@@ -120,7 +120,7 @@ mdio_tx_frame:
 	; could be optimized there...
 
 	mov     bx, dx
-	mov     dx, #io_eth_mdio
+	mov     dx, #io_ne2k_mdio
 	push    ax
 	mov     ax, bx
 
@@ -165,7 +165,7 @@ mdio_tx_rx:
 	push    ax
 	push    dx
 
-	mov     dx, #io_eth_mdio
+	mov     dx, #io_ne2k_mdio
 	mov     al, #mdio_dir
 	out     dx, al                   ; clock low
 	call    delay_2
@@ -303,7 +303,7 @@ mdio_read:
 mr_wait:
 
 	call    mdio_tx_rx
-	mov     dx, #io_eth_mdio
+	mov     dx, #io_ne2k_mdio
 	in      al, dx
 	test    al, #mdio_in
 	jz      mr_next
@@ -416,7 +416,7 @@ _ne2k_link_stat:
 	; get internal PHY status from linked GPIO pins
 	; rather than reading PHY status register
 
-	mov     dx, #io_eth_gpio
+	mov     dx, #io_ne2k_gpio
 	in      al, dx
 	and     al, #7
 

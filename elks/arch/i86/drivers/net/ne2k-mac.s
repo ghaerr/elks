@@ -6,40 +6,40 @@
 
 ; I/O base @ 300h
 
-io_eth_command    EQU $300
+io_ne2k_command    EQU $300
 
-io_eth_rx_first   EQU $301  ; page 0
-io_eth_rx_last    EQU $302  ; page 0
-io_eth_rx_get     EQU $303  ; page 0
+io_ne2k_rx_first   EQU $301  ; page 0
+io_ne2k_rx_last    EQU $302  ; page 0
+io_ne2k_rx_get     EQU $303  ; page 0
 
 ; This is not a true NE2K register
-;io_eth_rx_put1    EQU $306  ; page 0 - read
+;io_ne2k_rx_put1    EQU $306  ; page 0 - read
 
-io_eth_tx_start   EQU $304  ; page 0 - write
-io_eth_tx_len1    EQU $305  ; page 0 - write
-io_eth_tx_len2    EQU $306  ; page 0 - write
+io_ne2k_tx_start   EQU $304  ; page 0 - write
+io_ne2k_tx_len1    EQU $305  ; page 0 - write
+io_ne2k_tx_len2    EQU $306  ; page 0 - write
 
-io_eth_int_stat   EQU $307  ; page 0
+io_ne2k_int_stat   EQU $307  ; page 0
 
-io_eth_dma_addr1  EQU $308  ; page 0
-io_eth_dma_addr2  EQU $309  ; page 0
-io_eth_dma_len1   EQU $30A  ; page 0 - write
-io_eth_dma_len2   EQU $30B  ; page 0 - write
+io_ne2k_dma_addr1  EQU $308  ; page 0
+io_ne2k_dma_addr2  EQU $309  ; page 0
+io_ne2k_dma_len1   EQU $30A  ; page 0 - write
+io_ne2k_dma_len2   EQU $30B  ; page 0 - write
 
-io_eth_rx_stat    EQU $30C  ; page 0 - read
+io_ne2k_rx_stat    EQU $30C  ; page 0 - read
 
-io_eth_rx_conf    EQU $30C  ; page 0 - write
-io_eth_tx_conf    EQU $30D  ; page 0 - write
-io_eth_data_conf  EQU $30E  ; page 0 - write
-io_eth_int_mask   EQU $30F  ; page 0 - write
+io_ne2k_rx_conf    EQU $30C  ; page 0 - write
+io_ne2k_tx_conf    EQU $30D  ; page 0 - write
+io_ne2k_data_conf  EQU $30E  ; page 0 - write
+io_ne2k_int_mask   EQU $30F  ; page 0 - write
 
-io_eth_unicast    EQU $301  ; page 1 - 6 bytes
-io_eth_rx_put     EQU $307  ; page 1
-io_eth_multicast  EQU $308  ; page 1 - 8 bytes
+io_ne2k_unicast    EQU $301  ; page 1 - 6 bytes
+io_ne2k_rx_put     EQU $307  ; page 1
+io_ne2k_multicast  EQU $308  ; page 1 - 8 bytes
 
-io_eth_data_io    EQU $310  ; 2 bytes
+io_ne2k_data_io    EQU $310  ; 2 bytes
 
-io_eth_reset      EQU $31F
+io_ne2k_reset      EQU $31F
 
 
 ; Ring segmentation
@@ -67,7 +67,7 @@ page_select:
 	and     ah, #$01
 	shl     ah, #6
 
-	mov     dx, #io_eth_command
+	mov     dx, #io_ne2k_command
 	in      al, dx
 	and     al, #$3F
 	or      al, ah
@@ -103,7 +103,7 @@ _ne2k_addr_set:
 
 	; load MAC address
 
-	mov     dx, #io_eth_unicast
+	mov     dx, #io_ne2k_unicast
 	mov     cx, #6
 	cld
 
@@ -142,23 +142,23 @@ dma_init:
 
 	; set DMA start address
 
-	mov     dx, #io_eth_dma_addr1
+	mov     dx, #io_ne2k_dma_addr1
 	mov     al, bl
 	out     dx, al
 
-	; mov     dx, #io_eth_dma_addr2
+	; mov     dx, #io_ne2k_dma_addr2
 	inc     dx
 	mov     al, bh
 	out     dx, al
 
 	; set DMA byte count
 
-	; mov     dx, #io_eth_dma_len1
+	; mov     dx, #io_ne2k_dma_len1
 	inc     dx
 	mov     al, cl
 	out     dx, al
 
-	; mov     dx, #io_eth_dma_len2
+	; mov     dx, #io_ne2k_dma_len2
 	inc     dx
 	mov     al, ch
 	out     dx, al
@@ -187,7 +187,7 @@ dma_write:
 
 	; start DMA write
 
-	mov     dx, #io_eth_command
+	mov     dx, #io_ne2k_command
 	in      al, dx
 	and     al, #$C7
 	or      al, #$10
@@ -195,7 +195,7 @@ dma_write:
 
 	; I/O write loop
 
-	mov     dx, #io_eth_data_io
+	mov     dx, #io_ne2k_data_io
 	cld
 
 emw_loop:
@@ -232,7 +232,7 @@ dma_read:
 
 	; start DMA read
 
-	mov     dx, #io_eth_command
+	mov     dx, #io_ne2k_command
 	in      al, dx
 	and     al, #$C7
 	or      al, #$08
@@ -240,7 +240,7 @@ dma_read:
 
 	; I/O read loop
 
-	mov     dx, #io_eth_data_io
+	mov     dx, #io_ne2k_data_io
 	cld
 
 emr_loop:
@@ -277,7 +277,7 @@ _ne2k_rx_stat:
 	mov     al, #1
 	call    page_select
 
-	mov     dx, #io_eth_rx_put
+	mov     dx, #io_ne2k_rx_put
 	in      al, dx
 	mov     cl, al
 
@@ -286,7 +286,7 @@ _ne2k_rx_stat:
 	xor     al, al
 	call    page_select
 
-	mov     dx, #io_eth_rx_get
+	mov     dx, #io_ne2k_rx_get
 	in      al, dx
 	inc     al
 	cmp     al, #rx_last
@@ -339,7 +339,7 @@ _ne2k_pack_get:
 	mov     al, #1
 	call    page_select
 
-	mov     dx, #io_eth_rx_put
+	mov     dx, #io_ne2k_rx_put
 	in      al, dx
 	mov     cl, al
 
@@ -348,7 +348,7 @@ _ne2k_pack_get:
 	xor     al, al
 	call    page_select
 
-	mov     dx, #io_eth_rx_get
+	mov     dx, #io_ne2k_rx_get
 	in      al, dx
 	inc     al
 	cmp     al, #rx_last
@@ -428,7 +428,7 @@ npg_nowrap3:
 
 npg_next:
 
-	mov     dx, #io_eth_rx_get
+	mov     dx, #io_ne2k_rx_get
 	out     dx, al
 
 	xor     ax, ax
@@ -461,7 +461,7 @@ _ne2k_tx_stat:
 
 	push    dx
 
-	mov     dx, #io_eth_command
+	mov     dx, #io_ne2k_command
 	in      al, dx
 	and     al, #$04
 	jz      nts_ready
@@ -513,20 +513,20 @@ _ne2k_pack_put:
 
 	; set TX pointer and length
 
-	mov     dx, #io_eth_tx_start
+	mov     dx, #io_ne2k_tx_start
 	mov     al, #tx_first
 	out     dx, al
 
-	mov     dx, #io_eth_tx_len1
+	mov     dx, #io_ne2k_tx_len1
 	mov     al, cl
 	out     dx, al
-	inc     dx  ; = io_eth_tx_len2
+	inc     dx  ; = io_ne2k_tx_len2
 	mov     al, ch
 	out     dx, al
 
 	; start TX
 
-	mov     dx, #io_eth_command
+	mov     dx, #io_ne2k_command
 	mov     al, #$26
 	out     dx, al
 
@@ -564,7 +564,7 @@ _ne2k_int_stat:
 
 	xor     ah, ah
 
-	mov     dx, #io_eth_int_stat
+	mov     dx, #io_ne2k_int_stat
 	in      al, dx
 	test    al, #$03
 	jz      nis_next
@@ -596,7 +596,7 @@ _ne2k_init:
 	; Stop DMA and MAC
 	; TODO: is this really needed after a reset ?
 
-	mov     dx, #io_eth_command
+	mov     dx, #io_ne2k_command
 	in      al, dx
 	and     al, #$C0
 	or      al, #$21
@@ -606,14 +606,14 @@ _ne2k_init:
 	; and low endian for 80188
 	; plus magical stuff (48h)
 
-	mov     dx, #io_eth_data_conf
+	mov     dx, #io_ne2k_data_conf
 	mov     al, #$48
 	out     dx, al
 
 	; accept packet without error
 	; unicast & broadcast & promiscuous
 
-	mov     dx, #io_eth_rx_conf
+	mov     dx, #io_ne2k_rx_conf
 	mov     al, #$54
 	out     dx, al
 
@@ -621,7 +621,7 @@ _ne2k_init:
 	; to insulate the MAC while stopped
 	; TODO: loopback cannot be turned off later !
 
-	mov     dx, #io_eth_tx_conf
+	mov     dx, #io_ne2k_tx_conf
 	mov     al, #0  ; 2
 	out     dx, al
 
@@ -629,21 +629,21 @@ _ne2k_init:
 	; all 16KB on-chip memory
 	; except one TX frame at beginning (6 x 256B)
 
-	mov     dx, #io_eth_rx_first
+	mov     dx, #io_ne2k_rx_first
 	mov     al, #rx_first
 	out     dx, al
 
-	mov     dx, #io_eth_rx_last
+	mov     dx, #io_ne2k_rx_last
 	mov     al, #rx_last
 	out     dx, al
 
-	mov     dx, #io_eth_tx_start
+	mov     dx, #io_ne2k_tx_start
 	mov     al, #tx_first
 	out     dx, al
 
 	; set RX get pointer
 
-	mov     dx, #io_eth_rx_get
+	mov     dx, #io_ne2k_rx_get
 	mov     al, #rx_first
 	out     dx, al
 
@@ -651,21 +651,21 @@ _ne2k_init:
 	; TODO: is this really needed after a reset ?
 
 	xor     al, al
-	mov     dx, #io_eth_dma_len1
+	mov     dx, #io_ne2k_dma_len1
 	out     dx, al
-	inc     dx  ; = io_eth_dma_len2
+	inc     dx  ; = io_ne2k_dma_len2
 	out     dx, al
 
 	; clear all interrupt flags
 
-	mov     dx, #io_eth_int_stat
+	mov     dx, #io_ne2k_int_stat
 	mov     al, #$7F
 	out     dx, al
 
 	; set interrupt mask
 	; TX & RX without error and overflow
 
-	mov     dx, #io_eth_int_mask
+	mov     dx, #io_ne2k_int_mask
 	mov     al, #$03
 	out     dx, al
 
@@ -677,7 +677,7 @@ _ne2k_init:
 	; clear unicast address
 
 	mov     cx, #6
-	mov     dx, #io_eth_unicast
+	mov     dx, #io_ne2k_unicast
 	xor     al, al
 
 ei_loop_u:
@@ -689,7 +689,7 @@ ei_loop_u:
 	; clear multicast bitmap
 
 	mov     cx, #8
-	mov     dx, #io_eth_multicast
+	mov     dx, #io_ne2k_multicast
 	xor     al, al
 
 ei_loop_m:
@@ -700,7 +700,7 @@ ei_loop_m:
 
 	; set RX put pointer to first bloc + 1
 
-	mov     dx, #io_eth_rx_put
+	mov     dx, #io_ne2k_rx_put
 	mov     al, #rx_first
 	inc     al
 	out     dx, al
@@ -724,7 +724,7 @@ _ne2k_start:
 
 	; start the transceiver
 
-	mov     dx, #io_eth_command
+	mov     dx, #io_ne2k_command
 	in      al, dx
 	and     al, #$FC
 	or      al, #$02
@@ -734,7 +734,7 @@ _ne2k_start:
 
 	; TODO: read PHY status to update the duplex mode ?
 
-	mov     dx, #io_eth_tx_conf
+	mov     dx, #io_ne2k_tx_conf
 	xor     al, al
 	out     dx, al
 
@@ -755,7 +755,7 @@ _ne2k_stop:
 
 	; Stop the DMA and the MAC
 
-	mov     dx, #io_eth_command
+	mov     dx, #io_ne2k_command
 	in      al, dx
 	and     al, #$C0
 	or      al, #$21
@@ -770,16 +770,16 @@ _ne2k_stop:
 	; to insulate the MAC while stopped
 	; and ensure TX finally ends
 
-	mov     dx, #io_eth_tx_conf
+	mov     dx, #io_ne2k_tx_conf
 	mov     al, #2
 	out     dx, al
 
 	; clear DMA length
 
 	xor     al, al
-	mov     dx, #io_eth_dma_len1
+	mov     dx, #io_ne2k_dma_len1
 	out     dx, al
-	inc     dx  ; = io_eth_dma_len2
+	inc     dx  ; = io_ne2k_dma_len2
 	out     dx, al
 
 	; TODO: wait for the chip to get stable
@@ -807,7 +807,7 @@ _ne2k_term:
 
 	; mask all interrrupts
 
-	mov     dx, #io_eth_int_mask
+	mov     dx, #io_ne2k_int_mask
 	xor     al, al
 	out     dx, al
 
@@ -838,7 +838,7 @@ _ne2k_probe:
 	; register not initialized in QEMU
 	; so do not rely on this one
 
-	;mov     dx, #io_eth_command
+	;mov     dx, #io_ne2k_command
 	;in      al, dx
 	;and     al, #$3F
 	;cmp     al, #$21
@@ -869,13 +869,13 @@ _ne2k_reset:
 	; reset device
 	; with pulse on reset port
 
-	mov     dx, #io_eth_reset
+	mov     dx, #io_ne2k_reset
 	in      al, dx
 	out     dx, al
 
 	; stop all and select page 0
 
-	mov     dx, #io_eth_command
+	mov     dx, #io_ne2k_command
 	mov     al, #$21
 	out     dx, al
 
@@ -886,7 +886,7 @@ nr_loop:
 
 	hlt
 
-	mov     dx, #io_eth_int_stat
+	mov     dx, #io_ne2k_int_stat
 	in      al, dx
 	test    al, #$80
 	jz      nr_loop

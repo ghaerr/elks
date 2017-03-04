@@ -57,8 +57,8 @@ static byte_t rx_packet [MAX_PACK];
 
 struct arp_s
 	{
-	byte_t eth_to   [6];
-	byte_t eth_from [6];
+	byte_t ne2k_to   [6];
+	byte_t ne2k_from [6];
 
 	byte_t head     [10];
 
@@ -240,8 +240,8 @@ static word_t test_arp ()
 
 			arp->head [9] = 2;
 
-			strncpy (arp->eth_to, arp->eth_from, 6);
-			strncpy (arp->eth_from, mac_addr, 6);
+			strncpy (arp->ne2k_to, arp->ne2k_from, 6);
+			strncpy (arp->ne2k_from, mac_addr, 6);
 
 			strncpy (arp->ip_to, arp->ip_from, 4);
 			strncpy (arp->ip_from, ip_addr, 4);
