@@ -8,32 +8,6 @@ LOCALFLAGS =
 #
 # Include standard packaging commands.
 
-MIN_BIN 	= getty init kill login mount passwd ps swapon meminfo \
-		  reboot shutdown umount
-MIN_LIB 	= 
-MIN_SBIN	= clock exitemu getty init reboot shutdown
-MIN_USR_BIN	= meminfo passwd
-MIN_USR_LIB	= 
-MIN_USR_MAN	= 
-MIN_USR_SBIN	= knl
-
-NET_BIN 	= 
-NET_LIB 	= 
-NET_SBIN	= 
-NET_USR_BIN	= 
-NET_USR_LIB	= 
-NET_USR_MAN	= 
-NET_USR_SBIN	= 
-
-STD_BIN 	= 
-STD_LIB 	= 
-STD_SBIN	= 
-STD_USR_BIN	= man who
-STD_USR_LIB	= 
-STD_USR_MAN	= clock.8 getty.1 kill.1 knl.8 login.1 man.1 mount.8 \
-		  passwd.1 ps.1 reboot.8 umount.8 who.1 swapon.1
-STD_USR_SBIN	= 
-
 include $(BASEDIR)/Make.rules
 
 ###############################################################################

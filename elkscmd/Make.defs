@@ -43,6 +43,11 @@
 #			any user to mount this device, but otherwise avoids
 #			the limitations of the other two options.
 #
+#	DIR			Do not use block device at all. Build the image by
+#			copying from the build directories to an image directory,
+#			then use a "mk*fs" tool to compile it into a binary image.
+#			This target type is typically used by ROMFS (mkromfs).
+#
 # Each option has both advantages and disadvantages, and it is up to the
 # developer to determine the appropriate one to use.
 
@@ -170,6 +175,11 @@ endif
 
 ifeq ($(TARGET_MODE),RAM)
 TARGET_MNT=$(ELKSCMD_DIR)/x
+LOOP=
+endif
+
+ifeq ($(TARGET_MODE),DIR)
+TARGET_MNT=$(ELKSCMD_DIR)/RootFS
 LOOP=
 endif
 

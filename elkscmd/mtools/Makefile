@@ -12,31 +12,6 @@ LOCALFLAGS =
 #
 # Include standard packaging commands.
 
-MIN_BIN 	= 
-MIN_LIB 	= 
-MIN_SBIN	= 
-MIN_USR_BIN	= 
-MIN_USR_LIB	= 
-MIN_USR_MAN	= 
-MIN_USR_SBIN	= 
-
-NET_BIN 	= 
-NET_LIB 	= 
-NET_SBIN	= 
-NET_USR_BIN	= 
-NET_USR_LIB	= 
-NET_USR_MAN	= 
-NET_USR_SBIN	= 
-
-STD_BIN 	= 
-STD_LIB 	= 
-STD_SBIN	= 
-STD_USR_BIN	= mcopy mdel mdir mkdfs mmd mrd mread mren mtype mwrite
-STD_USR_LIB	= 
-STD_USR_MAN	= mcopy.1 mdel.1 mdir.1 mkdfs.1 mmd.1 mrd.1 mread.1 mren.1 \
-		  mtype.1 mwrite.1
-STD_USR_SBIN	= 
-
 include $(BASEDIR)/Make.rules
 
 ###############################################################################

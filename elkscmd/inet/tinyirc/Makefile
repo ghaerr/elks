@@ -67,4 +67,17 @@ tinyirc.o: tinyirc.c Makefile
 
 tinyirccv.o: tinyirccv.c Makefile
 	$(CC) $(CFLAGS) $(DEFINES) -c tinyirccv.c -o tinyirccv.o
+
+install:
+
+smin_rfs:
+
+min_rfs:
+
+rfs:
+
+max_rfs:
+
+net_rfs:
+
 #EOF
