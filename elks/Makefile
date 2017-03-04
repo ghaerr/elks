@@ -216,17 +216,14 @@ clean:	nodep doclean
 	@if [ ! -f .config ]; then \
 	    echo ' * This system is not configured. You need to run' ;\
 	    echo ' * `make config` or `make menuconfig` to configure it.' ;\
-	else \
-	    echo ' * This system has been configured. You need to run' ;\
-	    echo ' * `make dep` next to set up the relevant dependencies.' ;\
+	    echo ;\
 	fi
-	@echo
 
 config:	arch/i86/drivers/char/KeyMaps/Config.in
 	@echo
 	@$(CFG_SHELL) scripts/Configure arch/$(ARCH)/config.in
 	@echo
-	@echo ' * Configuration complete. You need to run `make dep` next.'
+	@echo ' * Configuration complete. You can now run `make` to build.'
 	@echo
 
 dep:	.config include/linuxmt/autoconf.h
