@@ -1,30 +1,37 @@
 # Helper to run ELKS in QEMU
 
-# Specify your QEMU system emulator here:
-qemu=qemu-system-i386
-#qemu=qemu-system-x86_64
+# QEMU emulator binary to use
+QEMU=qemu-system-i386
+#QEMU=qemu-system-x86_64
 
-# Specify your keyboard mapping here:
-# keyb="-k en-us"
-# keyb="-k fr"
-keyb=
+# Floppy image to use
+IMAGE=elkscmd/full3
 
-# Specify network dump option here:
-#netdump="-net dump"
-netdump=
+# Keyboard mapping
+# KEYBOARD="-k en-us"
+# KEYBOARD="-k fr"
+KEYBOARD=
 
-# Specify host forwarding here:
+# Network dump
+#NETDUMP="-net dump"
+NETDUMP=
+
+# Host forwarding for networking
 # no forwarding - only outgoing from ELKS to host
-hostfwd="-net user"
+HOSTFWD="-net user"
 # incoming telnet forwarding - example: connect to ELKS with telnet localhost:2323
-#hostfwd="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
+#HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
 # telnet and http forwarding - example: connect to ELKS httpd with 'http://localhost:8080'
-#hostfwd="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80"
+#HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80"
 
-serialdev="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
+SERIALDEV="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
+
+if [ ! -e "$IMAGE" ]
+	then echo "The disk image file '$IMAGE' is missing"
+	exit 1
+fi
 
 # Configure QEMU as pure ISA system
-
-$qemu -nodefaults -name ELKS -monitor stdio -machine isapc -cpu 486 \
--m 1M $keyb -display sdl -vga cirrus -rtc base=utc $serialdev \
--net nic,model=ne2k_isa $hostfwd $netdump -fda elkscmd/full3
+$QEMU -nodefaults -name ELKS -monitor stdio -machine isapc -cpu 486 \
+-m 1M $KEYBOARD -display sdl -vga cirrus -rtc base=utc $SERIALDEV \
+-net nic,model=ne2k_isa $HOSTFWD $NETDUMP -fda $IMAGE $@
