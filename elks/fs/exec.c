@@ -274,7 +274,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     debug("EXEC: old binary flushed.\n");
 
     tregs->cs = currentp->mm.cseg = cseg;
-    tregs->ss = tregs->ds = currentp->mm.dseg = dseg;
+    tregs->ds = tregs->es = tregs->ss = currentp->mm.dseg = dseg;
 
     currentp->t_begstack = ((__pptr) ptr);	/* Just below the arguments */
     tregs->sp = (__u16)(currentp->t_begstack);

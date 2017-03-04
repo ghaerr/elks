@@ -65,8 +65,8 @@ void kfork_proc(char *addr)
 
     t = find_empty_process();
 
-    t->t_regs.cs = kernel_cs;
-    t->t_regs.ds = t->t_regs.ss = kernel_ds; /* Run in kernel space */
+    t->t_regs.cs = kernel_cs;			/* Run in kernel space */
+    t->t_regs.ds = t->t_regs.es = t->t_regs.ss = kernel_ds;
     arch_build_stack(t, addr);
 }
 
@@ -92,11 +92,10 @@ unsigned get_ustack(register struct task_struct *t,int off)
  */
 void arch_setup_kernel_stack(register struct task_struct *t)
 {
-    put_ustack(t, -2, USER_FLAGS);			/* Flags */
-    put_ustack(t, -4, (int) current->t_regs.cs);	/* user CS */
-    put_ustack(t, -6, 0);				/* addr 0 */
+    put_ustack(t, -2, USER_FLAGS);		/* Flags */
+    put_ustack(t, -4, (int) t->t_regs.cs);	/* user CS */
+    put_ustack(t, -6, 0);			/* addr 0 */
     t->t_regs.sp -= 6;
-    t->t_kstackm = KSTACK_MAGIC;
 }
 
 /* Called by do_signal()
@@ -182,11 +181,11 @@ void arch_build_stack(struct task_struct *t, char *addr)
     register __u16 *csp = (__u16 *)(current->t_kstack + KSTACK_BYTES - 14);
 
     t->t_regs.ksp = (__u16)tsp;
-    *tsp++ = *(csp + 6);	/* Initial value for SI register */
-    *tsp++ = *(csp + 5);	/* Initial value for DI register */
-    *tsp++ = 0x3202;		/* Initial value for FLAGS register */
-    *tsp++ = current->t_regs.bp;/* Initial value for BP register */
+    *tsp = *(csp + 6);			/* Initial value for SI register */
+    *(tsp+1) = *(csp + 5);		/* Initial value for DI register */
+    *(tsp+2) = 0x3202;			/* Initial value for FLAGS register */
+    *(tsp+3) = current->t_regs.bp;	/* Initial value for BP register */
     if (addr == NULL)
 	addr = ret_from_syscall;
-    *tsp = addr;		/* Start execution address */
+    *(tsp+4) = addr;			/* Start execution address */
 }

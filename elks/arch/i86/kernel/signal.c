@@ -75,7 +75,7 @@ int do_signal(void)
 		do_exit((int) signr);
 	    }
 	}
-	debug1("Setting up return stack for sig handler %x.\n", sa->sa_handler);
+	debug1("Setting up return stack for sig handler %x.\n", (unsigned)(*sah));
 	debug1("Stack at %x\n", currentp->t_regs.sp);
 	arch_setup_sighandler_stack(currentp, *sah, signr);
 	debug1("Stack at %x\n", currentp->t_regs.sp);
