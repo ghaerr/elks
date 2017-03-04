@@ -47,7 +47,7 @@ void print_syscall(register struct syscall_params *p, int retval)
 #endif
 
 	i = 0;
-	tmpa = (s->s_params >> 4);
+	tmpa = s->s_params;
 	goto pscl;
 	while (tmpa >>= 4) {
 	    printk(", ");
