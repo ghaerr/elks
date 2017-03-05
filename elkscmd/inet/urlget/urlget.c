@@ -262,8 +262,7 @@ int len;
    return(0);
 }
 
-void ftppasv(reply)
-char *reply;
+void ftppasv(char *reply)
 {
 char *p;
 unsigned char n[6];
@@ -288,8 +287,7 @@ int i;
    return;
 }
 
-int ftpreply(fpr)
-FILE *fpr;
+int ftpreply(FILE *fpr)
 {
 static char reply[256];
 int s;
@@ -309,28 +307,24 @@ int ft;
    	} while (strncmp(reply, code, 3) || reply[3] == '-');
    	s = atoi(code);
    } while (s < 200 && s != 125 && s != 150);
-   if (s == 227) ftppasv(reply);
-   return(s);
+   //printf("ftpreply: s=%d\n",s);
+   if (s == 227) {
+     ftppasv(reply);
+     return 227;
+   }
+   return s;
 }
 
-int ftpcmd(fpw, fpr, cmd, arg)
-FILE *fpw;
-FILE *fpr;
-char *cmd;
-char *arg;
+int ftpcmd( FILE *fpw, FILE *fpr, char *cmd, char *arg)
 {
+   int s;
    fprintf(fpw, "%s%s%s\r\n", cmd, *arg ? " " : "", arg);
    fflush(fpw);
-   return(ftpreply(fpr));
+   s=ftpreply(fpr);
+   return s;
 }
 
-int ftpget(host, port, user, pass, path, type)
-char *host;
-int port;
-char *user;
-char *pass;
-char *path;
-int type;
+int ftpget(char *host, int port, char *user, char *pass, char *path, int type)
 {
 int fd;
 int fd2;
@@ -348,7 +342,7 @@ char typec[2];
    if (type == '\0')
    	type = 'i';
 
-   fd = connect(host, port);
+   fd = net_connect(host, port);
    if (fd < 0) {
    	fprintf(stderr, "ftpget: Could not connect to %s:%d\n", host, port);
    	return(-1);
@@ -371,14 +365,21 @@ char typec[2];
    	s = ftpcmd(fpw, fpr, "CWD", unesc(p));
    	p = p2;
    }
+   
    sprintf(typec, "%c", type == 'd' ? 'A' : type);
    s = ftpcmd(fpw, fpr, "TYPE", typec);
    if (s / 100 != 2) goto error;
+   
+   if (strlen(p) == 0) type = 'd'; //last char is '/', its a directory, list files 
+   ftppport=0; //to check if retrieved below
    s = ftpcmd(fpw, fpr, "PASV", "");
-   if (s != 227) goto error;
-   fd2 = connect(ftpphost, ftppport);
+   //printf("ftpget: s=%d,port=%u\n",s,ftppport);
+   //ftpreply() continues after s==227 found!
+   if (ftppport==0) goto error; //if (s != 227) goto error;
+   fd2 = net_connect(ftpphost, ftppport);
    if (fd2 < 0) goto error;
    s = ftpcmd(fpw, fpr, type == 'd' ? "NLST" : "RETR", unesc(p));
+   //s = ftpcmd(fpw, fpr, type == 'd' ? "LIST" : "RETR", unesc(p)); //full file specs
    if (s / 100 != 1) goto error;
    while ((s = read(fd2, buffer, sizeof(buffer))) > 0) {
    	s2 = write(1, buffer, s);
@@ -416,7 +417,7 @@ int s2;
    	return(-1);
    }
 
-   fd = connect(host, port);
+   fd = net_connect(host, port);
    if (fd < 0) {
    	fprintf(stderr, "httpget: Could not connect to %s:%d\n", host, port);
    	return(-1);
@@ -482,6 +483,8 @@ int opt_p = 0;
    if (strcmp(prog, "ftpget") == 0) {
    	if (argc < 2 || argc > 4) {
    		fprintf(stderr, "Usage: %s host path [user [pass]]\n", prog);
+		fprintf(stderr, "Add / to path for directory listing\n");
+		fprintf(stderr, "e.g. ftpget 90.147.160.69 /mirrors/\n");
    		return(-1);
    	}
    	strncpy(host, *argv++, sizeof(host));
@@ -514,6 +517,7 @@ int opt_p = 0;
 
    if (argc != 1) {
    	fprintf(stderr, "Usage: %s [-h] [-p] url\n", prog);
+	fprintf(stderr, "e.g. urlget http://216.58.209.67/index.html\n");
    	return(-1);
    }
 

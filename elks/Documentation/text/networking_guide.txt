@@ -62,6 +62,23 @@ Anyway, for "www.google.de" I retrieved 216.58.209.67. On ELKS you enter:
 contains all tags and is difficult to read.
 
 
+--------------------
+Using ftpget on ELKS
+--------------------
+
+urlget will read its own name on the command line and if the name is ftpget it will
+support ftp.
+
+Make sure hostfwd="-net user" is set in qemu.sh.
+
+Then enter e.g. "ftpget 193.219.28.2 /" on the command line and ftpget will wait a while
+and then return the directory listing of that ftp server. The parameter "/pub/" will
+return the listing of the pub directory: "ftpget 193.219.28.2 /pub/". However, for a 
+directory listing you need to add a "/" at the end of the path.
+
+To download a file you would enter: "ftpget 193.219.28.2 /pub/README"
+
+
 -----------------------------------------
 Retrieving web pages on ELKS using httpd
 -----------------------------------------
