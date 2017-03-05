@@ -79,6 +79,22 @@ directory listing you need to add a "/" at the end of the path.
 To download a file you would enter: "ftpget 193.219.28.2 /pub/README"
 
 
+----------------------
+Using tinyirc on ELKS
+----------------------
+
+tinyirc enables you to use internet relay chat with ELKS. This can be used for testing.
+
+Make sure hostfwd="-net user" is set in qemu.sh.
+
+Then enter e.g. "tinyirc" on the command line and tinyirc will connect to its default
+server chat.freenode.net at port 8000. 
+
+You can also specify the nickname server port and terminal emulation as command line
+parameters. So "tinyirc 162.213.39.42 8000" will connect to chat.freenode.net as well
+without specifying a nickname.
+
+
 -----------------------------------------
 Retrieving web pages on ELKS using httpd
 -----------------------------------------

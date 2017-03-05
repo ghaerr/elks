@@ -935,31 +935,37 @@ char *hostname;
 	sa.sin_port = htons((unsigned short) IRCPORT);
 	s = socket(AF_INET, SOCK_STREAM, 0);
 #endif
-	if (s > 0)
-	    if (connect(s, (struct sockaddr *) &sa, sizeof(sa)) < 0) {
-		close(s);
-		s = -1;
-	    } else {
-		fcntl(s, F_SETFL, O_NDELAY);
-		my_tcp = s;
-		sprintf(lineout, "USER %s * * :%s\n", IRCLOGIN, IRCGECOS);
-		sendline();
-		sprintf(lineout, "NICK :%s\n", IRCNAME);
-		sendline();
-#ifdef AUTOJOIN
-		sprintf(lineout, AUTOJOIN);
-		sendline();
-#endif
-		for (obj = olist; obj != NULL; obj = olist->next) {
-		    sprintf(lineout, "JOIN %s\n", OBJ);
-		    sendline();
-		}		/* error checking will be done later */
+	if (s > 0) {
+	    if (bind(s, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
+        	perror("Bind failed");
+		exit(1);
 	    }
+	}
+	if (connect(s, (struct sockaddr *) &sa, sizeof(sa)) < 0) {
+	close(s);
+	s = -1;
+	} else {
+	    fcntl(s, F_SETFL, O_NDELAY);
+	    my_tcp = s;
+	    sprintf(lineout, "USER %s * * :%s\n", IRCLOGIN, IRCGECOS);
+	    sendline();
+	    sprintf(lineout, "NICK :%s\n", IRCNAME);
+	    sendline();
+#ifdef AUTOJOIN
+	    sprintf(lineout, AUTOJOIN);
+	    sendline();
+#endif
+	    for (obj = olist; obj != NULL; obj = olist->next) {
+		sprintf(lineout, "JOIN %s\n", OBJ);
+		sendline();
+	    }		/* error checking will be done later */
+	}
 #ifndef ELKS
     }
 #endif
     return s;
 }
+
 main(argc, argv)
 int argc;
 char **argv;
