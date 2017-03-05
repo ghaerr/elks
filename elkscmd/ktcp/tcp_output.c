@@ -18,6 +18,7 @@
 #include "tcp.h"
 #include <linuxmt/arpa/inet.h>
 #include "timer.h"
+#include "tcpdev.h"
 
 char buf[128];
 
@@ -332,6 +333,8 @@ void tcp_output(struct tcpcb_s *cb)
     len = (__u16)CB_BUF_SPACE(cb);
     if (len == 0)
 	len = 1;		/* Never advertise zero window size */
+    if (len>255) 
+        len=256; //use even len, reducing the len causes the servers to pause
     th->window = htons(len);
     th->urgpnt = 0;
     th->flags = cb->flags;	
