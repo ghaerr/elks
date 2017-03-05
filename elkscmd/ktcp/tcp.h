@@ -71,7 +71,7 @@ struct iptcp_s {
 #define	TS_LAST_ACK	9
 #define	TS_TIME_WAIT	10
 
-#define CB_IN_BUF_SIZE	512
+#define CB_IN_BUF_SIZE	2048 /* 1024 too small */
 #define CB_BUF_USED(x)	((x)->buf_len)
 #define CB_BUF_SPACE(x)	(CB_IN_BUF_SIZE - CB_BUF_USED((x)))
 #define CB_BUF_TAIL(x)	(((x)->buf_head + (x)->buf_len) % (CB_IN_BUF_SIZE - 1))
