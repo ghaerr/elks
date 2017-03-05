@@ -104,7 +104,7 @@ int main(int argc,char **argv)
     __u8 * addr;
 
     const char dname[9];
-    sprintf(dname,"/dev/eth");
+    sprintf(dname, "/dev/eth");
 	
     if (argc < 3) {
 	printf("Syntax :\n    %s local_ip [interface] [gateway] [netmask]\n", argv[0]);
@@ -140,17 +140,19 @@ int main(int argc,char **argv)
 	exit(1);
 
     debug("KTCP: 3. init interface\n");
-    if (strcmp(argv[2],dname) == 0){
+    if (strcmp(argv[2],dname) == 0) {
 	debug("Init /dev/eth\n");
-    	dev->type=1;
-	if ((intfd = deveth_init(dname,argc,argv)) < 0){
-	      printf("failed to open /dev/eth\n");
-	      exit(1);}
-	} else { /* fall back to slip */
-	      dev->type=0;
-    	      if ((intfd = slip_init(argv[2])) < 0)
-	      exit(2);
+    	dev->type = 1;
+	intfd = deveth_init(dname, argc, argv);
+	if (intfd < 0) {
+	      printf("failed to open /dev/eth [%d]\n", intfd);
+	      exit(1);
 	}
+    } else { /* fall back to slip */
+	dev->type=0;
+	intfd = slip_init(argv[2]);
+	if (intfd < 0) exit(2);
+    }
 
     arp_init ();
 

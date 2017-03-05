@@ -32,13 +32,13 @@ void deveth_printhex(char* packet, int len)
   unsigned char *p;
   int i;
   printf("deveth_process():%d bytes\n",len);  
-  if (len>128) len=128;
-  p=packet;
-  i=1;
+  if (len > 128) len = 128;
+  p = packet;
+  i = 1;
   while (len--) {
 	printf("%02X",*p);
-	if ((i % 2)==0) printf(" "); /*%=modulo*/
-	if ((i % 16)==0) printf("\n"); /*%=modulo*/
+	if ((i % 2) == 0) printf(" "); /*%=modulo*/
+	if ((i % 16) == 0) printf("\n"); /*%=modulo*/
 	p++;
 	i++;
   }
@@ -53,7 +53,7 @@ int deveth_init(char *fdev, int argc, char **argv)
     
     devfd = open(fdev, O_NONBLOCK|O_RDWR);
     if (devfd < 0) {
-	printf("ERROR : failed to open eth device %s\n",fdev);
+	printf("ERROR: failed to open eth device %s\n", fdev);
 	return -1;
     }
     
@@ -64,7 +64,7 @@ int deveth_init(char *fdev, int argc, char **argv)
         /* MAC not available is a fatal error */
         /* because it means the driver does not work */
 
-        return -1;
+        return -2;
     }    
 
     /*
