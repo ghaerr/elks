@@ -936,6 +936,10 @@ char *hostname;
 	s = socket(AF_INET, SOCK_STREAM, 0);
 #endif
 	if (s > 0)
+	    if (bind(s, (struct sockaddr *)&sa, sizeof(sa))==-1) {
+        	perror("Bind failed");
+		exit(1);
+	    }	  
 	    if (connect(s, (struct sockaddr *) &sa, sizeof(sa)) < 0) {
 		close(s);
 		s = -1;

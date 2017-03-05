@@ -4,8 +4,9 @@
 # I don't wish to assert any rights (copyright) over this makefile
 # but please give me credit if you use my code.
 #
-SERVER = irc.freenode.net
-PORT = 7000
+# chat.freenode.net=
+SERVER = 162.213.39.42
+PORT = 8000
 #
 
 BASEDIR=../..
@@ -29,6 +30,7 @@ generic:
 
 elks:
 	$(MAKE) tinyirc CFLAGS="-0 -O -ansi -DPOSIX -DELKS -I$(INC_DIR)" LDFLAGS= LIBS= CC=bcc
+#	$(MAKE) tinyircd CFLAGS="-0 -O -ansi -DPOSIX -DELKS -I$(INC_DIR)" LDFLAGS= LIBS= CC=bcc
 
 aix:
 	$(MAKE) tinyirccv CFLAGS="-O -D_AIX_" \
@@ -59,6 +61,9 @@ DEFINES = -DDEFAULTSERVER=\"$(SERVER)\" -DDEFAULTPORT=$(PORT)
 tinyirc: tinyirc.o
 	$(CC) $(LDFLAGS) -o tinyirc tinyirc.o $(LIBS)
 
+tinyircd: tinyircd.o
+	$(CC) $(LDFLAGS) -o tinyircd tinyircd.o $(LIBS)
+
 tinyirccv: tinyirccv.o
 	$(CC) $(LDFLAGS) -o tinyirc tinyirccv.o $(LIBS)
 
@@ -68,13 +73,23 @@ tinyirc.o: tinyirc.c Makefile
 tinyirccv.o: tinyirccv.c Makefile
 	$(CC) $(CFLAGS) $(DEFINES) -c tinyirccv.c -o tinyirccv.o
 
-install:
+install: all
+	cp -p tinyirc $(TARGET_MNT)/bin
+
+max_rfs: install
+
+rfs:
+
+net_rfs: install
 
 smin_rfs:
 
 min_rfs:
 
 rfs:
+
+clean:
+	rm -f core *.o tinyirc
 
 max_rfs:
 
