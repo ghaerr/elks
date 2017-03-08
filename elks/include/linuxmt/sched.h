@@ -4,7 +4,7 @@
 #define MAX_TASKS 15
 #define NGROUPS	13		/* Supplementary groups */
 #define NOGROUP 0xFFFF
-#define KSTACK_BYTES 1024	/* Size of kernel stacks */
+#define KSTACK_BYTES 1014	/* Size of kernel stacks */
 
 #include <linuxmt/types.h>
 #include <linuxmt/fs.h>
@@ -47,7 +47,7 @@ struct signal_struct {
 struct task_struct {
 
 /* Executive stuff */
-    __registers 		t_regs;
+    struct xregs		t_xregs;
     __pptr			t_enddata;
     __pptr			t_begstack;
     __pptr			t_endbrk;
@@ -79,7 +79,7 @@ struct task_struct {
     struct task_struct		*p_parent;
     struct task_struct		*p_prevsib;
     struct task_struct		*p_nextsib;
-    struct task_struct		*p_child;	 
+    struct task_struct		*p_child;
     struct wait_queue		child_wait;
     pid_t			child_lastend;
     int 			lastend_status;
@@ -102,6 +102,7 @@ struct task_struct {
 
     __u16			t_kstackm;	/* To detect stack corruption */
     __u8			t_kstack[KSTACK_BYTES];
+    __registers 		t_regs;
 };
 
 #define KSTACK_MAGIC 0x5476

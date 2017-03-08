@@ -65,7 +65,7 @@ void kfork_proc(char *addr)
 
     t = find_empty_process();
 
-    t->t_regs.cs = kernel_cs;			/* Run in kernel space */
+    t->t_xregs.cs = kernel_cs;			/* Run in kernel space */
     t->t_regs.ds = t->t_regs.es = t->t_regs.ss = kernel_ds;
     arch_build_stack(t, addr);
 }
@@ -89,13 +89,15 @@ unsigned get_ustack(register struct task_struct *t,int off)
 
 /*
  * Called by sys_execve()
+ * Despite its name, this function sets up the user stack
  */
 void arch_setup_kernel_stack(register struct task_struct *t)
 {
     put_ustack(t, -2, USER_FLAGS);		/* Flags */
-    put_ustack(t, -4, (int) t->t_regs.cs);	/* user CS */
+    put_ustack(t, -4, (int) t->t_xregs.cs);	/* user CS */
     put_ustack(t, -6, 0);			/* addr 0 */
-    t->t_regs.sp -= 6;
+    put_ustack(t, -8, 0);			/* user BP */
+    t->t_regs.sp -= 8;
 }
 
 /* Called by do_signal()
@@ -103,11 +105,11 @@ void arch_setup_kernel_stack(register struct task_struct *t)
  * We need to make the program return to another point - to the signal
  * handler. The stack currently looks like this:-
  *
- *              ip cs  f
+ *          bp  ip  cs  f
  *
  * and will look like this
  *
- *      adr cs  f  ip  sig
+ *  bp  adr cs  f   ip  sig
  *
  * so that we return to the old point afterwards. This will confuse the code
  * as we don't have any way of sorting out a return value yet.
@@ -118,11 +120,8 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
 {
     register char *i;
 
-    i = 0;
-    if (t->t_regs.bx != 0) {
-        for (; (int)i < 18; i += 2)
-            put_ustack(t, (int)i-4, (int)get_ustack(t,(int)i));
-    }
+    for (i = 0; (int)i < (t->t_xregs.flags ? 18 : 2); i += 2)
+	put_ustack(t, (int)i-4, (int)get_ustack(t,(int)i));
     debug4("Stack %x was %x %x %x\n", addr, get_ustack(t,(int)i), get_ustack(t,(int)i+2),
 	   get_ustack(t,(int)i+4));
     put_ustack(t, (int)i-4, (int)addr);
@@ -136,12 +135,22 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
 }
 
 /*
+ *	arch_build_stack(t, addr);
+ *
+ * Called by do_fork() and kfork_proc().
+ *
+ * Build a fake return stack in kernel space so that we can have a new
+ * task start at a chosen kernel function while on its kernel stack. The
+ * new task comes into life in the middle of tswitch() function. We push
+ * the registers suitably for the new task to return from tswitch() into
+ * the function addr().
+ *
  * To start a child process we need to craft for it a kernel stack. The
  * child user stack must be the same than the caller user stack. The stack
  * state inside do_fork for the CALLER of sys_fork() looks like this:
  *
- *             Kernel Stack                               User Stack
- *     ?? ip bx cx dx di si                                  ip cs f
+ *             Kernel Stack                              User Stack
+ *     ?? ip bx cx dx di si                              bp ip cs f
  *           --------------
  *           syscall params
  *
@@ -153,38 +162,22 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
  * achieved by making tswitch() return ax=0. Stack for the CHILD must look
  * like this:
  *
- *           Kernel Stack                               User Stack
- *          si di f bp IP                                  ip cs f
+ *             Kernel Stack                              User Stack
+ *            si di f bp IP                              bp ip cs f
  *
- * with IP pointing to ret_from_syscall, and current->t_regs.ksp pointing
- * to si on the kernel stack. Values for the child stack si, di are taken
- * from the caller's stack and bp is taken from caller->t_regs.bp.
- *
- */
-
-/*
- *	arch_build_stack(t, addr);
- *
- * Called by do_fork() and kfork_proc().
- *
- * Build a fake return stack in kernel space so that we can
- * have a new task start at a chosen kernel function while on
- * its kernel stack. The new task comes into life in the middle
- * of tswitch() function. We push the registers suitably for
- * the new task to return from tswitch() into the function
- * addr().
+ * with IP pointing to ret_from_syscall, and current->t_xregs.ksp pointing
+ * to si on the kernel stack. Values for the child stack si, di and bp can
+ * be anything because their final value will be taken from the task structure
+ * in the case of fork(), or will be initialized at the begining of the target
+ * function in the case of kfork_proc().
  */
 
 void arch_build_stack(struct task_struct *t, char *addr)
 {
-    register __u16 *tsp = (__u16 *)(t->t_kstack + KSTACK_BYTES - 10);
-    register __u16 *csp = (__u16 *)(current->t_kstack + KSTACK_BYTES - 14);
+    register __u16 *tsp = ((__u16 *)(&(t->t_regs.ax))) - 5;
 
-    t->t_regs.ksp = (__u16)tsp;
-    *tsp = *(csp + 6);			/* Initial value for SI register */
-    *(tsp+1) = *(csp + 5);		/* Initial value for DI register */
+    t->t_xregs.ksp = (__u16)tsp;
     *(tsp+2) = 0x3202;			/* Initial value for FLAGS register */
-    *(tsp+3) = current->t_regs.bp;	/* Initial value for BP register */
     if (addr == NULL)
 	addr = ret_from_syscall;
     *(tsp+4) = addr;			/* Start execution address */

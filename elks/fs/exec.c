@@ -273,7 +273,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	mm_free(currentp->mm.dseg);
     debug("EXEC: old binary flushed.\n");
 
-    tregs->cs = currentp->mm.cseg = cseg;
+    currentp->t_xregs.cs = currentp->mm.cseg = cseg;
     tregs->ds = tregs->es = tregs->ss = currentp->mm.dseg = dseg;
 
     currentp->t_begstack = ((__pptr) ptr);	/* Just below the arguments */

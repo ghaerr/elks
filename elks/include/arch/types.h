@@ -24,11 +24,15 @@ typedef signed short int		__sint,		*__psint;
 /* Then we define registers, etc... */
 
 struct _registers {
-    __u16	ksp, sp, ss, ds, bx, cx, dx,
-		 di, si, ax, es, bp, ip, cs, flags;
+    __u16	ax, bx, cx, dx, di, si,
+		es, ds, sp, ss;
 };
 
 typedef struct _registers		__registers,	*__pregisters;
+
+struct xregs {
+    __u16	cs, ksp, flags;
+};
 
 struct pt_regs {
     __u16	bp, di, si, dx, cx, bx,
