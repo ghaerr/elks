@@ -619,10 +619,10 @@ static int swap_in(seg_t base, int chint)
 	    t->mm.flags &= ~DS_SWAP;
 	}
 	if (c && !t->mm.flags) {
-	    t->t_regs.cs = t->mm.cseg;
+	    t->t_xregs.cs = t->mm.cseg;
 	    t->t_regs.ds = t->t_regs.es = t->t_regs.ss = t->mm.dseg;
 
-	    put_ustack(t, 2, t->t_regs.cs);
+	    put_ustack(t, 4, t->t_xregs.cs);
 	}
     }
 

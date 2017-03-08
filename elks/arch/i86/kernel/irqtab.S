@@ -1,9 +1,6 @@
 #include <linuxmt/config.h>
 #include <arch/asm-offsets.h>
 
-#ifndef S_SPLINT_S
-#asm
-
 	.text
 
 /*
@@ -224,7 +221,7 @@ _nmi:
 	jmp	_irqit
 
 _brkpt:
-	push 	ax
+	push	ax
 	mov	ax,#19
 	jmp	_irqit
 
@@ -299,11 +296,11 @@ _algn:
 !	There are three possible cases to cope with
 !
 !	SS = kernel DS.
-!		Interrupted kernel mode code.
+!		Interrupted kernel mode code or kernel task
 !		No task switch allowed
 !		Running on a kernel process stack anyway.
 !
-!	SS = current->user_ss
+!	SS = current->t_regs.ss
 !		Interrupted user mode code
 !		Switch to kernel stack for process (will be free)
 !		Task switch allowed
@@ -317,9 +314,19 @@ _algn:
 !	We do all of this to avoid per process interrupt stacks and
 !	related nonsense. This way we need only one dedicted int stack
 !
+!  ELKS 0.76 7/1999  Fixed for ROMCODE-Version
+!  Christian Mardm�ller  (chm@kdt.de)
+!
+	.globl	_ret_from_syscall
 	.extern	_schedule
 	.extern	_do_signal
 	.extern	_do_IRQ
+	.extern	_stack_check
+	.extern	_syscall
+#ifdef CONFIG_STRACE
+	.extern	_strace
+	.extern	_ret_strace
+#endif
 
 _irq0:
 !
@@ -340,20 +347,19 @@ _irqit:
 	push	di
 	push	bp
 !
-!	Recover segments
+!	Recover data segment
 !
 #ifdef CONFIG_ROMCODE
-	mov	bx,#CONFIG_ROM_IRQ_DATA
-	mov	ds,bx
+	mov	si,#CONFIG_ROM_IRQ_DATA
+	mov	ds,si
+	mov	si,stashed_ds
 #else
 	seg	cs
+	mov	si,stashed_ds
 #endif
-	mov	bx,stashed_ds	! Recover the data segment
-	mov	ds,bx
-	mov	es,bx
+	mov	ds,si
+	mov	es,si
 
-	mov	dx,ss		! Get current SS
-	mov	bp,sp		! Get current SP
 !
 !	Set up task switch controller
 !
@@ -361,23 +367,24 @@ _irqit:
 !
 !       See where we were (DX holds the SS on entry)
 !
-	cmp	dx,bx		! SS = kernel SS ?
+	mov	di,ss		! Get current SS
+	cmp	di,si		! SS = kernel SS ?
 	je	ktask		! Kernel - no work
 !
 !	User or BIOS etc
 !
-        mov     ss,bx           ! /* Set SS: right */
-	mov	bx,_current
-	cmp	dx,TASK_USER_SS[bx] ! entry ss = current->t_regs.ss?
+	mov	ss,si		! Set SS: right
+	mov	si,_current
+	cmp	di,TASK_USER_SS[si] ! entry ss = current->t_regs.ss?
 	jne	btask		! Switch to interrupt stack
 !
 !	User task. Extract kernel SP. (BX already holds current)
 !	At this point, the kernel stack is empty. Thus, we can load
 !       the kernel stack pointer without accesing memory
 !
-        mov     TASK_USER_SP[bx],sp
-        lea     sp,TASK_KSTKTOP[bx] ! switch to kernel stack ptr
-        lea     bp,TASK_USER_SP[bx]
+	mov	TASK_USER_SP[si],sp
+	lea	sp,TASK_USER_AX[si] ! switch to kernel stack ptr
+	lea	bp,TASK_USER_SP[si]
 	inc	ch		! Switch allowable
         j       updct
 !
@@ -390,40 +397,36 @@ btask:
 !	better to use the intstack..
 !
 ktask:
-! /*
+!
 !	Put the old SS;SP on the top of the stack. We can't
 !	leave them in stashed_ss/sp as we could re-enter the
 !	routine on a reschedule.
-! */
-	push	dx		! push entry SS
-	push	bp		! push entry SP
+!
+	mov	si,sp		! Get current SP
+	push	di		! push entry SS
+	push	si		! push entry SP
 !
 !	The registers are now stored. Remember where
 !
 	mov	bp,sp
 !
-!   Update intr_count
+!	Update intr_count
 !
 updct:
-        inc     _intr_count
-!
-!       We are on a suitable stack and ch says whether
-!       we can switch afterwards.
-!
-        sti                     ! Reenable interrupts
-        push    cx              ! Switch flag
-	push	ax		! IRQ for later
-	push	bp		! Register base
-	push	ax		! IRQ number
+	inc	_intr_count
 !
 !	Call the C code
 !
+	sti			! Reenable interrupts
+	push	cx		! Switch flag
+	push	ax		! IRQ for later
+
+	push	bp		! Register base
+	push	ax		! IRQ number
 	call	_do_IRQ		! Do the work
-!
-!	Return path
-!
-	pop	ax		! We want the ax value back
-	pop	bx		! Drop arguments
+	pop	ax		! Clean parameters
+	pop	bx
+
 	pop	ax		! Saved IRQ
 	pop	cx		! Recover switch allowed flag
 !
@@ -477,7 +480,7 @@ was_trap:
 !
 	call	_schedule		! Task switch
 	mov	bx,_current
-	mov	8[bx],#1
+	mov	TASK_USER_FL[bx],#1
 	call	_do_signal		! Check signals
 !
 !	At this point, the kernel stack is empty. Thus, there is no
@@ -528,9 +531,6 @@ noschedpop:
  *	tswitch() saves the "previous" task registers and state. It in effect
  *	freezes a copy of the caller context. Then restores the "current"
  *	context and returns running the current task.
- *
- * ELKS 0.76 7/1999  Fixed for ROMCODE-Version
- * Christian Mardm�ller  (chm@kdt.de)
  */
 
 	.globl _tswitch
@@ -556,15 +556,6 @@ _tswitch:
 !
 !	On entry we are on the wrong stack, DS, ES are wrong
 !
-	.globl	_syscall_int
-	.globl	_ret_from_syscall
-	.extern	_stack_check
-	.extern	_syscall
-#ifdef CONFIG_STRACE
-	.extern	_strace
-	.extern	_ret_strace
-#endif
-!
 !	System calls enter here with ax as function and bx,cx,dx,di and si
 !	as parameters.
 !	syscall returns a value in ax
@@ -589,19 +580,20 @@ _syscall_int:
 	mov	ds,stashed_ds		! the org DS of kernel
 !
 !	At this point, the kernel stack is empty. Thus, we can push
-!       data into the kernel stack by writing directly to memory
+!	data into the kernel stack by writing directly to memory
 !
-	mov	si,_current		! pops SI from user stack and pushes
-	pop	TASK_KSTKT_SI[si]	! it directly into kernel stack
-	mov	TASK_USER_BP[si],bp	! Save user BP
+	mov	si,_current
+	add	si,#TASK_USER_SI	! pops SI from user stack and pushes
+	pop	[si]			! it directly into kernel stack
+	push	bp			! Save BP in the user stack
 !
 !	Stash user mode stack - needed for stack checking!
 !
-	mov	TASK_USER_SP[si],sp
+	mov	6[si],sp		! Save user SP
 !
 !	load kernel stack pointer
 !
-	lea	sp,TASK_KSTKT_SI[si]
+	mov	sp,si			! Load kernel SP
 !
 !	Finish switching to the right things
 !
@@ -635,14 +627,12 @@ _syscall_int:
 	call	_syscall
 	push	ax
 	mov	bx,_current
-	mov	8[bx],#0
+	mov	TASK_USER_FL[bx],#0
 	call	_do_signal
 	pop	ax
-	pop	bx
-	pop	cx
-	pop	dx
-	pop	di
-	pop	si
+_ret_from_syscall:
+	mov	bx,_current		! Ensure we have the
+	lea	sp,TASK_USER_BX[bx]	! right kernel SP
 #ifdef CONFIG_STRACE
 !
 !	ret_strace(retval)
@@ -652,24 +642,20 @@ _syscall_int:
 	pop	ax
 #endif
 !
-!	Now mend everything
+!	Restore registers
 !
-_ret_from_syscall:
 	cli
-	mov	bx,_current
-!
-!	At this point, the kernel stack is empty. Thus, there is no
-!       need to save the kernel stack pointer.
-!
-	mov	bp,TASK_USER_BP[bx]	! Restore user BP
-	mov	sp,TASK_USER_SP[bx]
-	mov	bx,TASK_USER_SS[bx]
-!
-!	User segment recovery
-!
-	mov	ds,bx
-	mov	es,bx
-	mov	ss,bx
+	pop	bx
+	pop	cx
+	pop	dx
+	pop	di
+	pop	si
+	pop	es
+	pop	ds
+	pop	bp			! Restore user SS:SP
+	pop	ss
+	mov	sp,bp
+	pop	bp			! Restore user BP
 !
 !	return with error info.
 !
@@ -695,5 +681,3 @@ _intr_count:
 	.zerow	256		! (was) 128 byte interrupt stack
 _intstack:
 
-#endasm
-#endif
