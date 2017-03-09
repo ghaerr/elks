@@ -31,12 +31,12 @@ struct _registers {
 typedef struct _registers		__registers,	*__pregisters;
 
 struct xregs {
-    __u16	cs, ksp, flags;
+    __u16	cs, ksp;
 };
 
 struct pt_regs {
-    __u16	bp, di, si, dx, cx, bx,
-		es, ds, ax, ip, cs, flags;
+    __u16	ax, bx, cx, dx, di, si,
+		es, ds, sp, ss;
 };
 
 /* Changed to unsigned short int as that is what it is here.
