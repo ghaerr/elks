@@ -118,20 +118,17 @@ void arch_setup_kernel_stack(register struct task_struct *t)
 void arch_setup_sighandler_stack(register struct task_struct *t,
 				 __sighandler_t addr,unsigned signr)
 {
-    register char *i;
-
-    for (i = 0; (int)i < (t->t_xregs.flags ? 18 : 2); i += 2)
-	put_ustack(t, (int)i-4, (int)get_ustack(t,(int)i));
-    debug4("Stack %x was %x %x %x\n", addr, get_ustack(t,(int)i), get_ustack(t,(int)i+2),
-	   get_ustack(t,(int)i+4));
-    put_ustack(t, (int)i-4, (int)addr);
-    put_ustack(t, (int)i-2, (int)get_ustack(t,(int)i+2));
-    put_ustack(t, (int)i+2, (int)get_ustack(t,(int)i));
-    put_ustack(t, (int)i, (int)get_ustack(t,(int)i+4));
-    put_ustack(t, (int)i+4, (int)signr);
+    debug5("Stack %x was %x %x %x %x\n", addr, get_ustack(t,0), get_ustack(t,2),
+	   get_ustack(t,4), get_ustack(t,6));
+    put_ustack(t, -4, (int)get_ustack(t,0));
+    put_ustack(t, -2, (int)addr);
+    put_ustack(t, 0, (int)get_ustack(t,4));
+    put_ustack(t, 4, (int)get_ustack(t,2));
+    put_ustack(t, 2, (int)get_ustack(t,6));
+    put_ustack(t, 6, (int)signr);
     t->t_regs.sp -= 4;
-    debug5("Stack is %x %x %x %x %x\n", get_ustack(t,(int)i), get_ustack(t,(int)i+2),
-	   get_ustack(t,(int)i+4),get_ustack(t,(int)i+6), get_ustack(t,(int)i+8));
+    debug6("Stack is %x %x %x %x %x %x\n", get_ustack(t,0), get_ustack(t,2),
+	   get_ustack(t,4), get_ustack(t,6), get_ustack(t,8), get_ustack(t,10));
 }
 
 /*
