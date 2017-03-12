@@ -38,7 +38,6 @@ struct termios def_vals = { BRKINT|ICRNL,
 
 #define TAB_SPACES 8
 
-#define MAX_TTYS NUM_TTYS
 struct tty ttys[MAX_TTYS];
 #if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT)
 extern struct tty_ops dircon_ops;
@@ -350,11 +349,10 @@ static struct file_operations tty_fops = {
 void tty_init(void)
 {
     register struct tty *ttyp;
-/*      unsigned short int i; */
     register char *pi;
 
     ttyp = ttys;
-    while (ttyp < &ttys[NUM_TTYS]) {
+    while (ttyp < &ttys[MAX_TTYS]) {
 	ttyp->minor = (unsigned short int)(-1L); /* set unsigned to -1 */
 	memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
 	ttyp++;
@@ -377,23 +375,21 @@ void tty_init(void)
 
 #ifdef CONFIG_CHAR_DEV_RS
 
-    ttyp = &ttys[4];
+    ttyp = &ttys[4]; /*put serial entries into ttys[4]-ttys[7] */
     for (pi = (char *)4; ((int)pi) < 4+NR_SERIAL; pi++) {
 	ttyp->ops = &rs_ops;
-	(ttyp++)->minor = ((int)pi) + 60;
+	(ttyp++)->minor = ((int)pi) +60; /* ttyS0 = 64 */
     }
 
 #endif
 
 #ifdef CONFIG_PSEUDO_TTY
-
-    ttyp = &ttys[4+NR_SERIAL];
-    for (pi = 4+(char *)NR_SERIAL; ((int)pi) < 4+NR_SERIAL+NR_PTYS; pi++) {
+    /* start at 8 fixed to match pty entries in MAKEDEV */
+    ttyp = &ttys[8]; /*put slave pseudo tty entries into ttys[8]-ttys[11] */
+    for (pi = 8; ((int)pi) < 12; pi++) {
 	ttyp->ops = &ttyp_ops;
 	(ttyp++)->minor = (int)pi;
     }
-    pty_init();
-
 #endif
 
     register_chrdev(TTY_MAJOR, "tty", &tty_fops);

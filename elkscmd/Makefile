@@ -21,7 +21,7 @@ include $(BASEDIR)/Make.defs
 
 DIRS		= sys_utils misc_utils disk_utils file_utils levee \
 		  minix1 minix2 minix3 ash bc mtools sash sh_utils \
-		  inet ktcp prems test/eth test/socket/echo
+		  inet ktcp prems test/eth test/socket/echo test/pty
 
 DONTUSE 	= debug_utils lib prn-utils rc tools xvi
 

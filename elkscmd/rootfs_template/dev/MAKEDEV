@@ -49,7 +49,14 @@ fi
 	$LINK  ram1	ramdisk
 
 ##############################################################################
-# Pseudo-TTY master devices. These are not yet supported by the ELKS kernel.
+# Pseudo-TTY master devices. 
+
+	$MKDEV ptyp0 c 2 8
+	$MKDEV ptyp1 c 2 9
+	$MKDEV ptyp2 c 2 10
+	$MKDEV ptyp3 c 2 11
+
+# These are not yet supported by the ELKS kernel.
 
 #	$MKSET   0 15 $MKDEV ptyp x 2
 #	$MKSET  16 15 $MKDEV ptyq x 2
@@ -77,8 +84,14 @@ fi
 #	$MKSET   0 3  $MKDEV fd b 2	# Ought to be.
 
 ##############################################################################
-# Pseudo-TTY master devices. These are not yet supported by the ELKS kernel.
+# Pseudo-TTY slave devices. 
 
+	$MKDEV ttyp0 c 4 8
+	$MKDEV ttyp1 c 4 9
+	$MKDEV ttyp2 c 4 10
+	$MKDEV ttyp3 c 4 11
+
+# These are not yet supported by the ELKS kernel.
 #	$MKSET   0 15 $MKDEV ttyp x 3
 #	$MKSET  16 15 $MKDEV ttyq x 3
 #	$MKSET  32 15 $MKDEV ttyr x 3
