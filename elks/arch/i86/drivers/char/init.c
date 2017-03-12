@@ -34,4 +34,7 @@ void chr_dev_init(void)
     eth_init ();
 #endif
 
+#ifdef CONFIG_PSEUDO_TTY    
+    pty_init();    
+#endif
 }
