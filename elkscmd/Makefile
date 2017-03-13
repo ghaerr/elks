@@ -54,11 +54,11 @@ all:
 	+@for i in $(DIRS); do make -C $$i all ; done
 
 images_clean:
-	-umount $(IMAGES) || true
+	-umount -d $(IMAGES) || true
 	-rm -f $(IMAGES) images.zip images.tar.*
 
 clean:
-	-umount $(IMAGES) || true
+	-umount -d $(IMAGES) || true
 	-rm -f $(IMAGES) core images.zip images.tar.*
 	-rm -rf $(ROOTDIR)
 	-rm -f *~
@@ -108,11 +108,11 @@ _build_bootable_target: boot_blocks _build_target kernel_image
 	cp $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
 	-@cp $(KHELPER) $(TARGET_MNT)/boot/boot || \
 	echo -e "\n\n *** WARNING: Failed to copy boot binary ***\n\n"
-	umount $(TARGET_FS)
+	umount -d $(TARGET_FS)
 	dd if=$(FD_BSECT) of=$(TARGET_FS) bs=512 count=2 conv=notrunc 2>/dev/null
 
 _build_nonbootable_target: _build_target
-	umount $(TARGET_FS)
+	umount -d $(TARGET_FS)
 
 _build_target: all banner check_id _populate_target
 
@@ -129,7 +129,7 @@ _populate_target: _mount_target
 _mount_target:
 	@if [ "$(shell id -u)" != "0" ]; \
 	then echo -e "\n\n *** Only root can build disk images *** \n\n"; exit 1; fi
-	umount $(TARGET_FS) >/dev/null 2>&1 || true
+	umount -d $(TARGET_FS) >/dev/null 2>&1 || true
 	dd if=/dev/zero of=$(TARGET_FS) bs=1024 count=$(TARGET_BLKS) 2>/dev/null
 	$(MKFS) $(MKFS_OPTS) $(TARGET_FS) >/dev/null
 	mkdir -p $(TARGET_MNT)
