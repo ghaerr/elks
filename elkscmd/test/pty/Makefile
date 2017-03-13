@@ -19,7 +19,7 @@ eth:	$(OBJS)
 
 smin_rfs: install
 
-min_rfs: install
+min_rfs:
 
 rfs: install
 
