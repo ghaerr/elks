@@ -190,12 +190,12 @@ int tty_outproc(register struct tty *tty)
 void tty_echo(register struct tty *tty, unsigned char ch)
 {
     if ((tty->termios.c_lflag & ECHO)
-		/*|| ((tty->termios.c_lflag & ECHONL) && (ch == '\n'))*/) {
+		|| ((tty->termios.c_lflag & ECHONL) && (ch == '\n'))) {
 	chq_addch(&tty->outq, ch);
-/*	if ((ch == '\b') && (tty->termios.c_lflag & ECHOE)) {
+	if ((ch == '\b') && (tty->termios.c_lflag & ECHOE)) {
 	    chq_addch(&tty->outq, ' ');
 	    chq_addch(&tty->outq, '\b');
-	}*/
+	}
 	tty->ops->write(tty);
     }
 }
@@ -249,7 +249,7 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 	    ch = chq_getch(&tty->inq);
 
 	    if (icanon) {
-		if (ch == /*tty->termios.c_cc[VERASE]*/'\b') {
+		if (ch == tty->termios.c_cc[VERASE]) {
 		    if ((int)pi > 0) {
 			pi--;
 			k = ((get_user_char((void *)(--data))
@@ -260,17 +260,17 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 		    }
 		    continue;
 		}
-		if (/*(tty->termios.c_iflag & ICRNL) && */(ch == '\r'))
+		if ((tty->termios.c_iflag & ICRNL) && (ch == '\r'))
 		    ch = '\n';
 
-		if (ch == 04/*tty->termios.c_cc[VEOF]*/)
+		if (ch == tty->termios.c_cc[VEOF])
 		    break;
 	    }
 	    put_user_char(ch, (void *)(data++));
 	    tty_echo(tty, ch);
 	    if ((int)(++pi) >= len)
 		break;
-	} while ((icanon && (ch != '\n') /*&& (ch != tty->termios.c_cc[VEOL])*/)
+	} while ((icanon && (ch != '\n') && (ch != tty->termios.c_cc[VEOL]))
 		    || (!icanon && (pi < tty->termios.c_cc[VMIN])));
     }
     return (int)pi;
