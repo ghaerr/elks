@@ -18,9 +18,11 @@ NETDUMP=
 
 # Host forwarding for networking
 # no forwarding - only outgoing from ELKS to host
-HOSTFWD="-net user"
-# incoming telnet forwarding - example: connect to ELKS with telnet localhost:2323
-#HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
+#HOSTFWD="-net user"
+# incoming echo client for echo server on ELKS
+#HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:2323"
+# incoming telnet forwarding - example: connect to ELKS with telnet localhost 2323
+HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
 # telnet and http forwarding - example: connect to ELKS httpd with 'http://localhost:8080'
 #HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80"
 

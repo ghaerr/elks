@@ -10,7 +10,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-DIRS=nettools httpd telnet tinyirc urlget
+DIRS=nettools httpd telnet tinyirc urlget telnetd
 
 DIRS2=
 

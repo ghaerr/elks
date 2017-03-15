@@ -28,7 +28,8 @@ then
 	echo ' ktcp'
 	
 	echo -n "Starting network services: "
-	for daemon in telnetd ftpd httpd
+	for daemon in telnetd 
+	#ftpd httpd
 	do
 		if test -f /bin/$daemon 
 		then
