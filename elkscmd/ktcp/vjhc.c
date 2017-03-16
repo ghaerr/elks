@@ -83,6 +83,59 @@ static int rcv_toss;
 static rcv_state_ut *rcv_state;
 static rcv_state_ut *rcv_last;
 
+
+/*************************************************************/
+
+/* Encode/decode ops - used to be macros, changed to functions
+ * for reduced code size except for decodeu which is only used
+ * one time anyway */
+
+void vjhc_encode(__u8 *cp, const __u32 n)
+{
+	if ((__u16)n >= 256) {
+		*(cp)++ = 0;
+		*(cp)++ = (n >> 8);
+		*(cp)++ = n;
+	} else *(cp)++ = n;
+}
+
+void vjhc_encodez(__u8 *cp, const __u32 n)
+{
+	if ((__u16)n == 0 || (__u16)n >= 256) {
+		*(cp)++ = 0;
+		*(cp)++ = (n >> 8);
+		*(cp)++ = n;
+	} else *(cp)++ = n;
+}
+
+void vjhc_decodel(__u8 *cp, __u32 *l) \
+{ \
+	if (*cp == 0) { \
+		*l = htonl(ntohl(*l) + ((cp[1] << 8) | cp[2])); \
+		cp += 3; \
+	} else l = htonl(ntohl(*l) + (__u32)*(cp)++); \
+}
+
+void vjhc_decodes(__u8 *cp, __u16 *s)
+{
+	if (*cp == 0) {
+		*s = htons(ntohs(*s) + ((cp[1] << 8) | cp[2]));
+		cp += 3;
+	} else *s = htons(ntohs(*s) + (__u16)*(cp)++);
+}
+
+#define vjhc_decodeu(cp, s) \
+{ \
+	if (*(cp) == 0) { \
+		(s)= htons(((cp)[1] << 8) | (cp)[2]); \
+		(cp) += 3; \
+	} else (s)= htons((__u16)*(cp)++); \
+}
+
+
+/*************************************************************/
+
+
 void ip_vjhc_init(void)
 {
 	int i;
@@ -235,7 +288,7 @@ int ip_vjhc_compress(pkt_ut *pkt)
 
 	if (tcp_hdr->flags & TF_URG) {
 		delta= ntohs(tcp_hdr->urgpnt);
-		VJHC_ENCODEZ(cp, delta);
+		vjhc_encodez(cp, delta);
 		changes |= VJHC_FLAG_U;
 	} else if (tcp_hdr->urgpnt != otcp_hdr->urgpnt) {
 		DBG(if (opt_d) fprintf(stderr, "ip_vjhc_compress: unexpected urgent pointer change\n");)
@@ -245,7 +298,7 @@ int ip_vjhc_compress(pkt_ut *pkt)
 	}
 
 	if ((delta= (__u16)(ntohs(tcp_hdr->window) - ntohs(otcp_hdr->window))) != 0) {
-		VJHC_ENCODE(cp, delta);
+		vjhc_encode(cp, delta);
 		changes |= VJHC_FLAG_W;
 	}
 	if ((deltaA= (__u32)(ntohl(tcp_hdr->acknum) - ntohl(otcp_hdr->acknum))) != 0) {
@@ -257,7 +310,7 @@ int ip_vjhc_compress(pkt_ut *pkt)
 		}
 		DBG(if (opt_d) fprintf(stderr, "ip_vjhc_compress: ack= 0x%08x, oack= 0x%08x, deltaA= 0x%x\n",
 			tcp_hdr->th_ack_nr, otcp_hdr->th_ack_nr, deltaA);)
-		VJHC_ENCODE(cp, deltaA);
+		vjhc_encode(cp, deltaA);
 		changes |= VJHC_FLAG_A;
 	}
 	if ((deltaS= (__u32)(ntohl(tcp_hdr->seqnum) - ntohl(otcp_hdr->seqnum))) != 0) {
@@ -267,7 +320,7 @@ int ip_vjhc_compress(pkt_ut *pkt)
 			xmit_last= ip_hdr->protocol= state->s_indx;
 			return PPP_TYPE_VJHC_UNCOMPR;
 		}
-		VJHC_ENCODE(cp, deltaS);
+		vjhc_encode(cp, deltaS);
 		changes |= VJHC_FLAG_S;
 	}
 
@@ -306,7 +359,7 @@ int ip_vjhc_compress(pkt_ut *pkt)
 	}
 
 	if ((delta= ntohs(ip_hdr->id) - ntohs(oip_hdr->id)) != 1) {
-		VJHC_ENCODEZ(cp, delta);
+		vjhc_encodez(cp, delta);
 		changes |= VJHC_FLAG_I;
 	}
 	if (tcp_hdr->flags & TF_PSH) changes |= VJHC_FLAG_P;
@@ -427,25 +480,22 @@ void ip_vjhc_arr_compr(pkt_ut *pkt)
 	default:
 		if (changes & VJHC_FLAG_U) {
 			tcp_hdr->flags |= TF_URG;
-			VJHC_DECODEU(cp, tcp_hdr->urgpnt);
+			vjhc_decodeu(cp, tcp_hdr->urgpnt);
 		} else tcp_hdr->flags &= ~TF_URG;
-		if (changes & VJHC_FLAG_W) {
-			VJHC_DECODES(cp, tcp_hdr->window);
-		}
+		if (changes & VJHC_FLAG_W) vjhc_decodes(cp, &(tcp_hdr->window));
 		if (changes & VJHC_FLAG_A) {
 			DBG(if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: oack= 0x%08x\n",
 				tcp_hdr->acknum);)
-			VJHC_DECODEL(cp, tcp_hdr->acknum);
+			vjhc_decodel(cp, &(tcp_hdr->acknum));
 			DBG(if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: ack= 0x%08x\n",
 				tcp_hdr->acknum);)
 		}
-		if (changes & VJHC_FLAG_S) VJHC_DECODEL(cp, tcp_hdr->seqnum);
+		if (changes & VJHC_FLAG_S) vjhc_decodel(cp, &(tcp_hdr->seqnum));
 		break;
 	}
 
-	if (changes & VJHC_FLAG_I) {
-		VJHC_DECODES(cp, ip_hdr->id);
-	} else ip_hdr->id= htons(ntohs(ip_hdr->id) + 1);
+	if (changes & VJHC_FLAG_I) vjhc_decodes(cp, &(ip_hdr->id));
+	else ip_hdr->id= htons(ntohs(ip_hdr->id) + 1);
 
 	delta= cp - (__u8 *)(pkt->p_data+pkt->p_offset);
 	if (delta > pkt->p_size) {
