@@ -360,28 +360,24 @@ static int empty_dir(register struct inode *inode)
     loff_t offset;
     register struct buffer_head *bh;
     struct minix_dir_entry *de;
+    unsigned short dirsize;
 
-    if (!inode || !inode->i_sb)
-	goto empt_dir;
+    if (!inode || !inode->i_sb) goto empt_dir;
+    /* Cache s_dirsize to reduce dereference overhead */
+    dirsize = inode->i_sb->u.minix_sb.s_dirsize;
+
     block = 0;
     bh = NULL;
-    offset = (inode->i_sb->u.minix_sb.s_dirsize << 1);
-    if (inode->i_size & (inode->i_sb->u.minix_sb.s_dirsize - 1))
-	goto bad_dir;
-    if (inode->i_size < (__u32) offset)
-	goto bad_dir;
+    offset = (dirsize << 1);
+    if (inode->i_size & (dirsize - 1)) goto bad_dir;
+    if (inode->i_size < (__u32) offset) goto bad_dir;
     bh = minix_bread(inode, 0, 0);
-    if (!bh)
-	goto bad_dir;
+    if (!bh) goto bad_dir;
     map_buffer(bh);
     de = (struct minix_dir_entry *) bh->b_data;
-    if (!de->inode || strcmp(de->name, "."))
-	goto bad_dir;
-    de =
-	(struct minix_dir_entry *) (bh->b_data +
-				    inode->i_sb->u.minix_sb.s_dirsize);
-    if (!de->inode || strcmp(de->name, ".."))
-	goto bad_dir;
+    if (!de->inode || strcmp(de->name, ".")) goto bad_dir;
+    de = (struct minix_dir_entry *) (bh->b_data + dirsize);
+    if (!de->inode || strcmp(de->name, "..")) goto bad_dir;
     while (block * 1024L + offset < inode->i_size) {
 	if (!bh) {
 	    bh = minix_bread(inode, block, 0);
@@ -391,13 +387,12 @@ static int empty_dir(register struct inode *inode)
 	    }
 	}
 	de = (struct minix_dir_entry *) (bh->b_data + offset);
-	offset += inode->i_sb->u.minix_sb.s_dirsize;
+	offset += dirsize;
 	if (de->inode) {
 	    unmap_brelse(bh);
 	    return 0;
 	}
-	if (offset < 1024L)
-	    continue;
+	if (offset < 1024L) continue;
 	unmap_brelse(bh);
 	bh = NULL;
 	offset = 0L;
