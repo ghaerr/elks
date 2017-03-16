@@ -428,7 +428,7 @@ int do_mknod(char *pathname, size_t offst, int mode, dev_t dev)
 		if (!iop || !(op = (offst ? ((offst > 1)
 						? iop->symlink
 						: iop->mkdir)
-					: iop->mknod))) {	      
+					: iop->mknod))) {
 		error = -EPERM;
 	   } else {
 		dirp->i_count++;

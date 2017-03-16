@@ -221,7 +221,7 @@ void out_hd(unsigned int drive,unsigned int nsect,unsigned int sect,
     unsigned int port;
 
     port = io_ports[drive / 2];
-    /* setting WPCOM to 0 is not good. this change uses the last value input to 
+    /* setting WPCOM to 0 is not good. this change uses the last value input to
      * the drive. (my BIOS sets this correctly, so it works for now but we should
      * fix this to work properly)  -- Alastair Bridgewater */
     /* this doesn't matter on newer (IDE) drives, but is important for MFM/RLLs
@@ -272,10 +272,10 @@ int directhd_init(void)
 	    printk("athd: drive %d (%d on port 0x%x) not found\n", drive,
 		   drive / 2, port);
 #endif
-	    continue;		/* this jumps to the start of for loop and 
+	    continue;		/* this jumps to the start of for loop and
 				 * proceeds with checking for other drives
 				 */
-	    /* this could use some optimisation as it is unlikely for 
+	    /* this could use some optimisation as it is unlikely for
 	     * computer to have slave drive on channel where master is
 	     * missing
 	     *
@@ -307,12 +307,12 @@ int directhd_init(void)
 	 * Safety check - check for heads returned and assume CD
 	 * if we get typical CD response .. this is a good place for
 	 * ATAPI ID, but it'd only enlarge the kernel and no HD can
-	 * have 60416 heads :-))) .. 4096 heads should cover it, 
+	 * have 60416 heads :-))) .. 4096 heads should cover it,
 	 * IDE will be dead by that time
-	 * 
+	 *
 	 * Maybe we can assume some specific number here ? i always
 	 * get 60416 with ATAPI (Mitsumi) CD - Blaz Antonic
-	 * 
+	 *
 	 * Safety check - head, cyl and sector values must be other than
 	 * 0 and buffer has to contain valid data (first entry in buffer
 	 * must be other than 0)

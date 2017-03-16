@@ -180,7 +180,7 @@ static struct inode *get_empty_inode(void)
 	}
 	inode = inode->i_next;
     }
-	    
+
 /* Here we are doing the same checks again. There cannot be a significant *
  * race condition here - no time has passed */
 #if 0

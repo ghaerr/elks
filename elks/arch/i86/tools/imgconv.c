@@ -2,24 +2,24 @@
 ***
 *** Filename         : imgconv.c
 *** Purpose          : converts a.out executables produced by bcc/as86/ld86
-***                    to the Psion .img format. This program is invoked when 
+***                    to the Psion .img format. This program is invoked when
 ***                    linking from bcc if the -img option is used.
 *** Author(s)        : Matt J. Gumbley <matt@cs.keele.ac.uk>
 ***                    This program was pieced together from postings to the
-***                    comp.sys.psion.programmer newsgroup, in particular, I'd 
-***                    like to thank the following for their efforts in 
+***                    comp.sys.psion.programmer newsgroup, in particular, I'd
+***                    like to thank the following for their efforts in
 ***                    discovering and publishing the format of the .img file:
-***                    Dr. Olaf Flebbe 
+***                    Dr. Olaf Flebbe
 ***                      <o.flebbe@science-computing.uni-tubingen.de>
 ***                      (for writing an initial version of this; his comments
 ***                       left intact)
 ***                    Alasdair Manson <ali-manson@psion.com>
 ***                      (for publishing the .img file structure)
 ***                    Andrew Lord     <Andrew_Lord@tertio.co.uk>
-***                      (for asking about the .img file and investigating 
+***                      (for asking about the .img file and investigating
 ***                       bcc's suitability for developing Psion programs)
 ***                    Nic Wise        <email address to be supplied later!>
-***                      (for porting the toolset to DOS, pointing out 
+***                      (for porting the toolset to DOS, pointing out
 ***                       incompatibilities.)
 ***                    Keith Walker <kdw@oasis.icl.co.uk>
 ***                      (CPOC author, with Dave Walker, for help with .img
@@ -55,7 +55,7 @@ emulator with a simple image containing the `ret' instruction ;-)
 The IMG Format was reverse engeniered by me. So, please comment if anybody
 knows details....for instance what do the magic numbers mean?
 
-BTW: Is it true, that the Psion Img format knows no .bss segment? 
+BTW: Is it true, that the Psion Img format knows no .bss segment?
 (.bss==uninitialzed data segment)
 
 The code compiles on Linux. The Header "bsd-a.out.h" is from
@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
 
     /* Olaf missed the DylTableOffset off this, methinks...
      * fwrite( img_ar, 12, 2, img_fd);
-     * for (i=0 ; i < 12; i++) 
+     * for (i=0 ; i < 12; i++)
      *   img_ar[i] = 0;
      * fwrite( img_ar, 12, 2, img_fd);*/
 

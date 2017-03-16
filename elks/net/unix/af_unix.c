@@ -480,7 +480,7 @@ static int unix_select(struct socket *sock, int sel_type, select_table * wait)
 {
     struct unix_proto_data *upd, *peerupd;
 
-    /* 
+    /*
      *      Handle server sockets specially.
      */
 
@@ -529,7 +529,7 @@ static int unix_select(struct socket *sock, int sel_type, select_table * wait)
     }
 
     /*
-     * Exceptions - SEL_EX 
+     * Exceptions - SEL_EX
      */
 
     return 0;
