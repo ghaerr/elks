@@ -42,6 +42,15 @@ Created:	Nov 11, 1993 by Philip Homburg <philip@cs.vu.nl>
 #define IH_DONT_FRAG    0x4000
 #define IH_FRAGOFF_MASK 0x1fff
 
+/* Debugging code inclusion - note debug code doesn't work because
+ * the variable 'opt_d' doesn't exist, presumably because this was
+ * ported from something else that provided it. */
+#ifdef DEBUGHC
+#define DBG(a) a
+#else
+#define DBG(a)
+#endif
+
 typedef struct snd_state
 {
 	int s_indx;
@@ -126,29 +135,21 @@ int ip_vjhc_compress(pkt_ut *pkt)
 
 	if (pkt->p_size < IP_MIN_HDR_SIZE + TCP_MIN_HDR_SIZE)
 	{
-#ifdef DEBUGHC
-		if (opt_d) fprintf(stderr,"ip_vjhc_compress: packet too small %d\n",
-			pkt->p_size);
-#endif
+		DBG(if (opt_d) fprintf(stderr,"ip_vjhc_compress: packet too small %d\n", pkt->p_size);)
 		return PPP_TYPE_IP;
 	}
 	ip_hdr= (iphdr_t *)(pkt->p_data + pkt->p_offset);
 	if ((ntohs(ip_hdr->frag_off) &
 		(IH_MORE_FRAGS | IH_FRAGOFF_MASK)) != 0)
 	{
-#ifdef DEBUGHC
-		if (opt_d) fprintf(stderr,"ip_vjhc_compress: fragmented packet\n");
-#endif
+		DBG(if (opt_d) fprintf(stderr,"ip_vjhc_compress: fragmented packet\n");)
 		return PPP_TYPE_IP;
 	}
 	ip_hdr_len= (ip_hdr->version_ihl & IH_IHL_MASK) * 4;
 	tcp_hdr= (tcphdr_t *)(pkt->p_data + pkt->p_offset + ip_hdr_len);
-	if ((tcp_hdr->flags & (TF_SYN | TF_FIN | TF_RST | TF_ACK)) !=
-		TF_ACK)
+	if ((tcp_hdr->flags & (TF_SYN | TF_FIN | TF_RST | TF_ACK)) != TF_ACK)
 	{
-#ifdef DEBUGHC
-		if (opt_d) fprintf(stderr,"ip_vjhc_compress: wrong flags in TCP header\n");
-#endif
+		DBG(if (opt_d) fprintf(stderr,"ip_vjhc_compress: wrong flags in TCP header\n");)
 		return PPP_TYPE_IP;
 	}
 	tcp_hdr_len= TCP_DATAOFF(tcp_hdr);	/* !!! */
@@ -169,20 +170,16 @@ int ip_vjhc_compress(pkt_ut *pkt)
 			fprintf(stderr, "%x ", *cp);
 		fprintf(stderr, "\n");
 	}
-#endif
-	for (prev= NULL, state= xmit_head;; ) {
+#endif /* DEBUGHC */
+	for (prev = NULL, state = xmit_head;;) {
 		if (ip_hdr->saddr == state->s_src_ip &&
 			ip_hdr->daddr == state->s_dst_ip &&
 			*(__u32 *)&tcp_hdr->sport ==
 			state->s_srcdst_port)
 		{
-#ifdef DEBUGHC
-			if (opt_d) fprintf(stderr, "ip_vjhc_compress: found entry\n");
-#endif
+			DBG(if (opt_d) fprintf(stderr, "ip_vjhc_compress: found entry\n");)
 			if (prev != NULL) {
-#ifdef DEBUGHC
-				if (opt_d) fprintf(stderr, "ip_vjhc_compress: moving entry to front\n");
-#endif
+				DBG(if (opt_d) fprintf(stderr, "ip_vjhc_compress: moving entry to front\n");)
 				prev->s_next= state->s_next;
 				state->s_next= xmit_head;
 				xmit_head= state;
@@ -205,11 +202,9 @@ int ip_vjhc_compress(pkt_ut *pkt)
 		state->s_src_ip= ip_hdr->saddr;
 		state->s_dst_ip= ip_hdr->daddr;
 		state->s_srcdst_port= *(__u32 *)&tcp_hdr->sport;
-#ifdef DEBUGHC
-		if (opt_d) fprintf(stderr,"ip_vjhc_compress: new entry: %x, %x, %x\n",
+		DBG(if (opt_d) fprintf(stderr,"ip_vjhc_compress: new entry: %x, %x, %x\n",
 			state->s_src_ip, state->s_dst_ip,
-			state->s_srcdst_port );
-#endif
+			state->s_srcdst_port );)
 		memcpy(state->s_data, ip_hdr, tot_len);
 		xmit_last= ip_hdr->protocol= state->s_indx;
 		return PPP_TYPE_VJHC_UNCOMPR;
@@ -229,9 +224,7 @@ int ip_vjhc_compress(pkt_ut *pkt)
 		(tcp_hdr_len > 20 && memcmp(&tcp_hdr[1], &otcp_hdr[1],
 			tcp_hdr_len-20) != 0))
 	{
-#ifdef DEBUGHC
-		if (opt_d) fprintf(stderr,"ip_vjhc_compress: ip or tcp header changed\n");
-#endif
+		DBG(if (opt_d) fprintf(stderr,"ip_vjhc_compress: ip or tcp header changed\n");)
 		memcpy(state->s_data, ip_hdr, tot_len);
 		xmit_last= ip_hdr->protocol= state->s_indx;
 		return PPP_TYPE_VJHC_UNCOMPR;
@@ -245,9 +238,7 @@ int ip_vjhc_compress(pkt_ut *pkt)
 		VJHC_ENCODEZ(cp, delta);
 		changes |= VJHC_FLAG_U;
 	} else if (tcp_hdr->urgpnt != otcp_hdr->urgpnt) {
-#ifdef DEBUGHC
-		if (opt_d) fprintf(stderr, "ip_vjhc_compress: unexpected urgent pointer change\n");
-#endif
+		DBG(if (opt_d) fprintf(stderr, "ip_vjhc_compress: unexpected urgent pointer change\n");)
 		memcpy(state->s_data, ip_hdr, tot_len);
 		xmit_last= ip_hdr->protocol= state->s_indx;
 		return PPP_TYPE_VJHC_UNCOMPR;
@@ -259,25 +250,19 @@ int ip_vjhc_compress(pkt_ut *pkt)
 	}
 	if ((deltaA= (__u32)(ntohl(tcp_hdr->acknum) - ntohl(otcp_hdr->acknum))) != 0) {
 		if (deltaA > 0xffff) {
-#ifdef DEBUGHC
-			if (opt_d) fprintf(stderr, "ip_vjhc_compress: bad ack change\n");
-#endif
+			DBG(if (opt_d) fprintf(stderr, "ip_vjhc_compress: bad ack change\n");)
 			memcpy(state->s_data, ip_hdr, tot_len);
 			xmit_last= ip_hdr->protocol= state->s_indx;
 			return PPP_TYPE_VJHC_UNCOMPR;
 		}
-#ifdef DEBUGHC
-		if (opt_d) fprintf(stderr, "ip_vjhc_compress: ack= 0x%08x, oack= 0x%08x, deltaA= 0x%x\n",
-			tcp_hdr->th_ack_nr, otcp_hdr->th_ack_nr, deltaA);
-#endif
+		DBG(if (opt_d) fprintf(stderr, "ip_vjhc_compress: ack= 0x%08x, oack= 0x%08x, deltaA= 0x%x\n",
+			tcp_hdr->th_ack_nr, otcp_hdr->th_ack_nr, deltaA);)
 		VJHC_ENCODE(cp, deltaA);
 		changes |= VJHC_FLAG_A;
 	}
 	if ((deltaS= (__u32)(ntohl(tcp_hdr->seqnum) - ntohl(otcp_hdr->seqnum))) != 0) {
 		if (deltaS > 0xffff) {
-#ifdef DEBUGHC
-			if (opt_d) fprintf(stderr, "ip_vjhc_compress: bad seq change\n");
-#endif
+			DBG(if (opt_d) fprintf(stderr, "ip_vjhc_compress: bad seq change\n");)
 			memcpy(state->s_data, ip_hdr, tot_len);
 			xmit_last= ip_hdr->protocol= state->s_indx;
 			return PPP_TYPE_VJHC_UNCOMPR;
@@ -292,28 +277,20 @@ int ip_vjhc_compress(pkt_ut *pkt)
 		if (ip_hdr->tot_len != oip_hdr->tot_len &&
 			ntohs(oip_hdr->tot_len) == tot_len)
 			break;
-#ifdef DEBUGHC
-		if (opt_d) fprintf(stderr, "ip_vjhc_compress: retransmission\n");
-#endif
+		DBG(if (opt_d) fprintf(stderr, "ip_vjhc_compress: retransmission\n");)
 		/* Fall through */
 
 	case VJHC_SPEC_I:
 	case VJHC_SPEC_D:
-#ifdef DEBUGHC
-		if ((changes != 0) & opt_d)
-			fprintf(stderr, "ip_vjhc_compress: bad special case\n");
-#endif
+		DBG(if ((changes != 0) & opt_d)
+			fprintf(stderr, "ip_vjhc_compress: bad special case\n");)
 		memcpy(state->s_data, ip_hdr, tot_len);
 		xmit_last= ip_hdr->protocol= state->s_indx;
 		return PPP_TYPE_VJHC_UNCOMPR;
 
 	case VJHC_FLAG_S | VJHC_FLAG_A:
-		if (deltaS == deltaA &&
-			deltaS == ntohs(oip_hdr->tot_len) - tot_len)
-		{
-#ifdef DEBUGHC
-			if (opt_d) fprintf(stderr, "ip_vjhc_compress: special case I\n");
-#endif
+		if (deltaS == deltaA && deltaS == ntohs(oip_hdr->tot_len) - tot_len) {
+			DBG(if (opt_d) fprintf(stderr, "ip_vjhc_compress: special case I\n");)
 			changes= VJHC_SPEC_I;
 			cp= new_hdr;
 		}
@@ -321,9 +298,7 @@ int ip_vjhc_compress(pkt_ut *pkt)
 
 	case VJHC_FLAG_S:
 		if (deltaS == ntohs(oip_hdr->tot_len) - tot_len) {
-#ifdef DEBUGHC
-			if (opt_d) fprintf(stderr, "ip_vjhc_compress: special case D\n");
-#endif
+			DBG(if (opt_d) fprintf(stderr, "ip_vjhc_compress: special case D\n");)
 			changes= VJHC_SPEC_D;
 			cp= new_hdr;
 		}
@@ -368,13 +343,9 @@ void ip_vjhc_arr_uncompr(pkt_ut *pkt)
 	ip_hdr= (iphdr_t *)(pkt->p_data + pkt->p_offset);
 	slot= ip_hdr->protocol;
 	ip_hdr->protocol= PROTO_TCP;
-#ifdef DEBUGHC
-	if (opt_d) fprintf(stderr, "ip_vjhc_arr_uncompr: packet at slot %d\n", slot); 
-#endif
+	DBG(if (opt_d) fprintf(stderr, "ip_vjhc_arr_uncompr: packet at slot %d\n", slot); )
 	if (slot >= ip_rcv_vjhc_state_nr) {
-#ifdef DEBUGHC
-		if (opt_d) fprintf(stderr, "ip_vjhc_arr_uncompr: bad slot\n"); 
-#endif
+		DBG(if (opt_d) fprintf(stderr, "ip_vjhc_arr_uncompr: bad slot\n");)
 		rcv_toss= 1;
 		pkt->p_size = 0;
 		return;
@@ -408,18 +379,12 @@ void ip_vjhc_arr_compr(pkt_ut *pkt)
 
 	cp= (__u8 *)pkt->p_data + pkt->p_offset;
 	changes= *cp++;
-#ifdef DEBUGHC
-	if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: changes= 0x%x\n", changes); 
-#endif
+	DBG(if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: changes= 0x%x\n", changes);)
 	if (changes & VJHC_FLAG_C) {
 		slot= *cp++;
-#ifdef DEBUGHC
-		if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: packet at slot %d\n", slot); 
-#endif
+		DBG(if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: packet at slot %d\n", slot);)
 		if (slot >= ip_rcv_vjhc_state_nr) {
-#ifdef DEBUGHC
-			if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: bad slot\n"); 
-#endif
+			DBG(if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: bad slot\n");)
 			rcv_toss= 1;
 			pkt->p_size=0;
 			return;
@@ -428,16 +393,13 @@ void ip_vjhc_arr_compr(pkt_ut *pkt)
 		rcv_toss= 0;
 	} else {
 		if (!ip_rcv_vjhc_compress_cid) {
-#ifdef DEBUGHC
-			if (opt_d) fprintf(stderr, "ip_vjhc_arr_compr: got compressed id but id compression is not enabled\n");
-#endif
+			DBG(if (opt_d) fprintf(stderr,
+				"ip_vjhc_arr_compr: got compressed id but id compression is not enabled\n");)
 			pkt->p_size=0;
 			return;
 		}
 		if (rcv_toss) {
-#ifdef DEBUGHC
-			if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: tossing packets\n"); 
-#endif
+			DBG(if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: tossing packets\n");)
 			pkt->p_size=0;
 			return;
 		}
@@ -467,18 +429,15 @@ void ip_vjhc_arr_compr(pkt_ut *pkt)
 			tcp_hdr->flags |= TF_URG;
 			VJHC_DECODEU(cp, tcp_hdr->urgpnt);
 		} else tcp_hdr->flags &= ~TF_URG;
-		if (changes & VJHC_FLAG_W) VJHC_DECODES(cp, tcp_hdr->window);
-		if (changes & VJHC_FLAG_A)
-		{
-#ifdef DEBUGHC
-			if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: oack= 0x%08x\n",
-				tcp_hdr->acknum); 
-#endif
+		if (changes & VJHC_FLAG_W) {
+			VJHC_DECODES(cp, tcp_hdr->window);
+		}
+		if (changes & VJHC_FLAG_A) {
+			DBG(if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: oack= 0x%08x\n",
+				tcp_hdr->acknum);)
 			VJHC_DECODEL(cp, tcp_hdr->acknum);
-#ifdef DEBUGHC
-			if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: ack= 0x%08x\n",
-				tcp_hdr->acknum); 
-#endif
+			DBG(if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: ack= 0x%08x\n",
+				tcp_hdr->acknum);)
 		}
 		if (changes & VJHC_FLAG_S) VJHC_DECODEL(cp, tcp_hdr->seqnum);
 		break;
@@ -490,9 +449,7 @@ void ip_vjhc_arr_compr(pkt_ut *pkt)
 
 	delta= cp - (__u8 *)(pkt->p_data+pkt->p_offset);
 	if (delta > pkt->p_size) {
-#ifdef DEBUGHC
-		if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: truncated packet\n"); 
-#endif
+		DBG(if (opt_d) fprintf(stderr,"ip_vjhc_arr_compr: truncated packet\n");)
 		rcv_toss= 1;
 		pkt->p_size=0;
 		return;
@@ -500,9 +457,7 @@ void ip_vjhc_arr_compr(pkt_ut *pkt)
 	pkt->p_offset += delta;
 	pkt->p_size -= delta;
 	if (pkt->p_offset < tot_len) {
-#ifdef DEBUGHC
-		if (opt_d) fprintf(stderr, "ip_vjhc_arr_compr: not enough space to insert header\n"); 
-#endif
+		DBG(if (opt_d) fprintf(stderr, "ip_vjhc_arr_compr: not enough space to insert header\n");)
 		rcv_toss= 1;
 		pkt->p_size=0;
 		return;
@@ -529,7 +484,7 @@ void ip_vjhc_arr_compr(pkt_ut *pkt)
 			fprintf(stderr, "%x ", *cp);
 		fprintf(stderr, "\n");
 	}
-#endif
+#endif /* DEBUGHC */
 }
 
 #endif  /* CSLIP */
