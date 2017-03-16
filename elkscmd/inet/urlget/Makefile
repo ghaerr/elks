@@ -30,7 +30,7 @@ net_rfs: all
 install: all
 	cp -p urlget $(TARGET_MNT)/bin
 #urlget.c checks its own name to branch to ftp	
-	cp -p urlget $(TARGET_MNT)/bin/ftpget
+	ln -s urlget $(TARGET_MNT)/bin/ftpget
 
 clean:
 	rm -f urlget *.o
