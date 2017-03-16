@@ -230,6 +230,7 @@ int flags;
 		default: output("cs??"); break;
 		}
 	}
+
 	print_flags(c_cflag, (unsigned long)PARENB, (unsigned long)TCTRL_DEF, "-parenb", all);
 	print_flags(c_cflag, (unsigned long)PARODD, (unsigned long)TCTRL_DEF, "-parodd", all);
 	print_flags(c_cflag, (unsigned long)HUPCL, (unsigned long)TCTRL_DEF, "-hupcl", all);

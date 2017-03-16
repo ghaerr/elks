@@ -23,7 +23,7 @@
  * Revision 4.0  85/07/30  12:50:00  joe
  *   Removed ferror() calls in output routine on every output except first.
  *   Prepared for release to the world.
- * 
+ *
  * Revision 3.6  85/07/04  01:22:21  joe
  *   Remove much wasted storage by overlaying hash table with the tables
  *   used by decompress: tab_suffix[1<<BITS], stack[8000].  Updated USERMEM
@@ -49,9 +49,9 @@
  * Revision 3.1  85/05/12  18:56:13  jaw
  *   Integrate decompress() stack speedups (from early pointer mods by McKie).
  *   Repair multi-file USERMEM gaffe.  Unify 'force' flags to mimic semantics
- *   of SVR2 'pack'.  Streamline block-compress table clear logic.  Increase 
+ *   of SVR2 'pack'.  Streamline block-compress table clear logic.  Increase
  *   output byte count by magic number size.
- * 
+ *
  * Revision 3.0   84/11/27  11:50:00  petsd!joe
  *   Set HSIZE depending on BITS.  Set BITS depending on USERMEM.  Unrolled
  *   loops in clear routines.  Added "-C" flag for 2.0 compatibility.  Used
@@ -144,7 +144,7 @@
  *
  * 2004-06-04 Claudio Matsuoka <claudio@conectiva.com>
  * - removed workaround for bcc bug (fixed in bcc 0.16.16)
- */ 
+ */
 #define ELKS
 #define LSTAT
 #define DIRENT
@@ -385,18 +385,18 @@ typedef	unsigned char	char_type;
 #ifndef	REGISTERS
 #	define	REGISTERS	2
 #endif
-#define	REG1	
-#define	REG2	
-#define	REG3	
-#define	REG4	
-#define	REG5	
-#define	REG6	
-#define	REG7	
-#define	REG8	
-#define	REG9	
+#define	REG1
+#define	REG2
+#define	REG3
+#define	REG4
+#define	REG5
+#define	REG6
+#define	REG7
+#define	REG8
+#define	REG9
 #define	REG10
-#define	REG11	
-#define	REG12	
+#define	REG11
+#define	REG12
 #define	REG13
 #define	REG14
 #define	REG15
@@ -713,7 +713,7 @@ void  	about		ARGS((void));
  *   substrings and replaces them with a variable size code.  This is
  *   deterministic, and can be done on the fly.  Thus, the decompression
  *   procedure needs no input table, but tracks the way the table was built.
- */ 
+ */
 int
 main(argc, argv)
 	REG1	int 	 argc;
@@ -906,7 +906,7 @@ comprexx(fileptr)
 		    	case ENOENT:	/* file doesn't exist */
 	      			/*
 	      			** if the given name doesn't end with .Z, try appending one
-	      			** This is obviously the wrong thing to do if it's a 
+	      			** This is obviously the wrong thing to do if it's a
 	      			** directory, but it shouldn't do any harm.
 	      			*/
 		      		if (strcmp(tempname + strlen(tempname) - 2, ".Z") != 0) {
@@ -1040,7 +1040,7 @@ comprexx(fileptr)
 		    			if (fgnd_flag && isatty(0)) {
 						fprintf(stderr, "Do you wish to overwrite %s (y or n)? ", ofname);
 						fflush(stderr);
-	
+
 			    			if (read(0, inbuf, 1) > 0) {
 							if (inbuf[0] != '\n') {
 								do {
@@ -1136,7 +1136,7 @@ comprexx(fileptr)
 	    				perror(ofname);
 					exit_code = 1;
 				}
-		
+
 				remove_ofname = 0;
 			}
 		} else if (zcat_flg == 0) {
@@ -1268,7 +1268,7 @@ compdir(dir)
 /*
  * compress fdin to fdout
  *
- * Algorithm:  use open addressing double hashing (no chaining) on the 
+ * Algorithm:  use open addressing double hashing (no chaining) on the
  * prefix code / next character combination.  We do a variant of Knuth's
  * algorithm D (vol. 3, sec. 6.4) along with G. Knott's relatively-prime
  * secondary probe.  Here, the modular division first probe is gives way
@@ -1395,7 +1395,7 @@ compress(fdin, fdout)
 				if ((code_int)i > extcode-free_ent)	i = (int)(extcode-free_ent);
 				if (i > ((sizeof(outbuf) - 32)*8 - outbits)/n_bits)
 					i = ((sizeof(outbuf) - 32)*8 - outbits)/n_bits;
-					
+
 				if (!stcode && (long)i > checkpoint-bytes_in)
 					i = (int)(checkpoint-bytes_in);
 
@@ -1493,7 +1493,7 @@ out:			;
 					codetabof(hp) = (unsigned short)free_ent++;
 					htabof(hp) = fc;
 				}
-			} 
+			}
 
 			goto next;
 
@@ -1622,7 +1622,7 @@ resetbuf:	;
 			insize += rsize;
 		}
 
-		inbits = ((rsize > 0) ? (insize - insize%n_bits)<<3 : 
+		inbits = ((rsize > 0) ? (insize - insize%n_bits)<<3 :
 			(insize<<3)-(n_bits-1));
 
 		while (inbits > posbits) {
@@ -1720,7 +1720,7 @@ resetbuf:	;
 		    		tab_prefixof(code) = (unsigned short)oldcode;
 		    		tab_suffixof(code) = (char_type)finchar;
     				free_ent = code+1;
-			} 
+			}
 
 			oldcode = incode;	/* Remember previous code.	*/
 		}
@@ -1782,7 +1782,7 @@ prratio(stream, num, den)
 	REG1 int q;			/* Doesn't need to be long */
 
 	if (den > 0) {
-		if (num > 214748L) 
+		if (num > 214748L)
 			q = (int)(num/(den/10000L));	/* 2147483647/10000 */
 		else
 			q = (int)(10000L*num/den);	/* Long calculations, though */
@@ -1835,7 +1835,7 @@ about()
 #ifdef LSTAT
 	fprintf(stderr, "LSTAT, ");
 #endif
-	fprintf(stderr, "\n        REGISTERS=%d IBUFSIZ=%d, OBUFSIZ=%d, BITS=%d\n", 
+	fprintf(stderr, "\n        REGISTERS=%d IBUFSIZ=%d, OBUFSIZ=%d, BITS=%d\n",
 			REGISTERS, IBUFSIZ, OBUFSIZ, BITS);
 
 	fprintf(stderr, "\n\

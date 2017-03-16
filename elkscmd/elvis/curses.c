@@ -331,7 +331,7 @@ void resume_curses(quietly)
 	{
 		mode = MODE_VI;
 		redraw(MARK_UNSET, FALSE);
-	}	
+	}
 	exwrote = FALSE;
 
 #if TURBOC
@@ -407,7 +407,7 @@ static void starttcap()
 	MAYHAVE(CD, "cd");
 #if OSK
 	MAYHAVE(SR_, "sr");
-#else	
+#else
 	MAYHAVE(SR, "sr");
 #endif
 	PAIR(IM, EI, "im", "ei");
@@ -725,9 +725,9 @@ alarm(time)
 #define TIME(secs) ((secs << 8) | 0x80000000)
 	static int alrmid;
 
-	if (time)	
+	if (time)
 		alrmid = alm_set(SIGQUIT, TIME(time));
-	else	
+	else
 		alm_delete(alrmid);
 }
 #endif /* OSK */

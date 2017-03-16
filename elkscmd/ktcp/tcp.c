@@ -66,7 +66,7 @@ __u32 choose_seq(void)
 void tcp_send_fin(struct tcpcb_s *cb)
 {
     cb->flags = TF_FIN|TF_ACK;
-    cb->datalen = 0;	
+    cb->datalen = 0;
     tcp_output(cb);
     cb->send_nxt++;
 }
@@ -75,14 +75,14 @@ void tcp_send_reset(struct tcpcb_s *cb)
 {
     cb->flags = TF_RST;
     cb->datalen = 0;
-    tcp_output(cb);	
+    tcp_output(cb);
 }
 
 void tcp_send_ack(struct tcpcb_s *cb)
 {
     cb->flags = TF_ACK;
     cb->datalen = 0;
-    tcp_output(cb);	
+    tcp_output(cb);
 }
 
 void tcp_connect(struct tcpcb_s *cb)
@@ -94,9 +94,9 @@ void tcp_connect(struct tcpcb_s *cb)
     cb->state = TS_SYN_SENT;
     cb->flags = TF_SYN;
 
-    cb->datalen = 0;	
+    cb->datalen = 0;
 
-    tcp_output(cb);	
+    tcp_output(cb);
 }
 
 void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
@@ -118,7 +118,7 @@ void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	    cb->send_nxt = h->acknum;
 	    cb->state = TF_RST;
 
-	    cb->datalen = 0;	
+	    cb->datalen = 0;
 	    tcp_output(cb);
 	    return;
 	}
@@ -132,7 +132,7 @@ void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	cb->state = TS_ESTABLISHED;
 	cb->flags = TF_ACK;
 
-	cb->datalen = 0;	
+	cb->datalen = 0;
 	tcp_output(cb);
 
 	retval_to_sock(cb->sock, 0);
@@ -162,7 +162,7 @@ void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
 
     cb->seg_seq = ntohl(h->seqnum); /*read sequence number got*/
     cb->seg_ack = ntohl(h->acknum); /*read ack number got*/
-    
+
     if (!(h->flags & TF_SYN)){
 #ifdef DEBUG
 	printf("no sync message in listen state\n");
@@ -206,7 +206,7 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     h = iptcp->tcph;
 
-    cb->rcv_wnd = ntohs(h->window);	
+    cb->rcv_wnd = ntohs(h->window);
 
     datasize = iptcp->tcplen - TCP_DATAOFF(h);
 
@@ -219,8 +219,8 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	if (datasize > CB_BUF_SPACE(cb))
 	    return;
 
-	tcpcb_buf_write(cb, data, datasize);	
-	
+	tcpcb_buf_write(cb, data, datasize);
+
 	if (h->flags & TF_PSH || CB_BUF_SPACE(cb) == 0) {
 	    if (cb->bytes_to_push <=0)
 		tcpcb_need_push++;
@@ -257,7 +257,7 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	return; /* ACK with no data received - so don't answer*/
 
     cb->rcv_nxt += datasize;
-    cb->flags = TF_ACK;	
+    cb->flags = TF_ACK;
     cb->datalen = 0;
     tcp_output(cb);
 }
@@ -420,7 +420,7 @@ void tcp_process(struct iphdr_s *iph)
 	    if (cb->rcv_nxt != ntohl(tcph->seqnum + 1))
 		tcp_send_ack(cb);
 	    return;
-	}	
+	}
 
 	/* for now
 	 * TODO queue up datagramms not in
@@ -469,6 +469,6 @@ void tcp_process(struct iphdr_s *iph)
 	case TS_CLOSING:
 	    debug("TS_CLOSING\n");
 	    tcp_closing(&iptcp, cb);
-	    break;	
+	    break;
     }
 }

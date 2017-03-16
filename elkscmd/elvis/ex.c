@@ -201,7 +201,7 @@ char *linespec(s, markptr)
 		{
 			s++;
 		}
-	
+
 		/* dot means current position */
 		if (*s == '.')
 		{
@@ -235,7 +235,7 @@ char *linespec(s, markptr)
 		{
 			/* put a '\0' at the end of the search pattern */
 			t = parseptrn(s);
-	
+
 			/* search for the pattern */
 			*markptr &= ~(BLKSIZE - 1);
 			if (*s == '/')
@@ -249,17 +249,17 @@ char *linespec(s, markptr)
 			{
 				*markptr = m_bsrch(*markptr, s);
 			}
-	
+
 			/* adjust command string pointer */
 			s = t;
 		}
-	
+
 		/* if linespec was faulty, quit now */
 		if (!*markptr)
 		{
 			return s;
 		}
-	
+
 		/* maybe add an offset */
 		t = s;
 		if (*t == '-' || *t == '+')
@@ -288,7 +288,7 @@ void ex()
 	char		cmdbuf[80];
 	int		cmdlen;
 	static long	oldline;
-	
+
 	significant = FALSE;
 	oldline = markline(cursor);
 
@@ -489,7 +489,7 @@ void doexcmd(cmdbuf)
 					}
 					didsub = TRUE;
 					break;
-	
+
 				  case '#':
 					if (!*prevorig)
 					{
@@ -503,7 +503,7 @@ void doexcmd(cmdbuf)
 					}
 					didsub = TRUE;
 					break;
-	
+
 				  case '*':
 				  case '?':
 #if !(MSDOS || TOS)
@@ -522,7 +522,7 @@ void doexcmd(cmdbuf)
 				}
 			}
 			*build = '\0';
-	
+
 			if (cmd == CMD_BANG
 			 || cmd == CMD_READ && tmpblk.c[0] == '!'
 			 || cmd == CMD_WRITE && tmpblk.c[0] == '!')

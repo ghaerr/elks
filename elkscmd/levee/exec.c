@@ -111,7 +111,7 @@ args()
 	    prints(argv[i]);
     }
 } /* args */
-    
+
 PROC
 setcmd()
 {
@@ -120,7 +120,7 @@ setcmd()
     register char *arg;
     char *num;
     register struct variable *vp;
-    
+
     if (arg = getarg()) {
 	do {
 	    if (*arg != 0) {
@@ -146,7 +146,7 @@ setcmd()
 		}
 		else {
 		    int j;
-                    
+
                     if (b)
 			if (vp->v_tipe == VBOOL)
 			    vp->u->valu = no;
@@ -291,7 +291,7 @@ unmap()
 {
     int i;
     register char *arg;
-    
+
     if (arg=getarg()) {
 	if (strlen(arg) == 1) {
 	    undefine(lookup(*arg));
@@ -380,7 +380,7 @@ cutandpaste()
     char delim;
     register char *ip;
     register char *dp;
-    
+
     zerostack(&undo);
     ip = execstr;
     if (*ip != '&') {
@@ -529,7 +529,7 @@ register char *name;
     else
 	strcat(back, ".bkp");
 #endif
-    
+
     unlink(back);
     rename(name, back);
 } /* backup */
@@ -601,7 +601,7 @@ bool PROC
 writefile()
 {
     register char *name;
-    
+
     if ((name=getname()) == NULL)
 	name = filenm;
     if (*name) {
@@ -677,7 +677,7 @@ PROC
 readfile()
 {
     register char *name;
-    
+
     if (name=getarg())
 	inputf(name,NO);
     else
@@ -695,12 +695,12 @@ bool prev;
 	myargc=0;
     char **myargv;
     bool newlist = NO;
-    
+
     if (prev == 0)
 	while (name=getarg())
 	    if (!expandargs(name, &myargc, &myargv))
 		return 0;
-    
+
     if (oktoedit(autowrite)) {
 	if (prev || (myargc == 1 && strcmp(myargv[0],"-") == 0)) {
 	    if (pc > 0) {
@@ -801,7 +801,7 @@ do_file(fname,mode,noquit)
 {
     char line[120];
     register FILE *fp;
-    
+
     if ((fp = fopen(fname,"r")) != NULL) {
 	indirect = YES;
 	while (fgets(line,120,fp) && indirect) {
@@ -912,7 +912,7 @@ exec(cmd, mode, noquit)
 {
     int  what;
     bool ok;
-    
+
     what = parse(cmd);
     ok = YES;
     if (diddled) {

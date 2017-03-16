@@ -199,8 +199,7 @@ static int dir_namei(register char *pathname, size_t * namelen,
 	while ((c = get_user_char(pathname++)) && (c != '/'))
 	    /* Do nothing */ ;
 	len = pathname - thisname - 1;
-	if (!c)
-	    break;
+	if (!c) break;
 	base->i_count++;
 	error = lookup(base, thisname, len, &inode);
 	if (error) {
@@ -208,8 +207,7 @@ static int dir_namei(register char *pathname, size_t * namelen,
 	    goto dnamei_end;
 	}
 	error = follow_link(base, inode, 0, 0, &baser);
-	if (error)
-	    goto dnamei_end;
+	if (error) goto dnamei_end;
 	base = baser;
     }
     if (!base->i_op || !base->i_op->lookup) {
@@ -255,8 +253,7 @@ int _namei(char *pathname, register struct inode *base, int follow_links,
 	if (!error) {
 	    if (follow_links) {
 		error = follow_link(base, inode, 0, 0, &inode);
-		if (error)
-		    goto namei_end;
+		if (error) goto namei_end;
 	    } else
 		iput(base);
 	    *res_inode = inode;
@@ -286,14 +283,10 @@ int namei(char *pathname, register struct inode **res_inode, int dir, int perm)
 
     if (!error) {
 	inode = *res_inode;
-	if (dir == NOT_DIR && S_ISDIR(inode->i_mode))
-	    error = -EISDIR;
-	else if (dir == IS_DIR && !S_ISDIR(inode->i_mode))
-	    error = -ENOTDIR;
-	else if (perm)
-	    error = permission(inode, perm);
-	if (error)
-	    iput(inode);
+	if (dir == NOT_DIR && S_ISDIR(inode->i_mode)) error = -EISDIR;
+	else if (dir == IS_DIR && !S_ISDIR(inode->i_mode)) error = -ENOTDIR;
+	else if (perm) error = permission(inode, perm);
+	if (error) iput(inode);
     }
     return error;
 }
@@ -326,8 +319,7 @@ int open_namei(char *pathname, int flag, int mode,
     debug("NAMEI: open namei entered\n");
     mode = S_IFREG | (mode & S_IALLUGO);
     error = dir_namei(pathname, &namelen, &basename, base, &dir);
-    if (error)
-	goto onamei_end;
+    if (error) goto onamei_end;
 
     dirp = dir;
     if (!namelen) {		/* special case: '/usr/' etc */
@@ -337,8 +329,7 @@ int open_namei(char *pathname, int flag, int mode,
 	} else if ((error = permission(dirp, ACC_MODE(flag))) != 0) {
 	    /* thanks to Paul Pluzhnikov for noticing this was missing.. */
 	    iput(dirp);
-	} else
-	    *res_inode = dirp;
+	} else *res_inode = dirp;
 	goto onamei_end;
     }
     dirp->i_count++;		/* lookup eats the dir */
@@ -353,9 +344,9 @@ int open_namei(char *pathname, int flag, int mode,
 	    }
 	} else if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) != 0) {
 	    /* Do nothing as error is already set! */ ;
-	} else if (!iop || !iop->create)
+	} else if (!iop || !iop->create) {
 	    error = -EACCES;
-	else {
+	} else {
 	    dirp->i_count++;	/* create eats the dir */
 	    error = iop->create(dirp, basename, namelen, mode, res_inode);
 	    up(&dirp->i_sem);
@@ -363,23 +354,19 @@ int open_namei(char *pathname, int flag, int mode,
 	    goto onamei_end;
 	}
 	up(&dirp->i_sem);
-    } else
-	error = lookup(dirp, basename, namelen, &inode);
+    } else error = lookup(dirp, basename, namelen, &inode);
     if (error) {
 	iput(dirp);
 	goto onamei_end;
     }
     error = follow_link(dirp, inode, flag, mode, &inode);
-    if (error)
-	goto onamei_end;
+    if (error) goto onamei_end;
     if (S_ISDIR(inode->i_mode) && (flag & 2)) {
 	error = -EISDIR;
     } else if ((error = permission(inode, ACC_MODE(flag))) == 0) {
 	if (S_ISBLK(inode->i_mode) || S_ISCHR(inode->i_mode)) {
-	    if (IS_NODEV(inode)) {
-		error = -EACCES;
-	    } else
-		flag &= ~O_TRUNC;
+	    if (IS_NODEV(inode)) error = -EACCES;
+	    else flag &= ~O_TRUNC;
 	}
     }
     if (!error) {
@@ -409,16 +396,13 @@ int open_namei(char *pathname, int flag, int mode,
 #endif
 
 	    down(&inode->i_sem);
-	    if ((iop = inode->i_op) && iop->truncate) {
-		iop->truncate(inode);
-	    }
+	    if ((iop = inode->i_op) && iop->truncate) iop->truncate(inode);
 	    up(&inode->i_sem);
 	    inode->i_dirt = 1;
 	    put_write_access(inode);
 	}
 	*res_inode = inode;
-    } else
-	iput(inode);
+    } else iput(inode);
 
   onamei_end:
     return error;
@@ -437,16 +421,14 @@ int do_mknod(char *pathname, size_t offst, int mode, dev_t dev)
 
     if (!error) {
 	dirp = dir;
-	if (!namelen)
-	    error = -ENOENT;
-/*	else if (IS_RDONLY(dirp))
-	    error = -EROFS;*/
+	if (!namelen) error = -ENOENT;
+/*	else if (IS_RDONLY(dirp)) error = -EROFS; */
 	else if (!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
 	    iop = dirp->i_op;
 		if (!iop || !(op = (offst ? ((offst > 1)
 						? iop->symlink
 						: iop->mkdir)
-					: iop->mknod))) {	      
+					: iop->mknod))) {
 		error = -EPERM;
 	   } else {
 		dirp->i_count++;
@@ -469,8 +451,7 @@ int sys_mknod(char *pathname, int mode, dev_t dev)
 #ifdef CONFIG_FS_RO
     return -EROFS;
 #else
-    if (S_ISDIR(mode) || (!S_ISFIFO(mode) && !suser()))
-	return -EPERM;
+    if (S_ISDIR(mode) || (!S_ISFIFO(mode) && !suser())) return -EPERM;
 
     switch (mode & S_IFMT) {
     case 0:
@@ -519,9 +500,9 @@ int __do_rmthing(char *pathname, size_t offst)
 	    error = -EROFS;*/
 	else if (!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
 	    iop = dirp->i_op;
-	    if (!iop || !(op = (*(int (**)())((char *)iop + offst))))
+	    if (!iop || !(op = (*(int (**)())((char *)iop + offst)))) {
 		error = -EPERM;
-	    else {
+	    } else {
 /*		dirp->i_count++;
 		down(&dirp->i_sem);*/
 		return op(dirp, basename, namelen);
@@ -564,16 +545,12 @@ static int do_link(char *pathname, struct inode *oldinode)
     error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
     if (!error) {
 	dirp = dir;
-	if (!namelen)
-	    error = -EPERM;
-/*	else if (IS_RDONLY(dirp))
-	    error = -EROFS;*/
-	else if (dirp->i_dev != oldinode->i_dev)
-	    error = -EXDEV;
+	if (!namelen) error = -EPERM;
+/*	else if (IS_RDONLY(dirp)) error = -EROFS; */
+	else if (dirp->i_dev != oldinode->i_dev) error = -EXDEV;
 	else if (!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
 	    iop = dirp->i_op;
-	    if (!iop || !iop->link)
-		error = -EPERM;
+	    if (!iop || !iop->link) error = -EPERM;
 	    else {
 		dirp->i_count++;
 		down(&dirp->i_sem);
@@ -612,8 +589,6 @@ int sys_rename(register char *oldname, char *pathname)
 {
     int err;
 
-    return !(err = sys_link(oldname, pathname))
-	? sys_unlink(oldname)
-	: err;
+    return !(err = sys_link(oldname, pathname)) ? sys_unlink(oldname) : err;
 
 }

@@ -621,7 +621,7 @@ STATIC int readtoken(void) {
 #if DEBUG
 	int alreadyseen = tokpushback;
 #endif
-	
+
 	t = xxreadtoken();
 
 	if (checkkwd) {
@@ -1225,7 +1225,7 @@ attyline() {
 
 /*
  * Output a prompt for atty.  We output the prompt as part of the
- * appropriate escape sequence.  
+ * appropriate escape sequence.
  */
 
 STATIC void

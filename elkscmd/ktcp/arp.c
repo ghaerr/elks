@@ -95,9 +95,9 @@ void arp_print(struct arp *arp_r)
     printf("ll_eth_src: %2X.%2X.%2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3],addr[4],addr[5]);
     addr = arp_r->ll_eth_dest;
     printf("ll_eth_dest: %2X.%2X.%2X.%2X.%2X.%2X \n",addr[0],addr[1],addr[2],addr[3],addr[4],addr[5]);
-  
+
     printf("Op: %2X \n",arp_r->op);
-    
+
     addr = (__u8 *)&arp_r->ip_src;
     printf("ip_src : %d.%d.%d.%d ",addr[0],addr[1],addr[2],addr[3]);
     addr = (__u8 *)&arp_r->ip_dest;
@@ -119,7 +119,7 @@ void arp_reply(char *packet,int size)
     struct arp_addr apair;
     struct arp *arp_r;
   __u8 *addr;
-  
+
     arp_r = (struct arp *)packet;
 
     /* arp_print(arp_r); */
@@ -149,14 +149,14 @@ void arp_reply(char *packet,int size)
 int arp_request(ipaddr_t ipaddress)
 {
     int i;
-    __u8 *addr; 
+    __u8 *addr;
     fd_set fdset;
     struct arp *arp_r;
     static char packet[sizeof(struct arp)];
     arp_r = (struct arp *)packet;
-    
+
     addr = &ipaddress;
-    
+
     /* build arp request */
     for (i=0;i<6;i++) arp_r->ll_eth_dest[i]=0xFF; /*broadcast*/
     memcpy(arp_r->ll_eth_src, eth_local_addr, 6);
@@ -169,7 +169,7 @@ int arp_request(ipaddr_t ipaddress)
     arp_r->op=0x0100; /*request - big endian*/
     memcpy(arp_r->eth_src, eth_local_addr, 6);
     arp_r->ip_src=local_ip;
-    for (i=0;i<6;i++) arp_r->eth_dest[i]=0; 
+    for (i=0;i<6;i++) arp_r->eth_dest[i]=0;
     arp_r->ip_dest=ipaddress;
 
     deveth_send(&packet, sizeof(struct arp));

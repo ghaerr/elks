@@ -56,14 +56,14 @@ _tcp_chksum:
 	mov	bp, sp
 	push	di
 	push	si
-	
+
 	mov	bx, 4[bp]	! h
 	mov	ax, 4[bx]	! h->tcplen
 	mov	cx, ax
 	xchg	al, ah
-	
+
 	mov	di, [bx]	! h->iph
-	
+
 	mov	si, 2[bx]	! h->tcph
 	mov	bx, cx
 	sar	cx, #$1
@@ -71,14 +71,14 @@ _tcp_chksum:
 	mov	dx, bx
 	and	bx, #$1
 	jz	loop1
-	
+
 	mov	bx, dx
 	dec	bx
 	mov	dl, [si + bx]
 	xor	dh, dh
 	add	ax, dx
-		
-loop1:        
+
+loop1:
 	adc	ax, [si]
         inc si
         inc si
@@ -129,7 +129,7 @@ _tcp_chksumraw:
 	mov	bp, sp
 	push	di
 	push	si
-	
+
 	mov	si, 4[bp]	! h
 	mov	ax, $E[bp]	! len
 	mov	cx, ax
@@ -140,14 +140,14 @@ _tcp_chksumraw:
 	mov	dx, bx
 	and	bx, #$1
 	jz	loop2
-	
+
 	mov	bx, dx
 	dec	bx
 	mov	dl, [si + bx]
 	xor	dh, dh
 	add	ax, dx
-		
-loop2:        
+
+loop2:
 	adc	ax, [si]
         inc si
         inc si
@@ -156,12 +156,12 @@ loop2:
 	adc	ax, 6[bp]
 	adc	ax, 8[bp]
 	adc	ax, $A[bp]
-	adc	ax, $C[bp]	
+	adc	ax, $C[bp]
 	adc	ax, #$600
         adc     ax, 0
 
         not	ax
-	
+
 	pop	si
 	pop	di
 	pop	bp
@@ -245,7 +245,7 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
     n->tcph = (struct tcphdr_s *)malloc(len);
     if (!n->tcph) {
 	printf("Out of memory\n");
-	exit(0);	
+	exit(0);
     }
     n->len = len;
     tcp_retrans_memory += len;
@@ -333,15 +333,15 @@ void tcp_output(struct tcpcb_s *cb)
     len = (__u16)CB_BUF_SPACE(cb);
     if (len == 0)
 	len = 1;		/* Never advertise zero window size */
-    if (len>255) 
+    if (len>255)
         len=256; //use even len, reducing the len causes the servers to pause
     th->window = htons(len);
     th->urgpnt = 0;
-    th->flags = cb->flags;	
+    th->flags = cb->flags;
 
-    header_len = 20;		
+    header_len = 20;
     option_len = 0;
-    options = &th->options;	
+    options = &th->options;
     if (cb->flags & TF_SYN) {
 	header_len += 4;
 	option_len += 4;
@@ -367,7 +367,7 @@ void tcp_output(struct tcpcb_s *cb)
     printf("saddr: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);
     memcpy(addr,apair.daddr,4);
     printf("daddr: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);
-*/    
+*/
     add_for_retrans(cb, th, len, &apair);
     ip_sendpacket(th, len, &apair);
 }

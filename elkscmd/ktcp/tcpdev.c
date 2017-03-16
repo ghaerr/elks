@@ -35,7 +35,7 @@ int tcpdev_init(char *fdev)
     tcpdevfd = open(fdev, O_NONBLOCK | O_RDWR);
     if (tcpdevfd < 0)
 	printf("ERROR : failed to open tcpdev device %s\n",fdev);
-    return tcpdevfd;    
+    return tcpdevfd;
 }
 
 void retval_to_sock(__u16 sock,short int r)
@@ -58,13 +58,13 @@ static void tcpdev_bind(void)
 	retval_to_sock(db->sock,-EINVAL);
 	return;
     }
-	
+
     n = tcpcb_new();
     if (n == NULL) {
 	retval_to_sock(db->sock,-ENOMEM);
 	return;
     }
-		
+
     port = ntohs(db->addr.sin_port);
     if (port == 0) {
 	if (next_port < 1024)
@@ -84,7 +84,7 @@ static void tcpdev_bind(void)
 	    retval_to_sock(db->sock,-EINVAL);
 	    return;
 	}
-    }	
+    }
 
     n->tcpcb.sock = db->sock;
     n->tcpcb.localaddr = local_ip;
@@ -158,7 +158,7 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
 static void tcpdev_connect(void)
 {
     struct tdb_connect *db = sbuf;
-    struct tcpcb_list_s *n;	
+    struct tcpcb_list_s *n;
 
     n = tcpcb_find_by_sock(db->sock);
     if (!n || n->tcpcb.state != TS_CLOSED) {
@@ -179,7 +179,7 @@ static void tcpdev_connect(void)
 static void tcpdev_listen(void)
 {
     struct tdb_listen *db = sbuf;
-    struct tcpcb_list_s *n;	
+    struct tcpcb_list_s *n;
 
     n = tcpcb_find_by_sock(db->sock);
     if (!n || n->tcpcb.state != TS_CLOSED) {
@@ -215,7 +215,7 @@ void tcpdev_read(void)
     }
 
     if (cb->remport == NETCONF_PORT && cb->remaddr == 0)
-	netconf_send(cb);	
+	netconf_send(cb);
 
     data_avail = cb->bytes_to_push;
 
@@ -240,7 +240,7 @@ void tcpdev_read(void)
     ret_data->sock = sock;
     tcpcb_buf_read(cb, &ret_data->data, data_avail);
 
-    write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail - 1);		
+    write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail - 1);
 }
 
 void tcpdev_checkread(struct tcpcb_s *cb)
@@ -261,7 +261,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 	ret_data->sock = sock;
 
 	write(tcpdevfd, sbuf, sizeof(struct tdb_return_data));
-	return;	
+	return;
     }
 
     data_avail = cb->wait_data < cb->bytes_to_push ? cb->wait_data : cb->bytes_to_push;
@@ -313,7 +313,7 @@ static void tcpdev_write(void)
 	if (db->size == sizeof(struct stat_request_s))
 	    netconf_request(db->data);
 	retval_to_sock(sock, db->size);
-	return;	
+	return;
     }
 
     cb->flags = TF_PSH|TF_ACK;
@@ -347,14 +347,14 @@ static void tcpdev_release(void)
 		break;
 	    case TS_SYN_RECEIVED:
 	    case TS_ESTABLISHED:
-		if (cb->remport == NETCONF_PORT && cb->remaddr == 0){		
+		if (cb->remport == NETCONF_PORT && cb->remaddr == 0){
 			tcpcb_remove(n);
-			return;	
+			return;
 		}
 		cb->state = TS_FIN_WAIT_1;
 		cbs_in_user_timeout++;
 		cb->time_wait_exp = Now;
-		
+
 		tcp_send_fin(cb);
 		/* Handle it as abort */
 #if 0

@@ -391,7 +391,7 @@ static MARK expandabbr(m, ch)
 }
 #endif
 
-		
+
 /* This function allows the user to replace an existing (possibly zero-length)
  * chunk of text with typed-in text.  It returns the MARK of the last character
  * that the user typed in.
@@ -639,7 +639,7 @@ MARK input(from, to, when)
 				  case '\n':
 #if OSK
 				  case '\l':
-#else				  
+#else
 				  case '\r':
 #endif
 #ifndef NO_ABBR

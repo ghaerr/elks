@@ -1,4 +1,4 @@
-# Makefile for urlget
+# Makefile for telnet
 
 BASEDIR=../..
 
@@ -12,26 +12,20 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-#CFLAGS=-O 
+SRC=	telnetd.c 
 
-#LDFLAGS=-i
+all:	telnetd
 
-SRC=	net.c urlget.c
-
-all:	urlget
-
-urlget:	$(SRC)
-	$(CC) $(CFLAGS) $(LDFLAGS) -I$(INC_DIR) -o urlget $(SRC)
+telnetd: $(SRC)
+	$(CC) $(CFLAGS) -I$(INC_DIR) $(LDFLAGS) -o $@ $(SRC)
 
 max_rfs: all
 
 net_rfs: all
 
 install: all
-	cp -p urlget $(TARGET_MNT)/bin
-#urlget.c checks its own name to branch to ftp	
-	ln -s urlget $(TARGET_MNT)/bin/ftpget
+	cp -p telnetd $(TARGET_MNT)/bin
 
 clean:
-	rm -f urlget *.o
+	rm -f *.o telnetd
 

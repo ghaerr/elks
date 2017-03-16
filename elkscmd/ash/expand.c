@@ -265,7 +265,7 @@ expbackq(cmd, quoted, full)
 	saveifs = ifsfirst;
 	savelastp = ifslastp;
 	saveargbackq = argbackq;
-	saveherefd = herefd;      
+	saveherefd = herefd;
 	herefd = -1;
 	p = grabstackstr(dest);
 	evalbackcmd(cmd, &in);
@@ -500,7 +500,7 @@ numvar:
 			sep = '\0';
 			goto allargs;
 		}
-		/* fall through */			
+		/* fall through */
 	case '*':
 		sep = ' ';
 allargs:
@@ -964,7 +964,7 @@ msort(list, len)
 
 	if (len <= 1)
 		return list;
-	half = len >> 1;      
+	half = len >> 1;
 	p = list;
 	for (n = half ; --n >= 0 ; ) {
 		q = p;

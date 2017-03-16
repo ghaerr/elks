@@ -28,8 +28,7 @@ static unsigned short count_used(struct buffer_head *map[],
     register struct buffer_head *bh;
 
     for (i = 0; (i < numblocks) && numbits; i++) {
-	if (!(bh = map[i]))
-	    return 0;
+	if (!(bh = map[i])) return 0;
 	map_buffer(bh);
 	if (numbits >= (8 * BLOCK_SIZE)) {
 	    end = BLOCK_SIZE;
@@ -79,13 +78,11 @@ void minix_free_block(register struct super_block *sb, unsigned short block)
 	printk("trying to free block %lx not in datazone\n", block);
     else {
 	bh = get_hash_table(sb->s_dev, (block_t) block);
-	if (bh)
-	    bh->b_dirty = 0;
+	if (bh) bh->b_dirty = 0;
 	brelse(bh);
 	zone = block - sb->u.minix_sb.s_firstdatazone + 1;
 	bh = sb->u.minix_sb.s_zmap[zone >> 13];
-	if (!bh)
-	    printk("mfb: bad bitbuf\n");
+	if (!bh) printk("mfb: bad bitbuf\n");
 	else {
 	    map_buffer(bh);
 	    if (!clear_bit(zone & 8191, bh->b_data))
@@ -112,12 +109,10 @@ block_t minix_new_block(register struct super_block *sb)
 	if ((bh = sb->u.minix_sb.s_zmap[i]) != NULL) {
 	    map_buffer(bh);
 	    j = (block_t) find_first_zero_bit((void *)(bh->b_data), 8192);
-	    if (j < 8192)
-		break;
+	    if (j < 8192) break;
 	    unmap_buffer(bh);
 	}
-    if (i >= 8)
-	return 0;
+    if (i >= 8) return 0;
     if (set_bit(j, bh->b_data)) {
 	panic("mnb: already set %d %d\n", j, bh->b_data);
 	unmap_buffer(bh);
@@ -148,8 +143,7 @@ void minix_free_inode(register struct inode *inode)
 
     s = 0;
     n = 0;
-    if (!inode->i_dev)
-	s = "no device\n";
+    if (!inode->i_dev) s = "no device\n";
     else if (inode->i_count != 1) {
 	n = inode->i_count;
 	s = "count=%d\n";
@@ -158,10 +152,8 @@ void minix_free_inode(register struct inode *inode)
 	n = inode->i_nlink;
 	s = "nlink=%d\n";
     }
-    else if (!inode->i_sb)
-	s = "no sb\n";
-    else if (inode->i_ino < 1)
-	s = "inode 0\n";
+    else if (!inode->i_sb) s = "no sb\n";
+    else if (inode->i_ino < 1) s = "inode 0\n";
     else if (inode->i_ino > inode->i_sb->u.minix_sb.s_ninodes)
 	s = "nonexistent inode\n";
     else if (!(bh = inode->i_sb->u.minix_sb.s_imap[inode->i_ino >> 13]))
@@ -188,8 +180,7 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
     /* Adding an sb here does not make the code smaller */
     block_t i, j;
 
-    if (!dir || !(inode = new_inode(dir, mode)))
-	return NULL;
+    if (!dir || !(inode = new_inode(dir, mode))) return NULL;
 
     minix_set_ops(inode);
     j = 8192;
@@ -197,8 +188,7 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
 	if ((bh = inode->i_sb->u.minix_sb.s_imap[i]) != NULL) {
 	    map_buffer(bh);
 	    j = (block_t) find_first_zero_bit((void *)(bh->b_data), 8192);
-	    if (j < 8192)
-		break;
+	    if (j < 8192) break;
 	    unmap_buffer(bh);
 	}
     if (!bh || j >= 8192) {
@@ -211,9 +201,7 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
     }
     mark_buffer_dirty(bh, 1);
     j += i * 8192;
-    if (!j || j > inode->i_sb->u.minix_sb.s_ninodes) {
-	goto iputfail;
-    }
+    if (!j || j > inode->i_sb->u.minix_sb.s_ninodes) goto iputfail;
     unmap_buffer(bh);
     inode->i_ino = j;
     inode->i_dirt = 1;

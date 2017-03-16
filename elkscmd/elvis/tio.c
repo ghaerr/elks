@@ -353,7 +353,7 @@ static int dummy()
 	longjmp(env_timeout, 1);
 	return 0;
 }
-# else 
+# else
 static int dummy()
 {
 }
@@ -366,7 +366,7 @@ static int dummy()
 int getkey(when)
 	int		when;		/* which bits must be ON? */
 {
-	static char	*cooked;	/* rawin, or pointer to converted key */ 
+	static char	*cooked;	/* rawin, or pointer to converted key */
 	static int	oldwhen;	/* "when" from last time */
 	static int	oldleft;
 	static long	oldtop;

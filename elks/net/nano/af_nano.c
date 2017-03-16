@@ -465,7 +465,7 @@ static int nano_select(register struct socket *sock,
 {
     struct nano_proto_data *upd, *peerupd;
 
-    /* 
+    /*
      *      Handle server sockets specially.
      */
 
@@ -509,7 +509,7 @@ static int nano_select(register struct socket *sock,
     }
 
     /*
-     * Exceptions - SEL_EX 
+     * Exceptions - SEL_EX
      */
 
     return 0;
@@ -533,7 +533,7 @@ static int nano_send(struct socket *sock,
     return nano_write(sock, (char *) buff, len, nonblock);
 }
 
-/* 
+/*
  *      Receive data. This version of AF_NANO also lacks MSG_PEEK 8(
  */
 

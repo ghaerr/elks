@@ -578,7 +578,7 @@ static DoESC (c, intermediate) {
 	    LineFeed ();
 	    break;
 	case 'D':
-	    LineFeed (); 
+	    LineFeed ();
 	    break;
 	case 'M':
 	    ReverseLineFeed ();

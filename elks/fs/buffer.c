@@ -96,7 +96,7 @@ void buffer_init(void)
 #endif
 	bh->b_next_lru = bh + 1;
 	bh->b_prev_lru = bh - 1;
-    } while(++bh < &buffers[NR_BUFFERS]);
+    } while (++bh < &buffers[NR_BUFFERS]);
     buffers[0].b_prev_lru = NULL;
     buffers[NR_BUFFERS - 1].b_next_lru = NULL;
 }
@@ -115,8 +115,7 @@ void wait_on_buffer(register struct buffer_head *bh)
 
 	wait_set(&bh->b_wait);
 	currentp->state = TASK_UNINTERRUPTIBLE;
-	while (buffer_locked(bh))
-	    schedule();
+	while (buffer_locked(bh)) schedule();
 	currentp->state = TASK_RUNNING;
 	wait_clear(&bh->b_wait);
 
@@ -143,13 +142,11 @@ void invalidate_buffers(kdev_t dev)
     register struct buffer_head *bh = bh_llru;
 
     do {
-	if (bh->b_dev != dev)
-	    continue;
+	if (bh->b_dev != dev) continue;
 	wait_on_buffer(bh);
 /*	if (bh->b_dev != dev)*/	/* This will never happen */
 /*	    continue;*/
-	if (bh->b_count)
-	    continue;
+	if (bh->b_count) continue;
 	bh->b_uptodate = 0;
 	bh->b_dirty = 0;
 	bh->b_lock = 0;
@@ -164,19 +161,16 @@ static void sync_buffers(kdev_t dev, int wait)
 	/*
 	 *      Skip clean buffers.
 	 */
-	if ((dev && (bh->b_dev != dev)) || (buffer_clean(bh)))
-	    continue;
+	if ((dev && (bh->b_dev != dev)) || (buffer_clean(bh))) continue;
 	/*
 	 *      Locked buffers..
 	 *
 	 *      If buffer is locked; skip it unless wait is requested
 	 *      AND pass > 0.
 	 */
-	if(buffer_locked(bh)) {
-	    if(wait)
-		continue;
-	    else
-		wait_on_buffer(bh);
+	if (buffer_locked(bh)) {
+	    if (wait) continue;
+	    else wait_on_buffer(bh);
 	}
 	/*
 	 *      Do the stuff
@@ -193,11 +187,11 @@ static struct buffer_head *get_free_buffer(void)
 
     bh = bh_lru;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-    while(bh->b_count || bh->b_dirty || bh->b_lock || bh->b_data) {
+    while (bh->b_count || bh->b_dirty || bh->b_lock || bh->b_data) {
 #else
-    while(bh->b_count || bh->b_dirty || bh->b_lock) {
+    while (bh->b_count || bh->b_dirty || bh->b_lock) {
 #endif
-	if((bh = bh->b_next_lru) == NULL) {
+	if ((bh = bh->b_next_lru) == NULL) {
 #if 0
 	    fsync_dev(0);
 	    /* This causes a sleep until another process brelse's */
@@ -221,10 +215,9 @@ void __brelse(register struct buffer_head *buf)
 {
     wait_on_buffer(buf);
 
-    if (buf->b_count <= 0)
-	panic("brelse");
+    if (buf->b_count <= 0) panic("brelse");
 #if 0
-    if(!--buf->b_count)
+    if (!--buf->b_count)
 	wake_up(&bufwait);
 #else
     buf->b_count--;
@@ -267,8 +260,7 @@ static struct buffer_head *find_buffer(kdev_t dev, block_t block)
     register struct buffer_head *bh = bh_llru;
 
     do {
-	if (bh->b_blocknr == block && bh->b_dev == dev)
-	    break;
+	if (bh->b_blocknr == block && bh->b_dev == dev) break;
     } while ((bh = bh->b_prev_lru) != NULL);
     return bh;
 }
@@ -277,7 +269,7 @@ struct buffer_head *get_hash_table(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh;
 
-    if((bh = find_buffer(dev, block)) != NULL) {
+    if ((bh = find_buffer(dev, block)) != NULL) {
 	bh->b_count++;
 	wait_on_buffer(bh);
     }
@@ -306,9 +298,8 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
 
     n_bh = NULL;
   repeat:
-    if((bh = find_buffer(dev, block)) != NULL)
-	goto found_it;
-    if(n_bh == NULL) {
+    if ((bh = find_buffer(dev, block)) != NULL) goto found_it;
+    if (n_bh == NULL) {
 	/*
 	 * Block not found. Create a buffer for this job.
 	 */
@@ -325,7 +316,7 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
     goto return_it;
 
   found_it:
-    if(n_bh != NULL)
+    if (n_bh != NULL)
 	n_bh->b_count = 0;	/* Release previously created buffer head */
     bh->b_count++;
     wait_on_buffer(bh);
@@ -451,9 +442,8 @@ void map_buffer(register struct buffer_head *bh)
 	/* First check for the trivial case */
 	pi = (char *)0;
 	do {
-	    if (!bufmem_map[(int)pi])
-		goto do_map_buffer;
-	} while((int)(++pi) < NR_MAPBUFS);
+	    if (!bufmem_map[(int)pi]) goto do_map_buffer;
+	} while ((int)(++pi) < NR_MAPBUFS);
 
 	/* Now, we check for a mapped buffer with no count and then
 	 * hopefully find one to send back to L2 */
@@ -474,8 +464,7 @@ void map_buffer(register struct buffer_head *bh)
 		goto do_map_buffer;
 	    }
 	  init_while:
-	    if((char *)(++pi) >= NR_MAPBUFS)
-		pi = (char *)0;
+	    if ((char *)(++pi) >= NR_MAPBUFS) pi = (char *)0;
 	} while ((int)pi != lastumap);
 
 	/* previous loop failed */

@@ -133,8 +133,8 @@ SHELLPROC {
  * The eval commmand.
  */
 
-evalcmd(argc, argv)  
-	char **argv; 
+evalcmd(argc, argv)
+	char **argv;
 {
         register char *p;
         register char *concat;
@@ -230,7 +230,7 @@ evaltree(n, flags)
 		evalsubshell(n, flags);
 		break;
 	case NIF: {
-		int status = 0; 
+		int status = 0;
 
 		evaltree(n->nif.test, EV_TESTED);
 		if (evalskip)

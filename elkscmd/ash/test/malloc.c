@@ -21,7 +21,7 @@
 	Consequently neither malloc nor free have to do any searching:
 	the cost of a call of malloc() (or free()) is constant, however
 	many blocks you have got.
-	
+
 	If you switch on the NON_STANDARD macro (see param.h) every block
 	costs 2 pointers overhead (otherwise it's 4).
 */
@@ -108,7 +108,7 @@ typedef unsigned long size_type;
 					Otherwise, "sbrk" is called directly.
 				*/
 
-#define	ALIGNMENT	8	
+#define	ALIGNMENT	8
 				/* alignment common to all types */
 #define	LOG_MIN_SIZE	3
 #define	LOG_MAX_SIZE	24
@@ -408,7 +408,7 @@ privious_free= (void *)-1;
 	if (n <= MAX_STORE*MIN_SIZE)	{
 		/* look in the store first */
 		register mallink **stp = &store[(n >> LOG_MIN_SIZE) - 1];
-		
+
 		if (ml = *stp)	{
 			*stp = log_next_of(ml);
 			set_store(ml, 0);
@@ -450,10 +450,10 @@ privious_free= (void *)-1;
 		register size_t req =
 			((MIN_SIZE<<min_class)+ mallink_size() + GRABSIZE - 1) &
 				~(GRABSIZE-1);
-	
+
 		if (!ml_last)	{
 			/* first align SBRK() */
-		
+
 			p = SBRK(0);
 			SBRK((int) (align((size_type) p) - (size_type) p));
 		}
@@ -541,7 +541,7 @@ privious_free= addr;
 	if (size_of(ml) <= MAX_STORE*MIN_SIZE)	{
 		/* return to store */
 		mallink **stp = &store[(size_of(ml) >> LOG_MIN_SIZE) - 1];
-		
+
 		set_log_next(ml, *stp);
 		*stp = ml;
 		set_store(ml, 1);
@@ -720,10 +720,10 @@ sell_out(void)	{
 	/*	Frees all block in store.
 	*/
 	register mallink **stp;
-	
+
 	for (stp = &store[0]; stp < &store[MAX_STORE]; stp++)	{
 		register mallink *ml = *stp;
-		
+
 		while (ml)	{
 			*stp = log_next_of(ml);
 			set_store(ml, 0);
@@ -740,7 +740,7 @@ private
 m_assert(const char *fn, int ln)
 {
 	char ch;
-	
+
 	while (*fn)
 		write(2, fn++, 1);
 	write(2, ": malloc assert failed in line ", 31);
@@ -842,7 +842,7 @@ search_free_list(int class, size_t n)
 		such a block may not be there.
 	*/
 	register mallink *ml;
-	
+
 	for (ml = free_list[class]; ml; ml = log_next_of(ml))
 		if (size_of(ml) >= n)
 			return ml;
@@ -862,7 +862,7 @@ first_present(int class)
 
 	for (mlp = &free_list[class]; mlp < &free_list[MAX_FLIST]; mlp++) {
 		if ((ml = *mlp) != MAL_NULL)	{
-	
+
 			*mlp = log_next_of(ml);	/* may be MAL_NULL */
 			if (*mlp) {
 				/* unhook backward link
@@ -918,7 +918,7 @@ create_chunk(void *p, size_t n)
 		Its use is prevented by testing for ml == ml_last first.
 	*/
 	register mallink *last = ml_last;
-	
+
 	assert(!last || p == (char *)phys_next_of(last) - mallink_size());
 	ml = (mallink *)((char *)p + mallink_size());	/* bump ml */
 	new_mallink(ml);
@@ -1028,7 +1028,7 @@ maldump(int n)	{
 	*/
 	static int dumping = 0;
 	int i;
-	
+
 	if (dumping)
 		return;
 	dumping++;
@@ -1054,9 +1054,9 @@ maldump(int n)	{
 private
 acquire_malout(void)	{
 	static char buf[BUFSIZ];
-	
+
 	if (!malout)	{
-		malout = freopen("mal.out", "w", stderr);	
+		malout = freopen("mal.out", "w", stderr);
 		setbuf(malout, buf);
 	}
 }
@@ -1064,7 +1064,7 @@ acquire_malout(void)	{
 private
 dump_all_mallinks(void)	{
 	mallink *ml;
-	
+
 	for_all_mallinks (ml)	{
 		if (print_loop(ml))
 			return;
@@ -1075,7 +1075,7 @@ dump_all_mallinks(void)	{
 private
 dump_free_list(int i)	{
 	mallink *ml = free_list_entry(i);
-	
+
 	if (!ml)
 		return;
 	fprintf(malout, "%2d: ", i);
@@ -1108,7 +1108,7 @@ dump_mallink(const char *s, mallink *ml)	{
 	if (!ml)	{
 		fprintf(malout, "\n");
 		return;
-	}	
+	}
 	if (free_of(ml))	{
 		fprintf(malout, " l_p: %p;", _log_prev_of(ml));
 		fprintf(malout, " l_n: %p;", _log_next_of(ml));
@@ -1142,7 +1142,7 @@ check_mallinks(const char *s)	{
 	size_type size;
 	int i;
 	char stat;
-	
+
 	check_ml_last(s);
 	stat = BEZET;
 	for_all_mallinks(ml)	{
@@ -1170,7 +1170,7 @@ check_mallinks(const char *s)	{
 			stat = BEZET;
 		set_mark(ml, IN_ML_LAST);
 	}
-	
+
 	for (i = 0, size = MIN_SIZE; i < MAX_FLIST; i++, size *= 2)	{
 		for_free_list(i, ml)	{
 			if (working_on(ml))
@@ -1212,7 +1212,7 @@ check_ml_last(const char *s)	{
 private size_type
 checksum(mallink *ml)	{
 	size_type sum = 0;
-	
+
 	if (free_of(ml))	{
 		sum += (size_type)_log_prev_of(ml);
 		sum += (size_type)_log_next_of(ml);
@@ -1233,7 +1233,7 @@ static mallink *off_colour[N_COLOUR];
 private
 started_working_on(mallink *ml)	{
 	int i;
-	
+
 	for (i = 0; i < N_COLOUR; i++)
 		if (off_colour[i] == MAL_NULL)	{
 			off_colour[i] = ml;
@@ -1245,7 +1245,7 @@ started_working_on(mallink *ml)	{
 private
 stopped_working_on(mallink *ml)	{
 	int i;
-	
+
 	for (i = 0; i < N_COLOUR; i++)
 		if (off_colour[i] == ml)	{
 			off_colour[i] = MAL_NULL;
@@ -1257,7 +1257,7 @@ stopped_working_on(mallink *ml)	{
 private int
 working_on(mallink *ml)	{
 	int i;
-	
+
 	for (i = 0; i < N_COLOUR; i++)
 		if (off_colour[i] == ml)
 			return 1;
@@ -1268,7 +1268,7 @@ private
 check_work_empty(const char *s)	{
 	int i;
 	int cnt = 0;
-	
+
 	for (i = 0; i < N_COLOUR; i++)
 		if (off_colour[i] != MAL_NULL)
 			cnt++;

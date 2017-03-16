@@ -3,16 +3,16 @@
  * Facility: m4 macro processor
  * by: oz
  */
- 
+
 #include "mdef.h"
-#include "extr.h" 
+#include "extr.h"
 
 extern ndptr lookup();
 extern ndptr addent();
 extern char  *strsave();
- 
+
 char *dumpfmt = "`%s'\t`%s'\n"; /* format string for dumpdef   */
- 
+
 /*
  * expand - user-defined macro expansion
  *
@@ -25,7 +25,7 @@ register int argc;
         register char *p;
         register int  n;
         register int  argno;
- 
+
         t = argv[0];    /* defn string as a whole */
         p = t;
         while (*p)
@@ -36,7 +36,7 @@ register int argc;
                         putback(*p);
                 else {
                         switch (*p) {
- 
+
                         case '#':
                                 pbnum(argc-2);
                                 break;
@@ -71,7 +71,7 @@ register int argc;
         if (p == t)         /* do last character */
                 putback(*p);
 }
- 
+
 /*
  * dodefine - install definition in the table
  *
@@ -81,7 +81,7 @@ register char *name;
 register char *defn;
 {
         register ndptr p;
- 
+
         if (!*name)
                 error("m4: null definition.");
         if (strcmp(name, defn) == 0)
@@ -96,24 +96,24 @@ register char *defn;
                 p->defn = strsave(defn);
         p->type = MACRTYPE;
 }
- 
+
 /*
  * dodefn - push back a quoted definition of
  *      the given name.
  */
- 
+
 dodefn(name)
 char *name;
 {
         register ndptr p;
- 
+
         if ((p = lookup(name)) != nil && p->defn != null) {
                 putback(rquote);
                 pbstr(p->defn);
                 putback(lquote);
         }
 }
-     
+
 /*
  * dopushdef - install a definition in the hash table
  *      without removing a previous definition. Since
@@ -126,7 +126,7 @@ register char *name;
 register char *defn;
 {
         register ndptr p;
- 
+
         if (!*name)
                 error("m4: null definition");
         if (strcmp(name, defn) == 0)
@@ -138,7 +138,7 @@ register char *defn;
                 p->defn = strsave(defn);
         p->type = MACRTYPE;
 }
- 
+
 /*
  * dodumpdef - dump the specified definitions in the hash
  *      table to stderr. If nothing is specified, the entire
@@ -151,7 +151,7 @@ register int argc;
 {
         register int n;
         ndptr p;
- 
+
         if (argc > 2) {
                 for (n = 2; n < argc; n++)
                         if ((p = lookup(argv[n])) != nil)
@@ -165,7 +165,7 @@ register int argc;
                                 p->defn);
         }
 }
- 
+
 /*
  * doifelse - select one of two alternatives - loop.
  *
@@ -187,7 +187,7 @@ register int argc;
                 break;
         }
 }
- 
+
 /*
  * doinclude - include a given file.
  *
@@ -204,7 +204,7 @@ char *ifile;
         else
                 return (0);
 }
- 
+
 #ifdef EXTENDED
 /*
  * dopaste - include a given file without any
@@ -215,7 +215,7 @@ char *pfile;
 {
         FILE *pf;
         register int c;
- 
+
         if ((pf = fopen(pfile, "r")) != NULL) {
                 while ((c = getc(pf)) != EOF)
                         putc(c, active);
@@ -226,7 +226,7 @@ char *pfile;
                 return(0);
 }
 #endif
- 
+
 /*
  * dochq - change quote characters
  *
@@ -250,7 +250,7 @@ register int argc;
                 rquote = RQUOTE;
         }
 }
- 
+
 /*
  * dochc - change comment characters
  *
@@ -274,7 +274,7 @@ register int argc;
                 ecommt = ECOMMT;
         }
 }
- 
+
 /*
  * dodivert - divert the output to a temporary file
  *
@@ -292,7 +292,7 @@ register int n;
         oindex = n;
         active = outfile[n];
 }
- 
+
 /*
  * doundivert - undivert a specified output, or all
  *              other outputs, in numerical order.
@@ -303,13 +303,13 @@ register int argc;
 {
         register int ind;
         register int n;
- 
+
         if (argc > 2) {
                 for (ind = 2; ind < argc; ind++) {
                         n = atoi(argv[ind]);
                         if (n > 0 && n < MAXOUT && outfile[n] != NULL)
                                 getdiv(n);
- 
+
                 }
         }
         else
@@ -317,7 +317,7 @@ register int argc;
                         if (outfile[n] != NULL)
                                 getdiv(n);
 }
- 
+
 /*
  * dosub - select substring
  *
@@ -328,7 +328,7 @@ register int  argc;
 {
         register char *ap, *fc, *k;
         register int nc;
- 
+
         if (argc < 5)
                 nc = MAXTOK;
         else
@@ -347,34 +347,34 @@ register int  argc;
                 for (k = fc+min(nc,strlen(fc))-1; k >= fc; k--)
                         putback(*k);
 }
- 
+
 /*
  * map:
  * map every character of s1 that is specified in from
  * into s3 and replace in s. (source s1 remains untouched)
  *
- * This is a standard implementation of map(s,from,to) function of ICON 
- * language. Within mapvec, we replace every character of "from" with 
- * the corresponding character in "to". If "to" is shorter than "from", 
- * than the corresponding entries are null, which means that those 
- * characters dissapear altogether. Furthermore, imagine 
- * map(dest, "sourcestring", "srtin", "rn..*") type call. In this case, 
- * `s' maps to `r', `r' maps to `n' and `n' maps to `*'. Thus, `s' 
- * ultimately maps to `*'. In order to achieve this effect in an efficient 
- * manner (i.e. without multiple passes over the destination string), we 
- * loop over mapvec, starting with the initial source character. if the 
- * character value (dch) in this location is different than the source 
- * character (sch), sch becomes dch, once again to index into mapvec, until 
- * the character value stabilizes (i.e. sch = dch, in other words 
- * mapvec[n] == n). Even if the entry in the mapvec is null for an ordinary 
- * character, it will stabilize, since mapvec[0] == 0 at all times. At the 
- * end, we restore mapvec* back to normal where mapvec[n] == n for 
- * 0 <= n <= 127. This strategy, along with the restoration of mapvec, is 
- * about 5 times faster than any algorithm that makes multiple passes over 
+ * This is a standard implementation of map(s,from,to) function of ICON
+ * language. Within mapvec, we replace every character of "from" with
+ * the corresponding character in "to". If "to" is shorter than "from",
+ * than the corresponding entries are null, which means that those
+ * characters dissapear altogether. Furthermore, imagine
+ * map(dest, "sourcestring", "srtin", "rn..*") type call. In this case,
+ * `s' maps to `r', `r' maps to `n' and `n' maps to `*'. Thus, `s'
+ * ultimately maps to `*'. In order to achieve this effect in an efficient
+ * manner (i.e. without multiple passes over the destination string), we
+ * loop over mapvec, starting with the initial source character. if the
+ * character value (dch) in this location is different than the source
+ * character (sch), sch becomes dch, once again to index into mapvec, until
+ * the character value stabilizes (i.e. sch = dch, in other words
+ * mapvec[n] == n). Even if the entry in the mapvec is null for an ordinary
+ * character, it will stabilize, since mapvec[0] == 0 at all times. At the
+ * end, we restore mapvec* back to normal where mapvec[n] == n for
+ * 0 <= n <= 127. This strategy, along with the restoration of mapvec, is
+ * about 5 times faster than any algorithm that makes multiple passes over
  * destination string.
  *
  */
-     
+
 map(dest,src,from,to)
 register char *dest;
 register char *src;
@@ -396,7 +396,7 @@ register char *to;
                 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
                 120, 121, 122, 123, 124, 125, 126, 127
         };
- 
+
         if (*src) {
                 tmp = from;
 	/*
@@ -404,7 +404,7 @@ register char *to;
 	 */
                 while (*from)
                         mapvec[*from++] = (*to) ? *to++ : (char) 0;
-     
+
                 while (*src) {
                         sch = *src++;
                         dch = mapvec[sch];

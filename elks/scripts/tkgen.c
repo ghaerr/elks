@@ -486,7 +486,7 @@ void generate_if_for_outfile(struct kconfig *item, struct condition *cond)
      * Now we generate what we do depending upon the value of the conditional.
      * Depending upon what the token type is, there are different things we
      * must do to write the value of the given widget - this code needs to be
-     * closely coordinated with the widget creation procedures in header.tk.  
+     * closely coordinated with the widget creation procedures in header.tk.
      */
     switch (item->tok) {
     case tok_define:
@@ -1041,7 +1041,7 @@ void dump_tk_script(struct kconfig *scfg)
 
     /*
      * Finally write a simple function that updates the master choice variable
-     * depending upon what values were loaded from a .config file.  
+     * depending upon what values were loaded from a .config file.
      */
     printf("proc clear_choices { } {\n");
     for (cfg = scfg; cfg != NULL; cfg = cfg->next) {

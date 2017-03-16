@@ -429,12 +429,12 @@ void vi()
 			}
 			count = 0L;
 			break;
-	
+
 		  case CURSOR_COUNT:
 			tcurs = (*keyptr->func)(cursor, count);
 			count = 0L;
 			break;
-	
+
 		  case CURSOR:
 			tcurs = (*keyptr->func)(cursor);
 			count = 0L;
@@ -472,7 +472,7 @@ void vi()
 			}
 			count = 0L;
 			break;
-	
+
 		  case CURSOR_MOVED:
 			/* '&' and uppercase keys always act like doubled */
 			if (key == '&' || isascii(key) && isupper(key))
@@ -519,7 +519,7 @@ void vi()
 
 		  case CURSOR_TEXT:
 		  	do
-		  	{	
+		  	{
 				text[0] = key;
 				if (vgets(key, text + 1, sizeof text - 1) >= 0)
 				{

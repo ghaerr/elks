@@ -7,11 +7,11 @@
  *	modify it under the terms of the GNU General Public License
  *	as published by the Free Software Foundation; either version
  *	2 of the License, or (at your option) any later version.
- */ 
+ */
 
 #include <time.h>
 #include <sys/types.h>
-#include <unistd.h> 
+#include <unistd.h>
 
 #include "slip.h"
 #include "tcpdev.h"
@@ -65,32 +65,24 @@ void ktcp_run(void)
 	    timeint.tv_sec  = 1;
 	    timeint.tv_usec = 0;
 	    tv = &timeint;
-	} else
-	    tv = NULL;
+	} else tv = NULL;
 
 	FD_ZERO(&fdset);
 	FD_SET(intfd, &fdset);
 	FD_SET(tcpdevfd, &fdset);
-	select(intfd > tcpdevfd ? intfd + 1 : tcpdevfd + 1,
-	       &fdset, NULL, NULL, tv);
+	select(intfd > tcpdevfd ? intfd + 1 : tcpdevfd + 1, &fdset, NULL, NULL, tv);
 
 	Now = timer_get_time();
 
 	tcp_update();
 
-	if (FD_ISSET(intfd, &fdset)){
-		if (dev->type == 0){
-		    slip_process();
-		} else {
-		    /*read eth*/
-		    deveth_process();
-		}
+	if (FD_ISSET(intfd, &fdset)) {
+		if (dev->type == 0) slip_process();
+		else deveth_process();
 	}
-	if (FD_ISSET(tcpdevfd, &fdset))
-	    tcpdev_process();
+	if (FD_ISSET(tcpdevfd, &fdset)) tcpdev_process();
 
-	if (tcp_timeruse > 0)
-	    tcp_retrans();
+	if (tcp_timeruse > 0) tcp_retrans();
 
 #ifdef DEBUG
 	tcpcb_printall();
@@ -105,7 +97,7 @@ int main(int argc,char **argv)
 
     const char dname[9];
     sprintf(dname, "/dev/eth");
-	
+
     if (argc < 3) {
 	printf("Syntax :\n    %s local_ip [interface] [gateway] [netmask]\n", argv[0]);
 	exit(3);
@@ -113,18 +105,12 @@ int main(int argc,char **argv)
 
     debug("KTCP: 1. local_ip \n");
     local_ip = in_aton(argv[1]);
-    
-    if (argc>3){
-      gateway_ip = in_aton(argv[3]);
-    } else {
-      gateway_ip = in_aton("10.0.2.2"); /* use dhcp when implemented */
-    }
-    
-    if (argc>4) {
-      netmask_ip = in_aton(argv[4]);
-    } else { /* default */
-      netmask_ip = in_aton("255.255.255.0");
-    }
+
+    if (argc > 3) gateway_ip = in_aton(argv[3]);
+    else gateway_ip = in_aton("10.0.2.2"); /* use dhcp when implemented */
+
+    if (argc > 4) netmask_ip = in_aton(argv[4]);
+    else netmask_ip = in_aton("255.255.255.0");
 
     /*
     addr = (__u8 *) &local_ip;
@@ -136,8 +122,7 @@ int main(int argc,char **argv)
     */
 
     debug("\nKTCP: 2. init tcpdev\n");
-    if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)
-	exit(1);
+    if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0) exit(1);
 
     debug("KTCP: 3. init interface\n");
     if (strcmp(argv[2],dname) == 0) {

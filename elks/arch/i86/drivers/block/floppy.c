@@ -11,7 +11,7 @@
  * but I don't like programming floppies, and I have only one anyway.
  * Urgel. I should check for more errors, and do more graceful error
  * recovery. Seems there are problems with several drives. I've tried to
- * correct them. No promises. 
+ * correct them. No promises.
  *
  * As with hd.c, all routines within this file can (and will) be called
  * by interrupts, so extreme caution is needed. A hardware interrupt
@@ -26,7 +26,7 @@
  * (almesber@nessie.cs.id.ethz.ch), who also corrected some problems with
  * the floppy-change signal detection.
  *
- * 1992/7/22 -- Hennus Bergman: Added better error reporting, fixed 
+ * 1992/7/22 -- Hennus Bergman: Added better error reporting, fixed
  * FDC data overrun bug, added some preliminary stuff for vertical
  * recording support.
  *
@@ -36,7 +36,7 @@
  *
  * 1992/9/20
  * Modifications for ``Sector Shifting'' by Rob Hooft (hooft@chem.ruu.nl)
- * modelled after the freeware MS/DOS program fdformat/88 V1.8 by 
+ * modelled after the freeware MS/DOS program fdformat/88 V1.8 by
  * Christoph H. Hochstatter.
  *
  * I have fixed the shift values to the ones I always use. Maybe a new

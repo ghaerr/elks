@@ -540,7 +540,7 @@ runcmd(cmd, argc, argv)
 		if ((*cp >= 'a') && (*cp <= 'z'))
 			continue;
 		if ((*cp >= 'A') && (*cp <= 'Z'))
-			continue;	
+			continue;
 		if (isdecimal(*cp))
 			continue;
 		if (isblank(*cp))
@@ -594,7 +594,7 @@ runcmd(cmd, argc, argv)
 	/*
 	 * We are the child, so run the program.
 	 * First close any extra file descriptors we have opened.
-	 */	
+	 */
 #ifdef CMD_SOURCE
 	while (--sourcecount >= 0) {
 		if (sourcefiles[sourcecount] != stdin)
@@ -651,7 +651,7 @@ do_alias(argc, argv)
 			printf("%s\n", alias->value);
 		else
 			fprintf(stderr, "Alias \"%s\" is not defined\n", name);
-		return;	
+		return;
 	}
 
 	if (strcmp(name, "alias") == 0) {
@@ -814,7 +814,7 @@ do_unalias(argc, argv)
 		free(alias->value);
 		aliascount--;
 		alias->name = aliastable[aliascount].name;
-		alias->value = aliastable[aliascount].value;	
+		alias->value = aliastable[aliascount].value;
 	}
 }
 #endif /* CMD_ALIAS */
@@ -834,7 +834,7 @@ showprompt()
 #endif
 
 	write(STDOUT, cp, strlen(cp));
-}	
+}
 
 
 static void

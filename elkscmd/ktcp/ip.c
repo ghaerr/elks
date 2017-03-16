@@ -33,7 +33,7 @@
 /*#define DEBUG*/
 #define USE_ASM
 
-static char ipbuf[TCPDEV_BUFSIZE]; 
+static char ipbuf[TCPDEV_BUFSIZE];
 
 int ip_init(void)
 {
@@ -46,13 +46,13 @@ __u16 ip_calc_chksum(char *data, int len)
     __u32 sum = 0;
     int i;
     __u16 *p = (__u16 *) data;
-    
+
     len >>= 1;
-    
+
     for (i=0; i < len ; i++){
 	sum += *p++;
     }
-    
+
     return ~((sum & 0xffff) + ((sum >> 16) & 0xffff));
 }
 #else
@@ -65,7 +65,7 @@ _ip_calc_chksum:
 	push	bp
 	mov	bp,sp
 	push	di
-	
+
 	mov	cx, 6[bp]
 	shr	cx, 1
 	shr	cx, 1
@@ -83,13 +83,13 @@ loop1:
 
 	adc	ax, 0
 	not	ax
-	
+
 	pop di
 	pop bp
-	
+
 	ret
 #endasm
-	
+
 
 #endif
 
@@ -98,7 +98,7 @@ void ip_print(struct iphdr_s *head)
 #ifdef DEBUG
     int i;
     __u8 *addr;
-    
+
     printf("Version/IHL: %d/%d ",IP_VERSION(head),IP_IHL(head));
     printf("TypeOfService/Length: %d/%d\n",head->tos,ntohs(head->tot_len));
     printf("Id/flags/fragment offset: %d/%d ",head->id,head->frag_off);
@@ -109,11 +109,11 @@ void ip_print(struct iphdr_s *head)
     printf("saddr : %d.%d.%d.%d ",addr[0],addr[1],addr[2],addr[3]);
     addr = (__u8 *)&head->daddr;
     printf("daddr : %d.%d.%d.%d ",addr[0],addr[1],addr[2],addr[3]);
-    
+
     printf("check sum = %d\n",ip_calc_chksum(head, 4 * IP_IHL(head)));
-    
+
     addr = (__u8 *)head + 4 * IP_IHL(head);
-    for ( i = 0 ; i < ntohs(head->tot_len) - 20 ; i++ ) 
+    for ( i = 0 ; i < ntohs(head->tot_len) - 20 ; i++ )
 	printf("%x ",addr[i]);
 
     printf("\n");
@@ -143,7 +143,7 @@ void ip_recvpacket(char *packet,int size)
 #endif
 	return;
     }
-    
+
     data = packet + 4 * IP_IHL(iphdr);
 
     switch (iphdr->protocol) {
@@ -163,7 +163,7 @@ void ip_recvpacket(char *packet,int size)
 		break;
 
     default:
-	break;	
+	break;
 
     }
 }
@@ -174,7 +174,7 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     __u16 tlen;
     __u8 *addr;
     ipaddr_t tmpaddress;
-    char llbuf[15];    
+    char llbuf[15];
     struct ip_ll *ipll = (struct ip_ll *)&llbuf;
 
     ipaddr_t ip_addr;
@@ -217,7 +217,7 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     memcpy(ipll->ll_eth_src,eth_local_addr, 6);
     ipll->ll_type_len=0x08; /*=0x0800 bigendian*/
     } //if (dev->type == 1)
-    
+
     /*ip layer*/
     iph->version_ihl	= 0x45;
 
@@ -236,14 +236,14 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     } else {
       iph->daddr		= apair->daddr;
       iph->saddr		= apair->saddr;
-    }    
+    }
 
     iph->check		= 0;
-    iph->check		= ip_calc_chksum((char *)iph, tlen);   
- 
+    iph->check		= ip_calc_chksum((char *)iph, tlen);
+
     //ip_print(iph);
-    
-    memcpy(&ipbuf[tlen], packet, len);    
+
+    memcpy(&ipbuf[tlen], packet, len);
     if (dev->type == 1) { /*add link layer*/
       memmove(&ipbuf[14],&ipbuf, TCPDEV_BUFSIZE-14);
       memcpy(&ipbuf,&llbuf,14);
@@ -257,5 +257,5 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
 	if (dev->type == 1)
 		deveth_send(&ipbuf, tlen + len + 14);  /* add link layer length */
         else
-		slip_send(&ipbuf, tlen + len);  
+		slip_send(&ipbuf, tlen + len);
 }

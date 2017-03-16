@@ -18,7 +18,7 @@
  */
 #include "levee.h"
 #include "extern.h"
-    
+
 /* do some undoable modification */
 
 /* These variables make docommand nonrecursive */
@@ -89,7 +89,7 @@ int count;
 {
     bool ok;
     int lp, first;
-    
+
     if (lend < bufmax) {	/* are we in the buffer? */
 	disp = lend;				/* start redraw here */
 	newc = lend;
@@ -120,7 +120,7 @@ char c;
 bool dorepl;
 {
     int i;
-    
+
     if (endp >= curr) {
 	ok = move_to_undo(&undo,curr,endp-curr+1);
 	if (ok) {
@@ -143,7 +143,7 @@ PROC
 bigreplace()
 {
     int len, tsiz;
-    
+
     tsiz = lend-curr;
     if (move_to_undo(&undo, curr, tsiz))
 	if (SIZE - bufmax > tsiz) {	/* enough room for temp copy? */
@@ -247,7 +247,7 @@ cmdtype cmd;
 		goto killredo;
 	    }
 	}
-	
+
 	endY = setY(endp);
 	newend = curr;
 	disp = curr;
@@ -502,7 +502,7 @@ editcore()
 {
     cmdtype cmd;
     extern bool s_wrapped;
-    
+
     /* rcb[0] = 0; rcp = rcb; */
 
     if (diddled) {

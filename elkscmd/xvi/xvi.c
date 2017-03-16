@@ -43,7 +43,7 @@
  *					of file (as vi does).
  *
  */
-
+
 #include	<sys/types.h>
 #include	<sys/ioctl.h>
 #include        <termios.h>
@@ -356,7 +356,7 @@ static char *qref[] = {
 };
 
 #define	MAXQREF	(sizeof(qref)/sizeof(*qref))	/* # of rows in qref	*/
-
+
 
 static char *qref80[] =
 {
@@ -401,7 +401,7 @@ static char *qref80[] =
 "The insert,append,replace modes are closed by <esc> key.",
 "To enter the file characters normally interpreted, make them preceded by \"\\\"."
 };
-
+
 
 #ifdef PC
 
@@ -429,7 +429,7 @@ static struct opt_s	option[] = {
 	{"nc", "ncolumns", 8, RANGE, 2, {"40", "999"}}
 };
 #endif
-
+
 
 static char	*mesg[] = {
 
@@ -476,7 +476,7 @@ static char	*mesg[] = {
 /* 40 */	"No previous pattern",
 /* 41 */	"Mantain working files \"%s\" and \"%s\" ?"
 };
-
+
 static char	*pmask[] = {
 
 	"%o",			/*  0 */
@@ -580,7 +580,7 @@ char	*cd;	/* clear to end of display	*/
 
 /* termcap var.s end */
 
-
+
 
 /* list of local functions	*/
 
@@ -665,7 +665,7 @@ static void terminate();
 static void toeosrefresh();
 static int wrnewf();
 static int wrsamef();
-
+
 /*
  *								CUROFFS(M)
  *	NAME
@@ -688,7 +688,7 @@ static int wrsamef();
  */
 
 #define	CUROFFS(r,c)	(((r) - FIRSTROW) * nbytes + ((c) - curfield.fc) / curfield.step)
-
+
 /*
  *								CUROUTSIDE(M)
  *	NAME
@@ -707,7 +707,7 @@ static int wrsamef();
  */
 
 #define	CUROUTSIDE ((y > curfield.lr) || (y == curfield.lr && x > curfield.lconlr))
-
+
 /*
  *								GETACHAR(M)
  *	NAME
@@ -731,7 +731,7 @@ static int wrsamef();
 #else
 #define	GETACHAR	mygetchar()
 #endif
-
+
 #ifndef CBREAK
 #define INTEN	inten()
 #define INTDIS	intdis()
@@ -739,7 +739,7 @@ static int wrsamef();
 #define INTEN
 #define INTDIS
 #endif
-
+
 /*
  *								ISCTRL(M)
  *
@@ -760,7 +760,7 @@ static int wrsamef();
  */
 
 #define	ISCTRL(c) ((c) < 0x20 || (c) == 0x7f || ((c) & 0200))
-
+
 /*
  *								MASK(M)
  *
@@ -782,7 +782,7 @@ static int wrsamef();
  */
 
 #define	MASK(n) ((n) + radix - 7)
-
+
 /*
  *								SETLASTROW(M)
  *	NAME
@@ -800,7 +800,7 @@ static int wrsamef();
  */
 
 #define	SETLASTROW	lastrow = FIRSTROW  + nrows - 1;
-
+
 /*
  *								backward(L)
  *	NAME
@@ -838,7 +838,7 @@ static void backward()
 	scrrefresh(base);
 	loghome();
 }
-
+
 /*
  *								changefield(L)
  *	NAME
@@ -893,7 +893,7 @@ static void changefield(mode)
 	if (mode)
 		mvcur(y,x);
 }
-
+
 /*
  *								cleareos(L)
  *	NAME
@@ -914,7 +914,7 @@ static void cleareos() {
 
 	tputs(cd,1,putch);
 }
-
+
 /*
  *								copyblk(L)
  *	NAME
@@ -947,7 +947,7 @@ static void copyblk(ifd,ofd,ifrom,ito,oto)
 	while (ifrom <= ito)
 		ifrom += write(ofd,rbuffer,min(read(ifd,rbuffer,BLKSIZE),ito-ifrom+1));
 }
-
+
 /*
  *								curcoords(L)
  *	NAME
@@ -974,7 +974,7 @@ static void curcoords(offs,yy,xx)
 	*xx = (offs % nbytes)*curfield.step + curfield.fc;
 	*yy = offs / nbytes + FIRSTROW;
 }
-
+
 /*
  *								delete(L)
  *	NAME
@@ -1100,7 +1100,7 @@ static void delete() {
 			mvcur(y,x);
 	}
 }
-
+
 /*
  *								det0(L)
  *	NAME
@@ -1125,7 +1125,7 @@ static int det0(c)
 {
 	return(c == '\0');
 }
-
+
 /*
  *								det1(L)
  *	NAME
@@ -1151,7 +1151,7 @@ static int det1(c)
 {
 	return(c == ',' || c == ' ' || c == '\t' || c == '\0');
 }
-
+
 /*
  *								display(L)
  *	NAME
@@ -1285,7 +1285,7 @@ static void display(fr,addr)
 	INTDIS;
 	signal(SIGINT,intrproc);
 }
-
+
 /*
  *								error(L)
  *	NAME
@@ -1320,7 +1320,7 @@ static void error(code)
 
 	mvcur(y,x);
 }
-
+
 /*
  *								c_index(L)
  *
@@ -1352,7 +1352,7 @@ char *c_index(string, c)
 	else
 		return(string);
 }
-
+
 /*
  *								esc_match(L)
  *	NAME
@@ -1377,7 +1377,7 @@ static int esc_match(c)
 {
 	return(c == ESC || c == '\t');
 }
-
+
 /*
  *								forward(L)
  *	NAME
@@ -1411,7 +1411,7 @@ static int forward() {
 	else
 		return(NOTOK);
 }
-
+
 /*
  *								getcmd(L)
  *	NAME
@@ -1885,7 +1885,7 @@ static void getcmd() {
 		}
 	}
 }
-
+
 /*
  *								gettcap(L)
  *	NAME
@@ -1924,7 +1924,7 @@ static int gettcap () {
 	maxrow = tgetnum("li");
 	return(OK);
 }
-
+
 /*
  *								gotoaddr(L)
  *	NAME
@@ -1991,7 +1991,7 @@ static void gotoaddr(c)
 				loghome();
 			}
 }
-
+
 /*
  *								help(L)
  *	NAME
@@ -2072,7 +2072,7 @@ static void help() {
 		}
 	}
 }
-
+
 /*
  *								help80()
  *	NAME
@@ -2113,7 +2113,7 @@ static void help80() {
 		cleareos();
 	}
 }
-
+
 /*
  *								insert(L)
  *	NAME
@@ -2334,7 +2334,7 @@ static void insert(mode,fd)
 		toeosrefresh(tmpaddr - actpos%nbytes);
 	mvcur(y,x);
 }
-
+
 /*
  *								insf(L)
  *	NAME
@@ -2367,7 +2367,7 @@ static void insf(inpfd,after)
 	tmpfd = inpfd;
 	curflength += pinfo->st_size;
 }
-
+
 /*
  *								intdis(L)
  *
@@ -2392,7 +2392,7 @@ static void intdis() {
 /*      ttyb.sg_flags |= RAW;
 	ioctl(2, TIOCSETP, &ttyb);                                       */
 }
-
+
 /*
  *								inten(L)
  *
@@ -2417,7 +2417,7 @@ static void inten() {
 /*      ttyb.sg_flags &= ~RAW;
 	ioctl(2, TIOCSETP, &ttyb);                                       */
 }
-
+
 /*
  *								intrproc(L)
  *	NAME
@@ -2462,7 +2462,7 @@ static int intrproc() {
 
 	mvcur(y,x);
 }
-
+
 /*
  *								isaddress(L)
  *	NAME
@@ -2486,7 +2486,7 @@ static int isaddress(c)
 {
 	return(isdigit(c) || c == '.' || c == '$');
 }
-
+
 /*
  *								ishex(L)
  *	NAME
@@ -2510,7 +2510,7 @@ static int ishex(c)
 {
 	return((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'));
 }
-
+
 /*
  *								isoct(L)
  *	NAME
@@ -2534,7 +2534,7 @@ static int isoct(c)
 {
 	return(c >= '0' && c <= '7');
 }
-
+
 /*
  *								isvalidname(L)
  *	NAME
@@ -2580,7 +2580,7 @@ static int isvalidname(string)
 	}
 	return(TRUE);
 }
-
+
 /*
  *								jmpproc(L)
  *	NAME
@@ -2608,7 +2608,7 @@ static void jmpproc() {
 	signal(SIGINT,intrproc);
 	longjmp(env,0);
 }
-
+
 /*
  *								lastpage(L)
  *	NAME
@@ -2636,7 +2636,7 @@ static void lastpage() {
 
 	logeop();
 }
-
+
 /*
  *								logbegrow(L)
  *	NAME
@@ -2659,7 +2659,7 @@ static void logbegrow() {
 	mvcur(y,x);
 	actpos = CUROFFS(y,x);
 }
-
+
 /*
  *								logbottom(L)
  *	NAME
@@ -2683,7 +2683,7 @@ static void logbottom() {
 	mvcur(y,x);
 	actpos = CUROFFS(y,x);
 }
-
+
 /*
  *								logendrow(L)
  *	NAME
@@ -2710,7 +2710,7 @@ static void logendrow() {
 	mvcur(y,x);
 	actpos = CUROFFS(y,x);
 }
-
+
 /*
  *								logeop(L)
  *	NAME
@@ -2733,7 +2733,7 @@ static void logeop() {
 	mvcur(y,x);
 	actpos = CUROFFS(y,x);
 }
-
+
 /*
  *								loghome(L)
  *	NAME
@@ -2756,7 +2756,7 @@ static void loghome() {
 	mvcur(y,x);
 	actpos = 0;
 }
-
+
 /*
  *								logmiddle(L)
  *	NAME
@@ -2780,7 +2780,7 @@ static void logmiddle() {
 	mvcur(y,x);
 	actpos = CUROFFS(y,x);
 }
-
+
 /*
  *								main(E)
  *	NAME
@@ -2943,7 +2943,7 @@ char	**argv;
 	resterm();
 	exit(0);
 }
-
+
 /*
  *								min(L)
  *	NAME
@@ -2971,7 +2971,7 @@ char	**argv;
 {
 	return((a < b) ? a : b);
 }
-
+
 /*
  *								moved(L)
  *	NAME
@@ -3019,7 +3019,7 @@ static void moved() {
 
 			putchar(BELL);
 }
-
+
 /*
  *								movel(L)
  *	NAME
@@ -3086,7 +3086,7 @@ static void movel() {
 
 	mvcur(y,x);
 }
-
+
 /*
  *								mover(L)
  *	NAME
@@ -3161,7 +3161,7 @@ static int mover() {
 			return(XRLC);
 		}
 }
-
+
 /*
  *								moveu(L)
  *	NAME
@@ -3192,7 +3192,7 @@ static void moveu() {
 	else
 		putchar(BELL);
 }
-
+
 /*
  *								mreplace(L)
  *	NAME
@@ -3296,7 +3296,7 @@ static void mreplace() {
 	if (eof)
 		insert(APPEOF,tmpfd);
 }
-
+
 /*
  *								mvcur(L)
  *	NAME
@@ -3324,7 +3324,7 @@ static void mvcur(y,x)
 	tputs(mov,1,putch);
 	fflush(stdout);
 }
-
+
 /*
  *								mygetchar(L)
  *
@@ -3352,7 +3352,7 @@ static int mygetchar() {
 	return(((c = getchar() & 0x7f) == '\r') ? '\n' : c);
 }
 #endif
-
+
 /*
  *								myisdigit(L)
  *	NAME
@@ -3376,7 +3376,7 @@ static int myisdigit(c)
 {
 	return(isdigit(c));
 }
-
+
 /*
  *								myisspace(L)
  *	NAME
@@ -3400,7 +3400,7 @@ static int myisspace(c)
 {
 	return(isspace(c) || c == '\0');
 }
-
+
 /*
  *								nevermatch(L)
  *	NAME
@@ -3420,7 +3420,7 @@ static int nevermatch() {
 
 	return(FALSE);
 }
-
+
 /*
  *								newline(L)
  *	NAME
@@ -3454,7 +3454,7 @@ static void newline() {
 		putchar(BELL);
 
 }
-
+
 /*
  *								pattmatch(L)
  *	NAME
@@ -3637,7 +3637,7 @@ static void pattmatch(direction,whichpattern)
 	INTDIS;
 	signal(SIGINT,intrproc);
 }
-
+
 /*
  *								prepline(L)
  *	NAME
@@ -3666,7 +3666,7 @@ static void prepline(tmpaddr)
 	mvcur(y,field2.lcmax+1);
 	putchar('"');
 }
-
+
 /*
  *								printhdr(L)
  *	NAME
@@ -3695,7 +3695,7 @@ static void printhdr() {
 	mvcur(FIRSTROW-1,field2.fc);
 	for (i = 0; i < nbytes; printf("%1x",(i++ + hnum)&radix));
 }
-
+
 /*
  *								printinfo(L)
  *	NAME
@@ -3727,7 +3727,7 @@ static void printinfo() {
 	printsize(base+actpos, 0);
 	mvcur(y,x);
 }
-
+
 /*
  *								printsize(L)
  *	NAME
@@ -3767,7 +3767,7 @@ static void printsize(sz,mode)
 	if (mode)
 		printf(" bytes");
 }
-
+
 /*
  *								prpageno(L)
  *	NAME
@@ -3792,7 +3792,7 @@ static void prpageno() {
 	else
 		printf(pmask[MASK(6)], pageno, pageno);
 }
-
+
 /*
  *								putch(L)
  *	NAME
@@ -3816,7 +3816,7 @@ static void putch(c)
 {
 	putchar(c);
 }
-
+
 /*
  *								readtty(L)
  *	NAME
@@ -3932,7 +3932,7 @@ static int readtty(c,ismchar)
 	}
 	return(NORM);
 }
-
+
 /*
  *								redraw(L)
  *	NAME
@@ -3953,7 +3953,7 @@ static void redraw() {
 	scrrefresh(base);
 	mvcur(y,x);
 }
-
+
 /*
  *								resterm(L)
  *	NAME
@@ -3980,7 +3980,7 @@ static void resterm() {
 
         ioctl(0,TCSETS,&ttybsave);                                  /* tjp */
 }
-
+
 /*
  *								scrolldown(L)
  *	NAME
@@ -4026,7 +4026,7 @@ static void scrolldown() {
 	else
 		mvcur(y,x);
 }
-
+
 /*
  *								scrollup(L)
  *	NAME
@@ -4059,7 +4059,7 @@ static void scrollup() {
 		else
 			putchar(BELL);
 }
-
+
 /*
  *								scrrefresh(L)
  *	NAME
@@ -4106,7 +4106,7 @@ static int scrrefresh(address)
 		return(l);
 	}
 }
-
+
 /*
  *								search(L)
  *	NAME
@@ -4162,7 +4162,7 @@ static long search(fptr,patt,pl,dir)
 
 	return(-1L);
 }
-
+
 /*
  *								b_select(L)
  *	NAME
@@ -4215,7 +4215,7 @@ static void b_select(reprtype)
 	field2.lcmax = field2.fc + nbytes - 1;
 	pagesz = nbytes * nrows;
 }
-
+
 #ifdef PC
 static setparam() {
 
@@ -4272,7 +4272,7 @@ static setparam() {
 	}
 }
 #endif
-
+
 /*
  *								setterm(L)
  *	NAME
@@ -4348,7 +4348,7 @@ static int setterm() {
 	else                                                       /* tjp */
           return(0);                                               /* tjp */
 }
-
+
 /*
  *								spec_match(L)
  *	NAME
@@ -4372,7 +4372,7 @@ static int spec_match(c)
 {
 	return(c == ESC || c == '\n' || c == '\t');
 }
-
+
 /*
  *								sreplace(L)
  *	NAME
@@ -4402,7 +4402,7 @@ static void sreplace() {
 	if (write(tmpfd,&c,1) != 1)
 		error(WRITEERR);
 }
-
+
 /*
  *								startup(L)
  *	NAME
@@ -4582,7 +4582,7 @@ static int startup (count,par)
 
 	return (OK);
 }
-
+
 /*
  *								stoln(L)
  *	NAME
@@ -4653,7 +4653,7 @@ static int stoln(string,num,eosdet)
 	*string = csave;
 	return(k);
 }
-
+
 /*
  *								stopignore(L)
  *	NAME
@@ -4676,7 +4676,7 @@ static void stopignore() {
 	signal(SIGTSTP,stopignore);
 }
 #endif
-
+
 /*
  *								stopproc(L)
  *	NAME
@@ -4701,7 +4701,7 @@ static void stopproc() {
 	fflush(stdout);
 }
 #endif
-
+
 /*
  *								terminate(L)
  *	NAME
@@ -4736,7 +4736,7 @@ static void terminate() {
 	}
 	printf("\n\r");
 }
-
+
 /*
  *								toeosrefresh(L)
  *	NAME
@@ -4769,7 +4769,7 @@ static void toeosrefresh(address)
 		prpageno();
 	display(y,address);
 }
-
+
 /*
  *								wrnewf(L)
  *	NAME
@@ -4849,7 +4849,7 @@ static int wrnewf(cmd,cmdlength,from,to)
 	else
 		return(NOFNAME);
 }
-
+
 /*
  *								wrsamef(L)
  *	NAME

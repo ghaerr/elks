@@ -28,10 +28,10 @@ static eth_addr_t broad_addr = {255, 255, 255, 255, 255, 255};
 
 
 void deveth_printhex(char* packet, int len)
-{ 
+{
   unsigned char *p;
   int i;
-  printf("deveth_process():%d bytes\n",len);  
+  printf("deveth_process():%d bytes\n",len);
   if (len > 128) len = 128;
   p = packet;
   i = 1;
@@ -50,13 +50,13 @@ int deveth_init(char *fdev, int argc, char **argv)
     int i, err;
     __u8 *addr;
     char tmpstring[16];
-    
+
     devfd = open(fdev, O_NONBLOCK|O_RDWR);
     if (devfd < 0) {
 	printf("ERROR: failed to open eth device %s\n", fdev);
 	return -1;
     }
-    
+
     /* read mac of nic */
     if (ioctl (devfd, IOCTL_ETH_ADDR_GET, eth_local_addr) < 0) {
         perror ("ioctl /dev/eth addr_get");
@@ -65,20 +65,20 @@ int deveth_init(char *fdev, int argc, char **argv)
         /* because it means the driver does not work */
 
         return -2;
-    }    
+    }
 
     /*
     addr = (__u8 *) &eth_local_addr;
     printf ("eth_local_addr: %2X.%2X.%2X.%2X.%2X.%2X \n",
         addr [0], addr [1], addr [2], addr [3], addr [4],addr [5]);
     */
-    
+
     return devfd;
 }
 
 
 /*
- *  Called when select in ktcp indicates we have new data waiting 
+ *  Called when select in ktcp indicates we have new data waiting
  */
 
 void deveth_process ()
@@ -117,9 +117,9 @@ void deveth_process ()
 
 
 void deveth_send(char *packet, int len)
-{ 
+{
     int i;
     //printf("deveth_send:\n");
-    //deveth_printhex(packet,len);  
+    //deveth_printhex(packet,len);
     i = write(devfd, packet, len);
 }

@@ -6,10 +6,10 @@
  * $Log:	flparc.c,v $
  * Revision 1.2  91/01/24  14:11:35  pro
  * message correction
- * 
+ *
  * Revision 1.1  90/12/18  16:20:43  pro
  * Initial revision
- * 
+ *
  */
 
 #ifndef lint

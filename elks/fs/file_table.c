@@ -49,8 +49,7 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
 #ifdef BLOAT_FS
     if (f->f_mode & FMODE_WRITE) {
 	result = get_write_access(inode);
-	if (result)
-	    goto cleanup_file;
+	if (result) goto cleanup_file;
     }
 #endif
 
@@ -58,13 +57,11 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
 /*    f->f_reada = 0;*/ /* Set to zero by memset() */
 #endif
 
-    if (inode->i_op)
-	f->f_op = inode->i_op->default_file_ops;
+    if (inode->i_op) f->f_op = inode->i_op->default_file_ops;
     fop = f->f_op;
     if (fop && fop->open && (result = fop->open(inode, f))) {
 #ifdef BLOAT_FS
-	if (f->f_mode & FMODE_WRITE)
-	    put_write_access(inode);
+	if (f->f_mode & FMODE_WRITE) put_write_access(inode);
       cleanup_file:
 #endif
 	f->f_count--;
@@ -79,12 +76,10 @@ void close_filp(struct inode *inode, register struct file *f)
     register struct file_operations *fop;
 
     fop = f->f_op;
-    if (fop && fop->release)
-	fop->release(inode, f);
+    if (fop && fop->release) fop->release(inode, f);
 
 #ifdef BLOAT_FS
-    if (f->f_mode & FMODE_WRITE)
-	put_write_access(inode);
+    if (f->f_mode & FMODE_WRITE) put_write_access(inode);
 #endif
     f->f_count--;
 }

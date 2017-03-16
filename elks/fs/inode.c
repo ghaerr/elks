@@ -60,8 +60,7 @@ void clear_inode(register struct inode *inode) /* and put_first_lru() */
 {
     wait_on_inode(inode);
     remove_inode_free(inode);
-    if (inode->i_count)
-	nr_free_inodes++;
+    if (inode->i_count) nr_free_inodes++;
     memset(inode, 0, sizeof(struct inode));
     insert_inode_free(inode);
 }
@@ -88,18 +87,15 @@ static void wait_on_inode(register struct inode *inode)
     register __ptask currentp = current;
 
     if (inode->i_lock) {
-	if (inode->i_count++ == 0)
-	    nr_free_inodes--;
+	if (inode->i_count++ == 0) nr_free_inodes--;
 
 	wait_set(&inode->i_wait);
 	currentp->state = TASK_UNINTERRUPTIBLE;
-	while (inode->i_lock)
-	    schedule();
+	while (inode->i_lock) schedule();
 	currentp->state = TASK_RUNNING;
 	wait_clear(&inode->i_wait);
 
-	if (!(--inode->i_count))
-	    nr_free_inodes++;
+	if (!(--inode->i_count)) nr_free_inodes++;
     }
 }
 
@@ -122,8 +118,7 @@ void invalidate_inodes(kdev_t dev)
 
     do {
         next = inode->i_prev;	/* clear_inode() changes the queues.. */
-	if (inode->i_dev != dev)
-	    continue;
+	if (inode->i_dev != dev) continue;
 	if (inode->i_count || inode->i_dirt || inode->i_lock) {
 	    printk("VFS: inode busy on removed device %s\n", kdevname(dev));
 	    continue;
@@ -138,9 +133,9 @@ static void write_inode(register struct inode *inode)
     if (inode->i_dirt) {
 	wait_on_inode(inode);
 	if (inode->i_dirt) {
-	    if (!sb || !sb->s_op || !sb->s_op->write_inode)
+	    if (!sb || !sb->s_op || !sb->s_op->write_inode) {
 		inode->i_dirt = 0;
-	    else {
+	    } else {
 		inode->i_lock = 1;
 		sb->s_op->write_inode(inode);
 		unlock_inode(inode);
@@ -154,11 +149,9 @@ void sync_inodes(kdev_t dev)
     register struct inode *inode = first_inode;
 
     do {
-	if (dev && inode->i_dev != dev)
-	    continue;
+	if (dev && inode->i_dev != dev) continue;
 	wait_on_inode(inode);
-	if (inode->i_dirt)
-	    write_inode(inode);
+	if (inode->i_dirt) write_inode(inode);
     } while ((inode = inode->i_prev) != first_inode);
 }
 
@@ -179,15 +172,15 @@ static struct inode *get_empty_inode(void)
     register struct inode *inode;
 
     inode = first_inode->i_next;
-    while(inode->i_count || inode->i_dirt || inode->i_lock) {
-	if(inode == first_inode) {
+    while (inode->i_count || inode->i_dirt || inode->i_lock) {
+	if (inode == first_inode) {
 	    printk("VFS: No free inodes\n");
 	    list_inode_status();
 	    sleep_on(&inode_wait);
 	}
 	inode = inode->i_next;
     }
-	    
+
 /* Here we are doing the same checks again. There cannot be a significant *
  * race condition here - no time has passed */
 #if 0
@@ -249,8 +242,7 @@ void iput(register struct inode *inode)
 		sop = inode->i_sb->s_op;
 		if (sop && sop->put_inode) {
 		    sop->put_inode(inode);
-		    if (!inode->i_nlink)
-			return;
+		    if (!inode->i_nlink) return;
 		}
 	    }
 
@@ -285,8 +277,7 @@ static void read_inode(register struct inode *inode)
     lock_inode(inode);
     if (sb && (sop = sb->s_op) && sop->read_inode) {
 	sop->read_inode(inode);
-	if (inode->i_op == NULL)
-	    set_ops(inode);
+	if (inode->i_op == NULL) set_ops(inode);
     }
     unlock_inode(inode);
 }
@@ -303,15 +294,12 @@ struct inode *new_inode(register struct inode *dir, __u16 mode)
 	inode->i_flags = inode->i_sb->s_flags;
 	if (dir->i_mode & S_ISGID) {
 	    inode->i_gid = dir->i_gid;
-	    if (S_ISDIR(mode))
-		mode |= S_ISGID;
+	    if (S_ISDIR(mode)) mode |= S_ISGID;
 	}
     }
 
-    if (S_ISLNK(mode))
-	mode |= 0777;
-    else
-	mode &= ~(current->fs.umask & 0777);
+    if (S_ISLNK(mode)) mode |= 0777;
+    else mode &= ~(current->fs.umask & 0777);
     inode->i_mode = mode;
     inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
 
@@ -337,11 +325,10 @@ struct inode *__iget(struct super_block *sb,
   repeat:
     inode = first_inode;
     do {
-	if(inode->i_ino == inr && inode->i_dev == sb->s_dev)
-	    goto found_it;
-    } while((inode = inode->i_prev) != first_inode);
+	if (inode->i_ino == inr && inode->i_dev == sb->s_dev) goto found_it;
+    } while ((inode = inode->i_prev) != first_inode);
 
-    if(n_ino == NULL) {
+    if (n_ino == NULL) {
 	debug("iget: getting an empty inode...\n");
 	n_ino = get_empty_inode();	/* get_empty_inode will never return NULL*/
 	goto repeat;
@@ -359,10 +346,8 @@ struct inode *__iget(struct super_block *sb,
     goto return_it;
 
   found_it:
-    if(n_ino != NULL)
-	iput(n_ino);
-    if (inode->i_count++ == 0)
-	nr_free_inodes--;
+    if (n_ino != NULL) iput(n_ino);
+    if (inode->i_count++ == 0) nr_free_inodes--;
 #if 0
     /* This will never happen */
     if (inode->i_dev != sb->s_dev || inode->i_ino != inr) {
@@ -389,10 +374,8 @@ int fs_may_mount(kdev_t dev)	/* and invalidate_inodes() */
 
     do {
         next = inode->i_prev;	/* clear_inode() changes the queues.. */
-	if (inode->i_dev != dev)
-	    continue;
-	if (inode->i_count || inode->i_dirt || inode->i_lock)
-	    return 0;
+	if (inode->i_dev != dev) continue;
+	if (inode->i_count || inode->i_dirt || inode->i_lock) return 0;
 	clear_inode(inode);
     } while ((inode = next) != first_inode);
     return 1;
@@ -403,10 +386,8 @@ int fs_may_umount(kdev_t dev, struct inode *mount_rooti)
     register struct inode *inode = first_inode;
 
     do {
-	if (inode->i_dev != dev || !inode->i_count)
-	    continue;
-	if (inode == mount_rooti && inode->i_count == 1)
-	    continue;
+	if (inode->i_dev != dev || !inode->i_count) continue;
+	if (inode == mount_rooti && inode->i_count == 1) continue;
 	return 0;
     } while ((inode = inode->i_prev) != first_inode);
     return 1;
@@ -420,10 +401,8 @@ int fs_may_remount_ro(kdev_t dev)
     /* Check that no files are currently opened for writing. */
     do {
 	inode = file->f_inode;
-	if (!file->f_count || !inode || inode->i_dev != dev)
-	    continue;
-	if (S_ISREG(inode->i_mode) && (file->f_mode & 2))
-	    return 0;
+	if (!file->f_count || !inode || inode->i_dev != dev) continue;
+	if (S_ISREG(inode->i_mode) && (file->f_mode & 2)) return 0;
     } while (++file < &file_array[NR_FILE]);
     return 1;
 }
@@ -433,12 +412,9 @@ int fs_may_remount_ro(kdev_t dev)
 static int inode_change_ok(register struct inode *inode,
 			   register struct iattr *attr)
 {
-    /*
-     *      If force is set do it anyway.
-     */
+    /* If force is set do it anyway.  */
 
-    if (attr->ia_valid & ATTR_FORCE)
-	return 0;
+    if (attr->ia_valid & ATTR_FORCE) return 0;
 
     /* Make sure a caller can chown */
     if ((attr->ia_valid & ATTR_UID) &&
@@ -454,8 +430,7 @@ static int inode_change_ok(register struct inode *inode,
 
     /* Make sure a caller can chmod */
     if (attr->ia_valid & ATTR_MODE) {
-	if ((current->euid != inode->i_uid) && !suser())
-	    return -EPERM;
+	if ((current->euid != inode->i_uid) && !suser()) return -EPERM;
 	/* Also check the setgid bit! */
 	if (!suser()
 	    && !in_group_p((attr->ia_valid & ATTR_GID) ? attr->ia_gid :
@@ -478,22 +453,15 @@ static int inode_change_ok(register struct inode *inode,
 static void inode_setattr(register struct inode *inode,
 			  register struct iattr *attr)
 {
-    if (attr->ia_valid & ATTR_UID)
-	inode->i_uid = attr->ia_uid;
-    if (attr->ia_valid & ATTR_GID)
-	inode->i_gid = attr->ia_gid;
-    if (attr->ia_valid & ATTR_SIZE)
-	inode->i_size = attr->ia_size;
-    if (attr->ia_valid & ATTR_MTIME)
-	inode->i_mtime = attr->ia_mtime;
-    if (attr->ia_valid & ATTR_ATIME)
-	inode->i_atime = attr->ia_atime;
-    if (attr->ia_valid & ATTR_CTIME)
-	inode->i_ctime = attr->ia_ctime;
+    if (attr->ia_valid & ATTR_UID) inode->i_uid = attr->ia_uid;
+    if (attr->ia_valid & ATTR_GID) inode->i_gid = attr->ia_gid;
+    if (attr->ia_valid & ATTR_SIZE) inode->i_size = attr->ia_size;
+    if (attr->ia_valid & ATTR_MTIME) inode->i_mtime = attr->ia_mtime;
+    if (attr->ia_valid & ATTR_ATIME) inode->i_atime = attr->ia_atime;
+    if (attr->ia_valid & ATTR_CTIME) inode->i_ctime = attr->ia_ctime;
     if (attr->ia_valid & ATTR_MODE) {
 	inode->i_mode = attr->ia_mode;
-	if (!suser() && !in_group_p(inode->i_gid))
-	    inode->i_mode &= ~S_ISGID;
+	if (!suser() && !in_group_p(inode->i_gid)) inode->i_mode &= ~S_ISGID;
     }
     inode->i_dirt = 1;
 }
@@ -511,18 +479,15 @@ int notify_change(register struct inode *inode, register struct iattr *attr)
 
     attr->ia_ctime = CURRENT_TIME;
     if (attr->ia_valid & (ATTR_ATIME | ATTR_MTIME)) {
-	if (!(attr->ia_valid & ATTR_ATIME_SET))
-	    attr->ia_atime = attr->ia_ctime;
-	if (!(attr->ia_valid & ATTR_MTIME_SET))
-	    attr->ia_mtime = attr->ia_ctime;
+	if (!(attr->ia_valid & ATTR_ATIME_SET)) attr->ia_atime = attr->ia_ctime;
+	if (!(attr->ia_valid & ATTR_MTIME_SET)) attr->ia_mtime = attr->ia_ctime;
     }
 #ifdef BLOAT_FS
     if (inode->i_sb && inode->i_sb->s_op && inode->i_sb->s_op->notify_change)
 	return inode->i_sb->s_op->notify_change(inode, attr);
 #endif
 
-    if ((retval = inode_change_ok(inode, attr)) != 0)
-	return retval;
+    if ((retval = inode_change_ok(inode, attr)) != 0) return retval;
 
     inode_setattr(inode, attr);
     return 0;
