@@ -156,8 +156,7 @@ int sys_utime(char *filename, register struct utimbuf *times)
 	if (times) {
 	    pinode->i_atime = get_user_long((void *) &times->actime);
 	    pinode->i_mtime = get_user_long((void *) &times->modtime);
-	} else
-	    pinode->i_atime = pinode->i_mtime = CURRENT_TIME;
+	} else pinode->i_atime = pinode->i_mtime = CURRENT_TIME;
 	pinode->i_dirt = 1;
 	iput(pinode);
     }
@@ -230,8 +229,7 @@ int sys_chmod(char *filename, mode_t mode)
     register struct iattr *nap = &newattrs;
 
     inodep = inode;
-    if (error)
-	return error;
+    if (error) return error;
     if (IS_RDONLY(inodep)) {
 	iput(inodep);
 	return -EROFS;
@@ -250,8 +248,7 @@ int sys_chmod(char *filename, mode_t mode)
 	    iput(inodep);
 	    return -EROFS;
 	}
-	if (mode == (mode_t) - 1)
-	    mode = inodep->i_mode;
+	if (mode == (mode_t) - 1) mode = inodep->i_mode;
 	mode = (mode & S_IALLUGO) | (inodep->i_mode & ~S_IALLUGO);
 	if ((current->euid != inodep->i_uid) && !suser()) {
 /* FIXME - Should we iput(inodep); at this point? */
@@ -274,12 +271,9 @@ static int do_chown(register struct inode *inode, uid_t user, gid_t group)
     struct iattr newattrs;
     register struct iattr *nap = &newattrs;
 
-    if (IS_RDONLY(inode))
-	return -EROFS;
-    if (user == (uid_t) - 1)
-	user = inode->i_uid;
-    if (group == (gid_t) - 1)
-	group = inode->i_gid;
+    if (IS_RDONLY(inode)) return -EROFS;
+    if (user == (uid_t) - 1) user = inode->i_uid;
+    if (group == (gid_t) - 1) group = inode->i_gid;
     nap->ia_mode = inode->i_mode;
     nap->ia_uid = user;
     nap->ia_gid = group;
@@ -308,11 +302,9 @@ static int do_chown(register struct inode *inode, uid_t user, gid_t group)
 
 static int do_chown(register struct inode *inode, uid_t user, gid_t group)
 {
-    if (IS_RDONLY(inode))
-	return -EROFS;
+    if (IS_RDONLY(inode)) return -EROFS;
 
-    if (!suser() && !(current->euid == inode->i_uid))
-	return -EPERM;
+    if (!suser() && !(current->euid == inode->i_uid)) return -EPERM;
 
     if (group != (gid_t) - 1) {
 	inode->i_gid = (__u8) group;
@@ -373,10 +365,8 @@ int sys_open(char *filename, int flags, int mode)
     int error, flag;
 
     flag = flags;
-    if ((mode_t)((flags + 1) & O_ACCMODE))
-	flag++;
-    if (flag & (O_TRUNC | O_CREAT))
-	flag |= FMODE_WRITE;
+    if ((mode_t)((flags + 1) & O_ACCMODE)) flag++;
+    if (flag & (O_TRUNC | O_CREAT)) flag |= FMODE_WRITE;
 
     error = open_namei(filename, flag, mode, &inode, NULL);
     if (!error) {
@@ -391,8 +381,7 @@ int sys_open(char *filename, int flags, int mode)
 	 * an incomplete fd to other processes which may share
 	 * the same file table with us.
 	 */
-	    if ((error = get_unused_fd(filp)) > -1)
-		goto exit_open;
+	    if ((error = get_unused_fd(filp)) > -1) goto exit_open;
 	    close_filp(pinode, filp);
 	}
 	iput(pinode);
@@ -405,10 +394,8 @@ static int close_fp(register struct file *filp)
 {
     register struct inode *inode;
 
-    if (filp->f_count < 1)
-	printk("VFS: Close: file count is 0\n");
-    else if (filp->f_count > 1)
-	filp->f_count--;
+    if (filp->f_count < 1) printk("VFS: Close: file count is 0\n");
+    else if (filp->f_count > 1) filp->f_count--;
     else {
 	inode = filp->f_inode;
 	close_filp(inode, filp);

@@ -40,9 +40,7 @@ static struct device_struct blkdevs[MAX_BLKDEV] = /*@i1@*/ {
 
 struct file_operations *get_blkfops(unsigned int major)
 {
-    return (major >= MAX_BLKDEV)
-	? NULL
-	: blkdevs[major].ds_fops;
+    return (major >= MAX_BLKDEV) ? NULL : blkdevs[major].ds_fops;
 }
 
 int register_chrdev(unsigned int major, char *name,
@@ -50,10 +48,8 @@ int register_chrdev(unsigned int major, char *name,
 {
     register struct device_struct *dev = &chrdevs[major];
 
-    if (major >= MAX_CHRDEV)
-	return -EINVAL;
-    if (dev->ds_fops && (dev->ds_fops != fops))
-	return -EBUSY;
+    if (major >= MAX_CHRDEV) return -EINVAL;
+    if (dev->ds_fops && (dev->ds_fops != fops)) return -EBUSY;
     dev->ds_fops = fops;
 
 #ifdef CONFIG_DEV_NAMES
@@ -68,10 +64,8 @@ int register_blkdev(unsigned int major, char *name,
 {
     register struct device_struct *dev = &blkdevs[major];
 
-    if (major >= MAX_BLKDEV)
-	return -EINVAL;
-    if (dev->ds_fops && dev->ds_fops != fops)
-	return -EBUSY;
+    if (major >= MAX_BLKDEV) return -EINVAL;
+    if (dev->ds_fops && dev->ds_fops != fops) return -EBUSY;
     dev->ds_fops = fops;
 
 #ifdef CONFIG_DEV_NAMES
@@ -98,17 +92,13 @@ int check_disk_change(kdev_t dev)
     int i;
 
     i = MAJOR(dev);
-    if (i >= MAX_BLKDEV || (fops = blkdevs[i].ds_fops) == NULL)
-	return 0;
-    if (fops->check_media_change == NULL)
-	return 0;
-    if (!fops->check_media_change(dev))
-	return 0;
+    if (i >= MAX_BLKDEV || (fops = blkdevs[i].ds_fops) == NULL) return 0;
+    if (fops->check_media_change == NULL) return 0;
+    if (!fops->check_media_change(dev)) return 0;
 
     printk("VFS: Disk change detected on device %s\n", kdevname(dev));
     for (i = 0; i < NR_SUPER; i++)
-	if (super_blocks[i].s_dev == dev)
-	    put_super(super_blocks[i].s_dev);
+	if (super_blocks[i].s_dev == dev) put_super(super_blocks[i].s_dev);
     invalidate_inodes(dev);
     invalidate_buffers(dev);
 
@@ -130,12 +120,9 @@ int blkdev_open(struct inode *inode, struct file *filp)
 
     pi = (char *)MAJOR(inode->i_rdev);
     fop = blkdevs[(unsigned int)pi].ds_fops;
-    if ((unsigned int)pi >= MAX_BLKDEV || !fop)
-	return -ENODEV;
+    if ((unsigned int)pi >= MAX_BLKDEV || !fop) return -ENODEV;
     filp->f_op = fop;
-    return (fop->open)
-	? fop->open(inode, filp)
-	: 0;
+    return (fop->open) ? fop->open(inode, filp) : 0;
 }
 
 /*
@@ -186,12 +173,9 @@ static int chrdev_open(struct inode *inode, struct file *filp)
 
     pi = (char *)MAJOR(inode->i_rdev);
     fop = chrdevs[(unsigned int)pi].ds_fops;
-    if ((unsigned int)pi >= MAX_CHRDEV || !fop)
-	return -ENODEV;
+    if ((unsigned int)pi >= MAX_CHRDEV || !fop) return -ENODEV;
     filp->f_op = fop;
-    return (fop->open)
-	? fop->open(inode, filp)
-	: 0;
+    return (fop->open) ? fop->open(inode, filp) : 0;
 }
 
 /*

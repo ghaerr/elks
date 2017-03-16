@@ -22,11 +22,9 @@ int sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
     loff_t offset;
 
     offset = (loff_t) get_user_long(p_offset);
-    if (fd >= NR_OPEN || !(file = current->files.fd[fd])
-	|| !(file->f_inode))
+    if (fd >= NR_OPEN || !(file = current->files.fd[fd]) || !(file->f_inode))
 	return -EBADF;
-    if (origin > 2)
-	return -EINVAL;
+    if (origin > 2) return -EINVAL;
     fop = file->f_op;
     if (fop && fop->lseek)
 	return fop->lseek(file->f_inode, file, offset, origin);
@@ -38,8 +36,7 @@ int sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
     else if (origin)			/* SEEK_END */
 	offset += file->f_inode->i_size;
 
-    if (offset < 0)
-	return -EINVAL;
+    if (offset < 0) return -EINVAL;
 
 #ifdef BLOAT_FS
     if (offset != file->f_pos) {
@@ -76,12 +73,10 @@ int fd_check(unsigned int fd, char *buf, size_t count, int rw,
 	return -EBADF;
     }
 
-    if (!tfil->f_op)
-	return -EINVAL;
+    if (!tfil->f_op) return -EINVAL;
 
     *file = tfil;
-    if (count && verify_area(VERIFY_WRITE, buf, count))
-	return -EFAULT;
+    if (count && verify_area(VERIFY_WRITE, buf, count)) return -EFAULT;
 
     return 0;
 }

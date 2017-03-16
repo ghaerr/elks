@@ -75,8 +75,7 @@ static int check(int flag, register struct file *file)
     if ((fops = file->f_op) && fops->select)
 	return (fops->select(file->f_inode, file, flag));
 
-    if (flag != SEL_EX)
-	return 1;
+    if (flag != SEL_EX) return 1;
 
     return 0;
 }
@@ -118,8 +117,7 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
     filp = current->files.fd;
     for (pi = 0; set && ((int)pi < n); pi++, set >>= 1) {
 	if (set & 1) {
-	    if ((*filp == NULL) || ((*filp)->f_inode == NULL))
-		return -EBADF;
+	    if ((*filp == NULL) || ((*filp)->f_inode == NULL)) return -EBADF;
 	    count = (int)pi;
 	}
 	filp++;
@@ -176,8 +174,7 @@ static int get_fd_set(register fd_set * fs_pointer, register fd_set * fdset)
 
 static void set_fd_set(register fd_set * fs_pointer, fd_set * fdset)
 {
-    if (fs_pointer)
-	memcpy_tofs(fs_pointer, fdset, sizeof(fd_set));
+    if (fs_pointer) memcpy_tofs(fs_pointer, fdset, sizeof(fd_set));
 }
 
 static void zero_fd_set(fd_set * fdset)
@@ -202,8 +199,7 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
     fd_set res_ex, ex;
     jiff_t timeout;
 
-    if (n > NR_OPEN)
-	n = NR_OPEN;
+    if (n > NR_OPEN) n = NR_OPEN;
     error = -EINVAL;
     if ((n < 0) || (error = get_fd_set(inp, &in)) ||
 	(error = get_fd_set(outp, &out)) || (error = get_fd_set(exp, &ex)))
@@ -211,13 +207,11 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
     timeout = ~0UL;
     if (tvp) {
 	error = verify_area(VERIFY_WRITE, tvp, sizeof(*tvp));
-	if (error)
-	    goto out;
+	if (error) goto out;
 
 	timeout = ROUND_UP(get_user_long(&tvp->tv_usec), (1000000 / HZ));
 	timeout += get_user_long(&tvp->tv_sec) * (jiff_t) HZ;
-	if (timeout)
-	    timeout += jiffies + 1UL;
+	if (timeout) timeout += jiffies + 1UL;
     }
     zero_fd_set(&res_in);
     zero_fd_set(&res_out);

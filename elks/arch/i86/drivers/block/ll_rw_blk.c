@@ -164,13 +164,13 @@ static struct request *get_request(int n, kdev_t dev)
     req = prev_found;
     do {
 	req = ((req > all_requests) ? req : limit) - 1;
-	if(req->rq_status == RQ_INACTIVE) {
+	if (req->rq_status == RQ_INACTIVE) {
 	    prev_found = req;
 	    req->rq_status = RQ_ACTIVE;
 	    req->rq_dev = dev;
 	    return req;
 	}
-    } while(req != prev_found);
+    } while (req != prev_found);
     return NULL;
 }
 

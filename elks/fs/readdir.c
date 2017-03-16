@@ -37,8 +37,7 @@ static int fillonedir(register char *__buf, char *name, size_t namlen, off_t off
 {
     register struct linux_dirent *dirent;
 
-    if (((struct readdir_callback *)__buf)->count)
-	return -EINVAL;
+    if (((struct readdir_callback *)__buf)->count) return -EINVAL;
     ((struct readdir_callback *)__buf)->count++;
     dirent = ((struct readdir_callback *)__buf)->dirent;
     put_user_long((__u32)ino, &dirent->d_ino);
@@ -67,9 +66,7 @@ int sys_readdir(unsigned int fd, char *dirent, unsigned int count
 	if (fop && fop->readdir) {
 	    buf.count = 0;
 	    buf.dirent = (struct linux_dirent *) dirent;
-	    if ((error = fop->readdir(filp->f_inode, filp,
-				      &buf, fillonedir))
-		>= 0)
+	    if ((error = fop->readdir(filp->f_inode, filp, &buf, fillonedir)) >= 0)
 		error = buf.count;
 	}
     }

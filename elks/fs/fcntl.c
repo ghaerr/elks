@@ -18,17 +18,13 @@ static int dupfd(unsigned int fd, unsigned int arg)
 {
     register struct file_struct *fils = &current->files;
 
-    if (fd >= NR_OPEN || !fils->fd[fd])
-	return -EBADF;
+    if (fd >= NR_OPEN || !fils->fd[fd]) return -EBADF;
 
-    if (arg >= NR_OPEN)
-	return -EINVAL;
+    if (arg >= NR_OPEN) return -EINVAL;
 
-    while ((arg < NR_OPEN) && (fils->fd[arg]))
-	++arg;
+    while ((arg < NR_OPEN) && (fils->fd[arg])) ++arg;
 
-    if (arg >= NR_OPEN)
-	return -EMFILE;
+    if (arg >= NR_OPEN) return -EMFILE;
 
     clear_bit(arg, &fils->close_on_exec);
     (fils->fd[arg] = fils->fd[fd])->f_count++;
@@ -39,8 +35,7 @@ static int dupfd(unsigned int fd, unsigned int arg)
 int sys_dup2(unsigned int oldfd, unsigned int newfd)
 {
     if (oldfd < NR_OPEN && current->files.fd[oldfd]) {
-	if (newfd == oldfd)
-	    return (int) newfd;
+	if (newfd == oldfd) return (int) newfd;
 	/* following POSIX.1 6.2.1, if newfd >= NR_OPEN, return -EBADF */
 	if (newfd < NR_OPEN) {
 	    sys_close(newfd);
@@ -61,8 +56,7 @@ int sys_fcntl(unsigned int fd, unsigned int cmd, unsigned int arg)
     register struct file_struct *fils = &current->files;
     int result;
 
-    if (fd >= NR_OPEN || !(filp = fils->fd[fd]))
-	return -EBADF;
+    if (fd >= NR_OPEN || !(filp = fils->fd[fd])) return -EBADF;
 
     switch (cmd) {
     case F_DUPFD:

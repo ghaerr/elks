@@ -43,8 +43,7 @@ static int V1_trunc_direct(register struct inode *inode)
   repeat:
     for (i = DIRECT_BLOCK; i < 7; i++) {
 	p = &inode->i_zone[i];
-	if (!(tmp = *p))
-	    continue;
+	if (!(tmp = *p)) continue;
 	bh = get_hash_table(inode->i_dev, (block_t) tmp);
 	if (i < DIRECT_BLOCK) {
 	    brelse(bh);
@@ -77,8 +76,7 @@ static int V1_trunc_indirect(register struct inode *inode,
     int retry = 0;
 
     tmp = *p;
-    if (!tmp)
-	return 0;
+    if (!tmp) return 0;
     ind_bh = bread(inode->i_dev, (block_t) tmp);
     if (tmp != *p) {
 	brelse(ind_bh);
@@ -91,15 +89,11 @@ static int V1_trunc_indirect(register struct inode *inode,
     map_buffer(ind_bh);
   repeat:
     for (i = INDIRECT_BLOCK(offset); i < 512; i++) {
-	if (i < 0) {
-	    i = 0;
-	} else if (i < INDIRECT_BLOCK(offset)) {
-	    goto repeat;
-	}
+	if (i < 0) i = 0;
+	else if (i < INDIRECT_BLOCK(offset)) goto repeat;
 	ind = i + (unsigned short *) ind_bh->b_data;
 	tmp = *ind;
-	if (!tmp)
-	    continue;
+	if (!tmp) continue;
 	bh = get_hash_table(inode->i_dev, (block_t) tmp);
 	if (i < INDIRECT_BLOCK(offset)) {
 	    brelse(bh);
@@ -117,11 +111,9 @@ static int V1_trunc_indirect(register struct inode *inode,
     }
     ind = (unsigned short *) ind_bh->b_data;
     for (i = 0; i < 512; i++)
-	if (*(ind++))
-	    break;
+	if (*(ind++)) break;
     if (i >= 512) {
-	if (ind_bh->b_count != 1)
-	    retry = 1;
+	if (ind_bh->b_count != 1) retry = 1;
 	else {
 	    tmp = *p;
 	    *p = 0;
@@ -141,8 +133,7 @@ static int V1_trunc_dindirect(register struct inode *inode,
     unsigned short *dind;
     int retry = 0;
 
-    if (!(tmp = *p))
-	return 0;
+    if (!(tmp = *p)) return 0;
     dind_bh = bread(inode->i_dev, (block_t) tmp);
     if (tmp != *p) {
 	brelse(dind_bh);
@@ -155,21 +146,17 @@ static int V1_trunc_dindirect(register struct inode *inode,
     map_buffer(dind_bh);
   repeat:
     for (i = DINDIRECT_BLOCK(offset); i < 512; i++) {
-	if (i < 0)
-	    i = 0;
-	if (i < DINDIRECT_BLOCK(offset))
-	    goto repeat;
+	if (i < 0) i = 0;
+	if (i < DINDIRECT_BLOCK(offset)) goto repeat;
 	dind = i + (unsigned short *) dind_bh->b_data;
 	retry |= V1_trunc_indirect(inode, offset + (i << 9), dind);
 	mark_buffer_dirty(dind_bh, 1);
     }
     dind = (unsigned short *) dind_bh->b_data;
     for (i = 0; i < 512; i++)
-	if (*(dind++))
-	    break;
+	if (*(dind++)) break;
     if (i >= 512) {
-	if (dind_bh->b_count != 1)
-	    retry = 1;
+	if (dind_bh->b_count != 1) retry = 1;
 	else {
 	    tmp = *p;
 	    *p = 0;
@@ -191,8 +178,7 @@ void minix_truncate(register struct inode *inode)
 	retry = V1_trunc_direct(inode);
 	retry |= V1_trunc_indirect(inode, 7, &inode->i_zone[7]);
 	retry |= V1_trunc_dindirect(inode, 7 + 512, &inode->i_zone[8]);
-	if (!retry)
-	    break;
+	if (!retry) break;
 	schedule();
     }
     inode->i_mtime = inode->i_ctime = CURRENT_TIME;

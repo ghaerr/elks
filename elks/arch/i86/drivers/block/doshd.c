@@ -246,13 +246,13 @@ static unsigned short int bioshd_getfdinfo(void)
 /* Some XT's return strange results - Al
  * The arch_cpu is a safety check
  */
-	if(arch_cpu > 5) {
+	if (arch_cpu > 5) {
 	    BD_AX = BIOSHD_DRIVE_PARMS;
 	    BD_DX = drive;
 	    BD_BX = 0;
 	    BD_IRQ = BIOSHD_INT;
 	    call_bios(&bdt);
-	    if(!CARRY_SET && !(BD_AX & 0xff00))
+	    if (!CARRY_SET && !(BD_AX & 0xff00))
 /*
  * AT archecture, drive type in BX
  */
@@ -323,11 +323,10 @@ int seek_sector(int drive, char track, char sector)
 
 	set_irq();
 	call_bios(&bdt);
-	if(!CARRY_SET)
-	    return 0;		/* everything is OK */
+	if (!CARRY_SET) return 0;		/* everything is OK */
 	if (((BD_AX & 0xFF00) != 0x400) || ((int)count != 1)) /* Sector not found */
 	    reset_bioshd(drive);
-    } while((int)(--count) > 0);
+    } while ((int)(--count) > 0);
     return 1;			/* error */
 }
 
@@ -620,7 +619,7 @@ static int bioshd_ioctl(struct inode *inode,
     switch (cmd) {
     case HDIO_GETGEO:
 	err = verify_area(VERIFY_WRITE, (void *) arg, sizeof(*loc));
-	if(!err) {
+	if (!err) {
 	    put_user((__u16) drivep->heads, (__u16 *) &loc->heads);
 	    put_user((__u16) drivep->sectors, (__u16 *) &loc->sectors);
 	    put_user((__u16) drivep->cylinders, (__u16 *) &loc->cylinders);
@@ -707,13 +706,10 @@ static void do_bioshd_request(void)
 	    cylinder = (unsigned int) (tmp / (sector_t)drivep->heads);
 	    this_pass = drivep->sectors - sector + 1;
 	/* Fix for weird BIOS behavior with 720K floppy */
-	    if(this_pass < 3)
-		this_pass = 1;
+	    if (this_pass < 3) this_pass = 1;
 	/* End of fix */
-	    if ((sector_t)this_pass > count)
-		this_pass = (unsigned int) count;
-	    while (!dma_avail)
-		sleep_on(&dma_wait);
+	    if ((sector_t)this_pass > count) this_pass = (unsigned int) count;
+	    while (!dma_avail) sleep_on(&dma_wait);
 	    dma_avail = 0;
 	    BD_IRQ = BIOSHD_INT;
 #ifdef DMA_OVR
@@ -721,8 +717,7 @@ static void do_bioshd_request(void)
 		BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
 		fmemcpy(BUFSEG, 0, req->rq_seg, (__u16)buff, this_pass * 512);
 	    }
-	    else
-		BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
+	    else BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
 	    BD_BX = 0;
 	    BD_ES = BUFSEG;
 #else

@@ -65,7 +65,7 @@ static int lp_reset(int target)
     LP_CONTROL(LP_SELECT, lpp);
     tmpp = (char *)LP_RESET_WAIT;
     do {
-    } while((int)(--tmpp));
+    } while ((int)(--tmpp));
     LP_CONTROL(LP_SELECT | LP_INIT, lpp);
 
     return LP_STATUS(lpp);
@@ -110,7 +110,7 @@ static int lp_char_polled(char c, unsigned int target)
 	while (!(((int)(statusp = (char *)LP_STATUS(lpp))) & LP_SELECTED))
 	    /* while not ready do busy loop */
 	    {
-		if(!--wait) {
+		if (!--wait) {
 		    printk("lp%d: timed out\n", target);
 		    return 0;
 		}

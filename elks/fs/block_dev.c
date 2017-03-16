@@ -41,8 +41,7 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	bh = getblk(inode->i_rdev, (block_t)(filp->f_pos >> BLOCK_SIZE_BITS));
 	if ((wr == BLOCK_READ) || (chars != BLOCK_SIZE)) {
 	    if (!readbuf(bh)) {
-		if (!written)
-		    written = -EIO;
+		if (!written) written = -EIO;
 		break;
 	    }
 	}
@@ -61,8 +60,7 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	    wait_on_buffer(bh);
 	    if (!bh->b_uptodate) { /* Write error. */
 		unmap_brelse(bh);
-		if (!written)
-		    written = -EIO;
+		if (!written) written = -EIO;
 		break;
 	    }
 	} else {
