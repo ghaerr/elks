@@ -54,7 +54,7 @@ all:
 	+@for i in $(DIRS); do make -C $$i all ; done
 
 images_clean:
-	-umount -d $(IMAGES) || true
+	-umount -d $(IMAGES) 2>/dev/null || true
 	-rm -f $(IMAGES) images.zip images.tar.*
 
 clean:
