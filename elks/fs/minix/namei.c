@@ -164,6 +164,7 @@ static int minix_add_entry(register struct inode *dir,
     register struct buffer_head *bh;
     struct minix_dir_entry *de;
     struct minix_sb_info *info;
+    __u32 bo;
 
     if (!dir || !dir->i_sb)
 	return -ENOENT;
@@ -189,9 +190,10 @@ static int minix_add_entry(register struct inode *dir,
 	}
 	de = (struct minix_dir_entry *) (bh->b_data + offset);
 	offset += info->s_dirsize;
-	if (block * 1024L + offset > dir->i_size) {
+	bo = block * 1024L + offset;
+	if (bo > dir->i_size) {
 	    de->inode = 0;
-	    dir->i_size = block * 1024L + offset;
+	    dir->i_size = bo;
 	    dir->i_dirt = 1;
 	}
 	if (de->inode) {
