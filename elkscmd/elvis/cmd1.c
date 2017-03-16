@@ -232,7 +232,7 @@ void cmd_write(frommark, tomark, cmd, bang, extra)
 		twrite(fd, scan, i);
 	}
 	close(fd);
-}	
+}
 
 
 /*ARGSUSED*/
@@ -496,7 +496,7 @@ void cmd_next(frommark, tomark, cmd, bang, extra)
 	else /* cmd == CMD_REWIND */
 	{
 		i = 0;
-	}	
+	}
 	if (i < 0 || i >= nargs)
 	{
 		msg("No %sfiles to edit", cmd == CMD_REWIND ? "" : "more ");
@@ -616,7 +616,7 @@ void cmd_args(frommark, tomark, cmd, bang, extra)
 			if (arg == argno)
 				addcols = 2;
 			else
-				addcols = 0;	
+				addcols = 0;
 			if (col+addcols+(int)(eow-scan)+1>=COLS)
 			{
 				addch('\n');
@@ -634,14 +634,14 @@ void cmd_args(frommark, tomark, cmd, bang, extra)
 				col++;
 			}
 			if (arg == argno)
-				qaddch(']');	
-			arg++;	
+				qaddch(']');
+			arg++;
 			col+=addcols;
 		}
 		/* write a trailing newline */
 		if ((mode == MODE_EX || mode == MODE_COLON || scrolled) && col)
 			addch('\n');
-		exrefresh();	
+		exrefresh();
 	}
 	else /* new args list given */
 	{
@@ -976,7 +976,7 @@ void cmd_digraph(frommark, tomark, cmd, bang, extra)
 #endif
 
 
-#ifndef NO_ERRLIST 
+#ifndef NO_ERRLIST
 static char	errfile[256];	/* the name of a file containing an error */
 static long	errline;	/* the line number for an error */
 

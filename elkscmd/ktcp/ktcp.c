@@ -7,11 +7,11 @@
  *	modify it under the terms of the GNU General Public License
  *	as published by the Free Software Foundation; either version
  *	2 of the License, or (at your option) any later version.
- */ 
+ */
 
 #include <time.h>
 #include <sys/types.h>
-#include <unistd.h> 
+#include <unistd.h>
 
 #include "slip.h"
 #include "tcpdev.h"
@@ -97,7 +97,7 @@ int main(int argc,char **argv)
 
     const char dname[9];
     sprintf(dname, "/dev/eth");
-	
+
     if (argc < 3) {
 	printf("Syntax :\n    %s local_ip [interface] [gateway] [netmask]\n", argv[0]);
 	exit(3);
@@ -105,10 +105,10 @@ int main(int argc,char **argv)
 
     debug("KTCP: 1. local_ip \n");
     local_ip = in_aton(argv[1]);
-    
+
     if (argc > 3) gateway_ip = in_aton(argv[3]);
     else gateway_ip = in_aton("10.0.2.2"); /* use dhcp when implemented */
-    
+
     if (argc > 4) netmask_ip = in_aton(argv[4]);
     else netmask_ip = in_aton("255.255.255.0");
 

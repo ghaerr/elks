@@ -109,7 +109,7 @@ int mkdirp(char *dir, int mode, int owner, int group)
 
 	sep= dir;
 	while (*sep == '/') sep++;
-	
+
 	if (*sep == 0) {
 		errno= EINVAL;
 		return -1;

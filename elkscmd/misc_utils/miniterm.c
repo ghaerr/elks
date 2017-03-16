@@ -1,11 +1,11 @@
 /*
  * Copyright (c) 2006-2014, Wojtek Kaniewski <wojtekka@toxygen.net>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * 3. Neither the name of the author nor the names of its contributors
  *    may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -48,7 +48,7 @@
 typedef int bool;
 #define true	1
 #define false	0
-#else 
+#else
 #include <stdbool.h>
 #endif
 #include <termios.h>
@@ -99,14 +99,14 @@ static void dump(const char *buf, size_t len)
 	char hextab[16], line[80];
 	size_t i;
 	sprintf(hextab,"0123456789abcdef");
-#else  
+#else
 	char hextab[16] = "0123456789abcdef", line[80];
 	size_t i;
 #endif
-	
+
 
 	for (i = 0; i < len; i++) {
-		
+
 		if (i % 16 == 0)
 			sprintf(line, "%04x:                                                                   ", (unsigned int) i);
 		line[6 + (i % 16) * 3 + ((i % 16) > 7 ? 1 : 0)] = hextab[(buf[i] >> 4) & 15];
@@ -135,7 +135,7 @@ static int slip_receive(int fd, char *buf, size_t len)
 		if (read(fd, &ch, 1) == -1) {
 			if (errno == EINTR)
 				continue;
-			
+
 			return -1;
 		}
 
@@ -149,7 +149,7 @@ static int slip_receive(int fd, char *buf, size_t len)
 				if (read(fd, &ch, 1) == -1) {
 					if (errno == EINTR)
 						continue;
-				
+
 					return -1;
 				}
 
@@ -238,22 +238,22 @@ static int serial_open(const char *device, unsigned int baudrate, bool rtscts, s
 	struct termios new;
 	int fd;
 	int b;
-	
+
 	fd = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
-	
+
 	if (fd == -1)
 		return -1;
-	
+
 #if ELKS
 	b = fcntl(fd, F_GETFL, 0);
 	fcntl(fd, F_SETFL, b | O_NONBLOCK);
 	/* no block on stdin */
 	b = fcntl(0, F_GETFL, 0);
-	fcntl(0, F_SETFL, b | O_NONBLOCK);	
+	fcntl(0, F_SETFL, b | O_NONBLOCK);
 	b=0;
 #else
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
-#endif	
+#endif
 
 	if (old != NULL)
 		tcgetattr(fd, old);
@@ -458,7 +458,7 @@ int main(int argc, char **argv)
 	usage(argv[0]);
 #endif
 	fprintf(stderr, "Connected to %s at %ubps. Press '%c%c' to exit, '%c%c' for help.\n\n", device, baudrate, ESCAPE_CHARACTER, EXIT_CHARACTER, ESCAPE_CHARACTER, HELP_CHARACTER);
-	
+
 	if (mode == MODE_TEXT) {
 		struct termios new;
 
@@ -471,7 +471,7 @@ int main(int argc, char **argv)
 
 		tcgetattr(1, &stdout_termio);
 		tcsetattr(1, TCSANOW, &new);
- 
+
 		tcgetattr(0, &stdin_termio);
 		tcgetattr(0, &new);
 		new.c_lflag &= ~(ICANON | ECHO);
@@ -481,7 +481,7 @@ int main(int argc, char **argv)
 	if (mode == MODE_SLIP) {
 		char buf[4096];
 		int len;
-		
+
 		for (;;) {
 			len = slip_receive(fd, buf, sizeof(buf));
 			if (len == -1)
@@ -597,7 +597,7 @@ int main(int argc, char **argv)
 					}
 				}
 			}
-			
+
 			for (wrote = 0; olen && wrote < olen; ) {
 				res = write(fd, obuf + wrote, olen - wrote);
 
@@ -628,7 +628,7 @@ int main(int argc, char **argv)
 						retval = 1;
 						break;
 					}
-	
+
 					wrote += res;
 				}
 			} else {

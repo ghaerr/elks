@@ -35,7 +35,7 @@
 #define MBUTTON		02
 #define RBUTTON		01
 
-/* 
+/*
  * Pixel formats
  * Note the two pseudo pixel formats are never returned by display drivers,
  * but rather used as a data structure type in GrArea.  The other

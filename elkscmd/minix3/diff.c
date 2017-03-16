@@ -90,7 +90,7 @@ static int offset;		/* offset of the actual line number for -e */
 struct f;
 _PROTOTYPE(int main, (int argc, char **argv ));
 _PROTOTYPE(void process_command_line, (int argc, char **argv ));
-_PROTOTYPE(void analyse_input_files, (char *arg1, char *arg2, char *input1, 
+_PROTOTYPE(void analyse_input_files, (char *arg1, char *arg2, char *input1,
 							char *input2 ));
 _PROTOTYPE(void diff, (char *filename1, char *filename2 ));
 _PROTOTYPE(FILE *check_file, (char *name ));
@@ -119,7 +119,7 @@ _PROTOTYPE(char *getold, (int targ ));
 _PROTOTYPE(char *getnew, (int targ ));
 _PROTOTYPE(int isdir, (char *path ));
 _PROTOTYPE(void diff_recursive, (char *dir1, char *dir2 ));
-_PROTOTYPE(void file_type_error, (char *filename1, char *filename2, 
+_PROTOTYPE(void file_type_error, (char *filename1, char *filename2,
 			struct stat *statbuf1, struct stat *statbuf2 ));
 _PROTOTYPE(void *xmalloc, (size_t size));
 _PROTOTYPE(void *xrealloc, (void *ptr, size_t size));

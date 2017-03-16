@@ -191,7 +191,7 @@ void cmd_substitute(frommark, tomark, cmd, bang, extra)
 					{
 						*d++ = *s++;
 					}
-	
+
 					/* substitute for the matched part */
 					regsub(re, subst, d);
 					s = re->endp[0];
@@ -494,7 +494,7 @@ void cmd_shift(frommark, tomark, cmd, bang, extra)
 					oldcol += *o_tabstop - (oldcol % *o_tabstop);
 				}
 			}
-	
+
 			/* calc newcol */
 			if (cmd == CMD_SHIFTR)
 			{
@@ -524,7 +524,7 @@ void cmd_shift(frommark, tomark, cmd, bang, extra)
 				newcol--;
 			}
 			tmpblk.c[newidx] = '\0';
-			
+
 			/* change the old indent string into the new */
 			change(MARK_AT_LINE(l), MARK_AT_LINE(l) + oldidx, tmpblk.c);
 		}

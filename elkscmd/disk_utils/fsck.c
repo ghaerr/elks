@@ -54,7 +54,7 @@
  *	-f force filesystem check even if filesystem marked as valid
  *
  * The device may be a block device or a image of one, but this isn't
- * enforced (but it's not much fun on a character device :-). 
+ * enforced (but it's not much fun on a character device :-).
  */
 
 #include <stdio.h>
@@ -87,7 +87,7 @@ static char * program_name = "fsck.minix";
 static char * program_version = "1.0 - 12/30/93";
 static char * device_name = NULL;
 static int IN;
-static int repair=0, automatic=0, verbose=0, list=0, show=0, warn_mode=0, 
+static int repair=0, automatic=0, verbose=0, list=0, show=0, warn_mode=0,
 	force=0;
 static int directory=0, regular=0, blockdev=0, chardev=0, links=0,
 		symlinks=0, total=0;
@@ -95,7 +95,7 @@ static int directory=0, regular=0, blockdev=0, chardev=0, links=0,
 static int changed = 0; /* flags if the filesystem has been changed */
 static int errors_uncorrected = 0; /* flag if some error was not corrected */
 /* static int dirsize = 16; RUBOUT */
-/* static int namelen = 14; RUBOUT */ 
+/* static int namelen = 14; RUBOUT */
 
 #define DIRSIZE 16
 #define NAMELEN 14
@@ -247,7 +247,7 @@ void inode_dump(struct minix_inode * ptr)
 	}
 	printf("\n");
 }
-	
+
 
 struct minix_inode * map_inode(unsigned int nr)
 /* Take an inode number and map the 1024 byte block on disk containing this
@@ -274,7 +274,7 @@ struct minix_inode * map_inode(unsigned int nr)
 			return inode_ptr;
 		}
 		/* WRITE OLD INODE BLOCK BACK TO DISK */
-		unmap_inode_buffer();		
+		unmap_inode_buffer();
 	}
 	/* Seek to after the Superblock, inode maps and zone maps */
 	lseek(IN, (off_t)((2 + IMAPS + ZMAPS) * BLOCK_SIZE), SEEK_SET);
@@ -490,7 +490,7 @@ void write_super_block(void)
 		SupeP->s_state |= MINIX_ERROR_FS;
 	else
 		SupeP->s_state &= ~MINIX_ERROR_FS;
-	
+
 	if ((off_t)BLOCK_SIZE != lseek(IN, (off_t)BLOCK_SIZE, SEEK_SET))
 		die("seek failed in write_super_block");
 	if (BLOCK_SIZE != write(IN, super_block_buffer, BLOCK_SIZE))
@@ -507,7 +507,7 @@ void write_tables(void)
 		die("Unable to write inode map");
 	if ((ZMAPS * BLOCK_SIZE) != write(IN, zone_map, (ZMAPS * BLOCK_SIZE)))
 		die("Unable to write zone map");
-	unmap_inode_buffer();		
+	unmap_inode_buffer();
 /*	if (INODE_BUFFER_SIZE != write(IN, inode_buffer, (INODE_BUFFER_SIZE))
 		die("Unable to write inodes"); RUBOUT */
 }
@@ -745,7 +745,7 @@ void check_file(struct minix_inode * dir, unsigned long offset)
 			write_block(block, blk);
 		}
 		ino = 0;
-	}	
+	}
 	inode = get_inode(ino);
 	if (offset == 0L)
 		if (!inode || strcmp(".",name)) {
@@ -763,7 +763,7 @@ void check_file(struct minix_inode * dir, unsigned long offset)
 		return;
 	if (name_depth < MAX_DEPTH)
 		strncpy(name_list[name_depth],name,NAMELEN);
-	name_depth++;	
+	name_depth++;
 	print_current_name();
 	printf("\n");
 	if (list) {
@@ -930,12 +930,12 @@ int main(int argc, char ** argv)
 	/*
 	 * Determine whether or not we should continue with the checking.
 	 * This is based on the status of the filesystem valid and error
-	 * flags and whether or not the -f switch was specified on the 
+	 * flags and whether or not the -f switch was specified on the
 	 * command line.
 	 */
 	printf("%s, %s\n", program_name, program_version);
-	if (!(SupeP->s_state & MINIX_ERROR_FS) && 
-	      (SupeP->s_state & MINIX_VALID_FS) && 
+	if (!(SupeP->s_state & MINIX_ERROR_FS) &&
+	      (SupeP->s_state & MINIX_VALID_FS) &&
 	      !force) {
 		if (repair)
 			printf("%s is clean, no check.\n", device_name);
@@ -985,7 +985,7 @@ int main(int argc, char ** argv)
 	}
 	else if (repair)
 		write_super_block();
-	
+
 	if (repair && !automatic)
 		tcsetattr(0,TCSANOW,&termios);
 

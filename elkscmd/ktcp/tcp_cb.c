@@ -36,7 +36,7 @@ void tcpcb_printall(void)
 
     printf("--- Control Blocks --- %d (%d)\n",tcpcb_num,tcp_retrans_memory);
     while (n) {
-	printf("CB:%p sock:0x%x 0x%x State:%d LP:%d RP:%d RTT: %d ms unacc : %d\n",&n->tcpcb, n->tcpcb.sock, 
+	printf("CB:%p sock:0x%x 0x%x State:%d LP:%d RP:%d RTT: %d ms unacc : %d\n",&n->tcpcb, n->tcpcb.sock,
 		n->tcpcb.newsock, n->tcpcb.state, n->tcpcb.localport,
 		n->tcpcb.remport, n->tcpcb.rtt * 1000 / 16,
 		n->tcpcb.unaccepted);
@@ -84,7 +84,7 @@ struct tcpcb_list_s *tcpcb_new(void)
     } else
 	tcpcbs = n;
 
-#ifdef CONFIG_INET_STATUS	
+#ifdef CONFIG_INET_STATUS
     tcpcb_num++;
 #endif
 
@@ -105,7 +105,7 @@ void tcpcb_remove(struct tcpcb_list_s *n)
 {
     struct tcpcb_list_s *next = n->next;
 
-#ifdef CONFIG_INET_STATUS	
+#ifdef CONFIG_INET_STATUS
     tcpcb_num--;
 #endif
 
@@ -123,10 +123,10 @@ void tcpcb_remove(struct tcpcb_list_s *n)
 
 	return;
     }
-	
+
     if (next)
 	next->prev = n->prev;
-	
+
     rmv_all_retrans(n);
     free(n);
 }

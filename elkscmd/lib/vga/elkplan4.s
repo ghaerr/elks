@@ -1,216 +1,216 @@
-! 1 
+! 1
 ! 1 # 1 "elkplan4.c"
-! 1 
-! 2 
-! 3 
-! 4 
-! 5 
-! 6 
-! 7 
-! 8 
+! 1
+! 2
+! 3
+! 4
+! 5
+! 6
+! 7
+! 8
 ! 9 # 1 "vga_dev.h" 1
-! 1 
-! 2 
-! 3 
-! 4 
-! 5 
-! 6 
-! 7 
-! 8 
-! 9 
-! 10 
-! 11 
-! 12 
-! 13 
-! 14 
-! 15 
-! 16 
-! 17 
-! 18 
-! 19 
-! 20 
-! 21 
-! 22 
-! 23 
-! 24 
-! 25 
-! 26 
-! 27 
-! 28 
-! 29 
-! 30 
-! 31 
-! 32 
-! 33 
-! 34 
-! 35 
-! 36 
-! 37 
-! 38 
-! 39 
-! 40 
-! 41 
-! 42 
-! 43 
-! 44 
-! 45 
-! 46 
-! 47 
-! 48 
-! 49 
-! 50 
-! 51 
-! 52 
-! 53 
-! 54 
-! 55 
-! 56 
-! 57 
-! 58 
-! 59 
-! 60 
-! 61 
-! 62 
-! 63 
-! 64 
-! 65 
-! 66 
-! 67 
-! 68 
-! 69 
-! 70 
-! 71 
-! 72 
-! 73 
-! 74 
-! 75 
-! 76 
-! 77 
-! 78 
-! 79 
-! 80 
-! 81 
-! 82 
-! 83 
-! 84 
-! 85 
-! 86 
-! 87 
-! 88 
-! 89 
-! 90 
-! 91 
-! 92 
-! 93 
-! 94 
-! 95 
-! 96 
-! 97 
-! 98 
-! 99 
-! 100 
-! 101 
-! 102 
-! 103 
-! 104 
-! 105 
-! 106 
-! 107 
+! 1
+! 2
+! 3
+! 4
+! 5
+! 6
+! 7
+! 8
+! 9
+! 10
+! 11
+! 12
+! 13
+! 14
+! 15
+! 16
+! 17
+! 18
+! 19
+! 20
+! 21
+! 22
+! 23
+! 24
+! 25
+! 26
+! 27
+! 28
+! 29
+! 30
+! 31
+! 32
+! 33
+! 34
+! 35
+! 36
+! 37
+! 38
+! 39
+! 40
+! 41
+! 42
+! 43
+! 44
+! 45
+! 46
+! 47
+! 48
+! 49
+! 50
+! 51
+! 52
+! 53
+! 54
+! 55
+! 56
+! 57
+! 58
+! 59
+! 60
+! 61
+! 62
+! 63
+! 64
+! 65
+! 66
+! 67
+! 68
+! 69
+! 70
+! 71
+! 72
+! 73
+! 74
+! 75
+! 76
+! 77
+! 78
+! 79
+! 80
+! 81
+! 82
+! 83
+! 84
+! 85
+! 86
+! 87
+! 88
+! 89
+! 90
+! 91
+! 92
+! 93
+! 94
+! 95
+! 96
+! 97
+! 98
+! 99
+! 100
+! 101
+! 102
+! 103
+! 104
+! 105
+! 106
+! 107
 ! 108 typedef unsigned char PIXELVAL;
-! 109 
-! 110 
-! 111 
-! 112 
-! 113 
-! 114 
-! 115 
-! 116 typedef int		COORD;		
-! 117 typedef int		MODE;		
-! 118 typedef unsigned long	COLORVAL;	
-! 119 typedef unsigned int	BUTTON;		
-! 120 typedef unsigned int	MODIFIER;	
-! 121 typedef int		FONTID;		
-! 122 typedef unsigned short	IMAGEBITS;	
-! 123 
-! 124 
-! 125 
-! 126 
-! 127 typedef int		BOOL;		
-! 128 
-! 129 
-! 130 typedef unsigned char 	UCHAR;		
-! 131 
-! 132 
-! 133 
-! 134 
-! 135 
-! 136 
-! 137 
-! 138 
-! 139 
-! 140 
-! 141 
-! 142 
-! 143 
+! 109
+! 110
+! 111
+! 112
+! 113
+! 114
+! 115
+! 116 typedef int		COORD;
+! 117 typedef int		MODE;
+! 118 typedef unsigned long	COLORVAL;
+! 119 typedef unsigned int	BUTTON;
+! 120 typedef unsigned int	MODIFIER;
+! 121 typedef int		FONTID;
+! 122 typedef unsigned short	IMAGEBITS;
+! 123
+! 124
+! 125
+! 126
+! 127 typedef int		BOOL;
+! 128
+! 129
+! 130 typedef unsigned char 	UCHAR;
+! 131
+! 132
+! 133
+! 134
+! 135
+! 136
+! 137
+! 138
+! 139
+! 140
+! 141
+! 142
+! 143
 ! 144 typedef struct {
-! 145 	COORD 	 rows;		
-! 146 	COORD 	 cols;		
-! 147 	int 	 xdpcm;		
-! 148 	int 	 ydpcm;		
-! 149 	int	 planes;	
-! 150 	int	 bpp;		
-! 151 	long	 ncolors;	
-! 152 	int 	 fonts;		
-! 153 	BUTTON 	 buttons;	
-! 154 	MODIFIER modifiers;	
-! 155 	int	 pixtype;	
+! 145 	COORD 	 rows;
+! 146 	COORD 	 cols;
+! 147 	int 	 xdpcm;
+! 148 	int 	 ydpcm;
+! 149 	int	 planes;
+! 150 	int	 bpp;
+! 151 	long	 ncolors;
+! 152 	int 	 fonts;
+! 153 	BUTTON 	 buttons;
+! 154 	MODIFIER modifiers;
+! 155 	int	 pixtype;
 ! 156 } SCREENINFO, *PSCREENINFO;
-! 157 
-! 158 
+! 157
+! 158
 ! 159 typedef struct {
-! 160 	int 	font;		
-! 161 	int 	height;		
-! 162 	int 	maxwidth;	
-! 163 	int 	baseline;	
-! 164 	BOOL	fixed;		
-! 165 	UCHAR	widths[256];	
+! 160 	int 	font;
+! 161 	int 	height;
+! 162 	int 	maxwidth;
+! 163 	int 	baseline;
+! 164 	BOOL	fixed;
+! 165 	UCHAR	widths[256];
 ! 166 } FONTINFO, *PFONTINFO;
-! 167 
-! 168 
+! 167
+! 168
 ! 169 typedef struct {
-! 170 	char *		name;		
-! 171 	int		maxwidth;	
-! 172 	int		height;		
-! 173 	int		firstchar;	
-! 174 	int		size;		
-! 175 	IMAGEBITS *	bits;		
-! 176 	unsigned short *offset;		
-! 177 	unsigned char *	width;		
-! 178 					
+! 170 	char *		name;
+! 171 	int		maxwidth;
+! 172 	int		height;
+! 173 	int		firstchar;
+! 174 	int		size;
+! 175 	IMAGEBITS *	bits;
+! 176 	unsigned short *offset;
+! 177 	unsigned char *	width;
+! 178
 ! 179 } FONT, *PFONT;
-! 180 
-! 181 
+! 180
+! 181
 ! 182 typedef struct {
-! 183 	int		width;			
-! 184 	int		height;			
-! 185 	COORD		hotx;			
-! 186 	COORD		hoty;			
-! 187 	COLORVAL	fgcolor;		
-! 188 	COLORVAL	bgcolor;		
-! 189 	IMAGEBITS	image[16];	
-! 190 	IMAGEBITS	mask[16];	
+! 183 	int		width;
+! 184 	int		height;
+! 185 	COORD		hotx;
+! 186 	COORD		hoty;
+! 187 	COLORVAL	fgcolor;
+! 188 	COLORVAL	bgcolor;
+! 189 	IMAGEBITS	image[16];
+! 190 	IMAGEBITS	mask[16];
 ! 191 } SWCURSOR, *PSWCURSOR;
-! 192 
-! 193 
+! 192
+! 193
 ! 194 typedef struct {
 ! 195 	UCHAR	r;
 ! 196 	UCHAR	g;
 ! 197 	UCHAR	b;
 ! 198 } RGBENTRY;
-! 199 
-! 200 
-! 201 
-! 202 
+! 199
+! 200
+! 201
+! 202
 ! 203 typedef struct {
 ! 204 	COORD dstx, dsty, dstw, dsth, dst_linelen;
 ! 205 	COORD srcx, srcy, src_linelen;
@@ -218,39 +218,39 @@
 ! 207 	PIXELVAL bg_color, fg_color;
 ! 208 	int gr_usebg;
 ! 209 } driver_gc_t;
-! 210 
-! 211 
-! 212 
-! 213 
-! 214 
-! 215 
-! 216 
-! 217 
-! 218 
-! 219 
-! 220 
-! 221 
-! 222 
-! 223 
-! 224 
-! 225 
-! 226 
+! 210
+! 211
+! 212
+! 213
+! 214
+! 215
+! 216
+! 217
+! 218
+! 219
+! 220
+! 221
+! 222
+! 223
+! 224
+! 225
+! 226
 ! 227 typedef struct _screendevice *PSD;
 ! 228 typedef struct _screendevice {
-! 229 	COORD	xres;		
-! 230 	COORD	yres;		
-! 231 	COORD	xvirtres;	
-! 232 	COORD	yvirtres;	
-! 233 	int	planes;		
-! 234 	int	bpp;		
-! 235 	int	linelen;	
-! 236 				
-! 237 	int	size;		
-! 238 	long	ncolors;	
-! 239 	int	pixtype;	
-! 240 	int	flags;		
-! 241 	void *	addr;		
-! 242 
+! 229 	COORD	xres;
+! 230 	COORD	yres;
+! 231 	COORD	xvirtres;
+! 232 	COORD	yvirtres;
+! 233 	int	planes;
+! 234 	int	bpp;
+! 235 	int	linelen;
+! 236
+! 237 	int	size;
+! 238 	long	ncolors;
+! 239 	int	pixtype;
+! 240 	int	flags;
+! 241 	void *	addr;
+! 242
 ! 243 	int	(*Open)();
 ! 244 	void	(*Close)();
 ! 245 	void	(*GetScreenInfo)();
@@ -260,8 +260,8 @@
 ! 249 	void	(*DrawHorzLine)();
 ! 250 	void	(*DrawVertLine)();
 ! 251 	void	(*FillRect)();
-! 252 	
-! 253 
+! 252
+! 253
 ! 254 	BOOL	(*GetFontInfo)();
 ! 255 	void	(*GetTextSize)(
 ! 256 );
@@ -273,225 +273,225 @@
 ! 261 t)();
 ! 262 	void	(*DrawArea)();
 ! 263 } SCREENDEVICE;
-! 264 
-! 265 
-! 266 
-! 267 
-! 268 
-! 269 
-! 270 
-! 271 
-! 272 
+! 264
+! 265
+! 266
+! 267
+! 268
+! 269
+! 270
+! 271
+! 272
 ! 273 typedef struct _mousedevice {
 ! 274 	int	(*Open)();
 ! 275 	void	(*Close)();
 ! 276 	BUTTON	(*GetButtonInfo)();
 ! 277 	void	(*GetDefaultAccel)();
 ! 278 	int	(*Read)();
-! 279 	int	(*Poll)();		
+! 279 	int	(*Poll)();
 ! 280 } MOUSEDEVICE;
-! 281 
-! 282 
+! 281
+! 282
 ! 283 typedef struct _kbddevice {
 ! 284 	int  (*Open)();
 ! 285 	void (*Close)();
 ! 286 	void (*GetModifierInfo)();
 ! 287 	int  (*Read)();
-! 288 	int  (*Poll)();		
+! 288 	int  (*Poll)();
 ! 289 } KBDDEVICE;
-! 290 
-! 291 
+! 290
+! 291
 ! 292 typedef struct {
-! 293 	COORD 	x;		
-! 294 	COORD 	y;		
+! 293 	COORD 	x;
+! 294 	COORD 	y;
 ! 295 } XYPOINT;
-! 296 
-! 297 
+! 296
+! 297
 ! 298 typedef struct {
-! 299 	COORD 	x;		
-! 300 	COORD 	y;		
-! 301 	COORD 	width;		
-! 302 	COORD 	height;		
+! 299 	COORD 	x;
+! 300 	COORD 	y;
+! 301 	COORD 	width;
+! 302 	COORD 	height;
 ! 303 } CLIPRECT;
-! 304 
-! 305 
-! 306 
-! 307 
-! 308 
-! 309 
-! 310 
-! 311 
-! 312 
-! 313 
+! 304
+! 305
+! 306
+! 307
+! 308
+! 309
+! 310
+! 311
+! 312
+! 313
 ! 314 typedef struct {
 ! 315 	COORD	left;
 ! 316 	COORD	top;
 ! 317 	COORD	right;
 ! 318 	COORD	bottom;
 ! 319 } RECT;
-! 320 
-! 321 
+! 320
+! 321
 ! 322 typedef struct {
-! 323 	int	size;		
-! 324 	int	numRects;	
-! 325 	int	type; 		
-! 326 	RECT *	rects;		
-! 327 	RECT	extents;	
+! 323 	int	size;
+! 324 	int	numRects;
+! 325 	int	type;
+! 326 	RECT *	rects;
+! 327 	RECT	extents;
 ! 328 } CLIPREGION;
-! 329 
-! 330 
-! 331 
-! 332 
-! 333 
-! 334 
-! 335 
-! 336 
-! 337 
-! 338 
-! 339 
-! 340 
-! 341 
-! 342 
-! 343 
-! 344 
-! 345 
-! 346 
-! 347 
-! 348 
-! 349 
-! 350 
-! 351 
-! 352 
-! 353 
-! 354 
-! 355 
-! 356 
-! 357 
-! 358 
-! 359 
-! 360 
-! 361 
-! 362 
-! 363 
-! 364 
-! 365 
-! 366 
-! 367 
-! 368 
-! 369 
-! 370 
-! 371 
-! 372 
-! 373 
-! 374 
-! 375 
-! 376 
-! 377 
-! 378 
-! 379 
-! 380 
-! 381 
-! 382 
-! 383 
-! 384 
-! 385 
-! 386 
-! 387 
-! 388 
-! 389 
-! 390 
-! 391 
-! 392 
-! 393 
-! 394 
-! 395 
-! 396 
-! 397 
-! 398 
-! 399 
-! 400 
-! 401 
-! 402 
-! 403 
-! 404 
-! 405 
-! 406 
-! 407 
-! 408 
-! 409 
-! 410 
-! 411 
-! 412 
-! 413 
-! 414 
-! 415 
-! 416 
-! 417 
-! 418 
-! 419 
-! 420 
-! 421 
-! 422 
-! 423 
-! 424 
-! 425 
-! 426 
-! 427 
-! 428 
-! 429 
-! 430 
-! 431 
-! 432 
-! 433 
-! 434 
-! 435 
-! 436 
-! 437 
-! 438 
-! 439 
-! 440 
-! 441 
-! 442 
-! 443 
-! 444 
-! 445 
-! 446 
-! 447 
-! 448 
-! 449 
-! 450 
-! 451 
-! 452 
-! 453 
-! 454 
-! 455 
-! 456 
-! 457 
-! 458 
-! 459 
-! 460 
-! 461 
-! 462 
-! 463 
-! 464 
+! 329
+! 330
+! 331
+! 332
+! 333
+! 334
+! 335
+! 336
+! 337
+! 338
+! 339
+! 340
+! 341
+! 342
+! 343
+! 344
+! 345
+! 346
+! 347
+! 348
+! 349
+! 350
+! 351
+! 352
+! 353
+! 354
+! 355
+! 356
+! 357
+! 358
+! 359
+! 360
+! 361
+! 362
+! 363
+! 364
+! 365
+! 366
+! 367
+! 368
+! 369
+! 370
+! 371
+! 372
+! 373
+! 374
+! 375
+! 376
+! 377
+! 378
+! 379
+! 380
+! 381
+! 382
+! 383
+! 384
+! 385
+! 386
+! 387
+! 388
+! 389
+! 390
+! 391
+! 392
+! 393
+! 394
+! 395
+! 396
+! 397
+! 398
+! 399
+! 400
+! 401
+! 402
+! 403
+! 404
+! 405
+! 406
+! 407
+! 408
+! 409
+! 410
+! 411
+! 412
+! 413
+! 414
+! 415
+! 416
+! 417
+! 418
+! 419
+! 420
+! 421
+! 422
+! 423
+! 424
+! 425
+! 426
+! 427
+! 428
+! 429
+! 430
+! 431
+! 432
+! 433
+! 434
+! 435
+! 436
+! 437
+! 438
+! 439
+! 440
+! 441
+! 442
+! 443
+! 444
+! 445
+! 446
+! 447
+! 448
+! 449
+! 450
+! 451
+! 452
+! 453
+! 454
+! 455
+! 456
+! 457
+! 458
+! 459
+! 460
+! 461
+! 462
+! 463
+! 464
 ! 465 typedef struct {
-! 466 	int		width;		
-! 467 	int		height;		
-! 468 	int		planes;		
-! 469 	int		bpp;		
-! 470 	int		compression;	
-! 471 	int		palsize;	
-! 472 	RGBENTRY *	palette;	
-! 473 	UCHAR *		imagebits;	
+! 466 	int		width;
+! 467 	int		height;
+! 468 	int		planes;
+! 469 	int		bpp;
+! 470 	int		compression;
+! 471 	int		palsize;
+! 472 	RGBENTRY *	palette;
+! 473 	UCHAR *		imagebits;
 ! 474 } IMAGEHDR, *PIMAGEHDR;
-! 475 
-! 476 
-! 477 
-! 478 
-! 479 
-! 480 
-! 481 
-! 482 
+! 475
+! 476
+! 477
+! 478
+! 479
+! 480
+! 481
+! 482
 ! 483 int	GdOpenScreen();
 ! 484 void	GdCloseScreen();
 ! 485 MODE	GdSetMode();
@@ -532,14 +532,14 @@
 ! 520 void	GdBlit(
 ! 521 );
 ! 522 extern SCREENDEVICE scrdev;
-! 523 
-! 524 
+! 523
+! 524
 ! 525 void 	GdSetClipRects();
 ! 526 BOOL	GdClipPoint();
 ! 527 int	GdClipArea();
 ! 528 extern COORD clipminx, clipminy, clipmaxx, clipmaxy;
-! 529 
-! 530 
+! 529
+! 530
 ! 531 BOOL GdPtInRegion();
 ! 532 BOOL GdRectInRegion();
 ! 533 CLIPREGION *GdAllocClipRegion();
@@ -551,8 +551,8 @@
 ! 538 UnionRegion();
 ! 539 void GdSubtractRegion();
 ! 540 void GdXorRegion();
-! 541 
-! 542 
+! 541
+! 542
 ! 543 int	GdOpenMouse();
 ! 544 void	GdCloseMouse();
 ! 545 void	GdGetButtonInfo();
@@ -568,183 +568,183 @@
 ! 555 void	GdCheckCursor();
 ! 556 void 	GdFixCursor();
 ! 557 extern MOUSEDEVICE mousedev;
-! 558 
-! 559 
+! 558
+! 559
 ! 560 int  	GdOpenKeyboard();
 ! 561 void 	GdCloseKeyboard();
 ! 562 void 	GdGetModifierInfo();
 ! 563 int  	GdReadKeyboard();
 ! 564 extern KBDDEVICE kbddev;
-! 565 
-! 566 
+! 565
+! 566
 ! 567 void GdJPEG (
 ! 568 );
 ! 569 void GdBMP (
 ! 570 );
-! 571 
-! 572 
-! 573 
-! 574 
-! 575 
-! 576 
-! 577 
-! 578 
-! 579 
-! 580 
-! 581 
-! 582 
-! 583 
-! 584 
-! 585 
-! 586 
-! 587 
-! 588 
+! 571
+! 572
+! 573
+! 574
+! 575
+! 576
+! 577
+! 578
+! 579
+! 580
+! 581
+! 582
+! 583
+! 584
+! 585
+! 586
+! 587
+! 588
 ! 589 # 9 "elkplan4.c" 2
-! 9 
+! 9
 ! 10 # 1 "vgaplan4.h" 1
-! 1 
-! 2 
-! 3 
-! 4 
-! 5 
-! 6 
-! 7 
-! 8 
-! 9 
-! 10 
-! 11 
-! 12 
-! 13 
-! 14 
-! 15 
-! 16 
-! 17 
-! 18 
-! 19 
-! 20 
-! 21 
-! 22 
-! 23 
-! 24 
-! 25 
-! 26 
-! 27 
-! 28 
-! 29 
-! 30 
-! 31 
-! 32 
-! 33 
-! 34 
-! 35 
-! 36 
-! 37 
-! 38 
-! 39 
-! 40 
-! 41 
-! 42 
-! 43 
-! 44 
-! 45 
-! 46 
-! 47 
-! 48 
-! 49 
-! 50 
-! 51 
-! 52 
-! 53 
-! 54 
-! 55 
-! 56 
-! 57 
-! 58 
-! 59 
-! 60 
-! 61 
-! 62 
-! 63 
-! 64 
-! 65 
-! 66 
-! 67 
-! 68 
-! 69 
-! 70 
-! 71 
+! 1
+! 2
+! 3
+! 4
+! 5
+! 6
+! 7
+! 8
+! 9
+! 10
+! 11
+! 12
+! 13
+! 14
+! 15
+! 16
+! 17
+! 18
+! 19
+! 20
+! 21
+! 22
+! 23
+! 24
+! 25
+! 26
+! 27
+! 28
+! 29
+! 30
+! 31
+! 32
+! 33
+! 34
+! 35
+! 36
+! 37
+! 38
+! 39
+! 40
+! 41
+! 42
+! 43
+! 44
+! 45
+! 46
+! 47
+! 48
+! 49
+! 50
+! 51
+! 52
+! 53
+! 54
+! 55
+! 56
+! 57
+! 58
+! 59
+! 60
+! 61
+! 62
+! 63
+! 64
+! 65
+! 66
+! 67
+! 68
+! 69
+! 70
+! 71
 ! 72 typedef unsigned long	FARADDR;
-! 73 
-! 74 
+! 73
+! 74
 ! 75 extern unsigned char GETBYTE_FP();
-! 76 
-! 77 
+! 76
+! 77
 ! 78 extern void PUTBYTE_FP();
-! 79 
-! 80 
+! 79
+! 80
 ! 81 extern void RMW_FP();
-! 82 
-! 83 
+! 82
+! 83
 ! 84 extern void ORBYTE_FP();
-! 85 
-! 86 
+! 85
+! 86
 ! 87 extern void ANDBYTE_FP();
-! 88 
-! 89 
-! 90 
-! 91 
-! 92 
-! 93 
-! 94 
-! 95 
-! 96 
-! 97 
-! 98 
+! 88
+! 89
+! 90
+! 91
+! 92
+! 93
+! 94
+! 95
+! 96
+! 97
+! 98
 ! 99 extern int  inportb();
 ! 100 extern void outportb();
 ! 101 extern void outport();
-! 102 
-! 103 
-! 104 
-! 105 
-! 106 
-! 107 
-! 108 
-! 109 
-! 110 
-! 111 
-! 112 
-! 113 
-! 114 
-! 115 
-! 116 
-! 117 
-! 118 
-! 119 
-! 120 
-! 121 
-! 122 
-! 123 
-! 124 
-! 125 
-! 126 
-! 127 
-! 128 
-! 129 
-! 130 
-! 131 
-! 132 
-! 133 
-! 134 
-! 135 
-! 136 
-! 137 
-! 138 
+! 102
+! 103
+! 104
+! 105
+! 106
+! 107
+! 108
+! 109
+! 110
+! 111
+! 112
+! 113
+! 114
+! 115
+! 116
+! 117
+! 118
+! 119
+! 120
+! 121
+! 122
+! 123
+! 124
+! 125
+! 126
+! 127
+! 128
+! 129
+! 130
+! 131
+! 132
+! 133
+! 134
+! 135
+! 136
+! 137
+! 138
 ! 139 FARADDR		int10();
-! 140 
-! 141 
-! 142 
-! 143 
+! 140
+! 141
+! 142
+! 143
 ! 144 int		ega_init();
 ! 145 void 		ega_drawpixel();
 ! 146 PIXELVAL 	ega_readpixel();
@@ -754,13 +754,13 @@
 ! 150 );
 ! 151 void	 	ega_blit(
 ! 152 );
-! 153 
-! 154 
+! 153
+! 154
 ! 155 void		ega_hwinit();
 ! 156 void		ega_hwterm();
-! 157 
-! 158 
-! 159 
+! 157
+! 158
+! 159
 ! 160 void 	 mempl4_drawpixel();
 ! 161 PIXELVAL mempl4_readpixel();
 ! 162 void 	 mempl4_drawhorzline();
@@ -773,49 +773,49 @@
 ! 169 );
 ! 170 void 	 vga_to_vga_blit(
 ! 171 );
-! 172 
-! 173 
-! 174 
-! 175 
-! 176 
-! 177 
-! 178 
-! 179 
-! 180 
-! 181 
-! 182 
-! 183 
-! 184 
-! 185 
-! 186 
-! 187 
-! 188 
-! 189 
-! 190 
-! 191 
-! 192 
-! 193 
-! 194 
-! 195 
-! 196 
-! 197 
-! 198 
-! 199 
-! 200 
-! 201 
-! 202 
-! 203 
+! 172
+! 173
+! 174
+! 175
+! 176
+! 177
+! 178
+! 179
+! 180
+! 181
+! 182
+! 183
+! 184
+! 185
+! 186
+! 187
+! 188
+! 189
+! 190
+! 191
+! 192
+! 193
+! 194
+! 195
+! 196
+! 197
+! 198
+! 199
+! 200
+! 201
+! 202
+! 203
 ! 204 # 10 "elkplan4.c" 2
-! 10 
-! 11 
-! 12 
-! 13 
-! 14 
-! 15 
-! 16 
-! 17 
-! 18 extern MODE gr_mode;	
-! 19 
+! 10
+! 11
+! 12
+! 13
+! 14
+! 15
+! 16
+! 17
+! 18 extern MODE gr_mode;
+! 19
 ! 20 static unsigned char mode_table[3 + 1] = {
 .data
 _mode_table:
@@ -825,7 +825,7 @@ _mode_table:
 .byte	$10
 ! 22 };
 .byte	8
-! 23 
+! 23
 ! 24 int
 ! 25 ega_init(psd)
 ! 26 # 25 "elkplan4.c"
@@ -834,7 +834,7 @@ _mode_table:
 export	_ega_init
 _ega_init:
 ! 26 {
-! 27 	
+! 27
 ! 28 	psd->addr = ((FARADDR)(((unsigned long)(0xa000)<< 16)| (unsigned)(0)));
 push	bp
 mov	bp,sp
@@ -847,8 +847,8 @@ mov	$18[bx],ax
 mov	bx,4[bp]
 mov	ax,*$50
 mov	$C[bx],ax
-! 30 
-! 31 	
+! 30
+! 31
 ! 32 	{ outportb(0x3ce,1); outportb(0x3cf,0x0f); };
 mov	ax,*1
 push	ax
@@ -888,7 +888,7 @@ mov	ax,#$3CF
 push	ax
 call	_outportb
 add	sp,*4
-! 35 
+! 35
 ! 36 	return 1;
 mov	ax,*1
 pop	si
@@ -896,17 +896,17 @@ pop	di
 pop	bp
 ret
 ! 37 }
-! 38 
-! 39 
-! 40 
-! 41 
-! 42 
-! 43 
-! 44 
-! 45 
-! 46 
-! 47 
-! 48 
+! 38
+! 39
+! 40
+! 41
+! 42
+! 43
+! 44
+! 45
+! 46
+! 47
+! 48
 ! 49 void
 ! 50 ega_drawhorzline(psd,x1,x2,y,color)
 ! 51 # 50 "elkplan4.c"
@@ -939,7 +939,7 @@ _ega_drawhorzline.x2	set	6
 	; configure the graphics controller
 
 	mov	dx, #$03ce	; DX := Graphics Controller port address
-	
+
 	mov	al, #3		; set data rotate register
 	lea	bx, _mode_table
 	add	bx, _gr_mode
@@ -1033,7 +1033,7 @@ L42:	mov 	ah, bh		; AH := bit mask for first byte
 
 L43:	mov 	ah, #$0ff	; AH := bit mask
 	out	dx, ax		; update Bit Mask register
-	rep 
+	rep
 	movsb			; update all pixels in the line
 
 	; set pixels in the rightmost byte of the line
@@ -1059,18 +1059,18 @@ L44:	mov 	ah, bl		; AH := bit mask for last byte
 !BCC_ENDASM
 ! 181 }
 ret
-! 182 
-! 183 
-! 184 
-! 185 
-! 186 
-! 187 
-! 188 
-! 189 
-! 190 
-! 191 
-! 192 
-! 193 
+! 182
+! 183
+! 184
+! 185
+! 186
+! 187
+! 188
+! 189
+! 190
+! 191
+! 192
+! 193
 ! 194 void
 ! 195 ega_drawvertline(psd,x,y1,y2,color)
 ! 196 # 195 "elkplan4.c"
@@ -1176,12 +1176,12 @@ L1111:	or	[bx], al	; set pixel
 !BCC_ENDASM
 ! 279 }
 ret
-! 280 
-! 281 
-! 282 
-! 283 
-! 284 
-! 285 
+! 280
+! 281
+! 282
+! 283
+! 284
+! 285
 ! 286 void
 ! 287 ega_drawpixel(psd,x,y,color)
 ! 288 # 287 "elkplan4.c"
@@ -1274,12 +1274,12 @@ _ega_drawpixel.x	set	4
 !BCC_ENDASM
 ! 361 }
 ret
-! 362 
-! 363 
-! 364 
-! 365 
-! 366 
-! 367 
+! 362
+! 363
+! 364
+! 365
+! 366
+! 367
 ! 368 PIXELVAL
 ! 369 ega_readpixel(psd,x,y)
 ! 370 # 369 "elkplan4.c"
@@ -1343,11 +1343,11 @@ L112:	out	dx, ax		; select bit plane
 
 	pop	ds
 	pop	si
-	pop	bp	
+	pop	bp
 !BCC_ENDASM
 ! 421 }
 ret
-! 422 
+! 422
 ! 423 void
 ! 424 ega_blit(dstpsd,dstx,dsty,w,h,
 ! 425 srcpsd,srcx,srcy,op)
@@ -1371,10 +1371,10 @@ _ega_blit:
 ! 426 # 425 "elkplan4.c"
 ! 425 int op;
 ! 426 {
-! 427 
+! 427
 ! 428 	BOOL	srcvga, dstvga;
-! 429 
-! 430 	
+! 429
+! 430
 ! 431 	srcvga = srcpsd->flags & 0x01;
 push	bp
 mov	bp,sp
@@ -1392,7 +1392,7 @@ mov	al,$16[bx]
 and	al,*1
 xor	ah,ah
 mov	-8[bp],ax
-! 433 
+! 433
 ! 434 	if (srcvga) {
 mov	ax,-6[bp]
 test	ax,ax
@@ -1472,7 +1472,7 @@ call	_mempl4_to_mempl4_blit
 add	sp,*$12
 ! 448 	}
 .9:
-! 449 
+! 449
 ! 450 }
 .6:
 add	sp,*4
@@ -1480,7 +1480,7 @@ pop	si
 pop	di
 pop	bp
 ret
-! 451 
+! 451
 .data
 .bss
 

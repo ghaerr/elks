@@ -1,8 +1,8 @@
-/* urlget.c Copyright 2000 by Michael Temari All Rights Reserved 
+/* urlget.c Copyright 2000 by Michael Temari All Rights Reserved
  *
- * 04/05/2000 Michael Temari <Michael@TemWare.Com> 
- * 09/29/2001 Ported to ELKS(and linux) (Harry Kalogiroy <harkal@rainbow.cs.unipi.gr>) 
- *  
+ * 04/05/2000 Michael Temari <Michael@TemWare.Com>
+ * 09/29/2001 Ported to ELKS(and linux) (Harry Kalogiroy <harkal@rainbow.cs.unipi.gr>)
+ *
  */
 
 
@@ -256,7 +256,7 @@ int len;
 			return(-1);
 		}
    }
-   
+
    close(fd);
 
    return(0);
@@ -365,12 +365,12 @@ char typec[2];
    	s = ftpcmd(fpw, fpr, "CWD", unesc(p));
    	p = p2;
    }
-   
+
    sprintf(typec, "%c", type == 'd' ? 'A' : type);
    s = ftpcmd(fpw, fpr, "TYPE", typec);
    if (s / 100 != 2) goto error;
-   
-   if (strlen(p) == 0) type = 'd'; //last char is '/', its a directory, list files 
+
+   if (strlen(p) == 0) type = 'd'; //last char is '/', its a directory, list files
    ftppport=0; //to check if retrieved below
    s = ftpcmd(fpw, fpr, "PASV", "");
    //printf("ftpget: s=%d,port=%u\n",s,ftppport);
@@ -531,7 +531,7 @@ int opt_p = 0;
    if (strncasecmp(url, "ftp://", 6) == 0) {
    	scheme = SCHEME_FTP;
    	ps = url + 6;
-   } else 
+   } else
    if (strncasecmp(url, "tcp://", 6) == 0) {
    	scheme = SCHEME_TCP;
    	ps = url + 6;

@@ -11,7 +11,7 @@ Created:	Nov 11, 1993 by Philip Homburg <philip@cs.vu.nl>
              on Minix 2.0.0
 
   Mar 1998 - code clean - Claudio Tantignone.
-  
+
   Jul 2002 - ported to ELKS - Harry Kalogirou <harkal@gmx.net>
 */
 
@@ -261,7 +261,7 @@ int ip_vjhc_compress(pkt_ut *pkt)
 		memcpy(state->s_data, ip_hdr, tot_len);
 		xmit_last= ip_hdr->protocol= state->s_indx;
 		return PPP_TYPE_VJHC_UNCOMPR;
-	}	
+	}
 	oip_hdr= (iphdr_t *)(state->s_data);
 	otcp_hdr= (tcphdr_t *)(state->s_data + ip_hdr_len);
 

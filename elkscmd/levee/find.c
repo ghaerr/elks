@@ -91,7 +91,7 @@ omatch(pattern, cp, endp)
     }
     return FALSE;
 }
-	
+
 int PROC
 amatch(pattern,start,endp)
  char *pattern;
@@ -140,7 +140,7 @@ patsize(pattern)
 register char **pattern;
 {
     register count;
-    
+
     switch (**pattern) {
       case LITCHAR:
 	*pattern += 2;
@@ -164,7 +164,7 @@ locate(pattern,linep)
 {
     register char *p = 1+pattern;
     register int count;
-    
+
     if ((count = (*p++)&0xff) == 0)
 	return FALSE;
     while (count--)
@@ -262,11 +262,11 @@ makepat(string,delim)
 	RE_start[arg] = RE_size[arg] = (-1);
     arg = 0;
     p = pattern;
-    
+
     while ((*string != delim) && (*string != 0)) {
 	oldcp = cp;
 	cp = p;
-	
+
 	if (!magic)		/* kludge for nonmagical patterns */
 	    goto normal;
 	if (*string == ANY)
@@ -422,7 +422,7 @@ findparse(src,idx,start) /* driver for ?, /, && : lineranges */
 	    count = 0;
 	    while (*src >= '0' && *src <= '9')
 		count = (count*10) + *(src++) - '0';
-		
+
 	    addr = to_index(count);
 	break;
 	case '$':
@@ -511,7 +511,7 @@ char c;
 bool begline;
 {
     int i;
-    
+
     if (c == '\'')
 	c = '`';
     if (c >= '`' && c <= 'z')

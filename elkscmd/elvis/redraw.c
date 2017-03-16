@@ -192,7 +192,7 @@ int idx2col(curs, text, inputting)
 		{
 			text += 2; /* plus one more at bottom of loop */
 			idx -= 2;
-		}			
+		}
 #endif
 		else
 		{

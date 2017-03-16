@@ -8,7 +8,7 @@
  */
 
 
-/* This file contains the code that manages the run-time options -- The 
+/* This file contains the code that manages the run-time options -- The
  * values that can be modified via the "set" command.
  */
 

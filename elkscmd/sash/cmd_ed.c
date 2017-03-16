@@ -302,7 +302,7 @@ docommands()
 					fprintf(stderr, "No file name specified\n");
 					break;
 				}
-	
+
 				writelines(cp, num1, num2);
 				break;
 
@@ -327,7 +327,7 @@ docommands()
 				}
 				printlines(curnum, curnum, FALSE);
 				break;
-	
+
 			case '-':
 				if (setcurnum(curnum - 1))
 					printlines(curnum, curnum, FALSE);
@@ -619,7 +619,7 @@ addlines(num)
 /*
  * Parse a line number argument if it is present.  This is a sum
  * or difference of numbers, '.', '$', 'x, or a search string.
- * Returns TRUE if successful (whether or not there was a number). 
+ * Returns TRUE if successful (whether or not there was a number).
  * Returns FALSE if there was a parsing error, with a message output.
  * Whether there was a number is returned indirectly, as is the number.
  * The character pointer which stopped the scan is also returned.

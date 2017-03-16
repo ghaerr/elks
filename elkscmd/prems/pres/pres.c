@@ -39,10 +39,10 @@
  * Revision 1.2  90/12/18  19:29:13  pro
  * Changed the order of memory freeing
  * otherwise it filled up with multiple file arguments.
- * 
+ *
  * Revision 1.1  90/12/18  16:21:20  pro
  * Initial revision
- * 
+ *
  */
 
 #ifndef lint

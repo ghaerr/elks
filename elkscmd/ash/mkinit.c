@@ -99,7 +99,7 @@ struct text {
 	int nleft;
 	struct block *start;
 	struct block *last;
-};      
+};
 
 struct block {
 	struct block *next;

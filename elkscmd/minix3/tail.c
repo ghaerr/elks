@@ -26,7 +26,7 @@
  *   the argument and is equivalent to specifying "-f" in the standard
  *   syntax.  Look for lines marked "OBSOLESCENT".
  *
- *   If no file is specified, standard input is assumed. 
+ *   If no file is specified, standard input is assumed.
  *
  *   P1003.2 does not specify tail's behavior when a count of 0 is given.
  *   It also does not specify clearly whether the first byte (line) of a
@@ -36,7 +36,7 @@
  *   while a count of +0 results in the entire file being copied (just like
  *   +1).  The implementor does not agree with these behaviors, but has
  *   copied them slavishly.  Look for lines marked "HISTORICAL".
- *   
+ *
  *   Author:    Norbert Schlenker
  *   Copyright: None.  Released to the public domain.
  *   Reference: P1003.2 section 4.59 (draft 10)
@@ -282,7 +282,7 @@ int read_until_killed;		/* keep reading at EOF */
 /* Back up inside the buffer.  The count has already been adjusted to
  * back up exactly one character too far, so we will bump the buffer
  * pointer once after we're done.
- * 
+ *
  * BUG: For large line counts, the buffer may not be large enough to
  *	hold all the lines.  The specification allows the program to
  *	fail in such a case - this program will simply dump the entire

@@ -34,7 +34,7 @@ void icmp_process(struct iphdr_s *iph,char *packet)
 	    apair.protocol = PROTO_ICMP;
 	    len = ntohs(iph->tot_len) - 20;	/* Do this right */
 
-/*	Set the type to ICMP_ECHO_REPLY 
+/*	Set the type to ICMP_ECHO_REPLY
  */
 	    packet[0] = 0;
 	    ip_sendpacket(packet, len, &apair);

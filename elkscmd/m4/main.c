@@ -9,9 +9,9 @@
 /*
  * m4 - macro processor
  *
- * PD m4 is based on the macro tool distributed with the software 
- * tools (VOS) package, and described in the "SOFTWARE TOOLS" and 
- * "SOFTWARE TOOLS IN PASCAL" books. It has been expanded to include 
+ * PD m4 is based on the macro tool distributed with the software
+ * tools (VOS) package, and described in the "SOFTWARE TOOLS" and
+ * "SOFTWARE TOOLS IN PASCAL" books. It has been expanded to include
  * most of the command set of SysV m4, the standard UN*X macro processor.
  *
  * Since both PD m4 and UN*X m4 are based on SOFTWARE TOOLS macro,
@@ -55,12 +55,12 @@
  *
  * Implementation Notes:
  *
- * [1]	PD m4 uses a different (and simpler) stack mechanism than the one 
- *	described in Software Tools and Software Tools in Pascal books. 
- *	The triple stack nonsense is replaced with a single stack containing 
- *	the call frames and the arguments. Each frame is back-linked to a 
- * 	previous stack frame, which enables us to rewind the stack after 
- * 	each nested call is completed. Each argument is a character pointer 
+ * [1]	PD m4 uses a different (and simpler) stack mechanism than the one
+ *	described in Software Tools and Software Tools in Pascal books.
+ *	The triple stack nonsense is replaced with a single stack containing
+ *	the call frames and the arguments. Each frame is back-linked to a
+ * 	previous stack frame, which enables us to rewind the stack after
+ * 	each nested call is completed. Each argument is a character pointer
  *	to the beginning of the argument string within the string space.
  *	The only exceptions to this are (*) arg 0 and arg 1, which are
  * 	the macro definition and macro name strings, stored dynamically
@@ -384,7 +384,7 @@ macro() {
  * combo with lookup to speed things up.
  */
 ndptr
-inspect(tp) 
+inspect(tp)
 register char *tp;
 {
 	register int h = 0;
@@ -407,7 +407,7 @@ register char *tp;
 
 #ifdef NONZEROPAGES
 /*
- * initm4 - initialize various tables. Useful only if your system 
+ * initm4 - initialize various tables. Useful only if your system
  * does not know anything about demand-zero pages.
  *
  */
@@ -423,11 +423,11 @@ initm4()
 #endif
 
 /*
- * initkwds - initialise m4 keywords as fast as possible. 
+ * initkwds - initialise m4 keywords as fast as possible.
  * This very similar to install, but without certain overheads,
- * such as calling lookup. Malloc is not used for storing the 
+ * such as calling lookup. Malloc is not used for storing the
  * keyword strings, since we simply use the static  pointers
- * within keywrds block. We also assume that there is enough memory 
+ * within keywrds block. We also assume that there is enough memory
  * to at least install the keywords (i.e. malloc won't fail).
  *
  */

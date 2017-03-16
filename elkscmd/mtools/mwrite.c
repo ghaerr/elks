@@ -302,11 +302,11 @@ int verbose, mod_time;
 	setbuffer(fp,inbuf,bufsiz) ;
 #endif
 
-	fat = oldfat = firstfat = nextfat(size=0); 
+	fat = oldfat = firstfat = nextfat(size=0);
 	for (;;) {
 		if (fat == -1) {
 			full = 1;
-			if (size) 
+			if (size)
 				zapit(firstfat) ;
 			return(NULL) ;
 		}
@@ -323,10 +323,10 @@ int verbose, mod_time;
 		 * In mread this may even be a win!  (Also see comments
 		 * in putclusters() )
 		 */
-		for (curfat=fat; 
+		for (curfat=fat;
 		    ++curfat < fat + maxcontig  &&
 		    nextfat(curfat-1) == curfat;) ;
-			
+
 		if ((oldfat=putclusters(oldfat,fat, curfat, fp)) == 0)
 			break ;
 
@@ -393,7 +393,7 @@ FILE *fp;
 		 * all instances of  read/write with Read/Write and
 		 * add an offset parameter to allow arbitrary sorting/queuing
 		 * etc,  behind the back of the DOS code.  This will
-		 * make the overall code much cleaner,  and we 
+		 * make the overall code much cleaner,  and we
 		 * can put Read/Write in a sysdep.c where they belong.
 		 * Also one may want to memory map the input file.  Avoiding
 		 * redundant copying to user space,  this is for perfectionists
@@ -404,7 +404,7 @@ FILE *fp;
 			perror("putcluster: fread");
 			exit(1);
 		}
-		if ( current != buflen ) 
+		if ( current != buflen )
 			++eof;
 	}
 

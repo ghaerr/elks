@@ -186,7 +186,7 @@ void cutswitch(tmpname)
 	sprintf(cutfname, CUTNAME, "", getpid(), fd);
 	if (!link(tmpname, &cutfname[1])) /* skip slash */
 		unlink(tmpname);
-# else	
+# else
 	sprintf(cutfname, CUTNAME, o_directory, getpid(), fd);
 	link(tmpname, cutfname) || unlink(tmpname);
 # endif
@@ -322,7 +322,7 @@ void cut(from, to)
 
 	/* ---------- */
 
-	/* Reporting... */	
+	/* Reporting... */
 	if (markidx(from) == 0 && markidx(to) == 0)
 	{
 		rptlines = markline(to) - markline(from);

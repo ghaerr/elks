@@ -14,7 +14,7 @@
 #include <time.h>
 #include <utime.h>
 
-#define BUF_SIZE 1024 
+#define BUF_SIZE 1024
 
 typedef	struct	chunk	CHUNK;
 #define	CHUNKINITSIZE	4
@@ -434,12 +434,12 @@ match(text, pattern)
 		ch = *pattern++;
 
 		switch (ch) {
-			case '*':  
+			case '*':
 				retrypat = pattern;
 				retrytxt = text;
 				break;
 
-			case '[':  
+			case '[':
 				found = FALSE;
 				while ((ch = *pattern++) != ']') {
 					if (ch == '\\')
@@ -455,18 +455,18 @@ match(text, pattern)
 				}
 				/* fall into next case */
 
-			case '?':  
+			case '?':
 				if (*text++ == '\0')
 					return FALSE;
 				break;
 
-			case '\\':  
+			case '\\':
 				ch = *pattern++;
 				if (ch == '\0')
 					return FALSE;
 				/* fall into next case */
 
-			default:        
+			default:
 				if (*text == ch) {
 					if (*text)
 						text++;
@@ -565,7 +565,7 @@ makestring(argc, argv, buf, buflen)
 
 		if (argc)
 			*buf++ = ' ';
-		buflen--; 
+		buflen--;
 	}
 
 	*buf = '\0';

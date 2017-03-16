@@ -533,7 +533,7 @@ static InitKeytab () {
     ktab['h'].type = ktab[Ctrl('h')].type = KEY_HARDCOPY;
     ktab['z'].type = ktab[Ctrl('z')].type = KEY_SUSPEND;
     ktab['c'].type = ktab[Ctrl('c')].type = KEY_SHELL;
-    ktab[' '].type = ktab[Ctrl(' ')].type = 
+    ktab[' '].type = ktab[Ctrl(' ')].type =
     ktab['n'].type = ktab[Ctrl('n')].type = KEY_NEXT;
     ktab['-'].type = ktab['p'].type = ktab[Ctrl('p')].type = KEY_PREV;
     ktab['k'].type = ktab[Ctrl('k')].type = KEY_KILL;
@@ -1161,7 +1161,7 @@ static Detach (suspend) {
     ioctl (DevTty, TIOCNOTTY, (char *)0);
     Detached = 1;
     do {
-	ReceiveMsg (ServerSocket); 
+	ReceiveMsg (ServerSocket);
     } while (Detached);
     if (!suspend)
 	for (pp = wtab; pp < wtab+MAXWIN; ++pp)
@@ -1406,7 +1406,7 @@ static ReadRc (fn) char *fn; {
 	    } else if (p[0] == '^' && p[1] != '\0' && p[2] == '\0') {
 		c = p[1];
 		if (isupper (c))
-		    p[1] = tolower (c);    
+		    p[1] = tolower (c);
 		key = Ctrl(c);
 	    } else if (IsNum (p, 7)) {
 		(void) sscanf (p, "%o", &key);

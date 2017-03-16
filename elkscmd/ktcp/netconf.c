@@ -26,7 +26,7 @@ static struct stat_request_s sreq;
 void netconf_request(struct stat_request_s *sr)
 {
     sreq.type = sr->type;
-    sreq.extra = sr->extra;		
+    sreq.extra = sr->extra;
 }
 
 void netconf_send(struct tcpcb_s *cb)

@@ -100,7 +100,7 @@ STATIC char *commandtext();
 #endif
 
 
- 
+
 #if JOBS
 /*
  * Turn job control on and off.
@@ -494,7 +494,7 @@ makejob(node, nprocs)
 	INTON;
 	TRACE(("makejob(0x%x, %d) returns %%%d\n", (int)node, nprocs, jp - jobtab + 1));
 	return jp;
-}	
+}
 
 
 /*

@@ -53,7 +53,7 @@ int slip_init(char *fdev)
 
     ioctl(devfd, TCSETS, &tios);
 
-    /* Init some variables 
+    /* Init some variables
      */
     packpos = 128;
     lastchar = 0;
@@ -69,14 +69,14 @@ int slip_init(char *fdev)
 void cslip_decompress(__u8 **packet, size_t *len){
     pkt_ut p;
     __u8 c;
-    
+
     p.p_data = *packet;
     p.p_size = *len;
     p.p_offset = 128;
     p.p_maxsize = SLIP_MTU;
-    
+
     c = *(*packet + 128) & 0xf0;
-    if ( c != TYPE_IP){   	
+    if ( c != TYPE_IP){
         if (c & 0x80){
             c = TYPE_COMPRESSED_TCP;
             ip_vjhc_arr_compr(&p);
@@ -100,14 +100,14 @@ void cslip_decompress(__u8 **packet, size_t *len){
 #endif
     	*packet += 128;
     }
-    
+
     *len = p.p_size;
 }
 #endif
 
 /*
  * slip_process()
- *  Called when we have new data waiting 
+ *  Called when we have new data waiting
  *  at the serial port
  *	FIXME : Handle the buffer overrun when out
  *          MTU is not honored.
@@ -125,10 +125,10 @@ void slip_process(void)
 
 	for (i=0; i < len ; i++) {
 	    if (lastchar == ESC) {
-		switch (sbuf[i]) { 
+		switch (sbuf[i]) {
 
 		    case ESC_END:
-			packet[packpos++] = END; 
+			packet[packpos++] = END;
 			break;
 
 		    case ESC_ESC:
@@ -151,9 +151,9 @@ void slip_process(void)
 			    break;
 
 			p_size = packpos - 128;
-#ifdef CONFIG_CSLIP			
+#ifdef CONFIG_CSLIP
 			p = packet;
-		        cslip_decompress(&p, &p_size);		        
+		        cslip_decompress(&p, &p_size);
 #else
 			p = packet + 128;
 #endif
@@ -192,23 +192,23 @@ void cslip_compress(__u8 **packet, int *len)
     pkt_ut p;
     __u8 type;
     size_t orig_len;
-    
+
     orig_len = *len;
-    
+
     p.p_data = *packet;
     p.p_size = *len;
     p.p_offset = 0;
     p.p_maxsize = SLIP_MTU;
-    
+
     type = ip_vjhc_compress(&p);
-    
+
     if (type != TYPE_IP){
         *packet += p.p_offset;
         *len = p.p_size;
         *packet[0] |= type;
     }
 
-#ifdef DEBUG   
+#ifdef DEBUG
     printf("cslip : from %d to %d\n", orig_len, p.p_size);
 #endif
 }
@@ -220,7 +220,7 @@ void cslip_compress(__u8 **packet, int *len)
 void slip_send(char *packet, int len)
 {
     __u8 *p = (__u8 *)packet;
-    
+
 #ifdef CONFIG_CSLIP
     cslip_compress(&p, &len);
 #endif

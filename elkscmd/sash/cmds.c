@@ -133,7 +133,7 @@ do_mknod(argc, argv)
 }
 #endif /* CMD_MKNOD */
 
-#ifdef CMD_RMDIR 
+#ifdef CMD_RMDIR
 void
 do_rmdir(argc, argv)
 	char	**argv;

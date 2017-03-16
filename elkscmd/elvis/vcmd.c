@@ -62,7 +62,7 @@ MARK v_1ex(m, text)
 	/* The command did some output.  Wait for a keystoke. */
 	if (exwrote)
 	{
-		mode = MODE_VI;	
+		mode = MODE_VI;
 		msg("[Hit <RETURN> to continue]");
 		if (getkey(0) == ':')
 		{	mode = MODE_COLON;
