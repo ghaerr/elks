@@ -45,7 +45,7 @@ TOPDIR := $(shell pwd)
 
 ifdef ELKS
 CC = bcc -0 -ansi -Dconst= -Dvolatile=
-INC = -I$(TOPDIR) -I/usr/bcc/include -I/home/georg/elks-dev/OS-build/elks/include
+INC = -I$(TOPDIR) -I/usr/bcc/include -I../../elks/include
 CFLAGS = -DELKS=1 -DUNIX=1 -DDEBUG=1 $(INC) -O
 MATHLIB =
 xSERMOUSE=1
