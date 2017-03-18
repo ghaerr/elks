@@ -1,0 +1,282 @@
+/*
+ * Copyright (c) 1999 Greg Haerr <greg@censoft.com>
+ *
+ * 4 planes Memory Video Driver for MicroWindows
+ * 
+ * 4bpp colors are stored bit-packed into memory, 1 bit of color per plane
+ * planes 0-3 are sequential in memory
+ *
+ * 	In this driver, psd->linelen is line byte length, not line pixel length
+ */
+/*#define NDEBUG*/
+#include <assert.h>
+#include <string.h>
+#include "../device.h"
+#include "vgaplan4.h"
+
+/* FIXME assumptions for speed: NOTE: psd is ignored in these routines*/
+#define SCREENBASE 		MK_FP(0xa000, 0)
+#define BYTESPERLINE		80
+
+/*FIXME*/
+typedef char *ADDR8;
+
+/* extern data*/
+extern MODE gr_mode;	/* temp kluge*/
+
+static unsigned char notmask[8] = {
+	0x7f, 0xbf, 0xdf, 0xef, 0xf7, 0xfb, 0xfd, 0xfe
+};
+static unsigned char mask[8] = {
+	0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01
+};
+
+/* Set pixel at x, y, to pixelval c*/
+void
+mempl4_drawpixel(PSD psd, COORD x, COORD y, PIXELVAL c)
+{
+	ADDR8	addr = psd->addr;
+	int	planesize = psd->yres * psd->linelen;
+	int	plane;
+
+	assert (addr != 0);
+	assert (x >= 0 && x < psd->xres);
+	assert (y >= 0 && y < psd->yres);
+	assert (c >= 0 && c < psd->ncolors);
+
+	addr += x/8 + y * psd->linelen;
+	if(gr_mode == MODE_XOR) {
+		for(plane=0; plane<4; ++plane) {
+			*addr = (*addr & notmask[x&7]) ^ (c << (7-(x&7)));
+			addr += planesize;
+		}
+	} else {
+		for(plane=0; plane<4; ++plane) {
+			*addr = (*addr & notmask[x&7]) | (c << (7-(x&7)));
+			addr += planesize;
+		}
+	}
+}
+
+/* Read pixel at x, y*/
+PIXELVAL
+mempl4_readpixel(PSD psd, COORD x, COORD y)
+{
+	ADDR8		addr = psd->addr;
+	int		planesize = psd->yres * psd->linelen;
+	int		plane;
+	PIXELVAL	c = 0;
+
+	assert (addr != 0);
+	assert (x >= 0 && x < psd->xres);
+	assert (y >= 0 && y < psd->yres);
+
+	addr += x/8 + y * psd->linelen;
+	for(plane=0; plane<4; ++plane) {
+		if(*addr & mask[x&7])
+			c |= 1 << plane;
+		addr += planesize;
+	}
+	assert (c >= 0 && c < NCOLORS);
+	return c;
+}
+
+/* Draw horizontal line from x1,y to x2,y not including final point*/
+void
+mempl4_drawhorzline(PSD psd, COORD x1, COORD x2, COORD y, PIXELVAL c)
+{
+	ADDR8	addr = psd->addr;
+	int	planesize = psd->yres * psd->linelen;
+	int	plane;
+
+	assert (addr != 0);
+	assert (x1 >= 0 && x1 < psd->xres);
+	assert (x2 >= 0 && x2 <= psd->xres);
+	assert (x2 >= x1);
+	assert (y >= 0 && y < psd->yres);
+	assert (c >= 0 && c < psd->ncolors);
+
+	addr += x1/8 + y * psd->linelen;
+	if(gr_mode == MODE_XOR) {
+		while(x1 < x2) {
+			*addr = (*addr & notmask[x1&7]) ^ (c << (7-(x1&7)));
+			addr += planesize;
+			*addr = (*addr & notmask[x1&7]) ^ (c << (7-(x1&7)));
+			addr += planesize;
+			*addr = (*addr & notmask[x1&7]) ^ (c << (7-(x1&7)));
+			addr += planesize;
+			*addr = (*addr & notmask[x1&7]) ^ (c << (7-(x1&7)));
+			addr -= planesize * 3;
+			if((++x1 & 7) == 0)
+				++addr;
+		}
+	} else {
+		while(x1 < x2) {
+			*addr = (*addr & notmask[x1&7]) | (c << (7-(x1&7)));
+			addr += planesize;
+			*addr = (*addr & notmask[x1&7]) | (c << (7-(x1&7)));
+			addr += planesize;
+			*addr = (*addr & notmask[x1&7]) | (c << (7-(x1&7)));
+			addr += planesize;
+			*addr = (*addr & notmask[x1&7]) | (c << (7-(x1&7)));
+			addr -= planesize * 3;
+			if((++x1 & 7) == 0)
+				++addr;
+		}
+	}
+}
+
+/* Draw a vertical line from x,y1 to x,y2 not including final point*/
+void
+mempl4_drawvertline(PSD psd, COORD x, COORD y1, COORD y2, PIXELVAL c)
+{
+	ADDR8	addr = psd->addr;
+	int	linelen = psd->linelen;
+	int	planesize = psd->yres * linelen;
+
+	assert (addr != 0);
+	assert (x >= 0 && x < psd->xres);
+	assert (y1 >= 0 && y1 < psd->yres);
+	assert (y2 >= 0 && y2 <= psd->yres);
+	assert (y2 >= y1);
+	assert (c >= 0 && c < psd->ncolors);
+
+	addr += x/8 + y1 * linelen;
+	if(gr_mode == MODE_XOR)
+		while(y1++ < y2) {
+			*addr = (*addr & notmask[x&7]) ^ (c << (7-(x&7)));
+			addr += planesize;
+			*addr = (*addr & notmask[x&7]) ^ (c << (7-(x&7)));
+			addr += planesize;
+			*addr = (*addr & notmask[x&7]) ^ (c << (7-(x&7)));
+			addr += planesize;
+			*addr = (*addr & notmask[x&7]) ^ (c << (7-(x&7)));
+			addr = addr - (planesize * 3) + linelen;
+		}
+	else
+		while(y1++ < y2) {
+			*addr = (*addr & notmask[x&7]) | (c << (7-(x&7)));
+			addr += planesize;
+			*addr = (*addr & notmask[x&7]) | (c << (7-(x&7)));
+			addr += planesize;
+			*addr = (*addr & notmask[x&7]) | (c << (7-(x&7)));
+			addr += planesize;
+			*addr = (*addr & notmask[x&7]) | (c << (7-(x&7)));
+			addr = addr - (planesize * 3) + linelen;
+		}
+}
+
+/* srccopy bitblt, opcode is currently ignored*/
+void
+mempl4_to_mempl4_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
+	PSD srcpsd, COORD srcx, COORD srcy, int op)
+{
+	ADDR8	dst;
+	ADDR8	src;
+	int	i;
+	int	dlinelen = dstpsd->linelen;
+	int	dplanesize = dstpsd->yres * dstpsd->linelen;
+	int	slinelen = srcpsd->linelen;
+	int	splanesize = srcpsd->yres * srcpsd->linelen;
+
+	assert (dstpsd->addr != 0);
+	assert (dstx >= 0 && dstx < dstpsd->xres);
+	assert (dsty >= 0 && dsty < dstpsd->yres);
+	assert (w > 0);
+	assert (h > 0);
+	assert (srcpsd->addr != 0);
+	assert (srcx >= 0 && srcx < srcpsd->xres);
+	assert (srcy >= 0 && srcy < srcpsd->yres);
+	assert (dstx+w <= dstpsd->xres);
+	assert (dsty+h <= dstpsd->yres);
+	assert (srcx+w <= srcpsd->xres);
+	assert (srcy+h <= srcpsd->yres);
+
+	while(--h >= 0) {
+		dst = (char *)dstpsd->addr + dstx/8 + dsty * dlinelen;
+		src = (char *)srcpsd->addr + srcx/8 + srcy * slinelen;
+		for(i=0; i<w; ++i) {
+			COORD	dx = dstx;
+			COORD	sx = srcx;
+			*dst = (*dst & notmask[dx&7]) |
+			   ((*src >> (7-(sx&7)) & 0x01) << (7-(dx&7)));
+			dst += dplanesize;
+			src += splanesize;
+			*dst = (*dst & notmask[dx&7]) |
+			   ((*src >> (7-(sx&7)) & 0x01) << (7-(dx&7)));
+			dst += dplanesize;
+			src += splanesize;
+			*dst = (*dst & notmask[dx&7]) |
+			   ((*src >> (7-(sx&7)) & 0x01) << (7-(dx&7)));
+			dst += dplanesize;
+			src += splanesize;
+			*dst = (*dst & notmask[dx&7]) |
+			   ((*src >> (7-(sx&7)) & 0x01) << (7-(dx&7)));
+			dst -= dplanesize * 3;
+			src -= splanesize * 3;
+			if((++dx & 7) == 0)
+				++dst;
+			if((++sx & 7) == 0)
+				++src;
+		}
+	}
+}
+
+/* srccopy bitblt, opcode is currently ignored*/
+/* copy from vga memory to vga memory, psd's ignored for speed*/
+void
+vga_to_vga_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
+	PSD srcpsd, COORD srcx, COORD srcy, int op)
+{
+	volatile FARADDR	dst;
+	volatile FARADDR	src;
+	int	i, plane;
+	int	x1, x2;
+	unsigned char linebuf[640/8];
+
+	assert (dstx >= 0 && dstx < dstpsd->xres);
+	assert (dsty >= 0 && dsty < dstpsd->yres);
+	assert (w > 0);
+	assert (h > 0);
+	assert (srcx >= 0 && srcx < srcpsd->xres);
+	assert (srcy >= 0 && srcy < srcpsd->yres);
+	assert (dstx+w <= dstpsd->xres);
+	assert (dsty+h <= dstpsd->yres);
+	assert (srcx+w <= srcpsd->xres);
+	assert (srcy+h <= srcpsd->yres);
+
+	set_enable_sr(0);
+	dst = SCREENBASE + dstx/8 + dsty * BYTESPERLINE;
+	src = SCREENBASE + srcx/8 + srcy * BYTESPERLINE;
+	x1 = dstx/8;
+	x2 = (dstx + w - 1) / 8;
+	while(--h >= 0) {
+		for(plane=0; plane<4; ++plane) {
+			volatile FARADDR d = dst;
+			volatile FARADDR s = src;
+
+	    		set_read_plane(plane);
+			set_write_planes(1 << plane);
+
+			select_mask();
+			if(x1 == x2) {
+		  		set_mask((0xff >> (x1 & 7)) & (0xff << (7 - (x2 & 7))));
+				PUTBYTE_FP(d, GETBYTE_FP(s));
+			} else {
+				set_mask(0xff >> (x1 & 7));
+				PUTBYTE_FP(d++, GETBYTE_FP(s++));
+
+				set_mask(0xff);
+		  		for(i=x1+1; i<x2; ++i)
+					PUTBYTE_FP(d++, GETBYTE_FP(s++));
+
+		  		set_mask(0xff << (7 - (x2 & 7)));
+				PUTBYTE_FP(d, GETBYTE_FP(s));
+			}
+		}
+		dst += BYTESPERLINE;
+		src += BYTESPERLINE;
+	}
+	set_write_planes(0x0f);
+	set_enable_sr(0x0f);
+}

@@ -1,0 +1,30 @@
+Nano-X is a lightweight X server intended for use in palmtops, PDAs,
+embedded systems, OS install disks, etc. It was originally derived from a
+combination of David I. Bell's Mini-X and Ben Pfaff's BOGL
+
+NanoGUI is a tiny windowing system, intended to be used for similar
+purposes to the X-Window system but lightweight enough to run on
+systems with limited resources such as Palmtops and embedded POS units.
+Nano-X is the part of the system which actually services requests from
+the clients and displays the graphics. Currently it depends on the Linux
+Framebuffer device included with 2.2.x Linux kernels, but it should
+not be too difficult to write drivers for other systems. People are currently
+working on abstracting the driver to make it even easier, and there are
+plans to port it to various platforms such as Linux-8086.
+
+You can always get the latest released version from
+http://www.linuxhacker.org/pub/nanogui/nano-X/ or
+ftp://ftp.linuxhacker.org/pub/nanogui/nano-X/
+
+You can get also get the latest development from anonymous CVS at
+cvs.linuxhacker.org. See the FAQ for detailed instructions. Note that
+the distributed tarballs have CVS directories included, so you can
+simply do a "cvs update -z3" instead of downloading the whole thing
+again.
+
+There is a mailing list for discussion of NanoGUI system. To subscribe,
+send an empty mail to nanogui-subscribe@linuxhacker.org. To unsubscribe,
+send an empty mail to nanogui-unsubscribe@linuxhacker.org.
+
+There is a web page with more information about the current status of
+the project at http://www.linuxhacker.org/nanogui/.

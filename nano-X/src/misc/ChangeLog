@@ -1,0 +1,185 @@
+Version 0.86 - 28th October 1999 - greg@censoft.com
+	* merged framebuffer, elks and msdos vga 16 color 4 planes drivers
+	* wrote vga bitbit routines (a herculean effort)
+	* optimized bitblit by traversing window clip region
+	* added experimental multi-rectangle dynamically allocated regions
+	* wrote scrolling terminal emulator demo for microwindows
+	* added WM_FDINPUT msg, WndRegisterFdInput call for terminal emulator
+	* changed SCREENINFO struct, removed black/white, added bpp, planes
+	* added offscreen (memory DC) drawing to microwindows
+	* added BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC
+	* retired BOGL library, must use new interface for blitting
+	* converted framebuffer, svgalib, elks and msdos screen drivers
+	* (we need blit routines for herc and svgalib still)
+	* major screen driver interface change, old drivers not compatible
+Version 0.85 - 14th October 1999 - greg@censoft.com
+	* ported microwindows to Casio and Clio palm pc's (thanks Brad)
+	* ported microwindows to Everex Freestyle palm pc
+	* changed ncolors in SCREENINFO user struct to long
+	* system automatically supports 1, 2, 4, 8bpp palette
+		and 8, 16 and 24 bpp truecolor systems (332, 565, 888 packing)
+	* removed F_PALINDEX from std colors, std colors now RGB
+	* wrote 16bpp, 32bpp fb drivers, 2bpp, 4bpp for palm pc
+	* removed requirement for bogl library, wrote direct framebuffer driver
+	* started screen driver rearchitecture for bitblit
+	* experimental bitblt
+	* added touchscreen device from Brad LaRonde
+	* enhanced nano-X terminal emulator, added scrolling,bitblit
+	* added GrRegisterInput for terminal emulator without polling
+	* rewrote GrGetNextEvent to not require polling
+	* added CREDITS file
+	* integrated Vidar's nanoWidgets 0.2
+	* added screenshot capability: read /dev/fb0 on exit
+	* wrote makebmp utility to convert fb data to bmp file
+Version 0.84 - 3rd October 1999 - greg@censoft.com
+	* integrated Vidar's nanoWidgets 0.1, changed color constants
+	* integrated Brad LaRonde's MIPS LinuxCE port cross-compile changes
+	* integrated Alex's nano-X-0.5pre3 changes except dir/filename changes
+	* added support for 8 to 32 bit truecolor systems
+	* reorganized Makefile for nanoX and linked/non-linked nano-X servers
+	* reorganized Makefiles for gcc, bcc and other compilers
+	* reorganized nano-X.h header file for client programs
+	* fixed GrSetGCFont,GrGetGCTextSize,ReadArea,Area client/server bugs
+	* fix bug in nanoX network select code for client attach
+	* workaround for GrGetNextEvent in nanoX client lib
+	* wrote asm version of VGA driver for ELKS
+	* added optimized herc hline routine from thomas_d_stewart@hotmail.com
+	* added contributed terminal emulator demo for nano-X,
+		(from Alistair Riddoch, requires linked server)
+Version 0.83 - 14th July 1999 - greg@censoft.com
+	* wrote sample untested hercules driver for ELKS
+	* tweaked window repaint code to paint child windows last for ELKS
+	* fixed code for pass-by-structure for bcc/ELKS
+	* added TEST= for select() code in ELKS
+Version 0.82 - 5th July 1999 - greg@censoft.com
+	* added contributed clock demo for nano-X from Alistair Riddoch
+	* added update region calculation for window painting
+	* fixed GdColorInPalette, GdSetPalette, various palette bugs
+	* added double click to maximize/restore windows
+	* added mouse double click processing
+	* added GetTickCount() api, requires OS millisecond time fn
+	* fixed some expose region calculations
+	* combined Makefile builds both/either Micro-Windows and Nano-X
+	* wrote XORMOVE window move algorithm for slow cpu's
+	* added GetDCEx(), SetROP2() and various rect api
+	* change to single toplevel Makefile mod for ELKS or LINUX
+	* changed default ELKS mouse port to /dev/ttys0, type to "pc"
+	* changed tgmath.h to math.h
+Version 0.81 - 22nd June 1999 - greg@censoft.com
+	* added Free System font
+	* removed mswin4 background
+	* changed nano directory
+	* changed vgaplan4 unsigned int fix for ELKS screen bug
+	* set default rom character height to 14 for scr_bios driver
+	* added -ansi option for bcc (I'll post my ansi compiling bcc shortly)
+Version 0.8 - 20th June 1999 - greg@censoft.com
+	* added 3d graphics library for demo app
+	* removed ms windows grabbed fonts, added FreeSansSerif font
+	* added color bitmap support
+	* wrote windows bmp file converter
+	* drawing color bitmaps in 1, 4 and 8 bpp supported
+	* added support for loading partial palettes
+	* added MakePaletteConversionTable function
+	* added support for sophisticated palette optimization
+	* implemented optimized window redraw algorithms during window moves
+	* added child window support
+	* wrote button control
+	* added more sophisticated focus routines on create/destroy
+	* added support for type 1 and type 2 line drawing requests in GdLine
+	* added multiple window color schemes
+	* added desktop wallpaper
+Version 0.7 - 8th June 1999 - greg@censoft.com
+	* created new win32 api: Micro-Win
+	* created window manager and overlapped window border drawcode
+	* added software cursor structure to device layer
+	* changed nano-x and micro-win color model to RGB for user programs
+	* added setpalette driver entry point, 16 and 256 color std palettes
+	* fixed console refresh bug for BOGL
+	* fixed expose bug bad return;
+	* fixed ELKS cols,rows bug in scr_bios.c
+	* disallow console switching for ELKS while in graphics mode
+	* added EGAMODE and CHARHEIGHT environment variables for ELKS/DOS
+Version 0.6 - 23rd May 1999 - greg@censoft.com
+	* Updated bugs from new mini-x distribution
+	* Wrote int33 mouse driver for dos
+	* Wrote a portable vga 4 plane driver for dos, elks
+	* Updated dos driver to support XOR,AND,OR draw modes
+	* Wrote routines for ELKS port, compiled with bcc
+		uses new serial mouse driver, vga 4 plane driver and bios kbd
+	* Added check for FRAMEBUFFER environment variable for /dev/fbX open
+	* Added clipped text output routines, using bitmaps
+	* Added GetCharBits device driver entry point, removed DrawText
+	* Added new nano-X font format, wrote conversion programs to
+		convert bdf fonts and PC ROM bios fonts.  There is no longer
+		any dependency on the BOGL font structure.  Any number
+		of fonts are supported.  Fonts use min 16 bits/scanline.
+		Convbdf and convrom.exe are included.
+	* Created rom 8x16, 8x16 fonts.
+	* Entire nano-X can run on only drawpixel and readpixel if required
+	* Documented scr_bogl.c (bogl), and scr_bios.c (bios) drivers.
+	* Ported world program to 16 bit systems
+	* Added pc, microsoft and logitech direct serial driver mouse support
+	* Wrote SVGAlib screen driver, will now run on *any* linux system,
+		not just v2.x framebuffer systems.  scr_svga.c.
+	* Nano-X is now completely self contained, if desired, in that
+		there are hw drivers for screen, mouse, and keyboard
+		that don't require other software to be running
+Version 0.5 - 18th May 1999 - greg@censoft.com
+	* Rewrote cursor routines
+	* Separated mouse from cursor routines
+	* Removed DrawCursor from device driver
+	* Added ReadPixel to device driver
+	* Made demo programs work with cursor changes
+	* Added polygon draw and fill routines
+	* Added area pixel reading/writing, removed 8-bit limit for colors
+	* Reworked color model
+	* Added direct hardware 640x480x16 support for VGA real mode systems
+	* Made api backwards compatible with mini-x
+	* Ported mini-x world demo program to examples library
+
+Version 0.4 - 12th May 1999 - greg@censoft.com
+	* Added XOR drawing mode to screen drivers
+	* Fixed rectangle, fillrect, and line off-by-one bugs
+	* Commented example drivers better
+	* Implemented text clipping
+	* Fixed VT switch code and redraw
+	* Hacked physical/virtual 0,0 mapping on linux framebuffer startup
+	* Added 256 color and 16 color explicit palette to bogl driver
+	* Added GetFontInfo and GetScreenInfo to drivers
+
+Version 0.3 - 9th May 1999 - greg@censoft.com
+	* Release 0.3 is heavy rewrite of lower-level/mid-level routines
+	* cursor clipping implemented
+	* screen, mouse and kbd driver APIs created
+	* includes GPM mouse driver, /dev/tty keyboard driver
+	* all device-dependent code is in drivers/ directory
+	* intended as evaluation for standalone and other OS ports
+	* should be easy to write an int 10h driver for real mode operation
+	* should be easy to add any other kbd, mouse or screen drivers
+	* quick port with MSC 5.10 for MSDOS created
+	
+Version 0.2 - 5th May 1999 - greg@censoft.com
+	* Made release 0.1 operational for evaluation
+	* Added event processing
+	* Made demo programs work
+	* Fixed numerous bugs
+	* Added client direct link stub routines for non networked systems/test
+	* Started screen device driver api and bogl integration rewrite
+	* printf debug code is still included, this is an interim release
+		for strawman evaluation
+
+Version 0.1 - 25th April 1999 - alex@linuxhacker.org
+Initial release, based on Alan Cox's combination of mini-X and Bogl, and some more work
+by myself. Changes since Alan's release include:
+
+	* Client library and server process are seperate.
+	* Mouse driver rewritten to take the output of GPM in repeater mode.
+	* Mouse pointer code added to the bogl cfb8 driver.
+	* K & R parameter declarations converted to ANSI.
+	* Main control loop uses select() instead of busy waiting.
+	* Beginning of code to redraw screen on switching to graphics console.
+	* Client data is stored in a dynamic linked list instead of a fixed size array.
+	* Some minor bugs fixed.
+	* Many major bugs added.
+	* ChangeLog, TODO, BUGS, README, INSTALL, etc. written.
+	* Probably various other things I've forgotten about now.

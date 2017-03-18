@@ -1,0 +1,34 @@
+Micro-Windows README 6/27/1999 g haerr
+
+Micro-Windows is a reimplementation of the win32 api
+that runs on Linux, ELKS, MSDOS and bare VGA hardware.  It
+uses the same device-independent graphics engine built for 
+the nanoGUI project.  Micro-Windows compiles a sample
+application and the win32 graphics api in about 42k.
+
+The architecture of Micro-Windows allows it to be ported
+or run on a wide variety of systems.  There are currently
+screen drivers for Linux 2.2.x framebuffers and Linux 2.0.x
+svgalib.  There exists a portable 4-planes VGA driver that
+will run on bare hardware, ELKS, or MSDOS (a framebuffer version
+of this is coming).  There are mouse drivers written for 
+bare hardware as well as the Linux GPM driver.  The Micro-Windows
+graphics engine is capable of running on any system that
+support readpixel, writepixel, drawhline and drawvline.
+
+Micro-Windows features full RGB color support, optimized
+palette bitmap drawing, and a Win95 identical look-and-feel.
+Overlapped and child windows are supported, with complete
+window and client area clipping.  Proportional and fixed
+fonts are supported, along with utilities for converting
+any MS Windows font or .bmp file.  Optimized painting
+algorithms are used to allow maximum response while the
+user is moving windows on the screen.
+
+In addition, the nano-X server can also be built on top of
+the device-independent graphics engine.
+
+Micro-Windows may be downloaded at
+	ftp://microwindws.censoft.com/pub/microwindows
+
+The chief maintainer of the project is Greg Haerr <greg@censoft.com>

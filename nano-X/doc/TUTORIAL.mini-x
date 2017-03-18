@@ -1,0 +1,1103 @@
+			MINI-X TUTORIAL
+			David I. Bell
+			19 May 91
+
+This is a simple tutorial on using the mini-X graphics system.  Much of this
+is a lot easier to understand if you are familiar to X.  I am not going to
+try to explain every concept in detail here, nor how to put it all together
+to make really fancy programs.  Instead, I am only going to tell you just
+enough to let you make some simple graphics programs which work.  Experience
+with simple test programs will enable you to build much fancier graphics
+programs much easier than trying to decipher what I could tell you.
+
+I am assuming that you basically know what a screen, pixels, colors,
+keyboards, mice, buttons, and windows are.  However, you probably don't
+know exactly what the properties of windows in this system are.  Also, you
+might not know two other concepts which are important here, which are
+graphics contexts and events.  So these things will be explained in this
+tutorial.
+
+
+WINDOWS
+
+Windows are rectangular areas which can be drawn into.  Windows have a
+position, specified by the x and y coordinates of their upper left corners,
+and also a size, specified by their width and height.  Windows are arranged
+in a tree structure, with the parent windows controlling the child windows.
+The top of the tree is known as the root window.  The root window is always
+present, and represents the total screen area.
+
+Each child window is clipped by its parent window.  This means that a window
+can be very large, but the only part of the window that can ever be seen is
+the part which shows through its parent window.  This applies recursively,
+so that all of the parents of a window limit its visibility.  The position
+of a window is specified relative to its parent, and not absolutely.  This
+means that for example, when a window is moved, then all of its children will
+move with it.  The position of a window can be negative.
+
+Windows which have the same parent can clip each other.  That is, there is a
+defined order among the children of a window as to which is more important.
+If two sibling windows overlap, then the more important window will be visible
+in preference to the less important window.  The precedence of visibility
+of siblings can be dynamically adjusted.  Clipping can also occur on a window
+by earlier siblings of any of the window's parents.
+
+Windows can be mapped or unmapped.  Unmapped windows are not visible, and
+cause no events.  They can be thought of as "in storage" or offscreen.
+When a window is mapped, then it can become visible on the screen.  Children
+of an unmapped window are implicitly also unmapped.  So a window is not
+visible until it and all of its parents are mapped.  A newly created window
+starts off unmapped.
+
+Windows have a background color.  A newly mapped window is filled with its
+background color.  Clearing the window later, or having obscured portions
+of the window become visible again, will fill the region with the background.
+The client program can then draw into the window to make it look correct.
+
+Windows may have a border.  A border is a set of rectangles adjacent to the
+four sides of the window which is drawn in a specified color, with a
+specified width.  This makes pretty lines around the window, for example.
+The border cannot be drawn in by the program.  Borders are optional, so
+that a window with a border width of zero has no border at all.  Borders
+are "around" the window, so that they do not affect the coordinates of the
+window.  Whether or not a window has borders, its position determines the
+location of the upper left corner which can be drawn into.
+
+Windows can have a cursor associated with them.  The graphics server tracks
+the location of the mouse, and maintains the position of a graphics cursor
+on the screen.  This cursor can automatically change its shape and colors as
+it moves between different windows.  The use of different cursors for different
+windows can be used to provide a powerful clue to the user as to what will
+happen if a mouse button is pressed in a window.  Newly created windows
+inherit the same cursor as their parent.
+
+There are two types of windows, input-output and input-only windows.
+Input-output windows are normal windows which are visible and can be drawn
+into.  Input-only windows are invisible, have no border, and cannot be
+drawn into.  Their purpose is to catch events, and to enable the cursor
+to be changed in different regions of a visible window.  The only children
+of input-only windows are also input-only windows.
+
+Windows are identified by integers called window ids.  The root window has
+a constant window id value of GR_ROOT_WINDOW_ID.  The root window does not
+need creating, and cannot be unmapped, moved, resized, or destroyed.
+However, it can be drawn into and events can be delivered to it.  New windows
+can be created from existing windows.  Their window ids are not constants,
+but once created the window id remains until the window is destroyed.  Window
+ids are not reused as windows are created and destroyed.
+
+
+GRAPHICS CONTEXTS
+
+When drawing objects such as lines, there are many parameters that can be
+specified for the function call that affect the operation.  Besides the
+minimum information needed for the function such as the endpoint coordinates,
+there are extra parameters that are less important and less variable.
+Examples of these extra parameters are color, width (thin or thick), style
+(dashed, dotted), and drawing operation (setting, XORing).  Instead of
+requiring the specifying of each of these extra parameters for every function
+call, graphics contexts are used.  Graphics contexts are just a collection
+of specific combinations of these extra parameters.  The many possible
+extra parameters to each function are replaced by just one extra parameter,
+which is the graphics context.
+
+For example, instead of a function call like:
+	drawline(window, x1, y1, x2, y2, color, width, style, operation);
+
+you have instead
+	drawline(window, gc, x1, y1, x2, y2),
+
+where the graphics context contains within itself the parameters color, width,
+style, and operation.
+
+Graphics contexts are stored in the graphics server, and are identified by
+unique numbers in a way similar to window ids.  Your program must allocate
+graphic contexts, which then can be used in drawing functions.  A newly
+allocated graphics context is supplied with default parameters, such as a
+foreground color of white, drawing operation of setting, and width of 0.
+You can modify the parameters associated with the graphics context one by
+one, by for example, setting the foreground color to black.
+
+A single graphics context could be used for every drawing operation by
+constantly setting the parameters associated with it to the values needed
+for each drawing call.  But this is inefficient.  The reason that multiple
+graphics contexts can be allocated is so that you can minimize the setting of
+their parameters.  By presetting the parameters of several graphics contexts
+to commonly used values in your program, you can avoid changing them later.
+For example, you can call one graphics context white_gc, and another graphics
+context black_gc, and then use the correct graphics context in the drawing
+functions to draw in either black or white.
+
+The parameters contained within a graphics context are currently the
+following:
+
+Drawing mode.
+Specifies the operation performed when drawing each pixel.  One of:
+	GR_MODE_SET	draw pixels as given (default)
+	GR_MODE_XOR	draw pixels using XOR
+	GR_MODE_OR	draw pixels using OR
+	GR_MODE_AND	draw pixels using AND
+
+Text font.
+A small integer identifying the font for drawing text.  The first few are
+built-in to the device driver, others must be loaded by the graphics server.
+The default font is 0.
+
+Foreground color.
+The color that is used to draw almost all objects with, such as lines,
+points, ellipses, text, bitmaps, and filled areas.  Default is white.
+
+Background color.
+The color used for some functions in addition to the foreground color.
+For bitmaps and text, this is the color used for the zero bits.  The
+default background color is black.  The drawing of this color can be
+disabled by the next parameter.
+
+UseBackground flag.
+This is a boolean value which indicates whether or not the background
+color is actually to be drawn for bitmaps, text, and the GrArea8 function.
+The default is GR_TRUE.
+
+
+EVENTS
+
+Events are the way in which the graphics system notifies your program
+of asychronous changes in the state of the screen, mouse, or keyboard.
+Whenever the state changes, your program is notified of this change and
+can act on it.  The word "event" is used both for the actual change
+that took place, and also for the data that is returned to your program
+which describes the change.
+
+Events are generated for various different types of changes that may be useful
+for your program to know.  Events directly related to the hardware are the
+keyboard and mouse events.  Keyboard events are generated for each key which
+is pressed (and released, if possible).  The event contains the character
+which caused the event.  Mouse events are generated when a button on the
+mouse is pressed or released, or when the mouse position moves.  The event
+contains the buttons which are pressed, and the current position of the mouse.
+Other events are more subtle, and are based on non-physical changes, such
+as having the mouse move into or out of specific windows.
+
+Events are generally tied to individual windows.  Your program can enable
+or disable which kinds of events it wants for each window.  Part of the data
+associated with an event is the window associated with the event.  For
+example, if a key is pressed on the keyboard, the event for that key will
+indicate which window that key is for.  You program can then act differently
+for different windows.  Events which you have not indicated an interest in
+are simply discarded.
+
+The keyboard and mouse events can propagate upwards through the window tree
+and be delivered to some parent window.  This occurs if the window does
+not select for the event, but one of the parent windows does.  Part of the
+information returned about these events is the window that accepted the event,
+and also the original window which caused the event.  Therefore, your program
+can determine which child window an event was for without having to select
+for the event for each child.  Events other than keyboard and mouse events
+never propagate.
+
+The window that keyboard events are delivered to depends on the current
+mouse position or on the "input focus".  The input focus is a way of
+specifying that keyboard events are to be delivered to a particular window,
+no matter where the mouse is currently pointing.  Your program can change
+the input focus as desired.  If the input focus is set to the root window,
+then the keyboard events will be delivered to the window which contains
+the mouse pointer (or one of its parents).
+
+Events are returned to your program as a structure containing the information
+about the event.  This information is the event type, the window id which
+the event is associated with, and other event-specific data.  Events are
+stored in a queue, and are delivered to your program one by one as requested.
+The order of the events is preserved.  Your program can either simply ask
+for the next available event (waiting for one if none are yet available),
+or it can check to see if an event is available without waiting.  The
+delivering of events only occurs when you request an event.  So even though
+events themselves are asychronous, the reading of them is synchronous.
+There are no "interrupts" for events, you must explicitly ask for them.
+
+The important thing about programming with events is that your program
+should be written to run "upside-down".  That is, you do not have a main
+routine which checks that the mouse has been moved, or the keyboard has
+been typed on, or which window the mouse is in.  Instead, your main routine
+just waits for an event, and then dispatches on its type and which window
+it is for.  Generally, you must keep some state information to remember
+what is happening in your program.  For example, if the user wants to click
+the button in a window to indicate where some text should be inserted, then
+your program cannot simply detect the mouse click, and then wait for the
+text to be typed.  Instead, when the mouse is clicked, it should just
+remember the position of the mouse and set a flag to indicate that text
+typing is allowed,  When the keyboard event arrives, this saved information
+then enables you to draw the text at the correct location.  Your program
+basically becomes one large state machine.
+
+One obscure event is the exposure event.  This is sent to your program when
+a window requires redrawing.  Due to lack of memory space, the graphics server
+does not attempt to save the data from the parts of windows which are
+covered by other windows.  Therefore, when the obscured parts of the window
+are uncovered, your program must be told to redraw those parts.  The exposure
+event contains a rectangular area which requires drawing (which may in fact
+be larger than the area which was actually uncovered).  Your program can
+either just redraw that area, or if more convenient, redraw the whole window.
+The area to be redrawn has already been cleared to the window's background
+color.  When a window is mapped, an exposure event is sent for the window.
+Therefore, you should not explicitly draw into a window when it is first
+created and mapped, but should instead just wait for the exposure event, and
+then draw it.  In this way, the code to draw the window only resides in one
+place in your program, and you prevent redundant drawing of the window.
+If you are drawing the complete window on all exposure events, then it
+might be useful to use GrPeekEvent to examine the next event too.  If it
+is also an exposure event for the same window, then you can read it by using
+GrGetNextEvent, and thereby prevent redundant redrawing.  Of course, to
+be able to redraw the window, you may need to save extra data in order to
+regenerate the drawing commands.  (Pixmaps are one way of doing this in
+the future, but they are not currently implemented.)
+
+The following is a description of the various types of events which are
+available, and (in parenthesis) the typedef name for the structure that
+returns the event.  Each event has a type field, which can be used to
+distinguish between the various events.  For details on the other data
+within the structures, refer to graphics.h.  The typedef GR_EVENT is a
+union which contains all of the possible event structures.
+
+
+GR_EVENT_TYPE_NONE	(GR_EVENT)
+	This indicates that no event has occurred.
+
+GR_EVENT_TYPE_EXPOSURE	(GR_EVENT_EXPOSURE)
+	This is generated when a window needs redrawing because it is either
+	newly mapped, or has been uncovered by another window.  This returns
+	the window id, and the x, y, width, and height of the area within
+	the window which needs redrawing.
+
+GR_EVENT_TYPE_BUTTON_DOWN	(GR_EVENT_BUTTON)
+	This is generated when a button is pressed down on the mouse.
+	This returns the window id which generated the event, the window id
+	which actually contains the mouse, the current position of the mouse,
+	the buttons which are currently down on the mouse, the buttons
+	which were just pressed down, and the current modifier flags.
+
+GR_EVENT_TYPE_BUTTON_UP		(GR_EVENT_BUTTON)
+	This is generated when a button is released on the mouse.  This
+	returns data similarly to button down.
+
+GR_EVENT_TYPE_MOUSE_ENTER	(GR_EVENT_GENERAL)
+	This is generated when the mouse enters a window.  This returns the
+	window id which generated the event.
+
+GR_EVENT_TYPE_MOUSE_EXIT	(GR_EVENT_GENERAL)
+	This is generated when the mouse leaves a window.  This returns
+	the window id which generated the event.
+
+GR_EVENT_TYPE_MOUSE_MOTION	(GR_EVENT_MOUSE)
+	Mouse motion is generated for every motion of the mouse, and is
+	used to	track the entire history of the mouse.  Mouse motion
+	generates many events and causes lots of overhead.  This returns
+	data similarly to mouse enter.
+
+GR_EVENT_TYPE_MOUSE_POSITION	(GR_EVENT_MOUSE)
+	Mouse position ignores the history of the motion, and only reports the
+	latest position of the mouse by only queuing the latest such event for
+	any single client (good for rubber-banding).  This returns data
+	similarly to mouse enter.
+
+GR_EVENT_TYPE_KEY_DOWN		(GR_EVENT_KEYSTROKE)
+	This indicates that a key has been pressed on the keyboard.
+	This returns the window id which generated the event, the window id
+	which actually contains the pointer (if the pointer is outside of
+	the event window, this will be the event window), the current position
+	of the mouse, the current buttons on the mouse which are down, the
+	current modifier flags, and the character which was typed.
+
+GR_EVENT_TYPE_KEY_UP		(GR_EVENT_KEYSTROKE)
+	This indicates that a key has been released on the keyboard.  This
+	event is not necessarily available, and should not be depended on.
+	This returns data similarly to key down.
+
+GR_EVENT_TYPE_FOCUS_IN		(GR_EVENT_GENERAL)
+	This indicates that the input focus has just changed to this window.
+	This returns the window id which got focus.
+
+GR_EVENT_TYPE_FOCUS_OUT		(GR_EVENT_GENERAL)
+	This indicates that the input focus has just left this window.
+	This returns the window id which lost focus.
+
+
+To select for events, you use GrSelectEvents, and specify the window which
+wants to receive the events, and also specify a mask indicating the events
+you wish to receive.  The mask is the logical OR of individual bit values
+representing the event types.  The mask names are the same as the event
+names, except that the "_TYPE_" string is replaced by "_MASK_".  For
+example, the mask associated with the event GR_EVENT_TYPE_FOCUS_IN is
+GR_EVENT_MASK_FOCUS_IN.
+
+If you select for both button down and button up events, then the mouse
+will be implicitly "grabbed" when any button is pressed down in that window.
+This means that the mouse position and button down and up events will be
+delivered only to that window, and the cursor shape won't change, even if
+the mouse leaves that window.  The implicit grabbing ends after the last
+button is released.  While this grabbing occurs, the input focus is also
+not changed as the mouse is moved.
+
+
+MODIFIER AND MOUSE BUTTONS
+
+Modifiers are the status of special keyboard shift-like keys.  The state
+of these keys can be read as up or down, and don't generate any characters
+by themselves.  These keys are for things like SHIFT, CTRL, and ALT.
+They are returned as bit values OR'd together in various events.  Not all
+of these modifiers may be implemented.  The GrGetScreenInfo function returns
+the modifiers that are implemented.  The following modifiers are defined:
+
+	GR_MODIFIER_SHIFT	shift key is down
+	GR_MODIFIER_CTRL	ctrl key is down
+	GR_MODIFIER_META	meta (or ALT) key is down
+	GR_MODIFIER_ANY		any of the modifiers is down
+
+
+The mouse button state are returned as bit values OR'd together in various
+events.  Not all of these buttons may be implemented.  The GrGetScreenInfo
+function returns the buttons that are implemented.  The following mouse
+buttons are defined:
+
+	GR_BUTTON_1		button 1 is down (left)
+	GR_BUTTON_2		button 2 is down (middle)
+	GR_BUTTON_3		button 3 is down (right)
+	GR_BUTTON_ANY		any of the buttons is down
+
+
+BITMAPS
+
+Bitmaps are defined as an array of GR_BITMAP values, which are unsigned shorts.
+Each word is 16 bits, which specify foreground and background values, with 1
+being foreground and 0 being background.  Higher order bits in the word
+represent pixels to the left of the lower order bits.  Bitmaps have a width
+and a height, measured in pixels.  The width does not need to be a multiple
+of 16.  In this case, remaining bits in the last word of a row are unused,
+so that each row starts with a new bitmap word.  The GR_BITMAP_SIZE macro can
+be used to allocate the proper number of bitmap words for a bitmap, as in:
+
+	GR_BITMAP_SIZE(width, height).
+
+The symbol GR_MAX_BITMAP_SIZE is the number of bitmap words required for
+the maximum sized cursor.
+
+
+ERROR CODES
+
+Calls to the graphics libraries may produce errors.  Most errors that
+occur are due to specifying a window or graphics context which does not
+exist, or attempting an operation which is illegal.  Many things are allowed
+even if pointless, such as drawing outside of the window boundaries, or
+while a window is not mapped.  The things which return errors are those
+which definitely indicate a program bug, attempts to exceed the system
+limits, or a fatal device error.
+
+In order to be as efficient as possible, error codes are not returned by
+individual function calls.  Instead, if a function fails, an error event
+is generated which will eventually be noticed by the program at a possibly
+much later time.  This allows many drawing requests to be sent at one time
+without having to worry about the status of each one.
+
+Error events are detected when the program checks for events, such as
+by calling GrGetNextEvent.  At this point, if an error had occurred, a
+special error handler routine is called to notice the error.  If the program
+had not set up its own error handler, a default one is called which will
+disconnect from the server, print out an indication of the error, and exit
+the program.
+
+The following is a list of the possible errors:
+
+GR_ERROR_BAD_WINDOW_ID		the specified window id is unknown
+GR_ERROR_BAD_GC_ID		the specified graphics context id is unknown
+GR_ERROR_BAD_CURSOR_SIZE	the specified cursor is too large
+GR_ERROR_MALLOC_FAILED		no more memory is available in the server
+GR_ERROR_BAD_WINDOW_SIZE	the specified window size is illegal
+GR_ERROR_KEYBOARD_ERROR		an error occurred reading from the keyboard
+GR_ERROR_MOUSE_ERROR		an error occurred reading from the mouse
+GR_ERROR_INPUT_ONLY_WINDOW	drawing was attempted in an input-only window
+GR_ERROR_ILLEGAL_ON_ROOT_WINDOW	an illegal operation was attempted on the root
+GR_ERROR_TOO_MUCH_CLIPPING	complexity of windows exceeded clipping limits
+GR_ERROR_SCREEN_ERROR		an error occurred talking to the screen driver
+GR_ERROR_UNMAPPED_FOCUS_WINDOW	attempted to set focus to an unmapped window
+GR_ERROR_BAD_DRAWING_MODE	illegal drawing mode specified for a GC
+
+
+SCREEN PROPERTIES
+
+You do not have to hard code the size of the screen or the number of colors
+available in your program.  Instead, you can find this information out
+dynamically after the connection is made to the graphics server, by using
+the GrGetScreenInfo call.  This returns the above information, and in addition
+returns the color values for black and white, the aspect ratio of pixels,
+the number of built-in fonts available, and the modifiers and buttons which
+are available.  The aspect ratio is useful for drawing objects which need
+to be scaled correctly, such as circles.  The aspect ratio is the quotient
+of xdpcm and ydpcm, which are integer values.
+
+
+typedef struct {
+	GR_SIZE		rows;		/* number of rows on screen */
+	GR_SIZE		cols;		/* number of columns on screen */
+	GR_SIZE		xdpcm;		/* dots/centimeter in x direction */
+	GR_SIZE		ydpcm;		/* dots/centimeter in y direction */
+	GR_COLOR	maxcolor;	/* maximum legal color value */
+	GR_COLOR	black;		/* the color black */
+	GR_COLOR	white;		/* the color white */
+	GR_COUNT	fonts;		/* number of built-in fonts */
+	GR_BUTTON	buttons;	/* buttons which are implemented */
+	GR_MODIFIER	modifiers;	/* modifiers which are implemented */
+} GR_SCREEN_INFO;
+
+
+INCLUDE FILE AND GRAPHICS LIBRARY
+
+To use the graphics server, your program must include "graphics.h".
+This should be put into /usr/include, so that your program simply has
+the following line at the top:
+	#include <graphics.h>
+
+Including this file gives you all of the definitions you need to use the
+graphics library.  These are the typedefs, function declarations, event
+structures, and various constants.
+
+When loading your program, you need to load the graphics server into the
+program by using the -lgraph option in the cc command.  For example, if
+your program is called myprog, then you could build it using the following:
+	cc -o myprog myprog.c -lgraph
+
+
+TYPEDEFS
+
+The following is a list of the typedefs in the include file, and a short
+description of their purpose.  Refer to their definitions in graphics.h
+to find out what their actual C base type is.  Most are shorts, unsigned
+shorts, or longs.
+
+GR_COORD	coordinate value (x, y locations, signed)
+GR_SIZE		size value (widths, heights, signed)
+GR_COUNT	number of items (signed)
+GR_COLOR	full color value (32 bit value for full generality)
+GR_COLOR8	eight bit color value (8 bit value for efficient storage)
+GR_BITMAP	bitmap unit (single words of 16 bits for bitmaps)
+GR_MODE		drawing mode (setting, xoring, anding, oring)
+GR_CHAR		text character (normal chars)
+GR_ID		resource ids (window, graphics context, pixmap)
+GR_DRAW_ID	drawable id (window, pixmap)
+GR_WINDOW_ID	window id (identifies individual window)
+GR_PIXMAP_ID	pixmap id (identifies individual pixmaps, not yet used)
+GR_GC_ID	graphics context id (identifies indiviual graphics contexts)
+GR_FONT		font number (identifies individual fonts, first few built-in)
+GR_BOOL		boolean value (GR_TRUE or GR_FALSE)
+GR_FUNC		function codes (not for clients to use)
+GR_ERROR	error value (reasons for graphics calls to fail)
+GR_EVENT_TYPE	event types (identifies the type of event)
+GR_BUTTON	button flags (which mouse buttons are depressed)
+GR_MODIFIER	modifier flags (CTRL, SHIFT, etc)
+GR_EVENT_MASK	event masks (mask values corresponding to event types)
+GR_FUNC_NAME	function name (for error reporting)
+GR_ERROR_FUNC	error function (for defining error handlers)
+
+
+The following typedefs may be useful to your program.  None of the library
+functions (currently) accept any of these structures as arguments, except
+for the GrPoly and GrFillPoly routines, which use GR_POINT.
+
+
+typedef struct {
+	GR_COORD	x;		/* x coordinate */
+	GR_COORD	y;		/* y coordinate */
+} GR_POINT;
+
+typedef struct {
+	GR_COORD	x1;		/* x coordinate of first point */
+	GR_COORD	y1;		/* y coordinate of first point */
+	GR_COORD	x2;		/* x coordinate of second point */
+	GR_COORD	y2;		/* y coordinate of second point */
+} GR_LINE;
+
+typedef struct {
+	GR_COORD	x;		/* x coordinate of center */
+	GR_COORD	y;		/* y coordinate of center */
+	GR_SIZE		rx;		/* radius in x direction */
+	GR_SIZE		ry;		/* radius in y direction */
+} GR_ELLIPSE;
+
+typedef struct {
+	GR_COORD	x;		/* x coordinate of top left corner */
+	GR_COORD	y;		/* y coordinate of top left corner */
+	GR_SIZE		width;		/* width of rectangle */
+	GR_SIZE		height;		/* height of rectangle */
+} GR_RECT;
+
+
+LIMITS
+
+The coordinate system is limited to integers in the range GR_COORD_MIN
+to GR_COORD_MAX.  This is -32768 to 32767, and fits in a short.
+
+The maximum size of a cursor definition is GR_MAX_CURSOR_SIZE, which is
+16 pixels by 16 pixels.
+
+The complexity of overlapping windows is limited to GR_MAX_CLIPRECTS regions,
+which is 200.  Each window which overlaps another requires another 1 to 4
+regions depending on its position and size.
+
+
+GRAPHICS CALLS
+
+
+int
+GrOpen()
+Open a connection to the graphics server.  This must be the first graphics
+function used by your program.  Currently, this sets the screen into
+graphics mode.  Returns zero if successful, -1 on failure.
+
+
+void
+GrClose()
+Close the connection to the graphics server, first flushing any graphics
+calls that have been buffered.  Currently, this sets the screen back into
+text mode.  This (currently) should be called before your program exits,
+otherwise the screen will be left in graphics mode.  If this occurs, you
+can run the 'tm' program to reset the terminal to text mode.
+
+
+GR_ERROR_FUNC
+GrSetErrorHandler(func)
+	GR_ERROR_FUNC	func;		/* function to handle errors */
+Set an error handling routine, which will be called on any errors from
+the server (when events are asked for by the client).  If zero is given,
+then a default routine will be used which will describe the error and exit.
+Returns the previous error handler (0 if none).  When an error occurs,
+the error handling function is called with the following parameters:
+GR_ERROR, GR_FUNC_NAME, and GR_ID.  These are the error code, the name
+of the function which failed, and a resource id (0 if not meaningful).
+The error routine can return if desired, but without corrective action
+new errors will probably occur soon.
+
+
+void
+GrGetScreenInfo(sip)
+	GR_SCREEN_INFO	*sip;		/* location to return info into */
+Return useful information about the screen.  This information returned
+has been documented above.
+
+
+void
+GrGetFontInfo(font, fip)
+	GR_FONT		font;		/* font number */
+	GR_FONT_INFO	*fip;		/* address of font info */
+Return useful information about the specified font number.  This information
+is the font number, the height of the font, the maximum width of any
+character in the font, the height of the baseline, a flag indicating whether
+or not the font is fixed-width, and a table of the individual widths of each
+character in the font.  If the font is unknown, the returned font number is
+set to zero and the remainder of the information is undefined.  Refer to
+graphics.h for a definition of the fields of GR_FONT_INFO.
+
+
+void
+GrGetGCInfo(gc, gcip)
+	GR_GC_ID	gc;		/* graphics context */
+	GR_GC_INFO	*gcip;		/* address of graphics context info */
+Return useful information about the specified graphics context.  This
+information is the graphics context id, the current font, the foreground
+and background colors, and so on.  If the graphics context is unknown,
+the returned id is 0, and the other information is undefined.  Refer to
+graphics.h for a definition of the fields of GR_GC_INFO.
+
+
+void
+GrGetGCTextSize(gc, cp, len, retwidth, retheight, retbase)
+	GR_GC_ID	gc;		/* graphics context containing font */
+	GR_CHAR		*cp;		/* address of text string */
+	GR_SIZE		len;		/* length of text string */
+	GR_SIZE		*retwidth;	/* returned width of string */
+	GR_SIZE		*retheight;	/* returned height of string */
+	GR_SIZE		*retbase;	/* returned height of baseline */
+Return the size of a text string for the font in a graphics context.
+This is the width of the string, the height of the string, and the height
+above the bottom of the font of the baseline for the font.  The returned
+sizes are in pixels.
+
+
+void
+GrGetNextEvent(ep)
+	GR_EVENT	*ep;		/* address where event is returned */
+Return the next event from the event queue, waiting for it if necessary.
+If a graphics error had occurred, the error handler will be called at this
+point.  This routine first flushes any buffered graphics commands.  The
+GR_EVENT is a union of all the possible events.  The type field of the union
+indicates which of the possible events took place, and then the correct
+element of the union can be used to access that particular event type's data.
+
+
+void
+GrCheckNextEvent(ep)
+	GR_EVENT	*ep;		/* address where event is returned */
+Return the next event from the event queue if one is ready.
+If one is not ready, then the event type GR_EVENT_TYPE_NONE is returned.
+Therefore, this routine never blocks.  This routine first flushes any
+buffered graphics commands.
+
+
+void
+GrPeekEvent(ep)
+	GR_EVENT	*ep;		/* address where event is returned */
+Return the next event from the event queue if one is ready, without removing
+it from the queue.  If one is not ready, then the type GR_EVENT_TYPE_NONE
+is returned.  This routine never blocks.  This routine first flushes any
+buffered graphics commands.
+
+
+void
+GrSelectEvents(wid, eventmask)
+	GR_WINDOW_ID	wid;		/* window id */
+	GR_EVENT_MASK	eventmask;	/* mask of events wanted */
+Select events for a window for this client.  The events are a bitmask
+specifying the events desired for this window.  This totally replaces
+any previously selected event mask for the window.
+
+
+GR_WINDOW_ID
+GrNewWindow(parent, x, y, width, height, bordersize, background, bordercolor)
+	GR_WINDOW_ID	parent;		/* parent id */
+	GR_COORD	x;		/* x position relative to parent */
+	GR_COORD	y;		/* y position relative to parent */
+	GR_SIZE		width;		/* width */
+	GR_SIZE		height;		/* height */
+	GR_SIZE		bordersize;	/* size of border */
+	GR_COLOR	background;	/* background color */
+	GR_COLOR	bordercolor;	/* border color */
+Allocate a new input-output window which is a child of the specified window.
+A new top-level window is made by specifying a parent of GR_ROOT_WINDOW_ID.
+The x and y position is the upper left corner of the window, relative to
+the parent's upper left corner.  These corners are only for the drawable
+area of the windows, so that the border does not affect the position.  An
+input-output window cannot be made as a child of an input-only window.  The
+new window starts off unmapped, and must be mapped before it can be seen.
+The new window inherits the cursor of the parent window, and initially is
+set to select no events.  This routine returns the window id of the window
+which can be used in other calls.
+
+
+GR_WINDOW_ID
+GrNewInputWindow(parent, x, y, width, height)
+	GR_WINDOW_ID	parent;		/* parent id */
+	GR_COORD	x;		/* x position relative to parent */
+	GR_COORD	y;		/* y position relative to parent */
+	GR_SIZE		width;		/* width */
+	GR_SIZE		height;		/* height */
+Allocate a new input-only window which is a child of the specified window.
+An input-only window is invisible, and cannot be drawn into.  It's only
+purposes are that it can select events, and can have it's own cursor.  The
+new window starts off unmapped, and must be mapped before it is effective.
+The new window inherits the cursor of the parent window, and initially is
+set to select no events.  This routine returns the window id of the window
+which can be used in other calls.
+
+
+void
+GrDestroyWindow(wid)
+	GR_WINDOW_ID	wid;		/* window to destroy */
+This unmaps and then destroys the specified window, and all of its children.
+The root window cannot be destroyed.  After destroying a window, you must be
+careful about handling events which refer to the dead window, but which have
+not been read yet.
+
+
+void
+GrGetWindowInfo(wid, wip)
+	GR_WINDOW_ID	wid;		/* window id to find out about */
+	GR_WINDOW_INFO	*wip;		/* location to return info into */
+Return useful information about the specified window.  Refer to the
+graphics.h include file for the definition of GR_WINDOW_INFO to see
+what data is returned.  If the window id is not valid, an error is NOT
+generated.  Instead, the wid value in the returned structure is set to
+zero, and the other fields are not defined.
+
+
+GR_GC_ID
+GrNewGC()
+Allocate a new graphics context with default parameters.  These defaults are:
+background of black, foreground of white, font as font 0, and drawing mode
+as setting.  This routine returns the id for the graphics context which can
+be used in other calls.
+
+
+GR_GC_ID
+GrCopyGC(gc)
+	GR_GC_ID	gc;		/* graphics context to copy */
+Allocate a new graphics context which is a copy of another one.  The new
+graphics context has the same parameter values as the old one, but is then
+independent.  This routine returns the id for the graphics context which
+can be used in other calls.
+
+
+void
+GrDestroyGC(gc)
+	GR_GC_ID	gc;		/* graphics context to destroy */
+Destroy an existing graphics context.
+
+
+void
+GrMapWindow(wid)
+	GR_WINDOW_ID	wid;		/* window to be mapped */
+Map the window to make it (and possibly its children) visible on the screen.
+This paints the border and background of the window, and creates an
+exposure event to tell the client to draw into it.
+
+
+void
+GrUnmapWindow(wid)
+	GR_WINDOW_ID	wid;		/* window to be unmapped */
+Unmap the window to make it and its children invisible on the screen.
+
+
+void
+GrRaiseWindow(wid)
+	GR_WINDOW_ID	wid;		/* window to be raised */
+Raise the window to the highest level among its siblings.  This means that
+this window will be visible in preference to those siblings.  Siblings are
+windows which have the same parent as this window.
+
+
+void
+GrLowerWindow(wid)
+	GR_WINDOW_ID	wid;		/* window to be lowered */
+Lower the window to the lowest level among its siblings.  This means that
+this window will be covered by any siblings which overlap it.
+
+
+void
+GrMoveWindow(wid, x, y)
+	GR_WINDOW_ID	wid;		/* window to be lowered */
+	GR_COORD	x;		/* new relative x position */
+	GR_COORD	y;		/* new relative y position */
+Move the window to the specified position relative to its parent.
+
+
+void
+GrResizeWindow(wid, width, height)
+	GR_WINDOW_ID	wid;		/* window to be lowered */
+	GR_SIZE		width;		/* new width of window */
+	GR_SIZE		height;		/* new height of window */
+Resize the window to be the specified size.  Resizing of a window can
+generate exposure events.
+
+
+void
+GrClearWindow(wid, exposeflag)
+	GR_WINDOW_ID	wid;		/* window id */
+	GR_BOOL		exposeflag;	/* nonzero to cause an exposure */
+Clear the specified window by setting it to its background color.
+If the exposeflag is nonzero, then this also creates an exposure
+event for the window.
+
+
+void
+GrSetFocus(wid)
+	GR_WINDOW_ID	wid;		/* window id */
+Set the focus to a particular window.  This makes keyboard events only
+visible to that window or children of it, depending on the pointer location.
+Setting the focus window to the root window makes the input focus track
+the pointer (which is the default).
+
+
+void
+GrSetBorderColor(wid, color)
+	GR_WINDOW_ID	wid;		/* window id */
+	GR_COLOR	color;		/* color for border */
+Set the border of a window to the specified color.
+
+
+void
+GrSetCursor(wid, width, height, hotx, hoty, foreground, background,
+	fgbitmap, bgbitmap)
+
+	GR_WINDOW_ID	wid;		/* window id to set cursor for */
+	GR_SIZE		width;		/* width of cursor */
+	GR_SIZE		height;		/* height of cursor */
+	GR_COORD	hotx;		/* relative x position of hot spot */
+	GR_COORD	hoty;		/* relative y position of hot spot */
+	GR_COLOR	foreground;	/* foreground color of cursor */
+	GR_COLOR	background;	/* background color of cursor */
+	GR_BITMAP	*fgbitmap;	/* foreground bitmap */
+	GR_BITMAP	*bgbitmap;	/* background bitmap */
+Specify a new cursor for a window.  This cursor will only be used within
+that window, and by default for its new children.  The cursor is defined
+by giving its width and height, its foreground and background colors, its
+foreground and background bitmaps, and its "hot spot" position.  If a pixel
+is specified for both the foreground and background bitmaps, then the
+foreground has precedence.  The hot spot is an offset from the upper left
+corner of the bitmap, and is the location in the cursor which is important.
+
+
+void
+GrMoveCursor(x, y)
+	GR_COORD	x;		/* new x position of cursor */
+	GR_COORD	y;		/* new y position of cursor */
+Move the cursor to the specified absolute screen coordinates.
+The coordinates are that of the defined hot spot of the cursor.
+The cursor's appearance is changed to that defined for the window
+in which the cursor is moved to.
+
+
+void
+GrFlush()
+Flush the graphics buffer so that all previous requests will be executed.
+This is only needed if you do not check events quickly and want to see the
+results on the screen soon, since checking for events does an automatic flush.
+
+
+void
+GrSetGCForeground(gc, foreground)
+	GR_GC_ID	gc;		/* graphics context id */
+	GR_COLOR	foreground;	/* foreground color */
+Set the foreground color in a graphics context.  The default is white.
+
+
+void
+GrSetGCBackground(gc, background)
+	GR_GC_ID	gc;		/* graphics context id */
+	GR_COLOR	background;	/* background color */
+Set the background color in a graphics context.  The default is black.
+
+
+void
+GrSetGCUseBackground(gc, flag)
+	GR_GC_ID	gc;		/* graphics context id */
+	GR_BOOL		flag;		/* TRUE if background is drawn */
+Set whether or not the background color is drawn in bitmaps and text.
+This affects GrBitmap, GrArea8, and GrText.  The default is GR_TRUE.
+
+
+void
+GrSetGCMode(gc, mode)
+	GR_GC_ID	gc;		/* graphics context id */
+	GR_MODE		mode;		/* drawing mode */
+Set the drawing mode in a graphics context.  The drawing mode is one of
+GR_MODE_SET, GR_MODE_XOR, GR_MODE_AND, or GR_MODE_OR.  The default is
+GR_MODE_SET.
+
+
+void
+GrSetGCFont(gc, font)
+	GR_GC_ID	gc;		/* graphics context id */
+	GR_FONT		font;		/* text font */
+Set the font used for text drawing in a graphics context.
+The font is a number identifying one of several fonts.
+Font number 0 is always available, and is the default font.
+
+
+void
+GrLine(id, gc, x1, y1, x2, y2)
+	GR_DRAW_ID	id;
+	GR_GC_ID	gc;
+	GR_COORD	x1;
+	GR_COORD	y1;
+	GR_COORD	x2;
+	GR_COORD	y2;
+Draw a line in the specified drawable using the specified graphics context.
+
+
+void
+GrRect(id, gc, x, y, width, height)
+	GR_DRAW_ID	id;
+	GR_GC_ID	gc;
+	GR_COORD	x;
+	GR_COORD	y;
+	GR_SIZE		width;
+	GR_SIZE		height;
+Draw the boundary of a rectangle in the specified drawable using the
+specified graphics context.
+
+
+void
+GrFillRect(id, gc, x, y, width, height)
+	GR_DRAW_ID	id;
+	GR_GC_ID	gc;
+	GR_COORD	x;
+	GR_COORD	y;
+	GR_SIZE		width;
+	GR_SIZE		height;
+Fill a rectangle in the specified drawable using the specified graphics
+context.  The boundary of this rectangle is identical to that drawn by
+the GrRect function.
+
+
+void
+GrEllipse(id, gc, x, y, rx, ry)
+	GR_DRAW_ID	id;
+	GR_GC_ID	gc;
+	GR_COORD	x;
+	GR_COORD	y;
+	GR_SIZE		rx;
+	GR_SIZE		ry;
+Draw the boundary of an ellipse in the specified drawable with
+the specified graphics context.
+
+
+void
+GrFillEllipse(id, gc, x, y, rx, ry)
+	GR_DRAW_ID	id;
+	GR_GC_ID	gc;
+	GR_COORD	x;
+	GR_COORD	y;
+	GR_SIZE		rx;
+	GR_SIZE		ry;
+Fill an ellipse in the specified drawable using the specified
+graphics context.
+
+
+void
+GrBitmap(id, gc, x, y, width, height, bitmaptable)
+	GR_DRAW_ID	id;
+	GR_GC_ID	gc;
+	GR_COORD	x;
+	GR_COORD	y;
+	GR_SIZE		width;
+	GR_SIZE		height;
+	GR_BITMAP	*bitmaptable;
+Draw a rectangular area in the specified drawable using the specified
+graphics context, as determined by the specified bit map.  This differs
+from rectangle drawing in that the rectangle is drawn using the foreground
+color and possibly the background color as determined by the bit map.
+Bits which are 1 are the foreground, and bits which are 0 are the background.
+Each row of bits is aligned to the next bitmap word boundary (so there can
+be padding at the end of each row).  The background bit values are only
+written if the usebackground flag is set in the GC.
+
+
+void
+GrArea8(id, gc, x, y, width, height, colortable)
+	GR_DRAW_ID	id;
+	GR_GC_ID	gc;
+	GR_COORD	x;
+	GR_COORD	y;
+	GR_SIZE		width;
+	GR_SIZE		height;
+	GR_COLOR8	*colortable;
+Draw a rectangular area in the specified drawable using the specified
+graphics context.  This differs from rectangle drawing in that the
+color values for each pixel in the rectangle are specified.  The color
+values are estricted to 8 bit values.  The color table is indexed row by
+row from left to right.  Table values whose color matches the background
+color are only written if the usebackground flag is set in the GC.
+
+
+void
+GrReadArea8(id, x, y, width, height, colortable)
+	GR_DRAW_ID	id;
+	GR_COORD	x;
+	GR_COORD	y;
+	GR_SIZE		width;
+	GR_SIZE		height;
+	GR_COLOR8	*colortable;
+Read the color values from the specified rectangular area of the specified
+drawable into a supplied buffer.  If the drawable is a window which is
+obscured by other windows, then the returned values will include the values
+from the covering windows.  Regions outside of the screen boundaries, or
+from unmapped windows will return black.
+
+
+void
+GrPoint(id, gc, x, y)
+	GR_DRAW_ID	id;
+	GR_GC_ID	gc;
+	GR_COORD	x;
+	GR_COORD	y;
+Draw a point in the specified drawable using the specified graphics context.
+
+
+void
+GrPoly(id, gc, count, pointtable)
+	GR_DRAW_ID	id;
+	GR_GC_ID	gc;
+	GR_COUNT	count;
+	GR_POINT	*pointtable;
+Draw a polygon in the specified drawable using the specified graphics
+context.  The polygon is only complete if the first point is repeated at
+the end.  Note: currently if the polygon crosses itself, and the drawing
+mode is set to XOR, then the individual line segments will affect each
+other.  The endpoints of the lines are correct, however.
+
+
+void
+GrFillPoly(id, gc, count, pointtable)
+	GR_DRAW_ID	id;
+	GR_GC_ID	gc;
+	GR_COUNT	count;
+	GR_POINT	*pointtable;
+Draw a filled polygon in the specified drawable using the specified
+graphics context.  The last point may be a duplicate of the first point,
+but this is not required.  Note: currently only convex polygons are
+filled properly.
+
+
+void
+GrText(id, gc, x, y, str, count)
+	GR_DRAW_ID	id;
+	GR_GC_ID	gc;
+	GR_COORD	x;
+	GR_COORD	y;
+	GR_CHAR		*str;
+	GR_COUNT	count;
+Draw a text string at the specified location in the specified drawable
+using the specified graphics context.  The background of the characters
+are only drawn if the usebackground flag in the GC is set.
+
+
+EXAMPLE PROGRAM
+
+The following simple program opens the graphics, creates a window, prints
+some text in it, waits for the mouse to be clicked in the window, then exits.
+
+
+#include <stdio.h>
+#include <graphics.h>
+
+#define	MARGIN	50			/* margin around window */
+
+
+main()
+{
+	GR_WINDOW_ID	wid;		/* window id */
+	GR_GC_ID	gc;		/* graphics context id */
+	GR_EVENT	event;		/* current event */
+	GR_SCREEN_INFO	si;		/* screen information */
+
+	if (GrOpen() < 0) {
+		fprintf(stderr, "Cannot open graphics\n");
+		exit(1);
+	}
+
+	GrGetScreenInfo(&si);
+
+	wid = GrNewWindow(GR_ROOT_WINDOW_ID, MARGIN, MARGIN,
+		si.cols - MARGIN * 2, si.rows - MARGIN * 2,
+		1, si.black, si.white);
+
+	GrSelectEvents(wid, GR_EVENT_MASK_BUTTON_DOWN | GR_EVENT_MASK_EXPOSURE);
+	GrMapWindow(wid);
+	gc = GrNewGC();
+
+	while (1) {
+		GrGetNextEvent(&event);
+		switch (event.type) {
+			case GR_EVENT_TYPE_BUTTON_DOWN:
+				if (event.button.wid != wid)
+					break;
+				GrClose();
+				exit(0);
+
+			case GR_EVENT_TYPE_EXPOSURE:
+				if (event.exposure.wid == wid)
+					GrText(wid, gc, 50, 50, "EXIT", 4);
+				break;
+		}
+	}
+}
+
+
+For a more complete demonstration program, see the file "demo.c" in the
+/usr/src/graphics/clients directory.

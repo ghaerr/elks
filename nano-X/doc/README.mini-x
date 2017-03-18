@@ -1,0 +1,492 @@
+			MINI-X GRAPHICS NOTES
+			David I. Bell
+			19 May 91
+
+Note: This is the second version of this package.  This includes the
+original distribution, two posted bug fixes, the landmine client, and
+several other small fixes.
+
+This is my mini-X graphics package for MINIX 1.5.  It has been designed to
+work for various types of machines, but the only low level support routines
+provided are for the IBM PC running a 386 in 32-bit protected mode.  If
+someone writes the device routines for other machines such as Amiga or Mac,
+then this code could work on them too.  This code is also only written for
+a serial mouse accessed using a normal tty line.  If you have a bus mouse,
+or have a mouse device driver, then you will have to modify the mouse code
+appropriately.
+
+This code is not TOO large, and doesn't require TOO much table space.  Even
+so, it probably will not run on machines with 64K limits.  Therefore this
+document assumes that you have already installed Bruce Evans' 32-bit patches.
+If you want to try to run this in 16-bit mode, then you will have to modify
+the FLAT_DS_SELECTOR usage and ROM character copying code appropriately.
+
+I have also installed the virtual console code in my kernel, but I do not
+think that this is required.  I have done nothing to make the virtual
+console code and the graphics code aware of each other (but this would
+be nice someday).  What interactions there are between the two will be
+discussed under the bugs section.  The virtual console code will only
+affect the name of the tty port used for the serial mouse.
+
+I am also running shoelace, but this should not affect things either except
+for the manner in which you back up old kernels when building new ones.
+
+You must also have a version of CPP which works.  The one I got from the
+MINIX archives works, but required several patches to make it useable for
+building the MINIX kernel.  This CPP is from "cpp.tar.Z", written by Martin
+Minow.  It needed patches to disable errors for unquoted strings, and errors
+when #if SYMBOL was used where SYMBOL was not defined.  If you have already
+rebuilt your own kernels in 32-bit mode, you must have already gotten around
+these problems.  If not, then I have included patches to this version of CPP
+for the above problems if you need them.
+
+The graphics code consists of two parts.  The first part is kernel code,
+which implements a new device type of /dev/graphics.  There are small
+patches to several files in order to make the device accessible to the
+rest of the system.  There are one or two small assembly routines needed
+to support the main graphics code.  Everything else is in new files in the
+kernel directory.  I have deliberately avoided changing existing code as
+much as possible for this first release.  Therefore, I expect that you
+should not have much trouble installing this code into the operating system,
+except for the known problems with using CPP.
+
+The second part is the graphics server code.  Eventually, the graphics
+server will be a process by itself, and will just be a program that you
+start up, and then run clients which open connections to it.  But in this
+release, the server code must be loaded with each client.  Therefore,
+the graphics server is built into a library that you just search when
+loading your client program.  The server code is self-contained, and is
+in its own directory called "/usr/src/graphics/server".
+
+For clients, the built server library "libgraph.a" must be moved into the
+library directory (/usr/local/lib/i386) and the include file "graphics.h"
+must be put into /usr/include for clients to use.  I expect that client
+programs (whenever they are written) would be placed into the directory
+"/usr/src/graphics/clients".  The only clients I have provided are a demo
+program, a program to reset the terminal back into text mode, and a game
+called landmine.
+
+The demo program is simple and doesn't do much, but it shows how to open the
+graphics device, determine the size of the screen and what black and white
+color values are, create windows and graphics contexts, draw lines, circles,
+and text, change graphics contexts in order to change colors, read keyboard
+and mouse events, handle several other types of events, and catch fatal
+errors.  It also demonstrates how to set input focus, how to draw rubber-
+banded lines, how to track the mouse constantly, and how to perform
+background calculations while waiting for events.  This should be enough
+examples to get you started writing your own stuff.
+
+I have also written a simple tutorial on the use of the graphics functions,
+and some concepts that you need to know if you don't know X-style graphics.
+This is called TUTORIAL.
+
+
+INSTALLATION INSTRUCTIONS
+
+Detailed instructions on installing and testing the graphics routines follow.
+In all the following, you are logged in as root.
+
+You should first copy the mini-X package into a temporary directory where
+you can examine and play with the files without harming anything.
+NOTE: The following instructions assume that you are using the directory
+"/mini-x" for your temporary directory.
+
+
+Unpacking the mini-X package creates the following directories:
+	include		include file for /usr/include
+	minix		include file and changes to /usr/include/minix
+	kernel		changes to /usr/src/kernel
+	fs		changes to /usr/src/fs
+	server		server library to be put into /usr/src/graphics/server
+	clients		client programs to be put in /usr/src/graphics/clients
+	libansi		vfprintf routine to be put into /usr/src/lib/ansi
+	cpp		patches for Martin Minow's CPP program
+
+
+PART A, BUILDING THE KERNEL:
+
+1.	If you have a working version of CPP that doesn't complain about
+	misquoted strings or undefined symbols, then skip this step.
+	Otherwise, you can get the CPP from the MINIX archives, and apply
+	the patches from the cpp directory to it.  These are for the
+	files "cpp5.c" and "cpp6.c".  Install the new CPP for use.
+
+2.	Copy or backup the following files in your /usr/include/minix, fs,
+	and kernel directories so that you can undo the changes to them if
+	required.  Even better,	if you have disk space, then copy ALL of
+	these directories to make sure they are safe.
+		/usr/include/minix/com.h
+		/usr/include/minix/const.h
+		fs/table.c
+		kernel/cstart.c
+		kernel/glo.h
+		kernel/makefile.cpp
+		kernel/makefile
+		kernel/proto.h
+		kernel/start.x
+		kernel/table.c
+		kernel/tty.c
+
+3.	Copy the existing minix image onto a bootable diskette so in case
+	the new one doesn't work, you can still bring the old MINIX back up.
+	If you are running shoelace like I am, then you can just copy the
+	kernel and fs into backup files in /etc/system.  For example:
+		cd /etc/system
+		cp kernel old_kernel
+		cp fs old_fs	
+
+4.	Copy the include file from the include directory to /usr/include.
+		cd /mini-x/include
+		cp graphics.h /usr/include
+		chmod 644 /usr/include/graphics.h
+
+5.	Copy the files from the minix directory to /usr/include/minix.
+	One of these is a new include file, and the other two are cdiff
+	files.  Use the cdiff files to patch two of the include files.
+		cd /mini-x/minix
+		cp * /usr/include/minix
+		cd /usr/include/minix
+		chmod 644 graph_msg.h
+		patch com.h com.h.cdif
+		patch const.h const.h.cdif
+
+6.	Copy the cdiff file from fs/table.c into /usr/src/fs, and
+	apply it.  Then build a new fs.
+		cd /usr/src/fs
+		cp /mini-x/fs/table.c.cdif .
+		patch table.c table.c.cdif
+		make
+
+7.	Copy the files from the kernel directory into /usr/src/kernel.
+	Some of these files are cdiff files and some are new files.
+		cd /usr/src/kernel
+		cp /mini-x/kernel/* .
+
+8.	Patch some of the files in the kernel directory.
+		cd /usr/src/kernel
+		patch cstart.c cstart.c.cdif
+		patch glo.h glo.h.cdif
+		patch proto.h proto.h.cdif
+		patch start.x start.x.cdif
+		patch table.c table.c.cdif
+		patch tty.c tty.c.cdif
+
+9.	You must now manually edit start.x, and insert the routine which
+	is in start.x.insert into it.  The reason for this is that cdiff
+	(and diff) gave the wrong results when I attempted to build patch
+	files, and so this part must be done manually.  In start.x, after
+	the routine get_ega, and before the routine get_ext_memsize, read in
+	the file start.x.insert (containing the routine get_rom_char_addr).
+	Leave two blank lines before and after the new routine.
+
+10.	You must now create a correct makefile.  I have given you cdiffs
+	for the original makefile source, "makefile.cpp.cdif", and for the
+	resulting file "makefile.cdif".  You can try using these to patch
+	makefile.cpp and makefile.  Alternatively, I have also given you
+	complete new copies of makefile.cpp and makefile with the patches
+	already applied, as "makefile.new" and "makefile.cpp.n".  Make use
+	of these however you can.  The reason I	have given you all these
+	versions is because of the CPP problems.  Assuming that the new
+	makefile I supply is correct as is, then simply do the following:
+		cp makefile.cpp.n makefile.cpp
+		cp makefile.new makefile
+
+	If you must rebuild a new makefile from makefile.cpp, then as
+	described in the original porting notes for the 32-bit kernel,
+	you must do the following.  Edit out extraneous # lines from the
+	makefile.cpp file, then	run a version of CPP on the makefile.cpp
+	to produce makefile.  Then you must edit that makefile and again
+	remove the # lines, and convert the string "/usr/include/1" back
+	to "/usr/include/minix", and restore the leading tabs on the build
+	lines.  If you have already tried playing with rebuilding your
+	kernel in 32-bit mode, then you know these problems already.
+
+11.	Build the kernel.  There should be no more warning messages during
+	the load than there used to be.
+		cd /usr/src/kernel
+		make
+
+12.	Make the new /dev/graphics file which is a character device.  If
+	you have added extra devices to your system, then you must use the
+	correct major device number (instead of 7) in the mknod command.
+	Examine dmap in /usr/src/fs/table.c to make sure of the number.
+		mknod /dev/graphics c 7 0
+		chmod 666 /dev/graphics
+
+13.	Sync and Reboot the system and verify that the system works correctly.
+	Then you can try copying a file to /dev/graphics if you want, and
+	nothing	should happen except that you should get an I/O error.  This
+	is normal, since the format of the data sent to the graphics device
+	includes a magic number which is validated.  For example:
+		cp /etc/passwd /dev/graphics
+		cp: I/O error
+
+
+
+PART B, BUILDING THE GRAPHICS SERVER:
+
+1.	Create the directories /usr/src/graphics and /usr/src/graphics/server.
+		cd /usr/src
+		mkdir graphics
+		chmod 755 graphics
+		cd graphics
+		mkdir server
+		chmod 755 server
+
+2.	Copy the files from the server directory to /usr/src/graphics/server.
+		cd /usr/src/graphics/server
+		cp /mini-x/server/* .
+
+3.	Examine the configuration of your machine, and define the mouse
+	type and mouse port names appropriately.  This is in the file
+	"mousedev.c", and the defines are MOUSE_TYPE and MOUSE_PORT.
+	MOUSE_TYPE specifies the type of mouse, where "ms" is a Microsoft
+	mouse (two buttons), and "pc" is a PC mouse (three buttons).
+	The default is "ms".  MOUSE_PORT specifies the tty device name
+	which the mouse is plugged into.  Since I am running the virtual
+	console code, the default value is "/dev/tty64".  If your mouse is
+	plugged into a different tty, then change MOUSE_PORT to use it.
+
+4.	Examine the makefile to determine where the graphics library
+	should go.  The default library directory is /usr/local/lib/i386,
+	and is the directory that Bruce Evans' 32-bit patches uses.  If
+	you have changed this, then edit LIBDIR in the makefile to point
+	at the correct library directory.
+
+5.	Build the graphics server library by typing make.  The library
+	name is called "libgraph.a".
+		cd /usr/src/graphics/server
+		make
+
+6.	Copy the built library into the library directory.
+		make install
+
+
+
+PART C, BUILDING THE CLIENTS
+
+1.	Copy the new vfprintf file into the ansi library directory,
+	compile it, and add it to the libc.a file for use.  This is
+	only used by landmine, but should have been available anyway
+	as a standard part of the library.
+		cd /usr/src/lib/ansi
+		cp /mini-x/libansi/vfprintf.c .
+		make vfprintf.o
+		ar r /usr/local/lib/i386/libc.a vfprintf.o
+
+2.	Create the /usr/src/graphics/clients directory, and copy the
+	files from the clients directory into it.
+		cd /usr/src/graphics
+		mkdir clients
+		chmod 755 clients
+		cd clients
+		cp /mini-x/clients/* .
+
+3.	Build the clients demo, tm, and landmine.  Demo is the demonstration
+	graphics program.  Tm is the "text mode" program, which is used to
+	reset the console back into text mode if a graphics program bombs out.
+	Landmine is a game program.
+		make
+
+4.	Try demo.  It should bring up several colored windows, with circles
+	being constantly drawn in the upper left one.  Move the mouse, and
+	a cursor should track its motion.  Moving the mouse into the small
+	grey window at the top middle should leave a trail of colored dots.
+	Using the button in the window at the upper right should let you
+	draw lines.  Moving the mouse into or out of the left window should
+	cause it to raise or lower itself, and change its border color.
+	Moving the mouse into or out of the large window should cause the
+	window to change it border color.  Clicking the mouse in the large
+	window should raise it to the top.  Typing characters while the mouse
+	is in the window should display them in the window.  The large window
+	should contain a filled	rectangle and a filled triangle.  Clicking
+	the button in the small	top window should take a snapshot of the
+	circles being drawn and	display that in the upper left of the large
+	window, blown up by a factor of 2.  The cursor should change its
+	shape when it enters or exits the circles window, or the large window.
+	Releasing a button while the mouse in in the circles window exits
+	from the demo.	Alternatively, pressing more than one button when
+	the mouse is in	the root window should cause a purposely generated
+	fatal error.
+
+5.	Install the demo, tm, and landmine programs into /bin.  If you wish
+	a different destination directory then /bin, then edit makefile and
+	change BINDIR as appropriate.  Also change LIBRARIES in the makefile
+	if your library	directory is not /usr/local/lib/i386.
+		make install
+
+
+That's it!
+
+
+PORTING NOTES FOR OTHER MACHINES
+
+I do not understand how MINIX runs on Macs or Amigas, so I cannot say much
+here, except to point out which files probably need changing, and what
+those changes are likely to be.
+
+The files graph_ega.c and ega.x are the only files which reference the
+graphics hardware.  The first file is the high level code which interfaces
+to the rest of the device driver, and the second is the low level graphics
+routines in assembly.  All calls to the graphics device are made through
+procedure variables in the gr_dev structure, which is typedef'd in the
+file graph_dev.h, and defined in graph_ega.c.  A typical call looks like
+(*gr_dev.drawpoint)(x, y, color).
+
+The procedure variables can call either the device specific routines,
+or the general routines.  The general routines are all in graph_gen.c.
+The general routines call other lower-level routines, also through the
+gr_dev structure.  Eventually, the lowest level routine is reached which
+is the drawing of a single pixel.  This routine cannot be a general
+routine, it must be a device specific routine.
+
+In order to implement a new graphics device, copy graph_ega.c into a new
+file (say, graph_foo.c), and modify it as required.  For those functions
+which can be done by the general routines (such as drawing lines), make
+the entries in the gr_dev structure point at the general routines.  For those
+functions which you can do in your hardware specific code, make the entries
+point to your own function.  You MUST have certain functions implemented as
+your own routines.  These are the init, term, setmode, drawpoint, drawtext,
+sizetext, readpoint, getcharbits, getscreeninfo, and getfontinto functions.
+The other functions can use the generic routines in graph_gen, if desired.
+Later, you can replace the generic routines with device specific routines
+for performance gains (especially drawing of lines and filling of areas).
+
+The gr_dev structure also contains parameters which give the configuration
+of the graphics screen, such as the number of rows, columns, and colors.
+If these are constant, you can just define them as initialized data in the
+structure definition.  However, if they vary (you may have more than one
+graphics mode available), then you can set them dynamically when the init
+routine is called.  The init routine is called with the requested number of
+rows, columns, and colors.  If any value is 0, then you can choose it.
+Otherwise, you should honor the request, returning an error from the init
+routine if this is impossible.  (The current ega_init routine is such an
+example, but it only accepts the 640x350 16 color mode.  It could be
+enhanced to support other modes too.)
+
+Note that the device level routines do not need to know about clipping.
+However, it is probably a good idea to put in checks to make sure that
+the arguments are within the screen area, just to be safe.  You can
+ignore drawing requests which attempt to go off of the screen, since
+they should not happen.
+
+Once you have made your new module, just change the makefile to build
+your graph_foo module, and any other new modules you made, and remove
+the use of graph_ega.c and ega.x.  Your gr_dev structure will then be
+used instead of the EGA one, and the higher level graphics functions
+will call your code.
+
+I cannot say much about interfacing the mouse, or returning modifiers from
+the keyboard.  One of you will have to investigate this.
+
+
+BUGS
+
+The following is a list of things which do not work as I desire.  Maybe
+someone can send me (or post) fixes or code for some of these things.
+
+1.	If the client or any other process outputs normally to the screen,
+	this will mess up the screen with rubbish.  This is because the
+	console code and the graphics code know nothing about each other.
+	Someday the console should be told to leave the screen alone, or
+	else it can send messages to the graphics server to draw characters
+	for it.  (This is an argument to keep the graphics code in the
+	kernel, instead of moving it out to user space.)
+
+2.	When the graphics program closes the screen, it is blanked, but
+	previous text and the cursor do not reappear.  When running the
+	virtual console code, typing a few returns to cause the screen
+	to scroll will fix things.  Once again, this is because the
+	console and graphics know nothing about each other.  Someday the
+	graphics code should send a message to the console driver to fix
+	the screen.
+
+3.	The graphics device needs to know about the last close for it, so
+	that it can automatically reset the console back into text mode.
+	Then the tm program would be unnecessary.
+
+4.	The graphics device really should be a once-open device, to prevent
+	attempts by multiple clients to open it.  If multiple  clients do
+	open it, they will interfere with each other.
+
+5.	There is no way to obtain the state of the the modifiers from the
+	keyboard.  These are SHIFT, CTRL, and ALT.  So currently there are
+	no modifiers available for clients to use.  The keyboard driver
+	knows these things, what is required is a way of obtaining them.
+	A simple way is to just make an IOCTL which returns the state.
+	Races can occur with this, so to do it right requires much more
+	extensive hacking in the keyboard driver to make sure the modifiers
+	are correct for each character read.
+
+6.	All the graphics programs busy loop.  So while events are being
+	waited for, the program constantly tries to read the newest status
+	from the mouse and keyboard.  Fixing this requires some form of
+	poll or select.
+
+
+FUTURES
+
+I have not thought much about window managers.  There is no code to support
+them at present.  For mini-X, I do not really see the need for an external
+window manager, with all of its complications.  It seems better to have a
+built-in window manager in the server.  However, it must interact with the
+rest of the server code in a small number of well-defined ways.  The reason
+for this is to allow multiple versions of the window mananger to be built,
+so that everyone can run the one they want.  If the interface was correct,
+then you could replace the window manager code with your own window manager
+with no problems.  As I said, I think this is adequate for mini-X.
+
+Changing the server code to run with multiple clients is needed.  This
+requires some form of cross-process communication, and POLL to be able to
+select on the clients.  The amoeba routines are not adequate, because
+they assume an RPC-type network call.  The server must be able to read and
+write from multiple clients, in any order, so that there can be many
+outstanding replies.  Named pipes could be used, but they are rather ugly.
+
+Poll is needed even without multiple clients, in order to stop the busy
+loop that the server does.  For a single user machine, a busy loop is not
+too bad, but it still slows down compiles and such.  It is better to fix it.
+
+Pixmaps would be useful.  Without them, doing redraws when exposures occur
+becomes very hard.  The code currently has stubs for the pixmap routines,
+so adding them would not be very difficult.
+
+Loadable fonts would be nice.  Currently the only fonts are the ones known
+by the device driver (and there is only 1 of those!).  The server would
+read a font from a file into memory, and then use the bitmap drawing
+primitives to draw the characters.  The bitmap drawing routines would
+then need some performance enhancements, such as adding a low level device
+function to do it.
+
+Ptys would be needed for building xterms.
+
+Higher resolution modes for the VGA would be nice to have.
+
+Routines are needed to convert color names into color values.  I have
+started this, but don't have it ready for this posting.  Hardwiring
+constants into client programs for colors is not good.
+
+Lots of client programs to do nifty graphics would be nice.  Some games
+using them would be fun.
+
+Speedups for various operations would be nice.  Some operations are much
+slower and uglier than they need to be.
+
+Finally, I do **NOT** want to implement everything that the real X has.
+If you want all that, then buy some more memory, run UNIX, and run the
+real thing.  What I do want are the smallest changes that do the most
+good.  In other words, weigh the cost of a feature with the usefulness
+of the feature.  The best features are the ones which win real big with
+only a little bit of effort.  I am sure that you all will argue for hours
+about which features are the really necessary ones...
+
+
+I hope this stuff will be as fun and useful to you as it is for me.  I
+will answer questions and coordinate changes and bug fixes to the code as
+people request it (as long as I am not TOO swamped with them).  However,
+if someone else wants to volunteer to do this, then that is OK by me too.
+(Especially for non-IBM machines, which I know nothing about.)
+
+
+David I. Bell			NEC Information Systems Australia
+dbell@pdact.pd.necisa.oz.au	SDC Canberra

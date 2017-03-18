@@ -1,0 +1,48 @@
+
+Notes for this Nano-X package
+
+This package is based on Microwindows 0.86. The code was changed to get it to
+run with the current version of ELKS and a new mouse driver added to work with
+Qemu. The makefile has been modified, the examples made working and unneeded
+files were removed. Some files were moved from the root directory to subdirectories.
+
+The package is set to use the mouse driver for Qemu. If you have a real PC, you will
+need a serial mouse connected to the RS232C port, PS/2 will not work. In that case
+you have to modify the Makefile and select the "mou_ser" mouse driver like this:
+SERVFILES += drivers/mou_ser.o
+#SERVFILES += drivers/mou_ser_qemu.o
+
+To compile make the "src" directory the current directory and enter "make" on the
+command line. This will generate the following demo programs in the bin directory:
+
+demo     - show several overlapping windows, allow to draw lines in the black window
+demo2    - very simple demo, just draws
+landmine - a game
+clock    - displays a round clock
+nterm    - graphical terminal, similar to Xterm
+world    - shows a world map
+
+There is a descriptive text for the landmine game and the world map in the 
+demos/nanox directory.
+For nterm to run, you need to enable pseudo ttys with "make menuconfig" in the 
+elks directory.
+
+You can press the ESC key to exit these programs.
+
+To install these programs, two scripts are provided. The script
+"add_to_full3.sh" will add a single demo file to the full3 floppy image in
+the elkscmd directory. E.g. "add_to_full3.sh nterm" will add the nterm
+program. Space on the floppy does not allow to add all demos.
+
+The script "build_hd_nano_image.sh" will generate a bootable hard disk image
+with the name nano_hdd in the elkscmd directory and copy all demo files to it.
+
+To run the modified full3 image, run the "qemu.sh" script in the "src" directory,
+to run the hard disk image, run the "qemu_hdd.sh" script in the "src" directory.
+
+The original package and further information about Microwindows can be downloaded
+from this site: www.microwindows.org.
+
+18th of March 2017 Georg Potthast
+
+

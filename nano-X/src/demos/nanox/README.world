@@ -1,0 +1,64 @@
+				WORLD
+
+This is a program that uses mini-X graphics in MINIX to display a map of
+the world.  The database for this map is supplied, and is an edited version
+of the CIA database.  The continents, islands, rivers, lakes, countries,
+and the states of the USA are shown.  I have slightly edited the database
+to fix some arctic islands and remove the Berlin corridor.  But some country
+boundaries are obsolete, since this map is a few years old at least.
+
+This program only uses integer arithmetic.  Floating point is simulated
+using fixed point arithmetic.  For this reason, the projection used in
+the program is rather crude (latitude and longitude are linear and are
+parallel lines).  This means that there is much distortion for the lands
+which are near the North and South poles.  If floating point was avaiable,
+a good projection could be used instead (such as a true spherical view!).
+
+The file "world.map" is the database, and should be installed in "/usr/lib".
+Otherwise you need to edit world.c and change MAPFILE as desired.
+
+To build the program (assuming mini-X is installed), use the command:
+
+	cc -o world world.c -lgraph
+
+When the program starts, it draws the whole world.  After this is done,
+you can use two of the mouse buttons and the keys to manipulate the view.
+
+To zoom in on a section of the map, move the mouse to the location that
+you intend to zoom in on, and press the left mouse button.  Then when you
+drag the mouse, a rectangle (the zoom box) will be drawn to indicate the
+current area that you are zooming into.  Notice that the point that you
+start the zoom box on will be the center of the zoom box, NOT one of its
+corners.
+
+While keeping the mouse button pressed, you can use the 's' and 'm' keys
+to switch between the 'scaling' and the 'moving' modes of the rectangle.
+The scaling mode makes the size of the zoom box vary as you move the mouse,
+but keeps the center of the zoom box fixed.  The moving mode keeps the size
+of the zoom box the same, but moves the box around as you move the mouse.
+Note that the width and height of the zoom box change together to preserve
+the aspect ratio of the zoom area.
+
+If you have started to do a zoom, but change your mind, then you can type
+the escape key before letting up on the mouse button, and this will cancel
+the zoom operation.  If you really want to do a zoom, then simply let up
+on the mouse button and the selected area will be redrawn to fit the screen.
+At this point you can zoom in further if you wish.
+
+You can return to the top level map by typing 't'.  Then you can zoom in
+again on a different area of the map.  Alternatively, you can "zoom out"
+just a little by creating a zoom box larger than the screen size.  This can
+be done, for example, by starting a zoom near the top of the screen, and then
+dragging the mouse down to the bottom of the screen.  Repeating this process
+lets you slowly reduce the magnification.
+
+If you press the right mouse button, the display will show the longitude
+and latitude of the location on the map covered by the cursor.  You can then
+drag the mouse around with the button held down, and the coordinates will
+continuously track the cursor location.  Letting up on the mouse button
+removes the coordinate display.
+
+Typing 'q' will quit from the world program.
+
+Enjoy!
+David I. Bell

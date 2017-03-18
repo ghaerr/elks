@@ -1,0 +1,33 @@
+reorganize all .h files to include dir
+reorganize win32 api and server into separate dir
+build all nano demos at once
+move to Xlib api compatibility
+rewrite client/server paradigm (completely too slow now - see world demo)
+warn if bad color args are passed?
+
+put fixed bcc allowing // comments on ftp site
+
+have GrGetNextEvent work with timeout returns, for nclock.c etc
+fix GrRegisterInput for multiple fd's
+fix GrRegisterInput to work with GrCheckNextEvent
+
+eliminate any timeout in select() loop
+no duplicate /dev/tty0 open
+fix -O3 framebuffer compile requirement
+remove gen_ routines from screen drivers into library, create fb library
+tag bitmap drawing palette conversion table to bitmap ID for speed
+fix DOS driver for stdpal4bpp for static pseudocolor
+rotate 2bpp Everex driver for normal display viewing
+
+convert all drivers to blit
+get fast inline memcpy, memcpyw, memcpyl for bitblt
+turn on NDEBUG for speed
+bitblt src screen clipping not implemented
+bitblt src mem clipping (copy BLACK?) not implemented
+bitblt assumes src and dest bitmap are same bpp
+vgaplan4 still needs vga_to_mempl4 blit
+fix asmplan4.s: don't draw last point, add psd struct, write ega_init
+
+allow more than one WndRegisterFdInput, run multiple mterm's
+dynamically load fonts, replace existing ones
+error check gdi structures, check for magic word
