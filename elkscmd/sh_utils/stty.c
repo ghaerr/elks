@@ -102,8 +102,8 @@ int match PROTO(( char *s1, char *s2 ));
 void prctl PROTO(( int c ));
 speed_t long2speed PROTO(( long num ));
 long speed2long PROTO(( unsigned long speed ));
-void print_flags PROTO(( unsigned long flags, unsigned long flag,
-				unsigned long def, char *string, int all ));
+void print_flags ( unsigned long flags, unsigned long flag,
+				unsigned long def, char *string, int all );
 void output PROTO(( char *s ));
 void do_print_char PROTO(( unsigned chr, unsigned def, char *name, int all ));
 void do_print_num PROTO(( unsigned num, unsigned def, char *name, int all ));
@@ -230,12 +230,13 @@ int flags;
 		default: output("cs??"); break;
 		}
 	}
-	print_flags(c_cflag, PARENB, TCTRL_DEF, "-parenb", all);
-	print_flags(c_cflag, PARODD, TCTRL_DEF, "-parodd", all);
-	print_flags(c_cflag, HUPCL, TCTRL_DEF, "-hupcl", all);
-	print_flags(c_cflag, CSTOPB, TCTRL_DEF, "-cstopb", all);
-	print_flags(c_cflag, CREAD, TCTRL_DEF, "-cread", all);
-	print_flags(c_cflag, CLOCAL, TCTRL_DEF, "-clocal", all);
+
+	print_flags(c_cflag, (unsigned long)PARENB, (unsigned long)TCTRL_DEF, "-parenb", all);
+	print_flags(c_cflag, (unsigned long)PARODD, (unsigned long)TCTRL_DEF, "-parodd", all);
+	print_flags(c_cflag, (unsigned long)HUPCL, (unsigned long)TCTRL_DEF, "-hupcl", all);
+	print_flags(c_cflag, (unsigned long)CSTOPB, (unsigned long)TCTRL_DEF, "-cstopb", all);
+	print_flags(c_cflag, (unsigned long)CREAD, (unsigned long)TCTRL_DEF, "-cread", all);
+	print_flags(c_cflag, (unsigned long)CLOCAL, (unsigned long)TCTRL_DEF, "-clocal", all);
 
 	if (all)
 	{
@@ -247,18 +248,18 @@ int flags;
 
 	c_iflag= termios.c_iflag;
 
-	print_flags(c_iflag, IGNBRK, TINPUT_DEF, "-ignbrk", all);
-	print_flags(c_iflag, BRKINT, TINPUT_DEF, "-brkint", all);
-	print_flags(c_iflag, IGNPAR, TINPUT_DEF, "-ignpar", all);
-	print_flags(c_iflag, PARMRK, TINPUT_DEF, "-parmrk", all);
-	print_flags(c_iflag, INPCK, TINPUT_DEF, "-inpck", all);
-	print_flags(c_iflag, ISTRIP, TINPUT_DEF, "-istrip", all);
-	print_flags(c_iflag, INLCR, TINPUT_DEF, "-inlcr", all);
-	print_flags(c_iflag, IGNCR, TINPUT_DEF, "-igncr", all);
-	print_flags(c_iflag, ICRNL, TINPUT_DEF, "-icrnl", all);
-	print_flags(c_iflag, IXON, TINPUT_DEF, "-ixon", all);
-	print_flags(c_iflag, IXOFF, TINPUT_DEF, "-ixoff", all);
-	print_flags(c_iflag, IXANY, TINPUT_DEF, "-ixany", all);
+	print_flags(c_iflag, (unsigned long)IGNBRK,(unsigned long) TINPUT_DEF, "-ignbrk", all);
+	print_flags(c_iflag, (unsigned long)BRKINT, (unsigned long)TINPUT_DEF, "-brkint", all);
+	print_flags(c_iflag, (unsigned long)IGNPAR, (unsigned long)TINPUT_DEF, "-ignpar", all);
+	print_flags(c_iflag, (unsigned long)PARMRK, (unsigned long)TINPUT_DEF, "-parmrk", all);
+	print_flags(c_iflag, (unsigned long)INPCK, (unsigned long)TINPUT_DEF, "-inpck", all);
+	print_flags(c_iflag, (unsigned long)ISTRIP, (unsigned long)TINPUT_DEF, "-istrip", all);
+	print_flags(c_iflag, (unsigned long)INLCR, (unsigned long)TINPUT_DEF, "-inlcr", all);
+	print_flags(c_iflag, (unsigned long)IGNCR, (unsigned long)TINPUT_DEF, "-igncr", all);
+	print_flags(c_iflag, (unsigned long)ICRNL, (unsigned long)TINPUT_DEF, "-icrnl", all);
+	print_flags(c_iflag, (unsigned long)IXON, (unsigned long)TINPUT_DEF, "-ixon", all);
+	print_flags(c_iflag, (unsigned long)IXOFF, (unsigned long)TINPUT_DEF, "-ixoff", all);
+	print_flags(c_iflag, (unsigned long)IXANY, (unsigned long)TINPUT_DEF, "-ixany", all);
 
 	if (all)
 	{
@@ -270,11 +271,11 @@ int flags;
 
 	c_oflag= termios.c_oflag;
 
-	print_flags(c_oflag, OPOST, TOUTPUT_DEF, "-opost", all);
+	print_flags(c_oflag, (unsigned long)OPOST, (unsigned long)TOUTPUT_DEF, "-opost", all);
 #ifdef __minix
-	print_flags(c_oflag, ONLCR, TOUTPUT_DEF, "-onlcr", all);
-	print_flags(c_oflag, XTABS, TOUTPUT_DEF, "-xtabs", all);
-	print_flags(c_oflag, ONOEOT, TOUTPUT_DEF, "-onoeot", all);
+	print_flags(c_oflag, (unsigned long)ONLCR, (unsigned long)TOUTPUT_DEF, "-onlcr", all);
+	print_flags(c_oflag, (unsigned long)XTABS, (unsigned long)TOUTPUT_DEF, "-xtabs", all);
+	print_flags(c_oflag, (unsigned long)ONOEOT, (unsigned long)TOUTPUT_DEF, "-onoeot", all);
 #endif
 	if (all)
 	{
@@ -286,14 +287,14 @@ int flags;
 
 	c_lflag= termios.c_lflag;
 
-	print_flags(c_lflag, ISIG, TLOCAL_DEF, "-isig", all);
-	print_flags(c_lflag, ICANON, TLOCAL_DEF, "-icanon", all);
-	print_flags(c_lflag, IEXTEN, TLOCAL_DEF, "-iexten", all);
-	print_flags(c_lflag, ECHO, TLOCAL_DEF, "-echo", all);
-	print_flags(c_lflag, ECHOE, TLOCAL_DEF, "-echoe", all);
-	print_flags(c_lflag, ECHOK, TLOCAL_DEF, "-echok", all);
-	print_flags(c_lflag, ECHONL, TLOCAL_DEF, "-echonl", all);
-	print_flags(c_lflag, NOFLSH, TLOCAL_DEF, "-noflsh", all);
+	print_flags(c_lflag, (unsigned long)ISIG, (unsigned long)TLOCAL_DEF, "-isig", all);
+	print_flags(c_lflag, (unsigned long)ICANON, (unsigned long)TLOCAL_DEF, "-icanon", all);
+	print_flags(c_lflag, (unsigned long)IEXTEN, (unsigned long)TLOCAL_DEF, "-iexten", all);
+	print_flags(c_lflag, (unsigned long)ECHO, (unsigned long)TLOCAL_DEF, "-echo", all);
+	print_flags(c_lflag,(unsigned long) ECHOE, (unsigned long)TLOCAL_DEF, "-echoe", all);
+	print_flags(c_lflag,(unsigned long) ECHOK, (unsigned long)TLOCAL_DEF, "-echok", all);
+	print_flags(c_lflag,(unsigned long) ECHONL, (unsigned long)TLOCAL_DEF, "-echonl", all);
+	print_flags(c_lflag,(unsigned long) NOFLSH, (unsigned long)TLOCAL_DEF, "-noflsh", all);
 #ifdef __minix
 	print_flags(c_lflag, LFLUSHO, TLOCAL_DEF, "-lflusho", all);
 #endif
