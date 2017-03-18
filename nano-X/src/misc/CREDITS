@@ -1,0 +1,28 @@
+MicroWindows project
+Copyright (c) 1999 Greg Haerr <greg@censoft.com>
+
+CREDITS
+Thanks to everyone who has contributed to this project.
+Some of the more active contributors are listed below.
+If I've missed you, please remind me or submit something!
+
+Contributors
+Engine				Greg Haerr, David Bell
+Win32 api			Greg Haerr
+Nano-X api			David Bell, Alan Cox, Alex Holden
+Network code, nano-X client lib	Alex Holden
+MIPS LinuxCE port, touch device	Brad LaRonde
+ELKS port			Greg Haerr, Al Riddoch
+NanoWidget set			Vidar Hokstad
+Bogl library			Ben Pfaff
+Fonts				Darran D. Rimron, Greg Haerr
+
+Contact Info
+Alan Cox		<alan@lxorguk.ukuu.org.uk>
+Greg Haerr		<greg@censoft.com>
+Vidar Hokstad		<vidarh@screenmedia.no> <vidar@hokstad.com>
+Alex Holden		<alex@linuxhacker.org>
+Brad LaRonde		<brad@ltc.com>
+Ben Pfaff		<pfaffben@debian.org>
+Al Riddoch		<ajr@ecs.soton.ac.uk>
+Darran D. Rimron	<darran@rimron.co.uk>

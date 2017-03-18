@@ -1,0 +1,105 @@
+This distribution consists of a few different libraries (BOGL, BOML,
+BOWL), a Linux 2.2.x kernel patch, and a couple of test programs.
+
+BOGL stands for Ben's Own Graphics Library.  It is a tiny graphics
+library for kernel 2.2.x framebuffers.  It supports only very simple
+graphics.  For instance, it lacks clipping, nonorthogonal lines,
+multiple brushes/pens, and so on.  It does, however, support the
+following:
+
+	- Horizontal and vertical lines
+	- Rectangles
+	- Solid rectangular fill
+	- Proportional fonts
+	- Pixmap drawing
+	- Palette setting
+	- Redraw notification on console switch
+
+Though meager, this is plenty to implement a simple graphical user
+interface, which is what BOWL (Ben's Own Window Library) does.  BOWL
+supports the following:
+
+	- A single, modal, fixed-width on-screen window
+	- Text boxes contained auto-flowed proportional text
+	- Command buttons
+	- Input boxes
+	- Menus
+	- Check boxes
+	- Completion bars
+
+BOML, Ben's Own Mouse Library, provides mouse support for BOGL.  It is
+experimental; its mouse detection algorithms may be fragile.  Please
+report success/failure.
+
+Somewhat unsurprisingly, this is exactly the list of features needed
+to install Debian GNU/Linux.
+
+Source files:
+
+Makefile: Makefile to compile the library and test programs.
+
+bdftobogl: A Perl program to translate any X Window System .bdf font
+file into a .c file that, when compiled and linked to a program using
+the BOGL library, can be used for text output.
+
+bogl-test.c: A simple test program for the BOGL library.  Run it for a
+usage message.
+
+bogl-vga16.c, bogl-vga16.h: An implementation of BOGL device-specific
+functions for EGA/VGA 16-color modes, for use with the included 2.2
+kernel framebuffer driver.
+
+bogl-cfb8.c, bogl-cfb8.h: BOGL driver for 8-bit packed pixel modes.
+As yet untested.  FIXME: needs to have a pointer-drawing routine
+added.
+
+bogl.c: BOGL main library implementation.
+
+bogl.h: BOGL public header.
+
+boglP.h: BOGL private header, for internal library use only.
+
+boml.h, boml.c: Ben's Own Mouse Library.
+
+bowl.h, bowl.c: Ben's Own Window Library.
+
+bowl-boxes.c: The beginnings of a compatible replacement for Debian
+boot-floppies boxes.c, using BOWL instead of newt.  Currently a BOWL
+test program; see the source for details.
+
+boxes.c, boxes.h: From Debian boot-floppies.
+
+giftobogl.c: A program to translate any .gif pixmap with 16 colors or
+fewer into a .c run-length encoded format that, when compiled and
+linked to a program using the BOGL library, can be displayed by BOGL.
+
+kernel.patch: A patch against Linux kernel 2.2.x that adds a 16-color
+EGA/VGA framebuffer driver.  By Ben Pfaff and Petr Vandrovec.
+
+*.bdf: Some fonts from the X Window System distribution for use with
+BOGL programs.
+
+*.gif: Some pixmaps for testing.
+
+Miscellaneous info:
+
+* Source files are written in GNU C, not ANSI C, using Linux- and
+  gcc-specific features.  Since BOGL targets Linux framebuffers, this
+  should not be a problem.
+
+* 16-color VGA framebuffers are supported, with the supplied patch, as
+  well as 8-bit packed pixel framebuffer, although this hasn't been
+  tested.  This means that you _must_ rebuild your kernel with the
+  supplied patch to see the working program (or write a driver for
+  your framebuffer).
+
+  There are no plans to support non-framebuffer graphics setups.  It
+  would be much more complicated since this effectively forces putting
+  the kernel framebuffer driver into the program.  Yuck.  I'm writing
+  a graphics and window library, not an X server :-)
+
+* All comments and suggestions are welcome.
+
+Local Variables:
+mode: text
+End:

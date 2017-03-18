@@ -1,0 +1,135 @@
+MicroWindows Installation Documentation
+October 12, 1999 g haerr <greg@censoft.com>
+
+MicroWindows compiles and runs on Linux, ELKS, MSDOS, and bare hardware.
+In addition, MicroWindows can be compiled to use different screen, 
+mouse and keyboard drivers for a given operating system environment. 
+The options are detailed following each operating environment below.
+
+In addition, since MicroWindows was based on Nano-X and shares
+the device-independent middle layer, the Makefile can build
+Nano-X as well.  The following lines control building MicroWindows,
+Nano-X, or both:
+	MICROWIN=1
+	NANOX=1
+For Nano-X, the NANOXDEMO= line must be set to build the different
+Nano-X application demos.
+
+The nano-X server can be built with a compiled-in application,
+or use UNIX sockets to allow seperately compiled applications
+to connect to the server.  Setting the line
+	LINK_APP_INTO_SERVER=1
+will build a linked application/server, which is useful for debugging
+and speed.  The client/server networking code is currently extremely
+slow.  This is required to be set for ELKS.
+
+To build the NanoWidget library, set 
+	NWIDGET=1
+in the Makefile.  Note that ELKS bcc can't currently compile
+the widget set, due to it's use of the ## token pasting preprocessor
+operator.  The NANOXDEMO= line must be set to the appropriate
+demo for Nano-X.  The demo application and server can then run
+using ./demo.sh.
+
+To run the MicroWindows demo, type "microwin".  To run the
+a linked nano-X application, type "nano-X".  To run the
+nano-X server and a demo application, run "demo.sh".
+
+Currently, there is only one demo for MicroWindows, demo.c, but
+there are several different #defines in demo.c that will build
+a 3d graphics demo, a child window demo, and a 256 color bitmap demo.
+
+Linux
+=====
+Linux users set the line below in the Makefile.
+	LINUX=1
+
+Linux users have the choice of running framebuffer screen drivers,
+which require kernel 2.2.x, or the svgalib screen driver for
+Linux 2.0.x users.  The framebuffer driver has only been tested on
+packed 8bpp. The 2bpp/16bpp/32bpp framebuffers have not been tested.
+There is a direct framebuffer driver, as well as support for the
+original BOGL library.  To choose between the framebuffer, BOGL
+or svgalib driver (should run on all Linux systems),
+set one of the following lines in the Makefile:
+	FRAMEBUFFER=1
+	VGALIB=1
+	BOGL=1
+
+Linux users can use either the GPM mouse driver, or a "bare"
+serial mouse driver that decodes the mouse directly from the 
+serial port.  Set either line in the Makefile.
+	GPMMOUSE=1	or
+	SERMOUSE=1
+
+Note that to use the GPM driver, you must start GPM with
+the -R option, and usually specify the mouse type with -t.
+See mouse.sh for an example.  If using the direct serial
+mouse driver, the serial port may have to be specified in
+mwin/src/drivers/mou_ser.c, as it defaults to /dev/ttyS1.
+
+I have written a utility that converts MS fonts, for exact
+MS-Windows look and feel.  You must own a MS license in order
+to use an MS font.  To use the MS fonts, run mwin/src/fonts/convfnt32.exe
+on a Windows system, and it will create the win*.c font tables.
+Then, set the following line in Makefile and fonts/Makefile:
+	HAVEMSFONTS=1
+
+
+ELKS
+====
+ELKS users set the line below in the Makefile.
+	ELKS=1
+
+The NWIDGETS=1 line must _not_ be set, as bcc can't handle
+ansi C's token paste operator, used in the widget library.
+In addition, the NANOXDEMO= line must also be set to something
+other than the widget test application, ntest.
+
+The serial mouse driver is in mwin/src/drivers/mou_ser.c.
+The default mouse port and type can be changed with the following
+environment variables, or changed in the driver.
+
+Environment Var		Default		Allowed
+MOUSE_TYPE		pc		ms, pc, logi(same as pc)
+MOUSE_PORT		/dev/ttys0	any serial port
+
+It might also be a good idea to use the XORMOVE window
+move algorithm, by setting the following line in the Makefile.
+The XORMOVE algorithm redraws only after the window move is
+completed, which works well on slower cpu's.
+	XORMOVE=1
+
+Since ELKS doesn't currently have a floating point library,
+the 3d demo is automatically compiled out of
+mwin/src/demos/microwin/demo.c:
+	#define GRAPH3D	0
+	#define IMAGE	0
+The IMAGE define is set to 0 as bringing in most
+images will break the 64k data segment limit.  The ELKS
+version also doesn't include the button control or wallpaper
+in the demo to keep the text/data sizes down.  Actually,
+the button control uses the ANSI C '##' token pasting operator
+that's not implemented...
+
+MSDOS
+=====
+MicroWindows is currently ported using MSC v5.10, and MASM.
+The file mcmwin.mak will build microwin.exe, and mcnanox.mak
+will build nanox.exe.  The DEMO= line can be changed to build
+different nano-X demos.
+
+Framebuffer notes:
+If you haven't used any of the Linux 2.2 framebuffer drivers before,
+it can be a little daunting at first. Alex Buell has written a
+Framebuffer HOWTO, which is available on his website at
+http://www.tahallah.demon.co.uk/ which goes into detail about the
+various drivers, command line options, and the fbset utility.
+Remember that currently the framebuffer will need to be in 8 bit
+colour mode to work. If you have any frame buffer
+other than the Vesa framebuffer (which can only change modes at
+bootup because it needs to execute the code in the video card's
+ROM in real mode), you can do this with the command 'fbset -depth 8'.
+
+Greg Haerr
+<greg@censoft.com>

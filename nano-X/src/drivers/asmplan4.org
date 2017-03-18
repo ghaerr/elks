@@ -1,0 +1,776 @@
+; Copyright (c) 1999 Greg Haerr <greg@censoft.com>
+; Copyright (c) 1991 David I. Bell
+; Permission is granted to use, distribute, or modify this source,
+; provided that this copyright notice remains intact.
+;
+; EGA/VGA Screen Driver 16 color 4 planes, portable C version
+;
+; Note: this file is a replacement for vgaplan4.c, when raw
+; speed rather than portability is desired
+;
+; The algorithms for some of these routines are taken from the book:
+; Programmer's Guide to PC and PS/2 Video Systems by Richard Wilton.
+;
+; Routines to draw pixels and lines for EGA/VGA resolutions.
+; The drawing mode in the data/rotate register is not changed in this
+; module, and must be changed as necessary by the callers.
+;
+
+; Define one and only one of the following to be nonzero.
+;VGA_ET4000	= 0		; TSENG LABS ET4000 chip
+VGA_STANDARD	= 1		; standard VGA
+;EGA_STANDARD	= 0		; standard EGA
+
+
+ifdef VGA_ET4000
+PIXROWS		= 600		; number of pixels down
+PIXCOLS		= 800		; number of pixels across
+PIXBYTES	= 100		; number of bytes across
+endif
+
+ifdef VGA_STANDARD
+PIXROWS		= 480		; number of pixels down
+PIXCOLS		= 640		; number of pixels across
+PIXBYTES	= 80		; number of bytes across
+endif
+
+ifdef EGA_STANDARD
+PIXROWS		= 350		; number of pixels down
+PIXCOLS		= 640		; number of pixels across
+PIXBYTES	= 80		; number of bytes across
+endif
+
+
+CHARCOLS	= 8		; number of pixels in char widths
+CHARROWS	= 16		; number of pixels in char heights
+xCHARROWS	= 14		; number of pixels in char heights
+BITMAPSIZE	= 2		; number of bytes in GR_BITMAP
+
+
+MSC = 1
+;__MEDIUM__ = 1
+	include asm.h
+	.header
+
+	.cextrn	rom_char_addr,word	; ROM char bimap physical address
+
+	.cseg
+
+;
+; void ega_init(void)
+;
+	.cproc	ega_init
+	ret
+	.cendp	ega_init
+
+;
+; Routine to draw an arbitrary line.
+; Called from C:
+;	_ega_drawline[x1, y1, x2, y2, color];
+;
+;	draw a line in the following EGA and VGA modes:
+;	200 line 16 colors modes
+;	350 line modes
+;	640x480 16 color
+
+; argument offsets from bp
+x1	= arg1		; first X coordinate
+y1	= arg1 + 2	; first Y coordinate
+x2	= arg1 + 4	; second X coordinate
+y2	= arg1 + 6	; second Y coordinate
+color	= arg1 + 8	; pixel value
+
+; local variable offsets from bp
+rowincr	= -2		; byte increment between rows
+incr1	= -4		; first increment
+incr2	= -6		; second increment
+routine	= -8		; routine to jump to
+localstack = 8
+
+
+	.cproc	ega_drawline
+	push	bp		; setup stack frame and preserve registers
+	mov	bp, sp
+
+;
+; Make sure that the line is totally within the screen area.
+; If not, we are allowed to completely ignore the line.
+;
+	mov	ax, x1[bp]		; EAX := x1
+	cmp	ax, offset PIXCOLS	; if ((x1<0) || (x1>=PIXCOLS)) return
+	jae	badline
+	mov	ax, x2[bp]		; EAX := x2
+	cmp	ax, offset PIXCOLS	; if ((x2<0) || (x2>=PIXCOLS)) return
+	jae	badline
+	mov	ax, y1[bp]		; EAX := y1
+	cmp	ax, offset PIXROWS	; if ((y1<0) || (y1>=PIXROWS)) return
+	jae	badline
+	mov	ax, y2[bp]		; EAX := y2
+	cmp	ax, offset PIXROWS+1	; if ((y2<0) || (y2>=PIXROWS)) return
+	;;jae	badline		;; FIXME vlines fail with code in
+	jmp	lineok
+
+badline:
+	pop	bp
+	ret
+
+;
+; Here when we know the line is totally drawable.
+;
+lineok:
+	sub	sp, offset localstack
+	push	si
+	push	di
+	push	es
+
+	; configure the graphics controller
+
+	mov	dx, 03ceh	; DX := Graphics Controller port address
+	mov 	ah, color[bp]	; pixel value
+	xor	al, al		; Set/Reset register number (0)
+	out	dx, ax
+
+	mov	ax, 0f01h	; AH := bit plane mask for Enable Set/Reset
+	out	dx, ax		; AL := Enable Set/Reset register number
+
+	; check for vertical line
+
+	mov	si, offset PIXBYTES	; increment for video buffer
+	mov	cx, x2[bp]
+	sub	cx, x1[bp]	; CX := x2 - x1
+	jz	VertLine
+
+	; force x1 < x2
+
+	jns	L01		; jump if x2 > x1
+
+	neg	cx		; CX := x1 - x2
+
+	mov	bx, x2[bp]	; exchange x1 and x2
+	xchg	bx, x1[bp]
+	mov	x2[bp], bx
+
+	mov	bx, y2[bp]	; exchange y1 and y2
+	xchg	bx, y1[bp]
+	mov	y2[bp], bx
+
+	; calculate dy = ABS[y2 - y1]
+
+L01:	mov	bx, y2[bp]
+	sub	bx, y1[bp]	; BX := y2 - y1
+	jz	HorizLine
+
+	jns	L03		; jump if slope is positive
+
+	neg	bx		; BX := y1 - y2
+	neg	si		; negate increment for buffer interleave
+
+	; select appropriate routine for slope of line
+
+L03:	mov	rowincr[bp], si	; save vertical increment
+	mov	routine[bp], offset LowSlope
+	cmp	bx, cx
+	jle	L04		; jump if dy <= dx [slope <= 1]
+	mov	routine[bp], offset HighSlope
+	xchg	bx, cx	; exchange dy and dx
+
+	; calculate initial decision variable and increments
+
+L04:	shl	bx, 1		; BX := 2 * dy
+	mov	incr1[bp], bx	; incr1 := 2 * dy
+	sub	bx, cx
+	mov	si, bx		; SI := d = 2 * dy - dx
+	sub	bx, cx
+	mov	incr2[bp], bx	; incr2 := 2 * [dy - dx]
+
+	; calculate first pixel address
+
+	push	cx		; preserve register
+	mov	ax, y1[bp]	; AX := y
+	mov	bx, x1[bp]	; BX := x
+	call	PixelAddr	; AH := bit mask
+				; ES:BX -> buffer
+				; CL := bits to shift left
+
+	mov	di, bx		; es:di -> buffer
+	shl	ah, cl		; AH := bit mask in proper position
+	mov 	bl, ah		; AH,BL := bit mask
+	mov 	al, 08h		; AL := Bit Mask Register number
+
+	pop	cx		; restore register
+	inc	cx		; CX := number of pixels to draw
+
+	jmp	routine[bp]	; jump to appropriate routine for slope
+
+
+;
+; Routine for vertical lines
+;
+VertLine:
+	mov	ax, y1[bp]	; AX := y1
+	mov	bx, y2[bp]	; BX := y2
+	mov	cx, bx
+	sub	cx, ax		; CX := dy
+	jge	L31		; jump if dy >= 0
+
+	neg	cx		; force dy >= 0
+	mov	ax, bx		; AX := y2
+
+L31:	inc	cx		; CX := number of pixels to draw
+	mov	bx, x1[bp]	; BX := x
+	push	cx		; save register
+	call	PixelAddr	; AH := bit mask
+				; ES:BX -> video buffer
+				; CL := number bits to shift left
+
+; set up Graphics controller
+
+	shl	ah, cl		; AH := bit mask in proper position
+	mov 	al, 08h	; AL := Bit Mask register number
+	out	dx, ax
+
+	pop	cx		; restore register
+
+; draw the line
+
+L111:	or	es:[bx], al	; set pixel
+	add	bx, si		; increment to next line
+	loop	L111
+	jmp 	Lexit
+
+
+;
+; Routine for horizontal lines [slope = 0]
+;
+HorizLine:
+	push	ds		; preserve DS
+
+	mov	ax, y1[bp]
+	mov	bx, x1[bp]
+	call	PixelAddr	; AH := bit mask
+				; ES:BX -> video buffer
+				; CL := number bits to shift left
+	mov	di, bx		; ES:DI -> buffer
+	mov 	dh, ah		; DH := unshifted bit mask for left byte
+
+	not	dh
+	shl	dh, cl		; DH := reverse bit mask for first byte
+	not	dh		; DH := bit mask for first byte
+
+	mov	cx, x2[bp]
+	and	cl, 7
+	xor	cl, 7		; CL := number of bits to shift left
+	mov 	dl, 0ffh	; DL := unshifted bit mask for right byte
+	shl	dl, cl		; DL := bit mask for last byte
+
+	; determine byte offset of first and last pixel in the line
+
+	mov	ax, x2[bp]	; AX := x2
+	mov	bx, x1[bp]	; BX := x1
+
+	mov 	cl, 3		; bits to convert pixels to bytes
+
+	shr	ax, cl		; AX := byte offset of X2
+	shr	bx, cl		; BX := byte offset of X1
+	mov	cx, ax
+	sub	cx, bx		; CX := [number of bytes in line] - 1
+
+	; get Graphics Controller port address into DX
+
+	mov	bx, dx		; BH := bit mask for first byte
+				; BL := bit mask for last byte
+	mov	dx, 03ceh	; DX := Graphics Controller port
+	mov 	al, 8		; AL := Bit mask Register number
+
+	; make video buffer addressable through DS:SI
+
+	push	es
+	pop	ds
+	mov	si, di		; DS:SI -> video buffer
+
+	; set pixels in leftmost byte of the line
+
+	or	bh, bh
+	js	L43		; jump if byte-aligned [x1 is leftmost]
+
+	or	cx, cx
+	jnz	L42		; jump if more than one byte in the line
+
+	and	bl, bh		; BL := bit mask for the line
+	jmp short L44
+
+L42:	mov 	ah, bh		; AH := bit mask for first byte
+	out	dx, ax		; update graphics controller
+
+	movsb			; update bit planes
+	dec	cx
+
+	; use a fast 8086 machine instruction to draw the remainder of the line
+
+L43:	mov 	ah, 0ffh	; AH := bit mask
+	out	dx, ax		; update Bit Mask register
+	rep movsb		; update all pixels in the line
+
+	; set pixels in the rightmost byte of the line
+
+L44:	mov 	ah, bl		; AH := bit mask for last byte
+	out	dx, ax		; update Graphics Controller
+	movsb			; update bit planes
+
+	pop	ds		; restore ds
+	jmp short Lexit
+
+
+;
+; Routine for dy >= dx [slope <= 1]
+; ES:DI -> video buffer
+; AL = Bit Mask Register number
+; BL = bit mask for first pixel
+; CX = number of pixels to draw
+; DX = Graphics Controller port address
+; SI = decision variable
+;
+LowSlope:
+
+L10:	mov 	ah, bl		; AH := bit mask for next pixel
+
+L11:	or	ah, bl		; mask current bit position
+	ror	bl, 1		; rotate pixel value
+	jc	L14		; jump if bit mask rotated to leftmost position
+
+	; bit mask not shifted out
+
+	or	si, si		; test sign of d
+	jns	L12		; jump if d >= 0
+
+	add	si, incr1[bp]	; d := d + incr1
+	loop	L11
+
+	out	dx, ax		; update Bit Mask register
+	or	es:[di], al	; set remaining pixel[s]
+	jmp	Lexit
+
+L12:	add	si, incr2[bp]	; d := d + incr2
+	out	dx, ax		; update Bit Mask register
+
+	or	es:[di], al	; update bit planes
+
+	add	di, rowincr[bp]	; increment y
+	loop	L10
+	jmp	Lexit
+
+	; bit mask shifted out
+
+L14:	out	dx, ax		; update Bit Mask register
+
+	or	es:[di], al	; update bit planes
+	inc	di		; increment x
+
+	or	si, si	; test sign of d
+	jns	L15		; jump if non-negative
+
+	add	si, incr1[bp]	; d := d + incr1
+	loop	L10
+	jmp	Lexit
+
+L15:	add	si, incr2[bp]	; d := d + incr2
+	add	di, rowincr[bp]	; vertical increment
+	loop	L10
+	jmp	Lexit
+
+
+;
+; Routine for dy > dx [slope > 1]
+; ES:DI -> video buffer
+; AH = bit mask for first pixel
+; AL = Bit Mask register number
+; CX = number pixels to draw
+; DX = Graphics Controller port address
+; SI = decision variable
+;
+HighSlope:
+	mov	bx, rowincr[bp]	; BX := y increment
+
+L21:	out	dx, ax		; update Bit Mask register
+L21a:	or	es:[di], al	; update bit planes
+
+	add	di, bx		; increment y
+
+L22:	or	si, si		; test sign of d
+	jns	L23		; jump if d >= 0
+
+	add	si, incr1[bp]	; d := d + incr1
+	loop	L21a
+	jmp	Lexit
+
+L23:	add	si, incr2[bp]	; d := d + incr2
+	ror	ah, 1		; rotate bit mask
+	adc	di, 0		; increment DI if when mask rotated to
+				; leftmost pixel position
+	loop	L21
+;	jmp	Lexit
+
+
+	; restore default Graphics Controller state and return to caller
+
+Lexit:	xor	ax, ax		; AH := 0, AL := 0
+	out	dx, ax		; restore Set/Reset register
+
+	inc	ax		; AH := 0, AL := 1
+	out	dx, ax		; restore Enable Set/Reset register
+
+	mov	ax, 0ff08h	; AH := 0xff, AL := 0
+	out	dx, ax		; restore Bit Mask register
+
+	pop	es
+	pop	di
+	pop	si
+	mov	sp, bp		; restore registers and return
+	pop	bp
+	ret
+	.cendp	ega_drawline
+
+
+;
+; Routine to set an individual pixel value.
+; Called from C like:
+;	_ega_drawpixel[x, y, c1];
+;
+
+; argument offsets, starting with 8 bytes [eip + bp]
+x	= arg1		; X coordinate
+y	= arg1+2	; Y coordinate
+c1	= arg1+4	; pixel value
+
+
+	.cproc	ega_drawpixel
+	push	bp
+	mov	bp, sp
+	push	ds		; save registers and set up stack frame
+
+	mov	cx, x[bp]		; ECX := x
+	cmp	cx, offset PIXCOLS	; if [[x<0] || [x>=PIXCOLS]] return
+	jae	done
+
+	mov	ax, y[bp]		; EAX := y
+	cmp	ax, offset PIXROWS	; if [[y<0] || [y>=PIXROWS]] return
+	jae	done
+
+	mov	dx, offset PIXBYTES	; AX := [y * PIXBYTES]
+	mul	dx
+
+	mov	bx, cx	; BX := [x / 8]
+	shr	bx, 1
+	shr	bx, 1
+	shr	bx, 1
+
+	add	bx, ax		; BX := [y * PIXBYTES] + [x / 8]
+
+	and	cl, 07h		; CL := [x % 8]
+	xor	cl, 07h		; CL := 7 - [x % 8]
+	mov 	ch, 01h		; CH := 1 << [7 - [x % 8]]	[mask]
+	shl	ch, cl
+
+	mov	ax, 0a000h	; DS := EGA buffer segment address
+	mov	ds, ax
+
+	mov	dx, 03ceh	; graphics controller port address
+	mov	ax, 0205h	; select write mode 2
+	out	dx, ax		; [load value 2 into mode register 5]
+	mov 	al, 08h	; set the bit mask register
+	mov 	ah, ch		; [load bit mask into register 8]
+	out	dx, ax
+	mov 	al, [bx]	; dummy read to latch bit planes
+	mov	ax, c1[bp]	; pixel value
+	mov 	[bx], al	; write pixel back to bit planes
+
+	mov	ax, 0005h	; restore default write mode 0
+	out	dx, ax		; [load value 0 into mode register 5]
+	mov	ax, 0ff08h	; restore default bit mask
+	out	dx, ax		; [load value ff into register 8]
+
+done:	pop	ds		; restore registers and return
+	pop	bp
+	ret
+	.cendp	ega_drawpixel
+
+
+
+;
+; Routine to read the value of an individual pixel.
+; Called from C like:
+; 	color = readpixel(xxx, yyy);
+;
+
+xxx	= arg1			; X coordinate
+yyy	= arg1+2		; Y coordinate
+
+
+	.cproc	ega_readpixel
+	push	bp
+	mov	bp, sp
+
+;
+; Make sure that the line is totally within the screen area.
+; If not, then return a pixel value of 0.
+;
+	mov	ax, yyy[bp]		; EAX := y
+	mov	bx, xxx[bp]		; EBX := x
+	cmp	ax, offset PIXROWS	; if [[y<0] || [y>=PIXROWS]] return
+	jae	retzero
+	cmp	bx, offset PIXCOLS	; if [[x<0] || [x>=PIXCOLS]] return
+	jae	retzero
+
+	push	si
+	push	ds
+
+	mov	dx, offset PIXBYTES	; AX := [y * PIXBYTES]
+	mul	dx
+
+	mov 	cl, bl		; save low order column bits
+	shr	bx, 1		; BX := [x / 8]
+	shr	bx, 1
+	shr	bx, 1
+
+	add	bx, ax		; BX := [y * PIXBYTES] + [x / 8]
+
+	and	cl, 07h		; CL := [x % 8]
+	xor 	cl, 07h		; CL := 7 - [x % 8]
+
+	mov	dx, 0a000h	; ES := EGA buffer segment address
+	mov	ds, dx
+
+	mov 	ch, 01h		; CH := 1 << [7 - [col % 8]]  [mask]
+	shl	ch, cl		; CH := bit mask in proper position
+
+	mov	si, bx		; ES:SI -> region buffer byte
+	xor	bl, bl		; BL is used to accumulate the pixel value
+
+	mov	dx, 03ceh	; DX := Graphics Controller port
+	mov	ax, 0304h	; AH := initial bit plane number
+				; AL := Read Map Select register number
+
+L112:	out	dx, ax		; select bit plane
+	mov 	bh, [si]	; BH := byte from current bit plane
+	and	bh, ch		; mask one bit
+	neg	bh		; bit 7 of BH := 1 if masked bit = 1
+				; bit 7 of BH := 0 if masked bit = 0
+	rol	bx, 1		; bit 0 of BL := next bit from pixel value
+	dec	ah		; AH := next bit plane number
+	jge	L112
+
+	xor	ax, ax		; AL := pixel value
+	mov 	al, bl
+
+	pop	ds
+	pop	si
+	pop	bp	
+	ret
+
+retzero:
+	pop	bp
+	xor	ax, ax
+	ret
+	.cendp	ega_readpixel
+
+
+;
+; Local routine to convert row and column numbers to pixel addresses and masks.
+; Input:	EAX = row
+;		EBX = column
+; Output:
+;		AH := bit mask
+;		ES:EBX -> video buffer
+;		CL := number bits to shift left
+;
+PixelAddr:
+	push	dx
+
+	mov	dx, offset PIXBYTES	; AX := [row * PIXBYTES]
+	mul	dx
+
+	mov 	cl, bl		; save low order column bits
+	shr	bx, 1		; BX := [col / 8]
+	shr	bx, 1
+	shr	bx, 1
+
+	add	bx, ax		; BX := [row * PIXBYTES] + [col / 8]
+
+	and	cl, 07h		; CL := [col % 8]
+	xor	cl, 07h		; CL := 7 - [col % 8]
+	mov 	ah, 01h		; AH := 1 << [7 - [col % 8]]	[mask]
+
+	mov	dx, 0a000h	; ES := EGA buffer segment address
+	mov	es, dx
+
+	pop	dx
+
+	ret
+
+IF 0000
+; char _far * ega_get_rom_char_addr();
+; Call the BIOS to find out the address of the ROM character table. 
+
+	.cproc	ega_get_rom_char_addr
+	push	bp		; interrupt uses these
+	push	es
+	push	ds
+	push	si
+	push	di
+	mov	ax,1130h	; function for address of rom character table
+	mov	bx,0202h	; want address of ROM 8x14 character table
+	int	10h		; return address in es:bp
+	mov	dx,es
+	mov	ax,bp
+	pop	di
+	pop	si
+	pop	ds
+	pop	es		; restore registers and return
+	pop	bp
+	ret
+	.cendp	ega_get_rom_char_addr
+
+;
+; Routine to return the bitmap for a character from the ROM.
+; Called from C:
+;	ega_gettextbits(charnum, retbitmap, retwidth, retheight);
+;		UCHAR		charnum;
+;		IMAGEBITS	*retbitmap;
+;		COORD		*retwidth;
+;		COORD		*retheight;
+; The retbitmap is a pointer to an array of IMAGEBITS values (shorts),
+; of length CHARROWS.  Retwidth and retheight are the returned
+; width and height of the character.
+;
+
+charnum		= arg1			; character to get bitmap of
+retaddr		= arg1 + 2		; returned address of bitmap
+retwidth	= arg1 + 4		; returned width of character
+retheight	= arg1 + 6		; returned height of character
+
+	.cproc	ega_gettextbits
+	push	bp		; setup stack frame and preserve registers
+	mov	bp, sp
+	push	es
+
+	xor	ax, ax			; get character code
+	mov	al, charnum[bp]
+	mov	cx, offset CHARROWS	; get number of bytes of data for chars
+	mul	cx			; make offset into ROM bitmap table
+	mov	bx, word ptr rom_char_addr@ ; physical addr of bitmap for char
+	add	bx,ax
+	mov	es, word ptr rom_char_addr@+2
+
+	push	bp
+
+	mov	bp, retaddr[bp]		; address for returned bits
+	xor	dx, dx			; clear low order part of bitmap values
+
+getcharloop:
+	mov 	dh, es:[bx]		; get next byte of bitmap
+	mov	[bp], dx		; store in caller's buffer
+	inc	bx			; advance ROM address
+	add	bp, offset BITMAPSIZE	; and buffer address
+	loop	getcharloop		; loop until did all rows of char
+
+	pop	bp
+
+	mov	ax, offset CHARCOLS	; return width of character
+	mov	bx, retwidth[bp]
+	mov	[bx], ax
+	mov	ax, offset CHARROWS	; return height of character
+	mov	bx, retheight[bp]
+	mov	[bx], ax
+
+	pop	es			; restore registers and return
+	pop	bp
+	ret
+	.cendp	ega_gettextbits
+
+;
+; Routine to draw a text string using the ROM character bitmap.
+; If the background color is [long] -1 then it is not drawn.
+; Called from C like:
+;	ega_drawtext(xx, yy, cp, len, fg, bg);
+;
+xx	= arg1			; X coordinate
+yy	= arg1+2		; Y coordinate
+cp	= arg1+4		; character pointer
+len	= arg1+6		; length of string
+fg	= arg1+8		; foreground color
+bg	= arg1+10		; background color
+
+	.cproc	ega_drawtext
+	push	bp
+	mov	bp, sp
+	push	ds		; save registers we use
+	push	es
+	push	di
+	push	si
+
+	mov	ax, yy[bp]		; EAX := y
+	cmp	ax, offset PIXROWS	; if [[y<0] || [y>=PIXROWS]] return
+	jae	donetext
+	add	ax, offset CHARROWS-1	; convert y to top of chars
+	jl	donetext		; if not enough room, return
+
+	mov	bx, xx[bp]		; EBX := x
+	cmp	bx, offset PIXCOLS	; if [[x<0] || [x>=PIXCOLS]] return
+	jae	donetext
+
+	mov	cx, len[bp]		; see if length is non-positive
+	or	cx, cx
+	jle	donetext
+
+	cmp	cx, offset PIXCOLS	; or very large
+	jae	donetext
+
+	shl	cx, 1		; convert char length to pixel column count
+	shl cx, 1
+	shl cx, 1
+	add	cx, bx	; determine first column to not touch
+	cmp	cx, offset PIXCOLS	; see if will write off end
+	jg	donetext
+
+charloop:
+	mov	bx, cp[bp]	; get address of next character
+	xor	ax, ax
+	mov 	al, [bx]	; get next character
+	inc	bx		; increment character pointer
+	mov	cp[bp], bx	; save away
+	mov	dx,offset CHARROWS	; bytes between character bitmaps
+	mul	dx		; convert char code to offset in ROM table
+	add	ax, word ptr rom_char_addr@ ; make physical address of char bits
+	mov	si, ax		; save in source register
+
+	mov	ax, xx[bp]
+	mov	dx, offset PIXBYTES	; AX := [y * PIXBYTES]
+	mul	dx
+
+	mov 	cl, bl		; save low order column bits
+	shr	bx, 1		; BX := [x / 8]
+	shr	bx, 1
+	shr	bx, 1
+
+	add	bx, ax		; BX := [y * PIXBYTES] + [x / 8]
+
+	and	cl, 07h		; CL := [x % 8]
+	xor	cl, 07h		; CL := 7 - [x % 8]
+
+	mov	dx, 0a000h	; ES := EGA buffer segment address
+	mov	ds, dx
+
+	mov 	ch, 01h		; CH := 1 << [7 - [col % 8]]  [mask]
+	shl	ch, cl		; CH := bit mask in proper position
+
+donetext:
+	pop	si
+	pop	di
+	pop	es
+	pop	ds
+	ret
+	.cendp	ega_drawtext
+ENDIF
+
+	.cend
+	end

@@ -1,0 +1,13 @@
+Child window border not drawn right with UPDATEREGIONS window move algorithm.
+
+repaint on VT switch doesn't work with client/server library
+Sleep api isn't accurate
+switch palette's on the fly from framebuffer identification
+
+BitBlt clips blit rectangle to source screen/memimage size
+Terminal emulator doesn't clip text on right side for some reason
+If closing last window, GetMessage/microwindows hangs if not exiting
+
+There might be some bugs in the vga 16 color 4 planes blitter
+
+The ELKS microwin demo draws mouse droppings on screen

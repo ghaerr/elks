@@ -1,0 +1,108 @@
+			LANDMINE
+
+
+Landmine is a game in which you try to safely move step by step from the
+top left corner of a square board to the bottom right corner of the board.
+Scattered among the cells of the board are invisible mines which blow up
+if you step on them.  When you step on a mine, one of your legs is blown
+off, and if you lose both legs, then the game is over.
+
+Steps are made one at a time from any cell you have already visited to
+any of the eight possible cells which are adjacent to it.  At the start
+of the game you are placed in the top left corner of the board, which is
+guaranteed to have no mine in it.  There are also no mines immediately
+adjacent to the starting cell.  There is also a guaranteed path from the
+starting cell to the finishing cell which does not encounter any mines.
+
+You cannot see the mines, however you have a detector which indicates
+the presence of the mines.  The detector cannot locate the direction of
+any individual mine, but it does indicate the number of mines immediately
+adjacent to your cell.  By using this information from all the cells you
+have already visited, you can usually deduce where the mines must be.
+In this way, you can find your way safely to the destination cell.  Some
+of the deductions that can be made are very subtle, and experience will
+improve your scores dramatically.
+
+When landmine is started up under mini-X, the board is displayed at the
+left side, some buttons are displayed at the upper right, and some statistics
+are displayed at the lower right.  To make a step, use the mouse to move the
+cursor onto the cell that you wish to step on, and press a button.  A number
+will appear in that square (if there is no mine there!) indicating now many
+mines are adjacent to that square.  You can step onto any cell which is
+adjacent to any cell you have already stepped on.
+
+In order to help you deduce where the mines are and what steps are safe,
+you can mark any non-visited cell as containing a mine.  To do this, move
+the mouse to that cell, and then type a space.  A red circle will then
+appear in that cell to indicate that you think it contains a mine.  A
+side effect of doing this is that you cannot accidentally step on the
+square while it is marked.  Notice that the cell is marked as you request
+whether or not a mine is actually there, thus if you mistakenly mark a
+cell, you are likely to get confused and later step on a real mine!  If
+you think that a cell is marked in error, you can clear the marking by
+moving the mouse to the cell and then typing another space.
+
+If you step on a mine, you will hear a beep, and a red circle will flash
+on and off for a few seconds to indicate that the mine has exploded.
+Then the mine will be removed, and the counts in the adjacent cells
+will be adjusted to reflect the new situation with one less mine.  Your
+number of legs is also reduced by 1, and the cursor shape is changed to
+indicate this.  If you lose both legs, then the game is lost.  If you
+successfully make it to the lower right corner, then the game is won.
+
+When the game is over, the location of all mines are marked with red circles.
+In addition, if you had marked cells as containing mines, but the cells were
+wrongly marked, then those cells are shown with green circles.  After you
+have analyzed the results of the game, you can start a new game by using
+the NEW GAME button.
+
+The three buttons on the top right of the screen are QUIT, SAVE GAME,
+and NEW GAME.  The buttons are activated by moving the cursor to the
+interior of the button, and pressing any mouse button.  No confirmation
+is asked for these actions.
+
+QUIT will immediately quit playing and return you to text mode and exit.
+However, if you had started landmine with a filename to restore from,
+then the current status will be saved back to that file.  If you had not
+supplied a filename on starting, and have not saved the game using the
+SAVE GAME button, then QUIT will quit without saving anything.
+
+SAVE GAME is used to save the current status of the game without exiting.
+This lets you make sure that the game is saved away when you have been
+playing for a long time and are worried about crashes.  If you had given
+a file for restoring of previous games, then the game will be saved back
+into that file.  If you had not specified a filename, then a default name
+of "landmine.save" will be used.  If the save operation works, the button
+will momentarily flash.  If the save operation fails, then a beep will
+be sounded.
+
+NEW GAME is used to start a new game.  This button can only be used after
+a game has just been completed.  That is, after both legs have been blown
+off or you have reached the destination cell, you use this button to
+begin another game.
+
+When starting landmine, you can specify some options on the command line.
+The options are the following:
+
+	landmine [-s n] [-m n] [savefile]
+
+The savefile is the filename to save the game into when the SAVE GAME or
+QUIT buttons are used, as described above.
+
+The -s option sets the size of the board.  The size is the number of cells
+across the board, and also down the board.  The board size can be set to
+any size from 3 to 30.  The default size is 15.
+
+The -m option sets the number of mines on the board.  This can be set from
+1 to 50% of the number of cells on the board.  The default number of mines
+is 15% of the number of cells on the board.  For the default board size,
+the default number of mines is 33.
+
+The statistics saved in the save file are kept for each combination of
+board size and mines, thus you can play with many different combinations
+of values and the statistics will be kept separately.  There is a limit
+of 1000 different combinations that can be saved.
+
+You cannot change the board size or number of mines while a game is in
+progress.  To change the parameters, finish the game, save the game into a
+file and exit, then restart landmine giving the new parameters.
