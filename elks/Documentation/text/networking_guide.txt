@@ -190,5 +190,32 @@ that you may be able to enter "chkconfig telnetd on" on the command line to enab
 The command "chkconfig --list telnet" will display if telnetd is running. If you do not run telnetd
 as root, there will be no login prompt and you cannot log into the host.
 
+-----------------------------
+Run the telnet server on ELKS
+-----------------------------
 
-4th of March 2017 Georg Potthast
+First edit the qemu.sh file in the elks directory to:
+
+# incoming telnet forwarding - example: connect to ELKS with telnet localhost 2323
+HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
+
+This way a telnet client on the host, using port 2323, can connect to the ELKS telnet
+server listening on port 23.
+The command line to use for that will be "telnet 127.0.0.1 2323".
+
+The ELKS telnet server does not support option negotiation, so the client will be in
+line mode using local echo. This is the default for a telnet client.
+
+If the telnet client on the host does not work well with the ELKS telnet server, you
+can use the gcc.sh script in the elkscmd/inet/telnet directory to compile a version
+of the ELKS telnet client with gcc to be used on the host. This way you have a telnet
+client on the host which will work with the ELKS telnet server.
+The command line to use for that is "telnetc 127.0.0.1 2323".
+
+Check the rc.sysinit script, which ELKS runs at boot time, so that the telnetd server
+is loaded and the httpd web server is comment out. Otherwise the telnetd server will not
+work well because of insufficient memory. You can also load it with "telnetd &" at run 
+time, but make sure httpd is not loaded.
+
+
+16th of March 2017 Georg Potthast

@@ -22,7 +22,7 @@ ttn.c
 #include <string.h>
 #include <unistd.h>
 
-#ifndef __LINUX__
+#ifndef __linux__
 #include <linuxmt/in.h>
 #include <linuxmt/net.h>
 #include <linuxmt/time.h>
@@ -50,6 +50,8 @@ static int tcp_fd;
 static char *term_env;
 static char done;
 static struct termios def_termios;
+static int writeall (int fd, char *buffer, int buf_size);
+static int process_opt (char *bp, int count);
 
 void finish()
 {
@@ -158,10 +160,7 @@ assert (optsize);
 
 
 
-int
-main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 	long host;
 	unsigned short port;
@@ -356,10 +355,7 @@ int optsrt;
 	}
 }
 
-static int writeall (fd, buffer, buf_size)
-int fd;
-char *buffer;
-int buf_size;
+static int writeall (int fd, char *buffer, int buf_size)
 {
 	int result;
 
@@ -478,9 +474,7 @@ ret:
 }
 
 
-static int process_opt (bp, count)
-char *bp;
-int count;
+static int process_opt (char *bp, int count)
 {
 	unsigned char iac, command, optsrt, sb_command;
 	int offset, result;	;

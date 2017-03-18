@@ -160,13 +160,15 @@ int main(int argc, char *argv[]) {
     while (1) {
       tel_out(connectionfd, (char *)"Welcome to the ELKS telnet server\n\nlogin: ", 42);
 read_again:
-      if (rc=read(connectionfd,buffer,sizeof(buffer)) > 0) 
-	if (strcmp(buffer,"root\r\n")==0) {
+      if (rc=read(connectionfd,buffer,sizeof(buffer)) > 0) {
+	buffer[4] = '\0';
+	if (strcmp(buffer,"root")==0) {
 	  goto login_successful;
 	} else {
+	  //printf("%d-%c,%c,%c,%c,%X,%X\n",rc,buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],buffer[5]); /*test for root*/
 	  continue;
 	} 
-      else {
+      } else {
 	  goto read_again;
       }
     }
