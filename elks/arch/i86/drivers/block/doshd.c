@@ -520,29 +520,31 @@ int init_bioshd(void)
 	   "Extended and modified for Linux 8086 by Alan Cox.\n");
 #endif /* CONFIG_SMALL_KERNEL */
 
-    printk("doshd: ");
-
 #ifdef CONFIG_BLK_DEV_BFD
     _fd_count = bioshd_getfdinfo();
-    printk("%d floppy drive%s",
-	   _fd_count, _fd_count == 1 ? "" : "s");
-    count += _fd_count;
 #endif
-
 #ifdef CONFIG_BLK_DEV_BHD
-#ifdef CONFIG_BLK_DEV_BFD
-    printk(" and ");
-#endif
     _hd_count = bioshd_gethdinfo();
-    printk("%d hard drive%s",
-       _hd_count, _hd_count == 1 ? "" : "s");
     bioshd_gendisk.nr_real = _hd_count;
-    count += _hd_count;
 #endif /* CONFIG_BLK_DEV_BHD */
 
-    printk("\n");
+#ifdef CONFIG_BLK_DEV_BFD
+#ifdef CONFIG_BLK_DEV_BHD
+    printk("doshd: %d floppy drive%s and %d hard drive%s\n",
+	   _fd_count, _fd_count == 1 ? "" : "s",
+	   _hd_count, _hd_count == 1 ? "" : "s");
+#else
+    printk("doshd: %d floppy drive%s\n",
+	   _fd_count, _fd_count == 1 ? "" : "s");
+#endif
+#else
+#ifdef CONFIG_BLK_DEV_BHD
+    printk("doshd: %d hard drive%s\n",
+	   _hd_count, _hd_count == 1 ? "" : "s");
+#endif
+#endif
 
-    if (!count) return 0;
+    if (!(_fd_count + _hd_count)) return 0;
 
 #ifdef TEMP_PRINT_DRIVES_MAX
     {
