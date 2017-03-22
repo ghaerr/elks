@@ -101,15 +101,16 @@ size_t pty_read(struct inode *inode, struct file *file, char *data, int len)
     }
     pi = 0;
     while (((int)pi) < len) {
-        ch = chq_getch(&tty->outq, !(file->f_flags & O_NONBLOCK));
+	ch = chq_wait_rd(&tty->outq, file->f_flags & O_NONBLOCK);
 	if (ch < 0) {
 	    if ((int)pi == 0)
 		pi = (char *)ch;
 	    break;
 	}
 	debug2(" rc[%u,%u]", (int)pi, len);
-	put_user_char(ch, (void *)(data++));
+	put_user_char(tty_outproc(tty), (void *)(data++));
 	pi++;
+	wake_up(&tty->outq.wait);
     }
     debug1("{%u}\n", (int)pi);
     return (size_t)pi;
