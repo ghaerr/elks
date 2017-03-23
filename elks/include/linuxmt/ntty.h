@@ -17,26 +17,17 @@
 
 #ifdef CONFIG_PSEUDO_TTY
 #define NR_PTYS		4
-/*need MAX_TTYS 12 even if no serial devs */
-#define MAX_TTYS	12
 #else
 #define NR_PTYS		0
 #endif
 
 #ifdef CONFIG_CHAR_DEV_RS
 #define NR_SERIAL	4
-#ifndef CONFIG_PSEUDO_TTY
-#define MAX_TTYS	8
-#endif
 #else
 #define NR_SERIAL	0
 #endif
 
-#ifndef CONFIG_PSEUDO_TTY
-#ifndef CONFIG_CHAR_DEV_RS
-#define MAX_TTYS 4
-#endif
-#endif
+#define MAX_TTYS (4+NR_SERIAL+NR_PTYS)
 
 #define DCGET_GRAPH	(('D'<<8)+0x01)
 #define DCREL_GRAPH	(('D'<<8)+0x02)
