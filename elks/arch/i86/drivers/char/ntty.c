@@ -375,20 +375,20 @@ void tty_init(void)
 
 #ifdef CONFIG_CHAR_DEV_RS
 
-    ttyp = &ttys[4]; /*put serial entries into ttys[4]-ttys[7] */
-    for (pi = (char *)4; ((int)pi) < 4+NR_SERIAL; pi++) {
+    /* put serial entries after console entries */
+    for (pi = 0; ((int)pi) < NR_SERIAL; pi++) {
 	ttyp->ops = &rs_ops;
-	(ttyp++)->minor = ((int)pi) +60; /* ttyS0 = 64 */
+	(ttyp++)->minor = ((int)pi) + 64; /* ttyS0 = 64 */
     }
 
 #endif
 
 #ifdef CONFIG_PSEUDO_TTY
-    /* start at 8 fixed to match pty entries in MAKEDEV */
-    ttyp = &ttys[8]; /*put slave pseudo tty entries into ttys[8]-ttys[11] */
-    for (pi = 8; ((int)pi) < 12; pi++) {
+    /* start at minor = 8 fixed to match pty entries in MAKEDEV */
+    /* put slave pseudo tty entries after serial entries */
+    for (pi = 0; ((int)pi) < NR_PTYS; pi++) {
 	ttyp->ops = &ttyp_ops;
-	(ttyp++)->minor = (int)pi;
+	(ttyp++)->minor = (int)pi + 8;
     }
 #endif
 
