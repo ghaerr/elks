@@ -77,9 +77,10 @@ xNANOXFILES += $(NANOXDEMO) $(STUBFILES)
 NANOXFILES += $(STUBFILES)
 ALL += nano-X
 else
+xNANOXDEMO =demos/nanox/demo2.o
 NANOXFILES += $(NETFILES)
 DEMOLIBS += libnano-X.a
-ALL += libnano-X.a nano-X demo
+ALL += libnano-X.a nano-Xd demo
 endif
 
 endif
@@ -144,5 +145,17 @@ nano-X: $(SERVFILES) $(NANOXFILES) $(NANOXDEMO)
 	$(CC) $(CFLAGS) $(NANOXFILES) demos/nanox/world.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/world $(MATHLIB)
 	cp demos/nanox/world.map bin/world.map
 
+nano-Xd: $(SERVFILES) $(NANOXFILES)
+	$(CC) $(CFLAGS) $(NANOXFILES) $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nano-X $(MATHLIB)
+
+#only a few demos work in client/server mode	
 demo: $(NANOXDEMO) libnano-X.a
-	$(CC) $(CFLAGS) $(NANOXDEMO) $(DEMOLIBS) -o demo
+#	$(CC) $(CFLAGS) $(NANOXDEMO) $(DEMOLIBS) -o bin/demo
+	$(CC) $(CFLAGS) demos/nanox/demo.o $(DEMOLIBS) -o bin/demo $(MATHLIB)
+	$(CC) $(CFLAGS) demos/nanox/landmine.o $(DEMOLIBS) -o bin/landmine $(MATHLIB)
+#	$(CC) $(CFLAGS) demos/nanox/nterm.o $(DEMOLIBS) -o bin/nterm $(MATHLIB)	
+#	$(CC) $(CFLAGS) demos/nanox/nclock.o $(DEMOLIBS) -o bin/nclock $(MATHLIB)	
+	$(CC) $(CFLAGS) demos/nanox/demo2.o $(DEMOLIBS) -o bin/demo2 $(MATHLIB)
+#	$(CC) $(CFLAGS) demos/nanox/world.o $(DEMOLIBS) -o bin/world $(MATHLIB)
+#	cp demos/nanox/world.map bin/world.map
+	cp demos/demo.sh bin/demo.sh	
