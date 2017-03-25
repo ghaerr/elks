@@ -27,7 +27,7 @@ NANOX=1
 # uncomment the following line to link the nano-X application
 # with the server.  This is required for ELKS, if no network is present,
 # or for speed or debugging.  This affects the nano-X server only.
-xLINK_APP_INTO_SERVER=1
+LINK_APP_INTO_SERVER=1
 
 # Window move algorithms, change for tradeoff between cpu speed and looks
 # UPDATEREGIONS paints in update clipping region only for better look and feel
@@ -45,7 +45,7 @@ TOPDIR := $(shell pwd)
 
 ifdef ELKS
 CC = bcc -0 -ansi -Dconst= -Dvolatile=
-INC = -I$(TOPDIR) -I/usr/bcc/include -I/home/georg/elks-dev/OS-build/elks/include
+INC = -I$(TOPDIR) -I/usr/bcc/include -I../../elks/include
 CFLAGS = -DELKS=1 -DUNIX=1 -DDEBUG=1 $(INC) -O
 MATHLIB =
 xSERMOUSE=1
