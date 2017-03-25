@@ -49,9 +49,9 @@ COMB360_DEL	= sbin/partype sbin/ramdisk bin/clock
 # Compile everything.
 
 all:
-	@if [ ! -e $(ELKS_DIR)/include/linuxmt/config.h ]; \
+	@if [ ! -e $(ELKS_DIR)/include/linuxmt/autoconf.h ]; \
 	then echo -e "\n*** ERROR: You must build the ELKS kernel first ***\n" >&2; exit 1; fi
-	+@for i in $(DIRS); do make -C $$i all ; done
+	+@for DIR in $(DIRS); do $(MAKE) -C $$DIR all; done
 
 images_clean:
 	-umount -d $(IMAGES) 2>/dev/null || true
@@ -62,7 +62,7 @@ clean:
 	-rm -f $(IMAGES) core images.zip images.tar.*
 	-rm -rf $(ROOTDIR)
 	-rm -f *~
-	-@for i in $(DIRS) $(DONTUSE) $(DONTWORK); do make -C $$i clean ; done
+	-@for DIR in $(DIRS) $(DONTUSE) $(DONTWORK); do $(MAKE) -C $$DIR clean; done
 
 ###############################################################################
 #
@@ -75,21 +75,21 @@ include $(BASEDIR)/Make.rules
 # Create relevant parts of ELKS package.
 
 $(ELKS_DIR)/.config:
-	make -C $(ELKS_DIR) config
+	$(MAKE) -C $(ELKS_DIR) config
 
 $(ELKS_DIR)/arch/i86/boot/Image: $(ELKS_DIR)/.config
-	make -C $(ELKS_DIR)
+	$(MAKE) -C $(ELKS_DIR)
 
 ###############################################################################
 #
 # Create relevant parts of other packages.
 
 $(FD_BSECT):
-	make -C $(MINIX_BOOT)
-	make -C $(MINIX_BOOT) bootbin
+	$(MAKE) -C $(MINIX_BOOT)
+	$(MAKE) -C $(MINIX_BOOT) bootbin
 
 $(KHELPER):
-	make -C $(MINIX_BOOT) minix_elks.bin
+	$(MAKE) -C $(MINIX_BOOT) minix_elks.bin
 
 ###############################################################################
 #
@@ -117,7 +117,7 @@ _build_nonbootable_target: _build_target
 _build_target: all banner check_id _populate_target
 
 _populate_target: _mount_target
-	for i in $(DIRS); do make -C $$i $(TARGET_RFS); done >/dev/null
+	for i in $(DIRS); do $(MAKE) -C $$i $(TARGET_RFS); done >/dev/null
 	[ -e $(TARGET_MNT)/bin/ash ] && ln -sf ash $(TARGET_MNT)/bin/sh || \
 		ln -sf sash $(TARGET_MNT)/bin/sh
 	$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(TARGET_MNT)/etc/issue
