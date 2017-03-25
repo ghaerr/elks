@@ -90,8 +90,7 @@ VGA_open(PSD psd)
 
 #if ELKS
 	/* disallow console switching while in graphics mode*/
-	if(ioctl(0, DCGET_GRAPH) != 0)
-		return -1;
+	ioctl(0, DCGET_GRAPH); /*continue if failed*/
 #endif
 
 #if HWINIT

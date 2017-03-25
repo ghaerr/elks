@@ -15,9 +15,14 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/stat.h>
+#ifndef __linux__ 
+#include <linuxmt/socket.h>
+#include <linuxmt/un.h>
+#else
 #include <sys/socket.h>
 #include <sys/un.h>
+#endif
+#include <sys/stat.h>
 #include "serv.h"
 
 extern	int		un_sock;
@@ -1275,7 +1280,7 @@ void GsMoveCursorWrapper(void)
 }
 
 /*
- * This is an array containting pointers to all of the above wrappers, in the same order as
+ * This is an array containing pointers to all of the above wrappers, in the same order as
  * the GrNum* #defines in nano-X.h. All the parser has to do is range check the function
  * number it gets from the client, and then call the relevant array member. The wrappers
  * do the work of reading the arguments and parsing them into the correct types and structures,
@@ -1442,9 +1447,9 @@ int GsRead(int fd, void *buf, int c)
 	n = 0;
 
 	while(n < c) {
-		e = read(fd, (buf + n), (c - n));
+		e = read(fd, ((char *)buf + n), (c - n));
 		if(e <= 0) {
-printf("GsRead: read failed %d %x %d: %d\r\n", e, buf+n, c-n, errno);
+printf("GsRead: read failed %d %x %d: %d\r\n", e, ((char *)buf +n), c-n, errno);
 			GsClose();
 			return -1;
 		}

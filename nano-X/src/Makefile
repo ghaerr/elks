@@ -27,7 +27,7 @@ NANOX=1
 # uncomment the following line to link the nano-X application
 # with the server.  This is required for ELKS, if no network is present,
 # or for speed or debugging.  This affects the nano-X server only.
-LINK_APP_INTO_SERVER=1
+xLINK_APP_INTO_SERVER=1
 
 # Window move algorithms, change for tradeoff between cpu speed and looks
 # UPDATEREGIONS paints in update clipping region only for better look and feel
@@ -45,7 +45,7 @@ TOPDIR := $(shell pwd)
 
 ifdef ELKS
 CC = bcc -0 -ansi -Dconst= -Dvolatile=
-INC = -I$(TOPDIR) -I/usr/bcc/include -I../../elks/include
+INC = -I$(TOPDIR) -I/usr/bcc/include -I/home/georg/elks-dev/OS-build/elks/include
 CFLAGS = -DELKS=1 -DUNIX=1 -DDEBUG=1 $(INC) -O
 MATHLIB =
 xSERMOUSE=1
@@ -77,9 +77,10 @@ xNANOXFILES += $(NANOXDEMO) $(STUBFILES)
 NANOXFILES += $(STUBFILES)
 ALL += nano-X
 else
+xNANOXDEMO =demos/nanox/demo2.o
 NANOXFILES += $(NETFILES)
 DEMOLIBS += libnano-X.a
-ALL += libnano-X.a nano-X demo
+ALL += libnano-X.a nano-Xd demo
 endif
 
 endif
@@ -144,5 +145,17 @@ nano-X: $(SERVFILES) $(NANOXFILES) $(NANOXDEMO)
 	$(CC) $(CFLAGS) $(NANOXFILES) demos/nanox/world.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/world $(MATHLIB)
 	cp demos/nanox/world.map bin/world.map
 
+nano-Xd: $(SERVFILES) $(NANOXFILES)
+	$(CC) $(CFLAGS) $(NANOXFILES) $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nano-X $(MATHLIB)
+
+#only a few demos work in client/server mode	
 demo: $(NANOXDEMO) libnano-X.a
-	$(CC) $(CFLAGS) $(NANOXDEMO) $(DEMOLIBS) -o demo
+#	$(CC) $(CFLAGS) $(NANOXDEMO) $(DEMOLIBS) -o bin/demo
+	$(CC) $(CFLAGS) demos/nanox/demo.o $(DEMOLIBS) -o bin/demo $(MATHLIB)
+	$(CC) $(CFLAGS) demos/nanox/landmine.o $(DEMOLIBS) -o bin/landmine $(MATHLIB)
+#	$(CC) $(CFLAGS) demos/nanox/nterm.o $(DEMOLIBS) -o bin/nterm $(MATHLIB)	
+#	$(CC) $(CFLAGS) demos/nanox/nclock.o $(DEMOLIBS) -o bin/nclock $(MATHLIB)	
+	$(CC) $(CFLAGS) demos/nanox/demo2.o $(DEMOLIBS) -o bin/demo2 $(MATHLIB)
+#	$(CC) $(CFLAGS) demos/nanox/world.o $(DEMOLIBS) -o bin/world $(MATHLIB)
+#	cp demos/nanox/world.map bin/world.map
+	cp demos/demo.sh bin/demo.sh	

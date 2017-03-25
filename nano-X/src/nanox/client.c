@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <signal.h>
-#if 1
+#ifndef __linux__ 
 #include <linuxmt/socket.h>
 #include <linuxmt/un.h>
 #else
@@ -19,7 +19,7 @@
 #include <sys/un.h>
 #include <sys/select.h>
 #endif
-#include "../nano-X.h"
+#include "nano-X.h"
 #include "serv.h"
 
 static int sock;	/* The network socket descriptor */
@@ -31,8 +31,9 @@ int	GrErrno;	/* The Nano-X equivalent of errno */
  * to the server, describe the error, and then exit.  This error function
  * will only be called when the client asks for events.
  */
+#ifdef __linux__ 
 static GR_ERROR_FUNC GrErrorFunc = &GrDefaultErrorHandler;
-
+#endif
 /*
  * Read n bytes of data from the server into block *b.
  * Returns 0 on success or -1 on failure.
@@ -73,8 +74,11 @@ static int GrDeliverErrorEvent(void)
 
 	if(GrReadBlock(&err, sizeof(err)) == -1)
 		return -1;
-
+#ifndef __linux__ 
+	GrDefaultErrorHandler(err);
+#else	
 	GrErrorFunc(err);
+#endif	
 
 	return 0;
 }
@@ -129,24 +133,18 @@ int GrOpen(void)
 	struct sockaddr_un name;
 	size_t size;
 
-			printf("GrOpen called\n");
-			sleep(30);
 	
 	if(!sock)
-		if((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == < 0) {
-			printf("socket failed (%d)\n", sock);
-			sleep(3);
+		if((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 			sock = 0;
 			return -1;
 		}
 
 	name.sun_family = AF_UNIX;
 	strcpy(name.sun_path, GR_NAMED_SOCKET);
-	size = (offsetof(struct sockaddr_un, sun_path) +
-		strlen(name.sun_path) + 1);
-	if(connect(sock, (struct sockaddr *) &name, size) == -1) {
-		printf("connect failed\n");
-		return -1; }
+	size = sizeof(name); //(offsetof(struct sockaddr_un, sun_path) + strlen(name.sun_path) + 1);
+	if(connect(sock, (struct sockaddr *) &name, size) == -1)
+		return -1;
 
 	if(GrSendByte(GrNumOpen) != GrRetOK)
 		return -1;
@@ -229,9 +227,13 @@ void GrDefaultErrorHandler(GR_EVENT_ERROR err)
  */
 GR_ERROR_FUNC GrSetErrorHandler(GR_ERROR_FUNC func)
 {
+#ifndef __linux__ 
+	GR_ERROR_FUNC temp = GrDefaultErrorHandler;
+#else  
 	GR_ERROR_FUNC temp = GrErrorFunc;
 	if(!func) GrErrorFunc = &GrDefaultErrorHandler;
 	else GrErrorFunc = func;
+#endif	
 	return temp;
 }
 

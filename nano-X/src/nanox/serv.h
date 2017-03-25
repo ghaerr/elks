@@ -336,7 +336,7 @@ extern	GR_FONT_INFO	curfont;		/* current font information */
  * The filename to use for the named socket. If we ever support multiple
  * servers on one machine, the last digit will be that of the FB used for it.
  */
-#define GR_NAMED_SOCKET "/var/nanox"
+#define GR_NAMED_SOCKET "/var/uds"
 
 /*
  * The network interface version number. Increment this if you make a change

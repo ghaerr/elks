@@ -40,9 +40,26 @@ with the name nano_hdd in the elkscmd directory and copy all demo files to it.
 To run the modified full3 image, run the "qemu.sh" script in the "src" directory,
 to run the hard disk image, run the "qemu_hdd.sh" script in the "src" directory.
 
+Microwindows will also allow to compile the package to a separate graphics server
+that the applications will use via Unix domain sockets. Therefore enable Unix
+domain sockets for that in menuconfig. To save space disable the ne2k driver.
+Then change the parameter in line 30 of the Makefile to "xLINK_APP_INTO_SERVER=1". 
+This undefines this parameter and will get Microwindows to compile a separate server.
+
+If you start "nano-X &" on the command line to run the server in the background it
+will switch the screen into graphics mode and clear it to black. Then you cannot
+enter the name of the demo to run in text mode. So you have to start both on the 
+command line e.g.: "nano-X &; demo2". There is also a demo.sh script which will
+start the nano-X server plus the demo application. Please try the landmine game
+right after booting ELKS. If you get the message "no space left on device" please 
+reload qemu and try again.
+
+You do not have to enable the nano sockets with ELKS for that, it will use the 
+Unix domain sockets which ELKS now supports.
+
 The original package and further information about Microwindows can be downloaded
 from this site: www.microwindows.org.
 
-18th of March 2017 Georg Potthast
+25th of March 2017 Georg Potthast
 
 

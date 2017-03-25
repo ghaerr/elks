@@ -37,7 +37,7 @@ typedef unsigned short GR_FUNC;	/* function codes */
 typedef int GR_ERROR;		/* error value */
 typedef short GR_EVENT_TYPE;	/* event types */
 typedef unsigned long GR_EVENT_MASK;	/* event masks */
-typedef char GR_FUNC_NAME[20];	/* function name */
+typedef char GR_FUNC_NAME[21];	/* function name */
 typedef void (*GR_ERROR_FUNC)();	/* error function */
 
 /* Pixel packings within words. */

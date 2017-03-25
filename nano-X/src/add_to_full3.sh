@@ -1,3 +1,5 @@
+#!/bin/bash
+
 set +x
  
 echo "Adding nano-X demos to ELKS full3 image"
