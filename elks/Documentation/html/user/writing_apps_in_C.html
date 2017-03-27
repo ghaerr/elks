@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice 4.1.2  (Win32)">
+	<META NAME="AUTHOR" CONTENT="Georg Potthast">
+	<META NAME="CREATED" CONTENT="20170105;19172240">
+	<META NAME="CHANGEDBY" CONTENT="Georg Potthast">
+	<META NAME="CHANGED" CONTENT="20170326;17511267">
+	<STYLE TYPE="text/css">
+	<!--
+		@page { margin: 2cm }
+		TD P { margin-bottom: 0cm }
+		P { margin-bottom: 0.21cm }
+		PRE.cjk { font-family: "NSimSun", monospace }
+		H2 { margin-bottom: 0.21cm }
+		H2.western { font-family: "Arial", sans-serif; font-size: 14pt; font-style: italic }
+		H2.cjk { font-family: "Microsoft YaHei"; font-size: 14pt; font-style: italic }
+		H2.ctl { font-family: "Lucida Sans"; font-size: 14pt; font-style: italic }
+		A:link { so-language: zxx }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="de-DE" DIR="LTR">
+<P STYLE="page-break-before: always"><BR><BR>
+</P>
+<TABLE WIDTH=718 BORDER=0 CELLPADDING=4 CELLSPACING=0>
+	<COL WIDTH=710>
+	<TR>
+		<TD WIDTH=710 VALIGN=TOP>
+			<H2 CLASS="western"><SPAN STYLE="font-style: normal">Writing
+			applications for ELKS in C</SPAN></H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">ELKS
+			and application programs for ELKS are cross-compiled on a standard
+			Linux system with the dev86 package. This contains the bcc C
+			compiler, the ld86 linker, the as86 assembler and the ar86
+			archiver. You can download the dev86 package from the repository
+			of your Linux distribution or download it here:
+			<A HREF="https://github.com/jbruchon/dev86">https://github.com/jbruchon/dev86</A>
+			and compile and install it from this source code.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			package also includes the elksemu program which allows 8086 ELKS
+			programs to be run under Linux-i386. These programs can be
+			compiled using the bcc compiler. However, elksemu will not run on
+			64bit Linux distributions. Therefore test the programs using Qemu
+			instead as described in the next chapter.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">For
+			a start let's compile a &bdquo;hello world&ldquo; program and run
+			that in ELKS. Here is the code:</FONT></P>
+			<PRE CLASS="western">#include&lt;stdio.h&gt;
+
+int main() {
+        printf(&quot;Hello World\n&quot;);
+        return 0;
+}</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Copy and save this as hello.c with
+			a text editor. Then enter </FONT>
+			</P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">bcc -ansi hello.c -o hello</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">We will always use the -ansi switch
+			because otherwise bcc will assume K&amp;R style. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">To
+			run this program in ELKS there are three alternatives. You can
+			load an existing ELKS image as a loop device on Linux and copy the
+			new executable to this image. Then run the image using qemu. Or
+			you make a directory in the ELKS source code, write a Makefile for
+			that and compile ELKS including your program. Finally, you could
+			set up an ftp server on your host and use the ftpget progam on
+			ELKS to download the executable to ELKS and run it there.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">It
+			is described now, how to use the loop device to add the executable
+			to the directory usr/bin in an existing ELKS image file named
+			full3. For this you can make a script with the following lines:</FONT></P>
+			<PRE CLASS="western">set -x
+cd ..
+mount -o loop full3 floppy1
+cp bccdev/hello floppy1/usr/bin
+umount floppy1
+cd bccdev</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">This assumes that you are
+			developing in the directory &bdquo;bccdev&ldquo; and that the
+			full3 image file is in the directory above that. Also in the
+			directory above there has to be the floppy1 directory which will
+			be used for the loop device. You have to execute the script with
+			&bdquo;sudo&ldquo; !</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">You
+			may wonder why Linux can access this floppy image since it is
+			using the Minix file system which is the only file system ELKS
+			supports. The reason is that Linux uses the Minix file system for
+			floppy disks as well.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">After
+			running the script call qemu to run ELKS and execute your program:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">qemu-system-i386 -fda ../full3</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Log in as &bdquo;root&ldquo; and
+			type cd /usr/bin and execute the hello program in there. If you
+			have to repeat this frequently while developing your program, you
+			can put these commands into the &bdquo;.profile&ldquo; script for
+			root. Then your program will be run as soon as you log in as root.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">bcc
+			generates programs with either up to 64k or 128k in size.
+			Currently ELKS can only load programs generated for 128k. In the
+			case of 64k both the code and data are in the same segment while
+			if you select 128k it will be up to 64k of code and up to 64k of
+			data and stack in two separate segments. This is determined with
+			the -i switch. If you do not use that, bcc will pass this to the
+			linker as default and generate 128k programs. The programs that
+			are included in ELKS therefore are 128k programs. However, if you
+			enter &bdquo;bcc -i&ldquo; then bcc will not pass &bdquo;-i&ldquo;
+			to the linker and thus generate 64k programs. There is also the -H
+			switch which bcc will pass on to the linker. This shall determine
+			the top of the heap address which is the initial stack address.
+			You can enter this in hex as e.g. 0xF800.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">If
+			an error number is returned you can look that up in the file
+			&bdquo;elks\include\arch\errno.h&ldquo;.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			bcc compiler has been ported to DOS so you can also develop ELKS
+			applications in DOS or a Windows 32bit DOS box:
+			<A HREF="https://ftp.gwdg.de/pub/misc/freedos/files/devel/c/bcc/">https://ftp.gwdg.de/pub/misc/freedos/files/devel/c/bcc/</A></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">This
+			includes doselks.com to run the compiled programs. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Alfonso
+			Martone found a way to convert DOS Turbo-C programs to enable
+			these to run with ELKS:
+			<A HREF="http://www.alfonsomartone.itb.it/fhlvnr.html">http://www.alfonsomartone.itb.it/fhlvnr.html</A></FONT>
+			<FONT FACE="Arial, sans-serif">For that he developed the exe2elks
+			DOS utility program and a small libc without DOS system calls. The
+			exe2elks program may work for DOS TASM assembler programs as well
+			if you get TLINK to generate a map file.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">26</FONT><SUP><FONT FACE="Arial, sans-serif">th</FONT></SUP><FONT FACE="Arial, sans-serif">
+			of March 2017 Georg Potthast</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-style: normal"><BR><BR>
+			</P>
+			<P><BR>
+			</P>
+		</TD>
+	</TR>
+</TABLE>
+<P><BR><BR>
+</P>
+</BODY>
+</HTML>

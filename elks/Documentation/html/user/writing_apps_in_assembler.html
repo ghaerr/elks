@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice 4.1.2  (Win32)">
+	<META NAME="AUTHOR" CONTENT="Georg Potthast">
+	<META NAME="CREATED" CONTENT="20170105;19172240">
+	<META NAME="CHANGEDBY" CONTENT="Georg Potthast">
+	<META NAME="CHANGED" CONTENT="20170326;18003120">
+	<STYLE TYPE="text/css">
+	<!--
+		@page { margin: 2cm }
+		TD P { margin-bottom: 0cm }
+		P { margin-bottom: 0.21cm }
+		PRE.cjk { font-family: "NSimSun", monospace }
+		H2 { margin-bottom: 0.21cm }
+		H2.western { font-family: "Arial", sans-serif; font-size: 14pt; font-style: italic }
+		H2.cjk { font-family: "Microsoft YaHei"; font-size: 14pt; font-style: italic }
+		H2.ctl { font-family: "Lucida Sans"; font-size: 14pt; font-style: italic }
+		A:link { so-language: zxx }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="de-DE" DIR="LTR">
+<P STYLE="page-break-before: always"><BR><BR>
+</P>
+<TABLE WIDTH=718 BORDER=0 CELLPADDING=4 CELLSPACING=0>
+	<COL WIDTH=710>
+	<TR>
+		<TD WIDTH=710 VALIGN=TOP>
+			<H2 CLASS="western"><SPAN STYLE="font-style: normal">Writing
+			applications for ELKS in assembler</SPAN></H2>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">If
+			you want to compile an assembler program with as86 here is an
+			example:</FONT></P>
+			<PRE CLASS="western">.text
+.global _main
+_main:
+push es
+push ax
+!write ABC at the left border of line 20
+      mov ax,#0xb800
+      mov es,ax
+      seg es
+      mov [3200],#0x41
+      seg es
+      mov [3201],#0x4B
+      seg es
+      mov [3202],#0x42
+      seg es
+      mov [3203],#0x2E
+      seg es
+      mov [3204],#0x43
+      seg es
+      mov [3205],#0x1f
+pop ax      
+pop es   
+
+xor bx,bx
+ret
+.data
+.bss</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Save this code as the file abc.s.
+			Then you can compile it with these commands:</FONT></P>
+			<PRE CLASS="western">as86 -o abc.o abc.s
+bcc -o abc abc.o</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Instead of the command &bdquo;bcc
+			-o abc abc.o&ldquo; you can also invoke the ld86 linker and enter:</FONT></P>
+			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">ld86 -i -o abc abc.o</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">You can reduce the memory
+			requirements of a program if you modify the total program size
+			(chmem) in the header with a hex editor. The abc.s program above
+			is linked to require 32.752 bytes by bcc/ld86. If you set the size
+			to 1.024 bytes instead it will run just as well. ELKS considers a
+			memory requirement below 1.024 bytes invalid and will refuse to
+			load the program with the message &bdquo;out of space&ldquo;. See
+			the check in fs/exec.c. The c program hello.c above is linked to
+			require 33.520 bytes and can be reduced to 3.984 bytes instead.
+			Just add the code, data and bss sections together and add 256
+			bytes for the stack. You will have to increase the stack size for
+			a larger program.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Unlike
+			gas the as86 assembler has Intel syntax like masm or tasm. </FONT>
+			</P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">It
+			is also possible to use NASM with the -f 86 switch to generate an
+			object file for ELKS. Here is an example:</FONT></P>
+			<PRE CLASS="western">section .text                   ;section declaration
+global _main                            ;ELKS needs main
+_main:
+                                ;write our string to stdout
+
+    mov     dx,len              ;3rd arg: message length
+    mov     cx,msg              ;2nd arg: pointer to message to write
+    mov     bx,1                ;1st arg: file handle (stdout)
+    mov     ax,4                ;system call number (sys_write)
+    int     0x80                ;call kernel
+
+                                ;exit now
+    mov     bx,0                ;1st syscall arg: exit code
+    mov     ax,1                ;system call number (sys_exit)
+    int     0x80                ;call kernel
+
+section .data                   ;section declaration
+
+msg db      &quot;Hello, world!&quot;,0xa ;the message string
+len equ     $ - msg             ;length of string</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Save this code as the file hello.s.
+			Then you can compile it with these commands:</FONT></P>
+			<PRE CLASS="western">nasm -f as86 -o hello.o hello.s
+bcc -o hello hello.o</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Transfer the executable hello to
+			ELKS as described above and see the message on the screen.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">You
+			cannot just bang any assembler program for NASM with the switch -f
+			as86 to ELKS, you need to make a few modifications. See the
+			e3-16.asm code for details.</FONT></P>
+			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
+			system calls implemented by ELKS are listed in
+			elks/Documentation/function.lst. The system call numbers are
+			identical to Linux. So you will find these numbers on this page:
+			<A HREF="http://asm.sourceforge.net/syscall.html">http://asm.sourceforge.net/syscall.html</A>
+			and further details here:
+			<A HREF="https://www.tutorialspoint.com/assembly_programming/assembly_system_calls.htm">https://www.tutorialspoint.com/assembly_programming/assembly_system_calls.htm</A></FONT></P>
+			<P STYLE="margin-bottom: 0.5cm; font-style: normal"><FONT FACE="Arial, sans-serif">26</FONT><SUP><FONT FACE="Arial, sans-serif">th</FONT></SUP><FONT FACE="Arial, sans-serif">
+			of March 2017 Georg Potthast</FONT></P>
+			<P><BR>
+			</P>
+		</TD>
+	</TR>
+</TABLE>
+<P><BR><BR>
+</P>
+</BODY>
+</HTML>
