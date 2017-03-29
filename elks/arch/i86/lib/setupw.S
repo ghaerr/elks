@@ -12,7 +12,11 @@ _setupw:
 	pop	dx
 
 #ifndef CONFIG_ROMCODE
+#ifndef REL_SYS
   INITSEG = DEF_INITSEG
+#else
+  INITSEG = REL_SETUPSEG
+#endif
 #else
   INITSEG = CONFIG_ROM_SETUP_DATA
 #endif

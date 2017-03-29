@@ -63,6 +63,18 @@
 #define DEF_SETUPSEG	DEF_INITSEG + 0x20
 #define DEF_SYSSIZE	0x2F00
 
+#if !defined(CONFIG_286PMODE) && !defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SIBO)
+#define REL_SYS 1
+#endif
+
+#ifdef CONFIG_BLK_DEV_BIOS
+#define REL_SYSSEG	0xA0
+#define REL_SETUPSEG	0x80
+#else
+#define REL_SYSSEG	0x80
+#define REL_SETUPSEG	0x60
+#endif
+
 /* internal svga startup constants */
 #define VGA_NORMAL	0xffff	/* 80x25 mode */
 #define VGA_EXTENDED	0xfffe	/* 80x50 mode */

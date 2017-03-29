@@ -50,7 +50,11 @@
 
 /* #define MULT_SECT_RQ */
 
+#ifdef REL_SYS
+#define BUFSEG 0x60
+#else
 #define BUFSEG 0x800
+#endif
 
 static int bioshd_ioctl(struct inode *, struct file *,
 	unsigned int, unsigned int);
@@ -513,7 +517,7 @@ static struct file_operations bioshd_fops = {
 int init_bioshd(void)
 {
     register struct gendisk *ptr;
-    int count = 0;
+    int count;
 
 #ifndef CONFIG_SMALL_KERNEL
     printk("hd Driver Copyright (C) 1994 Yggdrasil Computing, Inc.\n"
