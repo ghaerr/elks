@@ -4,120 +4,97 @@
  
 #include <arch/asm-offsets.h>
 
-#ifndef S_SPLINT_S
-#asm
-
-    .text
+	.text
 
 /* void memcpy_fromfs(void *daddr, void *saddr, size_t len);*/
-    .globl  _memcpy_fromfs
+	.globl	_memcpy_fromfs
 
 _memcpy_fromfs:
-
-    push    bp
-    mov	    bp,sp
-    mov	    bx,_current
-    mov	    dx,es
-    mov	    ax,ds
-    mov	    es,ax
-    mov	    ds,TASK_USER_DS[bx]
-    mov	    ax,di
-    mov	    di,4[bp]
-    mov	    bx,si
-    mov	    si,6[bp]
-    mov	    cx,8[bp]
-    cld
-    rep
-    movsb
-    mov	    si,bx
-    mov	    di,ax
-    mov	    ax,es
-    mov	    ds,ax
-    mov	    es,dx
-    pop	    bp
-    ret
+	mov	ax,si
+	mov	dx,di
+	mov	bx,sp
+	mov	di,2[bx]
+	mov	si,4[bx]
+	mov	cx,6[bx]
+	mov	bx,_current
+	mov	ds,TASK_USER_DS[bx]
+	cld
+	rep
+	movsb
+	mov	di,dx
+	mov	si,ax
+	mov	ax,ss
+	mov	ds,ax
+	ret
 
 /* void memcpy_tofs(void *daddr, void *saddr, size_t len);*/
-    .globl  _memcpy_tofs
+	.globl	_memcpy_tofs
 
 _memcpy_tofs:
-
-    push    bp
-    mov	    bp,sp
-    mov	    bx,_current
-    mov	    dx,es
-    mov	    es,TASK_USER_DS[bx]
-    mov	    ax,di
-    mov	    di,4[bp]
-    mov	    bx,si
-    mov	    si,6[bp]
-    mov	    cx,8[bp]
-    cld
-    rep
-    movsb
-    mov	    si,bx
-    mov	    di,ax
-    mov	    es,dx
-    pop	    bp
-    ret
+	mov	ax,si
+	mov	dx,di
+	mov	bx,sp
+	mov	di,2[bx]
+	mov	si,4[bx]
+	mov	cx,6[bx]
+	mov	bx,_current
+	mov	es,TASK_USER_DS[bx]
+	cld
+	rep
+	movsb
+	mov	di,dx
+	mov	si,ax
+	mov	ax,ss
+	mov	es,ax
+	ret
 
 /* void fmemcpy(dseg, dest, sseg, src, size); */
-    .globl  _fmemcpy
+	.globl	_fmemcpy
 
 _fmemcpy:
-
-    push    bp
-    mov	    bp,sp
-    push    ds
-    mov	    dx,es
-    mov	    es,4[bp]
-    mov	    ax,di
-    lds	    di,6[bp]
-    mov	    bx,si
-    mov	    si,10[bp]
-    mov	    cx,12[bp]
-    cld
-    rep
-    movsb
-    mov	    si,bx
-    mov	    di,ax
-    mov	    es,dx
-    pop	    ds
-    pop	    bp
-    ret
+	mov	ax,si
+	mov	dx,di
+	mov	bx,sp
+	mov	es,2[bx]
+	mov	si,8[bx]
+	mov	cx,10[bx]
+	lds	di,4[bx]
+	cld
+	rep
+	movsb
+	mov	di,dx
+	mov	si,ax
+	mov	ax,ss
+	mov	ds,ax
+	mov	es,ax
+	ret
 
 /* int strlen_fromfs(void *saddr); */
 
     /*  scasb uses es:di, not ds:si, so it is not necessary
      *  to save and restore ds
      */
-    .globl  _strlen_fromfs
+	.globl	_strlen_fromfs
 
 _strlen_fromfs:
+	mov	bx,_current
+	mov	es,TASK_USER_DS[bx]
+	mov	dx,di
+	mov	bx,sp
+	mov	di,2[bx]
+	xor	al,al		! search for NULL byte
+	cld
+	mov	cx,#-1
+	repne
+	scasb
+	mov	ax,ss
+	mov	es,ax
+	mov	ax,di		! calc len +1
+	mov	di,dx
+	sub	ax,2[bx]
+	dec	ax
+	ret
 
-    push    bp
-    mov	    bp,sp
-    mov	    bx,_current
-    mov	    dx,es
-    mov	    es,TASK_USER_DS[bx]	! source segment
-    mov	    bx,di
-    mov	    di,4[bp]		! source address
-    xor	    al,al		! search for NULL byte
-    cld
-    mov	    cx,#-1
-    repne
-    scasb
-    sub	    di,4[bp]		! calc len +1
-    dec	    di
-    mov	    ax,di		! save in local var ds
-    mov	    di,bx
-    mov	    es,dx
-    pop	    bp
-    ret
-
-    .data
-    .extern _current
-
-#endasm
-#endif
+	.data
+	.extern	_current
 

@@ -12,17 +12,17 @@ confusing :-)
 BOOT SECTOR:
 
 arch/i86/boot/
-bootsect.S	(first 512 bytes on disk; loaded by the PC's BIOS at 07C0:0)
-		moves itself to 9000:0 and jumps there
-		loads setup.S at 9020:0
-		loads kernel at 1000:0
-		jumps to setup.S
+bootsect.S	(first 512 bytes on disk; loaded by the PC's BIOS at BOOTSEG:0 (0x07C0:0))
+		moves itself to INITSEG:0 (0x100:0) and jumps to INITSEG:go
+		loads setup.S at INITSEG:0x200 (= INITSEG+0x20:0 = 0120:0)
+		loads kernel at SYSSEG:0 (1000:0)
+		jumps to setup.S (INITSEG+0x20:0)
 
 SETUP CODE:
 
 setup.S		gets some system params, stores them over the boot block
 		sets up code and data segments for kernel
-		jumps to 1002:0
+		jumps to SYSSEG+2:0 (1002:0)
 
 (Note: .S files are preprocessed to .s before being assembled)
 

@@ -61,7 +61,17 @@
 !	0x50:	zero terminated string containing the cpuid, 13 bytes
 !	0x80:	BIOS data for harddisk 0/1, 12 bytes
 !	0x8c:	data for floppy disk 0/1, 12 bytes
-
+!	...
+!	0x1ef:	SETUPSEG
+!	0x1f1:	SETUPSECS
+!	0x1f2:	ROOTFLAGS
+!	0x1f4:	SYSSIZE
+!	0x1f6:	SWAP_DEV
+!	0x1f8:	RAMDISK
+!	0x1fa:	SVGA_MODE
+!	0x1fc:	ROOT_DEV
+!	0x1fe:	0xAA55 = boot_flag
+!
 ! NOTE! These had better be the same as in bootsect.s!
 
 #define __ASSEMBLY__
