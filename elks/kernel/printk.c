@@ -94,7 +94,7 @@ static void numout(unsigned long v, int width, int base, int useSign,
 
     bp2 = Upper ? hex_string : hex_lower;
     do {
-	*--bp = *(bp2 + (v % base));	/* Store digit */
+	*--bp = *(bp2 + (int)(v % base));	/* Store digit */
     } while ((v /= base));
 
     if (useSign && !Zero)
@@ -129,9 +129,8 @@ static void vprintk(register char *fmt, va_list p)
 		continue;
 	    }
 
-	    width = zero = 0;
-	    if (c == '0')
-		zero++;
+	    width = 0;
+	    zero = (c == '0');
 	    while ((tmp = c - '0') <= 9) {
 		width = width*10 + tmp;
 		c = *fmt++;
@@ -207,9 +206,9 @@ void panic(char *error, ...)
     va_start(p, error);
     vprintk(error, p);
     va_end(p);
-    kputs("\napparent call stack:\n");
-    kputs("Line: Addr    Parameters\n");
-    kputs("~~~~: ~~~~    ~~~~~~~~~~\n");
+    kputs("\napparent call stack:\n"
+	  "Line: Addr    Parameters\n"
+	  "~~~~: ~~~~    ~~~~~~~~~~\n");
 
     do {
 	printk("%4u: %04P =>", i, bp[1]);
