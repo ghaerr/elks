@@ -3,8 +3,6 @@
  *
  *	FIXME: Only supports IRQ 0x13 for now. Needs to do 0x10 later!
  *
- *   9/1999  place the CS-Variable in a seperated RAM-Segment for
- *           ROM version. Christian Mardm"oller (chm@kdt.de)
  */
 
 #include <linuxmt/config.h>
@@ -13,23 +11,7 @@
  *	Quick drop into assembler for this one.
  */
 
-#ifndef S_SPLINT_S
-#asm
 	.text
-/*
- *	stashed_ds lives in the kernel cs or we can never recover it...
- *
- * In ROM we cant store anything! The space for the extrasegment
- * is managed in irqtab.c where I've found this mode first
- * ChM 10/99
- */
-
-#ifdef CONFIG_ROMCODE
-#define stashed_ds	[0]
-#else 
-	.extern stashed_ds
-#endif	
-	
 	.globl  _call_bios
 
 _call_bios:
@@ -43,7 +25,7 @@ _call_bios:
 	push si
 	push di
 
-! DS already saved in stashed_ds
+! DS also in SS
 
 	mov bx,4[bp]
 
@@ -72,30 +54,22 @@ _call_bios:
 	int #0x13
 
 !	Now recover the results
-
 !	Make some breathing room
 
 	pushf
 	push ds
 	push bx
 
-!	Stack is now returned FL, BX, DS
-
+!	Stack is now returned FL, DS, BX
 !	Recover our DS segment
 
-#ifdef CONFIG_ROMCODE
-        mov bx,#CONFIG_ROM_IRQ_DATA
-        mov ds,bx       ;we can use ds for one fetch
-#else
-	seg cs		
-#endif
-        mov ds,stashed_ds  ! the org DS of kernel
+	push	ss
+	pop	ds
 
 ! ***** We can now use the bios data table again *****
 
 	mov bx,sp
-	seg ss
-	mov bx,18[bx]
+	mov bx,18[bx]      ! Load BX with table address
 
 	mov 2[bx],ax       ! Save the old AX
 	pop 4[bx]          ! Save the old BX
@@ -116,6 +90,3 @@ _call_bios:
 	popf
 	pop bp
 	ret
-
-#endasm
-#endif

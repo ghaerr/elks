@@ -15,21 +15,18 @@
 !
 
 _strlen:			! needs more testing!
-	push	bp
-	mov	bp,sp
+	mov	bx,sp
 	push	di
-	mov	dx,[bp+4]
-	mov	di,dx
+	mov	di,2[bx]
 	xor	al,al
 	cld			! so di increments not decrements
 	mov	cx,#-1		! maximum loop count
 	repne			! while (cx) {
 	scasb			!     cx--; if (al - [es:di++] == 0) break;}
-	sub	di,dx
 	mov	ax,di
+	sub	ax,2[bx]
 	dec	ax
 	pop	di
-	pop	bp
 	ret
 
 !
@@ -39,22 +36,20 @@ _strlen:			! needs more testing!
 !
 
 _strcpy:
-	push	bp
-	mov	bp,sp
+	mov	bx,sp
 	push	di
 	push	si
-	mov	di,[bp+4]	! address of the destination string
-	mov	si,[bp+6]	! address of the source string
+	mov	di,2[bx]	! address of the destination string
+	mov	si,4[bx]	! address of the source string
 	cld
 
 copyon:	lodsb			! al = [ds:si++]
 	stosb			! [es:di++] = al
 	test	al,al
 	jnz	copyon
-	mov	ax,[bp+4]	! _strcpy returns a pointer to the destination string
+	mov	ax,2[bx]	! _strcpy returns a pointer to the destination string
 	pop	si
 	pop	di
-	pop	bp
 	ret
 
 !
@@ -64,12 +59,11 @@ copyon:	lodsb			! al = [ds:si++]
 !
 
 _strcmp:
-	push	bp
-	mov	bp,sp
+	mov	bx,sp
 	push	di
 	push	si
-	mov	si,[bp+4]	! address of the string 1
-	mov	di,[bp+6]	! address of the string 2
+	mov	si,2[bx]	! address of the string 1
+	mov	di,4[bx]	! address of the string 2
 	cld
 
 cmpon:	lodsb			! al = [ds:si++]
@@ -85,7 +79,6 @@ cmpend:	sbb	ax,ax		! strings differ
 
 cmpret:	pop	si
 	pop	di
-	pop	bp
 	ret
 
 !
@@ -93,16 +86,14 @@ cmpret:	pop	si
 !
 
 _memset:
-	push	bp
-	mov	bp,sp
+	mov	bx,sp
 	push	di
-	mov	di,[bp+4]	! address of the memory block
-	mov	ax,[bp+6]	! byte to write
-	mov	cx,[bp+8]	! loop count
+	mov	di,2[bx]	! address of the memory block
+	mov	ax,4[bx]	! byte to write
+	mov	cx,6[bx]	! loop count
 	cld
 	rep			! while (cx)
 	stosb			! 	cx--, [es:di++] = al
-	mov	ax,[bp+4]	! return value = start addr of block
+	mov	ax,2[bx]	! return value = start addr of block
 	pop	di
-	pop	bp
 	ret
