@@ -525,8 +525,8 @@ void print_bufmap_status(void)
 {
     int i;
 
-    printk("Current L1 buffer cache mappings :\n");
-    printk("L1 slot / Buffer # / Reference Count\n");
+    printk("Current L1 buffer cache mappings :\n"
+	    "L1 slot / Buffer # / Reference Count\n");
     for (i = 0; i < NR_MAPBUFS; i++) {
 	if (bufmem_map[i]) {
 	    printk("%u / %u / %u\n", i, bufmem_map[i]->b_num,

@@ -305,7 +305,7 @@ static void reset_bioshd(int drive)
 #endif
 }
 
-int seek_sector(int drive, char track, char sector)
+int seek_sector(int drive, int track, int sector)
 {
 
 /* i took this code from bioshd_open() where it replicates code used
@@ -417,9 +417,9 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	drivep->cylinders = 0;
 	count = 0;
 	do {
-	    if (seek_sector(target, track_probe[count] - 1, 1))
+	    if (seek_sector(target, (int)track_probe[count] - 1, 1))
 		break;
-	    drivep->cylinders = track_probe[count];
+	    drivep->cylinders = (int)track_probe[count];
 	} while (++count < 2);
 
 /* Next, probe for sector number. We probe on track 0, which is
@@ -430,9 +430,9 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	drivep->sectors = 0;
 	count = 0;
 	do {
-	    if (seek_sector(target, 0, sector_probe[count]))
+	    if (seek_sector(target, 0, (int)sector_probe[count]))
 		break;
-	    drivep->sectors = sector_probe[count];
+	    drivep->sectors = (int)sector_probe[count];
 	} while (++count < 5);
 
 	drivep->heads = 2;

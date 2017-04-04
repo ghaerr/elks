@@ -217,8 +217,8 @@ void iput(register struct inode *inode)
     if (inode) {
 	wait_on_inode(inode);
 	if (!inode->i_count) {
-	    printk("VFS: iput: trying to free free inode\n");
-	    printk("VFS: device %s, inode %u, mode=0%06o\n",
+	    printk("VFS: iput: trying to free free inode\n"
+		    "VFS: device %s, inode %u, mode=0%06o\n",
 		   kdevname(inode->i_rdev), inode->i_ino, inode->i_mode);
 	    return;
 	}

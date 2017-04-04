@@ -134,8 +134,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	cseg = mm_alloc((segext_t) ((mh.tseg + 15) >> 4));
 	if (!cseg) goto error_exec3;
 	tregs->ds = cseg;
-	result = filp->f_op->read(inode, filp, 0, mh.tseg);
-	if (result != mh.tseg) {
+	result = filp->f_op->read(inode, filp, 0, (size_t)mh.tseg);
+	if (result != (size_t)mh.tseg) {
 	    debug2("EXEC(tseg read): bad result %u, expected %u\n",
 	    result, mh.tseg);
 	    retval = -ENOEXEC;
@@ -164,9 +164,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     retval = -ENOEXEC;
     tregs->ds = dseg;
-    result = filp->f_op->read(inode, filp, (char *)stack_top, mh.dseg);
+    result = filp->f_op->read(inode, filp, (char *)stack_top, (size_t)mh.dseg);
 
-    if (result != mh.dseg) {
+    if (result != (size_t)mh.dseg) {
 	debug2("EXEC(dseg read): bad result %d, expected %d\n",
 	       result, mh.dseg);
 	goto error_exec5;
@@ -176,9 +176,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     fmemset((char *)((seg_t)mh.dseg + stack_top), dseg, 0, (__u16) mh.bseg);
 
     /* Copy the stack */
-    ptr = (stack_top)
-	? (char *) (stack_top - slen)
-	: (char *) ((size_t)len - slen);
+    ptr = (char *)(stack_top
+	? stack_top - slen
+	: (size_t)len - slen);
     fmemcpy(dseg, (__u16) ptr, ds, (__u16) sptr, (__u16) slen);
 
     /* From this point, the old code and data segments are not needed anymore */
@@ -234,7 +234,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     currentp->t_begstack = ((__pptr) ptr);	/* Just below the arguments */
     tregs->sp = (__u16)(currentp->t_begstack);
-    currentp->t_enddata = (__pptr) (mh.dseg + stack_top);
+    currentp->t_enddata = (__pptr) ((__u16)mh.dseg + stack_top);
     currentp->t_endbrk =  currentp->t_enddata + (__pptr)mh.bseg;
     /* Needed for sys_brk() */
     currentp->t_endseg = (__pptr) len;
