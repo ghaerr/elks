@@ -12,8 +12,8 @@ Here is the diagram from memory.txt
 +------------+--------------------------------------------------+
 | data + bss |  heap ---> |                          <--- stack |
 +------------+--------------------------------------------------+
-^      ^                  ^                                     ^
-0x0  current->t_endtext  current->t_endbrk                  current->t_endstack
+^            ^            ^                                     ^
+0x0  current->t_enddata  current->t_endbrk                  current->t_endstack
 
 As of now I have implemented a new format which locates the stack below
 the data and bss in reserved space at the bottom of the data segment,
@@ -25,19 +25,23 @@ changes.
 
 Here is a diagram representing the new format
 
-+-----------------+------------+----------------+
-|    | <--- stack | data + bss |  heap ---> |   | < current->t_endseg
-+-----------------+------------+----------------+
-^                        ^                  ^
-0x0            current->t_enddata        current->t_endbrk
+       current->t_begstack               current->t_endseg
+                v                                 v
++---------------+-------------+-------------------+
+|  | <--- stack |  data + bss |   heap ---> |     |
++---------------+-------------+-------------------+
+^                             ^                   ^
+0x0                current->t_enddata    current->t_endbrk
 
 and here is how the new labels apply to the old format
 
-+------------+--------------------------------------------------+
-| data + bss |  heap ---> |                          <--- stack |
-+------------+--------------------------------------------------+
-^      ^                  ^                                     ^
-0x0  current->t_enddata  current->t_endbrk                  current->t_endseg
+                                                   current->t_begstack
+                                                            v
++------------+----------------------------------------------+
+| data + bss |  heap ---> |                      <--- stack |
++------------+----------------------------------------------+
+^            ^            ^                                 ^
+0x0  current->t_enddata  current->t_endbrk         current->t_endseg
 
 A check for what type a binary is can be done by checking if t_begstack
 (stack pointer at the start of the process is) is greater than t_enddata.

@@ -59,12 +59,11 @@ void setup_mm(seg_t start, seg_t end)
 #endif
 
     printk(".\nELKS kernel (%u text + %u data + %u bss)\n"
-	   "Kernel text at %x:0000, data at %x:0000\n",
+	   "Kernel text at %x:0000, data at %x:0000\n"
+	   "%u K of memory for user processes.\n",
 	   (unsigned)_endtext, (unsigned)_enddata,
 	   (unsigned)_endbss - (unsigned)_enddata,
-	   kernel_cs, kernel_ds);
-
-    printk("%u K of memory for user processes.\n",
+	   kernel_cs, kernel_ds,
 	   (int) ((end - start) >> 6));
 
     if (setupb(0x1ff) == 0xAA && arch_cpu > 5)
