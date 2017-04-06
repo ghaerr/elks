@@ -16,7 +16,6 @@
 
 #include <linuxmt/config.h>
 #include <linuxmt/errno.h>
-#include <linuxmt/hdreg.h>
 #include <linuxmt/init.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
@@ -25,8 +24,9 @@
 
 #include <arch/io.h>
 #include <arch/irq.h>
-#include <arch/keyboard.h>
-#include <arch/system.h>
+
+/* Enable 80386 Traps */
+/*#define ENABLE_TRAPS */
 
 struct irqaction {
 	void (*handler)();
@@ -35,18 +35,21 @@ struct irqaction {
 
 static void default_handler(int i, void *regs, void *dev);
 
-static struct irqaction irq_action[32] = {
+static struct irqaction irq_action[] = {
     {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
     {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
     {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
     {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
     {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
+    {default_handler, NULL},
+#ifdef ENABLE_TRAPS
     {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
     {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
     {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
     {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
     {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL},
+    {default_handler, NULL},
+#endif
 };
 
 unsigned char cache_21 = 0xff, cache_A1 = 0xff;
@@ -116,7 +119,7 @@ void enable_irq(unsigned int irq)
 
 static int remap_irq(int irq)
 {
-    if ((irq > 15) || ((irq > 7) && (arch_cpu < 6)))
+    if (((unsigned int)irq > 15) || ((irq > 7) && (arch_cpu < 6)))
 	return -EINVAL;
     if (irq == 2 && arch_cpu > 5)
 	irq = 9;			/* Map IRQ 9/2 over */
@@ -138,9 +141,11 @@ void do_IRQ(int i,void *regs)
 
 static void default_handler(int i, void *regs, void *dev)
 {
+#ifdef ENABLE_TRAPS
     if (i > 15)
 	printk("Unexpected trap: %u\n", i-16);
     else
+#endif
 	printk("Unexpected interrupt: %u\n", i);
 }
 
@@ -230,26 +235,12 @@ void init_IRQ(void)
 
 #ifndef CONFIG_ARCH_SIBO
 
-    save_flags(flags);
-    clr_irq();
-
-    /* Enable the drop through interrupts. */
-
     if (arch_cpu > 5) {		/* PC-AT or greater */
+	save_flags(flags);
+	clr_irq();
 	enable_irq(2);		/* Cascade slave PIC */
-#ifdef CONFIG_BLK_DEV_BHD
-	enable_irq(HD_IRQ);	/* AT ST506 */
-	enable_irq(15);		/* AHA1542 */
+	restore_flags(flags);
     }
-    else {
-	enable_irq(5);		/* XT ST506 */
-#endif
-    }
-#ifdef CONFIG_BLK_DEV_BFD
-    enable_irq(6);		/* Floppy */
-#endif
-
-    restore_flags(flags);
 
 #endif
 }
