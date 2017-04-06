@@ -30,29 +30,6 @@ stashed_ds:
 	.word	0
 #endif
 
-/*
- *	Low level IRQ control.
- */
-	.globl	___save_flags
-	.globl	_restore_flags
-
-___save_flags:
-	pushf
-	pop	ax
-	ret
-
-! this version is smaller than the functionally equivalent C version
-! at 7 bytes vs. 21 or thereabouts :-) --Alastair Bridgewater
-!
-! Further reduced to 5 bytes  --Juan Perez
-!
-
-_restore_flags:
-	pop	ax
-	popf
-	pushf
-	jmp	ax
-
 ; CS points to this kernel code segment
 ; DS points to page 0  (interrupt table)
 ; ES points to the kernel data segment
@@ -69,7 +46,6 @@ _irqtab_init:
         seg cs
 #endif
         mov stashed_ds,bx
-        mov es,bx
 
         xor ax,ax
         mov ds,ax      ;intr table
@@ -204,7 +180,7 @@ _irq15:
 !	Traps (we use IRQ 16->31 for these)
 !
 !	Currently not used so removed for space.
-#if 0
+#ifdef ENABLE_TRAPS
 _div0:
 	push	ax
 	mov	ax,#16

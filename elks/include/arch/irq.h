@@ -5,8 +5,6 @@
 
 #include <arch/asm.h>
 
-#define save_flags(x)	x=__save_flags()
-
 /*	FIXME:	Who gets which entry in bh_base. Things which will occur
  *		most often should come first - in which case NET should
  *		be up the top with SERIAL/TQUEUE!
@@ -31,7 +29,6 @@ enum {
 extern void disable_irq(unsigned int);
 extern void enable_irq(unsigned int);
 extern void do_IRQ(int,void *);
-extern void restore_flags(flag_t);
 extern int request_irq(int,void (*)(int,struct pt_regs *,void *),void *);
 extern void free_irq(unsigned int);
 extern void init_IRQ(void);
@@ -46,18 +43,21 @@ extern void (*bh_base[16]) (void);
 
 /*@-namechecks@*/
 
-extern flag_t __save_flags(void);
-
-/*@+namechecks@*/
-
 #ifdef __KERNEL__
 
 #ifdef __BCC__
+#define save_flags(x)	x=__save_flags()
+extern flag_t __save_flags(void);
+extern void restore_flags(flag_t);
 #define clr_irq()	asm("cli")
 #define set_irq()	asm("sti")
 #endif
 
 #ifdef __ia16__
+#define save_flags(x) \
+__asm__ __volatile__("pushfw ; popw %0":"=r" (x): /* no input */ :"memory")
+#define restore_flags(x) \
+__asm__ __volatile__("pushw %0 ; popfw": /* no output */ :"r" (x):"memory")
 #define clr_irq()	asm("cli")
 #define set_irq()	asm("sti")
 #endif
@@ -69,6 +69,8 @@ extern flag_t __save_flags(void);
 
 #else
 
+#define save_flags(x)
+#define restore_flags(x)
 #define clr_irq()
 #define set_irq()
 

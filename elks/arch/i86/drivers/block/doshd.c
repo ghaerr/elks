@@ -40,6 +40,7 @@
 
 #include <arch/segment.h>
 #include <arch/system.h>
+#include <arch/irq.h>
 
 #ifdef CONFIG_BLK_DEV_BIOS
 
@@ -526,9 +527,17 @@ int init_bioshd(void)
 
 #ifdef CONFIG_BLK_DEV_BFD
     _fd_count = bioshd_getfdinfo();
+    enable_irq(6);		/* Floppy */
 #endif
 #ifdef CONFIG_BLK_DEV_BHD
     _hd_count = bioshd_gethdinfo();
+    if (arch_cpu > 5) {		/* PC-AT or greater */
+	enable_irq(HD_IRQ);	/* AT ST506 */
+	enable_irq(15);		/* AHA1542 */
+    }
+    else {
+	enable_irq(5);		/* XT ST506 */
+    }
     bioshd_gendisk.nr_real = _hd_count;
 #endif /* CONFIG_BLK_DEV_BHD */
 
