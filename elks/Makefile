@@ -69,6 +69,10 @@ ifeq ($(CONFIG_ROMFS_FS), y)
 	ARCHIVES := $(ARCHIVES) fs/romfs/romfs.a
 endif
 
+ifeq ($(CONFIG_MSDOS_FS), y)
+	ARCHIVES := $(ARCHIVES) fs/msdos/msdos.a
+endif
+
 #########################################################################
 # Define commands.
 
@@ -100,11 +104,14 @@ setup: $(ARCH_DIR)/boot/setup
 #########################################################################
 # library rules (all these are built even if they aren't used).
 
-.PHONY: fs/fs.a fs/minix/minixfs.a fs/romfs/romfs.a \
+.PHONY: fs/fs.a fs/msdos/msdos.a fs/minix/minixfs.a fs/romfs/romfs.a \
         kernel/kernel.a lib/lib.a net/net.a tools
 
 fs/fs.a:
 	${MAKE} -C fs fs.a
+
+fs/msdos/msdos.a:
+	${MAKE} -C fs/msdos msdos.a
 
 fs/minix/minixfs.a:
 	${MAKE} -C fs/minix minixfs.a

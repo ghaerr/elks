@@ -16,6 +16,11 @@
 
 #include <arch/bitops.h>
 
+#ifdef CONFIG_MSDOS_FS
+#include <linuxmt/msdos_fs_i.h>
+#include <linuxmt/msdos_fs_sb.h>
+#endif
+
 /*  It's silly to have NR_OPEN bigger than NR_FILE, but I'll fix that later.
  *  Anyway, now the file code is no longer dependent on bitmaps in unsigned
  *  longs, but uses the new fd_set structure..
@@ -31,7 +36,12 @@
 #define NR_FILE 	64	/* this can well be larger on a larger system */
 #define NR_SUPER	4
 #define NR_EXT_BUFFERS	64	/* This may be assumed by some code! */
+#ifdef CONFIG_MSDOS_FS
+#define NR_MAPBUFS	12	/* Maximum number of mappable buffers */
+#else
 #define NR_MAPBUFS	8	/* Maximum number of mappable buffers */
+#endif
+
 #define BLOCK_SIZE	1024
 #define BLOCK_SIZE_BITS 10
 
@@ -239,6 +249,7 @@ struct inode {
     union {
 	struct pipe_inode_info	pipe_i;
 	struct romfs_inode_info	romfs_i;
+	struct msdos_inode_info msdos_i;
 	struct socket		socket_i;
 	void			*generic_i;
     } u;
@@ -288,6 +299,7 @@ struct super_block {
     union {
 	struct minix_sb_info	minix_sb;
 	struct romfs_sb_info	romfs_sb;
+	struct msdos_sb_info	msdos_sb;
 	void			*generic_sbp;
     } u;
 };

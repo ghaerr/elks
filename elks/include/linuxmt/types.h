@@ -21,10 +21,12 @@ typedef __u32			u_ino_t;
 typedef __s16			pid_t;
 
 typedef __u16			block_t;
+typedef __u32			block32_t;
 typedef __u16			dev_t;
 typedef __u16			flag_t;
 typedef __u16			gid_t;
 typedef __u16			ino_t;
+typedef __u32			ino32_t;
 typedef __u16			mode_t;
 typedef __u16			nlink_t;
 typedef __u16			seg_t;

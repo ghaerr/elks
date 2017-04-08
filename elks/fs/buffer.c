@@ -469,7 +469,8 @@ void map_buffer(register struct buffer_head *bh)
 
 	/* previous loop failed */
 	/* The last case is to wait until unmap gets a b_mapcount down to 0 */
-	debug1("BUFMAP: buffer #%d waiting on L1 slot\n", bh->b_num);
+	/* replaced debug1 with printk here to indicate where it gets stuck - Georg P. */
+	printk("BUFMAP: buffer #%d waiting on L1 slot\n", bh->b_num);
 	sleep_on(&bufmapwait);
 	debug("BUFMAP: wait queue woken up...\n");
     }

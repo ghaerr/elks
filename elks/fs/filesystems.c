@@ -12,6 +12,7 @@
 
 #include <linuxmt/minix_fs.h>
 #include <linuxmt/romfs_fs.h>
+#include <linuxmt/msdos_fs.h>
 #include <linuxmt/major.h>
 
 void fs_init(void)
@@ -21,5 +22,8 @@ void fs_init(void)
 #endif
 #ifdef CONFIG_ROMFS_FS
     init_romfs_fs();
+#endif
+#ifdef CONFIG_MSDOS_FS
+    init_msdos_fs();
 #endif
 }

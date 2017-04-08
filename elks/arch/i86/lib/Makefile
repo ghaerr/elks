@@ -39,7 +39,7 @@ endif
 
 # compiler support for integer arithmetic
 
-IOBJS		=idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o
+IOBJS		=idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o min.o ctypefn.o 
 
 # miscellaneous
 
