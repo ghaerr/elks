@@ -41,6 +41,14 @@ then
 
 fi
 
+#try to mount FAT file system disk
+if test /dev/bda1
+then
+  echo
+  echo -n "Mounting FAT file system: "
+  mount -t msdos /dev/bda1 /mnt
+fi
+
 # 
 # View message of day
 #

@@ -27,7 +27,11 @@ int main(int argc, char **argv)
  */	
 	for (i = /*recurse+interact+*/1; i < argc; i++) {
 		if (argv[i][0] != '-') {	
+#ifdef CONFIG_MSDOS_FS		  
+			if (access(argv[i], 0) != -1) { 
+#else			  
 			if (!lstat(argv[i],&sbuf)) {
+#endif			  
 				if (unlink(argv[i])) {
 					fprintf(stderr,"rm: could not remove %s\n", argv[i]);
 				}
