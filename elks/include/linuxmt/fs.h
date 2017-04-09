@@ -249,7 +249,9 @@ struct inode {
     union {
 	struct pipe_inode_info	pipe_i;
 	struct romfs_inode_info	romfs_i;
+#ifdef CONFIG_MSDOS_FS	
 	struct msdos_inode_info msdos_i;
+#endif	
 	struct socket		socket_i;
 	void			*generic_i;
     } u;
@@ -299,7 +301,9 @@ struct super_block {
     union {
 	struct minix_sb_info	minix_sb;
 	struct romfs_sb_info	romfs_sb;
+#ifdef CONFIG_MSDOS_FS	
 	struct msdos_sb_info	msdos_sb;
+#endif	
 	void			*generic_sbp;
     } u;
 };
