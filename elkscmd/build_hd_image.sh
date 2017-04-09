@@ -62,8 +62,10 @@ echo -en "\nMaking partition table:"
 echo ',,80,*' | sfdisk --quiet -D $HD_IMAGE 2>/dev/null
 
 # add first partition to the loopback driver
-# 32.256 is block 63 times 512 blocksize
-# 63*512 = 32256 - 48194*512 = 24675328
+# run fdisk -l -u $HD_IMAGE to determine start and end of partition
+# start is block nr. 63 times 512 blocksize = 32256
+# end (sizelimit) is block nr. 48194 times 512 blocksize = 24675328
+# i.e. partition does not span entire disk image, just about 24 MB
 losetup -o 32256 --sizelimit 24675328 $LOOP $HD_IMAGE
 
 # make minix file system on this hard disk image partition
