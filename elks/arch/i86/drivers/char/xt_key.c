@@ -9,7 +9,13 @@
  ***************************************************************
  * Changed code to work with belgian keyboard                  *
  * Stefaan (Stefke) Van Dooren 1998                            *
- ***************************************************************/
+ ***************************************************************
+ * Changed code to support int'l keys 42 + 45, enable caps lock*
+ * preliminary F11+F12 support,                                *
+ * add comments to increase readability                        *
+ * Georg Potthast 2017                                         *
+ * ************************************************************/
+
 
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
@@ -58,44 +64,46 @@ int kraw = 0;
 
 #define ANYSHIFT (LSHIFT | RSHIFT)
 
-#define SSC 0xC0
+#define SSC 0xC0 /*Simple Scan Code*/
 
 static unsigned char tb_state[] = {
     SSC, CTRL, SSC, SSC,			/*1C->1F*/
     SSC, SSC, SSC, SSC, SSC, SSC, SSC, SSC,	/*20->27*/
     SSC, SSC, LSHIFT, SSC, SSC, SSC, SSC, SSC,	/*28->2F*/
     SSC, SSC, SSC, SSC, SSC, SSC, RSHIFT, SSC,	/*30->37*/
-    SSC, SSC, CAPS,				/*38->3A*/
+    ALT, SSC, CAPS,				/*38->3A*/
     'a', 'b', 'c', 'd', 'e',			/*3B->3F, Function Keys*/
     'f', 'g', 'h', 'i', 'j',			/*40->44, Function Keys*/
     NUM, SSC, SSC,				/*45->47*/
     0xB7, SSC, SSC, 0xBA, SSC, 0xB9, SSC, SSC,	/*48->4F*/
-    0xB8, SSC, SSC, SSC, SSC, SSC, ALT, SSC,	/*50->57*/
+    0xB8, SSC, SSC, SSC, SSC, SSC, SSC, 'k', 'l'/*50->58 F11-F12*/
 };
 
 static unsigned char state_code[] = {
-    0,	/* All status are 0 */
-    1,	/* SHIFT */
-    0,	/* CTRL */
-    1,	/* SHIFT CTRL */
-    0,	/* ALT */
-    1,	/* SHIFT ALT */
-    3,	/* CTRL ALT */
-    1,	/* SHIFT CTRL ALT */
-    2,	/* CAPS */
-    0,	/* CAPS SHIFT */
-    2,	/* CAPS CTRL */
-    0,	/* CAPS SHIFT CTRL */
-    2,	/* CAPS ALT */
-    0,	/* CAPS SHIFT ALT */
-    2,	/* CAPS CTRL ALT */
-    3,	/* CAPS SHIFT CTRL ALT */
+    0,	/*0= All status are 0 */
+    1,	/*1= SHIFT */
+    0,	/*2= CTRL */
+    1,	/*3= SHIFT CTRL */
+    0,	/*4= ALT */
+    1,	/*5= SHIFT ALT */
+    3,	/*6= CTRL ALT */
+    1,	/*7= SHIFT CTRL ALT */
+    2,	/*8= CAPS */ /* CAPS >>1 */
+    0,	/*9= CAPS SHIFT */
+    2,	/*10= CAPS CTRL */
+    0,	/*11= CAPS SHIFT CTRL */
+    2,	/*12= CAPS ALT */
+    0,	/*13= CAPS SHIFT ALT */
+    2,	/*14= CAPS CTRL ALT */
+    3,	/*15= CAPS SHIFT CTRL ALT */
 };
+
+/* tables defined in KeyMaps/keys-xx.h files*/
 static unsigned char *scan_tabs[] = {
-    xtkb_scan,
-    xtkb_scan_shifted,
-    xtkb_scan_caps,
-    xtkb_scan_ctrl_alt,
+    xtkb_scan,		/*mode = 0*/
+    xtkb_scan_shifted,	/*mode = 1*/
+    xtkb_scan_caps,	/*mode = 2*/
+    xtkb_scan_ctrl_alt,	/*mode = 3*/
 };
 
 /* Ack.  We can't add a character until the queue's ready
@@ -131,6 +139,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
     static unsigned int ModeState = 0;
     static int E0Prefix = 0;
+    static int capslocktoggle =0;
     int code, mode;
     register char *keyp_E0 = (char *)0;	/*[char *keyp; int E0]*/
     register char *IsReleasep;
@@ -139,6 +148,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 
     /* Necessary for the XT. */
     mode = inb_p((void *) KBD_CTL);
+    //printk("\nkey read:%X,mode:%X,ModeState:%d\n",code,mode,ModeState);    
     outb_p((unsigned char) (mode | 0x80), (void *) KBD_CTL);
     outb_p((unsigned char) mode, (void *) KBD_CTL);
 
@@ -146,44 +156,73 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	AddQueue((unsigned char) code);
 	return;
     }
+
+    /*extended keys are preceded by a E0 scancode*/
     if (code == 0xE0) {		/* Remember this has been received */
 	E0Prefix = 1;
 	return;
     }
+
+    /* temporary store EOPrefix in keyp_E0 e.g. for ALT_GR */
     if (E0Prefix) {
 	keyp_E0 = (char *)1;	/*[ E0 ]*/
 	E0Prefix = 0;
     }
+
+/* the highest bit is set when the key was released. 
+ * Save pressed/relased state in IsReleasep. Bit set = released */
     IsReleasep = (char *)(code & 0x80);
-    code &= 0x7F;
+    code &= 0x7F; /* clear bit indicating released key */
+
     /*
-     * Clasify scancode such that
+     * Classify scancode such that
      *  mode = 00xx xxxxB, Status key
      *         01xx xxxxB, Function key
      *         10xx xxxxB, Control key
      *         11xx xxxxB, Simple Scan Code
      */
-    mode = (code >= 0x1C) ? tb_state[code - 0x1C] : SSC;
-
+    if (code >= 0x1C) {
+      mode = tb_state[code - 0x1C]; /*is key a modifier key?*/
+    } else {
+      mode = SSC;
+    }
+      
     /* --------------Process status keys-------------- */
+    if (!(mode & 0xC0)) { /*not a simple scan code*/
 
-    if (!(mode & 0xC0)) {
-#if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE)
+#if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE) /* || defined(CONFIG_KEYMAP_ES) */
+	/* ALT_GR has a EO prefix this is stored in keyp_E0 above */
 	if ((mode == ALT) && ((int)keyp_E0 != 0))	/*[ E0 ]*/
 	    mode = ALT_GR;
 #endif
-	IsReleasep ? (ModeState &= ~mode) : (ModeState |= mode);
+	if (IsReleasep) { /* the key was released */
+	  if (mode == 16) {
+	    if (capslocktoggle==0) {
+	      capslocktoggle=1;
+	    } else {
+	      capslocktoggle=0;
+	    }
+	  } //mode == 16
+	  if ((mode != 16) | (capslocktoggle == 0)) ModeState &= ~mode; /*clear*/
+	} else {
+	  ModeState |= mode;  /*set*/
+	}
+
+    /* did set the ModeState according to the modifier key and return now */
 	return;
     }
-    if (IsReleasep)
+    
+    if (IsReleasep) /* a simple scan code was released */
 	return;
 
     switch(mode & 0xC0) {
-    case 0x40:	/* F1 .. F10 */
+      
     /* --------------Handle Function keys-------------- */
-
+    case 0x40:	/* F1 .. F10 - adding ESC plus mode byte to queue */
+    /* F11 and F12 function keys need 89 byte table like keys-de.h */
+    /* function keys are not posix standard here */
+    
 #ifdef CONFIG_CONSOLE_DIRECT
-
 	if (ModeState & ALT) {
 	    Console_set_vc((unsigned) (code - 0x3B));
 	    return;
@@ -204,40 +243,48 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 		AddQueue('[');
 #endif
 	    }
+	    //printk("key read2:%X,mode:%X,ModeState:%d,mode+0A:%X\n",code,mode,ModeState,(mode + 0x0A));    
 	    AddQueue(mode + 0x0A);
 	    return;
 	}
 
     default:
     /* --------------Handle CTRL-ALT-DEL-------------- */
-
 	if ((code == 0x53) && (ModeState & CTRL) && (ModeState & ALT))
 	    ctrl_alt_del();
 
+    /* --------------Handle simple scan codes-------------- */	
     /*
-     *      Pick the right keymap
+     *      Pick the right keymap determined by the ModeState
      */
 	mode = ((ModeState & ~(NUM | ALT_GR)) >> 1) | (ModeState & 0x01);
 	mode = state_code[mode];
+	
 	if (!mode && (ModeState & ALT_GR))
-	    mode = 3;
+	    mode = 3; /*ctrl_alt table*/
 
 	if ((ModeState & CTRL && code < 14 && !(ModeState & ALT))
 		|| (code < 70 && ModeState & NUM))
-	    mode = 1;
+	    mode = 1; /*shift keys*/
 
+	/* now read the key code from the selected table by mode */
 	keyp_E0 = (char *)(*(scan_tabs[mode] + code));	/*[ keyp ]*/
+
     /*
      *      Apply special modifiers
      */
 	if (ModeState & ALT && !(ModeState & CTRL))	/* Changed to support CTRL-ALT */
 	    keyp_E0 = (char *)(((int) keyp_E0) | 0x80); /* META-.. */	/*[ keyp ]*/
+	    
 	if (!keyp_E0)			/* non meta-@ is 64 */	/*[ keyp ]*/
 	    keyp_E0 = (char *) '@';	/*[ keyp ]*/
+	    
 	if (ModeState & CTRL && !(ModeState & ALT))	/* Changed to support CTRL-ALT */
 	    keyp_E0 = (char *)(((int) keyp_E0) & 0x1F); /* CTRL-.. */	/*[ keyp ]*/
+	    
 	if (((int)keyp_E0) == '\r')	/*[ keyp ]*/
 	    keyp_E0 = (char *) '\n';	/*[ keyp ]*/
+	//printk("keyp_E0:%X\n",keyp_E0);    
 	AddQueue((unsigned char) keyp_E0);
     }
 }
