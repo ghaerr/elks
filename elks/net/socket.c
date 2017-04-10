@@ -648,4 +648,4 @@ int sys_socket(int family, int type, int protocol)
     return fd;
 }
 
-#endif
+#endif /* CONFIG_SOCKET */

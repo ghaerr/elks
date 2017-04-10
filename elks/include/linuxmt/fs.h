@@ -428,7 +428,9 @@ extern struct file_operations write_pipe_fops;
 extern struct file_operations rdwr_pipe_fops;
 extern struct inode_operations pipe_inode_operations;
 
+#ifdef CONFIG_SOCKET
 extern struct inode_operations sock_inode_operations;
+#endif
 
 extern struct file_system_type *get_fs_type(char *);
 

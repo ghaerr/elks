@@ -263,7 +263,9 @@ static void set_ops(register struct inode *inode)
 	&pipe_inode_operations,		/* FIFO */
 	&chrdev_inode_operations,
 	&blkdev_inode_operations,
+#ifdef CONFIG_SOCKET
 	&sock_inode_operations,		/* Socket */
+#endif
     };
 
     inode->i_op = inop[(int)tabc[(inode->i_mode & S_IFMT) >> 12]];
