@@ -31,11 +31,8 @@ You can also access USB flash disks from Qemu and read files from that. I format
 flash disk with a 480 MB partition as number one and could read a file from that using
 ELKS and the FAT32 support.
 
-Not supported is the mkdir command. Also the mv command will only work if one of the 
-specified files is on a minix disk. You cannot move a file just on a FAT disk.
-
-You have to execute the „sync“ command to write the buffers to the disk to effectively 
-remove the file after the rm command though.
+The mv command will only work if one of the specified files is on a minix disk. You 
+cannot move a file just on a FAT disk. Also rm and ln do not work.
 
 Currently, FAT16 is not supported. The reason is that you cannot list the files
 on the FAT16 disk since the readdir command will hang in map_buffer() in fs/buffer.c. 
@@ -57,7 +54,6 @@ A FAT12 floppy image can be mounted with: "mount -t msdos /dev/fd1 /mnt". In the
 script you have to specify the floppy image e.g. with:
 "qemu-system-i386 -fda elkscmd/full3 -fdb ./fddos"
 
-The mkdir command does not work since the code still calls minix_mkdir() and not msdos_mkdir().
 The code contains long file name support but "ls" will still report the files as "xxx~1" and
 you have to use this file name to open the files.
 

@@ -416,7 +416,9 @@ int do_mknod(char *pathname, size_t offst, int mode, dev_t dev)
     struct inode *dir;
     char *basename;
     size_t namelen;
-    int (*op) ();
+    /* declare function pointer with varying arguments as specified by () 
+     * a pair of parentheses to bind the * to the name instead of the return type */
+    int (*op) (); 
     int error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
 
     if (!error) {
@@ -425,20 +427,28 @@ int do_mknod(char *pathname, size_t offst, int mode, dev_t dev)
 /*	else if (IS_RDONLY(dirp)) error = -EROFS; */
 	else if (!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
 	    iop = dirp->i_op;
-		if (!iop || !(op = (offst ? ((offst > 1)
-						? iop->symlink
-						: iop->mkdir)
-					: iop->mknod))) {
-		error = -EPERM;
-	   } else {
+	    /* cast function pointer in offst to op. Function address in offst is 
+	     * relative to iop structure address*/
+	    op = *(int (**)())((char *)iop + offst);
+#if 0
+	    printk("iop->mknod:%u,iop->mkdir:%u,iop->symlink:%u\n",\
+		&(iop->mknod),&(iop->mkdir),&(iop->symlink));
+	    printk("\niop:%u,offst:%u,iop+offst:%u,op:%u,dev:%d|\n",\
+		iop,offst,(char *)iop+offst,op,dev);
+#endif		
+	    if (!iop || !(op)) { 
+	      error = -EPERM; 
+	    } else {
 		dirp->i_count++;
 		down(&dirp->i_sem);
-		error = (offst != offsetof(struct inode_operations,mknod)
-				? op(dirp, basename, namelen, mode)
-				: op(dirp, basename, namelen, mode, dev)
-			    );
+
+		if (offst != offsetof(struct inode_operations,mknod))
+		    error = op(dirp, basename, namelen, mode);
+		else
+		    error = op(dirp, basename, namelen, mode, dev);
+		
 		up(&dirp->i_sem);
-	    }
+	    }	    
 	}
 	iput(dirp);
     }
