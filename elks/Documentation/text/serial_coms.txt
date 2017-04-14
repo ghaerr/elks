@@ -1,0 +1,113 @@
+
+----------------------------------------------
+Notes on using the serial line support of ELKS
+----------------------------------------------
+
+
+1. Setting up Qemu for serial communications with ELKS
+------------------------------------------------------
+
+To enable a serial line with Qemu, you can simply add
+the parameter "-serial pty". For example you can
+start ELKS like this:
+"qemu-system-i386 -serial pty -fda elkscmd/full3"
+
+Qemu will then e.g. report:
+"char device redirected to /dev/pts/3 (label serial0)"
+
+So you will know that you can communicate with the 
+serial device "/dev/ttys0" on ELKS by connecting to 
+the device "/dev/pts/3" on the host.
+
+If you want to configure two serial lines you could
+e.g. use this script:
+
+qemu-system-i386 \
+      -chardev pty,id=chardev1 \
+      -device isa-serial,chardev=chardev1,id=serial1 \
+      -chardev pty,id=chardev2 \
+      -device isa-serial,chardev=chardev2,id=serial2 \
+      -fda elkscmd/full3
+
+Qemu will then e.g. report that it generated the devices
+"/dev/pts/3" and "/dev/pts/4" on the host.
+
+
+2. Log into the ELKS system via a serial line
+---------------------------------------------
+
+First you have to spawn a "getty" process on the serial
+line to enable you to log into the system. For this open
+the file "elkscmd/rootfs_template/etc/inittab" and add
+the following line:
+
+2:2345:respawn:/bin/getty /dev/ttyS0
+
+then recompile elks and start it with qemu as described above.
+
+If you then start a terminal program on your host and open the
+device e.g. "/dev/pts/3" you will get a login prompt after you
+press enter and you can then log in as root.
+
+To use vi properly, you will need a terminal program that supports
+an ANSI terminal emulation.
+
+
+3. The miniterm application
+---------------------------
+
+To connect to a host from ELKS via a serial line you can use the
+miniterm application that is located in /usr/bin. On the host you 
+will have to edit the inittab file to enable logins on the serial 
+device that Qemu has provided, e.g. "/dev/pts/3".
+
+Miniterm starts using the "/dev/ttyS0" device on ELKS as default but 
+you can change that using parameters on the command line.
+
+
+4. stty usage
+-------------
+
+Qemu does not support different baud rates on emulated serial lines. If you
+run ELKS on a PC with real serial lines, you can set these with the stty
+command.
+
+When you enter 
+
+# stty 
+
+a line of current settings of your terminal will be displayed. The command 
+
+# stty -a
+
+will show all parameter settings of your terminal. With 
+
+# stty 1200
+
+you would set the speed of your current terminal to 1200 baud. 
+
+The commands 
+
+# stty < /dev/ttys0 
+or 
+# stty -a < /dev/ttys0 
+
+will show the current settings of the first serial line.
+
+
+5. Using cat with a serial line
+-------------------------------
+
+The command:
+
+# cat > /dev/ttyS0 
+
+will send the keyboard input out on the first serial line. You can
+also send e.g. the file "testfile" as well:
+
+# cat testfile > /dev/ttyS0 
+
+
+14th of April 2017
+
+Georg Potthast
