@@ -30,246 +30,226 @@ stashed_ds:
 	.word	0
 #endif
 
-; CS points to this kernel code segment
-; DS points to page 0  (interrupt table)
-; ES points to the kernel data segment
+#ifdef CONFIG_CONSOLE_DIRECT
+#define MCD 0x2
+#else
+#define MCD 0
+#endif
+#ifdef CONFIG_CHAR_DEV_RS
+#define MRS 0x18
+#else
+#define MRS 0
+#endif
+#ifdef CONFIG_BLK_DEV_HD
+#define MHD 0xC020
+#else
+#define MHD 0
+#endif
+#ifdef CONFIG_BLK_DEV_FD
+#define MFD 0x40
+#else
+#define MFD 0
+#endif
+#ifdef CONFIG_ETH_NE2K
+#define METH 0x200
+#else
+#define METH 0
+#endif
+
+#define MINT (1 | MCD | MRS | MHD | MFD | METH)
 
 	.globl	_irqtab_init
 _irqtab_init:
 	cli
-
-        mov bx,ds
 #ifdef CONFIG_ROMCODE
-        mov ax,#CONFIG_ROM_IRQ_DATA
-        mov ds,ax
+	mov	ax,#CONFIG_ROM_IRQ_DATA
+	mov	ds,ax
 #else
-        seg cs
+	seg	cs
 #endif
-        mov stashed_ds,bx
+	mov	stashed_ds,ss
 
-        xor ax,ax
-        mov ds,ax      ;intr table
+	xor	ax,ax
+	mov	ds,ax
 
-	mov ax,[32]
-	seg es
-        mov _stashed_irq0_l, ax  ; the old timer intr
-	mov ax,[34]
-	seg es
-        mov [_stashed_irq0_l+2], ax
+! CS points to this kernel code segment
+! DS points to page 0  (interrupt table)
+! ES points to the kernel data segment
 
-	mov [32],#_irq0   ;timer
-	mov [34],cs
+	mov	[512],#_syscall_int ! syscall
+	mov	[514],cs
 
-#ifndef CONFIG_CONSOLE_BIOS
-        mov [36],#_irq1   ;keyboard
-        mov [38],cs
-#endif
+	mov	bx,#32
+	mov	ax,[bx]		! get the old timer intr
+	seg	es
+	mov	_stashed_irq0_l,ax
+	mov	ax,2[bx]
+	seg	es
+	mov	[_stashed_irq0_l+2],ax
 
-#if 0	
-        mov [40],#_irq2
-        mov [42],cs
-#endif	
-
-        mov [44],#_irq3   ;com2
-        mov [46],cs
-	
-	mov [48],#_irq4   ;com1
-	mov [50],cs
-
-! IRQ 8-15 are mapped to vectors INT 70h-77h
-
-#ifdef CONFIG_ETH
-	mov     [452], #_irq9
-	mov     [454], cs
-#endif
-
-! Setup INT 0x80 (for syscall)
-	mov [512],#_syscall_int
-	mov [514],cs
+	mov	cx,#MINT
+	mov	ax,#_irq0
+init_tab1:
+	shr	cx,#1
+	jnc	init_tab2
+	mov	[bx],ax
+	mov	2[bx],cs
+	add	ax,#4
+init_tab2:
+	add	bx,#4
+	cmp	bx,#64
+	jne	init_tab3
+	add	bx,#384		! IRQ 8-15 are mapped to vectors INT 70h-77h
+init_tab3:
+	or	cx,cx
+	jnz	init_tab1
+!
 ! Tidy up
-
-        mov ds,bx      ;the original value just here
+!
+	push	ss		! restore DS
+	pop	ds
 	sti
 	ret
 
-/*
- *	IRQ and IRQ return paths for Linux 8086
- */
+!	IRQ and IRQ return paths for Linux 8086
 !
-!	Other IRQs (see IRQ 0 at the bottom for the
-!	main code).
-!
-_irq1:			;keyboard
-	push	ax
-	mov	ax,#1
-	br	_irqit
-#if 0
-_irq2:
-	push	ax
-	mov	ax,#2
-	br	_irqit
-#endif
-_irq3:                   ;com2
-	push	ax
-	mov	ax,#3
-	br	_irqit
-_irq4:                   ;com1
-	push	ax
-	mov	ax,#4
-	br	_irqit
+! The execution thread will not return from the function call.
+! Instead, the address pushed in the stack will be used to get
+! the interrupt number.
 
+_irq0:			! Timer
+	call	_irqit
+	.byte	0
+#ifdef CONFIG_CONSOLE_DIRECT
+_irq1:			! Keyboard
+	call	_irqit
+	.byte	1
+#endif
 #if 0
-_irq5:
-	push	ax
-	mov	ax,#5
-	br	_irqit
-_irq6:
-	push	ax
-	mov	ax,#6
-	br	_irqit
-_irq7:
-	push	ax
-	mov	ax,#7
-	br	_irqit
+_irq2:			! Cascade
+	call	_irqit
+	.byte	2
+#endif
+#ifdef CONFIG_CHAR_DEV_RS
+_irq3:			! COM2
+	call	_irqit
+	.byte	3
+_irq4:			! COM1
+	call	_irqit
+	.byte	4
+#endif
+#ifdef CONFIG_BLK_DEV_HD
+_irq5:			! XT HD
+	call	_irqit
+	.byte	5
+#endif
+#ifdef CONFIG_BLK_DEV_FD
+_irq6:			! Floppy
+	call	_irqit
+	.byte	6
+#endif
+#if 0
+_irq7:			! Lp1
+	call	_irqit
+	.byte	7
 !
 !	AT interrupts
 !
-_irq8:
-	push	ax
-	mov	ax,#8
-	br	_irqit
+_irq8:			! RTC
+	call	_irqit
+	.byte	8
 #endif
-
-! IRQ9 is used by the Ethernet device
-
-#ifdef CONFIG_ETH
-_irq9:
-	push    ax
-	mov     ax, #9
-	br      _irqit
+#ifdef CONFIG_ETH_NE2K
+_irq9:			! Ethernet device
+	call	_irqit
+	.byte	9
 #endif
-
 #if 0
-_irq10:
-	push	ax
-	mov	ax,#10
-	br	_irqit
-_irq11:
-	push	ax
-	mov	ax,#11
-	jmp	_irqit
-_irq12:
-	push	ax
-	mov	ax,#12
-	jmp	_irqit
-_irq13:
-	push	ax
-	mov	ax,#13
-	jmp	_irqit
-_irq14:
-	push	ax
-	mov	ax,#14
-	jmp	_irqit
-_irq15:
-	push	ax
-	mov	ax,#15
-	jmp	_irqit
+_irq10:			! USB
+	call	_irqit
+	.byte	10
+_irq11:			! Sound
+	call	_irqit
+	.byte	11
+_irq12:			! Mouse
+	call	_irqit
+	.byte	12
+_irq13:			! Math coproc.
+	call	_irqit
+	.byte	13
 #endif
-!
+#ifdef CONFIG_BLK_DEV_HD
+_irq14:			! AT HD ide primary
+	call	_irqit
+	.byte	14
+_irq15:			! AT HD ide secondary
+	call	_irqit
+	.byte	15
+#endif
 !
 !	Traps (we use IRQ 16->31 for these)
 !
 !	Currently not used so removed for space.
 #ifdef ENABLE_TRAPS
 _div0:
-	push	ax
-	mov	ax,#16
-	jmp	_irqit
-
+	call	_irqit
+	.byte	16
 _dbugtrap:
-	push	ax
-	mov	ax,#17
-	jmp	_irqit
-
+	call	_irqit
+	.byte	17
 _nmi:
-	push	ax
-	mov	ax,#18
-	jmp	_irqit
-
+	call	_irqit
+	.byte	18
 _brkpt:
-	push	ax
-	mov	ax,#19
-	jmp	_irqit
-
+	call	_irqit
+	.byte	19
 _oflow:
-	push	ax
-	mov	ax,#20
-	jmp	_irqit
-
+	call	_irqit
+	.byte	20
 _bounds:
-	push	ax
-	mov	ax,#21
-	jmp	_irqit
-
+	call	_irqit
+	.byte	21
 _invop:
-	push	ax
-	mov	ax,#22
-	jmp	_irqit
-
+	call	_irqit
+	.byte	22
 _devnp:
-	push	ax
-	mov	ax,#23
-	jmp	_irqit
-
+	call	_irqit
+	.byte	23
 _dfault:
-	push	ax
-	mov	ax,#24
-	jmp	_irqit
+	call	_irqit
+	.byte	24
 ;
 ;	trap 9 is reserved
 ;
 _itss:
-	push	ax
-	mov	ax,#26
-	jmp	_irqit
-
+	call	_irqit
+	.byte	26
 _nseg:
-	push	ax
-	mov	ax,#27
-	jmp	_irqit
-
+	call	_irqit
+	.byte	27
 _stkfault:
-	push 	ax
-	mov	ax,#28
-	jmp	_irqit
-
+	call	_irqit
+	.byte	28
 _segovr:
-	push	ax
-	mov	ax,#29
-	jmp	_irqit
-
+	call	_irqit
+	.byte	29
 _pfault:
-	push	ax
-	mov	ax,#30
-	jmp	_irqit
+	call	_irqit
+	.byte	30
 ;
 ;	trap 15 is reserved
 ;
 _fpetrap:
-	push	ax
-	mov	ax,#32
-	jmp	_irqit
-
+	call	_irqit
+	.byte	32
 _algn:
-	push	ax
-	mov	ax,#33
-	jmp	_irqit
-
+	call	_irqit
+	.byte	33
 #endif
-_syscall_int:
-	push	ax
-	mov	ax,#0x80
-	jmp	_irqit
+_syscall_int:		! Syscall
+	call	_irqit
+	.byte	128
+
 !
 !	On entry CS:IP is all we can trust
 !
@@ -292,7 +272,7 @@ _syscall_int:
 !		No task switch allowed.
 !
 !	We do all of this to avoid per process interrupt stacks and
-!	related nonsense. This way we need only one dedicted int stack
+!	related nonsense. This way we need only one dedicated int stack
 !
 !  ELKS 0.76 7/1999  Fixed for ROMCODE-Version
 !  Christian Mardm�ller  (chm@kdt.de)
@@ -308,12 +288,6 @@ _syscall_int:
 	.extern	_ret_strace
 #endif
 
-_irq0:
-!
-!	Save AX and load it with the IRQ number
-!
-	push	ax
-	xor	ax,ax
 _irqit:
 !
 !	Make room
@@ -368,7 +342,7 @@ save_regs:
 	pop	[si]		! DI
 	pop	2[si]		! SI
 	pop	6[si]		! DS
-	pop	di		! Original AX
+	pop	di		! Pointer to interrupt number
 	push	bp		! BP
 	mov	8[si],sp	! SP
 	mov	10[si],ss	! SS
@@ -386,11 +360,13 @@ save_regs:
 	push	dx		! DX
 	push	cx		! CX
 	push	bx		! BX
-	push	di		! AX
+	push	ax		! AX
 !
-!	AX has interrupt number
+!	cs:[di] has interrupt number
 !
-	cmp	ax,#0x80
+	seg	cs
+	movb	al,[di]
+	cmpb	al,#0x80
 	jne	updct
 !
 !	----------PROCESS SYSCALL----------
@@ -447,6 +423,7 @@ updct:
 !
 	sti			! Reenable interrupts
 	mov	bx,sp		! Get pointer to pt_regs
+	cbw
 	push	ax		! IRQ for later
 
 	push	bx		! Register base
