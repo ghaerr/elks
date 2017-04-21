@@ -106,11 +106,12 @@ if ( afunix == 0 ) { /* Internet */
       continue;
     } else {write(STDOUT_FILENO, "echoserver:accept\n",18);}
 
+    bzero( buf, sizeof(buf));
     while ( (rc=read(cl,buf,sizeof(buf))) > 0) {
       write(STDOUT_FILENO, "\rServer got:",12);
       write(STDOUT_FILENO, buf, rc+1);
       write(cl, buf, strlen(buf));
-      bzero( buf,100);
+      bzero( buf, sizeof(buf));
     }
     if (rc == -1) {
       perror("read");
