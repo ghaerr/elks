@@ -129,7 +129,7 @@ if (bind(fd, (struct sockaddr *)&addr_in, sizeof(struct sockaddr_in))==-1) {
 #endif  
 } /* afunix==0) */
   
-  write(STDOUT_FILENO, "\nType any string and press enter to send it to the server.\n",28);
+  write(STDOUT_FILENO, "\nType any string and press enter to send it to the server.\n",59);
   write(STDOUT_FILENO, "ESC and enter to quit.\n",23);
   while( (rc=read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
     if (buf[0]==27) exit (0);
