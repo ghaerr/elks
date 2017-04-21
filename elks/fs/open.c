@@ -381,7 +381,7 @@ int sys_open(char *filename, int flags, int mode)
 	 * an incomplete fd to other processes which may share
 	 * the same file table with us.
 	 */
-	    if ((error = get_unused_fd(filp)) != -1) goto exit_open;
+	    if ((error = get_unused_fd(filp)) >= 0) goto exit_open;
 	    close_filp(pinode, filp);
 	}
 	iput(pinode);
