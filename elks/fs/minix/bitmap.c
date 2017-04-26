@@ -160,10 +160,10 @@ void minix_free_inode(register struct inode *inode)
 	s = "nonexistent imap\n";
     else {
 	map_buffer(bh);
-	clear_inode(inode);
 	if (!clear_bit((unsigned int) (inode->i_ino & 8191), bh->b_data)) {
 	    debug1("%s: bit %ld already cleared.\n",ino);
 	}
+	clear_inode(inode);
 	mark_buffer_dirty(bh, 1);
 	unmap_buffer(bh);
     }
