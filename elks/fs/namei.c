@@ -502,9 +502,9 @@ int __do_rmthing(char *pathname, size_t offst)
 	    if (!iop || !(op = (*(int (**)())((char *)iop + offst)))) {
 		error = -EPERM;
 	    } else {
-/*		dirp->i_count++;
-		down(&dirp->i_sem);*/
-		return op(dirp, basename, namelen);
+		dirp->i_count++;
+/*		down(&dirp->i_sem);*/
+		error = op(dirp, basename, namelen);
 /*		up(&dirp->i_sem);*/
 	    }
 	}

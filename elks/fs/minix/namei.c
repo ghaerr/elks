@@ -407,51 +407,53 @@ int minix_rmdir(register struct inode *dir, char *name, size_t len)
     inode = NULL;
     bh = minix_find_entry(dir, name, len, &de);
     retval = -ENOENT;
-    if (!bh) goto end_rmdir;
-    retval = -EPERM;
-    if (!(inode = iget(dir->i_sb, (ino_t) de->inode))) goto end_rmdir;
-    if ((dir->i_mode & S_ISVTX) && !suser() &&
-	current->euid != inode->i_uid && current->euid != dir->i_uid)
-	goto end_rmdir;
-    if (inode->i_dev != dir->i_dev) goto end_rmdir;
-    if (inode == dir)		/* we may not delete ".", but "../dir" is ok */
-	goto end_rmdir;
-    if (!S_ISDIR(inode->i_mode)) {
-	retval = -ENOTDIR;
-	goto end_rmdir;
-    }
-    if (!empty_dir(inode)) {
-	retval = -ENOTEMPTY;
-	goto end_rmdir;
-    }
-    if (de->inode != inode->i_ino) {
-	retval = -ENOENT;
-	goto end_rmdir;
-    }
-    if (inode->i_count > 1) {
-	retval = -EBUSY;
-	goto end_rmdir;
-    }
-    if (inode->i_nlink != 2)
-	printk("empty directory has nlink!=2 (%u)\n", inode->i_nlink);
-    de->inode = 0;
+    if (bh) {
+	retval = -EPERM;
+	if ((inode = iget(dir->i_sb, (ino_t) de->inode))) {
+	    if ((dir->i_mode & S_ISVTX) && !suser() &&
+		    current->euid != inode->i_uid && current->euid != dir->i_uid)
+		goto end_rmdir1;
+	    if (inode->i_dev != dir->i_dev) goto end_rmdir1;
+	    if (inode == dir)		/* we may not delete ".", but "../dir" is ok */
+		goto end_rmdir1;
+	    if (!S_ISDIR(inode->i_mode)) {
+		retval = -ENOTDIR;
+		goto end_rmdir1;
+	    }
+	    if (!empty_dir(inode)) {
+		retval = -ENOTEMPTY;
+		goto end_rmdir1;
+	    }
+	    if (de->inode != inode->i_ino) {
+		retval = -ENOENT;
+		goto end_rmdir1;
+	    }
+	    if (inode->i_count > 1) {
+		retval = -EBUSY;
+		goto end_rmdir1;
+	    }
+	    if (inode->i_nlink != 2)
+		printk("empty directory has nlink!=2 (%u)\n", inode->i_nlink);
+	    de->inode = 0;
 
 #ifdef BLOAT_FS
-    dir->i_version = ++event;
+	    dir->i_version = ++event;
 #endif
 
-    mark_buffer_dirty(bh, 1);
-    inode->i_nlink = 0;
-    inode->i_dirt = 1;
-    inode->i_ctime = dir->i_ctime = dir->i_mtime = CURRENT_TIME;
-    dir->i_nlink--;
-    dir->i_dirt = 1;
-    retval = 0;
+	    mark_buffer_dirty(bh, 1);
+	    inode->i_nlink = 0;
+	    inode->i_dirt = 1;
+	    inode->i_ctime = dir->i_ctime = dir->i_mtime = CURRENT_TIME;
+	    dir->i_nlink--;
+	    dir->i_dirt = 1;
+	    retval = 0;
 
-  end_rmdir:
+	  end_rmdir1:
+	    iput(inode);
+	}
+	unmap_brelse(bh);
+    }
     iput(dir);
-    iput(inode);
-    unmap_brelse(bh);
     return retval;
 }
 
@@ -471,18 +473,14 @@ int minix_unlink(register struct inode *dir, char *name, size_t len)
 	retval = -ENOENT;
 	inode = NULL;
 	bh = minix_find_entry(dir, name, len, &de);
-	if (!bh) goto end_unlink;
-	if (!(inode = iget(dir->i_sb, (ino_t) de->inode))) goto end_unlink;
+	if (!bh) goto end_unlink2;
+	if (!(inode = iget(dir->i_sb, (ino_t) de->inode))) goto end_unlink1;
 	retval = -EPERM;
 	if (S_ISDIR(inode->i_mode)) goto end_unlink;
     } while (de->inode != inode->i_ino);
     if ((dir->i_mode & S_ISVTX) && !suser() &&
 	current->euid != inode->i_uid && current->euid != dir->i_uid)
 	goto end_unlink;
-    if (de->inode != inode->i_ino) {
-	retval = -ENOENT;
-	goto end_unlink;
-    }
     if (!inode->i_nlink) {
 	printk("Deleting nonexistent file (%s:%lu), %u\n",
 	       kdevname(inode->i_dev), inode->i_ino, inode->i_nlink);
@@ -503,8 +501,10 @@ int minix_unlink(register struct inode *dir, char *name, size_t len)
     retval = 0;
 
   end_unlink:
-    unmap_brelse(bh);
     iput(inode);
+  end_unlink1:
+    unmap_brelse(bh);
+  end_unlink2:
     iput(dir);
     return retval;
 }

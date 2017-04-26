@@ -20,6 +20,16 @@
 
 #ifdef CONFIG_UNIX
 
+#ifdef __WATCOMC__
+#define offsetof(__typ,__id) ((size_t)((char *)&(((__typ*)0)->__id) - (char *)0))
+#else
+#ifdef __ia16__
+#define offsetof(TYPE, MEMBER) __builtin_offsetof (TYPE, MEMBER)
+#else
+#define offsetof(s,m) ((size_t)&(((s *)0)->m))
+#endif
+#endif
+
 struct unix_proto_data unix_datas[NSOCKETS_UNIX];
 
 static struct unix_proto_data *unix_data_alloc(void)
@@ -165,7 +175,7 @@ static int unix_bind(struct socket *sock,
     old_ds = current->t_regs.ds;
     current->t_regs.ds = kernel_ds;
 
-    i = do_mknod(fname, 0, S_IFSOCK | S_IRWXUGO, 0);
+    i = do_mknod(fname, offsetof(struct inode_operations,mknod), S_IFSOCK | S_IRWXUGO, 0);
 
     if (i == 0)
 	i = open_namei(fname, 0, S_IFSOCK, &upd->inode, NULL);
