@@ -158,9 +158,10 @@ savekey:
 nhp:
     mov		ah, #0x01
     int		0x16
-    xor		ah,ah
+    jz		nhp1
     cmp		al,#6
     jge		savekey
+nhp1:
 #endasm
     restart_timer();
 }
