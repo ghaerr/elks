@@ -154,7 +154,7 @@ savekey:
     int		0x16
     push	ax
     call	_AddQueue
-    pop		ax
+    add		sp,#2
 nhp:
     mov		ah, #0x01
     int		0x16
