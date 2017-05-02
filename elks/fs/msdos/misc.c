@@ -121,6 +121,7 @@ printk("zeroing sector %d\r\n",sector);
 			if (!(bh = getblk(inode->i_dev,(block_t)(sector >> 1))))
 				printk("getblk failed\r\n");
 			else {
+				map_buffer(bh);
 				memset(bh->b_data,0,BLOCK_SIZE);
 				bh->b_uptodate = 1;
 			}
