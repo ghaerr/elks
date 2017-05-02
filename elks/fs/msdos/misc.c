@@ -237,7 +237,7 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 			return -1; /* FAT error ... */
 		*pos += sizeof(struct msdos_dir_entry);
 		if (*bh)
-			brelse(*bh);
+			unmap_brelse(*bh);
 		//printk("mge1\n");
 		if (!(*bh = msdos_sread(dir->i_dev,sector,&data)))
 			continue;
