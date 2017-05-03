@@ -121,6 +121,7 @@ printk("zeroing sector %d\r\n",sector);
 			if (!(bh = getblk(inode->i_dev,(block_t)(sector >> 1))))
 				printk("getblk failed\r\n");
 			else {
+				map_buffer(bh);
 				memset(bh->b_data,0,BLOCK_SIZE);
 				bh->b_uptodate = 1;
 			}
@@ -237,7 +238,7 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 			return -1; /* FAT error ... */
 		*pos += sizeof(struct msdos_dir_entry);
 		if (*bh)
-			brelse(*bh);
+			unmap_brelse(*bh);
 		//printk("mge1\n");
 		if (!(*bh = msdos_sread(dir->i_dev,sector,&data)))
 			continue;
