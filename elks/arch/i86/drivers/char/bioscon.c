@@ -105,6 +105,7 @@ int kraw = 0;
 #endif
 
 static void std_char(register Console *, char);
+static void Console_set_vc(unsigned int);
 
 static void AddQueue(unsigned char Key)
 {
@@ -138,31 +139,63 @@ void xtk_init(void)
 /*
  * Bios Keyboard Poll
  */
+static int poll_kbd(void)
+{
+#asm
+    mov		ah, #0x01
+    int		0x16
+    jnz		nhp1
+    xor		ax,ax
+nhp1:
+    or		ax,ax
+    jz		nhp2
+    xor		ah,ah
+    int		0x16
+nhp2:
+#endasm
+}
+
+/*
+ * Bios Keyboard Decoder
+ */
 static void kbd_timer(int __data)
 {
-    int		dav;
+    int dav;
 #if 0
     static int clk[4] = {0x072D, 0x075C, 0x077C, 0x072F,};
     static int c = 0;
 
     pokew(0xB800, (79+0*80)*2, clk[(c++)&0x03]);
 #endif
-#asm
-    jmp		nhp
-savekey:
-    xor		ah,ah
-    int		0x16
-    push	ax
-    call	_AddQueue
-    add		sp,#2
-nhp:
-    mov		ah, #0x01
-    int		0x16
-    jz		nhp1
-    cmp		al,#6
-    jge		savekey
-nhp1:
-#endasm
+    if ((dav = poll_kbd())) {
+	if (dav & 0xFF)
+	    AddQueue(dav & 0x7F);
+	else {
+	    dav = (dav >> 8) & 0xFF;
+	    if ((dav >= 0x3B) && (dav < 0x45))	/* Function keys */
+		dav = dav - 0x3B + 'a';
+	    else if ((dav >= 0x57) && (dav < 0x59))
+		dav = dav - 0x57 + 'k';
+	    else if ((dav>= 0x48) && (dav <= 0x50) && ((1 << (dav - 0x48) & 0x129))) {
+		dav = (((0x4A - dav) >> 1) & 0x07) + ('A' - 3); /* Arrows */
+		if (dav < 'A')
+		    dav = 'A';
+	    }
+	    else if ((dav >= 0x68) && (dav < 0x6B)) {	/* Change VC */
+		Console_set_vc((unsigned)(dav - 0x68));
+		dav = 0;
+	    }
+	    else
+		dav = 0;
+	    if (dav) {
+		AddQueue(ESC);
+#ifdef CONFIG_EMUL_ANSI
+		AddQueue('[');
+#endif
+		AddQueue(dav);
+	    }
+	}
+    }
     restart_timer();
 }
 
@@ -220,16 +253,11 @@ static void VideoWrite(register Console * C, char c)
 
 static void genscro(register Console * C, int n, int x, int y, int xx, int yy)
 {
-    int a, p;
+    int a;
 
     a = C->attr;
-    p = C->pageno;
     if (C != Visible) {
-#asm
-    mov		ah, #0x05
-    mov		al, [bp + .genscro.p]
-    int		#0x10
-#endasm
+	SetDisplayPage(C->pageno);
     }
 #asm
     mov		ah, #0x06
@@ -247,12 +275,7 @@ scrup:
     int		#0x10
 #endasm
     if (C != Visible) {
-	p = Visible->pageno;
-#asm
-    mov		ah, #0x05
-    mov		al, [bp + .genscro.p]
-    int		#0x10
-#endasm
+	SetDisplayPage(Visible->pageno);
     }
 }
 
@@ -503,6 +526,7 @@ static void std_char(register Console * C, char c)
     case '\b':
 	if (C->cx > 0) {
 	    --C->cx;
+	    PositionCursor(C);
 	    VideoWrite(C, ' ');
 	}
 	break;
