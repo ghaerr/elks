@@ -23,68 +23,52 @@ int do_signal(void)
     register __ptask currentp = current;
     register __sighandler_t *sah;
     unsigned signr;
+    sigset_t mask;
 
-    while ((currentp->signal &= ((1L << NSIG) - 1))) {
-	signr = find_first_non_zero_bit((void *)(&currentp->signal), NSIG);
-        clear_bit(signr, &currentp->signal);
+    signr = 1;
+    mask = (sigset_t)1;
+    while ((currentp->signal &= (((sigset_t)1 << NSIG) - 1))) {
+	if (currentp->signal & mask) {
+	    currentp->signal &= ~mask;
 
-	debug2("Process %d has signal %d.\n", currentp->pid, signr);
-	sah = &currentp->sig.action[signr].sa_handler;
-	signr++;
-	if (*sah == SIG_IGN) {
-	    debug("Ignore\n");
-	    continue;
-	}
-	if (*sah == SIG_DFL) {
-	    debug("Default\n");
-	    if (currentp->pid == 1)
+	    debug2("Process %d has signal %d.\n", currentp->pid, signr);
+	    sah = &currentp->sig.action[signr].sa_handler;
+	    if ((*sah == SIG_IGN) || (currentp->pid == 1))	/* Ignore */
 		continue;
-	    switch (signr) {
-	    case SIGCHLD:
-	    case SIGCONT:
-	    case SIGWINCH:
-		continue;
-
-	    case SIGSTOP:
-	    case SIGTSTP:
-#ifndef SMALLSIG
-	    case SIGTTIN:
-	    case SIGTTOU:
-#endif
-
-		currentp->state = TASK_STOPPED;
-		/* Let the parent know */
-		currentp->p_parent->child_lastend = currentp->pid;
-		currentp->p_parent->lastend_status = (int) signr;
-		schedule();
-		continue;
+	    if (*sah == SIG_DFL) {				/* Default */
+		if (mask &					/* Stop */
+			(SM_SIGSTOP | SM_SIGTSTP | SM_SIGTTIN | SM_SIGTTOU)) {
+		    currentp->state = TASK_STOPPED;
+		    /* Let the parent know */
+		    currentp->p_parent->child_lastend = currentp->pid;
+		    currentp->p_parent->lastend_status = (int) signr;
+		    schedule();
+		}
+		else if (!(mask &			/* Core or Terminate */
+			(SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG))) {
 #if 0
-	    case SIGABRT:
-#ifndef SMALLSIG
-	    case SIGFPE:
-	    case SIGILL:
+		    if (mask &					/* Core */
+		      (SM_SIGQUIT|SM_SIGILL|SM_SIGABRT|SM_SIGFPE|SM_SIGSEGV|SM_SIGTRAP))
+			dump_core();
 #endif
-	    case SIGQUIT:
-	    case SIGSEGV:
-#ifndef SMALLSIG
-	    case SIGTRAP:
-#endif
-#endif
-		/* This is where we dump the core, which we must do */
-	    default:
-		do_exit((int) signr);
+		    do_exit((int) signr);			/* Terminate */
+		}
+		/* else	Ignore */
+	    }
+	    else {						/* Set handler */
+		debug1("Setting up return stack for sig handler %x.\n",(unsigned)(*sah));
+		debug1("Stack at %x\n", currentp->t_regs.sp);
+		arch_setup_sighandler_stack(currentp, *sah, signr);
+		debug1("Stack at %x\n", currentp->t_regs.sp);
+		*sah = SIG_DFL;
+		currentp->signal = 0;
+
+		return 1;
 	    }
 	}
-	debug1("Setting up return stack for sig handler %x.\n", (unsigned)(*sah));
-	debug1("Stack at %x\n", currentp->t_regs.sp);
-	arch_setup_sighandler_stack(currentp, *sah, signr);
-	debug1("Stack at %x\n", currentp->t_regs.sp);
-	*sah = SIG_DFL;
-        currentp->signal = 0;
-
-	return 1;
+	signr++;
+	mask <<= 1;
     }
-
     return 0;
 }
 

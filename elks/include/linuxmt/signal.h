@@ -109,6 +109,70 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
  */
 #define SA_PROBE SA_ONESHOT
 #define SA_SAMPLE_RANDOM SA_RESTART
+
+#ifdef SMALLSIG
+
+#define SM_SIGHUP	(1 << (SIGHUP - 1))
+#define SM_SIGINT	(1 << (SIGINT - 1))
+#define SM_SIGQUIT	(1 << (SIGQUIT - 1))
+#define SM_SIGWINCH	(1 << (SIGWINCH - 1))
+#define SM_SIGSTOP	(1 << (SIGSTOP - 1))
+#define SM_SIGABRT	(1 << (SIGABRT - 1))
+#define SM_SIGTSTP	(1 << (SIGTSTP - 1))
+#define SM_SIGCONT	(1 << (SIGCONT - 1))
+#define SM_SIGKILL	(1 << (SIGKILL - 1))
+#define SM_SIGUSR1	(1 << (SIGUSR1 - 1))
+#define SM_SIGSEGV	(1 << (SIGSEGV - 1))
+#define SM_SIGCHLD	(1 << (SIGCHLD - 1))
+#define SM_SIGPIPE	(1 << (SIGPIPE - 1))
+#define SM_SIGALRM	(1 << (SIGALRM - 1))
+#define SM_SIGTERM	(1 << (SIGTERM - 1))
+
+#define SM_SIGILL	0
+#define SM_SIGFPE	0
+#define SM_SIGURG	0
+#define SM_SIGTTIN	0
+#define SM_SIGTTOU	0
+#define SM_SIGTRAP	0
+
+#else
+
+#define SM_SIGHUP	(1L << (SIGHUP - 1))
+#define SM_SIGINT	(1L << (SIGINT - 1))
+#define SM_SIGQUIT	(1L << (SIGQUIT - 1))
+#define SM_SIGILL	(1L << (SIGILL - 1))
+#define SM_SIGTRAP	(1L << (SIGTRAP - 1))
+#define SM_SIGABRT	(1L << (SIGABRT - 1))
+#define SM_SIGIOT	(1L << (SIGIOT - 1))
+#define SM_SIGBUS	(1L << (SIGBUS - 1))
+#define SM_SIGFPE	(1L << (SIGFPE - 1))
+#define SM_SIGKILL	(1L << (SIGKILL - 1))
+#define SM_SIGUSR1	(1L << (SIGUSR1 - 1))
+#define SM_SIGSEGV	(1L << (SIGSEGV - 1))
+#define SM_SIGUSR2	(1L << (SIGUSR2 - 1))
+#define SM_SIGPIPE	(1L << (SIGPIPE - 1))
+#define SM_SIGALRM	(1L << (SIGALRM - 1))
+#define SM_SIGTERM	(1L << (SIGTERM - 1))
+#define SM_SIGSTKFLT	(1L << (SIGSTKFLT - 1))
+#define SM_SIGCHLD	(1L << (SIGCHLD - 1))
+#define SM_SIGCONT	(1L << (SIGCONT - 1))
+#define SM_SIGSTOP	(1L << (SIGSTOP - 1))
+#define SM_SIGTSTP	(1L << (SIGTSTP - 1))
+#define SM_SIGTTIN	(1L << (SIGTTIN - 1))
+#define SM_SIGTTOU	(1L << (SIGTTOU - 1))
+#define SM_SIGURG	(1L << (SIGURG - 1))
+#define SM_SIGXCPU	(1L << (SIGXCPU - 1))
+#define SM_SIGXFSZ	(1L << (SIGXFSZ - 1))
+#define SM_SIGVTALRM	(1L << (SIGVTALRM - 1))
+#define SM_SIGPROF	(1L << (SIGPROF - 1))
+#define SM_SIGWINCH	(1L << (SIGWINCH - 1))
+#define SM_SIGIO	(1L << (SIGIO - 1))
+#define SM_SIGPOLL	(1L << (SIGPOLL - 1))
+#define SM_SIGPWR	(1L << (SIGPWR - 1))
+#define	SM_SIGUNUSED	(1L << (SIGUNUSED - 1))
+
+#endif
+
 #endif
 
 /*@-namechecks@*/
