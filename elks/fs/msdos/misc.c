@@ -279,7 +279,7 @@ int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
 				iput(inode);
 			}
 	}
-	if (*ino == -1) {
+	if (*ino == (ino_t)(-1L)) {
 		if (*res_bh) unmap_brelse(*res_bh);
 		*res_bh = NULL;
 		return name ? -ENOENT : -ENOSPC;

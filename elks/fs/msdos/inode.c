@@ -190,7 +190,7 @@ void msdos_read_inode(register struct inode *inode)
 	register struct msdos_dir_entry *raw_entry;
 	long this,nr;
 
-/* printk("read inode %d\r\n",inode->i_ino); */
+/* printk("read inode %lu\n",inode->i_ino); */
 	inode->u.msdos_i.i_busy = 0;
 	inode->i_uid = current->uid;
 	inode->i_gid = current->gid;

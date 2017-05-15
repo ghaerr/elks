@@ -2,6 +2,7 @@
 #define LX86_LINUXMT_TYPES_H
 
 #include <arch/types.h>
+#include <linuxmt/config.h>
 
 
 typedef __u8            byte_t;
@@ -25,7 +26,11 @@ typedef __u32			block32_t;
 typedef __u16			dev_t;
 typedef __u16			flag_t;
 typedef __u16			gid_t;
+#ifdef CONFIG_32BIT_INODES
+typedef __u32			ino_t;
+#else
 typedef __u16			ino_t;
+#endif
 typedef __u32			ino32_t;
 typedef __u16			mode_t;
 typedef __u16			nlink_t;

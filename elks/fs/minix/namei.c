@@ -214,7 +214,7 @@ static int minix_add_entry(register struct inode *dir,
 	    dir->i_version = ++event;
 #endif
 
-	    de->inode = ino;
+	    de->inode = (__u16)ino;
 	    mark_buffer_dirty(bh, 1);
 	    unmap_brelse(bh);
 	    break;

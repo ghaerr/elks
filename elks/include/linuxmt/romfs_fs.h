@@ -56,7 +56,7 @@ struct romfs_inode {
 
 #define ROMFH_SIZE 16
 #define ROMFH_PAD (ROMFH_SIZE-1)
-#define ROMFH_MASK (~ROMFH_PAD)
+#define ROMFH_MASK (~((__u32)ROMFH_PAD))
 
 #ifdef __KERNEL__
 

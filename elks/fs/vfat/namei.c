@@ -243,7 +243,7 @@ static loff_t vfat_find_free_slots(register struct inode *dir,int slots)
 	ino = msdos_get_entry(dir,&curr,&bh,&de);
 
 	for (added = 0; added < 2; added++) {
-		while (ino != -1) {
+		while (ino != (ino_t)(-1L)) {
 			done = IS_FREE(de->name);
 			if (done) {
 				inode = iget(dir->i_sb,ino);

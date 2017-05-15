@@ -153,14 +153,14 @@ void minix_free_inode(register struct inode *inode)
 	s = "nlink=%d\n";
     }
     else if (!inode->i_sb) s = "no sb\n";
-    else if (inode->i_ino < 1) s = "inode 0\n";
-    else if (inode->i_ino > inode->i_sb->u.minix_sb.s_ninodes)
+    else if ((unsigned int)inode->i_ino < 1) s = "inode 0\n";
+    else if ((unsigned int)inode->i_ino > inode->i_sb->u.minix_sb.s_ninodes)
 	s = "nonexistent inode\n";
-    else if (!(bh = inode->i_sb->u.minix_sb.s_imap[inode->i_ino >> 13]))
+    else if (!(bh = inode->i_sb->u.minix_sb.s_imap[(unsigned int)inode->i_ino >> 13]))
 	s = "nonexistent imap\n";
     else {
 	map_buffer(bh);
-	if (!clear_bit((unsigned int) (inode->i_ino & 8191), bh->b_data)) {
+	if (!clear_bit((unsigned int) ((unsigned int)inode->i_ino & 8191), bh->b_data)) {
 	    debug1("%s: bit %ld already cleared.\n",ino);
 	}
 	clear_inode(inode);
@@ -203,7 +203,7 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
     j += i * 8192;
     if (!j || j > inode->i_sb->u.minix_sb.s_ninodes) goto iputfail;
     unmap_buffer(bh);
-    inode->i_ino = j;
+    inode->i_ino = (ino_t)j;
     inode->i_dirt = 1;
 
 #ifdef BLOAT_FS
