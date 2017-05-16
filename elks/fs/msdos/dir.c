@@ -122,7 +122,7 @@ int fat_readdirx(
 	bh = NULL;
 	is_long = 0;
 	ino = msdos_get_entry(inode,&filp->f_pos,&bh,&de);
-	while (ino != -1) {
+	while (ino != (ino_t)(-1L)) {
 		/* Check for long filename entry */
 		if (de->name[0] == (__s8) DELETED_FLAG) {
 			is_long = 0;

@@ -8,11 +8,16 @@ mainmenu_option next_comment
 	bool 'All file systems are READ-ONLY'  CONFIG_FS_RO               n
 	bool 'Minix file system'               CONFIG_MINIX_FS            y
 	bool 'ROM file system'                 CONFIG_ROMFS_FS            n
-	bool 'MS-DOS file system'              CONFIG_MSDOS_FS            y
+	bool 'MS-DOS file system'              CONFIG_MSDOS_FS            n
 
 	comment 'General filesystem settings'
 
-	bool 'Full VFS support'                CONFIG_FULL_VFS            n
+	if [ "$CONFIG_MSDOS_FS" != "y" ]; then
+	    bool 'Full VFS support'            CONFIG_FULL_VFS            n
+	else
+	    define_bool                        CONFIG_FULL_VFS            y
+	    define_bool                        CONFIG_32BIT_INODES        y
+	fi
 	bool 'Extra external buffer cache'     CONFIG_FS_EXTERNAL_BUFFER  y
 	bool 'Pipe support'                    CONFIG_PIPE                y
 
