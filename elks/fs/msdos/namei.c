@@ -106,7 +106,7 @@ int msdos_lookup(register struct inode *dir,const char *name,int len,
 		iput(dir);
 		return res;
 	}
-	if (bh) brelse(bh);
+	if (bh) unmap_brelse(bh);
 /* printk("lookup: ino=%ld\r\n",ino); */
 	if (!(*result = iget(dir->i_sb,ino))) {
 		iput(dir);
@@ -144,7 +144,7 @@ static int msdos_create_entry(register struct inode *dir,char *name,int is_dir,
 	de->size = 0;
 	bh->b_dirty = 1;
 	if (*result = iget(dir->i_sb,ino)) msdos_read_inode(*result);
-	brelse(bh);
+	unmap_brelse(bh);
 	if (!*result) return -EIO;
 	(*result)->i_mtime = 
 	    CURRENT_TIME;
@@ -170,7 +170,7 @@ int msdos_create(register struct inode *dir,const char *name,int len,int mode,
 	lock_creation();
 	if (msdos_scan(dir,msdos_name,&bh,&de,&ino) >= 0) {
 		unlock_creation();
-		brelse(bh);
+		unmap_brelse(bh);
 		iput(dir);
 		return -EEXIST;
  	}
@@ -200,7 +200,7 @@ int msdos_mkdir(struct inode *dir,const char *name,int len,int mode)
 	if (msdos_scan(dir,msdos_name,&bh,&de,&ino) >= 0) {
 
 		unlock_creation();
-		brelse(bh);
+		unmap_brelse(bh);
 		iput(dir);
 		return -EEXIST;
  	}
@@ -270,7 +270,7 @@ int msdos_rmdir(register struct inode *dir,const char *name,int len)
 			    DELETED_FLAG && strncmp(dde->name,MSDOS_DOT,
 			    MSDOS_NAME) && strncmp(dde->name,MSDOS_DOTDOT,
 			    MSDOS_NAME)) goto rmdir_done; /* linux bug ??? */
-		if (dbh) brelse(dbh);
+		if (dbh) unmap_brelse(dbh);
 	}
 	inode->i_nlink = 0;
 	dir->i_mtime = CURRENT_TIME;
@@ -279,7 +279,7 @@ int msdos_rmdir(register struct inode *dir,const char *name,int len)
 	bh->b_dirty = 1;
 	res = 0;
 rmdir_done:
-	brelse(bh);
+	unmap_brelse(bh);
 	iput(dir);
 	iput(inode);
 	return res;
@@ -312,7 +312,7 @@ int msdos_unlink(register struct inode *dir,const char *name,int len)
 	de->name[0] = DELETED_FLAG;
 	bh->b_dirty = 1;
 unlink_done:
-	brelse(bh);
+	unmap_brelse(bh);
 	iput(inode);
 	iput(dir);
 	return res;
