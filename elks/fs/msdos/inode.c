@@ -44,7 +44,7 @@ void msdos_put_inode(register struct inode *inode)
     if (!inode->i_nlink) {
 	inode->i_size = 0;
 	msdos_truncate(inode);
-	memset(inode,0,sizeof(struct inode));
+	clear_inode(inode);
     }
 }
 
