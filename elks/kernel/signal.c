@@ -24,12 +24,7 @@ static void generate(int sig, register struct task_struct *p)
     sa = p->sig.action[--sig].sa_handler;
     msksig = (((sigset_t)1) << sig);
     if ((sa == SIG_IGN) || (sa == SIG_DFL) && (msksig &
-	((((sigset_t) 1) << (SIGCONT - 1)) | (((sigset_t) 1) << (SIGCHLD - 1))
-	| (((sigset_t) 1) << (SIGWINCH - 1))
-#ifndef SMALLSIG
-	| (((sigset_t) 1) << (SIGURG - 1))
-#endif
-	)))
+	    (SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG)))
 	return;
     debug1("SIGNAL: Generating sig %d.\n", sig);
     p->signal |= msksig;
@@ -51,18 +46,14 @@ int send_sig(sig_t sig, register struct task_struct *p, int priv)
     if ((sig == SIGKILL) || (sig == SIGCONT)) {
 	if (p->state == TASK_STOPPED)
 	    wake_up_process(p);
-	p->signal &= ~((1 << (SIGSTOP - 1)) | (1 << (SIGTSTP - 1))
-#ifndef SMALLSIG
-		| (1 << (SIGTTIN - 1)) | (1 << (SIGTTOU - 1))
-#endif
-	    );
+	p->signal &= ~(SM_SIGSTOP | SM_SIGTSTP | SM_SIGTTIN | SM_SIGTTOU);
     }
     if (sig == SIGSTOP || sig == SIGTSTP
 #ifndef SMALLSIG
 	|| sig == SIGTTIN || sig == SIGTTOU
 #endif
 	)
-	p->signal &= ~(1 << (SIGCONT - 1));
+	p->signal &= ~SM_SIGCONT;
     /* Actually generate the signal */
     generate(sig, p);
     return 0;
