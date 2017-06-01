@@ -74,15 +74,8 @@ struct file_system_type *get_fs_type(char *name)
 
 void wait_on_super(register struct super_block *sb)
 {
-    register __ptask currentp = current;
-
-    if (sb->s_lock) {
-	wait_set(&sb->s_wait);
-	currentp->state = TASK_UNINTERRUPTIBLE;
-	while (sb->s_lock) schedule();
-	currentp->state = TASK_RUNNING;
-	wait_clear(&sb->s_wait);
-    }
+    while (sb->s_lock)
+	sleep_on(&sb->s_wait);
 }
 
 void lock_super(register struct super_block *sb)

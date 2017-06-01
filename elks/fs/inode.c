@@ -84,17 +84,9 @@ void inode_init(void)
 
 static void wait_on_inode(register struct inode *inode)
 {
-    register __ptask currentp = current;
-
-    if (inode->i_lock) {
+    while (inode->i_lock) {
 	if (inode->i_count++ == 0) nr_free_inodes--;
-
-	wait_set(&inode->i_wait);
-	currentp->state = TASK_UNINTERRUPTIBLE;
-	while (inode->i_lock) schedule();
-	currentp->state = TASK_RUNNING;
-	wait_clear(&inode->i_wait);
-
+	sleep_on(&inode->i_wait);
 	if (!(--inode->i_count)) nr_free_inodes++;
     }
 }
