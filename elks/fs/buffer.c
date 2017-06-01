@@ -44,16 +44,11 @@ static void put_last_lru(register struct buffer_head *bh)
     register struct buffer_head *bhn;
 
     if (bh_llru != bh) {
-	/*
-	 *      Unhook
-	 */
+
 	bhn = bh->b_next_lru;
-	if ((bhn->b_prev_lru = bh->b_prev_lru))
+	if ((bhn->b_prev_lru = bh->b_prev_lru))	/* Unhook */
 	    bh->b_prev_lru->b_next_lru = bhn;
-	/*
-	 *      Alter head
-	 */
-	if (bh == bh_lru)
+	else					/* Alter head */
 	    bh_lru = bhn;
 	/*
 	 *      Put on lru end
@@ -107,18 +102,9 @@ void buffer_init(void)
 
 void wait_on_buffer(register struct buffer_head *bh)
 {
-    register __ptask currentp = current;
-
-    if (buffer_locked(bh)) {
-
+    while (buffer_locked(bh)) {
 	bh->b_count++;
-
-	wait_set(&bh->b_wait);
-	currentp->state = TASK_UNINTERRUPTIBLE;
-	while (buffer_locked(bh)) schedule();
-	currentp->state = TASK_RUNNING;
-	wait_clear(&bh->b_wait);
-
+	sleep_on(&bh->b_wait);
 	bh->b_count--;
     }
 }
