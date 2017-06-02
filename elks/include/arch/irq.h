@@ -55,9 +55,15 @@ extern void restore_flags(flag_t);
 
 #ifdef __ia16__
 #define save_flags(x) \
-__asm__ __volatile__("pushfw ; popw %0":"=r" (x): /* no input */ :"memory")
+__asm__ __volatile__("pushfw\n" \
+          "        popw %0\n" \
+          :"=r" (x): /* no input */ :"memory")
+
 #define restore_flags(x) \
-__asm__ __volatile__("pushw %0 ; popfw": /* no output */ :"r" (x):"memory")
+__asm__ __volatile__("pushw %0\n" \
+          "        popfw\n" \
+          : /* no output */ :"r" (x):"memory")
+
 #define clr_irq()	asm("cli")
 #define set_irq()	asm("sti")
 #endif

@@ -450,7 +450,7 @@ void map_buffer(register struct buffer_head *bh)
 		goto do_map_buffer;
 	    }
 	  init_while:
-	    if ((char *)(++pi) >= NR_MAPBUFS) pi = (char *)0;
+	    if ((int)(++pi) >= NR_MAPBUFS) pi = (char *)0;
 	} while ((int)pi != lastumap);
 
 	/* previous loop failed */

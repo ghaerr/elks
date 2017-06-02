@@ -135,7 +135,7 @@ pid_t do_fork(int virtual)
 	 * first few bytes at the top of the user stack. Save those
 	 * bytes in the parent's kernel stack.
 	 */
-	memcpy_fromfs(sc, currentp->t_regs.sp, sizeof(sc));
+	memcpy_fromfs(sc, (void *)currentp->t_regs.sp, sizeof(sc));
 	/*
 	 * Let the child go on first.
 	 */
@@ -144,7 +144,7 @@ pid_t do_fork(int virtual)
 	 * By now, the child should have its own user stack. Restore
 	 * the parent's user stack.
 	 */
-	memcpy_tofs(currentp->t_regs.sp, sc, sizeof(sc));
+	memcpy_tofs((void *)currentp->t_regs.sp, sc, sizeof(sc));
     }
     /*
      *      Return the created task.

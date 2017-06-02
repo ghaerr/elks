@@ -408,7 +408,7 @@ int open_namei(char *pathname, int flag, int mode,
     return error;
 }
 
-int do_mknod(char *pathname, size_t offst, int mode, dev_t dev)
+int do_mknod(char *pathname, int offst, int mode, dev_t dev)
 {
 #ifndef CONFIG_FS_RO
     register struct inode *dirp;
@@ -432,7 +432,7 @@ int do_mknod(char *pathname, size_t offst, int mode, dev_t dev)
 	else {
 	    dirp->i_count++;
 	    down(&dirp->i_sem);
-	    error = (offst != offsetof(struct inode_operations,mknod)
+	    error = (offst != (int)offsetof(struct inode_operations,mknod)
 			? op(dirp, basename, namelen, mode)
 			: op(dirp, basename, namelen, mode, dev)
 		    );
