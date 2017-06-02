@@ -23,8 +23,8 @@ static void generate(int sig, register struct task_struct *p)
 
     sa = p->sig.action[--sig].sa_handler;
     msksig = (((sigset_t)1) << sig);
-    if ((sa == SIG_IGN) || (sa == SIG_DFL) && (msksig &
-	    (SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG)))
+    if ((sa == SIG_IGN) || ((sa == SIG_DFL) && (msksig &
+	    (SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG))))
 	return;
     debug1("SIGNAL: Generating sig %d.\n", sig);
     p->signal |= msksig;

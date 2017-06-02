@@ -164,7 +164,7 @@ static void update_port(register struct serial_info *port)
     /* set baud rate divisor, first lower, then higher byte */
     cflags = port->tty->termios.c_cflag & CBAUD;
     if (cflags & CBAUDEX)
-	cflags = B38400 + cflags & 03;
+	cflags = B38400 + (cflags & 03);
     divisor = divisors[cflags];
 
     clr_irq();

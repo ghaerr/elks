@@ -9,8 +9,8 @@
 #include <arch/segment.h>
 
 static char *args[] = {
-    0x01,	/* argc     */
-    0x08,	/* &argv[0] */
+(char *)0x01,	/* argc     */
+(char *)0x08,	/* &argv[0] */
     NULL,	/* end argv */
     NULL,	/* envp     */
     NULL,	/* argv[0]     */

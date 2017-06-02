@@ -56,8 +56,8 @@ int chq_wait_wr(register struct ch_queue *q, int nonblock)
     return (int)pi;
 }
 
-/* Adds character c, waiting if wait=1 (or otherwise throws out new char) */
-int chq_addch(register struct ch_queue *q, unsigned char c)
+/* Adds character c if there is room (or otherwise throws out new char) */
+void chq_addch(register struct ch_queue *q, unsigned char c)
 {
     debug5("CHQ: chq_addch(%d, %c, %d) q->len=%d q->start=%d\n", q, c, 0,
 	   q->len, q->start);

@@ -383,8 +383,8 @@ struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
     if (next->flags == HOLE_FREE && next->extent >= ext){
         m->extent += ext;
         next->page_base += ext;
-        if ((next->extent -= ext) == 0){
-            next->flags == HOLE_SPARE;
+        if ((next->extent -= ext) == 0) {
+            next->flags = HOLE_SPARE;
             m->next = next->next;
         }
         return m;

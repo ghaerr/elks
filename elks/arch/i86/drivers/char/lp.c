@@ -29,7 +29,7 @@ struct lp_info {
 #ifdef BIOS_PORTS
 
 /* We'll get port info from BIOS. There are 4 ports max. */
-static struct lp_info ports[LP_PORTS] = { 0, 0, 0, 0 };
+static struct lp_info ports[LP_PORTS];
 
 #else
 
@@ -51,6 +51,11 @@ static int port_order[LP_PORTS] = { 0, };
 
 #endif
 
+/*
+#define USE_LP_RESET
+*/
+
+#ifdef USE_LP_RESET
 static int lp_reset(int target)
 {
     register struct lp_info *lpp;
@@ -70,6 +75,7 @@ static int lp_reset(int target)
 
     return LP_STATUS(lpp);
 }
+#endif
 
 static int lp_char_polled(char c, unsigned int target)
 {
@@ -157,7 +163,7 @@ static size_t lp_write(struct inode *inode, struct file *file, char *buf, int co
 {
     register char *chrsp;
 
-#if 0
+#ifdef USE_LP_RESET
 
     /* initialize printer */
     lp_reset(MINOR(inode->i_rdev));
