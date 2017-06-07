@@ -309,10 +309,10 @@ endif
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<
 
-.S.s:
-	gcc -E -traditional -I$(INCDIR) $(CCDEFS) -o $*.s $<
-
 ifeq ($(USEIA16), y)
+.S.s:
+	gcc -E -traditional -I$(INCDIR) -DUSE_IA16 $(CCDEFS) -o $*.s $<
+
 .c.o:
 	$(CC) $(CFLAGS) -S -o $*.s $<
 	att2as86 < $*.s > $*.asm
@@ -320,6 +320,9 @@ ifeq ($(USEIA16), y)
 	rm $*.s $*.asm
 
 else
+.S.s:
+	gcc -E -traditional -I$(INCDIR) $(CCDEFS) -o $*.s $<
+
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 
