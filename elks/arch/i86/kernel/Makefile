@@ -25,7 +25,7 @@ DEPEND  	=
 
 DISTFILES	= syscall.dat
 
-NOINDENT	= bios16.c irq.c irqtab.c printreg.c process.c strace.h \
+NOINDENT	= bios16.S irq.c irqtab.S printreg.S process.c strace.h \
 		  system.c timer.c
 
 #########################################################################
@@ -48,7 +48,7 @@ endif
 # Commands.
 
 irqtab.o: irqtab.s
- 
+
 bios16.o: bios16.s
 
 printreg.o: printreg.s

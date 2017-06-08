@@ -5,12 +5,13 @@
 	.globl _blt_forth
 
 _blt_forth:
-	mov	bx,sp
 	mov	ax,si
 	mov	dx,di
-	lds	si, 2[bx]
-	les	di, 6[bx]
-	mov	cx, 10[bx]
+	mov	si,sp
+	mov	bx,es
+	mov	cx, 10[si]
+	les	di, 6[si]
+	lds	si, 2[si]
 	std
 	rep
 	movsb
@@ -18,5 +19,5 @@ _blt_forth:
 	mov	si,ax
 	mov	ax,ss
 	mov	ds,ax
-	mov	es,ax
+	mov	es,bx
 	ret

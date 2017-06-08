@@ -18,13 +18,20 @@ _memcpy_fromfs:
 	mov	cx,6[bx]
 	mov	bx,_current
 	mov	ds,TASK_USER_DS[bx]
+	mov	bx,ss
+#ifdef USE_IA16
+	push	es
+	mov	es,bx
+#endif
 	cld
 	rep
 	movsb
+#ifdef USE_IA16
+	pop	es
+#endif
+	mov	ds,bx
 	mov	di,dx
 	mov	si,ax
-	mov	ax,ss
-	mov	ds,ax
 	ret
 
 /* void memcpy_tofs(void *daddr, void *saddr, size_t len);*/
@@ -33,19 +40,19 @@ _memcpy_fromfs:
 _memcpy_tofs:
 	mov	ax,si
 	mov	dx,di
-	mov	bx,sp
-	mov	di,2[bx]
-	mov	si,4[bx]
-	mov	cx,6[bx]
-	mov	bx,_current
-	mov	es,TASK_USER_DS[bx]
+	mov	bx,es
+	mov	si,_current
+	mov	es,TASK_USER_DS[si]
+	mov	si,sp
+	mov	di,2[si]
+	mov	cx,6[si]
+	mov	si,4[si]
 	cld
 	rep
 	movsb
+	mov	es,bx
 	mov	di,dx
 	mov	si,ax
-	mov	ax,ss
-	mov	es,ax
 	ret
 
 /* void fmemcpy(dseg, dest, sseg, src, size); */
@@ -54,11 +61,14 @@ _memcpy_tofs:
 _fmemcpy:
 	mov	ax,si
 	mov	dx,di
-	mov	bx,sp
-	mov	es,2[bx]
-	mov	si,8[bx]
-	mov	cx,10[bx]
-	lds	di,4[bx]
+#ifdef USE_IA16
+	mov	bx,es
+#endif
+	mov	di,sp
+	mov	es,2[di]
+	mov	si,8[di]
+	mov	cx,10[di]
+	lds	di,4[di]
 	cld
 	rep
 	movsb
@@ -66,7 +76,11 @@ _fmemcpy:
 	mov	si,ax
 	mov	ax,ss
 	mov	ds,ax
+#ifdef USE_IA16
+	mov	es,bx
+#else
 	mov	es,ax
+#endif
 	ret
 
 /* int strlen_fromfs(void *saddr); */
@@ -77,9 +91,10 @@ _fmemcpy:
 	.globl	_strlen_fromfs
 
 _strlen_fromfs:
-	mov	bx,_current
-	mov	es,TASK_USER_DS[bx]
 	mov	dx,di
+	mov	di,_current
+	push	es
+	mov	es,TASK_USER_DS[di]
 	mov	bx,sp
 	mov	di,2[bx]
 	xor	al,al		! search for NULL byte
@@ -87,8 +102,7 @@ _strlen_fromfs:
 	mov	cx,#-1
 	repne
 	scasb
-	mov	ax,ss
-	mov	es,ax
+	pop	es
 	mov	ax,di		! calc len +1
 	mov	di,dx
 	sub	ax,2[bx]

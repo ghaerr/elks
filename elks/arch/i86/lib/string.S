@@ -6,6 +6,9 @@
 	.globl _strcmp
 	.globl _memset
 	.text
+#ifdef USE_IA16
+	.extern _kernel_ds
+#endif
 	.even
 
 !
@@ -15,6 +18,10 @@
 !
 
 _strlen:			! needs more testing!
+#ifdef USE_IA16
+	mov	dx,es
+	mov	es,_kernel_ds
+#endif
 	mov	bx,sp
 	push	di
 	mov	di,2[bx]
@@ -27,6 +34,9 @@ _strlen:			! needs more testing!
 	sub	ax,2[bx]
 	dec	ax
 	pop	di
+#ifdef USE_IA16
+	mov	es,dx
+#endif
 	ret
 
 !
@@ -36,6 +46,10 @@ _strlen:			! needs more testing!
 !
 
 _strcpy:
+#ifdef USE_IA16
+	mov	dx,es
+	mov	es,_kernel_ds
+#endif
 	mov	bx,sp
 	push	di
 	push	si
@@ -50,6 +64,9 @@ copyon:	lodsb			! al = [ds:si++]
 	mov	ax,2[bx]	! _strcpy returns a pointer to the destination string
 	pop	si
 	pop	di
+#ifdef USE_IA16
+	mov	es,dx
+#endif
 	ret
 
 !
@@ -59,6 +76,10 @@ copyon:	lodsb			! al = [ds:si++]
 !
 
 _strcmp:
+#ifdef USE_IA16
+	mov	dx,es
+	mov	es,_kernel_ds
+#endif
 	mov	bx,sp
 	push	di
 	push	si
@@ -79,6 +100,9 @@ cmpend:	sbb	ax,ax		! strings differ
 
 cmpret:	pop	si
 	pop	di
+#ifdef USE_IA16
+	mov	es,dx
+#endif
 	ret
 
 !
@@ -86,6 +110,10 @@ cmpret:	pop	si
 !
 
 _memset:
+#ifdef USE_IA16
+	mov	dx,es
+	mov	es,_kernel_ds
+#endif
 	mov	bx,sp
 	push	di
 	mov	di,2[bx]	! address of the memory block
@@ -96,4 +124,7 @@ _memset:
 	stosb			! 	cx--, [es:di++] = al
 	mov	ax,2[bx]	! return value = start addr of block
 	pop	di
+#ifdef USE_IA16
+	mov	es,dx
+#endif
 	ret

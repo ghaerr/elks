@@ -71,6 +71,8 @@ lib86.a: $(OBJS)
 
 setupw.s: setupw.S
 
+string.s: string.S
+
 #########################################################################
 # Standard commands.
 

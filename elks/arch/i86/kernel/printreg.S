@@ -25,7 +25,8 @@ _print_regs:
 	push cx
 	push bx
 	push ax
-	push #fmtprg
+	mov  ax,#fmtprg
+	push ax
 	call _printk
 	pop ax
 	pop ax

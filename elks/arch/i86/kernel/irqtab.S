@@ -387,18 +387,16 @@ save_regs:
 !
 	call	_syscall
 	push	ax		! syscall returns a value in ax
-	call	_do_signal
 #ifdef CONFIG_STRACE
 !
 !	ret_strace(retval)
 !
-	pop	ax
-	push	ax
 	call	_ret_strace
 #endif
 !
 !	Restore registers
 !
+	call	_do_signal
 	cli
 	j	restore_regs
 !
@@ -522,7 +520,9 @@ restore_regs:
 
 _tswitch:
 	push	bp		! schedule()'s bp
-	pushf
+#ifdef USE_IA16
+	push	es
+#endif
 	push	di
 	push	si
 	mov	bx,_previous
@@ -531,7 +531,9 @@ _tswitch:
 	mov	sp,TASK_KRNL_SP[bx]
 	pop	si
 	pop	di
-	popf
+#ifdef USE_IA16
+	pop	es
+#endif
 	pop	bp		! BP of schedule()
 	ret
 !

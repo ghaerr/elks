@@ -160,7 +160,8 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
  * like this:
  *
  *             Kernel Stack                              User Stack
- *            si di f bp IP                              bp ip cs f
+ *              si di bp IP: BCC case                    bp ip cs f
+ *           si di es bp IP: IA16-GCC case               bp ip cs f
  *
  * with IP pointing to ret_from_syscall, and current->t_xregs.ksp pointing
  * to si on the kernel stack. Values for the child stack si, di and bp can
@@ -171,11 +172,15 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
 
 void arch_build_stack(struct task_struct *t, char *addr)
 {
-    register __u16 *tsp = ((__u16 *)(&(t->t_regs.ax))) - 5;
+    register __u16 *tsp = ((__u16 *)(&(t->t_regs.ax))) - 1;
 
-    t->t_xregs.ksp = (__u16)tsp;
-    *(tsp+2) = 0x3202;			/* Initial value for FLAGS register */
     if (addr == NULL)
 	addr = ret_from_syscall;
-    *(tsp+4) = addr;			/* Start execution address */
+    *tsp = addr;			/* Start execution address */
+#ifdef __ia16__
+    *(tsp-2) = kernel_ds;		/* Initial value for ES register */
+    t->t_xregs.ksp = (__u16)(tsp - 4);	/* Initial value for SP register */
+#else
+    t->t_xregs.ksp = (__u16)(tsp - 3);	/* Initial value for SP register */
+#endif
 }
