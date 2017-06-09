@@ -39,6 +39,25 @@ static __u16 _buf_ds;			/* Segment(s?) of L2 buffer cache */
 static int lastumap;
 #endif
 
+/* Uncomment next line to debug free buffer_head count */
+/*#define DEBUG_FREE_BH_COUNT */
+
+#ifdef DEBUG_FREE_BH_COUNT
+static int nr_free_bh = NR_BUFFERS;
+#define DCR_COUNT(bh) if(!(--bh->b_count))nr_free_bh++
+#define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
+#define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
+#define SET_COUNT(bh) if(--nr_free_bh < 0) { \
+	printk("VFS: get_free_buffer: bad free buffer head count.\n"); \
+	nr_free_bh = 0; \
+    }
+#else
+#define DCR_COUNT(bh) (bh->b_count--)
+#define INR_COUNT(bh) (bh->b_count++)
+#define CLR_COUNT(bh)
+#define SET_COUNT(bh)
+#endif
+
 static void put_last_lru(register struct buffer_head *bh)
 {
     register struct buffer_head *bhn;
@@ -103,9 +122,9 @@ void buffer_init(void)
 void wait_on_buffer(register struct buffer_head *bh)
 {
     while (buffer_locked(bh)) {
-	bh->b_count++;
+	INR_COUNT(bh);
 	sleep_on(&bh->b_wait);
-	bh->b_count--;
+	DCR_COUNT(bh);
     }
 }
 
@@ -118,8 +137,8 @@ void lock_buffer(register struct buffer_head *bh)
 
 void unlock_buffer(register struct buffer_head *bh)
 {
-    bh->b_lock = 0;
     unmap_buffer(bh);
+    bh->b_lock = 0;
     wake_up(&bh->b_wait);
 }
 
@@ -161,9 +180,9 @@ static void sync_buffers(kdev_t dev, int wait)
 	/*
 	 *      Do the stuff
 	 */
-	bh->b_count++;
+	INR_COUNT(bh);
 	ll_rw_blk(WRITE, bh);
-	bh->b_count--;
+	DCR_COUNT(bh);
     } while ((bh = bh->b_prev_lru) != NULL);
 }
 
@@ -190,6 +209,7 @@ static struct buffer_head *get_free_buffer(void)
     put_last_lru(bh);
     bh->b_uptodate = 0;
     bh->b_count = 1;
+    SET_COUNT(bh)
     return bh;
 }
 
@@ -206,7 +226,7 @@ void __brelse(register struct buffer_head *buf)
     if (!--buf->b_count)
 	wake_up(&bufwait);
 #else
-    buf->b_count--;
+    DCR_COUNT(buf);
 #endif
 }
 
@@ -219,7 +239,7 @@ void __bforget(struct buffer_head *buf)
 {
     wait_on_buffer(buf);
     buf->b_dirty = 0;
-    buf->b_count--;
+    DCR_COUNT(buf);
     buf->b_dev = NODEV;
     wake_up(&bufwait);
 }
@@ -256,7 +276,7 @@ struct buffer_head *get_hash_table(kdev_t dev, block_t block)
     register struct buffer_head *bh;
 
     if ((bh = find_buffer(dev, block)) != NULL) {
-	bh->b_count++;
+	INR_COUNT(bh);
 	wait_on_buffer(bh);
     }
     return bh;
@@ -302,9 +322,11 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
     goto return_it;
 
   found_it:
-    if (n_bh != NULL)
+    if (n_bh != NULL) {
+	CLR_COUNT(n_bh)
 	n_bh->b_count = 0;	/* Release previously created buffer head */
-    bh->b_count++;
+    }
+    INR_COUNT(bh);
     wait_on_buffer(bh);
     if (buffer_clean(bh) && buffer_uptodate(bh))
 	put_last_lru(bh);

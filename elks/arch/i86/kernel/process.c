@@ -175,8 +175,8 @@ void arch_build_stack(struct task_struct *t, char *addr)
     register __u16 *tsp = ((__u16 *)(&(t->t_regs.ax))) - 1;
 
     if (addr == NULL)
-	addr = ret_from_syscall;
-    *tsp = addr;			/* Start execution address */
+	addr = (char *)ret_from_syscall;
+    *tsp = (__u16 *)addr;		/* Start execution address */
 #ifdef __ia16__
     *(tsp-2) = kernel_ds;		/* Initial value for ES register */
     t->t_xregs.ksp = (__u16)(tsp - 4);	/* Initial value for SP register */

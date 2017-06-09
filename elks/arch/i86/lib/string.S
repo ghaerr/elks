@@ -6,9 +6,6 @@
 	.globl _strcmp
 	.globl _memset
 	.text
-#ifdef USE_IA16
-	.extern _kernel_ds
-#endif
 	.even
 
 !
@@ -128,3 +125,8 @@ _memset:
 	mov	es,dx
 #endif
 	ret
+
+#ifdef USE_IA16
+	.data
+	.extern _kernel_ds
+#endif
