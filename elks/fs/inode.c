@@ -26,7 +26,25 @@ static void wait_on_inode(struct inode *);
 static struct inode inode_block[NR_INODE];
 static struct inode *first_inode = &inode_block[0];
 static struct wait_queue inode_wait;
+
+/* Uncomment next line to debug free inodes count */
+/*#define DEBUG_FREE_INODES_COUNT */
+
+#ifdef DEBUG_FREE_INODES_COUNT
 static int nr_free_inodes = NR_INODE;
+#define DCR_COUNT(i) if(!(--i->i_count))nr_free_inodes++
+#define INR_COUNT(i) if(!(i->i_count++))nr_free_inodes--
+#define CLR_COUNT(i) if(i->i_count)nr_free_inodes++
+#define SET_COUNT(i) if(--nr_free_inodes < 0) { \
+	printk("VFS: get_empty_inode: bad free inode count.\n"); \
+	nr_free_inodes = 0; \
+    }
+#else
+#define DCR_COUNT(i) (i->i_count--)
+#define INR_COUNT(i) (i->i_count++)
+#define CLR_COUNT(i)
+#define SET_COUNT(i)
+#endif
 
 static void insert_inode_free(register struct inode *inode)
 {
@@ -60,7 +78,7 @@ void clear_inode(register struct inode *inode) /* and put_first_lru() */
 {
     wait_on_inode(inode);
     remove_inode_free(inode);
-    if (inode->i_count) nr_free_inodes++;
+    CLR_COUNT(inode);
     memset(inode, 0, sizeof(struct inode));
     insert_inode_free(inode);
 }
@@ -85,9 +103,9 @@ void inode_init(void)
 static void wait_on_inode(register struct inode *inode)
 {
     while (inode->i_lock) {
-	if (inode->i_count++ == 0) nr_free_inodes--;
+	INR_COUNT(inode);
 	sleep_on(&inode->i_wait);
-	if (!(--inode->i_count)) nr_free_inodes++;
+	DCR_COUNT(inode);
     }
 }
 
@@ -194,15 +212,12 @@ static struct inode *get_empty_inode(void)
     clear_inode(inode);
     put_last_lru(inode);
     inode->i_count = inode->i_nlink = 1;
+    SET_COUNT(inode)
     inode->i_uid = current->euid;
 #ifdef BLOAT_FS
     inode->i_version = ++event;
 #endif
     inode->i_ino = ++ino;
-    if (--nr_free_inodes < 0) {
-	printk("VFS: get_empty_inode: bad free inode count.\n");
-	nr_free_inodes = 0;
-    }
     return inode;
 }
 
@@ -247,8 +262,7 @@ void iput(register struct inode *inode)
 	    }
 
 	} while (inode->i_dirt);
-	inode->i_count--;
-	nr_free_inodes++;
+	DCR_COUNT(inode);
     }
 }
 
@@ -353,7 +367,7 @@ struct inode *__iget(struct super_block *sb,
 
   found_it:
     if (n_ino != NULL) iput(n_ino);
-    if (inode->i_count++ == 0) nr_free_inodes--;
+    INR_COUNT(inode);
 #if 0
     /* This will never happen */
     if (inode->i_dev != sb->s_dev || inode->i_ino != inr) {

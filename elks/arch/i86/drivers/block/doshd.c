@@ -610,9 +610,8 @@ int init_bioshd(void)
 	bioshd_initialized = 1;
     } else {
 	printk("hd: unable to register\n");
-	return -1;
     }
-    return 0;
+    return count;
 }
 
 static int bioshd_ioctl(struct inode *inode,

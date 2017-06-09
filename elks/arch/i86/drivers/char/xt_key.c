@@ -16,7 +16,7 @@
  * Georg Potthast 2017                                         *
  * ************************************************************/
 
-
+#include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
