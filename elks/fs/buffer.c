@@ -26,7 +26,7 @@ static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
  */
 /*static struct buffer_head *bh_chain = buffers; */
 static struct buffer_head *bh_lru = buffers;
-static struct buffer_head *bh_llru = &buffers[NR_BUFFERS - 1];
+static struct buffer_head *bh_llru = buffers;
 
 #if 0
 struct wait_queue bufwait;	/* Wait for a free buffer */
@@ -73,8 +73,7 @@ static void put_last_lru(register struct buffer_head *bh)
 	 *      Put on lru end
 	 */
 	bh->b_next_lru = NULL;
-	bh->b_prev_lru = bh_llru;
-	bh_llru->b_next_lru = bh;
+	(bh->b_prev_lru = bh_llru)->b_next_lru = bh;
 	bh_llru = bh;
     }
 }
@@ -89,7 +88,7 @@ void buffer_init(void)
     bufmem_i = (char *)bufmem + (unsigned int)pi;
 #endif
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-    _buf_ds = mm_alloc(NR_BUFFERS * 0x40);
+    _buf_ds = mm_alloc(NR_BUFFERS << (BLOCK_SIZE_BITS - 4));
     pi = (char *)NR_MAPBUFS;
     do {
 	bufmem_map[(unsigned int)(--pi)] = NULL;
@@ -97,6 +96,10 @@ void buffer_init(void)
 #endif
 
     do {
+	if ((unsigned int)pi) {
+	    bh->b_next_lru = bh->b_prev_lru = bh;
+	    put_last_lru(bh);
+	}
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 	bh->b_data = 0;		/* L1 buffer cache is reserved! */
 	bh->b_mapcount = 0;
@@ -108,11 +111,7 @@ void buffer_init(void)
 	bh->b_data = (char *)bufmem + ((unsigned int)(pi++) << BLOCK_SIZE_BITS);
 #endif
 #endif
-	bh->b_next_lru = bh + 1;
-	bh->b_prev_lru = bh - 1;
     } while (++bh < &buffers[NR_BUFFERS]);
-    buffers[0].b_prev_lru = NULL;
-    buffers[NR_BUFFERS - 1].b_next_lru = NULL;
 }
 
 /*
@@ -303,16 +302,16 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
      * for user processes to use (and dirty) */
 
     n_bh = NULL;
-  repeat:
-    if ((bh = find_buffer(dev, block)) != NULL) goto found_it;
-    if (n_bh == NULL) {
+    goto start;
+    do {
 	/*
 	 * Block not found. Create a buffer for this job.
 	 */
 	n_bh = get_free_buffer();	/* This function may sleep and someone else */
-	goto repeat;			/* can create the block */
-    }
-    bh = n_bh;
+      start:				/* can create the block */
+	if ((bh = find_buffer(dev, block)) != NULL) goto found_it;
+    } while(n_bh == NULL);
+    bh = n_bh;				/* Block not found, use the new buffer */
 /* OK, FINALLY we know that this buffer is the only one of its kind,
  * and that it's unused (b_count=0), unlocked (buffer_locked=0), and clean
  */

@@ -21,10 +21,9 @@
 int event = 0;
 #endif
 
-static void wait_on_inode(struct inode *);
-
 static struct inode inode_block[NR_INODE];
-static struct inode *first_inode = &inode_block[0];
+static struct inode *inode_lru = inode_block;
+static struct inode *inode_llru = inode_block;
 static struct wait_queue inode_wait;
 
 /* Uncomment next line to debug free inodes count */
@@ -46,27 +45,26 @@ static int nr_free_inodes = NR_INODE;
 #define SET_COUNT(i)
 #endif
 
-static void insert_inode_free(register struct inode *inode)
-{
-    register struct inode *in = first_inode;
-
-    inode->i_prev = in;
-    (inode->i_next = in->i_next)->i_prev = inode;
-    in->i_next = inode;
-}
-
 static void remove_inode_free(register struct inode *inode)
 {
-    if (first_inode == inode)
-        first_inode = inode->i_prev;
-    (inode->i_next->i_prev = inode->i_prev)->i_next = inode->i_next;
+    register struct inode *ino;
+
+    if((ino = inode->i_next)) {
+	if((ino->i_prev = inode->i_prev))
+	    inode->i_prev->i_next = ino;
+	else
+	    inode_lru = ino;
+    }
+    else
+	(inode_llru = inode->i_prev)->i_next = NULL;
 }
 
 static void put_last_lru(register struct inode *inode)
 {
     remove_inode_free(inode);
-    insert_inode_free(inode);
-    first_inode = inode;
+    inode->i_next = NULL;
+    (inode->i_prev = inode_llru)->i_next = inode;
+    inode_llru = inode;
 }
 
 /*
@@ -76,21 +74,22 @@ static void put_last_lru(register struct inode *inode)
 
 void clear_inode(register struct inode *inode) /* and put_first_lru() */
 {
-    wait_on_inode(inode);
     remove_inode_free(inode);
     CLR_COUNT(inode);
     memset(inode, 0, sizeof(struct inode));
-    insert_inode_free(inode);
+    inode->i_prev = NULL;
+    (inode->i_next = inode_lru)->i_prev = inode;
+    inode_lru = inode;
 }
 
 void inode_init(void)
 {
-    register struct inode *inode = inode_block;
+    register struct inode *inode = inode_block + 1;
 
-    inode->i_next = inode->i_prev = inode;
     do {
-	insert_inode_free(++inode);
-    } while (inode < &inode_block[NR_INODE-1]);
+	inode->i_next = inode->i_prev = inode;
+	put_last_lru(inode);
+    } while (++inode < &inode_block[NR_INODE]);
 }
 
 /*
@@ -123,18 +122,18 @@ static void unlock_inode(register struct inode *inode)
 
 void invalidate_inodes(kdev_t dev)
 {
-    register struct inode *next;
-    register struct inode *inode = first_inode;
+    register struct inode *prev;
+    register struct inode *inode = inode_llru;
 
     do {
-        next = inode->i_prev;	/* clear_inode() changes the queues.. */
+        prev = inode->i_prev;	/* clear_inode() changes the queues.. */
 	if (inode->i_dev != dev) continue;
 	if (inode->i_count || inode->i_dirt || inode->i_lock) {
 	    printk("VFS: inode busy on removed device %s\n", kdevname(dev));
 	    continue;
 	}
 	clear_inode(inode);
-    } while ((inode = next) != first_inode);
+    } while ((inode = prev) != NULL);
 }
 
 static void write_inode(register struct inode *inode)
@@ -156,19 +155,19 @@ static void write_inode(register struct inode *inode)
 
 void sync_inodes(kdev_t dev)
 {
-    register struct inode *inode = first_inode;
+    register struct inode *inode = inode_llru;
 
     do {
 	if (dev && inode->i_dev != dev) continue;
 	wait_on_inode(inode);
 	if (inode->i_dirt) write_inode(inode);
-    } while ((inode = inode->i_prev) != first_inode);
+    } while ((inode = inode->i_prev) != NULL);
 }
 
 static void list_inode_status(void)
 {
     register char *pi = 0;
-    register struct inode *inode = first_inode;
+    register struct inode *inode = inode_llru;
 
     do {
 #ifdef CONFIG_32BIT_INODES
@@ -177,7 +176,7 @@ static void list_inode_status(void)
         printk("[#%u: c=%u d=%x nr=%u]", ((int)(pi++)),
 #endif
 		inode->i_count, inode->i_dev, inode->i_ino);
-    } while ((inode = inode->i_prev) != first_inode);
+    } while ((inode = inode->i_prev) != NULL);
 }
 
 static struct inode *get_empty_inode(void)
@@ -185,14 +184,14 @@ static struct inode *get_empty_inode(void)
     static ino_t ino = 0;
     register struct inode *inode;
 
-    inode = first_inode->i_next;
+    inode = inode_lru;
     while (inode->i_count || inode->i_dirt || inode->i_lock) {
-	if (inode == first_inode) {
+	if ((inode = inode->i_next) == NULL) {
 	    printk("VFS: No free inodes\n");
 	    list_inode_status();
 	    sleep_on(&inode_wait);
+	    inode = inode_lru;
 	}
-	inode = inode->i_next;
     }
 
 /* Here we are doing the same checks again. There cannot be a significant *
@@ -342,18 +341,17 @@ struct inode *__iget(struct super_block *sb,
 	panic("VFS: iget with sb==NULL");
 
     n_ino = NULL;
-  repeat:
-    inode = first_inode;
+    goto start;
     do {
-	if (inode->i_ino == inr && inode->i_dev == sb->s_dev) goto found_it;
-    } while ((inode = inode->i_prev) != first_inode);
-
-    if (n_ino == NULL) {
 	debug("iget: getting an empty inode...\n");
-	n_ino = get_empty_inode();	/* get_empty_inode will never return NULL*/
-	goto repeat;
-    }
-    inode = n_ino;
+	n_ino = get_empty_inode();	/* This function may sleep and someone else */
+      start:				/* can create the inode */
+	inode = inode_llru;
+	do {
+	    if (inode->i_ino == inr && inode->i_dev == sb->s_dev) goto found_it;
+	} while ((inode = inode->i_prev) != NULL);
+    } while(n_ino == NULL);
+    inode = n_ino;			/* Inode not found, use the new structure */
     debug1("iget: got one... (%x)!\n", empty);
 
     inode->i_sb = sb;
@@ -383,33 +381,34 @@ struct inode *__iget(struct super_block *sb,
 	iput(n_ino);
     }
     wait_on_inode(inode);
+    put_last_lru(inode);
   return_it:
     return inode;
 }
 
 int fs_may_mount(kdev_t dev)	/* and invalidate_inodes() */
 {
-    register struct inode *next;
-    register struct inode *inode = first_inode;
+    register struct inode *prev;
+    register struct inode *inode = inode_llru;
 
     do {
-        next = inode->i_prev;	/* clear_inode() changes the queues.. */
+        prev = inode->i_prev;	/* clear_inode() changes the queues.. */
 	if (inode->i_dev != dev) continue;
 	if (inode->i_count || inode->i_dirt || inode->i_lock) return 0;
 	clear_inode(inode);
-    } while ((inode = next) != first_inode);
+    } while ((inode = prev) != NULL);
     return 1;
 }
 
 int fs_may_umount(kdev_t dev, struct inode *mount_rooti)
 {
-    register struct inode *inode = first_inode;
+    register struct inode *inode = inode_llru;
 
     do {
 	if (inode->i_dev != dev || !inode->i_count) continue;
 	if (inode == mount_rooti && inode->i_count == 1) continue;
 	return 0;
-    } while ((inode = inode->i_prev) != first_inode);
+    } while ((inode = inode->i_prev) != NULL);
     return 1;
 }
 
