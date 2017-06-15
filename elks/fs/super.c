@@ -92,16 +92,16 @@ void unlock_super(register struct super_block *sb)
 
 void sync_supers(kdev_t dev)
 {
-    register struct super_block *sb;
     register struct super_operations *sop;
+    register struct super_block *sb = super_blocks;
 
-    for (sb = super_blocks; sb < super_blocks + NR_SUPER; sb++) {
+    do {
 	if ((!sb->s_dev) || (dev && sb->s_dev != dev)) continue;
 	wait_on_super(sb);
 	if (!sb->s_dev || !sb->s_dirt || (dev && (dev != sb->s_dev))) continue;
 	sop = sb->s_op;
 	if (sop && sop->write_super) sop->write_super(sb);
-    }
+    } while (++sb < super_blocks + NR_SUPER);
 }
 
 static struct super_block *get_super(kdev_t dev)
@@ -109,14 +109,15 @@ static struct super_block *get_super(kdev_t dev)
     register struct super_block *s;
 
     if (dev) {
+      repeat:
 	s = super_blocks;
-	while (s < super_blocks + NR_SUPER) {
+	do {
 	    if (s->s_dev == dev) {
 		wait_on_super(s);
 		if (s->s_dev == dev) return s;
-		s = super_blocks;
-	    } else s++;
-	}
+		goto repeat;
+	    }
+	} while (++s < super_blocks + NR_SUPER);
     }
     return NULL;
 }
@@ -126,10 +127,9 @@ void put_super(kdev_t dev)
     register struct super_block *sb;
     register struct super_operations *sop;
 
-    if (dev == ROOT_DEV) {
+    if (dev == ROOT_DEV)
 	panic("put_super: root\n");
-	return;
-    }
+
     if (!(sb = get_super(dev))) return;
     if (sb->s_covered) {
 	printk("VFS: Mounted device %s - tssk, tssk\n", kdevname(dev));
