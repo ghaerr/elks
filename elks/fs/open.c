@@ -360,8 +360,6 @@ int sys_open(char *filename, int flags, int mode)
 {
     struct inode *inode;
     register struct inode *pinode;
-    struct file *f;
-    register struct file *filp;
     int error, flag;
 
     flag = flags;
@@ -371,30 +369,17 @@ int sys_open(char *filename, int flags, int mode)
     error = open_namei(filename, flag, mode, &inode, NULL);
     if (!error) {
 	pinode = inode;
-	error = open_filp(flags, pinode, &f);
-	filp = f;
-	if (!error) {
-	    filp->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
-
-	/*
-	 * We have to do this last, because we mustn't export
-	 * an incomplete fd to other processes which may share
-	 * the same file table with us.
-	 */
-	    if ((error = get_unused_fd(filp)) >= 0) goto exit_open;
-	    close_filp(pinode, filp);
-	}
-	iput(pinode);
+	if ((error = open_fd(flags, pinode)) < 0)
+	    iput(pinode);
     }
-  exit_open:
     return error;
 }
 
-static int close_fp(register struct file *filp)
+static void close_fp(register struct file *filp)
 {
     register struct inode *inode;
 
-    if (filp->f_count < 1) printk("VFS: Close: file count is 0\n");
+    if (!(filp->f_count)) printk("VFS: Close: file count is 0\n");
     else if (filp->f_count > 1) filp->f_count--;
     else {
 	inode = filp->f_inode;
@@ -402,7 +387,6 @@ static int close_fp(register struct file *filp)
 	filp->f_inode = NULL;
 	iput(inode);
     }
-    return 0;
 }
 
 /* This is used by exit and sometimes exec to close all files of a process */
@@ -431,7 +415,8 @@ int sys_close(unsigned int fd)
 	clear_bit(fd, &cfiles->close_on_exec);
 	if ((filp = cfiles->fd[fd])) {
 	    cfiles->fd[fd] = NULL;
-	    return close_fp(filp);
+	    close_fp(filp);
+	    return 0;
 	}
     }
     return -EBADF;
