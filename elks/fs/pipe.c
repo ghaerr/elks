@@ -31,28 +31,36 @@
 int get_unused_fd(struct file *f)
 {
     register char *pfd = 0;
-    register struct file_struct *cfs = &current->files;
+    register struct file **cfs = current->files.fd;
 
     do {
-	if (!cfs->fd[(unsigned int) pfd]) {
-	    cfs->fd[(unsigned int) pfd] = f;
-	    clear_bit((unsigned int) pfd,
-			     &cfs->close_on_exec);
-	    return (int) pfd;
+	if (!*cfs) {
+	    *cfs = f;
+	    clear_bit((unsigned int)pfd, &(current->files.close_on_exec));
+	    return (int)pfd;
 	}
+	cfs++;
     } while (((int)(++pfd)) < NR_OPEN);
-
     return -EMFILE;
 }
 
-int open_fd(int flags, register struct inode *inode)
+int open_fd(int flags, struct inode *inode)
 {
     int fd;
-    struct file *filp;
+    struct file *f;
+    register struct file *filp;
 
-    if (!(fd = open_filp(flags, inode, &filp))
-	&& ((fd = get_unused_fd(filp)) < 0))
-	close_filp(inode, filp);
+    if (!(fd = open_filp(flags, inode, &f))) {
+	filp = f;
+	filp->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
+    /*
+     * We have to do this last, because we mustn't export
+     * an incomplete fd to other processes which may share
+     * the same file table with us.
+     */
+	if ((fd = get_unused_fd(filp)) < 0)
+	    close_filp(inode, filp);
+    }
     return fd;
 }
 
@@ -337,17 +345,16 @@ static int do_pipe(register int *fd)
 	goto no_inodes;
 
     /* read file */
-    if ((error = open_fd(O_RDONLY, inode)) < 0) goto no_files;
+    if ((error = open_fd(O_RDONLY, inode)) < 0) {
+	iput(inode);
+	goto no_inodes;
+    }
 
     *fd = error;
 
     /* write file */
     if ((error = open_fd(O_WRONLY, inode)) < 0) {
-	f = current->files.fd[*fd];
-	current->files.fd[*fd] = NULL;
-	close_filp(inode, f);
-      no_files:
-	iput(inode);
+	sys_close(*fd);
       no_inodes:
 	return error;
     }

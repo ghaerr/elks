@@ -49,8 +49,8 @@ static void remove_inode_free(register struct inode *inode)
 {
     register struct inode *ino;
 
-    if((ino = inode->i_next)) {
-	if((ino->i_prev = inode->i_prev))
+    if ((ino = inode->i_next)) {
+	if ((ino->i_prev = inode->i_prev))
 	    inode->i_prev->i_next = ino;
 	else
 	    inode_lru = ino;
@@ -350,7 +350,7 @@ struct inode *__iget(struct super_block *sb,
 	do {
 	    if (inode->i_ino == inr && inode->i_dev == sb->s_dev) goto found_it;
 	} while ((inode = inode->i_prev) != NULL);
-    } while(n_ino == NULL);
+    } while (n_ino == NULL);
     inode = n_ino;			/* Inode not found, use the new structure */
     debug1("iget: got one... (%x)!\n", empty);
 

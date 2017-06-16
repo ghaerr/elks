@@ -310,7 +310,7 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
 	n_bh = get_free_buffer();	/* This function may sleep and someone else */
       start:				/* can create the block */
 	if ((bh = find_buffer(dev, block)) != NULL) goto found_it;
-    } while(n_bh == NULL);
+    } while (n_bh == NULL);
     bh = n_bh;				/* Block not found, use the new buffer */
 /* OK, FINALLY we know that this buffer is the only one of its kind,
  * and that it's unused (b_count=0), unlocked (buffer_locked=0), and clean
