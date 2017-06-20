@@ -423,20 +423,27 @@ int do_mknod(char *pathname, int offst, int mode, dev_t dev)
 
     if (!error) {
 	dirp = dir;
-	if (!namelen) error = -ENOENT;
+	if (!namelen) {
+	    if (offst == (int)offsetof(struct inode_operations,link))
+		error = -EPERM;
+	    else
+		error = -ENOENT;
+	}
 /*	else if (IS_RDONLY(dirp)) error = -EROFS; */
-    else if (!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
-	iop = dirp->i_op;
-	if (!iop || !(op = (*(int (**)())((char *)iop + offst))))
-	    error = -EPERM;
-	else {
-	    dirp->i_count++;
-	    down(&dirp->i_sem);
-	    error = (offst != (int)offsetof(struct inode_operations,mknod)
+	else if ((offst == (int)offsetof(struct inode_operations,link))
+		    && (dirp->i_dev != ((struct inode *)mode)->i_dev)) error = -EXDEV;
+	else if (!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
+	    iop = dirp->i_op;
+	    if (!iop || !(op = (*(int (**)())((char *)iop + offst))))
+		error = -EPERM;
+	    else {
+		dirp->i_count++;
+		down(&dirp->i_sem);
+		error = (offst != (int)offsetof(struct inode_operations,mknod)
 			? op(dirp, basename, namelen, mode)
 			: op(dirp, basename, namelen, mode, dev)
 		    );
-	    up(&dirp->i_sem);
+		up(&dirp->i_sem);
 	    }
 	}
 	iput(dirp);
@@ -532,36 +539,6 @@ int sys_symlink(char *oldname, char *pathname)
 #endif
 }
 
-static int do_link(char *pathname, struct inode *oldinode)
-{
-    register struct inode *dirp;
-    register struct inode_operations *iop;
-    struct inode *dir;
-    char *basename;
-    size_t namelen;
-    int error;
-
-    error = dir_namei(pathname, &namelen, &basename, NULL, &dir);
-    if (!error) {
-	dirp = dir;
-	if (!namelen) error = -EPERM;
-/*	else if (IS_RDONLY(dirp)) error = -EROFS; */
-	else if (dirp->i_dev != oldinode->i_dev) error = -EXDEV;
-	else if (!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
-	    iop = dirp->i_op;
-	    if (!iop || !iop->link) error = -EPERM;
-	    else {
-		dirp->i_count++;
-		down(&dirp->i_sem);
-		error = iop->link(oldinode, dirp, basename, namelen);
-		up(&dirp->i_sem);
-	    }
-	}
-	iput(dirp);
-    }
-    return error;
-}
-
 int sys_link(char *oldname, char *pathname)
 {
 #ifdef CONFIG_FS_RO
@@ -572,7 +549,8 @@ int sys_link(char *oldname, char *pathname)
 
     error = namei(oldname, &oldinode, 0, 0);
     if (!error) {
-	error = do_link(pathname, oldinode);
+	error = do_mknod(pathname, offsetof(struct inode_operations,link),
+			 (int)oldinode, 0);
 	iput(oldinode);
     }
     return error;
