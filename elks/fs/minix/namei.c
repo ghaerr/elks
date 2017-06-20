@@ -548,8 +548,8 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     return error;
 }
 
-int minix_link(register struct inode *oldinode, register struct inode *dir,
-		char *name, size_t len)
+int minix_link(register struct inode *dir, char *name, size_t len,
+		register struct inode *oldinode)
 {
     int error;
     struct buffer_head *bh;
