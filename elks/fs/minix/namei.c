@@ -129,20 +129,20 @@ int minix_lookup(register struct inode *dir, char *name, size_t len,
     error = -ENOENT;
     *result = NULL;
 
-    if (dir) {
+/*    if (dir) { dir != NULL always, because reached this function dereferencing dir */
 	if (S_ISDIR(dir->i_mode)) {
 	    debug("minix_lookup: Entering minix_find_entry\n");
 	    bh = minix_find_entry(dir, name, len, &de);
 	    debug2("minix_lookup: minix_find_entry returned %x %d\n", bh,
 		   bh->b_mapcount);
 	    if (bh) {
-		unmap_brelse(bh);
 		*result = iget(dir->i_sb, (ino_t) de->inode);
+		unmap_brelse(bh);
 		error = (!*result) ? -EACCES : 0;
 	    }
 	}
 	iput(dir);
-    }
+/*    }*/
     return error;
 }
 
