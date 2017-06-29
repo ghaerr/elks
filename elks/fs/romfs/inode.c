@@ -354,7 +354,8 @@ static int romfs_lookup(struct inode *dir, char *name, size_t len,
     debug("romfs: entered lookup\n");
 
     *result = NULL;
-    if (!dir || !S_ISDIR(dir->i_mode)) {
+/*  dir != NULL always, because reached this function dereferencing dir */
+    if (/*!dir || */!S_ISDIR(dir->i_mode)) {
 	res = -EBADF;
 	goto out;
     }

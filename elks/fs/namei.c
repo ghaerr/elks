@@ -97,26 +97,25 @@ void put_write_access(struct inode *inode)
  * routines for it. It also checks for fathers (pseudo-roots, mount-points)
  */
 
-int lookup(register struct inode *dir, char *name, size_t len,
+static int lookup(register struct inode *dir, char *name, size_t len,
 	   struct inode **result)
 {
     register struct inode_operations *iop;
-    int perm, retval = 0;
+    int perm, retval = -ENOENT;
 
     *result = NULL;
     if (dir) {
 	/* check permissions before traversing mount-points */
 	perm = permission(dir, MAY_EXEC);
-	if (len == 2 && get_user_char(name) == '.'
-		     && get_user_char(name + 1) == '.') {
+	if ((len == 2) && !fs_memcmp(name, "..", 2)) {
 	    if (dir == current->fs.root) {
 		*result = dir;
+		retval = 0;
 		goto lkp_end;
 	    } else if ((dir->i_sb) && (dir == dir->i_sb->s_mounted)) {
 		iput(dir);
 		dir = dir->i_sb->s_covered;
 		if (!dir) {
-		    retval = -ENOENT;
 		    goto lkp_end;
 		}
 		dir->i_count++;
@@ -136,10 +135,10 @@ int lookup(register struct inode *dir, char *name, size_t len,
 	    retval = perm;
 	} else if (!len) {
 	    *result = dir;
+	    retval = 0;
 	} else
 	    retval = iop->lookup(dir, name, len, result);
-    } else
-	retval = -ENOENT;
+    }
 
   lkp_end:
     return retval;
@@ -188,7 +187,7 @@ static int dir_namei(register char *pathname, size_t * namelen,
 	base = current->fs.pwd;
 	base->i_count++;
     }
-    if ((c = get_user_char(pathname)) == '/') {
+    if (get_user_char(pathname) == '/') {
 	iput(base);
 	base = current->fs.root;
 	pathname++;
@@ -545,15 +544,15 @@ int sys_link(char *oldname, char *pathname)
     return -EROFS;
 #else
     struct inode *oldinode;
-    int error;
+    register char *error;
 
-    error = namei(oldname, &oldinode, 0, 0);
-    if (!error) {
-	error = do_mknod(pathname, offsetof(struct inode_operations,link),
+    error = (char *)namei(oldname, &oldinode, 0, 0);
+    if (!((int)error)) {
+	error = (char *)do_mknod(pathname, offsetof(struct inode_operations,link),
 			 (int)oldinode, 0);
 	iput(oldinode);
     }
-    return error;
+    return (int)error;
 #endif
 }
 

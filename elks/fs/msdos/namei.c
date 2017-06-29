@@ -85,7 +85,7 @@ int msdos_lookup(register struct inode *dir,const char *name,int len,
 	struct buffer_head *bh;
 	struct inode *next;
 	*result = NULL;
-	if (!dir) return -ENOENT;
+/*	if (!dir) return -ENOENT; dir != NULL always, because reached this function dereferencing dir */
 	if (!S_ISDIR(dir->i_mode)) {
 		iput(dir);
 		return -ENOENT;

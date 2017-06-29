@@ -79,8 +79,8 @@ extern int minix_create(register struct inode *,char *,size_t,int,
 extern void minix_free_block(register struct super_block *,block_t);
 extern void minix_free_inode(register struct inode *);
 extern struct buffer_head *minix_getblk(register struct inode *,block_t,int);
-extern int minix_link(register struct inode *,register struct inode *,
-		      char *,size_t);
+extern int minix_link(register struct inode *,char *,size_t,
+			register struct inode *);
 extern int minix_lookup(register struct inode *,char *,size_t,
 			register struct inode **);
 extern int minix_mkdir(register struct inode *,char *,size_t,int);

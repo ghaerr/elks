@@ -338,7 +338,6 @@ struct inode_operations pipe_inode_operations = {
 static int do_pipe(register int *fd)
 {
     register struct inode *inode;
-    struct file *f;
     int error = -ENOMEM;
 
     if (!(inode = new_inode(NULL, S_IFIFO | S_IRUSR | S_IWUSR)))	/* Create inode */
