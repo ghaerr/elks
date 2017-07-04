@@ -618,8 +618,9 @@ int msdos_create(register struct inode *dir,const char *name,int len,int mode,
 	tmp_name[len] = '\0';
 	memcpy_fromfs(tmp_name,name,len);
 
-	if (!dir) return -ENOENT;
-
+/*    dir != NULL always, because reached this function dereferencing dir */
+/*	if (!dir) return -ENOENT;
+*/
 	lock_creation();
 	res = vfat_create_entry(dir,tmp_name,len,0,result);
 

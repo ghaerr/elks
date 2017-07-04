@@ -105,6 +105,7 @@ static int lookup(register struct inode *dir, char *name, size_t len,
 
     *result = NULL;
     if (dir) {
+	dir->i_count++;				/* lookup eats the dir */
 	/* check permissions before traversing mount-points */
 	perm = permission(dir, MAY_EXEC);
 	if ((len == 2) && !fs_memcmp(name, "..", 2)) {
@@ -144,23 +145,24 @@ static int lookup(register struct inode *dir, char *name, size_t len,
     return retval;
 }
 
-int follow_link(struct inode *dir, register struct inode *inode,
+static int follow_link(struct inode *dir, register struct inode *inode,
 		int flag, int mode, struct inode **res_inode)
 {
     register struct inode_operations *iop = inode->i_op;
     int error;
 
     if (!dir || !inode) {
-	iput(dir);
 	iput(inode);
 	*res_inode = NULL;
 	error = -ENOENT;
     } else if (!iop || !iop->follow_link) {
-	iput(dir);
 	*res_inode = inode;
 	error = 0;
-    } else
+    } else {
+	dir->i_count++;
 	error = iop->follow_link(dir, inode, flag, mode, res_inode);
+    }
+    iput(dir);
     return error;
 }
 
@@ -193,33 +195,32 @@ static int dir_namei(register char *pathname, size_t * namelen,
 	pathname++;
 	base->i_count++;
     }
-    while (1) {
+    do {
 	thisname = pathname;
 	while ((c = get_user_char(pathname++)) && (c != '/'))
 	    /* Do nothing */ ;
 	len = pathname - thisname - 1;
-	if (!c) break;
-	base->i_count++;
-	error = lookup(base, thisname, len, &inode);
-	if (error) {
-	    iput(base);
-	    goto dnamei_end;
+	if (!c) {
+	    if (!base->i_op || !base->i_op->lookup) {
+		iput(base);
+		error = -ENOTDIR;
+	    } else {
+		*name = thisname;
+		*namelen = len;
+		*res_inode = base;
+	    }
+	    debug("namei: left dir_namei succesfully\n");
+	    break;
 	}
-	error = follow_link(base, inode, 0, 0, &baser);
-	if (error) goto dnamei_end;
-	base = baser;
-    }
-    if (!base->i_op || !base->i_op->lookup) {
-	iput(base);
-	error = -ENOTDIR;
-    } else {
-	*name = thisname;
-	*namelen = len;
-	*res_inode = base;
-    }
-    debug("namei: left dir_namei succesfully\n");
+	error = lookup(base, thisname, len, &inode);
+	if (error)
+	    iput(base);
+	else {
+	    error = follow_link(base, inode, 0, 0, &baser);
+	    base = baser;
+	}
+    } while (!error);
 
-  dnamei_end:
     return error;
 }
 
@@ -245,7 +246,6 @@ int _namei(char *pathname, register struct inode *base, int follow_links,
     debug1("_namei: dir_namei returned %d\n", error);
     if (!error) {
 	base = inode;
-	base->i_count++;	/* lookup uses up base */
 	debug("_namei: calling lookup\n");
 	error = lookup(base, basename, namelen, &inode);
 	debug1("_namei: lookup returned %d\n", error);
@@ -331,7 +331,6 @@ int open_namei(char *pathname, int flag, int mode,
 	} else *res_inode = dirp;
 	goto onamei_end;
     }
-    dirp->i_count++;		/* lookup eats the dir */
     if (flag & O_CREAT) {
 	down(&dirp->i_sem);
 	error = lookup(dirp, basename, namelen, &inode);
@@ -360,6 +359,8 @@ int open_namei(char *pathname, int flag, int mode,
     }
     error = follow_link(dirp, inode, flag, mode, &inode);
     if (error) goto onamei_end;
+    dirp = inode;		/* dirp not used anymore */
+#define inode dirp
     if (S_ISDIR(inode->i_mode) && (flag & 2)) {
 	error = -EISDIR;
     } else if ((error = permission(inode, ACC_MODE(flag))) == 0) {
@@ -402,6 +403,7 @@ int open_namei(char *pathname, int flag, int mode,
 	}
 	*res_inode = inode;
     } else iput(inode);
+#undef inode
 
   onamei_end:
     return error;
