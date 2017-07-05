@@ -161,7 +161,8 @@ int msdos_create(register struct inode *dir,const char *name,int len,int mode,
 	char msdos_name[MSDOS_NAME];
 	ino_t ino;
 	int res;
-	if (!dir) return -ENOENT;
+/*    dir != NULL always, because reached this function dereferencing dir */
+/*	if (!dir) return -ENOENT;*/
 	if ((res = msdos_format_name(name,len,
 	    msdos_name)) < 0) {
 		iput(dir);
