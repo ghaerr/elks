@@ -215,8 +215,8 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
     /*  Oh no! We have 'Return of Goto' in a double feature with
      *  'Mozilla v Internet Exploder' :) */
 
-    printk("new_inode: iput fail\n");
   iputfail:
+    printk("new_inode: iput fail\n");
     unmap_buffer(bh);
   iputfail1:
     iput(inode);

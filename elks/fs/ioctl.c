@@ -39,17 +39,18 @@ int sys_ioctl(int fd, unsigned int cmd, unsigned int arg)
     register struct file *filp;
     register struct file_operations *fop;
     int on;
+    int retval = 0;
 
     if (fd >= NR_OPEN || !(filp = current->files.fd[fd]))
 	return -EBADF;
     switch (cmd) {
     case FIOCLEX:
 	FD_SET(fd, &current->files.close_on_exec);
-	return 0;
+	break;
 
     case FIONCLEX:
 	FD_CLR(fd, &current->files.close_on_exec);
-	return 0;
+	break;
 
     case FIONBIO:
 	memcpy_fromfs(&on, (unsigned int *) arg, 2);
@@ -59,16 +60,17 @@ int sys_ioctl(int fd, unsigned int cmd, unsigned int arg)
 	filp->f_flags = (on)
 	    ? filp->f_flags | O_NONBLOCK
 	    : filp->f_flags & ~O_NONBLOCK;
-	return 0;
+	break;
 
     default:
 	if (filp->f_inode && S_ISREG(filp->f_inode->i_mode))
-	    return file_ioctl(filp, cmd, arg);
-
-	fop = filp->f_op;
-	if (fop && fop->ioctl)
-	    return fop->ioctl(filp->f_inode, filp, cmd, arg);
-
-	return -EINVAL;
+	    retval = file_ioctl(filp, cmd, arg);
+	else {
+	    retval = -EINVAL;
+	    fop = filp->f_op;
+	    if (fop && fop->ioctl)
+		retval = fop->ioctl(filp->f_inode, filp, cmd, arg);
+	}
     }
+    return retval;
 }

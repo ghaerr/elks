@@ -248,7 +248,7 @@ int sys_chmod(char *filename, mode_t mode)
 	    iput(inodep);
 	    return -EROFS;
 	}
-	if (mode == (mode_t) - 1) mode = inodep->i_mode;
+	if (mode == (mode_t) -1) mode = inodep->i_mode;
 	mode = (mode & S_IALLUGO) | (inodep->i_mode & ~S_IALLUGO);
 	if ((current->euid != inodep->i_uid) && !suser()) {
 /* FIXME - Should we iput(inodep); at this point? */
@@ -306,11 +306,11 @@ static int do_chown(register struct inode *inode, uid_t user, gid_t group)
 
     if (!suser() && !(current->euid == inode->i_uid)) return -EPERM;
 
-    if (group != (gid_t) - 1) {
+    if (group != (gid_t) -1) {
 	inode->i_gid = (__u8) group;
 	inode->i_mode &= ~S_ISGID;
     }
-    if (user != (uid_t) - 1) {
+    if (user != (uid_t) -1) {
 	inode->i_uid = user;
 	inode->i_mode &= ~S_ISUID;
     }
