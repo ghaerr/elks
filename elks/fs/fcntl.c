@@ -54,7 +54,7 @@ int sys_fcntl(unsigned int fd, unsigned int cmd, unsigned int arg)
 {
     register struct file *filp;
     register struct file_struct *fils = &current->files;
-    int result;
+    int result = 0;
 
     if (fd >= NR_OPEN || !(filp = fils->fd[fd])) return -EBADF;
 
@@ -70,7 +70,6 @@ int sys_fcntl(unsigned int fd, unsigned int cmd, unsigned int arg)
 	    set_bit(fd, &fils->close_on_exec);
 	else
 	    clear_bit(fd, &fils->close_on_exec);
-	result = 0;
 	break;
     case F_GETFL:
 	result = (int) filp->f_flags;
@@ -80,16 +79,15 @@ int sys_fcntl(unsigned int fd, unsigned int cmd, unsigned int arg)
 	 * In the case of an append-only file, O_APPEND
 	 * cannot be cleared
 	 */
-	result = -EPERM;
 	if (!IS_APPEND(filp->f_inode) || (arg & O_APPEND)) {
 	    filp->f_flags &= ~(O_APPEND | O_NONBLOCK);
 	    filp->f_flags |= arg & (O_APPEND | O_NONBLOCK);
-	    result = 0;
+	    break;
 	}
+	result = -EPERM;
 	break;
     default:
 	result = -EINVAL;
-	break;
     }
 
     return result;

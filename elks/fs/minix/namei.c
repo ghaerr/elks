@@ -241,7 +241,8 @@ int minix_create(register struct inode *dir, char *name, size_t len,
 /*----------------------------------------------------------------------*/
 	if ((error = minix_add_entry(dir, name, len, inode->i_ino))) {
 	    inode->i_nlink--;
-	    inode->i_dirt = 1;
+/* if succesful, minix_new_inode() sets i_dirt to 1  */
+/*	    inode->i_dirt = 1;*/
 	    iput(inode);
 	    inode = NULL;
 	}
@@ -277,7 +278,8 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
     error = minix_add_entry(dir, name, len, inode->i_ino);
     if (error) {
 	inode->i_nlink--;
-	inode->i_dirt = 1;
+/* if succesful, minix_new_inode() sets i_dirt to 1  */
+/*	inode->i_dirt = 1;*/
     }
     iput(inode);
  mknod2:
@@ -333,7 +335,8 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
 	inode->i_nlink++;
 	dir->i_nlink++;
     }
-    inode->i_dirt = 1;
+/* if succesful, minix_new_inode() sets i_dirt to 1  */
+/*    inode->i_dirt = 1;*/
     iput(inode);
  mkdir2:
     iput(dir);
@@ -377,16 +380,17 @@ static int empty_dir(register struct inode *inode)
 	    }
 	}
 	de = (struct minix_dir_entry *) (bh->b_data + offset);
-	offset += dirsize;
 	if (de->inode) {
 	    unmap_brelse(bh);
 	    return 0;
 	}
-	if (offset < BLOCK_SIZE) continue;
-	unmap_brelse(bh);
-	bh = NULL;
-	offset = 0;
-	block++;
+	offset += dirsize;
+	if (offset >= BLOCK_SIZE) {
+	    unmap_brelse(bh);
+	    bh = NULL;
+	    offset = 0;
+	    block++;
+	}
     }
     brelse(bh);
     goto empt_dir;
@@ -540,7 +544,8 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     if (error) {
       symlink1:
 	inode->i_nlink--;
-	inode->i_dirt = 1;
+/* if succesful, minix_new_inode() sets i_dirt to 1  */
+/*	inode->i_dirt = 1;*/
     }
     iput(inode);
  symlink2:

@@ -80,7 +80,7 @@ static int minix_readdir(struct inode *inode,
     info = &inode->i_sb->u.minix_sb;
     if (((unsigned short)filp->f_pos) & (info->s_dirsize - 1)) return -EBADF;
     while (filp->f_pos < (loff_t) inode->i_size) {
-	offset = filp->f_pos & (BLOCK_SIZE - 1);
+	offset = (unsigned short)filp->f_pos & (BLOCK_SIZE - 1);
 	bh = minix_bread(inode, (block_t) ((filp->f_pos) >> BLOCK_SIZE_BITS), 0);
 	if (!bh) {
 	    filp->f_pos += (BLOCK_SIZE - offset);
@@ -89,8 +89,8 @@ static int minix_readdir(struct inode *inode,
 	do {
 	    de = (struct minix_dir_entry *) (offset + bh->b_data);
 	    if (de->inode) {
-		size_t size = strnlen(de->name, info->s_namelen);
-		if (filldir(dirent, de->name, size, filp->f_pos, de->inode) < 0) {
+		if (filldir(dirent, de->name, strnlen(de->name, info->s_namelen),
+			filp->f_pos, de->inode) < 0) {
 		    unmap_brelse(bh);
 		    return 0;
 		}

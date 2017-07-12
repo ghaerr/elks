@@ -116,7 +116,7 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
     set = *in | *out | *ex;
     filp = current->files.fd;
     for (pi = 0; set && ((int)pi < n); pi++, set >>= 1) {
-	if (set & 1) {
+	if ((int)set & 1) {
 	    if ((*filp == NULL) || ((*filp)->f_inode == NULL)) return -EBADF;
 	    count = (int)pi;
 	}
@@ -203,11 +203,11 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
     error = -EINVAL;
     if ((n < 0) || (error = get_fd_set(inp, &in)) ||
 	(error = get_fd_set(outp, &out)) || (error = get_fd_set(exp, &ex)))
-	goto out;
+	goto outl;
     timeout = ~0UL;
     if (tvp) {
 	error = verify_area(VERIFY_WRITE, tvp, sizeof(*tvp));
-	if (error) goto out;
+	if (error) goto outl;
 
 	timeout = ROUND_UP(get_user_long(&tvp->tv_usec), (1000000 / HZ));
 	timeout += get_user_long(&tvp->tv_sec) * (jiff_t) HZ;
@@ -233,6 +233,6 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
 	set_fd_set(outp, &res_out);
 	set_fd_set(exp, &res_ex);
     }
-  out:
+  outl:
     return error;
 }

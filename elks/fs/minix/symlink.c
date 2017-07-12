@@ -16,7 +16,7 @@
 
 #include <arch/segment.h>
 
-static int minix_follow_link(register struct inode *dir,
+static int minix_follow_link(struct inode *dir,
 			     register struct inode *inode,
 			     int flag, int mode, struct inode **res_inode)
 {
@@ -26,7 +26,7 @@ static int minix_follow_link(register struct inode *dir,
      */
 
     int error;
-    struct buffer_head *bh;
+    register struct buffer_head *bh;
     static int link_count = 0;
     __u16 ds, *pds;
 

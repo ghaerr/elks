@@ -115,8 +115,8 @@ static void vprintk(register char *fmt, va_list p)
     unsigned long v;
     int width, zero;
     char c;
-    register char *cp;
-    unsigned char tmp;
+    char *cp;
+    register char *tmp;
 
     while ((c = *fmt++)) {
 	if (c != '%')
@@ -131,20 +131,19 @@ static void vprintk(register char *fmt, va_list p)
 
 	    width = 0;
 	    zero = (c == '0');
-	    while ((tmp = c - '0') <= 9) {
-		width = width*10 + tmp;
+	    while ((tmp = (char *)(c - '0')) <= 9) {
+		width = width*10 + (int)tmp;
 		c = *fmt++;
 	    }
 
 	    if ((c == 'h') || (c == 'l'))
 		c = *fmt++;
-	    tmp = 16;
+	    tmp = (char *)16;
 	    switch (c) {
 	    case 'i':
-		c = 'd';
+		c = 'd'-('X' - 'P');
 	    case 'd':
-		tmp = 10;
-		goto NUMOUT;
+		tmp = (char *)18;
 	    case 'o':
 		tmp -= 2;
 	    case 'u':
@@ -154,7 +153,6 @@ static void vprintk(register char *fmt, va_list p)
 		c += 'X' - 'P';
 	    case 'X':
 	    case 'x':
-	    NUMOUT:
 		if (*(fmt-2) == 'l')
 		    v = va_arg(p, unsigned long);
 		else {
@@ -163,13 +161,13 @@ static void vprintk(register char *fmt, va_list p)
 		    else
 			v = (unsigned long)(va_arg(p, unsigned int));
 		}
-		numout(v, width, tmp, (c == 'd'), (c == 'X'), zero);
+		numout(v, width, (int)tmp, (c == 'd'), (c == 'X'), zero);
 		break;
 	    case 's':
 	    case 't':
 		cp = va_arg(p, char*);
-		while ((tmp = (c == 's' ? *cp : (char)get_user_char(cp)))) {
-		    kputchar(tmp);
+		while ((tmp = (char *)(c == 's' ? *cp : (char)get_user_char(cp)))) {
+		    kputchar((char)tmp);
 		    cp++;
 		    width--;
 		}

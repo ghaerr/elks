@@ -154,22 +154,20 @@ void schedule(void)
 
 struct timer_list tl_list = { NULL, NULL, 0L, 0, NULL };
 
-static int detach_timer(struct timer_list *timer)
+static int detach_timer(register struct timer_list *timer)
 {
-    register struct timer_list *next;
-    register struct timer_list *prev;
+    register struct timer_list *tmr;
+    int retval = 0;
 
-    next = timer->tl_next;
-    prev = timer->tl_prev;
+    if ((tmr = timer->tl_next)) {
+        tmr->tl_prev = tmr;
+    }
+    if ((tmr = timer->tl_prev)) {
+        tmr->tl_next = tmr;
+	retval = 1;
+    }
     timer->tl_next = timer->tl_prev = NULL;
-    if (next) {
-        next->tl_prev = prev;
-    }
-    if (prev) {
-        prev->tl_next = next;
-	return 1;
-    }
-    return 0;
+    return retval;
 }
 
 int del_timer(struct timer_list *timer)
