@@ -131,12 +131,12 @@ void put_super(kdev_t dev)
 	panic("put_super: root\n");
 
     if (!(sb = get_super(dev))) return;
-    if (sb->s_covered) {
+    if (sb->s_covered)
 	printk("VFS: Mounted device %s - tssk, tssk\n", kdevname(dev));
-	return;
+    else {
+	sop = sb->s_op;
+	if (sop && sop->put_super) sop->put_super(sb);
     }
-    sop = sb->s_op;
-    if (sop && sop->put_super) sop->put_super(sb);
 }
 
 #ifdef BLOAT_FS

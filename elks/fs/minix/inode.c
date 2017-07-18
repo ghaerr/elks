@@ -157,8 +157,22 @@ struct super_block *minix_read_super(register struct super_block *s,
 	register struct minix_super_block *ms;
 
 	ms = (struct minix_super_block *) bh->b_data;
+	if (ms->s_magic != MINIX_SUPER_MAGIC) {
+	    if (!silent)
+		printk("VFS: dev %s is not minixfs.\n", kdevname(dev));
+	    msgerr = err0;
+	    goto err_read_super_1;
+	}
 	s->u.minix_sb.s_ms = ms;
 	s->u.minix_sb.s_sbh = bh;
+	s->u.minix_sb.s_version = MINIX_V1;
+	s->u.minix_sb.s_dirsize = 16;
+	s->u.minix_sb.s_namelen = 14;
+
+#ifdef BLOAT_FS
+	s->s_magic = ms->s_magic;
+#endif
+
 	s->u.minix_sb.s_mount_state = ms->s_state;
 	s->u.minix_sb.s_ninodes = ms->s_ninodes;
 	s->u.minix_sb.s_imap_blocks = ms->s_imap_blocks;
@@ -166,22 +180,7 @@ struct super_block *minix_read_super(register struct super_block *s,
 	s->u.minix_sb.s_firstdatazone = ms->s_firstdatazone;
 	s->u.minix_sb.s_log_zone_size = ms->s_log_zone_size;
 	s->u.minix_sb.s_max_size = ms->s_max_size;
-
-#ifdef BLOAT_FS
-	s->s_magic = ms->s_magic;
-#endif
-
-	if (ms->s_magic == MINIX_SUPER_MAGIC) {
-	    s->u.minix_sb.s_version = MINIX_V1;
-	    s->u.minix_sb.s_nzones = ms->s_nzones;
-	    s->u.minix_sb.s_dirsize = 16;
-	    s->u.minix_sb.s_namelen = 14;
-	} else {
-	    if (!silent)
-		printk("VFS: dev %s is not minixfs.\n", kdevname(dev));
-	    msgerr = err0;
-	    goto err_read_super_1;
-	}
+	s->u.minix_sb.s_nzones = ms->s_nzones;
     }
     {
 	register char *pi;
