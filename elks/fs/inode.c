@@ -245,10 +245,8 @@ void iput(register struct inode *inode)
 	    write_inode(inode);	/* we can sleep - so do again */
 	    wait_on_inode(inode);
       ini_loop:
-	    if (inode->i_count > 1) {
-		inode->i_count--;
-		return;
-	    }
+	    if (inode->i_count > 1)
+		break;
 
 	    wake_up(&inode_wait);
 
