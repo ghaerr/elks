@@ -95,12 +95,12 @@ void schedule(void)
      * quite legal. We just dont switch then */
 	printk("Aiee: scheduling in interrupt %d - %d\n",
 	    intr_count, prev->pid);
-	goto no_sched;
+	return;
     }
 
     /* We have to let a task exit! */
     if (prev->state == TASK_EXITING)
-	goto no_sched;
+	return;
 
     clr_irq();
     if (prev->state == TASK_INTERRUPTIBLE) {
@@ -147,12 +147,14 @@ void schedule(void)
             del_timer(&timer);
         }
     }
-
-  no_sched:
-    ;
 }
 
 struct timer_list tl_list = { NULL, NULL, 0L, 0, NULL };
+
+void init_timer(register struct timer_list *timer)
+{
+    timer->tl_next = timer->tl_prev = NULL;
+}
 
 static int detach_timer(register struct timer_list *timer)
 {
@@ -166,7 +168,7 @@ static int detach_timer(register struct timer_list *timer)
         tmr->tl_next = tmr;
 	retval = 1;
     }
-    timer->tl_next = timer->tl_prev = NULL;
+    init_timer(timer);
     return retval;
 }
 
@@ -180,11 +182,6 @@ int del_timer(struct timer_list *timer)
     ret = detach_timer(timer);
     restore_flags(flags);
     return ret;
-}
-
-void init_timer(register struct timer_list *timer)
-{
-    timer->tl_next = timer->tl_prev = NULL;
 }
 
 void add_timer(register struct timer_list *timer)
@@ -263,21 +260,20 @@ void do_timer(struct pt_regs *regs)
 
 void sched_init(void)
 {
-    register struct task_struct *t = task;
+    register struct task_struct *t = &task[MAX_TASKS];
 
 /*
  *	Mark tasks 0-(MAX_TASKS-1) as not in use.
  */
     do {
-	t->state = TASK_UNUSED;
-    } while (++t < &task[MAX_TASKS]);
+	(--t)->state = TASK_UNUSED;
+    } while (t > task);
 
 /*
  *	Now create task 0 to be ourself.
  */
     kfork_proc(NULL);
 
-    t = task;
     t->state = TASK_RUNNING;
     t->next_run = t->prev_run = t;
 }
