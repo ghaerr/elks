@@ -30,7 +30,6 @@
 #include <linuxmt/mm.h>
 #include <stdarg.h>
 
-#define BUFFER_SIZE 12
 /*
  *	Just to make it work for now
  */
@@ -69,45 +68,56 @@ static void kputs(register char *buf)
  *	Output a number
  */
 
-char *hex_string = "0123456789ABCDEF";		/* Also used by devices. */
-static char *hex_lower = "0123456789abcdef";
+char *hex_string = "0123456789ABCDEF 0123456789abcdef ";	/* Also used by devices */
 
-static void numout(unsigned long v, int width, int base, int useSign,
-		   int Upper, int Zero)
+static void numout(__u32 v, int width, int base, int useSign,
+		   int Lower, int Zero)
 {
-    register char *bp;
-    char *bp2;
-    char buf[BUFFER_SIZE+1];
+    __u32 dvr;
+    int c, vch;
+    register char *i;
 
-    if (width > BUFFER_SIZE)		/* Error-check width specified */
-	width = BUFFER_SIZE;
-
-    if (useSign) {
-	if ((long)v < 0)
-	    v = (-(long)v);
-	else
-	    useSign = 0;
+    i = 10;
+    dvr = 0x3B9ACA00L;
+    if (base > 10) {
+	i = 8;
+	dvr = 0x10000000L;
+    }
+    if (base < 10) {
+	i = 11;
+	dvr = 0x40000000L;
     }
 
-    bp = buf + BUFFER_SIZE;
-    *bp = '\x00';
+    if (useSign && ((long)v < 0L))
+	v = (-(long)v);
+    else
+	useSign = 0;
 
-    bp2 = Upper ? hex_string : hex_lower;
+    if (Lower)
+	Lower = 17;
+    vch = 0;
     do {
-	*--bp = *(bp2 + (int)(v % base));	/* Store digit */
-    } while ((v /= base));
-
-    if (useSign && !Zero)
-	*--bp = '-';
-
-    width -= buf - bp + BUFFER_SIZE;
-    while (--width >= 0)		/* Process width */
-	*--bp = Zero ? '0' : ' ';
-
-    if (useSign && Zero && (*bp == '0'))
-	*bp = '-';
-
-    kputs(bp);
+	c = (int)(v / dvr);
+	v %= dvr;
+	dvr /= (unsigned int)base;
+	if (c || ((int)i <= width) || ((int)i < 2)) {
+	    if ((int)i > width)
+		width = (int)i;
+	    if (!Zero && !c && ((int)i > 1))
+		c = 16;
+	    else {
+		Zero = 1;
+		if (useSign) {
+		    useSign = 0;
+		    vch = '-';
+		}
+	    }
+	    if (vch)
+		kputchar(vch);
+	    vch = *(hex_string + Lower + c);
+	}
+    } while (--i);
+    kputchar(vch);
 }
 
 static void vprintk(register char *fmt, va_list p)
@@ -115,7 +125,6 @@ static void vprintk(register char *fmt, va_list p)
     unsigned long v;
     int width, zero;
     char c;
-    char *cp;
     register char *tmp;
 
     while ((c = *fmt++)) {
@@ -131,7 +140,7 @@ static void vprintk(register char *fmt, va_list p)
 
 	    width = 0;
 	    zero = (c == '0');
-	    while ((tmp = (char *)(c - '0')) <= 9) {
+	    while ((int)(tmp = (char *)(c - '0')) <= 9) {
 		width = width*10 + (int)tmp;
 		c = *fmt++;
 	    }
@@ -141,8 +150,8 @@ static void vprintk(register char *fmt, va_list p)
 	    tmp = (char *)16;
 	    switch (c) {
 	    case 'i':
-		c = 'd'-('X' - 'P');
 	    case 'd':
+		c = 'd'-('X' - 'P');
 		tmp = (char *)18;
 	    case 'o':
 		tmp -= 2;
@@ -161,14 +170,14 @@ static void vprintk(register char *fmt, va_list p)
 		    else
 			v = (unsigned long)(va_arg(p, unsigned int));
 		}
-		numout(v, width, (int)tmp, (c == 'd'), (c == 'X'), zero);
+		numout(v, width, (int)tmp, (c == 'd'), (c != 'X'), zero);
 		break;
 	    case 's':
 	    case 't':
-		cp = va_arg(p, char*);
-		while ((tmp = (char *)(c == 's' ? *cp : (char)get_user_char(cp)))) {
-		    kputchar((char)tmp);
-		    cp++;
+		tmp = va_arg(p, char*);
+		while ((zero = (int)(c == 's' ? *tmp : (char)get_user_char(tmp)))) {
+		    kputchar((char)zero);
+		    tmp++;
 		    width--;
 		}
 	    case 'c':
@@ -179,7 +188,6 @@ static void vprintk(register char *fmt, va_list p)
 		break;
 	    default:
 		kputchar('?');
-		break;
 	    }
 	}
     }
@@ -187,7 +195,7 @@ static void vprintk(register char *fmt, va_list p)
 
 void printk(char *fmt, ...)
 {
-    va_list p;
+    register va_list p;
 
     va_start(p, fmt);
     vprintk(fmt, p);
@@ -198,7 +206,8 @@ void panic(char *error, ...)
 {
     va_list p;
     register int *bp = (int *) &error - 2;
-    int i = 0, j;
+    register char *j;
+    int i = 0;
 
     kputs("\npanic: ");
     va_start(p, error);
@@ -206,19 +215,20 @@ void panic(char *error, ...)
     va_end(p);
     kputs("\napparent call stack:\n"
 	  "Line: Addr    Parameters\n"
-	  "~~~~: ~~~~    ~~~~~~~~~~\n");
+	  "~~~~: ~~~~    ~~~~~~~~~~");
 
     do {
-	printk("%4u: %04P =>", i, bp[1]);
+	printk("\n%4u: %04P =>", i, bp[1]);
 	bp = (int *) bp[0];
-	for (j = 2; j <= 8; j++)
-	    printk(" %04X", bp[j]);
-	kputchar('\n');
+	j = (char *)2;
+	do {
+	    printk(" %04X", bp[(int)j]);
+	} while ((int)(++j) <= 8);
     } while (++i < 9);
 
     /* Lock up with infinite loop */
 
-    kputs("\nSYSTEM LOCKED - Press CTRL-ALT-DEL to reboot: ");
+    kputs("\n\nSYSTEM LOCKED - Press CTRL-ALT-DEL to reboot:");
 
     while (1)
 	/* Do nothing */;
