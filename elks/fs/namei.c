@@ -58,7 +58,7 @@ int permission(register struct inode *inode, int mask)
 #ifdef HAVE_IMMUTABLE
     else if ((mask & S_IWOTH) && IS_IMMUTABLE(inode))
 	/* Nobody gets write access to an immutable file */
-	error = -EACCES;
+	;
 #endif
 
     else {
@@ -334,22 +334,23 @@ int open_namei(char *pathname, int flag, int mode,
     if (flag & O_CREAT) {
 	down(&dirp->i_sem);
 	error = lookup(dirp, basename, namelen, &inode);
-	iop = dirp->i_op;
 	if (!error) {
 	    if (flag & O_EXCL) {
 		iput(inode);
 		error = -EEXIST;
 	    }
-	} else if ((error = permission(dirp, MAY_WRITE | MAY_EXEC)) != 0) {
-	    /* Do nothing as error is already set! */ ;
-	} else if (!iop || !iop->create) {
-	    error = -EACCES;
-	} else {
-	    dirp->i_count++;	/* create eats the dir */
-	    error = iop->create(dirp, basename, namelen, mode, res_inode);
-	    up(&dirp->i_sem);
-	    iput(dirp);
-	    goto onamei_end;
+	}
+	else if (!(error = permission(dirp, MAY_WRITE | MAY_EXEC))) {
+	    iop = dirp->i_op;
+	    if (!iop || !iop->create)
+		error = -EACCES;
+	    else {
+		dirp->i_count++;	/* create eats the dir */
+		error = iop->create(dirp, basename, namelen, mode, res_inode);
+		up(&dirp->i_sem);
+		iput(dirp);
+		goto onamei_end;
+	    }
 	}
 	up(&dirp->i_sem);
     } else error = lookup(dirp, basename, namelen, &inode);

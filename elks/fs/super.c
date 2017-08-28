@@ -146,7 +146,6 @@ int sys_ustat(__u16 dev, struct ustat *ubuf)
     register struct super_block *s;
     struct ustat tmp;
     struct statfs sbuf;
-    int error;
 
     s = get_super(to_kdev_t(dev));
     if (s == NULL) return -EINVAL;
@@ -159,9 +158,7 @@ int sys_ustat(__u16 dev, struct ustat *ubuf)
     tmp.f_tfree = sbuf.f_bfree;
     tmp.f_tinode = sbuf.f_ffree;
 
-    if (error = verified_memcpy_tofs(ubuf, &tmp, sizeof(struct ustat)))
-	return error;
-    return 0;
+    return verified_memcpy_tofs(ubuf, &tmp, sizeof(struct ustat)))
 }
 
 #endif
@@ -198,7 +195,6 @@ static struct super_block *read_super(kdev_t dev, char *name, int flags,
 	s->s_dev = 0;
 	return NULL;
     }
-    s->s_dev = dev;
     s->s_covered = NULL;
     s->s_dirt = 0;
     s->s_type = type;
@@ -305,9 +301,9 @@ int sys_umount(char *name)
 
     }
     if (inodep != &dummy_inode) iput(inodep);
-    if (retval) return retval;
-    fsync_dev(dev);
-    return 0;
+    if (!retval)
+	fsync_dev(dev);
+    return retval;
 }
 
 /*
@@ -327,19 +323,22 @@ int do_mount(kdev_t dev, char *dir, char *type, int flags, char *data)
     register struct super_block *sb;
     int error;
 
-    if ((error = namei(dir, &dir_i, IS_DIR, 0))) return error;
+    if ((error = namei(dir, &dir_i, IS_DIR, 0))) goto ERROUT;
     dirp = dir_i;
     if ((dirp->i_count != 1 || dirp->i_mount) || (!fs_may_mount(dev)))
  	goto BUSY;
     sb = read_super(dev, type, flags, data, 0);
     if (!sb) {
-	iput(dirp);
-	return -EINVAL;
+	error = -EINVAL;
+	goto ERROUT1;
     }
     if (sb->s_covered) {
     BUSY:
+	error = -EBUSY;
+    ERROUT1:
 	iput(dirp);
-	return -EBUSY;
+    ERROUT:
+	return error;
     }
     sb->s_covered = dirp;
     dirp->i_mount = sb->s_mounted;
@@ -399,13 +398,11 @@ static int do_remount(char *dir, int flags, char *data)
 
 int sys_mount(char *dev_name, char *dir_name, char *type)
 {
-    struct file_system_type *fstype;
+    register struct file_system_type *fstype;
     struct inode *inode;
     register struct inode *inodep;
-    register struct file_operations *fops;
-    kdev_t dev;
+    struct file *filp;
     int retval;
-    char *t;
     int new_flags = 0;
 
 #ifdef CONFIG_FULL_VFS
@@ -417,8 +414,7 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 
 #ifdef BLOAT_FS			/* new_flags is set to zero, so this is never true. */
     if ((new_flags & MS_REMOUNT) == MS_REMOUNT) {
-	retval = do_remount(dir_name, new_flags & ~MS_REMOUNT, NULL);
-	return retval;
+	return do_remount(dir_name, new_flags & ~MS_REMOUNT, NULL);
     }
 #endif
 
@@ -428,7 +424,7 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
     debug("MOUNT: performing type check\n");
 
     if ((retval = strlen_fromfs(type)) >= 16) {
-	debug("MOUNT: type size exceeds 16 characters, trunctating\n");
+	debug("MOUNT: type size exceeds 16 characters, truncating\n");
 	retval = 15;
     }
 
@@ -442,8 +438,7 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
     fstype = file_systems[0];
 #endif
 
-    t = fstype->name;
-    fops = NULL;
+    filp = NULL;
 
 #ifdef BLOAT_FS
     if (fstype->requires_dev) {
@@ -461,32 +456,23 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 	    iput(inodep);
 	    return -EACCES;
 	}
-	dev = inodep->i_rdev;
-	if (MAJOR(dev) >= MAX_BLKDEV) {
+	if (MAJOR(inodep->i_rdev) >= MAX_BLKDEV) {
 	    iput(inodep);
 	    return -ENXIO;
 	}
-	fops = get_blkfops(MAJOR(dev));
-	if (!fops) goto NOTBLK;
-	if (fops->open) {
-	    struct file dummy;	/* allows read-write or read-only flag */
-	    memset(&dummy, 0, sizeof(dummy));
-	    dummy.f_inode = inodep;
-	    dummy.f_mode = (new_flags & MS_RDONLY) ? ((mode_t) 1)
-						   : ((mode_t) 3);
-	    retval = fops->open(inodep, &dummy);
-	    if (retval) {
-		iput(inodep);
-		return retval;
-	    }
+	retval = open_filp((mode_t)((new_flags & MS_RDONLY) ? 1 : 3), inodep, &filp);
+	if (retval) {
+	    iput(inodep);
+	    return retval;
 	}
 
 #ifdef BLOAT_FS
     } else printk("unnumbered fs is unsupported.\n");
 #endif
 
-    retval = do_mount(dev, dir_name, t, new_flags, NULL);
-    if (retval && fops && fops->release) fops->release(inodep, NULL);
+    retval = do_mount(inodep->i_rdev, dir_name, fstype->name, new_flags, NULL);
+    if (retval && filp)
+	close_filp(inodep, filp);
     iput(inodep);
 
     return retval;
@@ -494,29 +480,25 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 
 void mount_root(void)
 {
-    register struct file_system_type **fs_type;
+    struct file_system_type **fs_type;
+    struct file_system_type *fp;
     register struct super_block *sb;
-    struct inode *inode, d_inode;
-    struct file filp;
+    register struct inode *d_inode;
+    struct file *filp;
     int retval;
 
+    d_inode = new_inode(NULL, S_IFBLK);
+    d_inode->i_rdev = ROOT_DEV;
   retry_floppy:
-    memset(&filp, 0, sizeof(filp));
-    filp.f_inode = &d_inode;
-    filp.f_mode = ((root_mountflags & MS_RDONLY) ? 1 : 3);
-    memset(&d_inode, 0, sizeof(d_inode));
-    d_inode.i_rdev = ROOT_DEV;
-
-    retval = blkdev_open(&d_inode, &filp);
+    retval = open_filp(((root_mountflags & MS_RDONLY) ? 0 : 2), d_inode, &filp);
     if (retval == -EROFS) {
 	root_mountflags |= MS_RDONLY;
-	filp.f_mode = 1;
-	retval = blkdev_open(&d_inode, &filp);
+	retval = open_filp(0, d_inode, &filp);
     }
 
-    for (fs_type = &file_systems[0]; *fs_type; fs_type++) {
-	struct file_system_type *fp = *fs_type;
-	if (retval) break;
+    fs_type = &file_systems[0];
+    do {
+	fp = *fs_type;
 
 #ifdef BLOAT_FS
 	if (!fp->requires_dev) continue;
@@ -524,22 +506,24 @@ void mount_root(void)
 
 	sb = read_super(ROOT_DEV, fp->name, root_mountflags, NULL, 1);
 	if (sb) {
-	    inode = sb->s_mounted;
 	    /* NOTE! it is logically used 4 times, not 1 */
-	    inode->i_count += 3;
-	    sb->s_covered = inode;
-	    sb->s_flags = (unsigned short int) root_mountflags;
-	    current->fs.pwd = current->fs.root = inode;
+	    sb->s_mounted->i_count += 3;
+	    sb->s_covered = sb->s_mounted;
+/*	    sb->s_flags = (unsigned short int) root_mountflags;*/
+	    current->fs.pwd = current->fs.root = sb->s_mounted;
 	    printk("VFS: Mounted root (%s filesystem)%s.\n",
 		   fp->name, (sb->s_flags & MS_RDONLY) ? " readonly" : "");
+	    iput(d_inode);
+	    filp->f_count = 0;
 	    return;
 	}
-    }
+    } while (*(++fs_type) && !retval);
 
 #ifdef CONFIG_BLK_DEV_BIOS
     if (ROOT_DEV == 0x0380) {
-	if (filp.f_op->release) filp.f_op->release(&d_inode, &filp);
-	else printk("Release not defined\n");
+	if (!filp->f_op->release)
+	    printk("Release not defined\n");
+	close_filp(d_inode, filp);
 	printk("VFS: Insert root floppy and press ENTER\n");
 	wait_for_keypress();
 	goto retry_floppy;

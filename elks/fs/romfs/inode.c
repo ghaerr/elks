@@ -99,7 +99,7 @@ static struct super_block *romfs_read_super(struct super_block *s,
     lock_super(s);
 
     if (!(bh = bread(dev, (block_t) 0))) {
-	s->s_dev = 0;
+/*	s->s_dev = 0;*/
 	unlock_super(s);
 	printk("romfs: unable to read superblock\n");
 	return NULL;
@@ -145,7 +145,7 @@ static struct super_block *romfs_read_super(struct super_block *s,
       out:
 	unmap_brelse(bh);
       outnobh:
-	s->s_dev = 0;
+/*	s->s_dev = 0;*/
 	unlock_super(s);
 	s = NULL;
     }
