@@ -351,16 +351,15 @@ void tty_init(void)
     register struct tty *ttyp;
     register char *pi;
 
-    ttyp = ttys;
-    while (ttyp < &ttys[MAX_TTYS]) {
+    ttyp = &ttys[MAX_TTYS];
+    do {
+	ttyp--;
 	ttyp->minor = (unsigned short int)(-1L); /* set unsigned to -1 */
 	memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
-	ttyp++;
-    }
+    } while (ttyp > ttys);
 
 #if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
 
-    ttyp = ttys;
     for (pi = 0 ; ((int)pi) < 4 ; pi++) {
 #ifdef CONFIG_CONSOLE_BIOS
 	ttyp->ops = &bioscon_ops;

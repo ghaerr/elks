@@ -89,7 +89,7 @@ struct super_block *msdos_read_super(register struct super_block *s,
 	bh = bread(s->s_dev, (block_t)0);
 	unlock_super(s);
 	if (bh == NULL) {
-		s->s_dev = 0;
+/*		s->s_dev = 0;*/
 		printk("MSDOS bread failed\r\n");
 		return NULL;
 	}
@@ -141,7 +141,7 @@ printk("[me=0x%x,cs=%d,#f=%d,fs=%d,fl=%d,ds=%d,de=%d,data=%d,se=%d,ts=%ld]\n",
 		!fat32
 #endif
 		) {
-		s->s_dev = 0;
+/*		s->s_dev = 0;*/
 		printk("Unsupported FS parameters\r\n");
 		return NULL;
 	}
@@ -151,7 +151,7 @@ printk("[me=0x%x,cs=%d,#f=%d,fs=%d,fl=%d,ds=%d,de=%d,data=%d,se=%d,ts=%ld]\n",
 	/* set up enough so that it can read an inode */
 	s->s_op = &msdos_sops;
 	if (!(s->s_mounted = iget(s,(ino_t)MSDOS_ROOT_INO))) {
-		s->s_dev = 0;
+/*		s->s_dev = 0;*/
 		printk("get root inode failed\n");
 		return NULL;
 	}

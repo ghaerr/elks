@@ -67,13 +67,18 @@ void minix_put_super(register struct super_block *sb)
 	sb->u.minix_sb.s_ms->s_state = sb->u.minix_sb.s_mount_state;
 	mark_buffer_dirty(sb->u.minix_sb.s_sbh, 1);
     }
-    sb->s_dev = 0;
-    for (pi = 0; ((int)pi) < MINIX_I_MAP_SLOTS; pi++)
+
+    pi = 0;
+    do {
 	brelse(sb->u.minix_sb.s_imap[(int)pi]);
-    for (pi = 0; ((int)pi) < MINIX_Z_MAP_SLOTS; pi++)
+    } while (((int)(++pi)) < MINIX_I_MAP_SLOTS);
+    pi = 0;
+    do {
 	brelse(sb->u.minix_sb.s_zmap[(int)pi]);
+    } while (((int)(++pi)) < MINIX_Z_MAP_SLOTS);
     brelse(sb->u.minix_sb.s_sbh);
     unlock_super(sb);
+    sb->s_dev = 0;
     return;
 }
 
@@ -185,60 +190,45 @@ struct super_block *minix_read_super(register struct super_block *s,
     {
 	register char *pi;
 
-	pi = (char *) MINIX_I_MAP_SLOTS;
+	pi = 0;
 	do {
-	    --pi;
-	    s->u.minix_sb.s_imap[(unsigned short)pi] = NULL;
-	} while (pi);
-	pi = (char *) MINIX_Z_MAP_SLOTS;
+	    s->u.minix_sb.s_imap[(int)pi] = NULL;
+	} while (((int)(++pi)) < MINIX_I_MAP_SLOTS);
+	pi = 0;
 	do {
-	    --pi;
-	    s->u.minix_sb.s_zmap[(unsigned short) pi] = NULL;
-	} while (pi);
+	    s->u.minix_sb.s_zmap[(int)pi] = NULL;
+	} while (((int)(++pi)) < MINIX_Z_MAP_SLOTS);
 
 	block = 2;
 	/*
 	 *      FIXME:: We cant keep these in memory on an 8086, need to change
 	 *      the code to fetch/release each time we get a block.
 	 */
-	for (pi = 0; ((unsigned short)pi) < s->u.minix_sb.s_imap_blocks; pi++) {
-	    if ((s->u.minix_sb.s_imap[(unsigned short)pi]
+	pi = 0;
+	do {
+	    if ((s->u.minix_sb.s_imap[(int)pi]
 		 = bread(dev, (block_t) block)) == NULL)
 		break;
 	    block++;
-	}
-	for (pi = 0; ((unsigned short)pi) < s->u.minix_sb.s_zmap_blocks; pi++) {
-	    if ((s->u.minix_sb.s_zmap[(unsigned short)pi]
+	} while (((int)(++pi)) < s->u.minix_sb.s_imap_blocks);
+	pi = 0;
+	do {
+	    if ((s->u.minix_sb.s_zmap[(int)pi]
 		 = bread(dev, (block_t) block)) == NULL)
 		break;
 	    block++;
-	}
+	} while (((int)(++pi)) < s->u.minix_sb.s_zmap_blocks);
 
 	if (block != 2 + s->u.minix_sb.s_imap_blocks + s->u.minix_sb.s_zmap_blocks) {
-#if 1
 	    pi = 0;
 	    do {
-		brelse(s->u.minix_sb.s_imap[(unsigned short) pi]);
-		++pi;
-	    } while (((unsigned short) pi) < MINIX_I_MAP_SLOTS);
+		brelse(s->u.minix_sb.s_imap[(int)pi]);
+	    } while (((int)(++pi)) < MINIX_I_MAP_SLOTS);
 	    pi = 0;
-	    do{
-		brelse(s->u.minix_sb.s_zmap[(unsigned short) pi]);
-		++pi;
-	    } while (((unsigned short) pi) < MINIX_Z_MAP_SLOTS);
+	    do {
+		brelse(s->u.minix_sb.s_zmap[(int)pi]);
+	    } while (((int)(++pi)) < MINIX_Z_MAP_SLOTS);
 
-#else
-	    pi = (char *) MINIX_I_MAP_SLOTS;
-	    do {
-		--pi;
-		brelse(s->u.minix_sb.s_imap[(unsigned short) pi]);
-	    } while (pi);
-	    pi = (char *) MINIX_Z_MAP_SLOTS;
-	    do{
-		--pi;
-		brelse(s->u.minix_sb.s_zmap[(unsigned short) pi]);
-	    } while (pi);
-#endif
 	    msgerr = err2;
 	    goto err_read_super_1;
 	}
@@ -247,7 +237,6 @@ struct super_block *minix_read_super(register struct super_block *s,
     set_bit(0, s->u.minix_sb.s_zmap[0]->b_data);
     unlock_super(s);
     /* set up enough so that it can read an inode */
-    s->s_dev = dev;
     s->s_op = &minix_sops;
     s->s_mounted = iget(s, (ino_t) MINIX_ROOT_INO);
     if (!s->s_mounted) {
@@ -269,7 +258,7 @@ struct super_block *minix_read_super(register struct super_block *s,
   err_read_super_1:
     unmap_brelse(bh);
   err_read_super_2:
-    s->s_dev = 0;
+/*    s->s_dev = 0;*//* will be set to zero by fs/super.c, function read_super() */
     unlock_super(s);
     printk(msgerr);
     return NULL;
