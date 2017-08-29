@@ -105,14 +105,14 @@ block_t minix_new_block(register struct super_block *sb)
 
   repeat:
     j = 8192;
-    for (i = 0; i < 8; i++)
+    for (i = 0; i < MINIX_Z_MAP_SLOTS; i++)
 	if ((bh = sb->u.minix_sb.s_zmap[i]) != NULL) {
 	    map_buffer(bh);
 	    j = (block_t) find_first_zero_bit((void *)(bh->b_data), 8192);
 	    if (j < 8192) break;
 	    unmap_buffer(bh);
 	}
-    if (i >= 8) return 0;
+    if (i >= MINIX_Z_MAP_SLOTS) return 0;
     if (set_bit(j, bh->b_data)) {
 	panic("mnb: already set %d %d\n", j, bh->b_data);
 	unmap_buffer(bh);
@@ -184,7 +184,7 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
 
     minix_set_ops(inode);
     j = 8192;
-    for (i = 0; i < 8; i++)
+    for (i = 0; i < MINIX_I_MAP_SLOTS; i++)
 	if ((bh = inode->i_sb->u.minix_sb.s_imap[i]) != NULL) {
 	    map_buffer(bh);
 	    j = (block_t) find_first_zero_bit((void *)(bh->b_data), 8192);

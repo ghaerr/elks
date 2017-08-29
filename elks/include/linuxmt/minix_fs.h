@@ -14,8 +14,14 @@
 /* Not the same as the bogus LINK_MAX in <linux/limits.h>. Oh well. */
 #define MINIX_LINK_MAX	250
 
+#ifdef CONFIG_MINIX_V2
 #define MINIX_I_MAP_SLOTS	8
 #define MINIX_Z_MAP_SLOTS	64
+#else
+#define MINIX_I_MAP_SLOTS	4
+#define MINIX_Z_MAP_SLOTS	8
+#endif
+
 #define MINIX_SUPER_MAGIC	0x137F	/* original minix fs */
 #define MINIX_SUPER_MAGIC2	0x138F	/* minix fs, 30 char names */
 #define MINIX2_SUPER_MAGIC	0x2468	/* minix V2 fs */
