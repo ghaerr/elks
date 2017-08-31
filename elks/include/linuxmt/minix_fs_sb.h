@@ -4,6 +4,7 @@
 /*
  * minix super-block data in memory
  */
+#include <linuxmt/minix_fs.h>
 
 struct minix_sb_info {
     unsigned short		s_ninodes;
@@ -13,8 +14,8 @@ struct minix_sb_info {
     unsigned short		s_firstdatazone;
     unsigned short		s_log_zone_size;
     unsigned long		s_max_size;
-    struct buffer_head *	s_imap[8];
-    struct buffer_head *	s_zmap[64];
+    struct buffer_head *	s_imap[MINIX_I_MAP_SLOTS];
+    struct buffer_head *	s_zmap[MINIX_Z_MAP_SLOTS];
     unsigned short		s_dirsize;
     unsigned short		s_namelen;
     struct buffer_head *	s_sbh;
