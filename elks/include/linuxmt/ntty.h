@@ -57,7 +57,6 @@ struct tty {
     struct tty_ops *ops;
     unsigned short int minor;
     unsigned int flags;
-    unsigned char inq_buf[INQ_SIZE], outq_buf[OUTQ_SIZE];
 
 #if 0
     struct wait_queue *sleep;
@@ -67,6 +66,7 @@ struct tty {
     struct termios termios;
     int ostate;
     pid_t pgrp;
+    unsigned char outq_buf[OUTQ_SIZE], inq_buf[INQ_SIZE];
 };
 
 extern int ttynull_openrelease(struct tty *);
