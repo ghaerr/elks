@@ -71,11 +71,11 @@ void minix_put_super(register struct super_block *sb)
     pi = 0;
     do {
 	brelse(sb->u.minix_sb.s_imap[(int)pi]);
-    } while (((int)(++pi)) < MINIX_I_MAP_SLOTS);
+    } while (((int)(++pi)) < sb->u.minix_sb.s_imap_blocks);
     pi = 0;
     do {
 	brelse(sb->u.minix_sb.s_zmap[(int)pi]);
-    } while (((int)(++pi)) < MINIX_Z_MAP_SLOTS);
+    } while (((int)(++pi)) < sb->u.minix_sb.s_zmap_blocks);
     brelse(sb->u.minix_sb.s_sbh);
     unlock_super(sb);
     sb->s_dev = 0;
@@ -190,15 +190,6 @@ struct super_block *minix_read_super(register struct super_block *s,
     {
 	register char *pi;
 
-	pi = 0;
-	do {
-	    s->u.minix_sb.s_imap[(int)pi] = NULL;
-	} while (((int)(++pi)) < MINIX_I_MAP_SLOTS);
-	pi = 0;
-	do {
-	    s->u.minix_sb.s_zmap[(int)pi] = NULL;
-	} while (((int)(++pi)) < MINIX_Z_MAP_SLOTS);
-
 	block = 2;
 	/*
 	 *      FIXME:: We cant keep these in memory on an 8086, need to change
@@ -223,11 +214,11 @@ struct super_block *minix_read_super(register struct super_block *s,
 	    pi = 0;
 	    do {
 		brelse(s->u.minix_sb.s_imap[(int)pi]);
-	    } while (((int)(++pi)) < MINIX_I_MAP_SLOTS);
+	    } while (((int)(++pi)) < s->u.minix_sb.s_imap_blocks);
 	    pi = 0;
 	    do {
 		brelse(s->u.minix_sb.s_zmap[(int)pi]);
-	    } while (((int)(++pi)) < MINIX_Z_MAP_SLOTS);
+	    } while (((int)(++pi)) < s->u.minix_sb.s_zmap_blocks);
 
 	    msgerr = err2;
 	    goto err_read_super_1;

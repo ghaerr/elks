@@ -23,7 +23,6 @@
 #include <arch/bitops.h>
 
 extern struct file_operations *get_blkfops();
-extern struct file_operations *get_chrfops();
 
 extern int root_mountflags;
 

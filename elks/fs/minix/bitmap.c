@@ -96,7 +96,7 @@ void minix_free_block(register struct super_block *sb, unsigned short block)
 block_t minix_new_block(register struct super_block *sb)
 {
     register struct buffer_head *bh;
-    block_t i, j;
+    block_t i, j, k;
 
     if (!sb) {
 	printk("mnb: no sb\n");
@@ -104,35 +104,35 @@ block_t minix_new_block(register struct super_block *sb)
     }
 
   repeat:
-    j = 8192;
-    for (i = 0; i < MINIX_Z_MAP_SLOTS; i++)
-	if ((bh = sb->u.minix_sb.s_zmap[i]) != NULL) {
-	    map_buffer(bh);
-	    j = (block_t) find_first_zero_bit((void *)(bh->b_data), 8192);
-	    if (j < 8192) break;
+    i = 0;
+    do {
+	bh = sb->u.minix_sb.s_zmap[i];
+	map_buffer(bh);
+	j = (block_t) find_first_zero_bit((void *)(bh->b_data), 8192);
+	k = j + i * 8192 + sb->u.minix_sb.s_firstdatazone - 1;
+	if (k < sb->u.minix_sb.s_nzones) {
+	    if (set_bit(j, bh->b_data)) {
+		panic("mnb: already set %d %d\n", j, bh->b_data);
+/*		unmap_buffer(bh);
+		goto repeat;*/
+	    }
+	    if (j == (block_t)find_first_zero_bit((void *)(bh->b_data), 8192))
+		panic("still zero bit!%d\n", j);
+	    mark_buffer_dirty(bh, 1);
 	    unmap_buffer(bh);
+	    if (!k)
+		break;
+	    bh = getblk(sb->s_dev, k);
+	    map_buffer(bh);
+	    memset(bh->b_data, 0, BLOCK_SIZE);
+	    mark_buffer_uptodate(bh, 1);
+	    mark_buffer_dirty(bh, 1);
+	    unmap_brelse(bh);
+	    return k;
 	}
-    if (i >= MINIX_Z_MAP_SLOTS) return 0;
-    if (set_bit(j, bh->b_data)) {
-	panic("mnb: already set %d %d\n", j, bh->b_data);
 	unmap_buffer(bh);
-	goto repeat;
-    }
-    if (j == (block_t) find_first_zero_bit((void *)(bh->b_data), 8192))
-	panic("still zero bit!%d\n", j);
-    unmap_buffer(bh);
-    mark_buffer_dirty(bh, 1);
-    j += i * 8192 + sb->u.minix_sb.s_firstdatazone - 1;
-    if (j < sb->u.minix_sb.s_firstdatazone || j >= sb->u.minix_sb.s_nzones)
-	return 0;
-    /* WARNING: j is not converted, so we have to do it */
-    bh = getblk(sb->s_dev, (block_t) j);
-    map_buffer(bh);
-    memset(bh->b_data, 0, BLOCK_SIZE);
-    mark_buffer_uptodate(bh, 1);
-    mark_buffer_dirty(bh, 1);
-    unmap_brelse(bh);
-    return j;
+    } while (++i < sb->u.minix_sb.s_zmap_blocks);
+    return 0;
 }
 
 void minix_free_inode(register struct inode *inode)
@@ -178,47 +178,43 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
     register struct inode *inode;
     register struct buffer_head *bh;
     /* Adding an sb here does not make the code smaller */
-    block_t i, j;
+    block_t i, j, k;
+    char *s;
 
     if (!dir || !(inode = new_inode(dir, mode))) return NULL;
-
     minix_set_ops(inode);
-    j = 8192;
-    for (i = 0; i < MINIX_I_MAP_SLOTS; i++)
-	if ((bh = inode->i_sb->u.minix_sb.s_imap[i]) != NULL) {
-	    map_buffer(bh);
-	    j = (block_t) find_first_zero_bit((void *)(bh->b_data), 8192);
-	    if (j < 8192) break;
+
+    s = "No new inodes found!\n";
+    i = 0;
+    do {
+	bh = inode->i_sb->u.minix_sb.s_imap[i];
+	map_buffer(bh);
+	j = (block_t) find_first_zero_bit((void *)(bh->b_data), 8192);
+	k = j + i * 8192;
+	if (k < inode->i_sb->u.minix_sb.s_ninodes) {
+	    if (set_bit(j, bh->b_data)) {	/* shouldn't happen */
+		unmap_buffer(bh);
+		s = "mni: already set\n";
+		break;
+	    }
+	    mark_buffer_dirty(bh, 1);
 	    unmap_buffer(bh);
-	}
-    if (!bh || j >= 8192) {
-	printk("No new inodes found!\n");
-	goto iputfail1;
-    }
-    if (set_bit(j, bh->b_data)) {	/* shouldn't happen */
-	printk("mni: already set\n");
-	goto iputfail;
-    }
-    mark_buffer_dirty(bh, 1);
-    j += i * 8192;
-    if (!j || j > inode->i_sb->u.minix_sb.s_ninodes) goto iputfail;
-    unmap_buffer(bh);
-    inode->i_ino = (ino_t)j;
-    inode->i_dirt = 1;
+	    if (!k) {
+		s = "new_inode: iput fail\n";
+		break;
+	    }
+	    inode->i_ino = (ino_t)k;
+	    inode->i_dirt = 1;
 
 #ifdef BLOAT_FS
-    inode->i_blocks = inode->i_blksize = 0;
+	    inode->i_blocks = inode->i_blksize = 0;
 #endif
 
-    return inode;
-
-    /*  Oh no! We have 'Return of Goto' in a double feature with
-     *  'Mozilla v Internet Exploder' :) */
-
-  iputfail:
-    printk("new_inode: iput fail\n");
-    unmap_buffer(bh);
-  iputfail1:
+	    return inode;
+	}
+	unmap_buffer(bh);
+    } while (++i < inode->i_sb->u.minix_sb.s_imap_blocks);
+    printk(s);
     iput(inode);
     return NULL;
 }
