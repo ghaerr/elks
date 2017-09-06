@@ -6,8 +6,6 @@ include $(BASEDIR)/Make.defs
 #
 # Include standard packaging commands.
 
-STD_USR_BIN    = ed tar compress uncompress zcat miniterm
-
 include $(BASEDIR)/Make.rules
 
 HOSTCC = gcc
@@ -15,11 +13,12 @@ HOST_CFLAGS = -O2
 
 ###############################################################################
 
-PRGS=ed tar compress compress.host uncompress zcat miniterm
+PRGS=ed tar compress uncompress zcat miniterm
+PRGS_HOST=compress.host
 
-all: $(PRGS)
+all: $(PRGS) $(PRGS_HOST)
 
-compress: compress.c Makefile
+compress: compress.c
 	$(CC) $(CFLAGS) -H0xe000 -s $@.c -o $@
 
 compress.host: compress.c
@@ -32,10 +31,10 @@ zcat: compress
 	ln -sf compress zcat
 
 max_rfs: all
-	cp -p $(STD_USR_BIN) $(TARGET_MNT)/usr/bin
+	cp -p $(PRGS) $(TARGET_MNT)/usr/bin
 
 rfs: all
-	cp -p $(STD_USR_BIN) $(TARGET_MNT)/usr/bin
+	cp -p $(PRGS) $(TARGET_MNT)/usr/bin
 
 net_rfs: rfs
 
@@ -44,5 +43,4 @@ min_rfs:
 smin_rfs:
 
 clean:
-	rm -f core $(PRGS) *~ *.o
-
+	rm -f $(PRGS) $(PRGS_HOST) *~ *.o
