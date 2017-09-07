@@ -245,20 +245,21 @@ int sys_chmod(char *filename, mode_t mode)
     if (!error) {
 	inodep = inode;
 	if (IS_RDONLY(inodep)) {
-	    iput(inodep);
-	    return -EROFS;
+	    error = -EROFS;
+	    goto echmod;
 	}
 	if (mode == (mode_t) -1) mode = inodep->i_mode;
 	mode = (mode & S_IALLUGO) | (inodep->i_mode & ~S_IALLUGO);
 	if ((current->euid != inodep->i_uid) && !suser()) {
-/* FIXME - Should we iput(inodep); at this point? */
-	    return -EPERM;
+	    error = -EPERM;
+	    goto echmod;
 	}
 	if (!suser() && !in_group_p(inodep->i_gid)) {
 	    mode &= ~S_ISGID;
 	}
 	inodep->i_mode = mode;
 	inodep->i_dirt = 1;
+      echmod:
 	iput(inodep);
     }
 #endif

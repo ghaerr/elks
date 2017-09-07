@@ -69,28 +69,32 @@ unsigned short minix_count_free_inodes(register struct super_block *sb)
 void minix_free_block(register struct super_block *sb, unsigned short block)
 {
     register struct buffer_head *bh;
+    char *s;
     unsigned int zone;
 
+    s = NULL;
     if (!sb)
-	printk("mfb: bad dev\n");
+	s = "bad dev";
     else if (block < sb->u.minix_sb.s_firstdatazone ||
 	    block >= sb->u.minix_sb.s_nzones)
-	printk("trying to free block %lx not in datazone\n", block);
+	s = "trying to free block not in datazone";
     else {
 	bh = get_hash_table(sb->s_dev, (block_t) block);
 	if (bh) bh->b_dirty = 0;
 	brelse(bh);
 	zone = block - sb->u.minix_sb.s_firstdatazone + 1;
 	bh = sb->u.minix_sb.s_zmap[zone >> 13];
-	if (!bh) printk("mfb: bad bitbuf\n");
+	if (!bh) s = "bad bitbuf";
 	else {
 	    map_buffer(bh);
 	    if (!clear_bit(zone & 8191, bh->b_data))
-		printk("mfb (%s:%ld): already cleared\n", kdevname(sb->s_dev), block);
-	    unmap_buffer(bh);
+		s = "already cleared";
 	    mark_buffer_dirty(bh, 1);
+	    unmap_buffer(bh);
 	}
     }
+    if (s != NULL)
+	printk("mfb (%s:%u): %s\n", kdevname(sb->s_dev), block, s);
 }
 
 block_t minix_new_block(register struct super_block *sb)
@@ -158,6 +162,10 @@ void minix_free_inode(register struct inode *inode)
 	s = "nonexistent inode\n";
     else if (!(bh = inode->i_sb->u.minix_sb.s_imap[(unsigned int)inode->i_ino >> 13]))
 	s = "nonexistent imap\n";
+    if (s) {
+	printk("free_inode: ");
+	printk(s, n);
+    }
     else {
 	map_buffer(bh);
 	if (!clear_bit((unsigned int) ((unsigned int)inode->i_ino & 8191), bh->b_data)) {
@@ -166,10 +174,6 @@ void minix_free_inode(register struct inode *inode)
 	clear_inode(inode);
 	mark_buffer_dirty(bh, 1);
 	unmap_buffer(bh);
-    }
-    if (s) {
-	printk("free_inode: ");
-	printk(s, n);
     }
 }
 

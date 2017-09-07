@@ -81,14 +81,13 @@ static int move_addr_to_user(char *kaddr, size_t klen, char *uaddr, register int
 	return -EINVAL;
 
     if (len)
-	if ((err = verified_memcpy_tofs(uaddr, kaddr, len)))
-	    return err;
+	err = verified_memcpy_tofs(uaddr, kaddr, len);
 
 #if 0
     put_user(len, ulen);	/* This is pointless isn't it */
 #endif
 
-    return 0;
+    return err;
 }
 
 struct socket *sock_alloc(void)

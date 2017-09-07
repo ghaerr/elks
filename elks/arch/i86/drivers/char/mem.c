@@ -288,83 +288,64 @@ static struct file_operations kmem_fops = {
 #endif
 };
 
-/*@+type@*/
-
 /*
  * memory device open multiplexor
  */
-int memory_open(struct inode *inode, register struct file *filp)
+int memory_open(register struct inode *inode, struct file *filp)
 {
-    int err=0;
+#ifdef DEBUG
+    static char *mdev_nam[] = {
 
-    debugmem1("memory_open: minor = %d; it's /dev/",
-	      (int) MINOR(inode->i_rdev));
-    switch (MINOR(inode->i_rdev)) {
+    /*  Unimplemented minors will print out the correct device name
+     *  with a warning note.
+     */
 
-    case DEV_NULL_MINOR:
-	debugmem("null");
-	filp->f_op = &null_fops;
-	break;
-
-    case DEV_FULL_MINOR:
-	debugmem("full");
-	filp->f_op = &full_fops;
-	break;
-
-    case DEV_ZERO_MINOR:
-	debugmem("zero");
-	filp->f_op = &zero_fops;
-	break;
+	"???",
+	"mem",
+	"kmem",
+	"null",
+	"port",
+	"zero",
+	"???",
+	"full",
+	"random",
+	"urandom",
+    };
+#endif
+    static struct file_operations *mdev_fops[] = {
+	NULL,		/*  */
 
     /*  The following two entries assume that virtual memory is identical
      *  to physical memory. Is this still true now we have swap?
      */
 
-    case DEV_KMEM_MINOR:
-	debugmem("k");
-	/* Fallthru */
+	&kmem_fops,	/* DEV_MEM_MINOR */
+	&kmem_fops,	/* DEV_KMEM_MINOR */
+	&null_fops,	/* DEV_NULL_MINOR */
+	NULL,		/* DEV_PORT_MINOR */
+	&zero_fops,	/* DEV_ZERO_MINOR */
+	NULL,		/*  */
+	&full_fops,	/* DEV_FULL_MINOR */
+	NULL,		/* DEV_RANDOM_MINOR */
+	NULL,		/* DEV_URANDOM_MINOR */
+    };
+    unsigned int minor;
 
-    case DEV_MEM_MINOR: 
-	debugmem("mem");
-	filp->f_op = &kmem_fops;
-	break;
+    minor = MINOR(inode->i_rdev);
+    if (minor > 9)
+	minor = 0;
+    debugmem2("memory_open: minor = %u; it's /dev/%s\n",
+	      MINOR(inode->i_rdev), mdev_nam[minor]);
 
-#ifdef DEBUGMM
-
-    /*  The following entries are all currently subsumed by the default entry.
-     *  However, if debugging is enabled, we include them to print out the
-     *  correct device name rather than the ??? that would otherwise appear.
-     */
-
-    case DEV_PORT_MINOR:
-	debugmem("port");
-	err = -ENXIO;
-	break;
-
-    case DEV_RANDOM_MINOR:
-	debugmem("random");
-	err = -ENXIO;
-	break;
-
-    case DEV_URANDOM_MINOR:
-	debugmem("urandom");
-	err = -ENXIO;
-	break;
-
-#endif
-
-    default:
-	debugmem("???");
-	err = -ENXIO;
-	break;
+    if (mdev_fops[minor]) {
+	filp->f_op = mdev_fops[minor];
+	return 0;
     }
-    debugmem(" !!!\n");
-    if (err)
+    else
 	printk("Device minor %d not supported.\n", MINOR(inode->i_rdev));
-    return err;
-}
 
-/*@-type@*/
+    return -ENXIO;
+}
 
 static struct file_operations memory_fops = {
     NULL,			/* lseek */

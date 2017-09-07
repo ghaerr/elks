@@ -75,9 +75,7 @@ static int check(int flag, register struct file *file)
     if ((fops = file->f_op) && fops->select)
 	return (fops->select(file->f_inode, file, flag));
 
-    if (flag != SEL_EX) return 1;
-
-    return 0;
+    return (flag != SEL_EX);
 }
 
 static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,

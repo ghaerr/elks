@@ -149,16 +149,14 @@ static int follow_link(struct inode *dir, register struct inode *inode,
 		int flag, int mode, struct inode **res_inode)
 {
     register struct inode_operations *iop = inode->i_op;
-    int error;
+    int error = 0;
 
+    *res_inode = inode;
     if (!dir || !inode) {
 	iput(inode);
 	*res_inode = NULL;
 	error = -ENOENT;
-    } else if (!iop || !iop->follow_link) {
-	*res_inode = inode;
-	error = 0;
-    } else {
+    } else if (iop && iop->follow_link) {
 	dir->i_count++;
 	error = iop->follow_link(dir, inode, flag, mode, res_inode);
     }
@@ -464,7 +462,6 @@ int sys_mknod(char *pathname, int mode, dev_t dev)
     switch (mode & S_IFMT) {
     case 0:
 	mode |= S_IFREG;
-	break;
     case S_IFREG:
     case S_IFCHR:
     case S_IFBLK:
