@@ -41,16 +41,16 @@ static int namecompare(size_t len, size_t max, char *name, register char *buf)
 static int minix_match(size_t len,
 		       char *name,
 		       register struct minix_dir_entry *de,
-		       register struct minix_sb_info *info)
+		       size_t minixlen)
 {
-    if (!de->inode || len > info->s_namelen) {
+    if (!de->inode) {
 	return 0;
     }
     /* "" means "." ---> so paths like "/usr/lib//libc.a" work */
     if (!len && (de->name[0] == '.') && (de->name[1] == '\0')) {
 	return 1;
     }
-    return namecompare(len, info->s_namelen, name, de->name);
+    return namecompare(len, minixlen, name, de->name);
 }
 
 /*
@@ -71,7 +71,7 @@ static struct buffer_head *minix_find_entry(register struct inode *dir,
 {
     register struct buffer_head *bh;
     struct minix_sb_info *info;
-    block_t block;
+    __u32 bo;
     unsigned short offset;
 
     *res_dir = NULL;
@@ -87,32 +87,26 @@ static struct buffer_head *minix_find_entry(register struct inode *dir,
 #endif
 
     }
-    bh = NULL;
-    block = 0;
+    bo = 0L;
     offset = 0;
-    while (((__u32)block << BLOCK_SIZE_BITS) + offset < dir->i_size) {
-	if (!bh) {
-	    bh = minix_bread(dir, block, 0);
+    goto minix_find;
+    do {
+	offset = (__u16)bo & (BLOCK_SIZE - 1);
+	if (!offset) {
+	    unmap_brelse(bh);
+      minix_find:
+	    bh = minix_bread(dir, (__u16)(bo >> BLOCK_SIZE_BITS), 0);
 	    if (!bh) {
-		block++;
 		continue;
 	    }
 	    map_buffer(bh);
 	}
-
 	if (minix_match(namelen, name,
-		    (struct minix_dir_entry *)(bh->b_data + offset), info)) {
+		(struct minix_dir_entry *)(bh->b_data + offset), info->s_namelen)) {
 	    *res_dir = (struct minix_dir_entry *) (bh->b_data + offset);
 	    return bh;
 	}
-	offset += info->s_dirsize;
-	if (offset >= BLOCK_SIZE) {
-	    unmap_brelse(bh);
-	    bh = NULL;
-	    offset = 0;
-	    block++;
-	}
-    }
+    } while ((bo += info->s_dirsize) < dir->i_size);
     unmap_brelse(bh);
     return NULL;
 }
@@ -157,7 +151,6 @@ static int minix_add_entry(register struct inode *dir,
 			   size_t namelen,
 			   ino_t ino)
 {
-    unsigned short block;
     unsigned short offset;
     register struct buffer_head *bh;
     struct minix_dir_entry *de;
@@ -175,55 +168,46 @@ static int minix_add_entry(register struct inode *dir,
     }
     if (!namelen)
 	return -ENOENT;
-    bh = NULL;
-    block = 0;
+    bo = 0L;
     offset = 0;
+    goto minix_add;
     while (1) {
-	if (!bh) {
-	    bh = minix_bread(dir, block, 1);
+	offset = (__u16)bo & (BLOCK_SIZE - 1);
+	if (!offset) {
+	    unmap_brelse(bh);
+      minix_add:
+	    bh = minix_bread(dir, (__u16)(bo >> BLOCK_SIZE_BITS), 1);
 	    if (!bh) return -ENOSPC;
 	    map_buffer(bh);
 	}
 	de = (struct minix_dir_entry *) (bh->b_data + offset);
-	offset += info->s_dirsize;
-	bo = ((__u32)block << BLOCK_SIZE_BITS) + offset;
+	bo += info->s_dirsize;
 	if (bo > dir->i_size) {
-	    de->inode = 0;
 	    dir->i_size = bo;
-	    dir->i_dirt = 1;
-	}
-	if (de->inode) {
-	    if (namecompare(namelen, info->s_namelen, name, de->name)) {
-		debug2("MINIXadd_entry: file %t==%s (already exists)\n",
-		     name, de->name);
-		unmap_brelse(bh);
-		return -EEXIST;
-	    }
-	} else {
-	    size_t i;
-
-	    dir->i_mtime = dir->i_ctime = CURRENT_TIME;
-	    dir->i_dirt = 1;
-	    memcpy_fromfs(de->name, name, namelen);
-	    if ((i = info->s_namelen - namelen) > 0)
-		memset(de->name + namelen, 0, i);
-
-#ifdef BLOAT_FS
-	    dir->i_version = ++event;
-#endif
-
-	    de->inode = (__u16)ino;
-	    mark_buffer_dirty(bh, 1);
-	    unmap_brelse(bh);
 	    break;
 	}
-	if (offset >= BLOCK_SIZE) {
+	if (!de->inode)
+	    break;
+	if (namecompare(namelen, info->s_namelen, name, de->name)) {
+	    debug2("MINIXadd_entry: file %t==%s (already exists)\n",
+		    name, de->name);
 	    unmap_brelse(bh);
-	    bh = NULL;
-	    offset = 0;
-	    block++;
+	    return -EEXIST;
 	}
     }
+    dir->i_mtime = dir->i_ctime = CURRENT_TIME;
+    dir->i_dirt = 1;
+    memcpy_fromfs(de->name, name, namelen);
+    if (info->s_namelen > namelen)
+	memset(de->name + namelen, 0, info->s_namelen - namelen);
+
+#ifdef BLOAT_FS
+    dir->i_version = ++event;
+#endif
+
+    de->inode = (__u16)ino;
+    mark_buffer_dirty(bh, 1);
+    unmap_brelse(bh);
     return 0;
 }
 
