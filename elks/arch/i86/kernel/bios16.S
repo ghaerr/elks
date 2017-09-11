@@ -12,7 +12,7 @@
  */
 
 	.text
-	.globl  _call_bios
+	.globl	_call_bios
 
 _call_bios:
 	push bp
@@ -89,4 +89,6 @@ _call_bios:
 	pop es
 	popf
 	pop bp
+	mov	ax,20[bx]	! Return CARRY value
+	and	ax,#1
 	ret

@@ -44,6 +44,6 @@ struct biosparms {
 };
 
 /* exported functions */
-extern void call_bios(struct biosparms *);
+extern int call_bios(struct biosparms *);
 
 #endif
