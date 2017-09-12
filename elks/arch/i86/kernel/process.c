@@ -103,7 +103,7 @@ void arch_setup_kernel_stack(register struct task_struct *t)
 /* Called by do_signal()
  *
  * We need to make the program return to another point - to the signal
- * handler. The stack currently looks like this:-
+ * handler. The user stack currently looks like this:-
  *
  *          bp  ip  cs  f
  *
