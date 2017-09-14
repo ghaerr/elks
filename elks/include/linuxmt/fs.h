@@ -10,6 +10,7 @@
 #include <linuxmt/vfs.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/ioctl.h>
+#include <linuxmt/minix_fs.h>
 #include <linuxmt/pipe_fs_i.h>
 #include <linuxmt/net.h>
 #include <linuxmt/config.h>
@@ -215,7 +216,6 @@ struct inode {
     __u32			i_mtime;
     __u8			i_gid;
     __u8			i_nlink;
-    __u16			i_zone[9];
 
     /* This stuff is just in-memory... */
     ino_t			i_ino;
@@ -248,6 +248,7 @@ struct inode {
 
     union {
 	struct pipe_inode_info	pipe_i;
+	struct minix_inode_info	minix_i;
 	struct romfs_inode_info	romfs_i;
 #ifdef CONFIG_MSDOS_FS	
 	struct msdos_inode_info msdos_i;
