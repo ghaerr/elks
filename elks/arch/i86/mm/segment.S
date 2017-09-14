@@ -83,30 +83,32 @@ _fmemcpy:
 #endif
 	ret
 
-/* int strlen_fromfs(void *saddr); */
+/* int strnlen_fromfs(void *saddr, size_t maxlen); */
 
     /*  scasb uses es:di, not ds:si, so it is not necessary
      *  to save and restore ds
      */
-	.globl	_strlen_fromfs
+	.globl	_strnlen_fromfs
 
-_strlen_fromfs:
+_strnlen_fromfs:
 	mov	dx,di
 	mov	di,_current
+	mov	bx,sp
 	push	es
 	mov	es,TASK_USER_DS[di]
-	mov	bx,sp
 	mov	di,2[bx]
+	mov	cx,4[bx]
 	xor	al,al		! search for NULL byte
 	cld
-	mov	cx,#-1
 	repne
 	scasb
 	pop	es
 	mov	ax,di		! calc len +1
 	mov	di,dx
-	sub	ax,2[bx]
+	jnz	strnln1
 	dec	ax
+strnln1:
+	sub	ax,2[bx]
 	ret
 
 	.data

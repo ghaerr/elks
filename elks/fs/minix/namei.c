@@ -303,9 +303,11 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
     map_buffer(bh);
     de = (struct minix_dir_entry *) bh->b_data;
     de->inode = inode->i_ino;
+    inode->i_nlink++;
     strcpy(de->name, ".");
     de = (struct minix_dir_entry *)(((char *)de) + dir->i_sb->u.minix_sb.s_dirsize);
     de->inode = dir->i_ino;
+    dir->i_nlink++;
     strcpy(de->name, "..");
     mark_buffer_dirty(bh, 1);
     unmap_brelse(bh);
@@ -313,11 +315,10 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
 /*--------------------------------------------------------------------------------*/
     error = minix_add_entry(dir, name, len, inode->i_ino);
     if (error) {
+	dir->i_nlink--;
+	inode->i_nlink--;
       mkdir1:
 	inode->i_nlink--;
-    } else {
-	inode->i_nlink++;
-	dir->i_nlink++;
     }
 /* if succesful, minix_new_inode() sets i_dirt to 1  */
 /*    inode->i_dirt = 1;*/
@@ -333,33 +334,32 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
  */
 static int empty_dir(register struct inode *inode)
 {
-    unsigned short block;
     unsigned short offset;
     register struct buffer_head *bh;
     struct minix_dir_entry *de;
     unsigned short dirsize;
+    __u32 bo;
 
     if (!inode || !inode->i_sb) goto empt_dir;
     /* Cache s_dirsize to reduce dereference overhead */
     dirsize = inode->i_sb->u.minix_sb.s_dirsize;
 
-    block = 0;
-    bh = NULL;
-    offset = (dirsize << 1);
     if ((unsigned short)(inode->i_size) & (dirsize - 1)) goto bad_dir;
-    if (inode->i_size < (__u32)offset) goto bad_dir;
+    if (inode->i_size < (__u32)(dirsize << 1)) goto bad_dir;
     bh = minix_bread(inode, 0, 0);
     if (!bh) goto bad_dir;
     map_buffer(bh);
     de = (struct minix_dir_entry *) bh->b_data;
     if (!de->inode || strcmp(de->name, ".")) goto bad_dir;
-    de = (struct minix_dir_entry *) (bh->b_data + dirsize);
+    de = (struct minix_dir_entry *)(((char *)de) + dirsize);
     if (!de->inode || strcmp(de->name, "..")) goto bad_dir;
-    while (((__u32)block << BLOCK_SIZE_BITS) + offset < inode->i_size) {
-	if (!bh) {
-	    bh = minix_bread(inode, block, 0);
+    bo = (__u32)dirsize;
+    while ((bo += dirsize) < inode->i_size) {
+	offset = (__u16)bo & (BLOCK_SIZE - 1);
+	if (!offset) {
+	    unmap_brelse(bh);
+	    bh = minix_bread(inode, (__u16)(bo >> BLOCK_SIZE_BITS), 0);
 	    if (!bh) {
-		block++;
 		continue;
 	    }
 	}
@@ -367,13 +367,6 @@ static int empty_dir(register struct inode *inode)
 	if (de->inode) {
 	    unmap_brelse(bh);
 	    return 0;
-	}
-	offset += dirsize;
-	if (offset >= BLOCK_SIZE) {
-	    unmap_brelse(bh);
-	    bh = NULL;
-	    offset = 0;
-	    block++;
 	}
     }
     brelse(bh);
@@ -516,7 +509,8 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
 /*----------------------------------------------------------------------*/
     bh = minix_bread(inode, 0, 1);
     if (!bh) goto symlink1;
-    if ((error = strlen_fromfs(symname)) > 1023) error = 1023;
+    error = strnlen_fromfs(symname, 1023);
+/*    if ((error = strlen_fromfs(symname)) > 1023) error = 1023;*/
     inode->i_size = (__u32) error;
     map_buffer(bh);
     memcpy_fromfs(bh->b_data, symname, error);

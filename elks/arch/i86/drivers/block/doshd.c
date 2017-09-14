@@ -446,9 +446,9 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	    *drivep = fd_types[drivep->fdtype];
 	    printk("fd: Floppy drive autoprobe failed!\n");
 	}
-	else
+	else	/* target already checked to be (2 <= target <= 3) */
 	    printk("fd: /dev/fd%d probably has %d sectors and %d cylinders\n",
-		   target & 3, drivep->sectors, drivep->cylinders);
+		   target, drivep->sectors, drivep->cylinders);
 
 #endif
 
