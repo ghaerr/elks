@@ -295,24 +295,24 @@ static unsigned short map_izone(register struct inode *inode, block_t block,
     return *i_zone;
 }
 
-static unsigned short map_iblock(register struct inode *inode, block_t i,
+static unsigned short map_iblock(struct inode *inode, block_t i,
 				 block_t block, int create)
 {
     register struct buffer_head *bh;
+    register block_t *b_zone;
 
     if (!(bh = bread(inode->i_dev, i))) {
 	return 0;
     }
     map_buffer(bh);
-    i = ((block_t *) (bh->b_data))[block];
-    if (create && !i) {
-	if ((i = minix_new_block(inode->i_sb))) {
-	    ((block_t *) (bh->b_data))[block] = i;
+    b_zone = &(((block_t *) (bh->b_data))[block]);
+    if (create && !(*b_zone)) {
+	if ((*b_zone = minix_new_block(inode->i_sb))) {
 	    bh->b_dirty = 1;
 	}
     }
     unmap_brelse(bh);
-    return i;
+    return *b_zone;
 }
 
 unsigned short _minix_bmap(register struct inode *inode,

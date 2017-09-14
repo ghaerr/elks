@@ -75,8 +75,7 @@ static int minix_readlink(register struct inode *inode,
 	if (!bh) len = 0;
 	else {
 	    map_buffer(bh);
-	    if ((len = strlen(bh->b_data) + 1) > buflen) len = buflen;
-	    if (len > 1023) len = 1023;
+	    if ((len = strnlen(bh->b_data, 1023)) > buflen) len = buflen;
 	    memcpy_tofs(buffer, bh->b_data, len);
 	    unmap_brelse(bh);
 	}

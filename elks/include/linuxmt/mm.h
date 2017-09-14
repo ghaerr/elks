@@ -25,7 +25,7 @@ extern unsigned long high_memory;
 extern void memcpy_fromfs(void *,void *,size_t);
 extern void memcpy_tofs(void *,void *,size_t);
 
-extern int strlen_fromfs(void *);
+extern int strnlen_fromfs(void *,size_t);
 
 /*@+namechecks@*/
 

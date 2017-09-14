@@ -422,10 +422,11 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 #ifdef CONFIG_FULL_VFS
     debug("MOUNT: performing type check\n");
 
-    if ((retval = strlen_fromfs(type)) >= 16) {
+    retval = strnlen_fromfs(type, 15);
+/*    if ((retval = strlen_fromfs(type)) >= 16) {
 	debug("MOUNT: type size exceeds 16 characters, truncating\n");
 	retval = 15;
-    }
+    }*/
 
     verified_memcpy_fromfs(ltype, type, retval);
     ltype[retval] = '\0';	/* make asciiz again */
