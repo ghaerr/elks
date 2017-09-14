@@ -35,6 +35,12 @@
 #define MINIX_V1		0x0001	/* original minix fs */
 #define MINIX_V2		0x0002	/* minix V2 fs */
 
+/* inode in-kernel data */
+
+struct minix_inode_info {
+    __u16	i_zone[9];
+};
+
 /*  This is the original minix inode layout on disk.
  *  Note the 8-bit gid and atime and ctime.
  */

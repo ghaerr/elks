@@ -42,7 +42,7 @@ static int V1_trunc_direct(register struct inode *inode)
 
   repeat:
     for (i = DIRECT_BLOCK; i < 7; i++) {
-	p = &inode->i_zone[i];
+	p = &inode->u.minix_i.i_zone[i];
 	if (!(tmp = *p)) continue;
 	bh = get_hash_table(inode->i_dev, (block_t) tmp);
 	if (i < DIRECT_BLOCK) {
@@ -176,8 +176,8 @@ void minix_truncate(register struct inode *inode)
 	  S_ISLNK(inode->i_mode))) return;
     while (1) {
 	retry = V1_trunc_direct(inode);
-	retry |= V1_trunc_indirect(inode, 7, &inode->i_zone[7]);
-	retry |= V1_trunc_dindirect(inode, 7 + 512, &inode->i_zone[8]);
+	retry |= V1_trunc_indirect(inode, 7, &inode->u.minix_i.i_zone[7]);
+	retry |= V1_trunc_dindirect(inode, 7 + 512, &inode->u.minix_i.i_zone[8]);
 	if (!retry) break;
 	schedule();
     }

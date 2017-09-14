@@ -284,7 +284,7 @@ void minix_statfs(register struct super_block *sb, struct statfs *buf,
 static unsigned short map_izone(register struct inode *inode, block_t block,
 				int create)
 {
-    register __u16 *i_zone = &(inode->i_zone[block]);
+    register __u16 *i_zone = &(inode->u.minix_i.i_zone[block]);
 
     if (create && !(*i_zone)) {
 	if ((*i_zone = minix_new_block(inode->i_sb))) {
@@ -439,7 +439,8 @@ static void minix_read_inode(register struct inode *inode)
 
     bh = minix_get_inode(inode, &raw_inode);
     if (bh) {
-	memcpy(inode, raw_inode, sizeof(struct minix_inode));
+	memcpy(inode, raw_inode, 14);
+	memcpy(inode->u.minix_i.i_zone, raw_inode->i_zone, 18);
 	inode->i_ctime = inode->i_atime = inode->i_mtime;
 
 #ifdef BLOAT_FS
@@ -447,7 +448,7 @@ static void minix_read_inode(register struct inode *inode)
 #endif
 
 	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
-	    inode->i_rdev = to_kdev_t(raw_inode->i_zone[0]);
+	    inode->i_rdev = to_kdev_t(inode->u.minix_i.i_zone[0]);
 	unmap_brelse(bh);
 	minix_set_ops(inode);
     }
@@ -464,7 +465,8 @@ static struct buffer_head *minix_update_inode(register struct inode *inode)
 
     bh = minix_get_inode(inode, &raw_inode);
     if (bh) {
-	memcpy(raw_inode, inode, sizeof(struct minix_inode));
+	memcpy(raw_inode, inode, 14);
+	memcpy(raw_inode->i_zone, inode->u.minix_i.i_zone, 18);
 	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
 	    raw_inode->i_zone[0] = kdev_t_to_nr(inode->i_rdev);
 	inode->i_dirt = 0;
