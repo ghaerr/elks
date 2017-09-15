@@ -292,7 +292,7 @@ static void reset_bioshd(int drive)
 {
 /*    BD_IRQ = BIOSHD_INT;*/
     BD_AX = BIOSHD_RESET;
-    BD_DX = hd_drive_map[drive];
+    BD_DX = drive;
     call_bios(&bdt);
 
 /* Dont log this fail - its fine
@@ -320,13 +320,12 @@ int seek_sector(int drive, int track, int sector)
 	BD_AX = (unsigned short int) (BIOSHD_READ | 1); /* Read 1 sector  */
 	BD_BX = 0;					/* Seg offset = 0 */
 	BD_ES = BUFSEG;					/* Target segment */
-	BD_CX = (unsigned short int) (((int)track << 8) | sector);
-	BD_DX =  hd_drive_map[drive];
+	BD_CX = (unsigned short int) ((track << 8) | sector);
+	BD_DX = drive;					/* Head 0 | drive */
 
 	set_irq();
-	if (!call_bios(&bdt)) return 0;		/* everything is OK */
-	if (((BD_AX & 0xFF00) != 0x400) || ((int)count != 1)) /* Sector not found */
-	    reset_bioshd(drive);
+	if (!call_bios(&bdt)) return 0;			/* everything is OK */
+	reset_bioshd(drive);
     } while ((int)(--count) > 0);
     return 1;			/* error */
 }
@@ -344,7 +343,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 
     if (bioshd_initialized == 0)
 	return -ENXIO;
-    if (target >= 4)
+    if ((unsigned int)target >= 4)
 	return -ENXIO;
     if (((int) hdp->start_sect) == -1)
 	return -ENXIO;
@@ -373,19 +372,20 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	register struct drive_infot *drivep = &drive_info[target];
 
 #ifdef CONFIG_HW_USE_INT13_FOR_DISKPARMS
+	target &= 1;
 
 /* We can get the Geometry of the floppy from the BIOS.
  */
 
 /*	BD_IRQ = BIOSHD_INT;*/
 	BD_AX = BIOSHD_DRIVE_PARMS;
-	BD_DX = hd_drive_map[target];	/* Head 0, drive number */
+	BD_DX = target;			/* Head 0, drive number */
 	if (!call_bios(&bdt)) {
 	    drivep->sectors = (BD_CX & 0x3f);
 	    drivep->cylinders = ((BD_CX >> 8) | ((BD_CX & 0xC0) << 2)) + 1;
 	    drivep->heads = (BD_DX >> 8)  + 1;
 	} else
-	    printk("bioshd_open: no diskinfo %d\n", hd_drive_map[target]);
+	    printk("bioshd_open: no diskinfo %d\n", target);
 
 #else
 /* probing range can be easily extended by adding more values to these
@@ -397,7 +397,8 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	static char track_probe[2] = { 40, 80 };
 	int count;
 
-	printk("fd: probing disc in /dev/fd%d\n", target & 1);
+	target &= 1;
+	printk("fd: probing disc in /dev/fd%d\n", target);
 
 /* The area between 32-64K is a 'scratch' area - we need a semaphore for it
  */
@@ -446,7 +447,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	    *drivep = fd_types[drivep->fdtype];
 	    printk("fd: Floppy drive autoprobe failed!\n");
 	}
-	else	/* target already checked to be (2 <= target <= 3) */
+	else
 	    printk("fd: /dev/fd%d probably has %d sectors and %d cylinders\n",
 		   target, drivep->sectors, drivep->cylinders);
 
@@ -691,6 +692,7 @@ static void do_bioshd_request(void)
 	    continue;
 	}
 
+	drive = hd_drive_map[drive];
 #ifdef MULT_SECT_RQ
 	count = req->rq_nr_sectors;
 #else
@@ -740,8 +742,8 @@ static void do_bioshd_request(void)
 #endif
 	    BD_CX = (unsigned short int)
 			((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
-	    BD_DX = (head << 8) | hd_drive_map[drive];
-	    debug5("cylinder=%d head=%d sector=%d drive=%d CMD=%d\n",
+	    BD_DX = (head << 8) | drive;
+	    debug5("cylinder=%d head=%d sector=%d drive=0x%x CMD=%d\n",
 		   cylinder, head, sector, drive, req->rq_cmd);
 	    debug1("blocks %d\n", this_pass);
 	    set_irq();
