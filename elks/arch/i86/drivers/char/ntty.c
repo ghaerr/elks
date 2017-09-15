@@ -95,17 +95,17 @@ int tty_open(struct inode *inode, struct file *file)
 #endif
 
     err = otty->ops->open(otty);
-    if (err)
-	return err;
-    if (otty->pgrp == 0 && currentp->session == currentp->pid
-	&& currentp->tty == NULL) {
-	otty->pgrp = currentp->pgrp;
-	currentp->tty = otty;
+    if (!err) {
+	if (otty->pgrp == 0 && currentp->session == currentp->pid
+		&& currentp->tty == NULL) {
+	    otty->pgrp = currentp->pgrp;
+	    currentp->tty = otty;
+	}
+	otty->flags |= TTY_OPEN;
+	chq_init(&otty->inq, otty->inq_buf, INQ_SIZE);
+	chq_init(&otty->outq, otty->outq_buf, OUTQ_SIZE);
     }
-    otty->flags |= TTY_OPEN;
-    chq_init(&otty->inq, otty->inq_buf, INQ_SIZE);
-    chq_init(&otty->outq, otty->outq_buf, OUTQ_SIZE);
-    return 0;
+    return err;
 }
 
 int ttynull_openrelease(struct tty *tty)
@@ -344,8 +344,6 @@ static struct file_operations tty_fops = {
 #endif
 };
 
-/*@+type@*/
-
 void tty_init(void)
 {
     register struct tty *ttyp;
@@ -360,7 +358,7 @@ void tty_init(void)
 
 #if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
 
-    for (pi = 0 ; ((int)pi) < 4 ; pi++) {
+    for (pi = 0 ; ((int)pi) < NR_CONSOLES ; pi++) {
 #ifdef CONFIG_CONSOLE_BIOS
 	ttyp->ops = &bioscon_ops;
 #else
@@ -375,9 +373,9 @@ void tty_init(void)
 #ifdef CONFIG_CHAR_DEV_RS
 
     /* put serial entries after console entries */
-    for (pi = 0; ((int)pi) < NR_SERIAL; pi++) {
+    for (pi = RS_MINOR_OFFSET; ((int)pi) < NR_SERIAL + RS_MINOR_OFFSET; pi++) {
 	ttyp->ops = &rs_ops;
-	(ttyp++)->minor = ((int)pi) + 64; /* ttyS0 = 64 */
+	(ttyp++)->minor = ((int)pi);		/* ttyS0 = RS_MINOR_OFFSET */
     }
 
 #endif
@@ -385,9 +383,9 @@ void tty_init(void)
 #ifdef CONFIG_PSEUDO_TTY
     /* start at minor = 8 fixed to match pty entries in MAKEDEV */
     /* put slave pseudo tty entries after serial entries */
-    for (pi = 0; ((int)pi) < NR_PTYS; pi++) {
+    for (pi = 8; ((int)pi) < NR_PTYS + 8; pi++) {
 	ttyp->ops = &ttyp_ops;
-	(ttyp++)->minor = (int)pi + 8;
+	(ttyp++)->minor = (int)pi;
     }
 #endif
 

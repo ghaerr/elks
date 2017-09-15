@@ -15,19 +15,33 @@
  * hardcoded at present.)
  */
 
+/* Predefined maximum number of tty character devices */
+
+#define MAX_CONSOLES 3
+#define MAX_SERIAL   4
+#define MAX_PTYS     4
+
+#define RS_MINOR_OFFSET 64
+
+#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
+#define NR_CONSOLES	MAX_CONSOLES
+#else
+#define NR_CONSOLES	0
+#endif
+
 #ifdef CONFIG_PSEUDO_TTY
-#define NR_PTYS		4
+#define NR_PTYS		MAX_PTYS
 #else
 #define NR_PTYS		0
 #endif
 
 #ifdef CONFIG_CHAR_DEV_RS
-#define NR_SERIAL	4
+#define NR_SERIAL	MAX_SERIAL
 #else
 #define NR_SERIAL	0
 #endif
 
-#define MAX_TTYS (4+NR_SERIAL+NR_PTYS)
+#define MAX_TTYS (NR_CONSOLES+NR_SERIAL+NR_PTYS)
 
 #define DCGET_GRAPH	(('D'<<8)+0x01)
 #define DCREL_GRAPH	(('D'<<8)+0x02)

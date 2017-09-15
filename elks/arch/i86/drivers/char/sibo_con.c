@@ -19,7 +19,7 @@
 
 #ifdef CONFIG_SIBO_CONSOLE_DIRECT
 
-#include "console.h"
+/*#include "console.h"*/
 
 #if 0
 /* public interface of console.c: */

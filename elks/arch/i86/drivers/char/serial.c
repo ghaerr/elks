@@ -34,8 +34,6 @@ struct serial_info {
 
 };
 
-#define RS_MINOR_OFFSET 64
-
 #define CONSOLE_PORT 0
 
 /* all boxes should be able to do 9600 at least,
@@ -182,6 +180,7 @@ static void update_port(register struct serial_info *port)
     set_irq();
 }
 
+/* WARNING: Polling write function */
 static int rs_write(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
@@ -218,7 +217,7 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     register char *statusp;
 
 
-    debug1("SERIAL: Interrupt %d recieved.\n", irq);
+    debug1("SERIAL: Interrupt %d received.\n", irq);
     sp = &ports[(int)irq_port[irq - 2]];
     do {
 	statusp = (char *)inb_p(sp->io + UART_LSR);
@@ -357,7 +356,7 @@ int rs_init(void)
 		       sp->io, sp->irq, serial_type[sp->flags & 0x3],
 		       (sp->tty != NULL ? ", fetched" : ""));
 	    if (sp->tty == NULL) {
-		sp->tty = &ttys[4 + ttyno];
+		sp->tty = &ttys[ttyno + NR_CONSOLES];
 		update_port(sp);
 #if 0
 		outb_p(? ? ? ?, sp->io + UART_MCR);
@@ -365,7 +364,7 @@ int rs_init(void)
 	    }
 	    ttyno++;
 	}
-    } while (++sp < &ports[4]);
+    } while (++sp < &ports[NR_SERIAL]);
     return 0;
 }
 
