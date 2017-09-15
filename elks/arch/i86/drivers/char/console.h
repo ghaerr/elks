@@ -16,5 +16,5 @@
  *    stay at 3 to prevent inadvertant conflicts arising.
  *
  */
-
-#define MAX_CONSOLES 3
+/* This definition moved to include/linuxmt/ntty.h, to optimize space usage */
+/*#define MAX_CONSOLES 3*/

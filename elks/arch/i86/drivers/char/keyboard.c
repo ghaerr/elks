@@ -14,7 +14,7 @@
 
 #ifdef CONFIG_CONSOLE_DIRECT
 
-#include "console.h"		/* for number of VC's */
+/*#include "console.h"*/		/* for number of VC's */
 
 extern struct tty ttys[];
 

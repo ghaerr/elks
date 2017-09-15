@@ -26,7 +26,7 @@
 
 #ifdef CONFIG_CONSOLE_DIRECT
 
-#include "console.h"
+/*#include "console.h"*/
 
 /* Assumes ASCII values. */
 #define isalpha(c) (((unsigned char)(((c) | 0x20) - 'a')) < 26)

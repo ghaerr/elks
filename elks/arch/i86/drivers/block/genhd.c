@@ -295,7 +295,7 @@ void resetup_one_dev(struct gendisk *dev, int drive)
 
 void setup_dev(register struct gendisk *dev)
 {
-    int i;
+    register char *i;
 
 #ifdef BDEV_SIZE_CHK
     blk_size[dev->major] = NULL;
@@ -305,8 +305,8 @@ void setup_dev(register struct gendisk *dev)
     dev->init(dev);
 
 #ifdef CONFIG_BLK_DEV_BHD
-    for (i = 0; i < dev->nr_real; i++) {
-	int first_minor = i << dev->minor_shift;
+    for (i = (char *)0; (int)i < dev->nr_real; i++) {
+	int first_minor = (int)i << dev->minor_shift;
 
 	current_minor = (unsigned short int) (first_minor + 1);
 	check_partition(dev, MKDEV(dev->major, first_minor));

@@ -32,7 +32,7 @@ struct tty_ops dircon_ops;
 void init_console(void);
 #endif
 
-#include "console.h"
+/*#include "console.h"*/
 
 #define CONSOLE_NAME "console"
 #define WIDTH 60

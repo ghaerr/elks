@@ -449,16 +449,17 @@ int blk_dev_init(void)
     register struct request *req;
     register struct blk_dev_struct *dev;
 
-    for (dev = blk_dev + MAX_BLKDEV; dev-- != blk_dev;) {
+    dev = blk_dev;
+    do {
 	dev->request_fn = NULL;
 	dev->current_request = NULL;
-    }
+    } while (++dev < &blk_dev[MAX_BLKDEV]);
 
-    req = all_requests + NR_REQUEST;
-    while (--req >= all_requests) {
+    req = all_requests;
+    do {
 	req->rq_status = RQ_INACTIVE;
 	req->rq_next = NULL;
-    }
+    } while (++req < &all_requests[NR_REQUEST]);
 
 #ifdef CONFIG_BLK_DEV_RAM
     rd_init();
