@@ -16,11 +16,11 @@
  *	0x9000:6	- Video mode
  *	0x9000:7	- Window Width
  *	0x9000:8,10,12	- Video parameters
- *	0x9000:15 	- No vga
+ *	0x9000:15 	- VGA present
  *	0x9000:16	- Video height (points)
  *
- *	0x9000:80	- 16 bytes of disk 0 info
- *	0x9000:90	- 16 bytes of disk 1 info
+ *	0x9000:80	- 6 bytes of disk 0 info
+ *	0x9000:86	- 6 bytes of disk 1 info
  *
  *	0x01ff		- AA if psmouse present
  */

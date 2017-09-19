@@ -30,7 +30,10 @@
 !	6:	video mode, 1 byte
 !	7:	window width, 1 byte
 !	8,10,12	video data
-!	14: window height, 1 byte
+!	14:	window height, 1 byte
+!	15:	VGA present, 1 byte
+!			0 = no present
+!			1 = present
 !	16	video data
 !	0x20:	Processor type, 1 byte
 !			0  = 8088
@@ -59,8 +62,22 @@
 !	0x30:	zero terminated string containing the processor's name, 16 bytes
 !	0x40:	zero terminated string containing the fpu name, 16 bytes
 !	0x50:	zero terminated string containing the cpuid, 13 bytes
-!	0x80:	BIOS data for harddisk 0/1, 12 bytes
-!	0x8c:	data for floppy disk 0/1, 12 bytes
+!	0x80:	BIOS data for harddisk 0, 6 bytes
+!			0x80, no. of heads, 2 bytes (0, no disk)
+!			0x82, no. of sectors/track, 2 bytes
+!			0x84, no. of cylinders - 1, 2 bytes
+!	0x86:	BIOS data for harddisk 1, 6 bytes
+!			0x86, no. of heads, 2 bytes (0, no disk)
+!			0x88, no. of sectors/track, 2 bytes
+!			0x8A, no. of cylinders - 1, 2 bytes
+!	0x8c:	data for floppy disk 0, 6 bytes
+!			0x8C, no. of heads, 2 bytes (0, no disk)
+!			0x8E, no. of sectors/track, 2 bytes
+!			0x90, no. of cylinders, 2 bytes
+!	0x92:	data for floppy disk 1, 6 bytes
+!			0x92, no. of heads, 2 bytes (0, no disk)
+!			0x94, no. of sectors/track, 2 bytes
+!			0x96, no. of cylinders, 2 bytes
 !	...
 !	0x1ef:	SETUPSEG
 !	0x1f1:	SETUPSECS
@@ -70,7 +87,8 @@
 !	0x1f8:	RAMDISK
 !	0x1fa:	SVGA_MODE
 !	0x1fc:	ROOT_DEV
-!	0x1fe:	0xAA55 = boot_flag
+!	0x1fe:	0x55 = boot_flag, Low part
+!	0x1ff:	0xAA = boot_flag, High part/PS2 mouse device present (0, not present)
 !
 ! NOTE! These had better be the same as in bootsect.s!
 
@@ -106,7 +124,7 @@ start:
 
 #else
 ! Bootlin depends on this being done early
-	mov	ax,#0x01500
+	mov	ax,#0x01500	;Read disk type/DASD
 	mov	dl,#0x81
 	int	0x13
 #endif
@@ -134,18 +152,15 @@ prtstr:	lodsb
 
 
 
-#ifndef CONFIG_ROMCODE
 ! We now have to find the rest of the setup code/data
 ! in ROM the code is complete
 
-! variables in ROM are not very usefull
-start_sys_seg:	.word	SYSSEG
-
 bad_sig:
+#ifndef CONFIG_ROMCODE
 	mov	ax,#INITSEG     ;code setup
 	mov	ds,ax
 	xor	bh,bh
-	mov	bl,[497]	! get setup sects from boot sector
+	mov	bl,[497]	! get setup sects from boot sector (SETUPSECS)
 	sub	bx,#4		! LILO loads 4 sectors of setup
 	mov	cl,#8
 	shl	bx,cl		! convert to words
@@ -173,13 +188,10 @@ bad_sig:
 	cmp	setup_sig1,#SIG1
 	jne	no_sig
 	cmp	setup_sig2,#SIG2
-	jne	no_sig
-	jmp	good_sig
-#else
-bad_sig:
+	je	good_sig
+no_sig:
 #endif
 
-no_sig:
 	lea	si,no_sig_mess
 	call	prtstr
 no_sig_loop:			! And halt
@@ -198,8 +210,6 @@ good_sig:
 	pop ds 
 	retf                           ;back to BIOS
 #endif
-
-
 
 
 ;-------------------------------------------------------
@@ -294,10 +304,10 @@ no_psmouse:
 #endif
 
 	call	getcpu
-	push	es
-	mov	ax,#INITSEG
+	push	es		! clear BIOS data for harddisk 0/1, 12 bytes
+	mov	ax,#INITSEG	! and BIOS data for floppy disk 0/1, 12 bytes
 	mov	es,ax
-	mov	cx,#12
+	mov	cx,#24
 	mov	di,#0x80
 	xor	ax,ax
 	cld
@@ -305,10 +315,10 @@ no_psmouse:
 	stosw
 	pop	es
 #ifdef CONFIG_HW_HARD_DRIVE
-!	call	gethd
+	call	gethd		! Get geometry for harddisk 0/1.
 #endif
 #ifdef CONFIG_HW_FLOPPY_DRIVE
-	call	getfloppy
+	call	getfloppy	! Get geometry for floppy disk 0/1.
 #endif
 	mov	ax,#INITSEG
 	mov	ds,ax
@@ -914,7 +924,7 @@ getfloppy:
 	mov	ax,#INITSEG
 	mov	es,ax
 	mov	ds,ax
-	mov	bl,[0x20]
+	mov	bl,[0x20]	! Get processor type
 	mov	ax,#SETUPSEG
 	mov	ds,ax
 	int	0x11		! only ax is changed by int 0x11
@@ -936,12 +946,10 @@ getfloppy:
 	jz	no_floppy	! it has to be in the range 1..6
 	cmp	bl,#6
 	ja	no_floppy
-	lea	si,floppies
 	xor	bh,bh
 	dec	bl
 	add	bl,bl
-	add	si,bx
-	mov	si,[si]
+	mov	si,floppies[bx]
 	mov	di,#0x8c
 	mov	cx,#3
 	rep
@@ -959,14 +967,12 @@ getfloppy:
 	jz	no_floppy	! it has to be in the range 1..6
 	cmp	bl,#6
 	ja	no_floppy
-	lea	si,floppies
 	xor	bh,bh
 	dec	bl
 	add	bl,bl
-	add	si,bx
-	mov	si,[si]
-	mov	cx,#3
+	mov	si,floppies[bx]
 	mov	di,#(0x8c+6)
+	mov	cx,#3
 	rep
 	movsw
 	ret
@@ -1007,12 +1013,12 @@ gethd:
 	mov	ax,#INITSEG
 	mov	ds,ax
 	mov	es,ax
-	mov	ah,#0x10
-	mov	dl,#0x80
-	int	0x13
-	jc	no_hd0
-	or	ah,ah
-	jnz	no_hd0
+!	mov	ah,#0x10	! Test for drive 0 ready
+!	mov	dl,#0x80
+!	int	0x13
+!	jc	no_hd0
+!	or	ah,ah
+!	jnz	no_hd0
 	mov	ah,#0x08	! check for first drive
 	mov	dl,#0x80
 	int	0x13
@@ -1024,25 +1030,26 @@ gethd:
 	push	dx
 	mov	dl,dh
 	xor	dh,dh
-	inc	dx		! no. of heads in DX
+	inc	dx		! DX -> no. of heads
 	mov	bx,cx
-	and	bx,#0x3f	! bx -> no. of sectors
+	and	bx,#0x3f	! BX -> no. of sectors
 	mov	al,ch
 	mov	ah,cl
 	mov	cl, #6
-	shr	ah,cl		! ax -> no. of cylinders
+	shr	ah,cl		! AX -> no. of cylinders - 1
 	mov	[0x80],dx
 	mov	[0x82],bx
 	mov	[0x84],ax
 	pop	dx
 	dec	dl		! only one harddisk?
 	jz	no_hd1
-no_hd0:	mov	ah,#0x10
-	mov	dl,#0x81
-	int	0x13
-	jc	no_hd1
-	or	ah,ah
-	jnz	no_hd1
+no_hd0:
+!	mov	ah,#0x10	! Test for drive 1 ready
+!	mov	dl,#0x81
+!	int	0x13
+!	jc	no_hd1
+!	or	ah,ah
+!	jnz	no_hd1
 	mov	ah,#0x08	! check for second drive
 	mov	dl,#0x81
 	int	0x13
@@ -1051,13 +1058,13 @@ no_hd0:	mov	ah,#0x10
 	jnz	no_hd1
 	mov	dl,dh
 	xor	dh,dh
-	inc	dx		! no. of heads in DX
+	inc	dx		! DX -> no. of heads
 	mov	bx,cx
-	and	bx,#0x3f	! bx -> no. of sectors
+	and	bx,#0x3f	! BX -> no. of sectors
 	mov	al,ch
 	mov	ah,cl
 	mov	cl,#6
-	shr	ah,cl		! ax -> no. of cylinders
+	shr	ah,cl		! AX -> no. of cylinders - 1
 	mov	[0x86],dx
 	mov	[0x88],bx
 	mov	[0x8a],ax
@@ -1199,6 +1206,9 @@ copro:	dw 0
 
 no_sig_mess:	.ascii	"No ELKS setup signature found ..."
 		db	0x00
+
+! variables in ROM are not very usefull
+start_sys_seg:	.word	SYSSEG
 
 
 ! This must be last
