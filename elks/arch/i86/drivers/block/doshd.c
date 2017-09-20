@@ -159,18 +159,14 @@ static unsigned short int bioshd_gethdinfo(void)
 
     drive = (char *)0x80;
     do {
-/*	BD_IRQ = BIOSHD_INT;*/
-	BD_AX = BIOSHD_DRIVE_PARMS;
-	BD_DX = (int)drive;
-	if (!call_bios(&bdt)) {
-	    drivep->cylinders = ((BD_CX >> 8) | ((BD_CX & 0xC0) << 2)) + 1;
-	    drivep->heads = (BD_DX >> 8) + 1;
-	    drivep->sectors = (BD_CX & 63);
+	if ((drivep->heads = setupw((int)drive))) {
+	    drivep->sectors = setupw((int)drive + 2);
+	    drivep->cylinders = setupw((int)drive + 4) + 1;
 	    drivep->fdtype = -1;
 	    ndrives++;
 	}
 	drivep++;
-    } while ((int)(++drive) <= 0x81);
+    } while ((int)((drive += 6) <= 0x86));
     return ndrives;
 }
 
@@ -245,7 +241,7 @@ static unsigned short int bioshd_getfdinfo(void)
 /* If type cannot be determined correctly,
  * Type 4 should work on all AT systems
  */
-	*drivep = fd_types[arch_cpu > 5 ? 4 : 2];
+	*drivep = fd_types[arch_cpu > 5 ? 3 : 0];
 #ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
 /* Some XT's return strange results - Al
  * The arch_cpu is a safety check
