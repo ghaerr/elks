@@ -393,7 +393,9 @@ static int compile_fs ()
 
 	while (1)
 		{
-		int fd = open ("romfs.bin", O_WRONLY | O_CREAT | O_TRUNC);
+		/* Mode is required by O_CREAT */
+
+		int fd = open ("romfs.bin", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
 		if (fd < 0)
 			{
 			err = errno;
