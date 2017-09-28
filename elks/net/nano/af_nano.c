@@ -159,7 +159,7 @@ static int nano_bind(struct socket *sock,
     if (upd->npd_sockaddr_len || upd->npd_srvno)
 	return -EINVAL;		/* already bound */
 
-    memcpy(&upd->npd_sockaddr_na, umyaddr, sockaddr_len);
+    memcpy_fromfs(&upd->npd_sockaddr_na, umyaddr, sockaddr_len);
 
     if (upd->npd_sockaddr_na.sun_family != AF_NANO)
 	return -EINVAL;
@@ -191,10 +191,10 @@ static int nano_connect(register struct socket *sock,
     if (sock->state == SS_CONNECTING)
 	return -EINPROGRESS;
 
-    if (sock->state == SS_CONNECTED)
-	return -EISCONN;
+/*    if (sock->state == SS_CONNECTED)
+	return -EISCONN;*/	/*Already checked in socket.c*/
 
-    memcpy(&sockna, uservaddr, sockaddr_len);
+    memcpy_fromfs(&sockna, uservaddr, sockaddr_len);
 
     if (sockna.sun_family != AF_NANO) {
 	printk("ADR - {%d}\n", sockna.sun_family);
@@ -281,7 +281,6 @@ static int nano_getname(register struct socket *sock,
 			int *usockaddr_len, int peer)
 {
     register struct nano_proto_data *upd;
-    int len;
 
     if (peer) {
 	if (sock->state != SS_CONNECTED)
@@ -290,11 +289,8 @@ static int nano_getname(register struct socket *sock,
     } else
 	upd = NA_DATA(sock);
 
-    len = upd->npd_sockaddr_len;
-    memcpy(usockaddr, &upd->npd_sockaddr_na, len);
-    *usockaddr_len = len;
-
-    return 0;
+    return move_addr_to_user(&upd->npd_sockaddr_na, upd->npd_sockaddr_len,
+				    usockaddr, usockaddr_len)
 }
 
 static int nano_read(register struct socket *sock,
