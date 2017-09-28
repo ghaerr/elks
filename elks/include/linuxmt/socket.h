@@ -37,5 +37,6 @@ struct msghdr {
 
 struct proto_ops;
 extern int sock_register(int,struct proto_ops *);
+extern int move_addr_to_user(char *,size_t,char *,int *);
 
 #endif
