@@ -332,16 +332,18 @@ int do_mount(kdev_t dev, char *dir, char *type, int flags, char *data)
 	goto ERROUT1;
     }
     if (sb->s_covered) {
-    BUSY:
+      BUSY:
 	error = -EBUSY;
-    ERROUT1:
+      ERROUT1:
 	iput(dirp);
-    ERROUT:
-	return error;
     }
-    sb->s_covered = dirp;
-    dirp->i_mount = sb->s_mounted;
-    return 0;			/* we don't iput(dir_i) - see umount */
+    else {
+	sb->s_covered = dirp;
+	dirp->i_mount = sb->s_mounted;
+	error = 0;		/* we don't iput(dir_i) - see umount */
+    }
+  ERROUT:
+    return error;	
 }
 
 /*
@@ -448,19 +450,16 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 	inodep = inode;
 	debug("MOUNT: made it through namei\n");
 	if (!S_ISBLK(inodep->i_mode)) {
-	NOTBLK:
-	    iput(inodep);
-	    return -ENOTBLK;
+	    retval = -ENOTBLK;
 	}
-	if (IS_NODEV(inodep)) {
-	    iput(inodep);
-	    return -EACCES;
+	else if (IS_NODEV(inodep)) {
+	    retval = -EACCES;
 	}
-	if (MAJOR(inodep->i_rdev) >= MAX_BLKDEV) {
-	    iput(inodep);
-	    return -ENXIO;
+	else if (MAJOR(inodep->i_rdev) >= MAX_BLKDEV) {
+	    retval = -ENXIO;
 	}
-	retval = open_filp((mode_t)((new_flags & MS_RDONLY) ? 1 : 3), inodep, &filp);
+	else
+	    retval = open_filp((mode_t)((new_flags & MS_RDONLY) ? 1 : 3), inodep, &filp);
 	if (retval) {
 	    iput(inodep);
 	    return retval;

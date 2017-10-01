@@ -104,9 +104,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
-    if (ret >= 0)
-	ret = 0;
-    return ret;
+    return (ret >= 0 ? 0 : ret);
 }
 
 static int inet_connect(register struct socket *sock,
