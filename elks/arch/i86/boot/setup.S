@@ -6,7 +6,7 @@
 ! both setup.s and system has been loaded by the bootblock.
 !
 ! This code asks the bios for memory/disk/other parameters, and
-! puts them in a "safe" place: 0x90000-0x901FF, ie where the
+! puts them in a "safe" place: INITSEG:0-INITSEG:01FF, ie where the
 ! boot-block used to be. It is then up to the protected mode
 ! system to read them from there before the area is overwritten
 ! for buffer-blocks.
@@ -29,12 +29,14 @@
 !	4:	display page
 !	6:	video mode, 1 byte
 !	7:	window width, 1 byte
-!	8,10,12	video data
+!	8:	video data, 2 bytes
+!	10:	mono/color, video memory size, 2 bytes 
+!	12:	feature bits, switch settings, 2 bytes
 !	14:	window height, 1 byte
 !	15:	VGA present, 1 byte
-!			0 = no present
+!			0 = not present
 !			1 = present
-!	16	video data
+!	16	Point height of character matrix (taken from BDA), 2 bytes
 !	0x20:	Processor type, 1 byte
 !			0  = 8088
 !			1  = 8086
@@ -241,7 +243,7 @@ start_os:
 ! check for EGA/VGA and some config parameters
 
 #ifdef CONFIG_HW_VGA
- 	mov	ah,#0x12
+ 	mov	ah,#0x12	! Get video data
 	mov	bl,#0x10
 	int	0x10
 	mov	[8],ax
@@ -264,15 +266,15 @@ start_os:
 #ifdef CONFIG_HW_VIDEO_LINES_PER_SCREEN
         mov   al,#CONFIG_HW_VIDEO_LINES_PER_SCREEN
 #else
-        mov   al,#0x19          ! high of display (0x19 == 25 column)
+        mov   al,#0x19          ! height of display (0x19 == 25 rows)
 #endif
 #endif
 
-novga:	mov	[14],al
+novga:	mov	[14],al		! CGA 25 rows
 	mov	ah,#0x03	! read cursor pos
 	xor	bh,bh		! clear bh
 	int	0x10		! save it in known place, con_init fetches
-	mov	[0],dx	        ! it from 0x90000.
+	mov	[0],dx	        ! it from INITSEG.
 
 ! Get video-card data:
 	mov	ah,#0x0f
@@ -284,7 +286,7 @@ novga:	mov	[14],al
         mov   [16],#CONFIG_HW_VIDEO_LINES_PER_CHARACTER
 #else
 	xor	ax,ax
-	mov	es,ax		! Access low memory
+	mov	es,ax		! Access BIOS DATA AREA
 	seg es
 	mov	ax,[0x485]	! POINTS - Height of character matrix
 	mov	[16],ax
@@ -375,7 +377,7 @@ aout_ok:
    	mov ax,#CONFIG_ROM_KERNEL_DATA
    	mov es,ax
 
-   	mov cx,[10]    ;hi of size
+   	mov cx,[10]    ;hi of text size
    	or cx,cx       ;max 64k
    	jz size_ok
 size_error:
@@ -386,7 +388,7 @@ size_error:
    	jmp near err_loop  ;and halt
 
 size_ok:
-        mov cx,[14]
+        mov cx,[14]	   ; Check data section size
         or cx,cx
         jnz size_error     ;.data zu groﬂ
 
@@ -424,6 +426,34 @@ size_ok:
 
 !header is only in ROM, ds points on it
 #ifndef CONFIG_ROMCODE
+#ifdef REL_SYS
+
+! Relocate setup data
+
+	mov	ax,#DEF_INITSEG
+	mov	ds,ax
+	mov	ax,#REL_SETUPSEG
+	mov	es,ax
+	xor	si,si
+	xor	di,di
+	mov	cx,#256
+	cld
+	rep
+	movsw
+
+! Set the stack next to the kernel data segment
+
+	mov	ax,si
+	add	ax,dx
+	rcr	ax,#1
+	shr	ax,#1
+	shr	ax,#1
+	shr	ax,#1
+	add	ax,cx
+	mov	ss,ax
+	mov	sp,#1024
+
+#endif
 	mov ax, #SYSSEG       ;in ROM ds ist always set
 	mov ds, ax	! Get the header into DS
 	mov ax, [8]	! TSeg
@@ -433,10 +463,69 @@ size_ok:
 	mov cl, #4
 	shr ax, cl	! Data in paragraphs
 
+#ifdef REL_SYS
+
+! Save header data
+
+	push ax
+	push si
+
+! Relocate relocation code to next to kernel data segment
+
+	mov	ax,cs
+	mov	ds,ax
+	mov	ax,ss
+	mov	es,ax
+	push	ax	! Build far return address
+	mov	si,#cont
+	xor	di,di
+	push	di
+	mov	cx,#(end_reloc-cont)
+	rep
+	movsb
+	retf
+
+! Relocate kernel code segment
+
+cont:	mov	ax,#SYSSEG+2
+	mov	ds,ax
+	mov	ax,#REL_SYSSEG
+	mov	es,ax
+	xor	si,si
+	xor	di,di
+	mov	cx,bx	! BX register has not been touched
+	rep
+	movsb
+
+! Relocate kernel data segment
+
+	pop	cx
+	pop	di
+	push	di
+	push	cx
+	mov	ax,ds
+	add	ax,di
+	mov	ds,ax
+	mov	ax,es
+	add	ax,di
+	mov	es,ax		! New kernel DS
+	xor	si,si
+	xor	di,di
+	rep
+	movsb
+
+	pop si
+	pop ax
+	mov cx, #REL_SYSSEG
+#else
 	mov cx, #SYSSEG+2 ! Code starts here
+#endif
+	push cx		! Build far return address to SYSSEG+2:3
 	add cx, ax	! Segment base for data/bss/stack
 	mov ds, cx
 	mov es, cx
+	mov ax, #3
+	push ax
 !	mov ss, cx
 !	mov sp, #0xFFFE	! Top of stack right at the end (temporary)
 #endif
@@ -454,7 +543,9 @@ size_ok:
 
 #else
 ! changed jmpi 0,0x1002 to 3,0x1002 for kernel restart fix -AJB
-	jmpi	0x00003,SYSSEG+2   !jmp offset 0 of segment 0x1002 (cs)
+!	jmpi	0x00003,SYSSEG+2   !jmp offset 3 of segment 0x1002 (cs)
+	retf
+end_reloc:
 #endif
 
 !------------------------------

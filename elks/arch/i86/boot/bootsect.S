@@ -14,13 +14,13 @@ SYSSIZE = DEF_SYSSIZE
 !	modified for Linux/16 by Chad Page 
 !
 ! bootsect.s is loaded at 0x7c00 by the bios-startup routines, and moves
-! itself out of the way to address 0x90000, and jumps there.
+! itself out of the way to address INITSEG:0, and jumps there.
 !
 ! bde - should not jump blindly, there may be systems with only 512K low
 ! memory.  Use int 0x12 to get the top of memory, etc.
 !
-! It then loads 'setup' directly after itself (0x90200), and the system
-! at 0x10000, using BIOS interrupts. 
+! It then loads 'setup' directly after itself (INITSEG+20:0), and the system
+! at SYSSEG:0, using BIOS interrupts. 
 !
 ! NOTE! currently system is at most (8*65536-4096) bytes long. This should 
 ! be no problem, even in the future. I want to keep it simple. This 508 kB

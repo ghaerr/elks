@@ -22,15 +22,15 @@ SETUP CODE:
 
 setup.S		gets some system params, stores them over the boot block
 		sets up code and data segments for kernel
-		jumps to SYSSEG+2:0 (1002:0)
+		jumps to SYSSEG+2:3 (1002:3)
 
 (Note: .S files are preprocessed to .s before being assembled)
 
 KERNEL:
 
 crt0.s		(This module must be linked first. Because the
-		kernel is loaded at 1000:0, and there's a 32-byte
-		a.out header, that makes the kernel start 1002:0)
+		kernel is loaded at SYSSEG:0, and there's a 32-byte
+		a.out header, that makes the kernel start SYSSEG+2:0)
 		puts parameters passed on stack from setup into global
 		  storage, calls arch_boot and start_kernel
 crt1.c		arch_boot, just wipes the bss
@@ -41,19 +41,20 @@ system.c	setup_arch. Stores initial settings into arch_segs
 .
 arch/i86/mm/
 init.c		init memory manager, uses info which setup stored over
-		the boot block (9000:0)
+		the boot block (INITSEG:0)
 
 ----------------------------------------------------------------------------
 The boot sector contains some parameters at the end:
 
-497      *number of sectors in setup.S
-498,499   root_flags
-500,501  *size of kernel in 16-byte chunks
-502,503   swap device
-504,505   ramdisk size
-506,507   video mode
-508,509  *root device
-510,511   constant flag 0xAA55
+(0x1ef)495,496   Segment for setup.S			(SETUPSEG)
+(0x1f1)497      *number of sectors in setup.S		(SETUPSECS)
+(0x1f2)498,499   root_flags				(ROOTFLAGS)
+(0x1f4)500,501  *size of kernel in 16-byte chunks	(SYSSIZE)
+(0x1f6)502,503   swap device				(SWAP_DEV)
+(0x1f8)504,505   ramdisk size				(RAMDISK)
+(0x1fa)506,507   video mode				(SVGA_MODE)
+(0x1fc)508,509  *root device				(ROOT_DEV)
+(0x1fe)510,511   constant flag 0xAA55
 
 *patched by arch/i86/tools/build when the kernel is being built.
-Only 497 and 500,501 are used at present.
+Only 497, 500,501 and 508,509 are used at present.
