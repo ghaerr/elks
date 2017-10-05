@@ -128,11 +128,10 @@ void invalidate_inodes(kdev_t dev)
     do {
         prev = inode->i_prev;	/* clear_inode() changes the queues.. */
 	if (inode->i_dev != dev) continue;
-	if (inode->i_count || inode->i_dirt || inode->i_lock) {
+	if (inode->i_count || inode->i_dirt || inode->i_lock)
 	    printk("VFS: inode busy on removed device %s\n", kdevname(dev));
-	    continue;
-	}
-	clear_inode(inode);
+	else
+	    clear_inode(inode);
     } while ((inode = prev) != NULL);
 }
 
@@ -404,8 +403,8 @@ int fs_may_umount(kdev_t dev, struct inode *mount_rooti)
 
     do {
 	if (inode->i_dev != dev || !inode->i_count) continue;
-	if (inode == mount_rooti && inode->i_count == 1) continue;
-	return 0;
+	if ((inode != mount_rooti) || (inode->i_count != 1))
+	    return 0;
     } while ((inode = inode->i_prev) != NULL);
     return 1;
 }
