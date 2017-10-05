@@ -176,8 +176,8 @@ static void sync_buffers(kdev_t dev, int wait)
 	 *      AND pass > 0.
 	 */
 	if (buffer_locked(bh)) {
-	    if (wait) continue;
-	    else wait_on_buffer(bh);
+	    if (!wait) continue;
+	    wait_on_buffer(bh);
 	}
 	/*
 	 *      Do the stuff
@@ -449,21 +449,18 @@ void map_buffer(register struct buffer_head *bh)
     }
 
     /* else keep trying till we succeed */
-    pi = (char *)lastumap;
     for (;;) {
-	/* First check for the trivial case */
-	do {
-	    if ((int)(++pi) >= NR_MAPBUFS) pi = (char *)0;
-	    if (!bufmem_map[(int)pi]) goto do_map_buffer;
-	} while ((int)pi != lastumap);
-
-	/* Now, we check for a mapped buffer with no count and then
-	 * hopefully find one to send back to L2 */
+	pi = (char *)lastumap;
+	/* Look for an empty slot in the L1 cache */
 	do {
 	    if ((int)(++pi) >= NR_MAPBUFS) pi = (char *)0;
 	    debug1("BUFMAP: trying slot %d\n", (int)pi);
 
-	    bmap = bufmem_map[(int)pi];
+	    /* First check for the tivial case, to avoid dereferencing a null pointer */
+	    if (!(bmap = bufmem_map[(int)pi])) goto do_map_buffer;
+
+	    /* Now, we check for a mapped buffer with no count and then
+	     * hopefully find one to send back to L2 */
 	    if (!bmap->b_mapcount) {
 		debug1("BUFMAP: Buffer %u unmapped from L1\n",
 			       bmap->b_num);
