@@ -16,13 +16,11 @@
 
 #include <arch/segment.h>
 
-static void generate(int sig, register struct task_struct *p)
+static void generate(int sig, sigset_t msksig, register struct task_struct *p)
 {
     register __sighandler_t sa;
-    sigset_t msksig;
 
-    sa = p->sig.action[--sig].sa_handler;
-    msksig = (((sigset_t)1) << sig);
+    sa = p->sig.action[sig - 1].sa_handler;
     if ((sa == SIG_IGN) || ((sa == SIG_DFL) && (msksig &
 	    (SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG))))
 	return;
@@ -37,25 +35,23 @@ static void generate(int sig, register struct task_struct *p)
 int send_sig(sig_t sig, register struct task_struct *p, int priv)
 {
     register __ptask currentp = current;
+    sigset_t msksig;
 
     debug1("SIGNAL: Killing with sig %d.\n", sig);
     if (!priv && ((sig != SIGCONT) || (currentp->session != p->session)) &&
 	(currentp->euid ^ p->suid) && (currentp->euid ^ p->uid) &&
 	(currentp->uid ^ p->suid) && (currentp->uid ^ p->uid) && !suser())
 	return -EPERM;
-    if ((sig == SIGKILL) || (sig == SIGCONT)) {
+    msksig = (((sigset_t)1) << (sig - 1));
+    if (msksig & (SM_SIGKILL | SM_SIGCONT)) {
 	if (p->state == TASK_STOPPED)
 	    wake_up_process(p);
 	p->signal &= ~(SM_SIGSTOP | SM_SIGTSTP | SM_SIGTTIN | SM_SIGTTOU);
     }
-    if (sig == SIGSTOP || sig == SIGTSTP
-#ifndef SMALLSIG
-	|| sig == SIGTTIN || sig == SIGTTOU
-#endif
-	)
+    if (msksig & (SM_SIGSTOP | SM_SIGTSTP | SM_SIGTTIN | SM_SIGTTOU))
 	p->signal &= ~SM_SIGCONT;
     /* Actually generate the signal */
-    generate(sig, p);
+    generate(sig, msksig, p);
     return 0;
 }
 

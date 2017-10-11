@@ -65,7 +65,7 @@ struct console {
     int cx, cy;			/* cursor position */
     void (*fsm)(register Console *, char);
     unsigned int vseg;		/* video segment for page */
-    int pageno;			/* video ram page # */
+    int basepage;		/* start of video ram */
     unsigned char attr;		/* current attribute */
 #ifdef CONFIG_EMUL_VT52
     unsigned char tmp;		/* ESC Y ch save */
@@ -82,7 +82,6 @@ static Console Con[MAX_CONSOLES], *Visible;
 static Console *glock;		/* Which console owns the graphics hardware */
 static void *CCBase;
 static int Width, MaxCol, Height, MaxRow;
-static unsigned PageSize;
 static unsigned short int NumConsoles = MAX_CONSOLES;
 
 /* from keyboard.c */
@@ -100,15 +99,13 @@ extern int kraw;
 static void std_char(register Console *, char);
 extern void AddQueue(unsigned char Key);	/* From xt_key.c */
 
-static void SetDisplayPage(unsigned int N)
+static void SetDisplayPage(register Console * C)
 {
     register char *CCBasep;
-    unsigned int offset;
 
     CCBasep = (char *) CCBase;
-    offset = N * PageSize >> 1;
-    outw((unsigned short int) ((offset & 0xff00) | 0x0c), CCBasep);
-    outw((unsigned short int) (((offset & 0xff) << 8) | 0x0d), CCBasep);
+    outw((unsigned short int) ((C->basepage & 0xff00) | 0x0c), CCBasep);
+    outw((unsigned short int) ((C->basepage << 8) | 0x0d), CCBasep);
 }
 
 static void PositionCursor(register Console * C)
@@ -116,7 +113,7 @@ static void PositionCursor(register Console * C)
     register char *CCBasep = (char *) CCBase;
     int Pos;
 
-    Pos = C->cx + Width * C->cy + (C->pageno * PageSize >> 1);
+    Pos = C->cx + Width * C->cy + C->basepage;
     outb(14, CCBasep);
     outb((unsigned char) ((Pos >> 8) & 0xFF), CCBasep + 1);
     outb(15, CCBasep);
@@ -135,17 +132,21 @@ static void ClearRange(register Console * C, int x, int y, int xx, int yy)
     register __u16 *vp;
 
     xx = xx - x + 1;
-    for (vp = (__u16 *)((__u16)(x + y * Width) << 1); y <= yy; y++, vp += (Width - xx))
+    vp = (__u16 *)((__u16)(x + y * Width) << 1);
+    do {
 	for (x = 0; x < xx; x++)
 	    pokew((__u16)C->vseg, (__u16)(vp++), (((__u16)C->attr << 8) | ' '));
+	vp += (Width - xx);
+    } while (++y <= yy);
 }
 
 static void ScrollUp(register Console * C, int y)
 {
     register __u16 *vp;
 
-    for (vp = (__u16 *)((__u16)(y * Width) << 1); y < MaxRow; y++, vp += Width)
-	fmemcpy((__u16)C->vseg, vp, (__u16)C->vseg, vp + Width, (Width << 1));
+    vp = (__u16 *)((__u16)(y * Width) << 1);
+    if ((unsigned int)y < MaxRow)
+	fmemcpy((__u16)C->vseg, vp, (__u16)C->vseg, vp + Width, (MaxRow - y)*(Width << 1));
     ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
@@ -153,10 +154,13 @@ static void ScrollUp(register Console * C, int y)
 static void ScrollDown(register Console * C, int y)
 {
     register __u16 *vp;
-    int yy = MaxRow;
+    int yy = MaxRow + 1;
 
-    for (vp = (__u16 *)((__u16)(yy * Width) << 1); y < yy; yy--, vp -= Width)
+    vp = (__u16 *)((__u16)(yy * Width) << 1);
+    while (--y > y) {
 	fmemcpy((__u16)C->vseg, vp, (__u16)C->vseg, vp - Width, (Width << 1));
+	vp -= Width;
+    }
     ClearRange(C, 0, y, MaxCol, y);
 }
 #endif
@@ -461,7 +465,7 @@ void Console_set_vc(unsigned int N)
 	return;
     Visible = &Con[N];
 
-    SetDisplayPage(N);
+    SetDisplayPage(Visible);
     PositionCursor(Visible);
     Current_VCminor = (int) N;
 }
@@ -535,6 +539,7 @@ void init_console(void)
 {
     register Console *C;
     register char *pi;
+    unsigned PageSizeW;
     unsigned VideoSeg;
 
     MaxCol = (Width = peekb(0x40, 0x4a)) - 1;
@@ -542,7 +547,7 @@ void init_console(void)
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
     MaxRow = (Height = 25) - 1;
     CCBase = (void *) peekw(0x40, 0x63);
-    PageSize = (unsigned int) peekw(0x40, 0x4C);
+    PageSizeW = ((unsigned int)peekw(0x40, 0x4C) >> 1);
 
     VideoSeg = 0xb800;
     if (peekb(0x40, 0x49) == 7) {
@@ -560,8 +565,8 @@ void init_console(void)
 	    C->cy = peekb(0x40, 0x51);
 	}
 	C->fsm = std_char;
-	C->vseg = VideoSeg;
-	C->pageno = (int) pi;
+	C->basepage = (int)pi * PageSizeW;
+	C->vseg = VideoSeg + (C->basepage >> 3);
 	C->attr = A_DEFAULT;
 
 #ifdef CONFIG_EMUL_ANSI
@@ -572,7 +577,6 @@ void init_console(void)
 
 	ClearRange(C, 0, C->cy, MaxCol, MaxRow);
 	C++;
-	VideoSeg += (PageSize >> 4);
     }
 
     printk("Console: Direct %ux%u"TERM_TYPE"(%u virtual consoles)\n",
