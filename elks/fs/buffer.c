@@ -444,43 +444,40 @@ void map_buffer(register struct buffer_head *bh)
 	}
 #endif
 
-	bh->b_mapcount++;
-	return;
+	goto end_map_buffer;
     }
 
-    /* else keep trying till we succeed */
-    for (;;) {
-	pi = (char *)lastumap;
-	/* Look for an empty slot in the L1 cache */
-	do {
-	    if ((int)(++pi) >= NR_MAPBUFS) pi = (char *)0;
-	    debug1("BUFMAP: trying slot %d\n", (int)pi);
+    pi = (char *)lastumap;
+    /* Keep trying till we succeed */
+    do {
+	if ((int)(++pi) >= NR_MAPBUFS) pi = (char *)0;
+	debug1("BUFMAP: trying slot %d\n", (int)pi);
 
-	    /* First check for the tivial case, to avoid dereferencing a null pointer */
-	    if (!(bmap = bufmem_map[(int)pi])) goto do_map_buffer;
+	/* First check for the tivial case, to avoid dereferencing a null pointer */
+	if (!(bmap = bufmem_map[(int)pi])) break;
 
-	    /* Now, we check for a mapped buffer with no count and then
-	     * hopefully find one to send back to L2 */
-	    if (!bmap->b_mapcount) {
-		debug1("BUFMAP: Buffer %u unmapped from L1\n",
-			       bmap->b_num);
-		/* Now unmap it */
-		fmemcpy(_buf_ds, (__u16)(bmap->b_num << BLOCK_SIZE_BITS),
+	/* Now, we check for a mapped buffer with no count and then
+	 * hopefully find one to send back to L2 */
+	if (!bmap->b_mapcount) {
+	    debug1("BUFMAP: Buffer %u unmapped from L1\n",
+		    bmap->b_num);
+	    /* Now unmap it */
+	    fmemcpy(_buf_ds, (__u16)(bmap->b_num << BLOCK_SIZE_BITS),
 			kernel_ds, (__u16) bmap->b_data, BLOCK_SIZE);
-		bmap->b_data = 0;
-		/* success */
-		goto do_map_buffer;
-	    }
-	} while ((int)pi != lastumap);
+	    bmap->b_data = 0;
+	    /* success */
+	    break;
+	}
+	if ((int)pi == lastumap) {
+	    /* The scan of all buffers failed */
+	    /* The last resort is to wait until unmap gets a b_mapcount down to 0 */
+	    /* replaced debug1 with printk here to indicate where it gets stuck - Georg P. */
+	    debug1("BUFMAP: buffer #%u waiting on L1 slot\n", bh->b_num);	/*Back to debug1*/
+	    sleep_on(&bufmapwait);
+	    debug("BUFMAP: wait queue woken up...\n");
+	}
+    } while (1);
 
-	/* previous loop failed */
-	/* The last case is to wait until unmap gets a b_mapcount down to 0 */
-	/* replaced debug1 with printk here to indicate where it gets stuck - Georg P. */
-	debug1("BUFMAP: buffer #%u waiting on L1 slot\n", bh->b_num);	/*Back to debug1*/
-	sleep_on(&bufmapwait);
-	debug("BUFMAP: wait queue woken up...\n");
-    }
-  do_map_buffer:
     lastumap = (int)pi;
     /* We can just map here! */
     bufmem_map[(int)pi] = bh;
@@ -489,12 +486,13 @@ void map_buffer(register struct buffer_head *bh)
 #else
     bh->b_data = (char *)bufmem + ((int)pi << BLOCK_SIZE_BITS);
 #endif
-    bh->b_mapcount++;
     if (bh->b_uptodate)
 	fmemcpy(kernel_ds, (__u16) bh->b_data, _buf_ds,
 	    (__u16) (bh->b_num << BLOCK_SIZE_BITS), BLOCK_SIZE);
     debug3("BUFMAP: Buffer %u (block %u) mapped into L1 slot %d.\n",
 	bh->b_num, bh->b_blocknr, (int)pi);
+  end_map_buffer:
+    bh->b_mapcount++;
 }
 
 /* unmap_buffer decreases bh->b_mapcount, and wakes up anyone waiting over
