@@ -69,34 +69,32 @@ static void split_hole(struct malloc_head *mh,
 		       register struct malloc_hole *m, segext_t len)
 {
     register struct malloc_hole *n;
-    seg_t spare = m->extent - len;
     int ct;
 
     m->flags = HOLE_USED;
-    if (!spare)
-	return;
+    if (m->extent > len) {
+    /*
+     *	Find a spare hole.
+     */
+	ct = mh->size;
+	n = mh->holes;
+	while (n->flags != HOLE_SPARE) {
+	    n++;
+	    if (!--ct)		/* If no spare holes */
+		return;		/* Try to continue by no splitting the hole */
+	}
+
     /*
      *      Split into one allocated one free
      */
 
-    m->extent = len;
-
-/*
- *	Find a spare hole.
- */
-    ct = mh->size;
-    n = mh->holes;
-    while (n->flags != HOLE_SPARE) {
-	n++;
-	if (!--ct)
-	    panic("mm: too many holes");
+	n->flags = HOLE_FREE;
+	n->page_base = m->page_base + len;
+	n->next = m->next;
+	n->extent = m->extent - len;
+	m->extent = len;
+	m->next = n;
     }
-
-    n->page_base = m->page_base + len;
-    n->extent = spare;
-    n->flags = HOLE_FREE;
-    n->next = m->next;
-    m->next = n;
 }
 
 /*
@@ -109,13 +107,13 @@ static void free_hole(struct malloc_head *mh, register struct malloc_hole *m)
 
     m->flags = HOLE_FREE;
     if (m != n) {
-	while (n->next != m)
+	while (n->next != m)		/* Find the hole before hole m */
 	    n = n->next;
-	if (n->flags != HOLE_FREE)
-	    n = m;
+	if (n->flags != HOLE_FREE)	/* Will merge up to 3 holes */
+	    n = m;			/* starting with hole n */
     }
     while ((m = n->next) != NULL && m->flags == HOLE_FREE) {
-	n->extent += m->extent;
+	n->extent += m->extent;		/* Merge hole n with its next hole */
 	m->flags = HOLE_SPARE;
 	n->next = m->next;
     }
@@ -160,7 +158,7 @@ static struct malloc_hole *best_fit_hole(struct malloc_head *mh, segext_t size)
     register struct malloc_hole *best = NULL;
 
     do {
-	if ((m->flags == HOLE_FREE && m->extent >= size) &&
+	if ((m->flags == HOLE_FREE) && (m->extent >= size) &&
 	    (!best || best->extent > m->extent))
 		best = m;
     } while ((m = m->next));
@@ -205,14 +203,14 @@ seg_t mm_alloc(segext_t pages)
     while ((m = best_fit_hole(&memmap, pages)) == NULL) {
 	seg_t s = swap_strategy(NULL);
 	if (s == NULL || swap_out(s) == -1)
-	    return NULL;
+	    return 0;
     }
 
 #else
 
     m = best_fit_hole(&memmap, pages);
     if (m == NULL)
-	return NULL;
+	return 0;
 
 #endif
 
@@ -378,7 +376,7 @@ struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
         return m;
     }
 
-    next = m->next;
+    next = m->next;		/* WARNING: Check that next != NULL */
     ext = pages - m->extent;
     if (next->flags == HOLE_FREE && next->extent >= ext){
         m->extent += ext;

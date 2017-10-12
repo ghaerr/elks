@@ -181,9 +181,9 @@ static int parm1(register unsigned char *buf)
 {
     register char *np;
 
-    np = (char *) atoi((char *) buf);
-    return (np) ? ((int) np) : 1;
-
+    if (!(np = (char *) atoi((char *) buf)))
+	np = 1;
+    return np;
 }
 
 static int parm2(register unsigned char *buf)
@@ -470,30 +470,32 @@ void Console_set_vc(unsigned int N)
     Current_VCminor = (int) N;
 }
 
-static int Console_ioctl(register struct tty *tty, int cmd, char *arg)
+static int Console_ioctl(struct tty *tty, int cmd, char *arg)
 {
+    register Console *C = &Con[tty->minor];
+
     switch (cmd) {
     case DCGET_GRAPH:
 	if (!glock) {
-	    glock = &Con[tty->minor];
+	    glock = C;
 	    return 0;
 	}
 	return -EBUSY;
     case DCREL_GRAPH:
-	if (glock == &Con[tty->minor]) {
+	if (glock == C) {
 	    glock = NULL;
 	    wake_up(&glock_wait);
 	    return 0;
 	}
 	break;
     case DCSET_KRAW:
-	if (glock == &Con[tty->minor]) {
+	if (glock == C) {
 	    kraw = 1;
 	    return 0;
 	}
 	break;
     case DCREL_KRAW:
-	if ((glock == &Con[tty->minor]) && (kraw == 1)) {
+	if ((glock == C) && (kraw == 1)) {
 	    kraw = 0;
 	    return 1;
 	}

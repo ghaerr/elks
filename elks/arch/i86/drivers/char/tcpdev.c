@@ -124,7 +124,6 @@ int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
 	break;
     default:
 	debug1("TCPDEV: select() chose unknown option %d.\n",sel_type);
-	break;
     }
     debug1("TCPDEV: select() returning %d\n",ret);
     return (int)ret;

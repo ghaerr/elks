@@ -78,7 +78,7 @@ struct tty *determine_tty(dev_t dev)
 	    return ttyp;
     } while (++ttyp < &ttys[MAX_TTYS]);
 
-    return 0;
+    return NULL;
 }
 
 int tty_open(struct inode *inode, struct file *file)
