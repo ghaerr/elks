@@ -11,18 +11,19 @@
 #include <arch/segment.h>
 
 /*
- *	0x9000:2	- Extended memory size
- *	0x9000:4	- Display page
- *	0x9000:6	- Video mode
- *	0x9000:7	- Window Width
- *	0x9000:8,10,12	- Video parameters
- *	0x9000:15 	- No vga
- *	0x9000:16	- Video height (points)
+ *	INITSEG:2	- Extended memory size
+ *	INITSEG:4	- Display page
+ *	INITSEG:6	- Video mode
+ *	INITSEG:7	- Window Width
+ *	INITSEG:8,10,12	- Video parameters
+ *	INITSEG:14	- Video height (points)
+ *	INITSEG:15 	- VGA present
+ *	INITSEG:16	- Video Data
  *
- *	0x9000:80	- 16 bytes of disk 0 info
- *	0x9000:90	- 16 bytes of disk 1 info
+ *	INITSEG:80	- 6 bytes of disk 0 info
+ *	INITSEG:86	- 6 bytes of disk 1 info
  *
- *	0x01ff		- AA if psmouse present
+ *	INITSEG:0x01ff	- AA if psmouse present
  */
 
 char cpuid[17], proc_name[17];

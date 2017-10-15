@@ -47,7 +47,9 @@
 #include <arch/segment.h>
 
 static struct minix_exec_hdr mh;
+#ifdef CONFIG_EXEC_ELKS
 static struct minix_supl_hdr msuph;
+#endif
 
 #define INIT_HEAP 0x0
 

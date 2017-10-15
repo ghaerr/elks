@@ -77,9 +77,7 @@ static int inet_release(struct socket *sock, struct socket *peer)
     cmd.cmd = TDC_RELEASE;
     cmd.sock = sock;
     ret = tcpdev_inetwrite(&cmd, sizeof(struct tdb_release));
-    if (ret >= 0)
-	ret = 0;
-    return ret;
+    return (ret >= 0 ? 0 : ret);
 }
 
 static int inet_bind(register struct socket *sock, struct sockaddr *addr,
@@ -96,7 +94,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 
     cmd.cmd = TDC_BIND;
     cmd.sock = sock;
-    memcpy(&cmd.addr, addr, sockaddr_len);
+    memcpy_fromfs(&cmd.addr, addr, sockaddr_len);
 
     tcpdev_inetwrite(&cmd, sizeof(struct tdb_bind));
 
@@ -106,9 +104,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
-    if (ret >= 0)
-	ret = 0;
-    return ret;
+    return (ret >= 0 ? 0 : ret);
 }
 
 static int inet_connect(register struct socket *sock,
@@ -129,12 +125,12 @@ static int inet_connect(register struct socket *sock,
     if (sock->state == SS_CONNECTING)
         return -EINPROGRESS;
 
-    if (sock->state == SS_CONNECTED)
-        return -EISCONN;
+/*    if (sock->state == SS_CONNECTED)
+        return -EISCONN;*/	/*Already checked in socket.c*/
 
     cmd.cmd = TDC_CONNECT;
     cmd.sock = sock;
-    memcpy(&cmd.addr, uservaddr, sockaddr_len);
+    memcpy_fromfs(&cmd.addr, uservaddr, sockaddr_len);
 
     tcpdev_inetwrite(&cmd, sizeof(struct tdb_connect));
 

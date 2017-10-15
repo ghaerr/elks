@@ -255,21 +255,20 @@ _syscall_int:		! Syscall
 !
 !	There are three possible cases to cope with
 !
-!	SS = kernel DS.
-!		Interrupted kernel mode code or kernel task
-!		No task switch allowed
-!		Running on a kernel process stack anyway.
+!	Interrupted user mode or syscall (_gint_count == 0)
+!		Switch to process's kernel stack
+!		Optionally, check (SS == current->t_regs.ss)
+!		and panic on failure
+!		On return, task switch allowed
 !
-!	SS = current->t_regs.ss
-!		Interrupted user mode code or syscall
-!		Switch to kernel stack for process (will be free)
-!		Task switch allowed
+!	Interrupted kernel mode, interrupted kernel task
+!		or second interrupt (_gint_count == 1)
+!		Switch to interrupt stack
+!		On return, no task switch allowed
 !
-!	Other
-!		BIOS or other 'strange' code.
-!		Must be called from kernel space, but kernel stack is in use
-!		Switch to int_stack
-!		No task switch allowed.
+!	Interrupted interrupt service routine (_gint_count > 1)
+!		Already using interrupt stack, keep using it
+!		On return, no task switch allowed
 !
 !	We do all of this to avoid per process interrupt stacks and
 !	related nonsense. This way we need only one dedicated int stack
@@ -283,6 +282,9 @@ _syscall_int:		! Syscall
 	.extern	_do_IRQ
 	.extern	_stack_check
 	.extern	_syscall
+#ifdef CHECK_SS
+	.extern	_panic
+#endif
 #ifdef CONFIG_STRACE
 	.extern	_strace
 	.extern	_ret_strace
@@ -294,7 +296,6 @@ _irqit:
 !
 	push	ds
 	push	si
-	push	di
 !
 !	Recover data segment
 !
@@ -307,39 +308,53 @@ _irqit:
 	mov	ds,stashed_ds
 #endif
 !
-!	See where we were
+!	Determine which stack to use
 !
-	mov	di,ss		! Get current SS
-	cmp	di,_kernel_ds	! SS = kernel SS ?
-	je	ktask		! Kernel - no work
+	cmp	_gint_count,#1
+	jc	utask		! We were in user mode
+	jz	itask		! Using a process's kernel stack
+ktask:				! Already using interrupt stack
 !
-!	User or BIOS etc
+!	Already using interrupt stack, keep using it
 !
-	mov	si,_current
-	cmp	di,TASK_USER_SS[si] ! entry SS = current->t_regs.ss?
-	jne	btask		! Switch to interrupt stack
-!
-!	User mode case - switch to kernel stack
-!
-	add	si,#TASK_USER_DI
+	mov	si,sp
+	sub	si,#8
 	j	save_regs
 !
-!	Bios etc - switch to interrupt stack
+!	Using a process's kernel stack, switch to interrupt stack
 !
-btask:
+itask:
 	mov	si,#(_intstack-12)
 	j	save_regs
 !
-!	Kernel mode case - keep using kernel stack
+!	User mode case
 !
-ktask:
-	mov	si,sp
-	sub	si,#6
+utask:
+	mov	si,_current
+#ifdef CHECK_SS
+!
+!	We were in user mode, first confirm
+!
+	cmp	di,TASK_USER_SS[si] ! entry SS = current->t_regs.ss?
+	je	utask1		! User using the right stack
+!
+!	System got crazy
+!
+	mov	ax,#pmsg
+	push	ax
+	call	_panic
+!
+!	Switch to kernel stack
+!
+utask1:
+#endif
+	add	si,#TASK_USER_DI
 !
 !	Save segment, index, BP and SP registers
 !
 save_regs:
-	pop	[si]		! DI
+	inc	_gint_count
+	mov	[si],di		! DI
 	pop	2[si]		! SI
 	pop	6[si]		! DS
 	pop	di		! Pointer to interrupt number
@@ -472,9 +487,7 @@ was_trap:
 !
 !	Now look at rescheduling
 !
-	mov	bx,_current	! Schedule allowed ?
-	add	bx,#TASK_USER_AX
-	cmp	bx,sp
+	cmp	_gint_count,#1
 	jne	restore_regs	! No
 !	cmp	_need_resched,#0 ! Schedule needed ?
 !	je	restore_regs	! No
@@ -487,6 +500,7 @@ was_trap:
 !	Restore registers and return
 !
 restore_regs:
+	dec	_gint_count
 	pop	ax
 	pop	bx
 	pop	cx
@@ -549,8 +563,14 @@ _bios_call_cnt_l:
 	.word	5
 _stashed_irq0_l:
 	.long	0
-_intr_count:
+_intr_count:			! Hardware interrupts count
 	.word	0
+_gint_count:			! General interrupts count. Start with 1
+	.word	1		! because init_task() is in kernel mode
+#ifdef CHECK_SS
+pmsg:	.ascii "Running unknown code"
+	db	0
+#endif
 
 	.zerow	256		! (was) 128 byte interrupt stack
 _intstack:

@@ -162,10 +162,10 @@ static int detach_timer(register struct timer_list *timer)
     int retval = 0;
 
     if ((tmr = timer->tl_next)) {
-        tmr->tl_prev = tmr;
+        tmr->tl_prev = timer->tl_prev;
     }
     if ((tmr = timer->tl_prev)) {
-        tmr->tl_next = tmr;
+        tmr->tl_next = timer->tl_next;
 	retval = 1;
     }
     init_timer(timer);

@@ -45,7 +45,7 @@ static struct proto_ops *find_protocol_family(int family)
     return NULL;
 }
 
-struct socket *socki_lookup(struct inode *inode)
+static struct socket *socki_lookup(struct inode *inode)
 {
     return &inode->u.socket_i;
 }
@@ -55,7 +55,7 @@ struct socket *socki_lookup(struct inode *inode)
  * 	#define socki_lookup(_a) (&_a->u.sock_i)
  */
 
-static int move_addr_to_kernel(char *uaddr, size_t ulen, char *kaddr)
+static int check_addr_to_kernel(char *uaddr, size_t ulen)
 {
     if (ulen > MAX_SOCK_ADDR)
 	return -EINVAL;
@@ -63,34 +63,35 @@ static int move_addr_to_kernel(char *uaddr, size_t ulen, char *kaddr)
     if (ulen == 0)
 	return 0;
 
-    return verified_memcpy_fromfs(kaddr, uaddr, ulen);
+    return verify_area(VERIFY_READ, uaddr, ulen);
 }
 
-static int move_addr_to_user(char *kaddr, size_t klen, char *uaddr, register int *ulen)
+int move_addr_to_user(char *kaddr, size_t klen, char *uaddr, register int *ulen)
 {
     size_t len;
     int err;
 
-    if ((err = verified_memcpy_fromfs(&len, ulen, sizeof(*ulen))))
+    if ((err = verified_memcpy_fromfs(&len, ulen, sizeof(int))))
 	return err;
 
-    if (len > klen)
+    if (len > klen) {		/* If len < klen, truncate data */
 	len = klen;
 
-    if (len > MAX_SOCK_ADDR)
-	return -EINVAL;
+#if 0
+	put_user(len, ulen);	/* This is pointless isn't it */
+#endif
+
+    }
+
+/*    if (len > MAX_SOCK_ADDR)
+	return -EINVAL;*/	/* Now, this is the pointless code */
 
     if (len)
 	err = verified_memcpy_tofs(uaddr, kaddr, len);
-
-#if 0
-    put_user(len, ulen);	/* This is pointless isn't it */
-#endif
-
     return err;
 }
 
-struct socket *sock_alloc(void)
+static struct socket *sock_alloc(void)
 {
     static struct socket ini_sock = {
 	0,		/* type */
@@ -134,7 +135,7 @@ struct socket *sock_alloc(void)
     return sock;
 }
 
-struct socket *sockfd_lookup(int fd, struct file **pfile)
+static struct socket *sockfd_lookup(int fd, struct file **pfile)
 {
     register struct file *file;
     register struct inode *inode;
@@ -301,7 +302,7 @@ static void sock_release_peer(register struct socket *peer)
 }
 #endif
 
-void sock_release(register struct socket *sock)
+static void sock_release(register struct socket *sock)
 {
     int oldstate;
     register struct socket *peersock;
@@ -340,7 +341,7 @@ void sock_release(register struct socket *sock)
     iput(SOCK_INODE(sock));
 }
 
-void sock_close(register struct inode *inode, struct file *filp)
+static void sock_close(register struct inode *inode, struct file *filp)
 {
     if (!inode)
 	return;
@@ -355,7 +356,6 @@ void sock_close(register struct inode *inode, struct file *filp)
 int sys_bind(int fd, struct sockaddr *umyaddr, int addrlen)
 {
     register struct socket *sock;
-    char address[MAX_SOCK_ADDR];
     int err;
 
 #if 0
@@ -367,11 +367,11 @@ int sys_bind(int fd, struct sockaddr *umyaddr, int addrlen)
     if (!(sock = sockfd_lookup(fd, NULL)))
 	return -ENOTSOCK;
 
-    err = move_addr_to_kernel((char *) umyaddr, (size_t) addrlen, address);
+    err = check_addr_to_kernel((char *) umyaddr, (size_t) addrlen);
     if (err < 0)
 	return err;
 
-    if ((err = sock->ops->bind(sock, (struct sockaddr *) address, addrlen)) < 0)
+    if ((err = sock->ops->bind(sock, umyaddr, addrlen)) < 0)
 	return err;
 
     return 0;
@@ -472,8 +472,6 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
     struct file *file;
     register struct socket *sock;
     register struct socket *newsock;
-    char address[MAX_SOCK_ADDR];
-    size_t len;
     int i;
 
 #if 0
@@ -517,8 +515,7 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
     }
 
     if (upeer_sockaddr) {
-	newsock->ops->getname(newsock, (struct sockaddr *) address, &len, 1);
-	move_addr_to_user(address, len, (char *) upeer_sockaddr, upeer_addrlen);
+	newsock->ops->getname(newsock, upeer_sockaddr, upeer_addrlen, 1);
     }
 
     return fd;
@@ -530,7 +527,6 @@ int sys_connect(int fd, struct sockaddr *uservaddr, int addrlen)
 {
     register struct socket *sock;
     struct file *file;
-    char address[MAX_SOCK_ADDR];
     int err;
 
 #if 0
@@ -542,7 +538,7 @@ int sys_connect(int fd, struct sockaddr *uservaddr, int addrlen)
     if (!(sock = sockfd_lookup(fd, &file)))
 	return -ENOTSOCK;
 
-    err = move_addr_to_kernel((char *) uservaddr, (size_t) addrlen, address);
+    err = check_addr_to_kernel((char *) uservaddr, (size_t) addrlen);
     if (err < 0)
 	return err;
 
@@ -568,7 +564,7 @@ int sys_connect(int fd, struct sockaddr *uservaddr, int addrlen)
     default:
 	return -EINVAL;
     }
-    err = sock->ops->connect(sock, (struct sockaddr *) address, addrlen,
+    err = sock->ops->connect(sock, uservaddr, addrlen,
 			   file->f_flags);
     if (err < 0)
 	return err;

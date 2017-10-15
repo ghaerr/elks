@@ -163,7 +163,7 @@ static int unix_bind(struct socket *sock,
     if (upd->sockaddr_len || upd->inode)
 	return -EINVAL;		/* already bound */
 
-    memcpy(&upd->sockaddr_un, umyaddr, sockaddr_len);
+    memcpy_fromfs(&upd->sockaddr_un, umyaddr, sockaddr_len);
     upd->sockaddr_un.sun_path[sockaddr_len] = '\0';
 
     if (upd->sockaddr_un.sun_family != AF_UNIX)
@@ -211,10 +211,10 @@ static int unix_connect(struct socket *sock,
     if (sock->state == SS_CONNECTING)
 	return -EINPROGRESS;
 
-    if (sock->state == SS_CONNECTED)
-	return -EISCONN;
+/*    if (sock->state == SS_CONNECTED)
+	return -EISCONN;*/	/*Already checked in socket.c*/
 
-    memcpy(&sockun, uservaddr, sockaddr_len);
+    memcpy_fromfs(&sockun, uservaddr, sockaddr_len);
     sockun.sun_path[sockaddr_len] = '\0';
 
     if (sockun.sun_family != AF_UNIX)
@@ -317,7 +317,6 @@ static int unix_getname(struct socket *sock,
 			int *usockaddr_len, int peer)
 {
     struct unix_proto_data *upd;
-    int len;
 
     if (peer) {
 	if (sock->state != SS_CONNECTED)
@@ -326,11 +325,8 @@ static int unix_getname(struct socket *sock,
     } else
 	upd = UN_DATA(sock);
 
-    len = upd->sockaddr_len;
-    memcpy(usockaddr, &upd->sockaddr_un, len);
-    *usockaddr_len = len;
-
-    return 0;
+    return move_addr_to_user(&upd->sockaddr_un, upd->sockaddr_len,
+				    usockaddr, usockaddr_len)
 }
 
 static int unix_read(struct socket *sock, char *ubuf, int size, int nonblock)

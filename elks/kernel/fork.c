@@ -67,7 +67,6 @@ pid_t do_fork(int virtual)
     int j;
     struct file *filp;
     register __ptask currentp = current;
-    int sc[5];
 
     if ((t = find_empty_process()) == NULL)
         return -EAGAIN;
@@ -125,7 +124,26 @@ pid_t do_fork(int virtual)
     /* Wake our new process */
     wake_up_process(t);
 
-    if (virtual) {
+    /*
+     *      Return the created task.
+     */
+    return t->pid;
+}
+
+pid_t sys_fork(void)
+{
+    return do_fork(0);
+}
+
+pid_t sys_vfork(void)
+{
+#ifdef CONFIG_EXEC_ELKS
+    return do_fork(0);
+#else
+    register __ptask currentp = current;
+    int retval, sc[5];
+
+    if ((retval = do_fork(1)) >= 0) {
 
 	/* Parent and child are sharing the user stack at this point.
 	 * The child will go first, coming into life in the middle of
@@ -146,22 +164,6 @@ pid_t do_fork(int virtual)
 	 */
 	memcpy_tofs((void *)currentp->t_regs.sp, sc, sizeof(sc));
     }
-    /*
-     *      Return the created task.
-     */
-    return t->pid;
-}
-
-pid_t sys_fork(void)
-{
-    return do_fork(0);
-}
-
-pid_t sys_vfork(void)
-{
-#ifdef CONFIG_EXEC_ELKS
-    return do_fork(0);
-#else
-    return do_fork(1);
+    return retval;
 #endif
 }
