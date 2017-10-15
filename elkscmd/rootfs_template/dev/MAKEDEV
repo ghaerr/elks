@@ -40,6 +40,10 @@ fi
 #	$MKDEV random	c 1 8
 #	$MKDEV urandom	c 1 9
 #	$MKDEV aio	c 1 10
+#	$MKDEV kmsg c 1 11
+#	$MKDEV oldmem c 1 12
+	$MKDEV rom c 1 13
+
 
 ##############################################################################
 # RAM disks.
