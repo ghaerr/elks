@@ -17,7 +17,7 @@
 ! some changes and additional features by Christoph Niemann,
 ! March 1993/June 1994 (Christoph.Niemann@linux.org)
 !
-! changes for ROM-Version (ELKS) by Christian Mardmuller
+! changes for ROM-Version (ELKS) by Christian Mardmoller
 ! Juni / 1999 chm@kdt.de
 !   This code is called after the BIOS-POST and replaces
 !   the BIOS OS/loader

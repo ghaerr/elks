@@ -601,7 +601,10 @@ CONFIG_MINIX_FS
 
 ROM file system support
 CONFIG_ROMFS_FS
-  Incomplete support for the Read Only filesystem.
+  Support for the ROM file system.
+CONFIG_ROMFS_BASE
+  Base of the file system in ROM (segment).
+  Typically 8000h for 512K ROM.
 
 Full VFS support
 CONFIG_FULL_VFS
