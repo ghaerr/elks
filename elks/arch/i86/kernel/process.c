@@ -42,15 +42,18 @@ int run_init_process(register char *cmd)
 void stack_check(void)
 {
     register __ptask currentp = current;
-/*    register segext_t end;*/ /* Unused variable "end" */
+    register char *end = (char *)currentp->t_endbrk;
 
     if (currentp->t_begstack > currentp->t_enddata) {
-	if (currentp->t_regs.sp > currentp->t_endbrk)
+	if (currentp->t_regs.sp > (__u16)end)
 	    return;
     }
-    else if (currentp->t_regs.sp < currentp->t_endseg)
-	return;
-    printk("STACK OVERFLOW BY %u BYTES\n", 0xffff - currentp->t_regs.sp);
+    else {
+	if (currentp->t_regs.sp < (__u16)end)
+	    return;
+	end = 0;
+    }
+    printk("STACK OVERFLOW BY %u BYTES\n", (__u16)end - currentp->t_regs.sp);
     do_exit(SIGSEGV);
 }
 

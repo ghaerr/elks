@@ -27,6 +27,8 @@
  *	and one for the free space left.
  */
 
+#define MIN_STACK_SIZE 0x1000
+
 #define MAX_SEGMENTS		8+(MAX_TASKS*2)
 #define MAX_SWAP_SEGMENTS	8+(MAX_TASKS*2)
 
@@ -34,7 +36,7 @@ struct malloc_hole {
     seg_t page_base;		/* Pages */
     segext_t extent;		/* Pages */
     struct malloc_hole *next;	/* Next in list memory order */
-    __u8 refcount;
+    __u8 refcount;		/* Only meaningful if HOLE_USED */
     __u8 flags;			/* So we know if it is free */
 #define HOLE_USED		1
 #define HOLE_FREE		2
@@ -101,10 +103,8 @@ static void split_hole(struct malloc_head *mh,
  *	Merge adjacent free holes
  */
 
-static void free_hole(struct malloc_head *mh, register struct malloc_hole *m)
+static void free_hole(register struct malloc_hole *n, register struct malloc_hole *m)
 {
-    register struct malloc_hole *n = mh->holes;
-
     m->flags = HOLE_FREE;
     if (m != n) {
 	while (n->next != m)		/* Find the hole before hole m */
@@ -152,15 +152,14 @@ void dmem(struct malloc_head *mh)
  *	Find the nearest fitting hole
  */
 
-static struct malloc_hole *best_fit_hole(struct malloc_head *mh, segext_t size)
+static struct malloc_hole *best_fit_hole(register struct malloc_hole *m, segext_t size)
 {
-    register struct malloc_hole *m = mh->holes;
     register struct malloc_hole *best = NULL;
 
     do {
 	if ((m->flags == HOLE_FREE) && (m->extent >= size) &&
-	    (!best || best->extent > m->extent))
-		best = m;
+		    (!best || best->extent > m->extent))
+	    best = m;
     } while ((m = m->next));
     return best;
 }
@@ -169,10 +168,8 @@ static struct malloc_hole *best_fit_hole(struct malloc_head *mh, segext_t size)
  *	Find the hole starting at a given location
  */
 
-static struct malloc_hole *find_hole(struct malloc_head *mh, seg_t base)
+static struct malloc_hole *find_hole(register struct malloc_hole *m, seg_t base)
 {
-    register struct malloc_hole *m = mh->holes;
-
     while (m && (m->page_base != base)) {
 	m = m->next;
     }
@@ -199,16 +196,17 @@ seg_t mm_alloc(segext_t pages)
     register struct malloc_hole *m;
 
 #ifdef CONFIG_SWAP
+    seg_t s;
 
-    while ((m = best_fit_hole(&memmap, pages)) == NULL) {
-	seg_t s = swap_strategy(NULL);
+    while ((m = best_fit_hole(holes, pages)) == NULL) {
+	s = swap_strategy(NULL);
 	if (s == NULL || swap_out(s) == -1)
 	    return 0;
     }
 
 #else
 
-    m = best_fit_hole(&memmap, pages);
+    m = best_fit_hole(holes, pages);
     if (m == NULL)
 	return 0;
 
@@ -262,7 +260,7 @@ seg_t mm_realloc(seg_t base)
 
 #endif
 
-    m = find_hole(&memmap, base);
+    m = find_hole(holes, base);
     m->refcount++;
 
     return m->page_base;
@@ -278,7 +276,7 @@ seg_t mm_realloc(seg_t base)
 
 void mm_free(seg_t base)
 {
-    register struct malloc_head *mh = &memmap;
+    register struct malloc_hole *mh = holes;
     register struct malloc_hole *m;
 
     m = find_hole(mh, base);
@@ -286,11 +284,10 @@ void mm_free(seg_t base)
 
 #ifdef CONFIG_SWAP
 
-	m = find_hole(&swapmap, base);
+	mh = swap_holes;
+	m = find_hole(mh, base);
 	if (!m)
-	    panic("mm corruption");
-	mh = &swapmap;
-	printk("mm_free(): from swap\n");
+	    panic("mm_free(): mm corruption from swap\n");
 
 #else
 
@@ -316,7 +313,7 @@ seg_t mm_dup(seg_t base)
     register char *mbase;
 
     debug("MALLOC: mm_dup()\n");
-    o = find_hole(&memmap, base);
+    o = find_hole(holes, base);
     if (o->flags != HOLE_USED)
 	panic("bad/swapped hole");
 
@@ -333,23 +330,22 @@ seg_t mm_dup(seg_t base)
 unsigned int mm_get_usage(int type, int used)
 {
     register struct malloc_hole *m;
-    int flag;
     unsigned int ret = 0;
 
 #ifdef CONFIG_SWAP
 
-    m = type == MM_MEM ? memmap.holes : swapmap.holes;
+    m = type == MM_MEM ? holes : swap_holes;
 
 #else
 
-    m = memmap.holes;
+    m = holes;
 
 #endif
 
-    flag = used ? HOLE_USED : HOLE_FREE;
+    used = used ? HOLE_USED : HOLE_FREE;
 
     do {
-	if ((int)m->flags == flag)
+	if ((int)m->flags == used)
 	    ret += m->extent;
     } while ((m = m->next));
 
@@ -371,14 +367,14 @@ struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
     register struct malloc_hole *next;
     segext_t ext;
 
-    if (m->extent >= pages){
+    if (m->extent >= pages) {
         /* for now don't reduce holes */
         return m;
     }
-
-    next = m->next;		/* WARNING: Check that next != NULL */
     ext = pages - m->extent;
-    if (next->flags == HOLE_FREE && next->extent >= ext){
+
+    next = m->next;		/* First try extending to the next hole */
+    if (next && (next->flags == HOLE_FREE) && (next->extent >= ext)) {
         m->extent += ext;
         next->page_base += ext;
         if ((next->extent -= ext) == 0) {
@@ -389,21 +385,17 @@ struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
     }
 
 #ifdef CONFIG_ADVANCED_MM
-
-    if ((next = (struct malloc_hole *)mm_alloc(pages)) != NULL) {
+    /* Next, try relocating to a larger hole */
+    if ((m->refcount == 1) && ((next = (struct malloc_hole *)mm_alloc(pages)) != NULL)) {
 	fmemcpy((seg_t)next, 0, m->page_base, 0, (__u16)(m->extent << 4));
-	next = find_hole(&memmap, (seg_t)next);
-	next->refcount = m->refcount;
-	free_hole(&memmap, m);
+	next = find_hole(holes, (seg_t)next);
+	free_hole(holes, m);
+	return next;
     }
-    return next;
-
-#else
-
-    return NULL;
 
 #endif
 
+    return NULL;
 }
 
 int sys_brk(__pptr len)
@@ -423,24 +415,21 @@ int sys_brk(__pptr len)
 
     if (len < currentp->t_enddata)
         return -ENOMEM;
-    if (currentp->t_begstack > currentp->t_endbrk)
-        if (len > currentp->t_endseg - 0x1000) {
-		printk("sys_brk failed: len %u > endseg %u\n", len, (currentp->t_endseg - 0x1000));
+    if (currentp->t_begstack > currentp->t_endbrk) {	/* Old format? */
+        if (len > currentp->t_endseg - MIN_STACK_SIZE) {	/* Yes */
+	    printk("sys_brk failed: len %u > endseg %u\n", len, (currentp->t_endseg - MIN_STACK_SIZE));
             return -ENOMEM;
 	}
-
+    }
 #ifdef CONFIG_EXEC_ELKS
-    if (len > currentp->t_endseg){
+    if (len > currentp->t_endseg) {
         /* Resize time */
 
-        h = find_hole(&memmap, currentp->mm.dseg);
+        h = find_hole(holes, currentp->mm.dseg);
 
         h = mm_resize(h, (len + 15) >> 4);
-        if (!h){
+        if (!h) {
             return -ENOMEM;
-        }
-        if (h->refcount != 1){
-            panic("Relocated shared hole");
         }
 
 	currentp->t_regs.ds = currentp->t_regs.es\
@@ -521,13 +510,13 @@ int mm_swap_on(struct mem_swap_info *si)
 static int swap_out(seg_t base)
 {
     register struct task_struct *t;
-    register struct malloc_hole *o = find_hole(&memmap, base);
+    register struct malloc_hole *o = find_hole(holes, base);
     struct malloc_hole *so;
     int ct, blocks;
 
     /* We can hit disk this time. Allocate a hole in 1K increments */
     blocks = (o->extent + 0x3F) >> 6;
-    so = best_fit_hole(&swapmap, blocks);
+    so = best_fit_hole(swap_holes, blocks);
     if (so == NULL) {
 	/* No free swap */
 	return -1;
@@ -562,7 +551,7 @@ static int swap_out(seg_t base)
 	ll_rw_blk(WRITE, &swap_buf);
 	wait_on_buffer(&swap_buf);
     }
-    free_hole(&memmap, o);
+    free_hole(holes, o);
 
     return 1;
 }
@@ -574,9 +563,9 @@ static int swap_in(seg_t base, int chint)
     struct malloc_hole *so;
     int ct, blocks;
 
-    so = find_hole(&swapmap, base);
+    so = find_hole(swap_holes, base);
     /* Find memory for this segment */
-    o = best_fit_hole(&memmap, so->extent << 6);
+    o = best_fit_hole(holes, so->extent << 6);
     if (o == NULL)
 	return -1;
 
@@ -632,8 +621,8 @@ static int swap_in(seg_t base, int chint)
     if (chint==0)
 #endif
     {
-	so->refcount = 0;
-	free_hole(&swapmap, so);
+/*	so->refcount = 0;*//* refcount only meaningful if HOLE_USED */
+	free_hole(swap_holes, so);
     }
 
     return 0;

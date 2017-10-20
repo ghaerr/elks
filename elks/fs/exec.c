@@ -56,15 +56,12 @@ static struct minix_supl_hdr msuph;
 int sys_execve(char *filename, char *sptr, size_t slen)
 {
     register __ptask currentp;
-    void *ptr;
     struct inode *inode;
     struct file *filp;
-    __registers *tregs;
     int retval;
     __u16 ds;
-    seg_t cseg, dseg, stack_top = 0;
+    seg_t cseg, dseg, base_data = 0;
     lsize_t len;
-    size_t result;
 
     /* Open the image */
     /*debug1("EXEC: opening file: %s\n", filename);*/
@@ -90,57 +87,64 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	}
     } while (++currentp < &task[MAX_TASKS]);
 
-    /* Read the header.  */
+    /* Read the header */
     currentp = current;
-    tregs = &(currentp->t_regs);
-    ds = tregs->ds;
+    ds = currentp->t_regs.ds;
 
-    retval = -ENOEXEC;
-    if (!(filp->f_op) || !(filp->f_op->read)) goto normal_out;
+    if (!(filp->f_op) || !(filp->f_op->read)) goto error_exec2_5;
 
     debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
 
-    tregs->ds = kernel_ds;
-    result = filp->f_op->read(inode, filp, &mh, sizeof(mh));
+    currentp->t_regs.ds = kernel_ds;
+    retval = filp->f_op->read(inode, filp, &mh, sizeof(mh));
 
     /* Sanity check it.  */
-    if (result != sizeof(mh) ||
+    if (retval != (int)sizeof(mh) ||
 	(mh.type != MINIX_SPLITID) || mh.chmem < 1024 || mh.tseg == 0) {
-	debug1("EXEC: bad header, result %u\n", result);
+	debug1("EXEC: bad header, result %u\n", retval);
 	goto error_exec3;
     }
 
+    /*
+     * Size for data segment
+     * mh.chmem is "total size" requested by ld. Note that ld used to ask
+     * for (at least) 64K
+     */
+    len = mh.chmem;
 #ifdef CONFIG_EXEC_ELKS
     if ((unsigned int) mh.hlen == 0x30) {
 	/* BIG HEADER */
-	result = filp->f_op->read(inode, filp, &msuph, sizeof(msuph));
-	if (result != sizeof(msuph)) {
-	    debug1("EXEC: Bad secondary header, result %u\n", result);
+	retval = filp->f_op->read(inode, filp, &msuph, sizeof(msuph));
+	if (retval != (int)sizeof(msuph)) {
+	    debug1("EXEC: Bad secondary header, result %u\n", retval);
 	    goto error_exec3;
 	}
-	stack_top = msuph.msh_dbase;
-	if (stack_top & 0xf) goto error_exec3;
-	debug1("EXEC: New type executable stack = %x\n", stack_top);
+	base_data = msuph.msh_dbase;
+	if (base_data & 0xf) goto error_exec3;
+	debug1("EXEC: New type executable stack = %x\n", base_data);
+	len = mh.dseg + mh.bseg + base_data + INIT_HEAP;
     }
-#else
-    if ((unsigned int) mh.hlen != 0x20) goto error_exec3;
+    else
 #endif
+    if ((unsigned int) mh.hlen != 0x20) goto error_exec3;
+
+    len = (len + 15) & ~15L;
+    if (len > (lsize_t) 0x10000L) goto error_exec3;
 
     debug("EXEC: Malloc time\n");
 
     /*
      *      Looks good. Get the memory we need
      */
-    retval = -ENOMEM;
     if (!cseg) {
+	retval = -ENOMEM;
 	cseg = mm_alloc((segext_t) ((mh.tseg + 15) >> 4));
 	if (!cseg) goto error_exec3;
-	tregs->ds = cseg;
-	result = filp->f_op->read(inode, filp, 0, (size_t)mh.tseg);
-	if (result != (size_t)mh.tseg) {
+	currentp->t_regs.ds = cseg;
+	retval = filp->f_op->read(inode, filp, 0, (size_t)mh.tseg);
+	if (retval != (int)mh.tseg) {
 	    debug2("EXEC(tseg read): bad result %u, expected %u\n",
-	    result, mh.tseg);
-	    retval = -ENOEXEC;
+	    retval, mh.tseg);
 	    goto error_exec4;
 	}
     } else {
@@ -148,70 +152,73 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	filp->f_pos += mh.tseg;
     }
 
-    /*
-     * mh.chmem is "total size" requested by ld. Note that ld used to ask
-     * for (at least) 64K
-     */
-    if (stack_top) len = mh.dseg + mh.bseg + stack_top + INIT_HEAP;
-    else len = mh.chmem;
-    len = (len + 15) & ~15L;
-    if (len > (lsize_t) 0x10000L) goto error_exec4;
-
     debug1("EXEC: Allocating %ld bytes for data segment\n", len);
 
+    retval = -ENOMEM;
     dseg = mm_alloc((segext_t) (len >> 4));
     if (!dseg) goto error_exec4;
 
     debug2("EXEC: Malloc succeeded - cs=%x ds=%x\n", cseg, dseg);
 
-    retval = -ENOEXEC;
-    tregs->ds = dseg;
-    result = filp->f_op->read(inode, filp, (char *)stack_top, (size_t)mh.dseg);
+    currentp->t_regs.ds = dseg;
+    retval = filp->f_op->read(inode, filp, (char *)base_data, (size_t)mh.dseg);
 
-    if (result != (size_t)mh.dseg) {
+    if (retval != (size_t)mh.dseg) {
 	debug2("EXEC(dseg read): bad result %d, expected %d\n",
-	       result, mh.dseg);
+	       retval, mh.dseg);
 	goto error_exec5;
     }
+    /* From this point, exec() will surely succeed */
 
-    /* Wipe the BSS */
-    fmemset((char *)((seg_t)mh.dseg + stack_top), dseg, 0, (__u16) mh.bseg);
+    currentp->t_endseg = (__pptr)len;	/* Needed for sys_brk() */
 
-    /* Copy the stack */
-    ptr = (char *)(stack_top
-	? stack_top - slen
-	: (size_t)len - slen);
-    fmemcpy(dseg, (__u16) ptr, ds, (__u16) sptr, (__u16) slen);
+    /* Copy the command line and enviroment */
+    currentp->t_begstack = (base_data	/* Just above the top of stack */
+	? (__pptr)base_data
+	: currentp->t_endseg) - slen;
+    currentp->t_regs.sp = (__u16)(currentp->t_begstack);
+    fmemcpy(dseg, (__u16) currentp->t_begstack, ds, (__u16) sptr, (__u16) slen);
 
     /* From this point, the old code and data segments are not needed anymore */
+
+    /* Flush the old binary out.  */
+    if (currentp->mm.cseg) mm_free(currentp->mm.cseg);
+    if (currentp->mm.dseg) mm_free(currentp->mm.dseg);
+    debug("EXEC: old binary flushed.\n");
+
+    currentp->t_xregs.cs = currentp->mm.cseg = cseg;
+    currentp->t_regs.es = currentp->t_regs.ss = currentp->mm.dseg = dseg;
+
+    /* Wipe the BSS */
+    fmemset((char *)((seg_t)mh.dseg + base_data), dseg, 0, (__u16) mh.bseg);
     {
-	register char *pi = (char *) ptr;
+	register char *pi = (char *)0;
 
 	/* argv and envp are two NULL-terminated arrays of pointers, located
 	 * right after argc.  This fixes them up so that the loaded program
 	 * gets the right strings. */
 
-	result = 0;
+	slen = 0;	/* Start skiping argc */
 	do {
 	    pi = (char *)(((__u16 *)pi) + 1);
-	    if ((retval = (int)peekw(dseg, (__u16) pi)) != 0) 
-		pokew(dseg, (__u16) pi, (__u16) (((char *) ptr) + retval));
-	    else result++;	/* increments for each array traversed */
-	} while (result < 2);
+	    if ((retval = get_ustack(currentp, (int)pi)) != 0) 
+		put_ustack(currentp, (int)pi, (currentp->t_begstack + retval));
+	    else slen++;	/* increments for each array traversed */
+	} while (slen < 2);
 	retval = 0;
 
 	/* Clear signal handlers */
-	pi = (char *) (NSIG - 1);
+	pi = (char *)0;
 	do {
 	    currentp->sig.action[(int)pi].sa_handler = NULL;
-	} while (pi--);
+	} while ((int)(++pi) < NSIG);
 
 	/* Close required files */
-	pi = (char *) (NR_OPEN - 1);
+	pi = (char *)0;
 	do {
 	    if (FD_ISSET(((int)pi), &currentp->files.close_on_exec))
 		sys_close((int)pi);
-	} while (pi--);
+	} while ((int)(++pi) < NR_OPEN);
 
     /* this could be a good place to set the effective user identifier
      * in case the suid bit of the executable had been set */
@@ -226,20 +233,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    currentp->egid = ((struct inode *)pi)->i_gid;
     }
 
-    /* Flush the old binary out.  */
-    if (currentp->mm.cseg) mm_free(currentp->mm.cseg);
-    if (currentp->mm.dseg) mm_free(currentp->mm.dseg);
-    debug("EXEC: old binary flushed.\n");
-
-    currentp->t_xregs.cs = currentp->mm.cseg = cseg;
-    tregs->ds = tregs->es = tregs->ss = currentp->mm.dseg = dseg;
-
-    currentp->t_begstack = ((__pptr) ptr);	/* Just below the arguments */
-    tregs->sp = (__u16)(currentp->t_begstack);
-    currentp->t_enddata = (__pptr) ((__u16)mh.dseg + stack_top);
-    currentp->t_endbrk =  currentp->t_enddata + (__pptr)mh.bseg;
-    /* Needed for sys_brk() */
-    currentp->t_endseg = (__pptr) len;
+    currentp->t_enddata = (__pptr) ((__u16)mh.dseg + (__u16)mh.bseg + base_data);
+    currentp->t_endbrk =  currentp->t_enddata + INIT_HEAP;
 
     /*
      *      Arrange our return to be to CS:0
@@ -264,7 +259,10 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     mm_free(cseg);
 
   error_exec3:
-    tregs->ds = ds;
+    currentp->t_regs.ds = ds;
+  error_exec2_5:
+    if (retval >= 0)
+	retval = -ENOEXEC;
   normal_out:
     close_filp(inode, filp);
 
