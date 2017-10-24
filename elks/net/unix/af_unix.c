@@ -152,7 +152,6 @@ static int unix_release(struct socket *sock, struct socket *peer)
 static int unix_bind(struct socket *sock,
 		     struct sockaddr *umyaddr, int sockaddr_len)
 {
-    char fname[UNIX_PATH_MAX + 1];
     struct unix_proto_data *upd = sock->data;
     unsigned short old_ds;
     int i;
@@ -169,21 +168,19 @@ static int unix_bind(struct socket *sock,
     if (upd->sockaddr_un.sun_family != AF_UNIX)
 	return -EINVAL;
 
-    memcpy(fname, upd->sockaddr_un.sun_path, sockaddr_len);
-    fname[sockaddr_len] = '\0';
-
     old_ds = current->t_regs.ds;
     current->t_regs.ds = kernel_ds;
 
-    i = do_mknod(fname, offsetof(struct inode_operations,mknod), S_IFSOCK | S_IRWXUGO, 0);
+    i = do_mknod(upd->sockaddr_un.sun_path,
+	    offsetof(struct inode_operations,mknod), S_IFSOCK | S_IRWXUGO, 0);
 
     if (i == 0)
-	i = open_namei(fname, 0, S_IFSOCK, &upd->inode, NULL);
+	i = open_namei(upd->sockaddr_un.sun_path, 0, S_IFSOCK, &upd->inode, NULL);
 
     current->t_regs.ds = old_ds;
     if (i < 0) {
 #if 0
-	printk("UNIX: bind: can't open socket %s\n", fname);
+	printk("UNIX: bind: can't open socket %s\n", upd->sockaddr_un.sun_path);
 #endif
 	if (i == -EEXIST)
 	    i = -EADDRINUSE;
@@ -198,7 +195,6 @@ static int unix_connect(struct socket *sock,
 			struct sockaddr *uservaddr,
 			int sockaddr_len, int flags)
 {
-    char fname[sizeof(((struct sockaddr_un *) 0)->sun_path) + 1];
     struct sockaddr_un sockun;
     struct unix_proto_data *serv_upd;
     struct inode *inode;
@@ -225,13 +221,10 @@ static int unix_connect(struct socket *sock,
  * find our server. When we're connected, we mooch off the server.
  */
 
-    memcpy(fname, sockun.sun_path, sockaddr_len);
-    fname[sockaddr_len] = '\0';
-
     old_ds = current->t_regs.ds;
     current->t_regs.ds = kernel_ds;
 
-    i = open_namei(fname, 2, S_IFSOCK, &inode, NULL);
+    i = open_namei(sockun.sun_path, 2, S_IFSOCK, &inode, NULL);
     current->t_regs.ds = old_ds;
 
     if (i < 0)
@@ -326,7 +319,7 @@ static int unix_getname(struct socket *sock,
 	upd = UN_DATA(sock);
 
     return move_addr_to_user(&upd->sockaddr_un, upd->sockaddr_len,
-				    usockaddr, usockaddr_len)
+				    usockaddr, usockaddr_len);
 }
 
 static int unix_read(struct socket *sock, char *ubuf, int size, int nonblock)
