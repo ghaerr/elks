@@ -33,6 +33,12 @@ static struct wait_queue tcpdevq;
 
 char tcpdev_inuse;
 
+char *get_tdout_buf(void)
+{
+    down(&bufout_sem);
+    return tdout_buf;
+}
+
 static size_t tcpdev_read(struct inode *inode, struct file *filp, char *data,
 		       unsigned int len)
 {
@@ -66,11 +72,8 @@ int tcpdev_inetwrite(char *data, unsigned int len)
     if (len > TCPDEV_OUTBUFFERSIZE)
 	return -EINVAL;		/* FIXME: make sure this never happens */
     debug("TCPDEV: inetwrite() mark 1.\n");
-    down(&bufout_sem);
 
-    /* Copy the data to the buffer */
-/*    fmemcpy(kernel_ds, (__u16) tdout_buf, kernel_ds, (__u16) data, (__u16) len);*/
-    memcpy(tdout_buf, data, len);
+    /* Data already in tdout_buf buffer */
     tdout_tail = len;
     wake_up(&tcpdevq);
     debug("TCPDEV: inetwrite() returning\n");
@@ -102,7 +105,7 @@ static size_t tcpdev_write(struct inode *inode, struct file *filp,
     return len;
 }
 
-int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
+static int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
 {
     register char *ret = (char *)0;
 
@@ -146,7 +149,7 @@ static int tcpdev_open(struct inode *inode, struct file *file)
     return 0;
 }
 
-void tcpdev_release(struct inode *inode, struct file *file)
+static void tcpdev_release(struct inode *inode, struct file *file)
 {
     debug2("TCPDEV: release( %p, %p )\n",inode,file);
     tcpdev_inuse = 0;
