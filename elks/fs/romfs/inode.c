@@ -512,8 +512,8 @@ static struct inode_operations romfs_file_inode_operations = {
     NULL,			/* mknod */
     NULL,			/* readlink */
     NULL,			/* followlink */
-#ifdef BLOAT_FS
-    NULL,			/* bmap -- not really */
+#ifdef USE_GETBLK
+    NULL,			/* getblk -- not really */
 #endif
     NULL			/* truncate */
 #ifdef BLOAT_FS
@@ -555,8 +555,8 @@ static struct inode_operations romfs_dirlink_inode_operations = {
     NULL,			/* mknod */
     romfs_readlink,		/* readlink */
     NULL,			/* followlink */
-#ifdef BLOAT_FS
-    NULL,			/* bmap */
+#ifdef USE_GETBLK
+    NULL,			/* getblk */
 #endif
     NULL			/* truncate */
 #ifdef BLOAT_FS

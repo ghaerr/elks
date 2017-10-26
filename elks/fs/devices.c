@@ -119,8 +119,8 @@ int blkdev_open(struct inode *inode, struct file *filp)
     register char *pi;
 
     pi = (char *)MAJOR(inode->i_rdev);
-    fop = blkdevs[(unsigned int)pi].ds_fops;
-    if ((unsigned int)pi >= MAX_BLKDEV || !fop) return -ENODEV;
+    if ((unsigned int)pi >= MAX_BLKDEV
+		|| !(fop = blkdevs[(unsigned int)pi].ds_fops)) return -ENODEV;
     filp->f_op = fop;
     return (fop->open) ? fop->open(inode, filp) : 0;
 }
@@ -153,8 +153,8 @@ struct inode_operations blkdev_inode_operations = {
     NULL,			/* mknod */
     NULL,			/* readlink */
     NULL,			/* follow_link */
-#ifdef BLOAT_FS
-    NULL,			/* bmap */
+#ifdef USE_GETBLK
+    NULL,			/* getblk */
 #endif
     NULL,			/* truncate */
 #ifdef BLOAT_FS
@@ -172,8 +172,8 @@ static int chrdev_open(struct inode *inode, struct file *filp)
     register char *pi;
 
     pi = (char *)MAJOR(inode->i_rdev);
-    fop = chrdevs[(unsigned int)pi].ds_fops;
-    if ((unsigned int)pi >= MAX_CHRDEV || !fop) return -ENODEV;
+    if ((unsigned int)pi >= MAX_CHRDEV
+		|| !(fop = chrdevs[(unsigned int)pi].ds_fops)) return -ENODEV;
     filp->f_op = fop;
     return (fop->open) ? fop->open(inode, filp) : 0;
 }
@@ -207,8 +207,8 @@ struct inode_operations chrdev_inode_operations = {
     NULL,			/* mknod */
     NULL,			/* readlink */
     NULL,			/* follow_link */
-#ifdef BLOAT_FS
-    NULL,			/* bmap */
+#ifdef USE_GETBLK
+    NULL,			/* getblk */
 #endif
     NULL,			/* truncate */
 #ifdef BLOAT_FS
