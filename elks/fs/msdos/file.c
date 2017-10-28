@@ -36,7 +36,7 @@ static struct file_operations msdos_file_operations = {
 	NULL			/* release */
 };
 
-/* No bmap for MS-DOS FS' that don't align data at kByte boundaries. */
+/* No getblk for MS-DOS FS' that don't align data at kByte boundaries. */
 
 struct inode_operations msdos_file_inode_operations_no_bmap = {
 	&msdos_file_operations,	/* default file operations */
@@ -50,8 +50,8 @@ struct inode_operations msdos_file_inode_operations_no_bmap = {
 	NULL,			/* mknod */
 	NULL,			/* readlink */
 	NULL,			/* follow_link */
-#ifdef BLOAT_FS
-	NULL,			/* bmap */
+#ifdef USE_GETBLK
+	NULL,			/* getblk */
 #endif
 	msdos_truncate,		/* truncate */
 #ifdef BLOAT_FS

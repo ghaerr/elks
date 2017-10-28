@@ -20,54 +20,6 @@
 #include <arch/system.h>
 
 #include <linuxmt/fs.h>
-#include <linuxmt/minix_fs.h>
-
-static size_t minix_file_read(struct inode *inode, register struct file *filp,
-			    char *buf, size_t count);
-
-static size_t minix_file_write(struct inode *inode,
-			    register struct file *filp, char *buf, size_t count);
-
-/*
- * We have mostly NULL's here: the current defaults are ok for
- * the minix filesystem.
- */
-static struct file_operations minix_file_operations = {
-    NULL,			/* lseek - default */
-    minix_file_read,		/* read */
-    minix_file_write,		/* write */
-    NULL,			/* readdir - bad */
-    NULL,			/* select - default */
-    NULL,			/* ioctl - default */
-    NULL,			/* no special open is needed */
-    NULL,			/* release */
-#ifdef BLOAT_FS
-    NULL			/* fsync : minix_file_fsync */
-#endif
-};
-
-struct inode_operations minix_file_inode_operations = {
-    &minix_file_operations,	/* default file operations */
-    NULL,			/* create */
-    NULL,			/* lookup */
-    NULL,			/* link */
-    NULL,			/* unlink */
-    NULL,			/* symlink */
-    NULL,			/* mkdir */
-    NULL,			/* rmdir */
-    NULL,			/* mknod */
-    NULL,			/* readlink */
-    NULL,			/* follow_link */
-#ifdef BLOAT_FS
-    NULL /*minix_bmap */ ,	/* bmap */
-#endif
-    minix_truncate,		/* truncate */
-#ifdef BLOAT_FS
-    NULL			/* permission */
-#endif
-};
-
-/*@+type@*/
 
 /* FIXME: Readahead */
 #ifdef DEBUG
@@ -75,12 +27,16 @@ static char inode_equal_NULL[] = "inode = NULL\n";
 static char mode_equal_val[] = "mode = %07o\n";
 #endif
 
+#ifdef USE_GETBLK
+size_t block_read(struct inode *inode, register struct file *filp,
+	       char *buf, size_t count)
+#else
 static size_t minix_file_read(struct inode *inode, register struct file *filp,
 			    char *buf, size_t count)
+#endif
 {
-    register struct buffer_head *bh;
     loff_t pos;
-    size_t chars, offset;
+    size_t chars;
     int read = 0;
 
 #ifdef DEBUG
@@ -108,15 +64,23 @@ static size_t minix_file_read(struct inode *inode, register struct file *filp,
     if ((loff_t)count > pos) count = (size_t)pos;
 
     while (count > 0) {
-    /* Offset to block/offset */
-	offset = ((size_t)filp->f_pos) & (BLOCK_SIZE - 1);
-	chars = BLOCK_SIZE - offset;
-	if (chars > count) chars = count;
+	register struct buffer_head *bh;
+
 	/*
-	 *      Read the block in - use getblk on a write
-	 *      of a whole block to avoid a read of the data.
+	 *      Read the block in
 	 */
+#ifdef USE_GETBLK
+	chars = (filp->f_pos >> BLOCK_SIZE_BITS);
+	if (inode->i_op->getblk)
+	    bh = inode->i_op->getblk(inode, (block_t)chars, 0);
+	else
+	    bh = getblk(inode->i_dev, (block_t)chars);
+#else
 	bh = minix_getblk(inode, (block_t)(filp->f_pos >> BLOCK_SIZE_BITS), 0);
+#endif
+	/* Offset to block/offset */
+	chars = BLOCK_SIZE - (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1));
+	if (chars > count) chars = count;
 	if (bh) {
 	    if (!readbuf(bh)) {
 		debug("MINREAD: readbuf failed\n");
@@ -124,7 +88,8 @@ static size_t minix_file_read(struct inode *inode, register struct file *filp,
 		break;
 	    }
 	    map_buffer(bh);
-	    memcpy_tofs(buf, bh->b_data + (size_t)offset, chars);
+	    memcpy_tofs(buf, bh->b_data + (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1)),
+			chars);
 	    unmap_brelse(bh);
 	} else fmemset(buf, current->t_regs.ds, 0, chars);
 	buf += chars;
@@ -143,8 +108,13 @@ static size_t minix_file_read(struct inode *inode, register struct file *filp,
     return read;
 }
 
-static size_t minix_file_write(struct inode *inode,
-			    register struct file *filp, char *buf, size_t count)
+#ifdef USE_GETBLK
+size_t block_write(struct inode *inode, register struct file *filp,
+		char *buf, size_t count)
+#else
+static size_t minix_file_write(struct inode *inode, register struct file *filp,
+			    char *buf, size_t count)
+#endif
 {
     size_t chars, offset;
     int written = 0;
@@ -170,25 +140,37 @@ static size_t minix_file_write(struct inode *inode,
 
     while (count > 0) {
 	register struct buffer_head *bh;
-    /* Offset to block/offset */
-	offset = ((size_t)filp->f_pos) & (BLOCK_SIZE - 1);
-	chars = BLOCK_SIZE - offset;
-	if (chars > count) chars = count;
-	/*
-	 *      Read the block in - use getblk on a write
-	 *      of a whole block to avoid a read of the data.
-	 */
+
+#ifdef USE_GETBLK
+	chars = (filp->f_pos >> BLOCK_SIZE_BITS);
+	if (inode->i_op->getblk)
+	    bh = inode->i_op->getblk(inode, (block_t)chars, 1);
+	else
+	    bh = getblk(inode->i_dev, (block_t)chars);
+#else
 	bh = minix_getblk(inode, (block_t) (filp->f_pos >> BLOCK_SIZE_BITS), 1);
+#endif
 	if (!bh) {
 	    if (!written) written = -ENOSPC;
 	    break;
 	}
+	/* Offset to block/offset */
+	offset = ((size_t)filp->f_pos) & (BLOCK_SIZE - 1);
+	chars = BLOCK_SIZE - offset;
+	if (chars > count) chars = count;
+	/*
+	 *      Read the block in, unless we
+	 *      are writing a whole block.
+	 */
 	if (chars != BLOCK_SIZE) {
 	    if (!readbuf(bh)) {
 		if (!written) written = -EIO;
 		break;
 	    }
 	}
+	/*
+	 *      Alter buffer, mark dirty
+	 */
 	map_buffer(bh);
 	memcpy_fromfs((bh->b_data + offset), buf, chars);
 	mark_buffer_uptodate(bh, 1);
@@ -208,3 +190,47 @@ static size_t minix_file_write(struct inode *inode,
     }
     return written;
 }
+
+/*
+ * We have mostly NULL's here: the current defaults are ok for
+ * the minix filesystem.
+ */
+static struct file_operations minix_file_operations = {
+    NULL,			/* lseek - default */
+#ifdef USE_GETBLK
+    block_read,			/* read */
+    block_write,		/* write */
+#else
+    minix_file_read,		/* read */
+    minix_file_write,		/* write */
+#endif
+    NULL,			/* readdir - bad */
+    NULL,			/* select - default */
+    NULL,			/* ioctl - default */
+    NULL,			/* no special open is needed */
+    NULL,			/* release */
+#ifdef BLOAT_FS
+    NULL			/* fsync : minix_file_fsync */
+#endif
+};
+
+struct inode_operations minix_file_inode_operations = {
+    &minix_file_operations,	/* default file operations */
+    NULL,			/* create */
+    NULL,			/* lookup */
+    NULL,			/* link */
+    NULL,			/* unlink */
+    NULL,			/* symlink */
+    NULL,			/* mkdir */
+    NULL,			/* rmdir */
+    NULL,			/* mknod */
+    NULL,			/* readlink */
+    NULL,			/* follow_link */
+#ifdef USE_GETBLK
+    minix_getblk,		/* getblk */
+#endif
+    minix_truncate,		/* truncate */
+#ifdef BLOAT_FS
+    NULL			/* permission */
+#endif
+};
