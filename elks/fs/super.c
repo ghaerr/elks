@@ -486,7 +486,14 @@ void mount_root(void)
     struct file *filp;
     int retval;
 
+    /* TODO: allow mounting root from both character and block devices */
+    /* TEMP: hack to allow mounting from /dev/rom */
+#ifdef CONFIG_ROMFS_FS
+    d_inode = new_inode(NULL, S_IFCHR);
+#else
     d_inode = new_inode(NULL, S_IFBLK);
+#endif
+
     d_inode->i_rdev = ROOT_DEV;
   retry_floppy:
     retval = open_filp(((root_mountflags & MS_RDONLY) ? 0 : 2), d_inode, &filp);

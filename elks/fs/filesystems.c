@@ -20,9 +20,6 @@ void fs_init(void)
 #ifdef CONFIG_MINIX_FS
     init_minix_fs();
 #endif
-#ifdef CONFIG_ROMFS_FS
-    init_romfs_fs();
-#endif
 #ifdef CONFIG_MSDOS_FS
     init_msdos_fs();
 #endif

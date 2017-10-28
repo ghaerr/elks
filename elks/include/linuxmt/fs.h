@@ -275,7 +275,6 @@ struct file {
 };
 
 #include <linuxmt/minix_fs_sb.h>
-#include <linuxmt/romfs_fs_sb.h>
 
 struct super_block {
     kdev_t			s_dev;
@@ -301,7 +300,6 @@ struct super_block {
 
     union {
 	struct minix_sb_info	minix_sb;
-	struct romfs_sb_info	romfs_sb;
 #ifdef CONFIG_MSDOS_FS	
 	struct msdos_sb_info	msdos_sb;
 #endif	

@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*/
-/* Make ROM file system from existing tree                                   */
+/* Make ROM filesystem from existing tree                                    */
 /*---------------------------------------------------------------------------*/
 
 #include <sys/types.h>
@@ -18,13 +18,13 @@
 
 /* Super block on disk (actually in ROM) */
 
-#define SUPER_MAGIC "ROMFS.0"
+#define SUPER_MAGIC "ROMFS"
 
 struct super_disk_s
 	{
-	byte_t magic [8];
-	byte_t ssize;    /* size of super block */
-	byte_t isize;    /* size of inode */
+	byte_t magic [6];
+	word_t ssize;    /* size of super block */
+	word_t isize;    /* size of inode */
 	word_t icount;   /* number of inodes */
 	};
 
@@ -38,8 +38,8 @@ typedef struct super_disk_s super_disk_t;
 
 struct inode_disk_s
 	{
-	addr_t offset;
-	addr_t size;
+	word_t offset;  /* offset in paragraphs */
+	word_t size;    /* size in bytes */
 	word_t flags;
 	};
 
@@ -80,7 +80,7 @@ static inode_build_t * inode_alloc (inode_build_t * parent, char * path)
 		assert (inode->path);
 
 		list_add_tail (&_inodes, &inode->node);
-		inode->index = _inodes.count;
+		inode->index = _inodes.count - 1;
 		break;
 		}
 
@@ -333,17 +333,6 @@ static int compile_dir (int fd, inode_build_t * inode)
 		entry_build_t * entry = (entry_build_t *) inode->entries.node.next;
 		while (entry != (entry_build_t *) &inode->entries.node)
 			{
-			/* Entry inode index */
-
-			count = write (fd, &entry->inode->index, sizeof (word_t));
-			if (count != sizeof (word_t))
-				{
-				err = errno;
-				break;
-				}
-
-			size += count;
-
 			/* Entry string */
 			/* First byte is string length */
 
@@ -365,6 +354,17 @@ static int compile_dir (int fd, inode_build_t * inode)
 
 			count = write (fd, entry->name, len);
 			if (count != len)
+				{
+				err = errno;
+				break;
+				}
+
+			size += count;
+
+			/* Entry inode index */
+
+			count = write (fd, &entry->inode->index, sizeof (word_t));
+			if (count != sizeof (word_t))
 				{
 				err = errno;
 				break;
@@ -395,42 +395,28 @@ static int compile_fs ()
 		{
 		/* Mode is required by O_CREAT */
 
-		int fd = open ("romfs.bin", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+		int fd = open ("romfs.bin", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 		if (fd < 0)
 			{
 			err = errno;
 			break;
 			}
 
-		/* Write super block first */
+		/* Skip the superblock and the table of inodes */
+		/* that form the first block with size <= 64 KB */
+		/* and align next block to paragraph */
 
-		super_disk_t super;
-		memset (&super, 0xFF, sizeof (super_disk_t));
+		off_t offset = sizeof (super_disk_t) + _inodes.count * sizeof (inode_disk_t);
+		offset = (offset & 0xF) ? ((offset & 0xFFFF0) + 0x10) : offset;
 
-		strcpy (super.magic, SUPER_MAGIC);
-		super.ssize = sizeof (super_disk_t);
-		super.isize = sizeof (inode_disk_t);
-		super.icount = _inodes.count;
-
-		int count = write (fd, &super, sizeof (super_disk_t));
-		if (count != sizeof (super_disk_t))
-			{
-			err = errno;
-			break;
-			}
-
-		/* Skip the table of inodes */
-
-		off_t offset = _inodes.count * sizeof (inode_disk_t);
-
-		offset = lseek (fd, offset, SEEK_CUR);
+		offset = lseek (fd, offset, SEEK_SET);
 		if (offset < 0)
 			{
 			err = errno;
 			break;
 			}
 
-		/* Compile the inodes, directories and files */
+		/* Compile the inodes (directories, files, etc) */
 
 		inode_build_t * inode_build = (inode_build_t *) _inodes.node.next;
 		while (inode_build != (inode_build_t *) &_inodes.node)
@@ -450,17 +436,44 @@ static int compile_fs ()
 
 			if (err) break;
 
+			/* Align every data block on paragraph */
+
 			offset += inode_build->size;
+
+			if (offset & 0xF)
+				{
+				offset = (offset & 0xFFFF0) + 0x10;
+				offset = lseek (fd, offset, SEEK_SET);
+				if (offset < 0)
+					{
+					err = errno;
+					break;
+					}
+				}
 
 			inode_build = (inode_build_t *) inode_build->node.next;
 			}
 
-		/* Now write table of inodes */
+		/* Now write first data block */
+		/* with the SuperBlock and the table of INodes */
 
-		offset = sizeof (super_disk_t);
-
-		offset = lseek (fd, offset, SEEK_SET);
+		offset = lseek (fd, 0, SEEK_SET);
 		if (offset < 0)
+			{
+			err = errno;
+			break;
+			}
+
+		super_disk_t super;
+		memset (&super, 0, sizeof (super_disk_t));
+
+		strcpy (super.magic, SUPER_MAGIC);
+		super.ssize = sizeof (super_disk_t);
+		super.isize = sizeof (inode_disk_t);
+		super.icount = _inodes.count;
+
+		int count = write (fd, &super, sizeof (super_disk_t));
+		if (count != sizeof (super_disk_t))
 			{
 			err = errno;
 			break;
@@ -470,10 +483,17 @@ static int compile_fs ()
 		while (inode_build != (inode_build_t *) &_inodes.node)
 			{
 			inode_disk_t inode_disk;
-			memset (&inode_disk, 0xFF, sizeof (inode_disk_t));
+			memset (&inode_disk, 0, sizeof (inode_disk_t));
 
 			inode_disk.flags = inode_build->flags;
-			inode_disk.offset = inode_build->offset;
+
+			/* TODO: replace assert() by error */
+			assert (inode_build->offset < 0x100000);
+			assert ((inode_build->offset & 0xF) == 0);
+			inode_disk.offset = (inode_build->offset >> 4);  /* in paragraphs */
+
+			/* TODO: replace assert() by error */
+			assert (inode_build->size < 0x10000);
 			inode_disk.size = inode_build->size;
 
 			int count = write (fd, &inode_disk, sizeof (inode_disk_t));

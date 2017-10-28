@@ -1,7 +1,7 @@
-#ifndef LX86_LINUXMT_ROMFS_FS_H
-#define LX86_LINUXMT_ROMFS_FS_H
+/* ROMFS - A tiny filesystem in ROM */
 
-/* The basic structures of the romfs filesystem */
+#ifndef _LINUXMT_ROMFS_FS_H
+#define _LINUXMT_ROMFS_FS_H
 
 #define ROMBSIZE BLOCK_SIZE
 #define ROMBSBITS BLOCK_SIZE_BITS
@@ -16,30 +16,28 @@
 #define __mkl(h,l) (((h)&0xffffL)<<16|((l)&0xffffL))
 #define __mk4(a,b,c,d) htonl((unsigned long int)__mkl(__mkw(a,b),__mkw(c,d)))
 
-/*@+namechecks@*/
 
-#define ROMSB_WORD0 __mk4('-','r','o','m')
-#define ROMSB_WORD1 __mk4('1','f','s','-')
 
-/* On-disk "super block" */
+/* In-memory superblock */
+/* TODO: common declaration with mkromfs */
 
-struct romfs_super_block {
-    __u32 word0;
-    __u32 word1;
-    __u32 size;
-    __u32 checksum;
-    char name[];		/* volume name */
-};
+struct romfs_superblock_s
+	{
+	byte_t magic [6];
+	word_t ssize;    /* size of super block */
+	word_t isize;    /* size of inode */
+	word_t icount;   /* number of inodes */
+	};
 
-/* On disk inode */
+/* In-memory inode */
+/* TODO: common declaration with mkromfs */
 
-struct romfs_inode {
-    __u32 next;			/* low 4 bits see ROMFH_ */
-    __u32 spec;
-    __u32 size;
-    __u32 checksum;
-    char name[];
-};
+struct romfs_inode_s
+	{
+	word_t offset;  /* offset in paragraphs */
+	word_t size;    /* size in bytes */
+	word_t flags;
+	};
 
 #define ROMFH_TYPE 7
 #define ROMFH_HRD 0
@@ -52,17 +50,4 @@ struct romfs_inode {
 #define ROMFH_FIF 7
 #define ROMFH_EXEC 8
 
-/* Alignment */
-
-#define ROMFH_SIZE 16
-#define ROMFH_PAD (ROMFH_SIZE-1)
-#define ROMFH_MASK (~((__u32)ROMFH_PAD))
-
-#ifdef __KERNEL__
-
-/* Not much now */
-extern int init_romfs_fs(void);
-
-#endif
-
-#endif
+#endif  /* !_LINUXMT_ROMFS_FS_H */
