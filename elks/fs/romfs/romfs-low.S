@@ -46,7 +46,7 @@ _romfs_super_get:
 
 
 ; Get inode from index
-# int romfs_inode_get (word_t index, byte_t *);
+; int romfs_inode_get (word_t index, byte_t *);
 ; TODO: add argument with size of destination buffer
 
 _romfs_inode_get:
@@ -111,12 +111,13 @@ inode_get_exit:
 
 
 ; Get data from block offset and position
-; int romfs_file_read (word_t offset, word_t pos, byte_t *, word_t size);
+; int romfs_file_read (word_t offset, word_t pos, word_t seg, byte_t * buf, word_t len);
 
 _romfs_file_read:
 
 	push  bp
 	mov   bp,sp
+	push  es
 	push  ds
 	push  di
 	push  si
@@ -127,8 +128,9 @@ _romfs_file_read:
 	mov   ds,ax
 
 	mov   si,[bp+6]   ; arg1: position in the block (in bytes)
-	mov   di,[bp+8]   ; arg2
-	mov   cx,[bp+10]  ; arg3
+	mov   es,[bp+8]   ; arg2: destination segment
+	mov   di,[bp+10]  ; arg3: destination offset
+	mov   cx,[bp+12]  ; arg4: bytes count
 
 	cld
 	rep
@@ -140,12 +142,13 @@ _romfs_file_read:
 	pop   si
 	pop   di
 	pop   ds
+	pop   es
 	pop   bp
 	ret
 
 
 ; Lookup inode name in directory block
-; int romfs_dir_lookup (word_t offset, char * name, byte_t len, word_t * index);
+; int romfs_dir_lookup (word_t offset, word_t seg, char * name, byte_t len, word_t * index);
 
 _romfs_dir_lookup:
 
@@ -175,7 +178,7 @@ dir_lookup_loop1:
 
 	lodsb             ; entry size
 	xor   ah,ah
-	cmp   ax,[bp+8]   ; arg2: name length
+	cmp   ax,[bp+10]   ; arg3: name length
 	jz    dir_lookup_next2
 	add   si,ax
 	jmp   dir_lookup_next3
@@ -187,13 +190,16 @@ dir_lookup_next2:
 
 	push  cx
 	push  si
-	mov   di,[bp+6]   ; arg1: name
+	push  es
+	mov   es,[bp+6]   ; arg1: name segment
+	mov   di,[bp+8]   ; arg2: name offset
 
 	cld
 	repz
 	cmpsb
 	jz    dir_lookup_next4
 
+	pop   es
 	pop   si
 	pop   cx
 	add   si,cx
@@ -210,10 +216,11 @@ dir_lookup_next3:
 dir_lookup_next4:
 
 	lodsw             ; inode index
+	pop   es
 	pop   si
 	pop   cx
 	pop   cx
-	mov   di,[bp+10]  ; arg3: pointer to index
+	mov   di,[bp+12]  ; arg4: pointer to index
 	seg   es
 	mov   [di],ax
 

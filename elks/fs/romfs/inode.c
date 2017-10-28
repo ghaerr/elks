@@ -44,16 +44,46 @@ static void romfs_statfs(struct super_block *sb, struct statfs *buf,
 #endif
 #endif
 
-static int romfs_strnlen(struct inode *i, loff_t offset, size_t count)
-{
-    return -1;
-}
 
-static int romfs_copyfrom(struct inode *i, char *dest, loff_t offset,
-			  size_t count)
-{
-	return -1;
-}
+/* File operations */
+
+static size_t romfs_read (struct inode * inode, struct file * filp, char * buf, size_t len)
+	{
+	size_t count;
+	struct romfs_inode_s ri;
+	int res;
+	seg_t ds;
+
+	while (1)
+		{
+		ino_t ino = inode->i_ino;
+		res = romfs_inode_get (ino, &ri);
+		if (res)
+			{
+			printk ("romfs: cannot read inode 0x%\n", (int) ino);
+			count = -1;
+			break;
+			}
+
+		/* ELKS trick: the destination buffer is in the current task data segment */
+		ds = current->t_regs.ds;
+
+		res = romfs_file_read (ri.offset, (word_t) filp->f_pos, ds, buf, (word_t) len);
+		if (res)
+			{
+			printk ("romfs: cannot read file\n");
+			count = -1;
+			break;
+			}
+
+		filp->f_pos += len;
+		count = len;
+		break;
+		}
+
+	return count;
+	}
+
 
 /* Directory operations */
 
@@ -123,8 +153,7 @@ static int romfs_lookup (struct inode * dir, char *name, size_t len,
 	struct romfs_inode_s ri;
 	ino_t ino;
 	struct inode * i;
-
-	printk ("romfs: lookup(): %s (%i)\n", name, len);
+	seg_t ds;
 
 	while (1)
 		{
@@ -137,8 +166,11 @@ static int romfs_lookup (struct inode * dir, char *name, size_t len,
 			break;
 			}
 
+		/* ELKS trick: the name is in the current task data segment */
+		ds = current->t_regs.ds;
+
 		ino = 0;
-		res = romfs_dir_lookup (ri.offset, name, (byte_t) len, &ino);
+		res = romfs_dir_lookup (ri.offset, ds, name, (byte_t) len, &ino);
 		if (res)
 			{
 			res = -ENOENT;
@@ -162,13 +194,16 @@ static int romfs_lookup (struct inode * dir, char *name, size_t len,
 	}
 
 
-static int romfs_readlink(struct inode *inode, char *buffer, size_t len)
+static int romfs_readlink (struct inode *inode, char *buffer, size_t len)
 {
     char buf[ROMFS_MAXFN];	/* XXX dynamic */
     size_t mylen;
 
     printk ("romfs: readlink()\n");
 
+    return -1;
+
+    /*
     if (!inode || !S_ISLNK(inode->i_mode)) {
 	iput(inode);
 	return -EBADF;
@@ -184,17 +219,14 @@ static int romfs_readlink(struct inode *inode, char *buffer, size_t len)
     memcpy_tofs(buffer, buf, mylen);
     iput(inode);
     return (int) mylen;
+    */
 }
 
 /* Mapping from our types to the kernel */
 
 static struct file_operations romfs_file_operations = {
     NULL,			/* lseek - default */
-#if 0
-    generic_file_read,		/* read */
-#else
-    NULL,			/* read */
-#endif
+    romfs_read,		/* read */
     NULL,			/* write - bad */
     NULL,			/* readdir */
     NULL,			/* select - default */
@@ -235,7 +267,7 @@ static struct file_operations romfs_dir_operations = {
     NULL,			/* lseek - default */
     NULL,			/* read */
     NULL,			/* write - bad */
-    romfs_readdir,		/* readdir */
+    romfs_readdir,	/* readdir */
     NULL,			/* select - default */
     NULL,			/* ioctl */
     NULL,			/* open */
@@ -304,8 +336,6 @@ static void romfs_read_inode (struct inode * i)
 		i->i_op = NULL;
 
 		ino = i->i_ino;
-		printk ("romfs: read_inode(): 0x%x\n", (int) ino);
-
 		err = romfs_inode_get (ino, &ri);
 		if (err)
 			{
@@ -380,8 +410,6 @@ static struct super_block * romfs_read_super (struct super_block * s, void * dat
 	struct romfs_superblock_s rsb;
 	struct inode * i;
 	int err;
-
-	printk ("romfs: read_super()\n");
 
 	while (1)
 		{

@@ -157,7 +157,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     len = (len + 15) & ~15L;
     if (len > (lsize_t) 0x10000L) goto error_exec4;
 
-    debug1("EXEC: Allocating %ld bytes for data segment\n", len);
+    debug1("EXEC: Allocating %lu bytes for data segment\n", len);
 
     dseg = mm_alloc((segext_t) (len >> 4));
     if (!dseg) goto error_exec4;
