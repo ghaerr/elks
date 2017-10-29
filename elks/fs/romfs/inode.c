@@ -10,19 +10,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/string.h>
-#include <linuxmt/debug.h>
 
-#include <arch/border.h>
-
-#define min(a,b)	( (a) < (b) ? (a) : (b) )
-
-
-#ifdef BLOAT_FS
-static void romfs_statfs(struct super_block *sb, struct statfs *buf,
-			 size_t bufsize);
-#endif
-
-/* That's simple too. */
 
 #ifdef BLOAT_FS
 #ifndef CONFIG_FS_RO
@@ -47,7 +35,8 @@ static void romfs_statfs(struct super_block *sb, struct statfs *buf,
 
 /* File operations */
 
-static size_t romfs_read (struct inode * inode, struct file * filp, char * buf, size_t len)
+static size_t romfs_read (struct inode * inode, struct file * filp,
+	char * buf, size_t len)
 	{
 	size_t count;
 	struct romfs_inode_s ri;
@@ -56,11 +45,9 @@ static size_t romfs_read (struct inode * inode, struct file * filp, char * buf, 
 
 	while (1)
 		{
-		ino_t ino = inode->i_ino;
-		res = romfs_inode_get (ino, &ri);
+		res = romfs_inode_get (inode->i_ino, &ri);
 		if (res)
 			{
-			printk ("romfs: cannot read inode 0x%\n", (int) ino);
 			count = -1;
 			break;
 			}
@@ -71,7 +58,6 @@ static size_t romfs_read (struct inode * inode, struct file * filp, char * buf, 
 		res = romfs_file_read (ri.offset, (word_t) filp->f_pos, ds, buf, (word_t) len);
 		if (res)
 			{
-			printk ("romfs: cannot read file\n");
 			count = -1;
 			break;
 			}
@@ -87,62 +73,56 @@ static size_t romfs_read (struct inode * inode, struct file * filp, char * buf, 
 
 /* Directory operations */
 
-static int romfs_readdir (struct inode *i, struct file *filp,
-	void *dirent, filldir_t filldir)
+static int romfs_readdir (struct inode * i, struct file * filp,
+	void * dirent, filldir_t filldir)
 	{
-    printk ("romfs: readdir()\n");
-	/*
-    char fsname[ROMFS_MAXFN];
+    char name [ROMFS_MAXFN];
+    byte_t len;
     struct romfs_inode_s ri;
-    long int j;
-    unsigned long int nextfh;
-    loff_t offset, maxoff;
-    ino_t ino;
+    word_t pos;
+    int res;
+    seg_t ds;
     int stored = 0;
 
-    printk ("romfs: readdir()\n");
+	while (1)
+		{
+		res = romfs_inode_get (i->i_ino, &ri);
+		if (res) break;
 
-    if (!i || !S_ISDIR(i->i_mode)) return -EBADF;
+		pos = filp->f_pos;
+		if (!pos) pos += 2;  /* skip entry count */
 
-    maxoff = (loff_t) i->i_sb->u.romfs_sb.s_maxsize;
+		while (1)
+			{
+			if (pos >= ri.size)
+				{
+				pos = -1;
+				filp->f_pos = pos;
+				break;
+				}
 
-    offset = filp->f_pos;
-    if (!offset) {
-	offset = (loff_t) (i->i_ino & ROMFH_MASK);
-	if (romfs_copyfrom(i, (char *)(&ri), offset, (size_t) ROMFH_SIZE) <= 0)
-	    return stored;
-	offset = (loff_t) ntohl(ri.spec) & ROMFH_MASK;
-    }
+			res = romfs_file_read (ri.offset, pos, 0, &len, 1);
+			if (res) break;
 
-    /* Not really failsafe, but we are read-only... */
-    /*for (;;) {
-	if (!offset || offset >= maxoff) {
-	    offset = 0xffffffff;
-	    filp->f_pos = offset;
-	    return stored;
-	}
-	filp->f_pos = offset;*/
+			if (!len || len >= ROMFS_MAXFN) break;
 
-	/* Fetch inode info */
-	/*if (romfs_copyfrom(i, (char *)(&ri), offset, (size_t) ROMFH_SIZE) <= 0)
-	    return stored;
+			res = romfs_file_read (ri.offset, pos + 1, 0, name, (word_t) len);
+			if (res) break;
 
-	j = romfs_strnlen(i, offset + ROMFH_SIZE, (size_t) sizeof(fsname) - 1);
-	if (j < 0)
-	    return stored;
+			name [len] = 0;
 
-	fsname[j] = 0;
-	romfs_copyfrom(i, fsname, offset + ROMFH_SIZE, (size_t) j);
+			pos += 3 + len;  /* name len and inode index */
+			filp->f_pos = pos;
 
-	ino = (ino_t) offset;
-	nextfh = ntohl(ri.next);
-	if ((nextfh & ROMFH_TYPE) == ROMFH_HRD) ino = (ino_t) ntohl(ri.spec);
-	if (filldir(dirent, fsname, j, offset, ino) < 0) return stored;
-	stored++;
-	offset = (loff_t) nextfh & ROMFH_MASK;
-    }*/
+			res = filldir (dirent, name, len, pos, i->i_ino);
+			if (res < 0) break;
+			stored++;
+			}
 
-	return -1;
+		break;
+		}
+
+	return stored;
 	}
 
 
@@ -326,21 +306,16 @@ static struct inode_operations *romfs_inode_ops [] =
 
 static void romfs_read_inode (struct inode * i)
 	{
-	struct romfs_inode_s ri;
-	ino_t ino;
 	int err;
+	struct romfs_inode_s ri;
+	mode_t m;
 
 	while (1)
 		{
 		i->i_op = NULL;
 
-		ino = i->i_ino;
-		err = romfs_inode_get (ino, &ri);
-		if (err)
-			{
-			printk ("romfs: cannot read inode 0x%\n", (int) ino);
-			break;
-			}
+		err = romfs_inode_get (i->i_ino, &ri);
+		if (err) break;
 
 		i->i_nlink = 1;		/* TODO: compute link count in mkromfs */
 		i->i_size = ri.size;
@@ -351,22 +326,15 @@ static void romfs_read_inode (struct inode * i)
 
 		/* Compute inode mode (type & permissions) */
 
-		ino = (ino_t) (S_IRUGO | S_IXUGO);
-		ino |= romfs_modemap [ri.flags & ROMFH_TYPE];
-		i->i_mode = (__u16) ino;
+		m = S_IRUGO | S_IXUGO | romfs_modemap [ri.flags & ROMFH_TYPE];
 
-#ifdef NOT_YET
-		if (S_ISFIFO(ino)) init_fifo(i);
-#endif
-
-		if (S_ISDIR(ino)) i->i_size = 1 /*i->u.romfs_i.i_metasize*/; /* what's that ? */
-		else if (S_ISBLK(ino) || S_ISCHR(ino))
+		if (S_ISBLK (m) || S_ISCHR (m))
 			{
-			i->i_mode |= S_IWUGO;
-			i->i_mode &= ~S_IXUGO;
+			m = (m & ~S_IXUGO) | S_IWUGO;
 			i->i_rdev = (kdev_t) ri.offset;
 			}
 
+		i->i_mode = m;
 		break;
 		}
 	}

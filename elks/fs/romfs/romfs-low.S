@@ -127,8 +127,14 @@ _romfs_file_read:
 	add   ax,#CONFIG_ROMFS_BASE
 	mov   ds,ax
 
+	mov   ax,[bp+8]   ; arg2: destination segment (or 0 for current ES)
+	test  ax,ax
+	jz    file_read_next1
+	mov   es,ax
+
+file_read_next1:
+
 	mov   si,[bp+6]   ; arg1: position in the block (in bytes)
-	mov   es,[bp+8]   ; arg2: destination segment
 	mov   di,[bp+10]  ; arg3: destination offset
 	mov   cx,[bp+12]  ; arg4: bytes count
 

@@ -205,7 +205,6 @@ struct iattr {
     time_t			ia_ctime;
 };
 
-#include <linuxmt/romfs_fs_i.h>
 
 struct inode {
 
@@ -249,7 +248,6 @@ struct inode {
     union {
 	struct pipe_inode_info	pipe_i;
 	struct minix_inode_info	minix_i;
-	struct romfs_inode_info	romfs_i;
 #ifdef CONFIG_MSDOS_FS	
 	struct msdos_inode_info msdos_i;
 #endif	
