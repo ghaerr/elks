@@ -22,6 +22,8 @@
 #include <linuxmt/msdos_fs_sb.h>
 #endif
 
+#define USE_GETBLK
+
 /*  It's silly to have NR_OPEN bigger than NR_FILE, but I'll fix that later.
  *  Anyway, now the file code is no longer dependent on bitmaps in unsigned
  *  longs, but uses the new fd_set structure..
@@ -345,8 +347,8 @@ struct inode_operations {
     int 			(*readlink) ();
     int 			(*follow_link) ();
 
-#ifdef BLOAT_FS
-    int 			(*bmap) ();
+#ifdef USE_GETBLK
+    struct buffer_head *	(*getblk) ();
 #endif
 
     void			(*truncate) ();

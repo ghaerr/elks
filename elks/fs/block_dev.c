@@ -18,6 +18,7 @@
 
 #include <arch/segment.h>
 #include <arch/system.h>
+#ifndef USE_GETBLK
 
 static int blk_rw(struct inode *inode, register struct file *filp,
 		  char *buf, size_t count, int wr)
@@ -95,4 +96,5 @@ size_t block_write(struct inode *inode, struct file *filp,
     return blk_rw(inode, filp, buf, count, BLOCK_WRITE);
 }
 
+#endif
 #endif

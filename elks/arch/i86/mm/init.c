@@ -26,36 +26,50 @@
  *	INITSEG:0x01ff	- AA if psmouse present
  */
 
-char cpuid[17], proc_name[17];
+char proc_name[16];
 __u16 kernel_cs, kernel_ds;
 
 void setup_mm(seg_t start, seg_t end)
 {
     register char *pi;
+    register char *cp;
 
-    pi = 0;
+    pi = (char *)0x30;
+    cp = proc_name;
     do {
-	proc_name[(int)pi] = setupb(0x30 + (int)pi);
-	cpuid[(int)pi] = setupb(0x50 + (int)pi);
-    } while ((int)(++pi) < 16);
-    proc_name[16] = cpuid[16] = '\0';
+	*cp++ = setupb((int)pi++);
+
+#ifndef CONFIG_ARCH_SIBO
+
+	if((int)pi == 0x40) {
+	    printk("PC/%cT class machine, %s CPU\n%uK base RAM",
+		    arch_cpu > 5 ? 'A' : 'X', proc_name, setupw(0x2a));
+	    cp = proc_name;
+	    pi = 0x50;
+	}
+
+#endif
+
+    } while ((int)pi <
+#ifndef CONFIG_ARCH_SIBO
+			0x5D);
+#else
+			0x40);
+#endif
 
 #ifdef CONFIG_ARCH_SIBO
 
     printk("Psion Series 3a machine, %s CPU\n%uK base"
-	   ", CPUID `NEC V30'",
-	   proc_name, basemem);
+	    ", CPUID `NEC V30'", proc_name, basemem);
 
 #else
 
-    printk("PC/%cT class machine, %s CPU\n%uK base RAM",
-	   arch_cpu > 5 ? 'A' : 'X', proc_name, setupw(0x2a));
 #ifdef CONFIG_XMS
     if (arch_cpu >= 6)		/* XT bios hasn't got xms interrupt */
 	printk(", %uK extended memory (XMS)", setupw(2)); /* Fetched by boot code */
 #endif
-    if (*cpuid)
-	printk(", CPUID `%s'", cpuid);
+    if (*proc_name)
+	printk(", CPUID `%s'", proc_name);
 
 #endif
 

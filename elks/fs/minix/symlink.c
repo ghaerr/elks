@@ -100,8 +100,8 @@ struct inode_operations minix_symlink_inode_operations = {
     NULL,			/* mknod */
     minix_readlink,		/* readlink */
     minix_follow_link,		/* follow_link */
-#ifdef BLOAT_FS
-    NULL,			/* bmap */
+#ifdef USE_GETBLK
+    NULL,			/* getblk */
 #endif
     NULL,			/* truncate */
 #ifdef BLOAT_FS

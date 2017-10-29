@@ -19,29 +19,29 @@ As of now I have implemented a new format which locates the stack below
 the data and bss in reserved space at the bottom of the data segment,
 and allows the heap to grow up indefinitely providing support for growing
 holes is available in the mm code. This format uses already existing
-features of the minix header to indicate the ammount of reserved space,
+features of the minix header to indicate the amount of reserved space,
 and should be possible to add to the compiler tool chain with only minor
 changes.
 
-Here is a diagram representing the new format
+Here is a diagram representing the new format (env is the environment)
 
-       current->t_begstack               current->t_endseg
-                v                                 v
-+---------------+-------------+-------------------+
-|  | <--- stack |  data + bss |   heap ---> |     |
-+---------------+-------------+-------------------+
-^                             ^                   ^
-0x0                current->t_enddata    current->t_endbrk
+   current->t_begstack                       current->t_endseg
+            v                                         v
++------------------+------------+---------------------+
+|  |<--stack|  env | data + bss |     heap --> |      |
++------------------+------------+---------------------+
+^                               ^              ^
+0x0                    current->t_enddata  current->t_endbrk
 
 and here is how the new labels apply to the old format
 
-                                                   current->t_begstack
-                                                            v
-+------------+----------------------------------------------+
-| data + bss |  heap ---> |                      <--- stack |
-+------------+----------------------------------------------+
-^            ^            ^                                 ^
-0x0  current->t_enddata  current->t_endbrk         current->t_endseg
+                                           current->t_begstack
+                                                    v
++------------+--------------------------------------------+
+| data + bss |  heap ----> |            |<--- stack | env |
++------------+--------------------------------------------+
+^            ^             ^                              ^
+0x0  current->t_enddata  current->t_endbrk       current->t_endseg
 
 A check for what type a binary is can be done by checking if t_begstack
 (stack pointer at the start of the process is) is greater than t_enddata.

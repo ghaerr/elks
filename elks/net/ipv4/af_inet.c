@@ -26,6 +26,7 @@
 extern char tdin_buf[];
 extern short bufin_sem, bufout_sem;
 extern int tcpdev_inetwrite();
+extern char *get_tdout_buf();
 
 int inet_process_tcpdev(register char *buf, int len)
 {
@@ -70,20 +71,21 @@ static int inet_dup(struct socket *newsock, struct socket *oldsock)
 
 static int inet_release(struct socket *sock, struct socket *peer)
 {
-    struct tdb_release cmd;
+    register struct tdb_release *cmd;
     int ret;
 
     debug1("inet_release(sock: 0x%x)\n", sock);
-    cmd.cmd = TDC_RELEASE;
-    cmd.sock = sock;
-    ret = tcpdev_inetwrite(&cmd, sizeof(struct tdb_release));
+    cmd = (struct tdb_release *)get_tdout_buf();
+    cmd->cmd = TDC_RELEASE;
+    cmd->sock = sock;
+    ret = tcpdev_inetwrite(cmd, sizeof(struct tdb_release));
     return (ret >= 0 ? 0 : ret);
 }
 
 static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 		     size_t sockaddr_len)
 {
-    struct tdb_bind cmd;
+    register struct tdb_bind *cmd;
     int ret;
 
     debug1("inet_bind(sock: 0x%x)\n", sock);
@@ -92,11 +94,12 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 
     /* TODO : Check if the user has permision to bind the port */
 
-    cmd.cmd = TDC_BIND;
-    cmd.sock = sock;
-    memcpy_fromfs(&cmd.addr, addr, sockaddr_len);
+    cmd = (struct tdb_bind *)get_tdout_buf();
+    cmd->cmd = TDC_BIND;
+    cmd->sock = sock;
+    memcpy_fromfs(&cmd->addr, addr, sockaddr_len);
 
-    tcpdev_inetwrite(&cmd, sizeof(struct tdb_bind));
+    tcpdev_inetwrite(cmd, sizeof(struct tdb_bind));
 
     /* Sleep until tcpdev has news */
     while (bufin_sem == 0)
@@ -108,10 +111,10 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 }
 
 static int inet_connect(register struct socket *sock,
-			register struct sockaddr *uservaddr,
+			struct sockaddr *uservaddr,
 			size_t sockaddr_len, int flags)
 {
-    struct tdb_connect cmd;
+    register struct tdb_connect *cmd;
     int ret;
 
     debug1("inet_connect(sock: 0x%x)\n", sock);
@@ -119,7 +122,8 @@ static int inet_connect(register struct socket *sock,
     if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
         return -EINVAL;
 
-    if (((struct sockaddr_in *)uservaddr)->sin_family != AF_INET)
+    memcpy_fromfs(&ret, uservaddr, 2);
+    if (ret != AF_INET)
         return -EINVAL;
 
     if (sock->state == SS_CONNECTING)
@@ -128,11 +132,12 @@ static int inet_connect(register struct socket *sock,
 /*    if (sock->state == SS_CONNECTED)
         return -EISCONN;*/	/*Already checked in socket.c*/
 
-    cmd.cmd = TDC_CONNECT;
-    cmd.sock = sock;
-    memcpy_fromfs(&cmd.addr, uservaddr, sockaddr_len);
+    cmd = (struct tdb_connect *)get_tdout_buf();
+    cmd->cmd = TDC_CONNECT;
+    cmd->sock = sock;
+    memcpy_fromfs(&cmd->addr, uservaddr, sockaddr_len);
 
-    tcpdev_inetwrite(&cmd, sizeof(struct tdb_connect));
+    tcpdev_inetwrite(cmd, sizeof(struct tdb_connect));
 
     /* Sleep until tcpdev has news */
     while (bufin_sem == 0)
@@ -152,15 +157,16 @@ static int inet_connect(register struct socket *sock,
 
 static int inet_listen(register struct socket *sock, int backlog)
 {
-    struct tdb_listen cmd;
+    register struct tdb_listen *cmd;
     int ret;
 
     debug1("inet_listen(socket : 0x%x)\n", sock);
-    cmd.cmd = TDC_LISTEN;
-    cmd.sock = sock;
-    cmd.backlog = backlog;
+    cmd = (struct tdb_listen *)get_tdout_buf();
+    cmd->cmd = TDC_LISTEN;
+    cmd->sock = sock;
+    cmd->backlog = backlog;
 
-    tcpdev_inetwrite(&cmd, sizeof(struct tdb_listen));
+    tcpdev_inetwrite(cmd, sizeof(struct tdb_listen));
 
     /* Sleep until tcpdev has news */
     while (bufin_sem == 0) {
@@ -176,18 +182,19 @@ static int inet_listen(register struct socket *sock, int backlog)
 }
 
 static int inet_accept(register struct socket *sock,
-		       register struct socket *newsock, int flags)
+		       struct socket *newsock, int flags)
 {
-    struct tdb_accept cmd;
+    register struct tdb_accept *cmd;
     int ret;
 
     debug2("inet_accept(sock: 0x%x newsock: 0x%x)\n", sock, newsock);
-    cmd.cmd = TDC_ACCEPT;
-    cmd.sock = sock;
-    cmd.newsock = newsock;
-    cmd.nonblock = flags & O_NONBLOCK;
+    cmd = (struct tdb_accept *)get_tdout_buf();
+    cmd->cmd = TDC_ACCEPT;
+    cmd->sock = sock;
+    cmd->newsock = newsock;
+    cmd->nonblock = flags & O_NONBLOCK;
 
-    tcpdev_inetwrite(&cmd, sizeof(struct tdb_accept));
+    tcpdev_inetwrite(cmd, sizeof(struct tdb_accept));
 
     /* Sleep until tcpdev has news */
     while (bufin_sem == 0) {
@@ -214,8 +221,7 @@ static int inet_accept(register struct socket *sock,
 static int inet_read(register struct socket *sock, char *ubuf, int size,
 		     int nonblock)
 {
-    register struct tdb_return_data *r;
-    struct tdb_read cmd;
+    register struct tdb_read *cmd;
     int ret;
 
     debug3("inet_read(socket: 0x%x size:%d nonblock: %d)\n", sock, size,
@@ -223,11 +229,12 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
 
     if (size > TCPDEV_MAXREAD)
 	size = TCPDEV_MAXREAD;
-    cmd.cmd = TDC_READ;
-    cmd.sock = sock;
-    cmd.size = size;
-    cmd.nonblock = nonblock;
-    tcpdev_inetwrite(&cmd, sizeof(struct tdb_read));
+    cmd = (struct tdb_read *)get_tdout_buf();
+    cmd->cmd = TDC_READ;
+    cmd->sock = sock;
+    cmd->size = size;
+    cmd->nonblock = nonblock;
+    tcpdev_inetwrite(cmd, sizeof(struct tdb_read));
 
     /* Sleep until tcpdev has news and we have a lock on the buffer */
     while (bufin_sem == 0)
@@ -235,11 +242,10 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
 
     down(&sock->sem);
 
-    r = (struct tdb_return_data *)tdin_buf;
-    ret = r->ret_value;
+    ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
 
     if (ret > 0) {
-        memcpy_tofs(ubuf, &r->data, (size_t) ret);
+        memcpy_tofs(ubuf, &((struct tdb_return_data *)tdin_buf)->data, (size_t) ret);
         sock->avail_data = 0;
     }
 
@@ -253,8 +259,8 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
 static int inet_write(register struct socket *sock, char *ubuf, int size,
 		      int nonblock)
 {
-    struct tdb_write cmd;
-    int ret, todo;
+    register struct tdb_write *cmd;
+    int ret, usize, count;
 
     debug3("inet_write(socket: 0x%x size:%d nonblock: %d)\n", sock, size,
 	   nonblock);
@@ -267,18 +273,18 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
     if (sock->state != SS_CONNECTED)
         return -EINVAL;
 
-    cmd.cmd = TDC_WRITE;
-    cmd.sock = sock;
-    cmd.size = size;
-    cmd.nonblock = nonblock;
+    count = size;
+    while (count) {
+	cmd = (struct tdb_write *)get_tdout_buf();
+	cmd->cmd = TDC_WRITE;
+	cmd->sock = sock;
+	cmd->nonblock = nonblock;
 
-    todo = size;
-    while (todo) {
-        cmd.size = todo > TDB_WRITE_MAX ? TDB_WRITE_MAX : todo;
+        cmd->size = count > TDB_WRITE_MAX ? TDB_WRITE_MAX : count;
 
-        memcpy_fromfs(cmd.data, ubuf + size - todo, (size_t) cmd.size);
-        tcpdev_inetwrite(&cmd, sizeof(struct tdb_write));
-        todo -= cmd.size;
+        memcpy_fromfs(cmd->data, ubuf, (size_t) cmd->size);
+	usize = cmd->size;
+        tcpdev_inetwrite(cmd, sizeof(struct tdb_write));
 
 	/* Sleep until tcpdev has news and we have a lock on the buffer */
         while (bufin_sem == 0) {
@@ -290,10 +296,13 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 	if (ret < 0) {
             if (ret == -ERESTARTSYS) {
                 schedule();
-                todo += cmd.size;
             } else
                 return ret;
         }
+        else {
+	    count -= usize;
+	    ubuf += usize;
+	}
     }
 
     return size;
