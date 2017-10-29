@@ -111,11 +111,12 @@ static int romfs_readdir (struct inode * i, struct file * filp,
 
 			name [len] = 0;
 
+			res = filldir (dirent, name, len, pos, i->i_ino);
+			if (res < 0) break;
+
 			pos += 3 + len;  /* name len and inode index */
 			filp->f_pos = pos;
 
-			res = filldir (dirent, name, len, pos, i->i_ino);
-			if (res < 0) break;
 			stored++;
 			}
 

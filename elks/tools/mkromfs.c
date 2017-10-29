@@ -213,14 +213,16 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 					break;
 					}
 
-				if (S_ISREG (child_stat.st_mode))
+				mode_t mode = child_stat.st_mode;
+
+				if (S_ISREG (mode))
 					{
 					printf ("File:   %s\n", child_path);
 					child_inode->flags = INODE_FILE;
 					child_inode->size = child_stat.st_size;
 					}
 
-				else if (S_ISDIR (child_stat.st_mode))
+				else if (S_ISDIR (mode))
 					{
 					printf ("Dir:    %s\n", child_path);
 					child_inode->flags = INODE_DIR;
@@ -228,18 +230,19 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 					if (err) break;
 					}
 
-				else if (S_ISCHR (child_stat.st_mode))
+				else if (S_ISCHR (mode))
 					{
 					printf ("Char:   %s\n", child_path);
 					child_inode->flags = INODE_CHAR;
-					child_inode->dev = child_stat.st_rdev;
-					child_inode->size = 0;
+					goto char_block_inode;
 					}
 
-				else if (S_ISBLK (child_stat.st_mode))
+				else if (S_ISBLK (mode))
 					{
 					printf ("Block:  %s\n", child_path);
 					child_inode->flags = INODE_BLOCK;
+
+					char_block_inode:
 					child_inode->dev = child_stat.st_rdev;
 					child_inode->size = 0;
 					}

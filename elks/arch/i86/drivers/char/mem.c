@@ -288,26 +288,6 @@ static struct file_operations kmem_fops = {
 #endif
 };
 
-/* The ROM memory character device is just a placeholder
- * to tell ELKS to load root FS from ROMFS at boot time
- */
-static struct file_operations rom_fops = {
-	NULL,  /* lseek */
-	NULL,  /* read */
-	NULL,  /* write */
-	NULL,  /* readdir */
-	NULL,  /* select */
-	NULL,  /* ioctl */
-	NULL,  /* open */
-	NULL   /* release */
-#ifdef BLOAT_FS
-	,
-	NULL,  /* fsync */
-	NULL,  /* check_media_change */
-	NULL   /* revalidate */
-#endif
-};
-
 /*
  * memory device open multiplexor
  */
@@ -332,8 +312,7 @@ int memory_open(register struct inode *inode, struct file *filp)
 	"urandom",
 	"aio",
 	"kmsg",
-	"???",  /* OBSOLETE oldmem */
-	"rom"
+	"???"   /* OBSOLETE oldmem */
     };
 #endif
     static struct file_operations *mdev_fops[] = {
@@ -354,8 +333,7 @@ int memory_open(register struct inode *inode, struct file *filp)
 	NULL,		/* DEV_URANDOM_MINOR */
 	NULL,		/* none */
 	NULL,		/* none */
-	NULL,		/* none */
-	&rom_fops	/* DEV_ROM_MINOR */
+	NULL		/* none */
     };
     unsigned int minor;
 

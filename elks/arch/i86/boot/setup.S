@@ -221,11 +221,11 @@ start_os:
 	mov	ax,#INITSEG       ;datasegment setup.S
 	mov	ds,ax
 
-; The root device is obviously /dev/rom
+; The root device is obviously /dev/rom0
 ; when setup starts in ROM / Flash memory
 
 #ifdef CONFIG_ROMCODE
-	mov [0x01FC], #0x010D
+	mov [0x01FC], #0x1F00
 #endif
 
 ! Get memory size (extended mem, kB)
