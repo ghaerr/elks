@@ -39,15 +39,10 @@ struct romfs_inode_s
 	word_t flags;
 	};
 
-#define ROMFH_TYPE 7
-#define ROMFH_HRD 0
+#define ROMFH_TYPE 3
+#define ROMFH_REG 0
 #define ROMFH_DIR 1
-#define ROMFH_REG 2
-#define ROMFH_SYM 3
-#define ROMFH_BLK 4
-#define ROMFH_CHR 5
-#define ROMFH_SCK 6
-#define ROMFH_FIF 7
-#define ROMFH_EXEC 8
+#define ROMFH_CHR 2
+#define ROMFH_BLK 3
 
 #endif  /* !_LINUXMT_ROMFS_FS_H */

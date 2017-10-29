@@ -33,8 +33,10 @@ typedef struct super_disk_s super_disk_t;
 
 /* INode on disk (actually in ROM) */
 
-#define INODE_FILE 0x0001
-#define INODE_DIR  0x0002
+#define INODE_FILE  0x0000
+#define INODE_DIR   0x0001
+#define INODE_CHAR  0x0002
+#define INODE_BLOCK 0x0003
 
 struct inode_disk_s
 	{
@@ -55,6 +57,7 @@ struct inode_build_s
 	char * path;
 	word_t index;
 
+	word_t dev;           /* major & minor for device */
 	word_t flags;
 	addr_t offset;
 	addr_t size;
@@ -225,8 +228,25 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 					if (err) break;
 					}
 
+				else if (S_ISCHR (child_stat.st_mode))
+					{
+					printf ("Char:   %s\n", child_path);
+					child_inode->flags = INODE_CHAR;
+					child_inode->dev = child_stat.st_rdev;
+					child_inode->size = 0;
+					}
+
+				else if (S_ISBLK (child_stat.st_mode))
+					{
+					printf ("Block:  %s\n", child_path);
+					child_inode->flags = INODE_BLOCK;
+					child_inode->dev = child_stat.st_rdev;
+					child_inode->size = 0;
+					}
+
 				else
 					{
+					/* Unsupported inode type */
 					assert (0);
 					}
 				}
@@ -423,12 +443,13 @@ static int compile_fs ()
 			{
 			inode_build->offset = offset;
 
-			if (inode_build->flags & INODE_DIR)
+			if (inode_build->flags == INODE_DIR)
 				{
 				printf ("Dir:    %s\n", inode_build->path);
 				err = compile_dir (fd, inode_build);
 				}
-			else if (inode_build->flags & INODE_FILE)
+
+			else if (inode_build->flags == INODE_FILE)
 				{
 				printf ("File:   %s\n", inode_build->path);
 				err = compile_file (fd, inode_build);
@@ -485,16 +506,36 @@ static int compile_fs ()
 			inode_disk_t inode_disk;
 			memset (&inode_disk, 0, sizeof (inode_disk_t));
 
-			inode_disk.flags = inode_build->flags;
+			word_t flags = inode_build->flags;
+			inode_disk.flags = flags;
 
-			/* TODO: replace assert() by error */
-			assert (inode_build->offset < 0x100000);
-			assert ((inode_build->offset & 0xF) == 0);
-			inode_disk.offset = (inode_build->offset >> 4);  /* in paragraphs */
+			if (flags == INODE_FILE || flags == INODE_DIR)
+				{
+				/* TODO: replace assert() by error */
+				assert (inode_build->size < 0x10000);
+				word_t size = inode_build->size;
+				inode_disk.size = size;
 
-			/* TODO: replace assert() by error */
-			assert (inode_build->size < 0x10000);
-			inode_disk.size = inode_build->size;
+				if (size)
+					{
+					/* TODO: replace assert() by error */
+					assert (inode_build->offset < 0x100000);
+					assert ((inode_build->offset & 0xF) == 0);
+					inode_disk.offset = (inode_build->offset >> 4);  /* in paragraphs */
+					}
+				}
+
+			else if (flags == INODE_CHAR || flags == INODE_BLOCK)
+				{
+				/* Data block offset holds the device major & minor */
+				inode_disk.offset = inode_build->dev;
+				}
+
+			else
+				{
+				/* Unsupported inode type */
+				assert (0);
+				}
 
 			int count = write (fd, &inode_disk, sizeof (inode_disk_t));
 			if (count != sizeof (inode_disk_t))

@@ -307,22 +307,21 @@ static struct inode_operations romfs_dirlink_inode_operations = {
 };
 
 
-static mode_t romfs_modemap[] = {
-    0, S_IFREG, S_IFDIR, S_IFLNK + 0777,
-    S_IFBLK, S_IFCHR, S_IFSOCK, S_IFIFO
-};
+static mode_t romfs_modemap [] =
+	{
+	S_IFREG,
+	S_IFDIR,
+	S_IFCHR,
+	S_IFBLK
+	};
 
-
-static struct inode_operations *romfs_inode_ops[] = {
-    NULL,			/* hardlink, handled elsewhere */
-    &romfs_file_inode_operations,
-    &romfs_dirlink_inode_operations,
-    &romfs_dirlink_inode_operations,
-    &blkdev_inode_operations,	/* standard handlers */
-    &chrdev_inode_operations,
-    NULL,			/* socket */
-    NULL			/* fifo */
-};
+static struct inode_operations *romfs_inode_ops [] =
+	{
+	&romfs_file_inode_operations,
+	&romfs_dirlink_inode_operations,
+	&chrdev_inode_operations,  /* standard handler */
+	&blkdev_inode_operations   /* standard handler */
+	};
 
 
 static void romfs_read_inode (struct inode * i)
@@ -363,9 +362,9 @@ static void romfs_read_inode (struct inode * i)
 		if (S_ISDIR(ino)) i->i_size = 1 /*i->u.romfs_i.i_metasize*/; /* what's that ? */
 		else if (S_ISBLK(ino) || S_ISCHR(ino))
 			{
-			i->i_mode &= ~(S_IRWXG | S_IRWXO);
-			/*ino = (ino_t) ntohl(ri.spec);*/
-			i->i_rdev = (kdev_t) MKDEV(ino >> 16, ino & 0xffff);
+			i->i_mode |= S_IWUGO;
+			i->i_mode &= ~S_IXUGO;
+			i->i_rdev = (kdev_t) ri.offset;
 			}
 
 		break;
@@ -422,7 +421,7 @@ static struct super_block * romfs_read_super (struct super_block * s, void * dat
 			break;
 			}
 
-		s->s_flags |= MS_RDONLY;
+		/*s->s_flags |= MS_RDONLY;*/
 		s->s_op = &romfs_ops;
 
 #ifdef BLOAT_FS
