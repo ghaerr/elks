@@ -37,27 +37,36 @@ static void romfs_statfs(struct super_block *sb, struct statfs *buf,
 
 static size_t romfs_read (struct inode * inode, struct file * filp,
 	char * buf, size_t len)
-	{
+{
 	size_t count;
 	struct romfs_inode_s ri;
 	int res;
 	seg_t ds;
 
-	while (1)
-		{
+	while (1) {
 		res = romfs_inode_get (inode->i_ino, &ri);
-		if (res)
-			{
+		if (res) {
 			count = -1;
 			break;
-			}
+		}
+
+		/* Some programs do not check the size and read until EOF (cat) */
+		/* Limit the length in such case */
+
+		if (filp->f_pos >= ri.size) {
+			count = 0;
+			break;
+		}
+
+		if (filp->f_pos + len > ri.size) {
+			len = ri.size - filp->f_pos;
+		}
 
 		/* ELKS trick: the destination buffer is in the current task data segment */
 		ds = current->t_regs.ds;
 
 		res = romfs_file_read (ri.offset, (word_t) filp->f_pos, ds, buf, (word_t) len);
-		if (res)
-			{
+		if (res) {
 			count = -1;
 			break;
 			}
@@ -65,10 +74,10 @@ static size_t romfs_read (struct inode * inode, struct file * filp,
 		filp->f_pos += len;
 		count = len;
 		break;
-		}
+	}
 
 	return count;
-	}
+}
 
 
 /* Directory operations */

@@ -72,15 +72,6 @@ void start_kernel(void)
      */
     while (1){
         schedule();
-
-        /* Still scheduled ? Means we have nothing to do */
-        /* So halt the processor until next interrupt */
-        /* Will save much power */
-
-#asm
-hlt
-#endasm
-
     }
 }
 
