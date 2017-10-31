@@ -152,7 +152,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	filp->f_pos += mh.tseg;
     }
 
-    debug1("EXEC: Allocating %ld bytes for data segment\n", len);
+    debug1("EXEC: Allocating %lu bytes for data segment\n", len);
 
     retval = -ENOMEM;
     dseg = mm_alloc((segext_t) (len >> 4));

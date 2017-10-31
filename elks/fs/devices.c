@@ -22,21 +22,11 @@ struct device_struct {
     struct file_operations *ds_fops;
 };
 
-static struct device_struct chrdevs[MAX_CHRDEV] = /*@i1@*/ {
-#ifdef CONFIG_DEV_NAMES
-    {NULL, NULL},
-#else
-    {NULL},
-#endif
-};
+/* No initializer to put it in the BSS section (zero'ed at loading) */
+static struct device_struct chrdevs[MAX_CHRDEV];
 
-static struct device_struct blkdevs[MAX_BLKDEV] = /*@i1@*/ {
-#ifdef CONFIG_DEV_NAMES
-    {NULL, NULL},
-#else
-    {NULL},
-#endif
-};
+/* No initializer to put it in the BSS section (zero'ed at loading) */
+static struct device_struct blkdevs[MAX_BLKDEV];
 
 struct file_operations *get_blkfops(unsigned int major)
 {

@@ -36,7 +36,11 @@ include $(BASEDIR)/Makefile-rules
 ifeq ($(CONFIG_ARCH_SIBO), y)
 OBJS  = init.o genhd.o ll_rw_blk.o rd.o sibo_ssd.o ssd_asm.o
 else
+ifeq ($(CONFIG_ROMFS_FS), y)
+OBJS  = init.o genhd.o ll_rw_blk.o rd.o doshd.o floppy.o directhd.o romflash.o
+else
 OBJS  = init.o genhd.o ll_rw_blk.o rd.o doshd.o floppy.o directhd.o
+endif
 
 endif
 

@@ -1,4 +1,9 @@
 #
+# IDE local settings
+#
+.project
+
+#
 # Build ignores
 #
 #.*

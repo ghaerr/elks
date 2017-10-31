@@ -8,7 +8,7 @@
 /* limits */
 
 #define MAX_CHRDEV 10
-#define MAX_BLKDEV 8
+#define MAX_BLKDEV 32
 
 
 /*
@@ -28,6 +28,7 @@
  *  7 - mice
  *  8 - /dev/tcpdev
  *  9 - /dev/eth
+ * 31 - (none)                 /dev/rom0
  */
 
 
@@ -52,6 +53,7 @@
 #define BIOSHD_MAJOR      3
 #define MSCDEX_MAJOR      4
 #define ATHD_MAJOR        5
+#define ROMFLASH_MAJOR    31  /* as per Linux standard */
 
 
 #endif  /* !LX86_LINUXMT_MAJOR_H */

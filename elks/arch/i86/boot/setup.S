@@ -17,7 +17,7 @@
 ! some changes and additional features by Christoph Niemann,
 ! March 1993/June 1994 (Christoph.Niemann@linux.org)
 !
-! changes for ROM-Version (ELKS) by Christian Mardmöller
+! changes for ROM-Version (ELKS) by Christian Mardmoller
 ! Juni / 1999 chm@kdt.de
 !   This code is called after the BIOS-POST and replaces
 !   the BIOS OS/loader
@@ -215,12 +215,18 @@ good_sig:
 
 
 ;-------------------------------------------------------
-;-- from here the real loder starts
+;-- from here the real loader starts
 ;-------------------------------------------------------
 start_os:
 	mov	ax,#INITSEG       ;datasegment setup.S
 	mov	ds,ax
 
+; The root device is obviously /dev/rom0
+; when setup starts in ROM / Flash memory
+
+#ifdef CONFIG_ROMCODE
+	mov [0x01FC], #0x1F00
+#endif
 
 ! Get memory size (extended mem, kB)
 
@@ -331,7 +337,7 @@ no_psmouse:
 #ifdef CONFIG_ROMCODE
 ! We must now copy the kernel to RAM (SYSSEG)
 
-        mov ax,cs          ;string is in this codeseg
+	mov ax,cs          ;string is in this codeseg
 	mov ds,ax
 	lea si,load_kernel
 	call prtstr
@@ -390,7 +396,7 @@ size_error:
 size_ok:
         mov cx,[14]	   ; Check data section size
         or cx,cx
-        jnz size_error     ;.data zu groß
+        jnz size_error     ; .data section too big
 
 ;and now copy the kerneldata
    	mov si,[0x08]  ;code size

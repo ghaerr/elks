@@ -30,6 +30,10 @@
 
 #include "blk.h"
 
+#ifdef CONFIG_ROMFS_FS
+#include "romflash.h"
+#endif
+
 /*
  * The request-struct contains all necessary data
  * to load a number of sectors into memory
@@ -481,6 +485,10 @@ int blk_dev_init(void)
 
 #ifdef CONFIG_BLK_DEV_SSD
     ssd_init();
+#endif
+
+#ifdef CONFIG_ROMFS_FS
+    romflash_init ();
 #endif
 
     return 0;

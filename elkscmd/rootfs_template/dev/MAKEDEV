@@ -40,6 +40,9 @@ fi
 #	$MKDEV random	c 1 8
 #	$MKDEV urandom	c 1 9
 #	$MKDEV aio	c 1 10
+#	$MKDEV kmsg c 1 11
+#	$MKDEV oldmem c 1 12
+
 
 ##############################################################################
 # RAM disks.
@@ -251,6 +254,11 @@ fi
 
 #	$MKSET   0 63 $MKDEV hdc b 22
 #	$MKSET  64 63 $MKDEV hdd b 22
+
+##############################################################################
+# ROM / Flash memory card
+
+	$MKDEV rom0 b 0 31
 
 ##############################################################################
 # Direct IDE disks, Tertiary channel. These are not yet supported.

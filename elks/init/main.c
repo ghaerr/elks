@@ -105,7 +105,7 @@ static void init_task()
     num = sys_open("/dev/tty1", 2, 0);
 #endif
     if (num < 0)
-	printk("Unable to open /dev/tty (error %u)\n", -num);
+	printk("Unable to open /dev/tty1 (error %u)\n", -num);
 
 	if (sys_dup(num) != 1)
 	    printk("dup failed\n");
