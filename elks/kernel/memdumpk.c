@@ -9,7 +9,7 @@ void memdumpk(__u16 seg,__u16 off,size_t len)
     buffer[16] = '\0';
     while (len > 0) {
 	for (i=0; i<16; i++)
-	    buffer[i] = (char) peekb(seg,off++);
+	    buffer[i] = (char) peekb(off++, seg);
 	printk("%x:%x ", seg, off);
 	for (i=0; i<16; i++) {
 	    printk(" ");

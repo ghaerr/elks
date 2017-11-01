@@ -42,11 +42,13 @@ int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
 
 #if 0
 
+/* TODO: revisit this slow one - limit length with additional argument */
+
 int fstrlen(unsigned short int dseg, unsigned short int doff)
 {
     unsigned short int i = 0;
 
-    while (peekb(dseg, doff++))
+    while (peekb(doff++, dseg))
 	i++;
 
     return i;
@@ -70,8 +72,10 @@ void put_user_long(unsigned long int dv, void *dp)
 
 unsigned char get_user_char(void *dv)
 {
-    return peekb(current->t_regs.ds, (__u16)dv);
+    return peekb((word_t) dv, current->t_regs.ds);
 }
+
+/* TODO: revisit this one - use faster pokeb() */
 
 void put_user_char(unsigned char dv, void *dp)
 {

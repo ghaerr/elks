@@ -30,7 +30,7 @@ include $(BASEDIR)/Makefile-rules
 # Objects to be compiled.
 
 ifeq ($(USEIA16), y)
-OBJS		=peekb.o peekw.o pokew.o bitops.o \
+OBJS		=bitops.o \
 		 blt_forth.o string.o border.o setupw.o \
 		 ldivmod.o divmodsi3.o
 else
@@ -44,7 +44,7 @@ IOBJS		=idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o min.o ctypefn.o
 # miscellaneous
 
 JOBJS		=inport.o inportb.o outport.o outportb.o irqflag.o\
-		 peekb.o peekw.o pokew.o bitops.o \
+		 bitops.o \
 		 blt_forth.o string.o border.o setupw.o
 #		 ntohl.o ntohs.o
 

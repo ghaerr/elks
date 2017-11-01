@@ -165,7 +165,7 @@ static void kbd_timer(int __data)
     static int clk[4] = {0x072D, 0x075C, 0x077C, 0x072F,};
     static int c = 0;
 
-    pokew(0xB800, (79+0*80)*2, clk[(c++)&0x03]);
+    pokew((79+0*80)*2, 0xB800, clk[(c++)&0x03]);
 #endif
     if ((dav = poll_kbd())) {
 	if (dav & 0xFF)
@@ -678,7 +678,7 @@ void init_console(void)
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
     MaxRow = (Height = setupb(14)) - 1;
 
-    if (peekb(0x40, 0x49) == 7)
+    if (peekb(0x49, 0x40) == 7)  /* BIOS data segment */
 	NumConsoles = 1;
 
     C = Con;
@@ -687,8 +687,8 @@ void init_console(void)
     for (pi = 0; ((unsigned int)pi) < NumConsoles; pi++) {
 	C->cx = C->cy = 0;
 	if (!pi) {
-	    C->cx = peekb(0x40, 0x50);
-	    C->cy = peekb(0x40, 0x51);
+	    C->cx = peekb(0x50, 0x40);
+	    C->cy = peekb(0x51, 0x40);
 	}
 	C->fsm = std_char;
 	C->pageno = (int) pi;

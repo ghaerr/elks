@@ -49,14 +49,20 @@ extern void mm_free(seg_t);
 extern int do_swapper_run(struct task_struct *);
 extern unsigned int mm_get_usage(int,int);
 
-extern void pokew(__u16,__u16,__u16);
-
-extern __u8  peekb(__u16,__u16);
-extern __u16 peekw(__u16,__u16);
 
 /* memory primitives - count in bytes */
+
+extern byte_t peekb (word_t off, seg_t seg);
+extern word_t peekw (word_t off, seg_t seg);
+
+extern void pokeb (word_t off, seg_t seg, byte_t val);
+extern void pokew (word_t off, seg_t seg, word_t val);
+
 extern void fmemcpy (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
 extern void fmemset (word_t off, seg_t seg, byte_t val, word_t count);
+
+extern int fmemcmp (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
+
 
 /* FIXME: Following function prototypes are apparently phantom ones,
  *	  so are defined here with void parameters for now.

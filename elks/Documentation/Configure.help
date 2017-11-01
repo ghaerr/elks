@@ -603,8 +603,8 @@ ROM file system support
 CONFIG_ROMFS_FS
   Support for the ROM file system.
 CONFIG_ROMFS_BASE
-  Base of the file system in ROM (segment).
-  Typically 8000h for 512K ROM.
+  Base of the file system in ROM (in paragraphs).
+  Typically 0x8000 for a 512K ROM.
 
 Full VFS support
 CONFIG_FULL_VFS

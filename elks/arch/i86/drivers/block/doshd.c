@@ -233,7 +233,7 @@ static unsigned short int bioshd_getfdinfo(void)
 
 #else
 
-    ndrives = (peekb(0x40, 0x10) >> 6) + 1;
+    ndrives = (peekb(0x10, 0x40) >> 6) + 1;  /* BIOS data segment */
 
 #endif
 
