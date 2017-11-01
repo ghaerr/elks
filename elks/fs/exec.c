@@ -172,12 +172,12 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     currentp->t_endseg = (__pptr)len;	/* Needed for sys_brk() */
 
-    /* Copy the command line and enviroment */
+    /* Copy the command line and environment */
     currentp->t_begstack = (base_data	/* Just above the top of stack */
 	? (__pptr)base_data
 	: currentp->t_endseg) - slen;
     currentp->t_regs.sp = (__u16)(currentp->t_begstack);
-    fmemcpy(dseg, (__u16) currentp->t_begstack, ds, (__u16) sptr, (__u16) slen);
+    fmemcpy((word_t) currentp->t_begstack, dseg, (word_t) sptr, ds, (word_t) slen);
 
     /* From this point, the old code and data segments are not needed anymore */
 
@@ -190,7 +190,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     currentp->t_regs.es = currentp->t_regs.ss = currentp->mm.dseg = dseg;
 
     /* Wipe the BSS */
-    fmemset((char *)((seg_t)mh.dseg + base_data), dseg, 0, (__u16) mh.bseg);
+    fmemset((word_t) ((seg_t) mh.dseg + base_data), dseg, 0, (word_t) mh.bseg);
     {
 	register char *pi = (char *)0;
 

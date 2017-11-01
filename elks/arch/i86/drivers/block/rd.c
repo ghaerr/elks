@@ -249,16 +249,16 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
 		if (size != ((long) SEG_SIZE * (long) P_SIZE)) {
 		    debug2("RD: ioctl calling fmemset(0, 0x%x, 0, %d) ..\n",
 			   rd_segment[j].segment, (int) size);
-		    fmemset(0, rd_segment[j].segment, 0, (int) size);	/* clear seg_size * SECTOR_SIZE bytes */
+		    fmemset(0, rd_segment[j].segment, 0, (word_t) size);	/* clear seg_size * SECTOR_SIZE bytes */
 		} else {
 		    debug2("RD: ioctl calling fmemset(0, 0x%x, 0, %d) ..\n",
 			   rd_segment[j].segment, (int) (size / 2));
-		    fmemset(0, rd_segment[j].segment, 0, (int) (size / 2));	/* we could hardcode 32768 instead of size / 2 here */
+		    fmemset(0, rd_segment[j].segment, 0, (word_t) (size / 2));	/* we could hardcode 32768 instead of size / 2 here */
 		    debug3("rd_ioctl(): calling fmemset(%d, 0x%x, 0, %d) ..\n",
 			   (int) (size / 2), rd_segment[j].segment,
 			   (int) (size / 2));
-		    fmemset((size / 2), rd_segment[j].segment, 0,
-			    (int) (size / 2));
+		    fmemset((word_t) (size / 2), rd_segment[j].segment, 0,
+			    (word_t) (size / 2));
 		}
 
 		if (k != -1)
@@ -329,13 +329,13 @@ static void do_rd_request(void)
 	     buff);
 	if (CURRENT->rq_cmd == WRITE) {
 	    debug1("RD: request writing to %ld\n", (long) start);
-	    fmemcpy(rd_segment[segnum].segment, offset * SECTOR_SIZE,
-		    CURRENT->rq_seg, buff, 1024);
+	    fmemcpy(offset * SECTOR_SIZE, rd_segment[segnum].segment,
+	    		buff, CURRENT->rq_seg, 1024);
 	}
 	if (CURRENT->rq_cmd == READ) {
 	    debug1("RD_REQUEST reading from %ld\n", start);
-	    fmemcpy(CURRENT->rq_seg, buff, rd_segment[segnum].segment,
-		    offset * SECTOR_SIZE, 1024);
+	    fmemcpy(buff, CURRENT->rq_seg,
+	    		offset * SECTOR_SIZE, rd_segment[segnum].segment, 1024);
 	}
 	end_request(1, CURRENT->rq_dev);
     }

@@ -54,10 +54,9 @@ extern void pokew(__u16,__u16,__u16);
 extern __u8  peekb(__u16,__u16);
 extern __u16 peekw(__u16,__u16);
 
-extern void fmemcpy(__u16,__u16,__u16,__u16,__u16);
-extern void fmemset(char *,__u16,__u16,size_t);
-
-extern void far_memmove(unsigned,unsigned,unsigned,unsigned,unsigned);
+/* memory primitives - count in bytes */
+extern void fmemcpy (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
+extern void fmemset (word_t off, seg_t seg, byte_t val, word_t count);
 
 /* FIXME: Following function prototypes are apparently phantom ones,
  *	  so are defined here with void parameters for now.

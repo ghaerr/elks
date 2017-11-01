@@ -1,24 +1,5 @@
 The virtual consoles are there, and seem to work quite well.
 
-memmove.c
-~~~~~~~~~
-The console driver now uses a new function, far_memmove(). I hope that
-this function gets into the kernels lib, since it is useful for any memory
-copying. It has a small driver in C, but most of the work is done in plain
-assembly.
-
-	void far_memmove( sseg, soff, dseg, doff, bytes );
-	unsigned sseg, soff;  ....  The source segment and offset
-	unsigned dseg, doff;  ....  The target segment and offset
-	int bytes;  ..............  Number of bytes to transfer.
-
-It works for overlapping regions too. Note that the count of bytes to
-transfer is expressed as an int, not unsigned. This is to prevent problems
-caused by the segmentation. Sorry for that.
-
-This file, 'memmove.c', will be distributed here until it gets into the
-build tree.
-
 The virtual consoles
 ~~~~~~~~~~~~~~~~~~~~
 The virtual consoles are implemented in the display memory for now. This

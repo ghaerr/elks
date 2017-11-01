@@ -1,10 +1,87 @@
 /*
- *	Assembly user access routines for the kernel.
+ *  Assembly memory access routines for the kernel.
  */
  
 #include <arch/asm-offsets.h>
 
 	.text
+
+/*
+ *  void fmemset (word_t off, seg_t seg, byte_t val, word_t count);
+ *  segment after offset to allow LES from the stack
+ *  byte_t pushed as word_t by BCC
+ */
+
+	.globl	_fmemset
+
+_fmemset:
+	push   bp
+	mov    bp,sp
+	push   es
+	push   di
+	push   cx
+	les    di,[bp+4]           ; arg0+1: far pointer
+	mov    ax,[bp+8]           ; arg2: value
+	mov    cx,[bx+10]          ; arg3: byte count
+	cld
+	test   cx,#1               ; optimize for word multiple
+	jz     fmemset_word
+	rep
+	stosb
+	jmp    fmemset_exit
+
+fmemset_word:
+	shr    cx,#1
+	mov    ah,al
+	rep
+	stosw
+
+fmemset_exit:
+	pop    cx
+	pop    di
+	pop    es
+	pop    bp
+	ret
+
+/*
+ * void fmemcpy (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
+ * segment after offset to allow LDS & LES from the stack
+ */
+
+	.globl	_fmemcpy
+
+_fmemcpy:
+	push   bp
+	mov    bp,sp
+	push   es
+	push   ds
+	push   di
+	push   si
+	push   cx
+	les    di,[bp+4]           ; arg0+1: far destination pointer
+	lds    si,[bp+8]           ; arg2+3: far source pointer
+	mov    cx,[bp+12]          ; arg4: byte count
+	cld
+	test   cx,#1               ; optimize for word multiple
+	jz     fmemcpy_word
+	rep
+	movsb
+	jmp    fmemcpy_exit
+
+fmemcpy_word:
+	shr    cx,#1
+	rep
+	movsw
+
+fmemcpy_exit:
+	pop    cx
+	pop    si
+	pop    di
+	pop    ds
+	pop    es
+	pop    bp
+	ret
+
 
 /* void memcpy_fromfs(void *daddr, void *saddr, size_t len);*/
 	.globl	_memcpy_fromfs
@@ -53,34 +130,6 @@ _memcpy_tofs:
 	mov	es,bx
 	mov	di,dx
 	mov	si,ax
-	ret
-
-/* void fmemcpy(dseg, dest, sseg, src, size); */
-	.globl	_fmemcpy
-
-_fmemcpy:
-	mov	ax,si
-	mov	dx,di
-#ifdef USE_IA16
-	mov	bx,es
-#endif
-	mov	di,sp
-	mov	es,2[di]
-	mov	si,8[di]
-	mov	cx,10[di]
-	lds	di,4[di]
-	cld
-	rep
-	movsb
-	mov	di,dx
-	mov	si,ax
-	mov	ax,ss
-	mov	ds,ax
-#ifdef USE_IA16
-	mov	es,bx
-#else
-	mov	es,ax
-#endif
 	ret
 
 /* int strnlen_fromfs(void *saddr, size_t maxlen); */
