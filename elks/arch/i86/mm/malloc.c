@@ -318,7 +318,7 @@ seg_t mm_dup(seg_t base)
 	panic("bad/swapped hole");
 
     if ((mbase = (char *)mm_alloc(o->extent)) != NULL)
-	fmemcpy(0, (seg_t) mbase, 0, o->page_base, (word_t) (o->extent << 4));
+	fmemcpyb(0, (seg_t) mbase, 0, o->page_base, (word_t) (o->extent << 4));
     return (seg_t)mbase;
 }
 
@@ -387,7 +387,7 @@ struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
 #ifdef CONFIG_ADVANCED_MM
     /* Next, try relocating to a larger hole */
     if ((m->refcount == 1) && ((next = (struct malloc_hole *)mm_alloc(pages)) != NULL)) {
-	fmemcpy(0, (seg_t) next, 0, m->page_base, (word_t) (m->extent << 4));
+	fmemcpyb(0, (seg_t) next, 0, m->page_base, (word_t) (m->extent << 4));
 	next = find_hole(holes, (seg_t)next);
 	free_hole(holes, m);
 	return next;

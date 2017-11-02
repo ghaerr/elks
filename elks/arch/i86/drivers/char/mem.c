@@ -109,7 +109,7 @@ size_t full_write(struct inode *inode, struct file *filp, char *data, int len)
 size_t zero_read(struct inode *inode, struct file *filp, char *data, int len)
 {
     debugmem("zero_read()\n");
-    fmemset((word_t) data, current->mm.dseg, 0, (word_t) len);
+    fmemsetb((word_t) data, current->mm.dseg, 0, (word_t) len);
     filp->f_pos += len;
     return (size_t)len;
 }
@@ -132,7 +132,7 @@ size_t kmem_read(struct inode *inode, register struct file *filp,
     debugmem("[k]mem_read()\n");
     sseg = split_seg_off(&soff, filp->f_pos);
     debugmem3("Reading %u %p %p.\n", len, sseg, soff);
-    fmemcpy((word_t) data, current->mm.dseg, soff, sseg, (word_t) len);
+    fmemcpyb((word_t) data, current->mm.dseg, soff, sseg, (word_t) len);
     filp->f_pos += len;
     return (size_t) len;
 }
@@ -146,7 +146,7 @@ size_t kmem_write(struct inode *inode, register struct file *filp,
 
     dseg = split_seg_off(&doff, filp->f_pos);
     debugmem2("Writing to %d:%d\n", dseg, doff);
-    fmemcpy(doff, dseg, (word_t) data, current->mm.dseg, (word_t) len);
+    fmemcpyb(doff, dseg, (word_t) data, current->mm.dseg, (word_t) len);
     filp->f_pos += len;
     return len;
 }

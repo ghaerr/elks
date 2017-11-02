@@ -102,7 +102,7 @@ static void do_meta_request(kdev_t device)
 #if 0
 	    verified_memcpy_tofs(driver->udd_data, buff, BLOCK_SIZE);
 /* FIXME FIXME	*/
-	    fmemcpy(driver->udd_data, driver->udd_task->mm.dseg,
+	    fmemcpyb(driver->udd_data, driver->udd_task->mm.dseg,
 	    		buff, kernel_ds, 1024);
 #endif
 	}
@@ -128,7 +128,7 @@ static void do_meta_request(kdev_t device)
 #if 0
 	    verified_memcpy_fromfs(buff, driver->udd_data, BLOCK_SIZE);
 /* FIXME FIXME */
-	    fmemcpy(buff, kernel_ds,
+	    fmemcpyb(buff, kernel_ds,
 	    		driver->udd_data, driver->udd_task->mm.dseg, 1024);
 #endif
 	}

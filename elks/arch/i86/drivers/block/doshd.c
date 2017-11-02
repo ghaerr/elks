@@ -723,7 +723,7 @@ static void do_bioshd_request(void)
 #ifdef DMA_OVR
 	    if (req->rq_cmd == WRITE) {
 		BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
-		fmemcpy(0, BUFSEG, (word_t) buff, req->rq_seg, (word_t) (this_pass * 512));
+		fmemcpyb(0, BUFSEG, (word_t) buff, req->rq_seg, (word_t) (this_pass * 512));
 	    }
 	    else BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
 	    BD_BX = 0;
@@ -758,7 +758,7 @@ static void do_bioshd_request(void)
 	    }
 #ifdef DMA_OVR
 	    if (req->rq_cmd == READ)
-		fmemcpy((word_t) buff, req->rq_seg, 0, BUFSEG, (word_t) (this_pass * 512));
+		fmemcpyb((word_t) buff, req->rq_seg, 0, BUFSEG, (word_t) (this_pass * 512));
 #endif
 
 	    /* In case it's already been freed */

@@ -5,6 +5,7 @@
 	.globl _strcpy
 	.globl _strcmp
 	.globl _memset
+	.globl _memcmp
 	.text
 	.even
 
@@ -125,6 +126,38 @@ _memset:
 	mov	es,dx
 #endif
 	ret
+
+
+/*
+ *  int memcmp (void *dst, void *src, size_t len);
+ */
+
+_memcmp:
+	push   bp
+	mov    bp,sp
+	push   di
+	push   si
+	push   cx
+	mov    di,[bp+4]           /* arg0: destination pointer */
+	mov    si,[bp+6]           /* arg1: source pointer */
+	mov    cx,[bp+8]           /* arg2: byte count */
+	cld
+	repz
+	cmpsb
+	jz     memcmp_same
+	mov    ax,#1
+	jmp    memcmp_exit
+
+memcmp_same:
+	xor    ax,ax
+
+memcmp_exit:
+	pop    cx
+	pop    si
+	pop    di
+	pop    bp
+	ret
+
 
 #ifdef USE_IA16
 	.data

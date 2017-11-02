@@ -7,206 +7,31 @@
 	.text
 
 /*
- *  byte_t peekb (word_t off, seg_t seg);
- *  segment after offset to allow LDS from the stack
+ *  seg_t seg_cs (void);
+ *  seg_t seg_ss (void);
+ *  seg_t seg_ds (void);
+ *  seg_t seg_es (void);
  */
 
-	.globl _peekb
+	.globl _seg_cs
+	.globl _seg_ss
+	.globl _seg_ds
+	.globl _seg_es
 
-_peekb:
-	push   bp
-	mov    bp,sp
-	push   ds
-	push   bx
-	lds    bx,[bp+4]           /* arg0+1: far pointer */
-	mov    al,[bx]             /* DS by default */
-	xor    ah,ah
-	pop    bx
-	pop    ds
-	pop    bp
+_seg_cs:
+	mov    ax, cs
 	ret
 
-/*
- *  word_t peekw (word_t off, seg_t seg);
- *  segment after offset to allow LDS from the stack
- */
-
-	.globl _peekw
-
-_peekw:
-	push   bp
-	mov    bp,sp
-	push   ds
-	push   bx
-	lds    bx,[bp+4]           /* arg0+1: far pointer */
-	mov    ax,[bx]             /* DS by default */
-	pop    bx
-	pop    ds
-	pop    bp
+_seg_ss:
+	mov    ax, ss
 	ret
 
-/*
- *  void pokeb (word_t off, seg_t seg, byte__t val);
- *  segment after offset to allow LDS from the stack
- *  byte_t pushed as word_t by BCC
- */
-
-	.globl _pokeb
-
-_pokeb:
-	push   bp
-	mov    bp,sp
-	push   ds
-	push   bx
-	lds    bx,[bp+4]           /* arg0+1: far pointer */
-	mov    ax,[bp+8]           /* arg2: value */
-	mov    [bx],al             /* DS by default */
-	pop    bx
-	pop    ds
-	pop    bp
+_seg_ds:
+	mov    ax, ds
 	ret
 
-/*
- *  void pokew (word_t off, seg_t seg, word_t val);
- *  segment after offset to allow LDS from the stack
- */
-
-	.globl _pokew
-
-_pokew:
-	push   bp
-	mov    bp,sp
-	push   ds
-	push   bx
-	lds    bx,[bp+4]           /* arg0+1: far pointer */
-	mov    ax,[bp+8]           /* arg2: value */
-	mov    [bx],ax             /* DS by default */
-	pop    bx
-	pop    ds
-	pop    bp
-	ret
-
-/*
- *  void fmemset (word_t off, seg_t seg, byte_t val, word_t count);
- *  segment after offset to allow LES from the stack
- *  byte_t pushed as word_t by BCC
- */
-
-	.globl _fmemset
-
-_fmemset:
-	push   bp
-	mov    bp,sp
-	push   es
-	push   di
-	push   cx
-	les    di,[bp+4]           /* arg0+1: far pointer */
-	mov    ax,[bp+8]           /* arg2: value */
-	mov    cx,[bx+10]          /* arg3: byte count */
-	cld
-	test   cx,#1               /* optimize for word multiple */
-	jz     fmemset_word
-	rep
-	stosb
-	jmp    fmemset_exit
-
-fmemset_word:
-	shr    cx,#1
-	mov    ah,al
-	rep
-	stosw
-
-fmemset_exit:
-	pop    cx
-	pop    di
-	pop    es
-	pop    bp
-	ret
-
-/*
- *  void fmemcpy (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
- *  segment after offset to allow LDS & LES from the stack
- */
-
-	.globl _fmemcpy
-
-_fmemcpy:
-	push   bp
-	mov    bp,sp
-	push   es
-	push   ds
-	push   di
-	push   si
-	push   cx
-	les    di,[bp+4]           /* arg0+1: far destination pointer */
-	lds    si,[bp+8]           /* arg2+3: far source pointer */
-	mov    cx,[bp+12]          /* arg4: byte count */
-	cld
-	test   cx,#1               /* optimize for word multiple */
-	jz     fmemcpy_word
-	rep
-	movsb
-	jmp    fmemcpy_exit
-
-fmemcpy_word:
-	shr    cx,#1
-	rep
-	movsw
-
-fmemcpy_exit:
-	pop    cx
-	pop    si
-	pop    di
-	pop    ds
-	pop    es
-	pop    bp
-	ret
-
-/*
- *  int fmemcmp (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
- *  segment after offset to allow LDS & LES from the stack
- */
-
-	.globl _fmemcmp
-
-_fmemcmp:
-	push   bp
-	mov    bp,sp
-	push   es
-	push   ds
-	push   di
-	push   si
-	push   cx
-	les    di,[bp+4]           /* arg0+1: far destination pointer */
-	lds    si,[bp+8]           /* arg2+3: far source pointer */
-	mov    cx,[bp+12]          /* arg4: byte count */
-	cld
-	test   cx,#1               /* optimize for word multiple */
-	jz     fmemcmp_word
-	repz
-	cmpsb
-	jmp    fmemcmp_next
-
-fmemcmp_word:
-	shr    cx,#1
-	repz
-	cmpsw
-
-fmemcmp_next:
-	jz     fmemcmp_same
-	mov    ax,#1
-	jmp    fmemcmp_exit
-
-fmemcmp_same:
-	xor    ax,ax
-
-fmemcpy_exit:
-	pop    cx
-	pop    si
-	pop    di
-	pop    ds
-	pop    es
-	pop    bp
+_seg_es:
+	mov    ax, es
 	ret
 
 /* TODO: move as C function in user.c */

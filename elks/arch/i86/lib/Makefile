@@ -31,7 +31,7 @@ include $(BASEDIR)/Makefile-rules
 
 ifeq ($(USEIA16), y)
 OBJS		=bitops.o \
-		 blt_forth.o string.o border.o setupw.o \
+		 string.o border.o setupw.o \
 		 ldivmod.o divmodsi3.o
 else
 OBJS		= $(IOBJS) $(JOBJS) $(LLOBJS) $(LXOBJS)
@@ -43,9 +43,11 @@ IOBJS		=idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o min.o ctypefn.o
 
 # miscellaneous
 
-JOBJS		=inport.o inportb.o outport.o outportb.o irqflag.o\
-		 bitops.o \
-		 blt_forth.o string.o border.o setupw.o
+JOBJS       = inport.o inportb.o outport.o outportb.o irqflag.o \
+              peekb.o peekw.o pokeb.o pokew.o \
+              fmemsetb.o fmemsetw.o fmemcpyb.o fmemcpyw.o \
+              fmemcmpb.o fmemcmpw.o fstrnlen.o \
+              bitops.o string.o border.o setupw.o
 #		 ntohl.o ntohs.o
 
 # compiler support for long arithmetic on little-endian (normal) longs

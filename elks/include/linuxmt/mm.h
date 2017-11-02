@@ -18,6 +18,33 @@ extern unsigned long high_memory;
 #define MM_SWAP	1
 #endif
 
+/* segment primitives */
+
+extern seg_t seg_cs (void);
+extern seg_t seg_ss (void);
+extern seg_t seg_ds (void);
+extern seg_t seg_es (void);
+
+/* memory primitives */
+
+extern byte_t peekb (word_t off, seg_t seg);
+extern word_t peekw (word_t off, seg_t seg);
+
+extern void pokeb (word_t off, seg_t seg, byte_t val);
+extern void pokew (word_t off, seg_t seg, word_t val);
+
+extern void fmemsetb (word_t off, seg_t seg, byte_t val, word_t count);
+extern void fmemsetw (word_t off, seg_t seg, word_t val, word_t count);
+
+extern void fmemcpyb (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
+extern void fmemcpyw (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
+
+extern word_t fmemcmpb (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
+extern word_t fmemcmpw (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
+
+extern word_t fstrnlen (word_t off, seg_t seg, word_t max);
+
+
 #define verify_area(mode,point,size) verfy_area(point,size)
 
 /*@-namechecks@*/
@@ -48,21 +75,6 @@ extern seg_t mm_dup(seg_t);
 extern void mm_free(seg_t);
 extern int do_swapper_run(struct task_struct *);
 extern unsigned int mm_get_usage(int,int);
-
-
-/* memory primitives - count in bytes */
-
-extern byte_t peekb (word_t off, seg_t seg);
-extern word_t peekw (word_t off, seg_t seg);
-
-extern void pokeb (word_t off, seg_t seg, byte_t val);
-extern void pokew (word_t off, seg_t seg, word_t val);
-
-extern void fmemcpy (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
-extern void fmemset (word_t off, seg_t seg, byte_t val, word_t count);
-
-extern int fmemcmp (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
-
 
 /* FIXME: Following function prototypes are apparently phantom ones,
  *	  so are defined here with void parameters for now.

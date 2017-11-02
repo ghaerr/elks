@@ -40,22 +40,6 @@ int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
     return err;
 }
 
-#if 0
-
-/* TODO: revisit this slow one - limit length with additional argument */
-
-int fstrlen(unsigned short int dseg, unsigned short int doff)
-{
-    unsigned short int i = 0;
-
-    while (peekb(doff++, dseg))
-	i++;
-
-    return i;
-}
-
-#endif
-
 unsigned long int get_user_long(void *dv)
 {
     unsigned long retv;
