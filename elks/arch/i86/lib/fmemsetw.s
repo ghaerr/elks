@@ -3,22 +3,18 @@
 
 	.text
 
-	.globl _fmemsetw
+	.define _fmemsetw
 
 _fmemsetw:
-	push   bp
-	mov    bp,sp
-	push   es
-	push   di
-	push   cx
-	les    di,[bp+4]   ; arg0+1: far pointer
-	mov    ax,[bp+8]   ; arg2:   value
-	mov    cx,[bx+10]  ; arg3:   word count
+	mov    bx,es
+	mov    dx,di
+	mov    di,sp
+	mov    ax,[di+6]  ; arg2:   value
+	mov    cx,[di+8]  ; arg3:   byte count
+	les    di,[di+2]  ; arg0+1: far pointer
 	cld
 	rep
 	stosw
-	pop    cx
-	pop    di
-	pop    es
-	pop    bp
+	mov    di,dx
+	mov    es,bx
 	ret

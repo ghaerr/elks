@@ -3,23 +3,22 @@
 
 	.text
 
-	.globl fstrnlen
+	.define _fstrnlen
 
 _fstrnlen:
-	push   bp
-	mov    bp,sp
-	push   es
-	push   di
-	push   cx
-	les    di,[bp+4]  ; arg0+1: far pointer
-	mov    cx,[bp+8]  ; arg2:   max bytes
+	mov    bx,es
+	mov    dx,di
+	mov    di,sp
+	mov    cx,[di+6]  ; arg2:   max bytes
+	les    di,[di+2]  ; arg0+1: far pointer
 	xor    al,al      ; scan for zero byte
 	cld
 	repne
 	scasb
 	jnz    fstrnlen_max
 	mov    ax,di
-	sub    ax,[bp+4]
+	mov    di,sp
+	sub    ax,[di+2]
 	dec    ax
 	jmp    fstrnlen_exit
 
@@ -27,8 +26,6 @@ fstrnlen_max:
 	mov    ax,#0xFFFF  ; maximum reach
 
 fstrnlen_exit:
-	pop    cx
-	pop    di
-	pop    es
-	pop    bp
+	mov    es,bx
+	mov    di,dx
 	ret

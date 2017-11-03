@@ -1,19 +1,16 @@
 ; byte_t peekb (word_t off, seg_t seg)
 ; segment after offset to allow LDS from the stack
+; returns the byte at the far pointer segment:offset
 
 	.text
 
-	.globl _peekb
+	.define _peekb
 
 _peekb:
-	push   bp
-	mov    bp,sp
-	push   ds
-	push   bx
-	lds    bx,[bp+4]  ; arg0+1: far pointer
-	mov    al,[bx]    ; DS by default */
+	mov    bx,sp
+	mov    cx,ds
+	lds    bx,[bx+2]  ; arg0+1: far pointer
+	mov    al,[bx]  ; DS by default
 	xor    ah,ah
-	pop    bx
-	pop    ds
-	pop    bp
+	mov    ds,cx
 	ret

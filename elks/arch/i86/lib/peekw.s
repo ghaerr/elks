@@ -1,18 +1,15 @@
 ; word_t peekw (word_t off, seg_t seg)
 ; segment after offset to allow LDS from the stack
+; returns the word at the far pointer segment:offset
 
 	.text
 
-	.globl _peekw
+	.define _peekw
 
 _peekw:
-	push   bp
-	mov    bp,sp
-	push   ds
-	push   bx
-	lds    bx,[bp+4]  ; arg0+1: far pointer
-	mov    ax,[bx]    ; DS by default
-	pop    bx
-	pop    ds
-	pop    bp
+	mov    bx,sp
+	mov    cx,ds
+	lds    bx,[bx+2]  ; arg0+1: far pointer
+	mov    ax,[bx]  ; DS by default
+	mov    ds,cx
 	ret

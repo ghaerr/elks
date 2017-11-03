@@ -30,8 +30,8 @@ include $(BASEDIR)/Makefile-rules
 # Objects to be compiled.
 
 ifeq ($(USEIA16), y)
-OBJS		=bitops.o \
-		 string.o border.o setupw.o \
+OBJS		=peekb.o peekw.o pokew.o bitops.o \
+		 string.o fmemsetb.o border.o setupw.o \
 		 ldivmod.o divmodsi3.o
 else
 OBJS		= $(IOBJS) $(JOBJS) $(LLOBJS) $(LXOBJS)
@@ -47,7 +47,7 @@ JOBJS       = inport.o inportb.o outport.o outportb.o irqflag.o \
               peekb.o peekw.o pokeb.o pokew.o \
               fmemsetb.o fmemsetw.o fmemcpyb.o fmemcpyw.o \
               fmemcmpb.o fmemcmpw.o fstrnlen.o \
-              bitops.o string.o border.o setupw.o
+              bitops.o memcmp.s string.o border.o setupw.o
 #		 ntohl.o ntohs.o
 
 # compiler support for long arithmetic on little-endian (normal) longs

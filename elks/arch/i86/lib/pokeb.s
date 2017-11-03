@@ -1,20 +1,17 @@
 ; void pokeb (word_t off, seg_t seg, byte__t val)
 ; segment after offset to allow LDS from the stack
-; BCC pushes byte_t as word_t
+; compiler pushes byte_t as word_t
+; writes the byte at the far pointer segment:offset
 
 	.text
 
-	.globl _pokeb
+	.define _pokeb
 
 _pokeb:
-	push   bp
-	mov    bp,sp
-	push   ds
-	push   bx
-	lds    bx,[bp+4]  ; arg0+1: far pointer
-	mov    ax,[bp+8]  ; arg2: value
+	mov    bx,sp
+	mov    cx,ds
+	mov    ax,[bx+6]  ; arg2: value
+	lds    bx,[bx+2]  ; arg0+1: far pointer
 	mov    [bx],al    ; DS by default
-	pop    bx
-	pop    ds
-	pop    bp
+	mov    ds,cx
 	ret
