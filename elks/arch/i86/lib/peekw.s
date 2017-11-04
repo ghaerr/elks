@@ -7,9 +7,9 @@
 	.define _peekw
 
 _peekw:
+	mov    dx,ds
 	mov    bx,sp
-	mov    cx,ds
 	lds    bx,[bx+2]  ; arg0+1: far pointer
 	mov    ax,[bx]  ; DS by default
-	mov    ds,cx
+	mov    ds,dx
 	ret

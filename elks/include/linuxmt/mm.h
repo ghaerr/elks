@@ -18,14 +18,8 @@ extern unsigned long high_memory;
 #define MM_SWAP	1
 #endif
 
-/* segment primitives */
-
-extern seg_t seg_cs (void);
-extern seg_t seg_ss (void);
-extern seg_t seg_ds (void);
-extern seg_t seg_es (void);
-
 /* memory primitives */
+/* TODO: move these to a new library header memory.h */
 
 extern byte_t peekb (word_t off, seg_t seg);
 extern word_t peekw (word_t off, seg_t seg);
@@ -41,8 +35,6 @@ extern void fmemcpyw (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_s
 
 extern word_t fmemcmpb (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
 extern word_t fmemcmpw (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
-
-extern word_t fstrnlen (word_t off, seg_t seg, word_t max);
 
 
 #define verify_area(mode,point,size) verfy_area(point,size)

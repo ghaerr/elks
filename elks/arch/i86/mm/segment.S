@@ -6,35 +6,6 @@
 
 	.text
 
-/*
- *  seg_t seg_cs (void);
- *  seg_t seg_ss (void);
- *  seg_t seg_ds (void);
- *  seg_t seg_es (void);
- */
-
-	.globl _seg_cs
-	.globl _seg_ss
-	.globl _seg_ds
-	.globl _seg_es
-
-_seg_cs:
-	mov    ax, cs
-	ret
-
-_seg_ss:
-	mov    ax, ss
-	ret
-
-_seg_ds:
-	mov    ax, ds
-	ret
-
-_seg_es:
-	mov    ax, es
-	ret
-
-/* TODO: move as C function in user.c */
 /* void memcpy_fromfs(void *daddr, void *saddr, size_t len);*/
 	.globl	_memcpy_fromfs
 
@@ -63,7 +34,6 @@ _memcpy_fromfs:
 	mov	si,ax
 	ret
 
-/* TODO: move as C function in user.c */
 /* void memcpy_tofs(void *daddr, void *saddr, size_t len);*/
 	.globl	_memcpy_tofs
 
@@ -85,7 +55,6 @@ _memcpy_tofs:
 	mov	si,ax
 	ret
 
-/* TODO: revisit this one - split in generic fstrlen and user one in C */
 /* int strnlen_fromfs(void *saddr, size_t maxlen); */
 
     /*  scasb uses es:di, not ds:si, so it is not necessary

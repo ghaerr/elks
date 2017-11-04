@@ -45,8 +45,9 @@ IOBJS		=idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o min.o ctypefn.o
 
 JOBJS       = inport.o inportb.o outport.o outportb.o irqflag.o \
               peekb.o peekw.o pokeb.o pokew.o \
-              fmemsetb.o fmemsetw.o fmemcpyb.o fmemcpyw.o \
-              fmemcmpb.o fmemcmpw.o fstrnlen.o \
+              fmemsetb.o fmemsetw.o \
+              fmemcpyb.o fmemcpyw.o \
+              fmemcmpb.o fmemcmpw.o \
               bitops.o memcmp.s string.o border.o setupw.o
 #		 ntohl.o ntohs.o
 

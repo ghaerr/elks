@@ -7,10 +7,10 @@
 	.define _peekb
 
 _peekb:
+	mov    dx,ds
 	mov    bx,sp
-	mov    cx,ds
 	lds    bx,[bx+2]  ; arg0+1: far pointer
 	mov    al,[bx]  ; DS by default
 	xor    ah,ah
-	mov    ds,cx
+	mov    ds,dx
 	ret

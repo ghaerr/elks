@@ -7,10 +7,10 @@
 	.define _pokew
 
 _pokew:
+	mov    dx,ds
 	mov    bx,sp
-	mov    cx,ds
 	mov    ax,[bx+6]  ; arg2: value
 	lds    bx,[bx+2]  ; arg0+1: far pointer
 	mov    [bx],ax    ; DS by default
-	mov    ds,cx
+	mov    ds,dx
 	ret

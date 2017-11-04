@@ -8,10 +8,10 @@
 	.define _pokeb
 
 _pokeb:
+	mov    dx,ds
 	mov    bx,sp
-	mov    cx,ds
 	mov    ax,[bx+6]  ; arg2: value
 	lds    bx,[bx+2]  ; arg0+1: far pointer
 	mov    [bx],al    ; DS by default
-	mov    ds,cx
+	mov    ds,dx
 	ret

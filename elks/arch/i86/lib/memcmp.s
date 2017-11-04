@@ -8,7 +8,7 @@
 _memcmp:
 #ifdef USE_IA16
 	mov    bx,es
-	mov	   ax,ds
+	mov    ax,ds
 	mov    es,ax
 #endif
 	mov    ax,si

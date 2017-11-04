@@ -125,7 +125,6 @@ _memset:
 #endif
 	ret
 
-
 #ifdef USE_IA16
 	.data
 	.extern _kernel_ds

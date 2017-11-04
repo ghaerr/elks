@@ -29,11 +29,11 @@ fmemcmpw_same:
 	xor    ax,ax
 
 fmemcmpw_exit:
-	mov    cx,ss
-	mov    ds,cx
+	mov    dx,ss
+	mov    ds,dx
 #ifdef USE_IA16
 	mov    es,bx
 #else
-	mov    es,cx
+	mov    es,dx
 #endif
 	ret
