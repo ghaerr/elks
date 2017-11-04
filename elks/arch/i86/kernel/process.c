@@ -82,12 +82,12 @@ void kfork_proc(char *addr)
 
 void put_ustack(register struct task_struct *t,int off,int val)
 {
-    pokew(t->t_regs.ss, t->t_regs.sp+off, (__u16) val);
+    pokew(t->t_regs.sp+off, t->t_regs.ss, (word_t) val);
 }
 
 unsigned get_ustack(register struct task_struct *t,int off)
 {
-    return peekw(t->t_regs.ss, t->t_regs.sp+off);
+    return peekw(t->t_regs.sp+off, t->t_regs.ss);
 }
 
 /*

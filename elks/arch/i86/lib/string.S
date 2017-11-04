@@ -1,14 +1,13 @@
 ! string.s
 ! Contributed by Christoph Niemann <niemann@swt.ruhr-uni-bochum.de>
 
-	.globl _strlen
-	.globl _strcpy
-	.globl _strcmp
-	.globl _memset
 	.text
-	.even
 
-!
+	.define _strlen
+	.define _strcpy
+	.define _strcmp
+	.define _memset
+
 ! int strlen(char *str)
 !
 ! returns the length of a string in ax

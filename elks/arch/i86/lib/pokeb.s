@@ -1,17 +1,17 @@
-! void pokeb( unsigned segment, char *offset, char value );
-! writes the byte  value  at the far pointer  segment:offset
+; void pokeb (word_t off, seg_t seg, byte__t val)
+; segment after offset to allow LDS from the stack
+; compiler pushes byte_t as word_t
+; writes the byte at the far pointer segment:offset
 
-	.define	_pokeb
 	.text
-	.even
+
+	.define _pokeb
 
 _pokeb:
-	mov	cx,ds
-	pop	dx
-	pop	ds
-	pop	bx
-	pop	ax
-	sub	sp,*6
-	movb	[bx],al
-	mov	ds,cx
-	jmp	dx
+	mov    dx,ds
+	mov    bx,sp
+	mov    ax,[bx+6]  ; arg2: value
+	lds    bx,[bx+2]  ; arg0+1: far pointer
+	mov    [bx],al    ; DS by default
+	mov    ds,dx
+	ret

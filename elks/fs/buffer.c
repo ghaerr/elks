@@ -462,8 +462,8 @@ void map_buffer(register struct buffer_head *bh)
 	    debug1("BUFMAP: Buffer %u unmapped from L1\n",
 		    bmap->b_num);
 	    /* Now unmap it */
-	    fmemcpy(_buf_ds, (__u16)(bmap->b_num << BLOCK_SIZE_BITS),
-			kernel_ds, (__u16) bmap->b_data, BLOCK_SIZE);
+	    fmemcpyb((word_t) (bmap->b_num << BLOCK_SIZE_BITS), _buf_ds,
+	    		(word_t) bmap->b_data, kernel_ds, BLOCK_SIZE);
 	    bmap->b_data = 0;
 	    /* success */
 	    break;
@@ -487,8 +487,8 @@ void map_buffer(register struct buffer_head *bh)
     bh->b_data = (char *)bufmem + ((int)pi << BLOCK_SIZE_BITS);
 #endif
     if (bh->b_uptodate)
-	fmemcpy(kernel_ds, (__u16) bh->b_data, _buf_ds,
-	    (__u16) (bh->b_num << BLOCK_SIZE_BITS), BLOCK_SIZE);
+	fmemcpyb((word_t) bh->b_data, kernel_ds,
+			(word_t) (bh->b_num << BLOCK_SIZE_BITS), _buf_ds, BLOCK_SIZE);
     debug3("BUFMAP: Buffer %u (block %u) mapped into L1 slot %d.\n",
 	bh->b_num, bh->b_blocknr, (int)pi);
   end_map_buffer:

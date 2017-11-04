@@ -122,9 +122,9 @@ static void PositionCursor(register Console * C)
 
 static void VideoWrite(register Console * C, char c)
 {
-    pokew((__u16) C->vseg,
-	  (__u16)((C->cx + C->cy * Width) << 1),
-	  ((__u16)C->attr << 8) | ((__u16)c));
+    pokew((word_t)((C->cx + C->cy * Width) << 1),
+    		(seg_t) C->vseg,
+	  ((word_t)C->attr << 8) | ((word_t)c));
 }
 
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
@@ -135,7 +135,7 @@ static void ClearRange(register Console * C, int x, int y, int xx, int yy)
     vp = (__u16 *)((__u16)(x + y * Width) << 1);
     do {
 	for (x = 0; x < xx; x++)
-	    pokew((__u16)C->vseg, (__u16)(vp++), (((__u16)C->attr << 8) | ' '));
+	    pokew((word_t) (vp++), (seg_t) C->vseg, (((word_t) C->attr << 8) | ' '));
 	vp += (Width - xx);
     } while (++y <= yy);
 }
@@ -146,7 +146,7 @@ static void ScrollUp(register Console * C, int y)
 
     vp = (__u16 *)((__u16)(y * Width) << 1);
     if ((unsigned int)y < MaxRow)
-	fmemcpy((__u16)C->vseg, vp, (__u16)C->vseg, vp + Width, (MaxRow - y)*(Width << 1));
+	fmemcpyb(vp, (seg_t) C->vseg, vp + Width, (seg_t) C->vseg, (MaxRow - y)*(Width << 1));
     ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
@@ -158,7 +158,7 @@ static void ScrollDown(register Console * C, int y)
 
     vp = (__u16 *)((__u16)(yy * Width) << 1);
     while (--y > y) {
-	fmemcpy((__u16)C->vseg, vp, (__u16)C->vseg, vp - Width, (Width << 1));
+	fmemcpyb(vp, (seg_t) C->vseg, vp - Width, (seg_t) C->vseg, (Width << 1));
 	vp -= Width;
     }
     ClearRange(C, 0, y, MaxCol, y);
@@ -544,15 +544,15 @@ void init_console(void)
     unsigned PageSizeW;
     unsigned VideoSeg;
 
-    MaxCol = (Width = peekb(0x40, 0x4a)) - 1;
+    MaxCol = (Width = peekb(0x4a, 0x40)) - 1;  /* BIOS data segment */
 
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
     MaxRow = (Height = 25) - 1;
-    CCBase = (void *) peekw(0x40, 0x63);
-    PageSizeW = ((unsigned int)peekw(0x40, 0x4C) >> 1);
+    CCBase = (void *) peekw(0x63, 0x40);
+    PageSizeW = ((unsigned int)peekw(0x4C, 0x40) >> 1);
 
     VideoSeg = 0xb800;
-    if (peekb(0x40, 0x49) == 7) {
+    if (peekb(0x49, 0x40) == 7) {
 	VideoSeg = 0xB000;
 	NumConsoles = 1;
     }
@@ -563,8 +563,8 @@ void init_console(void)
     for (pi = 0; ((unsigned int)pi) < NumConsoles; pi++) {
 	C->cx = C->cy = 0;
 	if (!pi) {
-	    C->cx = peekb(0x40, 0x50);
-	    C->cy = peekb(0x40, 0x51);
+	    C->cx = peekb(0x50, 0x40);
+	    C->cy = peekb(0x51, 0x40);
 	}
 	C->fsm = std_char;
 	C->basepage = (int)pi * PageSizeW;

@@ -52,7 +52,7 @@ void timer_tick(int irq, struct pt_regs *regs, void *data)
 #ifndef CONFIG_ARCH_SIBO
 
 #if 0
-    pokew(0xb80a, 40, peekw(0xb80a, 40)+1);
+    pokew(40, 0xb80a, peekw(40, 0xb80a)+1);
 #endif
 
 #ifdef CONFIG_DEBUG_TIMER

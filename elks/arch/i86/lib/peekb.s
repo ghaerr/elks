@@ -1,17 +1,16 @@
-! int peekb( unsigned segment, char *offset );
-! returns the (unsigned) byte at the far pointer  segment:offset
+; byte_t peekb (word_t off, seg_t seg)
+; segment after offset to allow LDS from the stack
+; returns the byte at the far pointer segment:offset
 
-	.define	_peekb
 	.text
-	.even
+
+	.define _peekb
 
 _peekb:
-	mov	cx,ds
-	pop	dx
-	pop	ds
-	pop	bx
-	sub	sp,*4
-	movb	al,[bx]
-	subb	ah,ah
-	mov	ds,cx
-	jmp	dx
+	mov    dx,ds
+	mov    bx,sp
+	lds    bx,[bx+2]  ; arg0+1: far pointer
+	mov    al,[bx]  ; DS by default
+	xor    ah,ah
+	mov    ds,dx
+	ret

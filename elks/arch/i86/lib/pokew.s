@@ -1,15 +1,16 @@
-! void pokew( unsigned segment, int *offset, int value );
-! writes the word value  at the far pointer  segment:offset
+; void pokew (word_t off, seg_t seg, word_t val)
+; segment after offset to allow LDS from the stack
+; writes the word at the far pointer segment:offset
 
-	.define	_pokew
 	.text
-	.even
+
+	.define _pokew
+
 _pokew:
-	mov	cx,ds
-	pop	dx
-	pop	ds
-	pop	bx
-	pop	[bx]
-	sub	sp,*6
-	mov	ds,cx
-	jmp	dx
+	mov    dx,ds
+	mov    bx,sp
+	mov    ax,[bx+6]  ; arg2: value
+	lds    bx,[bx+2]  ; arg0+1: far pointer
+	mov    [bx],ax    ; DS by default
+	mov    ds,dx
+	ret

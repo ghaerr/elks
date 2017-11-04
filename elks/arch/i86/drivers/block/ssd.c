@@ -95,7 +95,7 @@ static int ssd_ioctl(register struct inode *inode,
 	    return -EBUSY;
 	else if ((rd_segment[target] = mm_alloc(MEM_SIZE, 0)) == -1)
 	    return -ENOMEM;
-	fmemset(0, rd_segment[target], 0, MEM_SIZE * SEG_SIZE);
+	fmemsetb(0, rd_segment[target], 0, MEM_SIZE * SEG_SIZE);
 	return 0;
 	break;
     case SSDDESTROY:

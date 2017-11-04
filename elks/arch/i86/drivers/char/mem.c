@@ -109,7 +109,7 @@ size_t full_write(struct inode *inode, struct file *filp, char *data, int len)
 size_t zero_read(struct inode *inode, struct file *filp, char *data, int len)
 {
     debugmem("zero_read()\n");
-    fmemset(data, current->mm.dseg, 0, (size_t) len);
+    fmemsetb((word_t) data, current->mm.dseg, 0, (word_t) len);
     filp->f_pos += len;
     return (size_t)len;
 }
@@ -132,7 +132,7 @@ size_t kmem_read(struct inode *inode, register struct file *filp,
     debugmem("[k]mem_read()\n");
     sseg = split_seg_off(&soff, filp->f_pos);
     debugmem3("Reading %u %p %p.\n", len, sseg, soff);
-    fmemcpy(current->mm.dseg, (__u16) data, sseg, soff, (__u16) len);
+    fmemcpyb((word_t) data, current->mm.dseg, soff, sseg, (word_t) len);
     filp->f_pos += len;
     return (size_t) len;
 }
@@ -146,7 +146,7 @@ size_t kmem_write(struct inode *inode, register struct file *filp,
 
     dseg = split_seg_off(&doff, filp->f_pos);
     debugmem2("Writing to %d:%d\n", dseg, doff);
-    fmemcpy(dseg, doff, current->mm.dseg, (__u16) data, (__u16) len);
+    fmemcpyb(doff, dseg, (word_t) data, current->mm.dseg, (word_t) len);
     filp->f_pos += len;
     return len;
 }
@@ -338,7 +338,7 @@ int memory_open(register struct inode *inode, struct file *filp)
     unsigned int minor;
 
     minor = MINOR(inode->i_rdev);
-    if (minor > 13)
+    if (minor > 12)
 	minor = 0;
     debugmem2("memory_open: minor = %u; it's /dev/%s\n",
 	      MINOR(inode->i_rdev), mdev_nam[minor]);

@@ -91,7 +91,7 @@ static size_t minix_file_read(struct inode *inode, register struct file *filp,
 	    memcpy_tofs(buf, bh->b_data + (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1)),
 			chars);
 	    unmap_brelse(bh);
-	} else fmemset(buf, current->t_regs.ds, 0, chars);
+	} else fmemsetb((word_t) buf, current->t_regs.ds, 0, (word_t) chars);
 	buf += chars;
 	filp->f_pos += chars;
 	read += chars;

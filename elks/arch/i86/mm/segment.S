@@ -1,5 +1,5 @@
 /*
- *	Assembly user access routines for the kernel.
+ *  Assembly memory access routines for the kernel.
  */
  
 #include <arch/asm-offsets.h>
@@ -53,34 +53,6 @@ _memcpy_tofs:
 	mov	es,bx
 	mov	di,dx
 	mov	si,ax
-	ret
-
-/* void fmemcpy(dseg, dest, sseg, src, size); */
-	.globl	_fmemcpy
-
-_fmemcpy:
-	mov	ax,si
-	mov	dx,di
-#ifdef USE_IA16
-	mov	bx,es
-#endif
-	mov	di,sp
-	mov	es,2[di]
-	mov	si,8[di]
-	mov	cx,10[di]
-	lds	di,4[di]
-	cld
-	rep
-	movsb
-	mov	di,dx
-	mov	si,ax
-	mov	ax,ss
-	mov	ds,ax
-#ifdef USE_IA16
-	mov	es,bx
-#else
-	mov	es,ax
-#endif
 	ret
 
 /* int strnlen_fromfs(void *saddr, size_t maxlen); */

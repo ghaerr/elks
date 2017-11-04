@@ -1,16 +1,15 @@
-! int peekw( unsigned segment, int *offset );
-! returns the word at the far pointer  segment:offset
+; word_t peekw (word_t off, seg_t seg)
+; segment after offset to allow LDS from the stack
+; returns the word at the far pointer segment:offset
 
-	.define	_peekw
 	.text
-	.even
+
+	.define _peekw
 
 _peekw:
-	mov	cx,ds
-	pop	dx
-	pop	ds
-	pop	bx
-	sub	sp,*4
-	mov	ax,[bx]
-	mov	ds,cx
-	jmp	dx
+	mov    dx,ds
+	mov    bx,sp
+	lds    bx,[bx+2]  ; arg0+1: far pointer
+	mov    ax,[bx]  ; DS by default
+	mov    ds,dx
+	ret

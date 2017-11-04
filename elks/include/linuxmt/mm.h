@@ -18,6 +18,25 @@ extern unsigned long high_memory;
 #define MM_SWAP	1
 #endif
 
+/* memory primitives */
+/* TODO: move these to a new library header memory.h */
+
+extern byte_t peekb (word_t off, seg_t seg);
+extern word_t peekw (word_t off, seg_t seg);
+
+extern void pokeb (word_t off, seg_t seg, byte_t val);
+extern void pokew (word_t off, seg_t seg, word_t val);
+
+extern void fmemsetb (word_t off, seg_t seg, byte_t val, word_t count);
+extern void fmemsetw (word_t off, seg_t seg, word_t val, word_t count);
+
+extern void fmemcpyb (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
+extern void fmemcpyw (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
+
+extern word_t fmemcmpb (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
+extern word_t fmemcmpw (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
+
+
 #define verify_area(mode,point,size) verfy_area(point,size)
 
 /*@-namechecks@*/
@@ -48,16 +67,6 @@ extern seg_t mm_dup(seg_t);
 extern void mm_free(seg_t);
 extern int do_swapper_run(struct task_struct *);
 extern unsigned int mm_get_usage(int,int);
-
-extern void pokew(__u16,__u16,__u16);
-
-extern __u8  peekb(__u16,__u16);
-extern __u16 peekw(__u16,__u16);
-
-extern void fmemcpy(__u16,__u16,__u16,__u16,__u16);
-extern void fmemset(char *,__u16,__u16,size_t);
-
-extern void far_memmove(unsigned,unsigned,unsigned,unsigned,unsigned);
 
 /* FIXME: Following function prototypes are apparently phantom ones,
  *	  so are defined here with void parameters for now.

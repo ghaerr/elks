@@ -19,7 +19,7 @@ DEPEND  	=
 
 DISTFILES	= 
 
-NOINDENT	= memmove.c
+NOINDENT	=
 
 #########################################################################
 # Include the standard rules.
@@ -31,7 +31,7 @@ include $(BASEDIR)/Makefile-rules
 
 ifeq ($(USEIA16), y)
 OBJS		=peekb.o peekw.o pokew.o bitops.o \
-		 memmove.o blt_forth.o string.o fmemset.o border.o setupw.o \
+		 string.o fmemsetb.o border.o setupw.o \
 		 ldivmod.o divmodsi3.o
 else
 OBJS		= $(IOBJS) $(JOBJS) $(LLOBJS) $(LXOBJS)
@@ -43,9 +43,12 @@ IOBJS		=idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o min.o ctypefn.o
 
 # miscellaneous
 
-JOBJS		=inport.o inportb.o outport.o outportb.o irqflag.o\
-		 peekb.o peekw.o pokew.o bitops.o \
-		 memmove.o blt_forth.o string.o fmemset.o border.o setupw.o
+JOBJS       = inport.o inportb.o outport.o outportb.o irqflag.o \
+              peekb.o peekw.o pokeb.o pokew.o \
+              fmemsetb.o fmemsetw.o \
+              fmemcpyb.o fmemcpyw.o \
+              fmemcmpb.o fmemcmpw.o \
+              bitops.o memcmp.s string.o border.o setupw.o
 #		 ntohl.o ntohs.o
 
 # compiler support for long arithmetic on little-endian (normal) longs
