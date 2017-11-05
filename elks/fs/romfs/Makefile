@@ -35,7 +35,7 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-OBJS  = inode.o romfs-low.o
+OBJS  = romfs.o
 
 #########################################################################
 # Commands.
@@ -44,9 +44,6 @@ all:	romfs.a
 
 romfs.a: $(OBJS)
 	ar rcs romfs.a $(OBJS)
-
-romfs-low.s: romfs-low.S
-romfs-low.o: romfs-low.s
 
 #########################################################################
 # Standard commands.

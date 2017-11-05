@@ -1,15 +1,15 @@
-/* ROMFS - A tiny filesystem in ROM */
+/* ROMFS - A tiny read-only filesystem in memory */
 
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
-#include <linuxmt/romfs_fs.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/locks.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/string.h>
+#include <arch/segment.h>
 
 
 #ifdef BLOAT_FS
@@ -35,43 +35,28 @@ static void romfs_statfs(struct super_block *sb, struct statfs *buf,
 
 /* File operations */
 
-static size_t romfs_read (struct inode * inode, struct file * filp,
+static size_t romfs_read (struct inode * i, struct file * f,
 	char * buf, size_t len)
 {
 	size_t count;
-	struct romfs_inode_s ri;
-	int res;
-	seg_t ds;
 
 	while (1) {
-		res = romfs_inode_get (inode->i_ino, &ri);
-		if (res) {
-			count = -1;
-			break;
-		}
-
 		/* Some programs do not check the size and read until EOF (cat) */
 		/* Limit the length in such case */
 
-		if (filp->f_pos >= ri.size) {
+		if (f->f_pos >= i->i_size) {
 			count = 0;
 			break;
 		}
 
-		if (filp->f_pos + len > ri.size) {
-			len = ri.size - filp->f_pos;
+		if (f->f_pos + len > i->i_size) {
+			len = i->i_size - f->f_pos;
 		}
 
 		/* ELKS trick: the destination buffer is in the current task data segment */
-		ds = current->t_regs.ds;
+		fmemcpyb (buf, current->t_regs.ds, (word_t) f->f_pos, i->u.romfs.seg, (word_t) len);
 
-		res = romfs_file_read (ri.offset, (word_t) filp->f_pos, ds, buf, (word_t) len);
-		if (res) {
-			count = -1;
-			break;
-			}
-
-		filp->f_pos += len;
+		f->f_pos += len;
 		count = len;
 		break;
 	}
@@ -82,106 +67,106 @@ static size_t romfs_read (struct inode * inode, struct file * filp,
 
 /* Directory operations */
 
-static int romfs_readdir (struct inode * i, struct file * filp,
+static int romfs_readdir (struct inode * i, struct file * f,
 	void * dirent, filldir_t filldir)
-	{
-    char name [ROMFS_MAXFN];
-    byte_t len;
-    struct romfs_inode_s ri;
-    word_t pos;
-    int res;
-    seg_t ds;
-    int stored = 0;
+{
+	char name [ROMFS_MAXFN];
+	byte_t len;
+	struct romfs_inode_info * ii;
+	word_t pos;
+	int res;
+	seg_t iseg;
+	int stored = 0;
 
-	while (1)
-		{
-		res = romfs_inode_get (i->i_ino, &ri);
-		if (res) break;
-
-		pos = filp->f_pos;
+	while (1) {
+		iseg = i->u.romfs.seg;
+		pos = f->f_pos;
 		if (!pos) pos += 2;  /* skip entry count */
 
-		while (1)
-			{
-			if (pos >= ri.size)
-				{
+		while (1) {
+			if (pos >= i->i_size) {
 				pos = -1;
-				filp->f_pos = pos;
+				f->f_pos = pos;
 				break;
-				}
+			}
 
-			res = romfs_file_read (ri.offset, pos, 0, &len, 1);
-			if (res) break;
-
+			len = peekb (pos, iseg);
 			if (!len || len >= ROMFS_MAXFN) break;
 
-			res = romfs_file_read (ri.offset, pos + 1, 0, name, (word_t) len);
-			if (res) break;
-
+			fmemcpyb (name, kernel_ds, pos + 1, iseg, (word_t) len);
 			name [len] = 0;
 
 			res = filldir (dirent, name, len, pos, i->i_ino);
 			if (res < 0) break;
 
-			pos += 3 + len;  /* name len and inode index */
-			filp->f_pos = pos;
+			pos += 3 + len;  /* name length and inode index */
+			f->f_pos = pos;
 
 			stored++;
-			}
-
-		break;
 		}
 
-	return stored;
+		break;
 	}
 
+	return stored;
+}
 
-static int romfs_lookup (struct inode * dir, char *name, size_t len,
-	struct inode **result)
-	{
+
+static int romfs_lookup (struct inode * dir, char * name, size_t len1,
+	struct inode ** result)
+{
 	int res;
-	struct romfs_inode_s ri;
 	ino_t ino;
 	struct inode * i;
-	seg_t ds;
+	word_t count;
+	word_t offset;
+	word_t index;
+	word_t len2;
+	seg_t seg_i;
 
-	while (1)
-		{
-		ino = dir->i_ino;
-		res = romfs_inode_get (ino, &ri);
-		if (res)
-			{
-			printk ("romfs: cannot read inode 0x%\n", (int) ino);
-			res = -1;
-			break;
+	while (1) {
+		seg_i = dir->u.romfs.seg;
+		/* TODO: better start inode number from 1 (0: null) */
+		ino = (ino_t) 0xFFFF;
+		/* TODO: simplify: remove count word and check on size */
+		count = peekw (0, seg_i);  /* directory entry count */
+		offset = 2;
+		index = 0;
+
+		while (index < count) {
+			len2 = peekb (offset, seg_i);
+			/* ELKS trick: the name is in the current task data segment */
+			/* TODO: remove that trick with explicit segment in call */
+			if (len2 == (byte_t) len1) {
+				if (!fmemcmpb (offset + 1, seg_i, name, current->t_regs.ds, (word_t) len2)) {
+					ino = (ino_t) peekw (offset + 1 + (word_t) len2, seg_i);
+					break;
+				}
 			}
 
-		/* ELKS trick: the name is in the current task data segment */
-		ds = current->t_regs.ds;
+			offset += 3 + (word_t) len2;
+			index++;
+		}
 
-		ino = 0;
-		res = romfs_dir_lookup (ri.offset, ds, name, (byte_t) len, &ino);
-		if (res)
-			{
+		if (ino == (ino_t) 0xFFFF) {
 			res = -ENOENT;
 			break;
-			}
+		}
 
 		i = iget (dir->i_sb, ino);
-		if (!i)
-			{
+		if (!i) {
 			res = -EACCES;
 			break;
-			}
+		}
 
 		*result = i;
 		res = 0;
 		break;
-		}
+	}
 
 	iput (dir);  /* really needed ? */
 	return res;
-	}
+}
 
 
 static int romfs_readlink (struct inode *inode, char *buffer, size_t len)
@@ -212,7 +197,7 @@ static int romfs_readlink (struct inode *inode, char *buffer, size_t len)
     */
 }
 
-/* Mapping from our types to the kernel */
+/* Inode operations for supported types */
 
 static struct file_operations romfs_file_operations = {
     NULL,			/* lseek - default */
@@ -270,79 +255,81 @@ static struct file_operations romfs_dir_operations = {
 #endif
 };
 
-/* Merged dir/symlink op table.  readdir/lookup/readlink
- * will protect from type mismatch.
- */
-
-static struct inode_operations romfs_dirlink_inode_operations = {
-    &romfs_dir_operations,
-    NULL,			/* create */
-    romfs_lookup,		/* lookup */
-    NULL,			/* link */
-    NULL,			/* unlink */
-    NULL,			/* symlink */
-    NULL,			/* mkdir */
-    NULL,			/* rmdir */
-    NULL,			/* mknod */
-    romfs_readlink,		/* readlink */
-    NULL,			/* followlink */
+static struct inode_operations romfs_dir_inode_operations = {
+	&romfs_dir_operations,
+	NULL,            /* create */
+	romfs_lookup,    /* lookup */
+	NULL,            /* link */
+	NULL,            /* unlink */
+	NULL,            /* symlink */
+	NULL,            /* mkdir */
+	NULL,            /* rmdir */
+	NULL,            /* mknod */
+	romfs_readlink,  /* readlink */
+	NULL,            /* followlink */
 #ifdef USE_GETBLK
-    NULL,			/* getblk */
+	NULL,            /* getblk */
 #endif
-    NULL			/* truncate */
+	NULL             /* truncate */
 #ifdef BLOAT_FS
-	,
-    NULL			/* permission */
+	, NULL           /* permission */
 #endif
 };
 
 
-static mode_t romfs_modemap [] =
-	{
+static mode_t romfs_modemap [] = {
 	S_IFREG,
 	S_IFDIR,
 	S_IFCHR,
 	S_IFBLK
-	};
+};
 
-static struct inode_operations *romfs_inode_ops [] =
-	{
+static struct inode_operations * romfs_inode_ops [] = {
 	&romfs_file_inode_operations,
-	&romfs_dirlink_inode_operations,
+	&romfs_dir_inode_operations,
 	&chrdev_inode_operations,  /* standard handler */
 	&blkdev_inode_operations   /* standard handler */
-	};
+};
 
+/* Read inode from memory */
 
 static void romfs_read_inode (struct inode * i)
-	{
-	int err;
-	struct romfs_inode_s ri;
+{
+	struct romfs_inode_mem rim;
+	struct romfs_super_info * isb;
+	word_t ino;
+	word_t off_i;
 	mode_t m;
 
-	while (1)
-		{
+	while (1) {
 		i->i_op = NULL;
 
-		err = romfs_inode_get (i->i_ino, &ri);
-		if (err) break;
+		ino = (word_t) i->i_ino;
+		isb = &(i->i_sb->u.romfs);
+		if (ino >= isb->icount) break;
 
-		i->i_nlink = 1;		/* TODO: compute link count in mkromfs */
-		i->i_size = ri.size;
+		off_i = isb->ssize + ino * isb->isize;
+		fmemcpyw (&rim, kernel_ds, off_i, CONFIG_ROMFS_BASE, sizeof (struct romfs_inode_mem) >> 1);
+
+		i->i_size = rim.size;
+
+		i->i_nlink = 1;  /* TODO: compute link count in mkromfs */
 		i->i_mtime = i->i_atime = i->i_ctime = 0;
 		i->i_uid = i->i_gid = 0;
 
-		i->i_op = romfs_inode_ops [ri.flags & ROMFH_TYPE];
+		i->i_op = romfs_inode_ops [rim.flags & ROMFS_TYPE];
 
 		/* Compute inode mode (type & permissions) */
 
-		m = S_IRUGO | S_IXUGO | romfs_modemap [ri.flags & ROMFH_TYPE];
+		m = S_IRUGO | S_IXUGO | romfs_modemap [rim.flags & ROMFS_TYPE];
 
-		if (S_ISBLK (m) || S_ISCHR (m))
-			{
+		if (S_ISBLK (m) || S_ISCHR (m)) {
 			m = (m & ~S_IXUGO) | S_IWUGO;
-			i->i_rdev = (kdev_t) ri.offset;
-			}
+			i->i_rdev = (kdev_t) rim.offset;
+		}
+		else {
+			i->u.romfs.seg = CONFIG_ROMFS_BASE + rim.offset;
+		}
 
 		i->i_mode = m;
 		break;
@@ -361,7 +348,7 @@ static void romfs_put_super (struct super_block * sb)
 	}
 
 
-static struct super_operations romfs_ops =
+static struct super_operations romfs_super_ops =
 	{
 	romfs_read_inode,
 #ifdef BLOAT_FS
@@ -378,53 +365,60 @@ static struct super_operations romfs_ops =
 	};
 
 
-/* Get superblock in ROM */
-/* No device needed */
+/* Read superblock from memory */
 
 static struct super_block * romfs_read_super (struct super_block * s, void * data, int silent)
-	{
+{
 	struct super_block * res;
-	struct romfs_superblock_s rsb;
+	struct romfs_super_mem rsm;
 	struct inode * i;
 	int err;
 
-	while (1)
-		{
+	while (1) {
 		lock_super (s);
-		err = romfs_super_get (&rsb);
-		if (err)
-			{
-			printk ("romfs: cannot get superblock\n");
+
+		if (fmemcmpw (ROMFS_MAGIC_STR, kernel_ds, 0, CONFIG_ROMFS_BASE, ROMFS_MAGIC_LEN >> 1)) {
+			printk ("romfs: no superblock at %x:0h\n", CONFIG_ROMFS_BASE);
 			res = NULL;
 			break;
-			}
+		}
+
+		fmemcpyw (&rsm, kernel_ds, 0, CONFIG_ROMFS_BASE, sizeof (struct romfs_super_mem) >> 1);
+		if (rsm.ssize != sizeof (struct romfs_super_mem)) {
+			printk ("romfs: superblock size mismatch\n");
+			res = NULL;
+			break;
+		}
+
+		s->u.romfs.ssize  = rsm.ssize;
+		s->u.romfs.isize  = rsm.isize;
+		s->u.romfs.icount = rsm.icount;
 
 		/*s->s_flags |= MS_RDONLY;*/
-		s->s_op = &romfs_ops;
+		s->s_op = &romfs_super_ops;
 
 #ifdef BLOAT_FS
 		s->s_magic = ROMFS_MAGIC;
 #endif
 
-		/* Check the root inode */
+		/* Get the root inode */
 
 		i = iget (s, 0);
-		if (!i)
-			{
+		if (!i) {
 			printk ("romfs: cannot get root inode\n");
 			res = NULL;
 			break;
-			}
+		}
 
 		s->s_mounted = i;
 
 		res = s;
 		break;
-		}
+	}
 
 	unlock_super (s);
 	return res;
-	}
+}
 
 
 struct file_system_type romfs_fs_type =
@@ -432,6 +426,6 @@ struct file_system_type romfs_fs_type =
 	romfs_read_super,
 	"romfs"
 #ifdef BLOAT_FS
-	,1
+	,1  /* device required ? not really ! */
 #endif
 	};
