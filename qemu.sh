@@ -1,39 +1,34 @@
 # Helper to run ELKS in QEMU
 
-# QEMU emulator binary to use
-QEMU=qemu-system-i386
-#QEMU=qemu-system-x86_64
+# Select your QEMU system emulator here:
+# QEMU=qemu-system-i386
+# QEMU=qemu-system-x86_64
+QEMU=qemu-system-x86_64
 
-# Floppy image to use
+# Select floppy disk image to use
 IMAGE=elkscmd/full3
 
-# Keyboard mapping
+# Select your keyboard mapping here:
 # KEYBOARD="-k en-us"
 # KEYBOARD="-k fr"
 KEYBOARD=
 
-# Network dump
-#NETDUMP="-net dump"
-NETDUMP=
-
 # Host forwarding for networking
-# no forwarding - only outgoing from ELKS to host
-#HOSTFWD="-net user"
-# incoming echo client for echo server on ELKS
-#HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:2323"
-# incoming telnet forwarding - example: connect to ELKS with telnet localhost 2323
-HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
-# telnet and http forwarding - example: connect to ELKS httpd with 'http://localhost:8080'
-#HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80"
+# No forwarding: only outgoing from ELKS to host
+# HOSTFWD="-net user"
+# Incoming telnet forwarding: example: connect to ELKS with telnet localhost 2323
+# HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
+# Incoming http forwarding: example: connect to ELKS httpd with 'http://localhost:8080'
+# HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80"
+HOSTFWD="-net user"
 
-SERIALDEV="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
-
-if [ ! -e "$IMAGE" ]
-	then echo "The disk image file '$IMAGE' is missing"
-	exit 1
-fi
+# Enable network dump here:
+# NETDUMP="-net dump"
 
 # Configure QEMU as pure ISA system
-$QEMU -nodefaults -name ELKS -monitor stdio -machine isapc -cpu 486 \
--m 1M $KEYBOARD -display sdl -vga cirrus -rtc base=utc $SERIALDEV \
+
+SERIAL="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
+
+$QEMU -nodefaults -name ELKS -monitor stdio -machine isapc -cpu 486 -m 1M \
+$KEYBOARD -display sdl -vga cirrus -rtc base=utc $SERIAL \
 -net nic,model=ne2k_isa $HOSTFWD $NETDUMP -fda $IMAGE $@

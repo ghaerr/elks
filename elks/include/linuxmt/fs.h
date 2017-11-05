@@ -10,16 +10,27 @@
 #include <linuxmt/vfs.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/ioctl.h>
-#include <linuxmt/minix_fs.h>
-#include <linuxmt/pipe_fs_i.h>
 #include <linuxmt/net.h>
 #include <linuxmt/config.h>
 
 #include <arch/bitops.h>
 
+#ifdef CONFIG_PIPE
+#include <linuxmt/pipe_fs_i.h>
+#endif
+
+#ifdef CONFIG_MINIX_FS
+#include <linuxmt/minix_fs.h>
+#include <linuxmt/minix_fs_sb.h>
+#endif
+
 #ifdef CONFIG_MSDOS_FS
 #include <linuxmt/msdos_fs_i.h>
 #include <linuxmt/msdos_fs_sb.h>
+#endif
+
+#ifdef CONFIG_ROMFS_FS
+#include <linuxmt/romfs_fs.h>
 #endif
 
 #define USE_GETBLK
@@ -248,13 +259,22 @@ struct inode {
     short			i_sem;
 
     union {
-	struct pipe_inode_info	pipe_i;
-	struct minix_inode_info	minix_i;
+#ifdef CONFIG_PIPE
+		struct pipe_inode_info pipe_i;
+#endif
+#ifdef CONFIG_MINIX_FS
+		struct minix_inode_info minix_i;
+#endif
 #ifdef CONFIG_MSDOS_FS	
-	struct msdos_inode_info msdos_i;
+		struct msdos_inode_info msdos_i;
 #endif	
-	struct socket		socket_i;
-	void			*generic_i;
+#ifdef CONFIG_ROMFS_FS
+		struct romfs_inode_info romfs;
+#endif
+#ifdef CONFIG_SOCKET
+		struct socket socket_i;
+#endif
+		void * generic_i;
     } u;
 };
 
@@ -273,8 +293,6 @@ struct file {
 				/* needed for tty driver, but not ntty */
 #endif
 };
-
-#include <linuxmt/minix_fs_sb.h>
 
 struct super_block {
     kdev_t			s_dev;
@@ -299,11 +317,16 @@ struct super_block {
     struct wait_queue		s_wait;
 
     union {
-	struct minix_sb_info	minix_sb;
-#ifdef CONFIG_MSDOS_FS	
-	struct msdos_sb_info	msdos_sb;
-#endif	
-	void			*generic_sbp;
+#ifdef CONFIG_MINIX_FS
+		struct minix_sb_info minix_sb;
+#endif
+#ifdef CONFIG_MSDOS_FS
+		struct msdos_sb_info msdos_sb;
+#endif
+#ifdef CONFIG_ROMFS_FS
+		struct romfs_super_info romfs;
+#endif
+		void * generic_sbp;
     } u;
 };
 

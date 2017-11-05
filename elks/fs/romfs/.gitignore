@@ -1,1 +1,2 @@
-romfs-low.s
+romfs.o
+romfs.a
