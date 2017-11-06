@@ -56,7 +56,7 @@ endif
 #########################################################################
 # What do we need this time?
 
-ARCHIVES=kernel/kernel.a fs/fs.a lib/lib.a net/net.a
+ARCHIVES=fs/fs.a kernel/kernel.a lib/lib.a net/net.a
 
 #########################################################################
 # Check what filesystems to include
