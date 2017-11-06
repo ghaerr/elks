@@ -32,7 +32,7 @@ include $(BASEDIR)/Makefile-rules
 ifeq ($(USEIA16), y)
 OBJS		=peekb.o peekw.o pokew.o bitops.o \
 		 string.o fmemsetb.o border.o setupw.o \
-		 ldivmod.o divmodsi3.o
+		 fmemcpyb.o ldivmod.o divmodsi3.o
 else
 OBJS		= $(IOBJS) $(JOBJS) $(LLOBJS) $(LXOBJS)
 endif
