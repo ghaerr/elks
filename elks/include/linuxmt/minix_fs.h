@@ -36,6 +36,7 @@
 #define MINIX_V2		0x0002	/* minix V2 fs */
 
 struct super_block;
+struct inode;
 
 /* inode in-kernel data */
 
