@@ -48,7 +48,7 @@ JOBJS       = inport.o inportb.o outport.o outportb.o irqflag.o \
               fmemsetb.o fmemsetw.o \
               fmemcpyb.o fmemcpyw.o \
               fmemcmpb.o fmemcmpw.o \
-              bitops.o memcmp.s string.o border.o setupw.o
+              bitops.o memcmp.o string.o border.o setupw.o
 #		 ntohl.o ntohs.o
 
 # compiler support for long arithmetic on little-endian (normal) longs
@@ -71,6 +71,10 @@ lib86.a: $(OBJS)
 	sync
 
 #setupb.s: setupb.S
+
+fmemsetb.s: fmemsetb.S
+
+fmemcpyb.s: fmemcpyb.S
 
 setupw.s: setupw.S
 
