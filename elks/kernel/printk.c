@@ -30,6 +30,12 @@
 #include <linuxmt/mm.h>
 #include <stdarg.h>
 
+#ifdef __BCC__
+#define REGISTER register
+#else
+#define REGISTER
+#endif
+
 /*
  *	Just to make it work for now
  */
@@ -77,14 +83,14 @@ static void numout(__u32 v, int width, int base, int useSign,
     int c, vch;
     register char *i;
 
-    i = 10;
+    i = (char *)10;
     dvr = 0x3B9ACA00L;
     if (base > 10) {
-	i = 8;
+	i = (char *)8;
 	dvr = 0x10000000L;
     }
     if (base < 10) {
-	i = 11;
+	i = (char *)11;
 	dvr = 0x40000000L;
     }
 
@@ -195,7 +201,7 @@ static void vprintk(register char *fmt, va_list p)
 
 void printk(char *fmt, ...)
 {
-    register va_list p;
+    REGISTER va_list p;
 
     va_start(p, fmt);
     vprintk(fmt, p);
