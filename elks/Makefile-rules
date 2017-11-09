@@ -143,9 +143,15 @@ CFG_SHELL	:= $(shell \
 #########################################################################
 # Specify the standard definitions to be given to system programs.
 
+ifdef USE_IA16
+CCDEFS_IA16= -DUSE_IA16
+else
+CCDEFS_IA16=
+endif
+
 CCDEFS		= -DELKS_VERSION_CODE=$(VSNCODE)		\
 		  -DUTS_RELEASE=\"$(DIST)\"			\
-		  -D__KERNEL__
+		  -D__KERNEL__ $(CCDEFS_IA16)
 
 #########################################################################
 # Set the target environment.
@@ -292,29 +298,28 @@ else
 ################################
 # Definitions using GCC compiler
 
-AS		= as
-ASFLAGS 	= 
-CC		= gcc
-CFLAGS		= -g $(CFLBASE) -ansi
-LD		= ld
-LDFLAGS 	=
+AS      = as
+ASFLAGS =
+CC      = gcc
+CFLAGS  = -ansi $(CFLBASE)
+LD      = ld
+LDFLAGS =
 
 endif
 
 #########################################################################
 # general construction rules
 
-.c.s:
-	$(CC) $(CFLAGS) -S -o $*.s $<
+.S.o: ;
+
+.S.s:
+	gcc -E -traditional -I$(INCDIR) $(CCDEFS) -o $*.s $<
 
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<
 
 ifneq ($(USEBCC), N)
 ifeq ($(USEIA16), y)
-.S.s:
-	gcc -E -traditional -I$(INCDIR) -DUSE_IA16 $(CCDEFS) -o $*.s $<
-
 .c.o:
 	$(CC) $(CFLAGS) -S -o $*.s $<
 	att2as86 < $*.s > $*.asm
@@ -322,9 +327,6 @@ ifeq ($(USEIA16), y)
 	rm $*.s $*.asm
 
 else
-.S.s:
-	gcc -E -traditional -I$(INCDIR) $(CCDEFS) -o $*.s $<
-
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 

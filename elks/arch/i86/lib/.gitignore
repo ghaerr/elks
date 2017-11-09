@@ -1,0 +1,7 @@
+fmemcmpb.s
+fmemcmpw.s
+fmemcpyb.s
+fmemcpyw.s
+setupb.s
+setupw.s
+string.s

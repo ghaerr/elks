@@ -17,8 +17,6 @@ arch/i86/kernel/entry.s
 arch/i86/kernel/entry.S
 arch/i86/kernel/irqtab.s
 arch/i86/kernel/printreg.s
-arch/i86/lib/setupw.s
-arch/i86/lib/string.s
 arch/i86/mm/segment.s
 arch/i86/tools/build
 arch/i86/tools/mkbootloader

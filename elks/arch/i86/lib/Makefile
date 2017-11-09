@@ -29,12 +29,48 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
+# Precompiled assembly
+
+SRCS1= \
+	fmemcpyb.S fmemcpyw.S \
+	fmemcmpb.S fmemcmpw.S \
+	setupb.S setupw.S \
+	string.S
+	# end of list
+	
+fmemcpyb.s:fmemcpyb.S
+fmemcpyw.s:fmemcpyw.S
+fmemcmpb.s:fmemcmpb.S
+fmemcmpw.s:fmemcmpw.S
+setupb.s:setupb.S
+setupw.s:setupw.S
+string.s:string.S
+
+OBJS1=$(SRCS1:.S=.o)
+
+# Non-precompiled assembly
+
+SRCS2= \
+	peekb.s peekw.s pokeb.s pokew.s \
+	fmemsetb.s fmemsetw.s \
+	border.s \
+	ldivmod.s \
+	# end of list
+
+OBJS2=$(SRCS2:.s=.o)
+
+# C sources
+
+SRCS3= \
+	bitops.c \
+	# end of list
+
+OBJS3=$(SRCS3:.c=.o)
+	
 ifeq ($(USEIA16), y)
-OBJS		=peekb.o peekw.o pokew.o bitops.o \
-		 string.o fmemsetb.o border.o setupw.o \
-		 fmemcpyb.o ldivmod.o divmodsi3.o
+OBJS		= $(OBJS1) $(OBJS2) $(OBJS3) divmodsi3.o
 else
-OBJS		= $(IOBJS) $(JOBJS) $(LLOBJS) $(LXOBJS)
+OBJS		= $(OBJS1) $(OBJS2) $(OBJS3) $(IOBJS) $(JOBJS) $(LLOBJS)
 endif
 
 # compiler support for integer arithmetic
@@ -44,11 +80,7 @@ IOBJS		=idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o min.o ctypefn.o
 # miscellaneous
 
 JOBJS       = inport.o inportb.o outport.o outportb.o irqflag.o \
-              peekb.o peekw.o pokeb.o pokew.o \
-              fmemsetb.o fmemsetw.o \
-              fmemcpyb.o fmemcpyw.o \
-              fmemcmpb.o fmemcmpw.o \
-              bitops.o memcmp.o string.o border.o setupw.o
+              memcmp.o
 #		 ntohl.o ntohs.o
 
 # compiler support for long arithmetic on little-endian (normal) longs
@@ -56,10 +88,6 @@ JOBJS       = inport.o inportb.o outport.o outportb.o irqflag.o \
 LLOBJS  	=laddl.o landl.o lcmpl.o lcoml.o ldecl.o ldivl.o ldivul.o \
 		 leorl.o lincl.o lmodl.o lmodul.o lmull.o lnegl.o lorl.o \
 		 lsll.o lsrl.o lsrul.o lsubl.o ltstl.o
-
-# compiler support for long arithmetic on all longs
-
-LXOBJS  	=ldivmod.o
 
 #########################################################################
 # Commands.
@@ -70,21 +98,11 @@ lib86.a: $(OBJS)
 	ar rcs lib86.a $(OBJS)
 	sync
 
-#setupb.s: setupb.S
-
-fmemsetb.s: fmemsetb.S
-
-fmemcpyb.s: fmemcpyb.S
-
-setupw.s: setupw.S
-
-string.s: string.S
-
 #########################################################################
 # Standard commands.
 
 distdir:
-	cp -pf Makefile *.c *.S *.s $(DISTDIR)/arch/i86/lib
+	cp -pf Makefile $(SRCS1) $(SRCS2) $(SRCS3) $(DISTDIR)/arch/i86/lib
 
 #########################################################################
 ### Dependencies:
