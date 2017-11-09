@@ -13,6 +13,8 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 
+#define DMA_ALN
+
 static struct buffer_head buffers[NR_BUFFERS];
 #ifdef DMA_ALN
 static char bufmem[(NR_MAPBUFS+1)*BLOCK_SIZE-1];	/* L1 buffer area */
