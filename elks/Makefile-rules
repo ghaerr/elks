@@ -57,8 +57,6 @@ SUBLEVEL	= 0	# (0-255)
 
 ARCH		= i86
 
-USEIA16  	= y
-
 #########################################################################
 # ROOT_DEV specifies the default root-device when making the image.
 # This does not yet work under ELKS. See include/linuxmt/config.h to
@@ -148,16 +146,29 @@ CCDEFS		= -DELKS_VERSION_CODE=$(VSNCODE)		\
 		  -D__KERNEL__
 
 #########################################################################
-# Set the target environment.
+# Set the target environment and the compiler to use.
 
-ifeq (wildcard($(BASEDIR)/.config), $(BASEDIR)/.config)
+ifeq ($(wildcard $(BASEDIR)/.config),)
+    MK_ARCH	= ibmpc
+    MK_CPU	= 8086
+    MK_CC	= bcc
+else
     MK_ARCH	= $(shell grep '^CONFIG_ARCH_' $(BASEDIR)/.config \
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
     MK_CPU	= $(shell grep '^CONFIG_CPU_' $(BASEDIR)/.config \
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
+    MK_CCN	= $(shell grep '^CONFIG_COMPILER_' $(BASEDIR)/.config \
+			| cut -d = -f 1 | cut -d _ -f 3- )
+ifeq ($(MK_CCN), 1)
+    MK_CC	= bcc
 else
-    MK_ARCH	= ibmpc
-    MK_CPU	= 8086
+ifeq ($(MK_CCN), 2)
+    MK_CC	= ia16-elf-gcc
+else
+    MK_CC	= ia16-unknown-elks-gcc
+endif
+    USEIA16	= y
+endif
 endif
 
 #########################################################################
@@ -268,8 +279,7 @@ ifeq ($(USEIA16), y)
 
 AS		= as86
 ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
-CC		= ia16-elf-gcc
-#CC		= ia16-unknown-elks-gcc
+CC		= $(MK_CC)
 CFLAGS		= $(CPU_CC) $(ARCH_CC) -Os $(CFLBASE) -Wall
 LD		= ld86
 LDFLAGS 	= $(CPU_LD) -s
