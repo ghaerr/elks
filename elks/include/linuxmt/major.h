@@ -8,8 +8,12 @@
 /* limits */
 
 #define MAX_CHRDEV 10
-#define MAX_BLKDEV 32
 
+#ifdef CONFIG_ROMFS_FS
+#define MAX_BLKDEV 32
+#else
+#define MAX_BLKDEV 6
+#endif
 
 /*
  * assignments
@@ -53,7 +57,10 @@
 #define BIOSHD_MAJOR      3
 #define MSCDEX_MAJOR      4
 #define ATHD_MAJOR        5
+
+#ifdef CONFIG_ROMFS_FS
 #define ROMFLASH_MAJOR    31  /* as per Linux standard */
+#endif
 
 
 #endif  /* !LX86_LINUXMT_MAJOR_H */

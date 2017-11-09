@@ -304,15 +304,10 @@ int memory_open(register struct inode *inode, struct file *filp)
 	"mem",
 	"kmem",
 	"null",
-	"port",
+	"port", /* not implemented */
 	"zero",
 	"???",  /* OBSOLETE core */
-	"full",
-	"random",
-	"urandom",
-	"aio",
-	"kmsg",
-	"???"   /* OBSOLETE oldmem */
+	"full"
     };
 #endif
     static struct file_operations *mdev_fops[] = {
@@ -327,18 +322,13 @@ int memory_open(register struct inode *inode, struct file *filp)
 	&null_fops,	/* DEV_NULL_MINOR */
 	NULL,		/* DEV_PORT_MINOR */
 	&zero_fops,	/* DEV_ZERO_MINOR */
-	NULL,		/* none */
-	&full_fops,	/* DEV_FULL_MINOR */
-	NULL,		/* DEV_RANDOM_MINOR */
-	NULL,		/* DEV_URANDOM_MINOR */
-	NULL,		/* none */
-	NULL,		/* none */
-	NULL		/* none */
+	NULL,		/* OBSOLETE core */
+	&full_fops	/* DEV_FULL_MINOR */
     };
     unsigned int minor;
 
     minor = MINOR(inode->i_rdev);
-    if (minor > 12)
+    if (minor > 7)
 	minor = 0;
     debugmem2("memory_open: minor = %u; it's /dev/%s\n",
 	      MINOR(inode->i_rdev), mdev_nam[minor]);
