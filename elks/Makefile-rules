@@ -310,6 +310,7 @@ endif
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<
 
+ifneq ($(USEBCC), N)
 ifeq ($(USEIA16), y)
 .S.s:
 	gcc -E -traditional -I$(INCDIR) -DUSE_IA16 $(CCDEFS) -o $*.s $<
@@ -327,6 +328,7 @@ else
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 
+endif
 endif
 
 #########################################################################
