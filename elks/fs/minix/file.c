@@ -21,19 +21,15 @@
 
 #include <linuxmt/fs.h>
 
+#ifndef USE_GETBLK
 /* FIXME: Readahead */
 #ifdef DEBUG
 static char inode_equal_NULL[] = "inode = NULL\n";
 static char mode_equal_val[] = "mode = %07o\n";
 #endif
 
-#ifdef USE_GETBLK
-size_t block_read(struct inode *inode, register struct file *filp,
-	       char *buf, size_t count)
-#else
 static size_t minix_file_read(struct inode *inode, register struct file *filp,
 			    char *buf, size_t count)
-#endif
 {
     loff_t pos;
     size_t chars;
@@ -69,15 +65,7 @@ static size_t minix_file_read(struct inode *inode, register struct file *filp,
 	/*
 	 *      Read the block in
 	 */
-#ifdef USE_GETBLK
-	chars = (filp->f_pos >> BLOCK_SIZE_BITS);
-	if (inode->i_op->getblk)
-	    bh = inode->i_op->getblk(inode, (block_t)chars, 0);
-	else
-	    bh = getblk(inode->i_dev, (block_t)chars);
-#else
 	bh = minix_getblk(inode, (block_t)(filp->f_pos >> BLOCK_SIZE_BITS), 0);
-#endif
 	/* Offset to block/offset */
 	chars = BLOCK_SIZE - (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1));
 	if (chars > count) chars = count;
@@ -108,13 +96,8 @@ static size_t minix_file_read(struct inode *inode, register struct file *filp,
     return read;
 }
 
-#ifdef USE_GETBLK
-size_t block_write(struct inode *inode, register struct file *filp,
-		char *buf, size_t count)
-#else
 static size_t minix_file_write(struct inode *inode, register struct file *filp,
 			    char *buf, size_t count)
-#endif
 {
     size_t chars, offset;
     int written = 0;
@@ -141,15 +124,7 @@ static size_t minix_file_write(struct inode *inode, register struct file *filp,
     while (count > 0) {
 	register struct buffer_head *bh;
 
-#ifdef USE_GETBLK
-	chars = (filp->f_pos >> BLOCK_SIZE_BITS);
-	if (inode->i_op->getblk)
-	    bh = inode->i_op->getblk(inode, (block_t)chars, 1);
-	else
-	    bh = getblk(inode->i_dev, (block_t)chars);
-#else
 	bh = minix_getblk(inode, (block_t) (filp->f_pos >> BLOCK_SIZE_BITS), 1);
-#endif
 	if (!bh) {
 	    if (!written) written = -ENOSPC;
 	    break;
@@ -190,6 +165,7 @@ static size_t minix_file_write(struct inode *inode, register struct file *filp,
     }
     return written;
 }
+#endif
 
 /*
  * We have mostly NULL's here: the current defaults are ok for
