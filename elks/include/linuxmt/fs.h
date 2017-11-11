@@ -360,14 +360,14 @@ struct file_operations {
 struct inode_operations {
     struct file_operations	*default_file_ops;
     int 			(*create) ();
-    int 			(*lookup) ();
+    int 			(*lookup) (struct inode * dir, char * name, size_t len, struct inode ** res);
     int 			(*link) ();
     int 			(*unlink) ();
     int 			(*symlink) ();
     int 			(*mkdir) ();
     int 			(*rmdir) ();
     int 			(*mknod) ();
-    int 			(*readlink) ();
+    int 			(*readlink) (struct inode * i, char * buf, size_t len);
     int 			(*follow_link) ();
 
 #ifdef USE_GETBLK

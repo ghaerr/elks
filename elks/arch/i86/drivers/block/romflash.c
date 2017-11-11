@@ -1,7 +1,8 @@
 
-
+#include <linuxmt/config.h>
 #include <linuxmt/major.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/kernel.h>
 #include "romflash.h"
 
 
