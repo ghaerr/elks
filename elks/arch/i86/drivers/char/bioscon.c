@@ -49,6 +49,16 @@ struct tty_ops dircon_ops;
 void init_console(void);
 #endif
 
+/* Function from bioscon-low */
+/* TODO: move these functions to a BIOS library */
+
+extern int poll_kbd ();
+extern void SetDisplayPage (byte_t page);
+extern void PosCursLow (byte_t x, byte_t y, byte_t page);
+extern void VideoWriteLow (byte_t c, byte_t attr, byte_t page);
+extern void ScrollLow (byte_t attr, byte_t n, byte_t x, byte_t y, byte_t xx, byte_t yy);
+
+
 #define A_DEFAULT 	0x07
 #define A_BOLD 		0x08
 #define A_BLINK 	0x80
@@ -137,25 +147,6 @@ void xtk_init(void)
 }
 
 /*
- * Bios Keyboard Poll
- */
-static int poll_kbd(void)
-{
-#asm
-    mov		ah, #0x01
-    int		0x16
-    jnz		nhp1
-    xor		ax,ax
-nhp1:
-    or		ax,ax
-    jz		nhp2
-    xor		ah,ah
-    int		0x16
-nhp2:
-#endasm
-}
-
-/*
  * Bios Keyboard Decoder
  */
 static void kbd_timer(int __data)
@@ -209,16 +200,6 @@ int wait_for_keypress(void)
     return chq_wait_rd(&ttys[0].inq, 0);
 }
 
-static void SetDisplayPage(unsigned int n)
-{
-    int		x;
-#asm
-    mov		ah, #0x05
-    mov		al, [bp + .SetDisplayPage.n]
-    int		#0x10
-#endasm
-}
-
 static void PositionCursor(register Console * C)
 {
     int x, y, p;
@@ -226,13 +207,8 @@ static void PositionCursor(register Console * C)
     x = C->cx;
     y = C->cy;
     p = C->pageno;
-#asm
-    mov		ah, #0x02
-    mov		bh, [bp + .PositionCursor.p]
-    mov		dh, [bp + .PositionCursor.y]
-    mov		dl, [bp + .PositionCursor.x]
-    int		#0x10
-#endasm
+
+    PosCursLow (x, y, p);
 }
 
 static void VideoWrite(register Console * C, char c)
@@ -241,14 +217,7 @@ static void VideoWrite(register Console * C, char c)
 
     a = C->attr;
     p = C->pageno;
-#asm
-    mov		ah, #0x09
-    mov		al, [bp + .VideoWrite.c]
-    mov		bh, [bp + .VideoWrite.p]
-    mov		bl, [bp + .VideoWrite.a]
-    mov		cx, #1
-    int		#0x10
-#endasm
+    VideoWriteLow (c, a, p);
 }
 
 static void genscro(register Console * C, int n, int x, int y, int xx, int yy)
@@ -259,21 +228,9 @@ static void genscro(register Console * C, int n, int x, int y, int xx, int yy)
     if (C != Visible) {
 	SetDisplayPage(C->pageno);
     }
-#asm
-    mov		ah, #0x06
-    mov		al, [bp + .genscro.n]
-    cmp		al, #0
-    jge		scrup
-    inc		ah
-    neg		al
-scrup:
-    mov		bh, [bp + .genscro.a]
-    mov		ch, [bp + .genscro.y]
-    mov		cl, [bp + .genscro.x]
-    mov		dh, [bp + .genscro.yy]
-    mov		dl, [bp + .genscro.xx]
-    int		#0x10
-#endasm
+
+    ScrollLow (a, n, x, y, xx, yy);
+
     if (C != Visible) {
 	SetDisplayPage(Visible->pageno);
     }

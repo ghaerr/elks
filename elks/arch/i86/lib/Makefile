@@ -37,7 +37,7 @@ SRCS1= \
 	setupb.S setupw.S \
 	string.S
 	# end of list
-	
+
 fmemcpyb.s:fmemcpyb.S
 fmemcpyw.s:fmemcpyw.S
 fmemcmpb.s:fmemcmpb.S
@@ -66,7 +66,7 @@ SRCS3= \
 	# end of list
 
 OBJS3=$(SRCS3:.c=.o)
-	
+
 ifeq ($(USEIA16), y)
 OBJS		= $(OBJS1) $(OBJS2) $(OBJS3) divmodsi3.o
 else

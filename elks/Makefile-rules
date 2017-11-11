@@ -143,7 +143,7 @@ CFG_SHELL	:= $(shell \
 #########################################################################
 # Specify the standard definitions to be given to system programs.
 
-ifdef USE_IA16
+ifdef USEIA16
 CCDEFS_IA16= -DUSE_IA16
 else
 CCDEFS_IA16=
