@@ -118,33 +118,29 @@ static int romfs_lookup (struct inode * dir, char * name, size_t len1,
 	struct inode * i;
 
 	word_t ino;
-	word_t count;
 	word_t offset;
-	word_t index;
 	word_t len2;
 	seg_t seg_i;
 
 	while (1) {
 		seg_i = dir->u.romfs.seg;
-		ino = 0;
-		/* TODO: simplify: remove count word and check on size */
-		count = peekw (0, seg_i);  /* directory entry count */
-		offset = 2;
-		index = 0;
 
-		while (index < count) {
-			len2 = (word_t) peekb (offset, seg_i);
+		ino = 0;
+		offset = 0;
+
+		while (offset < dir->i_size) {
+			len2 = (word_t) peekb (offset + 2, seg_i);
 			/* ELKS trick: the name is in the current task data segment */
 			/* TODO: remove that trick with explicit segment in call */
 			if (len2 == (word_t) len1) {
-				if (!fmemcmpb (offset + 1, seg_i, (word_t) name, current->t_regs.ds, len2)) {
-					ino = peekw (offset + 1 + len2, seg_i);
+				if (!fmemcmpb (offset + 3, seg_i, (word_t) name, current->t_regs.ds, len2)) {
+					ino = peekw (offset, seg_i);
 					break;
 				}
 			}
 
+			/* inode index + name length + name string */
 			offset += 3 + (word_t) len2;
-			index++;
 		}
 
 		if (!ino) {

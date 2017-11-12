@@ -344,20 +344,20 @@ static int compile_dir (int fd, inode_build_t * inode)
 		word_t size = 0;
 		int count;
 
-		/* Number of directory entries */
-
-		count = write (fd, &inode->entries.count, sizeof (word_t));
-		if (count != sizeof (word_t))
-			{
-			err = errno;
-			break;
-			}
-
-		size += count;
-
 		entry_build_t * entry = (entry_build_t *) inode->entries.node.next;
 		while (entry != (entry_build_t *) &inode->entries.node)
 			{
+			/* Entry inode index */
+
+			count = write (fd, &entry->inode->index, sizeof (word_t));
+			if (count != sizeof (word_t))
+				{
+				err = errno;
+				break;
+				}
+
+			size += count;
+
 			/* Entry string */
 			/* First byte is string length */
 
@@ -379,17 +379,6 @@ static int compile_dir (int fd, inode_build_t * inode)
 
 			count = write (fd, entry->name, len);
 			if (count != len)
-				{
-				err = errno;
-				break;
-				}
-
-			size += count;
-
-			/* Entry inode index */
-
-			count = write (fd, &entry->inode->index, sizeof (word_t));
-			if (count != sizeof (word_t))
 				{
 				err = errno;
 				break;
