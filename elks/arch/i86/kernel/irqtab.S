@@ -550,7 +550,22 @@ _tswitch:
 #endif
 	pop	bp		! BP of schedule()
 	ret
-!
+
+
+; Halt on idle helper
+; Wait for next interrupt to save CPU power
+
+#ifdef CONFIG_IDLE_HALT
+
+	.define _idle_halt
+
+_idle_halt:
+	hlt
+	ret
+
+#endif
+
+
 	.data
 	.globl	_intr_count
 	.extern	_current
