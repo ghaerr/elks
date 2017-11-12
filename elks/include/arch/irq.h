@@ -34,6 +34,10 @@ extern void free_irq(unsigned int);
 extern void init_IRQ(void);
 extern void do_bottom_half(void);
 
+#ifdef CONFIG_IDLE_HALT
+extern void idle_halt ();
+#endif
+
 extern int bh_mask_count[16];
 
 extern unsigned bh_active;

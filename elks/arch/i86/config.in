@@ -224,8 +224,9 @@ source fs/Config.in
 # Kernel hacking
 
 mainmenu_option next_comment
-    comment 'Kernel hacking'
+	comment 'Kernel hacking'
 
-    bool 'Include kernel version system call'	CONFIG_SYS_VERSION	n
-    bool 'System Trace' 			CONFIG_STRACE		n
+	bool 'Include kernel version system call' CONFIG_SYS_VERSION n
+	bool 'System Trace'                       CONFIG_STRACE      n
+	bool 'Halt on Idle'                       CONFIG_IDLE_HALT   n
 endmenu

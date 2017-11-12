@@ -72,6 +72,10 @@ void start_kernel(void)
      */
     while (1){
         schedule();
+
+#ifdef CONFIG_IDLE_HALT
+        idle_halt ();
+#endif
     }
 }
 
@@ -104,11 +108,12 @@ static void init_task()
 #else
     num = sys_open("/dev/tty1", 2, 0);
 #endif
-    if (num < 0)
-	printk("Unable to open /dev/tty1 (error %u)\n", -num);
+	if (num < 0)
+		printk("Unable to open /dev/tty1 (error %u)\n", -num);
 
 	if (sys_dup(num) != 1)
-	    printk("dup failed\n");
+		printk("dup failed\n");
+
 	sys_dup(num);
 	sys_dup(num);
 	printk("No init - running /bin/sh\n");
