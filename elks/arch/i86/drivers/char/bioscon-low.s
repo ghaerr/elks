@@ -77,7 +77,7 @@ _ScrollLow:
 	mov    al,[bx+4]
 	mov    bh,[bx+2]
 	mov    ah,#6
-	cmp    al,0
+	cmp    al,#0
 	jge    scroll_next
 	inc    ah
 	neg    al

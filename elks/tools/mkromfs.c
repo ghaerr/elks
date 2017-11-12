@@ -1,6 +1,7 @@
-/*---------------------------------------------------------------------------*/
-/* Make ROM filesystem from existing tree                                    */
-/*---------------------------------------------------------------------------*/
+/*
+ * A tiny read-only filesystem in memory
+ * Build filesystem image from directory
+ */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -13,10 +14,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+/* TODO: move list primitives to library */
 #include "list.h"
 
 
-/* Super block on disk (actually in ROM) */
+/* Super block in memory */
 
 #define SUPER_MAGIC "ROMFS"
 
@@ -83,7 +85,7 @@ static inode_build_t * inode_alloc (inode_build_t * parent, char * path)
 		assert (inode->path);
 
 		list_add_tail (&_inodes, &inode->node);
-		inode->index = _inodes.count - 1;
+		inode->index = _inodes.count;  /* 0 = no inode */
 		break;
 		}
 

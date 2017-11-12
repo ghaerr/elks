@@ -115,8 +115,9 @@ static int romfs_lookup (struct inode * dir, char * name, size_t len1,
 	struct inode ** result)
 {
 	int res;
-	ino_t ino;
 	struct inode * i;
+
+	word_t ino;
 	word_t count;
 	word_t offset;
 	word_t index;
@@ -125,20 +126,19 @@ static int romfs_lookup (struct inode * dir, char * name, size_t len1,
 
 	while (1) {
 		seg_i = dir->u.romfs.seg;
-		/* TODO: better start inode number from 1 (0: null) */
-		ino = (ino_t) 0xFFFF;
+		ino = 0;
 		/* TODO: simplify: remove count word and check on size */
 		count = peekw (0, seg_i);  /* directory entry count */
 		offset = 2;
 		index = 0;
 
 		while (index < count) {
-			len2 = peekb (offset, seg_i);
+			len2 = (word_t) peekb (offset, seg_i);
 			/* ELKS trick: the name is in the current task data segment */
 			/* TODO: remove that trick with explicit segment in call */
-			if (len2 == (byte_t) len1) {
+			if (len2 == (word_t) len1) {
 				if (!fmemcmpb (offset + 1, seg_i, (word_t) name, current->t_regs.ds, len2)) {
-					ino = (ino_t) peekw (offset + 1 + (word_t) len2, seg_i);
+					ino = peekw (offset + 1 + len2, seg_i);
 					break;
 				}
 			}
@@ -147,12 +147,12 @@ static int romfs_lookup (struct inode * dir, char * name, size_t len1,
 			index++;
 		}
 
-		if (ino == (ino_t) 0xFFFF) {
+		if (!ino) {
 			res = -ENOENT;
 			break;
 		}
 
-		i = iget (dir->i_sb, ino);
+		i = iget (dir->i_sb, (ino_t) ino);
 		if (!i) {
 			res = -EACCES;
 			break;
@@ -305,7 +305,7 @@ static void romfs_read_inode (struct inode * i)
 	while (1) {
 		i->i_op = NULL;
 
-		ino = (word_t) i->i_ino;
+		ino = (word_t) i->i_ino - 1;  /* 0 = no inode */
 		isb = &(i->i_sb->u.romfs);
 		if (ino >= isb->icount) break;
 
@@ -403,7 +403,7 @@ static struct super_block * romfs_read_super (struct super_block * s, void * dat
 
 		/* Get the root inode */
 
-		i = iget (s, 0);
+		i = iget (s, 1);
 		if (!i) {
 			printk ("romfs: cannot get root inode\n");
 			res = NULL;
