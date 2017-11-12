@@ -705,7 +705,6 @@ static void do_bioshd_request(void)
 	    continue;
 	}
 	start += hd[minor].start_sect;
-	errs = 0;
 
 	while (count > 0) {
 	    sector = (unsigned int) ((start % (sector_t)drivep->sectors) + 1);
@@ -717,55 +716,49 @@ static void do_bioshd_request(void)
 	    if (this_pass < 3) this_pass = 1;
 	/* End of fix */
 	    if ((sector_t)this_pass > count) this_pass = (unsigned int) count;
-	    while (!dma_avail) sleep_on(&dma_wait);
-	    dma_avail = 0;
-/*	    BD_IRQ = BIOSHD_INT;*/
-#ifdef DMA_OVR
-	    if (req->rq_cmd == WRITE) {
-		BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
-		fmemcpyb(0, BUFSEG, (word_t) buff, req->rq_seg, (word_t) (this_pass * 512));
-	    }
-	    else BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
-	    BD_BX = 0;
-	    BD_ES = BUFSEG;
-#else
-	    if (req->rq_cmd == WRITE)
-		BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
-	    else
-		BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
-	    BD_BX = (__u16) buff;
-	    BD_ES = req->rq_seg;
-#endif
-	    BD_CX = (unsigned short int)
-			((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
-	    BD_DX = (head << 8) | drive;
-	    debug5("cylinder=%d head=%d sector=%d drive=0x%x CMD=%d\n",
-		   cylinder, head, sector, drive, req->rq_cmd);
-	    debug1("blocks %d\n", this_pass);
-	    set_irq();
-	    if (call_bios(&bdt)) {
-		minor = BD_AX;
-		reset_bioshd(drive);
-		dma_avail = 1;
-		errs++;
-		if (errs > MAX_ERRS) {
-		    printk("hd: error: AX=0x%02X\n", minor >> 8);
-		    end_request(0);
-		    wake_up(&dma_wait);
-		    goto next_block;
-		}
-		continue;	/* try again */
-	    }
-#ifdef DMA_OVR
-	    if (req->rq_cmd == READ)
-		fmemcpyb((word_t) buff, req->rq_seg, 0, BUFSEG, (word_t) (this_pass * 512));
-#endif
 
-	    /* In case it's already been freed */
-	    if (!dma_avail) {
+	    errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
+	    do {
+		while (!dma_avail) sleep_on(&dma_wait);
+		dma_avail = 0;
+/*	    	BD_IRQ = BIOSHD_INT;*/
+#ifdef DMA_OVR
+		if (req->rq_cmd == WRITE) {
+		    BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
+		    fmemcpyb(0, BUFSEG, (word_t)buff, req->rq_seg, (this_pass << 9));
+		}
+		else BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
+		BD_BX = 0;
+		BD_ES = BUFSEG;
+#else
+		BD_AX = (req->rq_cmd == WRITE ? BIOSHD_WRITE : BIOSHD_READ) | this_pass;
+		BD_BX = (__u16) buff;
+		BD_ES = req->rq_seg;
+#endif
+		BD_CX = (unsigned short int)
+			    ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
+		BD_DX = (head << 8) | drive;
+		debug5("cylinder=%d head=%d sector=%d drive=0x%x CMD=%d\n",
+		    cylinder, head, sector, drive, req->rq_cmd);
+		debug1("blocks %d\n", this_pass);
+		minor = 0;
+		if (call_bios(&bdt)) {
+		    minor = BD_AX;
+		    reset_bioshd(drive); /* controller should be reset upon error detection */
+		}
 		dma_avail = 1;
 		wake_up(&dma_wait);
+	    } while (minor && --errs);	/* On error, retry up to MAX_ERRS times */
+	    if (minor) {
+		printk("hd: error: AX=0x%02X\n", minor >> 8);
+		end_request(0);
+		goto next_block;
 	    }
+
+#ifdef DMA_OVR
+	    if (req->rq_cmd == READ)
+		fmemcpyb((word_t) buff, req->rq_seg, 0, BUFSEG, (word_t)(this_pass << 9));
+#endif
 	    count -= this_pass;
 	    start += this_pass;
 	    buff += this_pass * 512;
