@@ -70,44 +70,43 @@ static size_t romfs_read (struct inode * i, struct file * f,
 static int romfs_readdir (struct inode * i, struct file * f,
 	void * dirent, filldir_t filldir)
 {
-	char name [ROMFS_MAXFN];
-	byte_t len;
-	word_t pos;
 	int res;
+
+	char name [ROMFS_MAXFN];
+	word_t len;
+	word_t pos;
 	seg_t iseg;
-	int stored = 0;
 
 	while (1) {
 		iseg = i->u.romfs.seg;
 		pos = f->f_pos;
-		if (!pos) pos += 2;  /* skip entry count */
 
-		while (1) {
-			if (pos >= i->i_size) {
-				pos = -1;
-				f->f_pos = pos;
-				break;
-			}
+		/* Only one entry is asked by the kernel */
 
-			len = peekb (pos, iseg);
-			if (!len || len >= ROMFS_MAXFN) break;
-
-			fmemcpyb ((word_t) name, kernel_ds, pos + 1, iseg, (word_t) len);
-			name [len] = 0;
-
-			res = filldir (dirent, name, len, pos, i->i_ino);
-			if (res < 0) break;
-
-			pos += 3 + len;  /* name length and inode index */
-			f->f_pos = pos;
-
-			stored++;
+		if (pos >= i->i_size) {
+			f->f_pos = -1;
+			res = 0;
+			break;
 		}
 
+		len = (word_t) peekb (pos + 2, iseg);
+		if (!len || len >= ROMFS_MAXFN) {
+			res = 0;
+			break;
+		}
+
+		fmemcpyb ((word_t) name, kernel_ds, pos + 3, iseg, len);
+		name [len] = 0;
+
+		res = filldir (dirent, name, len, pos, i->i_ino);
+		if (res < 0) break;
+
+		/* inode index + name length + name string */
+		f->f_pos = pos + 3 + len;
 		break;
 	}
 
-	return stored;
+	return res;
 }
 
 
