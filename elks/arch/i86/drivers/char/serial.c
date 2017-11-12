@@ -48,14 +48,14 @@ struct serial_info {
 
 #define MAX_RX_BUFFER_SIZE 16
 
-static struct serial_info ports[4] = {
+static struct serial_info ports[NR_SERIAL] = {
     {(char *)0x3f8, 4, 0, DEFAULT_LCR, DEFAULT_MCR, NULL},
     {(char *)0x2f8, 3, 0, DEFAULT_LCR, DEFAULT_MCR, NULL},
     {(char *)0x3e8, 5, 0, DEFAULT_LCR, DEFAULT_MCR, NULL},
     {(char *)0x2e8, 2, 0, DEFAULT_LCR, DEFAULT_MCR, NULL},
 };
 
-static char irq_port[4] = { 3, 1, 0, 2 };
+static char irq_port[NR_SERIAL] = { 3, 1, 0, 2 };
 
 static unsigned int divisors[] = {
     0,				/*  0 = B0      */
@@ -120,7 +120,6 @@ static int rs_probe(register struct serial_info *sp)
 	/* [*] 16550A or newer with enabled FIFO buffers
 	 */
 	sp->flags = (unsigned char) (SERF_EXIST | ST_16550);
-	break;
     }
 
     /* 8250 UART if scratch register isn't present */
@@ -332,7 +331,6 @@ static int rs_ioctl(struct tty *tty, int cmd, char *arg)
 
     case TIOCGSERIAL:
 	retvalp = (char *) get_serial_info(port, (struct serial_info *)arg);
-	break;
     }
 
     return (int) retvalp;
@@ -341,6 +339,7 @@ static int rs_ioctl(struct tty *tty, int cmd, char *arg)
 int rs_init(void)
 {
     register struct serial_info *sp = ports;
+    register struct tty *tty = ttys + NR_CONSOLES;
     int ttyno = 0;
     static char *serial_type[] = {
 	"n 8250",
@@ -349,22 +348,26 @@ int rs_init(void)
 	" UNKNOWN",
     };
 
+    do {
+	if (!rs_probe(sp) && !request_irq(sp->irq, rs_irq, NULL)) {
+	    sp->tty = tty;
+	    update_port(sp);
+#if 0
+	    outb_p(? ? ? ?, sp->io + UART_MCR);
+#endif
+	}
+	tty++;
+    } while (++sp < &ports[NR_SERIAL]);
+
+    sp = ports;
     printk("Serial driver version 0.02\n");
     do {
-	if ((sp->tty != NULL) || (!rs_probe(sp) && !request_irq(sp->irq, rs_irq, NULL))) {
-	    printk("ttyS%d at 0x%x (irq = %d) is a%s%s\n", ttyno,
-		       sp->io, sp->irq, serial_type[sp->flags & 0x3],
-		       (sp->tty != NULL ? ", fetched" : ""));
-	    if (sp->tty == NULL) {
-		sp->tty = &ttys[ttyno + NR_CONSOLES];
-		update_port(sp);
-#if 0
-		outb_p(? ? ? ?, sp->io + UART_MCR);
-#endif
-	    }
-	    ttyno++;
+	if (sp->tty != NULL) {
+	    printk("ttyS%d at 0x%x (irq = %d) is a%s\n", ttyno,
+		       sp->io, sp->irq, serial_type[sp->flags & 0x3]);
 	}
-    } while (++sp < &ports[NR_SERIAL]);
+	sp++;
+    } while (++ttyno < NR_SERIAL);
     return 0;
 }
 
