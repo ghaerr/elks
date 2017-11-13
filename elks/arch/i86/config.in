@@ -228,5 +228,6 @@ mainmenu_option next_comment
 
 	bool 'Include kernel version system call' CONFIG_SYS_VERSION n
 	bool 'System Trace'                       CONFIG_STRACE      n
+	bool 'Calibrate delay loop'		  CONFIG_CALIBRATE_DELAY n
 	bool 'Halt on Idle'                       CONFIG_IDLE_HALT   n
 endmenu

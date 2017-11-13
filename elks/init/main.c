@@ -23,12 +23,14 @@ int root_mountflags = 0;
 
 #endif
 
+#ifdef CONFIG_CALIBRATE_DELAY
+jiff_t loops_per_sec = 1;
+#endif
+
 /**************************************/
 
 static void init_task(void);
 extern int run_init_process(char *);
-
-jiff_t loops_per_sec = 1;
 
 /*
  *	For the moment this routine _MUST_ come first.
@@ -38,28 +40,29 @@ void start_kernel(void)
 {
     seg_t base, end;
 
-/* We set the scheduler up as task #0, and this as task #1 */
+/* We set the idle task as #0, and init_task() will be task #1 */
 
-    sched_init();
+    sched_init();	/* This block of functions don't need console */
     setup_arch(&base, &end);
     mm_init(base, end);
+    buffer_init();
+    inode_init();
     init_IRQ();
+    tty_init();
+
     init_console();
 
-#if 0
+#ifdef CONFIG_CALIBRATE_DELAY
     calibrate_delay();
 #endif
 
     setup_mm(base, end);		/* Architecture specifics */
-    tty_init();
-    buffer_init();
+    device_setup();
 
 #ifdef CONFIG_SOCKET
     sock_init();
 #endif
 
-    device_setup();
-    inode_init();
     fs_init();
 
     printk("ELKS version %s\n", system_utsname.release);
@@ -70,7 +73,7 @@ void start_kernel(void)
     /*
      * We are now the idle task. We won't run unless no other process can run.
      */
-    while (1){
+    while (1) {
         schedule();
 
 #ifdef CONFIG_IDLE_HALT
@@ -104,56 +107,59 @@ static void init_task()
     run_init_process("/bin/init");
 
 #ifdef CONFIG_CONSOLE_SERIAL
-    num = sys_open("/dev/ttyS0", 2, 0);
+    num = sys_open("/dev/ttyS0", 2, 0);		/* These are for stdin */
 #else
     num = sys_open("/dev/tty1", 2, 0);
 #endif
-	if (num < 0)
-		printk("Unable to open /dev/tty1 (error %u)\n", -num);
+    if (num < 0)
+	printk("Unable to open /dev/tty1 (error %u)\n", -num);
 
-	if (sys_dup(num) != 1)
-		printk("dup failed\n");
-
-	sys_dup(num);
-	sys_dup(num);
-	printk("No init - running /bin/sh\n");
+    if (sys_dup(num) != 1)			/* This is for stdout */
+	printk("dup failed\n");
+    sys_dup(num);				/* This is for stderr */
+    printk("No init - running /bin/sh\n");
 
     run_init_process("/bin/sh");
     panic("No init or sh found");
 }
 
+#ifdef CONFIG_CALIBRATE_DELAY
 /*
  *	Yes its the good old bogomip counter
  */
 
 static void delay(jiff_t loops)
 {
+    register char *hw = *(((unsigned char **)(&loops))+1);
+    register char *lw = *((unsigned char **)(&loops));
+
     do {
    	do {
-    	} while ((*((unsigned int *)(&loops)))--);
-    } while ((*(((unsigned int *)(&loops))+1))--);
+    	} while (lw--);
+    } while (hw--);
 }
 
 int calibrate_delay(void)
 {
-    jiff_t ticks, bogo, sub;
+    jiff_t ticks;
 
     printk("Calibrating delay loop... ");
-    while ((loops_per_sec <<= 1)) {
+    do {
 	ticks = jiffies;
 	delay(loops_per_sec);
 	ticks = jiffies - ticks;
-	if (ticks >= HZ) {
-	    loops_per_sec = (loops_per_sec / ticks) * (jiff_t) HZ;
-	    bogo = loops_per_sec / 500000L;
-	    sub = loops_per_sec / 5000L;
-	    sub %= 100;
-	    printk("ok - %lu.%s%lu BogoMips\n",
-		   bogo, (sub < 10) ? "0" : "", sub);
+	if (!ticks)
+	    ticks = 1L;
+	loops_per_sec = (loops_per_sec * (jiff_t)HZ) / ticks;
+	if (ticks >= (jiff_t)HZ) {
+	    printk("ok - %u.%02u BogoMips\n",
+		    (__u16)(loops_per_sec / 500000L),
+		    (__u16)((loops_per_sec / 5000L) % 100L));
 	    return 0;
 	}
-    }
+    } while (loops_per_sec < (4294967296L/((jiff_t)HZ)));
     printk("failed\n");
 
     return -1;
 }
+#endif
