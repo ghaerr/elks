@@ -258,7 +258,6 @@ int sys_umount(char *name)
     register struct inode *inodep;
     kdev_t dev;
     int retval;
-    struct inode dummy_inode;
 
     if (!suser()) return -EPERM;
     retval = namei(name, &inode, 0, 0);
@@ -268,7 +267,6 @@ int sys_umount(char *name)
     }
     inodep = inode;
     if (S_ISBLK(inodep->i_mode)) {
-	dev = inodep->i_rdev;
 	if (IS_NODEV(inodep)) {
 	    iput(inodep);
 	    return -EACCES;
@@ -279,12 +277,11 @@ int sys_umount(char *name)
 	    iput(inodep);
 	    return -EINVAL;
 	}
-	dev = sb->s_dev;
 	iput(inodep);
-	memset(&dummy_inode, 0, sizeof(dummy_inode));
-	dummy_inode.i_rdev = dev;
-	inodep = &dummy_inode;
+	inodep = new_inode(NULL, S_IFBLK);
+	inodep->i_rdev = sb->s_dev;
     }
+    dev = inodep->i_rdev;
     if (MAJOR(dev) >= MAX_BLKDEV) {
 	iput(inodep);
 	return -ENXIO;
@@ -299,7 +296,7 @@ int sys_umount(char *name)
 #endif
 
     }
-    if (inodep != &dummy_inode) iput(inodep);
+    iput(inodep);
     if (!retval)
 	fsync_dev(dev);
     return retval;
