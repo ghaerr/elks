@@ -65,14 +65,8 @@
 
 #if !defined(CONFIG_286PMODE) && !defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SIBO)
 #define REL_SYS 1
-#endif
-
-#ifdef CONFIG_BLK_DEV_BIOS
-#define REL_SYSSEG	0xA0
-#define REL_SETUPSEG	0x80
-#else
+#define REL_INITSEG	0x60
 #define REL_SYSSEG	0x80
-#define REL_SETUPSEG	0x60
 #endif
 
 /* internal svga startup constants */
