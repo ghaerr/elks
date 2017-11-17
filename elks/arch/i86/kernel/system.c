@@ -38,7 +38,11 @@ void setup_arch(seg_t *start, seg_t *end)
 
     /* XXX plac: free root ram disk */
 
+#ifdef REL_SYS
+    *start = kernel_cs + (((unsigned int) (_endtext+15)) >> 4);
+#else
     *start = kernel_ds + (((unsigned int) (_endbss+15)) >> 4);
+#endif
 
 #else
 

@@ -409,15 +409,6 @@ size_ok:
         movsw
 
 ; now ist the data and code ad the right position
-
-        mov dx,[0x10]  ;bbs size
-        mov si,[0x0c]  ;data size
-        mov bx,[0x08]  ;text size
-
-        mov ax,#CONFIG_ROM_KERNEL_DATA
-        mov ds,ax
-        mov ss,ax    ;es is set
-        mov sp,#0xfffe
 #endif
 
 !--------------------------------------------------------
@@ -430,113 +421,21 @@ size_ok:
 !	CS = DS is allowed (code then is start of data) or split.
 !
 
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! Case for kernel in ROM
+!
+#if defined(CONFIG_ROMCODE)
+
+        mov dx,[0x10]  ;bbs size
+        mov si,[0x0c]  ;data size
+        mov bx,[0x08]  ;text size
+
+        mov ax,#CONFIG_ROM_KERNEL_DATA
+        mov ds,ax
+        mov ss,ax    ;es is set
+        mov sp,#0xfffe
+
 !header is only in ROM, ds points on it
-#ifndef CONFIG_ROMCODE
-#ifdef REL_SYS
-
-! Relocate setup data
-
-	mov	ax,#DEF_INITSEG
-	mov	ds,ax
-	mov	ax,#REL_SETUPSEG
-	mov	es,ax
-	xor	si,si
-	xor	di,di
-	mov	cx,#256
-	cld
-	rep
-	movsw
-
-! Set the stack next to the kernel data segment
-
-	mov	ax,si
-	add	ax,dx
-	rcr	ax,#1
-	shr	ax,#1
-	shr	ax,#1
-	shr	ax,#1
-	add	ax,cx
-	mov	ss,ax
-	mov	sp,#1024
-
-#endif
-	mov ax, #SYSSEG       ;in ROM ds ist always set
-	mov ds, ax	! Get the header into DS
-	mov ax, [8]	! TSeg
-	mov bx,	ax	! Save Text size
-	mov si, [12]	! DSeg
-	mov dx, [16]	! BSeg
-	mov cl, #4
-	shr ax, cl	! Data in paragraphs
-
-#ifdef REL_SYS
-
-! Save header data
-
-	push ax
-	push si
-
-! Relocate relocation code to next to kernel data segment
-
-	mov	ax,cs
-	mov	ds,ax
-	mov	ax,ss
-	mov	es,ax
-	push	ax	! Build far return address
-	mov	si,#cont
-	xor	di,di
-	push	di
-	mov	cx,#(end_reloc-cont)
-	rep
-	movsb
-	retf
-
-! Relocate kernel code segment
-
-cont:	mov	ax,#SYSSEG+2
-	mov	ds,ax
-	mov	ax,#REL_SYSSEG
-	mov	es,ax
-	xor	si,si
-	xor	di,di
-	mov	cx,bx	! BX register has not been touched
-	rep
-	movsb
-
-! Relocate kernel data segment
-
-	pop	cx
-	pop	di
-	push	di
-	push	cx
-	mov	ax,ds
-	add	ax,di
-	mov	ds,ax
-	mov	ax,es
-	add	ax,di
-	mov	es,ax		! New kernel DS
-	xor	si,si
-	xor	di,di
-	rep
-	movsb
-
-	pop si
-	pop ax
-	mov cx, #REL_SYSSEG
-#else
-	mov cx, #SYSSEG+2 ! Code starts here
-#endif
-	push cx		! Build far return address to SYSSEG+2:3
-	add cx, ax	! Segment base for data/bss/stack
-	mov ds, cx
-	mov es, cx
-	mov ax, #3
-	push ax
-!	mov ss, cx
-!	mov sp, #0xFFFE	! Top of stack right at the end (temporary)
-#endif
-
-#ifdef CONFIG_ROMCODE
 	push	dx	! BSS size
 	push	si	! Data size
 	push	bx	! Text size
@@ -547,14 +446,183 @@ cont:	mov	ax,#SYSSEG+2
 
 	jmp     far SYSSEG+2:3
 
-#else
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! Case for kernel in disk to be relocated
+!
+#elif defined(REL_SYS)
+
+! Relocate setup data
+
+	mov	ax,#INITSEG
+	mov	ds,ax
+	mov	ax,#REL_INITSEG
+	mov	es,ax
+	xor	si,si
+	xor	di,di
+	mov	cx,#256
+	cld
+	rep
+	movsw
+
+! Assume kernel data+bss size > 5 Kbytes
+! Calculate values needed
+
+	mov	ax,#SYSSEG
+	mov	ds,ax
+	mov	bx,[12]
+	mov	dx,bx
+	push	bx		! Data size
+	add	bx,[16]
+	mov	cl,#4
+	shr	bx,cl
+	add	bx,#REL_SYSSEG	! BX = Relocated kernel code segment
+	mov	ax,[8]
+	push	ax		! Code size
+	mov	cl,#4
+	shr	ax,cl
+	mov	cx,ax
+	add	ax,bx		! AX = Relocated kernel data segment
+	add	cx,#SYSSEG+2
+	push	[16]		! Bss size
+	push	cx		! Kernel data segment
+	mov	cl,#4
+	shr	dx,cl
+	add	dx,ax		! DX = Rel rel segment
+	mov	bp,sp
+
+! Variables in stack as follows:
+! Offset from BP	variable
+!	6		data size
+!	4		code size
+!	2		bss size
+!	0		kernel data segment
+
+	cmp	bx,#SYSSEG+2
+	ja	move_back
+
+! Move forward
+
+	mov	es,bx		! Move code segment
+	mov	cx,#SYSSEG+2
+	mov	ds,cx
+	mov	cx,4[bp]
+	xor	si,si
+	mov	di,si
+	rep
+	movsb
+	mov	es,ax		! Move data segment
+	mov	ds,[bp]
+	mov	cx,6[bp]
+	xor	si,si
+	jmp	rel_rel
+
+! Move backward
+
+move_back:
+	std
+	mov	es,ax		! Move data segment
+	mov	ds,[bp]
+	mov	cx,6[bp]
+	mov	si,cx
+	dec	si
+	mov	di,si
+	rep
+	movsb
+	mov	es,bx		! Move code segment
+	mov	cx,#SYSSEG+2
+	mov	ds,cx
+	mov	cx,4[bp]
+	mov	si,cx
+	dec	si
+rel_rel:
+	mov	di,si
+	rep
+	movsb
+
+! Relocate relocation code to next to relocated kernel data
+! segment because current setup code might be overwritten
+
+	mov	es,dx
+	mov	cx,cs
+	mov	ds,cx
+	mov	si,#cont
+	xor	di,di
+	push	es		! build far return address
+	push	di
+	mov	cx,#(end_reloc-cont)
+	cld
+	rep
+	movsb
+	retf			! jump to dx:0
+
+! Still using the old stack. Switch to new stack
+! AX = Rel. kernel data seg. BX = Rel. kernel code seg. DX = Rel. rel. seg.
+
+cont:	mov	ds,ax
+	pop	di		! Empty old stack
+	pop	di
+	pop	ax
+	pop	si
+	mov	ss,dx		! Set new stack
+	mov	sp,#(end_reloc-cont+512)
+	mov	dx,di		! Move kernel data segment to REL_SYSSEG
+	mov	cx,#REL_SYSSEG
+	mov	es,cx
+	mov	cx,si
+	push	cx
+	xor	si,si
+	xor	di,di
+	rep
+	movsb
+
+! Load registers as expected by crt0.S
+!	BX, Text size
+!	SI, Data size
+!	DX, BSS size
+! DS,ES,CX, Kernel DS
+
+	xchg	ax,bx
+	pop	si
+	mov	cx,es
+	mov	ds,cx
+	push	ax		! Build far return address to relocated code segment
+	mov	ax,#3		! Address to offset 3
+	push	ax
+
 ! changed jmpi 0,0x1002 to 3,0x1002 for kernel restart fix -AJB
 !	jmpi	0x00003,SYSSEG+2   !jmp offset 3 of segment 0x1002 (cs)
 	retf
 end_reloc:
-#endif
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! Case for kernel in disk, no kernel relocation
+!
+#else
 
-!------------------------------
+	mov ax, #SYSSEG	! in ROM ds ist always set
+	mov ds, ax	! Get the header into DS
+	mov bx, [8]	! TSeg
+	mov si, [12]	! DSeg
+	mov dx, [16]	! BSeg
+	mov ax,	bx	! Get Text size
+	mov cl, #4
+	shr ax, cl	! Data in paragraphs
+
+	mov cx, #SYSSEG+2 ! Code starts here
+	push cx		! Build far return address to SYSSEG+2:3
+	add cx, ax	! Segment base for data/bss/stack
+	mov ds, cx
+	mov es, cx
+	mov ax, #3
+	push ax
+!	mov ss, cx
+!	mov sp, #0xFFFE	! Top of stack right at the end (temporary)
+
+! changed jmpi 0,0x1002 to 3,0x1002 for kernel restart fix -AJB
+!	jmpi	0x00003,SYSSEG+2   !jmp offset 3 of segment 0x1002 (cs)
+	retf
+#endif
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!
 ! This routine checks that the keyboard command queue is empty
 ! (after emptying the output buffers)
 !
