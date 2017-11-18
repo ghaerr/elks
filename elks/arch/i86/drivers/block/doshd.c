@@ -51,8 +51,10 @@
 
 /* #define MULT_SECT_RQ */
 
-#ifdef REL_SYS
-#define BUFSEG 0x60
+#if defined(REL_SYS)
+#define BUFSEG REL_INITSEG
+#elif defined(CONFIG_ROMCODE)
+#define BUFSEG CONFIG_ROM_SETUP_DATA
 #else
 #define BUFSEG 0x800
 #endif

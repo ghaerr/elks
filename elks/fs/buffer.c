@@ -13,7 +13,7 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 
-#define DMA_ALN
+/*#define DMA_ALN*/
 
 static struct buffer_head buffers[NR_BUFFERS];
 #ifdef DMA_ALN

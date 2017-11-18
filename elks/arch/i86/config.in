@@ -145,7 +145,7 @@ mainmenu_option next_comment
 	    fi
 
 	    bool 'Use bootup IRQ-Mask of 8259 as default'	CONFIG_HW_259_USE_ORIGINAL_MASK n
-	    int 'Ticks for BogoMIPS (0 = check at boottime)'	CONFIG_BOGOMIPS 0
+	    int 'Ticks for BogoMIPS (0 = check at boottime)'	CONFIG_BOGOMIPS 140055
 	    bool 'Use int 13 for floppy count'			CONFIG_HW_USE_INT13_FOR_FLOPPY n
 	    bool 'Use int 13 for disk parameters'		CONFIG_HW_USE_INT13_FOR_DISKPARMS y
 	    bool 'Advanced Power Management support'		CONFIG_APM y
@@ -228,6 +228,5 @@ mainmenu_option next_comment
 
 	bool 'Include kernel version system call' CONFIG_SYS_VERSION n
 	bool 'System Trace'                       CONFIG_STRACE      n
-	bool 'Calibrate delay loop'		  CONFIG_CALIBRATE_DELAY n
 	bool 'Halt on Idle'                       CONFIG_IDLE_HALT   n
 endmenu

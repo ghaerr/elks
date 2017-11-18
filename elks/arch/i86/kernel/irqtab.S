@@ -4,29 +4,19 @@
 	.text
 
 /*
- *	Easy way to store our kernel DS
+ *	Easy way to find the kernel DS
  *
- * moving variables from code segment to an extra segment
- * CONFIG_ROM_IRQ_DATA for the ROM_CODE-Version
- * ELKS 0.76 7/1999 Christian Mard�ller  (chm@kdt.de)
+ * Define a variable in the code segment whose
+ * predefined contents is the kernel data segment
  */
 
-#ifdef CONFIG_ROMCODE
-/*
- *  In ROM-Mode we must generate a physical 3th segment :-)
- *  The segmentaddress is given by CONFIG_ROM_IRQ_DATA,
- *  the offset is constant per #define
- */
-#define stashed_ds       [0]
-
-#else
-/*
- Kernel is in RAM. Reserve space in the
- code segment to save the kernel DS
-*/
-	.globl	stashed_ds
 	.even
-stashed_ds:
+ds_kernel:
+#if defined(REL_SYS)
+	.word	REL_SYSSEG
+#elif defined(CONFIG_ROMCODE)
+	.word	CONFIG_ROM_KERNEL_DATA
+#else
 	.word	0
 #endif
 
@@ -61,13 +51,11 @@ stashed_ds:
 	.globl	_irqtab_init
 _irqtab_init:
 	cli
-#ifdef CONFIG_ROMCODE
-	mov	ax,#CONFIG_ROM_IRQ_DATA
-	mov	ds,ax
-#else
+
+#if !defined(REL_SYS) && !defined(CONFIG_ROMCODE)
 	seg	cs
+	mov	ds_kernel,ss
 #endif
-	mov	stashed_ds,ss
 
 	xor	ax,ax
 	mov	ds,ax
@@ -273,9 +261,6 @@ _syscall_int:		! Syscall
 !	We do all of this to avoid per process interrupt stacks and
 !	related nonsense. This way we need only one dedicated int stack
 !
-!  ELKS 0.76 7/1999  Fixed for ROMCODE-Version
-!  Christian Mardm�ller  (chm@kdt.de)
-!
 	.globl	_ret_from_syscall
 	.extern	_schedule
 	.extern	_do_signal
@@ -299,14 +284,8 @@ _irqit:
 !
 !	Recover data segment
 !
-#ifdef CONFIG_ROMCODE
-	mov	si,#CONFIG_ROM_IRQ_DATA
-	mov	ds,si
-	mov	ds,stashed_ds
-#else
 	seg	cs
-	mov	ds,stashed_ds
-#endif
+	mov	ds,ds_kernel
 !
 !	Determine which stack to use
 !

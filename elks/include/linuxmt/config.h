@@ -64,7 +64,7 @@
 #define DEF_SYSSIZE	0x2F00
 
 #if !defined(CONFIG_286PMODE) && !defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SIBO)
-#define REL_SYS 1
+#define REL_SYS
 #define REL_INITSEG	0x60
 #define REL_SYSSEG	0x80
 #endif
