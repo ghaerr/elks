@@ -225,7 +225,11 @@ start_os:
 ; when setup starts in ROM / Flash memory
 
 #ifdef CONFIG_ROMCODE
+#ifdef CONFIG_ROMFS_FS
 	mov [0x01FC], #0x1F00
+#else
+	mov [0x01FC], #0x380
+#endif
 #endif
 
 ! Get memory size (extended mem, kB)
@@ -399,11 +403,12 @@ size_ok:
         jnz size_error     ; .data section too big
 
 ;and now copy the kerneldata
+! WARNING: Next code fails if code_size+data_size+32 > 64K
    	mov si,[0x08]  ;code size
    	add si,[0x04]  ;+header size
         xor di,di
         mov cx,[0x0c]  ;data size
-        shr cx,1       ;copy words
+        shr cx,#1      ;copy words
         cld
         rep
         movsw
@@ -430,15 +435,8 @@ size_ok:
         mov si,[0x0c]  ;data size
         mov bx,[0x08]  ;text size
 
-        mov ax,#CONFIG_ROM_KERNEL_DATA
-        mov ds,ax
-        mov ss,ax    ;es is set
-        mov sp,#0xfffe
-
-!header is only in ROM, ds points on it
-	push	dx	! BSS size
-	push	si	! Data size
-	push	bx	! Text size
+        mov cx,es
+        mov ds,cx
 
 #ifdef CONFIG_ROM_DEBUG
 	int     3               ! break for debugger just before kernel

@@ -23,8 +23,10 @@ int root_mountflags = 0;
 
 #endif
 
-#ifdef CONFIG_CALIBRATE_DELAY
-jiff_t loops_per_sec = 1;
+#if (CONFIG_BOGOMIPS == 0)
+unsigned long loops_per_sec = 1;
+#else
+unsigned long loops_per_sec = CONFIG_BOGOMIPS;
 #endif
 
 /**************************************/
@@ -52,7 +54,7 @@ void start_kernel(void)
 
     init_console();
 
-#ifdef CONFIG_CALIBRATE_DELAY
+#if (CONFIG_BOGOMIPS == 0)
     calibrate_delay();
 #endif
 
@@ -123,7 +125,7 @@ static void init_task()
     panic("No init or sh found");
 }
 
-#ifdef CONFIG_CALIBRATE_DELAY
+#if (CONFIG_BOGOMIPS == 0)
 /*
  *	Yes its the good old bogomip counter
  */
@@ -153,8 +155,8 @@ int calibrate_delay(void)
 	loops_per_sec = (loops_per_sec * (jiff_t)HZ) / ticks;
 	if (ticks >= (jiff_t)HZ) {
 	    printk("ok - %u.%02u BogoMips\n",
-		    (__u16)(loops_per_sec / 500000L),
-		    (__u16)((loops_per_sec / 5000L) % 100L));
+		    (__u16)(loops_per_sec / 391500L),
+		    (__u16)((loops_per_sec / 3915L) % 100L));
 	    return 0;
 	}
     } while (loops_per_sec < (4294967296L/((jiff_t)HZ)));

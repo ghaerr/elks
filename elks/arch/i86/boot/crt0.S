@@ -23,13 +23,6 @@
 !	kernel when using the 286pmode extender.
 
 _main:
-#ifdef CONFIG_ROMCODE
-	mov	cx,ds
-	pop	bx
-	pop	si
-	pop	dx
-#endif
-
 ! Setup.S already initialized DS and ES (but not SS)
 ! In addition, registers contain:
 !   BX, Text size
@@ -57,10 +50,8 @@ _main:
 	mov	_kernel_cs, cs
 	mov	_kernel_ds, ds
 
-#ifndef CONFIG_ROMCODE
 	mov	ss,dx		! in ROMCODE stack is ready placed
 	mov	sp,#(_task + TASK_USER_AX)
-#endif
 
 ! Space for temporary stack space _bootstack removed!!
 ! Saved 768 byte boot stack.
