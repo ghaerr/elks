@@ -187,12 +187,6 @@ CONFIG_ROM_SETUP_DATA
   Segment location in RAM where the setup code keeps the values it
   is going to pass to the kernel.
 
-Data segment (IRQ-Scheduler)  (SEG, size ca. 0x10 RAM)
-CONFIG_ROM_IRQ_DATA
-  Segment location of an absolute area of RAM where the kernel
-  stores certain variables that it must be able to access
-  when it does not know where its data segment is.
-
 Data segment (DATA+BSS+STACK) (SEG, ca. 64k RAM)
 CONFIG_ROM_KERNEL_DATA
   Segment location of the kernels data segment, used only when the

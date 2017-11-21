@@ -51,10 +51,8 @@
 
 /* #define MULT_SECT_RQ */
 
-#if defined(REL_SYS)
-#define BUFSEG REL_INITSEG
-#elif defined(CONFIG_ROMCODE)
-#define BUFSEG CONFIG_ROM_SETUP_DATA
+#if !defined(CONFIG_286PMODE) && !defined(CONFIG_ARCH_SIBO)
+#define BUFSEG SETUP_DATA
 #else
 #define BUFSEG 0x800
 #endif

@@ -1,17 +1,7 @@
 ! int setupw( int *offset );
-! returns the word at the far pointer INITSEG:offset
+! returns the word at the far pointer SETUP_DATA:offset
 
 #include <linuxmt/config.h>
-
-#if defined(CONFIG_286PMODE)
-  INITSEG = 0x0048
-#elif defined(REL_SYS)
-  INITSEG = REL_INITSEG
-#elif defined(CONFIG_ROMCODE)
-  INITSEG = CONFIG_ROM_SETUP_DATA
-#else
-  INITSEG = DEF_INITSEG
-#endif
 
 	.define	_setupw
 	.text
@@ -20,7 +10,7 @@
 _setupw:
 	mov	cx,ds
 	pop	dx
-	mov	ax,#INITSEG
+	mov	ax,#SETUP_DATA
 	mov	ds,ax
 	pop	bx
 	sub	sp,*2
