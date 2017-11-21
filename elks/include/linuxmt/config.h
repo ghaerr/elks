@@ -69,6 +69,16 @@
 #define REL_SYSSEG	0x80
 #endif
 
+#if defined(CONFIG_286PMODE)
+#define SETUP_DATA 0x0048
+#elif defined(REL_SYS)
+#define SETUP_DATA REL_INITSEG
+#elif defined(CONFIG_ROMCODE)
+#define SETUP_DATA CONFIG_ROM_SETUP_DATA
+#else
+#define SETUP_DATA DEF_INITSEG
+#endif
+
 /* internal svga startup constants */
 #define VGA_NORMAL	0xffff	/* 80x25 mode */
 #define VGA_EXTENDED	0xfffe	/* 80x50 mode */

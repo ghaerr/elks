@@ -163,8 +163,7 @@ if [ "$CONFIG_ROMCODE" = "y" ]; then
 	comment ''
 	comment 'Absolute segment locations for data in target system RAM'
 	hex 'Setup data (0x20 RAM)'	CONFIG_ROM_SETUP_DATA	0x0060
-	hex 'IRQ Scheduler (0x10 RAM)'	CONFIG_ROM_IRQ_DATA	0x0080
-	hex 'Kernel data (64k RAM)'	CONFIG_ROM_KERNEL_DATA	0x0090
+	hex 'Kernel data (64k RAM)'	CONFIG_ROM_KERNEL_DATA	0x0080
 
 	comment 'Information for ROM-Image generator'
 	hex 'Start address of ROM (for offset in image-file)'	CONFIG_ROM_BASE 0xe000
