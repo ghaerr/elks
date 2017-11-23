@@ -69,10 +69,11 @@ static int check_addr_to_kernel(char *uaddr, size_t ulen)
 int move_addr_to_user(char *kaddr, size_t klen, char *uaddr, register int *ulen)
 {
     size_t len;
-    int err;
+    int err = 0;
 
-    if ((err = verified_memcpy_fromfs(&len, ulen, sizeof(int))))
-	return err;
+    if (verify_area(VERIFY_READ, ulen, sizeof(int)))
+	return -EFAULT;
+    len = get_user(ulen);
 
     if (len > klen) {		/* If len < klen, truncate data */
 	len = klen;

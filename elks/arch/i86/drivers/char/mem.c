@@ -328,19 +328,14 @@ int memory_open(register struct inode *inode, struct file *filp)
     unsigned int minor;
 
     minor = MINOR(inode->i_rdev);
-    if (minor > 7)
-	minor = 0;
-    debugmem2("memory_open: minor = %u; it's /dev/%s\n",
-	      MINOR(inode->i_rdev), mdev_nam[minor]);
-
-    if (mdev_fops[minor]) {
-	filp->f_op = mdev_fops[minor];
-	return 0;
+    if ((minor > 7) || !mdev_fops[minor]) {
+	printk("Device minor %d not supported.\n", minor);
+	return -ENXIO;
     }
-    else
-	printk("Device minor %d not supported.\n", MINOR(inode->i_rdev));
-
-    return -ENXIO;
+    debugmem2("memory_open: minor = %u; it's /dev/%s\n",
+		minor, mdev_nam[minor]);
+    filp->f_op = mdev_fops[minor];
+    return 0;
 }
 
 static struct file_operations memory_fops = {

@@ -210,11 +210,12 @@ static int unix_connect(struct socket *sock,
 /*    if (sock->state == SS_CONNECTED)
 	return -EISCONN;*/	/*Already checked in socket.c*/
 
+    if (get_user(&(((sockaddr_un *)uservaddr)->sun_family)) != AF_UNIX)
+	return -EINVAL;
+
     memcpy_fromfs(&sockun, uservaddr, sockaddr_len);
     sockun.sun_path[sockaddr_len] = '\0';
 
-    if (sockun.sun_family != AF_UNIX)
-	return -EINVAL;
 /*
  * Try to open the name in the filesystem - this is how we identify ourselves
  * and our server. Note that we don't hold onto the inode much, just enough to

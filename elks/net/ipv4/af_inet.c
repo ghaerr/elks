@@ -122,8 +122,7 @@ static int inet_connect(register struct socket *sock,
     if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
         return -EINVAL;
 
-    memcpy_fromfs(&ret, uservaddr, 2);
-    if (ret != AF_INET)
+    if (get_user(&(((struct sockaddr_in *)uservaddr)->sin_family)) != AF_INET)
         return -EINVAL;
 
     if (sock->state == SS_CONNECTING)

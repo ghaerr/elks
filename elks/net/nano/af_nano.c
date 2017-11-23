@@ -194,12 +194,12 @@ static int nano_connect(register struct socket *sock,
 /*    if (sock->state == SS_CONNECTED)
 	return -EISCONN;*/	/*Already checked in socket.c*/
 
-    memcpy_fromfs(&sockna, uservaddr, sockaddr_len);
-
-    if (sockna.sun_family != AF_NANO) {
+    if (get_user(&(((sockaddr_na *)uservaddr)->sun_family)) != AF_NANO) {
 	printk("ADR - {%d}\n", sockna.sun_family);
 	return -EINVAL;
     }
+
+    memcpy_fromfs(&sockna, uservaddr, sockaddr_len);
 
     serv_upd = nano_data_lookup(&sockna, sockna.sun_no);
 
