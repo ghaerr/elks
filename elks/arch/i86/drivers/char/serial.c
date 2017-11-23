@@ -83,6 +83,16 @@ static unsigned int divisors[] = {
 #define	RS_IALLMOSTFULL 	(3 * INQ_SIZE / 4)
 #define	RS_IALLMOSTEMPTY	(    INQ_SIZE / 4)
 
+/* Flush input fifo */
+static void flush_input_fifo(register struct serial_info *sp)
+{
+    register char *pi = (char *)MAX_RX_BUFFER_SIZE;
+
+    do {
+	inb_p(sp->io + UART_RX);
+    } while (--pi && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
+}
+
 static int rs_probe(register struct serial_info *sp)
 {
     int status1, status2;
@@ -145,10 +155,7 @@ static int rs_probe(register struct serial_info *sp)
 			sp->io + UART_FCR);
 
     /* clear RX register */
-    scratch = (char *) MAX_RX_BUFFER_SIZE;
-    do {
-	inb_p(sp->io + UART_RX);		/* Flush input fifo */
-    } while (--scratch && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
+    flush_input_fifo(sp);
 
     return 0;
 }
@@ -241,7 +248,6 @@ static void rs_release(struct tty *tty)
 static int rs_open(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
-    register char *countp;
 
     debug("SERIAL: rs_open called\n");
 
@@ -258,10 +264,8 @@ static int rs_open(struct tty *tty)
     /* clear RX buffer */
     inb_p(port->io + UART_LSR);
 
-    countp = (char *) MAX_RX_BUFFER_SIZE;
-    do
-	inb_p(port->io + UART_RX);		/* Flush input fifo */
-    while (--countp && (inb_p(port->io + UART_LSR)) & UART_LSR_DR);
+    /* Flush input fifo */
+    flush_input_fifo(port);
 
     inb_p(port->io + UART_IIR);
     inb_p(port->io + UART_MSR);

@@ -38,7 +38,6 @@ int sys_ioctl(int fd, unsigned int cmd, unsigned int arg)
 {
     register struct file *filp;
     register struct file_operations *fop;
-    int on;
     int retval = 0;
 
     if (fd >= NR_OPEN || !(filp = current->files.fd[fd]))
@@ -53,11 +52,7 @@ int sys_ioctl(int fd, unsigned int cmd, unsigned int arg)
 	break;
 
     case FIONBIO:
-	memcpy_fromfs(&on, (unsigned int *) arg, 2);
-#if 0
-	on = get_user((void *) arg);
-#endif
-	filp->f_flags = (on)
+	filp->f_flags = (get_user((void *)arg))
 	    ? filp->f_flags | O_NONBLOCK
 	    : filp->f_flags & ~O_NONBLOCK;
 	break;

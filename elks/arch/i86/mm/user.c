@@ -66,17 +66,10 @@ void put_user_char(unsigned char dv, void *dp)
     memcpy_tofs(dp,&dv,1);
 }
 
-#if 0
-
 unsigned short int get_user(void *dv)
 {
-    unsigned short int retv;
-
-    memcpy_fromfs(&retv,dv,2);
-    return retv;
+    return peekw(dv, current->t_regs.ds);
 }
-
-#endif
 
 void put_user(unsigned short int dv, void *dp)
 {
