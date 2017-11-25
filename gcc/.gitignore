@@ -1,0 +1,16 @@
+att2as86
+
+*.zip
+
+binutils-ia16/
+binutils.src
+binutils-build/
+binutils.build
+
+gcc-ia16/
+gcc.src
+gcc-build/
+gcc.build
+
+install/
+
