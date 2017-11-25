@@ -1,0 +1,11 @@
+binutils-src/
+binutils-build/
+.binutils.src
+.binutils.build
+
+gcc-src/
+gcc-build/
+.gcc.src
+.gcc.build
+
+att2as86
