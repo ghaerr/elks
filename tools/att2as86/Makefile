@@ -4,10 +4,12 @@
 
 CFLAGS=-O2 -ansi -Wpedantic -Wall -Wextra
 
-$(BUILDDIR)/att2as86.o: $(SRCDIR)/att2as86/att2as86.c
+$(BUILDDIR)/att2as86.o: att2as86.c
+	mkdir -p $(BUILDDIR)
 	$(CC) -c $(CFLAGS) -o $@ $< 
 
 all: $(BUILDDIR)/att2as86
 
 install: $(BUILDDIR)/att2as86
-	install $< $(PREFIX)/bin
+	mkdir -p $(CROSSDIR)/bin
+	install $< $(CROSSDIR)/bin

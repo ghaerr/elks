@@ -13,6 +13,7 @@
 *.1.gz
 Kbuild
 dev86
+cross
 
 #
 # Never ignore these

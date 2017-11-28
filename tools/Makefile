@@ -1,12 +1,12 @@
 .PHONY: all
 
-# SRCDIR, DISTDIR, BUILDDIR and PREFIX must be set in environment
+# SRCDIR, DISTDIR, BUILDDIR and CROSSDIR must be set in environment
 
 # ATT to AS86 conversion utility
 
-all:: $(PREFIX)/bin/att2as86
+all:: $(CROSSDIR)/bin/att2as86
 
-$(PREFIX)/bin/att2as86:
+$(CROSSDIR)/bin/att2as86:
 	make -C $(SRCDIR)/att2as86 all install
 
 # BINUTILS for IA16
@@ -27,7 +27,7 @@ $(DISTDIR)/$(BINUTILS_DIST).zip:
 .binutils.build: .binutils.src
 	-rm -rf binutils-build
 	mkdir binutils-build
-	cd binutils-build && ../binutils-src/configure --target=ia16-elf --prefix="$(PREFIX)" --disable-gdb --disable-libdecnumber --disable-readline --disable-sim --disable-nls
+	cd binutils-build && ../binutils-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --disable-gdb --disable-libdecnumber --disable-readline --disable-sim --disable-nls
 	make -C binutils-build
 	make -C binutils-build install
 	touch .binutils.build
@@ -40,7 +40,7 @@ GCC_VER=3c79fd7bc3d5a834491714fb0082a0f985e6ba83
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).zip:
-	cd $(DISTDIR) && wget https://github.com/tkchia/gcc-ia16/archive/$(GCC_VER).zip -O $(GCC_DIST).zip
+	cd $(DISTDIR) && wget https://github.com/jbruchon/gcc-ia16/archive/$(GCC_VER).zip -O $(GCC_DIST).zip
 
 .gcc.src: $(DISTDIR)/$(GCC_DIST).zip
 	-rm -rf $(GCC_DIST)
@@ -52,7 +52,7 @@ $(DISTDIR)/$(GCC_DIST).zip:
 .gcc.build: .gcc.src .binutils.build
 	-rm -rf gcc-build
 	mkdir gcc-build
-	cd gcc-build && ../gcc-src/configure --target=ia16-elf --prefix="$(PREFIX)" --without-headers --enable-languages=c --disable-libssp --without-isl
+	cd gcc-build && ../gcc-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --without-headers --enable-languages=c --disable-libssp --without-isl
 	make -C gcc-build
 	make -C gcc-build install
 	touch .gcc.build
