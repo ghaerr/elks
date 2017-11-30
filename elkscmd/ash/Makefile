@@ -42,7 +42,6 @@ CLEANFILES= $(OBJS) \
 all:	ash
 
 ash:	$(OBJS)
-	$(CC) $(CFLAGS) -s -o ash $(OBJS) $(LIBS)
 
 max_rfs: install
 

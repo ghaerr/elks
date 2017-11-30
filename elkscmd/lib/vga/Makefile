@@ -10,7 +10,7 @@ include $(BASEDIR)/Make.rules
 
 CC=bcc
 
-CFLAGS=-ansi -DELKS
+LOCALFLAGS=-DELKS
 
 VGALIB = scr_bios.o elkplan4.o mempl4.o elksutil.o romfont.o
 

@@ -22,8 +22,7 @@ INCDIR	= `pwd`/../../elks/include
 
 OPTIONS	= -DELKS -DUSEBCOPY # -DLOADAV -DSUNLOADAV -DGETTTYENT -DUSEBCOPY
 
-CC	= bcc
-CFLAGS	= -ansi -I$(INCDIR) $(OPTIONS)
+LOCALFLAGS	= -I$(INCDIR) $(OPTIONS)
 
 all:	screen
 

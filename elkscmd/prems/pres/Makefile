@@ -2,20 +2,16 @@ BASEDIR = ../..
 include $(BASEDIR)/Make.defs
 include $(BASEDIR)/Make.rules
 
-CFLAGS        = -I. -I../prem -O $(CFLBASE)
+LOCALFLAGS= -I. -I../prem
 
 DEST          = .
 
 HDRS          = ../prem/prem.h \
 		pres.h
 
-LDFLAGS       = -s # -n
-
 LIBS          = ../prem/prem.a
 
 XLIBS         = ../prem/xprem.a
-
-LINKER        = $(CC)
 
 MAKEFILE      = makefile
 
@@ -34,17 +30,17 @@ all:            pres flparc
 
 pres:           $(POBJS) $(LIBS)
 		@echo -n "Loading pres ... "
-		$(LINKER) $(LDFLAGS) $(POBJS) $(LIBS) -o pres
+		$(CC) $(LDFLAGS) $(POBJS) $(LIBS) -o pres
 		@echo "done"
 
 xpres:          $(POBJS) $(XLIBS)
 		@echo -n "Loading xpres ... "
-		@$(LINKER) $(LDFLAGS) $(POBJS) $(XLIBS) -o xpres
+		@$(CC) $(LDFLAGS) $(POBJS) $(XLIBS) -o xpres
 		@echo "done"
 
 flparc:         $(FOBJS) $(LIBS)
 		@echo -n "Loading flparc ... "
-		@$(LINKER) $(LDFLAGS) $(FOBJS) $(LIBS) -o flparc
+		@$(CC) $(LDFLAGS) $(FOBJS) $(LIBS) -o flparc
 		@echo "done"
 
 clean:;         @rm -f $(OBJS) pres flparc

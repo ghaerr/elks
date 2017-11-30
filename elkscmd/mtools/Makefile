@@ -44,7 +44,7 @@ mdel:	mdel.o match.o putfat.o $(CMNOBJ)
 mtype:	mtype.o match.o $(CMNOBJ)
 mmd:	mmd.o fixname.o putfat.o mkentry.o $(CMNOBJ)
 mrd:	mrd.o putfat.o $(CMNOBJ)
-mren:	mren.o fixname.o putfat.c isdir.o $(CMNOBJ)
+mren:	mren.o fixname.o putfat.o isdir.o $(CMNOBJ)
 mcopy:	mcopy.o
 
 install: all

@@ -10,8 +10,6 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-CFLAGS = $(CFLBASE)
-
 PRGS=cat chgrp chmod chown cmp cp dd grep l ln ls mkdir mkfifo mknod \
 	more mv rm rmdir sync touch 
 

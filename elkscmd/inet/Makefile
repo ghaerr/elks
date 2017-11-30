@@ -15,7 +15,7 @@ DIRS=nettools httpd telnet tinyirc urlget telnetd
 DIRS2=
 
 all:
-	for i in $(DIRS); do make -C $$i all ; done
+	for i in $(DIRS); do make -C $$i all || exit 1 ; done
 
 max_rfs:
 	for i in $(DIRS); do make -C $$i max_rfs install ; done

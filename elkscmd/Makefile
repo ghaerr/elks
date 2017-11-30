@@ -51,7 +51,7 @@ COMB360_DEL	= sbin/partype sbin/ramdisk bin/clock
 all:
 	@if [ ! -e $(ELKS_DIR)/include/linuxmt/autoconf.h ]; \
 	then echo -e "\n*** ERROR: You must build the ELKS kernel first ***\n" >&2; exit 1; fi
-	+@for DIR in $(DIRS); do $(MAKE) -C $$DIR all; done
+	+@for DIR in $(DIRS); do $(MAKE) -C $$DIR all || exit 1; done
 
 images_clean:
 	-umount -d $(IMAGES) 2>/dev/null || true

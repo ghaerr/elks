@@ -12,7 +12,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-CFLAGS = -ansi -O -0 -DSIZE=16000L
+LOCALFLAGS=-DSIZE=16000L
 
 xCC=gcc
 xCFLAGS=-g
@@ -25,7 +25,6 @@ OBJS = blockio.o display.o editcor.o exec.o find.o \
 all: lev
 
 lev: $(OBJS)
-	$(CC) $(LDFLAGS) -o lev $(OBJS)
 
 max_rfs: install
 

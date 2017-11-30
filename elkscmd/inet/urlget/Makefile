@@ -12,16 +12,12 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-#CFLAGS=-O 
-
-#LDFLAGS=-i
-
 SRC=	net.c urlget.c
 
 all:	urlget
 
 urlget:	$(SRC)
-	$(CC) $(CFLAGS) $(LDFLAGS) -I$(INC_DIR) -o urlget $(SRC)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o urlget $(SRC)
 
 max_rfs: all
 

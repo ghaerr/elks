@@ -10,7 +10,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-CFLAGS	= $(CFLBASE) -D_POSIX_SOURCE
+LOCALFLAGS=-D_POSIX_SOURCE
 
 xCC=gcc
 xCFLAGS=-D_POSIX_SOURCE -D_PROTOTYPE\(a,b\)=

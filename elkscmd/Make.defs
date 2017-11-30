@@ -77,7 +77,7 @@ DEV86_DIR=$(HOMEDIR)/dev86
 ELKS_DIR=$(HOMEDIR)/elks
 ELKSCMD_DIR=$(HOMEDIR)/elkscmd
 
-INC_DIR=$(HOMEDIR)/elks/include
+INCLUDES=-I$(DEV86_DIR)/include -I$(ELKS_DIR)/include
 
 ##############################################################################
 #
@@ -97,7 +97,7 @@ ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre$$//')
 ifeq ($(PLATFORM),i86-ELKS)
 	CC=bcc
 	CFLBASE=-0 -O -ansi
-	LDFLAGS=-s -ansi
+	LDFLAGS=-s -ansi -L$(DEV86_DIR)/lib
 	CHECK=gcc -c -o .null.o -Wall -pedantic
 endif
 
@@ -108,7 +108,9 @@ ifeq ($(PLATFORM),DEFAULT)
 	CHECK=cc -c -o .null.o
 endif
 
-CFLAGS=$(CFLBASE) $(LOCALFLAGS) -I$(INC_DIR) "-DELKS_VERSION=\"$(ELKS_VSN)\""
+CFLAGS=$(CFLBASE) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
+
+LD=LD86
 
 ##############################################################################
 #
@@ -121,7 +123,7 @@ CFLAGS=$(CFLBASE) $(LOCALFLAGS) -I$(INC_DIR) "-DELKS_VERSION=\"$(ELKS_VSN)\""
 	$(AS) $(ASFLAGS) -o $*.o $<
 
 .S.s:
-	gcc -E -traditional -I$(INC_DIR) $(CCDEFS) -o $*.s $<
+	gcc -E -traditional $(INCLUDES) $(CCDEFS) -o $*.s $<
 
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<

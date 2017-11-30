@@ -10,13 +10,10 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-CFLAGS= $(CFLBASE)
-LFLAGS= -s
-
 all: xvi
 
 xvi: xvi.o
-	$(CC) $(LFLAGS) xvi.o -o xvi
+	$(CC) $(LDFLAGS) xvi.o -o xvi
 
 max_rfs: xvi
 	cp -p xvi $(TARGET_MNT)/bin$

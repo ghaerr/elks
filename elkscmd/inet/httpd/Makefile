@@ -14,7 +14,7 @@ PRGS=httpd
 
 SPRGS=
 
-CFLAGS=-0 -O -ansi -I$(ELKSCMD_DIR) -I$(ELKS_DIR)/include
+LOCALFLAGS=-I$(ELKSCMD_DIR)
 
 all: $(PRGS)
 
