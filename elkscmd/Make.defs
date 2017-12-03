@@ -73,11 +73,10 @@ PLATFORM=i86-ELKS
 
 HOMEDIR=$(shell cd $(BASEDIR)/.. ; pwd)
 
-DEV86_DIR=$(HOMEDIR)/dev86
 ELKS_DIR=$(HOMEDIR)/elks
 ELKSCMD_DIR=$(HOMEDIR)/elkscmd
 
-INCLUDES=-I$(DEV86_DIR)/include -I$(ELKS_DIR)/include
+INCLUDES=-I$(ELKS_DIR)/include
 
 ##############################################################################
 #
@@ -97,7 +96,7 @@ ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre$$//')
 ifeq ($(PLATFORM),i86-ELKS)
 	CC=bcc
 	CFLBASE=-0 -O -ansi
-	LDFLAGS=-s -ansi -L$(DEV86_DIR)/lib
+	LDFLAGS=-s -ansi
 	CHECK=gcc -c -o .null.o -Wall -pedantic
 endif
 

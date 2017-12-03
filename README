@@ -2,29 +2,28 @@
                ----------------------------------------
 
 This is a project to write a Linux-like operating system for ancient
-computers running an Intel 8086-compatible processor. To build ELKS, you
-will need to obtain an up-to-date copy of dev86, currently available at:
+computers running an Intel 8086-compatible processor.
 
-https://github.com/jbruchon/dev86
+To build ELKS, you will need a cross build chain, mainly based on DEV86, and
+also on GCC-IA16 if you select that latest in place of BCC to build the kernel.
 
-When you build dev86, you need to move, copy, or symlink to it in the
-ELKS source code root. For a dev86 source at /usr/src/dev86 do this:
+A script is provided to automatically download and build that cross chain:
 
-user:/usr/src/elks$ ln -s /usr/src/dev86 dev86
+'tools/build.sh'
 
-A script that attempts to automate the build process and make it easier
+A script that attempts to automate the whole build process and make it easier
 for ELKS newbies has been provided. Simply run:
 
-./build.sh
+'./build.sh'
 
 If you want to clean everything up afterwards, run './build.sh clean'
 and it will run 'make clean' in the build directories for you.
 
 The general build procedure for ELKS is as follows:
 
-* Build dev86, usually with default options
+* Build the cross chain in 'cross/' (see above)
 
-* Make sure 'dev86' is beside 'elks' 'elkscmd' etc.
+* Add 'cross/bin/' to you PATH (you can run '. tools/env.sh' to do that)
 
 * 'cd elks'
 
@@ -60,12 +59,6 @@ The general build procedure for ELKS is as follows:
   - images.tar.xz: make all images, pack into XZ-compressed tar archive
 
 Questions? Problems? Patches? Join and email the Linux-8086 mailing list at
-linux-8086@vger.kernel.org or email the maintainer at jody@jodybruchon.com
-
-* Note: official dev86 is hosted at https://github.com/lkundrak/dev86
-  but has not been changed since 2014. It is highly recommended to use the
-  version referenced at the top of this document since it is being actively
-  maintained and is constantly being tested with ELKS.
-
+linux-8086@vger.kernel.org or email the maintainer at jody@jodybruchon.com.
 
 More information in the Documentation folder: elks/Documentation/index.html

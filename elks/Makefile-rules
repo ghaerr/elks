@@ -109,7 +109,6 @@ TOPDIR		= $(shell cd "$(BASEDIR)" ; \
 
 ARCH_DIR	= arch/$(ARCH)
 
-BCCINCLUDES	= -I$(TOPDIR)/../dev86/include
 INCLUDES	= -I$(TOPDIR)/include
 
 MYDIR		= $(shell pwd | sed 's:^$(TOPDIR):.:')
@@ -298,7 +297,7 @@ else
 AS		= as86
 ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
 CC		= bcc
-CFLAGS		= $(CPU_CC) $(ARCH_CC) -O $(CFLBASE) -ansi $(BCCINCLUDES)
+CFLAGS		= $(CPU_CC) $(ARCH_CC) -O $(CFLBASE) -ansi
 LD		= ld86
 LDFLAGS 	= $(CPU_LD) -s
 
@@ -324,7 +323,7 @@ endif
 .S.o: ;
 
 .S.s:
-	gcc -E -traditional $(INCLUDES) $(BCCINCLUDES) $(CCDEFS) -o $*.s $<
+	gcc -E -traditional $(INCLUDES) $(CCDEFS) -o $*.s $<
 
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<
