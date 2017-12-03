@@ -1,0 +1,6 @@
+*.bin
+*.v
+*.lst
+*.sym
+minix.s
+minix_elks.s

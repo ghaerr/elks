@@ -21,6 +21,7 @@ OBJS = blockio.o display.o editcor.o exec.o find.o \
 all: lev
 
 lev: $(OBJS)
+	$(CC) $(LDFLAGS) -o lev $(OBJS)
 
 max_rfs: install
 

@@ -109,7 +109,7 @@ endif
 
 CFLAGS=$(CFLBASE) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
 
-LD=LD86
+LD=ld86
 
 ##############################################################################
 #
@@ -158,7 +158,7 @@ SIBO_TARGET_BLKS=128
 MKFS=/sbin/mkfs.minix
 MKFS_OPTS=-n14 -1 -i360
 
-MINIX_BOOT=$(DEV86_DIR)/bootblocks
+MINIX_BOOT=$(ELKSCMD_DIR)/bootblocks
 
 ##############################################################################
 #
