@@ -12,11 +12,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-CFLAGS = -ansi -O -0 -DSIZE=16000L
-
-xCC=gcc
-xCFLAGS=-g
-
+LOCALFLAGS=-DSIZE=16000L
 
 OBJS = blockio.o display.o editcor.o exec.o find.o \
     unixcall.o globals.o insert.o main.o misc.o \

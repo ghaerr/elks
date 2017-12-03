@@ -17,7 +17,7 @@ SRC=	telnetd.c
 all:	telnetd
 
 telnetd: $(SRC)
-	$(CC) $(CFLAGS) -I$(INC_DIR) $(LDFLAGS) -o $@ $(SRC)
+	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $(SRC)
 
 max_rfs: all
 

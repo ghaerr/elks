@@ -25,14 +25,10 @@ BINDIR = $(PREFIX)/bin
 SHELL = /bin/sh
 
 YACC = yacc
-#YACC = bison -y
 
 LEX = flex -I -8
-#LEX = lex
 
-CC = bcc
-CFLAGS = -ansi -0 -O -D_POSIX_SOURCE
-LDFLAGS = -0 -s
+LOCALFLAGS=-D_POSIX_SOURCE
 
 OFILES = scan.o util.o main.o number.o storage.o load.o execute.o 
 

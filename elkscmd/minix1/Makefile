@@ -10,10 +10,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-CFLAGS	= $(CFLBASE) -D_POSIX_SOURCE
-
-xCC=gcc
-xCFLAGS=-D_POSIX_SOURCE -D_PROTOTYPE\(a,b\)=
+LOCALFLAGS=-D_POSIX_SOURCE
 
 PRGS =	banner cksum cut decomp16 du fgrep grep proto sum uniq wc
 

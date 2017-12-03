@@ -16,9 +16,7 @@ BINDIR	      = /usr/bin
 
 HDRS	      = defs.h
 
-CFLAGS	      = $(CFLBASE) -DNDEBUG -D_POSIX_SOURCE
-
-LDFLAGS	      =
+LOCALFLAGS    = -DNDEBUG -D_POSIX_SOURCE
 
 LIBS	      =
 

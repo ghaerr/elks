@@ -1,10 +1,33 @@
 .PHONY: all
 
+all::
+
 # SRCDIR, DISTDIR, BUILDDIR and CROSSDIR must be set in environment
+
+# DEV86 (including BIN86, BCC and C library)
+
+DEV86_VER=dfb9b428df88dd3c2256f978351fa9959caf5c07
+DEV86_DIST=dev86-$(DEV86_VER)
+
+$(DISTDIR)/$(DEV86_DIST).zip:
+	cd $(DISTDIR) && wget https://github.com/jbruchon/dev86/archive/$(DEV86_VER).zip -O $(DEV86_DIST).zip
+
+.dev86.src: $(DISTDIR)/$(DEV86_DIST).zip
+	-rm -rf $(DEV86_DIST)
+	unzip -q $(DISTDIR)/$(DEV86_DIST).zip
+	-rm -rf dev86
+	mv $(DEV86_DIST) dev86
+	touch .dev86.src
+
+.dev86.build: .dev86.src
+	cd dev86 && make PREFIX=$(CROSSDIR) install
+	touch .dev86.build
+
+all:: .dev86.build
 
 # ATT to AS86 conversion utility
 
-all:: $(CROSSDIR)/bin/att2as86
+#all:: $(CROSSDIR)/bin/att2as86
 
 $(CROSSDIR)/bin/att2as86:
 	make -C $(SRCDIR)/att2as86 all install
@@ -32,7 +55,7 @@ $(DISTDIR)/$(BINUTILS_DIST).zip:
 	make -C binutils-build install
 	touch .binutils.build
 
-all:: .binutils.build
+#all:: .binutils.build
 
 # GCC for IA16
 
@@ -57,4 +80,4 @@ $(DISTDIR)/$(GCC_DIST).zip:
 	make -C gcc-build install
 	touch .gcc.build
 
-all:: .gcc.build
+#all:: .gcc.build

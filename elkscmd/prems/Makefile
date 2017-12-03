@@ -10,8 +10,6 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-CFLAGS	= $(CFLBASE)
-
 PRGS =	pres/pres
 
 NETPRGS =

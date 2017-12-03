@@ -12,14 +12,12 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-#LDFLAGS=-i
-
 SRC=	ttn.c ttn_conf.c
 
 all:	telnet
 
 telnet:	$(SRC)
-	$(CC) $(CFLAGS) -I$(INC_DIR) $(LDFLAGS) -o $@ $(SRC)
+	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $(SRC)
 
 max_rfs: all
 

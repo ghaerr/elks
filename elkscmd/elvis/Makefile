@@ -57,11 +57,6 @@ EXTRA2=
 LIBS=
 BIN=	/usr/local/bin
 
-#CC= bcc
-#xCC=gcc -DUNIX=1
-xLIBS=-ltermcap
-xEXTRA=tinytcap.o
-
 OF=	-o 
 RF=	-c
 DATE=	-DDATE=\'\"`date`\"\'

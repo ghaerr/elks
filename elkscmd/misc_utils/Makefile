@@ -16,10 +16,11 @@ HOST_CFLAGS = -O2
 PRGS=ed tar compress uncompress zcat miniterm
 PRGS_HOST=compress.host
 
+LOCALFLAGS=-H0xe000
+
 all: $(PRGS) $(PRGS_HOST)
 
 compress: compress.c
-	$(CC) $(CFLAGS) -H0xe000 -s $@.c -o $@
 
 compress.host: compress.c
 	$(HOSTCC) $(HOST_CFLAGS) -s compress.c -o $@

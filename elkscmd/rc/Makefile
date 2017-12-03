@@ -27,12 +27,6 @@ EXECVE=execve.o
 # useful to more people.
 #ADDON=addon.o
 
-# Use an ANSI compiler (or at least one that groks prototypes and void *):
-#CC=bcc
-#CFLAGS=-O2 -m486 -fomit-frame-pointer -DSYSVR4
-#CFLAGS=
-#LDFLAGS=-static
-
 # You may substitute "bison -y" for yacc. (You want to choose the one that
 # makes a smaller y.tab.c. Also see the README about Sun's yacc.)
 YACC=yacc

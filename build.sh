@@ -34,21 +34,17 @@ if [ "$UID" != "0" ] && [ "$1" != "clean" ]
 	then echo -e "\nWARNING: Disk images can only be built if you have root permissions"
 fi
 
-# A copy of dev86 is REQUIRED to build!
-if [ ! -e "./dev86" ]
-	then
-	echo "ERROR: You must copy or symlink 'dev86' to the root of the"
-	echo "       ELKS source tree. If you don't have dev86, you can obtain"
-	echo "       a copy at:       https://github.com/jbruchon/dev86"
-	echo "Cannot build without dev86 in the source tree. Aborting."
-	exit 1
-fi
+# Cross build tools environment setup
+pushd tools > /dev/null
+. ./env.sh
+popd > /dev/null
 
-# bcc is required (but has no --version switch, so test for stdio output)
-if [ -z "$(bcc 2>&1)" ]
+# Check tools
+if [ ! -x "$CROSSDIR/bin/bcc" ]
 	then
-	echo "ERROR: Cannot execute 'bcc'. You must build and install dev86 to"
-	echo "       your system before attempting to build ELKS. Aborting."
+	echo "ERROR: BCC not found. You must build the cross tools"
+	echo "       before attempting to build ELKS. Run tools/build.sh"
+	echo "       to automatically build that cross tools. Aborting."
 	exit 1
 fi
 
@@ -90,14 +86,6 @@ test -e .config || clean_exit 3
 make defconfig || clean_exit 4
 make -j$THREADS || clean_exit 4
 test -e arch/i86/boot/Image || clean_exit 4
-cd "$WD"
-
-
-### dev86 verification
-echo "Verifying dev86 is built."
-sleep 1
-cd dev86 || clean_exit 5
-make -j1 || clean_exit 5
 cd "$WD"
 
 

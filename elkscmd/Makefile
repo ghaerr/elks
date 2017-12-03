@@ -21,7 +21,7 @@ include $(BASEDIR)/Make.defs
 
 DIRS		= sys_utils misc_utils disk_utils file_utils levee \
 		  minix1 minix2 minix3 ash bc mtools sash sh_utils \
-		  inet ktcp prems test/eth test/socket/echo test/pty
+		  inet ktcp prems test/eth test/socket/echo test/pty bootblocks
 
 DONTUSE 	= debug_utils lib prn-utils rc tools xvi
 
@@ -51,7 +51,7 @@ COMB360_DEL	= sbin/partype sbin/ramdisk bin/clock
 all:
 	@if [ ! -e $(ELKS_DIR)/include/linuxmt/autoconf.h ]; \
 	then echo -e "\n*** ERROR: You must build the ELKS kernel first ***\n" >&2; exit 1; fi
-	+@for DIR in $(DIRS); do $(MAKE) -C $$DIR all; done
+	+@for DIR in $(DIRS); do $(MAKE) -C $$DIR all || exit 1; done
 
 images_clean:
 	-umount -d $(IMAGES) 2>/dev/null || true
@@ -85,8 +85,7 @@ $(ELKS_DIR)/arch/i86/boot/Image: $(ELKS_DIR)/.config
 # Create relevant parts of other packages.
 
 $(FD_BSECT):
-	$(MAKE) -C $(MINIX_BOOT)
-	$(MAKE) -C $(MINIX_BOOT) bootbin
+	$(MAKE) -C $(MINIX_BOOT) minix.bin
 
 $(KHELPER):
 	$(MAKE) -C $(MINIX_BOOT) minix_elks.bin
@@ -117,7 +116,7 @@ _build_nonbootable_target: _build_target
 _build_target: all banner check_id _populate_target
 
 _populate_target: _mount_target
-	for i in $(DIRS); do $(MAKE) -C $$i $(TARGET_RFS); done >/dev/null
+	for i in $(DIRS); do $(MAKE) -C $$i $(TARGET_RFS) || exit 1; done >/dev/null
 	[ -e $(TARGET_MNT)/bin/ash ] && ln -sf ash $(TARGET_MNT)/bin/sh || \
 		ln -sf sash $(TARGET_MNT)/bin/sh
 	$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(TARGET_MNT)/etc/issue

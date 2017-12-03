@@ -109,7 +109,7 @@ TOPDIR		= $(shell cd "$(BASEDIR)" ; \
 
 ARCH_DIR	= arch/$(ARCH)
 
-INCDIR		= $(TOPDIR)/include
+INCLUDES	= -I$(TOPDIR)/include
 
 MYDIR		= $(shell pwd | sed 's:^$(TOPDIR):.:')
 
@@ -267,12 +267,12 @@ endif
 # Common definitions
 
 AR		= ar
-CC_PROTO	= gcc -I$(INCDIR) -M -MG $(CCDEFS)
-CFLBASE 	= -I$(INCDIR) $(CCDEFS)
-CPP		= $(CC) -I$(INCDIR) -E $(CCDEFS) -ansi
+CC_PROTO	= gcc $(INCLUDES) -M -MG $(CCDEFS)
+CFLBASE 	= $(INCLUDES) $(CCDEFS)
+CPP		= $(CC) $(INCLUDES) -E $(CCDEFS) -ansi
 LINT		= splint
 LINTLEVEL	= -weak
-LCFLAGS 	= -I$(INCDIR) $(CCDEFS)
+LCFLAGS 	= $(INCLUDES) $(CCDEFS)
 LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
 		  -exportheader -varuse -exporttype -exportconst \
 		  -exportvar -typeuse -enummemuse -constuse
@@ -323,7 +323,7 @@ endif
 .S.o: ;
 
 .S.s:
-	gcc -E -traditional -I$(INCDIR) $(CCDEFS) -o $*.s $<
+	gcc -E -traditional $(INCLUDES) $(CCDEFS) -o $*.s $<
 
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<
