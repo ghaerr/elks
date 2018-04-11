@@ -33,4 +33,14 @@ clean realclean:
 .s.v:
 	./as86_encap $*.s $*.v $*_ $(ASFLAGS) $(LST)
 
+# Boot blocks are not part of the target filesystem
+# but embedded in the target disk image
+# so empty rules for the filesystem configurations
+
+rfs:
+
+smin_rfs:
+
+min_rfs:
+
 max_rfs:
