@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Quick and dirty build script for ELKS
 # Probably buggy, but makes from-scratch builds easier
