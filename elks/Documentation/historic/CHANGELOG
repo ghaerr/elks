@@ -792,9 +792,9 @@ Wed Apr 24 23:19:32 BST 2002	Riley Williams <Riley@Williams.Name>
 
 Wed Apr 24 20:12:29 BST 2002	Paul Nasrat <pauln@truemesh.com>
 
-	* Tweak to Makefile to stop it overwriting the Config.in script
+	* Tweak to Makefile to stop it overwriting the config.in script
 	  that mkcfg creates.
-	* Tweak to mkcfg script to correctly create both the Config.in
+	* Tweak to mkcfg script to correctly create both the config.in
 	  script and the keymaps.h header file as it is supposed to.
 
 Wed Apr 24 18:40:12 BST 2002	Riley Williams <Riley@Williams.Name>

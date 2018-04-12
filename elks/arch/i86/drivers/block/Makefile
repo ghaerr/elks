@@ -60,7 +60,7 @@ ssd_asm.s: ssd_asm.S
 # Standard commands.
 
 distdir:
-	cp -pf Config.in Makefile $(DISTDIR)/arch/i86/drivers/block
+	cp -pf config.in Makefile $(DISTDIR)/arch/i86/drivers/block
 	cp -pf *.S *.h *.c $(DISTDIR)/arch/i86/drivers/block
 
 #########################################################################

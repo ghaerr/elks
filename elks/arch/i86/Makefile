@@ -233,7 +233,7 @@ distdir:
 		mkdir -p 286pmode boot drivers kernel lib mm tools)
 	(cd $(DISTDIR)/arch/i86/drivers ; \
 		mkdir -p block char)
-	cp -pf config.in defconfig Makefile $(DISTDIR)/arch/i86
+	cp -pf defconfig Makefile $(DISTDIR)/arch/i86
 	cp -pf boot/*.S boot/*.c boot/tux.pic $(DISTDIR)/arch/i86/boot
 	cp -pf tools/Makefile tools/*.h $(DISTDIR)/arch/i86/tools
 	cp -pf tools/mknbi-elks tools/*.c $(DISTDIR)/arch/i86/tools

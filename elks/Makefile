@@ -135,8 +135,8 @@ tools:
 #########################################################################
 # Compiler-generated definitions not given as command arguments.
 
-arch/i86/drivers/char/KeyMaps/Config.in:
-	make -C arch/i86/drivers/char/KeyMaps Config.in
+arch/i86/drivers/char/KeyMaps/config.in:
+	make -C arch/i86/drivers/char/KeyMaps config.in
 
 include/linuxmt/compiler-generated.h:
 	printf > include/linuxmt/compiler-generated.h		\
@@ -171,7 +171,7 @@ dist:
 dist.old:
 	mkdir -m 755 -p $(DISTDIR)
 	cp -pf BUGS BUGS.html CHANGELOG COPYING nodeps $(DISTDIR)
-	cp -pf Makefile Makefile-rules README RELNOTES $(DISTDIR)
+	cp -pf config.in Makefile Makefile-rules README RELNOTES $(DISTDIR)
 	cp -pf INSTALLATION INSTALLATION.html TODO $(DISTDIR)
 	(cd $(DISTDIR); mkdir Documentation fs include init kernel lib net)
 	(cd $(DISTDIR); mkdir -p $(ARCH_DIR) scripts)
@@ -228,9 +228,9 @@ clean:	nodep doclean
 	    echo ;\
 	fi
 
-config:	arch/i86/drivers/char/KeyMaps/Config.in
+config:	arch/i86/drivers/char/KeyMaps/config.in
 	@echo
-	@$(CFG_SHELL) scripts/Configure arch/$(ARCH)/config.in
+	@$(CFG_SHELL) scripts/Configure config.in
 	@echo
 	@echo ' * Configuration complete. You can now run `make` to build.'
 	@echo
@@ -262,9 +262,9 @@ dup:
 	@echo ' * Created backup tree for testing.'
 	@echo
 
-menuconfig:	arch/i86/drivers/char/KeyMaps/Config.in
+menuconfig:	arch/i86/drivers/char/KeyMaps/config.in
 	${MAKE} -C scripts/lxdialog all
-	$(CFG_SHELL) scripts/Menuconfig arch/$(ARCH)/config.in
+	$(CFG_SHELL) scripts/Menuconfig config.in
 
 set:
 	@set

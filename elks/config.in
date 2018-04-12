@@ -207,18 +207,18 @@ fi
 mainmenu_option next_comment
     comment 'Driver Support'
 
-    source arch/i86/drivers/block/Config.in
-    source arch/i86/drivers/char/Config.in
-    source arch/i86/drivers/net/Config.in
+    source arch/i86/drivers/block/config.in
+    source arch/i86/drivers/char/config.in
+    source arch/i86/drivers/net/config.in
 endmenu
 
 # Generic networking support
 
-source net/Config.in
+source net/config.in
 
 # Filesystem support
 
-source fs/Config.in
+source fs/config.in
 
 # Kernel hacking
 
