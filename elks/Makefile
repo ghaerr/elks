@@ -148,7 +148,7 @@ include/linuxmt/compiler-generated.h:
 
 xlint:	include/linuxmt/autoconf.h
 	@echo
-	$(LINT) -I$(TOPDIR)/include -c init/main.c
+	$(LINT) -I$(TOPDIR)/elks/include -c init/main.c
 	@echo
 	@echo Checking with lint is now complete.
 	@echo
@@ -230,7 +230,7 @@ clean:	nodep doclean
 
 config:	arch/i86/drivers/char/KeyMaps/config.in
 	@echo
-	@$(CFG_SHELL) scripts/Configure config.in
+	@$(CFG_SHELL) $(TOPDIR)/config/Configure config.in
 	@echo
 	@echo ' * Configuration complete. You can now run `make` to build.'
 	@echo
@@ -263,8 +263,7 @@ dup:
 	@echo
 
 menuconfig:	arch/i86/drivers/char/KeyMaps/config.in
-	${MAKE} -C scripts/lxdialog all
-	$(CFG_SHELL) scripts/Menuconfig config.in
+	$(CFG_SHELL) $(TOPDIR)/config/Menuconfig config.in
 
 set:
 	@set

@@ -67,7 +67,7 @@ ROOT_DEV	= FLOPPY
 #########################################################################
 # Specify the target for the netboot image.
 
-TARGET_NB_IMAGE	= $(TOPDIR)/nbImage
+TARGET_NB_IMAGE	= $(TOPDIR)/elks/nbImage
 
 #########################################################################
 #									#
@@ -96,20 +96,11 @@ VSNCODE		= $(shell printf '0x%06X%02X' $$(($(VSNCODE1)-1)) $(PRE))
 endif
 
 #########################################################################
-# Specify the root directory.
-
-TOPDIR		= $(shell cd "$(BASEDIR)" ; \
-			  if [ -n "$$PWD" ]; \
-				then echo $$PWD ; \
-				else pwd ; \
-			  fi)
-
-#########################################################################
 # Specify the various directories.
 
 ARCH_DIR	= arch/$(ARCH)
 
-INCLUDES	= -I$(TOPDIR)/include
+INCLUDES	= -I$(TOPDIR)/elks/include
 
 MYDIR		= $(shell pwd | sed 's:^$(TOPDIR):.:')
 
@@ -118,7 +109,7 @@ MYDIR		= $(shell pwd | sed 's:^$(TOPDIR):.:')
 # directory in, in such a way that no . or .. directories occur. This
 # also makes this an absolute path, but that fact is not important.
 
-DISTDIR 	= $(shell $(BASEDIR)/scripts/setdir $(TOPDIR)/../elks-$(DIST)/$(MYDIR))
+DISTDIR 	= $(shell $(BASEDIR)/scripts/setdir $(TOPDIR)/elks-$(DIST)/$(MYDIR))
 
 #########################################################################
 # Specify the configuration shell to use.

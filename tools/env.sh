@@ -3,7 +3,8 @@
 # Set the cross build tools environment
 
 SCRIPTDIR="$(dirname "$0")"
-TOPDIR="$(cd "$SCRIPTDIR/.." && pwd)"
+
+export TOPDIR="$(cd "$SCRIPTDIR/.." && pwd)"
 
 if [[ ! -e "$TOPDIR/cross" ]]; then
 	echo "ERROR: Missing folder for cross build tools.";

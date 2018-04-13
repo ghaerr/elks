@@ -57,7 +57,7 @@ if [ "$1" = "clean" ]
 	then echo
 	echo "Cleaning up. Please wait."
 	sleep 1
-	for X in elks elkscmd
+	for X in config elks elkscmd
 		do cd $X; make clean; cd "$WD"
 	done
 	clean_exit 0
@@ -73,6 +73,11 @@ THREADS=$((THREADS * 2))
 test "$1" = "-j1" && THREADS=1 
 echo "Using $THREADS threads for make"
 
+### Configuration script build
+pushd config > /dev/null
+make all
+popd > /dev/null
+
 ### Kernel build
 echo
 echo "Preparing to build the ELKS kernel. This will invoke 'make menuconfig'"
@@ -83,7 +88,6 @@ cd elks || clean_exit 1
 make clean
 make menuconfig || clean_exit 2
 test -e .config || clean_exit 3
-make defconfig || clean_exit 4
 make -j$THREADS || clean_exit 4
 test -e arch/i86/boot/Image || clean_exit 4
 cd "$WD"
