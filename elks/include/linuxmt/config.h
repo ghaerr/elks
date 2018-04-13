@@ -1,7 +1,8 @@
 #ifndef LX86_LINUXMT_CONFIG_H
 #define LX86_LINUXMT_CONFIG_H
 
-#include <linuxmt/autoconf.h>
+#include <autoconf.h>
+
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/major.h>
 

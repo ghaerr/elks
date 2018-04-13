@@ -6,11 +6,11 @@
 #define NOGROUP 0xFFFF
 #define KSTACK_BYTES 988	/* Size of kernel stacks */
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/time.h>
 #include <linuxmt/signal.h>
-#include <linuxmt/autoconf.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/ntty.h>
 #include <linuxmt/timex.h>

@@ -485,7 +485,7 @@ nodep:
 #########################################################################
 # Recreate autoconf.h if it's missing.
 
-$(BASEDIR)/include/linuxmt/autoconf.h:
+$(BASEDIR)/include/autoconf.h:
 	@cd $(BASEDIR) && yes '' | $(MAKE) config
 
 #########################################################################

@@ -21,7 +21,7 @@ arch/i86/mm/segment.s
 arch/i86/tools/build
 arch/i86/tools/mkbootloader
 include/arch/asm-offsets.h
-include/linuxmt/autoconf.h
+include/autoconf.h
 include/linuxmt/compiler-generated.h
 scripts/lxdialog/local-curses.h
 scripts/lxdialog/lxdialog

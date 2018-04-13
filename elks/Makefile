@@ -76,12 +76,12 @@ endif
 #########################################################################
 # Define commands.
 
-Image: include/linuxmt/autoconf.h
+Image: include/autoconf.h
 	$(MAKE) $(ARCHIVES)
 	$(MAKE) init/main.o
 	cd $(ARCH_DIR) && $(MAKE) Image
 
-nbImage: defconfig include/linuxmt/autoconf.h $(ARCHIVES) init/main.o
+nbImage: defconfig include/autoconf.h $(ARCHIVES) init/main.o
 	${MAKE} -C $(ARCH_DIR) nbImage
 
 nb_install: defconfig nbImage
@@ -146,7 +146,7 @@ include/linuxmt/compiler-generated.h:
 #########################################################################
 # lint rule
 
-xlint:	include/linuxmt/autoconf.h
+xlint:	include/autoconf.h
 	@echo
 	$(LINT) -I$(TOPDIR)/elks/include -c init/main.c
 	@echo
@@ -235,7 +235,7 @@ config:	arch/i86/drivers/char/KeyMaps/config.in
 	@echo ' * Configuration complete. You can now run `make` to build.'
 	@echo
 
-dep:	.config include/linuxmt/autoconf.h
+dep:	.config include/autoconf.h
 	@make dodep
 	@echo
 	@echo ' * Dependencies configured. Next, you need to run one of the'

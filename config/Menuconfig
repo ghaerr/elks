@@ -1133,7 +1133,7 @@ save_configuration () {
 
     echo -n "."
     DEF_CONFIG="${1:-.config}"
-    DEF_CFG_H="include/linuxmt/autoconf.h"
+    DEF_CFG_H="include/autoconf.h"
     CONFIG=.tmpconfig
     CFG_H=.tmpconfig.h
     cat > $CONFIG <<-.EOM

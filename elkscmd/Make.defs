@@ -191,8 +191,8 @@ endif
 me:
 	make -C $(BASEDIR) all
 
-$(ELKS_DIR)/include/linuxmt/autoconf.h:
-	make -C $(ELKS_DIR) include/linuxmt/autoconf.h
+$(ELKS_DIR)/include/autoconf.h:
+	make -C $(ELKS_DIR) include/autoconf.h
 
 ##############################################################################
 # EOF #

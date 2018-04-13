@@ -1127,7 +1127,7 @@ Sun Jan 13 22:37:14 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
 Wed Dec 26 17:09:16 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* Brought include/linuxmt/autoconf.h in the repository up to date
+	* Brought include/autoconf.h in the repository up to date
 	  with respect to what is generated - but is this file meant to
 	  be in the repository in the first place?
 
@@ -1403,7 +1403,7 @@ Tue Oct 23 17:36:10 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* THIS IS ELKS RELEASE 0.0.88
 
-	* Updated include/linuxmt/autoconf.h to match `make defconfig` results.
+	* Updated include/autoconf.h to match `make defconfig` results.
 
 ===============================================================================
 
