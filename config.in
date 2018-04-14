@@ -1,0 +1,38 @@
+#
+# ELKS main configuration menu
+#
+
+mainmenu_name "ELKS Main Configuration"
+comment 'Just accept the defaults unless you know what you are doing'
+
+#mainmenu_option next_comment
+#	comment 'Cross build chain'
+
+#	bool 'Build cross tools' CONFIG_CROSS_BUILD y
+
+#	choice 'Select C compiler' \
+#		"BCC      CONFIG_CROSS_BCC \
+#		 GCC-IA16 CONFIG_CROSS_GCC \
+#		" BCC
+
+#endmenu
+
+#
+# ELKS Kernel configuration menu
+#
+
+mainmenu_option next_comment
+	comment 'ELKS Kernel'
+	source elks/config.in
+
+endmenu
+
+#
+# ELKS User Space configuration menu
+#
+
+mainmenu_option next_comment
+	comment 'ELKS User Land'
+	source elkscmd/config.in
+
+endmenu

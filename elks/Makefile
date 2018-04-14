@@ -39,19 +39,14 @@ all:	do-it-all
 # Make "config" the default target if there is no configuration file or
 # "depend" the target if there is no top-level dependency information.
 
-ifeq (.config,$(wildcard .config))
-include .config
+include $(TOPDIR)/.config
+
 #ifeq (.depend,$(wildcard .depend))
 #include .depend
 do-it-all:      Image
 #else
-#CONFIGURATION = dep
 #do-it-all:      dep
 #endif
-else
-CONFIGURATION = config
-do-it-all:      config
-endif
 
 #########################################################################
 # What do we need this time?
@@ -76,18 +71,18 @@ endif
 #########################################################################
 # Define commands.
 
-Image: include/autoconf.h
+Image: $(TOPDIR)/include/autoconf.h
 	$(MAKE) $(ARCHIVES)
 	$(MAKE) init/main.o
 	cd $(ARCH_DIR) && $(MAKE) Image
 
-nbImage: defconfig include/autoconf.h $(ARCHIVES) init/main.o
+nbImage: $(TOPDIR)/include/autoconf.h $(ARCHIVES) init/main.o
 	${MAKE} -C $(ARCH_DIR) nbImage
 
-nb_install: defconfig nbImage
+nb_install: nbImage
 	cp -f $(ARCH_DIR)/boot/nbImage $(TARGET_NB_IMAGE)
 
-nbrd_install: defconfig nbImage
+nbrd_install: nbImage
 	cp -f $(ARCH_DIR)/boot/nbImage $(ARCH_DIR)/boot/nbImage.rd
 	cat $(ARCH_DIR)/boot/nbRamdisk >> $(ARCH_DIR)/boot/nbImage.rd
 	cp -f $(ARCH_DIR)/boot/nbImage.rd $(TARGET_NB_IMAGE)
@@ -135,9 +130,6 @@ tools:
 #########################################################################
 # Compiler-generated definitions not given as command arguments.
 
-arch/i86/drivers/char/KeyMaps/config.in:
-	make -C arch/i86/drivers/char/KeyMaps config.in
-
 include/linuxmt/compiler-generated.h:
 	printf > include/linuxmt/compiler-generated.h		\
 		'#define %s %s\n'				\
@@ -146,7 +138,7 @@ include/linuxmt/compiler-generated.h:
 #########################################################################
 # lint rule
 
-xlint:	include/autoconf.h
+xlint:	$(TOPDIR)/include/autoconf.h
 	@echo
 	$(LINT) -I$(TOPDIR)/elks/include -c init/main.c
 	@echo
@@ -195,7 +187,7 @@ dist.old:
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 
 distclean: clean nodep
-	rm -f .config* .menuconfig* arch/i86/Image
+	rm -f arch/i86/Image
 
 #########################################################################
 # Create distribution archives.
@@ -221,21 +213,8 @@ tar:	dist
 # Configuration stuff
 
 clean:	nodep doclean
-	@echo
-	@if [ ! -f .config ]; then \
-	    echo ' * This system is not configured. You need to run' ;\
-	    echo ' * `make config` or `make menuconfig` to configure it.' ;\
-	    echo ;\
-	fi
 
-config:	arch/i86/drivers/char/KeyMaps/config.in
-	@echo
-	@$(CFG_SHELL) $(TOPDIR)/config/Configure config.in
-	@echo
-	@echo ' * Configuration complete. You can now run `make` to build.'
-	@echo
-
-dep:	.config include/autoconf.h
+dep:	$(TOPDIR)/include/autoconf.h
 	@make dodep
 	@echo
 	@echo ' * Dependencies configured. Next, you need to run one of the'
@@ -248,12 +227,6 @@ dep:	.config include/autoconf.h
 	@echo ' *                     across a network connection.'
 	@echo
 
-.config:
-	make defconfig
-
-defconfig:
-	@yes '' | ${MAKE} config
-
 dup:
 	rm -fr ../elks-test
 	mkdir ../elks-test
@@ -261,12 +234,6 @@ dup:
 	@echo
 	@echo ' * Created backup tree for testing.'
 	@echo
-
-menuconfig:	arch/i86/drivers/char/KeyMaps/config.in
-	$(CFG_SHELL) $(TOPDIR)/config/Menuconfig config.in
-
-set:
-	@set
 
 #########################################################################
 #
@@ -278,10 +245,6 @@ set:
 #
 #	make clean	Remove all of the compilation junk, so we know
 #			we're starting from scratch.
-#
-#	make defconfig	Perform the configuration step that results from
-#			running `make config` and just pressing ENTER to
-#			every prompt that pops up.
 #
 #	make dep	Create a full set of dependencies.
 #
@@ -308,8 +271,6 @@ test:
 	mv $(DISTDIR){,.Pre}
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 	${MAKE} clean
-	@printf '\n  %076u\n\n' 0 | tr 0 =
-	${MAKE} defconfig
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 	${MAKE} dep
 	@printf '\n  %076u\n\n' 0 | tr 0 =

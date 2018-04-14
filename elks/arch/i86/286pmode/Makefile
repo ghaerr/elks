@@ -48,7 +48,7 @@ pmode286: $(OBJS)
 # Standard commands.
 
 distdir:
-	cp -pf Makefile config.in *.c *.h $(DISTDIR)/arch/i86/286pmode
+	cp -pf Makefile *.c *.h $(DISTDIR)/arch/i86/286pmode
 	cp -pf crt0.s irq.s $(DISTDIR)/arch/i86/286pmode
 
 #########################################################################

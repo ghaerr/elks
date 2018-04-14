@@ -59,7 +59,7 @@ ARCH		= i86
 
 #########################################################################
 # ROOT_DEV specifies the default root-device when making the image.
-# This does not yet work under ELKS. See include/linuxmt/config.h to
+# This does not yet work under ELKS. See include/config.h to
 # change the root device.
 
 ROOT_DEV	= FLOPPY
@@ -100,7 +100,7 @@ endif
 
 ARCH_DIR	= arch/$(ARCH)
 
-INCLUDES	= -I$(TOPDIR)/elks/include
+INCLUDES	= -I$(TOPDIR)/include -I$(TOPDIR)/elks/include
 
 MYDIR		= $(shell pwd | sed 's:^$(TOPDIR):.:')
 
@@ -110,24 +110,6 @@ MYDIR		= $(shell pwd | sed 's:^$(TOPDIR):.:')
 # also makes this an absolute path, but that fact is not important.
 
 DISTDIR 	= $(shell $(BASEDIR)/scripts/setdir $(TOPDIR)/elks-$(DIST)/$(MYDIR))
-
-#########################################################################
-# Specify the configuration shell to use.
-
-CFG_SHELL	:= $(shell \
-	     if [ -x "$$bash" ]; \
-		then echo $$bash ; \
-		else if [ -x /bin/bash ]; \
-			then echo /bin/bash ; \
-			else if [ -x /usr/bin/bash ]; \
-				then echo /usr/bin/bash ; \
-				else if [ -x /usr/local/bin/bash ]; \
-					then echo /usr/local/bin/bash ; \
-					else echo sh ; \
-				     fi ; \
-			     fi ; \
-		     fi ; \
-	     fi)
 
 #########################################################################
 # Specify the standard definitions to be given to system programs.
@@ -145,16 +127,16 @@ CCDEFS		= -DELKS_VERSION_CODE=$(VSNCODE)		\
 #########################################################################
 # Set the target environment and the compiler to use.
 
-ifeq ($(wildcard $(BASEDIR)/.config),)
+ifeq ($(wildcard $(TOPDIR)/.config),)
     MK_ARCH	= ibmpc
     MK_CPU	= 8086
     MK_CC	= bcc
 else
-    MK_ARCH	= $(shell grep '^CONFIG_ARCH_' $(BASEDIR)/.config \
+    MK_ARCH	= $(shell grep '^CONFIG_ARCH_' $(TOPDIR)/.config \
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
-    MK_CPU	= $(shell grep '^CONFIG_CPU_' $(BASEDIR)/.config \
+    MK_CPU	= $(shell grep '^CONFIG_CPU_' $(TOPDIR)/.config \
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
-    MK_CCN	= $(shell grep '^CONFIG_COMPILER_' $(BASEDIR)/.config \
+    MK_CCN	= $(shell grep '^CONFIG_COMPILER_' $(TOPDIR)/.config \
 			| cut -d = -f 1 | cut -d _ -f 3- )
 ifeq ($(MK_CCN), 1)
     MK_CC	= bcc
@@ -481,12 +463,6 @@ nodep:
 			${MAKE} -C "$$DIR" nodep ; \
 		fi ; \
 	done
-
-#########################################################################
-# Recreate autoconf.h if it's missing.
-
-$(BASEDIR)/include/autoconf.h:
-	@cd $(BASEDIR) && yes '' | $(MAKE) config
 
 #########################################################################
 # Sub-command used by the `make dist` command in the toplevel Makefile.

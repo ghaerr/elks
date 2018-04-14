@@ -6,6 +6,8 @@ SCRIPTDIR="$(dirname "$0")"
 
 export TOPDIR="$(cd "$SCRIPTDIR/.." && pwd)"
 
+echo TOPDIR set to $TOPDIR
+
 if [[ ! -e "$TOPDIR/cross" ]]; then
 	echo "ERROR: Missing folder for cross build tools.";
 	echo "       Create an empty folder, either at the top of this ELKS tree,"
@@ -14,6 +16,8 @@ if [[ ! -e "$TOPDIR/cross" ]]; then
 fi
 
 export CROSSDIR="$TOPDIR/cross"	
+
+echo CROSSDIR set to $CROSSDIR
 
 add_path () {
 	if [[ ":$PATH:" != *":$1:"* ]]; then

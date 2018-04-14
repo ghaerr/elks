@@ -76,7 +76,7 @@ HOMEDIR=$(shell cd $(BASEDIR)/.. ; pwd)
 ELKS_DIR=$(HOMEDIR)/elks
 ELKSCMD_DIR=$(HOMEDIR)/elkscmd
 
-INCLUDES=-I$(ELKS_DIR)/include
+INCLUDES=-I$(TOPDIR)/include -I$(ELKS_DIR)/include
 
 ##############################################################################
 #

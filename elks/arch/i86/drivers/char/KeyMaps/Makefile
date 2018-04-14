@@ -11,7 +11,7 @@ USEBCC 		= Y
 
 CLEANDEP	= 
 
-CLEANME 	= config.in keymaps.h
+CLEANME 	=
 
 DEPEND  	= 
 

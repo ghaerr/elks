@@ -20,7 +20,7 @@ mainmenu_option next_comment
 	    fi
 	fi
 	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
-	    source arch/i86/drivers/char/KeyMaps/config.in
+	    source elks/arch/i86/drivers/char/KeyMaps/config.in
 	fi
     else
 	choice 'Select console driver'			\

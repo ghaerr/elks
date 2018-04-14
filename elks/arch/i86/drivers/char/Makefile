@@ -51,7 +51,6 @@ all:	chr_drv.a
 
 chr_drv.a: $(OBJS)
 	ar rcs chr_drv.a $(OBJS)
-	sync
 
 con_asm.s: con_asm.S
 
@@ -70,7 +69,7 @@ ser_asm.s: ser_asm.S
 ser_asm.o: ser_asm.s
 
 KeyMaps/keymaps.h:
-	make -C KeyMaps keymaps.h
+	$(MAKE) -C KeyMaps keymaps.h
 
 #########################################################################
 # Standard commands.

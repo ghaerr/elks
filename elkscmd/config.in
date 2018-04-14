@@ -1,0 +1,15 @@
+#
+# ELKS User Space configuration menu
+# See the Configure script for a description of the syntax of this file
+#
+
+#mainmenu_option next_comment
+#	comment 'Applets'
+
+	comment 'Select the applets'
+
+	#bool 'ASH'  CONFIG_USER_ASH  y
+	#bool 'SASH' CONFIG_USER_SASH y
+
+#endmenu
+
