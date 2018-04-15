@@ -11,8 +11,10 @@ A script is provided to automatically download and build that cross chain:
 
 'tools/build.sh'
 
+Note: all the scripts must be executed with top directory /elks as the current one.
+
 A script that attempts to automate the whole build process and make it easier
-for ELKS newbies has been provided. Simply run from the top directory:
+for ELKS newbies has been provided:
 
 './build.sh'
 
@@ -30,6 +32,8 @@ The general build procedure for ELKS is as follows:
 * 'make menuconfig' and configure the kernel
 
 * 'make all' (build the kernel and the user land)
+
+* 'cd elkscmd'
 
 * As root, run 'make [imagetype]' where image type is one of these:
 

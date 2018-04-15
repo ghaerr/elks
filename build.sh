@@ -35,9 +35,7 @@ if [ "$UID" != "0" ] && [ "$1" != "clean" ]
 fi
 
 # Build environment setup
-pushd tools > /dev/null
-. ./env.sh
-popd > /dev/null
+. tools/env.sh
 
 # Check tools
 if [ ! -x "$CROSSDIR/bin/bcc" ]
