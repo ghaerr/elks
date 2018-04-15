@@ -38,7 +38,7 @@ losetup -o 32256 --sizelimit 24675328 $LOOP $HD_IMAGE
 
 # make minix file system on this hard disk image partition
 echo "Partition formatted as "
-mkfs.vfat -F 32 $LOOP
+mkfs.vfat -F 16 $LOOP
 #mkfs.msdos -F 32 $LOOP
 #mkfs.msdos -F 16 $LOOP
 
