@@ -23,17 +23,13 @@ The general build procedure for ELKS is as follows:
 
 * Build the cross chain in 'cross/' (see above)
 
-* Add 'cross/bin/' to you PATH (you can run '. tools/env.sh' to do that)
+* Set up your environment (PATH, TOPDIR and CROSSDIR):
 
-* 'cd elks'
+'. tools/env.sh' (note the '.' before the script to keep the environment)
 
 * 'make menuconfig' and configure the kernel
 
-* Run 'make' to build the kernel
-
-* 'cd ../elkscmd'
-
-* 'make' (builds the core command line utilities and network stack)
+* 'make all' (build the kernel and the user land)
 
 * As root, run 'make [imagetype]' where image type is one of these:
 
@@ -58,7 +54,7 @@ The general build procedure for ELKS is as follows:
   - images.tar.gz: make all images, pack into Gzip-compressed tar archive
   - images.tar.xz: make all images, pack into XZ-compressed tar archive
 
-Before writting the image on the real floppy, you can run ELKS in QEMU with:
+Before writting the image on the real floppy, you test it on QEMU with:
 './qemu.sh' (will configure QEMU to be close as possible to an ISA system)
 
 Questions? Problems? Patches? Join and email the Linux-8086 mailing list at

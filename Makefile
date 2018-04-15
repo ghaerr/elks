@@ -21,7 +21,7 @@ CFG_SHELL	:= $(shell \
 #########################################################################
 # Rules
 
-.PHONY: all clean defconfig config menuconfig
+.PHONY: all clean kconfig defconfig config menuconfig
 
 all: .config
 	$(MAKE) -C elks all
@@ -40,13 +40,16 @@ clean:
 elks/arch/i86/drivers/char/KeyMaps/config.in:
 	$(MAKE) -C elks/arch/i86/drivers/char/KeyMaps config.in
 
+kconfig:
+	$(MAKE) -C config all
+
 defconfig:
 	@yes '' | ${MAKE} config
 
-config:	elks/arch/i86/drivers/char/KeyMaps/config.in
+config:	elks/arch/i86/drivers/char/KeyMaps/config.in kconfig
 	$(CFG_SHELL) config/Configure config.in
 
-menuconfig:	elks/arch/i86/drivers/char/KeyMaps/config.in
+menuconfig:	elks/arch/i86/drivers/char/KeyMaps/config.in kconfig
 	$(CFG_SHELL) config/Menuconfig config.in
 
 #########################################################################

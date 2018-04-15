@@ -34,7 +34,7 @@ if [ "$UID" != "0" ] && [ "$1" != "clean" ]
 	then echo -e "\nWARNING: Disk images can only be built if you have root permissions"
 fi
 
-# Cross build tools environment setup
+# Build environment setup
 pushd tools > /dev/null
 . ./env.sh
 popd > /dev/null
@@ -50,7 +50,6 @@ fi
 
 # Working directory
 WD="$(pwd)"
-
 
 ### Clean if asked
 if [ "$1" = "clean" ]
@@ -71,13 +70,6 @@ test $THREADS -lt 1 && THREADS=1
 # Allow passing -j1 to force single-threaded make
 test "$1" = "-j1" && THREADS=1 
 echo "Using $THREADS threads for make"
-
-### Build configuration script
-echo "Building the configuration script..."
-sleep 1
-pushd config > /dev/null
-make all || clean_exit 1
-popd > /dev/null
 
 ### Configure all (kernel + user land)
 echo
