@@ -393,7 +393,7 @@ expandwildcards(name, maxargc, retargv)
 
 	return matches;
 }
-
+#endif /* WILDCARDS */
 
 /*
  * Sort routine for list of filenames.
@@ -406,7 +406,7 @@ namesort(p1, p2)
 	return strcmp(*p2, *p1);
 }
 
-
+#ifdef WILDCARDS
 /*
  * Routine to see if a text string is matched by a wildcard pattern.
  * Returns TRUE if the text is matched, or FALSE if it is not matched

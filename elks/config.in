@@ -157,10 +157,10 @@ if [ "$CONFIG_ROMCODE" = "y" ]; then
     mainmenu_option next_comment
 	comment 'ROM-CODE kernel-loader'
 
-	comment 'Absolute segment locations for code in target system EPROM'
+	comment 'Absolute segment locations for code in target system ROM'
 	hex 'Setup code (0x60 ROM)'	CONFIG_ROM_SETUP_CODE	0xe000
 	hex 'Kernel code (64k ROM)'	CONFIG_ROM_KERNEL_CODE	0xe060
-	comment ''
+
 	comment 'Absolute segment locations for data in target system RAM'
 	hex 'Setup data (0x20 RAM)'	CONFIG_ROM_SETUP_DATA	0x0060
 	hex 'Kernel data (64k RAM)'	CONFIG_ROM_KERNEL_DATA	0x0080
