@@ -72,16 +72,6 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 #
-# Create relevant parts of ELKS package.
-
-$(ELKS_DIR)/.config:
-	$(MAKE) -C $(ELKS_DIR) config
-
-$(ELKS_DIR)/arch/i86/boot/Image: $(ELKS_DIR)/.config
-	$(MAKE) -C $(ELKS_DIR)
-
-###############################################################################
-#
 # Create relevant parts of other packages.
 
 $(FD_BSECT):
@@ -113,7 +103,7 @@ _build_bootable_target: boot_blocks _build_target kernel_image
 _build_nonbootable_target: _build_target
 	umount -d $(TARGET_FS)
 
-_build_target: all banner check_id _populate_target
+_build_target: banner check_id _populate_target
 
 _populate_target: _mount_target
 	for i in $(DIRS); do $(MAKE) -C $$i $(TARGET_RFS) || exit 1; done >/dev/null

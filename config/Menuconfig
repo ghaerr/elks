@@ -1225,7 +1225,7 @@ inputbox_instructions_string="\
 Please enter a string value. \
 Use the <TAB> key to move from the input field to the buttons below it."
 
-DIALOG="${TOPDIR}/config/lxdialog/lxdialog"
+DIALOG="config/lxdialog/lxdialog"
 
 if [ -z "${PRE}" ]; then
     kernel_version=`printf '%s.%s.%s%s' \

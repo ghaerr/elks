@@ -84,15 +84,15 @@ uni16_to_x8(unsigned char *ascii, register unsigned char *uni)
 	return (op - ascii);
 }
 
-/* Read a complete directory entry for a (specified) file, submit a message to the callback function, return a value of 0 or an error code */
-int fat_readdirx(
+/* Read a complete directory entry for a (specified) file,
+ * submit a message to the callback function,
+ * return a value of 0 or an error code.
+ */
+int msdos_readdir(
 	struct inode *inode,
 	register struct file *filp,
 	void *dirent,
-	fat_filldir_t fat_filldir,
-	filldir_t filldir,
-	int shortnames/* Whether a short file name is required */,
-	int longnames /* Whether or not a long file name is required */)
+	filldir_t filldir)
 {
 	ino_t ino;
 	struct buffer_head *bh;
@@ -105,16 +105,11 @@ int fat_readdirx(
 	if (!inode || !S_ISDIR(inode->i_mode)) return -EBADF;
 	if (inode->i_ino == MSDOS_ROOT_INO) {
 		/* Fake . and .. for the root directory. */
-#ifndef LINUX_FS_2_0_34
 		if ((int)filp->f_pos < 2) {
-			return fat_filldir(filldir, dirent, "..", (int)filp->f_pos, 0, filp->f_pos, ++filp->f_pos, 0, (long)MSDOS_ROOT_INO);
+			/* Tricky: returns "." or ".." depending on f_pos */
+			return filldir(dirent, "..", (int)filp->f_pos, ++filp->f_pos, (long) MSDOS_ROOT_INO);
 		}
-#else 
-		while ((int)filp->f_pos < 2) {
-			if (fat_filldir(filldir, dirent, "..", ++(*(int *)&filp->f_pos), 0, filp->f_pos, filp->f_pos, 0, (long)MSDOS_ROOT_INO) < 0)
-				return 0;
-		} 
-#endif
+
 		if ((int)filp->f_pos == 2) *(int *)&filp->f_pos = 0;
 	}
 
@@ -173,7 +168,6 @@ int fat_readdirx(
 			unsigned char long_len = 0; /* Make compiler warning go away */
 			char bufname[13], c;
 			register char *ptname = bufname;
-			int was_long = is_long;
 
 			if (is_long) {
 				unsigned char sum;
@@ -211,28 +205,19 @@ int fat_readdirx(
 				else if (!strcmp(de->name,MSDOS_DOTDOT))
 					ino = msdos_parent_ino(inode,0);
 
-				if (shortnames || !is_long) {
-					if (!was_long) {
-						long_slots = 0;
-					}
-					if (fat_filldir(filldir, dirent, bufname, i, 0, oldpos, 
-					    was_long ? filp->f_pos - sizeof(struct msdos_dir_entry) : oldpos, long_slots, (long)ino) < 0) {
-						filp->f_pos = oldpos;
-						break;
-					}
+				if (!is_long) {
+					filldir(dirent, bufname, i, oldpos, (long) ino);
+					break;
 				}
-				if (is_long && longnames) {
+				else {
 #ifdef CONFIG_UMSDOS_FS
 					if (inode->i_ino == MSDOS_ROOT_INO && filldir && 
 					    long_len == 3 && !strncmp(longname,"dev",3)) {
 						MSDOS_SB(inode->i_sb)->dev_ino = ino;
 					}
 #endif
-					if (fat_filldir(filldir, dirent, longname, long_len, 1, oldpos, 
-					    filp->f_pos - sizeof(struct msdos_dir_entry), long_slots, (long)ino) < 0) {
-						filp->f_pos = oldpos;
-						break;
-					}
+					filldir(dirent, longname, long_len, oldpos, (long) ino);
+					break;
 				}
 				oldpos = filp->f_pos;
 			}
@@ -242,33 +227,10 @@ int fat_readdirx(
 			oldpos = filp->f_pos;
 		}
 		ino = msdos_get_entry(inode,&filp->f_pos,&bh,&de);
-		
-	} //while
+
+	} /* while (ino != -1) */
 
 	if (bh)
 		unmap_brelse(bh);
 	return 0;
-}
-
-static int fat_filldir(
-	filldir_t filldir,
-	void * buf,
-	const char * name,
-	int name_len,
-	int is_long/*Whether it is a long file name*/,
-	off_t offset,
-	off_t short_offset,
-	int long_slots/*The correct number of long file name entries*/,
-	ino_t ino)
-{
-  return filldir(buf, name, name_len, offset, ino);
-}
-
-int msdos_readdir(
-	struct inode *inode,
-	struct file *filp,
-	void *dirent,
-	filldir_t filldir)
-{
-	return fat_readdirx(inode, filp, dirent, fat_filldir, filldir, 0, 1);
 }

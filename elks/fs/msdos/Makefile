@@ -37,13 +37,8 @@ include $(BASEDIR)/Makefile-rules
 
 OBJS  = namei.o inode.o file.o dir.o misc.o fat.o
 
-#CFLAGS += -DLINUX_FS_2_0_34 
 #CFLAGS += -DCONFIG_UMSDOS_FS
 #CFLAGS += -DFAT_BITS_32
-ifeq ($(findstring -DLINUX_FS_2_0_34, $(CFLAGS)),-DLINUX_FS_2_0_34)
-namei.o: ../vfat/namei.c 
-	$(CC) $(CFLAGS) -c -o $@ $<
-endif
 
 #########################################################################
 # Commands.

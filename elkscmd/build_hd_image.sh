@@ -30,8 +30,8 @@ if [ $UID != 0 ]
 fi
 
 # Location for boot sector and MBR files
-BOOTSECT=../dev86/bootblocks/minixhd.bin
-MBR=../dev86/bootblocks/mbr.bin
+BOOTSECT=bootblocks/minixhd.bin
+MBR=bootblocks/mbr.bin
 
 # Don't proceed if required files are missing
 if [ ! -e "$BOOTSECT" ]

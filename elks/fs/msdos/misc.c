@@ -249,7 +249,6 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 	}
 }
 
-#ifndef LINUX_FS_2_0_34	/* unwanted for vfat/namei.c */
 /* Scans a directory for a given file (name points to its formatted name) or
    for an empty directory slot (name is NULL). Returns the inode number. */
 
@@ -287,7 +286,6 @@ int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
 	*res_de = de;
 	return 0;
 }
-#endif
 
 /* Now an ugly part: this set of directory scan routines works on clusters
    rather than on inodes and sectors. They are necessary to locate the '..'

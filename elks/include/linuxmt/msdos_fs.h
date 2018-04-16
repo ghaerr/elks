@@ -6,6 +6,7 @@
  */
 
 #include <linuxmt/fs.h>
+
 extern char toupper(char c);
 extern char tolower(char c);
 
@@ -119,7 +120,6 @@ extern int fatbits; /*global*/
 
 extern struct buffer_head *msdos_sread(int dev,long sector,void **start);
 
-
 /* misc.c */
 
 extern void lock_creation(void);
@@ -168,13 +168,9 @@ extern long msdos_bmap(struct inode *inode,long block);
 extern void msdos_read_inode(struct inode *inode);
 extern void msdos_write_inode(struct inode *inode);
 extern int init_msdos_fs(void);
+
 /* dir.c */
 
-typedef int (*fat_filldir_t)(filldir_t filldir, char *, char *,
-			     size_t, int, off_t, off_t, int, ino_t);
-extern int fat_readdirx(struct inode *inode, struct file *filp, char *dirent,
-			fat_filldir_t fat_filldir, filldir_t filldir,
-			int shortnames, int longnames, int both);
 extern struct file_operations msdos_dir_operations;
 extern struct inode_operations msdos_dir_inode_operations;
 
