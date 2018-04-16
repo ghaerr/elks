@@ -89,11 +89,11 @@ static int minix_readdir(struct inode *inode,
 	do {
 	    de = (struct minix_dir_entry *) (offset + bh->b_data);
 	    if (de->inode) {
-		if (filldir(dirent, de->name, strnlen(de->name, info->s_namelen),
-			filp->f_pos, de->inode) < 0) {
+			filldir(dirent, de->name, strnlen(de->name, info->s_namelen),
+				filp->f_pos, de->inode);
+			filp->f_pos += info->s_dirsize;
 		    unmap_brelse(bh);
 		    return 0;
-		}
 	    }
 	    offset += info->s_dirsize;
 	    filp->f_pos += info->s_dirsize;
