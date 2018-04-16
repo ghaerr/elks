@@ -29,7 +29,7 @@ dd if=/dev/zero of=$HD_IMAGE bs=1024 count=32200
 
 # put partition table on this disk - id=0x80, *=bootable first partition
 echo -en "\nMaking partition table:"
-echo ',,0C,*' | sfdisk --quiet -D $HD_IMAGE 2>/dev/null
+echo '63,,0C,*' | sfdisk --quiet $HD_IMAGE 2>/dev/null
 
 # add first partition to the loopback driver
 # 32.256 is block 63 times 512 blocksize
@@ -38,7 +38,7 @@ losetup -o 32256 --sizelimit 24675328 $LOOP $HD_IMAGE
 
 # make minix file system on this hard disk image partition
 echo "Partition formatted as "
-mkfs.vfat -F 16 $LOOP
+mkfs.vfat -F 32 $LOOP
 #mkfs.msdos -F 32 $LOOP
 #mkfs.msdos -F 16 $LOOP
 

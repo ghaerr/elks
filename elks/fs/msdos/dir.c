@@ -117,7 +117,7 @@ int msdos_readdir(
 	bh = NULL;
 	is_long = 0;
 	ino = msdos_get_entry(inode,&filp->f_pos,&bh,&de);
-	if (ino != (ino_t)(-1L)) {
+	while (ino != (ino_t)(-1L)) {
 		/* Check for long filename entry */
 		if (de->name[0] == (__s8) DELETED_FLAG) {
 			is_long = 0;
@@ -168,7 +168,6 @@ int msdos_readdir(
 			unsigned char long_len = 0; /* Make compiler warning go away */
 			char bufname[13], c;
 			register char *ptname = bufname;
-			int was_long = is_long;
 
 			if (is_long) {
 				unsigned char sum;
@@ -207,9 +206,8 @@ int msdos_readdir(
 					ino = msdos_parent_ino(inode,0);
 
 				if (!is_long) {
-					if (filldir(dirent, bufname, i, oldpos, (long) ino) < 0) {
-						filp->f_pos = oldpos;
-					}
+					filldir(dirent, bufname, i, oldpos, (long) ino);
+					break;
 				}
 				else {
 #ifdef CONFIG_UMSDOS_FS
@@ -218,13 +216,19 @@ int msdos_readdir(
 						MSDOS_SB(inode->i_sb)->dev_ino = ino;
 					}
 #endif
-					if (filldir(dirent, longname, long_len, oldpos, (long) ino) < 0) {
-						filp->f_pos = oldpos;
-					}
+					filldir(dirent, longname, long_len, oldpos, (long) ino);
+					break;
 				}
+				oldpos = filp->f_pos;
 			}
+			is_long = 0;
+		} else {
+			is_long = 0;
+			oldpos = filp->f_pos;
 		}
-	} // if (ino != -1)
+		ino = msdos_get_entry(inode,&filp->f_pos,&bh,&de);
+
+	} /* while (ino != -1) */
 
 	if (bh)
 		unmap_brelse(bh);
