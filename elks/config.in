@@ -2,8 +2,8 @@
 # See the Configure script for a description of the syntax of this file.
 #
 
-mainmenu_name "Linux ELKS Kernel Configuration"
-comment 'Just accept the defaults unless you know what you are doing'
+#mainmenu_name "Linux ELKS Kernel Configuration"
+#comment 'Just accept the defaults unless you know what you are doing'
 
 mainmenu_option next_comment
     comment 'Advanced - for Developers and Hackers only'
@@ -207,18 +207,18 @@ fi
 mainmenu_option next_comment
     comment 'Driver Support'
 
-    source arch/i86/drivers/block/Config.in
-    source arch/i86/drivers/char/Config.in
-    source arch/i86/drivers/net/Config.in
+    source elks/arch/i86/drivers/block/config.in
+    source elks/arch/i86/drivers/char/config.in
+    source elks/arch/i86/drivers/net/config.in
 endmenu
 
 # Generic networking support
 
-source net/Config.in
+source elks/net/config.in
 
 # Filesystem support
 
-source fs/Config.in
+source elks/fs/config.in
 
 # Kernel hacking
 

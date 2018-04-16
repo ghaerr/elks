@@ -96,7 +96,6 @@ all:	lib86.a
 
 lib86.a: $(OBJS)
 	ar rcs lib86.a $(OBJS)
-	sync
 
 #########################################################################
 # Standard commands.

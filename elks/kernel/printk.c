@@ -25,7 +25,7 @@
  *	MTK:	Sep 97 - Misc hacks to shrink generated code
  */
 
-#include <linuxmt/autoconf.h>
+#include <linuxmt/config.h>
 #include <arch/segment.h>
 #include <linuxmt/mm.h>
 #include <stdarg.h>

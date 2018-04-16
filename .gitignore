@@ -6,9 +6,10 @@
 #
 # Build ignores
 #
-#.*
+.config
+.config.old
+
 *.o
-*.o.*
 *.a
 *.1.gz
 Kbuild
@@ -34,7 +35,7 @@ cross
 elks_todo
 
 #
-# debugging stuff
+# Debugging stuff
 #
 core
 .gdb_history

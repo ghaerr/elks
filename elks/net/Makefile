@@ -49,7 +49,7 @@ net.a: $(OBJS)
 # Standard commands.
 
 distdir:
-	cp -pf Config.in Makefile *.c $(DISTDIR)/net
+	cp -pf config.in Makefile *.c $(DISTDIR)/net
 	mkdir $(DISTDIR)/net/ipv4
 	cp -pf ipv4/Makefile ipv4/*.c ipv4/*.h $(DISTDIR)/net/ipv4
 	mkdir $(DISTDIR)/net/nano

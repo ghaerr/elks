@@ -44,7 +44,6 @@ all:	lib.a
 
 lib.a:	$(OBJS)
 	ar rcs lib.a $(OBJS)
-	sync
 
 #########################################################################
 # Standard rules.

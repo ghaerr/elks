@@ -46,7 +46,6 @@ all:	mm.a
 
 mm.a: $(OBJS)
 	ar rcs mm.a $(OBJS)
-	sync
 
 #########################################################################
 # Standard commands.

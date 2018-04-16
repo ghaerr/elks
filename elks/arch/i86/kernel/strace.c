@@ -1,7 +1,6 @@
-#include <linuxmt/autoconf.h>
-
 #ifdef CONFIG_STRACE
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/debug.h>

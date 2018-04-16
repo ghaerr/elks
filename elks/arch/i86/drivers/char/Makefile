@@ -51,7 +51,6 @@ all:	chr_drv.a
 
 chr_drv.a: $(OBJS)
 	ar rcs chr_drv.a $(OBJS)
-	sync
 
 con_asm.s: con_asm.S
 
@@ -70,7 +69,7 @@ ser_asm.s: ser_asm.S
 ser_asm.o: ser_asm.s
 
 KeyMaps/keymaps.h:
-	make -C KeyMaps keymaps.h
+	$(MAKE) -C KeyMaps keymaps.h
 
 #########################################################################
 # Standard commands.
@@ -80,7 +79,7 @@ distdir:
 	${MAKE} -C KeyMaps distdir
 	cp -pf CGAsnow Changes NEW_NOTES $(DISTDIR)/arch/i86/drivers/char
 	cp -pf NOTES README_CONSOLE $(DISTDIR)/arch/i86/drivers/char
-	cp -pf Makefile Config.in $(DISTDIR)/arch/i86/drivers/char
+	cp -pf Makefile config.in $(DISTDIR)/arch/i86/drivers/char
 	cp -pf *.S *.h *.c $(DISTDIR)/arch/i86/drivers/char
 
 #########################################################################

@@ -107,7 +107,7 @@ set -h +o posix
 function set_x_info () {
     eval x=\$$1
     if [ -z "$x" ]; then
-	eval `sed -n -e 's/# \(.*\) is not set.*/\1=n/' -e "/^$1=/p" arch/$ARCH/defconfig`
+	eval `sed -n -e 's/# \(.*\) is not set.*/\1=n/' -e "/^$1=/p" elks/arch/i86/defconfig`
 	eval x=\${$1:-"$2"}
 	eval $1=$x
 	eval INFO_$1="' (NEW)'"
@@ -1133,7 +1133,7 @@ save_configuration () {
 
     echo -n "."
     DEF_CONFIG="${1:-.config}"
-    DEF_CFG_H="include/linuxmt/autoconf.h"
+    DEF_CFG_H="include/autoconf.h"
     CONFIG=.tmpconfig
     CFG_H=.tmpconfig.h
     cat > $CONFIG <<-.EOM
@@ -1225,7 +1225,7 @@ inputbox_instructions_string="\
 Please enter a string value. \
 Use the <TAB> key to move from the input field to the buttons below it."
 
-DIALOG="./scripts/lxdialog/lxdialog"
+DIALOG="${TOPDIR}/config/lxdialog/lxdialog"
 
 if [ -z "${PRE}" ]; then
     kernel_version=`printf '%s.%s.%s%s' \
@@ -1246,7 +1246,7 @@ if [ "$1" != "" ] ; then
     CFG_IN=$1
 fi
 
-DEFAULTS=arch/$ARCH/defconfig
+DEFAULTS=elks/arch/i86/defconfig
 if [ -f .config ]; then
     DEFAULTS=.config
 fi

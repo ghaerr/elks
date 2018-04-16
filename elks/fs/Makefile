@@ -51,7 +51,7 @@ fs.a:	$(OBJS)
 # Standard commands.
 
 distdir:
-	cp -pf Config.in Makefile *.c $(DISTDIR)/fs
+	cp -pf config.in Makefile *.c $(DISTDIR)/fs
 
 #########################################################################
 ### Dependencies:

@@ -9,7 +9,7 @@ BASEDIR 	= ..
 
 USEBCC 		= Y
 
-CLEANDEP	= 
+CLEANDEP	= autoconf.h
 
 CLEANME 	= 
 

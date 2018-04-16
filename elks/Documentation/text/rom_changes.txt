@@ -1,4 +1,4 @@
-Christian Mardm”ller (chm@kdt.de)
+Christian Mardmï¿½ller (chm@kdt.de)
 10/1999
 
 
@@ -15,7 +15,6 @@ elks\ARCH\I86\KERNEL\IRQ.C
 elks\ARCH\I86\KERNEL\IRQTAB.C
 elks\ARCH\I86\KERNEL\PROCESS.C
 elks\ARCH\I86\MM\INIT.C
-elks\INCLUDE\LINUXMT\AUTOCONF.H
 elks\INCLUDE\LINUXMT\CONFIG.H
 elks\INCLUDE\LINUXMT\ROMFS_FS.H
 elks\INIT\MAIN.C

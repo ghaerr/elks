@@ -16,13 +16,13 @@
  * Georg Potthast 2017                                         *
  * ************************************************************/
 
+#include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/fcntl.h>
-#include <linuxmt/config.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/ntty.h>

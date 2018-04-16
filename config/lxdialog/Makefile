@@ -1,30 +1,4 @@
 #########################################################################
-# Relative path to base directory.
-
-BASEDIR 	= ../..
-
-#########################################################################
-# Define the variables required by the standard rules - see the standard
-# rules file (below) for details of these variables.
-
-USEBCC 		= N
-
-CLEANDEP	= 
-
-CLEANME 	= local-curses.h lxdialog
-
-DEPEND  	= local-curses.h
-
-DISTFILES	= BIG.FAT.WARNING
-
-NOINDENT	= 
-
-#########################################################################
-# Include the standard commands.
-
-include $(BASEDIR)/Makefile-rules
-
-#########################################################################
 # Where are the curses libraries?
 
 ifeq (/usr/include/ncurses/ncurses.h, $(wildcard /usr/include/ncurses/ncurses.h))
@@ -49,42 +23,40 @@ endif
 # Local commands.
 
 CC = gcc
-CPP = gcc -E
-OPTIM = -std=c99 -O2 -Wall -pedantic
+CFLAGS = -std=c99 -O2 -Wall -pedantic -DLOCALE $(CURSES_INC)
 
-CFLAGS = $(OPTIM) -DLOCALE $(CURSES_INC)
-LDFLAGS = -s -L .
+LDFLAGS = -s
 LDLIBS = -lncurses
 
 #########################################################################
 # What do we compile?
 
+PGM = lxdialog
+
 OBJS = checklist.o menubox.o textbox.o yesno.o inputbox.o \
        util.o lxdialog.o msgbox.o
+
 SRCS = $(OBJS:.o=.c)
 
 #########################################################################
 # Available commands.
 
-all:	ncurses lxdialog
+.PHONY: all clean
 
-lxdialog: $(OBJS)
+all: $(PGM)
 
-#########################################################################
-# Write a custom header for curses.
+clean:
+	rm -fv $(OBJS) $(PGM) local-curses.h
 
-local-curses.h:
-	printf > local-curses.h '%s\n' \
-		'/* Include curses as available on this system.' \
-		' * Automatically created during compilation.' \
-		' * DO NOT CHANGE.' \
-		' */' ''
-	printf '#include %s\n\n' $(CURSES_LOC) >> local-curses.h
+$(OBJS): local-curses.h
+
+$(PGM): $(OBJS)
 
 #########################################################################
 # Check that ncurses is available.
+# Write a custom header for curses.
 
-ncurses: local-curses.h
+local-curses.h:
 	@x=`find /lib/ /usr/lib/ /usr/local/lib/ -maxdepth 2 -name 'libncurses.*'` ;\
 	if [ ! "$$x" ]; then \
 		echo -e "\007" ;\
@@ -95,6 +67,11 @@ ncurses: local-curses.h
 		echo ;\
 		exit 1 ;\
 	fi
+	printf > local-curses.h '%s\n' \
+		'/* Include curses as available on this system.' \
+		' * Automatically created during compilation.' \
+		' * DO NOT CHANGE.' \
+		' */' ''
+	printf '#include %s\n\n' $(CURSES_LOC) >> local-curses.h
 
 #########################################################################
-### Dependencies:

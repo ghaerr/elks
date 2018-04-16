@@ -1,5 +1,5 @@
 all:
-	@test ! -e ../elks/include/linuxmt/autoconf.h && echo -e "\nYou must build ELKS first.\n" && exit 1 || true
+	@test ! -e ../elks/include/autoconf.h && echo -e "\nYou must build ELKS first.\n" && exit 1 || true
 	cd src && $(MAKE)
 clean:
 	cd src && $(MAKE) clean
