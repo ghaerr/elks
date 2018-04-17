@@ -10,22 +10,107 @@ include $(BASEDIR)/Make.defs
 
 ###############################################################################
 #
-# State directories to compile, as follows:
-#
-#	DIRS		Directories to compile automatically.
-#
-#	DONTUSE 	Directories compiled as part of other directories.
-#
-#	DONTWORK	Directories that don't currently compile.
-#
+# Subdirectories for clean / build / install
 
-DIRS		= sys_utils misc_utils disk_utils file_utils levee \
-		  minix1 minix2 minix3 ash bc mtools sash sh_utils \
-		  inet ktcp prems test/eth test/socket/echo test/pty bootblocks
+# All subdirectories (for clean)
 
-DONTUSE 	= debug_utils lib prn-utils rc tools xvi
+SUBDIRS =       \
+	ash         \
+	bc          \
+	bootblocks  \
+	debug_utils \
+	disk_utils  \
+	elvis       \
+	file_utils  \
+	inet        \
+	ktcp        \
+	levee       \
+	lib         \
+	minix1      \
+	minix2      \
+	minix3      \
+	misc_utils  \
+	mtools      \
+	prems       \
+	prn-utils   \
+	rc          \
+	test        \
+	sash        \
+	screen      \
+	sh_utils    \
+	sys_utils   \
+	test        \
+	tools       \
+	xvi         \
+	# EOL
 
-DONTWORK	= elvis screen
+# Directories to build (for all and install)
+
+BUILDDIRS =    \
+	bootblocks \
+	inet       \
+	test       \
+	# EOL
+
+ifeq ($(CONFIG_APP_ASH), y)
+BUILDDIRS += ash
+endif
+
+ifeq ($(CONFIG_APP_BC), y)
+BUILDDIRS += bc
+endif
+
+ifeq ($(CONFIG_APP_DISK_UTILS), y)
+BUILDDIRS += disk_utils
+endif
+
+ifeq ($(CONFIG_APP_FILE_UTILS), y)
+BUILDDIRS += file_utils
+endif
+
+ifeq ($(CONFIG_APP_LEVEE), y)
+BUILDDIRS += levee
+endif
+
+ifeq ($(CONFIG_APP_KTCP), y)
+BUILDDIRS += ktcp
+endif
+
+ifeq ($(CONFIG_APP_MINIX1), y)
+BUILDDIRS += minix1
+endif
+
+ifeq ($(CONFIG_APP_MINIX2), y)
+BUILDDIRS += minix2
+endif
+
+ifeq ($(CONFIG_APP_MINIX3), y)
+BUILDDIRS += minix3
+endif
+
+ifeq ($(CONFIG_APP_MTOOLS), y)
+BUILDDIRS += mtools
+endif
+
+ifeq ($(CONFIG_APP_MISC_UTILS), y)
+BUILDDIRS += misc_utils
+endif
+
+ifeq ($(CONFIG_APP_PREMS), y)
+BUILDDIRS += prems
+endif
+
+ifeq ($(CONFIG_APP_SASH), y)
+BUILDDIRS += sash
+endif
+
+ifeq ($(CONFIG_APP_SH_UTILS), y)
+BUILDDIRS += sh_utils
+endif
+
+ifeq ($(CONFIG_APP_SYS_UTILS), y)
+BUILDDIRS += sys_utils
+endif
 
 ###############################################################################
 #
@@ -51,7 +136,7 @@ COMB360_DEL	= sbin/partype sbin/ramdisk bin/clock
 all:
 	@if [ ! -e $(TOPDIR)/include/autoconf.h ]; \
 	then echo -e "\n*** ERROR: You must configure ELKS first ***\n" >&2; exit 1; fi
-	+@for DIR in $(DIRS); do $(MAKE) -C $$DIR all || exit 1; done
+	+@for DIR in $(BUILDDIRS); do $(MAKE) -C $$DIR all || exit 1; done
 
 images_clean:
 	-umount -d $(IMAGES) 2>/dev/null || true
@@ -62,7 +147,7 @@ clean:
 	-rm -f $(IMAGES) core images.zip images.tar.*
 	-rm -rf $(ROOTDIR)
 	-rm -f *~
-	-@for DIR in $(DIRS) $(DONTUSE) $(DONTWORK); do $(MAKE) -C $$DIR clean; done
+	@for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR clean || exit 1; done
 
 ###############################################################################
 #

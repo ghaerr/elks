@@ -1,9 +1,8 @@
 #
-# ELKS main configuration menu
+# ELKS Main
 #
 
-mainmenu_name "ELKS Main Configuration"
-comment 'Just accept the defaults unless you know what you are doing'
+mainmenu_name "ELKS Main"
 
 #mainmenu_option next_comment
 #	comment 'Cross build chain'
@@ -18,7 +17,7 @@ comment 'Just accept the defaults unless you know what you are doing'
 #endmenu
 
 #
-# ELKS Kernel configuration menu
+# ELKS Kernel
 #
 
 mainmenu_option next_comment
@@ -28,11 +27,11 @@ mainmenu_option next_comment
 endmenu
 
 #
-# ELKS User Space configuration menu
+# ELKS Commands
 #
 
 mainmenu_option next_comment
-	comment 'ELKS User Land'
+	comment 'ELKS Commands'
 	source elkscmd/config.in
 
 endmenu

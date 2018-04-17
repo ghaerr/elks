@@ -24,6 +24,14 @@
 # this file.
 #
 ##############################################################################
+
+ifndef TOPDIR
+$(error TOPDIR is not defined)
+endif
+
+include $(TOPDIR)/Make.defs
+
+##############################################################################
 #
 # Define type of target for creating boot file system on. Valid target types
 # are as follows:
