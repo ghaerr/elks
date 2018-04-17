@@ -85,7 +85,7 @@ mainmenu_option next_comment
 	mainmenu_option next_comment
 	    comment 'System Hardware'
 
-	    bool 'System has a math coprocessor'	CONFIG_HW_FPU        y
+	    bool 'System has a math coprocessor'	CONFIG_HW_FPU        n
 	    bool 'System has a PS/2 pointing device'	CONFIG_HW_PS2_MOUSE  y
 	    bool 'System has a VGA adapter'		CONFIG_HW_VGA        y
 	endmenu
@@ -147,7 +147,7 @@ mainmenu_option next_comment
 	    bool 'Use bootup IRQ-Mask of 8259 as default'	CONFIG_HW_259_USE_ORIGINAL_MASK n
 	    int 'Ticks for BogoMIPS (0 = check at boottime)'	CONFIG_BOGOMIPS 140055
 	    bool 'Use int 13 for floppy count'			CONFIG_HW_USE_INT13_FOR_FLOPPY n
-	    bool 'Use int 13 for disk parameters'		CONFIG_HW_USE_INT13_FOR_DISKPARMS y
+	    bool 'Use int 13 for disk parameters'		CONFIG_HW_USE_INT13_FOR_DISKPARMS n
 	    bool 'Advanced Power Management support'		CONFIG_APM y
 	endmenu
     fi

@@ -1,9 +1,18 @@
 #
+# Default configuration for a diskless and headless system
+# This configuration can be tested under EMU86
+#
+
+#
 # Automatically generated make config: don't edit
 #
 
 #
 # Just accept the defaults unless you know what you are doing
+#
+
+#
+# ELKS Kernel
 #
 
 #
@@ -90,14 +99,10 @@ CONFIG_APM=y
 #
 
 #
-# Absolute segment locations for code in target system EPROM
+# Absolute segment locations for code in target system ROM
 #
 CONFIG_ROM_SETUP_CODE=e000
 CONFIG_ROM_KERNEL_CODE=e060
-
-#
-# 
-#
 
 #
 # Absolute segment locations for data in target system RAM
