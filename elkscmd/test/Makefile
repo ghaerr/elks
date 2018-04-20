@@ -15,3 +15,10 @@ all: $(SUBDIRS)
 clean: $(SUBDIRS)
 	@for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR clean || exit 1; done
 
+smin_rfs:
+
+min_rfs:
+
+rfs:
+
+max_rfs:

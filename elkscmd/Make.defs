@@ -178,7 +178,7 @@ LOOP=
 endif
 
 ifeq ($(TARGET_MODE),LOOP)
-TARGET_MNT=/mnt/elks
+TARGET_MNT=$(TOPDIR)/target
 LOOP=-o loop
 endif
 
