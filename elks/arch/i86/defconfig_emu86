@@ -1,6 +1,7 @@
-###########################################################################
-# Default configuration file for typical IBM PC
-###########################################################################
+#
+# Default configuration for a diskless and headless system
+# This configuration can be tested under EMU86
+#
 
 #
 # Automatically generated make config: don't edit
@@ -37,7 +38,7 @@ CONFIG_PC_AUTO=y
 # CONFIG_PC_XT is not set
 # CONFIG_PC_AT is not set
 # CONFIG_PC_MCA is not set
-# CONFIG_ROMCODE is not set
+CONFIG_ROMCODE=y
 CONFIG_SMALL_KERNEL=y
 
 #
@@ -66,14 +67,14 @@ CONFIG_CPU_8086=y
 # System Hardware
 #
 # CONFIG_HW_FPU is not set
-CONFIG_HW_PS2_MOUSE=y
-CONFIG_HW_VGA=y
+# CONFIG_HW_PS2_MOUSE is not set
+# CONFIG_HW_VGA is not set
 
 #
 # Block Devices
 #
-CONFIG_HW_FLOPPY_DRIVE=y
-CONFIG_HW_HARD_DRIVE=y
+# CONFIG_HW_FLOPPY_DRIVE is not set
+# CONFIG_HW_HARD_DRIVE is not set
 
 #
 # Memory Configuration
@@ -85,13 +86,46 @@ CONFIG_XMS_SIZE=0
 #
 # BIOS Facilities
 #
-CONFIG_HW_KEYBOARD_BIOS=y
+# CONFIG_HW_KEYBOARD_BIOS is not set
 CONFIG_HW_VIDEO_HOC=y
 # CONFIG_HW_259_USE_ORIGINAL_MASK is not set
-CONFIG_BOGOMIPS=140055
+CONFIG_BOGOMIPS=0
 # CONFIG_HW_USE_INT13_FOR_FLOPPY is not set
 # CONFIG_HW_USE_INT13_FOR_DISKPARMS is not set
 CONFIG_APM=y
+
+#
+# ROM-CODE kernel-loader
+#
+
+#
+# Absolute segment locations for code in target system ROM
+#
+CONFIG_ROM_SETUP_CODE=e000
+CONFIG_ROM_KERNEL_CODE=e060
+
+#
+# Absolute segment locations for data in target system RAM
+#
+CONFIG_ROM_SETUP_DATA=0060
+CONFIG_ROM_KERNEL_DATA=0090
+
+#
+# Information for ROM-Image generator
+#
+CONFIG_ROM_BASE=e000
+CONFIG_ROM_CHECKSUM_SIZE=64
+# CONFIG_ROM_BOOTABLE_BY_RESET is not set
+
+#
+# Generate debug code and information
+#
+# CONFIG_ROM_DEBUG is not set
+
+#
+# EPROM Simulator
+#
+# CONFIG_ROM_USE_SIMULATOR is not set
 
 #
 # 286 Protected Mode Support
@@ -105,10 +139,7 @@ CONFIG_APM=y
 #
 # Block device drivers
 #
-CONFIG_BLK_DEV_BIOS=y
-CONFIG_BLK_DEV_BFD=y
-# CONFIG_BLK_DEV_BFD_HARD is not set
-CONFIG_BLK_DEV_BHD=y
+# CONFIG_BLK_DEV_BIOS is not set
 # CONFIG_BLK_DEV_FD is not set
 # CONFIG_BLK_DEV_HD is not set
 # CONFIG_DMA is not set
@@ -121,33 +152,24 @@ CONFIG_BLK_DEV_BHD=y
 #
 # Block device options
 #
-CONFIG_BLK_DEV_CHAR=y
+# CONFIG_BLK_DEV_CHAR is not set
 
 #
 # Character device drivers
 #
-CONFIG_CONSOLE_DIRECT=y
-# CONFIG_CONSOLE_BIOS is not set
+# CONFIG_CONSOLE_DIRECT is not set
+CONFIG_CONSOLE_BIOS=y
 # CONFIG_CONSOLE_SERIAL is not set
 CONFIG_EMUL_ANSI=y
 # CONFIG_EMUL_VT52 is not set
 # CONFIG_EMUL_NONE is not set
 # CONFIG_EMUL_ANSI_PRINTK is not set
-# CONFIG_KEYMAP_BE is not set
-# CONFIG_KEYMAP_DE is not set
-# CONFIG_KEYMAP_DV is not set
-# CONFIG_KEYMAP_ES is not set
-# CONFIG_KEYMAP_FR is not set
-# CONFIG_KEYMAP_IT is not set
-# CONFIG_KEYMAP_SE is not set
-# CONFIG_KEYMAP_UK is not set
-CONFIG_KEYMAP_US=y
 
 #
 # Other character devices
 #
 CONFIG_CHAR_DEV_RS=y
-CONFIG_CHAR_DEV_LP=y
+# CONFIG_CHAR_DEV_LP is not set
 CONFIG_CHAR_DEV_MEM=y
 CONFIG_PSEUDO_TTY=y
 # CONFIG_DEV_META is not set
@@ -160,23 +182,14 @@ CONFIG_PSEUDO_TTY=y
 #
 # Networking Support
 #
-CONFIG_SOCKET=y
-# CONFIG_NANO is not set
-CONFIG_INET=y
-CONFIG_CSLIP=y
-CONFIG_INET_STATUS=y
-# CONFIG_UNIX is not set
-
-#
-# Advanced socket options
-#
-# CONFIG_SOCK_CLIENTONLY is not set
+# CONFIG_SOCKET is not set
 
 #
 # Filesystem Support
 #
-CONFIG_MINIX_FS=y
-# CONFIG_ROMFS_FS is not set
+# CONFIG_MINIX_FS is not set
+CONFIG_ROMFS_FS=y
+CONFIG_ROMFS_BASE=8000
 # CONFIG_MSDOS_FS is not set
 
 #
@@ -197,12 +210,4 @@ CONFIG_EXEC_ELKS=y
 #
 CONFIG_SYS_VERSION=y
 # CONFIG_STRACE is not set
-# CONFIG_IDLE_HALT is not set
-
-#
-# ELKS User Land
-#
-
-#
-# Select the applets
-#
+CONFIG_IDLE_HALT=y

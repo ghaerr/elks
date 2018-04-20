@@ -24,7 +24,7 @@
 
 struct super_disk_s
 	{
-	byte_t magic [6];
+	char magic [6];
 	word_t ssize;    /* size of super block */
 	word_t isize;    /* size of inode */
 	word_t icount;   /* number of inodes */
@@ -554,7 +554,7 @@ static int compile_fs ()
 /* Main                                                                      */
 /*---------------------------------------------------------------------------*/
 
-void main (int argc, char ** argv)
+int main (int argc, char ** argv)
 	{
 	while (1)
 		{
@@ -593,6 +593,8 @@ void main (int argc, char ** argv)
 		puts ("End of compilation.");
 		break;
 		}
+
+	return 0;
 	}
 
 
