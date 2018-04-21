@@ -23,18 +23,8 @@ all: lev
 lev: $(OBJS)
 	$(CC) $(LDFLAGS) -o lev $(OBJS)
 
-max_rfs: install
-
-rfs: install
-
-net_rfs: install
-
-min_rfs: install
-
-smin_rfs:
-
 install: lev
-	cp -p lev $(TARGET_MNT)/bin/vi
+	sudo install lev $(TARGET_MNT)/bin/vi
 
 clean:
 	rm -f *.o lev

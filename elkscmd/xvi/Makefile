@@ -15,13 +15,8 @@ all: xvi
 xvi: xvi.o
 	$(CC) $(LDFLAGS) xvi.o -o xvi
 
-max_rfs: xvi
-	cp -p xvi $(TARGET_MNT)/bin$
-
-rfs: xvi
-	cp -p xvi $(TARGET_MNT)/bin$
-	
-min_rfs: xvi
+install: xvi
+	sudo install xvi $(TARGET_MNT)/bin$
 
 clean:
 	rm -f core xvi *.o

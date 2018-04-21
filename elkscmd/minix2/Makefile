@@ -12,9 +12,10 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS=env install lp pwdauth remsync synctree tget
+PRGS=env lp pwdauth remsync synctree tget
 RFS_PRGS=env install lp pwdauth tget
 
+# install   # Same name as phony target install
 # lpd mt	# Do not compile.
 
 NETPRGS=env
@@ -26,18 +27,8 @@ lpd: lpd.o ../lib/mktemp.o
 ../lib/mktemp.o:
 	make -C ../lib mktemp.o
 
-max_rfs: all
-	cp -p $(PRGS) $(TARGET_MNT)/bin
-
-rfs: all
-	cp -p $(RFS_PRGS) $(TARGET_MNT)/bin
-
-net_rfs: all
-	cp -p $(NETPRGS) $(TARGET_MNT)/bin
-
-min_rfs: all
-
-smin_rfs: all
+install: $(PRGS)
+	sudo install $(PRGS) $(TARGET_MNT)/bin
 
 clean:
 	rm -f core *.o $(PRGS)

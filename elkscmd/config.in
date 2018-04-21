@@ -1,12 +1,14 @@
 #
-# ELKS Commands configuration menu
+# ELKS Commands & Image configuration menu
 #
 
-#mainmenu_option next_comment
+mainmenu_option next_comment
+	comment 'Commands'
+
 	comment 'You can select a predefined set of commands'
 	comment 'or customize by selecting each of them'
 
-	choice 'Commands set'         \
+	choice 'Commands set' \
 	"custom CONFIG_APPSET_CUSTOM \
 	 tiny   CONFIG_APPSET_TINY   \
 	 small  CONFIG_APPSET_SMALL  \
@@ -135,5 +137,39 @@
 	define_bool CONFIG_APP_XVI        y
 	fi
 
-#endmenu
+endmenu
 
+mainmenu_option next_comment
+	comment 'Image'
+
+	choice 'Target filesystem' \
+	"MINIX  CONFIG_IMG_MINIX  \
+	 FAT12  CONFIG_IMG_FAT_12 \
+	 FAT16  CONFIG_IMG_FAT_16 \
+	 FAT32  CONFIG_IMG_FAT_32 \
+	 ROM    CONFIG_IMG_ROM" MINIX
+
+	if [ "$CONFIG_IMG_ROM" != "y" ]; then
+
+		choice 'Target medium' \
+		"FD1680 CONFIG_IMG_FD1680 \
+		 FD1440 CONFIG_IMG_FD1440 \
+		 FD1200 CONFIG_IMG_FD1200 \
+		 FD720  CONFIG_IMG_FD720  \
+		 FD360  CONFIG_IMG_FD360  \
+		 HD     CONFIG_IMG_HD     \
+		 FILE   CONFIG_IMG_FILE" FD1440
+
+		if [ "$CONFIG_IMG_HD" == "y" ]; then
+			int 'Blocks' CONFIG_IMG_BLOCKS 32768
+		fi
+
+		bool 'Bootable' CONFIG_IMG_BOOT y
+
+	else
+
+		define_bool CONFIG_IMG_FILE y
+
+	fi
+
+endmenu

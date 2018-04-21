@@ -14,18 +14,8 @@ PRGS=echoserver echoclient
 
 all: $(PRGS)
 
-smin_rfs:
-
-min_rfs:
-
-rfs:
-
-max_rfs: install
-
-net_rfs: install
-
-install: all
-	cp -p $(PRGS) $(TARGET_MNT)/bin
+install: $(PRGS)
+	sudo install $(PRGS) $(TARGET_MNT)/bin
 
 clean:
 	rm -f core *.o $(PRGS)

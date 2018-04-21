@@ -25,20 +25,8 @@ SMIN_PRGS	= init mount umount
 
 all: $(PRGS)
 
-max_rfs: all
-	cp -p $(PRGS) $(TARGET_MNT)/bin
-
-rfs: all
-	cp -p $(PRGS) $(TARGET_MNT)/bin
-	
-net_rfs: all
-	cp -p $(NETPRGS) $(TARGET_MNT)/bin
-
-min_rfs: all
-	cp -p $(MIN_PRGS) $(TARGET_MNT)/bin
-
-smin_rfs: all
-	cp -p $(SMIN_PRGS) $(TARGET_MNT)/bin
+install: $(PRGS)
+	sudo install $(PRGS) $(TARGET_MNT)/bin
 
 clean:
 	rm -f *.o core $(PRGS)

@@ -91,9 +91,10 @@ test -e elks/arch/i86/boot/Image || clean_exit 6
 
 ### Make image files
 cd elkscmd
-make images.zip || clean_exit 8
-make images.tar.gz || clean_exit 8
-make images.tar.xz || clean_exit 8
+make image
+#make images.zip || clean_exit 8
+#make images.tar.gz || clean_exit 8
+#make images.tar.xz || clean_exit 8
 cd "$WD"
 
 echo "Images and image file archives are under 'elkscmd'."

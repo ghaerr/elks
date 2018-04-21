@@ -14,22 +14,16 @@ include $(BASEDIR)/Make.rules
 
 PRGS=cal diff file find head sed sort tail tee
 
-NETPRGS=
+#
+# Rules
+#
+
+include $(BASEDIR)/Make.rules
 
 all: $(PRGS)
 
-max_rfs: all
-	cp -p $(PRGS) $(TARGET_MNT)/bin
-
-rfs: all
-	cp -p $(PRGS) $(TARGET_MNT)/bin
-
-net_rfs: all
-	cp -p $(NETPRGS) $(TARGET_MNT)/bin
-
-min_rfs: all
-
-smin_rfs: all
+install: $(PRGS)
+	sudo install $(PRGS) $(TARGET_MNT)/bin
 
 clean:
 	rm -f core *.o $(PRGS)

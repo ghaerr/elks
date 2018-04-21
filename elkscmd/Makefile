@@ -6,6 +6,7 @@
 
 BASEDIR = .
 
+include ../Make.defs
 include $(BASEDIR)/Make.defs
 
 ###############################################################################
@@ -124,10 +125,7 @@ KHELPER 	= $(MINIX_BOOT)/minix_elks.bin
 #
 # Names of all possible image files.
 
-IMAGES		= boot root comb360 comb comb_net full5 full3 full1680
-
-# Populated items to delete for special combined 360K boot+root disk
-COMB360_DEL	= sbin/partype sbin/ramdisk bin/clock
+IMAGES		= fd360 fd720 fd1440 fd1680
 
 ###############################################################################
 #
@@ -143,9 +141,8 @@ images_clean:
 	-rm -f $(IMAGES) images.zip images.tar.*
 
 clean:
-	-umount -d $(IMAGES) || true
+	-sudo umount -d $(TARGET_MNT) || true
 	-rm -f $(IMAGES) core images.zip images.tar.*
-	-rm -rf $(ROOTDIR)
 	-rm -f *~
 	@for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR clean || exit 1; done
 
@@ -162,106 +159,36 @@ include $(BASEDIR)/Make.rules
 kernel_image: $(ELKS_DIR)/arch/i86/boot/Image
 
 boot_blocks: $(FD_BSECT) $(KHELPER)
-	@if [ ! -e $(MINIX_BOOT)/minix.bin ]; \
-	then echo -e "\n\n *** Do builds in dev86 and dev86/bootblocks first *** \n\n"; exit 1; fi
-	@if [ ! -e $(MINIX_BOOT)/minix_elks.bin ]; \
-	then echo -e "\n\n *** Do builds in dev86 and dev86/bootblocks first *** \n\n"; exit 1; fi
 
 _build_bootable_target: boot_blocks _build_target kernel_image
-	mkdir -p $(TARGET_MNT)/boot
-	cp $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
-	-@cp $(KHELPER) $(TARGET_MNT)/boot/boot || \
-	echo -e "\n\n *** WARNING: Failed to copy boot binary ***\n\n"
-	umount -d $(TARGET_FS)
+	sudo mkdir -p $(TARGET_MNT)/boot
+	sudo install $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
+	sudo install $(KHELPER) $(TARGET_MNT)/boot/boot
+	sudo umount -d $(TARGET_FS)
 	dd if=$(FD_BSECT) of=$(TARGET_FS) bs=512 count=2 conv=notrunc
 
 _build_nonbootable_target: _build_target
-	umount -d $(TARGET_FS)
+	sudo umount -d $(TARGET_FS)
 
-_build_target: banner _populate_target
-
-_populate_target: _mount_target
-	for i in $(BUILDDIRS); do $(MAKE) -C $$i $(TARGET_RFS) || exit 1; done
-	[ -e $(TARGET_MNT)/bin/ash ] && ln -sf ash $(TARGET_MNT)/bin/sh || \
-		ln -sf sash $(TARGET_MNT)/bin/sh
-	$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(TARGET_MNT)/etc/issue
-	[ "$(COMB360)" = "yes" ] && \
-	for DEL in $(COMB360_DEL); do rm $(TARGET_MNT)/$$DEL; done || true
-	[ "$(INSTALL_KTCP)" = "yes" ] && \
-	cp -p $(ELKSCMD_DIR)/ktcp/ktcp $(TARGET_MNT)/bin || true
+_build_target: _mount_target
+	(cd $(ELKSCMD_DIR)/rootfs_template; \
+		tar cf - --exclude CVS --exclude .keep *) | \
+		(cd $(TARGET_MNT); sudo tar xpf - --no-same-owner)
+	(cd $(TARGET_MNT)/dev; sudo ./MAKEDEV; sudo rm MAKEDEV MAKESET)
+	for i in $(BUILDDIRS); do $(MAKE) -C $$i install || exit 1; done
+	[ -e $(TARGET_MNT)/bin/ash ] && sudo ln -sf ash $(TARGET_MNT)/bin/sh || \
+		sudo ln -sf sash $(TARGET_MNT)/bin/sh
+	sudo bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(TARGET_MNT)/etc/issue"
 
 _mount_target:
-	umount -d $(TARGET_FS) || true
+	-sudo umount -d $(TARGET_FS)
+	-sudo rm -rf $(TARGET_FS)
 	dd if=/dev/zero of=$(TARGET_FS) bs=1024 count=$(TARGET_BLKS)
-	$(MKFS) $(MKFS_OPTS) $(TARGET_FS)
+	sudo $(MKFS) $(MKFS_OPTS) $(TARGET_FS)
 	mkdir -p $(TARGET_MNT)
-	mount $(LOOP) $(TARGET_FS) $(TARGET_MNT)
-	(cd $(ELKSCMD_DIR)/rootfs_template; \
-	tar cf - --exclude CVS --exclude .keep *) | \
-	(cd $(TARGET_MNT); tar xpf -)
-	@(cd $(TARGET_MNT)/dev; ./MAKEDEV; rm MAKEDEV MAKESET)
+	sudo mount $(LOOP) $(TARGET_FS) $(TARGET_MNT)
 
-banner:
-	@echo "*"
-	@echo "* Building image: `basename $(TARGET_FS)`"
-	@echo "*"
-
-full1680:
-	sudo @$(MAKE) _build_bootable_target \
-		TARGET_FS=$(FULL1680_TARGET_FS) \
-		TARGET_RFS=max_rfs \
-		TARGET_BLKS=$(FULL1680_TARGET_BLKS) \
-		INSTALL_KTCP=yes
-full3:
-	sudo $(MAKE) TOPDIR=$(TOPDIR) _build_bootable_target \
-		TARGET_FS=$(FULL3_TARGET_FS) \
-		TARGET_RFS=max_rfs \
-		TARGET_BLKS=$(FULL3_TARGET_BLKS) \
-		INSTALL_KTCP=yes
-
-full5:
-	sudo $(MAKE) _build_bootable_target \
-		TARGET_FS=$(FULL5_TARGET_FS) \
-		TARGET_RFS=rfs \
-		TARGET_BLKS=$(FULL5_TARGET_BLKS) \
-		INSTALL_KTCP=yes
-
-comb360:
-	sudo @$(MAKE) _build_bootable_target \
-		TARGET_FS=$(COMB360_TARGET_FS) \
-		TARGET_RFS=min_rfs \
-		COMB360=yes \
-		TARGET_BLKS=$(COMB360_TARGET_BLKS)
-
-comb:
-	sudo @$(MAKE) _build_bootable_target \
-		TARGET_FS=$(COMB_TARGET_FS) \
-		TARGET_RFS=min_rfs \
-		TARGET_BLKS=$(COMB_TARGET_BLKS)
-
-comb_net:
-	sudo @$(MAKE) _build_bootable_target \
-		TARGET_FS=$(COMB_NET_TARGET_FS) \
-		TARGET_RFS=min_rfs \
-		TARGET_BLKS=$(COMB_NET_TARGET_BLKS) \
-		INSTALL_KTCP=yes
-
-boot: $(ELKS_DIR)/arch/i86/boot/Image
-	cp $(ELKS_DIR)/arch/i86/boot/Image boot
-	
-
-root:
-	sudo @$(MAKE) _build_nonbootable_target \
-		TARGET_FS=$(ROOT_TARGET_FS) \
-		TARGET_RFS=min_rfs \
-		TARGET_BLKS=$(ROOT_TARGET_BLKS)
-       
-# FIXME: should use SIBODEV instead of MAKEDEV
-sibo:
-	@$(MAKE) _build_nonbootable_target \
-		TARGET_FS=$(SIBO_TARGET_FS) \
-		TARGET_RFS=smin_rfs \
-		TARGET_BLKS=$(SIBO_TARGET_BLKS)
+image: _build_bootable_target
 
 images: $(IMAGES)
 
@@ -276,7 +203,3 @@ images.tar.gz: $(IMAGES)
 images.tar.xz: $(IMAGES)
 	tar -c $(IMAGES) | xz -e > images.tar.xz
 	-@stat -c "%s %n" images.tar.xz
-
-#######
-# EOF #
-#######

@@ -29,8 +29,6 @@ ifndef TOPDIR
 $(error TOPDIR is not defined)
 endif
 
-include $(TOPDIR)/Make.defs
-
 ##############################################################################
 #
 # Define type of target for creating boot file system on. Valid target types
@@ -59,7 +57,11 @@ include $(TOPDIR)/Make.defs
 # Each option has both advantages and disadvantages, and it is up to the
 # developer to determine the appropriate one to use.
 
+ifdef CONFIG_IMG_ROM
+TARGET_MODE=DIR
+else
 TARGET_MODE=LOOP
+endif
 
 ##############################################################################
 #
@@ -135,43 +137,60 @@ LD=ld86
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 
-##############################################################################
 #
-# Standard targets.
+# Image media options
+#
 
-COMB_TARGET_FS=$(ELKSCMD_DIR)/comb
-COMB_TARGET_BLKS=720
+ifdef CONFIG_IMG_FD360
+TARGET_FS=$(ELKSCMD_DIR)/fd360
+TARGET_BLKS=360
+endif
 
-FULL1680_TARGET_FS=$(ELKSCMD_DIR)/full1680
-FULL1680_TARGET_BLKS=1680
+ifdef CONFIG_IMG_FD720
+TARGET_FS=$(ELKSCMD_DIR)/fd720
+TARGET_BLKS=720
+endif
 
-FULL3_TARGET_FS=$(ELKSCMD_DIR)/full3
-FULL3_TARGET_BLKS=1440
+ifdef CONFIG_IMG_FD1200
+TARGET_FS=$(ELKSCMD_DIR)/fd1200
+TARGET_BLKS=1200
+endif
 
-FULL5_TARGET_FS=$(ELKSCMD_DIR)/full5
-FULL5_TARGET_BLKS=1200
+ifdef CONFIG_IMG_FD1440
+TARGET_FS=$(ELKSCMD_DIR)/fd1440
+TARGET_BLKS=1440
+endif
 
-ROOT_TARGET_FS=$(ELKSCMD_DIR)/root
-ROOT_TARGET_BLKS=360
+ifdef CONFIG_IMG_FD1680
+TARGET_FS=$(ELKSCMD_DIR)/fd1680
+TARGET_BLKS=1680
+endif
 
-COMB360_TARGET_FS=$(ELKSCMD_DIR)/comb360
-COMB360_TARGET_BLKS=360
+# FIXME: should use SIBODEV instead of MAKEDEV
+ifdef CONFIG_IMG_SIBO
+TARGET_FS=$(ELKSCMD_DIR)/sibo
+TARGET_BLKS=128
+endif
 
-COMB_NET_TARGET_FS=$(ELKSCMD_DIR)/comb_net
-COMB_NET_TARGET_BLKS=720
+ifdef CONFIG_IMG_HD
+TARGET_FS=$(ELKSCMD_DIR)/hd
+TARGET_BLKS=CONFIG_IMG_BLOCKS
+endif
 
-SIBO_TARGET_FS=$(ELKSCMD_DIR)/sibo
-SIBO_TARGET_BLKS=128
+#
+# Image filesystem options
+#
 
 MKFS=/sbin/mkfs.minix
 MKFS_OPTS=-n14 -1 -i360
 
 MINIX_BOOT=$(ELKSCMD_DIR)/bootblocks
 
-##############################################################################
 #
-# Select the target device depending on the above entry.
+# Image mount options
+#
 
+# This one is obsolete
 ifeq ($(TARGET_MODE),FLOPPY)
 TARGET_MNT=/dev/fd0
 LOOP=
@@ -182,13 +201,14 @@ TARGET_MNT=$(TOPDIR)/target
 LOOP=-o loop
 endif
 
+# This one is not implemented
 ifeq ($(TARGET_MODE),RAM)
 TARGET_MNT=$(ELKSCMD_DIR)/x
 LOOP=
 endif
 
 ifeq ($(TARGET_MODE),DIR)
-TARGET_MNT=$(ELKSCMD_DIR)/RootFS
+TARGET_MNT=$(TOPDIR)/target
 LOOP=
 endif
 

@@ -26,16 +26,6 @@ CMNOBJ	= init.o search.o unixname.o subdir.o getfat.o devices.o
 
 all:	$(PROGS)
 
-max_rfs: install
-
-rfs: install
-
-min_rfs:
-
-net_rfs: install
-
-smin_rfs:
-
 mkdfs:	mkdfs.o
 mdir:	mdir.o match.o convdate.o isdir.o $(CMNOBJ)
 mread:	mread.o match.o convdate.o $(CMNOBJ)
@@ -47,8 +37,8 @@ mrd:	mrd.o putfat.o $(CMNOBJ)
 mren:	mren.o fixname.o putfat.o isdir.o $(CMNOBJ)
 mcopy:	mcopy.o
 
-install: all
-	cp $(PROGS) $(TARGET_MNT)/$(BINDIR)/
+install: $(PROGS)
+	sudo install $(PROGS) $(TARGET_MNT)/$(BINDIR)/
 
 install-man:
 	@for i in $(PROGS); do \

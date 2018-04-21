@@ -19,12 +19,8 @@ all:	telnet
 telnet:	$(SRC)
 	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $(SRC)
 
-max_rfs: all
-
-net_rfs: all
-
-install: all
-	cp -p telnet $(TARGET_MNT)/bin
+install: telnet
+	sudo install telnet $(TARGET_MNT)/bin
 
 clean:
 	rm -f telnet

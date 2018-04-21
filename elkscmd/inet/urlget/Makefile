@@ -19,14 +19,10 @@ all:	urlget
 urlget:	$(SRC)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o urlget $(SRC)
 
-max_rfs: all
-
-net_rfs: all
-
-install: all
-	cp -p urlget $(TARGET_MNT)/bin
+install: urlget
+	sudo install urlget $(TARGET_MNT)/bin
 #urlget.c checks its own name to branch to ftp	
-	ln -s urlget $(TARGET_MNT)/bin/ftpget
+	sudo ln -s urlget $(TARGET_MNT)/bin/ftpget
 
 clean:
 	rm -f urlget *.o

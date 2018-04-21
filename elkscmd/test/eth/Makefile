@@ -17,19 +17,8 @@ all:	eth
 eth:	$(OBJS)
 
 
-smin_rfs:
-
-min_rfs:
-
-rfs:
-
-max_rfs:
-
-net_rfs:
-
-
-install: all
-	cp -p eth $(TARGET_MNT)/bin
+install: eth
+	sudo install eth $(TARGET_MNT)/bin
 
 clean: 
 	rm -f *.o eth

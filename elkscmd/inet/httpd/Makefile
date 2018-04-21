@@ -18,23 +18,13 @@ LOCALFLAGS=-I$(ELKSCMD_DIR)
 
 all: $(PRGS)
 
-max_rfs: install
-
-rfs:
-
-net_rfs: install
-
-min_rfs:
-
-smin_rfs:
-
 install_sibo: all
 	cp -p $(SPRGS) $(TARGET_MNT)/bin
 
-install: all
-	cp -p $(PRGS) $(TARGET_MNT)/bin
-	mkdir -p $(TARGET_MNT)/usr/lib/httpd
-	cp -f -p sample_index.html $(TARGET_MNT)/usr/lib/httpd/index.html
+install: $(PRGS)
+	sudo install $(PRGS) $(TARGET_MNT)/bin
+	sudo mkdir -p $(TARGET_MNT)/usr/lib/httpd
+	sudo install sample_index.html $(TARGET_MNT)/usr/lib/httpd/index.html
 
 netstat: httpd.o
 	$(CC) $(CFLAGS) $(LDFLAGS) httpd.o -o httpd

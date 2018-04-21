@@ -39,7 +39,7 @@ all:	do-it-all
 # Make "config" the default target if there is no configuration file or
 # "depend" the target if there is no top-level dependency information.
 
-include $(TOPDIR)/.config
+include ../Make.defs
 
 #ifeq (.depend,$(wildcard .depend))
 #include .depend

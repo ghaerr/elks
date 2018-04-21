@@ -21,7 +21,7 @@ mainmenu_name "ELKS Main"
 #
 
 mainmenu_option next_comment
-	comment 'ELKS Kernel'
+	comment 'Kernel'
 	source elks/config.in
 
 endmenu
@@ -30,8 +30,4 @@ endmenu
 # ELKS Commands
 #
 
-mainmenu_option next_comment
-	comment 'ELKS Commands'
-	source elkscmd/config.in
-
-endmenu
+source elkscmd/config.in

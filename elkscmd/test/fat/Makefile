@@ -1,2 +1,3 @@
 all:
+install:
 clean:
