@@ -25,6 +25,7 @@ cross
 # Normal output and testing dirs
 #
 target
+image
 
 #
 # Backups / patches

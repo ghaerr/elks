@@ -160,17 +160,25 @@ kernel_image: $(ELKS_DIR)/arch/i86/boot/Image
 
 boot_blocks: $(FD_BSECT) $(KHELPER)
 
-_build_bootable_target: boot_blocks _build_target kernel_image
-	sudo mkdir -p $(TARGET_MNT)/boot
-	sudo install $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
-	sudo install $(KHELPER) $(TARGET_MNT)/boot/boot
-	sudo umount -d $(TARGET_FS)
-	dd if=$(FD_BSECT) of=$(TARGET_FS) bs=512 count=2 conv=notrunc
-
-_build_nonbootable_target: _build_target
-	sudo umount -d $(TARGET_FS)
-
-_build_target: _mount_target
+ifdef CONFIG_IMG_BOOT
+image: boot_blocks kernel_image
+else
+image:
+endif
+	mkdir -p $(IMGDIR)
+ifdef CONFIG_IMG_DEV
+	-sudo umount -d $(TARGET_FILE)
+endif
+	-sudo rm -rf $(TARGET_FILE)
+ifdef CONFIG_IMG_DEV
+	dd if=/dev/zero of=$(TARGET_FILE) bs=1024 count=$(TARGET_BLKS)
+	sudo $(MKFS) $(MKFS_OPTS) $(TARGET_FILE)
+endif
+	-sudo rm -rf $(TARGET_MNT)
+	mkdir -p $(TARGET_MNT)
+ifdef CONFIG_IMG_DEV
+	sudo mount $(LOOP) $(TARGET_FILE) $(TARGET_MNT)
+endif
 	(cd $(ELKSCMD_DIR)/rootfs_template; \
 		tar cf - --exclude CVS --exclude .keep *) | \
 		(cd $(TARGET_MNT); sudo tar xpf - --no-same-owner)
@@ -179,16 +187,23 @@ _build_target: _mount_target
 	[ -e $(TARGET_MNT)/bin/ash ] && sudo ln -sf ash $(TARGET_MNT)/bin/sh || \
 		sudo ln -sf sash $(TARGET_MNT)/bin/sh
 	sudo bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(TARGET_MNT)/etc/issue"
+ifdef CONFIG_IMG_BOOT
+	sudo mkdir -p $(TARGET_MNT)/boot
+	sudo install $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
+	sudo install $(KHELPER) $(TARGET_MNT)/boot/boot
+endif
+ifdef CONFIG_IMG_DEV
+	sudo umount -d $(TARGET_FILE)
+ifdef CONFIG_IMG_BOOT
+	dd if=$(FD_BSECT) of=$(TARGET_FILE) bs=512 count=2 conv=notrunc
+endif
+endif
+ifdef CONFIG_IMG_ROM
+	cd $(IMGDIR) && $(ELKS_DIR)/tools/mkromfs $(TARGET_MNT)
+endif
 
-_mount_target:
-	-sudo umount -d $(TARGET_FS)
-	-sudo rm -rf $(TARGET_FS)
-	dd if=/dev/zero of=$(TARGET_FS) bs=1024 count=$(TARGET_BLKS)
-	sudo $(MKFS) $(MKFS_OPTS) $(TARGET_FS)
-	mkdir -p $(TARGET_MNT)
-	sudo mount $(LOOP) $(TARGET_FS) $(TARGET_MNT)
-
-image: _build_bootable_target
+# These ones are now broken
+# Should be moved into a global script
 
 images: $(IMAGES)
 

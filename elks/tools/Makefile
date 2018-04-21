@@ -19,7 +19,7 @@ USEBCC 		= N
 
 CLEANDEP	=
 
-CLEANME 	=
+CLEANME 	= mkromfs
 
 DEPEND  	=
 

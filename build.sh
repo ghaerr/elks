@@ -92,6 +92,8 @@ test -e elks/arch/i86/boot/Image || clean_exit 6
 ### Make image files
 cd elkscmd
 make image
+
+# TODO: restore the distribution build
 #make images.zip || clean_exit 8
 #make images.tar.gz || clean_exit 8
 #make images.tar.xz || clean_exit 8

@@ -1,5 +1,6 @@
-##############################################################################
+#
 # Top level Makefile definitions
+#
 
 ifndef TOPDIR
 $(error TOPDIR is not defined)
@@ -10,5 +11,3 @@ include $(TOPDIR)/.config
 else
 $(warning ELKS is not configured yet)
 endif
-
-##############################################################################

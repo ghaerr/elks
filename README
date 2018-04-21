@@ -11,7 +11,7 @@ A script is provided to automatically download and build that cross chain:
 
   'tools/build.sh'
 
-Note: all the scripts must be executed with top directory 'elks/' as the current one.
+Note: all the scripts must be executed with top folder 'elks/' as the current one.
 
 A script that attempts to automate the whole build process and make it easier
 for ELKS newbies has been provided:
@@ -43,10 +43,10 @@ The general build procedure for ELKS is as follows:
   'cd elkscmd'
   'make image'
 
-The target root directory is built in 'target/', and depending on your
-configuration, that directory is packed as either a floppy disk image (fd1440,
+The target root folder is built in 'target/', and depending on your
+configuration, that folder is packed as either a floppy disk image (fd1440,
 fd1680, fd1200, fd720, fd360, without MBR), a hard-disk image (hd, with MBR),
-or a file image (rom, tar).
+or a file image (rom, tar), into the '/image' folder.
 
 Before writting the image on the real device, you can test it first on QEMU with
 './qemu.sh' (will configure QEMU to be close as possible to an ISA system).
