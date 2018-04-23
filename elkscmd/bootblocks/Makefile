@@ -35,12 +35,6 @@ clean realclean:
 
 # Boot blocks are not part of the target filesystem
 # but embedded in the target disk image
-# so empty rules for the filesystem configurations
+# so empty rule for installation
 
-rfs:
-
-smin_rfs:
-
-min_rfs:
-
-max_rfs:
+install:

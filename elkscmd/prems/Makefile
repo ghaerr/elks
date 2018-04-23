@@ -15,20 +15,12 @@ PRGS =	pres/pres
 NETPRGS =
 
 all:
-	make -C prem all
-	make -C pres all
+	$(MAKE) -C prem all
+	$(MAKE) -C pres all
 
-max_rfs: all
-	cp -p $(PRGS) $(TARGET_MNT)/bin
-
-rfs: all
-
-net_rfs: all
-
-min_rfs: all
-
-smin_rfs: all
+install: $(PRGS)
+	sudo install $(PRGS) $(TARGET_MNT)/bin
 
 clean:
-	make -C pres clean
-	make -C prem clean
+	$(MAKE) -C pres clean
+	$(MAKE) -C prem clean

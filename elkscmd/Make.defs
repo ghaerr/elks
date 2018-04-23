@@ -24,34 +24,10 @@
 # this file.
 #
 ##############################################################################
-#
-# Define type of target for creating boot file system on. Valid target types
-# are as follows:
-#
-#	DIRECT		Mount /dev/fd0 and create image thereon, then create
-#			the image file as an image of /dev/fd0 instead. This
-#			requires that a diskette of at least the necessary
-#			size is in the drive when the images are created.
-#
-#	LOOP		Mount a file as a loopback file system. This requires
-#			that the command is run as the superuser.
-#
-#	RAMDISK 	Mount /dev/ram0 and create image thereon, then create
-#			the image file as an image of /dev/fd0 instead. This
-#			requires that ramdisks are enabled in the kernel, and
-#			also that there be an entry in /etc/fstab that allows
-#			any user to mount this device, but otherwise avoids
-#			the limitations of the other two options.
-#
-#	DIR			Do not use block device at all. Build the image by
-#			copying from the build directories to an image directory,
-#			then use a "mk*fs" tool to compile it into a binary image.
-#			This target type is typically used by ROMFS (mkromfs).
-#
-# Each option has both advantages and disadvantages, and it is up to the
-# developer to determine the appropriate one to use.
 
-TARGET_MODE=LOOP
+ifndef TOPDIR
+$(error TOPDIR is not defined)
+endif
 
 ##############################################################################
 #
@@ -71,10 +47,8 @@ PLATFORM=i86-ELKS
 #
 # Specify directories.
 
-HOMEDIR=$(shell cd $(BASEDIR)/.. ; pwd)
-
-ELKS_DIR=$(HOMEDIR)/elks
-ELKSCMD_DIR=$(HOMEDIR)/elkscmd
+ELKS_DIR=$(TOPDIR)/elks
+ELKSCMD_DIR=$(TOPDIR)/elkscmd
 
 INCLUDES=-I$(TOPDIR)/include -I$(ELKS_DIR)/include
 
@@ -127,73 +101,55 @@ LD=ld86
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 
-##############################################################################
 #
-# Standard targets.
+# Image file options
+#
 
-COMB_TARGET_FS=$(ELKSCMD_DIR)/comb
-COMB_TARGET_BLKS=720
+IMGDIR=$(TOPDIR)/image
 
-FULL1680_TARGET_FS=$(ELKSCMD_DIR)/full1680
-FULL1680_TARGET_BLKS=1680
+ifdef CONFIG_IMG_FD360
+TARGET_FILE=$(IMGDIR)/fd360
+TARGET_BLKS=360
+endif
 
-FULL3_TARGET_FS=$(ELKSCMD_DIR)/full3
-FULL3_TARGET_BLKS=1440
+ifdef CONFIG_IMG_FD720
+TARGET_FILE=$(IMGDIR)/fd720
+TARGET_BLKS=720
+endif
 
-FULL5_TARGET_FS=$(ELKSCMD_DIR)/full5
-FULL5_TARGET_BLKS=1200
+ifdef CONFIG_IMG_FD1200
+TARGET_FILE=$(IMGDIR)/fd1200
+TARGET_BLKS=1200
+endif
 
-ROOT_TARGET_FS=$(ELKSCMD_DIR)/root
-ROOT_TARGET_BLKS=360
+ifdef CONFIG_IMG_FD1440
+TARGET_FILE=$(IMGDIR)/fd1440
+TARGET_BLKS=1440
+endif
 
-COMB360_TARGET_FS=$(ELKSCMD_DIR)/comb360
-COMB360_TARGET_BLKS=360
+ifdef CONFIG_IMG_FD1680
+TARGET_FILE=$(IMGDIR)/fd1680
+TARGET_BLKS=1680
+endif
 
-COMB_NET_TARGET_FS=$(ELKSCMD_DIR)/comb_net
-COMB_NET_TARGET_BLKS=720
+# FIXME: should use SIBODEV instead of MAKEDEV
+ifdef CONFIG_IMG_SIBO
+TARGET_FILE=$(IMGDIR)/sibo
+TARGET_BLKS=128
+endif
 
-SIBO_TARGET_FS=$(ELKSCMD_DIR)/sibo
-SIBO_TARGET_BLKS=128
+ifdef CONFIG_IMG_HD
+TARGET_FILE=$(IMGDIR)/hd
+TARGET_BLKS=$(CONFIG_IMG_BLOCKS)
+endif
+
+#
+# Image filesystem options
+#
 
 MKFS=/sbin/mkfs.minix
-MKFS_OPTS=-n14 -1 -i360
+MKFS_OPTS=-1 -n14 -i360
 
 MINIX_BOOT=$(ELKSCMD_DIR)/bootblocks
 
-##############################################################################
-#
-# Select the target device depending on the above entry.
-
-ifeq ($(TARGET_MODE),FLOPPY)
-TARGET_MNT=/dev/fd0
-LOOP=
-endif
-
-ifeq ($(TARGET_MODE),LOOP)
-TARGET_MNT=/mnt/elks
-LOOP=-o loop
-endif
-
-ifeq ($(TARGET_MODE),RAM)
-TARGET_MNT=$(ELKSCMD_DIR)/x
-LOOP=
-endif
-
-ifeq ($(TARGET_MODE),DIR)
-TARGET_MNT=$(ELKSCMD_DIR)/RootFS
-LOOP=
-endif
-
-##############################################################################
-#
-# Include standard rules.
-
-me:
-	make -C $(BASEDIR) all
-
-$(ELKS_DIR)/include/autoconf.h:
-	make -C $(ELKS_DIR) include/autoconf.h
-
-##############################################################################
-# EOF #
-#######
+TARGET_MNT=$(TOPDIR)/target

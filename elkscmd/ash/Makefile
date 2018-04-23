@@ -44,18 +44,8 @@ all:	ash
 ash: $(OBJS)
 	$(CC) $(LDFLAGS) -o ash $(OBJS)
 
-max_rfs: install
-
-rfs: install
-
-min_rfs:
-
-net_rfs: install
-
-smin_rfs:
-
 install: ash
-	cp -p ash $(TARGET_MNT)/bin/ash
+	sudo install ash $(TARGET_MNT)/bin
 
 clean:
 	rm -f core ash $(CLEANFILES)

@@ -20,19 +20,8 @@ SMIN_PRGS=cat cp ls mkdir sync
 
 all: $(PRGS)
 
-max_rfs: all
-	cp -p $(PRGS) $(TARGET_MNT)/bin
-
-rfs: all
-	cp -p $(PRGS) $(TARGET_MNT)/bin
-
-min_rfs: all
-	cp -p $(MIN_PRGS) $(TARGET_MNT)/bin
-
-net_rfs: min_rfs
-
-smin_rfs: all
-	cp -p $(SMIN_PRGS) $(TARGET_MNT)/bin
+install: $(PRGS)
+	sudo install $(PRGS) $(TARGET_MNT)/bin
 
 clean:
 	rm -f $(PRGS) *~

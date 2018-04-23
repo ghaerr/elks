@@ -57,23 +57,14 @@ SRCS	      = closure.c \
 
 all:		$(PROGRAM)
 
-$(PROGRAM):     $(OBJS) $(LIBS)
-		$(LINKER) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
-
-max_rfs: install
-
-rfs: install
-
-min_rfs:
-
-net_rfs:
-
-smin_rfs: all
+$(PROGRAM):	$(OBJS) $(LIBS)
+	$(LINKER) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
 
 install: $(PROGRAM)
-	cp -p $(PROGRAM) $(TARGET_MNT)/usr/bin/$(PROGRAM)
+	sudo install $(PROGRAM) $(TARGET_MNT)/usr/bin
 
-clean:;		rm -f $(OBJS) $(PROGRAM) core
+clean:
+	rm -f $(OBJS) $(PROGRAM) core
 
 #depend:;	@mkmf -f $(MAKEFILE) PROGRAM=$(PROGRAM) DEST=$(DEST)
 #

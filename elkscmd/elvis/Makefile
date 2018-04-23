@@ -296,18 +296,9 @@ SRC8=	vars.c vcmd.c vi.c vi.h refont.c
 ###########################################################################
 
 all: $(PROGS)
-	@echo done.
 
-max_rfs: all
-
-rfs: all
-	cp -p $(PROGS) $(TARGET_MNT)/bin
-
-min_rfs: all
-
-smin_rfs: all
-
-net_rfs:
+install: $(PROGS)
+	sudo install $(PROGS) $(TARGET_MNT)/bin
 
 elvis: $(OBJS) $(EXTRA) $(EXTRA2)
 	$(CC) -s $(CFLAGS) $(OF)elvis $(OBJS) $(EXTRA) $(EXTRA2) $(LIBS)

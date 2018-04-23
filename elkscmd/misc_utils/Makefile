@@ -31,17 +31,8 @@ uncompress: compress
 zcat: compress
 	ln -sf compress zcat
 
-max_rfs: all
-	cp -p $(PRGS) $(TARGET_MNT)/usr/bin
-
-rfs: all
-	cp -p $(PRGS) $(TARGET_MNT)/usr/bin
-
-net_rfs: rfs
-
-min_rfs:
-
-smin_rfs:
+install: $(PRGS)
+	sudo install $(PRGS) $(TARGET_MNT)/usr/bin
 
 clean:
 	rm -f $(PRGS) $(PRGS_HOST) *~ *.o

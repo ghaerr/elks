@@ -22,19 +22,8 @@ lint:
 			2>&1 > "$${FILE}.lint" ; \
 	done
 
-max_rfs: all
-#        cp -p ktcp $(TARGET_MNT)/bin
-
-rfs: all
-#        cp -p ktcp $(TARGET_MNT)/bin
-
-net_rfs: all
-#        cp -p ktcp $(TARGET_MNT)/bin
-
-min_rfs:
-
-smin_rfs:
-
+install: ktcp
+	sudo install ktcp $(TARGET_MNT)/bin
 
 clean: 
 	rm -f *~ *.o ktcp core 

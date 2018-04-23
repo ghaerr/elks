@@ -53,25 +53,9 @@ fbc: $(OFILES) bc.o
 	$(CC) -c $(CFLAGS) global.c
 	$(CC) -o fbc $(LDFLAGS) bc.o $(OFILES) global.o
 
-install:	$(BINDIR)/bc $(LIBDIR)/libmath.b
-
-$(BINDIR)/bc:	bc
-	install -cs -o bin $? $@
-
-$(LIBDIR)/libmath.b:	libmath.b
-	install -c -o bin $? $@
-
-max_rfs: all
-
-rfs: all
-	cp -p bc $(TARGET_MNT)/bin
-#	cp -p fbc $(TARGET_MNT)/bin
-
-min_rfs: all
-
-smin_rfs: all
-
-net_rfs:
+install: bc fbc
+	sudo install bc $(TARGET_MNT)/bin
+#	sudo install fbc $(TARGET_MNT)/bin
 
 clean:
 	rm -f *.o *.bak core math.h bc fbc sbc bc.c sbc.c scan.c y.tab.h

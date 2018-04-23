@@ -91,10 +91,12 @@ test -e elks/arch/i86/boot/Image || clean_exit 6
 
 ### Make image files
 cd elkscmd
-test $UID -ne 0 && echo "Skipping image file build (not root)." && clean_exit 0
-make images.zip || clean_exit 8
-make images.tar.gz || clean_exit 8
-make images.tar.xz || clean_exit 8
+make image
+
+# TODO: restore the distribution build
+#make images.zip || clean_exit 8
+#make images.tar.gz || clean_exit 8
+#make images.tar.xz || clean_exit 8
 cd "$WD"
 
 echo "Images and image file archives are under 'elkscmd'."

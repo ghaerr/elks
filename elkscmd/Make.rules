@@ -1,18 +1,4 @@
-# This Makefile contains the rules used to create a tree of files ready
-# for turning into a root floppy image, and the command to turn the said
-# tree into just such an image. It assumes that the following value has
-# been defined before this file is included in any of the Makefiles:
 #
-#    BASEDIR       The relative path from the current directory to the
-#                  directory containing this file. This is the same value
-#                  used with Make.defs in this directory.
+# ELKS Commands
+# Common rules
 #
-###############################################################################
-#
-# Directory to create the target tree in.
-
-ROOTDIR=$(BASEDIR)/RootFS
-
-#######
-# EOF #
-#######

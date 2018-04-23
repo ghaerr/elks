@@ -14,22 +14,8 @@ include $(BASEDIR)/Make.rules
 
 all:	ptyshell
 
-eth:	$(OBJS)
-
-
-smin_rfs: install
-
-min_rfs:
-
-rfs: install
-
-max_rfs: install
-
-net_rfs: install
-
-
-install: all
-	cp -p ptyshell $(TARGET_MNT)/bin
+install: ptyshell
+	sudo install ptyshell $(TARGET_MNT)/bin
 
 clean: 
 	rm -f *.o ptyshell

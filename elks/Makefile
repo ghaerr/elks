@@ -29,6 +29,7 @@ NOINDENT	=
 #########################################################################
 # Include the standard ruleset.
 
+include ../Make.defs
 include $(BASEDIR)/Makefile-rules
 
 #########################################################################
@@ -38,8 +39,6 @@ all:	do-it-all
 
 # Make "config" the default target if there is no configuration file or
 # "depend" the target if there is no top-level dependency information.
-
-include $(TOPDIR)/.config
 
 #ifeq (.depend,$(wildcard .depend))
 #include .depend

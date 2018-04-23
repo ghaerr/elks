@@ -9,14 +9,14 @@ also on GCC-IA16 if you select that latest in place of BCC to build the kernel.
 
 A script is provided to automatically download and build that cross chain:
 
-'tools/build.sh'
+  'tools/build.sh'
 
-Note: all the scripts must be executed with top directory /elks as the current one.
+Note: all the scripts must be executed with top folder 'elks/' as the current one.
 
 A script that attempts to automate the whole build process and make it easier
 for ELKS newbies has been provided:
 
-'./build.sh'
+  './build.sh'
 
 If you want to clean everything up afterwards, run './build.sh clean'
 and it will run 'make clean' in the build directories for you.
@@ -27,41 +27,31 @@ The general build procedure for ELKS is as follows:
 
 * Set up your environment (PATH, TOPDIR and CROSSDIR):
 
-'. tools/env.sh' (note the '.' before the script to keep the environment)
+  '. tools/env.sh' (note the '.' before the script)
 
-* 'make menuconfig' and configure the kernel
+* Configure the build chain, the kernel, the commands and select the target
+  image format (the default configuration is for an IBM PC/XT/AT):
+  
+  'make menuconfig'
 
-* 'make all' (build the kernel and the user land)
+* Build the kernel and the commands:
 
-* 'cd elkscmd'
+  'make all'
 
-* As root, run 'make [imagetype]' where image type is one of these:
+* Build the target image as a user with the 'sudoer' privilege:
 
-  - full3: 1.44MB 3.5" floppy image, all-inclusive
+  'cd elkscmd'
+  'make image'
 
-  - full1680: same as full3 but on a 1.68MB 3.5" "extended format" floppy
+The target root folder is built in 'target/', and depending on your
+configuration, that folder is packed as either a floppy disk image (fd1440,
+fd1680, fd1200, fd720, fd360, without MBR), a hard-disk image (hd, with MBR),
+or a file image (rom, tar), into the '/image' folder.
 
-  - full5: 1.2MB 5.25" floppy image, all-inclusive
+Before writting the image on the real device, you can test it first on QEMU with
+'./qemu.sh' (will configure QEMU to be close as possible to an ISA system).
 
-  - comb: 720K floppy image, ELKS kernel plus minimal root filesystem
-
-  - comb_net: Same as 'comb' but with network components included
-
-  - comb360: 360K bootable floppy image with very minimal root filesystem
-
-  - boot: 360K floppy image, ELKS kernel only
-
-  - root: 360K floppy image, minimal root filesystem only
-
-  - images: make all images but don't create an archive of them
-  - images.zip: make all images, pack into a Zip-compress archive
-  - images.tar.gz: make all images, pack into Gzip-compressed tar archive
-  - images.tar.xz: make all images, pack into XZ-compressed tar archive
-
-Before writting the image on the real floppy, you test it on QEMU with:
-'./qemu.sh' (will configure QEMU to be close as possible to an ISA system)
-
-Questions? Problems? Patches? Join and email the Linux-8086 mailing list at
-linux-8086@vger.kernel.org, or open an issue on this GitHub project.
+Questions? Problems? Patches? Open an issue in this project! You can also join
+and email the 'Linux-8086' mailing list at linux-8086@vger.kernel.org. 
 
 More information in the Documentation folder: elks/Documentation/index.html

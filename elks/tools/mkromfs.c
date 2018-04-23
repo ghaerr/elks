@@ -252,6 +252,7 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 				else
 					{
 					/* Unsupported inode type */
+					printf ("Unsupported:  %s\n", child_path);
 					assert (0);
 					}
 				}

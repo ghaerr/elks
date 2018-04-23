@@ -19,12 +19,8 @@ all:	telnetd
 telnetd: $(SRC)
 	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $(SRC)
 
-max_rfs: all
-
-net_rfs: all
-
-install: all
-	cp -p telnetd $(TARGET_MNT)/bin
+install: telnetd
+	sudo install telnetd $(TARGET_MNT)/bin
 
 clean:
 	rm -f *.o telnetd

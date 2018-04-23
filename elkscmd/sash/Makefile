@@ -22,18 +22,7 @@ sash:	$(OBJS)
 clean:
 	rm -f core sash $(OBJS)
 
-max_rfs: install
-
-rfs: install
-
-net_rfs: rfs
-
-min_rfs: install
-
-smin_rfs: sash
-	cp -p sash $(TARGET_MNT)/bin/sh
-
 install: sash
-	cp -p sash $(TARGET_MNT)/bin/sash
+	sudo install sash $(TARGET_MNT)/bin/sash
 
 $(OBJS): sash.h config.h

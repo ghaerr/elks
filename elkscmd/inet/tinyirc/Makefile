@@ -14,6 +14,12 @@ include $(BASEDIR)/Make.defs
 
 LOCALFLAGS=-DPOSIX -DELKS
 
+#
+# Rules
+#
+
+include $(BASEDIR)/Make.rules
+
 all: tinyirc
 
 LOCALDEFS = -DDEFAULTSERVER=\"$(SERVER)\" -DDEFAULTPORT=$(PORT)
@@ -33,26 +39,8 @@ tinyirc.o: tinyirc.c Makefile
 tinyirccv.o: tinyirccv.c Makefile
 	$(CC) $(CFLAGS) $(LOCALDEFS) -c tinyirccv.c -o tinyirccv.o
 
-install: all
-	cp -p tinyirc $(TARGET_MNT)/bin
-
-max_rfs: install
-
-rfs:
-
-net_rfs: install
-
-smin_rfs:
-
-min_rfs:
-
-rfs:
+install: tinyirc
+	sudo install tinyirc $(TARGET_MNT)/bin
 
 clean:
 	rm -f core *.o tinyirc
-
-max_rfs:
-
-net_rfs:
-
-#EOF
