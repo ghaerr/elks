@@ -15,6 +15,7 @@
 #include <fcntl.h>
 
 /* TODO: move list primitives to library */
+
 #include "list.h"
 
 
@@ -39,6 +40,7 @@ typedef struct super_disk_s super_disk_t;
 #define INODE_DIR   0x0001
 #define INODE_CHAR  0x0002
 #define INODE_BLOCK 0x0003
+#define INODE_LINK  0x0004
 
 struct inode_disk_s
 	{
@@ -51,6 +53,9 @@ typedef struct inode_disk_s inode_disk_t;
 
 
 /* INode to build */
+
+#define ROMFS_MAX 0x100000
+#define ROMFS_FILE_MAX 0x10000
 
 struct inode_build_s
 	{
@@ -68,6 +73,49 @@ struct inode_build_s
 typedef struct inode_build_s inode_build_t;
 
 static list_root_t _inodes;  /* list of inodes */
+
+
+/* Entry to build */
+
+#define ROMFS_NAME_MAX 256
+
+struct entry_build_s
+	{
+	list_node_t node;
+	inode_build_t * inode;
+	char * name;
+	};
+
+typedef struct entry_build_s entry_build_t;
+
+
+/* Memory management */
+
+static entry_build_t * entry_alloc (inode_build_t * inode, char * name)
+	{
+	entry_build_t * entry;
+
+	while (1)
+		{
+		entry = (entry_build_t *) malloc (sizeof (entry_build_t));
+		assert (entry);
+
+		entry->name = strdup (name);
+		assert (entry->name);
+
+		list_add_tail (&inode->entries, &entry->node);
+		break;
+		}
+
+	return entry;
+	}
+
+
+static void entry_free (entry_build_t * entry)
+	{
+	if (entry->name) free (entry->name);
+	free (entry);
+	}
 
 
 static inode_build_t * inode_alloc (inode_build_t * parent, char * path)
@@ -96,45 +144,16 @@ static inode_build_t * inode_alloc (inode_build_t * parent, char * path)
 static void inode_free (inode_build_t * inode)
 	{
 	if (inode->path) free (inode->path);
-	/* TODO: empty entries */
-	}
 
-
-/* Entry to build */
-
-struct entry_build_s
-	{
-	list_node_t node;
-	inode_build_t * inode;
-	char * name;
-	};
-
-typedef struct entry_build_s entry_build_t;
-
-
-static entry_build_t * entry_alloc (inode_build_t * inode, char * name)
-	{
-	entry_build_t * entry;
-
-	while (1)
+	entry_build_t * entry = (entry_build_t *) inode->entries.node.next;
+	while (entry != (entry_build_t *) &inode->entries.node)
 		{
-		entry = (entry_build_t *) malloc (sizeof (entry_build_t));
-		assert (entry);
-
-		entry->name = strdup (name);
-		assert (entry->name);
-
-		list_add_tail (&inode->entries, &entry->node);
-		break;
+		entry_build_t * entry_next = (entry_build_t *) entry->node.next;
+		entry_free (entry);
+		entry = entry_next;
 		}
 
-	return entry;
-	}
-
-
-static void entry_free (entry_build_t * entry)
-	{
-	if (entry->name) free (entry->name);
+	free (inode);
 	}
 
 
@@ -154,6 +173,7 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 		parent_dir = opendir (parent_path);
 		if (!parent_dir)
 			{
+			perror ("opendir");
 			err = errno;
 			break;
 			}
@@ -163,6 +183,7 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 			struct dirent * ent = readdir (parent_dir);
 			if (!ent)
 				{
+				if (errno) perror ("readdir");
 				err = errno;
 				break;
 				}
@@ -211,6 +232,7 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 				err = lstat (child_path, &child_stat);
 				if (err)
 					{
+					perror ("lstat");
 					err = errno;
 					break;
 					}
@@ -228,6 +250,8 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 					{
 					printf ("Dir:    %s\n", child_path);
 					child_inode->flags = INODE_DIR;
+					child_inode->size = 0;  // initial size
+
 					err = parse_dir (parent_inode, child_inode, child_path);
 					if (err) break;
 					}
@@ -249,10 +273,17 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 					child_inode->size = 0;
 					}
 
+				else if (S_ISLNK (mode))
+					{
+					printf ("Link:   %s\n", child_path);
+					child_inode->flags = INODE_LINK;
+					child_inode->size = 0;
+					}
+
 				else
 					{
 					/* Unsupported inode type */
-					printf ("Unsupported:  %s\n", child_path);
+					printf ("Unsupported: %s\n", child_path);
 					assert (0);
 					}
 				}
@@ -291,6 +322,7 @@ static int compile_file (int fdout, inode_build_t * inode)
 		fdin = open (inode->path, O_RDONLY);
 		if (fdin < 0)
 			{
+			perror ("open");
 			err = errno;
 			break;
 			}
@@ -304,6 +336,7 @@ static int compile_file (int fdout, inode_build_t * inode)
 			int count_in = read (fdin, buf, BLOCK_SIZE);
 			if (count_in < 0)
 				{
+				perror ("read");
 				err = errno;
 				break;
 				}
@@ -317,7 +350,8 @@ static int compile_file (int fdout, inode_build_t * inode)
 			int count_out = write (fdout, buf, count_in);
 			if (count_out != count_in)
 				{
-				err = 1;
+				perror ("write");
+				err = errno;
 				break;
 				}
 
@@ -326,11 +360,53 @@ static int compile_file (int fdout, inode_build_t * inode)
 
 		if (err) break;
 
-		inode->size = size;
+		assert (inode->size == size);
 		break;
 		}
 
 	if (fdin >= 0) close (fdin);
+
+	return err;
+	}
+
+
+static int compile_link (int fdout, inode_build_t * inode)
+	{
+	int err;
+
+	while (1)
+		{
+		char buf [ROMFS_NAME_MAX];
+
+		int count_in = readlink (inode->path, buf, ROMFS_NAME_MAX);
+		if (count_in < 0)
+			{
+			perror ("readlink");
+			err = errno;
+			break;
+			}
+
+		if (!count_in)
+			{
+			printf ("Empty link: %s\n", inode->path);
+			err = 1;
+			break;
+			}
+
+		int count_out = write (fdout, buf, count_in);
+		if (count_out != count_in)
+			{
+			perror ("write");
+			err = errno;
+			break;
+			}
+
+		assert (inode->size == 0);
+		inode->size = count_out;
+
+		err = 0;
+		break;
+		}
 
 	return err;
 	}
@@ -363,7 +439,7 @@ static int compile_dir (int fd, inode_build_t * inode)
 			/* First byte is string length */
 
 			int len = strlen (entry->name);
-			if (len >= 256)
+			if (len >= ROMFS_NAME_MAX)
 				{
 				err = 1;
 				break;
@@ -390,6 +466,7 @@ static int compile_dir (int fd, inode_build_t * inode)
 			entry = (entry_build_t *) entry->node.next;
 			}
 
+		assert (inode->size == 0);
 		inode->size = size;
 
 		err = 0;
@@ -413,6 +490,7 @@ static int compile_fs ()
 		int fd = open ("romfs.bin", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 		if (fd < 0)
 			{
+			perror ("open");
 			err = errno;
 			break;
 			}
@@ -427,6 +505,7 @@ static int compile_fs ()
 		offset = lseek (fd, offset, SEEK_SET);
 		if (offset < 0)
 			{
+			perror ("lseek");
 			err = errno;
 			break;
 			}
@@ -437,17 +516,36 @@ static int compile_fs ()
 		while (inode_build != (inode_build_t *) &_inodes.node)
 			{
 			inode_build->offset = offset;
+			word_t flags = inode_build->flags;
 
-			if (inode_build->flags == INODE_DIR)
+			if (flags == INODE_DIR)
 				{
 				printf ("Dir:    %s\n", inode_build->path);
 				err = compile_dir (fd, inode_build);
 				}
 
-			else if (inode_build->flags == INODE_FILE)
+			else if (flags == INODE_FILE)
 				{
 				printf ("File:   %s\n", inode_build->path);
 				err = compile_file (fd, inode_build);
+				}
+
+			else if (flags == INODE_CHAR || flags == INODE_BLOCK)
+				{
+				// No data to compile as (major,minor) in inode
+				printf ("Device: %s\n", inode_build->path);
+				}
+
+			else if (flags == INODE_LINK)
+				{
+				printf ("Link:   %s\n", inode_build->path);
+				err = compile_link (fd, inode_build);
+				}
+
+			else
+				{
+				/* Unsupported inode type */
+				assert (0);
 				}
 
 			if (err) break;
@@ -470,12 +568,15 @@ static int compile_fs ()
 			inode_build = (inode_build_t *) inode_build->node.next;
 			}
 
+		if (err) break;
+
 		/* Now write first data block */
 		/* with the SuperBlock and the table of INodes */
 
 		offset = lseek (fd, 0, SEEK_SET);
 		if (offset < 0)
 			{
+			perror ("lseek");
 			err = errno;
 			break;
 			}
@@ -491,6 +592,7 @@ static int compile_fs ()
 		int count = write (fd, &super, sizeof (super_disk_t));
 		if (count != sizeof (super_disk_t))
 			{
+			perror ("write");
 			err = errno;
 			break;
 			}
@@ -504,17 +606,17 @@ static int compile_fs ()
 			word_t flags = inode_build->flags;
 			inode_disk.flags = flags;
 
-			if (flags == INODE_FILE || flags == INODE_DIR)
+			if (flags == INODE_FILE || flags == INODE_DIR || flags == INODE_LINK)
 				{
 				/* TODO: replace assert() by error */
-				assert (inode_build->size < 0x10000);
+				assert (inode_build->size < ROMFS_FILE_MAX);
 				word_t size = inode_build->size;
 				inode_disk.size = size;
 
 				if (size)
 					{
 					/* TODO: replace assert() by error */
-					assert (inode_build->offset < 0x100000);
+					assert (inode_build->offset < ROMFS_MAX);
 					assert ((inode_build->offset & 0xF) == 0);
 					inode_disk.offset = (inode_build->offset >> 4);  /* in paragraphs */
 					}
@@ -557,6 +659,8 @@ static int compile_fs ()
 
 int main (int argc, char ** argv)
 	{
+	list_init (&_inodes);
+
 	while (1)
 		{
 		int err;
@@ -571,8 +675,6 @@ int main (int argc, char ** argv)
 		printf ("Starting from %s directory.\n", argv [1]);
 
 		puts ("\nParsing file system...");
-
-		list_init (&_inodes);
 
 		inode_build_t * root_node = inode_alloc (NULL, argv [1]);
 		if (!root_node) break;
@@ -593,6 +695,14 @@ int main (int argc, char ** argv)
 
 		puts ("End of compilation.");
 		break;
+		}
+
+	inode_build_t * inode = (inode_build_t *) _inodes.node.next;
+	while (inode != (inode_build_t *) &_inodes.node)
+		{
+		inode_build_t * inode_next = (inode_build_t *) inode->node.next;
+		inode_free (inode);
+		inode = inode_next;
 		}
 
 	return 0;

@@ -7,7 +7,7 @@
 #define ROMFS_MAGIC_STR "ROMFS"
 #define ROMFS_MAGIC_LEN 6  /* even length for word compare */
 
-#define ROMFS_MAXFN 128
+#define ROMFS_NAME_MAX 256
 
 
 /* In-memory superblock */
@@ -31,11 +31,12 @@ struct romfs_inode_mem {
 	word_t flags;
 };
 
-#define ROMFS_TYPE 3
+#define ROMFS_TYPE 7
 #define ROMFH_REG 0
 #define ROMFH_DIR 1
 #define ROMFH_CHR 2
 #define ROMFH_BLK 3
+#define ROMFH_LNK 4
 
 struct romfs_super_info {
        word_t ssize;   /* size of superblock */
