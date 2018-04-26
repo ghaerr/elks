@@ -187,8 +187,6 @@ endif
 		(cd $(TARGET_MNT); sudo tar xpf - --no-same-owner)
 	(cd $(TARGET_MNT)/dev; sudo ./MAKEDEV; sudo rm MAKEDEV MAKESET)
 	for i in $(BUILDDIRS); do $(MAKE) -C $$i install || exit 1; done
-	[ -e $(TARGET_MNT)/bin/ash ] && sudo ln -sf ash $(TARGET_MNT)/bin/sh || \
-		sudo ln -sf sash $(TARGET_MNT)/bin/sh
 	sudo bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(TARGET_MNT)/etc/issue"
 ifdef CONFIG_IMG_BOOT
 	sudo mkdir -p $(TARGET_MNT)/boot

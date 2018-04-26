@@ -5,9 +5,20 @@
 mainmenu_option next_comment
 	comment 'Commands'
 
-	comment 'Select the commands:'
+	comment "Shell"
 
 	bool 'ash'        CONFIG_APP_ASH        y
+	bool 'shutils'    CONFIG_APP_SH_UTILS   y
+
+	if [ $CONFIG_APP_ASH != y ]; then
+		comment 'sash as default shell'
+		define_bool  CONFIG_APP_SASH        y
+	else
+		comment 'sash not needed when ash'
+	fi
+
+	comment 'Other commands'
+
 	bool 'bc'         CONFIG_APP_BC         y
 	bool 'dbgutils'   CONFIG_APP_DBG_UTILS  y
 	bool 'diskutils'  CONFIG_APP_DISK_UTILS y
@@ -24,8 +35,6 @@ mainmenu_option next_comment
 	bool 'mtools'     CONFIG_APP_MTOOLS     y
 	bool 'prems'      CONFIG_APP_PREMS      y
 	bool 'prnutils'   CONFIG_APP_PRN_UTILS  y
-	bool 'sash'       CONFIG_APP_SASH       y
-	bool 'shutils'    CONFIG_APP_SH_UTILS   y
 	bool 'sysutils'   CONFIG_APP_SYS_UTILS  y
 	bool 'screen'     CONFIG_APP_SCREEN     y
 	bool 'test'       CONFIG_APP_TEST       n
