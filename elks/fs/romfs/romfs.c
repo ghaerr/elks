@@ -194,6 +194,11 @@ static int romfs_followlink (struct inode * dir, register struct inode * inode,
 		pds = &current->t_regs.ds;
 		user_ds = *pds;
 		*pds = inode->u.romfs.seg;
+
+		/* Trick: mkromfs appends null character to link data
+		 * to protect against null-terminated string comparison
+		 */
+
 		err = open_namei (0, flag, mode, res_inode, dir);
 		*pds = user_ds;
 	}

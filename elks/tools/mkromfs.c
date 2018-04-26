@@ -401,8 +401,19 @@ static int compile_link (int fdout, inode_build_t * inode)
 			break;
 			}
 
+		// Trick: protect against null-terminated string operations
+		// such as in romfs_follow_link()
+
+		char eos = 0;
+		int count_eos = write (fdout, &eos, 1);
+		if (count_eos != 1) {
+			perror ("write");
+			err = errno;
+			break;
+		}
+
 		assert (inode->size == 0);
-		inode->size = count_out;
+		inode->size = count_out + count_eos;
 
 		err = 0;
 		break;
