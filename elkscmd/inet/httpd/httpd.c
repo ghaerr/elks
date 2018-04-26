@@ -36,7 +36,7 @@
 #endif
 
 #define DEF_PORT		80
-#define DEF_DOCBASE	"/usr/lib/httpd"
+#define DEF_DOCBASE	"/var/www"
 #define DEF_CONTENT	"text/html"
 
 #define WS(c)	( ((c) == ' ') || ((c) == '\t') || ((c) == '\r') || ((c) == '\n') )

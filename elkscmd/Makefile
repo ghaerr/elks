@@ -50,7 +50,6 @@ SUBDIRS =       \
 BUILDDIRS =    \
 	bootblocks \
 	inet       \
-	test       \
 	# EOL
 
 ifeq ($(CONFIG_APP_ASH), y)
@@ -111,6 +110,10 @@ endif
 
 ifeq ($(CONFIG_APP_SYS_UTILS), y)
 BUILDDIRS += sys_utils
+endif
+
+ifdef $(CONFIG_APP_TEST)
+BUILDDIRS += test
 endif
 
 ###############################################################################
