@@ -20,7 +20,7 @@ static void romfs_statfs(struct super_block *sb, struct statfs *buf,
 {
     struct statfs tmp;
 
-    printk ("romfs: statfs()\n");
+    printk ("romfs_statfs\n");
 
     memset(&tmp, 0, sizeof(tmp));
     tmp.f_type = ROMFS_MAGIC;
@@ -72,7 +72,7 @@ static int romfs_readdir (struct inode * i, struct file * f,
 {
 	int res;
 
-	char name [ROMFS_MAXFN];
+	char name [ROMFS_NAME_MAX];
 	word_t len;
 	word_t pos;
 	seg_t iseg;
@@ -90,7 +90,7 @@ static int romfs_readdir (struct inode * i, struct file * f,
 		}
 
 		len = (word_t) peekb (pos + 2, iseg);
-		if (!len || len >= ROMFS_MAXFN) {
+		if (!len || len >= ROMFS_NAME_MAX) {
 			res = 0;
 			break;
 		}
@@ -163,129 +163,107 @@ static int romfs_lookup (struct inode * dir, char * name, size_t len1,
 }
 
 
-static int romfs_readlink (struct inode *inode, char *buffer, size_t len)
+static int romfs_readlink (struct inode * inode, char * buf, size_t len)
 {
-	/*
-    char buf[ROMFS_MAXFN];
-    size_t mylen;
-    */
+	int count;
 
-    printk ("romfs: readlink()\n");
-
-    return -1;
-
-    /*
-    if (!inode || !S_ISLNK(inode->i_mode)) {
-	iput(inode);
-	return -EBADF;
-    }
-
-    mylen = min(sizeof(buf), inode->i_size);
-
-    if (romfs_copyfrom
-	(inode, buf, (loff_t) inode->u.romfs_i.i_dataoffset, mylen) <= 0) {
-	iput(inode);
-	return -EIO;
-    }
-    memcpy_tofs(buffer, buf, mylen);
-    iput(inode);
-    return (int) mylen;
-    */
+	count = min (len, inode->i_size);
+	/* ELKS trick: the destination buffer is in the current task data segment */
+	fmemcpyb ((word_t) buf, current->t_regs.ds, 0, inode->u.romfs.seg, (word_t) count);
+	iput (inode);
+	return count;
 }
+
+
+static int romfs_followlink (struct inode * dir, register struct inode * inode,
+	int flag, int mode, struct inode ** res_inode)
+{
+	int err;
+
+	seg_t user_ds;
+	seg_t *pds;
+
+	/* It is strange that the kernel calls this function for all inodes
+	 * even if they are not links... maybe something to fix here ?
+	 */
+
+	if (!S_ISLNK (inode->i_mode)) {
+		*res_inode = inode;
+		err = 0;
+	} else {
+		pds = &current->t_regs.ds;
+		user_ds = *pds;
+		*pds = inode->u.romfs.seg;
+
+		/* Trick: mkromfs appends null character to link data
+		 * to protect against null-terminated string comparison
+		 */
+
+		err = open_namei (0, flag, mode, res_inode, dir);
+		*pds = user_ds;
+	}
+
+	return err;
+}
+
 
 /* Inode operations for supported types */
 
 static struct file_operations romfs_file_operations = {
-    NULL,			/* lseek - default */
-    romfs_read,		/* read */
-    NULL,			/* write - bad */
-    NULL,			/* readdir */
-    NULL,			/* select - default */
-    NULL,			/* ioctl */
-    NULL,			/* open */
-    NULL			/* release */
+	NULL,           /* lseek - default */
+	romfs_read,     /* read */
+	NULL,           /* write - bad */
+	romfs_readdir,  /* readdir */
+	NULL,           /* select - default */
+	NULL,           /* ioctl */
+	NULL,           /* open */
+	NULL            /* release */
 #ifdef BLOAT_FS
 	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
+	NULL,           /* fsync */
+	NULL,           /* check_media_change */
+	NULL            /* revalidate */
 #endif
 };
 
-static struct inode_operations romfs_file_inode_operations = {
-    &romfs_file_operations,
-    NULL,			/* create */
-    NULL,			/* lookup */
-    NULL,			/* link */
-    NULL,			/* unlink */
-    NULL,			/* symlink */
-    NULL,			/* mkdir */
-    NULL,			/* rmdir */
-    NULL,			/* mknod */
-    NULL,			/* readlink */
-    NULL,			/* followlink */
+static struct inode_operations romfs_inode_operations = {
+	&romfs_file_operations,
+	NULL,             /* create */
+	romfs_lookup,     /* lookup */
+	NULL,             /* link */
+	NULL,             /* unlink */
+	NULL,             /* symlink */
+	NULL,             /* mkdir */
+	NULL,             /* rmdir */
+	NULL,             /* mknod */
+	romfs_readlink,   /* readlink */
+	romfs_followlink, /* followlink */
 #ifdef USE_GETBLK
-    NULL,			/* getblk -- not really */
+	NULL,             /* getblk -- not really */
 #endif
-    NULL			/* truncate */
+	NULL              /* truncate */
 #ifdef BLOAT_FS
 	,
-    NULL			/* permission */
+	NULL              /* permission */
 #endif
 };
-
-static struct file_operations romfs_dir_operations = {
-    NULL,			/* lseek - default */
-    NULL,			/* read */
-    NULL,			/* write - bad */
-    romfs_readdir,	/* readdir */
-    NULL,			/* select - default */
-    NULL,			/* ioctl */
-    NULL,			/* open */
-    NULL			/* release */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
-};
-
-static struct inode_operations romfs_dir_inode_operations = {
-	&romfs_dir_operations,
-	NULL,            /* create */
-	romfs_lookup,    /* lookup */
-	NULL,            /* link */
-	NULL,            /* unlink */
-	NULL,            /* symlink */
-	NULL,            /* mkdir */
-	NULL,            /* rmdir */
-	NULL,            /* mknod */
-	romfs_readlink,  /* readlink */
-	NULL,            /* followlink */
-#ifdef USE_GETBLK
-	NULL,            /* getblk */
-#endif
-	NULL             /* truncate */
-#ifdef BLOAT_FS
-	, NULL           /* permission */
-#endif
-};
-
 
 static mode_t romfs_modemap [] = {
 	S_IFREG,
 	S_IFDIR,
 	S_IFCHR,
-	S_IFBLK
+	S_IFBLK,
+	S_IFLNK
 };
 
 static struct inode_operations * romfs_inode_ops [] = {
-	&romfs_file_inode_operations,
-	&romfs_dir_inode_operations,
+	&romfs_inode_operations,
+	&romfs_inode_operations,
 	&chrdev_inode_operations,  /* standard handler */
-	&blkdev_inode_operations   /* standard handler */
+	&blkdev_inode_operations,  /* standard handler */
+	&romfs_inode_operations
 };
+
 
 /* Read inode from memory */
 
@@ -337,7 +315,6 @@ static void romfs_read_inode (struct inode * i)
 
 static void romfs_put_super (struct super_block * sb)
 	{
-	printk ("romfs: put_super()\n");
 	lock_super (sb);
 	sb->s_dev = 0;
 	unlock_super (sb);

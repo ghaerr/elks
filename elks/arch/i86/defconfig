@@ -7,22 +7,24 @@
 #
 
 #
-# Just accept the defaults unless you know what you are doing
+# Kernel
 #
 
 #
-# ELKS Kernel
+# Just accept the defaults unless you know what you are doing
 #
 
 #
 # Advanced - for Developers and Hackers only
 #
+
 CONFIG_EXPERIMENTAL=y
 # CONFIG_MODULES is not set
 
 #
 # Select compiler to use
 #
+
 CONFIG_COMPILER_1=y
 # CONFIG_COMPILER_2 is not set
 # CONFIG_COMPILER_3 is not set
@@ -30,6 +32,7 @@ CONFIG_COMPILER_1=y
 #
 # Architecture
 #
+
 # CONFIG_ARCH_AUTO is not set
 CONFIG_ARCH_IBMPC=y
 # CONFIG_ARCH_SIBO is not set
@@ -43,6 +46,7 @@ CONFIG_SMALL_KERNEL=y
 #
 # Model-specific features
 #
+
 CONFIG_IBMPC_CLONE=y
 # CONFIG_IBMPC_COMPAQ is not set
 # CONFIG_ROOT_READONLY is not set
@@ -50,12 +54,14 @@ CONFIG_IBMPC_CLONE=y
 #
 # Memory manager
 #
+
 CONFIG_ADVANCED_MM=y
 # CONFIG_SWAP is not set
 
 #
 # Hardware Facilities
 #
+
 CONFIG_CPU_8086=y
 # CONFIG_CPU_80186 is not set
 # CONFIG_CPU_80286 is not set
@@ -65,6 +71,7 @@ CONFIG_CPU_8086=y
 #
 # System Hardware
 #
+
 # CONFIG_HW_FPU is not set
 CONFIG_HW_PS2_MOUSE=y
 CONFIG_HW_VGA=y
@@ -72,12 +79,14 @@ CONFIG_HW_VGA=y
 #
 # Block Devices
 #
+
 CONFIG_HW_FLOPPY_DRIVE=y
 CONFIG_HW_HARD_DRIVE=y
 
 #
 # Memory Configuration
 #
+
 CONFIG_MEM_PAGES=8
 # CONFIG_XMS_INT15 is not set
 CONFIG_XMS_SIZE=0
@@ -85,6 +94,7 @@ CONFIG_XMS_SIZE=0
 #
 # BIOS Facilities
 #
+
 CONFIG_HW_KEYBOARD_BIOS=y
 CONFIG_HW_VIDEO_HOC=y
 # CONFIG_HW_259_USE_ORIGINAL_MASK is not set
@@ -96,15 +106,18 @@ CONFIG_APM=y
 #
 # 286 Protected Mode Support
 #
+
 # CONFIG_286PMODE is not set
 
 #
 # Driver Support
 #
 
+
 #
 # Block device drivers
 #
+
 CONFIG_BLK_DEV_BIOS=y
 CONFIG_BLK_DEV_BFD=y
 # CONFIG_BLK_DEV_BFD_HARD is not set
@@ -116,16 +129,19 @@ CONFIG_BLK_DEV_BHD=y
 #
 # Additional block devices
 #
+
 # CONFIG_BLK_DEV_RAM is not set
 
 #
 # Block device options
 #
+
 CONFIG_BLK_DEV_CHAR=y
 
 #
 # Character device drivers
 #
+
 CONFIG_CONSOLE_DIRECT=y
 # CONFIG_CONSOLE_BIOS is not set
 # CONFIG_CONSOLE_SERIAL is not set
@@ -146,6 +162,7 @@ CONFIG_KEYMAP_US=y
 #
 # Other character devices
 #
+
 CONFIG_CHAR_DEV_RS=y
 CONFIG_CHAR_DEV_LP=y
 CONFIG_CHAR_DEV_MEM=y
@@ -155,11 +172,13 @@ CONFIG_PSEUDO_TTY=y
 #
 # Network device drivers
 #
+
 # CONFIG_ETH is not set
 
 #
 # Networking Support
 #
+
 CONFIG_SOCKET=y
 # CONFIG_NANO is not set
 CONFIG_INET=y
@@ -170,11 +189,13 @@ CONFIG_INET_STATUS=y
 #
 # Advanced socket options
 #
+
 # CONFIG_SOCK_CLIENTONLY is not set
 
 #
 # Filesystem Support
 #
+
 CONFIG_MINIX_FS=y
 # CONFIG_ROMFS_FS is not set
 # CONFIG_MSDOS_FS is not set
@@ -182,6 +203,7 @@ CONFIG_MINIX_FS=y
 #
 # General filesystem settings
 #
+
 # CONFIG_FS_RO is not set
 # CONFIG_FULL_VFS is not set
 CONFIG_FS_EXTERNAL_BUFFER=y
@@ -190,19 +212,68 @@ CONFIG_PIPE=y
 #
 # Executable file formats
 #
+
 CONFIG_EXEC_ELKS=y
 
 #
 # Kernel hacking
 #
+
 CONFIG_SYS_VERSION=y
 # CONFIG_STRACE is not set
 # CONFIG_IDLE_HALT is not set
 
 #
-# ELKS User Land
+# Commands
 #
 
+# CONFIG_APPSET_CUSTOM is not set
+# CONFIG_APPSET_TINY is not set
+# CONFIG_APPSET_SMALL is not set
+# CONFIG_APPSET_MEDIUM is not set
+CONFIG_APPSET_LARGE=y
+CONFIG_APP_ASH=y
+CONFIG_APP_BC=y
+CONFIG_APP_BYACC=y
+CONFIG_APP_DISK_UTILS=y
+CONFIG_APP_E3=y
+CONFIG_APP_ELVIS=y
+CONFIG_APP_FILE_UTILS=y
+CONFIG_APP_HTTPD=y
+CONFIG_APP_KTCP=y
+CONFIG_APP_LEVEE=y
+CONFIG_APP_M4=y
+CONFIG_APP_MINIX1=y
+CONFIG_APP_MINIX2=y
+CONFIG_APP_MINIX3=y
+CONFIG_APP_MISC_UTILS=y
+CONFIG_APP_MTOOLS=y
+CONFIG_APP_NET_TOOLS=y
+CONFIG_APP_PREMS=y
+CONFIG_APP_PRN_UTILS=y
+CONFIG_APP_SASH=y
+CONFIG_APP_SH_UTILS=y
+CONFIG_APP_SYS_UTILS=y
+CONFIG_APP_TELNET=y
+CONFIG_APP_TELNETD=y
+CONFIG_APP_TINYIRC=y
+CONFIG_APP_URLGET=y
+CONFIG_APP_XVI=y
+
 #
-# Select the applets
+# Image
 #
+
+CONFIG_IMG_MINIX=y
+# CONFIG_IMG_FAT_12 is not set
+# CONFIG_IMG_FAT_16 is not set
+# CONFIG_IMG_FAT_32 is not set
+# CONFIG_IMG_ROM is not set
+CONFIG_IMG_DEV=y
+# CONFIG_IMG_FD1680 is not set
+CONFIG_IMG_FD1440=y
+# CONFIG_IMG_FD1200 is not set
+# CONFIG_IMG_FD720 is not set
+# CONFIG_IMG_FD360 is not set
+# CONFIG_IMG_HD is not set
+CONFIG_IMG_BOOT=y

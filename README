@@ -31,7 +31,7 @@ The general build procedure for ELKS is as follows:
 
 * Configure the build chain, the kernel, the commands and select the target
   image format (the default configuration is for an IBM PC/XT/AT):
-  
+
   'make menuconfig'
 
 * Build the kernel and the commands:
