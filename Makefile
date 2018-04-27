@@ -1,3 +1,10 @@
+
+ifndef TOPDIR
+$(error TOPDIR is not defined)
+endif
+
+include $(TOPDIR)/Make.defs
+
 #########################################################################
 # Variables
 

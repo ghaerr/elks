@@ -3,6 +3,14 @@
 # Standard rulesets for use when compiling and installing this system. #
 #                                                                      #
 ########################################################################
+
+ifndef TOPDIR
+$(error TOPDIR is not defined)
+endif
+
+include $(TOPDIR)/Make.defs
+
+########################################################################
 #
 # This file expects the following variables to have been defined before
 # it is included into any other Makefile on this system:
@@ -56,13 +64,6 @@ SUBLEVEL	= 0	# (0-255)
 # Specify the architecture we will use.
 
 ARCH		= i86
-
-#########################################################################
-# ROOT_DEV specifies the default root-device when making the image.
-# This does not yet work under ELKS. See include/config.h to
-# change the root device.
-
-ROOT_DEV	= FLOPPY
 
 #########################################################################
 # Specify the target for the netboot image.

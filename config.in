@@ -4,17 +4,17 @@
 
 mainmenu_name "ELKS Main"
 
-#mainmenu_option next_comment
-#	comment 'Cross build chain'
+mainmenu_option next_comment
+	comment 'Cross build chain'
+
+	choice 'Cross compiler' \
+	"bcc		CONFIG_COMPILER_1   \
+	 gcc-ia16 	CONFIG_COMPILER_2   \
+	 gcc-elks	CONFIG_COMPILER_3"  bcc
 
 #	bool 'Build cross tools' CONFIG_CROSS_BUILD y
 
-#	choice 'Select C compiler' \
-#		"BCC      CONFIG_CROSS_BCC \
-#		 GCC-IA16 CONFIG_CROSS_GCC \
-#		" BCC
-
-#endmenu
+endmenu
 
 #
 # ELKS Kernel

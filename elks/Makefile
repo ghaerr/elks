@@ -29,7 +29,6 @@ NOINDENT	=
 #########################################################################
 # Include the standard ruleset.
 
-include ../Make.defs
 include $(BASEDIR)/Makefile-rules
 
 #########################################################################

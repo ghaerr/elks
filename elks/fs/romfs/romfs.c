@@ -165,9 +165,10 @@ static int romfs_lookup (struct inode * dir, char * name, size_t len1,
 
 static int romfs_readlink (struct inode * inode, char * buf, size_t len)
 {
-	int count;
+	size_t count;
 
-	count = min (len, inode->i_size);
+	count = inode->i_size;
+	if (count > len) count = len;
 	/* ELKS trick: the destination buffer is in the current task data segment */
 	fmemcpyb ((word_t) buf, current->t_regs.ds, 0, inode->u.romfs.seg, (word_t) count);
 	iput (inode);

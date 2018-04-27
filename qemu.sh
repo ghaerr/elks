@@ -6,7 +6,7 @@
 QEMU=qemu-system-x86_64
 
 # Select floppy disk image to use
-IMAGE=elkscmd/fd1440
+IMAGE=image/fd1440
 
 # Select your keyboard mapping here:
 # KEYBOARD="-k en-us"

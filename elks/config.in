@@ -9,16 +9,6 @@ mainmenu_option next_comment
 endmenu
 
 mainmenu_option next_comment
-    comment 'Select compiler to use'
-
-    choice 'Select compiler to use'		\
-	"bcc		CONFIG_COMPILER_1	\
-	 elf-gcc 	CONFIG_COMPILER_2	\
-	 elks-gcc	CONFIG_COMPILER_3"				bcc
-
-endmenu
-
-mainmenu_option next_comment
     comment 'Architecture'
 
     choice 'Select system architecture'		\
