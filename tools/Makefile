@@ -1,3 +1,10 @@
+
+ifndef TOPDIR
+$(error TOPDIR is not defined)
+endif
+
+include $(TOPDIR)/Make.defs
+
 .PHONY: all
 
 all::
@@ -27,7 +34,9 @@ all:: .dev86.build
 
 # ATT to AS86 conversion utility
 
-#all:: $(CROSSDIR)/bin/att2as86
+ifdef CONFIG_COMPILER_2
+all:: $(CROSSDIR)/bin/att2as86
+endif
 
 $(CROSSDIR)/bin/att2as86:
 	make -C $(SRCDIR)/att2as86 all install
@@ -55,7 +64,9 @@ $(DISTDIR)/$(BINUTILS_DIST).zip:
 	make -C binutils-build install
 	touch .binutils.build
 
-#all:: .binutils.build
+ifdef CONFIG_COMPILER_2
+all:: .binutils.build
+endif
 
 # GCC for IA16
 
@@ -80,4 +91,6 @@ $(DISTDIR)/$(GCC_DIST).zip:
 	make -C gcc-build install
 	touch .gcc.build
 
-#all:: .gcc.build
+ifdef CONFIG_COMPILER_2
+all:: .gcc.build
+endif

@@ -24,5 +24,6 @@ clean:
 
 install: sash
 	sudo install sash $(TARGET_MNT)/bin/sash
+	sudo ln -sf sash $(TARGET_MNT)/bin/sh
 
 $(OBJS): sash.h config.h

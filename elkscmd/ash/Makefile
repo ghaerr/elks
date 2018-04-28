@@ -46,6 +46,7 @@ ash: $(OBJS)
 
 install: ash
 	sudo install ash $(TARGET_MNT)/bin
+	sudo ln -sf ash $(TARGET_MNT)/bin/sh
 
 clean:
 	rm -f core ash $(CLEANFILES)

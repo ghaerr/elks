@@ -23,8 +23,8 @@ install_sibo: all
 
 install: $(PRGS)
 	sudo install $(PRGS) $(TARGET_MNT)/bin
-	sudo mkdir -p $(TARGET_MNT)/usr/lib/httpd
-	sudo install sample_index.html $(TARGET_MNT)/usr/lib/httpd/index.html
+	sudo mkdir -p $(TARGET_MNT)/var/www
+	sudo install sample_index.html $(TARGET_MNT)/var/www/index.html
 
 netstat: httpd.o
 	$(CC) $(CFLAGS) $(LDFLAGS) httpd.o -o httpd
