@@ -2,3 +2,5 @@
 # ELKS Commands
 # Common rules
 #
+
+.PHONY: all clean install

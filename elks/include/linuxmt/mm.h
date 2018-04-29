@@ -59,14 +59,19 @@ extern int fs_memcmp(void *,void *,size_t);
 extern int verified_memcpy_tofs(void *,void *,size_t);
 extern int verified_memcpy_fromfs(void *,void *,size_t);
 
+/* Memory allocation */
+
 extern void mm_init(seg_t,seg_t);
 extern seg_t mm_alloc(segext_t);
-extern seg_t mm_realloc(seg_t);
-extern seg_t mm_dup(seg_t);
-
+extern seg_t mm_realloc(seg_t,segext_t);
 extern void mm_free(seg_t);
-extern int do_swapper_run(struct task_struct *);
+extern void mm_get(seg_t);
+extern void mm_put(seg_t);
+extern seg_t mm_dup(seg_t);
+extern void mm_stat(seg_t,seg_t);
 extern unsigned int mm_get_usage(int,int);
+
+extern int do_swapper_run(struct task_struct *);
 
 /* FIXME: Following function prototypes are apparently phantom ones,
  *	  so are defined here with void parameters for now.

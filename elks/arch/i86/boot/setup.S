@@ -226,9 +226,9 @@ start_os:
 
 #ifdef CONFIG_ROMCODE
 #ifdef CONFIG_ROMFS_FS
-	mov [0x01FC], #0x1F00
+	mov [0x01FC], #0x0600  /* rom-flash */
 #else
-	mov [0x01FC], #0x380
+	mov [0x01FC], #0x0380  /* bioshd */
 #endif
 #endif
 

@@ -148,7 +148,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    goto error_exec4;
 	}
     } else {
-	cseg = mm_realloc(cseg);
+	mm_get(cseg);
 	filp->f_pos += mh.tseg;
     }
 
@@ -182,8 +182,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /* From this point, the old code and data segments are not needed anymore */
 
     /* Flush the old binary out.  */
-    if (currentp->mm.cseg) mm_free(currentp->mm.cseg);
-    if (currentp->mm.dseg) mm_free(currentp->mm.dseg);
+    if (currentp->mm.cseg) mm_put(currentp->mm.cseg);
+    if (currentp->mm.dseg) mm_put(currentp->mm.dseg);
     debug("EXEC: old binary flushed.\n");
 
     currentp->t_xregs.cs = currentp->mm.cseg = cseg;
@@ -253,10 +253,10 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     goto normal_out;
 
   error_exec5:
-    mm_free(dseg);
+    mm_put(dseg);
 
   error_exec4:
-    mm_free(cseg);
+    mm_put(cseg);
 
   error_exec3:
     currentp->t_regs.ds = ds;

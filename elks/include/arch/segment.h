@@ -15,4 +15,4 @@ extern pid_t get_pid(void);
 
 extern short *_endtext, *_enddata, *_endbss;
 
-#endif
+#endif /* !LX86_ARCH_SEGMENT_H */

@@ -76,15 +76,15 @@ pid_t do_fork(int virtual)
     /*
      * We do shared text.
      */
-    mm_realloc(currentp->mm.cseg);
+    mm_get(currentp->mm.cseg);
 
     if (virtual) {
-	mm_realloc(currentp->mm.dseg);
+	mm_get(currentp->mm.dseg);
     } else {
 	t->mm.dseg = mm_dup(currentp->mm.dseg);
 
 	if (t->mm.dseg == 0) {
-	    mm_free(currentp->mm.cseg);
+	    mm_put(currentp->mm.cseg);
 	    t->state = TASK_UNUSED;
             task_slots_unused++;
             next_task_slot = t;

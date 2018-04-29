@@ -5,3 +5,5 @@ fmemcpyw.s
 setupb.s
 setupw.s
 string.s
+farlist.s
+seglist.s

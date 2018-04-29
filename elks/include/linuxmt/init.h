@@ -33,7 +33,6 @@ extern void tty_init(void);
 extern void xtk_init(void);
 
 extern void init_console(void);
-extern void setup_mm(seg_t,seg_t);
 extern void device_setup(void);
 
 extern void kfork_proc(void ());

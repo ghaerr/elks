@@ -3,6 +3,8 @@
  * Build filesystem image from directory
  */
 
+/* Host types */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -14,9 +16,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-/* TODO: move list primitives to library */
+/* Common types */
 
-#include "list.h"
+#include <list.h>
 
 
 /* Super block in memory */
@@ -26,9 +28,9 @@
 struct super_disk_s
 	{
 	char magic [6];
-	word_t ssize;    /* size of super block */
-	word_t isize;    /* size of inode */
-	word_t icount;   /* number of inodes */
+	u16_t ssize;    /* size of super block */
+	u16_t isize;    /* size of inode */
+	u16_t icount;   /* number of inodes */
 	};
 
 typedef struct super_disk_s super_disk_t;
@@ -44,9 +46,9 @@ typedef struct super_disk_s super_disk_t;
 
 struct inode_disk_s
 	{
-	word_t offset;  /* offset in paragraphs */
-	word_t size;    /* size in bytes */
-	word_t flags;
+	u16_t offset;  /* offset in paragraphs */
+	u16_t size;    /* size in bytes */
+	u16_t flags;
 	};
 
 typedef struct inode_disk_s inode_disk_t;
@@ -62,12 +64,12 @@ struct inode_build_s
 	list_node_t node;
 	list_root_t entries;  /* list of entries for directory */
 	char * path;
-	word_t index;
+	u16_t index;
 
-	word_t dev;           /* major & minor for device */
-	word_t flags;
-	addr_t offset;
-	addr_t size;
+	u16_t dev;           /* major & minor for device */
+	u16_t flags;
+	off_t offset;
+	u32_t size;
 	};
 
 typedef struct inode_build_s inode_build_t;
@@ -327,7 +329,7 @@ static int compile_file (int fdout, inode_build_t * inode)
 			break;
 			}
 
-		word_t size = 0;
+		u16_t size = 0;
 
 		while (1)
 			{
@@ -429,7 +431,7 @@ static int compile_dir (int fd, inode_build_t * inode)
 
 	while (1)
 		{
-		word_t size = 0;
+		u16_t size = 0;
 		int count;
 
 		entry_build_t * entry = (entry_build_t *) inode->entries.node.next;
@@ -437,8 +439,8 @@ static int compile_dir (int fd, inode_build_t * inode)
 			{
 			/* Entry inode index */
 
-			count = write (fd, &entry->inode->index, sizeof (word_t));
-			if (count != sizeof (word_t))
+			count = write (fd, &entry->inode->index, sizeof (u16_t));
+			if (count != sizeof (u16_t))
 				{
 				err = errno;
 				break;
@@ -527,7 +529,7 @@ static int compile_fs ()
 		while (inode_build != (inode_build_t *) &_inodes.node)
 			{
 			inode_build->offset = offset;
-			word_t flags = inode_build->flags;
+			u16_t flags = inode_build->flags;
 
 			if (flags == INODE_DIR)
 				{
@@ -614,14 +616,14 @@ static int compile_fs ()
 			inode_disk_t inode_disk;
 			memset (&inode_disk, 0, sizeof (inode_disk_t));
 
-			word_t flags = inode_build->flags;
+			u16_t flags = inode_build->flags;
 			inode_disk.flags = flags;
 
 			if (flags == INODE_FILE || flags == INODE_DIR || flags == INODE_LINK)
 				{
 				/* TODO: replace assert() by error */
 				assert (inode_build->size < ROMFS_FILE_MAX);
-				word_t size = inode_build->size;
+				u16_t size = inode_build->size;
 				inode_disk.size = size;
 
 				if (size)

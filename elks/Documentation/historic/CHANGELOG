@@ -2004,7 +2004,7 @@ Mon Jan 31 12:00:00 GMT 2000	Christoph Plattner <Christoph.Plattner@dot.at>
 
 	* include/arch/debug_disp.h: added display port to output debug
 	  messages to LED, hex-display or logic analyser.
-	* arch/i86/mm/init.c (setup_mm): reduce ram for ramdisk.
+	* arch/i86/mm/init.c (mm_stat): reduce ram for ramdisk.
 	* arch/i86/kernel/system.c: reducing the main memory for ramdisk.
 	* arch/i86/boot/netbootsect.S: added netboot sector for  netboot-0.8.1
 	  noting that it is (c) Gero Kuhlmann.

@@ -173,7 +173,7 @@ int rd_dealloc(int target)
 	debug5("RD: dealloc pass: %d, purging rd_segment[%d].segment = 0x%x, next index %d, size = %d\n",
 	     a, j, rd_segment[j].segment, rd_segment[j].next,
 	     rd_segment[j].seg_size);
-	mm_free(rd_segment[j].segment);
+	mm_put(rd_segment[j].segment);
 	rd_segment[j].segment = 0;
 	rd_segment[j].seg_size = 0;
 	i = rd_segment[j].next;

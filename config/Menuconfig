@@ -324,7 +324,7 @@ function choice () {
 # Configure script.
 
 function extract_help () {
-    if [ -f Documentation/Configure.help ]; then
+    if [ -f config/Configure.help ]; then
 	#first escape regexp special characters in the argument:
 	var=$(echo "$1"|sed 's/[][\/.^$*]/\\&/g')
 	#now pick out the right help text:
@@ -336,7 +336,7 @@ ${var}:\\
                         /^[^ 	]/q
                         s/^  //
                         p
-                    }" Documentation/Configure.help)
+                    }" config/Configure.help)
 
 	if [ -z "$text" ]; then
 	    echo "There is no help available for this kernel option."
