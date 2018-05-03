@@ -1,4 +1,4 @@
-This is elkscmd, a loose colletion of user space code for ELKS including
+This is elkscmd, a loose collection of user space code for ELKS including
 most of what you need apart from the kernel to build a working system.
 
 Note that inclusion of code in this package does not imply any kind of
@@ -18,43 +18,5 @@ This package has been put together for two main purposes:
 
 The Makefiles contain rules which automatically build disk images for
 the ELKS system. In order to do this you must have the source code to the ELKS
-kernel, and to the Dev86 package and elksnet package unpacked and online, and 
-the definitions at the top of the Make.defs point to the correct source 
-directories.
-
-CAUTION: Building images must be done as root as it needs to mount and unmount
-loopback filesystems. It is essential that TARGET_MNT is set in Make.defs, or
-running these rules could render your system inoperable.
-
-The main rule used in building a release is called images.zip and is invoked
-as follows:
-
-make images.zip
-
-This creates four of the five possible images, and puts them into a zip file
-ready for release.
-
-The images that can be created are as follows:-
-
-boot	- A kernel boot disk - simply a copy of the kernel from the kernel
-	  source tree.
-
-root	- A 360K minimal root image. Includes enough programs and support files
-	  for a basic test system.
-	  
-comb_net - A 720K combined boot/root image. Minimal networking elks disk.
-	  Includes networking utilities (a tiny webserver, telnet, etc)
-
-comb	- A 720K combined boot/root image. Includes a kernel, everything on
-	  root, and installs the minixfs bootloader from the Dev86 package.
-
-comb360	- A 360K combined boot/root image. Includes a kernel, everything on
-	  root, and installs the minixfs bootloader from the Dev86 package.
-
-full5	- A 1.2MB boot/root disk image with almost all available programs.
-
-full3	- A 1.44MB boot/root disk image with everything installed.
-
-sibo	- A 128K very minimal root image suitable for a 128K Solid State Disk
-	  as used in SIBO architecture machines such as the Psion series 3
-	  organiser.
+kernel, and the definitions at the top of the Make.defs point to the correct
+source directories.
