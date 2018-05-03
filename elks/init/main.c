@@ -58,7 +58,6 @@ void start_kernel(void)
     calibrate_delay();
 #endif
 
-    setup_mm(base, end);		/* Architecture specifics */
     device_setup();
 
 #ifdef CONFIG_SOCKET
@@ -67,6 +66,7 @@ void start_kernel(void)
 
     fs_init();
 
+    mm_stat(base, end);
     printk("ELKS version %s\n", system_utsname.release);
 
     kfork_proc(init_task);

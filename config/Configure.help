@@ -325,6 +325,19 @@ CONFIG_SWAP
 
   WARNING: This code is VERY experimental at the moment.
 
+Table-based allocator
+CONFIG_MEM_TABLE
+  Track the free & allocated segments in a table within the kernel
+  data segment. This limits the maximum number of segments but is
+  compatible with the 286 protected mode.
+
+List-based allocator
+CONFIG_MEM_LIST
+  Track the free & allocated segments in a list scattered over all
+  the memory. Maximum number of segments is only limited by the
+  size of the memory, but this allocator is not compatible with
+  the 286 protected mode.
+
 # 286 Protected Mode support - 286+ features
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

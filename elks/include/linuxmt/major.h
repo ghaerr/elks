@@ -8,12 +8,7 @@
 /* limits */
 
 #define MAX_CHRDEV 10
-
-#ifdef CONFIG_ROMFS_FS
-#define MAX_BLKDEV 32
-#else
-#define MAX_BLKDEV 6
-#endif
+#define MAX_BLKDEV  7
 
 /*
  * assignments
@@ -26,13 +21,12 @@
  *  1 - /dev/mem               ramdisk
  *  2 - /dev/ptyp*             floppy
  *  3 - /dev/ttyp*             bioshd
- *  4 - /dev/tty*	       mscdex
+ *  4 - /dev/tty*              mscdex
  *  5 - /dev/tty; /dev/cua*    athd
- *  6 - lp
+ *  6 - lp                     /dev/rom0
  *  7 - mice
  *  8 - /dev/tcpdev
  *  9 - /dev/eth
- * 31 - (none)                 /dev/rom0
  */
 
 
@@ -47,7 +41,7 @@
 #define LP_MAJOR          6
 #define MISC_MAJOR        7
 #define TCPDEV_MAJOR      8
-#define ETH_MAJOR         9  // should be rather a network-class driver
+#define ETH_MAJOR         9  /* should be rather a network-class driver */
 
 
 /* These are the block devices */
@@ -57,10 +51,7 @@
 #define BIOSHD_MAJOR      3
 #define MSCDEX_MAJOR      4
 #define ATHD_MAJOR        5
-
-#ifdef CONFIG_ROMFS_FS
-#define ROMFLASH_MAJOR    31  /* as per Linux standard */
-#endif
+#define ROMFLASH_MAJOR    6
 
 
 #endif  /* !LX86_LINUXMT_MAJOR_H */

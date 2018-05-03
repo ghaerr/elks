@@ -79,8 +79,9 @@ boot/netbootsect:	boot/netbootsect.o
 boot/netbootsect.o:	boot/netbootsect.s
 
 boot/setup:		boot/setup.o
-	$(LD) -0 -M $(ARCH_LD) -s -o boot/setup boot/setup.o > boot/setup.map
-
+	$(LD) -0 -M $(ARCH_LD) -s -o boot/setup boot/setup.o > boot/setup.tmp
+	sort -k3,4 boot/setup.tmp > boot/setup.map
+	rm -f boot/setup.tmp
 
 boot/setup.o:		boot/setup.s
 
@@ -129,7 +130,7 @@ boot/system: $(XINCLUDE) $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
 		$(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
 		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.tmp ; \
-		sort -k4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
+		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
 		rm -f $(ARCH_DIR)/boot/system.tmp )
 
 Image: boot/system toolkit
@@ -146,7 +147,7 @@ boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 		$(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
 		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.tmp ; \
-		sort -k4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
+		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
 		rm -f $(ARCH_DIR)/boot/system.tmp )
 
 ifneq ($(CONFIG_ROMCODE), y)

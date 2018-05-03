@@ -102,7 +102,7 @@ ${var}:\\
 			/^#/b
 			/^[^ 	]/q
 			p
-		    }" Documentation/Configure.help)
+		    }" config/Configure.help)
     if [ -z "$text" ]; then
 	echo "  Sorry, no help available for this option yet."
     else
@@ -119,13 +119,13 @@ function helpvar () {
     local PARM
 
     echo
-    if [ -f Documentation/Configure.help ]; then
+    if [ -f config/Configure.help ]; then
 	for PARM do
 	    gethelp "$PARM"
 	    echo
 	done
     else
-	echo "  Can't access the file Documentation/Configure.help which"
+	echo "  Can't access the file Configure.help which"
 	echo "  should contain the help texts."
 	echo
     fi

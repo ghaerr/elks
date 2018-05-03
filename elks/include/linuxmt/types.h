@@ -5,9 +5,6 @@
 #include <linuxmt/config.h>
 
 
-typedef __u8            byte_t;
-typedef __u16           word_t;
-
 typedef __s32			loff_t;
 typedef __s32			off_t;
 
@@ -34,7 +31,6 @@ typedef __u16			ino_t;
 typedef __u32			ino32_t;
 typedef __u16			mode_t;
 typedef __u16			nlink_t;
-typedef __u16			seg_t;
 typedef __u16			segext_t;
 typedef __u16			uid_t;
 typedef __u16			umode_t;

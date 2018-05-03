@@ -52,9 +52,9 @@ void do_exit(int status)
     /* Let go of the process */
     current->state = TASK_EXITING;
     if (current->mm.cseg)
-	mm_free(current->mm.cseg);
+	mm_put(current->mm.cseg);
     if (current->mm.dseg)
-	mm_free(current->mm.dseg);
+	mm_put(current->mm.dseg);
 
     current->mm.cseg = current->mm.dseg = 0;
 

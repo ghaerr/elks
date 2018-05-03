@@ -1,9 +1,14 @@
 /*
  *	Memory management support for a swapping rather than paging kernel.
  *
- *	Memory allocator for ELKS. We keep a hole list so we can keep the
- *	malloc arena data in the kernel not scattered into hard to read
- *	user memory.
+ *	Two possible memory allocators:
+ *
+ *	- table-based: manage the segments in a single table located in the kernel
+ *	  data. Minimize the number of segments to keep the protected mode easy.
+ *
+ *	- list-based: manage the segment in a list scattered over the whole memory.
+ *	  Number of segments is only limited by the available memory but no more
+ *	  compatible with the protected mode.
  *
  *	20th Jan 2000	Alistair Riddoch (ajr@ecs.soton.ac.uk)
  *			For reasons explained in fs/exec.c, support is
@@ -22,12 +27,17 @@
 #include <linuxmt/mem.h> /* for mem_swap_info */
 #include <linuxmt/debug.h>
 
+#include <arch/segment.h>
+#include <arch/seglist.h>
+
+#define MIN_STACK_SIZE 0x1000
+
+#ifdef CONFIG_MEM_TABLE
+
 /*
  *	Worst case is code+data segments for max tasks unique processes
  *	and one for the free space left.
  */
-
-#define MIN_STACK_SIZE 0x1000
 
 #define MAX_SEGMENTS		8+(MAX_TASKS*2)
 #define MAX_SWAP_SEGMENTS	8+(MAX_TASKS*2)
@@ -62,6 +72,37 @@ struct malloc_head swapmap = { swap_holes, MAX_SWAP_SEGMENTS };
 static struct buffer_head swap_buf;
 static dev_t swap_dev;
 #endif
+
+#endif /* CONFIG_MEM_TABLE */
+
+
+#ifdef CONFIG_MEM_LIST
+
+#define SEG_FLAG_USED 0x0001
+
+/* Segment header */
+/* No more than one paragraph */
+
+#define SEG_HEAD_NODE  0
+#define SEG_HEAD_SIZE  4
+#define SEG_HEAD_FLAGS 6
+#define SEG_HEAD_COUNT 8
+
+struct seg_head_s {
+	seglist_node_t node;
+	seg_t          size;
+	word_t         flags;
+	word_t         ref_count;
+};
+
+typedef struct seg_head_s seg_head_t;
+
+static seg_t _seg_first;
+
+#endif /* CONFIG_MEM_LIST */
+
+
+#ifdef CONFIG_MEM_TABLE
 
 /*
  *	Split a hole into two
@@ -188,8 +229,123 @@ int swap_out_someone();
 
 #endif
 
+#endif /* CONFIG_MEM_TABLE */
+
+
+#ifdef CONFIG_MEM_LIST
+
+/* Split a segment if too large */
+
+static seg_t seg_split (seg_t node_seg, seg_t node_size, seg_t req_size)
+{
+	seg_t split_size;
+	seg_t next_seg = 0;
+
+	split_size = req_size + 1;
+	if (node_size > split_size) {
+		pokew (SEG_HEAD_SIZE, node_seg, req_size);
+
+		next_seg = node_seg + split_size;
+		seglist_insert_after (SEG_HEAD_NODE, node_seg, next_seg);
+
+		pokew (SEG_HEAD_SIZE,  next_seg, node_size - split_size);
+		pokew (SEG_HEAD_FLAGS, next_seg, 0);  /* free */
+		pokew (SEG_HEAD_COUNT, next_seg, 0);
+	}
+
+	return next_seg;
+}
+
+/* Get a free segment */
+
+static seg_t seg_free_get (seg_t req_size)
+{
+	word_t node_size;
+	word_t node_flags;
+
+	seg_t  best_seg  = 0;
+	seg_t  best_size = 0xFFFF;
+
+	seg_t  node_seg = _seg_first;
+
+	/* First get the smallest suitable free segment */
+
+	while (1) {
+		node_size  = peekw (SEG_HEAD_SIZE, node_seg);
+		node_flags = peekw (SEG_HEAD_FLAGS, node_seg);
+
+		if (!(node_flags & SEG_FLAG_USED) && (node_size >= req_size) && (node_size < best_size)) {
+			best_seg  = node_seg;
+			best_size = node_size;
+		}
+
+		seglist_next (SEG_HEAD_NODE, node_seg, &node_seg);
+		if (node_seg == _seg_first) break;
+	}
+
+	/* Then allocate that free segment */
+
+	if (best_seg) {
+		seg_split (best_seg, best_size, req_size);
+		pokew (SEG_HEAD_FLAGS, best_seg, SEG_FLAG_USED);
+		pokew (SEG_HEAD_COUNT, best_seg, 1);
+	}
+
+	return best_seg;
+}
+
+/* Merge two contiguous segments */
+
+static void seg_merge (seg_t first_seg, seg_t next_seg)
+{
+	seg_t first_size;
+	seg_t next_size;
+
+	next_size = peekw (SEG_HEAD_SIZE, next_seg);
+	seglist_remove (SEG_HEAD_NODE, next_seg);
+
+	first_size = peekw (SEG_HEAD_SIZE, first_seg) + 1 + next_size;
+	pokew (SEG_HEAD_SIZE, first_seg, first_size);
+}
+
+/* Merge to left */
+
+static seg_t seg_merge_left (seg_t node_seg)
+{
+	seg_t left_seg = 0;
+
+	while (1) {
+		if (node_seg == _seg_first) break;
+		seglist_prev (SEG_HEAD_NODE, node_seg, &left_seg);
+		if (peekw (SEG_HEAD_FLAGS, left_seg) & SEG_FLAG_USED) {
+			left_seg = 0;
+			break;
+		}
+
+		seg_merge (left_seg, node_seg);
+		break;
+	}
+
+	return left_seg;
+}
+
+/* Merge to right */
+
+static void seg_merge_right (seg_t node_seg)
+{
+	seg_t right_seg = 0;
+
+	seglist_next (SEG_HEAD_NODE, node_seg, &right_seg);
+	if ((right_seg != _seg_first) && !(peekw (SEG_HEAD_FLAGS, right_seg) & SEG_FLAG_USED))
+		seg_merge (node_seg, right_seg);
+}
+
+#endif /* CONFIG_MEM_LIST */
+
+
 seg_t mm_alloc(segext_t pages)
 {
+#ifdef CONFIG_MEM_TABLE
     /*
      *      Which hole fits best ?
      */
@@ -220,7 +376,37 @@ seg_t mm_alloc(segext_t pages)
     m->refcount = 1;
 
     return m->page_base;
+
+#endif /* CONFIG_MEM_TABLE */
+
+#ifdef CONFIG_MEM_LIST
+
+	seg_t res = seg_free_get (pages);
+	if (res) res++;  /* skip header */
+	return res;
+
+#endif /* CONFIG_MEM_LIST */
 }
+
+#ifdef CONFIG_MEM_LIST
+
+void mm_free (seg_t base)
+{
+	seg_t left_seg;
+
+	seg_t node_seg = base - 1;  /* back to header */
+	left_seg = seg_merge_left (node_seg);
+	if (left_seg) {
+		node_seg = left_seg;
+	} else {
+		pokew (SEG_HEAD_FLAGS, node_seg, 0);  /* free */
+		pokew (SEG_HEAD_COUNT, node_seg, 0);
+	}
+
+	seg_merge_right (node_seg);
+}
+
+#endif /* CONFIG_MEM_LIST */
 
 /*
  * This function will swapin the whole process. After
@@ -249,9 +435,12 @@ static seg_t validate_address(seg_t base)
 
 #endif
 
-/* 	Increase refcount */
-seg_t mm_realloc(seg_t base)
+/* 	Increase segment reference count */
+
+void mm_get(seg_t base)
 {
+#ifdef CONFIG_MEM_TABLE
+
     register struct malloc_hole *m;
 
 #ifdef CONFIG_SWAP
@@ -264,18 +453,30 @@ seg_t mm_realloc(seg_t base)
     m->refcount++;
 
     return m->page_base;
+
+#endif /* CONFIG_MEM_TABLE */
+
+#ifdef CONFIG_MEM_LIST
+
+    seg_t node_seg = base - 1;  /* back to header */
+    word_t count = peekw (SEG_HEAD_COUNT, node_seg);
+    pokew (SEG_HEAD_COUNT, node_seg, count + 1);
+
+#endif /* CONFIG_MEM_LIST */
 }
 
+/* Decrease segment reference count */
+/* Free the segment on no more reference */
+
 /*
- *	Free a segment.
- *
  *	Caution: A process can be killed dead by another. That means we
  *	might potentially have to kill a swapped task. Be sure to catch
  *	that in exit...
  */
 
-void mm_free(seg_t base)
+void mm_put(seg_t base)
 {
+#ifdef CONFIG_MEM_TABLE
     register struct malloc_hole *mh = holes;
     register struct malloc_hole *m;
 
@@ -287,7 +488,7 @@ void mm_free(seg_t base)
 	mh = swap_holes;
 	m = find_hole(mh, base);
 	if (!m)
-	    panic("mm_free(): mm corruption from swap\n");
+	    panic("mm_put(): mm corruption from swap\n");
 
 #else
 
@@ -301,6 +502,19 @@ void mm_free(seg_t base)
 	panic("double free");
     if (!(--(m->refcount)))
 	free_hole(mh, m);
+
+#endif /* CONFIG_MEM_TABLE */
+
+#ifdef CONFIG_MEM_LIST
+
+	seg_t node_seg = base - 1;  /* back to header */
+	word_t count = peekw (SEG_HEAD_COUNT, node_seg);
+	if (count > 1)
+		pokew (SEG_HEAD_COUNT, node_seg, count - 1);
+	else
+		mm_free (base);
+
+#endif /* CONFIG_MEM_LIST */
 }
 
 /*
@@ -309,6 +523,8 @@ void mm_free(seg_t base)
 
 seg_t mm_dup(seg_t base)
 {
+#ifdef CONFIG_MEM_TABLE
+
     register struct malloc_hole *o;
     register char *mbase;
 
@@ -320,6 +536,22 @@ seg_t mm_dup(seg_t base)
     if ((mbase = (char *)mm_alloc(o->extent)) != NULL)
 	fmemcpyb(0, (seg_t) mbase, 0, o->page_base, (word_t) (o->extent << 4));
     return (seg_t)mbase;
+
+#endif /* CONFIG_MEM_TABLE */
+
+#ifdef CONFIG_MEM_LIST
+
+	seg_t new_seg;
+
+	seg_t old_seg = base - 1;  /* back to header */
+	seg_t old_size = peekw (SEG_HEAD_SIZE, old_seg);
+	new_seg = seg_free_get (old_size);
+	if (new_seg)
+		fmemcpyb (0, ++new_seg, 0, base, old_size << 4);
+
+    return new_seg;
+
+#endif /* CONFIG_MEM_TABLE */
 }
 
 /*
@@ -329,6 +561,8 @@ seg_t mm_dup(seg_t base)
  */
 unsigned int mm_get_usage(int type, int used)
 {
+#ifdef CONFIG_MEM_TABLE
+
     register struct malloc_hole *m;
     unsigned int ret = 0;
 
@@ -357,12 +591,41 @@ unsigned int mm_get_usage(int type, int used)
 #endif
 
     return ret >> 6;
+
+#endif /* CONFIG_MEM_TABLE */
+
+#ifdef CONFIG_MEM_LIST
+
+	seg_t  node_size;
+	word_t node_flags;
+
+	word_t res = 0;
+	seg_t  node_seg = _seg_first;
+
+	if (type == MM_MEM) {
+		while (1) {
+			node_size  = peekw (SEG_HEAD_SIZE, node_seg);
+			node_flags = peekw (SEG_HEAD_FLAGS, node_seg);
+			/*if (used) printk ("seg %X: size %X used %d count %d\n",
+				node_seg, node_size, node_flags, peekw (SEG_HEAD_COUNT, node_seg));*/
+			if ((node_flags & SEG_FLAG_USED) == used)
+				res += (node_size >> 6);
+			seglist_next (SEG_HEAD_NODE, node_seg, &node_seg);
+			if (node_seg == _seg_first) break;
+		}
+	}
+
+	return res;
+
+#endif /* CONFIG_MEM_LIST */
 }
+
+#ifdef CONFIG_MEM_TABLE
 
 /*
  * Resize a hole
  */
-struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
+static struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
 {
     register struct malloc_hole *next;
     segext_t ext;
@@ -398,15 +661,73 @@ struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pages)
     return NULL;
 }
 
+#endif /* CONFIG_MEM_TABLE */
+
+#ifdef CONFIG_MEM_LIST
+
+/* Try to change the size of an allocated segment */
+
+seg_t mm_realloc (seg_t base, seg_t req_size)
+{
+	seg_t node_size;
+
+	seg_t next_seg;
+	seg_t next_size;
+
+	seg_t node_seg = base - 1;  /* back to header */
+
+	while (1) {
+		node_size = peekw (SEG_HEAD_SIZE, node_seg);
+		if (node_size == req_size) break;
+
+		if (node_size > req_size) {
+			next_seg = seg_split (node_seg, node_size, req_size);
+			if (next_seg) {
+				pokew (SEG_HEAD_FLAGS, next_seg, 0);  /* free */
+				pokew (SEG_HEAD_COUNT, next_seg, 0);
+				seg_merge_right (next_seg);
+			}
+
+			break;
+		}
+
+		seglist_next (SEG_HEAD_NODE, node_seg, &next_seg);
+		if ((next_seg == _seg_first) || (peekw (SEG_HEAD_FLAGS, next_seg) & SEG_FLAG_USED)) {
+			node_seg = 0;
+			break;
+		}
+
+		req_size = req_size - node_size - 1;
+		next_size = peekw (SEG_HEAD_SIZE, next_seg);
+		if (next_size < req_size) {
+			node_seg = 0;
+			break;
+		}
+
+		seg_split (next_seg, next_size, req_size);
+		seg_merge (node_seg, next_seg);
+		break;
+	}
+
+	if (node_seg) node_seg++;  /* skip header */
+	return node_seg;
+}
+
+#endif /* CONFIG_MEM_LIST */
+
+
 int sys_brk(__pptr len)
 {
     register __ptask currentp = current;
+
 #ifdef CONFIG_EXEC_ELKS
+#ifdef CONFIG_MEM_TABLE
     register struct malloc_hole *h;
-#endif
+#endif /* CONFIG_MEM_TABLE */
+#endif /* CONFIG_EXEC_ELKS */
 
 #if 0
-    printk("sbrk: l %d, endd %x, bstack %x, endbrk %x, endseg %x, mem %x/%x\n",
+    printk("sbrk: len %x, endd %x, bstack %x, endbrk %x, endseg %x, mem %d/%dK\n",
 		    len, currentp->t_enddata, currentp->t_begstack,
 		    currentp->t_endbrk, currentp->t_endseg,
 		    mm_get_usage(MM_MEM, 1),
@@ -423,6 +744,12 @@ int sys_brk(__pptr len)
     }
 #ifdef CONFIG_EXEC_ELKS
     if (len > currentp->t_endseg) {
+
+#ifdef CONFIG_MEM_LIST
+        return -ENOMEM;
+#endif /* CONFIG_MEM_LIST */
+
+#ifdef CONFIG_MEM_TABLE
         /* Resize time */
 
         h = find_hole(holes, currentp->mm.dseg);
@@ -435,8 +762,10 @@ int sys_brk(__pptr len)
 	currentp->t_regs.ds = currentp->t_regs.es\
 		= currentp->t_regs.ss = currentp->mm.dseg = h->page_base;
         currentp->t_endseg = len;
+#endif /* CONFIG_MEM_TABLE */
+
     }
-#endif
+#endif /* CONFIG_EXEC_ELKS */
     currentp->t_endbrk = len;
 
     return 0;
@@ -448,6 +777,7 @@ int sys_brk(__pptr len)
 
 void mm_init(seg_t start, seg_t end)
 {
+#ifdef CONFIG_MEM_TABLE
     register struct malloc_hole *holep = &holes[MAX_SEGMENTS - 1];
 
     /*
@@ -471,6 +801,17 @@ void mm_init(seg_t start, seg_t end)
     mm_swap_on(NULL);
 #endif
 
+#endif /* CONFIG_MEM_TABLE */
+
+#ifdef CONFIG_MEM_LIST
+
+    _seg_first = start;
+    seglist_init (SEG_HEAD_NODE, start);            /* seg_head.node */
+    pokew (SEG_HEAD_SIZE,  start, end - start -1);  /* seg_head.size */
+    pokew (SEG_HEAD_FLAGS, start, 0);               /* seg_head.flags = free */
+    pokew (SEG_HEAD_COUNT, start, 0);               /* seg_head.count = 0 */
+
+#endif /* CONFIG_MEM_LIST */
 }
 
 #ifdef CONFIG_SWAP
@@ -708,4 +1049,4 @@ int do_swapper_run(register struct task_struct *swapin_target)
     return 0;
 }
 
-#endif
+#endif /* CONFIG_SWAP */

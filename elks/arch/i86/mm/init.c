@@ -29,7 +29,7 @@
 char proc_name[16];
 __u16 kernel_cs, kernel_ds;
 
-void setup_mm(seg_t start, seg_t end)
+void mm_stat(seg_t start, seg_t end)
 {
     register char *pi;
     register char *cp;
@@ -41,11 +41,11 @@ void setup_mm(seg_t start, seg_t end)
 
 #ifndef CONFIG_ARCH_SIBO
 
-	if((int)pi == 0x40) {
+	if(pi == (char *) 0x40) {
 	    printk("PC/%cT class machine, %s CPU\n%uK base RAM",
 		    arch_cpu > 5 ? 'A' : 'X', proc_name, setupw(0x2a));
 	    cp = proc_name;
-	    pi = 0x50;
+	    pi = (char *) 0x50;
 	}
 
 #endif

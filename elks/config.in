@@ -47,7 +47,12 @@ fi
 
 mainmenu_option next_comment
     comment 'Memory manager'
-  	
+
+	choice 'Allocator' \
+		"table CONFIG_MEM_TABLE \
+		 list  CONFIG_MEM_LIST" \
+		 list
+
     bool 'Advanced memory manager'			CONFIG_ADVANCED_MM	y
 	
     if [ "$CONFIG_ADVANCED_MM" = "y" ]; then

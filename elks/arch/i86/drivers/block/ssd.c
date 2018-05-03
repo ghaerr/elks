@@ -100,7 +100,7 @@ static int ssd_ioctl(register struct inode *inode,
 	break;
     case SSDDESTROY:
 	if (rd_segment[target]) {
-	    mm_free(rd_segment[target]);
+	    mm_put(rd_segment[target]);
 	    rd_segment[target] = NULL;
 	    invalidate_inodes(inode->i_rdev);
 	    invalidate_buffers(inode->i_rdev);
