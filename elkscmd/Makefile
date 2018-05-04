@@ -184,7 +184,9 @@ endif
 	(cd $(ELKSCMD_DIR)/rootfs_template; \
 		tar cf - --exclude CVS --exclude .keep *) | \
 		(cd $(TARGET_MNT); sudo tar xpf - --no-same-owner)
+ifdef CONFIG_IMG_LINK
 	(cd $(TARGET_MNT)/dev; sudo ./MAKEDEV; sudo rm MAKEDEV MAKESET)
+endif
 	for i in $(BUILDDIRS); do $(MAKE) -C $$i install || exit 1; done
 	sudo bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(TARGET_MNT)/etc/issue"
 ifdef CONFIG_IMG_BOOT

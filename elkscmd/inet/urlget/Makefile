@@ -21,8 +21,11 @@ urlget:	$(SRC)
 
 install: urlget
 	sudo install urlget $(TARGET_MNT)/bin
-#urlget.c checks its own name to branch to ftp	
+ifdef CONFIG_IMG_LINK
 	sudo ln -s urlget $(TARGET_MNT)/bin/ftpget
+else
+	sudo install urlget $(TARGET_MNT)/bin/ftpget
+endif
 
 clean:
 	rm -f urlget *.o

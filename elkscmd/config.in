@@ -63,11 +63,13 @@ mainmenu_option next_comment
 	comment 'Image'
 
 	choice 'Target filesystem' \
-	"MINIX  CONFIG_IMG_MINIX  \
-	 FAT12  CONFIG_IMG_FAT_12 \
-	 FAT16  CONFIG_IMG_FAT_16 \
-	 FAT32  CONFIG_IMG_FAT_32 \
+	"MINIX  CONFIG_IMG_MINIX   \
+	 FAT    CONFIG_IMG_FAT     \
 	 ROM    CONFIG_IMG_ROM" MINIX
+
+	if [ "$CONFIG_IMG_FAT" != "y" ]; then
+		define_bool CONFIG_IMG_LINK y
+		fi
 
 	if [ "$CONFIG_IMG_ROM" != "y" ]; then
 
