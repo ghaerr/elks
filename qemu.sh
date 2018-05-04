@@ -1,9 +1,9 @@
 # Helper to run ELKS in QEMU
 
-# Select your QEMU system emulator here:
-# QEMU=qemu-system-i386
-# QEMU=qemu-system-x86_64
-QEMU=qemu-system-x86_64
+# Auto-select QEMU system emulator variant
+[ -x /usr/bin/qemu-system-i386 ] && QEMU="qemu-system-i386"
+[ -x /usr/bin/qemu-system-x86_64 ] && QEMU="qemu-system-x86_64"
+[ -z $QEMU ] && { echo 'QEMU system emulator not found!'; exit 1; }
 
 # Select floppy disk image to use
 IMAGE=image/fd1440

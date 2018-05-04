@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script generates a bootable hard disk image for Qemu. It copies
-# the files from the full3 floppy image to this hard disk image and the
+# the files from the fd1440 floppy image to this hard disk image and the
 # bootblocks and mbr from dev86 to the hard disk image.
 #
 # This script has to run from the elkscmd directory! Otherwise it will not
@@ -13,7 +13,7 @@ echo "ELKS Hard Drive Image Builder"
 shopt -s dotglob
 
 # Source image file name
-SRC_IMAGE=full3
+SRC_IMAGE=fd1440
 
 # Hard drive image file name
 HD_IMAGE=full_hdd
