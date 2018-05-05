@@ -23,7 +23,11 @@ clean:
 	rm -f core sash $(OBJS)
 
 install: sash
+ifdef CONFIG_IMG_LINK
 	sudo install sash $(TARGET_MNT)/bin/sash
 	sudo ln -sf sash $(TARGET_MNT)/bin/sh
+else
+	sudo install sash $(TARGET_MNT)/bin/sh
+endif
 
 $(OBJS): sash.h config.h

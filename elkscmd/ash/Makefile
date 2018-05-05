@@ -45,8 +45,12 @@ ash: $(OBJS)
 	$(CC) $(LDFLAGS) -o ash $(OBJS)
 
 install: ash
+ifdef CONFIG_IMG_LINK
 	sudo install ash $(TARGET_MNT)/bin
 	sudo ln -sf ash $(TARGET_MNT)/bin/sh
+else
+	sudo install ash $(TARGET_MNT)/bin/sh
+endif
 
 clean:
 	rm -f core ash $(CLEANFILES)
