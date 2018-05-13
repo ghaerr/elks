@@ -111,7 +111,7 @@ ifeq ($(CONFIG_APP_SYS_UTILS), y)
 BUILDDIRS += sys_utils
 endif
 
-ifdef $(CONFIG_APP_TEST)
+ifdef CONFIG_APP_TEST
 BUILDDIRS += test
 endif
 

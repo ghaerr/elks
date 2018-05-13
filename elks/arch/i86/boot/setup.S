@@ -471,6 +471,7 @@ size_ok:
 	mov	dx,bx
 	push	bx		! Data size
 	add	bx,[16]
+	add bx,#0xF     ! align on next paragraph (issue #209)
 	mov	cl,#4
 	shr	bx,cl
 	add	bx,#REL_SYSSEG	! BX = Relocated kernel code segment
@@ -483,6 +484,7 @@ size_ok:
 	add	cx,#SYSSEG+2
 	push	[16]		! Bss size
 	push	cx		! Kernel data segment
+	add dx,#0xF     ! align on next paragraph (issue #209)
 	mov	cl,#4
 	shr	dx,cl
 	add	dx,ax		! DX = Rel rel segment
