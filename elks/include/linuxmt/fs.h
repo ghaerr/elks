@@ -344,7 +344,7 @@ struct file_operations {
     size_t			(*read)(struct inode *,struct file *,char *,size_t);
     size_t			(*write)(struct inode *,struct file *,char *,size_t);
     int 			(*readdir) ();
-    int 			(*select) ();
+    int 			(*select) (struct inode *,struct file *, int flag);
     int 			(*ioctl) ();
     int 			(*open) ();
     void			(*release) ();

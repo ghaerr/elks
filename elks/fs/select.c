@@ -49,12 +49,41 @@
  * Linus noticed.  -- jrs
  */
 
-struct wait_queue select_poll;	/* magic queue - see sleepwake.c */
+struct wait_queue select_queue;  /* magic queue - see sleepwake.c */
 
-/* FIXME *//* should be an inline function */
-void select_wait(struct wait_queue *q)
+/* Add queue to polled ones */
+
+void select_wait (struct wait_queue *q)
 {
-    current->pollhash |= 1 << ((((int) q) >> 8) & 15);
+	int n;
+	struct wait_queue **p;
+
+	for (n = 0; n < POLL_MAX; n++) {
+		p = &(current->poll [n]);
+		if (!*p) {
+			*p = q;
+			return;
+		}
+	}
+
+	panic ("select_wait:no slot left");
+}
+
+/* Return true if queue is polled */
+
+int select_poll (struct task_struct * t, struct wait_queue *q)
+{
+	int n;
+	struct wait_queue *p;
+
+	for (n = 0; n < POLL_MAX; n++) {
+		p = t->poll [n];
+		if (!p) return 0;
+		if (p == q) return 1;
+	}
+
+	panic ("select_poll:no slot found\n");
+	return 0;
 }
 
 /*
@@ -122,10 +151,10 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
     }
     n = count + 1;
     count = 0;
-    wait_set(&select_poll);
+    wait_set(&select_queue);
     current->state = TASK_INTERRUPTIBLE;
   repeat:
-    current->pollhash = 0;
+    memset (current->poll, 0, sizeof (struct wait_queue *) * POLL_MAX);
     filp = current->files.fd;
     for (pi = 0; ((int)pi) < n; pi++, filp++) {
 	if (*filp) {
@@ -149,9 +178,9 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 	goto repeat;
     }
 
-    current->pollhash = 0;
+    memset (current->poll, 0, sizeof (struct wait_queue *) * POLL_MAX);
     current->state = TASK_RUNNING;
-    wait_clear(&select_poll);
+    wait_clear(&select_queue);
     return count;
 }
 

@@ -201,7 +201,7 @@ static size_t sock_write(struct inode *inode, struct file *file,
 }
 
 static int sock_select(struct inode *inode,
-		       struct file *file, int sel_type, select_table * wait)
+		       struct file *file, int sel_type)
 {
     register struct socket *sock;
     register struct proto_ops *ops;
@@ -211,7 +211,7 @@ static int sock_select(struct inode *inode,
 
     ops = sock->ops;
     if (ops && ops->select)
-	return ops->select(sock, sel_type, wait);
+	return ops->select(sock, sel_type);
 
     return 0;
 }

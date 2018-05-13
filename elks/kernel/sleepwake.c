@@ -92,15 +92,10 @@ void wake_up_process(register struct task_struct *p)
 void _wake_up(register struct wait_queue *q, unsigned short int it)
 {
     register struct task_struct *p;
-    unsigned short int phash;
-
-    extern struct wait_queue select_poll;
-
-    phash = ((unsigned short int)1) << (((unsigned short int)q >> 8) & 0x0F);
 
     for_each_task(p) {
 	if ((p->waitpt == q)
-	    || ((p->waitpt == &select_poll) && (p->pollhash & phash))
+	    || ((p->waitpt == &select_queue) && select_poll (p, q))
 	    )
 	    if (p->state == TASK_INTERRUPTIBLE ||
 		(it && p->state == TASK_UNINTERRUPTIBLE)) {
