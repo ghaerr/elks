@@ -309,7 +309,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
 
 static int inet_select(register struct socket *sock,
-		       int sel_type, select_table * wait)
+		       int sel_type)
 {
     debug("inet_select\n");
     if (sel_type == SEL_IN) {

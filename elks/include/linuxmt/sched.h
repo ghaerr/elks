@@ -8,6 +8,7 @@
 
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
+#include <linuxmt/limits.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/time.h>
 #include <linuxmt/signal.h>
@@ -68,7 +69,7 @@ struct task_struct {
     __s16			state;
     __u32			timeout;	/* for select() */
     struct wait_queue		*waitpt;	/* Wait pointer */
-    __u16			pollhash;
+    struct wait_queue       *poll [POLL_MAX];  /* polled queues */
     struct task_struct		*next_run;
     struct task_struct		*prev_run;
     struct file_struct		files;		/* File system structure */
@@ -165,7 +166,7 @@ extern void put_ustack(register struct task_struct *,int,int);
 
 extern void tswitch(void);
 
-/* This should be an inline function !!! */
-extern void select_wait(struct wait_queue *);
+void select_wait(struct wait_queue *);
+int select_poll(struct task_struct *, struct wait_queue *);
 
 #endif

@@ -57,7 +57,7 @@ static size_t ne2k_read (struct inode * inode, struct file * filp,
 				{
 				// Interrupted by signal
 
-				res = -ERESTARTSYS;
+				res = -EINTR;
 				break;
 				}
 
@@ -116,7 +116,7 @@ static size_t ne2k_write (struct inode * inode, struct file * file,
 				{
 				// Interrupted by signal
 
-				res = -ERESTARTSYS;
+				res = -EINTR;
 				break;
 				}
 
@@ -258,6 +258,8 @@ static int ne2k_open (struct inode * inode, struct file * file)
 
 		err = ne2k_start ();
 		if (err) break;
+
+		ne2k_inuse = 1;
 
 		err = 0;
 		break;

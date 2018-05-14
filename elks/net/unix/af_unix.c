@@ -476,7 +476,7 @@ static int unix_write(struct socket *sock, char *ubuf, int size, int nonblock)
     return (size - todo);
 }
 
-static int unix_select(struct socket *sock, int sel_type, select_table * wait)
+static int unix_select(struct socket *sock, int sel_type)
 {
     struct unix_proto_data *upd, *peerupd;
 
@@ -490,11 +490,11 @@ static int unix_select(struct socket *sock, int sel_type, select_table * wait)
 	    if (sock->iconn)
 		return 1;
 
-	    select_wait(sock->wait, wait);
+	    select_wait(sock->wait);
 
 	    return (sock->iconn ? 1 : 0);
 	}
-	select_wait(sock->wait, wait);
+	select_wait(sock->wait);
 
 	return 0;
     }
@@ -508,7 +508,7 @@ static int unix_select(struct socket *sock, int sel_type, select_table * wait)
 	else if (sock->state != SS_CONNECTED)
 	    return 1;
 
-	select_wait(sock->wait, wait);
+	select_wait(sock->wait);
 
 	return 0;
     }
@@ -523,7 +523,7 @@ static int unix_select(struct socket *sock, int sel_type, select_table * wait)
 	if (UN_BUF_SPACE(peerupd) > 0)
 	    return 1;
 
-	select_wait(sock->wait, wait);
+	select_wait(sock->wait);
 
 	return 0;
     }
