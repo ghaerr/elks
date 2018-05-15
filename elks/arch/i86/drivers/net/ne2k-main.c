@@ -75,11 +75,11 @@ static size_t ne2k_read (struct inode * inode, struct file * filp,
 			break;
 			}
 
-		// Client should request at least MAX_PACKET_ETH bytes
+		// Client should read packet once
 		// otherwise end of packet will be lost
 
 		size = *((word_t *) (recv_buf + 2));
-		len = len > size ? size : len;
+		if (len > size) len = size;
 		memcpy_tofs (data, recv_buf + 4, len);
 
 		res = len;
@@ -128,9 +128,10 @@ static size_t ne2k_write (struct inode * inode, struct file * file,
 		// Client should write packet once
 		// otherwise end of packet will be lost
 
-		len = len > MAX_PACKET_ETH ? MAX_PACKET_ETH : len;
+		if (len > MAX_PACKET_ETH) len = MAX_PACKET_ETH;
 		memcpy_fromfs (send_buf, data, len);
 
+		if (len < 64) len = 64;  /* issue #133 */
 		res = ne2k_pack_put (send_buf, len);
 		if (res)
 			{
