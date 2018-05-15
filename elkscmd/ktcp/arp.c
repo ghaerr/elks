@@ -120,12 +120,9 @@ void arp_reply(char *packet,int size)
     struct arp *arp_r;
   __u8 *addr;
 
-    arp_r = (struct arp *)packet;
+    arp_r = (struct arp *) packet;
 
     /* arp_print(arp_r); */
-
-    /* Cache remote MAC and IP addresses */
-    arp_cache_add (&arp_r->ip_src, arp_r->eth_src);
 
     /* swap ip addresses and mac addresses */
     apair.daddr = arp_r->ip_src;
@@ -143,7 +140,7 @@ void arp_reply(char *packet,int size)
     memcpy(arp_r->eth_dest, apair.eth_dest, 6);
     arp_r->ip_dest=apair.daddr;
 
-    deveth_send(packet, size);
+    deveth_send(packet, sizeof (struct arp));
 }
 
 int arp_request(ipaddr_t ipaddress)
@@ -172,7 +169,7 @@ int arp_request(ipaddr_t ipaddress)
     for (i=0;i<6;i++) arp_r->eth_dest[i]=0;
     arp_r->ip_dest=ipaddress;
 
-    deveth_send(&packet, sizeof(struct arp));
+    deveth_send(&packet, sizeof (struct arp));
 
     /* wait for reply */
 selectagain:
@@ -198,11 +195,12 @@ void arp_proc (char * packet, int size)
 
 	arp_r = (struct arp *) packet;
 	switch (arp_r->op) {
-	case ARP_REQUEST:  /* big endian */
+	case ARP_REQUEST:
+		arp_cache_add (arp_r->ip_src, arp_r->eth_src);
 		arp_reply (packet, size);
 		break;
 
-	case ARP_REPLY:  /* big endian */
+	case ARP_REPLY:
 		arp_cache_add (arp_r->ip_src, arp_r->eth_src);
 		break;
 	}
