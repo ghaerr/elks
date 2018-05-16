@@ -54,4 +54,4 @@ Before writting the image on the real device, you can test it first on QEMU with
 Questions? Problems? Patches? Open an issue in this project! You can also join
 and email the 'Linux-8086' mailing list at linux-8086@vger.kernel.org. 
 
-More information in the Documentation folder: elks/Documentation/index.html
+More information in the Documentation folder: Documentation/index.html

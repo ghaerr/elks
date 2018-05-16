@@ -34,7 +34,7 @@ function header() {
 }
 
 function help() {
-    local HELPFILE=Documentation/Configure.help
+    local HELPFILE=config/Configure.help
 
     if [ ! -f "${HELPFILE}" ]; then
 	echo 0

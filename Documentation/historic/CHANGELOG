@@ -1423,7 +1423,7 @@ Mon Oct 22 14:22:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 	* Simplified creation of elks.spec for `make rpm` command (but this
 	  command is not yet guaranteed to work).
 	* Wrote design for revised Makefile system. Refer to the file
-	  elks/Documentation/Makefile-structure.html for details.
+	  Documentation/Makefile-structure.html for details.
 
 Mon Oct 22 10:49:00 EEST 2001	Harry Kalogirou <HarKal@rainbow.cs.unipi.gr>
 
@@ -1547,7 +1547,7 @@ Sat Sep 29 13:47:47 EEST 2001	Harry Kalogirou <HarKal@rainbow.cs.unipi.gr>
 
 Wed Sep 26 23:36:17 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* Deleted redundant Makefile's from elks/Documentation sub-tree.
+	* Deleted redundant Makefile's from Documentation sub-tree.
 	* Added prototype rule to Makefile-rules to allow automatic conversion
 	  of *.html to *.txt by Makefiles.
 
