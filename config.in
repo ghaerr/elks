@@ -12,8 +12,6 @@ mainmenu_option next_comment
 	 gcc-ia16 	CONFIG_COMPILER_2   \
 	 gcc-elks	CONFIG_COMPILER_3"  bcc
 
-#	bool 'Build cross tools' CONFIG_CROSS_BUILD y
-
 endmenu
 
 #
@@ -21,7 +19,7 @@ endmenu
 #
 
 mainmenu_option next_comment
-	comment 'Kernel'
+	comment 'Kernel & Hardware'
 	source elks/config.in
 
 endmenu

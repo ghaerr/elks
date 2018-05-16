@@ -33,7 +33,10 @@ mainmenu_option next_comment
 	if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
 	    bool 'Normal floppy disk support'	CONFIG_BLK_DEV_FD	n
 	    bool 'Normal IDE hardisk support'	CONFIG_BLK_DEV_HD	n
+	else
+		comment '(direct disk support is experimental)'
 	fi
+
 	if [ "$CONFIG_BLK_DEV_FD" = "y" ]; then
 	    define_bool CONFIG_DMA y
 	else

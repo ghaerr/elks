@@ -46,6 +46,9 @@ mainmenu_option next_comment
     bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y
 
     if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
-	bool 'Meta device driver'		CONFIG_DEV_META		  n
-    fi
+		bool 'Meta device driver'		CONFIG_DEV_META		  n
+	else
+		comment '(meta device is experimental)'
+	fi
+
 endmenu

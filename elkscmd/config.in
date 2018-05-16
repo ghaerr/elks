@@ -3,18 +3,18 @@
 #
 
 mainmenu_option next_comment
-	comment 'Commands'
+	comment 'Userland'
 
 	comment "Shell"
 
 	bool 'ash'        CONFIG_APP_ASH        y
 	bool 'shutils'    CONFIG_APP_SH_UTILS   y
 
-	if [ $CONFIG_APP_ASH != y ]; then
+	if [ "$CONFIG_APP_ASH" != "y" ]; then
 		comment 'sash as default shell'
-		define_bool  CONFIG_APP_SASH        y
+		define_bool CONFIG_APP_SASH y
 	else
-		comment 'sash not needed when ash'
+		comment '(sash not needed with ash)'
 	fi
 
 	comment 'Other commands'
@@ -25,7 +25,6 @@ mainmenu_option next_comment
 	bool 'e3'         CONFIG_APP_E3         y
 	bool 'elvis'      CONFIG_APP_ELVIS      y
 	bool 'fileutils'  CONFIG_APP_FILE_UTILS y
-	bool 'ktcp'       CONFIG_APP_KTCP       y
 	bool 'levee'      CONFIG_APP_LEVEE      y
 	bool 'm4'         CONFIG_APP_M4         y
 	bool 'minix1'     CONFIG_APP_MINIX1     y
@@ -40,29 +39,36 @@ mainmenu_option next_comment
 	bool 'test'       CONFIG_APP_TEST       n
 	bool 'xvi'        CONFIG_APP_XVI        y
 
-	if [ $CONFIG_APP_KTCP == y ]; then
+	comment "Internet stack"
 
-		comment "Internet commands"
+	if [ "$CONFIG_INET" == "y" ]; then
+		bool 'ktcp' CONFIG_APP_KTCP y
 
-		bool 'httpd'      CONFIG_APP_HTTPD      y
-		bool 'nettools'   CONFIG_APP_NET_TOOLS  y
-		bool 'telnet'     CONFIG_APP_TELNET     y
-		bool 'telnetd'    CONFIG_APP_TELNETD    y
-		bool 'tinyirc'    CONFIG_APP_TINYIRC    y
-		bool 'urlget'     CONFIG_APP_URLGET     y
+		if [ "$CONFIG_APP_KTCP" == "y" ]; then
+
+			comment "Internet applets"
+
+			bool 'httpd'      CONFIG_APP_HTTPD      y
+			bool 'nettools'   CONFIG_APP_NET_TOOLS  y
+			bool 'telnet'     CONFIG_APP_TELNET     y
+			bool 'telnetd'    CONFIG_APP_TELNETD    y
+			bool 'tinyirc'    CONFIG_APP_TINYIRC    y
+			bool 'urlget'     CONFIG_APP_URLGET     y
+
+		else
+			comment "(internet applets need ktcp)"
+		fi
 
 	else
-
-		comment "Internet commands need ktcp"
-
+		comment '(ktcp needs TCP/IP sockets)'
 	fi
 
 endmenu
 
 mainmenu_option next_comment
-	comment 'Image'
+	comment 'Target image'
 
-	choice 'Target filesystem' \
+	choice 'Filesystem' \
 	"MINIX  CONFIG_IMG_MINIX   \
 	 FAT    CONFIG_IMG_FAT     \
 	 ROM    CONFIG_IMG_ROM" MINIX
@@ -75,7 +81,7 @@ mainmenu_option next_comment
 
 		define_bool CONFIG_IMG_DEV y
 
-		choice 'Target medium' \
+		choice 'Medium' \
 		"FD1680 CONFIG_IMG_FD1680 \
 		 FD1440 CONFIG_IMG_FD1440 \
 		 FD1200 CONFIG_IMG_FD1200 \

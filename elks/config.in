@@ -1,147 +1,138 @@
-#mainmenu_name "ELKS Kernel"
+# Kernel configuration
+
 comment 'Just accept the defaults unless you know what you are doing'
 
 mainmenu_option next_comment
-    comment 'Advanced - for Developers and Hackers only'
+	comment 'Hardware'
 
-    bool 'Include development code/drivers'	CONFIG_EXPERIMENTAL	n
-    bool 'Modular kernel (NOT IMPLEMENTED)'	CONFIG_MODULES		n
-endmenu
+	comment 'System'
 
-mainmenu_option next_comment
-    comment 'Architecture'
+	choice 'Select system' \
+		"IBM-PC CONFIG_ARCH_IBMPC \
+		 SIBO   CONFIG_ARCH_SIBO" IBM-PC
 
-    choice 'Select system architecture'		\
-	"Auto		CONFIG_ARCH_AUTO	\
-	 IBM-PC 	CONFIG_ARCH_IBMPC	\
-	 SIBO		CONFIG_ARCH_SIBO"		Auto
+	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 
-    if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
-	choice 'Select PC system architecture'	\
-	    "Auto	CONFIG_PC_AUTO		\
-	     PC/XT	CONFIG_PC_XT		\
-	     PC/AT	CONFIG_PC_AT		\
-	     MCA	CONFIG_PC_MCA"			Auto
+		choice 'Select IBM-PC variant' \
+			"PC    CONFIG_PC_AUTO \
+			 PC-XT CONFIG_PC_XT   \
+			 PC-AT CONFIG_PC_AT   \
+			 MCA   CONFIG_PC_MCA" Auto
 
-	bool 'Build kernel as ROM-bootable'		CONFIG_ROMCODE	n
-    else
-	define_bool CONFIG_ROMCODE n
-    fi
+		choice 'Model of computer' \
+			"TrueClone CONFIG_IBMPC_CLONE \
+			 Compaq    CONFIG_IBMPC_COMPAQ" TrueClone
 
-    bool 'Minimize kernel size'			CONFIG_SMALL_KERNEL	n
-endmenu
-
-if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
-    mainmenu_option next_comment
-	comment 'Model-specific features'
-
-	choice 'Model of computer'		\
-	    "TrueClone	CONFIG_IBMPC_CLONE	\
-	     Compaq	CONFIG_IBMPC_COMPAQ"		TrueClone
-	if [ "$CONFIG_IBMPC_COMPAQ" = "y" ]; then
-	    bool 'Switch Compaq DeskPro to fast mode'	CONFIG_COMPAQ_FAST  n
-	fi
-	bool 'Mount root partition read-only by default' CONFIG_ROOT_READONLY n
-    endmenu
-fi
-
-mainmenu_option next_comment
-    comment 'Memory manager'
-
-	choice 'Allocator' \
-		"table CONFIG_MEM_TABLE \
-		 list  CONFIG_MEM_LIST" \
-		 list
-
-    bool 'Advanced memory manager'			CONFIG_ADVANCED_MM	y
-	
-    if [ "$CONFIG_ADVANCED_MM" = "y" ]; then
-	     bool 'Enable swap support'			CONFIG_SWAP	n
-	fi
-
-endmenu
-
-mainmenu_option next_comment
-    comment 'Hardware Facilities'
-
-    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
-	choice 'Processor'			\
-	    "8086	CONFIG_CPU_8086		\
-	     80186	CONFIG_CPU_80186	\
-	     80286	CONFIG_CPU_80286	\
-	     80386	CONFIG_CPU_80386	\
-	     80486+	CONFIG_CPU_80486"		8086
-    fi
-    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
-	mainmenu_option next_comment
-	    comment 'System Hardware'
-
-	    bool 'System has a math coprocessor'	CONFIG_HW_FPU        n
-	    bool 'System has a PS/2 pointing device'	CONFIG_HW_PS2_MOUSE  y
-	    bool 'System has a VGA adapter'		CONFIG_HW_VGA        y
-	endmenu
-    fi
-
-    if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
-	mainmenu_option next_comment
-	    comment 'Block Devices'
-
-	    bool 'System has a floppy drive'	CONFIG_HW_FLOPPY_DRIVE   y
-	    bool 'System has a hard drive'	CONFIG_HW_HARD_DRIVE     y
-	endmenu
-    fi
-
-#    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
-#	mainmenu_option next_comment
-#	    comment 'Character Devices'
-#
-#	    int 'Number of valid text consoles' CONFIG_CONSOLES_MAX 3 3 15
-#	endmenu
-#    fi
-
-    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
-	mainmenu_option next_comment
-	    comment 'Memory Configuration'
-
-	    int 'Base memory size (64K pages)'  	CONFIG_MEM_PAGES  8 4 10
-	    if [[ "$CONFIG_CPU_8086" != "y" && "$CONFIG_CPU_80186" != "y" ]]; then
-		bool 'Extended (XMS) memory support'	CONFIG_XMS	  n
-		if [ "$CONFIG_XMS" = "y" ]; then
-		    bool '  Use interrupt 15 for XMS size'	CONFIG_XMS_INT15  n
-		    if [ "$CONFIG_XMS_INT15" != "y" ]; then
-			int '  Extended memory size in kB'	CONFIG_XMS_SIZE   0
-		    else
-			define_int CONFIG_XMS_SIZE 0
-		    fi
-		else
-		    define_bool CONFIG_XMS_INT15 n
-		    define_int  CONFIG_XMS_SIZE  0
+		if [ "$CONFIG_IBMPC_COMPAQ" = "y" ]; then
+			bool 'Switch Compaq DeskPro to fast mode' CONFIG_COMPAQ_FAST n
 		fi
-	    else
-		define_bool CONFIG_XMS_INT15 n
-		define_int  CONFIG_XMS_SIZE  0
-	    fi
-	endmenu
-    fi
 
-    if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
+		comment 'Platform'
+
+		choice 'Processor' \
+			"8086   CONFIG_CPU_8086   \
+			 80186  CONFIG_CPU_80186  \
+			 80286  CONFIG_CPU_80286  \
+			 80386  CONFIG_CPU_80386  \
+			 80486+	CONFIG_CPU_80486" 8086
+
+		int 'Ticks for BogoMIPS (0 = check at boottime)' CONFIG_BOGOMIPS 140055
+
+		int 'Base memory size (64K pages)' CONFIG_MEM_PAGES 8 4 10
+
+		if [[ "$CONFIG_CPU_8086" != "y" && "$CONFIG_CPU_80186" != "y" ]]; then
+			bool 'Extended (XMS) memory support' CONFIG_XMS n
+
+			if [ "$CONFIG_XMS" = "y" ]; then
+				bool '  Use interrupt 15 for XMS size' CONFIG_XMS_INT15 n
+
+			    if [ "$CONFIG_XMS_INT15" != "y" ]; then
+					int '  Extended memory size in kB' CONFIG_XMS_SIZE 0
+			    else
+					define_int CONFIG_XMS_SIZE 0
+			    fi
+
+			else
+				define_bool CONFIG_XMS_INT15 n
+				define_int  CONFIG_XMS_SIZE  0
+			fi
+
+		else
+			define_bool CONFIG_XMS_INT15 n
+			define_int  CONFIG_XMS_SIZE  0
+		fi
+
+		comment 'Devices'
+
+		bool 'Math coprocessor' CONFIG_HW_FPU       n
+		bool 'PS/2 mouse'       CONFIG_HW_PS2_MOUSE y
+		bool 'VGA adapter'      CONFIG_HW_VGA       y
+
+		bool 'Floppy drive(s)' CONFIG_HW_FLOPPY_DRIVE y
+		if [ "$CONFIG_HW_FLOPPY_DRIVE" == "y" ]; then
+			bool '  Use INT 13h for floppy count' CONFIG_HW_USE_INT13_FOR_FLOPPY n
+		fi
+
+		bool 'Hard drive(s)'   CONFIG_HW_HARD_DRIVE   y
+		if [ "$CONFIG_HW_HARD_DRIVE" == "y" ]; then
+			bool '  Use INT 13h for disk parameters' CONFIG_HW_USE_INT13_FOR_DISKPARMS n
+		fi
+
+		comment 'BIOS support'
+
+		bool 'System has keyboard BIOS support'    CONFIG_HW_KEYBOARD_BIOS y
+		bool 'Get fontinfo via CRT-BIOS (40h:85h)' CONFIG_HW_VIDEO_HOC     y
+
+		if [ "$CONFIG_HW_VIDEO_HOC" != "y" ]; then
+			int 'Height of characters in lines' CONFIG_HW_VIDEO_LINES_PER_CHARACTER 8
+			int 'Lines per page'                CONFIG_HW_VIDEO_LINES_PER_SCREEN    25
+		fi
+
+		bool 'Use bootup IRQ-Mask of 8259 as default'    CONFIG_HW_259_USE_ORIGINAL_MASK n
+		bool 'Advanced Power Management support'         CONFIG_APM y
+
+	fi
+
+endmenu
+
+mainmenu_option next_comment
+	comment 'Kernel settings'
+
 	mainmenu_option next_comment
-	    comment 'BIOS Facilities'
+	    comment 'Memory manager'
 
-	    bool 'System has keyboard BIOS support'		CONFIG_HW_KEYBOARD_BIOS y
-	    bool 'Get fontinfo via CRT-BIOS (40h:85h)'		CONFIG_HW_VIDEO_HOC y
-	    if [ "$CONFIG_HW_VIDEO_HOC" != "y" ]; then
-		int 'Height of characters in lines'		CONFIG_HW_VIDEO_LINES_PER_CHARACTER 8
-		int 'Lines per page'				CONFIG_HW_VIDEO_LINES_PER_SCREEN 25
-	    fi
+		choice 'Allocator' \
+			"table CONFIG_MEM_TABLE \
+			 list  CONFIG_MEM_LIST" \
+			 list
 
-	    bool 'Use bootup IRQ-Mask of 8259 as default'	CONFIG_HW_259_USE_ORIGINAL_MASK n
-	    int 'Ticks for BogoMIPS (0 = check at boottime)'	CONFIG_BOGOMIPS 140055
-	    bool 'Use int 13 for floppy count'			CONFIG_HW_USE_INT13_FOR_FLOPPY n
-	    bool 'Use int 13 for disk parameters'		CONFIG_HW_USE_INT13_FOR_DISKPARMS n
-	    bool 'Advanced Power Management support'		CONFIG_APM y
+	    bool 'Advanced memory manager' CONFIG_ADVANCED_MM y
+
+	    if [ "$CONFIG_ADVANCED_MM" = "y" ]; then
+		     bool 'Enable swap support' CONFIG_SWAP n
+		fi
+
 	endmenu
+
+	bool 'Minimize kernel size'               CONFIG_SMALL_KERNEL n
+	bool 'Include kernel version system call' CONFIG_SYS_VERSION  n
+	bool 'System Trace'                       CONFIG_STRACE       n
+	bool 'Halt on Idle'                       CONFIG_IDLE_HALT    n
+
+	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
+		bool 'Build kernel as ROM-bootable'   CONFIG_ROMCODE      n
     fi
+
+	bool 'Include development code/drivers' CONFIG_EXPERIMENTAL n
+
+	if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+		bool '286 protected mode' CONFIG_286PMODE n
+	else
+		comment '(286 protected mode is experimental)'
+	fi
+
+    bool 'Modular kernel (NOT IMPLEMENTED)'	CONFIG_MODULES		n
+
 endmenu
 
 if [ "$CONFIG_ROMCODE" = "y" ]; then
@@ -182,28 +173,7 @@ if [ "$CONFIG_ROMCODE" = "y" ]; then
     endmenu
 fi
 
-if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
-    mainmenu_option next_comment
-	comment '286 Protected Mode Support'
-
-	bool '286 protected mode support'	CONFIG_286PMODE 	n
-	if [ "$CONFIG_286PMODE" = "y" ]; then
-	    bool 'Support 16M+ on 386+' 	CONFIG_386RAM		n
-	fi
-    endmenu
-fi
-
-# Drivers configuration
-
-mainmenu_option next_comment
-    comment 'Driver Support'
-
-    source elks/arch/i86/drivers/block/config.in
-    source elks/arch/i86/drivers/char/config.in
-    source elks/arch/i86/drivers/net/config.in
-endmenu
-
-# Generic networking support
+# Networking support
 
 source elks/net/config.in
 
@@ -211,12 +181,13 @@ source elks/net/config.in
 
 source elks/fs/config.in
 
-# Kernel hacking
+# Drivers configuration
 
 mainmenu_option next_comment
-	comment 'Kernel hacking'
+	comment 'Drivers'
 
-	bool 'Include kernel version system call' CONFIG_SYS_VERSION n
-	bool 'System Trace'                       CONFIG_STRACE      n
-	bool 'Halt on Idle'                       CONFIG_IDLE_HALT   n
+	source elks/arch/i86/drivers/block/config.in
+	source elks/arch/i86/drivers/char/config.in
+	source elks/arch/i86/drivers/net/config.in
+
 endmenu

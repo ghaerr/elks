@@ -17,6 +17,8 @@ mainmenu_option next_comment
 
 	comment 'General filesystem settings'
 
+	bool 'Mount root partition read-only by default' CONFIG_ROOT_READONLY n
+
 	bool 'All file systems are READ-ONLY'  CONFIG_FS_RO               n
 
 	if [ "$CONFIG_MSDOS_FS" != "y" ]; then
