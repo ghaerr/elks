@@ -11,6 +11,7 @@
 	.globl _main
 	.extern	_start_kernel
 	.extern _arch_boot
+	.globl _early_printk
 
 ! note: this next instruction is part of the kernel restart fix for
 ! protexted mode. it must be 3 bytes long.
@@ -68,6 +69,27 @@ _main:
 	call	_arch_boot
 	call	_start_kernel	! Break point if it returns
 	int	3
+
+_early_printk:
+	push  bp
+	mov   bp,sp
+	push  si
+	mov   si,[bp+4]
+	cld
+
+ep_loop:
+	lodsb
+	or    al,al
+	jz    ep_end
+	mov   ah,#0x0E
+	mov   bx,#0x0007
+	int   0x10
+	jmp   ep_loop
+
+ep_end:
+	pop   si
+	pop   bp
+	ret
 
 !	Segment beginnings
 
