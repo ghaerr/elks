@@ -163,7 +163,7 @@ dist.old:
 	cp -pf BUGS BUGS.html CHANGELOG COPYING nodeps $(DISTDIR)
 	cp -pf config.in Makefile Makefile-rules README RELNOTES $(DISTDIR)
 	cp -pf INSTALLATION INSTALLATION.html TODO $(DISTDIR)
-	(cd $(DISTDIR); mkdir Documentation fs include init kernel lib net)
+	(cd $(DISTDIR); mkdir fs include init kernel lib net)
 	(cd $(DISTDIR); mkdir -p $(ARCH_DIR) scripts)
 	(cd $(DISTDIR)/fs; mkdir minix romfs)
 	(cd $(DISTDIR)/include; mkdir arch linuxmt)
@@ -178,7 +178,6 @@ dist.old:
 	cp -pf include/linuxmt/*.h $(DISTDIR)/include/linuxmt
 	cp -pf include/arch/*.h $(DISTDIR)/include/arch
 	cp -pf init/main.c $(DISTDIR)/init
-	cp -apf Documentation $(DISTDIR)
 	@echo
 	@echo Directory $(DISTDIR) now contains a clean distribution tree.
 	@echo

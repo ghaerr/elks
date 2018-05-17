@@ -577,7 +577,10 @@ void init_console(void)
 
 #endif
 
-	ClearRange(C, 0, C->cy, MaxCol, MaxRow);
+	/* This hide the early printk
+	 * ClearRange(C, 0, C->cy, MaxCol, MaxRow);
+	 */
+
 	C++;
     }
 

@@ -729,7 +729,7 @@ getcpu:
 	popf
 	and	ax,#0xf000
 	cmp	ax,#0xf000
-	je	tmp86
+	je	is8086
 	mov	ax,#0x7000
 	pushf
 	push	ax
@@ -738,161 +738,13 @@ getcpu:
 	pop	ax
 	popf
 	and	ax,#0x7000
-	je	tmp286
+	je	is80286
 !
-! Check if the processor runs in VM-Mode (does not work with DOSEMU. Why not?)
+! Default & unknown CPU
 !
-	pushfd
-	pop	eax
-	and	eax,#0x020000
-	jz	chk486
 	mov	cl,#0xff
-	lea	si,pvm86
+	lea	si,px86
 	br	getfpu
-!
-! Probe for 486
-!
-chk486:	cli
-	mov	ebx,esp
-	and	esp,#0x0fffc
-	pushfd
-	pop	eax
-	mov	ecx,eax
-	xor	eax,#0x040000	! 1 << 18, AC flag
-	push	eax
-	popfd
-	pushfd
-	pop	eax
-	push	ecx
-	popfd
-	xor	eax,ecx
-	shr	eax,#18		! This can stay since it's 32-bit code :)
-	and	eax,#1
-	mov	esp,ebx
-	sti
-	mov	cl,#7
-	add	cl,al
-	or	al,al
-	jnz	is486
-#endif
-#ifdef CONFIG_CPU_80386
-        mov cl,#7
-	lea	si,p80386
-	br	getfpu
-#endif
-#ifndef CONFIG_ROMCODE
-	lea	si,p80386
-	br	getfpu
-tmp86:	br	is8086
-tmp286:	br	is80286
-#endif
-
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_80486)
-is486:	! Now check whether this processor knows the CPU-id instruction
-	!
-	! This does not work. The code seems to destroy some other memory
-	! areas. But why? Is it 16/32-bit stack corruption?
-	!
-	mov	ebp,esp
-	and	esp,#0xfffc
-	pushfd			! save flags
-	pushfd
-	pop	eax		! flags are in ax
-	mov	ecx,eax
-	xor	eax,#0x0200000	! 1 << 21, CPUID flag
-	push	eax
-	popfd
-	pushfd
-	pop	eax
-	xor	ecx,eax
-	popfd
-	mov	esp,ebp
-	and	eax,#0x0200000
-	jz	told486
-	xor	eax,eax
-	db	0x0f, 0xa2	! cpuid
-	mov	v_id,ebx
-	mov	v_id2,edx
-	mov	v_id3,ecx
-	mov	eax,#1
-	db	0x0f, 0xa2	! cpuid
-	mov	cl,al
-	and	ah,#0x0f	! cpu family
-	and	al,#0xf0
-	push	cx
-	mov 	cl, #4
-	shr	al,cl		! cpu model
-	pop 	cx
-	and	cl,#0x0f	! mask revision
-	push	ds
-	push	ax
-	mov	ax,#INITSEG
-	mov	ds,ax
-	pop	ax
-	mov	[0x23],ah	! x86 family
-	mov	[0x24],al	! x86 model
-	mov	[0x25],cl	! x86 mask revision
-	mov	[0x26],edx	! cpu capability flag
-	mov	dl,#1
-	mov	[0x22],dl	! cpuid data valid
-	pop	ds
-!
-! 486 processor with CPU-ID
-!
-	cmp	ah,#4		! 486 CPU
-	jne	m_pentium
-	lea	si,m486_t
-	xor	ah,ah
-	add	al,al		! 16 different 486 CPUs, no check needed
-	add	si,ax
-	mov	si,[si]
-	mov	cl,#8
-	br	getfpu
-told486:jmp	old486
-!
-! Pentium or above
-!
-m_pentium:
-	cmp	ah,#5
-	jnz	m_ppro
-	xor	ah,ah
-	cmp	al,#3		! we currently know of 4 differrent Pentia
-	jle	pen_ok
-	mov	al,#4
-pen_ok:	lea	si,m586_t
-	add	al,al
-	add	si,ax
-	mov	si,[si]
-	mov	cl,#9
-	br	getfpu
-!
-! Pentium pro -- the best machine for ELKS :-)
-!
-m_ppro:	cmp	ah,#6
-	jnz	m_unknown
-	xor	ah,ah
-	cmp	al,#1		! there a 2 known PPro versions
-	jle	ppro_ok
-	mov	al,#2
-ppro_ok: lea	si,m686_t
-	add	al,al
-	add	si,ax
-	mov	si,[si]
-	mov	cl,#10
-	jmp	getfpu
-m_unknown:
-	lea	si,m_x86
-	mov	cl,#8
-	jmp	getfpu
-old486:	xor	cl,cl
-	mov	ax,#INITSEG
-	push	ds
-	mov	ds,ax
-	mov	[0x22],cl
-	pop	ds
-	mov	cl,#8
-	lea	si,p80486
-	jmp	getfpu
 #endif
 
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
@@ -933,7 +785,7 @@ isv30:
 	jmp	getfpu
 isv20:	mov	cl,#2
 	lea	si,pv20
-        jmp     getfpu
+	jmp     getfpu
 #endif
 #if !defined (CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
 is80286:mov	cl,#6
@@ -1241,31 +1093,25 @@ no_hd1:	ret
 ! The processor name must not be longer than 15 characters!
 !
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
-p8088:	.ascii "8088"
+p8088:	.ascii "Intel 8088"
 	db 0
-p8086:	.ascii "8086"
+p8086:	.ascii "Intel 8086"
 	db 0
 pv20:	.ascii "NEC V20"
 	db 0
 pv30:	.ascii "NEC V30"
 	db 0
-p80188:	.ascii "80188"
+p80188:	.ascii "Intel 80188"
 	db 0
-p80186:	.ascii "80186"
+p80186:	.ascii "Intel 80186"
 	db 0
 #endif
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
-p80286:	.ascii "80286"
+p80286:	.ascii "Intel 80286"
 	db 0
 #endif
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_80386)
-p80386:	.ascii "80386"
-	db 0
-#endif
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_80486)
-p80486:	.ascii "80486 no CPUID"
-	db 0
-pvm86:	.ascii "VM86"
+#if !defined(CONFIG_ROMCODE)
+px86:   .ascii "Unknown x86"
 	db 0
 #endif
 !
@@ -1291,78 +1137,6 @@ f80387: .ascii "80387 or above"
 fpu_t:	.word f_none
 #ifdef CONFIG_HW_FPU
          .word f8087, f80287, f80387
-#endif
-
-!
-! Known 486 CPUs
-!
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_80486)
-m486_0:	.ascii "486 model 0"
-	db 0
-m486_1:	.ascii "486DX"
-	db 0
-m486_2:	.ascii "486SX"
-	db 0
-m486_3:	.ascii "486DX/2"
-	db 0
-m486_4:	.ascii "486 model 4"
-	db 0
-m486_5:	.ascii "486SX/2"
-	db 0
-m486_6:	.ascii "486 model 6"
-	db 0
-m486_7:	.ascii "486 DX/2-WB"
-	db 0
-m486_8:	.ascii "486 DX/4"
-	db 0
-m486_9:	.ascii "486 DX/4-WB"
-	db 0
-m486_10: .ascii "486 model 10"
-	db 0
-m486_11: .ascii "486 model 11"
-	db 0
-m486_12: .ascii "486 model 12"
-	db 0
-m486_13: .ascii "486 model 13"
-	db 0
-m486_14: .ascii "Am5x86-WT"
-	db 0
-m486_15: .ascii "Am5x86-WB"
-	db 0
-
-m486_t:	.word m486_0,  m486_1,  m486_2,  m486_3
-	.word m486_4,  m486_5,  m486_6,  m486_7
-	.word m486_8,  m486_9,  m486_10, m486_11
-	.word m486_12, m486_13, m486_14, m486_15
-!
-! Known Pentium CPUs
-!
-m586_0:	.ascii "586 model 0"
-	db 0
-m586_1:	.ascii "Pentium 60/66"
-	db 0
-m586_2: .ascii "Pentium 75+"
-	db 0
-m586_3: .ascii "Ovrdrv PODP5V83"
-	db 0
-m586_x:	.ascii "unknown 586"
-	db 0
-
-m586_t: .word m586_0, m586_1, m586_2, m586_3, m586_x
-
-!
-! Known Pentium Pro CPUs
-!
-m686_0: .ascii "PPro A-step"
-	db 0
-m686_1:	.ascii "Pentium Pro"
-	db 0
-m686_x:	.ascii "unknown 686"
-	db 0
-m686_t: .word m686_0, m686_1, m686_x
-
-m_x86:	.ascii "Unknown Proc."
-	db 0
 #endif
 
 #ifdef CONFIG_HW_FPU

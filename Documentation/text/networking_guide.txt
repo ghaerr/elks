@@ -3,15 +3,15 @@
 Instructions how to test ethernet with the new version of ktcp and the ne2k driver
 ----------------------------------------------------------------------------------
 
-Mark-Francois (MFLD) has written an NE2000 network interface card driver for ELKS. To be
-able to make use of that I (Georg Potthast / georgp24) modified the existing ktcp user
+MFLD (@mfld-fr) has written an NE2000 network interface card driver for ELKS. To be
+able to make use of that I (Georg Potthast / @georgp24) modified the existing ktcp user
 mode driver by Harry Kalogirou which supported SLIP only to support the ne2k driver now. 
 I added ARP support, a link layer, gateway support via the ne2k NIC and fixed 
 ntohl() / htonl() in linuxmt/arpa/inet.h. Plus several small changes here and there.
 
 As a result you can now use the ne2k driver for ethernet communication.
 
-If you run this using Qemu, please read the file "elks/Documentation/html/user/qemu.html" 
+If you run this using Qemu, please read the file "Documentation/html/user/qemu.html" 
 for the parameters to use for the required network support.
 
 ----------------------

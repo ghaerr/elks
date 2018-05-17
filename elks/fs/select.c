@@ -114,31 +114,6 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
     int count = -1;
     register char *pi;
     register struct file **filp;
-/*
-    int j;
-
-    j = 0;
-    for (;;) {
-	pi = (char *)(j * __NFDBITS);
-	if (((int)pi) >= n)
-	    break;
-	set = *in | *out | *ex;
-
-	j++;
-	for (; set; pi++, set >>= 1) {
-	    if (((int)pi) >= n)
-		goto end_check;
-	    if (!(set & 1))
-		continue;
-	    if (!currentp->files.fd[(int)pi])
-		return -EBADF;
-	    if (!currentp->files.fd[(int)pi]->f_inode)
-		return -EBADF;
-	    count = (int)pi;
-	}
-    }
-  end_check:
-*/
 
     set = *in | *out | *ex;
     filp = current->files.fd;
@@ -209,13 +184,6 @@ static void zero_fd_set(fd_set * fdset)
     memset(fdset, 0, sizeof(fd_set));
 }
 
-/*
- * We can actually return ERESTARTSYS instead of EINTR, but I'd like to be
- * certain this leads to no problems. So I return EINTR just for safety.
- *
- * Update: ERESTARTSYS breaks at least the xview clock binary, so
- * I'm trying ERESTARTNOHAND which restart only when you want to.
- */
 
 int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
 	       register struct timeval *tvp)
@@ -254,12 +222,14 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
 
     current->timeout = 0UL;
     if (!error && (current->signal /* & ~current->blocked */ ))
-	error = -ERESTARTNOHAND;
-    else if (error > 0) {
-	set_fd_set(inp, &res_in);
-	set_fd_set(outp, &res_out);
-	set_fd_set(exp, &res_ex);
-    }
+	error = -EINTR;
+	else {
+		/* update arrays even after timeout - see issue #213 */
+		set_fd_set(inp, &res_in);
+		set_fd_set(outp, &res_out);
+		set_fd_set(exp, &res_ex);
+	}
+
   outl:
     return error;
 }

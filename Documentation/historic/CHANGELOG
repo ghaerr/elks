@@ -1326,8 +1326,6 @@ Tue Nov 13 17:40:00 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
 		CONFIG_ARCH_PC_XT	CONFIG_PC_XT
 		CONFIG_ROM_IS186	CONFIG_CPU_80186
 		CONFIG_ROM_IS286	CONFIG_CPU_80286
-		CONFIG_ROM_IS386	CONFIG_CPU_80386
-		CONFIG_ROM_IS486	CONFIG_CPU_80486
 		CONFIG_ROM_IS86 	CONFIG_CPU_8086
 
 Mon Nov 12 14:05:37 GMT 2001	Riley Williams <rhw@MemAlpha.cx>
@@ -1425,7 +1423,7 @@ Mon Oct 22 14:22:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 	* Simplified creation of elks.spec for `make rpm` command (but this
 	  command is not yet guaranteed to work).
 	* Wrote design for revised Makefile system. Refer to the file
-	  elks/Documentation/Makefile-structure.html for details.
+	  Documentation/Makefile-structure.html for details.
 
 Mon Oct 22 10:49:00 EEST 2001	Harry Kalogirou <HarKal@rainbow.cs.unipi.gr>
 
@@ -1549,7 +1547,7 @@ Sat Sep 29 13:47:47 EEST 2001	Harry Kalogirou <HarKal@rainbow.cs.unipi.gr>
 
 Wed Sep 26 23:36:17 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* Deleted redundant Makefile's from elks/Documentation sub-tree.
+	* Deleted redundant Makefile's from Documentation sub-tree.
 	* Added prototype rule to Makefile-rules to allow automatic conversion
 	  of *.html to *.txt by Makefiles.
 

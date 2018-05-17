@@ -43,4 +43,4 @@ extern word_t ne2k_pack_get (byte_t * pack);
 extern word_t ne2k_pack_put (byte_t * pack, word_t len);
 
 
-#endif // !NE2K_H
+#endif /* !NE2K_H */

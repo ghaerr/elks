@@ -475,7 +475,7 @@ VERSION 0.0.66 NOTES
 	* Small change to stack_check() %d changed to %ld for t_endbrk.
 	* Implemented Rob. de Bath changes for Dev86v13.
 	* Added a simple ramdisk driver which can access up to 8 64K
-	  ramdisks. See elks/Documentation/ramdisk.txt.
+	  ramdisks. See Documentation/ramdisk.txt.
 	* Re-organised the way the debugging macros work, so they now have
 	  paramater numbers. This cut out 2656 bytes of initialised data.
 

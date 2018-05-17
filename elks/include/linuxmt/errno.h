@@ -161,7 +161,6 @@
 
 #define ERESTARTSYS	512	/* Restart system */
 #define ERESTARTNOINTR	513	/* Restart without interrupts */
-#define ERESTARTNOHAND	514	/* restart if no handler.. */
 #define ENOIOCTLCMD	515	/* No ioctl command */
 
 /* Defined for the NFSv3 protocol */

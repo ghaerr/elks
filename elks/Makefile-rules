@@ -205,30 +205,6 @@ else
 endif
 endif
 
-ifeq ($(MK_CPU), 80386)
-ifeq ($(USEIA16), y)
-    CPU_AS	= -3 -O
-    CPU_CC	= -3
-    CPU_LD	= -3
-else
-    CPU_AS	= -3 -O
-    CPU_CC	= -3
-    CPU_LD	= -3
-endif
-endif
-
-ifeq ($(MK_CPU), 80486)
-ifeq ($(USEIA16), y)
-    CPU_AS	= -3 -O
-    CPU_CC	= -3
-    CPU_LD	= -3
-else
-    CPU_AS	= -3 -O
-    CPU_CC	= -3
-    CPU_LD	= -3
-endif
-endif
-
 #########################################################################
 # Export all variables.
 

@@ -1,13 +1,16 @@
 #
-# Default configuration file for IBM PC/XT/AT
-#
-
-#
 # Automatically generated make config: don't edit
 #
 
 #
-# Kernel
+# Cross build chain
+#
+CONFIG_COMPILER_1=y
+# CONFIG_COMPILER_2 is not set
+# CONFIG_COMPILER_3 is not set
+
+#
+# Kernel & Hardware
 #
 
 #
@@ -15,109 +18,114 @@
 #
 
 #
-# Advanced - for Developers and Hackers only
+# Hardware
 #
 
-CONFIG_EXPERIMENTAL=y
-# CONFIG_MODULES is not set
-
 #
-# Select compiler to use
+# System
 #
-
-CONFIG_COMPILER_1=y
-# CONFIG_COMPILER_2 is not set
-# CONFIG_COMPILER_3 is not set
-
-#
-# Architecture
-#
-
-# CONFIG_ARCH_AUTO is not set
 CONFIG_ARCH_IBMPC=y
 # CONFIG_ARCH_SIBO is not set
 CONFIG_PC_AUTO=y
 # CONFIG_PC_XT is not set
 # CONFIG_PC_AT is not set
 # CONFIG_PC_MCA is not set
-# CONFIG_ROMCODE is not set
-CONFIG_SMALL_KERNEL=y
-
-#
-# Model-specific features
-#
-
 CONFIG_IBMPC_CLONE=y
 # CONFIG_IBMPC_COMPAQ is not set
-# CONFIG_ROOT_READONLY is not set
 
 #
-# Memory manager
+# Platform
 #
-
-CONFIG_ADVANCED_MM=y
-# CONFIG_SWAP is not set
-
-#
-# Hardware Facilities
-#
-
 CONFIG_CPU_8086=y
 # CONFIG_CPU_80186 is not set
 # CONFIG_CPU_80286 is not set
-# CONFIG_CPU_80386 is not set
-# CONFIG_CPU_80486 is not set
-
-#
-# System Hardware
-#
-
-# CONFIG_HW_FPU is not set
-CONFIG_HW_PS2_MOUSE=y
-CONFIG_HW_VGA=y
-
-#
-# Block Devices
-#
-
-CONFIG_HW_FLOPPY_DRIVE=y
-CONFIG_HW_HARD_DRIVE=y
-
-#
-# Memory Configuration
-#
-
+CONFIG_BOGOMIPS=140055
 CONFIG_MEM_PAGES=8
 # CONFIG_XMS_INT15 is not set
 CONFIG_XMS_SIZE=0
 
 #
-# BIOS Facilities
+# Devices
 #
+# CONFIG_HW_FPU is not set
+CONFIG_HW_PS2_MOUSE=y
+CONFIG_HW_VGA=y
+CONFIG_HW_FLOPPY_DRIVE=y
+# CONFIG_HW_USE_INT13_FOR_FLOPPY is not set
+CONFIG_HW_HARD_DRIVE=y
+# CONFIG_HW_USE_INT13_FOR_DISKPARMS is not set
 
+#
+# BIOS support
+#
 CONFIG_HW_KEYBOARD_BIOS=y
 CONFIG_HW_VIDEO_HOC=y
 # CONFIG_HW_259_USE_ORIGINAL_MASK is not set
-CONFIG_BOGOMIPS=140055
-# CONFIG_HW_USE_INT13_FOR_FLOPPY is not set
-# CONFIG_HW_USE_INT13_FOR_DISKPARMS is not set
 CONFIG_APM=y
 
 #
-# 286 Protected Mode Support
+# Kernel settings
 #
 
+#
+# Memory manager
+#
+# CONFIG_MEM_TABLE is not set
+CONFIG_MEM_LIST=y
+CONFIG_ADVANCED_MM=y
+# CONFIG_SWAP is not set
+CONFIG_SMALL_KERNEL=y
+CONFIG_SYS_VERSION=y
+# CONFIG_STRACE is not set
+# CONFIG_IDLE_HALT is not set
+# CONFIG_ROMCODE is not set
+CONFIG_EXPERIMENTAL=y
 # CONFIG_286PMODE is not set
+# CONFIG_MODULES is not set
 
 #
-# Driver Support
+# Networking Support
 #
+CONFIG_SOCKET=y
+# CONFIG_NANO is not set
+CONFIG_INET=y
+CONFIG_CSLIP=y
+CONFIG_INET_STATUS=y
+# CONFIG_UNIX is not set
 
+#
+# Advanced socket options
+#
+# CONFIG_SOCK_CLIENTONLY is not set
+
+#
+# Filesystem Support
+#
+CONFIG_MINIX_FS=y
+# CONFIG_ROMFS_FS is not set
+# CONFIG_MSDOS_FS is not set
+
+#
+# General filesystem settings
+#
+# CONFIG_ROOT_READONLY is not set
+# CONFIG_FS_RO is not set
+# CONFIG_FULL_VFS is not set
+CONFIG_FS_EXTERNAL_BUFFER=y
+CONFIG_PIPE=y
+
+#
+# Executable file formats
+#
+CONFIG_EXEC_ELKS=y
+
+#
+# Drivers
+#
 
 #
 # Block device drivers
 #
-
 CONFIG_BLK_DEV_BIOS=y
 CONFIG_BLK_DEV_BFD=y
 # CONFIG_BLK_DEV_BFD_HARD is not set
@@ -129,19 +137,16 @@ CONFIG_BLK_DEV_BHD=y
 #
 # Additional block devices
 #
-
 # CONFIG_BLK_DEV_RAM is not set
 
 #
 # Block device options
 #
-
 CONFIG_BLK_DEV_CHAR=y
 
 #
 # Character device drivers
 #
-
 CONFIG_CONSOLE_DIRECT=y
 # CONFIG_CONSOLE_BIOS is not set
 # CONFIG_CONSOLE_SERIAL is not set
@@ -162,7 +167,6 @@ CONFIG_KEYMAP_US=y
 #
 # Other character devices
 #
-
 CONFIG_CHAR_DEV_RS=y
 CONFIG_CHAR_DEV_LP=y
 CONFIG_CHAR_DEV_MEM=y
@@ -172,75 +176,31 @@ CONFIG_PSEUDO_TTY=y
 #
 # Network device drivers
 #
-
 # CONFIG_ETH is not set
 
 #
-# Networking Support
+# Userland
 #
 
-CONFIG_SOCKET=y
-# CONFIG_NANO is not set
-CONFIG_INET=y
-CONFIG_CSLIP=y
-CONFIG_INET_STATUS=y
-# CONFIG_UNIX is not set
-
 #
-# Advanced socket options
+# Shell
 #
-
-# CONFIG_SOCK_CLIENTONLY is not set
-
-#
-# Filesystem Support
-#
-
-CONFIG_MINIX_FS=y
-# CONFIG_ROMFS_FS is not set
-# CONFIG_MSDOS_FS is not set
-
-#
-# General filesystem settings
-#
-
-# CONFIG_FS_RO is not set
-# CONFIG_FULL_VFS is not set
-CONFIG_FS_EXTERNAL_BUFFER=y
-CONFIG_PIPE=y
-
-#
-# Executable file formats
-#
-
-CONFIG_EXEC_ELKS=y
-
-#
-# Kernel hacking
-#
-
-CONFIG_SYS_VERSION=y
-# CONFIG_STRACE is not set
-# CONFIG_IDLE_HALT is not set
-
-#
-# Commands
-#
-
-# CONFIG_APPSET_CUSTOM is not set
-# CONFIG_APPSET_TINY is not set
-# CONFIG_APPSET_SMALL is not set
-# CONFIG_APPSET_MEDIUM is not set
-CONFIG_APPSET_LARGE=y
 CONFIG_APP_ASH=y
+CONFIG_APP_SH_UTILS=y
+
+#
+# (sash not needed with ash)
+#
+
+#
+# Other commands
+#
 CONFIG_APP_BC=y
-CONFIG_APP_BYACC=y
+CONFIG_APP_DBG_UTILS=y
 CONFIG_APP_DISK_UTILS=y
 CONFIG_APP_E3=y
 CONFIG_APP_ELVIS=y
 CONFIG_APP_FILE_UTILS=y
-CONFIG_APP_HTTPD=y
-CONFIG_APP_KTCP=y
 CONFIG_APP_LEVEE=y
 CONFIG_APP_M4=y
 CONFIG_APP_MINIX1=y
@@ -248,27 +208,35 @@ CONFIG_APP_MINIX2=y
 CONFIG_APP_MINIX3=y
 CONFIG_APP_MISC_UTILS=y
 CONFIG_APP_MTOOLS=y
-CONFIG_APP_NET_TOOLS=y
 CONFIG_APP_PREMS=y
 CONFIG_APP_PRN_UTILS=y
-CONFIG_APP_SASH=y
-CONFIG_APP_SH_UTILS=y
 CONFIG_APP_SYS_UTILS=y
+CONFIG_APP_SCREEN=y
+CONFIG_APP_TEST=y
+CONFIG_APP_XVI=y
+
+#
+# Internet stack
+#
+CONFIG_APP_KTCP=y
+
+#
+# Internet applets
+#
+CONFIG_APP_HTTPD=y
+CONFIG_APP_NET_TOOLS=y
 CONFIG_APP_TELNET=y
 CONFIG_APP_TELNETD=y
 CONFIG_APP_TINYIRC=y
 CONFIG_APP_URLGET=y
-CONFIG_APP_XVI=y
 
 #
-# Image
+# Target image
 #
-
 CONFIG_IMG_MINIX=y
-# CONFIG_IMG_FAT_12 is not set
-# CONFIG_IMG_FAT_16 is not set
-# CONFIG_IMG_FAT_32 is not set
+# CONFIG_IMG_FAT is not set
 # CONFIG_IMG_ROM is not set
+CONFIG_IMG_LINK=y
 CONFIG_IMG_DEV=y
 # CONFIG_IMG_FD1680 is not set
 CONFIG_IMG_FD1440=y
