@@ -59,6 +59,7 @@ void ktcp_run(void)
 {
     fd_set fdset;
     struct timeval timeint, *tv;
+    int count;
 
     while (1) {
 	if (tcp_timeruse > 0 || tcpcb_need_push > 0) {
@@ -70,7 +71,8 @@ void ktcp_run(void)
 	FD_ZERO(&fdset);
 	FD_SET(intfd, &fdset);
 	FD_SET(tcpdevfd, &fdset);
-	select(intfd > tcpdevfd ? intfd + 1 : tcpdevfd + 1, &fdset, NULL, NULL, tv);
+	count = select(intfd > tcpdevfd ? intfd + 1 : tcpdevfd + 1, &fdset, NULL, NULL, tv);
+	if (count < 0) return;
 
 	Now = timer_get_time();
 
@@ -87,7 +89,6 @@ void ktcp_run(void)
 #ifdef DEBUG
 	tcpcb_printall();
 #endif
-
     }
 }
 

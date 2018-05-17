@@ -5,6 +5,7 @@ SUBDIRS =  \
 	fat    \
 	pty    \
 	socket \
+	select \
 	# EOL
 
 .PHONY: $(SUBDIRS)
