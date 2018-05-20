@@ -14,10 +14,10 @@ mainmenu_option next_comment
 	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 
 		choice 'Select IBM-PC variant' \
-			"PC    CONFIG_PC_AUTO \
+			"Auto  CONFIG_PC_AUTO \
 			 PC-XT CONFIG_PC_XT   \
 			 PC-AT CONFIG_PC_AT   \
-			 MCA   CONFIG_PC_MCA" Auto
+			 PS-2  CONFIG_PC_MCA" Auto
 
 		choice 'Model of computer' \
 			"TrueClone CONFIG_IBMPC_CLONE \
@@ -29,10 +29,24 @@ mainmenu_option next_comment
 
 		comment 'Platform'
 
-		choice 'Processor' \
-			"8086   CONFIG_CPU_8086   \
-			 80186  CONFIG_CPU_80186  \
-			 80286  CONFIG_CPU_80286" 8086
+		if [ "$CONFIG_PC_XT" == "y" ]; then
+
+			comment '(IBM PC/XT has 8088)'
+			define_bool CONFIG_CPU_8086 y
+
+		elif [ "$CONFIG_PC_AT" == "y" ]; then
+
+			comment '(IBM PC/AT has 80286)'
+			define_bool CONFIG_CPU_80286 y
+
+		else
+
+			choice 'Processor' \
+				"8086   CONFIG_CPU_8086   \
+				 80186  CONFIG_CPU_80186  \
+				 80286  CONFIG_CPU_80286" 8086
+
+		fi
 
 		int 'Ticks for BogoMIPS (0 = check at boottime)' CONFIG_BOGOMIPS 140055
 

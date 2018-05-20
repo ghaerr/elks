@@ -30,5 +30,5 @@ HOSTFWD="-net user"
 SERIAL="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
 
 $QEMU -nodefaults -name ELKS -monitor stdio -machine isapc -cpu 486 -m 1M \
-$KEYBOARD -display sdl -vga cirrus -rtc base=utc $SERIAL \
+$KEYBOARD -display sdl -vga std -rtc base=utc $SERIAL \
 -net nic,model=ne2k_isa $HOSTFWD $NETDUMP -fda $IMAGE $@

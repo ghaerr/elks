@@ -11,7 +11,5 @@ si::sysinit:/etc/rc.d/rc.sysinit
 #ud::once:/sbin/update
 
 1:2345:respawn:/bin/getty /dev/tty1
-#2:2345:respawn:/bin/getty /dev/tty2
-#3:2345:respawn:/bin/getty /dev/tty3
-
-
+2:2345:respawn:/bin/getty /dev/tty2
+3:2345:respawn:/bin/getty /dev/tty3

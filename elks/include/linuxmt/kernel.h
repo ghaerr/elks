@@ -22,6 +22,7 @@ extern int kill_sl(void);
 
 extern void panic(char *, ...);
 extern void printk(char *, ...);
+extern void early_printk (char *);
 
 extern int wait_for_keypress(void);
 
