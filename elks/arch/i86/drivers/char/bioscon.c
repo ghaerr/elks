@@ -504,6 +504,7 @@ static void std_char(register Console * C, char c)
 #endif
 
     default:
+	PositionCursor(C);
 	VideoWrite(C, c);
 	C->cx++;
       linewrap:
@@ -657,7 +658,9 @@ void init_console(void)
 
 #endif
 
-	ClearRange(C, 0, C->cy, MaxCol, MaxRow);
+	/* Do not erase early printk() */
+	/* ClearRange(C, 0, C->cy, MaxCol, MaxRow); */
+
 	C++;
     }
 
