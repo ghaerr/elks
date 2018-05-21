@@ -6,6 +6,7 @@ SUBDIRS =  \
 	pty    \
 	socket \
 	select \
+	signal \
 	# EOL
 
 .PHONY: $(SUBDIRS)
