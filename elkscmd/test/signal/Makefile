@@ -20,5 +20,5 @@ $(PGM): $(OBJS)
 install: $(PGM)
 	sudo install $(PGM) $(TARGET_MNT)/bin
 
-clean: 
+clean:
 	rm -f $(OBJS) $(PGM)
