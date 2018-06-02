@@ -13,19 +13,17 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include<string.h>
+#include <string.h>
 #endif
+#include <time.h>
 
 #define MAX_BUFFER 100
+static char buf_in  [MAX_BUFFER];
+static char buf_out [MAX_BUFFER];
 
 static int tfd, tfs;
 pid_t pid;
 char * nargv[2] = {"/bin/sh", NULL};
-
-void tel_out(int fdout, char *buf, int size)
-{
-  write(fdout, buf, size);
-}
 
 void sigchild(int signo)
 {
@@ -44,7 +42,7 @@ int term_init()
 
 again:
 	sprintf(pty_name, "/dev/ptyp%d", n);
-	if ((tfd = open(pty_name, O_RDWR | O_NONBLOCK)) < 0) {
+	if ((tfd = open(pty_name, O_RDWR)) < 0) {
 		if ((errno == EBUSY) && (n < 3)) {
 			n++;
 			goto again;
@@ -98,11 +96,79 @@ static void usage()
 	write(STDOUT_FILENO, "  -h  print this message\n\n",26);
 }
 
+static int client_loop (int fdsock, int fdterm)
+{
+    int count_fd;
+    fd_set fds_read;
+    fd_set fds_write;
+
+    int count;
+    int count_in;
+    int count_out;
+
+    count_fd = (fdsock > fdterm) ? (fdsock + 1) : (fdterm + 1);
+
+    count_in  = 0;
+    count_out = 0;
+
+    while (1) {
+		FD_ZERO (&fds_read);
+		if (!count_in)  FD_SET (fdsock, &fds_read);
+		if (!count_out) FD_SET (fdterm, &fds_read);
+
+		FD_ZERO (&fds_write);
+		if (count_in)  FD_SET (fdterm, &fds_write);
+		if (count_out) FD_SET (fdsock, &fds_write);
+
+		count = select (count_fd, &fds_read, &fds_write, NULL, NULL);
+		if (count < 0) {
+			perror ("select");
+			break;
+		}
+
+		if (!count_in && FD_ISSET (fdsock, &fds_read)) {
+			count_in = read (fdsock, buf_in, MAX_BUFFER);
+			if (count_in <= 0) {
+				perror ("read sock");
+				break;
+			}
+		}
+
+		/* TODO: process IAC sequences */
+
+		if (count_in && FD_ISSET (fdterm, &fds_write)) {
+			count = write (fdterm, buf_in, count_in);
+			if (count <= 0) {
+				perror ("write term");
+				break;
+			}
+			count_in -= count;
+		}
+
+		if (!count_out && FD_ISSET (fdterm, &fds_read)) {
+			count_out = read (fdterm, buf_out, MAX_BUFFER);
+			if (count_out <= 0) {
+				perror ("read term");
+				break;
+			}
+		}
+
+		if (count_out && FD_ISSET (fdsock, &fds_write)) {
+			count = write (fdsock, buf_out, count_out);
+			if (count <= 0) {
+				perror ("write sock");
+				break;
+			}
+			count_out -= count;
+		}
+    }
+
+    return 0;
+}
 
 /****************************************************************************************/
 int main(int argc, char *argv[]) {
 
-  char buffer[MAX_BUFFER];
   char	*cp;
   struct sockaddr_in addr_in;
   int sockfd,connectionfd,rc,afunix,lv;
@@ -139,84 +205,30 @@ int main(int argc, char *argv[]) {
   if (bind(sockfd, (struct sockaddr*)&addr_in, sizeof(addr_in)) == -1) {
     perror("bind error");
     exit(-1);
-  } //else {write(STDOUT_FILENO, "Telnetserver:bind successful\n",29);}
+  }
 
   if (listen(sockfd, lv) == -1) {
     perror("listen error");
     close(sockfd);
     exit(-1);
   } 
-   
-  term_init();
-  
-  write(STDOUT_FILENO, "Telnet server listening now\n",28); /* show prompt again */
-  while (1) {
-    if ( (connectionfd = accept(sockfd, (struct sockaddr*)NULL, NULL)) == -1) {
-      perror("accept error");
-      continue;
-    } else {write(STDOUT_FILENO, "Telnetserver:accept connection\n",31);}
-    
-/* login process **************************************************************************/    
-    while (1) {
-      tel_out(connectionfd, (char *)"Welcome to the ELKS telnet server\n\nlogin: ", 42);
-read_again:
-      if (rc=read(connectionfd,buffer,sizeof(buffer)) > 0) {
-	buffer[4] = '\0';
-	if (strcmp(buffer,"root")==0) {
-	  goto login_successful;
-	} else {
-	  //printf("%d-%c,%c,%c,%c,%X,%X\n",rc,buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],buffer[5]); /*test for root*/
-	  continue;
-	} 
-      } else {
-	  goto read_again;
-      }
-    }
-login_successful:
-    sprintf(buffer,"# "); /*simulate prompt */
-    tel_out(connectionfd, (char *)buffer, strlen(buffer));
 
-/* remote terminal session *****************************************************************/    
-    fprintf(stderr, "Commands entered by remote terminal:\n"); /*will work ok only with this log*/
-    while ( (rc=read(connectionfd,buffer,sizeof(buffer))) > 0) {
-		  //printf("%X,%X,%X,%X\n",buffer[0],buffer[1],buffer[2],buffer[3]); /*test for IAC*/
-		  write(tfd, buffer, rc);
-                  // Get the child's answer through the PTY
-                  rc = read(tfd, buffer, MAX_BUFFER-1); 
-                  if (rc > 0)
-                  {
-                    buffer[rc] = '\0'; // make NUL terminated
-                    if (strcmp(buffer,"exitelks\n")==0) {
-		       fprintf(stderr, "Terminating processes and telnet server\n");
-		       close(connectionfd);
-		       close(sockfd);
-		       kill(pid, SIGKILL);
-		       return 0; 
-		    }
-                    fprintf(stderr, ">%s", buffer);
-repeat:		  	
-		    /* read output from shell */
-		    rc = read(tfd, buffer, sizeof(buffer));
-		    buffer[rc] = '\0';
-		    if (rc < 2) continue;
-		    tel_out(connectionfd, (char *)buffer, strlen(buffer));
-		    if (rc>0) goto repeat;
-                  } else {
-		    if (errno == EAGAIN){
-		      fprintf(stderr, "errno == EAGAIN\n");
-		      continue;
-		    }
-		    fprintf(stderr, "no input read\n");
-		  }      
-    }
-    
-    if (rc == -1) {
-      perror("read");
-      close(connectionfd);
-      close(sockfd);
-      exit(-1);
-    }
-  }
-  close(sockfd);
-  return 0;
+	while (1) {
+		connectionfd = accept (sockfd, (struct sockaddr *) NULL, NULL);
+		if (connectionfd < 0) {
+			perror ("accept");
+			break;
+		}
+
+		term_init ();
+
+		client_loop (connectionfd, tfd);
+
+		kill (pid, SIGKILL);
+		close (connectionfd);
+		close (tfd);
+	}
+
+	close (sockfd);
+	return 0;
 }
