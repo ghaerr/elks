@@ -167,6 +167,7 @@ image: boot_blocks kernel_image
 else
 image:
 endif
+ifndef CONFIG_IMG_RAW
 	mkdir -p $(IMGDIR)
 ifdef CONFIG_IMG_DEV
 	-sudo umount -d $(TARGET_FILE)
@@ -202,6 +203,9 @@ endif
 endif
 ifdef CONFIG_IMG_ROM
 	cd $(IMGDIR) && $(ELKS_DIR)/tools/mkromfs $(TARGET_MNT)
+endif
+else # ! CONFIG_IMG_RAW
+	dd if=$(ELKS_DIR)/arch/i86/boot/Image of=$(TARGET_FILE) bs=1024 count=$(TARGET_BLKS)
 endif
 
 # These ones are now broken

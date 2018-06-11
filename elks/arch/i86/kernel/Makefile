@@ -47,14 +47,17 @@ endif
 #########################################################################
 # Commands.
 
+irqtab.s: irqtab.S
 irqtab.o: irqtab.s
 
+bios16.s: bios16.S
 bios16.o: bios16.s
 
+printreg.s: printreg.S
 printreg.o: printreg.s
 
+entry.s: entry.S
 entry.o: entry.s
-	as86 -0 -u -o entry.o entry.s
 
 all:	akernel.a
 

@@ -1,39 +1,41 @@
-; int fmemcmpw (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count)
-; segment after offset to allow LDS & LES from the stack
-; assume DS=ES=SS (not ES for GCC-IA16)
+// int fmemcmpw (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count)
+// segment after offset to allow LDS & LES from the stack
+// assume DS=ES=SS (not ES for GCC-IA16)
+
+    .code16
 
 	.text
 
-	.define _fmemcmpw
+	.global fmemcmpw
 
-_fmemcmpw:
+fmemcmpw:
 #ifdef USE_IA16
-	mov    bx,es
+	mov    %es,%bx
 #endif
-	mov    ax,si
-	mov    dx,di
-	mov    si,sp
-	mov    cx,[si+10]  ; arg4:   byte count
-	les    di,[si+2]   ; arg0+1: far destination pointer
-	lds    si,[si+6]   ; arg2+3: far source pointer
+	mov    %si,%ax
+	mov    %di,%dx
+	mov    %sp,%si
+	mov    10(%si),%cx  //; arg4:   byte count
+	les    2(%si),%di   //; arg0+1: far destination pointer
+	lds    6(%si),%si   //; arg2+3: far source pointer
 	cld
 	repz
 	cmpsw
-	mov    si,ax
-	mov    di,dx
+	mov    %ax,%si
+	mov    %dx,%di
 	jz     fmemcmpw_same
-	mov    ax,#1
+	mov    $1,%ax
 	jmp    fmemcmpw_exit
 
 fmemcmpw_same:
-	xor    ax,ax
+	xor    %ax,%ax
 
 fmemcmpw_exit:
-	mov    dx,ss
-	mov    ds,dx
+	mov    %ss,%dx
+	mov    %dx,%ds
 #ifdef USE_IA16
-	mov    es,bx
+	mov    %bx,%es
 #else
-	mov    es,dx
+	mov    %dx,%es
 #endif
 	ret

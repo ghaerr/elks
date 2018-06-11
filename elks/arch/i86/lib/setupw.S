@@ -1,19 +1,21 @@
-! int setupw( int *offset );
-! returns the word at the far pointer SETUP_DATA:offset
+// int setupw( int *offset );
+// returns the word at the far pointer SETUP_DATA:offset
 
 #include <linuxmt/config.h>
 
-	.define	_setupw
-	.text
-	.even
+    .code16
 
-_setupw:
-	mov	cx,ds
-	pop	dx
-	mov	ax,#SETUP_DATA
-	mov	ds,ax
-	pop	bx
-	sub	sp,*2
-	mov	ax,[bx]
-	mov	ds,cx
-	jmp	dx
+	.global	setupw
+	.text
+	.align 1
+
+setupw:
+	mov	%ds,%cx
+	pop	%dx
+	mov	$SETUP_DATA,%ax
+	mov	%ax,%ds
+	pop	%bx
+	sub	$2,%sp
+	mov	(%bx),%ax
+	mov	%cx,%ds
+	jmp	%dx

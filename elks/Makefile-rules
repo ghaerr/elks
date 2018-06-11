@@ -171,9 +171,9 @@ endif
 
 ifeq ($(MK_CPU), 8086)
 ifeq ($(USEIA16), y)
-    CPU_AS	= -0 -O
-    CPU_CC	= -mtune=i8086 -fno-inline -fdata-sections -ffunction-sections -fleading-underscore -mseparate-code-segment -Wl,--gc-sections
-    CPU_LD	= -0
+    CPU_AS	= -mtune=i8086
+    CPU_CC	= -mtune=i8086 -mcmodel=small -mno-segment-relocation-stuff -fno-inline -ffreestanding
+    CPU_LD	=
 else
     CPU_AS	= -0 -O
     CPU_CC	= -0
@@ -216,7 +216,6 @@ endif
 ################################
 # Common definitions
 
-AR		= ar
 CC_PROTO	= gcc $(INCLUDES) -M -MG $(CCDEFS)
 CFLBASE 	= $(INCLUDES) $(CCDEFS)
 CPP		= $(CC) $(INCLUDES) -E $(CCDEFS) -ansi
@@ -233,12 +232,13 @@ ifeq ($(USEIA16), y)
 ################################
 # Definitions using ia16-unknown-elks-gcc compiler
 
-AS		= as86
-ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
-CC		= $(MK_CC)
-CFLAGS		= $(CPU_CC) $(ARCH_CC) -Os $(CFLBASE) -Wall
-LD		= ld86
-LDFLAGS 	= $(CPU_LD) -s
+AS      = ia16-elf-as
+ASFLAGS = $(CPU_AS) $(ARCH_AS)
+CC      = $(MK_CC)
+CFLAGS  = $(CPU_CC) $(ARCH_CC) $(CFLBASE) -Wall
+LD      = ia16-elf-ld
+LDFLAGS = $(CPU_LD) -s
+AR      = ia16-elf-ar
 
 else
 ################################
@@ -250,6 +250,7 @@ CC		= bcc
 CFLAGS		= $(CPU_CC) $(ARCH_CC) -O $(CFLBASE) -ansi
 LD		= ld86
 LDFLAGS 	= $(CPU_LD) -s
+AR      = ar86
 
 endif
 
@@ -264,6 +265,7 @@ CC      = gcc
 CFLAGS  = -Wall $(CFLBASE)
 LD      = ld
 LDFLAGS =
+AR      = ar
 
 endif
 
@@ -281,11 +283,7 @@ endif
 ifneq ($(USEBCC), N)
 ifeq ($(USEIA16), y)
 .c.o:
-	$(CC) $(CFLAGS) -S -o $*.s $<
-	att2as86 < $*.s > $*.asm
-	$(AS) $(ASFLAGS) -u -o $*.o $*.asm
-	rm $*.s $*.asm
-
+	$(CC) $(CFLAGS) -c -o $*.o $<
 else
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<

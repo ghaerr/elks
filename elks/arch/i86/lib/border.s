@@ -1,17 +1,18 @@
-! border.s
+// border.s
 
-	.globl _ntohl
-	.globl _htonl
+    .code16
+
+	.global ntohl
+	.global htonl
 	.text
-	.even
+	.align 1
 
-_htonl:
-_ntohl:
-	pop	bx
-	pop	dx
-	pop	ax
-	sub	sp,#4
-	xchg	ah,al
-	xchg	dh,dl
-	jmp	bx
-
+htonl:
+ntohl:
+	pop	%bx
+	pop	%dx
+	pop	%ax
+	sub	$4,%sp
+	xchg	%al,%ah
+	xchg	%dl,%dh
+	jmp	%bx

@@ -36,7 +36,7 @@ SRCS1= \
 	fmemcmpb.S fmemcmpw.S \
 	setupb.S setupw.S \
 	string.S \
-	farlist.S seglist.S \
+#	farlist.S seglist.S \
 	# end of list
 
 fmemcpyb.s:fmemcpyb.S
@@ -46,8 +46,8 @@ fmemcmpw.s:fmemcmpw.S
 setupb.s:setupb.S
 setupw.s:setupw.S
 string.s:string.S
-farlist.s:farlist.S
-seglist.s:seglist.S
+#farlist.s:farlist.S
+#seglist.s:seglist.S
 
 OBJS1=$(SRCS1:.S=.o)
 

@@ -1,15 +1,17 @@
-; word_t peekw (word_t off, seg_t seg)
-; segment after offset to allow LDS from the stack
-; returns the word at the far pointer segment:offset
+// word_t peekw (word_t off, seg_t seg)
+// segment after offset to allow LDS from the stack
+// returns the word at the far pointer segment:offset
+
+    .code16
 
 	.text
 
-	.define _peekw
+	.global peekw
 
-_peekw:
-	mov    dx,ds
-	mov    bx,sp
-	lds    bx,[bx+2]  ; arg0+1: far pointer
-	mov    ax,[bx]  ; DS by default
-	mov    ds,dx
+peekw:
+	mov    %ds,%dx
+	mov    %sp,%bx
+	lds    2(%bx),%bx  // arg0+1: far pointer
+	mov    (%bx),%ax  // DS by default
+	mov    %dx,%ds
 	ret

@@ -1,3 +1,4 @@
+/*
 !
 !	setup.S		Copyright (C) 1991, 1992 Linus Torvalds
 !
@@ -93,11 +94,12 @@
 !	0x1ff:	0xAA = boot_flag, High part/PS2 mouse device present (0, not present)
 !
 ! NOTE! These had better be the same as in bootsect.s!
+*/
 
 #define __ASSEMBLY__
 #include <linuxmt/config.h>
 
-! Signature words to ensure LILO loaded us right
+//! Signature words to ensure LILO loaded us right
 #define SIG1	0xAA55
 #define SIG2	0x5A5A
 
@@ -105,268 +107,273 @@
 #define KERNEL_MAGICNUMBER MINIX_SPLITID_LOW
 
 #ifndef CONFIG_ROMCODE
-  INITSEG  = DEF_INITSEG	! (DATASEG) we move boot here - out of the way
-  SYSSEG   = DEF_SYSSEG 	! system loaded at 0x10000 (65536).
-  SETUPSEG = DEF_SETUPSEG	! this is the current code segment
+  INITSEG  = DEF_INITSEG	//! (DATASEG) we move boot here - out of the way
+  SYSSEG   = DEF_SYSSEG 	//! system loaded at 0x10000 (65536).
+  SETUPSEG = DEF_SETUPSEG	//! this is the current code segment
 #else
   INITSEG  = CONFIG_ROM_SETUP_DATA
   SYSSEG   = CONFIG_ROM_KERNEL_CODE
   SETUPSEG = CONFIG_ROM_SETUP_CODE
 #endif
 
+.code16
+
 .text
 
-entry start
+.global start
 start:
 #ifdef CONFIG_ROMCODE
-    .byte 0x55, 0xaa      ;sign for ROM-Extention
-    .byte 0x04            ;space for lengthcode (promsize/512)
+    .byte 0x55, 0xaa      //;sign for ROM-Extention
+    .byte 0x04            //;space for lengthcode (promsize/512)
 
-    push ds
+    push %ds
 
 #else
-! Bootlin depends on this being done early
-	mov	ax,#0x01500	;Read disk type/DASD
-	mov	dl,#0x81
-	int	0x13
+//! Bootlin depends on this being done early
+	mov	$0x01500,%ax	//;Read disk type/DASD
+	mov	$0x81,%dl
+	int	$0x13
 #endif
 
 
-! Check signature at end of setup
-	mov	ax,#SETUPSEG      ;setup codesegment
-	mov	ds,ax
-	cmp	setup_sig1,#SIG1
+// Check signature at end of setup
+	mov	$SETUPSEG,%ax      //;setup codesegment
+	mov	%ax,%ds
+	cmpw	$SIG1,setup_sig1
 	jne	bad_sig
-	cmp	setup_sig2,#SIG2
+	cmpw	$SIG2,setup_sig2
 	jne	bad_sig
-	jmp	near good_sig     ;why double jmp
+	jmp	good_sig     //;why double jmp
+	nop
 
 
-! Routine to print asciiz-string at DS:SI
-prts_1:	mov	bx,#0x0007   !page 0
-	mov	ah,#0x0e
-	int	0x10
+//! Routine to print asciiz-string at DS:SI
+prts_1:	mov	$0x0007,%bx   //!page 0
+	mov	$0x0e,%ah
+	int	$0x10
 
 prtstr:	lodsb
-	test	al,al
+	test	%al,%al
 	jnz	prts_1
 	ret
 
 
 
-! We now have to find the rest of the setup code/data
-! in ROM the code is complete
+//! We now have to find the rest of the setup code/data
+//! in ROM the code is complete
 
 bad_sig:
 #ifndef CONFIG_ROMCODE
-	mov	ax,#INITSEG     ;code setup
-	mov	ds,ax
-	xor	bh,bh
-	mov	bl,[497]	! get setup sects from boot sector (SETUPSECS)
-	sub	bx,#4		! LILO loads 4 sectors of setup
-	mov	cl,#8
-	shl	bx,cl		! convert to words
-	mov	cx,bx
-	push	cx		! This may not be needed - Chad.
-	mov	cl,#3
-	shr	bx,cl		! convert to segment
-	pop	cx
-	add	bx,#SYSSEG
-	seg cs
-	mov	start_sys_seg,bx
+	mov	$INITSEG,%ax     //;code setup
+	mov	%ax,%ds
+	xor	%bh,%bh
+	mov	497,%bl		//! get setup sects from boot sector (SETUPSECS)
+	sub	$4,%bx		//! LILO loads 4 sectors of setup
+	mov	$8,%cl
+	shl	%cl,%bx		//! convert to words
+	mov	%bx,%cx
+	push	%cx		//! This may not be needed - Chad.
+	mov	$3,%cl
+	shr	%cl,%bx		//! convert to segment
+	pop	%cx
+	add	$SYSSEG,%bx
+//	seg cs
+	mov	%bx,%cs:start_sys_seg
 
-! Move rest of setup code/data to here
-	mov	di,#2048	! four sectors loaded by LILO
-	sub	si,si
-	mov	ax,#SETUPSEG
-	mov	es,ax
-	mov	ax,#SYSSEG
-	mov	ds,ax
+//! Move rest of setup code/data to here
+	mov	$2048,%di	//! four sectors loaded by LILO
+	sub	%si,%si
+	mov	$SETUPSEG,%ax
+	mov	%ax,%es
+	mov	$SYSSEG,%ax
+	mov	%ax,%ds
 	rep
 	movsw
 
-	mov	ax,#SETUPSEG
-	mov	ds,ax
-	cmp	setup_sig1,#SIG1
+	mov	$SETUPSEG,%ax
+	mov	%ax,%ds
+	cmpw	$SIG1,setup_sig1
 	jne	no_sig
-	cmp	setup_sig2,#SIG2
+	cmpw	$SIG2,setup_sig2
 	je	good_sig
 no_sig:
 #endif
 
-	lea	si,no_sig_mess
+	lea	no_sig_mess,%si
 	call	prtstr
-no_sig_loop:			! And halt
+no_sig_loop:			//! And halt
 	jmp	no_sig_loop
 
 
-;------------------------------------------------
+//;------------------------------------------------
 good_sig:
 #ifdef CONFIG_ROMCODE
-	xor ax,ax
-	mov ds,ax                      ;Interrupttable
+	xor %ax,%ax
+	mov %ax,%ds                      //;Interrupttable
 
-	mov word ptr[4*0x19],#start_os
-	mov word ptr[4*0x19+2],cs      ;set os/loader int
+	movw $start_os,4*0x19
+	mov %cs,4*0x19+2      //;set os/loader int
 
-	pop ds 
-	retf                           ;back to BIOS
+	pop %ds 
+	lret                           //;back to BIOS
 #endif
 
 
-;-------------------------------------------------------
-;-- from here the real loader starts
-;-------------------------------------------------------
+//;-------------------------------------------------------
+//;-- from here the real loader starts
+//;-------------------------------------------------------
 start_os:
-	mov	ax,#INITSEG       ;datasegment setup.S
-	mov	ds,ax
+	mov	$INITSEG,%ax       //;datasegment setup.S
+	mov	%ax,%ds
 
-; The root device is obviously /dev/rom0
-; when setup starts in ROM / Flash memory
+//; The root device is obviously /dev/rom0
+//; when setup starts in ROM / Flash memory
 
 #ifdef CONFIG_ROMCODE
 #ifdef CONFIG_ROMFS_FS
-	mov [0x01FC], #0x0600  /* rom-flash */
+	movw $0x0600,0x01FC  /* rom-flash */
 #else
-	mov [0x01FC], #0x0380  /* bioshd */
+	movw $0x0380,0x01FC  /* bioshd */
 #endif
 #endif
 
-! Get memory size (extended mem, kB)
+//! Get memory size (extended mem, kB)
 
 #ifdef CONFIG_XMS_SIZE
-	mov	[2],#CONFIG_XMS_SIZE
+	movw	$CONFIG_XMS_SIZE,2
 #else
-	mov	ah,#0x88
-	int	0x15
-	mov	[2],ax
+	mov	$0x88,%ah
+	int	$0x15
+	mov	%ax,2
 #endif
 
-! set the keyboard repeat rate to the max
+//! set the keyboard repeat rate to the max
 
 #ifdef CONFIG_HW_KEYBOARD_BIOS
-	mov	ax,#0x0305
-	xor	bx,bx		! clear bx
-	int	0x16
+	mov	$0x0305,%ax
+	xor	%bx,%bx		//! clear bx
+	int	$0x16
 #endif
 
-! check for EGA/VGA and some config parameters
+//! check for EGA/VGA and some config parameters
 
 #ifdef CONFIG_HW_VGA
- 	mov	ah,#0x12	! Get video data
-	mov	bl,#0x10
-	int	0x10
-	mov	[8],ax
-	mov	[10],bx
-	mov	[12],cx
-	mov	ax,#0x5019
-	cmp	bl,#0x10
+ 	mov	$0x12,%ah	//! Get video data
+	mov	$0x10,%bl
+	int	$0x10
+	mov	%ax,8
+	mov	%bx,10
+	mov	%cx,12
+	mov	$0x5019,%ax
+	cmp	$0x10,%bl
 	je	novga
-	mov	ax,#0x1a00	! Added check for EGA/VGA discrimination
-	int	0x10
-	mov	bx,ax
-	mov	ax,#0x5019
-	movb	[15],#0		! by default, no VGA
-	cmp	bl,#0x1a	! 1a means VGA, anything else EGA or lower
+	mov	$0x1a00,%ax	//! Added check for EGA/VGA discrimination
+	int	$0x10
+	mov	%ax,%bx
+	mov	$0x5019,%ax
+	movb	$0,15		//! by default, no VGA
+	cmp	$0x1a,%bl	//! 1a means VGA, anything else EGA or lower
 	jne	novga
-	movb	[15],#1		! we've detected a VGA
-!	call	chsvga
+	movb	$1,15		//! we've detected a VGA
+//!	call	chsvga
 #else
-        movb  [15],#0           ! no VGA in system
+        movb  $0,15           //! no VGA in system
 #ifdef CONFIG_HW_VIDEO_LINES_PER_SCREEN
-        mov   al,#CONFIG_HW_VIDEO_LINES_PER_SCREEN
+        mov   $CONFIG_HW_VIDEO_LINES_PER_SCREEN,%al
 #else
-        mov   al,#0x19          ! height of display (0x19 == 25 rows)
+        mov   $0x19,%al          //! height of display (0x19 == 25 rows)
 #endif
 #endif
 
-novga:	mov	[14],al		! CGA 25 rows
-	mov	ah,#0x03	! read cursor pos
-	xor	bh,bh		! clear bh
-	int	0x10		! save it in known place, con_init fetches
-	mov	[0],dx	        ! it from INITSEG.
+novga:	mov	%al,14		//! CGA 25 rows
+	mov	$0x03,%ah	//! read cursor pos
+	xor	%bh,%bh		//! clear bh
+	int	$0x10		//! save it in known place, con_init fetches
+	mov	%dx,0	        //! it from INITSEG.
 
-! Get video-card data:
-	mov	ah,#0x0f
-	int	0x10
-	mov	[4],bx		! bh = display page
-	mov	[6],ax		! al = video mode, ah = window width
+//! Get video-card data:
+	mov	$0x0f,%ah
+	int	$0x10
+	mov	%bx,4		//! bh = display page
+	mov	%ax,6		//! al = video mode, ah = window width
 
 #ifdef CONFIG_HW_VIDEO_LINES_PER_CHARACTER
-        mov   [16],#CONFIG_HW_VIDEO_LINES_PER_CHARACTER
+        mov   $CONFIG_HW_VIDEO_LINES_PER_CHARACTER,16
 #else
-	xor	ax,ax
-	mov	es,ax		! Access BIOS DATA AREA
-	seg es
-	mov	ax,[0x485]	! POINTS - Height of character matrix
-	mov	[16],ax
+	xor	%ax,%ax
+	mov	%ax,%es		//! Access BIOS DATA AREA
+//	seg es
+	mov	%es:0x485,%ax	//! POINTS - Height of character matrix
+	mov	%ax,16
 #endif
 
-! check for PS/2 pointing device
+//! check for PS/2 pointing device
 
-!	mov	ax,#INITSEG     !ds was not changed sinse good_gig
-!	mov	ds,ax
-	mov	[0x1ff],#0	! default is no pointing device
+//!	mov	ax,#INITSEG     //!ds was not changed sinse good_gig
+//!	mov	ds,ax
+	movb	$0,0x1ff	//! default is no pointing device
+	nop
 #ifdef CONFIG_HW_PS2_MOUSE
-	int	0x11		! int 0x11: equipment determination
-	test	al,#0x04	! check if pointing device installed
+	int	$0x11		//! int 0x11: equipment determination
+	test	$0x04,%al	//! check if pointing device installed
 	jz	no_psmouse
-	mov	[0x1ff],#0xaa	! device present
+	movb	$0xaa,0x1ff	//! device present
+	nop
 no_psmouse:
 #endif
 
 	call	getcpu
-	push	es		! clear BIOS data for harddisk 0/1, 12 bytes
-	mov	ax,#INITSEG	! and BIOS data for floppy disk 0/1, 12 bytes
-	mov	es,ax
-	mov	cx,#24
-	mov	di,#0x80
-	xor	ax,ax
+	push	%es		//! clear BIOS data for harddisk 0/1, 12 bytes
+	mov	$INITSEG,%ax	//! and BIOS data for floppy disk 0/1, 12 bytes
+	mov	%ax,%es
+	mov	$24,%cx
+	mov	$0x80,%di
+	xor	%ax,%ax
 	cld
 	rep
 	stosw
-	pop	es
+	pop	%es
 #ifdef CONFIG_HW_HARD_DRIVE
-	call	gethd		! Get geometry for harddisk 0/1.
+	call	gethd		//! Get geometry for harddisk 0/1.
 #endif
 #ifdef CONFIG_HW_FLOPPY_DRIVE
-	call	getfloppy	! Get geometry for floppy disk 0/1.
+	call	getfloppy	//! Get geometry for floppy disk 0/1.
 #endif
-	mov	ax,#INITSEG
-	mov	ds,ax
-	int	0x12		! determine the size of the basememory
-	mov	[0x2a],ax
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	int	$0x12		//! determine the size of the basememory
+	mov	%ax,0x2a
 
-!----------------------------
+//!----------------------------
 #ifdef CONFIG_ROMCODE
-! We must now copy the kernel to RAM (SYSSEG)
+//! We must now copy the kernel to RAM (SYSSEG)
 
-	mov ax,cs          ;string is in this codeseg
-	mov ds,ax
-	lea si,load_kernel
+	mov %cs,%ax          //;string is in this codeseg
+	mov %ax,%ds
+	lea load_kernel,%si
 	call prtstr
 
-   	mov ax,#CONFIG_ROM_KERNEL_CODE   ;the ROM image
-   	mov ds,ax
+   	mov $CONFIG_ROM_KERNEL_CODE,%ax   //;the ROM image
+   	mov %ax,%ds
 
-! test, if correct a.out header
+//! test, if correct a.out header
 
-   	cmp word ptr[0],#KERNEL_MAGICNUMBER
+   	cmpw $KERNEL_MAGICNUMBER,0
    	jne aouterr
 
-   	cmp byte ptr [3],#0x04   ;prozessortype = 8086
+   	cmpb $0x04,3   //;prozessortype = 8086
    	jne test1
-	jmp near aout_ok
+	jmp aout_ok
 
 test1:
-	cmp byte ptr [3],#0x10   ;prozessortype = 80386
+	cmpb $0x10,[3]   //;prozessortype = 80386
 	jne aouterr
-	jmp near aout_ok
+	jmp aout_ok
 
 aouterr:
-   	mov ax,cs
-   	mov ds,ax
-   	lea si,kernel_aouterr
+   	mov %cs,%ax
+   	mov %ax,%ds
+   	lea kernel_aouterr,%si
    	call prtstr
 err_loop:
 	jmp err_loop
@@ -384,38 +391,39 @@ kernel_to_big:  .byte 13,10
 
 
 aout_ok:
-   	mov ax,#CONFIG_ROM_KERNEL_DATA
-   	mov es,ax
+   	mov $CONFIG_ROM_KERNEL_DATA,%ax
+   	mov %ax,%es
 
-   	mov cx,[10]    ;hi of text size
-   	or cx,cx       ;max 64k
+   	mov 10,%cx    //;hi of text size
+   	or %cx,%cx       //;max 64k
    	jz size_ok
 size_error:
-   	mov ax,cs
-   	mov ds,ax
-   	lea si,kernel_to_big
+   	mov %cs,%ax
+   	mov %ax,%ds
+   	lea kernel_to_big,%si
    	call prtstr
-   	jmp near err_loop  ;and halt
+   	jmp err_loop  //;and halt
 
 size_ok:
-        mov cx,[14]	   ; Check data section size
-        or cx,cx
-        jnz size_error     ; .data section too big
+        mov 14,%cx	   //; Check data section size
+        or %cx,%cx
+        jnz size_error     //; .data section too big
 
-;and now copy the kerneldata
-! WARNING: Next code fails if code_size+data_size+32 > 64K
-   	mov si,[0x08]  ;code size
-   	add si,[0x04]  ;+header size
-        xor di,di
-        mov cx,[0x0c]  ;data size
-        shr cx,#1      ;copy words
+//;and now copy the kerneldata
+//! WARNING: Next code fails if code_size+data_size+32 > 64K
+   	mov 0x08,%si  //;code size
+   	add 0x04,%si  //;+header size
+        xor %di,%di
+        mov 0x0c,%cx  //;data size
+        shr $1,%cx      //;copy words
         cld
         rep
         movsw
 
-; now ist the data and code ad the right position
+//; now ist the data and code ad the right position
 #endif
 
+/*
 !--------------------------------------------------------
 ! We setup ds, es, and ss now
 !
@@ -429,198 +437,225 @@ size_ok:
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ! Case for kernel in ROM
 !
+*/
 #if defined(CONFIG_ROMCODE)
 
-        mov dx,[0x10]  ;bbs size
-        mov si,[0x0c]  ;data size
-        mov bx,[0x08]  ;text size
+        mov 0x10,%dx  //;bbs size
+        mov 0x0c,%si  //;data size
+        mov 0x08,%bx  //;text size
 
-        mov cx,es
-        mov ds,cx
+        mov %es,%cx
+        mov %cx,%ds
 
 #ifdef CONFIG_ROM_DEBUG
-	int     3               ! break for debugger just before kernel
+	int     $3               //! break for debugger just before kernel
 #endif
 
-	jmp     far SYSSEG+2:3
+	ljmp     $SYSSEG+2:$0
 
-!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-! Case for kernel in disk to be relocated
-!
+//!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! Case for kernel in disk to be relocated
+//!
 #elif defined(REL_SYS)
 
-! Relocate setup data
+//! Relocate setup data
 
-	mov	ax,#INITSEG
-	mov	ds,ax
-	mov	ax,#REL_INITSEG
-	mov	es,ax
-	xor	si,si
-	xor	di,di
-	mov	cx,#256
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	mov	$REL_INITSEG,%ax
+	mov	%ax,%es
+	xor	%si,%si
+	xor	%di,%di
+	mov	$256,%cx
 	cld
 	rep
 	movsw
 
-! Assume kernel data+bss size > 5 Kbytes
-! Calculate values needed
+// Assume kernel data+bss size > 5 Kbytes
+// Calculate values needed
 
-	mov	ax,#SYSSEG
-	mov	ds,ax
-	mov	bx,[12]
-	mov	dx,bx
-	push	bx		! Data size
-	add	bx,[16]
-	add bx,#0xF     ! align on next paragraph (issue #209)
-	mov	cl,#4
-	shr	bx,cl
-	add	bx,#REL_SYSSEG	! BX = Relocated kernel code segment
-	mov	ax,[8]
-	push	ax		! Code size
-	mov	cl,#4
-	shr	ax,cl
-	mov	cx,ax
-	add	ax,bx		! AX = Relocated kernel data segment
-	add	cx,#SYSSEG+2
-	push	[16]		! Bss size
-	push	cx		! Kernel data segment
-	add dx,#0xF     ! align on next paragraph (issue #209)
-	mov	cl,#4
-	shr	dx,cl
-	add	dx,ax		! DX = Rel rel segment
-	mov	bp,sp
+	mov	$SYSSEG,%ax
+	mov	%ax,%ds
 
+// Check system header
+
+	cmpw $0x0301,0   // ELKS a.out magic
+	jne sys_hdr_bad
+	cmpw $0x0430,2   // i8086 - executable with separated I & D
+	jne sys_hdr_bad
+	cmpb $0x20,4     // header size (no relocs)
+	jne sys_hdr_bad
+	jmp sys_hdr_good
+
+sys_hdr_bad:
+	mov	$SETUPSEG,%ax
+	mov	%ax,%ds
+	lea sys_hdr_msg,%si
+	call prtstr
+sys_hdr_loop:
+	jmp sys_hdr_loop
+sys_hdr_msg:
+	.ascii "Bad sys hdr!"
+	.byte 0
+
+// System header is good
+
+sys_hdr_good:
+	mov	12,%bx
+	mov	%bx,%dx
+	push	%bx		//! Data size
+	add	16,%bx
+	add $0xF,%bx     //! align on next paragraph (issue #209)
+	mov	$4,%cl
+	shr	%cl,%bx
+	add	$REL_SYSSEG,%bx	//! BX = Relocated kernel code segment
+	mov	8,%ax
+	push	%ax		//! Code size
+	mov	$4,%cl
+	shr	%cl,%ax
+	mov	%ax,%cx
+	add	%bx,%ax		//! AX = Relocated kernel data segment
+	add	$SYSSEG+2,%cx
+	push	16		//! Bss size
+	push	%cx		//! Kernel data segment
+	add $0xF,%dx     //! align on next paragraph (issue #209)
+	mov	$4,%cl
+	shr	%cl,%dx
+	add	%ax,%dx		//! DX = Rel rel segment
+	mov	%sp,%bp
+
+
+/*
 ! Variables in stack as follows:
 ! Offset from BP	variable
 !	6		data size
 !	4		code size
 !	2		bss size
 !	0		kernel data segment
+*/
 
-	cmp	bx,#SYSSEG+2
+	cmp	$SYSSEG+2,%bx
 	ja	move_back
 
-! Move forward
+//! Move forward
 
-	mov	es,bx		! Move code segment
-	mov	cx,#SYSSEG+2
-	mov	ds,cx
-	mov	cx,4[bp]
-	xor	si,si
-	mov	di,si
+	mov	%bx,%es		//! Move code segment
+	mov	$SYSSEG+2,%cx
+	mov	%cx,%ds
+	mov	4(%bp),%cx
+	xor	%si,%si
+	mov	%si,%di
 	rep
 	movsb
-	mov	es,ax		! Move data segment
-	mov	ds,[bp]
-	mov	cx,6[bp]
-	xor	si,si
+	mov	%ax,%es		//! Move data segment
+	mov	(%bp),%ds
+	mov	6(%bp),%cx
+	xor	%si,%si
 	jmp	rel_rel
 
-! Move backward
+//! Move backward
 
 move_back:
 	std
-	mov	es,ax		! Move data segment
-	mov	ds,[bp]
-	mov	cx,6[bp]
-	mov	si,cx
-	dec	si
-	mov	di,si
+	mov	%ax,%es		//! Move data segment
+	mov	(%bp),%ds
+	mov	6(%bp),%cx
+	mov	%cx,%si
+	dec	%si
+	mov	%si,%di
 	rep
 	movsb
-	mov	es,bx		! Move code segment
-	mov	cx,#SYSSEG+2
-	mov	ds,cx
-	mov	cx,4[bp]
-	mov	si,cx
-	dec	si
+	mov	%bx,%es		//! Move code segment
+	mov	$SYSSEG+2,%cx
+	mov	%cx,%ds
+	mov	4(%bp),%cx
+	mov	%cx,%si
+	dec	%si
 rel_rel:
-	mov	di,si
+	mov	%si,%di
 	rep
 	movsb
 
-! Relocate relocation code to next to relocated kernel data
-! segment because current setup code might be overwritten
+//! Relocate relocation code to next to relocated kernel data
+//! segment because current setup code might be overwritten
 
-	mov	es,dx
-	mov	cx,cs
-	mov	ds,cx
-	mov	si,#cont
-	xor	di,di
-	push	es		! build far return address
-	push	di
-	mov	cx,#(end_reloc-cont)
+	mov	%dx,%es
+	mov	%cs,%cx
+	mov	%cx,%ds
+	mov	$cont,%si
+	xor	%di,%di
+	push	%es		//! build far return address
+	push	%di
+	mov	$end_reloc-cont,%cx
 	cld
 	rep
 	movsb
-	retf			! jump to dx:0
+	lret			//! jump to dx:0
 
-! Still using the old stack. Switch to new stack
-! AX = Rel. kernel data seg. BX = Rel. kernel code seg. DX = Rel. rel. seg.
+//! Still using the old stack. Switch to new stack
+//! AX = Rel. kernel data seg. BX = Rel. kernel code seg. DX = Rel. rel. seg.
 
-cont:	mov	ds,ax
-	pop	di		! Empty old stack
-	pop	di
-	pop	ax
-	pop	si
-	mov	ss,dx		! Set new stack
-	mov	sp,#(end_reloc-cont+512)
-	mov	dx,di		! Move kernel data segment to REL_SYSSEG
-	mov	cx,#REL_SYSSEG
-	mov	es,cx
-	mov	cx,si
-	push	cx
-	xor	si,si
-	xor	di,di
+cont:	mov	%ax,%ds
+	pop	%di		//! Empty old stack
+	pop	%di
+	pop	%ax
+	pop	%si
+	mov	%dx,%ss		//! Set new stack
+	mov	$end_reloc-cont+512,%sp
+	mov	%di,%dx		//! Move kernel data segment to REL_SYSSEG
+	mov	$REL_SYSSEG,%cx
+	mov	%cx,%es
+	mov	%si,%cx
+	push	%cx
+	xor	%si,%si
+	xor	%di,%di
 	rep
 	movsb
 
+/*
 ! Load registers as expected by crt0.S
 !	BX, Text size
 !	SI, Data size
 !	DX, BSS size
 ! DS,ES,CX, Kernel DS
+*/
 
-	xchg	ax,bx
-	pop	si
-	mov	cx,es
-	mov	ds,cx
-	push	ax		! Build far return address to relocated code segment
-	mov	ax,#3		! Address to offset 3
-	push	ax
+	xchg	%bx,%ax
+	pop	%si
+	mov	%es,%cx
+	mov	%cx,%ds
+	push	%ax		//! Build far return address to relocated code segment
+	mov	$0,%ax		//! Address to offset 0 (start)
+	push	%ax
 
-! changed jmpi 0,0x1002 to 3,0x1002 for kernel restart fix -AJB
-!	jmpi	0x00003,SYSSEG+2   !jmp offset 3 of segment 0x1002 (cs)
-	retf
+//! changed jmpi 0,0x1002 to 3,0x1002 for kernel restart fix -AJB
+//!	jmpi	0x00003,SYSSEG+2   !jmp offset 3 of segment 0x1002 (cs)
+	lret
 end_reloc:
-!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-! Case for kernel in disk, no kernel relocation
-!
+//!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! Case for kernel in disk, no kernel relocation
+//!
 #else
 
-	mov ax, #SYSSEG	! in ROM ds ist always set
-	mov ds, ax	! Get the header into DS
-	mov bx, [8]	! TSeg
-	mov si, [12]	! DSeg
-	mov dx, [16]	! BSeg
-	mov ax,	bx	! Get Text size
-	mov cl, #4
-	shr ax, cl	! Data in paragraphs
+	mov $SYSSEG,%ax	//! in ROM ds ist always set
+	mov %ax,%ds	//! Get the header into DS
+	mov 8,%bx	//! TSeg
+	mov 12,%si	//! DSeg
+	mov 16,%dx	//! BSeg
+	mov %bx,%ax	//! Get Text size
+	mov $4,%cl
+	shr %cl,%ax	//! Data in paragraphs
 
-	mov cx, #SYSSEG+2 ! Code starts here
-	push cx		! Build far return address to SYSSEG+2:3
-	add cx, ax	! Segment base for data/bss/stack
-	mov ds, cx
-	mov es, cx
-	mov ax, #3
-	push ax
-!	mov ss, cx
-!	mov sp, #0xFFFE	! Top of stack right at the end (temporary)
-
-! changed jmpi 0,0x1002 to 3,0x1002 for kernel restart fix -AJB
-!	jmpi	0x00003,SYSSEG+2   !jmp offset 3 of segment 0x1002 (cs)
+	mov $SYSSEG+2,%cx // Code starts here
+	push %cx		// Build far return address to SYSSEG+2:3
+	add %ax,%cx	// Segment base for data/bss/stack
+	mov %cx,%ds
+	mov %cx,%es
+	mov $0,%ax
+	push %ax
 	retf
 #endif
+/*
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 !
 ! This routine checks that the keyboard command queue is empty
@@ -630,6 +665,7 @@ end_reloc:
 ! the machine, and we probably couldn't proceed anyway.
 
 ! no call to this functions
+*/
 #if 0
 empty_8042:
 	call	delay
@@ -707,171 +743,176 @@ delay:
 	.word	0x00eb			! jmp $+2
 	ret
 #endif
-;from never calls
+//;from never calls
 
-!form this position are calles code
+//!form this position are calles code
 
+/*
 !
 ! Probe for the CPU/Coprocessor
 ! These information is taken from "PC intern 3.0", Data Becker Verlag, 1992
 ! and from the Linux-Kernel, arch/i386/kernel/head.S
 !
+*/
 getcpu:
-	mov	ax,#SETUPSEG         /* Codesegment setup.S */
-	mov	ds,ax
+	mov	$SETUPSEG,%ax         /* Codesegment setup.S */
+	mov	%ax,%ds
 #ifndef CONFIG_ROMCODE
 	pushf
-	xor	ax,ax
-	push	ax
+	xor	%ax,%ax
+	push	%ax
 	popf
 	pushf
-	pop	ax
+	pop	%ax
 	popf
-	and	ax,#0xf000
-	cmp	ax,#0xf000
+	and	$0xf000,%ax
+	cmp	$0xf000,%ax
 	je	is8086
-	mov	ax,#0x7000
+	mov	$0x7000,%ax
 	pushf
-	push	ax
+	push	%ax
 	popf
 	pushf
-	pop	ax
+	pop	%ax
 	popf
-	and	ax,#0x7000
+	and	$0x7000,%ax
 	je	is80286
-!
-! Default & unknown CPU
-!
-	mov	cl,#0xff
-	lea	si,px86
-	br	getfpu
+//!
+//! Default & unknown CPU
+//!
+	mov	$0xff,%cl
+	lea	px86,%si
+	jmp	getfpu
+	nop
 #endif
 
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
 is8086:
-	mov	al,#0xff
-	mov	cl,#0x21	! 80188/86 uses only the five lower
-	shr	al,cl		! bits of cl to determine the number
-	jnz	is80186		! of shifts.
+	mov	$0xff,%al
+	mov	$0x21,%cl	//! 80188/86 uses only the five lower
+	shr	%cl,%al		//! bits of cl to determine the number
+	jnz	is80186		//! of shifts.
 	sti             
-	xor	si,si
-	mov	cx,#0xffff
+	xor	%si,%si
+	mov	$0xffff,%cx
+	nop
 	rep
-	seg	es
+//	seg	es
 	lodsb
-	or	cx,cx
+	or	%cx,%cx
 	jz	isv30
 	call	queue
 	jz	is8088
-	mov	cl,#1
-	lea	si,p8086
+	mov	$1,%cl
+	lea	p8086,%si
 	jmp	getfpu
-is8088:	xor	cl,cl
-	lea	si,p8088
+is8088:	xor	%cl,%cl
+	lea	p8088,%si
 	jmp	getfpu
 is80186:call	queue
 	jz	is80188
-	mov	cl,#5
-	lea	si,p80186
+	mov	$5,%cl
+	lea	p80186,%si
 	jmp	getfpu
-is80188:mov	cl,#4
-	lea	si,p80188
+is80188:mov	$4,%cl
+	lea	p80188,%si
 	jmp	getfpu
 isv30:	
 	call	queue
 	jz	isv20
-	mov	cl,#3
-	lea	si,pv30
+	mov	$3,%cl
+	lea	pv30,%si
 	jmp	getfpu
-isv20:	mov	cl,#2
-	lea	si,pv20
+isv20:	mov	$2,%cl
+	lea	pv20,%si
 	jmp     getfpu
 #endif
 #if !defined (CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
-is80286:mov	cl,#6
-	lea	si,p80286
-!	jmp	getfpu
+is80286:mov	$6,%cl
+	lea	p80286,%si
+//!	jmp	getfpu
 #endif
 
 getfpu:
-	!
-	! Store the processor name and type
-	!
-	push	cx
-	mov	ax,#INITSEG
-	mov	es,ax
-	mov	di,#0x30
-	mov	cx,#16
+	//!
+	//! Store the processor name and type
+	//!
+	push	%cx
+	mov	$INITSEG,%ax
+	mov	%ax,%es
+	mov	$0x30,%di
+	mov	$16,%cx
 	cld
 con_cp1:
 	lodsb
 	stosb
-	or	al,al
+	or	%al,%al
 	loopnz	con_cp1
-	mov	di,#0x50
-	lea	si,v_id
-	mov	cx,#13
+	mov	$0x50,%di
+	lea	v_id,%si
+	mov	$13,%cx
 	rep
 	movsb
-	pop	cx
-	mov	ax,#INITSEG
-	mov	ds,ax
-	mov	[0x20],cl
+	pop	%cx
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	mov	%cl,0x20
 
 #ifdef CONFIG_HW_FPU
 	fninit
 	fnstcw	copro
-	mov	ax,copro
-	cmp	ah,#3
+	mov	copro,%ax
+	cmp	$3,%ah
 	jne	nofpu
-	and	copro,#0xff7f
+	and	$0xff7f,copro
 	fldcw	copro
 	fdisi
 	fstcw	copro
-	test	copro,#0x0080
+	test	$0x0080,copro
 	jnz	is8087
-	finit		! 80287/387 test
+	finit		//! 80287/387 test
 	fld1
 	fldz
-	fdiv	st,st(1)
-	fld	st
+	fdiv	%st,%st(1)
+	fld	%st
 	fchs
 	fcompp
 	fstsw	copro
-	mov	ax,copro
+	mov	copro,%ax
 	sahf
 	jz	is80287
-	mov	cl,#3
+	mov	$3,%cl
 	jmp	gotfpu
-is80287: mov	cl,#2
+is80287: mov	$2,%cl
 	jmp	gotfpu
-is8087:	mov	cl,#1
+is8087:	mov	$1,%cl
 	jmp	gotfpu
 #endif
-nofpu:	xor	cl,cl
+nofpu:	xor	%cl,%cl
 
-gotfpu:	mov	ax,#INITSEG
-	mov	es,ax
-	mov	ax,#SETUPSEG
-	mov	ds,ax
-	seg	es
-	mov	[0x21],cl
-	xor	ch,ch
-	add	cx,cx
-	lea	si,fpu_t
-	add	si,cx
-	mov	si,[si]
-	mov	di,#0x40
-	mov	cx,#16
+gotfpu:	mov	$INITSEG,%ax
+	mov	%ax,%es
+	mov	$SETUPSEG,%ax
+	mov	%ax,%ds
+//	seg	es
+	mov	%cl,%es:0x21
+	xor	%ch,%ch
+	add	%cx,%cx
+	lea	fpu_t,%si
+	add	%cx,%si
+	mov	(%si),%si
+	mov	$0x40,%di
+	mov	$16,%cx
 	cld
 con_cp2:
 	lodsb
 	stosb
-	or	al,al
+	or	%al,%al
 	loopnz	con_cp2
 	ret
 
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
+/*
 !
 ! Determine the length of the prefetch queue. 8088/188/v20 has
 ! a 4 bytes queue, 8086/186/v30 has 6 bytes.
@@ -879,6 +920,7 @@ con_cp2:
 ! In ROM we can't change the code, we must copy to RAM
 ! Using Kernel dataseg
 !
+*/
 queue:
 #ifdef CONFIG_ROMCODE
         push ds
@@ -902,16 +944,16 @@ queue:
 #endif
 queue_start:
 
-	mov	ax,cs
-	mov	es,ax
-	xor	dx,dx
+	mov	%cs,%ax
+	mov	%ax,%es
+	xor	%dx,%dx
 	std
-	lea	di,q_end
+	lea	q_end,%di
 #ifdef CONFIG_ROMCODE
-        sub di,#queue_start   ;we have new offset
+        sub $queue_start,%di   //;we have new offset
 #endif	
-	mov	al,#0xfb
-	mov	cx,#0x03
+	mov	$0xfb,%al
+	mov	$0x03,%cx
 	cli
 	rep
 	stosb
@@ -919,220 +961,226 @@ queue_start:
 	nop
 	nop
 	nop
-	inc	dx
+	inc	%dx
 q_end:	nop
 	sti
 
 #ifdef CONFIG_ROMCODE
-        jmp far CONFIG_ROM_SETUP_CODE:queue_end
+        ljmp $CONFIG_ROM_SETUP_CODE,$queue_end
 queue_end:
 #endif
 
-	or	dx,dx
+	or	%dx,%dx
 	ret
 #endif
 
+/*
 !
 ! Determine the number and type of floppy disks
 ! attached to our system.
 !
+*/
 #ifdef CONFIG_HW_FLOPPY_DRIVE
 getfloppy:
-	mov	ax,#INITSEG
-	mov	es,ax
-	mov	ds,ax
-	mov	bl,[0x20]	! Get processor type
-	mov	ax,#SETUPSEG
-	mov	ds,ax
-	int	0x11		! only ax is changed by int 0x11
-	test	al,#1		! bit 0 set -> floppy present
+	mov	$INITSEG,%ax
+	mov	%ax,%es
+	mov	%ax,%ds
+	mov	0x20,%bl	//! Get processor type
+	mov	$SETUPSEG,%ax
+	mov	%ax,%ds
+	int	$0x11		//! only ax is changed by int 0x11
+	test	$1,%al		//! bit 0 set -> floppy present
 	jz	no_floppy
-	cmp	bl,#5
+	cmp	$5,%bl
 	jle	is_xt
+/*
 !
 ! AT architecture. The BIOS tells us the number and capacity of the
 ! available floppy disks.
 !
-	xor	dl,dl
-	mov	ah,#0x08
-	push	es
-	int	0x13		! changes es
-	pop	es
-	jc	no_floppy	! c-flag is set if operation fails
-	or	bl,bl		! the drive code is returned in bl
-	jz	no_floppy	! it has to be in the range 1..6
-	cmp	bl,#6
+*/
+	xor	%dl,%dl
+	mov	$0x08,%ah
+	push	%es
+	int	$0x13		//! changes es
+	pop	%es
+	jc	no_floppy	//! c-flag is set if operation fails
+	or	%bl,%bl		//! the drive code is returned in bl
+	jz	no_floppy	//! it has to be in the range 1..6
+	cmp	$6,%bl
 	ja	no_floppy
-	xor	bh,bh
-	dec	bl
-	add	bl,bl
-	mov	si,floppies[bx]
-	mov	di,#0x8c
-	mov	cx,#3
+	xor	%bh,%bh
+	dec	%bl
+	add	%bl,%bl
+	mov	floppies(%bx),%si
+	mov	$0x8c,%di
+	mov	$3,%cx
 	rep
 	movsw
-	int	0x11		! check for second floppy
-	test	al,#0xc0	! Bit 6,7
+	int	$0x11		//! check for second floppy
+	test	$0xc0,%al	//! Bit 6,7
 	jz	no_floppy
-	mov	ah,#0x08
-	mov	dl,#0x01
-	push	es
-	int	0x13		! changes es
-	pop	es
-	jc	no_floppy	! c-flag is set if operation fails
-	or	bl,bl		! the drive code is returned in bl
-	jz	no_floppy	! it has to be in the range 1..6
-	cmp	bl,#6
+	mov	$0x08,%ah
+	mov	$0x01,%dl
+	push	%es
+	int	$0x13		//! changes es
+	pop	%es
+	jc	no_floppy	//! c-flag is set if operation fails
+	or	%bl,%bl		//! the drive code is returned in bl
+	jz	no_floppy	//! it has to be in the range 1..6
+	cmp	$6,%bl
 	ja	no_floppy
-	xor	bh,bh
-	dec	bl
-	add	bl,bl
-	mov	si,floppies[bx]
-	mov	di,#(0x8c+6)
-	mov	cx,#3
+	xor	%bh,%bh
+	dec	%bl
+	add	%bl,%bl
+	mov	floppies(%bx),%si
+	mov	$0x8c+6,%di
+	mov	$3,%cx
 	rep
 	movsw
 	ret
 is_xt:
+/*
 !
 ! XT architecture. Ask the BIOS about the number of available floppy
 ! disks and assume that they have a capacity of 360 KB.
 !
 ! ax contains the result of int 0x11 when jumped here!
 !
-	int	0x11
-	mov	cx,#3
-	mov	di,#0x8c
-	lea	si,f360
+*/
+	int	$0x11
+	mov	$3,%cx
+	mov	$0x8c,%di
+	lea	f360,%si
 	rep
 	movsw
-	test	al,#0xc0	! Bit 6,7
-	jz	no_floppy	! second floppy detected
-	mov	cx,#3
-	lea	si,f360
+	test	$0xc0,%al	//! Bit 6,7
+	jz	no_floppy	//! second floppy detected
+	mov	$3,%cx
+	lea	f360,%si
 	rep
 	movsw
 no_floppy: ret
 
-f360:	dw 2,9,40
-f720:	dw 2,9,80
-f1200:	dw 2,15,80
-f1440:	dw 2,18,80
-f2880:	dw 2,36,80
-floppies: dw f360, f1200, f720, f1440, f2880, f2880
+f360:	.word 2,9,40
+f720:	.word 2,9,80
+f1200:	.word 2,15,80
+f1440:	.word 2,18,80
+f2880:	.word 2,36,80
+floppies: .word f360, f1200, f720, f1440, f2880, f2880
 #endif
 
-!
-! gethd
-!
+//!
+//! gethd
+//!
 #ifdef CONFIG_HW_HARD_DRIVE
 gethd:
-	mov	ax,#INITSEG
-	mov	ds,ax
-	mov	es,ax
-!	mov	ah,#0x10	! Test for drive 0 ready
-!	mov	dl,#0x80
-!	int	0x13
-!	jc	no_hd0
-!	or	ah,ah
-!	jnz	no_hd0
-	mov	ah,#0x08	! check for first drive
-	mov	dl,#0x80
-	int	0x13
-	jc	no_hd0		! carry flag set -> an error occured
-	or	ah,ah
-	jnz	no_hd0		! error code != 0 -> bad
-	or	dl,dl
-	jz	no_hd0		! dl contains the number of harddisks
-	push	dx
-	mov	dl,dh
-	xor	dh,dh
-	inc	dx		! DX -> no. of heads
-	mov	bx,cx
-	and	bx,#0x3f	! BX -> no. of sectors
-	mov	al,ch
-	mov	ah,cl
-	mov	cl, #6
-	shr	ah,cl		! AX -> no. of cylinders - 1
-	mov	[0x80],dx
-	mov	[0x82],bx
-	mov	[0x84],ax
-	pop	dx
-	dec	dl		! only one harddisk?
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	mov	%ax,%es
+
+
+
+
+
+
+	mov	$0x08,%ah	//! check for first drive
+	mov	$0x80,%dl
+	int	$0x13
+	jc	no_hd0		//! carry flag set -> an error occured
+	or	%ah,%ah
+	jnz	no_hd0		//! error code != 0 -> bad
+	or	%dl,%dl
+	jz	no_hd0		//! dl contains the number of harddisks
+	push	%dx
+	mov	%dh,%dl
+	xor	%dh,%dh
+	inc	%dx		//! DX -> no. of heads
+	mov	%cx,%bx
+	and	$0x3f,%bx	//! BX -> no. of sectors
+	mov	%ch,%al
+	mov	%cl,%ah
+	mov	$6,%cl
+	shr	%cl,%ah		//! AX -> no. of cylinders - 1
+	mov	%dx,0x80
+	mov	%bx,0x82
+	mov	%ax,0x84
+	pop	%dx
+	dec	%dl		//! only one harddisk?
 	jz	no_hd1
 no_hd0:
-!	mov	ah,#0x10	! Test for drive 1 ready
-!	mov	dl,#0x81
-!	int	0x13
-!	jc	no_hd1
-!	or	ah,ah
-!	jnz	no_hd1
-	mov	ah,#0x08	! check for second drive
-	mov	dl,#0x81
-	int	0x13
+
+
+
+
+
+
+	mov	$0x08,%ah	//! check for second drive
+	mov	$0x81,%dl
+	int	$0x13
 	jc	no_hd1
-	or	ah,ah
+	or	%ah,%ah
 	jnz	no_hd1
-	mov	dl,dh
-	xor	dh,dh
-	inc	dx		! DX -> no. of heads
-	mov	bx,cx
-	and	bx,#0x3f	! BX -> no. of sectors
-	mov	al,ch
-	mov	ah,cl
-	mov	cl,#6
-	shr	ah,cl		! AX -> no. of cylinders - 1
-	mov	[0x86],dx
-	mov	[0x88],bx
-	mov	[0x8a],ax
+	mov	%dh,%dl
+	xor	%dh,%dh
+	inc	%dx		//! DX -> no. of heads
+	mov	%cx,%bx
+	and	$0x3f,%bx	//! BX -> no. of sectors
+	mov	%ch,%al
+	mov	%cl,%ah
+	mov	$6,%cl
+	shr	%cl,%ah		//! AX -> no. of cylinders - 1
+	mov	%dx,0x86
+	mov	%bx,0x88
+	mov	%ax,0x8a
 no_hd1:	ret
 #endif
 
 
-!
-! The processor name must not be longer than 15 characters!
-!
+//!
+//! The processor name must not be longer than 15 characters!
+//!
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
 p8088:	.ascii "Intel 8088"
-	db 0
+	.byte 0
 p8086:	.ascii "Intel 8086"
-	db 0
+	.byte 0
 pv20:	.ascii "NEC V20"
-	db 0
+	.byte 0
 pv30:	.ascii "NEC V30"
-	db 0
+	.byte 0
 p80188:	.ascii "Intel 80188"
-	db 0
+	.byte 0
 p80186:	.ascii "Intel 80186"
-	db 0
+	.byte 0
 #endif
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
 p80286:	.ascii "Intel 80286"
-	db 0
+	.byte 0
 #endif
 #if !defined(CONFIG_ROMCODE)
 px86:   .ascii "Unknown x86"
-	db 0
+	.byte 0
 #endif
-!
-! Here is the CPU id stored
-!
-v_id:	db 0,0,0,0
-v_id2:	db 0,0,0,0
-v_id3:	db 0,0,0,0
-	db 0
-!
-! FPU names. must be not longer than 15 characters!
-!
+//!
+//! Here is the CPU id stored
+//!
+v_id:	.byte 0,0,0,0
+v_id2:	.byte 0,0,0,0
+v_id3:	.byte 0,0,0,0
+	.byte 0
+//!
+//! FPU names. must be not longer than 15 characters!
+//!
 f_none:	.ascii "no fpu"
-	db 0
+	.byte 0
 #ifdef CONFIG_HW_FPU
 f8087:	.ascii "8087"
-	db 0
+	.byte 0
 f80287:	.ascii "80287"
-	db 0
+	.byte 0
 f80387: .ascii "80387 or above"
-	db 0
+	.byte 0
 #endif
 fpu_t:	.word f_none
 #ifdef CONFIG_HW_FPU
@@ -1140,23 +1188,17 @@ fpu_t:	.word f_none
 #endif
 
 #ifdef CONFIG_HW_FPU
-copro:	dw 0
+copro:	.word 0
 #endif
 
 no_sig_mess:	.ascii	"No ELKS setup signature found ..."
-		db	0x00
+		.byte	0x00
 
-! variables in ROM are not very usefull
+//! variables in ROM are not very usefull
 start_sys_seg:	.word	SYSSEG
 
 
-! This must be last
+//! This must be last
 setup_sig1:	.word	SIG1
 setup_sig2:	.word	SIG2
 
-.text
-endtext:
-.data
-enddata:
-.bss
-endbss:

@@ -9,52 +9,56 @@
 /*void printsp(void);*/
 
 #ifndef S_SPLINT_S
-#asm
+
+.code16
+
+.text
+
 	.extern	_printk
-	.globl _print_regs
+	.global _print_regs
 
 _print_regs:
-	push bp
-	push ss
-	push es
-	push ds
-	push cs
-	push si
-	push di
-	push dx
-	push cx
-	push bx
-	push ax
-	mov  ax,#fmtprg
-	push ax
+	push %bp
+	push %ss
+	push %es
+	push %ds
+	push %cs
+	push %si
+	push %di
+	push %dx
+	push %cx
+	push %bx
+	push %ax
+	mov  $fmtprg,%ax
+	push %ax
 	call _printk
-	pop ax
-	pop ax
-	pop bx
-	pop cx
-	pop dx
-	pop di
-	pop si
-	pop ds		! Can not pop cs.
-	pop ds
-	pop es
-	pop ss
-	pop bp
+	pop %ax
+	pop %ax
+	pop %bx
+	pop %cx
+	pop %dx
+	pop %di
+	pop %si
+	pop %ds		//! Can not pop cs.
+	pop %ds
+	pop %es
+	pop %ss
+	pop %bp
 	ret
 
-	.globl _printsp
+	.global _printsp
 
 _printsp:
-	mov ax,sp
-	add ax,#2
-	push ax
-	push ss
-	mov ax,#msg
-	push ax
+	mov %sp,%ax
+	add $2,%ax
+	push %ax
+	push %ss
+	mov $msg,%ax
+	push %ax
 	call _printk
-	pop ax
-	pop ax
-	pop ax
+	pop %ax
+	pop %ax
+	pop %ax
 	ret
 
 	.data
@@ -63,5 +67,4 @@ msg:	.ascii	"SP=%x:%x\n"
 fmtprg:	.ascii	"AX=%x BX=%x CX=%x DX=%x DI=%x SI=%x\nCS=%x DS=%x ES=%x SS=%x BP=%x\n"
 	.byte	0
 
-#endasm
 #endif
