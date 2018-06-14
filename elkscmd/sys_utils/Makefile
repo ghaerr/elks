@@ -42,7 +42,7 @@ meminfo: meminfo.c
 swapon: swapon.c
 	$(CC) $(CFLAGS) $(LDFLAGS) swapon.c -o swapon -H 0x100
 
-init: init.c 
+init: init.c
 	$(CC) $(CFLAGS) $(LDFLAGS) init.c -o init -H 0x8000
 
 rdev: rdev.c 

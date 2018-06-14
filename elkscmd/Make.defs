@@ -72,20 +72,23 @@ ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre$$//')
 ifeq ($(PLATFORM),i86-ELKS)
 	CC=bcc
 	CFLBASE=-0 -O -ansi
+	LD=ld86
 	LDFLAGS=-s -ansi
 	CHECK=gcc -c -o .null.o -Wall -pedantic
+	AS=as86
 endif
 
 ifeq ($(PLATFORM),DEFAULT)
 	CC=cc
 	CFLBASE=
+	LD=ld
 	LDFLAGS=
 	CHECK=cc -c -o .null.o
+	AS=as
 endif
 
 CFLAGS=$(CFLBASE) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
 
-LD=ld86
 
 ##############################################################################
 #

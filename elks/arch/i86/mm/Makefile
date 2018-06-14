@@ -40,7 +40,8 @@ OBJS  = init.o malloc.o user.o segment.o
 #########################################################################
 # Commands.
 
-segment.o:	segment.s
+segment.s: segment.S
+segment.o: segment.s
 
 all:	mm.a
 

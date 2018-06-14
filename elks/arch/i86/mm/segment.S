@@ -47,7 +47,7 @@ memcpy_tofs:
 	mov	TASK_USER_DS(%si),%es
 	mov	%sp,%si
 	mov	2(%si),%di
-	mov	6(%si),%cs
+	mov	6(%si),%cx
 	mov	4(%si),%si
 	cld
 	rep
