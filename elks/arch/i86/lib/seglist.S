@@ -1,113 +1,117 @@
 /* Double-linked list with segments */
 
-/* void seglist_init (word_t root_off, seg_t root_seg); */
-	.global _seglist_init
+	.code16
 
-_seglist_init:
-	push  bp
-	mov   bp,sp
-	push  ds
-	lds   bx,[bp+4]     /* node = root */
-	mov   [bx],ds       /* node->prev = node */
-	mov   [bx+2],ds     /* node->next = node */
-	pop   ds
-	pop   bp
+	.text
+
+/* void seglist_init (word_t root_off, seg_t root_seg); */
+	.global seglist_init
+
+seglist_init:
+	push  %bp
+	mov   %sp,%bp
+	push  %ds
+	lds   4(%bp),%bx     /* node = root */
+	mov   %ds,(%bx)       /* node->prev = node */
+	mov   %ds,2(%bx)     /* node->next = node */
+	pop   %ds
+	pop   %bp
 	ret
 
 seglist_link:
-	mov   ds,cx         /* prev->next = node */
-	mov   [bx+2],ax
-	mov   ds,dx         /* next->prev = node */
-	mov   [bx],ax
-	mov   ds,ax
-	mov   [bx],cx       /* node->prev = prev */
-	mov   [bx+2],dx     /* node->next = next */
+	mov   %cx,%ds         /* prev->next = node */
+	mov   %ax,2(%bx)
+	mov   %dx,%ds         /* next->prev = node */
+	mov   %ax,(%bx)
+	mov   %ax,%ds
+	mov   %cx,(%bx)       /* node->prev = prev */
+	mov   %dx,2(%bx)     /* node->next = next */
 	ret
 
 /* void seglist_insert_before (word_t node_off, seg_t next_seg, seg_t node_seg); */
-	.global _seglist_insert_before
+	.global seglist_insert_before
 
-_seglist_insert_before:
-	push  bp
-	mov   bp,sp
-	push  ds
-	mov   bx,[bp+4]     /* ax:bx = node */
-	mov   ax,[bp+8]
-	mov   dx,[bp+6]     /* dx:bx = next */
-	mov   ds,dx         /* prev = next->prev */
-	mov   cx,[bx]       /* cx:bx = prev */
+seglist_insert_before:
+	push  %bp
+	mov   %sp,%bp
+	push  %ds
+	mov   4(%bp),%bx     /* ax:bx = node */
+	mov   8(%bp),%ax
+	mov   6(%bp),%dx     /* dx:bx = next */
+	mov   %dx,%ds         /* prev = next->prev */
+	mov   (%bx),%cx       /* cx:bx = prev */
 	call  seglist_link
-	pop   ds
-	pop   bp
+	pop   %ds
+	pop   %bp
 	ret
 
 /* void seglist_insert_after (word_t node_off, seg_t prev_seg, seg_t node_seg); */
-	.global _seglist_insert_after
+	.global seglist_insert_after
 
-_seglist_insert_after:
-	push  bp
-	mov   bp,sp
-	push  ds
-	mov   bx,[bp+4]     /* ax:bx = node */
-	mov   ax,[bp+8]
-	mov   cx,[bp+6]     /* cx:bx = prev */
-	mov   ds,cx         /* next = prev->next */
-	mov   dx,[bx+2]     /* dx:bx = next */
+seglist_insert_after:
+	push  %bp
+	mov   %sp,%bp
+	push  %ds
+	mov   4(%bp),%bx     /* ax:bx = node */
+	mov   8(%bp),%ax
+	mov   6(%bp),%cx     /* cx:bx = prev */
+	mov   %cx,%ds         /* next = prev->next */
+	mov   2(%bx),%dx     /* dx:bx = next */
 	call  seglist_link
-	pop   ds
-	pop   bp
+	pop   %ds
+	pop   %bp
 	ret
 
 /* void seglist_remove (word_t node_off, seg_t node_seg); */
-	.global _seglist_remove
+	.global seglist_remove
 
-_seglist_remove:
-	push  bp
-	mov   bp,sp
-	push  ds
-	mov   bx,[bp+4]     /* ax:bx = node */
-	mov   ax,[bp+6]
-	mov   ds,ax
-	mov   cx,[bx]       /* prev = cx:bx = node->prev */
-	mov   dx,[bx+2]     /* next = dx:bx = node->next */
-	mov   ds,cx         /* prev->next = next */
-	mov   [bx+2],dx
-	mov   ds,dx         /* next->prev = prev */
-	mov   [bx],cx
-	pop   ds
-	pop   bp
+seglist_remove:
+	push  %bp
+	mov   %sp,%bp
+	push  %ds
+	mov   4(%bp),%bx     /* ax:bx = node */
+	mov   6(%bp),%ax
+	mov   %ax,%ds
+	mov   (%bx),%cx       /* prev = cx:bx = node->prev */
+	mov   2(%bx),%dx     /* next = dx:bx = node->next */
+	mov   %cx,%ds         /* prev->next = next */
+	mov   %dx,2(%bx)
+	mov   %dx,%ds         /* next->prev = prev */
+	mov   %cx,(%bx)
+	pop   %ds
+	pop   %bp
 	ret
 
 /* void seglist_prev (word_t node_off, seg_t node_seg, seg_t * prev_seg); */
-	.global _seglist_prev
+	.global seglist_prev
 
-_seglist_prev:
-	push  bp
-	mov   bp,sp
-	push  ds
-	mov   bx,[bp+4]     /* ax:bx = node */
-	mov   ax,[bp+6]
-	mov   ds,ax
-	mov   cx,[bx]       /* prev = cx:bx = node->prev */
-	pop   ds
-	mov   bx,[bp+8]
-	mov   [bx],cx
-	pop   bp
+seglist_prev:
+	push  %bp
+	mov   %sp,%bp
+	push  %ds
+	mov   4(%bp),%bx     /* ax:bx = node */
+	mov   6(%bp),%ax
+	mov   %ax,%ds
+	mov   (%bx),%cx       /* prev = cx:bx = node->prev */
+	pop   %ds
+	mov   8(%bp),%bx
+	mov   %cx,(%bx)
+	pop   %bp
 	ret
 
 /* void seglist_next (word_t node_off, seg_t node_seg, seg_t * next_seg); */
-	.global _seglist_next
+	.global seglist_next
 
-_seglist_next:
-	push  bp
-	mov   bp,sp
-	push  ds
-	mov   bx,[bp+4]     /* ax:bx = node */
-	mov   ax,[bp+6]
-	mov   ds,ax
-	mov   dx,[bx+2]     /* next = dx:bx = node->next */
-	pop   ds
-	mov   bx,[bp+8]
-	mov   [bx],dx
-	pop   bp
+seglist_next:
+	push  %bp
+	mov   %sp,%bp
+	push  %ds
+	mov   4(%bp),%bx     /* ax:bx = node */
+	mov   6(%bp),%ax
+	mov   %ax,%ds
+	mov   2(%bx),%dx     /* next = dx:bx = node->next */
+	pop   %ds
+	mov   8(%bp),%bx
+	mov   %dx,(%bx)
+	pop   %bp
 	ret

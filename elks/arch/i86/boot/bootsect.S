@@ -128,7 +128,7 @@ go:	mov     $0x4000-12,%di
 // ds:si is source
 
 	mov     $6,%cl
-//! copy 12 bytes
+// copy 12 bytes
     cld
     push    %di
 

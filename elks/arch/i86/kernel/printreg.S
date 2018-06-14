@@ -39,7 +39,7 @@ _print_regs:
 	pop %dx
 	pop %di
 	pop %si
-	pop %ds		//! Can not pop cs.
+	pop %ds		// Can not pop cs.
 	pop %ds
 	pop %es
 	pop %ss

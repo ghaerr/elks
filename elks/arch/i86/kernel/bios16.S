@@ -71,18 +71,18 @@ call_bios:
 // ***** We can now use the bios data table again *****
 
 	mov %sp,%bx
-	mov 18(%bx),%bx      //! Load BX with table address
+	mov 18(%bx),%bx      // Load BX with table address
 
-	mov %ax,2(%bx)       //! Save the old AX
-	pop 4(%bx)          //! Save the old BX
+	mov %ax,2(%bx)       // Save the old AX
+	pop 4(%bx)          // Save the old BX
 	mov %cx,6(%bx)
 	mov %dx,8(%bx)
 	mov %si,10(%bx)
 	mov %di,12(%bx)
 	mov %bp,14(%bx)
 	mov %es,16(%bx)
-	pop 18(%bx)         //! Save the old DS
-	pop 20(%bx)         //! Pop the returned flags off
+	pop 18(%bx)         // Save the old DS
+	pop 20(%bx)         // Pop the returned flags off
 
 //	Restore things we must save
 
@@ -91,6 +91,6 @@ call_bios:
 	pop %es
 	popf
 	pop %bp
-	mov	20(%bx),%ax	//! Return CARRY value
+	mov	20(%bx),%ax	// Return CARRY value
 	and	$1,%ax
 	ret

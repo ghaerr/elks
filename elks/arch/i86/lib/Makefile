@@ -36,7 +36,8 @@ SRCS1= \
 	fmemcmpb.S fmemcmpw.S \
 	setupb.S setupw.S \
 	string.S \
-#	farlist.S seglist.S \
+	seglist.S \
+#	farlist.S \
 	# end of list
 
 fmemcpyb.s:fmemcpyb.S
@@ -47,7 +48,7 @@ setupb.s:setupb.S
 setupw.s:setupw.S
 string.s:string.S
 #farlist.s:farlist.S
-#seglist.s:seglist.S
+seglist.s:seglist.S
 
 OBJS1=$(SRCS1:.S=.o)
 
@@ -70,11 +71,8 @@ SRCS3= \
 
 OBJS3=$(SRCS3:.c=.o)
 
-ifeq ($(USEIA16), y)
 OBJS		= $(OBJS1) $(OBJS2) $(OBJS3) divmodsi3.o
-else
-OBJS		= $(OBJS1) $(OBJS2) $(OBJS3) $(IOBJS) $(JOBJS) $(LLOBJS)
-endif
+#OBJS		= $(OBJS1) $(OBJS2) $(OBJS3) $(IOBJS) $(JOBJS) $(LLOBJS)
 
 # compiler support for integer arithmetic
 

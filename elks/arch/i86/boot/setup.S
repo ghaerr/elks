@@ -99,7 +99,7 @@
 #define __ASSEMBLY__
 #include <linuxmt/config.h>
 
-//! Signature words to ensure LILO loaded us right
+// Signature words to ensure LILO loaded us right
 #define SIG1	0xAA55
 #define SIG2	0x5A5A
 
@@ -107,9 +107,9 @@
 #define KERNEL_MAGICNUMBER MINIX_SPLITID_LOW
 
 #ifndef CONFIG_ROMCODE
-  INITSEG  = DEF_INITSEG	//! (DATASEG) we move boot here - out of the way
-  SYSSEG   = DEF_SYSSEG 	//! system loaded at 0x10000 (65536).
-  SETUPSEG = DEF_SETUPSEG	//! this is the current code segment
+  INITSEG  = DEF_INITSEG	// (DATASEG) we move boot here - out of the way
+  SYSSEG   = DEF_SYSSEG 	// system loaded at 0x10000 (65536).
+  SETUPSEG = DEF_SETUPSEG	// this is the current code segment
 #else
   INITSEG  = CONFIG_ROM_SETUP_DATA
   SYSSEG   = CONFIG_ROM_KERNEL_CODE
@@ -129,7 +129,7 @@ start:
     push %ds
 
 #else
-//! Bootlin depends on this being done early
+// Bootlin depends on this being done early
 	mov	$0x01500,%ax	//;Read disk type/DASD
 	mov	$0x81,%dl
 	int	$0x13
@@ -147,8 +147,8 @@ start:
 	nop
 
 
-//! Routine to print asciiz-string at DS:SI
-prts_1:	mov	$0x0007,%bx   //!page 0
+// Routine to print asciiz-string at DS:SI
+prts_1:	mov	$0x0007,%bx   //page 0
 	mov	$0x0e,%ah
 	int	$0x10
 
@@ -159,29 +159,29 @@ prtstr:	lodsb
 
 
 
-//! We now have to find the rest of the setup code/data
-//! in ROM the code is complete
+// We now have to find the rest of the setup code/data
+// in ROM the code is complete
 
 bad_sig:
 #ifndef CONFIG_ROMCODE
 	mov	$INITSEG,%ax     //;code setup
 	mov	%ax,%ds
 	xor	%bh,%bh
-	mov	497,%bl		//! get setup sects from boot sector (SETUPSECS)
-	sub	$4,%bx		//! LILO loads 4 sectors of setup
+	mov	497,%bl		// get setup sects from boot sector (SETUPSECS)
+	sub	$4,%bx		// LILO loads 4 sectors of setup
 	mov	$8,%cl
-	shl	%cl,%bx		//! convert to words
+	shl	%cl,%bx		// convert to words
 	mov	%bx,%cx
-	push	%cx		//! This may not be needed - Chad.
+	push	%cx		// This may not be needed - Chad.
 	mov	$3,%cl
-	shr	%cl,%bx		//! convert to segment
+	shr	%cl,%bx		// convert to segment
 	pop	%cx
 	add	$SYSSEG,%bx
 //	seg cs
 	mov	%bx,%cs:start_sys_seg
 
-//! Move rest of setup code/data to here
-	mov	$2048,%di	//! four sectors loaded by LILO
+// Move rest of setup code/data to here
+	mov	$2048,%di	// four sectors loaded by LILO
 	sub	%si,%si
 	mov	$SETUPSEG,%ax
 	mov	%ax,%es
@@ -201,7 +201,7 @@ no_sig:
 
 	lea	no_sig_mess,%si
 	call	prtstr
-no_sig_loop:			//! And halt
+no_sig_loop:			// And halt
 	jmp	no_sig_loop
 
 
@@ -237,7 +237,7 @@ start_os:
 #endif
 #endif
 
-//! Get memory size (extended mem, kB)
+// Get memory size (extended mem, kB)
 
 #ifdef CONFIG_XMS_SIZE
 	movw	$CONFIG_XMS_SIZE,2
@@ -247,18 +247,18 @@ start_os:
 	mov	%ax,2
 #endif
 
-//! set the keyboard repeat rate to the max
+// set the keyboard repeat rate to the max
 
 #ifdef CONFIG_HW_KEYBOARD_BIOS
 	mov	$0x0305,%ax
-	xor	%bx,%bx		//! clear bx
+	xor	%bx,%bx		// clear bx
 	int	$0x16
 #endif
 
-//! check for EGA/VGA and some config parameters
+// check for EGA/VGA and some config parameters
 
 #ifdef CONFIG_HW_VGA
- 	mov	$0x12,%ah	//! Get video data
+ 	mov	$0x12,%ah	// Get video data
 	mov	$0x10,%bl
 	int	$0x10
 	mov	%ax,8
@@ -267,64 +267,64 @@ start_os:
 	mov	$0x5019,%ax
 	cmp	$0x10,%bl
 	je	novga
-	mov	$0x1a00,%ax	//! Added check for EGA/VGA discrimination
+	mov	$0x1a00,%ax	// Added check for EGA/VGA discrimination
 	int	$0x10
 	mov	%ax,%bx
 	mov	$0x5019,%ax
-	movb	$0,15		//! by default, no VGA
-	cmp	$0x1a,%bl	//! 1a means VGA, anything else EGA or lower
+	movb	$0,15		// by default, no VGA
+	cmp	$0x1a,%bl	// 1a means VGA, anything else EGA or lower
 	jne	novga
-	movb	$1,15		//! we've detected a VGA
-//!	call	chsvga
+	movb	$1,15		// we've detected a VGA
+//	call	chsvga
 #else
-        movb  $0,15           //! no VGA in system
+        movb  $0,15           // no VGA in system
 #ifdef CONFIG_HW_VIDEO_LINES_PER_SCREEN
         mov   $CONFIG_HW_VIDEO_LINES_PER_SCREEN,%al
 #else
-        mov   $0x19,%al          //! height of display (0x19 == 25 rows)
+        mov   $0x19,%al          // height of display (0x19 == 25 rows)
 #endif
 #endif
 
-novga:	mov	%al,14		//! CGA 25 rows
-	mov	$0x03,%ah	//! read cursor pos
-	xor	%bh,%bh		//! clear bh
-	int	$0x10		//! save it in known place, con_init fetches
-	mov	%dx,0	        //! it from INITSEG.
+novga:	mov	%al,14		// CGA 25 rows
+	mov	$0x03,%ah	// read cursor pos
+	xor	%bh,%bh		// clear bh
+	int	$0x10		// save it in known place, con_init fetches
+	mov	%dx,0	        // it from INITSEG.
 
-//! Get video-card data:
+// Get video-card data:
 	mov	$0x0f,%ah
 	int	$0x10
-	mov	%bx,4		//! bh = display page
-	mov	%ax,6		//! al = video mode, ah = window width
+	mov	%bx,4		// bh = display page
+	mov	%ax,6		// al = video mode, ah = window width
 
 #ifdef CONFIG_HW_VIDEO_LINES_PER_CHARACTER
         mov   $CONFIG_HW_VIDEO_LINES_PER_CHARACTER,16
 #else
 	xor	%ax,%ax
-	mov	%ax,%es		//! Access BIOS DATA AREA
+	mov	%ax,%es		// Access BIOS DATA AREA
 //	seg es
-	mov	%es:0x485,%ax	//! POINTS - Height of character matrix
+	mov	%es:0x485,%ax	// POINTS - Height of character matrix
 	mov	%ax,16
 #endif
 
-//! check for PS/2 pointing device
+// check for PS/2 pointing device
 
-//!	mov	ax,#INITSEG     //!ds was not changed sinse good_gig
-//!	mov	ds,ax
-	movb	$0,0x1ff	//! default is no pointing device
+//	mov	ax,#INITSEG     //ds was not changed sinse good_gig
+//	mov	ds,ax
+	movb	$0,0x1ff	// default is no pointing device
 	nop
 #ifdef CONFIG_HW_PS2_MOUSE
-	int	$0x11		//! int 0x11: equipment determination
-	test	$0x04,%al	//! check if pointing device installed
+	int	$0x11		// int 0x11: equipment determination
+	test	$0x04,%al	// check if pointing device installed
 	jz	no_psmouse
-	movb	$0xaa,0x1ff	//! device present
+	movb	$0xaa,0x1ff	// device present
 	nop
 no_psmouse:
 #endif
 
 	call	getcpu
-	push	%es		//! clear BIOS data for harddisk 0/1, 12 bytes
-	mov	$INITSEG,%ax	//! and BIOS data for floppy disk 0/1, 12 bytes
+	push	%es		// clear BIOS data for harddisk 0/1, 12 bytes
+	mov	$INITSEG,%ax	// and BIOS data for floppy disk 0/1, 12 bytes
 	mov	%ax,%es
 	mov	$24,%cx
 	mov	$0x80,%di
@@ -334,19 +334,19 @@ no_psmouse:
 	stosw
 	pop	%es
 #ifdef CONFIG_HW_HARD_DRIVE
-	call	gethd		//! Get geometry for harddisk 0/1.
+	call	gethd		// Get geometry for harddisk 0/1.
 #endif
 #ifdef CONFIG_HW_FLOPPY_DRIVE
-	call	getfloppy	//! Get geometry for floppy disk 0/1.
+	call	getfloppy	// Get geometry for floppy disk 0/1.
 #endif
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
-	int	$0x12		//! determine the size of the basememory
+	int	$0x12		// determine the size of the basememory
 	mov	%ax,0x2a
 
-//!----------------------------
+//----------------------------
 #ifdef CONFIG_ROMCODE
-//! We must now copy the kernel to RAM (SYSSEG)
+// We must now copy the kernel to RAM (SYSSEG)
 
 	mov %cs,%ax          //;string is in this codeseg
 	mov %ax,%ds
@@ -356,7 +356,7 @@ no_psmouse:
    	mov $CONFIG_ROM_KERNEL_CODE,%ax   //;the ROM image
    	mov %ax,%ds
 
-//! test, if correct a.out header
+// test, if correct a.out header
 
    	cmpw $KERNEL_MAGICNUMBER,0
    	jne aouterr
@@ -410,7 +410,7 @@ size_ok:
         jnz size_error     //; .data section too big
 
 //;and now copy the kerneldata
-//! WARNING: Next code fails if code_size+data_size+32 > 64K
+// WARNING: Next code fails if code_size+data_size+32 > 64K
    	mov 0x08,%si  //;code size
    	add 0x04,%si  //;+header size
         xor %di,%di
@@ -448,17 +448,17 @@ size_ok:
         mov %cx,%ds
 
 #ifdef CONFIG_ROM_DEBUG
-	int     $3               //! break for debugger just before kernel
+	int     $3               // break for debugger just before kernel
 #endif
 
 	ljmp     $SYSSEG+2:$0
 
-//!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! Case for kernel in disk to be relocated
-//!
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Case for kernel in disk to be relocated
+//
 #elif defined(REL_SYS)
 
-//! Relocate setup data
+// Relocate setup data
 
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
@@ -503,25 +503,25 @@ sys_hdr_msg:
 sys_hdr_good:
 	mov	12,%bx
 	mov	%bx,%dx
-	push	%bx		//! Data size
+	push	%bx		// Data size
 	add	16,%bx
-	add $0xF,%bx     //! align on next paragraph (issue #209)
+	add $0xF,%bx     // align on next paragraph (issue #209)
 	mov	$4,%cl
 	shr	%cl,%bx
-	add	$REL_SYSSEG,%bx	//! BX = Relocated kernel code segment
+	add	$REL_SYSSEG,%bx	// BX = Relocated kernel code segment
 	mov	8,%ax
-	push	%ax		//! Code size
+	push	%ax		// Code size
 	mov	$4,%cl
 	shr	%cl,%ax
 	mov	%ax,%cx
-	add	%bx,%ax		//! AX = Relocated kernel data segment
+	add	%bx,%ax		// AX = Relocated kernel data segment
 	add	$SYSSEG+2,%cx
-	push	16		//! Bss size
-	push	%cx		//! Kernel data segment
-	add $0xF,%dx     //! align on next paragraph (issue #209)
+	push	16		// Bss size
+	push	%cx		// Kernel data segment
+	add $0xF,%dx     // align on next paragraph (issue #209)
 	mov	$4,%cl
 	shr	%cl,%dx
-	add	%ax,%dx		//! DX = Rel rel segment
+	add	%ax,%dx		// DX = Rel rel segment
 	mov	%sp,%bp
 
 
@@ -537,9 +537,9 @@ sys_hdr_good:
 	cmp	$SYSSEG+2,%bx
 	ja	move_back
 
-//! Move forward
+// Move forward
 
-	mov	%bx,%es		//! Move code segment
+	mov	%bx,%es		// Move code segment
 	mov	$SYSSEG+2,%cx
 	mov	%cx,%ds
 	mov	4(%bp),%cx
@@ -547,17 +547,17 @@ sys_hdr_good:
 	mov	%si,%di
 	rep
 	movsb
-	mov	%ax,%es		//! Move data segment
+	mov	%ax,%es		// Move data segment
 	mov	(%bp),%ds
 	mov	6(%bp),%cx
 	xor	%si,%si
 	jmp	rel_rel
 
-//! Move backward
+// Move backward
 
 move_back:
 	std
-	mov	%ax,%es		//! Move data segment
+	mov	%ax,%es		// Move data segment
 	mov	(%bp),%ds
 	mov	6(%bp),%cx
 	mov	%cx,%si
@@ -565,7 +565,7 @@ move_back:
 	mov	%si,%di
 	rep
 	movsb
-	mov	%bx,%es		//! Move code segment
+	mov	%bx,%es		// Move code segment
 	mov	$SYSSEG+2,%cx
 	mov	%cx,%ds
 	mov	4(%bp),%cx
@@ -576,33 +576,33 @@ rel_rel:
 	rep
 	movsb
 
-//! Relocate relocation code to next to relocated kernel data
-//! segment because current setup code might be overwritten
+// Relocate relocation code to next to relocated kernel data
+// segment because current setup code might be overwritten
 
 	mov	%dx,%es
 	mov	%cs,%cx
 	mov	%cx,%ds
 	mov	$cont,%si
 	xor	%di,%di
-	push	%es		//! build far return address
+	push	%es		// build far return address
 	push	%di
 	mov	$end_reloc-cont,%cx
 	cld
 	rep
 	movsb
-	lret			//! jump to dx:0
+	lret			// jump to dx:0
 
-//! Still using the old stack. Switch to new stack
-//! AX = Rel. kernel data seg. BX = Rel. kernel code seg. DX = Rel. rel. seg.
+// Still using the old stack. Switch to new stack
+// AX = Rel. kernel data seg. BX = Rel. kernel code seg. DX = Rel. rel. seg.
 
 cont:	mov	%ax,%ds
-	pop	%di		//! Empty old stack
+	pop	%di		// Empty old stack
 	pop	%di
 	pop	%ax
 	pop	%si
-	mov	%dx,%ss		//! Set new stack
+	mov	%dx,%ss		// Set new stack
 	mov	$end_reloc-cont+512,%sp
-	mov	%di,%dx		//! Move kernel data segment to REL_SYSSEG
+	mov	%di,%dx		// Move kernel data segment to REL_SYSSEG
 	mov	$REL_SYSSEG,%cx
 	mov	%cx,%es
 	mov	%si,%cx
@@ -624,27 +624,27 @@ cont:	mov	%ax,%ds
 	pop	%si
 	mov	%es,%cx
 	mov	%cx,%ds
-	push	%ax		//! Build far return address to relocated code segment
-	mov	$0,%ax		//! Address to offset 0 (start)
+	push	%ax		// Build far return address to relocated code segment
+	mov	$0,%ax		// Address to offset 0 (start)
 	push	%ax
 
-//! changed jmpi 0,0x1002 to 3,0x1002 for kernel restart fix -AJB
-//!	jmpi	0x00003,SYSSEG+2   !jmp offset 3 of segment 0x1002 (cs)
+// changed jmpi 0,0x1002 to 3,0x1002 for kernel restart fix -AJB
+//	jmpi	0x00003,SYSSEG+2   !jmp offset 3 of segment 0x1002 (cs)
 	lret
 end_reloc:
-//!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! Case for kernel in disk, no kernel relocation
-//!
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Case for kernel in disk, no kernel relocation
+//
 #else
 
-	mov $SYSSEG,%ax	//! in ROM ds ist always set
-	mov %ax,%ds	//! Get the header into DS
-	mov 8,%bx	//! TSeg
-	mov 12,%si	//! DSeg
-	mov 16,%dx	//! BSeg
-	mov %bx,%ax	//! Get Text size
+	mov $SYSSEG,%ax	// in ROM ds ist always set
+	mov %ax,%ds	// Get the header into DS
+	mov 8,%bx	// TSeg
+	mov 12,%si	// DSeg
+	mov 16,%dx	// BSeg
+	mov %bx,%ax	// Get Text size
 	mov $4,%cl
-	shr %cl,%ax	//! Data in paragraphs
+	shr %cl,%ax	// Data in paragraphs
 
 	mov $SYSSEG+2,%cx // Code starts here
 	push %cx		// Build far return address to SYSSEG+2:3
@@ -745,7 +745,7 @@ delay:
 #endif
 //;from never calls
 
-//!form this position are calles code
+//form this position are calles code
 
 /*
 !
@@ -777,9 +777,9 @@ getcpu:
 	popf
 	and	$0x7000,%ax
 	je	is80286
-//!
-//! Default & unknown CPU
-//!
+//
+// Default & unknown CPU
+//
 	mov	$0xff,%cl
 	lea	px86,%si
 	jmp	getfpu
@@ -789,9 +789,9 @@ getcpu:
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
 is8086:
 	mov	$0xff,%al
-	mov	$0x21,%cl	//! 80188/86 uses only the five lower
-	shr	%cl,%al		//! bits of cl to determine the number
-	jnz	is80186		//! of shifts.
+	mov	$0x21,%cl	// 80188/86 uses only the five lower
+	shr	%cl,%al		// bits of cl to determine the number
+	jnz	is80186		// of shifts.
 	sti             
 	xor	%si,%si
 	mov	$0xffff,%cx
@@ -830,13 +830,13 @@ isv20:	mov	$2,%cl
 #if !defined (CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
 is80286:mov	$6,%cl
 	lea	p80286,%si
-//!	jmp	getfpu
+//	jmp	getfpu
 #endif
 
 getfpu:
-	//!
-	//! Store the processor name and type
-	//!
+	//
+	// Store the processor name and type
+	//
 	push	%cx
 	mov	$INITSEG,%ax
 	mov	%ax,%es
@@ -870,7 +870,7 @@ con_cp1:
 	fstcw	copro
 	test	$0x0080,copro
 	jnz	is8087
-	finit		//! 80287/387 test
+	finit		// 80287/387 test
 	fld1
 	fldz
 	fdiv	%st,%st(1)
@@ -985,11 +985,11 @@ getfloppy:
 	mov	$INITSEG,%ax
 	mov	%ax,%es
 	mov	%ax,%ds
-	mov	0x20,%bl	//! Get processor type
+	mov	0x20,%bl	// Get processor type
 	mov	$SETUPSEG,%ax
 	mov	%ax,%ds
-	int	$0x11		//! only ax is changed by int 0x11
-	test	$1,%al		//! bit 0 set -> floppy present
+	int	$0x11		// only ax is changed by int 0x11
+	test	$1,%al		// bit 0 set -> floppy present
 	jz	no_floppy
 	cmp	$5,%bl
 	jle	is_xt
@@ -1002,11 +1002,11 @@ getfloppy:
 	xor	%dl,%dl
 	mov	$0x08,%ah
 	push	%es
-	int	$0x13		//! changes es
+	int	$0x13		// changes es
 	pop	%es
-	jc	no_floppy	//! c-flag is set if operation fails
-	or	%bl,%bl		//! the drive code is returned in bl
-	jz	no_floppy	//! it has to be in the range 1..6
+	jc	no_floppy	// c-flag is set if operation fails
+	or	%bl,%bl		// the drive code is returned in bl
+	jz	no_floppy	// it has to be in the range 1..6
 	cmp	$6,%bl
 	ja	no_floppy
 	xor	%bh,%bh
@@ -1017,17 +1017,17 @@ getfloppy:
 	mov	$3,%cx
 	rep
 	movsw
-	int	$0x11		//! check for second floppy
-	test	$0xc0,%al	//! Bit 6,7
+	int	$0x11		// check for second floppy
+	test	$0xc0,%al	// Bit 6,7
 	jz	no_floppy
 	mov	$0x08,%ah
 	mov	$0x01,%dl
 	push	%es
-	int	$0x13		//! changes es
+	int	$0x13		// changes es
 	pop	%es
-	jc	no_floppy	//! c-flag is set if operation fails
-	or	%bl,%bl		//! the drive code is returned in bl
-	jz	no_floppy	//! it has to be in the range 1..6
+	jc	no_floppy	// c-flag is set if operation fails
+	or	%bl,%bl		// the drive code is returned in bl
+	jz	no_floppy	// it has to be in the range 1..6
 	cmp	$6,%bl
 	ja	no_floppy
 	xor	%bh,%bh
@@ -1054,8 +1054,8 @@ is_xt:
 	lea	f360,%si
 	rep
 	movsw
-	test	$0xc0,%al	//! Bit 6,7
-	jz	no_floppy	//! second floppy detected
+	test	$0xc0,%al	// Bit 6,7
+	jz	no_floppy	// second floppy detected
 	mov	$3,%cx
 	lea	f360,%si
 	rep
@@ -1070,9 +1070,9 @@ f2880:	.word 2,36,80
 floppies: .word f360, f1200, f720, f1440, f2880, f2880
 #endif
 
-//!
-//! gethd
-//!
+//
+// gethd
+//
 #ifdef CONFIG_HW_HARD_DRIVE
 gethd:
 	mov	$INITSEG,%ax
@@ -1084,29 +1084,29 @@ gethd:
 
 
 
-	mov	$0x08,%ah	//! check for first drive
+	mov	$0x08,%ah	// check for first drive
 	mov	$0x80,%dl
 	int	$0x13
-	jc	no_hd0		//! carry flag set -> an error occured
+	jc	no_hd0		// carry flag set -> an error occured
 	or	%ah,%ah
-	jnz	no_hd0		//! error code != 0 -> bad
+	jnz	no_hd0		// error code != 0 -> bad
 	or	%dl,%dl
-	jz	no_hd0		//! dl contains the number of harddisks
+	jz	no_hd0		// dl contains the number of harddisks
 	push	%dx
 	mov	%dh,%dl
 	xor	%dh,%dh
-	inc	%dx		//! DX -> no. of heads
+	inc	%dx		// DX -> no. of heads
 	mov	%cx,%bx
-	and	$0x3f,%bx	//! BX -> no. of sectors
+	and	$0x3f,%bx	// BX -> no. of sectors
 	mov	%ch,%al
 	mov	%cl,%ah
 	mov	$6,%cl
-	shr	%cl,%ah		//! AX -> no. of cylinders - 1
+	shr	%cl,%ah		// AX -> no. of cylinders - 1
 	mov	%dx,0x80
 	mov	%bx,0x82
 	mov	%ax,0x84
 	pop	%dx
-	dec	%dl		//! only one harddisk?
+	dec	%dl		// only one harddisk?
 	jz	no_hd1
 no_hd0:
 
@@ -1115,7 +1115,7 @@ no_hd0:
 
 
 
-	mov	$0x08,%ah	//! check for second drive
+	mov	$0x08,%ah	// check for second drive
 	mov	$0x81,%dl
 	int	$0x13
 	jc	no_hd1
@@ -1123,13 +1123,13 @@ no_hd0:
 	jnz	no_hd1
 	mov	%dh,%dl
 	xor	%dh,%dh
-	inc	%dx		//! DX -> no. of heads
+	inc	%dx		// DX -> no. of heads
 	mov	%cx,%bx
-	and	$0x3f,%bx	//! BX -> no. of sectors
+	and	$0x3f,%bx	// BX -> no. of sectors
 	mov	%ch,%al
 	mov	%cl,%ah
 	mov	$6,%cl
-	shr	%cl,%ah		//! AX -> no. of cylinders - 1
+	shr	%cl,%ah		// AX -> no. of cylinders - 1
 	mov	%dx,0x86
 	mov	%bx,0x88
 	mov	%ax,0x8a
@@ -1137,9 +1137,9 @@ no_hd1:	ret
 #endif
 
 
-//!
-//! The processor name must not be longer than 15 characters!
-//!
+//
+// The processor name must not be longer than 15 characters!
+//
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
 p8088:	.ascii "Intel 8088"
 	.byte 0
@@ -1162,16 +1162,16 @@ p80286:	.ascii "Intel 80286"
 px86:   .ascii "Unknown x86"
 	.byte 0
 #endif
-//!
-//! Here is the CPU id stored
-//!
+//
+// Here is the CPU id stored
+//
 v_id:	.byte 0,0,0,0
 v_id2:	.byte 0,0,0,0
 v_id3:	.byte 0,0,0,0
 	.byte 0
-//!
-//! FPU names. must be not longer than 15 characters!
-//!
+//
+// FPU names. must be not longer than 15 characters!
+//
 f_none:	.ascii "no fpu"
 	.byte 0
 #ifdef CONFIG_HW_FPU
@@ -1194,11 +1194,10 @@ copro:	.word 0
 no_sig_mess:	.ascii	"No ELKS setup signature found ..."
 		.byte	0x00
 
-//! variables in ROM are not very usefull
+// variables in ROM are not very usefull
 start_sys_seg:	.word	SYSSEG
 
 
-//! This must be last
+// This must be last
 setup_sig1:	.word	SIG1
 setup_sig2:	.word	SIG2
-

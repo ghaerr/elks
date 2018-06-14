@@ -1,11 +1,11 @@
-//! enable the autoconfig tool
+// enable the autoconfig tool
 
 #define __ASSEMBLY__
 
 #include <linuxmt/config.h>
 #include <arch/asm-offsets.h>
 
-//!	Assembler boot strap hooks. This is called by setup
+//	Assembler boot strap hooks. This is called by setup
 
     .code16
 	.text
@@ -14,15 +14,15 @@
 	.extern arch_boot
 	.global early_printk
 
-//! note: this next instruction is part of the kernel restart fix for
-//! protexted mode. it must be 3 bytes long.
+// note: this next instruction is part of the kernel restart fix for
+// protexted mode. it must be 3 bytes long.
 
 //	.extern kernel_restarted
 //	jmp kernel_restarted
 
-//!	Setup passes these on the stack
-//!	Setup patched to pass parameters in registers to avoid clobbering the
-//!	kernel when using the 286pmode extender.
+//	Setup passes these on the stack
+//	Setup patched to pass parameters in registers to avoid clobbering the
+//	kernel when using the 286pmode extender.
 
 start:
 /*
@@ -39,22 +39,22 @@ start:
 	add	%dx,%si
 	mov	%si,_endbss
 
-//! Start cleaning BSS. Still using setup.S stack
+// Start cleaning BSS. Still using setup.S stack
 
-	mov	_enddata,%di	//! start of BSS
-	xchg	%dx,%cx		//! CX = BSS size, DX = Kernel DS
+	mov	_enddata,%di	// start of BSS
+	xchg	%dx,%cx		// CX = BSS size, DX = Kernel DS
 	xor	%ax,%ax
 	shr	$1,%cx
 	cld
 	rep
 	stosw
 
-//! End cleaning BSS
+// End cleaning BSS
 
 	mov	%cs,kernel_cs
 	mov	%ds,kernel_ds
 
-	mov	%dx,%ss		//! in ROMCODE stack is ready placed
+	mov	%dx,%ss		// in ROMCODE stack is ready placed
 	mov	$task + TASK_USER_AX,%sp
 
 /*
@@ -72,7 +72,7 @@ start:
 */
 
 	call	arch_boot
-	call	start_kernel	//! Break point if it returns
+	call	start_kernel	// Break point if it returns
 	int	$3
 
 early_printk:
@@ -96,7 +96,7 @@ ep_end:
 	pop   %bp
 	ret
 
-//!	Segment beginnings
+//	Segment beginnings
 
 	.data
 	.global _endtext

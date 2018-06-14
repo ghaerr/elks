@@ -18,7 +18,7 @@ SECTIONS {
 	_begintext = ALIGN(0x20);
 	.text 0 : AT(_begintext) { *(.text); . = ALIGN(0x10); }
 	_begindata = _begintext + .;
-	.data 0 : AT(_begindata) { *(.data) *(.rodata) }
+	.data 0 : AT(_begindata) { *(.data) *(.rodata*) }
 	.bss : { *(.bss) *(COMMON) }
 	/DISCARD/ : { *(.comment) }
 }
