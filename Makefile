@@ -33,10 +33,12 @@ CFG_SHELL	:= $(shell \
 all: .config
 	$(MAKE) -C elks all
 	$(MAKE) -C elkscmd all
+	$(MAKE) -C image all
 
 clean:
 	$(MAKE) -C elks clean
 	$(MAKE) -C elkscmd clean
+	$(MAKE) -C image clean
 	@echo
 	@if [ ! -f .config ]; then \
 	    echo ' * This system is not configured. You need to run' ;\

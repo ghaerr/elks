@@ -1,9 +1,7 @@
-
-ifndef TOPDIR
-$(error TOPDIR is not defined)
-endif
-
-include $(TOPDIR)/Make.defs
+# Select the cross compiler to build
+# Default is to build BCC and GCC-IA16
+BUILD_BCC = 1
+BUILD_GCC_IA16 = 1
 
 .PHONY: all
 
@@ -30,11 +28,13 @@ $(DISTDIR)/$(DEV86_DIST).zip:
 	cd dev86 && make PREFIX=$(CROSSDIR) install
 	touch .dev86.build
 
+ifdef BUILD_BCC
 all:: .dev86.build
+endif
 
 # ATT to AS86 conversion utility
 
-ifdef CONFIG_COMPILER_2
+ifdef BUILD_GCC_IA16
 all:: $(CROSSDIR)/bin/att2as86
 endif
 
@@ -64,13 +64,13 @@ $(DISTDIR)/$(BINUTILS_DIST).zip:
 	make -C binutils-build install
 	touch .binutils.build
 
-ifdef CONFIG_COMPILER_2
+ifdef BUILD_GCC_IA16
 all:: .binutils.build
 endif
 
 # GCC for IA16
 
-GCC_VER=3c79fd7bc3d5a834491714fb0082a0f985e6ba83
+GCC_VER=5853ef6a8e9334fb1e6d4a86dd92179d2dba9d32
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).zip:
@@ -91,6 +91,6 @@ $(DISTDIR)/$(GCC_DIST).zip:
 	make -C gcc-build install
 	touch .gcc.build
 
-ifdef CONFIG_COMPILER_2
+ifdef BUILD_GCC_IA16
 all:: .gcc.build
 endif

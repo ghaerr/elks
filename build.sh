@@ -89,15 +89,5 @@ sleep 1
 make all || clean_exit 5
 test -e elks/arch/i86/boot/Image || clean_exit 6
 
-### Make image files
-cd elkscmd
-make image
-
-# TODO: restore the distribution build
-#make images.zip || clean_exit 8
-#make images.tar.gz || clean_exit 8
-#make images.tar.xz || clean_exit 8
-cd "$WD"
-
-echo "Images and image file archives are under 'elkscmd'."
+echo "Target image is under 'image'."
 clean_exit 0

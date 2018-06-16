@@ -6,7 +6,7 @@
 [ -z $QEMU ] && { echo 'QEMU system emulator not found!'; exit 1; }
 
 # Select floppy disk image to use
-IMAGE=image/fd1440
+IMAGE=image/fd1440.bin
 
 # Select your keyboard mapping here:
 # KEYBOARD="-k en-us"
