@@ -1,13 +1,13 @@
 // int setupb(char *offset);
 // returns the (unsigned) byte at the far pointer SETUP_DATA:offset
 
-#include <linuxmt/config.h>
-
     .code16
 
-	.global	setupb
+#include <linuxmt/config.h>
+
 	.text
-	.align 1
+
+	.global	setupb
 
 setupb:
 	mov	%ds,%cx

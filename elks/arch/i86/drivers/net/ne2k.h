@@ -42,5 +42,6 @@ extern word_t ne2k_tx_stat ();
 extern word_t ne2k_pack_get (byte_t * pack);
 extern word_t ne2k_pack_put (byte_t * pack, word_t len);
 
+extern word_t ne2k_test ();
 
 #endif /* !NE2K_H */

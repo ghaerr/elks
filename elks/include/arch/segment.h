@@ -5,9 +5,10 @@
 
 extern __u16 kernel_cs, kernel_ds;
 
-extern __u16 setupw(unsigned short int);
+// Get data from setup segment
 
-#define setupb(p) ((char)setupw(p))
+extern word_t setupw (word_t);
+extern byte_t setupb (word_t);
 
 extern pid_t get_pid(void);
 

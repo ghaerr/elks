@@ -96,7 +96,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
 
     currentp->t_regs.ds = kernel_ds;
-    retval = filp->f_op->read(inode, filp, &mh, sizeof(mh));
+    retval = filp->f_op->read(inode, filp, (char *) &mh, sizeof(mh));
 
     /* Sanity check it.  */
     if (retval != (int)sizeof(mh) ||
@@ -114,7 +114,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 #ifdef CONFIG_EXEC_ELKS
     if ((unsigned int) mh.hlen == 0x30) {
 	/* BIG HEADER */
-	retval = filp->f_op->read(inode, filp, &msuph, sizeof(msuph));
+	retval = filp->f_op->read(inode, filp, (char *) &msuph, sizeof(msuph));
 	if (retval != (int)sizeof(msuph)) {
 	    debug1("EXEC: Bad secondary header, result %u\n", retval);
 	    goto error_exec3;

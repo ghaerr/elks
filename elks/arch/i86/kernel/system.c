@@ -7,7 +7,9 @@
 
 #include <arch/segment.h>
 
-int arch_cpu;			/* Processor type */
+
+byte_t arch_cpu;  // processor number (from setup data)
+
 #ifdef CONFIG_ARCH_SIBO
 extern long int basmem;
 #endif
