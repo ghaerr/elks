@@ -1,3 +1,4 @@
+# Makefile for cross tools
 
 ifndef TOPDIR
 $(error TOPDIR is not defined)
