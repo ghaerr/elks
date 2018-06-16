@@ -32,15 +32,6 @@ $(DISTDIR)/$(DEV86_DIST).zip:
 
 all:: .dev86.build
 
-# ATT to AS86 conversion utility
-
-ifdef CONFIG_COMPILER_2
-all:: $(CROSSDIR)/bin/att2as86
-endif
-
-$(CROSSDIR)/bin/att2as86:
-	make -C $(SRCDIR)/att2as86 all install
-
 # BINUTILS for IA16
 
 BINUTILS_VER=504e9ad8fbcc41117c004c42d97a645cc7eb306b
@@ -64,9 +55,7 @@ $(DISTDIR)/$(BINUTILS_DIST).zip:
 	make -C binutils-build install
 	touch .binutils.build
 
-ifdef CONFIG_COMPILER_2
 all:: .binutils.build
-endif
 
 # GCC for IA16
 
@@ -91,6 +80,4 @@ $(DISTDIR)/$(GCC_DIST).zip:
 	make -C gcc-build install
 	touch .gcc.build
 
-ifdef CONFIG_COMPILER_2
 all:: .gcc.build
-endif
