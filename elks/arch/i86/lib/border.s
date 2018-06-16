@@ -15,4 +15,4 @@ ntohl:
 	sub	$4,%sp
 	xchg	%al,%ah
 	xchg	%dl,%dh
-	jmp	%bx
+	jmp	*%bx
