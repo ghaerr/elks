@@ -1,0 +1,70 @@
+# Make defines for images
+
+ifndef TOPDIR
+$(error TOPDIR is not defined)
+endif
+
+include $(TOPDIR)/Make.defs
+
+# Dependencies folders
+
+ELKS_DIR = $(TOPDIR)/elks
+ELKSCMD_DIR = $(TOPDIR)/elkscmd
+
+MINIX_BOOT = $(ELKSCMD_DIR)/bootblocks
+FD_BSECT = $(MINIX_BOOT)/minix.bin
+KHELPER	= $(MINIX_BOOT)/minix_elks.bin
+
+# Image file options
+
+IMGDIR=$(TOPDIR)/image
+
+ifdef CONFIG_IMG_FD360
+TARGET_FILE = $(IMGDIR)/fd360.bin
+TARGET_BLKS = 360
+endif
+
+ifdef CONFIG_IMG_FD720
+TARGET_FILE = $(IMGDIR)/fd720.bin
+TARGET_BLKS = 720
+endif
+
+ifdef CONFIG_IMG_FD1200
+TARGET_FILE = $(IMGDIR)/fd1200.bin
+TARGET_BLKS = 1200
+endif
+
+ifdef CONFIG_IMG_FD1440
+TARGET_FILE = $(IMGDIR)/fd1440.bin
+TARGET_BLKS = 1440
+endif
+
+ifdef CONFIG_IMG_FD1680
+TARGET_FILE = $(IMGDIR)/fd1680.bin
+TARGET_BLKS = 1680
+endif
+
+# FIXME: should use SIBODEV instead of MAKEDEV
+ifdef CONFIG_IMG_SIBO
+TARGET_FILE = $(IMGDIR)/sibo.bin
+TARGET_BLKS = 128
+endif
+
+ifdef CONFIG_IMG_HD
+TARGET_FILE = $(IMGDIR)/hd.bin
+TARGET_BLKS = $(CONFIG_IMG_BLOCKS)
+endif
+
+# Image filesystem options
+
+ifdef CONFIG_IMG_MINIX
+MKFS = mkfs.minix
+MKFS_OPTS = -1 -n14 -i360
+endif
+
+ifdef CONFIG_IMG_FAT
+MKFS = mkfs.vfat
+MKFS_OPTS = -v
+endif
+
+TARGET_MNT = $(TOPDIR)/target
