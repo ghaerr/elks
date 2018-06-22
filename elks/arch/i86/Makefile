@@ -39,8 +39,6 @@ SIBOFLAGS	=
 
 endif
 
-LDFLAGS 	= -0 -i $(SIBOFLAGS)
-
 #########################################################################
 # Objects to be compiled.
 
@@ -62,61 +60,41 @@ XINCLUDE = $(BASEDIR)/include/arch/asm-offsets.h
 #########################################################################
 # Things to make.
 
-.PHONY: 		boot/system toolkit
+.PHONY: toolkit
 
-boot/bootsect:		boot/bootsect.o
-	$(LD) -0 -M $(ARCH_LD) -s -o boot/bootsect boot/bootsect.o > boot/bootsect.map
+boot/bootsect.o: boot/bootsect.S
+boot/bootsect.o: boot/bootsect.s
+boot/bootsect:   boot/bootsect.o
+	$(LD) $(LDFLAGS) $(SIBOFLAGS) -M -T $(TOPDIR)/elks/elks-tiny.ld -o boot/bootsect boot/bootsect.o > boot/bootsect.map
 
-boot/bootsect.o:	boot/bootsect.s
+boot/netbootsect:	boot/netbootsect.o
+	$(LD) $(LDFLAGS) $(SIBOFLAGS) -M $(ARCH_LD) -s -o boot/netbootsect boot/netbootsect.o > boot/netbootsect.map
 
+boot/netbootsect.o:	boot/netbootsect.s
+
+boot/setup.s: boot/setup.S
+boot/setup.o: boot/setup.s
+boot/setup:   boot/setup.o
+	$(LD) $(LDFLAGS) $(SIBOFLAGS) -M -T $(TOPDIR)/elks/elks-tiny.ld -o boot/setup boot/setup.o > boot/setup.map
+
+boot/crt0.s:		boot/crt0.S
 boot/crt0.o:		boot/crt0.s
 
 boot/crt1.o:		boot/crt1.c
 
-boot/netbootsect:	boot/netbootsect.o
-	$(LD) $(LDFLAGS) -M $(ARCH_LD) -s -o boot/netbootsect boot/netbootsect.o > boot/netbootsect.map
-
-boot/netbootsect.o:	boot/netbootsect.s
-
-boot/setup:		boot/setup.o
-	$(LD) -0 -M $(ARCH_LD) -s -o boot/setup boot/setup.o > boot/setup.tmp
-	sort -k3,4 boot/setup.tmp > boot/setup.map
-	rm -f boot/setup.tmp
-
-boot/setup.o:		boot/setup.s
-
 toolkit:
 	${MAKE} -C tools all
 
-ifeq ($(USEIA16), y)
 $(BASEDIR)/include/arch/asm-offsets.h: kernel/asm-offsets.c
 	echo '#ifndef ASM_OFFSETS_H' > $(BASEDIR)/include/arch/asm-offsets.h
 	echo '#define ASM_OFFSETS_H' >> $(BASEDIR)/include/arch/asm-offsets.h
 	$(CC) $(CFLAGS) -S -o asm-offsets.s kernel/asm-offsets.c
 	sed -e '/^\tm/ !d' \
 	-e "s/\(.*\t\\$$\)/\#define /" \
-	-e "s/\([0-9][0-9]*\),\t_\([a-zA-Z][_0-9a-zA-Z]*\)/\2 \1/" \
+	-e "s/\([0-9][0-9]*\),\t\([a-zA-Z][_0-9a-zA-Z]*\)/\2 \1/" \
 	< asm-offsets.s >> $(BASEDIR)/include/arch/asm-offsets.h
 	echo '#endif' >> $(BASEDIR)/include/arch/asm-offsets.h
 	rm asm-offsets.s
-
-else
-$(BASEDIR)/include/arch/asm-offsets.h: kernel/asm-offsets.c
-	echo '#ifndef ASM_OFFSETS_H' > $(BASEDIR)/include/arch/asm-offsets.h
-	echo '#define ASM_OFFSETS_H' >> $(BASEDIR)/include/arch/asm-offsets.h
-	$(CC) $(CFLAGS) -S -o asm-offsets.s kernel/asm-offsets.c
-	sed -e '/^[^m].*/ d' \
-	-e 's/\],/  /' \
-	-e 's/ #/ /' \
-	-e 's/ \*/ /' \
-	-e 's/ \$$/0x/' \
-	-e 's/^.*\[_/#define /' \
-	-e 's/ax/0/' \
-	< asm-offsets.s | grep -e define >> $(BASEDIR)/include/arch/asm-offsets.h
-	echo '#endif' >> $(BASEDIR)/include/arch/asm-offsets.h
-	rm asm-offsets.s
-
-endif
 
 #########################################################################
 # Image selection.
@@ -126,7 +104,7 @@ ifeq ($(CONFIG_ARCH_SIBO), y)
 # Begin SIBO image build
 
 boot/system: $(XINCLUDE) $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
-	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -t -M $(ARCH_LD) \
+	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) $(SIBOFLAGS) -M $(ARCH_LD) \
 		$(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
 		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.tmp ; \
@@ -143,12 +121,12 @@ else
 # Begin PC image build
 
 boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
-	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -t -M $(ARCH_LD) \
+	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -M $(ARCH_LD) -T $(TOPDIR)/elks/elks-small.ld \
 		$(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt1.o \
-		init/main.o $(ARCHIVES) $(DRIVERS) \
-		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.tmp ; \
-		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
-		rm -f $(ARCH_DIR)/boot/system.tmp )
+		init/main.o '-(' $(ARCHIVES) $(DRIVERS) '-)' \
+		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.map)
+#		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
+#		rm -f $(ARCH_DIR)/boot/system.tmp )
 
 ifneq ($(CONFIG_ROMCODE), y)
 

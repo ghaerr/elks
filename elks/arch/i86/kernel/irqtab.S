@@ -1,6 +1,8 @@
 #include <linuxmt/config.h>
 #include <arch/asm-offsets.h>
 
+	.code16
+
 	.text
 
 /*
@@ -10,7 +12,7 @@
  * predefined contents is the kernel data segment
  */
 
-	.even
+	.align 1
 ds_kernel:
 #if defined(REL_SYS)
 	.word	REL_SYSSEG
@@ -48,136 +50,136 @@ ds_kernel:
 
 #define MINT (1 | MCD | MRS | MHD | MFD | METH)
 
-	.globl	_irqtab_init
-_irqtab_init:
+	.global	irqtab_init
+irqtab_init:
 	cli
 
 #if !defined(REL_SYS) && !defined(CONFIG_ROMCODE)
-	seg	cs
-	mov	ds_kernel,ss
+//	seg	cs
+	mov	%ss,%cs:ds_kernel
 #endif
 
-	xor	ax,ax
-	mov	ds,ax
+	xor	%ax,%ax
+	mov	%ax,%ds
 
-! CS points to this kernel code segment
-! DS points to page 0  (interrupt table)
-! ES points to the kernel data segment
+// CS points to this kernel code segment
+// DS points to page 0  (interrupt table)
+// ES points to the kernel data segment
 
-	mov	[512],#_syscall_int ! syscall
-	mov	[514],cs
+	movw	$_syscall_int,512 // syscall
+	mov	%cs,514
 
-	mov	bx,#32
-	mov	ax,[bx]		! get the old timer intr
-	seg	es
-	mov	_stashed_irq0_l,ax
-	mov	ax,2[bx]
-	seg	es
-	mov	[_stashed_irq0_l+2],ax
+	mov	$32,%bx
+	mov	(%bx),%ax		// get the old timer intr
+//	seg	es
+	mov	%ax,%es:_stashed_irq0_l
+	mov	2(%bx),%ax
+//	seg	es
+	mov	%ax,%es:_stashed_irq0_l+2
 
-	mov	cx,#MINT
-	mov	ax,#_irq0
+	mov	$MINT,%cx
+	mov	$_irq0,%ax
 init_tab1:
-	shr	cx,#1
+	shr	$1,%cx
 	jnc	init_tab2
-	mov	[bx],ax
-	mov	2[bx],cs
-	add	ax,#4
+	mov	%ax,(%bx)
+	mov	%cs,2(%bx)
+	add	$4,%ax
 init_tab2:
-	add	bx,#4
-	cmp	bx,#64
+	add	$4,%bx
+	cmp	$64,%bx
 	jne	init_tab3
-	add	bx,#384		! IRQ 8-15 are mapped to vectors INT 70h-77h
+	add	$384,%bx		// IRQ 8-15 are mapped to vectors INT 70h-77h
 init_tab3:
-	or	cx,cx
+	or	%cx,%cx
 	jnz	init_tab1
-!
-! Tidy up
-!
-	push	ss		! restore DS
-	pop	ds
+//
+// Tidy up
+//
+	push	%ss		// restore DS
+	pop	%ds
 	sti
 	ret
 
-!	IRQ and IRQ return paths for Linux 8086
-!
-! The execution thread will not return from the function call.
-! Instead, the address pushed in the stack will be used to get
-! the interrupt number.
+//	IRQ and IRQ return paths for Linux 8086
+//
+// The execution thread will not return from the function call.
+// Instead, the address pushed in the stack will be used to get
+// the interrupt number.
 
-_irq0:			! Timer
+_irq0:			// Timer
 	call	_irqit
 	.byte	0
 #ifdef CONFIG_CONSOLE_DIRECT
-_irq1:			! Keyboard
+_irq1:			// Keyboard
 	call	_irqit
 	.byte	1
 #endif
 #if 0
-_irq2:			! Cascade
+_irq2:			// Cascade
 	call	_irqit
 	.byte	2
 #endif
 #ifdef CONFIG_CHAR_DEV_RS
-_irq3:			! COM2
+_irq3:			// COM2
 	call	_irqit
 	.byte	3
-_irq4:			! COM1
+_irq4:			// COM1
 	call	_irqit
 	.byte	4
 #endif
 #ifdef CONFIG_BLK_DEV_HD
-_irq5:			! XT HD
+_irq5:			// XT HD
 	call	_irqit
 	.byte	5
 #endif
 #ifdef CONFIG_BLK_DEV_FD
-_irq6:			! Floppy
+_irq6:			// Floppy
 	call	_irqit
 	.byte	6
 #endif
 #if 0
-_irq7:			! Lp1
+_irq7:			// Lp1
 	call	_irqit
 	.byte	7
 !
 !	AT interrupts
 !
-_irq8:			! RTC
+_irq8:			// RTC
 	call	_irqit
 	.byte	8
 #endif
 #ifdef CONFIG_ETH_NE2K
-_irq9:			! Ethernet device
+_irq9:			// Ethernet device
 	call	_irqit
 	.byte	9
 #endif
 #if 0
-_irq10:			! USB
+_irq10:			// USB
 	call	_irqit
 	.byte	10
-_irq11:			! Sound
+_irq11:			// Sound
 	call	_irqit
 	.byte	11
-_irq12:			! Mouse
+_irq12:			// Mouse
 	call	_irqit
 	.byte	12
-_irq13:			! Math coproc.
+_irq13:			// Math coproc.
 	call	_irqit
 	.byte	13
 #endif
 #ifdef CONFIG_BLK_DEV_HD
-_irq14:			! AT HD ide primary
+_irq14:			// AT HD ide primary
 	call	_irqit
 	.byte	14
-_irq15:			! AT HD ide secondary
+_irq15:			// AT HD ide secondary
 	call	_irqit
 	.byte	15
 #endif
-!
-!	Traps (we use IRQ 16->31 for these)
-!
-!	Currently not used so removed for space.
+//
+//	Traps (we use IRQ 16->31 for these)
+//
+//	Currently not used so removed for space.
 #ifdef ENABLE_TRAPS
 _div0:
 	call	_irqit
@@ -234,10 +236,11 @@ _algn:
 	call	_irqit
 	.byte	33
 #endif
-_syscall_int:		! Syscall
+_syscall_int:		// Syscall
 	call	_irqit
 	.byte	128
 
+/*
 !
 !	On entry CS:IP is all we can trust
 !
@@ -261,12 +264,13 @@ _syscall_int:		! Syscall
 !	We do all of this to avoid per process interrupt stacks and
 !	related nonsense. This way we need only one dedicated int stack
 !
-	.globl	_ret_from_syscall
-	.extern	_schedule
-	.extern	_do_signal
-	.extern	_do_IRQ
-	.extern	_stack_check
-	.extern	_syscall
+*/
+	.global	ret_from_syscall
+	.extern	schedule
+	.extern	do_signal
+	.extern	do_IRQ
+	.extern	stack_check
+	.extern	syscall
 #ifdef CHECK_SS
 	.extern	_panic
 #endif
@@ -276,225 +280,229 @@ _syscall_int:		! Syscall
 #endif
 
 _irqit:
-!
-!	Make room
-!
-	push	ds
-	push	si
-!
-!	Recover data segment
-!
-	seg	cs
-	mov	ds,ds_kernel
-!
-!	Determine which stack to use
-!
-	cmp	_gint_count,#1
-	jc	utask		! We were in user mode
-	jz	itask		! Using a process's kernel stack
-ktask:				! Already using interrupt stack
-!
-!	Already using interrupt stack, keep using it
-!
-	mov	si,sp
-	sub	si,#8
-	j	save_regs
-!
-!	Using a process's kernel stack, switch to interrupt stack
-!
+//
+//	Make room
+//
+	push	%ds
+	push	%si
+//
+//	Recover data segment
+//
+//	seg	cs
+	mov	%cs:ds_kernel,%ds
+//
+//	Determine which stack to use
+//
+	cmpw	$1,_gint_count
+	jc	utask		// We were in user mode
+	jz	itask		// Using a process's kernel stack
+ktask:				// Already using interrupt stack
+//
+//	Already using interrupt stack, keep using it
+//
+	mov	%sp,%si
+	sub	$8,%si
+	jmp	save_regs
+//
+//	Using a process's kernel stack, switch to interrupt stack
+//
 itask:
-	mov	si,#(_intstack-12)
-	j	save_regs
-!
-!	User mode case
-!
+	mov	$_intstack-12,%si
+	jmp	save_regs
+//
+//	User mode case
+//
 utask:
-	mov	si,_current
+	mov	current,%si
 #ifdef CHECK_SS
-!
-!	We were in user mode, first confirm
-!
-	cmp	di,TASK_USER_SS[si] ! entry SS = current->t_regs.ss?
-	je	utask1		! User using the right stack
-!
-!	System got crazy
-!
-	mov	ax,#pmsg
-	push	ax
+//
+//	We were in user mode, first confirm
+//
+	cmp	TASK_USER_SS(%si),%di // entry SS = current->t_regs.ss?
+	je	utask1		// User using the right stack
+//
+//	System got crazy
+//
+	mov	$pmsg,%ax
+	push	%ax
 	call	_panic
-!
-!	Switch to kernel stack
-!
+//
+//	Switch to kernel stack
+//
 utask1:
 #endif
-	add	si,#TASK_USER_DI
-!
-!	Save segment, index, BP and SP registers
-!
+	add	$TASK_USER_DI,%si
+//
+//	Save segment, index, BP and SP registers
+//
 save_regs:
-	inc	_gint_count
-	mov	[si],di		! DI
-	pop	2[si]		! SI
-	pop	6[si]		! DS
-	pop	di		! Pointer to interrupt number
-	push	bp		! BP
-	mov	8[si],sp	! SP
-	mov	10[si],ss	! SS
-	mov	4[si],es	! ES
-!
-!	Load new segment and SP registers
-!
-	mov	sp,si
-	mov	si,ds
-	mov	ss,si
-	mov	es,si
-!
-!	Save remaining registers
-!
-	push	dx		! DX
-	push	cx		! CX
-	push	bx		! BX
-	push	ax		! AX
-!
-!	cs:[di] has interrupt number
-!
-	seg	cs
-	movb	al,[di]
-	cmpb	al,#0x80
+	incw	_gint_count
+	mov	%di,(%si)		// DI
+	pop	2(%si)		// SI
+	pop	6(%si)		// DS
+	pop	%di		// Pointer to interrupt number
+	push	%bp		// BP
+	mov	%sp,8(%si)	// SP
+	mov	%ss,10(%si)	// SS
+	mov	%es,4(%si)	// ES
+//
+//	Load new segment and SP registers
+//
+	mov	%si,%sp
+	mov	%ds,%si
+	mov	%si,%ss
+	mov	%si,%es
+//
+//	Save remaining registers
+//
+	push	%dx		// DX
+	push	%cx		// CX
+	push	%bx		// BX
+	push	%ax		// AX
+//
+//	cs:[di] has interrupt number
+//
+//	seg	cs
+	movb	%cs:(%di),%al
+	cmpb	$0x80,%al
 	jne	updct
-!
-!	----------PROCESS SYSCALL----------
-!
+//
+//	----------PROCESS SYSCALL----------
+//
 	sti
-	call	_stack_check	! Check USER stack
-	pop	ax		! Get syscall function code
+	call	stack_check	// Check USER stack
+	pop	%ax		// Get syscall function code
 #ifdef CONFIG_STRACE
-!
-!	strace(syscall#, params...)
-!
-	push	ax
+//
+//	strace(syscall#, params...)
+//
+	push	%ax
 	call	_strace
-	pop	ax
+	pop	%ax
 #endif
-!
-!	syscall(params...)
-!
-	call	_syscall
-	push	ax		! syscall returns a value in ax
+//
+//	syscall(params...)
+//
+	call	syscall
+	push	%ax		// syscall returns a value in ax
 #ifdef CONFIG_STRACE
-!
-!	ret_strace(retval)
-!
+//
+//	ret_strace(retval)
+//
 	call	_ret_strace
 #endif
-!
-!	Restore registers
-!
-	call	_do_signal
+//
+//	Restore registers
+//
+	call	do_signal
 	cli
-	j	restore_regs
-!
-!	Done.
-!
-_ret_from_syscall:
-	mov	bx,_current	! Ensure we have the
-	lea	sp,TASK_USER_BX[bx] ! right kernel SP
-	xor	ax,ax		! Just in case we are starting a new task
-	push	ax
+	jmp	restore_regs
+//
+//	Done.
+//
+ret_from_syscall:
+	mov	current,%bx	// Ensure we have the
+	lea	TASK_USER_BX(%bx),%sp // right kernel SP
+	xor	%ax,%ax		// Just in case we are starting a new task
+	push	%ax
 	cli
-	j	restore_regs
+	jmp	restore_regs
+/*
 !
 !	----------PROCESS INTERRUPT----------
 !
 !	Update intr_count
 !
+*/
 updct:
-	inc	_intr_count
-!
-!	Call the C code
-!
-	sti			! Reenable interrupts
-	mov	bx,sp		! Get pointer to pt_regs
+	incw	intr_count
+//
+//	Call the C code
+//
+	sti			// Reenable interrupts
+	mov	%sp,%bx		// Get pointer to pt_regs
 	cbw
-	push	ax		! IRQ for later
+	push	%ax		// IRQ for later
 
-	push	bx		! Register base
-	push	ax		! IRQ number
-	call	_do_IRQ		! Do the work
-	pop	ax		! Clean parameters
-	pop	bx
+	push	%bx		// Register base
+	push	%ax		// IRQ number
+	call	do_IRQ		// Do the work
+	pop	%ax		// Clean parameters
+	pop	%bx
 
-	pop	ax		! Saved IRQ
-!
-!	Send EOI to interrupt controller
-!
-	cli			! Disable interrupts to avoid reentering ISR
-	cmp	ax,#16
-	jge	was_trap	! Traps need no reset
-	or	ax,ax		! Is int #0?
+	pop	%ax		// Saved IRQ
+//
+//	Send EOI to interrupt controller
+//
+	cli			// Disable interrupts to avoid reentering ISR
+	cmp	$16,%ax
+	jge	was_trap	// Traps need no reset
+	or	%ax,%ax		// Is int #0?
 	jnz	a4
-!
-!	IRQ 0 (timer) has to go on to the bios for some systems
-!
-	dec	_bios_call_cnt_l ! Will call bios int?
+//
+//	IRQ 0 (timer) has to go on to the bios for some systems
+//
+	decw	_bios_call_cnt_l // Will call bios int?
 	jne	a4
-	mov	_bios_call_cnt_l,#5
+	movw	$5,_bios_call_cnt_l
 	pushf
-	callf	[_stashed_irq0_l]
-	jmp	was_trap	! EOI already sent by bios int
+	lcall	*_stashed_irq0_l
+	jmp	was_trap	// EOI already sent by bios int
 a4:
-	cmp	ax,#8
-	movb	al,#0x20	! EOI
-	jb	a6		! IRQ on low chip
+	cmp	$8,%ax
+	mov	$0x20,%al	// EOI
+	jb	a6		// IRQ on low chip
+/*
 !
 !	Reset secondary 8259 if we have taken an AT rather
 !	than XT irq. We also have to prod the primay
 !	controller EOI..
 !
-	outb	0xA0,al
+*/
+	out	%al,$0xA0
 	jmp	a5
 a5:	jmp	a6
-a6:	outb	0x20,al		! Ack on primary controller
-!
-!	And a trap does no hardware work
-!
+a6:	out	%al,$0x20		// Ack on primary controller
+//
+//	And a trap does no hardware work
+//
 was_trap:
-!
-!	Restore intr_count
-!
-	dec	_intr_count
-!
-!	Now look at rescheduling
-!
-	cmp	_gint_count,#1
-	jne	restore_regs	! No
-!	cmp	_need_resched,#0 ! Schedule needed ?
-!	je	restore_regs	! No
-!
-! This path will return directly to user space
-!
-	call	_schedule	! Task switch
-	call	_do_signal	! Check signals
-!
-!	Restore registers and return
-!
+//
+//	Restore intr_count
+//
+	decw	intr_count
+//
+//	Now look at rescheduling
+//
+	cmpw	$1,_gint_count
+	jne	restore_regs	// No
+//	cmp	$0,_need_resched // Schedule needed ?
+//	je	restore_regs	// No
+//
+// This path will return directly to user space
+//
+	call	schedule	// Task switch
+	call	do_signal	// Check signals
+//
+//	Restore registers and return
+//
 restore_regs:
-	dec	_gint_count
-	pop	ax
-	pop	bx
-	pop	cx
-	pop	dx
-	pop	di
-	pop	si
-	pop	es
-	pop	ds
-	pop	bp
-	pop	ss
-	mov	sp,bp
-	pop	bp
-!
-!	Iret restores CS:IP and F (thus including the interrupt bit)
-!
+	decw	_gint_count
+	pop	%ax
+	pop	%bx
+	pop	%cx
+	pop	%dx
+	pop	%di
+	pop	%si
+	pop	%es
+	pop	%ds
+	pop	%bp
+	pop	%ss
+	mov	%bp,%sp
+	pop	%bp
+//
+//	Iret restores CS:IP and F (thus including the interrupt bit)
+//
 	iret
 
 /*
@@ -509,34 +517,34 @@ restore_regs:
  *	context and returns running the current task.
  */
 
-	.globl	_tswitch
+	.global	tswitch
 
-_tswitch:
-	push	bp		! schedule()'s bp
+tswitch:
+	push	%bp		// schedule()'s bp
 #ifdef USE_IA16
-	push	es
+	push	%es
 #endif
-	push	di
-	push	si
-	mov	bx,_previous
-	mov	TASK_KRNL_SP[bx],sp
-	mov	bx,_current
-	mov	sp,TASK_KRNL_SP[bx]
-	pop	si
-	pop	di
+	push	%di
+	push	%si
+	mov	previous,%bx
+	mov	%sp,TASK_KRNL_SP(%bx)
+	mov	current,%bx
+	mov	TASK_KRNL_SP(%bx),%sp
+	pop	%si
+	pop	%di
 #ifdef USE_IA16
-	pop	es
+	pop	%es
 #endif
-	pop	bp		! BP of schedule()
+	pop	%bp		// BP of schedule()
 	ret
 
 
-; Halt on idle helper
-; Wait for next interrupt to save CPU power
+//; Halt on idle helper
+//; Wait for next interrupt to save CPU power
 
 #ifdef CONFIG_IDLE_HALT
 
-	.define _idle_halt
+	.global _idle_halt
 
 _idle_halt:
 	hlt
@@ -546,26 +554,25 @@ _idle_halt:
 
 
 	.data
-	.globl	_intr_count
-	.extern	_current
-	.extern	_previous
+	.global	intr_count
+	.extern	current
+	.extern	previous
 	.extern	_kernel_ds
 
-	.even
+	.align 1
 
 _bios_call_cnt_l:
 	.word	5
 _stashed_irq0_l:
 	.long	0
-_intr_count:			! Hardware interrupts count
+intr_count:			// Hardware interrupts count
 	.word	0
-_gint_count:			! General interrupts count. Start with 1
-	.word	1		! because init_task() is in kernel mode
+_gint_count:			// General interrupts count. Start with 1
+	.word	1		// because init_task() is in kernel mode
 #ifdef CHECK_SS
 pmsg:	.ascii "Running unknown code"
-	db	0
+	.byte	0
 #endif
-
-	.zerow	256		! (was) 128 byte interrupt stack
+	.skip 512,0		// (was) 128 byte interrupt stack
 _intstack:
 

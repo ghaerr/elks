@@ -9,6 +9,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/limits.h>
+#include <linuxmt/mm.h>
 
 
 // Shared declarations between low and high parts
@@ -32,7 +33,7 @@ static byte_t send_buf [MAX_PACKET_ETH];
 // Get packet
 
 static size_t ne2k_read (struct inode * inode, struct file * filp,
-	char * data, unsigned int len)
+	char * data, size_t len)
 
 	{
 	size_t res;
@@ -191,7 +192,6 @@ static void ne2k_int (int irq, struct pt_regs * regs, void * dev_id)
     word_t stat;
 
     stat = ne2k_int_stat ();
-
     if (stat & NE2K_STAT_RX)
     	{
     	wake_up (&rx_queue);

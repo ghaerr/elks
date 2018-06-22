@@ -1,90 +1,92 @@
 
+	.code16
+
 	.text
 	.extern	ldivmod
 	.extern	ludivmod
 
-	.globl	___divsi3
-	.even
+	.global	__divsi3
+	.align 1
 
-___divsi3:
-	push	bp
-	mov	bp,sp
-	push	bx
-	push	cx
-	push	di
-	mov	ax,4[bp]
-	mov	bx,6[bp]
-	mov	cx,8[bp]
-	mov	di,10[bp]
+__divsi3:
+	push	%bp
+	mov	%sp,%bp
+	push	%bx
+	push	%cx
+	push	%di
+	mov	4(%bp),%ax
+	mov	6(%bp),%bx
+	mov	8(%bp),%cx
+	mov	10(%bp),%di
 	call	ldivmod
-	mov	dx,di
-	mov	ax,cx
-	pop	di
-	pop	cx
-	pop	bx
-	pop	bp
+	mov	%di,%dx
+	mov	%cx,%ax
+	pop	%di
+	pop	%cx
+	pop	%bx
+	pop	%bp
 	ret
 
-	.globl	___modsi3
-	.even
+	.global	__modsi3
+	.align 1
 
-___modsi3:
-	push	bp
-	mov	bp,sp
-	push	bx
-	push	cx
-	push	di
-	mov	ax,4[bp]
-	mov	bx,6[bp]
-	mov	cx,8[bp]
-	mov	di,10[bp]
+__modsi3:
+	push	%bp
+	mov	%sp,%bp
+	push	%bx
+	push	%cx
+	push	%di
+	mov	4(%bp),%ax
+	mov	6(%bp),%bx
+	mov	8(%bp),%cx
+	mov	10(%bp),%di
 	call	ldivmod
-	mov	dx,bx
-	pop	di
-	pop	cx
-	pop	bx
-	pop	bp
+	mov	%bx,%dx
+	pop	%di
+	pop	%cx
+	pop	%bx
+	pop	%bp
 	ret
 
-	.globl	___udivsi3
-	.even
+	.global	__udivsi3
+	.align 1
 
-___udivsi3:
-	push	bp
-	mov	bp,sp
-	push	bx
-	push	cx
-	push	di
-	mov	ax,4[bp]
-	mov	bx,6[bp]
-	mov	cx,8[bp]
-	mov	di,10[bp]
+__udivsi3:
+	push	%bp
+	mov	%sp,%bp
+	push	%bx
+	push	%cx
+	push	%di
+	mov	4(%bp),%ax
+	mov	6(%bp),%bx
+	mov	8(%bp),%cx
+	mov	10(%bp),%di
 	call	ludivmod
-	mov	dx,di
-	mov	ax,cx
-	pop	di
-	pop	cx
-	pop	bx
-	pop	bp
+	mov	%di,%dx
+	mov	%cx,%ax
+	pop	%di
+	pop	%cx
+	pop	%bx
+	pop	%bp
 	ret
 
-	.globl	___umodsi3
-	.even
+	.global	__umodsi3
+	.align 1
 
-___umodsi3:
-	push	bp
-	mov	bp,sp
-	push	bx
-	push	cx
-	push	di
-	mov	ax,4[bp]
-	mov	bx,6[bp]
-	mov	cx,8[bp]
-	mov	di,10[bp]
+__umodsi3:
+	push	%bp
+	mov	%sp,%bp
+	push	%bx
+	push	%cx
+	push	%di
+	mov	4(%bp),%ax
+	mov	6(%bp),%bx
+	mov	8(%bp),%cx
+	mov	10(%bp),%di
 	call	ludivmod
-	mov	dx,bx
-	pop	di
-	pop	cx
-	pop	bx
-	pop	bp
+	mov	%bx,%dx
+	pop	%di
+	pop	%cx
+	pop	%bx
+	pop	%bp
 	ret

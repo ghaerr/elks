@@ -1,20 +1,22 @@
-! int setupb(char *offset);
-! returns the (unsigned) byte at the far pointer SETUP_DATA:offset
+// int setupb(char *offset);
+// returns the (unsigned) byte at the far pointer SETUP_DATA:offset
+
+    .code16
 
 #include <linuxmt/config.h>
 
-	.define	_setupb
 	.text
-	.even
 
-_setupb:
-	mov	cx,ds
-	pop	dx
-	mov	ax,#SETUP_DATA
-	mov	ds,ax
-	pop	bx
-	sub	sp,*2
-	movb	al,[bx]
-	subb	ah,ah
-	mov	ds,cx
-	jmp	dx
+	.global	setupb
+
+setupb:
+	mov	%ds,%cx
+	pop	%dx
+	mov	$SETUP_DATA,%ax
+	mov	%ax,%ds
+	pop	%bx
+	sub	$2,%sp
+	mov	(%bx),%al
+	sub	%ah,%ah
+	mov	%cx,%ds
+	jmp	%dx

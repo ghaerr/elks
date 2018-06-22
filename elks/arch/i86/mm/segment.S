@@ -4,55 +4,57 @@
  
 #include <arch/asm-offsets.h>
 
+    .code16
+
 	.text
 
 /* void memcpy_fromfs(void *daddr, void *saddr, size_t len);*/
-	.globl	_memcpy_fromfs
+	.global	memcpy_fromfs
 
-_memcpy_fromfs:
-	mov	ax,si
-	mov	dx,di
-	mov	bx,sp
-	mov	di,2[bx]
-	mov	si,4[bx]
-	mov	cx,6[bx]
-	mov	bx,_current
-	mov	ds,TASK_USER_DS[bx]
-	mov	bx,ss
+memcpy_fromfs:
+	mov	%si,%ax
+	mov	%di,%dx
+	mov	%sp,%bx
+	mov	2(%bx),%di
+	mov	4(%bx),%si
+	mov	6(%bx),%cx
+	mov	current,%bx
+	mov	TASK_USER_DS(%bx),%ds
+	mov	%ss,%bx
 #ifdef USE_IA16
-	push	es
-	mov	es,bx
+	push	%es
+	mov	%bx,%es
 #endif
 	cld
 	rep
 	movsb
 #ifdef USE_IA16
-	pop	es
+	pop	%es
 #endif
-	mov	ds,bx
-	mov	di,dx
-	mov	si,ax
+	mov	%bx,%ds
+	mov	%dx,%di
+	mov	%ax,%si
 	ret
 
 /* void memcpy_tofs(void *daddr, void *saddr, size_t len);*/
-	.globl	_memcpy_tofs
+	.global	memcpy_tofs
 
-_memcpy_tofs:
-	mov	ax,si
-	mov	dx,di
-	mov	bx,es
-	mov	si,_current
-	mov	es,TASK_USER_DS[si]
-	mov	si,sp
-	mov	di,2[si]
-	mov	cx,6[si]
-	mov	si,4[si]
+memcpy_tofs:
+	mov	%si,%ax
+	mov	%di,%dx
+	mov	%es,%bx
+	mov	current,%si
+	mov	TASK_USER_DS(%si),%es
+	mov	%sp,%si
+	mov	2(%si),%di
+	mov	6(%si),%cx
+	mov	4(%si),%si
 	cld
 	rep
 	movsb
-	mov	es,bx
-	mov	di,dx
-	mov	si,ax
+	mov	%bx,%es
+	mov	%dx,%di
+	mov	%ax,%si
 	ret
 
 /* int strnlen_fromfs(void *saddr, size_t maxlen); */
@@ -60,29 +62,29 @@ _memcpy_tofs:
     /*  scasb uses es:di, not ds:si, so it is not necessary
      *  to save and restore ds
      */
-	.globl	_strnlen_fromfs
+	.global	strnlen_fromfs
 
-_strnlen_fromfs:
-	mov	dx,di
-	mov	di,_current
-	mov	bx,sp
-	push	es
-	mov	es,TASK_USER_DS[di]
-	mov	di,2[bx]
-	mov	cx,4[bx]
-	xor	al,al		! search for NULL byte
+strnlen_fromfs:
+	mov	%di,%dx
+	mov	current,%di
+	mov	%sp,%bx
+	push	%es
+	mov	TASK_USER_DS(%di),%es
+	mov	2(%bx),%di
+	mov	4(%bx),%cx
+	xor	%al,%al		// search for NULL byte
 	cld
 	repne
 	scasb
-	pop	es
-	mov	ax,di		! calc len +1
-	mov	di,dx
+	pop	%es
+	mov	%di,%ax		// calc len +1
+	mov	%dx,%di
 	jnz	strnln1
-	dec	ax
+	dec	%ax
 strnln1:
-	sub	ax,2[bx]
+	sub	2(%bx),%ax
 	ret
 
 	.data
-	.extern	_current
+	.extern	current
 

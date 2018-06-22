@@ -115,15 +115,9 @@ DISTDIR 	= $(shell $(BASEDIR)/scripts/setdir $(TOPDIR)/elks-$(DIST)/$(MYDIR))
 #########################################################################
 # Specify the standard definitions to be given to system programs.
 
-ifdef USEIA16
-CCDEFS_IA16= -DUSE_IA16
-else
-CCDEFS_IA16=
-endif
-
 CCDEFS		= -DELKS_VERSION_CODE=$(VSNCODE)		\
 		  -DUTS_RELEASE=\"$(DIST)\"			\
-		  -D__KERNEL__ $(CCDEFS_IA16)
+		  -D__KERNEL__ -DUSE_IA16
 
 #########################################################################
 # Set the target environment and the compiler to use.
@@ -131,25 +125,15 @@ CCDEFS		= -DELKS_VERSION_CODE=$(VSNCODE)		\
 ifeq ($(wildcard $(TOPDIR)/.config),)
     MK_ARCH	= ibmpc
     MK_CPU	= 8086
-    MK_CC	= bcc
 else
     MK_ARCH	= $(shell grep '^CONFIG_ARCH_' $(TOPDIR)/.config \
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
     MK_CPU	= $(shell grep '^CONFIG_CPU_' $(TOPDIR)/.config \
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
-    MK_CCN	= $(shell grep '^CONFIG_COMPILER_' $(TOPDIR)/.config \
-			| cut -d = -f 1 | cut -d _ -f 3- )
-ifeq ($(MK_CCN), 1)
-    MK_CC	= bcc
-else
-ifeq ($(MK_CCN), 2)
-    MK_CC	= ia16-elf-gcc
-else
-    MK_CC	= ia16-unknown-elks-gcc
 endif
-    USEIA16	= y
-endif
-endif
+
+CROSS_CC = ia16-elf-gcc
+CROSS_CFLAGS = -fno-inline -mcmodel=small -mno-segment-relocation-stuff -ffreestanding
 
 #########################################################################
 # Define architecture-specific flags.
@@ -170,39 +154,21 @@ endif
 # Define CPU-specific flags.
 
 ifeq ($(MK_CPU), 8086)
-ifeq ($(USEIA16), y)
-    CPU_AS	= -0 -O
-    CPU_CC	= -mtune=i8086 -fno-inline -fdata-sections -ffunction-sections -fleading-underscore -mseparate-code-segment -Wl,--gc-sections
-    CPU_LD	= -0
-else
-    CPU_AS	= -0 -O
-    CPU_CC	= -0
-    CPU_LD	= -0
-endif
+    CPU_AS	= -mtune=i8086
+    CPU_CC	= -mtune=i8086
+    CPU_LD	=
 endif
 
 ifeq ($(MK_CPU), 80186)
-ifeq ($(USEIA16), y)
-    CPU_AS	= -1 -O
-    CPU_CC	= -mtune=i80186 -fno-inline -fdata-sections -ffunction-sections -fleading-underscore -mseparate-code-segment -Wl,--gc-sections
-    CPU_LD	= -0
-else
-    CPU_AS	= -1 -O
-    CPU_CC	= -0
-    CPU_LD	= -0
-endif
+    CPU_AS	= -mtune=i18086
+    CPU_CC	= -mtune=i80186
+    CPU_LD	=
 endif
 
 ifeq ($(MK_CPU), 80286)
-ifeq ($(USEIA16), y)
-    CPU_AS	= -2 -O
-    CPU_CC	= -mtune=i80286 -fno-inline -fdata-sections -ffunction-sections -fleading-underscore -mseparate-code-segment -Wl,--gc-sections
-    CPU_LD	= -0
-else
-    CPU_AS	= -2 -O
-    CPU_CC	= -0
-    CPU_LD	= -0
-endif
+    CPU_AS	= -mtune=i80286
+    CPU_CC	= -mtune=i80286
+    CPU_LD	=
 endif
 
 #########################################################################
@@ -216,7 +182,6 @@ endif
 ################################
 # Common definitions
 
-AR		= ar
 CC_PROTO	= gcc $(INCLUDES) -M -MG $(CCDEFS)
 CFLBASE 	= $(INCLUDES) $(CCDEFS)
 CPP		= $(CC) $(INCLUDES) -E $(CCDEFS) -ansi
@@ -229,34 +194,21 @@ LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
 
 ifneq ($(USEBCC), N)
 
-ifeq ($(USEIA16), y)
 ################################
 # Definitions using ia16-unknown-elks-gcc compiler
 
-AS		= as86
-ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
-CC		= $(MK_CC)
-CFLAGS		= $(CPU_CC) $(ARCH_CC) -Os $(CFLBASE) -Wall
-LD		= ld86
-LDFLAGS 	= $(CPU_LD) -s
-
-else
-################################
-# Definitions using BCC compiler
-
-AS		= as86
-ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
-CC		= bcc
-CFLAGS		= $(CPU_CC) $(ARCH_CC) -O $(CFLBASE) -ansi
-LD		= ld86
-LDFLAGS 	= $(CPU_LD) -s
-
-endif
+AS      = ia16-elf-as
+ASFLAGS = $(CPU_AS) $(ARCH_AS)
+CC      = $(CROSS_CC) -Os
+CFLAGS  = $(CROSS_CFLAGS) $(CPU_CC) $(ARCH_CC) $(CFLBASE) -Wall
+LD      = ia16-elf-ld
+LDFLAGS = $(CPU_LD) -s
+AR      = ia16-elf-ar
 
 else
 
 ################################
-# Definitions using GCC compiler
+# Definitions using GCC host compiler
 
 AS      = as
 ASFLAGS =
@@ -264,6 +216,7 @@ CC      = gcc
 CFLAGS  = -Wall $(CFLBASE)
 LD      = ld
 LDFLAGS =
+AR      = ar
 
 endif
 
@@ -279,18 +232,8 @@ endif
 	$(AS) $(ASFLAGS) -o $*.o $<
 
 ifneq ($(USEBCC), N)
-ifeq ($(USEIA16), y)
-.c.o:
-	$(CC) $(CFLAGS) -S -o $*.s $<
-	att2as86 < $*.s > $*.asm
-	$(AS) $(ASFLAGS) -u -o $*.o $*.asm
-	rm $*.s $*.asm
-
-else
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
-
-endif
 endif
 
 #########################################################################

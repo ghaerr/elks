@@ -40,9 +40,14 @@ ifeq ($(CONFIG_ARCH_SIBO), y)
 OBJS  = init.o con_asm.o font.o sibo_key.o key_asm.o mem.o \
 	sibo_con.o meta.o ntty.o ser_asm.o pty.o
 else
-OBJS  = bioscon.o bioscon-low.o serial.o lp.o xt_key.o init.o dircon.o mem.o \
-	ntty.o meta.o tcpdev.o pty.o bell.o	# clist.o tty.o
+OBJS  = serial.o lp.o xt_key.o init.o dircon.o mem.o \
+	ntty.o meta.o tcpdev.o pty.o bell.o
+
+ifdef CONFIG_CONSOLE_BIOS
+OBJS += bioscon.o bioscon-low.o
 endif
+
+endif # CONFIG_ARCH_SIBO
 
 #########################################################################
 # Commands.

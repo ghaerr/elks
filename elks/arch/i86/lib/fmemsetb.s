@@ -1,21 +1,23 @@
-; void fmemsetb (word_t off, seg_t seg, byte_t val, word_t count)
-; segment after offset to allow LES from the stack
-; compiler pushes byte_t as word_t
+// void fmemsetb (word_t off, seg_t seg, byte_t val, word_t count)
+// segment after offset to allow LES from the stack
+// compiler pushes byte_t as word_t
+
+    .code16
 
 	.text
 
-	.define _fmemsetb
+	.global fmemsetb
 
-_fmemsetb:
-	mov    bx,es
-	mov    dx,di
-	mov    di,sp
-	mov    ax,[di+6]  ; arg2:   value
-	mov    cx,[di+8]  ; arg3:   byte count
-	les    di,[di+2]  ; arg0+1: far pointer
+fmemsetb:
+	mov    %es,%bx
+	mov    %di,%dx
+	mov    %sp,%di
+	mov    6(%di),%ax  // arg2:   value
+	mov    8(%di),%cx  // arg3:   byte count
+	les    2(%di),%di  // arg0+1: far pointer
 	cld
 	rep
 	stosb
-	mov    di,dx
-	mov    es,bx
+	mov    %dx,%di
+	mov    %bx,%es
 	ret

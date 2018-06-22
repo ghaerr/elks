@@ -3,7 +3,7 @@
 
 #include <linuxmt/types.h>
 
-extern int arch_cpu;
+extern byte_t arch_cpu;  // processor number (from setup data)
 
 extern void arch_setuptasks(void);
 extern void setup_arch(seg_t *,seg_t *);

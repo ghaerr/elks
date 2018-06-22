@@ -31,66 +31,47 @@ include $(BASEDIR)/Makefile-rules
 
 # Precompiled assembly
 
-SRCS1= \
+SRCS1 = \
 	fmemcpyb.S fmemcpyw.S \
 	fmemcmpb.S fmemcmpw.S \
 	setupb.S setupw.S \
 	string.S \
-	farlist.S seglist.S \
+	seglist.S \
+#	farlist.S \
 	# end of list
 
-fmemcpyb.s:fmemcpyb.S
-fmemcpyw.s:fmemcpyw.S
-fmemcmpb.s:fmemcmpb.S
-fmemcmpw.s:fmemcmpw.S
-setupb.s:setupb.S
-setupw.s:setupw.S
-string.s:string.S
-farlist.s:farlist.S
-seglist.s:seglist.S
+TMPS1 = $(SRCS1:.S=.s)
 
-OBJS1=$(SRCS1:.S=.o)
+OBJS1 = $(TMPS1:.s=.o)
 
 # Non-precompiled assembly
 
-SRCS2= \
+SRCS2 = \
 	peekb.s peekw.s pokeb.s pokew.s \
 	fmemsetb.s fmemsetw.s \
 	border.s \
 	ldivmod.s \
+	divmodsi3.s \
 	# end of list
 
-OBJS2=$(SRCS2:.s=.o)
+OBJS2 = $(SRCS2:.s=.o)
 
 # C sources
 
-SRCS3= \
+SRCS3 = \
 	bitops.c \
 	# end of list
 
-OBJS3=$(SRCS3:.c=.o)
+OBJS3 = $(SRCS3:.c=.o)
 
-ifeq ($(USEIA16), y)
-OBJS		= $(OBJS1) $(OBJS2) $(OBJS3) divmodsi3.o
-else
-OBJS		= $(OBJS1) $(OBJS2) $(OBJS3) $(IOBJS) $(JOBJS) $(LLOBJS)
-endif
-
-# compiler support for integer arithmetic
-
-IOBJS		=idiv.o idivu.o imod.o imodu.o imul.o isl.o isr.o isru.o min.o ctypefn.o 
+OBJS		= $(OBJS1) $(OBJS2) $(OBJS3)
+#OBJS		= $(OBJS1) $(OBJS2) $(OBJS3) $(JOBJS)
 
 # miscellaneous
+# TODO: move them to the C library
 
 JOBJS       = inport.o inportb.o outport.o outportb.o irqflag.o \
               memcmp.o
-#		 ntohl.o ntohs.o
-
-# compiler support for long arithmetic on little-endian (normal) longs
-
-LLOBJS  	=laddl.o landl.o lcmpl.o lcoml.o ldecl.o ldivl.o ldivul.o \
-		 leorl.o lincl.o lmodl.o lmodul.o lmull.o lnegl.o lorl.o \
-		 lsll.o lsrl.o lsrul.o lsubl.o ltstl.o
 
 #########################################################################
 # Commands.
@@ -98,7 +79,12 @@ LLOBJS  	=laddl.o landl.o lcmpl.o lcoml.o ldecl.o ldivl.o ldivul.o \
 all:	lib86.a
 
 lib86.a: $(OBJS)
-	ar rcs lib86.a $(OBJS)
+	$(AR) rcs lib86.a $(OBJS)
+
+$(TMPS1): $(SRCS1)
+$(OBJS1): $(TMPS1)
+$(OBJS2): $(SRCS2)
+$(OBJS3): $(SRCS3)
 
 #########################################################################
 # Standard commands.

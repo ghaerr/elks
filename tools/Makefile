@@ -1,7 +1,10 @@
-# Select the cross compiler to build
-# Default is to build BCC and GCC-IA16
-BUILD_BCC = 1
-BUILD_GCC_IA16 = 1
+# Makefile for cross tools
+
+ifndef TOPDIR
+$(error TOPDIR is not defined)
+endif
+
+include $(TOPDIR)/Make.defs
 
 .PHONY: all
 
@@ -28,26 +31,15 @@ $(DISTDIR)/$(DEV86_DIST).zip:
 	cd dev86 && make PREFIX=$(CROSSDIR) install
 	touch .dev86.build
 
-ifdef BUILD_BCC
 all:: .dev86.build
-endif
-
-# ATT to AS86 conversion utility
-
-ifdef BUILD_GCC_IA16
-all:: $(CROSSDIR)/bin/att2as86
-endif
-
-$(CROSSDIR)/bin/att2as86:
-	make -C $(SRCDIR)/att2as86 all install
 
 # BINUTILS for IA16
 
-BINUTILS_VER=c045395ece435fcb3bf6225e9c4734b3ebcc874b
+BINUTILS_VER=504e9ad8fbcc41117c004c42d97a645cc7eb306b
 BINUTILS_DIST=binutils-ia16-$(BINUTILS_VER)
 
 $(DISTDIR)/$(BINUTILS_DIST).zip:
-	cd $(DISTDIR) && wget https://github.com/crtc-demos/binutils-ia16/archive/$(BINUTILS_VER).zip -O $(BINUTILS_DIST).zip
+	cd $(DISTDIR) && wget https://github.com/tkchia/binutils-ia16/archive/$(BINUTILS_VER).zip -O $(BINUTILS_DIST).zip
 
 .binutils.src: $(DISTDIR)/$(BINUTILS_DIST).zip
 	-rm -rf $(BINUTILS_DIST)
@@ -64,17 +56,15 @@ $(DISTDIR)/$(BINUTILS_DIST).zip:
 	make -C binutils-build install
 	touch .binutils.build
 
-ifdef BUILD_GCC_IA16
 all:: .binutils.build
-endif
 
 # GCC for IA16
 
-GCC_VER=5853ef6a8e9334fb1e6d4a86dd92179d2dba9d32
+GCC_VER=eb57e7ea98ebf30ff455fbde1af4c7279cc030bc
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).zip:
-	cd $(DISTDIR) && wget https://github.com/jbruchon/gcc-ia16/archive/$(GCC_VER).zip -O $(GCC_DIST).zip
+	cd $(DISTDIR) && wget https://github.com/tkchia/gcc-ia16/archive/$(GCC_VER).zip -O $(GCC_DIST).zip
 
 .gcc.src: $(DISTDIR)/$(GCC_DIST).zip
 	-rm -rf $(GCC_DIST)
@@ -91,6 +81,4 @@ $(DISTDIR)/$(GCC_DIST).zip:
 	make -C gcc-build install
 	touch .gcc.build
 
-ifdef BUILD_GCC_IA16
 all:: .gcc.build
-endif

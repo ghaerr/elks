@@ -1,20 +1,25 @@
                ELKS, the Embeddable Linux Kernel Subset
                ----------------------------------------
 
-This is a project to write a Linux-like operating system for ancient
-computers running an Intel 8086-compatible processor.
+This is a project to write a Linux-like operating system for systems based on
+the Intel IA16 architecture (16 bits processors: i8088, i8086, i80188, i80186,
+i80286, V20, V30 and compatibles).
 
-To build ELKS, you will need a cross build chain, mainly based on DEV86, and
-also on GCC-IA16 if you select that latest in place of BCC to build the kernel.
+Such systems are ancient computers (IBM-PC XT/AT and clones) or more recent
+embedded ones that reuse their huge hardware & software legacy.
+
+To build ELKS, you need a cross build chain, mainly based on DEV86 (still used
+for the user land) and GCC-IA16 (now used for the kernel).
 
 A script is provided to automatically download and build that cross chain:
 
   'tools/build.sh'
 
-Note: all the scripts must be executed with top folder 'elks/' as the current one.
+Note: all the scripts must be executed with the top folder 'elks/' as the
+current one.
 
-A script that attempts to automate the whole build process and make it easier
-for ELKS newbies has been provided:
+A script is provided to automate the whole build process (configuration,
+kernel, user land and target image) and make it easier for ELKS newbies:
 
   './build.sh'
 
@@ -29,29 +34,24 @@ The general build procedure for ELKS is as follows:
 
   '. tools/env.sh' (note the '.' before the script)
 
-* Configure the build chain, the kernel, the commands and select the target
-  image format (the default configuration is for an IBM PC/XT/AT):
+* Configure the build chain, the kernel, the user land and the target image
+  format:
 
   'make menuconfig'
 
-* Build the kernel and the commands:
+* Build the kernel, the user land and the target image:
 
   'make all'
-
-* Build the target image as a user with the 'sudoer' privilege:
-
-  'cd elkscmd'
-  'make image'
 
 The target root folder is built in 'target/', and depending on your
 configuration, that folder is packed as either a floppy disk image (fd1440,
 fd1680, fd1200, fd720, fd360, without MBR), a hard-disk image (hd, with MBR),
 or a file image (rom, tar), into the '/image' folder.
 
-Before writting the image on the real device, you can test it first on QEMU with
-'./qemu.sh' (will configure QEMU to be close as possible to an ISA system).
+Before writting the image on the real device, you can test it first on QEMU
+with './qemu.sh' (will configure QEMU for an ISA system).
 
 Questions? Problems? Patches? Open an issue in this project! You can also join
-and email the 'Linux-8086' mailing list at linux-8086@vger.kernel.org. 
+and email the 'Linux-8086' list at linux-8086@vger.kernel.org.
 
 More information in the Documentation folder: Documentation/index.html

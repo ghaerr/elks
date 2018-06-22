@@ -1,16 +1,18 @@
-; void pokew (word_t off, seg_t seg, word_t val)
-; segment after offset to allow LDS from the stack
-; writes the word at the far pointer segment:offset
+// void pokew (word_t off, seg_t seg, word_t val)
+// segment after offset to allow LDS from the stack
+// writes the word at the far pointer segment:offset
+
+    .code16
 
 	.text
 
-	.define _pokew
+	.global pokew
 
-_pokew:
-	mov    dx,ds
-	mov    bx,sp
-	mov    ax,[bx+6]  ; arg2: value
-	lds    bx,[bx+2]  ; arg0+1: far pointer
-	mov    [bx],ax    ; DS by default
-	mov    ds,dx
+pokew:
+	mov    %ds,%dx
+	mov    %sp,%bx
+	mov    6(%bx),%ax  // arg2: value
+	lds    2(%bx),%bx  // arg0+1: far pointer
+	mov    %ax,(%bx)    // DS by default
+	mov    %dx,%ds
 	ret

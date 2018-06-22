@@ -1,3 +1,4 @@
+/*
 ! ldivmod.s - 32 over 32 to 32 bit division and remainder for 8086
 
 ! ldivmod( dividend bx:ax, divisor di:cx )  [ signed quot di:cx, rem bx:ax ]
@@ -27,171 +28,173 @@
 
 ! if the divisor is negative, the division is done by negating a and b,
 ! doing the division, then negating q and r
+*/
 
+	.code16
 
-	.globl	ldivmod
+	.global	ldivmod
 	.text
-	.even
+	.align 1
 
 ldivmod:
-	mov	dx,di		! sign byte of b in dh
-	mov	dl,bh		! sign byte of a in dl
-	test	di,di
+	mov	%di,%dx		// sign byte of b in dh
+	mov	%bh,%dl 	// sign byte of a in dl
+	test	%di,%di
 	jns	set_asign
-	neg	di
-	neg	cx
-	sbb	di,*0
+	neg	%di
+	neg	%cx
+	sbb	$0,%di
 
 set_asign:
-	test	bx,bx
-	jns	got_signs	! leave r = a positive
-	neg	bx
-	neg	ax
-	sbb	bx,*0
-	j	got_signs
+	test	%bx,%bx
+	jns	got_signs	// leave r = a positive
+	neg	%bx
+	neg	%ax
+	sbb	$0,%bx
+	jmp	got_signs
 
-	.globl	ludivmod
-	.even
+	.global	ludivmod
+	.align 1
 
 ludivmod:
-	xor	dx,dx		! both sign bytes 0
+	xor	%dx,%dx		// both sign bytes 0
 
 got_signs:
-	push	bp
-	push	si
-	mov	bp,sp
-	push	di		! remember b
-	push	cx
+	push	%bp
+	push	%si
+	mov	%sp,%bp
+	push	%di		// remember b
+	push	%cx
 
 b0	=	-4
 b16	=	-2
 
-	test	di,di
+	test	%di,%di
 	jne	divlarge
-	test	cx,cx
+	test	%cx,%cx
 	je	divzero
-	cmp	bx,cx
-	jae	divlarge	! would overflow
-	xchg	dx,bx		! a in dx:ax, signs in bx
-	div	cx
-	xchg	cx,ax		! q in di:cx, junk in ax
-	xchg	ax,bx		! signs in ax, junk in bx
-	xchg	ax,dx		! r in ax, signs back in dx
-	mov	bx,di		! r in bx:ax
-	j	zdivu1
+	cmp	%cx,%bx
+	jae	divlarge	// would overflow
+	xchg	%bx,%dx		// a in dx:ax, signs in bx
+	div	%cx
+	xchg	%ax,%cx		// q in di:cx, junk in ax
+	xchg	%bx,%ax		// signs in ax, junk in bx
+	xchg	%dx,%ax		// r in ax, signs back in dx
+	mov	%di,%bx		// r in bx:ax
+	jmp	zdivu1
 
-divzero:			! return q = 0 and r = a
-	test	dl,dl
+divzero:			// return q = 0 and r = a
+	test	%dl,%dl
 	jns	return
-	j	negr		! a initially minus, restore it
+	jmp	negr		// a initially minus, restore it
 
 divlarge:
-	push	dx		! remember sign bytes
-	mov	si,di		! w in si:dx, initially b from di:cx
-	mov	dx,cx
-	xor	cx,cx		! q in di:cx, initially 0
-	mov	di,cx
+	push	%dx		// remember sign bytes
+	mov	%di,%si		// w in si:dx, initially b from di:cx
+	mov	%cx,%dx
+	xor	%cx,%cx		// q in di:cx, initially 0
+	mov	%cx,%di
 
-! r in bx:ax, initially a
-! use di:cx rather than dx:cx in order to
-! have dx free for a byte pair later
+// r in bx:ax, initially a
+// use di:cx rather than dx:cx in order to
+// have dx free for a byte pair later
 
-	cmp	si,bx
+	cmp	%bx,%si
 	jb	loop1
-	ja	zdivu		! finished if b > r
-	cmp	dx,ax
+	ja	zdivu		// finished if b > r
+	cmp	%ax,%dx
 	ja	zdivu
 
-! rotate w (= b) to greatest dyadic multiple of b <= r
+// rotate w (= b) to greatest dyadic multiple of b <= r
 
 loop1:
-	shl	dx,*1		! w = 2*w
-	rcl	si,*1
-	jc	loop1_exit	! w was > r counting overflow (unsigned)
-	cmp	si,bx		! while w <= r (unsigned)
+	shl	$1,%dx		// w = 2*w
+	rcl	$1,%si
+	jc	loop1_exit	// w was > r counting overflow (unsigned)
+	cmp	%bx,%si		// while w <= r (unsigned)
 	jb	loop1
 	ja	loop1_exit
-	cmp	dx,ax
-	jbe	loop1		! else exit with carry clear for rcr
+	cmp	%ax,%dx
+	jbe	loop1		// else exit with carry clear for rcr
 
 loop1_exit:
-	rcr	si,*1
-	rcr	dx,*1
+	rcr	$1,%si
+	rcr	$1,%dx
 
 loop2:
-	shl	cx,*1		! q = 2*q
-	rcl	di,*1
-	cmp	si,bx		! if w <= r
+	shl	$1,%cx		// q = 2*q
+	rcl	$1,%di
+	cmp	%bx,%si		// if w <= r
 	jb	loop2_over
 	ja	loop2_test
-	cmp	dx,ax
+	cmp	%ax,%dx
 	ja	loop2_test
 
 loop2_over:
-	add	cx,*1		! q++
-	adc	di,*0
-	sub	ax,dx		! r = r-w
-	sbb	bx,si
+	add	$1,%cx		// q++
+	adc	$0,%di
+	sub	%dx,%ax		// r = r-w
+	sbb	%si,%bx
 
 loop2_test:
-	shr	si,*1		! w = w/2
-	rcr	dx,*1
-	cmp	si,b16[bp]	! while w >= b
+	shr	$1,%si		// w = w/2
+	rcr	$1,%dx
+	cmp	b16(%bp),%si	// while w >= b
 	ja	loop2
 	jb	zdivu
-	cmp	dx,b0[bp]
+	cmp	b0(%bp),%dx
 	jae	loop2
 
 zdivu:
-	pop	dx		! sign bytes
+	pop	%dx		// sign bytes
 
 zdivu1:
-	test	dh,dh
+	test	%dh,%dh
 	js	zbminus
-	test	dl,dl
-	jns	return		! else a initially minus, b plus
-	mov	dx,ax		! -a = b * q + r ==> a = b * (-q) + (-r)
-	or	dx,bx
-	je	negq		! use if r = 0
-	sub	ax,b0[bp]	! use a = b * (-1 - q) + (b - r)
-	sbb	bx,b16[bp]
-	not	cx		! q = -1 - q (same as complement)
-	not	di
+	test	%dl,%dl
+	jns	return		// else a initially minus, b plus
+	mov	%ax,%dx		// -a = b * q + r ==> a = b * (-q) + (-r)
+	or	%bx,%dx
+	je	negq		// use if r = 0
+	sub	b0(%bp),%ax	// use a = b * (-1 - q) + (b - r)
+	sbb	b16(%bp),%bx
+	not	%cx		// q = -1 - q (same as complement)
+	not	%di
 
 negr:
-	neg	bx
-	neg	ax
-	sbb	bx,*0
+	neg	%bx
+	neg	%ax
+	sbb	$0,%bx
 return:
-	mov	sp,bp
-	pop	si
-	pop	bp
+	mov	%bp,%sp
+	pop	%si
+	pop	%bp
 	ret
 
-	.even
+	.align 1
 
 zbminus:
-	test	dl,dl		! (-a) = (-b) * q + r ==> a = b * q + (-r)
-	js	negr		! use if initial a was minus
-	mov	dx,ax		! a = (-b) * q + r ==> a = b * (-q) + r
-	or	dx,bx
-	je	negq		! use if r = 0
-	sub	ax,b0[bp]	! use a = b * (-1 - q) + (b + r) (b is now -b)
-	sbb	bx,b16[bp]
-	not	cx
-	not	di
-	mov	sp,bp
-	pop	si
-	pop	bp
+	test	%dl,%dl		// (-a) = (-b) * q + r ==> a = b * q + (-r)
+	js	negr		// use if initial a was minus
+	mov	%ax,%dx		// a = (-b) * q + r ==> a = b * (-q) + r
+	or	%bx,%dx
+	je	negq		// use if r = 0
+	sub	b0(%bp),%ax	// use a = b * (-1 - q) + (b + r) (b is now -b)
+	sbb	b16(%bp),%bx
+	not	%cx
+	not	%di
+	mov	%bp,%sp
+	pop	%si
+	pop	%bp
 	ret
 
-	.even
+	.align 1
 
 negq:
-	neg	di
-	neg	cx
-	sbb	di,*0
-	mov	sp,bp
-	pop	si
-	pop	bp
+	neg	%di
+	neg	%cx
+	sbb	$0,%di
+	mov	%bp,%sp
+	pop	%si
+	pop	%bp
 	ret

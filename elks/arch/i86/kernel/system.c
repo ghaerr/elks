@@ -7,7 +7,9 @@
 
 #include <arch/segment.h>
 
-int arch_cpu;			/* Processor type */
+
+byte_t arch_cpu;  // processor number (from setup data)
+
 #ifdef CONFIG_ARCH_SIBO
 extern long int basmem;
 #endif
@@ -70,10 +72,10 @@ void hard_reset_now(void)
 	);
 #endif
 #ifdef __ia16__
-    asm("movw $64,%ax\n\t"
-	"movw %ax,%ds\n\t"
-	"movw $4660,114\n\t"
-	"jmp 65535:0\n\t"
+    asm("mov $0x40,%ax\n\t"
+	"mov %ax,%ds\n\t"
+	"movw $0x1234,0x72\n\t"
+	"ljmp $0xFFFF,$0\n\t"
 	);
 #endif
 }
