@@ -28,9 +28,8 @@ init(mode)
 int mode;
 {
   int code, buflen, intr();
-  void perror(), exit(), move(), reset_dir();
+  void perror(), move(), reset_dir();
   char *getenv(), *fixmcwd(), *malloc(), *dummy;
-  long lseek();
   struct device *try;
   int ncyl = 0, nsect = 0, ntrack =0 ;
   char *floppy = getenv("FLOPPY");
@@ -122,9 +121,6 @@ void
 move(sector)
 int sector;
 {
-  long lseek();
-  void exit(), perror();
-
   if (lseek(fd, (long)sector*MSECSIZ, 0) < 0) {
     perror("move: lseek");
     exit(1);

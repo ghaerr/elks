@@ -23,8 +23,6 @@
 #include <string.h>
 #include <stdio.h>
 
-_PROTOTYPE(int main, (int argc, char **argv));
-
 char *glyphs[] = {
 	  "         @@@  @@   @@  @ @   @@@@@          @@     @@@  ",
 	  "         @@@  @@   @@  @ @  @  @  @@@   @  @  @    @@@  ",

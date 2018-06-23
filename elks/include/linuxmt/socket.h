@@ -1,6 +1,7 @@
 #ifndef LX86_LINUXMT_SOCKET_H
 #define LX86_LINUXMT_SOCKET_H
 
+#include <stddef.h>
 #include <linuxmt/types.h>
 #include <linuxmt/uio.h>
 

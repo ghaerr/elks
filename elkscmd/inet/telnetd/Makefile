@@ -12,16 +12,17 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-SRC=	telnetd.c 
+SRCS = telnetd.c
+OBJS = $(SRCS:.c=.o) 
 
 all:	telnetd
 
-telnetd: $(SRC)
-	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $(SRC)
+telnetd: $(OBJS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 install: telnetd
 	sudo install telnetd $(TARGET_MNT)/bin
 
 clean:
-	rm -f *.o telnetd
+	rm -f $(OBJS) telnetd
 

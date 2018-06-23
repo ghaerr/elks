@@ -11,11 +11,11 @@ SECTIONS {
 		LONG (SIZEOF (.text));
 		LONG (0);        /* .data section size */
 		LONG (0);        /* .bss section size */
-		LONG (start);    /* entry point */
+		LONG (entry);    /* entry point */
 		LONG (0);        /* total memory allocated */
 		LONG (0);        /* symbol table size */
 		}
 	_begintext = ALIGN(0x20);
-	.text 0 : AT(_begintext) { *(.text) *(.data) *(.rodata*) *(.bss) *(COMMON) }
+	.text 0 : AT(_begintext) { *(.text*) *(.data*) *(.rodata*) *(.bss) *(COMMON) }
 	/DISCARD/ : { *(.comment) }
 }

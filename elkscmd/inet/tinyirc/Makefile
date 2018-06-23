@@ -25,10 +25,10 @@ all: tinyirc
 LOCALDEFS = -DDEFAULTSERVER=\"$(SERVER)\" -DDEFAULTPORT=$(PORT)
 
 tinyirc: tinyirc.o
-	$(CC) $(LDFLAGS) -o tinyirc tinyirc.o $(LIBS)
+	$(LD) $(LDFLAGS) -o tinyirc tinyirc.o $(LDLIBS)
 
 tinyircd: tinyircd.o
-	$(CC) $(LDFLAGS) -o tinyircd tinyircd.o $(LIBS)
+	$(LD) $(LDFLAGS) -o tinyircd tinyircd.o $(LDLIBS)
 
 tinyirccv: tinyirccv.o
 	$(CC) $(LDFLAGS) -o tinyirc tinyirccv.o $(LIBS)

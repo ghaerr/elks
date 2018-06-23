@@ -24,6 +24,9 @@
 #include <arpa/inet.h>
 #endif
 
+#include <sys/socket.h>
+
+
 unsigned long int in_aton(str)
 const char *str;
 {

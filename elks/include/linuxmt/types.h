@@ -16,8 +16,6 @@ typedef __u32			speed_t;
 typedef __u32			tcflag_t;
 typedef __u32			u_ino_t;
 
-typedef __s16			pid_t;
-
 typedef __u16			block_t;
 typedef __u32			block32_t;
 typedef __u16			dev_t;
@@ -45,10 +43,6 @@ typedef __u8			sig_t;
 /* The next three lines cause splint to complain needlessly */
 
 typedef __u32			time_t;
-
-typedef __s16			ptrdiff_t;
-
-typedef __u16			size_t;
 
 /*@end@*/
 

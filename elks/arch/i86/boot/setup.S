@@ -120,8 +120,8 @@
 
 .text
 
-.global start
-start:
+.global entry
+entry:
 #ifdef CONFIG_ROMCODE
     .byte 0x55, 0xaa      //;sign for ROM-Extention
     .byte 0x04            //;space for lengthcode (promsize/512)

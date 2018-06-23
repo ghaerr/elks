@@ -11,14 +11,14 @@ SECTIONS {
 		LONG(SIZEOF (.text));
 		LONG(SIZEOF (.data));
 		LONG (SIZEOF (.bss));
-		LONG (start);    /* entry point */
+		LONG (entry);    /* entry point */
 		LONG (0);        /* total memory allocated */
 		LONG (0);        /* symbol table size */
 		}
 	_begintext = ALIGN(0x20);
-	.text 0 : AT(_begintext) { *(.text); . = ALIGN(0x10); }
+	.text 0 : AT(_begintext) { *(.text*); . = ALIGN(0x10); }
 	_begindata = _begintext + .;
-	.data 0 : AT(_begindata) { *(.data) *(.rodata*) }
+	.data 0 : AT(_begindata) { *(.data*) *(.rodata*) }
 	.bss : { *(.bss) *(COMMON) }
 	/DISCARD/ : { *(.comment) }
 }

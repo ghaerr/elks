@@ -23,14 +23,19 @@ install: all
 	sudo install $(PROGS) $(TARGET_MNT)/sbin
 
 fsck: fsck.o
+	$(LD) $(LDFLAGS) -o fsck fsck.o $(LDLIBS)
 
 fdisk: fdisk.o
+	$(LD) $(LDFLAGS) -o fdisk fdisk.o $(LDLIBS)
 
 mkfs: mkfs.o
+	$(LD) $(LDFLAGS) -o mkfs mkfs.o $(LDLIBS)
 
 partype: partype.o
+	$(LD) $(LDFLAGS) -o partype partype.o $(LDLIBS)
 
 ramdisk: ramdisk.o
+	$(LD) $(LDFLAGS) -o ramdisk ramdisk.o $(LDLIBS)
 
 clean:
 	rm -f *.o $(FORMATMOD) core $(PROGS)

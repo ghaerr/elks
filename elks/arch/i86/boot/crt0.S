@@ -9,7 +9,7 @@
 
     .code16
 	.text
-	.global start
+	.global entry
 	.extern	start_kernel
 	.extern arch_boot
 	.global early_printk
@@ -24,7 +24,7 @@
 //	Setup patched to pass parameters in registers to avoid clobbering the
 //	kernel when using the 286pmode extender.
 
-start:
+entry:
 /*
 ! Setup.S already initialized DS and ES (but not SS)
 ! In addition, registers contain:

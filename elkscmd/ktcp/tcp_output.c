@@ -22,7 +22,7 @@
 
 char buf[128];
 
-#define USE_ASM
+//#define USE_ASM
 
 static struct tcp_retrans_list_s *retrans_list;
 

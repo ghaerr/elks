@@ -19,7 +19,6 @@
 #include "levee.h"
 #include "extern.h"
 #include "grep.h"
-#include <ctype.h>
 
 static int arg;		/* arguments inside of a RE */
 
@@ -57,9 +56,6 @@ omatch(pattern, cp, endp)
       case TOKENE:
 	  return !isalnum(**cp);
       case LITCHAR:
-#ifdef TOUPPER_FTN
-#undef toupper
-#endif
 	  if (ignorecase)
 	      flag = (toupper(**cp) == toupper(*(pattern+1)));
 	  else

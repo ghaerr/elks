@@ -20,10 +20,10 @@ install: $(PRGS)
 	sudo install $(PRGS) $(TARGET_MNT)/bin
 
 netstat: netstat.o
-	$(CC) $(CFLAGS) $(LDFLAGS) netstat.o -o netstat
+	$(LD) $(LDFLAGS) netstat.o -o netstat $(LDLIBS)
 
 nslookup: nslookup.o
-	$(CC) $(CFLAGS) $(LDFLAGS) nslookup.o -o nslookup
+	$(LD) $(LDFLAGS) nslookup.o -o nslookup $(LDLIBS)
 
 clean:
 	rm -f core *.o $(PRGS)

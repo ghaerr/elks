@@ -36,7 +36,7 @@ char *argv[];
 	int fat, i, ismatch, entry, c, oops;
 	char *filename, *newfile, text[4], tname[9], *getname(), *unixname();
 	char *strncpy(), *pathname, *getpath();
-	void exit(), readit(), free();
+	void readit(), free();
 	struct directory *dir, *search();
 
 	if (init(0)) {

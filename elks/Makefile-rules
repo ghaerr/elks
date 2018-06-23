@@ -101,7 +101,7 @@ endif
 
 ARCH_DIR	= arch/$(ARCH)
 
-INCLUDES	= -I$(TOPDIR)/include -I$(TOPDIR)/elks/include
+INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/elks/include
 
 MYDIR		= $(shell pwd | sed 's:^$(TOPDIR):.:')
 
@@ -204,6 +204,8 @@ CFLAGS  = $(CROSS_CFLAGS) $(CPU_CC) $(ARCH_CC) $(CFLBASE) -Wall
 LD      = ia16-elf-ld
 LDFLAGS = $(CPU_LD) -s
 AR      = ia16-elf-ar
+
+INCLUDES += -I$(TOPDIR)/libc/include
 
 else
 

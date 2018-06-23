@@ -28,7 +28,7 @@
 #include <linuxmt/debug.h>
 
 #include <arch/segment.h>
-#include <arch/seglist.h>
+#include <asm/seglist.h>
 
 #define MIN_STACK_SIZE 0x1000
 
