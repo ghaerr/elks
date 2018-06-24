@@ -463,7 +463,7 @@ int main(int argc, char **argv)
 
 	argv[0] = "init";
 #ifdef DEBUG
-	fd = open(DEVTTY, O_RDWR);
+	int fd = open(DEVTTY, O_RDWR);
 	dup2(fd, 0);
 	dup2(fd, 1);
 	dup2(fd, 2);
@@ -516,7 +516,7 @@ int main(int argc, char **argv)
 			pid = wait(NULL);
 
 			FPUTS("and ");
-			FPUTD(pid)
+			FPUTD(pid);
 			FPUTS(" came out\n");
 
 			if (-1 == pid) continue;

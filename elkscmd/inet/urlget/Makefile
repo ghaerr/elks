@@ -12,12 +12,13 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-SRC=	net.c urlget.c
+SRCS = net.c urlget.c
+OBJS = $(SRCS:.c=.o)
 
 all:	urlget
 
-urlget:	$(SRC)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o urlget $(SRC)
+urlget:	$(OBJS)
+	$(LD) $(LDFLAGS) -o urlget $(OBJS) $(LDLIBS)
 
 install: urlget
 	sudo install urlget $(TARGET_MNT)/bin

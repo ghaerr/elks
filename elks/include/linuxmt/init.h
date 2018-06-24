@@ -36,7 +36,7 @@ extern void init_console(void);
 extern void device_setup(void);
 
 extern void kfork_proc(void ());
-extern void arch_setup_kernel_stack(struct task_struct *);
+extern void arch_setup_user_stack(struct task_struct *, word_t entry);
 extern void setup_dev(register struct gendisk *);
 extern void mem_dev_init(void);
 extern void init_bioshd(void);

@@ -12,16 +12,16 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-SRC=	ttn.c ttn_conf.c
+SRCS = ttn.c ttn_conf.c
+OBJS = $(SRCS:.c=.o)
 
 all:	telnet
 
-telnet:	$(SRC)
-	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $(SRC)
+telnet:	$(OBJS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 install: telnet
 	sudo install telnet $(TARGET_MNT)/bin
 
 clean:
-	rm -f telnet
-
+	rm -f $(OBJS) telnet

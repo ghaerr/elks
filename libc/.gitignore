@@ -1,0 +1,3 @@
+crt0.s
+crt0.o
+libc.a

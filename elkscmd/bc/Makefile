@@ -37,10 +37,10 @@ SUBDIRS = Examples Test
 all: fbc bc
 
 bc: $& config.h bc.o $(OFILES) global.o
-	$(CC) -o bc $(LDFLAGS) bc.o $(OFILES) global.o
+	$(LD) -o bc $(LDFLAGS) bc.o $(OFILES) global.o $(LDLIBS)
 
 sbc: sbc.o $(OFILES) global.o
-	$(CC) -o sbc $(LDFLAGS) sbc.o $(OFILES) global.o
+	$(LD) -o sbc $(LDFLAGS) sbc.o $(OFILES) global.o $(LDLIBS)
 
 math.h: libmath.b
 	$(MAKE) -$(MAKEFLAGS) fbc
@@ -51,7 +51,7 @@ math.h: libmath.b
 fbc: $(OFILES) bc.o
 	echo \"\" > math.h
 	$(CC) -c $(CFLAGS) global.c
-	$(CC) -o fbc $(LDFLAGS) bc.o $(OFILES) global.o
+	$(LD) -o fbc $(LDFLAGS) bc.o $(OFILES) global.o $(LDLIBS)
 
 install: bc fbc
 	sudo install bc $(TARGET_MNT)/bin

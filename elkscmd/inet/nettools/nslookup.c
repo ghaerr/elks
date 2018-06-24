@@ -1,16 +1,18 @@
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <sys/socket.h>
+
 #ifndef __linux__ 
-#include <linuxmt/socket.h>
 #include <linuxmt/un.h>
 #include <linuxmt/in.h>
 #include "linuxmt/arpa/inet.h"
 #else
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
-#include<string.h>
 #endif
 
 struct DNS_HEADER
@@ -104,7 +106,7 @@ char* get_dns_server()
 	      //printf("ip adress not read\n");
 	      sprintf(line,"208.67.222.222"); /*default nameserver*/
 	    }
-	    close (fp);
+	    fclose (fp);
 	    return &line;
         }
     }
@@ -119,7 +121,7 @@ int main(int argc, char *argv[]) {
   const char* nameserver;
   unsigned char *qname;
   int query_type;  
-  int fd,rc,i;
+  int fd,rc;
   struct sockaddr_in addr;  
   struct DNS_HEADER *dns = NULL;
   struct QUESTION *qinfo = NULL;

@@ -218,7 +218,7 @@ tc_init()
 #else
 
     if (tgetent(lp, p) < 1) {
-	puts("lv: no termcap for %s\n", p);
+	printf("lv: no termcap for %s\n", p);
 	exit(1);
     }
     if ((LINES=tgetnum("li")) <= 0) {

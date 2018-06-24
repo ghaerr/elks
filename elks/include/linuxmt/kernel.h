@@ -2,6 +2,7 @@
 #define LX86_LINUXMT_KERNEL_H
 
 #include <linuxmt/types.h>
+#include <stddef.h>
 
 /*
  * 'kernel.h' contains some often-used function prototypes etc

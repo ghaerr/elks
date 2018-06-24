@@ -31,7 +31,7 @@
 #endif
 
 /*#define DEBUG*/
-#define USE_ASM
+//#define USE_ASM
 
 static char ipbuf[TCPDEV_BUFSIZE];
 

@@ -62,11 +62,6 @@ typedef struct already {
   nlink_t al_nlink;
 } ALREADY;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(int makedname, (char *d, char *f, char *out, int outlen));
-_PROTOTYPE(int done, (int dev, Ino_t inum, Nlink_t nlink));
-_PROTOTYPE(long dodir, (char *d, int thislev));
-
 char *prog;			/* program name */
 char *optstr = "asl:";		/* -a and -s arguments */
 int silent = 0;			/* silent mode */

@@ -30,7 +30,7 @@ all:            pres flparc
 
 pres:           $(POBJS) $(LIBS)
 		@echo -n "Loading pres ... "
-		$(CC) $(LDFLAGS) $(POBJS) $(LIBS) -o pres
+		$(LD) $(LDFLAGS) $(POBJS) $(LIBS) -o pres $(LDLIBS)
 		@echo "done"
 
 xpres:          $(POBJS) $(XLIBS)
@@ -40,7 +40,7 @@ xpres:          $(POBJS) $(XLIBS)
 
 flparc:         $(FOBJS) $(LIBS)
 		@echo -n "Loading flparc ... "
-		@$(CC) $(LDFLAGS) $(FOBJS) $(LIBS) -o flparc
+		@$(LD) $(LDFLAGS) $(FOBJS) $(LIBS) -o flparc $(LDLIBS)
 		@echo "done"
 
 clean:;         @rm -f $(OBJS) pres flparc

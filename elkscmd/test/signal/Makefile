@@ -16,6 +16,7 @@ include $(BASEDIR)/Make.rules
 all: $(PGM)
 
 $(PGM): $(OBJS)
+	$(LD) $(LDFLAGS) -o $(PGM) $(OBJS) $(LDLIBS)
 
 install: $(PGM)
 	sudo install $(PGM) $(TARGET_MNT)/bin

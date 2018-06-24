@@ -27,15 +27,34 @@ CMNOBJ	= init.o search.o unixname.o subdir.o getfat.o devices.o
 all:	$(PROGS)
 
 mkdfs:	mkdfs.o
+	$(LD) $(LDFLAGS) -o mkdfs mkdfs.o $(LDLIBS)
+
 mdir:	mdir.o match.o convdate.o isdir.o $(CMNOBJ)
+	$(LD) $(LDFLAGS) -o mdir mdir.o match.o convdate.o isdir.o $(CMNOBJ) $(LDLIBS)
+
 mread:	mread.o match.o convdate.o $(CMNOBJ)
+	$(LD) $(LDFLAGS) -o mread mread.o match.o convdate.o $(CMNOBJ) $(LDLIBS)
+
 mwrite:	mwrite.o fixname.o putfat.o mkentry.o isdir.o $(CMNOBJ)
+	$(LD) $(LDFLAGS) -o mwrite mwrite.o fixname.o putfat.o mkentry.o isdir.o $(CMNOBJ) $(LDLIBS)
+
 mdel:	mdel.o match.o putfat.o $(CMNOBJ)
+	$(LD) $(LDFLAGS) -o mdel mdel.o match.o putfat.o $(CMNOBJ) $(LDLIBS)
+
 mtype:	mtype.o match.o $(CMNOBJ)
+	$(LD) $(LDFLAGS) -o mtype mtype.o match.o $(CMNOBJ) $(LDLIBS)
+
 mmd:	mmd.o fixname.o putfat.o mkentry.o $(CMNOBJ)
+	$(LD) $(LDFLAGS) -o mmd mmd.o fixname.o putfat.o mkentry.o $(CMNOBJ) $(LDLIBS)
+
 mrd:	mrd.o putfat.o $(CMNOBJ)
+	$(LD) $(LDFLAGS) -o mrd mrd.o putfat.o $(CMNOBJ) $(LDLIBS)
+
 mren:	mren.o fixname.o putfat.o isdir.o $(CMNOBJ)
+	$(LD) $(LDFLAGS) -o mren mren.o fixname.o putfat.o isdir.o $(CMNOBJ) $(LDLIBS)
+
 mcopy:	mcopy.o
+	$(LD) $(LDFLAGS) -o mcopy mcopy.o $(LDLIBS)
 
 install: $(PROGS)
 	sudo install $(PROGS) $(TARGET_MNT)/$(BINDIR)/

@@ -26,6 +26,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
 #ifndef __linux__
 #include <linuxmt/in.h>
 #include <linuxmt/net.h>
@@ -96,7 +98,6 @@ char *str;
 
 void process_request()
 {
-	int p;
 	int fin, size;
 	int ret;
 	char *c, *file, fullpath[128];
@@ -159,8 +160,6 @@ int argc;
 char** argv;
 {
 	int ret;
-	unsigned long i;
-	char *t;
 	struct sockaddr_in localadr;
 
 	ret = fork();

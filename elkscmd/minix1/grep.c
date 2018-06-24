@@ -33,7 +33,7 @@
 
 /* External interfaces */
 #include <sys/types.h>
-#include <regexp.h>		/* Thanks to Henry Spencer */
+#include <regex.h>		/* Thanks to Henry Spencer */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

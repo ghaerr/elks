@@ -1,10 +1,14 @@
 /* Double-linked list with near pointers */
 
+// TODO: move to top include
+
 #ifndef _LIST_H
 #define _LIST_H
 
-#include <types.h>
+typedef unsigned char byte_t;
 
+typedef unsigned int  u16_t;
+typedef unsigned long u32_t;
 
 struct list_node_s
 	{

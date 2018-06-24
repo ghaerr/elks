@@ -2,6 +2,7 @@
 #define LX86_LINUXMT_STRING_H
 
 #include <linuxmt/types.h>
+#include <stddef.h>
 
 /*@-namechecks@*/
 

@@ -21,7 +21,7 @@ OBJS = blockio.o display.o editcor.o exec.o find.o \
 all: lev
 
 lev: $(OBJS)
-	$(CC) $(LDFLAGS) -o lev $(OBJS)
+	$(LD) $(LDFLAGS) -o lev $(OBJS) $(LDLIBS)
 
 install: lev
 	sudo install lev $(TARGET_MNT)/bin/vi

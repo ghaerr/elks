@@ -29,12 +29,8 @@ clean_exit () {
 	exit $E
 }
 
-# Disk images cannot be built unless we're UID 0
-if [ "$UID" != "0" ] && [ "$1" != "clean" ]
-	then echo -e "\nWARNING: Disk images can only be built if you have root permissions"
-fi
-
 # Build environment setup
+# TODO: check script status on return
 . tools/env.sh
 
 # Check tools
