@@ -13,6 +13,8 @@ include $(BASEDIR)/Make.rules
 PRGS		= init getty login kill mount umount passwd reboot shutdown ps \
 		  swapon meminfo who knl man poweroff
 
+CFLAGS += -DDEBUG
+
 # clock disabled because direct I/O port access
 # exitemu disabled because it calls INT directly to DOSEMU
 

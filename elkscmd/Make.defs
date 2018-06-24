@@ -80,9 +80,11 @@ ifeq ($(PLATFORM),i86-ELKS)
 	LD=ia16-elf-ld
 #	LDFLAGS=-s -ansi
 	LDFLAGS= -T $(TOPDIR)/elks/elks-small.ld
+# TODO: move crt0 to begin of object files
 	LDLIBS='-(' $(TOPDIR)/libc/crt0.o $(TOPDIR)/libc/libc.a '-)'
 	CHECK=gcc -c -o .null.o -Wall -pedantic
-	AS=as86
+	AS=ia16-elf-as
+	ASFLAGS=-mtune=i8086
 endif
 
 ifeq ($(PLATFORM),DEFAULT)

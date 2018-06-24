@@ -38,7 +38,7 @@ typedef int intptr_t;
 // Functions
 
 int brk (void * addr);
-void *sbrk (intptr_t increment);
+void * sbrk (intptr_t increment);
 
 int close (int fildes);
 int dup2 (int oldfd, int newfd);
@@ -51,3 +51,4 @@ pid_t setsid ();
 
 uid_t getuid (void);
 
+char * getcwd (char * buf, size_t size);

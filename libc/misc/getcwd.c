@@ -30,7 +30,11 @@ int size;
    if( size < 3 ) { errno = ERANGE; return 0; }
    strcpy(path_buf, ".");
 
-   if( stat("/", &st) < 0 ) return 0;
+   if( stat("/", &st) < 0 )
+	   {
+	   perror ("stat");
+	   return 0;
+	   }
 
    root_dev = st.st_dev;
    root_ino = st.st_ino;
@@ -43,7 +47,12 @@ recurser()
 {
    dev_t this_dev;
    ino_t this_ino;
-   if( stat(path_buf, &st) < 0 ) return 0;
+   if( stat(path_buf, &st) < 0 )
+	   {
+	   perror ("stat");
+	   return 0;
+	   }
+
    this_dev = st.st_dev;
    this_ino = st.st_ino;
    if( this_dev == root_dev && this_ino == root_ino )
@@ -84,7 +93,11 @@ ino_t this_ino;
    slen++;
 
    dp = opendir(path_buf);
-   if( dp == 0 ) return 0;
+   if( dp == 0 )
+	   {
+	   perror ("opendir");
+	   return 0;
+	   }
 
    while( (d=readdir(dp)) != 0 )
    {

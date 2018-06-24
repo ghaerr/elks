@@ -145,7 +145,7 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
    int   preci, dpoint, width;
    char  pad, sign, radix, hash;
    register char *ptmp;
-   char  tmp[64], *ltostr(), *ultostr();
+   char  tmp[64];
    int buffer_mode;
 
    /* This speeds things up a bit for unbuffered */

@@ -17,12 +17,13 @@ entry:
 	.global exit
 
 // C runtime startup
+// Stack is empty and immediately followed by argc, argv and envp
 
 _startup:
 	push %bp
 	mov %sp,%bp
-	lea 6(%bp),%bx  // argv [0]
-	mov 4(%bp),%cx  // argc
+	lea 4(%bp),%bx  // argv [0]
+	mov 2(%bp),%cx  // argc
 	mov %cx,%ax
 	shl $1,%ax
 	add %bx,%ax     // envp [0]
@@ -31,7 +32,7 @@ _startup:
 	push %bx
 	push %cx
 	call main
-	add $4,%sp
+	add $6,%sp
 	push %ax  // main return value
 	call exit  // no return
 	int $3

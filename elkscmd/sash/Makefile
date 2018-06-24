@@ -17,7 +17,7 @@ OBJS = sash.o cmds.o cmd_dd.o cmd_ed.o cmd_grep.o cmd_ls.o cmd_tar.o utils.o
 all: sash
 
 sash:	$(OBJS)
-	$(CC) $(LDFLAGS) -o sash $(OBJS)
+	$(LD) $(LDFLAGS) -o sash $(OBJS) $(LDLIBS)
 
 clean:
 	rm -f core sash $(OBJS)
