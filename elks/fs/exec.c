@@ -53,8 +53,8 @@ static struct minix_supl_hdr msuph;
 
 // Default data sizes
 
-#define INIT_HEAP  0x1000  // 4 K
-#define INIT_STACK 0x1000  // 4 K
+#define INIT_HEAP  0x0     // For future use (inverted heap and stack)
+#define INIT_STACK 0x4000  // 16 K (space for both stack and heap)
 
 
 int sys_execve(char *filename, char *sptr, size_t slen)

@@ -5,23 +5,7 @@
 
 static char buf[34];
 
-extern char * ultostr();
-
-char * ltostr(val, radix)
-long val;
-int radix;
-{
-   char *p;
-   int flg = 0;
-   if( val < 0 ) { flg++; val= -val; }
-   p = ultostr(val, radix);
-   if(p && flg) *--p = '-';
-   return p;
-}
-
-char * ultostr(val, radix)
-unsigned long val;
-int radix;
+char * ultostr (unsigned long val, int radix)
 {
    register char *p;
    register int c;
@@ -41,3 +25,12 @@ int radix;
    return p;
 }
 
+char * ltostr (long val, int radix)
+{
+   char *p;
+   int flg = 0;
+   if( val < 0 ) { flg++; val= -val; }
+   p = ultostr(val, radix);
+   if(p && flg) *--p = '-';
+   return p;
+}

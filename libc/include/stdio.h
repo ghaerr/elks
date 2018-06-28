@@ -4,6 +4,7 @@
 
 #include <features.h>
 #include <sys/types.h>
+#include <stdarg.h>
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -126,6 +127,8 @@ extern int puts __P((char*));
 extern int printf __P ((__const char*, ...));
 extern int fprintf __P ((FILE*, __const char*, ...));
 extern int sprintf __P ((char*, __const char*, ...));
+
+int vfprintf (FILE * stream, const char * format, va_list ap);
 
 #define stdio_pending(fp) ((fp)->bufread>(fp)->bufpos)
 

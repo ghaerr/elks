@@ -24,9 +24,13 @@
 #include <sys/types.h>
 
 #include <fcntl.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+
+
+extern char * ltostr (long val, int radix);
+extern char * ultostr (unsigned long val, int radix);
+
 
 int sprintf (char * sp, const char * fmt, ...)
 {
@@ -224,7 +228,7 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
 	 case 'i':
 	    ptmp = ltostr((long) ((lval)
 			 ? va_arg(ap, long)
-			 : va_arg(ap, short)),
+			 : va_arg(ap, int)),
 		 10);
 	    goto printit;
 
@@ -252,7 +256,7 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
 	  usproc:
 	    ptmp = ultostr((unsigned long) ((lval)
 				   ? va_arg(ap, unsigned long)
-				   : va_arg(ap, unsigned short)),
+				   : va_arg(ap, unsigned int)),
 		  radix);
 	    if( hash && radix == 8 ) { width = strlen(ptmp)+1; pad='0'; }
 	    goto printit;
