@@ -11,7 +11,8 @@ include Makefile.inc
 # Defines
 
 SUBDIRS = \
-    error \
+	asm \
+	error \
 	gcc \
 	getent \
 	malloc \

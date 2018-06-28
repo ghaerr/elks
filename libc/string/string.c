@@ -315,59 +315,6 @@ char * s;
    return p;
 }
 
-/********************** Function memcpy ************************************/
-
-void *memcpy(void *d, const void *s, size_t l)
-{
-#ifdef BCC_AX_ASM
-#asm
-  mov	bx,sp
-  push	di
-  push	si
-
-#ifdef PARANOID
-  push	es
-  push	ds	; Im not sure if this is needed, so just in case.
-  pop	es
-  cld
-#endif
-
-#if __FIRST_ARG_IN_AX__
-  mov	di,ax		; dest
-  mov	si,[bx+2]	; source
-  mov	cx,[bx+4]	; count
-#else
-  mov	di,[bx+2]	; dest
-  mov	si,[bx+4]	; source
-  mov	cx,[bx+6]	; count
-
-  mov	ax,di
-#endif
-  		; If di is odd we could mov 1 byte before doing word move
-		; as this would speed the copy slightly but its probably
-		; too rare to be worthwhile.
-		; NB 8086 has no problem with mis-aligned access.
-
-  shr	cx,#1	; Do this faster by doing a mov word
-  rep
-  movsw
-  adc	cx,cx	; Retrieve the leftover 1 bit from cflag.
-  rep
-  movsb
-
-#ifdef PARANOID
-  pop	es
-#endif
-  pop	si
-  pop	di
-#endasm
-#else /* ifdef BCC_AX_ASM */
-   register char *s1=d, *s2=(char *)s;
-   for( ; l>0; l--) *((unsigned char*)s1++) = *((unsigned char*)s2++);
-   return d;
-#endif /* ifdef BCC_AX_ASM */
-}
-
 /********************** Function memccpy ************************************/
 
 #ifdef L_memccpy
