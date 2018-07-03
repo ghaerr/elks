@@ -3,7 +3,8 @@
 include $(TOPDIR)/libc/Makefile.inc
 
 SRCS = \
-    memcpy-a.s \
+    memcpy-s.s \
+    strcpy-s.s \
     # end of list
 
 OBJS = $(SRCS:.s=.o)

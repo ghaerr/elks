@@ -8,6 +8,7 @@ SRCS = \
 	strcasecmp.c \
 	strcspn.c \
 	string.c \
+	strcpy-c.c \
 	strncasecmp.c \
 	strpbrk.c \
 	strspn.c \

@@ -80,17 +80,6 @@ char * strcat(char *d, const char * s)
    return d;
 }
 
-/********************** Function strcpy ************************************/
-
-char * strcpy(d, s)
-char *d;
-const char * s;
-{
-   /* This is probably the quickest on an 8086 but a CPU with a cache will
-    * prefer to do this in one pass */
-   return memcpy(d, s, strlen(s)+1);
-}
-
 /********************** Function strcmp ************************************/
 
 int strcmp(const char *d, const char * s)
@@ -277,7 +266,7 @@ got_it:
    register char ch;
    for(;;)
    {
-     if( (ch= *s) == c ) return s;
+     if( (ch= *s) == c ) return (char *) s;
      if( ch == 0 ) return 0;
      s++;
    }

@@ -10,30 +10,41 @@
 	.global memcpy
 
 memcpy:
-	mov %sp,%bx
+	push %bp
+	mov %sp,%bp
 
-	push %si
-	push %di
+	// Save SI DI ES
 
 	mov %es,%dx
 
 	mov %ds,%ax
 	mov %ax,%es
 
-	mov 2(%bx),%di  // dest
-	mov 4(%bx),%si  // src
-	mov 6(%bx),%cx  // n
+	mov %si,%ax
+	mov %di,%bx
 
-	mov %di,%ax     // retval
+	// Do the copy
+
+	mov 4(%bp),%di  // dest
+	mov 6(%bp),%si  // src
+	mov 8(%bp),%cx  // n
 
 	cld
 	rep
 	movsb
 
+	// Restore SI DI ES
+
+	mov %ax,%si
+	mov %bx,%di
+
 	mov %dx,%es
 
-	pop %di
-	pop %si
+	// Return value is destination
+
+	mov 4(%bp),%ax
+
+	pop %bp
 	ret
 
 //------------------------------------------------------------------------------
