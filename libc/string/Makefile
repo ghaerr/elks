@@ -5,6 +5,7 @@ include $(TOPDIR)/libc/Makefile.inc
 SRCS = \
 	bzero.c \
 	memcpy-c.c \
+	memset-c.c \
 	strcasecmp.c \
 	strcspn.c \
 	string.c \

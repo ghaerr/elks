@@ -4,4 +4,5 @@
 #pragma once
 
 #define LIBC_ASM_MEMCPY
+#define LIBC_ASM_MEMSET
 #define LIBC_ASM_STRCPY

@@ -4,6 +4,7 @@ include $(TOPDIR)/libc/Makefile.inc
 
 SRCS = \
     memcpy-s.s \
+    memset-s.s \
     strcpy-s.s \
     # end of list
 

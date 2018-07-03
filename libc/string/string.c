@@ -368,68 +368,7 @@ xit:
 #endif /* ifdef BCC_ASM */
 }
 
-//-----------------------------------------------------------------------------
-
-void * memset (void * str, int c, size_t l)
-{
-#ifdef BCC_AX_ASM
-#asm
-  mov	bx,sp
-  push	di
-
-#ifdef PARANOID
-  push	es
-  push	ds	; Im not sure if this is needed, so just in case.
-  pop	es
-  cld
-#endif
-
-#if __FIRST_ARG_IN_AX__
-  mov	di,ax		; Fetch
-  mov	ax,[bx+2]
-  mov	cx,[bx+4]
-#else
-  mov	di,[bx+2]	; Fetch
-  mov	ax,[bx+4]
-  mov	cx,[bx+6]
-#endif
-
-; How much difference does this alignment make ?
-; I don`t think it`s significant cause most will already be aligned.
-
-;  test	cx,cx		; Zero size - skip
-;  je	xit
-;
-;  test	di,#1		; Line it up
-;  je	s_1
-;  stosb
-;  dec	cx
-;s_1:
-
-  mov	ah,al		; Replicate byte
-  shr	cx,#1		; Do this faster by doing a sto word
-  rep			; Bzzzzz ...
-  stosw
-  adc	cx,cx		; Retrieve the leftover 1 bit from cflag.
-
-  rep			; ... z
-  stosb
-
-xit:
-  mov	ax,[bx+2]
-#ifdef PARANOID
-  pop	es
-#endif
-  pop	di
-#endasm
-#else /* ifdef BCC_AX_ASM */
-   register char *s1=str;
-   while(l-->0) *s1++ = c;
-   return str;
-#endif /* ifdef BCC_AX_ASM */
-}
-
-/********************** Function memcmp ************************************/
+//------------------------------------------------------------------------------
 
 int memcmp(const void *s, const void *d, size_t l)
 {
