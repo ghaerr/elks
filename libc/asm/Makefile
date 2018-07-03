@@ -6,6 +6,7 @@ SRCS = \
     memcpy-s.s \
     memset-s.s \
     strcpy-s.s \
+    strlen-s.s \
     # end of list
 
 OBJS = $(SRCS:.s=.o)

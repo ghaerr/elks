@@ -6,71 +6,17 @@
 #include <string.h>
 #include <malloc.h>
 
-#ifdef __AS386_16__
-#if __FIRST_ARG_IN_AX__
-#define BCC_AX_ASM	/* BCC Assembler that can cope with arg in AX  */
-#else
-#define BCC_AX_ASM
-#define BCC_ASM		/* Use 16 bit BCC assembler */
-#endif
+/* This is a basic string package; it includes the most used functions:
 
-#define PARANOID	/* Include extra code for cld and ES register */
-#endif
+   strcat strcmp strncat strncpy strncmp strchr strrchr strdup
+   memccpy memchr memcmp memmove
 
-/* This is a basic string package; it includes the most used functions
-
-   strlen strcat strcpy strcmp strncat strncpy strncmp strchr strrchr strdup
-   memcpy memccpy memchr memset memcmp memmove
-
-   These functions are in seperate files.
-    strpbrk.o strsep.o strstr.o strtok.o strcspn.o
-    strspn.o strcasecmp.o strncasecmp.o
+   These functions are in separate files:
+    memcpy memset
+    strcpy strlen
+    strpbrk strcpy strsep strstr strtok strcspn
+    strspn strcasecmp strncasecmp
  */
-
-/********************** Function strlen ************************************/
-
-size_t strlen(const char * str)
-{
-#ifdef BCC_AX_ASM
-#asm
-#if !__FIRST_ARG_IN_AX__
-  mov	bx,sp
-#endif
-  push	di
-
-#ifdef PARANOID
-  push	es
-  push	ds	! Im not sure if this is needed, so just in case.
-  pop	es
-  cld
-#endif
-		! This is almost the same as memchr, but it can
-		! stay as a special.
-
-#if __FIRST_ARG_IN_AX__
-  mov	di,ax
-#else
-  mov	di,[bx+2]
-#endif
-  mov	cx,#-1
-  xor	ax,ax
-  repne
-  scasb
-  not	cx
-  dec	cx
-  mov	ax,cx
-
-#ifdef PARANOID
-  pop	es
-#endif
-  pop	di
-#endasm
-#else
-   register char * p =(char *) str;
-   while(*p) p++;
-   return p-str;
-#endif  /* ifdef BCC_AX_ASM */
-}
 
 /********************** Function strcat ************************************/
 

@@ -10,6 +10,7 @@ SRCS = \
 	strcspn.c \
 	string.c \
 	strcpy-c.c \
+	strlen-c.c \
 	strncasecmp.c \
 	strpbrk.c \
 	strspn.c \
