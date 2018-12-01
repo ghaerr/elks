@@ -26,6 +26,9 @@ endif
 	(cd $(ELKSCMD_DIR)/rootfs_template; \
 		tar cf - --exclude .keep *) | \
 		(cd $(TARGET_MNT); sudo tar xpf - --no-same-owner)
+	sudo find $(TARGET_MNT) \
+		-type d ! -name root -execdir chmod go+rx '{}' \; -o \
+		! -type d ! -name .profile -execdir chmod go+r '{}' \;
 ifdef CONFIG_IMG_LINK
 	(cd $(TARGET_MNT)/dev; sudo ./MAKEDEV; sudo rm MAKEDEV MAKESET)
 endif
