@@ -298,7 +298,7 @@ novga:	mov	%al,14		// CGA 25 rows
 	mov	%ax,6		// al = video mode, ah = window width
 
 #ifdef CONFIG_HW_VIDEO_LINES_PER_CHARACTER
-        mov   $CONFIG_HW_VIDEO_LINES_PER_CHARACTER,16
+	movw	$CONFIG_HW_VIDEO_LINES_PER_CHARACTER,16
 #else
 	xor	%ax,%ax
 	mov	%ax,%es		// Access BIOS DATA AREA
@@ -366,7 +366,7 @@ no_psmouse:
 	jmp aout_ok
 
 test1:
-	cmpb $0x10,[3]   //;prozessortype = 80386
+	cmpb $0x10,3   //;prozessortype = 80386
 	jne aouterr
 	jmp aout_ok
 
@@ -451,7 +451,7 @@ size_ok:
 	int     $3               // break for debugger just before kernel
 #endif
 
-	ljmp     $SYSSEG+2:$0
+	ljmp     $SYSSEG+2,$0
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Case for kernel in disk to be relocated
@@ -923,24 +923,23 @@ con_cp2:
 */
 queue:
 #ifdef CONFIG_ROMCODE
-        push ds
-        mov ax,#CONFIG_ROM_KERNEL_DATA
-        mov es,ax
-        mov ax,cs
-        mov ds,ax
-        mov si,#queue_start
-        xor di,di
-        mov cx,#0x20    
-        cli
-        cld
-        rep
-        movsw
-        sti
-        xor ax,ax
-        pop ds
-        push es
-        push ax
-        retf
+	pushw	%ds
+	movw	$CONFIG_ROM_KERNEL_DATA,%ax
+	movw	%ax,%es
+	movw	%cs,%ax
+	movw	%ax,%ds
+	movw	$queue_start,%si
+	xorw	%di,%di
+	movw	$0x20,%cx
+	cli
+	cld
+	rep movsw
+	sti
+	xorw	%ax,%ax
+	popw	%ds
+	pushw	%es
+	pushw	%ax
+	lret
 #endif
 queue_start:
 

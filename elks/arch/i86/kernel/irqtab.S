@@ -544,9 +544,9 @@ tswitch:
 
 #ifdef CONFIG_IDLE_HALT
 
-	.global _idle_halt
+	.global idle_halt
 
-_idle_halt:
+idle_halt:
 	hlt
 	ret
 
