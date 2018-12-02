@@ -46,7 +46,8 @@ ifdef CONFIG_IMG_BOOT
 endif
 endif
 ifdef CONFIG_IMG_ROM
-	cd $(IMGDIR) && $(ELKS_DIR)/tools/mkromfs $(TARGET_MNT)
+	cd $(IMGDIR) && sudo $(ELKS_DIR)/tools/mkromfs $(TARGET_MNT)
+	sudo chown "`id -u`":"`id -g`" romfs.bin
 endif
 
 # Clean target
