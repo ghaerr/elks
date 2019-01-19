@@ -28,11 +28,11 @@ and it will run 'make clean' in the build directories for you.
 
 The general build procedure for ELKS is as follows:
 
-* Build the cross chain in 'cross/' (see above)
-
 * Set up your environment (PATH, TOPDIR and CROSSDIR):
 
   '. tools/env.sh' (note the '.' before the script)
+
+* Build the cross chain in 'cross/' (see above)
 
 * Configure the build chain, the kernel, the user land and the target image
   format:
