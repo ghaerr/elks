@@ -1,3 +1,4 @@
+	.code16
 
 	.text
 
