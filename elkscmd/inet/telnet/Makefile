@@ -23,5 +23,5 @@ install: telnet
 	sudo install telnet $(TARGET_MNT)/bin
 
 clean:
-	rm -f telnet
+	rm -f telnet *.o
 
