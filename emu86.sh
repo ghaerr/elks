@@ -5,8 +5,9 @@
 # ELKS must be configured minimaly with config-emu86
 # with only core and using serial port for the console
 
-DEV86_DIR=../dev86
+DEV86_DIR=cross/build/dev86
 EMU86_DIR=$DEV86_DIR/emu86
+${MAKE-make} -C $EMU86_DIR emu86 pcat
 
 # First run ELKS with kernel and root FS in ROM
 # Kernel image @ segment 0xE000 (top of 1024K address space)
