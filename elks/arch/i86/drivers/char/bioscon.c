@@ -54,7 +54,8 @@ void init_console(void);
 
 extern int poll_kbd ();
 extern void SetDisplayPage (byte_t page);
-extern void PosCursLow (byte_t x, byte_t y, byte_t page);
+extern void PosCursSetLow (byte_t x, byte_t y, byte_t page);
+extern void PosCursGetLow (byte_t * x, byte_t * y);
 extern void VideoWriteLow (byte_t c, byte_t attr, byte_t page);
 extern void ScrollLow (byte_t attr, byte_t n, byte_t x, byte_t y, byte_t xx, byte_t yy);
 
@@ -200,7 +201,7 @@ int wait_for_keypress(void)
     return chq_wait_rd(&ttys[0].inq, 0);
 }
 
-static void PositionCursor(register Console * C)
+static void PositionCursorSet(register Console * C)
 {
     int x, y, p;
 
@@ -208,7 +209,15 @@ static void PositionCursor(register Console * C)
     y = C->cy;
     p = C->pageno;
 
-    PosCursLow (x, y, p);
+    PosCursSetLow (x, y, p);
+}
+
+static void PositionCursorGet (int * x, int * y)
+{
+	byte_t col, row;
+	PosCursGetLow (&col, &row);
+	*x = col;
+	*y = row;
 }
 
 static void VideoWrite(register Console * C, char c)
@@ -483,7 +492,7 @@ static void std_char(register Console * C, char c)
     case '\b':
 	if (C->cx > 0) {
 	    --C->cx;
-	    PositionCursor(C);
+	    PositionCursorSet(C);
 	    VideoWrite(C, ' ');
 	}
 	break;
@@ -504,7 +513,7 @@ static void std_char(register Console * C, char c)
 #endif
 
     default:
-	PositionCursor(C);
+	PositionCursorSet(C);
 	VideoWrite(C, c);
 	C->cx++;
       linewrap:
@@ -541,7 +550,7 @@ void con_charout(char Ch)
     if (Ch == '\n')
 	WriteChar(Visible, '\r');
     WriteChar(Visible, Ch);
-    PositionCursor(Visible);
+    PositionCursorSet(Visible);
 }
 
 /* This also tells the keyboard driver which tty to direct it's output to...
@@ -557,7 +566,7 @@ static void Console_set_vc(unsigned int N)
     Visible = &Con[N];
 
     SetDisplayPage(N);
-    PositionCursor(Visible);
+    PositionCursorSet(Visible);
     Current_VCminor = (int) N;
 }
 
@@ -604,7 +613,7 @@ static int Console_write(register struct tty *tty)
 	cnt++;
     }
     if (C == Visible)
-	PositionCursor(C);
+	PositionCursorSet(C);
     return cnt;
 }
 
@@ -645,8 +654,9 @@ void init_console(void)
     for (pi = 0; ((unsigned int)pi) < NumConsoles; pi++) {
 	C->cx = C->cy = 0;
 	if (!pi) {
-	    C->cx = peekb(0x50, 0x40);
-	    C->cy = peekb(0x51, 0x40);
+		// Get current cursor position
+		// to write after boot messages
+		PositionCursorGet (&C->cx, &C->cy);
 	}
 	C->fsm = std_char;
 	C->pageno = (int) pi;
