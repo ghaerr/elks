@@ -152,6 +152,7 @@ endif
 
 #########################################################################
 # Define CPU-specific flags.
+# Issue #233: different option names for GCC-IA16 and AS-IA16
 
 ifeq ($(MK_CPU), 8086)
     CPU_AS	= -mtune=i8086
@@ -160,13 +161,13 @@ ifeq ($(MK_CPU), 8086)
 endif
 
 ifeq ($(MK_CPU), 80186)
-    CPU_AS	= -mtune=i18086
+    CPU_AS	= -mtune=i186
     CPU_CC	= -mtune=i80186
     CPU_LD	=
 endif
 
 ifeq ($(MK_CPU), 80286)
-    CPU_AS	= -mtune=i80286
+    CPU_AS	= -mtune=i286
     CPU_CC	= -mtune=i80286
     CPU_LD	=
 endif
