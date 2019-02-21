@@ -5,15 +5,6 @@
 	.extern	_start_kernel
 	.extern _arch_boot
 
-; note: this next instruction is part of the kernel restart fix for
-; protexted mode. it must be 3 bytes long.
-;	.extern _kernel_restarted
-;	br _kernel_restarted
-
-;	Setup passes these on the stack
-;	Setup patched to pass parameters in registers to avoid clobbering the
-;	kernel when using the 286pmode extender.
-
 _main:
 	cli
 	mov al, #0x00

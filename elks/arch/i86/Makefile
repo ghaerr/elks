@@ -130,20 +130,11 @@ boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 
 ifneq ($(CONFIG_ROMCODE), y)
 
-ifeq ($(CONFIG_286PMODE), y)
-
-Image:	toolkit boot/bootsect boot/setup lib/lib86.a 286pmode/pmode286 boot/system
-	tools/build boot/bootsect boot/setup 286pmode/pmode286 boot/system > Image
-
-else
-
 Image:	toolkit boot/bootsect boot/setup boot/system
 	tools/build boot/bootsect boot/setup boot/system > boot/Image
 
 nbImage:	Image boot/netbootsect
 	tools/mknbi-elks boot/netbootsect boot/Image boot/nbImage
-
-endif
 
 else
 
@@ -182,7 +173,7 @@ endif
 # Build archives and add them to the list of things to link into kernel image
 
 .PHONY: kernel/akernel.a lib/lib86.a mm/mm.a drivers/char/chr_drv.a \
-	drivers/block/blk_drv.a drivers/net/net_drv.a 286pmode/pmode286
+	drivers/block/blk_drv.a drivers/net/net_drv.a
 
 kernel/akernel.a:
 	${MAKE} -C kernel akernel.a
@@ -202,16 +193,13 @@ drivers/block/blk_drv.a:
 drivers/net/net_drv.a:
 	${MAKE} -C drivers/net net_drv.a
 
-286pmode/pmode286:
-	${MAKE} -C 286pmode pmode286
-
 #########################################################################
 # commands.
 
 distdir:
 	mkdir -p $(DISTDIR)/arch/i86
 	(cd $(DISTDIR)/arch/i86 ; \
-		mkdir -p 286pmode boot drivers kernel lib mm tools)
+		mkdir -p boot drivers kernel lib mm tools)
 	(cd $(DISTDIR)/arch/i86/drivers ; \
 		mkdir -p block char)
 	cp -pf defconfig Makefile $(DISTDIR)/arch/i86
@@ -219,7 +207,6 @@ distdir:
 	cp -pf tools/Makefile tools/*.h $(DISTDIR)/arch/i86/tools
 	cp -pf tools/mknbi-elks tools/*.c $(DISTDIR)/arch/i86/tools
 	cp -pf tools/*.s tools/*.1 $(DISTDIR)/arch/i86/tools
-	${MAKE} -C 286pmode distdir
 	${MAKE} -C drivers/block distdir
 	${MAKE} -C drivers/char distdir
 	${MAKE} -C kernel distdir

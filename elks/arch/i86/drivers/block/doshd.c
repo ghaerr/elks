@@ -51,7 +51,7 @@
 
 /* #define MULT_SECT_RQ */
 
-#if !defined(CONFIG_286PMODE) && !defined(CONFIG_ARCH_SIBO)
+#if !defined(CONFIG_ARCH_SIBO)
 #define BUFSEG SETUP_DATA
 #else
 #define BUFSEG 0x800

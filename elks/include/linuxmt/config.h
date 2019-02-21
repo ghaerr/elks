@@ -34,11 +34,7 @@
 #endif
 
 #ifndef UTS_MACHINE
-#ifdef CONFIG_286PMODE
-#define UTS_MACHINE "i80286"
-#else
 #define UTS_MACHINE "i8086"
-#endif
 #endif
 
 #ifndef UTS_NODENAME
@@ -64,15 +60,13 @@
 #define DEF_SETUPSEG	DEF_INITSEG + 0x20
 #define DEF_SYSSIZE	0x2F00
 
-#if !defined(CONFIG_286PMODE) && !defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SIBO)
+#if !defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SIBO)
 #define REL_SYS
 #define REL_INITSEG	0x60
 #define REL_SYSSEG	0x80
 #endif
 
-#if defined(CONFIG_286PMODE)
-#define SETUP_DATA 0x0048
-#elif defined(REL_SYS)
+#if defined(REL_SYS)
 #define SETUP_DATA REL_INITSEG
 #elif defined(CONFIG_ROMCODE)
 #define SETUP_DATA CONFIG_ROM_SETUP_DATA

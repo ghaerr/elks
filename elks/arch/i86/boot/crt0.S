@@ -14,16 +14,6 @@
 	.extern arch_boot
 	.global early_printk
 
-// note: this next instruction is part of the kernel restart fix for
-// protexted mode. it must be 3 bytes long.
-
-//	.extern kernel_restarted
-//	jmp kernel_restarted
-
-//	Setup passes these on the stack
-//	Setup patched to pass parameters in registers to avoid clobbering the
-//	kernel when using the 286pmode extender.
-
 start:
 /*
 ! Setup.S already initialized DS and ES (but not SS)
