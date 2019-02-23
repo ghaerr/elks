@@ -52,13 +52,6 @@ start:
 ! Saved 768 byte boot stack.
 ! Print sp in wake_up and you'll see that more than 512 bytes of stack are used!
 ! Must be in data as its in use when we wipe the BSS
-
-!  overwrite start of main with a jmp to kernel_restarted()
-!  this will give is a call stack trace instead of the "timer bug" message
-!  no longer necessary due to pmode fix. -AJB
-
-!	.extern _redirect_main
-!	call	_redirect_main
 */
 
 	call	arch_boot
