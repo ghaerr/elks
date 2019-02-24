@@ -239,8 +239,3 @@ void panic(char *error, ...)
     while (1)
 	/* Do nothing */;
 }
-
-void kernel_restarted(void)
-{
-    panic("kernel restarted\n");
-}

@@ -97,11 +97,7 @@ void die(const char *str)
 
 void usage(void)
 {
-#ifdef CONFIG_286PMODE
-    die("Usage: build bootsect setup 286pmode system [rootdev] [>image]");
-#else
     die("Usage: build bootsect setup system [rootdev] [> image]");
-#endif
 }
 
 int main(int argc, char **argv)
@@ -118,11 +114,7 @@ int main(int argc, char **argv)
     struct stat sb;
     unsigned char setup_sectors;
 
-#ifdef CONFIG_286PMODE
-#define ROOTDEV_ARG 5
-#else
 #define ROOTDEV_ARG 4
-#endif
 
     if ((argc < ROOTDEV_ARG) || (argc > ROOTDEV_ARG + 1))
 	usage();
@@ -220,68 +212,7 @@ int main(int argc, char **argv)
 	i += c;
     }
 
-#ifdef CONFIG_286PMODE
     if ((id = open(argv[3], O_RDONLY, 0)) < 0)
-	die("Unable to open '286pmode'");
-#ifndef __BFD__
-    if (read(id, buf, MINIX_HEADER) != MINIX_HEADER)
-	die("Unable to read header of '286pmode'");
-    if ((ex->a_magic[0] != 0x01) || (ex->a_magic[1] != 0x03)) {
-	die("Non-MINIX header of '286pmode'");
-    }
-    fprintf(stderr, "PMode is %d B (%d B code, %d B data and %u B bss)\n",
-	    (intel_long(ex->a_text) + intel_long(ex->a_data) +
-	     intel_long(ex->a_bss)), intel_long(ex->a_text),
-	    intel_long(ex->a_data), (unsigned) intel_long(ex->a_bss));
-    sz = MINIX_HEADER + intel_long(ex->a_text) + intel_long(ex->a_data);
-
-    if (intel_long(ex->a_data) + intel_long(ex->a_bss) > 65535) {
-	fprintf(stderr, "Image too large.\n");
-	exit(1);
-    }
-
-    lseek(id, 0, 0);
-#else
-    if (fstat(id, &sb)) {
-	perror("fstat");
-	die("Unable to stat '286pmode'");
-    }
-    sz = sb.st_size;
-    fprintf(stderr, "System is %d kB\n", sz / 1024);
-#endif
-    sys_size = (sz + 15) / 16;
-    fprintf(stderr, "Pmode is %d\n", sz);
-    if (sys_size > SYS_SIZE)
-	die("System is too big");
-    while (sz > 0) {
-	int l, n;
-
-	l = sz;
-	if (l > sizeof(buf))
-	    l = sizeof(buf);
-	if ((n = read(id, buf, l)) != l) {
-	    if (n == -1)
-		perror(argv[1]);
-	    else
-		fprintf(stderr, "Unexpected EOF\n");
-	    die("Can't read '286pmode'");
-	}
-	if (write(1, buf, l) != l)
-	    die("Write failed");
-	sz -= l;
-	if ((sz == 0) && (((sizeof(buf) - l) & 15) != 0)) {
-	    if (write(1, buf, ((sizeof(buf) - l) & 15)) !=
-		((sizeof(buf) - l) & 15)) {
-		die("Write failed");
-	    }
-	}
-    }
-    close(id);
-
-    if ((id = open(argv[4], O_RDONLY, 0)) < 0)
-#else
-    if ((id = open(argv[3], O_RDONLY, 0)) < 0)
-#endif
 	die("Unable to open 'system'");
 #ifndef __BFD__
     if (read(id, buf, MINIX_HEADER) != MINIX_HEADER)
@@ -309,14 +240,8 @@ int main(int argc, char **argv)
     sz = sb.st_size;
     fprintf(stderr, "System is %d kB\n", sz / 1024);
 #endif
-#ifdef CONFIG_286PMODE
-    sys_size += (sz + 15) / 16;
-    fprintf(stderr, "System is %d\n", sz);
-    fprintf(stderr, "sys_size is 0x%x\n", sys_size);
-#else
     sys_size = (sz + 15) / 16;
     fprintf(stderr, "System is %d\n", sz);
-#endif
     if (sys_size > SYS_SIZE)
 	die("System is too big");
     while (sz > 0) {

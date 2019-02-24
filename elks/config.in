@@ -137,12 +137,6 @@ mainmenu_option next_comment
 
 	bool 'Include development code/drivers' CONFIG_EXPERIMENTAL n
 
-	if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
-		bool '286 protected mode' CONFIG_286PMODE n
-	else
-		comment '(286 protected mode is experimental)'
-	fi
-
     bool 'Modular kernel (NOT IMPLEMENTED)'	CONFIG_MODULES		n
 
 endmenu

@@ -732,8 +732,6 @@ Fri Apr 26 20:01:37 BST 2002	Riley Williams <Riley@Williams.Name>
 	  bug in this directory as far as `make lint` is concerned.
 	* Removed duplicate declaration of get_ss() from header file
 	  include/arch/segment.h and added prototypes for declarations.
-	* Tweaked machine name for uname such that if CONFIG_286PMODE is
-	  defined, we report as a 286 rather than an 8086.
 
 Fri Apr 26 15:21:58 EEST 2002	Harry Kalogirou <harkal@gmx.net>
 
@@ -864,8 +862,6 @@ Mon Apr 22 23:11:38 BST 2002	Riley Williams <Riley@Williams.Name>
 
 Mon Apr 22 18:22:01 BST 2002	Riley Williams <Riley@Williams.Name>
 
-	* ANSI'fied function prototypes in the arch/i86/286pmode subtree.
-	* Applied `make indent` rule to the arch/i86/286pmode subtree.
 	* ANSI'fied function prototypes in the arch/i86/boot subtree.
 	* Applied `make indent` rule to the arch/i86/boot subtree.
 	* Split system call table out of arch/i86/kernel/strace.c into
@@ -2433,12 +2429,6 @@ Wed Dec  3 17:12:30 GMT 1998	Alistair Riddoch <ajr@ecs.soton.ac.uk>
 Wed Nov 19 18:22:30 GMT 1998	Riley Williams <rhw@MemAlpha.cx>
 
 	* Added changes to bootsect.S to fix a bug and tidy up the code.
-
-Wed Nov 19 17:51:30 GMT 1998	Alastair Bridgewater <nyef@softhome.net>
-
-	* Added latest changes to 286 pmode code. This includes changes to
-	  the code that detect when the kernel is restarted so it no longer
-	  has to modify its own code segment.
 
 Wed Nov 19 17:39:30 GMT 1998	Alistair Riddoch <ajr@ecs.soton.ac.uk>
 
