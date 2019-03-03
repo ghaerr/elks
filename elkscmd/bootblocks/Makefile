@@ -1,37 +1,33 @@
 
-CC=bcc
-CFLAGS=-ansi -Ms -Oi -O
-AS=as86
-ASFLAGS=-0 -w
-LDFLAGS=-s -i -H0x10000
+CC = ia16-elf-gcc
+CROSS_CFLAGS = -fno-inline -mcmodel=tiny -mno-segment-relocation-stuff -ffreestanding
+INCLUDES = -I $(TOPDIR)/include
+CFLAGS = -Os $(CROSS_CFLAGS) $(INCLUDES)
 
-MINIXDEFS=-DDOTS
-LST=-l $*.lst
+AS = ia16-elf-as
+ASFLAGS =
+
+LD = ia16-elf-ld
+LDFLAGS = -T $(TOPDIR)/elks/elks-raw.ld
 
 .PHONY: all
 
-all: minix.bin minix_elks.bin
+all: minix.bin
 
-minix.bin: minix.s
-minix_elks.bin: minix_elks.v
+minix.bin: minix_first.o minix_second.o
+	$(LD) $(LDFLAGS) -o minix.bin minix_first.o minix_second.o
 
-minix.s: minix.c Makefile
-	$(CC) -Mf -O -DTRY_FLOPPY $(MINIXDEFS) -S minix.c
+minix_first.o: minix_first.s
+	$(AS) -o minix_first.o minix_first.s
 
-minix_elks.s: minix_elks.c Makefile minix.v
-	$(CC) -Mf -O $(MINIXDEFS) -S minix_elks.c
+minix_first.s: minix_first.S
+	$(CC) $(INCLUDES) -E -o minix_first.s minix_first.S
+
+minix_second.o: minix_second.c
 
 clean realclean:
-	rm -f minix.s minix_elks.s
-	rm -f *.bin *.lst *.sym *.v
-
-.SUFFIXES: .bin .v
-
-.s.bin:
-	$(AS) -w- -0 -b $*.bin -s $*.sym $*.s $(LST)
-
-.s.v:
-	./as86_encap $*.s $*.v $*_ $(ASFLAGS) $(LST)
+	rm -f minix_first.s
+	rm -f *.o *.bin
 
 # Boot blocks are not part of the target filesystem
 # but embedded in the target disk image

@@ -19,7 +19,7 @@
  * A super_block slot is free if s_dev == NO_DEV.
  */
 
-#define BLOCK_SIZE      1024	/* # bytes in a disk block */
+#define BLOCK_SIZE      1024     // block size in bytes
 
 /* Flag bits for i_mode in the inode. */
 #define I_TYPE          0170000	/* this field gives inode type */
@@ -36,7 +36,14 @@
 #define X_BIT           0000001	/* rwX protection bit */
 #define I_NOT_ALLOC     0000000	/* this inode is free */
 
-/* Type definitions */
+// Types
+
+typedef unsigned char  byte_t;
+typedef unsigned short word_t;
+
+typedef unsigned short ushort_t;
+typedef unsigned long  ulong_t;
+
 typedef unsigned short unshort;	/* must be 16-bit unsigned */
 typedef unshort block_nr;	/* block number */
 typedef unshort inode_nr;	/* inode number */
@@ -57,7 +64,6 @@ typedef char gid;		/* group id */
 
 /* Tables sizes */
 #define NR_ZONE_NUMS       9	/* # zone numbers in an inode */
-#define NAME_SIZE         14	/* # bytes in a directory component */
 
 /* Miscellaneous constants */
 #define SUPER_MAGIC   0x137F	/* magic number contained in super-block */
@@ -69,36 +75,54 @@ typedef char gid;		/* group id */
 
 /* Derived sizes */
 #define NR_DZONE_NUM     (NR_ZONE_NUMS-2)		/* # zones in inode */
-#define INODES_PER_BLOCK (BLOCK_SIZE/sizeof(d_inode))	/* # inodes/disk blk */
 #define NR_INDIRECTS     (BLOCK_SIZE/sizeof(zone_nr))	/* # zones/indir blk */
 #define INTS_PER_BLOCK   (BLOCK_SIZE/sizeof(int))	/* # integers/blk */
 
+#define LEVEL_MAX          2     // Maximum zone indirection level
+#define ZONE_IND_L0        0     // Direct zone
+#define ZONE_IND_L1        7     // Indirect zone
+#define ZONE_IND_L2        8     // Double-indirect zone
+#define ZONE_IND_END       9     // Zone list end
+
+//------------------------------------------------------------------------------
+
+// Super block (sb)
+
 struct super_block {
-  inode_nr s_ninodes;		/* # usable inodes on the minor device */
-  zone_nr s_nzones;		/* total device size, including bit maps etc */
-  unshort s_imap_blocks;	/* # of blocks used by inode bit map */
-  unshort s_zmap_blocks;	/* # of blocks used by zone bit map */
-  zone_nr s_firstdatazone;	/* number of first data zone */
-  short s_log_zone_size;	/* log2 of blocks/zone */
-  file_pos s_max_size;		/* maximum file size on this device */
-  short s_magic;		/* magic number to recognize super-blocks */
+	inode_nr s_ninodes;		/* # usable inodes on the minor device */
+	zone_nr s_nzones;		/* total device size, including bit maps etc */
+	unshort s_imap_blocks;	/* # of blocks used by inode bit map */
+	unshort s_zmap_blocks;	/* # of blocks used by zone bit map */
+	zone_nr s_firstdatazone;	/* number of first data zone */
+	short s_log_zone_size;  // log2 of zone size in blocks
+	file_pos s_max_size;		/* maximum file size on this device */
+	short s_magic;           // magic number
+};
 
-} ;
+// Directory entry (dirent)
 
-/* Type definitions local to the File System. */
-typedef struct {		/* directory entry */
-  inode_nr d_inum;		/* inode number */
-  char d_name[NAME_SIZE];	/* character string */
-} dir_struct;
+#define NAME_SIZE 14
 
-/* Declaration of the disk inode used in rw_inode(). */
-typedef struct {		/* disk inode.  Memory inode is in "inotab.h" */
-  mask_bits i_mode;		/* file type, protection, etc. */
-  uid i_uid;			/* user id of the file's owner */
-  file_pos i_size;		/* current file size in bytes */
-  real_time i_modtime;		/* when was file data last changed */
-  gid i_gid;			/* group number */
-  links i_nlinks;		/* how many links to this file */
-  zone_nr i_zone[NR_ZONE_NUMS];	/* block nums for direct, ind, and dbl ind */
-} d_inode;
+typedef struct {
+	ushort_t d_inum;              // inode number (base 1)
+	char     d_name [NAME_SIZE];  // null-terminated string
+} dirent_s;
 
+#define DIRENT_SIZE sizeof (dirent_s)
+
+
+// I-Node (inode)
+
+struct inode_s {
+	mask_bits i_mode;                 /* file type, protection, etc. */
+	uid       i_uid;                  /* user id of the file's owner */
+	file_pos  i_size;                 /* current file size in bytes */
+	real_time i_modtime;              /* when was file data last changed */
+	gid       i_gid;                  /* group number */
+	links     i_nlinks;               /* how many links to this file */
+	zone_nr   i_zone [NR_ZONE_NUMS];  /* block nums for direct, ind, and dbl ind */
+};
+
+#define INODES_PER_BLOCK (BLOCK_SIZE/sizeof(struct inode_s))  // inodes per block
+
+//------------------------------------------------------------------------------

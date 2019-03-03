@@ -13,7 +13,6 @@ ELKSCMD_DIR = $(TOPDIR)/elkscmd
 
 MINIX_BOOT = $(ELKSCMD_DIR)/bootblocks
 FD_BSECT = $(MINIX_BOOT)/minix.bin
-KHELPER	= $(MINIX_BOOT)/minix_elks.bin
 
 # Image file options
 

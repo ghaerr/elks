@@ -16,6 +16,7 @@ SECTIONS {
 		LONG (0);        /* symbol table size */
 		}
 	_begintext = ALIGN(0x20);
-	.text 0 : AT(_begintext) { *(.text*) *(.data*) *(.rodata*) *(.bss) *(COMMON) }
+	.text 0 : AT(_begintext) { *(.text*) *(.rodata*) *(.data*) }
+	.bss : { *(.bss) *(COMMON) }
 	/DISCARD/ : { *(.comment) }
 }
