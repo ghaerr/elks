@@ -55,4 +55,4 @@ install: $(PRGS)
 	sudo install $(PRGS) $(TARGET_MNT)/bin
 
 clean:
-	rm -f *.o $(PRGS)
+	rm -f $(PRGS) *.o

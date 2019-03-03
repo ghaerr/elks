@@ -1,3 +1,4 @@
+	.code16
 
 	.text
 
@@ -33,18 +34,33 @@ SetDisplayPage:
 	int    $0x10
 	ret
 
-// void PosCursLow (byte_t x, byte_t y, byte_t page)
+// void PosCursSetLow (byte_t x, byte_t y, byte_t page)
 // compiler pushes byte as word
 
-	.global PosCursLow
+	.global PosCursSetLow
 
-PosCursLow:
+PosCursSetLow:
 	mov    %sp,%bx
 	mov    2(%bx),%dl
 	mov    4(%bx),%dh
 	mov    6(%bx),%bh
 	mov    $2,%ah
 	int    $0x10
+	ret
+
+// void PosCursGetLow (byte_t * x, byte_t * y)
+
+	.global PosCursGetLow
+
+PosCursGetLow:
+	mov    $3,%ah
+	int    $0x10
+	mov    %sp,%bx
+	mov    2(%bx),%bx
+	mov    %dl,(%bx)
+	mov    %sp,%bx
+	mov    4(%bx),%bx
+	mov    %dh,(%bx)
 	ret
 
 // void VideoWriteLow (byte_t c, byte_t attr, byte_t page)

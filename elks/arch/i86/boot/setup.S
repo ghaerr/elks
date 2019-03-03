@@ -298,7 +298,7 @@ novga:	mov	%al,14		// CGA 25 rows
 	mov	%ax,6		// al = video mode, ah = window width
 
 #ifdef CONFIG_HW_VIDEO_LINES_PER_CHARACTER
-        mov   $CONFIG_HW_VIDEO_LINES_PER_CHARACTER,16
+	movw	$CONFIG_HW_VIDEO_LINES_PER_CHARACTER,16
 #else
 	xor	%ax,%ax
 	mov	%ax,%es		// Access BIOS DATA AREA
@@ -366,7 +366,7 @@ no_psmouse:
 	jmp aout_ok
 
 test1:
-	cmpb $0x10,[3]   //;prozessortype = 80386
+	cmpb $0x10,3   //;prozessortype = 80386
 	jne aouterr
 	jmp aout_ok
 
@@ -451,7 +451,10 @@ size_ok:
 	int     $3               // break for debugger just before kernel
 #endif
 
-	ljmp     $SYSSEG+2:$0
+	mov	$SYSSEG+2,%bp
+	pushw	%bp
+	pushw	0x18	//; entry point
+	lretw
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Case for kernel in disk to be relocated
@@ -501,6 +504,8 @@ sys_hdr_msg:
 // System header is good
 
 sys_hdr_good:
+	mov	24,%bx
+	push	%bx
 	mov	12,%bx
 	mov	%bx,%dx
 	push	%bx		// Data size
@@ -528,6 +533,7 @@ sys_hdr_good:
 /*
 ! Variables in stack as follows:
 ! Offset from BP	variable
+!	8		entry point
 !	6		data size
 !	4		code size
 !	2		bss size
@@ -600,6 +606,7 @@ cont:	mov	%ax,%ds
 	pop	%di
 	pop	%ax
 	pop	%si
+	pop	%bp
 	mov	%dx,%ss		// Set new stack
 	mov	$end_reloc-cont+512,%sp
 	mov	%di,%dx		// Move kernel data segment to REL_SYSSEG
@@ -625,11 +632,8 @@ cont:	mov	%ax,%ds
 	mov	%es,%cx
 	mov	%cx,%ds
 	push	%ax		// Build far return address to relocated code segment
-	mov	$0,%ax		// Address to offset 0 (start)
-	push	%ax
+	push	%bp		// Address to start
 
-// changed jmpi 0,0x1002 to 3,0x1002 for kernel restart fix -AJB
-//	jmpi	0x00003,SYSSEG+2   !jmp offset 3 of segment 0x1002 (cs)
 	lret
 end_reloc:
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -642,17 +646,17 @@ end_reloc:
 	mov 8,%bx	// TSeg
 	mov 12,%si	// DSeg
 	mov 16,%dx	// BSeg
+	mov 24,%bp	// start
 	mov %bx,%ax	// Get Text size
 	mov $4,%cl
 	shr %cl,%ax	// Data in paragraphs
 
 	mov $SYSSEG+2,%cx // Code starts here
-	push %cx		// Build far return address to SYSSEG+2:3
+	push %cx		// Build far return address to SYSSEG+2:start
 	add %ax,%cx	// Segment base for data/bss/stack
 	mov %cx,%ds
 	mov %cx,%es
-	mov $0,%ax
-	push %ax
+	push %bp
 	retf
 #endif
 /*
@@ -923,24 +927,23 @@ con_cp2:
 */
 queue:
 #ifdef CONFIG_ROMCODE
-        push ds
-        mov ax,#CONFIG_ROM_KERNEL_DATA
-        mov es,ax
-        mov ax,cs
-        mov ds,ax
-        mov si,#queue_start
-        xor di,di
-        mov cx,#0x20    
-        cli
-        cld
-        rep
-        movsw
-        sti
-        xor ax,ax
-        pop ds
-        push es
-        push ax
-        retf
+	pushw	%ds
+	movw	$CONFIG_ROM_KERNEL_DATA,%ax
+	movw	%ax,%es
+	movw	%cs,%ax
+	movw	%ax,%ds
+	movw	$queue_start,%si
+	xorw	%di,%di
+	movw	$0x20,%cx
+	cli
+	cld
+	rep movsw
+	sti
+	xorw	%ax,%ax
+	popw	%ds
+	pushw	%es
+	pushw	%ax
+	lret
 #endif
 queue_start:
 

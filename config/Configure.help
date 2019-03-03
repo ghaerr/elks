@@ -113,10 +113,6 @@ CONFIG_CPU_8086
 
 	80286	The 80286 processor.
 
-	80386	The 80386 processor.
-
-	80486+	The 80486 and later processors.
-
 System has a math coprocessor
 CONFIG_HW_FPU
   Saying no will compile the code for use in systems without
@@ -337,26 +333,6 @@ CONFIG_MEM_LIST
   the memory. Maximum number of segments is only limited by the
   size of the memory, but this allocator is not compatible with
   the 286 protected mode.
-
-# 286 Protected Mode support - 286+ features
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-286 Protected Mode support
-CONFIG_286PMODE
-  Include support for 286 Protected Mode. Experimental.
-  Use at your own risk.
-
-  This option will probably not interact well with the BIOS disk
-  drivers.
-
-# 286 Protected Mode support - 386+ features
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Support more than 16 Megs of RAM
-CONFIG_386RAM
-  Add support for RAM beyond 16 megs on 386+ systems.
-
-  Currently nonexistant.
 
 # Kernel hacking
 # ~~~~~~~~~~~~~~
@@ -728,11 +704,6 @@ CONFIG_BLK_DEV_BFD1_1440
 CONFIG_BLK_DEV_BFD1_2880
 CONFIG_CPU_80186
 CONFIG_CPU_80286
-CONFIG_CPU_80286_PLUS
-CONFIG_CPU_80386
-CONFIG_CPU_80386_PLUS
-CONFIG_CPU_80486
-CONFIG_CPU_SUB_80286
 CONFIG_IBMPC_COMPAQ
 CONFIG_PC_XT
 CONFIG_PC_AT

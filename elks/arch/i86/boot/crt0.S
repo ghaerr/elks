@@ -14,16 +14,6 @@
 	.extern arch_boot
 	.global early_printk
 
-// note: this next instruction is part of the kernel restart fix for
-// protexted mode. it must be 3 bytes long.
-
-//	.extern kernel_restarted
-//	jmp kernel_restarted
-
-//	Setup passes these on the stack
-//	Setup patched to pass parameters in registers to avoid clobbering the
-//	kernel when using the 286pmode extender.
-
 entry:
 /*
 ! Setup.S already initialized DS and ES (but not SS)
@@ -62,13 +52,6 @@ entry:
 ! Saved 768 byte boot stack.
 ! Print sp in wake_up and you'll see that more than 512 bytes of stack are used!
 ! Must be in data as its in use when we wipe the BSS
-
-!  overwrite start of main with a jmp to kernel_restarted()
-!  this will give is a call stack trace instead of the "timer bug" message
-!  no longer necessary due to pmode fix. -AJB
-
-!	.extern _redirect_main
-!	call	_redirect_main
 */
 
 	call	arch_boot
