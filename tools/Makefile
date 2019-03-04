@@ -82,3 +82,26 @@ $(DISTDIR)/$(GCC_DIST).zip:
 	touch .gcc.build
 
 all:: .gcc.build
+
+# EMU86
+
+EMU86_VER=ff4b425aa86e053ed71ab7222b048b8951243d76
+EMU86_DIST=emu86-$(EMU86_VER)
+
+$(DISTDIR)/$(EMU86_DIST).zip:
+	cd $(DISTDIR) && wget https://github.com/mfld-fr/emu86/archive/$(EMU86_VER).zip -O $(EMU86_DIST).zip
+
+.emu86.src: $(DISTDIR)/$(EMU86_DIST).zip
+	-rm -rf $(EMU86_DIST)
+	unzip -q $(DISTDIR)/$(EMU86_DIST).zip
+	-rm -rf emu86
+	mv $(EMU86_DIST) emu86
+	touch .emu86.src
+
+.emu86.build: .emu86.src
+	make -C emu86 all
+	install emu86/emu86 $(CROSSDIR)/bin/
+	install emu86/pcat $(CROSSDIR)/bin/
+	touch .emu86.build
+
+all:: .emu86.build
