@@ -473,7 +473,6 @@ VERSION 0.0.66 NOTES
 	* Added code to doshd_release() so that floppy changes don't cause
 	  corruption from old buffers.
 	* Small change to stack_check() %d changed to %ld for t_endbrk.
-	* Implemented Rob. de Bath changes for Dev86v13.
 	* Added a simple ramdisk driver which can access up to 8 64K
 	  ramdisks. See Documentation/ramdisk.txt.
 	* Re-organised the way the debugging macros work, so they now have
@@ -781,13 +780,6 @@ VERSION 0.0.53(.1) NOTES
 	  again. (I suspect the bug predates bug reports though). Instead
 	  of going to the next track/head it was going back one sector,
 	  which was bad.
-	* If you don't know already, this release is meant to install
-	  over/into Dev86 0.0.11, so if you haven't gotten it already *get
-	  it now!!!* To get everything working you have to unpack Dev86,
-	  then unpack elks, build the (slightly-modified) Dev86, and then
-	  build the kernel with it. This is done so that you don't have to
-	  manually change dev86, and it dosen't really change anything
-	  except the libc/syscall directory and the rules.86 file.
 	* minish unpacks into the tests/ directory, along with a new
 	  makefile.
 	* Optimization is turned off, since there appears to be something

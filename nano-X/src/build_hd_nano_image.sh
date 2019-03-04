@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# BROKEN SCRIPT
+# DEV86 is no more linked to this project
+# See issue jbruchon/elks#199
+
 # This script generates a bootable hard disk image for Qemu. It copies
 # the files from the full3 floppy image to this hard disk image and the
 # bootblocks and mbr from dev86 to the hard disk image.

@@ -31,20 +31,9 @@
 		<TD WIDTH=710 VALIGN=TOP>
 			<H2 CLASS="western"><SPAN STYLE="font-style: normal">Writing
 			applications for ELKS in C</SPAN></H2>
-			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">ELKS
-			and application programs for ELKS are cross-compiled on a standard
-			Linux system with the dev86 package. This contains the bcc C
-			compiler, the ld86 linker, the as86 assembler and the ar86
-			archiver. You can download the dev86 package from the repository
-			of your Linux distribution or download it here:
-			<A HREF="https://github.com/jbruchon/dev86">https://github.com/jbruchon/dev86</A>
-			and compile and install it from this source code.</FONT></P>
-			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
-			package also includes the elksemu program which allows 8086 ELKS
-			programs to be run under Linux-i386. These programs can be
-			compiled using the bcc compiler. However, elksemu will not run on
-			64bit Linux distributions. Therefore test the programs using Qemu
-			instead as described in the next chapter.</FONT></P>
+			<p>ELKS and application programs for ELKS are cross-compiled on
+			a standard Linux system with GCC-IA16.</p>
+			<p>Test the programs using Qemu as described in the next chapter.</p>
 			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">For
 			a start let's compile a &bdquo;hello world&ldquo; program and run
 			that in ELKS. Here is the code:</FONT></P>
