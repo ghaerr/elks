@@ -13,6 +13,8 @@ all::
 # SRCDIR, DISTDIR, BUILDDIR and CROSSDIR must be set in environment
 
 # DEV86 (including BIN86, BCC and C library)
+# Only sources now as not used any more for ELKS build
+# but still for test with EMU86
 
 DEV86_VER=dfb9b428df88dd3c2256f978351fa9959caf5c07
 DEV86_DIST=dev86-$(DEV86_VER)
@@ -27,11 +29,7 @@ $(DISTDIR)/$(DEV86_DIST).zip:
 	mv $(DEV86_DIST) dev86
 	touch .dev86.src
 
-.dev86.build: .dev86.src
-	cd dev86 && make PREFIX=$(CROSSDIR) install
-	touch .dev86.build
-
-all:: .dev86.build
+all:: .dev86.src
 
 # BINUTILS for IA16
 

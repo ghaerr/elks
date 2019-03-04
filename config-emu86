@@ -3,14 +3,6 @@
 #
 
 #
-# Cross build chain
-#
-
-# CONFIG_COMPILER_1 is not set
-CONFIG_COMPILER_2=y
-# CONFIG_COMPILER_3 is not set
-
-#
 # Kernel & Hardware
 #
 
