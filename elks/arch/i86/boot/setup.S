@@ -361,12 +361,12 @@ no_psmouse:
    	cmpw $KERNEL_MAGICNUMBER,0
    	jne aouterr
 
-   	cmpb $0x04,3   //;prozessortype = 8086
+   	cmpb $0x04,3   // processor type = 8086
    	jne test1
 	jmp aout_ok
 
 test1:
-	cmpb $0x10,3   //;prozessortype = 80386
+	cmpb $0x10,3   // processor type = 80386
 	jne aouterr
 	jmp aout_ok
 
@@ -440,21 +440,23 @@ size_ok:
 */
 #if defined(CONFIG_ROMCODE)
 
-        mov 0x10,%dx  //;bbs size
-        mov 0x0c,%si  //;data size
-        mov 0x08,%bx  //;text size
+// BX,CX,DX,SI,DS,ES are expected in kernel crt0.S
 
-        mov %es,%cx
-        mov %cx,%ds
+	mov 0x10,%dx  // bss size
+	mov 0x0c,%si  // data size
+	mov 0x08,%bx  // text size
+	mov 0x18,%ax  // entry point
+	mov %es,%cx   // data segment
+	mov %cx,%ds
 
 #ifdef CONFIG_ROM_DEBUG
 	int     $3               // break for debugger just before kernel
 #endif
 
-	mov	$SYSSEG+2,%bp
-	pushw	%bp
-	pushw	0x18	//; entry point
-	lretw
+	mov $SYSSEG+2,%di
+	push %di
+	push %ax
+	lret
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Case for kernel in disk to be relocated
