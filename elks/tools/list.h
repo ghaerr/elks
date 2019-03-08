@@ -5,10 +5,10 @@
 #ifndef _LIST_H
 #define _LIST_H
 
-typedef unsigned char byte_t;
+typedef unsigned char  byte_t;
 
-typedef unsigned int  u16_t;
-typedef unsigned long u32_t;
+typedef unsigned short u16_t;
+typedef unsigned long  u32_t;
 
 struct list_node_s
 	{
