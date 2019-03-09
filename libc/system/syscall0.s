@@ -16,7 +16,7 @@ _syscall_0:
 	int    $0x80
 
 _syscall_test:
-	test   %ax,%ax
+	cmp    $0,%ax
 	jge    _syscall_ok
 	neg    %ax
 	mov    %ax,errno
