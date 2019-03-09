@@ -7,14 +7,14 @@ DEFINES=-D__LIBC__ -D__LIBC_VER__='"$(VERSION)"' -D__HAS_NO_FLOATS__
 SDEFS=$(DEFINES)
 CDEFS=$(DEFINES)
 
-ARCH=-mtune=i8086 -fno-inline -mcmodel=small -mno-segment-relocation-stuff -ffreestanding
+ARCH=-mtune=i8086 -fno-inline -mcmodel=small -mno-segment-relocation-stuff -ffreestanding -melks
 
 CC=ia16-elf-gcc
 AS=ia16-elf-as
 AR=ia16-elf-ar
 LD=ia16-elf-ld
 
-CFLAGS=$(ARCH) $(INCLUDES) $(CDEFS) -Os -Wall
+CFLAGS=$(ARCH) $(INCLUDES) $(CDEFS) -Wall -Os
 ASFLAGS=-mtune=i8086
 LDFLAGS=-mtune=i8086
 

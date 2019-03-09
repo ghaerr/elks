@@ -39,7 +39,7 @@ all:: .binutils.build
 
 # GCC for IA16
 
-GCC_VER=eb57e7ea98ebf30ff455fbde1af4c7279cc030bc
+GCC_VER=2aa70f8c292e4e67b980d7468a011206130bfd7d
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).zip:
@@ -64,7 +64,7 @@ all:: .gcc.build
 
 # EMU86
 
-EMU86_VER=ff4b425aa86e053ed71ab7222b048b8951243d76
+EMU86_VER=5ea2e76a30c75223c484c3b1bd2f67646e3cfa94
 EMU86_DIST=emu86-$(EMU86_VER)
 
 $(DISTDIR)/$(EMU86_DIST).zip:

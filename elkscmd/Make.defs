@@ -72,13 +72,9 @@ ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre$$//')
 # Determine compiler variables for this target.
 
 ifeq ($(PLATFORM),i86-ELKS)
-#	CC=bcc
 	CC=ia16-elf-gcc
-#	CFLBASE=-0 -O -ansi
-	CFLBASE=-fno-inline -mcmodel=small -mno-segment-relocation-stuff -ffreestanding -mtune=i8086 -Wall -Os
-#	LD=ld86
+	CFLBASE=-fno-inline -mcmodel=small -mno-segment-relocation-stuff -ffreestanding -mtune=i8086 -Wall -Os -melks
 	LD=ia16-elf-ld
-#	LDFLAGS=-s -ansi
 	LDFLAGS= -T $(TOPDIR)/elks/elks-small.ld
 # TODO: move crt0 to begin of object files
 	LDLIBS='-(' $(TOPDIR)/libc/crt0.o $(TOPDIR)/libc/libc.a '-)'
