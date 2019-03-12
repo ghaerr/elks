@@ -1,4 +1,5 @@
-# C runtime bootstrap
+// C runtime bootstrap
+// This must be the first module of the executable
 
 	.code16
 
@@ -13,8 +14,6 @@
 
 entry:
 	jmp _startup
-
-	.global exit
 
 // C runtime startup
 // Stack is empty and immediately followed by argc, argv and envp
@@ -37,6 +36,8 @@ _startup:
 	call exit  // no return
 	int $3
 
+	.global exit
+
 exit:
 	push %bp
 	mov %sp,%bp
@@ -56,6 +57,9 @@ _exit_end:
 	.extern _cleanup
 
 // Zero data for null pointers (near & far)
+// Will be linked as first section in data segment
+
+	.section .nildata
 
 	.word 0
 	.word 0

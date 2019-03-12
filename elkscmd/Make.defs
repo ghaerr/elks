@@ -75,9 +75,9 @@ ifeq ($(PLATFORM),i86-ELKS)
 	CC=ia16-elf-gcc
 	CFLBASE=-fno-inline -mcmodel=small -mno-segment-relocation-stuff -ffreestanding -mtune=i8086 -Wall -Os -melks
 	LD=ia16-elf-ld
-	LDFLAGS= -T $(TOPDIR)/elks/elks-small.ld
+	LDFLAGS=-T $(TOPDIR)/elks/elks-small.ld $(TOPDIR)/libc/crt0.o
 # TODO: move crt0 to begin of object files
-	LDLIBS='-(' $(TOPDIR)/libc/crt0.o $(TOPDIR)/libc/libc.a '-)'
+	LDLIBS='-(' $(TOPDIR)/libc/libc.a '-)'
 	CHECK=gcc -c -o .null.o -Wall -pedantic
 	AS=ia16-elf-as
 	ASFLAGS=-mtune=i8086
