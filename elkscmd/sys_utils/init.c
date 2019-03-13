@@ -257,7 +257,7 @@ void makefork(void)
 pid_t respawn(const char **a)
 {
     int pid;
-    char *argv[4], buf[128];
+    char *argv[5], buf[128];
     int fd;
     char *devtty;
 
