@@ -122,6 +122,7 @@ extern long gemdos();
 
 #include <stdio.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #define OPEN_OLD(n)		open(n, O_RDONLY)
 #define OPEN_NEW(n)		open(n, O_WRONLY|O_CREAT|O_TRUNC, 0666)
@@ -132,7 +133,7 @@ extern long gemdos();
 
 #define zwrite(p,s)	WRITE_TEXT(fileno(stdout), p, s)
 
-#endif /*MSDOS*/
+#endif /*UNIX*/
 
 #if FLEXOS
 

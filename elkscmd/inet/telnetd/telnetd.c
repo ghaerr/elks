@@ -5,15 +5,17 @@
 #include <errno.h>
 #include <signal.h>
 #include <termios.h>
+#include <signal.h>
+#include <string.h>
+#include <sys/socket.h>
+
 #ifndef __linux__ 
 #include <linuxmt/socket.h>
 #include <linuxmt/in.h>
 #include <linuxmt/arpa/inet.h>
 #else
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
-#include <string.h>
 #endif
 #include <time.h>
 

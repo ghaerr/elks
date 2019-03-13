@@ -51,7 +51,11 @@ static struct minix_exec_hdr mh;
 static struct minix_supl_hdr msuph;
 #endif
 
-#define INIT_HEAP 0x0
+// Default data sizes
+
+#define INIT_HEAP  0x0     // For future use (inverted heap and stack)
+#define INIT_STACK 0x4000  // 16 K (space for both stack and heap)
+
 
 int sys_execve(char *filename, char *sptr, size_t slen)
 {
@@ -100,17 +104,23 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     /* Sanity check it.  */
     if (retval != (int)sizeof(mh) ||
-	(mh.type != MINIX_SPLITID) || mh.chmem < 1024 || mh.tseg == 0) {
+	(mh.type != MINIX_SPLITID) || mh.tseg == 0) {
 	debug1("EXEC: bad header, result %u\n", retval);
 	goto error_exec3;
     }
 
     /*
      * Size for data segment
-     * mh.chmem is "total size" requested by ld. Note that ld used to ask
-     * for (at least) 64K
+     * mh.chmem was used by old ld86
+     * New LD script sets this to zero (default)
      */
     len = mh.chmem;
+    if (!len) len = mh.dseg + mh.bseg + INIT_HEAP + INIT_STACK;
+
+    // TODO: revise the ELKS specific executable format
+    // as we now master the executable header content
+    // with the new GNU build tool chain (custom LD script)
+
 #ifdef CONFIG_EXEC_ELKS
     if ((unsigned int) mh.hlen == 0x30) {
 	/* BIG HEADER */
@@ -129,7 +139,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if ((unsigned int) mh.hlen != 0x20) goto error_exec3;
 
     len = (len + 15) & ~15L;
-    if (len > (lsize_t) 0x10000L) goto error_exec3;
+    if (len > (lsize_t) 0xFFFFL) goto error_exec3;  // 64K - 1 to avoid 16 bits rounding
 
     debug("EXEC: Malloc time\n");
 
@@ -234,13 +244,12 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     }
 
     currentp->t_enddata = (__pptr) ((__u16)mh.dseg + (__u16)mh.bseg + base_data);
-    currentp->t_endbrk =  currentp->t_enddata + INIT_HEAP;
+    currentp->t_endbrk =  currentp->t_enddata;
 
     /*
-     *      Arrange our return to be to CS:0
-     *      (better to use the entry offset in the header)
+     *      Arrange our return to be to CS:entry
      */
-    arch_setup_kernel_stack(currentp);
+    arch_setup_user_stack(currentp, (word_t) mh.entry);
 
     wake_up(&currentp->p_parent->child_wait);
 

@@ -45,7 +45,7 @@ void deveth_printhex(char* packet, int len)
   printf("\n");
 }
 
-int deveth_init(char *fdev, int argc, char **argv)
+int deveth_init(char *fdev)
 {
     int i, err;
     __u8 *addr;

@@ -27,6 +27,8 @@ static int chars = 0;
 /* The meat of the whole affair */
 static char *nowline, *prevline, buf1[1024], buf2[1024];
 
+static int getline(char *buf, int count);
+
 static FILE *xfopen(const char *fn, const char *mode)
 {
   FILE *p;

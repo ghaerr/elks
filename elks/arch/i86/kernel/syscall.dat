@@ -5,7 +5,7 @@
 # all three of those packages.
 #
 #	'.' = Ok, with comment
-#	'*' = Needs libc code (Prefix __)
+#	'*' = Needs libc code (Prefix _)
 #	'-' = Obsolete/not required
 #	'@' = May be required later
 #	'=' = Depends on stated config variable
@@ -87,12 +87,16 @@ insmod		65	1	- Removed support for modules
 fchown		+66	3
 dlload		+67	2	- Removed support for dynamic libraries
 setsid		+68	0
-socket		+69	3	= CONFIG_SOCKET
-bind		+70	3	= CONFIG_SOCKET
-listen		+71	2	= CONFIG_SOCKET
-accept		+72	3	= CONFIG_SOCKET
-connect		+73	3	= CONFIG_SOCKET
+sbrk        +69 2	* Legacy number from Linux
 knlvsn		+74	1	= CONFIG_SYS_VERSION
+#
+# From /usr/include/asm-generic/unistd.h
+#
+socket		+198	3	= CONFIG_SOCKET
+bind		+200	3	= CONFIG_SOCKET
+listen		+201	2	= CONFIG_SOCKET
+accept		+202	3	= CONFIG_SOCKET
+connect		+203	3	= CONFIG_SOCKET
 #
 # Name			No	Args	Flag&comment
 #

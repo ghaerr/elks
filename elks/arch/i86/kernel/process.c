@@ -92,13 +92,12 @@ unsigned get_ustack(register struct task_struct *t,int off)
 
 /*
  * Called by sys_execve()
- * Despite its name, this function sets up the user stack
  */
-void arch_setup_kernel_stack(register struct task_struct *t)
+void arch_setup_user_stack (register struct task_struct * t, word_t entry)
 {
     put_ustack(t, -2, USER_FLAGS);		/* Flags */
     put_ustack(t, -4, (int) t->t_xregs.cs);	/* user CS */
-    put_ustack(t, -6, 0);			/* addr 0 */
+    put_ustack(t, -6, entry);			/* user entry point */
     put_ustack(t, -8, 0);			/* user BP */
     t->t_regs.sp -= 8;
 }

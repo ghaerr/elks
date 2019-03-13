@@ -52,7 +52,7 @@ PLATFORM=i86-ELKS
 ELKS_DIR=$(TOPDIR)/elks
 ELKSCMD_DIR=$(TOPDIR)/elkscmd
 
-INCLUDES=-I$(TOPDIR)/include -I$(ELKS_DIR)/include
+INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(ELKS_DIR)/include
 
 TARGET_MNT=$(TOPDIR)/target
 
@@ -72,12 +72,15 @@ ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre$$//')
 # Determine compiler variables for this target.
 
 ifeq ($(PLATFORM),i86-ELKS)
-	CC=bcc
-	CFLBASE=-0 -O -ansi
-	LD=ld86
-	LDFLAGS=-s -ansi
+	CC=ia16-elf-gcc
+	CFLBASE=-fno-inline -mcmodel=small -mno-segment-relocation-stuff -ffreestanding -mtune=i8086 -Wall -Os -melks
+	LD=ia16-elf-ld
+	LDFLAGS=-T $(TOPDIR)/elks/elks-small.ld $(TOPDIR)/libc/crt0.o
+# TODO: move crt0 to begin of object files
+	LDLIBS='-(' $(TOPDIR)/libc/libc.a '-)'
 	CHECK=gcc -c -o .null.o -Wall -pedantic
-	AS=as86
+	AS=ia16-elf-as
+	ASFLAGS=-mtune=i8086
 endif
 
 ifeq ($(PLATFORM),DEFAULT)
@@ -96,14 +99,11 @@ CFLAGS=$(CFLBASE) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSION=\"$(ELKS_V
 #
 # Standard compilation rules.
 
-.c.s:
-	$(CC) $(CFLAGS) -S -o $*.o $<
+.S.s:
+	gcc -E -traditional $(INCLUDES) $(CCDEFS) -o $*.s $<
 
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<
-
-.S.s:
-	gcc -E -traditional $(INCLUDES) $(CCDEFS) -o $*.s $<
 
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<

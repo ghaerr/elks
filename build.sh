@@ -29,21 +29,17 @@ clean_exit () {
 	exit $E
 }
 
-# Disk images cannot be built unless we're UID 0
-if [ "$UID" != "0" ] && [ "$1" != "clean" ]
-	then echo -e "\nWARNING: Disk images can only be built if you have root permissions"
-fi
-
 # Build environment setup
+# TODO: check script status on return
 . tools/env.sh
 
 # Check tools
-if [ ! -x "$CROSSDIR/bin/bcc" ]
+if [ ! -x "$CROSSDIR/bin/ia16-elf-gcc" ]
 	then
-	echo "ERROR: BCC not found. You must build the cross tools"
+	echo "ERROR: GCC-IA16 not found. You must build the cross tools"
 	echo "       before attempting to build ELKS. Run tools/build.sh"
 	echo "       to automatically build that cross tools. Aborting."
-	exit 1
+	clean_exit 1
 fi
 
 # Working directory

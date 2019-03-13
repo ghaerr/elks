@@ -28,7 +28,7 @@
 #include <linuxmt/debug.h>
 
 #include <arch/segment.h>
-#include <arch/seglist.h>
+#include <asm/seglist.h>
 
 #define MIN_STACK_SIZE 0x1000
 
@@ -727,7 +727,7 @@ int sys_brk(__pptr len)
 #endif /* CONFIG_EXEC_ELKS */
 
 #if 0
-    printk("sbrk: len %x, endd %x, bstack %x, endbrk %x, endseg %x, mem %d/%dK\n",
+    printk("brk: len %x, endd %x, bstack %x, endbrk %x, endseg %x, mem %d/%dK\n",
 		    len, currentp->t_enddata, currentp->t_begstack,
 		    currentp->t_endbrk, currentp->t_endseg,
 		    mm_get_usage(MM_MEM, 1),
@@ -770,6 +770,21 @@ int sys_brk(__pptr len)
 
     return 0;
 }
+
+
+int sys_sbrk (int increment, u16_t * pbrk)
+{
+	__pptr brk = current->t_endbrk;
+	if (increment) {
+		brk += increment;
+		int err = sys_brk (brk);
+		if (err) return err;
+	}
+
+	put_user (brk, pbrk);
+	return 0;
+}
+
 
 /*
  *	Initialise the memory manager.

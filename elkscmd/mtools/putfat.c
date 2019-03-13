@@ -60,7 +60,7 @@ struct directory *dir;
 {
 	int skip, entry;
 	struct directory dirs[16];
-	void exit(), perror(), move();
+	void perror(), move();
 					/* which sector */
 	skip = dir_chain[num / 16];
 

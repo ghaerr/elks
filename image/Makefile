@@ -6,7 +6,7 @@ include Make.rules
 # All target
 
 ifdef CONFIG_IMG_BOOT
-all: $(FD_BSECT) $(KHELPER) $(ELKS_DIR)/arch/i86/boot/Image
+all: $(FD_BSECT) $(ELKS_DIR)/arch/i86/boot/Image
 else
 all:
 endif
@@ -35,9 +35,7 @@ endif
 	$(MAKE) -C $(ELKSCMD_DIR) install
 	sudo bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(TARGET_MNT)/etc/issue"
 ifdef CONFIG_IMG_BOOT
-	sudo mkdir -p $(TARGET_MNT)/boot
-	sudo install $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/boot/linux
-	sudo install $(KHELPER) $(TARGET_MNT)/boot/boot
+	sudo install $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/linux
 endif
 ifdef CONFIG_IMG_DEV
 	sudo umount -d $(TARGET_FILE)

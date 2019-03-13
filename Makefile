@@ -31,11 +31,13 @@ CFG_SHELL	:= $(shell \
 .PHONY: all clean kconfig defconfig config menuconfig
 
 all: .config
+	$(MAKE) -C libc all
 	$(MAKE) -C elks all
 	$(MAKE) -C elkscmd all
 	$(MAKE) -C image all
 
 clean:
+	$(MAKE) -C libc clean
 	$(MAKE) -C elks clean
 	$(MAKE) -C elkscmd clean
 	$(MAKE) -C image clean

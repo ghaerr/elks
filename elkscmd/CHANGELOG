@@ -83,10 +83,6 @@ Wed Jun 09 03:47:56 CST 2004	Tommy McCabe <rocketjet314@yahoo.com>
 
 	* Included ktcp in full5
 
-Wed Jun 09 03:45:34 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
-	
-	* Added e3
-
 Sat Jun  5 17:44:06 BRT 2004	Eduardo Habkost <ehabkost@conectiva.com.br>
 
 	* rootfs_template/etc/passwd doesn't depend on rootfs_template.tar

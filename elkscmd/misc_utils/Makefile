@@ -13,14 +13,24 @@ HOST_CFLAGS = -O2
 
 ###############################################################################
 
-PRGS=ed tar compress uncompress zcat miniterm
+PRGS=ed tar miniterm
 PRGS_HOST=compress.host
 
-LOCALFLAGS=-H0xe000
+#compress uncompress zcat disabled
 
 all: $(PRGS) $(PRGS_HOST)
 
-compress: compress.c
+ed: ed.o
+	$(LD) $(LDFLAGS) -o ed ed.o $(LDLIBS)
+
+tar: tar.o
+	$(LD) $(LDFLAGS) -o tar tar.o $(LDLIBS)
+
+compress: compress.o
+	$(LD) $(LDFLAGS) -o compress compress.o $(LDLIBS)
+
+miniterm: miniterm.o
+	$(LD) $(LDFLAGS) -o miniterm miniterm.o $(LDLIBS)
 
 compress.host: compress.c
 	$(HOSTCC) $(HOST_CFLAGS) -s compress.c -o $@

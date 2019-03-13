@@ -65,8 +65,8 @@ SWAP_DEV = 0
 
 // ld86 requires an entry symbol. This may as well be the usual one.
 
-.global     start
-start:
+.global     entry
+entry:
 #if 0   /* hook for debugger, harmless unless BIOS is fussy (old HP) */
         int     3
 #endif

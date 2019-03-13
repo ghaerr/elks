@@ -15,7 +15,7 @@ include $(BASEDIR)/Make.rules
 all:	eth
 
 eth:	$(OBJS)
-
+	$(LD) $(LDFLAGS) -o eth eth.o $(LDLIBS)
 
 install: eth
 	sudo install eth $(TARGET_MNT)/bin

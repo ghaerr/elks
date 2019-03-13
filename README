@@ -1,21 +1,31 @@
                ELKS, the Embeddable Linux Kernel Subset
                ----------------------------------------
 
-This is a project to write a Linux-like operating system for systems based on
-the Intel IA16 architecture (16 bits processors: i8088, i8086, i80188, i80186,
-i80286, V20, V30 and compatibles).
 
-Such systems are ancient computers (IBM-PC XT/AT and clones) or more recent
-embedded ones that reuse their huge hardware & software legacy.
+What is this ?
+--------------
 
-To build ELKS, you need a cross build chain, mainly based on DEV86 (still used
-for the user land) and GCC-IA16 (now used for the kernel).
+This is a project to write a Linux-like OS for systems based on the Intel
+IA16 architecture (16 bits processors: 8088, 8086, 80188, 80186, 80286,
+Nec V20, V30 and compatibles).
 
-A script is provided to automatically download and build that cross chain:
+Such systems are ancient computers (IBM-PC XT / AT and clones), or more
+recent SBC / SoC / FPGA that reuse the huge hardware & software legacy
+from that popular platform.
+
+
+How to build ?
+--------------
+
+To build ELKS, you need a cross build tool chain, mainly based on the latest
+GCC-IA16 (DEV86 including BCC was used for previous versions, but has been
+dropped because it was obsolete and no more actively maintained).
+
+A script is provided to automatically download and build that tool chain:
 
   'tools/build.sh'
 
-Note: all the scripts must be executed with the top folder 'elks/' as the
+Note: all the scripts must be executed within the top folder 'elks/' as the
 current one.
 
 A script is provided to automate the whole build process (configuration,
@@ -46,10 +56,14 @@ The general build procedure for ELKS is as follows:
 The target root folder is built in 'target/', and depending on your
 configuration, that folder is packed as either a floppy disk image (fd1440,
 fd1680, fd1200, fd720, fd360, without MBR), a hard-disk image (hd, with MBR),
-or a file image (rom, tar), into the '/image' folder.
+or a file image (ROM, TAR), into the '/image' folder.
 
 Before writting the image on the real device, you can test it first on QEMU
-with './qemu.sh' (will configure QEMU for an ISA system).
+with './qemu.sh' (will configure QEMU as an ISA system).
+
+
+More information
+----------------
 
 Questions? Problems? Patches? Open an issue in this project! You can also join
 and email the 'Linux-8086' list at linux-8086@vger.kernel.org.

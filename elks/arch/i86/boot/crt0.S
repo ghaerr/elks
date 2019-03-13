@@ -9,12 +9,12 @@
 
     .code16
 	.text
-	.global start
+	.global entry
 	.extern	start_kernel
 	.extern arch_boot
 	.global early_printk
 
-start:
+entry:
 /*
 ! Setup.S already initialized DS and ES (but not SS)
 ! In addition, registers contain:

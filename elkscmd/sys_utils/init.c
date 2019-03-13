@@ -257,7 +257,7 @@ void makefork(void)
 pid_t respawn(const char **a)
 {
     int pid;
-    char *argv[4], buf[128];
+    char *argv[5], buf[128];
     int fd;
     char *devtty;
 
@@ -463,7 +463,7 @@ int main(int argc, char **argv)
 
 	argv[0] = "init";
 #ifdef DEBUG
-	fd = open(DEVTTY, O_RDWR);
+	int fd = open(DEVTTY, O_RDWR);
 	dup2(fd, 0);
 	dup2(fd, 1);
 	dup2(fd, 2);
@@ -516,7 +516,7 @@ int main(int argc, char **argv)
 			pid = wait(NULL);
 
 			FPUTS("and ");
-			FPUTD(pid)
+			FPUTD(pid);
 			FPUTS(" came out\n");
 
 			if (-1 == pid) continue;

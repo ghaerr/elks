@@ -13,7 +13,6 @@
 *.a
 *.1.gz
 Kbuild
-dev86
 cross
 
 #
@@ -33,7 +32,6 @@ target
 *.orig
 *.rej
 /*.patch
-elks_todo
 
 #
 # Debugging stuff

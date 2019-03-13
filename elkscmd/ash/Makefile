@@ -42,7 +42,7 @@ CLEANFILES= $(OBJS) \
 all:	ash
 
 ash: $(OBJS)
-	$(CC) $(LDFLAGS) -o ash $(OBJS)
+	$(LD) $(LDFLAGS) -o ash $(OBJS) $(LDLIBS)
 
 install: ash
 ifdef CONFIG_IMG_LINK

@@ -21,6 +21,7 @@ ttn.c
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
 #ifndef __linux__
 #include <linuxmt/in.h>

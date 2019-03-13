@@ -129,7 +129,7 @@ int main(int argc,char **argv)
     if (strcmp(argv[2],dname) == 0) {
 	debug("Init /dev/eth\n");
     	dev->type = 1;
-	intfd = deveth_init(dname, argc, argv);
+	intfd = deveth_init(dname);
 	if (intfd < 0) {
 	      printf("failed to open /dev/eth [%d]\n", intfd);
 	      exit(1);

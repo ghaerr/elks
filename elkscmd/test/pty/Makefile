@@ -14,6 +14,9 @@ include $(BASEDIR)/Make.rules
 
 all:	ptyshell
 
+ptyshell: $(OBJS)
+	$(LD) $(LDFLAGS) -o ptyshell ptyshell.o $(LDLIBS)
+
 install: ptyshell
 	sudo install ptyshell $(TARGET_MNT)/bin
 

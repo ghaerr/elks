@@ -401,7 +401,7 @@ int main(register int argc, char **argv)
     int overwrite = 0;  /* Do not recreate existing file(s) */
     char tempname[MAXFNAMEL];
     char **filelist, **fileptr;
-    char *cp, *strrchr(const char *, int);
+    char *cp;
     struct stat statbuf;
     extern int onintr();
 

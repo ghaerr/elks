@@ -12,27 +12,6 @@ all::
 
 # SRCDIR, DISTDIR, BUILDDIR and CROSSDIR must be set in environment
 
-# DEV86 (including BIN86, BCC and C library)
-
-DEV86_VER=dfb9b428df88dd3c2256f978351fa9959caf5c07
-DEV86_DIST=dev86-$(DEV86_VER)
-
-$(DISTDIR)/$(DEV86_DIST).zip:
-	cd $(DISTDIR) && wget https://github.com/jbruchon/dev86/archive/$(DEV86_VER).zip -O $(DEV86_DIST).zip
-
-.dev86.src: $(DISTDIR)/$(DEV86_DIST).zip
-	-rm -rf $(DEV86_DIST)
-	unzip -q $(DISTDIR)/$(DEV86_DIST).zip
-	-rm -rf dev86
-	mv $(DEV86_DIST) dev86
-	touch .dev86.src
-
-.dev86.build: .dev86.src
-	cd dev86 && make PREFIX=$(CROSSDIR) install
-	touch .dev86.build
-
-all:: .dev86.build
-
 # BINUTILS for IA16
 
 BINUTILS_VER=184ba458e1ab8e46d09c3dee48790e93141793f2
@@ -60,7 +39,7 @@ all:: .binutils.build
 
 # GCC for IA16
 
-GCC_VER=eb57e7ea98ebf30ff455fbde1af4c7279cc030bc
+GCC_VER=2aa70f8c292e4e67b980d7468a011206130bfd7d
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).zip:
@@ -85,7 +64,7 @@ all:: .gcc.build
 
 # EMU86
 
-EMU86_VER=ff4b425aa86e053ed71ab7222b048b8951243d76
+EMU86_VER=5ea2e76a30c75223c484c3b1bd2f67646e3cfa94
 EMU86_DIST=emu86-$(EMU86_VER)
 
 $(DISTDIR)/$(EMU86_DIST).zip:

@@ -30,7 +30,11 @@
 
    $Log$
  */
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/select.h>
+
 #ifndef POSIX
 #include <sgtty.h>
 #define	USE_OLD_TTY
@@ -50,7 +54,6 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include <sys/file.h>
 #include <fcntl.h>
 #include <sys/socket.h>
 #ifdef ELKS

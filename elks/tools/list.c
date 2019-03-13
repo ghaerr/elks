@@ -1,6 +1,6 @@
 /* Double-linked list with near pointers */
 
-#include <list.h>
+#include "list.h"
 
 
 void list_init (list_root_t * root)
