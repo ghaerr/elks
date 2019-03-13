@@ -33,7 +33,6 @@ SUBDIRS =       \
 	mtools      \
 	prems       \
 	prn-utils   \
-	rc          \
 	test        \
 	sash        \
 	screen      \
