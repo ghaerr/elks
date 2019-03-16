@@ -16,22 +16,31 @@
 
 bool_t _wait_event (cond_t * c, bool_t i)
 {
-    if (!cond_test (c)) {
+	bool_t res = 0;
 
-        if (current == &task [0])
-            panic ("task 0 waits condition %x", (int) c);
+	if (!cond_test (c)) {
 
-        wait_set ((struct wait_queue *) c);
-        while (1) {
-            current->state = i ? TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE;
-            if (cond_test (c)) break;
-            schedule ();
-        }
+		if (current == &task [0])
+			panic ("task 0 waits condition %x", (int) c);
 
-        current->state = TASK_RUNNING;
-        wait_clear ((struct wait_queue *) c);
-    }
+		wait_set ((struct wait_queue *) c);
+		while (1) {
+			current->state = i ? TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE;
+			if (cond_test (c)) break;
+			schedule ();
 
-    // FIXME: missing signal test when interrupted
-    return 0;
+			if (i && current->signal)
+			{
+				// Interrupted by signal
+				res = 1;
+				break;
+			}
+		}
+
+		current->state = TASK_RUNNING;
+		wait_clear ((struct wait_queue *) c);
+	}
+
+	// FIXME: missing signal test when interrupted
+	return res;
 }

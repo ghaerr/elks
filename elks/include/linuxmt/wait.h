@@ -26,8 +26,8 @@ typedef bool_t (* test_t) (void *);
 
 struct cond_s
 {
-	void * obj;
 	test_t test;
+	void * obj;
 };
 
 typedef struct cond_s cond_t;
