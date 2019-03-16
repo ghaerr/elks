@@ -32,23 +32,15 @@ struct cond_s
 
 typedef struct cond_s cond_t;
 
-static inline void cond_init(cond_t * c, void * p, test_t t)
-{
-	c->obj = p;
-	c->test = t;
-}
-
-static inline bool_t cond_test (cond_t * c)
-{
-	return (c->test) (c->obj);
-}
+#define cond_test(_c) \
+	(((_c)->test) ((_c)->obj))
 
 // Wait for condition change (= event)
 // ELKS has no wait queue (simplification)
 
 bool_t _wait_event (cond_t * c, bool_t i);
 
-#define wait_event(_c) _wait_event (_c, 0)
-#define wait_event_interruptible(_c) _wait_event (_c, 1)
+#define wait_event(_c) _wait_event ((_c), 0)
+#define wait_event_interruptible(_c) _wait_event ((_c), 1)
 
 #endif

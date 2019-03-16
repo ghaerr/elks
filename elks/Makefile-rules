@@ -140,7 +140,7 @@ endif
 # No relocation stuff related to MSDOS 'MZ' executable
 
 CROSS_CC = ia16-elf-gcc
-CROSS_CFLAGS = -ffreestanding -melks -mcmodel=small -mno-segment-relocation-stuff
+CROSS_CFLAGS = -ffreestanding -fno-inline -melks -mcmodel=small -mno-segment-relocation-stuff
 
 #########################################################################
 # Define architecture-specific flags.

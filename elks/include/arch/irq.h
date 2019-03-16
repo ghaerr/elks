@@ -30,16 +30,13 @@ __asm__ __volatile__("pushw %0\n" \
           : /* no output */ :"r" (x):"memory")
 
 // From Linux arch/x86/include/asm/irqflags.h
+// Note the memory barrier for the compiler
 
-static inline void irq_disable(void)
-{
-	asm volatile("cli": : :"memory");
-}
+#define irq_disable(_x) \
+	asm volatile ("cli": : :"memory")
 
-static inline void irq_enable(void)
-{
-	asm volatile("sti": : :"memory");
-}
+#define irq_enable(_x) \
+	asm volatile ("sti": : :"memory");
 
 #define clr_irq irq_disable
 #define set_irq irq_enable
