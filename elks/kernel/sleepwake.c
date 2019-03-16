@@ -93,6 +93,8 @@ void _wake_up(register struct wait_queue *q, unsigned short int it)
 {
     register struct task_struct *p;
 
+    // FIXME: task list not protected against interruption
+
     for_each_task(p) {
 	if ((p->waitpt == q)
 	    || ((p->waitpt == &select_queue) && select_poll (p, q))
