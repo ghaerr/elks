@@ -7,7 +7,7 @@ DEFINES=-D__LIBC__ -D__LIBC_VER__='"$(VERSION)"' -D__HAS_NO_FLOATS__
 SDEFS=$(DEFINES)
 CDEFS=$(DEFINES)
 
-ARCH=-mtune=i8086 -fno-inline -mcmodel=small -mno-segment-relocation-stuff -ffreestanding -melks
+ARCH=-ffreestanding -melks -mcmodel=small -mno-segment-relocation-stuff -mtune=i8086
 
 CC=ia16-elf-gcc
 AS=ia16-elf-as

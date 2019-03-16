@@ -132,8 +132,15 @@ else
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
 endif
 
+# Use GCC-IA16 compiler
+
+# Not linked to any target C library ('freestanding')
+# Use ES only for segment ('elks')
+# Small memory model: CS != DS == SS
+# No relocation stuff related to MSDOS 'MZ' executable
+
 CROSS_CC = ia16-elf-gcc
-CROSS_CFLAGS = -fno-inline -mcmodel=small -mno-segment-relocation-stuff -ffreestanding -melks
+CROSS_CFLAGS = -ffreestanding -melks -mcmodel=small -mno-segment-relocation-stuff
 
 #########################################################################
 # Define architecture-specific flags.
