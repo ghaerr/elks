@@ -24,4 +24,4 @@ install: $(PRGS)
 	sudo install $(PRGS) $(TARGET_MNT)/bin
 
 clean:
-	rm -f core *.o $(PRGS)
+	rm -f *.o $(PRGS)
