@@ -19,7 +19,7 @@
 
 // Static data
 
-static byte_t ne2k_inuse = 0;
+static byte_t eth_inuse = 0;
 
 static byte_t mac_addr [6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};  // QEMU default
 
@@ -39,7 +39,7 @@ static cond_t rx_cond = { rx_test, NULL };
 
 // Get packet
 
-static size_t ne2k_read (struct inode * inode, struct file * filp,
+static size_t eth_read (struct inode * inode, struct file * filp,
 	char * data, size_t len)
 {
 	size_t res;
@@ -92,7 +92,7 @@ static cond_t tx_cond = { tx_test, NULL };
 
 // Put packet
 
-static size_t ne2k_write (struct inode * inode, struct file * file,
+static size_t eth_write (struct inode * inode, struct file * file,
 	char * data, size_t len)
 {
 	size_t res;
@@ -133,7 +133,7 @@ static size_t ne2k_write (struct inode * inode, struct file * file,
 
 // Test for readiness
 
-int ne2k_select (struct inode * inode, struct file * filp, int sel_type)
+int eth_select (struct inode * inode, struct file * filp, int sel_type)
 {
 	int res = 0;
 
@@ -184,7 +184,7 @@ static void ne2k_int (int irq, struct pt_regs * regs, void * dev_id)
 
 // I/O control
 
-static int ne2k_ioctl (struct inode * inode, struct file * file,
+static int eth_ioctl (struct inode * inode, struct file * file,
 	unsigned int cmd, unsigned int arg)
 
 	{
@@ -216,13 +216,13 @@ static int ne2k_ioctl (struct inode * inode, struct file * file,
 
 // Open
 
-static int ne2k_open (struct inode * inode, struct file * file)
+static int eth_open (struct inode * inode, struct file * file)
 	{
 	int err;
 
 	while (1)
 		{
-		if (ne2k_inuse)
+		if (eth_inuse)
 			{
 			err = -EBUSY;
 			break;
@@ -238,7 +238,7 @@ static int ne2k_open (struct inode * inode, struct file * file)
 		err = ne2k_start ();
 		if (err) break;
 
-		ne2k_inuse = 1;
+		eth_inuse = 1;
 
 		err = 0;
 		break;
@@ -250,27 +250,27 @@ static int ne2k_open (struct inode * inode, struct file * file)
 
 // Release (close)
 
-static void ne2k_release (struct inode * inode, struct file * file)
+static void eth_release (struct inode * inode, struct file * file)
 	{
 	ne2k_stop ();
 	ne2k_term ();
 
-	ne2k_inuse = 0;
+	eth_inuse = 0;
 	}
 
 
 // Ethernet operations
 
-static struct file_operations ne2k_fops =
+static struct file_operations eth_fops =
 	{
 	NULL,         /* lseek */
-    ne2k_read,
-    ne2k_write,
+    eth_read,
+    eth_write,
     NULL,         /* readdir */
-    ne2k_select,
-    ne2k_ioctl,
-    ne2k_open,
-    ne2k_release
+    eth_select,
+    eth_ioctl,
+    eth_open,
+    eth_release
 
 #ifdef BLOAT_FS
     NULL,         /* fsync */
@@ -283,7 +283,7 @@ static struct file_operations ne2k_fops =
 
 // Ethernet main initialization
 
-void ne2k_drv_init ()
+void eth_drv_init ()
 	{
 	int err;
 
@@ -303,10 +303,10 @@ void ne2k_drv_init ()
 			break;
 			}
 
-		err = register_chrdev (ETH_MAJOR, "eth", &ne2k_fops);
+		err = register_chrdev (ETH_MAJOR, "eth", &eth_fops);
 		if (err)
 			{
-			printk ("[ne2k] register error: %i\n", err);
+			printk ("[eth] register error: %i\n", err);
 			break;
 			}
 

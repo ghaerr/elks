@@ -41,4 +41,6 @@ extern void setup_dev(register struct gendisk *);
 extern void mem_dev_init(void);
 extern void init_bioshd(void);
 
+void eth_drv_init (void);
+
 #endif

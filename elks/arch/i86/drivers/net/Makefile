@@ -29,7 +29,7 @@ include $(BASEDIR)/Makefile-rules
 
 OBJS = net_drv.o
 ifeq ($(CONFIG_ETH_NE2K), y)
-OBJS += ne2k-mac.o ne2k-main.o
+OBJS += ne2k-mac.o eth-main.o
 endif
 
 all: net_drv.a
