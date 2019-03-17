@@ -122,7 +122,7 @@ extern FILE *__fopen __P((char*, int, FILE*, char*));
 #endif
 
 extern int fputs __P((char*, FILE*));
-extern int puts __P((char*));
+int puts (const char * s);
 
 extern int printf __P ((__const char*, ...));
 extern int fprintf __P ((FILE*, __const char*, ...));

@@ -333,13 +333,11 @@ int fputs(char *str, FILE *fp)
    return (n);
 }
 
-int
-puts(str)
-char *str;
+int puts (const char * s)
 {
    register int n;
 
-   if (((n = fputs(str, stdout)) == EOF)
+   if (((n = fputs(s, stdout)) == EOF)
        || (putc('\n', stdout) == EOF))
       return (EOF);
    return (++n);
