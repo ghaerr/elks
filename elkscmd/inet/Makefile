@@ -42,5 +42,7 @@ all:
 install:
 	for i in $(DIRS); do make -C $$i install || exit 1; done
 
+CLEANDIRS = httpd nettools telnet telnetd tinyirc urlget
+
 clean:
-	for i in $(DIRS); do make -C $$i clean || exit 1; done
+	for i in $(CLEANDIRS); do make -C $$i clean || exit 1; done
