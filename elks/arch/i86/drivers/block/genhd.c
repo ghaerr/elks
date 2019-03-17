@@ -32,8 +32,6 @@ extern int blk_dev_init();
 
 struct gendisk *gendisk_head = NULL;
 
-static unsigned short int current_minor = 0;
-
 #ifdef BDEV_SIZE_CHK
 extern int blk_size[];
 #endif
@@ -41,6 +39,8 @@ extern int blk_size[];
 extern void rd_load();
 
 #ifdef CONFIG_BLK_DEV_BHD
+
+static unsigned short current_minor;
 
 static void print_minor_name(register struct gendisk *hd,
 			     unsigned short int minor)
@@ -295,22 +295,19 @@ void resetup_one_dev(struct gendisk *dev, int drive)
 
 void setup_dev(register struct gendisk *dev)
 {
-    register char *i;
-
 #ifdef BDEV_SIZE_CHK
-    blk_size[dev->major] = NULL;
+	blk_size[dev->major] = NULL;
 #endif
 
-    memset((void *)dev->part, 0, sizeof(struct hd_struct)*dev->max_nr*dev->max_p);
-    dev->init(dev);
+	memset((void *)dev->part, 0, sizeof(struct hd_struct)*dev->max_nr*dev->max_p);
+	dev->init(dev);
 
 #ifdef CONFIG_BLK_DEV_BHD
-    for (i = (char *)0; (int)i < dev->nr_real; i++) {
-	int first_minor = (int)i << dev->minor_shift;
-
-	current_minor = (unsigned short int) (first_minor + 1);
-	check_partition(dev, MKDEV(dev->major, first_minor));
-    }
+	for (int i = 0; i < dev->nr_real; i++) {
+		int first_minor = i << dev->minor_shift;
+		current_minor = (unsigned short) (first_minor + 1);
+		check_partition(dev, MKDEV(dev->major, first_minor));
+	}
 #endif
 
 }
