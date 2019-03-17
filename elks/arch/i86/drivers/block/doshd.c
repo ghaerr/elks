@@ -725,7 +725,7 @@ static void do_bioshd_request(void)
 #ifdef DMA_OVR
 		if (req->rq_cmd == WRITE) {
 		    BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
-		    fmemcpyb(0, BUFSEG, (word_t)buff, req->rq_seg, (this_pass << 9));
+		    fmemcpyb(NULL, BUFSEG, buff, req->rq_seg, (this_pass << 9));
 		}
 		else BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
 		BD_BX = 0;
@@ -757,7 +757,7 @@ static void do_bioshd_request(void)
 
 #ifdef DMA_OVR
 	    if (req->rq_cmd == READ)
-		fmemcpyb((word_t) buff, req->rq_seg, 0, BUFSEG, (word_t)(this_pass << 9));
+		fmemcpyb(buff, req->rq_seg, NULL, BUFSEG, (word_t)(this_pass << 9));
 #endif
 	    count -= this_pass;
 	    start += this_pass;

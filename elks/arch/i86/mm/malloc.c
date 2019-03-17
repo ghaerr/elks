@@ -534,7 +534,7 @@ seg_t mm_dup(seg_t base)
 	panic("bad/swapped hole");
 
     if ((mbase = (char *)mm_alloc(o->extent)) != NULL)
-	fmemcpyb(0, (seg_t) mbase, 0, o->page_base, (word_t) (o->extent << 4));
+	fmemcpyb(NULL, (seg_t) mbase, NULL, o->page_base, (word_t) (o->extent << 4));
     return (seg_t)mbase;
 
 #endif /* CONFIG_MEM_TABLE */
@@ -547,7 +547,7 @@ seg_t mm_dup(seg_t base)
 	seg_t old_size = peekw (SEG_HEAD_SIZE, old_seg);
 	new_seg = seg_free_get (old_size);
 	if (new_seg)
-		fmemcpyb (0, ++new_seg, 0, base, old_size << 4);
+		fmemcpyb (NULL, ++new_seg, 0, base, old_size << 4);
 
     return new_seg;
 
@@ -650,7 +650,7 @@ static struct malloc_hole *mm_resize(register struct malloc_hole *m, segext_t pa
 #ifdef CONFIG_ADVANCED_MM
     /* Next, try relocating to a larger hole */
     if ((m->refcount == 1) && ((next = (struct malloc_hole *)mm_alloc(pages)) != NULL)) {
-	fmemcpyb(0, (seg_t) next, 0, m->page_base, (word_t) (m->extent << 4));
+	fmemcpyb(NULL, (seg_t) next, 0, m->page_base, (word_t) (m->extent << 4));
 	next = find_hole(holes, (seg_t)next);
 	free_hole(holes, m);
 	return next;

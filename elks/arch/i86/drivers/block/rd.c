@@ -17,6 +17,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/mm.h>
 
 #ifdef CONFIG_BLK_DEV_RAM
 
@@ -67,7 +68,6 @@ static struct rd_segmentt {
 };
 
 static int rd_open(struct inode *inode, struct file *filp);
-static int rd_release(struct inode *inode, struct file *filp);
 static int rd_ioctl(register struct inode *inode, struct file *file,
 		    unsigned int cmd, unsigned int arg);
 
@@ -76,8 +76,21 @@ void rd_load(void)
     /* Do nothing */
 }
 
-static struct file_operations rd_fops = {
 
+static void rd_release (struct inode * inode, struct file * filp)
+{
+    int target = DEVICE_NR(inode->i_rdev);
+
+    debug1("RD: release ram%d\n", target);
+
+#if 0
+    rd_info[target].flags = 0;		/* ioctl() takes care of it */
+#endif
+
+}
+
+
+static struct file_operations rd_fops = {
     NULL,			/* lseek */
     block_read,			/* read */
     block_write,		/* write */
@@ -128,19 +141,6 @@ static int rd_open(struct inode *inode, struct file *filp)
 #endif
 
     inode->i_size = (rd_info[target].size) << 9;
-    return 0;
-}
-
-static int rd_release(struct inode *inode, struct file *filp)
-{
-    int target = DEVICE_NR(inode->i_rdev);
-
-    debug1("RD: release ram%d\n", target);
-
-#if 0
-    rd_info[target].flags = 0;		/* ioctl() takes care of it */
-#endif
-
     return 0;
 }
 
@@ -286,7 +286,7 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
 
 static void do_rd_request(void)
 {
-    register char *buff;
+    byte_t *buff;
     rd_sector_t start;		/* absolute offset from start of device */
     seg_t segnum;		/* segment index; segment = rd_segment[segnum].segment */
     segext_t offset;		/* relative offset (from start of segment) */
@@ -302,7 +302,7 @@ static void do_rd_request(void)
 	    return;
 
 	if (rd_initialised != 1) {
-	    end_request(0, CURRENT->rq_dev);
+	    end_request(0);
 	    continue;
 	}
 
@@ -314,7 +314,7 @@ static void do_rd_request(void)
 	    || (start >= rd_info[target].size)) {
 	    debug4("RD: bad request on ram%d, flags: %d, size: %d, start: %d\n",
 		 target, rd_info[target].flags, rd_info[target].size, start);
-	    end_request(0, CURRENT->rq_dev);
+	    end_request(0);
 	    continue;
 	}
 	offset = start;		/* offset from segment start */
@@ -329,15 +329,15 @@ static void do_rd_request(void)
 	     buff);
 	if (CURRENT->rq_cmd == WRITE) {
 	    debug1("RD: request writing to %ld\n", (long) start);
-	    fmemcpyb(offset * SECTOR_SIZE, rd_segment[segnum].segment,
-	    		buff, CURRENT->rq_seg, 1024);
+	    fmemcpyb((byte_t *) (offset * SECTOR_SIZE), rd_segment[segnum].segment,
+			buff, CURRENT->rq_seg, 1024);
 	}
 	if (CURRENT->rq_cmd == READ) {
 	    debug1("RD_REQUEST reading from %ld\n", start);
 	    fmemcpyb(buff, CURRENT->rq_seg,
-	    		offset * SECTOR_SIZE, rd_segment[segnum].segment, 1024);
+			(byte_t *) (offset * SECTOR_SIZE), rd_segment[segnum].segment, 1024);
 	}
-	end_request(1, CURRENT->rq_dev);
+	end_request(1);
     }
 }
 

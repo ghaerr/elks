@@ -347,7 +347,7 @@ struct file_operations {
     int 			(*select) (struct inode *,struct file *, int flag);
     int 			(*ioctl) ();
     int 			(*open) ();
-    void			(*release) ();
+    void			(*release) (struct inode *, struct file *);
 
 #ifdef BLOAT_FS
     int 			(*fsync) ();

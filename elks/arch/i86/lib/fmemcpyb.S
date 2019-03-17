@@ -1,4 +1,4 @@
-// void fmemcpyb (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count)
+// void fmemcpyb (byte_t * dst_off, seg_t dst_seg, byte_t * src_off, seg_t src_seg, word_t count)
 // segment after offset to allow LDS & LES from the stack
 // assume DS=ES=SS (not ES for GCC-IA16)
 

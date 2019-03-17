@@ -132,7 +132,7 @@ size_t kmem_read(struct inode *inode, register struct file *filp,
     debugmem("[k]mem_read()\n");
     sseg = split_seg_off(&soff, filp->f_pos);
     debugmem3("Reading %u %p %p.\n", len, sseg, soff);
-    fmemcpyb((word_t) data, current->mm.dseg, soff, sseg, (word_t) len);
+    fmemcpyb(data, current->mm.dseg, soff, sseg, (word_t) len);
     filp->f_pos += len;
     return (size_t) len;
 }
