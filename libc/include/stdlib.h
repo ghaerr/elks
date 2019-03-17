@@ -55,4 +55,6 @@ void exit (int status);
 void * malloc (size_t size);
 void free (void * ptr);
 
+void breakpoint ();
+
 #endif /* __STDLIB_H */
