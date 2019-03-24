@@ -22,7 +22,7 @@ extern void setpwent __P ((void));
 extern void endpwent __P ((void));
 extern struct passwd * getpwent __P ((void));
 
-extern int putpwent __P ((__const struct passwd * __p, FILE * __f));
+int putpwent (const struct passwd * p, FILE * stream);
 extern int getpw __P ((uid_t uid, char *buf));
 
 extern struct passwd * fgetpwent __P ((FILE * file));
