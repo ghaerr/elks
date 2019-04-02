@@ -1,5 +1,2 @@
-Nano-X was provided to the ELKS project without a dedicated license file; however, the source code files all seem to contain the following license text which is GPL-compatible:
-
-Copyright (c) 1999 Greg Haerr <greg@censoft.com>
-Copyright (c) 1991 David I. Bell
-Permission is granted to use, distribute, or modify this source, provided that this copyright notice remains intact.
+The actual license file is "./src/misc/LICENSE".
+This one is just to redirect from Nano-X root folder.
