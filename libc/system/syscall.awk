@@ -28,7 +28,7 @@ BEGIN {
 	printf ("// CALL %s \n\n", $0);
 	printf ("\t.global %s\n\n", funcname);
 	printf ("%s:\n", funcname);
-	printf ("\tmov $%d,%ax\n", callno);
+	printf ("\tmov $%d,%%ax\n", callno);
 	printf ("\tjmp _syscall_%d\n\n", $3);
 }
 END {
