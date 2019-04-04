@@ -232,10 +232,12 @@ endif
 #########################################################################
 # general construction rules
 
-.S.o: ;
+.S.s: ;
 
-.S.s:
-	gcc -E -traditional $(INCLUDES) $(CCDEFS) -o $*.s $<
+.S.o:
+	gcc -E -traditional $(INCLUDES) $(CCDEFS) -o $*.tmp $<
+	$(AS) $(ASFLAGS) -o $*.o $*.tmp
+	rm $*.tmp
 
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<

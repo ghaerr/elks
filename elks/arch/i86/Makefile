@@ -62,8 +62,6 @@ XINCLUDE = $(BASEDIR)/include/arch/asm-offsets.h
 
 .PHONY: toolkit
 
-boot/bootsect.o: boot/bootsect.S
-boot/bootsect.o: boot/bootsect.s
 boot/bootsect:   boot/bootsect.o
 	$(LD) $(LDFLAGS) $(SIBOFLAGS) -M -T $(TOPDIR)/elks/elks-tiny.ld -o boot/bootsect boot/bootsect.o > boot/bootsect.map
 
@@ -72,15 +70,8 @@ boot/netbootsect:	boot/netbootsect.o
 
 boot/netbootsect.o:	boot/netbootsect.s
 
-boot/setup.s: boot/setup.S
-boot/setup.o: boot/setup.s
 boot/setup:   boot/setup.o
 	$(LD) $(LDFLAGS) $(SIBOFLAGS) -M -T $(TOPDIR)/elks/elks-tiny.ld -o boot/setup boot/setup.o > boot/setup.map
-
-boot/crt0.s:		boot/crt0.S
-boot/crt0.o:		boot/crt0.s
-
-boot/crt1.o:		boot/crt1.c
 
 toolkit:
 	${MAKE} -C tools all

@@ -40,9 +40,7 @@ SRCS1 = \
 #	farlist.S \
 	# end of list
 
-TMPS1 = $(SRCS1:.S=.s)
-
-OBJS1 = $(TMPS1:.s=.o)
+OBJS1 = $(SRCS1:.S=.o)
 
 # Non-precompiled assembly
 
