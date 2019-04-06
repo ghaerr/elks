@@ -76,15 +76,9 @@ boot/setup:   boot/setup.o
 toolkit:
 	${MAKE} -C tools all
 
-$(BASEDIR)/include/arch/asm-offsets.h: kernel/asm-offsets.c
-	echo '#ifndef ASM_OFFSETS_H' > $(BASEDIR)/include/arch/asm-offsets.h
-	echo '#define ASM_OFFSETS_H' >> $(BASEDIR)/include/arch/asm-offsets.h
+$(BASEDIR)/include/arch/asm-offsets.h: kernel/asm-offsets.c asm-offsets.awk
 	$(CC) $(CFLAGS) -S -o asm-offsets.s kernel/asm-offsets.c
-	sed -e '/^\tm/ !d' \
-	-e "s/\(.*\t\\$$\)/\#define /" \
-	-e "s/\([0-9][0-9]*\),\t\([a-zA-Z][_0-9a-zA-Z]*\)/\2 \1/" \
-	< asm-offsets.s >> $(BASEDIR)/include/arch/asm-offsets.h
-	echo '#endif' >> $(BASEDIR)/include/arch/asm-offsets.h
+	awk -f asm-offsets.awk asm-offsets.s > $(BASEDIR)/include/arch/asm-offsets.h
 	rm asm-offsets.s
 
 #########################################################################
