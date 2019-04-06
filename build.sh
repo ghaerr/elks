@@ -34,13 +34,7 @@ clean_exit () {
 . tools/env.sh
 
 # Check tools
-if [ ! -x "$CROSSDIR/bin/ia16-elf-gcc" ]
-	then
-	echo "ERROR: GCC-IA16 not found. You must build the cross tools"
-	echo "       before attempting to build ELKS. Run tools/build.sh"
-	echo "       to automatically build that cross tools. Aborting."
-	clean_exit 1
-fi
+test ! -x "$CROSSDIR/bin/ia16-elf-gcc" && tools/build.sh || clean_exit 1
 
 # Working directory
 WD="$(pwd)"
