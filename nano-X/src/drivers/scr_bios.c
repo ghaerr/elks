@@ -37,6 +37,7 @@
 
 #if ELKS
 #include <linuxmt/ntty.h>
+#include <sys/ioctl.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>

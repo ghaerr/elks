@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
 #if UNIX
 #include <fcntl.h>
 #include <unistd.h>
@@ -13,6 +14,9 @@
 #endif
 #include "nano-X.h"
 
+#if ELKS
+#undef index
+#endif
 
 #define	MINSIZE		3		/* minimum size of board */
 #define MAXSIZE		30		/* maximum size of board */
@@ -1258,7 +1262,7 @@ readgame(name)
 		return;
 	}
 
-	if (read(fd, &st, sizeof(st)) != sizeof(st))
+	if (read(fd, (char *)&st, sizeof(st)) != sizeof(st))
 		magic = 0;
 	close(fd);
 
@@ -1286,7 +1290,7 @@ writegame(name)
 	if (fd < 0)
 		return GR_TRUE;
 
-	if (write(fd, &st, sizeof(st)) != sizeof(st)) {
+	if (write(fd, (char *)&st, sizeof(st)) != sizeof(st)) {
 		close(fd);
 		return GR_TRUE;
 	}

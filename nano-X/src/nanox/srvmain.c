@@ -18,6 +18,7 @@
 #if ELKS
 #include <linuxmt/posix_types.h>
 #include <linuxmt/time.h>
+#include <sys/select.h>
 #endif
 
 /*

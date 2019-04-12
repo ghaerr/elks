@@ -20,10 +20,10 @@ syscall1.o: syscall1.s
 syslib.o: syslib.c
 signal.o: signal.c
 exec.o: exec.c
-setjmp.o: setjmp.s
-setjmp.s: setjmp.S
+setjmp.o: setjmp.S
+#setjmp.s: setjmp.S
 
 clean:
-	rm -f *.o setjmp.s
+	rm -f *.o
 	rm -f syscall.dat syscall1.s
 	rm -f call_tab.v defn_tab.v

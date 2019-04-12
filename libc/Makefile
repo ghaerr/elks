@@ -38,12 +38,13 @@ $(LIBC):: $(SUBDIRS)
 
 $(SUBDIRS):
 	$(MAKE) -C $@ all
+	sleep 1
 
-crt0.s: crt0.S
-crt0.o: crt0.s
+#crt0.s: crt0.S
+crt0.o: crt0.S
 
 .PHONY: clean
 
 clean:
 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR clean || exit 1; done
-	rm -f crt0.s *.o libc.a
+	rm -f *.o libc.a

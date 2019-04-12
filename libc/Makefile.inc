@@ -22,10 +22,12 @@ LIBC=$(TOPDIR)/libc/libc.a
 LIB_CPU=i86
 LIB_OS=ELKS
 
-.S.o: ;
+#.S.o: ;
 
-.S.s:
-	gcc -E -traditional $(INCS) $(SDEFS) -o $*.s $<
+.S.o:
+	gcc -E -traditional $(INCS) $(SDEFS) -o $*.tmp $<
+	$(AS) $(ASFLAGS) -o $*.o $*.tmp
+	rm -f $*.tmp
 
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<
