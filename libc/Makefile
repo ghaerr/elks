@@ -38,7 +38,6 @@ $(LIBC):: $(SUBDIRS)
 
 $(SUBDIRS):
 	$(MAKE) -C $@ all
-	sleep 1
 
 #crt0.s: crt0.S
 crt0.o: crt0.S

@@ -23,7 +23,7 @@
 
 #include <stdio.h>			/* fprintf */
 
-//#include <sys/sysmacros.h>		/* We NEED these macros */
+#include <sys/sysmacros.h>		/* We NEED these macros */
 #include <sys/stat.h>
 #include <sys/types.h>			/* unistd.h needs this */
 
