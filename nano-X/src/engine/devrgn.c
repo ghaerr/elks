@@ -84,6 +84,7 @@ SOFTWARE.
  */
 #include <stdio.h>
 #include <malloc.h>
+#include <string.h>
 #include "device.h"
 
 typedef void (*voidProcp)();

@@ -6,11 +6,13 @@
  * ported to 16 bit systems by Greg Haerr
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "nano-X.h"
 
-#if MSDOS
+#if MSDOS | ELKS
 #include <fcntl.h>
+#include <unistd.h>
 #endif
 
 #ifndef O_BINARY
@@ -147,6 +149,7 @@ static	void	mintostr();
 
 int
 main(argc, argv)
+	int		argc;
 	char	**argv;
 {
 	GR_SCREEN_INFO	si;
@@ -528,7 +531,7 @@ load(fn)
 		exit(1);
 	}
 
-	while ((n = read(fh, p, PCount * POINTSize)) > 0) {
+	while ((n = read(fh, (char *)p, PCount * POINTSize)) > 0) {
 		for (pp = p,pend = p + n/POINTSize; pp < pend; pp++)
 		{
 			/* do displacement */

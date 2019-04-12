@@ -13,6 +13,7 @@
  * Bradley D. LaRonde added absolute coordinates and z (pen pressure) Oct-1999
  */
 #include "device.h"
+#include <string.h>
 
 static COORD	xpos;		/* current x position of mouse */
 static COORD	ypos;		/* current y position of mouse */

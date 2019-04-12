@@ -129,6 +129,7 @@ extern int fprintf __P ((FILE*, __const char*, ...));
 extern int sprintf __P ((char*, __const char*, ...));
 
 int vfprintf (FILE * stream, const char * format, va_list ap);
+int vsprintf (char * sp, const char * format, va_list ap);
 
 #define stdio_pending(fp) ((fp)->bufread>(fp)->bufpos)
 
