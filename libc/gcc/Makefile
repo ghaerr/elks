@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS = divmodsi3.s ldivmod.s
+SRCS = divmodsi3.s ldivmod.s ashlsi3.s
 OBJS = $(SRCS:.s=.o)
 
 all: $(LIBC) 
