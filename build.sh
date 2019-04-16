@@ -34,7 +34,8 @@ clean_exit () {
 . tools/env.sh
 
 # Check tools
-test ! -x "$CROSSDIR/bin/ia16-elf-gcc" && tools/build.sh || clean_exit 1
+mkdir -p "$CROSSDIR"
+test -x "$CROSSDIR/bin/ia16-elf-gcc" || tools/build.sh || clean_exit 1
 
 # Working directory
 WD="$(pwd)"
