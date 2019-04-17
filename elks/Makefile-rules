@@ -260,13 +260,13 @@ elks:
 
 doclean: $(CLEANDEP)
 	rm -fv *~ *.a *.bak *.lint *.map *.o *.tmp core $(CLEANME)
-	@for FILE in *.s ; do \
-		BASE=`basename "$$FILE" .s` ; \
-		if [ -f "$$BASE.c" -o -f "$$BASE.S" ]; then \
-			echo rm -fv "$$FILE" ; \
-			rm -fv "$$FILE" ; \
-		fi ; \
-	done
+#	@for FILE in *.s ; do \
+#		BASE=`basename "$$FILE" .s` ; \
+#		if [ -f "$$BASE.c" -o -f "$$BASE.S" ]; then \
+#			echo rm -fv "$$FILE" ; \
+#			rm -fv "$$FILE" ; \
+#		fi ; \
+#	done
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
 			${MAKE} -C "$$DIR" doclean ; \

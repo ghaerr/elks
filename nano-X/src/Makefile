@@ -49,8 +49,7 @@ NANOXDEMO += demos/nanox/world.o
 NANOXDEMO += demos/nanox/nclock.o
 # works if pseudo tty enabled in ELKS menuconfig
 NANOXDEMO += demos/nanox/nterm.o
-# demo outtable[] is too large
-#NANOXDEMO += demos/nanox/demo.o
+NANOXDEMO += demos/nanox/demo.o
 NANOXDEMO += demos/nanox/demo2.o
 #NANOXDEMO += demos/nanox/info.o
 
@@ -81,9 +80,9 @@ endif
 
 ## mouse driver
 # serial mouse
-#SERVFILES += drivers/mou_ser.o
+SERVFILES += drivers/mou_ser.o
 # qemu mouse
-SERVFILES += drivers/mou_ser_qemu.o
+#SERVFILES += drivers/mou_ser_qemu.o
 # no mouse
 #SERVFILES += drivers/mou_null.o
 
@@ -107,11 +106,12 @@ nano-X: $(SERVFILES) $(NANOXFILES) $(NANOXDEMO)
 ifdef GCC
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nanox/nterm.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nterm $(LDLIBS)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nanox/world.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/world $(LDLIBS)
+	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nanox/demo.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/demo $(LDLIBS)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nanox/demo2.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/demo2 $(LDLIBS)
 # nclock missing gmtime
-#	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nanox/nclock.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nclock $(LDLIBS)
+	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nanox/nclock.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nclock $(LDLIBS)
 # landmine missing rand/srand
-#	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nanox/landmine.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/landmine $(LDLIBS)
+	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nanox/landmine.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/landmine $(LDLIBS)
 else
 	$(CC) $(CFLAGS) $(NANOXFILES) demos/nanox/landmine.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/landmine $(MATHLIB)
 	$(CC) $(CFLAGS) $(NANOXFILES) demos/nanox/nterm.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nterm $(MATHLIB)	

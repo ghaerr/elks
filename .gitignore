@@ -2,6 +2,7 @@
 # IDE local settings
 #
 .project
+.DS_Store
 
 #
 # Build ignores

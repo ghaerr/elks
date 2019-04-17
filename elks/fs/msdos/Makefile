@@ -46,7 +46,7 @@ OBJS  = namei.o inode.o file.o dir.o misc.o fat.o
 all:	msdos.a
 
 msdos.a: $(OBJS)
-	ar rcs msdos.a $(OBJS)
+	$(AR) rcs msdos.a $(OBJS)
 
 #########################################################################
 # Standard commands.
