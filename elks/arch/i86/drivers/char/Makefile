@@ -50,23 +50,7 @@ endif
 all:	chr_drv.a
 
 chr_drv.a: $(OBJS)
-	ar rcs chr_drv.a $(OBJS)
-
-con_asm.s: con_asm.S
-
-con_asm.o: con_asm.s
-
-font.s: font.S
-
-font.o: font.s
-
-key_asm.s: key_asm.S
-
-key_asm.o: key_asm.s
-
-ser_asm.s: ser_asm.S
-
-ser_asm.o: ser_asm.s
+	$(AR) $(ARFLAGS) chr_drv.a $(OBJS)
 
 KeyMaps/keymaps.h:
 	$(MAKE) -C KeyMaps keymaps.h

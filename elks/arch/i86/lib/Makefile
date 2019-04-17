@@ -39,16 +39,6 @@ SRCS1= \
 	farlist.S seglist.S \
 	# end of list
 
-fmemcpyb.s:fmemcpyb.S
-fmemcpyw.s:fmemcpyw.S
-fmemcmpb.s:fmemcmpb.S
-fmemcmpw.s:fmemcmpw.S
-setupb.s:setupb.S
-setupw.s:setupw.S
-string.s:string.S
-farlist.s:farlist.S
-seglist.s:seglist.S
-
 OBJS1=$(SRCS1:.S=.o)
 
 # Non-precompiled assembly
@@ -98,7 +88,7 @@ LLOBJS  	=laddl.o landl.o lcmpl.o lcoml.o ldecl.o ldivl.o ldivul.o \
 all:	lib86.a
 
 lib86.a: $(OBJS)
-	ar rcs lib86.a $(OBJS)
+	$(AR) $(ARFLAGS) lib86.a $(OBJS)
 
 #########################################################################
 # Standard commands.

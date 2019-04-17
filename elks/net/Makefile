@@ -43,7 +43,7 @@ OBJS  = socket.o protocols.o ipv4/af_inet.o nano/af_nano.o unix/af_unix.o
 all:	net.a
 
 net.a: $(OBJS)
-	ar rcs net.a $(OBJS)
+	$(AR) $(ARFLAGS) net.a $(OBJS)
 
 #########################################################################
 # Standard commands.

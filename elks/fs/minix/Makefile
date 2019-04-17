@@ -43,7 +43,7 @@ OBJS  = bitmap.o dir.o file.o namei.o symlink.o truncate.o inode.o
 all:	minixfs.a
 
 minixfs.a: $(OBJS)
-	ar rcs minixfs.a $(OBJS)
+	$(AR) $(ARFLAGS) minixfs.a $(OBJS)
 
 #########################################################################
 # Standard commands.

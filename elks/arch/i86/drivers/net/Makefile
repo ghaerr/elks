@@ -35,7 +35,7 @@ endif
 all: net_drv.a
 
 net_drv.a: $(OBJS)
-	ar rcs net_drv.a $(OBJS)
+	$(AR) $(ARFLAGS) net_drv.a $(OBJS)
 
 #########################################################################
 ### Dependencies:

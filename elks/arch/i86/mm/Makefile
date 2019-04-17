@@ -40,12 +40,12 @@ OBJS  = init.o malloc.o user.o segment.o
 #########################################################################
 # Commands.
 
-segment.o:	segment.s
+#segment.o:	segment.s
 
 all:	mm.a
 
 mm.a: $(OBJS)
-	ar rcs mm.a $(OBJS)
+	$(AR) $(ARFLAGS) mm.a $(OBJS)
 
 #########################################################################
 # Standard commands.

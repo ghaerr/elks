@@ -67,12 +67,6 @@ XINCLUDE = $(BASEDIR)/include/arch/asm-offsets.h
 boot/bootsect:		boot/bootsect.o
 	$(LD) -0 -M $(ARCH_LD) -s -o boot/bootsect boot/bootsect.o > boot/bootsect.map
 
-boot/bootsect.o:	boot/bootsect.s
-
-boot/crt0.o:		boot/crt0.s
-
-boot/crt1.o:		boot/crt1.c
-
 boot/netbootsect:	boot/netbootsect.o
 	$(LD) $(LDFLAGS) -M $(ARCH_LD) -s -o boot/netbootsect boot/netbootsect.o > boot/netbootsect.map
 
@@ -82,8 +76,6 @@ boot/setup:		boot/setup.o
 	$(LD) -0 -M $(ARCH_LD) -s -o boot/setup boot/setup.o > boot/setup.tmp
 	sort -k3,4 boot/setup.tmp > boot/setup.map
 	rm -f boot/setup.tmp
-
-boot/setup.o:		boot/setup.s
 
 toolkit:
 	${MAKE} -C tools all
@@ -141,11 +133,15 @@ Image: boot/system toolkit
 else
 
 # Begin PC image build
+#fs/*.o kernel/*.o lib/*.o net/*.o net/*/*.o fs/minix/*.o arch/i86/kernel/*.o arch/i86/lib/*.o \
+#arch/i86/mm/*.o arch/i86/drivers/char/*.o arch/i86/drivers/block/*.o arch/i86/drivers/net/*.o \
+#
 
 boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
 	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -t -M $(ARCH_LD) \
 		$(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt1.o \
-		init/main.o $(ARCHIVES) $(DRIVERS) \
+		init/main.o \
+		$(ARCHIVES) $(DRIVERS) \
 		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.tmp ; \
 		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
 		rm -f $(ARCH_DIR)/boot/system.tmp )

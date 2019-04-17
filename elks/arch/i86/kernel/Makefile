@@ -47,19 +47,15 @@ endif
 #########################################################################
 # Commands.
 
-irqtab.o: irqtab.s
-
-bios16.o: bios16.s
-
-printreg.o: printreg.s
-
-entry.o: entry.s
-	as86 -0 -u -o entry.o entry.s
+entry.o: entry.S
+	gcc -E -traditional $(INCLUDES) $(CCDEFS) -o $*.tmp $<
+	as86 -0 -u -o entry.o entry.tmp
+	rm entry.tmp
 
 all:	akernel.a
 
 akernel.a: $(OBJS)
-	ar rcs akernel.a $(OBJS)
+	$(AR) $(ARFLAGS) akernel.a $(OBJS)
 
 entry.S: syscall.dat mkentry.sh
 	sh mkentry.sh > entry.tmp

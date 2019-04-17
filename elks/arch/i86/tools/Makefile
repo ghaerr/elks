@@ -50,8 +50,6 @@ endif
 
 wrt_disk.o: wrt_disk.c
 
-file.o: file.s
-
 wrt_disk.tmp: wrt_disk.o file.o
 	ld86 -0 -i -D $(DATA_SEG) -H $(HEAP_SEG) -o wrt_disk.tmp \
 		wrt_disk.o file.o \

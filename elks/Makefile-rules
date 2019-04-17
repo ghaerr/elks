@@ -57,7 +57,7 @@ include $(TOPDIR)/Make.defs
 
 VERSION 	= 0	# (0-255)
 PATCHLEVEL	= 2	# (0-255)
-SUBLEVEL	= 0	# (0-255)
+SUBLEVEL	= 2	# (0-255)
 #PRE		= 1	# (0-255)	If not a pre, comment this line.
 
 #########################################################################
@@ -216,7 +216,6 @@ endif
 ################################
 # Common definitions
 
-AR		= ar
 CC_PROTO	= gcc $(INCLUDES) -M -MG $(CCDEFS)
 CFLBASE 	= $(INCLUDES) $(CCDEFS)
 CPP		= $(CC) $(INCLUDES) -E $(CCDEFS) -ansi
@@ -233,6 +232,8 @@ ifeq ($(USEIA16), y)
 ################################
 # Definitions using ia16-unknown-elks-gcc compiler
 
+AR		= ar
+ARFLAGS	= rcs
 AS		= as86
 ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
 CC		= $(MK_CC)
@@ -244,6 +245,9 @@ else
 ################################
 # Definitions using BCC compiler
 
+AR		= ar86
+# ar86 broken using rcs, must use rc
+ARFLAGS	= rc
 AS		= as86
 ASFLAGS 	= $(CPU_AS) $(ARCH_AS)
 CC		= bcc
@@ -270,13 +274,19 @@ endif
 #########################################################################
 # general construction rules
 
-.S.o: ;
-
-.S.s:
-	gcc -E -traditional $(INCLUDES) $(CCDEFS) -o $*.s $<
+.S.o:
+	gcc -E -traditional $(INCLUDES) $(CCDEFS) $< > $*.tmp
+	$(AS) $(ASFLAGS) -o $*.o $*.tmp
+	rm $*.tmp
 
 .s.o:
+ifeq ($(shell uname),Darwin)
+	gcc -E -traditional $(INCLUDES) $(CCDEFS) $< > $*.tmp
+	$(AS) $(ASFLAGS) -o $*.o $*.tmp
+	rm $*.tmp
+else
 	$(AS) $(ASFLAGS) -o $*.o $<
+endif
 
 ifneq ($(USEBCC), N)
 ifeq ($(USEIA16), y)
@@ -306,13 +316,13 @@ elks:
 
 doclean: $(CLEANDEP)
 	rm -fv *~ *.a *.bak *.lint *.map *.o *.tmp core $(CLEANME)
-	@for FILE in *.s ; do \
-		BASE=`basename "$$FILE" .s` ; \
-		if [ -f "$$BASE.c" -o -f "$$BASE.S" ]; then \
-			echo rm -fv "$$FILE" ; \
-			rm -fv "$$FILE" ; \
-		fi ; \
-	done
+#	@for FILE in *.s ; do \
+#		BASE=`basename "$$FILE" .s` ; \
+#		if [ -f "$$BASE.c" -o -f "$$BASE.S" ]; then \
+#			echo rm -fv "$$FILE" ; \
+#			rm -fv "$$FILE" ; \
+#		fi ; \
+#	done
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" ]; then \
 			${MAKE} -C "$$DIR" doclean ; \

@@ -43,7 +43,7 @@ OBJS  = chqueue.o string.o
 all:	lib.a
 
 lib.a:	$(OBJS)
-	ar rcs lib.a $(OBJS)
+	$(AR) $(ARFLAGS) lib.a $(OBJS)
 
 #########################################################################
 # Standard rules.

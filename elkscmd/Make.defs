@@ -72,7 +72,7 @@ ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre$$//')
 ifeq ($(PLATFORM),i86-ELKS)
 	CC=bcc
 	CFLBASE=-0 -O -ansi
-	LDFLAGS=-s -ansi
+	LDFLAGS=-s -ansi -L$(TOPDIR)/cross/build/dev86/libc
 	CHECK=gcc -c -o .null.o -Wall -pedantic
 endif
 
