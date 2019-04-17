@@ -1,7 +1,7 @@
 CFLAGS = -g -I../server/nanox
 LDFLAGS = -g -L../server -lnano-X
 BINDIR = .
-PROGS = info wait demo landmine world demo2
+PROGS = info demo landmine world demo2
 
 all:	$(PROGS)
 
@@ -23,9 +23,6 @@ world: world.c
 
 info: info.c
 	$(CC) $(CFLAGS) -o info info.c $(LDFLAGS)
-
-wait: wait.c
-	$(CC) $(CFLAGS) -o wait wait.c $(LDFLAGS)
 
 demo2: demo2.c
 	$(CC) $(CFLAGS) -o demo2 demo2.c $(LDFLAGS)

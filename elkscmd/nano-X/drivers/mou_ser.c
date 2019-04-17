@@ -38,7 +38,7 @@
 
 /* default settings*/
 #if ELKS
-#define	MOUSE_PORT	"/dev/ttys0"	/* default mouse tty port */
+#define	MOUSE_PORT	"/dev/ttyS0"	/* default mouse tty port */
 #else
 #define	MOUSE_PORT	"/dev/ttyS1"	/* default mouse tty port */
 #endif

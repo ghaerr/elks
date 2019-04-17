@@ -14,7 +14,7 @@
  */
 /*#define NDEBUG*/
 #include <stdio.h>
-#include <assert.h>
+/*#include <assert.h>*/
 #include "device.h"
 
 /*

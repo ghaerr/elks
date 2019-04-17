@@ -235,7 +235,7 @@ HERC_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c)
 
 	/*NON Optimized version left in case my one goes wroung */
 	/*while(x1 <= x2)
-	  HERC_drawpixel(x1++, y, c);*/
+	  HERC_drawpixel(psd, x1++, y, c);*/
 }
 
 static void
@@ -246,14 +246,14 @@ HERC_drawvline(PSD psd,COORD x, COORD y1, COORD y2, PIXELVAL c)
 	 * Driver doesn't support vline yet
 	 */
 	while(y1 <= y2)
-		HERC_drawpixel(x, y1++, c);
+		HERC_drawpixel(psd, x, y1++, c);
 }
 
 static void
 HERC_fillrect(PSD psd,COORD x1, COORD y1, COORD x2, COORD y2, PIXELVAL c)
 {
 	while(y1 <= y2)
-		HERC_drawhline(x1, x2, y1++, c);
+		HERC_drawhline(psd, x1, x2, y1++, c);
 }
 
 static void

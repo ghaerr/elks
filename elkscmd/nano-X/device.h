@@ -36,7 +36,7 @@
 typedef int		COORD;		/* device coordinates*/
 typedef int		MODE;		/* drawing mode*/
 typedef unsigned long	COLORVAL;	/* device-independent color value*/
-#ifdef __AS386_16__
+#if ELKS
 /* support up to 32 bit truecolor except on ELKS for size*/
 typedef unsigned char	PIXELVAL;	/* pixel color value*/
 #else

@@ -44,6 +44,8 @@
 #include "vgaplan4.h"
 #include "romfont.h"
 
+#define static
+
 /* VGA driver entry points*/
 static int  VGA_open(PSD psd);
 static void VGA_close(PSD psd);
