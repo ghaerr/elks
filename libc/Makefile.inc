@@ -14,11 +14,18 @@ AS=ia16-elf-as
 AR=ia16-elf-ar
 LD=ia16-elf-ld
 
-CFLAGS=$(ARCH) $(INCLUDES) $(CDEFS) -Wall -Os
+CFLAGS=$(ARCH) $(INCLUDES) $(CDEFS) -Wall -Os $(MULTILIB)
 ASFLAGS=-mtune=i8086
 LDFLAGS=-mtune=i8086
+# This is used in subdirectories to quickly create a library archive without
+# a symbol index
+ARFLAGS_SUB=cqS
 
+ifdef MULTISUBDIR
+LIBC=$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/libc_elks.a
+else
 LIBC=$(TOPDIR)/libc/libc.a
+endif
 LIB_CPU=i86
 LIB_OS=ELKS
 
@@ -28,6 +35,13 @@ LIB_OS=ELKS
 	gcc -E -traditional $(INCS) $(SDEFS) -o $*.tmp $<
 	$(AS) $(ASFLAGS) -o $*.o $*.tmp
 	rm -f $*.tmp
+
+ifdef MULTISUBDIR
+build-ml/$(MULTISUBDIR)/%.o: %.S
+	gcc -E -traditional $(INCS) $(SDEFS) -o $@.tmp $<
+	$(AS) $(ASFLAGS) -o $@ $@.tmp
+	rm -f $@.tmp
+endif
 
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<

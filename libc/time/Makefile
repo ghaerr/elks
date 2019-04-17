@@ -5,12 +5,13 @@ include $(TOPDIR)/libc/Makefile.inc
 SRCS= localtime.c ctime.c tm_conv.c asctime.c asc_conv.c
 OBJS= $(SRCS:.c=.o)
 
-all: $(LIBC)
-
 $(OBJS): $(SRCS)
 
-$(LIBC): $(OBJS)
-	$(AR) $(ARFLAGS) $@ $?
+all: out.a
+
+out.a: $(OBJS)
+	$(RM) $@
+	$(AR) $(ARFLAGS_SUB) $@ $^
 
 clean:
-	rm -f *.o
+	rm -f *.[ao]
