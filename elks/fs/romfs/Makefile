@@ -43,7 +43,7 @@ OBJS  = romfs.o
 all:	romfs.a
 
 romfs.a: $(OBJS)
-	ar rcs romfs.a $(OBJS)
+	$(AR) rcs romfs.a $(OBJS)
 
 #########################################################################
 # Standard commands.

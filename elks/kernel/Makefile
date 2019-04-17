@@ -44,7 +44,7 @@ OBJS  = sched.o printk.o sleepwake.o dma.o version.o sys.o fork.o \
 all:	kernel.a
 
 kernel.a: $(OBJS)
-	ar rcs kernel.a $(OBJS)
+	$(AR) rcs kernel.a $(OBJS)
 
 #########################################################################
 # Standard commands.

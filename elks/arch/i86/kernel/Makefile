@@ -50,7 +50,7 @@ endif
 all:	akernel.a
 
 akernel.a: $(OBJS)
-	ar rcs akernel.a $(OBJS)
+	$(AR) rcs akernel.a $(OBJS)
 
 entry.S: syscall.dat mkentry.sh
 	sh mkentry.sh > entry.tmp

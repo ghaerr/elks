@@ -38,6 +38,9 @@ $(LIBC):: $(SUBDIRS)
 
 $(SUBDIRS):
 	$(MAKE) -C $@ all
+ifeq ($(shell uname),Darwin)
+#	sleep 1
+endif
 
 #crt0.s: crt0.S
 crt0.o: crt0.S

@@ -206,7 +206,7 @@ GsSelect(void)
 
 	/* Set up the timeout for the main select(): */
 	to.tv_sec = 0L;
-	to.tv_usec = 10000L;
+	to.tv_usec = 100L;
 
 	/* Wait for some input on any of the fds in the set or a timeout: */
 	if((e = select(setsize, &rfds, NULL, NULL, &to)) > 0) {

@@ -4,7 +4,7 @@
  * NULL Mouse Driver
  */
 #include <stdio.h>
-#include "device.h"
+#include "../device.h"
 
 #define	SCALE		3	/* default scaling factor for acceleration */
 #define	THRESH		5	/* default threshhold for acceleration */
@@ -13,7 +13,7 @@ static int  	NUL_Open(MOUSEDEVICE *pmd);
 static void 	NUL_Close(void);
 static int  	NUL_GetButtonInfo(void);
 static void	NUL_GetDefaultAccel(int *pscale,int *pthresh);
-static int  	NUL_Read(MWCOORD *dx, MWCOORD *dy, MWCOORD *dz, int *bp);
+static int  	NUL_Read(COORD *dx, COORD *dy, COORD *dz, int *bp);
 static int  	NUL_Poll(void);
 
 MOUSEDEVICE mousedev = {

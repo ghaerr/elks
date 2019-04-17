@@ -45,7 +45,7 @@ OBJS  = buffer.o super.o bufops.o devices.o fcntl.o stat.o inode.o file_table.o 
 all:	fs.a
 
 fs.a:	$(OBJS)
-	ar rcs fs.a $(OBJS)
+	$(AR) rcs fs.a $(OBJS)
 
 #########################################################################
 # Standard commands.

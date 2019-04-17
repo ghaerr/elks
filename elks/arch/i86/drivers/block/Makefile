@@ -50,11 +50,7 @@ endif
 all:	blk_drv.a
 
 blk_drv.a: $(OBJS)
-	ar rcs blk_drv.a $(OBJS)
-
-ssd_asm.o: ssd_asm.s
-
-ssd_asm.s: ssd_asm.S
+	$(AR) rcs blk_drv.a $(OBJS)
 
 #########################################################################
 # Standard commands.

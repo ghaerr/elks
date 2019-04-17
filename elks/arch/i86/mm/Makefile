@@ -43,7 +43,7 @@ OBJS  = init.o malloc.o user.o segment.o
 all:	mm.a
 
 mm.a: $(OBJS)
-	ar rcs mm.a $(OBJS)
+	$(AR) rcs mm.a $(OBJS)
 
 #########################################################################
 # Standard commands.

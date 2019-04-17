@@ -4,20 +4,23 @@
 
 BASEDIR 	= ../..
 
-include $(BASEDIR)/Make.rules
+include $(BASEDIR)/Make.defs
 
 ###############################################################################
 
-CC=bcc
+LOCALFLAGS=-DELKS=1
 
-LOCALFLAGS=-DELKS
+VGALIB = scr_bios.o elkplan4.o mempl4.o elksutilasm.o romfont.o
+HERCLIB = scr_herc.o elksutilasm.o romfont.o
 
-VGALIB = scr_bios.o elkplan4.o mempl4.o elksutil.o romfont.o
-
-all: demo
+#all: demo demo-herc
+all: demo-herc
 
 demo: $(VGALIB) demo.o
-	$(CC) $(LDFLAGS) -o demo demo.o $(VGALIB) 
+	$(CC) $(CFLAGS) $(LDFLAGS) -o demo demo.o $(VGALIB) 
+
+demo-herc: $(HERCLIB) demo-herc.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o demo-herc demo-herc.o $(HERCLIB) 
 
 clean:
 	rm -f core demo *.o
