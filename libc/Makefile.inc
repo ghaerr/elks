@@ -29,8 +29,6 @@ endif
 LIB_CPU=i86
 LIB_OS=ELKS
 
-#.S.o: ;
-
 .S.o:
 	gcc -E -traditional $(INCS) $(SDEFS) -o $*.tmp $<
 	$(AS) $(ASFLAGS) -o $*.o $*.tmp
