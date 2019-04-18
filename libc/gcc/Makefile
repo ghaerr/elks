@@ -5,12 +5,13 @@ include $(TOPDIR)/libc/Makefile.inc
 SRCS = divmodsi3.s ldivmod.s ashlsi3.s
 OBJS = $(SRCS:.s=.o)
 
-all: $(LIBC) 
+all: out.a
 
-$(LIBC): $(OBJS)
-	$(AR) $(ARFLAGS) $@ $?
-
-$(OBJS): $(SRCS)
+out.a: $(OBJS)
+	$(RM) $@
+	$(AR) $(ARFLAGS_SUB) $@ $^
 
 clean:
-	rm -f *.o
+	rm -f *.[ao]
+
+$(OBJS): $(SRCS)

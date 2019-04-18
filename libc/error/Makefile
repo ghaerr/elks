@@ -5,12 +5,13 @@ include $(TOPDIR)/libc/Makefile.inc
 SRCS= __assert.c error.c perror.c
 OBJS= $(SRCS:.c=.o)
 
-all: $(LIBC)
-
 $(OBJS): $(SRCS)
 
-$(LIBC): $(OBJS)
-	$(AR) $(ARFLAGS) $@ $?
+all: out.a
+
+out.a: $(OBJS)
+	$(RM) $@
+	$(AR) $(ARFLAGS_SUB) $@ $^
 
 clean:
-	rm -f $(OBJS)
+	rm -f *.[ao]

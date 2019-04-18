@@ -11,10 +11,11 @@ SRCS = \
 
 OBJS = $(SRCS:.s=.o)
 
-all: $(LIBC)
+all: out.a
 
-$(LIBC): $(OBJS)
-	$(AR) $(ARFLAGS) $@ $?
+out.a: $(OBJS)
+	$(RM) $@
+	$(AR) $(ARFLAGS_SUB) $@ $^
 
 clean:
-	rm -f *.o
+	rm -f *.[ao]

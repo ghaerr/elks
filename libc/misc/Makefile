@@ -24,12 +24,13 @@ SRCS= \
 	
 OBJS= $(SRCS:.c=.o)
 
-all: $(LIBC)
-
 $(OBJS): $(SRCS)
 
-$(LIBC): $(OBJS)
-	$(AR) $(ARFLAGS) $@ $?
+all: out.a
+
+out.a: $(OBJS)
+	$(RM) $@
+	$(AR) $(ARFLAGS_SUB) $@ $^
 
 clean:
-	rm -f *.o
+	rm -f *.[ao]
