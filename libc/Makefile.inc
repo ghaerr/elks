@@ -22,7 +22,7 @@ LDFLAGS=-mtune=i8086
 ARFLAGS_SUB=cqS
 
 ifdef MULTISUBDIR
-LIBC=$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/libc_elks.a
+LIBC=$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/libc.a
 else
 LIBC=$(TOPDIR)/libc/libc.a
 endif

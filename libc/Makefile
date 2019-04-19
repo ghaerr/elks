@@ -82,7 +82,7 @@ $(LIBC):
 		flags="`echo "$$flags" | sed 's,@, -,g'`"; \
 		$(MAKE) MULTISUBDIR="$$dir" MULTILIB="$$flags" all; \
 	done
-	cp -u build-ml/libc_elks.a $(LIBC)
+	cp -u build-ml/libc.a $(LIBC)
 	cp -u build-ml/crt0.o crt0.o
 
 endif
