@@ -10,6 +10,7 @@
 	.global memset
 
 memset:
+#ifndef __IA16_CALLCVT_REGPARMCALL
 	push %bp
 	mov %sp,%bp
 
@@ -41,7 +42,28 @@ memset:
 
 	mov 4(%bp),%ax
 
-	pop %bp
+# ifdef __IA16_CALLCVT_STDCALL
+	ret $6
+# else
 	ret
+# endif
+#else
+	push %ax
+	mov %es, %bx
+
+	push %ds
+	pop %es
+	xchg %ax, %di
+	xchg %ax, %dx
+
+	cld
+	rep
+	stosb
+
+	mov %dx, %di
+	mov %bx, %es
+	pop %ax
+	ret
+#endif
 
 //------------------------------------------------------------------------------

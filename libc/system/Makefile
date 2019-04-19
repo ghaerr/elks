@@ -12,12 +12,12 @@ out.a: $(OBJS)
 	$(RM) $@
 	$(AR) $(ARFLAGS_SUB) $@ $^
 
-syscall1.s: syscall.awk $(SYSCALLDAT)
+syscall1.S: syscall.awk $(SYSCALLDAT)
 	tr '[A-Z]' '[a-z]' < $(SYSCALLDAT) > syscall.dat
-	awk -f $< syscall.dat > syscall1.s
+	awk -f $< syscall.dat > syscall1.S
 
-syscall0.o: syscall0.s
-syscall1.o: syscall1.s
+syscall0.o: syscall0.S
+syscall1.o: syscall1.S
 syslib.o: syslib.c
 signal.o: signal.c
 exec.o: exec.c

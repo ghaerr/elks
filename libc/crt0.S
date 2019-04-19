@@ -27,18 +27,28 @@ _startup:
 	shl $1,%ax
 	add %bx,%ax     // envp [0]
 	mov %ax,environ
+#ifndef __IA16_CALLCVT_REGPARMCALL
 	push %ax
 	push %bx
 	push %cx
+#else
+	xchg %ax,%cx	// argc and envp
+	mov %bx,%dx	// argv
+#endif
 	call main
 	add $6,%sp
+#ifndef __IA16_CALLCVT_REGPARMCALL
 	push %ax  // main return value
+#endif
 	call exit  // no return
 	int $3
 
 	.global exit
 
 exit:
+#ifdef __IA16_CALLCVT_REGPARMCALL
+	xchg %ax,%si
+#endif
 	push %bp
 	mov %sp,%bp
 	mov _cleanup,%bx
@@ -47,7 +57,11 @@ exit:
 	call *%bx
 
 _exit_end:
+#ifndef __IA16_CALLCVT_REGPARMCALL
 	push 4(%bp)  // exit code
+#else
+	xchg %ax,%si
+#endif
 	call _exit  // kernel one - no return
 	int $3
 

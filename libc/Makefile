@@ -72,7 +72,7 @@ all: $(LIBC)
 $(LIBC):
 	set -e; \
 	save_ifs="$$IFS"; \
-	$(CC) -print-multi-lib | fgrep -x '.;' | \
+	$(CC) -print-multi-lib | \
 	while read -r line; do \
 		IFS=';'; \
 		set -- $$line; \
