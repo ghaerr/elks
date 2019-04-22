@@ -1,16 +1,15 @@
 //------------------------------------------------------------------------------
 // #include <string.h>
-// void * memcpy (void * dest, const void * src, size_t n);
+// char * strcpy (char * dest, const char * src);
 //------------------------------------------------------------------------------
 
 	.code16
 
 	.text
 
-	.global memcpy
+	.global strcpy
 
-memcpy:
-#ifndef __IA16_CALLCVT_REGPARMCALL
+strcpy:
 	push %bp
 	mov %sp,%bp
 
@@ -21,23 +20,25 @@ memcpy:
 	mov %ds,%ax
 	mov %ax,%es
 
-	mov %si,%ax
-	mov %di,%bx
+	mov %si,%bx
+	mov %di,%cx
 
 	// Do the copy
 
 	mov 4(%bp),%di  // dest
 	mov 6(%bp),%si  // src
-	mov 8(%bp),%cx  // n
-
 	cld
-	rep
-	movsb
+
+_loop:
+	lodsb
+	stosb
+	test %al,%al
+	jnz _loop
 
 	// Restore SI DI ES
 
-	mov %ax,%si
-	mov %bx,%di
+	mov %bx,%si
+	mov %cx,%di
 
 	mov %dx,%es
 
@@ -46,30 +47,7 @@ memcpy:
 	mov 4(%bp),%ax
 
 	pop %bp
-# ifdef __IA16_CALLCVT_STDCALL
-	ret $6
-# else
 	ret
-# endif
-#else
-	push %ax
-	mov %es, %bx
-
-	push %ds
-	pop %es
-	xchg %ax, %di
-	xchg %dx, %si
-
-	cld
-	rep
-	movsb
-
-	xchg %ax, %di
-	mov %dx, %si
-
-	mov %bx, %es
-	pop %ax
-	ret
-#endif
 
 //------------------------------------------------------------------------------
+

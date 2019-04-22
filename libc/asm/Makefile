@@ -3,13 +3,13 @@
 include $(TOPDIR)/libc/Makefile.inc
 
 SRCS = \
-    memcpy-s.S \
-    memset-s.S \
-    strcpy-s.S \
-    strlen-s.S \
+    memcpy-s.s \
+    memset-s.s \
+    strcpy-s.s \
+    strlen-s.s \
     # end of list
 
-OBJS = $(SRCS:.S=.o)
+OBJS = $(SRCS:.s=.o)
 
 all: out.a
 
