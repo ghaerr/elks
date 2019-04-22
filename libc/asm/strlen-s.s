@@ -10,7 +10,6 @@
 	.global strlen
 
 strlen:
-#ifndef __IA16_CALLCVT_REGPARMCALL
 	push %bp
 	mov %sp,%bp
 
@@ -43,33 +42,7 @@ strlen:
 	mov %dx,%es
 
 	pop %bp
-# ifdef __IA16_CALLCVT_STDCALL
-	ret $2
-# else
 	ret
-# endif
-#else
-	mov %es, %dx
-	mov %di, %bx
-
-	mov %ds, %cx
-	mov %cx, %es
-	xchg %ax, %di
-	mov $-1, %cx
-	xor %al, %al
-
-	cld
-	repne
-	scasb
-
-	xchg %ax, %cx
-	not %ax
-	dec %ax
-
-	mov %bx, %di
-	mov %dx, %es
-	ret
-#endif
 
 //------------------------------------------------------------------------------
 

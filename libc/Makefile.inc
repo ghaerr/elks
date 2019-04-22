@@ -22,7 +22,7 @@ LDFLAGS=-mtune=i8086
 ARFLAGS_SUB=cqS
 
 ifdef MULTISUBDIR
-LIBC=$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/libc.a
+LIBC=$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/libc_elks.a
 else
 LIBC=$(TOPDIR)/libc/libc.a
 endif
@@ -30,13 +30,13 @@ LIB_CPU=i86
 LIB_OS=ELKS
 
 .S.o:
-	$(CC) -E -traditional $(INCS) $(SDEFS) $(MULTILIB) -o $*.tmp $<
+	gcc -E -traditional $(INCS) $(SDEFS) -o $*.tmp $<
 	$(AS) $(ASFLAGS) -o $*.o $*.tmp
 	rm -f $*.tmp
 
 ifdef MULTISUBDIR
 build-ml/$(MULTISUBDIR)/%.o: %.S
-	$(CC) -E -traditional $(INCS) $(SDEFS) $(MULTILIB) -o $@.tmp $<
+	gcc -E -traditional $(INCS) $(SDEFS) -o $@.tmp $<
 	$(AS) $(ASFLAGS) -o $@ $@.tmp
 	rm -f $@.tmp
 endif
