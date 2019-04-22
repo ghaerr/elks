@@ -9,6 +9,7 @@
 #	'-' = Obsolete/not required
 #	'@' = May be required later
 #	'=' = Depends on stated config variable
+#	'!' = Last argument is optional in libc routine (variadic)
 #
 #	An initial plus on the call number specifies that this call is
 #	implemented in the kernel.
@@ -22,7 +23,7 @@ exit		+1	1	* c exit does stdio, _exit in crt0
 fork		+2	0	 
 read		+3	3	 
 write		+4	3	 
-open		+5	3	 
+open		+5	3	!
 close		+6	1	 
 wait4		+7	4
 creat		8	0	- Not needed alias for open
@@ -67,11 +68,11 @@ setgid		+46	1
 getgid		47	1	* this gets both gid and egid
 signal		+48	2	* have put the despatch table in user space.
 getinfo		49	1	@ possible? gets pid,ppid,uid,euid etc
-fcntl		+50	3	 
+fcntl		+50	3	!
 acct		51	1	@ Accounting to named file (off if null)
 phys		52	3	- Replaced by mmap()
 lock		53	1	@ Prevent swapping for this proc if flg!=0
-ioctl		+54	3	. make this and fcntl the same ?
+ioctl		+54	3	! make this and fcntl the same ?
 reboot		+55	3	. the magic number is 0xfee1,0xdead,...
 mpx		56	2	- Replaced by fifos and select.
 lstat		+57	2

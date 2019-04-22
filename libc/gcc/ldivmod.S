@@ -1,8 +1,8 @@
 /*
 ! ldivmod.s - 32 over 32 to 32 bit division and remainder for 8086
 
-! ldivmod( dividend bx:ax, divisor di:cx )  [ signed quot di:cx, rem bx:ax ]
-! ludivmod( dividend bx:ax, divisor di:cx ) [ unsigned quot di:cx, rem bx:ax ]
+! _ldivmod( dividend bx:ax, divisor di:cx )  [ signed quot di:cx, rem bx:ax ]
+! _ludivmod( dividend bx:ax, divisor di:cx ) [ unsigned quot di:cx, rem bx:ax ]
 
 ! dx is not preserved
 
@@ -32,11 +32,11 @@
 
 	.code16
 
-	.global	ldivmod
+	.global	_ldivmod
 	.text
 	.align 1
 
-ldivmod:
+_ldivmod:
 	mov	%di,%dx		// sign byte of b in dh
 	mov	%bh,%dl 	// sign byte of a in dl
 	test	%di,%di
@@ -53,10 +53,10 @@ set_asign:
 	sbb	$0,%bx
 	jmp	got_signs
 
-	.global	ludivmod
+	.global	_ludivmod
 	.align 1
 
-ludivmod:
+_ludivmod:
 	xor	%dx,%dx		// both sign bytes 0
 
 got_signs:

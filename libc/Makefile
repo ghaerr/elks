@@ -72,7 +72,7 @@ all: $(LIBC)
 $(LIBC):
 	set -e; \
 	save_ifs="$$IFS"; \
-	$(CC) -print-multi-lib | fgrep -x '.;' | \
+	$(CC) -print-multi-lib | \
 	while read -r line; do \
 		IFS=';'; \
 		set -- $$line; \
@@ -82,8 +82,8 @@ $(LIBC):
 		flags="`echo "$$flags" | sed 's,@, -,g'`"; \
 		$(MAKE) MULTISUBDIR="$$dir" MULTILIB="$$flags" all; \
 	done
-	cp -u build-ml/libc_elks.a $(LIBC)
-	cp -u build-ml/crt0.o crt0.o
+	cp -u build-ml/libc.a $(LIBC) || cp build-ml/libc.a $(LIBC)
+	cp -u build-ml/crt0.o crt0.o || cp build-ml/crt0.o crt0.o
 
 endif
 

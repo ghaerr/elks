@@ -10,6 +10,7 @@
 	.global strcpy
 
 strcpy:
+#ifndef __IA16_CALLCVT_REGPARMCALL
 	push %bp
 	mov %sp,%bp
 
@@ -47,7 +48,34 @@ _loop:
 	mov 4(%bp),%ax
 
 	pop %bp
+# ifdef __IA16_CALLCVT_STDCALL
+	ret $4
+# else
 	ret
+# endif
+#else
+	push %ax
+	mov %es, %bx
+
+	mov %ds, %cx
+	mov %cx, %es
+	mov %di, %cx
+	xchg %ax, %di
+	xchg %dx, %si
+	cld
+
+_loop:
+	lodsb
+	stosb
+	test %al, %al
+	jnz _loop
+
+	mov %cx, %di
+	mov %dx, %si
+	mov %bx, %es
+	pop %ax
+	ret
+#endif
 
 //------------------------------------------------------------------------------
 

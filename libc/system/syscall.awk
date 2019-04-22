@@ -6,6 +6,7 @@ BEGIN {
 	print "\t.extern _syscall_0";
 	print "\t.extern _syscall_1";
 	print "\t.extern _syscall_2";
+	print "\t.extern _syscall_2va";
 	print "\t.extern _syscall_3";
 	print "\t.extern _syscall_4";
 	print "\t.extern _syscall_5\n";
@@ -28,8 +29,13 @@ BEGIN {
 	printf ("// CALL %s \n\n", $0);
 	printf ("\t.global %s\n\n", funcname);
 	printf ("%s:\n", funcname);
+	printf ("#ifndef __IA16_CALLCVT_REGPARMCALL\n");
 	printf ("\tmov $%d,%%ax\n", callno);
-	printf ("\tjmp _syscall_%d\n\n", $3);
+	printf ("#else\n");
+	printf ("\tmov $%d,%%bx\n", callno);
+	printf ("#endif\n");
+	if ($4 != "!" || $3 < 1) printf ("\tjmp _syscall_%d\n\n", $3);
+	else printf ("\tjmp _syscall_%dva\n\n", $3 - 1);
 }
 END {
 	for (i = 0; i <= max_call; i++)
