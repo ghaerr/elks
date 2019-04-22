@@ -210,7 +210,7 @@ static int unix_connect(struct socket *sock,
 /*    if (sock->state == SS_CONNECTED)
 	return -EISCONN;*/	/*Already checked in socket.c*/
 
-    if (get_user(&(((sockaddr_un *)uservaddr)->sun_family)) != AF_UNIX)
+    if (get_user(&(((struct sockaddr_un *)uservaddr)->sun_family)) != AF_UNIX)
 	return -EINVAL;
 
     memcpy_fromfs(&sockun, uservaddr, sockaddr_len);
