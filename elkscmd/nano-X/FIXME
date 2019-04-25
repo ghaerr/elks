@@ -1,0 +1,14 @@
+nterm broken?
+
+test mouse drivers on ttyS0 adn VB?
+
+
+romfont.c: ROM_CHAR_HEIGHT forced to 14
+
+demo/stubs.c for rand/srand
+	time() takes .5 second to return!!!!
+
+old:
+	nanox/srvmain.c mouse open later
+	drivers/romfont.c ROM_CHAR_HEIGHT
+	Makefile move mouse driver to top
