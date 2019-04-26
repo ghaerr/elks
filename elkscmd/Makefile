@@ -31,6 +31,7 @@ SUBDIRS =       \
 	minix3      \
 	misc_utils  \
 	mtools      \
+	nano-X      \
 	prems       \
 	prn-utils   \
 	test        \
@@ -92,6 +93,10 @@ endif
 
 ifeq ($(CONFIG_APP_MISC_UTILS), y)
 BUILDDIRS += misc_utils
+endif
+
+ifeq ($(CONFIG_APP_NANOX), y)
+BUILDDIRS += nano-X
 endif
 
 ifeq ($(CONFIG_APP_PREMS), y)

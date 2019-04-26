@@ -31,6 +31,7 @@ mainmenu_option next_comment
 	bool 'minix3'     CONFIG_APP_MINIX3     y
 	bool 'miscutils'  CONFIG_APP_MISC_UTILS y
 	bool 'mtools'     CONFIG_APP_MTOOLS     y
+	bool 'nano-X'     CONFIG_APP_NANOX      n
 	bool 'prems'      CONFIG_APP_PREMS      y
 	bool 'prnutils'   CONFIG_APP_PRN_UTILS  y
 	bool 'sysutils'   CONFIG_APP_SYS_UTILS  y

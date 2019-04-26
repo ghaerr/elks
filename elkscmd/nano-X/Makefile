@@ -76,13 +76,13 @@ nano-X: $(SERVFILES) $(NANOXFILES) $(NANOXDEMO)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/world.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/world $(MATHLIB) $(LDLIBS)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/landmine.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/landmine $(MATHLIB) $(LDLIBS)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nterm.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nterm $(MATHLIB) $(LDLIBS)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nclock.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nclock $(MATHLIB) $(LDLIBS)
+	#$(LD) $(LDFLAGS) $(NANOXFILES) demos/nclock.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nclock $(MATHLIB) $(LDLIBS)
 	cp demos/world.map bin/world.map
 
 nano-Xd: $(SERVFILES) $(NANOXFILES)
 	$(LD) $(LDFLAGS) $(NANOXFILES) $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nano-X $(MATHLIB) $(LDFLAGS)
 
-#only a few demos work in client/server mode	
+#only a few demos work in client/server mode
 demo: $(NANOXDEMO) libnano-X.a
 #	$(LD) $(LDFLAGS) $(NANOXDEMO) $(DEMOLIBS) -o bin/demo $(LDFLAGS)
 	$(LD) $(LDFLAGS) demos/demo.o $(DEMOLIBS) -o bin/demo $(MATHLIB) $(LDFLAGS)
@@ -92,4 +92,9 @@ demo: $(NANOXDEMO) libnano-X.a
 	$(LD) $(LDFLAGS) demos/demo2.o $(DEMOLIBS) -o bin/demo2 $(MATHLIB) $(LDFLAGS)
 #	$(LD) $(LDFLAGS) demos/world.o $(DEMOLIBS) -o bin/world $(MATHLIB) $(LDFLAGS)
 #	cp demos/world.map bin/world.map
-#	cp demos/demo.sh bin/demo.sh	
+#	cp demos/demo.sh bin/demo.sh
+
+.PHONY: install
+
+install:
+	sudo install bin/demo $(TARGET_MNT)/bin/demo
