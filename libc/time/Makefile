@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS= localtime.c ctime.c tm_conv.c asctime.c asc_conv.c
+SRCS= gmtime.c localtime.c ctime.c tm_conv.c asctime.c asc_conv.c
 OBJS= $(SRCS:.c=.o)
 
 $(OBJS): $(SRCS)

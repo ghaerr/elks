@@ -20,6 +20,7 @@ SRCS= \
 	strtol.c \
 	system.c \
 	tmpnam.c \
+	rand.c \
 	# end of list
 	
 OBJS= $(SRCS:.c=.o)

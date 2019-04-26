@@ -1,3 +1,4 @@
+cp 	~greg/net/bootimages/elks/test.bak ~greg/net/bootimages/elks/test.img
 /tmp/mfstool ~greg/net/bootimages/elks/test.img stat
 #/tmp/mfstool ~greg/net/bootimages/elks/test.img rm /usr/bin/mdir /usr/bin/mread /usr/bin/mwrite
 #/tmp/mfstool ~greg/net/bootimages/elks/test.img rm /usr/bin/mdel /usr/bin/mtype /usr/bin/mmd
@@ -10,4 +11,6 @@
 #/tmp/mfstool ~greg/net/bootimages/elks/test.img cp bin/demo-vga /usr/bin/demo-vga
 /tmp/mfstool ~greg/net/bootimages/elks/test.img cp bin/landmine /usr/bin/landmine
 /tmp/mfstool ~greg/net/bootimages/elks/test.img cp bin/nterm /usr/bin/nterm
+/tmp/mfstool ~greg/net/bootimages/elks/test.img cp bin/nclock /usr/bin/nclock
 /tmp/mfstool ~greg/net/bootimages/elks/test.img ls -l /usr/bin
+/tmp/mfstool ~greg/net/bootimages/elks/test.img stat
