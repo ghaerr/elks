@@ -383,6 +383,8 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	} else
 	    printk("bioshd_open: no diskinfo %d\n", target);
 
+	printk("fd: /dev/fd%d BIOS: %d sectors, %d cylinders\n",
+   		target, drivep->sectors, drivep->cylinders);
 #else
 /* probing range can be easily extended by adding more values to these
  * two lists and adjusting for loop' parameters in line 433 and 446 (or
