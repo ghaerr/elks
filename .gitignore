@@ -37,6 +37,7 @@ target
 #
 # Debugging stuff
 #
+*.map
 core
 .gdb_history
 .gdbinit

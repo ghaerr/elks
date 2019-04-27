@@ -36,7 +36,7 @@ __asm__ __volatile__("pushw %0\n" \
 	asm volatile ("cli": : :"memory")
 
 #define irq_enable(_x) \
-	asm volatile ("sti": : :"memory");
+	asm volatile ("sti": : :"memory")
 
 #define clr_irq irq_disable
 #define set_irq irq_enable

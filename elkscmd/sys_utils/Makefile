@@ -34,8 +34,8 @@ mount: mount.o
 umount: umount.o
 	$(LD) $(LDFLAGS) -o umount umount.o $(LDLIBS)
 
-passwd: getpass.o passwd.o putpwent.o
-	$(LD) $(LDFLAGS) -o passwd getpass.o passwd.o putpwent.o $(LDLIBS)
+passwd: getpass.o passwd.o
+	$(LD) $(LDFLAGS) -o passwd getpass.o passwd.o $(LDLIBS)
 
 reboot: reboot.o
 	$(LD) $(LDFLAGS) -o reboot reboot.o $(LDLIBS)

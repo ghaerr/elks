@@ -41,6 +41,5 @@ bool_t _wait_event (cond_t * c, bool_t i)
 		wait_clear ((struct wait_queue *) c);
 	}
 
-	// FIXME: missing signal test when interrupted
 	return res;
 }

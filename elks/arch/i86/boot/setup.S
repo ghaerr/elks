@@ -361,8 +361,8 @@ no_psmouse:
    	cmpw $KERNEL_MAGICNUMBER,0
    	jne aouterr
 
-   	cmpb $0x04,3   // processor type = 8086
-   	jne test1
+	cmpb $0x04,3   // processor type = 8086
+	jne test1
 	jmp aout_ok
 
 test1:

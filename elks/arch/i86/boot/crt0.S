@@ -7,8 +7,9 @@
 
 //	Assembler boot strap hooks. This is called by setup
 
-    .code16
+	.code16
 	.text
+
 	.global entry
 	.extern	start_kernel
 	.extern arch_boot
