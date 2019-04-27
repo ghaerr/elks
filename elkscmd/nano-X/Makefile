@@ -22,7 +22,7 @@ LINK_APP_INTO_SERVER=1
 NANOXFILES = nanox/srvmain.o nanox/srvfunc.o nanox/srvutil.o nanox/srvevent.o
 CLNTFILES = nanox/client.o
 NETFILES = nanox/srvnet.o
-STUBFILES = nanox/stubs.o demos/stubs.o
+STUBFILES = nanox/stubs.o
 
 # nano-X demo programs 
 NANOXDEMO =  demos/demo.o
@@ -76,7 +76,7 @@ nano-X: $(SERVFILES) $(NANOXFILES) $(NANOXDEMO)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/world.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/world $(MATHLIB) $(LDLIBS)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/landmine.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/landmine $(MATHLIB) $(LDLIBS)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nterm.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nterm $(MATHLIB) $(LDLIBS)
-	#$(LD) $(LDFLAGS) $(NANOXFILES) demos/nclock.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nclock $(MATHLIB) $(LDLIBS)
+	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nclock.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nclock $(MATHLIB) $(LDLIBS)
 	cp demos/world.map bin/world.map
 
 nano-Xd: $(SERVFILES) $(NANOXFILES)
