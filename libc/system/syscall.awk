@@ -6,6 +6,7 @@ BEGIN {
 	print "\t.extern _syscall_0";
 	print "\t.extern _syscall_1";
 	print "\t.extern _syscall_2";
+	print "\t.extern _syscall_2p";
 	print "\t.extern _syscall_3";
 	print "\t.extern _syscall_4";
 	print "\t.extern _syscall_5\n";
@@ -29,7 +30,8 @@ BEGIN {
 	printf ("\t.global %s\n\n", funcname);
 	printf ("%s:\n", funcname);
 	printf ("\tmov $%d,%%ax\n", callno);
-	printf ("\tjmp _syscall_%d\n\n", $3);
+	if ($4 != "!" || $3 < 1) printf ("\tjmp _syscall_%d\n\n", $3);
+	else printf ("\tjmp _syscall_%dp\n\n", $3 - 1);
 }
 END {
 	for (i = 0; i <= max_call; i++)
