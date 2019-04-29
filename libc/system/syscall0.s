@@ -8,6 +8,7 @@
 	.global _syscall_0
 	.global _syscall_1
 	.global _syscall_2
+	.global _syscall_2p
 	.global _syscall_3
 	.global _syscall_4
 	.global _syscall_5
@@ -37,6 +38,7 @@ _syscall_2:
 	jmp    _syscall_0
 
 _syscall_3:
+_syscall_2p:
 	mov    %sp,%bx
 	mov    6(%bx),%dx
 	mov    4(%bx),%cx
