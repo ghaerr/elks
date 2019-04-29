@@ -1,0 +1,35 @@
+ls -R, -C, sorted, mtime/ctime for v2
+rm -rf
+mkdir -p
+add chmod
+add chown/chgrp
+add genfs: repeated operations genfs or filesystem duplication
+fix S_ISREG etc portable, u32 type?
+
+ASAP:
+ELKS min boot disk image w /dev, /etc
+test: all files should be copied as 0,0 unless -p option set
+update man page & main.c, uses cdoc, add instructions in usage
+	doc -s vs [blockcount]
+
+OTHER:
+option remove SDL from 8086tiny
+demo-vga.c in old nx
+
+ADDED
+	bootblock handling
+	ls [-ld]
+	change argument structure, add - options for ls/cp etc
+	disk free / disk in use blocks
+	reorder program arguments
+
+FIXES:
+	fix char mknod argc handling
+	fix mkfs v1
+	fix -n option overwriting -i
+	add -> cp
+	unlink -> rm
+	dir -> ls
+	unlink IS_DIR for v1
+	ls -l output format
+	namelen != 14 && != 30 in mkfs
