@@ -127,7 +127,7 @@ endif
 #	mfs $(MIN_TARGET_FILE) ls -l / /etc /etc/rc.d /usr /var /root /dev /bin
 	mfs $(MIN_TARGET_FILE) stat
 	mfsck -fv $(MIN_TARGET_FILE)
-	cp $(MIN_TARGET_FILE) ~greg/net/bootimages/elks/test2.img
+#	cp $(MIN_TARGET_FILE) ~greg/net/bootimages/elks/test2.img
 ifdef CONFIG_IMG_ROM
 #	cd $(IMGDIR) && sudo $(ELKS_DIR)/tools/mkromfs $(TARGET_MNT)
 #	sudo chown "`id -u`":"`id -g`" romfs.bin
