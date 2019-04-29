@@ -4,12 +4,15 @@
 #include <features.h>
 #include <sys/types.h>
 
+typedef int intptr_t;
+typedef intptr_t ssize_t;
+
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 
-extern size_t read __P ((int __fd, char * __buf, size_t __nbytes));
-extern size_t write __P ((int __fd, __const char * __buf, size_t __n));
+extern ssize_t read __P ((int __fd, char * __buf, size_t __nbytes));
+extern ssize_t write __P ((int __fd, __const char * __buf, size_t __n));
 extern int pipe __P ((int __pipedes[2]));
 extern unsigned int alarm __P ((unsigned int __seconds));
 extern unsigned int sleep __P ((unsigned int __seconds));
@@ -30,10 +33,6 @@ extern char*    crypt __P((__const char *__key, __const char *__salt));
 #endif
 
 #define _POSIX_VDISABLE	'\0'
-
-// Types
-
-typedef int intptr_t;
 
 // Functions
 
