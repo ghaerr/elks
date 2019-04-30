@@ -1,13 +1,5 @@
-# Makefile for the Linux/MT-kernel.
-#
-#########################################################################
-#
-# Note! Dependencies are done automagically by 'make dep', which also
-# removes any old dependencies. DON'T put your own dependencies here
-# unless it's something special (ie not a .c file).
-#
-#########################################################################
-# Relative path to base directory.
+# Note that the standard Makefile rules and defines have been moved to
+# the file below.
 
 BASEDIR 	= ..
 
@@ -17,38 +9,28 @@ BASEDIR 	= ..
 
 USEBCC 		= N
 
-CLEANDEP	=
+CLEANDEP	= 
 
-CLEANME 	= mkromfs
+CLEANME 	= 
 
-DEPEND  	=
+DEPEND  	= 
 
-DISTFILES	=
+DISTFILES	= 
 
-NOINDENT	=
+NOINDENT	= 
 
 #########################################################################
-# Include standard commands.
+# Include the standard rules.
 
 include $(BASEDIR)/Makefile-rules
 
 #########################################################################
-# Objects to be compiled.
-
-OBJS  = mkromfs.o list.o
-
-#########################################################################
 # Commands.
+all:
+	$(MAKE) -C mfs all
+	$(MAKE) -C mfsck all
+	$(MAKE) -C mkromfs all
 
-all:	mkromfs
-
-mkromfs: $(OBJS)
-
-#########################################################################
-# Standard commands.
-
-distdir:
-	cp -pf Makefile *.c $(DISTDIR)/tools
 
 #########################################################################
 ### Dependencies:
