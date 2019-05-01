@@ -102,8 +102,9 @@ dflag:
 void cmd_ls(struct minix_fs_dat *fs,int argc,char **argv) {
   int flags = 0;
 
+  optind = 1;
   while (1) {
-    int c = getopt(argc,argv,"ald");
+    int c = getoptX(argc,argv,"ald");
     if (c == -1) break;
     switch (c) {
     case 'a':

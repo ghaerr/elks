@@ -88,6 +88,8 @@ endif
 
 	mfs $(MIN_TARGET_FILE) mknod /dev/fd0 b 3 128
 	mfs $(MIN_TARGET_FILE) mknod /dev/tty1 c 4 0
+	mfs $(MIN_TARGET_FILE) mknod /dev/ptyp0 c 2 8
+	mfs $(MIN_TARGET_FILE) mknod /dev/ttyp0 c 4 8
 
 	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/sys_utils/init /bin
 	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/sys_utils/getty /bin
@@ -96,9 +98,14 @@ endif
 	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/ash/ash /bin/sh
 
 	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/sh_utils/test /bin
+	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/sh_utils/pwd /bin
 	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/file_utils/cat /bin
 	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/sys_utils/mount /bin
 	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/sys_utils/umount /bin
+
+	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/nano-X/bin/demo /usr/bin
+	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/nano-X/bin/nterm /usr/bin
+	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/nano-X/bin/nclock /usr/bin
 
 #	(cd $(ELKSCMD_DIR)/rootfs_template; \
 #		tar cf - --exclude .keep *) | \
@@ -111,9 +118,13 @@ ifdef CONFIG_IMG_LINK
 endif
 #	$(MAKE) -C $(ELKSCMD_DIR) install
 
+# Create and copy filesystem in a single command, will replace all above
+#	mfs -v $(MIN_TARGET_FILE) genfs $(MFS_OPTS) $(ELKSCMD_DIR)/rootfs_template
+#
+
 	# note ver.pl broken on OSX
 	bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > issue.tmp"
-	mfs $(MIN_TARGET_FILE) cp issue.tmp /etc/motd
+	mfs $(MIN_TARGET_FILE) cp issue.tmp /etc/issue
 	rm issue.tmp
 
 ifdef CONFIG_IMG_BOOT
