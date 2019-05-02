@@ -21,7 +21,7 @@ telnet:	$(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 install: telnet
-	sudo install telnet $(TARGET_MNT)/bin
+	$(SUDO) install telnet $(TARGET_MNT)/bin
 
 clean:
 	rm -f $(OBJS) telnet

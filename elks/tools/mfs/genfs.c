@@ -102,23 +102,9 @@ insert_before(list_node_t * next, list_node_t * node)
 }
 
 static void 
-insert_after(list_node_t * prev, list_node_t * node)
-{
-	list_node_t    *next = prev->next;
-	LIST_LINK;
-}
-
-static void 
 list_add_tail(list_root_t * root, list_node_t * node)
 {
 	insert_before(&root->node, node);
-	root->count++;
-}
-
-static void 
-list_add_head(list_root_t * root, list_node_t * node)
-{
-	insert_after(&root->node, node);
 	root->count++;
 }
 
@@ -191,7 +177,7 @@ inode_free(inode_build_t * inode)
 static int
 blocksused(size_t filesize)
 {
-	int b = (filesize + BLOCK_SIZE) >> BLOCK_SIZE_BITS;
+	int b = (filesize + BLOCK_SIZE - 1) >> BLOCK_SIZE_BITS;
 	int blks = b;
 
 	if (b > 7)
@@ -317,23 +303,29 @@ parse_dir(inode_build_t * grand_parent_inode,
 static int 
 compile_fs(struct minix_fs_dat *fs)
 {
-	int		err;
-
-	while (1) {
 		char major[32], minor[32];
 		char *av[6];
+
 		/* Compile the inodes (directories, files, etc) */
 		inode_build_t  *inode_build = (inode_build_t *) inodes.node.next;
-		while (inode_build != (inode_build_t *) & inodes.node) {
-			u16_t		flags = inode_build->flags;
+		for ( ;inode_build != (inode_build_t *) &inodes.node;
+					inode_build = (inode_build_t *) inode_build->node.next) {
+			u16_t flags = inode_build->flags;
 
 			if (flags == S_IFDIR) {
+				if (*(prefix+inode_build->path) == 0) continue; /* skip template dir*/
 				if (opt_verbose) printf("mkdir %s\n", prefix+inode_build->path);
 				av[0] = "mkdir";
 				av[1] = prefix+inode_build->path;
 				av[2] = 0;
 				cmd_mkdir(fs, 2, av);
 			} else if (flags == S_IFREG) {
+				if (opt_nocopyzero && !inode_build->blocks) {
+					char *p = strrchr(inode_build->path, '/');
+					if (p && *++p == '.')
+						if (opt_verbose) printf("Skipping %s\n", inode_build->path);
+						continue;
+				}
 				if (opt_verbose) printf("cp %s %s\n", inode_build->path, prefix+inode_build->path);
 				av[0] = "cp";
 				av[1] = inode_build->path;
@@ -375,16 +367,8 @@ compile_fs(struct minix_fs_dat *fs)
 					cmd_ln(fs, 4, av);
 				}
 			}
-
-			if (err)
-				break;
-
-			inode_build = (inode_build_t *) inode_build->node.next;
 		}
-		break;
-
-	}
-	return err;
+		return 0;
 }
 
 
@@ -412,7 +396,7 @@ void cmd_genfs(char *filename, int argc,char **argv) {
   if (p)
 	  p++;
   else p = dirname;
-  prefix = p - dirname;
+  prefix = p - dirname + strlen(p);		/* skip template dir*/
   if (opt_verbose) printf("Generating filesystem from %s\n", dirname);
   numblocks = 2;			/* root inode and first mkdir*/
   list_init(&inodes);

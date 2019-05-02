@@ -28,6 +28,8 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
+int opt_nocopyzero = 0;		/* don't copy zero-length files starting with . */
+
 /**
  * Parse mkfs/genfs command line arguments
  * @param argc - argc from command line
@@ -52,7 +54,7 @@ void parse_mkfs(int argc,char **argv,int *magic_p,int *nblks_p,int *inodes_p) {
     
   optind = 1;
   while (1) {
-    c = getoptX(argc,argv,"12vi:n:s:");
+    c = getoptX(argc,argv,"12vi:n:s:k");
     if (c == -1) break;
     switch (c) {
     case '1':
@@ -73,6 +75,9 @@ void parse_mkfs(int argc,char **argv,int *magic_p,int *nblks_p,int *inodes_p) {
     case 's':
       *nblks_p = atoi(optarg);
       break;
+	case 'k':
+		opt_nocopyzero = 1;
+		break;
     default:
       usage(argv[0]);
     }

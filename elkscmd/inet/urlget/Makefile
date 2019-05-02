@@ -21,11 +21,11 @@ urlget:	$(OBJS)
 	$(LD) $(LDFLAGS) -o urlget $(OBJS) $(LDLIBS)
 
 install: urlget
-	sudo install urlget $(TARGET_MNT)/bin
+	$(SUDO) install urlget $(TARGET_MNT)/bin
 ifdef CONFIG_IMG_LINK
-	sudo ln -s urlget $(TARGET_MNT)/bin/ftpget
+	$(SUDO) ln -sf urlget $(TARGET_MNT)/bin/ftpget
 else
-	sudo install urlget $(TARGET_MNT)/bin/ftpget
+	$(SUDO) install urlget $(TARGET_MNT)/bin/ftpget
 endif
 
 clean:

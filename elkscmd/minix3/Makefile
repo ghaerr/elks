@@ -52,7 +52,7 @@ all: $(PRGS)
 
 
 install: $(PRGS)
-	sudo install $(PRGS) $(TARGET_MNT)/bin
+	$(SUDO) install $(PRGS) $(TARGET_MNT)/bin
 
 clean:
 	rm -f core *.o $(PRGS)

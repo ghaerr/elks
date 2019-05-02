@@ -44,7 +44,18 @@ void outent(const unsigned char *dp,int namlen) {
   while (*dp && namlen--) {
     putchar(*dp++);
   }
-  putchar('\n');
+}
+
+void printsymlink(struct minix_fs_dat *fs, int inode)
+{
+  int bsz;
+  u8 blk[BLOCK_SIZE+1];
+
+  bsz = read_inoblk(fs,inode,0,blk);
+  if (!bsz)
+  	return;
+  blk[bsz] = 0;
+  printf(" -> %s", blk);
 }
 
 /**
@@ -57,6 +68,7 @@ void dols(struct minix_fs_dat *fs,const char *path,int flags) {
   int i,bsz,j;
   int fdirsize;
   int dentsz = DIRSIZE(fs);
+  int symlink = 0;
   u8 blk[BLOCK_SIZE];
 
   if (inode == -1) {
@@ -67,27 +79,36 @@ void dols(struct minix_fs_dat *fs,const char *path,int flags) {
 dflag:
 	if (flags & LFLAG)
 	  dostat_inode(fs, inode);
-  	printf("%s\n", path);
+  	printf("%s", path);
+	if (symlink)
+		printsymlink(fs, inode);
+	putchar('\n');
 	return;
   }
   if (VERSION_2(fs)) {
     struct minix2_inode *ino = INODE2(fs,inode);
+	symlink = S_ISLNK(ino->i_mode);
     if (!S_ISDIR(ino->i_mode)) goto dflag;
     fdirsize = ino->i_size;    
   } else {
     struct minix_inode *ino = INODE(fs,inode);
+	symlink = S_ISLNK(ino->i_mode);
     if (!S_ISDIR(ino->i_mode)) goto dflag;
     fdirsize = ino->i_size;    
   }
+  /* read directory*/
   for (i = 0; i < fdirsize; i += BLOCK_SIZE) {
     bsz = read_inoblk(fs,inode,i / BLOCK_SIZE,blk);
     for (j = 0; j < bsz ; j+= dentsz) {
       u16 fino = *((u16 *)(blk+j));
-      // printf("%d ",fino);
       if (fino == 0) continue;
+	  symlink = 0;
 	  if (flags & LFLAG)
-	    dostat_inode(fs, fino);
+	    symlink = dostat_inode(fs, fino);
       outent(blk+j+2,dentsz-2);
+	  if (symlink && (flags & LFLAG))
+		printsymlink(fs, fino);
+	  putchar('\n');
     }
   }
 }
@@ -181,9 +202,12 @@ void outmode(int mode) {
   outmode2(mode);
 }
 
-void dostat_inode(struct minix_fs_dat *fs, int inode) {
+int dostat_inode(struct minix_fs_dat *fs, int inode) {
+  int symlink;
+
   if (VERSION_2(fs)) {
     struct minix2_inode *ino = INODE2(fs,inode);
+	symlink = S_ISLNK(ino->i_mode);
     outmode(ino->i_mode);
     printf(" %2d %3d ",ino->i_nlinks, inode);
     printf("%3d,%3d ",ino->i_uid,ino->i_gid);
@@ -196,6 +220,7 @@ void dostat_inode(struct minix_fs_dat *fs, int inode) {
     //timefmt("changed",ino->i_ctime);
   } else {
     struct minix_inode *ino = INODE(fs,inode);
+	symlink = S_ISLNK(ino->i_mode);
     outmode(ino->i_mode);
     printf(" %2d %3d ",ino->i_nlinks, inode);
     printf("%3d,%3d ",ino->i_uid,ino->i_gid);
@@ -205,6 +230,7 @@ void dostat_inode(struct minix_fs_dat *fs, int inode) {
       printf("%7d ",ino->i_size);
     timefmt("accessed",ino->i_time);
   }
+  return symlink;
 }
 
 /**
