@@ -129,11 +129,7 @@ int main(int argc, char ** argv)
 	}
 }
 
-#if ELKS
-char * nargv[2] = {"/bin/sash", NULL};
-#else
 char * nargv[2] = {"/bin/sh", NULL};
-#endif
 
 void sigchild(int signo)
 {

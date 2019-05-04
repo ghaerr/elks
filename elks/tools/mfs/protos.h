@@ -34,13 +34,14 @@ void cmd_mkfs(char *filename, int argc, char **argv);
 void cmd_genfs(char *filename, int argc, char **argv);
 void cmd_boot(char *filename, int argc,char **argv);
 void outent(const unsigned char *dp, int namlen);
+void printsymlink(struct minix_fs_dat *fs, int inode);
 void dols(struct minix_fs_dat *fs, const char *path,int flags);
 void cmd_ls(struct minix_fs_dat *fs, int argc, char **argv);
 int domkdir(struct minix_fs_dat *fs, char *newdir);
 void cmd_mkdir(struct minix_fs_dat *fs, int argc, char **argv);
 void timefmt(const char *str, u32 usecs);
 void outmode(int mode);
-void dostat_inode(struct minix_fs_dat *fs, int inode);
+int dostat_inode(struct minix_fs_dat *fs, int inode);
 void dormdir(struct minix_fs_dat *fs, const char *dir);
 void cmd_rmdir(struct minix_fs_dat *fs, int argc, char **argv);
 void dounlink(struct minix_fs_dat *fs, char *fpath);
@@ -62,6 +63,14 @@ void dname_add(struct minix_fs_dat *fs, int dinode, const char *name, int inode)
 void dname_rem(struct minix_fs_dat *fs, int dinode, const char *name);
 int make_node(struct minix_fs_dat *fs, char *fpath, int mode, int uid, int gid, u32 size, u32 atime, u32 mtime, u32 ctime, int *dinode_p);
 
+extern int opt_verbose;
 extern int opt_keepuid;
 extern int opt_fsbad_fatal;
 extern char *toolname;
+
+extern int opt_nocopyzero;
+
+extern char *optarg;
+extern int opterr;
+extern int optind;
+int getoptX(int argc, char *const *argv, const char *shortopts);

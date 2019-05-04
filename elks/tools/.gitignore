@@ -1,3 +1,3 @@
-mkromfs
-mfs
-mfsck
+bin/mkromfs
+bin/mfsck
+bin/mfs

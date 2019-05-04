@@ -3,13 +3,84 @@
 include Make.defs
 include Make.rules
 
-# All target
+# Template directory for installing applications and linux before genfs
+TEMPLATE_DIR = $(ELKSCMD_DIR)/rootfs_template
 
+# TARGET_MNT is used in elkscmd/* Makefiles for install prefix
+TARGET_MNT = $(TEMPLATE_DIR)
+export TARGET_MNT
+
+# add image block size to mkfs options for mfs
+MFS_OPTS=$(MKFS_OPTS) -s$(TARGET_BLKS) -k
+#VERBOSE=-v
+
+# command to make char/block devices in image (no sudo required)
+MKDEV=mfs $(TARGET_FILE) mknod
+
+# elkscmd/* Makefiles use $(SUDO) install... remove if not wanted
+SUDO=
+
+#
+# Determine what to build for All target
+TARGETS=
 ifdef CONFIG_IMG_BOOT
-all: $(FD_BSECT) $(ELKS_DIR)/arch/i86/boot/Image
-else
-all:
+TARGETS += $(FD_BSECT) $(ELKS_DIR)/arch/i86/boot/Image
 endif
+TARGETS += template image
+ifdef CONFIG_IMG_LINK
+TARGETS += devices
+endif
+ifdef CONFIG_IMG_ROM
+TARGETS += romfs
+endif
+
+all: $(TARGETS)
+	mfsck -fv $(TARGET_FILE)
+	mfs $(TARGET_FILE) stat
+#	mfs $(TARGET_FILE) ls -l / /bin /usr/bin /dev /etc
+#	cp $(TARGET_FILE) ~greg/net/bootimages/elks/test2.img
+
+#
+# Create character and block devices in image (make target devices:)
+include Make.devices
+
+#
+# Populate template for filesystem genfs
+template:
+	$(MAKE) -C $(ELKSCMD_DIR) install
+	bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(TEMPLATE_DIR)/etc/issue"
+ifdef CONFIG_IMG_BOOT
+	install $(ELKS_DIR)/arch/i86/boot/Image $(TEMPLATE_DIR)/linux
+endif
+
+#
+# Create MINIX filesystem from template
+image:
+	mfs $(VERBOSE) $(TARGET_FILE) genfs $(MFS_OPTS) $(TEMPLATE_DIR)
+ifdef CONFIG_IMG_BOOT
+	mfs $(TARGET_FILE) boot $(FD_BSECT)
+endif
+
+romfs:
+	mkromfs $(TEMPLATE_DIR)
+
+# Clean target
+clean:
+	-rm -f $(TARGET_FILE)
+	-rm -f $(TEMPLATE_DIR)/linux
+	-rm -f $(TEMPLATE_DIR)/bin/*
+	-rm -f $(TEMPLATE_DIR)/sbin/*
+	-rm -f $(TEMPLATE_DIR)/usr/bin/*
+	-rm -f $(TEMPLATE_DIR)/etc/issue
+	-rm -f $(TEMPLATE_DIR)/etc/resolv.conf
+	-rm -f $(TEMPLATE_DIR)/dev/*
+	-rm -rf $(TEMPLATE_DIR)/var/www
+	-rm -f *.bin
+
+#
+# The following is the original installation mechanism,
+# could be used for systems requiring mount device
+orgall:
 ifdef CONFIG_IMG_DEV
 	-sudo umount -d $(TARGET_FILE)
 endif
@@ -48,91 +119,7 @@ ifdef CONFIG_IMG_ROM
 	sudo chown "`id -u`":"`id -g`" romfs.bin
 endif
 
-# Clean target
-
-clean:
+orgclean:
 	-sudo umount -d $(TARGET_MNT) || true
 	sudo rm -rf $(TARGET_MNT)
 	sudo rm -rf *.bin
-
-# Proof of concept using mfs and mfsck
-MFS_OPTS=$(MKFS_OPTS) -s$(TARGET_BLKS)
-MIN_TARGET_FILE=fd1440min.bin
-
-min:
-	-rm -rf $(MIN_TARGET_FILE)
-ifdef CONFIG_IMG_DEV
-	mfs $(MIN_TARGET_FILE) mkfs $(MFS_OPTS)
-endif
-	mfs $(MIN_TARGET_FILE) mkdir /bin
-	mfs $(MIN_TARGET_FILE) mkdir /dev
-	mfs $(MIN_TARGET_FILE) mkdir /etc /etc/rc.d
-	mfs $(MIN_TARGET_FILE) mkdir /home
-	mfs $(MIN_TARGET_FILE) mkdir /lib
-	mfs $(MIN_TARGET_FILE) mkdir /mnt
-	mfs $(MIN_TARGET_FILE) mkdir /root
-	mfs $(MIN_TARGET_FILE) mkdir /sbin
-	mfs $(MIN_TARGET_FILE) mkdir /tmp
-	mfs $(MIN_TARGET_FILE) mkdir /usr /usr/bin
-	mfs $(MIN_TARGET_FILE) mkdir /var /var/run
-
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/rootfs_template/etc/group /etc
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/rootfs_template/etc/inittab /etc
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/rootfs_template/etc/issue /etc
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/rootfs_template/etc/passwd /etc
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/rootfs_template/etc/termcap /etc
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/rootfs_template/etc/rc.d/rc.sysinit /etc/rc.d
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/rootfs_template/lib/liberror.txt /lib
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/rootfs_template/var/run/utmp /var/run
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/rootfs_template/root/.profile /root
-
-	mfs $(MIN_TARGET_FILE) mknod /dev/fd0 b 3 128
-	mfs $(MIN_TARGET_FILE) mknod /dev/tty1 c 4 0
-
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/sys_utils/init /bin
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/sys_utils/getty /bin
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/sys_utils/login /bin
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/file_utils/ls /bin
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/ash/ash /bin/sh
-
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/sh_utils/test /bin
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/file_utils/cat /bin
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/sys_utils/mount /bin
-	mfs $(MIN_TARGET_FILE) cp $(ELKSCMD_DIR)/sys_utils/umount /bin
-
-#	(cd $(ELKSCMD_DIR)/rootfs_template; \
-#		tar cf - --exclude .keep *) | \
-#		(cd $(TARGET_MNT); sudo tar xpf - --no-same-owner)
-#	sudo find $(TARGET_MNT) \
-#		-type d ! -name root -execdir chmod go+rx '{}' \; -o \
-#		! -type d ! -name .profile -execdir chmod go+r '{}' \;
-ifdef CONFIG_IMG_LINK
-#	(cd $(TARGET_MNT)/dev; sudo ./MAKEDEV; sudo rm MAKEDEV MAKESET)
-endif
-#	$(MAKE) -C $(ELKSCMD_DIR) install
-
-	# note ver.pl broken on OSX
-	bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > issue.tmp"
-	mfs $(MIN_TARGET_FILE) cp issue.tmp /etc/motd
-	rm issue.tmp
-
-ifdef CONFIG_IMG_BOOT
-	mfs $(MIN_TARGET_FILE) cp $(ELKS_DIR)/arch/i86/boot/Image /linux
-endif
-ifdef CONFIG_IMG_DEV
-ifdef CONFIG_IMG_BOOT
-	mfs $(MIN_TARGET_FILE) boot $(FD_BSECT)
-endif
-endif
-#	mfs $(MIN_TARGET_FILE) ls -l / /etc /etc/rc.d /usr /var /root /dev /bin
-	mfs $(MIN_TARGET_FILE) stat
-	mfsck -fv $(MIN_TARGET_FILE)
-#	cp $(MIN_TARGET_FILE) ~greg/net/bootimages/elks/test2.img
-ifdef CONFIG_IMG_ROM
-#	cd $(IMGDIR) && sudo $(ELKS_DIR)/tools/mkromfs $(TARGET_MNT)
-#	sudo chown "`id -u`":"`id -g`" romfs.bin
-endif
-
-minclean:
-	rm -rf $(MIN_TARGET_FILE)
-	rm -rf *.bin

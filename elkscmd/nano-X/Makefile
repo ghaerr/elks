@@ -97,4 +97,4 @@ demo: $(NANOXDEMO) libnano-X.a
 .PHONY: install
 
 install:
-	sudo install bin/demo $(TARGET_MNT)/bin/demo
+	$(SUDO) install bin/demo $(TARGET_MNT)/bin/demo
