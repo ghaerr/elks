@@ -235,7 +235,6 @@ CONFIG_APP_SASH=y
 # CONFIG_APP_BC is not set
 # CONFIG_APP_DBG_UTILS is not set
 # CONFIG_APP_DISK_UTILS is not set
-# CONFIG_APP_E3 is not set
 # CONFIG_APP_ELVIS is not set
 # CONFIG_APP_FILE_UTILS is not set
 # CONFIG_APP_LEVEE is not set
