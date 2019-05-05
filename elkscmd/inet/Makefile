@@ -10,39 +10,50 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-DIRS =
+# All subdirectories to build & clean
+
+SUBDIRS = \
+    httpd \
+    nettools \
+    telnet \
+    telnetd \
+    tinyirc \
+    urlget \
+    # EOL
+
+# Directories to install
+
+INSTDIRS =
 
 ifdef CONFIG_APP_HTTPD
-DIRS += httpd
+INSTDIRS += httpd
 endif
 
 ifdef CONFIG_APP_NET_TOOLS
-DIRS += nettools
+INSTDIRS += nettools
 endif
 
 ifdef CONFIG_APP_TELNET
-DIRS += telnet
+INSTDIRS += telnet
 endif
 
 ifdef CONFIG_APP_TELNETD
-DIRS += telnetd
+INSTDIRS += telnetd
 endif
 
 ifdef CONFIG_APP_TINYIRC
-DIRS += tinyirc
+INSTDIRS += tinyirc
 endif
 
 ifdef CONFIG_APP_URLGET
-DIRS += urlget
+INSTDIRS += urlget
 endif
 
 all:
-	for i in $(DIRS); do make -C $$i all || exit 1 ; done
+	for i in $(SUBDIRS); do make -C $$i all || exit 1 ; done
 
 install:
-	for i in $(DIRS); do make -C $$i install || exit 1; done
-
-CLEANDIRS = httpd nettools telnet telnetd tinyirc urlget
+	for i in $(INSTDIRS); do make -C $$i install || exit 1; done
 
 clean:
-	for i in $(CLEANDIRS); do make -C $$i clean || exit 1; done
+	for i in $(SUBDIRS); do make -C $$i clean || exit 1; done
