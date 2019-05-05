@@ -32,16 +32,88 @@ SUBDIRS = \
 
 .PHONY: all $(SUBDIRS)
 
-ifdef MULTISUBDIR
+# Stuff for handling multilibs (https://wiki.gentoo.org/wiki/Multilib),
+# which ia16-elf-gcc uses to support separate library files for multiple ABIs
+# for the same architecture and OS.
+#
+# Much of the complexity in the code below is for processing the output of
+# GCC's -print-multi-lib option.  `ia16-elf-gcc -print-multi-lib' prints
+# something like this:
+#
+#	.;
+#	...
+#	rtd;@mrtd
+#	...
+#	regparmcall/any_186/size;@mregparmcall@march=any_186@Os
+#	...
+#
+# The last line above means that the options `-mregparmcall -march=any_186
+# -Os' (listed after the `;') will make GCC look in the subdirectories
+# regparmcall/any_186/size/ within the library search path's directories,
+# when looking for library files.  `.' in the first line is the subdirectory
+# for default compiler options.
+#
+# So, in Apr 2019 I added an -melks-libc option to ia16-elf-gcc, to try to
+# support linking with elks-libc and not Newlib, when targeting ELKS.  Later
+# I added a separate multilib setting for -melks-libc.
+#
+# Thus depending on the version of ia16-elf-gcc, there are two possibilities:
+#   * gcc has separate -melks-libc multilibs (and supports -melks-libc).
+#   * gcc supports -melks, and possibly -melks-libc, but does not have
+#     separate -melks-libc multilibs.
+#
+# For the first case, arrange to build elks-libc for the available
+# -melks-libc multilib settings.  Furthermore, if $(PREFIX) is defined, add
+# an `install' makefile rule which will install the elks-libc files under
+# $(PREFIX), such that they can be used from outside the ELKS source tree.
+#
+# For the second case, arrange to build elks-libc only for default compiler
+# settings.  Installing the libraries outside the ELKS tree is not supported
+# in this case.
+#
+# $(MAINMULTISUBDIR) gives the multilib subdirectory containing the library
+# files we want to use for building the rest of ELKS.  This is expected to
+# be either `elkslibc' (first case) or `.' (second case).
+#	-- tkchia
+
+ALLMULTIS:=$(strip $(shell $(CC) -print-multi-lib))
+ELKSLIBCMULTIS:=$(strip $(foreach ml,$(ALLMULTIS), \
+    $(if $(findstring @melks-libc@,$(lastword $(subst ;, ,$(ml)))@),$(ml))))
+
+ifneq "" "$(ELKSLIBCMULTIS)"
+BUILDMULTIS:=$(ELKSLIBCMULTIS)
+MAINMULTI:=$(filter %;@melks-libc,$(ELKSLIBCMULTIS))
+else
+MAINMULTI:=$(filter .;,$(ALLMULTIS))
+BUILDMULTIS:=$(MAINMULTI)
+override PREFIX=
+endif
+
+MAINMULTISUBDIR=$(firstword $(subst ;, ,$(MAINMULTI)))
+
+# For now do not build multilibs for non-cdecl calling conventions, as the
+# assembly code in elks-libc does not yet support these.  TODO.  -- tkchia
+BUILDMULTIS:=$(strip \
+    $(foreach ml,$(BUILDMULTIS), \
+	$(if $(findstring @mrtd@,$(ml)@)$(findstring @mregparmcall@,$(ml)@),, \
+	$(ml))))
+ifeq "" "$(BUILDMULTIS)"
+$(error no multilib variants to build for elks-libc)
+endif
+ifeq "" "$(MAINMULTISUBDIR)"
+$(error no main multilib variant to use)
+endif
+
+ifneq "" "$(MULTISUBDIR)"
 
 # Build one particular multilib variant of libc.a.  $(MULTISUBDIR) gives the
 # multilib variant to build for, and $(MULTILIB) gives the C compiler flags
 # to pass to GCC.
-all: $(LIBC) build-ml/$(MULTISUBDIR)/crt0.o
+all: $(LIBC) $(CRT0)
 
-SUBDIRS_IN_MULTILIB = $(SUBDIRS:%=build-ml/$(MULTISUBDIR)/%)
+SUBDIRSINMULTILIB = $(SUBDIRS:%=$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/%)
 
-$(LIBC): $(SUBDIRS_IN_MULTILIB)
+$(LIBC): $(SUBDIRSINMULTILIB)
 	mkdir -p $(@D)
 	set -e; \
 	( \
@@ -52,38 +124,69 @@ $(LIBC): $(SUBDIRS_IN_MULTILIB)
 	) | $(AR) -M
 	mv $(LIBC).tmp $(LIBC)
 
-build-ml/$(MULTISUBDIR)/crt0.o: crt0.S
+$(CRT0): crt0.S
 
-build-ml/$(MULTISUBDIR)/%: %
+$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/%: %
 	mkdir -p $@
 	$(MAKE) -C $@ VPATH=$(abspath $<) -f $(abspath $<)/Makefile all
 
 $(SUBDIRS):
 
+# Install one particular multilib variant of libc.a, crt0.o, and include files.
+# TODO: tidy up the include file installation?
+ifneq "" "$(PREFIX)"
+INSTALL_DATA = install -c -m 644
+MULTIINCDIR = $(PREFIX)/ia16-elf/lib/$(MULTISUBDIR)/include
+.PHONY: install
+install: $(LIBC)
+	mkdir -p $(PREFIX)/ia16-elf/lib/$(MULTISUBDIR) \
+		 $(MULTIINCDIR)/asm $(MULTIINCDIR)/sys \
+		 $(MULTIINCDIR)/arch $(MULTIINCDIR)/linuxmt/arpa
+	$(INSTALL_DATA) $(LIBC) $(CRT0) \
+	    $(TOPDIR)/elks/elks-small.ld $(TOPDIR)/elks/elks-tiny.ld \
+	    $(PREFIX)/ia16-elf/lib/$(MULTISUBDIR)
+	$(INSTALL_DATA) include/*.h $(MULTIINCDIR)
+	$(INSTALL_DATA) include/asm/*.h $(MULTIINCDIR)/asm
+	$(INSTALL_DATA) include/sys/*.h $(MULTIINCDIR)/sys
+	$(INSTALL_DATA) $(TOPDIR)/elks/include/arch/*.h $(MULTIINCDIR)/arch
+	$(INSTALL_DATA) $(TOPDIR)/elks/include/linuxmt/*.h \
+	    $(MULTIINCDIR)/linuxmt
+	$(INSTALL_DATA) $(TOPDIR)/elks/include/linuxmt/arpa/*.h \
+	    $(MULTIINCDIR)/linuxmt/arpa
+endif
+
 else
 
-# This currently just builds the default multilib.
-# TODO: if $(MULTISUBDIR) is undefined, then build all libc.a multilibs.
+.PHONY: install $(LIBC)
+
+# $(MULTISUBDIR) is undefined.  Build all multilibs that we can build; then
+# copy the library files for "default" settings into this directory.
+all: $(LIBC)
 
 .PHONY: $(LIBC)
 
-all: $(LIBC)
-
 $(LIBC):
-	set -e; \
-	save_ifs="$$IFS"; \
-	$(CC) -print-multi-lib | fgrep -x '.;' | \
-	while read -r line; do \
-		IFS=';'; \
-		set -- $$line; \
-		dir="$$1"; \
-		flags="$$2"; \
-		IFS="$$save_ifs"; \
-		flags="`echo "$$flags" | sed 's,@, -,g'`"; \
-		$(MAKE) MULTISUBDIR="$$dir" MULTILIB="$$flags" all; \
-	done
-	cp -u build-ml/libc_elks.a $(LIBC) || cp build-ml/libc_elks.a $(LIBC)
-	cp -u build-ml/crt0.o crt0.o || cp build-ml/crt0.o crt0.o
+	set -e \
+	$(foreach ml,$(BUILDMULTIS), ; \
+		export MULTISUBDIR='$(firstword $(subst ;, ,$(ml)))'; \
+		export MULTILIB='$(strip $(subst @, -, \
+		    $(lastword $(subst ;, ,$(ml)))))'; \
+		$(MAKE) all)
+	cp -u build-ml/$(MAINMULTISUBDIR)/libc.a $(LIBC) || \
+	    cp build-ml/$(MAINMULTISUBDIR)/libc.a $(LIBC)
+	cp -u build-ml/$(MAINMULTISUBDIR)/crt0.o $(CRT0) || \
+	    cp build-ml/$(MAINMULTISUBDIR)/crt0.o $(CRT0)
+
+ifneq "" "$(PREFIX)"
+.PHONY: install
+install:
+	set -e \
+	$(foreach ml,$(BUILDMULTIS), ; \
+		export MULTISUBDIR='$(firstword $(subst ;, ,$(ml)))'; \
+		export MULTILIB='$(strip $(subst @, -, \
+		    $(lastword $(subst ;, ,$(ml)))))'; \
+		$(MAKE) install)
+endif
 
 endif
 
