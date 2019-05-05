@@ -18,17 +18,17 @@ extern unsigned short int inw_p(void *);
 
 #ifdef __ia16__
 #define outb(value,port) \
-__asm__ ("outb %%al,%%dx"::"a" (value),"d" (port))
+__asm__ ("outb %%al,%%dx"::"Ral" ((unsigned char)(value)),"d" (port))
 
 
 #define inb(port) ({ \
 unsigned char _v; \
-__asm__ volatile ("inb %%dx,%%al":"=a" (_v):"d" (port)); \
+__asm__ volatile ("inb %%dx,%%al":"=Ral" (_v):"d" (port)); \
 _v; \
 })
 
 #define outw(value,port) \
-__asm__ ("outw %%ax,%%dx"::"a" (value),"d" (port))
+__asm__ ("outw %%ax,%%dx"::"a" ((unsigned short)(value)),"d" (port))
 
 
 #define inw(port) ({ \
@@ -40,20 +40,20 @@ _v; \
 #define outb_p(value,port) \
 __asm__ volatile ("outb %%al,%%dx\n" \
         "outb %%al,$0x80\n" \
-        ::"a" (value),"d" (port))
+        ::"Ral" ((unsigned char)(value)),"d" (port))
 
 #define inb_p(port) ({ \
 unsigned char _v; \
 __asm__ volatile ("inb %%dx,%%al\n" \
         "outb %%al,$0x80\n" \
-        :"=a" (_v):"d" (port)); \
+        :"=Ral" (_v):"d" (port)); \
 _v; \
 })
 
 #define outw_p(value,port) \
 __asm__ volatile ("outw %%ax,%%dx\n" \
         "outb %%al,$0x80\n" \
-        ::"a" (value),"d" (port))
+        ::"a" ((unsigned short)(value)),"d" (port))
 
 #define inw_p(port) ({ \
 unsigned char _v; \
