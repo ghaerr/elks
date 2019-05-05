@@ -20,7 +20,7 @@ install_sibo: all
 	cp -p $(SPROGS) $(TARGET_MNT)/sbin
 
 install: all
-	$(SUDO) install $(PROGS) $(TARGET_MNT)/sbin
+	install $(PROGS) $(TARGET_MNT)/sbin
 
 fsck: fsck.o
 	$(LD) $(LDFLAGS) -o fsck fsck.o $(LDLIBS)

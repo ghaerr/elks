@@ -72,7 +72,7 @@ test: test.o
 
 
 install: $(PRGS)
-	$(SUDO) install $(PRGS) $(TARGET_MNT)/bin
+	install $(PRGS) $(TARGET_MNT)/bin
 
 clean:
 	rm -f *.o $(PRGS)

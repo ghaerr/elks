@@ -57,7 +57,7 @@ mcopy:	mcopy.o
 	$(LD) $(LDFLAGS) -o mcopy mcopy.o $(LDLIBS)
 
 install: $(PROGS)
-	$(SUDO) install $(PROGS) $(TARGET_MNT)/$(BINDIR)/
+	install $(PROGS) $(TARGET_MNT)/$(BINDIR)/
 
 install-man:
 	@for i in $(PROGS); do \

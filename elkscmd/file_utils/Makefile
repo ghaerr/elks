@@ -76,7 +76,7 @@ touch: touch.o
 	$(LD) $(LDFLAGS) -o touch touch.o $(LDLIBS)
 
 install: $(PRGS)
-	$(SUDO) install $(PRGS) $(TARGET_MNT)/bin
+	install $(PRGS) $(TARGET_MNT)/bin
 
 clean:
 	rm -f $(PRGS) *.o

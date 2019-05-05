@@ -16,7 +16,7 @@ xvi: xvi.o
 	$(CC) $(LDFLAGS) xvi.o -o xvi
 
 install: xvi
-	$(SUDO) install xvi $(TARGET_MNT)/bin$
+	install xvi $(TARGET_MNT)/bin$
 
 clean:
 	rm -f core xvi *.o

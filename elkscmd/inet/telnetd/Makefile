@@ -21,7 +21,7 @@ telnetd: $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 install: telnetd
-	$(SUDO) install telnetd $(TARGET_MNT)/bin
+	install telnetd $(TARGET_MNT)/bin
 
 clean:
 	rm -f $(OBJS) telnetd

@@ -24,8 +24,8 @@ lint:
 	done
 
 install: ktcp
-	$(SUDO) install ktcp $(TARGET_MNT)/bin
-	$(SUDO) install resolv.conf $(TARGET_MNT)/etc
+	install ktcp $(TARGET_MNT)/bin
+	install resolv.conf $(TARGET_MNT)/etc
 
 clean: 
 	rm -f *~ *.o ktcp core 

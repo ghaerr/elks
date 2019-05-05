@@ -17,9 +17,6 @@ MFS_OPTS=$(MKFS_OPTS) -s$(TARGET_BLKS) -k
 # command to make char/block devices in image (no sudo required)
 MKDEV=mfs $(TARGET_FILE) mknod
 
-# elkscmd/* Makefiles use $(SUDO) install... remove if not wanted
-SUDO=
-
 #
 # Determine what to build for All target
 TARGETS=
