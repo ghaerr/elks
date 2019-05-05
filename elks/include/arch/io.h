@@ -32,7 +32,7 @@ __asm__ ("outw %%ax,%%dx"::"a" ((unsigned short)(value)),"d" (port))
 
 
 #define inw(port) ({ \
-unsigned char _v; \
+unsigned short _v; \
 __asm__ volatile ("inw %%dx,%%ax":"=a" (_v):"d" (port)); \
 _v; \
 })
@@ -56,7 +56,7 @@ __asm__ volatile ("outw %%ax,%%dx\n" \
         ::"a" ((unsigned short)(value)),"d" (port))
 
 #define inw_p(port) ({ \
-unsigned char _v; \
+unsigned short _v; \
 __asm__ volatile ("inw %%dx,%%ax\n" \
         "outb %%al,$0x80\n" \
         :"=a" (_v):"d" (port)); \
