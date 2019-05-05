@@ -73,7 +73,7 @@ poweroff: poweroff.o
 all: $(PRGS)
 
 install: $(PRGS)
-	install $(PRGS) $(TARGET_MNT)/bin
+	install $(PRGS) $(DESTDIR)/bin
 
 clean:
 	rm -f *.o core $(PRGS)

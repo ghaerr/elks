@@ -21,7 +21,7 @@ echoclient: echoclient.o
 	$(LD) $(LDFLAGS) -o echoclient echoclient.o $(LDLIBS)
 
 install: $(PRGS)
-	sudo install $(PRGS) $(TARGET_MNT)/bin
+	sudo install $(PRGS) $(DESTDIR)/bin
 
 clean:
 	rm -f *.o $(PRGS)

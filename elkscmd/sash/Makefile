@@ -24,10 +24,10 @@ clean:
 
 install: sash
 ifdef CONFIG_IMG_LINK
-	install sash $(TARGET_MNT)/bin/sash
-	ln -sf sash $(TARGET_MNT)/bin/sh
+	install sash $(DESTDIR)/bin/sash
+	ln -sf sash $(DESTDIR)/bin/sh
 else
-	install sash $(TARGET_MNT)/bin/sh
+	install sash $(DESTDIR)/bin/sh
 endif
 
 $(OBJS): sash.h config.h

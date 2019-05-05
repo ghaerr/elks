@@ -17,7 +17,7 @@ LOCALFLAGS=-I$(ELKSCMD_DIR)
 all: $(PRGS)
 
 install: $(PRGS)
-	install $(PRGS) $(TARGET_MNT)/bin
+	install $(PRGS) $(DESTDIR)/bin
 
 netstat: netstat.o
 	$(LD) $(LDFLAGS) netstat.o -o netstat $(LDLIBS)

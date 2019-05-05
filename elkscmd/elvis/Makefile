@@ -298,7 +298,7 @@ SRC8=	vars.c vcmd.c vi.c vi.h refont.c
 all: $(PROGS)
 
 install: $(PROGS)
-	install $(PROGS) $(TARGET_MNT)/bin
+	install $(PROGS) $(DESTDIR)/bin
 
 elvis: $(OBJS) $(EXTRA) $(EXTRA2)
 	$(CC) -s $(CFLAGS) $(OF)elvis $(OBJS) $(EXTRA) $(EXTRA2) $(LIBS)

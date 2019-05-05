@@ -54,8 +54,8 @@ fbc: $(OFILES) bc.o
 	$(LD) -o fbc $(LDFLAGS) bc.o $(OFILES) global.o $(LDLIBS)
 
 install: bc fbc
-	install bc $(TARGET_MNT)/bin
-#	install fbc $(TARGET_MNT)/bin
+	install bc $(DESTDIR)/bin
+#	install fbc $(DESTDIR)/bin
 
 clean:
 	rm -f *.o *.bak core math.h bc fbc sbc bc.c sbc.c scan.c y.tab.h

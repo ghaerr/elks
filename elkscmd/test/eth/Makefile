@@ -18,7 +18,7 @@ eth:	$(OBJS)
 	$(LD) $(LDFLAGS) -o eth eth.o $(LDLIBS)
 
 install: eth
-	sudo install eth $(TARGET_MNT)/bin
+	sudo install eth $(DESTDIR)/bin
 
 clean: 
 	rm -f *.o eth

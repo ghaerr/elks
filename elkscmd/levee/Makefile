@@ -24,7 +24,7 @@ lev: $(OBJS)
 	$(LD) $(LDFLAGS) -o lev $(OBJS) $(LDLIBS)
 
 install: lev
-	install lev $(TARGET_MNT)/bin/vi
+	install lev $(DESTDIR)/bin/vi
 
 clean:
 	rm -f *.o lev

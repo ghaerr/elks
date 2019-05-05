@@ -61,7 +61,7 @@ $(PROGRAM):	$(OBJS) $(LIBS)
 	$(LINKER) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
 
 install: $(PROGRAM)
-	install $(PROGRAM) $(TARGET_MNT)/usr/bin
+	install $(PROGRAM) $(DESTDIR)/usr/bin
 
 clean:
 	rm -f $(OBJS) $(PROGRAM) core

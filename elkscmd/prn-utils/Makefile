@@ -15,7 +15,7 @@ PRGS=lpfilter
 all: $(PRGS)
 
 install: $(PRGS)
-	install $(PRGS) $(TARGET_MNT)/bin
+	install $(PRGS) $(DESTDIR)/bin
 
 clean:
 	rm -f $(PRGS)

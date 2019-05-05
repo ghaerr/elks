@@ -97,4 +97,4 @@ demo: $(NANOXDEMO) libnano-X.a
 .PHONY: install
 
 install:
-	install bin/demo $(TARGET_MNT)/bin/demo
+	install bin/demo $(DESTDIR)/bin/demo

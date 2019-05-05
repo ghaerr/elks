@@ -6,9 +6,9 @@ include Make.rules
 # Template directory for installing applications and linux before genfs
 TEMPLATE_DIR = $(ELKSCMD_DIR)/rootfs_template
 
-# TARGET_MNT is used in elkscmd/* Makefiles for install prefix
-TARGET_MNT = $(TEMPLATE_DIR)
-export TARGET_MNT
+# DESTDIR is used in elkscmd/* Makefiles for installation destination
+DESTDIR = $(TEMPLATE_DIR)
+export DESTDIR
 
 # add image block size to mkfs options for mfs
 MFS_OPTS=$(MKFS_OPTS) -s$(TARGET_BLKS) -k
@@ -86,24 +86,24 @@ ifdef CONFIG_IMG_DEV
 	dd if=/dev/zero of=$(TARGET_FILE) bs=1024 count=$(TARGET_BLKS)
 	sudo $(MKFS) $(MKFS_OPTS) $(TARGET_FILE)
 endif
-	-sudo rm -rf $(TARGET_MNT)
-	mkdir -p $(TARGET_MNT)
+	-sudo rm -rf $(DESTDIR)
+	mkdir -p $(DESTDIR)
 ifdef CONFIG_IMG_DEV
-	sudo mount $(LOOP) $(TARGET_FILE) $(TARGET_MNT)
+	sudo mount $(LOOP) $(TARGET_FILE) $(DESTDIR)
 endif
 	(cd $(ELKSCMD_DIR)/rootfs_template; \
 		tar cf - --exclude .keep *) | \
-		(cd $(TARGET_MNT); sudo tar xpf - --no-same-owner)
-	sudo find $(TARGET_MNT) \
+		(cd $(DESTDIR); sudo tar xpf - --no-same-owner)
+	sudo find $(DESTDIR) \
 		-type d ! -name root -execdir chmod go+rx '{}' \; -o \
 		! -type d ! -name .profile -execdir chmod go+r '{}' \;
 ifdef CONFIG_IMG_LINK
-	(cd $(TARGET_MNT)/dev; sudo ./MAKEDEV; sudo rm MAKEDEV MAKESET)
+	(cd $(DESTDIR)/dev; sudo ./MAKEDEV; sudo rm MAKEDEV MAKESET)
 endif
 	$(MAKE) -C $(ELKSCMD_DIR) install
-	sudo bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(TARGET_MNT)/etc/issue"
+	sudo bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(DESTDIR)/etc/issue"
 ifdef CONFIG_IMG_BOOT
-	sudo install $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_MNT)/linux
+	sudo install $(ELKS_DIR)/arch/i86/boot/Image $(DESTDIR)/linux
 endif
 ifdef CONFIG_IMG_DEV
 	sudo umount -d $(TARGET_FILE)
@@ -112,11 +112,11 @@ ifdef CONFIG_IMG_BOOT
 endif
 endif
 ifdef CONFIG_IMG_ROM
-	cd $(IMGDIR) && sudo $(ELKS_DIR)/tools/mkromfs $(TARGET_MNT)
+	cd $(IMGDIR) && sudo $(ELKS_DIR)/tools/mkromfs $(DESTDIR)
 	sudo chown "`id -u`":"`id -g`" romfs.bin
 endif
 
 orgclean:
-	-sudo umount -d $(TARGET_MNT) || true
-	sudo rm -rf $(TARGET_MNT)
+	-sudo umount -d $(DESTDIR) || true
+	sudo rm -rf $(DESTDIR)
 	sudo rm -rf *.bin
