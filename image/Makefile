@@ -7,7 +7,7 @@ include Make.rules
 TEMPLATE_DIR = $(ELKSCMD_DIR)/rootfs_template
 
 # DESTDIR is used in elkscmd/* Makefiles for installation destination
-DESTDIR = $(TEMPLATE_DIR)
+DESTDIR = $(TOPDIR)/target
 export DESTDIR
 
 # add image block size to mkfs options for mfs
@@ -34,8 +34,6 @@ endif
 all: $(TARGETS)
 	mfsck -fv $(TARGET_FILE)
 	mfs $(TARGET_FILE) stat
-#	mfs $(TARGET_FILE) ls -l / /bin /usr/bin /dev /etc
-#	cp $(TARGET_FILE) ~greg/net/bootimages/elks/test2.img
 
 #
 # Create character and block devices in image (make target devices:)
@@ -44,79 +42,31 @@ include Make.devices
 #
 # Populate template for filesystem genfs
 template:
+	-rm -rf $(DESTDIR)
+	cp -a $(TEMPLATE_DIR) $(DESTDIR)
+	find $(DESTDIR) -name .keep -delete
 	$(MAKE) -C $(ELKSCMD_DIR) install
-	bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(TEMPLATE_DIR)/etc/issue"
+	bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(DESTDIR)/etc/issue"
 ifdef CONFIG_IMG_BOOT
-	install $(ELKS_DIR)/arch/i86/boot/Image $(TEMPLATE_DIR)/linux
+	install $(ELKS_DIR)/arch/i86/boot/Image $(DESTDIR)/linux
 endif
+	find $(DESTDIR) \
+		-type d ! -name root -execdir chmod go+rx '{}' ';' -o \
+		! -type d ! -name .profile -execdir chmod go+r '{}' ';'
 
 #
 # Create MINIX filesystem from template
 image:
-	mfs $(VERBOSE) $(TARGET_FILE) genfs $(MFS_OPTS) $(TEMPLATE_DIR)
+	mfs $(VERBOSE) $(TARGET_FILE) genfs $(MFS_OPTS) $(DESTDIR)
 ifdef CONFIG_IMG_BOOT
 	mfs $(TARGET_FILE) boot $(FD_BSECT)
 endif
 
 romfs:
-	mkromfs $(TEMPLATE_DIR)
+	mkromfs $(DESTDIR)
 
 # Clean target
 clean:
 	-rm -f $(TARGET_FILE)
-	-rm -f $(TEMPLATE_DIR)/linux
-	-rm -f $(TEMPLATE_DIR)/bin/*
-	-rm -f $(TEMPLATE_DIR)/sbin/*
-	-rm -f $(TEMPLATE_DIR)/usr/bin/*
-	-rm -f $(TEMPLATE_DIR)/etc/issue
-	-rm -f $(TEMPLATE_DIR)/etc/resolv.conf
-	-rm -f $(TEMPLATE_DIR)/dev/*
-	-rm -rf $(TEMPLATE_DIR)/var/www
+	-rm -rf $(DESTDIR)
 	-rm -f *.bin
-
-#
-# The following is the original installation mechanism,
-# could be used for systems requiring mount device
-orgall:
-ifdef CONFIG_IMG_DEV
-	-sudo umount -d $(TARGET_FILE)
-endif
-	-sudo rm -rf $(TARGET_FILE)
-ifdef CONFIG_IMG_DEV
-	dd if=/dev/zero of=$(TARGET_FILE) bs=1024 count=$(TARGET_BLKS)
-	sudo $(MKFS) $(MKFS_OPTS) $(TARGET_FILE)
-endif
-	-sudo rm -rf $(DESTDIR)
-	mkdir -p $(DESTDIR)
-ifdef CONFIG_IMG_DEV
-	sudo mount $(LOOP) $(TARGET_FILE) $(DESTDIR)
-endif
-	(cd $(ELKSCMD_DIR)/rootfs_template; \
-		tar cf - --exclude .keep *) | \
-		(cd $(DESTDIR); sudo tar xpf - --no-same-owner)
-	sudo find $(DESTDIR) \
-		-type d ! -name root -execdir chmod go+rx '{}' \; -o \
-		! -type d ! -name .profile -execdir chmod go+r '{}' \;
-ifdef CONFIG_IMG_LINK
-	(cd $(DESTDIR)/dev; sudo ./MAKEDEV; sudo rm MAKEDEV MAKESET)
-endif
-	$(MAKE) -C $(ELKSCMD_DIR) install
-	sudo bash -c "$(ELKSCMD_DIR)/tools/ver.pl $(ELKS_DIR)/Makefile-rules > $(DESTDIR)/etc/issue"
-ifdef CONFIG_IMG_BOOT
-	sudo install $(ELKS_DIR)/arch/i86/boot/Image $(DESTDIR)/linux
-endif
-ifdef CONFIG_IMG_DEV
-	sudo umount -d $(TARGET_FILE)
-ifdef CONFIG_IMG_BOOT
-	dd if=$(FD_BSECT) of=$(TARGET_FILE) bs=512 count=2 conv=notrunc
-endif
-endif
-ifdef CONFIG_IMG_ROM
-	cd $(IMGDIR) && sudo $(ELKS_DIR)/tools/mkromfs $(DESTDIR)
-	sudo chown "`id -u`":"`id -g`" romfs.bin
-endif
-
-orgclean:
-	-sudo umount -d $(DESTDIR) || true
-	sudo rm -rf $(DESTDIR)
-	sudo rm -rf *.bin
