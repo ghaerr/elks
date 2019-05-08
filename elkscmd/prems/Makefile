@@ -19,7 +19,7 @@ all:
 	$(MAKE) -C pres all
 
 install: $(PRGS)
-	install $(PRGS) $(DESTDIR)/bin
+	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
 	$(MAKE) -C pres clean

@@ -21,11 +21,11 @@ urlget:	$(OBJS)
 	$(LD) $(LDFLAGS) -o urlget $(OBJS) $(LDLIBS)
 
 install: urlget
-	install urlget $(DESTDIR)/bin
+	$(INSTALL) urlget $(DESTDIR)/bin
 ifdef CONFIG_IMG_LINK
-	ln -sf urlget $(DESTDIR)/bin/ftpget
+	$(LN) -sf urlget $(DESTDIR)/bin/ftpget
 else
-	install urlget $(DESTDIR)/bin/ftpget
+	$(INSTALL) urlget $(DESTDIR)/bin/ftpget
 endif
 
 clean:

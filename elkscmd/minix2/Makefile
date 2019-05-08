@@ -46,7 +46,7 @@ lpd: lpd.o ../lib/mktemp.o
 	make -C ../lib mktemp.o
 
 install: $(PRGS)
-	install $(PRGS) $(DESTDIR)/bin
+	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
 	rm -f core *.o $(PRGS)

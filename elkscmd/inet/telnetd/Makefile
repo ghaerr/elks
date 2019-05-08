@@ -21,7 +21,7 @@ telnetd: $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 install: telnetd
-	install telnetd $(DESTDIR)/bin
+	$(INSTALL) telnetd $(DESTDIR)/bin
 
 clean:
 	rm -f $(OBJS) telnetd

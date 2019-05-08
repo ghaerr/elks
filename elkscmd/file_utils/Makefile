@@ -76,7 +76,7 @@ touch: touch.o
 	$(LD) $(LDFLAGS) -o touch touch.o $(LDLIBS)
 
 install: $(PRGS)
-	install $(PRGS) $(DESTDIR)/bin
+	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
 	rm -f $(PRGS) *.o

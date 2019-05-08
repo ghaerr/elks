@@ -16,7 +16,7 @@ xvi: xvi.o
 	$(CC) $(LDFLAGS) xvi.o -o xvi
 
 install: xvi
-	install xvi $(DESTDIR)/bin$
+	$(INSTALL) xvi $(DESTDIR)/bin$
 
 clean:
 	rm -f core xvi *.o

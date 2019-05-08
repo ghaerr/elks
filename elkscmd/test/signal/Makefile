@@ -19,7 +19,7 @@ $(PGM): $(OBJS)
 	$(LD) $(LDFLAGS) -o $(PGM) $(OBJS) $(LDLIBS)
 
 install: $(PGM)
-	sudo install $(PGM) $(DESTDIR)/bin
+	$(INSTALL) $(PGM) $(DESTDIR)/bin
 
 clean:
 	rm -f $(OBJS) $(PGM)

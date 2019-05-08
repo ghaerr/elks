@@ -40,7 +40,7 @@ tinyirccv.o: tinyirccv.c Makefile
 	$(CC) $(CFLAGS) $(LOCALDEFS) -c tinyirccv.c -o tinyirccv.o
 
 install: tinyirc
-	install tinyirc $(DESTDIR)/bin
+	$(INSTALL) tinyirc $(DESTDIR)/bin
 
 clean:
 	rm -f core *.o tinyirc

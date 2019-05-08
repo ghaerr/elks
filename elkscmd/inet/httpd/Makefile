@@ -20,9 +20,9 @@ $(PRG): httpd.o
 	$(LD) $(LDFLAGS) -o $(PRG) httpd.o $(LDLIBS)
 
 install: $(PRG)
-	install $(PRG) $(DESTDIR)/bin
-	mkdir -p $(DESTDIR)/var/www
-	install sample_index.html $(DESTDIR)/var/www/index.html
+	$(INSTALL) $(PRG) $(DESTDIR)/bin
+	$(INSTALL) -d $(DESTDIR)/var/www
+	$(INSTALL) sample_index.html $(DESTDIR)/var/www/index.html
 
 clean:
 	rm -f *.o $(PRG)

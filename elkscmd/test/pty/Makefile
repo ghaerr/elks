@@ -18,7 +18,7 @@ ptyshell: $(OBJS)
 	$(LD) $(LDFLAGS) -o ptyshell ptyshell.o $(LDLIBS)
 
 install: ptyshell
-	sudo install ptyshell $(DESTDIR)/bin
+	$(INSTALL) ptyshell $(DESTDIR)/bin
 
 clean: 
 	rm -f *.o ptyshell

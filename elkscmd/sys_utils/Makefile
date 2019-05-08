@@ -73,7 +73,7 @@ poweroff: poweroff.o
 all: $(PRGS)
 
 install: $(PRGS)
-	install $(PRGS) $(DESTDIR)/bin
+	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
 	rm -f *.o core $(PRGS)

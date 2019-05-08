@@ -43,7 +43,9 @@ SUBDIRS =       \
 
 # Directories to install
 
-INSTDIRS =
+INSTDIRS = \
+	inet \
+	# EOL
 
 ifeq ($(CONFIG_APP_ASH), y)
 INSTDIRS += ash

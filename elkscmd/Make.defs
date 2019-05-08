@@ -92,6 +92,11 @@ endif
 
 CFLAGS=$(CFLBASE) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
 
+# Installation commands
+# Default for now
+
+INSTALL=install
+LN=ln
 
 ###############################################################################
 #
