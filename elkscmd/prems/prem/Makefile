@@ -48,7 +48,7 @@ all:            $(LIBRARY)
 
 $(LIBRARY):     $(OBJS)
 		@echo -n "Loading $(LIBRARY) ... "
-		@$(AR) cru $(LIBRARY) $(OBJS)
+		@$(AR) crsu $(LIBRARY) $(OBJS)
 		@echo "done"
 
 ela_komun.o:    ela_komun.c $(ELHDRS)
