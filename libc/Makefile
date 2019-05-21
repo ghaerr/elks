@@ -145,7 +145,7 @@ install: $(LIBC)
 	$(INSTALL_DATA) $(LIBC) $(CRT0) \
 	    $(TOPDIR)/elks/elks-small.ld $(TOPDIR)/elks/elks-tiny.ld \
 	    $(PREFIX)/ia16-elf/lib/$(MULTISUBDIR)
-	$(INSTALL_DATA) include/*.h $(MULTIINCDIR)
+	$(INSTALL_DATA) include/*.h $(TOPDIR)/include/autoconf.h $(MULTIINCDIR)
 	$(INSTALL_DATA) include/asm/*.h $(MULTIINCDIR)/asm
 	$(INSTALL_DATA) include/sys/*.h $(MULTIINCDIR)/sys
 	$(INSTALL_DATA) $(TOPDIR)/elks/include/arch/*.h $(MULTIINCDIR)/arch
