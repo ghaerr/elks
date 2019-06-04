@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS = stdio.c printf.c scanf.c
+SRCS = stdio.c printf.c scanf.c putchar.c
 OBJS = $(SRCS:.c=.o)
 
 $(OBJS): $(SRCS)
