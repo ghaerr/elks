@@ -870,11 +870,11 @@ con_cp1:
 	mov	copro,%ax
 	cmp	$3,%ah
 	jne	nofpu
-	and	$0xff7f,copro
+	andw	$0xff7f,copro
 	fldcw	copro
 	fdisi
 	fstcw	copro
-	test	$0x0080,copro
+	testw	$0x0080,copro
 	jnz	is8087
 	finit		// 80287/387 test
 	fld1
