@@ -65,7 +65,8 @@ SUBDIRS = \
 # For the first case, arrange to build elks-libc for the available
 # -melks-libc multilib settings.  Furthermore, if $(PREFIX) is defined, add
 # an `install' makefile rule which will install the elks-libc files under
-# $(PREFIX), such that they can be used from outside the ELKS source tree.
+# $(PREFIX), such that they can be used from outside the ELKS source tree;
+# and also add an `uninstall' rule to allow elks-libc to be cleaned away.
 #
 # For the second case, arrange to build elks-libc only for default compiler
 # settings.  Installing the libraries outside the ELKS tree is not supported
@@ -153,11 +154,21 @@ install: $(LIBC)
 	    $(MULTIINCDIR)/linuxmt
 	$(INSTALL_DATA) $(TOPDIR)/elks/include/linuxmt/arpa/*.h \
 	    $(MULTIINCDIR)/linuxmt/arpa
+uninstall:
+	$(RM) $(PREFIX)/ia16-elf/lib/$(MULTISUBDIR)/$(notdir $(LIBC)) \
+	      $(PREFIX)/ia16-elf/lib/$(MULTISUBDIR)/$(notdir $(CRT0)) \
+	      $(PREFIX)/ia16-elf/lib/$(MULTISUBDIR)/elks-small.ld \
+	      $(PREFIX)/ia16-elf/lib/$(MULTISUBDIR)/elks-tiny.ld \
+	      $(MULTIINCDIR)/autoconf.h \
+	      $(patsubst include/%,$(MULTIINCDIR)/%, \
+		  $(wildcard include/*.h include/asm/*.h include/sys/*.h)) \
+	      $(patsubst $(TOPDIR)/elks/include/%,$(MULTIINCDIR)/%, \
+		  $(wildcard $(TOPDIR)/elks/include/arch/*.h \
+			     $(TOPDIR)/elks/include/linuxmt/*.h \
+			     $(TOPDIR)/elks/include/linuxmt/arpa/*.h))
 endif
 
 else
-
-.PHONY: install $(LIBC)
 
 # $(MULTISUBDIR) is undefined.  Build all multilibs that we can build; then
 # copy the library files for "default" settings into this directory.
@@ -178,14 +189,14 @@ $(LIBC):
 	    cp build-ml/$(MAINMULTISUBDIR)/crt0.o $(CRT0)
 
 ifneq "" "$(PREFIX)"
-.PHONY: install
-install:
+.PHONY: install uninstall
+install uninstall:
 	set -e \
 	$(foreach ml,$(BUILDMULTIS), ; \
 		export MULTISUBDIR='$(firstword $(subst ;, ,$(ml)))'; \
 		export MULTILIB='$(strip $(subst @, -, \
 		    $(lastword $(subst ;, ,$(ml)))))'; \
-		$(MAKE) install)
+		$(MAKE) $@)
 endif
 
 endif
