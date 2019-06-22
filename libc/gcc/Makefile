@@ -2,7 +2,10 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS = divmodsi3.s ldivmod.s ashlsi3.s
+# It is feasible to now link programs with the real libgcc, so this libgcc
+# module is not really needed any more.  -- tkchia 20190603
+# SRCS = divmodsi3.s ldivmod.s ashlsi3.s
+SRCS =
 OBJS = $(SRCS:.s=.o)
 
 all: out.a

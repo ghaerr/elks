@@ -39,7 +39,7 @@ all:: .binutils.build
 
 # GCC for IA16
 
-GCC_VER=a28317104e1888e54057a03afbc1602386ad736b
+GCC_VER=2dd73a5500dce4be8f0f7d4bab02f5ed6bf849b0
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).zip:

@@ -63,9 +63,10 @@ SUBDIRS = \
 #     separate -melks-libc multilibs.
 #
 # For the first case, arrange to build elks-libc for the available
-# -melks-libc multilib settings.  Furthermore, if $(PREFIX) is defined, add
+# -melks-libc multilib settings.  Furthermore, if $(DESTDIR) is defined, add
 # an `install' makefile rule which will install the elks-libc files under
-# $(PREFIX), such that they can be used from outside the ELKS source tree.
+# $(DESTDIR), such that they can be used from outside the ELKS source tree;
+# and also add an `uninstall' rule to allow elks-libc to be cleaned away.
 #
 # For the second case, arrange to build elks-libc only for default compiler
 # settings.  Installing the libraries outside the ELKS tree is not supported
@@ -86,7 +87,7 @@ MAINMULTI:=$(filter %;@melks-libc,$(ELKSLIBCMULTIS))
 else
 MAINMULTI:=$(filter .;,$(ALLMULTIS))
 BUILDMULTIS:=$(MAINMULTI)
-override PREFIX=
+override DESTDIR=
 endif
 
 MAINMULTISUBDIR=$(firstword $(subst ;, ,$(MAINMULTI)))
@@ -134,17 +135,17 @@ $(SUBDIRS):
 
 # Install one particular multilib variant of libc.a, crt0.o, and include files.
 # TODO: tidy up the include file installation?
-ifneq "" "$(PREFIX)"
+ifneq "" "$(DESTDIR)"
 INSTALL_DATA = install -c -m 644
-MULTIINCDIR = $(PREFIX)/ia16-elf/lib/$(MULTISUBDIR)/include
+MULTIINCDIR = $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/include
 .PHONY: install
 install: $(LIBC)
-	mkdir -p $(PREFIX)/ia16-elf/lib/$(MULTISUBDIR) \
+	mkdir -p $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR) \
 		 $(MULTIINCDIR)/asm $(MULTIINCDIR)/sys \
 		 $(MULTIINCDIR)/arch $(MULTIINCDIR)/linuxmt/arpa
 	$(INSTALL_DATA) $(LIBC) $(CRT0) \
 	    $(TOPDIR)/elks/elks-small.ld $(TOPDIR)/elks/elks-tiny.ld \
-	    $(PREFIX)/ia16-elf/lib/$(MULTISUBDIR)
+	    $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)
 	$(INSTALL_DATA) include/*.h $(TOPDIR)/include/autoconf.h $(MULTIINCDIR)
 	$(INSTALL_DATA) include/asm/*.h $(MULTIINCDIR)/asm
 	$(INSTALL_DATA) include/sys/*.h $(MULTIINCDIR)/sys
@@ -153,11 +154,21 @@ install: $(LIBC)
 	    $(MULTIINCDIR)/linuxmt
 	$(INSTALL_DATA) $(TOPDIR)/elks/include/linuxmt/arpa/*.h \
 	    $(MULTIINCDIR)/linuxmt/arpa
+uninstall:
+	$(RM) $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/$(notdir $(LIBC)) \
+	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/$(notdir $(CRT0)) \
+	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/elks-small.ld \
+	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/elks-tiny.ld \
+	      $(MULTIINCDIR)/autoconf.h \
+	      $(patsubst include/%,$(MULTIINCDIR)/%, \
+		  $(wildcard include/*.h include/asm/*.h include/sys/*.h)) \
+	      $(patsubst $(TOPDIR)/elks/include/%,$(MULTIINCDIR)/%, \
+		  $(wildcard $(TOPDIR)/elks/include/arch/*.h \
+			     $(TOPDIR)/elks/include/linuxmt/*.h \
+			     $(TOPDIR)/elks/include/linuxmt/arpa/*.h))
 endif
 
 else
-
-.PHONY: install $(LIBC)
 
 # $(MULTISUBDIR) is undefined.  Build all multilibs that we can build; then
 # copy the library files for "default" settings into this directory.
@@ -177,15 +188,15 @@ $(LIBC):
 	cp -u build-ml/$(MAINMULTISUBDIR)/crt0.o $(CRT0) || \
 	    cp build-ml/$(MAINMULTISUBDIR)/crt0.o $(CRT0)
 
-ifneq "" "$(PREFIX)"
-.PHONY: install
-install:
+ifneq "" "$(DESTDIR)"
+.PHONY: install uninstall
+install uninstall:
 	set -e \
 	$(foreach ml,$(BUILDMULTIS), ; \
 		export MULTISUBDIR='$(firstword $(subst ;, ,$(ml)))'; \
 		export MULTILIB='$(strip $(subst @, -, \
 		    $(lastword $(subst ;, ,$(ml)))))'; \
-		$(MAKE) install)
+		$(MAKE) $@)
 endif
 
 endif
