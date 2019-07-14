@@ -25,7 +25,7 @@ static int msdos_file_write(struct inode *inode,struct file *filp,char *buf,
     size_t count);
 
 
-static struct file_operations msdos_file_operations = {
+static struct file_operations msdos_file_operations1 = {
 	NULL,			/* lseek - default */
 	msdos_file_read,	/* read */
 	msdos_file_write,	/* write */
@@ -39,7 +39,7 @@ static struct file_operations msdos_file_operations = {
 /* No getblk for MS-DOS FS' that don't align data at kByte boundaries. */
 
 struct inode_operations msdos_file_inode_operations_no_bmap = {
-	&msdos_file_operations,	/* default file operations */
+	&msdos_file_operations1,	/* default file operations */
 	NULL,			/* create */
 	NULL,			/* lookup */
 	NULL,			/* link */
@@ -85,7 +85,7 @@ static int msdos_file_read(register struct inode *inode,register struct file *fi
 			break;
 		offset = (short)filp->f_pos & (SECTOR_SIZE-1);
 		if (!(bh = msdos_sread(inode->i_dev,sector,&data))) break;
-		filp->f_pos += (size = min(SECTOR_SIZE-offset,left));
+		filp->f_pos += (size = MIN(SECTOR_SIZE-offset,left));
 			memcpy_tofs(buf,(char *)data+offset,size);
 			buf += size;
 		unmap_brelse(bh);
@@ -125,7 +125,7 @@ static int msdos_file_write(register struct inode *inode,register struct file *f
 			if ((error = msdos_add_cluster(inode)) < 0) break;
 		if (error) break;
 		offset = (short)filp->f_pos & (SECTOR_SIZE-1);
-		size = min(SECTOR_SIZE-offset,count);
+		size = MIN(SECTOR_SIZE-offset,count);
 		if (!(bh = msdos_sread(inode->i_dev,sector,&data))) {
 			error = -EIO;
 			break;

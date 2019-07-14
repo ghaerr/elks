@@ -31,7 +31,7 @@ static int msdos_readdir(struct inode *inode,
 
 /*@-type@*/
 
-static struct file_operations msdos_dir_operations = {
+static struct file_operations msdos_dir_operations1 = {
 	NULL,			/* lseek - default */
 	msdos_dir_read,		/* read */
 	NULL,			/* write - bad */
@@ -49,7 +49,7 @@ static struct file_operations msdos_dir_operations = {
  * directories can handle most operations...
  */
 struct inode_operations msdos_dir_inode_operations = {
-	&msdos_dir_operations,	/* default directory file-ops */
+	&msdos_dir_operations1,	/* default directory file-ops */
 	msdos_create,		/* create */
 	msdos_lookup,		/* lookup */
 	NULL,			/* link */
@@ -91,7 +91,7 @@ uni16_to_x8(unsigned char *ascii, register unsigned char *uni)
 int msdos_readdir(
 	struct inode *inode,
 	register struct file *filp,
-	void *dirent,
+	char *dirent,
 	filldir_t filldir)
 {
 	ino_t ino;
@@ -172,8 +172,8 @@ int msdos_readdir(
 			if (is_long) {
 				unsigned char sum;
 				for (sum = 0, i = 0; i < 11; i++) {
-					//sum = (((sum&1)<<7)|((sum&0xfe)>>1));
-					asm("rorb [bp-111], 1");    /* Note the offset */
+					sum = (((sum&1)<<7)|((sum&0xfe)>>1));
+//					asm("rorb [bp-111], 1");    /* Note the offset */
 					sum += de->name[i];
 				}
 
