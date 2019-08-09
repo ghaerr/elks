@@ -245,14 +245,17 @@ sect_max:
 #ifdef CONFIG_IMG_FD1440
 	.word 18
 #endif
+#ifdef CONFIG_IMG_FD720
+	.word 9
+#endif
 
 head_max:
-#ifdef CONFIG_IMG_FD1440
+#if defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD720)
 	.word 2
 #endif
 
 track_max:
-#ifdef CONFIG_IMG_FD1440
+#if defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD720)
 	.word 80
 #endif
 
