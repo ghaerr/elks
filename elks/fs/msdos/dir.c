@@ -87,8 +87,10 @@ uni16_to_x8(unsigned char *ascii, register unsigned char *uni)
 /* Read a complete directory entry for a (specified) file,
  * submit a message to the callback function,
  * return a value of 0 or an error code.
+ *
+ * Notice the optimization level - GCC IA16 optimizes out most of the function code at the moment with -Os.
  */
-int msdos_readdir(
+int __attribute__((optimize("O1"))) msdos_readdir(
 	struct inode *inode,
 	register struct file *filp,
 	char *dirent,
