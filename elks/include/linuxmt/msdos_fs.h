@@ -176,12 +176,12 @@ extern int init_msdos_fs(void);
 
 /* dir.c */
 
-extern struct file_operations msdos_dir_operations;
+//extern struct file_operations msdos_dir_operations;
 extern struct inode_operations msdos_dir_inode_operations;
 
 /* file.c */
 
-extern struct file_operations msdos_file_operations;
+//extern struct file_operations msdos_file_operations;
 extern struct inode_operations msdos_file_inode_operations;
 extern struct inode_operations msdos_file_inode_operations_no_bmap;
 

@@ -25,7 +25,7 @@ static int msdos_file_write(struct inode *inode,struct file *filp,char *buf,
     size_t count);
 
 
-static struct file_operations msdos_file_operations1 = {
+static struct file_operations msdos_file_operations = {
 	NULL,			/* lseek - default */
 	msdos_file_read,	/* read */
 	msdos_file_write,	/* write */
@@ -39,7 +39,7 @@ static struct file_operations msdos_file_operations1 = {
 /* No getblk for MS-DOS FS' that don't align data at kByte boundaries. */
 
 struct inode_operations msdos_file_inode_operations_no_bmap = {
-	&msdos_file_operations1,	/* default file operations */
+	&msdos_file_operations,	/* default file operations */
 	NULL,			/* create */
 	NULL,			/* lookup */
 	NULL,			/* link */

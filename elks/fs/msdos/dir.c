@@ -31,7 +31,7 @@ static int msdos_readdir(struct inode *inode,
 
 /*@-type@*/
 
-static struct file_operations msdos_dir_operations1 = {
+static struct file_operations msdos_dir_operations = {
 	NULL,			/* lseek - default */
 	msdos_dir_read,		/* read */
 	NULL,			/* write - bad */
@@ -49,7 +49,7 @@ static struct file_operations msdos_dir_operations1 = {
  * directories can handle most operations...
  */
 struct inode_operations msdos_dir_inode_operations = {
-	&msdos_dir_operations1,	/* default directory file-ops */
+	&msdos_dir_operations,	/* default directory file-ops */
 	msdos_create,		/* create */
 	msdos_lookup,		/* lookup */
 	NULL,			/* link */
