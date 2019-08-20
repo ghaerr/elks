@@ -90,7 +90,9 @@ uni16_to_x8(unsigned char *ascii, register unsigned char *uni)
  *
  * Notice the optimization level - GCC IA16 optimizes out most of the function code at the moment with -Os.
  */
-int __attribute__((optimize("O1"))) msdos_readdir(
+#pragma GCC push_options
+#pragma GCC optimize ("O1")
+int msdos_readdir(
 	struct inode *inode,
 	register struct file *filp,
 	char *dirent,
@@ -236,3 +238,4 @@ int __attribute__((optimize("O1"))) msdos_readdir(
 		unmap_brelse(bh);
 	return 0;
 }
+#pragma GCC pop_options
