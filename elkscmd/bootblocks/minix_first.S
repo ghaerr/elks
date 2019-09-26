@@ -69,6 +69,7 @@ _next1:
 	xor %ah,%ah
 	int $0x13          // reset floppy
 
+// TODO: infinite retry loop - give up after some retries
 
 loopy:
 	mov $0x0201,%ax    // read 1 sector
@@ -249,14 +250,14 @@ drive_reset:
 // #undef CONFIG_IMG_FD360
 
 sect_max:
-#ifdef CONFIG_IMG_FD1440
-	.word 18
-#endif
 #ifdef CONFIG_IMG_FD720
 	.word 9
 #endif
 #if defined(CONFIG_IMG_FD1200)
 	.word 15
+#endif
+#ifdef CONFIG_IMG_FD1440
+	.word 18
 #endif
 #if defined(CONFIG_IMG_FD1680)
 	.word 21
@@ -268,14 +269,12 @@ head_max:
 #endif
 
 track_max:
-#if defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD720)
-	.word 80
-#endif
-
 #if defined(CONFIG_IMG_FD360)
 	.word 40
 #endif
-
+#if defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD720)
+	.word 80
+#endif
 
 //------------------------------------------------------------------------------
 
