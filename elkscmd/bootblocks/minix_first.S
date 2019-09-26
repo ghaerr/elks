@@ -65,12 +65,19 @@ _next1:
 
 	// Load the second sector of the boot block
 
+	xor %dl,%dl
+	xor %ah,%ah
+	int $0x13          // reset floppy
+
+
+loopy:
 	mov $0x0201,%ax    // read 1 sector
 	mov $sector_2,%bx  // destination
 	mov $2,%cx         // track 0 - from sector 2 (base 1)
 	xor %dx,%dx        // drive 0 - head 0
 	int $0x13          // BIOS disk services
-	jnc _next2
+	jc loopy
+	jmp _next2
 
 	mov $msg_load,%bx
 	call _puts
@@ -245,16 +252,30 @@ sect_max:
 #ifdef CONFIG_IMG_FD1440
 	.word 18
 #endif
+#ifdef CONFIG_IMG_FD720
+	.word 9
+#endif
+#if defined(CONFIG_IMG_FD1200)
+	.word 15
+#endif
+#if defined(CONFIG_IMG_FD1680)
+	.word 21
+#endif
 
 head_max:
-#ifdef CONFIG_IMG_FD1440
+#if defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1680)
 	.word 2
 #endif
 
 track_max:
-#ifdef CONFIG_IMG_FD1440
+#if defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD720)
 	.word 80
 #endif
+
+#if defined(CONFIG_IMG_FD360)
+	.word 40
+#endif
+
 
 //------------------------------------------------------------------------------
 

@@ -85,7 +85,7 @@ static int msdos_file_read(register struct inode *inode,register struct file *fi
 			break;
 		offset = (short)filp->f_pos & (SECTOR_SIZE-1);
 		if (!(bh = msdos_sread(inode->i_dev,sector,&data))) break;
-		filp->f_pos += (size = min(SECTOR_SIZE-offset,left));
+		filp->f_pos += (size = MIN(SECTOR_SIZE-offset,left));
 			memcpy_tofs(buf,(char *)data+offset,size);
 			buf += size;
 		unmap_brelse(bh);
@@ -125,7 +125,7 @@ static int msdos_file_write(register struct inode *inode,register struct file *f
 			if ((error = msdos_add_cluster(inode)) < 0) break;
 		if (error) break;
 		offset = (short)filp->f_pos & (SECTOR_SIZE-1);
-		size = min(SECTOR_SIZE-offset,count);
+		size = MIN(SECTOR_SIZE-offset,count);
 		if (!(bh = msdos_sread(inode->i_dev,sector,&data))) {
 			error = -EIO;
 			break;

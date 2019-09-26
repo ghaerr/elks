@@ -4,6 +4,7 @@
 extern void bell(void);
 
 #ifdef __BCC__
+//#error BCC
 extern void outb(unsigned char, void *);
 extern void outb_p(unsigned char, void *);
 extern void outw(unsigned short int, void *);
@@ -17,6 +18,8 @@ extern unsigned short int inw_p(void *);
 #endif
 
 #ifdef __ia16__
+//#error __IA16
+
 #define outb(value,port) \
 __asm__ ("outb %%al,%%dx"::"Ral" ((unsigned char)(value)),"d" (port))
 

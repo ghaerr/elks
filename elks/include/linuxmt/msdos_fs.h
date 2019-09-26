@@ -6,9 +6,14 @@
  */
 
 #include <linuxmt/fs.h>
+#include <linuxmt/ctype.h>
 
+#ifndef toupper
 extern char toupper(char c);
+#endif
+#ifndef tolower
 extern char tolower(char c);
+#endif
 
 #define MSDOS_ROOT_INO  1 /* == MINIX_ROOT_INO */
 #define SECTOR_SIZE     512 /* sector size (bytes) */
@@ -131,7 +136,7 @@ extern void date_unix2dos(long unix_date,unsigned short *time,
 extern ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
     struct msdos_dir_entry **de);
 extern int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
-    struct msdos_dir_entry **res_de,int *ino);
+    struct msdos_dir_entry **res_de,ino_t *ino);
 extern ino_t msdos_parent_ino(struct inode *dir,int locked);
 
 /* fat.c */
@@ -162,7 +167,7 @@ extern int msdos_rename(struct inode *old_dir,const char *old_name,int old_len,
 
 extern void msdos_put_inode(struct inode *inode);
 extern void msdos_put_super(struct super_block *sb);
-extern struct super_block *msdos_read_super(struct super_block *s,void *data);
+extern struct super_block *msdos_read_super(register struct super_block *s,char *data, int silent);
 extern void msdos_statfs(struct super_block *sb,struct statfs *buf);
 extern long msdos_bmap(struct inode *inode,long block);
 extern void msdos_read_inode(struct inode *inode);
@@ -171,12 +176,12 @@ extern int init_msdos_fs(void);
 
 /* dir.c */
 
-extern struct file_operations msdos_dir_operations;
+//extern struct file_operations msdos_dir_operations;
 extern struct inode_operations msdos_dir_inode_operations;
 
 /* file.c */
 
-extern struct file_operations msdos_file_operations;
+//extern struct file_operations msdos_file_operations;
 extern struct inode_operations msdos_file_inode_operations;
 extern struct inode_operations msdos_file_inode_operations_no_bmap;
 

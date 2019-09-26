@@ -13,6 +13,7 @@
 #include <linuxmt/directhd.h>
 #include <linuxmt/debug.h>
 
+#include <arch/io.h>
 #include <arch/segment.h>
 
 #ifdef CONFIG_BLK_DEV_HD
