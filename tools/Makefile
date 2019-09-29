@@ -31,8 +31,8 @@ $(DISTDIR)/$(BINUTILS_DIST).zip:
 	-rm -rf binutils-build
 	mkdir binutils-build
 	cd binutils-build && ../binutils-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --disable-gdb --disable-libdecnumber --disable-readline --disable-sim --disable-nls
-	make -C binutils-build $(MAKEFLAGS)
-	make -C binutils-build install
+	$(MAKE) -C binutils-build
+	$(MAKE) -C binutils-build install
 	touch .binutils.build
 
 all:: .binutils.build
@@ -57,8 +57,8 @@ $(DISTDIR)/$(GCC_DIST).zip:
 	-rm -rf gcc-build
 	mkdir gcc-build
 	cd gcc-build && ../gcc-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --without-headers --enable-languages=c --disable-libssp --without-isl
-	make -C gcc-build $(MAKEFLAGS)
-	make -C gcc-build install
+	$(MAKE) -C gcc-build
+	$(MAKE) -C gcc-build install
 	touch .gcc.build
 
 all:: .gcc.build
@@ -79,7 +79,7 @@ $(DISTDIR)/$(EMU86_DIST).zip:
 	touch .emu86.src
 
 .emu86.build: .emu86.src
-	make -C emu86 all
+	$(MAKE) -C emu86 all
 	install emu86/emu86 $(CROSSDIR)/bin/
 	install emu86/pcat $(CROSSDIR)/bin/
 	touch .emu86.build
