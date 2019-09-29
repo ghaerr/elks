@@ -31,7 +31,7 @@ $(DISTDIR)/$(BINUTILS_DIST).zip:
 	-rm -rf binutils-build
 	mkdir binutils-build
 	cd binutils-build && ../binutils-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --disable-gdb --disable-libdecnumber --disable-readline --disable-sim --disable-nls
-	make -C binutils-build
+	make -C binutils-build $(MAKEFLAGS)
 	make -C binutils-build install
 	touch .binutils.build
 
@@ -51,12 +51,13 @@ $(DISTDIR)/$(GCC_DIST).zip:
 	-rm -rf gcc-src
 	mv $(GCC_DIST) gcc-src
 	touch .gcc.src
+	cd gcc-src && contrib/download_prerequisites
 
 .gcc.build: .gcc.src .binutils.build
 	-rm -rf gcc-build
 	mkdir gcc-build
 	cd gcc-build && ../gcc-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --without-headers --enable-languages=c --disable-libssp --without-isl
-	make -C gcc-build
+	make -C gcc-build $(MAKEFLAGS)
 	make -C gcc-build install
 	touch .gcc.build
 

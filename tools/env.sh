@@ -35,3 +35,7 @@ add_path () {
 add_path "$CROSSDIR/bin"
 
 echo PATH set to $PATH
+
+export MAKEFLAGS="$MAKEFLAGS"
+
+echo MAKEFLAGS set to $MAKEFLAGS
