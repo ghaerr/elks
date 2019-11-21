@@ -24,6 +24,7 @@ _startup:
 	lea 4(%bp),%bx  // argv [0]
 	mov 2(%bp),%cx  // argc
 	mov %cx,%ax
+	inc %ax
 	shl $1,%ax
 	add %bx,%ax     // envp [0]
 	mov %ax,environ
