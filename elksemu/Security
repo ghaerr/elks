@@ -1,0 +1,20 @@
+Is is possible to install /usr/bin/elksemu as a suid-root executable.
+This gives two additional facilities when running elks executables.
+
+1) It is now possible to run programs that are execute only, without
+   read permission, as the file is opened while we have superuser
+   access.
+
+2) If the ELKS executable has suid or sgid bits set these will be honoured.
+
+The user now needs execute access to run an executable, this is checked.
+
+If the executable does not have either suid/sgid bits set then all
+extra permissions will be dropped within the first few lines of the
+main() function. Because of this you need only check this tiny
+piece of code if you intend never to use suid.
+
+If you have any problem with elksemu being suid-root the program will
+run as before, with no complaints, if you remove the suid permission.
+
+Rob.
