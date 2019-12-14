@@ -190,6 +190,9 @@ $(LIBC):
 
 ifneq "" "$(DESTDIR)"
 .PHONY: install uninstall
+# Besides installing library files and header files, also install the system
+# call tables call_tab.v and defn_tab.v in a reasonable place.  The elksemu
+# build process needs these.
 install uninstall:
 	set -e \
 	$(foreach ml,$(BUILDMULTIS), ; \
@@ -197,6 +200,17 @@ install uninstall:
 		export MULTILIB='$(strip $(subst @, -, \
 		    $(lastword $(subst ;, ,$(ml)))))'; \
 		$(MAKE) $@)
+	set -e; \
+	dest=$(DESTDIR)/share/misc/elks; \
+	case $@ in \
+	    install) \
+		mkdir -p "$$dest"; \
+		cp build-ml/$(MAINMULTISUBDIR)/system/call_tab.v \
+		   build-ml/$(MAINMULTISUBDIR)/system/defn_tab.v "$$dest";; \
+	    *) \
+		$(RM) "$$dest"/call_tab.v "$$dest"/defn_tab.v; \
+		rmdir -p "$$dest" || true;; \
+	esac
 endif
 
 endif
