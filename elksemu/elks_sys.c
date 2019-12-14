@@ -9,7 +9,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <sys/vm86.h>
 #include <sys/times.h>
 #include <utime.h>
 #include <termios.h>
@@ -22,6 +21,7 @@
 #include <sys/ioctl.h>
 #include <dirent.h>
 #include <sys/time.h>
+#include <linux/reboot.h>
 #include "elks.h" 
 
 #include "efile.h"
@@ -56,23 +56,9 @@ static int elks_closedir(int bx);
  
 static void squash_stat(struct stat *s, int bx)
 {
-#if 1	/* Can't use elks_stat, shot in the foot by alignment */
-
-	ELKS_POKE(short, bx+0, s->st_dev);
-	ELKS_POKE(short, bx+2, s->st_ino ^ (s->st_ino>>16));
-	ELKS_POKE(short, bx+4, s->st_mode);
-	ELKS_POKE(short, bx+6, s->st_nlink);
-	ELKS_POKE(short, bx+8, s->st_uid);
-	ELKS_POKE(short, bx+10, s->st_gid);
-	ELKS_POKE(short, bx+12, s->st_rdev);
-	ELKS_POKE(long, bx+14, s->st_size);
-	ELKS_POKE(long, bx+18, s->st_atime);
-	ELKS_POKE(long, bx+22, s->st_mtime);
-	ELKS_POKE(long, bx+26, s->st_ctime);
-#else
 	struct elks_stat * ms = ELKS_PTR(struct elks_stat, bx);
 	ms->est_dev=s->st_dev;
-	ms->est_inode=(unsigned short)s->st_ino;	/* Bits lost */
+	ms->est_inode=(uint16_t)s->st_ino;	/* Bits lost */
 	ms->est_mode=s->st_mode;
 	ms->est_nlink=s->st_nlink;
 	ms->est_uid=s->st_uid;
@@ -82,7 +68,6 @@ static void squash_stat(struct stat *s, int bx)
 	ms->est_atime=s->st_atime;
 	ms->est_mtime=s->st_mtime;
 	ms->est_ctime=s->st_ctime;
-#endif
 }
 
 /*
@@ -179,7 +164,7 @@ static int elks_close(int bx,int cx,int dx,int di,int si)
 static int elks_wait4(int bx,int cx,int dx,int di,int si)
 {
 	int status;
-	unsigned short *tp=ELKS_PTR(unsigned short, cx);
+	uint16_t *tp=ELKS_PTR(uint16_t, cx);
 	int r;
 	struct rusage use;
 
@@ -244,13 +229,9 @@ static int elks_chown(int bx,int cx,int dx,int di,int si)
 #define sys_brk elks_brk
 static int elks_brk(int bx,int cx,int dx,int di,int si)
 {
-	dbprintf(("brk(%d)\n",bx));	
-	if(bx>=elks_cpu.regs.esp)
-	{
-		errno= 1;	/* Really return -1 */
-		return -1;
-	}
-	return 0;		/* Can't return bx, 0xBAD1 is an error */
+	dbprintf(("brk(%d)\n",bx));
+	brk_at = bx;
+	return bx;
 }
 
 #define sys_stat elks_stat
@@ -278,12 +259,12 @@ static int elks_lstat(int bx,int cx,int dx,int di,int si)
 #define sys_lseek elks_lseek
 static int elks_lseek(int bx,int cx,int dx,int di,int si)
 {
-	long l=ELKS_PEEK(long, cx);
+	long l=ELKS_PEEK(int32_t, cx);
 	
 	dbprintf(("lseek(%d,%ld,%d)\n",bx,l,dx));
 	l = lseek(bx,l,dx);
 	if( l < 0 ) return -1;
-	ELKS_POKE(long, cx, l);
+	ELKS_POKE(int32_t, cx, l);
 	return 0;
 }
 
@@ -291,7 +272,7 @@ static int elks_lseek(int bx,int cx,int dx,int di,int si)
 static int elks_getpid(int bx,int cx,int dx,int di,int si)
 {
 	dbprintf(("getpid/getppid()\n"));
-	ELKS_POKE(unsigned short, bx, getppid());
+	ELKS_POKE(uint16_t, bx, getppid());
 	return getpid();
 }
 
@@ -306,7 +287,7 @@ static int elks_setuid(int bx,int cx,int dx,int di,int si)
 static int elks_getuid(int bx,int cx,int dx,int di,int si)
 {
 	dbprintf(("get[e]uid()\n"));
-	ELKS_POKE(unsigned short, bx, geteuid());
+	ELKS_POKE(uint16_t, bx, geteuid());
 	return getuid();
 }
 
@@ -338,7 +319,7 @@ static int elks_pause(int bx,int cx,int dx,int di,int si)
 #define sys_utime elks_utime
 static int elks_utime(int bx,int cx,int dx,int di,int si)
 {
-	unsigned long *up=ELKS_PTR(long, cx);
+	uint32_t *up=ELKS_PTR(uint32_t, cx);
 	struct utimbuf u;
 	u.actime=*up++;
 	u.modtime=*up;
@@ -370,7 +351,7 @@ static int elks_kill(int bx,int cx,int dx,int di,int si)
 #define sys_pipe elks_pipe
 static int elks_pipe(int bx,int cx,int dx,int di,int si)
 {
-	unsigned short *dp=ELKS_PTR(unsigned short, bx);
+	uint16_t *dp=ELKS_PTR(uint16_t, bx);
 	int p[2];
 	int err=pipe(p);
 	if(err==-1)
@@ -384,9 +365,9 @@ static int elks_pipe(int bx,int cx,int dx,int di,int si)
 static int elks_times(int bx,int cx,int dx,int di,int si)
 {
 	struct tms t;
-	long clock_ticks=times(&t);
-	long *tp=ELKS_PTR(long, bx);
-	long *clkt=ELKS_PTR(long, cx);
+	clock_t clock_ticks=times(&t);
+	int32_t *tp=ELKS_PTR(int32_t, bx);
+	int32_t *clkt=ELKS_PTR(int32_t, cx);
 	*tp++=t.tms_utime;
 	*tp++=t.tms_stime;
 	*tp++=t.tms_cutime;
@@ -404,7 +385,7 @@ static int elks_setgid(int bx,int cx,int dx,int di,int si)
 #define sys_getgid elks_getgid
 static int elks_getgid(int bx,int cx,int dx,int di,int si)
 {
-	ELKS_POKE(unsigned short, bx, getegid());
+	ELKS_POKE(uint16_t, bx, getegid());
 	return getgid();
 }
 
@@ -426,16 +407,16 @@ static int elks_execve(int bx,int cx,int dx,int di,int si)
 	int arg_ct,env_ct;
 	int ct;
 	char **argp, **envp;
-	unsigned short *bp;
+	uint16_t *bp;
 	unsigned char *base;
-	unsigned short *tmp;
+	uint16_t *tmp;
 	struct elks_exec_hdr mh;
 	int is_elks = 1;
 	
 	dbprintf(("exec(%s,%d,%d)\n",ELKS_PTR(char, bx), cx, dx));
 
 	base=ELKS_PTR(unsigned char, cx);
-	bp=ELKS_PTR(unsigned short, cx+2);
+	bp=ELKS_PTR(uint16_t, cx+2);
 	tmp=bp;
 
 	fd=open(ELKS_PTR(char, bx),O_RDONLY);
@@ -576,13 +557,13 @@ static int elks_gettimeofday(int bx,int cx,int dx,int di,int si)
 
 	if( ax == 0 && bx )
 	{
-	   ELKS_POKE(long, bx, tv.tv_sec);
-	   ELKS_POKE(long, bx+4, tv.tv_usec);
+	   ELKS_POKE(int32_t, bx, tv.tv_sec);
+	   ELKS_POKE(int32_t, bx+4, tv.tv_usec);
 	}
 	if( ax == 0 && cx )
 	{
-	   ELKS_POKE(short, cx, tz.tz_minuteswest);
-	   ELKS_POKE(short, cx+2, tz.tz_dsttime);
+	   ELKS_POKE(int16_t, cx, tz.tz_minuteswest);
+	   ELKS_POKE(int16_t, cx+2, tz.tz_dsttime);
 	}
 	return ax?-1:0;
 }
@@ -598,14 +579,14 @@ static int elks_settimeofday(int bx,int cx,int dx,int di,int si)
 	if( bx )
 	{
 	   pv = &tv;
-	   tv.tv_sec  = ELKS_PEEK(long, bx);
-	   tv.tv_usec = ELKS_PEEK(long, bx+4);
+	   tv.tv_sec  = ELKS_PEEK(int32_t, bx);
+	   tv.tv_usec = ELKS_PEEK(int32_t, bx+4);
 	}
 	if( cx )
 	{
 	   pz = &tz;
-	   tz.tz_minuteswest = ELKS_PEEK(short, cx);
-	   tz.tz_dsttime =     ELKS_PEEK(short, cx+2);
+	   tz.tz_minuteswest = ELKS_PEEK(int16_t, cx);
+	   tz.tz_dsttime =     ELKS_PEEK(int16_t, cx+2);
 	}
 
 	ax = settimeofday(pv, pz);
@@ -697,8 +678,8 @@ static int elks_readdir(int bx,int cx,int dx,int di,int si)
 	if( ent == 0 ) { if( errno ) { return -1; } else return 0; }
 
 	memcpy(ELKS_PTR(char, cx+10), ent->d_name, ent->d_reclen+1);
-	ELKS_POKE(long, cx, ent->d_ino);
-	ELKS_POKE(short, cx+8, ent->d_reclen);
+	ELKS_POKE(int32_t, cx, ent->d_ino);
+	ELKS_POKE(int16_t, cx+8, ent->d_reclen);
 	return dx;
 }
 
@@ -708,6 +689,41 @@ elks_closedir(int bx)
 	bx-=10000;
 	if( dirtab[bx] ) closedir(dirtab[bx]);
 	dirtab[bx] = 0;
+	return 0;
+}
+
+#define sys_sbrk elks_sbrk
+static int elks_sbrk(int bx,int cx,int dx,int di,int si)
+{
+	unsigned short old_brk_at = brk_at;
+	dbprintf(("sbrk(%d,0x%04x)\n",bx,cx));
+	if (bx % 2)
+	{
+		++bx;
+		bx &= 0xFFFF;
+	}
+	if (bx > 0) {
+		if (brk_at + bx < brk_at)
+		{
+			errno= ENOMEM;
+			return -1;
+		}
+	}
+	else
+	{
+		if (brk_at <= -bx || brk_at + bx >= elks_cpu.regs.xsp)
+		{
+			errno= ENOMEM;
+			return -1;
+		}
+	}
+	if (brk_at >= elks_cpu.regs.xsp ^ brk_at + bx >= elks_cpu.regs.xsp)
+	{
+		errno = ENOMEM;
+		return -1;
+	}
+	brk_at += bx;
+	ELKS_POKE(int16_t, cx, old_brk_at);
 	return 0;
 }
 
@@ -742,7 +758,7 @@ static int elks_termios(int bx,int cx,int dx,int di,int si)
 static int elks_enosys(int bx,int cx,int dx,int di,int si)
 {
 	fprintf(stderr, "Function number %d called (%d,%d,%d)\n",
-	                 (int)(0xFFFF&elks_cpu.regs.eax),
+	                 (int)(0xFFFF&elks_cpu.regs.xax),
 			 bx, cx, dx);
 	errno = ENOSYS;
 	return -1;
@@ -761,14 +777,14 @@ static funcp jump_tbl[] = {
 int elks_syscall(void)
 {
 	int r, n;
-	int bx=elks_cpu.regs.ebx&0xFFFF;
-	int cx=elks_cpu.regs.ecx&0xFFFF;
-	int dx=elks_cpu.regs.edx&0xFFFF;
-	int di=elks_cpu.regs.edi&0xFFFF;
-	int si=elks_cpu.regs.esi&0xFFFF;
+	int bx=elks_cpu.regs.xbx&0xFFFF;
+	int cx=elks_cpu.regs.xcx&0xFFFF;
+	int dx=elks_cpu.regs.xdx&0xFFFF;
+	int di=elks_cpu.regs.xdi&0xFFFF;
+	int si=elks_cpu.regs.xsi&0xFFFF;
 	
 	errno=0;
-	n = (elks_cpu.regs.eax&0xFFFF);
+	n = (elks_cpu.regs.xax&0xFFFF);
 	if( n>= 0 && n< sizeof(jump_tbl)/sizeof(funcp) )
 	   r = (*(jump_tbl[n]))(bx, cx, dx, di, si);
 	else

@@ -1,10 +1,12 @@
 /*
  *	ELKSEMU	An emulator for Linux8086 binaries.
  *
- *	VM86 is used to process all the 8086 mode code.
+ *	The 8086 mode code runs in protected mode by way of 16-bit segment
+ *	descriptors which we set up in the LDT.
  *	We trap up to 386 mode for system call emulation and naughties. 
  */
- 
+
+#define _GNU_SOURCE  /* for clone */ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -13,18 +15,22 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <sched.h>
 #include <errno.h>
+#include <stdint.h>
 #include <sys/stat.h>
-#include <sys/vm86.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/ptrace.h>
+#include <sys/wait.h>
+#include <asm/ldt.h>
+#include <asm/ptrace-abi.h>
 #include "elks.h" 
 
-#ifdef __BCC__
-#define OLD_LIBC_VERSION
-#endif
-
-volatile struct vm86_struct elks_cpu;
-unsigned char *elks_base;	/* Paragraph aligned */
+volatile struct elks_cpu_s elks_cpu;
+unsigned char *elks_base, *elks_data_base;	/* Paragraph aligned */
+unsigned short brk_at = 0;
 
 #ifdef DEBUG
 #define dbprintf(x) db_printf x
@@ -32,14 +38,52 @@ unsigned char *elks_base;	/* Paragraph aligned */
 #define dbprintf(x) 
 #endif
 
+static int modify_ldt(int func, void *ptr, unsigned long bytes)
+{
+	return syscall(SYS_modify_ldt, func, ptr, bytes);
+}
+
 static void elks_init()
 {
-	elks_cpu.screen_bitmap=0;
-	elks_cpu.cpu_type = CPU_286;
-	/*
-	 *	All INT xx calls are trapped.
-	 */
-	memset((void *)&elks_cpu.int_revectored,0xFF, sizeof(elks_cpu.int_revectored));
+	uint64_t ldt[8192];
+	struct user_desc cs_desc, ds_desc;
+	memset(ldt, 0, sizeof ldt);
+	int cs_idx = 0, ds_idx, ldt_count = modify_ldt(0, ldt, sizeof ldt);
+	unsigned cs, ds;
+	if (ldt_count < 0)
+		ldt_count = 0;
+	while (cs_idx < ldt_count && ldt[cs_idx] != 0)
+		++cs_idx;
+	ds_idx = cs_idx + 1;
+	while (ds_idx < ldt_count && ldt[ds_idx] != 0)
+		++ds_idx;
+	if (cs_idx >= 8192 || ds_idx >= 8192)
+	{
+		fprintf(stderr, "No free LDT descriptors for text and data "
+				"segments\n");
+		exit(255);
+	}
+	elks_cpu.regs.xcs = cs = cs_idx * 8 + 7;
+	elks_cpu.regs.xds = elks_cpu.regs.xes = elks_cpu.regs.xss
+			  = ds = ds_idx * 8 + 7;
+	dbprintf(("LDT descriptor for text is %#x\n", cs));
+	dbprintf(("LDT descriptor for data is %#x\n", ds));
+	/* Try to place dummy descriptors in the LDT */
+	memset(&cs_desc, 0, sizeof cs_desc);
+	cs_desc.entry_number = cs_idx;
+	cs_desc.contents = MODIFY_LDT_CONTENTS_CODE;
+	cs_desc.useable = 1;
+	memset(&ds_desc, 0, sizeof ds_desc);
+	ds_desc.entry_number = ds_idx;
+	ds_desc.contents = MODIFY_LDT_CONTENTS_DATA;
+	ds_desc.useable = 1;
+	if (modify_ldt(1, &cs_desc, sizeof cs_desc) != 0
+	    || modify_ldt(1, &ds_desc, sizeof ds_desc) != 0)
+	{
+		fprintf(stderr, "Cannot allocate LDT descriptors for text "
+				"and data segments\n");
+		exit(255);
+	}
 }
 
 static void elks_take_interrupt(int arg)
@@ -55,24 +99,33 @@ static void elks_take_interrupt(int arg)
 		return;
 	}
 	
-	dbprintf(("syscall AX=%x BX=%x CX=%x DX=%x\n",
-		(unsigned short)elks_cpu.regs.eax,
-		(unsigned short)elks_cpu.regs.ebx,
-		(unsigned short)elks_cpu.regs.ecx,
-		(unsigned short)elks_cpu.regs.edx));
+	dbprintf(("syscall AX=%x BX=%x CX=%x DX=%x SP=%x "
+		  "stack=%x %x %x %x %x\n",
+		(unsigned short)elks_cpu.regs.xax,
+		(unsigned short)elks_cpu.regs.xbx,
+		(unsigned short)elks_cpu.regs.xcx,
+		(unsigned short)elks_cpu.regs.xdx,
+		(unsigned short)elks_cpu.regs.xsp,
+		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp),
+		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 2),
+		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 4),
+		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 6),
+		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 8)));
 		
-	elks_cpu.regs.eax = elks_syscall();
-	dbprintf(("elks syscall returned %d\n", elks_cpu.regs.eax));
-	/* Finally return to vm86 state */
+	elks_cpu.regs.xax = elks_syscall();
+	dbprintf(("elks syscall returned %d\n",
+		  (int)(short)elks_cpu.regs.xax));
+	/* Finally resume the child process */
 }
 
 
 static int load_elks(int fd)
 {
-	/* Load the elks binary image and set it up in a suitable VM86 segment. Load CS and DS/SS
-	   according to image type. chmem is ignored we always use 64K segments */
+	/* Load the elks binary image and set it up in the text and data
+	   segments. Load CS and DS/SS according to image type. chmem is
+	   ignored we always use 64K segments */
 	struct elks_exec_hdr mh;
-	unsigned char *dsp;
+	struct user_desc cs_desc, ds_desc;
 	if(read(fd, &mh,sizeof(mh))!=sizeof(mh))
 		return -ENOEXEC;
 	if(mh.hlen!=EXEC_HEADER_SIZE)
@@ -83,88 +136,147 @@ static int load_elks(int fd)
 	fprintf(stderr,"Linux-86 binary - %lX. tseg=%ld dseg=%ld bss=%ld\n",
 		mh.type,mh.tseg,mh.dseg,mh.bseg);
 #endif
+	if (mh.tseg > 0xfffful || mh.dseg > 0xfffful
+	    || mh.bseg > 0xfffful - mh.dseg || mh.entry >= mh.tseg)
+	{
+		fprintf(stderr, "Bogus a.out headers\n");
+		exit(1);
+	}
 	if(read(fd,elks_base,mh.tseg)!=mh.tseg)
 		return -ENOEXEC;
 	if(mh.type==ELKS_COMBID)
-		dsp=elks_base+mh.tseg;
+		elks_data_base=elks_base+mh.tseg;
 	else
-		dsp=elks_base+65536;
-	if(read(fd,dsp,mh.dseg)!=mh.dseg)
+		elks_data_base=elks_base+65536;
+	if(read(fd,elks_data_base,mh.dseg)!=mh.dseg)
 		return -ENOEXEC;
-	memset(dsp+mh.dseg,0, mh.bseg);
+	memset(elks_data_base+mh.dseg,0, mh.bseg);
 	/*
-	 *	Load the VM86 registers
+	 *	Really set up the LDT descriptors
 	 */
 	 
 	if(mh.type==ELKS_COMBID)
-		dsp=elks_base;
-	elks_cpu.regs.ds=PARAGRAPH(dsp);
-	elks_cpu.regs.es=PARAGRAPH(dsp);
-	elks_cpu.regs.ss=PARAGRAPH(dsp);
-	elks_cpu.regs.esp=65536; 	/* Args stacked later */
-	elks_cpu.regs.cs=PARAGRAPH(elks_base);
-	elks_cpu.regs.eip=0;		/* Run from 0 */
-	
-	/*
-	 *	Loaded, check for sanity.
-	 */
-	if( dsp != ELKS_PTR(unsigned char, 0) )
+		elks_data_base=elks_base;
+	memset(&cs_desc, 0, sizeof cs_desc);
+	memset(&ds_desc, 0, sizeof ds_desc);
+	cs_desc.entry_number = elks_cpu.regs.xcs / 8;
+	cs_desc.base_addr = (uintptr_t)elks_base;
+	cs_desc.limit = mh.tseg - 1;
+	cs_desc.contents = MODIFY_LDT_CONTENTS_CODE;
+	cs_desc.seg_not_present = mh.tseg == 0;
+	ds_desc.entry_number = elks_cpu.regs.xss / 8;
+	ds_desc.base_addr = (uintptr_t)elks_data_base;
+	ds_desc.limit = 0xffff;
+	ds_desc.contents = MODIFY_LDT_CONTENTS_DATA;
+	if (mh.type == ELKS_COMBID)
+		ds_desc.seg_not_present = mh.tseg == 0
+					  && mh.dseg == 0 && mh.bseg == 0;
+	else
+		ds_desc.seg_not_present = mh.dseg == 0 && mh.bseg == 0;
+	if (modify_ldt(1, &cs_desc, sizeof cs_desc) != 0
+	    || modify_ldt(1, &ds_desc, sizeof ds_desc) != 0)
 	{
-	   printf("Error VM86 problem %lx!=%lx (Is DS > 16 bits ?)\n",
-	           (long)dsp, (long)ELKS_PTR(char, 0));
-	   exit(0);
+		fprintf(stderr, "Cannot set LDT descriptors for text and data "
+				"segments\n");
+		exit(255);
 	}
-
+	elks_cpu.regs.xsp = 0;	 	/* Args stacked later */
+	elks_cpu.regs.xip = mh.entry;	/* Run from entry point */
+	elks_cpu.child = 0;
+	if (mh.type == ELKS_COMBID)
+		brk_at = mh.tseg + mh.dseg + mh.bseg;
+	else
+		brk_at = mh.dseg + mh.bseg;
 	return 0;
 }
 
-#ifndef OLD_LIBC_VERSION
-  /*
-   *  recent versions of libc have changed the proto for vm86()
-   *  for now I'll just override ...
-   */
-#define OLD_SYS_vm86  113
-#define NEW_SYS_vm86  166
-
-static inline int vm86_mine(struct vm86_struct* v86)
+static int child_idle(void *dummy)
 {
-	int __res;
-	__asm__ __volatile__("int $0x80\n"
-	:"=a" (__res):"a" ((int)OLD_SYS_vm86), "b" ((int)v86));
-	return __res;
-} 
-#endif
+	for (;;)
+		raise(SIGSTOP);
+	return 0;
+}
+
+static int wait_for_child(void)
+{
+	pid_t child = elks_cpu.child, pid;
+	int status;
+	while ((pid = waitpid(child, &status, 0)) != child)
+	{
+		if (pid < 0)
+		{
+			fprintf(stderr, "waitpid failed\n");
+			exit(255);
+		}
+	}
+	return status;
+}
 
 void run_elks()
 {
 	/*
 	 *	Execute 8086 code for a while.
 	 */
-#ifndef OLD_LIBC_VERSION
-	int err=vm86_mine((struct vm86_struct*)&elks_cpu);
-#else
-	int err=vm86((struct vm86_struct*)&elks_cpu);
-#endif
-	switch(VM86_TYPE(err))
+	pid_t child = elks_cpu.child;
+	int status;
+	if (!child)
 	{
-		/*
-		 *	Signals are just re-starts of emulation (yes the
-		 *	handler might alter elks_cpu)
-		 */
-		case VM86_SIGNAL:
-			break;
-		case VM86_UNKNOWN:
-			fprintf(stderr, "VM86_UNKNOWN returned\n");
-			exit(1);
-		case VM86_INTx:
-			elks_take_interrupt(VM86_ARG(err));
-			break;
-		case VM86_STI:
-			fprintf(stderr, "VM86_STI returned\n");
-			break;	/* Shouldnt be seen */
-		default:
-			fprintf(stderr, "Unknown return value from vm86\n");
-			exit(1);
+		child = clone(child_idle, elks_data_base + elks_cpu.regs.xsp,
+			      CLONE_FILES | CLONE_FS | CLONE_IO | CLONE_VM,
+			      NULL);
+		if (child <= 0)
+		{
+			fprintf(stderr, "clone call failed\n");
+			exit(255);
+		}
+		dbprintf(("Created child thread %ld\n", (long)child));
+		elks_cpu.child = child;
+		if (ptrace(PTRACE_ATTACH, child, NULL, NULL) != 0)
+		{
+			int err = errno;
+			fprintf(stderr, "ptrace(PTRACE_ATTACH ...) failed\n");
+			fprintf(stderr, "%s\n", strerror(errno));
+			exit(255);
+		}
+		wait_for_child();
+	}
+	if (ptrace(PTRACE_SETREGS, child, NULL, &elks_cpu.regs) != 0)
+	{
+		fprintf(stderr, "ptrace(PTRACE_SETREGS ...) failed\n");
+		exit(255);
+	}
+	if (ptrace(PTRACE_SYSEMU, child, NULL, NULL) != 0)
+	{
+		fprintf(stderr, "ptrace(PTRACE_SYSEMU ...) failed\n");
+		exit(255);
+	}
+	status = wait_for_child();
+	if (ptrace(PTRACE_GETREGS, child, NULL, &elks_cpu.regs) != 0)
+	{
+		fprintf(stderr, "ptrace(PTRACE_GETREGS ...) failed\n");
+		exit(255);
+	}
+	dbprintf(("%#lx:%#lx\n", elks_cpu.regs.xcs, elks_cpu.regs.xip));
+	if (WIFSIGNALED(status))
+		raise(WTERMSIG(status));
+	else if (WIFSTOPPED(status))
+	{
+		siginfo_t si;
+		if (WSTOPSIG(status) != SIGTRAP
+		  || ptrace(PTRACE_GETSIGINFO, child, NULL, &si) != 0
+		  || (si.si_code != SIGTRAP
+		      && si.si_code != (SIGTRAP | 0x80)))
+			raise(WSTOPSIG(status));
+		else
+		{	/* this is a syscall-stop */
+			elks_cpu.regs.xax = elks_cpu.regs.orig_xax;
+			elks_take_interrupt(0x80);
+		}
+	}
+	else if (!WIFCONTINUED(status))
+	{
+		fprintf(stderr, "Unknown return value from waitpid\n");
+		exit(255);
 	}
 }
 
@@ -182,12 +294,16 @@ void build_stack(char ** argv, char ** envp)
 	{
 	   argv_count++; argv_len += strlen(*p)+1;
 	}
+	if (argv_len % 2)
+		argv_len++;
 
 	/* How much space for envp */
 	for(p=envp; *p; p++)
 	{
 	   envp_count++; envp_len += strlen(*p)+1;
 	}
+	if (envp_len % 2)
+		envp_len++;
 
 	/* tot it all up */
 	stack_bytes = 2				/* argc */
@@ -197,16 +313,16 @@ void build_stack(char ** argv, char ** envp)
 		    + envp_len;
 
 	/* Allocate it */
-	elks_cpu.regs.esp -= stack_bytes;
+	elks_cpu.regs.xsp -= stack_bytes;
 
-/* Sanity check 
-	printf("Argv = (%d,%d), Envp=(%d,%d), stack=%d\n",
-	        argv_count, argv_len, envp_count, envp_len, stack_bytes);
-*/
+#ifdef DEBUG
+	fprintf(stderr, "Argv = (%d,%d), Envp=(%d,%d), stack=%d\n",
+		argv_count, argv_len, envp_count, envp_len, stack_bytes);
+#endif
 
 	/* Now copy in the strings */
-	pip=ELKS_PTR(unsigned short, elks_cpu.regs.esp);
-	pcp=elks_cpu.regs.esp+2*(1+argv_count+1+envp_count+1);
+	pip=ELKS_PTR(unsigned short, elks_cpu.regs.xsp);
+	pcp=elks_cpu.regs.xsp+2*(1+argv_count+1+envp_count+1);
 
 	*pip++ = argv_count;
 	for(p=argv; *p; p++)
@@ -232,6 +348,7 @@ main(int argc, char *argv[], char *envp[])
 	int fd;
 	struct stat st;
 	int ruid, euid, rgid, egid;
+	int pg_sz;
 
 	if(argc<=1)
 	{
@@ -265,28 +382,24 @@ main(int argc, char *argv[], char *envp[])
 	dbprintf(("ELKSEMU\n"));
 	elks_init();
 
+	pg_sz = getpagesize();
+	if (pg_sz < 0)
+	{
+		fprintf(stderr, "Cannot get system page size\n");
+		exit(255);
+	}
+
 	/* The Linux vm will deal with not allocating the unused pages */
-#if __AOUT__
-#if __GNUC__
-	/* GNU malloc will align to 4k with large chunks */
-	elks_base = malloc(0x20000);
-#else
-	/* But others won't */
-	elks_base = malloc(0x20000+4096);
-	elks_base = (void*) (((int)elks_base+4095) & -4096);
-#endif
-#else
-	/* For ELF first 128M is unmapped, it needs to be mapped manually */
-	elks_base = mmap((void*)0x10000, 0x20000,
+	elks_base = mmap(NULL, 0x20000 + pg_sz,
 	                  PROT_EXEC|PROT_READ|PROT_WRITE,
-			  MAP_ANON|MAP_PRIVATE|MAP_FIXED, 
-			  0, 0);
-#endif
-	if( (long)elks_base < 0 || (long)elks_base >= 0xE0000 )
+			  MAP_ANON|MAP_PRIVATE|MAP_32BIT, 
+			  -1, 0);
+	if( (intptr_t)elks_base < 0 || (uintptr_t)elks_base >= 0x100000000ull)
 	{
 		fprintf(stderr, "Elks memory is at an illegal address\n");
 		exit(255);
 	}
+	mprotect(elks_base + 0x20000, pg_sz, PROT_NONE);
 	
 	if(load_elks(fd) < 0)
 	{
@@ -318,5 +431,6 @@ static FILE * db_fd = 0;
   va_start(ptr, fmt);
   rv = vfprintf(db_fd,fmt,ptr);
   va_end(ptr);
+  fflush(db_fd);
 }
 #endif

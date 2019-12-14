@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <sys/vm86.h>
 #include <sys/times.h>
 #include <utime.h>
 #include <termios.h>
@@ -45,9 +44,9 @@ minix_syscall()
    static char *nm[4] = {"?", "send", "receive", "sendrec"};
    char   tsks[10], syss[10];
 
-   int   sr  = (unsigned short) elks_cpu.regs.ecx;
-   int   tsk = (unsigned short) elks_cpu.regs.eax;
-   int   sys = ELKS_PEEK(short, (unsigned short) elks_cpu.regs.ebx + 2);
+   int   sr  = (unsigned short) elks_cpu.regs.xcx;
+   int   tsk = (unsigned short) elks_cpu.regs.xax;
+   int   sys = ELKS_PEEK(short, (unsigned short) elks_cpu.regs.xbx + 2);
 
    if (sr < 0 || sr > 3) sr = 0;
    switch(tsk)

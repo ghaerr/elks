@@ -12,7 +12,7 @@ endif
 
 # Default
 ifeq ($(CFLAGS),)
-CFLAGS=-O
+CFLAGS=-O $(DEFS)
 endif
 
 # Turn on elkemu's strace like facility.
@@ -26,15 +26,18 @@ OBJ=elks.o elks_sys.o elks_signal.o minix.o
 elksemu:	$(OBJ)
 		$(CC) $(CFLAGS) -o $@ $^
 
-elks_sys.o:	call_tab.v efile.h
+elks_sys.o:	call_tab.v defn_tab.v efile.h
 $(OBJ):		elks.h
 
-call_tab.v:	dummy
-	-cp -p ../libc/syscall/call_tab.v . 2>/dev/null
-	-cp -p ../libc/syscall/defn_tab.v . 2>/dev/null
+ifneq "" "$(PREFIX)"
+call_tab.v:	$(PREFIX)/share/misc/elks/call_tab.v
+	cp $< $@
+defn_tab.v:	$(PREFIX)/share/misc/elks/defn_tab.v
+	cp $< $@
+endif
 
-efile.h: ../libc/error/liberror.txt
-	sh mkefile ../libc/error/liberror.txt
+efile.h: $(TOPDIR)/elkscmd/rootfs_template/lib/liberror.txt
+	sh mkefile $<
 
 dummy:
 

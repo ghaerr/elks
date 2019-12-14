@@ -36,7 +36,7 @@ all: .config
 	$(MAKE) -C elks all
 	$(MAKE) -C elkscmd all
 	$(MAKE) -C image all
-	$(MAKE) -C elksemu elksemu
+	-$(MAKE) -C elksemu PREFIX='$(TOPDIR)/cross' elksemu
 
 clean:
 	$(MAKE) -C libc clean

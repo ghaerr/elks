@@ -1,10 +1,10 @@
 /*
  *	Definitions for emulating ELKS
  */
- 
-#define ELKS_CS_OFFSET		0
-#define ELKS_DS_OFFSET		0		/* For split I/D */
 
+#include <stdint.h>
+#include <sys/user.h>
+ 
 #define HZ			100
 
 #define ELKS_SIG_IGN		(-1)
@@ -35,7 +35,7 @@ struct elks_stat
 	int est_atime;
 	int est_mtime;
 	int est_ctime;
-};
+} __attribute__((packed));
 
 
 /*
@@ -69,28 +69,60 @@ struct elks_stat
 
 struct elks_exec_hdr
 {
-	unsigned long type;
+	uint32_t type;
 #define ELKS_COMBID	0x04100301L
-#define ELKS_SPLITID	0x04200301L	
-	unsigned long hlen;
-	unsigned long tseg;
-	unsigned long dseg;
-	unsigned long bseg;
-	unsigned long unused;
-	unsigned long chmem;
-	unsigned long unused2; 
+#define ELKS_SPLITID	0x04300301L	
+	uint32_t hlen;
+	uint32_t tseg;
+	uint32_t dseg;
+	uint32_t bseg;
+	uint32_t entry;
+	uint32_t chmem;
+	uint32_t unused2; 
 };
 
-#define PARAGRAPH(x)	(((unsigned long)(x))>>4)
-#define ELKS_DSEG(x)	((unsigned char *)(((x)&0xFFFF)+(elks_cpu.regs.ds<<4)))
-
-#define ELKS_PTR(_t,x)	  ((_t *) ((elks_cpu.regs.ds<<4)+((x)&0xFFFF)) )
-#define ELKS_PEEK(_t,x)	(*((_t *) ((elks_cpu.regs.ds<<4)+((x)&0xFFFF)) ))
+#define ELKS_PTR(_t,x)	  ((_t *) (elks_data_base+((x)&0xFFFFU)) )
+#define ELKS_PEEK(_t,x)	(*((_t *) (elks_data_base+((x)&0xFFFFU)) ))
 #define ELKS_POKE(_t,x,_v)	\
-		(*((_t *) ((elks_cpu.regs.ds<<4)+((x)&0xFFFF)) ) = (_v))
+		(*((_t *) (elks_data_base+((x)&0xFFFFU)) ) = (_v))
 
-extern unsigned char * elks_base;
-extern volatile struct vm86_struct elks_cpu;
+struct elks_cpu_s
+{
+	struct user_regs_struct regs;
+	pid_t child;
+};
+
+#ifdef __x86_64__
+#define xax		rax
+#define xbx		rbx
+#define xcx		rcx
+#define xdx		rdx
+#define xsp		rsp
+#define xbp		rbp
+#define xsi		rsi
+#define xdi		rdi
+#define xip		rip
+#define xcs		cs
+#define xds		ds
+#define xes		es
+#define xss		ss
+#define orig_xax	orig_rax
+#else
+#define xax		eax
+#define xbx		ebx
+#define xcx		ecx
+#define xdx		edx
+#define xsp		esp
+#define xbp		ebp
+#define xsi		esi
+#define xdi		edi
+#define xip		eip
+#define orig_xax	orig_eax
+#endif
+
+extern unsigned char * elks_base, *elks_data_base;
+extern unsigned short brk_at;
+extern volatile struct elks_cpu_s elks_cpu;
 
 void db_printf(const char *, ...);
 int elks_syscall(void);
