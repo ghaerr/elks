@@ -2,6 +2,10 @@
 #	Makefile for elksemu.
 #
 
+ifndef TOPDIR
+$(error TOPDIR is not defined)
+endif
+
 # Use BCC to make a tiny static a.out version.
 ifeq ($(CC),bcc)
 CFLAGS=-Ml -ansi -s $(DEFS)
@@ -29,12 +33,40 @@ elksemu:	$(OBJ)
 elks_sys.o:	call_tab.v defn_tab.v efile.h
 $(OBJ):		elks.h
 
-ifneq "" "$(PREFIX)"
-call_tab.v:	$(PREFIX)/share/misc/elks/call_tab.v
-	cp $< $@
-defn_tab.v:	$(PREFIX)/share/misc/elks/defn_tab.v
-	cp $< $@
+ifdef PREFIX
+INSTALLED_CALL_TAB = $(PREFIX)/share/misc/elks/call_tab.v
+INSTALLED_DEFN_TAB = $(PREFIX)/share/misc/elks/defn_tab.v
+else
+# Try to auto-detect the locations of the system call tables call_tab.v and
+# defn_tab.v, if they are not already given by means of $(PREFIX).
+#
+# ia16-elf-gcc's target libraries are expected to go in PREFIX/ia16-elf/
+# lib/, while the syscall tables should be in PREFIX/share/misc/elks/
+# (PREFIX = ia16-elf-gcc's installation prefix).  So looking for "libraries"
+# in ../../share/misc/elks/ relative to GCC's library directories should
+# lead us on the right track.
+INSTALLED_CALL_TAB:=$(shell \
+		ia16-elf-gcc -print-file-name=../../share/misc/elks/call_tab.v)
+INSTALLED_DEFN_TAB:=$(shell \
+		ia16-elf-gcc -print-file-name=../../share/misc/elks/defn_tab.v)
+ifeq "" "$(INSTALLED_CALL_TAB)"
+$(error cannot find call_tab.v from elks-libc installation)
 endif
+ifeq "../../share/misc/elks/call_tab.v" "$(INSTALLED_CALL_TAB)"
+$(error cannot find call_tab.v from elks-libc installation)
+endif
+ifeq "" "$(INSTALLED_DEFN_TAB)"
+$(error cannot find defn_tab.v from elks-libc installation)
+endif
+ifeq "../../share/misc/elks/defn_tab.v" "$(INSTALLED_DEFN_TAB)"
+$(error cannot find defn_tab.v from elks-libc installation)
+endif
+endif
+
+call_tab.v:	$(INSTALLED_CALL_TAB)
+	cp $< $@
+defn_tab.v:	$(INSTALLED_DEFN_TAB)
+	cp $< $@
 
 efile.h: $(TOPDIR)/elkscmd/rootfs_template/lib/liberror.txt
 	sh mkefile $<
