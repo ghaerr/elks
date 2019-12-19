@@ -38,7 +38,8 @@ INSTALLED_CALL_TAB = $(PREFIX)/share/misc/elks/call_tab.v
 INSTALLED_DEFN_TAB = $(PREFIX)/share/misc/elks/defn_tab.v
 else
 # Try to auto-detect the locations of the system call tables call_tab.v and
-# defn_tab.v, if they are not already given by means of $(PREFIX).
+# defn_tab.v from elks-libc, if they are not already given by means of
+# $(PREFIX).
 #
 # ia16-elf-gcc's target libraries are expected to go in PREFIX/ia16-elf/
 # lib/, while the syscall tables should be in PREFIX/share/misc/elks/
@@ -49,23 +50,26 @@ INSTALLED_CALL_TAB:=$(shell \
 		ia16-elf-gcc -print-file-name=../../share/misc/elks/call_tab.v)
 INSTALLED_DEFN_TAB:=$(shell \
 		ia16-elf-gcc -print-file-name=../../share/misc/elks/defn_tab.v)
-ifeq "" "$(INSTALLED_CALL_TAB)"
-$(error cannot find call_tab.v from elks-libc installation)
-endif
 ifeq "../../share/misc/elks/call_tab.v" "$(INSTALLED_CALL_TAB)"
-$(error cannot find call_tab.v from elks-libc installation)
-endif
-ifeq "" "$(INSTALLED_DEFN_TAB)"
-$(error cannot find defn_tab.v from elks-libc installation)
+INSTALLED_CALL_TAB:=
 endif
 ifeq "../../share/misc/elks/defn_tab.v" "$(INSTALLED_DEFN_TAB)"
-$(error cannot find defn_tab.v from elks-libc installation)
+INSTALLED_DEFN_TAB:=
 endif
 endif
 
+# Copy call_tab.v and defn_tab.v from the elks-libc installation.  To do
+# this, $(INSTALLED_CALL_TAB) and $(INSTALL_DEFN_TAB) must be defined.
+#
+# But do not throw an error if we do not actually need them --- for example,
+# during a `make clean'.  See https://github.com/jbruchon/elks/issues/283 .
 call_tab.v:	$(INSTALLED_CALL_TAB)
+	$(if $(INSTALLED_CALL_TAB),, \
+	    $(error cannot find call_tab.v from elks-libc installation))
 	cp $< $@
 defn_tab.v:	$(INSTALLED_DEFN_TAB)
+	$(if $(INSTALLED_DEFN_TAB),, \
+	    $(error cannot find defn_tab.v from elks-libc installation))
 	cp $< $@
 
 efile.h: $(TOPDIR)/elkscmd/rootfs_template/lib/liberror.txt
