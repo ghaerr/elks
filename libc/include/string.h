@@ -28,6 +28,9 @@ extern int memcmp __P ((__const void*, __const void*, size_t));
 
 extern void * memmove __P ((void*, void*, size_t));
 
+/* Error messages */
+extern char * strerror __P ((int));
+
 /* Minimal (very!) locale support */
 #define strcoll strcmp
 #define strxfrm strncpy

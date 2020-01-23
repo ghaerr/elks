@@ -55,6 +55,9 @@ void exit (int status);
 void * malloc (size_t size);
 void free (void * ptr);
 
+#ifndef __STRICT_ANSI__
 void breakpoint ();
+char *itoa __P ((int));
+#endif
 
 #endif /* __STDLIB_H */
