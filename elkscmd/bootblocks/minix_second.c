@@ -226,7 +226,7 @@ void main ()
 
 		for (int d = 0; d < i_data->i_size; d += DIRENT_SIZE) {
 			if (!strcmp (d_dir + 2 + d, "linux")) {
-				//puts ("Linux found\r\n");
+				puts ("Linux found\r\n");
 				i_now = (*(int *)(d_dir + d)) - 1;
 				load_file ();
 				run_prog ();

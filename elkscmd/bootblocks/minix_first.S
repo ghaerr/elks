@@ -257,34 +257,41 @@ drive_num:
 
 // #undef CONFIG_IMG_FD1680
 // #undef CONFIG_IMG_FD1200
-// #undef CONFIG_IMG_FD720
-// #undef CONFIG_IMG_FD360
 
 sect_max:
-#ifdef CONFIG_IMG_FD720
+#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720)
 	.word 9
 #endif
 #if defined(CONFIG_IMG_FD1200)
 	.word 15
 #endif
-#ifdef CONFIG_IMG_FD1440
+#if defined(CONFIG_IMG_FD1440)
 	.word 18
 #endif
 #if defined(CONFIG_IMG_FD1680)
 	.word 21
 #endif
+#if defined(CONFIG_IMG_HD)
+	.word CONFIG_IMG_SECT
+#endif
 
 head_max:
-#if defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1680)
+#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680)
 	.word 2
+#endif
+#if defined(CONFIG_IMG_HD)
+	.word CONFIG_IMG_HEAD
 #endif
 
 track_max:
 #if defined(CONFIG_IMG_FD360)
 	.word 40
 #endif
-#if defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD720)
+#if  defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1440)
 	.word 80
+#endif
+#if defined(CONFIG_IMG_HD)
+	.word CONFIG_IMG_TRACK
 #endif
 
 //------------------------------------------------------------------------------
