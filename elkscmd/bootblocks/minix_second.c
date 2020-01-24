@@ -18,8 +18,6 @@
 //extern int head_max;
 //extern int track_max;
 
-static unsigned char dir_32;
-
 static byte_t sb_block [BLOCK_SIZE];  // super block block buffer
 static struct super_block *sb_data;   // super block structure
 
@@ -57,24 +55,13 @@ void run_prog ();
 
 //------------------------------------------------------------------------------
 
-/*
-static void log_err (const char * s)
-{
-	puts ("ERROR: ");
-	puts (s);
-	puts (" !\r\n");
-}
-*/
-
-//------------------------------------------------------------------------------
-
 static int load_super ()
 {
 	int err;
 
 	while (1) {
 		err = disk_read (2, 2, sb_block, seg_data ());
-		//if (err) break;
+		if (err) break;
 
 		sb_data = (struct super_block *) sb_block;
 		/*
@@ -116,7 +103,7 @@ static int load_inode ()
 
 		int ib = ib_first + i_now / INODES_PER_BLOCK;
 		err = disk_read (ib << 1, 2, i_block, seg_data ());
-		//if (err) break;
+		if (err) break;
 
 		// Get inode data
 
@@ -136,12 +123,14 @@ static int load_zone (int level, zone_nr * z_start, zone_nr * z_end)
 	for (zone_nr * z = z_start; z < z_end; z++) {
 		if (level == 0) {
 			// FIXME: image can be > 64K
-			err = disk_read ((*z) << 1, 2, i_now ? f_pos : d_dir + f_pos, i_now ? LOADSEG : seg_data ());
+			err = disk_read ((*z) << 1, 2, i_now ? (byte_t *) 0 + f_pos : d_dir + f_pos, i_now ? LOADSEG : seg_data ());
+			if (err) break;
 			f_pos += BLOCK_SIZE;
 			if (f_pos >= i_data->i_size) break;
 		} else {
 			int next = level - 1;
 			err = disk_read (*z << 1, 2, z_block [next], seg_data ());
+			if (err) break;
 			load_zone (next, (zone_nr *) z_block [next], (zone_nr *) (z_block [next] + BLOCK_SIZE));
 		}
 	}
@@ -170,15 +159,15 @@ static int load_file ()
 		while (1) {
 
 			// Direct zones
-			load_zone (0, &(i_data->i_zone [ZONE_IND_L0]), &(i_data->i_zone [ZONE_IND_L1]));
+			err = load_zone (0, &(i_data->i_zone [ZONE_IND_L0]), &(i_data->i_zone [ZONE_IND_L1]));
 			if (f_pos >= i_data->i_size) break;
 
 			// Indirect zones
-			load_zone (1, &(i_data->i_zone [ZONE_IND_L1]), &(i_data->i_zone [ZONE_IND_L2]));
+			err = load_zone (1, &(i_data->i_zone [ZONE_IND_L1]), &(i_data->i_zone [ZONE_IND_L2]));
 			if (f_pos >= i_data->i_size) break;
 
 			// Double-indirect zones
-			//load_zone (2, &(i_data->i_zone [ZONE_IND_L2]), &(i_data->i_zone [ZONE_IND_END]));
+			//err = load_zone (2, &(i_data->i_zone [ZONE_IND_L2]), &(i_data->i_zone [ZONE_IND_END]));
 
 			break;
 		}
@@ -207,12 +196,10 @@ void main ()
 		*/
 
 		err = load_super ();
-		/*
 		if (err) {
-			//log_err ("load_super");
+			puts ("super!");
 			break;
 		}
-		*/
 
 		/*
 		puts ("inodes=");
@@ -222,13 +209,22 @@ void main ()
 		puts ("\r\n");
 		*/
 
-		load_file ();
+		err = load_file ();
+		if (err) {
+			puts ("root!");
+			break;
+		}
 
 		for (int d = 0; d < i_data->i_size; d += DIRENT_SIZE) {
-			if (!strcmp (d_dir + 2 + d, "linux")) {
-				puts ("Linux found\r\n");
+			if (!strcmp ((char *)(d_dir + 2 + d), "linux")) {
+				//puts ("Linux found\r\n");
 				i_now = (*(int *)(d_dir + d)) - 1;
-				load_file ();
+				err = load_file ();
+				if (err) {
+					puts ("linux!");
+					break;
+				}
+
 				run_prog ();
 				break;
 			}
