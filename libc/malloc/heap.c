@@ -8,6 +8,8 @@
 
 //-----------------------------------------------------------------------------
 
+int _sbrk (intptr_t, void **);
+
 void * sbrk (intptr_t increment)
 {
    void * new_brk;
@@ -20,6 +22,8 @@ void * sbrk (intptr_t increment)
 //-----------------------------------------------------------------------------
 
 // TODO: simplify
+
+int _brk (void *);
 
 int brk (void * addr)
 {

@@ -148,7 +148,6 @@ void *ptr;
 #ifdef __MINI_MALLOC__
       if (__alloca_alloc == __mini_malloc && __freed_list)
       {
-         mem *prev, *curr;
 	 chk = __freed_list;
 	 __freed_list = m_next(__freed_list);
 	 goto try_this;
