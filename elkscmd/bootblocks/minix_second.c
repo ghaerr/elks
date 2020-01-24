@@ -48,8 +48,7 @@ int seg_data ();
 
 int drive_reset (const int drive);
 //int drive_get (const int drive);
-int disk_read (const int drive,
-	const int sect, const int count,
+int disk_read (const int sect, const int count,
 	const byte_t * buf, const int seg);
 
 int strcmp (const char * s, const char * d);
@@ -74,7 +73,7 @@ static int load_super ()
 	int err;
 
 	while (1) {
-		err = disk_read (0, 2, 2, sb_block, seg_data ());
+		err = disk_read (2, 2, sb_block, seg_data ());
 		//if (err) break;
 
 		sb_data = (struct super_block *) sb_block;
@@ -116,7 +115,7 @@ static int load_inode ()
 		// Compute inode block and load if not cached
 
 		int ib = ib_first + i_now / INODES_PER_BLOCK;
-		err = disk_read (0, ib << 1, 2, i_block, seg_data ());
+		err = disk_read (ib << 1, 2, i_block, seg_data ());
 		//if (err) break;
 
 		// Get inode data
@@ -137,12 +136,12 @@ static int load_zone (int level, zone_nr * z_start, zone_nr * z_end)
 	for (zone_nr * z = z_start; z < z_end; z++) {
 		if (level == 0) {
 			// FIXME: image can be > 64K
-			err = disk_read (0, (*z) << 1, 2, i_now ? f_pos : d_dir + f_pos, i_now ? LOADSEG : seg_data ());
+			err = disk_read ((*z) << 1, 2, i_now ? f_pos : d_dir + f_pos, i_now ? LOADSEG : seg_data ());
 			f_pos += BLOCK_SIZE;
 			if (f_pos >= i_data->i_size) break;
 		} else {
 			int next = level - 1;
-			err = disk_read (0, *z << 1, 2, z_block [next], seg_data ());
+			err = disk_read (*z << 1, 2, z_block [next], seg_data ());
 			load_zone (next, (zone_nr *) z_block [next], (zone_nr *) (z_block [next] + BLOCK_SIZE));
 		}
 	}

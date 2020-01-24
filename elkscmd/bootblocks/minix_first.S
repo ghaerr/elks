@@ -20,7 +20,7 @@
 
 // Boot block is the first one in the MINIX filesystem
 // First part of the boot block (1K) is the boot sector (512 B)
-// Loaded by the BIOS at address 0x7C00 (32K - 1K)
+// Loaded by the BIOS at 0:7C00h (32K - 1K) with DL = boot drive
 
 sector_1:
 
@@ -60,12 +60,18 @@ sector_1:
 
 _next1:
 
+	// Save boot drive as provided by BIOS
+
+	mov %dl,drive_num
+
+	// Print header
+
 	mov $msg_head,%bx
 	call _puts
 
 	// Load the second sector of the boot block
 
-	xor %dl,%dl
+	mov drive_num,%dl
 	xor %ah,%ah
 	int $0x13          // reset floppy
 
@@ -75,7 +81,8 @@ loopy:
 	mov $0x0201,%ax    // read 1 sector
 	mov $sector_2,%bx  // destination
 	mov $2,%cx         // track 0 - from sector 2 (base 1)
-	xor %dx,%dx        // drive 0 - head 0
+	xor %dh,%dh        // head 0
+	mov drive_num,%dl  // boot driver
 	int $0x13          // BIOS disk services
 	jc loopy
 	jmp _next2
@@ -93,7 +100,7 @@ reboot:
 	call _puts
 	xor %ax,%ax  // wait for key
 	int $0x16
-	int $0x19
+	int $0x19    // BIOS bootstrap
 	jmp reboot
 
 _next2:
@@ -110,7 +117,6 @@ _next2:
 		break;
 		}
 	*/
-
 
 	call main
 	jmp reboot
@@ -238,6 +244,11 @@ drive_reset:
 
 //------------------------------------------------------------------------------
 
+// Boot drive as provided by BIOS on entry
+
+drive_num:
+	.byte 0
+
 // Disk geometry (CHS)
 
 	.global sect_max
@@ -326,7 +337,7 @@ dg_exit:
 
 //------------------------------------------------------------------------------
 
-// int disk_read (int drive, int sect, int count, byte_t * buf, int seg)
+// int disk_read (int sect, int count, byte_t * buf, int seg)
 
 	.global disk_read
 
@@ -343,7 +354,7 @@ disk_read:
 
 	// Compute the CHS from absolute sector
 
-	mov 6(%bp),%ax   // absolute sector
+	mov 4(%bp),%ax   // absolute sector
 	xor %dx,%dx
 	divw sect_max
 	mov %dx,-2(%bp)
@@ -359,10 +370,10 @@ dr_loop:
 	// Compute remaining sectors in current track
 
 	mov -2(%bp),%ax
-	add 8(%bp),%ax    // absolute count
+	add 6(%bp),%ax    // absolute count
 	cmp sect_max,%ax
 	ja dr_over
-	mov 8(%bp),%ax
+	mov 6(%bp),%ax
 	jmp dr_next1
 
 dr_over:
@@ -374,15 +385,15 @@ dr_next1:
 
 	mov %ax,-8(%bp)  // relative count
 
-	mov 4(%bp),%dl   // drive number
+	mov drive_num,%dl
 	mov -4(%bp),%dh  // head number
 	mov -2(%bp),%cl  // first sector number
 	inc %cl          // base 1 for sector number
 	mov -6(%bp),%ch  // cylinder number
 
 	push %es
-	mov 10(%bp),%bx
-	mov 12(%bp),%es
+	mov 8(%bp),%bx
+	mov 10(%bp),%es
 	mov $0x02,%ah    // BIOS read disk
 	int $0x13
 	pop %es
@@ -392,7 +403,7 @@ dr_next1:
 	// Update absolute count
 
 	mov -8(%bp),%ax
-	sub %ax,8(%bp)
+	sub %ax,6(%bp)
 	jz dr_end
 
 	// Move to next head
@@ -419,7 +430,7 @@ dr_next2:
 	mov -8(%bp),%ax
 	mov $5,%cl
 	shl %cl,%ax
-	add %ax,12(%bp)
+	add %ax,10(%bp)
 
 	jmp dr_loop
 
