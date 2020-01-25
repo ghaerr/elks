@@ -223,8 +223,8 @@ got_it:
 
 char * strrchr (const char * s, int c)
 {
-   register char * prev = 0;
-   register char * p = s;
+   register const char * prev = 0;
+   register const char * p = s;
    /* For null it's just like strlen */
    if( c == '\0' ) return p+strlen(p);
 
