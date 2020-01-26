@@ -18,8 +18,6 @@
 //extern int head_max;
 //extern int track_max;
 
-static unsigned char dir_32;
-
 static byte_t sb_block [BLOCK_SIZE];  // super block block buffer
 static struct super_block *sb_data;   // super block structure
 
@@ -39,7 +37,7 @@ static byte_t d_dir [BLOCK_SIZE];  // latest in program segment
 
 // Helpers from minix_first
 
-void reboot ();
+void except (int code);
 
 void puts (const char * s);
 
@@ -48,194 +46,138 @@ int seg_data ();
 
 int drive_reset (const int drive);
 //int drive_get (const int drive);
-int disk_read (const int drive,
-	const int sect, const int count,
+void disk_read (const int sect, const int count,
 	const byte_t * buf, const int seg);
-
-int strcmp (const char * s, const char * d);
 
 void run_prog ();
 
 //------------------------------------------------------------------------------
 
-/*
-static void log_err (const char * s)
+static int strcmp (const char * s, const char * d)
 {
-	puts ("ERROR: ");
-	puts (s);
-	puts (" !\r\n");
+	const char * p1 = s;
+	const char * p2 = d;
+
+	char c1, c2;
+
+	while ((c1 = *p1++) == (c2 = *p2++) && c1 /* && c2*/);
+	return c1 - c2;
 }
-*/
 
 //------------------------------------------------------------------------------
 
-static int load_super ()
+static void load_super ()
 {
-	int err;
+	disk_read (2, 2, sb_block, seg_data ());
 
-	while (1) {
-		err = disk_read (0, 2, 2, sb_block, seg_data ());
-		//if (err) break;
-
-		sb_data = (struct super_block *) sb_block;
-		/*
-		if (sb_data->s_log_zone_size) {
-			//log_err ("zone size");
-			err = -1;
-			break;
-		}
-		*/
-
-		ib_first = 2 + sb_data->s_imap_blocks + sb_data->s_zmap_blocks;
-
-		/*
-		if (sb_data->s_magic == SUPER_MAGIC) {
-			dir_32 = 0;
-		} else if (sb_data->s_magic == SUPER_MAGIC2) {
-			dir_32 = 1;
-		} else {
-			//log_err ("super magic");
-			err = -1;
-		}
-		*/
-
+	sb_data = (struct super_block *) sb_block;
+	/*
+	if (sb_data->s_log_zone_size) {
+		//log_err ("zone size");
+		err = -1;
 		break;
 	}
+	*/
 
-	return err;
-}
+	ib_first = 2 + sb_data->s_imap_blocks + sb_data->s_zmap_blocks;
 
-//------------------------------------------------------------------------------
-
-static int load_inode ()
-{
-	int err;
-
-	while (1) {
-
-		// Compute inode block and load if not cached
-
-		int ib = ib_first + i_now / INODES_PER_BLOCK;
-		err = disk_read (0, ib << 1, 2, i_block, seg_data ());
-		//if (err) break;
-
-		// Get inode data
-
-		i_data = (struct inode_s *) i_block + i_now % INODES_PER_BLOCK;
-		break;
+	/*
+	if (sb_data->s_magic == SUPER_MAGIC) {
+		dir_32 = 0;
+	} else if (sb_data->s_magic == SUPER_MAGIC2) {
+		dir_32 = 1;
+	} else {
+		//log_err ("super magic");
+		err = -1;
 	}
-
-	return err;
+	*/
 }
 
 //------------------------------------------------------------------------------
 
-static int load_zone (int level, zone_nr * z_start, zone_nr * z_end)
+static void load_inode ()
 {
-	int err;
+	// Compute inode block and load if not cached
 
+	int ib = ib_first + i_now / INODES_PER_BLOCK;
+	disk_read (ib << 1, 2, i_block, seg_data ());
+
+	// Get inode data
+
+	i_data = (struct inode_s *) i_block + i_now % INODES_PER_BLOCK;
+}
+
+//------------------------------------------------------------------------------
+
+static void load_zone (int level, zone_nr * z_start, zone_nr * z_end)
+{
 	for (zone_nr * z = z_start; z < z_end; z++) {
 		if (level == 0) {
 			// FIXME: image can be > 64K
-			err = disk_read (0, (*z) << 1, 2, i_now ? f_pos : d_dir + f_pos, i_now ? LOADSEG : seg_data ());
+			disk_read ((*z) << 1, 2, i_now ? (byte_t *) 0 + f_pos : d_dir + f_pos, i_now ? LOADSEG : seg_data ());
 			f_pos += BLOCK_SIZE;
 			if (f_pos >= i_data->i_size) break;
 		} else {
 			int next = level - 1;
-			err = disk_read (0, *z << 1, 2, z_block [next], seg_data ());
+			disk_read (*z << 1, 2, z_block [next], seg_data ());
 			load_zone (next, (zone_nr *) z_block [next], (zone_nr *) (z_block [next] + BLOCK_SIZE));
 		}
 	}
-
-	return err;
 }
 
 //------------------------------------------------------------------------------
 
-static int load_file ()
+static void load_file ()
 {
-	int err;
+	load_inode ();
 
-	while (1) {
-		err = load_inode ();
-		if (err) break;
+	/*
+	puts ("size=");
+	word_hex (i_data->i_size);
+	puts ("\r\n");
+	*/
 
-		/*
-		puts ("size=");
-		word_hex (i_data->i_size);
-		puts ("\r\n");
-		*/
+	f_pos = 0;
 
-		f_pos = 0;
+	// Direct zones
+	load_zone (0, &(i_data->i_zone [ZONE_IND_L0]), &(i_data->i_zone [ZONE_IND_L1]));
+	if (f_pos >= i_data->i_size) return;
 
-		while (1) {
+	// Indirect zones
+	load_zone (1, &(i_data->i_zone [ZONE_IND_L1]), &(i_data->i_zone [ZONE_IND_L2]));
+	if (f_pos >= i_data->i_size) return;
 
-			// Direct zones
-			load_zone (0, &(i_data->i_zone [ZONE_IND_L0]), &(i_data->i_zone [ZONE_IND_L1]));
-			if (f_pos >= i_data->i_size) break;
-
-			// Indirect zones
-			load_zone (1, &(i_data->i_zone [ZONE_IND_L1]), &(i_data->i_zone [ZONE_IND_L2]));
-			if (f_pos >= i_data->i_size) break;
-
-			// Double-indirect zones
-			//load_zone (2, &(i_data->i_zone [ZONE_IND_L2]), &(i_data->i_zone [ZONE_IND_END]));
-
-			break;
-		}
-
-		break;
-	}
-
-	return err;
+	// Double-indirect zones
+	//load_zone (2, &(i_data->i_zone [ZONE_IND_L2]), &(i_data->i_zone [ZONE_IND_END]));
 }
 
 //------------------------------------------------------------------------------
 
-void main ()
+void load_prog ()
 {
-	int err;
+	/*
+	puts ("C=");
+	word_hex (track_max);
+	puts (" H=");
+	word_hex (head_max);
+	puts (" S=");
+	word_hex (sect_max);
+	puts ("\r\n");
+	*/
 
-	while (1) {
-		/*
-		puts ("C=");
-		word_hex (track_max);
-		puts (" H=");
-		word_hex (head_max);
-		puts (" S=");
-		word_hex (sect_max);
-		puts ("\r\n");
-		*/
+	load_super ();
 
-		err = load_super ();
-		/*
-		if (err) {
-			//log_err ("load_super");
+	load_file ();
+
+	for (int d = 0; d < i_data->i_size; d += DIRENT_SIZE) {
+		if (!strcmp ((char *)(d_dir + 2 + d), "linux")) {
+			//puts ("Linux found\r\n");
+			i_now = (*(int *)(d_dir + d)) - 1;
+			load_file ();
+
+			run_prog ();
 			break;
 		}
-		*/
-
-		/*
-		puts ("inodes=");
-		word_hex (sb_data->s_ninodes);
-		puts (" zones=");
-		word_hex (sb_data->s_nzones);
-		puts ("\r\n");
-		*/
-
-		load_file ();
-
-		for (int d = 0; d < i_data->i_size; d += DIRENT_SIZE) {
-			if (!strcmp (d_dir + 2 + d, "linux")) {
-				//puts ("Linux found\r\n");
-				i_now = (*(int *)(d_dir + d)) - 1;
-				load_file ();
-				run_prog ();
-				break;
-			}
-		}
-
-		break;
 	}
 }
 

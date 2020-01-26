@@ -1,0 +1,11 @@
+#!/bin/sh - 
+
+awk '
+BEGIN {
+   printf "char efile[] =\n"
+}
+{ printf "   \"%s\\n\"\n", $0 }
+END{
+   printf ";\n";
+}
+' < "$1" > efile.h

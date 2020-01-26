@@ -44,7 +44,9 @@ char *argv[];			/* argument vector from main */
 char *optstring;		/* allowed args, e.g. "ab:c" */
 {
    static int sp = 1;		/* position within argument */
+#ifdef STRICT
    register int osp;		/* saved `sp' for param test */
+#endif
 #ifndef STRICT
    register int oind;		/* saved `optind' for param test */
 #endif
@@ -54,6 +56,7 @@ char *optstring;		/* allowed args, e.g. "ab:c" */
    optarg = NULL;
 
    if (sp == 1)			/* fresh argument */
+   {
       if (optind >= argc	/* no more arguments */
 	  || argv[optind][0] != '-'	/* no more options */
 	  || argv[optind][1] == '\0'	/* not option; stdin */
@@ -64,9 +67,12 @@ char *optstring;		/* allowed args, e.g. "ab:c" */
 	 ++optind;		/* skip over "--" */
 	 return EOF;		/* "--" marks end of options */
       }
+   }
 
    c = argv[optind][sp];	/* option letter */
+#ifdef STRICT
    osp = sp++;			/* get ready for next letter */
+#endif
 
 #ifndef STRICT
    oind = optind;		/* save optind for param test */

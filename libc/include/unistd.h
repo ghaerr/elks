@@ -11,8 +11,8 @@ typedef intptr_t ssize_t;
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 
-extern ssize_t read __P ((int __fd, char * __buf, size_t __nbytes));
-extern ssize_t write __P ((int __fd, __const char * __buf, size_t __n));
+extern ssize_t read __P ((int __fd, void * __buf, size_t __nbytes));
+extern ssize_t write __P ((int __fd, __const void * __buf, size_t __n));
 extern int pipe __P ((int __pipedes[2]));
 extern unsigned int alarm __P ((unsigned int __seconds));
 extern unsigned int sleep __P ((unsigned int __seconds));

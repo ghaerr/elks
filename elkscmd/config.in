@@ -93,7 +93,14 @@ mainmenu_option next_comment
 		fi
 
 		if [ "$CONFIG_IMG_HD" == "y" ]; then
-			int 'Blocks' CONFIG_IMG_BLOCKS 32768
+
+			comment 'Disk geometry'
+			int 'Sectors' CONFIG_IMG_SECT  63
+			int 'Heads'   CONFIG_IMG_HEAD  16
+			int 'Tracks'  CONFIG_IMG_TRACK 1024
+
+			comment 'Disk size in 1K blocks'
+			int 'Blocks'  CONFIG_IMG_BLOCKS 32768
 		fi
 
 		if [ "$CONFIG_IMG_MINIX" == "y" ]; then

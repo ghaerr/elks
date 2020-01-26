@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Quick and dirty build script for ELKS
-# Probably buggy, but makes from-scratch builds easier
 
 DELAY=7
 
@@ -51,15 +50,6 @@ if [ "$1" = "clean" ]
 	clean_exit 0
 fi
 
-# CPU count detection (Linux w/sysfs only) for parallel make
-THREADS=$(test -e /sys/devices/system/cpu/cpu0 && echo /sys/devices/system/cpu/cpu? 2>/dev/null | wc -w)
-THREADS=$(echo "$THREADS" | sed 's/[^0-9]//g')
-test -z "$THREADS" && THREADS=1
-test $THREADS -lt 1 && THREADS=1
-# Allow passing -j1 to force single-threaded make
-test "$1" = "-j1" && THREADS=1 
-echo "Using $THREADS threads for make"
-
 ### Configure all (kernel + user land)
 echo
 echo "Now invoking 'make menuconfig' for you to configure the system."
@@ -76,8 +66,8 @@ make clean || clean_exit 4
 ### Build all
 echo "Building all..."
 sleep 1
-#make -j$THREADS all || clean_exit 5
-make all || clean_exit 5
+# Forcing single threaded build because of dirty dependencies (see #273)
+make -j1 all || clean_exit 5
 test -e elks/arch/i86/boot/Image || clean_exit 6
 
 echo "Target image is under 'image'."

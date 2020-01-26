@@ -40,3 +40,7 @@ ELKSTOOLSDIR="$TOPDIR/elks/tools"
 add_path "$ELKSTOOLSDIR/bin"
 
 echo PATH set to $PATH
+
+export MAKEFLAGS="$MAKEFLAGS"
+
+echo MAKEFLAGS set to $MAKEFLAGS

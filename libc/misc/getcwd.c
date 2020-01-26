@@ -1,8 +1,9 @@
-
 #include <errno.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <string.h>
+#include <stdio.h>
+
 /*
  * These functions find the absolute path to the current working directory.
  *

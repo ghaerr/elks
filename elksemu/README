@@ -1,0 +1,24 @@
+
+Elksemu is an emulator for the environment that elks will provide on a
+real ELKS machine. The emulator only runs on linux-i386 or similar.
+
+If you're using a 2.0.36, 2.1.43, 2.2.0 or later kernel then the
+binfmt_misc driver is in the stock kernel and all you need to do is
+add the following line into the relevent /etc/rc* file.
+
+echo ':i86-elks:M::\x01\x03\x20\x00:\xff\xff\xff\x83:/usr/bin/elksemu:' \
+     > /proc/sys/fs/binfmt_misc/register
+
+Note, however, if binfmt_misc is compiled as a module it will not auto
+load so you will have to do this manually. 
+
+If your kernel version is 1.2.13 then apply the patch in the Kernel_patch
+file. 
+
+If you're using one of the other 2.0.X series then the binfmt_elks.c module
+should be able to compile and install. BUT do note you need the modules
+and probably modversions options and you _may_ have to alter the compile
+command to match those seen when you compile modules that come with the
+kernel.
+
+Rob.

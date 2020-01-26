@@ -71,11 +71,9 @@ ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre$$//')
 
 ifeq ($(PLATFORM),i86-ELKS)
 	CC=ia16-elf-gcc
-	CFLBASE=-ffreestanding -fno-inline -melks -mcmodel=small -mno-segment-relocation-stuff -mtune=i8086 -Wall -Os
-	LD=ia16-elf-ld
-	LDFLAGS=-T $(TOPDIR)/elks/elks-small.ld $(TOPDIR)/libc/crt0.o
-# TODO: move crt0 to begin of object files
-	LDLIBS='-(' $(TOPDIR)/libc/libc.a '-)'
+	CFLBASE=-fno-inline -melks-libc -mcmodel=small -mno-segment-relocation-stuff -mtune=i8086 -Wall -Os
+	LD=ia16-elf-gcc
+	LDFLAGS=$(CFLBASE)
 	CHECK=gcc -c -o .null.o -Wall -pedantic
 	AS=ia16-elf-as
 	ASFLAGS=-mtune=i8086

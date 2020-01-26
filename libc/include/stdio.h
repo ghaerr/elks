@@ -50,7 +50,7 @@ struct __stdio_file {
   int fd; /* the file descriptor associated with the stream */
   int mode;
 
-  char unbuf[8];	   /* The buffer for 'unbuffered' streams */
+  unsigned char unbuf[8];  /* The buffer for 'unbuffered' streams */
 
   struct __stdio_file * next;
 };
@@ -121,8 +121,10 @@ extern FILE *freopen  __P((char*, char*, FILE*));
 extern FILE *__fopen __P((char*, int, FILE*, char*));
 #endif
 
-extern int fputs __P((char*, FILE*));
+extern int fputs __P((const char*, FILE*));
 int puts (const char * s);
+
+size_t fread __P ((void *, size_t, size_t, FILE *));
 
 extern int printf __P ((__const char*, ...));
 extern int fprintf __P ((FILE*, __const char*, ...));

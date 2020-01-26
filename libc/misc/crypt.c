@@ -17,6 +17,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 char *
 crypt(const char * key, const char * salt)
@@ -42,8 +43,8 @@ crypt(const char * key, const char * salt)
 
   while (n-->0) {
     sum += delta;
-    v[0] += (v[1]<<4)+k[0] ^ v[1]+sum ^ (v[1]>>5)+k[1];
-    v[1] += (v[0]<<4)+k[2] ^ v[0]+sum ^ (v[0]>>5)+k[3];
+    v[0] += ((v[1]<<4)+k[0]) ^ (v[1]+sum) ^ ((v[1]>>5)+k[1]);
+    v[1] += ((v[0]<<4)+k[2]) ^ (v[0]+sum) ^ ((v[0]>>5)+k[3]);
   }
 
   /* Remove any trace of key */

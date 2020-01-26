@@ -1,8 +1,8 @@
 
 CC = ia16-elf-gcc
-CROSS_CFLAGS = -fno-inline -mcmodel=tiny -mno-segment-relocation-stuff -ffreestanding
+CROSS_CFLAGS = -fno-inline -mcmodel=tiny -mno-segment-relocation-stuff -ffreestanding -mtune=i8086
 INCLUDES = -I $(TOPDIR)/include
-CFLAGS = -Os $(CROSS_CFLAGS) $(INCLUDES)
+CFLAGS = -Wall -Os $(CROSS_CFLAGS) $(INCLUDES)
 
 AS = ia16-elf-as
 ASFLAGS =
@@ -15,7 +15,7 @@ LDFLAGS = -T $(TOPDIR)/elks/elks-raw.ld
 all: minix.bin
 
 minix.bin: minix_first.o minix_second.o
-	$(LD) $(LDFLAGS) -o minix.bin minix_first.o minix_second.o
+	$(LD) $(LDFLAGS) -M -o minix.bin minix_first.o minix_second.o > minix.map
 
 minix_first.o: minix_first.S
 	$(CC) $(INCLUDES) -E -o minix_first.tmp minix_first.S

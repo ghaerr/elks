@@ -14,7 +14,7 @@ BEGIN {
 /^[	 ]*#/ { next; }
 /^[	 ]*$/ { next; }
 {
-	callno = $2;
+	callno = $2 + 0;
 	if (!(callno in calltab))
 		callwas [callno] = $1;
 

@@ -1,11 +1,13 @@
 //------------------------------------------------------------------------------
 // MINIX Boot Block (first block of the filesystem)
-// Sourced from DEV86 bootblocks
+// Sourced from DEV86 boot blocks
 // Reworked for ELKS to load directly the kernel without any helper
 // Sector 1 : boot sector and primitives
 //------------------------------------------------------------------------------
 
 #include <autoconf.h>
+
+#include "boot_err.h"
 
 #define BOOTADDR  0x7C00
 #define LOADSEG   0x1000
@@ -20,11 +22,12 @@
 
 // Boot block is the first one in the MINIX filesystem
 // First part of the boot block (1K) is the boot sector (512 B)
-// Loaded by the BIOS at address 0x7C00 (32K - 1K)
+// Loaded by the BIOS at 0:7C00h (32K - 1K) with DL = boot drive
 
 sector_1:
 
 	// Get the memory size
+	// TODO: optional BIOS INT 12h
 
 	int $0x12   // in KB
 	mov $6,%cl  // to paragraphs
@@ -46,6 +49,22 @@ sector_1:
 	rep
 	movsw
 
+	// Copy the current BIOS floppy parameter table
+
+	mov $0x78,%bx  // 0:78h (INT vector 1Eh)
+	lds (%bx),%si  // ds:si = BIOS original table
+	mov $fdd_table,%di
+	mov $6,%cx     // 12 bytes (actually 11 in the table)
+	//cld
+	rep
+	movsw
+
+	// Change table pointer to copy
+
+	mov $fdd_table,%di
+	mov %di,(%bx)
+	mov %es,2(%bx)
+
 	// Rebase CS DS ES SS to work in the 64K segment
 
 	mov %es,%ax
@@ -60,37 +79,74 @@ sector_1:
 
 _next1:
 
+	// Print header
+
 	mov $msg_head,%bx
 	call _puts
 
+	// Save boot drive as provided by BIOS
+
+	mov %dl,drive_num
+
+	// Set sector count in FDD table
+
+	mov $fdd_table,%bx
+	mov sect_max,%al
+	mov %al,4(%bx)
+
+	// Reset the floppy drive
+
+	//mov drive_num,%dl
+	xor %ah,%ah
+	int $0x13
+
 	// Load the second sector of the boot block
 
+	mov $3,%si         // number of tries = 3
+
+_loop1:
+
 	mov $0x0201,%ax    // read 1 sector
-	mov $sector_2,%bx  // destination
+	mov $sector_2,%bx  // destination (ES already set)
 	mov $2,%cx         // track 0 - from sector 2 (base 1)
-	xor %dx,%dx        // drive 0 - head 0
+	xor %dh,%dh        // head 0
+	mov drive_num,%dl  // boot driver
 	int $0x13          // BIOS disk services
 	jnc _next2
 
-	mov $msg_load,%bx
-	call _puts
+	dec %si
+	jnz _loop1
 
-// void reboot ()
+	mov $ERR_SECTOR_2,%ax
+	jmp _except
 
-	.global reboot
+// void except (int code)
 
-reboot:
+	.global except
 
-	mov $msg_reboot,%bx
+except:
+
+	mov %sp,%bp
+	mov 2(%bp),%ax  // exception code
+
+_except:
+
+	xor %sp,%sp
+	add $'0',%al  // first version with single digit
+	call _putc
+	mov $msg_error,%bx
 	call _puts
 	xor %ax,%ax  // wait for key
 	int $0x16
-	int $0x19
+
+reboot:
+
+	int $0x19    // BIOS bootstrap
 	jmp reboot
 
 _next2:
 
-	.extern main
+	.extern load_prog
 
 	/*
 	// Not necessary as fixed format
@@ -103,20 +159,9 @@ _next2:
 		}
 	*/
 
-
-	call main
-	jmp reboot
-
-//------------------------------------------------------------------------------
-
-msg_head:
-	.asciz "\r\nMINIX boot\r\n"
-
-msg_load:
-	.asciz "Sector 2!\r\n"
-
-msg_reboot:
-	.asciz "Press key\r\n\r\n"
+	call load_prog
+	mov $ERR_NO_SYSTEM,%ax
+	jmp _except
 
 //------------------------------------------------------------------------------
 
@@ -132,9 +177,9 @@ _puts:
 	mov (%bx),%al
 	or %al,%al
 	jz puts_exit
-	mov %bx,%dx
+	mov %bx,%cx
 	call _putc
-	mov %dx,%bx
+	mov %cx,%bx
 	inc %bx
 	jmp _puts
 
@@ -149,23 +194,21 @@ puts:
 
 	mov %sp,%bx
 	mov 2(%bx),%bx
-	call _puts
-	ret
+	jmp _puts
 
 //------------------------------------------------------------------------------
 
 /*
-hex_tab:
-	.asciz "0123456789ABCDEF"
-
-_quad_hex:
+_half_hex:
 
 	and $0x0F,%al
-	xor %bh,%bh
-	mov %al,%bl
-	mov hex_tab(%bx),%al
-	call _putc
-	ret
+	add $'0',%al
+	cmp $'9',%al
+	jle hh_next
+	add $('A'-'9'),%al
+
+hh_next:
+	jmp _putc
 
 _byte_hex:
 
@@ -173,10 +216,10 @@ _byte_hex:
 
 	mov $4,%cl
 	shr %cl,%al
-	call _quad_hex
+	call _half_hex
 
 	mov %dl,%al
-	call _quad_hex
+	call _half_hex
 
 	ret
 
@@ -230,34 +273,6 @@ drive_reset:
 
 //------------------------------------------------------------------------------
 
-// Disk geometry (CHS)
-
-	.global sect_max
-	.global head_max
-	.global track_max
-
-// #undef CONFIG_IMG_FD1680
-// #undef CONFIG_IMG_FD1200
-// #undef CONFIG_IMG_FD720
-// #undef CONFIG_IMG_FD360
-
-sect_max:
-#ifdef CONFIG_IMG_FD1440
-	.word 18
-#endif
-
-head_max:
-#ifdef CONFIG_IMG_FD1440
-	.word 2
-#endif
-
-track_max:
-#ifdef CONFIG_IMG_FD1440
-	.word 80
-#endif
-
-//------------------------------------------------------------------------------
-
 // int drive_get (int drive)
 /*
 	.global drive_get
@@ -306,7 +321,7 @@ dg_exit:
 
 //------------------------------------------------------------------------------
 
-// int disk_read (int drive, int sect, int count, byte_t * buf, int seg)
+// void disk_read (int sect, int count, byte_t * buf, int seg)
 
 	.global disk_read
 
@@ -323,7 +338,7 @@ disk_read:
 
 	// Compute the CHS from absolute sector
 
-	mov 6(%bp),%ax   // absolute sector
+	mov 4(%bp),%ax   // absolute sector
 	xor %dx,%dx
 	divw sect_max
 	mov %dx,-2(%bp)
@@ -339,10 +354,10 @@ dr_loop:
 	// Compute remaining sectors in current track
 
 	mov -2(%bp),%ax
-	add 8(%bp),%ax    // absolute count
+	add 6(%bp),%ax    // absolute count
 	cmp sect_max,%ax
 	ja dr_over
-	mov 8(%bp),%ax
+	mov 6(%bp),%ax
 	jmp dr_next1
 
 dr_over:
@@ -354,26 +369,32 @@ dr_next1:
 
 	mov %ax,-8(%bp)  // relative count
 
-	mov 4(%bp),%dl   // drive number
+	mov drive_num,%dl
 	mov -4(%bp),%dh  // head number
 	mov -2(%bp),%cl  // first sector number
 	inc %cl          // base 1 for sector number
 	mov -6(%bp),%ch  // cylinder number
 
 	push %es
-	mov 10(%bp),%bx
-	mov 12(%bp),%es
+	mov 8(%bp),%bx
+	mov 10(%bp),%es
 	mov $0x02,%ah    // BIOS read disk
 	int $0x13
 	pop %es
 
-	jc dr_error
+	jnc dr_cont
+	//mov %ah,%al
+	//mov $0,%ah
+	mov $ERR_DISK_READ,%ax
+	jmp _except
+
+dr_cont:
 
 	// Update absolute count
 
 	mov -8(%bp),%ax
-	sub %ax,8(%bp)
-	jz dr_end
+	sub %ax,6(%bp)
+	jz dr_exit
 
 	// Move to next head
 
@@ -399,17 +420,9 @@ dr_next2:
 	mov -8(%bp),%ax
 	mov $5,%cl
 	shl %cl,%ax
-	add %ax,12(%bp)
+	add %ax,10(%bp)
 
 	jmp dr_loop
-
-dr_error:
-	mov %ah,%al
-	mov $0,%ah
-	jmp dr_exit
-
-dr_end:
-	xor %ax,%ax
 
 dr_exit:
 
@@ -419,44 +432,11 @@ dr_exit:
 
 //------------------------------------------------------------------------------
 
-// int strcmp (const char *s, const char * d)
-
-	.global strcmp
-
-strcmp:
-
-	mov %sp,%bx
-	push %di
-	push %si
-
-	mov 2(%bx),%di
-	mov 4(%bx),%si
-
-_sc_loop:
-
-	lodsb
-	scasb
-	jne _sc_diff
-	test %al,%al
-	jne _sc_loop
-	xor %ax,%ax
-	jmp _sc_exit
-
-_sc_diff:
-	cmc
-	sbb %ax,%ax
-	or $1,%al
-
-_sc_exit:
-	pop %si
-	pop %di
-	ret
-
-//------------------------------------------------------------------------------
-
 // void run_prog ()
 
 	.global run_prog
+
+// TODO: to be moved to second part
 
 run_prog:
 
@@ -520,9 +500,8 @@ binfile:
 not_elks:
 
 	pop %ds
-	mov $msg_elks,%bx
-	call _puts
-	jmp reboot
+	mov $ERR_NOT_ELKS,%ax
+	jmp _except
 
 boot_it:
 
@@ -582,10 +561,70 @@ copy_sect:
 	mov %ax,%es
 	ret
 
-msg_elks:
-	.asciz "Not ELKS!\r\n"
+//------------------------------------------------------------------------------
+
+msg_head:
+	.asciz "MINIX boot\r\n"
+
+msg_error:
+	.asciz "!\r\nPress key\r\n"
 
 //------------------------------------------------------------------------------
+
+// Boot drive as provided by BIOS on entry
+
+drive_num:
+	.byte 0
+
+// BIOS floppy parameter table
+
+fdd_table:
+	.word 0,0,0,0,0,0
+
+// Disk geometry (CHS)
+
+	.global sect_max
+	.global head_max
+	.global track_max
+
+// #undef CONFIG_IMG_FD1680
+// #undef CONFIG_IMG_FD1200
+
+sect_max:
+#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720)
+	.word 9
+#endif
+#if defined(CONFIG_IMG_FD1200)
+	.word 15
+#endif
+#if defined(CONFIG_IMG_FD1440)
+	.word 18
+#endif
+#if defined(CONFIG_IMG_FD1680)
+	.word 21
+#endif
+#if defined(CONFIG_IMG_HD)
+	.word CONFIG_IMG_SECT
+#endif
+
+head_max:
+#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680)
+	.word 2
+#endif
+#if defined(CONFIG_IMG_HD)
+	.word CONFIG_IMG_HEAD
+#endif
+
+track_max:
+#if defined(CONFIG_IMG_FD360)
+	.word 40
+#endif
+#if  defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1440)
+	.word 80
+#endif
+#if defined(CONFIG_IMG_HD)
+	.word CONFIG_IMG_TRACK
+#endif
 
 // Magic at end of first sector
 // to mark it as bootable for BIOS

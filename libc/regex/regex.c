@@ -282,7 +282,7 @@ int *flagp;
 	register char *ret;
 	register char *br;
 	register char *ender;
-	register int parno;
+	register int parno = 0;
 	int flags;
 
 	*flagp = HASWIDTH;	/* Tentatively. */
