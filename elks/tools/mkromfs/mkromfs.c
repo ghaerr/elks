@@ -76,6 +76,9 @@ typedef struct inode_build_s inode_build_t;
 
 static list_root_t _inodes;  /* list of inodes */
 
+static int arglen;					/* passed filesystem prefix length*/
+static char *devfile;				/* passed special device filename*/
+static inode_build_t *devinode;		/* /dev inode*/
 
 /* Entry to build */
 
@@ -158,6 +161,37 @@ static void inode_free (inode_build_t * inode)
 	free (inode);
 	}
 
+/* parse external device file spec*/
+static int parse_dev(inode_build_t *parent_inode, char *child_path, char *devfile)
+{
+	FILE *fp;
+	unsigned char type;
+	int major, minor;
+	char buf[256], path[256], dev[256];
+
+	fp = fopen(devfile, "r");
+	if (!fp) return -1;
+
+	while (fgets(buf, sizeof(buf), fp)) {
+		if (sscanf(buf, "%s %c %d %d", dev, &type, &major, &minor) != 4) {
+err:
+			fclose(fp);
+			return -1;
+		}
+		printf("Device: %s %c %d %d\n", dev, type, major, minor);
+		if (strncmp(dev, "/dev/", 5) != 0)
+			goto err;
+		sprintf(path, "%s/%s", child_path, dev+5);
+		inode_build_t * child_inode = inode_alloc (parent_inode, path);
+		if (!child_inode)
+			return -1;
+		child_inode->flags = (type == 'c')? INODE_CHAR: INODE_BLOCK;
+		child_inode->dev = (major << 8) | minor;
+		child_inode->size = 0;
+	}
+	fclose(fp);
+	return 0;
+}
 
 /*---------------------------------------------------------------------------*/
 /* Recursive directory parsing                                               */
@@ -254,6 +288,12 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 					child_inode->flags = INODE_DIR;
 					child_inode->size = 0;  // initial size
 
+					/* check if /dev and special device file specified*/
+					if (devfile && strcmp(&child_path[arglen], "/dev") == 0) {
+						devinode = child_inode;
+						err = parse_dev(devinode, child_path, devfile);
+						if (err) break;
+					}
 					err = parse_dir (parent_inode, child_inode, child_path);
 					if (err) break;
 					}
@@ -533,25 +573,25 @@ static int compile_fs ()
 
 			if (flags == INODE_DIR)
 				{
-				printf ("Dir:    %s\n", inode_build->path);
+				printf ("Dir:    %s\n", &inode_build->path[arglen]);
 				err = compile_dir (fd, inode_build);
 				}
 
 			else if (flags == INODE_FILE)
 				{
-				printf ("File:   %s\n", inode_build->path);
+				printf ("File:   %s\n", &inode_build->path[arglen]);
 				err = compile_file (fd, inode_build);
 				}
 
 			else if (flags == INODE_CHAR || flags == INODE_BLOCK)
 				{
 				// No data to compile as (major,minor) in inode
-				printf ("Device: %s\n", inode_build->path);
+				printf ("Device: %s\n", &inode_build->path[arglen]);
 				}
 
 			else if (flags == INODE_LINK)
 				{
-				printf ("Link:   %s\n", inode_build->path);
+				printf ("Link:   %s\n", &inode_build->path[arglen]);
 				err = compile_link (fd, inode_build);
 				}
 
@@ -678,13 +718,23 @@ int main (int argc, char ** argv)
 		{
 		int err;
 
-		if (argc != 2)
+		if (argc < 2)
 			{
-			puts ("usage: mkromfs <dir>");
+help:
+			puts ("usage: mkromfs [-d <devfile>] <dir>");
 			err = 1;
 			break;
 			}
 
+		if (argv[1][0] == '-' && argv[1][1] == 'd') {
+			++argv;
+			devfile = argv[1];
+			++argv;
+			if (argc < 4)
+				goto help;
+		}
+
+		arglen = strlen(argv[1]);
 		printf ("Starting from %s directory.\n", argv [1]);
 
 		puts ("\nParsing file system...");

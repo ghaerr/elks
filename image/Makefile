@@ -14,9 +14,6 @@ export DESTDIR
 MFS_OPTS=$(MKFS_OPTS) -s$(TARGET_BLKS) -k
 #VERBOSE=-v
 
-# command to make char/block devices in image (no sudo required)
-MKDEV=mfs $(TARGET_FILE) mknod
-
 #
 # Determine what to build for All target
 TARGETS=
@@ -24,9 +21,6 @@ ifdef CONFIG_IMG_BOOT
 TARGETS += $(FD_BSECT) $(ELKS_DIR)/arch/i86/boot/Image
 endif
 TARGETS += template image
-ifdef CONFIG_IMG_LINK
-TARGETS += devices
-endif
 ifdef CONFIG_IMG_ROM
 TARGETS += romfs
 endif
@@ -58,12 +52,18 @@ endif
 # Create MINIX filesystem from template
 image:
 	mfs $(VERBOSE) $(TARGET_FILE) genfs $(MFS_OPTS) $(DESTDIR)
+ifdef CONFIG_IMG_LINK
+	# command to make char/block devices in image (no sudo required)
+	$(MAKE) -f Make.devices "MKDEV=mfs $(TARGET_FILE) mknod"
+endif
 ifdef CONFIG_IMG_BOOT
 	mfs $(TARGET_FILE) boot $(FD_BSECT)
 endif
 
 romfs:
-	mkromfs $(DESTDIR)
+	-rm -f romfs.devices
+	$(MAKE) -f Make.devices "MKDEV=echo >> romfs.devices"
+	mkromfs -d romfs.devices $(DESTDIR)
 
 # Clean target
 clean:
