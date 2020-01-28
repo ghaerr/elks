@@ -244,6 +244,7 @@ CONFIG_APP_SASH=y
 # CONFIG_APP_MINIX3 is not set
 # CONFIG_APP_MISC_UTILS is not set
 # CONFIG_APP_MTOOLS is not set
+# CONFIG_APP_NANOX is not set
 # CONFIG_APP_PREMS is not set
 # CONFIG_APP_PRN_UTILS is not set
 # CONFIG_APP_SYS_UTILS is not set
