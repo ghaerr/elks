@@ -78,7 +78,6 @@ static list_root_t _inodes;  /* list of inodes */
 
 static int arglen;					/* passed filesystem prefix length*/
 static char *devfile;				/* passed special device filename*/
-static inode_build_t *devinode;		/* /dev inode*/
 
 /* Entry to build */
 
@@ -161,41 +160,58 @@ static void inode_free (inode_build_t * inode)
 	free (inode);
 	}
 
-/* parse external device file spec*/
-static int parse_dev(inode_build_t *parent_inode, char *child_path, char *devfile)
-{
-	FILE *fp;
-	unsigned char type;
-	int major, minor;
-	char buf[256], path[256], dev[256];
-
-	fp = fopen(devfile, "r");
-	if (!fp) return -1;
-
-	while (fgets(buf, sizeof(buf), fp)) {
-		if (sscanf(buf, "%s %c %d %d", dev, &type, &major, &minor) != 4) {
-err:
-			fclose(fp);
-			return -1;
-		}
-		printf("Device: %s %c %d %d\n", dev, type, major, minor);
-		if (strncmp(dev, "/dev/", 5) != 0)
-			goto err;
-		sprintf(path, "%s/%s", child_path, dev+5);
-		inode_build_t * child_inode = inode_alloc (parent_inode, path);
-		if (!child_inode)
-			return -1;
-		child_inode->flags = (type == 'c')? INODE_CHAR: INODE_BLOCK;
-		child_inode->dev = (major << 8) | minor;
-		child_inode->size = 0;
-	}
-	fclose(fp);
-	return 0;
-}
-
 /*---------------------------------------------------------------------------*/
 /* Recursive directory parsing                                               */
 /*---------------------------------------------------------------------------*/
+
+/* special directory parsing for devices */
+
+static int parse_dir_dev (inode_build_t * parent_inode, char * child_path)
+{
+	int err = -1;
+
+	FILE * fp;
+	while (1)
+		{
+		unsigned char type;
+		int major, minor;
+		char buf [256], path [256], dev [256];
+
+		fp = fopen (devfile, "r");
+		if (!fp) break;
+
+		while (fgets (buf, sizeof (buf), fp))
+			{
+			if (sscanf(buf, "%s %c %d %d", dev, &type, &major, &minor) != 4) break;
+
+			printf ("Device: %s %c %d %d\n", dev, type, major, minor);
+			if (strncmp(dev, "/dev/", 5) != 0) break;
+			sprintf (path, "%s/%s", child_path, dev + 5);
+
+			entry_build_t * child_ent = entry_alloc (parent_inode, dev + 5);
+			if (!child_ent) break;
+
+			inode_build_t * child_inode = inode_alloc (parent_inode, path);
+			if (!child_inode) break;
+
+			child_ent->inode = child_inode;
+
+			child_inode->flags = (type == 'c')? INODE_CHAR: INODE_BLOCK;
+			child_inode->dev = (major << 8) | minor;
+			child_inode->size = 0;
+			}
+
+		// Success
+
+		err = 0;
+		break;
+		}
+
+	if (fp) fclose (fp);
+	return err;
+	}
+
+/* regular directory parsing */
 
 static int parse_dir (inode_build_t * grand_parent_inode,
 	inode_build_t * parent_inode, char * parent_path)
@@ -288,12 +304,13 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 					child_inode->flags = INODE_DIR;
 					child_inode->size = 0;  // initial size
 
-					/* check if /dev and special device file specified*/
-					if (devfile && strcmp(&child_path[arglen], "/dev") == 0) {
-						devinode = child_inode;
-						err = parse_dev(devinode, child_path, devfile);
+					/* check if /dev and special device file specified */
+
+					if (devfile && strcmp (&child_path [arglen], "/dev") == 0) {
+						err = parse_dir_dev (child_inode, child_path);
 						if (err) break;
 					}
+
 					err = parse_dir (parent_inode, child_inode, child_path);
 					if (err) break;
 					}
