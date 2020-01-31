@@ -9,7 +9,7 @@ DEST          = .
 HDRS          = ../prem/prem.h \
 		pres.h
 
-LIBS          = ../prem/prem.a
+LIBS          = ../prem/*.o
 
 XLIBS         = ../prem/xprem.a
 

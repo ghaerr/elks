@@ -20,9 +20,9 @@ $(PRG): httpd.o
 	$(LD) $(LDFLAGS) -o $(PRG) httpd.o $(LDLIBS)
 
 install: $(PRG)
-	sudo install $(PRG) $(TARGET_MNT)/bin
-	sudo mkdir -p $(TARGET_MNT)/var/www
-	sudo install sample_index.html $(TARGET_MNT)/var/www/index.html
+	$(INSTALL) $(PRG) $(DESTDIR)/bin
+	$(INSTALL) -d $(DESTDIR)/var/www
+	$(INSTALL) sample_index.html $(DESTDIR)/var/www/index.html
 
 clean:
 	rm -f *.o $(PRG)

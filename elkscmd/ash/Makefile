@@ -46,10 +46,10 @@ ash: $(OBJS)
 
 install: ash
 ifdef CONFIG_IMG_LINK
-	sudo install ash $(TARGET_MNT)/bin
-	sudo ln -sf ash $(TARGET_MNT)/bin/sh
+	$(INSTALL) ash $(DESTDIR)/bin
+	$(LN) -sf ash $(DESTDIR)/bin/sh
 else
-	sudo install ash $(TARGET_MNT)/bin/sh
+	$(INSTALL) ash $(DESTDIR)/bin/sh
 endif
 
 clean:

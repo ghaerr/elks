@@ -55,7 +55,7 @@ O=	.o
 EXTRA=
 EXTRA2=
 LIBS=
-BIN=	/usr/local/bin
+BIN=	/usr/bin
 
 OF=	-o 
 RF=	-c
@@ -297,9 +297,6 @@ SRC8=	vars.c vcmd.c vi.c vi.h refont.c
 
 all: $(PROGS)
 
-install: $(PROGS)
-	sudo install $(PROGS) $(TARGET_MNT)/bin
-
 elvis: $(OBJS) $(EXTRA) $(EXTRA2)
 	$(CC) -s $(CFLAGS) $(OF)elvis $(OBJS) $(EXTRA) $(EXTRA2) $(LIBS)
 	$(CHMEM)
@@ -359,13 +356,11 @@ install: $(INST)
 	@echo Installation complete.
 
 inst.unix: $(DUMMY)
-	cp $(PROGS) $(BIN)
-	(cd $(BIN); chmod 755 $(PROGS))
-	(cd $(BIN); chown bin $(PROGS))
-	-ln $(BIN)/elvis $(BIN)/vi
-	-ln $(BIN)/elvis $(BIN)/ex
-	-ln $(BIN)/elvis $(BIN)/view
-	-ln $(BIN)/elvis $(BIN)/input
+	$(INSTALL) -m 755 -o bin $(PROGS) $(BIN)
+	$(LN) $(BIN)/elvis $(BIN)/vi
+	$(LN) $(BIN)/elvis $(BIN)/ex
+	$(LN) $(BIN)/elvis $(BIN)/view
+	$(LN) $(BIN)/elvis $(BIN)/input
 
 inst.dos: $(DUMMY)
 	copy $(PROGS) $(BIN)

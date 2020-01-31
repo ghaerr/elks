@@ -41,7 +41,7 @@ all:	do-it-all
 
 #ifeq (.depend,$(wildcard .depend))
 #include .depend
-do-it-all:      Image
+do-it-all:      Image tools
 #else
 #do-it-all:      dep
 #endif

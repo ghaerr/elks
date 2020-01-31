@@ -54,8 +54,6 @@ ELKSCMD_DIR=$(TOPDIR)/elkscmd
 
 INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(ELKS_DIR)/include
 
-TARGET_MNT=$(TOPDIR)/target
-
 ##############################################################################
 #
 # Determine the ELKS kernel version.
@@ -92,6 +90,11 @@ endif
 
 CFLAGS=$(CFLBASE) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
 
+# Installation commands
+# Default for now
+
+INSTALL=install
+LN=ln
 
 ###############################################################################
 #

@@ -52,7 +52,7 @@ wc: wc.o
 	$(LD) $(LDFLAGS) -o wc wc.o $(LDLIBS)
 
 install: $(PRGS)
-	sudo install $(PRGS) $(TARGET_MNT)/bin
+	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
 	rm -f $(PRGS) *.o

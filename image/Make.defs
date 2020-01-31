@@ -65,5 +65,3 @@ ifdef CONFIG_IMG_FAT
 MKFS = mkfs.vfat
 MKFS_OPTS = -v
 endif
-
-TARGET_MNT = $(TOPDIR)/target

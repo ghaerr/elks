@@ -34,6 +34,11 @@ add_path () {
 
 add_path "$CROSSDIR/bin"
 
+# Set up internal ELKS tools path
+ELKSTOOLSDIR="$TOPDIR/elks/tools"
+
+add_path "$ELKSTOOLSDIR/bin"
+
 echo PATH set to $PATH
 
 export MAKEFLAGS="$MAKEFLAGS"

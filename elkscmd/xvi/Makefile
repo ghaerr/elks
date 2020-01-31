@@ -16,7 +16,7 @@ xvi: xvi.o
 	$(CC) $(LDFLAGS) xvi.o -o xvi
 
 install: xvi
-	sudo install xvi $(TARGET_MNT)/bin$
+	$(INSTALL) xvi $(DESTDIR)/bin$
 
 clean:
 	rm -f core xvi *.o

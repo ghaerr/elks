@@ -12,7 +12,8 @@ include $(BASEDIR)/Make.defs
 #
 # Subdirectories for clean / build / install
 
-# All subdirectories (for clean)
+# All subdirectories to build & clean
+# TODO: restore elvis, prn-utils, screen & xvi
 
 SUBDIRS =       \
 	ash         \
@@ -20,7 +21,6 @@ SUBDIRS =       \
 	bootblocks  \
 	debug_utils \
 	disk_utils  \
-	elvis       \
 	file_utils  \
 	inet        \
 	ktcp        \
@@ -33,90 +33,86 @@ SUBDIRS =       \
 	mtools      \
 	nano-X      \
 	prems       \
-	prn-utils   \
 	test        \
 	sash        \
-	screen      \
 	sh_utils    \
 	sys_utils   \
 	test        \
 	tools       \
-	xvi         \
 	# EOL
 
-# Directories to build (for all and install)
+# Directories to install
 
-BUILDDIRS =    \
-	bootblocks \
-	inet       \
+INSTDIRS = \
+	inet \
 	# EOL
 
 ifeq ($(CONFIG_APP_ASH), y)
-BUILDDIRS += ash
+INSTDIRS += ash
 endif
 
 ifeq ($(CONFIG_APP_BC), y)
-BUILDDIRS += bc
+INSTDIRS += bc
 endif
 
 ifeq ($(CONFIG_APP_DISK_UTILS), y)
-BUILDDIRS += disk_utils
+INSTDIRS += disk_utils
 endif
 
 ifeq ($(CONFIG_APP_FILE_UTILS), y)
-BUILDDIRS += file_utils
+INSTDIRS += file_utils
 endif
 
 ifeq ($(CONFIG_APP_LEVEE), y)
-BUILDDIRS += levee
+INSTDIRS += levee
 endif
 
 ifeq ($(CONFIG_APP_KTCP), y)
-BUILDDIRS += ktcp
+INSTDIRS += ktcp
 endif
 
 ifeq ($(CONFIG_APP_MINIX1), y)
-BUILDDIRS += minix1
+INSTDIRS += minix1
 endif
 
 ifeq ($(CONFIG_APP_MINIX2), y)
-BUILDDIRS += minix2
+INSTDIRS += minix2
 endif
 
 ifeq ($(CONFIG_APP_MINIX3), y)
-BUILDDIRS += minix3
+INSTDIRS += minix3
 endif
 
 ifeq ($(CONFIG_APP_MTOOLS), y)
-BUILDDIRS += mtools
+INSTDIRS += mtools
 endif
 
 ifeq ($(CONFIG_APP_MISC_UTILS), y)
-BUILDDIRS += misc_utils
+INSTDIRS += misc_utils
 endif
 
 ifeq ($(CONFIG_APP_NANOX), y)
-BUILDDIRS += nano-X
+INSTDIRS += nano-X
 endif
 
 ifeq ($(CONFIG_APP_PREMS), y)
-BUILDDIRS += prems
+INSTDIRS += prems
 endif
 
 ifeq ($(CONFIG_APP_SASH), y)
-BUILDDIRS += sash
+INSTDIRS += sash
 endif
 
 ifeq ($(CONFIG_APP_SH_UTILS), y)
-BUILDDIRS += sh_utils
+INSTDIRS += sh_utils
 endif
 
 ifeq ($(CONFIG_APP_SYS_UTILS), y)
-BUILDDIRS += sys_utils
+INSTDIRS += sys_utils
 endif
 
 ifdef CONFIG_APP_TEST
-BUILDDIRS += test
+INSTDIRS += test
 endif
 
 ###############################################################################
@@ -128,10 +124,10 @@ include $(BASEDIR)/Make.rules
 all:
 	@if [ ! -e $(TOPDIR)/include/autoconf.h ]; \
 	then echo -e "\n*** ERROR: You must configure ELKS first ***\n" >&2; exit 1; fi
-	for DIR in $(BUILDDIRS); do $(MAKE) -C $$DIR all || exit 1; done
+	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR all || exit 1; done
 
 install:
-	for i in $(BUILDDIRS); do $(MAKE) -C $$i install || exit 1; done
+	for i in $(INSTDIRS); do $(MAKE) -C $$i install || exit 1; done
 
 clean:
 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR clean || exit 1; done

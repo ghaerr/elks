@@ -1,1 +1,5 @@
+all:
+
+install:
+
 clean:
