@@ -37,10 +37,6 @@ endif
 all: $(TARGETS)
 
 #
-# Create character and block devices in image (make target devices:)
-include Make.devices
-
-#
 # Populate template for filesystem genfs
 template:
 	-rm -rf $(DESTDIR)
