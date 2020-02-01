@@ -54,7 +54,6 @@ mainmenu_option next_comment
 
 		comment 'Devices'
 
-		bool 'Math coprocessor' CONFIG_HW_FPU       n
 		bool 'PS/2 mouse'       CONFIG_HW_PS2_MOUSE y
 		bool 'VGA adapter'      CONFIG_HW_VGA       y
 

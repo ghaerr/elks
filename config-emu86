@@ -44,7 +44,6 @@ CONFIG_MEM_PAGES=8
 #
 # Devices
 #
-# CONFIG_HW_FPU is not set
 # CONFIG_HW_PS2_MOUSE is not set
 # CONFIG_HW_VGA is not set
 # CONFIG_HW_FLOPPY_DRIVE is not set

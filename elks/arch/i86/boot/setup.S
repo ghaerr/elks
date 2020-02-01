@@ -52,11 +52,7 @@
 !			9  = Pentium
 !			10 = Pentium PRO
 !			255 = VM86 mode
-!	0x21:	FPU type, 1 byte
-!			0 = no fpu
-!			1 = 8087
-!			2 = 80287
-!			3 = 80387 or above
+!	0x21:	unused (was FPU type), 1 byte
 !	0x22:	cpuid available -> 1, otherwise 0, 1 byte
 !	0x23:	processor family, 1 byte
 !	0x24:	mask model, 1 byte
@@ -64,7 +60,7 @@
 !	0x26:	capability flag, 4 bytes
 !	0x2a:	size of the base memory, in kytes, 2 bytes
 !	0x30:	zero terminated string containing the processor's name, 16 bytes
-!	0x40:	zero terminated string containing the fpu name, 16 bytes
+!	0x40:	unused (was FPU name), 16 bytes
 !	0x50:	zero terminated string containing the cpuid, 13 bytes
 !	0x80:	BIOS data for harddisk 0, 6 bytes
 !			0x80, no. of heads, 2 bytes (0, no disk)
@@ -745,8 +741,8 @@ delay:
 //form this position are calles code
 
 /*
-!
-! Probe for the CPU/Coprocessor
+! TODO: move probing to boot tools
+! Probe for the CPU
 ! These information is taken from "PC intern 3.0", Data Becker Verlag, 1992
 ! and from the Linux-Kernel, arch/i386/kernel/head.S
 !
@@ -779,7 +775,7 @@ getcpu:
 //
 	mov	$0xff,%cl
 	lea	px86,%si
-	jmp	getfpu
+	jmp	cpu_store
 	nop
 #endif
 
@@ -802,35 +798,35 @@ is8086:
 	jz	is8088
 	mov	$1,%cl
 	lea	p8086,%si
-	jmp	getfpu
+	jmp	cpu_store
 is8088:	xor	%cl,%cl
 	lea	p8088,%si
-	jmp	getfpu
+	jmp	cpu_store
 is80186:call	queue
 	jz	is80188
 	mov	$5,%cl
 	lea	p80186,%si
-	jmp	getfpu
+	jmp	cpu_store
 is80188:mov	$4,%cl
 	lea	p80188,%si
-	jmp	getfpu
+	jmp	cpu_store
 isv30:	
 	call	queue
 	jz	isv20
 	mov	$3,%cl
 	lea	pv30,%si
-	jmp	getfpu
+	jmp	cpu_store
 isv20:	mov	$2,%cl
 	lea	pv20,%si
-	jmp     getfpu
+	jmp     cpu_store
 #endif
 #if !defined (CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
 is80286:mov	$6,%cl
 	lea	p80286,%si
-//	jmp	getfpu
+//	jmp	cpu_store
 #endif
 
-getfpu:
+cpu_store:
 	//
 	// Store the processor name and type
 	//
@@ -854,58 +850,6 @@ con_cp1:
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
 	mov	%cl,0x20
-
-#ifdef CONFIG_HW_FPU
-	fninit
-	fnstcw	copro
-	mov	copro,%ax
-	cmp	$3,%ah
-	jne	nofpu
-	andw	$0xff7f,copro
-	fldcw	copro
-	fdisi
-	fstcw	copro
-	testw	$0x0080,copro
-	jnz	is8087
-	finit		// 80287/387 test
-	fld1
-	fldz
-	fdiv	%st,%st(1)
-	fld	%st
-	fchs
-	fcompp
-	fstsw	copro
-	mov	copro,%ax
-	sahf
-	jz	is80287
-	mov	$3,%cl
-	jmp	gotfpu
-is80287: mov	$2,%cl
-	jmp	gotfpu
-is8087:	mov	$1,%cl
-	jmp	gotfpu
-#endif
-nofpu:	xor	%cl,%cl
-
-gotfpu:	mov	$INITSEG,%ax
-	mov	%ax,%es
-	mov	$SETUPSEG,%ax
-	mov	%ax,%ds
-//	seg	es
-	mov	%cl,%es:0x21
-	xor	%ch,%ch
-	add	%cx,%cx
-	lea	fpu_t,%si
-	add	%cx,%si
-	mov	(%si),%si
-	mov	$0x40,%di
-	mov	$16,%cx
-	cld
-con_cp2:
-	lodsb
-	stosb
-	or	%al,%al
-	loopnz	con_cp2
 	ret
 
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
@@ -1165,27 +1109,6 @@ v_id:	.byte 0,0,0,0
 v_id2:	.byte 0,0,0,0
 v_id3:	.byte 0,0,0,0
 	.byte 0
-//
-// FPU names. must be not longer than 15 characters!
-//
-f_none:	.ascii "no fpu"
-	.byte 0
-#ifdef CONFIG_HW_FPU
-f8087:	.ascii "8087"
-	.byte 0
-f80287:	.ascii "80287"
-	.byte 0
-f80387: .ascii "80387 or above"
-	.byte 0
-#endif
-fpu_t:	.word f_none
-#ifdef CONFIG_HW_FPU
-         .word f8087, f80287, f80387
-#endif
-
-#ifdef CONFIG_HW_FPU
-copro:	.word 0
-#endif
 
 no_sig_mess:	.ascii	"No ELKS setup signature found ..."
 		.byte	0x00
