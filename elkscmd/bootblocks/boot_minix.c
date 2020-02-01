@@ -54,6 +54,14 @@ void run_prog ();
 
 //------------------------------------------------------------------------------
 
+// FIXME: this is a lot of source code just to get at the data segment value
+// from %ss.  Perhaps there should be a built-in function in gcc-ia16 for this.
+
+#define _FP_SEG(fp)	((int) ((long) (void __far *) (fp) >> 16))
+#define seg_data()	_FP_SEG (&i_now)
+
+//------------------------------------------------------------------------------
+
 static int strcmp (const char * s, const char * d)
 {
 	const char * p1 = s;

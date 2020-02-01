@@ -158,12 +158,8 @@ _next2:
 	.global except
 
 except:
-
-	mov %sp,%bp
-	mov 2(%bp),%ax  // exception code
-
 _except:
-
+	// AX = exception code
 	xor %sp,%sp
 	add $'0',%al  // first version with single digit
 	call _putc
@@ -194,6 +190,12 @@ _putc:
 	int $0x10     // BIOS video services
 	ret
 
+	.global puts
+
+puts:
+	xchg %ax,%bx
+	// fall through
+
 	.global _puts
 
 _puts:
@@ -208,26 +210,56 @@ _puts:
 	inc %bx
 	jmp _puts
 
-// void puts (const char * s)
-
-	.global puts
-
-puts:
-
-	mov %sp,%bx
-	mov 2(%bx),%bx
-	jmp _puts
+puts_exit:
+	ret
 
 //------------------------------------------------------------------------------
 
-// int seg_data ()
+/*
+_half_hex:
 
-	.global seg_data
+	and $0x0F,%al
+	add $'0',%al
+	cmp $'9',%al
+	jle hh_next
+	add $('A'-'9'),%al
 
-seg_data:
+hh_next:
+	jmp _putc
 
-	mov %ds,%ax
+_byte_hex:
+
+	mov %al,%dl
+
+	mov $4,%cl
+	shr %cl,%al
+	call _half_hex
+
+	mov %dl,%al
+	call _half_hex
+
 	ret
+
+_word_hex:
+
+	push %ax
+	mov %ah,%al
+	call _byte_hex
+	pop %ax
+	call _byte_hex
+	ret
+
+// void word_hex (word_t w)
+
+	.global word_hex
+
+word_hex:
+
+	mov %sp,%bx
+	mov 2(%bx),%ax
+	call _word_hex
+	ret
+*/
 
 //------------------------------------------------------------------------------
 
@@ -253,10 +285,15 @@ drive_reset:
 
 disk_read:
 
+	push %cx
+	push %dx
 	push %bp
 	mov %sp,%bp
 	sub $8,%sp
 
+// 8(%bp) = segment
+// 4(%bp) = offset
+// 2(%bp) = logical count
 // -2(%bp) = relative sector
 // -4(%bp) = relative head
 // -6(%bp) = relative track
@@ -264,7 +301,7 @@ disk_read:
 
 	// Compute the CHS from absolute sector
 
-	mov 4(%bp),%ax   // absolute sector
+	// AX = absolute sector
 	xor %dx,%dx
 	divw sect_max
 	mov %dx,-2(%bp)
@@ -280,10 +317,10 @@ dr_loop:
 	// Compute remaining sectors in current track
 
 	mov -2(%bp),%ax
-	add 6(%bp),%ax    // absolute count
+	add 2(%bp),%ax    // absolute count
 	cmp sect_max,%ax
 	ja dr_over
-	mov 6(%bp),%ax
+	mov 2(%bp),%ax
 	jmp dr_next1
 
 dr_over:
@@ -302,8 +339,8 @@ dr_next1:
 	mov -6(%bp),%ch  // cylinder number
 
 	push %es
-	mov 8(%bp),%bx
-	mov 10(%bp),%es
+	mov 4(%bp),%bx
+	mov 8(%bp),%es
 	mov $0x02,%ah    // BIOS read disk
 	int $0x13
 	pop %es
@@ -337,7 +374,7 @@ dr_cont:
 	// Update absolute count
 
 	mov -8(%bp),%ax
-	sub %ax,6(%bp)
+	sub %ax,2(%bp)
 	jz dr_exit
 
 	// Move to next head
@@ -365,7 +402,7 @@ dr_next2:
 	mov -8(%bp),%ax
 	mov $9,%cl
 	shl %cl,%ax
-	add %ax,8(%bp)
+	add %ax,4(%bp)
 
 	jmp dr_loop
 
@@ -373,7 +410,9 @@ dr_exit:
 
 	mov %bp,%sp
 	pop %bp
-	ret
+	pop %dx
+	pop %cx
+	ret $2
 
 //------------------------------------------------------------------------------
 
