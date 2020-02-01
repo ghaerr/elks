@@ -24,7 +24,7 @@
 // First part of the boot block (1K) is the boot sector (512 B)
 // Loaded by the BIOS at 0:7C00h (32K - 1K) with DL = boot drive
 
-sector_1:
+entry:
 
 	// Get the memory size
 	// TODO: optional BIOS INT 12h
@@ -33,8 +33,10 @@ sector_1:
 	mov $6,%cl  // to paragraphs
 	shl %cl,%ax
 
-	// Move to the latest rounded 64K
-	// To avoid unaligned buffer for BIOS INT 13h
+	// Move to the highest & aligned 64K
+
+	// Some BIOSes are intolerant to unaligned buffer for INT 13h
+	// so the 64K is the safest possible alignement in all cases
 
 	sub $0x1000,%ax
 	and $0xF000,%ax
@@ -50,19 +52,20 @@ sector_1:
 	movsw
 
 	// Copy the current BIOS floppy parameter table
+	// so that we could modify it locally
 
 	mov $0x78,%bx  // 0:78h (INT vector 1Eh)
 	lds (%bx),%si  // ds:si = BIOS original table
-	mov $fdd_table,%di
+	mov $floppy_table,%di
 	mov $6,%cx     // 12 bytes (actually 11 in the table)
 	//cld
 	rep
 	movsw
 
-	// Change table pointer to copy
+	// Change BIOS table pointer to our copy
 
 	mov %ax,%ds
-	mov $fdd_table,%di
+	mov $floppy_table,%di
 	mov %di,(%bx)
 	mov %es,2(%bx)
 
@@ -87,11 +90,11 @@ _next1:
 
 	// Save boot drive as provided by BIOS
 
-	mov %dl,drive_num
+	mov %dl,drive_num  // DX preserved above
 
-	// Set sector count in FDD table
+	// Set sector count in floppy parameter table
 
-	mov $fdd_table,%bx
+	mov $floppy_table,%bx
 	mov sect_max,%al
 	mov %al,4(%bx)
 
@@ -103,12 +106,15 @@ _next1:
 
 	// Load the second sector of the boot block
 
+	// TODO: move the retry to the 'disk_read' function
+	// and reuse the same function for all reading
+
 	mov $3,%si         // number of tries = 3
 
 _loop1:
 
 	mov $0x0201,%ax    // read 1 sector
-	mov $sector_2,%bx  // destination (ES already set)
+	mov $payload,%bx  // destination (ES already set)
 	mov $2,%cx         // track 0 - from sector 2 (base 1)
 	xor %dh,%dh        // head 0
 	mov drive_num,%dl  // boot driver
@@ -118,8 +124,34 @@ _loop1:
 	dec %si
 	jnz _loop1
 
-	mov $ERR_SECTOR_2,%ax
+	mov $ERR_PAYLOAD,%al
 	jmp _except
+
+_next2:
+
+	.extern load_prog
+
+	/*
+	// Not necessary as fixed format
+	// TODO: move it to the "target probe" payload
+
+	err = drive_get (0);
+	if (err) {
+		puts ("drive_get:");
+		word_hex (err);
+		puts ("\r\n");
+		break;
+		}
+	*/
+
+	call load_prog
+	mov $ERR_NO_SYSTEM,%al
+	jmp _except
+
+//------------------------------------------------------------------------------
+
+// We use an exception-like basic mechanism
+// to save the space required by error returning
 
 // void except (int code)
 
@@ -144,25 +176,6 @@ reboot:
 
 	int $0x19    // BIOS bootstrap
 	jmp reboot
-
-_next2:
-
-	.extern load_prog
-
-	/*
-	// Not necessary as fixed format
-	err = drive_get (0);
-	if (err) {
-		puts ("drive_get:");
-		word_hex (err);
-		puts ("\r\n");
-		break;
-		}
-	*/
-
-	call load_prog
-	mov $ERR_NO_SYSTEM,%ax
-	jmp _except
 
 //------------------------------------------------------------------------------
 
@@ -391,16 +404,15 @@ dr_next1:
 	call _putc
 
 	// TODO: reset drive on error and retry
-
 	//mov drive_num,%dl
 	//xor %ah,%ah
 	//int $0x13
 	//mov -8(%bp),%ax
 	//jmp dr_try
 
+	// TODO: use BIOS returned error
 	//mov %ah,%al
-	//mov $0,%ah
-	mov $ERR_DISK_READ,%ax
+	mov $ERR_DISK_READ,%al
 	jmp _except
 
 dr_cont:
@@ -429,9 +441,7 @@ dr_cont:
 	// Move to next track
 
 	movw $0,-4(%bp)
-	mov -6(%bp),%ax
-	inc %ax
-	mov %ax,-6(%bp)
+	incw -6(%bp)
 
 dr_next2:
 
@@ -459,7 +469,7 @@ dr_exit:
 
 	.global run_prog
 
-// TODO: to be moved to second part
+// TODO: to be moved to the MINIX specific payload
 
 run_prog:
 
@@ -523,7 +533,7 @@ binfile:
 not_elks:
 
 	pop %ds
-	mov $ERR_NOT_ELKS,%ax
+	mov $ERR_BAD_SYSTEM,%al
 	jmp _except
 
 boot_it:
@@ -599,9 +609,9 @@ msg_error:
 drive_num:
 	.byte 0
 
-// BIOS floppy parameter table
+// Local copy of BIOS floppy parameter table
 
-fdd_table:
+floppy_table:
 	.word 0,0,0,0,0,0
 
 // Disk geometry (CHS)
@@ -638,6 +648,8 @@ head_max:
 	.word CONFIG_IMG_HEAD
 #endif
 
+// TODO: number of tracks is not used
+
 track_max:
 #if defined(CONFIG_IMG_FD360)
 	.word 40
@@ -655,10 +667,11 @@ track_max:
 	.org 0x1FE
 	.word 0xAA55
 
-// Second sector of the boot block
+// Here comes the first sector of the payload
+// that is specific to the filesystem
 
 	.org 0x200
 
-sector_2:
+payload:
 
 //------------------------------------------------------------------------------

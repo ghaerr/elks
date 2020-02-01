@@ -14,15 +14,15 @@ LDFLAGS = -T $(TOPDIR)/elks/elks-raw.ld
 
 all: minix.bin
 
-minix.bin: minix_first.o minix_second.o
-	$(LD) $(LDFLAGS) -M -o minix.bin minix_first.o minix_second.o > minix.map
+minix.bin: boot_sect.o boot_minix.o
+	$(LD) $(LDFLAGS) -M -o minix.bin boot_sect.o boot_minix.o > minix.map
 
-minix_first.o: minix_first.S
-	$(CC) $(INCLUDES) -E -o minix_first.tmp minix_first.S
-	$(AS) -o minix_first.o minix_first.tmp
-	rm -f minix_first.tmp
+boot_sect.o: boot_sect.S
+	$(CC) $(INCLUDES) -E -o boot_sect.tmp boot_sect.S
+	$(AS) -o boot_sect.o boot_sect.tmp
+	rm -f boot_sect.tmp
 
-minix_second.o: minix_second.c
+boot_minix.o: boot_minix.c
 
 clean realclean:
 	rm -f *.o *.bin
