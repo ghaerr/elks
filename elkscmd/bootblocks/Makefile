@@ -1,6 +1,6 @@
 
 CC = ia16-elf-gcc
-CROSS_CFLAGS = -mregparmcall -fno-inline -mcmodel=tiny -mno-segment-relocation-stuff -ffreestanding -mtune=i8086
+CROSS_CFLAGS = -mregparmcall -fno-toplevel-reorder -fno-inline -mcmodel=tiny -mno-segment-relocation-stuff -ffreestanding -mtune=i8086
 INCLUDES = -I $(TOPDIR)/include
 CFLAGS = -Wall -Os $(CROSS_CFLAGS) $(INCLUDES)
 
