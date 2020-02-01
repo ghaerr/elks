@@ -41,7 +41,7 @@ static byte_t d_dir [BLOCK_SIZE];  // latest in program segment
 
 // Helpers from boot sector
 
-void except (int code);
+void except (char code);
 
 void puts (const char * s);
 

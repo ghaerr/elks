@@ -26,6 +26,11 @@
 
 entry:
 
+// Allow the new BIOS floppy parameter table to clobber the first few bytes
+// of the boot block after we are done with them
+
+floppy_table:
+
 	// Get the memory size
 	// TODO: optional BIOS INT 12h
 
@@ -42,10 +47,9 @@ entry:
 	and $0xF000,%ax
 	mov %ax,%es
 
-	xor %ax,%ax
-	mov %ax,%ds
-	mov $BOOTADDR,%si
 	xor %di,%di
+	mov %di,%ds
+	mov $BOOTADDR,%si
 	mov $256,%cx  // 256 words = 512 B
 	cld
 	rep
@@ -56,17 +60,21 @@ entry:
 
 	mov $0x78,%bx  // 0:78h (INT vector 1Eh)
 	lds (%bx),%si  // ds:si = BIOS original table
+.if floppy_table == sector_1
+	xor %di,%di
+.else
 	mov $floppy_table,%di
-	mov $6,%cx     // 12 bytes (actually 11 in the table)
+.endif
+	push %di
+	mov $6,%cl     // 12 bytes (actually 11 in the table); and, ch = 0
 	//cld
 	rep
 	movsw
 
 	// Change BIOS table pointer to our copy
 
-	mov %ax,%ds
-	mov $floppy_table,%di
-	mov %di,(%bx)
+	mov %cx,%ds    // cx = 0
+	popw (%bx)
 	mov %es,2(%bx)
 
 	// Rebase CS DS ES SS to work in the 64K segment
@@ -94,15 +102,8 @@ _next1:
 
 	// Set sector count in floppy parameter table
 
-	mov $floppy_table,%bx
 	mov sect_max,%al
-	mov %al,4(%bx)
-
-	// Reset the floppy drive
-
-	//mov drive_num,%dl
-	xor %ah,%ah
-	int $0x13
+	mov %al,floppy_table+4
 
 	// Load the second sector of the boot block
 
@@ -113,11 +114,13 @@ _next1:
 
 _loop1:
 
+	xor %ah,%ah        // reset the floppy drive
+	int $0x13
 	mov $0x0201,%ax    // read 1 sector
 	mov $payload,%bx  // destination (ES already set)
 	mov $2,%cx         // track 0 - from sector 2 (base 1)
-	xor %dh,%dh        // head 0
-	mov drive_num,%dl  // boot driver
+	cwtd               // head 0 (dh = 0)
+	mov drive_num,%dl  // boot drive
 	int $0x13          // BIOS disk services
 	jnc _next2
 
@@ -146,20 +149,20 @@ _next2:
 
 	call load_prog
 	mov $ERR_NO_SYSTEM,%al
-	jmp _except
+	// fall through to _except
 
 //------------------------------------------------------------------------------
 
 // We use an exception-like basic mechanism
 // to save the space required by error returning
 
-// void except (int code)
+// void except (char code)
 
 	.global except
 
 except:
 _except:
-	// AX = exception code
+	// AL = exception code
 	xor %sp,%sp
 	add $'0',%al  // first version with single digit
 	call _putc
@@ -564,11 +567,6 @@ msg_reboot:
 
 drive_num:
 	.byte 0
-
-// Local copy of BIOS floppy parameter table
-
-floppy_table:
-	.word 0,0,0,0,0,0
 
 // Disk geometry (CHS)
 
