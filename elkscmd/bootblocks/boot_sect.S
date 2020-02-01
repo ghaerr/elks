@@ -1,8 +1,5 @@
 //------------------------------------------------------------------------------
-// MINIX Boot Block (first block of the filesystem)
-// Sourced from DEV86 boot blocks
-// Reworked for ELKS to load directly the kernel without any helper
-// Sector 1 : boot sector and primitives
+// ELKS boot sector
 //------------------------------------------------------------------------------
 
 #include <autoconf.h>
@@ -20,14 +17,12 @@
 
 	.text
 
-// Boot block is the first one in the MINIX filesystem
-// First part of the boot block (1K) is the boot sector (512 B)
-// Loaded by the BIOS at 0:7C00h (32K - 1K) with DL = boot drive
+// Loaded by the BIOS at 0:7C00h (32K - 1K) with DL = boot drive number
 
 entry:
 
 // Allow the new BIOS floppy parameter table to clobber the first few bytes
-// of the boot block after we are done with them
+// of the boot sector after we are done with them
 
 floppy_table:
 
@@ -60,20 +55,20 @@ floppy_table:
 
 	mov $0x78,%bx  // 0:78h (INT vector 1Eh)
 	lds (%bx),%si  // ds:si = BIOS original table
-.if floppy_table == sector_1
+.if floppy_table == entry
 	xor %di,%di
 .else
 	mov $floppy_table,%di
 .endif
 	push %di
-	mov $6,%cl     // 12 bytes (actually 11 in the table); and, ch = 0
+	mov $6,%cl     // 12 bytes (actually 11 in the table) and CH = 0
 	//cld
 	rep
 	movsw
 
 	// Change BIOS table pointer to our copy
 
-	mov %cx,%ds    // cx = 0
+	mov %cx,%ds    // CX = 0
 	popw (%bx)
 	mov %es,2(%bx)
 
@@ -103,7 +98,7 @@ _next1:
 	// Set sector count in floppy parameter table
 
 	mov sect_max,%al
-	mov %al,floppy_table+4
+	mov %al,floppy_table + 4
 
 	// Load the second sector of the boot block
 
@@ -116,8 +111,9 @@ _loop1:
 
 	xor %ah,%ah        // reset the floppy drive
 	int $0x13
+
 	mov $0x0201,%ax    // read 1 sector
-	mov $payload,%bx  // destination (ES already set)
+	mov $payload,%bx   // destination (ES already set)
 	mov $2,%cx         // track 0 - from sector 2 (base 1)
 	cwtd               // head 0 (dh = 0)
 	mov drive_num,%dl  // boot drive
@@ -133,19 +129,6 @@ _loop1:
 _next2:
 
 	.extern load_prog
-
-	/*
-	// Not necessary as fixed format
-	// TODO: move it to the "target probe" payload
-
-	err = drive_get (0);
-	if (err) {
-		puts ("drive_get:");
-		word_hex (err);
-		puts ("\r\n");
-		break;
-		}
-	*/
 
 	call load_prog
 	mov $ERR_NO_SYSTEM,%al
@@ -205,16 +188,13 @@ _puts:
 
 	mov (%bx),%al
 	or %al,%al
-	jnz 1f
-	ret
-1:	mov %bx,%cx
+	jz 1f
+	mov %bx,%cx
 	call _putc
 	mov %cx,%bx
 	inc %bx
 	jmp _puts
-
-puts_exit:
-	ret
+1:  ret
 
 //------------------------------------------------------------------------------
 
@@ -254,9 +234,9 @@ disk_read:
 // -6(%bp) = relative track
 // -8(%bp) = relative count
 
-	// Compute the CHS from absolute sector
+	// Compute the CHS from logical sector
 
-	// AX = absolute sector
+	// AX = logical sector
 	xor %dx,%dx
 	divw sect_max
 	mov %dx,-2(%bp)
@@ -272,7 +252,7 @@ dr_loop:
 	// Compute remaining sectors in current track
 
 	mov -2(%bp),%ax
-	add 2(%bp),%ax    // absolute count
+	add 2(%bp),%ax
 	cmp sect_max,%ax
 	ja dr_over
 	mov 2(%bp),%ax
@@ -326,7 +306,7 @@ dr_cont:
 	mov $'.',%al
 	call _putc
 
-	// Update absolute count
+	// Update logical count
 
 	mov -8(%bp),%ax
 	sub %ax,2(%bp)
@@ -352,7 +332,7 @@ dr_next2:
 	// Advance in buffer
 
 	// PATCH: don't move ES, only BX
-	// This limits the reading size to 64K
+	// Limitation: reading size <= 64K
 
 	mov -8(%bp),%ax
 	mov $9,%cl
