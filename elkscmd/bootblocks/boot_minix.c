@@ -41,7 +41,7 @@ static byte_t d_dir [BLOCK_SIZE];  // latest in program segment
 
 // Helpers from boot sector
 
-void except (int code);
+void except (char code);
 
 void puts (const char * s);
 
@@ -51,6 +51,14 @@ void disk_read (const int sect, const int count,
 	const byte_t * buf, const int seg);
 
 void run_prog ();
+
+//------------------------------------------------------------------------------
+
+// FIXME: this is a lot of source code just to get at the data segment value
+// from %ss.  Perhaps there should be a built-in function in gcc-ia16 for this.
+
+#define _FP_SEG(fp)	((int) ((long) (void __far *) (fp) >> 16))
+#define seg_data()	_FP_SEG (&i_now)
 
 //------------------------------------------------------------------------------
 

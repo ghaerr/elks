@@ -26,6 +26,11 @@
 
 entry:
 
+// Allow the new BIOS floppy parameter table to clobber the first few bytes
+// of the boot block after we are done with them
+
+floppy_table:
+
 	// Get the memory size
 	// TODO: optional BIOS INT 12h
 
@@ -42,10 +47,9 @@ entry:
 	and $0xF000,%ax
 	mov %ax,%es
 
-	xor %ax,%ax
-	mov %ax,%ds
-	mov $BOOTADDR,%si
 	xor %di,%di
+	mov %di,%ds
+	mov $BOOTADDR,%si
 	mov $256,%cx  // 256 words = 512 B
 	cld
 	rep
@@ -56,17 +60,21 @@ entry:
 
 	mov $0x78,%bx  // 0:78h (INT vector 1Eh)
 	lds (%bx),%si  // ds:si = BIOS original table
+.if floppy_table == sector_1
+	xor %di,%di
+.else
 	mov $floppy_table,%di
-	mov $6,%cx     // 12 bytes (actually 11 in the table)
+.endif
+	push %di
+	mov $6,%cl     // 12 bytes (actually 11 in the table); and, ch = 0
 	//cld
 	rep
 	movsw
 
 	// Change BIOS table pointer to our copy
 
-	mov %ax,%ds
-	mov $floppy_table,%di
-	mov %di,(%bx)
+	mov %cx,%ds    // cx = 0
+	popw (%bx)
 	mov %es,2(%bx)
 
 	// Rebase CS DS ES SS to work in the 64K segment
@@ -94,15 +102,8 @@ _next1:
 
 	// Set sector count in floppy parameter table
 
-	mov $floppy_table,%bx
 	mov sect_max,%al
-	mov %al,4(%bx)
-
-	// Reset the floppy drive
-
-	//mov drive_num,%dl
-	xor %ah,%ah
-	int $0x13
+	mov %al,floppy_table+4
 
 	// Load the second sector of the boot block
 
@@ -113,11 +114,13 @@ _next1:
 
 _loop1:
 
+	xor %ah,%ah        // reset the floppy drive
+	int $0x13
 	mov $0x0201,%ax    // read 1 sector
 	mov $payload,%bx  // destination (ES already set)
 	mov $2,%cx         // track 0 - from sector 2 (base 1)
-	xor %dh,%dh        // head 0
-	mov drive_num,%dl  // boot driver
+	cwtd               // head 0 (dh = 0)
+	mov drive_num,%dl  // boot drive
 	int $0x13          // BIOS disk services
 	jnc _next2
 
@@ -146,24 +149,20 @@ _next2:
 
 	call load_prog
 	mov $ERR_NO_SYSTEM,%al
-	jmp _except
+	// fall through to _except
 
 //------------------------------------------------------------------------------
 
 // We use an exception-like basic mechanism
 // to save the space required by error returning
 
-// void except (int code)
+// void except (char code)
 
 	.global except
 
 except:
-
-	mov %sp,%bp
-	mov 2(%bp),%ax  // exception code
-
 _except:
-
+	// AL = exception code
 	xor %sp,%sp
 	add $'0',%al  // first version with single digit
 	call _putc
@@ -194,6 +193,12 @@ _putc:
 	int $0x10     // BIOS video services
 	ret
 
+	.global puts
+
+puts:
+	xchg %ax,%bx
+	// fall through
+
 	.global _puts
 
 _puts:
@@ -208,25 +213,7 @@ _puts:
 	inc %bx
 	jmp _puts
 
-// void puts (const char * s)
-
-	.global puts
-
-puts:
-
-	mov %sp,%bx
-	mov 2(%bx),%bx
-	jmp _puts
-
-//------------------------------------------------------------------------------
-
-// int seg_data ()
-
-	.global seg_data
-
-seg_data:
-
-	mov %ds,%ax
+puts_exit:
 	ret
 
 //------------------------------------------------------------------------------
@@ -253,10 +240,15 @@ drive_reset:
 
 disk_read:
 
+	push %cx
+	push %dx
 	push %bp
 	mov %sp,%bp
 	sub $8,%sp
 
+// 8(%bp) = segment
+// 4(%bp) = offset
+// 2(%bp) = logical count
 // -2(%bp) = relative sector
 // -4(%bp) = relative head
 // -6(%bp) = relative track
@@ -264,7 +256,7 @@ disk_read:
 
 	// Compute the CHS from absolute sector
 
-	mov 4(%bp),%ax   // absolute sector
+	// AX = absolute sector
 	xor %dx,%dx
 	divw sect_max
 	mov %dx,-2(%bp)
@@ -280,10 +272,10 @@ dr_loop:
 	// Compute remaining sectors in current track
 
 	mov -2(%bp),%ax
-	add 6(%bp),%ax    // absolute count
+	add 2(%bp),%ax    // absolute count
 	cmp sect_max,%ax
 	ja dr_over
-	mov 6(%bp),%ax
+	mov 2(%bp),%ax
 	jmp dr_next1
 
 dr_over:
@@ -302,8 +294,8 @@ dr_next1:
 	mov -6(%bp),%ch  // cylinder number
 
 	push %es
-	mov 8(%bp),%bx
-	mov 10(%bp),%es
+	mov 4(%bp),%bx
+	mov 8(%bp),%es
 	mov $0x02,%ah    // BIOS read disk
 	int $0x13
 	pop %es
@@ -337,7 +329,7 @@ dr_cont:
 	// Update absolute count
 
 	mov -8(%bp),%ax
-	sub %ax,6(%bp)
+	sub %ax,2(%bp)
 	jz dr_exit
 
 	// Move to next head
@@ -365,7 +357,7 @@ dr_next2:
 	mov -8(%bp),%ax
 	mov $9,%cl
 	shl %cl,%ax
-	add %ax,8(%bp)
+	add %ax,4(%bp)
 
 	jmp dr_loop
 
@@ -373,7 +365,9 @@ dr_exit:
 
 	mov %bp,%sp
 	pop %bp
-	ret
+	pop %dx
+	pop %cx
+	ret $2
 
 //------------------------------------------------------------------------------
 
@@ -525,11 +519,6 @@ msg_reboot:
 
 drive_num:
 	.byte 0
-
-// Local copy of BIOS floppy parameter table
-
-floppy_table:
-	.word 0,0,0,0,0,0
 
 // Disk geometry (CHS)
 
