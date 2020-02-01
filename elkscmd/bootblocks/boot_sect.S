@@ -128,9 +128,7 @@ _loop1:
 
 _next2:
 
-	.extern load_prog
-
-	call load_prog
+	call payload
 	mov $ERR_NO_SYSTEM,%al
 	// fall through to _except
 
