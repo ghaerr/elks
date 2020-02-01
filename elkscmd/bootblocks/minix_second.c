@@ -21,7 +21,7 @@
 static byte_t sb_block [BLOCK_SIZE];  // super block block buffer
 static struct super_block *sb_data;   // super block structure
 
-static int i_now = 0;
+static int i_now;
 static int ib_first;                 // inode first block
 static byte_t i_block [BLOCK_SIZE];  // inode block buffer
 static struct inode_s * i_data;      // current inode structure
@@ -167,11 +167,12 @@ void load_prog ()
 
 	load_super ();
 
+	i_now = 0;
 	load_file ();
 
 	for (int d = 0; d < i_data->i_size; d += DIRENT_SIZE) {
 		if (!strcmp ((char *)(d_dir + 2 + d), "linux")) {
-			//puts ("Linux found\r\n");
+			puts ("Linux found\r\n");
 			i_now = (*(int *)(d_dir + d)) - 1;
 			load_file ();
 

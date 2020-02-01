@@ -61,6 +61,7 @@ sector_1:
 
 	// Change table pointer to copy
 
+	mov %ax,%ds
 	mov $fdd_table,%di
 	mov %di,(%bx)
 	mov %es,2(%bx)
@@ -383,12 +384,31 @@ dr_next1:
 	pop %es
 
 	jnc dr_cont
+
+	// PATCH: failure trace
+
+	mov $'*',%al
+	call _putc
+
+	// TODO: reset drive on error and retry
+
+	//mov drive_num,%dl
+	//xor %ah,%ah
+	//int $0x13
+	//mov -8(%bp),%ax
+	//jmp dr_try
+
 	//mov %ah,%al
 	//mov $0,%ah
 	mov $ERR_DISK_READ,%ax
 	jmp _except
 
 dr_cont:
+
+	// PATCH: success trace
+
+	mov $'.',%al
+	call _putc
 
 	// Update absolute count
 
@@ -417,10 +437,13 @@ dr_next2:
 
 	// Advance in buffer
 
+	// PATCH: don't move ES, only BX
+	// This limits the reading size to 64K
+
 	mov -8(%bp),%ax
-	mov $5,%cl
+	mov $9,%cl
 	shl %cl,%ax
-	add %ax,10(%bp)
+	add %ax,8(%bp)
 
 	jmp dr_loop
 
@@ -564,7 +587,7 @@ copy_sect:
 //------------------------------------------------------------------------------
 
 msg_head:
-	.asciz "MINIX boot\r\n"
+	.asciz "MINIX\r\n"
 
 msg_error:
 	.asciz "!\r\nPress key\r\n"
