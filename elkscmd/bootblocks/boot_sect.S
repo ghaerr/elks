@@ -100,37 +100,17 @@ _next1:
 	mov sect_max,%al
 	mov %al,floppy_table + 4
 
-	// Load the second sector of the boot block
+	// Load the payload sector, usually the second sector of the boot block
 
-	// TODO: move the retry to the 'disk_read' function
-	// and reuse the same function for all reading
+	mov payload_logical_sect,%ax
+	mov $1,%dx
+	mov $payload,%cx
+	push %ss
+	mov $ERR_PAYLOAD,%bl
+	call _disk_read
 
-	mov $3,%si         // number of tries = 3
+	call payload
 
-_loop1:
-
-	xor %ah,%ah        // reset the floppy drive
-	int $0x13
-
-	mov $0x0201,%ax    // read 1 sector
-	mov $payload,%bx   // destination (ES already set)
-	mov $2,%cx         // track 0 - from sector 2 (base 1)
-	cwtd               // head 0 (dh = 0)
-	mov drive_num,%dl  // boot drive
-	int $0x13          // BIOS disk services
-	jnc _next2
-
-	dec %si
-	jnz _loop1
-
-	mov $ERR_PAYLOAD,%al
-	jmp _except
-
-_next2:
-
-	.extern load_prog
-
-	call load_prog
 	mov $ERR_NO_SYSTEM,%al
 	// fall through to _except
 
@@ -219,12 +199,18 @@ drive_reset:
 	.global disk_read
 
 disk_read:
+	mov $ERR_DISK_READ,%bl
+
+_disk_read:
+	// BL = error code to display on failure
 
 	push %cx
 	push %dx
 	push %bp
 	mov %sp,%bp
 	sub $8,%sp
+	mov $3,%bh
+	push %bx
 
 // 8(%bp) = segment
 // 4(%bp) = offset
@@ -233,6 +219,8 @@ disk_read:
 // -4(%bp) = relative head
 // -6(%bp) = relative track
 // -8(%bp) = relative count
+// -9(%bp) = retries left
+// -10(%bp) = failure error code
 
 	// Compute the CHS from logical sector
 
@@ -287,16 +275,17 @@ dr_next1:
 	mov $'*',%al
 	call _putc
 
-	// TODO: reset drive on error and retry
-	//mov drive_num,%dl
-	//xor %ah,%ah
-	//int $0x13
-	//mov -8(%bp),%ax
-	//jmp dr_try
+	decb -9(%bp)
+	jz dr_error
+	mov drive_num,%dl
+	xor %ah,%ah
+	int $0x13
+	jmp dr_loop
 
+dr_error:
 	// TODO: use BIOS returned error
 	//mov %ah,%al
-	mov $ERR_DISK_READ,%al
+	pop %ax
 	jmp _except
 
 dr_cont:
@@ -546,6 +535,9 @@ track_max:
 #if defined(CONFIG_IMG_HD)
 	.word CONFIG_IMG_TRACK
 #endif
+
+payload_logical_sect:
+	.word 1
 
 // Magic at end of first sector
 // to mark it as bootable for BIOS
