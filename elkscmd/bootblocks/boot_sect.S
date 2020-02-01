@@ -218,54 +218,6 @@ puts_exit:
 
 //------------------------------------------------------------------------------
 
-/*
-_half_hex:
-
-	and $0x0F,%al
-	add $'0',%al
-	cmp $'9',%al
-	jle hh_next
-	add $('A'-'9'),%al
-
-hh_next:
-	jmp _putc
-
-_byte_hex:
-
-	mov %al,%dl
-
-	mov $4,%cl
-	shr %cl,%al
-	call _half_hex
-
-	mov %dl,%al
-	call _half_hex
-
-	ret
-
-_word_hex:
-
-	push %ax
-	mov %ah,%al
-	call _byte_hex
-	pop %ax
-	call _byte_hex
-	ret
-
-// void word_hex (word_t w)
-
-	.global word_hex
-
-word_hex:
-
-	mov %sp,%bx
-	mov 2(%bx),%ax
-	call _word_hex
-	ret
-*/
-
-//------------------------------------------------------------------------------
-
 // int drive_reset (int drive)
 /*
 	.global drive_reset
