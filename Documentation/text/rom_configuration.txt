@@ -57,14 +57,6 @@ OS/loader function.
    Init floppy. The kernel code is in ROM, so you doesn't need this.
    
 
-'Get extended memory size via BIOS-Int 15'  CONFIG_XMS_INT15  
-'Extended memory size in kB'                CONFIG_XMS_SIZE
------------------------------------------------------------
-
-  The BIOS function give the size of extended memory (above 1 MB)
-  You can tell the size directly or ask the BIOS.
-
- 
 'Get fontinfo via CRT-BIOS (40h:85h)'    CONFIG_HW_VIDEO_HOC y
 'High of character in lines'             CONFIG_HW_VIDEO_LINES_PER_CHARACTER 
 'Lines per page'                         CONFIG_HW_VIDEO_LINES_PER_SCREEN

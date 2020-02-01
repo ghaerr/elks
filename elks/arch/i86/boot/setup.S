@@ -25,8 +25,9 @@
 !
 ! The following data is passed to the main kernel (relative to INITSEG)
 !
-! index 0:	cursor position, 2 bytes
-!	2:	extended memory size in K, 2 bytes
+! index
+!	0:	cursor position, 2 bytes
+!	2:	unused (was extended memory size), 2 bytes
 !	4:	display page
 !	6:	video mode, 1 byte
 !	7:	window width, 1 byte
@@ -235,16 +236,6 @@ start_os:
 #else
 	movw $0x0380,0x01FC  /* bioshd */
 #endif
-#endif
-
-// Get memory size (extended mem, kB)
-
-#ifdef CONFIG_XMS_SIZE
-	movw	$CONFIG_XMS_SIZE,2
-#else
-	mov	$0x88,%ah
-	int	$0x15
-	mov	%ax,2
 #endif
 
 // set the keyboard repeat rate to the max

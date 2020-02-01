@@ -40,9 +40,6 @@ CONFIG_BOGOMIPS=140055
 # Memory
 #
 CONFIG_MEM_PAGES=8
-# CONFIG_XMS_INT15 is not set
-CONFIG_XMS_SIZE=0
-
 
 #
 # Devices

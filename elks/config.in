@@ -52,28 +52,6 @@ mainmenu_option next_comment
 
 		int 'Base memory size (64K pages)' CONFIG_MEM_PAGES 8 4 10
 
-		if [[ "$CONFIG_CPU_80286" == "y" ]]; then
-			bool 'Extended (XMS) memory support' CONFIG_XMS n
-
-			if [ "$CONFIG_XMS" = "y" ]; then
-				bool '  Use interrupt 15 for XMS size' CONFIG_XMS_INT15 n
-
-			    if [ "$CONFIG_XMS_INT15" != "y" ]; then
-					int '  Extended memory size in kB' CONFIG_XMS_SIZE 0
-			    else
-					define_int CONFIG_XMS_SIZE 0
-			    fi
-
-			else
-				define_bool CONFIG_XMS_INT15 n
-				define_int  CONFIG_XMS_SIZE  0
-			fi
-
-		else
-			define_bool CONFIG_XMS_INT15 n
-			define_int  CONFIG_XMS_SIZE  0
-		fi
-
 		comment 'Devices'
 
 		bool 'Math coprocessor' CONFIG_HW_FPU       n

@@ -64,10 +64,6 @@ void mm_stat(seg_t start, seg_t end)
 
 #else
 
-#ifdef CONFIG_XMS
-    if (arch_cpu >= 6)		/* XT bios hasn't got xms interrupt */
-	printk(", %uK extended memory (XMS)", setupw(2)); /* Fetched by boot code */
-#endif
     if (*proc_name)
 	printk(", CPUID `%s'", proc_name);
 
