@@ -85,7 +85,7 @@ _next1:
 
 	// Print header
 
-	mov $msg_head,%bx
+	mov $msg_boot,%bx
 	call _puts
 
 	// Save boot drive as provided by BIOS
@@ -169,15 +169,23 @@ _except:
 	call _putc
 	mov $msg_error,%bx
 	call _puts
+
+	.global _reboot
+
+_reboot:
+
+	mov $msg_reboot,%bx
+	call _puts
+
 	xor %ax,%ax  // wait for key
 	int $0x16
 
-reboot:
-
 	int $0x19    // BIOS bootstrap
-	jmp reboot
+	jmp _reboot
 
 //------------------------------------------------------------------------------
+
+	.global _putc
 
 _putc:
 
@@ -186,19 +194,19 @@ _putc:
 	int $0x10     // BIOS video services
 	ret
 
+	.global _puts
+
 _puts:
 
 	mov (%bx),%al
 	or %al,%al
-	jz puts_exit
-	mov %bx,%cx
+	jnz 1f
+	ret
+1:	mov %bx,%cx
 	call _putc
 	mov %cx,%bx
 	inc %bx
 	jmp _puts
-
-puts_exit:
-	ret
 
 // void puts (const char * s)
 
@@ -209,54 +217,6 @@ puts:
 	mov %sp,%bx
 	mov 2(%bx),%bx
 	jmp _puts
-
-//------------------------------------------------------------------------------
-
-/*
-_half_hex:
-
-	and $0x0F,%al
-	add $'0',%al
-	cmp $'9',%al
-	jle hh_next
-	add $('A'-'9'),%al
-
-hh_next:
-	jmp _putc
-
-_byte_hex:
-
-	mov %al,%dl
-
-	mov $4,%cl
-	shr %cl,%al
-	call _half_hex
-
-	mov %dl,%al
-	call _half_hex
-
-	ret
-
-_word_hex:
-
-	push %ax
-	mov %ah,%al
-	call _byte_hex
-	pop %ax
-	call _byte_hex
-	ret
-
-// void word_hex (word_t w)
-
-	.global word_hex
-
-word_hex:
-
-	mov %sp,%bx
-	mov 2(%bx),%ax
-	call _word_hex
-	ret
-*/
 
 //------------------------------------------------------------------------------
 
@@ -282,54 +242,6 @@ drive_reset:
 	int $0x13
 	mov %ah,%al     // AH = status
 	xor %ah,%ah
-	ret
-*/
-
-//------------------------------------------------------------------------------
-
-// int drive_get (int drive)
-/*
-	.global drive_get
-
-drive_get:
-
-	mov %sp,%bx
-	mov 2(%bx),%dx  // DL = drive ( base 0)
-
-	push %es
-	push %si
-
-	mov $8,%ah
-	int $0x13
-
-	pop %si
-	pop %es
-
-	jc dg_error
-
-	mov %ch,%al  // maximum track (base 0)
-	mov $0,%ah
-	inc %al
-	mov %ax,track_max
-
-	mov %cl,%al  // maximum sector (base 1)
-	and $0x3F,%al
-	mov %ax,sect_max
-
-	mov %dh,%al  // maximum head (base 0)
-	inc %al
-	mov %ax,head_max
-
-	xor %ax,%ax
-	jmp dg_exit
-
-dg_error:
-
-	mov %ah,%al
-	mov $0,%ah
-
-dg_exit:
-
 	ret
 */
 
@@ -596,15 +508,20 @@ copy_sect:
 
 //------------------------------------------------------------------------------
 
-msg_head:
-	.asciz "MINIX\r\n"
+msg_boot:
+	.asciz "Boot sector\r\n"
 
 msg_error:
-	.asciz "!\r\nPress key\r\n"
+	.asciz "!\r\n"
+
+msg_reboot:
+	.asciz "Press key\r\n"
 
 //------------------------------------------------------------------------------
 
 // Boot drive as provided by BIOS on entry
+
+	.global drive_num
 
 drive_num:
 	.byte 0

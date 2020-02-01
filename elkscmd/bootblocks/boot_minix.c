@@ -5,7 +5,6 @@
 // Sector 2 : boot loader
 //------------------------------------------------------------------------------
 
-//#include <a.out.h>
 #include "minix.h"
 
 // Global constants
@@ -18,11 +17,16 @@
 //extern int head_max;
 //extern int track_max;
 
+// Uninitialized data is not set to zero by default
+// as the context is not a user process
+// but code loaded in uninitialized memory
+
 static byte_t sb_block [BLOCK_SIZE];  // super block block buffer
 static struct super_block *sb_data;   // super block structure
 
 static int i_now;
 static int ib_first;                 // inode first block
+
 static byte_t i_block [BLOCK_SIZE];  // inode block buffer
 static struct inode_s * i_data;      // current inode structure
 
@@ -35,17 +39,14 @@ static byte_t d_dir [BLOCK_SIZE];  // latest in program segment
 
 //------------------------------------------------------------------------------
 
-// Helpers from minix_first
+// Helpers from boot sector
 
 void except (int code);
 
 void puts (const char * s);
 
-void word_hex (const int w);
 int seg_data ();
 
-int drive_reset (const int drive);
-//int drive_get (const int drive);
 void disk_read (const int sect, const int count,
 	const byte_t * buf, const int seg);
 
