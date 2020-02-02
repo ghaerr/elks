@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <pwd.h>
 
 int read_task(int fd, unsigned int off, unsigned int ds,
@@ -92,9 +93,6 @@ int main(int argc, char **argv)
 				(pwent ? pwent->pw_name : "unknown"),
 				((task_table.state == TASK_RUNNING) ? 'R' : 'S'),
 				task_table.t_inode);
-			if (task_table.mm.flags & DS_SWAP)
-				printf("[data swapped] \n");
-			else
 				get_name(fd, task_table.t_regs.ss, task_table.t_begstack + 2);
 			fflush(stdout);
 		}

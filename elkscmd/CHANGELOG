@@ -75,10 +75,6 @@ Wed Jun 09 08:54:11 CST 2004	Claudio Matsuoka <claudio@conectiva.com>
 
 	* Trivial patch to build stuff in elkscmd/inet.
 
-Wed Jun 09 08:21:32 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
-
-	* Included swapon back into cvs :)
-
 Wed Jun 09 03:47:56 CST 2004	Tommy McCabe <rocketjet314@yahoo.com>
 
 	* Included ktcp in full5

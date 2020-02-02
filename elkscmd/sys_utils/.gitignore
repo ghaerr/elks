@@ -13,6 +13,5 @@ poweroff
 ps
 reboot
 shutdown
-swapon
 umount
 who
