@@ -13,10 +13,12 @@ ELKSCMD_DIR = $(TOPDIR)/elkscmd
 
 MINIX_BOOT = $(ELKSCMD_DIR)/bootblocks
 FD_BSECT = $(MINIX_BOOT)/minix.bin
+export FD_BSECT
 
 # Image file options
 
 IMGDIR=$(TOPDIR)/image
+export IMGDIR
 
 ifdef CONFIG_IMG_FD360
 TARGET_FILE = $(IMGDIR)/fd360.bin

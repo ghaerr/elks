@@ -39,6 +39,7 @@
  *	add genfs <directory>
  *	use ELKS defaults of -1 -n14 -i360 -s1440 for mkfs/genfs
  *	add genfs -k option to not copy 0 length (hidden) files starting with .
+ *	add addfs option to add files/dirs specified in file from directory
  *
  * Bug fixes by ghaerr:
  * fix mkfs -1, -n overwriting -i, -n14
@@ -46,6 +47,7 @@
  * fix unlink on v1 filesys
  * fix ln, ln -s
  * add getoptX() since Linux and OSX getopt() don't work together
+ * fix -k option from always skipping zero-length files
  */
 
 #include <stdarg.h>
@@ -72,6 +74,7 @@ void usage(const char *name) {
 	"cmd:\n"
 	"	mkfs [-1|2] [-i<#inodes>] [-n<#direntlen>] [-s<#blocks>]\n"
 	"	genfs [-1|2] [-i<#inodes>] [-n<#direntlen>] [-s<#blocks>] [-k] <directory>\n"
+	"	addfs <file_of_filenames> <directory>\n"
 	"	[stat]\n"
 	"	ls [-ld] [filelist...]"
 	"	cp source_file dest_dir_or_file\n"
@@ -151,6 +154,8 @@ int main(int argc,char **argv) {
     cmd_mkfs(filename, argc,argv);
   } else if (argc > 0 && !strcmp(argv[0],"genfs")) {
     cmd_genfs(filename, argc,argv);
+  } else if (argc > 0 && !strcmp(argv[0],"addfs")) {
+    cmd_addfs(filename, argc,argv);
   } else if (argc > 0 && !strcmp(argv[0],"boot")) {
     cmd_boot(filename, argc,argv);
   } else {

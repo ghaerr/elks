@@ -1,0 +1,27 @@
+# Application package creation Makefile
+#	passed NAME=, OPTS=, APPS=
+#	implicitly uses IMGDIR=, DESTDIR= and FD_BSECT=
+
+VERBOSE=-v
+IMAGE=$(IMGDIR)/$(NAME).bin
+MKFSOPTS=-1 -n14 $(OPTS)
+
+# Create bootable ELKS disk image:
+#	Select tagged files into filelist
+#	Create empty filesystem
+#	Add tagged files into filesystem (regular, directories, links)
+#	Create special files in /dev
+#	Write boot sector
+#	Check image integrity
+#	Print filesystem used inode and block count
+
+package:
+	awk "/$(APPS)/{print}" Packages | cut -f 1 > Filelist
+	mfs $(VERBOSE) $(IMAGE) mkfs $(MKFSOPTS)
+	mfs $(VERBOSE) $(IMAGE) addfs Filelist $(DESTDIR)
+	rm Filelist
+	$(MAKE) -f Make.devices "MKDEV=mfs $(IMAGE) mknod"
+	# NOTE: mfs does not currently change DISKPARAMS struct in boot sector (coming!)
+	mfs $(IMAGE) boot $(FD_BSECT)
+	mfsck -fv $(IMAGE)
+	mfs $(IMAGE) stat
