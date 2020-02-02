@@ -100,10 +100,10 @@ _next1:
 	mov sect_max,%al
 	mov %al,floppy_table + 4
 
-	// Load the payload sector, usually the second sector of the boot block
+	// Load the payload sectors, usually the second sector of the boot block
 
 	mov payload_logical_sect,%ax
-	mov $1,%dx
+	mov payload_sect_count,%dx
 	mov $payload,%cx
 	push %ss
 	mov $ERR_PAYLOAD,%bl
@@ -483,11 +483,21 @@ msg_reboot:
 //------------------------------------------------------------------------------
 
 // Boot drive as provided by BIOS on entry
+// Allow this to overlap with the parameter block marker
 
 	.global drive_num
 
 drive_num:
-	.byte 0
+
+// Marker to signify the start of our block of disk parameters --- other
+// disk processing programs can look for this marker, and use or update the
+// parameters
+
+	.ascii "<eLkS>"
+
+// Length of disk parameter block
+
+	.byte disk_parms_end-sect_max
 
 // Disk geometry (CHS)
 
@@ -536,8 +546,16 @@ track_max:
 	.word CONFIG_IMG_TRACK
 #endif
 
+// Starting logical sector and sector count of the OS-specific payload
+
 payload_logical_sect:
 	.word 1
+payload_sect_count:
+	.word 1
+
+// End of disk parameter block
+
+disk_parms_end:
 
 // Magic at end of first sector
 // to mark it as bootable for BIOS

@@ -62,6 +62,10 @@ void run_prog ();
 
 //------------------------------------------------------------------------------
 
+// This must occur right at the start of the payload.  Currently this is done
+// by specifying -fno-toplevel-reorder in the Makefile.  FIXME: find a better
+// way.
+
 __asm("jmp load_prog");
 
 //------------------------------------------------------------------------------
