@@ -14,7 +14,7 @@ all::
 
 # BINUTILS for IA16
 
-BINUTILS_VER=184ba458e1ab8e46d09c3dee48790e93141793f2
+BINUTILS_VER=3fc69e3b2e9864a7357027a9c37c37fa6c55685d
 BINUTILS_DIST=binutils-ia16-$(BINUTILS_VER)
 
 $(DISTDIR)/$(BINUTILS_DIST).zip:
@@ -31,15 +31,15 @@ $(DISTDIR)/$(BINUTILS_DIST).zip:
 	-rm -rf binutils-build
 	mkdir binutils-build
 	cd binutils-build && ../binutils-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --disable-gdb --disable-libdecnumber --disable-readline --disable-sim --disable-nls
-	make -C binutils-build
-	make -C binutils-build install
+	$(MAKE) -C binutils-build
+	$(MAKE) -C binutils-build install
 	touch .binutils.build
 
 all:: .binutils.build
 
 # GCC for IA16
 
-GCC_VER=2aa70f8c292e4e67b980d7468a011206130bfd7d
+GCC_VER=2dd73a5500dce4be8f0f7d4bab02f5ed6bf849b0
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).zip:
@@ -51,13 +51,14 @@ $(DISTDIR)/$(GCC_DIST).zip:
 	-rm -rf gcc-src
 	mv $(GCC_DIST) gcc-src
 	touch .gcc.src
+	cd gcc-src && contrib/download_prerequisites
 
 .gcc.build: .gcc.src .binutils.build
 	-rm -rf gcc-build
 	mkdir gcc-build
 	cd gcc-build && ../gcc-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --without-headers --enable-languages=c --disable-libssp --without-isl
-	make -C gcc-build
-	make -C gcc-build install
+	$(MAKE) -C gcc-build
+	$(MAKE) -C gcc-build install
 	touch .gcc.build
 
 all:: .gcc.build
@@ -78,7 +79,7 @@ $(DISTDIR)/$(EMU86_DIST).zip:
 	touch .emu86.src
 
 .emu86.build: .emu86.src
-	make -C emu86 all
+	$(MAKE) -C emu86 all
 	install emu86/emu86 $(CROSSDIR)/bin/
 	install emu86/pcat $(CROSSDIR)/bin/
 	touch .emu86.build

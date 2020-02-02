@@ -32,7 +32,6 @@ target
 *~
 *.orig
 *.rej
-/*.patch
 
 #
 # Debugging stuff

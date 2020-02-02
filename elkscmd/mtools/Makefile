@@ -57,13 +57,13 @@ mcopy:	mcopy.o
 	$(LD) $(LDFLAGS) -o mcopy mcopy.o $(LDLIBS)
 
 install: $(PROGS)
-	sudo install $(PROGS) $(TARGET_MNT)/$(BINDIR)/
+	$(INSTALL) $(PROGS) $(DESTDIR)$(BINDIR)
 
 install-man:
 	@for i in $(PROGS); do \
 		M=`echo $$i | sed 's/\(.\)/\u\1/'`.1; \
 		echo Installing $$M; \
-		$(COMPRESS) -b12 < $$M > $(TARGET_MNT)/$(MANDIR)/$$M.Z; \
+		$(COMPRESS) -b12 < $$M > $(DESTDIR)/$(MANDIR)/$$M.Z; \
 	done
 
 clean:

@@ -61,7 +61,7 @@ $(PROGRAM):	$(OBJS) $(LIBS)
 	$(LINKER) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
 
 install: $(PROGRAM)
-	sudo install $(PROGRAM) $(TARGET_MNT)/usr/bin
+	$(INSTALL) $(PROGRAM) $(DESTDIR)/usr/bin
 
 clean:
 	rm -f $(OBJS) $(PROGRAM) core

@@ -87,11 +87,15 @@ uni16_to_x8(unsigned char *ascii, register unsigned char *uni)
 /* Read a complete directory entry for a (specified) file,
  * submit a message to the callback function,
  * return a value of 0 or an error code.
+ *
+ * Notice the optimization level - GCC IA16 optimizes out most of the function code at the moment with -Os.
  */
+#pragma GCC push_options
+#pragma GCC optimize ("O1")
 int msdos_readdir(
 	struct inode *inode,
 	register struct file *filp,
-	void *dirent,
+	char *dirent,
 	filldir_t filldir)
 {
 	ino_t ino;
@@ -172,8 +176,8 @@ int msdos_readdir(
 			if (is_long) {
 				unsigned char sum;
 				for (sum = 0, i = 0; i < 11; i++) {
-					//sum = (((sum&1)<<7)|((sum&0xfe)>>1));
-					asm("rorb [bp-111], 1");    /* Note the offset */
+					sum = (((sum&1)<<7)|((sum&0xfe)>>1));
+//					asm("rorb [bp-111], 1");    /* Note the offset */
 					sum += de->name[i];
 				}
 
@@ -234,3 +238,4 @@ int msdos_readdir(
 		unmap_brelse(bh);
 	return 0;
 }
+#pragma GCC pop_options

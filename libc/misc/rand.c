@@ -41,7 +41,7 @@ static int seed3 = 1;
 
 int rand()
 {
-   register int q, z;
+   register int q;
    CRANK(206, 157,  31, 32363, seed1);
    CRANK(217, 146,  45, 31727, seed2);
    CRANK(222, 142, 133, 31657, seed3);

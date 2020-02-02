@@ -24,10 +24,10 @@ clean:
 
 install: sash
 ifdef CONFIG_IMG_LINK
-	sudo install sash $(TARGET_MNT)/bin/sash
-	sudo ln -sf sash $(TARGET_MNT)/bin/sh
+	$(INSTALL) sash $(DESTDIR)/bin/sash
+	$(LN) -sf sash $(DESTDIR)/bin/sh
 else
-	sudo install sash $(TARGET_MNT)/bin/sh
+	$(INSTALL) sash $(DESTDIR)/bin/sh
 endif
 
 $(OBJS): sash.h config.h

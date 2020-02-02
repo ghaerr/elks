@@ -26,7 +26,7 @@ m4:	$(OBJS)
 	$(CC) $(CFLAGS) -o m4 $(OBJS) $(LIBS)
 
 install: m4
-	sudo install m4 $(TARGET_MNT)/usr/bin
+	$(INSTALL) m4 $(DESTDIR)/usr/bin
 
 test: m4
 	m4 < test.m4 > test_host_m4.txt

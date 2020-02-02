@@ -36,36 +36,42 @@
  *			creates mode 644 by default
  *	rename hardlink -> ln
  *	rename symlink -> ln -s
+ *	add genfs <directory>
+ *	use ELKS defaults of -1 -n14 -i360 -s1440 for mkfs/genfs
+ *	add genfs -k option to not copy 0 length (hidden) files starting with .
  *
  * Bug fixes by ghaerr:
  * fix mkfs -1, -n overwriting -i, -n14
  * fix mknod char special
  * fix unlink on v1 filesys
  * fix ln, ln -s
+ * add getoptX() since Linux and OSX getopt() don't work together
  */
 
 #include <stdarg.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
 #include <sys/stat.h>
 #include "minix_fs.h"
 #include "protos.h"
 
 #define VERSION	"1.0"
 
+int opt_verbose = 0;
 int	opt_keepuid = 0;
 int opt_fsbad_fatal = 1;
 char *toolname;
 
 void usage(const char *name) {
   printf(
-  	"Usage: %s (v%s) [-fp] imgfile cmd [options]\n"
+  	"Usage: %s (v%s) [-fpv] imgfile cmd [options]\n"
 	"	-f	force even if filesystem state unknown\n"
 	"	-p	use existing uid/gid instead of 0/0\n"
+	"	-v	verbose\n"
 	"cmd:\n"
 	"	mkfs [-1|2] [-i<#inodes>] [-n<#direntlen>] [-s<#blocks>]\n"
+	"	genfs [-1|2] [-i<#inodes>] [-n<#direntlen>] [-s<#blocks>] [-k] <directory>\n"
 	"	[stat]\n"
 	"	ls [-ld] [filelist...]"
 	"	cp source_file dest_dir_or_file\n"
@@ -86,7 +92,7 @@ void parse_opts(int *argc_p,char ***argv_p) {
   char **argv = *argv_p;
 
   while (1) {
-    int c = getopt(argc,argv,"pf");
+    int c = getoptX(argc,argv,"pfv");
     if (c == -1) break;
     switch (c) {
     case 'p':
@@ -94,6 +100,9 @@ void parse_opts(int *argc_p,char ***argv_p) {
       break;
     case 'f':
       opt_fsbad_fatal = 0;
+      break;
+    case 'v':
+      opt_verbose = 1;
       break;
     }
   }
@@ -148,7 +157,10 @@ int main(int argc,char **argv) {
     struct minix_fs_dat *fs = open_fs(filename, opt_fsbad_fatal);
     if (argc == 0)
 		cmd_sysinfo(fs);
-    else do_cmd(fs,argc,argv);
+    else {
+		do_cmd(fs,argc,argv);
+		if (opt_verbose) cmd_sysinfo(fs);
+	}
     close_fs(fs);
   }
   return 0;

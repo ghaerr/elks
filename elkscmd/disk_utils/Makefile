@@ -17,10 +17,10 @@ SPROGS=mkfs
 all: $(PROGS)
 
 install_sibo: all
-	cp -p $(SPROGS) $(TARGET_MNT)/sbin
+	$(INSTALL) $(SPROGS) $(DESTDIR)/sbin
 
 install: all
-	sudo install $(PROGS) $(TARGET_MNT)/sbin
+	$(INSTALL) $(PROGS) $(DESTDIR)/sbin
 
 fsck: fsck.o
 	$(LD) $(LDFLAGS) -o fsck fsck.o $(LDLIBS)

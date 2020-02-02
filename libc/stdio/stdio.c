@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 #ifndef O_BINARY
@@ -38,10 +39,10 @@ extern FILE *__IO_list;		/* For fflush at exit */
 
 FILE *__IO_list = 0;		/* For fflush at exit */
 
-static char bufin[BUFSIZ];
-static char bufout[BUFSIZ];
+static unsigned char bufin[BUFSIZ];
+static unsigned char bufout[BUFSIZ];
 #ifndef buferr
-static char buferr[BUFSIZ];
+static unsigned char buferr[BUFSIZ];
 #endif
 
 FILE  stdin[1] =
@@ -90,7 +91,7 @@ auto_func:		! Label for bcc -M to work.
 #define STATIC
 #endif
 
-STATIC int 
+STATIC void
 __stdio_close_all()
 {
    FILE *fp;
@@ -166,12 +167,14 @@ int fputc (int ch, FILE *fp)
 
 int fgetc(FILE *fp)
 {
-   int   ch;
+   size_t ch;
 
    if (fp->mode & __MODE_WRITING)
       fflush(fp);
 
+#if __MODE_IOTRAN && !O_BINARY
  try_again:
+#endif
    /* Can't read or there's been an EOF or error then return EOF */
    if ((fp->mode & (__MODE_READ | __MODE_EOF | __MODE_ERR)) != __MODE_READ)
       return EOF;
@@ -205,7 +208,7 @@ int fgetc(FILE *fp)
 int fflush(FILE *fp)
 {
    int   len, cc, rv=0;
-   char * bstart;
+   unsigned char * bstart;
    if (fp == NULL)		/* On NULL flush the lot. */
    {
       if (fflush(stdin))
@@ -321,7 +324,7 @@ char *str;
    return (((c == EOF) && (p == str)) ? NULL : str);	/* NULL == EOF */
 }
 
-int fputs(char *str, FILE *fp)
+int fputs(const char *str, FILE *fp)
 {
    register int n = 0;
    while (*str)
@@ -351,10 +354,11 @@ int puts (const char * s)
  * This ignores __MODE__IOTRAN; probably exactly what you want. (It _is_ what
  * fgetc wants)
  */
-int fread(char *buf, int size, int nelm, FILE *fp)
+size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
 {
-   int   len, v;
-   unsigned bytes, got = 0;
+   size_t len;
+   int v;
+   size_t bytes, got = 0;
    Inline_init;
 
    v = fp->mode;
@@ -373,7 +377,7 @@ int fread(char *buf, int size, int nelm, FILE *fp)
    len = fp->bufread - fp->bufpos;
    if (len >= bytes)		/* Enough buffered */
    {
-      memcpy(buf, fp->bufpos, (unsigned) bytes);
+      memcpy(buf, fp->bufpos, bytes);
       fp->bufpos += bytes;
       return nelm;
    }
@@ -385,7 +389,7 @@ int fread(char *buf, int size, int nelm, FILE *fp)
    }
 
    /* Need more; do it with a direct read */
-   len = read(fp->fd, buf + got, (unsigned) (bytes - got));
+   len = read(fp->fd, (char *)buf + got, bytes - got);
 
    /* Possibly for now _or_ later */
    if (len < 0)
@@ -764,8 +768,8 @@ int size;
    }
    else
    {
-      fp->bufstart = buf;
-      fp->bufend = buf+size;
+      fp->bufstart = (unsigned char *)buf;
+      fp->bufend = (unsigned char *)buf+size;
       fp->mode |= _IOFBF;
    }
    fp->bufpos = fp->bufread = fp->bufwrite = fp->bufstart;
@@ -796,8 +800,8 @@ size_t size;
       }
       if( buf )
       {
-         fp->bufstart = buf;
-         fp->bufend = buf+size;
+         fp->bufstart = (unsigned char *)buf;
+         fp->bufend = (unsigned char *)buf+size;
          fp->mode &= ~__MODE_BUF;
          fp->mode |= mode;
       }

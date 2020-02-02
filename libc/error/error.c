@@ -3,6 +3,9 @@
  * under the GNU Library General Public License.
  */
 #include <string.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 char **__sys_errlist =0;
 int __sys_nerr = 0;
@@ -11,7 +14,7 @@ char *
 strerror(err)
 int err;
 {
-   int fd;
+   int fd = -1;
    static char retbuf[80];
    char inbuf[256];
    int cc;

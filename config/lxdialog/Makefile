@@ -26,7 +26,7 @@ CC = gcc
 CFLAGS = -std=c99 -O2 -Wall -pedantic -DLOCALE $(CURSES_INC)
 
 LDFLAGS = -s
-LDLIBS = -lncurses
+LDLIBS = $(shell pkg-config ncurses --libs)
 
 #########################################################################
 # What do we compile?
@@ -57,7 +57,7 @@ $(PGM): $(OBJS)
 # Write a custom header for curses.
 
 local-curses.h:
-	@x=`find /lib/ /usr/lib/ /usr/local/lib/ -maxdepth 2 -name 'libncurses.*'` ;\
+	@x=`find /lib/ /lib64/ /usr/lib/ /usr/lib64/ /usr/local/lib/ /usr/local/lib64/ -maxdepth 2 -name 'libncurses.*'` ;\
 	if [ ! "$$x" ]; then \
 		echo -e "\007" ;\
 		echo ">> Unable to find the Ncurses libraries." ;\

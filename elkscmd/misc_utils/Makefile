@@ -42,7 +42,7 @@ zcat: compress
 	ln -sf compress zcat
 
 install: $(PRGS)
-	sudo install $(PRGS) $(TARGET_MNT)/usr/bin
+	$(INSTALL) $(PRGS) $(DESTDIR)/usr/bin
 
 clean:
 	rm -f $(PRGS) $(PRGS_HOST) *~ *.o

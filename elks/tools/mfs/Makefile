@@ -35,7 +35,7 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-SRCS=dir.c genfs.c iname.c inode.c main.c reader.c super.c utils.c writer.c
+SRCS=mkfs.c genfs.c dir.c iname.c inode.c main.c reader.c super.c utils.c writer.c getoptx.c
 OBJS=$(SRCS:.c=.o)
 
 #########################################################################

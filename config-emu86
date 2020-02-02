@@ -40,14 +40,10 @@ CONFIG_BOGOMIPS=140055
 # Memory
 #
 CONFIG_MEM_PAGES=8
-# CONFIG_XMS_INT15 is not set
-CONFIG_XMS_SIZE=0
-
 
 #
 # Devices
 #
-# CONFIG_HW_FPU is not set
 # CONFIG_HW_PS2_MOUSE is not set
 # CONFIG_HW_VGA is not set
 # CONFIG_HW_FLOPPY_DRIVE is not set
@@ -235,7 +231,6 @@ CONFIG_APP_SASH=y
 # CONFIG_APP_BC is not set
 # CONFIG_APP_DBG_UTILS is not set
 # CONFIG_APP_DISK_UTILS is not set
-# CONFIG_APP_E3 is not set
 # CONFIG_APP_ELVIS is not set
 # CONFIG_APP_FILE_UTILS is not set
 # CONFIG_APP_LEVEE is not set
@@ -245,6 +240,7 @@ CONFIG_APP_SASH=y
 # CONFIG_APP_MINIX3 is not set
 # CONFIG_APP_MISC_UTILS is not set
 # CONFIG_APP_MTOOLS is not set
+# CONFIG_APP_NANOX is not set
 # CONFIG_APP_PREMS is not set
 # CONFIG_APP_PRN_UTILS is not set
 # CONFIG_APP_SYS_UTILS is not set
