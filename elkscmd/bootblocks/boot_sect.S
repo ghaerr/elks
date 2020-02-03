@@ -18,14 +18,91 @@
 	.text
 
 // Loaded by the BIOS at 0:7C00h (32K - 1K) with DL = boot drive number
-
-entry:
-
+//
 // Allow the new BIOS floppy parameter table to clobber the first few bytes
 // of the boot sector after we are done with them
 
+entry:
 floppy_table:
+	jmp entry1
 
+	.org entry+3,0x90
+
+// Parameter block structure, hopefully compatible enough with Microsoft's
+// BPB (see the _Microsoft FAT Specification_) to be used on a FAT12 or
+// FAT16 disk
+//
+// Fields marked (-) only have a meaning for FAT12 or FAT16, and are not
+// used by other filesystem types
+
+#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720)
+	.set SECT_MAX,9
+#elif defined(CONFIG_IMG_FD1200)
+	.set SECT_MAX,15
+#elif defined(CONFIG_IMG_FD1440)
+	.set SECT_MAX,18
+#elif defined(CONFIG_IMG_FD1680)
+	.set SECT_MAX,12
+#elif defined(CONFIG_IMG_HD)
+	.set SECT_MAX,CONFIG_IMG_SECT
+#endif
+#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) \
+    || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) \
+    || defined(CONFIG_IMG_FD1680)
+	.set HEAD_MAX,2
+#elif defined(CONFIG_IMG_HEAD)
+	.set HEAD_MAX,CONFIG_IMG_HEAD
+#endif
+#if defined(CONFIG_IMG_FD360)
+	.set TRACK_MAX,40
+#elif defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1440)
+	.set TRACK_MAX,80
+#elif defined(CONFIG_IMG_HD)
+	.set TRACK_MAX,CONFIG_IMG_TRACK
+#endif
+
+	.global sect_max
+	.global head_max
+	.global tot_sects
+
+// Boot drive as provided by BIOS on entry
+// Allow this to overlap with the OEM name, which the boot code does not use
+
+	.global drive_num
+
+drive_num:
+
+	.ascii "eLkS"			// OEM name --- stash information on
+	.byte 0				// ELKS parameters' location and
+	.byte elks_parms_start		// size here
+	.byte elks_parms_end-elks_parms_start
+	.byte 0
+	.word 0x200			// Bytes per sector
+	.byte 0				// Sectors per cluster (-)
+	.word 0				// Reserved sectors (-)
+	.byte 0				// No. of file allocation tables (-)
+	.word 0				// No. of root directory entries (-)
+tot_sects:
+	.word SECT_MAX*HEAD_MAX*TRACK_MAX // Total sector count, 16-bit
+	.byte 0				// Media descriptor (-)
+	.word 0				// Size of one file alloc. table (-)
+sect_max:
+	.word SECT_MAX			// Sectors per track
+head_max:
+	.word HEAD_MAX			// No. of heads
+	.word 0				// No. of hidden sectors
+
+// Extra disk parameters for the ELKS bootloader
+
+elks_parms_start:
+payload_logical_sect:
+	.word 1				// Starting logical sector of OS-
+					// -specific payload
+payload_sect_count:
+	.byte 1				// No. of sectors in payload
+elks_parms_end:
+
+entry1:
 	// Get the memory size
 	// TODO: optional BIOS INT 12h
 
@@ -103,7 +180,8 @@ _next1:
 	// Load the payload sectors, usually the second sector of the boot block
 
 	mov payload_logical_sect,%ax
-	mov payload_sect_count,%dx
+	mov payload_sect_count,%dl
+	xor %dh,%dh
 	mov $payload,%cx
 	push %ss
 	mov $ERR_PAYLOAD,%bl
@@ -481,81 +559,6 @@ msg_reboot:
 	.asciz "Press key\r\n"
 
 //------------------------------------------------------------------------------
-
-// Boot drive as provided by BIOS on entry
-// Allow this to overlap with the parameter block marker
-
-	.global drive_num
-
-drive_num:
-
-// Marker to signify the start of our block of disk parameters --- other
-// disk processing programs can look for this marker, and use or update the
-// parameters
-
-	.ascii "<eLkS>"
-
-// Length of disk parameter block
-
-	.byte disk_parms_end-sect_max
-
-// Disk geometry (CHS)
-
-	.global sect_max
-	.global head_max
-	.global track_max
-
-// #undef CONFIG_IMG_FD1680
-// #undef CONFIG_IMG_FD1200
-
-sect_max:
-#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720)
-	.word 9
-#endif
-#if defined(CONFIG_IMG_FD1200)
-	.word 15
-#endif
-#if defined(CONFIG_IMG_FD1440)
-	.word 18
-#endif
-#if defined(CONFIG_IMG_FD1680)
-	.word 21
-#endif
-#if defined(CONFIG_IMG_HD)
-	.word CONFIG_IMG_SECT
-#endif
-
-head_max:
-#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680)
-	.word 2
-#endif
-#if defined(CONFIG_IMG_HD)
-	.word CONFIG_IMG_HEAD
-#endif
-
-// TODO: number of tracks is not used
-
-track_max:
-#if defined(CONFIG_IMG_FD360)
-	.word 40
-#endif
-#if  defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1440)
-	.word 80
-#endif
-#if defined(CONFIG_IMG_HD)
-	.word CONFIG_IMG_TRACK
-#endif
-
-// Starting logical sector and sector count of the OS-specific payload
-
-payload_logical_sect:
-	.word 1
-payload_sect_count:
-	.word 1
-
-// End of disk parameter block
-
-disk_parms_end:
 
 // Magic at end of first sector
 // to mark it as bootable for BIOS
