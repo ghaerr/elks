@@ -298,6 +298,79 @@ parse_dir(inode_build_t * grand_parent_inode,
 	return err;
 }
 
+/* parse list of files/directories to add*/
+static int 
+parse_filelist(char *filelist, inode_build_t *parent_inode, char *parent_path)
+{
+	int		err = 0;
+	FILE	*fp;
+	char	filename[256];
+
+	fp = fopen(filelist, "r");
+	if (!fp) die(filelist);
+
+	while (fgets(filename, sizeof(filename), fp))
+		{
+			char *name = filename;
+
+			if (name[0] == '#')
+				continue;
+			name[strlen(name)-1] = '\0';	/* remove lf*/
+			char *child_path = domalloc(strlen(parent_path) + 1 + strlen(name) + 1, -1);
+			strcpy(child_path, parent_path);
+			if (name[0] != '/') strcat(child_path, "/");
+			strcat(child_path, name);
+
+			inode_build_t  *child_inode = inode_alloc(parent_inode, child_path);
+			if (!child_inode) {
+				err = -1;
+				break;
+			}
+
+				struct stat	child_stat;
+				err = lstat(child_path, &child_stat);
+				if (err) {
+					perror("lstat");
+					err = errno;
+					break;
+				}
+				mode_t		mode = child_stat.st_mode;
+
+				if (S_ISREG(mode)) {
+					child_inode->flags = S_IFREG;
+					child_inode->blocks = blocksused(child_stat.st_size);
+					//printf("File:   %s, size %ld, blocks %ld\n",
+						//child_path, (long)child_stat.st_size, child_inode->blocks);
+				} else if (S_ISDIR(mode)) {
+					//printf("Dir:    %s\n", child_path);
+					child_inode->flags = S_IFDIR;
+					child_inode->blocks = 1;
+				} else if (S_ISCHR(mode)) {
+					//printf("Char:   %s\n", child_path);
+					child_inode->flags = S_IFCHR;
+					child_inode->dev = (int)child_stat.st_rdev;
+					child_inode->blocks = 0;
+				} else if (S_ISBLK(mode)) {
+					//printf("Block:  %s\n", child_path);
+					child_inode->flags = S_IFBLK;
+					child_inode->dev = (int)child_stat.st_rdev;
+					child_inode->blocks = 0;
+				} else if (S_ISLNK(mode)) {
+					//printf("Symlnk: %s\n", child_path);
+					child_inode->flags = S_IFLNK;
+					child_inode->blocks = 1;
+				} else {
+					/* Unsupported inode type */
+					fatalmsg("Unsupported: %s\n", child_path);
+				}
+				numblocks += child_inode->blocks;
+
+				free(child_path);
+		}
+	fclose(fp);
+	return err;
+}
+
 
 /* generate filesystem commands*/
 static int 
@@ -322,9 +395,10 @@ compile_fs(struct minix_fs_dat *fs)
 			} else if (flags == S_IFREG) {
 				if (opt_nocopyzero && !inode_build->blocks) {
 					char *p = strrchr(inode_build->path, '/');
-					if (p && *++p == '.')
+					if (p && *++p == '.') {
 						if (opt_verbose) printf("Skipping %s\n", inode_build->path);
 						continue;
+					}
 				}
 				if (opt_verbose) printf("cp %s %s\n", inode_build->path, prefix+inode_build->path);
 				av[0] = "cp";
@@ -414,6 +488,56 @@ void cmd_genfs(char *filename, int argc,char **argv) {
   	fatalmsg("Blocks required %d, available %d\n", numblocks, req_blks);
 
   fs = new_fs(filename,magic,req_blks,req_inos);
+  err = compile_fs(fs);
+  if (opt_verbose) cmd_sysinfo(fs);
+  close_fs(fs);
+
+  inode_build_t  *inode = (inode_build_t *) inodes.node.next;
+  while (inode != (inode_build_t *) &inodes.node) {
+    inode_build_t  *inode_next = (inode_build_t *) inode->node.next;
+    inode_free(inode);
+    inode = inode_next;
+  }
+}
+
+/**
+ * Add files and directories from passed file to filesystem
+ * @param argc - from command line
+ * @param argv - from command line
+ */
+void cmd_addfs(char *filename, int argc,char **argv) {
+  struct minix_fs_dat *fs;
+  char *p;
+  int err;
+  char dirname[256];
+
+  argv++; argc--;
+  if (argc != 2) fatalmsg("Usage: addfs <file_of_filenames> <root_template>");
+
+  strcpy(dirname, argv[1]);
+  p = strrchr(dirname, '/');
+  if (p)
+	  p++;
+  else p = dirname;
+  prefix = p - dirname + strlen(p);		/* skip template dir*/
+  if (opt_verbose) printf("Adding files from %s\n", dirname);
+  numblocks = 2;			/* root inode and first mkdir*/
+  list_init(&inodes);
+  inode_build_t  *root_node = inode_alloc(NULL, dirname);
+  if (!root_node)
+	  fatalmsg("No memory");
+  root_node->flags = S_IFDIR;
+  err = parse_filelist(argv[0], root_node, dirname);
+
+  fs = open_fs(filename, opt_fsbad_fatal);
+
+  cmd_sysinfo(fs);
+  printf("adding inodes: %d, blocks %d\n", inodes.count, numblocks);
+  //if (inodes.count > req_inos)
+	//fatalmsg("Inodes required %d, available %d\n", inodes.count, req_inos);
+  //if (numblocks > req_blks)
+	//fatalmsg("Blocks required %d, available %d\n", numblocks, req_blks);
+
   err = compile_fs(fs);
   if (opt_verbose) cmd_sysinfo(fs);
   close_fs(fs);

@@ -1,0 +1,189 @@
+# ELKS Package Management - Application Selection for Disk Images
+#	2/2/20 Greg Haerr
+#
+# This file is used to tag applications with to control
+# which disk sets the applications should be copied to.
+# A tag is an alphanumeric name preceded by a colon.
+#
+# The file format is the application path on in the first field,
+# followed by tabs and any number of tags specifying possiby multiple
+# disk sets for each application.
+#
+# Each package is specified in Makefile, which uses Make.package
+# to create the disk image. Multiple tags are combined with the | character
+# in the Makefile to specify more than one tag per image. The
+# applications are copied from the DESTDIR directory onto the image.
+#
+# Following are the current ELKS application packages and description:
+#	Tag			Description									Image
+#	--------	-----------------------------------------	--------
+#	:boot		Required for ELKS boot						fd320
+#	:small		Minimal set of apps for very small disks	fd360
+#	:base		Base set of apps for small disks			fd720
+#	:net		Networking apps								fd720
+#	:shutil		Shell utilities								fd1440
+#	:fileutil	File handling utilities						fd1440
+#	:app		Nonessential apps							fd1440
+#	:nanox		Nano-X graphical apps						fd1440
+# 
+# The following are used in Makefile to create the packages:
+# fd320=:boot
+# fd360=:boot|:small
+# fd720=:boot|:small|:base|:net
+# fd1440=:boot|:base|:net|:shutil|:fileutil|:app|:nanox
+# 
+# Application	Tags (spaced apart for readability)
+#				:boot
+#					:small
+#						:base
+#							:net
+#								:shutil
+#									:fileutil
+#										:app
+#										:nanox
+# -------------	------------------------------------------------------
+/bin			:boot
+/bin/ash		:boot
+/bin/banner								:app
+/bin/basename					:shutil
+/bin/bc									:app
+/bin/cal								:app
+/bin/cat		:boot
+/bin/chgrp				:base
+/bin/chmod				:base
+/bin/chown				:base
+/bin/cksum						:shutil
+/bin/cmp						:shutil
+/bin/cp				:small
+/bin/cut						:shutil
+/bin/date			:small
+/bin/dd								:fileutil
+/bin/decomp16						:fileutil
+/bin/diff							:fileutil
+/bin/dirname					:shutil
+/bin/du					:base
+/bin/echo		:boot
+/bin/env			:small
+/bin/false				:base
+/bin/fgrep						:shutil
+/bin/file							:fileutil
+/bin/find				:base
+/bin/ftpget					:net
+/bin/getty		:boot
+/bin/grep				:base
+/bin/head							:fileutil
+/bin/httpd					:net
+/bin/init		:boot
+/bin/kill			:small
+/bin/knl			:small
+/bin/ktcp					:net
+/bin/l								:fileutil
+/bin/ln				:small
+/bin/login		:boot
+/bin/logname					:shutil
+/bin/lp						:net
+/bin/ls				:small
+/bin/man							:fileutil
+/bin/meminfo			:base
+/bin/mesg			:small
+/bin/mkdir			:small
+/bin/mkfifo							:fileutil
+/bin/mknod				:base
+/bin/more				:base
+/bin/mount		:boot
+/bin/mv				:small
+/bin/netstat				:net
+/bin/nslookup				:net
+/bin/passwd				:base
+/bin/poweroff		:small
+/bin/printenv		:small
+/bin/proto							:fileutil
+/bin/ps				:small
+/bin/pwd			:small
+/bin/pwdauth			:base
+/bin/reboot			:small
+/bin/remsync						:fileutil
+/bin/rm				:small
+/bin/rmdir			:small
+/bin/sed						:shutil
+/bin/sh			:boot
+/bin/shutdown		:small
+/bin/sort							:fileutil
+/bin/stty				:base :net
+/bin/sum						:shutil
+/bin/swapon							:fileutil
+/bin/sync			:small
+/bin/synctree						:fileutil
+/bin/tail							:fileutil
+/bin/tee						:shutil
+/bin/telnet					:net
+/bin/telnetd				:net
+/bin/test		:boot
+/bin/tget							:fileutil
+/bin/tinyirc				:net
+/bin/touch							:fileutil
+/bin/tr							:shutil
+/bin/true				:base
+/bin/umount			:small
+/bin/uniq						:shutil
+/bin/urlget					:net
+/bin/vi					:base
+/bin/wc							:shutil
+/bin/which						:shutil
+/bin/who				:base
+/bin/whoami						:shutil
+/bin/xargs				:base
+/bin/yes				:base
+/dev			:boot
+/etc			:boot
+/etc/group		:boot
+/etc/inittab	:boot
+/etc/issue		:boot
+/etc/passwd		:boot
+/etc/rc.d		:boot
+/etc/rc.d/rc.sysinit	:boot
+/etc/resolv.conf	:boot
+/etc/termcap	:boot
+/home			:boot
+/lib			:boot
+/lib/liberror.txt	:boot
+/linux			:boot
+/mnt			:boot
+/root			:boot
+/root/.profile	:boot
+/sbin					:base :fileutil
+/sbin/fdisk							:fileutil
+/sbin/fsck				:base
+/sbin/mkfs							:fileutil
+/sbin/partype						:fileutil
+/sbin/ramdisk						:fileutil
+/tmp			:boot
+/usr							:shutil :fileutil :net
+/usr/bin						:shutil :fileutil :net
+/usr/bin/ed						:shutil
+/usr/bin/mcopy						:fileutil
+/usr/bin/mdel						:fileutil
+/usr/bin/mdir						:fileutil
+/usr/bin/miniterm			:net
+/usr/bin/mkdfs						:fileutil
+/usr/bin/mmd						:fileutil
+/usr/bin/mrd						:fileutil
+/usr/bin/mread						:fileutil
+/usr/bin/mren						:fileutil
+/usr/bin/mtype						:fileutil
+/usr/bin/mwrite						:fileutil
+/usr/bin/tar						:fileutil
+/var			:boot
+/var/run		:boot
+/var/run/utmp	:boot
+/var/www					:net
+/var/www/index.html			:net
+/bin/ndemo								:nanox
+# The following Nano-X graphical apps will be added soon
+#/bin/demo2								:nanox
+#/bin/demo-vga							:nanox
+#/bin/landmine							:nanox
+#/bin/nclock							:nanox
+#/bin/nterm								:nanox
+#/bin/world								:nanox
+#/bin/world.map							:nanox

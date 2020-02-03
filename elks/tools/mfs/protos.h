@@ -32,6 +32,7 @@ void clr_inode(struct minix_fs_dat *fs, int inode);
 void parse_mkfs(int argc, char **argv, int *magic_p, int *nblks_p, int *inodes_p);
 void cmd_mkfs(char *filename, int argc, char **argv);
 void cmd_genfs(char *filename, int argc, char **argv);
+void cmd_addfs(char *filename, int argc, char **argv);
 void cmd_boot(char *filename, int argc,char **argv);
 void outent(const unsigned char *dp, int namlen);
 void printsymlink(struct minix_fs_dat *fs, int inode);

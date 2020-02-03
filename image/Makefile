@@ -12,7 +12,7 @@ export DESTDIR
 
 # add image block size to mkfs options for mfs
 MFS_OPTS=$(MKFS_OPTS) -s$(TARGET_BLKS) -k
-#VERBOSE=-v
+VERBOSE=-v
 
 # Determine what to build for 'all' target
 
@@ -25,7 +25,7 @@ endif
 TARGETS += template
 
 ifdef CONFIG_IMG_MINIX
-TARGETS += minfs
+TARGETS += minixfs
 endif
 
 ifdef CONFIG_IMG_ROM
@@ -53,7 +53,7 @@ endif
 
 # Create MINIX filesystem from template
 
-minfs: template
+minixfs: template
 	mfs $(VERBOSE) $(TARGET_FILE) genfs $(MFS_OPTS) $(DESTDIR)
 ifdef CONFIG_IMG_LINK
 	# command to make char/block devices in image (no sudo required)
@@ -77,3 +77,26 @@ clean:
 	-rm -f $(TARGET_FILE)
 	-rm -rf $(DESTDIR)
 	-rm -f *.bin
+
+# Application package management
+# Type "make images" after normal ELKS build to create all disk image sets
+# Applications are tagged for disk images in the 'Packages' file
+images: fd320 fd360 fd720 fd1440
+
+msdosfs: fd1440-msdos
+
+fd320:
+	$(MAKE) -f Make.package minix NAME=fd320 OPTS="-i192 -s320" APPS=":boot"
+
+fd360:
+	$(MAKE) -f Make.package minix NAME=fd360 OPTS="-i192 -s360" APPS=":boot|:small"
+
+fd720:
+	$(MAKE) -f Make.package minix NAME=fd720 OPTS="-i256 -s720" APPS=":boot|:small|:base|:net"
+
+fd1440:
+	$(MAKE) -f Make.package minix NAME=fd1440 OPTS="-i360 -s1440" APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+
+fd1440-msdos:
+	$(MAKE) -f Make.package msdos NAME=fd1440-msdos OPTS="-f 1440" APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+
