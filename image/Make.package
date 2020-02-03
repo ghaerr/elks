@@ -34,38 +34,52 @@ minix:
 #		Note: filenames larger than 8.3 will create VFAT LFN entries
 #	Write boot sector (not completed)
 
+# all mtools commands require image file
 # -i image	image filename
-MSDOS_IMAGE=-i $(IMGDIR)/$(NAME).bin
-# -C		create image
+MSDOS_IMAGE=$(IMGDIR)/$(NAME).bin
+
+# mformat options
 # -f size	image size in 1k
+# -M size	software sector size (=physical sector size)
 # -d 2		2 FAT tables
 # -L 9		9 FAT sectors
 # -r 14		14 root directory sectors
 # -c 1		cluster size 1 sector
-# -R 1		1 reserve sector (boot)
-# -k		only update boot block geometry and file system data fields
+# -R 1		1 reserve sector (boot, may need to reserve 2)
+# -k		only update offsets 11 through 61 in boot block, all else unchanged
 # -B boot	use passed boot file (not complete)
 # -N 0		serial number 0
-# -v label	volume label
-MSDOS_MKFSOPTS=-C $(OPTS) -M 512 -d 2 -L 9 -r 14 -c 1 -R 1 -k -N 0 -v ELKS
+# -v label	volume label (don't use with first format as uses two directory entries)
+# -C		create image (buggy, leaves nonzero data in image)
+MSDOS_MKFSOPTS=$(OPTS) -M 512 -d 2 -L 9 -r 14 -c 1 -R 1 -k -N 0
 
+# mcopy options
 # -v		verbose
 # -p		preserve attributes
 # -m		preserve file modtime
 # -Q		quit on error
-MSDOS_COPYOPTS=-vpmQ
+# -D o		overwrite primary name if exists
+MSDOS_COPYOPTS=-vpmQ -D o
+
+# mdir options
+# -a		also list hidden files
+# -/		recursive output (buggy: will fail on empty, newly formatted disks!
 
 msdos:
 	awk "/$(APPS)/{print}" Packages | cut -f 1 | sed "/^#/d" > Filelist
-	cat Filelist
-	mformat $(MSDOS_IMAGE) $(MSDOS_MKFSOPTS)
-	mdir $(MSDOS_IMAGE) -a ::
+	-rm $(MSDOS_IMAGE)
+	dd if=/dev/zero of=$(MSDOS_IMAGE) bs=512 count=2880
+	mformat -i $(MSDOS_IMAGE) $(MSDOS_MKFSOPTS)
+	-rm linux; touch linux
+	mcopy -i $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) linux ::/linux
+	rm linux
+	mdir -i $(MSDOS_IMAGE) -/ -a ::
 	for f in `cat Filelist`; \
 	do \
-		[ -d $(DESTDIR)/$$f ] && mmd $(MSDOS_IMAGE) ::$$f; \
-		[ -f $(DESTDIR)/$$f ] && mcopy $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) $(DESTDIR)$$f ::$$f; \
+		[ -d $(DESTDIR)/$$f ] && mmd -i $(MSDOS_IMAGE) ::$$f; \
+		[ -f $(DESTDIR)/$$f ] && mcopy -i $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) $(DESTDIR)$$f ::$$f; \
 	done
 	rm Filelist
 # add boot sector and modify disk parameter block (not completed)
-#	mfs $(IMGDIR)/$(NAME).bin boot $(FD_BSECT)
-	mdir $(MSDOS_IMAGE) -/ -a ::
+#	mfs $(MSDOS_IMAGE) boot $(FD_BSECT)
+	mdir -i $(MSDOS_IMAGE) -/ -a ::

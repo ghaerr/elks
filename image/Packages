@@ -111,7 +111,6 @@
 /bin/sort							:fileutil
 /bin/stty				:base :net
 /bin/sum						:shutil
-/bin/swapon							:fileutil
 /bin/sync			:small
 /bin/synctree						:fileutil
 /bin/tail							:fileutil
