@@ -83,14 +83,20 @@ clean:
 # Applications are tagged for disk images in the 'Packages' file
 images: fd320 fd360 fd720 fd1440
 
+msdosfs: fd1440-msdos
+
 fd320:
-	$(MAKE) -f Make.package NAME=fd320 OPTS="-i192 -s320" APPS=":boot"
+	$(MAKE) -f Make.package minix NAME=fd320 OPTS="-i192 -s320" APPS=":boot"
 
 fd360:
-	$(MAKE) -f Make.package NAME=fd360 OPTS="-i192 -s360" APPS=":boot|:small"
+	$(MAKE) -f Make.package minix NAME=fd360 OPTS="-i192 -s360" APPS=":boot|:small"
 
 fd720:
-	$(MAKE) -f Make.package NAME=fd720 OPTS="-i256 -s720" APPS=":boot|:small|:base|:net"
+	$(MAKE) -f Make.package minix NAME=fd720 OPTS="-i256 -s720" APPS=":boot|:small|:base|:net"
 
 fd1440:
-	$(MAKE) -f Make.package NAME=fd1440 OPTS="-i360 -s1440" APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+	$(MAKE) -f Make.package minix NAME=fd1440 OPTS="-i360 -s1440" APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+
+fd1440-msdos:
+	$(MAKE) -f Make.package msdos NAME=fd1440-msdos OPTS="-f 1440" APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+

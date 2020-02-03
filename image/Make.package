@@ -3,10 +3,10 @@
 #	implicitly uses IMGDIR=, DESTDIR= and FD_BSECT=
 
 VERBOSE=-v
-IMAGE=$(IMGDIR)/$(NAME).bin
-MKFSOPTS=-1 -n14 $(OPTS)
+MINIX_IMAGE=$(IMGDIR)/$(NAME).bin
+MINIX_MKFSOPTS=-1 -n14 $(OPTS)
 
-# Create bootable ELKS disk image:
+# Create bootable ELKS MINIX disk image:
 #	Select tagged files into filelist
 #	Create empty filesystem
 #	Add tagged files into filesystem (regular, directories, links)
@@ -15,13 +15,57 @@ MKFSOPTS=-1 -n14 $(OPTS)
 #	Check image integrity
 #	Print filesystem used inode and block count
 
-package:
+minix:
 	awk "/$(APPS)/{print}" Packages | cut -f 1 > Filelist
-	mfs $(VERBOSE) $(IMAGE) mkfs $(MKFSOPTS)
-	mfs $(VERBOSE) $(IMAGE) addfs Filelist $(DESTDIR)
+	mfs $(VERBOSE) $(MINIX_IMAGE) mkfs $(MINIX_MKFSOPTS)
+	mfs $(VERBOSE) $(MINIX_IMAGE) addfs Filelist $(DESTDIR)
 	rm Filelist
-	$(MAKE) -f Make.devices "MKDEV=mfs $(IMAGE) mknod"
+	$(MAKE) -f Make.devices "MKDEV=mfs $(MINIX_IMAGE) mknod"
 	# NOTE: mfs does not currently change DISKPARAMS struct in boot sector (coming!)
-	mfs $(IMAGE) boot $(FD_BSECT)
-	mfsck -fv $(IMAGE)
-	mfs $(IMAGE) stat
+	mfs $(MINIX_IMAGE) boot $(FD_BSECT)
+	mfsck -fv $(MINIX_IMAGE)
+	mfs $(MINIX_IMAGE) stat
+
+# Create bootable ELKS MSDOS disk image:
+#	Select tagged files into filelist
+#	Create empty filesystem (1440k only for now)
+#	Add tagged files into filesystem (regular, directories, links)
+#		Filename case is preserved
+#		Note: filenames larger than 8.3 will create VFAT LFN entries
+#	Write boot sector (not completed)
+
+# -i image	image filename
+MSDOS_IMAGE=-i $(IMGDIR)/$(NAME).bin
+# -C		create image
+# -f size	image size in 1k
+# -d 2		2 FAT tables
+# -L 9		9 FAT sectors
+# -r 14		14 root directory sectors
+# -c 1		cluster size 1 sector
+# -R 1		1 reserve sector (boot)
+# -k		only update boot block geometry and file system data fields
+# -B boot	use passed boot file (not complete)
+# -N 0		serial number 0
+# -v label	volume label
+MSDOS_MKFSOPTS=-C $(OPTS) -M 512 -d 2 -L 9 -r 14 -c 1 -R 1 -k -N 0 -v ELKS
+
+# -v		verbose
+# -p		preserve attributes
+# -m		preserve file modtime
+# -Q		quit on error
+MSDOS_COPYOPTS=-vpmQ
+
+msdos:
+	awk "/$(APPS)/{print}" Packages | cut -f 1 | sed "/^#/d" > Filelist
+	cat Filelist
+	mformat $(MSDOS_IMAGE) $(MSDOS_MKFSOPTS)
+	mdir $(MSDOS_IMAGE) -a ::
+	for f in `cat Filelist`; \
+	do \
+		[ -d $(DESTDIR)/$$f ] && mmd $(MSDOS_IMAGE) ::$$f; \
+		[ -f $(DESTDIR)/$$f ] && mcopy $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) $(DESTDIR)$$f ::$$f; \
+	done
+	rm Filelist
+# add boot sector and modify disk parameter block (not completed)
+#	mfs $(IMGDIR)/$(NAME).bin boot $(FD_BSECT)
+	mdir $(MSDOS_IMAGE) -/ -a ::
