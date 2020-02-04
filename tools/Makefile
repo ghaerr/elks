@@ -6,7 +6,7 @@ endif
 
 include $(TOPDIR)/Make.defs
 
-.PHONY: all
+.PHONY: all pack
 
 all::
 
@@ -85,3 +85,10 @@ $(DISTDIR)/$(EMU86_DIST).zip:
 	touch .emu86.build
 
 all:: .emu86.build
+
+# Tools packing
+
+pack:
+	-rm -rf $(DISTDIR)
+	-rm -rf $(BUILDDIR)
+
