@@ -507,7 +507,6 @@ extern struct buffer_head *readbuf(struct buffer_head *);
 
 extern void ll_rw_blk(int,struct buffer_head *);
 extern void ll_rw_page(void);
-extern void ll_rw_swap_file(void);
 
 extern void map_buffer(struct buffer_head *);
 extern void unmap_buffer(struct buffer_head *);

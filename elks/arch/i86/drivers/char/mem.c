@@ -155,10 +155,6 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, register char *a
 {
     struct mem_usage mu;
 
-#ifdef CONFIG_SWAP
-    struct mem_swap_info si;
-#endif
-
     debugmem1("[k]mem_ioctl() %d\n", cmd);
     switch (cmd) {
 
@@ -196,24 +192,9 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, register char *a
 	mu.free_memory = mm_get_usage(MM_MEM, 0);
 	mu.used_memory = mm_get_usage(MM_MEM, 1);
 
-#ifdef CONFIG_SWAP
-	mu.free_swap = mm_get_usage(MM_SWAP, 0);
-	mu.used_swap = mm_get_usage(MM_SWAP, 1);
-#else
-	mu.free_swap = mu.used_swap = 0;
-#endif
-
 	memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
 	
 	return 0;
-
-#ifdef CONFIG_SWAP
-    case MEM_SETSWAP:
-    	if (!suser())
-    	   return -EPERM;
-    	memcpy_fromfs(&si, arg, sizeof(struct mem_swap_info));
-    	return mm_swap_on(&si);
-#endif
     }
     return -EINVAL;
 }
@@ -314,7 +295,7 @@ int memory_open(register struct inode *inode, struct file *filp)
 	NULL,		/*  */
 
     /*  The following two entries assume that virtual memory is identical
-     *  to physical memory. Is this still true now we have swap?
+     *  to physical memory.
      */
 
 	&kmem_fops,	/* DEV_MEM_MINOR */

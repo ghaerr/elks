@@ -21,7 +21,7 @@ struct request {
     __u8 rq_status;
     sector_t rq_sector;
     char *rq_buffer;
-    seg_t rq_seg;		/* Used by swapper */
+    seg_t rq_seg;
     struct buffer_head *rq_bh;
     struct request *rq_next;
 

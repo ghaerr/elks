@@ -83,7 +83,7 @@
 !	0x1f1:	SETUPSECS
 !	0x1f2:	ROOTFLAGS
 !	0x1f4:	SYSSIZE
-!	0x1f6:	SWAP_DEV
+!	0x1f6:	unused (was SWAP_DEV)
 !	0x1f8:	RAMDISK
 !	0x1fa:	SVGA_MODE
 !	0x1fc:	ROOT_DEV

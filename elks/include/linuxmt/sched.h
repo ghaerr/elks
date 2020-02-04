@@ -37,8 +37,6 @@ struct mm_struct {
     seg_t			cseg;
     seg_t			dseg;
     char			flags;
-#define CS_SWAP		1
-#define DS_SWAP		2
 };
 
 struct signal_struct {
@@ -89,10 +87,6 @@ struct task_struct {
     struct signal_struct	sig;		/* Signal block */
     int 			dumpable;	/* Can core dump */
 
-#ifdef CONFIG_SWAP
-    jiff_t			last_running;
-#endif
-
 #ifdef CONFIG_SUPPLEMENTARY_GROUPS
     gid_t			groups[NGROUPS];
 #endif
@@ -113,7 +107,6 @@ struct task_struct {
 #define TASK_UNINTERRUPTIBLE 	2
 #define TASK_ZOMBIE		3
 #define TASK_STOPPED		4
-#define TASK_SWAPPING		5
 #define TASK_UNUSED		6
 #define TASK_WAITING		7
 #define TASK_EXITING		8
