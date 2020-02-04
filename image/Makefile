@@ -73,40 +73,46 @@ romfs: template
 	mkromfs -d romfs.devices $(DESTDIR)
 
 # Clean target
+
 clean:
 	-rm -f $(TARGET_FILE)
 	-rm -rf $(DESTDIR)
 	-rm -f *.bin
 
 # Application package management
-# Type "make images" after normal ELKS build to create all MINIX disk image sets
+
+# Type 'make images' after normal ELKS build to create all disk images
 # Applications are tagged for disk images in the 'Packages' file
-allimages: images dosimages
 
-images: fd320 fd360 fd720 fd1440
+images: images-minix images-fat
 
-dosimages: fd320-msdos fd360-msdos fd720-msdos fd1440-msdos
 
-fd320:
-	$(MAKE) -f Make.package minix NAME=fd320 OPTS="-i192 -s320" BPB=-B8,1 APPS=":boot"
+images-minix: fd320-minix fd360-minix fd720-minix fd1440-minix
 
-fd360:
-	$(MAKE) -f Make.package minix NAME=fd360 OPTS="-i192 -s360" BPB=-B9,1 APPS=":boot|:small"
+fd320-minix:
+	$(MAKE) -f Make.package minix NAME=fd320-minix OPTS="-i192 -s320" BPB=-B8,1 APPS=":boot"
 
-fd720:
-	$(MAKE) -f Make.package minix NAME=fd720 OPTS="-i256 -s720" BPB=-B9,2 APPS=":boot|:small|:base|:net"
+fd360-minix:
+	$(MAKE) -f Make.package minix NAME=fd360-minix OPTS="-i192 -s360" BPB=-B9,1 APPS=":boot|:small"
 
-fd1440:
-	$(MAKE) -f Make.package minix NAME=fd1440 OPTS="-i360 -s1440" BPB=-B18,2 APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+fd720-minix:
+	$(MAKE) -f Make.package minix NAME=fd720-minix OPTS="-i256 -s720" BPB=-B9,2 APPS=":boot|:small|:base|:net"
 
-fd320-msdos:
-	$(MAKE) -f Make.package msdos NAME=fd320-msdos SIZE=320 APPS=":boot"
+fd1440-minix:
+	$(MAKE) -f Make.package minix NAME=fd1440-minix OPTS="-i360 -s1440" BPB=-B18,2 APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
 
-fd360-msdos:
-	$(MAKE) -f Make.package msdos NAME=fd360-msdos SIZE=360 APPS=":boot|:small"
 
-fd720-msdos:
-	$(MAKE) -f Make.package msdos NAME=fd720-msdos SIZE=720 APPS=":boot|:small|:base|:net"
+images-fat: fd320-fat fd360-fat fd720-fat fd1440-fat
 
-fd1440-msdos:
-	$(MAKE) -f Make.package msdos NAME=fd1440-msdos SIZE=1440 APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+fd320-fat:
+	$(MAKE) -f Make.package msdos NAME=fd320-fat SIZE=320 APPS=":boot"
+
+fd360-fat:
+	$(MAKE) -f Make.package msdos NAME=fd360-fat SIZE=360 APPS=":boot|:small"
+
+fd720-fat:
+	$(MAKE) -f Make.package msdos NAME=fd720-fat SIZE=720 APPS=":boot|:small|:base|:net"
+
+fd1440-fat:
+	$(MAKE) -f Make.package msdos NAME=fd1440-fat SIZE=1440 APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+
