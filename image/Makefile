@@ -79,24 +79,34 @@ clean:
 	-rm -f *.bin
 
 # Application package management
-# Type "make images" after normal ELKS build to create all disk image sets
+# Type "make images" after normal ELKS build to create all MINIX disk image sets
 # Applications are tagged for disk images in the 'Packages' file
+allimages: images dosimages
+
 images: fd320 fd360 fd720 fd1440
 
-msdosfs: fd1440-msdos
+dosimages: fd320-msdos fd360-msdos fd720-msdos fd1440-msdos
 
 fd320:
-	$(MAKE) -f Make.package minix NAME=fd320 OPTS="-i192 -s320" APPS=":boot"
+	$(MAKE) -f Make.package minix NAME=fd320 OPTS="-i192 -s320" BPB=-B8,1 APPS=":boot"
 
 fd360:
-	$(MAKE) -f Make.package minix NAME=fd360 OPTS="-i192 -s360" APPS=":boot|:small"
+	$(MAKE) -f Make.package minix NAME=fd360 OPTS="-i192 -s360" BPB=-B9,1 APPS=":boot|:small"
 
 fd720:
-	$(MAKE) -f Make.package minix NAME=fd720 OPTS="-i256 -s720" APPS=":boot|:small|:base|:net"
+	$(MAKE) -f Make.package minix NAME=fd720 OPTS="-i256 -s720" BPB=-B9,2 APPS=":boot|:small|:base|:net"
 
 fd1440:
-	$(MAKE) -f Make.package minix NAME=fd1440 OPTS="-i360 -s1440" APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+	$(MAKE) -f Make.package minix NAME=fd1440 OPTS="-i360 -s1440" BPB=-B18,2 APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+
+fd320-msdos:
+	$(MAKE) -f Make.package msdos NAME=fd320-msdos SIZE=320 APPS=":boot"
+
+fd360-msdos:
+	$(MAKE) -f Make.package msdos NAME=fd360-msdos SIZE=360 APPS=":boot|:small"
+
+fd720-msdos:
+	$(MAKE) -f Make.package msdos NAME=fd720-msdos SIZE=720 APPS=":boot|:small|:base|:net"
 
 fd1440-msdos:
-	$(MAKE) -f Make.package msdos NAME=fd1440-msdos OPTS="-f 1440" APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
-
+	$(MAKE) -f Make.package msdos NAME=fd1440-msdos SIZE=1440 APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
