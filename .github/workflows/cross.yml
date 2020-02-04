@@ -1,10 +1,11 @@
 name: Cross tools build
 
-on: push
-  branches:
-    - master
-  paths:
-    - 'tools/*'
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'tools/*'
 
 jobs:
   build:
