@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Build the tools to cross compile ELKS
+# Build the cross tools for IA16 target
 
-# This script is the entry point for the 'Cross tools build' workflow
+# This script is the entry point for the 'cross tools build' workflow
 # See .github/workflow/cross.yml
 
 SCRIPTDIR="$(dirname "$0")"
