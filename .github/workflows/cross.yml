@@ -14,5 +14,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: prepare
+        run: 'mkdir cross'
+
       - name: build
         run: tools/build.sh
