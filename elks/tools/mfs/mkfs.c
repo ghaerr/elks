@@ -109,34 +109,67 @@ void cmd_mkfs(char *filename, int argc,char **argv) {
   close_fs(fs);
 }
 
+#define BPB_SecPerTrk	24		/* offset of sectors per track (short)*/
+#define BPB_NumHeads	26		/* offset of number of heads (short)*/
 /**
  * Write boot block to image file
  */
 void cmd_boot(char *filename, int argc,char **argv) {
-  FILE *ifp, *ofp;
+  FILE *ifp = NULL, *ofp;
   struct stat sb;
   int count;
+  int opt_new_bootblock = 0, opt_updatebpb = 0;
+  int SecPerTrk, NumHeads;
   u8 blk[MINIX_BOOT_BLOCKS * BLOCK_SIZE];
 
-  if (argc != 2) fatalmsg("Usage: %s [boot file]\n",argv[0]);
-  if (stat(argv[1],&sb)) die("stat(%s)",argv[1]);
-  if (!S_ISREG(sb.st_mode)) fatalmsg("%s: not a regular file\n",argv[1]);
-  if (sb.st_size > MINIX_BOOT_BLOCKS * BLOCK_SIZE)
-  	fatalmsg("%s: boot block greater than %d bytes\n", argv[1], MINIX_BOOT_BLOCKS*BLOCK_SIZE);
+  if (argc != 2 && argc != 3) fatalmsg("Usage: %s [boot file]\n",argv[0]);
+  if (argv[1][0] == '-' && argv[1][1] == 'B') {
+	opt_updatebpb = 1;			/* BPB update specified*/
+	if (sscanf(&argv[1][2], "%d,%d", &SecPerTrk, &NumHeads) != 2)
+		fatalmsg("Invalid -B<sectors>,<heads> option\n");
+	printf("Updating BPB to %d sectors, %d heads\n", SecPerTrk, NumHeads);
+	argv++;
+	argc--;
+  }
+  if (argc == 2)				/* new boot block specified*/
+	opt_new_bootblock = 1;
 
-  ifp = fopen(argv[1],"rb");
-  if (!ifp) die(argv[1]);
+  if (opt_new_bootblock) {
+	if (stat(argv[1],&sb)) die("stat(%s)",argv[1]);
+	if (!S_ISREG(sb.st_mode)) fatalmsg("%s: not a regular file\n",argv[1]);
+	if (sb.st_size > MINIX_BOOT_BLOCKS * BLOCK_SIZE)
+		fatalmsg("%s: boot block greater than %d bytes\n", argv[1], MINIX_BOOT_BLOCKS*BLOCK_SIZE);
 
-  ofp = fopen(filename,"r+b");
-  if (!ofp) die(filename);
+	ifp = fopen(argv[1],"rb");
+	if (!ifp) die(argv[1]);
 
-  count = fread(blk,1,MINIX_BOOT_BLOCKS * BLOCK_SIZE,ifp);
-  if (count != sb.st_size) die("fread(%s)", argv[1]);
+	ofp = fopen(filename,"r+b");
+	if (!ofp) die(filename);
 
-  if (count < 512 || blk[510] != 0x55 || blk[511] != 0xaa)
-  	fprintf(stderr, "%s warning: may not be valid boot block\n", argv[1]);
+	count = fread(blk,1,MINIX_BOOT_BLOCKS * BLOCK_SIZE,ifp);
+	if (count != sb.st_size) die("fread(%s)", argv[1]);
+
+	if (count < 512 || blk[510] != 0x55 || blk[511] != 0xaa)
+		fprintf(stderr, "%s warning: may not be valid boot block\n", argv[1]);
   
-  if (fwrite(blk,1,count,ofp) != count) die("fwrite(%s)", argv[1]);
-  fclose(ofp);
-  fclose(ifp);
+	if (opt_updatebpb) {	/* update BPB before writing*/
+		blk[BPB_SecPerTrk] = (unsigned char)SecPerTrk;
+		blk[BPB_NumHeads] = (unsigned char)NumHeads;
+	}
+	if (fwrite(blk,1,count,ofp) != count) die("fwrite(%s)", argv[1]);
+	fclose(ofp);
+	fclose(ifp);
+  } else {			/* perform BPB update only on existing boot block*/
+	ofp = fopen(filename, "r+b");
+	if (!ofp) die(filename);
+
+	count = fread(blk,1,512,ofp);
+	if (count != 512) die("fread(%s)", filename);
+	blk[BPB_SecPerTrk] = (unsigned char)SecPerTrk;
+	blk[BPB_NumHeads] = (unsigned char)NumHeads;
+	if (fseek(ofp, 0L, SEEK_SET) != 0)
+		die("fseek(%s)", filename);
+	if (fwrite(blk,1,512,ofp) != 512) die("fwrite(%s)", filename);
+	fclose(ofp);
+  }
 }

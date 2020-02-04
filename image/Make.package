@@ -80,7 +80,7 @@ MSDOS_COPYOPTS=-vpmQ -D o
 msdos:
 	awk "/$(APPS)/{print}" Packages | cut -f 1 | sed "/^#/d" > Filelist
 	dd if=/dev/zero of=$(MSDOS_IMAGE) bs=1024 count=$(SIZE)
-# add boot sector, mformat will modify BPB
+# write MSDOS boot sector(s) only, mformat will modify BPB
 #	mfs $(MSDOS_IMAGE) boot $(FD_BSECT)
 	mformat -i $(MSDOS_IMAGE) $(MSDOS_MKFSOPTS)
 	-rm linux; touch linux
@@ -92,5 +92,5 @@ msdos:
 		[ -d $(DESTDIR)/$$f ] && mmd -i $(MSDOS_IMAGE) ::$$f; \
 		[ -f $(DESTDIR)/$$f ] && mcopy -i $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) $(DESTDIR)$$f ::$$f; \
 	done
-#	rm Filelist
+	rm Filelist
 	mdir -i $(MSDOS_IMAGE) -/ -a ::
