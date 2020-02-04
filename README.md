@@ -2,6 +2,9 @@
                ----------------------------------------
 
 
+![cross](https://github.com/elks-org/elks/workflows/cross/badge.svg)
+
+
 What is this ?
 --------------
 

@@ -1,10 +1,11 @@
-name: Cross tools build
+name: cross
 
 on:
   push:
     branches:
       - master
     paths:
+      - '.github/workflows/cross.yml'
       - 'tools/*'
 
 jobs:
@@ -13,10 +14,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: setup
+        run: 'sudo apt install bison flex texinfo'
+
+      - name: checkout
+        uses: actions/checkout@v2
 
       - name: prepare
         run: 'mkdir cross'
 
       - name: build
         run: tools/build.sh
+
+      - name: packing
+        run: tools/pack.sh
+
+      - name: upload
+        uses: actions/upload-artifact@v1
+        with:
+          name: cross
+          path: cross
