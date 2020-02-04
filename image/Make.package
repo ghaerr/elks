@@ -1,19 +1,30 @@
 # Application package creation Makefile
-#	passed NAME=, OPTS=, APPS=
+#	passed NAME=, APPS=, OPTS= and BPB= for MINIX, SIZE= for MSDOS
 #	implicitly uses IMGDIR=, DESTDIR= and FD_BSECT=
-
-VERBOSE=-v
-MINIX_IMAGE=$(IMGDIR)/$(NAME).bin
-MINIX_MKFSOPTS=-1 -n14 $(OPTS)
 
 # Create bootable ELKS MINIX disk image:
 #	Select tagged files into filelist
 #	Create empty filesystem
 #	Add tagged files into filesystem (regular, directories, links)
 #	Create special files in /dev
-#	Write boot sector
+#	Write boot sector (and modify BPB (not completed))
 #	Check image integrity
 #	Print filesystem used inode and block count
+
+VERBOSE=-v
+MINIX_IMAGE=$(IMGDIR)/$(NAME).bin
+
+# mfs options
+# -v		verbose
+# mkfs		initialize filesystem
+# genfs		generate filesystem from template
+# addfs		generate filesytem from filelist
+# mfs genfs options
+# -1		create MINIX v1 filesystem
+# -n14		filename size 14
+# -i<size>	max inodes
+# -s<size>	image size in 1k blocks
+MINIX_MKFSOPTS=-1 -n14 $(OPTS)
 
 minix:
 	awk "/$(APPS)/{print}" Packages | cut -f 1 > Filelist
@@ -21,26 +32,27 @@ minix:
 	mfs $(VERBOSE) $(MINIX_IMAGE) addfs Filelist $(DESTDIR)
 	rm Filelist
 	$(MAKE) -f Make.devices "MKDEV=mfs $(MINIX_IMAGE) mknod"
-	# NOTE: mfs does not currently change DISKPARAMS struct in boot sector (coming!)
 	mfs $(MINIX_IMAGE) boot $(FD_BSECT)
+#	mfs $(MINIX_IMAGE) boot $(BPB) $(FD_BSECT)
 	mfsck -fv $(MINIX_IMAGE)
 	mfs $(MINIX_IMAGE) stat
 
 # Create bootable ELKS MSDOS disk image:
 #	Select tagged files into filelist
-#	Create empty filesystem (1440k only for now)
+#	Create empty filesystem
+#	Write boot sector (not completed)
+#	Create \linux as first directory entry
 #	Add tagged files into filesystem (regular, directories, links)
 #		Filename case is preserved
 #		Note: filenames larger than 8.3 will create VFAT LFN entries
-#	Write boot sector (not completed)
 
 # all mtools commands require image file
 # -i image	image filename
 MSDOS_IMAGE=$(IMGDIR)/$(NAME).bin
 
 # mformat options
-# -f size	image size in 1k
-# -M size	software sector size (=physical sector size)
+# -f size	image size in kilobytes
+# -M 512	software sector size 512 (=physical sector size)
 # -d 2		2 FAT tables
 # -L 9		9 FAT sectors
 # -r 14		14 root directory sectors
@@ -51,7 +63,7 @@ MSDOS_IMAGE=$(IMGDIR)/$(NAME).bin
 # -N 0		serial number 0
 # -v label	volume label (don't use with first format as uses two directory entries)
 # -C		create image (buggy, leaves nonzero data in image)
-MSDOS_MKFSOPTS=$(OPTS) -M 512 -d 2 -L 9 -r 14 -c 1 -R 1 -k -N 0
+MSDOS_MKFSOPTS=-f $(SIZE) -M 512 -d 2 -L 9 -r 14 -c 1 -R 1 -k -N 0
 
 # mcopy options
 # -v		verbose
@@ -67,8 +79,9 @@ MSDOS_COPYOPTS=-vpmQ -D o
 
 msdos:
 	awk "/$(APPS)/{print}" Packages | cut -f 1 | sed "/^#/d" > Filelist
-	-rm $(MSDOS_IMAGE)
-	dd if=/dev/zero of=$(MSDOS_IMAGE) bs=512 count=2880
+	dd if=/dev/zero of=$(MSDOS_IMAGE) bs=1024 count=$(SIZE)
+# add boot sector, mformat will modify BPB
+#	mfs $(MSDOS_IMAGE) boot $(FD_BSECT)
 	mformat -i $(MSDOS_IMAGE) $(MSDOS_MKFSOPTS)
 	-rm linux; touch linux
 	mcopy -i $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) linux ::/linux
@@ -79,7 +92,5 @@ msdos:
 		[ -d $(DESTDIR)/$$f ] && mmd -i $(MSDOS_IMAGE) ::$$f; \
 		[ -f $(DESTDIR)/$$f ] && mcopy -i $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) $(DESTDIR)$$f ::$$f; \
 	done
-	rm Filelist
-# add boot sector and modify disk parameter block (not completed)
-#	mfs $(MSDOS_IMAGE) boot $(FD_BSECT)
+#	rm Filelist
 	mdir -i $(MSDOS_IMAGE) -/ -a ::
