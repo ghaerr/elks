@@ -1,0 +1,17 @@
+name: Cross tools build
+
+on: push
+  branches:
+    - master
+  paths:
+    - 'tools/*'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: build
+        run: tools/build.sh
