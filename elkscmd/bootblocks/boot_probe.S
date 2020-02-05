@@ -70,7 +70,7 @@ _half_hex:
 	add $'0',%al
 	cmp $'9',%al
 	jle 1f
-	add $('A'-'9'),%al
+	add $('A'-'9'-1),%al
 1:	jmp _putc
 
 _byte_hex:
