@@ -97,10 +97,6 @@ mainmenu_option next_comment
 
 	    bool 'Advanced memory manager' CONFIG_ADVANCED_MM y
 
-	    if [ "$CONFIG_ADVANCED_MM" = "y" ]; then
-		     bool 'Enable swap support' CONFIG_SWAP n
-		fi
-
 	endmenu
 
 	bool 'Minimize kernel size'               CONFIG_SMALL_KERNEL n

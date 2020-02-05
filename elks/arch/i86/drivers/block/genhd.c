@@ -221,7 +221,7 @@ static int msdos_partition(struct gendisk *hd,
 	    hd->sizes[minor] = (int) (hdp->nr_sects >> (BLOCK_SIZE_BITS - 9));
 	    extended_partition(hd, MKDEV(hd->major, minor));
 	    printk(" >");
-	    /* prevent someone doing mkfs or mkswap on an
+	    /* prevent someone doing mkfs on an
 	     * extended partition, but leave room for LILO */
 	    if (hdp->nr_sects > 2)
 		hdp->nr_sects = 2;

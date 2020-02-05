@@ -30,7 +30,8 @@ at offset 504 (decimal) in the kernel image:
 .nf
 .RS
  498 Root flags
-(500 and 502 Reserved)
+(500 Reserved)
+ 502 Unused (was Swap Device)
  504 RAM Disk Size
  506 VGA Mode
  508 Root Device
@@ -144,13 +145,6 @@ is an ancient hack that works by patching a kernel image at a magic offset
 with magic numbers. It does not work on architectures other than i386.
 Its use is strongly discouraged. Use a boot loader like SysLinux or LILO
 instead.
-.SH HISTORY
-At offset 502 there used to be the device number of the swap device
-(in Linux 0.12), and "rdev -s" or "swapdev" would set this.
-However, since Linux 0.95 this constant is not used any longer,
-and the swap device is specified using the
-.IR swapon ()
-system call.
 .SH AUTHORS
 .nf
 Originally by Werner Almesberger (almesber@nessie.cs.id.ethz.ch)

@@ -1,5 +1,5 @@
 /*
- *	Memory management support for a swapping rather than paging kernel.
+ *	Memory management support.
  *
  *	Two possible memory allocators:
  *
@@ -24,7 +24,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/mm.h>
-#include <linuxmt/mem.h> /* for mem_swap_info */
+//#include <linuxmt/mem.h>
 #include <linuxmt/debug.h>
 
 #include <arch/segment.h>
@@ -40,7 +40,6 @@
  */
 
 #define MAX_SEGMENTS		8+(MAX_TASKS*2)
-#define MAX_SWAP_SEGMENTS	8+(MAX_TASKS*2)
 
 struct malloc_hole {
     seg_t page_base;		/* Pages */
@@ -51,14 +50,9 @@ struct malloc_hole {
 #define HOLE_USED		1
 #define HOLE_FREE		2
 #define HOLE_SPARE		3
-#define HOLE_SWAPPED		8
 };
 
 static struct malloc_hole holes[MAX_SEGMENTS];
-
-#ifdef CONFIG_SWAP
-static struct malloc_hole swap_holes[MAX_SWAP_SEGMENTS];
-#endif
 
 struct malloc_head {
     struct malloc_hole *holes;
@@ -66,12 +60,6 @@ struct malloc_head {
 };
 
 struct malloc_head memmap = { holes, MAX_SEGMENTS };
-
-#ifdef CONFIG_SWAP
-struct malloc_head swapmap = { swap_holes, MAX_SWAP_SEGMENTS };
-static struct buffer_head swap_buf;
-static dev_t swap_dev;
-#endif
 
 #endif /* CONFIG_MEM_TABLE */
 
@@ -217,18 +205,6 @@ static struct malloc_hole *find_hole(register struct malloc_hole *m, seg_t base)
     return m;
 }
 
-/*
- *	Allocate a segment
- */
-
-#ifdef CONFIG_SWAP
-
-int swap_out(seg_t base);
-seg_t swap_strategy();
-int swap_out_someone();
-
-#endif
-
 #endif /* CONFIG_MEM_TABLE */
 
 
@@ -342,6 +318,9 @@ static void seg_merge_right (seg_t node_seg)
 
 #endif /* CONFIG_MEM_LIST */
 
+/*
+ *     Allocate a segment
+ */
 
 seg_t mm_alloc(segext_t pages)
 {
@@ -351,22 +330,9 @@ seg_t mm_alloc(segext_t pages)
      */
     register struct malloc_hole *m;
 
-#ifdef CONFIG_SWAP
-    seg_t s;
-
-    while ((m = best_fit_hole(holes, pages)) == NULL) {
-	s = swap_strategy(NULL);
-	if (s == NULL || swap_out(s) == -1)
-	    return 0;
-    }
-
-#else
-
     m = best_fit_hole(holes, pages);
     if (m == NULL)
 	return 0;
-
-#endif
 
     /*
      *      The hole is (probably) too big
@@ -408,33 +374,6 @@ void mm_free (seg_t base)
 
 #endif /* CONFIG_MEM_LIST */
 
-/*
- * This function will swapin the whole process. After
- * there are exact ideas on the implementation of the swap cache
- * this sould change
- */
-
-#ifdef CONFIG_SWAP
-
-static seg_t validate_address(seg_t base)
-{
-    register struct task_struct *t;
-
-    for_each_task(t) {
-	if (t->mm.cseg == base && t->mm.flags & CS_SWAP) {
-	    do_swapper_run(t);
-	    return t->mm.cseg;
-	}
-	if (t->mm.dseg == base && t->mm.flags & DS_SWAP) {
-	    do_swapper_run(t);
-	    return t->mm.dseg;
-	}
-    }
-    return base;
-}
-
-#endif
-
 /* 	Increase segment reference count */
 
 void mm_get(seg_t base)
@@ -442,12 +381,6 @@ void mm_get(seg_t base)
 #ifdef CONFIG_MEM_TABLE
 
     register struct malloc_hole *m;
-
-#ifdef CONFIG_SWAP
-
-    base = validate_address(base);
-
-#endif
 
     m = find_hole(holes, base);
     m->refcount++;
@@ -469,9 +402,8 @@ void mm_get(seg_t base)
 /* Free the segment on no more reference */
 
 /*
- *	Caution: A process can be killed dead by another. That means we
- *	might potentially have to kill a swapped task. Be sure to catch
- *	that in exit...
+ *	Caution: A process can be killed dead by another.
+ *	Be sure to catch that in exit...
  */
 
 void mm_put(seg_t base)
@@ -483,18 +415,7 @@ void mm_put(seg_t base)
     m = find_hole(mh, base);
     if (!m) {
 
-#ifdef CONFIG_SWAP
-
-	mh = swap_holes;
-	m = find_hole(mh, base);
-	if (!m)
-	    panic("mm_put(): mm corruption from swap\n");
-
-#else
-
 	panic("mm corruption");
-
-#endif
 
     }
 
@@ -531,7 +452,7 @@ seg_t mm_dup(seg_t base)
     debug("MALLOC: mm_dup()\n");
     o = find_hole(holes, base);
     if (o->flags != HOLE_USED)
-	panic("bad/swapped hole");
+	panic("bad hole");
 
     if ((mbase = (char *)mm_alloc(o->extent)) != NULL)
 	fmemcpyb(NULL, (seg_t) mbase, NULL, o->page_base, (word_t) (o->extent << 4));
@@ -556,7 +477,7 @@ seg_t mm_dup(seg_t base)
 
 /*
  * Returns memory usage information in KB's.
- * "type" is either MM_MEM or MM_SWAP and "used"
+ * "type" is either MM_MEM and "used"
  * selects if we request the used or free memory.
  */
 unsigned int mm_get_usage(int type, int used)
@@ -566,15 +487,7 @@ unsigned int mm_get_usage(int type, int used)
     register struct malloc_hole *m;
     unsigned int ret = 0;
 
-#ifdef CONFIG_SWAP
-
-    m = type == MM_MEM ? holes : swap_holes;
-
-#else
-
     m = holes;
-
-#endif
 
     used = used ? HOLE_USED : HOLE_FREE;
 
@@ -582,13 +495,6 @@ unsigned int mm_get_usage(int type, int used)
 	if ((int)m->flags == used)
 	    ret += m->extent;
     } while ((m = m->next));
-
-#ifdef CONFIG_SWAP
-
-    if (type != MM_MEM)
-	return ret;
-
-#endif
 
     return ret >> 6;
 
@@ -811,11 +717,6 @@ void mm_init(seg_t start, seg_t end)
     holep->refcount = 0;
     holep->next = NULL;
 
-#ifdef CONFIG_SWAP
-    swap_dev = NULL;
-    mm_swap_on(NULL);
-#endif
-
 #endif /* CONFIG_MEM_TABLE */
 
 #ifdef CONFIG_MEM_LIST
@@ -829,239 +730,3 @@ void mm_init(seg_t start, seg_t end)
 #endif /* CONFIG_MEM_LIST */
 }
 
-#ifdef CONFIG_SWAP
-/*
- *	Swapper task
- */
-
-/*
- *	Push a segment to disk if possible
- */
-
-int mm_swap_on(struct mem_swap_info *si)
-{
-    register struct malloc_hole *holep;
-    int ct;
-    if (swap_dev)
-    	return -EPERM;
-
-    for (ct = 1; ct < MAX_SWAP_SEGMENTS; ct++)
-	swap_holes[ct].flags = HOLE_SPARE;
-
-    if (!si)
-    	return 0;
-
-    holep = &swap_holes[0];
-    holep->flags = HOLE_FREE;
-    holep->page_base = 0;
-    holep->extent = si->size;
-    holep->refcount = 0;
-    holep->next = NULL;
-
-    swap_dev = (si->major << 8) + si->minor;
-
-    return 0;
-}
-
-static int swap_out(seg_t base)
-{
-    register struct task_struct *t;
-    register struct malloc_hole *o = find_hole(holes, base);
-    struct malloc_hole *so;
-    int ct, blocks;
-
-    /* We can hit disk this time. Allocate a hole in 1K increments */
-    blocks = (o->extent + 0x3F) >> 6;
-    so = best_fit_hole(swap_holes, blocks);
-    if (so == NULL) {
-	/* No free swap */
-	return -1;
-    }
-    split_hole(&swapmap, so, blocks);
-    so->refcount = o->refcount;
-
-    for_each_task(t) {
-	int c = t->mm.flags;
-	if (t->mm.cseg == base && !(c & CS_SWAP)) {
-	    t->mm.cseg = so->page_base;
-	    t->mm.flags |= CS_SWAP;
-	    debug2("MALLOC: swaping out code of pid %d blocks %d\n",
-		   t->pid, blocks);
-	}
-	if (t->mm.dseg == base && !(c & DS_SWAP)) {
-	    t->mm.dseg = so->page_base;
-	    t->mm.flags |= DS_SWAP;
-	    debug2("MALLOC: swaping out data of pid %d blocks %d\n",
-		   t->pid, blocks);
-	}
-    }
-
-    /* Now write the segment out */
-    for (ct = 0; ct < blocks; ct++) {
-	swap_buf.b_blocknr = so->page_base + ct;
-	swap_buf.b_dev = swap_dev;
-	swap_buf.b_lock = 0;
-	swap_buf.b_dirty = 1;
-	swap_buf.b_seg = o->page_base;
-	swap_buf.b_data = ct << 10;
-	ll_rw_blk(WRITE, &swap_buf);
-	wait_on_buffer(&swap_buf);
-    }
-    free_hole(holes, o);
-
-    return 1;
-}
-
-static int swap_in(seg_t base, int chint)
-{
-    register struct task_struct *t;
-    register struct malloc_hole *o;
-    struct malloc_hole *so;
-    int ct, blocks;
-
-    so = find_hole(swap_holes, base);
-    /* Find memory for this segment */
-    o = best_fit_hole(holes, so->extent << 6);
-    if (o == NULL)
-	return -1;
-
-    /* Now read the segment in */
-    split_hole(&memmap, o, so->extent << 6);
-    o->refcount = so->refcount;
-
-    blocks = so->extent;
-
-    for (ct = 0; ct < blocks; ct++) {
-	swap_buf.b_blocknr = so->page_base + ct;
-	swap_buf.b_dev = swap_dev;
-	swap_buf.b_lock = 0;
-	swap_buf.b_dirty = 0;
-	swap_buf.b_uptodate = 0;
-	swap_buf.b_seg = o->page_base;
-	swap_buf.b_data = ct << 10;
-
-	ll_rw_blk(READ, &swap_buf);
-	wait_on_buffer(&swap_buf);
-    }
-
-    /*
-     *      Update the memory management tables
-     */
-    for_each_task(t) {
-	int c = t->mm.flags;
-	if (t->mm.cseg == base && c & CS_SWAP) {
-	    debug2("MALLOC: swapping in code of pid %d seg %x\n",
-		   t->pid, t->mm.cseg);
-	    t->mm.cseg = o->page_base;
-	    t->mm.flags &= ~CS_SWAP;
-	}
-	if (t->mm.dseg == base && c & DS_SWAP) {
-	    debug2("MALLOC: swapping in data of pid %d seg %x\n",
-		   t->pid, t->mm.dseg);
-	    t->mm.dseg = o->page_base;
-	    t->mm.flags &= ~DS_SWAP;
-	}
-	if (c && !t->mm.flags) {
-	    t->t_xregs.cs = t->mm.cseg;
-	    t->t_regs.ds = t->t_regs.es = t->t_regs.ss = t->mm.dseg;
-
-	    put_ustack(t, 4, t->t_xregs.cs);
-	}
-    }
-
-    /* Our equivalent of the Linux swap cache. Try and avoid writing CS
-     * back. Need to kill segments on last exit for this to work, and
-     * keep a table - TODO
-     */
-#if 0
-    if (chint==0)
-#endif
-    {
-/*	so->refcount = 0;*//* refcount only meaningful if HOLE_USED */
-	free_hole(swap_holes, so);
-    }
-
-    return 0;
-}
-
-/*
- *	When the swapper has found a task it wishes to make run we do the
- *	dirty work. On failure we return -1
- */
-static int make_runnable(register struct task_struct *t)
-{
-    char flags = t->mm.flags;
-
-    if (flags & CS_SWAP)
-	if (swap_in(t->mm.cseg, 1) == -1)
-	    return -1;
-    if (flags & DS_SWAP)
-	if (swap_in(t->mm.dseg, 0) == -1)
-	    return -1;
-    return 0;
-}
-
-static seg_t swap_strategy(register struct task_struct *swapin_target)
-{
-    register struct task_struct *t;
-    struct malloc_hole *o;
-    seg_t best_ret = 0;
-    int ret, rate;
-    int best_rate = -1;
-    int best_pid;
-
-    debug1("swap_strategy(pid %d)\n", swapin_target->pid);
-    for_each_task(t) {
-	if (   t->state == TASK_UNUSED
-	    || t->pid == 0
-	    || t->mm.cseg == current->mm.cseg
-	    )
-	    continue;
-	if (swapin_target != NULL && t->mm.cseg == swapin_target->mm.cseg)
-	    continue;
-
-	ret = 0;
-	rate = 0;
-	if (t->state != TASK_RUNNING)
-	    rate++;
-
-	rate += (jiffies - t->last_running) >> 4;
-
-	if (!(t->mm.flags & CS_SWAP)) {
-	    if (t->mm.flags & DS_SWAP)
-		rate += 1000;
-	    ret = t->mm.cseg;
-	}
-
-	if (!(t->mm.flags & DS_SWAP) && ret == 0) {
-	    if (t->mm.flags & CS_SWAP)
-		rate += 1000;
-	    ret = t->mm.dseg;
-	}
-
-	if (ret != 0 && rate > best_rate) {
-	    best_rate = rate;
-	    best_ret = ret;
-	    best_pid = t->pid;
-	}
-    }
-
-    debug2("Choose pid %d rate %d\n", best_pid, best_rate);
-
-    return best_ret;
-}
-
-/*
- *	Do an iteration of the swapper
- */
-int do_swapper_run(register struct task_struct *swapin_target)
-{
-    while (make_runnable(swapin_target) == -1) {
-	seg_t t = swap_strategy(swapin_target);
-	if (!t || swap_out(t) == -1)
-	    return -1;
-    }
-    return 0;
-}
-
-#endif /* CONFIG_SWAP */

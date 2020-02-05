@@ -18,8 +18,6 @@ knl \- query/set kernel configuration parameters
 .B [--ram=offset]
 .B [-r=device]
 .B [--root=device]
-.B [-s=device]
-.B [--swap=device]
 .B [-v=mode]
 .B [--video=mode]
 .B [--help]
@@ -96,11 +94,6 @@ section (below), or can be specified as
 .B NFS
 to indicate that the file system root is remote NFS mounted.
 .TP
-.B -s=device --swap=device
-Specifies the default device to mount as a swap partition. See the
-.I DEVICES
-section (below) for further details.
-.TP
 .B --version
 Displays the program version, then exits.
 .TP
@@ -119,7 +112,7 @@ options, located at the following offsets:
 
  498  1F2  Root flags
  500  1F4  Reserved
- 502  1F6  Swap Device
+ 502  1F6  Unused (was Swap Device)
  504  1F8  RAM Disk Parameters
  506  1FA  VGA Mode
  508  1FC  Root Device
@@ -135,8 +128,6 @@ Valid values for the
 .B device
 specification in the
 .B --root
-and
-.B --swap
 options are as follows:
 .PP
 .nf

@@ -41,9 +41,8 @@ INITSEG   = DEF_INITSEG			! we move boot here - out of the way
 SYSSEG    = DEF_SYSSEG			! system loaded at 0x10000 (65536).
 SYSSEGB   = DEF_SYSSEG + 2
 
-! ROOT_DEV & SWAP_DEV are now written by "build".
+! ROOT_DEV is now written by "build".
 ROOT_DEV = 0
-SWAP_DEV = 0
 #ifndef SVGA_MODE
 #define SVGA_MODE VGA_ASK
 #endif
@@ -93,8 +92,8 @@ root_flags:
 	.word ROOTFLAGS
 syssize:
 	.word SYSSIZE
-swap_dev:
-	.word SWAP_DEV
+unused:
+	.word 0
 ram_size:
 	.word RAMDISK
 vid_mode:

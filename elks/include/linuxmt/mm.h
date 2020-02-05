@@ -14,9 +14,6 @@ extern unsigned long high_memory;
 #define VERIFY_WRITE 1
 
 #define MM_MEM	0
-#ifdef CONFIG_SWAP
-#define MM_SWAP	1
-#endif
 
 /* memory primitives */
 /* TODO: move these to a new library header memory.h */
@@ -70,14 +67,6 @@ extern void mm_put(seg_t);
 extern seg_t mm_dup(seg_t);
 extern void mm_stat(seg_t,seg_t);
 extern unsigned int mm_get_usage(int,int);
-
-extern int do_swapper_run(struct task_struct *);
-
-/* FIXME: Following function prototypes are apparently phantom ones,
- *	  so are defined here with void parameters for now.
- */
-
-extern int mm_swapon(void);
 
 #endif
 #endif

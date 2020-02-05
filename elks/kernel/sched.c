@@ -52,9 +52,6 @@ void del_from_runqueue(register struct task_struct *p)
     nr_running--;
     (p->next_run->prev_run = p->prev_run)->next_run = p->next_run;
     p->next_run = p->prev_run = NULL;
-#ifdef CONFIG_SWAP
-    p->last_running = jiffies;
-#endif
 
 }
 
@@ -130,13 +127,6 @@ void schedule(void)
             timer.tl_function = process_timeout;
             add_timer(&timer);
         }
-
-#ifdef CONFIG_SWAP
-        if (do_swapper_run(next) == -1){
-            printk("Can't become runnable %d\n", next->pid);
-            panic("");
-        }
-#endif
 
         previous = prev;
         current = next;

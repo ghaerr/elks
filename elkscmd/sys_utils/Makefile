@@ -10,8 +10,23 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS		= init getty login kill mount umount passwd reboot shutdown ps \
-		  swapon meminfo who knl man poweroff
+PRGS = \
+	init \
+	getty \
+	login \
+	kill \
+	mount \
+	umount \
+	passwd \
+	reboot \
+	shutdown \
+	ps \
+	meminfo \
+	who \
+	knl \
+	man \
+	poweroff \
+	# EOL
 
 # clock disabled because direct I/O port access
 # exitemu disabled because it calls INT directly to DOSEMU
@@ -45,9 +60,6 @@ shutdown: shutdown.o
 
 ps: ps.o
 	$(LD) $(LDFLAGS) -o ps ps.o $(LDLIBS)
-
-swapon: swapon.o
-	$(LD) $(LDFLAGS) -o swapon swapon.o $(LDLIBS)
 
 meminfo: meminfo.o
 	$(LD) $(LDFLAGS) -o meminfo meminfo.o $(LDLIBS)

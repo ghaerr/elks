@@ -14,8 +14,6 @@
  *
  * RS_TIMER		timer for the RS-232 ports
  *
- * SWAP_TIMER		timer for the background pageout daemon
- * 
  * HD_TIMER		harddisk timer
  *
  * HD_TIMER2		(atdisk2 patches)
@@ -38,7 +36,6 @@
 #define BLANK_TIMER	0
 #define BEEP_TIMER	1
 #define RS_TIMER	2
-#define SWAP_TIMER	3
 
 #define HD_TIMER	16
 #define FLOPPY_TIMER	17

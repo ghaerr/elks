@@ -14,7 +14,7 @@ There are quite a few versions of rdev:
   - the original rootdev that only printed the current root device, by
     Linus.
   - rdev that does what rootdev did and that also allows you to change
-    the root (and swap) device, by me.
+    the root device, by me.
   - rdev got renamed to setroot and I think even to rootdev on various
     distributions.
   - Peter MacDonald added video mode and RAM disk setting and included
@@ -158,7 +158,7 @@ static char *find_dev(int number)
 
 /* The enum values are significant, things are stored in this order,
    see bootsect.S */
-enum { RDEV, VIDMODE, RAMSIZE, __swapdev__, __syssize__, ROOTFLAGS };
+enum { RDEV, VIDMODE, RAMSIZE, __unused__, __syssize__, ROOTFLAGS };
 char *cmdnames[6] = { "rdev", "vidmode",  "ramsize", "",
 		      "", "rootflags"};
 char *desc[6] = { "Root device", "Video mode",  "Ramsize",  "",

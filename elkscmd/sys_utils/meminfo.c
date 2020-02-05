@@ -30,8 +30,6 @@ char ** argv;
     printf("memory usage : %4dKB total, %4dKB used, %4dKB free\n",
 		mu.used_memory + mu.free_memory, mu.used_memory,
 		mu.free_memory);
-    printf("swap usage   : %4dKB total, %4dKB used, %4dKB free\n",
-		mu.used_swap + mu.free_swap, mu.used_swap, mu.free_swap);
 
     return 0;
 }

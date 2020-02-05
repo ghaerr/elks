@@ -148,7 +148,7 @@ static void help(void)
 	    "for details.\n\n"
 	    "Syntax:  knl [--kernel=]image [-f=flaglist] [--flags=flaglist]\n"
 	    "             [--noram] [-p] [--prompt] [--ram=offset] [-r=device]\n"
-	    "             [--root=device] [-s=device] [--swap=device] [--help]\n"
+	    "             [--root=device] [--help]\n"
 	    "             [-v=mode] [--video=mode] [--version]\n");
     exit(255);
 }
@@ -987,14 +987,13 @@ static WORD Buffer[BufSize] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
 #define BufFlags	Buffer[1]	/* 0x01F2 - 0x01F3 */
 #define SysSize 	Buffer[2]	/* 0x01F4 - 0x01F5 */
-#define BufSwap		Buffer[3]	/* 0x01F6 - 0x01F7 */
+#define Unused		Buffer[3]	/* 0x01F6 - 0x01F7 */
 #define BufRAM		Buffer[4]	/* 0x01F8 - 0x01F9 */
 #define BufVideo	Buffer[5]	/* 0x01FA - 0x01FB */
 #define BufRoot		Buffer[6]	/* 0x01FC - 0x01FD */
 #define BufSignature	Buffer[7]	/* 0x01FE - 0x01FF */
 
 #define FlagsOK 	bit(1)
-#define SwapOK		bit(3)
 #define RamOK		bit(4)
 #define VideoOK 	bit(5)
 #define RootOK		bit(6)
@@ -1012,7 +1011,6 @@ int main(int c, char **v)
     WORD Flags = 0;
     WORD RamOffset = 0;
     WORD RootDev = 0;
-    WORD SwapDev = 0;
     WORD VideoMode = 0;
     char RamPrompt = 'N';
     char UseRAM = 'N';
@@ -1061,18 +1059,6 @@ int main(int c, char **v)
 				debug1("DEBUG: Root device set to %s\n", Ptr);
 			    } else {
 				debug1("DEBUG: Invalid root device: %s\n", Ptr);
-			    }
-			}
-			break;
-		    case 's':
-			trace("TRACE: Found -s\n");
-			if (*Ptr == '=') {
-			    SwapDev = GetDisk(++Ptr);
-			    if (Valid == 'Y') {
-				Accept |= SwapOK;
-				debug1("DEBUG: Swap device set to %s\n", Ptr);
-			    } else {
-				debug1("DEBUG: Invalid swap device: %s\n", Ptr);
 			    }
 			}
 			break;
@@ -1172,18 +1158,6 @@ int main(int c, char **v)
 				    break;
 			    }
 			break;
-		    case 's':
-			if (same(Ptr,"swap") && (Value != NULL)) {
-			    trace("TRACE: Found --swap\n");
-			    SwapDev = GetDisk(Value);
-			    if (Valid == 'Y') {
-				Accept |= SwapOK;
-				debug1("DEBUG: Swap device set to %s\n", Value);
-			    } else {
-				debug1("DEBUG: Invalid swap device: %s\n", Value);
-			    }
-			}
-			break;
 		    case 'v':
 			switch (Ptr[1]) {
 			    case 'e':
@@ -1245,14 +1219,12 @@ int main(int c, char **v)
 	    UseRAM = (BufRAM & 0x4000) != 0 ? 'Y' : 'N';
 	    VideoMode = BufVideo;
 	    RootDev = BufRoot;
-	    SwapDev = BufSwap;
 	    printf("\nKernel image configuration:\n\n"
 		   "    Image:       %s\n\n"
 		   "    Root Dev:    %s\n"
-		   "    Swap Dev:    %s\n\n"
 		   "    Flags:       %s\n"
 		   "    Video Mode:  %s\n\n",
-		   Image, SetDisk(RootDev), SetDisk(SwapDev),
+		   Image, SetDisk(RootDev),
 		   SetFlags(Flags), SetVideo(VideoMode));
 	    if (UseRAM == 'N')
 		printf("    Ram Disk:    No\n\n");
@@ -1278,11 +1250,6 @@ int main(int c, char **v)
 		trace2("TRACE: Changing Root from 0x%04X to 0x%04X\n",
 			BufRoot, RootDev);
 		BufRoot = RootDev;
-	    }
-	    if ((Accept & SwapOK) != 0) {
-		trace2("TRACE: Changing Swap from 0x%04X to 0x%04X\n",
-			BufSwap, SwapDev);
-		BufSwap = SwapDev;
 	    }
 	    if ((Accept & VideoOK) != 0) {
 		trace2("TRACE: Changing Video from %u to %u\n",

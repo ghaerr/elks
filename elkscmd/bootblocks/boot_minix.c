@@ -62,6 +62,14 @@ void run_prog ();
 
 //------------------------------------------------------------------------------
 
+// This must occur right at the start of the payload.  Currently this is done
+// by specifying -fno-toplevel-reorder in the Makefile, which forces GCC to
+// output all functions, variables, and __asm's in the same order as in the
+// source code.  FIXME: find a better way.
+__asm("jmp load_prog");
+
+//------------------------------------------------------------------------------
+
 static int strcmp (const char * s, const char * d)
 {
 	const char * p1 = s;
