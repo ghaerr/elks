@@ -1,10 +1,10 @@
-name: cross
+name: main
 
 on:
   push:
     paths:
-      - '.github/workflows/cross.yml'
-      - 'tools/*'
+      - '.github/workflows/main.yml'
+      - '!tools/*'
 
 jobs:
   build:
@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: setup
-        run: 'sudo apt install bison flex texinfo'
+        run: 'sudo apt install bison flex texinfo libncurses5-dev'
 
       - name: checkout
         uses: actions/checkout@v2
@@ -25,21 +25,15 @@ jobs:
           path: cross
           key: cross-${{ hashFiles('tools/*') }}-${{ runner.os }}
 
-      - name: prepare
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: 'mkdir cross'
-
-      - name: build
+      - name: cross
         if: steps.cache.outputs.cache-hit != 'true'
         run: tools/build.sh
 
-      - name: packing
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: tools/pack.sh
+      - name: build
+        run: ./build.sh auto
 
       - name: upload
-        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v1
         with:
-          name: cross
-          path: cross
+          name: fd1440.bin
+          path: image/fd1440.bin

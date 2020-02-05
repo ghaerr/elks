@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # Quick and dirty build script for ELKS
+# Arguments:
+#   - 'clean': full cleanup
+#   - 'auto' : continuous integration context
 
 DELAY=7
 
@@ -14,7 +17,7 @@ pause () {
 		else
 		echo -n "Press a key to continue... "
 		read -n 1 -s 2>/dev/null || sleep $DELAY
-fi
+	fi
 	echo
 }
 
@@ -32,9 +35,11 @@ clean_exit () {
 # TODO: check script status on return
 . tools/env.sh
 
-# Check tools
-mkdir -p "$CROSSDIR"
-test -x "$CROSSDIR/bin/ia16-elf-gcc" || tools/build.sh || clean_exit 1
+# Build cross tools if not already
+if [ "$1" != "auto" ]; then
+	mkdir -p "$CROSSDIR"
+	test -x "$CROSSDIR/bin/ia16-elf-gcc" || tools/build.sh || clean_exit 1
+fi
 
 # Working directory
 WD="$(pwd)"
@@ -51,21 +56,28 @@ if [ "$1" = "clean" ]
 fi
 
 ### Configure all (kernel + user land)
-echo
-echo "Now invoking 'make menuconfig' for you to configure the system."
-echo "The defaults should be OK for many systems, but you may want to review them."
-pause
-make menuconfig || clean_exit 2
+if [ "$1" = "auto" ]; then
+	echo "Invoking 'make defconfig'."
+	make defconfig || clean_exit 2
+else
+	echo
+	echo "Now invoking 'make menuconfig' for you to configure the system."
+	echo "The defaults should be OK for many systems, but you may want to review them."
+	pause
+	make menuconfig || clean_exit 2
+fi
+
 test -e .config || clean_exit 3
 
 ### Clean all
-echo "Cleaning all..."
-sleep 1
-make clean || clean_exit 4
+if [ "$1" != "auto" ]; then
+	echo "Cleaning all..."
+	sleep 1
+	make clean || clean_exit 4
+	fi
 
 ### Build all
 echo "Building all..."
-sleep 1
 # Forcing single threaded build because of dirty dependencies (see #273)
 make -j1 all || clean_exit 5
 test -e elks/arch/i86/boot/Image || clean_exit 6
