@@ -80,20 +80,20 @@ floppy_table:
 	xor %sp,%sp
 
 	push %ax
-	mov $_next1,%ax
-	push %ax
+	mov $_next1,%cl  // CH = 0
+	push %cx
 	retf
 
 _next1:
+
+	// Save boot drive as provided by BIOS
+
+	mov %dl,drive_num  // DX preserved above
 
 	// Print header
 
 	mov $msg_boot,%bx
 	call _puts
-
-	// Save boot drive as provided by BIOS
-
-	mov %dl,drive_num  // DX preserved above
 
 	// Set sector count in floppy parameter table
 
@@ -102,31 +102,12 @@ _next1:
 
 	// Load the second sector of the boot block
 
-	// TODO: move the retry to the 'disk_read' function
-	// and reuse the same function for all reading
-
-	mov $3,%si         // number of tries = 3
-
-_loop1:
-
-	xor %ah,%ah        // reset the floppy drive
-	int $0x13
-
-	mov $0x0201,%ax    // read 1 sector
-	mov $payload,%bx   // destination (ES already set)
-	mov $2,%cx         // track 0 - from sector 2 (base 1)
-	cwtd               // head 0 (dh = 0)
-	mov drive_num,%dl  // boot drive
-	int $0x13          // BIOS disk services
-	jnc _next2
-
-	dec %si
-	jnz _loop1
-
-	mov $ERR_PAYLOAD,%al
-	jmp _except
-
-_next2:
+	mov $1,%ax
+	mov %ax,%dx
+	mov $payload,%cx
+	push %ss
+	mov $ERR_PAYLOAD,%bl
+	call _disk_read
 
 	call payload
 	mov $ERR_NO_SYSTEM,%al
@@ -217,134 +198,136 @@ drive_reset:
 	.global disk_read
 
 disk_read:
+	// AX = sect
+	// DX = count
+	// CX = buf
+	// seg pushed on stack
+	mov $ERR_DISK_READ,%bl
 
-	push %cx
-	push %dx
+_disk_read:
+	// BL = error code in case of failure
+
+	mov $5,%bh
 	push %bp
 	mov %sp,%bp
-	sub $8,%sp
+	push %ax
+	push %dx
+	push %cx
+	push %bx
 
-// 8(%bp) = segment
-// 4(%bp) = offset
-// 2(%bp) = logical count
-// -2(%bp) = relative sector
-// -4(%bp) = relative head
-// -6(%bp) = relative track
-// -8(%bp) = relative count
-
-	// Compute the CHS from logical sector
-
-	// AX = logical sector
-	xor %dx,%dx
-	divw sect_max
-	mov %dx,-2(%bp)
-	xor %dx,%dx
-	divw head_max
-	mov %dx,-4(%bp)
-	mov %ax,-6(%bp)
-
-	// Read loop
+// word 4(%bp) = segment
+// word -2(%bp) = logical sector number
+// word -4(%bp) = logical count
+// word -6(%bp) = buffer offset
+// byte -7(%bp) = no. of retries left
+// byte -8(%bp) = failure error code
 
 dr_loop:
+	// Compute the CHS from logical sector
+	// AX = logical sector
+	mov sect_max,%bx
+	xor %dx,%dx
+	divw %bx
+	mov %dl,%cl      // CL = physical sector number in track, minus 1
+	divb head_max
+	mov %al,%ch      // CH = physical cylinder number
+	xchg %ax,%dx     // DH = physical head number
 
-	// Compute remaining sectors in current track
+	// Compute number of sectors to read
+	// First limit the sector count to the end of the track
 
-	mov -2(%bp),%ax
-	add 2(%bp),%ax
-	cmp sect_max,%ax
-	ja dr_over
-	mov 2(%bp),%ax
-	jmp dr_next1
+	sub %cl,%bl
+	inc %cx          // base 1 for sector number
+	mov -4(%bp),%ax
+	cmp %bx,%ax
+	jna dr_over
+	xchg %ax,%bx
+
+	// Also make sure the read does not overshoot the end of ES
+
+	mov -6+1(%bp),%bl
+	neg %bl
+	shr %bl
+	jz dr_over
+	cmp %bl,%al
+	jna dr_over
+	xchg %ax,%bx     // AL = number of sectors to read for this round
 
 dr_over:
-
-	mov sect_max,%ax
-	sub -2(%bp),%ax
-
-dr_next1:
-
-	mov %ax,-8(%bp)  // relative count
-
 	mov drive_num,%dl
-	mov -4(%bp),%dh  // head number
-	mov -2(%bp),%cl  // first sector number
-	inc %cl          // base 1 for sector number
-	mov -6(%bp),%ch  // cylinder number
 
+dr_try:
+	push %ax
+	push %cx
+	push %dx
 	push %es
-	mov 4(%bp),%bx
-	mov 8(%bp),%es
+	mov -6(%bp),%bx
+	mov 4(%bp),%es
 	mov $0x02,%ah    // BIOS read disk
 	int $0x13
 	pop %es
 
 	jnc dr_cont
 
+	xor %ah,%ah
+	int $0x13
+
 	// PATCH: failure trace
 
 	mov $'*',%al
 	call _putc
 
-	// TODO: reset drive on error and retry
-	//mov drive_num,%dl
-	//xor %ah,%ah
-	//int $0x13
-	//mov -8(%bp),%ax
-	//jmp dr_try
+	decb -7(%bp)
+	pop %dx
+	pop %cx
+	pop %ax
+	mov $1,%al       // if retry needed, try reading just _one_ sector...
+	jnz dr_try
 
 	// TODO: use BIOS returned error
-	//mov %ah,%al
-	mov $ERR_DISK_READ,%al
+	pop %ax
 	jmp _except
 
 dr_cont:
+	// Reset retry count
+
+	movb $5,-7(%bp)
 
 	// PATCH: success trace
 
 	mov $'.',%al
 	call _putc
 
-	// Update logical count
+	pop %dx
+	pop %cx
+	pop %ax
 
-	mov -8(%bp),%ax
-	sub %ax,2(%bp)
+	// Update logical sector number and logical count
+	// AL = number of sectors just read
+
+	xor %ah,%ah
+	sub %ax,-4(%bp)
 	jz dr_exit
+	add %ax,-2(%bp)
 
-	// Move to next head
+	// Advance in buffer; advance BX, then advance ES if BX overflows
 
-	movw $0,-2(%bp)
-	mov -4(%bp),%ax
-	inc %ax
-	mov %ax,-4(%bp)
+	shl %al
+	jnc dr_next
+	addb $0x10,4+1(%bp)
 
-	cmp head_max,%ax
-	jnz dr_next2
-
-	// Move to next track
-
-	movw $0,-4(%bp)
-	incw -6(%bp)
+dr_next:
+	add %al,-6+1(%bp)
+	jnc dr_next2
+	addb $0x10,4+1(%bp)
 
 dr_next2:
-
-	// Advance in buffer
-
-	// PATCH: don't move ES, only BX
-	// Limitation: reading size <= 64K
-
-	mov -8(%bp),%ax
-	mov $9,%cl
-	shl %cl,%ax
-	add %ax,4(%bp)
-
+	mov -2(%bp),%ax
 	jmp dr_loop
 
 dr_exit:
-
 	mov %bp,%sp
 	pop %bp
-	pop %dx
-	pop %cx
 	ret $2
 
 //------------------------------------------------------------------------------
