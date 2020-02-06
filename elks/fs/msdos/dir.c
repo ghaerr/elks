@@ -25,8 +25,7 @@ static int msdos_dir_read(inode, filp, buf, count)
     return -EISDIR;
 }
 
-static int msdos_readdir(struct inode *inode,
-			 struct file *filp,
+static int msdos_readdir(struct inode *inode, struct file *filp,
 			 char *dirent, filldir_t filldir);
 
 /*@-type@*/
@@ -92,20 +91,20 @@ uni16_to_x8(unsigned char *ascii, register unsigned char *uni)
  */
 #pragma GCC push_options
 #pragma GCC optimize ("O1")
-int msdos_readdir(
-	struct inode *inode,
-	register struct file *filp,
-	char *dirent,
+int msdos_readdir(struct inode *inode, register struct file *filp, char *dirent,
 	filldir_t filldir)
 {
 	ino_t ino;
 	struct buffer_head *bh;
 	struct msdos_dir_entry *de;
-	unsigned long oldpos = filp->f_pos; /* The location of the next starting directory entry */
-	int is_long;                        /* Whether it is complete, and its long file name matches the long file name */
-	unsigned char alias_checksum = 0; /* Make compiler warning go away */
+	/* The location of the next starting directory entry */
+	unsigned long oldpos = filp->f_pos;
+	/* Whether it is complete, and its long file name matches the long file name */
+	int is_long;
+	unsigned char alias_checksum = 0;	/* Make compiler warning go away */
 	unsigned char long_slots = 0;
 	unsigned char unicode[52];          /* Limit to two long entries */
+
 	if (!inode || !S_ISDIR(inode->i_mode)) return -EBADF;
 	if (inode->i_ino == MSDOS_ROOT_INO) {
 		/* Fake . and .. for the root directory. */
@@ -139,9 +138,8 @@ int msdos_readdir(
 			}
 
 			while (slot > 0) {
-				if (ds->attr !=  ATTR_EXT ||
-				    (ds->id & ~0x40) != slot ||
-				    ds->alias_checksum != alias_checksum) {
+				if (ds->attr !=  ATTR_EXT || (ds->id & ~0x40) != slot ||
+					ds->alias_checksum != alias_checksum) {
 					is_long = 0;
 					break;
 				}
@@ -214,12 +212,6 @@ int msdos_readdir(
 					break;
 				}
 				else {
-#ifdef CONFIG_UMSDOS_FS
-					if (inode->i_ino == MSDOS_ROOT_INO && filldir && 
-					    long_len == 3 && !strncmp(longname,"dev",3)) {
-						MSDOS_SB(inode->i_sb)->dev_ino = ino;
-					}
-#endif
 					filldir(dirent, longname, long_len, oldpos, (long) ino);
 					break;
 				}

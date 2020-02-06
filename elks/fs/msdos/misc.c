@@ -209,7 +209,7 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 	int offset;
 	void *data;
 
-#ifdef CONFIG_UMSDOS_FS
+#ifdef CONFIG_MSDOS_DEV
 	if (dir->i_ino == MSDOS_SB(dir->i_sb)->dev_ino) {
 		unsigned i = (unsigned)*pos / sizeof(struct msdos_dir_entry);
 		if (i - 2 <= DEVDIR_SIZE) {
@@ -242,10 +242,8 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 		//printk("mge1\n");
 		if (!(*bh = msdos_sread(dir->i_dev,sector,&data)))
 			continue;
-		*de = (struct msdos_dir_entry *) ((char *)data+(offset &
-		    (SECTOR_SIZE-1)));
-		return (sector << MSDOS_DPS_BITS)+((offset & (SECTOR_SIZE-1)) >>
-		    MSDOS_DIR_BITS);
+		*de = (struct msdos_dir_entry *) ((char *)data+(offset & (SECTOR_SIZE-1)));
+		return (sector << MSDOS_DPS_BITS)+((offset & (SECTOR_SIZE-1)) >> MSDOS_DIR_BITS);
 	}
 }
 
@@ -263,12 +261,10 @@ int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
 	*res_bh = NULL;
 	while ((*ino = msdos_get_entry(dir,&pos,res_bh,&de)) != -1) {
 		if (name) {
-			if (de->name[0] && ((unsigned char *) (de->name))[0]
-			    != DELETED_FLAG && !(de->attr & ATTR_VOLUME) &&
-			    !strncmp(de->name,name,MSDOS_NAME)) break;
+			if (de->name[0] && ((unsigned char *) (de->name))[0] != DELETED_FLAG
+				&& !(de->attr & ATTR_VOLUME) && !strncmp(de->name,name,MSDOS_NAME)) break;
 		}
-		else if (!de->name[0] || ((unsigned char *) (de->name))[0] ==
-			    DELETED_FLAG) {
+		else if (!de->name[0] || ((unsigned char *) (de->name))[0] == DELETED_FLAG) {
 				if (!(inode = iget(dir->i_dev,*ino))) break;
 				if (!inode->u.msdos_i.i_busy) {
 					iput(inode);
