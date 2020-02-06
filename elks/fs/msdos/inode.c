@@ -12,18 +12,14 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
-
 #include <arch/segment.h>
 
-int fatbits;
-
-#ifdef CONFIG_UMSDOS_FS
+#ifdef CONFIG_MSDOS_DEV
 struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "bda",	S_IFBLK | 0644, MKDEV(3, 0) },
     { "bda1",	S_IFBLK | 0644, MKDEV(3, 1) },
     { "fd0",	S_IFBLK | 0644, MKDEV(3, 128)},
     { "fd1",	S_IFBLK | 0644, MKDEV(3, 192)},
-
     { "mem",	S_IFCHR | 0644, MKDEV(1, 1) },
     { "kmem",	S_IFCHR | 0644, MKDEV(1, 2) },
     { "null",	S_IFCHR | 0644, MKDEV(1, 3) },
@@ -111,8 +107,8 @@ struct super_block *msdos_read_super(register struct super_block *s,
 	}
 	MSDOS_SB(s)->dir_start= b->reserved + b->fats*MSDOS_SB(s)->fat_length;
 	MSDOS_SB(s)->dir_entries = *((unsigned short *) b->dir_entries);
-	MSDOS_SB(s)->data_start = MSDOS_SB(s)->dir_start+((MSDOS_SB(s)->
-	    dir_entries << MSDOS_DIR_BITS) >> SECTOR_BITS);
+	MSDOS_SB(s)->data_start = MSDOS_SB(s)->dir_start +
+		((MSDOS_SB(s)-> dir_entries << MSDOS_DIR_BITS) >> SECTOR_BITS);
 	data_sectors = (*((unsigned short *) b->sectors)?*((unsigned short *)
 	    b->sectors) : b->total_sect)-MSDOS_SB(s)->data_start;
 	MSDOS_SB(s)->clusters = MSDOS_SB(s)->cluster_size ? data_sectors/MSDOS_SB(s)->cluster_size : 0;
@@ -122,10 +118,7 @@ struct super_block *msdos_read_super(register struct super_block *s,
 	32,
 #endif
 	unmap_brelse(bh);
-printk("[MS-DOS FS Rel. beta.1, FAT %d]\n",
-  MSDOS_SB(s)->fat_bits);
-
-fatbits=MSDOS_SB(s)->fat_bits; //fill global variable
+printk("[MSDOS-FS 0.3 FAT%d]\n", MSDOS_SB(s)->fat_bits);
 
 /*
 printk("[me=0x%x,cs=%d,#f=%d,fs=%d,fl=%d,ds=%d,de=%d,data=%d,se=%d,ts=%ld]\n",
@@ -155,6 +148,28 @@ printk("[me=0x%x,cs=%d,#f=%d,fs=%d,fl=%d,ds=%d,de=%d,data=%d,se=%d,ts=%ld]\n",
 		printk("get root inode failed\n");
 		return NULL;
 	}
+
+#ifdef CONFIG_MSDOS_DEV
+{
+	struct msdos_dir_entry *de;
+	ino_t ino;
+	loff_t pos = 0;
+	int i;
+	bh = NULL;
+
+	/* if /dev is first or second directory entry, turn on devfs filesystem*/
+	for (i=0; i<3; i++) {
+		ino = msdos_get_entry(s->s_mounted, &pos, &bh, &de); 
+		if (ino < 0) break;
+		if (de->attr == ATTR_DIR && !strncmp(de->name, "DEV        ", 11)) {
+				MSDOS_SB(s)->dev_ino = ino;
+				break;
+		}
+	}
+	if (bh)
+		unmap_brelse(bh);
+}
+#endif
 	return s;
 }
 
@@ -190,13 +205,12 @@ void msdos_read_inode(register struct inode *inode)
 	register struct msdos_dir_entry *raw_entry;
 	long this,nr;
 
-/* printk("read inode %lu\n",inode->i_ino); */
+/*printk("read inode %x\n",inode->i_ino);*/
 	inode->u.msdos_i.i_busy = 0;
 	inode->i_uid = current->uid;
 	inode->i_gid = current->gid;
 	if (inode->i_ino == MSDOS_ROOT_INO) {
-		inode->i_mode = (0777 & ~current->fs.umask) |
-		    S_IFDIR;
+		inode->i_mode = (0777 & ~current->fs.umask) | S_IFDIR;
 		inode->i_op = &msdos_dir_inode_operations;
 #ifndef FAT_BITS_32
 		if (MSDOS_SB(inode->i_sb)->fat_bits == 32)
@@ -224,7 +238,7 @@ void msdos_read_inode(register struct inode *inode)
 		inode->i_mtime = 0;
 		return;
 	}
-#ifdef CONFIG_UMSDOS_FS
+#ifdef CONFIG_MSDOS_DEV
 	else if (inode->i_ino < DEVINO_BASE + DEVDIR_SIZE) {
 		inode->i_mode = devnods[(int)inode->i_ino - DEVINO_BASE].mode;
 		inode->i_uid  = 0;
@@ -243,8 +257,7 @@ void msdos_read_inode(register struct inode *inode)
 	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS))))
 	    panic("unable to read i-node block");
 	map_buffer(bh);
-	raw_entry = &((struct msdos_dir_entry *) (bh->b_data))
-	    [inode->i_ino & (MSDOS_DPB-1)];
+	raw_entry = &((struct msdos_dir_entry *) (bh->b_data))[inode->i_ino & (MSDOS_DPB-1)];
 	((unsigned short *)&inode->u.msdos_i.i_start)[0] = raw_entry->start;
 	((unsigned short *)&inode->u.msdos_i.i_start)[1] = 
 #ifndef FAT_BITS_32
@@ -253,26 +266,21 @@ void msdos_read_inode(register struct inode *inode)
 	    raw_entry->starthi;
 #endif
 	if (raw_entry->attr & ATTR_DIR) {
-		inode->i_mode = MSDOS_MKMODE(raw_entry->attr,0777 &
-		    ~current->fs.umask) | S_IFDIR;
+		inode->i_mode = MSDOS_MKMODE(raw_entry->attr,0777 & ~current->fs.umask) | S_IFDIR;
 		inode->i_op = &msdos_dir_inode_operations;
 		inode->i_nlink = 3;
 		inode->i_size = 0;
-		for (this = inode->u.msdos_i.i_start; this && this != -1; this =
-		    fat_access(inode->i_sb,this,-1L))
-			inode->i_size += SECTOR_SIZE*MSDOS_SB(inode->i_sb)->
-			    cluster_size;
+		for (this = inode->u.msdos_i.i_start; this && this != -1; this = fat_access(inode->i_sb,this,-1L))
+			inode->i_size += SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 	}
 	else {
-		inode->i_mode = MSDOS_MKMODE(raw_entry->attr,0755 &
-		    ~current->fs.umask) | S_IFREG;
+		inode->i_mode = MSDOS_MKMODE(raw_entry->attr,0755 & ~current->fs.umask) | S_IFREG;
 		inode->i_op = &msdos_file_inode_operations_no_bmap;
 		inode->i_nlink = 1;
 		inode->i_size = raw_entry->size;
 	}
 	inode->u.msdos_i.i_attrs = raw_entry->attr & ATTR_UNUSED;
-	inode->i_mtime =
-	    date_dos2unix(raw_entry->time,raw_entry->date);
+	inode->i_mtime = date_dos2unix(raw_entry->time,raw_entry->date);
 	unmap_brelse(bh);
 }
 
