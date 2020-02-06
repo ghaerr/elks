@@ -31,17 +31,16 @@ load_prog:
 	jmp _reboot
 
 1:	mov %dh,%al  // maximum head (base 0)
-	inc %al
-	mov $0,%ah
-	mov %ax,head_max
+	inc %ax
+	mov %al,head_max
 
 	mov %ch,%al  // maximum track (base 0)
-	inc %al
-	mov %ax,track_max
+	inc %ax
+	mov %al,track_max
 
 	mov %cl,%al  // maximum sector (base 1)
 	and $0x3F,%al
-	mov %ax,sect_max
+	mov %al,sect_max
 
 	mov $msg_track,%bx
 	call _puts

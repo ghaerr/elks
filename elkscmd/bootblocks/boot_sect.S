@@ -225,7 +225,8 @@ _disk_read:
 dr_loop:
 	// Compute the CHS from logical sector
 	// AX = logical sector
-	mov sect_max,%bx
+	mov sect_max,%bl
+	xor %bh,%bh
 	xor %dx,%dx
 	divw %bx
 	mov %dl,%cl      // CL = physical sector number in track, minus 1
@@ -481,57 +482,66 @@ msg_reboot:
 drive_num:
 	.byte 0
 
+//------------------------------------------------------------------------------
+
+// ELKS disk parameter structure
+// For future expansion, fields should be added at the _front_ of structure
+
+	.org 0x1F7
+
+elks_parms_start:
+
 // Disk geometry (CHS)
 
 	.global sect_max
 	.global head_max
 	.global track_max
 
-// #undef CONFIG_IMG_FD1680
-// #undef CONFIG_IMG_FD1200
-
-sect_max:
-#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720)
-	.word 9
-#endif
-#if defined(CONFIG_IMG_FD1200)
-	.word 15
-#endif
-#if defined(CONFIG_IMG_FD1440)
-	.word 18
-#endif
-#if defined(CONFIG_IMG_FD1680)
-	.word 21
-#endif
-#if defined(CONFIG_IMG_HD)
-	.word CONFIG_IMG_SECT
-#endif
-
-head_max:
-#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680)
-	.word 2
-#endif
-#if defined(CONFIG_IMG_HD)
-	.word CONFIG_IMG_HEAD
-#endif
-
 // TODO: number of tracks is not used
 
 track_max:
 #if defined(CONFIG_IMG_FD360)
 	.word 40
-#endif
-#if  defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1440)
+#elif defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1440)
 	.word 80
-#endif
-#if defined(CONFIG_IMG_HD)
+#elif defined(CONFIG_IMG_HD)
 	.word CONFIG_IMG_TRACK
+#else
+	.error "Unknown number of disk tracks!"
 #endif
+
+sect_max:
+#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720)
+	.byte 9
+#elif defined(CONFIG_IMG_FD1200)
+	.byte 15
+#elif defined(CONFIG_IMG_FD1440)
+	.byte 18
+#elif defined(CONFIG_IMG_FD1680)
+	.byte 21
+#elif defined(CONFIG_IMG_HD)
+	.byte CONFIG_IMG_SECT
+#else
+	.error "Unknown number of disk sectors per track!"
+#endif
+
+head_max:
+#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680)
+	.byte 2
+#elif defined(CONFIG_IMG_HD)
+	.byte CONFIG_IMG_HEAD
+#else
+	.error "Unknown number of disk sides/heads!"
+#endif
+
+// Marker to indicate presence and size of ELKS parameter structure
+
+	.byte . - elks_parms_start
+	.ascii "eL"
 
 // Magic at end of first sector
 // to mark it as bootable for BIOS
 
-	.org 0x1FE
 	.word 0xAA55
 
 // Here comes the first sector of the payload
