@@ -3,7 +3,8 @@ name: main
 on:
   push:
     paths:
-      - '.github/workflows/main.yml'
+      - '**'
+      - '!.github/workflows/cross.yml'
       - '!tools/*'
 
 jobs:
