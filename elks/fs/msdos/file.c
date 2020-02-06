@@ -69,7 +69,7 @@ static int msdos_file_read(register struct inode *inode,register struct file *fi
 	struct buffer_head *bh;
 	void *data;
 
-/* printk("msdos_file_read\r\n"); */
+/* printk("msdos_file_read\n"); */
 	if (!inode) {
 		printk("msdos_file_read: inode = NULL\r\n");
 		return -EINVAL;

@@ -41,7 +41,9 @@
 #									:fileutil
 #										:app
 #										:nanox
-# -------------	------------------------------------------------------
+# Note: For FAT disks, /dev must be first or second root directory to work
+# -------------	----------------------------------------------------------
+/dev			:boot
 /bin			:boot
 /bin/ash		:boot
 /bin/banner								:app
@@ -56,7 +58,7 @@
 /bin/cmp						:shutil
 /bin/cp				:small
 /bin/cut						:shutil
-/bin/date			:small
+/bin/date				:base
 /bin/dd								:fileutil
 /bin/decomp16						:fileutil
 /bin/diff							:fileutil
@@ -78,7 +80,7 @@
 /bin/knl			:small
 /bin/ktcp					:net
 /bin/l								:fileutil
-/bin/ln				:small
+/bin/ln					:base
 /bin/login		:boot
 /bin/logname					:shutil
 /bin/lp						:net
@@ -95,8 +97,8 @@
 /bin/netstat				:net
 /bin/nslookup				:net
 /bin/passwd				:base
-/bin/poweroff		:small
-/bin/printenv		:small
+/bin/poweroff			:base
+/bin/printenv					:shutil
 /bin/proto							:fileutil
 /bin/ps				:small
 /bin/pwd			:small
@@ -107,7 +109,7 @@
 /bin/rmdir			:small
 /bin/sed						:shutil
 /bin/sh			:boot
-/bin/shutdown		:small
+/bin/shutdown			:base
 /bin/sort							:fileutil
 /bin/stty				:base :net
 /bin/sum						:shutil
@@ -133,7 +135,6 @@
 /bin/whoami						:shutil
 /bin/xargs				:base
 /bin/yes				:base
-/dev			:boot
 /etc			:boot
 /etc/group		:boot
 /etc/inittab	:boot
