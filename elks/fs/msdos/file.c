@@ -60,8 +60,8 @@ struct inode_operations msdos_file_inode_operations_no_bmap = {
 };
 
 
-static int msdos_file_read(register struct inode *inode,register struct file *filp,char *buf,
-    size_t count)
+static int msdos_file_read(register struct inode *inode,register struct file *filp,
+	char *buf,size_t count)
 {
 	char *start;
 	int left,offset,size;

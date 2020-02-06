@@ -16,11 +16,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/stat.h>
 
-static int msdos_dir_read(inode, filp, buf, count)
-     struct inode *inode;
-     struct file *filp;
-     char *buf;
-     int count;
+static int msdos_dir_read(struct inode *inode, struct file *filp, char *buf, int count)
 {
     return -EISDIR;
 }

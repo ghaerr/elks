@@ -72,8 +72,8 @@ static struct super_operations msdos_sops = {
 
 /* Read the super block of an MS-DOS FS. */
 
-struct super_block *msdos_read_super(register struct super_block *s,
-				     char *data, int silent)
+struct super_block *msdos_read_super(register struct super_block *s, char *data,
+	int silent)
 {
 	struct buffer_head *bh;
 	register struct msdos_boot_sector *b;
@@ -98,7 +98,7 @@ struct super_block *msdos_read_super(register struct super_block *s,
 		fat32 = 1;
 		MSDOS_SB(s)->fat_length = (unsigned short)b->fat32_length;
 		MSDOS_SB(s)->root_cluster = b->root_cluster;
-	}else{
+	} else {
 		fat32 = 0;
 #ifndef FAT_BITS_32
 		MSDOS_SB(s)->fat_length = b->fat_length;
@@ -109,9 +109,10 @@ struct super_block *msdos_read_super(register struct super_block *s,
 	MSDOS_SB(s)->dir_entries = *((unsigned short *) b->dir_entries);
 	MSDOS_SB(s)->data_start = MSDOS_SB(s)->dir_start +
 		((MSDOS_SB(s)-> dir_entries << MSDOS_DIR_BITS) >> SECTOR_BITS);
-	data_sectors = (*((unsigned short *) b->sectors)?*((unsigned short *)
-	    b->sectors) : b->total_sect)-MSDOS_SB(s)->data_start;
-	MSDOS_SB(s)->clusters = MSDOS_SB(s)->cluster_size ? data_sectors/MSDOS_SB(s)->cluster_size : 0;
+	data_sectors = (*((unsigned short *) b->sectors)?
+		*((unsigned short *) b->sectors) : b->total_sect)-MSDOS_SB(s)->data_start;
+	MSDOS_SB(s)->clusters = MSDOS_SB(s)->cluster_size?
+		data_sectors/MSDOS_SB(s)->cluster_size : 0;
 #if 1 /* ndef FAT_BITS_32 */
 	MSDOS_SB(s)->fat_bits = fat32 ? 32 : MSDOS_SB(s)->clusters > MSDOS_FAT12 ? 16 : 12;
 #else
@@ -158,7 +159,7 @@ printk("[me=0x%x,cs=%d,#f=%d,fs=%d,fl=%d,ds=%d,de=%d,data=%d,se=%d,ts=%ld]\n",
 	bh = NULL;
 
 	/* if /dev is first or second directory entry, turn on devfs filesystem*/
-	for (i=0; i<3; i++) {
+	for (i=0; i<2; i++) {
 		ino = msdos_get_entry(s->s_mounted, &pos, &bh, &de); 
 		if (ino < 0) break;
 		if (de->attr == ATTR_DIR && !strncmp(de->name, "DEV        ", 11)) {
@@ -175,7 +176,6 @@ printk("[me=0x%x,cs=%d,#f=%d,fs=%d,fl=%d,ds=%d,de=%d,data=%d,se=%d,ts=%ld]\n",
 
 
 #ifdef BLOAT_FS
-
 void msdos_statfs(struct super_block *sb,struct statfs *buf)
 {
 	long cluster_size,free,this;
@@ -195,7 +195,6 @@ void msdos_statfs(struct super_block *sb,struct statfs *buf)
 	tmp.f_ffree = 0;
 	memcpy(buf, &tmp, bufsiz);
 }
-
 #endif
 
 
@@ -204,6 +203,7 @@ void msdos_read_inode(register struct inode *inode)
 	struct buffer_head *bh;
 	register struct msdos_dir_entry *raw_entry;
 	long this,nr;
+	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
 
 /*printk("read inode %x\n",inode->i_ino);*/
 	inode->u.msdos_i.i_busy = 0;
@@ -213,7 +213,7 @@ void msdos_read_inode(register struct inode *inode)
 		inode->i_mode = (0777 & ~current->fs.umask) | S_IFDIR;
 		inode->i_op = &msdos_dir_inode_operations;
 #ifndef FAT_BITS_32
-		if (MSDOS_SB(inode->i_sb)->fat_bits == 32)
+		if (fatsz == 32)
 #endif
 		{
 			inode->u.msdos_i.i_start = MSDOS_SB(inode->i_sb)->root_cluster;
@@ -229,8 +229,7 @@ void msdos_read_inode(register struct inode *inode)
 #ifndef FAT_BITS_32
 		} else {
 			inode->u.msdos_i.i_start = 0;
-			inode->i_size = MSDOS_SB(inode->i_sb)->dir_entries*
-				sizeof(struct msdos_dir_entry);
+			inode->i_size = MSDOS_SB(inode->i_sb)->dir_entries* sizeof(struct msdos_dir_entry);
 #endif
 		}
 		inode->i_nlink = 1;
@@ -261,7 +260,7 @@ void msdos_read_inode(register struct inode *inode)
 	((unsigned short *)&inode->u.msdos_i.i_start)[0] = raw_entry->start;
 	((unsigned short *)&inode->u.msdos_i.i_start)[1] = 
 #ifndef FAT_BITS_32
-	    (MSDOS_SB(inode->i_sb)->fat_bits == 32) ? raw_entry->starthi : 0;
+	    (fatsz == 32)? raw_entry->starthi : 0;
 #else
 	    raw_entry->starthi;
 #endif
@@ -295,8 +294,7 @@ void msdos_write_inode(register struct inode *inode)
 	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS))))
 	    panic("unable to read i-node block");
 	map_buffer(bh);
-	raw_entry = &((struct msdos_dir_entry *) (bh->b_data))
-	    [inode->i_ino & (MSDOS_DPB-1)];
+	raw_entry = &((struct msdos_dir_entry *) (bh->b_data))[inode->i_ino & (MSDOS_DPB-1)];
 	if (S_ISDIR(inode->i_mode)) {
 		raw_entry->attr = ATTR_DIR;
 		raw_entry->size = 0;
