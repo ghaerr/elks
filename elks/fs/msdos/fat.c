@@ -27,7 +27,7 @@ long fat_access(register struct super_block *sb,long this,long new_value)
 #endif
 		first = last = this*4;
 #ifndef FAT_BITS_32
-	else if fatsz == 16) first = last = this*2;
+	else if( fatsz == 16) first = last = this*2;
 	else {
 		first = this*3/2;
 		last = first+1;
