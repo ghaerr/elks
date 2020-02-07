@@ -3,7 +3,8 @@
 
 #include "cmd.h"
 
-int main(int argc, char **argv)
+int
+main(int argc, char * argv[])
 {
 	char * progname = strrchr(argv[0], '/');
 
@@ -21,12 +22,12 @@ int main(int argc, char **argv)
 
 #if defined(CMD_basename)
 	if(!strcmp(progname, "basename"))
-		basename_main(argc, argv);
+		return basename_main(argc, argv);
 #endif
 
 #if defined(CMD_dirname)
 	if(!strcmp(progname, "dirname"))
-		dirname_main(argc, argv);
+		return dirname_main(argc, argv);
 #endif
 
 #if defined(CMD_true)

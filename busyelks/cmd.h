@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-void	basename_main (int argc, char **argv);
-void	dirname_main (int argc, char **argv);
+int	basename_main(int argc, char * argv[]);
+int	dirname_main(int argc, char * argv[]);
 
 #if defined(__cplusplus)
 }
