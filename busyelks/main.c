@@ -24,6 +24,11 @@ int main(int argc, char **argv)
 		basename_main(argc, argv);
 #endif
 
+#if defined(CMD_dirname)
+	if(!strcmp(progname, "dirname"))
+		dirname_main(argc, argv);
+#endif
+
 	if(!strcmp(progname, "true"))
 		return 0;
 
@@ -37,6 +42,9 @@ int main(int argc, char **argv)
 	fputs("BusyELKS commands:\n"
 #if defined(CMD_basename)
 		"\tbasename NAME [SUFFIX]\n"
+#endif
+#if defined(CMD_dirname)
+		"\tdirname NAME\n"
 #endif
 		"\tfalse\n"
 		"\ttrue\n"

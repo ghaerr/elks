@@ -22,6 +22,8 @@ Commands
 
 basename::	Strip directory and suffix from filenames.
 
+dirname::	Strip last component from file name.
+
 false::	Do nothing, unsuccessfully.
 
 true::	true - do nothing, successfully

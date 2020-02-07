@@ -42,6 +42,12 @@ ifdef CMD_basename
 	NEED_stripslash	= yes
 endif
 
+ifdef CMD_dirname
+	CFLAGS	+= -DCMD_dirname
+	OBJS	+= cmd/dirname.o
+	NEED_stripslash	= yes
+endif
+
 ifdef NEED_stripslash
 	OBJS	+= lib/stripslash.o
 endif
