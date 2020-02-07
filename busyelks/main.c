@@ -3,6 +3,9 @@
 
 #include "cmd.h"
 
+#define	true_main(argc, argv)		(0)
+#define	false_main(argc, argv)	(1)
+
 int
 main(int argc, char * argv[])
 {
@@ -32,12 +35,12 @@ main(int argc, char * argv[])
 
 #if defined(CMD_true)
 	if(!strcmp(progname, "true"))
-		return 0;
+		return true_main(argc, argv);
 #endif
 
 #if defined(CMD_false)
 	if(!strcmp(progname, "false"))
-		return 1;
+		return false_main(argc, argv);
 #endif
 
 	/*
