@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <string.h>
 
 int main(int argc, char **argv)
@@ -15,8 +14,12 @@ int main(int argc, char **argv)
 		progname = argv[1];
 	}
 
-	if(strcmp(progname, "true") == 0) exit(0);
-	if(strcmp(progname, "false") == 0) exit(1);
+	if(!strcmp(progname, "true"))
+		return 0;
+
+	if(!strcmp(progname, "false"))
+		return 1;
+
 	/*
 	if(strcmp(progname, "sync") == 0) { sync(); exit(0); }
 	*/
