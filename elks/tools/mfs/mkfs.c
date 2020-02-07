@@ -109,8 +109,13 @@ void cmd_mkfs(char *filename, int argc,char **argv) {
   close_fs(fs);
 }
 
-#define BPB_SecPerTrk	24		/* offset of sectors per track (short)*/
-#define BPB_NumHeads	26		/* offset of number of heads (short)*/
+/* ELKS BPB parameters*/
+#define ELKS_BPB_SecPerTrk	505		/* offset of sectors per track (byte)*/
+#define ELKS_BPB_NumHeads	506		/* offset of number of heads (byte)*/
+
+/* MSDOS FAT parameters (unused at present)*/
+#define FAT_BPB_SecPerTrk	24		/* offset of sectors per track (short)*/
+#define FAT_BPB_NumHeads	26		/* offset of number of heads (short)*/
 /**
  * Write boot block to image file
  */
@@ -153,8 +158,8 @@ void cmd_boot(char *filename, int argc,char **argv) {
 		fprintf(stderr, "%s warning: may not be valid boot block\n", argv[1]);
   
 	if (opt_updatebpb) {	/* update BPB before writing*/
-		blk[BPB_SecPerTrk] = (unsigned char)SecPerTrk;
-		blk[BPB_NumHeads] = (unsigned char)NumHeads;
+		blk[ELKS_BPB_SecPerTrk] = (unsigned char)SecPerTrk;
+		blk[ELKS_BPB_NumHeads] = (unsigned char)NumHeads;
 	}
 	if (fwrite(blk,1,count,ofp) != count) die("fwrite(%s)", argv[1]);
 	fclose(ofp);
@@ -165,8 +170,8 @@ void cmd_boot(char *filename, int argc,char **argv) {
 
 	count = fread(blk,1,512,ofp);
 	if (count != 512) die("fread(%s)", filename);
-	blk[BPB_SecPerTrk] = (unsigned char)SecPerTrk;
-	blk[BPB_NumHeads] = (unsigned char)NumHeads;
+	blk[ELKS_BPB_SecPerTrk] = (unsigned char)SecPerTrk;
+	blk[ELKS_BPB_NumHeads] = (unsigned char)NumHeads;
 	if (fseek(ofp, 0L, SEEK_SET) != 0)
 		die("fseek(%s)", filename);
 	if (fwrite(blk,1,512,ofp) != 512) die("fwrite(%s)", filename);
