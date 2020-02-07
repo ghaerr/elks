@@ -47,6 +47,11 @@ ifdef CMD_cal
 	OBJS	+= cmd/cal.o
 endif
 
+ifdef CMD_cat
+	CFLAGS	+= -DCMD_cat
+	OBJS	+= cmd/cat.o
+endif
+
 ifdef CMD_dirname
 	CFLAGS	+= -DCMD_dirname
 	OBJS	+= cmd/dirname.o

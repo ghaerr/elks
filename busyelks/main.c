@@ -50,6 +50,9 @@ static struct cmd cmd[] =
 #if defined(CMD_cal)
 	CMD("cal",	cal_main,	"[month] year", "Displays a calendar."),
 #endif
+#if defined(CMD_cal)
+	CMD("cat",	cat_main,	"[file]...", "Concatenate files and print on the standard output."),
+#endif
 #if defined(CMD_dirname)
 	CMD("dirname",	dirname_main,	"NAME", " Strip last component from file name."),
 #endif
