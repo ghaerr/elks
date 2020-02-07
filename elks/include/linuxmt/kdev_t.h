@@ -45,7 +45,7 @@ extern char *kdevname(kdev_t);	  /* note: returns pointer to static data! */
 #define kdev_t_to_nr(dev)	((__u16) dev)
 #define to_kdev_t(dev)		((kdev_t) dev)
 
-#else
+#else  /* __KERNEL__
 
 /* Some programs want their definitions of MAJOR and MINOR and MKDEV
  * from the kernel sources. These must be the externally visible ones.
@@ -54,6 +54,10 @@ extern char *kdevname(kdev_t);	  /* note: returns pointer to static data! */
 #define MAJOR(dev)		(((dev) >> MINORBITS))
 #define MINOR(dev)		(((dev) & MINORMASK))
 #define MKDEV(major,minor)	((major) << MINORBITS | (minor))
+
+#include <stdint.h>
+
+typedef uint16_t kdev_t;
 
 #endif
 

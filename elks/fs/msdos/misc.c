@@ -210,7 +210,7 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 	int offset;
 	void *data;
 
-#ifdef CONFIG_MSDOS_DEV
+#ifdef CONFIG_FS_DEV
 	if (dir->i_ino == MSDOS_SB(dir->i_sb)->dev_ino) {
 		unsigned i = (unsigned)*pos / sizeof(struct msdos_dir_entry);
 		if (i - 2 <= DEVDIR_SIZE) {

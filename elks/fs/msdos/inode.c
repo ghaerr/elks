@@ -15,7 +15,7 @@
 #include <linuxmt/locks.h>
 #include <arch/segment.h>
 
-#ifdef CONFIG_MSDOS_DEV
+#ifdef CONFIG_FS_DEV
 struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "bda",	S_IFBLK | 0644, MKDEV(3, 0) },
     { "bda1",	S_IFBLK | 0644, MKDEV(3, 1) },
@@ -150,7 +150,7 @@ printk("[me=0x%x,cs=%d,#f=%d,fs=%d,fl=%d,ds=%d,de=%d,data=%d,se=%d,ts=%ld]\n",
 		return NULL;
 	}
 
-#ifdef CONFIG_MSDOS_DEV
+#ifdef CONFIG_FS_DEV
 {
 	struct msdos_dir_entry *de;
 	ino_t ino;
@@ -237,7 +237,7 @@ void msdos_read_inode(register struct inode *inode)
 		inode->i_mtime = 0;
 		return;
 	}
-#ifdef CONFIG_MSDOS_DEV
+#ifdef CONFIG_FS_DEV
 	else if (inode->i_ino < DEVINO_BASE + DEVDIR_SIZE) {
 		inode->i_mode = devnods[(int)inode->i_ino - DEVINO_BASE].mode;
 		inode->i_uid  = 0;

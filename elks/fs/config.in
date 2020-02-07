@@ -10,10 +10,13 @@ mainmenu_option next_comment
 	bool 'ROM file system'                 CONFIG_ROMFS_FS            n
 
 	if [ "$CONFIG_ROMFS_FS" = "y" ]; then
-		hex 'Base in ROM (segment)' CONFIG_ROMFS_BASE 0x8000
+		hex 'Base in ROM (paragraphs)' CONFIG_ROMFS_BASE 0x8000
 		fi
 
-	bool 'MS-DOS file system'              CONFIG_MSDOS_FS            n
+	bool 'FAT filesystem' CONFIG_MSDOS_FS 'n'
+	if [ "$CONFIG_MSDOS_FS" == "y" ]; then
+		bool 'Fake FAT /dev folder' CONFIG_FS_DEV 'y'
+	fi
 
 	comment 'General filesystem settings'
 
@@ -27,6 +30,7 @@ mainmenu_option next_comment
 	    define_bool                        CONFIG_FULL_VFS            y
 	    define_bool                        CONFIG_32BIT_INODES        y
 	fi
+
 	bool 'Extra external buffer cache'     CONFIG_FS_EXTERNAL_BUFFER  y
 	bool 'Pipe support'                    CONFIG_PIPE                y
 
