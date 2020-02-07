@@ -106,7 +106,7 @@ int msdos_lookup(register struct inode *dir,const char *name,int len,
 		return res;
 	}
 	if (bh) unmap_brelse(bh);
-/* printk("lookup: ino=%d\n",ino); */
+/* printk("lookup: ino=%ld\n",(unsigned long)ino); */
 	if (!(*result = iget(dir->i_sb,ino))) {
 		iput(dir);
 		return -EACCES;
@@ -142,7 +142,7 @@ static int msdos_create_entry(register struct inode *dir,char *name,int is_dir,
 	date_unix2dos(CURRENT_TIME,&de->time,&de->date);
 	de->size = 0;
 	bh->b_dirty = 1;
-	if (*result = iget(dir->i_sb,ino)) msdos_read_inode(*result);
+	if ((*result = iget(dir->i_sb,ino)) != 0) msdos_read_inode(*result);
 	unmap_brelse(bh);
 	if (!*result) return -EIO;
 	(*result)->i_mtime = CURRENT_TIME;
@@ -294,6 +294,10 @@ int msdos_unlink(register struct inode *dir,const char *name,int len)
 	inode = NULL;
 	if ((res = msdos_find(dir,name,len,&bh,&de,&ino)) < 0)
 		goto unlink_done;
+
+	/* the following returned inode will have a i_count of 2,
+	 * requiring two iputs() below
+	 */
 	if (!(inode = iget(dir->i_sb,ino))) {
 		res = -ENOENT;
 		goto unlink_done;
@@ -306,10 +310,14 @@ int msdos_unlink(register struct inode *dir,const char *name,int len)
 	inode->u.msdos_i.i_busy = 1;
 	inode->i_dirt = 1;
 	de->name[0] = DELETED_FLAG;
+	dir->i_dirt = 1;
 	bh->b_dirty = 1;
 unlink_done:
 	unmap_brelse(bh);
+//if (inode) printk("unlink iput inode %u dirt %d count %d\n", inode->i_ino, inode->i_dirt, inode->i_count);
+//if (dir) printk("unlink iput dir %u dirt %d count %d\n", dir->i_ino, dir->i_dirt, dir->i_count);
 	iput(inode);
+	iput(inode);	/* 2nd call required from iget() above*/
 	iput(dir);
 	return res;
 }

@@ -34,7 +34,7 @@ minix:
 	$(MAKE) -f Make.devices "MKDEV=mfs $(MINIX_IMAGE) mknod"
 	mfs $(MINIX_IMAGE) boot $(FD_BSECT)
 #	mfs $(MINIX_IMAGE) boot $(BPB) $(FD_BSECT)
-	mfsck -fv $(MINIX_IMAGE)
+	#mfsck -fv $(MINIX_IMAGE)
 	mfs $(MINIX_IMAGE) stat
 
 # Create bootable ELKS MSDOS disk image:

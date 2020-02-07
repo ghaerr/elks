@@ -12,6 +12,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
+#include <linuxmt/locks.h>
 #include <arch/segment.h>
 
 #ifdef CONFIG_MSDOS_DEV
@@ -37,16 +38,18 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
 
 void msdos_put_inode(register struct inode *inode)
 {
-    if (!inode->i_nlink) {
-	inode->i_size = 0;
-	msdos_truncate(inode);
-	clear_inode(inode);
-    }
+//printk("iput %ld count %d dirty %d\n", (unsigned long)inode->i_ino, inode->i_count, inode->i_dirt);
+	if (!inode->i_nlink) {
+		inode->i_size = 0;
+		msdos_truncate(inode);
+		clear_inode(inode);
+	}
 }
 
 
 void msdos_put_super(register struct super_block *sb)
 {
+//printk("put super\n");
 	cache_inval_dev(sb->s_dev);
 	lock_super(sb);
 	sb->s_dev = 0;
@@ -205,7 +208,7 @@ void msdos_read_inode(register struct inode *inode)
 	long this,nr;
 	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
 
-/*printk("read inode %x\n",inode->i_ino);*/
+//printk("read inode %ld\n", (unsigned long)inode->i_ino);
 	inode->u.msdos_i.i_busy = 0;
 	inode->i_uid = current->uid;
 	inode->i_gid = current->gid;
@@ -216,12 +219,12 @@ void msdos_read_inode(register struct inode *inode)
 		if (fatsz == 32)
 #endif
 		{
-			inode->u.msdos_i.i_start = MSDOS_SB(inode->i_sb)->root_cluster;
-			if ((nr = inode->u.msdos_i.i_start) != 0) {
+			nr = inode->u.msdos_i.i_start = MSDOS_SB(inode->i_sb)->root_cluster;
+			if (nr) {
 				while (nr != -1) {
 					inode->i_size += (unsigned long)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 					if (!(nr = fat_access(inode->i_sb,nr,-1L))) {
-						printk("Directory %ld: bad FAT\n",inode->i_ino);
+						printk("Directory %ld: bad FAT\n", (unsigned long)inode->i_ino);
 						break;
 					}
 				}
@@ -242,7 +245,7 @@ void msdos_read_inode(register struct inode *inode)
 		inode->i_mode = devnods[(int)inode->i_ino - DEVINO_BASE].mode;
 		inode->i_uid  = 0;
 		inode->i_size = 0;
-		inode->i_mtime= 0;
+		inode->i_mtime= 0;	//FIXME add atime, ctime, set to mount time
 		inode->i_gid  = 0;
 		inode->i_nlink= 1;
 		inode->i_rdev = devnods[(int)inode->i_ino - DEVINO_BASE].rdev;
@@ -254,9 +257,9 @@ void msdos_read_inode(register struct inode *inode)
 	}
 #endif
 	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS))))
-	    panic("unable to read i-node block");
+	    panic("unable to read i-node block");		//FIXME allow panic on floppy fail?
 	map_buffer(bh);
-	raw_entry = &((struct msdos_dir_entry *) (bh->b_data))[inode->i_ino & (MSDOS_DPB-1)];
+	raw_entry = &((struct msdos_dir_entry *)(bh->b_data))[inode->i_ino & (MSDOS_DPB-1)];
 	((unsigned short *)&inode->u.msdos_i.i_start)[0] = raw_entry->start;
 	((unsigned short *)&inode->u.msdos_i.i_start)[1] = 
 #ifndef FAT_BITS_32
@@ -289,17 +292,17 @@ void msdos_write_inode(register struct inode *inode)
 	struct buffer_head *bh;
 	register struct msdos_dir_entry *raw_entry;
 
+//printk("iwrite %ld %d\n", (unsigned long)inode->i_ino, inode->i_dirt);
 	inode->i_dirt = 0;
 	if (inode->i_ino == MSDOS_ROOT_INO || !inode->i_nlink) return;
 	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS))))
-	    panic("unable to read i-node block");
+	    panic("unable to read i-node block");	//FIXME allow panic on floppy fail?
 	map_buffer(bh);
-	raw_entry = &((struct msdos_dir_entry *) (bh->b_data))[inode->i_ino & (MSDOS_DPB-1)];
+	raw_entry = &((struct msdos_dir_entry *)(bh->b_data))[inode->i_ino & (MSDOS_DPB-1)];
 	if (S_ISDIR(inode->i_mode)) {
 		raw_entry->attr = ATTR_DIR;
 		raw_entry->size = 0;
-	}
-	else {
+	} else {
 		raw_entry->attr = ATTR_NONE;
 		raw_entry->size = inode->i_size;
 	}
@@ -312,10 +315,9 @@ void msdos_write_inode(register struct inode *inode)
 }
 
 struct file_system_type msdos_fs_type = {
-#ifdef BLOAT_FS
-	msdos_read_super, "msdos", 1
-#else
 	msdos_read_super, "msdos"
+#ifdef BLOAT_FS
+	,1
 #endif
 };
 
