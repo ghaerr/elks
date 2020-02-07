@@ -3,8 +3,59 @@
 
 #include "cmd.h"
 
-#define	true_main(argc, argv)		(0)
-#define	false_main(argc, argv)	(1)
+#if defined(CMD_false)
+int false_main(int argc, char * argv[])
+{
+	return 1;
+}
+#endif
+
+#if defined(CMD_true)
+int true_main(int argc, char * argv[])
+{
+	return 0;
+}
+#endif
+
+struct cmd
+{
+	char const *	name;
+	int (* fun)(int argc, char * argv[]);
+#if defined(CMD_INFO_ARGS)
+	char const *	args;
+#	if defined(CMD_INFO_DESCR)
+	char const *	descr;
+#	endif
+#endif
+};
+
+#if defined(CMD_INFO_ARGS)
+#	if defined(CMD_INFO_DESCR)
+#		define	CMD(name, fun, args, descr)	{ name, fun, args, descr }
+#	else
+#		define	CMD(name, fun, args, descr)	{ name, fun, args }
+#	endif
+#else
+#	define	CMD(name, fun, args, descr)	{ name, fun }
+#endif
+
+#define	CMD_MAX	(sizeof(cmd) / sizeof(*cmd))
+
+static struct cmd cmd[] =
+{
+#if defined(CMD_basename)
+	CMD("basename",	basename_main,	"NAME [SUFFIX]", "Strip directory and suffix from filenames."),
+#endif
+#if defined(CMD_dirname)
+	CMD("dirname",	dirname_main,	"NAME", " Strip last component from file name."),
+#endif
+#if defined(CMD_false)
+	CMD("false",	false_main,	NULL, "Do nothing, unsuccessfully."),
+#endif
+#if defined(CMD_true)
+	CMD("true",	true_main, NULL, "Do nothing, successfully"),
+#endif
+};
 
 int
 main(int argc, char * argv[])
@@ -23,44 +74,45 @@ main(int argc, char * argv[])
 		argc--;
 	}
 
-#if defined(CMD_basename)
-	if(!strcmp(progname, "basename"))
-		return basename_main(argc, argv);
-#endif
+	{
+		unsigned i;
 
-#if defined(CMD_dirname)
-	if(!strcmp(progname, "dirname"))
-		return dirname_main(argc, argv);
-#endif
+		for(i = 0; i < CMD_MAX; i++)
+			if(!strcmp(progname, cmd[i].name))
+				return cmd[i].fun(argc, argv);
+	}
 
-#if defined(CMD_true)
-	if(!strcmp(progname, "true"))
-		return true_main(argc, argv);
-#endif
+	fputs("BusyELKS", stderr);
 
-#if defined(CMD_false)
-	if(!strcmp(progname, "false"))
-		return false_main(argc, argv);
-#endif
+	if(*progname)
+	{
+		fputs(": Unknown command: ", stderr);
+		fputs(progname, stderr);
+	}
 
-	/*
-	if(strcmp(progname, "sync") == 0) { sync(); exit(0); }
-	*/
+	fputc('\n' , stderr);
+	{
+		unsigned i;
 
-	fputs("BusyELKS commands:\n"
-#if defined(CMD_basename)
-		"\tbasename NAME [SUFFIX]\n"
+		for(i = 0; i < CMD_MAX; i++)
+		{
+			fputc('\t', stderr);
+			fputs(cmd[i].name, stderr);
+#if defined(CMD_INFO_ARGS)
+			fputc(' ', stderr);
+			if(cmd[i].args != NULL)
+				fputs(cmd[i].args, stderr);
+#	if defined(CMD_INFO_DESCR)
+			if(cmd[i].descr != NULL)
+			{
+				fputs("\n\t\t", stderr);
+				fputs(cmd[i].descr, stderr);
+			}
+#	endif
 #endif
-#if defined(CMD_dirname)
-		"\tdirname NAME\n"
-#endif
-#if defined(CMD_false)
-		"\tfalse\n"
-#endif
-#if defined(CMD_true)
-		"\ttrue\n"
-#endif
-		, stderr);
+			fputc('\n', stderr);
+		}
+	}
 
 	return 1;
 }
