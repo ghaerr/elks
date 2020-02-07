@@ -32,7 +32,7 @@ LDFLAGS	+= \
 	$(FLAGS) \
 	-melks-libc \
 
-OBJS	+= main.o
+OBJS	+= main.o lib/bsearch.o
 
 include config.mk
 

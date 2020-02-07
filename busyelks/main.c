@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "cmd.h"
+#include "lib.h"
 
 #if defined(CMD_false)
 int false_main(int argc, char * argv[])
@@ -57,6 +58,12 @@ static struct cmd cmd[] =
 #endif
 };
 
+static int
+cmd_cmp(void const * key, void const * data)
+{
+	return strcmp((char const *)key, ((struct cmd *)data)->name);
+}
+
 int
 main(int argc, char * argv[])
 {
@@ -75,11 +82,10 @@ main(int argc, char * argv[])
 	}
 
 	{
-		unsigned i;
+		struct cmd * c = bsearch(progname, cmd, CMD_MAX, sizeof(struct cmd), cmd_cmp);
 
-		for(i = 0; i < CMD_MAX; i++)
-			if(!strcmp(progname, cmd[i].name))
-				return cmd[i].fun(argc, argv);
+		if(c != NULL)
+			return c->fun(argc, argv);
 	}
 
 	fputs("BusyELKS", stderr);
