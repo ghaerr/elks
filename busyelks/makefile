@@ -5,7 +5,7 @@ LIBC	= $(ROOT)/libc
 NAME	= busyelks
 
 OUT	= $(NAME)
-OUTINST	= $(ROOT)/elkscmd/rootfs_template/bin/$(OUT)
+INSTDIR	= $(ROOT)/elkscmd/rootfs_template
 
 CC	= ia16-elf-gcc
 
@@ -85,7 +85,24 @@ doc:	README.html
 README.html:	README
 	asciidoc README
 
-install:	$(OUTINST)
+install: busyelks.tar.xz
+	tar Jxf $< -C $(INSTDIR)
 
-$(OUTINST):	$(OUT)
-	cp $< $@
+busyelks.tar.xz: busyelks.fs $(OUT)
+	b=`grep '/busyelks' < $<` \
+	&& $(RM) -r _install \
+	&& mkdir -p "`dirname "_install/$$b"`" \
+	&& cp $(OUT) "_install/$$b" \
+	&& grep '^[ 	]*CMD(' < main.c \
+		| sed 's|^.*CMD([0 \t]*"||' \
+		| sed 's|".*$$||' \
+		| while read f; \
+			do \
+				if p=`grep "/$$f"` < $<; \
+				then \
+					mkdir -p "`dirname "_install/$$p"`"; \
+					ln -sr "_install/$$b" "_install/$$p"; \
+				fi; \
+			done
+	tar Jcf $@ -C _install .
+	$(RM) -r _install
