@@ -7,9 +7,16 @@ for _ELKS_.
 Compilation
 -----------
 
+* Prepare your ELKS tool chain.
+
 * Set up your environment (PATH, TOPDIR and CROSSDIR):
 .........................................
 $ . tools/env.sh
+.........................................
+
+* Enter 'busyelks' directory:
+.........................................
+$ cd busyelks
 .........................................
 
 * Build everything:
@@ -17,13 +24,78 @@ $ . tools/env.sh
 $ make
 .........................................
 
-Commands
+* Create the pack of 'busyelks' and all symlinks:
+.........................................
+$ make busyelks.tar.xz
+.........................................
+
+Configuration
+-------------
+
+config.mk::
+	Parameteres of compilation, commands selection.
+busyelks.fs::
+	Places for busyelks & symlinks on the target filesystem.
+
+Installation
+------------
+
+Extract all files from busyelks.tar.gz pack in the root of ELKS filesystem.
+
+Hack
+~~~~
+
+This command make and copy everything to _elkscmd/rootfs_template/_:
+...........................................................
+$ make install
+...........................................................
+
+Not very correct, but useful and quick. Now you are ready to create
+system image. Remove all files frm _rootfs_templare_ on your own.
+
+Have fun
 --------
+.....................................................................
+(...)
+login: root
 
-basename::	Strip directory and suffix from filenames.
+# which busyelks
+	/bin/busyelks
 
-dirname::	Strip last component from file name.
+# ls -l /bin/busyelks
+-rwxr-xr-x  1 root     root        10064  Feb 06 2020  busyelks
 
-false::	Do nothing, unsuccessfully.
+# busyelks
+BusyELKS
+	basename NAME [SUFFIX]
+		Strip directory and suffix from filenames.
+	cal [month] year
+		Displays a calendar.
+	cat [file]...
+		Concatenate files and print on the standard output.
+	dirname NAME
+		Strip last component from file name.
+	false
+		Do nothing, unsuccessfully.
+	true
+		Do nothing, successfully
 
-true::	true - do nothing, successfully
+# busyelks basename /etc/resolv.conf .conf
+resolv
+
+# which basename
+/bin/basename
+/usr/bin/basename
+
+# ls -l /bin/basename
+-rwxr-xr-x  1 root     root         5634  Feb 06 2020  basename
+
+# ls -l /usr/bin/basename
+lrwxrwxrwx  1 root     root           18  Feb 06 2020  basename -> ../../bin/busyelks
+
+# /usr/bin/basename /etc/resolv.conf .conf
+resolv
+
+# /bin/basename /etc/resolv.conf .conf
+resolv
+..................................................................
