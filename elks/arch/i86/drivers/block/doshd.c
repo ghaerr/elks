@@ -57,6 +57,21 @@
 #define BUFSEG 0x800
 #endif
 
+struct elks_disk_parms {
+    __u16 track_max;		/* number of tracks, little-endian */
+    __u8 sect_max;		/* number of sectors per track */
+    __u8 head_max;		/* number of disk sides/heads */
+    __u8 size;			/* size of parameter block (everything before
+				   this point) */
+    __u8 marker[2];		/* should be "eL" */
+} __attribute__((packed));
+
+struct elks_boot_sect {
+    __u8 xx1[0x1FE - sizeof(struct elks_disk_parms)];
+    struct elks_disk_parms disk_parms;
+    __u8 xx2[2];		/* 0xAA55 */
+} __attribute__((packed));
+
 static int bioshd_ioctl(struct inode *, struct file *,
 	unsigned int, unsigned int);
 
@@ -299,8 +314,7 @@ static void reset_bioshd(int drive)
 #endif
 }
 
-#ifndef CONFIG_HW_USE_INT13_FOR_DISKPARMS
-int seek_sector(int drive, int track, int sector)
+int read_sector(int drive, int track, int sector)
 {
 
 /* i took this code from bioshd_open() where it replicates code used
@@ -312,7 +326,6 @@ int seek_sector(int drive, int track, int sector)
     do {
 	/* BIOS read sector */
 
-/*	BD_IRQ = BIOSHD_INT;*/
 	BD_AX = (unsigned short int) (BIOSHD_READ | 1); /* Read 1 sector  */
 	BD_BX = 0;					/* Seg offset = 0 */
 	BD_ES = BUFSEG;					/* Target segment */
@@ -325,7 +338,6 @@ int seek_sector(int drive, int track, int sector)
     } while ((int)(--count) > 0);
     return 1;			/* error */
 }
-#endif
 
 static int bioshd_open(struct inode *inode, struct file *filp)
 {
@@ -367,25 +379,6 @@ static int bioshd_open(struct inode *inode, struct file *filp)
     if (target >= 2) {		/* 2,3 are the floppydrives */
 	register struct drive_infot *drivep = &drive_info[target];
 
-#ifdef CONFIG_HW_USE_INT13_FOR_DISKPARMS
-	target &= 1;
-
-/* We can get the Geometry of the floppy from the BIOS.
- */
-
-/*	BD_IRQ = BIOSHD_INT;*/
-	BD_AX = BIOSHD_DRIVE_PARMS;
-	BD_DX = target;			/* Head 0, drive number */
-	if (!call_bios(&bdt)) {
-	    drivep->sectors = (BD_CX & 0x3f);
-	    drivep->cylinders = ((BD_CX >> 8) | ((BD_CX & 0xC0) << 2)) + 1;
-	    drivep->heads = (BD_DX >> 8)  + 1;
-	} else
-	    printk("bioshd_open: no diskinfo %d\n", target);
-
-	printk("fd: /dev/fd%d BIOS: %d sectors, %d cylinders\n",
-   		target, drivep->sectors, drivep->cylinders);
-#else
 /* probing range can be easily extended by adding more values to these
  * two lists and adjusting for loop' parameters in line 433 and 446 (or
  * somewhere near)
@@ -396,14 +389,38 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	int count;
 
 	target &= 1;
-	printk("fd: probing disc in /dev/fd%d\n", target);
-
 /* The area between 32-64K is a 'scratch' area - we need a semaphore for it
  */
 
 	while (!dma_avail)
 	    sleep_on(&dma_wait);
 	dma_avail = 0;
+
+/* Try to look for an ELKS disk parameter block in the first sector.  If
+ * it exists, we can obtain the disk geometry from it.
+ */
+
+	if (!read_sector(target, 0, 1)) {
+	    struct elks_boot_sect __far *boot
+		= (struct elks_boot_sect __far *)((__u32)BUFSEG << 16);
+	    struct elks_disk_parms __far *parms = &boot->disk_parms;
+
+	    if (parms->marker[0] == 'e' && parms->marker[1] == 'L'
+		&& parms->size >= offsetof(struct elks_disk_parms, size)) {
+		drivep->cylinders = parms->track_max;
+		drivep->sectors = parms->sect_max;
+		drivep->heads = parms->head_max;
+
+		if (drivep->cylinders != 0 && drivep->sectors != 0
+		    && drivep->heads != 0) {
+		    printk("fd: found valid ELKS disk parameters on /dev/fd%d "
+			   "boot sector\n", target);
+		    goto got_geom;
+		}
+	    }
+	}
+
+	printk("fd: probing disc in /dev/fd%d\n", target);
 
 /* First probe for cylinder number. We probe on sector 1, which is
  * safe for all formats, and if we get a seek error, we assume that
@@ -413,7 +430,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	drivep->cylinders = 0;
 	count = 0;
 	do {
-	    if (seek_sector(target, (int)track_probe[count] - 1, 1))
+	    if (read_sector(target, (int)track_probe[count] - 1, 1))
 		break;
 	    drivep->cylinders = (int)track_probe[count];
 	} while (++count < 2);
@@ -426,7 +443,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	drivep->sectors = 0;
 	count = 0;
 	do {
-	    if (seek_sector(target, 0, (int)sector_probe[count]))
+	    if (read_sector(target, 0, (int)sector_probe[count]))
 		break;
 	    drivep->sectors = (int)sector_probe[count];
 	} while (++count < 5);
@@ -434,6 +451,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	drivep->heads = 2;
 /* DMA code belongs out of the loop. */
 
+      got_geom:
 	dma_avail = 1;
 	wake_up(&dma_wait);
 
@@ -446,10 +464,10 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	    printk("fd: Floppy drive autoprobe failed!\n");
 	}
 	else
-	    printk("fd: /dev/fd%d probably has %d sectors and %d cylinders\n",
-		   target, drivep->sectors, drivep->cylinders);
+	    printk("fd: /dev/fd%d probably has %d sectors, %d heads, and "
+		   "%d cylinders\n",
+		   target, drivep->sectors, drivep->heads, drivep->cylinders);
 
-#endif
 
 /*	This is not a bugfix, hence no code, but coders should be aware that
  *	multi-sector reads from this point on depend on bootsect modifying

@@ -473,8 +473,6 @@ msg_error:
 msg_reboot:
 	.asciz "Press key\r\n"
 
-// Boot drive as provided by BIOS on entry
-
 //------------------------------------------------------------------------------
 
 // ELKS disk parameter structure
