@@ -230,7 +230,8 @@ int msdos_mkdir(struct inode *dir,const char *name,int len,int mode)
 	return 0;
 mkdir_error:
 	iput(inode);
-	if (msdos_rmdir(dir,name,len) < 0) panic("rmdir in mkdir failed");
+	if (msdos_rmdir(dir,name,len) < 0)
+		printk("FAT: rmdir fail\n");
 	unlock_creation();
 	return res;
 }

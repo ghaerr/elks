@@ -15,6 +15,7 @@
 #include <linuxmt/msdos_fs.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/stat.h>
+#include <linuxmt/mm.h>
 
 static int msdos_dir_read(struct inode *inode, struct file *filp, char *buf, int count)
 {
@@ -98,7 +99,7 @@ int msdos_readdir(struct inode *inode, register struct file *filp, char *dirent,
 	/* Whether it is complete, and its long file name matches the long file name */
 	int is_long;
 	unsigned char alias_checksum = 0;	/* Make compiler warning go away */
-	unsigned char long_slots = 0;
+//	unsigned char long_slots = 0;
 	unsigned char unicode[52];          /* Limit to two long entries */
 
 	if (!inode || !S_ISDIR(inode->i_mode)) return -EBADF;
@@ -128,7 +129,7 @@ int msdos_readdir(struct inode *inode, register struct file *filp, char *dirent,
 
 			ds = (struct msdos_dir_slot *) de;
 			if (ds->id & 0x40) {
-				long_slots = slot = ds->id & ~0x40;
+//				long_slots = slot = ds->id & ~0x40;
 				is_long = 1;
 				alias_checksum = ds->alias_checksum;
 			}

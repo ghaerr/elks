@@ -8,6 +8,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/stat.h>
+#include <linuxmt/mm.h>
 
 static struct fat_cache *fat_cache,cache[FAT_CACHE];
 
@@ -34,7 +35,7 @@ long fat_access(register struct super_block *sb,long this,long new_value)
 	}
 #endif
 	if (!(bh = msdos_sread(sb->s_dev,(long)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS)),&data))) {
-		printk("bread in fat_access failed\r\n");
+		printk("FAT: bread fat failed\n");
 		return 0;
 	}
 	if ((first >> SECTOR_BITS) == (last >> SECTOR_BITS)) {
@@ -44,7 +45,7 @@ long fat_access(register struct super_block *sb,long this,long new_value)
 	else {
 		if (!(bh2 = msdos_sread(sb->s_dev,(long)(MSDOS_SB(sb)->fat_start+(last >> SECTOR_BITS)),&data2))) {
 			unmap_brelse(bh);
-			printk("bread in fat_access failed\r\n");
+			printk("FAT: bread fat failed\n");
 			return 0;
 		}
 	}
@@ -175,8 +176,10 @@ printk("cache add: %d (%d)\r\n",f_clu,d_clu);
 	for (walk = fat_cache; walk->next; walk = (last = walk)->next)
 		if (inode->i_dev == walk->device && walk->ino == inode->i_ino &&
 		    walk->file_cluster == f_clu) {
-			if (walk->disk_cluster != d_clu)
-				panic("FAT cache corruption");
+			if (walk->disk_cluster != d_clu) {
+				printk("FAT: corrupt cache");
+				return;
+			}
 			/* update LRU */
 			if (last == NULL) return;
 			last->next = walk->next;
@@ -274,7 +277,7 @@ int fat_free(register struct inode *inode,long skip)
 		if ((this = fat_access(inode->i_sb,this,-1L)) == -1)
 			return 0;
 		if (!this) {
-			printk("fat_free: skipped EOF\r\n");
+			printk("FAT: missing EOF\n");
 			return -EIO;
 		}
 	}
@@ -290,8 +293,10 @@ int fat_free(register struct inode *inode,long skip)
 		inode->i_dirt = 1;
 	}
 	while (this != -1)
-		if (!(this = fat_access(inode->i_sb,this,0L)))
-			panic("fat_free: deleting beyond EOF");
+		if (!(this = fat_access(inode->i_sb,this,0L))) {
+			printk("FAT: delete past EOF");
+			return -EIO;
+		}
 	cache_inval_inode(inode);
 	return 0;
 }

@@ -26,7 +26,7 @@ struct buffer_head *msdos_sread(int dev,long sector,void **start)
 
 
 static struct wait_queue *creation_wait = NULL;
-static creation_lock = 0;
+static int creation_lock = 0;
 
 
 void lock_creation(void)
@@ -91,11 +91,13 @@ printk("set to %x\r\n",fat_access(inode->i_sb,this,-1L));
 	}
 	else {
 		last = 0;
-		if (current = inode->u.msdos_i.i_start) {
+		if ((current = inode->u.msdos_i.i_start) != 0) {
 			cache_lookup(inode,0x7fffffffL,&last,&current);
 			while (current && current != -1)
-				if (!(current = fat_access(inode->i_sb, last = current,-1L)))
-					panic("File without EOF");
+				if (!(current = fat_access(inode->i_sb, last = current,-1L))) {
+					printk("FAT: no EOF in file");
+					return -ENOSPC;
+				}
 			}
 	}
 #ifdef DEBUG
@@ -118,7 +120,7 @@ printk("zeroing sector %d\r\n",sector);
 #endif
 		if (current < MSDOS_SB(inode->i_sb)->cluster_size-1 && !(sector & 1)) {
 			if (!(bh = getblk(inode->i_dev,(block_t)(sector >> 1))))
-				printk("getblk failed\r\n");
+				printk("FAT: getblk fail\n");
 			else {
 				map_buffer(bh);
 				memset(bh->b_data,0,BLOCK_SIZE);
@@ -128,7 +130,7 @@ printk("zeroing sector %d\r\n",sector);
 		}
 		else {
 			if (!(bh = msdos_sread(inode->i_dev,sector,&data)))
-				printk("msdos_sread failed\r\n");
+				printk("FAT: sread fail\n");
 			else memset(data,0,SECTOR_SIZE);
 		}
 		if (bh) {
@@ -137,8 +139,10 @@ printk("zeroing sector %d\r\n",sector);
 		}
 	}
 	if (S_ISDIR(inode->i_mode)) {
-		if (inode->i_size & (SECTOR_SIZE-1))
-			panic("Odd directory size");
+		if (inode->i_size & (SECTOR_SIZE-1)) {
+			printk("FAT: bad dir size\n");
+			return -ENOSPC;
+		}
 		inode->i_size += SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 #ifdef DEBUG
 printk("size is %d now (%x)\r\n",inode->i_size,inode);
@@ -236,7 +240,7 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 		*pos += sizeof(struct msdos_dir_entry);
 		if (*bh)
 			unmap_brelse(*bh);
-		//printk("mge1\n");
+//printk("mge1\n");
 		if (!(*bh = msdos_sread(dir->i_dev,sector,&data)))
 			continue;
 		*de = (struct msdos_dir_entry *) ((char *)data+(offset & (SECTOR_SIZE-1)));
@@ -324,7 +328,7 @@ static long raw_found(struct super_block *sb,long sector,char *name,long number,
 static long raw_scan_root(register struct super_block *sb,char *name,long number,ino_t *ino)
 {
 	int count;
-	long cluster;
+	long cluster = 0;
 
 	for (count = 0; count < MSDOS_SB(sb)->dir_entries/MSDOS_DPS; count++) {
 		if ((cluster = raw_found(sb,(long)(MSDOS_SB(sb)->dir_start+count),name,
@@ -346,9 +350,11 @@ static long raw_scan_nonroot(register struct super_block *sb,long start,char *na
 			    cluster_size+MSDOS_SB(sb)->data_start+count,name,
 			    number,ino)) >= 0) return cluster;
 		}
-		if (!(start = fat_access(sb,start,-1L))) panic("FAT error");
-	}
-	while (start != -1);
+		if (!(start = fat_access(sb,start,-1L))) {
+			printk("FAT: bad fat");
+			return -1;
+		}
+	} while (start != -1);
 	return -1;
 }
 
@@ -365,7 +371,10 @@ ino_t msdos_parent_ino(register struct inode *dir,int locked)
 	long current,prev;
 	ino_t this = -1;
 
-	if (!S_ISDIR(dir->i_mode)) panic("Non-directory fed to m_p_i");
+	if (!S_ISDIR(dir->i_mode)) {	// actually coding error if occurs
+		printk("FAT: bad directory\n");
+		return -1;
+	}
 	if (dir->i_ino == MSDOS_ROOT_INO) return dir->i_ino;
 	if (!locked) lock_creation(); /* prevent renames */
 	if ((current = raw_scan(dir->i_sb,dir->u.msdos_i.i_start,MSDOS_DOTDOT,0L, NULL)) < 0) {

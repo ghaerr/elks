@@ -89,7 +89,7 @@ struct super_block *msdos_read_super(register struct super_block *s, char *data,
 	unlock_super(s);
 	if (bh == NULL) {
 /*		s->s_dev = 0;*/
-		printk("MSDOS bread failed\r\n");
+		printk("FAT: can't read super\n");
 		return NULL;
 	}
 	map_buffer(bh);
@@ -116,14 +116,11 @@ struct super_block *msdos_read_super(register struct super_block *s, char *data,
 		*((unsigned short *) b->sectors) : b->total_sect)-MSDOS_SB(s)->data_start;
 	MSDOS_SB(s)->clusters = MSDOS_SB(s)->cluster_size?
 		data_sectors/MSDOS_SB(s)->cluster_size : 0;
-#if 1 /* ndef FAT_BITS_32 */
 	MSDOS_SB(s)->fat_bits = fat32 ? 32 : MSDOS_SB(s)->clusters > MSDOS_FAT12 ? 16 : 12;
-#else
-	32,
-#endif
 	unmap_brelse(bh);
-printk("[MSDOS-FS 0.3 FAT%d]\n", MSDOS_SB(s)->fat_bits);
 
+	printk("FAT: %dk, fat%d format\n", *(unsigned short *)b->sectors/2,
+		MSDOS_SB(s)->fat_bits);
 /*
 printk("[me=0x%x,cs=%d,#f=%d,fs=%d,fl=%d,ds=%d,de=%d,data=%d,se=%d,ts=%ld]\n",
   b->media,MSDOS_SB(s)->cluster_size,MSDOS_SB(s)->fats,MSDOS_SB(s)->fat_start,
@@ -139,7 +136,7 @@ printk("[me=0x%x,cs=%d,#f=%d,fs=%d,fl=%d,ds=%d,de=%d,data=%d,se=%d,ts=%ld]\n",
 #endif
 		) {
 /*		s->s_dev = 0;*/
-		printk("Unsupported FS parameters\r\n");
+		printk("FAT: Unsupported format\n");
 		return NULL;
 	}
 #ifdef BLOAT_FS
@@ -149,7 +146,7 @@ printk("[me=0x%x,cs=%d,#f=%d,fs=%d,fl=%d,ds=%d,de=%d,data=%d,se=%d,ts=%ld]\n",
 	s->s_op = &msdos_sops;
 	if (!(s->s_mounted = iget(s,(ino_t)MSDOS_ROOT_INO))) {
 /*		s->s_dev = 0;*/
-		printk("get root inode failed\n");
+		printk("FAT: can't read rootdir\n");
 		return NULL;
 	}
 
@@ -224,7 +221,7 @@ void msdos_read_inode(register struct inode *inode)
 				while (nr != -1) {
 					inode->i_size += (unsigned long)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 					if (!(nr = fat_access(inode->i_sb,nr,-1L))) {
-						printk("Directory %ld: bad FAT\n", (unsigned long)inode->i_ino);
+						printk("FAT: can't read dir %ld\n", (unsigned long)inode->i_ino);
 						break;
 					}
 				}
@@ -256,8 +253,10 @@ void msdos_read_inode(register struct inode *inode)
 		return;
 	}
 #endif
-	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS))))
-	    panic("unable to read i-node block");		//FIXME allow panic on floppy fail?
+	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS)))) {
+	    printk("FAT: read inode fail\n");
+		return;
+	}
 	map_buffer(bh);
 	raw_entry = &((struct msdos_dir_entry *)(bh->b_data))[inode->i_ino & (MSDOS_DPB-1)];
 	((unsigned short *)&inode->u.msdos_i.i_start)[0] = raw_entry->start;
@@ -295,8 +294,10 @@ void msdos_write_inode(register struct inode *inode)
 //printk("iwrite %ld %d\n", (unsigned long)inode->i_ino, inode->i_dirt);
 	inode->i_dirt = 0;
 	if (inode->i_ino == MSDOS_ROOT_INO || !inode->i_nlink) return;
-	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS))))
-	    panic("unable to read i-node block");	//FIXME allow panic on floppy fail?
+	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS)))) {
+	    printk("FAT: write inode fail\n");
+	    return;
+	}
 	map_buffer(bh);
 	raw_entry = &((struct msdos_dir_entry *)(bh->b_data))[inode->i_ino & (MSDOS_DPB-1)];
 	if (S_ISDIR(inode->i_mode)) {
