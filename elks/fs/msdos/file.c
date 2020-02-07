@@ -71,16 +71,16 @@ static int msdos_file_read(register struct inode *inode,register struct file *fi
 
 /* printk("msdos_file_read\n"); */
 	if (!inode) {
-		printk("msdos_file_read: inode = NULL\r\n");
+		printk("FAT: read NULL inode\n");
 		return -EINVAL;
 	}
 	if (!S_ISREG(inode->i_mode)) {
-		printk("msdos_file_read: mode = %07o\n",inode->i_mode);
+		printk("FAT: read bad mode %07o\n",inode->i_mode);
 		return -EINVAL;
 	}
 	if (filp->f_pos >= inode->i_size || count <= 0) return 0;
 	start = buf;
-	while (left = MIN(inode->i_size-filp->f_pos,count-(buf-start))) {
+	while ((left = MIN(inode->i_size-filp->f_pos,count-(buf-start))) != 0) {
 		if (!(sector = msdos_smap(inode,filp->f_pos >> SECTOR_BITS)))
 			break;
 		offset = (short)filp->f_pos & (SECTOR_SIZE-1);
@@ -99,18 +99,18 @@ static int msdos_file_write(register struct inode *inode,register struct file *f
     size_t count)
 {
 	long sector;
-	int offset,size,left,written;
+	int offset,size,written;
 	int error;
 	char *start;
 	struct buffer_head *bh;
 	void *data;
 
 	if (!inode) {
-		printk("msdos_file_write: inode = NULL\n");
+		printk("FAT: write NULL inode\n");
 		return -EINVAL;
 	}
 	if (!S_ISREG(inode->i_mode)) {
-		printk("msdos_file_write: mode = %07o\n",inode->i_mode);
+		printk("FAT: write bad mode %07o\n",inode->i_mode);
 		return -EINVAL;
 	}
 /*
