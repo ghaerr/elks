@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 
 int main(int argc, char **argv)
@@ -24,8 +25,10 @@ int main(int argc, char **argv)
 	if(strcmp(progname, "sync") == 0) { sync(); exit(0); }
 	*/
 
-	/*
-	usage();
-	*/
+	fputs("BusyELKS commands:\n"
+		"\tfalse\n"
+		"\ttrue\n"
+		, stderr);
+
 	return 1;
 }
