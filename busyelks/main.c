@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "cmd.h"
+
 int main(int argc, char **argv)
 {
 	char * progname = strrchr(argv[0], '/');
@@ -13,7 +15,14 @@ int main(int argc, char **argv)
 	/* If our name was called, assume argv[1] is the command */
 	if(strcmp(progname, "busyelks") == 0) {
 		progname = argv[1];
+		argv++;
+		argc--;
 	}
+
+#if defined(CMD_basename)
+	if(!strcmp(progname, "basename"))
+		basename_main(argc, argv);
+#endif
 
 	if(!strcmp(progname, "true"))
 		return 0;
@@ -26,6 +35,9 @@ int main(int argc, char **argv)
 	*/
 
 	fputs("BusyELKS commands:\n"
+#if defined(CMD_basename)
+		"\tbasename NAME [SUFFIX]\n"
+#endif
 		"\tfalse\n"
 		"\ttrue\n"
 		, stderr);

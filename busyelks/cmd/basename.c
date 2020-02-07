@@ -1,5 +1,8 @@
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+
+#include "./lib.h"
 
 static void
 remove_suffix (name, suffix)

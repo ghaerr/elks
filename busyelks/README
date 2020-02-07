@@ -20,6 +20,8 @@ $ make
 Commands
 --------
 
+basename::	Strip directory and suffix from filenames.
+
 false::	Do nothing, unsuccessfully.
 
 true::	true - do nothing, successfully

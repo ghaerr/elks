@@ -18,6 +18,7 @@ CFLAGS	+= \
 	$(FLAGS) \
 	-fno-inline \
 	-D_POSIX_SOURCE \
+	-I. \
 	-I$(ROOT)/include \
 	-I$(ELKS)/include \
 	-I$(LIBC)/include \
@@ -33,10 +34,24 @@ LDFLAGS	+= \
 
 OBJS	+= main.o
 
+include config.mk
+
+ifdef CMD_basename
+	CFLAGS	+= -DCMD_basename
+	OBJS	+= cmd/basename.o
+	NEED_stripslash	= yes
+endif
+
+ifdef NEED_stripslash
+	OBJS	+= lib/stripslash.o
+endif
+
 all: $(OUT)
 
 $(OUT):	$(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
+
+$(OBJS): config.mk
 
 clean:
 	$(RM) $(OBJS)
