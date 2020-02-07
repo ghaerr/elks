@@ -113,9 +113,6 @@ void cmd_mkfs(char *filename, int argc,char **argv) {
 #define ELKS_BPB_SecPerTrk	505		/* offset of sectors per track (byte)*/
 #define ELKS_BPB_NumHeads	506		/* offset of number of heads (byte)*/
 
-/* MSDOS FAT parameters (unused at present)*/
-#define FAT_BPB_SecPerTrk	24		/* offset of sectors per track (short)*/
-#define FAT_BPB_NumHeads	26		/* offset of number of heads (short)*/
 /**
  * Write boot block to image file
  */
