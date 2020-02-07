@@ -1,9 +1,18 @@
-This is an attempt at creating a BusyBox-like set of binaries
-for ELKS.
+BusyELKS
+========
 
-I am awful at Makefiles, so I wrote a rudimentary Makefile and 
-wrote a shell script to oversee the build process. Run ./build 
-and wait for it. When it's finished, you will have three
-BusyELKS binaries and a series of symbolic links for them.
-They will be set up under the _install/ directory exactly as
-they need to appear in a root filesystem.
+_BusyELKS_ is an attempt at creating a _BusyBox_-like set of binaries
+for _ELKS_.
+
+Compilation
+-----------
+
+* Set up your environment (PATH, TOPDIR and CROSSDIR):
+.........................................
+$ . tools/env.sh
+.........................................
+
+* Build everything:
+.........................................
+$ make
+.........................................
