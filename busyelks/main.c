@@ -29,11 +29,15 @@ int main(int argc, char **argv)
 		dirname_main(argc, argv);
 #endif
 
+#if defined(CMD_true)
 	if(!strcmp(progname, "true"))
 		return 0;
+#endif
 
+#if defined(CMD_false)
 	if(!strcmp(progname, "false"))
 		return 1;
+#endif
 
 	/*
 	if(strcmp(progname, "sync") == 0) { sync(); exit(0); }
@@ -46,8 +50,12 @@ int main(int argc, char **argv)
 #if defined(CMD_dirname)
 		"\tdirname NAME\n"
 #endif
+#if defined(CMD_false)
 		"\tfalse\n"
+#endif
+#if defined(CMD_true)
 		"\ttrue\n"
+#endif
 		, stderr);
 
 	return 1;
