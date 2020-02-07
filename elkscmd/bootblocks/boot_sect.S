@@ -473,14 +473,7 @@ msg_error:
 msg_reboot:
 	.asciz "Press key\r\n"
 
-//------------------------------------------------------------------------------
-
 // Boot drive as provided by BIOS on entry
-
-	.global drive_num
-
-drive_num:
-	.byte 0
 
 //------------------------------------------------------------------------------
 
@@ -538,6 +531,15 @@ head_max:
 
 	.byte . - elks_parms_start
 	.ascii "eL"
+
+//------------------------------------------------------------------------------
+
+// Boot drive as provided by BIOS on entry
+// Allow this variable to overlap the "eL" marker (above)
+
+	.global drive_num
+
+	.set drive_num, . - 1
 
 // Magic at end of first sector
 // to mark it as bootable for BIOS
