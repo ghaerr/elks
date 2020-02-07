@@ -37,3 +37,8 @@ $(OUT):	$(OBJS)
 
 clean:
 	$(RM) $(OBJS)
+
+doc:	README.html
+
+README.html:	README
+	asciidoc README
