@@ -30,6 +30,8 @@ LDFLAGS	+= \
 	$(FLAGS) \
 	-melks-libc \
 
+OBJS	+= main.o
+
 all: $(OUT)
 
 $(OUT):	$(OBJS)
