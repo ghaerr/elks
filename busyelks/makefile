@@ -5,6 +5,7 @@ LIBC	= $(ROOT)/libc
 NAME	= busyelks
 
 OUT	= $(NAME)
+OUTINST	= $(ROOT)/elkscmd/rootfs_template/bin/$(OUT)
 
 CC	= ia16-elf-gcc
 
@@ -44,3 +45,8 @@ doc:	README.html
 
 README.html:	README
 	asciidoc README
+
+install:	$(OUTINST)
+
+$(OUTINST):	$(OUT)
+	cp $< $@
