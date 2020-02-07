@@ -47,6 +47,9 @@ static struct cmd cmd[] =
 #if defined(CMD_basename)
 	CMD("basename",	basename_main,	"NAME [SUFFIX]", "Strip directory and suffix from filenames."),
 #endif
+#if defined(CMD_cal)
+	CMD("cal",	cal_main,	"[month] year", "Displays a calendar."),
+#endif
 #if defined(CMD_dirname)
 	CMD("dirname",	dirname_main,	"NAME", " Strip last component from file name."),
 #endif

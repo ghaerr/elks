@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 int	basename_main(int argc, char * argv[]);
+int cal_main(int argc, char * argv[]);
 int	dirname_main(int argc, char * argv[]);
 
 #if defined(__cplusplus)
