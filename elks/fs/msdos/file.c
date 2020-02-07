@@ -60,8 +60,8 @@ struct inode_operations msdos_file_inode_operations_no_bmap = {
 };
 
 
-static int msdos_file_read(register struct inode *inode,register struct file *filp,char *buf,
-    size_t count)
+static int msdos_file_read(register struct inode *inode,register struct file *filp,
+	char *buf,size_t count)
 {
 	char *start;
 	int left,offset,size;
@@ -69,7 +69,7 @@ static int msdos_file_read(register struct inode *inode,register struct file *fi
 	struct buffer_head *bh;
 	void *data;
 
-/* printk("msdos_file_read\r\n"); */
+/* printk("msdos_file_read\n"); */
 	if (!inode) {
 		printk("msdos_file_read: inode = NULL\r\n");
 		return -EINVAL;
@@ -150,7 +150,7 @@ static int msdos_file_write(register struct inode *inode,register struct file *f
 
 void msdos_truncate(register struct inode *inode)
 {
-	int cluster;
+	int cluster;		//FIXME should this be long for FAT32?
 
 	cluster = SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 	(void) fat_free(inode,(inode->i_size+(cluster-1))/cluster);

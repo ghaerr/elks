@@ -30,11 +30,11 @@ minix:
 	awk "/$(APPS)/{print}" Packages | cut -f 1 > Filelist
 	mfs $(VERBOSE) $(MINIX_IMAGE) mkfs $(MINIX_MKFSOPTS)
 	mfs $(VERBOSE) $(MINIX_IMAGE) addfs Filelist $(DESTDIR)
-	rm Filelist
+	#rm Filelist
 	$(MAKE) -f Make.devices "MKDEV=mfs $(MINIX_IMAGE) mknod"
 	mfs $(MINIX_IMAGE) boot $(FD_BSECT)
 #	mfs $(MINIX_IMAGE) boot $(BPB) $(FD_BSECT)
-	mfsck -fv $(MINIX_IMAGE)
+	#mfsck -fv $(MINIX_IMAGE)
 	mfs $(MINIX_IMAGE) stat
 
 # Create bootable ELKS MSDOS disk image:

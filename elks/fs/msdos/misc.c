@@ -51,9 +51,10 @@ int msdos_add_cluster(register struct inode *inode)
 	long count,this,limit,last,current,sector;
 	void *data;
 	struct buffer_head *bh;
+	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
 
 #ifndef FAT_BITS_32
-	if (MSDOS_SB(inode->i_sb)->fat_bits != 32)
+	if (fatsz != 32)
 		if (inode->i_ino == MSDOS_ROOT_INO) return -ENOSPC;
 #endif
 	while (lock) sleep_on(&wait);
@@ -75,8 +76,8 @@ printk("free cluster: %d\r\n",this);
 	}
 	fat_access(inode->i_sb,this,
 #ifndef FAT_BITS_32
-	    MSDOS_SB(inode->i_sb)->fat_bits == 12 ?
-	    0xff8UL : MSDOS_SB(inode->i_sb)->fat_bits == 16?0xfff8UL:
+	    fatsz == 12 ?
+	    0xff8UL : fatsz == 16?0xfff8UL:
 #endif
 	    0xffffff8UL);
 	lock = 0;
@@ -93,8 +94,7 @@ printk("set to %x\r\n",fat_access(inode->i_sb,this,-1L));
 		if (current = inode->u.msdos_i.i_start) {
 			cache_lookup(inode,0x7fffffffL,&last,&current);
 			while (current && current != -1)
-				if (!(current = fat_access(inode->i_sb,
-				    last = current,-1L)))
+				if (!(current = fat_access(inode->i_sb, last = current,-1L)))
 					panic("File without EOF");
 			}
 	}
@@ -111,13 +111,12 @@ if (last) printk("next set to %d\r\n",fat_access(inode->i_sb,last,-1L));
 #endif
 	for (current = 0; current < MSDOS_SB(inode->i_sb)->cluster_size;
 	    current++) {
-		sector = MSDOS_SB(inode->i_sb)->data_start+(this-2)*
-		    MSDOS_SB(inode->i_sb)->cluster_size+current;
+		sector = MSDOS_SB(inode->i_sb)->data_start+(this-2) *
+			MSDOS_SB(inode->i_sb)->cluster_size+current;
 #ifdef DEBUG
 printk("zeroing sector %d\r\n",sector);
 #endif
-		if (current < MSDOS_SB(inode->i_sb)->cluster_size-1 &&
-		    !(sector & 1)) {
+		if (current < MSDOS_SB(inode->i_sb)->cluster_size-1 && !(sector & 1)) {
 			if (!(bh = getblk(inode->i_dev,(block_t)(sector >> 1))))
 				printk("getblk failed\r\n");
 			else {
@@ -140,8 +139,7 @@ printk("zeroing sector %d\r\n",sector);
 	if (S_ISDIR(inode->i_mode)) {
 		if (inode->i_size & (SECTOR_SIZE-1))
 			panic("Odd directory size");
-		inode->i_size += SECTOR_SIZE*MSDOS_SB(inode->i_sb)->
-		    cluster_size;
+		inode->i_size += SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 #ifdef DEBUG
 printk("size is %d now (%x)\r\n",inode->i_size,inode);
 #endif
@@ -174,8 +172,7 @@ long date_dos2unix(unsigned short time,unsigned short date)
 
 /* Convert linear UNIX date to a MS-DOS time/date pair. */
 
-void date_unix2dos(long unix_date,unsigned short *time,
-    unsigned short *date)
+void date_unix2dos(long unix_date,unsigned short *time, unsigned short *date)
 {
 	int day,year,nl_day,month;
 
@@ -209,7 +206,7 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 	int offset;
 	void *data;
 
-#ifdef CONFIG_UMSDOS_FS
+#ifdef CONFIG_MSDOS_DEV
 	if (dir->i_ino == MSDOS_SB(dir->i_sb)->dev_ino) {
 		unsigned i = (unsigned)*pos / sizeof(struct msdos_dir_entry);
 		if (i - 2 <= DEVDIR_SIZE) {
@@ -242,10 +239,8 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 		//printk("mge1\n");
 		if (!(*bh = msdos_sread(dir->i_dev,sector,&data)))
 			continue;
-		*de = (struct msdos_dir_entry *) ((char *)data+(offset &
-		    (SECTOR_SIZE-1)));
-		return (sector << MSDOS_DPS_BITS)+((offset & (SECTOR_SIZE-1)) >>
-		    MSDOS_DIR_BITS);
+		*de = (struct msdos_dir_entry *) ((char *)data+(offset & (SECTOR_SIZE-1)));
+		return (sector << MSDOS_DPS_BITS)+((offset & (SECTOR_SIZE-1)) >> MSDOS_DIR_BITS);
 	}
 }
 
@@ -263,12 +258,10 @@ int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
 	*res_bh = NULL;
 	while ((*ino = msdos_get_entry(dir,&pos,res_bh,&de)) != -1) {
 		if (name) {
-			if (de->name[0] && ((unsigned char *) (de->name))[0]
-			    != DELETED_FLAG && !(de->attr & ATTR_VOLUME) &&
-			    !strncmp(de->name,name,MSDOS_NAME)) break;
+			if (de->name[0] && ((unsigned char *) (de->name))[0] != DELETED_FLAG
+				&& !(de->attr & ATTR_VOLUME) && !strncmp(de->name,name,MSDOS_NAME)) break;
 		}
-		else if (!de->name[0] || ((unsigned char *) (de->name))[0] ==
-			    DELETED_FLAG) {
+		else if (!de->name[0] || ((unsigned char *) (de->name))[0] == DELETED_FLAG) {
 				if (!(inode = iget(dir->i_dev,*ino))) break;
 				if (!inode->u.msdos_i.i_busy) {
 					iput(inode);
@@ -360,8 +353,7 @@ static long raw_scan_nonroot(register struct super_block *sb,long start,char *na
 }
 
 /* In the directory file (cluster start) within the name or cluster number number to retrieve the file, return to its ino and cluster number */
-static long raw_scan(struct super_block *sb,long start,char *name,long number,
-    ino_t *ino)
+static long raw_scan(struct super_block *sb,long start,char *name,long number, ino_t *ino)
 {
     if (start) return raw_scan_nonroot(sb,start,name,number,ino);
     else return raw_scan_root(sb,name,number,ino);
@@ -376,12 +368,11 @@ ino_t msdos_parent_ino(register struct inode *dir,int locked)
 	if (!S_ISDIR(dir->i_mode)) panic("Non-directory fed to m_p_i");
 	if (dir->i_ino == MSDOS_ROOT_INO) return dir->i_ino;
 	if (!locked) lock_creation(); /* prevent renames */
-	if ((current = raw_scan(dir->i_sb,dir->u.msdos_i.i_start,MSDOS_DOTDOT,0L,
-	    NULL)) < 0) {
+	if ((current = raw_scan(dir->i_sb,dir->u.msdos_i.i_start,MSDOS_DOTDOT,0L, NULL)) < 0) {
 	}
 	else if (!current) this = MSDOS_ROOT_INO;
 	else {
-		if ((prev = raw_scan(dir->i_sb,current,MSDOS_DOTDOT,0L,NULL))<0) {
+		if ((prev = raw_scan(dir->i_sb,current,MSDOS_DOTDOT,0L,NULL)) < 0) {
 		}
 		else {
 		if (prev == 0 

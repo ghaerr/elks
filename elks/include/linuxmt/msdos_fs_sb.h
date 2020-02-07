@@ -10,12 +10,12 @@ struct msdos_sb_info { /* space in struct super_block is 28 bytes */
 	unsigned long clusters;      /* number of clusters */
 	unsigned long root_cluster;
 
-# ifdef CONFIG_UMSDOS_FS
+# ifdef CONFIG_MSDOS_DEV
 	ino_t dev_ino;               /* "/dev" ino */
 # endif
 };
 
-# ifdef CONFIG_UMSDOS_FS
+# ifdef CONFIG_MSDOS_DEV
 #define DEVINO_BASE MSDOS_DPB
 #define DEVDIR_SIZE 16
 
