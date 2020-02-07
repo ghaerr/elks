@@ -11,7 +11,6 @@
 #include <string.h>
 #include <malloc.h>
 #include <ctype.h>
-#include "config.h"
 
 #define	PATHLEN		256	
 #define	CMDLEN		512	
