@@ -69,7 +69,7 @@ static int msdos_file_read(register struct inode *inode,register struct file *fi
 	struct buffer_head *bh;
 	void *data;
 
-/* printk("msdos_file_read\n"); */
+//fsdebug("msdos_file_read\n");
 	if (!inode) {
 		printk("FAT: read NULL inode\n");
 		return -EINVAL;

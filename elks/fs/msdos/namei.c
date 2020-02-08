@@ -106,7 +106,7 @@ int msdos_lookup(register struct inode *dir,const char *name,int len,
 		return res;
 	}
 	if (bh) unmap_brelse(bh);
-/* printk("lookup: ino=%ld\n",(unsigned long)ino); */
+//fsdebug("lookup: ino=%ld\n",(unsigned long)ino);
 	if (!(*result = iget(dir->i_sb,ino))) {
 		iput(dir);
 		return -EACCES;
@@ -315,8 +315,8 @@ int msdos_unlink(register struct inode *dir,const char *name,int len)
 	bh->b_dirty = 1;
 unlink_done:
 	unmap_brelse(bh);
-//if (inode) printk("unlink iput inode %u dirt %d count %d\n", inode->i_ino, inode->i_dirt, inode->i_count);
-//if (dir) printk("unlink iput dir %u dirt %d count %d\n", dir->i_ino, dir->i_dirt, dir->i_count);
+if (inode) fsdebug("unlink iput inode %u dirt %d count %d\n", inode->i_ino, inode->i_dirt, inode->i_count);
+if (dir) fsdebug("unlink iput dir %u dirt %d count %d\n", dir->i_ino, dir->i_dirt, dir->i_count);
 	iput(inode);
 	iput(inode);	/* 2nd call required from iget() above*/
 	iput(dir);

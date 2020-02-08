@@ -8,6 +8,13 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/ctype.h>
 
+/* temporary FAT filesystem debugging*/
+#if 0
+#define fsdebug			printk
+#else
+#define fsdebug(...)
+#endif
+
 #ifndef toupper
 extern char toupper(char c);
 #endif
@@ -120,8 +127,6 @@ struct fat_cache {
 /* Convert the UNIX mode to MS-DOS attribute bits. */
 
 #define MSDOS_MKATTR(m) (!(m & 0200) ? ATTR_RO : ATTR_NONE)
-
-extern int fatbits; /*global*/
 
 extern struct buffer_head *msdos_sread(int dev,long sector,void **start);
 
