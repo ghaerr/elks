@@ -30,6 +30,7 @@ all:
 	$(MAKE) -C mfs all
 	$(MAKE) -C mfsck all
 	$(MAKE) -C mkromfs all
+	$(MAKE) -C setboot all
 
 
 #########################################################################

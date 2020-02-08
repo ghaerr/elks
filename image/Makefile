@@ -60,7 +60,7 @@ ifdef CONFIG_IMG_LINK
 	$(MAKE) -f Make.devices "MKDEV=mfs $(TARGET_FILE) mknod"
 endif
 ifdef CONFIG_IMG_BOOT
-	mfs $(TARGET_FILE) boot $(FD_BSECT)
+	setboot $(TARGET_FILE) $(FD_BSECT)
 endif
 	mfsck -fv $(TARGET_FILE)
 	mfs $(TARGET_FILE) stat
