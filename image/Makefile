@@ -19,7 +19,7 @@ VERBOSE=-v
 TARGETS=
 
 ifdef CONFIG_IMG_BOOT
-TARGETS += $(FD_BSECT) $(ELKS_DIR)/arch/i86/boot/Image
+TARGETS += $(FD_BOOTBLOCK) $(ELKS_DIR)/arch/i86/boot/Image
 endif
 
 TARGETS += template
@@ -60,7 +60,7 @@ ifdef CONFIG_IMG_LINK
 	$(MAKE) -f Make.devices "MKDEV=mfs $(TARGET_FILE) mknod"
 endif
 ifdef CONFIG_IMG_BOOT
-	setboot $(TARGET_FILE) $(FD_BSECT)
+	mfs $(TARGET_FILE) boot $(FD_BOOTBLOCK)
 endif
 	mfsck -fv $(TARGET_FILE)
 	mfs $(TARGET_FILE) stat

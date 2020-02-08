@@ -12,8 +12,9 @@ ELKS_DIR = $(TOPDIR)/elks
 ELKSCMD_DIR = $(TOPDIR)/elkscmd
 
 MINIX_BOOT = $(ELKSCMD_DIR)/bootblocks
-FD_BSECT = $(MINIX_BOOT)/minix.bin
-export FD_BSECT
+FD_BOOTBLOCK = $(MINIX_BOOT)/minix.bin
+# TODO: replace these exports by includes
+export FD_BOOTBLOCK
 
 # Image file options
 

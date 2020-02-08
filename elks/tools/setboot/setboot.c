@@ -3,10 +3,10 @@
  *
  * 7 Feb 2020 Greg Haerr <greg@censoft.com>
  *
- * Usage: setboot <image> [-B<sectors>,<heads>] [<input_boot_image>]
+ * Usage: setboot <image> [-B<sectors>,<heads>] [<input_boot_sector>]
  *
- *	setboot writes image after optionally reading an input boot image and
- *		optionally modifying boot sector parameters passed as parameters.
+ *	setboot writes image after optionally reading an input boot sector and
+ *		optionally modifying boot sector disk parameters passed as parameters.
  *
  *	Examples:
  *		setboot <image> -B9,2
@@ -14,7 +14,7 @@
  *		setboot <image> -B18,2 <bootsector>
  *			-> read <bootsector>, set 18 sectors 2 heads, write <image>
  *
- *	Currently only writes ELKS BPB sector_max and head_max values.
+ *	Currently only writes ELKS sector_max and head_max values.
  */
 
 #include <stdio.h>
@@ -22,11 +22,11 @@
 #include <stdarg.h>
 #include <sys/stat.h>
 
-#define ELKS_BPB_SecPerTrk	505		/* offset of sectors per track (byte)*/
-#define ELKS_BPB_NumHeads	506		/* offset of number of heads (byte)*/
+#define SECT_SIZE 512
 
-#define MINIX_BOOT_BLOCKS	2
-#define BLOCK_SIZE			1024
+/* See bootblocks/minix.map for the offsets */
+#define ELKS_BPB_SecPerTrk	0x1F9		/* offset of sectors per track (byte)*/
+#define ELKS_BPB_NumHeads	0x1FA		/* offset of number of heads (byte)*/
 
 static int SecPerTrk, NumHeads;
 
@@ -67,9 +67,9 @@ int main(int argc,char **argv)
 	FILE *ifp = NULL, *ofp;
 	struct stat sb;
 	int count;
-	int opt_new_bootblock = 0, opt_updatebpb = 0;
+	int opt_new_bootsect = 0, opt_updatebpb = 0;
 	char *outfile, *infile = NULL;
-	unsigned char blk[MINIX_BOOT_BLOCKS * BLOCK_SIZE];
+	unsigned char blk[SECT_SIZE];
 
 	if (argc != 3 && argc != 4)
 		fatalmsg("Usage: %s <image> [-B<sectors>,<heads>] [<input_boot_image>]\n", argv[0]);
@@ -84,17 +84,16 @@ int main(int argc,char **argv)
 		argv++;
 		argc--;
 	}
-	if (argc == 2) {			/* new boot block specified*/
+	if (argc == 2) {			/* new boot sector specified*/
 		infile = *++argv;
-		opt_new_bootblock = 1;
+		opt_new_bootsect = 1;
 	}
 
-	if (opt_new_bootblock) {
+	if (opt_new_bootsect) {
 		if (stat(infile,&sb)) die("stat(%s)",infile);
 		if (!S_ISREG(sb.st_mode)) fatalmsg("%s: not a regular file\n",infile);
-		if (sb.st_size > MINIX_BOOT_BLOCKS * BLOCK_SIZE)
-				fatalmsg("%s: boot block greater than %d bytes\n", infile,
-					MINIX_BOOT_BLOCKS*BLOCK_SIZE);
+		if (sb.st_size != SECT_SIZE)
+				fatalmsg("%s: boot sector size not equal to %d bytes\n", infile, SECT_SIZE);
 
 		ifp = fopen(infile,"rb");
 		if (!ifp) die(infile);
@@ -102,11 +101,11 @@ int main(int argc,char **argv)
 		ofp = fopen(outfile,"r+b");
 		if (!ofp) die(outfile);
 
-		count = fread(blk,1,MINIX_BOOT_BLOCKS * BLOCK_SIZE,ifp);
+		count = fread(blk,1,SECT_SIZE,ifp);
 		if (count != sb.st_size) die("fread(%s)", infile);
 
-		if (count < 512 || blk[510] != 0x55 || blk[511] != 0xaa)
-		fprintf(stderr, "Warning: '%s' may not be valid boot block\n", infile);
+		if (blk[510] != 0x55 || blk[511] != 0xaa)
+		fprintf(stderr, "Warning: '%s' may not be valid bootable sector\n", infile);
 
 		if (opt_updatebpb)		/* update BPB before writing*/
 				setSHparms(blk);
@@ -117,12 +116,12 @@ int main(int argc,char **argv)
 			ofp = fopen(outfile, "r+b");
 			if (!ofp) die(outfile);
 
-			count = fread(blk,1,512,ofp);
+			count = fread(blk,1,SECT_SIZE,ofp);
 			if (count != 512) die("fread(%s)", outfile);
 			setSHparms(blk);
 			if (fseek(ofp, 0L, SEEK_SET) != 0)
 			die("fseek(%s)", outfile);
-			if (fwrite(blk,1,512,ofp) != 512) die("fwrite(%s)", outfile);
+			if (fwrite(blk,1,SECT_SIZE,ofp) != SECT_SIZE) die("fwrite(%s)", outfile);
 			fclose(ofp);
 		}
 	return 0;

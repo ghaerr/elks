@@ -1,6 +1,6 @@
 # Application package creation Makefile
 #	passed NAME=, APPS=, OPTS= and BPB= for MINIX, SIZE= for MSDOS
-#	implicitly uses IMGDIR=, DESTDIR= and FD_BSECT=
+#	implicitly uses IMGDIR=, DESTDIR= and FD_BOOTBLOCK=
 
 # Create bootable ELKS MINIX disk image:
 #	Select tagged files into filelist
@@ -32,7 +32,7 @@ minix:
 	mfs $(VERBOSE) $(MINIX_IMAGE) addfs Filelist $(DESTDIR)
 	rm Filelist
 	$(MAKE) -f Make.devices "MKDEV=mfs $(MINIX_IMAGE) mknod"
-	setboot $(MINIX_IMAGE) $(BPB) $(FD_BSECT)
+	mfs $(MINIX_IMAGE) boot $(FD_BOOTBLOCK)
 	#mfsck -fv $(MINIX_IMAGE)
 	mfs $(MINIX_IMAGE) stat
 
@@ -57,8 +57,8 @@ MSDOS_IMAGE=$(IMGDIR)/$(NAME).bin
 # -r 14		14 root directory sectors
 # -c 1		cluster size 1 sector
 # -R 1		1 reserve sector (boot, may need to reserve 2)
+# -B boot      use passed boot file (not complete)
 # -k		only update offsets 11 through 61 in boot block, all else unchanged
-# -B boot	use passed boot file (not complete)
 # -N 0		serial number 0
 # -v label	volume label (don't use with first format as uses two directory entries)
 # -C		create image (buggy, leaves nonzero data in image)
@@ -79,8 +79,8 @@ MSDOS_COPYOPTS=-vpmQ -D o
 msdos:
 	awk "/$(APPS)/{print}" Packages | cut -f 1 | sed "/^#/d" > Filelist
 	dd if=/dev/zero of=$(MSDOS_IMAGE) bs=1024 count=$(SIZE)
-# write MSDOS boot sector(s) only, mformat will modify BPB
-#	setboot $(MSDOS_IMAGE) $(FD_BSECT)
+#	write ELKS boot sector, mformat will only modify BPB
+#	setboot $(MSDOS_IMAGE) $(BPB) $(FD_BOOTSECT)
 	mformat -i $(MSDOS_IMAGE) $(MSDOS_MKFSOPTS)
 	-rm linux; touch linux
 	mcopy -i $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) linux ::/linux

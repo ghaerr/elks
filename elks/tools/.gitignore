@@ -1,3 +1,4 @@
 bin/mkromfs
 bin/mfsck
 bin/mfs
+bin/setboot
