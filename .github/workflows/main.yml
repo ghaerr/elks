@@ -6,6 +6,9 @@ on:
       - '**'
       - '!.github/workflows/cross.yml'
       - '!tools/*'
+  pull_request:
+    paths:
+      - '**'
 
 jobs:
   build:
