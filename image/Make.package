@@ -33,6 +33,8 @@ minix:
 	rm Filelist
 	$(MAKE) -f Make.devices "MKDEV=mfs $(MINIX_IMAGE) mknod"
 	mfs $(MINIX_IMAGE) boot $(FD_BOOTBLOCK)
+#	This overrides the parameters from the build configuration
+	setboot $(MINIX_IMAGE) $(BPB)
 	#mfsck -fv $(MINIX_IMAGE)
 	mfs $(MINIX_IMAGE) stat
 
