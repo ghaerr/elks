@@ -496,7 +496,7 @@ track_max:
 #elif defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1440)
 	.word 80
 #elif defined(CONFIG_IMG_HD)
-	.word CONFIG_IMG_TRACK
+	.word CONFIG_IMG_CYL
 #else
 	.error "Unknown number of disk tracks!"
 #endif

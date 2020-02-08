@@ -32,9 +32,9 @@ mainmenu_option next_comment
 		if [ "$CONFIG_IMG_HD" == "y" ]; then
 
 			comment 'Disk geometry'
-			int 'Sectors' CONFIG_IMG_SECT  63
-			int 'Heads'   CONFIG_IMG_HEAD  16
-			int 'Tracks'  CONFIG_IMG_TRACK 1024
+			int 'Sectors'    CONFIG_IMG_SECT  63
+			int 'Heads'      CONFIG_IMG_HEAD  16
+			int 'Cylinders'  CONFIG_IMG_CYL   1024
 
 			comment 'Disk size in 1K blocks'
 			int 'Blocks'  CONFIG_IMG_BLOCKS 32768
