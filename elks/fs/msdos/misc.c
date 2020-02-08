@@ -53,6 +53,7 @@ int msdos_add_cluster(register struct inode *inode)
 	struct buffer_head *bh;
 	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
 
+fsdebug("add cluster\n");
 #ifndef FAT_BITS_32
 	if (fatsz != 32)
 		if (inode->i_ino == MSDOS_ROOT_INO) return -ENOSPC;
@@ -86,7 +87,7 @@ printk("free cluster: %d\r\n",this);
 printk("set to %x\r\n",fat_access(inode->i_sb,this,-1L));
 #endif
 	if (!S_ISDIR(inode->i_mode)) {
-		last = inode->i_size ? get_cluster(inode,(inode->i_size-1)/
+		last = inode->i_size? get_cluster(inode,(inode->i_size-1) /
 		    SECTOR_SIZE/MSDOS_SB(inode->i_sb)->cluster_size) : 0;
 	}
 	else {
@@ -111,8 +112,7 @@ printk("last = %d\r\n",last);
 #ifdef DEBUG
 if (last) printk("next set to %d\r\n",fat_access(inode->i_sb,last,-1L));
 #endif
-	for (current = 0; current < MSDOS_SB(inode->i_sb)->cluster_size;
-	    current++) {
+	for (current = 0; current < MSDOS_SB(inode->i_sb)->cluster_size; current++) {
 		sector = MSDOS_SB(inode->i_sb)->data_start+(this-2) *
 			MSDOS_SB(inode->i_sb)->cluster_size+current;
 #ifdef DEBUG
@@ -127,8 +127,7 @@ printk("zeroing sector %d\r\n",sector);
 				bh->b_uptodate = 1;
 			}
 			current++;
-		}
-		else {
+		} else {
 			if (!(bh = msdos_sread(inode->i_dev,sector,&data)))
 				printk("FAT: sread fail\n");
 			else memset(data,0,SECTOR_SIZE);
@@ -298,7 +297,7 @@ static long raw_found(struct super_block *sb,long sector,char *name,long number,
 	long start = -1;
 
 	if ((bh = msdos_sread(sb->s_dev,sector,(void **) &data))) {
-	for (entry = 0; entry < MSDOS_DPS; entry++) {
+	  for (entry = 0; entry < MSDOS_DPS; entry++) {
 #ifndef FAT_BITS_32
 	    __u16 starthi = (MSDOS_SB(sb)->fat_bits == 32) ? data[entry].starthi : 0;
 #else
@@ -309,17 +308,16 @@ static long raw_found(struct super_block *sb,long sector,char *name,long number,
 		    continue;
 		((__u16 *)&start)[0] = data[entry].start;
 		((__u16 *)&start)[1] = starthi;
-	    }
-	    else {
-		 if (*(unsigned char *) data[entry].name == DELETED_FLAG ||
-		    data[entry].start != (__u16)number || starthi != ((__u16 *)&number)[1])
+	    } else {
+		  if (*(unsigned char *) data[entry].name == DELETED_FLAG
+			|| data[entry].start != (__u16)number || starthi != ((__u16 *)&number)[1])
 		    continue;
-		start = number;
+		  start = number;
 	    }
 		if (ino) *ino = sector*MSDOS_DPS+entry;
 		break;
-	}
-	unmap_brelse(bh);
+	  }
+	  unmap_brelse(bh);
 	}
 	return start;
 }
@@ -331,8 +329,8 @@ static long raw_scan_root(register struct super_block *sb,char *name,long number
 	long cluster = 0;
 
 	for (count = 0; count < MSDOS_SB(sb)->dir_entries/MSDOS_DPS; count++) {
-		if ((cluster = raw_found(sb,(long)(MSDOS_SB(sb)->dir_start+count),name,
-		    number,ino)) >= 0) break;
+		if ((cluster = raw_found(sb,(long)(MSDOS_SB(sb)->dir_start+count),name, number,
+				ino)) >= 0) break;
 	}
 	return cluster;
 }
@@ -346,9 +344,9 @@ static long raw_scan_nonroot(register struct super_block *sb,long start,char *na
 
 	do {
 		for (count = 0; count < MSDOS_SB(sb)->cluster_size; count++) {
-			if ((cluster = raw_found(sb,(start-2)*MSDOS_SB(sb)->
-			    cluster_size+MSDOS_SB(sb)->data_start+count,name,
-			    number,ino)) >= 0) return cluster;
+			if ((cluster = raw_found(sb,
+				(start-2)*MSDOS_SB(sb)->cluster_size+MSDOS_SB(sb)->data_start+count,
+				name, number,ino)) >= 0) return cluster;
 		}
 		if (!(start = fat_access(sb,start,-1L))) {
 			printk("FAT: bad fat");
@@ -358,11 +356,14 @@ static long raw_scan_nonroot(register struct super_block *sb,long start,char *na
 	return -1;
 }
 
-/* In the directory file (cluster start) within the name or cluster number number to retrieve the file, return to its ino and cluster number */
+/* In the directory file (cluster start) within the name or cluster number number
+ * to retrieve the file, return to its ino and cluster number
+ */
 static long raw_scan(struct super_block *sb,long start,char *name,long number, ino_t *ino)
 {
-    if (start) return raw_scan_nonroot(sb,start,name,number,ino);
-    else return raw_scan_root(sb,name,number,ino);
+    if (start)
+		return raw_scan_nonroot(sb,start,name,number,ino);
+    return raw_scan_root(sb,name,number,ino);
 }
 
 

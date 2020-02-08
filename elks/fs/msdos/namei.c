@@ -121,7 +121,7 @@ int msdos_lookup(register struct inode *dir,const char *name,int len,
 }
 
 
-/* Creates a directory entry (name is already formatted). */
+/* Create a new directory entry (name is already formatted). */
 
 static int msdos_create_entry(register struct inode *dir,char *name,int is_dir,
     register struct inode **result)
@@ -131,9 +131,14 @@ static int msdos_create_entry(register struct inode *dir,char *name,int is_dir,
 	int res;
 	ino_t ino;
 
+fsdebug("create_entry\n");
+	/* find empty directory entry*/
 	if ((res = msdos_scan(dir,NULL,&bh,&de,&ino)) < 0) {
+		/* if rootdir return no space*/
 		if (dir->i_ino == MSDOS_ROOT_INO) return -ENOSPC;
+		/* try adding space to directory*/
 		if ((res = msdos_add_cluster(dir)) < 0) return res;
+		/* if can't find empty entry return error*/
 		if ((res = msdos_scan(dir,NULL,&bh,&de,&ino)) < 0) return res;
 	}
 	memcpy(de->name,name,MSDOS_NAME);
@@ -166,6 +171,7 @@ int msdos_create(register struct inode *dir,const char *name,int len,int mode,
 		return res;
 	}
 	lock_creation();
+	/* check for name already present*/
 	if (msdos_scan(dir,msdos_name,&bh,&de,&ino) >= 0) {
 		unlock_creation();
 		unmap_brelse(bh);

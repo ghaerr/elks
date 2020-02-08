@@ -9,7 +9,7 @@
 #include <linuxmt/ctype.h>
 
 /* temporary FAT filesystem debugging*/
-#if 0
+#ifdef FSDEBUG
 #define fsdebug			printk
 #else
 #define fsdebug(...)
