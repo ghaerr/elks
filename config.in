@@ -15,7 +15,13 @@ mainmenu_option next_comment
 endmenu
 
 #
-# ELKS Commands
+# ELKS Userland (commands)
 #
 
 source elkscmd/config.in
+
+#
+# ELKS Images
+#
+
+source image/config.in

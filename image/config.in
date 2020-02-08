@@ -1,0 +1,49 @@
+#
+# ELKS Image configuration menu
+#
+
+mainmenu_option next_comment
+	comment 'Target image'
+
+	choice 'Filesystem' \
+	"MINIX  CONFIG_IMG_MINIX   \
+	 FAT    CONFIG_IMG_FAT     \
+	 RAW    CONFIG_IMG_RAW     \
+	 ROM    CONFIG_IMG_ROM" MINIX
+
+	if [ "$CONFIG_IMG_MINIX" == "y" -o "$CONFIG_IMG_ROM" == "y" ]; then
+		define_bool CONFIG_IMG_LINK y
+		fi
+
+	if [ "$CONFIG_IMG_ROM" != "y" ]; then
+
+		choice 'Medium' \
+		"FD1680 CONFIG_IMG_FD1680 \
+		 FD1440 CONFIG_IMG_FD1440 \
+		 FD1200 CONFIG_IMG_FD1200 \
+		 FD720  CONFIG_IMG_FD720  \
+		 FD360  CONFIG_IMG_FD360  \
+		 HD     CONFIG_IMG_HD" FD1440
+
+		if [ "$CONFIG_IMG_MINIX" == "y" -o "$CONFIG_IMG_FAT" == "y" ]; then
+			define_bool CONFIG_IMG_DEV y
+		fi
+
+		if [ "$CONFIG_IMG_HD" == "y" ]; then
+
+			comment 'Disk geometry'
+			int 'Sectors' CONFIG_IMG_SECT  63
+			int 'Heads'   CONFIG_IMG_HEAD  16
+			int 'Tracks'  CONFIG_IMG_TRACK 1024
+
+			comment 'Disk size in 1K blocks'
+			int 'Blocks'  CONFIG_IMG_BLOCKS 32768
+		fi
+
+		if [ "$CONFIG_IMG_MINIX" == "y" ]; then
+			bool 'Bootable' CONFIG_IMG_BOOT y
+		fi
+
+	fi
+
+endmenu
