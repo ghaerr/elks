@@ -40,7 +40,6 @@
  *	use ELKS defaults of -1 -n14 -i360 -s1440 for mkfs/genfs
  *	add genfs -k option to not copy 0 length (hidden) files starting with .
  *	add addfs option to add files/dirs specified in file from directory
- *	add boot -B option to update BPB sector and head fields in boot block
  *
  * Bug fixes by ghaerr:
  * fix mkfs -1, -n overwriting -i, -n14
@@ -74,7 +73,7 @@ void usage(const char *name) {
 	"	-v	verbose\n"
 	"cmd:\n"
 	"	mkfs [-1|2] [-i<#inodes>] [-n<#direntlen>] [-s<#blocks>]\n"
-	"	boot [-B<sectors>,<heads>] [bootimage]\n"
+	"	boot <boot block image>\n"
 	"	genfs [-1|2] [-i<#inodes>] [-n<#direntlen>] [-s<#blocks>] [-k] <directory>\n"
 	"	addfs <file_of_filenames> <directory>\n"
 	"	[stat]\n"
