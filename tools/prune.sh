@@ -1,15 +1,11 @@
 #!/bin/bash
 
-# Pack the cross tools
+# Prune the cross tools to save disk space
 
-# This script is one entry point for the 'cross tools build' workflow
-# See .github/workflow/cross.yml
+# This script is an entry point for the workflows
+# See .github/workflow/*.yml
 
 SCRIPTDIR="$(dirname "$0")"
 . "$SCRIPTDIR/env.sh"
 
-export SRCDIR="$TOPDIR/tools"
-export DISTDIR="$CROSSDIR/dist"
-export BUILDDIR="$CROSSDIR/build"
-
-make -f "$SRCDIR/Makefile" pack
+make -C "$SCRIPTDIR" prune

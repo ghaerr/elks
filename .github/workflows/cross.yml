@@ -33,9 +33,9 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: tools/build.sh
 
-      - name: packing
+      - name: prune
         if: steps.cache.outputs.cache-hit != 'true'
-        run: tools/pack.sh
+        run: tools/prune.sh
 
       - name: upload
         if: steps.cache.outputs.cache-hit != 'true'
