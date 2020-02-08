@@ -30,10 +30,9 @@ minix:
 	awk "/$(APPS)/{print}" Packages | cut -f 1 > Filelist
 	mfs $(VERBOSE) $(MINIX_IMAGE) mkfs $(MINIX_MKFSOPTS)
 	mfs $(VERBOSE) $(MINIX_IMAGE) addfs Filelist $(DESTDIR)
-	#rm Filelist
+	rm Filelist
 	$(MAKE) -f Make.devices "MKDEV=mfs $(MINIX_IMAGE) mknod"
-	mfs $(MINIX_IMAGE) boot $(FD_BSECT)
-#	mfs $(MINIX_IMAGE) boot $(BPB) $(FD_BSECT)
+	setboot $(MINIX_IMAGE) $(BPB) $(FD_BSECT)
 	#mfsck -fv $(MINIX_IMAGE)
 	mfs $(MINIX_IMAGE) stat
 
@@ -81,7 +80,7 @@ msdos:
 	awk "/$(APPS)/{print}" Packages | cut -f 1 | sed "/^#/d" > Filelist
 	dd if=/dev/zero of=$(MSDOS_IMAGE) bs=1024 count=$(SIZE)
 # write MSDOS boot sector(s) only, mformat will modify BPB
-#	mfs $(MSDOS_IMAGE) boot $(FD_BSECT)
+#	setboot $(MSDOS_IMAGE) $(FD_BSECT)
 	mformat -i $(MSDOS_IMAGE) $(MSDOS_MKFSOPTS)
 	-rm linux; touch linux
 	mcopy -i $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) linux ::/linux
