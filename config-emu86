@@ -141,7 +141,8 @@ CONFIG_INET_STATUS=y
 # CONFIG_MINIX_FS is not set
 CONFIG_ROMFS_FS=y
 CONFIG_ROMFS_BASE=8000
-# CONFIG_MSDOS_FS is not set
+# CONFIG_FS_FAT is not set
+# CONFIG_FS_DEV is not set
 
 #
 # General filesystem settings

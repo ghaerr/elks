@@ -18,9 +18,10 @@
 void fs_init(void)
 {
 #ifdef CONFIG_MINIX_FS
-    init_minix_fs();
+	init_minix_fs();
 #endif
-#ifdef CONFIG_MSDOS_FS
-    init_msdos_fs();
+
+#ifdef CONFIG_FS_FAT
+	init_msdos_fs();
 #endif
 }

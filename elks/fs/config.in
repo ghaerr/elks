@@ -13,22 +13,22 @@ mainmenu_option next_comment
 		hex 'Base in ROM (paragraphs)' CONFIG_ROMFS_BASE 0x8000
 		fi
 
-	bool 'FAT filesystem' CONFIG_MSDOS_FS 'n'
-	if [ "$CONFIG_MSDOS_FS" == "y" ]; then
+	bool 'FAT filesystem' CONFIG_FS_FAT 'n'
+	if [ "$CONFIG_FS_FAT" == "y" ]; then
 		bool 'Fake FAT /dev folder' CONFIG_FS_DEV 'y'
 	fi
 
-	comment 'General filesystem settings'
+	comment 'Filesystem settings'
 
 	bool 'Mount root partition read-only by default' CONFIG_ROOT_READONLY n
 
 	bool 'All file systems are READ-ONLY'  CONFIG_FS_RO               n
 
-	if [ "$CONFIG_MSDOS_FS" != "y" ]; then
-	    bool 'Full VFS support'            CONFIG_FULL_VFS            n
+	if [ "$CONFIG_FS_FAT" != "y" ]; then
+		bool 'Full VFS support'            CONFIG_FULL_VFS            n
 	else
-	    define_bool                        CONFIG_FULL_VFS            y
-	    define_bool                        CONFIG_32BIT_INODES        y
+		define_bool                        CONFIG_FULL_VFS            y
+		define_bool                        CONFIG_32BIT_INODES        y
 	fi
 
 	bool 'Extra external buffer cache'     CONFIG_FS_EXTERNAL_BUFFER  y

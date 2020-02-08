@@ -24,7 +24,7 @@
 #include <linuxmt/minix_fs_sb.h>
 #endif
 
-#ifdef CONFIG_MSDOS_FS
+#ifdef CONFIG_FS_FAT
 #include <linuxmt/msdos_fs_i.h>
 #include <linuxmt/msdos_fs_sb.h>
 #endif
@@ -50,10 +50,13 @@
 #define NR_FILE 	64	/* this can well be larger on a larger system */
 #define NR_SUPER	4
 #define NR_EXT_BUFFERS	64	/* This may be assumed by some code! */
-#ifdef CONFIG_MSDOS_FS
-#define NR_MAPBUFS	12	/* Maximum number of mappable buffers */
+
+/* Maximum number of mappable buffers */
+
+#ifdef CONFIG_FS_FAT
+#define NR_MAPBUFS  12
 #else
-#define NR_MAPBUFS	8	/* Maximum number of mappable buffers */
+#define NR_MAPBUFS  8
 #endif
 
 #define BLOCK_SIZE	1024
@@ -265,7 +268,7 @@ struct inode {
 #ifdef CONFIG_MINIX_FS
 		struct minix_inode_info minix_i;
 #endif
-#ifdef CONFIG_MSDOS_FS	
+#ifdef CONFIG_FS_FAT
 		struct msdos_inode_info msdos_i;
 #endif	
 #ifdef CONFIG_ROMFS_FS
@@ -316,18 +319,18 @@ struct super_block {
     struct inode		*s_mounted;
     struct wait_queue		s_wait;
 
-    union {
+	union {
 #ifdef CONFIG_MINIX_FS
 		struct minix_sb_info minix_sb;
 #endif
-#ifdef CONFIG_MSDOS_FS
+#ifdef CONFIG_FS_FAT
 		struct msdos_sb_info msdos_sb;
 #endif
 #ifdef CONFIG_ROMFS_FS
 		struct romfs_super_info romfs;
 #endif
 		void * generic_sbp;
-    } u;
+	} u;
 };
 
 /*

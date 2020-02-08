@@ -42,21 +42,21 @@ extern struct file_system_type minix_fs_type;
 extern struct file_system_type romfs_fs_type;
 #endif
 
-#ifdef CONFIG_MSDOS_FS
+#ifdef CONFIG_FS_FAT
 extern struct file_system_type msdos_fs_type;
 #endif
 
 static struct file_system_type *file_systems[] = {
 #ifdef CONFIG_MINIX_FS
-    &minix_fs_type,
+	&minix_fs_type,
 #endif
 #ifdef CONFIG_ROMFS_FS
-    &romfs_fs_type,
+	&romfs_fs_type,
 #endif
-#ifdef CONFIG_MSDOS_FS
-    &msdos_fs_type,
+#ifdef CONFIG_FS_FAT
+	&msdos_fs_type,
 #endif
-    NULL
+	NULL
 };
 
 /* Should only be called with a near pointer */

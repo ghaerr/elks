@@ -62,7 +62,7 @@ ifeq ($(CONFIG_ROMFS_FS), y)
 	ARCHIVES := $(ARCHIVES) fs/romfs/romfs.a
 endif
 
-ifeq ($(CONFIG_MSDOS_FS), y)
+ifeq ($(CONFIG_FS_FAT), y)
 	ARCHIVES := $(ARCHIVES) fs/msdos/msdos.a
 endif
 
