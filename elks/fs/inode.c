@@ -169,12 +169,8 @@ static void list_inode_status(void)
     register struct inode *inode = inode_llru;
 
     do {
-#ifdef CONFIG_32BIT_INODES
         printk("[#%u: c=%u d=%x nr=%lu]", ((int)(pi++)),
-#else
-        printk("[#%u: c=%u d=%x nr=%u]", ((int)(pi++)),
-#endif
-		inode->i_count, inode->i_dev, inode->i_ino);
+			inode->i_count, inode->i_dev, (unsigned long)inode->i_ino);
     } while ((inode = inode->i_prev) != NULL);
 }
 
@@ -227,12 +223,8 @@ void iput(register struct inode *inode)
 	wait_on_inode(inode);
 	if (!inode->i_count) {
 	    printk("VFS: iput: trying to free free inode\n"
-#ifdef CONFIG_32BIT_INODES
-		    "VFS: device %s, inode %lu, mode=0%06o\n",
-#else
-		    "VFS: device %s, inode %u, mode=0%06o\n",
-#endif
-		   kdevname(inode->i_rdev), inode->i_ino, inode->i_mode);
+			"VFS: device %s, inode %lu, mode=0%06o\n",
+			kdevname(inode->i_rdev), (unsigned long)inode->i_ino, inode->i_mode);
 	    return;
 	}
 #ifdef NOT_YET
@@ -329,11 +321,7 @@ struct inode *__iget(struct super_block *sb,
     register struct inode *inode;
     register struct inode *n_ino;
 
-#ifdef CONFIG_32BIT_INODES
-    debug3("iget called(%x, %lu, %d)\n", sb, inr, 0 /* crossmntp */ );
-#else
-    debug3("iget called(%x, %u, %d)\n", sb, inr, 0 /* crossmntp */ );
-#endif
+    debug3("iget called(%x, %lu, %d)\n", sb, (unsigned long)inr, 0 /* crossmntp */ );
     if (!sb)
 	panic("VFS: iget with sb==NULL");
 

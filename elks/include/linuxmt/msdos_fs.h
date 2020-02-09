@@ -114,7 +114,7 @@ struct slot_info {
 
 struct fat_cache {
 	int device; /* device number. 0 means unused. */
-	long ino; /* inode number. */
+	ino_t ino; /* inode number. */
 	long file_cluster; /* cluster number in the file. */
 	long disk_cluster; /* cluster number on disk. */
 	struct fat_cache *next; /* next cache entry */

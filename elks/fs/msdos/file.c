@@ -83,7 +83,7 @@ static int msdos_file_read(register struct inode *inode,register struct file *fi
 	while ((left = MIN(inode->i_size-filp->f_pos,count-(buf-start))) != 0) {
 		if (!(sector = msdos_smap(inode,filp->f_pos >> SECTOR_BITS)))
 			break;
-		offset = (short)filp->f_pos & (SECTOR_SIZE-1);
+		offset = (int)filp->f_pos & (SECTOR_SIZE-1);
 		if (!(bh = msdos_sread(inode->i_dev,sector,&data))) break;
 		filp->f_pos += (size = MIN(SECTOR_SIZE-offset,left));
 		memcpy_tofs(buf,(char *)data+offset,size);
@@ -125,13 +125,13 @@ fsdebug("file_write\n");
 		while (!(sector = msdos_smap(inode,filp->f_pos >> SECTOR_BITS)))
 			if ((error = msdos_add_cluster(inode)) < 0) break;
 		if (error) break;
-		offset = (short)filp->f_pos & (SECTOR_SIZE-1);
+		offset = (int)filp->f_pos & (SECTOR_SIZE-1);
 		size = MIN(SECTOR_SIZE-offset,count);
 		if (!(bh = msdos_sread(inode->i_dev,sector,&data))) {
 			error = -EIO;
 			break;
 		}
-		memcpy_fromfs((char *)data+((short)filp->f_pos & (SECTOR_SIZE-1)),
+		memcpy_fromfs((char *)data+((int)filp->f_pos & (SECTOR_SIZE-1)),
 			    buf,written = size);
 		buf += size;
 		filp->f_pos += written;
@@ -139,6 +139,7 @@ fsdebug("file_write\n");
 			inode->i_size = filp->f_pos;
 			inode->i_dirt = 1;
 		}
+fsdebug("file block write %d\n", bh->b_blocknr);
 		bh->b_dirty = 1;
 		unmap_brelse(bh);
 	}
@@ -151,11 +152,11 @@ fsdebug("file_write\n");
 
 void msdos_truncate(register struct inode *inode)
 {
-	int cluster;		//FIXME should this be long for FAT32?
+	int cluster;
 
 fsdebug("truncate\n");
 	cluster = SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
-	(void) fat_free(inode,(inode->i_size+(cluster-1))/cluster);
+	(void)fat_free(inode,(inode->i_size + (cluster-1)) / cluster);
 	inode->u.msdos_i.i_attrs |= ATTR_ARCH;
 	inode->i_dirt = 1;
 }
