@@ -349,7 +349,7 @@ struct inode *__iget(struct super_block *sb,
 	} while ((inode = inode->i_prev) != NULL);
     } while (n_ino == NULL);
     inode = n_ino;			/* Inode not found, use the new structure */
-    debug1("iget: got one... (%x)!\n", empty);
+    debug("iget: got one...\n");
 
     inode->i_sb = sb;
     inode->i_dev = sb->s_dev;

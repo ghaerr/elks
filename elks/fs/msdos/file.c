@@ -69,7 +69,7 @@ static int msdos_file_read(register struct inode *inode,register struct file *fi
 	struct buffer_head *bh;
 	void *data;
 
-/* printk("msdos_file_read\n"); */
+//fsdebug("file_read\n");
 	if (!inode) {
 		printk("FAT: read NULL inode\n");
 		return -EINVAL;
@@ -86,8 +86,8 @@ static int msdos_file_read(register struct inode *inode,register struct file *fi
 		offset = (short)filp->f_pos & (SECTOR_SIZE-1);
 		if (!(bh = msdos_sread(inode->i_dev,sector,&data))) break;
 		filp->f_pos += (size = MIN(SECTOR_SIZE-offset,left));
-			memcpy_tofs(buf,(char *)data+offset,size);
-			buf += size;
+		memcpy_tofs(buf,(char *)data+offset,size);
+		buf += size;
 		unmap_brelse(bh);
 	}
 	if (start == buf) return -EIO;
@@ -105,6 +105,7 @@ static int msdos_file_write(register struct inode *inode,register struct file *f
 	struct buffer_head *bh;
 	void *data;
 
+fsdebug("file_write\n");
 	if (!inode) {
 		printk("FAT: write NULL inode\n");
 		return -EINVAL;
@@ -130,9 +131,9 @@ static int msdos_file_write(register struct inode *inode,register struct file *f
 			error = -EIO;
 			break;
 		}
-			memcpy_fromfs((char *)data+((short)filp->f_pos & (SECTOR_SIZE-1)),
+		memcpy_fromfs((char *)data+((short)filp->f_pos & (SECTOR_SIZE-1)),
 			    buf,written = size);
-			buf += size;
+		buf += size;
 		filp->f_pos += written;
 		if (filp->f_pos > inode->i_size) {
 			inode->i_size = filp->f_pos;
@@ -152,6 +153,7 @@ void msdos_truncate(register struct inode *inode)
 {
 	int cluster;		//FIXME should this be long for FAT32?
 
+fsdebug("truncate\n");
 	cluster = SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 	(void) fat_free(inode,(inode->i_size+(cluster-1))/cluster);
 	inode->u.msdos_i.i_attrs |= ATTR_ARCH;

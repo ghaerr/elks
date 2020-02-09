@@ -169,7 +169,7 @@ void minix_free_inode(register struct inode *inode)
     else {
 	map_buffer(bh);
 	if (!clear_bit((unsigned int) ((unsigned int)inode->i_ino & 8191), bh->b_data)) {
-	    debug1("%s: bit %ld already cleared.\n",ino);
+	    debug1("minix_free_inode: bit %ld already cleared.\n",((unsigned int)inode->i_ino & 8191));
 	}
 	clear_inode(inode);
 	mark_buffer_dirty(bh, 1);

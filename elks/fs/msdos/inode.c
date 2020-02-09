@@ -38,7 +38,7 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
 
 void msdos_put_inode(register struct inode *inode)
 {
-//printk("iput %ld count %d dirty %d\n", (unsigned long)inode->i_ino, inode->i_count, inode->i_dirt);
+fsdebug("iput %ld count %d dirty %d\n", (unsigned long)inode->i_ino, inode->i_count, inode->i_dirt);
 	if (!inode->i_nlink) {
 		inode->i_size = 0;
 		msdos_truncate(inode);
@@ -49,7 +49,7 @@ void msdos_put_inode(register struct inode *inode)
 
 void msdos_put_super(register struct super_block *sb)
 {
-//printk("put super\n");
+fsdebug("put super\n");
 	cache_inval_dev(sb->s_dev);
 	lock_super(sb);
 	sb->s_dev = 0;
@@ -205,7 +205,7 @@ void msdos_read_inode(register struct inode *inode)
 	long this,nr;
 	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
 
-//printk("read inode %ld\n", (unsigned long)inode->i_ino);
+fsdebug("read inode %ld\n", (unsigned long)inode->i_ino);
 	inode->u.msdos_i.i_busy = 0;
 	inode->i_uid = current->uid;
 	inode->i_gid = current->gid;
@@ -291,7 +291,7 @@ void msdos_write_inode(register struct inode *inode)
 	struct buffer_head *bh;
 	register struct msdos_dir_entry *raw_entry;
 
-//printk("iwrite %ld %d\n", (unsigned long)inode->i_ino, inode->i_dirt);
+fsdebug("iwrite %ld %d\n", (unsigned long)inode->i_ino, inode->i_dirt);
 	inode->i_dirt = 0;
 	if (inode->i_ino == MSDOS_ROOT_INO || !inode->i_nlink) return;
 	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS)))) {

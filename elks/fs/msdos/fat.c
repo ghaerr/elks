@@ -270,6 +270,7 @@ int fat_free(register struct inode *inode,long skip)
 {
 	long this,last;
 
+fsdebug("fat_free\n");
 	if (!(this = inode->u.msdos_i.i_start)) return 0;
 	last = 0;
 	while (skip--) {

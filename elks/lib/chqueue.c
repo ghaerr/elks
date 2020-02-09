@@ -103,8 +103,8 @@ int chq_getch(register struct ch_queue *q)
 {
     register char *retval;
 
-    debug6("CHQ: chq_getch(%d, %d, %d) q->len=%d q->start=%d q->size=%d\n",
-	   q, c, wait, q->len, q->start, q->size);
+    debug4("CHQ: chq_getch(%d) q->len=%d q->start=%d q->size=%d\n",
+	   q, q->len, q->start, q->size);
 
     if (!q->len)
 	retval = (char *)(-EAGAIN);
