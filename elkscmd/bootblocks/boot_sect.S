@@ -2,6 +2,12 @@
 // ELKS boot sector
 //------------------------------------------------------------------------------
 
+// If BOOT_FAT is undefined, this assembles to a filesystem-independent boot
+// sector which loads a stage 2 bootloader on the second disk sector
+//
+// If BOOT_FAT is defined, this assembles to a single-sector bootloader that
+// reads and runs /linux on a FAT12/FAT16 filesystem
+
 #include <autoconf.h>
 
 #include "boot_err.h"
