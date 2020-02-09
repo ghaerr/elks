@@ -55,7 +55,7 @@
 	.global head_max
 
 bs_oem_name:				// OEM name
-	.ascii "MSWIN4.1"
+	.ascii "ELKSFAT1"
 bpb_byts_per_sec:			// Bytes per sector
 	.word 0x200
 bpb_sec_per_clus:			// Sectors per cluster
@@ -80,9 +80,11 @@ head_max:
 	.word FAT_NUM_HEADS
 bpb_hidd_sec:				// Hidden sectors
 	.long 0
+bpb_tot_sec_32:				// Total number of sectors, 32-bit
+	.long 0
 .endm
 
-.macro FAT_LOAD_KERNEL
+.macro FAT_LOAD_AND_RUN_KERNEL
 	.set buf, entry + 0x200
 
 	// Load the first sector of the root directory
@@ -91,16 +93,16 @@ bpb_hidd_sec:				// Hidden sectors
 	mulw bpb_fat_sz_16
 	addw bpb_rsvd_sec_cnt,%ax
 	push %ax
-	inc %dx				// Assume DX = 0; if DX != 0 then we
-					// are in trouble anyway
+	inc %dx				// Assume DX was 0 (from mulw); if
+					// DX != 0 then we are in trouble
+					// anyway
 	mov $buf,%cx
-	push %cx
+	mov %cx,%si
 	push %ss
 	call disk_read
 
 	// See if the first directory entry is /linux; bail out if not
-	pop %si				// SI = buf
-	mov $kernel_name,%di
+	mov $kernel_name,%di		// SI = buf
 	mov $0xb,%cx
 	repz
 	cmpsb
@@ -121,20 +123,56 @@ bpb_hidd_sec:				// Hidden sectors
 	mov $4,%cl
 	shr %cl,%ax
 	add %bx,%ax
+	push %ax
 
-	// Calculate number of sectors to load; this may overestimate a bit :-|
-	mov (0x1d-0xb)(%si),%dx
-	inc %dx
-	shr %dx
+	// Load 1 sector first --- this has metadata on the sector counts for
+	// the setup code (to be at ELKS_INITSEG) and for the kernel (at
+	// ELKS_SYSSEG)
+	inc %dx				// Again assume DX was 0 (from mul)
+	mov $ELKS_INITSEG,%bx
+	mov %bx,%es
+	call _disk_read_at_bx_0
 
-	// Load at LOADSEG:0
-	xor %cx,%cx
-	mov $LOADSEG,%bx
-	push %bx
-	call disk_read
+	// Check for ELKS magic number
+	mov $0x1E6,%di
+	mov $0x4C45,%ax
+	scasw
+	jnz not_elks
+	mov $0x534B,%ax
+	scasw
+	jz boot_it
+
+not_elks:
+	mov $ERR_BAD_SYSTEM,%al
+	jmp _except
+
+boot_it:
+	// Load the setup code
+	cwtd				// DX = 0
+	pop %ax
+	inc %ax
+	mov %ax,%si			// SI = starting sector of setup code
+	mov %es:(0x1F1-0x1E6-4)(%di),%dl
+	add %dx,%si			// Precompute starting sector of kernel
+	mov $ELKS_INITSEG+0x20,%bx
+	call _disk_read_at_bx_0
+
+	// Load the kernel
+	xchg %ax,%si			// AX = starting sector of kernel
+	mov %es:(0x1F4-0x1E6-4)(%di),%dx
+	add $31,%dx
+	mov $5,%cl
+	shr %cl,%dx
+	mov $ELKS_SYSSEG,%bx
+	call _disk_read_at_bx_0
 
 	// w00t!
-	call run_prog
+	push %es
+	pop %ds
+	push %es
+	pop %ss
+	mov $0x4000-12,%sp
+	ljmp $ELKS_INITSEG+0x20,$0
 
 kernel_name:
 	.ascii "LINUX      "

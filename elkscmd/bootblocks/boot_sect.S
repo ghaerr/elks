@@ -126,7 +126,7 @@ _next1:
 #else
 	// Load the file /linux from the FAT12/16 filesystem's root directory
 
-	FAT_LOAD_KERNEL
+	FAT_LOAD_AND_RUN_KERNEL
 #endif
 
 no_system:
@@ -214,6 +214,16 @@ drive_reset:
 //------------------------------------------------------------------------------
 
 // void disk_read (int sect, int count, byte_t * buf, int seg)
+
+#ifdef BOOT_FAT
+_disk_read_at_bx_0:
+	// Load sectors at the absolute address BX:0 --- used by FAT loader
+	pop %cx
+	push %bx
+	push %cx
+	xor %cx,%cx
+	// fall through
+#endif
 
 	.global disk_read
 
@@ -359,6 +369,7 @@ dr_exit:
 
 //------------------------------------------------------------------------------
 
+#ifndef BOOT_FAT
 // void run_prog ()
 
 	.global run_prog
@@ -417,7 +428,6 @@ binfile:
 	mov $LOADSEG,%ax
 	mov %ax,%ds
 
-#ifndef BOOT_FAT
 	mov 0x01E6,%ax  // check for ELKS magic number
 	cmp $0x4C45,%ax
 	jnz not_elks
@@ -430,9 +440,6 @@ not_elks:
 	pop %ds
 	mov $ERR_BAD_SYSTEM,%al
 	jmp _except
-#else
-	// For now, skip the check in the FAT12 bootloader, to save space
-#endif
 
 boot_it:
 
@@ -489,11 +496,12 @@ copy_sect:
 	add $32,%ax
 	mov %ax,%es
 	ret
+#endif
 
 //------------------------------------------------------------------------------
 
 msg_boot:
-	.asciz "Boot sector\r\n"
+	.asciz "ELKS boot\r\n"
 
 msg_error:
 	.asciz "!\r\n"
