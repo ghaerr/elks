@@ -33,8 +33,8 @@ boot_probe.o: boot_probe.S
 
 boot_minix.o: boot_minix.c
 
-clean realclean:
-	rm -f *.o *.bin
+clean:
+	rm -f *.o *.bin *.map
 
 # Boot blocks are not part of the target filesystem
 # but embedded in the target disk image

@@ -5,29 +5,6 @@ endif
 
 include $(TOPDIR)/Make.defs
 
-#########################################################################
-# Variables
-
-# Specify the configuration shell to use.
-
-CFG_SHELL	:= $(shell \
-	     if [ -x "$$bash" ]; \
-		then echo $$bash ; \
-		else if [ -x /bin/bash ]; \
-			then echo /bin/bash ; \
-			else if [ -x /usr/bin/bash ]; \
-				then echo /usr/bin/bash ; \
-				else if [ -x /usr/local/bin/bash ]; \
-					then echo /usr/local/bin/bash ; \
-					else echo sh ; \
-				     fi ; \
-			     fi ; \
-		     fi ; \
-	     fi)
-
-#########################################################################
-# Rules
-
 .PHONY: all clean kconfig defconfig config menuconfig
 
 all: .config
@@ -36,7 +13,7 @@ all: .config
 	$(MAKE) -C elks all
 	$(MAKE) -C elkscmd all
 	$(MAKE) -C image all
-	-$(MAKE) -C elksemu PREFIX='$(TOPDIR)/cross' elksemu
+	$(MAKE) -C elksemu PREFIX='$(TOPDIR)/cross' elksemu
 
 clean:
 	$(MAKE) -C libc clean
@@ -61,10 +38,8 @@ kconfig:
 defconfig:
 	@yes '' | ${MAKE} config
 
-config:	elks/arch/i86/drivers/char/KeyMaps/config.in kconfig
-	$(CFG_SHELL) config/Configure config.in
+config: elks/arch/i86/drivers/char/KeyMaps/config.in kconfig
+	config/Configure config.in
 
-menuconfig:	elks/arch/i86/drivers/char/KeyMaps/config.in kconfig
-	$(CFG_SHELL) config/Menuconfig config.in
-
-#########################################################################
+menuconfig: elks/arch/i86/drivers/char/KeyMaps/config.in kconfig
+	config/Menuconfig config.in

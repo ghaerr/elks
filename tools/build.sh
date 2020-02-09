@@ -6,6 +6,5 @@
 # See .github/workflow/*.yml
 
 SCRIPTDIR="$(dirname "$0")"
-. "$SCRIPTDIR/env.sh"
-
+. "$SCRIPTDIR/../env.sh"
 make -C "$SCRIPTDIR" all
