@@ -23,12 +23,12 @@ probe.bin: boot_sect.o boot_probe.o
 
 boot_sect.o: boot_sect.S
 	$(CC) $(INCLUDES) -E -o boot_sect.tmp boot_sect.S
-	$(AS) -o boot_sect.o boot_sect.tmp
+	$(AS) $(ASFLAGS) -o boot_sect.o boot_sect.tmp
 	rm -f boot_sect.tmp
 
 boot_probe.o: boot_probe.S
 	$(CC) $(INCLUDES) -E -o boot_probe.tmp boot_probe.S
-	$(AS) -oboot_probe.o boot_probe.tmp
+	$(AS) $(ASFLAGS) -oboot_probe.o boot_probe.tmp
 	rm -f boot_probe.tmp
 
 boot_minix.o: boot_minix.c

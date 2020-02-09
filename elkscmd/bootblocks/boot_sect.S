@@ -74,9 +74,10 @@ floppy_table:
 
 	// Rebase CS DS ES SS to work in the 64K segment
 
-	mov %es,%ax
-	mov %ax,%ds
-	mov %ax,%ss  // automatic CLI for next instruction
+	push %es
+	pop %ds
+	push %es
+	pop %ss        // automatic CLI for next instruction
 	xor %sp,%sp
 
 	push %ax
@@ -168,9 +169,9 @@ _puts:
 	mov (%bx),%al
 	or %al,%al
 	jz 1f
-	mov %bx,%cx
+	push %bx
 	call _putc
-	mov %cx,%bx
+	pop %bx
 	inc %bx
 	jmp _puts
 1:  ret
@@ -245,16 +246,22 @@ dr_loop:
 	xchg %ax,%bx
 
 	// Also make sure the read does not overshoot the end of ES
+	//
+	// And, make sure we do not read more than 0x7F sectors at one go
+	// (this slightly simplifies the advance-in-buffer calculations
+	// later on)
 
 	mov -6+1(%bp),%bl
 	neg %bl
 	shr %bl
-	jz dr_over
-	cmp %bl,%al
-	jna dr_over
+	jnz dr_over
+	mov $0x7F,%bl
+dr_over:
+	cmp %bl,%al      // BL ranges from 1 to 0x7F inclusive
+	jna dr_over2
 	xchg %ax,%bx     // AL = number of sectors to read for this round
 
-dr_over:
+dr_over2:
 	mov drive_num,%dl
 
 dr_try:
@@ -304,25 +311,21 @@ dr_cont:
 	pop %ax
 
 	// Update logical sector number and logical count
-	// AL = number of sectors just read
+	// AL = number of sectors just read, which is at most 0x7F
 
-	xor %ah,%ah
+	cbtw
 	sub %ax,-4(%bp)
 	jz dr_exit
 	add %ax,-2(%bp)
 
 	// Advance in buffer; advance BX, then advance ES if BX overflows
 
-	shl %al
+	shl %al          // cannot overflow :-)
+	add %al,-6+1(%bp)
 	jnc dr_next
 	addb $0x10,4+1(%bp)
 
 dr_next:
-	add %al,-6+1(%bp)
-	jnc dr_next2
-	addb $0x10,4+1(%bp)
-
-dr_next2:
 	mov -2(%bp),%ax
 	jmp dr_loop
 
