@@ -82,7 +82,6 @@ int msdos_lookup(register struct inode *dir,const char *name,int len,
 	int res;
 	struct msdos_dir_entry *de;
 	struct buffer_head *bh;
-	struct inode *next;
 	*result = NULL;
 
 /*	if (!dir) return -ENOENT; dir != NULL always, because reached this function dereferencing dir */
@@ -146,6 +145,7 @@ fsdebug("create_entry\n");
 	de->start = 0;
 	date_unix2dos(CURRENT_TIME,&de->time,&de->date);
 	de->size = 0;
+fsdebug("create_entry block write %d\n", bh->b_blocknr);
 	bh->b_dirty = 1;
 	if ((*result = iget(dir->i_sb,ino)) != 0) msdos_read_inode(*result);
 	unmap_brelse(bh);
@@ -279,6 +279,7 @@ int msdos_rmdir(register struct inode *dir,const char *name,int len)
 	dir->i_mtime = CURRENT_TIME;
 	inode->i_dirt = dir->i_dirt = 1;
 	de->name[0] = DELETED_FLAG;
+fsdebug("rmdir block write %d\n", bh->b_blocknr);
 	bh->b_dirty = 1;
 	res = 0;
 rmdir_done:
@@ -318,6 +319,7 @@ int msdos_unlink(register struct inode *dir,const char *name,int len)
 	inode->i_dirt = 1;
 	de->name[0] = DELETED_FLAG;
 	dir->i_dirt = 1;
+fsdebug("unlink block write %d\n", bh->b_blocknr);
 	bh->b_dirty = 1;
 unlink_done:
 	unmap_brelse(bh);

@@ -340,7 +340,7 @@ struct super_block {
  * to have different dirent layouts depending on the binary type.
  */
 
-typedef int (*filldir_t) ();
+typedef int (*filldir_t) (char *, char *, size_t, off_t, ino_t);
 
 struct file_operations {
     int				(*lseek) ();

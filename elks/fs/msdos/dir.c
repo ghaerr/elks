@@ -99,7 +99,6 @@ int msdos_readdir(struct inode *inode, register struct file *filp, char *dirent,
 	/* Whether it is complete, and its long file name matches the long file name */
 	int is_long;
 	unsigned char alias_checksum = 0;	/* Make compiler warning go away */
-//	unsigned char long_slots = 0;
 	unsigned char unicode[52];          /* Limit to two long entries */
 
 	if (!inode || !S_ISDIR(inode->i_mode)) return -EBADF;
@@ -107,17 +106,18 @@ int msdos_readdir(struct inode *inode, register struct file *filp, char *dirent,
 		/* Fake . and .. for the root directory. */
 		if ((int)filp->f_pos < 2) {
 			/* Tricky: returns "." or ".." depending on f_pos */
-			return filldir(dirent, "..", (int)filp->f_pos, ++filp->f_pos, (long) MSDOS_ROOT_INO);
+			//FIXME compiler warning on ++filp->f_pos order of operands
+			return filldir(dirent, "..", (size_t)filp->f_pos, ++filp->f_pos, (ino_t)MSDOS_ROOT_INO);
 		}
 
-		if ((int)filp->f_pos == 2) *(int *)&filp->f_pos = 0;
+		if ((int)filp->f_pos == 2) *(int *)&filp->f_pos = 0;	//FIXME nonportable cast
 	}
 
 	if ((int)filp->f_pos & (sizeof(struct msdos_dir_entry)-1)) return -ENOENT;
 	bh = NULL;
 	is_long = 0;
 	ino = msdos_get_entry(inode,&filp->f_pos,&bh,&de);
-	while (ino != (ino_t)(-1L)) {
+	while (ino != (ino_t)-1L) {
 		/* Check for long filename entry */
 		if (de->name[0] == (__s8) DELETED_FLAG) {
 			is_long = 0;
@@ -129,14 +129,14 @@ int msdos_readdir(struct inode *inode, register struct file *filp, char *dirent,
 
 			ds = (struct msdos_dir_slot *) de;
 			if (ds->id & 0x40) {
-//				long_slots = slot = ds->id & ~0x40;
+				slot = ds->id & ~0x40;
 				is_long = 1;
 				alias_checksum = ds->alias_checksum;
 			}
 
 			while (slot > 0) {
-				if (ds->attr !=  ATTR_EXT || (ds->id & ~0x40) != slot ||
-					ds->alias_checksum != alias_checksum) {
+				if (ds->attr != ATTR_EXT || (ds->id & ~0x40) != slot
+					|| ds->alias_checksum != alias_checksum) {
 					is_long = 0;
 					break;
 				}
@@ -149,30 +149,28 @@ int msdos_readdir(struct inode *inode, register struct file *filp, char *dirent,
 				memcpy(&unicode[offset], ds->name11_12, 4);
 				offset += 4;
 
-				if (ds->id & 0x40) {
+				if (ds->id & 0x40)
 					*(short *)&unicode[offset] = 0;
-				}
 				if (slot > 0) {
 					ino = msdos_get_entry(inode,&filp->f_pos,&bh,&de);
-					if (ino == -1L) {
+					if (ino == (ino_t)-1L) {
 						is_long = 0;
 						break;
 					}
-					ds = (struct msdos_dir_slot *) de;
+					ds = (struct msdos_dir_slot *)de;
 				}
 			}
 		} else if (de->name[0] && !(de->attr & ATTR_VOLUME)) {
 			int i,i2,last;
-			char longname[14];
-			unsigned char long_len = 0; /* Make compiler warning go away */
+			unsigned int long_len = 0; /* Make compiler warning go away */
 			char bufname[13], c;
+			char longname[14];	//FIXME can we support > 14?
 			register char *ptname = bufname;
 
 			if (is_long) {
 				unsigned char sum;
-				for (sum = 0, i = 0; i < 11; i++) {
-					sum = (((sum&1)<<7)|((sum&0xfe)>>1));
-//					asm("rorb [bp-111], 1");    /* Note the offset */
+				for (sum = 0, i = 0; i < MSDOS_NAME; i++) {
+					sum = ((sum&1)<<7) | ((sum&0xfe)>>1);
 					sum += de->name[i];
 				}
 
@@ -205,11 +203,11 @@ int msdos_readdir(struct inode *inode, register struct file *filp, char *dirent,
 					ino = msdos_parent_ino(inode,0);
 
 				if (!is_long) {
-					filldir(dirent, bufname, i, oldpos, (long) ino);
+					filldir(dirent, bufname, i, oldpos, ino);
 					break;
 				}
 				else {
-					filldir(dirent, longname, long_len, oldpos, (long) ino);
+					filldir(dirent, longname, long_len, oldpos, ino);
 					break;
 				}
 				oldpos = filp->f_pos;

@@ -14,12 +14,12 @@
 struct buffer_head *msdos_sread(int dev,long sector,void **start)
 {
 	register struct buffer_head *bh;
-	bh = NULL;
 
 	if (!(bh = bread(dev, (block_t)(sector >> 1) )))
 		return NULL;
 
 	map_buffer(bh);
+//fsdebug("msread sector %ld block %d\n", sector, bh->b_blocknr);
 	*start = bh->b_data + (((int)sector & 1) << SECTOR_BITS);
 	return bh;
 }
@@ -47,13 +47,14 @@ int msdos_add_cluster(register struct inode *inode)
 {
 	static struct wait_queue *wait = NULL;
 	static int lock = 0;
+	//FIXME: using previous on booted FAT volume with mounted FAT floppy won't work well
 	static long previous = 0; /* works best if one FS is being used */
 	long count,this,limit,last,current,sector;
 	void *data;
 	struct buffer_head *bh;
 	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
 
-fsdebug("add cluster\n");
+fsdebug("add_cluster\n");
 #ifndef FAT_BITS_32
 	if (fatsz != 32)
 		if (inode->i_ino == MSDOS_ROOT_INO) return -ENOSPC;
@@ -77,8 +78,7 @@ printk("free cluster: %d\r\n",this);
 	}
 	fat_access(inode->i_sb,this,
 #ifndef FAT_BITS_32
-	    fatsz == 12 ?
-	    0xff8UL : fatsz == 16?0xfff8UL:
+	    fatsz == 12? 0xff8UL : fatsz == 16? 0xfff8UL:
 #endif
 	    0xffffff8UL);
 	lock = 0;
@@ -87,10 +87,10 @@ printk("free cluster: %d\r\n",this);
 printk("set to %x\r\n",fat_access(inode->i_sb,this,-1L));
 #endif
 	if (!S_ISDIR(inode->i_mode)) {
-		last = inode->i_size? get_cluster(inode,(inode->i_size-1) /
-		    SECTOR_SIZE/MSDOS_SB(inode->i_sb)->cluster_size) : 0;
-	}
-	else {
+		last = inode->i_size?
+			get_cluster(inode,(inode->i_size-1) / SECTOR_SIZE /
+			MSDOS_SB(inode->i_sb)->cluster_size) : 0;
+	} else {
 		last = 0;
 		if ((current = inode->u.msdos_i.i_start) != 0) {
 			cache_lookup(inode,0x7fffffffL,&last,&current);
@@ -104,7 +104,8 @@ printk("set to %x\r\n",fat_access(inode->i_sb,this,-1L));
 #ifdef DEBUG
 printk("last = %d\r\n",last);
 #endif
-	if (last) fat_access(inode->i_sb,last,this);
+	if (last)
+		fat_access(inode->i_sb,last,this);
 	else {
 		inode->u.msdos_i.i_start = this;
 		inode->i_dirt = 1;
@@ -133,6 +134,7 @@ printk("zeroing sector %d\r\n",sector);
 			else memset(data,0,SECTOR_SIZE);
 		}
 		if (bh) {
+fsdebug("add_cluster block write %d\n", bh->b_blocknr);
 			bh->b_dirty = 1;
 			unmap_brelse(bh);
 		}
@@ -154,8 +156,8 @@ printk("size is %d now (%x)\r\n",inode->i_size,inode);
 
 /* Linear day numbers of the respective 1sts in non-leap years. */
 
+                  /* JanFebMarApr May Jun Jul Aug Sep Oct Nov Dec */
 static int day_n[] = { 0,31,59,90,120,151,181,212,243,273,304,334,0,0,0,0 };
-		  /* JanFebMarApr May Jun Jul Aug Sep Oct Nov Dec */
 
 
 /* Convert a MS-DOS time/date pair to a UNIX date (seconds since 1 1 70). */
@@ -179,22 +181,24 @@ void date_unix2dos(long unix_date,unsigned short *time, unsigned short *date)
 {
 	int day,year,nl_day,month;
 
-	*time = (short)(unix_date % 60)/2+((short)((unix_date/60) % 60) << 5)+
-	    ((short)((unix_date/3600) % 24) << 11);
-	day = (short)(unix_date/86400L)-3652;
+	*time = (short)(unix_date % 60)/2 +
+			((short)((unix_date/60) % 60) << 5) +
+			((short)((unix_date/3600) % 24) << 11);
+	day = (short)(unix_date/86400L) - 3652;
 	year = day/365;
-	if ((year+3)/4+365*year > day) year--;
-	day -= (year+3)/4+365*year;
+	if ((year+3)/4 + 365*year > day)
+		year--;
+	day -= (year+3)/4 + 365*year;
 	if (day == 59 && !(year & 3)) {
 		nl_day = day;
 		month = 2;
-	}
-	else {
-		nl_day = (year & 3) || day <= 59 ? day : day-1;
+	} else {
+		nl_day = (year & 3) || day <= 59? day : day-1;
 		for (month = 0; month < 12; month++)
-			if (day_n[month] > nl_day) break;
+			if (day_n[month] > nl_day)
+				break;
 	}
-	*date = nl_day-day_n[month-1]+1+(month << 5)+(year << 9);
+	*date = nl_day-day_n[month-1] + 1 + (month << 5) + (year << 9);
 }
 
 
@@ -213,16 +217,15 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 	if (dir->i_ino == MSDOS_SB(dir->i_sb)->dev_ino) {
 		unsigned i = (unsigned)*pos / sizeof(struct msdos_dir_entry);
 		if (i - 2 <= DEVDIR_SIZE) {
-			static struct msdos_dir_entry _de;
+			static struct msdos_dir_entry deventry;
 			int j;
 
 			i -= 2;
-			*(int *)pos += sizeof(struct msdos_dir_entry);
-			*de = &_de;
-
-			memset(_de.name, ' ', 11);
+			*pos += sizeof(struct msdos_dir_entry);
+			*de = &deventry;
+			memset(deventry.name, ' ', MSDOS_NAME);
 			for (j = strlen(devnods[i].name); --j >= 0; )
-			    _de.name[j] = toupper(devnods[i].name[j]);
+			    deventry.name[j] = toupper(devnods[i].name[j]);
 
 			i += DEVINO_BASE;
 			return i;
@@ -239,10 +242,18 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 		*pos += sizeof(struct msdos_dir_entry);
 		if (*bh)
 			unmap_brelse(*bh);
-//printk("mge1\n");
 		if (!(*bh = msdos_sread(dir->i_dev,sector,&data)))
 			continue;
 		*de = (struct msdos_dir_entry *) ((char *)data+(offset & (SECTOR_SIZE-1)));
+
+		/* return value will overfow for FAT16/32 if sector is beyond 2MB boundary*/
+#ifndef CONFIG_32BIT_INODES
+		if (sector > 8191) {
+			printk("FAT: disk too large, turn on CONFIG_32BIT_INODES\n");
+			return -1;
+		}
+#endif
+//fsdebug("get entry %ld\n", sector);
 		return (sector << MSDOS_DPS_BITS)+((offset & (SECTOR_SIZE-1)) >> MSDOS_DIR_BITS);
 	}
 }
@@ -265,16 +276,17 @@ int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
 				&& !(de->attr & ATTR_VOLUME) && !strncmp(de->name,name,MSDOS_NAME)) break;
 		}
 		else if (!de->name[0] || ((unsigned char *) (de->name))[0] == DELETED_FLAG) {
-				if (!(inode = iget(dir->i_dev,*ino))) break;
+				if (!(inode = iget(dir->i_sb,*ino)))
+					break;
 				if (!inode->u.msdos_i.i_busy) {
 					iput(inode);
 					break;
 				}
-	/* skip deleted files that haven't been closed yet */
+				/* skip deleted files that haven't been closed yet */
 				iput(inode);
 			}
 	}
-	if (*ino == (ino_t)(-1L)) {
+	if (*ino == (ino_t)-1L) {
 		if (*res_bh) unmap_brelse(*res_bh);
 		*res_bh = NULL;
 		return name ? -ENOENT : -ENOSPC;
@@ -299,22 +311,24 @@ static long raw_found(struct super_block *sb,long sector,char *name,long number,
 	if ((bh = msdos_sread(sb->s_dev,sector,(void **) &data))) {
 	  for (entry = 0; entry < MSDOS_DPS; entry++) {
 #ifndef FAT_BITS_32
-	    __u16 starthi = (MSDOS_SB(sb)->fat_bits == 32) ? data[entry].starthi : 0;
+		unsigned short starthi = (MSDOS_SB(sb)->fat_bits == 32) ? data[entry].starthi : 0;
 #else
-	    __u16 starthi = data[entry].starthi;
+		unsigned short starthi = data[entry].starthi;
 #endif
-	    if (name) {
-		if (strncmp(data[entry].name,name,MSDOS_NAME) != 0)
-		    continue;
-		((__u16 *)&start)[0] = data[entry].start;
-		((__u16 *)&start)[1] = starthi;
+		if (name) {
+			if (strncmp(data[entry].name,name,MSDOS_NAME) != 0)
+				continue;
+			((unsigned short *)&start)[0] = data[entry].start;
+			((unsigned short *)&start)[1] = starthi;
 	    } else {
-		  if (*(unsigned char *) data[entry].name == DELETED_FLAG
-			|| data[entry].start != (__u16)number || starthi != ((__u16 *)&number)[1])
-		    continue;
-		  start = number;
+			if (*(unsigned char *)data[entry].name == DELETED_FLAG
+				|| data[entry].start != (unsigned short)number
+				|| starthi != ((unsigned short *)&number)[1])
+				continue;
+			start = number;
 	    }
-		if (ino) *ino = sector*MSDOS_DPS+entry;
+		if (ino)
+			*ino = sector*MSDOS_DPS + entry;
 		break;
 	  }
 	  unmap_brelse(bh);

@@ -99,7 +99,7 @@ fd1440-minix:
 	$(MAKE) -f Make.package minix NAME=fd1440-minix OPTS="-i360 -s1440" BPB=-B18,2 APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
 
 
-images-fat: fd360-fat fd720-fat fd1440-fat
+images-fat: fd360-fat fd720-fat fd1440-fat fd2880-fat
 
 fd360-fat:
 	$(MAKE) -f Make.package msdos NAME=fd360-fat SIZE=360 APPS=":boot|:small"
@@ -110,3 +110,6 @@ fd720-fat:
 fd1440-fat:
 	$(MAKE) -f Make.package msdos NAME=fd1440-fat SIZE=1440 APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
 
+# FAT16 image
+fd2880-fat:
+	$(MAKE) -f Make.package msdos NAME=fd2880-fat SIZE=2880 APPS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"

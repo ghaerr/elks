@@ -55,7 +55,7 @@ MSDOS_IMAGE=$(IMGDIR)/$(NAME).bin
 # -f size	image size in kilobytes
 # -M 512	software sector size 512 (=physical sector size)
 # -d 2		2 FAT tables
-# -L 9		9 FAT sectors
+# -L 9		9 FAT sectors (mformat forces 3 for 360k, 5 for 720k)
 # -r 14		14 root directory sectors
 # -c 1		cluster size 1 sector
 # -R 1		1 reserve sector (boot, may need to reserve 2)
