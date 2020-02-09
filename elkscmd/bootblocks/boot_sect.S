@@ -26,6 +26,17 @@ entry:
 
 floppy_table:
 
+#ifdef BOOT_FAT
+	jmp entry1
+	.org 3, 0x90
+
+#include "boot_sect_fat.h"
+
+	FAT_BPB
+
+entry1:
+#endif
+
 	// Get the memory size
 	// TODO: optional BIOS INT 12h
 
@@ -80,7 +91,7 @@ floppy_table:
 	pop %ss        // automatic CLI for next instruction
 	xor %sp,%sp
 
-	push %ax
+	push %ss
 	mov $_next1,%cl  // CH = 0
 	push %cx
 	retf
@@ -101,6 +112,7 @@ _next1:
 	mov sect_max,%al
 	mov %al,floppy_table + 4
 
+#ifndef BOOT_FAT
 	// Load the second sector of the boot block
 
 	mov $1,%ax
@@ -111,6 +123,13 @@ _next1:
 	call _disk_read
 
 	call payload
+#else
+	// Load the file /linux from the FAT12/16 filesystem's root directory
+
+	FAT_LOAD_KERNEL
+#endif
+
+no_system:
 	mov $ERR_NO_SYSTEM,%al
 	// fall through to _except
 
@@ -226,8 +245,12 @@ _disk_read:
 dr_loop:
 	// Compute the CHS from logical sector
 	// AX = logical sector
+#ifndef BOOT_FAT
 	mov sect_max,%bl
 	xor %bh,%bh
+#else
+	mov sect_max,%bx
+#endif
 	xor %dx,%dx
 	divw %bx
 	mov %dl,%cl      // CL = physical sector number in track, minus 1
@@ -394,6 +417,7 @@ binfile:
 	mov $LOADSEG,%ax
 	mov %ax,%ds
 
+#ifndef BOOT_FAT
 	mov 0x01E6,%ax  // check for ELKS magic number
 	cmp $0x4C45,%ax
 	jnz not_elks
@@ -406,12 +430,13 @@ not_elks:
 	pop %ds
 	mov $ERR_BAD_SYSTEM,%al
 	jmp _except
+#else
+	// For now, skip the check in the FAT12 bootloader, to save space
+#endif
 
 boot_it:
 
-	pop %ds
-	mov $LOADSEG,%ax
-	mov %ax,%ds
+	pop %ax
 	mov $ELKS_INITSEG,%ax
 	mov %ax,%es
 
@@ -478,6 +503,7 @@ msg_reboot:
 
 //------------------------------------------------------------------------------
 
+#ifndef BOOT_FAT
 // ELKS disk parameter structure
 // For future expansion, fields should be added at the _front_ of structure
 
@@ -494,44 +520,49 @@ elks_parms_start:
 // TODO: number of tracks is not used
 
 track_max:
-#if defined(CONFIG_IMG_FD360)
+#   if defined(CONFIG_IMG_FD360)
 	.word 40
-#elif defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1440)
+#   elif defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1440)
 	.word 80
-#elif defined(CONFIG_IMG_HD)
+#   elif defined(CONFIG_IMG_HD)
 	.word CONFIG_IMG_CYL
-#else
+#   else
 	.error "Unknown number of disk tracks!"
-#endif
+#   endif
 
 sect_max:
-#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720)
+#   if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720)
 	.byte 9
-#elif defined(CONFIG_IMG_FD1200)
+#   elif defined(CONFIG_IMG_FD1200)
 	.byte 15
-#elif defined(CONFIG_IMG_FD1440)
+#   elif defined(CONFIG_IMG_FD1440)
 	.byte 18
-#elif defined(CONFIG_IMG_FD1680)
+#   elif defined(CONFIG_IMG_FD1680)
 	.byte 21
-#elif defined(CONFIG_IMG_HD)
+#   elif defined(CONFIG_IMG_HD)
 	.byte CONFIG_IMG_SECT
-#else
+#   else
 	.error "Unknown number of disk sectors per track!"
-#endif
+#   endif
 
 head_max:
-#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680)
+#   if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) \
+       || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) \
+       || defined(CONFIG_IMG_FD1680)
 	.byte 2
-#elif defined(CONFIG_IMG_HD)
+#   elif defined(CONFIG_IMG_HD)
 	.byte CONFIG_IMG_HEAD
-#else
+#   else
 	.error "Unknown number of disk sides/heads!"
-#endif
+#   endif
 
 // Marker to indicate presence and size of ELKS parameter structure
 
 	.byte . - elks_parms_start
 	.ascii "eL"
+#else
+	.org 0x1FE
+#endif  // !BOOT_FAT
 
 //------------------------------------------------------------------------------
 
@@ -547,11 +578,13 @@ head_max:
 
 	.word 0xAA55
 
+#ifndef BOOT_FAT
 // Here comes the first sector of the payload
 // that is specific to the filesystem
 
 	.org 0x200
 
 payload:
+#endif
 
 //------------------------------------------------------------------------------
