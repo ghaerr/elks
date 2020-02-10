@@ -41,42 +41,34 @@ ifdef CMD_basename
 	OBJS	+= cmd/basename.o
 	NEED_stripslash	= yes
 endif
-
 ifdef CMD_cal
 	CFLAGS	+= -DCMD_cal
 	OBJS	+= cmd/cal.o
 endif
-
 ifdef CMD_cat
 	CFLAGS	+= -DCMD_cat
 	OBJS	+= cmd/cat.o
 endif
-
 ifdef CMD_chgrp
 	CFLAGS	+= -DCMD_chgrp
 	OBJS	+= cmd/chgrp.o
 endif
-
 ifdef CMD_chmod
 	CFLAGS	+= -DCMD_chmod
 	OBJS	+= cmd/chmod.o
 endif
-
 ifdef CMD_chown
 	CFLAGS	+= -DCMD_chown
 	OBJS	+= cmd/chown.o
 endif
-
 ifdef CMD_cksum
 	CFLAGS	+= -DCMD_cksum
 	OBJS	+= cmd/cksum.o
 endif
-
 ifdef CMD_cmp
 	CFLAGS	+= -DCMD_cmp
 	OBJS	+= cmd/cmp.o
 endif
-
 ifdef CMD_cp
 	CFLAGS	+= -DCMD_cp
 	OBJS	+= cmd/cp.o
@@ -84,33 +76,27 @@ ifdef CMD_cp
 	NEED_copyfile	= yes
 	NEED_isadir	= yes
 endif
-
 ifdef CMD_cut
 	CFLAGS	+= -DCMD_cut
 	OBJS	+= cmd/cut.o
 endif
-
 ifdef CMD_date
 	CFLAGS	+= -DCMD_date
 	OBJS	+= cmd/date.o
 	NEED_utc_mktime	= yes
 endif
-
 ifdef CMD_dd
 	CFLAGS	+= -DCMD_dd
 	OBJS	+= cmd/dd.o
 endif
-
 ifdef CMD_dirname
 	CFLAGS	+= -DCMD_dirname
 	OBJS	+= cmd/dirname.o
 	NEED_stripslash	= yes
 endif
-
 ifdef CMD_false
 	CFLAGS	+= -DCMD_false
 endif
-
 ifdef CMD_true
 	CFLAGS	+= -DCMD_true
 endif
@@ -118,19 +104,15 @@ endif
 ifdef NEED_buildname
 	OBJS	+= lib/buildname.o
 endif
-
 ifdef NEED_copyfile
 	OBJS	+= lib/copyfile.o
 endif
-
 ifdef NEED_isadir
 	OBJS	+= lib/isadir.o
 endif
-
 ifdef NEED_stripslash
 	OBJS	+= lib/stripslash.o
 endif
-
 ifdef	NEED_utc_mktime
 	OBJS	+= lib/utc_mktime.o
 endif
