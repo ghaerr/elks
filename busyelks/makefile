@@ -52,6 +52,11 @@ ifdef CMD_cat
 	OBJS	+= cmd/cat.o
 endif
 
+ifdef CMD_chgrp
+	CFLAGS	+= -DCMD_chgrp
+	OBJS	+= cmd/chgrp.o
+endif
+
 ifdef CMD_dirname
 	CFLAGS	+= -DCMD_dirname
 	OBJS	+= cmd/dirname.o

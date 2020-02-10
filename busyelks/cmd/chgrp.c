@@ -18,9 +18,10 @@
 #include <utime.h>
 #include <errno.h>
 
-void
-chgrp_main(argc, argv)
-	char	**argv;
+#include "cmd.h"
+
+int
+chgrp_main(int argc, char * argv[])
 {
 	char		*cp;
 	int		gid;
