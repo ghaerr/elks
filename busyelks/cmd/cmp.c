@@ -18,18 +18,16 @@
 #include <utime.h>
 #include <errno.h>
 
-void
-cmp_main(argc, argv)
-	char	**argv;
+#include "cmd.h"
+
+int
+cmp_main(int argc, char * argv[])
 {
 	int		fd1;
 	int		fd2;
 	int		cc1;
 	int		cc2;
 	long		pos;
-	char		*srcname;
-	char		*destname;
-	char		*lastarg;
 	char		*bp1;
 	char		*bp2;
 	char		buf1[512];

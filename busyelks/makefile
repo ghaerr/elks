@@ -72,6 +72,11 @@ ifdef CMD_cksum
 	OBJS	+= cmd/cksum.o
 endif
 
+ifdef CMD_cmp
+	CFLAGS	+= -DCMD_cmp
+	OBJS	+= cmd/cmp.o
+endif
+
 ifdef CMD_dirname
 	CFLAGS	+= -DCMD_dirname
 	OBJS	+= cmd/dirname.o

@@ -65,6 +65,9 @@ static struct cmd cmd[] =
 #if defined(CMD_cksum)
 	CMD("cksum",	cksum_main,	"[file1] ...", "Checksum and count the bytes in a file."),
 #endif
+#if defined(CMD_cmp)
+	CMD("cmp",	cmp_main,	"file1 file2", "Compare two files byte by byte."),
+#endif
 #if defined(CMD_dirname)
 	CMD("dirname",	dirname_main,	"NAME", " Strip last component from file name."),
 #endif
