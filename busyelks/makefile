@@ -138,7 +138,12 @@ endif
 all: $(OUT)
 
 $(OUT):	$(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $^
+	@echo '[LD]	$@'
+	@$(LD) $(LDFLAGS) -o $@ $^
+
+.c.o:
+	@echo '[CC]	$@'
+	@$(CC) $(CFLAGS) -o $@ -c $<
 
 $(OBJS): config.mk
 
