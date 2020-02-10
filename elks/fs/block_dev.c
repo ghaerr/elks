@@ -67,7 +67,7 @@ size_t block_read(struct inode *inode, register struct file *filp,
 	if (inode->i_op->getblk)
 	    bh = inode->i_op->getblk(inode, (block_t)chars, 0);
 	else
-	    bh = getblk(inode->i_dev, (block_t)chars);
+	    bh = getblk(inode->i_rdev, (block_t)chars);
 	/* Offset to block/offset */
 	chars = BLOCK_SIZE - (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1));
 	if (chars > count) chars = count;
@@ -130,7 +130,7 @@ size_t block_write(struct inode *inode, register struct file *filp,
 	if (inode->i_op->getblk)
 	    bh = inode->i_op->getblk(inode, (block_t)chars, 1);
 	else
-	    bh = getblk(inode->i_dev, (block_t)chars);
+	    bh = getblk(inode->i_rdev, (block_t)chars);
 	if (!bh) {
 	    if (!written) written = -ENOSPC;
 	    break;
