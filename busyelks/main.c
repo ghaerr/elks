@@ -56,6 +56,9 @@ static struct cmd cmd[] =
 #if defined(CMD_chgrp)
 	CMD("chgrp",	chgrp_main,	"group_name file1 [file2] ...", "Change group ownership."),
 #endif
+#if defined(CMD_chmod)
+	CMD("chmod",	chmod_main,	"mode file1 [file2] ...", "Change file mode bits."),
+#endif
 #if defined(CMD_dirname)
 	CMD("dirname",	dirname_main,	"NAME", " Strip last component from file name."),
 #endif

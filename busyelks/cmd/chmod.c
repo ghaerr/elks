@@ -18,9 +18,10 @@
 #include <utime.h>
 #include <errno.h>
 
-void
-chmod_main(argc, argv)
-	char	**argv;
+#include "cmd.h"
+
+int
+chmod_main(int argc, char * argv[])
 {
 	char	*cp;
 	int	mode;
