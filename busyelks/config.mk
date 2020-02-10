@@ -13,6 +13,7 @@ CMD_cp		= yes
 CMD_cut		= yes
 CMD_date	= yes
 CMD_dd		= yes
+CMD_diff	= yes
 CMD_dirname	= yes
 CMD_false	= yes
 CMD_true	= yes

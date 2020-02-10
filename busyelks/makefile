@@ -89,6 +89,10 @@ ifdef CMD_dd
 	CFLAGS	+= -DCMD_dd
 	OBJS	+= cmd/dd.o
 endif
+ifdef CMD_diff
+	CFLAGS	+= -DCMD_diff
+	OBJS	+= cmd/diff.o
+endif
 ifdef CMD_dirname
 	CFLAGS	+= -DCMD_dirname
 	OBJS	+= cmd/dirname.o

@@ -31,6 +31,7 @@
 *-----------------------------------------------------------------------------
 */
 
+#include <getopt.h>
 #include <stdlib.h>
 #include <limits.h>		/* NAME_MAX for maximal filename length	 */
 #include <string.h>		/* string manipulation			 */
@@ -43,6 +44,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include "../defs.h"
+
+#include "cmd.h"
 
 /* These definitions are needed only to suppress warning messages. */
 #define Nullfp 		((FILE*)0)
@@ -65,64 +68,65 @@ typedef enum {
 } MODE;
 
  /* Global variables for the 'normal' diff part	 */
-char *progname;			/* program name	(on command line)	 */
-int diffs = 0;			/* number of differences		 */
-MODE mode;			/* which mode is used			 */
-int severe_error;		/* nonzero after severe, non-fatal error */
+static	char *progname;			/* program name	(on command line)	 */
+static	int diffs = 0;			/* number of differences		 */
+static	MODE mode;			/* which mode is used			 */
+static	int severe_error;		/* nonzero after severe, non-fatal error */
 
 /* The following global variables are used with the -r option:
  * for every pair of files that are different, a "command line" of the
  * form "diff <options> <oldfile> <newfile>" is printed before the real
  * output starts.							 */
-int firstoutput = 1;		/* flag to print one time		 */
-char options_string[10];	/* string to hold command line options 	 */
-char oldfile[PATH_MAX];		/* first file				 */
-char newfile[PATH_MAX];		/* second file				 */
-
+static	int firstoutput = 1;		/* flag to print one time		 */
+static	char options_string[10];	/* string to hold command line options 	 */
+static	char oldfile[PATH_MAX];		/* first file				 */
+static	char newfile[PATH_MAX];		/* second file				 */
 
  /* Global variables for the command-line options */
-int trim_blanks = NOT_SET;	/* SET if -b specified	 		 */
-int recursive_dir = NOT_SET;	/* SET if -r specified	 		 */
-int context_lines = 3;		/* numbers of lines in a context	 */
-static int offset;		/* offset of the actual line number for -e */
+static	int trim_blanks = NOT_SET;	/* SET if -b specified	 		 */
+static	int recursive_dir = NOT_SET;	/* SET if -r specified	 		 */
+static	int context_lines = 3;		/* numbers of lines in a context	 */
+static	int offset;		/* offset of the actual line number for -e */
 
  /* Function prototypes for the functions in this file	 */
-struct f;
+struct f;   
 _PROTOTYPE(int diff_main, (int argc, char **argv ));
-_PROTOTYPE(void process_command_line, (int argc, char **argv ));
-_PROTOTYPE(void analyse_input_files, (char *arg1, char *arg2, char *input1, 
+_PROTOTYPE(static void process_command_line, (int argc, char **argv ));
+_PROTOTYPE(static void analyse_input_files, (char *arg1, char *arg2, char *input1, 
 							char *input2 ));
-_PROTOTYPE(void diff, (char *filename1, char *filename2 ));
-_PROTOTYPE(FILE *check_file, (char *name ));
-_PROTOTYPE(void build_option_string, (void ));
-_PROTOTYPE(void fatal_error, (char *fmt, char *s ));
-_PROTOTYPE(void diff_warn, (int number, char *string ));
-_PROTOTYPE(void trimming_blanks, (char *l_text ));
-_PROTOTYPE(char *filename, (char *path_string));
-_PROTOTYPE(struct line *new_line, (int size ));
-_PROTOTYPE(void free_line, (struct line *l ));
-_PROTOTYPE(int equal_line, (struct line *l1, struct line *l2 ));
-_PROTOTYPE(int equal_3, (struct line *l1, struct line *l2 ));
-_PROTOTYPE(struct line *read_line, (FILE *fp ));
-_PROTOTYPE(void advance, (struct f *f ));
-_PROTOTYPE(void aside, (struct f *f, struct line *l ));
-_PROTOTYPE(struct line *next, (struct f *f ));
-_PROTOTYPE(void init_f, (struct f *f, FILE *fp ));
-_PROTOTYPE(void update, (struct f *f, char *s ));
-_PROTOTYPE(void __diff, (FILE *fp1, FILE *fp2 ));
-_PROTOTYPE(void differ, (struct f *f1, struct f *f2 ));
-_PROTOTYPE(int wlen, (struct f *f ));
-_PROTOTYPE(void range, (int a, int b ));
-_PROTOTYPE(void cdiff, (char *old, char *new, FILE *file1, FILE *file2 ));
-_PROTOTYPE(void dumphunk, (void ));
-_PROTOTYPE(char *getold, (int targ ));
-_PROTOTYPE(char *getnew, (int targ ));
-_PROTOTYPE(int isdir, (char *path ));
-_PROTOTYPE(void diff_recursive, (char *dir1, char *dir2 ));
-_PROTOTYPE(void file_type_error, (char *filename1, char *filename2, 
+_PROTOTYPE(static void diff, (char *filename1, char *filename2 ));
+_PROTOTYPE(static FILE *check_file, (char *name ));
+_PROTOTYPE(static void build_option_string, (void ));
+_PROTOTYPE(static void fatal_error, (char *fmt, char *s ));
+_PROTOTYPE(static void diff_warn, (int number, char *string ));
+_PROTOTYPE(static void trimming_blanks, (char *l_text ));
+/*
+_PROTOTYPE(static char *filename, (char *path_string));
+*/
+_PROTOTYPE(static struct line *new_line, (int size ));
+_PROTOTYPE(static void free_line, (struct line *l ));
+_PROTOTYPE(static int equal_line, (struct line *l1, struct line *l2 ));
+_PROTOTYPE(static int equal_3, (struct line *l1, struct line *l2 ));
+_PROTOTYPE(static struct line *read_line, (FILE *fp ));
+_PROTOTYPE(static void advance, (struct f *f ));
+_PROTOTYPE(static void aside, (struct f *f, struct line *l ));
+_PROTOTYPE(static struct line *next, (struct f *f ));
+_PROTOTYPE(static void init_f, (struct f *f, FILE *fp ));
+_PROTOTYPE(static void update, (struct f *f, char *s ));
+_PROTOTYPE(static void __diff, (FILE *fp1, FILE *fp2 ));
+_PROTOTYPE(static void differ, (struct f *f1, struct f *f2 ));
+_PROTOTYPE(static int wlen, (struct f *f ));
+_PROTOTYPE(static void range, (int a, int b ));
+_PROTOTYPE(static void cdiff, (char *old, char *new, FILE *file1, FILE *file2 ));
+_PROTOTYPE(static void dumphunk, (void ));
+_PROTOTYPE(static char *getold, (int targ ));
+_PROTOTYPE(static char *getnew, (int targ ));
+_PROTOTYPE(static int isdir, (char *path ));
+_PROTOTYPE(static void diff_recursive, (char *dir1, char *dir2 ));
+_PROTOTYPE(static void file_type_error, (char *filename1, char *filename2, 
 			struct stat *statbuf1, struct stat *statbuf2 ));
-_PROTOTYPE(void *xmalloc, (size_t size));
-_PROTOTYPE(void *xrealloc, (void *ptr, size_t size));
+_PROTOTYPE(static void *xmalloc, (size_t size));
+_PROTOTYPE(static void *xrealloc, (void *ptr, size_t size));
 
 int diff_main(argc, argv)
 int argc;
@@ -151,7 +155,8 @@ char **argv;
  * options. the processing of the command line is done with the
  * getopt() library function. a minimal error processing is done
  * for the number of command line arguments.				 */
-void process_command_line(argc, argv)
+static void
+process_command_line(argc, argv)
 int argc;			/* number of arguments on command line	 */
 char **argv;			/* ** to arguments on command line	 */
 {
@@ -201,7 +206,8 @@ char **argv;			/* ** to arguments on command line	 */
  * in the directory <directory> with <filename>.
  * if two filenames are specified, no special action takes place.
  */
-void analyse_input_files(arg1, arg2, input1, input2)
+static void
+analyse_input_files(arg1, arg2, input1, input2)
 char *arg1, *arg2;		/* filenames on the command line	 */
 char *input1, *input2;		/* filenames to be used with diff()	 */
 {
@@ -253,7 +259,8 @@ char *input1, *input2;		/* filenames to be used with diff()	 */
  * diff() expects the filenames of the two files to be compared as
  * arguments. the mode is determined from the global variable mode.
  */
-void diff(filename1, filename2)
+static void
+diff(filename1, filename2)
 char *filename1, *filename2;
 {
   FILE *file1 = check_file(filename1);
@@ -291,7 +298,8 @@ char *filename1, *filename2;
 /* Check_file() opens the fileptr with name <filename>. if <filename>
  * equals "-" stdin is associated with the return value.
  */
-FILE *check_file(name)
+static FILE *
+check_file(name)
 char *name;
 {
   FILE *temp;
@@ -310,7 +318,8 @@ char *name;
  * is used on the command line to get the current operation mode.
  * e.g. "-C 6 -b".
  */
-void build_option_string()
+static void
+build_option_string(void)
 {
   switch (mode) {
 	    case ed_mode:sprintf(options_string, "-e");
@@ -330,7 +339,8 @@ void build_option_string()
  * Expects a format string and a string as arguments. The arguments
  * are printed to stderr and the program exits with an error code 2.
  */
-void fatal_error(fmt, s)
+static void
+fatal_error(fmt, s)
 char *fmt;			/* the format sttring to be printed	 */
 char *s;			/* string to be inserted into the format
 				 * string				 */
@@ -346,7 +356,8 @@ char *s;			/* string to be inserted into the format
  * to the (optional) string to be printed.
  * Returns no value.
  */
-void diff_warn(number, string)
+static void
+diff_warn(number, string)
 int number;			/* index of the warning			 */
 char *string;			/* string to be inserted to the warning	 */
 {
@@ -361,7 +372,8 @@ char *string;			/* string to be inserted to the warning	 */
  * - blanks between words are reduced to one
  * - trailing blanks are eliminated.
  */
-void trimming_blanks(l_text)
+static void
+trimming_blanks(l_text)
 char *l_text;			/* begin of the char array		 */
 {
   char *line = l_text;
@@ -379,11 +391,12 @@ char *l_text;			/* begin of the char array		 */
   } while (*(++line) != '\0');
 }
 
-
+#if 0
 /* Filename separates the filename and the relative path in path_string.
  * Returns the filename with a leading /
  */
-char *filename(path_string)
+static char *
+filename(path_string)
 char *path_string;
 {
   char name[NAME_MAX + 2];	/* filename plus /		 	 */
@@ -400,6 +413,7 @@ char *path_string;
 
   return(name);
 }
+#endif
 
 /* The line module: one member in a linked list of lines. */
 struct line {
@@ -412,7 +426,8 @@ struct line *freelist = 0;
 #define stepup(ll) ( ((ll) && ((ll)->l_eof==0)) ? (ll)->l_next : (ll) )
 
 /* Function to allocate space for a new line containing SIZE chars	*/
-struct line *new_line(size)
+static struct line *
+new_line(size)
 int size;
 {
   register struct line *l;
@@ -429,7 +444,8 @@ int size;
 
 
 /* Free_line() releases storage allocated for <l>. */
-void free_line(l)
+static void
+free_line(l)
 register struct line *l;
 {
   l->l_next = freelist;
@@ -439,7 +455,8 @@ register struct line *l;
 /* Equal_line() compares two lines, <l1> and <l2>.
  * the returned value is the result of the strcmp() function.
  */
-int equal_line(l1, l2)
+static int
+equal_line(l1, l2)
 struct line *l1, *l2;
 {
   if (l1 == 0 || l2 == 0)
@@ -450,7 +467,8 @@ struct line *l1, *l2;
 	return(strcmp(l1->l_text, l2->l_text) == 0);
 }
 
-int equal_3(l1, l2)
+static int
+equal_3(l1, l2)
 struct line *l1, *l2;
 {
   register int i, ansr;
@@ -484,8 +502,8 @@ struct line *l1, *l2;
   return(ansr);
 }
 
-struct line *
- read_line(fp)
+static struct line *
+read_line(fp)
 FILE *fp;
 {
   register struct line *l = new_line(LINELEN);
@@ -524,7 +542,8 @@ struct f {
   FILE *f_fp;
 };
 
-void advance(f)
+static void
+advance(f)
 register struct f *f;
 {
   register struct line *l;
@@ -539,7 +558,8 @@ register struct f *f;
   }
 }
 
-void aside(f, l)
+static void
+aside(f, l)
 struct f *f;
 struct line *l;
 {
@@ -555,8 +575,8 @@ struct line *l;
   }
 }
 
-
-struct line *next(f)
+static struct line *
+next(f)
 register struct f *f;
 {
   register struct line *l;
@@ -581,11 +601,11 @@ register struct f *f;
   return l;
 }
 
-
 /* Init_f() initialises a window structure (struct f). <fp> is the
  * file associated with <f>.
  */
-void init_f(f, fp)
+static void
+init_f(f, fp)
 register struct f *f;
 FILE *fp;
 {
@@ -594,12 +614,12 @@ FILE *fp;
   f->f_fp = fp;
 }
 
-
 /* Update() prints a window. <f> is a pointer to the window, <s> is the
  * string containing the "prefix" to the printout( either "<" or ">").
  * after completion of update(), the window is empty.
  */
-void update(f, s)
+static void
+update(f, s)
 register struct f *f;
 char *s;
 {
@@ -653,8 +673,8 @@ char *s;
  * Expects two file-pointers as arguments. This functions does
  * *not* check if the file-pointers are valid.
  */
-
-void __diff(fp1, fp2)
+static void
+__diff(fp1, fp2)
 FILE *fp1, *fp2;
 {
   struct f f1, f2;
@@ -724,7 +744,8 @@ search:
 /* Differ() prints the differences between files. the arguments <f1> and
  * <f2> are pointers to the two windows, where the differences are.
  */
-void differ(f1, f2)
+static void
+differ(f1, f2)
 register struct f *f1, *f2;
 {
   int cnt1 = f1->f_linecnt, len1 = wlen(f1);
@@ -787,12 +808,12 @@ register struct f *f1, *f2;
   }
 }
 
-
 /* Function wlen() calculates the number of lines in a window. */
-int wlen(f)
+static int
+wlen(f)
 struct f *f;
 {
-  register cnt = 0;
+  register int cnt = 0;
   register struct line *l = f->f_bwin, *e = f->f_ewin;
 
   while (l && l != e) {
@@ -802,13 +823,13 @@ struct f *f;
   return cnt;
 }
 
-
 /* Range() prints the line numbers of a range. the arguments <a> and <b>
  * are the beginning and the ending line number of the range. if
  * <a> == <b>, only one line number is printed. otherwise <a> and <b> are
  * separated by a ",".
  */
-void range(a, b)
+static void
+range(a, b)
 int a, b;
 {
   printf(((a == b) ? "%d" : "%d,%d"), a, b);
@@ -825,19 +846,20 @@ int a, b;
 /* These global variables are still here from the original cdiff program...
  * I was to lazy just to sort them out...
  */
-char buff[512];
-FILE *oldfp, *newfp;
+static char buff[512];
+static FILE *oldfp, *newfp;
 
-int oldmin, oldmax, newmin, newmax;
-int oldbeg, oldend, newbeg, newend;
-int preoldmax, prenewmax;
-int preoldbeg, preoldend, prenewbeg, prenewend;
-int oldwanted, newwanted;
+static int oldmin, oldmax, newmin, newmax;
+static int oldbeg, oldend, newbeg, newend;
+static int preoldmax, prenewmax;
+static int preoldbeg, preoldend, prenewbeg, prenewend;
+static int oldwanted, newwanted;
 
-char *oldhunk, *newhunk;
-size_t oldsize, oldalloc, newsize, newalloc;
+static char *oldhunk, *newhunk;
+static size_t oldsize, oldalloc, newsize, newalloc;
 
-void cdiff(old, new, file1, file2)
+static void
+cdiff(old, new, file1, file2)
 char *old, *new;		/* The names of the two files to be compared */
 FILE *file1, *file2;		/* The corresponding file-pointers	 */
 {
@@ -1000,7 +1022,8 @@ FILE *file1, *file2;		/* The corresponding file-pointers	 */
   }
 }
 
-void dumphunk()
+static void
+dumphunk(void)
 {
   int i;
   char *line;
@@ -1059,7 +1082,8 @@ void dumphunk()
   *newhunk = '\0';
 }
 
-char *getold(targ)
+static char *
+getold(targ)
 int targ;
 {
   static int oldline = 0;
@@ -1071,7 +1095,8 @@ int targ;
   return Nullch;
 }
 
-char *getnew(targ)
+static char *
+getnew(targ)
 int targ;
 {
   static int newline = 0;
@@ -1083,11 +1108,11 @@ int targ;
   return Nullch;
 }
 
-
 /* Isdir() checks, if <path> is the name of a directory. a return value
  * is 0, <path> is a normal file. otherwise the <path> is a directory.
  */
-int isdir(path)
+static int
+isdir(path)
 char *path;
 {
   struct stat buf;
@@ -1099,12 +1124,11 @@ char *path;
   }
 }
 
-
-
 /* This is the "main" function if a diff of two directories has to be
  * done. diff_recursive() expects the names of the two directories to
  * be compared. 							 */
-void diff_recursive(dir1, dir2)
+static void
+diff_recursive(dir1, dir2)
 char *dir1, *dir2;
 {
   FILE *ls1, *ls2;
@@ -1183,11 +1207,11 @@ char *dir1, *dir2;
   if (pclose(ls2) != 0) severe_error = 1;
 }
 
-
 /* File_type_error is called, if in a recursive diff ( -r) one of the two
  * files a block special, a character special or a FIFO special file is.
  * The corresponding error message is printed here.			  */
-void file_type_error(filename1, filename2, statbuf1, statbuf2)
+static void
+file_type_error(filename1, filename2, statbuf1, statbuf2)
 char *filename1, *filename2;
 struct stat *statbuf1, *statbuf2;
 {
@@ -1228,7 +1252,8 @@ struct stat *statbuf1, *statbuf2;
          filename1, type1, filename2, type2);
 }
 
-void *xmalloc(size)
+static void *
+xmalloc(size)
 size_t size;
 {
   void *ptr;
@@ -1241,7 +1266,8 @@ size_t size;
   return(ptr);
 }
 
-void *xrealloc(ptr, size)
+static void *
+xrealloc(ptr, size)
 void *ptr;
 size_t size;
 {

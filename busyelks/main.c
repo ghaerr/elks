@@ -86,6 +86,9 @@ static struct cmd cmd[] =
 	CMD("dd",	dd_main,	"if=<inflie> of=<outfile> [bs=<N>] [count=<N>] [seek=<N>] [skip=<N>]",
 		"Copy a file."),
 #endif
+#if defined(CMD_diff)
+	CMD("diff",	diff_main, "[-c|-e|-C n][-br] file1 file2", "Compare files line by line."),
+#endif
 #if defined(CMD_dirname)
 	CMD("dirname",	dirname_main,	"NAME", " Strip last component from file name."),
 #endif
