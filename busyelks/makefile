@@ -90,6 +90,12 @@ ifdef CMD_cut
 	OBJS	+= cmd/cut.o
 endif
 
+ifdef CMD_date
+	CFLAGS	+= -DCMD_date
+	OBJS	+= cmd/date.o
+	NEED_utc_mktime	= yes
+endif
+
 ifdef CMD_dirname
 	CFLAGS	+= -DCMD_dirname
 	OBJS	+= cmd/dirname.o
@@ -118,6 +124,10 @@ endif
 
 ifdef NEED_stripslash
 	OBJS	+= lib/stripslash.o
+endif
+
+ifdef	NEED_utc_mktime
+	OBJS	+= lib/utc_mktime.o
 endif
 
 all: $(OUT)

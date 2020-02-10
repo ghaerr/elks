@@ -75,6 +75,13 @@ static struct cmd cmd[] =
 	CMD("cut",	cut_main,	"[-f args [-i] [-d x]]|[-c args] [filename [...]]",
 		"Remove sections from each line of files."),
 #endif
+#if defined(CMD_date)
+	CMD("date",	date_main,	"[option] [[yy]yy-m-dTh:m:s]",
+		"Read or modify current system date\n"
+		"-s STR\tset time described by STR\n"
+		"-i\tinteractively set time\n"
+		"-c STR\tinteractively set time if `now' is before STR"),
+#endif
 #if defined(CMD_dirname)
 	CMD("dirname",	dirname_main,	"NAME", " Strip last component from file name."),
 #endif

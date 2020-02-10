@@ -11,6 +11,7 @@ CMD_cksum	= yes
 CMD_cmp		= yes
 CMD_cp		= yes
 CMD_cut		= yes
+CMD_date	= yes
 CMD_dirname	= yes
 CMD_false	= yes
 CMD_true	= yes

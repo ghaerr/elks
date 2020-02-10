@@ -2,6 +2,8 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include "lib.h"
+
 /* our own happy mktime() replacement, with the following drawbacks: */
 /*    doesn't check boundary conditions */
 /*    doesn't set wday or yday */

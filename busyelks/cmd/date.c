@@ -16,10 +16,16 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <sys/time.h>
 
-void date_usage()
+#include "cmd.h"
+#include "lib.h"
+
+static void
+date_usage(void)
 {
 	fputs("date : read or modify current system date\n", stdout);
 	fputs("usage: date [option] [[yy]yy-m-dTh:m:s]\n", stdout);
@@ -29,7 +35,8 @@ void date_usage()
 	exit(1);
 }
 
-int decodedatestring(datestring, tv)
+static int
+decodedatestring(datestring, tv)
 char * datestring;
 struct timeval *tv;
 {
@@ -60,7 +67,7 @@ struct timeval *tv;
 	if(tm.tm_year<70) tm.tm_year+=2000;
 	else if(tm.tm_year<100)tm.tm_year+=1900;
 	else if(tm.tm_year<1970) 
-		usage();
+		date_usage();
 	systime = utc_mktime(&tm);
    tv->tv_sec = systime;
    tv->tv_usec = 0;
@@ -81,30 +88,30 @@ int argc;
 	}
 	else
 	{
-		char *p, buf[32];
+		char buf[32];
 		struct timeval tv;
 		int param = 1;
 
 		if(argv[param][0] != '-')
-			usage();
+			date_usage();
 			
 		switch(argv[param][1]){
 		case 'c':
-			if(decodedatestring(argv[++param], &tv)) usage();
+			if(decodedatestring(argv[++param], &tv)) date_usage();
 			if(systime > tv.tv_sec)
 			return 0;
 		case 'i':
 			fputs("insert current date: ", stdout);
 			fgets(buf, 31, stdin);
-			if(decodedatestring(buf, &tv)) usage();
+			if(decodedatestring(buf, &tv)) date_usage();
 			break;
 
 		case 's':
-			if(decodedatestring(argv[++param], &tv)) usage();
+			if(decodedatestring(argv[++param], &tv)) date_usage();
 			break;
 
 		default:
-			usage();
+			date_usage();
 		}
 
       if (settimeofday (&tv, NULL) != 0)
