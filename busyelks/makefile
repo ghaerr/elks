@@ -62,6 +62,11 @@ ifdef CMD_chmod
 	OBJS	+= cmd/chmod.o
 endif
 
+ifdef CMD_chown
+	CFLAGS	+= -DCMD_chown
+	OBJS	+= cmd/chown.o
+endif
+
 ifdef CMD_dirname
 	CFLAGS	+= -DCMD_dirname
 	OBJS	+= cmd/dirname.o

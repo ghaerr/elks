@@ -10,6 +10,7 @@ int cal_main(int argc, char * argv[]);
 int cat_main(int argc, char **argv);
 int chgrp_main(int argc, char * argv[]);
 int chmod_main(int argc, char * argv[]);
+int chown_main(int argc, char * argv[]);
 int	dirname_main(int argc, char * argv[]);
 
 #if defined(__cplusplus)
