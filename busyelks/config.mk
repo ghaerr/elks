@@ -7,6 +7,7 @@ CMD_cat		= yes
 CMD_chgrp	= yes
 CMD_chmod	= yes
 CMD_chown	= yes
+CMD_cksum	= yes
 CMD_dirname	= yes
 CMD_false	= yes
 CMD_true	= yes

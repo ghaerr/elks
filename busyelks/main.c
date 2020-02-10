@@ -62,6 +62,9 @@ static struct cmd cmd[] =
 #if defined(CMD_chown)
 	CMD("chown",	chown_main,	"chown new_owner file1 [file2] ...", "Change file owner."),
 #endif
+#if defined(CMD_cksum)
+	CMD("cksum",	cksum_main,	"[file1] ...", "Checksum and count the bytes in a file."),
+#endif
 #if defined(CMD_dirname)
 	CMD("dirname",	dirname_main,	"NAME", " Strip last component from file name."),
 #endif

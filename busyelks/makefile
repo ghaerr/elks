@@ -67,6 +67,11 @@ ifdef CMD_chown
 	OBJS	+= cmd/chown.o
 endif
 
+ifdef CMD_cksum
+	CFLAGS	+= -DCMD_cksum
+	OBJS	+= cmd/cksum.o
+endif
+
 ifdef CMD_dirname
 	CFLAGS	+= -DCMD_dirname
 	OBJS	+= cmd/dirname.o
