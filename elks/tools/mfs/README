@@ -9,3 +9,5 @@ Unlike mounting through Linux's mount device, this tool does not require
 root priviledges and will allow regular users create device nodes on
 the file system.
 
+Project home page: https://sourceforge.net/projects/mfstool
+
