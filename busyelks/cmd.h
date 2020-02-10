@@ -16,6 +16,7 @@ int cmp_main(int argc, char * argv[]);
 int cp_main(int argc, char * argv[]);
 int cut_main(int argc, char * argv[]);
 int date_main(int argc, char * argv[]);
+int dd_main(int argc, char * argv[]);
 int	dirname_main(int argc, char * argv[]);
 
 #if defined(__cplusplus)

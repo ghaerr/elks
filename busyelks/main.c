@@ -82,6 +82,10 @@ static struct cmd cmd[] =
 		"-i\tinteractively set time\n"
 		"-c STR\tinteractively set time if `now' is before STR"),
 #endif
+#if defined(CMD_dd)
+	CMD("dd",	dd_main,	"if=<inflie> of=<outfile> [bs=<N>] [count=<N>] [seek=<N>] [skip=<N>]",
+		"Copy a file."),
+#endif
 #if defined(CMD_dirname)
 	CMD("dirname",	dirname_main,	"NAME", " Strip last component from file name."),
 #endif
