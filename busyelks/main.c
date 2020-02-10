@@ -68,6 +68,9 @@ static struct cmd cmd[] =
 #if defined(CMD_cmp)
 	CMD("cmp",	cmp_main,	"file1 file2", "Compare two files byte by byte."),
 #endif
+#if defined(CMD_cp)
+	CMD("cp",	cp_main,	"source_file1 [source_file2]... {dest_file | dest_directory}", "Copy files."),
+#endif
 #if defined(CMD_dirname)
 	CMD("dirname",	dirname_main,	"NAME", " Strip last component from file name."),
 #endif

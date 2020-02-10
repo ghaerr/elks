@@ -21,7 +21,10 @@
 #include <utime.h>
 #include <errno.h>
 
-int cp_main(int argc, char **argv)
+#include "cmd.h"
+
+int
+cp_main(int argc, char * argv[])
 {
 	int	dirflag;
 	char	*srcname;

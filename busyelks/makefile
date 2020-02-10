@@ -77,6 +77,14 @@ ifdef CMD_cmp
 	OBJS	+= cmd/cmp.o
 endif
 
+ifdef CMD_cp
+	CFLAGS	+= -DCMD_cp
+	OBJS	+= cmd/cp.o
+	NEED_buildname	= yes
+	NEED_copyfile	= yes
+	NEED_isadir	= yes
+endif
+
 ifdef CMD_dirname
 	CFLAGS	+= -DCMD_dirname
 	OBJS	+= cmd/dirname.o
@@ -89,6 +97,18 @@ endif
 
 ifdef CMD_true
 	CFLAGS	+= -DCMD_true
+endif
+
+ifdef NEED_buildname
+	OBJS	+= lib/buildname.o
+endif
+
+ifdef NEED_copyfile
+	OBJS	+= lib/copyfile.o
+endif
+
+ifdef NEED_isadir
+	OBJS	+= lib/isadir.o
 endif
 
 ifdef NEED_stripslash
