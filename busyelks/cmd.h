@@ -14,6 +14,7 @@ int chown_main(int argc, char * argv[]);
 int cksum_main(int argc, char * argv[]);
 int cmp_main(int argc, char * argv[]);
 int cp_main(int argc, char * argv[]);
+int cut_main(int argc, char * argv[]);
 int	dirname_main(int argc, char * argv[]);
 
 #if defined(__cplusplus)

@@ -71,6 +71,10 @@ static struct cmd cmd[] =
 #if defined(CMD_cp)
 	CMD("cp",	cp_main,	"source_file1 [source_file2]... {dest_file | dest_directory}", "Copy files."),
 #endif
+#if defined(CMD_cut)
+	CMD("cut",	cut_main,	"[-f args [-i] [-d x]]|[-c args] [filename [...]]",
+		"Remove sections from each line of files."),
+#endif
 #if defined(CMD_dirname)
 	CMD("dirname",	dirname_main,	"NAME", " Strip last component from file name."),
 #endif

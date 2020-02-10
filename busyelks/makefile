@@ -85,6 +85,11 @@ ifdef CMD_cp
 	NEED_isadir	= yes
 endif
 
+ifdef CMD_cut
+	CFLAGS	+= -DCMD_cut
+	OBJS	+= cmd/cut.o
+endif
+
 ifdef CMD_dirname
 	CFLAGS	+= -DCMD_dirname
 	OBJS	+= cmd/dirname.o
