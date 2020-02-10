@@ -139,8 +139,16 @@ main(int argc, char * argv[])
 #	if defined(CMD_INFO_DESCR)
 			if(cmd[i].descr != NULL)
 			{
+				char const * s;
+
 				fputs("\n\t\t", stderr);
-				fputs(cmd[i].descr, stderr);
+
+				for(s = cmd[i].descr; *s; s++)
+				{
+					fputc(*s, stderr);
+					if(*s == '\n')
+						fputs("\t\t", stderr);
+				}
 			}
 #	endif
 #endif
