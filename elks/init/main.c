@@ -104,9 +104,9 @@ static void init_task()
      * So, I've modified the ELKS kernel to follow this tradition.
      */
 
-    run_init_process("/sbin/init");
-    run_init_process("/etc/init");
-    run_init_process("/bin/init");
+//	run_init_process("/sbin/init");
+//	run_init_process("/etc/init");
+	run_init_process("/bin/init");
 
 #ifdef CONFIG_CONSOLE_SERIAL
     num = sys_open("/dev/ttyS0", 2, 0);		/* These are for stdin */

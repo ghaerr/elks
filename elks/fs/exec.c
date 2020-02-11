@@ -174,8 +174,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     retval = filp->f_op->read(inode, filp, (char *)base_data, (size_t)mh.dseg);
 
     if (retval != (size_t)mh.dseg) {
-	debug2("EXEC(dseg read): bad result %d, expected %d\n",
-	       retval, mh.dseg);
+	debug2("EXEC(dseg read): bad result %d, expected %d\n", retval, mh.dseg);
 	goto error_exec5;
     }
     /* From this point, exec() will surely succeed */

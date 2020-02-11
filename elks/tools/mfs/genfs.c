@@ -243,6 +243,7 @@ parse_dir(inode_build_t * grand_parent_inode,
 				struct stat	child_stat;
 				err = lstat(child_path, &child_stat);
 				if (err) {
+					fprintf(stderr, "File: %s: ", child_path);
 					perror("lstat");
 					err = errno;
 					break;
@@ -330,6 +331,7 @@ parse_filelist(char *filelist, inode_build_t *parent_inode, char *parent_path)
 				struct stat	child_stat;
 				err = lstat(child_path, &child_stat);
 				if (err) {
+					fprintf(stderr, "File: %s: ", child_path);
 					perror("lstat");
 					err = errno;
 					break;

@@ -26,6 +26,8 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "null",	S_IFCHR | 0644, MKDEV(1, 3) },
     { "zero",	S_IFCHR | 0644, MKDEV(1, 5) },
     { "full",	S_IFCHR | 0644, MKDEV(1, 7) },
+    { "tcpdev",	S_IFCHR | 0644, MKDEV(8, 0) },
+    { "eth",	S_IFCHR | 0644, MKDEV(9, 0) },
     { "tty1",	S_IFCHR | 0644, MKDEV(4, 0) },
     { "tty2",	S_IFCHR | 0644, MKDEV(4, 1) },
     { "tty3",	S_IFCHR | 0644, MKDEV(4, 2) },
@@ -119,10 +121,7 @@ struct super_block *msdos_read_super(register struct super_block *s, char *data,
 	MSDOS_SB(s)->fat_bits = fat32 ? 32 : MSDOS_SB(s)->clusters > MSDOS_FAT12 ? 16 : 12;
 	unmap_brelse(bh);
 
-	printk("FAT: %dk, fat%d format\n", *(unsigned short *)b->sectors/2,
-		MSDOS_SB(s)->fat_bits);
-
-fsdebug("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%d,ts=%ld\n",
+printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%d,ts=%ld\n",
   b->media,MSDOS_SB(s)->cluster_size,MSDOS_SB(s)->fats,MSDOS_SB(s)->fat_start,
   MSDOS_SB(s)->fat_length,MSDOS_SB(s)->dir_start,MSDOS_SB(s)->dir_entries,
   MSDOS_SB(s)->data_start,*(unsigned short *) b->sectors,b->total_sect);
@@ -139,6 +138,10 @@ fsdebug("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%d,ts=%
 		printk("FAT: Unsupported format\n");
 		return NULL;
 	}
+
+	printk("FAT: %dk, fat%d format\n", *(unsigned short *)b->sectors/2,
+		MSDOS_SB(s)->fat_bits);
+
 #ifdef BLOAT_FS
 	s->s_magic = MSDOS_SUPER_MAGIC;
 #endif
