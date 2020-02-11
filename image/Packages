@@ -45,7 +45,7 @@
 # -------------	----------------------------------------------------------
 /dev			:boot
 /bin			:boot
-/bin/ash		:boot
+#/bin/ash		:boot
 /bin/banner								:app
 /bin/basename					:shutil
 /bin/bc									:app
@@ -107,6 +107,7 @@
 /bin/remsync						:fileutil
 /bin/rm				:small
 /bin/rmdir			:small
+#/bin/sash						:shutil
 /bin/sed						:shutil
 /bin/sh			:boot
 /bin/shutdown			:base
@@ -140,8 +141,9 @@
 /etc/inittab	:boot
 /etc/issue		:boot
 /etc/passwd		:boot
+/etc/motd		:boot
 /etc/rc.d		:boot
-/etc/rc.d/rc.sysinit	:boot
+/etc/rc.d/rc.sys	:boot
 /etc/resolv.conf	:boot
 /etc/termcap	:boot
 /home			:boot

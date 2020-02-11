@@ -69,6 +69,8 @@
 #define SYSINIT      398
 #define KBREQUEST    622
 
+char *initname;				/* full path to this program*/
+
 int hash(const char *string)
 {
 	const char *p;
@@ -81,14 +83,16 @@ int hash(const char *string)
 	return result;
 }
 
-/* `gently' exit */
-#if 1
-# define PANIC0 fprintf(stderr, "init panic\n"),exit(1)
-# define PANIC(a) fprintf(stderr, "init panic: %s\n", a),exit(1)
-
-#else
-# define PANIC(a) exit(1)
-#endif
+/* Print an error message and die*/
+static void fatalmsg(const char *msg, ...)
+{
+	va_list args;
+	va_start(args, msg);
+	fprintf(stderr, "%s: ", initname);
+	vfprintf(stderr, msg, args);
+	va_end(args);
+	exit(1);
+}
 
 #ifdef DEBUG
 #define FPUTS(A) fputs(A,stderr)
@@ -151,7 +155,7 @@ void scanFile(void func())
 	char buf[BUFSIZE], *line, *next;
 
 	f = open(INITTAB, O_RDONLY);
-	if (-1 == f) PANIC0;
+	if (-1 == f) fatalmsg("Missing %s\n", INITTAB);
 
 	left = read(f, buf, BUFSIZE);
 	line = strtok(buf, "\n");
@@ -200,7 +204,7 @@ struct tabentry *matchId(const char *id)
 void appendChild (const char *id, pid_t pid)
 {
 	if (MAXCHILD == nextchild-children)
-		PANIC("too many children");
+		fatalmsg("too many children\n");
 	memcpy(nextchild->id, id, 2);
 	nextchild->id[2] = 0;
 	nextchild->pid = pid;
@@ -211,7 +215,7 @@ void appendChild (const char *id, pid_t pid)
 void removeChild(struct tabentry *pos)
 {
 	if (pos-children >= nextchild-children)
-		PANIC("unexistent child");
+		fatalmsg("nonexistent child\n");
 	memcpy(pos, --nextchild, sizeof (struct tabentry));
 }
 
@@ -268,12 +272,12 @@ pid_t respawn(const char **a)
     if (a[3] == 0) return 1;
 
     pid = fork();
-    if (-1 == pid) PANIC0;
+    if (-1 == pid) fatalmsg("No fork\n");
 
     if (0 == pid) {
 	setsid();
 #ifdef DEBUG
-        close(0);
+	close(0);
 	close(1);
 	close(2);
 #endif
@@ -281,9 +285,9 @@ pid_t respawn(const char **a)
 	if (!strncmp(buf, GETTY, sizeof GETTY -1)) {
 	    devtty = strchr(buf, ' ');
 
-	    if (!devtty) PANIC0;
+	    if (!devtty) fatalmsg("Bad getty line\n");
 	    *(devtty++) = 0;
-	    if ((fd = open(devtty, O_RDWR)) < 0) PANIC0;
+	    if ((fd = open(devtty, O_RDWR)) < 0) fatalmsg("Can't open %s\n", devtty);
 
 	    dup2(fd ,STDIN_FILENO);
 	    dup2(fd ,STDOUT_FILENO);
@@ -292,12 +296,11 @@ pid_t respawn(const char **a)
 	    argv[0] = GETTY;
 	    argv[1] = devtty;
 	    argv[2] = NULL;
-
 	    execv(argv[0], argv);
 	}
 	else
 	{
-	    if ((fd = open(DEVTTY, O_RDWR)) < 0) PANIC0;
+	    if ((fd = open(DEVTTY, O_RDWR)) < 0) fatalmsg("Can't open %s\n", DEVTTY);
 
 	    dup2(fd ,STDIN_FILENO);
 	    dup2(fd ,STDOUT_FILENO);
@@ -308,11 +311,10 @@ pid_t respawn(const char **a)
 	    argv[2] = buf;
 	    argv[3] = strtok(buf, " ");
 	    argv[4] = NULL;
-
-    	    execv(argv[0], argv);
+		execv(argv[0], argv);
 	}
 
-	PANIC0;
+	fatalmsg("exec failed: %s\n", argv[0]);
     }
 
     FPUTS("owner process owns ");
@@ -461,7 +463,8 @@ int main(int argc, char **argv)
 {
 	pid_t pid;
 
-	argv[0] = "init";
+//	argv[0] = "init";
+	initname = argv[0];
 #ifdef DEBUG
 	int fd = open(DEVTTY, O_RDWR);
 	dup2(fd, 0);

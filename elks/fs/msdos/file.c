@@ -64,12 +64,12 @@ static int msdos_file_read(register struct inode *inode,register struct file *fi
 	char *buf,size_t count)
 {
 	char *start;
-	int left,offset,size;
+	size_t left,offset,size;
 	long sector;
 	struct buffer_head *bh;
 	void *data;
 
-//fsdebug("file_read\n");
+//fsdebug("file_read cnt %u\n", count);
 	if (!inode) {
 		printk("FAT: read NULL inode\n");
 		return -EINVAL;

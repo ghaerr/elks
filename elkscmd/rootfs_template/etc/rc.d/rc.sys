@@ -1,5 +1,7 @@
 # This file performs system initialization
 
+echo Running $0 script
+
 umask 022
 PATH=/bin:/usr/bin
 export PATH

@@ -40,6 +40,7 @@ all: $(TARGETS)
 # Populate template for filesystem genfs
 template:
 	-rm -rf $(DESTDIR)
+	git log | head -1 | sed 's/commit/ELKS built from commit/' > $(TEMPLATE_DIR)/etc/motd
 	cp -a $(TEMPLATE_DIR) $(DESTDIR)
 	find $(DESTDIR) -name .keep -delete
 	$(MAKE) -C $(ELKSCMD_DIR) install
