@@ -91,7 +91,7 @@ static void fatalmsg(const char *msg, ...)
 	fprintf(stderr, "%s: ", initname);
 	vfprintf(stderr, msg, args);
 	va_end(args);
-	exit(-1);
+	exit(1);
 }
 
 #ifdef DEBUG

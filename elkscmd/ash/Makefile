@@ -45,13 +45,7 @@ ash: $(OBJS)
 	$(LD) $(LDFLAGS) -o ash $(OBJS) $(LDLIBS)
 
 install: ash
-ifdef CONFIG_IMG_LINK
-#	$(INSTALL) ash $(DESTDIR)/bin
-#	$(LN) -sf ash $(DESTDIR)/bin/sh
 	$(INSTALL) ash $(DESTDIR)/bin/sh
-else
-	$(INSTALL) ash $(DESTDIR)/bin/sh
-endif
 
 clean:
 	rm -f core ash $(CLEANFILES)
