@@ -2,4 +2,5 @@
 *.bin
 
 # Temporary files
+Filelist
 romfs.devices

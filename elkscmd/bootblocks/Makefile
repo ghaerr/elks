@@ -42,8 +42,8 @@ boot_sect_fat.o: boot_sect.S boot_sect_fat.h
 	$(AS) $(ASFLAGS) -o boot_sect_fat.o boot_sect_fat.tmp
 	rm -f boot_sect_fat.tmp
 
-clean realclean:
-	rm -f *.o *.bin
+clean:
+	rm -f *.o *.bin *.map
 
 # Boot blocks are not part of the target filesystem
 # but embedded in the target disk image

@@ -5,8 +5,7 @@
 ![main](https://github.com/elks-org/elks/workflows/main/badge.svg)
 
 
-What is this ?
---------------
+# What is this ?
 
 This is a project to write a Linux-like OS for systems based on the Intel
 IA16 architecture (16 bits processors: 8088, 8086, 80188, 80186, 80286,
@@ -16,62 +15,81 @@ Such systems are ancient computers (IBM-PC XT / AT and clones), or more
 recent SBC / SoC / FPGA that reuse the huge hardware & software legacy
 from that popular platform.
 
+Watch ELKS in action (thanks @xrayer): https://www.youtube.com/watch?v=6rwlqmdebxk
 
-How to build ?
---------------
+# How to build ?
 
-To build ELKS, you need a cross build tool chain, mainly based on the latest
-GCC-IA16 (DEV86 including BCC was used for previous versions, but has been
-dropped because it was obsolete and no more actively maintained).
+## Prerequisites
 
-Among the dependencies there are packages (for Debian and Ubuntu distros):
-texinfo bison flex libgmp-dev libmpfr-dev libmpc-dev libncurses5-dev
+To build ELKS, you need a GNU development environment, including:
+- flex
+- bison
+- texinfo
+- libncurses5-dev
 
-A script is provided to automatically download and build that tool chain:
+## Quickstart
 
-  'tools/build.sh'
+A script is provided to automate the whole build process
+(cross toool chain, configuration, kernel, user land and target image),
+and make it easier for ELKS newbies:
 
-Note: all the scripts must be executed within the top folder 'elks/' as the
-current one.
+`./build.sh`
 
-A script is provided to automate the whole build process (configuration,
-kernel, user land and target image) and make it easier for ELKS newbies:
+Note: all the scripts must be executed within the top folder of
+the ELKS repository as the current one (= TOPDIR).
 
-  './build.sh'
+If you want to clean everything up afterwards (except the cross tool chain):
 
-If you want to clean everything up afterwards, run './build.sh clean'
-and it will run 'make clean' in the build directories for you.
+`./clean.sh`
 
-The general build procedure for ELKS is as follows:
+## Build steps
 
-* Set up your environment (PATH, TOPDIR and CROSSDIR):
+1- Create a `cross` subfolder:
 
-  '. tools/env.sh' (note the '.' before the script)
+`mkdir cross`
 
-* Build the cross chain in 'cross/' (see above)
+2- Build the cross tool chain, mainly based on a recent GCC-IA16
+(DEV86 including BCC was used for previous versions, but has been
+dropped because it was obsolete and no more maintained):
 
-* Configure the build chain, the kernel, the user land and the target image
-  format:
+`tools/build.sh`
 
-  'make menuconfig'
+Ubuntu 18.04 LTS users: as this step is quite long,
+you can download an already built cross folder from here:
+https://github.com/elks-org/elks/actions?query=workflow%3Across
 
-* Build the kernel, the user land and the target image:
+3- Set up your environment (PATH, TOPDIR and CROSSDIR):
 
-  'make all'
+`. env.sh` (note the '.' before the script)
 
-The target root folder is built in 'target/', and depending on your
-configuration, that folder is packed as either a floppy disk image (fd1440,
-fd1680, fd1200, fd720, fd360, without MBR), a hard-disk image (hd, with MBR),
-or a file image (ROM, TAR), into the '/image' folder.
+4- Configure the kernel, the user land and the target image format:
 
-Before writting the image on the real device, you can test it first on QEMU
-with './qemu.sh' (will configure QEMU as an ISA system).
+`make menuconfig`
+
+5- Build the kernel, the user land and the target image:
+
+`make all`
+
+The target root folder is built in `target`', and depending on your
+configuration, that folder is packed as either a floppy disk image
+(fd360, fd720, fd1440), a hard disk image (hd, without MBR),
+or a file image (ROM, TAR), into the `image` folder.
+
+6- Before writting that image on the real medium,
+you can test it first on QEMU:
+
+`./qemu.sh`
+
+7- You can then modify the configuration or the sources and repeat from the
+step 4 after cleaning only the kernel, the user land and the image:
+
+`make clean`
 
 
-More information
-----------------
+# More information
 
-Questions? Problems? Patches? Open an issue in this project! You can also join
-and email the 'Linux-8086' list at linux-8086@vger.kernel.org.
+Questions? Problems? Patches? Open an issue in this project!
 
-More information in the Documentation folder: Documentation/index.html
+You can also join and email the 'Linux-8086' list at linux-8086@vger.kernel.org.
+
+More information in the Documentation folder: `Documentation/index.html`

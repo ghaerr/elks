@@ -97,4 +97,5 @@ demo: $(NANOXDEMO) libnano-X.a
 .PHONY: install
 
 install:
-	$(INSTALL) bin/demo $(DESTDIR)/bin/ndemo
+#	install bin/demo $(DESTDIR)/bin/ndemo
+	install bin/nclock $(DESTDIR)/bin/nclock

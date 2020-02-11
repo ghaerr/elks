@@ -1,42 +1,29 @@
 #
 # IDE local settings
 #
+
 .project
-.DS_Store
 
 #
 # Build ignores
 #
+
 .config
 .config.old
 
 *.o
 *.a
-*.1.gz
-Kbuild
-cross
-
-#
-# Never ignore these
-#
-!.gitignore
+*.map
 
 #
 # Normal output and testing dirs
 #
+
+cross
 target
 
 #
-# Backups / patches
+# Never ignore these
 #
-*~
-*.orig
-*.rej
 
-#
-# Debugging stuff
-#
-*.map
-core
-.gdb_history
-.gdbinit
+!.gitignore

@@ -64,7 +64,7 @@ MSDOS_IMAGE=$(IMGDIR)/$(NAME).bin
 # -N 0		serial number 0
 # -v label	volume label (don't use with first format as uses two directory entries)
 # -C		create image (buggy, leaves nonzero data in image)
-MSDOS_MKFSOPTS=-f $(SIZE) -M 512 -d 2 -L 9 -r 14 -c 1 -R 1 -k -N 0
+MSDOS_MKFSOPTS=-f $(SIZE) -M 512 -d 2 -L 9 -r 14 -c 1 -k -N 0
 
 # mcopy options
 # -v		verbose

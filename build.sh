@@ -1,25 +1,11 @@
 #!/bin/bash
 
-# Quick and dirty build script for ELKS
+# Full build (including the cross tool chain)
+
 # Arguments:
-#   - 'clean': full cleanup
 #   - 'auto' : continuous integration context
 
-DELAY=7
-
-pause () {
-	echo
-	# 'read -n/-s' are bashisms, so work around them
-	if [ -z "$BASH_VERSION" ]
-		then
-		echo "Starting in $DELAY seconds."
-		sleep $DELAY
-		else
-		echo -n "Press a key to continue... "
-		read -n 1 -s 2>/dev/null || sleep $DELAY
-	fi
-	echo
-}
+SCRIPTDIR="$(dirname "$0")"
 
 clean_exit () {
 	E="$1"
@@ -31,56 +17,48 @@ clean_exit () {
 	exit $E
 }
 
-# Build environment setup
-# TODO: check script status on return
-. tools/env.sh
+# Environment setup
+
+. "$SCRIPTDIR/env.sh"
+[ $? -ne 0 ] && clean_exit 1
 
 # Build cross tools if not already
+
 if [ "$1" != "auto" ]; then
 	mkdir -p "$CROSSDIR"
-	test -x "$CROSSDIR/bin/ia16-elf-gcc" || tools/build.sh || clean_exit 1
+	test -f "$CROSSDIR/.gcc.install" || tools/build.sh || clean_exit 1
 fi
 
-# Working directory
-WD="$(pwd)"
+# Configure all
 
-### Clean if asked
-if [ "$1" = "clean" ]
-	then echo
-	echo "Cleaning up. Please wait."
-	sleep 1
-	for X in config elks elkscmd
-		do cd $X; make clean; cd "$WD"
-	done
-	clean_exit 0
-fi
-
-### Configure all (kernel + user land)
 if [ "$1" = "auto" ]; then
-	echo "Invoking 'make defconfig'."
+	echo "Invoking 'make defconfig'..."
 	make defconfig || clean_exit 2
 else
 	echo
 	echo "Now invoking 'make menuconfig' for you to configure the system."
 	echo "The defaults should be OK for many systems, but you may want to review them."
-	pause
+	echo -n "Press ENTER to continue..."
+	read
 	make menuconfig || clean_exit 2
 fi
 
 test -e .config || clean_exit 3
 
-### Clean all
+# Clean kernel, user land and image
+
 if [ "$1" != "auto" ]; then
 	echo "Cleaning all..."
-	sleep 1
 	make clean || clean_exit 4
 	fi
 
-### Build all
-echo "Building all..."
+# Build kernel, user land and image
 # Forcing single threaded build because of dirty dependencies (see #273)
-make -j1 all || clean_exit 5
-test -e elks/arch/i86/boot/Image || clean_exit 6
 
-echo "Target image is under 'image'."
+echo "Building all..."
+make -j1 all || clean_exit 5
+
+# Success
+
+echo "Target image is in 'image' folder."
 clean_exit 0

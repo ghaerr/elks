@@ -43,14 +43,6 @@ then
 
 fi
 
-#try to mount FAT file system disk
-if test /dev/fd1
-then
-  echo
-  echo -n "Mounting FAT file system: "
-  mount -t msdos /dev/fd1 /mnt
-fi
-
 # 
 # View message of day
 #
