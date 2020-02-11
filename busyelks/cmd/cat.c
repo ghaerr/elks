@@ -14,6 +14,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "cmd.h"
+
 int cat_read_size = 1;
 char colon[2] = { ':', ' ' };
 char nl = '\n';
@@ -42,7 +44,15 @@ int cat_main(int argc, char **argv)
 				write(STDERR_FILENO, colon, 2);
 				write(STDERR_FILENO, argv[i], strlen(argv[i]));
 				write(STDERR_FILENO, colon, 2);
-				write(STDERR_FILENO, sys_errlist[errno], strlen(sys_errlist[errno]));
+
+				{
+					char const * s = strerror(errno);
+
+					if(s == NULL)
+						s = "(unknown)";
+					write(STDERR_FILENO, s, strlen(s));
+				}
+
 				write(STDERR_FILENO, &nl, 1);
 			} else {
 				dumpfile(fd);

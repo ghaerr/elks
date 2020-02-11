@@ -1,10 +1,11 @@
 #include <unistd.h>
 #include <string.h>
 
-void
-dirname_main (argc, argv)
-	int argc;
-	char **argv;
+#include "cmd.h"
+#include "lib.h"
+
+int
+dirname_main(int argc, char * argv[])
 {
 	char *line;
 	
@@ -23,5 +24,6 @@ dirname_main (argc, argv)
 		write(STDOUT_FILENO,argv[1],strlen(argv[1]));
 		write(STDOUT_FILENO,"\n",1);
 	}
-	exit(0);
+
+	return 0;
 }

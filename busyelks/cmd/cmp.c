@@ -8,28 +8,20 @@
 
 #include "../sash.h"
 
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <signal.h>
-#include <pwd.h>
-#include <grp.h>
-#include <utime.h>
-#include <errno.h>
 
-void
-cmp_main(argc, argv)
-	char	**argv;
+#include "cmd.h"
+
+int
+cmp_main(int argc, char * argv[])
 {
 	int		fd1;
 	int		fd2;
 	int		cc1;
 	int		cc2;
 	long		pos;
-	char		*srcname;
-	char		*destname;
-	char		*lastarg;
 	char		*bp1;
 	char		*bp2;
 	char		buf1[512];
@@ -37,68 +29,77 @@ cmp_main(argc, argv)
 	struct	stat	statbuf1;
 	struct	stat	statbuf2;
 
+	if(argc != 3)
+	{
+		fputs(argv[0], stderr);
+		fputs(" file1 file2\n", stderr);
+		return 1;
+	}
+
 	if (stat(argv[1], &statbuf1) < 0) {
 		perror(argv[1]);
-		exit(2);
+		return 2;
 	}
 
 	if (stat(argv[2], &statbuf2) < 0) {
 		perror(argv[2]);
-		exit(2);
+		return 2;
 	}
 
 	if ((statbuf1.st_dev == statbuf2.st_dev) &&
 		(statbuf1.st_ino == statbuf2.st_ino))
 	{
 		printf("Files are links to each other\n");
-		exit(0);
+		return 0;
 	}
 
 	if (statbuf1.st_size != statbuf2.st_size) {
 		printf("Files are different sizes\n");
-		exit(1);
+		return 1;
 	}
 
 	fd1 = open(argv[1], 0);
 	if (fd1 < 0) {
 		perror(argv[1]);
-		exit(2);
+		return 2;
 	}
 
 	fd2 = open(argv[2], 0);
 	if (fd2 < 0) {
 		perror(argv[2]);
 		close(fd1);
-		exit(2);
+		return 2;
 	}
 
 	pos = 0;
-	while (TRUE) {
+	for(;;)
+	{
 		cc1 = read(fd1, buf1, sizeof(buf1));
 		if (cc1 < 0) {
 			perror(argv[1]);
-			exit(2);
+			return 2;
 		}
 
 		cc2 = read(fd2, buf2, sizeof(buf2));
 		if (cc2 < 0) {
 			perror(argv[2]);
-			goto differ;
+			break;
 		}
 
-		if ((cc1 == 0) && (cc2 == 0)) {
+		if(!(cc1 || cc2))
+		{
 			printf("Files are identical\n");
-			goto same;
+			return 0;
 		}
 
 		if (cc1 < cc2) {
 			printf("First file is shorter than second\n");
-			goto differ;
+			break;
 		}
 
 		if (cc1 > cc2) {
 			printf("Second file is shorter than first\n");
-			goto differ;
+			break;
 		}
 
 		if (memcmp(buf1, buf2, cc1) == 0) {
@@ -112,10 +113,9 @@ cmp_main(argc, argv)
 			pos++;
 
 		printf("Files differ at byte position %ld\n", pos);
-		goto differ;
+		break;
 	}
-same:
-	exit(0);
-differ:
-	exit(1);
+
+	/* Differ */
+	return 1;
 }

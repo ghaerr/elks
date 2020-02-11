@@ -1,9 +1,101 @@
-This is an attempt at creating a BusyBox-like set of binaries
-for ELKS.
+BusyELKS
+========
 
-I am awful at Makefiles, so I wrote a rudimentary Makefile and 
-wrote a shell script to oversee the build process. Run ./build 
-and wait for it. When it's finished, you will have three
-BusyELKS binaries and a series of symbolic links for them.
-They will be set up under the _install/ directory exactly as
-they need to appear in a root filesystem.
+_BusyELKS_ is an attempt at creating a _BusyBox_-like set of binaries
+for _ELKS_.
+
+Compilation
+-----------
+
+* Prepare your ELKS tool chain.
+
+* Set up your environment (PATH, TOPDIR and CROSSDIR):
+.........................................
+$ . tools/env.sh
+.........................................
+
+* Enter 'busyelks' directory:
+.........................................
+$ cd busyelks
+.........................................
+
+* Build everything:
+.........................................
+$ make
+.........................................
+
+* Create the pack of 'busyelks' and all symlinks:
+.........................................
+$ make busyelks.tar.xz
+.........................................
+
+Configuration
+-------------
+
+config.mk::
+	Parameteres of compilation, commands selection.
+busyelks.fs::
+	Places for busyelks & symlinks on the target filesystem.
+
+Installation
+------------
+
+Extract all files from busyelks.tar.gz pack in the root of ELKS filesystem.
+
+Hack
+~~~~
+
+This command make and copy everything to _elkscmd/rootfs_template/_:
+...........................................................
+$ make install
+...........................................................
+
+Not very correct, but useful and quick. Now you are ready to create
+system image. Remove all files frm _rootfs_templare_ on your own.
+
+Have fun
+--------
+.....................................................................
+(...)
+login: root
+
+# which busyelks
+	/bin/busyelks
+
+# ls -l /bin/busyelks
+-rwxr-xr-x  1 root     root        10064  Feb 06 2020  busyelks
+
+# busyelks
+BusyELKS
+	basename NAME [SUFFIX]
+		Strip directory and suffix from filenames.
+	cal [month] year
+		Displays a calendar.
+	cat [file]...
+		Concatenate files and print on the standard output.
+	dirname NAME
+		Strip last component from file name.
+	false
+		Do nothing, unsuccessfully.
+	true
+		Do nothing, successfully
+
+# busyelks basename /etc/resolv.conf .conf
+resolv
+
+# which basename
+/bin/basename
+/usr/bin/basename
+
+# ls -l /bin/basename
+-rwxr-xr-x  1 root     root         5634  Feb 06 2020  basename
+
+# ls -l /usr/bin/basename
+lrwxrwxrwx  1 root     root           18  Feb 06 2020  basename -> ../../bin/busyelks
+
+# /usr/bin/basename /etc/resolv.conf .conf
+resolv
+
+# /bin/basename /etc/resolv.conf .conf
+resolv
+..................................................................

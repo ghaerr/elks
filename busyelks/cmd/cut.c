@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "cmd.h"
+
 #define MAX_FIELD	80	/* Pointers to the beginning of each field
 			 * are stored in columns[], if a line holds
 			 * more than MAX_FIELD columns the array
@@ -35,8 +37,8 @@
 
 #define MAX_ARGS	32	/* Maximum number of fields following -f or
 			 * -c switches												  	  */
-int args[MAX_ARGS * 2];
-int num_args;
+static	int args[MAX_ARGS * 2];
+static	int num_args;
 
 /* Lots of new defines, should easen maintainance...			*/
 #define DUMP_STDIN	0	/* define for mode: no options	 */
@@ -63,17 +65,17 @@ int num_args;
 #define MAX_ARGS_EXEEDED_ERROR		107
 
 
-int mode;			/* 0 = dump stdin to stdout, 1=-f, 2=-c   */
-int flag_i;			/* SET = -i set on command line	 */
-int flag_s;			/* SET = -s set on command line	 */
-char delim = '\t';		/* default delimiting character	  */
-FILE *fd;
-char *name;
-char line[BUFSIZ];
-int exit_status;
+static	int mode;			/* 0 = dump stdin to stdout, 1=-f, 2=-c   */
+static	int flag_i;			/* SET = -i set on command line	 */
+static	int flag_s;			/* SET = -s set on command line	 */
+static	char delim = '\t';		/* default delimiting character	  */
+static	FILE *fd;
+static	char *name;
+static	char line[BUFSIZ];
+static	int exit_status;
 
-
-void warn(warn_number, option)
+static void
+warn(warn_number, option)
 int warn_number;
 char *option;
 {
@@ -89,7 +91,8 @@ char *option;
 
 }
 
-void cuterror(err)
+static void
+cuterror(err)
 int err;
 {
   static char *err_mes[] = {
@@ -106,8 +109,8 @@ int err;
   exit(err);
 }
 
-
-void get_args()
+static void
+get_args(void)
 {
   int i = 0;
   int arg_ptr = 0;
@@ -145,8 +148,8 @@ void get_args()
   while (line[i++]);
 }
 
-
-void cut()
+void
+cut(void)
 {
   int i, j, length, maxcol;
   char *columns[MAX_FIELD];
@@ -197,7 +200,6 @@ void cut()
 		putchar('\n');
   }
 }
-
 
 int cut_main(argc, argv)
 int argc;

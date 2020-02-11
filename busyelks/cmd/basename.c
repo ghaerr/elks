@@ -1,6 +1,9 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "cmd.h"
+#include "lib.h"
+
 static void
 remove_suffix (name, suffix)
 	register char *name, *suffix;
@@ -29,10 +32,8 @@ basename (name)
 }
            
 
-void
-basename_main (argc, argv)
-	int argc;
-	char **argv;
+int
+basename_main(int argc, char * argv[])
 {
 	char *line;
 	
@@ -44,5 +45,6 @@ basename_main (argc, argv)
 		write(STDOUT_FILENO,line,strlen(line));
 		write(STDOUT_FILENO,"\n",1);
 	}
-	exit(0);
+
+	return 0;
 }

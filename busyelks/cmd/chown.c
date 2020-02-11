@@ -18,9 +18,9 @@
 #include <utime.h>
 #include <errno.h>
 
-void
-chown_main(argc, argv)
-	char	**argv;
+#include "cmd.h"
+
+int chown_main(int argc, char * argv[])
 {
 	char		*cp;
 	int		uid;

@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include "../defs.h"
 
+#include "cmd.h"
+
 #define do3months	domonth
 #define	IO_SUCCESS	0	/* Unix definitions		 */
 #define	IO_ERROR	1

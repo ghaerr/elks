@@ -11,12 +11,14 @@
 #include <unistd.h>
 #include <stdio.h>
 
-int error;
+#include "cmd.h"
+
+static int error;
 
 /* Table from P1003.2 (4.9/Fig 4.1). In fact, this table was taken from zmodem
  * and rewritten to look like the Draft 11 example.
  */
-unsigned long crctab[] = {
+static unsigned long crctab[] = {
 		  0x7fffffff,
 	 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
 	 0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e,
@@ -70,10 +72,6 @@ unsigned long crctab[] = {
 	 0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02,
 	  0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
-
-_PROTOTYPE(int cksum_main, (int argc, char **argv));
-_PROTOTYPE(void crc, (int fd, char *name));
-_PROTOTYPE(unsigned long strncrc, (unsigned char *b, int n, unsigned long s));
 
 static int aux;
 
@@ -153,4 +151,3 @@ char *argv[];
 	for (argv++; argc--; argv++) crc(open(*argv, O_RDONLY), *argv);
   return(error);
 }
-
