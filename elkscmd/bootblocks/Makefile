@@ -6,7 +6,8 @@ INCLUDES = -I $(TOPDIR)/include
 CFLAGS = -Wall -Os $(CROSS_CFLAGS) $(INCLUDES)
 
 AS = ia16-elf-as
-ASFLAGS =
+# We do some assembly-time divisions in boot_sect_fat.h, so ask GNU as not to treat `/' as a comment character.
+ASFLAGS = --divide
 
 LD = ia16-elf-ld
 LDFLAGS = -T $(TOPDIR)/elks/elks-raw.ld

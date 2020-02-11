@@ -541,7 +541,8 @@ track_max:
 #   elif defined(CONFIG_IMG_HD)
 	.word CONFIG_IMG_CYL
 #   else
-	.error "Unknown number of disk tracks!"
+	.warning "Unknown number of disk tracks!"
+	.word 0
 #   endif
 
 sect_max:
@@ -556,7 +557,8 @@ sect_max:
 #   elif defined(CONFIG_IMG_HD)
 	.byte CONFIG_IMG_SECT
 #   else
-	.error "Unknown number of disk sectors per track!"
+	.warning "Unknown number of disk sectors per track!"
+	.byte 0
 #   endif
 
 head_max:
@@ -567,7 +569,8 @@ head_max:
 #   elif defined(CONFIG_IMG_HD)
 	.byte CONFIG_IMG_HEAD
 #   else
-	.error "Unknown number of disk sides/heads!"
+	.warning "Unknown number of disk sides/heads!"
+	.byte 0
 #   endif
 
 // Marker to indicate presence and size of ELKS parameter structure
