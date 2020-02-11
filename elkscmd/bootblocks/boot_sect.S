@@ -517,7 +517,6 @@ msg_reboot:
 
 //------------------------------------------------------------------------------
 
-#ifndef BOOT_FAT
 // ELKS disk parameter structure
 // For future expansion, fields should be added at the _front_ of structure
 
@@ -545,7 +544,9 @@ track_max:
 	.word 0
 #   endif
 
+#   ifndef BOOT_FAT
 sect_max:
+#   endif
 #   if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720)
 	.byte 9
 #   elif defined(CONFIG_IMG_FD1200)
@@ -561,7 +562,9 @@ sect_max:
 	.byte 0
 #   endif
 
+#   ifndef BOOT_FAT
 head_max:
+#   endif
 #   if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) \
        || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) \
        || defined(CONFIG_IMG_FD1680)
@@ -577,9 +580,7 @@ head_max:
 
 	.byte . - elks_parms_start
 	.ascii "eL"
-#else
 	.org 0x1FE
-#endif  // !BOOT_FAT
 
 //------------------------------------------------------------------------------
 
