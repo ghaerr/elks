@@ -94,6 +94,7 @@ msdos:
 	do \
 		[ -d $(DESTDIR)/$$f ] && mmd -i $(MSDOS_IMAGE) ::$$f; \
 		[ -f $(DESTDIR)/$$f ] && mcopy -i $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) $(DESTDIR)$$f ::$$f; \
+		true; \
 	done
 	rm Filelist
 	#mdir -i $(MSDOS_IMAGE) -/ -a ::
