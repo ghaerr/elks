@@ -106,6 +106,10 @@ ifdef CMD_echo
 	CFLAGS	+= -DCMD_echo
 	OBJS	+= cmd/echo.o
 endif
+ifdef CMD_ed
+	CFLAGS	+= -DCMD_ed
+	OBJS	+= cmd/ed.o
+endif
 ifdef CMD_false
 	CFLAGS	+= -DCMD_false
 endif

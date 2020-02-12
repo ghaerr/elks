@@ -17,5 +17,6 @@ CMD_diff	= yes
 CMD_dirname	= yes
 CMD_du		= yes
 CMD_echo	= yes
+CMD_ed		= yes
 CMD_false	= yes
 CMD_true	= yes

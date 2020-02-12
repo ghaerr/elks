@@ -98,6 +98,9 @@ static struct cmd cmd[] =
 #if defined(CMD_echo)
 	CMD("echo",	echo_main, NULL, "Display a line of text."),
 #endif
+#if defined(CMD_ed)
+	CMD("ed",	ed_main, "[file]", "Line-oriented text editor"),
+#endif
 #if defined(CMD_false)
 	CMD("false",	false_main,	NULL, "Do nothing, unsuccessfully."),
 #endif
