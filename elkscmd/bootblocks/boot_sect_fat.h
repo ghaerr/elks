@@ -37,8 +37,42 @@
 	.set FAT_TABLE_SIZE, 9
 	.set FAT_SEC_PER_TRK, 18
 	.set FAT_NUM_HEADS, 2
+#elif defined(CONFIG_IMG_HD)
+	.set FAT_ROOT_ENT_CNT, 512
+	.set FAT_TOT_SEC, 2 * CONFIG_IMG_BLOCKS
+// Default cluster sizes for various partition sizes --- see Microsoft's 2000
+// white paper (reference below), p. 20
+.if FAT_TOT_SEC < 262144
+	.set FAT_SEC_PER_CLUS, 2
+.elseif FAT_TOT_SEC < 524288
+	.set FAT_SEC_PER_CLUS, 4
+.elseif FAT_TOT_SEC < 1048576
+	.set FAT_SEC_PER_CLUS, 8
+.elseif FAT_TOT_SEC < 2097152
+	.set FAT_SEC_PER_CLUS, 16
+.elseif FAT_TOT_SEC < 4194304
+	.set FAT_SEC_PER_CLUS, 32
+.else
+	.set FAT_SEC_PER_CLUS, 64
+.endif
+	.set FAT_MEDIA_BYTE, 0xf8
+// Default file allocation table size --- see 2000 white paper (again), p. 21
+	.set FAT_TMP_VAL_1, \
+	     FAT_TOT_SEC - 1 - (FAT_ROOT_ENT_CNT * 32 + 511) / 512
+	.set FAT_TMP_VAL_2, 256 * FAT_SEC_PER_CLUS + 2
+	.set FAT_TABLE_SIZE, \
+	     (FAT_TMP_VAL_1 + FAT_TMP_VAL_2 - 1) / FAT_TMP_VAL_2
+	.set FAT_SEC_PER_TRK, CONFIG_IMG_SECT
+	.set FAT_NUM_HEADS, CONFIG_IMG_HEAD
 #else
-	.error "Unknown disk medium!"
+	.warning "Unknown disk medium!"
+	.set FAT_SEC_PER_CLUS, 0
+	.set FAT_ROOT_ENT_CNT, 0
+	.set FAT_TOT_SEC, 0
+	.set FAT_MEDIA_BYTE, 0
+	.set FAT_TABLE_SIZE, 0
+	.set FAT_SEC_PER_TRK, 0
+	.set FAT_NUM_HEADS, 0
 #endif
 
 // BIOS Parameter Block (BPB) for FAT filesystems, as laid out in
@@ -67,7 +101,11 @@ bpb_num_fats:				// Number of duplicate file allocation
 bpb_root_ent_cnt:			// Number of root directory entries
 	.word FAT_ROOT_ENT_CNT
 bpb_tot_sec_16:				// Total number of sectors, 16-bit
+.if FAT_TOT_SEC <= 0xffff
 	.word FAT_TOT_SEC
+.else
+	.word 0
+.endif
 bpb_media:				// Media byte
 	.byte FAT_MEDIA_BYTE
 bpb_fat_sz_16:				// Sectors per FAT
@@ -81,7 +119,11 @@ head_max:
 bpb_hidd_sec:				// Hidden sectors
 	.long 0
 bpb_tot_sec_32:				// Total number of sectors, 32-bit
+.if FAT_TOT_SEC > 0xffff
+	.long FAT_TOT_SEC
+.else
 	.long 0
+.endif
 .endm
 
 .macro FAT_LOAD_AND_RUN_KERNEL
