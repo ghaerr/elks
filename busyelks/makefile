@@ -98,6 +98,10 @@ ifdef CMD_dirname
 	OBJS	+= cmd/dirname.o
 	NEED_stripslash	= yes
 endif
+ifdef CMD_du
+	CFLAGS	+= -DCMD_du
+	OBJS	+= cmd/du.o
+endif
 ifdef CMD_false
 	CFLAGS	+= -DCMD_false
 endif
