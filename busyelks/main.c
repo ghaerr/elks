@@ -95,6 +95,9 @@ static struct cmd cmd[] =
 #if defined(CMD_du)
 	CMD("du",	du_main,	" [-a] [-s] [-l levels] [startdir]", "Estimate file space usage."),
 #endif
+#if defined(CMD_echo)
+	CMD("echo",	echo_main, NULL, "Display a line of text."),
+#endif
 #if defined(CMD_false)
 	CMD("false",	false_main,	NULL, "Do nothing, unsuccessfully."),
 #endif
