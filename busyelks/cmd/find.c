@@ -2,9 +2,7 @@
 
 /* Original author: Erik Baalbergen; POSIX compliant version: Bert Laverman */
 
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,9 +11,10 @@
 #include <pwd.h>
 #include <grp.h>
 #include <dirent.h>
-#include <limits.h>
 #include <stdio.h>
 #include "../defs.h"
+
+#include "cmd.h"
 
 /*######################## DEFINITIONS ##############################*/
 
@@ -172,47 +171,47 @@ struct oper {
 };
 
 
-char **ipp;			/* pointer to next argument during parsing       */
-char *prog;			/* program name (== argv [0])                    */
-char *epath;			/* value of PATH environment string              */
-long current_time;		/* for computing age                             */
-int tty;			/* fd for /dev/tty when using -ok                */
-int xdev_flag = 0;		/* cross device boundaries?                      */
-int devnr;			/* device nr of first inode                      */
-int depth_flag = 0;		/* descend before check?                         */
-int prune_here;			/* This is Baaaad! Don't ever do this again!     */
-int um;				/* current umask()                               */
-int needprint = 1;		/* implicit -print needed?                       */
+static char **ipp;			/* pointer to next argument during parsing       */
+static char *prog;			/* program name (== argv [0])                    */
+static char *epath;			/* value of PATH environment string              */
+static time_t current_time;		/* for computing age                             */
+static int tty;			/* fd for /dev/tty when using -ok                */
+static int xdev_flag = 0;		/* cross device boundaries?                      */
+static int devnr;			/* device nr of first inode                      */
+static int depth_flag = 0;		/* descend before check?                         */
+static int prune_here;			/* This is Baaaad! Don't ever do this again!     */
+static int um;				/* current umask()                               */
+static int needprint = 1;		/* implicit -print needed?                       */
 
 
 /* The prototypes: */
 _PROTOTYPE(int find_main, (int argc, char **argv));
-_PROTOTYPE(char *Malloc, (int n));
-_PROTOTYPE(char *Salloc, (char *s));
-_PROTOTYPE(void find, (char *path, struct node * pred, char *last));
-_PROTOTYPE(int check, (char *path, struct stat * st, struct node * n, char *last));
-_PROTOTYPE(int ichk, (long val, struct node * n));
-_PROTOTYPE(int find_lex, (char *str));
-_PROTOTYPE(struct node * newnode, (int t));
-_PROTOTYPE(int isnumber, (char *str, int base, int sign));
-_PROTOTYPE(void number, (char *str, int base, long *pl, int *ps));
-_PROTOTYPE(void fmode, (char *str, long *pl, int *ps));
-_PROTOTYPE(struct node * find_expr, (int t));
-_PROTOTYPE(struct node * find_primary, (int t));
-_PROTOTYPE(struct node * secondary, (int t));
-_PROTOTYPE(void checkarg, (char *arg));
-_PROTOTYPE(struct node * simple, (int t));
-_PROTOTYPE(void nonfatal, (char *s1, char *s2));
-_PROTOTYPE(void fatal, (char *s1, char *s2));
-_PROTOTYPE(int smatch, (char *s, char *t));
-_PROTOTYPE(char *find_bin, (char *s));
-_PROTOTYPE(int execute, (int op, struct exec * e, char *path));
-_PROTOTYPE(void domode, (int op, int *mode, int bits));
+_PROTOTYPE(static char *Malloc, (int n));
+_PROTOTYPE(static char *Salloc, (char *s));
+_PROTOTYPE(static void find, (char *path, struct node * pred, char *last));
+_PROTOTYPE(static int check, (char *path, struct stat * st, struct node * n, char *last));
+_PROTOTYPE(static int ichk, (long val, struct node * n));
+_PROTOTYPE(static int find_lex, (char *str));
+_PROTOTYPE(static struct node * newnode, (int t));
+_PROTOTYPE(static int isnumber, (char *str, int base, int sign));
+_PROTOTYPE(static void number, (char *str, int base, long *pl, int *ps));
+_PROTOTYPE(static void fmode, (char *str, long *pl, int *ps));
+_PROTOTYPE(static struct node * find_expr, (int t));
+_PROTOTYPE(static struct node * find_primary, (int t));
+_PROTOTYPE(static struct node * secondary, (int t));
+_PROTOTYPE(static void checkarg, (char *arg));
+_PROTOTYPE(static struct node * simple, (int t));
+_PROTOTYPE(static void nonfatal, (char *s1, char *s2));
+_PROTOTYPE(static void fatal, (char *s1, char *s2));
+_PROTOTYPE(static int smatch, (char *s, char *t));
+_PROTOTYPE(static char *find_bin, (char *s));
+_PROTOTYPE(static int execute, (int op, struct exec * e, char *path));
+_PROTOTYPE(static void domode, (int op, int *mode, int bits));
 
 
 /* Malloc: a certified malloc */
-char *Malloc(n)
-int n;
+static char *
+Malloc(int n)
 {
   char *m;
 
@@ -221,17 +220,16 @@ int n;
 }
 
 /* Salloc: allocate space for a string */
-char *Salloc(s)
-char *s;
+static char *
+Salloc(char * s)
 {
   return strcpy(Malloc(strlen(s) + 1), s);
 }
 
 
 /* Main: the main body */
-int find_main(argc, argv)
-int argc;
-char *argv[];
+int
+find_main(int argc, char * argv[])
 {
   char **pathlist, *path, *last;
   int pathcnt = 0, i;
@@ -268,12 +266,11 @@ char *argv[];
   return 0;
 }
 
-void find(path, pred, last)
-char *path, *last;
-struct node *pred;
+static void
+find(char * path, struct node *pred, char * last)
 {
   char spath[PATH_MAX];
-  register char *send = spath, *p;
+  register char *send = spath /*, *p;*/;
   struct stat st;
   DIR *dp;
   struct dirent *de;
@@ -310,7 +307,7 @@ struct node *pred;
 		}
 		send[-1] = '/';
 		while ((de = readdir(dp)) != NULL) {
-			p = de->d_name;
+			/*p = de->d_name;*/
 			if ((de->d_name[0] != '.') || ((de->d_name[1])
 					  && ((de->d_name[1] != '.')
 					      || (de->d_name[2])))) {
@@ -328,10 +325,8 @@ struct node *pred;
   }
 }
 
-int check(path, st, n, last)
-char *path, *last;
-register struct stat *st;
-register struct node *n;
+static int
+check(char * path, register struct stat * st, register struct node * n, char * last)
 {
   if (n == (struct node *) NULL) return 1;
   switch (n->n_type) {
@@ -397,9 +392,8 @@ register struct node *n;
   return 0;			/* Never reached */
 }
 
-int ichk(val, n)
-long val;
-struct node *n;
+static int
+ichk(long val, struct node * n)
 {
   switch (n->n_info.n_int.n_sign) {
     case 0:
@@ -412,8 +406,8 @@ struct node *n;
   return 0;			/* Never reached */
 }
 
-int find_lex(str)
-char *str;
+static int
+find_lex(char * str)
 {
   if (str == (char *) NULL) return EOI;
   if (*str == '-') {
@@ -437,8 +431,7 @@ char *str;
 }
 
 struct node *
- newnode(t)
-int t;
+newnode(int t)
 {
   struct node *n = (struct node *) Malloc(sizeof(struct node));
 
@@ -457,10 +450,8 @@ int t;
 /* Isnumber checks correct number syntax. A sign is allowed, but the '+'
  * only if the number is to be in decimal.
  */
-int isnumber(str, base, sign)
-register char *str;
-int base;
-int sign;
+static int
+isnumber(register char * str, int base, int sign)
 {
   if (sign && ((*str == '-') || ((base == 8) && (*str == '+')))) str++;
   while ((*str >= '0') && (*str < ('0' + base))) str++;
@@ -468,11 +459,8 @@ int sign;
 }
 
 /* Convert a string to an integer, storing sign info in *ps. */
-void number(str, base, pl, ps)
-char *str;
-int base;
-long *pl;
-int *ps;
+static void
+number(char * str, int base, long * pl, int * ps)
 {
   int up = '0' + base - 1;
   long val = 0;
@@ -484,10 +472,8 @@ int *ps;
 }
 
 
-void domode(op, mode, bits)
-int op;
-int *mode;
-int bits;
+static void
+domode(int op, int * mode, int bits)
 {
   switch (op) {
     case '-':
@@ -501,10 +487,8 @@ int bits;
   }
 }
 
-void fmode(str, pl, ps)
-char *str;
-long *pl;
-int *ps;
+static void
+fmode(char * str, long * pl, int * ps)
 {
   int m = 0, w, op;
   char *p = str;
@@ -577,9 +561,8 @@ int *ps;
   *pl = m;
 }
 
-struct node *
- find_expr(t)
-int t;
+static struct node *
+find_expr(int t)
 {
   struct node *nd, *p, *nd2;
 
@@ -595,9 +578,8 @@ int t;
   return nd;
 }
 
-struct node *
- find_primary(t)
-int t;
+static struct node *
+find_primary(int t)
 {
   struct node *nd, *p, *nd2;
 
@@ -613,9 +595,8 @@ int t;
   return p;
 }
 
-struct node *
- secondary(t)
-int t;
+static struct node *
+secondary(int t)
 {
   struct node *n, *p;
 
@@ -633,15 +614,14 @@ int t;
   return simple(t);
 }
 
-void checkarg(arg)
-char *arg;
+static void
+checkarg(char * arg)
 {
   if (arg == 0) fatal("syntax error, argument expected", "");
 }
 
-struct node *
- simple(t)
-int t;
+static struct node *
+simple(int t)
 {
   struct node *p = newnode(t);
   struct exec *e;
@@ -788,14 +768,14 @@ int t;
 
 /*######################## DIAGNOSTICS ##############################*/
 
-void nonfatal(s1, s2)
-char *s1, *s2;
+static void
+nonfatal(char * s1, char * s2)
 {
   fprintf(stderr, "%s: %s%s\n", prog, s1, s2);
 }
 
-void fatal(s1, s2)
-char *s1, *s2;
+static void
+fatal(char * s1, char * s2)
 {
   nonfatal(s1, s2);
   exit(1);
@@ -803,10 +783,10 @@ char *s1, *s2;
 
 /*################### SMATCH #########################*/
 /* Don't try to understand the following one... */
-int smatch(s, t)		/* shell-like matching */
-char *s, *t;
+static int
+smatch(char * s, char * t)		/* shell-like matching */
 {
-  register n;
+  register int n;
 
   if (*t == '\0') return *s == '\0';
   if (*t == '*') {
@@ -823,12 +803,14 @@ char *s, *t;
 	while (*++t != ']') {
 		if (*t == '\\') ++t;
 		if (*(t + 1) != '-')
+		{
 			if (*t == *s) {
 				while (*++t != ']')
 					if (*t == '\\') ++t;
 				return smatch(++s, ++t);
 			} else
 				continue;
+		}
 		if (*(t + 2) == ']') return(*s == *t || *s == '-');
 		n = (*(t + 2) == '\\') ? 3 : 2;
 		if (*s >= *t && *s <= *(t + n)) {
@@ -847,8 +829,7 @@ char *s, *t;
 /* Do -exec or -ok */
 
 char *
- find_bin(s)
-char *s;
+find_bin(char * s)
 {
   char *f, *l, buf[PATH_MAX];
 
@@ -866,7 +847,7 @@ char *s;
 			while (f != l) *p++ = *f++;
 			f++;
 			*p++ = '/';
-			while (*p++ = *q++) {
+			while ((*p++ = *q++)) {
 			}
 			if (access(buf, 1) == 0) return Salloc(buf);
 		}
@@ -877,10 +858,8 @@ char *s;
   return 0;
 }
 
-int execute(op, e, path)
-int op;
-struct exec *e;
-char *path;
+static int
+execute(int op, struct exec * e, char * path)
 {
   int s, pid;
   char *argv[MAXARG];
@@ -901,7 +880,7 @@ char *path;
   }
   if ((pid = fork()) == -1) fatal("can't fork", "");
   if (pid == 0) {
-	register i = 3;
+	register int i = 3;
 
 	while (close(i++) == 0) {
 	}			/* wow!!! */

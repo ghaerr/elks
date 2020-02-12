@@ -20,4 +20,5 @@ CMD_echo	= yes
 CMD_ed		= yes
 CMD_false	= yes
 CMD_fdisk	= yes
+CMD_find	= yes
 CMD_true	= yes

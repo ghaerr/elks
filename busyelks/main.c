@@ -107,6 +107,9 @@ static struct cmd cmd[] =
 #if defined(CMD_fdisk)
 	CMD("fdisk",	fdisk_main,	"[-l] device", "Manipulate disk partition table."),
 #endif
+#if defined(CMD_fdisk)
+	CMD("find",	find_main,	"path-list [predicate-list]", "Search for files in a directory hierarchy."),
+#endif
 #if defined(CMD_true)
 	CMD("true",	true_main, NULL, "Do nothing, successfully"),
 #endif

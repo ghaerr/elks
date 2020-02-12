@@ -117,6 +117,10 @@ ifdef CMD_fdisk
 	CFLAGS	+= -DCMD_fdisk
 	OBJS	+= cmd/fdisk.o
 endif
+ifdef CMD_find
+	CFLAGS	+= -DCMD_find
+	OBJS	+= cmd/find.o
+endif
 ifdef CMD_true
 	CFLAGS	+= -DCMD_true
 endif

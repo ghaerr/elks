@@ -23,6 +23,7 @@ int du_main(int argc, char * argv[]);
 int echo_main(int argc, char * argv[]);
 int ed_main(int argc, char * argv[]);
 int fdisk_main(int argc, char * argv[]);
+int find_main(int argc, char * argv[]);
 
 #if defined(__cplusplus)
 }
