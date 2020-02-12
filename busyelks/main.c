@@ -104,6 +104,9 @@ static struct cmd cmd[] =
 #if defined(CMD_false)
 	CMD("false",	false_main,	NULL, "Do nothing, unsuccessfully."),
 #endif
+#if defined(CMD_fdisk)
+	CMD("fdisk",	fdisk_main,	"[-l] device", "Manipulate disk partition table."),
+#endif
 #if defined(CMD_true)
 	CMD("true",	true_main, NULL, "Do nothing, successfully"),
 #endif

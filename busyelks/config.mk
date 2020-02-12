@@ -19,4 +19,5 @@ CMD_du		= yes
 CMD_echo	= yes
 CMD_ed		= yes
 CMD_false	= yes
+CMD_fdisk	= yes
 CMD_true	= yes
