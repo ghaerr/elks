@@ -32,20 +32,19 @@ minix:
 	mfs $(VERBOSE) $(MINIX_IMAGE) addfs Filelist $(DESTDIR)
 	rm Filelist
 	$(MAKE) -f Make.devices "MKDEV=mfs $(MINIX_IMAGE) mknod"
-	mfs $(MINIX_IMAGE) boot $(FD_BOOTBLOCK)
-#	This overrides the parameters from the build configuration
-	setboot $(MINIX_IMAGE) $(BPB)
+#	Write boot and override the parameters from the build configuration
+	setboot $(MINIX_IMAGE) $(BPB) $(FD_BOOTBLOCK)
 	#mfsck -fv $(MINIX_IMAGE)
 	mfs $(MINIX_IMAGE) stat
 
 # Create bootable ELKS MSDOS disk image:
 #	Select tagged files into filelist
 #	Create empty filesystem
-#	Write boot sector (not completed)
 #	Create \linux as first directory entry
 #	Add tagged files into filesystem (regular, directories, links)
 #		Filename case is preserved
 #		Note: filenames larger than 8.3 will create VFAT LFN entries
+#	Write boot sector and modify ELKS PB
 
 # all mtools commands require image file
 # -i image	image filename
@@ -59,7 +58,7 @@ MSDOS_IMAGE=$(IMGDIR)/$(NAME).bin
 # -r 14		14 root directory sectors
 # -c 1		cluster size 1 sector
 # -R 1		1 reserve sector (boot, may need to reserve 2)
-# -B boot      use passed boot file (not complete)
+# -B boot      use passed boot file (not used)
 # -k		only update offsets 11 through 61 in boot block, all else unchanged
 # -N 0		serial number 0
 # -v label	volume label (don't use with first format as uses two directory entries)
@@ -78,11 +77,11 @@ MSDOS_COPYOPTS=-pmQ -D o
 # -a		also list hidden files
 # -/		recursive output (buggy: will fail on empty, newly formatted disks!
 
+FD_BOOTSECT=$(TOPDIR)/elkscmd/bootblocks/fat.bin
+
 msdos:
 	awk "/$(APPS)/{print}" Packages | cut -f 1 | sed "/^#/d" > Filelist
 	dd if=/dev/zero of=$(MSDOS_IMAGE) bs=1024 count=$(SIZE)
-#	write ELKS boot sector, mformat will only modify BPB
-#	setboot $(MSDOS_IMAGE) $(BPB) $(FD_BOOTSECT)
 	mformat -i $(MSDOS_IMAGE) $(MSDOS_MKFSOPTS)
 	rm -f linux; touch linux
 	mcopy -i $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) linux ::/linux
@@ -102,10 +101,17 @@ msdos:
 		fi \
 	done
 	rm Filelist
-	#mdir -i $(MSDOS_IMAGE) -/ -a ::
-	## FIXME setboot needed to copy fat.bin to FAT sector 1 for .config configuration
-	## setboot hasn't been updated yet for -B<secs>,<heads> and not overwrite FAT BPB
-	## thus package manager builds won't create non-.config based FAT boot images yet
-ifeq ($(SIZE), 1440)
-	setboot $(MSDOS_IMAGE) $(TOPDIR)/elkscmd/bootblocks/fat.bin
+	# Read boot sector, skip FAT BPB, set ELKS PB sectors/heads and write boot
+ifeq ($(SIZE), 360)
+	setboot $(MSDOS_IMAGE) -F -B9,2 $(FD_BOOTSECT)
 endif
+ifeq ($(SIZE), 720)
+	setboot $(MSDOS_IMAGE) -F -B9,2 $(FD_BOOTSECT)
+endif
+ifeq ($(SIZE), 1440)
+	setboot $(MSDOS_IMAGE) -F -B18,2 $(FD_BOOTSECT)
+endif
+ifeq ($(SIZE), 2880)
+	setboot $(MSDOS_IMAGE) -F -B36,2 $(FD_BOOTSECT)
+endif
+	#mdir -i $(MSDOS_IMAGE) -/ -a ::

@@ -6,19 +6,19 @@
 
 .macro FAT_BPB
 #if defined(CONFIG_IMG_FD360)
-	.set FAT_SEC_PER_CLUS, 2
-	.set FAT_ROOT_ENT_CNT, 112
+	.set FAT_SEC_PER_CLUS, 1
+	.set FAT_ROOT_ENT_CNT, 224
 	.set FAT_TOT_SEC, 720
 	.set FAT_MEDIA_BYTE, 0xfd
-	.set FAT_TABLE_SIZE, 2
+	.set FAT_TABLE_SIZE, 3
 	.set FAT_SEC_PER_TRK, 9
 	.set FAT_NUM_HEADS, 2
 #elif defined(CONFIG_IMG_FD720)
-	.set FAT_SEC_PER_CLUS, 2
-	.set FAT_ROOT_ENT_CNT, 112
+	.set FAT_SEC_PER_CLUS, 1
+	.set FAT_ROOT_ENT_CNT, 224
 	.set FAT_TOT_SEC, 1440
 	.set FAT_MEDIA_BYTE, 0xf9
-	.set FAT_TABLE_SIZE, 3
+	.set FAT_TABLE_SIZE, 9
 	.set FAT_SEC_PER_TRK, 9
 	.set FAT_NUM_HEADS, 2
 #elif defined(CONFIG_IMG_FD1200)
@@ -124,6 +124,18 @@ bpb_tot_sec_32:				// Total number of sectors, 32-bit
 .else
 	.long 0
 .endif
+bpb_drv_num:				// INT 13 drive number
+	.byte 0
+bpb_reserved1:				// Reserved
+	.byte 0
+bpb_bootsig:				// Extended boot signature
+	.byte 0x29
+bpb_vol_id:					// Volume serial number
+	.long 0
+bpb_vol_label:				// Volume label (11 bytes)
+	.ascii "NO NAME    "
+bpb_fil_sys_type:			// Filesystem type (8 bytes)
+	.ascii "FAT12   "
 .endm
 
 .macro FAT_LOAD_AND_RUN_KERNEL
