@@ -261,12 +261,8 @@ _disk_read:
 dr_loop:
 	// Compute the CHS from logical sector
 	// AX = logical sector
-#ifndef BOOT_FAT
 	mov sect_max,%bl
 	xor %bh,%bh
-#else
-	mov sect_max,%bx
-#endif
 	xor %dx,%dx
 	divw %bx
 	mov %dl,%cl      // CL = physical sector number in track, minus 1
@@ -507,14 +503,16 @@ copy_sect:
 //------------------------------------------------------------------------------
 
 msg_boot:
-	.asciz "ELKS boot\r\n"
+	.asciz "ELKS"
 
 msg_error:
 	.asciz "!\r\n"
 
 msg_reboot:
-	.asciz "Press key\r\n"
+	.asciz "Presskey\r\n"
 
+	.global last_code
+last_code:
 //------------------------------------------------------------------------------
 
 // ELKS disk parameter structure
