@@ -243,7 +243,6 @@ parse_dir(inode_build_t * grand_parent_inode,
 				struct stat	child_stat;
 				err = lstat(child_path, &child_stat);
 				if (err) {
-					fprintf(stderr, "File: %s: ", child_path);
 					perror("lstat");
 					err = errno;
 					break;
@@ -330,12 +329,8 @@ parse_filelist(char *filelist, inode_build_t *parent_inode, char *parent_path)
 
 				struct stat	child_stat;
 				err = lstat(child_path, &child_stat);
-				if (err) {
-					fprintf(stderr, "File: %s: ", child_path);
-					perror("lstat");
-					err = errno;
-					break;
-				}
+				if (err)
+					fatalmsg("File not found: %s", child_path);
 				mode_t		mode = child_stat.st_mode;
 
 				if (S_ISREG(mode)) {
@@ -481,6 +476,8 @@ void cmd_genfs(char *filename, int argc,char **argv) {
 	  fatalmsg("No memory");
   root_node->flags = S_IFDIR;
   err = parse_dir(NULL, root_node, dirname);
+  if (err)
+	fatalmsg("Error parsing directory tree\n");
 
   //printf("inodes: %d, blocks %d\n", inodes.count, numblocks);
 
@@ -530,10 +527,12 @@ void cmd_addfs(char *filename, int argc,char **argv) {
 	  fatalmsg("No memory");
   root_node->flags = S_IFDIR;
   err = parse_filelist(argv[0], root_node, dirname);
+  if (err)
+	fatalmsg("Error processing %s\n", argv[0]);
 
   fs = open_fs(filename, opt_fsbad_fatal);
 
-  cmd_sysinfo(fs);
+  if (opt_verbose) cmd_sysinfo(fs);
   printf("adding inodes: %d, blocks %d\n", inodes.count, numblocks);
   //if (inodes.count > req_inos)
 	//fatalmsg("Inodes required %d, available %d\n", inodes.count, req_inos);

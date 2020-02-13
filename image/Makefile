@@ -12,7 +12,7 @@ export DESTDIR
 
 # add image block size to mkfs options for mfs
 MFS_OPTS=$(MKFS_OPTS) -s$(TARGET_BLKS) -k
-VERBOSE=-v
+#VERBOSE=-v
 
 # Determine what to build for 'all' target
 

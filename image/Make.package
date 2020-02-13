@@ -84,7 +84,7 @@ msdos:
 #	write ELKS boot sector, mformat will only modify BPB
 #	setboot $(MSDOS_IMAGE) $(BPB) $(FD_BOOTSECT)
 	mformat -i $(MSDOS_IMAGE) $(MSDOS_MKFSOPTS)
-	-rm linux; touch linux
+	rm -f linux; touch linux
 	mcopy -i $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) linux ::/linux
 #	change attributes of /linux to read-only, system, hidden (command broken)
 #	mattrib -i $(MSDOS_IMAGE) +r +s +h ::/linux
@@ -92,8 +92,14 @@ msdos:
 	#mdir -i $(MSDOS_IMAGE) -/ -a ::
 	for f in `cat Filelist`; \
 	do \
-		[ -d $(DESTDIR)/$$f ] && mmd -i $(MSDOS_IMAGE) ::$$f; \
-		[ -f $(DESTDIR)/$$f ] && mcopy -i $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) $(DESTDIR)$$f ::$$f; \
+		if [ ! -e $(DESTDIR)$$f ]; \
+		then \
+			echo "File specified in Package not found: $(DESTDIR)$$f"; \
+			exit 1; \
+		else \
+			[ -d $(DESTDIR)/$$f ] && mmd -i $(MSDOS_IMAGE) ::$$f; \
+			[ -f $(DESTDIR)/$$f ] && mcopy -i $(MSDOS_IMAGE) $(MSDOS_COPYOPTS) $(DESTDIR)$$f ::$$f; \
+		fi \
 	done
 	rm Filelist
 	#mdir -i $(MSDOS_IMAGE) -/ -a ::
