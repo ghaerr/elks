@@ -77,6 +77,8 @@ MSDOS_COPYOPTS=-pmQ -D o
 # -a		also list hidden files
 # -/		recursive output (buggy: will fail on empty, newly formatted disks!
 
+FD_BOOTSECT=$(TOPDIR)/elkscmd/bootblocks/fat.bin
+
 msdos:
 	awk "/$(APPS)/{print}" Packages | cut -f 1 | sed "/^#/d" > Filelist
 	dd if=/dev/zero of=$(MSDOS_IMAGE) bs=1024 count=$(SIZE)
@@ -95,15 +97,15 @@ msdos:
 	rm Filelist
 	# Read boot sector, skip FAT BPB, set ELKS PB sectors/heads and write boot
 ifeq ($(SIZE), 360)
-	setboot $(MSDOS_IMAGE) -F -B9,2 $(TOPDIR)/elkscmd/bootblocks/fat.bin
+	setboot $(MSDOS_IMAGE) -F -B9,2 $(FD_BOOTSECT)
 endif
 ifeq ($(SIZE), 720)
-	setboot $(MSDOS_IMAGE) -F -B9,2 $(TOPDIR)/elkscmd/bootblocks/fat.bin
+	setboot $(MSDOS_IMAGE) -F -B9,2 $(FD_BOOTSECT)
 endif
 ifeq ($(SIZE), 1440)
-	setboot $(MSDOS_IMAGE) -F -B18,2 $(TOPDIR)/elkscmd/bootblocks/fat.bin
+	setboot $(MSDOS_IMAGE) -F -B18,2 $(FD_BOOTSECT)
 endif
 ifeq ($(SIZE), 2880)
-	setboot $(MSDOS_IMAGE) -F -B36,2 $(TOPDIR)/elkscmd/bootblocks/fat.bin
+	setboot $(MSDOS_IMAGE) -F -B36,2 $(FD_BOOTSECT)
 endif
 	#mdir -i $(MSDOS_IMAGE) -/ -a ::
