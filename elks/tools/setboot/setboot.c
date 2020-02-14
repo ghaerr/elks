@@ -31,8 +31,8 @@
 #define ELKS_BPB_NumHeads	0x1FA		/* offset of number of heads (byte)*/
 
 /* FAT BPB start and end offsets*/
-#define FATBPB_START	3
-#define FATBPB_END		61
+#define FATBPB_START	11				/* start at bytes per sector*/
+#define FATBPB_END		61				/* through end of file system type*/
 
 static int SecPerTrk, NumHeads;
 
