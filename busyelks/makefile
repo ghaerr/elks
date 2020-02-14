@@ -31,6 +31,7 @@ LD	= $(CC)
 LDFLAGS	+= \
 	$(FLAGS) \
 	-melks-libc \
+	-Wl,-M
 
 OBJS	+= main.o lib/bsearch.o
 
@@ -145,7 +146,7 @@ all: $(OUT)
 
 $(OUT):	$(OBJS)
 	@echo '[LD]	$@'
-	@$(LD) $(LDFLAGS) -o $@ $^
+	@$(LD) $(LDFLAGS) -o $@ $^ > busyelks.map
 
 .c.o:
 	@echo '[CC]	$@'
