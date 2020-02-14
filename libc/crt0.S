@@ -13,12 +13,10 @@
 	.global _start
 
 _start:
-	jmp _startup
 
 // C runtime startup
 // Stack is empty and immediately followed by argc, argv and envp
 
-_startup:
 	push %bp
 	mov %sp,%bp
 	lea 4(%bp),%bx  // argv [0]
