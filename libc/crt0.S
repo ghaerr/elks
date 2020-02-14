@@ -10,9 +10,9 @@
 
 // This is the program entry point
 
-	.global entry
+	.global _start
 
-entry:
+_start:
 	jmp _startup
 
 // C runtime startup
