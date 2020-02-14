@@ -10,15 +10,13 @@
 
 // This is the program entry point
 
-	.global entry
+	.global _start
 
-entry:
-	jmp _startup
+_start:
 
 // C runtime startup
 // Stack is empty and immediately followed by argc, argv and envp
 
-_startup:
 	push %bp
 	mov %sp,%bp
 	lea 4(%bp),%bx  // argv [0]

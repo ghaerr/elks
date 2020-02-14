@@ -11,7 +11,7 @@ SECTIONS {
 		LONG(SIZEOF (.text));
 		LONG(SIZEOF (.data));
 		LONG (SIZEOF (.bss));
-		LONG (entry);    /* entry point */
+		LONG (_start);    /* entry point */
 		LONG (_total_adjusted); /* total memory allocated */
 		LONG (0);        /* symbol table size */
 		}
@@ -24,6 +24,7 @@ SECTIONS {
 		ASSERT (. + 0x100 <= 0x10000,
 		    "Error: too large for a small-model ELKS a.out file.");
 	}
+	PROVIDE (_start = entry); /* `entry' was the old entry point symbol */
 	PROVIDE (_total = 0);
 	_total_adjusted = _total == 0 ? 0
 			  : MIN (0x10000, MAX (. + 0x100, _total));
