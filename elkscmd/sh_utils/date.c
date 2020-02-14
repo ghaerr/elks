@@ -81,7 +81,7 @@ struct timeval *tv;
 	char * p;
 	struct tm tm;
 	
-	p = strtok(datestring, '-');
+	p = strtok(datestring, "-");
 	
 	tm.tm_year= tm.tm_mon= tm.tm_mday= tm.tm_hour= tm.tm_min= tm.tm_sec=0;
 
