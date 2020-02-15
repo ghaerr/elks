@@ -130,7 +130,7 @@ static int load_elks(int fd)
 		return -ENOEXEC;
 	if(mh.hlen!=EXEC_HEADER_SIZE)
 		return -ENOEXEC;
-	if(mh.type!=ELKS_COMBID&&mh.type!=ELKS_SPLITID)
+	if(mh.type!=ELKS_SPLITID)
 		return -ENOEXEC;
 #ifdef DEBUG
 	fprintf(stderr,"Linux-86 binary - %lX. tseg=%ld dseg=%ld bss=%ld\n",
@@ -144,10 +144,7 @@ static int load_elks(int fd)
 	}
 	if(read(fd,elks_base,mh.tseg)!=mh.tseg)
 		return -ENOEXEC;
-	if(mh.type==ELKS_COMBID)
-		elks_data_base=elks_base+mh.tseg;
-	else
-		elks_data_base=elks_base+65536;
+	elks_data_base=elks_base+65536;
 	if(read(fd,elks_data_base,mh.dseg)!=mh.dseg)
 		return -ENOEXEC;
 	memset(elks_data_base+mh.dseg,0, mh.bseg);
@@ -155,8 +152,6 @@ static int load_elks(int fd)
 	 *	Really set up the LDT descriptors
 	 */
 	 
-	if(mh.type==ELKS_COMBID)
-		elks_data_base=elks_base;
 	memset(&cs_desc, 0, sizeof cs_desc);
 	memset(&ds_desc, 0, sizeof ds_desc);
 	cs_desc.entry_number = elks_cpu.regs.xcs / 8;
@@ -168,11 +163,7 @@ static int load_elks(int fd)
 	ds_desc.base_addr = (uintptr_t)elks_data_base;
 	ds_desc.limit = 0xffff;
 	ds_desc.contents = MODIFY_LDT_CONTENTS_DATA;
-	if (mh.type == ELKS_COMBID)
-		ds_desc.seg_not_present = mh.tseg == 0
-					  && mh.dseg == 0 && mh.bseg == 0;
-	else
-		ds_desc.seg_not_present = mh.dseg == 0 && mh.bseg == 0;
+	ds_desc.seg_not_present = mh.dseg == 0 && mh.bseg == 0;
 	if (modify_ldt(1, &cs_desc, sizeof cs_desc) != 0
 	    || modify_ldt(1, &ds_desc, sizeof ds_desc) != 0)
 	{
@@ -183,10 +174,7 @@ static int load_elks(int fd)
 	elks_cpu.regs.xsp = 0;	 	/* Args stacked later */
 	elks_cpu.regs.xip = mh.entry;	/* Run from entry point */
 	elks_cpu.child = 0;
-	if (mh.type == ELKS_COMBID)
-		brk_at = mh.tseg + mh.dseg + mh.bseg;
-	else
-		brk_at = mh.dseg + mh.bseg;
+	brk_at = mh.dseg + mh.bseg;
 	return 0;
 }
 

@@ -429,8 +429,7 @@ static int elks_execve(int bx,int cx,int dx,int di,int si)
 		return -1;
 	}
 	close(fd);
-	if(mh.hlen!=EXEC_HEADER_SIZE
-	   || (mh.type!=ELKS_COMBID && mh.type!=ELKS_SPLITID))
+	if(mh.hlen!=EXEC_HEADER_SIZE || mh.type!=ELKS_SPLITID)
 	   is_elks = 0;
 
 	arg_ct = env_ct = 0;
