@@ -22,7 +22,7 @@
 #include <linuxmt/fs.h>
 
 #ifndef USE_GETBLK
-/* FIXME: Readahead */
+
 #ifdef DEBUG
 static char inode_equal_NULL[] = "inode = NULL\n";
 static char mode_equal_val[] = "mode = %07o\n";
