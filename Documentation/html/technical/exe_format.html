@@ -1,0 +1,35 @@
+<h1>ELKS Executable Formats</h1>
+
+<h2>Linking</h2>
+
+<p>ELKS C source code is compiled by GCC for the IA16 platform ('gcc-ia16') and
+object & static library files are worked with the BINUTILS ('binutils-ia16'),
+so using the ELF format.</p>
+
+<p>At link time, custom 'ld' scripts (see '*.ld' files) convert ELF format to
+legacy 'a.out' format, and drop out all that is not 'code', 'data', 'bbs' and
+'rodata'. So the final executable contains neither symbol nor comment.</p>
+
+<h2>A.OUT executable</h2>
+
+<p>Executable are still using the legacy A.OUT format with splitted I/D option:</p>
+<ul>
+<li>A.OUT header</li>
+<li>code section (up to 64K)</li>
+<li>data section (up to 64K)</li>
+</ul>
+
+<h2>A.OUT header</h2>
+
+uint32_t  type;
+uint32_t  header size
+uint32_t  code section size (.text)
+uint32_t  initialized data section (.data)
+uint32_t  uninitialized data section (.bss)
+uint32_t  unused 1
+uint32_t  total data segment size
+uint32_t  unused 2 
+
+<p>ELKS does not use the optional relocation fields as the IA16 code
+is natively relocatable inside a segment with relative offsets.</p>
+
