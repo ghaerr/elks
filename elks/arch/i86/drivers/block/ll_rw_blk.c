@@ -270,7 +270,7 @@ static void make_request(unsigned short int major, int rw,
     if (buffer_locked(bh))
 	return;
     /* Maybe the above fixes it, and maybe it doesn't boot. Life is interesting */
-    bh->b_lock = 1;
+    lock_buffer(bh);
     map_buffer(bh);
 
     switch (rw) {
@@ -290,6 +290,7 @@ static void make_request(unsigned short int major, int rw,
 
     default:
 	debug("make_request: bad block dev cmd, must be R/W/RA/WA\n");
+	unmap_buffer(bh);
 	unlock_buffer(bh);
 	return;
     }
