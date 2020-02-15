@@ -77,8 +77,6 @@
 
 #define READ		0
 #define WRITE		1
-#define READA		2	/* read-ahead - don't pause */
-#define WRITEA		3	/* "write-ahead" - silly, but somewhat useful */
 
 #define SEL_IN		1
 #define SEL_OUT		2
@@ -109,13 +107,6 @@
  * Flags that can be altered by MS_REMOUNT
  */
 #define MS_RMT_MASK (MS_RDONLY)
-
-/*
- * Executable formats
- */
-
-#define RUNNABLE_MINIX	0x1
-#define RUNNABLE_MSDOS	0x2
 
 /*
  * Note that read-only etc flags are inode-specific: setting some file-system

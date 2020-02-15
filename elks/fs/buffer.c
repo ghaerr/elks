@@ -13,15 +13,8 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 
-/*#define DMA_ALN*/
-
 static struct buffer_head buffers[NR_BUFFERS];
-#ifdef DMA_ALN
-static char bufmem[(NR_MAPBUFS+1)*BLOCK_SIZE-1];	/* L1 buffer area */
-static char *bufmem_i;
-#else
 static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
-#endif
 
 /*
  *	STUBS for the buffer cache when we put it in
@@ -29,10 +22,6 @@ static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
 /*static struct buffer_head *bh_chain = buffers; */
 static struct buffer_head *bh_lru = buffers;
 static struct buffer_head *bh_llru = buffers;
-
-#if 0
-struct wait_queue bufwait;	/* Wait for a free buffer */
-#endif
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 static struct wait_queue bufmapwait;	/* Wait for a free L1 buffer area */
@@ -82,26 +71,19 @@ static void put_last_lru(register struct buffer_head *bh)
 
 void buffer_init(void)
 {
-    register struct buffer_head *bh = buffers;
-    register char *pi;
+    // TODO: allocate buffer one by one in global memory
 
-#ifdef DMA_ALN
-    bufmem_i = (char *)bufmem
-	+ (unsigned int)((-(((int)kernel_ds << 4) + (int)bufmem)) & (BLOCK_SIZE - 1));
-#endif
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     _buf_ds = mm_alloc(NR_BUFFERS << (BLOCK_SIZE_BITS - 4));
-    pi = (char *)NR_MAPBUFS;
+    unsigned int i = NR_MAPBUFS;
     do {
-	bufmem_map[(unsigned int)(--pi)] = NULL;
-    } while ((unsigned int)pi > 0);
+	bufmem_map[--i] = NULL;
+    } while (i > 0);
 #else
-#ifdef DMA_ALN
-    pi = bufmem_i;
-#else
-    pi = (char *)bufmem;
+	char * p = bufmem;
 #endif
-#endif
+
+    struct buffer_head *bh = buffers;
 
     goto buf_init;
     do {
@@ -111,10 +93,10 @@ void buffer_init(void)
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 	bh->b_data = (char *)0;			/* L1 buffer cache is reserved! */
 	bh->b_mapcount = 0;
-	bh->b_num = (unsigned char)(pi++);	/* Used to compute L2 location */
+	bh->b_num = i++;	/* Used to compute L2 location */
 #else
-	bh->b_data = pi;
-	pi += BLOCK_SIZE;
+	bh->b_data = p;
+	p += BLOCK_SIZE;
 #endif
     } while (++bh < &buffers[NR_BUFFERS]);
 }
@@ -201,11 +183,6 @@ static struct buffer_head *get_free_buffer(void)
     while (bh->b_count || bh->b_dirty || bh->b_lock) {
 #endif
 	if ((bh = bh->b_next_lru) == NULL) {
-#if 0
-	    fsync_dev(0);
-	    /* This causes a sleep until another process brelse's */
-	    sleep_on(&bufwait);
-#endif
 	    sync_buffers(0, 0);
 	    bh = bh_lru;
 	}
@@ -464,8 +441,8 @@ void map_buffer(register struct buffer_head *bh)
 	    debug1("BUFMAP: Buffer %u unmapped from L1\n",
 		    bmap->b_num);
 	    /* Now unmap it */
-	    fmemcpyb((word_t) (bmap->b_num << BLOCK_SIZE_BITS), _buf_ds,
-	    		(word_t) bmap->b_data, kernel_ds, BLOCK_SIZE);
+		fmemcpyb((byte_t *) (bmap->b_num << BLOCK_SIZE_BITS), _buf_ds,
+			(byte_t *) bmap->b_data, kernel_ds, BLOCK_SIZE);
 	    bmap->b_data = 0;
 	    /* success */
 	    break;
@@ -483,14 +460,10 @@ void map_buffer(register struct buffer_head *bh)
     lastumap = (int)pi;
     /* We can just map here! */
     bufmem_map[(int)pi] = bh;
-#ifdef DMA_ALN
-    bh->b_data = bufmem_i + ((int)pi << BLOCK_SIZE_BITS);
-#else
     bh->b_data = (char *)bufmem + ((int)pi << BLOCK_SIZE_BITS);
-#endif
     if (bh->b_uptodate)
-	fmemcpyb((word_t) bh->b_data, kernel_ds,
-			(word_t) (bh->b_num << BLOCK_SIZE_BITS), _buf_ds, BLOCK_SIZE);
+	fmemcpyb ((byte_t *) bh->b_data, kernel_ds,
+		(byte_t *) (bh->b_num << BLOCK_SIZE_BITS), _buf_ds, BLOCK_SIZE);
     debug3("BUFMAP: Buffer %u (block %u) mapped into L1 slot %d.\n",
 	bh->b_num, bh->b_blocknr, (int)pi);
   end_map_buffer:
@@ -522,24 +495,6 @@ void unmap_brelse(register struct buffer_head *bh)
     if (bh) {
 	unmap_buffer(bh);
 	__brelse(bh);
-    }
-}
-#endif
-
-/* This function prints the status of the L1 mappings... */
-
-#if 0				/* Currently unused */
-void print_bufmap_status(void)
-{
-    int i;
-
-    printk("Current L1 buffer cache mappings :\n"
-	    "L1 slot / Buffer # / Reference Count\n");
-    for (i = 0; i < NR_MAPBUFS; i++) {
-	if (bufmem_map[i]) {
-	    printk("%u / %u / %u\n", i, bufmem_map[i]->b_num,
-		   bufmem_map[i]->b_mapcount);
-	}
     }
 }
 #endif
