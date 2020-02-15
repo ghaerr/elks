@@ -3,29 +3,33 @@
 include Make.defs
 include Make.rules
 
-# Template directory for installing applications and linux before genfs
+# Template directory for installing applications and linux before mkfs
+
 TEMPLATE_DIR = $(ELKSCMD_DIR)/rootfs_template
 
 # DESTDIR is used in elkscmd/* Makefiles for installation destination
+
 DESTDIR = $(TOPDIR)/target
 export DESTDIR
 
-# add image block size to mkfs options for mfs
-MFS_OPTS=$(MKFS_OPTS) -s$(TARGET_BLKS) -k
 #VERBOSE=-v
 
 # Determine what to build for 'all' target
 
-TARGETS=
+TARGETS =
 
 ifdef CONFIG_IMG_BOOT
-TARGETS += $(FD_BOOTBLOCK) $(ELKS_DIR)/arch/i86/boot/Image
+TARGETS += $(FD_BOOTBLOCK) $(FD_BOOTSECT) $(ELKS_DIR)/arch/i86/boot/Image
 endif
 
 TARGETS += template
 
 ifdef CONFIG_IMG_MINIX
 TARGETS += minixfs
+endif
+
+ifdef CONFIG_IMG_FAT
+TARGETS += fatfs
 endif
 
 ifdef CONFIG_IMG_ROM
@@ -36,8 +40,8 @@ endif
 
 all: $(TARGETS)
 
-#
 # Populate template for filesystem genfs
+
 template:
 	-rm -rf $(DESTDIR)
 	cp -a $(TEMPLATE_DIR) $(DESTDIR)
@@ -48,6 +52,7 @@ template:
 ifdef CONFIG_IMG_BOOT
 	install $(ELKS_DIR)/arch/i86/boot/Image $(DESTDIR)/linux
 endif
+	# pull request #227
 	find $(DESTDIR) \
 		-type d ! -name root -execdir chmod go+rx '{}' ';' -o \
 		! -type d ! -name .profile -execdir chmod go+r '{}' ';'
@@ -55,8 +60,9 @@ endif
 # Create MINIX filesystem from template
 
 minixfs: template
+	rm -f $(TARGET_FILE)
 	mfs $(VERBOSE) $(TARGET_FILE) genfs $(MFS_OPTS) $(DESTDIR)
-ifdef CONFIG_IMG_LINK
+ifdef CONFIG_IMG_DEV
 	# command to make char/block devices in image (no sudo required)
 	$(MAKE) -f Make.devices "MKDEV=mfs $(TARGET_FILE) mknod"
 endif
@@ -65,6 +71,29 @@ ifdef CONFIG_IMG_BOOT
 endif
 	mfsck -fv $(TARGET_FILE)
 	mfs $(TARGET_FILE) stat
+
+# Create FAT filesystem from template
+
+fatfs: template
+	rm -f $(TARGET_FILE)
+	dd if=/dev/zero of=$(TARGET_FILE) bs=1024 count=$(TARGET_BLKS)
+	mformat -i $(TARGET_FILE) $(MKFS_OPTS)
+	# Linux has to be the first file for the boot sector loader
+	rm -f linux; touch linux
+	mcopy -i $(TARGET_FILE) $(CPFS_OPTS) linux ::/linux
+	rm linux
+	# Device folder has to be first or second for the 'fake dev' to work
+	mmd -i $(TARGET_FILE) ::/dev
+	for f in $$(cd $(DESTDIR); find -name '*'); do \
+		[ -d $(DESTDIR)/$$f -a "$$f" != "./dev" ] && mmd -i $(TARGET_FILE) ::$$f; \
+		[ -f $(DESTDIR)/$$f ] && mcopy -i $(TARGET_FILE) $(CPFS_OPTS) $(DESTDIR)/$$f ::$$f; \
+	done
+	# Protect contiguous /linux by marking as RO, System and Hidden
+	mattrib -i $(TARGET_FILE) +r +s +h ::/linux
+	# Read boot sector, skip FAT BPB, set ELKS PB sectors/heads and write boot
+ifdef CONFIG_IMG_BOOT
+	setboot $(TARGET_FILE) -F $(FD_BOOTSECT)
+endif
 
 # Create ROM filesystem from template
 
