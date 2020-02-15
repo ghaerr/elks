@@ -145,16 +145,20 @@ void wait_on_buffer(register struct buffer_head *bh)
     }
 }
 
+// Lock buffer in memory
+// when driver is working on it
+// or client is reading from / writing to it
+
+// TODO: replace by a 'lock_t'
+
 void lock_buffer(register struct buffer_head *bh)
 {
     wait_on_buffer(bh);
     bh->b_lock = 1;
-    map_buffer(bh);
 }
 
 void unlock_buffer(register struct buffer_head *bh)
 {
-    unmap_buffer(bh);
     bh->b_lock = 0;
     wake_up(&bh->b_wait);
 }
@@ -171,7 +175,7 @@ void invalidate_buffers(kdev_t dev)
 	if (bh->b_count) continue;
 	bh->b_uptodate = 0;
 	bh->b_dirty = 0;
-	bh->b_lock = 0;
+	unlock_buffer(bh);
     } while ((bh = bh->b_prev_lru) != NULL);
 }
 
@@ -209,9 +213,9 @@ static struct buffer_head *get_free_buffer(void)
 
     bh = bh_lru;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-    while (bh->b_count || bh->b_dirty || bh->b_lock || bh->b_data) {
+    while (bh->b_count || bh->b_dirty || buffer_locked (bh) || bh->b_data) {
 #else
-    while (bh->b_count || bh->b_dirty || bh->b_lock) {
+    while (bh->b_count || bh->b_dirty || buffer_locked (bh)) {
 #endif
 	if ((bh = bh->b_next_lru) == NULL) {
 	    sync_buffers(0, 0);
