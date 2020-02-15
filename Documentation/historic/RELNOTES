@@ -20,7 +20,6 @@ VERSION 0.0.88 NOTES
 VERSION 0.0.88-PRE1 NOTES
 -------------------------
 
-	* Fixed bug in calculation of ELKS_VERSION_CODE value.
 	* Removed requirement for compile.h and version.h headers.
 
 VERSION 0.0.87 NOTES
@@ -45,8 +44,6 @@ VERSION 0.0.87-PRE1 NOTES
 	* Added missing "### Dependencies:" tags to several Makefiles.
 	* Added `make tar` and skeletons for `make rpm` and `make deb` to
 	  create relevant distribution atrchives.
-	* Reformatted ELKS_VERSION_CODE calculation, and bumped version
-	  directly to 0.0.87-pre1 in case this was used anywhere.
 
 VERSION 0.0.85-PRE3 NOTES
 -------------------------

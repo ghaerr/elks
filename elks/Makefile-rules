@@ -77,22 +77,15 @@ TARGET_NB_IMAGE	= $(TOPDIR)/elks/nbImage
 #########################################################################
 # Define variables directly dependant on the current version number.
 
-VSNCODE1	= $(shell printf '0x%02X%02X%02X' \
-			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
-
 ifeq (x$(PRE), x)
 
 DIST		= $(shell printf '%u.%u.%u' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
 
-VSNCODE		= $(VSNCODE1)00
-
 else
 
 DIST		= $(shell printf '%u.%u.%u-pre%u' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $(PRE))
-
-VSNCODE		= $(shell printf '0x%06X%02X' $$(($(VSNCODE1)-1)) $(PRE))
 
 endif
 
@@ -115,8 +108,7 @@ DISTDIR 	= $(shell $(BASEDIR)/scripts/setdir $(TOPDIR)/elks-$(DIST)/$(MYDIR))
 #########################################################################
 # Specify the standard definitions to be given to system programs.
 
-CCDEFS		= -DELKS_VERSION_CODE=$(VSNCODE)		\
-		  -DUTS_RELEASE=\"$(DIST)\"			\
+CCDEFS = -DUTS_RELEASE=\"$(DIST)\"			\
 		  -D__KERNEL__ -DUSE_IA16
 
 #########################################################################

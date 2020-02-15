@@ -1411,8 +1411,6 @@ Tue Oct 23 01:44:24 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 Mon Oct 22 14:22:41 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
-	* Corrected ELKS_VERSION_CODE calculation - it didn't work when
-	  SUBLEVEL was 0, a case I forgot to test :(((
 	* Removed requirement for compile.h and version.h as the relevant
 	  values are now provided as defaults to all source code during the
 	  compilation process.
@@ -1462,10 +1460,6 @@ Tue Oct 16 21:59:27 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* THIS IS ELKS RELEASE 0.0.87-PRE1.
 
-	* Reformatted ELKS_VERSION_CODE to reflect the actual use made of the
-	  PRE's as being BEFORE the non-PRE version rather than after as was
-	  previously assumed. Also allowed up to 255 PRE's between PATCHLEVEL
-	  increments.
 	* Bumped version to 0.0.87-pre1 in case anything is using the above
 	  field. Don't think anything is, but better to be safe than sorry.
 
@@ -1525,9 +1519,6 @@ Tue Oct  2 21:29:28 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 	  all other Makefiles as I progress through the tree, and will have the
 	  result of performing `make all` in the base directory independently
 	  of the current location in the tree.
-	* Changed method of calculating ELKS_VERSION_CODE and simplified it in
-	  the process. The new method allows for 15 PRE's between sublevels,
-	  instead of the 7 that previously existed.
 	* Bumped version up to 0.0.85-pre3 to provide a marker for the previous
 	  change. This is tagged both as V0-0-85-PRE3 and as elks-0_0_85-pre3
 	  in CVS, the latter being the standard used for most other releases
