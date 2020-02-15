@@ -26,6 +26,7 @@ PRGS = \
 	knl \
 	man \
 	poweroff \
+	chmem \
 	# EOL
 
 # clock disabled because direct I/O port access
@@ -81,6 +82,9 @@ man: man.o
 
 poweroff: poweroff.o
 	$(LD) $(LDFLAGS) -o poweroff poweroff.o $(LDLIBS)
+
+chmem: chmem.o
+	$(LD) $(LDFLAGS) -o chmem chmem.o $(LDLIBS)
 
 all: $(PRGS)
 
