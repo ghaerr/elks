@@ -60,7 +60,7 @@ https://github.com/elks-org/elks/actions?query=workflow%3Across
 
 3- Set up your environment (PATH, TOPDIR and CROSSDIR):
 
-`. env.sh` (note the '.' before the script)
+`. ./env.sh` (note the '.' before the script)
 
 4- Configure the kernel, the user land and the target image format:
 

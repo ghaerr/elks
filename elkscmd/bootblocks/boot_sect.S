@@ -155,13 +155,15 @@ _except:
 	add $'0',%al  // first version with single digit
 	call _putc
 	mov $msg_error,%bx
-	call _puts
+	jmp _reboot1
 
 	.global _reboot
 
 _reboot:
 
 	mov $msg_reboot,%bx
+
+_reboot1:
 	call _puts
 
 	xor %ax,%ax  // wait for key
@@ -506,10 +508,11 @@ msg_boot:
 	.asciz "ELKS"
 
 msg_error:
-	.asciz "!\r\n"
+	.ascii "!\r\n"
+	// fall through
 
 msg_reboot:
-	.asciz "Presskey\r\n"
+	.asciz "Press key\r\n"
 
 	.global last_code
 last_code:
