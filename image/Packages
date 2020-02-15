@@ -77,7 +77,7 @@
 /bin/httpd					:net
 /bin/init		:boot
 /bin/kill			:small
-/bin/knl			:small
+#/bin/knl			:small
 /bin/ktcp					:net
 /bin/l								:fileutil
 /bin/ln					:base

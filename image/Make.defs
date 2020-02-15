@@ -13,6 +13,7 @@ ELKSCMD_DIR = $(TOPDIR)/elkscmd
 
 MINIX_BOOT = $(ELKSCMD_DIR)/bootblocks
 FD_BOOTBLOCK = $(MINIX_BOOT)/minix.bin
+FD_BOOTSECT = $(MINIX_BOOT)/fat.bin
 # TODO: replace these exports by includes
 export FD_BOOTBLOCK
 
@@ -61,10 +62,10 @@ endif
 
 ifdef CONFIG_IMG_MINIX
 MKFS = mkfs.minix
-MKFS_OPTS = -1 -n14 -i360
+MKFS_OPTS = -1 -n14 -i360 -s$(TARGET_BLKS) -k
 endif
 
 ifdef CONFIG_IMG_FAT
-MKFS = mkfs.vfat
-MKFS_OPTS = -v
+MKFS_OPTS = -f $(TARGET_BLKS) -M 512 -d 2 -L 9 -r 14 -c 1 -k -N 0
+CPFS_OPTS = -pmQ -D o
 endif

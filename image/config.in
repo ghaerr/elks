@@ -25,7 +25,7 @@ mainmenu_option next_comment
 		 FD360  CONFIG_IMG_FD360  \
 		 HD     CONFIG_IMG_HD" FD1440
 
-		if [ "$CONFIG_IMG_MINIX" == "y" -o "$CONFIG_IMG_FAT" == "y" ]; then
+		if [ "$CONFIG_IMG_MINIX" == "y" -o "$CONFIG_IMG_ROM" == "y" ]; then
 			define_bool CONFIG_IMG_DEV y
 		fi
 
@@ -40,7 +40,7 @@ mainmenu_option next_comment
 			int 'Blocks'  CONFIG_IMG_BLOCKS 32768
 		fi
 
-		if [ "$CONFIG_IMG_MINIX" == "y" ]; then
+		if [ "$CONFIG_IMG_MINIX" == "y" -o "$CONFIG_IMG_FAT" == "y" ]; then
 			bool 'Bootable' CONFIG_IMG_BOOT y
 		fi
 
