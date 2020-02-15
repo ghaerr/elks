@@ -13,7 +13,33 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 
+// Number of external buffers
+
+#define NR_EXT_BUFFERS 64
+
+// Number of internal buffers
+// used to "map" external buffers
+
+#ifdef CONFIG_FS_FAT
+#define NR_MAPBUFS  12
+#else
+#define NR_MAPBUFS  8
+#endif
+
+// Number of internal buffers
+
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
+#define NR_BUFFERS NR_EXT_BUFFERS
+#else
+#define NR_BUFFERS NR_MAPBUFS
+#endif
+
+// Buffer heads (internal or external)
+
 static struct buffer_head buffers[NR_BUFFERS];
+
+// Internal buffers
+
 static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
 
 /*
@@ -22,6 +48,9 @@ static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
 /*static struct buffer_head *bh_chain = buffers; */
 static struct buffer_head *bh_lru = buffers;
 static struct buffer_head *bh_llru = buffers;
+
+// External buffers are allocated in one big 64K segment
+// in the global memory (BLOCK_SIZE * NR_EXT_BUFFERS)
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 static struct wait_queue bufmapwait;	/* Wait for a free L1 buffer area */
@@ -71,9 +100,9 @@ static void put_last_lru(register struct buffer_head *bh)
 
 void buffer_init(void)
 {
-    // TODO: allocate buffer one by one in global memory
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
+	// TODO: allocate buffer one by one in global memory
     _buf_ds = mm_alloc(NR_BUFFERS << (BLOCK_SIZE_BITS - 4));
     unsigned int i = NR_MAPBUFS;
     do {
@@ -90,6 +119,7 @@ void buffer_init(void)
 	bh->b_next_lru = bh->b_prev_lru = bh;
 	put_last_lru(bh);
       buf_init:
+
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 	bh->b_data = (char *)0;			/* L1 buffer cache is reserved! */
 	bh->b_mapcount = 0;
@@ -98,6 +128,7 @@ void buffer_init(void)
 	bh->b_data = p;
 	p += BLOCK_SIZE;
 #endif
+
     } while (++bh < &buffers[NR_BUFFERS]);
 }
 
