@@ -95,7 +95,6 @@
 /bin/more				:base
 /bin/mount		:boot
 /bin/mv				:small
-/bin/nclock							:nanox
 /bin/netstat				:net
 /bin/nslookup				:net
 /bin/passwd				:base
@@ -182,11 +181,12 @@
 /var/run/utmp	:boot
 /var/www					:net
 /var/www/index.html			:net
-#/bin/ndemo								:nanox
 # The following Nano-X graphical apps will be added soon
+#/bin/ndemo								:nanox
 #/bin/demo2								:nanox
 #/bin/demo-vga							:nanox
-#/bin/landmine							:nanox
+/bin/landmine							:nanox
+#/bin/nclock							:nanox
 #/bin/nterm								:nanox
 #/bin/world								:nanox
 #/bin/world.map							:nanox
