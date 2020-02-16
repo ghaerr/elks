@@ -52,6 +52,7 @@
 /bin/cal								:app
 /bin/cat		:boot
 /bin/chgrp				:base
+/bin/chmem				:base
 /bin/chmod				:base
 /bin/chown				:base
 /bin/cksum						:shutil
