@@ -19,13 +19,13 @@ SECTIONS {
 	.text 0 : AT(_begintext) { *(.text*) *(.rodata*) *(.data*) }
 	.bss : {
 		*(.bss) *(COMMON)
-		ASSERT (. + 0x100 <= 0x10000,
+		ASSERT (. + 0x100 <= 0xfff0,
 		    "Error: too large for a tiny-model ELKS a.out file.");
 	}
 	PROVIDE (_start = entry); /* `entry' was the old entry point symbol */
 	PROVIDE (_chmem = 0);
 	PROVIDE (_total = _chmem == 0 ? 0 : . + _chmem);
 	_total_adjusted = _total == 0 ? 0
-			  : MIN (0x10000, MAX (. + 0x100, _total));
+			  : MIN (0xfff0, MAX (. + 0x100, _total));
 	/DISCARD/ : { *(.comment) }
 }
