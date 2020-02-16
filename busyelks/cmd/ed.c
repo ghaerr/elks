@@ -8,9 +8,10 @@
 
 #include "../sash.h"
 
+#include "cmd.h"
+
 #define	USERSIZE	1024	/* max line length typed in by user */
 #define	INITBUFSIZE	1024	/* initial buffer size */
-
 
 typedef	int	NUM;
 typedef	int	LEN;
@@ -22,7 +23,6 @@ struct	LINE	{
 	LEN	len;
 	char	data[1];
 };
-
 
 static	LINE	lines;
 static	LINE	*curline;
@@ -55,9 +55,8 @@ static	NUM	searchlines();
 static	LEN	findstring();
 static	LINE	*findline();
 
-void
-ed_main(argc, argv)
-	char	**argv;
+int
+ed_main(int argc, char * argv[])
 {
 	if (!initedit())
 		return;
@@ -86,7 +85,6 @@ ed_main(argc, argv)
 	termedit();
 	exit(0);
 }
-
 
 /*
  * Read commands until we are told to stop.

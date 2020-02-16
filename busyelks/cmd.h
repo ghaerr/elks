@@ -19,6 +19,11 @@ int date_main(int argc, char * argv[]);
 int dd_main(int argc, char * argv[]);
 int diff_main(int argc, char * argv[]);
 int	dirname_main(int argc, char * argv[]);
+int du_main(int argc, char * argv[]);
+int echo_main(int argc, char * argv[]);
+int ed_main(int argc, char * argv[]);
+int fdisk_main(int argc, char * argv[]);
+int find_main(int argc, char * argv[]);
 
 #if defined(__cplusplus)
 }

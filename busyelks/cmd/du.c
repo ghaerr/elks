@@ -41,10 +41,13 @@
 #include <stdio.h>
 #include <dirent.h>
 
+#include "cmd.h"
+#include "defs.h"
+
 #define BLOCK_SIZE	1024
 
-extern char *optarg;
-extern int optind;
+static char *optarg;
+static int optind;
 
 #define	LINELEN		256
 #define	NR_ALREADY	512
@@ -63,26 +66,25 @@ typedef struct already {
 } ALREADY;
 
 _PROTOTYPE(int du_main, (int argc, char **argv));
-_PROTOTYPE(int makedname, (char *d, char *f, char *out, int outlen));
-_PROTOTYPE(int done, (int dev, Ino_t inum, Nlink_t nlink));
-_PROTOTYPE(long dodir, (char *d, int thislev));
+_PROTOTYPE(static int makedname, (char *d, char *f, char *out, int outlen));
+_PROTOTYPE(static int done, (int dev, ino_t inum, nlink_t nlink));
+_PROTOTYPE(static long dodir, (char *d, int thislev));
 
-char *prog;			/* program name */
-char *optstr = "asl:";		/* -a and -s arguments */
-int du_silent = 0;			/* silent mode */
-int all = 0;			/* all directory entries mode */
-char *startdir = ".";		/* starting from here */
-int levels = 20000;		/* # of directory levels to print */
-ALREADY *already[NR_ALREADY];
-int alc;
-
+static char *prog;			/* program name */
+static char *optstr = "asl:";		/* -a and -s arguments */
+static int du_silent = 0;			/* silent mode */
+static int all = 0;			/* all directory entries mode */
+static char *startdir = ".";		/* starting from here */
+static int levels = 20000;		/* # of directory levels to print */
+static ALREADY *already[NR_ALREADY];
+static int alc;
 
 /*
  *	makedname - make the pathname from the directory name, and the
  *	directory entry, placing it in out. If this would overflow,
  *	return 0, otherwise 1.
  */
-int makedname(d, f, out, outlen)
+static int makedname(d, f, out, outlen)
 char *d;
 char *f;
 char *out;
@@ -104,7 +106,7 @@ int outlen;
  *	done - have we encountered (dev, inum) before? Returns 1 for yes,
  *	0 for no, and remembers (dev, inum, nlink).
  */
-int done(dev, inum, nlink)
+static int done(dev, inum, nlink)
 int dev;
 ino_t inum;
 nlink_t nlink;
@@ -138,7 +140,7 @@ nlink_t nlink;
  *	dodir - process the directory d. Return the long size (in blocks)
  *	of d and its descendants.
  */
-long dodir(d, thislev)
+static long dodir(d, thislev)
 char *d;
 int thislev;
 {

@@ -8,18 +8,12 @@
 
 #include "../sash.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <pwd.h>
-#include <grp.h>
-#include <utime.h>
-#include <errno.h>
 
+#include "cmd.h"
 
-void echo_main(int argc, char **argv)
+int
+echo_main(int argc, char * argv[])
 {
 	int first;
 	char *sptr;

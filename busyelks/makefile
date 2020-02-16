@@ -31,6 +31,7 @@ LD	= $(CC)
 LDFLAGS	+= \
 	$(FLAGS) \
 	-melks-libc \
+	-Wl,-M
 
 OBJS	+= main.o lib/bsearch.o
 
@@ -98,8 +99,28 @@ ifdef CMD_dirname
 	OBJS	+= cmd/dirname.o
 	NEED_stripslash	= yes
 endif
+ifdef CMD_du
+	CFLAGS	+= -DCMD_du
+	OBJS	+= cmd/du.o
+endif
+ifdef CMD_echo
+	CFLAGS	+= -DCMD_echo
+	OBJS	+= cmd/echo.o
+endif
+ifdef CMD_ed
+	CFLAGS	+= -DCMD_ed
+	OBJS	+= cmd/ed.o
+endif
 ifdef CMD_false
 	CFLAGS	+= -DCMD_false
+endif
+ifdef CMD_fdisk
+	CFLAGS	+= -DCMD_fdisk
+	OBJS	+= cmd/fdisk.o
+endif
+ifdef CMD_find
+	CFLAGS	+= -DCMD_find
+	OBJS	+= cmd/find.o
 endif
 ifdef CMD_true
 	CFLAGS	+= -DCMD_true
@@ -125,7 +146,7 @@ all: $(OUT)
 
 $(OUT):	$(OBJS)
 	@echo '[LD]	$@'
-	@$(LD) $(LDFLAGS) -o $@ $^
+	@$(LD) $(LDFLAGS) -o $@ $^ > busyelks.map
 
 .c.o:
 	@echo '[CC]	$@'

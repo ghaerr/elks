@@ -92,8 +92,23 @@ static struct cmd cmd[] =
 #if defined(CMD_dirname)
 	CMD("dirname",	dirname_main,	"NAME", " Strip last component from file name."),
 #endif
+#if defined(CMD_du)
+	CMD("du",	du_main,	" [-a] [-s] [-l levels] [startdir]", "Estimate file space usage."),
+#endif
+#if defined(CMD_echo)
+	CMD("echo",	echo_main, NULL, "Display a line of text."),
+#endif
+#if defined(CMD_ed)
+	CMD("ed",	ed_main, "[file]", "Line-oriented text editor"),
+#endif
 #if defined(CMD_false)
 	CMD("false",	false_main,	NULL, "Do nothing, unsuccessfully."),
+#endif
+#if defined(CMD_fdisk)
+	CMD("fdisk",	fdisk_main,	"[-l] device", "Manipulate disk partition table."),
+#endif
+#if defined(CMD_fdisk)
+	CMD("find",	find_main,	"path-list [predicate-list]", "Search for files in a directory hierarchy."),
 #endif
 #if defined(CMD_true)
 	CMD("true",	true_main, NULL, "Do nothing, successfully"),

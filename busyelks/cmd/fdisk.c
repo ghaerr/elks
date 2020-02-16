@@ -7,38 +7,41 @@
  *
  */
 
-#include <stdio.h>
-
-#ifdef linux
-
-#include <stdlib.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <linux/hdreg.h>
-
-#else
-
-#include <linuxmt/types.h>
-#include <linuxmt/errno.h>
-#include <linuxmt/genhd.h>
+#include <unistd.h>
 #include <linuxmt/hdreg.h>
-#include <linuxmt/major.h>
-#include <linuxmt/bioshd.h>
-#include <linuxmt/fs.h>
-#include <linuxmt/string.h>
-#include <linuxmt/fcntl.h>
-
-#endif
 
 #include "../fdisk.h"
+#include "cmd.h"
 
 #define isxdigit(x)	( ((x)>='0' && (x)<='9') || ((x)>='A' && (x)<='F') \
 						 || ((x)>='a' && (x)<='f') )
 
 #define die { printf("Usage %s [-l] <device-name>\n",argv[0]); fflush(stdout); exit(1); }
 #define spc ((unsigned long)(geometry.heads*geometry.sectors))
+
+static char dev[256]; /* FIXME - should be a #define'd number from header file */
+static int pFd;
+static unsigned char partitiontable[512];
+static struct hd_geometry geometry;
+
+
+static	void quit(void);
+static	void list_part(void);
+static	void del_part(void);
+static	void add_part(void);
+static	void help(void);
+static	void write_out(void);
+static	void list_types(void);
+static	void list_part(void);
+static	void set_boot(void);
+static	void set_type(void);
+static	void list_partition(char *dev);
+
 
 static Funcs funcs[] = {
     { 'a',"Add partion",           add_part },
@@ -62,7 +65,7 @@ static Funcs funcs[] = {
  * command that is distributed with Red Hat Linux 6.2.
  */
 
-char partOK[257] = {   /*	'0123456789ABCDEF'		*/
+static char partOK[257] = {   /*	'0123456789ABCDEF'		*/
 
 				"YYYYYYYYYYYYY.YY"	/*  0x	*/
 				"YYY.Y.YYY..YY.Y."	/*  1x	*/
@@ -84,7 +87,7 @@ char partOK[257] = {   /*	'0123456789ABCDEF'		*/
 
 #define valid(n)	(partOK[n] == 'Y')
 
-void list_types()	/* FIXME - Should make this more flexible */
+static void list_types(void)	/* FIXME - Should make this more flexible */
 {
     printf(
 	" 0 Empty                  3c PartitionMagic recovery 85 Linux extended\n"
@@ -117,18 +120,21 @@ void list_types()	/* FIXME - Should make this more flexible */
     fflush(stdout);
 }
 
-void quit()
+static void
+quit(void)
 {
     exit(1);
 }
 
-void list_part()
+static void
+list_part(void)
 {
     if(*dev!=0)
 	list_partition(NULL);
 }
 
-void add_part()
+static void
+add_part(void)
 {
     unsigned char pentry[16];
     char buf[8];
@@ -206,7 +212,8 @@ void add_part()
     fflush(stdout);
 }
 
-void set_boot()
+static void
+set_boot(void)
 {
     char buf[8];
     int part, a;
@@ -225,8 +232,8 @@ void set_boot()
     partitiontable[a]=(partitiontable[a]==0x00?0x80:0x00);
 }
 
-int atohex(s)
-char *s;
+static int
+atohex(char * s)
 {
     int n, r;
 
@@ -248,7 +255,8 @@ char *s;
     return n;
 }
 
-void set_type()  /* FIXME - Should make this more flexible */
+static void
+set_type(void)  /* FIXME - Should make this more flexible */
 {
     char buf[8];
     int part, type, a;
@@ -288,7 +296,8 @@ void set_type()  /* FIXME - Should make this more flexible */
     partitiontable[a]=type;
 }
 
-void del_part()
+static void
+del_part(void)
 {
     char buf[8];
     int part;
@@ -308,7 +317,8 @@ void del_part()
     fflush(stdout);
 }
 
-void write_out()
+static void
+write_out(void)
 {
     int i;
 
@@ -323,7 +333,8 @@ void write_out()
     fflush(stdout);
 }
 
-void help()
+static void
+help(void)
 {
     Funcs *tmp;
 
@@ -333,7 +344,8 @@ void help()
     fflush(stdout);
 }
 
-void list_partition(devname)
+static void
+list_partition(devname)
 char *devname;
 {
     unsigned char ptbl[512],*partition;
@@ -378,9 +390,8 @@ char *devname;
     fflush(stdout);
 }
 
-int fdisk_main(argc,argv)
-int argc;
-char *argv[];
+int
+fdisk_main(int argc, char * argv[])
 {
     int i, mode=MODE_EDIT;
 
@@ -389,7 +400,7 @@ char *argv[];
 	if (*argv[i]=='/') {
 	    if (*dev!=0) {
 		printf("Can only specify one device on the command line.\n");
-		exit(1);
+		return 1;
 	    } else
 		strncpy(dev,argv[i],256); /* FIXME - Should be some value from a header */
 	} else
@@ -400,7 +411,7 @@ char *argv[];
 			break;
 		    default:
 			printf("Unknown command: %s\n",argv[i]);
-			exit(1);
+			return 1;
 		}
 	    else
 		die;
@@ -432,18 +443,18 @@ char *argv[];
 
 	if ((pFd=open(dev,O_RDWR))==-1) {
 	    printf("Error opening %s (%d)\n",dev,-pFd);
-	    exit(1);
+	    return 1;
 	}
 
 	if ((i=read(pFd,partitiontable,512))!=512) {
 	    printf("Unable to read first 512 bytes from %s, only read %d bytes\n",
 		   dev,i);
-	    exit(1);
+	    return 1;
 	}
 
 	if (ioctl(pFd, HDIO_GETGEO, &geometry)) {
 	    printf("Error getting geometry of disk, exiting.\n");
-	    exit(1);
+	    return 1;
 	}
 	if (geometry.heads==0 && geometry.cylinders==0 && geometry.sectors==0)
 	    printf("WARNING!  Read disk geometry as 0/0/0.  Things may break.\n");
@@ -465,5 +476,5 @@ char *argv[];
 	    }
 	}
     }
-    exit(0);
+    return 0;
 }
