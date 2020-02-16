@@ -98,4 +98,5 @@ demo: $(NANOXDEMO) libnano-X.a
 
 install:
 #	install bin/demo $(DESTDIR)/bin/ndemo
-	install bin/nclock $(DESTDIR)/bin/nclock
+#	install bin/nclock $(DESTDIR)/bin/nclock
+	install bin/landmine $(DESTDIR)/bin/landmine
