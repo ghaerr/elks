@@ -77,7 +77,7 @@ struct elks_exec_hdr
 	uint32_t dseg;
 	uint32_t bseg;
 	uint32_t entry;
-	uint32_t chmem;
+	uint32_t total;
 	uint32_t unused2; 
 };
 

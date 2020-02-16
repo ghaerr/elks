@@ -122,8 +122,8 @@ static void elks_take_interrupt(int arg)
 static int load_elks(int fd)
 {
 	/* Load the elks binary image and set it up in the text and data
-	   segments. Load CS and DS/SS according to image type. chmem is
-	   ignored we always use 64K segments */
+	   segments. Load CS and DS/SS according to image type. Allocate
+	   data segment according to a.out total field */
 	struct elks_exec_hdr mh;
 	struct user_desc cs_desc, ds_desc;
 	if(read(fd, &mh,sizeof(mh))!=sizeof(mh))
@@ -136,12 +136,16 @@ static int load_elks(int fd)
 	fprintf(stderr,"Linux-86 binary - %lX. tseg=%ld dseg=%ld bss=%ld\n",
 		mh.type,mh.tseg,mh.dseg,mh.bseg);
 #endif
+	if (mh.total == 0)
+		mh.total = mh.dseg + mh.bseg + 0x4000ul;
 	if (mh.tseg > 0xfffful || mh.dseg > 0xfffful
-	    || mh.bseg > 0xfffful - mh.dseg || mh.entry >= mh.tseg)
+	    || mh.bseg > 0xfffful - mh.dseg || mh.entry >= mh.tseg
+	    || mh.total > 0xfff0ul || mh.total <= mh.dseg + mh.bseg)
 	{
 		fprintf(stderr, "Bogus a.out headers\n");
 		exit(1);
 	}
+	mh.total = (mh.total + 0xful) & 0xfff0ul;
 	if(read(fd,elks_base,mh.tseg)!=mh.tseg)
 		return -ENOEXEC;
 	elks_data_base=elks_base+65536;
@@ -161,7 +165,7 @@ static int load_elks(int fd)
 	cs_desc.seg_not_present = mh.tseg == 0;
 	ds_desc.entry_number = elks_cpu.regs.xss / 8;
 	ds_desc.base_addr = (uintptr_t)elks_data_base;
-	ds_desc.limit = 0xffff;
+	ds_desc.limit = mh.total - 1;
 	ds_desc.contents = MODIFY_LDT_CONTENTS_DATA;
 	ds_desc.seg_not_present = mh.dseg == 0 && mh.bseg == 0;
 	if (modify_ldt(1, &cs_desc, sizeof cs_desc) != 0
@@ -171,7 +175,7 @@ static int load_elks(int fd)
 				"segments\n");
 		exit(255);
 	}
-	elks_cpu.regs.xsp = 0;	 	/* Args stacked later */
+	elks_cpu.regs.xsp = mh.total;	/* Args stacked later */
 	elks_cpu.regs.xip = mh.entry;	/* Run from entry point */
 	elks_cpu.child = 0;
 	brk_at = mh.dseg + mh.bseg;
