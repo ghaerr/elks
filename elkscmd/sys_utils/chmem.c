@@ -15,7 +15,7 @@
 #define TOTPOS          24	/* where is total in header */
 #define SEPBIT   0x00200000	/* this bit is set for separate I/D */
 #define MAGIC       0x0301	/* magic number for executable progs */
-#define MAX         65536L	/* maximum allocation size */
+#define MAX         65520L	/* maximum allocation size */
 
 /* Print an error message and die*/
 static void fatalmsg(const char *s,...)
@@ -48,17 +48,16 @@ int main(int argc, char **argv)
 
 
   char *p;
-  unsigned int n;
   int fd, separate;
-  unsigned long lsize, olddynam, newdynam = 0, newtot, overflow, dsegsize, header[HLONG];
+  unsigned long lsize, olddynam, newdynam = 0, newtot, overflow, dsegsize;
+  unsigned long header[HLONG];
 
   p = argv[1];
   if (argc != 3) 
 	fatalmsg("Usage: %s {=+-}<# bytes dynamic data> <executable>\n", argv[0]);
   if (*p != '=' && *p != '+' && *p != '-') usage();
-  n = atoi(p+1);
-  lsize = n;
-  if (n > 65520) fatalmsg("chmem: ", p+1, " too large\n");
+  lsize = atol(p+1);
+  if (lsize > MAX) fatalmsg("chmem: %lu too large, max %lu\n", lsize, MAX);
 
   fd = open(argv[2], 2);
   if (fd < 0) fatalmsg("chmem: can't open ", argv[2], "\n");
