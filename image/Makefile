@@ -52,10 +52,6 @@ template:
 ifdef CONFIG_IMG_BOOT
 	install $(ELKS_DIR)/arch/i86/boot/Image $(DESTDIR)/linux
 endif
-	# pull request #227
-	find $(DESTDIR) \
-		-type d ! -name root -execdir chmod go+rx '{}' ';' -o \
-		! -type d ! -name .profile -execdir chmod go+r '{}' ';'
 
 # Create MINIX filesystem from template
 
