@@ -213,7 +213,13 @@ lsfile(name, statbuf, flags)
 	*cp = '\0';
 
 	if (flags & LSF_INODE) {
+
+#ifdef CONFIG_32BIT_INODES
+		sprintf(cp, "%5ld ", statbuf->st_ino);
+#else
 		sprintf(cp, "%5d ", statbuf->st_ino);
+#endif
+
 		cp += strlen(cp);
 	}
 

@@ -21,7 +21,7 @@
  *
  */
 struct linux_dirent {
-    u_ino_t d_ino;
+    ino_t  d_ino;
     loff_t d_offset;
     size_t d_namlen;
     char d_name[255];
