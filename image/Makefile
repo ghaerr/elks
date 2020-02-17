@@ -57,7 +57,7 @@ endif
 
 minixfs: template
 	rm -f $(TARGET_FILE)
-	mfs $(VERBOSE) $(TARGET_FILE) genfs $(MFS_OPTS) $(DESTDIR)
+	mfs $(VERBOSE) $(TARGET_FILE) genfs $(MKFS_OPTS) $(DESTDIR)
 ifdef CONFIG_IMG_DEV
 	# command to make char/block devices in image (no sudo required)
 	$(MAKE) -f Make.devices "MKDEV=mfs $(TARGET_FILE) mknod"

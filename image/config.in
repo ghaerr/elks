@@ -34,10 +34,10 @@ mainmenu_option next_comment
 			comment 'Disk geometry'
 			int 'Sectors'    CONFIG_IMG_SECT  63
 			int 'Heads'      CONFIG_IMG_HEAD  16
-			int 'Cylinders'  CONFIG_IMG_CYL   1024
+			int 'Cylinders'  CONFIG_IMG_CYL   63
 
 			comment 'Disk size in 1K blocks'
-			int 'Blocks'  CONFIG_IMG_BLOCKS 32768
+			int 'Blocks'  CONFIG_IMG_BLOCKS 31752
 		fi
 
 		if [ "$CONFIG_IMG_MINIX" == "y" -o "$CONFIG_IMG_FAT" == "y" ]; then

@@ -61,11 +61,14 @@ endif
 # Image filesystem options
 
 ifdef CONFIG_IMG_MINIX
-MKFS = mkfs.minix
 MKFS_OPTS = -1 -n14 -i360 -s$(TARGET_BLKS) -k
 endif
 
 ifdef CONFIG_IMG_FAT
+ifdef CONFIG_IMG_HD
+MKFS_OPTS = -s $(CONFIG_IMG_SECT) -h $(CONFIG_IMG_HEAD) -t $(CONFIG_IMG_CYL)
+else
 MKFS_OPTS = -f $(TARGET_BLKS) -M 512 -d 2 -L 9 -r 14 -c 1 -k -N 0
+endif
 CPFS_OPTS = -pmQ -D o
 endif

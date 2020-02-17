@@ -6,22 +6,25 @@
 [ -x /usr/local/bin/qemu-system-i386 ] && QEMU="qemu-system-i386"
 [ -x /usr/local/bin/qemu-system-x86_64 ] && QEMU="qemu-system-x86_64"
 [ -z $QEMU ] && { echo 'QEMU system emulator not found!'; exit 1; }
+echo "Using QEMU: $QEMU"
 
-# Select floppy disk image set(s) to use
-
+# Select disk image to use
 # MINIX or FAT .config build
-IMAGE=image/fd1440.bin
+[ -f image/fd1440.bin ] && IMAGE="-fda image/fd1440.bin"
+[ -f image/hd.bin ] && IMAGE="-hda image/hd.bin"
+[ -z "$IMAGE" ] && { echo 'Disk image not found!'; exit 1; }
+echo "Using disk image: $IMAGE"
 
 # FAT package manager build
-#IMAGE=image/fd360-fat.bin
-#IMAGE=image/fd720-fat.bin
-#IMAGE=image/fd1440-fat.bin
-#IMAGE=image/fd2880-fat.bin
+#IMAGE="-fda image/fd360-fat.bin"
+#IMAGE="-fda image/fd720-fat.bin"
+#IMAGE="-fda image/fd1440-fat.bin"
+#IMAGE="-fda image/fd2880-fat.bin"
 
 # MINIX package manager build
-#IMAGE=image/fd360-minix.bin
-#IMAGE=image/fd720-minix.bin
-#IMAGE=image/fd1440-minix.bin
+#IMAGE="-fda image/fd360-minix.bin"
+#IMAGE="-fda image/fd720-minix.bin"
+#IMAGE="-fda image/fd1440-minix.bin"
 
 # Second disk for mount after boot
 #DISK2="-fdb image/fd360-fat.bin"
@@ -47,7 +50,7 @@ HOSTFWD="-net user"
 # Enable network dump here:
 # NETDUMP="-net dump"
 
-# Determine display type
+# Determine display type ("Darwin" = OSX)
 [ `uname` != 'Darwin' ] && QDISPLAY="-display sdl"
 
 # Configure QEMU as pure ISA system
@@ -56,4 +59,4 @@ SERIAL="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
 
 $QEMU -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 1M \
 $KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \
--net nic,model=ne2k_isa $HOSTFWD $NETDUMP -fda $IMAGE $DISK2 $@
+-net nic,model=ne2k_isa $HOSTFWD $NETDUMP $IMAGE $DISK2 $@
