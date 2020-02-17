@@ -193,7 +193,7 @@ static int wait_for_child(void)
 {
 	pid_t child = elks_cpu.child, pid;
 	int status;
-	while ((pid = waitpid(child, &status, 0)) != child)
+	while ((pid = waitpid(child, &status, __WALL)) != child)
 	{
 		if (pid < 0)
 		{
@@ -203,6 +203,20 @@ static int wait_for_child(void)
 	}
 	return status;
 }
+
+#ifdef __x86_64__
+/* Workaround for openSUSE 13.2 (see below).  */
+__attribute__((noreturn)) static void linux3_workaround()
+{
+	static struct { uint32_t rip, cs; } ljmp_to;
+	uint32_t scratch;
+	ljmp_to.rip = elks_cpu.regs.xip;
+	ljmp_to.cs = elks_cpu.regs.xcs;
+	__asm volatile("movl %%ds, %0; movl %0, %%ss; xorl %0, %0; ljmpl *%1"
+		       : "=&r" (scratch) : "m" (ljmp_to) : "memory");
+	__builtin_unreachable();
+}
+#endif
 
 void run_elks()
 {
@@ -237,6 +251,37 @@ void run_elks()
 		fprintf(stderr, "ptrace(PTRACE_SETREGS ...) failed\n");
 		exit(255);
 	}
+#ifdef __x86_64__
+	/*
+	 * On Linux 3.16.6 for x86-64 --- as used by openSUSE 13.2 ---
+	 * ptrace(PTRACE_SETREGS, ...) does not properly set .cs and .ss in
+	 * the `struct user_regs_struct'.
+	 *
+	 * To overcome this, after PTRACE_SETREGS, first do a sanity check
+	 * for the correct .cs and .ss values here.  If they are wrong,
+	 * arrange for the child to start at a trampoline which will jump to
+	 * the true ELKS program entry point.
+	 */
+	{
+		struct user_regs_struct tr_r;
+		if (ptrace(PTRACE_GETREGS, child, NULL, &tr_r) != 0)
+		{
+			fprintf(stderr,"ptrace(PTRACE_GETREGS ...) failed\n");
+			exit(255);
+		}
+		if (tr_r.xcs != elks_cpu.regs.xcs ||
+		    tr_r.xss != elks_cpu.regs.xss)
+		{
+			tr_r.xip = (uintptr_t)linux3_workaround;
+			if (ptrace(PTRACE_SETREGS, child, NULL, &tr_r) != 0)
+			{
+				fprintf(stderr, "ptrace(PTRACE_SETREGS ...) "
+						"failed\n");
+				exit(255);
+			}
+		}
+	}
+#endif
 	if (ptrace(PTRACE_SYSEMU, child, NULL, NULL) != 0)
 	{
 		fprintf(stderr, "ptrace(PTRACE_SYSEMU ...) failed\n");
