@@ -24,8 +24,9 @@ typedef int (*__dir_compar_fn_t) __P ((
                 __const struct dirent * __const *
                 ));
 
+// FIXME: duplicate declaration
 struct dirent {
-	long		d_ino;
+	ino_t		d_ino;
 	off_t		d_off;
 	unsigned short	d_reclen;
 	char		d_name[MAXNAMLEN+1];
