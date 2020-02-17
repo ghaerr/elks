@@ -248,6 +248,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
 #endif
     }
 
+#if 0 // broken - hangs in malloc in realloc()
 /* If a class character exists for the file name, add it on */
     if (class != '\0') {
 	    len = strlen(name);
@@ -263,14 +264,20 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
 	    classp++;
 	    *classp = '\0';
     }
+#endif
 
     {
 	char *cp;
+	char buf[255];
 
 	cp = strrchr(name, '/');
 	if (!cp) cp = name;
 	else cp++;
-	printf(fmt, cp);
+	if (class)		/* handle class without realloc*/
+		sprintf(buf, "%s%c", cp, class);
+	else
+		strcpy(buf, cp);
+	printf(fmt, buf);
     }
 
 #ifdef S_ISLNK
