@@ -4,15 +4,27 @@ include $(TOPDIR)/libc/Makefile.inc
 
 SRCS = \
 	bzero.c \
+	memccpy.c \
+	memchr.c \
+	memcmp.c \
 	memcpy-c.c \
+	memmove.c \
 	memset-c.c \
+	movedata.c \
 	strcasecmp.c \
+	strcat.c \
+	strchr.c \
+	strcmp.c \
 	strcspn.c \
-	string.c \
 	strcpy-c.c \
+	strdup.c \
 	strlen-c.c \
 	strncasecmp.c \
+	strncat.c \
+	strncmp.c \
+	strncpy.c \
 	strpbrk.c \
+	strrchr.c \
 	strspn.c \
 	strstr.c \
 	strtok.c \

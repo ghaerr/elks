@@ -4,7 +4,37 @@ include $(TOPDIR)/libc/Makefile.inc
 
 SYSCALLDAT=${TOPDIR}/elks/arch/i86/kernel/syscall.dat
 
-OBJS = syscall0.o syscall1.o syslib.o signal.o exec.o dirent.o setjmp.o
+OBJS = \
+	abort.o \
+	cleanup.o \
+	dirent.o \
+	dup.o \
+	dup2.o \
+	environ.o \
+	errno.o \
+	exec.o \
+	getegid.o \
+	geteuid.o \
+	getgid.o \
+	getpgid.o \
+	getpid.o \
+	getppid.o \
+	getuid.o \
+	killpg.o \
+	lseek.o \
+	mkfifo.o \
+	setjmp.o \
+	setpgrp.o \
+	signal.o \
+	sleep.o \
+	syscall0.o \
+	syscall1.o \
+	time.o \
+	times.o \
+	usleep.o \
+	wait.o \
+	wait3.o \
+	waitpid.o \
 
 all: out.a
 
@@ -18,7 +48,6 @@ syscall1.s: syscall.awk $(SYSCALLDAT)
 
 syscall0.o: syscall0.s
 syscall1.o: syscall1.s
-syslib.o: syslib.c
 signal.o: signal.c
 exec.o: exec.c
 setjmp.o: setjmp.S
