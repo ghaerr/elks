@@ -170,7 +170,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
     *cp = '\0';
 
     if (flags & LSF_INODE) {
-	sprintf(cp, "%5ld ", statbuf->st_ino);
+	sprintf(cp, "%5"PRIino" ", statbuf->st_ino);
 	cp += strlen(cp);
     }
 
