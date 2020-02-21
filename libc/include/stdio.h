@@ -125,6 +125,10 @@ extern int fputs __P((const char*, FILE*));
 int puts (const char * s);
 
 size_t fread __P ((void *, size_t, size_t, FILE *));
+int fseek(FILE *fp, long offset, int ref);
+long ftell(FILE *fp);
+int fwrite(char *buf, int size, int nelm, FILE *fp);
+char * gets(char *str);	/* BAD function; DON'T use it! */
 
 extern int printf __P ((__const char*, ...));
 extern int fprintf __P ((FILE*, __const char*, ...));
