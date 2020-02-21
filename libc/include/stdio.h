@@ -130,6 +130,8 @@ long ftell(FILE *fp);
 int fwrite(char *buf, int size, int nelm, FILE *fp);
 char * gets(char *str);	/* BAD function; DON'T use it! */
 
+int fscanf(FILE * fp, const char * fmt, ...);
+
 extern int printf __P ((__const char*, ...));
 extern int fprintf __P ((FILE*, __const char*, ...));
 extern int sprintf __P ((char*, __const char*, ...));
@@ -145,5 +147,8 @@ int scanf (const char * format, ...);
 int sscanf (const char * str, const char * format, ...);
 
 int ungetc (int c, FILE *stream);
+int vfscanf(register FILE *fp, register char *fmt, va_list ap);
+int vscanf(__const char *fmt, va_list ap);
+int vsscanf(char *sp, __const char *fmt, va_list ap);
 
 #endif /* __STDIO_H */

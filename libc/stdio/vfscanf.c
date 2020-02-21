@@ -16,84 +16,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#if defined(__STDC__) && !defined(__FIRST_ARG_IN_AX__)
-#include <stdarg.h>
-#define va_strt      va_start
-#else
-#include <varargs.h>
-#define va_strt(p,i) va_start(p)
-#endif
-
-//-----------------------------------------------------------------------------
-
-int scanf (const char * fmt, ...)
-{
-  va_list ptr;
-  int rv;
-  va_strt(ptr, fmt);
-  rv = vfscanf(stdin,fmt,ptr);
-  va_end(ptr);
-  return rv;
-}
-
-//-----------------------------------------------------------------------------
-
-int sscanf (const char * str, const char * format, ...)
-{
-static FILE  string[1] =
-{
-   {0, (char*)(unsigned) -1, 0, 0, (char*) (unsigned) -1, -1,
-    _IOFBF | __MODE_READ}
-};
-
-  va_list ptr;
-  int rv;
-  va_strt(ptr, format);
-  string->bufpos = str;
-  rv = vfscanf(string,format,ptr);
-  va_end(ptr);
-  return rv;
-}
-
-//-----------------------------------------------------------------------------
-
-int fscanf(FILE * fp, const char * fmt, ...)
-{
-  va_list ptr;
-  int rv;
-  va_strt(ptr, fmt);
-  rv = vfscanf(fp,fmt,ptr);
-  va_end(ptr);
-  return rv;
-}
-
-#ifdef L_vscanf
-int vscanf(fmt, ap)
-__const char *fmt;
-va_list ap;
-{
-  return vfscanf(stdin,fmt,ap);
-}
-#endif
-
-#ifdef L_vsscanf
-int vsscanf(sp, fmt, ap)
-char * sp;
-__const char *fmt;
-{
-static FILE  string[1] =
-{
-   {0, (char*)(unsigned) -1, 0, 0, (char*) (unsigned) -1, -1,
-    _IOFBF | __MODE_READ}
-};
-
-  string->bufpos = sp;
-  return vfscanf(string,fmt,ap);
-}
-#endif
-
 /* #define	skip()	do{c=getc(fp); if (c<1) goto done;}while(isspace(c))*/
-
 #define	skip()	while(isspace(c)) { if ((c=getc(fp))<1) goto done; }
 
 #if FLOATS
@@ -122,7 +45,8 @@ static FILE  string[1] =
 #define FC_SIGN		3
 
 /* given transition,state do what action? */
-int fp_do[][NSTATE] = {
+static int
+fp_do[][NSTATE] = {
 	{F_INT,F_INT,F_INT,
 	 F_FRAC,F_FRAC,
 	 F_EXP,F_EXP,F_EXP},	/* see digit */
@@ -134,8 +58,10 @@ int fp_do[][NSTATE] = {
 	{F_SIGN,F_QUIT,F_QUIT,F_QUIT,F_QUIT,
 	 F_ESIGN,F_QUIT,F_QUIT},	/* see sign */
 };
+
 /* given transition,state what is new state? */
-int fp_ns[][NSTATE] = {
+static int
+fp_ns[][NSTATE] = {
 	{FS_DIGS,FS_DIGS,FS_DIGS,
 	 FS_DD,FS_DD,
 	 FS_EDIGS,FS_EDIGS,FS_EDIGS},	/* see digit */
@@ -147,17 +73,16 @@ int fp_ns[][NSTATE] = {
 	{FS_SIGNED,0,0,0,0,
 	 FS_ESIGN,0,0},	/* see sign */
 };
+
 /* which states are valid terminators? */
-int fp_sval[NSTATE] = {
+static int
+fp_sval[NSTATE] = {
 	0,0,1,0,1,0,0,1
 };
 #endif
 
-vfscanf(fp, fmt, ap)
-register FILE *fp;
-register char *fmt;
-va_list ap;
-
+int
+vfscanf(register FILE *fp, register char *fmt, va_list ap)
 {
    register long n;
    register int c, width, lval, cnt = 0;
@@ -188,8 +113,8 @@ va_list ap;
 	 endnull = 1;
 	 neg = -1;
 
-	 strcpy(delim, "\011\012\013\014\015 ");
-	 strcpy(digits, "0123456789ABCDEF");
+	 strcpy((char *)delim, "\011\012\013\014\015 ");
+	 strcpy((char *)digits, "0123456789ABCDEF");
 
 	 if (fmt[1] == '*')
 	 {
@@ -282,7 +207,7 @@ va_list ap;
 
 	    digits[base] = '\0';
 	    p = ((unsigned char *)
-		 strchr(digits, toupper(c)));
+		 strchr((char *)digits, toupper(c)));
 
 	    if ((!c || !p) && width)
 	       goto done;
@@ -293,7 +218,7 @@ va_list ap;
 	       c = getc(fp);
 	     zeroin:
 	       p = ((unsigned char *)
-		    strchr(digits, toupper(c)));
+		    strchr((char *)digits, toupper(c)));
 	    }
 	  savnum:
 	    if (store)
@@ -447,7 +372,7 @@ va_list ap;
 	    if (width)
 	    {
 	       q = ((unsigned char *)
-		    strchr(delim, c));
+		    strchr((char *)delim, c));
 	       if ((c < 1) || lval == (q==0))
 	       {
 		  if (endnull)
@@ -465,7 +390,7 @@ va_list ap;
 		  break;
 
 	       q = ((unsigned char *)
-		    strchr(delim, c));
+		    strchr((char *)delim, c));
 	       if (lval == (q==0))
 	          break;
 	    }
@@ -510,5 +435,3 @@ va_list ap;
       ungetc(c, fp);
    return (cnt);
 }
-
-//-----------------------------------------------------------------------------

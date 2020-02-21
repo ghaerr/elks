@@ -17,6 +17,7 @@ SRCS = \
 	fputs.c \
 	fread.c \
 	freopen.c \
+	fscanf.c \
 	fseek.c \
 	ftell.c \
 	fwrite.c \
@@ -25,8 +26,10 @@ SRCS = \
 	printf.c \
 	putchar.c \
 	rewind.c \
+	scanf.c \
 	setbuffer.c \
 	setvbuf.c \
+	sscanf.c \
 	stderr.c \
 	stdin.c \
 	stdout.c \
@@ -34,6 +37,7 @@ SRCS = \
 	putchar.c \
 	ungetc.c \
 	vfscanf.c \
+	vscanf.c \
 
 OBJS = $(SRCS:.c=.o)
 
