@@ -2,53 +2,49 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS = \
-	stdio.c \
-	__fopen.c \
-	__fp_print.c \
-	__fp_print_func.c \
-	__io_init.c \
-	__io_list.c \
-	fclose.c \
-	fdopen.c \
-	fflush.c \
-	fgetc.c \
-	fgets.c \
-	fopen.c \
-	fprintf.c \
-	fputc.c \
-	fputs.c \
-	fread.c \
-	freopen.c \
-	fscanf.c \
-	fseek.c \
-	ftell.c \
-	fwrite.c \
-	puts.c \
-	gets.c \
-	printf.c \
-	putchar.c \
-	rewind.c \
-	scanf.c \
-	setbuffer.c \
-	setvbuf.c \
-	sprintf.c \
-	sscanf.c \
-	stderr.c \
-	stdin.c \
-	stdout.c \
-	putchar.c \
-	ungetc.c \
-	vfprintf.c \
-	vfscanf.c \
-	vprintf.c \
-	vscanf.c \
-	vprintf.c \
-	vsprintf.c \
-
-OBJS = $(SRCS:.c=.o)
-
-$(OBJS): $(SRCS)
+OBJS = \
+	stdio.o \
+	__fopen.o \
+	__fp_print.o \
+	__fp_print_func.o \
+	__io_init.o \
+	__io_list.o \
+	fclose.o \
+	fdopen.o \
+	fflush.o \
+	fgetc.o \
+	fgets.o \
+	fopen.o \
+	fprintf.o \
+	fputc.o \
+	fputs.o \
+	fread.o \
+	freopen.o \
+	fscanf.o \
+	fseek.o \
+	ftell.o \
+	fwrite.o \
+	puts.o \
+	gets.o \
+	printf.o \
+	putchar.o \
+	rewind.o \
+	scanf.o \
+	setbuffer.o \
+	setvbuf.o \
+	sprintf.o \
+	sscanf.o \
+	stderr.o \
+	stdin.o \
+	stdout.o \
+	putchar.o \
+	ungetc.o \
+	vfprintf.o \
+	vfscanf.o \
+	vprintf.o \
+	vscanf.o \
+	vprintf.o \
+	vsprintf.o \
 
 all: out.a
 
