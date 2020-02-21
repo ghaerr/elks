@@ -25,7 +25,6 @@ SRCS = \
 	printf.c \
 	putchar.c \
 	rewind.c \
-	scanf.c \
 	setbuffer.c \
 	setvbuf.c \
 	stderr.c \
@@ -34,6 +33,7 @@ SRCS = \
 	printf.c \
 	putchar.c \
 	ungetc.c \
+	vfscanf.c \
 
 OBJS = $(SRCS:.c=.o)
 
