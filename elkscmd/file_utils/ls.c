@@ -183,14 +183,8 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
     *cp = '\0';
 
     if (flags & LSF_INODE) {
-
-#ifdef CONFIG_32BIT_INODES
-    	sprintf(cp, "%5ld ", statbuf->st_ino);
-#else
-    	sprintf(cp, "%5d ", statbuf->st_ino);
-#endif
-
-    	cp += strlen(cp);
+	sprintf(cp, "%5ld ", statbuf->st_ino);
+	cp += strlen(cp);
     }
 
     if (flags & LSF_LONG) {
