@@ -275,6 +275,7 @@ void msdos_read_inode(register struct inode *inode)
 		inode->i_op = &msdos_dir_inode_operations;
 		inode->i_nlink = 3;
 		inode->i_size = 0;
+		/* read FAT chain to set directory size*/
 		for (this = inode->u.msdos_i.i_start; this && this != -1; this = fat_access(inode->i_sb,this,-1L))
 			inode->i_size += SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 	}

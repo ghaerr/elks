@@ -282,6 +282,9 @@ int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
 				&& !(de->attr & ATTR_VOLUME) && !strncmp(de->name,name,MSDOS_NAME)) break;
 		}
 		else if (!de->name[0] || ((unsigned char *) (de->name))[0] == DELETED_FLAG) {
+				/* unset directory bit so read_inode doesn't traverse FAT table*/
+				/* MSDOS sometimes has deleted DIR entries with non-zero first cluster*/
+				de->attr &= ~ATTR_DIR;
 				if (!(inode = iget(dir->i_sb,*ino)))
 					break;
 				if (!inode->u.msdos_i.i_busy) {
