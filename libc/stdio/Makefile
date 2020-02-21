@@ -5,6 +5,8 @@ include $(TOPDIR)/libc/Makefile.inc
 SRCS = \
 	stdio.c \
 	__fopen.c \
+	__fp_print.c \
+	__fp_print_func.c \
 	__io_init.c \
 	__io_list.c \
 	fclose.c \
@@ -13,6 +15,7 @@ SRCS = \
 	fgetc.c \
 	fgets.c \
 	fopen.c \
+	fprintf.c \
 	fputc.c \
 	fputs.c \
 	fread.c \
@@ -23,11 +26,13 @@ SRCS = \
 	fwrite.c \
 	puts.c \
 	gets.c \
+	printf.c \
 	putchar.c \
 	rewind.c \
 	scanf.c \
 	setbuffer.c \
 	setvbuf.c \
+	sprintf.c \
 	sscanf.c \
 	stderr.c \
 	stdin.c \
@@ -36,7 +41,10 @@ SRCS = \
 	ungetc.c \
 	vfprintf.c \
 	vfscanf.c \
+	vprintf.c \
 	vscanf.c \
+	vprintf.c \
+	vsprintf.c \
 
 OBJS = $(SRCS:.c=.o)
 

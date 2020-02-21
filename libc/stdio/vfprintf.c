@@ -24,64 +24,15 @@
 #include <sys/types.h>
 
 #include <fcntl.h>
-#include <stdio.h>
 #include <string.h>
 
+#include "_stdio.h"
 
 extern char * ltostr (long val, int radix);
 extern char * ultostr (unsigned long val, int radix);
 
-
-int sprintf (char * sp, const char * fmt, ...)
-{
-static FILE  string[1] =
-{
-   {0, 0, (char*)(unsigned) -1, 0, (char*) (unsigned) -1, -1,
-    _IOFBF | __MODE_WRITE}
-};
-
-  va_list ptr;
-  int rv;
-  va_start(ptr, fmt);
-  string->bufpos = sp;
-  rv = vfprintf(string,fmt,ptr);
-  va_end(ptr);
-  *(string->bufpos) = 0;
-  return rv;
-}
-
-#ifdef L_vprintf
-int vprintf(fmt, ap)
-__const char *fmt;
-va_list ap;
-{
-  return vfprintf(stdout,fmt,ap);
-}
-#endif
-
-int vsprintf(sp, fmt, ap)
-char * sp;
-__const char *fmt;
-va_list ap;
-{
-static FILE  string[1] =
-{
-   {0, 0, (char*)(unsigned) -1, 0, (char*) (unsigned) -1, -1,
-    _IOFBF | __MODE_WRITE}
-};
-
-  int rv;
-  string->bufpos = sp;
-  rv = vfprintf(string,fmt,ap);
-  *(string->bufpos) = 0;
-  return rv;
-}
-
-#ifndef __HAS_NO_FLOATS__
-int (*__fp_print)() = 0;
-#endif
-
-static int prtfld(FILE *op, unsigned char *buf,
+static int
+prtfld(FILE *op, unsigned char *buf,
 	int ljustf, char sign, char pad, int width, int preci, int buffer_mode)
 /*
  * Output the given field in the manner specified by the arguments. Return
@@ -91,7 +42,7 @@ static int prtfld(FILE *op, unsigned char *buf,
    register int cnt = 0, len;
    register unsigned char ch;
 
-   len = strlen(buf);
+   len = strlen((char *)buf);
 
    if (*buf == '-')
       sign = *buf++;
@@ -143,7 +94,8 @@ static int prtfld(FILE *op, unsigned char *buf,
    return (cnt);
 }
 
-int vfprintf(FILE *op, const char *fmt, va_list ap)
+int
+vfprintf(FILE *op, const char *fmt, va_list ap)
 {
    register int i, cnt = 0, ljustf, lval;
    int   preci, dpoint, width;
@@ -276,7 +228,7 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
 	    sign = '\0';
 	    pad = ' ';
 	  printit:
-	    cnt += prtfld(op, ptmp, ljustf,
+	    cnt += prtfld(op, (unsigned char *)ptmp, ljustf,
 			   sign, pad, width, preci, buffer_mode);
 	    break;
 
@@ -314,26 +266,6 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
    return (cnt);
 }
 
-int printf(const char * fmt, ...)
-{
-  va_list ptr;
-  int rv;
-  va_start(ptr, fmt);
-  rv = vfprintf(stdout,fmt,ptr);
-  va_end(ptr);
-  return rv;
-}
-
-int fprintf(FILE * fp, const char * fmt, ...)
-{
-  va_list ptr;
-  int rv;
-  va_start(ptr, fmt);
-  rv = vfprintf(fp,fmt,ptr);
-  va_end(ptr);
-  return rv;
-}
-
 #ifdef L_fp_print
 #ifndef __HAS_NO_FLOATS__
 
@@ -355,50 +287,11 @@ auto_func:        ! Label for bcc -M to work.
 #endasm
 #endif
 
-void
-__fp_print_func(pval, style, preci, ptmp)
-   double * pval;
-   int style;
-   int preci;
-   char * ptmp;
-{
-   int decpt, negative;
-   char * cvt;
-   double val = *pval;
-
-   if (preci < 0) preci = 6;
-
-   cvt = fcvt(val, preci, &decpt, &negative);
-   if(negative)
-      *ptmp++ = '-';
-
-   if (decpt<0) {
-      *ptmp++ = '0';
-      *ptmp++ = '.';
-      while(decpt<0) {
-	 *ptmp++ = '0'; decpt++;
-      }
-   }
-
-   while(*cvt) {
-      *ptmp++ = *cvt++;
-      if (decpt == 1)
-	 *ptmp++ = '.';
-      decpt--;
-   }
-
-   while(decpt > 0) {
-      *ptmp++ = '0';
-      decpt--;
-   }
-}
-
-void
-__xfpcvt()
+static void
+__xfpcvt(void)
 {
    extern int (*__fp_print)();
    __fp_print = __fp_print_func;
 }
-
 #endif
 #endif
