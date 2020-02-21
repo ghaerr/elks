@@ -2,10 +2,22 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS= termios.c ttyname.c
-OBJS= $(SRCS:.c=.o)
-
-$(OBJS): $(SRCS)
+OBJS = \
+	cfgetispeed.o \
+	cfgetospeed.o \
+	cfmakeraw.o \
+	cfsetispeed.o \
+	cfsetospeed.o \
+	isatty.o \
+	tcdrain.o \
+	tcflow.o \
+	tcflush.o \
+	tcgetattr.o \
+	tcgetpgrp.o \
+	tcsendbreak.o \
+	tcsetattr.o \
+	tcsetpgrp.o \
+	ttyname.o \
 
 all: out.a
 
@@ -13,5 +25,5 @@ out.a: $(OBJS)
 	$(RM) $@
 	$(AR) $(ARFLAGS_SUB) $@ $^
 
-clean:
-	rm -f *.[ao]
+clean::
+	$(RM) $(OBJS) out.a
