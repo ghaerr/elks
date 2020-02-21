@@ -40,7 +40,6 @@ static int fillonedir(register char *__buf, char *name, size_t namlen, off_t off
     if (((struct readdir_callback *)__buf)->count) return -EINVAL;
     ((struct readdir_callback *)__buf)->count++;
     dirent = ((struct readdir_callback *)__buf)->dirent;
-    // FIXME: variable length for ino_t and off_t opaque types
     put_user_long((__u32)ino, &dirent->d_ino);
     put_user_long((__u32) offset, &dirent->d_offset);
     put_user((__u16) namlen, &dirent->d_namlen);
