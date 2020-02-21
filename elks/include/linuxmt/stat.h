@@ -1,8 +1,8 @@
-// This is the actual "sys/stat.h"
+#ifndef LX86_LINUXMT_STAT_H
+#define LX86_LINUXMT_STAT_H
 
-#pragma once
-
-#include <linuxmt/types.h>
+#include "types.h"
+#include <arch/stat.h>
 
 #define S_IFMT  00170000
 #define S_IFSOCK 0140000
@@ -47,16 +47,4 @@
 #define S_IXUGO		(S_IXUSR|S_IXGRP|S_IXOTH)
 #endif
 
-struct stat {
-	dev_t   st_dev;
-	ino_t   st_ino;
-	mode_t  st_mode;
-	nlink_t st_nlink;
-	uid_t   st_uid;
-	gid_t   st_gid;
-	dev_t   st_rdev;
-	off_t   st_size;
-	time_t  st_atime;
-	time_t  st_mtime;
-	time_t  st_ctime;
-};
+#endif

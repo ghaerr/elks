@@ -213,7 +213,7 @@ lsfile(name, statbuf, flags)
 	*cp = '\0';
 
 	if (flags & LSF_INODE) {
-		sprintf(cp, "%5"PRIino" ", statbuf->st_ino);
+		sprintf(cp, "%5d ", statbuf->st_ino);
 		cp += strlen(cp);
 	}
 
