@@ -23,7 +23,6 @@ SRCS = \
 	fwrite.c \
 	puts.c \
 	gets.c \
-	printf.c \
 	putchar.c \
 	rewind.c \
 	scanf.c \
@@ -33,9 +32,9 @@ SRCS = \
 	stderr.c \
 	stdin.c \
 	stdout.c \
-	printf.c \
 	putchar.c \
 	ungetc.c \
+	vfprintf.c \
 	vfscanf.c \
 	vscanf.c \
 
