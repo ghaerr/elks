@@ -184,6 +184,11 @@ struct buffer_head {
 extern void brelse(struct buffer_head *);
 extern void bforget(struct buffer_head *);
 
+void wait_on_buffer (struct buffer_head *);
+void lock_buffer (struct buffer_head *);
+void unlock_buffer (struct buffer_head *);
+
+
 /*
  * Attribute flags.  These should be or-ed together to figure out what
  * has been changed!
@@ -332,6 +337,10 @@ struct super_block {
 		void * generic_sbp;
 	} u;
 };
+
+void wait_on_super (struct super_block *);
+void lock_super (struct super_block *);
+void unlock_super (struct super_block *);
 
 /*
  * This is the "filldir" function type, used by readdir() to let
@@ -511,6 +520,7 @@ extern struct buffer_head *readbuf(struct buffer_head *);
 extern void ll_rw_blk(int,struct buffer_head *);
 extern void ll_rw_page(void);
 
+// FIXME: duplicates
 extern void map_buffer(struct buffer_head *);
 extern void unmap_buffer(struct buffer_head *);
 extern void unmap_brelse(struct buffer_head *);

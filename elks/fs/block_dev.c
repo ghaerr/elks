@@ -11,7 +11,6 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/fs.h>
-#include <linuxmt/locks.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 

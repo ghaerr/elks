@@ -12,7 +12,6 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
-#include <linuxmt/locks.h>
 #include <linuxmt/debug.h>
 
 #include <arch/system.h>
