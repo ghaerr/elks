@@ -44,6 +44,7 @@ BEGIN {
 	printf "\tmov\t$%d,%%ax\n", callno > sf;
 	printf "\tjmp" > sf;
 	print_syscall(sf, $3, $4);
+	close(sf);
 
 	printf "\tsyscall/%s.o \\\n", funcname;
 }
