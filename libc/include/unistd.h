@@ -40,6 +40,7 @@ int brk (void * addr);
 void * sbrk (intptr_t increment);
 
 int close (int fildes);
+int dup (int fildes);
 int dup2 (int oldfd, int newfd);
 int isatty (int fd);
 off_t lseek (int fildes, off_t offset, int whence);
@@ -51,3 +52,10 @@ pid_t setsid ();
 uid_t getuid (void);
 
 char * getcwd (char * buf, size_t size);
+int getegid(void);
+int geteuid(void);
+int getgid(void);
+int getpgrp(void);
+int getppid(void);
+int setpgrp(void);
+void usleep(unsigned long useconds);
