@@ -119,7 +119,9 @@ int msdos_readdir(struct inode *inode, register struct file *filp, char *dirent,
 	ino = msdos_get_entry(inode,&filp->f_pos,&bh,&de);
 	while (ino != (ino_t)-1L) {
 		/* Check for long filename entry */
-		if (de->name[0] == (__s8) DELETED_FLAG) {
+		if (de->name[0] == 0)	/* stop reading after nul dirname[0]*/
+			break;
+		else if (de->name[0] == (__s8) DELETED_FLAG) {
 			is_long = 0;
 			oldpos = filp->f_pos;
 		} else if (de->attr ==  ATTR_EXT) {
@@ -202,6 +204,7 @@ int msdos_readdir(struct inode *inode, register struct file *filp, char *dirent,
 				else if (!strcmp(de->name,MSDOS_DOTDOT))
 					ino = msdos_parent_ino(inode,0);
 
+fsdebug("dir: '%s' attr %x\n", de->name, de->attr);
 				if (!is_long) {
 					filldir(dirent, bufname, i, oldpos, ino);
 					break;

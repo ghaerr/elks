@@ -293,7 +293,7 @@ int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
 				}
 				/* skip deleted files that haven't been closed yet */
 				iput(inode);
-			}
+		}
 	}
 	if (*ino == (ino_t)-1L) {
 		if (*res_bh) unmap_brelse(*res_bh);
