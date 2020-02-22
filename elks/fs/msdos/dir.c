@@ -119,7 +119,7 @@ int msdos_readdir(struct inode *inode, register struct file *filp, char *dirent,
 	ino = msdos_get_entry(inode,&filp->f_pos,&bh,&de);
 	while (ino != (ino_t)-1L) {
 		/* Check for long filename entry */
-		if (de->name[0] == 0)	/* stop reading after nul dirname[0]*/
+		if (de->name[0] == 0)	/* stop reading after nul dirname[0] */
 			break;
 		else if (de->name[0] == (__s8) DELETED_FLAG) {
 			is_long = 0;
