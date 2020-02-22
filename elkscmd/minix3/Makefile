@@ -36,8 +36,11 @@ head: head.o
 sed: sed.o
 	$(LD) $(LDFLAGS) -o sed sed.o $(LDLIBS)
 
+# For ELKS, sort needs more data segment space than the kernel-given default.
+# Use gcc-ia16's -maout-chmem= option so that the a.out header will ask the
+# kernel for more non-static memory.
 sort: sort.o
-	$(LD) $(LDFLAGS) -o sort sort.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-chmem=0xc000 -o sort sort.o $(LDLIBS)
 
 tail: tail.o
 	$(LD) $(LDFLAGS) -o tail tail.o $(LDLIBS)
