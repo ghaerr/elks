@@ -30,6 +30,9 @@ LEX = flex -I -8
 
 LOCALFLAGS=-D_POSIX_SOURCE
 
+# For ELKS, bc needs more data segment space than the kernel-given default.
+LDFLAGS += -maout-chmem=0xc000
+
 OFILES = scan.o util.o main.o number.o storage.o load.o execute.o 
 
 SUBDIRS = Examples Test

@@ -49,7 +49,7 @@ all:: $(CROSSDIR)/.binutils.install
 
 # GCC for IA16
 
-GCC_VER=2dd73a5500dce4be8f0f7d4bab02f5ed6bf849b0
+GCC_VER=53a9614cbbc5880a1e11bdd73f8af933202ff24c
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).zip:
