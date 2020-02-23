@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <string.h>
 #ifdef __ia16__
+#include <arch/irq.h>
 #include <arch/io.h>
 #endif
 
@@ -186,29 +187,27 @@ _outb:
     pop bp
     ret
 #endasm
+
+#asm
+_clr_irq:
+    cli
+    ret
+#endasm
+
+#asm
+_set_irq:
+    sti
+    ret
+#endasm
 #endif
 
 unsigned char cmos_read(unsigned char reg)
 {
   register unsigned char ret;
-#ifdef __BCC__
-#asm
-  cli
-#endasm
-#endif
-#ifdef __ia16__
-  asm( "cli \n");
-#endif
-  outb (reg | 0x80, 0x70);
-  ret = inb (0x71);
-#ifdef __BCC__
-#asm
-  sti
-#endasm
-#endif
-#ifdef __ia16__
-  asm("sti \n");
-#endif
+  clr_irq ();
+  outb_p (reg | 0x80, 0x70);
+  ret = inb_p (0x71);
+  set_irq ();
   return ret;
 }
 
@@ -216,8 +215,10 @@ void cmos_write(reg, val)
 unsigned char reg;
 unsigned char val;
 {
-  outb (reg | 0x80, 0x70);
-  outb (val, 0x71);
+  clr_irq ();
+  outb_p (reg | 0x80, 0x70);
+  outb_p (val, 0x71);
+  set_irq ();
 }
 
 
