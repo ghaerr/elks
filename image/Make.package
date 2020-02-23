@@ -1,6 +1,37 @@
 # Application package creation Makefile
-#	passed NAME=, APPS=, OPTS= and BPB= for MINIX, SIZE= for MSDOS
+#	passed NAME=, FS=, SIZE=, and optional PACKAGE= and TAGS=
 #	implicitly uses IMGDIR=, DESTDIR= and FD_BOOTBLOCK=
+
+
+# set BPB and mkfs options based on passed image size
+ifeq ($(SIZE),  360)
+	BPB=-B9,2
+	MINIX_MKFSOPTS=-1 -n14 -i192 -s360
+endif
+ifeq ($(SIZE), 720)
+	BPB=-B9,2
+	MINIX_MKFSOPTS=-1 -n14 -i256 -s720
+endif
+ifeq ($(SIZE), 1440)
+	BPB=-B18,2
+	MINIX_MKFSOPTS=-1 -n14 -i360 -s1440
+endif
+ifeq ($(SIZE), 2880)
+	BPB=-B36,2
+	MINIX_MKFSOPTS=-1 -n14 -i720 -s2880
+endif
+
+# select package file
+ifeq ($(PACKAGE), )
+	PACKAGE=Packages
+endif
+
+# set all if no TAGS specified
+ifeq ($(TAGS), )
+	TAGS=*
+endif
+
+all: $(FS)
 
 # Create bootable ELKS MINIX disk image:
 #	Select tagged files into filelist
@@ -12,7 +43,7 @@
 #	Print filesystem used inode and block count
 
 VERBOSE=-v
-MINIX_IMAGE=$(IMGDIR)/$(NAME).bin
+MINIX_IMAGE=$(IMGDIR)/$(NAME)-$(FS).bin
 
 # mfs options
 # -v		verbose
@@ -24,10 +55,9 @@ MINIX_IMAGE=$(IMGDIR)/$(NAME).bin
 # -n14		filename size 14
 # -i<size>	max inodes
 # -s<size>	image size in 1k blocks
-MINIX_MKFSOPTS=-1 -n14 $(OPTS)
 
 minix:
-	awk "/$(APPS)/{print}" Packages | cut -f 1 > Filelist
+	awk "/$(TAGS)/{print}" $(PACKAGE) | cut -f 1 > Filelist
 	mfs $(VERBOSE) $(MINIX_IMAGE) mkfs $(MINIX_MKFSOPTS)
 	mfs $(VERBOSE) $(MINIX_IMAGE) addfs Filelist $(DESTDIR)
 	rm Filelist
@@ -45,10 +75,9 @@ minix:
 #		Filename case is preserved
 #		Note: filenames larger than 8.3 will create VFAT LFN entries
 #	Write boot sector and modify ELKS PB
-
 # all mtools commands require image file
 # -i image	image filename
-MSDOS_IMAGE=$(IMGDIR)/$(NAME).bin
+MSDOS_IMAGE=$(IMGDIR)/$(NAME)-$(FS).bin
 
 # mformat options
 # -f size	image size in kilobytes
@@ -79,8 +108,8 @@ MSDOS_COPYOPTS=-pmQ -D o
 
 FD_BOOTSECT=$(TOPDIR)/elkscmd/bootblocks/fat.bin
 
-msdos:
-	awk "/$(APPS)/{print}" Packages | cut -f 1 | sed "/^#/d" > Filelist
+fat:
+	awk "/$(TAGS)/{print}" $(PACKAGE) | cut -f 1 | sed "/^#/d" > Filelist
 	dd if=/dev/zero of=$(MSDOS_IMAGE) bs=1024 count=$(SIZE)
 	mformat -i $(MSDOS_IMAGE) $(MSDOS_MKFSOPTS)
 	rm -f linux; touch linux
@@ -91,7 +120,7 @@ msdos:
 	do \
 		if [ ! -e $(DESTDIR)$$f ]; \
 		then \
-			echo "File specified in Package not found: $(DESTDIR)$$f"; \
+			echo "File specified in $(PACKAGE) not found: $(DESTDIR)$$f"; \
 			exit 1; \
 		else \
 			[ -d $(DESTDIR)/$$f ] && mmd -i $(MSDOS_IMAGE) ::$$f; \
@@ -102,16 +131,5 @@ msdos:
 	# Protect contiguous /linux by marking as R/O, System and Hidden
 	mattrib -i $(MSDOS_IMAGE) +r +s +h ::/linux
 	# Read boot sector, skip FAT BPB, set ELKS PB sectors/heads and write boot
-ifeq ($(SIZE), 360)
-	setboot $(MSDOS_IMAGE) -F -B9,2 $(FD_BOOTSECT)
-endif
-ifeq ($(SIZE), 720)
-	setboot $(MSDOS_IMAGE) -F -B9,2 $(FD_BOOTSECT)
-endif
-ifeq ($(SIZE), 1440)
-	setboot $(MSDOS_IMAGE) -F -B18,2 $(FD_BOOTSECT)
-endif
-ifeq ($(SIZE), 2880)
-	setboot $(MSDOS_IMAGE) -F -B36,2 $(FD_BOOTSECT)
-endif
+	setboot $(MSDOS_IMAGE) -F $(BPB) $(FD_BOOTSECT)
 	#mdir -i $(MSDOS_IMAGE) -/ -a ::
