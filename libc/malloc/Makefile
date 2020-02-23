@@ -2,16 +2,26 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS = \
-	heap.c \
-	malloc.c \
-	# end of list
+#CFLAGS	+= -DL_alloca
+#CFLAGS	+= -DLAZY_FREE
+CFLAGS	+= -DMCHUNK=2048
+#CFLAGS	+= -DMINALLOC
+#CFLAGS	+= -DVERBOSE
 
-OBJS = $(SRCS:.c=.o)
+OBJS = \
+	__alloca_alloc.o \
+	__freed_list.o \
+	__mini_malloc.o \
+	alloca.o \
+	brk.o \
+	calloc.o \
+	free.o \
+	malloc.o \
+	noise.o \
+	realloc.o \
+	sbrk.o \
 
 .PHONY: all
-
-$(OBJS): $(SRCS)
 
 all: out.a
 
@@ -20,4 +30,4 @@ out.a: $(OBJS)
 	$(AR) $(ARFLAGS_SUB) $@ $^
 
 clean:
-	rm -f *.[ao]
+	$(RM) $(OBJS)

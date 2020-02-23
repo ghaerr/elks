@@ -14,5 +14,6 @@ int fstat __P((int __fd, struct stat * __statbuf));
 #define S_IEXEC		S_IXUSR /* execute/search permission, owner */
 
 int stat (const char * restrict path, struct stat * restrict buf);
+int mkfifo(char * path, int mode);
 
 #endif

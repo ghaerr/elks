@@ -178,12 +178,13 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
     static int		groupidknown;
     char		class;
     char		*classp;
+	char		*pp;
 
     cp = buf;
     *cp = '\0';
 
     if (flags & LSF_INODE) {
-	sprintf(cp, "%5ld ", statbuf->st_ino);
+	sprintf(cp, "%5ld ", (unsigned long)statbuf->st_ino);
 	cp += strlen(cp);
     }
 
@@ -248,30 +249,19 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
 #endif
     }
 
-/* If a class character exists for the file name, add it on */
+	strcpy(buf, name);
+	pp = strrchr(buf, '/');
+
+	/* If a class character exists for the file name, add it on */
     if (class != '\0') {
-	    len = strlen(name);
-	    classp = (char *)realloc(name, len + 2);
-	    if (!classp) {
-		    free(name);
-		    fprintf(stderr, "ls: out of memory\n");
-		    exit(EXIT_FAILURE);
-	    }
-	    name = classp;
-	    classp += len;
-	    *classp = class;
-	    classp++;
-	    *classp = '\0';
+		classp = &buf[strlen(buf)];
+		*classp++ = class;
+		*classp = '\0';
     }
 
-    {
-	char *cp;
-
-	cp = strrchr(name, '/');
-	if (!cp) cp = name;
-	else cp++;
-	printf(fmt, cp);
-    }
+	if (!pp) pp = buf;
+	else pp++;
+	printf(fmt, pp);
 
 #ifdef S_ISLNK
     if ((flags & LSF_LONG) && S_ISLNK(statbuf->st_mode)) {

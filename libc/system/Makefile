@@ -1,30 +1,23 @@
-# Makefile of /libc/syscall module
-
-include $(TOPDIR)/libc/Makefile.inc
-
 SYSCALLDAT=${TOPDIR}/elks/arch/i86/kernel/syscall.dat
 
-OBJS = syscall0.o syscall1.o syslib.o signal.o exec.o dirent.o setjmp.o
+ifeq "$(VPATH)" ""
+	dir	=
+else
+	dir	= $(VPATH)/
+endif
 
 all: out.a
 
-out.a: $(OBJS)
-	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+out.a: syscall.mk out
 
-syscall1.s: syscall.awk $(SYSCALLDAT)
-	tr '[A-Z]' '[a-z]' < $(SYSCALLDAT) > syscall.dat
-	awk -f $< syscall.dat > syscall1.s
+syscall.mk: $(SYSCALLDAT) $(dir)syscall.awk
+	awk -f $(dir)syscall.awk $< > $@
 
-syscall0.o: syscall0.s
-syscall1.o: syscall1.s
-syslib.o: syslib.c
-signal.o: signal.c
-exec.o: exec.c
-setjmp.o: setjmp.S
-#setjmp.s: setjmp.S
+out::
+	make -f $(dir)out.mk
 
-clean:
-	rm -f *.[ao]
-	rm -f syscall.dat syscall1.s
-	rm -f call_tab.v defn_tab.v
+clean::
+	touch syscall.mk
+	$(MAKE) -f $(dir)out.mk clean
+	$(RM) syscall.mk out
+	$(RM) -r syscall

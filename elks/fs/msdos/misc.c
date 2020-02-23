@@ -186,7 +186,7 @@ void date_unix2dos(long unix_date,unsigned short *time, unsigned short *date)
 			((short)((unix_date/3600) % 24) << 11);
 
 	day = (short)(unix_date/86400L) - 3652;
-	if (day < 0)		/* correct for dates earlier than 1980*/
+	if (day < 0)		/* correct for dates earlier than 1980 */
 		day = 0;
 	year = day/365;
 	if ((year+3)/4 + 365*year > day)
@@ -252,10 +252,10 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 			continue;
 		*de = (struct msdos_dir_entry *) ((char *)data+(offset & (SECTOR_SIZE-1)));
 
-		/* return value will overfow for FAT16/32 if sector is beyond 2MB boundary*/
+		/* return value will overfow for FAT16/32 if sector is beyond 2MB boundary */
 #ifndef CONFIG_32BIT_INODES
-		if (sector > 8191) {
-			printk("FAT: disk too large, turn on CONFIG_32BIT_INODES\n");
+		if (sector > 4095) {
+			printk("FAT: disk too large, set CONFIG_32BIT_INODES\n");
 			return -1;
 		}
 #endif
@@ -282,6 +282,9 @@ int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
 				&& !(de->attr & ATTR_VOLUME) && !strncmp(de->name,name,MSDOS_NAME)) break;
 		}
 		else if (!de->name[0] || ((unsigned char *) (de->name))[0] == DELETED_FLAG) {
+				/* unset directory bit so read_inode doesn't traverse FAT table */
+				/* MSDOS sometimes has deleted DIR entries with non-zero first cluster */
+				de->attr &= ~ATTR_DIR;
 				if (!(inode = iget(dir->i_sb,*ino)))
 					break;
 				if (!inode->u.msdos_i.i_busy) {
@@ -290,7 +293,7 @@ int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
 				}
 				/* skip deleted files that haven't been closed yet */
 				iput(inode);
-			}
+		}
 	}
 	if (*ino == (ino_t)-1L) {
 		if (*res_bh) unmap_brelse(*res_bh);

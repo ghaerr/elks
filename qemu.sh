@@ -10,10 +10,8 @@ echo "Using QEMU: $QEMU"
 
 # Select disk image to use
 # MINIX or FAT .config build
-[ -f image/fd1440.bin ] && IMAGE="-fda image/fd1440.bin"
-[ -f image/hd.bin ] && IMAGE="-hda image/hd.bin"
-[ -z "$IMAGE" ] && { echo 'Disk image not found!'; exit 1; }
-echo "Using disk image: $IMAGE"
+IMAGE="-fda image/fd1440.bin"
+#IMAGE="-hda image/hd.bin"
 
 # FAT package manager build
 #IMAGE="-fda image/fd360-fat.bin"
@@ -32,6 +30,9 @@ echo "Using disk image: $IMAGE"
 #DISK2="-fdb image/fd1440-fat.bin"
 #DISK2="-fdb image/fd2880-fat.bin"
 #DISK2="-fdb image/fd1440-minix.bin"
+
+[ -z "$IMAGE" ] && { echo 'Disk image not found!'; exit 1; }
+echo "Using disk image: $IMAGE"
 
 # Select your keyboard mapping here:
 # KEYBOARD="-k en-us"

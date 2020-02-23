@@ -29,12 +29,14 @@ static byte_t send_buf [MAX_PACKET_ETH];
 
 // Receive condition
 
+static bool_t rx_flag;  // dummy flag
+
 static bool_t rx_test (void * p)
 {
 	return (ne2k_rx_stat () == NE2K_STAT_RX);
 }
 
-static cond_t rx_cond = { rx_test, NULL };
+static cond_t rx_cond = { rx_test, &rx_flag };
 
 
 // Get packet
@@ -82,12 +84,14 @@ static size_t eth_read (struct inode * inode, struct file * filp,
 
 // Transmit condition
 
+static bool_t tx_flag;  // dummy flag
+
 static bool_t tx_test (void * p)
 {
 	return (ne2k_tx_stat () == NE2K_STAT_TX);
 }
 
-static cond_t tx_cond = { tx_test, NULL };
+static cond_t tx_cond = { tx_test, &tx_flag };
 
 
 // Put packet
@@ -141,7 +145,7 @@ int eth_select (struct inode * inode, struct file * filp, int sel_type)
 		case SEL_OUT:
 			if (ne2k_tx_stat () != NE2K_STAT_TX)
 			{
-				select_wait ((struct wait_queue *) &tx_cond);
+				select_wait ((struct wait_queue *) &tx_flag);
 				break;
 			}
 
@@ -151,7 +155,7 @@ int eth_select (struct inode * inode, struct file * filp, int sel_type)
 		case SEL_IN:
 			if (ne2k_rx_stat () != NE2K_STAT_RX)
 			{
-				select_wait ((struct wait_queue *) &rx_cond);
+				select_wait ((struct wait_queue *) &rx_flag);
 				break;
 			}
 
@@ -175,10 +179,10 @@ static void ne2k_int (int irq, struct pt_regs * regs, void * dev_id)
 
 	stat = ne2k_int_stat ();
 	if (stat & NE2K_STAT_RX)
-		wake_up ((struct wait_queue *) &rx_cond);
+		wake_up ((struct wait_queue *) &rx_flag);
 
 	if (stat & NE2K_STAT_TX)
-		wake_up ((struct wait_queue *) &tx_cond);
+		wake_up ((struct wait_queue *) &tx_flag);
 }
 
 

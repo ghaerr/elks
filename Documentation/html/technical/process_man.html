@@ -1,27 +1,35 @@
+<P>
 Each process gets a single segment for data+stack+heap. This is necessary
 because 'C' pointers must be usable interchangeably between objects in these
 three areas. The bcc compiler currently assumes SS=DS=ES.
 
+<PRE>
 +------------+--------------------------------------------------+
 | data + bss |  heap ---> |                          <--- stack |
 +------------+--------------------------------------------------+
                           ^                                     ^
                   current->t_enddata                  current->t_endstack
+</PRE>
 
+<P>
 Memory allocation for a new process is done in sys_execve() in fs/exec.c.
-The binary file header, defined in <linuxmt/minix.h>, gives the sizes of the
-areas to allocate:
+The binary file header, defined in &lt;linuxmt/minix.h&gt;, gives the sizes
+of the areas to allocate:
 
-  tseg  (bytes 8..11)    - code size
-  dseg  (bytes 12..15)   - data size
-  bseg  (bytes 16..19)   - bss size [uninitialised data, filled with zeros]
-  chmem (bytes 24..27)   - total data segment
+<UL>
+  <LI>tseg  (bytes 8..11)    - code size
+  <LI>dseg  (bytes 12..15)   - data size
+  <LI>bseg  (bytes 16..19)   - bss size [uninitialised data, filled with zeros]
+  <LI>chmem (bytes 24..27)   - total data segment
+</UL>
 
+<P>
 Hence current->t_enddata is initialised to dseg+bseg, and
 current->t_endstack to chmem. The position of current->t_enddata can be
 changed by the "sys_brk" system call, which is in turn used by the malloc
 functions in libc.
 
+<P>
 When the linker (ld) creates a binary it gives a default setting for chmem
 (see writebin.c in the ld source). If you know that a particular program
 uses little or no heap, you can patch bytes 24..27 in the executable to a

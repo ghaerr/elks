@@ -4,7 +4,6 @@
 #include <linuxmt/major.h>
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
-#include <linuxmt/locks.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 
