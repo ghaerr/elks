@@ -6,6 +6,9 @@
 #include <time.h>
 #include <sys/time.h>
 #include <string.h>
+#ifdef __ia16__
+#include <arch/io.h>
+#endif
 
 
 /* V1.0
@@ -135,7 +138,7 @@
  * And since the long code is so slow, the program just locks.
  */
 
-#define VERSION "1.4.ELKS"
+#define VERSION "1.5.ELKS"
 
 /* Globals */
 int readit = 0;
@@ -154,6 +157,7 @@ int usage(void)
     exit(1);
 }
 
+#ifdef __BCC__
 #asm
 _inb:
     push bp
@@ -182,18 +186,29 @@ _outb:
     pop bp
     ret
 #endasm
+#endif
 
 unsigned char cmos_read(unsigned char reg)
 {
   register unsigned char ret;
+#ifdef __BCC__
 #asm
   cli
 #endasm
+#endif
+#ifdef __ia16__
+  asm( "cli \n");
+#endif
   outb (reg | 0x80, 0x70);
   ret = inb (0x71);
+#ifdef __BCC__
 #asm
   sti
 #endasm
+#endif
+#ifdef __ia16__
+  asm("sti \n");
+#endif
   return ret;
 }
 
@@ -274,7 +289,7 @@ int main(int argc, char **argv)
   double not_adjusted;
   unsigned char save_control, save_freq_select;
 
-  while ((arg = getopt (argc, argv, "rwsuaDv")) != -1)
+  while ((arg = getopt (argc, argv, "rwsuv")) != -1)
     {
       switch (arg)
 	{
@@ -443,9 +458,14 @@ int main(int argc, char **argv)
 	tmp = localtime (&systime);
 
 #ifndef KEEP_OFF
+#ifdef __BCC__
 #asm
       cli
 #endasm
+#endif
+#ifdef __ia16__
+  asm("cli \n");
+#endif
       save_control = cmos_read (11);   /* tell the clock it's being set */
       cmos_write (11, (save_control | 0x80));
       save_freq_select = cmos_read (10);       /* stop and reset prescaler */
@@ -461,9 +481,14 @@ int main(int argc, char **argv)
 
       cmos_write (10, save_freq_select);
       cmos_write (11, save_control);
+#ifdef __BCC__
 #asm
       sti
 #endasm
+#endif
+#ifdef __ia16__
+   asm("sti \n");
+#endif
 #endif
     }
   exit (0);

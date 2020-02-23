@@ -41,7 +41,7 @@ OBJS  = strace.o printreg.o system.o irq.o ../sibo/irqtab.o process.o \
 		entry.o signal.o timer.o
 else
 OBJS  = strace.o printreg.o system.o irq.o irqtab.o process.o bios16.o \
-		entry.o signal.o timer.o
+		entry.o signal.o timer.o atomic.o
 endif
 
 #########################################################################

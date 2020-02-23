@@ -88,5 +88,6 @@ extern __const char * __const sys_siglist[];
 
 __sighandler_t signal(int number, __sighandler_t pointer);
 int kill (pid_t pid, int sig);
+int killpg (int pid, int sig);
 
 #endif

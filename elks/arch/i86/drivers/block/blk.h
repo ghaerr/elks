@@ -4,7 +4,6 @@
 #include <linuxmt/major.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kdev_t.h>
-#include <linuxmt/locks.h>
 #include <linuxmt/genhd.h>
 #include <linuxmt/config.h>
 

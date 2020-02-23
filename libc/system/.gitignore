@@ -1,5 +1,5 @@
-setjmp.s
 syscall.dat
-syscall1.s
 call_tab.v
 defn_tab.v
+syscall/
+syscall.mk

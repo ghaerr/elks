@@ -12,8 +12,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
-#include <linuxmt/locks.h>
-#include <arch/segment.h>
+//#include <arch/segment.h>
 
 #ifdef CONFIG_FS_DEV
 struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
@@ -161,7 +160,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%d,ts=%l
 	int i;
 	bh = NULL;
 
-	/* if /dev is first or second directory entry, turn on devfs filesystem*/
+	/* if /dev is first or second directory entry, turn on devfs filesystem */
 	for (i=0; i<2; i++) {
 		ino = msdos_get_entry(s->s_mounted, &pos, &bh, &de); 
 		if (ino < 0) break;
@@ -275,6 +274,7 @@ void msdos_read_inode(register struct inode *inode)
 		inode->i_op = &msdos_dir_inode_operations;
 		inode->i_nlink = 3;
 		inode->i_size = 0;
+		/* read FAT chain to set directory size */
 		for (this = inode->u.msdos_i.i_start; this && this != -1; this = fat_access(inode->i_sb,this,-1L))
 			inode->i_size += SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 	}

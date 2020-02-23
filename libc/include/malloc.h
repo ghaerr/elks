@@ -13,11 +13,13 @@
  */
 
 extern void free __P((void *));
+extern void *calloc(unsigned int elm, unsigned int sz);
 extern void *malloc __P((size_t));
 extern void *realloc __P((void *, size_t));
 extern void *alloca __P((size_t));
 
 extern void *(*__alloca_alloc) __P((size_t));
+extern void *__mini_malloc(size_t size);
 
 #ifdef __LIBC__
 #define __MINI_MALLOC__

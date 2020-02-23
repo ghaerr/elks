@@ -27,9 +27,10 @@ PRGS = \
 	man \
 	poweroff \
 	chmem \
+	clock \
 	# EOL
 
-# clock disabled because direct I/O port access
+# clock enabled and has direct I/O port access
 # exitemu disabled because it calls INT directly to DOSEMU
 
 init: init.o

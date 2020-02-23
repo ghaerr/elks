@@ -6,6 +6,9 @@ umask 022
 PATH=/bin:/usr/bin
 export PATH
 
+# init date from hardware
+clock -s
+
 #
 # Network initialization
 #

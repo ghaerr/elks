@@ -12,7 +12,6 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
-#include <linuxmt/locks.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/kdev_t.h>
