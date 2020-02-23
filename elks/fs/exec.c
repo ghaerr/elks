@@ -103,8 +103,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     retval = filp->f_op->read(inode, filp, (char *) &mh, sizeof(mh));
 
     /* Sanity check it.  */
-    if (retval != (int)sizeof(mh) ||
-	(mh.type != MINIX_SPLITID) || mh.tseg == 0) {
+    if (retval != (int)sizeof(mh) || mh.tseg == 0) {
 	debug1("EXEC: bad header, result %u\n", retval);
 	goto error_exec3;
     }
@@ -122,7 +121,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     // with the new GNU build tool chain (custom LD script)
 
 #ifdef CONFIG_EXEC_ELKS
-    if ((unsigned int) mh.hlen == 0x30) {
+    if ((unsigned int) mh.hlen == 0x30) || ((unsigned int) mh.hlen == 0x20) {
 	/* BIG HEADER */
 	retval = filp->f_op->read(inode, filp, (char *) &msuph, sizeof(msuph));
 	if (retval != (int)sizeof(msuph)) {
