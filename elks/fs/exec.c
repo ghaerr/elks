@@ -121,7 +121,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     // with the new GNU build tool chain (custom LD script)
 
 #ifdef CONFIG_EXEC_ELKS
-    if ((unsigned int) mh.hlen == 0x30) || ((unsigned int) mh.hlen == 0x20) {
+    if ((unsigned int) mh.hlen == 0x30) {
 	/* BIG HEADER */
 	retval = filp->f_op->read(inode, filp, (char *) &msuph, sizeof(msuph));
 	if (retval != (int)sizeof(msuph)) {
