@@ -81,7 +81,7 @@ struct super_block *msdos_read_super(register struct super_block *s, char *data,
 {
 	struct buffer_head *bh;
 	register struct msdos_boot_sector *b;
-	long data_sectors;
+	long total_sectors, data_sectors;
 	int fat32;
 
 	cache_init();
@@ -113,17 +113,18 @@ struct super_block *msdos_read_super(register struct super_block *s, char *data,
 	MSDOS_SB(s)->dir_entries = *((unsigned short *) b->dir_entries);
 	MSDOS_SB(s)->data_start = MSDOS_SB(s)->dir_start +
 		((MSDOS_SB(s)-> dir_entries << MSDOS_DIR_BITS) >> SECTOR_BITS);
-	data_sectors = (*((unsigned short *) b->sectors)?
-		*((unsigned short *) b->sectors) : b->total_sect)-MSDOS_SB(s)->data_start;
+	total_sectors = *((unsigned short *) b->sectors)?
+		*((unsigned short *) b->sectors) : b->total_sect;
+	data_sectors = total_sectors - MSDOS_SB(s)->data_start;
 	MSDOS_SB(s)->clusters = MSDOS_SB(s)->cluster_size?
 		data_sectors/MSDOS_SB(s)->cluster_size : 0;
 	MSDOS_SB(s)->fat_bits = fat32 ? 32 : MSDOS_SB(s)->clusters > MSDOS_FAT12 ? 16 : 12;
 	unmap_brelse(bh);
 
-printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%d,ts=%ld\n",
+printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%ld\n",
   b->media,MSDOS_SB(s)->cluster_size,MSDOS_SB(s)->fats,MSDOS_SB(s)->fat_start,
   MSDOS_SB(s)->fat_length,MSDOS_SB(s)->dir_start,MSDOS_SB(s)->dir_entries,
-  MSDOS_SB(s)->data_start,*(unsigned short *) b->sectors,b->total_sect);
+  MSDOS_SB(s)->data_start,total_sectors,b->total_sect);
 
 	if (!MSDOS_SB(s)->fats || (MSDOS_SB(s)->dir_entries & (MSDOS_DPS-1))
 	    || !b->cluster_size || 
@@ -138,8 +139,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%d,ts=%l
 		return NULL;
 	}
 
-	printk("FAT: %dk, fat%d format\n", *(unsigned short *)b->sectors/2,
-		MSDOS_SB(s)->fat_bits);
+	printk("FAT: %ldk, fat%d format\n", total_sectors/2, MSDOS_SB(s)->fat_bits);
 
 #ifdef BLOAT_FS
 	s->s_magic = MSDOS_SUPER_MAGIC;
