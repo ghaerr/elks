@@ -1,4 +1,4 @@
-ROOT	= ..
+ROOT	= ../..
 ELKS	= $(ROOT)/elks
 LIBC	= $(ROOT)/libc
 
