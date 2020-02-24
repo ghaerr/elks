@@ -116,11 +116,6 @@ void rd_init(void)
     if ((i = register_blkdev(MAJOR_NR, DEVICE_NAME, &rd_fops)) == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 
-#if 0
-	blksize_size[MAJOR_NR] = 1024;
-	read_ahead[MAJOR_NR] = 2;
-#endif
-
 	rd_initialised = 1;
     } else {
 	printk("rd: unable to register\n");

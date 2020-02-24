@@ -101,13 +101,14 @@ devices:
 #	$MKSET 240 15 $(MKDEV) /dev/ttye x 3
 
 ##############################################################################
-# Direct IDE disks, Primary channel.
+# Direct PATA / IDE disks.
+# Limit to 4 primary partitions per disk (MBR).
 
-	$(MKDEV) /dev/hda b 5 0 		# Currently.
-	$(MKDEV) /dev/hda b 5	0 16 	# Currently.
+	$(MKDEV) /dev/hda b 5  0    # Currently.
+	$(MKDEV) /dev/hda b 5  0 4  # Currently.
 #	$MKSET   0 15 $(MKDEV) /dev/hda b 5	# Currently.
-	$(MKDEV) /dev/hdb b 5 64 		# Currently.
-	$(MKDEV) /dev/hdb b 5 64 16 	# Currently.
+	$(MKDEV) /dev/hdb b 5 64    # Currently.
+	$(MKDEV) /dev/hdb b 5 64 4  # Currently.
 #	$MKSET  64 15 $(MKDEV) /dev/hdb b 5	# Currently.
 
 #	$MKSET   0 63 $(MKDEV) /dev/hda b 3	# Ought to be.
@@ -163,7 +164,8 @@ devices:
 	$(MKDEV) /dev/eth c 9 0
 
 ##############################################################################
-# SCSI disks. These are not yet supported.
+# SATA / SCSI disks. These are not yet supported.
+# And will never be on IA16 platform (CPU too slow).
 
 #	$MKSET   0 15 $(MKDEV) /dev/sda b 8
 #	$MKSET  16 15 $(MKDEV) /dev/sdb b 8
@@ -211,17 +213,19 @@ devices:
 
 ##############################################################################
 # 8-bit MFM/RLL controllers. These are not yet supported.
+# And will never be (superseeded by IDE / PATA).
 
 #	$MKSET   0 63 $(MKDEV) /dev/xda b 13
 #	$MKSET  64 63 $(MKDEV) /dev/xdb b 13
 
 ##############################################################################
 # BIOS hard disks.
+# Limit to 4 primary partitions per disk (MBR).
 
-	$(MKDEV) /dev/bda b 3 0 		# Currently.
-	$(MKDEV) /dev/bda b 3 0 16		# Currently.
-	$(MKDEV) /dev/bdb b 3 64 		# Currently.
-	$(MKDEV) /dev/bdb b 3 64 16 	# Currently.
+	$(MKDEV) /dev/bda b 3  0    # Currently.
+	$(MKDEV) /dev/bda b 3  0 4  # Currently.
+	$(MKDEV) /dev/bdb b 3 64    # Currently.
+	$(MKDEV) /dev/bdb b 3 64 4  # Currently.
 #	$MKSET   0 15 $(MKDEV) /dev/bda b 3	# Currently
 #	$MKSET  64 15 $(MKDEV) /dev/bdb b 3	# Currently
 #	$MKSET 128 15 $(MKDEV) /dev/bdc b 3	# Currently

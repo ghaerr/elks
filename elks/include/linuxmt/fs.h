@@ -49,24 +49,9 @@
 #define NR_INODE	96	/* this should be bigger than NR_FILE */
 #define NR_FILE 	64	/* this can well be larger on a larger system */
 #define NR_SUPER	4
-#define NR_EXT_BUFFERS	64	/* This may be assumed by some code! */
-
-/* Maximum number of mappable buffers */
-
-#ifdef CONFIG_FS_FAT
-#define NR_MAPBUFS  12
-#else
-#define NR_MAPBUFS  8
-#endif
 
 #define BLOCK_SIZE	1024
 #define BLOCK_SIZE_BITS 10
-
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
-#define NR_BUFFERS NR_EXT_BUFFERS
-#else
-#define NR_BUFFERS NR_MAPBUFS
-#endif
 
 #define MAY_EXEC	1
 #define MAY_WRITE	2
@@ -77,8 +62,6 @@
 
 #define READ		0
 #define WRITE		1
-#define READA		2	/* read-ahead - don't pause */
-#define WRITEA		3	/* "write-ahead" - silly, but somewhat useful */
 
 #define SEL_IN		1
 #define SEL_OUT		2
@@ -109,13 +92,6 @@
  * Flags that can be altered by MS_REMOUNT
  */
 #define MS_RMT_MASK (MS_RDONLY)
-
-/*
- * Executable formats
- */
-
-#define RUNNABLE_MINIX	0x1
-#define RUNNABLE_MSDOS	0x2
 
 /*
  * Note that read-only etc flags are inode-specific: setting some file-system

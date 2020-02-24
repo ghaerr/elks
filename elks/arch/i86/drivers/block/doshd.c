@@ -606,11 +606,6 @@ int init_bioshd(void)
     if (count == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 
-#if 0
-	blksize_size[MAJOR_NR] = 1024;	/* Currently unused */
-	read_ahead[MAJOR_NR] = 2;	/* Currently unused */
-#endif
-
 	if (gendisk_head == NULL) {
 	    bioshd_gendisk.next = gendisk_head;
 	    gendisk_head = &bioshd_gendisk;
