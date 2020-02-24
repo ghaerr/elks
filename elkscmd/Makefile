@@ -19,6 +19,7 @@ SUBDIRS =       \
 	ash         \
 	bc          \
 	bootblocks  \
+	busyelks    \
 	debug_utils \
 	disk_utils  \
 	file_utils  \
@@ -53,6 +54,10 @@ endif
 
 ifeq ($(CONFIG_APP_BC), y)
 INSTDIRS += bc
+endif
+
+ifeq ($(CONFIG_APP_BUSYELKS), y)
+INSTDIRS += busyelks
 endif
 
 ifeq ($(CONFIG_APP_DISK_UTILS), y)

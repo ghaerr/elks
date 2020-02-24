@@ -20,6 +20,7 @@ mainmenu_option next_comment
 	comment 'Other commands'
 
 	bool 'bc'         CONFIG_APP_BC         y
+	bool 'busyelks'   CONFIG_APP_BUSYELKS   n
 	bool 'dbgutils'   CONFIG_APP_DBG_UTILS  y
 	bool 'diskutils'  CONFIG_APP_DISK_UTILS y
 	bool 'elvis'      CONFIG_APP_ELVIS      y
