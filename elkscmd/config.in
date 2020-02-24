@@ -22,15 +22,15 @@ mainmenu_option next_comment
 	bool 'bc'         CONFIG_APP_BC         y
 	bool 'busyelks'   CONFIG_APP_BUSYELKS   n
 	bool 'dbgutils'   CONFIG_APP_DBG_UTILS  y
-	bool 'diskutils'  CONFIG_APP_DISK_UTILS y
+	busyelks 'diskutils'  CONFIG_APP_DISK_UTILS y
 	bool 'elvis'      CONFIG_APP_ELVIS      y
-	bool 'fileutils'  CONFIG_APP_FILE_UTILS y
+	busyelks 'fileutils'  CONFIG_APP_FILE_UTILS y
 	bool 'levee'      CONFIG_APP_LEVEE      y
 	bool 'm4'         CONFIG_APP_M4         y
-	bool 'minix1'     CONFIG_APP_MINIX1     y
+	busyelks 'minix1'     CONFIG_APP_MINIX1     y
 	bool 'minix2'     CONFIG_APP_MINIX2     y
-	bool 'minix3'     CONFIG_APP_MINIX3     y
-	bool 'miscutils'  CONFIG_APP_MISC_UTILS y
+	busyelks 'minix3'     CONFIG_APP_MINIX3     y
+	busyelks 'miscutils'  CONFIG_APP_MISC_UTILS y
 	bool 'mtools'     CONFIG_APP_MTOOLS     y
 	bool 'nano-X'     CONFIG_APP_NANOX      n
 	bool 'prems'      CONFIG_APP_PREMS      y

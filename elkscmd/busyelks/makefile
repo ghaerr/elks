@@ -131,8 +131,9 @@ doc:	README.html
 README.html:	README
 	asciidoc README
 
-install: $(OUT)
+install: $(OUT) busyelks.tar.xz
 	$(INSTALL) $(OUT) $(DESTDIR)/bin
+	tar Jxf busyelks.tar.xz -C $(DESTDIR)
 
 busyelks.tar.xz: busyelks.fs $(OUT)
 	b=`grep '/busyelks' < $<` \

@@ -60,11 +60,11 @@ ifeq ($(CONFIG_APP_BUSYELKS), y)
 INSTDIRS += busyelks
 endif
 
-ifeq ($(CONFIG_APP_DISK_UTILS), y)
+ifneq ($(CONFIG_APP_DISK_UTILS), n)
 INSTDIRS += disk_utils
 endif
 
-ifeq ($(CONFIG_APP_FILE_UTILS), y)
+ifneq ($(CONFIG_APP_FILE_UTILS), n)
 INSTDIRS += file_utils
 endif
 
@@ -76,7 +76,7 @@ ifeq ($(CONFIG_APP_KTCP), y)
 INSTDIRS += ktcp
 endif
 
-ifeq ($(CONFIG_APP_MINIX1), y)
+ifneq ($(CONFIG_APP_MINIX1), n)
 INSTDIRS += minix1
 endif
 
@@ -84,7 +84,7 @@ ifeq ($(CONFIG_APP_MINIX2), y)
 INSTDIRS += minix2
 endif
 
-ifeq ($(CONFIG_APP_MINIX3), y)
+ifneq ($(CONFIG_APP_MINIX3), n)
 INSTDIRS += minix3
 endif
 
@@ -92,7 +92,7 @@ ifeq ($(CONFIG_APP_MTOOLS), y)
 INSTDIRS += mtools
 endif
 
-ifeq ($(CONFIG_APP_MISC_UTILS), y)
+ifneq ($(CONFIG_APP_MISC_UTILS), n)
 INSTDIRS += misc_utils
 endif
 
