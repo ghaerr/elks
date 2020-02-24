@@ -127,9 +127,11 @@ $(LIBC): $(SUBDIRSINMULTILIB)
 
 $(CRT0): crt0.S
 
-$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/%: %
+$(SUBDIRSINMULTILIB) : $(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/%: %
 	mkdir -p $@
 	$(MAKE) -C $@ VPATH=$(abspath $<) -f $(abspath $<)/Makefile all
+# Use .PHONY to force recursive `make' in all subdirectories for each multilib
+.PHONY: $(SUBDIRSINMULTILIB)
 
 $(SUBDIRS):
 
