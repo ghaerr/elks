@@ -134,6 +134,10 @@ function define_bool () {
     eval $1=$2
 }
 
+function define_busyelks () {
+    eval $1=$2
+}
+
 function define_tristate () {
     eval $1=$2
 }
@@ -161,6 +165,27 @@ function bool () {
     esac
     echo -ne "'$2' '[$flag] $1$info' " >>MCmenu
     echo -e "function $2 () { l_bool '$2' \"\$1\" ;}\n" >>MCradiolists
+}
+
+# Create a busyelks (Yes/No/BusyELKS) radiolist function
+# which calls our local busyelks function.
+#
+# Collapses to a boolean (Yes/No) if busyelks support is disabled.
+
+function busyelks () {
+    if [ "$CONFIG_APP_BUSYELKS" != "y" ]; then
+	bool "$1" "$2"
+    else
+	set_x_info "$2" n
+	case $x in
+	    y)	flag="*" ;;
+	    b)	flag="B" ;;
+	    *)	flag=" " ;;
+	esac
+	echo -ne "'$2' '<$flag> $1$info' " >>MCmenu
+	echo -e "
+	function $2 () { l_busyelks '$2' \"\$1\" ; }" >>MCradiolists
+    fi
 }
 
 # Create a tristate (Yes/No/Module) radiolist function
@@ -442,6 +467,31 @@ As a result, this feature will be built as a module." 4 70
 		case $x in
 		    m)	eval $1=n	;;
 		    *)	eval $1=m	;;
+		esac
+		;;
+	    *)	eval $1=n
+		;;
+	esac
+    else
+	echo -ne "\007"
+    fi
+}
+
+# Handle a busyelks (Yes/No/BusyELKS) option.
+
+function l_busyelks () {
+    if [ -n "$2" ]; then
+	eval x=\$$1
+	case "$2" in
+	    y)	eval $1=y
+		;;
+	    b)	eval $1=b
+		;;
+	    c)	eval x=\$$1
+		case $x in
+		    y)	eval $1=n	;;
+		    n)	eval $1=b	;;
+		    *)	eval $1=y	;;
 		esac
 		;;
 	    *)	eval $1=n
@@ -943,6 +993,11 @@ save_configuration () {
 	eval define_bool "$2" "$x"
     }
 
+    function busyelks () {
+	set_x_info "$2" "n"
+	eval define_busyelks "$2" "$x"
+    }
+
     function tristate () {
 	set_x_info "$2" "n"
 	eval define_tristate "$2" "$x"
@@ -1034,6 +1089,27 @@ save_configuration () {
 
     function define_bool () {
 	define_tristate "$1" "$2"
+    }
+
+    function define_busyelks () {
+	eval $1="$2"
+	case "$2" in
+	    y)	echo "$1=y"			>> $CONFIG
+		echo "#define $1 1"		>> $CFG_H
+		;;
+	    b)	if [ "$CONFIG_APP_BUSYELKS" = "y" ]; then
+		    echo "$1=b" 		>> $CONFIG
+		    echo "#undef $1"		>> $CFG_H
+		    echo "#define $1_BUSYELKS 1"	>> $CFG_H
+		else
+		    echo "$1=y" 		>> $CONFIG
+		    echo "#define $1 1" 	>> $CFG_H
+		fi
+                ;;
+	    n)	echo "# $1 is not set"		>> $CONFIG
+		echo "#undef $1"		>> $CFG_H
+		;;
+	esac
     }
 
     function define_tristate () {

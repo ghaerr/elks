@@ -13,7 +13,14 @@ HOST_CFLAGS = -O2
 
 ###############################################################################
 
-PRGS=ed tar miniterm
+OUTS = tar miniterm
+OUTS_BE = ed
+
+PRGS = $(OUTS)
+ifeq "$(CONFIG_APP_MISC_UTILS)" "y"
+	PRGS += $(OUTS_BE)
+endif
+
 PRGS_HOST=compress.host
 
 #compress uncompress zcat disabled
@@ -45,4 +52,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/usr/bin
 
 clean:
-	rm -f $(PRGS) $(PRGS_HOST) *~ *.o
+	rm -f $(OUTS) $(OUTS_BE) $(PRGS_HOST) *~ *.o
