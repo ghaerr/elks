@@ -9,7 +9,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/stat.h>
-#include <linuxmt/dir.h>
+#include <linuxmt/dirent.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/mm.h>

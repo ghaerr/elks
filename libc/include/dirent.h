@@ -4,7 +4,7 @@
 #include <features.h>
 #include <stddef.h>
 #include <sys/types.h>
-#include __SYSINC__(dir.h)
+#include __SYSINC__(dirent.h)
 
 #ifndef	MAXNAMLEN
 #define	MAXNAMLEN	255
