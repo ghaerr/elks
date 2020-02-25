@@ -1,10 +1,10 @@
-
 #ifndef	__DIRENT_H
 #define	__DIRENT_H
 
 #include <features.h>
+#include <stddef.h>
 #include <sys/types.h>
-#include <sys/dir.h>
+#include __SYSINC__(dir.h)
 
 #ifndef	MAXNAMLEN
 #define	MAXNAMLEN	255
@@ -43,4 +43,3 @@ extern int scandir __P ((__const char *__dir,
 			 __dir_compar_fn_t __compar));
 
 #endif /* dirent.h  */
-

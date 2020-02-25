@@ -1,3 +1,2 @@
-#include <features.h>
-#include <stddef.h>
-#include __SYSINC__(dir.h)
+/* backwards-comptabible pre-POSIX header - use <dirent.h> instead*/
+#include <dirent.h>
