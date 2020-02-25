@@ -10,7 +10,13 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PROGS=fdisk ramdisk mkfs fsck partype
+OUTS = ramdisk mkfs fsck partype
+OUTS_BE = fdisk
+
+PROGS = $(OUTS)
+ifeq "$(CONFIG_APP_DISK_UTILS)" "y"
+	PROGS += $(OUTS_BE)
+endif
 
 SPROGS=mkfs
 
@@ -38,4 +44,4 @@ ramdisk: ramdisk.o
 	$(LD) $(LDFLAGS) -o ramdisk ramdisk.o $(LDLIBS)
 
 clean:
-	rm -f *.o $(FORMATMOD) core $(PROGS)
+	rm -f *.o $(FORMATMOD) core $(OUTS) $(OUTS_BE)
