@@ -5,13 +5,13 @@
 
 	.text
 
-// void count_up (count_t * count)
+// void atomic_inc (atomic_t * count)
 
-	.global count_up
+	.global atomic_inc
 
 // Atomic LOCK INC instruction
 
-count_up:
+atomic_inc:
 
 	mov %sp,%bx
 	mov 2(%bx),%bx
@@ -19,13 +19,13 @@ count_up:
 	incw (%bx)
 	ret
 
-// void count_down (count_t * count)
+// void atomic_dec (atomic_t * count)
 
-	.global count_down
+	.global atomic_dec
 
 // Atomic LOCK DEC instruction
 
-count_down:
+atomic_dec:
 
 	mov %sp,%bx
 	mov 2(%bx),%bx
