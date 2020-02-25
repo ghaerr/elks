@@ -27,18 +27,6 @@
 
 /*@-namechecks@*/
 
-#ifdef CONFIG_SHORT_FILES
-
-#undef __NFDBITS
-#define __NFDBITS	(8 * sizeof(unsigned short))
-
-#undef __FD_SETSIZE
-#define __FD_SETSIZE	16
-
-typedef __u16 __kernel_fd_set;
-
-#else
-
 #undef __NFDBITS
 #define __NFDBITS	(8 * sizeof(unsigned long))
 
@@ -46,8 +34,6 @@ typedef __u16 __kernel_fd_set;
 #define __FD_SETSIZE	20
 
 typedef __u32 __kernel_fd_set;
-
-#endif
 
 /*@+namechecks@*/
 
