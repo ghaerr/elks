@@ -22,7 +22,7 @@ static int cp_stat(register struct inode *inode, struct stat *statbuf)
     memset(&tmp, 0, sizeof(tmp));
 
     tmp.st_dev		= kdev_t_to_nr(inode->i_dev);
-    tmp.st_ino		= (__u16)inode->i_ino;
+    tmp.st_ino		= inode->i_ino;
     tmp.st_mode 	= inode->i_mode;
     tmp.st_nlink	= inode->i_nlink;
     tmp.st_uid		= inode->i_uid;

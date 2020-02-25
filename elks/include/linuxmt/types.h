@@ -26,7 +26,6 @@ typedef __u32			ino_t;
 #else
 typedef __u16			ino_t;
 #endif
-typedef __u32			ino32_t;
 typedef __u16			mode_t;
 typedef __u16			nlink_t;
 typedef __u16			segext_t;

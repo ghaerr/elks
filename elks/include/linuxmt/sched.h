@@ -138,7 +138,7 @@ extern void wait_clear(struct wait_queue *);
 // This old style sleep is unsafe
 // Use wait_event instead
 extern void sleep_on(struct wait_queue *) __attribute__ ((deprecated));
-extern void interruptible_sleep_on(struct wait_queue *)__attribute__ ((deprecatded));
+extern void interruptible_sleep_on(struct wait_queue *)__attribute__ ((deprecated));
 
 /*@-namechecks@*/
 
