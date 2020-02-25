@@ -46,11 +46,7 @@ typedef __u32			time_t;
 
 /*@end@*/
 
-#ifdef CONFIG_SHORT_FILES
-typedef __u16			fd_mask_t;
-#else
 typedef __u32			fd_mask_t;
-#endif
 
 #include <linuxmt/config.h>
 #include <linuxmt/posix_types.h>

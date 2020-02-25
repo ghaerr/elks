@@ -40,11 +40,7 @@
  *  longs, but uses the new fd_set structure..
  */
 
-#ifdef CONFIG_SHORT_FILES
-#define NR_OPEN 	16
-#else
 #define NR_OPEN 	20
-#endif
 
 #define NR_INODE	96	/* this should be bigger than NR_FILE */
 #define NR_FILE 	64	/* this can well be larger on a larger system */
