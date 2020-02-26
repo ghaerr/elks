@@ -35,7 +35,7 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to compile.
 
-OBJS  = chqueue.o string.o
+OBJS  = chqueue.o string.o list.o heap.o
 
 #########################################################################
 # Commands:
