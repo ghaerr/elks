@@ -14,19 +14,24 @@ typedef __u32			lflag_t;
 typedef __u32			lsize_t;
 typedef __u32			speed_t;
 typedef __u32			tcflag_t;
-typedef __u32			u_ino_t;
 
 typedef __u16			block_t;
 typedef __u32			block32_t;
 typedef __u16			dev_t;
 typedef __u16			flag_t;
 typedef __u16			gid_t;
+
+typedef __u32			u_ino_t;
+#ifndef __KERNEL__
+typedef u_ino_t			ino_t;
+#else
 #ifdef CONFIG_32BIT_INODES
 typedef __u32			ino_t;
 #else
 typedef __u16			ino_t;
 #endif
-typedef __u32			ino32_t;
+#endif /* __KERNEL__*/
+
 typedef __u16			mode_t;
 typedef __u16			nlink_t;
 typedef __u16			segext_t;

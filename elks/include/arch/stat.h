@@ -5,11 +5,7 @@
 
 struct stat {
     dev_t	st_dev;
-#ifdef CONFIG_32BIT_INODES
-    __u16	st_ino;
-#else
-    ino_t	st_ino;
-#endif
+    u_ino_t	st_ino;
     mode_t	st_mode;
     nlink_t	st_nlink;
     uid_t	st_uid;

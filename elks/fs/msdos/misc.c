@@ -389,32 +389,26 @@ static long raw_scan(struct super_block *sb,long start,char *name,long number, i
     return raw_scan_root(sb,name,number,ino);
 }
 
-
 ino_t msdos_parent_ino(register struct inode *dir,int locked)
 {
 	long current,prev;
-	ino_t this = -1;
+	ino_t this = (ino_t)-1L;
 
-	if (!S_ISDIR(dir->i_mode)) {	// actually coding error if occurs
-		printk("FAT: bad directory\n");
-		return -1;
-	}
+	if (!S_ISDIR(dir->i_mode))	/* actually coding error if occurs*/
+		return (ino_t)-1L;
 	if (dir->i_ino == MSDOS_ROOT_INO) return dir->i_ino;
 	if (!locked) lock_creation(); /* prevent renames */
 	if ((current = raw_scan(dir->i_sb,dir->u.msdos_i.i_start,MSDOS_DOTDOT,0L, NULL)) < 0) {
-	}
-	else if (!current) this = MSDOS_ROOT_INO;
+	} else if (!current) this = MSDOS_ROOT_INO;
 	else {
 		if ((prev = raw_scan(dir->i_sb,current,MSDOS_DOTDOT,0L,NULL)) < 0) {
-		}
-		else {
-		if (prev == 0 
+		} else {
+			if (prev == 0 
 #ifndef FAT_BITS_32
-		    && MSDOS_SB(dir->i_sb)->fat_bits == 32
+				&& MSDOS_SB(dir->i_sb)->fat_bits == 32
 #endif
-		    ) {
-			prev = MSDOS_SB(dir->i_sb)->root_cluster;
-		}
+		    )
+				prev = MSDOS_SB(dir->i_sb)->root_cluster;
 			raw_scan(dir->i_sb,prev,NULL,current,&this);
 		}
 	}
