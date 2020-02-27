@@ -1,5 +1,7 @@
 include $(TOPDIR)/libc/Makefile.inc
 
+CFLAGS	+= -DL_execlp
+
 ifneq "$(VPATH)" ""
 	dir	= $(VPATH)/
 else
@@ -14,7 +16,12 @@ OBJS = \
 	dup2.o \
 	environ.o \
 	errno.o \
-	exec.o \
+	execl.o \
+	execle.o \
+	execlp.o \
+	execv.o \
+	execve.o \
+	execvp.o \
 	getegid.o \
 	geteuid.o \
 	getgid.o \
