@@ -130,7 +130,7 @@ static int load_elks(int fd)
 		return -ENOEXEC;
 	if(mh.hlen!=EXEC_HEADER_SIZE)
 		return -ENOEXEC;
-	if(mh.type!=ELKS_SPLITID)
+	if(mh.type!=ELKS_SPLITID && mh.type!=ELKS_SPLITID_AHISTORICAL)
 		return -ENOEXEC;
 #ifdef DEBUG
 	fprintf(stderr,"Linux-86 binary - %lX. tseg=%ld dseg=%ld bss=%ld\n",

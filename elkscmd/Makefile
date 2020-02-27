@@ -19,6 +19,7 @@ SUBDIRS =       \
 	ash         \
 	bc          \
 	bootblocks  \
+	busyelks    \
 	debug_utils \
 	disk_utils  \
 	file_utils  \
@@ -55,11 +56,15 @@ ifeq ($(CONFIG_APP_BC), y)
 INSTDIRS += bc
 endif
 
-ifeq ($(CONFIG_APP_DISK_UTILS), y)
+ifeq ($(CONFIG_APP_BUSYELKS), y)
+INSTDIRS += busyelks
+endif
+
+ifdef CONFIG_APP_DISK_UTILS
 INSTDIRS += disk_utils
 endif
 
-ifeq ($(CONFIG_APP_FILE_UTILS), y)
+ifdef CONFIG_APP_FILE_UTILS
 INSTDIRS += file_utils
 endif
 
@@ -71,7 +76,7 @@ ifeq ($(CONFIG_APP_KTCP), y)
 INSTDIRS += ktcp
 endif
 
-ifeq ($(CONFIG_APP_MINIX1), y)
+ifdef CONFIG_APP_MINIX1
 INSTDIRS += minix1
 endif
 
@@ -79,7 +84,7 @@ ifeq ($(CONFIG_APP_MINIX2), y)
 INSTDIRS += minix2
 endif
 
-ifeq ($(CONFIG_APP_MINIX3), y)
+ifdef CONFIG_APP_MINIX3
 INSTDIRS += minix3
 endif
 
@@ -87,7 +92,7 @@ ifeq ($(CONFIG_APP_MTOOLS), y)
 INSTDIRS += mtools
 endif
 
-ifeq ($(CONFIG_APP_MISC_UTILS), y)
+ifdef CONFIG_APP_MISC_UTILS
 INSTDIRS += misc_utils
 endif
 

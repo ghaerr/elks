@@ -365,7 +365,7 @@ static char *timestring(long t)
     strcpy(buf, &str[4]);
     buf[12] = '\0';
 
-    if ((t > now) || (t < now - 180*24*60*60L)) {
+    if ((t > now) || (t < now - 180*24*60L*60)) {
 	strcpy(&buf[7], &str[20]);
 	buf[11] = '\0';
     }

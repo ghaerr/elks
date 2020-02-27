@@ -104,7 +104,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     /* Sanity check it.  */
     if (retval != (int)sizeof(mh) ||
-	(mh.type != MINIX_SPLITID) || mh.tseg == 0) {
+	(mh.type != MINIX_SPLITID_AHISTORICAL && mh.type != MINIX_SPLITID) ||
+	mh.tseg == 0) {
 	debug1("EXEC: bad header, result %u\n", retval);
 	goto error_exec3;
     }

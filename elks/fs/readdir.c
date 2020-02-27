@@ -9,6 +9,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/stat.h>
+#include <linuxmt/dirent.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/mm.h>
@@ -20,22 +21,15 @@
  * Traditional linux readdir() handling..
  *
  */
-struct linux_dirent {
-    u_ino_t d_ino;
-    loff_t d_offset;
-    size_t d_namlen;
-    char d_name[255];
-};
-
 struct readdir_callback {
-    struct linux_dirent *dirent;
+    struct dirent *dirent;
     int count;
 };
 
 static int fillonedir(register char *__buf, char *name, size_t namlen, off_t offset,
 		      ino_t ino)
 {
-    register struct linux_dirent *dirent;
+    register struct dirent *dirent;
 
     if (((struct readdir_callback *)__buf)->count) return -EINVAL;
     ((struct readdir_callback *)__buf)->count++;
@@ -57,7 +51,7 @@ int sys_readdir(unsigned int fd, char *dirent, unsigned int count
     register struct file_operations *fop;
     struct readdir_callback buf;
 
-    if ((error = fd_check(fd, dirent, sizeof(struct linux_dirent),
+    if ((error = fd_check(fd, dirent, sizeof(struct dirent),
 			  FMODE_READ, &file))
 	>= 0) {
 	error = -ENOTDIR;
@@ -65,7 +59,7 @@ int sys_readdir(unsigned int fd, char *dirent, unsigned int count
 	fop = filp->f_op;
 	if (fop && fop->readdir) {
 	    buf.count = 0;
-	    buf.dirent = (struct linux_dirent *) dirent;
+	    buf.dirent = (struct dirent *) dirent;
 	    if ((error = fop->readdir(filp->f_inode, filp, &buf, fillonedir)) >= 0)
 		error = buf.count;
 	}

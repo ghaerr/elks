@@ -71,7 +71,8 @@ struct elks_exec_hdr
 {
 	uint32_t type;
 #define ELKS_COMBID	0x04100301L
-#define ELKS_SPLITID	0x04300301L	
+#define ELKS_SPLITID	0x04200301L
+#define ELKS_SPLITID_AHISTORICAL 0x04300301L
 	uint32_t hlen;
 	uint32_t tseg;
 	uint32_t dseg;
