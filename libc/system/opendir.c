@@ -1,14 +1,12 @@
-
-#include <errno.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <sys/stat.h>
 #include <dirent.h>
-#include <malloc.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 DIR  *
-opendir(dname)
-const char *dname;
+opendir(const char *dname)
 {
    struct stat st;
    int   fd;
@@ -44,29 +42,3 @@ const char *dname;
 
    return p;
 }
-
-int
-closedir(dirp)
-DIR  *dirp;
-{
-   int   fd;
-   fd = dirp->dd_fd;
-   free(dirp->dd_buf);
-   free(dirp);
-   return close(fd);
-}
-
-struct dirent *
-readdir(dirp)
-DIR  *dirp;
-{
-   int cc;
-
-   cc = _readdir(dirp->dd_fd, dirp->dd_buf, 1);
-   if (cc <= 0)
-      return 0;
-   if (cc>1) dirp->dd_buf->d_name[cc] = 0;
-
-   return dirp->dd_buf;
-}
-
