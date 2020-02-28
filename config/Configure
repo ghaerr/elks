@@ -180,6 +180,32 @@ function define_bool () {
     define_tristate $1 $2
 }
 
+# define_busyelks sets the value of a busyelks argument
+#
+#	define_busyelks define value
+
+function define_busyelks () {
+    case "$2" in
+	"y")	echo "$1=y" >>$CONFIG
+		echo "#define $1 1" >>$CFG_H
+		;;
+	"b")	if [ "$CONFIG_APP_BUSYELKS" = "y" ]; then
+		    echo "$1=b" 		>> $CONFIG
+		    echo "#undef $1"		>> $CFG_H
+		    echo "#define $1_BUSYELKS 1"	>> $CFG_H
+		else
+		    echo "$1=y" 		>> $CONFIG
+		    echo "#define $1 1" 	>> $CFG_H
+		fi
+		;;
+	"n")	echo "# $1 is not set" >>$CONFIG
+		echo "#undef  $1" >>$CFG_H
+		;;
+    esac
+    eval "$1=$2"
+}
+
+
 # define_tristate sets the value of a tristate argument
 #
 #	define_tristate define value
@@ -212,7 +238,7 @@ function bool () {
 	def=${old:-n}
     fi
     case "$def" in
-	"y" | "m")	defprompt="Y/n/?"
+	"y"|"m"|"b")	defprompt="Y/n/?"
 			def="y"
 			;;
 	"n")		defprompt="N/y/?"
@@ -231,6 +257,59 @@ function bool () {
 				;;
 	esac
     done
+}
+
+# busyelks processes a busyelks argument
+#
+#	busyelks question define
+
+function busyelks () {
+    if [ "$CONFIG_APP_BUSYELKS" != "y" ]; then
+	bool "$1" "$2"
+    else
+	old=$(eval echo "\${$2}")
+	def=${old:-'n'}
+	case "$def" in
+	    "y")	defprompt="Y/b/n/?"
+			;;
+	    "b")	defprompt="B/n/y/?"
+			;;
+	    "n")	defprompt="N/y/b/?"
+			;;
+	esac
+	while true; do
+	    readln "$1 ($2) [$defprompt] " "$def" "$old"
+	    case "$ans" in
+		[yY] | [yY]es )		define_busyelks "$2" "y"
+					break
+					;;
+		[nN] | [nN]o )		define_busyelks "$2" "n"
+					break
+					;;
+		[bB] | [bB]usyelks )	define_busyelks "$2" "b"
+					break
+					;;
+		* )			help "$2"
+					;;
+	    esac
+	done
+    fi
+}
+
+# dep_busyelks_notval writes out an error message used by dep_busyelks, and
+# is not used elsewhere.
+#
+#	dep_busyelks_notval
+
+function dep_busyelks_notval () {
+    echo
+    echo "  This answer is not allowed, because it is not consistent with"
+    echo "  your other choices."
+    echo
+    echo "  This command depends on another one which you chose to compile"
+    echo "  as a busyelks command. This means that you can either compile this one"
+    echo "  as a busyelks command as well (with B) or leave it out altogether (N)."
+    echo
 }
 
 # tristate processes a tristate argument
