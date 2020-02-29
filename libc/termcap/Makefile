@@ -2,16 +2,17 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS= termcap.c tparam.c
-OBJS= $(SRCS:.c=.o)
+LIB	= out.a
+OBJS	= termcap.o tparam.o
 
-$(OBJS): $(SRCS)
+all: $(LIB)
 
-all: out.a
-
-out.a: $(OBJS)
+$(LIB): $(OBJS)
 	$(RM) $@
 	$(AR) $(ARFLAGS_SUB) $@ $^
 
-clean:
-	rm -f *.[ao]
+distclean: clean
+	$(RM) $(LIB)
+
+clean::
+	$(RM) $(OBJS)
