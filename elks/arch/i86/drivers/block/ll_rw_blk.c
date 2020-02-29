@@ -51,10 +51,7 @@ static struct request all_requests[NR_REQUEST];
 struct wait_queue wait_for_request = NULL;
 #endif
 
-/* This specifies how many sectors to read ahead on the disk.  */
-
-/* int read_ahead[MAX_BLKDEV] = {0, };
- *
+/*
  * blk_dev_struct is:
  *	*request_fn
  *	*current_request
@@ -258,10 +255,6 @@ static void make_request(unsigned short int major, int rw,
     sector_t sector, count;
     int max_req;
 
-#ifdef READ_AHEAD
-    int rw_ahead;
-#endif
-
     count = (sector_t) (BLOCK_SIZE >> 9);
     sector = bh->b_blocknr * count;
 
@@ -277,30 +270,14 @@ static void make_request(unsigned short int major, int rw,
     if (buffer_locked(bh))
 	return;
     /* Maybe the above fixes it, and maybe it doesn't boot. Life is interesting */
-    bh->b_lock = 1;
+    lock_buffer(bh);
     map_buffer(bh);
 
-#ifdef READ_AHEAD
-    rw_ahead = 0;		/* normal case; gets changed below for READA/WRITEA */
-#endif
-
     switch (rw) {
-
-#ifdef READ_AHEAD
-    case READA:
-	rw_ahead = 1;
-	rw = READ;		/* drop into READ */
-#endif
 
     case READ:
 	max_req = NR_REQUEST;	/* reads take precedence */
 	break;
-
-#ifdef READ_AHEAD
-    case WRITEA:
-	rw_ahead = 1;
-	rw = WRITE;		/* drop into WRITE */
-#endif
 
     case WRITE:
 	/* We don't allow the write-requests to fill up the
@@ -313,6 +290,7 @@ static void make_request(unsigned short int major, int rw,
 
     default:
 	debug("make_request: bad block dev cmd, must be R/W/RA/WA\n");
+	unmap_buffer(bh);
 	unlock_buffer(bh);
 	return;
     }
@@ -321,17 +299,9 @@ static void make_request(unsigned short int major, int rw,
     req = get_request(max_req, bh->b_dev);
     set_irq();
 
-    /* if no request available: if rw_ahead, forget it;
-     * otherwise try again blocking..
-     */
-    if (!req) {
+	// Try again blocking if no request available
 
-#ifdef READ_AHEAD
-	if (rw_ahead) {
-	    unlock_buffer(bh);
-	    return;
-	}
-#endif
+    if (!req) {
 
 /* I suspect we may need to call get_request_wait() but not at the moment
  * For now I will wait until we start getting panics, and then work out
@@ -351,11 +321,6 @@ static void make_request(unsigned short int major, int rw,
     req->rq_sector = sector;
     req->rq_buffer = bh->b_data;
     req->rq_seg = bh->b_seg;
-
-#if 0
-    req->rq_sem = NULL;
-#endif
-
     req->rq_bh = bh;
 
 #ifdef BLOAT_FS

@@ -53,14 +53,11 @@ SUBDIRS = \
 # when looking for library files.  `.' in the first line is the subdirectory
 # for default compiler options.
 #
-# So, in Apr 2019 I added an -melks-libc option to ia16-elf-gcc, to try to
-# support linking with elks-libc and not Newlib, when targeting ELKS.  Later
-# I added a separate multilib setting for -melks-libc.
-#
-# Thus depending on the version of ia16-elf-gcc, there are two possibilities:
+# Depending on the version of ia16-elf-gcc, there are two possibilities:
 #   * gcc has separate -melks-libc multilibs (and supports -melks-libc).
-#   * gcc supports -melks, and possibly -melks-libc, but does not have
-#     separate -melks-libc multilibs.
+#   * In a slightly older (pre-April 2019) arrangement, gcc supports -melks,
+#     and possibly -melks-libc, but does not have separate -melks-libc
+#     multilibs.
 #
 # For the first case, arrange to build elks-libc for the available
 # -melks-libc multilib settings.  Furthermore, if $(DESTDIR) is defined, add
@@ -72,9 +69,10 @@ SUBDIRS = \
 # settings.  Installing the libraries outside the ELKS tree is not supported
 # in this case.
 #
-# $(MAINMULTISUBDIR) gives the multilib subdirectory containing the library
-# files we want to use for building the rest of ELKS.  This is expected to
-# be either `elkslibc' (first case) or `.' (second case).
+# $(MAINMULTISUBDIR) gives the multilib subdirectory containing the files we
+# want to get the generated syscall tables from --- which should be the same
+# anyway across all multilibs.  $(MAINMULTISUBDIR) is expected to be either
+# `elkslibc' (first case) or `.' (second case).
 #	-- tkchia
 
 ALLMULTIS:=$(strip $(shell $(CC) -print-multi-lib))
@@ -92,12 +90,11 @@ endif
 
 MAINMULTISUBDIR=$(firstword $(subst ;, ,$(MAINMULTI)))
 
-# For now do not build multilibs for non-cdecl calling conventions, as the
-# assembly code in elks-libc does not yet support these.  TODO.  -- tkchia
+# For now do not build multilibs for the regparmcall calling convention, as
+# the assembly code in elks-libc does not yet support it.  TODO.  -- tkchia
 BUILDMULTIS:=$(strip \
     $(foreach ml,$(BUILDMULTIS), \
-	$(if $(findstring @mrtd@,$(ml)@)$(findstring @mregparmcall@,$(ml)@),, \
-	$(ml))))
+	$(if $(findstring @mregparmcall@,$(ml)@),,$(ml))))
 ifeq "" "$(BUILDMULTIS)"
 $(error no multilib variants to build for elks-libc)
 endif
@@ -127,9 +124,11 @@ $(LIBC): $(SUBDIRSINMULTILIB)
 
 $(CRT0): crt0.S
 
-$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/%: %
+$(SUBDIRSINMULTILIB) : $(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/%: %
 	mkdir -p $@
 	$(MAKE) -C $@ VPATH=$(abspath $<) -f $(abspath $<)/Makefile all
+# Use .PHONY to force recursive `make' in all subdirectories for each multilib
+.PHONY: $(SUBDIRSINMULTILIB)
 
 $(SUBDIRS):
 
@@ -172,21 +171,15 @@ else
 
 # $(MULTISUBDIR) is undefined.  Build all multilibs that we can build; then
 # copy the library files for "default" settings into this directory.
-all: $(LIBC)
+.PHONY: all
 
-.PHONY: $(LIBC)
-
-$(LIBC):
+all:
 	set -e \
 	$(foreach ml,$(BUILDMULTIS), ; \
 		export MULTISUBDIR='$(firstword $(subst ;, ,$(ml)))'; \
 		export MULTILIB='$(strip $(subst @, -, \
 		    $(lastword $(subst ;, ,$(ml)))))'; \
 		$(MAKE) all)
-	cp -u build-ml/$(MAINMULTISUBDIR)/libc.a $(LIBC) || \
-	    cp build-ml/$(MAINMULTISUBDIR)/libc.a $(LIBC)
-	cp -u build-ml/$(MAINMULTISUBDIR)/crt0.o $(CRT0) || \
-	    cp build-ml/$(MAINMULTISUBDIR)/crt0.o $(CRT0)
 
 ifneq "" "$(DESTDIR)"
 .PHONY: install uninstall

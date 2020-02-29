@@ -1,38 +1,11 @@
-ROOT	= ..
-ELKS	= $(ROOT)/elks
-LIBC	= $(ROOT)/libc
+BASEDIR	= ..
+include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Make.rules
 
 NAME	= busyelks
 
 OUT	= $(NAME)
-INSTDIR	= $(ROOT)/elkscmd/rootfs_template
-
-CC	= ia16-elf-gcc
-
-FLAGS	= \
-	-mcmodel=small \
-	-mno-segment-relocation-stuff \
-	-mtune=i8086
-
-CFLAGS	+= \
-	$(FLAGS) \
-	-fno-inline \
-	-D_POSIX_SOURCE \
-	-I. \
-	-I$(ROOT)/include \
-	-I$(ELKS)/include \
-	-I$(LIBC)/include \
-	-D__ELKS__ \
-	-DELKS_VERSION=\"0.3.0-prei86\"
-CFLAGS	+= -Os
-CFLAGS	+= -Wall
-
-LD	= $(CC)
-LDFLAGS	+= \
-	$(FLAGS) \
-	-melks-libc \
-	-Wl,-M
-
+CFLAGS	+= -I.
 OBJS	+= main.o lib/bsearch.o
 
 include config.mk
@@ -148,10 +121,6 @@ $(OUT):	$(OBJS)
 	@echo '[LD]	$@'
 	@$(LD) $(LDFLAGS) -o $@ $^ > busyelks.map
 
-.c.o:
-	@echo '[CC]	$@'
-	@$(CC) $(CFLAGS) -o $@ -c $<
-
 $(OBJS): config.mk
 
 clean:
@@ -162,8 +131,9 @@ doc:	README.html
 README.html:	README
 	asciidoc README
 
-install: busyelks.tar.xz
-	tar Jxf $< -C $(INSTDIR)
+install: $(OUT) busyelks.tar.xz
+	$(INSTALL) $(OUT) $(DESTDIR)/bin
+	tar Jxf busyelks.tar.xz -C $(DESTDIR)
 
 busyelks.tar.xz: busyelks.fs $(OUT)
 	b=`grep '/busyelks' < $<` \

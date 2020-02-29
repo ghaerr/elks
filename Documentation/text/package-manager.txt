@@ -1,0 +1,25 @@
+ELKS Package Manager
+
+The package manager facility lives in the files image/Makefile, image/Make.package and image/Packages.
+
+On the business of getting any group of new applications integrated into ELKS, the following process can be followed.
+
+The application-set contributor would create a custom, say, 'busyElks.package' file for their contribution, which would use the package manager to build a bootable FAT or MINIX floppy image with their intended application-set. This would very quickly and easily allow the ELKS community users access to images for testing and comment. It is also quite necessary, since we're completely out of space for existing applications, yet alone new ones, in the 1440k image.
+
+In the elks/images directory, the application-set contributor would do something like the following to create a packages file once, from the already built application tree:
+
+ls -R template > busyElks.package
+{edit package file to manually add or remove applications}
+
+Please see the existing image/Packages and Make.package to see how things currently work.
+This also necessitates any new command sets be placed in directories where they don't conflict with existing command names - only for the short term.
+
+After editing the new busyElks.package file created as above from the ELKS bootable image template tree (/template), the following package manager command would allow easily building the application-set image, which could then be added to the 'make images' Makefile:
+
+make -f Make.packages PACKAGE=busyElks.package NAME=busyelks FS=minix SIZE=360
+
+In the above usage, a bootable 360k minix disk image busyelks-minix.bin will be created with all files specified in the busyElks.package file.
+
+The package manager also uses a TAGS=:tag 'tags' mechanism that allows a single Package file to specify file inclusion in an image for different image sizes or types using one or more ":tags" placed on each application line. A TAGS= parameter added to 'make -f' above adds this functionality. Symlinks are also properly currently handled.
+
+The ELKS PB and minix or fat mkfs options are set automatically from the SIZE= parameter, which can be one of 360, 720, 1440 or 2880. An optional TAGS= parameter allows the use of a single package file for multiple disk sizes, if desired.

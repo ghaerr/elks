@@ -19,7 +19,7 @@
 
 #ifdef USE_GETBLK
 #if defined(CONFIG_MINIX_FS) || defined(CONFIG_BLK_DEV_CHAR)
-/* FIXME: Readahead */
+
 #ifdef DEBUG
 static char inode_equal_NULL[] = "inode = NULL\n";
 static char mode_equal_val[] = "mode = %07o\n";

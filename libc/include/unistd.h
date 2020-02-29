@@ -42,6 +42,12 @@ void * sbrk (intptr_t increment);
 int close (int fildes);
 int dup (int fildes);
 int dup2 (int oldfd, int newfd);
+int execl(char *fname, char *arg0, ...);
+int execle(char *fname, char *arg0, ...);
+int execlp(char *fname, char *arg0, ...);
+int execv(char *fname, char **argv);
+int execve(char *fname, char **argv, char **envp);
+int execvp(char *fname, char **argv);
 int isatty (int fd);
 off_t lseek (int fildes, off_t offset, int whence);
 
@@ -59,3 +65,5 @@ int getpgrp(void);
 int getppid(void);
 int setpgrp(void);
 void usleep(unsigned long useconds);
+
+extern char ** environ;

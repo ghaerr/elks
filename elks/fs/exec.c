@@ -103,7 +103,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     retval = filp->f_op->read(inode, filp, (char *) &mh, sizeof(mh));
 
     /* Sanity check it.  */
-    if (retval != (int)sizeof(mh) || mh.tseg == 0) {
+    if (retval != (int)sizeof(mh) ||
+	(mh.type != MINIX_SPLITID_AHISTORICAL && mh.type != MINIX_SPLITID) ||
+	mh.tseg == 0) {
 	debug1("EXEC: bad header, result %u\n", retval);
 	goto error_exec3;
     }

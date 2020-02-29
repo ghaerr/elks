@@ -53,8 +53,6 @@ void ssd_init(void)
     printk("SSD driver (Major = %u)\n", MAJOR_NR);
     if ((i = register_blkdev(MAJOR_NR, DEVICE_NAME, &ssd_fops)) == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
-	/* blksize_size[MAJOR_NR] = 1024; */
-	/* read_ahead[MAJOR_NR] = 2; */
 	ssd_initialised = 1;
     } else {
 	printk("SSD failed to register.\n");

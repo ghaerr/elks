@@ -84,7 +84,6 @@ int msdos_lookup(register struct inode *dir,const char *name,int len,
 	struct buffer_head *bh;
 	*result = NULL;
 
-/*	if (!dir) return -ENOENT; dir != NULL always, because reached this function dereferencing dir */
 	if (!S_ISDIR(dir->i_mode)) {
 		iput(dir);
 		return -ENOENT;
@@ -96,7 +95,7 @@ int msdos_lookup(register struct inode *dir,const char *name,int len,
 	if (len == 2 && get_fs_byte(name) == '.' && get_fs_byte(name+1) == '.') {
 		ino = msdos_parent_ino(dir,0);
 		iput(dir);
-		if (ino < 0) return (int)ino;
+		if (ino == (ino_t)-1L) return -ENOENT;
 		if (!(*result = iget(dir->i_sb,ino))) return -EACCES;
 		return 0;
 	}
@@ -164,8 +163,7 @@ int msdos_create(register struct inode *dir,const char *name,int len,int mode,
 	char msdos_name[MSDOS_NAME];
 	ino_t ino;
 	int res;
-/*    dir != NULL always, because reached this function dereferencing dir */
-/*	if (!dir) return -ENOENT;*/
+
 	if ((res = msdos_format_name(name,len, msdos_name)) < 0) {
 		iput(dir);
 		return res;
