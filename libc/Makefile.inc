@@ -24,9 +24,6 @@ ARFLAGS_SUB=cqS
 ifdef MULTISUBDIR
 LIBC=$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/libc.a
 CRT0=$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/crt0.o
-else
-LIBC=$(TOPDIR)/libc/libc.a
-CRT0=$(TOPDIR)/libc/crt0.o
 endif
 LIB_CPU=i86
 LIB_OS=ELKS
