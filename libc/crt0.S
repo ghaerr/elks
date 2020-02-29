@@ -30,7 +30,9 @@ _start:
 	push %bx
 	push %cx
 	call main
+#ifdef __IA16_CALLCVT_CDECL
 	add $6,%sp
+#endif
 	push %ax  // main return value
 	call exit  // no return
 	int $3

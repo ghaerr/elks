@@ -47,7 +47,13 @@ _loop:
 	mov 4(%bp),%ax
 
 	pop %bp
+#ifdef __IA16_CALLCVT_CDECL
 	ret
+#elif defined __IA16_CALLCVT_STDCALL
+	ret $4
+#else
+#error "unknown calling convention"
+#endif
 
 //------------------------------------------------------------------------------
 

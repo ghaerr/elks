@@ -43,6 +43,13 @@ strlen:
 
 	pop %bp
 	ret
+#ifdef __IA16_CALLCVT_CDECL
+	ret
+#elif defined __IA16_CALLCVT_STDCALL
+	ret $2
+#else
+#error "unknown calling convention"
+#endif
 
 //------------------------------------------------------------------------------
 

@@ -68,6 +68,10 @@ typedef unsigned long sigset_t;		/* at least 32 bits */
 
 /* Type of a signal handler.  */
 typedef void (*__sighandler_t)(int);
+/* Type of a signal handler to pass to the kernel.  This is always a `stdcall'
+   function, even if the user program is being compiled for a different
+   calling convention.  */
+typedef void (__attribute__((stdcall)) *__kern_sighandler_t)(int);
 
 #define SIG_DFL	((__sighandler_t)0)	/* default signal handling */
 #define SIG_IGN	((__sighandler_t)1)	/* ignore signal */

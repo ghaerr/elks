@@ -8,8 +8,14 @@
 _setjmp:
 
 	pop %cx  // PC
+#ifdef __IA16_CALLCVT_CDECL
 	mov %sp,%bx
 	mov (%bx),%bx  // TOS is prt -> env
+#elif defined __IA16_CALLCVT_STDCALL
+	pop %bx
+#else
+#error "unknown calling convention"
+#endif
 
 	mov %cx,0(%bx)  // PC
 	mov %sp,2(%bx)  // This registers are all that may be constant.
