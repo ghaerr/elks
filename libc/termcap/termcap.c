@@ -69,33 +69,33 @@ int bufsize = 128;
 #endif
 
 #ifndef emacs
-static void
-memory_out ()
+void
+termcap_memory_out ()
 {
   write (2, "virtual memory exhausted\n", 25);
   exit (1);
 }
 
-static char *
-xmalloc (size)
+char *
+termcap_xmalloc (size)
      unsigned size;
 {
   register char *tem = malloc (size);
 
   if (!tem)
-    memory_out ();
+    termcap_memory_out ();
   return tem;
 }
 
-static char *
-xrealloc (ptr, size)
+char *
+termcap_xrealloc (ptr, size)
      char *ptr;
      unsigned size;
 {
   register char *tem = realloc (ptr, size);
 
   if (!tem)
-    memory_out ();
+    termcap_memory_out ();
   return tem;
 }
 #endif /* not emacs */
@@ -104,16 +104,16 @@ xrealloc (ptr, size)
 
 /* The pointer to the data made by tgetent is left here
    for tgetnum, tgetflag and tgetstr to find.  */
-static char *term_entry;
+char *termcap_term_entry;
 
-static char *tgetst1 ();
+char *termcap_tgetst1 ();
 
 /* Search entry BP for capability CAP.
    Return a pointer to the capability (in BP) if found,
    0 if not found.  */
 
-static char *
-find_capability (bp, cap)
+char *
+termcap_find_capability (bp, cap)
      register char *bp, *cap;
 {
   for (; *bp; bp++)
@@ -128,7 +128,7 @@ int
 tgetnum (cap)
      char *cap;
 {
-  register char *ptr = find_capability (term_entry, cap);
+  register char *ptr = termcap_find_capability (termcap_term_entry, cap);
   if (!ptr || ptr[-1] != '#')
     return -1;
   return atoi (ptr);
@@ -138,7 +138,7 @@ int
 tgetflag (cap)
      char *cap;
 {
-  register char *ptr = find_capability (term_entry, cap);
+  register char *ptr = termcap_find_capability (termcap_term_entry, cap);
   return ptr && ptr[-1] == ':';
 }
 
@@ -152,10 +152,10 @@ tgetstr (cap, area)
      char *cap;
      char **area;
 {
-  register char *ptr = find_capability (term_entry, cap);
+  register char *ptr = termcap_find_capability (termcap_term_entry, cap);
   if (!ptr || (ptr[-1] != '=' && ptr[-1] != '~'))
     return NULL;
-  return tgetst1 (ptr, area);
+  return termcap_tgetst1 (ptr, area);
 }
 
 /* Table, indexed by a character in range 0100 to 0140 with 0100 subtracted,
@@ -175,8 +175,8 @@ static char esctab[]
    Return the address to which we copied the value,
    or NULL if PTR is NULL.  */
 
-static char *
-tgetst1 (ptr, area)
+char *
+termcap_tgetst1 (ptr, area)
      char *ptr;
      char **area;
 {
@@ -196,7 +196,7 @@ tgetst1 (ptr, area)
       p = ptr;
       while ((c = *p++) && c != ':' && c != '\n')
 	;
-      ret = (char *) xmalloc (p - ptr + 1);
+      ret = (char *) termcap_xmalloc (p - ptr + 1);
     }
   else
     ret = *area;
@@ -323,7 +323,7 @@ tputs (str, nlines, outfun)
 
 /* Finding the termcap entry in the termcap data base.  */
 
-struct buffer
+struct termcap_buffer
   {
     char *beg;
     int size;
@@ -377,7 +377,7 @@ int li, co;
   for (t = li; (t /= 10) > 0; ++licolen);
   for (t = co; (t /= 10) > 0; ++licolen);
 
-  licobuf = xmalloc(licolen + 1);
+  licobuf = termcap_xmalloc(licolen + 1);
   sprintf(licobuf, ":li#%d:co#%d:", li, co);
 
   if (howalloc == 0)
@@ -389,7 +389,7 @@ int li, co;
   {
     char *newbp;
 
-    newbp = xmalloc(o_len + licolen + 1);
+    newbp = termcap_xmalloc(o_len + licolen + 1);
     bcopy(*bpp, newbp, colon);
     bcopy(licobuf, newbp + colon, licolen);
     strcpy(newbp + colon + licolen, *bpp + colon);
@@ -399,7 +399,7 @@ int li, co;
   {
     char *newbp;
 
-    newbp = xrealloc(*bpp, o_len + licolen + 1);
+    newbp = termcap_xrealloc(*bpp, o_len + licolen + 1);
     bcopy(newbp + colon, newbp + colon + licolen, o_len - colon + 1);
     bcopy(licobuf, newbp + colon, licolen);
     *bpp = newbp;
@@ -458,7 +458,7 @@ tgetent (bp, name)
 {
   register char *termcap_name;
   register int fd;
-  struct buffer buf;
+  struct termcap_buffer buf;
   register char *bp1;
   char *bp2;
   char *term;
@@ -488,7 +488,7 @@ tgetent (bp, name)
 
   if (termcap_name && !filep && !strcmp (name, getenv ("TERM")))
     {
-      indirect = tgetst1 (find_capability (termcap_name, "tc"), (char **) 0);
+      indirect = termcap_tgetst1 (termcap_find_capability (termcap_name, "tc"), (char **) 0);
       if (!indirect)
 	{
 	  if (!bp)
@@ -530,13 +530,13 @@ tgetent (bp, name)
 
   buf.size = BUFSIZE;
   /* Add 1 to size to ensure room for terminating null.  */
-  buf.beg = (char *) xmalloc (buf.size + 1);
+  buf.beg = (char *) termcap_xmalloc (buf.size + 1);
   term = indirect ? indirect : name;
 
   if (!bp)
     {
       malloc_size = indirect ? strlen (tcenv) + 1 : buf.size;
-      bp = (char *) xmalloc (malloc_size);
+      bp = (char *) termcap_xmalloc (malloc_size);
     }
   bp1 = bp;
 
@@ -567,7 +567,7 @@ tgetent (bp, name)
       if (malloc_size)
 	{
 	  malloc_size = bp1 - bp + buf.size;
-	  termcap_name = (char *) xrealloc (bp, malloc_size);
+	  termcap_name = (char *) termcap_xrealloc (bp, malloc_size);
 	  bp1 += termcap_name - bp;
 	  bp = termcap_name;
 	}
@@ -587,20 +587,20 @@ tgetent (bp, name)
 
       /* Does this entry refer to another terminal type's entry?
 	 If something is found, copy it into heap and null-terminate it.  */
-      term = tgetst1 (find_capability (bp2, "tc"), (char **) 0);
+      term = termcap_tgetst1 (termcap_find_capability (bp2, "tc"), (char **) 0);
     }
 
   close (fd);
   free (buf.beg);
 
   if (malloc_size)
-    bp = (char *) xrealloc (bp, bp1 - bp + 1);
+    bp = (char *) termcap_xrealloc (bp, bp1 - bp + 1);
 #ifdef ADJUST_WIN_EXTENT
   adjust_win_extent(&bp, malloc_size ? 2 : 0, li, co);
 #endif /* ADJUST_WIN_EXTENT */
 
  ret:
-  term_entry = bp;
+  termcap_term_entry = bp;
   if (malloc_size)
     return (int) bp;
   return 1;
@@ -616,7 +616,7 @@ static int
 scan_file (str, fd, bufp)
      char *str;
      int fd;
-     register struct buffer *bufp;
+     register struct termcap_buffer *bufp;
 {
   register char *end;
 
@@ -712,7 +712,7 @@ compare_contin (str1, str2)
 static char *
 gobble_line (fd, bufp, append_end)
      int fd;
-     register struct buffer *bufp;
+     register struct termcap_buffer *bufp;
      char *append_end;
 {
   register char *end;
@@ -737,7 +737,7 @@ gobble_line (fd, bufp, append_end)
 	    {
 	      bufp->size *= 2;
 	      /* Add 1 to size to ensure room for terminating null.  */
-	      tem = (char *) xrealloc (buf, bufp->size + 1);
+	      tem = (char *) termcap_xrealloc (buf, bufp->size + 1);
 	      bufp->ptr = (bufp->ptr - buf) + tem;
 	      append_end = (append_end - buf) + tem;
 	      bufp->beg = buf = tem;
