@@ -29,13 +29,13 @@ LIB_CPU=i86
 LIB_OS=ELKS
 
 .S.o:
-	gcc -E -traditional $(INCS) $(SDEFS) -o $*.tmp $<
+	$(CC) -E -traditional $(MULTILIB) $(INCS) $(SDEFS) -o $*.tmp $<
 	$(AS) $(ASFLAGS) -o $*.o $*.tmp
 	rm -f $*.tmp
 
 ifdef MULTISUBDIR
 $(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/%.o: %.S
-	gcc -E -traditional $(INCS) $(SDEFS) -o $@.tmp $<
+	$(CC) -E -traditional $(MULTILIB) $(INCS) $(SDEFS) -o $@.tmp $<
 	$(AS) $(ASFLAGS) -o $@ $@.tmp
 	rm -f $@.tmp
 endif
