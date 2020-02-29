@@ -85,13 +85,12 @@ _syscall_2:
 	jmp _syscall_0
 
 _syscall_2p:
-	/* callee must pop the first 2 arguments, but not the (optional) 3rd */
+	/* variadic function, callee must not pop any arguments */
 	mov %sp,%bx
 	mov 6(%bx),%dx
 	mov 4(%bx),%cx
 	mov 2(%bx),%bx
-	call _syscall_0
-	ret $4
+	jmp _syscall_0
 
 _syscall_3:
 	mov %sp,%bx
