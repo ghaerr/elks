@@ -50,6 +50,7 @@ int execve(char *fname, char **argv, char **envp);
 int execvp(char *fname, char **argv);
 int isatty (int fd);
 off_t lseek (int fildes, off_t offset, int whence);
+int unlink(const char *fname);
 
 pid_t fork ();
 pid_t getpid ();
