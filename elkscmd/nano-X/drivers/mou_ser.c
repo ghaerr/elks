@@ -37,13 +37,9 @@
 #endif
 
 /* default settings*/
-#if ELKS
 #define	MOUSE_PORT	"/dev/ttyS0"	/* default mouse tty port */
-#else
-#define	MOUSE_PORT	"/dev/ttyS1"	/* default mouse tty port */
-#endif
-#define	MOUSE_TYPE	"pc"		/* default mouse type ("ms" or "pc") */
-#define MAX_BYTES	128		/* number of bytes for buffer */
+#define	MOUSE_TYPE	"ms"			/* default mouse type ("ms" or "pc") */
+#define MAX_BYTES	128				/* number of bytes for buffer */
 
 /* states for the mouse*/
 #define	IDLE			0		/* start of byte sequence */
