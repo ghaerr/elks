@@ -2,36 +2,34 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS= \
-	aliases.c \
-	atexit.c \
-	atoi.c \
-	atol.c \
-	crypt.c \
-	ctype.c \
-	getcwd.c \
-	getenv.c \
-	getopt.c \
-	itoa.c \
-	ltostr.c \
-	popen.c \
-	putenv.c \
-	qsort.c \
-	strtol.c \
-	system.c \
-	tmpnam.c \
-	rand.c \
+LIB = out.a
+
+OBJS = \
+	aliases.o \
+	atexit.o \
+	atoi.o \
+	atol.o \
+	crypt.o \
+	ctype.o \
+	getcwd.o \
+	getenv.o \
+	getopt.o \
+	itoa.o \
+	ltostr.o \
+	popen.o \
+	putenv.o \
+	qsort.o \
+	strtol.o \
+	system.o \
+	tmpnam.o \
+	rand.o \
 	# end of list
 	
-OBJS= $(SRCS:.c=.o)
+all: $(LIB)
 
-$(OBJS): $(SRCS)
-
-all: out.a
-
-out.a: $(OBJS)
+$(LIB): $(OBJS)
 	$(RM) $@
 	$(AR) $(ARFLAGS_SUB) $@ $^
 
 clean:
-	rm -f *.[ao]
+	$(RM) $(OBJS) $(LIB)
