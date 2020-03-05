@@ -62,4 +62,7 @@ void breakpoint ();
 char *itoa __P ((int));
 #endif
 
+char * ltostr (long val, int radix);
+char * ultostr (unsigned long val, int radix);
+
 #endif /* __STDLIB_H */

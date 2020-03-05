@@ -23,6 +23,7 @@ OBJS = \
 	system.o \
 	tmpnam.o \
 	rand.o \
+	ultostr.o \
 	# end of list
 	
 all: $(LIB)
