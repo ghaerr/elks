@@ -73,23 +73,21 @@ struct minix_fs_dat *new_fs(const char *fn,int magic,unsigned long fsize,int ino
     fatalmsg("invalid magic fs-type %x",magic);
   }
   fs->msb.s_magic = magic;
-  if (VERSION_2(fs)) {
+  if (VERSION_2(fs))
     fs->msb.s_zones = fsize;
-  } else {
+  else
     fs->msb.s_nzones = fsize;
-  }
   fs->msb.s_state = MINIX_VALID_FS;
   fs->msb.s_max_size = VERSION_2(fs) ? 0x7fffffff : (7+512+512*512) * 1024;
+  fs->msb.s_log_zone_size = 0;		/* zone size is always BLOCK_SIZE*/
 
   /* Manage inodes */
   if (!inodes) inodes = fsize / 3; /* Default number inodes to 1/3 blocks */
   /* Round up inode count */
   if (VERSION_2(fs))
-    inodes = ((inodes + MINIX2_INODES_PER_BLOCK - 1) &
-		~(MINIX2_INODES_PER_BLOCK - 1));
+    inodes = ((inodes + MINIX2_INODES_PER_BLOCK - 1) & ~(MINIX2_INODES_PER_BLOCK - 1));
   else
-    inodes = ((inodes + MINIX_INODES_PER_BLOCK - 1) & 
-		~(MINIX_INODES_PER_BLOCK - 1));
+    inodes = ((inodes + MINIX_INODES_PER_BLOCK - 1) & ~(MINIX_INODES_PER_BLOCK - 1));
   if (inodes > 65535) inodes = 65535;
   INODES(fs) = inodes;
   if (INODE_BLOCKS(fs) > fsize * 9 / 10 + 5)
@@ -99,8 +97,7 @@ struct minix_fs_dat *new_fs(const char *fn,int magic,unsigned long fsize,int ino
    * Initialise bitmaps
    */
   IMAPS(fs) =UPPER(inodes + 1,BITS_PER_BLOCK);
-  ZMAPS(fs)=UPPER(fsize-(1+fs->msb.s_imap_blocks+INODE_BLOCKS(fs)),
-  				BITS_PER_BLOCK+1);
+  ZMAPS(fs)=UPPER(fsize-(1+fs->msb.s_imap_blocks+INODE_BLOCKS(fs)), BITS_PER_BLOCK+1);
   FIRSTZONE(fs) = NORM_FIRSTZONE(fs);
 
   fs->inode_bmap = domalloc(IMAPS(fs) * BLOCK_SIZE,0xff);
@@ -117,11 +114,10 @@ struct minix_fs_dat *new_fs(const char *fn,int magic,unsigned long fsize,int ino
   set_inode(fs,MINIX_ROOT_INO,S_IFDIR | 0755, 2,
 		dogetuid(), dogetgid(), 2 * DIRSIZE(fs),NOW,NOW,NOW,0);
   rootblkp = get_free_block(fs);
-  if (VERSION_2(fs)) {
+  if (VERSION_2(fs))
     INODE2(fs,MINIX_ROOT_INO)->i_zone[0] = rootblkp;
-  } else {
+  else
     INODE(fs,MINIX_ROOT_INO)->i_zone[0] = rootblkp;
-  }
   mark_zone(fs,rootblkp);
     
   /*
