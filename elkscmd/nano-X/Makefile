@@ -10,9 +10,8 @@ LOCALFLAGS = -DELKS=1 -DUNIX=1 -DDEBUG=1 -Dconst= -Dvolatile= -I.
 MATHLIB =
 
 ## mouse and kbd drivers
-#DRIVERS += drivers/mou_ser.o
-#DRIVERS += drivers/mou_ser_qemu.o
-DRIVERS += drivers/mou_null.o
+DRIVERS += drivers/mou_ser.o
+#DRIVERS += drivers/mou_null.o
 DRIVERS += drivers/kbd_tty.o
 
 # The following line links the nano-X application with the server.
