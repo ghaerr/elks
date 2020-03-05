@@ -14,13 +14,14 @@ SRCS= \
 	getopt.c \
 	itoa.c \
 	ltostr.c \
+	mktemp.c \
 	popen.c \
 	putenv.c \
 	qsort.c \
+	rand.c \
 	strtol.c \
 	system.c \
 	tmpnam.c \
-	rand.c \
 	# end of list
 	
 OBJS= $(SRCS:.c=.o)

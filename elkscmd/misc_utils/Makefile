@@ -16,14 +16,14 @@ HOST_CFLAGS = -O2
 OUTS = tar miniterm
 OUTS_BE = ed
 
+#TODO: fix compress uncompress zcat lpfilter disabled
+
 PRGS = $(OUTS)
 ifeq "$(CONFIG_APP_MISC_UTILS)" "y"
 	PRGS += $(OUTS_BE)
 endif
 
 PRGS_HOST=compress.host
-
-#compress uncompress zcat disabled
 
 all: $(PRGS) $(PRGS_HOST)
 
