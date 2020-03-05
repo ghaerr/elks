@@ -5,6 +5,8 @@
 #ifndef __STDLIB_H
 #define __STDLIB_H
 
+#include <malloc.h>
+
 /* Don't overwrite user definitions of NULL */
 #ifndef NULL
 #define NULL ((void *) 0)

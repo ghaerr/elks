@@ -11,7 +11,7 @@ endif
 OBJS = \
 	abort.o \
 	cleanup.o \
-	dirent.o \
+	closedir.o \
 	dup.o \
 	dup2.o \
 	environ.o \
@@ -32,6 +32,8 @@ OBJS = \
 	killpg.o \
 	lseek.o \
 	mkfifo.o \
+	opendir.o \
+	readdir.o \
 	setjmp.o \
 	setpgrp.o \
 	signal.o \

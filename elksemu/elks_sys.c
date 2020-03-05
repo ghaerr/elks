@@ -58,7 +58,7 @@ static void squash_stat(struct stat *s, int bx)
 {
 	struct elks_stat * ms = ELKS_PTR(struct elks_stat, bx);
 	ms->est_dev=s->st_dev;
-	ms->est_inode=(uint16_t)s->st_ino;	/* Bits lost */
+	ms->est_inode=s->st_ino;
 	ms->est_mode=s->st_mode;
 	ms->est_nlink=s->st_nlink;
 	ms->est_uid=s->st_uid;
