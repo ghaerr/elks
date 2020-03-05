@@ -2,6 +2,8 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
+CFLAGS	+= -DUSE_ATOL_AS_ATOI
+
 LIB = out.a
 
 OBJS = \
@@ -25,7 +27,7 @@ OBJS = \
 	rand.o \
 	ultostr.o \
 	# end of list
-	
+
 all: $(LIB)
 
 $(LIB): $(OBJS)
