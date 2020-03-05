@@ -15,9 +15,7 @@ mainmenu_option next_comment
 		define_bool CONFIG_IMG_LINK y
 	fi
 
-	if [ "$CONFIG_IMG_RAW" == "y" ]; then
-		:
-	elif [ "$CONFIG_IMG_ROM" != "y" ]; then
+	if [ "$CONFIG_IMG_ROM" != "y" ]; then
 
 		choice 'Medium' \
 		"FD1680 CONFIG_IMG_FD1680 \

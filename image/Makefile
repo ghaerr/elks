@@ -103,7 +103,8 @@ romfs: template
 # Create RAW filesystem
 
 raw: $(ELKS_DIR)/arch/i86/boot/Image
-	cp $(ELKS_DIR)/arch/i86/boot/Image $(TARGET_FILE)
+	dd if=/dev/zero of=$(TARGET_FILE) bs=1024 count=$(TARGET_BLKS)
+	dd if=$(ELKS_DIR)/arch/i86/boot/Image of=$(TARGET_FILE) conv=notrunc
 
 # Clean target
 
