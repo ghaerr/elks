@@ -24,17 +24,17 @@
  
 struct elks_stat
 {
-	unsigned short est_dev;
-	unsigned short est_inode;
-	unsigned short est_mode;
-	unsigned short est_nlink;
-	unsigned short est_uid;
-	unsigned short est_gid;
-	unsigned short est_rdev;
-	int est_size;
-	int est_atime;
-	int est_mtime;
-	int est_ctime;
+	uint16_t est_dev;
+	uint32_t est_inode;
+	uint16_t est_mode;
+	uint16_t est_nlink;
+	uint16_t est_uid;
+	uint16_t est_gid;
+	uint16_t est_rdev;
+	int32_t est_size;
+	int32_t est_atime;
+	int32_t est_mtime;
+	int32_t est_ctime;
 } __attribute__((packed));
 
 
@@ -122,7 +122,7 @@ struct elks_cpu_s
 #endif
 
 extern unsigned char * elks_base, *elks_data_base;
-extern unsigned short brk_at;
+extern uint16_t brk_at;
 extern volatile struct elks_cpu_s elks_cpu;
 
 void db_printf(const char *, ...);

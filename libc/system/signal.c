@@ -4,8 +4,8 @@
 
 typedef __sighandler_t Sig;
 
-extern int _signal (int, __sighandler_t);
-extern Sig _syscall_signal ();
+extern int _signal (int, __kern_sighandler_t);
+extern Sig _syscall_signal () __attribute__((stdcall));
 
 Sig _sigtable[_NSIG-1];
 
@@ -36,7 +36,7 @@ Sig signal(int number, Sig pointer)
    if( number < 1 || number >= _NSIG ) { errno=EINVAL; return SIG_ERR; }
 
    if( pointer == SIG_DFL || pointer == SIG_IGN )
-      rv = _signal(number, pointer);
+      rv = _signal(number, (__kern_sighandler_t) pointer);
    else
       rv = _signal(number, (__sighandler_t) _syscall_signal);
 

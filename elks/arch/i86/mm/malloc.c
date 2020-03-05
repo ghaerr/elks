@@ -30,7 +30,7 @@
 #include <arch/segment.h>
 #include <asm/seglist.h>
 
-#define MIN_STACK_SIZE 0x1000
+#define MIN_STACK_SIZE 0x1000	/* 4k min stack above heap*/
 
 #ifdef CONFIG_MEM_TABLE
 
@@ -622,57 +622,46 @@ seg_t mm_realloc (seg_t base, seg_t req_size)
 #endif /* CONFIG_MEM_LIST */
 
 
-int sys_brk(__pptr len)
+int sys_brk(__pptr newbrk)
 {
     register __ptask currentp = current;
 
-#ifdef CONFIG_EXEC_ELKS
-#ifdef CONFIG_MEM_TABLE
-    register struct malloc_hole *h;
-#endif /* CONFIG_MEM_TABLE */
-#endif /* CONFIG_EXEC_ELKS */
+	/*printk("brk(%d): new %x, edat %x, ebrk %x, free %x sp %x, eseg %x, %d/%dK\n",
+		current->pid, newbrk, currentp->t_enddata, currentp->t_endbrk,
+		currentp->t_regs.sp - currentp->t_endbrk,
+		currentp->t_regs.sp, currentp->t_endseg,
+		mm_get_usage(MM_MEM, 1), mm_get_usage(MM_MEM, 0));*/
 
-#if 0
-    printk("brk: len %x, endd %x, bstack %x, endbrk %x, endseg %x, mem %d/%dK\n",
-		    len, currentp->t_enddata, currentp->t_begstack,
-		    currentp->t_endbrk, currentp->t_endseg,
-		    mm_get_usage(MM_MEM, 1),
-		    mm_get_usage(MM_MEM, 0));
-#endif
-
-    if (len < currentp->t_enddata)
+    if (newbrk < currentp->t_enddata)
         return -ENOMEM;
+
     if (currentp->t_begstack > currentp->t_endbrk) {	/* Old format? */
-        if (len > currentp->t_endseg - MIN_STACK_SIZE) {	/* Yes */
-	    printk("sys_brk failed: len %u > endseg %u\n", len, (currentp->t_endseg - MIN_STACK_SIZE));
+        if (newbrk > currentp->t_endseg - MIN_STACK_SIZE) {	/* Yes */
+			printk("sys_brk failed: brk %x > endseg %x\n",
+				newbrk, currentp->t_endseg - MIN_STACK_SIZE);
             return -ENOMEM;
-	}
+		}
     }
 #ifdef CONFIG_EXEC_ELKS
-    if (len > currentp->t_endseg) {
-
+    if (newbrk > currentp->t_endseg) {
 #ifdef CONFIG_MEM_LIST
         return -ENOMEM;
-#endif /* CONFIG_MEM_LIST */
-
-#ifdef CONFIG_MEM_TABLE
+#else /* CONFIG_MEM_TABLE */
         /* Resize time */
+		struct malloc_hole *h = find_hole(holes, currentp->mm.dseg);
 
-        h = find_hole(holes, currentp->mm.dseg);
-
-        h = mm_resize(h, (len + 15) >> 4);
-        if (!h) {
+        h = mm_resize(h, (newbrk + 15) >> 4);
+        if (!h)
             return -ENOMEM;
-        }
 
-	currentp->t_regs.ds = currentp->t_regs.es\
-		= currentp->t_regs.ss = currentp->mm.dseg = h->page_base;
-        currentp->t_endseg = len;
+		currentp->t_regs.ds = currentp->t_regs.es = currentp->t_regs.ss
+			= currentp->mm.dseg = h->page_base;
+		currentp->t_endseg = newbrk;
 #endif /* CONFIG_MEM_TABLE */
 
     }
 #endif /* CONFIG_EXEC_ELKS */
-    currentp->t_endbrk = len;
+    currentp->t_endbrk = newbrk;
 
     return 0;
 }
@@ -680,10 +669,9 @@ int sys_brk(__pptr len)
 
 int sys_sbrk (int increment, u16_t * pbrk)
 {
-	__pptr brk = current->t_endbrk;
+	__pptr brk = current->t_endbrk;		/* always return start of old break*/
 	if (increment) {
-		brk += increment;
-		int err = sys_brk (brk);
+		int err = sys_brk(brk + increment);
 		if (err) return err;
 	}
 

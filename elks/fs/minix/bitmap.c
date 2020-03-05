@@ -51,17 +51,15 @@ static unsigned short count_used(struct buffer_head *map[],
 unsigned short minix_count_free_blocks(register struct super_block *sb)
 {
     return (sb->u.minix_sb.s_nzones -
-	    count_used(sb->u.minix_sb.s_zmap, sb->u.minix_sb.s_zmap_blocks,
-		       sb->u.minix_sb.s_nzones)) << sb->u.
-	minix_sb.s_log_zone_size;
+			count_used(sb->u.minix_sb.s_zmap, sb->u.minix_sb.s_zmap_blocks, sb->u.minix_sb.s_nzones))
+			<< sb->u.minix_sb.s_log_zone_size;
 }
 
 
 unsigned short minix_count_free_inodes(register struct super_block *sb)
 {
-    return sb->u.minix_sb.s_ninodes - count_used(sb->u.minix_sb.s_imap,
-						 sb->u.minix_sb.s_imap_blocks,
-						 sb->u.minix_sb.s_ninodes);
+    return (sb->u.minix_sb.s_ninodes -
+			count_used(sb->u.minix_sb.s_imap, sb->u.minix_sb.s_imap_blocks, sb->u.minix_sb.s_ninodes));
 }
 
 #endif
@@ -102,12 +100,8 @@ block_t minix_new_block(register struct super_block *sb)
     register struct buffer_head *bh;
     block_t i, j, k;
 
-    if (!sb) {
-	printk("mnb: no sb\n");
-	return 0;
-    }
+    if (!sb) return 0;
 
-  repeat:
     i = 0;
     do {
 	bh = sb->u.minix_sb.s_zmap[i];
@@ -116,12 +110,13 @@ block_t minix_new_block(register struct super_block *sb)
 	k = j + i * 8192 + sb->u.minix_sb.s_firstdatazone - 1;
 	if (k < sb->u.minix_sb.s_nzones) {
 	    if (set_bit(j, bh->b_data)) {
-		panic("mnb: already set %d %d\n", j, bh->b_data);
-/*		unmap_buffer(bh);
-		goto repeat;*/
+			printk("mnb: already set %d %d\n", j, bh->b_data);
+			return 0;
 	    }
-	    if (j == (block_t)find_first_zero_bit((void *)(bh->b_data), 8192))
-		panic("still zero bit!%d\n", j);
+	    if (j == (block_t)find_first_zero_bit((void *)(bh->b_data), 8192)) {
+			printk("mnb: still zero bit!%d\n", j);
+			return 0;
+		}
 	    mark_buffer_dirty(bh, 1);
 	    unmap_buffer(bh);
 	    if (!k)

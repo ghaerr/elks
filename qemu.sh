@@ -39,6 +39,10 @@ echo "Using disk image: $IMAGE"
 # KEYBOARD="-k fr"
 KEYBOARD=
 
+# Select pty serial port or serial mouse driver
+SERIAL="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
+#SERIAL="-chardev msmouse,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
+
 # Host forwarding for networking
 # No forwarding: only outgoing from ELKS to host
 # HOSTFWD="-net user"
@@ -55,8 +59,6 @@ HOSTFWD="-net user"
 [ `uname` != 'Darwin' ] && QDISPLAY="-display sdl"
 
 # Configure QEMU as pure ISA system
-
-SERIAL="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
 
 $QEMU -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 1M \
 $KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \
