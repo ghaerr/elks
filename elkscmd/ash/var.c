@@ -89,7 +89,7 @@ const struct varinit varinit[] = {
 	{&vifs,	VSTRFIXED|VTEXTFIXED,		"IFS= \t\n"},
 	{&vmail,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAIL="},
 	{&vmpath,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAILPATH="},
-	{&vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=:/bin:/usr/bin"},
+	{&vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=/bin:/usr/bin:/sbin"},
 	/*
 	 * vps1 depends on uid
 	 */

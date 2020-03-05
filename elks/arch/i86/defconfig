@@ -176,11 +176,8 @@ CONFIG_PSEUDO_TTY=y
 # Shell
 #
 CONFIG_APP_ASH=y
+CONFIG_APP_SASH=y
 CONFIG_APP_SH_UTILS=y
-
-#
-# (sash not needed with ash)
-#
 
 #
 # Other commands
@@ -227,7 +224,6 @@ CONFIG_IMG_MINIX=y
 # CONFIG_IMG_FAT is not set
 # CONFIG_IMG_RAW is not set
 # CONFIG_IMG_ROM is not set
-CONFIG_IMG_LINK=y
 # CONFIG_IMG_FD1680 is not set
 CONFIG_IMG_FD1440=y
 # CONFIG_IMG_FD1200 is not set

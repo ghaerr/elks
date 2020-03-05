@@ -13,6 +13,7 @@ include $(BASEDIR)/Make.rules
 ###############################################################################
 
 OBJS = sash.o cmds.o cmd_dd.o cmd_ed.o cmd_grep.o cmd_ls.o cmd_tar.o utils.o
+#LDFLAGS += -maout-chmem=0xc000
 
 all: sash
 
@@ -23,10 +24,10 @@ clean:
 	rm -f core sash $(OBJS)
 
 install: sash
-ifdef CONFIG_IMG_LINK
+ifdef CONFIG_APP_ASH
 	$(INSTALL) sash $(DESTDIR)/bin/sash
-	$(LN) -sf sash $(DESTDIR)/bin/sh
 else
+	# install as /bin/sh if no ash shell
 	$(INSTALL) sash $(DESTDIR)/bin/sh
 endif
 

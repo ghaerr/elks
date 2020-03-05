@@ -87,6 +87,7 @@ void start_kernel(void)
 static void init_task()
 {
     int num;
+	char *s;
 
     mount_root();
 #ifndef CONFIG_SMALL_KERNEL
@@ -100,21 +101,17 @@ static void init_task()
      * run_init_process("/etc/init");
      * run_init_process("/bin/init");
      * run_init_process("/bin/sh");
-     *
-     * So, I've modified the ELKS kernel to follow this tradition.
      */
 
-//	run_init_process("/sbin/init");
-//	run_init_process("/etc/init");
 	run_init_process("/bin/init");
 
 #ifdef CONFIG_CONSOLE_SERIAL
-    num = sys_open("/dev/ttyS0", 2, 0);		/* These are for stdin */
+    num = sys_open(s="/dev/ttyS0", 2, 0);		/* These are for stdin */
 #else
-    num = sys_open("/dev/tty1", 2, 0);
+    num = sys_open(s="/dev/tty1", 2, 0);
 #endif
     if (num < 0)
-	printk("Unable to open /dev/tty1 (error %u)\n", -num);
+	printk("Unable to open %s (error %d)\n", s, -num);
 
     if (sys_dup(num) != 1)			/* This is for stdout */
 	printk("dup failed\n");
@@ -122,6 +119,7 @@ static void init_task()
     printk("No init - running /bin/sh\n");
 
     run_init_process("/bin/sh");
+    run_init_process("/bin/sash");
     panic("No init or sh found");
 }
 

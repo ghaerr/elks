@@ -545,9 +545,7 @@ makeargs(cmd, argcptr, argvptr)
  * arguments correctly.
  */
 BOOL
-makestring(argc, argv, buf, buflen)
-	char	**argv;
-	char	*buf;
+makestring(int argc, char **argv, char *buf, int buflen)
 {
 	int	len;
 

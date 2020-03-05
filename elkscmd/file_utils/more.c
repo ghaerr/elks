@@ -37,13 +37,13 @@ int main(int argc, char **argv)
 				perror(name);
 				exit(1);
 			}
-			printf("<< %s >>\n", name);
+			/*printf("<< %s >>\n", name);*/
 		} else {
 			fd = 0;
 			/* FIXME: these open commands are not the way to open stdin */
 			cin = open("/dev/tty1", O_RDONLY);
 			if (!cin) cin = fopen("/dev/console", "r");
-			printf("<< stdin >>\n");
+			/*printf("<< stdin >>\n");*/
 		}
 		line = 1;
 		col = 0;
