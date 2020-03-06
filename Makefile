@@ -1,6 +1,6 @@
 
 ifndef TOPDIR
-$(error TOPDIR is not defined)
+$(error TOPDIR is not defined; did you mean to run './build.sh' instead?)
 endif
 
 include $(TOPDIR)/Make.defs
