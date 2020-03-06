@@ -1,12 +1,13 @@
 /* Outputting a string with padding.  */
 
 #ifdef __linux__
-speed_t ospeed;
+speed_t
 #else
-short ospeed;
+short
 #endif
+	 ospeed;
+
 /* If OSPEED is 0, we use this as the actual baud rate.  */
-int tputs_baud_rate;
 char PC;
 
 /* Actual baud rate if positive;
@@ -30,17 +31,6 @@ tputs (str, nlines, outfun)
      register int (*outfun) ();
 {
   register int padcount = 0;
-  register int speed;
-
-#ifdef emacs
-  extern baud_rate;
-  speed = baud_rate;
-#else
-  if (ospeed == 0)
-    speed = tputs_baud_rate;
-  else
-    speed = speeds[ospeed];
-#endif
 
   if (!str)
     return;
