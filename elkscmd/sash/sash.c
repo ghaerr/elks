@@ -443,16 +443,19 @@ command(char *cmd)
 #endif
 
 	/*
-	 * Now look for the command in the builtin table, and execute
-	 * the command if found.
+	 * Check if the command line has '>', '<', '&' etc that require a full shell.
+	 * If so, then the external program will be run rather than the builtin.
 	 */
-	if (!needfullshell(cmd) && trybuiltin(argc, argv))
-		return;
+	if (!needfullshell(cmd)) {
+		if (trybuiltin(argc, argv))
+			return;
+	}
 
 	/*
-	 * Not found, run the program along the PATH list.
+	 * Not a builtin or needs full shell, run the program along the PATH list.
 	 */
-	runcmd(cmd, argc, argv);
+	 runcmd(cmd, argc, argv);
+
 }
 
 /*
@@ -550,12 +553,15 @@ runcmd(char *cmd, int argc, char **argv)
 	int		pid;
 	int		status;
 
+	/*
+	 * If a full shell is required, run 'sh -c cmd' unless we are the only shell.
+	 */
 	if (needfullshell(cmd)) {
 		if (isbinshell)
-			printf("%s: no such file or directory\n", argv[0]);
+			fprintf(stderr, "%s: No such file or directory\n", argv[0]);
 		else {
 			system(cmd);
-			wait(&status);
+			wait(&status);	/* synchronize shell prompt*/
 		}
 		return;
 	}
@@ -603,17 +609,14 @@ runcmd(char *cmd, int argc, char **argv)
 
 	execvp(argv[0], argv);
 
-	if (errno == ENOEXEC) {
-		if (isbinshell)
-			printf("%s: no such file or directory\n", argv[0]);
-		else {
-			system(cmd);
-			wait(&status);
-		}
-		exit(0);
-	}
+	/*
+	 * If file has access but didn't execute, guess it's a shell script
+	 * and run 'sh -c cmd'.
+	 */
+	if (errno == ENOEXEC)
+		execl("/bin/sh", "sh", "-c", cmd, (char*)0);
 
-	perror(argv[0]);
+	perror(argv[0]);	/* Usually 'No such file or directory'*/
 	exit(1);
 }
 
