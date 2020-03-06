@@ -4,7 +4,7 @@
 
 # Must be executed with top directory /elks as the current one
 
-if [[ ! -e "env.sh" ]]; then
+if [ ! -e "env.sh" ]; then
 	echo "ERROR: You did not sourced this script from the top directory.";
 	echo "       Set the top directory of ELKS as the current one,";
 	echo "       then source this script again.";
@@ -12,19 +12,10 @@ if [[ ! -e "env.sh" ]]; then
 fi
 
 export TOPDIR="$(pwd)"
-
 echo TOPDIR set to $TOPDIR
 
-if [[ ! -d "$TOPDIR/cross" ]]; then
-	echo "ERROR: Missing folder for the cross build tools.";
-	echo "       Create an empty folder, either at the top of this ELKS tree,"
-	echo "       or outside this tree and link it from: $TOPDIR/cross";
-	return 1;
-fi
-
 export CROSSDIR="$TOPDIR/cross"	
-
-echo CROSSDIR set to $CROSSDIR
+echo "CROSSDIR set to $CROSSDIR"
 
 add_path () {
 	if [[ ":$PATH:" != *":$1:"* ]]; then

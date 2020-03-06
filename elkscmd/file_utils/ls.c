@@ -67,6 +67,7 @@
 #define LSF_ALL 	0x10	/* List files starting with `.' */
 #define LSF_ALLX	0x20	/* List . files except . and .. */
 #define LSF_CLASS	0x40	/* Classify files (append symbol) */
+#define LSF_ONEPER	0x80	/* One entry per line */
 
 static void lsfile();
 static void setfmt();
@@ -273,7 +274,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
     }
 #endif
 
-    if (flags & LSF_LONG || ++col == cols) {
+    if ((flags & (LSF_LONG|LSF_ONEPER)) || ++col == cols) {
 	fputc('\n', stdout);
 	col = 0;
     }
@@ -453,6 +454,9 @@ int main(int argc, char **argv)
 		case 'F':
 			flags |= LSF_CLASS;
 			break;
+		case '1':
+			flags |= LSF_ONEPER;
+			break;
 		case 'r':
 			reverse = -reverse;
 			break;
@@ -469,6 +473,8 @@ int main(int argc, char **argv)
     TRACESTRING(*argv)
     if (argv[1])
 	flags |= LSF_MULT;
+    if (!isatty(1))
+		flags |= LSF_ONEPER;
 
     for ( ; *argv; argv++) {
 	if (LSTAT(*argv, &statbuf) < 0) {
@@ -511,18 +517,19 @@ int main(int argc, char **argv)
 		    col = 0;
 		    fputc('\n', stdout);
 		}
-		printf("\n%s:\n", name);
+		if ((flags & LSF_MULT) || recursive)
+			printf("\n%s:\n", name);
 	    }
 	    free(name);
 	    if (recursive) recursive--;
 	}
     } while (files.size || dirs.size);
-    if (~flags & LSF_LONG)
+    if (!(flags & (LSF_LONG|LSF_ONEPER)))
 	fputc('\n', stdout);
     exit(EXIT_SUCCESS);
 
 usage:
-    fprintf(stderr, "usage: %s [-aAdFilrR] [file1] [file2] ...\n", argv[0]);
+    fprintf(stderr, "usage: %s [-aAdFilrR1] [file1] [file2] ...\n", argv[0]);
     fprintf(stderr, "  -a: list all files (including '.' and '..')\n");
     fprintf(stderr, "  -A: list hidden files too\n");
     fprintf(stderr, "  -d: list directory entries instead of contents (not implemented)\n");
@@ -531,5 +538,6 @@ usage:
     fprintf(stderr, "  -l: show files in long (detailed) format\n");
     fprintf(stderr, "  -r: reverse sort order\n");
     fprintf(stderr, "  -R: recursively list directory contents\n");
+    fprintf(stderr, "  -1: one entry per line\n");
     exit(EXIT_FAILURE);
 }

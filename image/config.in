@@ -11,10 +11,6 @@ mainmenu_option next_comment
 	 RAW    CONFIG_IMG_RAW     \
 	 ROM    CONFIG_IMG_ROM" MINIX
 
-	if [ "$CONFIG_IMG_MINIX" == "y" -o "$CONFIG_IMG_ROM" == "y" ]; then
-		define_bool CONFIG_IMG_LINK y
-		fi
-
 	if [ "$CONFIG_IMG_ROM" != "y" ]; then
 
 		choice 'Medium' \
