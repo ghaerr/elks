@@ -72,7 +72,7 @@ struct minix_super_block {
         u16 s_imap_blocks;	/* inode map size in blocks */ 
         u16 s_zmap_blocks;	/* zone map size in blocks */
         u16 s_firstdatazone;	/* Where data blocks begin */
-        u16 s_log_zone_size;	/* unused... */
+        u16 s_log_zone_size;	/* log2 of zone size*/
         u32 s_max_size;	/* Max file size supported in bytes*/
         u16 s_magic;	/* magic number... fs version */
         u16 s_state;	/* filesystem state */
@@ -130,23 +130,18 @@ struct minix_fs_dat {
 };
 
 #define FSMAGIC(fs)	((fs)->msb.s_magic)
-#define VERSION_2(fs) (FSMAGIC(fs) == MINIX2_SUPER_MAGIC || \
-			FSMAGIC(fs) == MINIX2_SUPER_MAGIC2 )
+#define VERSION_2(fs) (FSMAGIC(fs) == MINIX2_SUPER_MAGIC || FSMAGIC(fs) == MINIX2_SUPER_MAGIC2 )
 #define INODES(fs) ((fs)->msb.s_ninodes)
 #define UPPER(size,n) ((size+((n)-1))/(n))
-#define INODE_BLOCKS(fs) UPPER(INODES(fs), \
-			VERSION_2(fs) ? MINIX2_INODES_PER_BLOCK : \
-			MINIX_INODES_PER_BLOCK)
+#define INODE_BLOCKS(fs) UPPER(INODES(fs), VERSION_2(fs) ? MINIX2_INODES_PER_BLOCK : MINIX_INODES_PER_BLOCK)
 #define INODE_BUFFER_SIZE(fs) (INODE_BLOCKS(fs) * BLOCK_SIZE)			
-#define ZONES(fs) ((unsigned long)(VERSION_2(fs) ? (fs)->msb.s_zones : \
-						(fs)->msb.s_nzones))
+#define ZONES(fs) ((unsigned long)(VERSION_2(fs) ? (fs)->msb.s_zones : (fs)->msb.s_nzones))
 #define IMAPS(fs) ((fs)->msb.s_imap_blocks)
 #define ZMAPS(fs) ((fs)->msb.s_zmap_blocks)
 #define FIRSTZONE(fs) ((fs)->msb.s_firstdatazone)
 #define NORM_FIRSTZONE(fs) (MINIX_BOOT_BLOCKS+1+IMAPS(fs)+ZMAPS(fs)+INODE_BLOCKS(fs))
 #define INODE_BUF(fs) (VERSION_2(fs) ? (fs)->ino.v2 : (fs)->ino.v1)
-#define DIRSIZE(fs) (FSMAGIC(fs) == MINIX_SUPER_MAGIC2 || \
-			FSMAGIC(fs) == MINIX2_SUPER_MAGIC2 ? 32 : 16)
+#define DIRSIZE(fs) (FSMAGIC(fs) == MINIX_SUPER_MAGIC2 || FSMAGIC(fs) == MINIX2_SUPER_MAGIC2 ? 32 : 16)
 #define BLOCKS(fs) (VERSION_2(fs)?fs->msb.s_zones : fs->msb.s_nzones)
 
 #define INODE(fs,inode) ((fs)->ino.v1+((inode)-1))

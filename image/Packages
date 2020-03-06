@@ -45,7 +45,6 @@
 # -------------	----------------------------------------------------------
 /dev			:boot
 /bin			:boot
-#/bin/ash		:boot
 /bin/banner								:app
 /bin/basename					:shutil
 /bin/bc									:app
@@ -72,7 +71,6 @@
 /bin/fgrep						:shutil
 /bin/file							:fileutil
 /bin/find				:base
-/bin/ftpget					:net
 /bin/getty		:boot
 /bin/grep				:base
 /bin/head							:fileutil
@@ -81,7 +79,6 @@
 /bin/kill			:small
 #/bin/knl			:small
 /bin/ktcp					:net
-/bin/l								:fileutil
 /bin/ln					:base
 /bin/login		:boot
 /bin/logname					:shutil
@@ -109,7 +106,7 @@
 /bin/remsync						:fileutil
 /bin/rm				:small
 /bin/rmdir			:small
-#/bin/sash						:shutil
+/bin/sash		:boot
 /bin/sed						:shutil
 /bin/sh			:boot
 /bin/shutdown			:base

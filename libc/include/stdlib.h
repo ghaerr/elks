@@ -16,8 +16,6 @@
 #define EXIT_FAILURE 1
 #define EXIT_SUCCESS 0
 
-#include <malloc.h>
-
 extern int rand __P ((void));
 extern void srand __P ((unsigned int seed));
 
@@ -54,12 +52,12 @@ void abort (void);
 int atexit (void (* function) ());
 void exit (int status);
 
-void * malloc (size_t size);
-void free (void * ptr);
-
 #ifndef __STRICT_ANSI__
 void breakpoint ();
 char *itoa __P ((int));
 #endif
+
+char * ltostr (long val, int radix);
+char * ultostr (unsigned long val, int radix);
 
 #endif /* __STDLIB_H */

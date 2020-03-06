@@ -21,12 +21,10 @@ Cambridge, MA 02139, USA.  */
 /* Return the length of the maximum initial segment
    of S which contains only characters in ACCEPT.  */
 size_t
-strspn(s, accept)
-char *s;
-char *accept;
+strspn(const char *s, const char *accept)
 {
-  register char *p;
-  register char *a;
+  register char const *p;
+  register char const *a;
   register size_t count = 0;
 
   for (p = s; *p != '\0'; ++p)

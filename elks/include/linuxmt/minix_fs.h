@@ -14,13 +14,9 @@
 /* Not the same as the bogus LINK_MAX in <linux/limits.h>. Oh well. */
 #define MINIX_LINK_MAX	250
 
-#ifdef CONFIG_MINIX_V2
-#define MINIX_I_MAP_SLOTS	8
-#define MINIX_Z_MAP_SLOTS	64
-#else
+/* MINIX V1 buffers for inode and zone bitmaps*/
 #define MINIX_I_MAP_SLOTS	4
 #define MINIX_Z_MAP_SLOTS	8
-#endif
 
 #define MINIX_SUPER_MAGIC	0x137F	/* original minix fs */
 #define MINIX_SUPER_MAGIC2	0x138F	/* minix fs, 30 char names */
@@ -31,9 +27,6 @@
 
 #define MINIX_INODES_PER_BLOCK ((BLOCK_SIZE)/(sizeof (struct minix_inode)))
 #define MINIX2_INODES_PER_BLOCK ((BLOCK_SIZE)/(sizeof (struct minix2_inode)))
-
-#define MINIX_V1		0x0001	/* original minix fs */
-#define MINIX_V2		0x0002	/* minix V2 fs */
 
 struct super_block;
 struct inode;
@@ -70,7 +63,7 @@ struct minix_super_block {
     __u32	s_max_size;
     __u16	s_magic;
     __u16	s_state;
-    __u32	s_zones;
+    __u32	s_zones;		/* MINIX V2 only*/
 };
 
 struct minix_dir_entry {

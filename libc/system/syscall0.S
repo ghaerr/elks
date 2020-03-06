@@ -26,6 +26,7 @@ _syscall_test:
 _syscall_ok:
 	ret
 
+#ifdef __IA16_CALLCVT_CDECL
 _syscall_1:
 	mov    %sp,%bx
 	mov    2(%bx),%bx
@@ -69,6 +70,63 @@ _syscall_5:
 	pop    %di
 	pop    %si
 	jmp    _syscall_test
+#elif defined __IA16_CALLCVT_STDCALL
+_syscall_1:
+	pop %dx
+	pop %bx
+	push %dx
+	jmp _syscall_0
+
+_syscall_2:
+	pop %dx
+	pop %bx
+	pop %cx
+	push %dx
+	jmp _syscall_0
+
+_syscall_2p:
+	/* variadic function, callee must not pop any arguments */
+	mov %sp,%bx
+	mov 6(%bx),%dx
+	mov 4(%bx),%cx
+	mov 2(%bx),%bx
+	jmp _syscall_0
+
+_syscall_3:
+	mov %sp,%bx
+	mov 6(%bx),%dx
+	mov 4(%bx),%cx
+	mov 2(%bx),%bx
+	call _syscall_0
+	ret $6
+
+_syscall_4:
+	mov %sp,%bx
+	push %di
+	mov 8(%bx),%di
+	mov 6(%bx),%dx
+	mov 4(%bx),%cx
+	mov 2(%bx),%bx
+	call _syscall_0
+	pop %di
+	ret $8
+
+_syscall_5:
+	mov %sp,%bx
+	push %si
+	mov 10(%bx),%si
+	push %di
+	mov 8(%bx),%di
+	mov 6(%bx),%dx
+	mov 4(%bx),%cx
+	mov 2(%bx),%bx
+	call _syscall_0
+	pop %di
+	pop %si
+	ret $10
+#else
+#error "unknown calling convention"
+#endif
 
 //-----------------------------------------------------------------------------
 
@@ -94,8 +152,10 @@ _syscall_signal:
 	add %bx,%bx
 	mov	_sigtable-2(%bx),%bx  // offset by 2 because no entry for signal 0
 	call *%bx
+#ifdef __IA16_CALLCVT_CDECL
 	inc %sp
 	inc %sp
+#endif
 
 	pop %es
 	pop %di
