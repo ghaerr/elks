@@ -13,11 +13,12 @@
 #include "boot_err.h"
 
 #define BOOTADDR  0x7C00
-#define LOADSEG   0x1000
+#define LOADSEG   ELKS_INITSEG
 
 // Must match ELKS
 #define ELKS_INITSEG (0x0100)
 #define ELKS_SYSSEG  (0x1000)
+#define EF_AS_BLOB   (0x8000)
 
 	.code16
 
@@ -222,16 +223,6 @@ drive_reset:
 //------------------------------------------------------------------------------
 
 // void disk_read (int sect, int count, byte_t * buf, int seg)
-
-#ifdef BOOT_FAT
-_disk_read_at_bx_0:
-	// Load sectors at the absolute address BX:0 --- used by FAT loader
-	pop %cx
-	push %bx
-	push %cx
-	xor %cx,%cx
-	// fall through
-#endif
 
 	.global disk_read
 
@@ -446,60 +437,17 @@ not_elks:
 	jmp _except
 
 boot_it:
+.if LOADSEG != ELKS_INITSEG
+	.error
+.endif
 
 	pop %ax
-	mov $ELKS_INITSEG,%ax
-	mov %ax,%es
-
-	mov 497,%bl  // fetch number of setup sectors
-	xor %bh,%bh
-	inc %bx
-	mov 500,%ax  // fetch system executable size
-	mov $5,%cl
-	add $31,%ax
-	shr %cl,%ax
-	mov %ax,%dx
-
-// Put the setup where it belongs
-
-looping:
-	call copy_sect
-	dec %bx
-	jnz looping
-
-	mov	$ELKS_SYSSEG,%ax
-	mov %ax,%es
-
-// Put the system code at the right place
-
-looping2:
-	call copy_sect
-	dec %dx
-	jnz looping2
-
-// Ok, everything should be where it belongs call it
+	orb $EF_AS_BLOB>>8,0x01F7  // signify that setup + kernel is 1 blob
 
 	mov $ELKS_INITSEG,%ax
 	mov %ax,%ds
 	mov %ax,%es
-	mov %ax,%ss
-	mov $0x4000-12,%sp
 	ljmp $ELKS_INITSEG+0x20,$0
-
-copy_sect:
-	mov $256,%cx
-	xor %si,%si
-	xor %di,%di
-	rep
-	movsw
-
-	mov %ds,%ax
-	add $32,%ax
-	mov %ax,%ds
-	mov %es,%ax
-	add $32,%ax
-	mov %ax,%es
-	ret
 #endif
 
 //------------------------------------------------------------------------------

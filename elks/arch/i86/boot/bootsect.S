@@ -563,8 +563,8 @@ root_flags:
 	.word ROOTFLAGS
 syssize:
 	.word SYSSIZE
-unused:
-	.word 0
+elks_flags:
+	.word ELKSFLAGS
 ram_size:
 	.word RAMDISK
 vid_mode:

@@ -9,7 +9,7 @@
 
 // Global constants
 
-#define LOADSEG 0x1000
+#define LOADSEG 0x0100
 
 // Global variables
 
