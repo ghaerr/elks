@@ -11,6 +11,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <ctype.h>
+#include <unistd.h>
 #include "config.h"
 
 #define	PATHLEN		256	

@@ -10,7 +10,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-OUTS = grep l ln ls mkdir mkfifo mknod more mv rm rmdir sync touch
+OUTS = grep ln ls mkdir mkfifo mknod more mv rm rmdir sync touch
 OUTS_BE += cat chgrp chmod chown cmp cp dd
 
 PRGS = $(OUTS)

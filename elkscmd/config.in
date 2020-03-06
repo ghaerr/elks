@@ -8,14 +8,8 @@ mainmenu_option next_comment
 	comment "Shell"
 
 	bool 'ash'        CONFIG_APP_ASH        y
+	bool 'sash'       CONFIG_APP_SASH       y
 	bool 'shutils'    CONFIG_APP_SH_UTILS   y
-
-	if [ "$CONFIG_APP_ASH" != "y" ]; then
-		comment 'sash as default shell'
-		define_bool CONFIG_APP_SASH y
-	else
-		comment '(sash not needed with ash)'
-	fi
 
 	comment 'Other commands'
 
