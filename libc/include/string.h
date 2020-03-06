@@ -48,7 +48,7 @@ char *strsep __P ((char **, char *));
 char * strstr (const char *, const char *);
 
 size_t strcspn __P ((char *, char *));
-size_t strspn __P ((char *, char *));
+size_t strspn __P ((const char *, const char *));
 
 /* Linux silly hour */
 char *strfry __P ((char *));
