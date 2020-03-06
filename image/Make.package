@@ -1,6 +1,6 @@
 # Application package creation Makefile
 #	passed NAME=, FS=, SIZE=, and optional PACKAGE= and TAGS=
-#	implicitly uses IMGDIR=, DESTDIR= and FD_BOOTBLOCK=
+#	implicitly uses IMGDIR=, DESTDIR=, FD_MINIX_BOOT= and FD_FAT_BOOT=
 
 
 # set BPB and mkfs options based on passed image size
@@ -63,7 +63,7 @@ minix:
 	rm Filelist
 	$(MAKE) -f Make.devices "MKDEV=mfs $(MINIX_IMAGE) mknod"
 #	Write boot and override the parameters from the build configuration
-	setboot $(MINIX_IMAGE) $(BPB) $(FD_BOOTBLOCK)
+	setboot $(MINIX_IMAGE) $(BPB) $(FD_MINIX_BOOT)
 	#mfsck -fv $(MINIX_IMAGE)
 	mfs $(MINIX_IMAGE) stat
 
@@ -106,8 +106,6 @@ MSDOS_COPYOPTS=-pmQ -D o
 # -a		also list hidden files
 # -/		recursive output (buggy: will fail on empty, newly formatted disks!
 
-FD_BOOTSECT=$(TOPDIR)/elkscmd/bootblocks/fat.bin
-
 fat:
 	awk "/$(TAGS)/{print}" $(PACKAGE) | cut -f 1 | sed "/^#/d" > Filelist
 	dd if=/dev/zero of=$(MSDOS_IMAGE) bs=1024 count=$(SIZE)
@@ -131,5 +129,5 @@ fat:
 	# Protect contiguous /linux by marking as R/O, System and Hidden
 	mattrib -i $(MSDOS_IMAGE) +r +s +h ::/linux
 	# Read boot sector, skip FAT BPB, set ELKS PB sectors/heads and write boot
-	setboot $(MSDOS_IMAGE) -F $(BPB) $(FD_BOOTSECT)
+	setboot $(MSDOS_IMAGE) -F $(BPB) $(FD_FAT_BOOT)
 	#mdir -i $(MSDOS_IMAGE) -/ -a ::

@@ -19,21 +19,23 @@ export DESTDIR
 TARGETS =
 
 ifdef CONFIG_IMG_BOOT
-TARGETS += $(FD_BOOTBLOCK) $(FD_BOOTSECT) $(ELKS_DIR)/arch/i86/boot/Image
+TARGETS += $(FD_MINIX_BOOT) $(FD_FAT_BOOT) $(ELKS_DIR)/arch/i86/boot/Image
 endif
 
-TARGETS += template
-
 ifdef CONFIG_IMG_MINIX
-TARGETS += minixfs
+TARGETS += template minixfs
 endif
 
 ifdef CONFIG_IMG_FAT
-TARGETS += fatfs
+TARGETS += template fatfs
 endif
 
 ifdef CONFIG_IMG_ROM
-TARGETS += romfs
+TARGETS += template romfs
+endif
+
+ifdef CONFIG_IMG_RAW
+TARGETS += raw
 endif
 
 .PHONY: all $(TARGETS)
@@ -63,7 +65,7 @@ ifdef CONFIG_IMG_DEV
 	$(MAKE) -f Make.devices "MKDEV=mfs $(TARGET_FILE) mknod"
 endif
 ifdef CONFIG_IMG_BOOT
-	setboot $(TARGET_FILE) $(FD_BOOTBLOCK)
+	setboot $(TARGET_FILE) $(FD_MINIX_BOOT)
 endif
 	mfsck -fv $(TARGET_FILE)
 	mfs $(TARGET_FILE) stat
@@ -80,15 +82,15 @@ fatfs: template
 	rm linux
 	# Device folder has to be first or second for the 'fake dev' to work
 	mmd -i $(TARGET_FILE) ::/dev
-	for f in $$(cd $(DESTDIR); find -name '*'); do \
-		[ -d $(DESTDIR)/$$f -a "$$f" != "./dev" ] && mmd -i $(TARGET_FILE) ::$$f; \
+	for f in $$(cd $(DESTDIR); find * -name '*'); do \
+		[ -d $(DESTDIR)/$$f -a "$$f" != "dev" ] && mmd -i $(TARGET_FILE) ::$$f; \
 		[ -f $(DESTDIR)/$$f ] && mcopy -i $(TARGET_FILE) $(CPFS_OPTS) $(DESTDIR)/$$f ::$$f; \
 	done
 	# Protect contiguous /linux by marking as RO, System and Hidden
 	mattrib -i $(TARGET_FILE) +r +s +h ::/linux
 	# Read boot sector, skip FAT BPB, set ELKS PB sectors/heads and write boot
 ifdef CONFIG_IMG_BOOT
-	setboot $(TARGET_FILE) -F $(FD_BOOTSECT)
+	setboot $(TARGET_FILE) -F $(FD_FAT_BOOT)
 endif
 
 # Create ROM filesystem from template
@@ -97,6 +99,12 @@ romfs: template
 	-rm -f romfs.devices
 	$(MAKE) -f Make.devices "MKDEV=echo >> romfs.devices"
 	mkromfs -d romfs.devices $(DESTDIR)
+
+# Create RAW filesystem
+
+raw: $(ELKS_DIR)/arch/i86/boot/Image
+	dd if=/dev/zero of=$(TARGET_FILE) bs=1024 count=$(TARGET_BLKS)
+	dd if=$(ELKS_DIR)/arch/i86/boot/Image of=$(TARGET_FILE) conv=notrunc
 
 # Clean target
 
