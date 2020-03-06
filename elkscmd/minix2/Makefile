@@ -39,11 +39,8 @@ NETPRGS=env
 
 all: $(PRGS)
 
-lpd: lpd.o ../lib/mktemp.o
-	$(LD) $(LDFLAGS) -o lpd lpd.o ../lib/mktemp.o $(LDLIBS)
-
-../lib/mktemp.o:
-	make -C ../lib mktemp.o
+lpd: lpd.o
+	$(LD) $(LDFLAGS) -o lpd lpd.o $(LDLIBS)
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
