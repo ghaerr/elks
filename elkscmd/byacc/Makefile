@@ -35,8 +35,7 @@ OBJS	      = closure.o \
 		skeleton.o \
 		symtab.o \
 		verbose.o \
-		warshall.o \
-		../lib/mktemp.o
+		warshall.o
 
 PRINT	      = pr -f -l88
 

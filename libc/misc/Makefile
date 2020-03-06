@@ -18,13 +18,14 @@ OBJS = \
 	getopt.o \
 	itoa.o \
 	ltostr.o \
+	mktemp.o \
 	popen.o \
 	putenv.o \
 	qsort.o \
+	rand.o \
 	strtol.o \
 	system.o \
 	tmpnam.o \
-	rand.o \
 	ultostr.o \
 	# end of list
 

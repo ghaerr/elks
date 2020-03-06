@@ -13,26 +13,29 @@ mainmenu_option next_comment
 
 	comment 'Other commands'
 
+	bool 'busyelks'			CONFIG_APP_BUSYELKS		n
+	busyelks 'diskutils'	CONFIG_APP_DISK_UTILS	y
+	busyelks 'fileutils'	CONFIG_APP_FILE_UTILS	y
+	bool 'sysutils'			CONFIG_APP_SYS_UTILS	y
+	bool 'vi'				CONFIG_APP_LEVEE		y
+	busyelks 'minix1'		CONFIG_APP_MINIX1		y
+	bool 'minix2'			CONFIG_APP_MINIX2		y
+	busyelks 'minix3'		CONFIG_APP_MINIX3		y
+	busyelks 'miscutils'	CONFIG_APP_MISC_UTILS	y
+	bool 'mtools'			CONFIG_APP_MTOOLS		y
+	bool 'nano-X'			CONFIG_APP_NANOX		y
+
 	bool 'bc'         CONFIG_APP_BC         y
-	bool 'busyelks'   CONFIG_APP_BUSYELKS   n
-	bool 'dbgutils'   CONFIG_APP_DBG_UTILS  y
-	busyelks 'diskutils'  CONFIG_APP_DISK_UTILS y
-	bool 'elvis'      CONFIG_APP_ELVIS      y
-	busyelks 'fileutils'  CONFIG_APP_FILE_UTILS y
-	bool 'levee'      CONFIG_APP_LEVEE      y
 	bool 'm4'         CONFIG_APP_M4         y
-	busyelks 'minix1'     CONFIG_APP_MINIX1     y
-	bool 'minix2'     CONFIG_APP_MINIX2     y
-	busyelks 'minix3'     CONFIG_APP_MINIX3     y
-	busyelks 'miscutils'  CONFIG_APP_MISC_UTILS y
-	bool 'mtools'     CONFIG_APP_MTOOLS     y
-	bool 'nano-X'     CONFIG_APP_NANOX      n
 	bool 'prems'      CONFIG_APP_PREMS      y
-	bool 'prnutils'   CONFIG_APP_PRN_UTILS  y
-	bool 'sysutils'   CONFIG_APP_SYS_UTILS  y
-	bool 'screen'     CONFIG_APP_SCREEN     y
+
+	#comment 'Commands not compiling'
+
+	bool 'byacc'      CONFIG_APP_BYACC      n
+	bool 'elvis'      CONFIG_APP_ELVIS      n
+	bool 'screen'     CONFIG_APP_SCREEN     n
 	bool 'test'       CONFIG_APP_TEST       n
-	bool 'xvi'        CONFIG_APP_XVI        y
+	bool 'xvi'        CONFIG_APP_XVI        n
 
 	comment "Internet stack"
 
