@@ -3,6 +3,10 @@
 
 #pragma once
 
+#include <stddef.h>
+
+#define structof(p,t,m) ((t *) ((char *) (p) - offsetof (t,m)))
+
 struct list_s {
 	struct list_s * prev;
 	struct list_s * next;

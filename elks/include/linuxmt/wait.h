@@ -23,11 +23,8 @@ extern struct wait_queue select_queue;
 // to allow composite ones through indirection (poll and select cases)
 // while saving code size (see issue #222)
 
-typedef bool_t (* test_t) (void *);
-
-struct cond_s
-{
-	test_t test;
+struct cond_s {
+	bool_t (* test) (void *);
 	void * obj;
 };
 

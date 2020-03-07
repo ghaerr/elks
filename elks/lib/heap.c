@@ -1,9 +1,9 @@
 // Kernel library
 // Local heap management
 
-#include <linuxmt/heap.h>
-#include <linuxmt/list.h>
 #include <linuxmt/lock.h>
+#include <linuxmt/list.h>
+#include <linuxmt/heap.h>
 
 // Heap block header
 
