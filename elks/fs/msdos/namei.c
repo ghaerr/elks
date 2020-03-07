@@ -67,11 +67,14 @@ static int msdos_format_name(register const char *name,int len,char *res)
 static int msdos_find(struct inode *dir,const char *name,int len,
     struct buffer_head **bh,struct msdos_dir_entry **de,ino_t *ino)
 {
-	char msdos_name[MSDOS_NAME];
+	char msdos_name[MSDOS_NAME+1];
 	int res;
 
 	if ((res = msdos_format_name(name,len, msdos_name)) < 0) return res;
-	return msdos_scan(dir,msdos_name,bh,de,ino);
+	int t = msdos_scan(dir,msdos_name,bh,de,ino);
+msdos_name[MSDOS_NAME] = 0;
+fsdebug("find '%11s', ino=%ld\n", msdos_name, (unsigned long)*ino);
+	return t;
 }
 
 
@@ -104,7 +107,6 @@ int msdos_lookup(register struct inode *dir,const char *name,int len,
 		return res;
 	}
 	if (bh) unmap_brelse(bh);
-//fsdebug("lookup: ino=%ld\n",(unsigned long)ino);
 	if (!(*result = iget(dir->i_sb,ino))) {
 		iput(dir);
 		return -EACCES;

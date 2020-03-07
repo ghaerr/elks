@@ -9,16 +9,16 @@
 #include <arch/segment.h>
 
 static char *args[] = {
-(char *)0x01,	/* argc     */
-(char *)0x08,	/* &argv[0] */
-    NULL,	/* end argv */
-    NULL,	/* envp     */
-    NULL,	/* argv[0]     */
+(char *)0x01,	/* 0 argc     */
+(char *)0x08,	/* 2 &argv[0] */
+    NULL,		/* 4 end argv */
+    NULL,		/* 6 envp     */
+    NULL,		/* 8-19 argv[0], 12 chars space for cmd path*/
     NULL,
     NULL,
     NULL,
     NULL,
-    NULL,
+    NULL		/* 18-19*/
 };
 
 extern void ret_from_syscall(void);
@@ -27,11 +27,9 @@ int run_init_process(register char *cmd)
 {
     int num;
 
-    strcpy((char *)(&args[4]), cmd);
-    if (!(num = sys_execve(cmd, args, 20))) {
-	ret_from_syscall();
-    }
-    printk("sys_execve(\"%s\", args, 18) => %d.\n", cmd, -num);
+    strcpy((char *)&args[4], cmd);
+    if (!(num = sys_execve(cmd, (char *)args, sizeof(args))))
+		ret_from_syscall();
     return num;
 }
 
@@ -178,7 +176,7 @@ void arch_build_stack(struct task_struct *t, char *addr)
 
     if (addr == NULL)
 	addr = (char *)ret_from_syscall;
-    *tsp = (__u16 *)addr;		/* Start execution address */
+    *tsp = (__u16)addr;			/* Start execution address */
 #ifdef __ia16__
     *(tsp-2) = kernel_ds;		/* Initial value for ES register */
     t->t_xregs.ksp = (__u16)(tsp - 4);	/* Initial value for SP register */
