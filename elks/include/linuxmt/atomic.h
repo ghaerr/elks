@@ -11,6 +11,8 @@
 
 typedef volatile word_t atomic_t;
 
+atomic_t atomic_get (atomic_t * count);
+
 void atomic_inc (atomic_t * count);
 void atomic_dec (atomic_t * count);
 

@@ -5,6 +5,20 @@
 
 	.text
 
+// atomic_t atomic_get (atomic_t * count)
+
+	.global atomic_get
+
+// Atomic LOCK load instruction
+
+atomic_get:
+
+	mov %sp,%bx
+	mov 2(%bx),%bx
+	lock
+	mov (%bx),%ax
+	ret
+
 // void atomic_inc (atomic_t * count)
 
 	.global atomic_inc
