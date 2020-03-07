@@ -2,3 +2,4 @@ bin/mkromfs
 bin/mfsck
 bin/mfs
 bin/setboot
+bin/objdump86

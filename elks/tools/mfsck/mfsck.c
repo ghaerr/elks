@@ -1399,8 +1399,9 @@ main(int argc, char ** argv) {
 		printf(_(	"----------------------------\n"
 			"FILE SYSTEM HAS BEEN CHANGED\n"
 			"----------------------------\n"));
-		for (count=0 ; count<3 ; count++)
-			sync();
+		/* unnecessary in ELKS build and for speed, remove sync*/
+		/***for (count=0 ; count<3 ; count++)
+			sync();***/
 	}
 	else if ( repair )
 		write_super_block();

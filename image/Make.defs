@@ -11,11 +11,10 @@ include $(TOPDIR)/Make.defs
 ELKS_DIR = $(TOPDIR)/elks
 ELKSCMD_DIR = $(TOPDIR)/elkscmd
 
-MINIX_BOOT = $(ELKSCMD_DIR)/bootblocks
-FD_BOOTBLOCK = $(MINIX_BOOT)/minix.bin
-FD_BOOTSECT = $(MINIX_BOOT)/fat.bin
+FD_MINIX_BOOT = $(ELKSCMD_DIR)/bootblocks/minix.bin
+FD_FAT_BOOT = $(ELKSCMD_DIR)/bootblocks/fat.bin
 # TODO: replace these exports by includes
-export FD_BOOTBLOCK
+export FD_MINIX_BOOT FD_FAT_BOOT
 
 # Image file options
 
@@ -56,6 +55,10 @@ endif
 ifdef CONFIG_IMG_HD
 TARGET_FILE = $(IMGDIR)/hd.bin
 TARGET_BLKS = $(CONFIG_IMG_BLOCKS)
+endif
+
+ifdef CONFIG_IMG_RAW
+TARGET_FILE = $(IMGDIR)/fd.bin
 endif
 
 # Image filesystem options

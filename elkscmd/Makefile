@@ -13,20 +13,17 @@ include $(BASEDIR)/Make.defs
 # Subdirectories for clean / build / install
 
 # All subdirectories to build & clean
-# TODO: restore elvis, prn-utils, screen & xvi
 
 SUBDIRS =       \
 	ash         \
 	bc          \
 	bootblocks  \
 	busyelks    \
-	debug_utils \
 	disk_utils  \
 	file_utils  \
 	inet        \
 	ktcp        \
 	levee       \
-	lib         \
 	minix1      \
 	minix2      \
 	minix3      \
@@ -34,13 +31,15 @@ SUBDIRS =       \
 	mtools      \
 	nano-X      \
 	prems       \
-	test        \
 	sash        \
 	sh_utils    \
 	sys_utils   \
 	test        \
-	tools       \
 	# EOL
+
+# TODO: fix broken command compilations
+# misc_utils/lpfilter.c
+#SUBDIRS += byacc elvis screen xvi
 
 # Directories to install
 

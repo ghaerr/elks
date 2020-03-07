@@ -626,7 +626,7 @@ do_more(argc, argv)
 			return;
 		}
 
-		printf("<< %s >>\n", name);
+		/*printf("<< %s >>\n", name);*/
 		line = 1;
 		col = 0;
 

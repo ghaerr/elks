@@ -3,10 +3,14 @@
  * under the GNU Library General Public License.
  */
 
+#include <stdlib.h>
+
 int
-atoi(number)
-register char  *number;
+atoi(register const char *number)
 {
+#ifdef USE_ATOL_AS_ATOI
+	return atol(number);
+#else
    register int   n = 0, neg = 0;
 
    while (*number <= ' ' && *number > 0)
@@ -21,4 +25,5 @@ register char  *number;
    while (*number>='0' && *number<='9')
       n = (n * 10) + ((*number++) - '0');
    return (neg ? -n : n);
+#endif
 }

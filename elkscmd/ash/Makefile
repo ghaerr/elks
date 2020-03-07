@@ -28,6 +28,8 @@ OBJS=	builtins.o cd.o dirent.o error.o eval.o exec.o expand.o input.o \
 	output.o var.o init.o \
 	bltin/echo.o bltin/expr.o bltin/regexp.o bltin/operators.o
 
+#LDFLAGS += -maout-chmem=0xc000
+
 #
 # Set READLINE in shell.h and add -ledit to LIBS if you want to use the
 # editline package by Simmule Turner and Rich Salz.  (The big, bloated

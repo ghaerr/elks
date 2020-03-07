@@ -12,9 +12,6 @@
 #include <signal.h>
 #include <errno.h>
 
-static	char	*version = "1.0";
-
-
 typedef struct {
 	char	*name;
 	char	*usage;
@@ -201,25 +198,25 @@ static	CMDTAB	cmdtab[] = {
 };
 
 
+#ifdef CMD_ALIAS
 typedef struct {
 	char	*name;
 	char	*value;
 } ALIAS;
 
-
 static	ALIAS	*aliastable;
 static	int	aliascount;
+static	ALIAS	*findalias();
+#endif
+
+static	BOOL	intcrlf = TRUE;
+static	char	*prompt;
+static BOOL		isbinshell;
 
 #ifdef CMD_SOURCE
 static	FILE	*sourcefiles[MAXSOURCE];
 static	int	sourcecount;
 #endif
-
-static	BOOL	intcrlf = TRUE;
-#ifdef CMD_PROMPT
-static	char	*prompt;
-#endif
-
 
 static	void	catchint();
 static	void	catchtstp();
@@ -229,35 +226,41 @@ static	void	command();
 static	void	runcmd();
 static	void	showprompt();
 static	BOOL	trybuiltin();
-#ifdef CMD_ALIAS
-static	ALIAS	*findalias();
-#endif
 
 BOOL	intflag;
 
 
-main(argc, argv)
-	char	**argv;
+int main(int argc, char **argv)
 {
 	char	*cp;
 	char	buf[PATHLEN];
 
-	printf("Stand-alone shell (version %s)\n", version);
-	fflush(stdout);
 	signal(SIGINT, catchint);
 	signal(SIGQUIT, catchquit);
 	signal(SIGTSTP, SIG_IGN);
 
+	/* check if we are /bin/sh*/
+	if ((cp = strrchr(argv[0], '/')) != 0)
+		cp++;
+	else cp = argv[0];
+	isbinshell = !strcmp(cp, "sh");
+
+#ifdef CMD_PROMPT
+	if ((prompt = malloc(3)) == 0)
+#endif
+		prompt = "  ";
+	strcpy(prompt, getuid()? "$ ": "# ");
+
 	if (getenv("PATH") == NULL)
-		putenv("PATH=/bin:/usr/bin:/etc");
+		putenv("PATH=/bin:/usr/bin:/sbin");
 
 #ifdef CMD_SOURCE
-#ifdef CMD_ALIAS
+#ifdef LATER
 	cp = getenv("HOME");
 	if (cp) {
 		strcpy(buf, cp);
 		strcat(buf, "/");
-		strcat(buf, ".aliasrc");
+		strcat(buf, ".sashrc");
 
 		if ((access(buf, 0) == 0) || (errno != ENOENT))
 			readfile(buf);
@@ -361,6 +364,36 @@ readfile(name)
 #endif
 }
 
+/* check if command line requires a real shell to run it*/
+static BOOL
+needfullshell(char *cmd)
+{
+	char 	*cp;
+
+	for (cp = cmd; *cp; cp++) {
+		if ((*cp >= 'a') && (*cp <= 'z'))
+			continue;
+		if ((*cp >= 'A') && (*cp <= 'Z'))
+			continue;
+		if (isdecimal(*cp))
+			continue;
+		if (isblank(*cp))
+			continue;
+
+		if ((*cp == '.') || (*cp == '/') || (*cp == '-') ||
+			(*cp == '+') || (*cp == '=') || (*cp == '_') ||
+			(*cp == ':') || (*cp == ',') || (*cp == '#'))
+				continue;
+#ifdef WILDCARDS
+		if ((*cp == '*') || (*cp == '?') || (*cp == '[') || (*cp == ']'))
+			continue;
+#endif
+
+		return TRUE;
+	}
+	return FALSE;
+}
+
 
 /*
  * Parse and execute one null-terminated command line string.
@@ -368,8 +401,7 @@ readfile(name)
  * command is an alias, and expands wildcards.
  */
 static void
-command(cmd)
-	char	*cmd;
+command(char *cmd)
 {
 	char	**argv;
 	int	argc;
@@ -386,7 +418,7 @@ command(cmd)
 	while (isblank(*cmd))
 		cmd++;
 
-	if ((*cmd == '\0') || !makeargs(cmd, &argc, &argv))
+	if ((*cmd == '\0') || (*cmd == '#') || !makeargs(cmd, &argc, &argv))
 		return;
 
 #ifdef CMD_ALIAS
@@ -411,18 +443,20 @@ command(cmd)
 #endif
 
 	/*
-	 * Now look for the command in the builtin table, and execute
-	 * the command if found.
+	 * Check if the command line has '>', '<', '&' etc that require a full shell.
+	 * If so, then the external program will be run rather than the builtin.
 	 */
-	if (trybuiltin(argc, argv))
-		return;
+	if (!needfullshell(cmd)) {
+		if (trybuiltin(argc, argv))
+			return;
+	}
 
 	/*
-	 * Not found, run the program along the PATH list.
+	 * Not a builtin or needs full shell, run the program along the PATH list.
 	 */
-	runcmd(cmd, argc, argv);
-}
+	 runcmd(cmd, argc, argv);
 
+}
 
 /*
  * Try to execute a built-in command.
@@ -430,8 +464,7 @@ command(cmd)
  * command succeeds.  Returns FALSE if this is not a built-in command.
  */
 static BOOL
-trybuiltin(argc, argv)
-	char	**argv;
+trybuiltin(int argc, char **argv)
 {
 	CMDTAB	*cmdptr;
 #ifdef WILDCARDS
@@ -456,9 +489,7 @@ trybuiltin(argc, argv)
 	 * or too small.
 	 */
 	if ((argc < cmdptr->minargs) || (argc > cmdptr->maxargs)) {
-		fprintf(stderr, "usage: %s %s\n",
-			cmdptr->name, cmdptr->usage);
-
+		fprintf(stderr, "usage: %s %s\n", cmdptr->name, cmdptr->usage);
 		return TRUE;
 	}
 
@@ -466,24 +497,17 @@ trybuiltin(argc, argv)
 	 * Check here for several special commands which do not
 	 * have wildcarding done for them.
 	 */
+	if (
 #ifdef CMD_ALIAS
+	(cmdptr->func == do_alias) ||
+#endif
 #ifdef CMD_PROMPT
-	if ((cmdptr->func == do_alias) || (cmdptr->func == do_prompt)) {
-#else /* CMD_PROMPT */
-	if (cmdptr->func == do_alias) {
-#endif /* CMD_PROMPT */
+	(cmdptr->func == do_prompt) ||
+#endif
+	   0) {
 		(*cmdptr->func)(argc, argv);
 		return TRUE;
 	}
-#else /* CMD_ALIAS */
-#ifdef CMD_PROMPT
-        if (cmdptr->func == do_prompt) {
-		(*cmdptr->func)(argc, argv);
-		return TRUE;
-	}
-#else
-#endif /* CMD_PROMPT */
-#endif /* CMD_ALIAS */
 
 #ifdef WILDCARDS
 	/*
@@ -524,42 +548,23 @@ trybuiltin(argc, argv)
  * Execute the specified command.
  */
 static void
-runcmd(cmd, argc, argv)
-	char	*cmd;
-	char	**argv;
+runcmd(char *cmd, int argc, char **argv)
 {
-	register char *	cp;
 	int		pid;
 	int		status;
 
-#if POINTLESS
-	BOOL		magic;
-	magic = FALSE;
-
-	for (cp = cmd; *cp; cp++) {
-		if ((*cp >= 'a') && (*cp <= 'z'))
-			continue;
-		if ((*cp >= 'A') && (*cp <= 'Z'))
-			continue;
-		if (isdecimal(*cp))
-			continue;
-		if (isblank(*cp))
-			continue;
-
-		if ((*cp == '.') || (*cp == '/') || (*cp == '-') ||
-			(*cp == '+') || (*cp == '=') || (*cp == '_') ||
-			(*cp == ':') || (*cp == ','))
-				continue;
-
-		magic = TRUE;
+	/*
+	 * If a full shell is required, run 'sh -c cmd' unless we are the only shell.
+	 */
+	if (needfullshell(cmd)) {
+		if (isbinshell)
+			fprintf(stderr, "%s: No such file or directory\n", argv[0]);
+		else {
+			system(cmd);
+			wait(&status);	/* synchronize shell prompt*/
+		}
+		return;
 	}
-
-	if (magic) {
-		printf("%s: no such file or directory\n", cmd);
-/*		system(cmd);
-*/		return;
-	}
-#endif
 
 	/*
 	 * No magic characters in the command, so do the fork and
@@ -604,13 +609,14 @@ runcmd(cmd, argc, argv)
 
 	execvp(argv[0], argv);
 
-	if (errno == ENOEXEC) {
-		printf("%s: no such file or directory\n");
-		/*system(cmd);
-*/		exit(0);
-	}
+	/*
+	 * If file has access but didn't execute, guess it's a shell script
+	 * and run 'sh -c cmd'.
+	 */
+	if (errno == ENOEXEC)
+		execl("/bin/sh", "sh", "-c", cmd, (char*)0);
 
-	perror(argv[0]);
+	perror(argv[0]);	/* Usually 'No such file or directory'*/
 	exit(1);
 }
 
@@ -825,15 +831,7 @@ do_unalias(argc, argv)
 static void
 showprompt()
 {
-	char	*cp;
-
-	cp = "> ";
-#ifdef PROMPT
-	if (prompt)
-		cp = prompt;
-#endif
-
-	write(STDOUT, cp, strlen(cp));
+	write(STDOUT, prompt, strlen(prompt));
 }
 
 

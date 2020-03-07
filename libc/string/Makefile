@@ -2,39 +2,35 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS = \
-	bzero.c \
-	memccpy.c \
-	memchr.c \
-	memcmp.c \
-	memcpy-c.c \
-	memmove.c \
-	memset-c.c \
-	movedata.c \
-	strcasecmp.c \
-	strcat.c \
-	strchr.c \
-	strcmp.c \
-	strcspn.c \
-	strcpy-c.c \
-	strdup.c \
-	strlen-c.c \
-	strncasecmp.c \
-	strncat.c \
-	strncmp.c \
-	strncpy.c \
-	strpbrk.c \
-	strrchr.c \
-	strspn.c \
-	strstr.c \
-	strtok.c \
+OBJS = \
+	bzero.o \
+	memccpy.o \
+	memchr.o \
+	memcmp.o \
+	memcpy-c.o \
+	memmove.o \
+	memset-c.o \
+	movedata.o \
+	strcasecmp.o \
+	strcat.o \
+	strchr.o \
+	strcmp.o \
+	strcspn.o \
+	strcpy-c.o \
+	strdup.o \
+	strlen-c.o \
+	strncasecmp.o \
+	strncat.o \
+	strncmp.o \
+	strncpy.o \
+	strpbrk.o \
+	strrchr.o \
+	strspn.o \
+	strstr.o \
+	strtok.o \
 	# end of list
 
-OBJS = $(SRCS:.c=.o)
-
 .PHONY: all
-
-$(OBJS): $(SRCS)
 
 all: out.a
 
@@ -43,4 +39,4 @@ out.a: $(OBJS)
 	$(AR) $(ARFLAGS_SUB) $@ $^
 
 clean:
-	rm -f *.[ao]
+	rm -f $(OBJS) out.a

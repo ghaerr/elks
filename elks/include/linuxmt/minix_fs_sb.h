@@ -19,9 +19,8 @@ struct minix_sb_info {
     unsigned short		s_dirsize;
     unsigned short		s_namelen;
     struct buffer_head *	s_sbh;
-    struct minix_super_block *	s_ms;
     unsigned short		s_mount_state;
-    unsigned short		s_version;
+	unsigned short		s_ondisk_state;		/* copy of fs state on disk*/
 };
 
 #endif

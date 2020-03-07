@@ -31,6 +31,7 @@ all:
 	$(MAKE) -C mfsck all
 	$(MAKE) -C mkromfs all
 	$(MAKE) -C setboot all
+	$(MAKE) -C objdump86 all
 
 
 #########################################################################
