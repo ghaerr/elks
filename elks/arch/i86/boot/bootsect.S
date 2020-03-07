@@ -552,6 +552,7 @@ disksizes_end:
 .org 0x1E3
 msg1:
 	.byte 13,10,7
+elks_magic:
 	.ascii "ELKS Boot"
 msg1end:
 

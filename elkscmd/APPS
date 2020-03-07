@@ -125,6 +125,5 @@ CONFIG_APP_TINYIRC		inet/tinyirc/	Installs /bin/tinyirc
 CONFIG_APP_URLGET		inet/urlget/	Installs /bin/urlget and symlink /bin/ftpget
 
 # Other directories in elkscmd/
-bootblocks/								Boot sectors for MINIX and FAT boots. Should be moved.
 rootfs_template/						Root filesystem template for static files not built in elkscmd/
 lib/									Unused. putenv.c, sleep.c, bsd/daemon.c, bsd/err.c

@@ -130,7 +130,7 @@ bpb_reserved1:				// Reserved
 	.byte 0
 bpb_bootsig:				// Extended boot signature
 	.byte 0x29
-bpb_vol_id:					// Volume serial number
+bpb_vol_id:				// Volume serial number
 	.long 0
 bpb_vol_label:				// Volume label (11 bytes)
 	.ascii "NO NAME    "
@@ -183,14 +183,27 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 	shr %dx				// Now by 0x200 --- a sector count
 	inc %dx				// Account for any incomplete sector
 					// (this may overestimate a bit)
-	xor %cx,%cx
-	mov $ELKS_INITSEG,%bx
-	mov %bx,%es
+	// (According to MFLD (https://github.com/jbruchon/elks/issues/288
+	// #issuecomment-581034966), BIOS reads may reportedly fail if %es
+	// for read calls is not aligned to a large power of 2; to be on the
+	// safe side, rewrite 0x100:0 into something like 0:0x1000...)
+	mov $ELKS_INITSEG,%cx
+	mov %cx,%es
+.if (ELKS_INITSEG & 0xff) == 0
+	mov $ELKS_INITSEG>>4,%ch
+.else
+	mov $ELKS_INITSEG<<4,%cx
+.endif
+.if (ELKS_INITSEG & 0xf000) == 0
+	xor %bx,%bx
+.else
+	mov $ELKS_INITSEG&0xf000,%bx
+.endif
 	push %bx
 	call disk_read
 
 	// Check for ELKS magic number
-	mov $0x1E6,%di
+	mov $elks_magic,%di
 	mov $0x4C45,%ax
 	scasw
 	jnz not_elks
@@ -206,7 +219,12 @@ boot_it:
 	// w00t!
 	push %es
 	pop %ds
-	orb $EF_AS_BLOB>>8,0x1F7	// Signify /linux was loaded as 1 blob
+	// Signify that /linux was loaded as 1 blob
+.if (EF_AS_BLOB & 0xff) == 0
+	orb $EF_AS_BLOB>>8,elks_flags+1
+.else
+	orw $EF_AS_BLOB,elks_flags
+.endif
 	ljmp $ELKS_INITSEG+0x20,$0
 
 kernel_name:

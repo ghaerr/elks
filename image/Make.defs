@@ -10,9 +10,10 @@ include $(TOPDIR)/Make.defs
 
 ELKS_DIR = $(TOPDIR)/elks
 ELKSCMD_DIR = $(TOPDIR)/elkscmd
+BOOTBLOCKS_DIR = $(TOPDIR)/bootblocks
 
-FD_MINIX_BOOT = $(ELKSCMD_DIR)/bootblocks/minix.bin
-FD_FAT_BOOT = $(ELKSCMD_DIR)/bootblocks/fat.bin
+FD_MINIX_BOOT = $(BOOTBLOCKS_DIR)/minix.bin
+FD_FAT_BOOT = $(BOOTBLOCKS_DIR)/fat.bin
 # TODO: replace these exports by includes
 export FD_MINIX_BOOT FD_FAT_BOOT
 
