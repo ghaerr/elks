@@ -45,7 +45,9 @@ void device_setup(void)
 
 #ifdef CONFIG_BLK_DEV_RAM
     rd_load();
-#else
+#endif
+
+#if ! defined CONFIG_ROMCODE || ! defined CONFIG_ROMFS_FS
     /*
      * The bootloader may have passed us a ROOT_DEV which is actually a BIOS
      * drive number.  If so, convert it into a proper <major, minor> block
