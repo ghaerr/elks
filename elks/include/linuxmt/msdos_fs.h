@@ -91,6 +91,8 @@ struct msdos_dir_entry {
 	unsigned long size;  /* file size (in bytes) */
 };
 
+#define LAST_LONG_ENTRY		0x40	/* marks last entry in slot seqno*/
+
 /* Up to 13 characters of the name */
 struct msdos_dir_slot {
 	__u8    id;		/* sequence number for slot */
@@ -183,6 +185,8 @@ extern int init_msdos_fs(void);
 
 //extern struct file_operations msdos_dir_operations;
 extern struct inode_operations msdos_dir_inode_operations;
+extern int msdos_get_entry_long(struct inode *dir, off_t *pos, struct buffer_head **bh,
+    char *name, int *namelen, off_t *dirpos, ino_t *ino);
 
 /* file.c */
 

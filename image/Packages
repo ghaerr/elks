@@ -152,6 +152,7 @@
 /mnt			:boot
 /root			:boot
 /root/.profile	:boot
+#/root/thisisaverylongfilenameandthatisallthereistoit	:boot
 /sbin					:base :fileutil
 /sbin/fdisk							:fileutil
 /sbin/fsck				:base
