@@ -1,8 +1,0 @@
-List of known bugs in elkscmd
-=============================
-Last modified 2014-04-26
-
-* Parallel make (make -j option) not supported
-
-* Images may remain loop-mounted after building them
-
