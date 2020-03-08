@@ -13,7 +13,7 @@ HOST_CFLAGS = -O2
 
 ###############################################################################
 
-OUTS = tar miniterm
+OUTS = tar miniterm unreal16
 OUTS_BE = ed
 
 #TODO: fix compress uncompress zcat lpfilter disabled
@@ -32,7 +32,11 @@ ed: ed.o
 
 tar: tar.o
 	$(LD) $(LDFLAGS) -o tar tar.o $(LDLIBS)
-
+	
+unreal16: unreal16
+	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o
+	$(LD) -melks-libc -mcmodel=small -nostdlib -o unreal16 unreal16.o
+	
 compress: compress.o
 	$(LD) $(LDFLAGS) -o compress compress.o $(LDLIBS)
 

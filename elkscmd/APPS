@@ -63,7 +63,7 @@ CONFIG_APP_DISK_UTILS	disk_utils/		Disk utilities from early 1990s.  (B option w
 
 CONFIG_APP_MISC_UTILS	misc_utils/		Miscellaneous utilities from various sources, including sash.
 										(B option when busyelks selected)
-										Installs in /usr/bin: ed, miniterm, tar
+										Installs in /usr/bin: ed, miniterm, tar, unreal16
 										Not installed: compress, uncompress, zcat
 
 CONFIG_APP_MINIX1		minix1/			MINIX utilities, part 1.  (B option when busyelks selected)	
