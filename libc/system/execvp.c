@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "_execve.h"
 
 #ifdef __AS386_16__
 static int
