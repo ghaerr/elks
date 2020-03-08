@@ -23,7 +23,6 @@ PRGS = \
 	ps \
 	meminfo \
 	who \
-	knl \
 	man \
 	poweroff \
 	chmem \
@@ -32,6 +31,7 @@ PRGS = \
 	# EOL
 
 # clock enabled and has direct I/O port access
+# knl removed as useless
 # exitemu disabled because it calls INT directly to DOSEMU
 
 init: init.o
