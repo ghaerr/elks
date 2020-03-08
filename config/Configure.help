@@ -255,10 +255,6 @@ CONFIG_HW_259_USE_ORIGINAL_MASK
 
   This should only be used by kernel hackers.
 
-Ticks for BogoMIPS (0 = check at boot time)
-CONFIG_BOGOMIPS
-  Enter the number of ticks for the BogoMIPS (integer)
-
 NO Floppy count at 40:10 use INT13.08
 CONFIG_HW_USE_INT13_FOR_FLOPPY
   Saying yes will get the number of floppy drive via the BIOS

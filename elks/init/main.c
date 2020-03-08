@@ -17,12 +17,6 @@ int root_mountflags = MS_RDONLY;
 int root_mountflags = 0;
 #endif
 
-#if (CONFIG_BOGOMIPS == 0)
-unsigned long loops_per_sec = 1;
-#else
-unsigned long loops_per_sec = CONFIG_BOGOMIPS;
-#endif
-
 static void init_task(void);
 extern int run_init_process(char *);
 
@@ -45,10 +39,6 @@ void start_kernel(void)
     tty_init();
 
     init_console();
-
-#if (CONFIG_BOGOMIPS == 0)
-    calibrate_delay();
-#endif
 
     device_setup();
 
@@ -103,44 +93,3 @@ static void init_task()
     run_init_process("/bin/sash");
     panic("No init or sh found");
 }
-
-#if (CONFIG_BOGOMIPS == 0)
-/*
- *	Yes its the good old bogomip counter
- */
-
-static void delay(jiff_t loops)
-{
-    register char *hw = *(((unsigned char **)(&loops))+1);
-    register char *lw = *((unsigned char **)(&loops));
-
-    do {
-   	do {
-    	} while (lw--);
-    } while (hw--);
-}
-
-int calibrate_delay(void)
-{
-    jiff_t ticks;
-
-    printk("Calibrating delay loop... ");
-    do {
-	ticks = jiffies;
-	delay(loops_per_sec);
-	ticks = jiffies - ticks;
-	if (!ticks)
-	    ticks = 1L;
-	loops_per_sec = (loops_per_sec * (jiff_t)HZ) / ticks;
-	if (ticks >= (jiff_t)HZ) {
-	    printk("ok - %u.%02u BogoMips\n",
-		    (__u16)(loops_per_sec / 391500L),
-		    (__u16)((loops_per_sec / 3915L) % 100L));
-	    return 0;
-	}
-    } while (loops_per_sec < (4294967296L/((jiff_t)HZ)));
-    printk("failed\n");
-
-    return -1;
-}
-#endif
