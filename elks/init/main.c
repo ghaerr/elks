@@ -1,11 +1,9 @@
-/* $Header$
- */
-
 #include <linuxmt/config.h>
 #include <linuxmt/init.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
+#include <linuxmt/fcntl.h>
 #include <linuxmt/utsname.h>
 
 #include <arch/system.h>
@@ -14,13 +12,9 @@
  *	System variable setups
  */
 #ifdef CONFIG_FS_RO
-
 int root_mountflags = MS_RDONLY;
-
 #else
-
 int root_mountflags = 0;
-
 #endif
 
 #if (CONFIG_BOGOMIPS == 0)
@@ -28,8 +22,6 @@ unsigned long loops_per_sec = 1;
 #else
 unsigned long loops_per_sec = CONFIG_BOGOMIPS;
 #endif
-
-/**************************************/
 
 static void init_task(void);
 extern int run_init_process(char *);
@@ -90,32 +82,21 @@ static void init_task()
 	char *s;
 
     mount_root();
-#ifndef CONFIG_SMALL_KERNEL
-    printk("Loading init\n");
-#endif
 
-    /* The Linux kernel traditionally attempts to start init from 4 locations,
-     * as indicated by this code:
-     *
-     * run_init_process("/sbin/init");
-     * run_init_process("/etc/init");
-     * run_init_process("/bin/init");
-     * run_init_process("/bin/sh");
-     */
-
+	/* run init, normally no return*/
 	run_init_process("/bin/init");
 
+	/* No init, open stdin and try running shell*/
 #ifdef CONFIG_CONSOLE_SERIAL
-    num = sys_open(s="/dev/ttyS0", 2, 0);		/* These are for stdin */
+    num = sys_open(s="/dev/ttyS0", O_RDWR, 0);
 #else
-    num = sys_open(s="/dev/tty1", 2, 0);
+    num = sys_open(s="/dev/tty1", O_RDWR, 0);
 #endif
     if (num < 0)
-	printk("Unable to open %s (error %d)\n", s, -num);
+		printk("Unable to open %s (error %d)\n", s, -num);
 
-    if (sys_dup(num) != 1)			/* This is for stdout */
-	printk("dup failed\n");
-    sys_dup(num);				/* This is for stderr */
+    sys_dup(num);		/* open stdout*/
+    sys_dup(num);		/* open stderr*/
     printk("No init - running /bin/sh\n");
 
     run_init_process("/bin/sh");

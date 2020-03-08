@@ -301,8 +301,13 @@ void msdos_write_inode(register struct inode *inode)
 	struct buffer_head *bh;
 	register struct msdos_dir_entry *raw_entry;
 
-fsdebug("write_inode %ld %d\n", (unsigned long)inode->i_ino, inode->i_dirt);
 	inode->i_dirt = 0;
+#ifdef CONFIG_FS_DEV
+	/* FAT /dev inodes don't actually exist, so don't write anything*/
+	if (inode->i_ino < DEVINO_BASE + DEVDIR_SIZE)
+		return;
+#endif
+fsdebug("write_inode %ld %d\n", (unsigned long)inode->i_ino, inode->i_dirt);
 	if (inode->i_ino == MSDOS_ROOT_INO || !inode->i_nlink) return;
 	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS)))) {
 	    printk("FAT: write inode fail\n");
