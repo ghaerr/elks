@@ -98,6 +98,7 @@
 /bin/passwd				:base
 /bin/poweroff			:base
 /bin/printenv					:shutil
+/bin/pres							:fileutil
 /bin/proto							:fileutil
 /bin/ps				:small
 /bin/pwd			:small
@@ -127,6 +128,7 @@
 /bin/true				:base
 /bin/umount			:small
 /bin/uniq						:shutil
+/bin/unreal16							:app
 /bin/urlget					:net
 /bin/vi					:base
 /bin/wc							:shutil
@@ -175,7 +177,6 @@
 /usr/bin/mtype						:fileutil
 /usr/bin/mwrite						:fileutil
 /usr/bin/tar						:fileutil
-/usr/bin/unreal16							:app
 /var			:boot
 /var/run		:boot
 /var/run/utmp	:boot
