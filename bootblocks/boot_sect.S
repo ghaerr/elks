@@ -9,6 +9,7 @@
 // reads and runs /linux on a FAT12/FAT16 filesystem
 
 #include <autoconf.h>
+#include <linuxmt/boot.h>
 
 #include "boot_err.h"
 
@@ -18,7 +19,6 @@
 // Must match ELKS
 #define ELKS_INITSEG (0x0100)
 #define ELKS_SYSSEG  (0x1000)
-#define EF_AS_BLOB   (0x8000)
 
 	.code16
 
@@ -279,17 +279,18 @@ dr_loop:
 	// (this slightly simplifies the advance-in-buffer calculations
 	// later on)
 
+dr_over:
 	mov -6+1(%bp),%bl
 	neg %bl
 	shr %bl
-	jnz dr_over
+	jnz dr_over2
 	mov $0x7F,%bl
-dr_over:
+dr_over2:
 	cmp %bl,%al      // BL ranges from 1 to 0x7F inclusive
-	jna dr_over2
+	jna dr_over3
 	xchg %ax,%bx     // AL = number of sectors to read for this round
 
-dr_over2:
+dr_over3:
 	mov drive_num,%dl
 
 dr_try:
@@ -423,10 +424,10 @@ binfile:
 	mov $LOADSEG,%ax
 	mov %ax,%ds
 
-	mov 0x01E6,%ax  // check for ELKS magic number
+	mov elks_magic,%ax  // check for ELKS magic number
 	cmp $0x4C45,%ax
 	jnz not_elks
-	mov 0x01E8,%ax
+	mov elks_magic+2,%ax
 	cmp $0x534B,%ax
 	jz  boot_it
 
@@ -442,7 +443,13 @@ boot_it:
 .endif
 
 	pop %ax
-	orb $EF_AS_BLOB>>8,0x01F7  // signify that setup + kernel is 1 blob
+
+	// Signify that /linux was loaded as 1 blob
+.if (EF_AS_BLOB & 0xff) == 0
+	orb $EF_AS_BLOB>>8,elks_flags+1
+.else
+	orw $EF_AS_BLOB,elks_flags
+.endif
 
 	mov $ELKS_INITSEG,%ax
 	mov %ax,%ds

@@ -11,6 +11,7 @@ all: .config
 	$(MAKE) -C libc all
 	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' install
 	$(MAKE) -C elks all
+	$(MAKE) -C bootblocks all
 	$(MAKE) -C elkscmd all
 	$(MAKE) -C image all
 	$(MAKE) -C elksemu PREFIX='$(TOPDIR)/cross' elksemu
@@ -19,6 +20,7 @@ clean:
 	$(MAKE) -C libc clean
 	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' uninstall
 	$(MAKE) -C elks clean
+	$(MAKE) -C bootblocks clean
 	$(MAKE) -C elkscmd clean
 	$(MAKE) -C image clean
 	$(MAKE) -C elksemu clean

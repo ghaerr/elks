@@ -26,4 +26,18 @@
 
 #define ELKSFLAGS	0
 
+/* If we are not building the (dummy) boot sector (elks/elks/arch/i86/boot/
+   {bootsect.S, netbootsect.S}) at the start of /linux, then define
+   constants giving the offsets of various fields within /linux. */
+
+#if defined __ASSEMBLER__ && !defined BOOTSEG
+elks_magic	=	0x1e6
+setup_sects	=	0x1f1
+root_flags	=	0x1f2
+syssize		=	0x1f4
+elks_flags	=	0x1f6
+root_dev	=	0x1fc
+boot_flag	=	0x1fe
+#endif
+
 #endif

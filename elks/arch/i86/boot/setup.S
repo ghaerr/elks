@@ -96,11 +96,6 @@
 ! NOTE! These had better be the same as in bootsect.s!
 */
 
-setup_sects = 0x1f1
-syssize = 0x1f4
-elks_flags = 0x1f6
-boot_flag = 0x1fe
-
 #define __ASSEMBLY__
 #include <linuxmt/config.h>
 #include <linuxmt/boot.h>
@@ -166,7 +161,7 @@ prtstr:	lodsb
 
 
 // If setup and kernel were loaded as a blob, we need to separate them out,
-// then move to a more spacious stack
+// then move to our own stack
 
 move_kernel:
 #ifndef CONFIG_ROMCODE
@@ -262,9 +257,9 @@ start_os:
 
 #ifdef CONFIG_ROMCODE
 #ifdef CONFIG_ROMFS_FS
-	movw $0x0600,0x01FC  /* rom-flash */
+	movw $0x0600,root_dev  /* rom-flash */
 #else
-	movw $0x0380,0x01FC  /* bioshd */
+	movw $0x0380,root_dev  /* bioshd */
 #endif
 #endif
 

@@ -17,7 +17,6 @@ include $(BASEDIR)/Make.defs
 SUBDIRS =       \
 	ash         \
 	bc          \
-	bootblocks  \
 	busyelks    \
 	disk_utils  \
 	file_utils  \

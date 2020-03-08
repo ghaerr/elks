@@ -130,8 +130,11 @@ static void load_zone (int level, zone_nr * z_start, zone_nr * z_end)
 {
 	for (zone_nr * z = z_start; z < z_end; z++) {
 		if (level == 0) {
-			// FIXME: image can be > 64K
-			disk_read ((*z) << 1, 2, i_now ? (byte_t *) 0 + f_pos : d_dir + f_pos, i_now ? LOADSEG : seg_data ());
+			if (i_now) {
+				long lin_addr = ((file_pos) LOADSEG << 4) + f_pos;
+				disk_read ((*z) << 1, 2, (byte_t *) (unsigned) lin_addr, (unsigned) (lin_addr >> 4) & 0xf000);
+			} else
+				disk_read ((*z) << 1, 2, d_dir + f_pos, seg_data ());
 			f_pos += BLOCK_SIZE;
 			if (f_pos >= i_data->i_size) break;
 		} else {
