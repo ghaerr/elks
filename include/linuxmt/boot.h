@@ -23,19 +23,31 @@
 					   loaded as one blob at SETUPSEG:0,
 					   and setup may need to move kernel
 					   to SYSSEG:0 */
+#define EF_BIOS_DEV_NUM	0x4000		/* says that root_dev does not give
+					   a <major, minor> block device
+					   number, but only a BIOS drive
+					   number (and possibly other
+					   information); setup or kernel
+					   should use this drive number to
+					   figure out the correct root
+					   device */
 
-#define ELKSFLAGS	0
+#define ELKSFLAGS	EF_NONE
 
 /* If we are not building the (dummy) boot sector (elks/elks/arch/i86/boot/
    {bootsect.S, netbootsect.S}) at the start of /linux, then define
-   constants giving the offsets of various fields within /linux. */
+   constants giving the offsets of various fields within /linux.
+
+   The fields in /linux are mainly based on an old version of the Linux/x86
+   Boot Protocol (https://www.kernel.org/doc/html/latest/x86/boot.html).
+   Fields which are specific to ELKS are indicated below.  */
 
 #if defined __ASSEMBLER__ && !defined BOOTSEG
-elks_magic	=	0x1e6
+elks_magic	=	0x1e6		/* should read "ELKS" (45 4c 4b 53) */
 setup_sects	=	0x1f1
 root_flags	=	0x1f2
 syssize		=	0x1f4
-elks_flags	=	0x1f6
+elks_flags	=	0x1f6		/* 16-bit ELKS flags (EF_...) */
 root_dev	=	0x1fc
 boot_flag	=	0x1fe
 #endif
