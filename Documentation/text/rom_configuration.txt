@@ -189,14 +189,6 @@ This section include the option used only in the kernel.
    
    
    
-'Ticks for BogoMIPS (0 = check at boot time)'  CONFIG_BOGOMIPS
-------------------------------------------------------------
-
-   A 8088 for example need up to 15 sec for calculating his bogomips but 
-   only 5 sec for booting the kernel. If you know your speed you can use 
-   this define.
-
-
 'NO Floppycount at 40:10 use INT13.08'        CONFIG_HW_USE_INT13_FOR_FLOPPY 
 -----------------------------------------------------------------------
    

@@ -48,8 +48,6 @@ mainmenu_option next_comment
 
 		fi
 
-		int 'Ticks for BogoMIPS (0 = check at boottime)' CONFIG_BOGOMIPS 140055
-
 		int 'Base memory size (64K pages)' CONFIG_MEM_PAGES 8 4 10
 
 		comment 'Devices'
