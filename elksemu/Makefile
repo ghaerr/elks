@@ -93,6 +93,8 @@ module: binfmt_elks.o
 
 # This matches my compile (2.0.x); yours may be different.
 MODCFLAGS=-D__KERNEL__ -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer \
+	   -Wextra -Wwrite-strings -Wcast-align -Wstrict-aliasing \
+	   -Wstrict-overflow -Wstrict-prototypes -Wpointer-arith -Wundef \
           -fno-strength-reduce -pipe -m486 -DCPU=486 -DMODULE -DMODVERSIONS \
 	  -include /usr/include/linux/modversions.h
 

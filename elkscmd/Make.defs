@@ -71,10 +71,10 @@ ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre$$//')
 
 ifeq ($(PLATFORM),i86-ELKS)
 	CC=ia16-elf-gcc
-	CFLBASE=-fno-inline -melks-libc -mcmodel=small -mno-segment-relocation-stuff -mtune=i8086 -Wall -Os
+	CFLBASE=-fno-inline -melks-libc -mcmodel=small -mno-segment-relocation-stuff -mtune=i8086 -Wall -Wextra -Wwrite-strings -Wcast-align -Wstrict-aliasing -Wstrict-overflow -Wstrict-prototypes -Wpointer-arith -Wundef -Os
 	LD=ia16-elf-gcc
 	LDFLAGS=$(CFLBASE)
-	CHECK=gcc -c -o .null.o -Wall -pedantic
+	CHECK=gcc -c -o .null.o -Wall -Wextra -Wwrite-strings -Wcast-align -Wstrict-aliasing -Wstrict-overflow -Wstrict-prototypes -Wpointer-arith -Wundef -pedantic
 	AS=ia16-elf-as
 	ASFLAGS=-mtune=i8086
 endif
