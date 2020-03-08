@@ -33,7 +33,7 @@ jobs:
 
       - name: prepare
         if: steps.cache.outputs.cache-hit != 'true'
-        run: 'mkdir cross'
+        run: 'mkdir -p cross'
 
       - name: cross
         if: steps.cache.outputs.cache-hit != 'true'
