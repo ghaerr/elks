@@ -217,14 +217,17 @@ not_elks:
 
 boot_it:
 	// w00t!
+	mov drive_num,%al
+	xor %ah,%ah
 	push %es
 	pop %ds
 	// Signify that /linux was loaded as 1 blob
-.if (EF_AS_BLOB & 0xff) == 0
-	orb $EF_AS_BLOB>>8,elks_flags+1
+.if ((EF_AS_BLOB|EF_BIOS_DEV_NUM) & 0xff) == 0
+	orb $(EF_AS_BLOB|EF_BIOS_DEV_NUM)>>8,elks_flags+1
 .else
-	orw $EF_AS_BLOB,elks_flags
+	orw $(EF_AS_BLOB|EF_BIOS_DEV_NUM),elks_flags
 .endif
+	mov %ax,root_dev
 	ljmp $ELKS_INITSEG+0x20,$0
 
 kernel_name:

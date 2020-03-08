@@ -420,6 +420,9 @@ binfile:
 }
 */
 
+	mov drive_num,%dl
+	xor %dh,%dh
+
 	push %ds
 	mov $LOADSEG,%ax
 	mov %ax,%ds
@@ -445,11 +448,12 @@ boot_it:
 	pop %ax
 
 	// Signify that /linux was loaded as 1 blob
-.if (EF_AS_BLOB & 0xff) == 0
-	orb $EF_AS_BLOB>>8,elks_flags+1
+.if ((EF_AS_BLOB|EF_BIOS_DEV_NUM) & 0xff) == 0
+	orb $(EF_AS_BLOB|EF_BIOS_DEV_NUM)>>8,elks_flags+1
 .else
-	orw $EF_AS_BLOB,elks_flags
+	orw $(EF_AS_BLOB|EF_BIOS_DEV_NUM),elks_flags
 .endif
+	mov %dx,root_dev
 
 	mov $ELKS_INITSEG,%ax
 	mov %ax,%ds
