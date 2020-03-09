@@ -1,9 +1,9 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include "_execve.h"
 
-int execve(char *fname, char **argv, char **envp)
+int
+execve(char *fname, char **argv, char **envp)
 {
 	char **p;
 	int argv_len=0, argv_count=0;
