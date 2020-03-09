@@ -98,7 +98,7 @@ struct super_block *msdos_read_super(register struct super_block *s, char *data,
 	MSDOS_SB(s)->cluster_size = b->cluster_size;
 	MSDOS_SB(s)->fats = b->fats;
 	MSDOS_SB(s)->fat_start = b->reserved;
-	if(!b->fat_length && b->fat32_length){
+	if (!b->fat_length && b->fat32_length){
 		fat32 = 1;
 		MSDOS_SB(s)->fat_length = (unsigned short)b->fat32_length;
 		MSDOS_SB(s)->root_cluster = b->root_cluster;

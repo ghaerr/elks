@@ -196,7 +196,7 @@ int main(int argc, char ** argv)
    multiple_files = 0;
    for (ar = 1; ar < argc; ar++)
    {
-      if (argv[ar][0] == '-') switch(argv[ar][1])
+      if (argv[ar][0] == '-') switch (argv[ar][1])
       {
       case 's': display_mode = 1; break;
       case 'n': display_mode = 2; break;
@@ -362,7 +362,7 @@ void do_module(char *fname, char *archive)
       fseek(ifd, 0L, 0);
       fetch_aout_hdr();
 
-      switch(display_mode)
+      switch (display_mode)
       {
       case 0: dump_aout(); break;
       case 1: size_aout(); break;
@@ -374,7 +374,7 @@ void do_module(char *fname, char *archive)
       fseek(ifd, 0L, 0);
       fetch_v7_hdr();
 
-      switch(display_mode)
+      switch (display_mode)
       {
       case 0: dump_v7(); break;
       case 1: size_v7(); break;
@@ -392,7 +392,7 @@ void do_module(char *fname, char *archive)
 
 int error(char *str)
 {
-   switch( display_mode)
+   switch (display_mode)
    {
    case 1: fprintf(stderr, "size: %s: %s\n", ifname, str); break;
    case 2: fprintf(stderr, "nm: %s: %s\n", ifname, str); break;
@@ -556,7 +556,7 @@ int disp_syms(void)
             printf("         ");
 	 else
             printf("%08lx ", offset);
-	 switch(symtype)
+	 switch (symtype)
 	 {
 	 case 0x004F: putchar('U'); break;
 	 case 0x0000: putchar('t'); break;
@@ -605,9 +605,9 @@ static char * relstr[] = {"ERR", "DB", "DW", "DD"};
 
       if (ch == 0) break;
 
-      switch( ch & 0xC0)
+      switch (ch & 0xC0)
       {
-      case 0x00:  switch(ch & 0xF0)
+      case 0x00:  switch (ch & 0xF0)
                   {
                   case 0x00: /* Relocator size */
 	                     printf("RELSZ %d\n", relsize= (ch & 0xF));
@@ -670,7 +670,7 @@ break_break:;
 
 long get_sized(int sz)
 {
-   switch(sz)
+   switch (sz)
    {
    case 0: return 0;
    case 1: return get_byte();
@@ -897,7 +897,7 @@ void nm_aout(void)
          printf("         ");
       else
          printf("%08lx ", n_value);
-      switch(n_sclass)
+      switch (n_sclass)
       {
       case 0x01: printf("a "); break;
       case 0x12: printf("T "); break;
@@ -912,14 +912,14 @@ void nm_aout(void)
                  }
 
                  printf("n_sclass=");
-                 switch(n_sclass >> 3)
+                 switch (n_sclass >> 3)
 		 {
 		 case 0: printf("C_NULL,"); break;
 		 case 2: printf("C_EXT,"); break;
 		 case 3: printf("C_STAT,"); break;
 		 default: printf("%04o,", n_sclass & 0xF8);
 		 }
-                 switch(n_sclass & 7)
+                 switch (n_sclass & 7)
 		 {
 		 case 0: printf("N_UNDF "); break;
 		 case 1: printf("N_ABS "); break;

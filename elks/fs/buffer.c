@@ -63,10 +63,10 @@ static int lastumap;
 
 #ifdef DEBUG_FREE_BH_COUNT
 static int nr_free_bh = NR_BUFFERS;
-#define DCR_COUNT(bh) if(!(--bh->b_count))nr_free_bh++
-#define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
-#define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
-#define SET_COUNT(bh) if(--nr_free_bh < 0) { \
+#define DCR_COUNT(bh) if (!(--bh->b_count))nr_free_bh++
+#define INR_COUNT(bh) if (!(bh->b_count++))nr_free_bh--
+#define CLR_COUNT(bh) if (bh->b_count)nr_free_bh++
+#define SET_COUNT(bh) if (--nr_free_bh < 0) { \
 	printk("VFS: get_free_buffer: bad free buffer head count.\n"); \
 	nr_free_bh = 0; \
     }

@@ -146,7 +146,7 @@ void cmd_ln(struct minix_fs_dat *fs,int argc,char **argv) {
 }
 
 static int ftype(const char *strtype) {
-  switch(strtype[0]) {
+  switch (strtype[0]) {
   case 'c': return S_IFCHR;
   case 'b': return S_IFBLK;
   //case 'd': return S_IFDIR;

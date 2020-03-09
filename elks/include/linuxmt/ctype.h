@@ -24,7 +24,7 @@ extern	unsigned char	__ctype[];
 
 #define __CT(c) (__ctype[1+(unsigned char)c])
 
-/* Note the '!!' is a cast to 'bool' and even BCC deletes it in an if()  */
+/* Note the '!!' is a cast to 'bool' and even BCC deletes it in an if ()  */
 #define	isalnum(c)	(!!(__CT(c)&(__CT_u|__CT_l|__CT_d)))
 #define	isalpha(c)	(!!(__CT(c)&(__CT_u|__CT_l)))
 #define	isascii(c)	(!((c)&~0x7F))

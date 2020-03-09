@@ -28,7 +28,7 @@ int do_signal(void)
     signr = 1;
     mask = (sigset_t)1;
     while (currentp->signal) {
-	while(!(currentp->signal & mask)) {
+	while (!(currentp->signal & mask)) {
 	    signr++;
 	    mask <<= 1;
 	}

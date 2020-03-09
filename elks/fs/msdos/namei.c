@@ -103,7 +103,7 @@ static int msdos_find_long(struct inode *dir, const char *name, int len,
 			if ((len == entry_len) && compare(entry_name, msdos_name, len))
 				return 0;
 		}
-	} while(res != 0);
+	} while (res != 0);
 	if (*bh)
 		unmap_brelse(*bh);
 	*bh = NULL;
