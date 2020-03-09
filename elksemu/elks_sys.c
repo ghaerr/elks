@@ -96,9 +96,9 @@ static int elks_read(int bx,int cx,int dx,int di,int si)
 {
 	dbprintf(("read(%d, %d, %d)\n",
 		bx,cx,dx));
-	if( bx >= 10000 && bx < 10000+DIRCOUNT)
+	if (bx >= 10000 && bx < 10000+DIRCOUNT)
 		return elks_readdir(bx, cx, dx, di, si);
-	if( dx < 0 || dx > 1024 ) dx = 1024;
+	if (dx < 0 || dx > 1024) dx = 1024;
 	return read(bx, ELKS_PTR(void, cx), dx);
 }
 
@@ -106,7 +106,7 @@ static int elks_read(int bx,int cx,int dx,int di,int si)
 static int elks_write(int bx,int cx,int dx,int di,int si)
 {
 #ifdef TESTING
-	if( dx > 1024 || dx < 0 )
+	if (dx > 1024 || dx < 0)
 	{
 	   dx = 1024;
 	   dbprintf(("write(%d, %d, >%d)\n",bx,cx,dx));
@@ -131,7 +131,7 @@ static int elks_open(int bx,int cx,int dx,int di,int si)
 
 	/* Nasty hack so /lib/liberror.txt doesn't exist on the host.
 	 */
-	if (strcmp(dp, "/lib/liberror.txt") == 0 ) {
+	if (strcmp(dp, "/lib/liberror.txt") == 0) {
 	   int fd = open("/tmp/liberror.txt", O_CREAT|O_EXCL|O_RDWR, 0666);
 	   if (fd < 0) return fd;
 	   unlink("/tmp/liberror.txt");
@@ -140,11 +140,11 @@ static int elks_open(int bx,int cx,int dx,int di,int si)
 	   return fd;
 	}
 
-	if( cx == O_RDONLY )
+	if (cx == O_RDONLY)
 	{
-		if(stat(dp,&s)==-1)
+		if (stat(dp,&s)==-1)
 			return -1;
-		if( S_ISDIR(s.st_mode) )
+		if (S_ISDIR(s.st_mode))
 			return elks_opendir(dp);
 	}
 
@@ -155,7 +155,7 @@ static int elks_open(int bx,int cx,int dx,int di,int si)
 static int elks_close(int bx,int cx,int dx,int di,int si)
 {
 	dbprintf(("close(%d)\n",bx));
-	if( bx >= 10000 && bx < 10000+DIRCOUNT)
+	if (bx >= 10000 && bx < 10000+DIRCOUNT)
 		return elks_closedir(bx);
 	return close(bx);
 }
@@ -169,10 +169,10 @@ static int elks_wait4(int bx,int cx,int dx,int di,int si)
 	struct rusage use;
 
 	dbprintf(("wait4(%d, %d, %d, %d)\n", bx, cx, dx, di));
-	r=wait4((int)(short)bx, &status, dx, &use );
+	r=wait4((int)(short)bx, &status, dx, &use);
 
 	*tp=status;
-	if( di ) memcpy(ELKS_PTR(void, di), &use, sizeof(use));
+	if (di) memcpy(ELKS_PTR(void, di), &use, sizeof(use));
 	return r;
 }
 
@@ -239,7 +239,7 @@ static int elks_stat(int bx,int cx,int dx,int di,int si)
 {
 	struct stat s;
 	dbprintf(("stat(%s,%d)\n", ELKS_PTR(char, bx), cx));
-	if(stat(ELKS_PTR(char, bx),&s)==-1)
+	if (stat(ELKS_PTR(char, bx),&s)==-1)
 		return -1;
 	squash_stat(&s,cx);
 	return 0;
@@ -250,7 +250,7 @@ static int elks_lstat(int bx,int cx,int dx,int di,int si)
 {
 	struct stat s;
 	dbprintf(("lstat(%s,%d)\n", ELKS_PTR(char, bx), cx));
-	if(lstat(ELKS_PTR(char, bx),&s)==-1)
+	if (lstat(ELKS_PTR(char, bx),&s)==-1)
 		return -1;
 	squash_stat(&s,cx);
 	return 0;
@@ -263,7 +263,7 @@ static int elks_lseek(int bx,int cx,int dx,int di,int si)
 
 	dbprintf(("lseek(%d,%ld,%d)\n",bx,l,dx));
 	l = lseek(bx,l,dx);
-	if( l < 0 ) return -1;
+	if (l < 0) return -1;
 	ELKS_POKE(int32_t, cx, l);
 	return 0;
 }
@@ -354,7 +354,7 @@ static int elks_pipe(int bx,int cx,int dx,int di,int si)
 	uint16_t *dp=ELKS_PTR(uint16_t, bx);
 	int p[2];
 	int err=pipe(p);
-	if(err==-1)
+	if (err==-1)
 		return err;
 	*dp++=p[0];
 	*dp=p[1];
@@ -420,16 +420,16 @@ static int elks_execve(int bx,int cx,int dx,int di,int si)
 	tmp=bp;
 
 	fd=open(ELKS_PTR(char, bx),O_RDONLY);
-	if(fd==-1)
+	if (fd==-1)
 	{ errno = ENOENT; return -1; }
-	if(read(fd, &mh, sizeof(mh))!=sizeof(mh))
+	if (read(fd, &mh, sizeof(mh))!=sizeof(mh))
 	{
 		close(fd);
 		errno = ENOEXEC;
 		return -1;
 	}
 	close(fd);
-	if(mh.hlen!=EXEC_HEADER_SIZE || mh.type!=ELKS_SPLITID)
+	if (mh.hlen!=EXEC_HEADER_SIZE || mh.type!=ELKS_SPLITID)
 	   is_elks = 0;
 
 	arg_ct = env_ct = 0;
@@ -440,9 +440,9 @@ static int elks_execve(int bx,int cx,int dx,int di,int si)
 	arg_ct+=2;	/* elksemu-path progname arg0...argn */
 	argp=malloc(sizeof(char *)*(arg_ct+1));
 	envp=malloc(sizeof(char *)*(env_ct+1));
-	if(!argp||!envp) { errno = ENOMEM; return -1; }
+	if (!argp||!envp) { errno = ENOMEM; return -1; }
 	ct=0;
-	if( is_elks )
+	if (is_elks)
 	{
 	   argp[0]="/usr/bin/elksemu";
 	   /* argp[1]=ELKS_PTR(char, bx); */
@@ -456,14 +456,14 @@ static int elks_execve(int bx,int cx,int dx,int di,int si)
 	while(*bp)
 		envp[ct++]=ELKS_PTR(char, cx+ *bp++);
 	envp[ct]=0;
-	if( is_elks )
+	if (is_elks)
 	{
 	   argp[1]=ELKS_PTR(char, bx);
 	   execve(argp[0],argp,envp);
 	}
 	else
 	   execve(ELKS_PTR(char, bx),argp,envp);
-	if( errno == ENOEXEC || errno == EACCES ) return -1;
+	if (errno == ENOEXEC || errno == EACCES) return -1;
 	perror("elksemu");
 	exit(1);
 }
@@ -554,12 +554,12 @@ static int elks_gettimeofday(int bx,int cx,int dx,int di,int si)
 
 	ax = gettimeofday(&tv, &tz);
 
-	if( ax == 0 && bx )
+	if (ax == 0 && bx)
 	{
 	   ELKS_POKE(int32_t, bx, tv.tv_sec);
 	   ELKS_POKE(int32_t, bx+4, tv.tv_usec);
 	}
-	if( ax == 0 && cx )
+	if (ax == 0 && cx)
 	{
 	   ELKS_POKE(int16_t, cx, tz.tz_minuteswest);
 	   ELKS_POKE(int16_t, cx+2, tz.tz_dsttime);
@@ -575,13 +575,13 @@ static int elks_settimeofday(int bx,int cx,int dx,int di,int si)
 	int ax;
 	dbprintf(("settimeofday(%d,%d)\n",bx,cx));
 
-	if( bx )
+	if (bx)
 	{
 	   pv = &tv;
 	   tv.tv_sec  = ELKS_PEEK(int32_t, bx);
 	   tv.tv_usec = ELKS_PEEK(int32_t, bx+4);
 	}
-	if( cx )
+	if (cx)
 	{
 	   pz = &tz;
 	   tz.tz_minuteswest = ELKS_PEEK(int16_t, cx);
@@ -631,7 +631,7 @@ static int elks_ioctl(int bx,int cx,int dx,int di,int si)
 static int elks_reboot(int bx,int cx,int dx,int di,int si)
 {
    errno = EINVAL;
-   if( bx != 0xfee1 || cx != 0xdead ) return -1;
+   if (bx != 0xfee1 || cx != 0xdead) return -1;
 
    switch(dx)
    {
@@ -653,11 +653,11 @@ elks_opendir(char * dname)
 	DIR * d;
 	int rv;
 	for(rv=0; rv<DIRCOUNT; rv++)
-		if( dirtab[rv] == 0 )
+		if (dirtab[rv] == 0)
 			break;
-	if( rv >= DIRCOUNT ) { errno=ENOMEM; return -1; }
+	if (rv >= DIRCOUNT) { errno=ENOMEM; return -1; }
 	d = opendir(dname);
-	if( d == 0 ) return -1;
+	if (d == 0) return -1;
 	dirtab[rv] = d;
 	return 10000+rv;
 }
@@ -668,13 +668,13 @@ static int elks_readdir(int bx,int cx,int dx,int di,int si)
 	struct dirent * ent;
 
 	/* Only read _ONE_ _WHOLE_ dirent at a time */
-	if( dx != 266 && dx != 1 )
+	if (dx != 266 && dx != 1)
 	{
 		errno=EINVAL; return -1;
 	}
 	errno = 0;
 	ent = readdir(dirtab[bx-10000]);
-	if( ent == 0 ) { if( errno ) { return -1; } else return 0; }
+	if (ent == 0) { if ( errno ) { return -1; } else return 0; }
 
 	memcpy(ELKS_PTR(char, cx+10), ent->d_name, ent->d_reclen+1);
 	ELKS_POKE(int32_t, cx, ent->d_ino);
@@ -686,7 +686,7 @@ static int
 elks_closedir(int bx)
 {
 	bx-=10000;
-	if( dirtab[bx] ) closedir(dirtab[bx]);
+	if (dirtab[bx]) closedir(dirtab[bx]);
 	dirtab[bx] = 0;
 	return 0;
 }
@@ -784,12 +784,12 @@ int elks_syscall(void)
 
 	errno=0;
 	n = (elks_cpu.regs.xax&0xFFFF);
-	if( n>= 0 && n< sizeof(jump_tbl)/sizeof(funcp) )
+	if (n>= 0 && n< sizeof(jump_tbl)/sizeof(funcp))
 	   r = (*(jump_tbl[n]))(bx, cx, dx, di, si);
 	else
 		return -ENOSYS;
 
-	if(r>=0)
+	if (r>=0)
 		return r;
 	else
 		return -errno;
