@@ -19,7 +19,7 @@
  * HD_TIMER2		(atdisk2 patches)
  *
  * FLOPPY_TIMER		floppy disk timer (not used right now)
- * 
+ *
  * SCSI_TIMER		scsi.c timeout timer
  *
  * NET_TIMER		tcp/ip timeout timer

@@ -3,13 +3,13 @@
  * (C) 1997 Chad Page et. al
  *
  * Modified by Greg Haerr <greg@censoft.com> for screen editors
- * 
+ *
  * 03/27/2001 : Modified for raw mode support (HarKal)
  */
 
-/* 
+/*
  * This new tty sub-system builds around the character queue to provide a
- * VFS interface to the character drivers (what a mouthful! :)  
+ * VFS interface to the character drivers (what a mouthful! :)
  */
 
 #include <linuxmt/types.h>

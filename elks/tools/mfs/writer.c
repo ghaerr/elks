@@ -64,7 +64,7 @@ void writefile(struct minix_fs_dat *fs,FILE *fp,int inode) {
  */
 void writedata(struct minix_fs_dat *fs,u8 *blk,u32 cnt,int inode) {
   int i,blkcnt;
-  
+
   for (blkcnt=i=0; i < cnt; i+= BLOCK_SIZE) {
     if (i+BLOCK_SIZE < cnt) {
       write_inoblk(fs,inode,blkcnt++,blk+i);
@@ -112,9 +112,9 @@ void dohardlink(struct minix_fs_dat *fs,char *source,char *lnkpath) {
     struct minix_inode *ino =INODE(fs,tinode);
     if (!S_ISREG(ino->i_mode)) fatalmsg("%s: can only link regular files", source);
     ino->i_nlinks++;
-  }  
+  }
 
-  if (find_inode(fs,lnkpath) != -1) fatalmsg("%s: already exists",lnkpath); 
+  if (find_inode(fs,lnkpath) != -1) fatalmsg("%s: already exists",lnkpath);
   if (lname) {
     *lname++ = 0;
   } else {
@@ -170,7 +170,7 @@ void cmd_mknode(struct minix_fs_dat *fs,int argc,char **argv) {
 
   if (argc < 4 || (type = ftype(argv[2])) < 0)
     fatalmsg("Usage: %s path [c|b] major minor [count inc]\n", argv[0]);
-  
+
   mode = type | 0644;
   major = atoi(argv[3]);
   minor = atoi(argv[4]);
@@ -254,7 +254,7 @@ void cmd_cp(struct minix_fs_dat *fs,int argc,char **argv) {
     inode = make_node(fs,filename,sb.st_mode,
 			opt_keepuid? sb.st_uid: 0,opt_keepuid? sb.st_gid: 0,
 			sb.st_size,sb.st_atime,sb.st_mtime,sb.st_ctime,NULL);
-  
+
   }
   writefile(fs,fp,inode);
   fclose(fp);

@@ -40,7 +40,7 @@ void fatalmsg(const char *s,...) {
   va_start(p,s);
   vfprintf(stderr,s,p);
   va_end(p);
-  putc('\n',stderr);  
+  putc('\n',stderr);
   exit(-1);
 }
 
@@ -125,7 +125,7 @@ void *domalloc(unsigned long size,int elm) {
  */
 int dogetuid(void) {
   if (opt_keepuid)
-    return getuid();    
+    return getuid();
   return 0;
 }
 
@@ -134,6 +134,6 @@ int dogetuid(void) {
  */
 int dogetgid(void) {
   if (opt_keepuid)
-  	return getgid();    
+  	return getgid();
   return 0;
 }

@@ -19,7 +19,7 @@
 
 _ssd_open4:
 	cli			;clear interrupts and turn off protection
-	out 0x15, al		
+	out 0x15, al
 
 	in ax, #0x24		;turn on power to packs
 	or ax, #0x8000
@@ -59,14 +59,14 @@ _ssd_open4:
 	mov al, bl
 	and al, #0x07
 	out 0x8A, al
-	
-	mov al, bl		;return 'device' found 
+
+	mov al, bl		;return 'device' found
 	sti
 	ret
 
 _ssd_close4:
 	cli			;clear interrupts and turn off protection
-	out 0x15, al		
+	out 0x15, al
 
 open4_error:
 	in ax, #0x2c		;disable clock to 'soap on a rope'
@@ -88,7 +88,7 @@ open4_error:
 
 _ssd_read4:
 	cli			;clear interrupts and turn off protection
-	out 0x15, al		
+	out 0x15, al
 
 	push bp			;get parameters
 	mov bp, sp
@@ -123,13 +123,13 @@ _ssd_read4:
 	ret
 
 ;------------------------------------------------------------------
-; read a memory block (16 bytes) from flash via ASIC4 
+; read a memory block (16 bytes) from flash via ASIC4
 ;
 ; ssd_read4( int high_address, int low_address, char *data)
 
 _ssd_readblk4:
 	cli			;clear interrupts and turn off protection
-	out 0x15, al		
+	out 0x15, al
 
 	push bp			;get parameters
 	mov bp, sp
@@ -163,7 +163,7 @@ readblk_loop:
 	mov al, #0x01
 	out 0x8A, al
 
-	mov ax, #0xC0		;read result 
+	mov ax, #0xC0		;read result
 	out 0x8C, al
 	in al, #0x8A
 
@@ -172,13 +172,13 @@ readblk_loop:
 	mov ax, #0x82		;increase address
 	out 0x8C, al
 	out 0x8A, al
-	
+
 	loop readblk_loop
 
 	mov ah, #0x01
 	sti
 	ret
-	
+
 ;------------------------------------------------------------------
 ; write a memory location to flash via ASIC 4
 ;
@@ -186,7 +186,7 @@ readblk_loop:
 
 _ssd_write4:
 	cli			;clear interrupts and turn off protection
-	out 0x15, al		
+	out 0x15, al
 
 	push bp			;get parameters
 	mov bp, sp
@@ -199,7 +199,7 @@ _ssd_write4:
 	pop bp
 				;power and clock already on
 				;chanel and size selected
-	
+
 	mov ax, #0x87		;set VPP
 	out 0x8C, al
 	mov al, #0x10
@@ -297,11 +297,11 @@ ssd_write_ok:
 	out 0x8C, al
 	mov al, #0x00
 	out 0x8A, al
-	
+
 	mov ax, bx
 	sti
 	ret
-	
+
 ;------------------------------------------------------------------
 ; erases a flash via ASIC 4 (each 64K block must be erased and checked)
 ;
@@ -309,7 +309,7 @@ ssd_write_ok:
 
 _ssd_erase4:
 	cli			;clear interrupts and turn off protection
-	out 0x15, al		
+	out 0x15, al
 
 	push bp			;get parameters
 	mov bp, sp
@@ -419,7 +419,7 @@ ssd_erase_check:
 	out 0x8C, al
 	mov al, #0x12
 	out 0x8A, al
-	
+
 	sti
 	mov cx, #0x0050		;delay approx 6us
 loop6:

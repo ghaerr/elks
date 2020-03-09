@@ -49,7 +49,7 @@ bitop (setbit, "set")
 bitop (clrbit, "clr")
 
 #else
-static inline int bit(char * addr,unsigned int nr) 
+static inline int bit(char * addr,unsigned int nr)
 {
   return (addr[nr >> 3] & (1<<(nr & 7))) != 0;
 }

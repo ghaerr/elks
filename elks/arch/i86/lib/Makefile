@@ -11,13 +11,13 @@ BASEDIR 	= ../../..
 
 USEBCC 		= Y
 
-CLEANDEP	= 
+CLEANDEP	=
 
-CLEANME 	= 
+CLEANME 	=
 
-DEPEND  	= 
+DEPEND  	=
 
-DISTFILES	= 
+DISTFILES	=
 
 NOINDENT	=
 

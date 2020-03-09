@@ -50,7 +50,7 @@ static void fatalmsg(const char *s,...)
 	va_start(p,s);
 	vfprintf(stderr,s,p);
 	va_end(p);
-	putc('\n',stderr);  
+	putc('\n',stderr);
 	exit(-1);
 }
 

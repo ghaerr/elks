@@ -3,7 +3,7 @@
  * image was LOC::M:\MINIX.DSK but this version draws both parameters from
  * a separate header file where they can be configured.
  *
- * It is rather slow at present but uses the SSD driver stuff so should 
+ * It is rather slow at present but uses the SSD driver stuff so should
  * pick up any improvements as that developes.
  */
 

@@ -9,8 +9,8 @@
 
 _send_byte:
 	cli			;clear interrupts and turn off protection
-	out 0x15, al		
-	
+	out 0x15, al
+
 	push bp
 
 	mov bp, sp		;get parameters
@@ -30,7 +30,7 @@ _send_byte:
 	or al, #0x10
 	out 0x8e, al
 
-				;read port A to find out what's 
+				;read port A to find out what's
 				;there on the selected channel
 	mov al, #0x43
 	out 0x8c, al
@@ -76,7 +76,7 @@ continue:
 	out 0x8c,al
 	mov al, #00
 	out 0x8a, al
-	
+
 	mov al, #0x89		;actually send byte
 	out 0x8c, al
 	mov al, character
@@ -86,14 +86,14 @@ waitdone:
 	mov al, #0xC8		;wait till tx finished
 	out 0x8c, al
 	in al, 0x8a
-	
+
 	test al, #0x08
 	jz waitdone		;loop until TX buf is empty
 txfin:
 	mov al, #0xC8
 	out 0x8c, al
 	in al, 0x8a
-	
+
 	test al, #0x10
 	jnz txfin		;loop until TX is finished
 

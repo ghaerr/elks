@@ -2,7 +2,7 @@
  * Direct video memory display driver *
  * Saku Airila 1996                   *
  **************************************
- 
+
  * Modified for the Psion Series 3
  * Simon Wood. 12th June 1999
  */
@@ -191,7 +191,7 @@ void LCD_Refresh(void)
 }
 
 /* This also tells the keyboard driver which tty to direct it's output to...
- * CAUTION: It *WILL* break if the console driver doesn't get tty0-X. 
+ * CAUTION: It *WILL* break if the console driver doesn't get tty0-X.
  */
 void Console_set_vc(int N)
 {

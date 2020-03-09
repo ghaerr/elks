@@ -94,14 +94,14 @@ list_init(list_root_t * root)
 	root->count = 1;		/* root directory inode*/
 }
 
-static void 
+static void
 insert_before(list_node_t * next, list_node_t * node)
 {
 	list_node_t    *prev = next->prev;
 	LIST_LINK;
 }
 
-static void 
+static void
 list_add_tail(list_root_t * root, list_node_t * node)
 {
 	insert_before(&root->node, node);
@@ -127,7 +127,7 @@ entry_alloc(inode_build_t * inode, char *name)
 }
 
 
-static void 
+static void
 entry_free(entry_build_t * entry)
 {
 	if (entry->name)
@@ -157,7 +157,7 @@ inode_alloc(inode_build_t * parent, char *path)
 }
 
 
-static void 
+static void
 inode_free(inode_build_t * inode)
 {
 	if (inode->path)
@@ -191,7 +191,7 @@ blocksused(size_t filesize)
 
 
 /* recursive directory parsing*/
-static int 
+static int
 parse_dir(inode_build_t * grand_parent_inode,
 	  inode_build_t * parent_inode, char *parent_path)
 {
@@ -299,7 +299,7 @@ parse_dir(inode_build_t * grand_parent_inode,
 }
 
 /* parse list of files/directories to add*/
-static int 
+static int
 parse_filelist(char *filelist, inode_build_t *parent_inode, char *parent_path)
 {
 	int		err = 0;
@@ -370,7 +370,7 @@ parse_filelist(char *filelist, inode_build_t *parent_inode, char *parent_path)
 
 
 /* generate filesystem commands*/
-static int 
+static int
 compile_fs(struct minix_fs_dat *fs)
 {
 		char major[32], minor[32];

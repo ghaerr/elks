@@ -1,4 +1,4 @@
-; small program to display a brief meassage on the screen 	
+; small program to display a brief meassage on the screen
 ; SDW 28/2/99
 
 	.text

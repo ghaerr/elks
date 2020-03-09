@@ -61,14 +61,14 @@ unsigned long get_free_bit(u8 *bmap,int bsize) {
  * @param inodes - number of inodes to allocate (0 for auto)
  * @return pointer to a minix_fs_dat structure
  * @effect the file will be created or truncated.
- */ 
+ */
 struct minix_fs_dat *new_fs(const char *fn,int magic,unsigned long fsize,int inodes) {
   struct minix_fs_dat *fs = domalloc(sizeof(struct minix_fs_dat),0);
   u32 rootblkp;
   char root_block[BLOCK_SIZE];
   int i;
 
-  if (magic != MINIX_SUPER_MAGIC && magic != MINIX_SUPER_MAGIC2 && 
+  if (magic != MINIX_SUPER_MAGIC && magic != MINIX_SUPER_MAGIC2 &&
 	magic != MINIX2_SUPER_MAGIC && magic != MINIX2_SUPER_MAGIC2) {
     fatalmsg("invalid magic fs-type %x",magic);
   }
@@ -119,7 +119,7 @@ struct minix_fs_dat *new_fs(const char *fn,int magic,unsigned long fsize,int ino
   else
     INODE(fs,MINIX_ROOT_INO)->i_zone[0] = rootblkp;
   mark_zone(fs,rootblkp);
-    
+
   /*
    * Initialise file
    */
@@ -140,14 +140,14 @@ struct minix_fs_dat *new_fs(const char *fn,int magic,unsigned long fsize,int ino
   // printf("WRITE TO : %d %08x\n",rootblkp,rootblkp * BLOCK_SIZE);
   // printf("%3d) FIRSTZONE: %d\n",__LINE__,FIRSTZONE(fs));
   dofwrite(goto_blk(fs->fp,rootblkp),root_block,sizeof(root_block));
- 
-  return fs;  
+
+  return fs;
 }
 
 /**
  * Returns filesystem info
  * @param fs - pointer to filesystem structure
- */ 
+ */
 void cmd_sysinfo(struct minix_fs_dat *fs) {
   unsigned long fsize;
   int i, inodecount = 0, blkcount = 0;
@@ -175,7 +175,7 @@ void cmd_sysinfo(struct minix_fs_dat *fs) {
  * @param fn - file name for filesystem
  * @param chk - stop if filesystem is not clean
  * @return pointer to a minix_fs_dat structure
- */ 
+ */
 struct minix_fs_dat *open_fs(const char *fn,int chk) {
   struct minix_fs_dat *fs = domalloc(sizeof(struct minix_fs_dat),0);
 
@@ -191,7 +191,7 @@ struct minix_fs_dat *open_fs(const char *fn,int chk) {
   /*
    * Sanity checks ...
    */
-  if (FSMAGIC(fs) != MINIX_SUPER_MAGIC && FSMAGIC(fs) != MINIX_SUPER_MAGIC2 && 
+  if (FSMAGIC(fs) != MINIX_SUPER_MAGIC && FSMAGIC(fs) != MINIX_SUPER_MAGIC2 &&
 	FSMAGIC(fs) != MINIX2_SUPER_MAGIC && FSMAGIC(fs) != MINIX2_SUPER_MAGIC2) {
     fatalmsg("invalid magic fs-type %x",FSMAGIC(fs));
   }
@@ -219,7 +219,7 @@ struct minix_fs_dat *open_fs(const char *fn,int chk) {
  * Closes filesystem
  * @param fs - pointer to filesystem structure
  * @return NULL
- */ 
+ */
 struct minix_fs_dat *close_fs(struct minix_fs_dat *fs) {
   goto_blk(fs->fp,MINIX_SUPER_BLOCK);
   dofwrite(goto_blk(fs->fp,MINIX_SUPER_BLOCK),
@@ -235,6 +235,6 @@ struct minix_fs_dat *close_fs(struct minix_fs_dat *fs) {
   else
     dofwrite(fs->fp,fs->ino.v1,INODE_BUFFER_SIZE(fs));
 
-  return 0;  
+  return 0;
 }
 

@@ -298,8 +298,8 @@ fsdebug("fat_free\n");
 	if (last)
 		fat_access(inode->i_sb,last,
 #ifndef FAT_BITS_32
-		MSDOS_SB(inode->i_sb)->fat_bits == 12 ? 
-		0xff8UL : MSDOS_SB(inode->i_sb)->fat_bits==16 ? 0xfff8UL : 
+		MSDOS_SB(inode->i_sb)->fat_bits == 12 ?
+		0xff8UL : MSDOS_SB(inode->i_sb)->fat_bits==16 ? 0xfff8UL :
 #endif
 		0xffffff8UL);
 	else {

@@ -17,11 +17,11 @@ BASEDIR 	= ../../..
 
 USEBCC 		= Y
 
-CLEANDEP	= 
+CLEANDEP	=
 
 CLEANME 	= entry.c entry.S entry.s
 
-DEPEND  	= 
+DEPEND  	=
 
 DISTFILES	= syscall.dat
 

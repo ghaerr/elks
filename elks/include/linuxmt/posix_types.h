@@ -22,7 +22,7 @@
  * place for them. Solved by having dummy defines in <sys/time.h>.
  *
  * Those macros may have been defined in <gnu/types.h>. But we always
- * use the ones here. 
+ * use the ones here.
  */
 
 /*@-namechecks@*/

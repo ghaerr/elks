@@ -119,7 +119,7 @@ void imagefiletype(unsigned char *buf, long buflen)
     printf("HeapParas       0x%04X\n", ifh->HeapParas);
     printf("InitialisedData 0x%04X bytes\n", ifh->InitialisedData);
 
-    /* printf("=>Uninitialised 0x%04X bytes\n", ifh->DataParas*16 - ifh->InitialisedData);  
+    /* printf("=>Uninitialised 0x%04X bytes\n", ifh->DataParas*16 - ifh->InitialisedData);
      * not entirely sure about this -- MJG */
 
     printf("CodeCheckSum    0x%04X\n", ifh->CodeCheckSum);
@@ -183,7 +183,7 @@ void lddfiletype(unsigned char *buf, long buflen)
 {
   struct dylfheader {
     word16 words[8];
-  } *dylfh; 
+  } *dylfh;
   int i;
   printf("DYLFileType\n");
   dylfh=(struct dylfheader *)(buf+2);

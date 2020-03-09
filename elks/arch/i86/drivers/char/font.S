@@ -6,11 +6,11 @@
 ; Modified to work with the Psio Port of ELKS (character bit mape reversed
 ; left/right - first byte is char code )  S D Wood 14 August 1999
 
-;COMMENT  
+;COMMENT
 ;COMMENT  Copyright 1989 Dale Schumacher, dal@sytel.mn.org
 ;COMMENT                 399 Beaco Ave.
 ;COMMENT                 St. Paul, MN  55104-3527
-;COMMENT  
+;COMMENT
 ;COMMENT  Permissio to use, copy, modify, and distribute this software and
 ;COMMENT  its documetation for any purpose and without fee is hereby
 ;COMMENT  grated, provided that the above copyright notice appear in all
@@ -21,7 +21,7 @@
 ;COMMENT  permissio.  Dale Schumacher makes no representations about the
 ;COMMENT  suitability of this software for ay purpose.  It is provided "as
 ;COMMENT  is" without express or implied warraty.
-;COMMENT  
+;COMMENT
 ;FONT -Schumacher-Clea-Medium-R-Normal--8-80-75-75-C-80-ISO8859-1
 ;SIZE 8 75 75
 ;FONTBOUNDINGBOX 8 8 0 -1

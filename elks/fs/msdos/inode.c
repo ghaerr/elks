@@ -58,7 +58,7 @@ fsdebug("put_super\n");
 }
 
 
-static struct super_operations msdos_sops = { 
+static struct super_operations msdos_sops = {
 	msdos_read_inode,
 #ifdef BLOAT_FS
 	NULL,
@@ -127,7 +127,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
   MSDOS_SB(s)->data_start,total_sectors,b->total_sect);
 
 	if (!MSDOS_SB(s)->fats || (MSDOS_SB(s)->dir_entries & (MSDOS_DPS-1))
-	    || !b->cluster_size || 
+	    || !b->cluster_size ||
 #ifndef FAT_BITS_32
 		MSDOS_SB(s)->clusters+2 > MSDOS_SB(s)->fat_length*(SECTOR_SIZE*8/MSDOS_SB(s)->fat_bits)
 #else
@@ -168,7 +168,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 
 	/* if /dev is first or second directory entry, turn on devfs filesystem */
 	for (i=0; i<2; i++) {
-		ino = msdos_get_entry(s->s_mounted, &pos, &bh, &de); 
+		ino = msdos_get_entry(s->s_mounted, &pos, &bh, &de);
 		if (ino < 0) break;
 		if (de->attr == ATTR_DIR && !strncmp(de->name, "DEV        ", 11)) {
 				MSDOS_SB(s)->dev_ino = ino;
@@ -269,7 +269,7 @@ void msdos_read_inode(register struct inode *inode)
 	map_buffer(bh);
 	raw_entry = &((struct msdos_dir_entry *)(bh->b_data))[(int)inode->i_ino & (MSDOS_DPB-1)];
 	((unsigned short *)&inode->u.msdos_i.i_start)[0] = raw_entry->start;
-	((unsigned short *)&inode->u.msdos_i.i_start)[1] = 
+	((unsigned short *)&inode->u.msdos_i.i_start)[1] =
 #ifndef FAT_BITS_32
 	    (fatsz == 32)? raw_entry->starthi : 0;
 #else

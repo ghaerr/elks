@@ -17,15 +17,15 @@ BASEDIR 	= ../..
 
 USEBCC 		= Y
 
-CLEANDEP	= 
+CLEANDEP	=
 
-CLEANME 	= 
+CLEANME 	=
 
-DEPEND  	= 
+DEPEND  	=
 
-DISTFILES	= 
+DISTFILES	=
 
-NOINDENT	= 
+NOINDENT	=
 
 #########################################################################
 # Include standard commands.

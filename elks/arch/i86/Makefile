@@ -11,15 +11,15 @@ BASEDIR 	= ../..
 
 USEBCC  	= Y
 
-CLEANDEP	= 
+CLEANDEP	=
 
 CLEANME 	= $(BASEDIR)/include/arch/asm-offsets.h
 
-DEPEND  	= 
+DEPEND  	=
 
 DISTFILES	= defconfig
 
-NOINDENT	= 
+NOINDENT	=
 
 #########################################################################
 # Include standard commands.
@@ -124,13 +124,13 @@ nbImage:	Image boot/netbootsect
 else
 
 ifeq ($(CONFIG_ROM_BOOTABLE_BY_RESET), y)
-    RVECT = -r $(CONFIG_ROM_RESET_ADDRESS)   
+    RVECT = -r $(CONFIG_ROM_RESET_ADDRESS)
 endif
 
 # Disable temporary the checksum to not overwrite the image
 # as it is actually not needed for execution in EMU86
 
-Image:	toolkit boot/setup boot/system  
+Image:	toolkit boot/setup boot/system
 #	tools/mkbootloader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(CONFIG_ROM_CHECKSUM_SIZE) boot/Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
 	tools/mkbootloader $(RVECT) boot/Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
 	$(CONFIG_ROM_SIMULATOR_PROGRAM)
@@ -147,7 +147,7 @@ boot:	Image
 
 disk:	boot
 
-setup:	toolkit boot/setup  
+setup:	toolkit boot/setup
 	tools/mkbootloader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(ROM_MAX_SETUP_SIZE) Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
 	$(CONFIG_ROM_SIMULATOR_PROGRAM)
 endif

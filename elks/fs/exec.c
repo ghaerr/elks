@@ -211,7 +211,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	slen = 0;	/* Start skiping argc */
 	do {
 	    pi = (char *)(((__u16 *)pi) + 1);
-	    if ((retval = get_ustack(currentp, (int)pi)) != 0) 
+	    if ((retval = get_ustack(currentp, (int)pi)) != 0)
 		put_ustack(currentp, (int)pi, (currentp->t_begstack + retval));
 	    else slen++;	/* increments for each array traversed */
 	} while (slen < 2);

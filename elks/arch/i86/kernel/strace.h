@@ -1,10 +1,10 @@
 /* ELKS (version >= 0.0.49) system call layout.
- * 
- * syscall_info table format : 
+ *
+ * syscall_info table format :
  *
  * { "sys_call_name", # of parameters, \
- *		{parameter types, explained, below}}, 
- * 
+ *		{parameter types, explained, below}},
+ *
  * This table needs to be kept synchronised with the syscall.dat file.
  *
  * The following parameter types are available:

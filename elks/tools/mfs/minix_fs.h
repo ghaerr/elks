@@ -69,7 +69,7 @@ struct minix2_inode {
 struct minix_super_block {
         u16 s_ninodes;	/* Number of inodes */
         u16 s_nzones;	/* device size in blocks (v1) */
-        u16 s_imap_blocks;	/* inode map size in blocks */ 
+        u16 s_imap_blocks;	/* inode map size in blocks */
         u16 s_zmap_blocks;	/* zone map size in blocks */
         u16 s_firstdatazone;	/* Where data blocks begin */
         u16 s_log_zone_size;	/* log2 of zone size*/
@@ -84,7 +84,7 @@ struct minix_dir_entry {
 	u16 inode;
 	char name[0];
 };
-		
+
 #define MINIX_BOOT_BLOCKS	1	/* number of boot blocks*/
 
 #define BLOCK_SIZE_BITS 10		/* 1024 byte disk blocks*/
@@ -134,7 +134,7 @@ struct minix_fs_dat {
 #define INODES(fs) ((fs)->msb.s_ninodes)
 #define UPPER(size,n) ((size+((n)-1))/(n))
 #define INODE_BLOCKS(fs) UPPER(INODES(fs), VERSION_2(fs) ? MINIX2_INODES_PER_BLOCK : MINIX_INODES_PER_BLOCK)
-#define INODE_BUFFER_SIZE(fs) (INODE_BLOCKS(fs) * BLOCK_SIZE)			
+#define INODE_BUFFER_SIZE(fs) (INODE_BLOCKS(fs) * BLOCK_SIZE)
 #define ZONES(fs) ((unsigned long)(VERSION_2(fs) ? (fs)->msb.s_zones : (fs)->msb.s_nzones))
 #define IMAPS(fs) ((fs)->msb.s_imap_blocks)
 #define ZMAPS(fs) ((fs)->msb.s_zmap_blocks)

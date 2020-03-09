@@ -5,7 +5,7 @@
  *
  * SIGBUS SIGTRAP SIGIOT SIGEMT SIGSYS SIGSTKFLT SIGPOLL
  * SIGCPU SIGPROF SIGPWR SIGILL SIGFPE
- * 
+ *
  * So we can have much tighter signal code if we have 16 bit signal
  * mask by losing all these unused signals.
  */

@@ -89,12 +89,12 @@ dflag:
     struct minix2_inode *ino = INODE2(fs,inode);
 	symlink = S_ISLNK(ino->i_mode);
     if (!S_ISDIR(ino->i_mode)) goto dflag;
-    fdirsize = ino->i_size;    
+    fdirsize = ino->i_size;
   } else {
     struct minix_inode *ino = INODE(fs,inode);
 	symlink = S_ISLNK(ino->i_mode);
     if (!S_ISDIR(ino->i_mode)) goto dflag;
-    fdirsize = ino->i_size;    
+    fdirsize = ino->i_size;
   }
   /* read directory*/
   for (i = 0; i < fdirsize; i += BLOCK_SIZE) {
@@ -289,11 +289,11 @@ void dormdir(struct minix_fs_dat *fs,const char *dir) {
   if (VERSION_2(fs)) {
     struct minix2_inode *ino = INODE2(fs,inode);
     if (!S_ISDIR(ino->i_mode)) fatalmsg("%s: is not a directory",dir);
-    fdirsize = ino->i_size;    
+    fdirsize = ino->i_size;
   } else {
     struct minix_inode *ino = INODE(fs,inode);
     if (!S_ISDIR(ino->i_mode)) fatalmsg("%s: is not a directory",dir);
-    fdirsize = ino->i_size;    
+    fdirsize = ino->i_size;
   }
 
   /* Do a directory scan... */

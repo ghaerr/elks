@@ -11,15 +11,15 @@ BASEDIR 	= ../../..
 
 USEBCC  	= N
 
-CLEANDEP	= 
+CLEANDEP	=
 
 CLEANME 	= build imgconv mkbootloader wrt_disk.img
 
-DEPEND  	= 
+DEPEND  	=
 
 DISTFILES	= mknbi-elks
 
-NOINDENT	= 
+NOINDENT	=
 
 ###########################################################################
 # Include the standard rules.
