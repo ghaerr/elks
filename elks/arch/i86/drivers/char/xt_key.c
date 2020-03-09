@@ -197,7 +197,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 #endif
 	if (IsReleasep) { /* the key was released */
 	  if (mode == 16) {
-	    if (capslocktoggle==0) {
+	    if (capslocktoggle == 0) {
 	      capslocktoggle=1;
 	    } else {
 	      capslocktoggle=0;

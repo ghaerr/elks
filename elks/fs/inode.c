@@ -323,7 +323,7 @@ struct inode *__iget(struct super_block *sb,
 
     debug3("iget called(%x, %lu, %d)\n", sb, (unsigned long)inr, 0 /* crossmntp */ );
     if (!sb)
-	panic("VFS: iget with sb==NULL");
+	panic("VFS: iget with sb == NULL");
 
     n_ino = NULL;
     goto start;

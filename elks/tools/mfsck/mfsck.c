@@ -268,7 +268,7 @@ ask(const char * string, int def) {
 	printf(def?"%s (y/n)? ":"%s (n/y)? ",string);
 	for (;;) {
 		fflush(stdout);
-		if ((c=getchar())==EOF) {
+		if ((c=getchar()) == EOF) {
 		        if (!def)
 			      errors_uncorrected = 1;
 			return def;

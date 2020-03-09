@@ -199,9 +199,9 @@ void analyse(unsigned char *buf, long buflen)
     /* What sort of file is this? */
     if (buflen > 16 && strncmp("ImageFileType**", buf, 15) == 0)
 	imagefiletype(buf, buflen);
-    /*else if (buflen>2 && buf[0]==0x41 && buf[1]==0xdd)
+    /*else if (buflen>2 && buf[0] == 0x41 && buf[1] == 0xdd)
      * dylfiletype(buf, buflen);
-     * if (buflen>16 && strncmp("LDDFileType****",buf,15)==0)
+     * if (buflen>16 && strncmp("LDDFileType****",buf,15) == 0)
      * lddfiletype(buf, buflen); */
 
     else

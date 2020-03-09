@@ -103,7 +103,7 @@ int sys_ftruncate(unsigned int fd, loff_t length)
     return do_truncate(inode, length);
 }
 
-/* If times==NULL, set access and modification to current time,
+/* If times == NULL, set access and modification to current time,
  * must be owner or have write permission.
  * Else, update from *times, must be owner or super user.
  */
