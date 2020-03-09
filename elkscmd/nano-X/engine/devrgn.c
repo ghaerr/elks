@@ -1231,7 +1231,7 @@ static void REGION_DumpRegion(CLIPREGION *pReg)
     TRACE(region, "Region %p: %d,%d - %d,%d %d rects\n", pReg,
 	    pReg->extents.left, pReg->extents.top,
 	    pReg->extents.right, pReg->extents.bottom, pReg->numRects);
-    for(pRect = pReg->rects; pRect < pRectEnd; pRect++)
+    for (pRect = pReg->rects; pRect < pRectEnd; pRect++)
         TRACE(region, "\t%d,%d - %d,%d\n", pRect->left, pRect->top,
 		       pRect->right, pRect->bottom);
 }

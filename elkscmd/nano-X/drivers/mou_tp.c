@@ -387,14 +387,14 @@ int main()
 
 	printf("Opening touch panel...\n");
 
-	if((result=PD_Open(0)) < 0)
+	if ((result=PD_Open(0)) < 0)
 		printf("Error %d, result %d opening touch-panel\n", errno, result);
 
 	printf("Reading touch panel...\n");
 
-	while(1) {
+	while (1) {
 		result = PD_Read(&x, &y, &z, &b);
-		if( result > 0) {
+		if (result > 0) {
 			/* printf("%d,%d,%d,%d,%d\n", result, x, y, z, b); */
 		}
 	}

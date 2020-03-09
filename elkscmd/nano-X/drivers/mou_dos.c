@@ -106,11 +106,11 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bp)
 	int86(0x33, &regset, &regset);
 
 	buttons = 0;
-	if(regset.x.bx & 01)
+	if (regset.x.bx & 01)
 		buttons |= LBUTTON;
-	if(regset.x.bx & 02)
+	if (regset.x.bx & 02)
 		buttons |= RBUTTON;
-	if(regset.x.bx & 04)
+	if (regset.x.bx & 04)
 		buttons |= MBUTTON;
 	*bp = buttons;
 

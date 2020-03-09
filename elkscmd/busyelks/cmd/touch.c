@@ -15,7 +15,7 @@ touch_main (argc,argv)
 	if ((argv[1][0] == '-') && (argv[1][1] == 'c'))
 		ncreate = 1;
 
-	for(i=ncreate+1;i<argc;i++) {
+	for (i=ncreate+1;i<argc;i++) {
 		if (argv[i][0] != '-') {
 			if (stat(argv[i],&sbuf)) {
 				if (!ncreate)

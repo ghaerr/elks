@@ -54,7 +54,7 @@ GdOpenScreen(void)
 	extern RGBENTRY	stdpal4[16];
 	extern RGBENTRY	stdpal8[256];
 
-	if(scrdev.Open(&scrdev) < 0)
+	if (scrdev.Open(&scrdev) < 0)
 		return -1;
 	GdGetScreenInfo(&scrdev, &gr_sinfo);
 
@@ -62,7 +62,7 @@ GdOpenScreen(void)
 	gr_firstuserpalentry = (int)gr_sinfo.ncolors;
 
 	/* set palette according to system colors and devpalX.c*/
-	switch((int)gr_sinfo.ncolors) {
+	switch ((int)gr_sinfo.ncolors) {
 	case 2:		/* 1bpp*/
 		stdpal = stdpal1;
 		break;
@@ -117,10 +117,10 @@ GdCloseScreen(void)
 
 	ifd = open("/dev/fb0", 0);
 	ofd = creat("file", 0666);
-	for(n=0; n<256; ++n)
+	for (n=0; n<256; ++n)
 		write(ofd, &gr_palette[n], 3);
-	for(i=gr_sinfo.cols*gr_sinfo.rows; i > 0; ) {
-		if((n = read(ifd, buf, 256)) > 0) {
+	for (i=gr_sinfo.cols*gr_sinfo.rows; i > 0; ) {
+		if ((n = read(ifd, buf, 256)) > 0) {
 			write(ofd, buf, n);
 			i -= n;
 		}
@@ -208,17 +208,17 @@ GdSetPalette(int first, int count, RGBENTRY *palette)
 	int	i;
 
 	/* no palette management needed if running truecolor*/
-	if(gr_sinfo.pixtype != PF_PALETTE)
+	if (gr_sinfo.pixtype != PF_PALETTE)
 		return;
 
 	/* bounds check against # of device color entries*/
-	if(first + count > (int)gr_sinfo.ncolors)
+	if (first + count > (int)gr_sinfo.ncolors)
 		count = (int)gr_sinfo.ncolors - first;
-	if(first < (int)gr_sinfo.ncolors)
+	if (first < (int)gr_sinfo.ncolors)
 		scrdev.SetPalette(&scrdev, first, count, palette);
 
 	/* copy palette for GdFind*Color*/
-	for(i=0; i<count; ++i)
+	for (i=0; i<count; ++i)
 		gr_palette[i+first] = palette[i];
 }
 
@@ -232,7 +232,7 @@ GdFindColor(COLORVAL c)
 	 * Handle truecolor displays.  Note that the F_PALINDEX
 	 * bit is ignored when running truecolor drivers.
 	 */
-	switch(gr_sinfo.pixtype) {
+	switch (gr_sinfo.pixtype) {
 	case PF_TRUECOLOR24:
 		/* create 24 bit pixel from RGB colorval*/
 		return (PIXELVAL)c & 0x00ffffff;
@@ -256,7 +256,7 @@ GdFindColor(COLORVAL c)
 	 * Check if color is a palette index.  Note that the index
 	 * isn't error checked against the system palette, for speed.
 	 */
-	if(c & F_PALINDEX)
+	if (c & F_PALINDEX)
 		return (c & 0xff);
 
 	/* search palette for closest match*/
@@ -280,15 +280,15 @@ GdFindNearestColor(RGBENTRY *pal, int size, COLORVAL cr)
 	r = REDVALUE(cr);
 	g = GREENVALUE(cr);
 	b = BLUEVALUE(cr);
-	for(rgb=pal; diff && rgb < &pal[size]; ++rgb) {
+	for (rgb=pal; diff && rgb < &pal[size]; ++rgb) {
 		R = rgb->r - r;
 		G = rgb->g - g;
 		B = rgb->b - b;
 		sq = (long)R*R*30*30 + (long)G*G*59*59 + (long)B*B*11*11;
 
-		if(sq < diff) {
+		if (sq < diff) {
 			best = rgb - pal;
-			if((diff = sq) == 0)
+			if ((diff = sq) == 0)
 				return best;
 		}
 	}
@@ -354,7 +354,7 @@ GdLine(PSD psd, COORD x1, COORD y1, COORD x2, COORD y2, BOOL bDrawLastPoint)
 	/*
 	 * Adjust coordinates if not drawing last point.  Tricky.
 	 */
-	if(!bDrawLastPoint) {
+	if (!bDrawLastPoint) {
 		if (x1 > x2) {
 			temp = x1;
 			x1 = x2 + 1;
@@ -372,7 +372,7 @@ GdLine(PSD psd, COORD x1, COORD y1, COORD x2, COORD y2, BOOL bDrawLastPoint)
 	/*
 	 * Adjust coordinates if not drawing last point.  Tricky.
 	 */
-	if(!bDrawLastPoint) {
+	if (!bDrawLastPoint) {
 		if (y1 > y2) {
 			temp = y1;
 			y1 = y2 + 1;
@@ -419,8 +419,8 @@ GdLine(PSD psd, COORD x1, COORD y1, COORD x2, COORD y2, BOOL bDrawLastPoint)
 	  psd->DrawPixel(psd, x1, y1, gr_foreground);
   if (xdelta >= ydelta) {
 	rem = xdelta / 2;
-	for(;;) {
-		if(!bDrawLastPoint && x1 == x2)
+	for (;;) {
+		if (!bDrawLastPoint && x1 == x2)
 			break;
 		x1 += xinc;
 		rem += ydelta;
@@ -430,13 +430,13 @@ GdLine(PSD psd, COORD x1, COORD y1, COORD x2, COORD y2, BOOL bDrawLastPoint)
 		}
 		if (GdClipPoint(x1, y1))
 			psd->DrawPixel(psd, x1, y1, gr_foreground);
-		if(bDrawLastPoint && x1 == x2)
+		if (bDrawLastPoint && x1 == x2)
 			break;
 	}
   } else {
 	rem = ydelta / 2;
-	for(;;) {
-		if(!bDrawLastPoint && y1 == y2)
+	for (;;) {
+		if (!bDrawLastPoint && y1 == y2)
 			break;
 		y1 += yinc;
 		rem += xdelta;
@@ -446,7 +446,7 @@ GdLine(PSD psd, COORD x1, COORD y1, COORD x2, COORD y2, BOOL bDrawLastPoint)
 		}
 		if (GdClipPoint(x1, y1))
 			psd->DrawPixel(psd, x1, y1, gr_foreground);
-		if(bDrawLastPoint && y1 == y2)
+		if (bDrawLastPoint && y1 == y2)
 			break;
 	}
   }
@@ -607,7 +607,7 @@ GdText(PSD psd, COORD x, COORD y, const UCHAR *str, int cc, BOOL fBottomAlign)
 
 	psd->GetTextSize(psd, str, cc, &width, &height, gr_font);
 
-	if(fBottomAlign)
+	if (fBottomAlign)
 		y -= (height - 1);
 
 	switch (GdClipArea(x, y, x + width - 1, y + height - 1)) {
@@ -718,8 +718,8 @@ GdColorInPalette(COLORVAL cr,RGBENTRY *palette,int palsize)
 {
 	int	i;
 
-	for(i=0; i<palsize; ++i)
-		if(GETPALENTRY(palette, i) == cr)
+	for (i=0; i<palsize; ++i)
+		if (GETPALENTRY(palette, i) == cr)
 			return TRUE;
 	return FALSE;
 }
@@ -742,8 +742,8 @@ GdMakePaletteConversionTable(RGBENTRY *palette,int palsize,PIXELVAL *convtable,
 	 * Check for load palette completely, or add colors
 	 * from passed palette to system palette until full.
 	 */
-	if(gr_sinfo.pixtype == PF_PALETTE) {
-	    switch(fLoadType) {
+	if (gr_sinfo.pixtype == PF_PALETTE) {
+	    switch (fLoadType) {
 	    case LOADPALETTE:
 		/* Load palette from beginning with image's palette.
 		 * First palette entries are micro-windows colors
@@ -754,7 +754,7 @@ GdMakePaletteConversionTable(RGBENTRY *palette,int palsize,PIXELVAL *convtable,
 
 	    case MERGEPALETTE:
 		/* get system palette*/
-		for(i=0; i<(int)gr_sinfo.ncolors; ++i)
+		for (i=0; i<(int)gr_sinfo.ncolors; ++i)
 			newpal[i] = gr_palette[i];
 
 		/* merge passed palette into system palette*/
@@ -762,16 +762,16 @@ GdMakePaletteConversionTable(RGBENTRY *palette,int palsize,PIXELVAL *convtable,
 		nextentry = gr_nextpalentry;
 
 		/* if color missing and there's room, add it*/
-		for(i=0; i<palsize && nextentry < (int)gr_sinfo.ncolors; ++i) {
+		for (i=0; i<palsize && nextentry < (int)gr_sinfo.ncolors; ++i) {
 			cr = GETPALENTRY(palette, i);
-			if(!GdColorInPalette(cr, newpal, nextentry)) {
+			if (!GdColorInPalette(cr, newpal, nextentry)) {
 				newpal[nextentry++] = palette[i];
 				++newsize;
 			}
 		}
 
 		/* set the new palette if any color was added*/
-		if(newsize) {
+		if (newsize) {
 			GdSetPalette(gr_nextpalentry, newsize,
 				&newpal[gr_nextpalentry]);
 			gr_nextpalentry += newsize;
@@ -787,7 +787,7 @@ GdMakePaletteConversionTable(RGBENTRY *palette,int palsize,PIXELVAL *convtable,
 	 * nearest color from the inuse palette.
 	 * FIXME: tag the conversion table to the bitmap image
 	 */
-	for(i=0; i<palsize; ++i) {
+	for (i=0; i<palsize; ++i) {
 		cr = GETPALENTRY(palette, i);
 		convtable[i] = GdFindColor(cr);
 	}
@@ -822,7 +822,7 @@ GdDrawImage(PSD psd, COORD x, COORD y, PIMAGEHDR pimage)
 
   /* determine if entire image is clipped out, save clipresult for later*/
   clip = GdClipArea(x, y, x + width - 1, y + height - 1);
-  if(clip == CLIP_INVISIBLE)
+  if (clip == CLIP_INVISIBLE)
 	return;
 
   /*
@@ -835,7 +835,7 @@ GdDrawImage(PSD psd, COORD x, COORD y, PIMAGEHDR pimage)
   maxx = x + width - 1;
   imagebits = pimage->imagebits;
 
-  if(pimage->compression & 01) {
+  if (pimage->compression & 01) {
 	/* bottom-up dibs*/
 	y += height - 1;
 	yoff = -1;
@@ -844,7 +844,7 @@ GdDrawImage(PSD psd, COORD x, COORD y, PIMAGEHDR pimage)
 
 #define PIX2BYTES(n)	(((n)+7)/8)
   /* imagebits are dword aligned*/
-  switch(pimage->bpp) {
+  switch (pimage->bpp) {
   default:
   case 8:
 	linesize = width;
@@ -859,12 +859,12 @@ GdDrawImage(PSD psd, COORD x, COORD y, PIMAGEHDR pimage)
   extra = ((linesize + 3) & ~3) - linesize;
 
   bitcount = 0;
-  while(height > 0) {
+  while (height > 0) {
 	if (bitcount <= 0) {
 		bitcount = sizeof(UCHAR) * 8;
 		bitvalue = *imagebits++;
 	}
-	switch(pimage->bpp) {
+	switch (pimage->bpp) {
 	default:
 	case 8:
 		pixel = bitvalue;
@@ -882,16 +882,16 @@ GdDrawImage(PSD psd, COORD x, COORD y, PIMAGEHDR pimage)
 		break;
 	}
 
-	if(clip == CLIP_VISIBLE || GdClipPoint(x, y)) {
+	if (clip == CLIP_VISIBLE || GdClipPoint(x, y)) {
 		psd->DrawPixel(psd, x, y, convtable[pixel]);
 	}
 #if 0
 	// fix: use clipmaxx to clip quicker
-	else if(clip != CLIP_VISIBLE && !clipresult && x > clipmaxx) {
+	else if (clip != CLIP_VISIBLE && !clipresult && x > clipmaxx) {
 		x = maxx;
 	}
 #endif
-	if(x++ == maxx) {
+	if (x++ == maxx) {
 		x = minx;
 		y += yoff;
 		height--;
@@ -1381,12 +1381,12 @@ GdBlit(PSD dstpsd, COORD dstx, COORD dsty, COORD width, COORD height,
 
 	/* clip blit rectangle to source screen/bitmap size*/
 	/* we must do this because there isn't any source clipping setup*/
-	if(srcx+width > srcpsd->xres)
+	if (srcx+width > srcpsd->xres)
 		width = srcpsd->xres - srcx;
-	if(srcy+height > srcpsd->yres)
+	if (srcy+height > srcpsd->yres)
 		height = srcpsd->yres - srcy;
 
-	switch(GdClipArea(dstx, dsty, dstx+width-1, dsty+height-1)) {
+	switch (GdClipArea(dstx, dsty, dstx+width-1, dsty+height-1)) {
 	case CLIP_VISIBLE:
 		dstpsd->Blit(dstpsd, dstx, dsty, width, height,
 			srcpsd, srcx, srcy, rop);
@@ -1409,7 +1409,7 @@ GdBlit(PSD dstpsd, COORD dstx, COORD dsty, COORD width, COORD height,
 	prc = cliprects;
 	count = clipcount;
 #endif
-	while(--count >= 0) {
+	while (--count >= 0) {
 #if REGIONS
 		dx = prc->left - dstx;
 		dy = prc->top - dsty;
@@ -1428,9 +1428,9 @@ GdBlit(PSD dstpsd, COORD dstx, COORD dsty, COORD width, COORD height,
 		SRCY = srcy + dy;
 
 		/* clip source rectangle*/
-		if(SRCX + WIDTH > srcpsd->xres)
+		if (SRCX + WIDTH > srcpsd->xres)
 			WIDTH = srcpsd->yres - SRCY;
-		if(SRCY + HEIGHT > srcpsd->yres)
+		if (SRCY + HEIGHT > srcpsd->yres)
 			HEIGHT = srcpsd->yres - SRCY;
 
 		GdCheckCursor(DSTX, DSTY, DSTX+WIDTH-1, DSTY+HEIGHT-1);

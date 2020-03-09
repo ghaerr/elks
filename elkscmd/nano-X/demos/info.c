@@ -22,16 +22,16 @@ int main()
 	printf("modifiers = 0x%x\n", si.modifiers);
 	printf("fonts = %d\n", si.fonts);
 
-	for(fonts = 0; fonts < si.fonts; fonts++) {
-		if(!GrGetFontInfo(fonts, &fi)) {
+	for (fonts = 0; fonts < si.fonts; fonts++) {
+		if (!GrGetFontInfo(fonts, &fi)) {
 			printf("\nfont = %d\n", fi.font);
 			printf("height = %d\n", fi.height);
 			printf("maxwidth = %d\n", fi.maxwidth);
 			printf("baseline = %d\n", fi.baseline);
 			printf("fixed = %s\n", fi.fixed ? "TRUE" : "FALSE");
 			printf("widths =\n");
-			for(y = 0; y != 3; y++) {
-				for(x = 0; x != 7; x++)
+			for (y = 0; y != 3; y++) {
+				for (x = 0; x != 7; x++)
 					printf("%2d", fi.widths[x * y]);
 				printf("\n");
 			}

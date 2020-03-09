@@ -43,7 +43,7 @@ char ** argv;
 
 	printf("Adding swap device (%d, %d) size %d\n", si.major, si.minor, si.size);
 
-	if(ioctl(fd, MEM_SETSWAP, &si)){
+	if (ioctl(fd, MEM_SETSWAP, &si)){
 		perror(*argv);
 		exit(1);
 	}

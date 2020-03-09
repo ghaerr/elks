@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 	newmode = 0666 & ~umask(0);
 
 	if (argc == 5) {
-		switch(argv[2][0]) {
+		switch (argv[2][0]) {
 		case 'b':
 			filetype = S_IFBLK;
 			break;

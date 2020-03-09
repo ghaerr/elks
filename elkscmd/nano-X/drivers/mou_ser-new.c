@@ -135,14 +135,14 @@ MOU_Open(MOUSEDEVICE *pmd)
 	struct termios termios;
 
 	/* get mouse type and port*/
-	if( !(type = getenv("MOUSE_TYPE")))
+	if (!(type = getenv("MOUSE_TYPE")))
 		type = MOUSE_TYPE;
 
-	if( !(port = getenv("MOUSE_PORT")))
+	if (!(port = getenv("MOUSE_PORT")))
 		port = MOUSE_PORT;
 
 	/* set button bits and parse procedure*/
-	if(!strcmp(type, "pc") || !strcmp(type, "logi")) {
+	if (!strcmp(type, "pc") || !strcmp(type, "logi")) {
 		/* pc or logitech mouse*/
 		left = PC_LEFT_BUTTON;
 		middle = PC_MIDDLE_BUTTON;
@@ -199,10 +199,10 @@ MOU_Open(MOUSEDEVICE *pmd)
 	tcgetattr(mouse_fd, &termios);
 
 	/* These functions appear to be broken in ELKS Dev86 */
-	if(cfgetispeed(&termios) != B1200)
+	if (cfgetispeed(&termios) != B1200)
 		cfsetispeed(&termios, B1200);
 #if _MINIX
-	if(cfgetospeed(&termios) != B1200)
+	if (cfgetospeed(&termios) != B1200)
 		cfsetospeed(&termios, B1200);
 #endif
 
@@ -314,11 +314,11 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
 			*dy = yd;
 			*dz = 0;
 			b = 0;
-			if(buttons & left)
+			if (buttons & left)
 				b |= LBUTTON;
-			if(buttons & right)
+			if (buttons & right)
 				b |= RBUTTON;
-			if(buttons & middle)
+			if (buttons & middle)
 				b |= MBUTTON;
 			*bptr = b;
 			//printf("x:%d,y:%d,b:%Xd\n", xd, yd, b);
@@ -446,14 +446,14 @@ ParsePS2(int byte)
 			break;
 
 		case XSET:
-			if(byte > 127)
+			if (byte > 127)
 				byte -= 256;
 			xd = byte;
 			state = YSET;
 			break;
 
 		case YSET:
-			if(byte > 127)
+			if (byte > 127)
 				byte -= 256;
 			yd = -byte;
 			state = IDLE;
@@ -476,12 +476,12 @@ main()
 	BUTTON	b;
 
 	printf("Open Mouse\n");
-	if( MOU_Open(0) < 0)
+	if (MOU_Open(0) < 0)
 		printf("open failed mouse\n" );
 
-	while(1)
+	while (1)
 	{
-		if(MOU_Read(&x, &y, &z, &b) == 1)
+		if (MOU_Read(&x, &y, &z, &b) == 1)
 		{
 	     		printf("%d,%d,%d\n", x, y, b);
 		}

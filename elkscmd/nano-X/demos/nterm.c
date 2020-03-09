@@ -199,14 +199,14 @@ void char_del(GR_COORD x, GR_COORD y)
 
 void char_out(GR_CHAR ch)
 {
-	switch(ch) {
+	switch (ch) {
 	case '\r':
 		xpos = 0;
 		return;
 	case '\n':
 		xpos = 0;
 		ypos += height;
-		if(ypos > si.rows - 60 - height) {
+		if (ypos > si.rows - 60 - height) {
 			ypos -= height;
 #if HAVEBLIT
 			bogl_cfb8_blit(50, 30, si.cols-120,
@@ -224,7 +224,7 @@ void char_out(GR_CHAR ch)
 		return;
 	case '\t':
 		xpos += width;
-		while((xpos/width) & 7)
+		while ((xpos/width) & 7)
 			char_out(' ');
 		return;
 	case '\b':			/* assumes fixed width font!!*/
@@ -241,7 +241,7 @@ void printg(char * text)
 {
 	int i;
 
-	for(i = 0; i < strlen(text); i++) {
+	for (i = 0; i < strlen(text); i++) {
 		char_out(text[i]);
 	}
 }

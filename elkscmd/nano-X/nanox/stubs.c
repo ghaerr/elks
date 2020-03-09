@@ -37,7 +37,7 @@ GR_ERROR_FUNC GrSetErrorHandler(GR_ERROR_FUNC func)
 {
 #if 0
 	GR_ERROR_FUNC temp = GrErrorFunc;
-	if(!func) GrErrorFunc = &GrDefaultErrorHandler;
+	if (!func) GrErrorFunc = &GrDefaultErrorHandler;
 	else GrErrorFunc = func;
 	return temp;
 #endif
@@ -542,7 +542,7 @@ void GrDefaultErrorHandler(GR_EVENT_ERROR err)
 {
 	char *why;
 
-	switch(err.code) {
+	switch (err.code) {
 		case GR_ERROR_BAD_WINDOW_ID:
 			why = "it was passed a bad window id";
 			break;

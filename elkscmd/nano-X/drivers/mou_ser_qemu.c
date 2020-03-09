@@ -135,14 +135,14 @@ MOU_Open(MOUSEDEVICE *pmd)
 	struct termios termios;
 
 	/* get mouse type and port*/
-	if( !(type = getenv("MOUSE_TYPE")))
+	if (!(type = getenv("MOUSE_TYPE")))
 		type = MOUSE_TYPE;
 
-	if( !(port = getenv("MOUSE_PORT")))
+	if (!(port = getenv("MOUSE_PORT")))
 		port = MOUSE_PORT;
 
 	/* set button bits and parse procedure*/
-	if(!strcmp(type, "pc") || !strcmp(type, "logi")) {
+	if (!strcmp(type, "pc") || !strcmp(type, "logi")) {
 		/* pc or logitech mouse*/
 		left = PC_LEFT_BUTTON;
 		middle = PC_MIDDLE_BUTTON;
@@ -187,7 +187,7 @@ MOU_Open(MOUSEDEVICE *pmd)
 	if (tcgetattr(mouse_fd, &termios) < 0)
 		goto err;
 
-	if(cfgetispeed(&termios) != B1200)
+	if (cfgetispeed(&termios) != B1200)
 		cfsetispeed(&termios, B1200);
 
 	termios.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG);
@@ -196,7 +196,7 @@ MOU_Open(MOUSEDEVICE *pmd)
 	termios.c_cflag |= CS7;
 	termios.c_cc[VMIN] = 0;
 	termios.c_cc[VTIME] = 0;
-	if(tcsetattr(mouse_fd, TCSAFLUSH, &termios) < 0)
+	if (tcsetattr(mouse_fd, TCSAFLUSH, &termios) < 0)
 		goto err;
 #endif
 
@@ -285,9 +285,9 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
 	byte &= 0xBF; //clear bit 6
 	b = 0;
 //printf("bytecleared:%X,",byte);
-	if(byte & 0x20) {
+	if (byte & 0x20) {
 	  b |= LBUTTON;
-	} else 	if(byte & 0x10) {
+	} else 	if (byte & 0x10) {
 	  b |= RBUTTON;
 	} else {
 	  b = 0;
@@ -341,10 +341,10 @@ main()
 	COORD 	x, y;
 	BUTTON	b;
 
-	if(MOU_Open(0) < 0)
+	if (MOU_Open(0) < 0)
 		printf("open failed\n");
-	while(1) {
-		if(MOU_Read(&x, &y, &b) == 1) {
+	while (1) {
+		if (MOU_Read(&x, &y, &b) == 1) {
 			printf("%d,%d,%d\n", x, y, b);
 		}
 	}

@@ -111,7 +111,7 @@ char ** argv;
 				(pwent ? pwent->pw_name : "unknown"),
 				((task_table.state == TASK_RUNNING) ? 'R' : 'S'),
 				task_table.t_inode);
-			if(task_table.mm.flags & DS_SWAP)
+			if (task_table.mm.flags & DS_SWAP)
 				printf("[data swapped] \n");
 			else
 				get_name(fd, task_table.t_regs.ss, task_table.t_begstack + 2);

@@ -68,42 +68,42 @@ void GsNewWindowWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &parent, sizeof(parent)))
+	if (GsRead(current_fd, &parent, sizeof(parent)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &x, sizeof(x)))
+	if (GsRead(current_fd, &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &y, sizeof(y)))
+	if (GsRead(current_fd, &y, sizeof(y)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &width, sizeof(width)))
+	if (GsRead(current_fd, &width, sizeof(width)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &height, sizeof(height)))
+	if (GsRead(current_fd, &height, sizeof(height)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &bordersize, sizeof(bordersize)))
+	if (GsRead(current_fd, &bordersize, sizeof(bordersize)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &background, sizeof(background)))
+	if (GsRead(current_fd, &background, sizeof(background)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &bordercolor, sizeof(bordercolor)))
+	if (GsRead(current_fd, &bordercolor, sizeof(bordercolor)))
 		return;
 
 	wid = GsNewWindow(parent, x, y, width, height, bordersize, background, bordercolor);
@@ -121,27 +121,27 @@ void GsNewInputWindowWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &parent, sizeof(parent)))
+	if (GsRead(current_fd, &parent, sizeof(parent)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &x, sizeof(x)))
+	if (GsRead(current_fd, &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &y, sizeof(y)))
+	if (GsRead(current_fd, &y, sizeof(y)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &width, sizeof(width)))
+	if (GsRead(current_fd, &width, sizeof(width)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &height, sizeof(height)))
+	if (GsRead(current_fd, &height, sizeof(height)))
 		return;
 
 	wid = GsNewInputWindow(parent, x, y, width, height);
@@ -157,7 +157,7 @@ void GsDestroyWindowWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &wid, sizeof(wid)))
+	if (GsRead(current_fd, &wid, sizeof(wid)))
 		return;
 
 	GsDestroyWindow(wid);
@@ -180,7 +180,7 @@ void GsCopyGCWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &gci, sizeof(gci)))
+	if (GsRead(current_fd, &gci, sizeof(gci)))
 		return;
 
 	gco = GsCopyGC(gci);
@@ -197,7 +197,7 @@ void GsGetGCInfoWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &g, sizeof(g)))
+	if (GsRead(current_fd, &g, sizeof(g)))
 		return;
 
 	GsGetGCInfo(g, &gc);
@@ -213,7 +213,7 @@ void GsDestroyGCWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &gc, sizeof(gc)))
+	if (GsRead(current_fd, &gc, sizeof(gc)))
 		return;
 
 	GsDestroyGC(gc);
@@ -227,7 +227,7 @@ void GsMapWindowWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &wid, sizeof(wid)))
+	if (GsRead(current_fd, &wid, sizeof(wid)))
 		return;
 
 	GsMapWindow(wid);
@@ -241,7 +241,7 @@ void GsUnmapWindowWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &wid, sizeof(wid)))
+	if (GsRead(current_fd, &wid, sizeof(wid)))
 		return;
 
 	GsUnmapWindow(wid);
@@ -255,7 +255,7 @@ void GsRaiseWindowWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &wid, sizeof(wid)))
+	if (GsRead(current_fd, &wid, sizeof(wid)))
 		return;
 
 	GsRaiseWindow(wid);
@@ -269,7 +269,7 @@ void GsLowerWindowWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &wid, sizeof(wid)))
+	if (GsRead(current_fd, &wid, sizeof(wid)))
 		return;
 
 	GsLowerWindow(wid);
@@ -285,17 +285,17 @@ void GsMoveWindowWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &wid, sizeof(wid)))
+	if (GsRead(current_fd, &wid, sizeof(wid)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &x, sizeof(x)))
+	if (GsRead(current_fd, &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &y, sizeof(y)))
+	if (GsRead(current_fd, &y, sizeof(y)))
 		return;
 
 	GsMoveWindow(wid, x, y);
@@ -311,17 +311,17 @@ void GsResizeWindowWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &wid, sizeof(wid)))
+	if (GsRead(current_fd, &wid, sizeof(wid)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &width, sizeof(width)))
+	if (GsRead(current_fd, &width, sizeof(width)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &height, sizeof(height)))
+	if (GsRead(current_fd, &height, sizeof(height)))
 		return;
 
 	GsResizeWindow(wid, width, height);
@@ -336,7 +336,7 @@ void GsGetWindowInfoWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &wid, sizeof(wid)))
+	if (GsRead(current_fd, (void *) &wid, sizeof(wid)))
 		return;
 
 	GsGetWindowInfo(wid, &wi);
@@ -353,7 +353,7 @@ void GsGetFontInfoWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &font, sizeof(GR_FONT)))
+	if (GsRead(current_fd, (void *) &font, sizeof(GR_FONT)))
 		return;
 
 	GsGetFontInfo(font, &fi);
@@ -369,7 +369,7 @@ void GsSetFocusWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &wid, sizeof(wid)))
+	if (GsRead(current_fd, &wid, sizeof(wid)))
 		return;
 
 	GsSetFocus(wid);
@@ -384,12 +384,12 @@ void GsSetBorderColorWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &wid, sizeof(wid)))
+	if (GsRead(current_fd, &wid, sizeof(wid)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &colour, sizeof(colour)))
+	if (GsRead(current_fd, &colour, sizeof(colour)))
 		return;
 
 	GsSetBorderColor(wid, colour);
@@ -404,12 +404,12 @@ void GsClearWindowWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &wid, sizeof(wid)))
+	if (GsRead(current_fd, &wid, sizeof(wid)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &exposeflag, sizeof(exposeflag)))
+	if (GsRead(current_fd, &exposeflag, sizeof(exposeflag)))
 		return;
 
 	GsClearWindow(wid, exposeflag);
@@ -424,12 +424,12 @@ void GsSelectEventsWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &wid, sizeof(wid)))
+	if (GsRead(current_fd, (void *) &wid, sizeof(wid)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &eventmask, sizeof(eventmask)))
+	if (GsRead(current_fd, (void *) &eventmask, sizeof(eventmask)))
 		return;
 
 	GsSelectEvents(wid, eventmask);
@@ -443,7 +443,7 @@ void GsGetNextEventWrapper(void)
 
 	/* first check if any event ready*/
 	GsCheckNextEvent(&evt);
-	if(evt.type == GR_EVENT_TYPE_NONE) {
+	if (evt.type == GR_EVENT_TYPE_NONE) {
 		/* tell main loop to call Finish routine on event*/
 		curclient->waiting_for_event = TRUE;
 		return;
@@ -508,32 +508,32 @@ void GsLineWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &id, sizeof(id)))
+	if (GsRead(current_fd, (void *) &id, sizeof(id)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &gc, sizeof(gc)))
+	if (GsRead(current_fd, (void *) &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &x1, sizeof(x1)))
+	if (GsRead(current_fd, (void *) &x1, sizeof(x1)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &y1, sizeof(y1)))
+	if (GsRead(current_fd, (void *) &y1, sizeof(y1)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &x2, sizeof(x2)))
+	if (GsRead(current_fd, (void *) &x2, sizeof(x2)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &y2, sizeof(y2)))
+	if (GsRead(current_fd, (void *) &y2, sizeof(y2)))
 		return;
 
 	GsLine(id, gc, x1, y1, x2, y2);
@@ -549,22 +549,22 @@ void GsPointWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &id, sizeof(id)))
+	if (GsRead(current_fd, (void *) &id, sizeof(id)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &gc, sizeof(gc)))
+	if (GsRead(current_fd, (void *) &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &x, sizeof(x)))
+	if (GsRead(current_fd, (void *) &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &y, sizeof(y)))
+	if (GsRead(current_fd, (void *) &y, sizeof(y)))
 		return;
 
 	GsPoint(id, gc, x, y);
@@ -582,32 +582,32 @@ void GsRectWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &id, sizeof(id)))
+	if (GsRead(current_fd, (void *) &id, sizeof(id)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &gc, sizeof(gc)))
+	if (GsRead(current_fd, (void *) &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &x, sizeof(x)))
+	if (GsRead(current_fd, (void *) &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &y, sizeof(y)))
+	if (GsRead(current_fd, (void *) &y, sizeof(y)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &width, sizeof(width)))
+	if (GsRead(current_fd, (void *) &width, sizeof(width)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &height, sizeof(height)))
+	if (GsRead(current_fd, (void *) &height, sizeof(height)))
 		return;
 
 	GsRect(id, gc, x, y, width, height);
@@ -624,32 +624,32 @@ void GsFillRectWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &id, sizeof(id)))
+	if (GsRead(current_fd, (void *) &id, sizeof(id)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &gc, sizeof(gc)))
+	if (GsRead(current_fd, (void *) &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &x, sizeof(x)))
+	if (GsRead(current_fd, (void *) &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &y, sizeof(y)))
+	if (GsRead(current_fd, (void *) &y, sizeof(y)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &width, sizeof(width)))
+	if (GsRead(current_fd, (void *) &width, sizeof(width)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &height, sizeof(height)))
+	if (GsRead(current_fd, (void *) &height, sizeof(height)))
 		return;
 
 	GsFillRect(id, gc, x, y, width, height);
@@ -667,27 +667,27 @@ void GsPolyWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &id, sizeof(id)))
+	if (GsRead(current_fd, (void *) &id, sizeof(id)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &gc, sizeof(gc)))
+	if (GsRead(current_fd, (void *) &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &count, sizeof(count)))
+	if (GsRead(current_fd, (void *) &count, sizeof(count)))
 		return;
 
-	if(!(pointtable = malloc(count * sizeof(GR_POINT)))) {
+	if (!(pointtable = malloc(count * sizeof(GR_POINT)))) {
 		GsPutCh(current_fd, GrRetENoMem);
 		return;
 	}
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) pointtable, (count * sizeof(GR_POINT)))) {
+	if (GsRead(current_fd, (void *) pointtable, (count * sizeof(GR_POINT)))) {
 		free(pointtable);
 		return;
 	}
@@ -709,27 +709,27 @@ void GsFillPolyWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &id, sizeof(id)))
+	if (GsRead(current_fd, (void *) &id, sizeof(id)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &gc, sizeof(gc)))
+	if (GsRead(current_fd, (void *) &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &count, sizeof(count)))
+	if (GsRead(current_fd, (void *) &count, sizeof(count)))
 		return;
 
-	if(!(pointtable = malloc(count * sizeof(GR_POINT)))) {
+	if (!(pointtable = malloc(count * sizeof(GR_POINT)))) {
 		GsPutCh(current_fd, GrRetENoMem);
 		return;
 	}
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) pointtable, (count * sizeof(GR_POINT)))) {
+	if (GsRead(current_fd, (void *) pointtable, (count * sizeof(GR_POINT)))) {
 		free(pointtable);
 		return;
 	}
@@ -750,32 +750,32 @@ void GsEllipseWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &id, sizeof(id)))
+	if (GsRead(current_fd, (void *) &id, sizeof(id)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &gc, sizeof(gc)))
+	if (GsRead(current_fd, (void *) &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &x, sizeof(x)))
+	if (GsRead(current_fd, (void *) &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &y, sizeof(y)))
+	if (GsRead(current_fd, (void *) &y, sizeof(y)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &rx, sizeof(rx)))
+	if (GsRead(current_fd, (void *) &rx, sizeof(rx)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &ry, sizeof(ry)))
+	if (GsRead(current_fd, (void *) &ry, sizeof(ry)))
 		return;
 
 	GsEllipse(id, gc, x, y, rx, ry);
@@ -792,32 +792,32 @@ void GsFillEllipseWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &id, sizeof(id)))
+	if (GsRead(current_fd, (void *) &id, sizeof(id)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &gc, sizeof(gc)))
+	if (GsRead(current_fd, (void *) &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &x, sizeof(x)))
+	if (GsRead(current_fd, (void *) &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &y, sizeof(y)))
+	if (GsRead(current_fd, (void *) &y, sizeof(y)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &rx, sizeof(rx)))
+	if (GsRead(current_fd, (void *) &rx, sizeof(rx)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &ry, sizeof(ry)))
+	if (GsRead(current_fd, (void *) &ry, sizeof(ry)))
 		return;
 
 	GsFillEllipse(id, gc, x, y, rx, ry);
@@ -832,12 +832,12 @@ void GsSetGCForegroundWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &gc, sizeof(gc)))
+	if (GsRead(current_fd, &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &foreground, sizeof(foreground)))
+	if (GsRead(current_fd, &foreground, sizeof(foreground)))
 		return;
 
 	GsSetGCForeground(gc, foreground);
@@ -852,12 +852,12 @@ void GsSetGCBackgroundWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &gc, sizeof(gc)))
+	if (GsRead(current_fd, &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &background, sizeof(background)))
+	if (GsRead(current_fd, &background, sizeof(background)))
 		return;
 
 	GsSetGCBackground(gc, background);
@@ -872,12 +872,12 @@ void GsSetGCUseBackgroundWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &gc, sizeof(gc)))
+	if (GsRead(current_fd, &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &use, sizeof(use)))
+	if (GsRead(current_fd, &use, sizeof(use)))
 		return;
 
 	GsSetGCUseBackground(gc, use);
@@ -892,12 +892,12 @@ void GsSetGCModeWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &gc, sizeof(gc)))
+	if (GsRead(current_fd, &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &mode, sizeof(mode)))
+	if (GsRead(current_fd, &mode, sizeof(mode)))
 		return;
 
 	GsSetGCMode(gc, mode);
@@ -912,12 +912,12 @@ void GsSetGCFontWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &gc, sizeof(gc)))
+	if (GsRead(current_fd, &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &font, sizeof(font)))
+	if (GsRead(current_fd, &font, sizeof(font)))
 		return;
 
 	GsSetGCFont(gc, font);
@@ -934,25 +934,25 @@ void GsGetGCTextSizeWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &gc, sizeof(gc)))
+	if (GsRead(current_fd, (void *) &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &len, sizeof(len)))
+	if (GsRead(current_fd, (void *) &len, sizeof(len)))
 		return;
 
-	if(len <= sizeof(strbuf))
+	if (len <= sizeof(strbuf))
 		string = strbuf;
-	else if(!(string = malloc(len))) {
+	else if (!(string = malloc(len))) {
 		GsPutCh(current_fd, GrRetENoMem);
 		return;
 	}
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *)string, len)) {
-		if(len > sizeof(strbuf))
+	if (GsRead(current_fd, (void *)string, len)) {
+		if (len > sizeof(strbuf))
 			free(string);
 		return;
 	}
@@ -967,7 +967,7 @@ void GsGetGCTextSizeWrapper(void)
 
 	GsWrite(current_fd, &retbase, sizeof(retbase));
 
-	if(len > sizeof(strbuf))
+	if (len > sizeof(strbuf))
 		free(string);
 }
 
@@ -982,33 +982,33 @@ void GsReadAreaWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &id, sizeof(id)))
+	if (GsRead(current_fd, (void *) &id, sizeof(id)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &x, sizeof(x)))
+	if (GsRead(current_fd, (void *) &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &y, sizeof(y)))
+	if (GsRead(current_fd, (void *) &y, sizeof(y)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &width, sizeof(width)))
+	if (GsRead(current_fd, (void *) &width, sizeof(width)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &height, sizeof(height)))
+	if (GsRead(current_fd, (void *) &height, sizeof(height)))
 		return;
 
 	/* FIXME: optimize for smaller pixelvals*/
 	size = width * height * sizeof(PIXELVAL);
 
-	if(!(area = malloc(size))) {
+	if (!(area = malloc(size))) {
 		GsPutCh(current_fd, GrRetENoMem);
 		return;
 	}
@@ -1034,32 +1034,32 @@ void GsAreaWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &id, sizeof(id)))
+	if (GsRead(current_fd, (void *) &id, sizeof(id)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &gc, sizeof(gc)))
+	if (GsRead(current_fd, (void *) &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &x, sizeof(x)))
+	if (GsRead(current_fd, (void *) &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &y, sizeof(y)))
+	if (GsRead(current_fd, (void *) &y, sizeof(y)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &width, sizeof(width)))
+	if (GsRead(current_fd, (void *) &width, sizeof(width)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &height, sizeof(height)))
+	if (GsRead(current_fd, (void *) &height, sizeof(height)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
@@ -1067,12 +1067,12 @@ void GsAreaWrapper(void)
 	/* FIXME: optimize for smaller pixelvals*/
 	size = width * height * sizeof(PIXELVAL);
 
-	if(!(area = malloc(size))) {
+	if (!(area = malloc(size))) {
 		GsPutCh(current_fd, GrRetENoMem);
 		return;
 	}
 
-	if(GsRead(current_fd, (void *) area, size))
+	if (GsRead(current_fd, (void *) area, size))
 		return;
 
 	GsArea(id, gc, x, y, width, height, area);
@@ -1094,44 +1094,44 @@ void GsBitmapWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &id, sizeof(id)))
+	if (GsRead(current_fd, (void *) &id, sizeof(id)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &gc, sizeof(gc)))
+	if (GsRead(current_fd, (void *) &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &x, sizeof(x)))
+	if (GsRead(current_fd, (void *) &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &y, sizeof(y)))
+	if (GsRead(current_fd, (void *) &y, sizeof(y)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &width, sizeof(width)))
+	if (GsRead(current_fd, (void *) &width, sizeof(width)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &height, sizeof(height)))
+	if (GsRead(current_fd, (void *) &height, sizeof(height)))
 		return;
 
 	bitmapsize = GR_BITMAP_SIZE(width, height) * sizeof(GR_BITMAP);
 
-	if(!(bitmap = malloc(bitmapsize))) {
+	if (!(bitmap = malloc(bitmapsize))) {
 		GsPutCh(current_fd, GrRetENoMem);
 		return;
 	}
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) bitmap, bitmapsize))
+	if (GsRead(current_fd, (void *) bitmap, bitmapsize))
 		return;
 
 	GsBitmap(id, gc, x, y, width, height, bitmap);
@@ -1152,47 +1152,47 @@ void GsTextWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &id, sizeof(id)))
+	if (GsRead(current_fd, (void *) &id, sizeof(id)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &gc, sizeof(gc)))
+	if (GsRead(current_fd, (void *) &gc, sizeof(gc)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &x, sizeof(x)))
+	if (GsRead(current_fd, (void *) &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &y, sizeof(y)))
+	if (GsRead(current_fd, (void *) &y, sizeof(y)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &count, sizeof(count)))
+	if (GsRead(current_fd, (void *) &count, sizeof(count)))
 		return;
 
-	if(count <= sizeof(strbuf))
+	if (count <= sizeof(strbuf))
 		str = strbuf;
-	else if(!(str = malloc(count))) {
+	else if (!(str = malloc(count))) {
 		GsPutCh(current_fd, GrRetENoMem);
 		return;
 	}
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) str, count)) {
-		if(count > sizeof(strbuf))
+	if (GsRead(current_fd, (void *) str, count)) {
+		if (count > sizeof(strbuf))
 			free(str);
 		return;
 	}
 
 	GsText(id, gc, x, y, str, count);
 
-	if(count > sizeof(strbuf))
+	if (count > sizeof(strbuf))
 		free(str);
 
 	GsPutCh(current_fd, GrRetOK);
@@ -1206,37 +1206,37 @@ void GsSetCursorWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &wid, sizeof(wid)))
+	if (GsRead(current_fd, (void *) &wid, sizeof(wid)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &cr.cursor.width, sizeof(cr.cursor.width)))
+	if (GsRead(current_fd, (void *) &cr.cursor.width, sizeof(cr.cursor.width)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &cr.cursor.height, sizeof(cr.cursor.height)))
+	if (GsRead(current_fd, (void *) &cr.cursor.height, sizeof(cr.cursor.height)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &cr.cursor.hotx, sizeof(cr.cursor.hotx)))
+	if (GsRead(current_fd, (void *) &cr.cursor.hotx, sizeof(cr.cursor.hotx)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &cr.cursor.hoty, sizeof(cr.cursor.hoty)))
+	if (GsRead(current_fd, (void *) &cr.cursor.hoty, sizeof(cr.cursor.hoty)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &cr.cursor.fgcolor, sizeof(cr.cursor.fgcolor)))
+	if (GsRead(current_fd, (void *) &cr.cursor.fgcolor, sizeof(cr.cursor.fgcolor)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) &cr.cursor.bgcolor, sizeof(cr.cursor.bgcolor)))
+	if (GsRead(current_fd, (void *) &cr.cursor.bgcolor, sizeof(cr.cursor.bgcolor)))
 		return;
 
 	bitmapsize = GR_BITMAP_SIZE(cr.cursor.width, cr.cursor.height)
@@ -1244,12 +1244,12 @@ void GsSetCursorWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) cr.cursor.image, bitmapsize))
+	if (GsRead(current_fd, (void *) cr.cursor.image, bitmapsize))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, (void *) cr.cursor.mask, bitmapsize))
+	if (GsRead(current_fd, (void *) cr.cursor.mask, bitmapsize))
 		return;
 
 	GsSetCursor(wid, cr.cursor.width, cr.cursor.height,
@@ -1266,12 +1266,12 @@ void GsMoveCursorWrapper(void)
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &x, sizeof(x)))
+	if (GsRead(current_fd, &x, sizeof(x)))
 		return;
 
 	GsPutCh(current_fd, GrRetSendData);
 
-	if(GsRead(current_fd, &y, sizeof(y)))
+	if (GsRead(current_fd, &y, sizeof(y)))
 		return;
 
 	GsMoveCursor(x, y);
@@ -1353,31 +1353,31 @@ int GsOpenSocket(void)
 #endif
 
 	/* Check if the file already exists: */
-	if(!stat(GR_NAMED_SOCKET, &s)) {
+	if (!stat(GR_NAMED_SOCKET, &s)) {
 		/* FIXME: should try connecting to see if server is active */
-		if(unlink(GR_NAMED_SOCKET))
+		if (unlink(GR_NAMED_SOCKET))
 			return -1;
 	}
 
 	/* Create the socket: */
-	if((un_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if ((un_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		return -1;
 
 	/* Bind a name to the socket: */
 	sckt.sun_family = AF_UNIX;
 	strncpy(sckt.sun_path, GR_NAMED_SOCKET, sizeof(sckt.sun_path));
-	if(bind(un_sock, (struct sockaddr *) &sckt, SUN_LEN(&sckt)) < 0)
+	if (bind(un_sock, (struct sockaddr *) &sckt, SUN_LEN(&sckt)) < 0)
 		return -1;
 
 	/* Start listening on the socket: */
-	if(listen(un_sock, 5) == -1)
+	if (listen(un_sock, 5) == -1)
 		return -1;
 	return 1;
 }
 
 void GsCloseSocket(void)
 {
-	if(un_sock != -1)
+	if (un_sock != -1)
 		close(un_sock);
 	un_sock = -1;
 	unlink(GR_NAMED_SOCKET);
@@ -1392,7 +1392,7 @@ void GsAcceptClient(void)
 	struct sockaddr_un sckt;
 	size_t size = sizeof(sckt);
 
-	if((i = accept(un_sock, (struct sockaddr *) &sckt, &size)) == -1) {
+	if ((i = accept(un_sock, (struct sockaddr *) &sckt, &size)) == -1) {
 		printf("accept failed (%d)\n", errno);
 		return;
 	}
@@ -1409,8 +1409,8 @@ GR_CLIENT *GsFindClient(int fd)
 
 	client = root_client;
 
-	while(client) {
-		if(client->id == fd) return(client);
+	while (client) {
+		if (client->id == fd) return(client);
 		client = client->next;
 	}
 
@@ -1427,11 +1427,11 @@ void GsDropClient(int fd)
 
 	close(fd);	/* Close the socket */
 
-	if((client = GsFindClient(fd))) { /* If it exists */
-		if(client == root_client)
+	if ((client = GsFindClient(fd))) { /* If it exists */
+		if (client == root_client)
 			root_client = client->next;
-		if(client->prev) client->prev->next = client->next; /* Link the prev to the next */
-		if(client->next) client->next->prev = client->prev; /* Link the next to the prev */
+		if (client->prev) client->prev->next = client->next; /* Link the prev to the next */
+		if (client->next) client->next->prev = client->prev; /* Link the next to the prev */
 		free(client);	/* Free the structure */
 	} else fprintf(stderr, "Error: trying to drop non-existent client %d.\n", fd);
 }
@@ -1446,9 +1446,9 @@ int GsRead(int fd, void *buf, int c)
 
 	n = 0;
 
-	while(n < c) {
+	while (n < c) {
 		e = read(fd, ((char *)buf + n), (c - n));
-		if(e <= 0) {
+		if (e <= 0) {
 printf("GsRead: read failed %d %x %d: %d\r\n", e, ((char *)buf +n), c-n, errno);
 			GsClose();
 			return -1;
@@ -1473,9 +1473,9 @@ int GsWrite(int fd, void *buf, int c)
 
 	n = 0;
 
-	while(n < c) {
+	while (n < c) {
 		e = write(fd, ((char *) buf + n), (c - n));
-		if(e <= 0) {
+		if (e <= 0) {
 			GsClose();
 			return -1;
 		}
@@ -1494,10 +1494,10 @@ void GsHandleClient(int fd)
 
 	current_fd = fd;
 
-	if(GsRead(fd, &c, 1))
+	if (GsRead(fd, &c, 1))
 		return;
 
-	if(c >= GrTotalNumCalls) {
+	if (c >= GrTotalNumCalls) {
 		GsPutCh(fd, GrRetENoFunction);
 	} else {
 		curfunc = GrFunctions[c].name;

@@ -600,7 +600,7 @@ int opt_p = 0;
    fprintf(stderr, "Type: %c\n", type);
 #endif
 
-   switch(scheme) {
+   switch (scheme) {
    	case SCHEME_HTTP:
 		s = httpget(host, port, user, pass, path, opt_h, opt_d, opt_p);
 		break;

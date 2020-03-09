@@ -24,7 +24,7 @@ char ** argv;
 	perror("meminfo");
 	exit(1);
     }
-    if(ioctl(fd, MEM_GETUSAGE, &mu))
+    if (ioctl(fd, MEM_GETUSAGE, &mu))
 	perror("meminfo");
 
     printf("memory usage : %4dKB total, %4dKB used, %4dKB free\n",

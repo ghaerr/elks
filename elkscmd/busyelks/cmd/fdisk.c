@@ -129,7 +129,7 @@ quit(void)
 static void
 list_part(void)
 {
-    if(*dev!=0)
+    if (*dev!=0)
 	list_partition(NULL);
 }
 
@@ -180,7 +180,7 @@ add_part(void)
 	fflush(stdout);
 	fgets(buf,8,stdin);
 	ecyl=atoi(buf);
-	if(*buf=='\n')
+	if (*buf=='\n')
 	    return;
     }
 
@@ -219,7 +219,7 @@ set_boot(void)
     int part, a;
 
     printf("Toggle bootable flag:\n\n");
-    for(part=0;part<1 || part>4;) {
+    for (part=0;part<1 || part>4;) {
 	printf("Which partition to toggle(1-4): ");
 	fflush(stdout);
 	fgets(buf,8,stdin);
@@ -405,7 +405,7 @@ fdisk_main(int argc, char * argv[])
 		strncpy(dev,argv[i],256); /* FIXME - Should be some value from a header */
 	} else
 	    if (*argv[i]=='-')
-		switch(*(argv[i]+1)) {
+		switch (*(argv[i]+1)) {
 		    case 'l':
 			mode=MODE_LIST;
 			break;
@@ -417,7 +417,7 @@ fdisk_main(int argc, char * argv[])
 		die;
     }
 
-    if(argc==1)
+    if (argc==1)
 #ifdef DEFAULT_DEV
 	strncpy(dev,DEFAULT_DEV,256);
 #else
@@ -461,7 +461,7 @@ fdisk_main(int argc, char * argv[])
 	printf("\nGeometry: %d cylinders, %d heads, %d sectors.\n\n",
 		geometry.cylinders,geometry.heads,geometry.sectors);
 	fflush(stdout);
-	while(!feof(stdin)) {
+	while (!feof(stdin)) {
 	    printf("Command%s:",flag==0?" (? for help)":"");
 	    flag=1;
 	    fflush(stdout);

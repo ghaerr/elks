@@ -46,7 +46,7 @@ char *argv[];
 					/* get command line options */
 	oops = 0;
 	while ((c = getopt(argc, argv, "st")) != EOF) {
-		switch(c) {
+		switch (c) {
 			case 's':
 				stripmode = 1;
 				break;

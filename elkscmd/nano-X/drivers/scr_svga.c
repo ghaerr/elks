@@ -95,11 +95,11 @@ SVGA_getscreeninfo(PSD psd,PSCREENINFO psi)
 	psi->pixtype = psd->pixtype;
 	psi->fonts = NUMBER_FONTS;
 
-	if(scrdev.yres > 480) {
+	if (scrdev.yres > 480) {
 		/* SVGA 800x600*/
 		psi->xdpcm = 33;	/* assumes screen width of 24 cm*/
 		psi->ydpcm = 33;	/* assumes screen height of 18 cm*/
-	} else if(scrdev.yres > 350) {
+	} else if (scrdev.yres > 350) {
 		/* VGA 640x480*/
 		psi->xdpcm = 27;	/* assumes screen width of 24 cm*/
 		psi->ydpcm = 27;	/* assumes screen height of 18 cm*/
@@ -113,7 +113,7 @@ SVGA_getscreeninfo(PSD psd,PSCREENINFO psi)
 static void
 SVGA_setpalette(PSD psd,int first,int count,RGBENTRY *pal)
 {
-	while(first < 256 && count-- > 0) {
+	while (first < 256 && count-- > 0) {
 		vga_setpalette(first++, pal->r>>2, pal->g>>2, pal->b>>2);
 		++pal;
 	}
@@ -124,7 +124,7 @@ SVGA_drawpixel(PSD psd,COORD x, COORD y, PIXELVAL c)
 {
 	unsigned char gline, line;
 
-	if(gr_mode == MODE_SET) {
+	if (gr_mode == MODE_SET) {
 		vga_setegacolor(c);
 		vga_drawpixel(x, y);
 		return;
@@ -165,15 +165,15 @@ SVGA_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c)
 	width = x2-x1+1;
 
 	/* this is faster than calling vga_drawline !!!*/
-	if(width != lastwidth || c != lastcolor) {
+	if (width != lastwidth || c != lastcolor) {
 		lastwidth = width;
 		lastcolor = c;
-		for(i=0; i<width; ++i)
+		for (i=0; i<width; ++i)
 			line[i] = c;
 	}
-	if(gr_mode == MODE_XOR) {
+	if (gr_mode == MODE_XOR) {
 		vga_getscansegment(getline, x1, y, width);
-		for(i=0; i<width; ++i)
+		for (i=0; i<width; ++i)
 			line[i] ^= getline[i];
 		lastwidth = -1;
 	}
@@ -189,20 +189,20 @@ SVGA_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c)
 static void
 SVGA_drawvline(PSD psd,COORD x, COORD y1, COORD y2, PIXELVAL c)
 {
-	if(gr_mode == MODE_SET) {
+	if (gr_mode == MODE_SET) {
 		vga_setegacolor(c);
 		vga_drawline(x, y1, x, y2);
 	}
 
 	/* slower version required for XOR drawing support*/
-	while(y1 <= y2)
+	while (y1 <= y2)
 		SVGA_drawpixel(psd, x, y1++, c);
 }
 
 static void
 SVGA_fillrect(PSD psd,COORD x1, COORD y1, COORD x2, COORD y2, PIXELVAL c)
 {
-	while(y1 <= y2)
+	while (y1 <= y2)
 		SVGA_drawhline(psd, x1, x2, y1++, c);
 }
 

@@ -40,7 +40,7 @@ mkdir_main (argc,argv)
 
 	newmode = 0777 & ~umask(0);
 
-	for(i=parent+1;i<argc;i++) {
+	for (i=parent+1;i<argc;i++) {
 		if (argv[i][0] != '-') {
 			if (argv[i][strlen(argv[i])-1] == '/')
 				argv[i][strlen(argv[i])-1] = '\0';

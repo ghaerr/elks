@@ -23,13 +23,13 @@ char ** argv;
 	}
 
 	argv[argc] = 0;
-	for(argv++ ; *argv; argv++) {
+	for (argv++ ; *argv; argv++) {
 
 		strcpy(patbuf, envpath);
 		cp = path = patbuf;
 		quit = found = 0;
 
-		while(!quit) {
+		while (!quit) {
 			cp = index(path, ':');
 			if (cp == NULL) {
 				quit++;

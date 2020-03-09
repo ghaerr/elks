@@ -197,7 +197,7 @@ void inode_dump(struct minix_inode * ptr)
 
 	printf("Mode %d %d %d %d\n", mode & 7, (mode>>4) & 7, (mode>>4) & 7, (mode>>12) & 7);
 	printf("uid %d size %ld gid %d links %d\n", ptr->i_uid, ptr->i_size, ptr->i_gid, ptr->i_nlinks);
-	for(i=0;i<9;i++){
+	for (i=0;i<9;i++){
 		printf("Z%d ", ptr->i_zone[i]);
 	}
 	printf("\n");
@@ -355,7 +355,7 @@ void read_block(unsigned int nr, char * addr)
 		memset(addr,0,BLOCK_SIZE);
 		errors_uncorrected = 1;
 	}
-	for(i = 0; i < 16; i++) {
+	for (i = 0; i < 16; i++) {
 		printd("%x ", addr[i]);
 	}
 	printd("\n");
@@ -398,7 +398,7 @@ unsigned int map_block(struct minix_inode * inode, unsigned int blknr)
 	int i;
 
 	printd("map_block %x %d (", inode, blknr);
-	for(i = 0; i < 7; i++) {
+	for (i = 0; i < 7; i++) {
 		printd("%x ", inode->i_zone[i]);
 	}
 	if (blknr<7) {

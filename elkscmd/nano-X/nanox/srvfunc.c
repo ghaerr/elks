@@ -89,7 +89,7 @@ void GsGetNextEvent(GR_EVENT *ep)
 	/* If no event ready, wait for one*/
 	/* Note: won't work for multiple clients*/
 	/* This is OK, since only static linked apps call this function*/
-	while(curclient->eventhead == NULL)
+	while (curclient->eventhead == NULL)
 		GsSelect();
 	GsCheckNextEvent(ep);
 }
@@ -112,7 +112,7 @@ void GsCheckNextEvent(GR_EVENT *ep)
 	GsSelect();
 #endif
 	/* Copy first event if any*/
-	if(!GsPeekEvent(ep))
+	if (!GsPeekEvent(ep))
 		return;
 
 	/* Get first event again*/
@@ -137,7 +137,7 @@ int GsPeekEvent(GR_EVENT *ep)
 	GR_EVENT_LIST *	elp;
 
 	elp = curclient->eventhead;
-	if(elp == NULL) {
+	if (elp == NULL) {
 		ep->type = GR_EVENT_TYPE_NONE;
 		return 0;
 	}
@@ -834,7 +834,7 @@ void GsMoveCursor(GR_COORD x, GR_COORD y)
 	 * place the hot spot at the specified coordinates.
 	 */
 	if ((x != cursorx) || (y != cursory)) {
-		if(curcursor)
+		if (curcursor)
 			GdMoveCursor(x - curcursor->cursor.hotx,
 				y - curcursor->cursor.hoty);
 		cursorx = x;

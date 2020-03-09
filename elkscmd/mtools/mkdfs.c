@@ -45,7 +45,7 @@ main(argc,argv)
   progname = argv[0] ;
 
   while ( (c=getopt(argc,argv,"hf")) != EOF ) {
-    switch(c) {
+    switch (c) {
     case 'f' :
       fflag++ ;
       break;

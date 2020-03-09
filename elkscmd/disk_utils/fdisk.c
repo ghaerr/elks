@@ -356,7 +356,7 @@ int main(int argc, char **argv)
 	    else strncpy(dev, argv[i], 256); /* FIXME - Should be some value from a header */
 	} else {
 	    if (*argv[i] == '-')
-		switch(*(argv[i] + 1)) {
+		switch (*(argv[i] + 1)) {
 		    case 'l':
 			mode = MODE_LIST;
 			break;

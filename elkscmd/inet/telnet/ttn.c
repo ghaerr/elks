@@ -489,7 +489,7 @@ assert (count);
 	next_char(iac);
 assert (iac == IAC);
 	next_char(command);
-	switch(command)
+	switch (command)
 	{
 	case IAC_NOP:
 		break;

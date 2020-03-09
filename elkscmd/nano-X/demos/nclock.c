@@ -126,7 +126,7 @@ main(int argc,char **argv)
 
 int bsin(int angle)
 {
-	if(angle < 91) {
+	if (angle < 91) {
 		return trig[angle];
 	} else if (angle < 181) {
 		return trig[180 - angle];
@@ -141,7 +141,7 @@ int bsin(int angle)
 
 int bcos(int angle)
 {
-	if(angle < 91) {
+	if (angle < 91) {
 		return trig[90 - angle];
 	} else if (angle < 181) {
 		return -trig[angle - 90];
@@ -168,7 +168,7 @@ do_exposure(ep)
 /*	GrFillRect(w1, gc2, 0, 0, CWIDTH, CHEIGHT); */
 /*	GrFillEllipse(w1, gc1, midx, midy, midx, midy); */
 	GrEllipse(w1, gc2, midx, midy, midx - 1, midy - 1);
-	for(i = 0; i < 60; i++) {
+	for (i = 0; i < 60; i++) {
 		if (i%5 == 0) {
 			l = 5;
 		} else {

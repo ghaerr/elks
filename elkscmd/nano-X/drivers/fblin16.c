@@ -34,7 +34,7 @@ linear16_drawpixel(PSD psd, COORD x, COORD y, PIXELVAL c)
 	assert (c >= 0 && c < psd->ncolors);
 
 	++drawing;
-	if(gr_mode == MODE_XOR)
+	if (gr_mode == MODE_XOR)
 		addr[x + y * psd->linelen] ^= c;
 	else
 		addr[x + y * psd->linelen] = c;
@@ -69,12 +69,12 @@ linear16_drawhorzline(PSD psd, COORD x1, COORD x2, COORD y, PIXELVAL c)
 
 	++drawing;
 	addr += x1 + y * psd->linelen;
-	if(gr_mode == MODE_XOR) {
-		while(x1++ < x2)
+	if (gr_mode == MODE_XOR) {
+		while (x1++ < x2)
 			*addr++ ^= c;
 	} else
 		//FIXME: memsetw(dst, c, x2-x1)?
-		while(x1++ < x2)
+		while (x1++ < x2)
 			*addr++ = c;
 	--drawing;
 }
@@ -95,13 +95,13 @@ linear16_drawvertline(PSD psd, COORD x, COORD y1, COORD y2, PIXELVAL c)
 
 	++drawing;
 	addr += x + y1 * linelen;
-	if(gr_mode == MODE_XOR)
-		while(y1++ < y2) {
+	if (gr_mode == MODE_XOR)
+		while (y1++ < y2) {
 			*addr ^= c;
 			addr += linelen;
 		}
 	else
-		while(y1++ < y2) {
+		while (y1++ < y2) {
 			*addr = c;
 			addr += linelen;
 		}
@@ -135,14 +135,14 @@ linear16_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 	++drawing;
 	dst = dstpsd->addr + dstx + dsty * dlinelen;
 	src = srcpsd->addr + srcx + srcy * slinelen;
-	while(--h >= 0) {
+	while (--h >= 0) {
 #if 0
 		/* a _fast_ memcpy is a _must_ in this routine*/
 		wmemcpy(dst, src, w);
 		dst += dlinelen;
 		src += slinelen;
 #else
-		for(i=0; i<w; ++i)
+		for (i=0; i<w; ++i)
 			*dst++ = *src++;
 		dst += dlinelen - w;
 		src += slinelen - w;

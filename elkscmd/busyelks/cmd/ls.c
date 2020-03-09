@@ -305,7 +305,7 @@ int ls_main(int argc, char **argv)
 
     while ( --argc && ((cp = * ++argv)[0]=='-') ) {
 	while (*++cp) {
-	    switch(*cp) {
+	    switch (*cp) {
 		case 'l':
 			flags |= LSF_LONG;
 			break;

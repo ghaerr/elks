@@ -100,7 +100,7 @@ struct timeval *tv;
 		p = strtok(NULL, "\n");
 		if (!p) break;
 		tm.tm_sec = atoi(p);
-	}while(0);	/* only to have that 'break' */
+	}while (0);	/* only to have that 'break' */
 	if (tm.tm_year<70) tm.tm_year+=2000;
 	else if (tm.tm_year<100)tm.tm_year+=1900;
 	else if (tm.tm_year<1970)
@@ -132,7 +132,7 @@ int argc;
 		if (argv[param][0] != '-')
 			usage();
 
-		switch(argv[param][1]){
+		switch (argv[param][1]){
 		case 'c':
 			if (decodedatestring(argv[++param], &tv)) usage();
 			if (systime > tv.tv_sec)

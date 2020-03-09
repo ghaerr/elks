@@ -34,12 +34,12 @@ int cat_main(int argc, char **argv)
 {
 	int i, fd;
 
-	if(argc <= 1) {
+	if (argc <= 1) {
 		dumpfile(STDIN_FILENO);
 	} else {
-		for(i=1;i<argc;i++) {
+		for (i=1;i<argc;i++) {
 			fd = open(argv[i], O_RDONLY);
-			if(fd == -1) {
+			if (fd == -1) {
 				write(STDERR_FILENO, argv[0], strlen(argv[0]));
 				write(STDERR_FILENO, colon, 2);
 				write(STDERR_FILENO, argv[i], strlen(argv[i]));
@@ -48,7 +48,7 @@ int cat_main(int argc, char **argv)
 				{
 					char const * s = strerror(errno);
 
-					if(s == NULL)
+					if (s == NULL)
 						s = "(unknown)";
 					write(STDERR_FILENO, s, strlen(s));
 				}

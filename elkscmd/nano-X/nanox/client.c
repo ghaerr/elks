@@ -45,9 +45,9 @@ static int GrReadBlock(void *b, int n)
 
 	v = (char *) b;
 
-	while(v < ((char *) b + n)) {
+	while (v < ((char *) b + n)) {
 		i = read(sock, v, ((char *) b + n - v));
-		if(i <= 0) return -1;
+		if (i <= 0) return -1;
 		v += i;
 	}
 
@@ -60,7 +60,7 @@ static int GrReadBlock(void *b, int n)
 static int GrReadByte()
 {
 	unsigned char c;
-	if(GrReadBlock(&c, 1) == -1)
+	if (GrReadBlock(&c, 1) == -1)
 		return -1;
 	else return (int) c;
 }
@@ -72,7 +72,7 @@ static int GrDeliverErrorEvent(void)
 {
 	GR_EVENT_ERROR err;
 
-	if(GrReadBlock(&err, sizeof(err)) == -1)
+	if (GrReadBlock(&err, sizeof(err)) == -1)
 		return -1;
 #ifndef __linux__
 	GrDefaultErrorHandler(err);
@@ -94,24 +94,24 @@ static int GrSendBlock(void *b, long n)
 	c = (unsigned char *) b;
 
 	/* FIXME: n > 64k will fail here if sizeof(int) == 2*/
-	while(c < ((unsigned char *) b + n)) {
+	while (c < ((unsigned char *) b + n)) {
 		i = write(sock, c, ((unsigned char *) b + n - c));
-		if(i <= 0) return -1;
+		if (i <= 0) return -1;
 		c += i;
 	}
 
 	do {
-		if((i = GrReadByte()) < 0) return -1;
-		else if(i == GrRetESig) {
+		if ((i = GrReadByte()) < 0) return -1;
+		else if (i == GrRetESig) {
 			z = GrReadByte();
-			if(z == -1) return -1;
+			if (z == -1) return -1;
 printf("client bad GrSendBlock\r\n");
 			raise(z);
 		}
-		else if(i == GrRetErrorPending)
-			if(GrDeliverErrorEvent() == -1) return -1;
+		else if (i == GrRetErrorPending)
+			if (GrDeliverErrorEvent() == -1) return -1;
 
-	} while((i == GrRetESig) | (i == GrRetErrorPending));
+	} while ((i == GrRetESig) | (i == GrRetErrorPending));
 
 	return((int) i);
 }
@@ -134,8 +134,8 @@ int GrOpen(void)
 	size_t size;
 
 
-	if(!sock)
-		if((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+	if (!sock)
+		if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 			sock = 0;
 			return -1;
 		}
@@ -143,10 +143,10 @@ int GrOpen(void)
 	name.sun_family = AF_UNIX;
 	strcpy(name.sun_path, GR_NAMED_SOCKET);
 	size = sizeof(name); //(offsetof(struct sockaddr_un, sun_path) + strlen(name.sun_path) + 1);
-	if(connect(sock, (struct sockaddr *) &name, size) == -1)
+	if (connect(sock, (struct sockaddr *) &name, size) == -1)
 		return -1;
 
-	if(GrSendByte(GrNumOpen) != GrRetOK)
+	if (GrSendByte(GrNumOpen) != GrRetOK)
 		return -1;
 
 	return sock;
@@ -171,7 +171,7 @@ void GrDefaultErrorHandler(GR_EVENT_ERROR err)
 {
 	char *why;
 
-	switch(err.code) {
+	switch (err.code) {
 		case GR_ERROR_BAD_WINDOW_ID:
 			why = "it was passed a bad window id";
 			break;
@@ -231,7 +231,7 @@ GR_ERROR_FUNC GrSetErrorHandler(GR_ERROR_FUNC func)
 	GR_ERROR_FUNC temp = GrDefaultErrorHandler;
 #else
 	GR_ERROR_FUNC temp = GrErrorFunc;
-	if(!func) GrErrorFunc = &GrDefaultErrorHandler;
+	if (!func) GrErrorFunc = &GrDefaultErrorHandler;
 	else GrErrorFunc = func;
 #endif
 	return temp;
@@ -243,10 +243,10 @@ GR_ERROR_FUNC GrSetErrorHandler(GR_ERROR_FUNC func)
  */
 int GrGetScreenInfo(GR_SCREEN_INFO *sip)
 {
-	if(GrSendByte(GrNumGetScreenInfo) != GrRetDataFollows)
+	if (GrSendByte(GrNumGetScreenInfo) != GrRetDataFollows)
 		return -1;
 
-	if(GrReadBlock(sip, sizeof(GR_SCREEN_INFO)) == -1)
+	if (GrReadBlock(sip, sizeof(GR_SCREEN_INFO)) == -1)
 		return -1;
 
 	return 0;
@@ -257,13 +257,13 @@ int GrGetScreenInfo(GR_SCREEN_INFO *sip)
  */
 int GrGetFontInfo(GR_FONT fontno, GR_FONT_INFO *fip)
 {
-	if(GrSendByte(GrNumGetFontInfo) != GrRetSendData)
+	if (GrSendByte(GrNumGetFontInfo) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&fontno, sizeof(fontno)) != GrRetDataFollows)
+	if (GrSendBlock(&fontno, sizeof(fontno)) != GrRetDataFollows)
 		return -1;
 
-	if(GrReadBlock(fip, sizeof(GR_FONT_INFO)) == -1)
+	if (GrReadBlock(fip, sizeof(GR_FONT_INFO)) == -1)
 		return -1;
 
 	return 0;
@@ -274,13 +274,13 @@ int GrGetFontInfo(GR_FONT fontno, GR_FONT_INFO *fip)
  */
 int GrGetGCInfo(GR_GC_ID gc, GR_GC_INFO *gcip)
 {
-	if(GrSendByte(GrNumGetGCInfo) != GrRetSendData)
+	if (GrSendByte(GrNumGetGCInfo) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetDataFollows)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetDataFollows)
 		return -1;
 
-	if(GrReadBlock(gcip, sizeof(GR_GC_INFO)) == -1)
+	if (GrReadBlock(gcip, sizeof(GR_GC_INFO)) == -1)
 		return -1;
 
 	return 0;
@@ -294,25 +294,25 @@ int GrGetGCInfo(GR_GC_ID gc, GR_GC_INFO *gcip)
 int GrGetGCTextSize(GR_GC_ID gc, GR_CHAR *cp, GR_SIZE len, GR_SIZE *retwidth,
 	GR_SIZE *retheight, GR_SIZE *retbase)
 {
-	if(GrSendByte(GrNumGetGCTextSize) != GrRetSendData)
+	if (GrSendByte(GrNumGetGCTextSize) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&len, sizeof(len)) != GrRetSendData)
+	if (GrSendBlock(&len, sizeof(len)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(cp, len) != GrRetDataFollows)
+	if (GrSendBlock(cp, len) != GrRetDataFollows)
 		return -1;
 
-	if(GrReadBlock(retwidth, sizeof(*retwidth)) == -1)
+	if (GrReadBlock(retwidth, sizeof(*retwidth)) == -1)
 		return -1;
 
-	if(GrReadBlock(retheight, sizeof(*retheight)) == -1)
+	if (GrReadBlock(retheight, sizeof(*retheight)) == -1)
 		return -1;
 
-	if(GrReadBlock(retbase, sizeof(*retbase)) == -1)
+	if (GrReadBlock(retbase, sizeof(*retbase)) == -1)
 		return -1;
 	return 0;
 }
@@ -342,24 +342,24 @@ int GrGetNextEvent(GR_EVENT *ep)
 	fd_set 	rfds;
 	int	setsize = 0;
 
-	if(regfd != -1) {
+	if (regfd != -1) {
 		c = GrNumGetNextEvent;
 		write(sock, &c, 1); /* fixme: check return code*/
 		FD_ZERO(&rfds);
 		FD_SET(sock, &rfds);
 		FD_SET(regfd, &rfds);
-		if(sock > setsize) setsize = sock;
-		if(regfd > setsize) setsize = regfd;
+		if (sock > setsize) setsize = sock;
+		if (regfd > setsize) setsize = regfd;
 		++setsize;
-		if(select(setsize, &rfds, NULL, NULL, NULL) > 0) {
-			if(FD_ISSET(sock, &rfds)) {
+		if (select(setsize, &rfds, NULL, NULL, NULL) > 0) {
+			if (FD_ISSET(sock, &rfds)) {
 				/* fixme: check return code*/
 				read(sock, &c, 1);
-				if(c != GrRetDataFollows)
+				if (c != GrRetDataFollows)
 					return -1;
 				goto readevent;
 			}
-			if(FD_ISSET(regfd, &rfds)) {
+			if (FD_ISSET(regfd, &rfds)) {
 				ep->type = GR_EVENT_TYPE_FDINPUT;
 			}
 		}
@@ -367,14 +367,14 @@ int GrGetNextEvent(GR_EVENT *ep)
 		/* send a byte requesting an event check,
 		 * wait till event exists
 		 */
-		if(GrSendByte(GrNumGetNextEvent) != GrRetDataFollows)
+		if (GrSendByte(GrNumGetNextEvent) != GrRetDataFollows)
 			return -1;
 
 readevent:
 		/* this will never be GR_EVENT_IDLE
 		 * with current implementation
 		 */
-		if(GrReadBlock(ep, sizeof(*ep)) == -1)
+		if (GrReadBlock(ep, sizeof(*ep)) == -1)
 			return -1;
 	}
 	return 0;
@@ -388,10 +388,10 @@ readevent:
  */
 int GrCheckNextEvent(GR_EVENT *ep)
 {
-	if(GrSendByte(GrNumCheckNextEvent) != GrRetDataFollows)
+	if (GrSendByte(GrNumCheckNextEvent) != GrRetDataFollows)
 		return -1;
 
-	if(GrReadBlock(ep, sizeof(*ep)) == -1)
+	if (GrReadBlock(ep, sizeof(*ep)) == -1)
 		return -1;
 
 	return 0;
@@ -403,10 +403,10 @@ int GrCheckNextEvent(GR_EVENT *ep)
  */
 int GrPeekEvent(GR_EVENT *ep)
 {
-	if(GrSendByte(GrNumPeekEvent) != GrRetDataFollows)
+	if (GrSendByte(GrNumPeekEvent) != GrRetDataFollows)
 		return -1;
 
-	if(GrReadBlock(ep, sizeof(*ep)) == -1)
+	if (GrReadBlock(ep, sizeof(*ep)) == -1)
 		return -1;
 
 	return GrReadByte();
@@ -418,13 +418,13 @@ int GrPeekEvent(GR_EVENT *ep)
  */
 int GrSelectEvents(GR_WINDOW_ID wid, GR_EVENT_MASK eventmask)
 {
-	if(GrSendByte(GrNumSelectEvents) != GrRetSendData)
+	if (GrSendByte(GrNumSelectEvents) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetSendData)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&eventmask, sizeof(eventmask)) != GrRetOK)
+	if (GrSendBlock(&eventmask, sizeof(eventmask)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -440,34 +440,34 @@ GR_WINDOW_ID GrNewWindow(GR_WINDOW_ID parent, GR_COORD x, GR_COORD y, GR_SIZE wi
 {
 	GR_WINDOW_ID wid;
 
-	if(GrSendByte(GrNumNewWindow) != GrRetSendData)
+	if (GrSendByte(GrNumNewWindow) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&parent, sizeof(parent)) != GrRetSendData)
+	if (GrSendBlock(&parent, sizeof(parent)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetSendData)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&width, sizeof(width)) != GrRetSendData)
+	if (GrSendBlock(&width, sizeof(width)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&height, sizeof(height)) != GrRetSendData)
+	if (GrSendBlock(&height, sizeof(height)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&bordersize, sizeof(bordersize)) != GrRetSendData)
+	if (GrSendBlock(&bordersize, sizeof(bordersize)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&background, sizeof(background)) != GrRetSendData)
+	if (GrSendBlock(&background, sizeof(background)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&bordercolor, sizeof(bordercolor)) != GrRetDataFollows)
+	if (GrSendBlock(&bordercolor, sizeof(bordercolor)) != GrRetDataFollows)
 		return -1;
 
-	if(GrReadBlock(&wid, sizeof(wid)) == -1)
+	if (GrReadBlock(&wid, sizeof(wid)) == -1)
 		return -1;
 
 	return wid;
@@ -482,25 +482,25 @@ GR_WINDOW_ID GrNewInputWindow(GR_WINDOW_ID parent, GR_COORD x, GR_COORD y, GR_SI
 {
 	GR_WINDOW_ID wid;
 
-	if(GrSendByte(GrNumNewInputWindow) != GrRetSendData)
+	if (GrSendByte(GrNumNewInputWindow) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&parent, sizeof(parent)) != GrRetSendData)
+	if (GrSendBlock(&parent, sizeof(parent)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetSendData)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&width, sizeof(width)) != GrRetSendData)
+	if (GrSendBlock(&width, sizeof(width)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&height, sizeof(height)) != GrRetSendData)
+	if (GrSendBlock(&height, sizeof(height)) != GrRetSendData)
 		return -1;
 
-	if(GrReadBlock(&wid, sizeof(wid)) == -1)
+	if (GrReadBlock(&wid, sizeof(wid)) == -1)
 		return -1;
 
 	return wid;
@@ -511,10 +511,10 @@ GR_WINDOW_ID GrNewInputWindow(GR_WINDOW_ID parent, GR_COORD x, GR_COORD y, GR_SI
  */
 int GrDestroyWindow(GR_WINDOW_ID wid)
 {
-	if(GrSendByte(GrNumDestroyWindow) != GrRetSendData)
+	if (GrSendByte(GrNumDestroyWindow) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetOK)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -525,13 +525,13 @@ int GrDestroyWindow(GR_WINDOW_ID wid)
  */
 int GrGetWindowInfo(GR_WINDOW_ID wid, GR_WINDOW_INFO *infoptr)
 {
-	if(GrSendByte(GrNumGetWindowInfo) != GrRetSendData)
+	if (GrSendByte(GrNumGetWindowInfo) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetDataFollows)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetDataFollows)
 		return -1;
 
-	if(GrReadBlock(infoptr, sizeof(GR_WINDOW_INFO)) == -1)
+	if (GrReadBlock(infoptr, sizeof(GR_WINDOW_INFO)) == -1)
 		return -1;
 
 	return 0;
@@ -544,10 +544,10 @@ GR_GC_ID GrNewGC(void)
 {
 	GR_GC_ID gc;
 
-	if(GrSendByte(GrNumNewGC) != GrRetDataFollows)
+	if (GrSendByte(GrNumNewGC) != GrRetDataFollows)
 		return -1;
 
-	if(GrReadBlock(&gc, sizeof(gc)) == -1)
+	if (GrReadBlock(&gc, sizeof(gc)) == -1)
 		return -1;
 
 	return gc;
@@ -560,13 +560,13 @@ GR_GC_ID GrCopyGC(GR_GC_ID gc)
 {
 	GR_GC_ID newgc;
 
-	if(GrSendByte(GrNumCopyGC) != GrRetSendData)
+	if (GrSendByte(GrNumCopyGC) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetDataFollows)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetDataFollows)
 		return -1;
 
-	if(GrReadBlock(&newgc, sizeof(newgc)) == -1)
+	if (GrReadBlock(&newgc, sizeof(newgc)) == -1)
 		return -1;
 
 	return newgc;
@@ -577,10 +577,10 @@ GR_GC_ID GrCopyGC(GR_GC_ID gc)
  */
 int GrDestroyGC(GR_GC_ID gc)
 {
-	if(GrSendByte(GrNumDestroyGC) != GrRetSendData)
+	if (GrSendByte(GrNumDestroyGC) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetOK)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -593,10 +593,10 @@ int GrDestroyGC(GR_GC_ID gc)
  */
 int GrMapWindow(GR_WINDOW_ID wid)
 {
-	if(GrSendByte(GrNumMapWindow) != GrRetSendData)
+	if (GrSendByte(GrNumMapWindow) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetOK)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -607,10 +607,10 @@ int GrMapWindow(GR_WINDOW_ID wid)
  */
 int GrUnmapWindow(GR_WINDOW_ID wid)
 {
-	if(GrSendByte(GrNumUnmapWindow) != GrRetSendData)
+	if (GrSendByte(GrNumUnmapWindow) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetOK)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -621,10 +621,10 @@ int GrUnmapWindow(GR_WINDOW_ID wid)
  */
 int GrRaiseWindow(GR_WINDOW_ID wid)
 {
-	if(GrSendByte(GrNumRaiseWindow) != GrRetSendData)
+	if (GrSendByte(GrNumRaiseWindow) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetOK)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -635,10 +635,10 @@ int GrRaiseWindow(GR_WINDOW_ID wid)
  */
 int GrLowerWindow(GR_WINDOW_ID wid)
 {
-	if(GrSendByte(GrNumLowerWindow) != GrRetSendData)
+	if (GrSendByte(GrNumLowerWindow) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetOK)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -649,16 +649,16 @@ int GrLowerWindow(GR_WINDOW_ID wid)
  */
 int GrMoveWindow(GR_WINDOW_ID wid, GR_COORD x, GR_COORD y)
 {
-	if(GrSendByte(GrNumMoveWindow) != GrRetSendData)
+	if (GrSendByte(GrNumMoveWindow) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetSendData)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetOK)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -669,16 +669,16 @@ int GrMoveWindow(GR_WINDOW_ID wid, GR_COORD x, GR_COORD y)
  */
 int GrResizeWindow(GR_WINDOW_ID wid, GR_SIZE width, GR_SIZE height)
 {
-	if(GrSendByte(GrNumResizeWindow) != GrRetSendData)
+	if (GrSendByte(GrNumResizeWindow) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetSendData)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&width, sizeof(width)) != GrRetSendData)
+	if (GrSendBlock(&width, sizeof(width)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&height, sizeof(height)) != GrRetOK)
+	if (GrSendBlock(&height, sizeof(height)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -691,13 +691,13 @@ int GrResizeWindow(GR_WINDOW_ID wid, GR_SIZE width, GR_SIZE height)
  */
 int GrClearWindow(GR_WINDOW_ID wid, GR_BOOL exposeflag)
 {
-	if(GrSendByte(GrNumClearWindow) != GrRetSendData)
+	if (GrSendByte(GrNumClearWindow) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetSendData)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&exposeflag, sizeof(exposeflag)) != GrRetOK)
+	if (GrSendBlock(&exposeflag, sizeof(exposeflag)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -710,10 +710,10 @@ int GrClearWindow(GR_WINDOW_ID wid, GR_BOOL exposeflag)
  */
 int GrSetFocus(GR_WINDOW_ID wid)
 {
-	if(GrSendByte(GrNumSetFocus) != GrRetSendData)
+	if (GrSendByte(GrNumSetFocus) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetOK)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -724,13 +724,13 @@ int GrSetFocus(GR_WINDOW_ID wid)
  */
 int GrSetBorderColor(GR_WINDOW_ID wid, GR_COLOR colour)
 {
-	if(GrSendByte(GrNumSetBorderColor) != GrRetSendData)
+	if (GrSendByte(GrNumSetBorderColor) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetSendData)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&colour, sizeof(colour)) != GrRetOK)
+	if (GrSendBlock(&colour, sizeof(colour)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -748,34 +748,34 @@ int GrSetCursor(GR_WINDOW_ID wid, GR_SIZE width, GR_SIZE height, GR_COORD hotx,
 {
 	int bitmapsize = GR_BITMAP_SIZE(width, height) * sizeof(GR_BITMAP);
 
-	if(GrSendByte(GrNumSetCursor) != GrRetSendData)
+	if (GrSendByte(GrNumSetCursor) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&wid, sizeof(wid)) != GrRetSendData)
+	if (GrSendBlock(&wid, sizeof(wid)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&width, sizeof(width)) != GrRetSendData)
+	if (GrSendBlock(&width, sizeof(width)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&height, sizeof(height)) != GrRetSendData)
+	if (GrSendBlock(&height, sizeof(height)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&hotx, sizeof(hotx)) != GrRetSendData)
+	if (GrSendBlock(&hotx, sizeof(hotx)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&hoty, sizeof(hoty)) != GrRetSendData)
+	if (GrSendBlock(&hoty, sizeof(hoty)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&foreground, sizeof(foreground)) != GrRetSendData)
+	if (GrSendBlock(&foreground, sizeof(foreground)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&background, sizeof(background)) != GrRetSendData)
+	if (GrSendBlock(&background, sizeof(background)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(fgbitmap, bitmapsize) != GrRetSendData)
+	if (GrSendBlock(fgbitmap, bitmapsize) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(bgbitmap, bitmapsize) != GrRetOK)
+	if (GrSendBlock(bgbitmap, bitmapsize) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -789,13 +789,13 @@ int GrSetCursor(GR_WINDOW_ID wid, GR_SIZE width, GR_SIZE height, GR_COORD hotx,
  */
 int GrMoveCursor(GR_COORD x, GR_COORD y)
 {
-	if(GrSendByte(GrNumMoveCursor) != GrRetSendData)
+	if (GrSendByte(GrNumMoveCursor) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetOK)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -806,7 +806,7 @@ int GrMoveCursor(GR_COORD x, GR_COORD y)
  */
 int GrFlush(void)
 {
-	if(GrSendByte(GrNumFlush) != GrRetOK)
+	if (GrSendByte(GrNumFlush) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -817,13 +817,13 @@ int GrFlush(void)
  */
 int GrSetGCForeground(GR_GC_ID gc, GR_COLOR foreground)
 {
-	if(GrSendByte(GrNumSetGCForeground) != GrRetSendData)
+	if (GrSendByte(GrNumSetGCForeground) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&foreground, sizeof(foreground)) != GrRetOK)
+	if (GrSendBlock(&foreground, sizeof(foreground)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -834,13 +834,13 @@ int GrSetGCForeground(GR_GC_ID gc, GR_COLOR foreground)
  */
 int GrSetGCBackground(GR_GC_ID gc, GR_COLOR background)
 {
-	if(GrSendByte(GrNumSetGCBackground) != GrRetSendData)
+	if (GrSendByte(GrNumSetGCBackground) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&background, sizeof(background)) != GrRetOK)
+	if (GrSendBlock(&background, sizeof(background)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -851,13 +851,13 @@ int GrSetGCBackground(GR_GC_ID gc, GR_COLOR background)
  */
 int GrSetGCMode(GR_GC_ID gc, GR_MODE mode)
 {
-	if(GrSendByte(GrNumSetGCMode) != GrRetSendData)
+	if (GrSendByte(GrNumSetGCMode) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&mode, sizeof(mode)) != GrRetOK)
+	if (GrSendBlock(&mode, sizeof(mode)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -868,13 +868,13 @@ int GrSetGCMode(GR_GC_ID gc, GR_MODE mode)
  */
 int GrSetGCUseBackground(GR_GC_ID gc, GR_BOOL flag)
 {
-	if(GrSendByte(GrNumSetGCUseBackground) != GrRetSendData)
+	if (GrSendByte(GrNumSetGCUseBackground) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&flag, sizeof(flag)) != GrRetOK)
+	if (GrSendBlock(&flag, sizeof(flag)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -887,13 +887,13 @@ int GrSetGCUseBackground(GR_GC_ID gc, GR_BOOL flag)
  */
 int GrSetGCFont(GR_GC_ID gc, GR_FONT font)
 {
-	if(GrSendByte(GrNumSetGCFont) != GrRetSendData)
+	if (GrSendByte(GrNumSetGCFont) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&font, sizeof(font)) != GrRetOK)
+	if (GrSendBlock(&font, sizeof(font)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -904,25 +904,25 @@ int GrSetGCFont(GR_GC_ID gc, GR_FONT font)
  */
 int GrLine(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x1, GR_COORD y1, GR_COORD x2, GR_COORD y2)
 {
-	if(GrSendByte(GrNumLine) != GrRetSendData)
+	if (GrSendByte(GrNumLine) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&id, sizeof(id)) != GrRetSendData)
+	if (GrSendBlock(&id, sizeof(id)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x1, sizeof(x1)) != GrRetSendData)
+	if (GrSendBlock(&x1, sizeof(x1)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y1, sizeof(y1)) != GrRetSendData)
+	if (GrSendBlock(&y1, sizeof(y1)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x2, sizeof(x2)) != GrRetSendData)
+	if (GrSendBlock(&x2, sizeof(x2)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y2, sizeof(y2)) != GrRetOK)
+	if (GrSendBlock(&y2, sizeof(y2)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -934,25 +934,25 @@ int GrLine(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x1, GR_COORD y1, GR_COORD x2, GR
  */
 int GrRect(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_SIZE width, GR_SIZE height)
 {
-	if(GrSendByte(GrNumRect) != GrRetSendData)
+	if (GrSendByte(GrNumRect) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&id, sizeof(id)) != GrRetSendData)
+	if (GrSendBlock(&id, sizeof(id)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetSendData)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&width, sizeof(width)) != GrRetSendData)
+	if (GrSendBlock(&width, sizeof(width)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&height, sizeof(height)) != GrRetOK)
+	if (GrSendBlock(&height, sizeof(height)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -964,25 +964,25 @@ int GrRect(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_SIZE width, GR
  */
 int GrFillRect(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_SIZE width, GR_SIZE height)
 {
-	if(GrSendByte(GrNumFillRect) != GrRetSendData)
+	if (GrSendByte(GrNumFillRect) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&id, sizeof(id)) != GrRetSendData)
+	if (GrSendBlock(&id, sizeof(id)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetSendData)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&width, sizeof(width)) != GrRetSendData)
+	if (GrSendBlock(&width, sizeof(width)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&height, sizeof(height)) != GrRetOK)
+	if (GrSendBlock(&height, sizeof(height)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -994,25 +994,25 @@ int GrFillRect(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_SIZE width
  */
 int GrEllipse(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_SIZE rx, GR_SIZE ry)
 {
-	if(GrSendByte(GrNumEllipse) != GrRetSendData)
+	if (GrSendByte(GrNumEllipse) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&id, sizeof(id)) != GrRetSendData)
+	if (GrSendBlock(&id, sizeof(id)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetSendData)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&rx, sizeof(rx)) != GrRetSendData)
+	if (GrSendBlock(&rx, sizeof(rx)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&ry, sizeof(ry)) != GrRetOK)
+	if (GrSendBlock(&ry, sizeof(ry)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -1024,25 +1024,25 @@ int GrEllipse(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_SIZE rx, GR
  */
 int GrFillEllipse(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_SIZE rx, GR_SIZE ry)
 {
-	if(GrSendByte(GrNumFillEllipse) != GrRetSendData)
+	if (GrSendByte(GrNumFillEllipse) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&id, sizeof(id)) != GrRetSendData)
+	if (GrSendBlock(&id, sizeof(id)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetSendData)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&rx, sizeof(rx)) != GrRetSendData)
+	if (GrSendBlock(&rx, sizeof(rx)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&ry, sizeof(ry)) != GrRetOK)
+	if (GrSendBlock(&ry, sizeof(ry)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -1062,28 +1062,28 @@ int GrBitmap(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_SIZE width,
 {
 	long bitmapsize = (long)GR_BITMAP_SIZE(width, height) * sizeof(GR_BITMAP);
 
-	if(GrSendByte(GrNumBitmap) != GrRetSendData)
+	if (GrSendByte(GrNumBitmap) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&id, sizeof(id)) != GrRetSendData)
+	if (GrSendBlock(&id, sizeof(id)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetSendData)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&width, sizeof(width)) != GrRetSendData)
+	if (GrSendBlock(&width, sizeof(width)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&height, sizeof(height)) != GrRetSendData)
+	if (GrSendBlock(&height, sizeof(height)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(bitmaptable, bitmapsize) != GrRetOK)
+	if (GrSendBlock(bitmaptable, bitmapsize) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -1103,28 +1103,28 @@ int GrArea(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_SIZE width,
 	/* FIXME: optimize for smaller pixelvals*/
 	long size = (long)width * height * sizeof(PIXELVAL);
 
-	if(GrSendByte(GrNumArea) != GrRetSendData)
+	if (GrSendByte(GrNumArea) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&id, sizeof(id)) != GrRetSendData)
+	if (GrSendBlock(&id, sizeof(id)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetSendData)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&width, sizeof(width)) != GrRetSendData)
+	if (GrSendBlock(&width, sizeof(width)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&height, sizeof(height)) != GrRetSendData)
+	if (GrSendBlock(&height, sizeof(height)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(pixels, size) != GrRetOK)
+	if (GrSendBlock(pixels, size) != GrRetOK)
 		return -1;
 	return 0;
 }
@@ -1142,25 +1142,25 @@ int GrReadArea(GR_DRAW_ID id,GR_COORD x,GR_COORD y,GR_SIZE width,GR_SIZE height,
 	/* FIXME: optimize for smaller pixelvals*/
 	long size = (long)width * height * sizeof(PIXELVAL);
 
-	if(GrSendByte(GrNumReadArea) != GrRetSendData)
+	if (GrSendByte(GrNumReadArea) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&id, sizeof(id)) != GrRetSendData)
+	if (GrSendBlock(&id, sizeof(id)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetSendData)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&width, sizeof(width)) != GrRetSendData)
+	if (GrSendBlock(&width, sizeof(width)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&height, sizeof(height)) != GrRetDataFollows)
+	if (GrSendBlock(&height, sizeof(height)) != GrRetDataFollows)
 		return -1;
 
-	if(GrReadBlock(pixels, size) == -1)
+	if (GrReadBlock(pixels, size) == -1)
 		return -1;
 	return 0;
 }
@@ -1171,19 +1171,19 @@ int GrReadArea(GR_DRAW_ID id,GR_COORD x,GR_COORD y,GR_SIZE width,GR_SIZE height,
  */
 int GrPoint(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y)
 {
-	if(GrSendByte(GrNumPoint) != GrRetSendData)
+	if (GrSendByte(GrNumPoint) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&id, sizeof(id)) != GrRetSendData)
+	if (GrSendBlock(&id, sizeof(id)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetOK)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -1197,19 +1197,19 @@ int GrPoint(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y)
  */
 int GrPoly(GR_DRAW_ID id, GR_GC_ID gc, GR_COUNT count, GR_POINT *pointtable)
 {
-	if(GrSendByte(GrNumPoly) != GrRetSendData)
+	if (GrSendByte(GrNumPoly) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&id, sizeof(id)) != GrRetSendData)
+	if (GrSendBlock(&id, sizeof(id)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&count, sizeof(count)) != GrRetSendData)
+	if (GrSendBlock(&count, sizeof(count)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(pointtable, (count * sizeof(GR_POINT))) != GrRetOK)
+	if (GrSendBlock(pointtable, (count * sizeof(GR_POINT))) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -1222,19 +1222,19 @@ int GrPoly(GR_DRAW_ID id, GR_GC_ID gc, GR_COUNT count, GR_POINT *pointtable)
  */
 int GrFillPoly(GR_DRAW_ID id, GR_GC_ID gc, GR_COUNT count, GR_POINT *pointtable)
 {
-	if(GrSendByte(GrNumFillPoly) != GrRetSendData)
+	if (GrSendByte(GrNumFillPoly) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&id, sizeof(id)) != GrRetSendData)
+	if (GrSendBlock(&id, sizeof(id)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&count, sizeof(count)) != GrRetSendData)
+	if (GrSendBlock(&count, sizeof(count)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(pointtable, (count * sizeof(GR_POINT))) != GrRetOK)
+	if (GrSendBlock(pointtable, (count * sizeof(GR_POINT))) != GrRetOK)
 		return -1;
 
 	return 0;
@@ -1247,25 +1247,25 @@ int GrFillPoly(GR_DRAW_ID id, GR_GC_ID gc, GR_COUNT count, GR_POINT *pointtable)
  */
 int GrText(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_CHAR *str, GR_COUNT count)
 {
-	if(GrSendByte(GrNumText) != GrRetSendData)
+	if (GrSendByte(GrNumText) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&id, sizeof(id)) != GrRetSendData)
+	if (GrSendBlock(&id, sizeof(id)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
+	if (GrSendBlock(&gc, sizeof(gc)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&x, sizeof(x)) != GrRetSendData)
+	if (GrSendBlock(&x, sizeof(x)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&y, sizeof(y)) != GrRetSendData)
+	if (GrSendBlock(&y, sizeof(y)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(&count, sizeof(count)) != GrRetSendData)
+	if (GrSendBlock(&count, sizeof(count)) != GrRetSendData)
 		return -1;
 
-	if(GrSendBlock(str, count) != GrRetOK)
+	if (GrSendBlock(str, count) != GrRetOK)
 		return -1;
 
 	return 0;

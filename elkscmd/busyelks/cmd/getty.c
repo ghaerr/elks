@@ -225,7 +225,7 @@ void getty_main(int argc, char **argv) {
 		case '\\':
 		    ch = Buffer[1];
 		    debug1("DEBUG: Found '\\%c'\n",ch);
-		    switch(ch) {
+		    switch (ch) {
 			case '0':			/* NUL */
 			    ch = 0;
 			case '\\':
@@ -260,7 +260,7 @@ void getty_main(int argc, char **argv) {
 		case '@':
 		    ch = Buffer[1];
 		    debug1("DEBUG: Found '@%c'\n",ch);
-		    switch(ch) {
+		    switch (ch) {
 			case '@':
 			    put(ch);
 			    break;

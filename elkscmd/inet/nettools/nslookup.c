@@ -60,12 +60,12 @@ void ChangetoDnsNameFormat(unsigned char* dns,unsigned char* host)
     int lock = 0 , i;
     strcat((char*)host,".");
 
-    for(i = 0 ; i < strlen((char*)host) ; i++)
+    for (i = 0 ; i < strlen((char*)host) ; i++)
     {
-        if(host[i]=='.')
+        if (host[i]=='.')
         {
             *dns++ = i-lock;
-            for(;lock<i;lock++)
+            for (;lock<i;lock++)
             {
                 *dns++=host[lock];
             }
@@ -82,20 +82,20 @@ char* get_dns_server()
     static char line[200];
     char ipaddress[200];
     char* ptr;
-    if((fp = fopen("/etc/resolv.conf" , "r")) == NULL)
+    if ((fp = fopen("/etc/resolv.conf" , "r")) == NULL)
     {
         //printf("failed to read resolv.conf\n");
 	sprintf(line,"208.67.222.222"); /*nameserver*/
 	return &line;
     }
 
-    while(fgets(line , 200 , fp))
+    while (fgets(line , 200 , fp))
     {
-        if(line[0] == '#')
+        if (line[0] == '#')
         {
             continue;
         }
-        if(strncmp(line , "nameserver" , 10) == 0)
+        if (strncmp(line , "nameserver" , 10) == 0)
         {
 	    sprintf(ipaddress,"%s",line); /*strtok modifies the string, use copy*/
             ptr = strtok(ipaddress, " "); /*first part = "nameserver"*/

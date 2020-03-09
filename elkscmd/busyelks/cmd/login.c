@@ -112,7 +112,7 @@ char ** argv;
 				exit(1);
 			}
 			p=strchr(lbuf,'\n');
-			if(p) *p='\0';
+			if (p) *p='\0';
 		} else {
 			strncpy(lbuf, argv[1], UT_NAMESIZE);
 			lbuf[UT_NAMESIZE - 1] = '\0';
