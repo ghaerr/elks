@@ -1,7 +1,7 @@
 /*
  * __getpwent.c - This file is part of the libc-8086/pwd package for ELKS,
  * Copyright (C) 1995, 1996 Nat Friedman <ndf@linux.mit.edu>.
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
  *  License as published by the Free Software Foundation; either
@@ -31,7 +31,7 @@
   so it's probably nicer.  Write me if you want the old version.  Maybe I
   should include it as a build-time option... ?
   -Nat <ndf@linux.mit.edu> */
-   
+
 struct passwd *
 __getpwent(int pwd_fd)
 {
@@ -89,7 +89,7 @@ restart:
     }
   passwd.pw_gid=(gid_t) strtoul(gid_ptr, &endptr, 10);
   if (*endptr!='\0') goto restart;
-  
+
   passwd.pw_uid=(uid_t) strtoul(uid_ptr, &endptr, 10);
   if (*endptr!='\0') goto restart;
 

@@ -61,7 +61,7 @@ struct utmp *
 getutid(const struct utmp * utmp_entry)
 {
   struct utmp * utmp;
-  
+
   while ((utmp=getutent())!=NULL)
     {
       if ((utmp_entry->ut_type==RUN_LVL   ||

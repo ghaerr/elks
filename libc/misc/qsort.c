@@ -1,7 +1,7 @@
 /*
  * This file lifted in toto from 'Dlibs' on the atari ST  (RdeBath)
  *
- * 
+ *
  *    Dale Schumacher                         399 Beacon Ave.
  *    (alias: Dalnefre')                      St. Paul, MN  55104
  *    dal@syntel.UUCP                         United States of America

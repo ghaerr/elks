@@ -1,7 +1,7 @@
 /*
  * __getgrent.c - This file is part of the libc-8086/grp package for ELKS,
  * Copyright (C) 1995, 1996 Nat Friedman <ndf@linux.mit.edu>.
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
  *  License as published by the Free Software Foundation; either
@@ -32,7 +32,7 @@
 struct group *
 __getgrent(int grp_fd)
 {
-#ifndef GR_SCALE_DYNAMIC  
+#ifndef GR_SCALE_DYNAMIC
   static char line_buff[GR_MAX_LINE_LEN];
   static char * members[GR_MAX_MEMBERS];
 #else

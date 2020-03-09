@@ -48,7 +48,7 @@ __execvve(char * fname, char **interp, char **argv, char **envp)
 	   return -1;
 	}
 
-/* Sanity check 
+/* Sanity check
 	printf("Argv = (%d,%d), Envp=(%d,%d), stack=%d\n",
 	        argv_count, argv_len, envp_count, envp_len, stack_bytes);
 */

@@ -3,7 +3,7 @@
  * under the GNU Library General Public License.
  */
 
-double 
+double
 #ifdef __STDC__
 atof(const char *p)
 #else

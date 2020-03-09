@@ -6,9 +6,9 @@
 /*
  * Like fread, fwrite will often be used to write out large chunks of
  * data; calling write() directly can be a big win in this case.
- * 
+ *
  * But first we check to see if there's space in the buffer.
- * 
+ *
  * Again this ignores __MODE__IOTRAN.
  */
 int

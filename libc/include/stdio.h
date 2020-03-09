@@ -85,7 +85,7 @@ extern FILE stderr[1];
     (*(stream)->bufpos++))
 #endif
 
-#define putchar(c) putc((c), stdout)  
+#define putchar(c) putc((c), stdout)
 #define getchar() getc(stdin)
 
 #define ferror(fp)	(((fp)->mode&__MODE_ERR) != 0)

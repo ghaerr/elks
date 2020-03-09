@@ -107,7 +107,7 @@ ino_t this_ino;
          if( slen + strlen(d->d_name) > path_size )
 	    { errno = ERANGE; return 0; }
          strcpy(ptr+1, d->d_name);
-	 if( stat(path_buf, &st) < 0 ) 
+	 if( stat(path_buf, &st) < 0 )
 	    continue;
          if( st.st_ino == this_ino && st.st_dev == this_dev )
 	 {

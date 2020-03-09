@@ -5,10 +5,10 @@
 
 /*
  * This deals with both the atexit and on_exit function calls
- * 
+ *
  * Note calls installed with atexit are called with the same args as on_exit
  * fuctions; the void* is given the NULL value.
- * 
+ *
  */
 
 #include <errno.h>

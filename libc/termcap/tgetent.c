@@ -302,7 +302,7 @@ tgetent(char *bp, const char *name)
   int filep;
 #ifdef ADJUST_WIN_EXTENT
   int li, co;			/* #lines and columns on this tty */
-  
+
   if (get_win_extent(&li, &co) != 0)
      li = co = -1;
 #endif /* ADJUST_WIN_EXTENT */

@@ -1,7 +1,7 @@
 /*
  * strtol.c - This file is part of the libc-8086 package for ELKS,
  * Copyright (C) 1995, 1996 Nat Friedman <ndf@linux.mit.edu>.
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
  *  License as published by the Free Software Foundation; either
@@ -52,7 +52,7 @@ strtoul(const char *nptr, char **endptr, int base)
   /* Sanity check the arguments */
   if (base==1 || base>36 || base<0)
     base=0;
-  
+
   /* advance beyond any leading whitespace */
   while (isspace(*nptr))
     nptr++;

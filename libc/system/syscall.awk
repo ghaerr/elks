@@ -54,7 +54,7 @@ END {
 			printf ("#ifndef sys_%s\n", calltab [i]) > "defn_tab.v";
 			printf ("#define sys_%s sys_enosys\n", calltab [i]) > "defn_tab.v";
 			printf ("#endif\n\n") > "defn_tab.v";
-			
+
 			printf ("/* %3d */  sys_%s,\n", i, calltab [i]) > "call_tab.v";
 		}
 		else
