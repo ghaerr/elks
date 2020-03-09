@@ -20,7 +20,7 @@ unsigned char trig[91] =
 	181, 184, 187, 190, 193, 196, 198, 201, 204, 207, 209, 212, 214, 217,
 	219, 221, 223, 226, 228, 230, 232, 233, 235, 237, 238, 240, 242, 243,
 	244, 246, 247, 248, 249, 250, 251, 252, 252, 253, 254, 254, 255, 255,
-	255, 255, 255, 255}; 
+	255, 255, 255, 255};
 
 /*
  * Definitions to make it easy to define cursors
@@ -62,7 +62,7 @@ main(int argc,char **argv)
 		fprintf(stderr, "cannot open graphics\n");
 		exit(1);
 	}
-	
+
 	GrGetScreenInfo(&si);
 
 	GrSetErrorHandler(errorcatcher);
@@ -175,13 +175,13 @@ do_exposure(ep)
 			l = 0;
 		}
 		GrLine(w1, gc2,
-			midx + (((midx - 3) * bsin(i * 6)) >> 8), 
-			midy + (((midy - 3) * bcos(i * 6)) >> 8), 
-			midx + (((midx - 3 - l) * bsin(i * 6)) >> 8), 
+			midx + (((midx - 3) * bsin(i * 6)) >> 8),
+			midy + (((midy - 3) * bcos(i * 6)) >> 8),
+			midx + (((midx - 3 - l) * bsin(i * 6)) >> 8),
 			midy + (((midy - 3 - l) * bcos(i * 6)) >> 8));
 	}
-	
-	
+
+
 }
 
 void draw_time(int hour, int min, int sec, GR_GC_ID gc )
@@ -191,35 +191,35 @@ void draw_time(int hour, int min, int sec, GR_GC_ID gc )
 	static int lh = -1, lm = -1, ls = -1;
 
 	GrLine(w1, gc1,
-		midx + (((midx - 8 - midx / 10) * bsin(ls)) >> 8), 
-		midy - (((midy - 8 - midy / 10) * bcos(ls)) >> 8), 
-		midx + (((midx - 8 - midx / 4) * bsin(ls)) >> 8), 
+		midx + (((midx - 8 - midx / 10) * bsin(ls)) >> 8),
+		midy - (((midy - 8 - midy / 10) * bcos(ls)) >> 8),
+		midx + (((midx - 8 - midx / 4) * bsin(ls)) >> 8),
 		midy - (((midy - 8 - midx / 4) * bcos(ls)) >> 8));
 	GrLine(w1, gc2,
-		midx + (((midx - 8 - midx / 10) * bsin(sec)) >> 8), 
-		midy - (((midy - 8 - midy / 10) * bcos(sec)) >> 8), 
-		midx + (((midx - 8 - midx / 4) * bsin(sec)) >> 8), 
+		midx + (((midx - 8 - midx / 10) * bsin(sec)) >> 8),
+		midy - (((midy - 8 - midy / 10) * bcos(sec)) >> 8),
+		midx + (((midx - 8 - midx / 4) * bsin(sec)) >> 8),
 		midy - (((midy - 8 - midx / 4) * bcos(sec)) >> 8));
 	if ((lm != min) || (ls == min)) {
 		GrLine(w1, gc1,
-			midx + (((midx - 8 - midx / 10) * bsin(lm)) >> 8), 
-			midy - (((midy - 8 - midy / 10) * bcos(lm)) >> 8), 
-			midx + (((midx / 5) * bsin(lm)) >> 8), 
+			midx + (((midx - 8 - midx / 10) * bsin(lm)) >> 8),
+			midy - (((midy - 8 - midy / 10) * bcos(lm)) >> 8),
+			midx + (((midx / 5) * bsin(lm)) >> 8),
 			midy - (((midy / 5) * bcos(lm)) >> 8));
 		GrLine(w1, gc2,
-			midx + (((midx - 8 - midx / 10) * bsin(min)) >> 8), 
-			midy - (((midy - 8 - midy / 10) * bcos(min)) >> 8), 
-			midx + (((midx / 5) * bsin(min)) >> 8), 
+			midx + (((midx - 8 - midx / 10) * bsin(min)) >> 8),
+			midy - (((midy - 8 - midy / 10) * bcos(min)) >> 8),
+			midx + (((midx / 5) * bsin(min)) >> 8),
 			midy - (((midy / 5) * bcos(min)) >> 8));
 		GrLine(w1, gc1,
-			midx + (((midx - 8 - midx / 2) * bsin(lh)) >> 8), 
-			midy - (((midy - 8 - midy / 2) * bcos(lh)) >> 8), 
-			midx + (((midx / 5) * bsin(lh)) >> 8), 
+			midx + (((midx - 8 - midx / 2) * bsin(lh)) >> 8),
+			midy - (((midy - 8 - midy / 2) * bcos(lh)) >> 8),
+			midx + (((midx / 5) * bsin(lh)) >> 8),
 			midy - (((midy / 5) * bcos(lh)) >> 8));
 		GrLine(w1, gc2,
-			midx + (((midx - 8 - midx / 2) * bsin(hour)) >> 8), 
-			midy - (((midy - 8 - midy / 2) * bcos(hour)) >> 8), 
-			midx + (((midx / 5) * bsin(hour)) >> 8), 
+			midx + (((midx - 8 - midx / 2) * bsin(hour)) >> 8),
+			midy - (((midy - 8 - midy / 2) * bcos(hour)) >> 8),
+			midx + (((midx / 5) * bsin(hour)) >> 8),
 			midy - (((midy / 5) * bcos(hour)) >> 8));
 	}
 	lh = hour;

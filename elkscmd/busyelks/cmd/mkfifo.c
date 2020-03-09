@@ -9,7 +9,7 @@ mkfifo_main (argc,argv)
 {
 	unsigned short newmode;
 	int i,er=0;
-	
+
 	newmode = 0666 & ~umask(0);
 	for(i=1;i<argc;i++)
 	{

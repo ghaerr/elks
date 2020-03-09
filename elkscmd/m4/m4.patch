@@ -46,7 +46,7 @@ Index: main.c
   			}
   			while (nlpar != 0);
   		}
--- 
+--
 Those who lose the sight	     Usenet: [decvax|ihnp4]!utzoo!yunexus!oz
 of what is really important 	    	     ......!seismo!mnetor!yunexus!oz
 are destined to become 		     Bitnet: oz@[yusol|yulibra|yuyetti]

@@ -183,7 +183,7 @@ VGA_drawpixel(PSD psd,COORD x, COORD y, PIXELVAL c)
 #if HAVEBLIT
 	if(psd->flags & PSF_MEMORY)
 		mempl4_drawpixel(psd, x, y, c);
-	else 
+	else
 #endif
 		ega_drawpixel(psd, x, y, c);
 }
@@ -206,7 +206,7 @@ VGA_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c)
 #if HAVEBLIT
 	if(psd->flags & PSF_MEMORY)
 		mempl4_drawhorzline(psd, x1, x2, y, c);
-	else 
+	else
 #endif
 		ega_drawhorzline(psd, x1, x2, y, c);
 }
@@ -219,7 +219,7 @@ VGA_drawvline(PSD psd,COORD x, COORD y1, COORD y2, PIXELVAL c)
 #if HAVEBLIT
 	if(psd->flags & PSF_MEMORY)
 		mempl4_drawvertline(psd, x, y1, y2, c);
-	else 
+	else
 #endif
 		ega_drawvertline(psd, x, y1, y2, c);
 }
@@ -232,7 +232,7 @@ VGA_fillrect(PSD psd,COORD x1, COORD y1, COORD x2, COORD y2, PIXELVAL c)
 	if(psd->flags & PSF_MEMORY) {
 		while(y1 <= y2)
 			mempl4_drawhorzline(psd, x1, x2, y1++, c);
-	} else 
+	} else
 #endif
 		while(y1 <= y2)
 			ega_drawhorzline(psd, x1, x2, y1++, c);

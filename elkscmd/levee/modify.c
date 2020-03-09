@@ -30,7 +30,7 @@ int low, high;
 {
     HANDLE f;
     register sz;
-    
+
     yank.size = high - low;
     moveleft(&core[low], yank.stuff, min(yank.size, SBUFSIZE));
     if (yank.size > SBUFSIZE) {
@@ -65,7 +65,7 @@ register int *newend;
 {
     int siz, st;
     HANDLE f;
-    
+
     if (yank.size+bufmax < SIZE && yank.size > 0) {
 	*newend = start + yank.size;
 	if (start < bufmax)
@@ -147,7 +147,7 @@ bool visual;
   <<<<*/
     char dest[DSIZE];
     register int len, dlen;
-    
+
     retval = -1;
     /*dlen = strlen(dst);*/
 restart:

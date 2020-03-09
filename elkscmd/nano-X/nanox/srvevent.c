@@ -104,7 +104,7 @@ void GsCheckMouseEvent(void)
 	if(mousestatus < 0) {
 		GsError(GR_ERROR_MOUSE_ERROR, 0);
 		return;
-	} else if(mousestatus) /* Deliver events as appropriate: */	
+	} else if(mousestatus) /* Deliver events as appropriate: */
 		GsHandleMouseStatus(rootx, rooty, newbuttons);
 }
 
@@ -126,7 +126,7 @@ void GsCheckKeyboardEvent(void)
 			GsTerminate();
 		GsError(GR_ERROR_KEYBOARD_ERROR, 0);
 		return;
-	} else if(keystatus) /* Deliver events as appropriate: */	
+	} else if(keystatus) /* Deliver events as appropriate: */
 		GsDeliverKeyboardEvent(GR_EVENT_TYPE_KEY_DOWN, ch, modifiers);
 }
 
@@ -338,7 +338,7 @@ void GsDeliverMotionEvent(GR_EVENT_TYPE type, BUTTON buttons, MODIFIER modifiers
 			 * then search the event queue for an existing
 			 * event of this type (if any), and free it.
 			 */
-			if (type == GR_EVENT_TYPE_MOUSE_POSITION) 
+			if (type == GR_EVENT_TYPE_MOUSE_POSITION)
 				GsFreePositionEvent(client, wp->id, subwid);
 
 			ep = (GR_EVENT_MOUSE *) GsAllocEvent(client);

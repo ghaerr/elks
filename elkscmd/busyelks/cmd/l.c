@@ -157,7 +157,7 @@ l_main(argc, argv)
 		 */
 		qsort((char *) list, listused, sizeof(char *), namesort);
 
-		
+
 		/*
 		 * Now finally list the filenames.
 		 */
@@ -201,7 +201,7 @@ lsfile (cp)
 			col = len;
 		} else if (comma) {
 			fputs (", ", stdout);
-			col += 2; 
+			col += 2;
 		} else comma = 1;
 		fputs (cp, stdout);
 	}

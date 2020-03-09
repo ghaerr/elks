@@ -51,7 +51,7 @@ int main(int argc, char ** argv)
 		fprintf(stderr, "cannot open graphics\n");
 		exit(1);
 	}
-	
+
 	GrGetScreenInfo(&si);
 
 	GrSetErrorHandler(errorcatcher);
@@ -165,7 +165,7 @@ again:
 		close(STDOUT_FILENO);
 		close(STDERR_FILENO);
 		close(tfd);
-		
+
 		setsid();
 		pty_name[5] = 't'; /* results in: /dev/ttyp%d */
 		if ((tfd = open(pty_name, O_RDWR)) < 0) {
@@ -180,7 +180,7 @@ again:
 	}
 	return 0;
 }
-	
+
 
 GR_SIZE		width;		/* width of character */
 GR_SIZE		height;		/* height of character */
@@ -196,7 +196,7 @@ void char_del(GR_COORD x, GR_COORD y)
 	xpos -= width;
 	GrFillRect(w1, gc3, x, y /*- height*/ /*+ base*/ + 1, width, height);
 }
-	
+
 void char_out(GR_CHAR ch)
 {
 	switch(ch) {

@@ -2,7 +2,7 @@ Micro-Windows README 6/27/1999 g haerr
 
 Micro-Windows is a reimplementation of the win32 api
 that runs on Linux, ELKS, MSDOS and bare VGA hardware.  It
-uses the same device-independent graphics engine built for 
+uses the same device-independent graphics engine built for
 the nanoGUI project.  Micro-Windows compiles a sample
 application and the win32 graphics api in about 42k.
 
@@ -11,7 +11,7 @@ or run on a wide variety of systems.  There are currently
 screen drivers for Linux 2.2.x framebuffers and Linux 2.0.x
 svgalib.  There exists a portable 4-planes VGA driver that
 will run on bare hardware, ELKS, or MSDOS (a framebuffer version
-of this is coming).  There are mouse drivers written for 
+of this is coming).  There are mouse drivers written for
 bare hardware as well as the Linux GPM driver.  The Micro-Windows
 graphics engine is capable of running on any system that
 support readpixel, writepixel, drawhline and drawvline.

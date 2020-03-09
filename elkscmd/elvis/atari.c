@@ -12,7 +12,7 @@
  * This file contains the 'standard' functions which are not supported
  * by Atari/Mark Williams, and some other TOS-only requirements.
  */
- 
+
 #include "config.h"
 #include "vi.h"
 

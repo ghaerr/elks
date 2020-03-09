@@ -225,7 +225,7 @@ GdReadMouse(COORD *px, COORD *py, BUTTON *pb)
 	case 3:	/* only button data is available */
 		break;
 	}
- 
+
 	/* didn't anything change? */
 	if (!changed)
 		return 0;
@@ -361,7 +361,7 @@ GdHideCursor(void)
 	saveptr = cursavbits;
 	for (y = cursavy; y <= cursavy2; y++) {
 		for (x = cursavx; x <= cursavx2; x++) {
-			if(x >= 0 && x < scrdev.xres && 
+			if(x >= 0 && x < scrdev.xres &&
 			   y >= 0 && y < scrdev.yres) {
 				scrdev.DrawPixel(&scrdev, x, y, *saveptr++);
 			}

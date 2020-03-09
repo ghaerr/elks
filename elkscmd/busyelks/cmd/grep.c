@@ -118,7 +118,7 @@ char *argv[];
   if (optind == argc) {		/* no file names - find pattern in stdin */
 	exit_status = match(stdin, (char *) NULL, "<stdin>");
   }
-  else 
+  else
   if (optind + 1 == argc) {	/* one file name - find pattern in it */
 	if (strcmp(argv[optind], "-") == 0) {
 		exit_status = match(stdin, (char *) NULL, "-");

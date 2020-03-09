@@ -3,7 +3,7 @@
 /*
 	Adapted to POSIX 1003.2 by Philip Homburg.
  */
- 
+
  /*
   * Tiny changes for use in ELKS by Harry Kalogirou
   *
@@ -205,7 +205,7 @@ int flags;
 	ospeed= cfgetospeed(&termios);
 	if (ispeed != ospeed)
 	{
-		sprintf(line, "ispeed %lu baud; ospeed %lu baud;", 
+		sprintf(line, "ispeed %lu baud; ospeed %lu baud;",
 			speed2long(ispeed), speed2long(ospeed));
 		stty_output(line);
 	}
@@ -236,7 +236,7 @@ int flags;
 	print_flags(c_cflag, CSTOPB, TCTRL_DEF, "-cstopb", all);
 	print_flags(c_cflag, CREAD, TCTRL_DEF, "-cread", all);
 	print_flags(c_cflag, CLOCAL, TCTRL_DEF, "-clocal", all);
-		
+
 	if (all)
 	{
 		printf("\n");
@@ -259,7 +259,7 @@ int flags;
 	print_flags(c_iflag, IXON, TINPUT_DEF, "-ixon", all);
 	print_flags(c_iflag, IXOFF, TINPUT_DEF, "-ixoff", all);
 	print_flags(c_iflag, IXANY, TINPUT_DEF, "-ixany", all);
-	
+
 	if (all)
 	{
 		printf("\n");
@@ -332,14 +332,14 @@ int flags;
 	/* Screen size */
 	if (all || winsize.ws_row != 0 || winsize.ws_col != 0)
 	{
-		sprintf(line, "%d rows %d columns", winsize.ws_row, 
+		sprintf(line, "%d rows %d columns", winsize.ws_row,
 			winsize.ws_col);
 		stty_output(line);
 	}
 
 	if (all || winsize.ws_ypixel != 0 || winsize.ws_xpixel != 0)
 	{
-		sprintf(line, "%d ypixels %d xpixels", winsize.ws_ypixel, 
+		sprintf(line, "%d ypixels %d xpixels", winsize.ws_ypixel,
 			winsize.ws_xpixel);
 		stty_output(line);
 	}
@@ -464,7 +464,7 @@ char *opt, *next;
 		speed= long2speed(num);
 		if (speed == (speed_t)-1)
 		{
-			fprintf(stderr, "%s: illegal speed: '%s'\n", prog_name, 
+			fprintf(stderr, "%s: illegal speed: '%s'\n", prog_name,
 									opt);
 			return 1;
 		}
@@ -473,7 +473,7 @@ char *opt, *next;
 	}
 	else
 	{
-		fprintf(stderr, "%s: invalid argument to ispeed: '%s'\n", 
+		fprintf(stderr, "%s: invalid argument to ispeed: '%s'\n",
 			prog_name, next);
 		return 1;
 	}
@@ -486,7 +486,7 @@ char *opt, *next;
 		speed= long2speed(num);
 		if (speed == (speed_t)-1)
 		{
-			fprintf(stderr, "%s: illegal speed: '%s'\n", prog_name, 
+			fprintf(stderr, "%s: illegal speed: '%s'\n", prog_name,
 									opt);
 			return 1;
 		}
@@ -495,7 +495,7 @@ char *opt, *next;
 	}
 	else
 	{
-		fprintf(stderr, "%s: invalid argument to ospeed: %s\n", 
+		fprintf(stderr, "%s: invalid argument to ospeed: %s\n",
 			prog_name, next);
 		return 1;
 	}
@@ -805,7 +805,7 @@ char *opt, *next;
 	return 1;
   }
 #endif
- 
+
   if (match(opt, "min")) {
 	set_min_tim(VMIN, next);
 	return 1;
@@ -920,7 +920,7 @@ char *opt, *next;
   	num= strtol(next, &check, 0);
   	if (check[0] != '\0')
   	{
-  		fprintf(stderr, "%s: illegal parameter to cols: '%s'\n", 
+  		fprintf(stderr, "%s: illegal parameter to cols: '%s'\n",
   							prog_name, next);
   		return 1;
   	}
@@ -933,7 +933,7 @@ char *opt, *next;
   	num= strtol(next, &check, 0);
   	if (check[0] != '\0')
   	{
-  		fprintf(stderr, "%s: illegal parameter to rows: '%s'\n", 
+  		fprintf(stderr, "%s: illegal parameter to rows: '%s'\n",
   							prog_name, next);
   		return 1;
   	}
@@ -946,7 +946,7 @@ char *opt, *next;
   	num= strtol(next, &check, 0);
   	if (check[0] != '\0')
   	{
-  		fprintf(stderr, "%s: illegal parameter to xpixels: '%s'\n", 
+  		fprintf(stderr, "%s: illegal parameter to xpixels: '%s'\n",
   							prog_name, next);
   		return 1;
   	}
@@ -959,7 +959,7 @@ char *opt, *next;
   	num= strtol(next, &check, 0);
   	if (check[0] != '\0')
   	{
-  		fprintf(stderr, "%s: illegal parameter to ypixels: '%s'\n", 
+  		fprintf(stderr, "%s: illegal parameter to ypixels: '%s'\n",
   							prog_name, next);
   		return 1;
   	}
@@ -1028,7 +1028,7 @@ unsigned long speed;
 	}
 	return -1;
 }
-		
+
 void print_flags(flags, flag, def, string, all)
 unsigned long flags;
 unsigned long flag;
@@ -1077,7 +1077,7 @@ int all;
 
 	if (!all && chr == def)
 		return;
-	
+
 #ifdef _POSIX_VDISABLE
 	if (chr == _POSIX_VDISABLE)
 		sprintf(line, "%s = <undef>", name);
@@ -1099,7 +1099,7 @@ char *name;
 int all;
 {
 	char line[20];
-		
+
 	if (!all && num == def)
 		return;
 	sprintf(line, "%s = %u", name, num);
@@ -1202,7 +1202,7 @@ char *value;
 #ifdef _POSIX_VDISABLE
 		chr= _POSIX_VDISABLE;
 #else
-		fprintf(stderr, 
+		fprintf(stderr,
 			"stty: unable to set option to _POSIX_VDISABLE\n");
 		return;
 #endif
@@ -1225,7 +1225,7 @@ char *value;
 /*	assert(option >= 0 && option < NCCS);*/
 	termios.c_cc[option]= chr;
 }
-		
+
 void set_min_tim(option, value)
 int option;
 char *value;

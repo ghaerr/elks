@@ -25,7 +25,7 @@ getline(str)
 {
     int len;
     char flag;
-    
+
     flag = line(str, 0, COLS-curpos.x, &len);
     str[len] = 0;
     strput(CE);
@@ -106,7 +106,7 @@ setX(cp)
 int cp;
 {
     int top, xp;
-    
+
     top = bseekeol(cp);
     xp = 0;
     while (top < cp) {
@@ -127,7 +127,7 @@ setY(cp)
 int cp;
 {
     int yp, ix;
-    
+
     ix = ptop;
     yp = -1;
     cp = min(cp,bufmax-1);
@@ -165,13 +165,13 @@ int line;
     }
     return(cp);
 } /* to_index */
-    
+
 PROC
 swap(a,b)
  register int *a,*b;
 {
     int c;
-    
+
     c = *a;
     *a = *b;
     *b = c;
@@ -275,7 +275,7 @@ lookup(c)
 char c;
 {
     int ix = MAXMACROS;
-    
+
     while (--ix >= 0 && mbuffer[ix].token != c)
 	;
     return ix;
@@ -287,7 +287,7 @@ fixmarkers(base,offset)
 int base,offset;
 {
     char c;
-    
+
     for (c = 0;c<'z'-'`';c++)
 	if (contexts[c] > base)
 	    if (contexts[c]+offset < base || contexts[c]+offset >= bufmax)
@@ -330,7 +330,7 @@ wr_stat()
 static int  tabptr,
 	    tabstack[20],
 	    ixp;
-	
+
 PROC
 back_up(c)
 char c;
@@ -361,7 +361,7 @@ int start, endd;
     int col0,
 	ip;
     char c;
-    
+
     col0 = ixp = curpos.x;
     ip = start;
     tabptr = 0;
@@ -446,7 +446,7 @@ PROC
 setend()
 {
     int bottom, count;
-    
+
     bottom = ptop;
     count = LINES-1;
     while (bottom < bufmax && count > 0) {
@@ -465,7 +465,7 @@ settop(lines)
 int lines;
 {
     int top, yp;
-    
+
     top = curr;
     yp = -1;
     do {

@@ -80,7 +80,7 @@ void v_cs()
 /* clear to end: get cursor position and emit the aproppriate number
  * of spaces, without moving cursor.
  */
- 
+
 void v_ce()
 {
 	int cx, dx;
@@ -228,7 +228,7 @@ int v_rows()
 		line>>=8;
 		if (oldline==line)
 			return line+1;
-		oldline=line;	
+		oldline=line;
 	}
 }
 
@@ -258,7 +258,7 @@ static void video(ax, cx, dx)
  * commandline-options by command.com. This system call is undocumented
  * and valid for versions < 4.00 only.
  */
- 
+
 int switchar()
 {
 	union REGS regs;

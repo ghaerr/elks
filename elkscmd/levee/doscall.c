@@ -98,7 +98,7 @@ basename(s)
 register char *s;
 {
     register char *p = s;
-    
+
     for (p = s+strlen(s); p > s; --p)
 	if (p[-1] == '/' || p[-1] == '\\' || p[-1] == ':')
 	    return p;
@@ -134,7 +134,7 @@ struct glob_t *dta;
 	/* set up initial parameters for DosFindFirst()
 	 */
 	dta_bfr = dta;
-	
+
 	if (isdotpattern = (*file_part == '.'))
 	    /* _dos_findfirst() magically expands . and .. into their
 	     * directory names.  Admittedly, there are cases where

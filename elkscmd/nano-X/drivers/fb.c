@@ -4,7 +4,7 @@
  * Framebuffer Video Driver for MicroWindows
  *
  * Portions used from Ben Pfaff's BOGL <pfaffben@debian.org>
- * 
+ *
  * Note: modify select_driver() to add new framebuffer drivers
  */
 #define _GNU_SOURCE 1
@@ -68,7 +68,7 @@ fb_init(PSD psd)
 	//struct vt_stat vts;
 
 	assert(status < 2);
-  
+
 	/* locate and open framebuffer, get info*/
 	if(!(env = getenv("FRAMEBUFFER")))
 		env = "/dev/fb0";
@@ -148,10 +148,10 @@ fb_exit(PSD psd)
 
   	/* reset hw palette*/
 	ioctl_setpalette(0, 16, saved_red, saved_green, saved_blue);
-  
+
 	/* unmap framebuffer*/
 	munmap(psd->addr, psd->size);
-  
+
 	/* reset tty modes*/
 	signal(SIGUSR2, SIG_DFL);
 	ioctl(tty, KDSETMODE, KD_TEXT);
@@ -159,7 +159,7 @@ fb_exit(PSD psd)
 	mode.relsig = 0;
 	mode.acqsig = 0;
 	ioctl(tty, VT_SETMODE, &mode);
-  
+
 	/* close tty and framebuffer*/
 	close(tty);
 	close(fb);
@@ -224,7 +224,7 @@ select_driver(PSD psd, int type, int visual)
 				psd->ncolors);
 			return NULL;
 		}
-	} else		
+	} else
 		psd->pixtype = PF_PALETTE;
 
 	/* return driver selected*/
@@ -295,7 +295,7 @@ draw_enable(void)
 	visible = 1;
 	fbprocs = savfbprocs;
 }
-      
+
 static void
 draw_disable(void)
 {
@@ -328,7 +328,7 @@ vt_switch(int sig)
     	setitimer (ITIMER_REAL, &duration, NULL);
     	return;
     }
-      
+
     if(visible) {
     	draw_disable ();
 
@@ -336,7 +336,7 @@ vt_switch(int sig)
 	    failmsg("can't switch away from VT: %m");
     } else {
     	draw_enable ();
-      
+
 	if(ioctl (tty, VT_RELDISP, VT_ACKACQ) == -1)
 		failmsg("can't acknowledge VT switch: %m");
     }

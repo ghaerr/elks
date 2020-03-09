@@ -1,9 +1,9 @@
 #
 # pd m4	[oz]
 #
-#	-DEXTENDED 
+#	-DEXTENDED
 #		if you like to get paste & spaste macros.
-#	-DVOID 
+#	-DVOID
 #		if your C compiler does NOT support void.
 #	-DGETOPT
 #		if you STILL do not have getopt	in your library.
@@ -29,7 +29,7 @@ m4: ${OBJS}
 	$(CC) -s -o m4 ${OBJS}
 	size86 m4
 
-${OBJS}: ${INCL} 
+${OBJS}: ${INCL}
 
 lint:
 	lint -h ${CSRC}
@@ -38,7 +38,7 @@ install: m4
 	install ./m4 ${DEST}/m4
 	cp ./m4.1 ${MANL}/m4.l
 
-deinstall: 
+deinstall:
 	rm -f ${DEST}/m4
 	rm -f ${MANL}/m4.l
 time: m4

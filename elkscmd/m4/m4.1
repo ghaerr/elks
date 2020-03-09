@@ -43,7 +43,7 @@ If the name of a defined macro is not followed by a
 it is taken to be a call of that macro with no arguments, i.e. name().
 Potential macro names consist of alphabetic letters and digits.
 .PP
-Leading unquoted blanks, tabs and newlines are ignored while collecting 
+Leading unquoted blanks, tabs and newlines are ignored while collecting
 arguments.
 Left and right single quotes are used to quote strings.
 The value of a quoted string is the string stripped of the quotes.
@@ -95,7 +95,7 @@ macros.
 .MC undefine "(name [, name ...])"
 removes the definition of the macro(s) named. If there is
 more than one definition for the named macro, (due to previous use of
-.IR pushdef ) 
+.IR pushdef )
 all definitions are removed.
 .MC pushdef "(name [, val])"
 like
@@ -105,7 +105,7 @@ but saves any previous definition by stacking the current definition.
 removes current definition of its argument(s),
 exposing the previous one if any.
 .MC ifdef "(name, if-def [, ifnot-def])"
-if the first argument is defined, the value is the second argument, 
+if the first argument is defined, the value is the second argument,
 otherwise the third.
 If there is no third argument, the value is null.
 A word indicating the current operating system is predefined.
@@ -126,9 +126,9 @@ characters. (i.e., \*`\|\*').
 .MC changecom "(lcchar, rcchar)"
 change left and right comment markers from the default
 .B #
-and 
+and
 .BR newline .
-With no arguments, the comment mechanism is reset back to 
+With no arguments, the comment mechanism is reset back to
 the default characters.
 With one argument, the left marker becomes the argument and
 the right marker becomes newline.
@@ -136,7 +136,7 @@ With two arguments, both markers are affected.
 .MC divert "(divnum)"
 .I m4
 maintains 10 output streams,
-numbered 0-9.  initially stream 0 is the current stream. 
+numbered 0-9.  initially stream 0 is the current stream.
 The
 .I divert
 macro changes the current output stream to its (digit-string)
@@ -162,7 +162,7 @@ reads and discards characters up to and including the next newline.
 has three or more arguments.
 If the first argument is the same string as the second,
 then the value is the third argument.
-If not, and if there are more than four arguments, the process is 
+If not, and if there are more than four arguments, the process is
 repeated with arguments 4, 5, 6 and 7.
 Otherwise, the value is either the fourth string, or, if it is not present,
 null.
@@ -176,13 +176,13 @@ returns the value of its argument decremented by 1.
 evaluates its argument as a constant expression, using integer arithmetic.
 The evaluation mechanism is very similar to that of
 .I cpp
-(#if expression). 
+(#if expression).
 The expression can involve only integer constants and character constants,
 possibly connected by the binary operators
 .nf
 .ft B
 
-*	/	%	+	-	>>	<<	<	>	
+*	/	%	+	-	>>	<<	<	>
 <=	>=	==	!=	&	^	|	&&	||
 
 .ft R
@@ -194,7 +194,7 @@ in C.
 .MC len "(string)"
 returns the number of characters in its argument.
 .MC index "(search-string, string)"
-returns the position in its first argument where the second argument 
+returns the position in its first argument where the second argument
 begins (zero origin),
 or \-1 if the second argument does not occur.
 .MC substr "(string, index [, length])"
@@ -203,7 +203,7 @@ The second argument is a zero origin
 number selecting the first character (internally treated as an expression);
 the third argument indicates the length of the substring.
 A missing third argument is taken to be large enough to extend to
-the end of the first string. 
+the end of the first string.
 .MC translit "(source, from [, to])"
 transliterates the characters in its first argument
 from the set given by the second argument to the set given by the third.
@@ -220,7 +220,7 @@ except that it
 says nothing if the file is inaccessible.
 .MC paste "(filename)"
 returns the contents of the file named in the argument without any
-processing, unlike 
+processing, unlike
 .IR include.
 .MC spaste "(filename)"
 is identical to
@@ -272,7 +272,7 @@ Pd M4 is slower than V7 M4.
 .SH EXAMPLES
 .PP
 The following macro program illustrates the type of things that
-can be done with M4. 
+can be done with M4.
 .PP
 .RS
 .nf
@@ -323,9 +323,9 @@ struct prehash {
 .PP
 Presumably, such a table would speed up the installation of the
 keywords into a dynamic hash table. (Note that the above macro
-cannot be used with 
-.IR M4 , 
-since 
+cannot be used with
+.IR M4 ,
+since
 .B eval
 does not handle character constants.)
 

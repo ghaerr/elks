@@ -108,7 +108,7 @@ int
 GsOpen(void)
 {
 #if NONETWORK
-	/* Client calls this routine once.  We 
+	/* Client calls this routine once.  We
 	 * init everything here
 	 */
 	if(GsInitialize() < 0)
@@ -209,7 +209,7 @@ GsSelect(void)
 
 	/* Wait for some input on any of the fds in the set or a timeout: */
 	if((e = select(setsize, &rfds, NULL, NULL, &to)) > 0) {
-		
+
 		/* If data is present on the mouse fd, service it: */
 		if(FD_ISSET(mouse_fd, &rfds))
 			GsCheckMouseEvent();
@@ -242,7 +242,7 @@ GsSelect(void)
 		}
 #endif
 
-	} 
+	}
 	else if(!e) {
 #if FRAMEBUFFER | BOGL
 		if(fb_CheckVtChange())

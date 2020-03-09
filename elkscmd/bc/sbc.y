@@ -1,6 +1,6 @@
 , %{
 /* sbc.y: A POSIX bc processor written for minix with no extensions.  */
- 
+
 /*  This file is part of bc written for MINIX.
     Copyright (C) 1991, 1992 Free Software Foundation, Inc.
 
@@ -24,7 +24,7 @@
                 Computer Science Department, 9062
                 Western Washington University
                 Bellingham, WA 98226-9062
-       
+
 *************************************************************************/
 
 #include "bcdefs.h"
@@ -66,7 +66,7 @@
 %type <a_value> opt_parameter_list parameter_list opt_auto_define_list
 %type <a_value> define_list opt_argument_list argument_list
 %type <i_value> program input_item semicolon_list statement_list
-%type <i_value> statement_or_error statement function relational_expression 
+%type <i_value> statement_or_error statement function relational_expression
 
 /* precedence */
 %nonassoc REL_OP
@@ -96,7 +96,7 @@ input_item		: semicolon_list NEWLINE
 			    { run_code(); }
 			| error NEWLINE
 			    {
-			      yyerrok; 
+			      yyerrok;
 			      init_gen() ;
 			    }
 			;
@@ -150,9 +150,9 @@ statement 		: Warranty
 			    { generate ("0R"); }
 			| Return '(' return_expression ')'
 			    { generate ("R"); }
-			| For 
+			| For
 			    {
-			      $1 = break_label; 
+			      $1 = break_label;
 			      break_label = next_label++;
 			    }
 			  '(' expression ';'
@@ -182,7 +182,7 @@ statement 		: Warranty
 			      generate (genstr);
 			      break_label = $1;
 			    }
-			| If '(' relational_expression ')' 
+			| If '(' relational_expression ')'
 			    {
 			      $3 = next_label++;
 			      sprintf (genstr, "Z%1d:", $3);
@@ -190,18 +190,18 @@ statement 		: Warranty
 			    }
 			  statement
 			    {
-			      sprintf (genstr, "N%1d:", $3); 
+			      sprintf (genstr, "N%1d:", $3);
 			      generate (genstr);
 			    }
-			| While 
+			| While
 			    {
 			      $1 = next_label++;
 			      sprintf (genstr, "N%1d:", $1);
 			      generate (genstr);
 			    }
-			'(' relational_expression 
+			'(' relational_expression
 			    {
-			      $4 = break_label; 
+			      $4 = break_label;
 			      break_label = next_label++;
 			      sprintf (genstr, "Z%1d:", break_label);
 			      generate (genstr);
@@ -216,7 +216,7 @@ statement 		: Warranty
 			    { $$ = 0; }
 			;
 function 		: Define NAME '(' opt_parameter_list ')' '{'
-       			  NEWLINE opt_auto_define_list 
+       			  NEWLINE opt_auto_define_list
 			    {
 			      check_params ($4,$8);
 			      sprintf (genstr, "F%d,%s.%s[", lookup($2,FUNCT),
@@ -233,7 +233,7 @@ function 		: Define NAME '(' opt_parameter_list ')' '{'
 			      next_label = $1;
 			    }
 			;
-opt_parameter_list	: /* empty */ 
+opt_parameter_list	: /* empty */
 			    { $$ = NULL; }
 			| parameter_list
 			;
@@ -242,12 +242,12 @@ parameter_list 		: NAME
 			| define_list ',' NAME
 			    { $$ = nextarg ($1, lookup($3,SIMPLE)); }
 			;
-opt_auto_define_list 	: /* empty */ 
+opt_auto_define_list 	: /* empty */
 			    { $$ = NULL; }
 			| Auto define_list NEWLINE
-			    { $$ = $2; } 
+			    { $$ = $2; }
 			| Auto define_list ';'
-			    { $$ = $2; } 
+			    { $$ = $2; }
 			;
 define_list 		: NAME
 			    { $$ = nextarg (NULL, lookup($1,SIMPLE)); }
@@ -302,7 +302,7 @@ return_expression	: /* empty */
 			    }
 			| expression
 			;
-expression		: named_expression ASSIGN_OP 
+expression		: named_expression ASSIGN_OP
 			    {
 			      if ($2 != '=')
 				{
@@ -375,7 +375,7 @@ expression		: named_expression ASSIGN_OP
 			    {
 			      $$ = 1;
 			      if ($3 != NULL)
-				{ 
+				{
 				  sprintf (genstr, "C%d,%s:", lookup($1,FUNCT),
 					   arg_str ($3,FALSE));
 				  free_args ($3);
@@ -409,7 +409,7 @@ expression		: named_expression ASSIGN_OP
 			      if ($1 < 0)
 				{
 				  sprintf (genstr, "DL%d:x", -$1);
-				  generate (genstr); 
+				  generate (genstr);
 				  if ($2 == '+')
 				    sprintf (genstr, "A%d:", -$1);
 				  else

@@ -37,7 +37,7 @@
  *         mkfs [-l filename ] device size-in-blocks
  *
  * The device may be a block device or a image of one, but this isn't
- * enforced (but it's not much fun on a character device :-). 
+ * enforced (but it's not much fun on a character device :-).
  *
  */
 
@@ -152,7 +152,7 @@ void mkfs_write_tables(void)
 			die("Unable to write inodes");
 	}
 }
- 
+
 void write_block(int blk, char * buffer)
 {
 	unsigned long seek_point = (long)((long)blk * BLOCK_SIZE);

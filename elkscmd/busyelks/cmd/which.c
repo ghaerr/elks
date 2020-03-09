@@ -34,7 +34,7 @@ char ** argv;
 			if (cp == NULL) {
 				quit++;
 			} else {
-				*cp = '\0'; 
+				*cp = '\0';
 			}
 			sprintf(buf, "%s/%s", (*path ? path:"."), *argv);
 			path = ++cp;

@@ -22,7 +22,7 @@ up to a factor of 12 for large files on high density disks.  The algorithm
 degrades to the original speed once files get substantially fragemented,
 A more robust algorithm is possible,  but this is quite good enough for
 moving files around,  which is the main application I would expect to see
-for this package.  
+for this package.
 
 	Enjoy!  And please send those bug fixes or improvements,  the
 package is still 90% Emmet's code,  so I would much have preferred for him

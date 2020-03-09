@@ -2,7 +2,7 @@
  *
  * This is a manual pager program, it will search for and format manual
  * pages which it then pipes to more.
- * 
+ *
  * The program understands manual pages that have been compressed with
  * either 'compress' or 'gzip' and will decompress them on the fly.
  *
@@ -343,7 +343,7 @@ struct cmd_list_s {
 };
 
 /****************************************************************************
- * ifd is the manual page, ofd is the 'output' file or pipe, format it! 
+ * ifd is the manual page, ofd is the 'output' file or pipe, format it!
  */
 do_file()
 {
@@ -398,7 +398,7 @@ do_file()
 	    if(keep_nl>0) keep_nl--;
 	 }
 
-         if( nl == 1 && ( word[0] == '.' || 
+         if( nl == 1 && ( word[0] == '.' ||
 	                  (word[0] == '\'' && strcmp(word, "'\\\"") == 0) ||
 	                  (word[0] == '\'' && strcmp(word, "'''") == 0)
 	   ))
@@ -445,7 +445,7 @@ static int col = 0;
       nl = (ch == '\n' || ch == '\r');
       if(nl) col=0; else col++;
 
-      if( no_fill && nl && *whitespace ) 
+      if( no_fill && nl && *whitespace )
       {
          *word=0; ungetc(ch, ifd); return 0;
       }
@@ -530,7 +530,7 @@ do_command()
          line_break();
          left_indent=i;
       }
-      
+
       i=0;	/* Treat as comment */
    }
 
@@ -622,7 +622,7 @@ static char ftab[] = " RBIS";
 	    p=word;
 	 }
          i=this_font; this_font=other_font; other_font=i;
-         if( p<word+sizeof(word)-4 ) 
+         if( p<word+sizeof(word)-4 )
          {
             strcpy(p, "\\f"); p[2]=ftab[this_font]; p+=3;
          }

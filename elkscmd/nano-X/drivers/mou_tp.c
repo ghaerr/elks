@@ -156,7 +156,7 @@ static int PD_Open(MOUSEDEVICE *pmd)
 		fprintf(stderr, "Error %d, result %d setting scan parameters.\n", result, errno);
 
 	if (enable_pointing_coordinate_transform)
-	{ 
+	{
 		if (GetPointerCalibrationData() < 0)
 		{
 			close(pd_fd);

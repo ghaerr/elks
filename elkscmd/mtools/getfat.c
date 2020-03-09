@@ -1,7 +1,7 @@
 /*
  * Get and decode a FAT (file allocation table) entry.  The FAT entries
  * are 1.5 bytes long and switch nibbles (.5 byte) according to whether
- * or not the entry starts on a byte boundary.  Returns the cluster 
+ * or not the entry starts on a byte boundary.  Returns the cluster
  * number on success or -1 on failure.
  */
 

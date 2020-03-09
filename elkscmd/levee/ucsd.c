@@ -68,7 +68,7 @@ char tst,ch;
 register char *src;
 {
     register inc,l;
-    
+
     if (length < 0)
 	inc = -1;
     else

@@ -159,7 +159,7 @@ int num;
 					/* stop at size not EOF marker */
 	for (i=0; i<buflen; i++) {
 		current++;
-		if (current > size) 
+		if (current > size)
 			break;
 		if (textmode && buf[i] == '\r')
 			continue;

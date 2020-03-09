@@ -18,7 +18,7 @@ not --switch as they can be in the GNU utils. The options available for each
 util are as follows. Please view the relevant man pages for info on what
 these options do. (Eventually I will write man pages for these, if noone
 else does it first.) If I have removed an option which you think is vital,
-please E-mail ajr@ecs.soton.ac.uk me letting me know why and I may add it, 
+please E-mail ajr@ecs.soton.ac.uk me letting me know why and I may add it,
 or better still send me a patch.
 
 mkdir [-p] dir...

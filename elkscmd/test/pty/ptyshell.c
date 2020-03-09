@@ -1,7 +1,7 @@
 /*
  * ptyshell - demo program for ELKS pseudo tty support
- * 
- * This program opens a master pseudo tty and then forks a child process. 
+ *
+ * This program opens a master pseudo tty and then forks a child process.
  * This child process opens a slave tty and starts a shell in it.
  * The master process read user input from stdin (could be a network connection too)
  * and writes it to the master pseudo tty. This sends this to the slave tty which gets
@@ -32,36 +32,36 @@ int main(int argc, char ** argv)
 {
   	int rc;
 	char input[MAX_INPUT];
-	
+
 	printf("# "); /*simulate prompt */
 	fflush(stdout);
-	
+
 	if (term_init() < 0) exit(1);
 
 	while (1) {
 	      rc = read(0, input, sizeof(input));
-	      
+
 	      if (rc > 0)
               {
                   write(tfd, input, rc);
                   // Get the child's answer through the PTY
-                  rc = read(tfd, input, MAX_INPUT-1); 
+                  rc = read(tfd, input, MAX_INPUT-1);
                   if (rc > 0)
                   {
                     input[rc] = '\0'; // make NUL terminated
                     if (strcmp(input,"exitshell\n")==0) {
 		       fprintf(stderr, "Terminating processes and ptyshell\n");
 		       kill(pid, SIGKILL);
-		       return 0; 
+		       return 0;
 		    }
                     fprintf(stderr, "read from child:%s", input);
-repeat:		  	
+repeat:
 		    /* read output from shell */
 		    rc = read(tfd, input, sizeof(input));
 		    input[rc] = '\0';
 		    if (rc < 2) continue;
-		    
-                    fprintf(stderr, "%s", input);		      
+
+                    fprintf(stderr, "%s", input);
 		    if (rc>0) goto repeat;
                   } else {
 		    if (errno == EAGAIN){
@@ -87,7 +87,7 @@ int term_init()
 	char pty_name[12];
 	int n = 0;
 	int rc;
-	
+
 	struct termios slave_orig_term_settings; // Saved terminal settings
 	struct termios new_term_settings; // Current terminal settings
 
@@ -103,7 +103,7 @@ again:
 	}
 	signal(SIGCHLD, sigchild);
 	signal(SIGINT, sigchild);
-	
+
 	if ((pid = fork()) == -1) {
 		fprintf(stderr, "No processes\n");
 		return -1;
@@ -116,19 +116,19 @@ again:
 		//cfmakeraw (&new_term_settings);
 		//new_term_settings.c_lflag &= ~ECHO;
 		tcsetattr (tfs, TCSANOW, &new_term_settings);
-		
+
 		close(STDIN_FILENO);
 		close(STDOUT_FILENO);
 		close(STDERR_FILENO);
 		close(tfd);
-		
+
 		setsid();
 		pty_name[5] = 't'; /* results in: /dev/ttyp%d */
 		if ((tfs = open(pty_name, O_RDWR)) < 0) {
 			fprintf(stderr, "Child: Can't open pty %s\n", pty_name);
 			exit(1);
 		}
-	
+
 		dup2(tfs, STDIN_FILENO);
 		dup2(tfs, STDOUT_FILENO);
 		dup2(tfs, STDERR_FILENO);
@@ -138,4 +138,3 @@ again:
 	}
 	return 0;
 }
-	

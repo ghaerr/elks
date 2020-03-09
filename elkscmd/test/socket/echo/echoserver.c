@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#ifndef __linux__ 
+#ifndef __linux__
 #include <linuxmt/socket.h>
 #include <linuxmt/un.h>
 #include <linuxmt/in.h>
@@ -28,13 +28,13 @@ int main(int argc, char *argv[]) {
   char buf[100];
   char	*cp;
   struct sockaddr_in addr_in;
-#ifndef __linux__  
-  struct sockaddr_un addr_un;    
+#ifndef __linux__
+  struct sockaddr_un addr_un;
 #endif
   int fd,cl,rc,afunix,lv;
   afunix=0;
-  
-#ifndef __linux__  
+
+#ifndef __linux__
   if (argv[1][0] == '-') {
 		cp = &argv[1][1];
 		if (strcmp(cp, "u") == 0) {
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 			exit (0);
 		} else {
 			usage();
-			exit (0);			
+			exit (0);
 		}
 		argc--;
 		argv++;
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 			usage();
 			exit (0);
 	}
-	  
+
 #endif
 
 if ( afunix == 0 ) { /* Internet */
@@ -71,14 +71,14 @@ if ( afunix == 0 ) { /* Internet */
     exit(-1);
   } else {write(STDOUT_FILENO, "Echoserver:bind successful\n",27);}
 } else { /* unix domain sockets */
-#ifndef __linux__  
-  lv=5;      
+#ifndef __linux__
+  lv=5;
   if ( (fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
     perror("socket error");
     exit(-1);
   }
   memset(&addr_un, 0, sizeof(addr_un));
-  addr_un.sun_family = AF_UNIX; 
+  addr_un.sun_family = AF_UNIX;
   if (*socket_path == '\0') {
     *addr_un.sun_path = '\0';
     strncpy(addr_un.sun_path+1, socket_path+1, sizeof(addr_un.sun_path)-2);
@@ -97,7 +97,7 @@ if ( afunix == 0 ) { /* Internet */
     perror("listen error");
     close(fd);
     exit(-1);
-  } 
+  }
 
   write(STDOUT_FILENO, "\nEcho server listening now\n",27); /* show prompt again */
   while (1) {

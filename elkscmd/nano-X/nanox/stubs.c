@@ -461,7 +461,7 @@ int GrArea(GR_DRAW_ID id,GR_GC_ID gc,GR_COORD x,GR_COORD y,GR_SIZE width,
  * will include the values from the covering windows.  Regions outside
  * of the screen boundaries, or unmapped windows will return black.
  */
-int GrReadArea(GR_DRAW_ID id, GR_COORD x, GR_COORD y, GR_SIZE width, 
+int GrReadArea(GR_DRAW_ID id, GR_COORD x, GR_COORD y, GR_SIZE width,
 	GR_SIZE height, PIXELVAL *pixels)
 {
 	GsReadArea(id, x, y, width, height, pixels);
@@ -534,7 +534,7 @@ static int GrDeliverErrorEvent(void)
 	return 0;
 }
 
-/* 
+/*
  * The default error handler which is called when the server reports an error event
  * and the client hasn't set a handler for error events.
  */

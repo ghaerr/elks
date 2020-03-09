@@ -3,8 +3,8 @@
  * Based on code by Jakob Eriksson.
  *
  * Hercules Graphics Screen Driver, PC bios version
- * 	This driver uses int10 bios to to get the address of the 
- * 	ROM character font which is used for the character bitmaps.  
+ * 	This driver uses int10 bios to to get the address of the
+ * 	ROM character font which is used for the character bitmaps.
  * 	All other access to the hardware is controlled through this driver.
  *
  * 	All text/font drawing code is based on the above routines and
@@ -197,10 +197,10 @@ HERC_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c)
 
 	/*offset of the row */
 	rowoffset = 8192 * (y % 4) + (y / 4) * 90;
-	
+
 	/*offset of first byte in line */
 	x1yoffset = rowoffset + (x1 / 8);
-	
+
 	/*ofset of the last byte in line */
 	x2yoffset = rowoffset + (x2 / 8);
 

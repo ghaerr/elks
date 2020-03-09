@@ -3,7 +3,7 @@
  *
  * 4 planes EGA/VGA Memory Video Driver for MicroWindows
  * Optional driver included with #define HAVEBLIT in vgaplan4.h
- * 
+ *
  * 4bpp colors are stored in linear 4pp format in memory dc's
  *
  * 	In this driver, psd->linelen is line byte length, not line pixel length

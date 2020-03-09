@@ -31,7 +31,7 @@ cmdtype cmd;
 
     *newpos = ERR;
     switch (cmd) {			/* move around */
-    
+
     case GO_LEFT:
 	*newpos = max(lstart, curp-max(count,1));
 	break;
@@ -185,7 +185,7 @@ movearound(cmd)
 cmdtype cmd;
 {
     int cp;
-    
+
     switch (findCP(curr, &cp, cmd)) {
 	case LEGALMOVE:
 	    if (cp < bufmax) {
@@ -232,13 +232,13 @@ cmdtype cmd;
     }
     mvcur(yp, xp);
 }
-    
+
 int PROC
 findcol(ip, col)
 int ip, col;
 {
     int tcol, endd;
-    
+
     ip = bseekeol(ip);			/* start search here */
     endd = fseekeol(ip);		/* end search here */
 
@@ -263,7 +263,7 @@ int p;
 {
     char srcchar, dstchar;
     int lev, step;
-    
+
     while ((lev = scan(6,'=',core[p],srcpatt)) >= 6 && core[p] != EOL)
 	p++;
     if (lev < 6) {
@@ -328,7 +328,7 @@ bool forwd, toword;
 {
     int step;
     register char *ccl;
-    
+
     step = setstep[forwd];	/* set direction to move.. */
     if (!toword)
 	cp += step;		/* advance one character */

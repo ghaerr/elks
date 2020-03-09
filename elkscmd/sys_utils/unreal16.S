@@ -120,7 +120,7 @@ entry:
         movw	$_success_msg_len,%dx
         movw	$_success_msg,%cx
 
-msg_and_exit: 
+msg_and_exit:
 
         movw	$1,%bx
         movw	$4,%ax
@@ -131,7 +131,7 @@ msg_and_exit:
         int	$0x80
 
         .data
-        
+
 # Global Descriptor Table
 # NULL descriptor (required):
 _gdt:   .word 0         # limit 15:0
@@ -140,14 +140,14 @@ _gdt:   .word 0         # limit 15:0
         .byte 0         # access byte (descriptor type)
         .byte 0         # b7-4=flags, b3-0=limit 19:16
         .byte 0         # base 31:24
-        
+
 # code segment descriptor:
 CODE_SEL = . - _gdt
         .word 0xFFFF
         .word 0
         .byte 0
         .byte 0x92      # present, ring 0, data, expand-up, writable
-        .byte 0x8F      
+        .byte 0x8F
         .byte 0
 
 # data segment descriptor:
@@ -159,26 +159,26 @@ DATA_SEL = . - _gdt
 # can put zero byte here (instead of 0xCF) to DISABLE unreal mode:
         .byte 0xCF      # 32-bit segment, page-granular 20-bit limit=4GB-1
         .byte 0
-_gdt_end: 
+_gdt_end:
 
-_gdt_ptr: 
+_gdt_ptr:
             .word _gdt_end - _gdt - 1
             .long _gdt
 
-_cpu16_msg: 
+_cpu16_msg:
         .ascii "Sorry, 32-bit CPU required\n"
         _cpu16_msg_len = . - _cpu16_msg
-_v86_msg: 
+_v86_msg:
         .ascii "Sorry, CPU in Virtual-8086 mode (Windows DOS box or EMM386 loaded)\n"
         _v86_msg_len = . - _v86_msg
-_success_msg: 
+_success_msg:
         .ascii "Unreal mode enabled!\nThe black-on-green text on the screen is written with 32bit offsets.\n"
         _success_msg_len = . - _success_msg
-        
+
 # This string is written directly to text-mode video memory.
 # The alternating spaces are treated as character attribute bytes.
 # 0x20 = black text (color 0) on green background (color 2)
-_unreal_msg: 
+_unreal_msg:
         .ascii "U n r e a l   m o d e "
         _unreal_msg_len = . - _unreal_msg
 

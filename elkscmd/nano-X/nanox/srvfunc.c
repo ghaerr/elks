@@ -106,7 +106,7 @@ void GsCheckNextEvent(GR_EVENT *ep)
 	GR_EVENT_LIST *	elp;
 
 #if NONETWORK
-	/* Since we're bound to server, select() is only called 
+	/* Since we're bound to server, select() is only called
 	 * thru here
 	 */
 	GsSelect();
@@ -1038,7 +1038,7 @@ void GsBitmap(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_SIZE width,
 /*
  * Draw a rectangular area in the specified drawable using the specified
  * graphics context.  This differs from rectangle drawing in that the
- * color values for each pixel in the rectangle are specified.  
+ * color values for each pixel in the rectangle are specified.
  * The color table is indexed row by row.
  */
 void GsArea(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_SIZE width,

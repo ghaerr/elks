@@ -11,13 +11,13 @@
 /*
  * This file contains a minimal version of a shell for TOS. It allows the
  * setting of an environment, calling programs, and exiting.
- * If you don't have another one, this might be sufficient, but you should 
+ * If you don't have another one, this might be sufficient, but you should
  * prefer *any* other shell.
  * You may, however, want to set your SHELL environment variable to this
  * shell: it implements the -c switch, which is required by Elvis, and
  * not supported by most other atari shells.
  */
- 
+
 #include <stdio.h>
 #include <string.h>
 #include <osbind.h>
@@ -106,7 +106,7 @@ execute(buf)
 		strcat(ep, myenv[i].value);
 		ep+=strlen(ep)+1;
 	}
-	
+
 	*ep='\0';
 
 	return Pexec(0, cmd, line, env);

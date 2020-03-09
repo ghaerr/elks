@@ -305,7 +305,7 @@ void		GsBitmapWrapper(void);
 void		GsTextWrapper(void);
 void		GsSetCursorWrapper(void);
 void		GsMoveCursorWrapper(void);
- 
+
 /*
  * External data definitions.
  */

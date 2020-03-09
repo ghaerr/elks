@@ -5,7 +5,7 @@
  * provided that this copyright notice remains intact.
  *
  * UNIX Serial Port Mouse Driver
- * 
+ *
  * This driver opens a serial port directly, and interprets serial data.
  * Microsoft, PC, and Logitech mice are supported.
  *

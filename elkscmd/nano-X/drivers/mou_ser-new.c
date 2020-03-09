@@ -3,7 +3,7 @@
  * Portions Copyright (c) 1991 David I. Bell
  *
  * UNIX Serial Port Mouse Driver
- * 
+ *
  * This driver opens a serial port directly, and interprets serial data.
  * Microsoft, PC, Logitech and PS/2 mice are supported.
  * The PS/2 mouse is supported by using the /dev/psaux device.
@@ -398,7 +398,7 @@ static int
 ParseMS(int byte)
 {
   //byte = byte & BOTTOM_SIX_BITS; /* clear upper two bits */
-  
+
 	switch (state) {
 		case IDLE:
 		  printf("idle:%X,",byte);
@@ -439,7 +439,7 @@ ParsePS2(int byte)
 	switch (state) {
 		case IDLE:
 			if (byte & PS2_CTRL_BYTE) {
-				buttons = byte & 
+				buttons = byte &
 					(PS2_LEFT_BUTTON|PS2_RIGHT_BUTTON);
 				state = XSET;
 			}
@@ -479,9 +479,9 @@ main()
 	if( MOU_Open(0) < 0)
 		printf("open failed mouse\n" );
 
-	while(1) 
+	while(1)
 	{
-		if(MOU_Read(&x, &y, &z, &b) == 1) 
+		if(MOU_Read(&x, &y, &z, &b) == 1)
 		{
 	     		printf("%d,%d,%d\n", x, y, b);
 		}

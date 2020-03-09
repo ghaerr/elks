@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <signal.h>
-#ifndef __linux__ 
+#ifndef __linux__
 #include <linuxmt/socket.h>
 #include <linuxmt/un.h>
 #else
@@ -31,7 +31,7 @@ int	GrErrno;	/* The Nano-X equivalent of errno */
  * to the server, describe the error, and then exit.  This error function
  * will only be called when the client asks for events.
  */
-#ifdef __linux__ 
+#ifdef __linux__
 static GR_ERROR_FUNC GrErrorFunc = &GrDefaultErrorHandler;
 #endif
 /*
@@ -74,11 +74,11 @@ static int GrDeliverErrorEvent(void)
 
 	if(GrReadBlock(&err, sizeof(err)) == -1)
 		return -1;
-#ifndef __linux__ 
+#ifndef __linux__
 	GrDefaultErrorHandler(err);
-#else	
+#else
 	GrErrorFunc(err);
-#endif	
+#endif
 
 	return 0;
 }
@@ -110,7 +110,7 @@ printf("client bad GrSendBlock\r\n");
 		}
 		else if(i == GrRetErrorPending)
 			if(GrDeliverErrorEvent() == -1) return -1;
-			
+
 	} while((i == GrRetESig) | (i == GrRetErrorPending));
 
 	return((int) i);
@@ -133,7 +133,7 @@ int GrOpen(void)
 	struct sockaddr_un name;
 	size_t size;
 
-	
+
 	if(!sock)
 		if((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 			sock = 0;
@@ -163,7 +163,7 @@ int GrClose(void)
 	return 0;
 }
 
-/* 
+/*
  * The default error handler which is called when the server reports an error event
  * and the client hasn't set a handler for error events.
  */
@@ -227,13 +227,13 @@ void GrDefaultErrorHandler(GR_EVENT_ERROR err)
  */
 GR_ERROR_FUNC GrSetErrorHandler(GR_ERROR_FUNC func)
 {
-#ifndef __linux__ 
+#ifndef __linux__
 	GR_ERROR_FUNC temp = GrDefaultErrorHandler;
-#else  
+#else
 	GR_ERROR_FUNC temp = GrErrorFunc;
 	if(!func) GrErrorFunc = &GrDefaultErrorHandler;
 	else GrErrorFunc = func;
-#endif	
+#endif
 	return temp;
 }
 
@@ -747,7 +747,7 @@ int GrSetCursor(GR_WINDOW_ID wid, GR_SIZE width, GR_SIZE height, GR_COORD hotx,
 		GR_BITMAP *fgbitmap, GR_BITMAP *bgbitmap)
 {
 	int bitmapsize = GR_BITMAP_SIZE(width, height) * sizeof(GR_BITMAP);
- 
+
 	if(GrSendByte(GrNumSetCursor) != GrRetSendData)
 		return -1;
 

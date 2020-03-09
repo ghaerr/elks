@@ -15,7 +15,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#ifndef __linux__ 
+#ifndef __linux__
 #include <linuxmt/socket.h>
 #include <linuxmt/un.h>
 #else
@@ -434,7 +434,7 @@ void GsSelectEventsWrapper(void)
 
 	GsSelectEvents(wid, eventmask);
 
-	GsPutCh(current_fd, GrRetOK);	
+	GsPutCh(current_fd, GrRetOK);
 }
 
 void GsGetNextEventWrapper(void)
@@ -538,7 +538,7 @@ void GsLineWrapper(void)
 
 	GsLine(id, gc, x1, y1, x2, y2);
 
-	GsPutCh(current_fd, GrRetOK);	
+	GsPutCh(current_fd, GrRetOK);
 }
 
 void GsPointWrapper(void)
@@ -569,7 +569,7 @@ void GsPointWrapper(void)
 
 	GsPoint(id, gc, x, y);
 
-	GsPutCh(current_fd, GrRetOK);	
+	GsPutCh(current_fd, GrRetOK);
 
 }
 
@@ -612,7 +612,7 @@ void GsRectWrapper(void)
 
 	GsRect(id, gc, x, y, width, height);
 
-	GsPutCh(current_fd, GrRetOK);	
+	GsPutCh(current_fd, GrRetOK);
 }
 
 void GsFillRectWrapper(void)
@@ -696,7 +696,7 @@ void GsPolyWrapper(void)
 
 	free(pointtable);
 
-	GsPutCh(current_fd, GrRetOK);	
+	GsPutCh(current_fd, GrRetOK);
 }
 
 /* FIXME: fails with pointtable size > 64k if sizeof(int) == 2*/
@@ -738,7 +738,7 @@ void GsFillPolyWrapper(void)
 
 	free(pointtable);
 
-	GsPutCh(current_fd, GrRetOK);	
+	GsPutCh(current_fd, GrRetOK);
 }
 
 void GsEllipseWrapper(void)
@@ -1413,7 +1413,7 @@ GR_CLIENT *GsFindClient(int fd)
 		if(client->id == fd) return(client);
 		client = client->next;
 	}
-	
+
 	return 0;
 }
 

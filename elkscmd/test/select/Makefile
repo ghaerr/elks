@@ -21,5 +21,5 @@ $(PGM): $(OBJS)
 install: $(PGM)
 	$(INSTALL) $(PGM) $(DESTDIR)/bin
 
-clean: 
+clean:
 	rm -f $(OBJS) $(PGM)

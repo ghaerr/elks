@@ -3,7 +3,7 @@ ttn.c
 */
 
 /*
- * Telnet for ELKS 
+ * Telnet for ELKS
  *
  * Based on minix telnet client.
  * (c) 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
@@ -57,7 +57,7 @@ static int process_opt (char *bp, int count);
 void finish()
 {
 	tcsetattr(0, TCSANOW, &def_termios);
-	exit(0);	
+	exit(0);
 }
 
 unsigned long int in_aton(str)
@@ -85,7 +85,7 @@ const char *str;
                                 str++;
                 }
         }
-        return(htonl(l));   
+        return(htonl(l));
 }
 
 
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 	}
 
 	tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
-	
+
 	locadr.sin_family = AF_INET;
 	locadr.sin_port = 0; /* any port */
 	locadr.sin_addr.s_addr = INADDR_ANY;
@@ -198,9 +198,9 @@ int main(int argc, char *argv[])
 	if (argc == 3){
 		sscanf(argv[2],"%d", &port);
 	} else {
-		port = 23;	
+		port = 23;
 	}
-		
+
 	remadr.sin_family = AF_INET;
 	remadr.sin_port = htons( port );
 	remadr.sin_addr.s_addr = in_aton(argv[1]);
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
 	printf("Connected\r\n");
 
 	tcgetattr(0, &def_termios);
-	
+
 	nonblock = 1;
 	ioctl(0, FIONBIO, &nonblock);
 
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 
 		if (FD_ISSET(0, &fdset)){
 			keybd();
-		}			
+		}
 	}
 }
 
@@ -441,7 +441,7 @@ int count;
 		result= writeall(tcp_fd, (char *)buffer,2);
 		if (result<0){
 			ret_value = result;
-			goto ret;			
+			goto ret;
 		}
 
 	}
@@ -468,7 +468,7 @@ int count;
 		/*	fprintf(stderr, "got IAC %d\r\n", optsrt);*/
 		}
 		break;
-	}	
+	}
 	ret_value = offset;
 ret:
 	return ret_value;

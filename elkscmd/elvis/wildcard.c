@@ -70,12 +70,12 @@ char **wildexpand(argc, argv)
 	char **argv;
 {
 	int i;
-	
+
 	for (i=0; i<*argc; i++)
 		expand(argv[i]);
 	*argc=nfiles;
 	return files;
-}	
+}
 #endif
 
 expand(name)

@@ -1,6 +1,6 @@
 	What you have here is a completely PD implementation of
-	M4. It was originally written for the GNU project. 
-	This version was the last version before a major re-write 
+	M4. It was originally written for the GNU project.
+	This version was the last version before a major re-write
 	took place.
 
 	Pd M4 is based on software tools macro, as described in the
@@ -8,12 +8,12 @@
 	serious changes have been made, this version inherits the basic
 	design problems of the original, hence the ugliness of the
 	underlying code. [GNU version of this processor is re-designed
-	in a much cleaner fashion, and is expected to be out before 
+	in a much cleaner fashion, and is expected to be out before
 	1988. GNU version also includes an extensive texinfo document.]
 
 	PDness:
 
-	This code *is* PD. You (public) have all the rights to the code. 
+	This code *is* PD. You (public) have all the rights to the code.
 	[But this also means you (singular) do not have any *extra*
 	rights to the code, hence it is impossible for you to restrict
 	the use and distribution of this code in any way.]
@@ -23,7 +23,7 @@
 	This posting is a dedication to an old 750 that started out
 	running 4.1BSD and had 1.5 meg, 1 dz11, and 2 Rk07 drives.
 	It was named yetti [sic] by accident, and was managed by the
-	author until its retirement few months ago. [the name yetti 
+	author until its retirement few months ago. [the name yetti
 	now identifies a different machine]
 
 	Distribution + misc:
@@ -67,11 +67,11 @@
 	much interested, since my new version inherits some code from this
 	version. I am also interested in hearing about any unique applica-
 	tions of M4. I am not interested in gratuitous hacks or "neat"
-	kitchen-sink features. 
+	kitchen-sink features.
 
 	Contact:
 
-		Usenet: [decvax|ihnp4]!utzoo!yetti!oz || 
+		Usenet: [decvax|ihnp4]!utzoo!yetti!oz ||
 			    ...seismo!mnetor!yetti!oz
 		Bitnet: oz@[yulibra|yuyetti].BITNET
 		Phonet: [416] 736-5257 x 3976

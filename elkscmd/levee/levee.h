@@ -204,7 +204,7 @@ extern long gemdos();
 #endif
 
 #define TAB	9
-    
+
 	/* variable types */
 #define VBOOL	0
 #define VINT	1
@@ -377,7 +377,7 @@ struct macrecord {	/* Macro Descriptor */
     cmdtype oldmap;			/* Old value in movemap */
     char *m_text;			/* Replacement text */
 };
-		    
+
 struct tmacro {		/* For running a macro */
     char *mtext,	/* Pointer to macro text */
 	 *ip;		/* Pointer into macro text */

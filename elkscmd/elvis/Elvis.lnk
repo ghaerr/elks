@@ -4,5 +4,5 @@ move1.obj move2.obj move3.obj move4.obj move5.obj +
 opts.obj recycle.obj redraw.obj regexp.obj +
 regsub.obj system.obj tio.obj tmp.obj vars.obj +
 vcmd.obj vi.obj pc.obj sysdos.obj tinytcap.obj /co /noi /map +
-/pac /far /stack:0x4000 
-elvis.exe; 
+/pac /far /stack:0x4000
+elvis.exe;

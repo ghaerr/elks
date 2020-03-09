@@ -2,7 +2,7 @@
  * Copyright (c) 1999 Greg Haerr <greg@censoft.com>
  *
  * Screen Driver Utilities
- * 
+ *
  * PC ROM Font Routine Header (PC ROM font format)
  *
  * This file contains the PC ROM format low-level font/text
@@ -97,7 +97,7 @@ pcrom_gettextbits(PSD psd,UCHAR ch,IMAGEBITS *retmap,COORD *retwd, COORD *retht,
 }
 
 #if NOTUSED
-/* 
+/*
  * Low level text draw routine, called only if no clipping
  * is required.  This routine draws ROM font characters only.
  */

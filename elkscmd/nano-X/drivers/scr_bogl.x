@@ -4,7 +4,7 @@
  * Screen Driver using BOGL Library
  *
  * This driver now requires only the following BOGL entry points:
- * 	bogl_init, bogl_done, 
+ * 	bogl_init, bogl_done,
  * 	bogl_pixel, bogl_readpixel,
  * 	bogl_vline, bogl_hline
  *
@@ -199,7 +199,7 @@ BOGL_fillrect(COORD x1, COORD y1, COORD x2, COORD y2, PIXELVAL c)
 }
 
 #if 0000
-/* 
+/*
  * Generalized low level text draw routine, called only
  * if no clipping is required
  */

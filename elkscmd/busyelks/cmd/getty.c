@@ -1,10 +1,10 @@
-/* 
+/*
  * elkscmd/sysutils/getty.c
  *
  * Copyright (C) 1998 Alistair Riddoch <ajr@ecs.soton.ac.uk>
  *
  * Source for the /bin/getty command.
- *  
+ *
  * usage: /bin/getty /dev/tty?? <speed>
  *
  * This file may be distributed under the terms of the GNU General Public

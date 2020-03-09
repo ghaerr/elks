@@ -106,7 +106,7 @@ GdOpenScreen(void)
 /*
  * Close low level graphics driver
  */
-void 
+void
 GdCloseScreen(void)
 {
 #if 0
@@ -195,7 +195,7 @@ GdSetFont(FONTID fontid)
 void
 GdResetPalette(void)
 {
-	/* note: when palette entries are changed, all 
+	/* note: when palette entries are changed, all
 	 * windows may need to be redrawn
 	 */
 	gr_nextpalentry = gr_firstuserpalentry;
@@ -606,7 +606,7 @@ GdText(PSD psd, COORD x, COORD y, const UCHAR *str, int cc, BOOL fBottomAlign)
 		return;
 
 	psd->GetTextSize(psd, str, cc, &width, &height, gr_font);
-	
+
 	if(fBottomAlign)
 		y -= (height - 1);
 
@@ -796,7 +796,7 @@ GdMakePaletteConversionTable(RGBENTRY *palette,int palsize,PIXELVAL *convtable,
 /*
  * Draw a color bitmap image in 1, 4 or 8 bits per pixel.  The
  * Micro-Win color image format are DWORD padded bytes, with
- * the upper bits corresponding to the left side (identical to 
+ * the upper bits corresponding to the left side (identical to
  * the MS-Windows format).  This format is currently different
  * than the IMAGEBITS format, which uses word-padded bits
  * for monochrome display only, where the upper bits in the word
@@ -1202,7 +1202,7 @@ typedef long NUM;
 }
 
 /*
- * Read a rectangular area of the screen.  
+ * Read a rectangular area of the screen.
  * The color table is indexed row by row.
  */
 void
@@ -1378,7 +1378,7 @@ GdBlit(PSD dstpsd, COORD dstx, COORD dsty, COORD width, COORD height,
 	/*FIXME: compare bpp's and convert if necessary*/
 	assert(dstpsd->planes == srcpsd->planes);
 	assert(dstpsd->bpp == srcpsd->bpp);
-	
+
 	/* clip blit rectangle to source screen/bitmap size*/
 	/* we must do this because there isn't any source clipping setup*/
 	if(srcx+width > srcpsd->xres)

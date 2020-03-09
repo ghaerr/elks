@@ -5,8 +5,8 @@
  * $Log:	prem.h,v $
  * Revision 1.1  91/01/15  22:36:05  pro
  * Initial revision
- * 
- * 
+ *
+ *
  */
 
 #define LITER unsigned char

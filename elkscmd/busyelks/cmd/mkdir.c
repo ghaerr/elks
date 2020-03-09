@@ -12,7 +12,7 @@ make_dir(name,f)
 {
 	char iname[256];
 	char *line;
-	
+
 	strcpy(iname, name);
 	if (((line = rindex(iname,'/')) != NULL) && f) {
 		while ((line > iname) && (*line == '/'))
@@ -26,7 +26,7 @@ make_dir(name,f)
 		return(0);
 
 }
-	
+
 
 int
 mkdir_main (argc,argv)
@@ -34,10 +34,10 @@ mkdir_main (argc,argv)
 	char **argv;
 {
 	int i, parent = 0, er = 0;
-	
-	if ((argv[1][0] == '-') && (argv[1][1] == 'p'))	
+
+	if ((argv[1][0] == '-') && (argv[1][1] == 'p'))
 		parent = 1;
-	
+
 	newmode = 0777 & ~umask(0);
 
 	for(i=parent+1;i<argc;i++) {

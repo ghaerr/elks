@@ -2,7 +2,7 @@
 #define IP_H
 
 #define IPOPT_END       0
-#define IPOPT_NOOP      1 
+#define IPOPT_NOOP      1
 #define IPOPT_SEC       130
 #define IPOPT_LSRR      131
 #define IPOPT_SSRR      137

@@ -2,7 +2,7 @@
  * Copyright (c) 1999 Greg Haerr <greg@censoft.com>
  *
  * Screen Driver Utilities
- * 
+ *
  * MicroWindows Proportional Font Routines (proportional font format)
  *
  * This file contains the generalized low-level font/text
@@ -137,7 +137,7 @@ gen_gettextbits(PSD psd,UCHAR ch,IMAGEBITS *retmap,COORD *retwd, COORD *retht,
 }
 
 #if NOTUSED
-/* 
+/*
  * Generalized low level text draw routine, called only
  * if no clipping is required
  */

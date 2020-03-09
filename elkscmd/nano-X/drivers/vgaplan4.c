@@ -13,7 +13,7 @@
  *
  * This file is meant to compile under Linux, ELKS, and MSDOS
  * without changes.  Please try to keep it that way.
- * 
+ *
  */
 /*#define NDEBUG*/
 #include <assert.h>
@@ -79,7 +79,7 @@ ega_drawpixel(PSD psd,unsigned int x, unsigned int y, PIXELVAL c)
 	assert (x >= 0 && x < psd->xres);
 	assert (y >= 0 && y < psd->yres);
 	assert (c >= 0 && c < psd->ncolors);
-  
+
 	DRAWON;
 	set_op(mode_table[gr_mode]);
 	set_color (c);
@@ -96,10 +96,10 @@ ega_readpixel(PSD psd,unsigned int x,unsigned int y)
 	FARADDR		src;
 	int		plane;
 	PIXELVAL	c = 0;
-	
+
 	assert (x >= 0 && x < psd->xres);
 	assert (y >= 0 && y < psd->yres);
-  
+
 	DRAWON;
 	src = SCREENBASE + x / 8 + y * BYTESPERLINE;
 	for(plane=0; plane<4; ++plane) {

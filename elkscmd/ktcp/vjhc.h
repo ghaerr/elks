@@ -86,7 +86,7 @@ Created:	May 25, 1993 by Philip Homburg <philip@cs.vu.nl>
 #define PPP_H
 /*
 void ppp_snd_init ARGS(( void ));
-void ppp_snd_init_callback ARGS(( ppp_snd_callback_ut *callback, 
+void ppp_snd_init_callback ARGS(( ppp_snd_callback_ut *callback,
 	psc_cbf_ut cb_f, int cb_arg ));
 void ppp_snd_sethdr ARGS(( struct pkt *pkt, __u16 proto ));
 int ppp_snd ARGS(( struct pkt *pkt, ppp_snd_callback_ut *callback ));

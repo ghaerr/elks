@@ -2,7 +2,7 @@
  * Copyright (c) 1999 Greg Haerr <greg@censoft.com>
  *
  * 4 planes Memory Video Driver for MicroWindows
- * 
+ *
  * 4bpp colors are stored bit-packed into memory, 1 bit of color per plane
  * planes 0-3 are sequential in memory
  *

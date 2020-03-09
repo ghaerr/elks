@@ -90,7 +90,7 @@ unsigned char *time_field, *date_field;
 	sec_mday = mday * 24 * 60 * 60;
 	sec_hour = hour * 60 * 60;
 	sec_min = min * 60;
-	
+
 	answer = sec_leap + sec_year + sec_mon + sec_mday + sec_hour + sec_min + sec/* + timezone*/;
 	return(answer);
 }

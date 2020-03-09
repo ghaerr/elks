@@ -87,7 +87,7 @@ do_dd(argc, argv)
 					fprintf(stderr, "Multiple input files illegal\n");
 					return;
 				}
-	
+
 				infile = cp;
 				break;
 
