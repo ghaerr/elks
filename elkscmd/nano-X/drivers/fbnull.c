@@ -25,17 +25,17 @@ null_readpixel(PSD psd, COORD x, COORD y)
 	return 0;
 }
 
-static void 	
+static void
 null_drawhorzline(PSD psd, COORD x1, COORD x2, COORD y, PIXELVAL c)
 {
 }
 
-static void	
+static void
 null_drawvertline(PSD psd, COORD x, COORD y1, COORD y2, PIXELVAL c)
 {
 }
 
-static void	
+static void
 null_blit(PSD destpsd, COORD destx, COORD desty, COORD w, COORD h,
 	PSD srcpsd, COORD srcx, COORD srcy, int op)
 {

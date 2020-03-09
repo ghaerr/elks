@@ -149,7 +149,7 @@ int dot, dot_dot;
 	move(start);
 
 	buflen = clus_size * MSECSIZ;
-					/* make the '.' and '..' entries */	
+					/* make the '.' and '..' entries */
 	time(&now);
 	dirs[0] = *mk_entry(".          ", 0x10, dot, 0L, now);
 	dirs[1] = *mk_entry("..         ", 0x10, dot_dot, 0L, now);

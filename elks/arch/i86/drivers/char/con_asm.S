@@ -9,7 +9,7 @@
 #ifdef CONFIG_SIBO_CONSOLE_DIRECT
 
 	.global _LCD_ScrollUp
-	.global _LCD_Position 
+	.global _LCD_Position
 	.global _LCD_ClearLine
 	.global _LCD_WriteChar
 	.global _LCD_PowerOn
@@ -20,12 +20,12 @@
 
 _LCD_Position:
 	push bp
-	
+
 	mov bp, sp		;get parameters
 	mov ax, 4[bp]
 	mov xpos, ax
 
-	mov ax, 6[bp]		
+	mov ax, 6[bp]
 	mov ypos, ax
 
 	pop bp
@@ -36,7 +36,7 @@ _LCD_Position:
 _LCD_ClearLine:
 	cli
 	push bp
-	
+
 	mov bp, sp		;get line number
 	mov cx, 4[bp]
 
@@ -46,11 +46,11 @@ _LCD_ClearLine:
 	push ds
 
 	out 0x15, al		;turn memory protection off
-	
+
 	mov ax, #0x0040
 	mov es, ax		;start of screen
 	mov ax, #0x0000
-	
+
 	cmp cx, #0x0000		;check for line 1 (no add!)
 	je clear_positioned
 
@@ -112,7 +112,7 @@ clear_loop3:
 _LCD_WriteChar:
 	cli
 	push bp
-	
+
 	mov bp, sp		;get parameter
 	mov ah, 4[bp]
 
@@ -132,7 +132,7 @@ putchar_loop:
 	add si, #0x0008		;advance to next character
 
 	cmp al, #0xFF		;check for end of map and print '255'
-	jne putchar_loop	;if wanted charcater not found	
+	jne putchar_loop	;if wanted charcater not found
 
 	sub si, #0x0008		;undo what has just been added
 
@@ -182,7 +182,7 @@ _LCD_ScrollUp:
 	push si
 	push es
 	push ds
-	
+
 scroll_up:
 	out 0x15, al		;turn off memory protection
 
@@ -195,7 +195,7 @@ scroll_up:
 
 	mov cx, #0x12C0 	;black plane (in words)
 	cld
-	
+
 	out 0x10, al		;keep watchdog at bay
 
 scroll_loop:
@@ -215,7 +215,7 @@ scroll_loop:
 
 _LCD_PowerOn:
 	cli			;clear interrupts and turn off protection
-	out 0x15, al		
+	out 0x15, al
 
 	in ax, #0x24		;enable LCD Screen
 	or ax, #0x6000
@@ -231,7 +231,7 @@ _LCD_PowerOn:
 
 _LCD_PowerOff:
 	cli			;clear interrupts and turn off protection
-	out 0x15, al		
+	out 0x15, al
 
 	in ax, #0x2E		;read current Voltage Pump Settings
 	mov pump_ctrl, ax
@@ -248,7 +248,7 @@ _LCD_PowerOff:
 	.data
 
 	.global font_map
-	
+
 ;--------------------------------------------------------------
 xpos:
 	.word 0x0000

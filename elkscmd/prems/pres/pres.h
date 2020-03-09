@@ -23,7 +23,7 @@
  * $Log:	pres.h,v $
  * Revision 1.1  90/12/18  16:22:56  pro
  * Initial revision
- * 
+ *
  */
 
 #ifdef lint

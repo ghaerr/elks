@@ -15,8 +15,8 @@
  */
 #undef CONFIG_PRELOAD_RAMDISK
 
-/* 
- * The ramdisk is placed in the seg 0x6000 and 0x7000. So the ram is 
+/*
+ * The ramdisk is placed in the seg 0x6000 and 0x7000. So the ram is
  * reduced to 384KB main memory. This is only for test and experimental
  * use.
  */
@@ -27,7 +27,7 @@
 #endif
 
 /*
- * Defines for what uname() should return 
+ * Defines for what uname() should return
  */
 #ifndef UTS_SYSNAME
 #define UTS_SYSNAME "ELKS"

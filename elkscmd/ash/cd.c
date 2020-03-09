@@ -218,7 +218,7 @@ top:
 	STPUTC('\0', p);
 	p = grabstackstr(p);
 	INTOFF;
-	/* The empty string is not a legal argument to chdir on a POSIX 1003.1 
+	/* The empty string is not a legal argument to chdir on a POSIX 1003.1
 	 * system. */
 	if (p[0] != '\0' && chdir(p) < 0) {
 		INTON;

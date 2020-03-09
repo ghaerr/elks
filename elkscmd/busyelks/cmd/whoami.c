@@ -6,7 +6,7 @@ void whoami_main (void)
 {
     register struct passwd *pw;
     register uid_t uid;
-    
+
     uid = geteuid ();
     pw = getpwuid (uid);
     if (pw) {

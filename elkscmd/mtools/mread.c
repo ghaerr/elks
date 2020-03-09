@@ -59,7 +59,7 @@ char *argv[];
 	oops = 0;
 	mod_time = 0;
 	while ((c = getopt(argc, argv, "tnm")) != EOF) {
-		switch(c) {
+		switch (c) {
 			case 't':
 				textmode = 1;
 				break;
@@ -86,7 +86,7 @@ char *argv[];
 					/* ...unless last arg is a directory */
 	if (!stat(target, &stbuf)) {
 		if ((stbuf.st_mode & S_IFMT) == S_IFDIR)
-			single = 0;	
+			single = 0;
 	}
 					/* too many arguments */
 	if (single && (argc - optind) != 2) {
@@ -236,7 +236,7 @@ long mod_date;
 		 */
 		for (curfat=fat;
 		    ++curfat < fat + maxcontig &&
-		    getfat(curfat-1)==curfat;) ;
+		    getfat(curfat-1) == curfat;) ;
 
 		getclusters(fat, curfat, fp);
 					/* get next cluster number */
@@ -290,7 +290,7 @@ FILE *fp;
 	if (textmode) {
 		for (i=0; i<buflen; i++) {
 			current++;
-			if (current > size) 
+			if (current > size)
 				break;
 			if ( buf[i] == '\r')
 				continue;
@@ -307,6 +307,6 @@ FILE *fp;
 		}
 		size -= buflen ;
 	}
-		
+
 	return;
 }

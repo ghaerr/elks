@@ -13,15 +13,15 @@ __const time_t * timep;
   struct tm tmb;
   struct timezone tz;
   time_t offt;
-  
+
   gettimeofday((void*)0, &tz);
-  
+
   offt = -tz.tz_minuteswest*60L;
-  
+
   /* tmb.tm_isdst = ? */
   __tm_conv(&tmb, timep, offt);
-  
+
   __asctime(cbuf, &tmb);
-  
+
   return cbuf;
 }

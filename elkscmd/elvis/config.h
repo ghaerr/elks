@@ -54,7 +54,7 @@
 /* compilers which dont understand #if defined() or #if UNDEFINED_SYMBOL */
 
 /*************************** operating systems *****************************/
- 
+
 #ifndef	BSD
 # define BSD	0		/* UNIX - Berkeley 4.x */
 #endif
@@ -102,7 +102,7 @@
 #endif
 
 /*************************** compilers **************************************/
- 
+
 #ifndef	MICROSOFT
 # define MICROSOFT	0
 #endif

@@ -96,9 +96,9 @@ __const char *src;
    extern int errno;
    int er = errno;
    int rv = unlink(src);
-   if( rv < 0 && errno == EISDIR )
+   if (rv < 0 && errno == EISDIR )
       rv = rmdir(src);
-   if( rv >= 0 ) errno = er;
+   if (rv >= 0) errno = er;
    return rv;
 }
 #endif

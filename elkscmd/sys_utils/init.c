@@ -33,12 +33,12 @@
 #include <errno.h>
 #include <time.h>
 
-/*#define DEBUG*/
+#define USE_UTMP	0	/* =1 to use /var/run/utmp*/
+#define DEBUG		0	/* =1 for debug messages*/
 
-#if 0
-#define _(A) A
-#else
-#define _(A) ()
+#if !DEBUG
+#define debug(...)
+#define debug2(...)
 #endif
 
 #define FLAG_RESPAWN   1
@@ -69,19 +69,30 @@
 #define SYSINIT      398
 #define KBREQUEST    622
 
-char *initname;				/* full path to this program*/
+/*
+  each of the entries from inittab corresponds to a child, each of which:
+  has a unique 2 chars identifier.
+  is allowed to run in some run-levels.
+  might need to be waited for completion when spawned.
+  might be running or not (pid different from zero).
+  might have to been respawned.
+  was respawned at a certain point in time.
 
-int hash(const char *string)
-{
-	const char *p;
-	int result = 0, i=1;
+  for each running child, we keep the pid assigned to a given id.
+  We take this information each time from the INITTAB file.
+*/
+struct tabentry {
+	char id[3];
+	pid_t pid;
+};
 
-	p = string;
-	while (*p)
-		result += ((*p++)-'a')*(i++);
-
-	return result;
-}
+static char *initname;			/* full path to this program*/
+static struct tabentry children[MAXCHILD], *nextchild=children, *thisOne;
+static char runlevel;
+static char prevRunlevel;
+#if USE_UTMP
+static struct utmp utentry;
+#endif
 
 /* Print an error message and die*/
 static void fatalmsg(const char *msg, ...)
@@ -94,38 +105,21 @@ static void fatalmsg(const char *msg, ...)
 	exit(1);
 }
 
-#ifdef DEBUG
-#define FPUTS(A) fputs(A,stderr)
-#define FPUTC(A) fputc(A,stderr)
-#define FPUTD(A) fprintf(stderr, "%d", A)
-#else
-#define FPUTS(A)
-#define FPUTC(A)
-#define FPUTD(A)
+#if DEBUG
+static void debug(const char *msg, ...)
+{
+	va_list args;
+	va_start(args, msg);
+	fprintf(stderr, "%s: ", initname);
+	vfprintf(stderr, msg, args);
+	va_end(args);
+}
+
+static void debug2(const char *str)
+{
+	fprintf(stderr, "%s", str);
+}
 #endif
-
-/*
-each of the entries from inittab corresponds to a child, each of which:
-  has a unique 2 chars identifier.
-  is allowed to run in some run-levels.
-  might need to be waited for completion when spawned.
-  might be running or not (pid different from zero).
-  might have to been respawned.
-  was respawned at a certain point in time.
-
-for each running child, we keep the pid assigned to a given id.
-We take this information each time from the INITTAB file.
-*/
-struct tabentry {
-	char id[3];
-	pid_t pid;
-};
-
-static struct tabentry children[MAXCHILD], *nextchild=children, *thisOne;
-static char runlevel;
-static char prevRunlevel;
-
-static struct utmp utentry;
 
 void parseLine(const char* line, void func())
 {
@@ -232,32 +226,6 @@ void doSleep(int sec)
  */
 }
 
-/* Unused function */
-#if 0
-void makefork(void)
-{
-    int pid;
-    int fd;
-    const static char **argv = { "/bin/ps", NULL };
-
-    pid = fork();
-    if (pid == 0) {
-	setsid();
-#ifdef DEBUG
-        close(0);
-	close(1);
-	close(2);
-#endif
-	fd = open(DEVTTY, O_RDWR);
-        dup2(fd ,STDIN_FILENO);
-	dup2(fd ,STDOUT_FILENO);
-        dup2(fd ,STDERR_FILENO);
-	execv(argv[0], argv);
-    }
-    while (pid != wait(NULL));
-}
-#endif
-
 pid_t respawn(const char **a)
 {
     int pid;
@@ -265,18 +233,15 @@ pid_t respawn(const char **a)
     int fd;
     char *devtty;
 
-    FPUTS("spawning \"");
-    FPUTS(a[3]);
-    FPUTS("\"\n");
-
-    if (a[3] == 0) return 1;
+    if (a[3] == NULL) return 1;
+    debug("spawning '%s'\n", a[3]);
 
     pid = fork();
     if (-1 == pid) fatalmsg("No fork\n");
 
     if (0 == pid) {
 	setsid();
-#ifdef DEBUG
+#if DEBUG
 	close(0);
 	close(1);
 	close(2);
@@ -316,13 +281,22 @@ pid_t respawn(const char **a)
 
 	fatalmsg("exec failed: %s\n", argv[0]);
     }
-
-    FPUTS("owner process owns ");
-    FPUTD(pid);
-    FPUTC('\n');
+    debug("process owns %d\n", pid);
 
 /* here I must do something about utmp */
     return pid;
+}
+
+int hash(const char *string)
+{
+	const char *p;
+	int result = 0, i=1;
+
+	p = string;
+	while (*p)
+		result += ((*p++)-'a')*(i++);
+
+	return result;
 }
 
 void passOne(const char **a)
@@ -341,7 +315,7 @@ void passOne(const char **a)
 
 	default:
 	/* ignore */
-	;
+		;
 	}
 }
 
@@ -352,23 +326,21 @@ void getRunlevel(char **a)
 
 void exitRunlevel(char **a)
 {
-	FPUTS(a[0]); FPUTC(':'); FPUTS(a[1]);
-	FPUTC(':'); FPUTS(a[2]); FPUTC(':');
-	FPUTS(a[3]);
+	debug("%s:%s:%s:%s ", a[0], a[1], a[2], a[3]);
 
 	if (a[1][0] && !strchr(a[1], runlevel)) {
 		struct tabentry *child;
 
-		FPUTS(" stop it!");
+		debug2("stop ");
 
 		/* if running, terminate it gently */
 		child = matchId(a[0]);
 		if (!child) {
-			FPUTS(" not running\n");
+			debug2("not running\n");
 			return;
 		}
 		if (!child->pid) {
-			FPUTS(" not running\n");
+			debug2("not running\n");
 			return;
 		}
 		kill(child->pid, SIGTERM);
@@ -381,16 +353,14 @@ void exitRunlevel(char **a)
 		if (!child->pid) return;
 		kill(child->pid, SIGKILL);
 	}
-	FPUTC('\n');
+	debug2("\n");
 }
 
 void enterRunlevel(const char **a)
 {
 	pid_t pid;
 
-	FPUTS(a[0]); FPUTS(" : "); FPUTS(a[1]);
-	FPUTS(" : "); FPUTS(a[2]); FPUTS(" : ");
-	FPUTS(a[3]);
+	debug("%s:%s:%s:%s ", a[0], a[1], a[2], a[3]);
 
 	if (!a[1][0] || strchr(a[1], runlevel)) {
 		int andWait=0;
@@ -407,11 +377,9 @@ void enterRunlevel(const char **a)
 				else appendChild(a[0], pid);
 				break;
 			default:
-				{
-				FPUTS("discarded\n");
-				}
+				debug2("discarded\n");
 			}
-		} else FPUTS("already running!\n");
+		} else debug2("already running\n");
 	}
 }
 
@@ -426,7 +394,7 @@ void spawnThisOne(const char **a)
 		default:
 			removeChild(thisOne);
 		}
-
+#if USE_UTMP
 		strcpy(utentry.ut_line, strstr(a[3], "/tty")+1);
 		time(&utentry.ut_time);
 		utentry.ut_id[0] = a[0][0];
@@ -435,13 +403,14 @@ void spawnThisOne(const char **a)
 		setutent();
 		pututline(&utentry);
 		endutent();
+#endif
 	}
 }
 
 void handle_signal(int sig)
 {
-	FPUTS("got signaled!\n");
-	switch(sig) {
+	debug("signaled\n");
+	switch (sig) {
 		case SIGHUP:
 		/* got signaled by another instance of init, change runlevel! */
 		{
@@ -465,14 +434,15 @@ int main(int argc, char **argv)
 
 //	argv[0] = "init";
 	initname = argv[0];
-#ifdef DEBUG
+#if DEBUG
 	int fd = open(DEVTTY, O_RDWR);
 	dup2(fd, 0);
 	dup2(fd, 1);
 	dup2(fd, 2);
-	FPUTS("entered /bin/init\n");
+	debug("starting\n");
 #endif
 
+#if USE_UTMP
 	memset(&utentry, 0, sizeof(struct utmp));
 	utentry.ut_type = INIT_PROCESS;
 	time(&utentry.ut_time);
@@ -482,7 +452,7 @@ int main(int argc, char **argv)
 	strcpy(utentry.ut_user, "INIT");
 	setutent();
 	pututline(&utentry);
-
+#endif
 	/* am I the No.1 init? */
 	if (getpid() == 1) {
 		/*   signal(SIGALRM,  handle_signal); */
@@ -496,57 +466,43 @@ int main(int argc, char **argv)
 		/*   signal(SIGTSTP,  handle_signal); */
 		/*   signal(SIGCONT,  handle_signal); */
 		/*   signal(SIGSEGV,  handle_signal); */
-
+#if USE_UTMP
 		setutent();
-
+#endif
 		/* get runlevel & spawn sysinit */
-		FPUTS("scanfile - passOne\n");
+		debug("scan inittab pass 1\n");
 		scanFile(passOne);
-		FPUTS("entered runlevel ");
-		FPUTC(runlevel);
-		FPUTC('\n');
 
 		/* spawn needed children */
-		FPUTS("scanfile - enterRunlevel\n");
+		debug("scan inittab runlevel %c\n", runlevel);
 		scanFile(enterRunlevel);
-
+#if USE_UTMP
 		endutent();
-
+#endif
 		/* wait for signals. */
 		while (1) {
-
-			FPUTS("about to go waiting...\n");
 			pid = wait(NULL);
+			if (pid == -1) continue;
 
-			FPUTS("and ");
-			FPUTD(pid);
-			FPUTS(" came out\n");
-
-			if (-1 == pid) continue;
-
-			FPUTS("child ");
-			FPUTD(pid);
-			FPUTS(" died...\n");
-
+			debug("wait got child %d\n", pid);
 			thisOne = matchPid(pid);
 			if (!thisOne) continue;
 
-			FPUTS("scanfile - spawnThisOne\n");
+			debug("scan inittab spawn\n");
 			scanFile(spawnThisOne);
 		}
 	} else {
-		/* store the new run-level into /etc/initrunlvl */
+		/* try to store new run-level into /etc/initrunlvl*/
 		int f = open(INITLVL, O_WRONLY);
+		if (f < 0)
+			debug("write '%s' failed\n", INITLVL);
 		write(f, argv[1], 1);
 		close(f);
 
-		FPUTS("change request to ");
-		FPUTC(argv[1][0]);
-		FPUTC('\n');
+		debug("change to runlevel %c\n", argv[1][0]);
 
-		/* signal (SIGHUP) the No.1 init that we must switch run-level. */
+		/* signal the first init to switch run level*/
 		kill(1, SIGHUP);
 	}
 	return 0;
 }
-

@@ -29,7 +29,7 @@ cmp_main(int argc, char * argv[])
 	struct	stat	statbuf1;
 	struct	stat	statbuf2;
 
-	if(argc != 3)
+	if (argc != 3)
 	{
 		fputs(argv[0], stderr);
 		fputs(" file1 file2\n", stderr);
@@ -72,7 +72,7 @@ cmp_main(int argc, char * argv[])
 	}
 
 	pos = 0;
-	for(;;)
+	for (;;)
 	{
 		cc1 = read(fd1, buf1, sizeof(buf1));
 		if (cc1 < 0) {
@@ -86,7 +86,7 @@ cmp_main(int argc, char * argv[])
 			break;
 		}
 
-		if(!(cc1 || cc2))
+		if (!(cc1 || cc2))
 		{
 			printf("Files are identical\n");
 			return 0;

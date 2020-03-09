@@ -23,14 +23,15 @@ PRGS = \
 	ps \
 	meminfo \
 	who \
-	knl \
 	man \
 	poweroff \
 	chmem \
 	clock \
+	unreal16 \
 	# EOL
 
 # clock enabled and has direct I/O port access
+# knl removed as useless
 # exitemu disabled because it calls INT directly to DOSEMU
 
 init: init.o
@@ -86,6 +87,10 @@ poweroff: poweroff.o
 
 chmem: chmem.o
 	$(LD) $(LDFLAGS) -o chmem chmem.o $(LDLIBS)
+
+unreal16: unreal16
+	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o
+	$(LD) -melks-libc -mcmodel=small -nostdlib -o unreal16 unreal16.o
 
 all: $(PRGS)
 

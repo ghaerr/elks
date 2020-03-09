@@ -48,7 +48,7 @@ struct tm *t;
    ret += (t->tm_mday - 1);
 
   /* convert to hours */
-	ret *= 24L;  
+	ret *= 24L;
    ret += t->tm_hour;
 
   /* convert to minutes */
@@ -80,9 +80,9 @@ struct timeval *tv;
 	time_t systime;
 	char * p;
 	struct tm tm;
-	
+
 	p = strtok(datestring, "-");
-	
+
 	tm.tm_year= tm.tm_mon= tm.tm_mday= tm.tm_hour= tm.tm_min= tm.tm_sec=0;
 
 	do{
@@ -100,10 +100,10 @@ struct timeval *tv;
 		p = strtok(NULL, "\n");
 		if (!p) break;
 		tm.tm_sec = atoi(p);
-	}while(0);	/* only to have that 'break' */
+	}while (0);	/* only to have that 'break' */
 	if (tm.tm_year<70) tm.tm_year+=2000;
 	else if (tm.tm_year<100)tm.tm_year+=1900;
-	else if (tm.tm_year<1970) 
+	else if (tm.tm_year<1970)
 		usage();
 	systime = utc_mktime(&tm);
    tv->tv_sec = systime;
@@ -119,7 +119,7 @@ int argc;
 	time_t systime;
 	time(&systime);
 
-	if (argc==1)
+	if (argc == 1)
 	{
 		fputs(ctime(&systime), stdout);
 	}
@@ -131,8 +131,8 @@ int argc;
 
 		if (argv[param][0] != '-')
 			usage();
-			
-		switch(argv[param][1]){
+
+		switch (argv[param][1]){
 		case 'c':
 			if (decodedatestring(argv[++param], &tv)) usage();
 			if (systime > tv.tv_sec)
@@ -157,9 +157,9 @@ int argc;
 				"Unable to set time -- probably you are not root\n");
 			exit (1);
 		}
-/*		
+/*
  *	trailing parameters simply ignored
- *		if (++param < argc) usage(); 
+ *		if (++param < argc) usage();
  */
 
 	}

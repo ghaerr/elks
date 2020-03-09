@@ -56,7 +56,7 @@ dircon.c : Size optimization... made it 18 bytes smaller :)
 
 --- RELEASE ---
 
-JUN 22 1996 
+JUN 22 1996
 dircon.c : Cleaned up scrolling funcs. Now they won't hopefully break
            anything. At least my Amstrad PPC now works ok in both mda
            and cga mode.

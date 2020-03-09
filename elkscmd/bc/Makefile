@@ -36,7 +36,7 @@ CFLBASE += -mrtd
 # For ELKS, bc needs more data segment space than the kernel-given default.
 LDFLAGS += -maout-chmem=0xc000
 
-OFILES = scan.o util.o main.o number.o storage.o load.o execute.o 
+OFILES = scan.o util.o main.o number.o storage.o load.o execute.o
 
 SUBDIRS = Examples Test
 
@@ -80,12 +80,12 @@ sbc.c: sbc.y
 	mv y.tab.c sbc.c
 
 global.o: bcdefs.h global.h math.h
-bc.o:	bcdefs.h global.h 
+bc.o:	bcdefs.h global.h
 execute.o: bcdefs.h global.h
-load.o: bcdefs.h global.h 
+load.o: bcdefs.h global.h
 main.o: bcdefs.h global.h version.h
 number.o: bcdefs.h
-sbc.o: bcdefs.h global.h 
+sbc.o: bcdefs.h global.h
 scan.o: y.tab.h bcdefs.h global.h
 storage.o: bcdefs.h global.h
 util.o: bcdefs.h global.h version.h

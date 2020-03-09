@@ -427,7 +427,7 @@ L112:	out	dx, ax		; select bit plane
 
 	pop	ds
 	pop	si
-	pop	bp	
+	pop	bp
 	ret
 	.cendp	ega_readpixel
 

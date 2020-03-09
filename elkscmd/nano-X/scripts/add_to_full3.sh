@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set +x
- 
+
 echo "Adding nano-X demos to ELKS full3 image"
 echo
 echo "Enter demo file in bin directory to copy to full3 image as script parameter"
@@ -42,7 +42,7 @@ mount -o loop $SRC_IMAGE /mnt/$FD_MOUNT || \
 cp -a ../nano-X/src/bin/$1 /mnt/$FD_MOUNT/usr/bin
 #cp ../nano-X/src/profile /mnt/$FD_MOUNT/root/.profile
 df /mnt/$FD_MOUNT/
-	
+
 	# Take down mounts
 umount /mnt/$FD_MOUNT
 

@@ -1,22 +1,22 @@
                                  ELKS BUGS
-                                      
+
    This is a list of reported bugs with ELKS, together with the current
    status thereof.
-   
+
    As and when you discover new bugs, please report them to the [1]ELKS
    Bugzilla System on the [2]ELKS website. This file will be updated from
    there.
 
      __________________________________________________________________
 
-   
+
                                   CONTENTS
-                                      
+
     1. Bugs reported [3]prior to June 2001 that may not still exist.
     2. [4]Latest Bugs.
 
      __________________________________________________________________
-   
+
 
     1. Bugs reported prior to June 2001 that may or may not still exist.
 
@@ -31,7 +31,7 @@
 
                ______________________________________________________
 
-            
+
          1. Sometimes unmounting a non-root filesystem returns EBUSY when
             nothing is using, and nothing seems to rectify it.
 
@@ -92,7 +92,7 @@
 
          ______________________________________________________________
 
-       
+
     2. Recent Bugs
 
        The following bugs have been reported since 1st June 2001:
@@ -120,7 +120,7 @@
             [7]Thomas McWilliams
 
      __________________________________________________________________
-   
+
 
    This document was last updated on 13th August 2001.
 

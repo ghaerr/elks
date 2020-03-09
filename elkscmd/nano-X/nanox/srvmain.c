@@ -63,10 +63,10 @@ int
 main(int argc, char *argv[])
 {
 	/* Attempt to initialise the server*/
-	if(GsInitialize())
+	if (GsInitialize())
 		exit(1);
 
-	while(1)
+	while (1)
 		GsSelect();
 	return 0;
 }
@@ -77,7 +77,7 @@ GsAcceptClientFd(int i)
 {
 	GR_CLIENT *client, *cl;
 
-	if(!(client = malloc(sizeof(GR_CLIENT)))) {
+	if (!(client = malloc(sizeof(GR_CLIENT)))) {
 		close(i);
 		return;
 	}
@@ -89,11 +89,11 @@ GsAcceptClientFd(int i)
 	client->next = NULL;
 	client->waiting_for_event = FALSE;
 
-	if(connectcount++ == 0)
+	if (connectcount++ == 0)
 		root_client = client;
 	else {
 		cl = root_client;
-			while(cl->next)
+			while (cl->next)
 				cl = cl->next;
 		client->prev = cl;
 		cl->next = client;
@@ -108,10 +108,10 @@ int
 GsOpen(void)
 {
 #if NONETWORK
-	/* Client calls this routine once.  We 
+	/* Client calls this routine once.  We
 	 * init everything here
 	 */
-	if(GsInitialize() < 0)
+	if (GsInitialize() < 0)
 		return -1;
 	GsAcceptClientFd(999);
 	curclient = root_client;
@@ -128,7 +128,7 @@ GsClose(void)
 #if !NONETWORK
 	GsDropClient(current_fd);
 #endif
-        if(--connectcount == 0)
+        if (--connectcount == 0)
 		GsTerminate();
 }
 
@@ -154,11 +154,11 @@ void
 GsSelect(void)
 {
 	/* If mouse data present, service it*/
-	if(mousedev.Poll())
+	if (mousedev.Poll())
 		GsCheckMouseEvent();
 
 	/* If keyboard data present, service it*/
-	if(kbddev.Poll())
+	if (kbddev.Poll())
 		GsCheckKeyboardEvent();
 
 }
@@ -190,14 +190,14 @@ GsSelect(void)
 	FD_SET(un_sock, &rfds);
 	if (un_sock > setsize) setsize = un_sock;
 	curclient = root_client;
-	while(curclient) {
-		if(curclient->waiting_for_event && curclient->eventhead) {
+	while (curclient) {
+		if (curclient->waiting_for_event && curclient->eventhead) {
 			curclient->waiting_for_event = FALSE;
 			GsGetNextEventWrapperFinish();
 			return;
 		}
 		FD_SET(curclient->id, &rfds);
-		if(curclient->id > setsize) setsize = curclient->id;
+		if (curclient->id > setsize) setsize = curclient->id;
 		curclient = curclient->next;
 	}
 #endif
@@ -208,48 +208,48 @@ GsSelect(void)
 	to.tv_usec = 100L;
 
 	/* Wait for some input on any of the fds in the set or a timeout: */
-	if((e = select(setsize, &rfds, NULL, NULL, &to)) > 0) {
-		
+	if ((e = select(setsize, &rfds, NULL, NULL, &to)) > 0) {
+
 		/* If data is present on the mouse fd, service it: */
-		if(FD_ISSET(mouse_fd, &rfds))
+		if (FD_ISSET(mouse_fd, &rfds))
 			GsCheckMouseEvent();
 
 		/* If data is present on the keyboard fd, service it: */
-		if(FD_ISSET(keyb_fd, &rfds))
+		if (FD_ISSET(keyb_fd, &rfds))
 			GsCheckKeyboardEvent();
 
 #if NONETWORK
 		/* If registered input descriptor, handle it*/
-		if(regfd != -1 && FD_ISSET(regfd, &rfds)) {
+		if (regfd != -1 && FD_ISSET(regfd, &rfds)) {
 			GR_EVENT_FDINPUT *	gp;
 			gp = (GR_EVENT_FDINPUT *)GsAllocEvent(curclient);
-			if(gp) {
+			if (gp) {
 				gp->type = GR_EVENT_TYPE_FDINPUT;
 				gp->fd = regfd;
 			}
 		}
 #else
 		/* If a client is trying to connect, accept it: */
-		if(FD_ISSET(un_sock, &rfds))
+		if (FD_ISSET(un_sock, &rfds))
 			GsAcceptClient();
 
 		/* If a client is sending us a command, handle it: */
 		curclient = root_client;
-		while(curclient) {
-			if(FD_ISSET(curclient->id, &rfds))
+		while (curclient) {
+			if (FD_ISSET(curclient->id, &rfds))
 				GsHandleClient(curclient->id);
 			curclient = curclient->next;
 		}
 #endif
 
-	} 
-	else if(!e) {
+	}
+	else if (!e) {
 #if FRAMEBUFFER | BOGL
-		if(fb_CheckVtChange())
+		if (fb_CheckVtChange())
 			GsRedrawScreen();
 #endif
 	} else
-		if(errno != EINTR)
+		if (errno != EINTR)
 			perror("Select() call in main failed");
 }
 #endif

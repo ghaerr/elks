@@ -143,7 +143,7 @@ void ino2_setzone(struct minix_fs_dat *fs,struct minix2_inode *ino,
       izone = iblks[iblk] = get_free_block(fs);
       mark_zone(fs,iblks[iblk]);
       dofwrite(goto_blk(fs->fp,ino->i_dbl_indr_zone),iblks,sizeof iblks);
-      memset(iblks,0,sizeof iblks);      
+      memset(iblks,0,sizeof iblks);
     } else {
       dofread(goto_blk(fs->fp,izone = iblks[iblk]),iblks,sizeof iblks);
       if (iblks[blk] && iblks[blk] != zone) unmark_zone(fs,iblks[blk]);
@@ -205,7 +205,7 @@ void ino_setzone(struct minix_fs_dat *fs,struct minix_inode *ino,
       izone = iblks[iblk] = get_free_block(fs);
       mark_zone(fs,iblks[iblk]);
       dofwrite(goto_blk(fs->fp,ino->i_dbl_indr_zone),iblks,sizeof iblks);
-      memset(iblks,0,sizeof iblks);      
+      memset(iblks,0,sizeof iblks);
     } else {
       dofread(goto_blk(fs->fp,izone = iblks[iblk]),iblks,sizeof iblks);
       if (iblks[blk] && iblks[blk] != zone) unmark_zone(fs,iblks[blk]);
@@ -262,7 +262,7 @@ void ino2_freezone(struct minix_fs_dat *fs,struct minix2_inode *ino,u32 blk) {
     blk %= MINIX2_ZONESZ;
 
     if (iblks[iblk] == 0) return;
- 
+
     dofread(goto_blk(fs->fp,iblks[iblk]),dblks,sizeof dblks);
     if (dblks[blk]) unmark_zone(fs,dblks[blk]);
     dblks[blk] = 0;
@@ -282,7 +282,7 @@ void ino2_freezone(struct minix_fs_dat *fs,struct minix2_inode *ino,u32 blk) {
       }
     }
     unmark_zone(fs,ino->i_dbl_indr_zone);
-    ino->i_dbl_indr_zone = 0;    
+    ino->i_dbl_indr_zone = 0;
     return;
   }
   die("file bigger than maximum size");
@@ -333,7 +333,7 @@ void ino_freezone(struct minix_fs_dat *fs,struct minix_inode *ino,int blk) {
     blk %= MINIX_ZONESZ;
 
     if (iblks[iblk] == 0) return;
- 
+
     dofread(goto_blk(fs->fp,iblks[iblk]),dblks,sizeof dblks);
     if (dblks[blk]) unmark_zone(fs,dblks[blk]);
     dblks[blk] = 0;
@@ -353,20 +353,20 @@ void ino_freezone(struct minix_fs_dat *fs,struct minix_inode *ino,int blk) {
       }
     }
     unmark_zone(fs,ino->i_dbl_indr_zone);
-    ino->i_dbl_indr_zone = 0;    
+    ino->i_dbl_indr_zone = 0;
     return;
   }
   die("file bigger than maximum size");
 }
 
 /**
- * Read an inode block.  Checks if we are actually trying to read past 
+ * Read an inode block.  Checks if we are actually trying to read past
  * the end-of-file.
  * @param fs - filesystem structure
  * @param inode - inode to read from
  * @param blk - file block to read
  * @param buf - buffer pointer (must be BLOCKSIZE)
- * @return	number of bytes copied in to buf (typically BLOCKSIZE) unless 
+ * @return	number of bytes copied in to buf (typically BLOCKSIZE) unless
  *		last block or if we are reading a hole, which will return 0.
  */
 int read_inoblk(struct minix_fs_dat *fs,int inode,u32 blk,u8 *buf) {
@@ -474,7 +474,7 @@ void trunc_inode(struct minix_fs_dat *fs,int inode,u32 sz) {
   }
 }
 
-    
+
 /**
  * Find an inode given the specified path
  * @param fs - filesystem structure

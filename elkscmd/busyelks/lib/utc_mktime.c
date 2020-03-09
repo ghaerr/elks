@@ -33,7 +33,7 @@ struct tm *t;
    ret += (t->tm_mday - 1);
 
   /* convert to hours */
-	ret *= 24L;  
+	ret *= 24L;
    ret += t->tm_hour;
 
   /* convert to minutes */

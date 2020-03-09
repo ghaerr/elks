@@ -49,6 +49,7 @@ template:
 	cp -a $(TEMPLATE_DIR) $(DESTDIR)
 	find $(DESTDIR) -name .keep -delete
 	$(MAKE) -C $(ELKSCMD_DIR) install
+	$(MAKE) -C $(BOOTBLOCKS_DIR)
 	bash -c "./ver.pl $(ELKS_DIR)/Makefile-rules > $(DESTDIR)/etc/issue"
 	git log --abbrev-commit | head -1 | sed 's/commit/ELKS built from commit/' > $(DESTDIR)/etc/motd
 ifdef CONFIG_IMG_BOOT

@@ -14,7 +14,7 @@ AS=ia16-elf-as
 AR=ia16-elf-ar
 LD=ia16-elf-ld
 
-CFLAGS=$(ARCH) $(INCLUDES) $(CDEFS) -Wall -Os $(MULTILIB)
+CFLAGS=$(ARCH) $(INCLUDES) $(CDEFS) -Wall -Wextra -Wwrite-strings -Wcast-align -Wstrict-aliasing -Wstrict-overflow -Wstrict-prototypes -Wpointer-arith -Wundef -Os $(MULTILIB)
 ASFLAGS=-mtune=i8086
 LDFLAGS=-mtune=i8086
 # This is used in subdirectories to quickly create a library archive without

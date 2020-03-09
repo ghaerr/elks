@@ -10,7 +10,7 @@ OBJS=	blk.obj cmd1.obj cmd2.obj curses.obj cut.obj ex.obj input.obj \
 
 CFLAGS=	-DCS_IBMPC -DCS_SPECIAL
 CC=	cl -AM
-	
+
 blk.obj:	blk.c
 	$(CC) $(CFLAGS) -c blk.c
 

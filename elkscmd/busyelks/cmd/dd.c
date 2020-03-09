@@ -86,7 +86,7 @@ dd_main(int argc, char * argv[])
 					write(STDERR_FILENO, "Multiple input files illegal\n", 29);
 					return 2;
 				}
-	
+
 				infile = cp;
 				break;
 

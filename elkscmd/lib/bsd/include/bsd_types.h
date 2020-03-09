@@ -9,7 +9,7 @@ typedef unsigned long u_long;
 
 typedef off_t fpos_t;
 
-#define sig_t           __sighandler_t 
+#define sig_t           __sighandler_t
 
 #define __attribute__(_a)
 #define __dead

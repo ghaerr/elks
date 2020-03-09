@@ -3,10 +3,10 @@
  *
  *	The 8086 mode code runs in protected mode by way of 16-bit segment
  *	descriptors which we set up in the LDT.
- *	We trap up to 386 mode for system call emulation and naughties. 
+ *	We trap up to 386 mode for system call emulation and naughties.
  */
 
-#define _GNU_SOURCE  /* for clone */ 
+#define _GNU_SOURCE  /* for clone */
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -26,7 +26,7 @@
 #include <sys/wait.h>
 #include <asm/ldt.h>
 #include <asm/ptrace-abi.h>
-#include "elks.h" 
+#include "elks.h"
 
 volatile struct elks_cpu_s elks_cpu;
 unsigned char *elks_base, *elks_data_base;	/* Paragraph aligned */
@@ -35,7 +35,7 @@ unsigned short brk_at = 0;
 #ifdef DEBUG
 #define dbprintf(x) db_printf x
 #else
-#define dbprintf(x) 
+#define dbprintf(x)
 #endif
 
 static int modify_ldt(int func, void *ptr, unsigned long bytes)
@@ -50,22 +50,16 @@ static void elks_init()
 	memset(ldt, 0, sizeof ldt);
 	int cs_idx = 0, ds_idx, ldt_count = modify_ldt(0, ldt, sizeof ldt);
 	unsigned cs, ds;
-	if (ldt_count < 0)
-		ldt_count = 0;
-	while (cs_idx < ldt_count && ldt[cs_idx] != 0)
-		++cs_idx;
+	if (ldt_count < 0) ldt_count = 0;
+	while (cs_idx < ldt_count && ldt[cs_idx] != 0) ++cs_idx;
 	ds_idx = cs_idx + 1;
-	while (ds_idx < ldt_count && ldt[ds_idx] != 0)
-		++ds_idx;
-	if (cs_idx >= 8192 || ds_idx >= 8192)
-	{
-		fprintf(stderr, "No free LDT descriptors for text and data "
-				"segments\n");
+	while (ds_idx < ldt_count && ldt[ds_idx] != 0) ++ds_idx;
+	if (cs_idx >= 8192 || ds_idx >= 8192) {
+		fprintf(stderr, "No free LDT descriptors for text and data segments\n");
 		exit(255);
 	}
 	elks_cpu.regs.xcs = cs = cs_idx * 8 + 7;
-	elks_cpu.regs.xds = elks_cpu.regs.xes = elks_cpu.regs.xss
-			  = ds = ds_idx * 8 + 7;
+	elks_cpu.regs.xds = elks_cpu.regs.xes = elks_cpu.regs.xss = ds = ds_idx * 8 + 7;
 	dbprintf(("LDT descriptor for text is %#x\n", cs));
 	dbprintf(("LDT descriptor for data is %#x\n", ds));
 	/* Try to place dummy descriptors in the LDT */
@@ -80,8 +74,7 @@ static void elks_init()
 	if (modify_ldt(1, &cs_desc, sizeof cs_desc) != 0
 	    || modify_ldt(1, &ds_desc, sizeof ds_desc) != 0)
 	{
-		fprintf(stderr, "Cannot allocate LDT descriptors for text "
-				"and data segments\n");
+		fprintf(stderr, "Cannot allocate LDT descriptors for text and data segments\n");
 		exit(255);
 	}
 }
@@ -89,16 +82,15 @@ static void elks_init()
 static void elks_take_interrupt(int arg)
 {
 #if 1
-	if(arg==0x20) { minix_syscall(); return; }
+	if (arg == 0x20) { minix_syscall(); return; }
 #endif
-	if(arg!=0x80)
-	{
+	if (arg != 0x80) {
 		dbprintf(("Took an int %d\n", arg));
 		fflush(stderr);
 		kill(getpid(), SIGILL);
 		return;
 	}
-	
+
 	dbprintf(("syscall AX=%x BX=%x CX=%x DX=%x SP=%x "
 		  "stack=%x %x %x %x %x\n",
 		(unsigned short)elks_cpu.regs.xax,
@@ -111,7 +103,7 @@ static void elks_take_interrupt(int arg)
 		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 4),
 		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 6),
 		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 8)));
-		
+
 	elks_cpu.regs.xax = elks_syscall();
 	dbprintf(("elks syscall returned %d\n",
 		  (int)(short)elks_cpu.regs.xax));
@@ -126,11 +118,11 @@ static int load_elks(int fd)
 	   data segment according to a.out total field */
 	struct elks_exec_hdr mh;
 	struct user_desc cs_desc, ds_desc;
-	if(read(fd, &mh,sizeof(mh))!=sizeof(mh))
+	if (read(fd, &mh,sizeof(mh)) != sizeof(mh))
 		return -ENOEXEC;
-	if(mh.hlen!=EXEC_HEADER_SIZE)
+	if (mh.hlen!=EXEC_HEADER_SIZE)
 		return -ENOEXEC;
-	if(mh.type!=ELKS_SPLITID && mh.type!=ELKS_SPLITID_AHISTORICAL)
+	if (mh.type!=ELKS_SPLITID && mh.type!=ELKS_SPLITID_AHISTORICAL)
 		return -ENOEXEC;
 #ifdef DEBUG
 	fprintf(stderr,"Linux-86 binary - %lX. tseg=%ld dseg=%ld bss=%ld\n",
@@ -146,16 +138,14 @@ static int load_elks(int fd)
 		exit(1);
 	}
 	mh.total = (mh.total + 0xful) & 0xfff0ul;
-	if(read(fd,elks_base,mh.tseg)!=mh.tseg)
-		return -ENOEXEC;
-	elks_data_base=elks_base+65536;
-	if(read(fd,elks_data_base,mh.dseg)!=mh.dseg)
-		return -ENOEXEC;
+	if (read(fd,elks_base,mh.tseg)!=mh.tseg) return -ENOEXEC;
+	elks_data_base = elks_base + 65536;
+	if (read(fd,elks_data_base,mh.dseg)!=mh.dseg) return -ENOEXEC;
 	memset(elks_data_base+mh.dseg,0, mh.bseg);
 	/*
 	 *	Really set up the LDT descriptors
 	 */
-	 
+
 	memset(&cs_desc, 0, sizeof cs_desc);
 	memset(&ds_desc, 0, sizeof ds_desc);
 	cs_desc.entry_number = elks_cpu.regs.xcs / 8;
@@ -193,10 +183,8 @@ static int wait_for_child(void)
 {
 	pid_t child = elks_cpu.child, pid;
 	int status;
-	while ((pid = waitpid(child, &status, __WALL)) != child)
-	{
-		if (pid < 0)
-		{
+	while ((pid = waitpid(child, &status, __WALL)) != child) {
+		if (pid < 0) {
 			fprintf(stderr, "waitpid failed\n");
 			exit(255);
 		}
@@ -327,20 +315,18 @@ void build_stack(char ** argv, char ** envp)
 	unsigned short pcp;
 
 	/* How much space for argv */
-	for(p=argv; *p; p++)
-	{
-	   argv_count++; argv_len += strlen(*p)+1;
+	for (p = argv; *p; p++) {
+		argv_count++;
+		argv_len += strlen(*p) + 1;
 	}
-	if (argv_len % 2)
-		argv_len++;
+	if (argv_len % 2) argv_len++;
 
 	/* How much space for envp */
-	for(p=envp; *p; p++)
-	{
-	   envp_count++; envp_len += strlen(*p)+1;
+	for (p = envp; *p; p++) {
+		envp_count++;
+		envp_len += strlen(*p) + 1;
 	}
-	if (envp_len % 2)
-		envp_len++;
+	if (envp_len % 2) envp_len++;
 
 	/* tot it all up */
 	stack_bytes = 2				/* argc */
@@ -359,22 +345,20 @@ void build_stack(char ** argv, char ** envp)
 
 	/* Now copy in the strings */
 	pip=ELKS_PTR(unsigned short, elks_cpu.regs.xsp);
-	pcp=elks_cpu.regs.xsp+2*(1+argv_count+1+envp_count+1);
+	pcp=elks_cpu.regs.xsp + 2 * (1 + argv_count + 1 + envp_count + 1);
 
 	*pip++ = argv_count;
-	for(p=argv; *p; p++)
-	{
+	for (p = argv; *p; p++) {
 	   *pip++ = pcp;
 	   strcpy(ELKS_PTR(char, pcp), *p);
-	   pcp += strlen(*p)+1;
+	   pcp += strlen(*p) + 1;
 	}
 	*pip++ = 0;
 
-	for(p=envp; *p; p++)
-	{
+	for (p = envp; *p; p++) {
 	   *pip++ = pcp;
 	   strcpy(ELKS_PTR(char, pcp), *p);
-	   pcp += strlen(*p)+1;
+	   pcp += strlen(*p) + 1;
 	}
 	*pip++ = 0;
 }
@@ -387,20 +371,19 @@ main(int argc, char *argv[], char *envp[])
 	int ruid, euid, rgid, egid;
 	int pg_sz;
 
-	if(argc<=1)
-	{
+	if (argc <= 1) {
 		fprintf(stderr,"elksemu cmd args.....\n");
 		exit(1);
 	}
 	/* This uses the _real_ user ID If the file is exec only that's */
 	/* ok cause the suid root will override.  */
-	/* BTW, be careful here, security problems are possible because of 
+	/* BTW, be careful here, security problems are possible because of
 	 * races if you change this. */
 
-	if( access(argv[1], X_OK) < 0
+	if (access(argv[1], X_OK) < 0
 	  || (fd=open(argv[1], O_RDONLY)) < 0
 	  || fstat(fd, &st) < 0
-	  )
+	 )
 	{
 		perror(argv[1]);
 		exit(1);
@@ -409,8 +392,8 @@ main(int argc, char *argv[], char *envp[])
 	/* Check the suid bits ... */
 	ruid = getuid(); rgid = getgid();
 	euid = ruid; egid = rgid;
-	if( st.st_mode & S_ISUID ) euid = st.st_uid;
-	if( st.st_mode & S_ISGID ) egid = st.st_gid;
+	if (st.st_mode & S_ISUID) euid = st.st_uid;
+	if (st.st_mode & S_ISGID) egid = st.st_gid;
 
 	/* Set the _real_ permissions, or revoke superuser priviliages */
 	setregid(rgid, egid);
@@ -429,27 +412,26 @@ main(int argc, char *argv[], char *envp[])
 	/* The Linux vm will deal with not allocating the unused pages */
 	elks_base = mmap(NULL, 0x20000 + pg_sz,
 	                  PROT_EXEC|PROT_READ|PROT_WRITE,
-			  MAP_ANON|MAP_PRIVATE|MAP_32BIT, 
+			  MAP_ANON|MAP_PRIVATE|MAP_32BIT,
 			  -1, 0);
-	if( (intptr_t)elks_base < 0 || (uintptr_t)elks_base >= 0x100000000ull)
+	if ((intptr_t)elks_base < 0 || (uintptr_t)elks_base >= 0x100000000ull)
 	{
 		fprintf(stderr, "Elks memory is at an illegal address\n");
 		exit(255);
 	}
 	mprotect(elks_base + 0x20000, pg_sz, PROT_NONE);
-	
-	if(load_elks(fd) < 0)
+
+	if (load_elks(fd) < 0)
 	{
 		fprintf(stderr,"Not a elks binary.\n");
 		exit(1);
 	}
-	
+
 	close(fd);
 
-	build_stack(argv+1, envp);
+	build_stack(argv + 1, envp);
 
-	while(1)
-		run_elks();
+	while (1) run_elks();
 }
 
 #ifdef DEBUG
@@ -458,10 +440,10 @@ void db_printf(const char * fmt, ...)
 static FILE * db_fd = 0;
   va_list ptr;
   int rv;
-  if( db_fd == 0 )
+  if (db_fd == 0)
   {
      db_fd = fopen("/tmp/ELKS_log", "a");
-     if( db_fd == 0 ) db_fd = stderr;
+     if (db_fd == 0) db_fd = stderr;
      setbuf(db_fd, 0);
   }
   fprintf(db_fd, "%d: ", getpid());

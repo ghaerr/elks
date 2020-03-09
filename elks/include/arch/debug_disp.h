@@ -2,11 +2,11 @@
  * File:		debug_disp.h
  * Date:		Sun Jan 30 18:41:56 2000
  * Author:		 (plattner)
- *  
+ *
  * Abstract:
- *      Debugging facility over i/o port 
+ *      Debugging facility over i/o port
  * Modifications:
- * 
+ *
  * $Log$
  * Revision 1.2  2002/02/24 17:29:00  rhw2
  * Fixed #else and #endif to not fox the bcc -ansi option. Reformatted scripts/Configure and scripts/Menuconfig to a consistent style. Removed ELKS dependency on the Linux kernel source being available.

@@ -1,7 +1,7 @@
 /*
  *  Assembly memory access routines for the kernel.
  */
- 
+
 #include <arch/asm-offsets.h>
 
     .code16

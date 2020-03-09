@@ -11,15 +11,15 @@ touch_main (argc,argv)
 	int i, ncreate = 0;
 	struct stat sbuf;
 	int fd,er;
-	
+
 	if ((argv[1][0] == '-') && (argv[1][1] == 'c'))
 		ncreate = 1;
-	
-	for(i=ncreate+1;i<argc;i++) {
-		if (argv[i][0] != '-') {	
+
+	for (i=ncreate+1;i<argc;i++) {
+		if (argv[i][0] != '-') {
 			if (stat(argv[i],&sbuf)) {
 				if (!ncreate)
-					er = close(creat(argv[i], 0666));				
+					er = close(creat(argv[i], 0666));
 			} else
 				er = utime(argv[i],NULL);
 		}

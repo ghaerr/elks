@@ -55,7 +55,7 @@ minix_syscall()
    case 1:  strcpy(tsks, "FS"); break;
    default: sprintf(tsks, "task(%d)", tsk);
    }
-   if( sys > 0 && sys < 77 )
+   if (sys > 0 && sys < 77)
       strcpy(syss, minix_names[sys]);
    else
       sprintf(syss, "%d", sys);

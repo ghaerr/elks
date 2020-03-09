@@ -25,10 +25,10 @@ static char mons[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
    /*              012345678901234567890123456 */
    strcpy(buffer, "Err Err .. ..:..:.. ....\n");
-   if( (ptm->tm_wday >= 0) && (ptm->tm_wday <= 6) )
+   if ((ptm->tm_wday >= 0) && (ptm->tm_wday <= 6) )
      memcpy(buffer, days+3*(ptm->tm_wday), 3);
 
-   if( (ptm->tm_mon >= 0) && (ptm->tm_mon <= 11) )
+   if ((ptm->tm_mon >= 0) && (ptm->tm_mon <= 11) )
      memcpy(buffer+4, mons+3*(ptm->tm_mon), 3);
 
 

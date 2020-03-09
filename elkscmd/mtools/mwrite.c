@@ -60,7 +60,7 @@ char *argv[];
 	verbose = 0;
 	mod_time = 0;
 	while ((c = getopt(argc, argv, "tnvm")) != EOF) {
-		switch(c) {
+		switch (c) {
 			case 't':
 				textmode = 1;
 				break;

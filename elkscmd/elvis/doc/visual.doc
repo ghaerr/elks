@@ -4,23 +4,23 @@
 
 E2.  VISUAL MODE COMMANDSF
 
-        Most visual mode commands are one keystroke long.  The following 
+        Most visual mode commands are one keystroke long.  The following
      table  lists  the  operation  performed by each keystroke, and also
-     denotes any options or arguments that it accepts.  Notes at the end 
-     of the table describe the notation used in this table.  
+     denotes any options or arguments that it accepts.  Notes at the end
+     of the table describe the notation used in this table.
 
         In addition to the keys listed  here,  your  keyboard's  "arrow"
      keys  will  be  interpretted  as  the  appropriate  cursor movement
      commands.  The same goes for <PgUp> and <PgDn>,  if  your  keyboard
      has them.    There  is a colon mode command (to be described later)
-     which will allow you to define other keys, such as function keys.  
+     which will allow you to define other keys, such as function keys.
 
-        A tip: visual command mode looks a lot like text input mode.  If 
+        A tip: visual command mode looks a lot like text input mode.  If
      you forget which mode you're in, just hit the <Esc> key.  If  elvis
-     beeps, then you're in visual command mode.  If elvis does not beep, 
+     beeps, then you're in visual command mode.  If elvis does not beep,
      then  you  were  in  input mode, but by hitting <Esc> you will have
      switched to visual command mode.  So, one  way  or  another,  after
-     <Esc> elvis will be ready for a command.  
+     <Esc> elvis will be ready for a command.
 
 -1command         description                                             type-0
         ^A      ---
@@ -204,13 +204,13 @@ MOVE    These commands move the cursor, and may be used to specify the extent
 
         You  can't type text into your file directly from visual command
      mode.  Instead, you must first give a command which  will  put  you
-     into input mode.  The commands to do this are A/C/I/O/R/S/a/i/o/s.  
+     into input mode.  The commands to do this are A/C/I/O/R/S/a/i/o/s.
 
         The  S/s/C/c  commands  temporarily  place a $ at the end of the
-     text that they are going to change.  
+     text that they are going to change.
 
         In input mode, all keystrokes are inserted into the text at  the
-     cursor's position, except for the following: 
+     cursor's position, except for the following:
 
                 ^A      insert a copy of the last input text
                 ^D      delete one indent character
@@ -228,12 +228,12 @@ MOVE    These commands move the cursor, and may be used to specify the extent
 
         Also,  on  some  systems,  ^S  may  stop  output, ^Q may restart
      output, and ^C may interupt execution.    ^@  (the  NUL  character)
-     cannot be inserted.  
+     cannot be inserted.
 
         The  R  visual  command  puts  you  in overtype mode, which is a
-     slightly different form of input mode.  In overtype mode, each time 
+     slightly different form of input mode.  In overtype mode, each time
      you insert a character, one of the old characters is  deleted  from
-     the file.  
+     the file.
 
 
    E2.2  Arrow keys in Input ModeF
@@ -242,7 +242,7 @@ MOVE    These commands move the cursor, and may be used to specify the extent
      (This is an extension; the real Vi doesn't support  arrow  keys  in
      input  mode.)  The  <PgUp>,  <PgDn>, <Home>, and <End> keys work in
      input mode, too.  The <Delete> key deletes a  single  character  in
-     input mode.  
+     input mode.
 
         The  best  thing about allowing arrow keys to work in input mode
      is that as long as you're in input mode,  Elvis  seems  to  have  a
@@ -251,7 +251,7 @@ MOVE    These commands move the cursor, and may be used to specify the extent
      the arrow  keys at any time to move the cursor.  Now, Elvis can act
      like that, too.  In fact, with the new "inputmode" option  and  the
      "control-Z  control-Z" input command, you may never have to go into
-     visual command mode for simple edit sessions.  
+     visual command mode for simple edit sessions.
 
 
 
@@ -272,21 +272,21 @@ MOVE    These commands move the cursor, and may be used to specify the extent
      A   digraph   is  a  character  which  is  composed  of  two  other
      characters.  For example, an apostrophe and the letter i  could  be
      defined  as  a  digraph  which  is  to  be stored & displayed as an
-     accented i.  
+     accented i.
 
         There is no single standard for extended ASCII  character  sets.
      Elvis  can  be compiled to fill the digraph with values appropriate
      for either the IBM PC character set, or the LATIN-1  character  set
      used by  X windows, or neither.  (See the discussions of -DCS_IBMPC
-     and -DCS_LATIN1 in the CFLAGS section of this manual.) You can view 
-     or edit the digraph table via the ":digraph" colon command.  
+     and -DCS_LATIN1 in the CFLAGS section of this manual.) You can view
+     or edit the digraph table via the ":digraph" colon command.
 
         Digraphs wil  not  be  recognized  until  you've  entered  ":set
-     digraph".  
+     digraph".
 
         To  actually  use  a  digraph type the first character, then hit
      <Backspace>, and then type the second character.  Elvis  will  then
-     substitute the non-ASCII character in their place.  
+     substitute the non-ASCII character in their place.
 
 
    E2.4  AbbreviationsF
@@ -294,12 +294,12 @@ MOVE    These commands move the cursor, and may be used to specify the extent
         Elvis can   expand   abbreviations  for  you.    You  define  an
      abbreviation with the :abbr command, and then whenever you type  in
      the  abbreviated  form  while in input mode, elvis will immediately
-     the long form.  COBOL programmers should find this useful.  :-) 
+     the long form.  COBOL programmers should find this useful.  :-)
 
         Elvis  doesn't  perform  the  substitution  until  you  type   a
      non-alphanumeric character  to  mark  the  end of the word.  If you
-     type a control-V before that non-alphanumeric character, then Elvis 
-     will not perform the substitution.  
+     type a control-V before that non-alphanumeric character, then Elvis
+     will not perform the substitution.
 
 
    E2.5  Auto-IndentF
@@ -307,15 +307,15 @@ MOVE    These commands move the cursor, and may be used to specify the extent
         With  the  ":set  autoindent"  option  turned  on,  Elvis   will
      automatically  insert  leading  whitespace at the beginning of each
      new line that you type in.  The leading whitespace is  copied  from
-     the preceding line.  
+     the preceding line.
 
         To add  more leading whitespace, type control-T.  To remove some
-     whitespace, type control-D.  
+     whitespace, type control-D.
 
         Elvis' autoindent mode isn't 100%  compatible  with  vi's.    In
-     Elvis, 0^D and ^^D don't work, ^U can wipeout all indentation,  and 
+     Elvis, 0^D and ^^D don't work, ^U can wipeout all indentation,  and
      sometimes  Elvis will use a different amount of indentation than vi
-     would.  
+     would.
 
 
 

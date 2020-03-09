@@ -1,8 +1,8 @@
 /*
 ! ldivmod.s - 32 over 32 to 32 bit division and remainder for 8086
 
-! ldivmod( dividend bx:ax, divisor di:cx )  [ signed quot di:cx, rem bx:ax ]
-! ludivmod( dividend bx:ax, divisor di:cx ) [ unsigned quot di:cx, rem bx:ax ]
+! ldivmod(dividend bx:ax, divisor di:cx)  [ signed quot di:cx, rem bx:ax ]
+! ludivmod(dividend bx:ax, divisor di:cx) [ unsigned quot di:cx, rem bx:ax ]
 
 ! dx is not preserved
 

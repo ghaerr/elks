@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     yes = argc == 1 ? y : argv[1];
 
     n = strlen(yes);
-		
+
     yes[n++] = '\n';
 
     while (write(1, yes, n) != -1)

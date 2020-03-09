@@ -20,13 +20,13 @@ following lines at the top of the Makefile you create in that directory:
 
 	USEBCC	 	= Y
 
-	CLEANDEP	= 
+	CLEANDEP	=
 
-	CLEANME 	= 
+	CLEANME 	=
 
-	DEPEND		= 
+	DEPEND		=
 
-	DISTFILES	= 
+	DISTFILES	=
 
 	include $(BASEDIR)/Makefile-rules
 

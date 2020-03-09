@@ -36,7 +36,7 @@ linear4_drawpixel(PSD psd, COORD x, COORD y, PIXELVAL c)
 
 	++drawing;
 	addr += x/2 + y * psd->linelen;
-	if(gr_mode == MODE_XOR)
+	if (gr_mode == MODE_XOR)
 		*addr = (*addr & notmask[x&1]) ^ (c << ((1-(x&1))*4));
 	else
 		*addr = (*addr & notmask[x&1]) | (c << ((1-(x&1))*4));
@@ -71,16 +71,16 @@ linear4_drawhorzline(PSD psd, COORD x1, COORD x2, COORD y, PIXELVAL c)
 
 	++drawing;
 	addr += x1/2 + y * psd->linelen;
-	if(gr_mode == MODE_XOR) {
-		while(x1 < x2) {
+	if (gr_mode == MODE_XOR) {
+		while (x1 < x2) {
 			*addr = (*addr & notmask[x1&1]) ^ (c << ((1-(x1&1))*4));
-			if((++x1 & 1) == 0)
+			if ((++x1 & 1) == 0)
 				++addr;
 		}
 	} else {
-		while(x1 < x2) {
+		while (x1 < x2) {
 			*addr = (*addr & notmask[x1&1]) | (c << ((1-(x1&1))*4));
-			if((++x1 & 1) == 0)
+			if ((++x1 & 1) == 0)
 				++addr;
 		}
 	}
@@ -103,13 +103,13 @@ linear4_drawvertline(PSD psd, COORD x, COORD y1, COORD y2, PIXELVAL c)
 
 	++drawing;
 	addr += x/2 + y1 * linelen;
-	if(gr_mode == MODE_XOR)
-		while(y1++ < y2) {
+	if (gr_mode == MODE_XOR)
+		while (y1++ < y2) {
 			*addr = (*addr & notmask[x&1]) ^ (c << ((1-(x&1))*4));
 			addr += linelen;
 		}
 	else
-		while(y1++ < y2) {
+		while (y1++ < y2) {
 			*addr = (*addr & notmask[x&1]) | (c << ((1-(x&1))*4));
 			addr += linelen;
 		}
@@ -143,17 +143,17 @@ linear4_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 	++drawing;
 	dst = dstpsd->addr + dstx/2 + dsty * dlinelen;
 	src = srcpsd->addr + srcx/2 + srcy * slinelen;
-	while(--h >= 0) {
+	while (--h >= 0) {
 		ADDR8	d = dst;
 		ADDR8	s = src;
 		COORD	dx = dstx;
 		COORD	sx = srcx;
-		for(i=0; i<w; ++i) {
+		for (i=0; i<w; ++i) {
 			*d = (*d & notmask[dx&1]) |
 			   ((*s >> ((1-(sx&1))*4) & 0x0f) << ((1-(dx&1))*4));
-			if((++dx & 1) == 0)
+			if ((++dx & 1) == 0)
 				++d;
-			if((++sx & 1) == 0)
+			if ((++sx & 1) == 0)
 				++s;
 		}
 		dst += dlinelen;

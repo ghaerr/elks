@@ -41,7 +41,7 @@ void mm_stat(seg_t start, seg_t end)
 
 #ifndef CONFIG_ARCH_SIBO
 
-	if(pi == (char *) 0x40) {
+	if (pi == (char *) 0x40) {
 	    printk("PC/%cT class machine, %s CPU\n%uK base RAM",
 		    arch_cpu > 5 ? 'A' : 'X', proc_name, setupw(0x2a));
 	    cp = proc_name;

@@ -142,7 +142,7 @@ main(argc, argv)
 #if OSK
 		fclose(stdout);
 		system("qsort tags >-_tags; -nx; del tags; rename _tags tags");
-#else	
+#else
 		system("sort tags >_tags$$; mv _tags$$ tags");
 #endif
 #endif
@@ -172,7 +172,7 @@ ctags(fp, name, refs)
 	for (context = EXPECTFN, lnum = 1; fgets(text, sizeof text, fp); lnum++)
 	{
 #ifdef VERBOSE
-		switch(context)
+		switch (context)
 		{
 		  case EXPECTFN:	scan = "EXPECTFN";	break;
 		  case ARGS:		scan = "ARGS    ";	break;
@@ -253,7 +253,7 @@ ctags(fp, name, refs)
 #if OSK
 				sprintf(fmt, NUMFMT, len);
 				printf(fmt, scan, name, lnum);
-#else			
+#else
 				printf(NUMFMT, len, scan, name, lnum);
 #endif
 			}
@@ -311,14 +311,14 @@ ctags(fp, name, refs)
 #if OSK
 						sprintf(fmt, MAINFMT, strlen(name) - 2);
 						printf(fmt, name, name, text);
-#else			
+#else
 						printf(MAINFMT, strlen(name) - 2, name, name, text);
 #endif
 					}
 #if OSK
 					sprintf(fmt, SRCHFMT, len);
 					printf(fmt, scan, name, text);
-#else				
+#else
 					printf(SRCHFMT, len, scan, name, text);
 #endif
 					context = ARGS;

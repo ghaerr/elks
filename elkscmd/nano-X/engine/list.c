@@ -18,14 +18,14 @@ ItemAlloc(unsigned int size)
 void
 ListAdd(PLISTHEAD pHead,PLIST pItem)
 {
-	if( pHead->tail) {
+	if (pHead->tail) {
 		pItem->prev = pHead->tail;
 		pHead->tail->next = pItem;
 	} else
 		pItem->prev = NULL;
 	pItem->next = NULL;
 	pHead->tail = pItem;
-	if( !pHead->head)
+	if (!pHead->head)
 		pHead->head = pItem;
 }
 
@@ -33,27 +33,27 @@ ListAdd(PLISTHEAD pHead,PLIST pItem)
 void
 ListInsert(PLISTHEAD pHead,PLIST pItem)
 {
-	if( pHead->head) {
+	if (pHead->head) {
 		pItem->next = pHead->head;
 		pHead->head->prev = pItem;
 	} else
 		pItem->next = NULL;
 	pItem->prev = NULL;
 	pHead->head = pItem;
-	if( !pHead->head)
+	if (!pHead->head)
 		pHead->head = pItem;
 }
 
 void
 ListRemove(PLISTHEAD pHead,PLIST pItem)
 {
-	if( pItem->next)
+	if (pItem->next)
 		pItem->next->prev = pItem->prev;
-	if( pItem->prev)
+	if (pItem->prev)
 		pItem->prev->next = pItem->next;
-	if( pHead->head == pItem)
+	if (pHead->head == pItem)
 		pHead->head = pItem->next;
-	if( pHead->tail == pItem)
+	if (pHead->tail == pItem)
 		pHead->tail = pItem->prev;
 	pItem->next = pItem->prev = NULL;
 }

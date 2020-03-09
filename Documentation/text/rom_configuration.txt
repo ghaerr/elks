@@ -4,8 +4,8 @@ Configuration for OS-Loader
 Most options are made to reduce the size of code and (constant) data.
 If an option not defined as absent, a test for this device is performed.
 
-An embedded 8086 system you can use without full IBM BIOS. So al lot of 
-BIOS variable and BIOS-function (INTxx) are not implemented. In this 
+An embedded 8086 system you can use without full IBM BIOS. So al lot of
+BIOS variable and BIOS-function (INTxx) are not implemented. In this
 cases you must perform the results directly.
 
 The bootsector code isn't used for ROM code. setup.S made the full
@@ -17,36 +17,36 @@ OS/loader function.
 -------------------------------------------------
 
   Reduces the code and data size. Only the result strings for the
-  specified group included to the code.   
-   
-   
+  specified group included to the code.
+
+
 'System has an FPU'               CONFIG_HW_FPU
 --------------------------------------------
 
   Most systems do not have an FPU. Reduces the code size.
 
 
-'System has a keyboard BIOS (if no BIOS-Int 16h)'    CONFIG_HW_KEYBOARD_BIOS 
+'System has a keyboard BIOS (if no BIOS-Int 16h)'    CONFIG_HW_KEYBOARD_BIOS
 ------------------------------------------------------------------
 
   Systems with SIO console doesn't need a keyboard BIOS
-  
+
 
 'System has a VGA-adapter'        CONFIG_HW_VGA
 --------------------------------------------
-  
+
   No search to VGA
-  
-  
+
+
 'System has a PS/2 pointing device'   CONFIG_HW_PS2_MOUSE
 ------------------------------------------------------
 
-  No search to PS/2 mouse. The variable is placed to the address 01ff 
-  in setup segment. This variable generates a 500 bytes memory hole. 
+  No search to PS/2 mouse. The variable is placed to the address 01ff
+  in setup segment. This variable generates a 500 bytes memory hole.
   The device should disabled until the address is fixed.
 
 
-'System has a hard drive          CONFIG_HW_HARD_DRIVE    
+'System has a hard drive          CONFIG_HW_HARD_DRIVE
 ------------------------------------------------------------
   Do not init a hard disk. A comment in 0.76 says you should disable
   this option.
@@ -55,13 +55,13 @@ OS/loader function.
 'System has a floppy drive'       CONFIG_HW_FLOPPY_DRIVE
 -----------------------------------------------
    Init floppy. The kernel code is in ROM, so you doesn't need this.
-   
+
 
 'Get fontinfo via CRT-BIOS (40h:85h)'    CONFIG_HW_VIDEO_HOC y
-'High of character in lines'             CONFIG_HW_VIDEO_LINES_PER_CHARACTER 
+'High of character in lines'             CONFIG_HW_VIDEO_LINES_PER_CHARACTER
 'Lines per page'                         CONFIG_HW_VIDEO_LINES_PER_SCREEN
 -------------------------------------------------------------------
-   
+
    The BIOS placed font information in the BIOS data space. The normal
    values are 8 and 25.
 
@@ -73,9 +73,9 @@ OS/loader function.
 -
 -  In this area you specify the location of all segments. The code is
 -  always placed in the ROM are, the data (DATA and BSS) in RAM.
-   
-   
-'Codesegment for setup.S      (SEG, size ca. 0x60 ROM)'  CONFIG_ROM_SETUP_CODE 
+
+
+'Codesegment for setup.S      (SEG, size ca. 0x60 ROM)'  CONFIG_ROM_SETUP_CODE
 ------------------------------------------------------------------------
    The OS/loader setup.S  *must* place at start of a 2 kB segment, therefore
    the BIOS looks only at this position after user ROMs.
@@ -84,73 +84,73 @@ OS/loader function.
 'Codesegment kernel           (SEG, ca. 64k ROM)'        CONFIG_ROM_KERNEL_CODE
 -------------------------------------------------------------------------
    Position for kernel code (including kernel DATA)
-   
-   
+
+
 'Datasegment for setup.S      (SEG, size ca. 0x10 RAM)'  CONFIG_ROM_SETUP_DATA
 ------------------------------------------------------------------------
    Position where the computer configuration infos stored.
-   
-   
+
+
 'Datasegment (IRQ-Scheduler)  (SEG, size: ca. 0x5 RAM)'  CONFIG_ROM_IRQ_DATA
 ----------------------------------------------------------------------------
-   The ELKS kernel used in original CS variables in some routines. 
+   The ELKS kernel used in original CS variables in some routines.
    In ROM case this was fixed by moving this into this special RAM segment.
-   
+
 
 'Datasegment (DATA+BSS+STACK) (SEG, ca. 64k RAM)'        CONFIG_ROM_KERNEL_DATA
 -------------------------------------------------------------------------
    To this area the kernel DATA is copied form ROM (kernel CODE).
-   
-   
+
+
 
 ---------------------------------------
 'Information for ROM-Image generator'
 ---------------------------------------
 -
--  The images of kernel, setup and (if you want) the power on code (a small 
--  BIOS) must merged to one big image for the PROM. You also can add a 
+-  The images of kernel, setup and (if you want) the power on code (a small
+-  BIOS) must merged to one big image for the PROM. You also can add a
 -  reset vector (at f000:fff0) in the image.
 
 
 'Startaddress of ROM (for offset in image-file)'         CONFIG_ROM_BASE
 --------------------------------------------------------------------
-  
-   Basis of the ROM image. Normally 0xf000 for 64 k PROMS 
+
+   Basis of the ROM image. Normally 0xf000 for 64 k PROMS
    (0xe000 for 128 k PROMS).
    This address is used as offset for the next addresses
-   
+
 
 'Area with BIOS Checksum in kbytes (normally 64)'  CONFIG_ROM_CHECKSUM_SIZE
 -----------------------------------------------------------------------------
-   
+
    The size should response to the size of setup und kernel.
    Some BIOSes have problems is less then 4 kB. Maximum 128 kB
 
 
-'Make image-file bootable by reset'             CONFIG_ROM_BOOTABLE_BY_RESET   
-'Address jumped after reset (offset in image)'  CONFIG_ROM_RESET_ADDRESS  
+'Make image-file bootable by reset'             CONFIG_ROM_BOOTABLE_BY_RESET
+'Address jumped after reset (offset in image)'  CONFIG_ROM_RESET_ADDRESS
 ----------------------------------------------------------------
 
-   If you say 'yes' a reset vector is added to the image. 
+   If you say 'yes' a reset vector is added to the image.
    jmp far CONFIG_ROM_BASE:CONFIG_ROM_RESET_ADDRESS
    Normally the value is 0003 (0..2 is the BIOS identifier)
-   
 
-'Add startup module to image (BIOS-functions)' CONFIG_ROM_ADD_BIOS_IMAGE 
-'Name of module'                               CONFIG_ROM_BIOS_MODULE 
-'Module codesegment address'                   CONFIG_ROM_BIOS_MODULE_ADDR 
+
+'Add startup module to image (BIOS-functions)' CONFIG_ROM_ADD_BIOS_IMAGE
+'Name of module'                               CONFIG_ROM_BIOS_MODULE
+'Module codesegment address'                   CONFIG_ROM_BIOS_MODULE_ADDR
 ------------------------------------------------------------------
 
    In bootable images (CONFIG_ROM_BOOTABLE_BY_RESET = y) you can placed a third image file
    (for example the power on code with BIOS). CONFIG_ROM_BIOS_MODULE is the name
-   of the binary, CONFIG_ROM_BIOS_MODULE_ADDR the offset in the destination image 
+   of the binary, CONFIG_ROM_BIOS_MODULE_ADDR the offset in the destination image
    (0xf000 placed an image at ff000 n a 64 k ROM)
 
 
-'Use EPROM-Simulator after make'        CONFIG_ROM_USE_SIMULATOR   
-'Programcall'                           CONFIG_ROM_SIMULATOR_PROGRAM  
+'Use EPROM-Simulator after make'        CONFIG_ROM_USE_SIMULATOR
+'Programcall'                           CONFIG_ROM_SIMULATOR_PROGRAM
 --------------------------------------------------------
-   
+
    After successful compiling you can call a program. For example for
    copy the image in an EPROM emulator.
 
@@ -161,12 +161,12 @@ OS/loader function.
 ------------------------------------------------------------
 
    Additional Information from setup.S
-   
+
 
 -----------------------------------------------------------
 The next information only for the kernel. Some information from
 the OS/loader section the kernel needs too (CONFIG_ROM_KERNEL_DATA, ...)
-Both (setup and kernel) should recompile if a value in the 
+Both (setup and kernel) should recompile if a value in the
 OS/loader section is changed.
 -----------------------------------------------------------
 
@@ -179,32 +179,24 @@ Configuration of ROM-Kernel
 
 This section include the option used only in the kernel.
 
-    
-'Use IRQ-Mask of 8259 at boottime as default'      CONFIG_HW_259_USE_ORIGINAL_MASK 
+
+'Use IRQ-Mask of 8259 at boottime as default'      CONFIG_HW_259_USE_ORIGINAL_MASK
 ------------------------------------------------------------------------
 
    Normally the kernel disables all interrupts at boot time. If you use
    a ROM-debugger connected via SIO its ugly if the kernel disable you.
    If you say yes, the interrupt mask at boot time is used as default.
-   
-   
-   
-'Ticks for BogoMIPS (0 = check at boot time)'  CONFIG_BOGOMIPS
-------------------------------------------------------------
-
-   A 8088 for example need up to 15 sec for calculating his bogomips but 
-   only 5 sec for booting the kernel. If you know your speed you can use 
-   this define.
 
 
-'NO Floppycount at 40:10 use INT13.08'        CONFIG_HW_USE_INT13_FOR_FLOPPY 
+
+'NO Floppycount at 40:10 use INT13.08'        CONFIG_HW_USE_INT13_FOR_FLOPPY
 -----------------------------------------------------------------------
-   
+
    If no BIOS data at 40h, its possible to get the Flopyinformation via INT 13.
    (Only if you use BIOS FDD)
 
 
-'Use int 13 for disk parameters'	CONFIG_HW_USE_INT13_FOR_DISKPARMS 
+'Use int 13 for disk parameters'	CONFIG_HW_USE_INT13_FOR_DISKPARMS
 ----------------------------------------------------------------------------------
 
    If you have no real disks and the information of INT 13 function 8 are consistent,

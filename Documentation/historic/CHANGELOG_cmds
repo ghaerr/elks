@@ -1,8 +1,8 @@
 *** Note from Jody Bruchon: this file is no longer maintained ***
 
-This file is used to record changes made to the CVS database. Please add 
-yourself to the top of this file before committing any changes. Please use 
-the header format provided for each entry, noting that the text on each line 
+This file is used to record changes made to the CVS database. Please add
+yourself to the top of this file before committing any changes. Please use
+the header format provided for each entry, noting that the text on each line
 should not be longer than the lines of dashes.
 
 Miguel Bolanos.
@@ -45,7 +45,7 @@ Sat Sep 18 13:29:26 BRT 2004	Claudio Matsuoka <claudio@conectiva.com>
 	  /usr/bin/yacc as well
 	* Clean up generated files (bc.c, sbc.c, scan.c, y.tab.h) in the
 	  clean rule (also removed those files from CVS).
-	  
+
 Sat Sep 18 09:08:23 CST 2004	Miguel Bolanos <mike@linuxlabs.com>
 
 	* Fixed warning caused by some "," on bc.y and sbc.y
@@ -110,7 +110,7 @@ Thu Jun 03 21:01:34 CST 2004    Claudio Matsuoka <claudio@conectiva.com>
 	* fixed BSS problem
 
 Wed Jun 02 14:16:57 CST 2004	Claudio Matsuoka <claudio@conectiva.com>
-	
+
 	* Added more minix utilities (cal diff file find head sort tail tee)
 	* Removed warning comment from ash/expand.c as bcc compiles the code.
 

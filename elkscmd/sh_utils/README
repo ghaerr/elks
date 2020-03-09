@@ -1,7 +1,7 @@
 This is version 0.1 of my port of the the GNU shutils. This package
 consists of clones of some of the shell utilities rewritten to be as compact
 as possible for use in the elks project. Included in this version are pretty
-complete versions of basename, dirname, false, pwd, true, whoami and yes and 
+complete versions of basename, dirname, false, pwd, true, whoami and yes and
 versions of logname and uname which should work, but logname will not compile
 until linux-86 libc has a getlogin() function, and the uname() function
 currently returns an error under elksemu.
@@ -10,8 +10,8 @@ While the code is based around the GNU sh-utils 1.12, with inspiration from
 tiny-utils, I have re-written alot of code, and this should not be
 considered to be a version of sh-utils.
 
-To compile all the utilities, edit Make.defs to choose the binary format, as 
-for tiny-utils, then type make, and they will be built and copied into the 
+To compile all the utilities, edit Make.defs to choose the binary format, as
+for tiny-utils, then type make, and they will be built and copied into the
 bin directory. From here, install where you want to use them.
 
 Almost all of the utilities have had features removed to make them smaller.
@@ -21,7 +21,7 @@ not --switch as they can be in the GNU utils. The options available for each
 util are as follows. Please view the relevant man pages for info on what
 these options do. (Eventually I will write man pages for these, if noone
 else does it first.) If I have removed an option which you think is vital,
-please E-mail ajr@ecs.soton.ac.uk me letting me know why and I may add it, 
+please E-mail ajr@ecs.soton.ac.uk me letting me know why and I may add it,
 or better still send me a patch.
 
 basename name [suffix]

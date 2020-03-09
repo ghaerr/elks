@@ -1,0 +1,130 @@
+Config Option			Directory		Comments
+----------------------	--------------	------------------------------------------------------------
+# shells
+CONFIG_APP_ASH			ash/			Default shell, installs as /bin/sh. Early BASH compatible.
+										Std builtins: cd, chdir, '.', source, echo, eval, exec, exit,
+											export, readonly, getops, hash, jobid, jobs, read,
+											set, setvar, shift, trap, ':', true, false, umask, unset, wait
+										Scripting builtins: break, continue, return
+										No non-std builtins.
+
+CONFIG_APP_SASH			sash/			Good shell for slow floppy systems. Installs as /bin/sash when ash
+										also selected, otherwise /bin/sh. If both shells installed,
+										edit /etc/passwd to specify /bin/sash on login.
+										Sash has some standard and large number of useful builtins.
+										Not BASH-compatible and no scripting, however it will call /bin/sh
+										for seamless BASH shell script execution.
+										Std builtins: alias, unalias, cd, exec, exit, source, setenv,
+											prompt, umask
+										Builtins:
+											chown, chgrp, cp, echo, ln, ls, mkdir, mkdir, mknod, printenv,
+											pwd, sync, rm, rmdir, sync, mv, mount, umount,
+											dd, ed, grep, more, kill, tar, touch
+										Other builtins: help, quit
+
+# New config option
+CONFIG_APP_COREUTILS	core_utils/		Core utilities, Installed in /bin. Sources moved from other directories
+										Already included in sash (but sources to be merged):
+											chown, chgrp, cp, echo, ln, ls, mkdir, mkdir, mknod, printenv,
+											pwd, sync, rm, rmdir, sync, mv, mount, umount,
+											dd, ed, grep, more, kill, tar, touch
+										Not yet included in sash (but to be added):
+											cat, date, env
+										Move from sys_utils: clock, getty, init, login, mount, umount
+										Move from file_utils:
+											cat, chgrp, chmod, chown, cp, dd, grep, ln, mkdir, mknod,
+											more, mv, rm, rmdir, sync, touch
+										Move from minix1: grep (overwrites file_utils/grep)
+										Move from minix2: env
+										Move from minix3:
+										Move from misc_utils: ed, tar
+										Move from sh_utils: date, echo, false, printenv, pwd, true
+
+# Selectable Application categories
+CONFIG_APP_SH_UTILS		sh_utils/		Shell utilities from Alistair Riddoch.
+										Rewritten from GNU shutils 1.12 and sash.
+										Installs in /bin: basename, date, dirname, echo, false, logname, mesg,
+											printenv, pwd, stty, test, tr, true, which, whoami, xargs, yes
+										Note: uname and write not compiled.
+
+CONFIG_APP_SYS_UTILS	sys_utils/		System utilities from various origins.
+										Installs in /bin: chmem, clock, getty, init, kill, knl, login, man,
+											meminfo, mount, passwd, poweroff, ps, reboot, shutdown, umount, who,
+											unreal16
+										Not compiled: exitemu, insmod, min_init, rdev, utent(lib routine)
+										Some manual pages present.
+
+CONFIG_APP_FILE_UTILS	file_utils/		File utilities from Alistair Riddoch.  (B option when busyelks selected)
+										Rewritten from GNU fileutils 3.14 and sash.
+										Installs in /bin: cat, chgrp, chmod, chown, cmp, cp, dd, grep,
+										l, ln, ls, mkdir, mkfifo, mknod, more, mv, rm, rmdir, sync, touch
+
+CONFIG_APP_DISK_UTILS	disk_utils/		Disk utilities from early 1990s.  (B option when busyelks selected)
+										Installs in /sbin: fdisk, fsck, mkfs, partype, ramdisk
+
+CONFIG_APP_MISC_UTILS	misc_utils/		Miscellaneous utilities from various sources, including sash.
+										(B option when busyelks selected)
+										Installs in /usr/bin: ed, miniterm, tar
+										Not installed: compress, uncompress, zcat
+
+CONFIG_APP_MINIX1		minix1/			MINIX utilities, part 1.  (B option when busyelks selected)
+										Installs in /bin: banner, cksum, cut, decomp16, du, fgrep, grep,
+											proto, sum, uniq, wc
+
+CONFIG_APP_MINIX2		minix2/			MINIX utilities, part 2.
+										Installs in /bin: env, lp, pwdauth, synctree, tget
+										Not built: eject, install, lpd, man, mt
+
+
+CONFIG_APP_MINIX3		minix3/			MINIX utilities, part 3.  (B option when busyelks selected)
+										Installs in /bin: cal, diff, file, find, head, sed, sort, tail, tee
+
+# busyelks
+CONFIG_APP_BUSYELKS		busyelks/		Not selected by default. When selected, B options occur on:
+											disk_utils, file_utils, minix1, minix3, misc_utils.
+											B option currently broken.
+										Installs /bin/busyelks, and symlinks to:
+											basename, cal, cat, chgrp, chmod, chown, chksum, cmp,
+											cp, cut, date, dd, diff, dirname, du, echo, ed, fdisk, find.
+											Looks like many others coming.
+# Other commands
+CONFIG_APP_LEVEE		levee/			1st vi editor, installs as /bin/vi
+
+CONFIG_APP_MTOOLS		mtools/			Early MSDOS mtools v1.6.2 from 1989, with man pages.
+										Installs into /usr/bin: mcopy, mdel, mdir, mkdfs, mmd, mrd, mread,
+											mren, mtype, mwrite
+CONFIG_APP_NANOX		nano-X/			Nano-X Graphical Window System v0.86 from 1999.
+										Too many programs to fit on 1440k floppy
+										Installs /bin/landmine
+										Builds but doesn't install: demo, demo2, nclock
+										Doesn't build: nterm, world
+
+CONFIG_APP_BC			bc/				Calculator
+
+CONFIG_APP_M4			m4/				Macro processor, including man page
+
+CONFIG_APP_PREMS		prems/			Compression library and compress/gzip lookalike.
+										Installs /bin/pres. flparc not installed.
+# Not compiling or broken commands
+CONFIG_APP_BYACC		byacc/			Berkely Yacc. Not selectable so never compiles.
+
+CONFIG_APP_ELVIS		elvis/			2nd vi editor, Makefile broken, not built.
+											Installs as /usr/bin/[elvis,vi,ex,view,input]
+CONFIG_APP_XVI			xvi/			3rd vi editor, won't compile, installs as /bin/xvi
+
+CONFIG_APP_SCREEN		screen/			Text multi-screen support. Doesn't compile or install.
+
+CONFIG_APP_TEST			test/			Various test programs, not selected by default.
+
+# Internet stack
+CONFIG_APP_KTCP			ktcp/			ELKS TCP/IP stack. Installs /bin/ktcp and /etc/resolv.conf
+CONFIG_APP_HTTPD		inet/httpd/		Installs /bin/httpd and /var/www/index.html
+CONFIG_APP_NET_TOOLS	inet/nettools/	Installs /bin/netstat, /bin/nslookup
+CONFIG_APP_TELNET		inet/telnet/	Installs /bin/telnet
+CONFIG_APP_TELNETD		inet/telnetd/	Installs /bin/telnetd
+CONFIG_APP_TINYIRC		inet/tinyirc/	Installs /bin/tinyirc
+CONFIG_APP_URLGET		inet/urlget/	Installs /bin/urlget
+
+# Other directories in elkscmd/
+rootfs_template/						Root filesystem template for static files not built in elkscmd/
+lib/									Unused. putenv.c, sleep.c, bsd/daemon.c, bsd/err.c

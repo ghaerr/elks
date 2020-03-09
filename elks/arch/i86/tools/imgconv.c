@@ -56,7 +56,7 @@ The IMG Format was reverse engeniered by me. So, please comment if anybody
 knows details....for instance what do the magic numbers mean?
 
 BTW: Is it true, that the Psion Img format knows no .bss segment?
-(.bss==uninitialzed data segment)
+(.bss == uninitialzed data segment)
 
 The code compiles on Linux. The Header "bsd-a.out.h" is from
 the bin86-0.1 source code distribution by Bruce Evans changed by H.J.Lu.

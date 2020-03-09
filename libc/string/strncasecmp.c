@@ -12,15 +12,15 @@ char *s;
 char *d;
 size_t l;
 {
-   while(l>0)
+   while (l>0)
    {
-      if( *s != *d )
+      if (*s != *d )
       {
-	 if( tolower(*s) != tolower(*d) )
+	 if (tolower(*s) != tolower(*d) )
 	    return *s - *d;
       }
       else
-	 if( *s == '\0' ) return 0;
+	 if (*s == '\0') return 0;
       s++; d++; l--;
    }
    return 0;

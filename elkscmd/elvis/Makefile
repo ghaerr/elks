@@ -57,12 +57,12 @@ EXTRA2=
 LIBS=
 BIN=	/usr/bin
 
-OF=	-o 
+OF=	-o
 RF=	-c
 DATE=	-DDATE=\'\"`date`\"\'
-EVAL=	eval 
+EVAL=	eval
 PROGS=	elvis ctags ref virec refont
-CHMEM=	
+CHMEM=
 SORT=	-DSORT
 INST=	inst.unix
 RM=	rm -f
@@ -80,12 +80,12 @@ DOC=	doc/
 #BIN=	/usr/local/bin
 #CC=	cc -M2s -i
 #CFLAGS=	-DM_SYSV -Ox -DCS_IBMPC
-#OF=	-o 
+#OF=	-o
 #RF=	-c
 #DATE=	-DDATE=\'\"`date`\"\'
-#EVAL=	eval 
+#EVAL=	eval
 #PROGS=	elvis ctags ref virec refont
-#CHMEM=	
+#CHMEM=
 #SORT=	-DSORT
 #INST=	inst.unix
 #RM=	rm -f
@@ -102,12 +102,12 @@ DOC=	doc/
 #LIBS=	-ltermcap
 #BIN=	/usr/local/bin
 #CFLAGS=	-Dbsd -O
-#OF=	-o 
+#OF=	-o
 #RF=	-c
 #DATE=	-DDATE=\'\"`date`\"\'
-#EVAL=	eval 
+#EVAL=	eval
 #PROGS=	elvis ctags ref virec refont
-#CHMEM=	
+#CHMEM=
 #SORT=	-DSORT
 #INST=	inst.unix
 #RM=	rm -f
@@ -123,10 +123,10 @@ DOC=	doc/
 #EXTRA2=
 #LIBS=	-lterm
 #BIN=	/usr/bin
-#CC=	cc 
+#CC=	cc
 #CFLAGS=	-O -DCOHERENT -DCRUNCH -DNO_CHARATTR -DNO_CURSORSHAPE \
 #	-DNO_DIGRAPH -DNO_MKEXRC -VSUVAR
-#OF=	-o 
+#OF=	-o
 #RF=	-c
 #DATE=	-DDATE=\'\"`date`\"\'
 #EVAL=	eval
@@ -149,10 +149,10 @@ DOC=	doc/
 #BIN=	/usr/bin
 #CC=	cc
 #CFLAGS=
-#OF=	-o 
+#OF=	-o
 #RF=	-c
 #DATE=	-DDATE=\'\"`date`\"\'
-#EVAL=	eval 
+#EVAL=	eval
 #PROGS=	elvis ctags ref virec refont
 #CHMEM=	chmem =18000 elvis
 #SORT=
@@ -175,17 +175,17 @@ DOC=	doc/
 #	-DNO_SHOWMODE -DNO_MODELINE -DNO_OPTCOLS -DNO_DIGRAPH -DNO_ABBR \
 #	-DNO_AT -DNO_SENTENCE -DNO_ERRLIST
 #### (all but -DNO_EXTENSIONS, -DNO_RECYCLE, -DNO_MAGIC, and -DNO_CHARSEARCH)
-#OF=	-o 
+#OF=	-o
 #RF=	-c
 #DATE=	-DDATE=\'\"`date`\"\'
-#EVAL=	eval 
+#EVAL=	eval
 #PROGS=	elvis ctags ref virec refont
 #CHMEM=
 #SORT=
 #INST=	inst.unix
 #RM=	rm -f
 #PR1=	lpr
-#PR2=	
+#PR2=
 #DUMMY=
 #DOC=	doc/
 
@@ -198,12 +198,12 @@ DOC=	doc/
 #BIN=	c:\dos
 #CC=	cl /AM
 #CFLAGS=	-O -DCS_IBMPC -DCS_SPECIAL
-#OF=	-o 
+#OF=	-o
 #RF=	-c
 #DATE=
 #EVAL=
 #PROGS=	elvis ex ctags ref virec wildcard refont
-#CHMEM=	
+#CHMEM=
 #SORT=
 #INST=	inst.dos
 #RM=	del
@@ -221,7 +221,7 @@ DOC=	doc/
 #BIN=	c:\
 #CC=	cc -VPEEP
 #CFLAGS=	-O -DCS_IBMPC -DCS_SPECIAL
-#OF=	-o 
+#OF=	-o
 #RF=	-c
 #DATE=
 #EVAL=
@@ -239,7 +239,7 @@ DOC=	doc/
 #O=	.r
 #E=
 #EXTRA=	date.o
-#EXTRA2=	osk.o 
+#EXTRA2=	osk.o
 #LIBS=	-l=/dd/lib/termlib.l
 #BIN=	/dd/usr/cmds
 #CC=	cc
@@ -289,8 +289,8 @@ SRC3=	Elvis.lnk Elvis.mak Elvis.prj Makefile.mix alias.c atari.c \
 SRC4=	blk.c cmd1.c cmd2.c config.h curses.c
 SRC5=	curses.h cut.c ex.c input.c main.c misc.c
 SRC6=	modify.c move1.c move2.c move3.c move4.c move5.c opts.c recycle.c \
-	redraw.c 
-SRC7=	regexp.c regexp.h regsub.c system.c tinytcap.c tio.c tmp.c 
+	redraw.c
+SRC7=	regexp.c regexp.h regsub.c system.c tinytcap.c tio.c tmp.c
 SRC8=	vars.c vcmd.c vi.c vi.h refont.c
 
 ###########################################################################

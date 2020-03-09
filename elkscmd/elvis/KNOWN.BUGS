@@ -23,7 +23,7 @@
   either, for the same reason.
 
 - Commands which delete text before the cursor, such as `dB', don't move the
-  cursor, but they should.  
+  cursor, but they should.
 
 - Using the substitute command, it is not possible to replace with multi-
   line text using the ^V^M construct in the replacement string.  Vi allows

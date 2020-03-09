@@ -48,7 +48,7 @@ int
 fb_CheckVtChange(void)
 {
 	cvt = fb_CurrentVt();
-	if(cvt != ocvt && cvt == vterm) {
+	if (cvt != ocvt && cvt == vterm) {
 		ocvt = cvt;
 		return 1;
 	}
@@ -64,7 +64,7 @@ fb_CheckVtChange(void)
 void
 fb_RedrawVt(int t)
 {
-	if(fb_CurrentVt() == vterm) {
+	if (fb_CurrentVt() == vterm) {
 		ioctl(ttyfd, VT_ACTIVATE, t == 1 ? 2 : 1); /* Awful hack!!*/
 		ioctl(ttyfd, VT_ACTIVATE, t);
 	}
@@ -73,6 +73,6 @@ fb_RedrawVt(int t)
 void
 fb_ExitVt(void)
 {
-	if(ttyfd != -1)
+	if (ttyfd != -1)
 		close(ttyfd);
 }

@@ -157,7 +157,7 @@ Version 0.3 - 9th May 1999 - greg@censoft.com
 	* should be easy to write an int 10h driver for real mode operation
 	* should be easy to add any other kbd, mouse or screen drivers
 	* quick port with MSC 5.10 for MSDOS created
-	
+
 Version 0.2 - 5th May 1999 - greg@censoft.com
 	* Made release 0.1 operational for evaluation
 	* Added event processing

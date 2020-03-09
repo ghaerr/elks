@@ -9,15 +9,15 @@ BASEDIR 	= ../..
 
 USEBCC 		= Y
 
-CLEANDEP	= 
+CLEANDEP	=
 
 CLEANME 	= compiler-generated.h
 
-DEPEND  	= 
+DEPEND  	=
 
-DISTFILES	= 
+DISTFILES	=
 
-NOINDENT	= 
+NOINDENT	=
 
 #########################################################################
 # Include the standard rules.

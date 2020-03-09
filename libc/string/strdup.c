@@ -9,6 +9,6 @@ strdup(char * s)
 
    len = strlen(s)+1;
    p = (char *) malloc(len);
-   if(p) memcpy(p, s, len); /* Faster than strcpy */
+   if (p) memcpy(p, s, len); /* Faster than strcpy */
    return p;
 }

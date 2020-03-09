@@ -59,7 +59,7 @@ main(
 #endif
 
 	VGA_getscreeninfo(&device, &sinfo);
-	
+
 	VGA_close(&device);
 
 	printf("[%d %d], %ld cols\n", sinfo.cols, sinfo.rows, sinfo.ncolors);

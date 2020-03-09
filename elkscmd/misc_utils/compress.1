@@ -77,7 +77,7 @@ takes a list of files on its command line and replaces each
 file whose name ends with
 .B "\&.Z"
 and which begins with the correct magic number with an uncompressed
-file without the 
+file without the
 .B "\&.Z."
 The uncompressed file will have the mode, ownership and
 timestamps of the compressed file.
@@ -103,10 +103,10 @@ suffix or not.
 .PP
 If the
 .B \-r
-flag is specified, 
+flag is specified,
 .I compress
 will operate recursively. If any of the file names specified on the command
-line are directories, 
+line are directories,
 .I compress
 will descend into the directory and compress all the files it finds there.
 .PP
@@ -149,12 +149,12 @@ Note that the
 .B \-b
 flag is omitted for
 .I uncompress,
-since the 
+since the
 .I bits
 parameter specified during compression
 is encoded within the output, along with
 a magic number to ensure that neither decompression of random data nor
-recompression of compressed data is attempted. 
+recompression of compressed data is attempted.
 .PP
 .ne 8
 The amount of compression obtained depends on the size of the
@@ -199,15 +199,15 @@ The file specified to
 has not been compressed.
 .in -8
 .IR file :
-compressed with 
+compressed with
 .I xx
-bits, can only handle 
+bits, can only handle
 .I yy
 bits
 .in +8
 .I File
 was compressed by a program that could deal with
-more 
+more
 .I bits
 than the compress code on this machine.
 Recompress the file with smaller
@@ -237,7 +237,7 @@ uncompress: corrupt input
 A SIGSEGV violation was detected which usually means that the input file has
 been corrupted.
 .in -8
-Compression: 
+Compression:
 .I "xx.xx%"
 .in +8
 Percentage of the input saved by compression.
@@ -250,8 +250,8 @@ When the input file is not a regular file or directory,
 (e.g. a symbolic link, socket, FIFO, device file), it is
 left unaltered.
 .in -8
--- has 
-.I xx 
+-- has
+.I xx
 other links: unchanged
 .in +8
 The input file has links; it is left unchanged.  See
@@ -268,7 +268,7 @@ compression.  The input remains virgin.
 .SH "BUGS"
 Although compressed files are compatible between machines with large memory,
 .BR \-b \12
-should be used for file transfer to architectures with 
+should be used for file transfer to architectures with
 a small process data space (64KB or less, as exhibited by the DEC PDP
 series, the Intel 80286, etc.)
 .PP

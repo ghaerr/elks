@@ -189,7 +189,7 @@ static int minix_add_entry(register struct inode *dir,
 	if (!de->inode)
 	    break;
 	if (namecompare(namelen, info->s_namelen, name, de->name)) {
-	    debug2("MINIXadd_entry: file %t==%s (already exists)\n",
+	    debug2("MINIXadd_entry: file %t == %s (already exists)\n",
 		    name, de->name);
 	    unmap_brelse(bh);
 	    return -EEXIST;

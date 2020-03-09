@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 #include <sys/user.h>
- 
+
 #define HZ			100
 
 #define ELKS_SIG_IGN		(-1)
@@ -21,7 +21,7 @@
  *	Minix view of stat(). We have to squash a bit here and give
  *	wrong values with inode >65535 etc
  */
- 
+
 struct elks_stat
 {
 	uint16_t est_dev;
@@ -51,7 +51,7 @@ struct elks_stat
 /*
  *	fcntl list
  */
- 
+
 #define ELKS_F_DUPFD	0
 #define ELKS_F_GETFD	1
 #define ELKS_F_SETFD	2
@@ -64,7 +64,7 @@ struct elks_stat
 /*
  *	Elks binary formats
  */
- 
+
 #define EXEC_HEADER_SIZE	32
 
 struct elks_exec_hdr
@@ -79,7 +79,7 @@ struct elks_exec_hdr
 	uint32_t bseg;
 	uint32_t entry;
 	uint32_t total;
-	uint32_t unused2; 
+	uint32_t unused2;
 };
 
 #define ELKS_PTR(_t,x)	  ((_t *) (elks_data_base+((x)&0xFFFFU)) )

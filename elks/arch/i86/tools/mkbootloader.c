@@ -1,7 +1,7 @@
 /* Merge a.out object files into a ROM boot "Image"
  * (typically "setup" & "system")
  *
- * Written by Christian Mardm"oller  (chm@kdt.de) 
+ * Written by Christian Mardm"oller  (chm@kdt.de)
  * Some German->English edits by Jody Bruchon <jody@jodybruchon.com>
 //------------------------------------------------------------------*/
 
@@ -54,7 +54,7 @@ int main(int argcnt, char **arg)
     uint32_t romgr;	// size of target binary
     uint32_t offs;		// base address of eprom in memory space
     char *rom;			// buffer for target date
-    struct t_source source[MAXQ];	// data of the source files 
+    struct t_source source[MAXQ];	// data of the source files
     struct t_check check;	// info about the checksum area
     uint32_t l, i, nr;
     unsigned firstname;		// nummber of first source in argument string

@@ -3,7 +3,7 @@
  *
  * 19-OCT-88: Dale Schumacher
  * > John Stanley has again been a great help in debugging, particularly
- * > with the printf/scanf functions which are his creation.  
+ * > with the printf/scanf functions which are his creation.
  *
  *    Dale Schumacher                         399 Beacon Ave.
  *    (alias: Dalnefre')                      St. Paul, MN  55104
@@ -16,8 +16,8 @@
 #include <ctype.h>
 #include <string.h>
 
-/* #define	skip()	do{c=getc(fp); if (c<1) goto done;}while(isspace(c))*/
-#define	skip()	while(isspace(c)) { if ((c=getc(fp))<1) goto done; }
+/* #define	skip()	do{c=getc(fp); if (c<1) goto done;}while (isspace(c))*/
+#define	skip()	while (isspace(c)) { if ((c=getc(fp))<1) goto done; }
 
 #if FLOATS
 /* fp scan actions */
@@ -373,7 +373,7 @@ vfscanf(register FILE *fp, register char *fmt, va_list ap)
 	    {
 	       q = ((unsigned char *)
 		    strchr((char *)delim, c));
-	       if ((c < 1) || lval == (q==0))
+	       if ((c < 1) || lval == (q == 0))
 	       {
 		  if (endnull)
 		     *p = '\0';
@@ -391,7 +391,7 @@ vfscanf(register FILE *fp, register char *fmt, va_list ap)
 
 	       q = ((unsigned char *)
 		    strchr((char *)delim, c));
-	       if (lval == (q==0))
+	       if (lval == (q == 0))
 	          break;
 	    }
 
@@ -431,7 +431,7 @@ vfscanf(register FILE *fp, register char *fmt, va_list ap)
    if ((c == EOF) && (cnt == 0))
       return (EOF);
 
-   if( c != EOF )
+   if (c != EOF )
       ungetc(c, fp);
    return (cnt);
 }

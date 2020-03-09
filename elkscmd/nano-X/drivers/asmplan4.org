@@ -564,7 +564,7 @@ L112:	out	dx, ax		; select bit plane
 
 	pop	ds
 	pop	si
-	pop	bp	
+	pop	bp
 	ret
 
 retzero:
@@ -609,7 +609,7 @@ PixelAddr:
 
 IF 0000
 ; char _far * ega_get_rom_char_addr();
-; Call the BIOS to find out the address of the ROM character table. 
+; Call the BIOS to find out the address of the ROM character table.
 
 	.cproc	ega_get_rom_char_addr
 	push	bp		; interrupt uses these

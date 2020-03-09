@@ -51,7 +51,7 @@ int main(int argc, char ** argv)
 		fprintf(stderr, "cannot open graphics\n");
 		exit(1);
 	}
-	
+
 	GrGetScreenInfo(&si);
 
 	GrSetErrorHandler(errorcatcher);
@@ -165,7 +165,7 @@ again:
 		close(STDOUT_FILENO);
 		close(STDERR_FILENO);
 		close(tfd);
-		
+
 		setsid();
 		pty_name[5] = 't'; /* results in: /dev/ttyp%d */
 		if ((tfd = open(pty_name, O_RDWR)) < 0) {
@@ -180,7 +180,7 @@ again:
 	}
 	return 0;
 }
-	
+
 
 GR_SIZE		width;		/* width of character */
 GR_SIZE		height;		/* height of character */
@@ -196,17 +196,17 @@ void char_del(GR_COORD x, GR_COORD y)
 	xpos -= width;
 	GrFillRect(w1, gc3, x, y /*- height*/ /*+ base*/ + 1, width, height);
 }
-	
+
 void char_out(GR_CHAR ch)
 {
-	switch(ch) {
+	switch (ch) {
 	case '\r':
 		xpos = 0;
 		return;
 	case '\n':
 		xpos = 0;
 		ypos += height;
-		if(ypos > si.rows - 60 - height) {
+		if (ypos > si.rows - 60 - height) {
 			ypos -= height;
 #if HAVEBLIT
 			bogl_cfb8_blit(50, 30, si.cols-120,
@@ -224,7 +224,7 @@ void char_out(GR_CHAR ch)
 		return;
 	case '\t':
 		xpos += width;
-		while((xpos/width) & 7)
+		while ((xpos/width) & 7)
 			char_out(' ');
 		return;
 	case '\b':			/* assumes fixed width font!!*/
@@ -241,7 +241,7 @@ void printg(char * text)
 {
 	int i;
 
-	for(i = 0; i < strlen(text); i++) {
+	for (i = 0; i < strlen(text); i++) {
 		char_out(text[i]);
 	}
 }

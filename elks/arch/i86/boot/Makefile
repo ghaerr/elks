@@ -9,12 +9,12 @@ BASEDIR 	= ../../..
 
 USEBCC 		= Y
 
-CLEANDEP	= 
+CLEANDEP	=
 
 CLEANME 	= Image bootsect nbImage nbImage.rd netbootsect setup \
 		  system system.app
 
-DEPEND  	= 
+DEPEND  	=
 
 DISTFILES	= empty system.afl system.rsz tux.pic
 

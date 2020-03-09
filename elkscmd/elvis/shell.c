@@ -11,13 +11,13 @@
 /*
  * This file contains a minimal version of a shell for TOS. It allows the
  * setting of an environment, calling programs, and exiting.
- * If you don't have another one, this might be sufficient, but you should 
+ * If you don't have another one, this might be sufficient, but you should
  * prefer *any* other shell.
  * You may, however, want to set your SHELL environment variable to this
  * shell: it implements the -c switch, which is required by Elvis, and
  * not supported by most other atari shells.
  */
- 
+
 #include <stdio.h>
 #include <string.h>
 #include <osbind.h>
@@ -80,7 +80,7 @@ execute(buf)
 	char env[4096], *ep=env;
 	int i;
 
-	while (*scan==' ')
+	while (*scan == ' ')
 		scan++;
 	if (!*scan)
 		return;
@@ -106,7 +106,7 @@ execute(buf)
 		strcat(ep, myenv[i].value);
 		ep+=strlen(ep)+1;
 	}
-	
+
 	*ep='\0';
 
 	return Pexec(0, cmd, line, env);
@@ -125,7 +125,7 @@ searchpath(from, to)
 		if (!strcmp(myenv[i].name,"PATH"))
 			path=myenv[i].value;
 	for (scan=from; *scan; scan++)
-		if (*scan==':' || *scan=='\\')
+		if (*scan == ':' || *scan == '\\')
 		{	path=0;
 			break;
 		}
@@ -141,7 +141,7 @@ searchpath(from, to)
 	{
 		for (q=to; *scan && *scan!=';' && *scan!=','; scan++)
 			*q++=*scan;
-		if (*scan==';' || *scan==',')
+		if (*scan == ';' || *scan == ',')
 			scan++;
 		*q++='\\';
 		*q='\0';
@@ -198,7 +198,7 @@ doset(line, value)
 
 	for (i=0; i<MAXENV && myenv[i].name && strcmp(myenv[i].name, line); i++)
 		;
-	if (i==MAXENV)
+	if (i == MAXENV)
 	{	printf("No Space\n");
 		return -1;
 	}
@@ -219,7 +219,7 @@ script(name)
 	FILE *fp;
 	char buf[128], *p;
 
-	if ((fp=fopen(name, "r"))==0)
+	if ((fp=fopen(name, "r")) == 0)
 		return;
 	while (fgets(buf, sizeof buf, fp))
 	{

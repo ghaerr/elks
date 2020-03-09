@@ -10,7 +10,7 @@ int remove_dir(char *name, int f)
 {
 	int er, era=2;
 	char *line;
-	
+
 	while (((er = rmdir(name)) == 0) && ((line = rindex(name,'/')) != NULL) && f) {
 		while ((line > name) && (*line == '/'))
 			--line;
@@ -19,17 +19,17 @@ int remove_dir(char *name, int f)
 	}
 	return(er && era);
 }
-	
+
 
 int main (int argc, char **argv)
 {
 	int i, parent = 0, er = 0;
-	
+
 	if (argc < 2) goto usage;
 
-	if ((argv[1][0] == '-') && (argv[1][1] == 'p'))	
+	if ((argv[1][0] == '-') && (argv[1][1] == 'p'))
 		parent = 1;
-	
+
 	newmode = 0666 & ~umask(0);
 
 	for (i = parent + 1; i < argc; i++) {

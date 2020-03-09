@@ -4,13 +4,13 @@
 
 E4.  REGULAR EXPRESSIONSF
 
-        Elvis uses regular expressions for searching and substututions.  
+        Elvis uses regular expressions for searching and substututions.
 
 
    E4.1  SyntaxF
 
-        Elvis' regexp package treats the following one- or two-character 
-     strings (called meta-characters) in special ways: 
+        Elvis' regexp package treats the following one- or two-character
+     strings (called meta-characters) in special ways:
 
                 \( \)   Used to delimit subexpressions
                 ^       Matches the beginning of a line
@@ -23,37 +23,37 @@ E4.  REGULAR EXPRESSIONSF
                 \?      The preceding is optional
 
         Anything  else is treated as a normal character which must match
-     exactly.  The special strings may all be preceded by a backslash to 
-     force them to be treated normally.  
+     exactly.  The special strings may all be preceded by a backslash to
+     force them to be treated normally.
 
 
    E4.2  OptionsF
 
         Elvis has two options which affect the way  regular  expressions
      are used.    These  options  may  be  examined  or set via the :set
-     command.  
+     command.
 
         The first option is called  "[no]magic".    This  is  a  boolean
      option, and  it is "magic" (TRUE) by default.  While in magic mode,
      all of the meta-characters behave as described above.   In  nomagic
-     mode, only ^ and $ retain their special meaning.  
+     mode, only ^ and $ retain their special meaning.
 
-        The second option is called "[no]ignorecase".  This is a boolean 
+        The second option is called "[no]ignorecase".  This is a boolean
      option, and  it  is  "noignorecase"  (FALSE)  by default.  While in
      ignorecase mode,  the  searching  mechanism  will  not  distinguish
      between an   uppercase   letter   and   its  lowercase  form.    In
      noignorecase mode, uppercase and lowercase  are  treated  as  being
-     different.  
+     different.
 
-        Also, the "[no]wrapscan" option affects searches.  
+        Also, the "[no]wrapscan" option affects searches.
 
 
    E4.3  SubstitutionsF
 
-        The :s command has at least two arguments: a regular expression, 
+        The :s command has at least two arguments: a regular expression,
      and a  substitution  string.    The  text  that matched the regular
      expression  is  replaced  by  text  which  is  derived   from   the
-     substitution string.  
+     substitution string.
 
 
 
@@ -69,7 +69,7 @@ E4.  REGULAR EXPRESSIONSF
 
 
         Most  characters  in the substitution string are copied into the
-     text literally but a few have special meaning: 
+     text literally but a few have special meaning:
 
         &       Insert a copy of the original text
         ~       Insert a copy of the previous replacement text
@@ -82,31 +82,31 @@ E4.  REGULAR EXPRESSIONSF
         \u      Convert the first char of the next &, ~ or \# to uppercase
         \l      Convert the first char of the next &, ~ or \# to lowercase
 
-        These may be preceded by a backslash to force them to be treated 
+        These may be preceded by a backslash to force them to be treated
      normally.  If "nomagic" mode is in effect, then &  and  ~  will  be
-     treated normally, and you must write them as \& and \~ form them to 
-     have special meaning.  
+     treated normally, and you must write them as \& and \~ form them to
+     have special meaning.
 
 
    E4.4  ExamplesF
 
-        This example changes every occurence of "utilize" to "use": 
+        This example changes every occurence of "utilize" to "use":
 
             :%s/utilize/use/g
 
         This  example deletes all whitespace that occurs at the end of a
      line anywhere in the file.  (The brackets contain  a  single  space
-     and a single tab.): 
+     and a single tab.):
 
             :%s/[   ]\+$//
 
-        This example converts the current line to uppercase: 
+        This example converts the current line to uppercase:
 
             :s/.*/\U&/
 
         This  example  underlines  each  letter  in the current line, by
      changing it into an "underscore backspace letter" sequence.    (The
-     ^H is entered as "control-V backspace".): 
+     ^H is entered as "control-V backspace".):
 
             :s/[a-zA-Z]/_^H&/g
 
@@ -114,7 +114,7 @@ E4.  REGULAR EXPRESSIONSF
      text before the colon with the text after the colon.  The first  \(
      \)  pair  is  used to delineate the stuff before the colon, and the
      second pair delineates the stuff after.  In the substitution  text,
-     \1 and \2 are given in reverse order, to perform the swap: 
+     \1 and \2 are given in reverse order, to perform the swap:
 
             :s/\(.*\):\(.*\)/\2:\1/
 

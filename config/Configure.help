@@ -144,7 +144,7 @@ CONFIG_HW_FLOPPY_DRIVE
 
 Get extended memory size via BIOS Interrupt 15
 CONFIG_XMS_INT15
-  Saying yes will allow ELKS to get the extended memory size 
+  Saying yes will allow ELKS to get the extended memory size
   by calling BIOS Int 15 (function 88).
 
 Extended memory size in kB
@@ -249,15 +249,11 @@ CONFIG_ROM_DEBUG
 Use IRQ-Mask of 8259 at boot time as default
 CONFIG_HW_259_USE_ORIGINAL_MASK
   Saying yes will force the irq system to read in the original
-  interrupt mask befor it starts sorting out interrupts. 
+  interrupt mask befor it starts sorting out interrupts.
 
   By default the kernel disables all interrupts.
 
   This should only be used by kernel hackers.
-
-Ticks for BogoMIPS (0 = check at boot time)
-CONFIG_BOGOMIPS
-  Enter the number of ticks for the BogoMIPS (integer)
 
 NO Floppy count at 40:10 use INT13.08
 CONFIG_HW_USE_INT13_FOR_FLOPPY
@@ -310,8 +306,8 @@ High Memory (HMA) Support
 Advanced Memory Manager
 CONFIG_ADVANCED_MM
   Adds some features to the MM like resizable holes and relocatable
-  code and data segments for processes. If you are going to use the 
-  ELKS executable format then you better say Y here. 
+  code and data segments for processes. If you are going to use the
+  ELKS executable format then you better say Y here.
   This enlarges the kernel by around 110 bytes.
 
 Swap support (Experimental)
@@ -367,7 +363,7 @@ CONFIG_CONSOLE_DIRECT
 
 Direct console VT52 emulation
 CONFIG_EMUL_VT52
-  Saying no removes some of the intelligent features from the console 
+  Saying no removes some of the intelligent features from the console
   code leaving a dumb text console which is much smaller.
 
 Direct console ANSI emulation
@@ -579,7 +575,7 @@ CONFIG_ETH
 
 Minix file system support
 CONFIG_MINIX_FS
-  Support for the basic Minix filesystem. The only currently working 
+  Support for the basic Minix filesystem. The only currently working
   filesystem. Until another filesystem is working this is required.
 
 ROM file system support
@@ -591,7 +587,7 @@ CONFIG_ROMFS_BASE
 
 Full VFS support
 CONFIG_FULL_VFS
-  If you say no to this then the vfs will only support one filesystem 
+  If you say no to this then the vfs will only support one filesystem
   type. You do not need to say yes currently as only minixfs is
   available.
 
@@ -606,7 +602,7 @@ CONFIG_FS_EXTERNAL_BUFFER
   very fast block devices such as RAM, ROM or Flash disks.
 
   It is also useful for stress testing the block device code.
-  
+
 Inter-process pipe support
 CONFIG_PIPE
   Include support for standard UNIX inter-process pipes.
@@ -626,7 +622,7 @@ ELKS file format
 CONFIG_EXEC_ELKS
   Adds support for the new ELKS executable format that supports a growing
   heap. If you are only going to run MINIX executables and you don't care
-  for a growing heap say N, otherwise say Y. 
+  for a growing heap say N, otherwise say Y.
   This will enlarge the kernel by around 210 bytes.
 
 # Networking support
@@ -666,7 +662,7 @@ CONFIG_INET_STATUS
   If you intent to use utilities like netstat say YES.
 
   If you don't, say NO it will save size from ktcp.
-  
+
 CSLIP TCP/IP header compression
 CONFIG_CSLIP
   Add support for compressed TCP/IP headers in SLIP.

@@ -5,7 +5,7 @@
  * provided that this copyright notice remains intact.
  *
  * UNIX Serial Port Mouse Driver
- * 
+ *
  * This driver opens a serial port directly, and interprets serial data.
  * Microsoft, PC, and Logitech mice are supported.
  *
@@ -112,14 +112,14 @@ MOU_Open(MOUSEDEVICE *pmd)
 	struct termios termios;
 
 	/* get mouse type and port*/
-	if( !(type = getenv("MOUSE_TYPE")))
+	if (!(type = getenv("MOUSE_TYPE")))
 		type = MOUSE_TYPE;
 
-	if( !(port = getenv("MOUSE_PORT")))
+	if (!(port = getenv("MOUSE_PORT")))
 		port = MOUSE_PORT;
 
 	/* set button bits and parse procedure*/
-	if(!strcmp(type, "pc") || !strcmp(type, "logi")) {
+	if (!strcmp(type, "pc") || !strcmp(type, "logi")) {
 		/* pc or logitech mouse*/
 		left = PC_LEFT_BUTTON;
 		middle = PC_MIDDLE_BUTTON;
@@ -163,7 +163,7 @@ MOU_Open(MOUSEDEVICE *pmd)
 	if (tcgetattr(mouse_fd, &termios) < 0)
 		goto err;
 
-	if(cfgetispeed(&termios) != B1200)
+	if (cfgetispeed(&termios) != B1200)
 		cfsetispeed(&termios, B1200);
 
 	termios.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG);
@@ -172,7 +172,7 @@ MOU_Open(MOUSEDEVICE *pmd)
 	termios.c_cflag |= CS8;
 	termios.c_cc[VMIN] = 0;
 	termios.c_cc[VTIME] = 0;
-	if(tcsetattr(mouse_fd, TCSAFLUSH, &termios) < 0)
+	if (tcsetattr(mouse_fd, TCSAFLUSH, &termios) < 0)
 		goto err;
 #endif
 
@@ -259,11 +259,11 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
 			*dy = yd;
 			*dz = 0;
 			b = 0;
-			if(buttons & left)
+			if (buttons & left)
 				b |= LBUTTON;
-			if(buttons & right)
+			if (buttons & right)
 				b |= RBUTTON;
-			if(buttons & middle)
+			if (buttons & middle)
 				b |= MBUTTON;
 			*bptr = b;
 			return 1;
@@ -374,10 +374,10 @@ main()
 	COORD 	x, y;
 	BUTTON	b;
 
-	if(MOU_Open(0) < 0)
+	if (MOU_Open(0) < 0)
 		printf("open failed\n");
-	while(1) {
-		if(MOU_Read(&x, &y, &b) == 1) {
+	while (1) {
+		if (MOU_Read(&x, &y, &b) == 1) {
 			printf("%d,%d,%d\n", x, y, b);
 		}
 	}

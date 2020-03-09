@@ -12,14 +12,14 @@
  * This file contains the 'standard' functions which are not supported
  * by Atari/Mark Williams, and some other TOS-only requirements.
  */
- 
+
 #include "config.h"
 #include "vi.h"
 
 #if TOS
 #include <osbind.h>
 
-/* vi uses mode==0 only ... */
+/* vi uses mode == 0 only ... */
 int access(file, mode)
 	char *file;
 {
@@ -37,7 +37,7 @@ char *mktemp(template)
 }
 
 /* read -- text mode, compress \r\n to \n
- * warning: might fail when maxlen==1 and at eol
+ * warning: might fail when maxlen == 1 and at eol
  */
 
 int tread(fd, buf, maxlen)
@@ -47,12 +47,12 @@ int tread(fd, buf, maxlen)
 {
 	int i, j, nread=read(fd, buf, (unsigned)maxlen);
 
-	if (nread && buf[nread-1]=='\r')
+	if (nread && buf[nread-1] == '\r')
 	{	nread--;
 		lseek(fd, -1l, 1);
 	}
 	for (i=j=0; j<nread; i++,j++)
-	{	if (buf[j]=='\r' && buf[j+1]=='\n')
+	{	if (buf[j] == '\r' && buf[j+1] == '\n')
 			j++;
 		buf[i]=buf[j];
 	}
@@ -69,14 +69,14 @@ int twrite(fd, buf, maxlen)
 
 	for (i=j=0; j<maxlen; )
 	{
-		if ((writbuf[i++]=buf[j++])=='\n')
+		if ((writbuf[i++]=buf[j++]) == '\n')
 		{	writbuf[i-1]='\r';
 			if (i<BLKSIZE)
 				writbuf[i++]='\n';
 			else
 				hadnl=1;
 		}
-		if (i==BLKSIZE)
+		if (i == BLKSIZE)
 		{
 			write(fd, writbuf, (unsigned)i);
 			i=0;

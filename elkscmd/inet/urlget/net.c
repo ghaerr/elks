@@ -52,7 +52,7 @@ const char *str;
                                 str++;
                 }
         }
-        return(htonl(l));   
+        return(htonl(l));
 }
 
 int net_connect(host, port)
@@ -62,9 +62,9 @@ int port;
 	int netfd;
 	struct sockaddr_in in_adr;
 	int ret;
-	
+
 	netfd = socket(AF_INET, SOCK_STREAM, 0);
-	
+
 	in_adr.sin_family = AF_INET;
 	in_adr.sin_port = 0; /* any port */
 	in_adr.sin_addr.s_addr = INADDR_ANY;
@@ -74,7 +74,7 @@ int port;
 		perror("Bind failed");
 		exit(1);
 	}
-	
+
 	in_adr.sin_family = AF_INET;
 	in_adr.sin_port = htons(port);
 	in_adr.sin_addr.s_addr = in_aton(host);

@@ -4,7 +4,7 @@
 
 #include <features.h>
 
-/* 
+/*
  * I know most systems use an array of ints here, but I prefer this   - RDB
  */
 

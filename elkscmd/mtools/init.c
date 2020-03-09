@@ -47,7 +47,7 @@ int mode;
     ntrack = strtol(dummy,0,0) ;
   if ( dummy = getenv("NSECT") )
     nsect = strtol(dummy,0,0) ;
-  
+
   fd = -1 ;
 
   for ( try = fd_devices ; try->drv_dev ; ++try )
@@ -77,7 +77,7 @@ int mode;
     (void) fprintf(stderr,"All known devices failed.\nSorry.\n") ;
     exit(1) ;
   }
-	
+
   dir_start = DIROFF(bb.sb) ;
   dir_len = DIRLEN(bb.sb);
   clus_size = CLSIZ(bb.sb);
@@ -88,7 +88,7 @@ int mode;
   if ( try->drv_ifunc )
     if ( (*(try->drv_ifunc))(fd,NCYL(bb.sb),NTRACK(bb.sb),NSECT(bb.sb)) )
       exit(1) ;
-  
+
   buflen = fat_len * MSECSIZ;
   fatbuf = (unsigned char *) malloc((unsigned int) buflen);
 
@@ -214,11 +214,11 @@ read_boot()
   static unsigned char ans;
 
   move(0) ;
-	
+
   if (read(fd, &bb, MSECSIZ) != MSECSIZ ) {
     return(1) ;
   }
-  
+
   /* Do not know how to deal with non 512 byte blocks! */
   if ( SECSIZ(bb.sb) != MSECSIZ ) {
     fprintf(stderr,"File system block size of %d bytes is not valid\n",

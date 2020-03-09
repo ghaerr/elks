@@ -86,7 +86,7 @@ FRAZ  alb; /* adreso de la elira bloko  */
                 EL_FNUM( omksf-nod_num[nod]-1, omksf );
             }
             lit_kom = l;
-        } else ;  /*  l-n_l==1  => ne trovighis kopiebleco */
+        } else ;  /*  l-n_l == 1  => ne trovighis kopiebleco */
     }
     /* fino de la bloko */
     if ( n_l > lit_kom ) el_lit( lit_kom );

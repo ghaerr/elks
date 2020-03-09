@@ -68,7 +68,7 @@ shtree(n, ind, pfx, fp)
 	char *s;
 
 	indent(ind, pfx, fp);
-	switch(n->type) {
+	switch (n->type) {
 	case NSEMI:
 		s = "; ";
 		goto binop;

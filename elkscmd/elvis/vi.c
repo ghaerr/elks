@@ -722,7 +722,7 @@ MARK adjmove(old, new, flags)
 #ifndef NO_CHARATTR
 			else if (*o_charattr && text[0] == '\\' && text[1] == 'f' && text[2])
 			{
-				text += 2; /* plus one more in "for()" stmt */
+				text += 2; /* plus one more in "for ()" stmt */
 			}
 #endif
 			else

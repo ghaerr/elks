@@ -247,7 +247,7 @@ struct inode {
 #endif
 #ifdef CONFIG_FS_FAT
 		struct msdos_inode_info msdos_i;
-#endif	
+#endif
 #ifdef CONFIG_ROMFS_FS
 		struct romfs_inode_info romfs;
 #endif

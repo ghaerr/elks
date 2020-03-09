@@ -82,7 +82,7 @@ bool visual;
 
     cp = curr;
     do {				/* Insert loop */
-	Dflag = (cp==0 || core[cp-1]==EOL);
+	Dflag = (cp == 0 || core[cp-1] == EOL);
 	do {
 	    if (Dflag)
 		while ((cmd=peekc()) == 0x14 || cmd == 0x04) {	/* handle ^T, ^D */

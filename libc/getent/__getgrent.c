@@ -1,7 +1,7 @@
 /*
  * __getgrent.c - This file is part of the libc-8086/grp package for ELKS,
  * Copyright (C) 1995, 1996 Nat Friedman <ndf@linux.mit.edu>.
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
  *  License as published by the Free Software Foundation; either
@@ -32,7 +32,7 @@
 struct group *
 __getgrent(int grp_fd)
 {
-#ifndef GR_SCALE_DYNAMIC  
+#ifndef GR_SCALE_DYNAMIC
   static char line_buff[GR_MAX_LINE_LEN];
   static char * members[GR_MAX_MEMBERS];
 #else
@@ -71,8 +71,8 @@ restart:
       lseek(grp_fd, (long) ((field_begin-line_buff)-line_len+1), SEEK_CUR);
       goto restart;
     }
-  if (*line_buff=='#' || *line_buff==' ' || *line_buff=='\n' ||
-      *line_buff=='\t')
+  if (*line_buff == '#' || *line_buff == ' ' || *line_buff == '\n' ||
+      *line_buff == '\t')
     goto restart;
   *field_begin='\0';
 
@@ -89,8 +89,8 @@ restart:
 	  lseek(grp_fd, (long) (1+field_begin-(line_len+line_index+line_buff)),
 		SEEK_CUR);
 	  *field_begin='\0';
-	  if (*line_buff=='#' || *line_buff==' ' || *line_buff=='\n' ||
-	      *line_buff=='\t')
+	  if (*line_buff == '#' || *line_buff == ' ' || *line_buff == '\n' ||
+	      *line_buff == '\t')
 	    goto restart;
 	  break;
 	}
@@ -106,17 +106,17 @@ restart:
   /* Now parse the line */
   group.gr_name=line_buff;
   ptr=strchr(line_buff, ':');
-  if (ptr==NULL) goto restart;
+  if (ptr == NULL) goto restart;
   *ptr++='\0';
 
   group.gr_passwd=ptr;
   ptr=strchr(ptr, ':');
-  if (ptr==NULL) goto restart;
+  if (ptr == NULL) goto restart;
   *ptr++='\0';
 
   field_begin=ptr;
   ptr=strchr(ptr, ':');
-  if (ptr==NULL) goto restart;
+  if (ptr == NULL) goto restart;
   *ptr++='\0';
 
   group.gr_gid=(gid_t) strtoul(field_begin, &endptr, 10);
@@ -134,7 +134,7 @@ restart:
       field_begin=ptr;
       member_num++;
     }
-  if (*field_begin=='\0')
+  if (*field_begin == '\0')
     members[member_num]=NULL;
   else
     {
@@ -154,7 +154,7 @@ restart:
       member_num++;
       members=(char **)realloc((void *)members, (member_num+1)*sizeof(char *));
     }
-  if (*field_begin=='\0')
+  if (*field_begin == '\0')
       members[member_num]=NULL;
   else
     {

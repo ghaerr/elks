@@ -44,7 +44,7 @@ and needs "ioctls" to be set to the right physical parameters.
 The disk geometry can be kept in the environment for unusual cases,
 init.c will pass "NCYL", "NSECT" and "NTRACK" to the disk parameter
 setting routine (if any).  This should be documented in an "mtools"
-manual page giving an overview of the whole package,  this file is a 
+manual page giving an overview of the whole package,  this file is a
 start.
 
 The manuals are very terse...  it's assumed that the reader is already

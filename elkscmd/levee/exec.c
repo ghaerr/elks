@@ -130,7 +130,7 @@ setcmd()
 		}
 		else {				/* set [no]opt */
 		    b = YES;
-		    if (arg[0]=='n' && arg[1]=='o') {
+		    if (arg[0] == 'n' && arg[1] == 'o') {
 			arg += 2;
 			no = NO;
 		    }
@@ -894,7 +894,7 @@ parse(inp)
     while (isspace(*inp))
 	++inp;
     execstr = inp;
-    if (j==0)
+    if (j == 0)
 	return EX_CR;
     for (k=0; excmds[k]; k++)
 	if (strncmp(cmd, excmds[k], j) == 0)
@@ -939,13 +939,13 @@ exec(cmd, mode, noquit)
 	    clrmsg();
 	    if (readonly && !affirm)
 		prints(fisro);
-	    else if (writefile() && what==EX_WQ)
+	    else if (writefile() && what == EX_WQ)
 		*noquit = NO;
 	    break;
 	case EX_PREV:
 	case EX_NEXT:				/* :next */
 	    clrmsg();
-	    nextfile(what==EX_PREV);
+	    nextfile(what == EX_PREV);
 	    break;
 	case EX_SUBS:				/* :substitute */
 	    cutandpaste();

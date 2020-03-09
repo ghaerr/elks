@@ -1,7 +1,7 @@
 /*
  * This file lifted in toto from 'Dlibs' on the atari ST  (RdeBath)
  *
- * 
+ *
  *    Dale Schumacher                         399 Beacon Ave.
  *    (alias: Dalnefre')                      St. Paul, MN  55104
  *    dal@syntel.UUCP                         United States of America
@@ -18,7 +18,7 @@
 char *_qbuf = 0;		/* pointer to storage for qsort() */
 
 #define	PIVOT			((i+j)>>1)
-#define moveitem(dst,src,size)	if(dst != src) memcpy(dst, src, size)
+#define moveitem(dst,src,size)	if (dst != src) memcpy(dst, src, size)
 
 static void
 _wqsort(base, lo, hi, cmp)

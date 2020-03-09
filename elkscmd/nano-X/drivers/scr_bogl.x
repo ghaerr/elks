@@ -4,7 +4,7 @@
  * Screen Driver using BOGL Library
  *
  * This driver now requires only the following BOGL entry points:
- * 	bogl_init, bogl_done, 
+ * 	bogl_init, bogl_done,
  * 	bogl_pixel, bogl_readpixel,
  * 	bogl_vline, bogl_hline
  *
@@ -83,16 +83,16 @@ PFONT fonts[NUMBER_FONTS] = {
 static int
 BOGL_open(SCREENDEVICE *psd)
 {
-	if(bogl_init() == 0)
+	if (bogl_init() == 0)
 		return -1;
 	psd->xres = bogl_xres;
 	psd->yres = bogl_yres;
 	psd->ncolors = bogl_ncols;
 
 	/* set pixel format*/
-	if(bogl_ncols > 256)
+	if (bogl_ncols > 256)
 		psd->pixtype = PF_TRUECOLOR24;
-	else if(bogl_ncols == 256 && bogl_truecolor)
+	else if (bogl_ncols == 256 && bogl_truecolor)
 		psd->pixtype = PF_TRUECOLOR332;
 	else
 		psd->pixtype = PF_PALETTE;
@@ -116,11 +116,11 @@ BOGL_getscreeninfo(PSCREENINFO psi)
 	psi->white = 15;
 	psi->fonts = NUMBER_FONTS;
 
-	if(scrdev.yres > 480) {
+	if (scrdev.yres > 480) {
 		/* SVGA 800x600*/
 		psi->xdpcm = 33;	/* assumes screen width of 24 cm*/
 		psi->ydpcm = 33;	/* assumes screen height of 18 cm*/
-	} else if(scrdev.yres > 350) {
+	} else if (scrdev.yres > 350) {
 		/* VGA 640x480*/
 		psi->xdpcm = 27;	/* assumes screen width of 24 cm*/
 		psi->ydpcm = 27;	/* assumes screen height of 18 cm*/
@@ -162,7 +162,7 @@ BOGL_drawhline(COORD x1, COORD x2, COORD y, PIXELVAL c)
 
 	/*
 	 * Uncomment the following if driver doesn't support hline
-	while(x1 <= x2)
+	while (x1 <= x2)
 		bogl_pixel(x1++, y, c);
 	 */
 }
@@ -177,7 +177,7 @@ BOGL_drawvline(COORD x, COORD y1, COORD y2, PIXELVAL c)
 
 	/*
 	 * Uncomment the following if driver doesn't support vline
-	while(y1 <= y2)
+	while (y1 <= y2)
 		bogl_pixel(x, y1++, c);
 	 */
 }
@@ -189,17 +189,17 @@ BOGL_fillrect(COORD x1, COORD y1, COORD x2, COORD y2, PIXELVAL c)
 	 * Call bogl hline (type 2) to save size
 	 */
 	++x2;		/* fix bogl last point not drawn*/
-	while(y1 <= y2)
+	while (y1 <= y2)
 		bogl_hline(x1, x2, y1++, c);
 	/*
 	 * Uncomment the following if driver doesn't support fillrect
-	while(y1 <= y2)
+	while (y1 <= y2)
 		BOGL_drawhline(x1, x2, y1++, c);
 	 */
 }
 
 #if 0000
-/* 
+/*
  * Generalized low level text draw routine, called only
  * if no clipping is required
  */
@@ -211,7 +211,7 @@ gen_drawtext(COORD x,COORD y,const UCHAR *s,int n,PIXELVAL fg,FONTID fontid)
 	PFONT		pf;
 	IMAGEBITS 	bitmap[MAX_CHAR_HEIGHT];/* bitmap for character */
 
-	if(fontid >= NUMBER_FONTS)
+	if (fontid >= NUMBER_FONTS)
 		return;
 	pf = fonts[fontid];
 
@@ -270,7 +270,7 @@ gen_getfontinfo(FONTID fontid,PFONTINFO pfontinfo)
 	PFONT	pf;
 	int	i;
 
-	if(fontid >= NUMBER_FONTS)
+	if (fontid >= NUMBER_FONTS)
 		return FALSE;
 	pf = fonts[fontid];
 
@@ -279,11 +279,11 @@ gen_getfontinfo(FONTID fontid,PFONTINFO pfontinfo)
 	pfontinfo->maxwidth = pf->maxwidth;
 	pfontinfo->baseline = 0;
 	pfontinfo->fixed = pf->width == NULL? TRUE: FALSE;
-	for(i=0; i<256; ++i) {
-		if(pf->width == NULL)
+	for (i=0; i<256; ++i) {
+		if (pf->width == NULL)
 			pfontinfo->widths[i] = pf->maxwidth;
 		else {
-			if(i<pf->firstchar || i >= pf->firstchar+pf->size)
+			if (i<pf->firstchar || i >= pf->firstchar+pf->size)
 				pfontinfo->widths[i] = 0;
 			else pfontinfo->widths[i] = pf->width[i-pf->firstchar];
 		}
@@ -303,19 +303,19 @@ gen_gettextsize(const UCHAR *str,int cc,COORD *retwd,COORD *retht,
 	int	c;
 	int	width;
 
-	if(fontid >= NUMBER_FONTS) {
+	if (fontid >= NUMBER_FONTS) {
 		*retht = 0;
 		*retwd = 0;
 		return;
 	}
 	pf = fonts[fontid];
 
-	if(pf->width == NULL)
+	if (pf->width == NULL)
 		width = cc * pf->maxwidth;
 	else {
 		width = 0;
-		while(--cc >= 0) {
-			if( (c = *str++) >= pf->firstchar &&
+		while (--cc >= 0) {
+			if ((c = *str++) >= pf->firstchar &&
 			     c < pf->firstchar+pf->size)
 				width += pf->width[c - pf->firstchar];
 		}
@@ -338,10 +338,10 @@ gen_gettextbits(UCHAR ch,IMAGEBITS *retmap,COORD *retwd, COORD *retht,
 	PFONT		pf = NULL;
 	IMAGEBITS *	bits;
 
-	if(fontid < NUMBER_FONTS)
+	if (fontid < NUMBER_FONTS)
 		pf = fonts[fontid];
 
-	if(!pf || ch < pf->firstchar || ch >= pf->firstchar+pf->size) {
+	if (!pf || ch < pf->firstchar || ch >= pf->firstchar+pf->size) {
 		*retht = 0;
 		*retwd = 0;
 		return;
@@ -350,7 +350,7 @@ gen_gettextbits(UCHAR ch,IMAGEBITS *retmap,COORD *retwd, COORD *retht,
 
 	/* get font bitmap depending on fixed pitch or not*/
 	bits = pf->bits + (pf->offset? pf->offset[ch]: (pf->height * ch));
-	for(n=0; n<pf->height; ++n)
+	for (n=0; n<pf->height; ++n)
 		*retmap++ = *bits++;
 
 	/* return width depending on fixed pitch or not*/

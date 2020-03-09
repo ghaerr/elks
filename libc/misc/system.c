@@ -10,18 +10,18 @@ char * command;
    __sighandler_t save_quit;
    __sighandler_t save_int;
 
-   if( command == 0 ) return 1;
+   if (command == 0) return 1;
 
    save_quit = signal(SIGQUIT, SIG_IGN);
    save_int  = signal(SIGINT,  SIG_IGN);
 
-   if( (pid=vfork()) < 0 )
+   if ((pid=vfork()) < 0 )
    {
       signal(SIGQUIT, save_quit);
       signal(SIGINT,  save_int);
       return -1;
    }
-   if( pid == 0 )
+   if (pid == 0 )
    {
       signal(SIGQUIT, SIG_DFL);
       signal(SIGINT,  SIG_DFL);
@@ -35,13 +35,13 @@ char * command;
 
    do
    {
-      if( (wait_ret = wait(&wait_val)) == -1 )
+      if ((wait_ret = wait(&wait_val)) == -1 )
       {
          wait_val = -1;
 	 break;
       }
    }
-   while( wait_ret != pid );
+   while (wait_ret != pid );
 
    signal(SIGQUIT, save_quit);
    signal(SIGINT,  save_int);

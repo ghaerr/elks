@@ -405,7 +405,7 @@ void afterdo()
 	if (significant)
 	{
 		setflag(file, MODIFIED);
-	}	
+	}
 }
 
 /* This function cuts short the current set of changes.  It is called after

@@ -27,6 +27,9 @@ CFLAGS = -std=c99 -O2 -Wall -pedantic -DLOCALE $(CURSES_INC)
 
 LDFLAGS = -s
 LDLIBS = $(shell pkg-config ncurses --libs)
+ifeq ($(LDLIBS), )
+	LDLIBS = -lncurses
+endif
 #LDLIBS = /usr/local/opt/ncurses/lib/libncurses.a
 
 #########################################################################

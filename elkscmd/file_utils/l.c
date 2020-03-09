@@ -197,7 +197,7 @@ int main(int argc, char **argv)
 		 */
 		qsort((char *) list, listused, sizeof(char *), namesort);
 
-		
+
 		/*
 		 * Now finally list the filenames.
 		 */

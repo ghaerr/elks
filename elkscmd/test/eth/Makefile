@@ -20,7 +20,7 @@ eth:	$(OBJS)
 install: eth
 	$(INSTALL) eth $(DESTDIR)/bin
 
-clean: 
+clean:
 	rm -f *.o eth
 
 dep:

@@ -42,7 +42,7 @@ int y,x;
 #if ANSI
     static char gt[30];
 #endif
-   
+
     if (y == -1)
 	y = curpos.y;
     else
@@ -110,7 +110,7 @@ int num;
 {
     char nb[10];
     register int size;
-    
+
     numtoa(nb,num);
     size = min(strlen(nb),COLS-curpos.x);
     if (size > 0) {
@@ -211,9 +211,9 @@ int y,x,start;
     register size;
     char buf[MAXCOLS+1];
     register bi = 0;
-    
+
     endd = fseekeol(start);
-    if (start==0 || core[start-1] == EOL)
+    if (start == 0 || core[start-1] == EOL)
 	mvcur(y, 0);
     else
 	mvcur(y, x);
@@ -244,7 +244,7 @@ int y,x,start,endd;
 bool rest;
 {
     int sp;
-    
+
 #if ST
     /* turn the cursor off */
     asm(" clr.l  -(sp)     ");
@@ -285,7 +285,7 @@ bool flag;
 	clrprompt();
     refresh(0, 0, ptop, pend, TRUE);
 }
-    
+
 PROC
 scrollback(curr)
 int curr;
@@ -318,7 +318,7 @@ ok_to_scroll(top,bottom)
 int top,bottom;
 {
     int nl, i;
-    
+
     nl = dofscroll;
     i = top;
     do

@@ -593,7 +593,7 @@ do_free(register mallink *ml)
 		off NON_STANDARD.
 	*/
 	}
-	switch(0)	{
+	switch (0)	{
 	case sizeof(void *) != sizeof(size_type):	break;
 	case 1:	break;
 	/*	If this statement does not compile due to duplicate

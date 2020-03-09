@@ -31,10 +31,10 @@ static struct wait_queue inode_wait;
 
 #ifdef DEBUG_FREE_INODES_COUNT
 static int nr_free_inodes = NR_INODE;
-#define DCR_COUNT(i) if(!(--i->i_count))nr_free_inodes++
-#define INR_COUNT(i) if(!(i->i_count++))nr_free_inodes--
-#define CLR_COUNT(i) if(i->i_count)nr_free_inodes++
-#define SET_COUNT(i) if(--nr_free_inodes < 0) { \
+#define DCR_COUNT(i) if (!(--i->i_count)) nr_free_inodes++
+#define INR_COUNT(i) if (!(i->i_count++)) nr_free_inodes--
+#define CLR_COUNT(i) if (i->i_count) nr_free_inodes++
+#define SET_COUNT(i) if (--nr_free_inodes < 0) { \
 	printk("VFS: get_empty_inode: bad free inode count.\n"); \
 	nr_free_inodes = 0; \
     }
@@ -323,7 +323,7 @@ struct inode *__iget(struct super_block *sb,
 
     debug3("iget called(%x, %lu, %d)\n", sb, (unsigned long)inr, 0 /* crossmntp */ );
     if (!sb)
-	panic("VFS: iget with sb==NULL");
+	panic("VFS: iget with sb == NULL");
 
     n_ino = NULL;
     goto start;

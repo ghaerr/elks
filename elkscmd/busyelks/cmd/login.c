@@ -1,4 +1,4 @@
-/* 
+/*
  * file:	 login.c
  * descripton:	 login into a user account
  * author:	 Alistair Riddoch <ajr@ecs.soton.ac.uk>
@@ -28,7 +28,7 @@
 
 /*#define USE_UTMP*/	/* Disabled until we fix the "utmp file currupt" */
 			/* issue. 17/4/2002 Harry Kalogirou */
-			
+
 #define PATHLEN 256
 #define STR_SIZE (PATHLEN + 7)
 
@@ -104,7 +104,7 @@ char ** argv;
 	char * tty_name;
 	char * p;
 
-	
+
 	for (;;) {
 		if (argc == 1) {
 			write(STDOUT_FILENO,"login: ",7);
@@ -112,14 +112,14 @@ char ** argv;
 				exit(1);
 			}
 			p=strchr(lbuf,'\n');
-			if(p) *p='\0';
+			if (p) *p='\0';
 		} else {
 			strncpy(lbuf, argv[1], UT_NAMESIZE);
 			lbuf[UT_NAMESIZE - 1] = '\0';
 			argc = 1;
 		}
 		pwd = getpwnam(lbuf);
-#ifdef USE_UTMP	
+#ifdef USE_UTMP
 		if ((tty_name = ttyname(0)) == NULL) {
 			goto not_tty;
 		}
@@ -154,6 +154,6 @@ not_tty:
 				login(pwd, entryp);
 			}
 		}
-		write(STDOUT_FILENO,"Login incorrect\n\n",17); 
+		write(STDOUT_FILENO,"Login incorrect\n\n",17);
 	}
 }

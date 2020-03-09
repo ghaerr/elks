@@ -9,7 +9,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#ifndef __linux__ 
+#ifndef __linux__
 #include <linuxmt/socket.h>
 #include <linuxmt/in.h>
 #include <linuxmt/arpa/inet.h>
@@ -38,7 +38,7 @@ int term_init()
 	char pty_name[12];
 	int n = 0;
 	int rc;
-	
+
 	struct termios slave_orig_term_settings; // Saved terminal settings
 	struct termios new_term_settings; // Current terminal settings
 
@@ -54,7 +54,7 @@ again:
 	}
 	signal(SIGCHLD, sigchild);
 	signal(SIGINT, sigchild);
-	
+
 	if ((pid = fork()) == -1) {
 		fprintf(stderr, "No processes\n");
 		return -1;
@@ -67,19 +67,19 @@ again:
 		//cfmakeraw (&new_term_settings);
 		//new_term_settings.c_lflag &= ~ECHO;
 		tcsetattr (tfs, TCSANOW, &new_term_settings);
-		
+
 		close(STDIN_FILENO);
 		close(STDOUT_FILENO);
 		close(STDERR_FILENO);
 		close(tfd);
-		
+
 		setsid();
 		pty_name[5] = 't'; /* results in: /dev/ttyp%d */
 		if ((tfs = open(pty_name, O_RDWR)) < 0) {
 			fprintf(stderr, "Child: Can't open pty %s\n", pty_name);
 			exit(1);
 		}
-	
+
 		dup2(tfs, STDIN_FILENO);
 		dup2(tfs, STDOUT_FILENO);
 		dup2(tfs, STDERR_FILENO);
@@ -175,8 +175,8 @@ int main(int argc, char *argv[]) {
   struct sockaddr_in addr_in;
   int sockfd,connectionfd,rc,afunix,lv;
   afunix=0;
-  
-#ifndef __linux__  
+
+#ifndef __linux__
   if (argv[1][0] == '-') {
 		cp = &argv[1][1];
 		if (strcmp(cp, "h") == 0) {
@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
 			exit (0);
 		} else {
 			usage();
-			exit (0);			
+			exit (0);
 		}
 		argc--;
 		argv++;
@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
 			usage();
 			exit (0);
 	}
-	  
+
 #endif
 
   lv=10;
@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
     perror("listen error");
     close(sockfd);
     exit(-1);
-  } 
+  }
 
 	while (1) {
 		connectionfd = accept (sockfd, (struct sockaddr *) NULL, NULL);

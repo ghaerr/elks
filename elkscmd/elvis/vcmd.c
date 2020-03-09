@@ -581,7 +581,7 @@ MARK v_again(m, n)
 
 
 /* This function switches to the previous file, if possible */
-MARK v_switch()
+MARK v_switch ()
 {
 	if (!*prevorig)
 		msg("No previous file");

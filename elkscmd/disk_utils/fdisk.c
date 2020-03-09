@@ -113,7 +113,7 @@ void add_part(void)
 	fflush(stdout);
 	fgets(buf, 8, stdin);
 	part = atoi(buf);
-	if (*buf=='\n')
+	if (*buf == '\n')
 	    return;
     }
 
@@ -185,7 +185,7 @@ void set_boot(void)
 	fflush(stdout);
 	fgets(buf, 8, stdin);
 	part = atoi(buf);
-	if (*buf=='\n')
+	if (*buf == '\n')
 	    return;
     }
 
@@ -226,7 +226,7 @@ void set_type()  /* FIXME - Should make this more flexible */
 	fflush(stdout);
 	fgets(buf,8,stdin);
 	part=atoi(buf);
-	if (*buf=='\n')
+	if (*buf == '\n')
 	    return;
     }
     a=(0x1ae)+(part*16)+4;
@@ -307,7 +307,7 @@ void list_partition(char *devname)
     int i;
 
     if (devname!=NULL) {
-	if ((pFd=open(devname,O_RDONLY))==-1) {
+	if ((pFd=open(devname,O_RDONLY)) == -1) {
 	    printf("Error opening %s (%d)\n",devname,-pFd);
 	    exit(1);
 	}
@@ -328,8 +328,8 @@ void list_partition(char *devname)
 		 (unsigned long) partition[12];
 	if (partition[5])
 	    printf("%s%d  %c     %2d    %3d    %5d     %2d    %3d    %5d    %2x    %10ld\n",
-		devname==NULL?dev:devname,1+((i-0x1be)/16),
-		partition[0]==0?' ':(partition[0]==0x80?'*':'?'),
+		devname == NULL?dev:devname,1+((i-0x1be)/16),
+		partition[0] == 0?' ':(partition[0] == 0x80?'*':'?'),
 		partition[1],				     /* Start head */
 		partition[2] & 0x3f,			     /* Start sector */
 		partition[3] | ((partition[2] & 0xc0) << 2), /* Start cylinder */
@@ -356,7 +356,7 @@ int main(int argc, char **argv)
 	    else strncpy(dev, argv[i], 256); /* FIXME - Should be some value from a header */
 	} else {
 	    if (*argv[i] == '-')
-		switch(*(argv[i] + 1)) {
+		switch (*(argv[i] + 1)) {
 		    case 'l':
 			mode = MODE_LIST;
 			break;
@@ -421,7 +421,7 @@ int main(int argc, char **argv)
 	    if (fgets(buf,CMDLEN-1,stdin)) {
 		printf("\n");
 		for (tmp=funcs; tmp->cmd; tmp++)
-		    if (*buf==tmp->cmd) {
+		    if (*buf == tmp->cmd) {
 			tmp->func();
 			break;
 		    }

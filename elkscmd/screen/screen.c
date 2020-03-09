@@ -883,7 +883,7 @@ static execvpe (prog, args, env) char *prog, **args, **env; {
 	errno = EACCES;
 }
 
-static WriteFile (dump) {   /* dump==0: create .termcap, dump==1: hardcopy */
+static WriteFile (dump) {   /* dump == 0: create .termcap, dump == 1: hardcopy */
     register i, j, k;
     register char *p;
     register FILE *f;

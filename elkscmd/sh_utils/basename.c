@@ -16,7 +16,7 @@ remove_suffix (name, suffix)
 	if (np > name)
 		*np = '\0';
 }
-                             
+
 
 char *
 basename (name)
@@ -27,7 +27,7 @@ basename (name)
 	base = rindex (name, '/');
 	return base ? base + 1 : name;
 }
-           
+
 
 
 void
@@ -40,7 +40,7 @@ char *path;
 	while (last > 0 && path[last] == '/')
 		path[last--] = '\0';
 }
-               
+
 
 void
 main (argc, argv)
@@ -48,7 +48,7 @@ main (argc, argv)
 	char **argv;
 {
 	char *line;
-	
+
 	if (argc == 2 || argc == 3) {
 		strip_trailing_slashes(argv[1]);
 		line = basename(argv[1]);

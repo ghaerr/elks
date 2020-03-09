@@ -84,7 +84,7 @@ static struct file_operations hello_fops = {
     NULL,                       /* ioctl */
     hello_open,                 /* open */
     hello_release               /* release */
-    
+
 #ifdef BLOAT_FS
         ,
     NULL,                       /* fsync */
@@ -188,17 +188,17 @@ extern void init_console(void);</PRE><P STYLE="margin-bottom: 0.5cm">
 #include&lt;stdlib.h&gt;
 #include&lt;errno.h&gt;
 #include&lt;fcntl.h&gt;
- 
-#define BUFFER_LENGTH 256               
-static char receive[BUFFER_LENGTH];     
- 
+
+#define BUFFER_LENGTH 256
+static char receive[BUFFER_LENGTH];
+
 int main(){
    int ret, fd;
    char stringToSend[BUFFER_LENGTH];
 
    printf(&quot;Starting device test code example...\n&quot;);
 
-   fd = open(&quot;/dev/hellodev&quot;, O_RDWR);  
+   fd = open(&quot;/dev/hellodev&quot;, O_RDWR);
 
    if (fd &lt; 0){
       perror(&quot;Failed to open the device...&quot;);
@@ -209,14 +209,14 @@ int main(){
    scanf(&quot;%s&quot;, stringToSend);                // Read in a string
    printf(&quot;Writing message to the device [%s].\n&quot;, stringToSend);
 
-   ret = write(fd, stringToSend, strlen(stringToSend)); 
+   ret = write(fd, stringToSend, strlen(stringToSend));
    if (ret &lt; 0){
       perror(&quot;Failed to write the message to the device.&quot;);
       return errno;
    }
- 
+
    printf(&quot;Now reading the string back from the device...\n&quot;);
-   ret = read(fd, &amp;receive[0], BUFFER_LENGTH);        
+   ret = read(fd, &amp;receive[0], BUFFER_LENGTH);
    if (ret &lt; 0){
       perror(&quot;Failed to read the message from the device.&quot;);
       return errno;

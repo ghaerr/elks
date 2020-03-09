@@ -261,7 +261,7 @@ ccl:
 			 * 19980218 Claudio Matsuoka <claudio@conectiva.com>
 			 * Workaround for bcc compilation problem
 			 */
-			
+
 #if 0
 			r = match_begin[*p];
 			len = match_length[*p++];

@@ -1,9 +1,9 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include "_execve.h"
 
-int
-execve(char *fname, char **argv, char **envp)
+int execve(char *fname, char **argv, char **envp)
 {
 	char **p;
 	int argv_len=0, argv_count=0;
@@ -14,13 +14,13 @@ execve(char *fname, char **argv, char **envp)
 	int rv;
 
 	/* How much space for argv */
-	for(p=argv; p && *p && argv_len >= 0; p++)
+	for (p=argv; p && *p && argv_len >= 0; p++)
 	{
 	   argv_count++; argv_len += strlen(*p)+1;
 	}
 
 	/* How much space for envp */
-	for(p=envp; p && *p && envp_len >= 0; p++)
+	for (p=envp; p && *p && envp_len >= 0; p++)
 	{
 	   envp_count++; envp_len += strlen(*p)+1;
 	}
@@ -33,14 +33,14 @@ execve(char *fname, char **argv, char **envp)
 		    + envp_len;
 
 	/* Allocate it */
-	if( argv_len < 0 || envp_len < 0 || stack_bytes <= 0
+	if (argv_len < 0 || envp_len < 0 || stack_bytes <= 0
 	 || (int)(stk_ptr = (char*)sbrk(stack_bytes)) == -1)
 	{
 	   errno = ENOMEM;
 	   return -1;
 	}
 
-/* Sanity check 
+/* Sanity check
 	printf("Argv = (%d,%d), Envp=(%d,%d), stack=%d\n",
 	        argv_count, argv_len, envp_count, envp_len, stack_bytes);
 */
@@ -52,7 +52,7 @@ execve(char *fname, char **argv, char **envp)
 	/* baseoff = stk_ptr + stack_bytes; */
 	baseoff = stk_ptr;
 	*pip++ = argv_count;
-	for(p=argv; p && *p; p++)
+	for (p=argv; p && *p; p++)
 	{
 	   int l;
 	   *pip++ = pcp-baseoff;
@@ -62,7 +62,7 @@ execve(char *fname, char **argv, char **envp)
 	}
 	*pip++ = 0;
 
-	for(p=envp; p && *p; p++)
+	for (p=envp; p && *p; p++)
 	{
 	   int l;
 	   *pip++ = pcp-baseoff;

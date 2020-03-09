@@ -32,7 +32,7 @@
 	a subset of  the visual commands.  They take as  input whole
 	lines,  terminated  by  return (to execute),  or  escape (to
 	abort.)
-	    
+
 	    Command mode is reached by typing ":" or "Q" from visual
 	mode.  If you enter command  mode by typing ":",  Levee will
 	execute  one  command,   then return  to  visual  mode after
@@ -47,20 +47,20 @@
 	you do not provide a line-range,  Levee will use the default
 	line-range shown by the command.  A line-range is one or two
 	address specifications in the following format:
-	
+
 		(.|$|'x|#) [ (+|-) (/patt/|?patt?|#) ]
 
 		    .  => current line.
 		    $  => last line.
 		    'x => the line with mark x on it.
 		    #  => line #.
-	    
+
 	    For example, ".-5,.+5p" will print every line within ten
 	lines of the current line.  "$-5" is the fifth line from the
 	end of the file,  and "/end/+2"  is the second line past the
 	next  occurrence  of  the  pattern "end".  Patterns  may  be
 	regular expressions (see below.)
-	    
+
 	    Also,  a naked line-range will  set the current  line to
 	the first line in the range  and print all the lines in that
 	range. "1,10" sets the current line to 1,  then prints lines
@@ -137,7 +137,7 @@
 ---------------
     execmode
 	Remain in command mode until you use the "visual" command.
-    
+
 ---------------
     file [name]
 	Echo what the current filename is, its status, and the current
@@ -267,7 +267,7 @@
 	    cols (co)		(ST version only) How many columns on the
 				display.  Like the lines variable, it's for
 				running levee through the serial port.
-	    
+
 	You may set multiple variables on one line, as in 'set ws noai'.
     To see the current settings of these variables, :set -- without any
     arguments -- will show the current settings.
@@ -311,7 +311,7 @@
 NOTE:	If you are running Levee on RMX or Osy/SWOs, it will read
     ":home:r?lvrc" or "*.lvrc" at startup. These can consist of any
     legal command mode instruction, just like any other source file.
-	    
+
 ---------------
     (.,.)substitute(delim)patt(delim)repl(delim)[qcpg]
     (.,.)substitute&
@@ -344,7 +344,7 @@ NOTE:	If you are running Levee on RMX or Osy/SWOs, it will read
 	    g    => do the change globally. That is, do it for every
 		    occurence  of patt on a  line,  rather than just
 		    once.
-	
+
     Levee.					A Screen Oriented Editor.
 ---------------
     undo
@@ -419,7 +419,7 @@ NOTE:	If you are running Levee on RMX or Osy/SWOs, it will read
 	Whitespace is tabs, spaces, and end of line.
 
     How the display works.
-	
+
 	    Characters  are  displayed  on  the  screen  as  you would
 	expect,  except that  nonprinting characters are  shown as ^x,
 	and tabs  expand to  spaces ( unless you  set the option list,
@@ -427,7 +427,7 @@ NOTE:	If you are running Levee on RMX or Osy/SWOs, it will read
 	tab, the cursor is placed on the FIRST character displayed. If
 	you move the cursor to  any other part of them ( via j or k --
 	see below), any changes will start at the next character.
-	
+
 	    Levee  does  not  display a end of  file marker, but lines
 	past the end of the file are denoted by ~ lines.
 
@@ -526,7 +526,7 @@ NOTE:	If you are running Levee on RMX or Osy/SWOs, it will read
 
     When changing, deleting, or yanking a object, it will be placed into
     a yank buffer, where it can be retrieved by the 'p' or 'P' commands.
-    
+
 ---------------
 	(#)d
     Delete an object. Like 'cc', 'dd' effects whole lines.
@@ -540,7 +540,7 @@ NOTE:	If you are running Levee on RMX or Osy/SWOs, it will read
     Find the next (count'th) occurance of a character on the current line.
     For example, if the cursor is sitting on the first character of the
     line 'abcdef', typing "ff" will put the cursor on the 'f'.
-    
+
 (*)------------
 	(#)h
     Move left one (count) characters. Exactly like ^H.
@@ -852,10 +852,10 @@ NOTE:	If you are running Levee on RMX or Osy/SWOs, it will read
     Levee.					A Screen Oriented Editor.
 
     COPYRIGHT
-  
+
    Copyright (c) 1982-1997 David L Parsons
    All rights reserved.
-  
+
    Redistribution and use in source and binary forms are permitted
    provided that the above copyright notice and this paragraph are
    duplicated in all such forms and that any documentation,
@@ -867,7 +867,7 @@ NOTE:	If you are running Levee on RMX or Osy/SWOs, it will read
    AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
    WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND
    FITNESS FOR A PARTICULAR PURPOSE.
- 
+
     Levee.					A Screen Oriented Editor.
 			    I N D E X
 	Are you kidding?

@@ -53,7 +53,7 @@ int main(int argc, char **argv)
   unsigned long header[HLONG];
 
   p = argv[1];
-  if (argc != 3) 
+  if (argc != 3)
 	fatalmsg("Usage: %s {=+-}<# bytes dynamic data> <executable>\n", argv[0]);
   if (*p != '=' && *p != '+' && *p != '-') usage();
   lsize = atol(p+1);

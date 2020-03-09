@@ -13,7 +13,7 @@
  *
  * This file is meant to compile under Linux, ELKS, and MSDOS
  * without changes.  Please try to keep it that way.
- * 
+ *
  */
 /*#define NDEBUG*/
 #include <assert.h>
@@ -52,7 +52,7 @@ ega_init(PSD psd)
 {
 #if LINUX
 	/* allow direct access to vga controller space*/
-	if(ioperm(0x3c0, 0x20, 1) == -1)
+	if (ioperm(0x3c0, 0x20, 1) == -1)
 		return 0;
 #endif
 
@@ -79,7 +79,7 @@ ega_drawpixel(PSD psd,unsigned int x, unsigned int y, PIXELVAL c)
 	assert (x >= 0 && x < psd->xres);
 	assert (y >= 0 && y < psd->yres);
 	assert (c >= 0 && c < psd->ncolors);
-  
+
 	DRAWON;
 	set_op(mode_table[gr_mode]);
 	set_color (c);
@@ -96,15 +96,15 @@ ega_readpixel(PSD psd,unsigned int x,unsigned int y)
 	FARADDR		src;
 	int		plane;
 	PIXELVAL	c = 0;
-	
+
 	assert (x >= 0 && x < psd->xres);
 	assert (y >= 0 && y < psd->yres);
-  
+
 	DRAWON;
 	src = SCREENBASE + x / 8 + y * BYTESPERLINE;
-	for(plane=0; plane<4; ++plane) {
+	for (plane=0; plane<4; ++plane) {
 		set_read_plane(plane);
-		if(GETBYTE_FP(src) & mask[x&7])
+		if (GETBYTE_FP(src) & mask[x&7])
 			c |= 1 << plane;
 	}
 	DRAWOFF;
@@ -133,7 +133,7 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 	* for some reason.  So, we use the equivalent slower drawpixel
 	* method when not drawing MODE_SET.
 	*/
-	if(gr_mode == MODE_SET) {
+	if (gr_mode == MODE_SET) {
 		dst = SCREENBASE + x1 / 8 + y * BYTESPERLINE;
 		select_mask ();
 		if (x1 / 8 == x2 / 8) {
@@ -155,7 +155,7 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 	} else {
 		/* slower method, draw pixel by pixel*/
 		select_mask ();
-		while(x1 < x2) {
+		while (x1 < x2) {
 			set_mask (mask[x1&7]);
 			RMW_FP (SCREENBASE + x1++ / 8 + y * BYTESPERLINE);
 		}
@@ -201,15 +201,15 @@ ega_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 	srcvga = srcpsd->flags & PSF_SCREEN;
 	dstvga = dstpsd->flags & PSF_SCREEN;
 
-	if(srcvga) {
-		if(dstvga)
+	if (srcvga) {
+		if (dstvga)
 			vga_to_vga_blit(dstpsd, dstx, dsty, w, h,
 				srcpsd, srcx, srcy, op);
 		else
 			vga_to_mempl4_blit(dstpsd, dstx, dsty, w, h,
 				srcpsd, srcx, srcy, op);
 	} else {
-		if(dstvga)
+		if (dstvga)
 			mempl4_to_vga_blit(dstpsd, dstx, dsty, w, h,
 				srcpsd, srcx, srcy, op);
 		else

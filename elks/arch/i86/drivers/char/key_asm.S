@@ -35,7 +35,7 @@ scan_col:
 	mov cx, #0x0020
 loop1:				;delay a little to let hardware settle
 	loop loop1
- 
+
 	in ax, 0x20		;read row data
 
 	mov cl, al		;get 'modifiers'
@@ -43,9 +43,9 @@ loop1:				;delay a little to let hardware settle
 	or cl, key_modifier
 	ror cl, 1
 	mov key_modifier, cl
-	
+
 	push bx
-	
+
 	and ax, #0x077F		;get 'key' (remove modifer bit)
 	jz scan_no_key
 
@@ -71,35 +71,35 @@ loop1:				;delay a little to let hardware settle
 
 	test ax, #0x0020	;bit 5
 	jne scan_match
-	inc bx			
+	inc bx
 
 	test ax, #0x0040	;bit 6
 	jne scan_match
-	inc bx			
+	inc bx
 
 	test ax, #0x0100	;bit 8
 	jne scan_match
-	inc bx			
+	inc bx
 
 	test ax, #0x0200	;bit 9
 	jne scan_match
-	inc bx			
+	inc bx
 				;must be bit 10
 ;	test ax, #0x0400	;bit 10
 ;	jne scan_match
-;	inc bx			
+;	inc bx
 
 scan_match:
 	mov al, [bx]		;look up character
 	mov key_value, al
-	
+
 scan_no_key:
 	mov ax, key_col
 
 	inc key_col		;increase columm counter
 	pop bx
 	add bx, #0x000A
-	
+
 	cmp ax, #0x0F		;have we done all of rows?
 	jne scan_col
 
@@ -134,7 +134,7 @@ scan_no_shift:
 ;--------------------------------------------------------------
 ;--------------------------------------------------------------
 	.data
-	
+
 
 key_col:
 	.word 0x0000

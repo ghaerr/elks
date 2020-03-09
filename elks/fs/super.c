@@ -339,7 +339,7 @@ int do_mount(kdev_t dev, char *dir, char *type, int flags, char *data)
 	error = 0;		/* we don't iput(dir_i) - see umount */
     }
   ERROUT:
-    return error;	
+    return error;
 }
 
 /*

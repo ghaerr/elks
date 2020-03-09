@@ -23,6 +23,9 @@
 !   This code is called after the BIOS-POST and replaces
 !   the BIOS OS/loader
 !
+! changes to support having setup + ELKS kernel as one single blob
+! March 2020 https://github.com/tkchia
+!
 ! The following data is passed to the main kernel (relative to INITSEG)
 !
 ! index
@@ -32,7 +35,7 @@
 !	6:	video mode, 1 byte
 !	7:	window width, 1 byte
 !	8:	video data, 2 bytes
-!	10:	mono/color, video memory size, 2 bytes 
+!	10:	mono/color, video memory size, 2 bytes
 !	12:	feature bits, switch settings, 2 bytes
 !	14:	window height, 1 byte
 !	15:	VGA present, 1 byte
@@ -83,7 +86,7 @@
 !	0x1f1:	SETUPSECS
 !	0x1f2:	ROOTFLAGS
 !	0x1f4:	SYSSIZE
-!	0x1f6:	unused (was SWAP_DEV)
+!	0x1f6:	ELKSFLAGS
 !	0x1f8:	RAMDISK
 !	0x1fa:	SVGA_MODE
 !	0x1fc:	ROOT_DEV
@@ -95,6 +98,7 @@
 
 #define __ASSEMBLY__
 #include <linuxmt/config.h>
+#include <linuxmt/boot.h>
 
 // Signature words to ensure LILO loaded us right
 #define SIG1	0xAA55
@@ -137,10 +141,10 @@ entry:
 	mov	$SETUPSEG,%ax      //;setup codesegment
 	mov	%ax,%ds
 	cmpw	$SIG1,setup_sig1
-	jne	bad_sig
+	jne	no_sig
 	cmpw	$SIG2,setup_sig2
-	jne	bad_sig
-	jmp	good_sig     //;why double jmp
+	jne	no_sig
+	jmp	move_kernel     //;why double jmp
 	nop
 
 
@@ -156,46 +160,63 @@ prtstr:	lodsb
 
 
 
-// We now have to find the rest of the setup code/data
-// in ROM the code is complete
+// If setup and kernel were loaded as a blob, we need to separate them out,
+// then move to our own stack
 
-bad_sig:
+move_kernel:
 #ifndef CONFIG_ROMCODE
-	mov	$INITSEG,%ax     //;code setup
+	mov	$INITSEG,%ax
 	mov	%ax,%ds
-	xor	%bh,%bh
-	mov	497,%bl		// get setup sects from boot sector (SETUPSECS)
-	sub	$4,%bx		// LILO loads 4 sectors of setup
-	mov	$8,%cl
-	shl	%cl,%bx		// convert to words
-	mov	%bx,%cx
-	push	%cx		// This may not be needed - Chad.
-	mov	$3,%cl
-	shr	%cl,%bx		// convert to segment
-	pop	%cx
-	add	$SYSSEG,%bx
-//	seg cs
-	mov	%bx,%cs:start_sys_seg
-
-// Move rest of setup code/data to here
-	mov	$2048,%di	// four sectors loaded by LILO
-	sub	%si,%si
-	mov	$SETUPSEG,%ax
-	mov	%ax,%es
-	mov	$SYSSEG,%ax
-	mov	%ax,%ds
+.if (EF_AS_BLOB & 0xff) == 0
+	testb	$(EF_AS_BLOB>>8),elks_flags+1
+.else
+	testw	$EF_AS_BLOB,elks_flags
+.endif
+	jz	good_sig
+	std			// move backwards --- we are moving from a
+				// lower address to a higher one
+	mov	setup_sects,%al	// find start of a.out kernel
+	xor	%ah,%ah
+	mov	$5,%cl
+	shl	%cl,%ax
+	add	$SETUPSEG,%ax
+	mov	syssize,%bp
+	mov	%bp,%cx		// first move the last sub-64KiB piece in place
+	and	$0x0fff,%cx
+	xor	%cx,%bp
+	mov	%ax,%dx
+	add	%bp,%dx
+	mov	%dx,%ds
+	lea	SYSSEG(%bp),%dx
+	mov	%dx,%es
+	jcxz	move_kernel_in_64ks
+	shl	%cx
+	shl	%cx
+	shl	%cx
+	mov	%cx,%si
+	dec	%si
+	shl	%si
+	mov	%si,%di
 	rep
 	movsw
-
-	mov	$SETUPSEG,%ax
+move_kernel_in_64ks:
+	mov	%es,%ax
+	cmp	$SYSSEG,%ax
+	jz	done_move_kernel
+	sub	$0x1000,%ax
+	mov	%ax,%es
+	mov	%ds,%ax
+	sub	$0x1000,%ax
 	mov	%ax,%ds
-	cmpw	$SIG1,setup_sig1
-	jne	no_sig
-	cmpw	$SIG2,setup_sig2
-	je	good_sig
-no_sig:
+	mov	$0x80,%ch
+	mov	$0xfffe,%si
+	mov	%si,%di
+	rep
+	movsw
+	jmp	move_kernel_in_64ks
 #endif
 
+no_sig:
 	lea	no_sig_mess,%si
 	call	prtstr
 no_sig_loop:			// And halt
@@ -203,6 +224,14 @@ no_sig_loop:			// And halt
 
 
 //;------------------------------------------------
+#ifndef CONFIG_ROMCODE
+done_move_kernel:
+	cld
+	mov	$INITSEG,%ax
+	mov	%ax,%ss
+	mov	$0x4000-12,%sp
+#endif
+
 good_sig:
 #ifdef CONFIG_ROMCODE
 	xor %ax,%ax
@@ -211,7 +240,7 @@ good_sig:
 	movw $start_os,4*0x19
 	mov %cs,4*0x19+2      //;set os/loader int
 
-	pop %ds 
+	pop %ds
 	lret                           //;back to BIOS
 #endif
 
@@ -228,9 +257,9 @@ start_os:
 
 #ifdef CONFIG_ROMCODE
 #ifdef CONFIG_ROMFS_FS
-	movw $0x0600,0x01FC  /* rom-flash */
+	movw $0x0600,root_dev  /* rom-flash */
 #else
-	movw $0x0380,0x01FC  /* bioshd */
+	movw $0x0380,root_dev  /* bioshd */
 #endif
 #endif
 
@@ -298,13 +327,13 @@ novga:	mov	%al,14		// CGA 25 rows
 
 //	mov	ax,#INITSEG     //ds was not changed sinse good_gig
 //	mov	ds,ax
-	movb	$0,0x1ff	// default is no pointing device
+	movb	$0,boot_flag+1	// default is no pointing device
 	nop
 #ifdef CONFIG_HW_PS2_MOUSE
 	int	$0x11		// int 0x11: equipment determination
 	test	$0x04,%al	// check if pointing device installed
 	jz	no_psmouse
-	movb	$0xaa,0x1ff	// device present
+	movb	$0xaa,boot_flag+1 // device present
 	nop
 no_psmouse:
 #endif
@@ -785,7 +814,7 @@ is8086:
 	mov	$0x21,%cl	// 80188/86 uses only the five lower
 	shr	%cl,%al		// bits of cl to determine the number
 	jnz	is80186		// of shifts.
-	sti             
+	sti
 	xor	%si,%si
 	mov	$0xffff,%cx
 	nop
@@ -810,7 +839,7 @@ is80186:call	queue
 is80188:mov	$4,%cl
 	lea	p80188,%si
 	jmp	cpu_store
-isv30:	
+isv30:
 	call	queue
 	jz	isv20
 	mov	$3,%cl
@@ -891,7 +920,7 @@ queue_start:
 	lea	q_end,%di
 #ifdef CONFIG_ROMCODE
         sub $queue_start,%di   //;we have new offset
-#endif	
+#endif
 	mov	$0xfb,%al
 	mov	$0x03,%cx
 	cli

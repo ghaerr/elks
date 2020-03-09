@@ -19,7 +19,7 @@ void
 el_bit( bit )
 int bit;
 {
-    printf( bit==NODKOP ? "NODKOP\n" : "FOLIKOP\n" );
+    printf( bit == NODKOP ? "NODKOP\n" : "FOLIKOP\n" );
 }
 
 /* eligi kodon de minimuma longeco */

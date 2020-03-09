@@ -9,7 +9,7 @@
  * cost is about 100 bytes of code in free but malloc (700bytes) doesn't
  * have to be linked. Unfortunatly memory can only be reused if everything
  * above it has been freed
- * 
+ *
  */
 
 extern void free __P((void *));

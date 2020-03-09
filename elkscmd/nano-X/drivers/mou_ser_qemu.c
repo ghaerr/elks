@@ -5,7 +5,7 @@
  * provided that this copyright notice remains intact.
  *
  * UNIX Serial Port Mouse Driver for Qemu serial line - Georg Potthast
- * 
+ *
  * This driver opens a serial port directly, and interprets serial data.
  * Microsoft mice are supported.
  *
@@ -18,22 +18,22 @@
  */
 
 /*
-The serial microsoft mouse driver of Qemu as it is working is absolutely not compatible 
+The serial microsoft mouse driver of Qemu as it is working is absolutely not compatible
 with a microsoft mouse and rather seems to be code taken from some touchpad. The code
 in Qemu looks ok though. This is how it currently works:
 
-Each byte has bit six (counting from zero) set which needs to be cleared first. A left 
+Each byte has bit six (counting from zero) set which needs to be cleared first. A left
 button click causes to bit 5 to be set and the right button causes bit 4 to be set. Bits
-zero to three contain the mouse movement. A zero means the mouse moved down, a 0X0F means 
+zero to three contain the mouse movement. A zero means the mouse moved down, a 0X0F means
 the mouse moved up, a 0x0C means the mouse moved right and 3 means the mouse moved left.
-I translated these movements into 5 points positive and negative as required. Plus using 
+I translated these movements into 5 points positive and negative as required. Plus using
 a high resolution.
- 
-When a button is clicked, the byte contains no movement data. When the mouse is moved with 
-the button down, the button bit remains set while the lower four bits contain the usual 
-movement data. When the button is released, a zero byte is send by the mouse. Since a zero 
-byte can also mean mouse down, this byte means a release when the button bit had been set 
-in the byte before it. In that case this byte contains no movement data and just indicates 
+
+When a button is clicked, the byte contains no movement data. When the mouse is moved with
+the button down, the button bit remains set while the lower four bits contain the usual
+movement data. When the button is released, a zero byte is send by the mouse. Since a zero
+byte can also mean mouse down, this byte means a release when the button bit had been set
+in the byte before it. In that case this byte contains no movement data and just indicates
 a button release.
 */
 
@@ -135,14 +135,14 @@ MOU_Open(MOUSEDEVICE *pmd)
 	struct termios termios;
 
 	/* get mouse type and port*/
-	if( !(type = getenv("MOUSE_TYPE")))
+	if (!(type = getenv("MOUSE_TYPE")))
 		type = MOUSE_TYPE;
 
-	if( !(port = getenv("MOUSE_PORT")))
+	if (!(port = getenv("MOUSE_PORT")))
 		port = MOUSE_PORT;
 
 	/* set button bits and parse procedure*/
-	if(!strcmp(type, "pc") || !strcmp(type, "logi")) {
+	if (!strcmp(type, "pc") || !strcmp(type, "logi")) {
 		/* pc or logitech mouse*/
 		left = PC_LEFT_BUTTON;
 		middle = PC_MIDDLE_BUTTON;
@@ -187,7 +187,7 @@ MOU_Open(MOUSEDEVICE *pmd)
 	if (tcgetattr(mouse_fd, &termios) < 0)
 		goto err;
 
-	if(cfgetispeed(&termios) != B1200)
+	if (cfgetispeed(&termios) != B1200)
 		cfsetispeed(&termios, B1200);
 
 	termios.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG);
@@ -196,7 +196,7 @@ MOU_Open(MOUSEDEVICE *pmd)
 	termios.c_cflag |= CS7;
 	termios.c_cc[VMIN] = 0;
 	termios.c_cc[VTIME] = 0;
-	if(tcsetattr(mouse_fd, TCSAFLUSH, &termios) < 0)
+	if (tcsetattr(mouse_fd, TCSAFLUSH, &termios) < 0)
 		goto err;
 #endif
 
@@ -258,7 +258,7 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
 	int b, byte;
 	int i;
 	static unsigned int buttonpressed;
-	
+
 	bp = buffer;
 	nbytes = read(mouse_fd, bp, 1);
 //printf("\nnbytes=%d,",nbytes);
@@ -281,17 +281,17 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
 //printf("button released\n");
 	  return 1;
 	}
-	  
+
 	byte &= 0xBF; //clear bit 6
 	b = 0;
-//printf("bytecleared:%X,",byte);	
-	if(byte & 0x20) {
+//printf("bytecleared:%X,",byte);
+	if (byte & 0x20) {
 	  b |= LBUTTON;
-	} else 	if(byte & 0x10) {
-	  b |= RBUTTON; 
-	} else {	  
+	} else 	if (byte & 0x10) {
+	  b |= RBUTTON;
+	} else {
 	  b = 0;
-	  buttonpressed = 0;	  
+	  buttonpressed = 0;
 	}
 	  if ((b>0) && (buttonpressed == 0)) {
 	    buttonpressed = 1; //first down
@@ -300,13 +300,13 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
 	  }
 
 	*bptr = b;
-//printf("b:%X, bpressed:%X, ",b,buttonpressed);	
+//printf("b:%X, bpressed:%X, ",b,buttonpressed);
 	byte &= 0xCF; //clear button bits
 //printf("bytecleared2:%X,",byte);
 	if ((byte == 0) && (buttonpressed == 1)){ //no movement data at first click
 	  *dx=xd;
 	  *dy=yd;
-//printf("x:%X,y:%X,b:%X-nm\n",xd,yd,b);	  
+//printf("x:%X,y:%X,b:%X-nm\n",xd,yd,b);
 	  return 1;
 	}
 
@@ -330,7 +330,7 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
 	}
 	*dx=xd;
 	*dy=yd;
-	if ((xd+yd+b)==0) return 0; //no valid data
+	if ((xd+yd+b) == 0) return 0; //no valid data
 //printf("x:%X,y:%X,b:%X\n",xd,yd,b);
 	return 1; //ok
 }
@@ -341,10 +341,10 @@ main()
 	COORD 	x, y;
 	BUTTON	b;
 
-	if(MOU_Open(0) < 0)
+	if (MOU_Open(0) < 0)
 		printf("open failed\n");
-	while(1) {
-		if(MOU_Read(&x, &y, &b) == 1) {
+	while (1) {
+		if (MOU_Read(&x, &y, &b) == 1) {
 			printf("%d,%d,%d\n", x, y, b);
 		}
 	}

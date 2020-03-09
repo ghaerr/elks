@@ -130,7 +130,7 @@ bpb_reserved1:				// Reserved
 	.byte 0
 bpb_bootsig:				// Extended boot signature
 	.byte 0x29
-bpb_vol_id:					// Volume serial number
+bpb_vol_id:				// Volume serial number
 	.long 0
 bpb_vol_label:				// Volume label (11 bytes)
 	.ascii "NO NAME    "
@@ -177,18 +177,33 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 	mov $4,%cl
 	shr %cl,%ax
 	add %bx,%ax
-	push %ax
 
-	// Load 1 sector first --- this has metadata on the sector counts for
-	// the setup code (to be at ELKS_INITSEG) and for the kernel (at
-	// ELKS_SYSSEG)
-	inc %dx				// Again assume DX was 0 (from mul)
-	mov $ELKS_INITSEG,%bx
-	mov %bx,%es
-	call _disk_read_at_bx_0
+	// Load the file as one single blob at ELKS_INITSEG:0
+	mov (0x1d-0xb)(%si),%dx		// File size divided by 0x100
+	shr %dx				// Now by 0x200 --- a sector count
+	inc %dx				// Account for any incomplete sector
+					// (this may overestimate a bit)
+	// (According to MFLD (https://github.com/jbruchon/elks/issues/288
+	// #issuecomment-581034966), BIOS reads may reportedly fail if %es
+	// for read calls is not aligned to a large power of 2; to be on the
+	// safe side, rewrite 0x100:0 into something like 0:0x1000...)
+	mov $ELKS_INITSEG,%cx
+	mov %cx,%es
+.if (ELKS_INITSEG & 0xff) == 0
+	mov $ELKS_INITSEG>>4,%ch
+.else
+	mov $ELKS_INITSEG<<4,%cx
+.endif
+.if (ELKS_INITSEG & 0xf000) == 0
+	xor %bx,%bx
+.else
+	mov $ELKS_INITSEG&0xf000,%bx
+.endif
+	push %bx
+	call disk_read
 
 	// Check for ELKS magic number
-	mov $0x1E6,%di
+	mov $elks_magic,%di
 	mov $0x4C45,%ax
 	scasw
 	jnz not_elks
@@ -201,31 +216,18 @@ not_elks:
 	jmp _except
 
 boot_it:
-	// Load the setup code
-	cwtd				// DX = 0
-	pop %ax
-	inc %ax
-	mov %ax,%si			// SI = starting sector of setup code
-	mov %es:(0x1F1-0x1E6-4)(%di),%dl
-	add %dx,%si			// Precompute starting sector of kernel
-	mov $ELKS_INITSEG+0x20,%bx
-	call _disk_read_at_bx_0
-
-	// Load the kernel
-	xchg %ax,%si			// AX = starting sector of kernel
-	mov %es:(0x1F4-0x1E6-4)(%di),%dx
-	add $31,%dx
-	mov $5,%cl
-	shr %cl,%dx
-	mov $ELKS_SYSSEG,%bx
-	call _disk_read_at_bx_0
-
 	// w00t!
+	mov drive_num,%al
+	xor %ah,%ah
 	push %es
 	pop %ds
-	push %es
-	pop %ss
-	mov $0x4000-12,%sp
+	// Signify that /linux was loaded as 1 blob
+.if ((EF_AS_BLOB|EF_BIOS_DEV_NUM) & 0xff) == 0
+	orb $(EF_AS_BLOB|EF_BIOS_DEV_NUM)>>8,elks_flags+1
+.else
+	orw $(EF_AS_BLOB|EF_BIOS_DEV_NUM),elks_flags
+.endif
+	mov %ax,root_dev
 	ljmp $ELKS_INITSEG+0x20,$0
 
 kernel_name:

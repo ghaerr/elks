@@ -414,7 +414,7 @@ getoctal(cp, len)
 	return val;
 }
 
-#define BUF_SIZE 1024 
+#define BUF_SIZE 1024
 
 typedef	struct	chunk	CHUNK;
 #define	CHUNKINITSIZE	4

@@ -97,8 +97,8 @@ GPM_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bp)
 	static int nbytes;
 	int n;
 
-	while((n = read(mouse_fd, &buf[nbytes], 5 - nbytes))) {
-		if(n < 0) {
+	while ((n = read(mouse_fd, &buf[nbytes], 5 - nbytes))) {
+		if (n < 0) {
 			if ((errno == EINTR) || (errno == EAGAIN))
 				return 0;
 			else return -1;
@@ -106,7 +106,7 @@ GPM_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bp)
 
 		nbytes += n;
 
-		if(nbytes == 5) {
+		if (nbytes == 5) {
 			/* button data matches defines, no conversion*/
 			*bp = (~buf[0]) & 0x07;
 			*dx = (signed char)(buf[1]) + (signed char)(buf[3]);

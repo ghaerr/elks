@@ -2,8 +2,8 @@ MicroWindows Installation Documentation
 October 12, 1999 g haerr <greg@censoft.com>
 
 MicroWindows compiles and runs on Linux, ELKS, MSDOS, and bare hardware.
-In addition, MicroWindows can be compiled to use different screen, 
-mouse and keyboard drivers for a given operating system environment. 
+In addition, MicroWindows can be compiled to use different screen,
+mouse and keyboard drivers for a given operating system environment.
 The options are detailed following each operating environment below.
 
 In addition, since MicroWindows was based on Nano-X and shares
@@ -23,7 +23,7 @@ will build a linked application/server, which is useful for debugging
 and speed.  The client/server networking code is currently extremely
 slow.  This is required to be set for ELKS.
 
-To build the NanoWidget library, set 
+To build the NanoWidget library, set
 	NWIDGET=1
 in the Makefile.  Note that ELKS bcc can't currently compile
 the widget set, due to it's use of the ## token pasting preprocessor
@@ -57,7 +57,7 @@ set one of the following lines in the Makefile:
 	BOGL=1
 
 Linux users can use either the GPM mouse driver, or a "bare"
-serial mouse driver that decodes the mouse directly from the 
+serial mouse driver that decodes the mouse directly from the
 serial port.  Set either line in the Makefile.
 	GPMMOUSE=1	or
 	SERMOUSE=1

@@ -89,10 +89,10 @@ static	int context_lines = 3;		/* numbers of lines in a context	 */
 static	int offset;		/* offset of the actual line number for -e */
 
  /* Function prototypes for the functions in this file	 */
-struct f;   
+struct f;
 _PROTOTYPE(int diff_main, (int argc, char **argv ));
 _PROTOTYPE(static void process_command_line, (int argc, char **argv ));
-_PROTOTYPE(static void analyse_input_files, (char *arg1, char *arg2, char *input1, 
+_PROTOTYPE(static void analyse_input_files, (char *arg1, char *arg2, char *input1,
 							char *input2 ));
 _PROTOTYPE(static void diff, (char *filename1, char *filename2 ));
 _PROTOTYPE(static FILE *check_file, (char *name ));
@@ -123,7 +123,7 @@ _PROTOTYPE(static char *getold, (int targ ));
 _PROTOTYPE(static char *getnew, (int targ ));
 _PROTOTYPE(static int isdir, (char *path ));
 _PROTOTYPE(static void diff_recursive, (char *dir1, char *dir2 ));
-_PROTOTYPE(static void file_type_error, (char *filename1, char *filename2, 
+_PROTOTYPE(static void file_type_error, (char *filename1, char *filename2,
 			struct stat *statbuf1, struct stat *statbuf2 ));
 _PROTOTYPE(static void *xmalloc, (size_t size));
 _PROTOTYPE(static void *xrealloc, (void *ptr, size_t size));
@@ -423,7 +423,7 @@ struct line {
 };
 
 struct line *freelist = 0;
-#define stepup(ll) ( ((ll) && ((ll)->l_eof==0)) ? (ll)->l_next : (ll) )
+#define stepup(ll) ( ((ll) && ((ll)->l_eof == 0)) ? (ll)->l_next : (ll) )
 
 /* Function to allocate space for a new line containing SIZE chars	*/
 static struct line *

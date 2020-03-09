@@ -1,12 +1,12 @@
 #
 # This stuff is taken from the xvi.c file.
 # (Archive maintainer)
-# 
+#
 
 /*
  *								xvi(H)
  *
- *	This program implements a screen oriented hexadecimal/octal editor 
+ *	This program implements a screen oriented hexadecimal/octal editor
  *	whose commands are a subset of those of "vi".
  *
  *
@@ -20,10 +20,10 @@
 
 
                           COMMAND SUMMARY
- 
+
 Cursor movement      Display control      File updating    String searching
 ---------------      ---------------      -------------    ----------------
- 
+
 TAB: change field    ctrl-f,f: next page  i: insert        /: search forw
 BS,h: left           ctrl-b,b: prec.page  a: local append  ?: search backw
 j,+: down            ctrl-u: scroll up    A: append to eof n: repeat search
@@ -51,7 +51,7 @@ ctrl-?: display this       :.=                     display current address
                            :set base=8/16          change numeric base
                            :set pagesz=n           set # of bytes per page
                            :set all                display current settings
- 
+
 Symbols between \"[\" and \"]\" mean options.
 <address> is a decimal number or, if preceded by \"0x\ a hex number
 or, if preceded by a \"0\" not followed by \"x\ an octal number.

@@ -15,7 +15,7 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/mm.h>
 
-unsigned char get_fs_byte(void *dv)
+unsigned char get_fs_byte(const void *dv)
 {
     unsigned char retv;
 
@@ -62,25 +62,60 @@ static int msdos_format_name(register const char *name,int len,char *res)
 }
 
 
-/* Locates a directory entry. */
-
+/* Locates a shortname directory entry. */
 static int msdos_find(struct inode *dir,const char *name,int len,
     struct buffer_head **bh,struct msdos_dir_entry **de,ino_t *ino)
 {
-	char msdos_name[MSDOS_NAME];
 	int res;
+	char msdos_name[MSDOS_NAME+1];
 
 	if ((res = msdos_format_name(name,len, msdos_name)) < 0) return res;
-	return msdos_scan(dir,msdos_name,bh,de,ino);
+	res = msdos_scan(dir,msdos_name,bh,de,ino);
+msdos_name[MSDOS_NAME] = 0;
+fsdebug("find '%11s', ino=%ld\n", msdos_name, (unsigned long)*ino);
+	return res;
 }
 
+static int compare(char *s1, char *s2, int len)
+{
+	while (len--)
+		if (*s1++ != *s2++)
+			return 0;
+	return 1;
+}
+
+/* Locate a long or shortname directory entry*/
+static int msdos_find_long(struct inode *dir, const char *name, int len,
+    struct buffer_head **bh, ino_t *ino)
+{
+	int i, entry_len, res;
+	off_t dirpos, pos = 0;
+	char entry_name[14];
+	char msdos_name[14];
+
+	for (i=0; i<len; i++)
+		msdos_name[i] = get_fs_byte(name++);
+
+	*bh = NULL;
+	do {
+		res = msdos_get_entry_long(dir, &pos, bh, entry_name, &entry_len, &dirpos, ino);
+		if (res) {
+			if ((len == entry_len) && compare(entry_name, msdos_name, len))
+				return 0;
+		}
+	} while (res != 0);
+	if (*bh)
+		unmap_brelse(*bh);
+	*bh = NULL;
+	return -ENOENT;
+
+}
 
 int msdos_lookup(register struct inode *dir,const char *name,int len,
     register struct inode **result)
 {
 	ino_t ino;
 	int res;
-	struct msdos_dir_entry *de;
 	struct buffer_head *bh;
 	*result = NULL;
 
@@ -99,12 +134,11 @@ int msdos_lookup(register struct inode *dir,const char *name,int len,
 		if (!(*result = iget(dir->i_sb,ino))) return -EACCES;
 		return 0;
 	}
-	if ((res = msdos_find(dir,name,len,&bh,&de,&ino)) < 0) {
+	if ((res = msdos_find_long(dir,name,len,&bh,&ino)) < 0) {
 		iput(dir);
 		return res;
 	}
 	if (bh) unmap_brelse(bh);
-//fsdebug("lookup: ino=%ld\n",(unsigned long)ino);
 	if (!(*result = iget(dir->i_sb,ino))) {
 		iput(dir);
 		return -EACCES;

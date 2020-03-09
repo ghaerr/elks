@@ -4,19 +4,19 @@ Status der Portierung ELKS im ROM
 Die meisten énderungen beziehen sich bisher auf:
   - den OS/loader (setup.S)
   - das Interruptinterface.
-  
+
 Im Ersteren habe ich eine Reihe von Konfigurationstest so auskommentiert,
 daﬂ das Ergebnis (falls bekannt) direkt angegeben werden kann. Gerade das
 Vorhalten der vielen Prozessorvarianten als ASCII-Zeichenkette verschwendet
-relativ viel Speicherplatz im ROM. 
+relativ viel Speicherplatz im ROM.
 
-Abweichend zur Diskettenversion mÅssen die Segmente anders initialisiert 
+Abweichend zur Diskettenversion mÅssen die Segmente anders initialisiert
 werden. In der Diskettenversion wird das kernel image im Block (CODE+DATA)
-in den Speicher geladen. Auch der Code befindet sich somit im RAM (und 
-zwar direkt unter dem DATA/BSS/STACK Segment. In der ROM Version wÑre es 
-Verschwendung, noch eine Kopie, des sich bereits im Adreﬂbereich des 
-Prozessors befindlichen Codes, im RAM anzufertigen. Daher bleibt CODE im 
-ROM, wÑhrend DATA (initialisierter Teil des Datensegmentes) aus dem ROM 
+in den Speicher geladen. Auch der Code befindet sich somit im RAM (und
+zwar direkt unter dem DATA/BSS/STACK Segment. In der ROM Version wÑre es
+Verschwendung, noch eine Kopie, des sich bereits im Adreﬂbereich des
+Prozessors befindlichen Codes, im RAM anzufertigen. Daher bleibt CODE im
+ROM, wÑhrend DATA (initialisierter Teil des Datensegmentes) aus dem ROM
 ins RAM kopiert wird.
 
 Ein groﬂes Problem stellten einige CS-Variablen (Variablen im Codesegment)
@@ -30,7 +30,7 @@ bisheriges Ergebnis:
 Der startup und die Initialisierung des kernels lÑuft durch. Der inittask wird
 gestartet. Beim laden von /bin/init kommt es dann jedoch zu HÑngern. Da mein
 derzeitiger Debugger noch nicht ganz Multitasking ist, konnte ich den genauen
-Grund noch nicht aufspÅren. Zur Zeit arbeite ich an der entsprechenden 
+Grund noch nicht aufspÅren. Zur Zeit arbeite ich an der entsprechenden
 Hardwareerweiterung meines ROM-Debuggers.
 
 Die gemachten énderungen *scheinen* auf die Diskettenversion keinen negativen
@@ -47,21 +47,21 @@ State of the port
 The most changes are made
   - in the OS/loader (setup.S)
   - the interrupt interface.
-  
+
 The OS/loader get rid of most configuration tests. The tests doesn∆t performs
-if the result is known. For example the strings for all 8086 processor 
+if the result is known. For example the strings for all 8086 processor
 models waste a lot of ROM space.
 
-In contrast to the disk version of ELKS the segments have to initialise 
+In contrast to the disk version of ELKS the segments have to initialise
 in an other way. In the disk version the kernel image (CODE+DATA) is
 copied to RAM. The CODE segment is in RAM space (directly below the
 DATA/BSS/STACK segment). In ROM version its nonsense to copy the CODE
-from ROM (also in address space of the CPU) in RAM. Therefore the CODE 
+from ROM (also in address space of the CPU) in RAM. Therefore the CODE
 segment stay in ROM while DATA (initialised part of data segment) is
 copied form ROM into RAM.
 
 A big problem are some CS variables (variables placed in the code segment).
-In software this was a simple way to find this values when the segment 
+In software this was a simple way to find this values when the segment
 registers (ES, DS, SS) for example after an interrupt are undefined. I∆ve
 placed this variables in a new absolute segment.
 
@@ -70,7 +70,7 @@ Present result:
 ---------------
 
 The start-up and the self initialising of the kernels runs. The init task is
-called. At boot time of /bin/init the system crashed. Because my debugger 
+called. At boot time of /bin/init the system crashed. Because my debugger
 have some problems with the multitasking, I can't find the motive. At time
 I work on a hardware extension for my ROM debugger.
 

@@ -195,7 +195,7 @@ GdReadMouse(COORD *px, COORD *py, BUTTON *pb)
 	}
 
 	/* depending on the kind of data that we have */
-	switch(status) {
+	switch (status) {
 	case 1:	/* relative position change reported, figure new position */
 		sign = 1;
 		if (x < 0) {
@@ -225,7 +225,7 @@ GdReadMouse(COORD *px, COORD *py, BUTTON *pb)
 	case 3:	/* only button data is available */
 		break;
 	}
- 
+
 	/* didn't anything change? */
 	if (!changed)
 		return 0;
@@ -249,7 +249,7 @@ GdMoveCursor(COORD newx, COORD newy)
 
 	shiftx = newx - curminx;
 	shifty = newy - curminy;
-	if(shiftx == 0 && shifty == 0)
+	if (shiftx == 0 && shifty == 0)
 		return;
 	curminx += shiftx;
 	curmaxx += shiftx;
@@ -305,7 +305,7 @@ GdShowCursor(void)
 	PIXELVAL 	newcolor;
 	MODE 		oldmode;
 
-	if(curvisible)
+	if (curvisible)
 		return TRUE;
 	oldmode = gr_mode;
 	gr_mode = MODE_SET;
@@ -323,7 +323,7 @@ GdShowCursor(void)
 		mbits = *maskptr++;
 		curbit = IMAGE_FIRSTBIT;
 		for (x = curminx; x <= curmaxx; x++) {
-			if(x >= 0 && x < scrdev.xres &&
+			if (x >= 0 && x < scrdev.xres &&
 			   y >= 0 && y < scrdev.yres) {
 				oldcolor = scrdev.ReadPixel(&scrdev, x, y);
 				if (curbit & mbits) {
@@ -353,7 +353,7 @@ GdHideCursor(void)
 	COORD 		x, y;
 	MODE 		oldmode;
 
-	if(!curvisible)
+	if (!curvisible)
 		return FALSE;
 	oldmode = gr_mode;
 	gr_mode = MODE_SET;
@@ -361,7 +361,7 @@ GdHideCursor(void)
 	saveptr = cursavbits;
 	for (y = cursavy; y <= cursavy2; y++) {
 		for (x = cursavx; x <= cursavx2; x++) {
-			if(x >= 0 && x < scrdev.xres && 
+			if (x >= 0 && x < scrdev.xres &&
 			   y >= 0 && y < scrdev.yres) {
 				scrdev.DrawPixel(&scrdev, x, y, *saveptr++);
 			}
@@ -382,7 +382,7 @@ GdCheckCursor(COORD x1,COORD y1,COORD x2,COORD y2)
 {
 	COORD temp;
 
-	if(curneedsrestore)
+	if (curneedsrestore)
 		return;
 
 	if (x1 > x2) {
