@@ -31,7 +31,7 @@ getpwnam(const char * name)
   int passwd_fd;
   struct passwd * passwd;
 
-  if (name==NULL)
+  if (name == NULL)
     {
       errno=EINVAL;
       return NULL;

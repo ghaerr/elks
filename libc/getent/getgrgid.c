@@ -33,7 +33,7 @@ getgrgid(const gid_t gid)
     return NULL;
 
   while ((group=__getgrent(grp_fd))!=NULL)
-    if (group->gr_gid==gid)
+    if (group->gr_gid == gid)
       {
 	close(grp_fd);
 	return group;

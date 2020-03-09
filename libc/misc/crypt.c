@@ -59,8 +59,8 @@ crypt(const char * key, const char * salt)
       /* This unpacks the 6 bit data, each cluster into its own byte */
       rkey[i]=(sum&0x3F);
       sum>>=6;
-      if (i==0+2) sum |= (v[1]<<26);
-      if (i==5+2) sum |= (v[1]>>4);
+      if (i == 0+2) sum |= (v[1]<<26);
+      if (i == 5+2) sum |= (v[1]>>4);
 
       /* Now we map to the proper chars */
       if (rkey[i]>=0 && rkey[i]<12) rkey[i]+=46;

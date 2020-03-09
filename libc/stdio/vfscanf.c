@@ -373,7 +373,7 @@ vfscanf(register FILE *fp, register char *fmt, va_list ap)
 	    {
 	       q = ((unsigned char *)
 		    strchr((char *)delim, c));
-	       if ((c < 1) || lval == (q==0))
+	       if ((c < 1) || lval == (q == 0))
 	       {
 		  if (endnull)
 		     *p = '\0';
@@ -391,7 +391,7 @@ vfscanf(register FILE *fp, register char *fmt, va_list ap)
 
 	       q = ((unsigned char *)
 		    strchr((char *)delim, c));
-	       if (lval == (q==0))
+	       if (lval == (q == 0))
 	          break;
 	    }
 

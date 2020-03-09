@@ -30,7 +30,7 @@ getgrnam(const char * name)
   int grp_fd;
   struct group * group;
 
-  if (name==NULL)
+  if (name == NULL)
     {
       errno=EINVAL;
       return NULL;

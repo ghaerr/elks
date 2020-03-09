@@ -61,8 +61,8 @@ restart:
       lseek(pwd_fd, (long) (field_begin-line_buff)-line_len+1, SEEK_CUR);
       goto restart;
     }
-  if (*line_buff=='#' || *line_buff==' ' || *line_buff=='\n' ||
-      *line_buff=='\t')
+  if (*line_buff == '#' || *line_buff == ' ' || *line_buff == '\n' ||
+      *line_buff == '\t')
       goto restart;
   *field_begin='\0';
 
@@ -83,7 +83,7 @@ restart:
       if (i<6)
 	{
 	  field_begin=strchr(field_begin, ':');
-	  if (field_begin==NULL) goto restart;
+	  if (field_begin == NULL) goto restart;
 	  *field_begin++='\0';
 	}
     }

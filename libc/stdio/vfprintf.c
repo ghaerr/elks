@@ -122,7 +122,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 	 radix = 10;		/* number base */
 	 ptmp = tmp;		/* pointer to area to print */
 	 hash = 0;
-	 lval = (sizeof(int)==sizeof(long));	/* long value flaged */
+	 lval = (sizeof(int) == sizeof(long));	/* long value flaged */
        fmtnxt:
 	 i = 0;
 	 for (;;)

@@ -33,7 +33,7 @@ getpwuid(uid_t uid)
     return NULL;
 
   while ((passwd=__getpwent(passwd_fd))!=NULL)
-    if (passwd->pw_uid==uid)
+    if (passwd->pw_uid == uid)
       {
 	close(passwd_fd);
 	return passwd;
