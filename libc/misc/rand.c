@@ -12,7 +12,7 @@ static unsigned int sseed = 0;
 
 int rand()
 {
-   return ( sseed = (((sseed+1L)*75L)%65537L)-1 ) & MAXINT;
+   return ( sseed = (((sseed+1L)*75L)%65537L)-1) & MAXINT;
 }
 
 void srand(seed)

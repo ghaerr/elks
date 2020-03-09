@@ -265,7 +265,7 @@ malloc(size_t size)
 	       ptr = __mini_malloc(alloc);
 	       if (ptr)
 	       {
-	          if (alloc > needed ) needed = 0; else needed -= alloc;
+	          if (alloc > needed) needed = 0; else needed -= alloc;
 	          __insert_chunk(ptr - 1);
 	       }
 	       else     alloc/=2;

@@ -37,8 +37,8 @@ got_it:
    register char ch;
    for (;;)
    {
-     if ((ch= *s) == c ) return (char *) s;
-     if (ch == 0 ) return 0;
+     if ((ch= *s) == c) return (char *) s;
+     if (ch == 0) return 0;
      s++;
    }
 #endif /* ifdef BCC_AX_ASM */

@@ -22,13 +22,13 @@ int err;
 
    if (__sys_nerr )
    {
-      if (err < 0 || err >= __sys_nerr ) goto unknown;
+      if (err < 0 || err >= __sys_nerr) goto unknown;
       return __sys_errlist[err];
    }
 
-   if (err <= 0 ) goto unknown;	/* NB the <= allows comments in the file */
+   if (err <= 0) goto unknown;	/* NB the <= allows comments in the file */
    fd = open("/lib/liberror.txt", 0);
-   if (fd < 0 ) goto unknown;
+   if (fd < 0) goto unknown;
 
    while ((cc=read(fd, inbuf, sizeof(inbuf))) > 0 )
    {
@@ -41,7 +41,7 @@ int err;
 	    if (err == atoi(retbuf) )
 	    {
 	       char * p = strchr(retbuf, ' ');
-	       if (p == 0 ) goto unknown;
+	       if (p == 0) goto unknown;
 	       while (*p == ' ') p++;
 	       close(fd);
 	       return p;
@@ -53,7 +53,7 @@ int err;
       }
    }
 unknown:;
-   if (fd >= 0 ) close(fd);
+   if (fd >= 0) close(fd);
    strcpy(retbuf, "Unknown error ");
    strcpy(retbuf+14, itoa(err));
    return retbuf;

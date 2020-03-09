@@ -20,11 +20,11 @@ int fd;
       if (fcntl(nfd, F_GETFD) < 0 )
          break;
    }
-   if (nfd == NR_OPEN ) { errno = EMFILE ; return -1; }
+   if (nfd == NR_OPEN) { errno = EMFILE ; return -1; }
    errno = oerr;
    if (fcntl(fd, F_DUPFD, nfd) < 0 )
    {
-      if (errno == EINVAL ) errno = EMFILE;
+      if (errno == EINVAL) errno = EMFILE;
       return -1;
    }
    return nfd;

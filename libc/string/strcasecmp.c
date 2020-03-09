@@ -18,7 +18,7 @@ char *d;
 	 if (tolower(*s) != tolower(*d) )
 	    return *s - *d;
       }
-      else if (*s == '\0' ) break;
+      else if (*s == '\0') break;
       s++; d++;
    }
    return 0;

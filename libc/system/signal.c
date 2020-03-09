@@ -33,14 +33,14 @@ Sig signal(int number, Sig pointer)
 {
    Sig old_sig;
    int rv;
-   if (number < 1 || number >= _NSIG ) { errno=EINVAL; return SIG_ERR; }
+   if (number < 1 || number >= _NSIG) { errno=EINVAL; return SIG_ERR; }
 
    if (pointer == SIG_DFL || pointer == SIG_IGN )
       rv = _signal(number, (__kern_sighandler_t) pointer);
    else
       rv = _signal(number, (__sighandler_t) _syscall_signal);
 
-   if (rv < 0 ) return SIG_ERR;
+   if (rv < 0) return SIG_ERR;
 
    old_sig = _sigtable[number-1];
    _sigtable[number-1] = pointer;

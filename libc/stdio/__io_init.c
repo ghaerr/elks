@@ -25,7 +25,7 @@ __io_init_vars(void)
 #ifndef __AS386_16__
 #ifndef __AS386_32__
    static int first_time = 1;
-   if (!first_time ) return ;
+   if (!first_time) return ;
    first_time = 0;
 #endif
 #endif

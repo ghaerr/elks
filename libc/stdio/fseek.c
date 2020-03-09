@@ -11,7 +11,7 @@ fseek(FILE *fp, long offset, int ref)
         ( ref == SEEK_SET || ref == SEEK_CUR ))
    {
       long fpos = lseek(fp->fd, 0L, SEEK_CUR);
-      if (fpos == -1 ) return EOF;
+      if (fpos == -1) return EOF;
 
       if (ref == SEEK_CUR )
       {

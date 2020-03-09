@@ -10,7 +10,7 @@ char * command;
    __sighandler_t save_quit;
    __sighandler_t save_int;
 
-   if (command == 0 ) return 1;
+   if (command == 0) return 1;
 
    save_quit = signal(SIGQUIT, SIG_IGN);
    save_int  = signal(SIGINT,  SIG_IGN);

@@ -98,7 +98,7 @@ __const char *src;
    int rv = unlink(src);
    if (rv < 0 && errno == EISDIR )
       rv = rmdir(src);
-   if (rv >= 0 ) errno = er;
+   if (rv >= 0) errno = er;
    return rv;
 }
 #endif

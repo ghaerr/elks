@@ -15,7 +15,7 @@ char * name;
    register char ** ep = environ;
    l = strlen(name);
 
-   if (ep == 0 || l == 0 ) return 0;
+   if (ep == 0 || l == 0) return 0;
 
    while (*ep)
    {

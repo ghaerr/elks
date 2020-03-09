@@ -103,8 +103,8 @@ tryrun(char *pname, char **argv)
 #endif
    struct stat st;
 
-   if (stat(pname, &st) < 0 ) return;
-   if (!S_ISREG(st.st_mode) ) return;
+   if (stat(pname, &st) < 0) return;
+   if (!S_ISREG(st.st_mode)) return;
 
 #ifdef __AS386_16__
    __execvve(pname, (void*)0, argv, environ);
@@ -136,8 +136,8 @@ execvp(char *fname, char **argv)
          if (*path == ':' || *path == '\0' )
 	 {
 	    tryrun(fname, argv);
-	    if (errno == EACCES ) besterr = EACCES;
-	    if (*path ) path++; else break;
+	    if (errno == EACCES) besterr = EACCES;
+	    if (*path) path++; else break;
 	 }
 	 else
 	 {
@@ -151,7 +151,7 @@ execvp(char *fname, char **argv)
 	    strcat(pname, fname);
 
 	    tryrun(pname, argv);
-	    if (errno == EACCES ) besterr = EACCES;
+	    if (errno == EACCES) besterr = EACCES;
 
 	    brk(pname);
 	    pname = fname;
@@ -163,6 +163,6 @@ execvp(char *fname, char **argv)
 
    tryrun(pname, argv);
    brk(bp);
-   if (errno == ENOENT || errno == 0 ) errno = besterr;
+   if (errno == ENOENT || errno == 0) errno = besterr;
    return -1;
 }

@@ -28,7 +28,7 @@ int size;
    path_buf = buf;
    path_size = size;
 
-   if (size < 3 ) { errno = ERANGE; return 0; }
+   if (size < 3) { errno = ERANGE; return 0; }
    strcpy(path_buf, ".");
 
    if (stat("/", &st) < 0 )
@@ -61,9 +61,9 @@ recurser()
       strcpy(path_buf, "/");
       return path_buf;
    }
-   if (strlen(path_buf) + 4 > path_size ) { errno = ERANGE; return 0; }
+   if (strlen(path_buf) + 4 > path_size) { errno = ERANGE; return 0; }
    strcat(path_buf, "/..");
-   if (recurser() == 0 ) return 0;
+   if (recurser() == 0) return 0;
 
    return search_dir(this_dev, this_ino);
 }
@@ -80,14 +80,14 @@ ino_t this_ino;
    /* The test is for ELKS lib 0.0.9, this should be fixed in the real kernel*/
    int slow_search = (sizeof(ino_t) != sizeof(d->d_ino));
 
-   if (stat(path_buf, &st) < 0 ) return 0;
-   if (this_dev != st.st_dev ) slow_search = 1;
+   if (stat(path_buf, &st) < 0) return 0;
+   if (this_dev != st.st_dev) slow_search = 1;
 
    slen = strlen(path_buf);
    ptr = path_buf + slen -1;
    if (*ptr != '/' )
    {
-      if (slen + 2 > path_size ) { errno = ERANGE; return 0; }
+      if (slen + 2 > path_size) { errno = ERANGE; return 0; }
       strcpy(++ptr, "/");
       slen++;
    }

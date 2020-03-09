@@ -109,7 +109,7 @@ __fopen(char * fname, int fd, FILE * fp, char * mode)
       {
 	 fp->mode |= _IOLBF;
 #if __MODE_IOTRAN && !O_BINARY
-	 if (do_iosense ) fopen_mode |= __MODE_IOTRAN;
+	 if (do_iosense) fopen_mode |= __MODE_IOTRAN;
 #endif
       }
       else

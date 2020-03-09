@@ -20,7 +20,7 @@ size_t l;
 	    return *s - *d;
       }
       else
-	 if (*s == '\0' ) return 0;
+	 if (*s == '\0') return 0;
       s++; d++; l--;
    }
    return 0;
