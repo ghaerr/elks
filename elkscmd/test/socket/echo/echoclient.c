@@ -88,7 +88,7 @@ addr_in.sin_family = AF_INET;
 addr_in.sin_port = 0; /* any port */
 addr_in.sin_addr.s_addr = INADDR_ANY;
 
-if (bind(fd, (struct sockaddr *)&addr_in, sizeof(struct sockaddr_in))==-1) {
+if (bind(fd, (struct sockaddr *)&addr_in, sizeof(struct sockaddr_in)) == -1) {
         	perror("Bind failed");
 		exit(1);
 }
@@ -127,12 +127,12 @@ if (bind(fd, (struct sockaddr *)&addr_in, sizeof(struct sockaddr_in))==-1) {
     exit(-1);
   }
 #endif
-} /* afunix==0) */
+} /* afunix == 0) */
 
   write(STDOUT_FILENO, "\nType any string and press enter to send it to the server.\n",59);
   write(STDOUT_FILENO, "ESC and enter to quit.\n",23);
   while ((rc=read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
-    if (buf[0]==27) exit (0);
+    if (buf[0] == 27) exit (0);
     if (write(fd, buf, rc) != rc) {
       if (rc > 0) fprintf(stderr,"partial write");
       else {

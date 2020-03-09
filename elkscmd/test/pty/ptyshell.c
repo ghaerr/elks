@@ -49,7 +49,7 @@ int main(int argc, char ** argv)
                   if (rc > 0)
                   {
                     input[rc] = '\0'; // make NUL terminated
-                    if (strcmp(input,"exitshell\n")==0) {
+                    if (strcmp(input,"exitshell\n") == 0) {
 		       fprintf(stderr, "Terminating processes and ptyshell\n");
 		       kill(pid, SIGKILL);
 		       return 0;

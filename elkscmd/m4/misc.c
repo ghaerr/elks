@@ -222,7 +222,7 @@ char *optstring;
 
 		if (optind >= argc || argv[optind][0] != '-' || argv[optind][1] == '\0')
 			return(EOF);
-		if (strcmp(argv[optind], "--")==0) {
+		if (strcmp(argv[optind], "--") == 0) {
 			optind++;
 			return(EOF);
 		}

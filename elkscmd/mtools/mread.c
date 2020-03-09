@@ -236,7 +236,7 @@ long mod_date;
 		 */
 		for (curfat=fat;
 		    ++curfat < fat + maxcontig &&
-		    getfat(curfat-1)==curfat;) ;
+		    getfat(curfat-1) == curfat;) ;
 
 		getclusters(fat, curfat, fp);
 					/* get next cluster number */

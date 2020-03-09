@@ -213,7 +213,7 @@ int y,x,start;
     register bi = 0;
 
     endd = fseekeol(start);
-    if (start==0 || core[start-1] == EOL)
+    if (start == 0 || core[start-1] == EOL)
 	mvcur(y, 0);
     else
 	mvcur(y, x);

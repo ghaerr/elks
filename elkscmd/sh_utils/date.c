@@ -119,7 +119,7 @@ int argc;
 	time_t systime;
 	time(&systime);
 
-	if (argc==1)
+	if (argc == 1)
 	{
 		fputs(ctime(&systime), stdout);
 	}

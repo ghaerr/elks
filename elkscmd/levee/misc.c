@@ -199,7 +199,7 @@ register unsigned char c;
 	return 2;
     if (c == '' || c < ' ')
 	return 1;
-#if MSDOS==0
+#if MSDOS == 0
     if (c & 0x80)
 	return 3;
 #endif
@@ -380,7 +380,7 @@ int start, endd;
 	    tabptr = 0;
 	    mvcur(-1,ixp=col0);
 	}
-	else if (c==erasechar) {
+	else if (c == erasechar) {
 	    if (ip>start)
 		back_up(s[--ip]);
 	    else {
@@ -388,9 +388,9 @@ int start, endd;
 		return(0);
 	    }
 	}
-	else if (c=='\n' || c=='\r' || c==ESC) {
+	else if (c == '\n' || c == '\r' || c == ESC) {
 	    *size = (ip-start);
-            return (c==ESC) ? ESC : EOL;
+            return (c == ESC) ? ESC : EOL;
 	}
 	else if ((!beautify) || c == TAB || c == 0x16		/* ^V */
 			     || (c >= ' ' && c <= '~')) {

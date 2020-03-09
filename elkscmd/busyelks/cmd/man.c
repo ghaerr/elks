@@ -676,11 +676,11 @@ int cmd_id;
    int ch;
 
    line_break();
-   while ((ch=fgetc(ifd)) != EOF && (ch==' ' || ch=='\t') )
+   while ((ch=fgetc(ifd)) != EOF && (ch == ' ' || ch == '\t') )
       ;
    ungetc(ch, ifd);
 
-   switch (cmd_id + 10*(ch=='\n'))
+   switch (cmd_id + 10*(ch == '\n'))
    {
    case 1:	/* Title and headers */
       page_break();

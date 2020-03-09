@@ -91,7 +91,7 @@ if ( afunix == 0 ) { /* Internet */
     exit(-1);
   } else {write(STDOUT_FILENO, "Echoserver:bind successful\n",27);}
 #endif
-} /* afunix==0) */
+} /* afunix == 0) */
 
   if (listen(fd, lv) == -1) {
     perror("listen error");

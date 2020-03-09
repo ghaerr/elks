@@ -97,9 +97,9 @@ expand(name)
 		;
 
 	while (--filespec>=buf)
-	{	if (*filespec=='?' || *filespec=='*')
+	{	if (*filespec == '?' || *filespec == '*')
 			wildcard=1;
-		if (*filespec=='/' || *filespec=='\\' || *filespec==':')
+		if (*filespec == '/' || *filespec == '\\' || *filespec == ':')
 			break;
 	}
 	if (!wildcard)

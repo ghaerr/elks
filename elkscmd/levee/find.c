@@ -455,8 +455,8 @@ findparse(src,idx,start) /* driver for ?, /, && : lineranges */
 	    if (count == 0)		/* +0 goes to beginning of line */
 		addr = bseekeol(addr);
 	    else {
-		addr = nextline((c=='+'), addr, count);
-		if (c=='-' && addr > 0)
+		addr = nextline((c == '+'), addr, count);
+		if (c == '-' && addr > 0)
 		    addr = bseekeol(addr);
 	    }
 	    if (addr >= bufmax)

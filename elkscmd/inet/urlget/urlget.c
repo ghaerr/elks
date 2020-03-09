@@ -374,8 +374,8 @@ char typec[2];
    ftppport=0; //to check if retrieved below
    s = ftpcmd(fpw, fpr, "PASV", "");
    //printf("ftpget: s=%d,port=%u\n",s,ftppport);
-   //ftpreply() continues after s==227 found!
-   if (ftppport==0) goto error; //if (s != 227) goto error;
+   //ftpreply() continues after s == 227 found!
+   if (ftppport == 0) goto error; //if (s != 227) goto error;
    fd2 = net_connect(ftpphost, ftppport);
    if (fd2 < 0) goto error;
    s = ftpcmd(fpw, fpr, type == 'd' ? "NLST" : "RETR", unesc(p));

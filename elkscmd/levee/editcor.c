@@ -300,7 +300,7 @@ cmdtype cmd;
 		break;
 	    case OPEN_C:
 	    case OPENUP_C:
-		newend = insertion(1,setstep[ (cmd==OPENUP_C)&1 ],
+		newend = insertion(1,setstep[ (cmd == OPENUP_C)&1 ],
 						&disp,&endY,TRUE)-1;
 		ok = (newend >= 0);
 		break;
@@ -311,11 +311,11 @@ cmdtype cmd;
 			goto killredo;
 		}
 		if (findCP(curr, &endp, GO_RIGHT) == LEGALMOVE)
-		    squiggle(endp-1, cmdch, (cmd==REPLACE_C));
+		    squiggle(endp-1, cmdch, (cmd == REPLACE_C));
 		break;
 	    case PUT_BEFORE:
 	    case PUT_AFTER:
-		ok = put(cmd==PUT_AFTER);
+		ok = put(cmd == PUT_AFTER);
 		break;
 	    case BIG_REPL_C:
 		bigreplace();
@@ -525,7 +525,7 @@ editcore()
 
 	  case WINDOW_UP:
 	  case WINDOW_DOWN:
-	    scroll(cmd==WINDOW_UP);		/* scroll the window */
+	    scroll(cmd == WINDOW_UP);		/* scroll the window */
 	    break;
 
 	  case REDRAW_C:			/* redraw the window */

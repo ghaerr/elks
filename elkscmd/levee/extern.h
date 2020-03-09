@@ -190,7 +190,7 @@ cmdtype movemap[];
 #endif /*SYS5*/
 		/* non int functions to be found elsewhere */
 
-#if MSDOS==0
+#if MSDOS == 0
 extern findstates findCP();
 extern exec_type editcore();
 extern char line(), peekc(), readchar();

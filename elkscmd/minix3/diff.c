@@ -409,7 +409,7 @@ struct line {
 };
 
 struct line *freelist = 0;
-#define stepup(ll) ( ((ll) && ((ll)->l_eof==0)) ? (ll)->l_next : (ll) )
+#define stepup(ll) ( ((ll) && ((ll)->l_eof == 0)) ? (ll)->l_next : (ll) )
 
 /* Function to allocate space for a new line containing SIZE chars	*/
 struct line *new_line(size)

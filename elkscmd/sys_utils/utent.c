@@ -52,9 +52,9 @@ endutent(void)
 struct utmp *
 getutent(void)
 {
-  if (ut_fd==-1)
+  if (ut_fd == -1)
     setutent();
-  if (ut_fd==-1)
+  if (ut_fd == -1)
     return NULL;
   return __getutent(ut_fd);
 }
@@ -64,23 +64,23 @@ getutid(struct utmp * utmp_entry)
 {
   struct utmp * utmp;
 
-  if (ut_fd==-1)
+  if (ut_fd == -1)
     setutent();
-  if (ut_fd==-1)
+  if (ut_fd == -1)
     return NULL;
 
   while ((utmp=__getutent(ut_fd))!=NULL)
     {
-      if ((utmp_entry->ut_type==RUN_LVL   ||
-	   utmp_entry->ut_type==BOOT_TIME ||
-	   utmp_entry->ut_type==NEW_TIME  ||
-	   utmp_entry->ut_type==OLD_TIME) &&
-	  utmp->ut_type==utmp_entry->ut_type)
+      if ((utmp_entry->ut_type == RUN_LVL   ||
+	   utmp_entry->ut_type == BOOT_TIME ||
+	   utmp_entry->ut_type == NEW_TIME  ||
+	   utmp_entry->ut_type == OLD_TIME) &&
+	  utmp->ut_type == utmp_entry->ut_type)
 	return utmp;
-      if ((utmp_entry->ut_type==INIT_PROCESS ||
-	   utmp_entry->ut_type==DEAD_PROCESS ||
-	   utmp_entry->ut_type==LOGIN_PROCESS ||
-	   utmp_entry->ut_type==USER_PROCESS) &&
+      if ((utmp_entry->ut_type == INIT_PROCESS ||
+	   utmp_entry->ut_type == DEAD_PROCESS ||
+	   utmp_entry->ut_type == LOGIN_PROCESS ||
+	   utmp_entry->ut_type == USER_PROCESS) &&
 	  !strncmp(utmp->ut_id, utmp_entry->ut_id, 2))
 	return utmp;
     }
@@ -93,9 +93,9 @@ getutline(struct utmp * utmp_entry)
 {
   struct utmp * utmp;
 
-  if (ut_fd==-1)
+  if (ut_fd == -1)
     setutent();
-  if (ut_fd==-1)
+  if (ut_fd == -1)
     return NULL;
 
 #if 0 /* This is driving me nuts.  It's not an implementation problem -
@@ -105,8 +105,8 @@ getutline(struct utmp * utmp_entry)
 
   while ((utmp=__getutent(ut_fd))!=NULL)
     {
-      if ((utmp->ut_type==USER_PROCESS  ||
-	   utmp->ut_type==LOGIN_PROCESS) &&
+      if ((utmp->ut_type == USER_PROCESS  ||
+	   utmp->ut_type == LOGIN_PROCESS) &&
 	  !strcmp(utmp->ut_line, utmp_entry->ut_line))
 	return utmp;
     }
@@ -119,9 +119,9 @@ pututline(struct utmp * utmp_entry)
 {
   struct utmp * ut;
 
-  if (ut_fd==-1)
+  if (ut_fd == -1)
     setutent();
-  if (ut_fd==-1)
+  if (ut_fd == -1)
     return NULL;
 
   /* Ignore the return value.  That way, if they've already positioned

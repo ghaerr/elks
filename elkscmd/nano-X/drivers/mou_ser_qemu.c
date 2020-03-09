@@ -330,7 +330,7 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
 	}
 	*dx=xd;
 	*dy=yd;
-	if ((xd+yd+b)==0) return 0; //no valid data
+	if ((xd+yd+b) == 0) return 0; //no valid data
 //printf("x:%X,y:%X,b:%X\n",xd,yd,b);
 	return 1; //ok
 }
