@@ -92,7 +92,7 @@ von ELKS?</A>
 <LI><A HRef="#1.4">F1.4. Laeuft ELKS auf einem Intel 8088 Prozessor?</A>
 
 </UL>
-	
+
 <H2><A HRef="#2">Abschnitt 2 - Uebersetzen und Installieren</A></H2>
 
 <UL>
@@ -116,7 +116,7 @@ Diskettenlaufwerk besitze?</A>
 Boot-Image?</A>
 
 </UL>
-	
+
 <H2><A HRef="#3">Abschnitt 3 - Benuetzung von ELKS</A></H2>
 
 <UL>
@@ -433,7 +433,7 @@ Sie nichts aendern muessen falls Sie nicht ueber 640K RAM verfuegen.</P>
 
 <A Name="2.7"><H3>F2.7. Wie aendere ich das root Device eines
 Boot-Image?</H3>
-	
+
 <P Align=Justify>Die Bootdiskette Version 0.0.62 wurde dahingehend
 uebersetzt, dass das zweite Diskettenlaufwerk als Rootdisk benuetzt wird,
 weil die Funktion wait_for_keypress() noch nicht funktioniert. Sie koennen
@@ -494,7 +494,7 @@ beim Starten von 'dos' oder 'xdos' wenn noetig, um ein Booten von Diskette
 zu erreichen.</P>
 
 <Pre>
-	floppy { device /dev/fd0 threeinch }  
+	floppy { device /dev/fd0 threeinch }
 </Pre>
 
 <HR Width=90%>
@@ -516,12 +516,12 @@ zugreifen koennen).</I></P>
 <LI><P Align=Justify>Kann man das Boot und das Root Abbild
 kombinieren?</P>
 
-<Pre>	
-	> From: Bar-David Yedidya 
-	> 
+<Pre>
+	> From: Bar-David Yedidya
+	>
 	> Today I managed to combine root/boot disks using LILO.
 	> It just worked!
-	> 
+	>
 	> I created /boot on the floppy, copied Image and boot.b to it,
 	> put in /etc (on the floppy) lilo.conf with this :
 	>
