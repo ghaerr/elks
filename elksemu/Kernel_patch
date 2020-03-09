@@ -13,7 +13,7 @@ If you are using 2.0.36, 2.1.43 or 2.2.0  and later use binfmt_misc.
  		goto exec_error2;
 +#ifndef NO_ELKSEMU
 +	/* What a horrible hack! :-) */
-+	if ((bprm.buf[0] == 1)    && (bprm.buf[1] == 3) && 
++	if ((bprm.buf[0] == 1)    && (bprm.buf[1] == 3) &&
 +	    (bprm.buf[2] == 0x20 || bprm.buf[2] == 0x10) && (bprm.buf[3] == 4))
 +		memcpy(bprm.buf, "#!/lib/elksemu\n", 16);
 +#endif

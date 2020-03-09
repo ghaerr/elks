@@ -7,7 +7,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include "elks.h" 
+#include "elks.h"
 
 static int elks_sigtrap= -1;
 
@@ -26,7 +26,7 @@ int elks_signal(int bx,int cx,int dx,int di,int si)
    if( bx < 0 || bx >= NSIG ) { errno = EINVAL; return -1; }
    if( cx == 0 )      oldsig = signal(bx, SIG_DFL);
    else if( cx == 1 ) oldsig = signal(bx, SIG_IGN);
-   else 
+   else
    {
       elks_sigtrap = cx;
       oldsig = signal(bx, sig_trap);

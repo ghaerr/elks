@@ -3,10 +3,10 @@
  *
  *	The 8086 mode code runs in protected mode by way of 16-bit segment
  *	descriptors which we set up in the LDT.
- *	We trap up to 386 mode for system call emulation and naughties. 
+ *	We trap up to 386 mode for system call emulation and naughties.
  */
 
-#define _GNU_SOURCE  /* for clone */ 
+#define _GNU_SOURCE  /* for clone */
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -26,7 +26,7 @@
 #include <sys/wait.h>
 #include <asm/ldt.h>
 #include <asm/ptrace-abi.h>
-#include "elks.h" 
+#include "elks.h"
 
 volatile struct elks_cpu_s elks_cpu;
 unsigned char *elks_base, *elks_data_base;	/* Paragraph aligned */
@@ -35,7 +35,7 @@ unsigned short brk_at = 0;
 #ifdef DEBUG
 #define dbprintf(x) db_printf x
 #else
-#define dbprintf(x) 
+#define dbprintf(x)
 #endif
 
 static int modify_ldt(int func, void *ptr, unsigned long bytes)
@@ -98,7 +98,7 @@ static void elks_take_interrupt(int arg)
 		kill(getpid(), SIGILL);
 		return;
 	}
-	
+
 	dbprintf(("syscall AX=%x BX=%x CX=%x DX=%x SP=%x "
 		  "stack=%x %x %x %x %x\n",
 		(unsigned short)elks_cpu.regs.xax,
@@ -111,7 +111,7 @@ static void elks_take_interrupt(int arg)
 		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 4),
 		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 6),
 		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 8)));
-		
+
 	elks_cpu.regs.xax = elks_syscall();
 	dbprintf(("elks syscall returned %d\n",
 		  (int)(short)elks_cpu.regs.xax));
@@ -155,7 +155,7 @@ static int load_elks(int fd)
 	/*
 	 *	Really set up the LDT descriptors
 	 */
-	 
+
 	memset(&cs_desc, 0, sizeof cs_desc);
 	memset(&ds_desc, 0, sizeof ds_desc);
 	cs_desc.entry_number = elks_cpu.regs.xcs / 8;
@@ -394,7 +394,7 @@ main(int argc, char *argv[], char *envp[])
 	}
 	/* This uses the _real_ user ID If the file is exec only that's */
 	/* ok cause the suid root will override.  */
-	/* BTW, be careful here, security problems are possible because of 
+	/* BTW, be careful here, security problems are possible because of
 	 * races if you change this. */
 
 	if( access(argv[1], X_OK) < 0
@@ -429,7 +429,7 @@ main(int argc, char *argv[], char *envp[])
 	/* The Linux vm will deal with not allocating the unused pages */
 	elks_base = mmap(NULL, 0x20000 + pg_sz,
 	                  PROT_EXEC|PROT_READ|PROT_WRITE,
-			  MAP_ANON|MAP_PRIVATE|MAP_32BIT, 
+			  MAP_ANON|MAP_PRIVATE|MAP_32BIT,
 			  -1, 0);
 	if( (intptr_t)elks_base < 0 || (uintptr_t)elks_base >= 0x100000000ull)
 	{
@@ -437,13 +437,13 @@ main(int argc, char *argv[], char *envp[])
 		exit(255);
 	}
 	mprotect(elks_base + 0x20000, pg_sz, PROT_NONE);
-	
+
 	if(load_elks(fd) < 0)
 	{
 		fprintf(stderr,"Not a elks binary.\n");
 		exit(1);
 	}
-	
+
 	close(fd);
 
 	build_stack(argv+1, envp);

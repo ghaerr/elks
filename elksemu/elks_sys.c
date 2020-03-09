@@ -22,7 +22,7 @@
 #include <dirent.h>
 #include <sys/time.h>
 #include <linux/reboot.h>
-#include "elks.h" 
+#include "elks.h"
 
 #include "efile.h"
 
@@ -50,10 +50,10 @@ static int elks_closedir(int bx);
  *	Compress a host stat into a elks one. Lose upper bits with wild
  *	abandon. For SYS5.3 this isn't a problem, but machines with 32
  *	bit inodes (BSD, SYS5 with veritas, newest SCO) you lose the top
- *	bits which can confuse a few programs which use inode numbers 
+ *	bits which can confuse a few programs which use inode numbers
  *	(eg gnu tar).
  */
- 
+
 static void squash_stat(struct stat *s, int bx)
 {
 	struct elks_stat * ms = ELKS_PTR(struct elks_stat, bx);
@@ -73,8 +73,8 @@ static void squash_stat(struct stat *s, int bx)
 /*
  *	Implementation of ELKS syscalls.
  */
- 
- 
+
+
 #define sys_exit elks_exit
 static int elks_exit(int bx,int cx,int dx,int di,int si)
 {
@@ -111,7 +111,7 @@ static int elks_write(int bx,int cx,int dx,int di,int si)
 	   dx = 1024;
 	   dbprintf(("write(%d, %d, >%d)\n",bx,cx,dx));
 	}
-	else 
+	else
 #endif
 	{
 	   dbprintf(("write(%d, %d, %d)\n",bx,cx,dx));
@@ -260,7 +260,7 @@ static int elks_lstat(int bx,int cx,int dx,int di,int si)
 static int elks_lseek(int bx,int cx,int dx,int di,int si)
 {
 	long l=ELKS_PEEK(int32_t, cx);
-	
+
 	dbprintf(("lseek(%d,%ld,%d)\n",bx,l,dx));
 	l = lseek(bx,l,dx);
 	if( l < 0 ) return -1;
@@ -395,7 +395,7 @@ static int elks_getgid(int bx,int cx,int dx,int di,int si)
  * its another elks image then our kernel side binary loader will load
  * elksemu again and we'll take the Unix args and turn them back into a
  * elks stack image.
- * 
+ *
  * For now we run elksemu ourselves and do token attempts at binary checking.
  *
  * Of course if the kernel misc module is confiured we could just run the exe.
@@ -412,7 +412,7 @@ static int elks_execve(int bx,int cx,int dx,int di,int si)
 	uint16_t *tmp;
 	struct elks_exec_hdr mh;
 	int is_elks = 1;
-	
+
 	dbprintf(("exec(%s,%d,%d)\n",ELKS_PTR(char, bx), cx, dx));
 
 	base=ELKS_PTR(unsigned char, cx);
@@ -499,7 +499,7 @@ static int elks_fcntl(int bx,int cx,int dx,int di,int si)
 		case ELKS_F_SETFL:
 			return fcntl(bx,F_SETFL,dx);
 		/*
-		 *	Fixme: Unpack and process elks file locks 
+		 *	Fixme: Unpack and process elks file locks
 		 */
 		case ELKS_F_GETLK:
 		case ELKS_F_SETLK:
@@ -772,7 +772,7 @@ static funcp jump_tbl[] = {
 #include "call_tab.v"
    elks_enosys
 };
- 
+
 int elks_syscall(void)
 {
 	int r, n;
@@ -781,7 +781,7 @@ int elks_syscall(void)
 	int dx=elks_cpu.regs.xdx&0xFFFF;
 	int di=elks_cpu.regs.xdi&0xFFFF;
 	int si=elks_cpu.regs.xsi&0xFFFF;
-	
+
 	errno=0;
 	n = (elks_cpu.regs.xax&0xFFFF);
 	if( n>= 0 && n< sizeof(jump_tbl)/sizeof(funcp) )
