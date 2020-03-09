@@ -16,7 +16,7 @@ CONFIG_APP_SASH			sash/			Good shell for slow floppy systems. Installs as /bin/s
 										for seamless BASH shell script execution.
 										Std builtins: alias, unalias, cd, exec, exit, source, setenv,
 											prompt, umask
-										Builtins:
+										Builtins: 
 											chown, chgrp, cp, echo, ln, ls, mkdir, mkdir, mknod, printenv,
 											pwd, sync, rm, rmdir, sync, mv, mount, umount,
 											dd, ed, grep, more, kill, tar, touch
@@ -36,7 +36,7 @@ CONFIG_APP_COREUTILS	core_utils/		Core utilities, Installed in /bin. Sources mov
 											more, mv, rm, rmdir, sync, touch
 										Move from minix1: grep (overwrites file_utils/grep)
 										Move from minix2: env
-										Move from minix3:
+										Move from minix3: 
 										Move from misc_utils: ed, tar
 										Move from sh_utils: date, echo, false, printenv, pwd, true
 
@@ -67,7 +67,7 @@ CONFIG_APP_MISC_UTILS	misc_utils/		Miscellaneous utilities from various sources,
 										Installs in /usr/bin: ed, miniterm, tar
 										Not installed: compress, uncompress, zcat
 
-CONFIG_APP_MINIX1		minix1/			MINIX utilities, part 1.  (B option when busyelks selected)
+CONFIG_APP_MINIX1		minix1/			MINIX utilities, part 1.  (B option when busyelks selected)	
 										Installs in /bin: banner, cksum, cut, decomp16, du, fgrep, grep,
 											proto, sum, uniq, wc
 

@@ -121,7 +121,7 @@ struct op {
   {	0,	0,	0	}
 };
 
-#define _PROTOTYPE(a,b)
+#define _PROTOTYPE(a,b)	
 
 char **ip;
 char *prog;

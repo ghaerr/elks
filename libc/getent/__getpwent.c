@@ -1,7 +1,7 @@
 /*
  * __getpwent.c - This file is part of the libc-8086/pwd package for ELKS,
  * Copyright (C) 1995, 1996 Nat Friedman <ndf@linux.mit.edu>.
- *
+ * 
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
  *  License as published by the Free Software Foundation; either
@@ -31,7 +31,7 @@
   so it's probably nicer.  Write me if you want the old version.  Maybe I
   should include it as a build-time option... ?
   -Nat <ndf@linux.mit.edu> */
-
+   
 struct passwd *
 __getpwent(int pwd_fd)
 {
@@ -61,8 +61,8 @@ restart:
       lseek(pwd_fd, (long) (field_begin-line_buff)-line_len+1, SEEK_CUR);
       goto restart;
     }
-  if (*line_buff == '#' || *line_buff == ' ' || *line_buff == '\n' ||
-      *line_buff == '\t')
+  if (*line_buff=='#' || *line_buff==' ' || *line_buff=='\n' ||
+      *line_buff=='\t')
       goto restart;
   *field_begin='\0';
 
@@ -70,7 +70,7 @@ restart:
   field_begin=line_buff;
   for (i=0;i<7;i++)
     {
-      switch (i)
+      switch(i)
 	{
 	case 0: passwd.pw_name=field_begin; break;
 	case 1: passwd.pw_passwd=field_begin; break;
@@ -83,13 +83,13 @@ restart:
       if (i<6)
 	{
 	  field_begin=strchr(field_begin, ':');
-	  if (field_begin == NULL) goto restart;
+	  if (field_begin==NULL) goto restart;
 	  *field_begin++='\0';
 	}
     }
   passwd.pw_gid=(gid_t) strtoul(gid_ptr, &endptr, 10);
   if (*endptr!='\0') goto restart;
-
+  
   passwd.pw_uid=(uid_t) strtoul(uid_ptr, &endptr, 10);
   if (*endptr!='\0') goto restart;
 

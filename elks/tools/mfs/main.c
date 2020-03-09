@@ -150,7 +150,7 @@ int main(int argc,char **argv) {
 
   filename = argv[0];
   argv++,argc--;
-
+  
   if (argc > 0 && !strcmp(argv[0],"mkfs")) {
     cmd_mkfs(filename, argc,argv);
   } else if (argc > 0 && !strcmp(argv[0],"genfs")) {

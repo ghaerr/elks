@@ -23,7 +23,7 @@
                 Computer Science Department, 9062
                 Western Washington University
                 Bellingham, WA 98226-9062
-
+       
 *************************************************************************/
 
 
@@ -41,7 +41,7 @@ define e(x) {
   if (x<0) {
     m = 1
     x = -x
-  }
+  } 
 
   /* Precondition x. */
   z = scale;
@@ -116,7 +116,7 @@ define s(x) {
   auto  e, i, m, n, s, v, z
 
   /* precondition x. */
-  z = scale
+  z = scale 
   scale = 1.1*z + 1;
   v = a(1)
   if (x < 0) {
@@ -161,13 +161,13 @@ define a(x) {
   auto a, e, f, i, m, n, s, v, z
 
   /* Special case and for fast answers */
-  if (x == 1) {
+  if (x==1) {
     if (scale <= 25) return (.7853981633974483096156608/1)
     if (scale <= 40) return (.7853981633974483096156608458198757210492/1)
     if (scale <= 60) \
       return (.785398163397448309615660845819875721049292349843776455243736/1)
   }
-  if (x == .2) {
+  if (x==.2) {
     if (scale <= 25) return (.1973955598498807583700497/1)
     if (scale <= 40) return (.1973955598498807583700497651947902934475/1)
     if (scale <= 60) \
@@ -184,12 +184,12 @@ define a(x) {
   z = scale;
 
   /* Note: a and f are known to be zero due to being auto vars. */
-  /* Calculate atan of a known number. */
+  /* Calculate atan of a known number. */ 
   if (x > .2)  {
     scale = z+4;
     a = a(.2);
   }
-
+   
   /* Precondition x. */
   scale = z+2;
   while (x > .2) {
@@ -215,7 +215,7 @@ define a(x) {
 
 
 /* Bessel function of integer order.  Uses the following:
-   j(-n,x) = (-1)^n*j(n,x)
+   j(-n,x) = (-1)^n*j(n,x) 
    j(n,x) = x^n/(2^n*n!) * (1 - x^2/(2^2*1!*(n+1)) + x^4/(2^4*2!*(n+1)*(n+2))
             - x^6/(2^6*3!*(n+1)*(n+2)*(n+3)) .... )
 */

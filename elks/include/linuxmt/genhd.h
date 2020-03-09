@@ -5,7 +5,7 @@
 
 /*
  * 	genhd.h Copyright (C) 1992 Drew Eckhardt
- *	Generic hard disk header file by
+ *	Generic hard disk header file by  
  * 		Drew Eckhardt
  *
  *		<drew@colorado.edu>

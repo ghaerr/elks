@@ -64,7 +64,7 @@ TTY_Open(KBDDEVICE *pkd)
 	new.c_cflag |= CS8;
 	new.c_cc[VMIN] = 0;
 	new.c_cc[VTIME] = 0;
-	if (tcsetattr(fd, TCSAFLUSH, &new) < 0) {
+	if(tcsetattr(fd, TCSAFLUSH, &new) < 0) {
 		close(fd);
 		fd = 0;
 		return -1;
@@ -107,7 +107,7 @@ TTY_Read(UCHAR *buf, MODIFIER *modifiers)
 	*modifiers = 0;			/* no modifiers yet */
 	cc = read(fd, buf, 1);
 	if (cc > 0) {
-		if (*buf == 0x1b)
+		if(*buf == 0x1b)
 			return -2;	/* special case ESC*/
 		return 1;
 	}

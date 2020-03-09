@@ -36,7 +36,7 @@ printf("GsError %d, %d\r\n", code, id);
 	ep = &curclient->errorevent;
 	ep->type = GR_EVENT_TYPE_ERROR;
 	ep->name[0] = 0;
-	if (curfunc) {
+	if(curfunc) {
 		strncpy(ep->name, curfunc, sizeof(GR_FUNC_NAME));
 		ep->name[sizeof(GR_FUNC_NAME)-1] = '\0';
 	}
@@ -101,10 +101,10 @@ void GsCheckMouseEvent(void)
 
 	/* Read the latest mouse status: */
 	mousestatus = GdReadMouse(&rootx, &rooty, &newbuttons);
-	if (mousestatus < 0) {
+	if(mousestatus < 0) {
 		GsError(GR_ERROR_MOUSE_ERROR, 0);
 		return;
-	} else if (mousestatus) /* Deliver events as appropriate: */
+	} else if(mousestatus) /* Deliver events as appropriate: */	
 		GsHandleMouseStatus(rootx, rooty, newbuttons);
 }
 
@@ -121,12 +121,12 @@ void GsCheckKeyboardEvent(void)
 
 	/* Read the latest keyboard status: */
 	keystatus = GdReadKeyboard(&ch, &modifiers);
-	if (keystatus < 0) {
-		if (keystatus == -2)	/* special case for ESC pressed*/
+	if(keystatus < 0) {
+		if(keystatus == -2)	/* special case for ESC pressed*/
 			GsTerminate();
 		GsError(GR_ERROR_KEYBOARD_ERROR, 0);
 		return;
-	} else if (keystatus) /* Deliver events as appropriate: */
+	} else if(keystatus) /* Deliver events as appropriate: */	
 		GsDeliverKeyboardEvent(GR_EVENT_TYPE_KEY_DOWN, ch, modifiers);
 }
 
@@ -338,7 +338,7 @@ void GsDeliverMotionEvent(GR_EVENT_TYPE type, BUTTON buttons, MODIFIER modifiers
 			 * then search the event queue for an existing
 			 * event of this type (if any), and free it.
 			 */
-			if (type == GR_EVENT_TYPE_MOUSE_POSITION)
+			if (type == GR_EVENT_TYPE_MOUSE_POSITION) 
 				GsFreePositionEvent(client, wp->id, subwid);
 
 			ep = (GR_EVENT_MOUSE *) GsAllocEvent(client);

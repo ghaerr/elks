@@ -2,8 +2,8 @@
  * include/linux/serial.h
  *
  * Copyright (C) 1992, 1994 by Theodore Ts'o.
- *
- * Redistribution of this file is permitted under the terms of the GNU
+ * 
+ * Redistribution of this file is permitted under the terms of the GNU 
  * General Public License (GPL)
  *
  * These are the UART port assignments, expressed as offsets from the base
@@ -52,8 +52,8 @@
 #define UART_FCR6_T_TRIGGER_30	0x30	/* Mask for transmit trigger set at 30 */
 
 /* These are the definitions for the Line Control Register
- *
- * Note: if the word length is 5 bits (UART_LCR_WLEN5), then setting
+ * 
+ * Note: if the word length is 5 bits (UART_LCR_WLEN5), then setting 
  * UART_LCR_STOP will select 1.5 stop bits, not 2 stop bits.
  */
 #define UART_LCR_DLAB	0x80	/* Divisor latch access bit */

@@ -91,7 +91,7 @@ settty()
     unsigned dummy;
     /* transparent mode? */
     dq$special(1,&fileno(stdin),&dummy);
-
+    
     /* turn off control character assignments */
     strput("\033]T:C15=0,C18=0,C20=0,C21=0,C23=0\033\\");
 }
@@ -168,14 +168,14 @@ int count;
     for (i = 0;i < MAXMACROS;i++)
 	mbuffer[i].token = 0;
     core[0] = EOL;
-
+	
     yank.size = ERR;		/* no yanks yet */
-
+    
     undo.blockp = undo.ptr = 0;
-
+    
     fillchar(adjcurr, sizeof(adjcurr), 0);
     fillchar(adjendp, sizeof(adjendp), 0);
-
+    
     adjcurr[BTO_WD]	=	/* more practical to just leave dynamic */
     adjcurr[SENT_BACK]	=
     adjendp[BTO_WD]	=
@@ -193,7 +193,7 @@ int count;
     stamp(undobuf, "$un");
     stamp(yankbuf, "$ya");
     stamp(undotmp, "$tm");
-
+    
     mvcur(LINES-1,0);
 #if ST
     mapslash = getenv("mapslash") != 0L;

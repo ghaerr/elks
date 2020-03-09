@@ -7,5 +7,5 @@
  * Stripped down and inlined for ELKS file_utils
  */
 
-#define	PATHLEN		256
+#define	PATHLEN		256	
 #define	isdecimal(ch)	(((ch) >= '0') && ((ch) <= '9'))

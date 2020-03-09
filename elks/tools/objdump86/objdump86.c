@@ -79,9 +79,9 @@
 #endif
 
 #ifdef MC6809			/* temp don't support alignment at all */
-# define ld_roundup( num, boundary, type) (num)
+# define ld_roundup( num, boundary, type ) (num)
 #else
-# define ld_roundup( num, boundary, type) \
+# define ld_roundup( num, boundary, type ) \
 	(((num) + ((boundary) - 1)) & (type) ~((boundary) - 1))
 #endif
 
@@ -190,13 +190,13 @@ int main(int argc, char ** argv)
    p = strrchr(argv[0], '/');
    if (p) p++; else p = argv[0];
 
-   if (p[0] == 's') display_mode = 1;
-   if (p[0] == 'n') display_mode = 2;
+   if (p[0] == 's' ) display_mode = 1;
+   if (p[0] == 'n' ) display_mode = 2;
 
    multiple_files = 0;
    for (ar = 1; ar < argc; ar++)
    {
-      if (argv[ar][0] == '-') switch (argv[ar][1])
+      if (argv[ar][0] == '-' ) switch(argv[ar][1])
       {
       case 's': display_mode = 1; break;
       case 'n': display_mode = 2; break;
@@ -314,7 +314,7 @@ void do_module(char *fname, char *archive)
       {
 	 if (modno != 1 && !display_mode)
             printf("OBJECTSECTION %d\n", modno);
-	 if (read_sectheader() < 0) break;
+	 if (read_sectheader() < 0 ) break;
 
 	 /* segments 0, 4-E are text, 1-3 are data*/
 	 for (i = 0; i < 16; i++)
@@ -324,10 +324,10 @@ void do_module(char *fname, char *archive)
 	    else size_data += segsizes[i];
 	 }
 
-	 if (read_syms() < 0) break;
+	 if (read_syms() < 0 ) break;
 
 	 strtab = malloc((unsigned int)str_len+1);
-	 if (strtab == 0) { error("Out of memory"); break; }
+	 if (strtab == 0 ) { error("Out of memory"); break; }
 	 str_off = ftell(ifd);
 	 fread(strtab, 1, (unsigned int)str_len, ifd);
 
@@ -362,7 +362,7 @@ void do_module(char *fname, char *archive)
       fseek(ifd, 0L, 0);
       fetch_aout_hdr();
 
-      switch (display_mode)
+      switch(display_mode)
       {
       case 0: dump_aout(); break;
       case 1: size_aout(); break;
@@ -374,7 +374,7 @@ void do_module(char *fname, char *archive)
       fseek(ifd, 0L, 0);
       fetch_v7_hdr();
 
-      switch (display_mode)
+      switch(display_mode)
       {
       case 0: dump_v7(); break;
       case 1: size_v7(); break;
@@ -392,7 +392,7 @@ void do_module(char *fname, char *archive)
 
 int error(char *str)
 {
-   switch (display_mode)
+   switch( display_mode)
    {
    case 1: fprintf(stderr, "size: %s: %s\n", ifname, str); break;
    case 2: fprintf(stderr, "nm: %s: %s\n", ifname, str); break;
@@ -418,7 +418,7 @@ int read_objheader(void)
 	 return 1;
       }
 #ifndef VERY_SMALL_MEMORY
-      if (buf[1] == 1) /* 04xx octal */
+      if (buf[1] == 1 ) /* 04xx octal */
       {
          sections = 1;
          return 2;
@@ -484,13 +484,13 @@ int read_syms(void)
 {
    int i;
 
-   if (num_syms < 0) return error("Bad symbol table");
+   if (num_syms < 0 ) return error("Bad symbol table");
 
    symnames = malloc(num_syms*sizeof(char*)+1);
-   if (symnames == 0) return error("Out of memory");
+   if (symnames == 0 ) return error("Out of memory");
 
    symtab = calloc(num_syms, sizeof(*symtab));
-   if (symtab == 0) return error("Out of memory");
+   if (symtab == 0 ) return error("Out of memory");
 
    for (i = 0; i < num_syms; i++)
    {
@@ -556,7 +556,7 @@ int disp_syms(void)
             printf("         ");
 	 else
             printf("%08lx ", offset);
-	 switch (symtype)
+	 switch(symtype)
 	 {
 	 case 0x004F: putchar('U'); break;
 	 case 0x0000: putchar('t'); break;
@@ -601,13 +601,13 @@ static char * relstr[] = {"ERR", "DB", "DW", "DD"};
    printf("\nBYTECODE\n");
    for (;;)
    {
-      if ((ch = get_byte()) == -1) break;
+      if ((ch = get_byte()) == -1 ) break;
 
-      if (ch == 0) break;
+      if (ch == 0 ) break;
 
-      switch (ch & 0xC0)
+      switch( ch & 0xC0)
       {
-      case 0x00:  switch (ch & 0xF0)
+      case 0x00:  switch(ch & 0xF0)
                   {
                   case 0x00: /* Relocator size */
 	                     printf("RELSZ %d\n", relsize= (ch & 0xF));
@@ -626,7 +626,7 @@ static char * relstr[] = {"ERR", "DB", "DW", "DD"};
       case 0x40:  /* Raw bytes */
                   {
                      int abscnt = (ch & 0x3F);
-		     if (abscnt == 0) abscnt = 64;
+		     if (abscnt == 0 ) abscnt = 64;
 	             for (i = 0; i < abscnt; i++) {
                         if ((ch = get_byte()) == -1) break;
 	                hex_output(ch);
@@ -650,7 +650,7 @@ static char * relstr[] = {"ERR", "DB", "DW", "DD"};
 		     printf("CODE %02x - unknown\n", ch);
 		     goto break_break;
 		  }
-                  if (ch & 4) i = get_word();
+                  if (ch & 4 ) i = get_word();
                   else         i = get_byte();
 		  l = get_sized(ch & 3);
 
@@ -670,7 +670,7 @@ break_break:;
 
 long get_sized(int sz)
 {
-   switch (sz)
+   switch(sz)
    {
    case 0: return 0;
    case 1: return get_byte();
@@ -729,7 +729,7 @@ static int pos = 0;
       if (!pos) memset(linebuf, ' ', sizeof(linebuf));
       sprintf(buf, "%02x", ch & 0xFF);
       memcpy(linebuf + pos * 3 + (pos > 7), buf, 2);
-      if (ch > ' ' && ch <= '~') linebuf[50+pos] = ch;
+      if (ch > ' ' && ch <= '~' ) linebuf[50+pos] = ch;
       else linebuf[50+pos] = '.';
       pos = ((pos+1) & 0xF);
       if (pos == 0) {
@@ -774,20 +774,20 @@ static char * byteord[] = { "LITTLE_ENDIAN", "(2143)","(3412)","BIG_ENDIAN" };
    int i;
    long l;
 
-   if (h_cpu > 0x17) h_cpu &= 3;
+   if (h_cpu > 0x17 ) h_cpu &= 3;
 
    printf("HLEN %d\n", h_len);
    printf("CPU  %s %s\n", cpu[h_cpu >> 2], byteord[h_cpu & 3]);
 
    printf("FLAGS:");
-   if (h_flgs & 0x01) printf(" A_UZP");
-   if (h_flgs & 0x02) printf(" A_PAL");
-   if (h_flgs & 0x04) printf(" A_NSYM");
-   if (h_flgs & 0x08) printf(" FLG-08");
-   if (h_flgs & 0x10) printf(" A_EXEC");
-   if (h_flgs & 0x20) printf(" A_SEP");
-   if (h_flgs & 0x40) printf(" A_PURE");
-   if (h_flgs & 0x80) printf(" A_TOVLY");
+   if (h_flgs & 0x01 ) printf(" A_UZP");
+   if (h_flgs & 0x02 ) printf(" A_PAL");
+   if (h_flgs & 0x04 ) printf(" A_NSYM");
+   if (h_flgs & 0x08 ) printf(" FLG-08");
+   if (h_flgs & 0x10 ) printf(" A_EXEC");
+   if (h_flgs & 0x20 ) printf(" A_SEP");
+   if (h_flgs & 0x40 ) printf(" A_PURE");
+   if (h_flgs & 0x80 ) printf(" A_TOVLY");
    printf("\n");
 
    if (header[5])
@@ -824,7 +824,7 @@ static char * byteord[] = { "LITTLE_ENDIAN", "(2143)","(3412)","BIG_ENDIAN" };
    fseek(ifd, (long)h_len, 0);
    for (l = 0; l < header[2]; l++)
    {
-      if ((i = getc(ifd)) == EOF) break;
+      if ((i = getc(ifd)) == EOF ) break;
       hex_output(i);
    }
    hex_output(EOF);
@@ -833,7 +833,7 @@ static char * byteord[] = { "LITTLE_ENDIAN", "(2143)","(3412)","BIG_ENDIAN" };
    fseek(ifd, (long)h_len+header[2], 0);
    for (l = 0; l < header[3]; l++)
    {
-      if ((i = getc(ifd)) == EOF) break;
+      if ((i = getc(ifd)) == EOF ) break;
       hex_output(i);
    }
    hex_output(EOF);
@@ -877,11 +877,11 @@ void nm_aout(void)
 
    while (bytes_left > 16)
    {
-      if (fread(n_name, 1, 8, ifd) != 8) break;
+      if (fread(n_name, 1, 8, ifd) != 8 ) break;
       n_name[8] = 0;
       n_value  = get_long();
-      if ((n_sclass = getc(ifd)) == EOF) break;
-      if ((n_numaux = getc(ifd)) == EOF) break;
+      if ((n_sclass = getc(ifd)) == EOF ) break;
+      if ((n_numaux = getc(ifd)) == EOF ) break;
       n_type = get_word();
 
       if (pending_nl && n_sclass == 0)
@@ -890,14 +890,14 @@ void nm_aout(void)
          continue;
       }
 
-      if (pending_nl) putchar('\n');
+      if (pending_nl ) putchar('\n');
       if (opt_o)
          printf("%s: ", ifname);
       if (n_sclass == 0x10)
          printf("         ");
       else
          printf("%08lx ", n_value);
-      switch (n_sclass)
+      switch(n_sclass)
       {
       case 0x01: printf("a "); break;
       case 0x12: printf("T "); break;
@@ -912,14 +912,14 @@ void nm_aout(void)
                  }
 
                  printf("n_sclass=");
-                 switch (n_sclass >> 3)
+                 switch(n_sclass >> 3)
 		 {
 		 case 0: printf("C_NULL,"); break;
 		 case 2: printf("C_EXT,"); break;
 		 case 3: printf("C_STAT,"); break;
 		 default: printf("%04o,", n_sclass & 0xF8);
 		 }
-                 switch (n_sclass & 7)
+                 switch(n_sclass & 7)
 		 {
 		 case 0: printf("N_UNDF "); break;
 		 case 1: printf("N_ABS "); break;
@@ -945,7 +945,7 @@ void nm_aout(void)
       pending_nl = 1;
    }
 
-   if (pending_nl) putchar('\n');
+   if (pending_nl ) putchar('\n');
 }
 
 #ifndef VERY_SMALL_MEMORY
@@ -1007,7 +1007,7 @@ void dump_v7(void)
    fseek(ifd, (long)h_len, 0);
    for (l = 0; l < header[1]; l++)
    {
-      if ((i = getc(ifd)) == EOF) break;
+      if ((i = getc(ifd)) == EOF ) break;
       hex_output(i);
    }
    hex_output(EOF);
@@ -1016,7 +1016,7 @@ void dump_v7(void)
    fseek(ifd, (long)h_len+header[1], 0);
    for (l = 0; l < header[2]; l++)
    {
-      if ((i = getc(ifd)) == EOF) break;
+      if ((i = getc(ifd)) == EOF ) break;
       hex_output(i);
    }
    hex_output(EOF);

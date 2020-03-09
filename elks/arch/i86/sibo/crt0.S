@@ -41,7 +41,7 @@ codecopy:
 
 	mov ax, #0x14F0
 	mov es, ax
-
+	
 	mov cx, #0x8000
 	mov di, #0x0000
 	mov si, #0x0000
@@ -75,7 +75,7 @@ datacopy:
 ; Break point if it returns
 ;	int	3
 ;
-;	Segment beginnings
+;	Segment beginnings	
 
 	.data
 	.globl __endtext

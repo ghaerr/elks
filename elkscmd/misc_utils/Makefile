@@ -32,7 +32,7 @@ ed: ed.o
 
 tar: tar.o
 	$(LD) $(LDFLAGS) -o tar tar.o $(LDLIBS)
-
+	
 compress: compress.o
 	$(LD) $(LDFLAGS) -o compress compress.o $(LDLIBS)
 

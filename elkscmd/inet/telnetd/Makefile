@@ -13,7 +13,7 @@ include $(BASEDIR)/Make.rules
 ###############################################################################
 
 SRCS = telnetd.c
-OBJS = $(SRCS:.c=.o)
+OBJS = $(SRCS:.c=.o) 
 
 all:	telnetd
 

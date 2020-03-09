@@ -410,7 +410,7 @@ void spawnThisOne(const char **a)
 void handle_signal(int sig)
 {
 	debug("signaled\n");
-	switch (sig) {
+	switch(sig) {
 		case SIGHUP:
 		/* got signaled by another instance of init, change runlevel! */
 		{

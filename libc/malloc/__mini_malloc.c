@@ -12,14 +12,14 @@ __mini_malloc(size_t size)
 
 	/* First time round this _might_ be odd, But we won't do that! */
 	sz = (unsigned int)sbrk(0);
-	if (sz & (sizeof(mem) - 1))
+	if(sz & (sizeof(mem) - 1))
 		sbrk(4 - (sz & (sizeof(mem) - 1)));
 
 	if (size <= 0)
 		return 0;
 
 	/* Minor oops here, sbrk has a signed argument */
-	if (size > (((unsigned)-1) >> 1) - sizeof(mem) * 3)
+	if(size > (((unsigned)-1) >> 1) - sizeof(mem) * 3)
 	{
 		errno = ENOMEM;
 		return 0;
@@ -29,7 +29,7 @@ __mini_malloc(size_t size)
 	size /= sizeof(mem);
 
 	ptr = (mem *) sbrk(size * sizeof(mem));
-	if ((int)ptr == -1)
+	if((int)ptr == -1)
 		return 0;
 
 	m_size(ptr) = size;

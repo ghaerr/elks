@@ -2,7 +2,7 @@
  * lp printing filter
  * use -pcl switch if you have PCL or compatible printer
  */
-
+ 
 #include <stdio.h>
 
 #define BUFFER_SIZE 256
@@ -27,7 +27,7 @@ char ** argv;
 	{
 #ifdef DEBUG
 		fprintf(stderr, "Invoking PCL filter ..\n");
-#endif
+#endif	
 		/* ]E]&k2g](0N --> reset printer, set CR = CRLF, FF = CRFF, set latin 1 character set */
 		fprintf(stdout, "\033E\033&k2g\033(0N");
 		/* feed printer with unmodified data */
@@ -56,7 +56,7 @@ char ** argv;
 				if ((buffer[pos] == '\012') || (buffer[pos] == '\014')) {
 #ifdef DEBUG
 					fprintf(stderr, "LF or FF w/out CR\n");
-#endif
+#endif					
 					buffer[pos + 1] = buffer[pos]; /* FF or LF */
 					buffer[pos + 0] = '\015'; /* CR */
 					buffer[pos + 2] = '\000'; /* terminate string */
@@ -64,7 +64,7 @@ char ** argv;
 					}
 				}
 			fputs(buffer, stdout);
-			}
+			}	
 	}
 	free(buffer);
 

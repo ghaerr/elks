@@ -113,7 +113,7 @@ extern char	ERASEKEY;	/* taken from the ioctl structure */
 /* Msdos-versions may use bios; others always termcap.
  * Will emit some 'code has no effect' warnings in unix.
  */
-
+ 
 #if MSDOS
 extern char o_pcbios[1];		/* BAH! */
 #define	CHECKBIOS(x,y)	(*o_pcbios ? (x) : (y))

@@ -462,7 +462,7 @@ Uzo:    fprintf( stderr, ediag( "\
     }
     argc--, argv++, i = 1;
     while ( c = *(*argv)++ ){ /* process all flags */
-	switch (c ){
+	switch( c ){
 	    case 'x':
 		premado += 2; /* must become 0 */
 		break;

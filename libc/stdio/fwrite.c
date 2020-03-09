@@ -6,9 +6,9 @@
 /*
  * Like fread, fwrite will often be used to write out large chunks of
  * data; calling write() directly can be a big win in this case.
- *
+ * 
  * But first we check to see if there's space in the buffer.
- *
+ * 
  * Again this ignores __MODE__IOTRAN.
  */
 int
@@ -45,7 +45,7 @@ fwrite(char *buf, int size, int nelm, FILE *fp)
       memcpy(fp->bufpos, buf, bytes);
       if (v & _IOLBF)
       {
-         if (memchr(fp->bufpos, '\n', bytes))
+         if(memchr(fp->bufpos, '\n', bytes))
 	    do_flush=1;
       }
       fp->bufpos += bytes;
@@ -63,7 +63,7 @@ fwrite(char *buf, int size, int nelm, FILE *fp)
       do
       {
          len = write(fp->fd, buf, bytes);
-	 if (len > 0 )
+	 if( len > 0 )
 	 {
 	    buf+=len; bytes-=len;
 	 }

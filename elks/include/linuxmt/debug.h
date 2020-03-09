@@ -1,6 +1,6 @@
 /* linuxmt/include/linuxmt/debug.h for ELKS v. >=0.0.47
  * (C) 1997 Chad Page
- *
+ * 
  * This file contains the #defines to turn on and off various printk()-related
  * functions...
  */

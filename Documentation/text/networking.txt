@@ -2,7 +2,7 @@
 ELKS Networking
 ---------------
 
-
+ 
 Table of contents
 -----------------
 
@@ -74,13 +74,13 @@ function tcpdev_inetwrite() in our char/tcpdev driver which writes it into the
 "tdout_buf" buffer.
 
 This buffer is then copied to memory in the tcpdev_read() function for the ktcp
-user space driver to pick up and send. The ktcp driver will use the select()
-command to query if any data is available to send and call tcp_process() in "tcp.c"
-which handles the tcp connection status and calls tcp_syn_sent() which again calls
+user space driver to pick up and send. The ktcp driver will use the select() 
+command to query if any data is available to send and call tcp_process() in "tcp.c" 
+which handles the tcp connection status and calls tcp_syn_sent() which again calls 
 tcp_output() in "tcp_output.c" which sends the data via ip_sendpacket() in "ip.c".
 
-On the other hand, the char/tcpdev driver will use the tcpdev_write() function
-to copy received data to the kernel interface "af_inet.c" by calling the function
+On the other hand, the char/tcpdev driver will use the tcpdev_write() function 
+to copy received data to the kernel interface "af_inet.c" by calling the function 
 inet_process_tcpdev() in that code.
 
 There are two tcpdev.c files in the code. One, the "char/tcpdev", is linked as

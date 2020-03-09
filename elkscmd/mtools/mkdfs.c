@@ -45,7 +45,7 @@ main(argc,argv)
   progname = argv[0] ;
 
   while ( (c=getopt(argc,argv,"hf")) != EOF ) {
-    switch (c) {
+    switch(c) {
     case 'f' :
       fflag++ ;
       break;
@@ -59,7 +59,7 @@ main(argc,argv)
     }
   }
 
-  if (fflag)
+  if (fflag) 
     formatit(hdflag) ;
 
   /*  Lets initialize the MSDOS FS */
@@ -75,7 +75,7 @@ main(argc,argv)
     fat_len=9 ;
     fat=FAT1440 ;
   }
-
+  
   bzero(buf,sizeof(buf)) ;
   bcopy(hdflag?hdboot:ldboot,buf,MSECSIZ) ;   /* Create the boot block */
   Write(fd,buf,MSECSIZ) ;   /* Dump the boot block */
@@ -98,7 +98,7 @@ main(argc,argv)
     Write(fd,buf,MSECSIZ) ;  /* Root dir */
 }
 
-void
+void 
 move(fd,sector)
   int fd, sector ;
 {
@@ -122,7 +122,7 @@ Write(fd,buf,count)
 }
 
 void
-usage()
+usage() 
 {
   fprintf(stderr,"Usage: %s [-h] [-f]\n",progname) ;
   fprintf(stderr,"\tBuilds an empty DOS filesystem\n") ;
@@ -145,7 +145,7 @@ formatit(hdq)
   }
 
   if ( !pid ) {
-    if ( hdq )
+    if ( hdq ) 
       execl("/bin/fdformat","fdformat",floppy,0) ;
     else
       execl("/bin/fdformat","fdformat","-l",floppy,0) ;

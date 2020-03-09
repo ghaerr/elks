@@ -161,7 +161,7 @@ function readln () {
 # comment does some pretty-printing
 #
 #	comment 'xxx'
-#
+# 
 function comment () {
     local S=`echo "$1" | tr -s '\t' ' ' | sed 's/^ //'`
 

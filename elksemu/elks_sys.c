@@ -22,7 +22,7 @@
 #include <dirent.h>
 #include <sys/time.h>
 #include <linux/reboot.h>
-#include "elks.h"
+#include "elks.h" 
 
 #include "efile.h"
 
@@ -50,31 +50,31 @@ static int elks_closedir(int bx);
  *	Compress a host stat into a elks one. Lose upper bits with wild
  *	abandon. For SYS5.3 this isn't a problem, but machines with 32
  *	bit inodes (BSD, SYS5 with veritas, newest SCO) you lose the top
- *	bits which can confuse a few programs which use inode numbers
+ *	bits which can confuse a few programs which use inode numbers 
  *	(eg gnu tar).
  */
-
+ 
 static void squash_stat(struct stat *s, int bx)
 {
 	struct elks_stat * ms = ELKS_PTR(struct elks_stat, bx);
-	ms->est_dev = s->st_dev;
-	ms->est_inode = s->st_ino;
-	ms->est_mode = s->st_mode;
-	ms->est_nlink = s->st_nlink;
-	ms->est_uid = s->st_uid;
-	ms->est_gid = s->st_gid;
-	ms->est_rdev = s->st_rdev;
-	ms->est_size = s->st_size;
-	ms->est_atime = s->st_atime;
-	ms->est_mtime = s->st_mtime;
-	ms->est_ctime = s->st_ctime;
+	ms->est_dev=s->st_dev;
+	ms->est_inode=s->st_ino;
+	ms->est_mode=s->st_mode;
+	ms->est_nlink=s->st_nlink;
+	ms->est_uid=s->st_uid;
+	ms->est_gid=s->st_gid;
+	ms->est_rdev=s->st_rdev;
+	ms->est_size=s->st_size;
+	ms->est_atime=s->st_atime;
+	ms->est_mtime=s->st_mtime;
+	ms->est_ctime=s->st_ctime;
 }
 
 /*
  *	Implementation of ELKS syscalls.
  */
-
-
+ 
+ 
 #define sys_exit elks_exit
 static int elks_exit(int bx,int cx,int dx,int di,int si)
 {
@@ -96,9 +96,9 @@ static int elks_read(int bx,int cx,int dx,int di,int si)
 {
 	dbprintf(("read(%d, %d, %d)\n",
 		bx,cx,dx));
-	if (bx >= 10000 && bx < 10000 + DIRCOUNT)
+	if( bx >= 10000 && bx < 10000+DIRCOUNT)
 		return elks_readdir(bx, cx, dx, di, si);
-	if (dx < 0 || dx > 1024) dx = 1024;
+	if( dx < 0 || dx > 1024 ) dx = 1024;
 	return read(bx, ELKS_PTR(void, cx), dx);
 }
 
@@ -106,10 +106,12 @@ static int elks_read(int bx,int cx,int dx,int di,int si)
 static int elks_write(int bx,int cx,int dx,int di,int si)
 {
 #ifdef TESTING
-	if (dx > 1024 || dx < 0) {
+	if( dx > 1024 || dx < 0 )
+	{
 	   dx = 1024;
 	   dbprintf(("write(%d, %d, >%d)\n",bx,cx,dx));
-	} else
+	}
+	else 
 #endif
 	{
 	   dbprintf(("write(%d, %d, %d)\n",bx,cx,dx));
@@ -123,13 +125,13 @@ static int elks_open(int bx,int cx,int dx,int di,int si)
 	struct stat s;
 
 	/* Assumes _all_ flags are the same */
-	char *dp = ELKS_PTR(char, bx);
+	char *dp=ELKS_PTR(char, bx);
 	dbprintf(("open(%s, %d, %d)\n",
 		dp,cx,dx));
 
 	/* Nasty hack so /lib/liberror.txt doesn't exist on the host.
 	 */
-	if (strcmp(dp, "/lib/liberror.txt") == 0) {
+	if (strcmp(dp, "/lib/liberror.txt") == 0 ) {
 	   int fd = open("/tmp/liberror.txt", O_CREAT|O_EXCL|O_RDWR, 0666);
 	   if (fd < 0) return fd;
 	   unlink("/tmp/liberror.txt");
@@ -138,9 +140,12 @@ static int elks_open(int bx,int cx,int dx,int di,int si)
 	   return fd;
 	}
 
-	if (cx == O_RDONLY) {
-		if (stat(dp,&s) == -1) return -1;
-		if (S_ISDIR(s.st_mode)) return elks_opendir(dp);
+	if( cx == O_RDONLY )
+	{
+		if(stat(dp,&s)==-1)
+			return -1;
+		if( S_ISDIR(s.st_mode) )
+			return elks_opendir(dp);
 	}
 
 	return open(dp,cx,dx);
@@ -150,7 +155,8 @@ static int elks_open(int bx,int cx,int dx,int di,int si)
 static int elks_close(int bx,int cx,int dx,int di,int si)
 {
 	dbprintf(("close(%d)\n",bx));
-	if (bx >= 10000 && bx < 10000 + DIRCOUNT) return elks_closedir(bx);
+	if( bx >= 10000 && bx < 10000+DIRCOUNT)
+		return elks_closedir(bx);
 	return close(bx);
 }
 
@@ -158,15 +164,15 @@ static int elks_close(int bx,int cx,int dx,int di,int si)
 static int elks_wait4(int bx,int cx,int dx,int di,int si)
 {
 	int status;
-	uint16_t *tp = ELKS_PTR(uint16_t, cx);
+	uint16_t *tp=ELKS_PTR(uint16_t, cx);
 	int r;
 	struct rusage use;
 
 	dbprintf(("wait4(%d, %d, %d, %d)\n", bx, cx, dx, di));
-	r = wait4((int)(short)bx, &status, dx, &use);
+	r=wait4((int)(short)bx, &status, dx, &use );
 
-	*tp = status;
-	if (di) memcpy(ELKS_PTR(void, di), &use, sizeof(use));
+	*tp=status;
+	if( di ) memcpy(ELKS_PTR(void, di), &use, sizeof(use));
 	return r;
 }
 
@@ -233,7 +239,8 @@ static int elks_stat(int bx,int cx,int dx,int di,int si)
 {
 	struct stat s;
 	dbprintf(("stat(%s,%d)\n", ELKS_PTR(char, bx), cx));
-	if (stat(ELKS_PTR(char, bx),&s) == -1) return -1;
+	if(stat(ELKS_PTR(char, bx),&s)==-1)
+		return -1;
 	squash_stat(&s,cx);
 	return 0;
 }
@@ -243,7 +250,8 @@ static int elks_lstat(int bx,int cx,int dx,int di,int si)
 {
 	struct stat s;
 	dbprintf(("lstat(%s,%d)\n", ELKS_PTR(char, bx), cx));
-	if (lstat(ELKS_PTR(char, bx),&s) == -1) return -1;
+	if(lstat(ELKS_PTR(char, bx),&s)==-1)
+		return -1;
 	squash_stat(&s,cx);
 	return 0;
 }
@@ -251,11 +259,11 @@ static int elks_lstat(int bx,int cx,int dx,int di,int si)
 #define sys_lseek elks_lseek
 static int elks_lseek(int bx,int cx,int dx,int di,int si)
 {
-	long l = ELKS_PEEK(int32_t, cx);
-
+	long l=ELKS_PEEK(int32_t, cx);
+	
 	dbprintf(("lseek(%d,%ld,%d)\n",bx,l,dx));
 	l = lseek(bx,l,dx);
-	if (l < 0) return -1;
+	if( l < 0 ) return -1;
 	ELKS_POKE(int32_t, cx, l);
 	return 0;
 }
@@ -296,7 +304,7 @@ static int elks_fstat(int bx,int cx,int dx,int di,int si)
 	struct stat s;
 	int err;
 	dbprintf(("fstat(%d,%d)\n",bx,cx));
-	err = fstat(bx,&s);
+	err=fstat(bx,&s);
 	squash_stat(&s,cx);
 	return err;
 }
@@ -311,7 +319,7 @@ static int elks_pause(int bx,int cx,int dx,int di,int si)
 #define sys_utime elks_utime
 static int elks_utime(int bx,int cx,int dx,int di,int si)
 {
-	uint32_t *up = ELKS_PTR(uint32_t, cx);
+	uint32_t *up=ELKS_PTR(uint32_t, cx);
 	struct utimbuf u;
 	u.actime=*up++;
 	u.modtime=*up;
@@ -343,12 +351,13 @@ static int elks_kill(int bx,int cx,int dx,int di,int si)
 #define sys_pipe elks_pipe
 static int elks_pipe(int bx,int cx,int dx,int di,int si)
 {
-	uint16_t *dp = ELKS_PTR(uint16_t, bx);
+	uint16_t *dp=ELKS_PTR(uint16_t, bx);
 	int p[2];
-	int err = pipe(p);
-	if (err == -1) return err;
-	*dp++ = p[0];
-	*dp = p[1];
+	int err=pipe(p);
+	if(err==-1)
+		return err;
+	*dp++=p[0];
+	*dp=p[1];
 	return 0;
 }
 
@@ -356,13 +365,13 @@ static int elks_pipe(int bx,int cx,int dx,int di,int si)
 static int elks_times(int bx,int cx,int dx,int di,int si)
 {
 	struct tms t;
-	clock_t clock_ticks = times(&t);
-	int32_t *tp = ELKS_PTR(int32_t, bx);
-	int32_t *clkt = ELKS_PTR(int32_t, cx);
-	*tp++ = t.tms_utime;
-	*tp++ = t.tms_stime;
-	*tp++ = t.tms_cutime;
-	*tp = t.tms_cstime;
+	clock_t clock_ticks=times(&t);
+	int32_t *tp=ELKS_PTR(int32_t, bx);
+	int32_t *clkt=ELKS_PTR(int32_t, cx);
+	*tp++=t.tms_utime;
+	*tp++=t.tms_stime;
+	*tp++=t.tms_cutime;
+	*tp=t.tms_cstime;
 	*clkt = clock_ticks;
 	return 0;	/* Should be clock_ticks */
 }
@@ -386,7 +395,7 @@ static int elks_getgid(int bx,int cx,int dx,int di,int si)
  * its another elks image then our kernel side binary loader will load
  * elksemu again and we'll take the Unix args and turn them back into a
  * elks stack image.
- *
+ * 
  * For now we run elksemu ourselves and do token attempts at binary checking.
  *
  * Of course if the kernel misc module is confiured we could just run the exe.
@@ -403,50 +412,58 @@ static int elks_execve(int bx,int cx,int dx,int di,int si)
 	uint16_t *tmp;
 	struct elks_exec_hdr mh;
 	int is_elks = 1;
-
+	
 	dbprintf(("exec(%s,%d,%d)\n",ELKS_PTR(char, bx), cx, dx));
 
-	base = ELKS_PTR(unsigned char, cx);
-	bp = ELKS_PTR(uint16_t, cx + 2);
-	tmp = bp;
+	base=ELKS_PTR(unsigned char, cx);
+	bp=ELKS_PTR(uint16_t, cx+2);
+	tmp=bp;
 
-	fd = open(ELKS_PTR(char, bx),O_RDONLY);
-	if (fd == -1) { errno = ENOENT; return -1; }
-	if (read(fd, &mh, sizeof(mh)) != sizeof(mh)) {
+	fd=open(ELKS_PTR(char, bx),O_RDONLY);
+	if(fd==-1)
+	{ errno = ENOENT; return -1; }
+	if(read(fd, &mh, sizeof(mh))!=sizeof(mh))
+	{
 		close(fd);
 		errno = ENOEXEC;
 		return -1;
 	}
 	close(fd);
-	if (mh.hlen != EXEC_HEADER_SIZE || mh.type != ELKS_SPLITID)
+	if(mh.hlen!=EXEC_HEADER_SIZE || mh.type!=ELKS_SPLITID)
 	   is_elks = 0;
 
 	arg_ct = env_ct = 0;
-	while(*tmp++) arg_ct++;
-	while(*tmp++) env_ct++;
-	arg_ct += 2;	/* elksemu-path progname arg0...argn */
-	argp = malloc(sizeof(char *)*(arg_ct + 1));
-	envp = malloc(sizeof(char *)*(env_ct + 1));
-	if (!argp || !envp) { errno = ENOMEM; return -1; }
-	ct = 0;
-	if (is_elks) {
+	while(*tmp++)
+		arg_ct++;
+	while(*tmp++)
+		env_ct++;
+	arg_ct+=2;	/* elksemu-path progname arg0...argn */
+	argp=malloc(sizeof(char *)*(arg_ct+1));
+	envp=malloc(sizeof(char *)*(env_ct+1));
+	if(!argp||!envp) { errno = ENOMEM; return -1; }
+	ct=0;
+	if( is_elks )
+	{
 	   argp[0]="/usr/bin/elksemu";
-	   /* argp[1] = ELKS_PTR(char, bx); */
-	   ct = 1;
+	   /* argp[1]=ELKS_PTR(char, bx); */
+	   ct=1;
 	}
-	while(*bp) argp[ct++] = ELKS_PTR(char, cx+ *bp++);
-	argp[ct] = 0;
+	while(*bp)
+		argp[ct++]=ELKS_PTR(char, cx+ *bp++);
+	argp[ct]=0;
 	bp++;
-	ct = 0;
-	while(*bp) envp[ct++] = ELKS_PTR(char, cx+ *bp++);
-	envp[ct] = 0;
-	if (is_elks) {
-	   argp[1] = ELKS_PTR(char, bx);
+	ct=0;
+	while(*bp)
+		envp[ct++]=ELKS_PTR(char, cx+ *bp++);
+	envp[ct]=0;
+	if( is_elks )
+	{
+	   argp[1]=ELKS_PTR(char, bx);
 	   execve(argp[0],argp,envp);
 	}
 	else
 	   execve(ELKS_PTR(char, bx),argp,envp);
-	if (errno == ENOEXEC || errno == EACCES) return -1;
+	if( errno == ENOEXEC || errno == EACCES ) return -1;
 	perror("elksemu");
 	exit(1);
 }
@@ -482,7 +499,7 @@ static int elks_fcntl(int bx,int cx,int dx,int di,int si)
 		case ELKS_F_SETFL:
 			return fcntl(bx,F_SETFL,dx);
 		/*
-		 *	Fixme: Unpack and process elks file locks
+		 *	Fixme: Unpack and process elks file locks 
 		 */
 		case ELKS_F_GETLK:
 		case ELKS_F_SETLK:
@@ -537,15 +554,17 @@ static int elks_gettimeofday(int bx,int cx,int dx,int di,int si)
 
 	ax = gettimeofday(&tv, &tz);
 
-	if (ax == 0 && bx) {
+	if( ax == 0 && bx )
+	{
 	   ELKS_POKE(int32_t, bx, tv.tv_sec);
-	   ELKS_POKE(int32_t, bx + 4, tv.tv_usec);
+	   ELKS_POKE(int32_t, bx+4, tv.tv_usec);
 	}
-	if (ax == 0 && cx) {
+	if( ax == 0 && cx )
+	{
 	   ELKS_POKE(int16_t, cx, tz.tz_minuteswest);
-	   ELKS_POKE(int16_t, cx + 2, tz.tz_dsttime);
+	   ELKS_POKE(int16_t, cx+2, tz.tz_dsttime);
 	}
-	return ax ? -1 : 0;
+	return ax?-1:0;
 }
 
 #define sys_settimeofday elks_settimeofday
@@ -556,19 +575,21 @@ static int elks_settimeofday(int bx,int cx,int dx,int di,int si)
 	int ax;
 	dbprintf(("settimeofday(%d,%d)\n",bx,cx));
 
-	if (bx) {
+	if( bx )
+	{
 	   pv = &tv;
 	   tv.tv_sec  = ELKS_PEEK(int32_t, bx);
-	   tv.tv_usec = ELKS_PEEK(int32_t, bx + 4);
+	   tv.tv_usec = ELKS_PEEK(int32_t, bx+4);
 	}
-	if (cx) {
+	if( cx )
+	{
 	   pz = &tz;
 	   tz.tz_minuteswest = ELKS_PEEK(int16_t, cx);
-	   tz.tz_dsttime =     ELKS_PEEK(int16_t, cx + 2);
+	   tz.tz_dsttime =     ELKS_PEEK(int16_t, cx+2);
 	}
 
 	ax = settimeofday(pv, pz);
-	return ax ? -1 : 0;
+	return ax?-1:0;
 }
 
 #define sys_nice elks_nice
@@ -610,7 +631,7 @@ static int elks_ioctl(int bx,int cx,int dx,int di,int si)
 static int elks_reboot(int bx,int cx,int dx,int di,int si)
 {
    errno = EINVAL;
-   if (bx != 0xfee1 || cx != 0xdead) return -1;
+   if( bx != 0xfee1 || cx != 0xdead ) return -1;
 
    switch(dx)
    {
@@ -631,11 +652,12 @@ elks_opendir(char * dname)
 {
 	DIR * d;
 	int rv;
-	for (rv = 0; rv < DIRCOUNT; rv++)
-		if (dirtab[rv] == 0) break;
-	if (rv >= DIRCOUNT) { errno = ENOMEM; return -1; }
+	for(rv=0; rv<DIRCOUNT; rv++)
+		if( dirtab[rv] == 0 )
+			break;
+	if( rv >= DIRCOUNT ) { errno=ENOMEM; return -1; }
 	d = opendir(dname);
-	if (d == 0) return -1;
+	if( d == 0 ) return -1;
 	dirtab[rv] = d;
 	return 10000+rv;
 }
@@ -646,25 +668,25 @@ static int elks_readdir(int bx,int cx,int dx,int di,int si)
 	struct dirent * ent;
 
 	/* Only read _ONE_ _WHOLE_ dirent at a time */
-	if (dx != 266 && dx != 1)
+	if( dx != 266 && dx != 1 )
 	{
-		errno = EINVAL; return -1;
+		errno=EINVAL; return -1;
 	}
 	errno = 0;
 	ent = readdir(dirtab[bx-10000]);
-	if (ent == 0) { if ( errno ) { return -1; } else return 0; }
+	if( ent == 0 ) { if( errno ) { return -1; } else return 0; }
 
-	memcpy(ELKS_PTR(char, cx + 10), ent->d_name, ent->d_reclen + 1);
+	memcpy(ELKS_PTR(char, cx+10), ent->d_name, ent->d_reclen+1);
 	ELKS_POKE(int32_t, cx, ent->d_ino);
-	ELKS_POKE(int16_t, cx + 8, ent->d_reclen);
+	ELKS_POKE(int16_t, cx+8, ent->d_reclen);
 	return dx;
 }
 
 static int
 elks_closedir(int bx)
 {
-	bx -= 10000;
-	if (dirtab[bx]) closedir(dirtab[bx]);
+	bx-=10000;
+	if( dirtab[bx] ) closedir(dirtab[bx]);
 	dirtab[bx] = 0;
 	return 0;
 }
@@ -750,23 +772,25 @@ static funcp jump_tbl[] = {
 #include "call_tab.v"
    elks_enosys
 };
-
+ 
 int elks_syscall(void)
 {
 	int r, n;
-	int bx = elks_cpu.regs.xbx & 0xFFFF;
-	int cx = elks_cpu.regs.xcx & 0xFFFF;
-	int dx = elks_cpu.regs.xdx & 0xFFFF;
-	int di = elks_cpu.regs.xdi & 0xFFFF;
-	int si = elks_cpu.regs.xsi & 0xFFFF;
-
-	errno = 0;
-	n = (elks_cpu.regs.xax & 0xFFFF);
-	if (n >= 0 && n < sizeof(jump_tbl) / sizeof(funcp))
+	int bx=elks_cpu.regs.xbx&0xFFFF;
+	int cx=elks_cpu.regs.xcx&0xFFFF;
+	int dx=elks_cpu.regs.xdx&0xFFFF;
+	int di=elks_cpu.regs.xdi&0xFFFF;
+	int si=elks_cpu.regs.xsi&0xFFFF;
+	
+	errno=0;
+	n = (elks_cpu.regs.xax&0xFFFF);
+	if( n>= 0 && n< sizeof(jump_tbl)/sizeof(funcp) )
 	   r = (*(jump_tbl[n]))(bx, cx, dx, di, si);
 	else
 		return -ENOSYS;
 
-	if (r >= 0) return r;
-	else return -errno;
+	if(r>=0)
+		return r;
+	else
+		return -errno;
 }

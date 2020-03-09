@@ -4,7 +4,7 @@
  *  Copyright (C) 1996  Martin von Löwis
  *  original #!-checking implemented by tytso.
  *  ELKS hack added by Chad Page...
- *  Cleaned up some more by Robert de Bath
+ *  Cleaned up some more by Robert de Bath 
  */
 
 #include <linux/module.h>
@@ -22,7 +22,7 @@ static int do_load_elksaout(struct linux_binprm *bprm,struct pt_regs *regs)
 	int retval;
 
 	/* What a horrible hack! :-) */
-	if ((bprm->buf[0] != 1)   || (bprm->buf[1] != 3) ||
+	if ((bprm->buf[0] != 1)   || (bprm->buf[1] != 3) || 
 	    (bprm->buf[2] != 0x20 && bprm->buf[2] != 0x10) ||
 	    (bprm->buf[3] != 4) || bprm->sh_bang)
 		return -ENOEXEC;
@@ -37,8 +37,9 @@ static int do_load_elksaout(struct linux_binprm *bprm,struct pt_regs *regs)
 	i_name = interp;
 	i_arg = 0;
 
-	for (cp = i_name; *cp && (*cp != ' ') && (*cp != '\t'); cp++) {
-		if (*cp == '/') i_name = cp + 1;
+	for (cp=i_name; *cp && (*cp != ' ') && (*cp != '\t'); cp++) {
+ 		if (*cp == '/')
+			i_name = cp+1;
 	}
 
 	/*
@@ -60,19 +61,22 @@ static int do_load_elksaout(struct linux_binprm *bprm,struct pt_regs *regs)
 	}
 	bprm->p = copy_strings(1, &i_name, bprm->page, bprm->p, 2);
 	bprm->argc++;
-	if (!bprm->p) return -E2BIG;
+	if (!bprm->p) 
+		return -E2BIG;
 	/*
 	 * OK, now restart the process with the interpreter's inode.
 	 * Note that we use open_namei() as the name is now in kernel
 	 * space, and we don't need to copy it.
 	 */
 	retval = open_namei(interp, 0, 0, &bprm->inode, NULL);
-	if (retval) return retval;
+	if (retval)
+		return retval;
 #if LINUX_VERSION_CODE >= 0x010300
-	bprm->dont_iput = 0;
+	bprm->dont_iput=0;
 #endif
-	retval = prepare_binprm(bprm);
-	if (retval < 0) return retval;
+	retval=prepare_binprm(bprm);
+	if(retval<0)
+		return retval;
 	return search_binary_handler(bprm,regs);
 }
 

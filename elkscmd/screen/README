@@ -11,7 +11,7 @@ features of 4.2 and 4.3 BSD UNIX.
 
 If you want to get a quick idea how "screen" works but don't want to read
 the entire manual, do the following:
-
+ 
      -  call "screen" without arguments
      -  wait for the shell prompt; execute some commands
      -  type ^A ^C (Control-A followed by Control-C)

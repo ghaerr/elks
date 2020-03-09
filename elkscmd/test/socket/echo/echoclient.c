@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#ifndef __linux__
+#ifndef __linux__ 
 #include <linuxmt/socket.h>
 #include <linuxmt/un.h>
 #include <linuxmt/in.h>
@@ -50,12 +50,12 @@ int main(int argc, char *argv[]) {
   char	*cp;
   int fd,rc,afunix;
   struct sockaddr_in addr_in;
-#ifndef __linux__
+#ifndef __linux__   
   struct sockaddr_un addr_un;
 #endif
   afunix=0;
-
-#ifndef __linux__
+  
+#ifndef __linux__  
   if (argv[1][0] == '-') {
 		cp = &argv[1][1];
 		if (strcmp(cp, "u") == 0) {
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 			exit (0);
 		} else {
 			usage();
-			exit (0);
+			exit (0);			
 		}
 		argc--;
 		argv++;
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
 			usage();
 			exit (0);
 	}
-
+	  
 #endif
 
 if ( afunix == 0 ) { /* Internet */
@@ -88,17 +88,17 @@ addr_in.sin_family = AF_INET;
 addr_in.sin_port = 0; /* any port */
 addr_in.sin_addr.s_addr = INADDR_ANY;
 
-if (bind(fd, (struct sockaddr *)&addr_in, sizeof(struct sockaddr_in)) == -1) {
+if (bind(fd, (struct sockaddr *)&addr_in, sizeof(struct sockaddr_in))==-1) {
         	perror("Bind failed");
 		exit(1);
 }
-
+  
   addr_in.sin_family = AF_INET;
-#ifndef __linux__
+#ifndef __linux__   
   addr_in.sin_addr.s_addr = in_aton("10.0.2.2");
-#else
+#else  
   inet_pton(AF_INET,"127.0.0.1",&(addr_in.sin_addr));
-#endif
+#endif  
   addr_in.sin_port = htons(2323);
 
   if (connect(fd, (struct sockaddr*)&addr_in, sizeof(addr_in)) == -1) {
@@ -108,13 +108,13 @@ if (bind(fd, (struct sockaddr *)&addr_in, sizeof(struct sockaddr_in)) == -1) {
   }
 
 } else { /* unix domain sockets */
-#ifndef __linux__
+#ifndef __linux__   
   if ( (fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
     perror("socket error");
     exit(-1);
   }
   memset(&addr_un, 0, sizeof(addr_un));
-  addr_un.sun_family = AF_UNIX;
+  addr_un.sun_family = AF_UNIX; 
   if (*socket_path == '\0') {
     *addr_un.sun_path = '\0';
     strncpy(addr_un.sun_path+1, socket_path+1, sizeof(addr_un.sun_path)-2);
@@ -126,13 +126,13 @@ if (bind(fd, (struct sockaddr *)&addr_in, sizeof(struct sockaddr_in)) == -1) {
     close(fd);
     exit(-1);
   }
-#endif
-} /* afunix == 0) */
-
+#endif  
+} /* afunix==0) */
+  
   write(STDOUT_FILENO, "\nType any string and press enter to send it to the server.\n",59);
   write(STDOUT_FILENO, "ESC and enter to quit.\n",23);
-  while ((rc=read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
-    if (buf[0] == 27) exit (0);
+  while( (rc=read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
+    if (buf[0]==27) exit (0);
     if (write(fd, buf, rc) != rc) {
       if (rc > 0) fprintf(stderr,"partial write");
       else {
@@ -141,10 +141,10 @@ if (bind(fd, (struct sockaddr *)&addr_in, sizeof(struct sockaddr_in)) == -1) {
         exit(-1);
       }
     }
-    bzero( buf, sizeof(buf));
+    bzero( buf, sizeof(buf));  
     if (rc=read(fd,buf,100) > 0)
     write(STDOUT_FILENO, "Server returned:",17);
-    write(STDOUT_FILENO, buf, sizeof(buf));
+    write(STDOUT_FILENO, buf, sizeof(buf));  
     write(STDOUT_FILENO, "\r", 1);
     bzero( buf, sizeof(buf));
   }

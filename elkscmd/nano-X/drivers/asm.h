@@ -2,7 +2,7 @@
 ; Copyright (c) 1999 Greg Haerr <greg@censoft.com>
 ; asm.h - all asm*.s TC/MC/Aztec assembly include file
 ;
-; 7/26/92 v6.3 TSC support
+; 7/26/92 v6.3 TSC support 
 ; 11/17/92 original version
 ;
 ; #define __LARGE__, __MEDIUM__, __SMALL__ for model

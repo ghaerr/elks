@@ -31,22 +31,22 @@ char ** argv;
 		perror(*argv);
 		exit(1);
 	}
-
+	
 	if (!S_ISBLK(statbuf.st_mode)){
 		printf("%s not a block device\n", argv[1]);
 		exit(1);
 	}
-
+		
 	si.major = statbuf.st_rdev >> 8;
 	si.minor = statbuf.st_rdev & 0xff;
 	sscanf(argv[2], "%d", &si.size);
 
-	printf("Adding swap device (%d, %d) size %d\n", si.major, si.minor, si.size);
+	printf("Adding swap device (%d, %d) size %d\n", si.major, si.minor, si.size); 
 
-	if (ioctl(fd, MEM_SETSWAP, &si)){
+	if(ioctl(fd, MEM_SETSWAP, &si)){
 		perror(*argv);
 		exit(1);
-	}
+	}	
 
 	return 0;
 }

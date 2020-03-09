@@ -8,7 +8,7 @@
 #include "elarbo.h"
 
 /* DATAOJ POR LA NODOJ DE LA ARBO */
-/* post la hash-tabelo kushas nekodotaj nodoj (kun nivelo == 1) */
+/* post la hash-tabelo kushas nekodotaj nodoj (kun nivelo==1) */
 FRAZ *
     /* [HDIM+NEKODOT] */
     nod_d; /* direktilo al la komenco de la frazo           */

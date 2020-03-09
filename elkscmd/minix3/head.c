@@ -39,7 +39,7 @@ char *argv[];
 
   /* One or more files have been listed explicitly. */
   while (k < argc) {
-	if (nfiles > 1) printf(" == > %s < == \n", argv[k]);
+	if (nfiles > 1) printf("==> %s <==\n", argv[k]);
 	if ((f = fopen(argv[k], "r")) == NULL)
 		fprintf(stderr, "%s: cannot open %s: %s\n",
 			argv[0], argv[k], strerror(errno));

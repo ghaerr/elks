@@ -51,8 +51,8 @@ lp4:
 #endasm
 #else
    register char c1=0, c2=0;
-   while (l-- >0)
-      if ((c1= *d++) != (c2= *s++) || c1 == '\0' )
+   while(l-- >0)
+      if( (c1= *d++) != (c2= *s++) || c1 == '\0' )
          break;
    return c1-c2;
 #endif

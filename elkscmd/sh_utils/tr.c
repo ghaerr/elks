@@ -165,11 +165,11 @@ again:
 					default:
 						fprintf(stderr, "%s: Illegal %c in set%d\n", progname, ch, num);
 						exit(1);
-
+							
 				}
 				break;
 			case '-':
-				if ((tail) &&
+				if ((tail) && 
 				    ((n1 = set_descr[++i]) > buf[tail-1])) {
 					for (n2 = buf[tail-1] + 1;n2 <= n1;n2++){
 						buf[tail++] = n2;
@@ -181,7 +181,7 @@ again:
 			default:
 				buf[tail++] = ch;
 				break;
-
+		
 		}
 		if ((size - tail) < 4) {
 			size += BSIZE;

@@ -1,10 +1,10 @@
 /*
  * An nano-http server. Part of the linux-86 project
- *
+ * 
  * Copyright (c) 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
  *
  */
-
+ 
 /*
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -102,20 +102,20 @@ void process_request()
 	int ret;
 	char *c, *file, fullpath[128];
 	struct stat st;
-
+	
 	ret = read(conn_sock, buf, BUF_SIZE);
-
+	
 	c = buf;
 	while (*c && !WS(*c) && c < (buf + sizeof(buf))){
 		c++;
 	}
 	*c = 0;
-
+	
 	if (strcasecmp(buf, "get")){
 		send_error(404, "Method not supported");
-		return;
+		return;		
 	}
-
+	
 	file = ++c;
 	while (*c && !WS(*c) && c < (buf + sizeof(buf))){
 		c++;
@@ -126,14 +126,14 @@ void process_request()
 	strcpy(fullpath, doc_base);
 	strcat(fullpath, file);
 	stat(fullpath, &st);
-
+	
 	if ((st.st_mode & S_IFMT) == S_IFDIR){
 		if (file[strlen(fullpath) - 1] != '/'){
 			strcat(fullpath, "/");
 		}
 		strcat(fullpath, "index.html");
 	}
-
+	
 	fin = open(fullpath, O_RDONLY);
 	if (fin < 0){
 		send_error(404, "Document (probably) not found");
@@ -145,14 +145,14 @@ void process_request()
 	buf[0] = 0;
 	sprintf(buf,"Content-Length: %d\r\n\r\n",size);
 	write(conn_sock, buf, strlen(buf));
-
+	
 	do {
 		ret = read(fin, buf, BUF_SIZE);
 		write(conn_sock, buf, ret);
 	} while (ret == BUF_SIZE);
-
+	
 	close(fin);
-
+	
 }
 
 int main(argc, argv)
@@ -164,7 +164,7 @@ char** argv;
 
 	ret = fork();
 	if (ret > 0 || ret == -1){
-		exit(0);
+		exit(0);	
 	}
 	ret = open("/dev/null", O_RDWR); /* our log file! */
 	dup2(ret, 0);
@@ -174,9 +174,9 @@ char** argv;
 	setsid();
 
 	strcpy(doc_base, DEF_DOCBASE);
-
+	
 	listen_sock = socket(AF_INET, SOCK_STREAM, 0);
-
+	
 	localadr.sin_family = AF_INET;
 	localadr.sin_port = htons(DEF_PORT);
 	localadr.sin_addr.s_addr = INADDR_ANY;
@@ -189,7 +189,7 @@ char** argv;
 
 	while (1){
 		conn_sock = accept(listen_sock, NULL, NULL);
-
+		
 		if (conn_sock < 0)
 			continue;
 

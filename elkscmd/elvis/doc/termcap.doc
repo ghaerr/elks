@@ -5,8 +5,8 @@
 E10.  TERMCAPF
 
         Elvis uses  fairly  standard  termcap fields for most things.  I
-     invented the cursor shape names but other than that there should be
-     no surprises.
+     invented the cursor shape names but other than that there should be 
+     no surprises.  
 
 
    E10.1  Required numeric fieldsF
@@ -71,11 +71,11 @@ E10.  TERMCAPF
         Originally, termcap  didn't  have  any  names  for  the  <PgUp>,
      <PgDn>, <Home>,  and  <End>  keys.    Although the capability names
      shown in the  table  above  are  the  most  common,  they  are  -1not-0
-     universal.  SCO Xenix uses :PU=:PD=:HM=:EN=: for those keys.  Also,
+     universal.  SCO Xenix uses :PU=:PD=:HM=:EN=: for those keys.  Also, 
      if  the four arrow keys happen to be part of a 3x3 keypad, then the
      five non-arrow keys may be named :K1=: through :K5=:, so an IBM  PC
-     keyboard may be described using those names instead.  Elvis can any
-     of these names.
+     keyboard may be described using those names instead.  Elvis can any 
+     of these names.  
 
 
    E10.6  Optional fields that describe character attributesF
@@ -91,7 +91,7 @@ E10.  TERMCAPF
 
         The  :cQ=: string is used by elvis immediately before exiting to
      undo the effects of the other cursor shape strings.   If  :cQ=:  is
-     not given, then all other cursor shape strings are ignored.
+     not given, then all other cursor shape strings are ignored.  
 
         :cQ=:   normal cursor
         :cX=:   cursor shape used for reading EX command -- steady underline
@@ -100,7 +100,7 @@ E10.  TERMCAPF
         :cR=:   cursor shape used during VI replace mode -- blinking block
 
         If  the  capabilities above aren't given, then Elvis will try to
-     use the following values instead.
+     use the following values instead.  
 
         :ve=:   normal cursor, used as :cQ=:cX=:cI=:cR=:
         :vs=:   gaudy cursor, used as :cV=:
@@ -109,8 +109,8 @@ E10.  TERMCAPF
    E10.8  An exampleF
 
         Here's the termcap entry I use on my Minix-ST system.   Some  of
-     the fields in it have nothing to do with Elvis.  Some can only work
-     on my system; I have modified my kernel's screen driver.
+     the fields in it have nothing to do with Elvis.  Some can only work 
+     on my system; I have modified my kernel's screen driver.  
 
 
             mx|minix|minixst|ansi:\

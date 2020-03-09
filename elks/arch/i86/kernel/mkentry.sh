@@ -105,7 +105,7 @@ syscall:
         jmp    *sys_call_table(%bx)
 
 //	All unimplemented calls
-
+	
 _no_syscall:
 	mov	$-38,%ax
 	ret

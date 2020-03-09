@@ -11,7 +11,7 @@ SYSSIZE = DEF_SYSSIZE
 !	modified by Drew Eckhardt
 !	modified by Bruce Evans (bde)
 ! 	modified by Alan Cox for Linux/ELKS and 8088 compatiblity
-!	modified for Linux/16 by Chad Page
+!	modified for Linux/16 by Chad Page 
 !
 ! bootsect.s is loaded at 0x7c00 by the bios-startup routines, and moves
 ! itself out of the way to address 0x90000, and jumps there.
@@ -20,12 +20,12 @@ SYSSIZE = DEF_SYSSIZE
 ! memory.  Use int 0x12 to get the top of memory, etc.
 !
 ! It then loads 'setup' directly after itself (0x90200), and the system
-! at 0x10000, using BIOS interrupts.
+! at 0x10000, using BIOS interrupts. 
 !
-! NOTE! currently system is at most (8*65536-4096) bytes long. This should
+! NOTE! currently system is at most (8*65536-4096) bytes long. This should 
 ! be no problem, even in the future. I want to keep it simple. This 508 kB
 ! kernel size should be enough, especially as this doesn't contain the
-! buffer cache as in minix (and especially now that the kernel is
+! buffer cache as in minix (and especially now that the kernel is 
 ! compressed :-)
 !
 ! The loader has been made as simple as possible, and continuous
@@ -48,13 +48,13 @@ ROOT_DEV = 0
 #endif
 #ifndef RAMDISK
 #define RAMDISK 0
-#endif
+#endif 
 
 #include <linuxmt/boot.h>
 
 ! ld86 requires an entry symbol. This may as well be the usual one.
 .globl	_main
-_main:
+_main:	
 .org 0x0000
 	.long 0x1B031336
 	.long 0x00000004
@@ -67,23 +67,23 @@ _main:
 	.long ((INITSEG << 4) + 0x0200)
 	.long (SETUPSECS * 512)
 	.long (SETUPSECS * 512)
-
+	
 #ifdef CONFIG_PRELOAD_RAMDISK
-	.long 0x00000004
+	.long 0x00000004  
 #else
 	.long 0x04000004      /* bit 26 is end marker ! */
-#endif
+#endif	
 	.long (SYSSEG << 4)
 	.long (SYSSIZE << 4)
 	.long (SYSSIZE << 4)
 
-#ifdef CONFIG_PRELOAD_RAMDISK
+#ifdef CONFIG_PRELOAD_RAMDISK	
 	.long 0x04000004
 	.long 0x00060000
 	.long 0x00020000
 	.long 0x00020000
-#endif
-
+#endif	
+	
 .org 0x01EF
 	.word 0
 setup_sects:

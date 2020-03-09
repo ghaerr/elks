@@ -62,7 +62,7 @@ main(int argc,char **argv)
 		fprintf(stderr, "cannot open graphics\n");
 		exit(1);
 	}
-
+	
 	GrGetScreenInfo(&si);
 
 	GrSetErrorHandler(errorcatcher);
@@ -443,11 +443,11 @@ do_idle()
 	y = rand() % 40;
 	rx = (rand() % 10) + 5;
 	ry = (rx * si.ydpcm) / si.xdpcm;	/* make it appear circular */
-
+	
 	color = rand() % si.ncolors;
 
 	GrSetGCForeground(gc3, PALINDEX(color));
-	GrFillEllipse(w2, gc3, x, y, rx, ry);
+	GrFillEllipse(w2, gc3, x, y, rx, ry);	
 }
 
 

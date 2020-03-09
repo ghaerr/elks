@@ -31,25 +31,25 @@ __fp_print_func(double * pval, int style, int preci, char * ptmp)
    if (preci < 0) preci = 6;
 
    cvt = fcvt(val, preci, &decpt, &negative);
-   if (negative)
+   if(negative)
       *ptmp++ = '-';
 
    if (decpt<0) {
       *ptmp++ = '0';
       *ptmp++ = '.';
-      while (decpt<0) {
+      while(decpt<0) {
 	 *ptmp++ = '0'; decpt++;
       }
    }
 
-   while (*cvt) {
+   while(*cvt) {
       *ptmp++ = *cvt++;
       if (decpt == 1)
 	 *ptmp++ = '.';
       decpt--;
    }
 
-   while (decpt > 0) {
+   while(decpt > 0) {
       *ptmp++ = '0';
       decpt--;
    }

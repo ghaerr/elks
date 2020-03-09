@@ -10,10 +10,10 @@ static char RCSid[]="$Header$" ;
  * $Log$
  * Revision 1.3  90/03/16  02:52:20  viktor
  * *** empty log message ***
- *
+ * 
  * Revision 1.2  90/03/08  20:29:59  viktor
  * Added unixpc support.
- *
+ * 
  */
 #include "devices.h"
 

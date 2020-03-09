@@ -95,7 +95,7 @@ makestring(argc, argv, buf, buflen)
 
 		if (argc)
 			*buf++ = ' ';
-		buflen--;
+		buflen--; 
 	}
 
 	*buf = '\0';

@@ -1,7 +1,7 @@
 /*
  * strtol.c - This file is part of the libc-8086 package for ELKS,
  * Copyright (C) 1995, 1996 Nat Friedman <ndf@linux.mit.edu>.
- *
+ * 
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
  *  License as published by the Free Software Foundation; either
@@ -36,7 +36,7 @@ strtol(const char *nptr, char **endptr, int base)
     ptr++;
 
   negative=0;
-  if (*ptr == '-')
+  if (*ptr=='-')
     negative=1;
 
   number=(long int)strtoul(nptr, endptr, base);
@@ -50,30 +50,30 @@ strtoul(const char *nptr, char **endptr, int base)
   unsigned long int number;
 
   /* Sanity check the arguments */
-  if (base == 1 || base>36 || base<0)
+  if (base==1 || base>36 || base<0)
     base=0;
-
+  
   /* advance beyond any leading whitespace */
   while (isspace(*nptr))
     nptr++;
 
   /* check for optional '+' or '-' */
-  if (*nptr == '-')
+  if (*nptr=='-')
       nptr++;
   else
-    if (*nptr == '+')
+    if (*nptr=='+')
       nptr++;
 
-  /* If base == 0 and the string begins with "0x" then we're supposed
+  /* If base==0 and the string begins with "0x" then we're supposed
      to assume that it's hexadecimal (base 16). */
-  if (base == 0 && *nptr == '0')
+  if (base==0 && *nptr=='0')
     {
-      if (toupper(*(nptr+1)) == 'X')
+      if (toupper(*(nptr+1))=='X')
 	{
 	  base=16;
 	  nptr+=2;
 	}
-  /* If base == 0 and the string begins with "0" but not "0x",
+  /* If base==0 and the string begins with "0" but not "0x",
      then we're supposed to assume that it's octal (base 8). */
       else
 	{
@@ -84,7 +84,7 @@ strtoul(const char *nptr, char **endptr, int base)
 
   /* If base is still 0 (it was 0 to begin with and the string didn't begin
      with "0"), then we are supposed to assume that it's base 10 */
-  if (base == 0)
+  if (base==0)
     base=10;
 
   number=0;

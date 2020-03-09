@@ -4,7 +4,7 @@ int
 cfsetospeed(struct termios *tp, speed_t speed)
 {
 #ifdef CBAUDEX
-	if ((speed & ~CBAUD)
+	if((speed & ~CBAUD)
 	|| ((speed & CBAUDEX) && (speed < B57600 || speed > B115200)))
 		return 0;
 #else

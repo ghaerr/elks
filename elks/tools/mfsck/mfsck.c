@@ -49,7 +49,7 @@
  * 01.07.96  - Fixed the v2 fs stuff to use the right #defines and such
  *	       for modern libcs (janl@math.uio.no, Nicolai Langfeldt)
  *
- * 02.07.96  - Added C bit fiddling routines from rmk@ecs.soton.ac.uk
+ * 02.07.96  - Added C bit fiddling routines from rmk@ecs.soton.ac.uk 
  *             (Russell King).  He made them for ARM.  It would seem
  *	       that the ARM is powerful enough to do this in C whereas
  *             i386 and m64k must use assembly to get it fast >:-)
@@ -57,7 +57,7 @@
  *	       (janl@math.uio.no, Nicolai Langfeldt)
  *
  * 04.11.96  - Added minor fixes from Andreas Schwab to avoid compiler
- *             warnings.  Added mc68k bitops from
+ *             warnings.  Added mc68k bitops from 
  *	       Joerg Dorchain <dorchain@mpi-sb.mpg.de>.
  *
  * 06.11.96  - Added v2 code submitted by Joerg Dorchain, but written by
@@ -87,7 +87,7 @@
  *	-f force filesystem check even if filesystem marked as valid
  *
  * The device may be a block device or a image of one, but this isn't
- * enforced (but it's not much fun on a character device :-).
+ * enforced (but it's not much fun on a character device :-). 
  */
 
 #include <stdio.h>
@@ -125,7 +125,7 @@
 static char * program_name = "fsck.minix";
 static char * device_name = NULL;
 static int IN;
-static int repair=0, automatic=0, verbose=1, list=0, show=0, warn_mode=0,
+static int repair=0, automatic=0, verbose=1, list=0, show=0, warn_mode=0, 
 	force=1;
 static int directory=0, regular=0, blockdev=0, chardev=0, links=0,
 		symlinks=0, total=0;
@@ -268,7 +268,7 @@ ask(const char * string, int def) {
 	printf(def?"%s (y/n)? ":"%s (n/y)? ",string);
 	for (;;) {
 		fflush(stdout);
-		if ((c=getchar()) == EOF) {
+		if ((c=getchar())==EOF) {
 		        if (!def)
 			      errors_uncorrected = 1;
 			return def;
@@ -324,7 +324,7 @@ check_mount(void) {
 		return;
 	else
 		close(fd);
-
+	
 	printf (_("%s is mounted.	 "), device_name);
 	if (isatty(0) && isatty(1))
 		cont = ask(_("Do you really want to continue"), 0);
@@ -545,7 +545,7 @@ write_super_block(void) {
 		Super.s_state |= MINIX_ERROR_FS;
 	else
 		Super.s_state &= ~MINIX_ERROR_FS;
-
+	
 	if (BLOCK_SIZE != lseek(IN, BLOCK_SIZE, SEEK_SET))
 		die(_("seek failed in write_super_block"));
 	if (BLOCK_SIZE != write(IN, super_block_buffer, BLOCK_SIZE))
@@ -985,7 +985,7 @@ check_file(struct minix_inode * dir, unsigned int offset) {
 			write_block(block, blk);
 		}
 		ino = 0;
-	}
+	}	
 	if (name_depth < MAX_DEPTH)
 		strncpy (name_list[name_depth], name, namelen);
 	name_depth++;
@@ -1011,7 +1011,7 @@ check_file(struct minix_inode * dir, unsigned int offset) {
 		return;
 	if (name_depth < MAX_DEPTH)
 		strncpy(name_list[name_depth], name, namelen);
-	name_depth++;
+	name_depth++;	
 	if (list) {
 		if (verbose)
 			printf("%6d %07o %3d ", ino,
@@ -1330,11 +1330,11 @@ main(int argc, char ** argv) {
 	/*
 	 * Determine whether or not we should continue with the checking.
 	 * This is based on the status of the filesystem valid and error
-	 * flags and whether or not the -f switch was specified on the
+	 * flags and whether or not the -f switch was specified on the 
 	 * command line.
 	 */
-	if ( !(Super.s_state & MINIX_ERROR_FS) &&
-	      (Super.s_state & MINIX_VALID_FS) &&
+	if ( !(Super.s_state & MINIX_ERROR_FS) && 
+	      (Super.s_state & MINIX_VALID_FS) && 
 	      !force ) {
 		if (repair)
 			printf(_("%s is clean, no check.\n"), device_name);
@@ -1405,7 +1405,7 @@ main(int argc, char ** argv) {
 	}
 	else if ( repair )
 		write_super_block();
-
+	
 	if (repair && !automatic)
 		tcsetattr(0,TCSANOW,&termios);
 

@@ -7,48 +7,48 @@ To enable the FAT support run "make menuconfig" in the elks directory. Then enab
 e.g. the serial device drivers to get sufficient memory space. Then run the build.sh
 script.
 
-In the elkscmd/test/fat directory there is a script to generate a fat32 disk image which
+In the elkscmd/test/fat directory there is a script to generate a fat32 disk image which 
 I have used for testing. The is also a script to list the contents of this disk image.
-After you have generated a FAT disk image, you can run the qemu.sh script which allows
+After you have generated a FAT disk image, you can run the qemu.sh script which allows 
 to run ELKS with Qemu from the elkscmd/test/fat directory.
 
-If you run ELKS with this script, ELKS will report a floppy disk and a hard disk. The
-etc/rc.sysint script will try to mount the disk if a bda1 device is present. You can
+If you run ELKS with this script, ELKS will report a floppy disk and a hard disk. The 
+etc/rc.sysint script will try to mount the disk if a bda1 device is present. You can 
 also mount the FAT32 hard disk from the command line with the command:
-"mount -t msdos /dev/bda1 /mnt".
-Then you can enter ls /mnt to list the files and directories in the root directory of the
-FAT32 disk.
+"mount -t msdos /dev/bda1 /mnt". 
+Then you can enter ls /mnt to list the files and directories in the root directory of the 
+FAT32 disk. 
 
 A FAT12 floppy image can be mounted with: "mount -t msdos /dev/fd1 /mnt". In the qemu.sh
 script you have to specify the floppy image e.g. with:
 "qemu-system-i386 -fda elkscmd/full3 -fdb ./fddos"
 
-The FAT support allows to read data from disks formatted in the FAT32 or FAT12 format
-and list the files on these disks. You can also write back a modified file and extend
+The FAT support allows to read data from disks formatted in the FAT32 or FAT12 format 
+and list the files on these disks. You can also write back a modified file and extend 
 its size. You can generate new files too.
 
 You can also access USB flash disks from Qemu and read files from that. I formated a
 flash disk with a 480 MB partition as number one and could read a file from that using
 ELKS and the FAT32 support.
 
-The mv command will only work if one of the specified files is on a minix disk. You
+The mv command will only work if one of the specified files is on a minix disk. You 
 cannot move a file just on a FAT disk. Also rm and ln do not work.
 
 Currently, FAT16 is not supported. The reason is that you cannot list the files
-on the FAT16 disk since the readdir command will hang in map_buffer() in fs/buffer.c.
+on the FAT16 disk since the readdir command will hang in map_buffer() in fs/buffer.c. 
 It hangs with the message: "BUFMAP: buffer #x waiting on L1 slot\n".
-You could open files if you knew their names in advance.
+You could open files if you knew their names in advance. 
 
-In the elkscmd/test/fat directory there is a script to generate a fat32 disk image which
+In the elkscmd/test/fat directory there is a script to generate a fat32 disk image which 
 I have used for testing. The is also a script to list the contents of this disk image and a
 qemu.sh script which allows to run ELKS with Qemu from this directory.
 
-If you run ELKS with this script, ELKS will report a floppy disk and a hard disk. The
-etc/rc.sysint script will try to mount the disk if a bda1 device is present. You can
+If you run ELKS with this script, ELKS will report a floppy disk and a hard disk. The 
+etc/rc.sysint script will try to mount the disk if a bda1 device is present. You can 
 also mount the FAT32 hard disk from the command line with the command:
-"mount -t msdos /dev/bda1 /mnt".
-Then you can enter ls /mnt to list the files and directories in the root directory of the
-FAT32 disk.
+"mount -t msdos /dev/bda1 /mnt". 
+Then you can enter ls /mnt to list the files and directories in the root directory of the 
+FAT32 disk. 
 
 A FAT12 floppy image can be mounted with: "mount -t msdos /dev/fd1 /mnt". In the qemu.sh
 script you have to specify the floppy image e.g. with:

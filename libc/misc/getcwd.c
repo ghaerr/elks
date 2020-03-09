@@ -28,10 +28,10 @@ int size;
    path_buf = buf;
    path_size = size;
 
-   if (size < 3) { errno = ERANGE; return 0; }
+   if( size < 3 ) { errno = ERANGE; return 0; }
    strcpy(path_buf, ".");
 
-   if (stat("/", &st) < 0 )
+   if( stat("/", &st) < 0 )
 	   {
 	   perror ("stat");
 	   return 0;
@@ -48,7 +48,7 @@ recurser()
 {
    dev_t this_dev;
    ino_t this_ino;
-   if (stat(path_buf, &st) < 0 )
+   if( stat(path_buf, &st) < 0 )
 	   {
 	   perror ("stat");
 	   return 0;
@@ -56,14 +56,14 @@ recurser()
 
    this_dev = st.st_dev;
    this_ino = st.st_ino;
-   if (this_dev == root_dev && this_ino == root_ino )
+   if( this_dev == root_dev && this_ino == root_ino )
    {
       strcpy(path_buf, "/");
       return path_buf;
    }
-   if (strlen(path_buf) + 4 > path_size) { errno = ERANGE; return 0; }
+   if( strlen(path_buf) + 4 > path_size ) { errno = ERANGE; return 0; }
    strcat(path_buf, "/..");
-   if (recurser() == 0) return 0;
+   if( recurser() == 0 ) return 0;
 
    return search_dir(this_dev, this_ino);
 }
@@ -80,36 +80,36 @@ ino_t this_ino;
    /* The test is for ELKS lib 0.0.9, this should be fixed in the real kernel*/
    int slow_search = (sizeof(ino_t) != sizeof(d->d_ino));
 
-   if (stat(path_buf, &st) < 0) return 0;
-   if (this_dev != st.st_dev) slow_search = 1;
+   if( stat(path_buf, &st) < 0 ) return 0;
+   if( this_dev != st.st_dev ) slow_search = 1;
 
    slen = strlen(path_buf);
    ptr = path_buf + slen -1;
-   if (*ptr != '/' )
+   if( *ptr != '/' )
    {
-      if (slen + 2 > path_size) { errno = ERANGE; return 0; }
+      if( slen + 2 > path_size ) { errno = ERANGE; return 0; }
       strcpy(++ptr, "/");
       slen++;
    }
    slen++;
 
    dp = opendir(path_buf);
-   if (dp == 0 )
+   if( dp == 0 )
 	   {
 	   perror ("opendir");
 	   return 0;
 	   }
 
-   while ((d=readdir(dp)) != 0 )
+   while( (d=readdir(dp)) != 0 )
    {
-      if (slow_search || this_ino == d->d_ino )
+      if( slow_search || this_ino == d->d_ino )
       {
-         if (slen + strlen(d->d_name) > path_size )
+         if( slen + strlen(d->d_name) > path_size )
 	    { errno = ERANGE; return 0; }
          strcpy(ptr+1, d->d_name);
-	 if (stat(path_buf, &st) < 0 )
+	 if( stat(path_buf, &st) < 0 ) 
 	    continue;
-         if (st.st_ino == this_ino && st.st_dev == this_dev )
+         if( st.st_ino == this_ino && st.st_dev == this_dev )
 	 {
 	    closedir(dp);
 	    return path_buf;

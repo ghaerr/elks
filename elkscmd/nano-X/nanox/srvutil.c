@@ -344,7 +344,7 @@ void GsDrawBorder(GR_WINDOW *wp)
 	bminy = wp->y + height;
 	topy = wp->y;
 	boty = bminy - 1;
-
+ 
 	wp->x -= bs;
 	wp->y -= bs;
 	wp->width += (bs * 2);
@@ -563,7 +563,7 @@ GR_WINDOW *GsPrepareWindow(GR_WINDOW_ID wid)
 	wp = GsFindWindow(wid);
 	if (wp == NULL)
 		return NULL;
-
+	
 	if (!wp->output) {
 		GsError(GR_ERROR_INPUT_ONLY_WINDOW, wid);
 		return NULL;

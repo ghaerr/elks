@@ -30,7 +30,7 @@ char * ttyname (int fd)
 
    while ((d = readdir(fp)) != 0)
    {
-      if (strlen(d->d_name) > sizeof(name) - sizeof(dev) - 1)
+      if( strlen(d->d_name) > sizeof(name) - sizeof(dev) - 1)
          continue;
       strcpy(name + sizeof(dev), d->d_name);
       if (stat(name, &dst) == 0

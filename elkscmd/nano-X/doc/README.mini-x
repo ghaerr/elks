@@ -133,7 +133,7 @@ PART A, BUILDING THE KERNEL:
 	kernel and fs into backup files in /etc/system.  For example:
 		cd /etc/system
 		cp kernel old_kernel
-		cp fs old_fs
+		cp fs old_fs	
 
 4.	Copy the include file from the include directory to /usr/include.
 		cd /mini-x/include

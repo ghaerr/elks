@@ -119,7 +119,7 @@ char *path;
 
 /*
  * Fill in the global variable dir_chain.  Argument is the starting
- * cluster number.  Info, in this variable is used by search() to
+ * cluster number.  Info, in this variable is used by search() to 
  * scan a directory.  An arbitrary limit of 25 sectors is placed, this
  * equates to 400 entries.  Returns the number of sectors in the chain.
  */
@@ -159,7 +159,7 @@ int num;
 	return(i);
 }
 
-/*
+/* 
  * Reset the global variable dir_chain to the root directory.
  */
 

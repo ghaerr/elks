@@ -99,6 +99,6 @@ int write_main(int argc, char ** argv)
 		write(ofd, buf, n);
 	}
 	write(ofd, "EOF\n", 4);
-
+	
 	exit(0);
 }

@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 					write(STDERR_FILENO, "Multiple input files illegal\n", 29);
 					goto usage;
 				}
-
+	
 				infile = cp;
 				break;
 

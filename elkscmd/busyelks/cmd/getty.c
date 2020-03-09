@@ -1,10 +1,10 @@
-/*
+/* 
  * elkscmd/sysutils/getty.c
  *
  * Copyright (C) 1998 Alistair Riddoch <ajr@ecs.soton.ac.uk>
  *
  * Source for the /bin/getty command.
- *
+ *  
  * usage: /bin/getty /dev/tty?? <speed>
  *
  * This file may be distributed under the terms of the GNU General Public
@@ -225,7 +225,7 @@ void getty_main(int argc, char **argv) {
 		case '\\':
 		    ch = Buffer[1];
 		    debug1("DEBUG: Found '\\%c'\n",ch);
-		    switch (ch) {
+		    switch(ch) {
 			case '0':			/* NUL */
 			    ch = 0;
 			case '\\':
@@ -260,7 +260,7 @@ void getty_main(int argc, char **argv) {
 		case '@':
 		    ch = Buffer[1];
 		    debug1("DEBUG: Found '@%c'\n",ch);
-		    switch (ch) {
+		    switch(ch) {
 			case '@':
 			    put(ch);
 			    break;

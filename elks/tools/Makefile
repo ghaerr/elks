@@ -9,15 +9,15 @@ BASEDIR 	= ..
 
 USEBCC 		= N
 
-CLEANDEP	=
+CLEANDEP	= 
 
-CLEANME 	=
+CLEANME 	= 
 
-DEPEND  	=
+DEPEND  	= 
 
-DISTFILES	=
+DISTFILES	= 
 
-NOINDENT	=
+NOINDENT	= 
 
 #########################################################################
 # Include the standard rules.

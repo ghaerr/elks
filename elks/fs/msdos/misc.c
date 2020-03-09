@@ -403,7 +403,7 @@ ino_t msdos_parent_ino(register struct inode *dir,int locked)
 	else {
 		if ((prev = raw_scan(dir->i_sb,current,MSDOS_DOTDOT,0L,NULL)) < 0) {
 		} else {
-			if (prev == 0
+			if (prev == 0 
 #ifndef FAT_BITS_32
 				&& MSDOS_SB(dir->i_sb)->fat_bits == 32
 #endif

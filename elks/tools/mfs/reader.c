@@ -50,14 +50,14 @@ int readfile(struct minix_fs_dat *fs,FILE *fp,const char *path,
       fatalmsg("%s: is not a regular file",path);
     else if (type == S_IFLNK && !S_ISLNK(ino->i_mode))
       fatalmsg("%s: is not a symbolic link",path);
-    fdirsize = ino->i_size;
+    fdirsize = ino->i_size;    
   } else {
     struct minix_inode *ino = INODE(fs,inode);
     if (type == S_IFREG && !S_ISREG(ino->i_mode))
       fatalmsg("%s: is not a regular file",path);
     else if (type == S_IFLNK && !S_ISLNK(ino->i_mode))
       fatalmsg("%s: is not a symbolic link",path);
-    fdirsize = ino->i_size;
+    fdirsize = ino->i_size;    
   }
   for (i = 0; i < fdirsize; i += BLOCK_SIZE) {
     bsz = read_inoblk(fs,inode,i / BLOCK_SIZE,blk);
@@ -121,7 +121,7 @@ void cmd_extract(struct minix_fs_dat *fs,int argc,char **argv) {
   if (opt_keepuid) chown(argv[2],uid,gid);
   chmod(argv[2],mode);
   utime(argv[2],&tb);
-}
+} 
 
 /**
  * Read contents of a symlink

@@ -60,7 +60,7 @@ static int
 KBD_Read(UCHAR *buf, MODIFIER *modifiers)
 {
 	/* wait until a char is ready*/
-	if (!kbpoll())
+	if(!kbpoll())
 		return 0;
 
 	/* read keyboard shift status*/
@@ -69,7 +69,7 @@ KBD_Read(UCHAR *buf, MODIFIER *modifiers)
 	/* read keyboard character*/
 	*buf = kbread();
 
-	if (*buf == 0x1b)			/* special case ESC*/
+	if(*buf == 0x1b)			/* special case ESC*/
 		return -2;
 	return 1;
 }

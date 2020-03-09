@@ -36,8 +36,8 @@ xit:
 #else /* ifdef BCC_ASM */
    register const char *s1=d, *s2=s;
    register char c1=0, c2=0;
-   while (l-- > 0)
-      if ((c1= *s1++) != (c2= *s2++) )
+   while(l-- > 0)
+      if( (c1= *s1++) != (c2= *s2++) )
          break;
    return c1-c2;
 #endif /* ifdef BCC_ASM */

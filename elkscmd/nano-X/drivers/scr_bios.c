@@ -86,7 +86,7 @@ static int
 VGA_open(PSD psd)
 {
 	/* setup operating mode from environment variable*/
-	if (getenv("EGAMODE"))
+	if(getenv("EGAMODE"))
 		VGAMODE = FALSE;
 	else VGAMODE = TRUE;
 
@@ -154,7 +154,7 @@ VGA_getscreeninfo(PSD psd,PSCREENINFO psi)
 	psi->pixtype = psd->pixtype;
 	psi->fonts = NUMBER_FONTS;
 
-	if (VGAMODE) {
+	if(VGAMODE) {
 		/* VGA 640x480*/
 		psi->xdpcm = 27;	/* assumes screen width of 24 cm*/
 		psi->ydpcm = 27;	/* assumes screen height of 18 cm*/
@@ -181,9 +181,9 @@ static void
 VGA_drawpixel(PSD psd,COORD x, COORD y, PIXELVAL c)
 {
 #if HAVEBLIT
-	if (psd->flags & PSF_MEMORY)
+	if(psd->flags & PSF_MEMORY)
 		mempl4_drawpixel(psd, x, y, c);
-	else
+	else 
 #endif
 		ega_drawpixel(psd, x, y, c);
 }
@@ -192,7 +192,7 @@ static PIXELVAL
 VGA_readpixel(PSD psd,COORD x, COORD y)
 {
 #if HAVEBLIT
-	if (psd->flags & PSF_MEMORY)
+	if(psd->flags & PSF_MEMORY)
 		return mempl4_readpixel(psd, x, y);
 #endif
 	return ega_readpixel(psd, x, y);
@@ -204,9 +204,9 @@ VGA_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c)
 {
 	++x2;		/* draw final point*/
 #if HAVEBLIT
-	if (psd->flags & PSF_MEMORY)
+	if(psd->flags & PSF_MEMORY)
 		mempl4_drawhorzline(psd, x1, x2, y, c);
-	else
+	else 
 #endif
 		ega_drawhorzline(psd, x1, x2, y, c);
 }
@@ -217,9 +217,9 @@ VGA_drawvline(PSD psd,COORD x, COORD y1, COORD y2, PIXELVAL c)
 {
 	++y2;		/* draw final point*/
 #if HAVEBLIT
-	if (psd->flags & PSF_MEMORY)
+	if(psd->flags & PSF_MEMORY)
 		mempl4_drawvertline(psd, x, y1, y2, c);
-	else
+	else 
 #endif
 		ega_drawvertline(psd, x, y1, y2, c);
 }
@@ -229,11 +229,11 @@ VGA_fillrect(PSD psd,COORD x1, COORD y1, COORD x2, COORD y2, PIXELVAL c)
 {
 	++x2;		/* draw last point*/
 #if HAVEBLIT
-	if (psd->flags & PSF_MEMORY) {
-		while (y1 <= y2)
+	if(psd->flags & PSF_MEMORY) {
+		while(y1 <= y2)
 			mempl4_drawhorzline(psd, x1, x2, y1++, c);
-	} else
+	} else 
 #endif
-		while (y1 <= y2)
+		while(y1 <= y2)
 			ega_drawhorzline(psd, x1, x2, y1++, c);
 }

@@ -8,19 +8,19 @@ Overview
 Some kernel features may be built directly into the kernel.
 Some may be made into loadable runtime modules.  Some features
 may be completely removed altogether.  There are also certain
-kernel parameters which are not really features, but must be
+kernel parameters which are not really features, but must be 
 entered in as decimal or hexadecimal numbers or possibly text.
 
-Menu items beginning with [*], <M> or [ ] represent features
+Menu items beginning with [*], <M> or [ ] represent features 
 configured to be built in, modularized or removed respectively.
 Pointed brackets <> represent module capable features.
 
-To change any of these features, highlight it with the cursor
+To change any of these features, highlight it with the cursor 
 keys and press <Y> to build it in, <M> to make it a module or
 <N> to removed it.  You may also press the <Space Bar> to cycle
-through the available options (ie. Y->N->M->Y).
+through the available options (ie. Y->N->M->Y). 
 
-Items beginning with numbers or other text within parenthesis can
+Items beginning with numbers or other text within parenthesis can 
 be changed by highlighting the item and pressing <Enter>.  Then
 enter the new parameter into the dialog box that pops up.
 
@@ -29,7 +29,7 @@ Some additional keyboard hints:
 
 Menus
 ----------
-o  Use the Up/Down arrow keys (cursor keys) to highlight the item
+o  Use the Up/Down arrow keys (cursor keys) to highlight the item 
    you wish to change or submenu wish to select and press <Enter>.
    Submenus are designated by "--->".
 
@@ -41,7 +41,7 @@ o  Use the Up/Down arrow keys (cursor keys) to highlight the item
    unseen options into view.
 
 o  To exit a menu use the cursor keys to highlight the <Exit> button
-   and press <ENTER>.
+   and press <ENTER>.  
 
    Shortcut: Press <ESC><ESC> or <E> or <X> if there is no hotkey
              using those letters.  You may press a single <ESC>, but
@@ -105,7 +105,7 @@ information which may help you determine the cause.
 Alternate Configuration Files
 -----------------------------
 Menuconfig supports the use of alternate configuration files for
-those who, for various reasons, find it necessary to switch
+those who, for various reasons, find it necessary to switch 
 between different kernel configurations.
 
 At the end of the main menu you will find two options.  One is
@@ -113,10 +113,10 @@ for saving the current configuration to a file of your choosing.
 The other option is for loading a previously saved alternate
 configuration.
 
-Even if you don't use alternate configuration files, but you
+Even if you don't use alternate configuration files, but you 
 find during a Menuconfig session that you have completely messed
 up your settings, you may use the "Load Alternate..." option to
-restore your previously saved settings from ".config" without
+restore your previously saved settings from ".config" without 
 restarting Menuconfig.
 
 Other information
@@ -128,15 +128,15 @@ in, most likely the rebuild time will be short.  You may force a
 complete rebuild of lxdialog by changing to it's directory and doing
 'make clean all'
 
-If you use Menuconfig in an XTERM window make sure you have your
+If you use Menuconfig in an XTERM window make sure you have your 
 $TERM variable set to point to a xterm definition which supports color.
-Otherwise, Menuconfig will look rather bad.  Menuconfig will not
+Otherwise, Menuconfig will look rather bad.  Menuconfig will not 
 display correctly in a RXVT window because rxvt displays only one
 intensity of color, bright.
 
 Menuconfig will display larger menus on screens or xterms which are
 set to display more than the standard 25 row by 80 column geometry.
-In order for this to work, the "stty size" command must be able to
+In order for this to work, the "stty size" command must be able to 
 display the screen's current row and column geometry.  I STRONGLY
 RECOMMEND that you make sure you do NOT have the shell variables
 LINES and COLUMNS exported into your environment.  Some distributions
@@ -151,7 +151,7 @@ NOTICE:  lxdialog requires the ncurses libraries to compile.  If you
          The makefile for lxdialog attempts to find your ncurses
          header file.  Although it should find the header for older
          versions of ncurses, it is probably a good idea to get the
-         latest ncurses anyway.
+         latest ncurses anyway. 
 
          If you have upgraded your ncurses libraries, MAKE SURE you
          remove the old ncurses header files.  If you don't you
@@ -172,7 +172,7 @@ COMPATIBILITY ISSUE:
 ********                                                     ********
 If you prefer to have all of the kernel options listed in a single
 menu, rather than the default multimenu hierarchy, you may edit the
-Menuconfig script and change the line "single_menu_mode="  to
+Menuconfig script and change the line "single_menu_mode="  to 
 "single_menu_mode=TRUE".
 
 This mode is not recommended unless you have a fairly fast machine.

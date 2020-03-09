@@ -193,7 +193,7 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, register char *a
 	mu.used_memory = mm_get_usage(MM_MEM, 1);
 
 	memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
-
+	
 	return 0;
     }
     return -EINVAL;

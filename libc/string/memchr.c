@@ -38,9 +38,9 @@ xit:
 #endasm
 #else /* ifdef BCC_ASM */
    register char *p=(char *)str;
-   while (l-- > 0)
+   while(l-- > 0)
    {
-      if (*p == c) return p;
+      if(*p == c) return p;
       p++;
    }
    return 0;

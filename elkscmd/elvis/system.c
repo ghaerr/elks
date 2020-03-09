@@ -133,7 +133,7 @@ static int rpipe(cmd, in)
 		exit(1); /* if we get here, exec failed */
 
 	  default:						/* parent */
-		/* close the "write" end of the pipe */
+		/* close the "write" end of the pipe */	
 		close(r0w1[1]);
 
 		return r0w1[0];
@@ -173,13 +173,13 @@ static int rpipe(cmd, in)
 		}
 		else
 			len = p - command;
-		words++;
+		words++;	
 		while (command[len] && command[len] == ' ')
 			len++;
 		if (!command[len])
 			break;
 		command = command + len;
-	}
+	}	
 	while (loop);
 	if ((argblk = (char **)malloc((words+1) * sizeof(char*))) == (char **)0)
 		return 0;
@@ -202,7 +202,7 @@ static int rpipe(cmd, in)
 			break;
 		command = command + len;
 	} while (loop);
-	if (argblk[words - 1][0] == '#')
+	if (argblk[words - 1][0] == '#') 
 		addstack = 1024 * atoi(&argblk[--words][1]);
 	argblk[words] = 0;
 
@@ -239,7 +239,7 @@ static int rpipe(cmd, in)
 		dup(stdinp);
 	}
 	return fp;
-}
+}	
 #endif
 
 #if ANY_UNIX || OSK

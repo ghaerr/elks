@@ -60,7 +60,7 @@ int ilookup_name(struct minix_fs_dat *fs,int inode,const char *lname,
 		u32 *blkp,int *offp) {
   int i,bsz,j;
   u8 blk[BLOCK_SIZE];
-  int fdirsize = VERSION_2(fs) ?
+  int fdirsize = VERSION_2(fs) ? 
 		(INODE2(fs,inode))->i_size : (INODE(fs,inode))->i_size;
   int dentsz = DIRSIZE(fs);
 
@@ -112,14 +112,14 @@ SKIP_ALL:
       nblk++;
       j = 0;
       memset(blk,0,BLOCK_SIZE);
-    }
+    } 
   } else {
     memset(blk+j,0,dentsz);
   }
   /* Create directory entry */
   *((u16 *)(blk+j)) = inode;
   strncpy((char *)blk+j+2,name,dentsz-2);
-
+  
   /* Update directory */
   write_inoblk(fs,dinode,nblk,blk);
 }
@@ -181,7 +181,7 @@ int make_node(struct minix_fs_dat *fs,char *fpath, int mode,
   char *fname = strrchr(fpath,'/');
   int dinode,ninode;
 
-  if (find_inode(fs,fpath) != -1) fatalmsg("%s: already exists",fpath);
+  if (find_inode(fs,fpath) != -1) fatalmsg("%s: already exists",fpath); 
   if (fname) {
     *fname++ = 0;
   } else {

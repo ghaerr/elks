@@ -22,21 +22,21 @@ ttybaud=4800
 if test -f /bin/ktcp
 then
 	echo -n 'Starting network process:'
-	if test "$interface" != "/dev/eth"
+	if test "$interface" != "/dev/eth" 
 	then stty $ttybaud < $interface
 	echo -n ' stty slip'
 	else
 	echo -n ' eth'
 	fi
-
+	
 	ktcp $localip $interface &
 	echo ' ktcp'
-
+	
 	echo -n "Starting network services: "
-	for daemon in telnetd
+	for daemon in telnetd 
 	#ftpd httpd
 	do
-		if test -f /bin/$daemon
+		if test -f /bin/$daemon 
 		then
 			echo -n " $daemon"
 			$daemon &
@@ -46,7 +46,7 @@ then
 
 fi
 
-#
+# 
 # View message of day
 #
 if test -f /etc/motd

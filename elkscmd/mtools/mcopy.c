@@ -28,7 +28,7 @@ char *argv[];
 	unix_args = 0;
 	oops = 0;
 	while ((i = getopt(argc, argv, "tnvm")) != EOF) {
-		switch (i) {
+		switch(i) {
 			case 't':
 			case 'n':
 			case 'v':
@@ -66,7 +66,7 @@ char *argv[];
 					/* strip out the fake "drive code" */
 	for (i=optind; i<argc; i++) {
 		if (argv[i][1] == ':') {
-			switch (argv[i][0]) {
+			switch(argv[i][0]) {
 				case 'a':
 				case 'A':
 					if (argv[i][2] == '\0')

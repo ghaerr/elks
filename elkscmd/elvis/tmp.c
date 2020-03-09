@@ -26,32 +26,42 @@
 
 
 #ifndef NO_MODELINE
-/* long	l	line number to start at
- * long	stop	line number to stop at */
-static void do_modeline(long l, long stop)
+static void do_modeline(l, stop)
+	long	l;	/* line number to start at */
+	long	stop;	/* line number to stop at */
 {
 	char	*str;	/* used to scan through the line */
 	char	*start;	/* points to the start of the line */
 	char	buf[80];
 
 	/* if modelines are disabled, then do nothing */
-	if (!*o_modeline) return;
+	if (!*o_modeline)
+	{
+		return;
+	}
 
 	/* for each line... */
-	for (l = 1; l <= stop; l++) {
+	for (l = 1; l <= stop; l++)
+	{
 		/* for each position in the line.. */
-		for (str = fetchline(l); *str; str++) {
+		for (str = fetchline(l); *str; str++)
+		{
 			/* if it is the start of a modeline command... */
 			if ((str[0] == 'e' && str[1] == 'x'
 			  || str[0] == 'v' && str[1] == 'i')
-			  && str[2] == ':') {
+			  && str[2] == ':')
+			{
 				start = str += 3;
 
 				/* find the end */
-				while (*str && *str != ':') str++;
+				while (*str && *str != ':')
+				{
+					str++;
+				}
 
 				/* if it is a well-formed modeline, execute it */
-				if (*str && str - start < sizeof buf) {
+				if (*str && str - start < sizeof buf)
+				{
 					strncpy(buf, start, (int)(str - start));
 					buf[str - start] = '\0';
 					doexcmd(buf);
@@ -73,8 +83,8 @@ static char	tmpname[80];
 /* This function creates the temp file and copies the original file into it.
  * Returns if successful, or stops execution if it fails.
  */
-/* char *filename	name of the original file */
-int tmpstart(char *filename)
+int tmpstart(filename)
+	char		*filename; /* name of the original file */
 {
 	int		origfd;	/* fd used for reading the original file */
 	struct stat	statb;	/* stat buffer, used to examine inode */
@@ -94,16 +104,21 @@ int tmpstart(char *filename)
 
 	/* open the original file for reading */
 	*origname = '\0';
-	if (filename && *filename) {
+	if (filename && *filename)
+	{
 		strcpy(origname, filename);
 		origfd = open(origname, O_RDONLY);
-		if (origfd < 0 && errno != ENOENT) {
+		if (origfd < 0 && errno != ENOENT)
+		{
 			msg("Can't open \"%s\"", origname);
 			return tmpstart("");
 		}
-		if (origfd >= 0) {
+		if (origfd >= 0)
+		{
 			if (stat(origname, &statb) < 0)
+			{
 				FAIL("Can't stat \"%s\"", origname);
+			}
 #if TOS
 			if (origfd >= 0 && (statb.st_mode & S_IJDIR))
 #else
@@ -117,9 +132,13 @@ int tmpstart(char *filename)
 				msg("\"%s\" is not a regular file", origname);
 				return tmpstart("");
 			}
-		} else stat(".", &statb);
-
-		if (origfd >= 0) {
+		}
+		else
+		{
+			stat(".", &statb);
+		}
+		if (origfd >= 0)
+		{
 			origtime = statb.st_mtime;
 #if MSDOS || OSK
 			if (*o_readonly || !(statb.st_mode & S_IWRITE))
@@ -134,8 +153,14 @@ int tmpstart(char *filename)
 			{
 				setflag(file, READONLY);
 			}
-		} else origtime = 0L;
-	} else {
+		}
+		else
+		{
+			origtime = 0L;
+		}
+	}
+	else
+	{
 		setflag(file, NOFILE);
 		origfd = -1;
 		origtime = 0L;
@@ -145,7 +170,9 @@ int tmpstart(char *filename)
 	/* generate a checksum from the file's name */
 	for (sum = 0, scan = origname + strlen(origname);
 	     --scan >= origname && (isascii(*scan) && isalnum(*scan) || *scan == '.');
-	     sum = sum + *scan) {}
+	     sum = sum + *scan)
+	{
+	}
 	sum &= 0xf;
 
 	/* make a name for the tmp file */
@@ -163,8 +190,10 @@ int tmpstart(char *filename)
 #endif
 
 	/* make sure nobody else is editing the same file */
-	if (access(tmpname, 0) == 0) {
-		if (*origname) {
+	if (access(tmpname, 0) == 0)
+	{
+		if (*origname)
+		{
 			msg("\"%s\" is busy", filename);
 			return tmpstart("");
 		}
@@ -178,7 +207,8 @@ int tmpstart(char *filename)
 	close(creat(tmpname, FILEPERMS));	/* anybody body can read it, alas */
 #endif
 	tmpfd = open(tmpname, O_RDWR | O_BINARY);
-	if (tmpfd < 0) {
+	if (tmpfd < 0)
+	{
 		FAIL("Can't create temporary file, errno=%d", errno);
 		return 1;
 	}
@@ -194,11 +224,15 @@ int tmpstart(char *filename)
 #endif
 
 	/* initialize lnum[] */
-	for (i = 1; i < MAXBLKS; i++) lnum[i] = INFINITY;
+	for (i = 1; i < MAXBLKS; i++)
+	{
+		lnum[i] = INFINITY;
+	}
 	lnum[0] = 0;
 
 	/* if there is no original file, then create a 1-line file */
-	if (origfd < 0) {
+	if (origfd < 0)
+	{
 		hdr.n[0] = 0;	/* invalid inode# denotes new file */
 
 		this = blkget(1); 	/* get the new text block */
@@ -208,8 +242,14 @@ int tmpstart(char *filename)
 		nlines = 1L;	/* there is 1 line in the file */
 		nbytes = 1L;
 
-		if (*origname) msg("\"%s\" [NEW FILE]  1 line, 1 char", origname);
-		else msg("\"[NO FILE]\"  1 line, 1 char");
+		if (*origname)
+		{
+			msg("\"%s\" [NEW FILE]  1 line, 1 char", origname);
+		}
+		else
+		{
+			msg("\"[NO FILE]\"  1 line, 1 char");
+		}
 	}
 	else /* there is an original file -- read it in */
 	{
@@ -222,13 +262,15 @@ int tmpstart(char *filename)
 		inbuf = 0;
 
 		/* loop, moving blocks from orig to tmp */
-		for (;;) {
+		for (;;)
+		{
 			/* "next" buffer becomes "this" buffer */
 			this = next;
 
 			/* read [more] text into this block */
 			nread = tread(origfd, &this->c[inbuf], BLKSIZE - 1 - inbuf);
-			if (nread < 0) {
+			if (nread < 0)
+			{
 				close(origfd);
 				close(tmpfd);
 				tmpfd = -1;
@@ -237,8 +279,10 @@ int tmpstart(char *filename)
 			}
 
 			/* convert NUL characters to something else */
-			for (k = inbuf; k < inbuf + nread; k++) {
-				if (!this->c[k]) {
+			for (k = inbuf; k < inbuf + nread; k++)
+			{
+				if (!this->c[k])
+				{
 					setflag(file, HADNUL);
 					this->c[k] = 0x80;
 				}
@@ -246,7 +290,10 @@ int tmpstart(char *filename)
 			inbuf += nread;
 
 			/* if the buffer is empty, quit */
-			if (inbuf == 0) goto FoundEOF;
+			if (inbuf == 0)
+			{
+				goto FoundEOF;
+			}
 
 #if MSDOS || TOS
 /* BAH! MS text mode read fills inbuf, then compresses eliminating \r
@@ -256,10 +303,19 @@ int tmpstart(char *filename)
 #endif
 
 			/* search backward for last newline */
-			for (k = inbuf; --k >= 0 && this->c[k] != '\n';) {}
-			if (k++ < 0) {
-				if (inbuf >= BLKSIZE - 1) k = 80;
-				else k = inbuf;
+			for (k = inbuf; --k >= 0 && this->c[k] != '\n';)
+			{
+			}
+			if (k++ < 0)
+			{
+				if (inbuf >= BLKSIZE - 1)
+				{
+					k = 80;
+				}
+				else
+				{
+					k = inbuf;
+				}
 			}
 
 			/* allocate next buffer */
@@ -267,21 +323,29 @@ int tmpstart(char *filename)
 
 			/* move fragmentary last line to next buffer */
 			inbuf -= k;
-			for (j = 0; k < BLKSIZE; j++, k++) {
+			for (j = 0; k < BLKSIZE; j++, k++)
+			{
 				next->c[j] = this->c[k];
 				this->c[k] = 0;
 			}
 
 			/* if necessary, add a newline to this buf */
-			for (k = BLKSIZE - inbuf; --k >= 0 && !this->c[k]; ) {}
-			if (this->c[k] != '\n') {
+			for (k = BLKSIZE - inbuf; --k >= 0 && !this->c[k]; )
+			{
+			}
+			if (this->c[k] != '\n')
+			{
 				setflag(file, ADDEDNL);
 				this->c[k + 1] = '\n';
 			}
 
 			/* count the lines in this block */
-			for (k = 0; k < BLKSIZE && this->c[k]; k++) {
-				if (this->c[k] == '\n') nlines++;
+			for (k = 0; k < BLKSIZE && this->c[k]; k++)
+			{
+				if (this->c[k] == '\n')
+				{
+					nlines++;
+				}
 				nbytes++;
 			}
 			lnum[i - 1] = nlines;
@@ -289,7 +353,8 @@ int tmpstart(char *filename)
 FoundEOF:
 
 		/* if this is a zero-length file, add 1 line */
-		if (nlines == 0) {
+		if (nlines == 0)
+		{
 			this = blkget(1); 	/* get the new text block */
 			strcpy(this->c, "\n");	/* put a line in it */
 
@@ -321,15 +386,24 @@ FoundEOF:
 
 	/* any other messages? */
 	if (tstflag(file, HADNUL))
+	{
 		msg("This file contained NULs.  They've been changed to \\x80 chars");
+	}
 	if (tstflag(file, ADDEDNL))
+	{
 		msg("Newline characters have been inserted to break up long lines");
+	}
 
 #ifndef NO_MODELINE
-	if (nlines > 10) {
+	if (nlines > 10)
+	{
 		do_modeline(1L, 5L);
 		do_modeline(nlines - 4L, nlines);
-	} else do_modeline(1L, nlines);
+	}
+	else
+	{
+		do_modeline(1L, nlines);
+	}
 #endif
 	return 0;
 }
@@ -363,40 +437,52 @@ int tmpsave(filename, bang)
 	}
 
 	/* can't rewrite a READONLY file */
-	if (!strcmp(filename, origname) && *o_readonly && !bang) {
+	if (!strcmp(filename, origname) && *o_readonly && !bang)
+	{
 		msg("\"%s\" [READONLY] -- NOT WRITTEN", filename);
 		return FALSE;
 	}
 
 	/* open the file */
-	if (*filename == '>' && filename[1] == '>') {
+	if (*filename == '>' && filename[1] == '>')
+	{
 		filename += 2;
-		while (*filename == ' ' || *filename == '\t') filename++;
+		while (*filename == ' ' || *filename == '\t')
+		{
+			filename++;
+		}
 #ifdef O_APPEND
 		fd = open(filename, O_WRONLY|O_APPEND);
 #else
 		fd = open(filename, O_WRONLY);
 		lseek(fd, 0L, 2);
 #endif
-	} else {
+	}
+	else
+	{
 		/* either the file must not exist, or it must be the original
 		 * file, or we must have a bang
 		 */
-		if (strcmp(filename, origname) && access(filename, 0) == 0 && !bang) {
+		if (strcmp(filename, origname) && access(filename, 0) == 0 && !bang)
+		{
 			msg("File already exists - Use :w! to overwrite");
 			return FALSE;
 		}
 		fd = creat(filename, FILEPERMS);
 	}
-	if (fd < 0) {
+	if (fd < 0)
+	{
 		msg("Can't write to \"%s\" -- NOT WRITTEN", filename);
 		return FALSE;
 	}
 
 	/* write each text block to the file */
 	bytes = 0L;
-	for (i = 1; i < MAXBLKS && (this = blkget(i)) && this->c[0]; i++) {
-		for (len = 0; len < BLKSIZE && this->c[len]; len++) {}
+	for (i = 1; i < MAXBLKS && (this = blkget(i)) && this->c[0]; i++)
+	{
+		for (len = 0; len < BLKSIZE && this->c[len]; len++)
+		{
+		}
 		twrite(fd, this->c, len);
 		bytes += len;
 	}
@@ -410,7 +496,9 @@ int tmpsave(filename, bang)
 	bytes += nlines; /* for the inserted carriage returns */
 #endif
 	if (strncmp(filename, o_directory, strlen(o_directory)))
+	{
 		msg("Wrote \"%s\"  %ld lines, %ld characters", filename, nlines, bytes);
+	}
 
 	/* close the file */
 	close(fd);
@@ -426,16 +514,23 @@ int tmpsave(filename, bang)
  * If the "autowrite" option is set, then instead of returning FALSE when
  * the file has been modified and "bang" is false, it will call tmpend().
  */
-int tmpabort(int bang)
+int tmpabort(bang)
+	int	bang;
 {
 	/* if there is no file, return successfully */
-	if (tmpfd < 0) return TRUE;
+	if (tmpfd < 0)
+	{
+		return TRUE;
+	}
 
 	/* see if we must return FALSE -- can't quit */
-	if (!bang && tstflag(file, MODIFIED)) {
+	if (!bang && tstflag(file, MODIFIED))
+	{
 		/* if "autowrite" is set, then act like tmpend() */
-		if (*o_autowrite) return tmpend(bang);
-		else return FALSE;
+		if (*o_autowrite)
+			return tmpend(bang);
+		else
+			return FALSE;
 	}
 
 	/* delete the tmp file */
@@ -458,11 +553,14 @@ int tmpabort(int bang)
  * needs to be saved but can't be.  When it returns FALSE, it will not have
  * deleted the tmp file, either.
  */
-int tmpend(int bang)
+int tmpend(bang)
+	int	bang;
 {
 	/* save the file if it has been modified */
 	if (tstflag(file, MODIFIED) && !tmpsave((char *)0, FALSE) && !bang)
+	{
 		return FALSE;
+	}
 
 	/* delete the tmp file */
 	tmpabort(TRUE);
@@ -476,7 +574,7 @@ int tmpend(int bang)
  * system crash or power failure.
  */
 #if MSDOS || TOS || OSK
-void sync(void)
+sync()
 {
 # if OSK
 	/* OS9 doesn't need an explicit sync operation, but the linker

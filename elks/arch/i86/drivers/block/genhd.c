@@ -118,7 +118,7 @@ static void extended_partition(register struct gendisk *hd, kdev_t dev)
 	 * and OS/2 seems to use all four entries.
 	 */
 
-	/*
+	/* 
 	 * First process the data partition(s)
 	 */
 	for (i = 0; i < 4; i++, p++) {

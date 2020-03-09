@@ -60,8 +60,8 @@ int tr_do_args(int argc, register char ** argv)
 {
 	int i = 1, j;
 
-	while (i < argc && argv[i][0] == '-') {
-		for (j = 1; j < strlen(argv[i]); j++) {
+	while(i < argc && argv[i][0] == '-') {
+		for(j = 1; j < strlen(argv[i]); j++) {
 			switch (argv[i][j]) {
 				case 'c':
 					complement1 = 1;
@@ -124,7 +124,7 @@ char * build_string(char * set_descr, int num)
 		out_of_mem();
 	}
 
-	for (i = 0; i < strlen(set_descr); i++) {
+	for(i = 0; i < strlen(set_descr); i++) {
 		ch = set_descr[i];
 again:
 		switch (ch) {
@@ -165,13 +165,13 @@ again:
 					default:
 						fprintf(stderr, "%s: Illegal %c in set%d\n", progname, ch, num);
 						exit(1);
-
+							
 				}
 				break;
 			case '-':
-				if ((tail) &&
+				if ((tail) && 
 				    ((n1 = set_descr[++i]) > buf[tail-1])) {
-					for (n2 = buf[tail-1] + 1;n2 <= n1;n2++){
+					for(n2 = buf[tail-1] + 1;n2 <= n1;n2++){
 						buf[tail++] = n2;
 					}
 				} else {
@@ -181,7 +181,7 @@ again:
 			default:
 				buf[tail++] = ch;
 				break;
-
+		
 		}
 		if ((size - tail) < 4) {
 			size += BSIZE;

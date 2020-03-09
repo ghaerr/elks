@@ -4,7 +4,7 @@
  * Framebuffer Video Driver for MicroWindows
  *
  * Portions used from Ben Pfaff's BOGL <pfaffben@debian.org>
- *
+ * 
  * Note: modify select_driver() to add new framebuffer drivers
  */
 #define _GNU_SOURCE 1
@@ -55,7 +55,7 @@ static void	ioctl_setpalette(int start, int len, short *red, short *green,
 			short *blue);
 static void  	draw_enable(void);
 static void 	draw_disable(void);
-static void 	vt_switch (int);
+static void 	vt_switch(int);
 
 /* init framebuffer*/
 int
@@ -68,14 +68,14 @@ fb_init(PSD psd)
 	//struct vt_stat vts;
 
 	assert(status < 2);
-
+  
 	/* locate and open framebuffer, get info*/
-	if (!(env = getenv("FRAMEBUFFER")))
+	if(!(env = getenv("FRAMEBUFFER")))
 		env = "/dev/fb0";
 	fb = open(env, O_RDWR);
-	if (fb < 0)
+	if(fb < 0)
 		return failmsg("opening %s: %m", env);
-	if (ioctl(fb, FBIOGET_FSCREENINFO, &fb_fix) == -1 ||
+	if(ioctl(fb, FBIOGET_FSCREENINFO, &fb_fix) == -1 ||
 		ioctl(fb, FBIOGET_VSCREENINFO, &fb_var) == -1)
 			return failmsg("reading screen info: %m");
 
@@ -93,40 +93,40 @@ fb_init(PSD psd)
 	 	psd->yres, psd->ncolors, psd->linelen, fbtype, fbvisual);*/
 
 	/* determine framebuffer driver and enable draw procedures*/
-	if (!(savfbprocs = select_driver(psd, fbtype, fbvisual)))
+	if(!(savfbprocs = select_driver(psd, fbtype, fbvisual)))
 		return failmsg("unknown screen type %d visual %d ncolors %d",
 			fbtype, fbvisual, psd->ncolors);
 	draw_enable();
 
 	/* open tty, get info*/
 	tty = open ("/dev/tty0", O_RDWR);
-	if (tty < 0) {
+	if(tty < 0) {
 		close(fb);
 		return failmsg("opening /dev/tty0: %m");
 	}
-	//if (ioctl (tty, VT_GETSTATE, &vts) == -1)
+	//if(ioctl (tty, VT_GETSTATE, &vts) == -1)
 		//return failmsg("can't get VT state: %m");
 	//tty_no = vts.v_active;
 
 	/* setup new tty mode*/
-	if (ioctl (tty, VT_GETMODE, &mode) == -1)
+	if(ioctl (tty, VT_GETMODE, &mode) == -1)
 		return failmsg("can't get VT mode: %m");
 	mode.mode = VT_PROCESS;
 	mode.relsig = SIGUSR2;
 	mode.acqsig = SIGUSR2;
 	signal (SIGUSR2, vt_switch);
-	if (ioctl (tty, VT_SETMODE, &mode) == -1)
+	if(ioctl (tty, VT_SETMODE, &mode) == -1)
 		return failmsg("can't set VT mode: %m");
-	if (ioctl (tty, KDSETMODE, KD_GRAPHICS) == -1)
+	if(ioctl (tty, KDSETMODE, KD_GRAPHICS) == -1)
 		return failmsg("setting graphics mode: %m");
 
 	/* call driver init procedure to calc map size, map framebuffer*/
-	if (!fbprocs->init(psd))
+	if(!fbprocs->init(psd))
 		return 0;
 	psd->size = (psd->size + getpagesize () - 1)
 			/ getpagesize () * getpagesize ();
 	psd->addr = mmap(NULL, psd->size, PROT_READ|PROT_WRITE,MAP_SHARED,fb,0);
-	if (psd->addr == NULL || psd->addr == (unsigned char *)-1)
+	if(psd->addr == NULL || psd->addr == (unsigned char *)-1)
 		return failmsg("mmaping %s: %m", env);
 	psd->flags = PSF_SCREEN | PSF_HAVEBLIT;
 
@@ -142,16 +142,16 @@ void
 fb_exit(PSD psd)
 {
 	/* if not opened, return*/
-	if (status != 2)
+	if(status != 2)
 		return;
 	status = 1;
 
   	/* reset hw palette*/
 	ioctl_setpalette(0, 16, saved_red, saved_green, saved_blue);
-
+  
 	/* unmap framebuffer*/
 	munmap(psd->addr, psd->size);
-
+  
 	/* reset tty modes*/
 	signal(SIGUSR2, SIG_DFL);
 	ioctl(tty, KDSETMODE, KD_TEXT);
@@ -159,7 +159,7 @@ fb_exit(PSD psd)
 	mode.relsig = 0;
 	mode.acqsig = 0;
 	ioctl(tty, VT_SETMODE, &mode);
-
+  
 	/* close tty and framebuffer*/
 	close(tty);
 	close(fb);
@@ -181,32 +181,32 @@ select_driver(PSD psd, int type, int visual)
 	extern FBENTRY	fbvgaplan4;
 
 	/* currently, the driver is selected from the fbtype alone*/
-	if (type == FB_TYPE_VGA_PLANES) {
+	if(type == FB_TYPE_VGA_PLANES) {
 		psd->planes = 4;
 		driver = &fbvgaplan4;
 	}
 #endif
 
-	if (type == FB_TYPE_PACKED_PIXELS) {
-		if (psd->ncolors == 2)
+	if(type == FB_TYPE_PACKED_PIXELS) {
+		if(psd->ncolors == 2)
 			driver = &fblinear1;
-		else if (psd->ncolors == 4)
+		else if(psd->ncolors == 4)
 			driver = &fblinear2;
-		else if (psd->ncolors == 16)
+		else if(psd->ncolors == 16)
 			driver = &fblinear4;
-		else if (psd->ncolors == 256)
+		else if(psd->ncolors == 256)
 			driver = &fblinear8;
-		else if (psd->ncolors == 65536)
+		else if(psd->ncolors == 65536)
 			driver = &fblinear16;
-		else if (psd->ncolors > 65536)
+		else if(psd->ncolors > 65536)
 			driver = &fblinear32;
 	}
-	if (!driver)
+	if(!driver)
 		return NULL;
 
 	/* set pixel format*/
-	if (visual == FB_VISUAL_TRUECOLOR) {
-		switch (psd->ncolors) {
+	if(visual == FB_VISUAL_TRUECOLOR) {
+		switch(psd->ncolors) {
 		case 1 << 8:
 			psd->pixtype = PF_TRUECOLOR332;
 			break;
@@ -224,7 +224,7 @@ select_driver(PSD psd, int type, int visual)
 				psd->ncolors);
 			return NULL;
 		}
-	} else
+	} else		
 		psd->pixtype = PF_PALETTE;
 
 	/* return driver selected*/
@@ -241,7 +241,7 @@ fb_setpalette(PSD psd,int first, int count, RGBENTRY *palette)
 	short 	blue[count];
 
 	/* convert palette to framebuffer format*/
-	for (i=0; i < count; i++) {
+	for(i=0; i < count; i++) {
 		RGBENTRY *p = &palette[i];
 
 		/* grayscale computation:
@@ -295,7 +295,7 @@ draw_enable(void)
 	visible = 1;
 	fbprocs = savfbprocs;
 }
-
+      
 static void
 draw_disable(void)
 {
@@ -305,7 +305,7 @@ draw_disable(void)
 
 /* Signal handler called when kernel switches to or from our tty*/
 static void
-vt_switch (int sig)
+vt_switch(int sig)
 {
     struct itimerval duration;
 
@@ -316,7 +316,7 @@ vt_switch (int sig)
      * scribble on the screen after the switch.  So disable further
      * drawing and schedule an alarm to try again in .1 second.
      */
-    if (drawing) {
+    if(drawing) {
     	draw_disable ();
 
     	signal(SIGALRM, vt_switch);
@@ -328,16 +328,16 @@ vt_switch (int sig)
     	setitimer (ITIMER_REAL, &duration, NULL);
     	return;
     }
-
-    if (visible) {
+      
+    if(visible) {
     	draw_disable ();
 
-	if (ioctl (tty, VT_RELDISP, 1) == -1)
+	if(ioctl (tty, VT_RELDISP, 1) == -1)
 	    failmsg("can't switch away from VT: %m");
     } else {
     	draw_enable ();
-
-	if (ioctl (tty, VT_RELDISP, VT_ACKACQ) == -1)
+      
+	if(ioctl (tty, VT_RELDISP, VT_ACKACQ) == -1)
 		failmsg("can't acknowledge VT switch: %m");
     }
 }

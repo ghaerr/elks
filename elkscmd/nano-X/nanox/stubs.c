@@ -37,7 +37,7 @@ GR_ERROR_FUNC GrSetErrorHandler(GR_ERROR_FUNC func)
 {
 #if 0
 	GR_ERROR_FUNC temp = GrErrorFunc;
-	if (!func) GrErrorFunc = &GrDefaultErrorHandler;
+	if(!func) GrErrorFunc = &GrDefaultErrorHandler;
 	else GrErrorFunc = func;
 	return temp;
 #endif
@@ -461,7 +461,7 @@ int GrArea(GR_DRAW_ID id,GR_GC_ID gc,GR_COORD x,GR_COORD y,GR_SIZE width,
  * will include the values from the covering windows.  Regions outside
  * of the screen boundaries, or unmapped windows will return black.
  */
-int GrReadArea(GR_DRAW_ID id, GR_COORD x, GR_COORD y, GR_SIZE width,
+int GrReadArea(GR_DRAW_ID id, GR_COORD x, GR_COORD y, GR_SIZE width, 
 	GR_SIZE height, PIXELVAL *pixels)
 {
 	GsReadArea(id, x, y, width, height, pixels);
@@ -534,7 +534,7 @@ static int GrDeliverErrorEvent(void)
 	return 0;
 }
 
-/*
+/* 
  * The default error handler which is called when the server reports an error event
  * and the client hasn't set a handler for error events.
  */
@@ -542,7 +542,7 @@ void GrDefaultErrorHandler(GR_EVENT_ERROR err)
 {
 	char *why;
 
-	switch (err.code) {
+	switch(err.code) {
 		case GR_ERROR_BAD_WINDOW_ID:
 			why = "it was passed a bad window id";
 			break;

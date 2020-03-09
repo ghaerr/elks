@@ -12,7 +12,7 @@ struct directory {
 	unsigned char	ext[3];		/* file extent */
 	unsigned char	attr;		/* attribute byte */
 	unsigned char	reserved[10];	/* ?? */
-	unsigned char	time[2];
+	unsigned char	time[2];		
 	unsigned char	date[2];
 	unsigned char	start[2];	/* starting cluster number */
 	unsigned char	size[4];	/* size of the file */
