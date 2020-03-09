@@ -25,13 +25,13 @@
 #	:fileutil	File handling utilities						fd1440
 #	:app		Nonessential apps							fd1440
 #	:nanox		Nano-X graphical apps						fd1440
-# 
+#
 # The following are used in Makefile to create the packages:
 # fd320=:boot
 # fd360=:boot|:small
 # fd720=:boot|:small|:base|:net
 # fd1440=:boot|:base|:net|:shutil|:fileutil|:app|:nanox
-# 
+#
 # Application	Tags (spaced apart for readability)
 #				:boot
 #					:small
