@@ -71,7 +71,7 @@ int vgets(prompt, buf, bsize)
 		}
 
 		/* process the character */
-		switch(ch)
+		switch (ch)
 		{
 		  case ctrl('V'):
 			qaddch('^');

@@ -172,7 +172,7 @@ ctags(fp, name, refs)
 	for (context = EXPECTFN, lnum = 1; fgets(text, sizeof text, fp); lnum++)
 	{
 #ifdef VERBOSE
-		switch(context)
+		switch (context)
 		{
 		  case EXPECTFN:	scan = "EXPECTFN";	break;
 		  case ARGS:		scan = "ARGS    ";	break;
