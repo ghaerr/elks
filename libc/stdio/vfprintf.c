@@ -88,7 +88,7 @@ prtfld(FILE *op, unsigned char *buf,
 	 --width;
       }
       putc(ch, op);
-      if( ch == '\n' && buffer_mode == _IOLBF ) fflush(op);
+      if (ch == '\n' && buffer_mode == _IOLBF ) fflush(op);
    }
 
    return (cnt);
@@ -112,7 +112,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
    {
       if (*fmt == '%')
       {
-         if( buffer_mode == _IONBF ) fflush(op);
+         if (buffer_mode == _IONBF ) fflush(op);
 	 ljustf = 0;		/* left justify flag */
 	 sign = '\0';		/* sign char & status */
 	 pad = ' ';		/* justification padding char */
@@ -125,10 +125,10 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 	 lval = (sizeof(int)==sizeof(long));	/* long value flaged */
        fmtnxt:
 	 i = 0;
-	 for(;;)
+	 for (;;)
 	 {
 	    ++fmt;
-	    if(*fmt < '0' || *fmt > '9' ) break;
+	    if (*fmt < '0' || *fmt > '9' ) break;
 	    i = (i * 10) + (*fmt - '0');
 	    if (dpoint)
 	       preci = i;
@@ -210,7 +210,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 				   ? va_arg(ap, unsigned long)
 				   : va_arg(ap, unsigned int)),
 		  radix);
-	    if( hash && radix == 8 ) { width = strlen(ptmp)+1; pad='0'; }
+	    if (hash && radix == 8 ) { width = strlen(ptmp)+1; pad='0'; }
 	    goto printit;
 
 	 case '#':
@@ -238,7 +238,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 	 case 'g':
 	 case 'E':
 	 case 'G':
-	    if ( __fp_print )
+	    if (__fp_print )
 	    {
 	       (*__fp_print)(&va_arg(ap, double), *fmt, preci, ptmp);
 	       preci = -1;
@@ -256,13 +256,13 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
        charout:
 	 putc(*fmt, op);	/* normal char out */
 	 ++cnt;
-         if( *fmt == '\n' && buffer_mode == _IOLBF ) fflush(op);
+         if (*fmt == '\n' && buffer_mode == _IOLBF ) fflush(op);
       }
       ++fmt;
    }
    op->mode |= buffer_mode;
-   if( buffer_mode == _IONBF ) fflush(op);
-   if( buffer_mode == _IOLBF ) op->bufwrite = op->bufstart;
+   if (buffer_mode == _IONBF ) fflush(op);
+   if (buffer_mode == _IOLBF ) op->bufwrite = op->bufstart;
    return (cnt);
 }
 

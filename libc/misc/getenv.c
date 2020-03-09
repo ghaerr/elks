@@ -15,11 +15,11 @@ char * name;
    register char ** ep = environ;
    l = strlen(name);
 
-   if( ep == 0 || l == 0 ) return 0;
+   if (ep == 0 || l == 0 ) return 0;
 
-   while(*ep)
+   while (*ep)
    {
-      if( **ep == *name && memcmp(name, *ep, l) == 0 && (*ep)[l] == '=' )
+      if (**ep == *name && memcmp(name, *ep, l) == 0 && (*ep)[l] == '=' )
          return *ep+l+1;
       ep++;
    }

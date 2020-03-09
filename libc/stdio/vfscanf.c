@@ -16,8 +16,8 @@
 #include <ctype.h>
 #include <string.h>
 
-/* #define	skip()	do{c=getc(fp); if (c<1) goto done;}while(isspace(c))*/
-#define	skip()	while(isspace(c)) { if ((c=getc(fp))<1) goto done; }
+/* #define	skip()	do{c=getc(fp); if (c<1) goto done;}while (isspace(c))*/
+#define	skip()	while (isspace(c)) { if ((c=getc(fp))<1) goto done; }
 
 #if FLOATS
 /* fp scan actions */
@@ -431,7 +431,7 @@ vfscanf(register FILE *fp, register char *fmt, va_list ap)
    if ((c == EOF) && (cnt == 0))
       return (EOF);
 
-   if( c != EOF )
+   if (c != EOF )
       ungetc(c, fp);
    return (cnt);
 }

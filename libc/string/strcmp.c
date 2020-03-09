@@ -49,7 +49,7 @@ sc_3:
 #endasm
 #else /* ifdef BCC_AX_ASM */
    register char *s1=(char *)d, *s2=(char *)s, c1,c2;
-   while((c1= *s1++) == (c2= *s2++) && c1 );
+   while ((c1= *s1++) == (c2= *s2++) && c1 );
    return c1 - c2;
 #endif /* ifdef BCC_AX_ASM */
 }

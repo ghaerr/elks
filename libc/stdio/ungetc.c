@@ -13,9 +13,9 @@ ungetc(int c, FILE * fp)
    /* Can't do fast fseeks */
    fp->mode |= __MODE_UNGOT;
 
-   if( fp->bufpos > fp->bufstart )
+   if (fp->bufpos > fp->bufstart )
       return *--fp->bufpos = (unsigned char) c;
-   else if( fp->bufread == fp->bufstart )
+   else if (fp->bufread == fp->bufstart )
       return *fp->bufread++ = (unsigned char) c;
    else
       return EOF;

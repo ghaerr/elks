@@ -15,16 +15,16 @@ int fd;
    int oerr = errno;
 
    errno = 0;
-   for(nfd=0; nfd<NR_OPEN; nfd++)
+   for (nfd=0; nfd<NR_OPEN; nfd++)
    {
-      if( fcntl(nfd, F_GETFD) < 0 )
+      if (fcntl(nfd, F_GETFD) < 0 )
          break;
    }
-   if( nfd == NR_OPEN ) { errno = EMFILE ; return -1; }
+   if (nfd == NR_OPEN ) { errno = EMFILE ; return -1; }
    errno = oerr;
-   if( fcntl(fd, F_DUPFD, nfd) < 0 )
+   if (fcntl(fd, F_DUPFD, nfd) < 0 )
    {
-      if( errno == EINVAL ) errno = EMFILE;
+      if (errno == EINVAL ) errno = EMFILE;
       return -1;
    }
    return nfd;

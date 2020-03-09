@@ -260,12 +260,12 @@ malloc(size_t size)
 	 else		/* Oooo, near end of RAM */
 	 {
 	    unsigned int needed = alloc;
-	    for(alloc/=2; alloc>256 && needed; )
+	    for (alloc/=2; alloc>256 && needed; )
 	    {
 	       ptr = __mini_malloc(alloc);
 	       if (ptr)
 	       {
-	          if( alloc > needed ) needed = 0; else needed -= alloc;
+	          if (alloc > needed ) needed = 0; else needed -= alloc;
 	          __insert_chunk(ptr - 1);
 	       }
 	       else     alloc/=2;
@@ -279,7 +279,7 @@ malloc(size_t size)
 	    ptr = __mini_malloc(size);
 #endif
 #ifdef VERBOSE
-	    if( ptr == 0 )
+	    if (ptr == 0 )
 	       __noise("MALLOC FAIL", 0);
 	    else
 	       __noise("MALLOC NOW", ptr - 1);

@@ -70,7 +70,7 @@ restart:
   field_begin=line_buff;
   for (i=0;i<7;i++)
     {
-      switch(i)
+      switch (i)
 	{
 	case 0: passwd.pw_name=field_begin; break;
 	case 1: passwd.pw_passwd=field_begin; break;

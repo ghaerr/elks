@@ -10,8 +10,8 @@ ltostr (long val, int radix)
 {
    char *p;
    int flg = 0;
-   if( val < 0 ) { flg++; val= -val; }
+   if (val < 0 ) { flg++; val= -val; }
    p = ultostr(val, radix);
-   if(p && flg) *--p = '-';
+   if (p && flg) *--p = '-';
    return p;
 }

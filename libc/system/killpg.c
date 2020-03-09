@@ -4,9 +4,9 @@
 int
 killpg(int pid, int sig)
 {
-   if(pid == 0)
+   if (pid == 0)
        pid = getpgrp();
-   if(pid > 1)
+   if (pid > 1)
        return kill(-pid, sig);
    errno = EINVAL;
    return -1;

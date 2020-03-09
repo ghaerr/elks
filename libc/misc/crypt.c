@@ -32,7 +32,7 @@ crypt(const char * key, const char * salt)
 
   /* Our constant string will be a string of zeros .. */
   v[0]=v[1]=k[0]=k[1]=k[2]=k[3]=0;
-  for(i=0;i<16;i++) rkey[i]=0;
+  for (i=0;i<16;i++) rkey[i]=0;
 
   rkey[0]=*salt;
   rkey[1]=salt[1];
@@ -48,7 +48,7 @@ crypt(const char * key, const char * salt)
   }
 
   /* Remove any trace of key */
-  for(i=0;i<16;i++) rkey[i]=0;
+  for (i=0;i<16;i++) rkey[i]=0;
   *rkey=*salt; rkey[1]=salt[1];
 
   /* Now we need to unpack the bits and map it to "A-Za-z0-9./" for printing
@@ -59,8 +59,8 @@ crypt(const char * key, const char * salt)
       /* This unpacks the 6 bit data, each cluster into its own byte */
       rkey[i]=(sum&0x3F);
       sum>>=6;
-      if(i==0+2) sum |= (v[1]<<26);
-      if(i==5+2) sum |= (v[1]>>4);
+      if (i==0+2) sum |= (v[1]<<26);
+      if (i==5+2) sum |= (v[1]>>4);
 
       /* Now we map to the proper chars */
       if (rkey[i]>=0 && rkey[i]<12) rkey[i]+=46;

@@ -11,14 +11,14 @@ strcasecmp(s, d)
 char *s;
 char *d;
 {
-   for(;;)
+   for (;;)
    {
-      if( *s != *d )
+      if (*s != *d )
       {
-	 if( tolower(*s) != tolower(*d) )
+	 if (tolower(*s) != tolower(*d) )
 	    return *s - *d;
       }
-      else if( *s == '\0' ) break;
+      else if (*s == '\0' ) break;
       s++; d++;
    }
    return 0;

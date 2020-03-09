@@ -3,7 +3,7 @@
 function print_syscall(file, p3, p4)
 {
 	printf "\t_syscall_" > sf;
-	if(p4 != "!" || p3 < 1)
+	if (p4 != "!" || p3 < 1)
 		printf "%d", p3 > sf;
 	else
 		printf "%dp", p3 - 1 > sf;

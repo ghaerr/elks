@@ -18,7 +18,7 @@
 char *_qbuf = 0;		/* pointer to storage for qsort() */
 
 #define	PIVOT			((i+j)>>1)
-#define moveitem(dst,src,size)	if(dst != src) memcpy(dst, src, size)
+#define moveitem(dst,src,size)	if (dst != src) memcpy(dst, src, size)
 
 static void
 _wqsort(base, lo, hi, cmp)

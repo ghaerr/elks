@@ -18,7 +18,7 @@ int fgetc(FILE *fp)
    if (fp->bufpos >= fp->bufread)
    {
       /* Bind stdin to stdout if it's open and line buffered */
-      if( fp == stdin && stdout->fd >= 0 && (stdout->mode & _IOLBF ))
+      if (fp == stdin && stdout->fd >= 0 && (stdout->mode & _IOLBF ))
          fflush(stdout);
 
       fp->bufpos = fp->bufread = fp->bufstart;

@@ -18,17 +18,17 @@ __execvve(char * fname, char **interp, char **argv, char **envp)
 	int rv;
 
 	/* How much space for argv */
-	for(p=interp; p && *p && argv_len >= 0; p++)
+	for (p=interp; p && *p && argv_len >= 0; p++)
 	{
 	   argv_count++; argv_len += strlen(*p)+1;
 	}
-	for(p=argv; p && *p && argv_len >= 0; p++)
+	for (p=argv; p && *p && argv_len >= 0; p++)
 	{
 	   argv_count++; argv_len += strlen(*p)+1;
 	}
 
 	/* How much space for envp */
-	for(p=envp; p && *p && envp_len >= 0; p++)
+	for (p=envp; p && *p && envp_len >= 0; p++)
 	{
 	   envp_count++; envp_len += strlen(*p)+1;
 	}
@@ -41,7 +41,7 @@ __execvve(char * fname, char **interp, char **argv, char **envp)
 		    + envp_len;
 
 	/* Allocate it */
-	if( argv_len < 0 || envp_len < 0 || stack_bytes <= 0
+	if (argv_len < 0 || envp_len < 0 || stack_bytes <= 0
 	 || (int)(stk_ptr = (char*)sbrk(stack_bytes)) == -1)
 	{
 	   errno = ENOMEM;
@@ -60,7 +60,7 @@ __execvve(char * fname, char **interp, char **argv, char **envp)
 	/* baseoff = stk_ptr + stack_bytes; */
 	baseoff = stk_ptr;
 	*pip++ = argv_count;
-	for(p=interp; p && *p; p++)
+	for (p=interp; p && *p; p++)
 	{
 	   int l;
 	   *pip++ = pcp-baseoff;
@@ -68,7 +68,7 @@ __execvve(char * fname, char **interp, char **argv, char **envp)
 	   memcpy(pcp, *p, l);
 	   pcp += l;
 	}
-	for(p=argv; p && *p; p++)
+	for (p=argv; p && *p; p++)
 	{
 	   int l;
 	   *pip++ = pcp-baseoff;
@@ -78,7 +78,7 @@ __execvve(char * fname, char **interp, char **argv, char **envp)
 	}
 	*pip++ = 0;
 
-	for(p=envp; p && *p; p++)
+	for (p=envp; p && *p; p++)
 	{
 	   int l;
 	   *pip++ = pcp-baseoff;
@@ -103,12 +103,12 @@ tryrun(char *pname, char **argv)
 #endif
    struct stat st;
 
-   if( stat(pname, &st) < 0 ) return;
-   if( !S_ISREG(st.st_mode) ) return;
+   if (stat(pname, &st) < 0 ) return;
+   if (!S_ISREG(st.st_mode) ) return;
 
 #ifdef __AS386_16__
    __execvve(pname, (void*)0, argv, environ);
-   if( errno == ENOEXEC )
+   if (errno == ENOEXEC )
    {
       shprog[1] = pname;
       __execvve(shprog[0], shprog, argv, environ);
@@ -127,22 +127,22 @@ execvp(char *fname, char **argv)
    int flen, plen;
    char * bp = sbrk(0);
 
-   if( *fname != '/' && (path = getenv("PATH")) != 0 )
+   if (*fname != '/' && (path = getenv("PATH")) != 0 )
    {
       flen = strlen(fname)+2;
 
-      for(;path;)
+      for (;path;)
       {
-         if( *path == ':' || *path == '\0' )
+         if (*path == ':' || *path == '\0' )
 	 {
 	    tryrun(fname, argv);
-	    if( errno == EACCES ) besterr = EACCES;
-	    if( *path ) path++; else break;
+	    if (errno == EACCES ) besterr = EACCES;
+	    if (*path ) path++; else break;
 	 }
 	 else
 	 {
 	    char * p = strchr(path, ':');
-	    if(p) *p = '\0';
+	    if (p) *p = '\0';
 	    plen = strlen(path);
 	    pname = sbrk(plen+flen);
 
@@ -151,11 +151,11 @@ execvp(char *fname, char **argv)
 	    strcat(pname, fname);
 
 	    tryrun(pname, argv);
-	    if( errno == EACCES ) besterr = EACCES;
+	    if (errno == EACCES ) besterr = EACCES;
 
 	    brk(pname);
 	    pname = fname;
-	    if(p) *p++ = ':';
+	    if (p) *p++ = ':';
 	    path=p;
 	 }
       }
@@ -163,6 +163,6 @@ execvp(char *fname, char **argv)
 
    tryrun(pname, argv);
    brk(bp);
-   if( errno == ENOENT || errno == 0 ) errno = besterr;
+   if (errno == ENOENT || errno == 0 ) errno = besterr;
    return -1;
 }

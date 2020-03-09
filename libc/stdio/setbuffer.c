@@ -5,10 +5,10 @@ void
 setbuffer(FILE *fp, char *buf, int size)
 {
    fflush(fp);
-   if( fp->mode & __MODE_FREEBUF ) free(fp->bufstart);
+   if (fp->mode & __MODE_FREEBUF ) free(fp->bufstart);
    fp->mode &= ~(__MODE_FREEBUF|__MODE_BUF);
 
-   if( buf == 0 )
+   if (buf == 0 )
    {
       fp->bufstart = fp->unbuf;
       fp->bufend = fp->unbuf + sizeof(fp->unbuf);

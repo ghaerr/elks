@@ -24,7 +24,7 @@ static int   moffset[] =
    j = offset / 86400L + 719469;
    s = offset % 86400L;
 
-   if( s < 0 ) { s += 86400L; j--; }
+   if (s < 0 ) { s += 86400L; j--; }
 
    tmbuf->tm_sec = s % 60;
    tmbuf->tm_min = (s / 60) % 60;

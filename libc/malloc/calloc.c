@@ -8,7 +8,7 @@ calloc(unsigned int elm, unsigned int sz)
 	register void *ptr;
 
 	ptr = malloc(v = elm * sz);
-	if(ptr)
+	if (ptr)
 		memset(ptr, 0, v);
 
 	return ptr;

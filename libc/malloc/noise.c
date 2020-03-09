@@ -21,7 +21,7 @@ __noise(char *y, mem *x)
 	write(2, "Malloc ", 7);
 	phex((int)x);
 	write(2, " sz ", 4);
-	if(x)
+	if (x)
 		phex(m_size(x));
 	else
 		phex(0);

@@ -37,7 +37,7 @@ static int seed3 = 1;
 #define CRANK(a,b,c,m,s) 	\
 	q = s/a;		\
 	s = b*(s-a*q) - c*q;	\
-	if(s<0) s+=m;
+	if (s<0) s+=m;
 
 int rand()
 {

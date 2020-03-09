@@ -118,7 +118,7 @@ pututline(const struct utmp * utmp_entry)
 
   if ((ut=getutid(utmp_entry))!=NULL)
       lseek(ut_fd, (off_t) -sizeof(struct utmp), SEEK_CUR);
-  else if( ut_fd==-1 )
+  else if (ut_fd==-1 )
       return NULL;
   else
       lseek(ut_fd, (off_t) 0, SEEK_END);
