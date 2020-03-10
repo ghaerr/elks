@@ -217,8 +217,10 @@ static int do_umount(kdev_t dev)
 	    */
 	    retval = 0;
 	    if (!(sb->s_flags & MS_RDONLY)) {
+		debug_sup("UMOUNT remount fsync\n");
 		fsync_dev(dev);
 		retval = do_remount_sb(sb, MS_RDONLY, 0);
+		debug_sup("UMOUNT remount returns %d\n", retval);
 	    }
 	}
 	else if (sb->s_covered) {
@@ -296,8 +298,10 @@ int sys_umount(char *name)
 
     }
     iput(inodep);
-    if (!retval)
+    if (!retval) {
+	debug_sup("UMOUNT fsync\n");
 	fsync_dev(dev);
+    }
     return retval;
 }
 
@@ -339,6 +343,7 @@ int do_mount(kdev_t dev, char *dir, char *type, int flags, char *data)
 	error = 0;		/* we don't iput(dir_i) - see umount */
     }
   ERROUT:
+    debug_sup("MOUNT error %d\n", error);
     return error;	
 }
 
@@ -348,12 +353,12 @@ int do_mount(kdev_t dev, char *dir, char *type, int flags, char *data)
  * FS-specific mount options can't be altered by remounting.
  */
 
-static int do_remount_sb(register struct super_block *sb, int flags,
-			 char *data)
+static int do_remount_sb(register struct super_block *sb, int flags, char *data)
 {
     int retval;
     register struct super_operations *sop = sb->s_op;
 
+    debug_sup("REMOUNT sb check %d,%d\n", sb->s_flags, flags);
     if (!(flags & MS_RDONLY) && sb->s_dev) return -EACCES;
 
 #if 0
@@ -365,10 +370,13 @@ static int do_remount_sb(register struct super_block *sb, int flags,
 	if (!fs_may_remount_ro(sb->s_dev)) return -EBUSY;
     if (sop && sop->remount_fs) {
 	retval = sop->remount_fs(sb, &flags, data);
-	if (retval) return retval;
+	if (retval) {
+		debug_sup("REMOUNT fail\n");
+		return retval;
+	}
     }
-    sb->s_flags = (unsigned short int)
-		((sb->s_flags & ~MS_RMT_MASK) | (flags & MS_RMT_MASK));
+    sb->s_flags = (unsigned short int) ((sb->s_flags & ~MS_RMT_MASK) | (flags & MS_RMT_MASK));
+    debug_sup("REMOUNT ok\n");
     return 0;
 }
 
@@ -482,6 +490,7 @@ void mount_root(void)
     struct file *filp;
     int retval;
 
+    debug_sup("MOUNT root\n");
     d_inode = new_inode(NULL, S_IFBLK);
     d_inode->i_rdev = ROOT_DEV;
   retry_floppy:
