@@ -52,9 +52,9 @@ int isatty (int fd);
 off_t lseek (int fildes, off_t offset, int whence);
 int unlink(const char *fname);
 
-pid_t fork ();
-pid_t getpid ();
-pid_t setsid ();
+pid_t fork(void);
+pid_t getpid(void);
+pid_t setsid(void);
 
 uid_t getuid (void);
 

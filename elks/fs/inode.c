@@ -406,8 +406,12 @@ int fs_may_remount_ro(kdev_t dev)
     do {
 	inode = file->f_inode;
 	if (!file->f_count || !inode || inode->i_dev != dev) continue;
-	if (S_ISREG(inode->i_mode) && (file->f_mode & 2)) return 0;
+	if (S_ISREG(inode->i_mode) && (file->f_mode & 2)) {
+		debug_sup("REMOUNT RO fail: open file\n");
+		return 0;
+	}
     } while (++file < &file_array[NR_FILE]);
+    debug_sup("REMOUNT RO ok\n");
     return 1;
 }
 

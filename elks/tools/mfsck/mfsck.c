@@ -1273,7 +1273,6 @@ check2 (void) {
 int
 main(int argc, char ** argv) {
 	struct termios tmp;
-	int count;
 	int retcode = 0;
 	char *p;
 
@@ -1323,8 +1322,10 @@ main(int argc, char ** argv) {
 	IN = open(device_name,repair?O_RDWR:O_RDONLY);
 	if (IN < 0)
 		die(_("unable to open '%s': %s"), device_name, strerror(errno));
-	for (count=0 ; count<3 ; count++)
-		sync();
+
+	/* unnecessary in ELKS build and for speed, remove sync*/
+	/***for (count=0 ; count<3 ; count++)
+		sync();***/
 	read_superblock();
 
 	/*

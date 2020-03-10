@@ -52,7 +52,7 @@ static int minix_set_super_state(struct super_block *sb, int notflags, int newst
 	if (notflags)
 		ms->s_state &= notflags;
 	else ms->s_state = newstate;
-	sb->u.minix_sb.s_ondisk_state = ms->s_state;		/* save for remount*/
+	debug_sup("MINIX set super state %d\n", newstate);
 	mark_buffer_dirty(bh, 1);
 	unmap_buffer(bh);
 	return oldstate;
@@ -74,6 +74,7 @@ static void minix_release_bitmaps(struct super_block *sb)
 
 void minix_write_super(register struct super_block *sb)
 {
+	debug_sup("MINIX write super\n");
 	if (!(sb->s_flags & MS_RDONLY))
 		minix_set_super_state(sb, ~MINIX_VALID_FS, 0);		/* unset fs checked flag, commit superblock*/
 	sb->s_dirt = 0;
@@ -81,6 +82,7 @@ void minix_write_super(register struct super_block *sb)
 
 void minix_put_super(register struct super_block *sb)
 {
+	debug_sup("MINIX put super\n");
 	lock_super(sb);
 	if (!(sb->s_flags & MS_RDONLY))
 		minix_set_super_state(sb, 0, sb->u.minix_sb.s_mount_state);	/* set original fs state*/
@@ -115,16 +117,19 @@ static void minix_mount_warning(register struct super_block *sb, char *prefix)
 
 int minix_remount(register struct super_block *sb, int *flags, char *data)
 {
-	if ((*flags & MS_RDONLY) == (sb->s_flags & MS_RDONLY))
+	debug_sup("MINIX remount %d,%d\n", sb->s_flags, *flags);
+	if ((*flags & MS_RDONLY) == (sb->s_flags & MS_RDONLY)) {
+		debug_sup("MINIX remount both rdonly\n");
 		return 0;
+	}
 	if (*flags & MS_RDONLY) {
-		if ((sb->u.minix_sb.s_ondisk_state & MINIX_VALID_FS) || !(sb->u.minix_sb.s_mount_state & MINIX_VALID_FS))
-			return 0;
 		/* Mounting a rw partition read-only*/
+		debug_sup("MINIX remount RW to RO\n");
 		minix_set_super_state(sb, 0, sb->u.minix_sb.s_mount_state);	/* reset original fs state and commit superblock*/
 		sb->s_dirt = 0;
 	} else {
 		/* Mount a partition which is read-only, read-write*/
+		debug_sup("MINIX remount RO to RW\n");
 		sb->u.minix_sb.s_mount_state = minix_set_super_state(sb, ~MINIX_VALID_FS, 0); /* unset fs checked flag*/
 		sb->s_dirt = 1;
 		minix_mount_warning(sb, "re");
@@ -163,7 +168,6 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	s->u.minix_sb.s_dirsize = 16;
 	s->u.minix_sb.s_namelen = 14;
 	s->u.minix_sb.s_mount_state = ms->s_state;
-	s->u.minix_sb.s_ondisk_state = ms->s_state;
 	s->u.minix_sb.s_ninodes = ms->s_ninodes;
 	s->u.minix_sb.s_imap_blocks = ms->s_imap_blocks;
 	s->u.minix_sb.s_zmap_blocks = ms->s_zmap_blocks;

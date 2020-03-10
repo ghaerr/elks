@@ -255,6 +255,7 @@ static void make_request(unsigned short int major, int rw,
     sector_t sector, count;
     int max_req;
 
+    debug_blk("BLK %d %s\n", bh->b_blocknr, rw==READ? "read": "write");
     count = (sector_t) (BLOCK_SIZE >> 9);
     sector = bh->b_blocknr * count;
 
@@ -347,10 +348,6 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
     unsigned short int major;
     int i;
 
-#ifdef BLOAT_FS
-    int correct_size;
-#endif
-
     /* Make sure the first block contains something reasonable */
     while (!*bh) {
 	bh++;
@@ -396,10 +393,6 @@ void ll_rw_blk(int rw, register struct buffer_head *bh)
 {
     register struct blk_dev_struct *dev;
     unsigned short int major;
-
-#ifdef BLOAT_FS
-    int correct_size;
-#endif
 
     dev = NULL;
     if ((major = MAJOR(bh->b_dev)) < MAX_BLKDEV)

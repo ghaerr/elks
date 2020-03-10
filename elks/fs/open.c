@@ -17,6 +17,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/utime.h>
+#include <linuxmt/debug.h>
 
 #include <arch/segment.h>
 #include <arch/system.h>
@@ -342,6 +343,17 @@ int sys_fchown(unsigned int fd, uid_t user, gid_t group)
 	    : do_chown(filp->f_inode, user, group));
 }
 
+#if DEBUG_FILE
+static char *get_userspace_filename(char *filename)
+{
+	static char name[32];
+
+	memcpy_fromfs(name, filename, sizeof(name));
+	name[sizeof(name)-1] = 0;
+	return name;
+}
+#endif
+
 /*
  * Note that while the flag value (low two bits) for sys_open means:
  *	00 - read-only
@@ -367,6 +379,7 @@ int sys_open(char *filename, int flags, int mode)
     if ((mode_t)((flags + 1) & O_ACCMODE)) flag++;
     if (flag & (O_TRUNC | O_CREAT)) flag |= FMODE_WRITE;
 
+    debug_file("OPEN '%s' flags %x\n", get_userspace_filename(filename), flags);
     error = open_namei(filename, flag, mode, &inode, NULL);
     if (!error) {
 	pinode = inode;
