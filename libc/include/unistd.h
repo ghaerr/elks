@@ -54,7 +54,7 @@ int unlink(const char *fname);
 
 pid_t fork(void);
 pid_t getpid(void);
-pid_t setsidvoid();
+pid_t setsid(void);
 
 uid_t getuid (void);
 
