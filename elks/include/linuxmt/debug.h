@@ -31,7 +31,47 @@
 #define pstrace(_a)
 #endif
 
+<<<<<<< HEAD
+/*
+ * New kernel debug mechanism, set here or in autoconf.h, works across multiple files.
+ */
+#define DEBUG_BLK	0		/* block i/o*/
+#define DEBUG_FILE	0		/* sys open and file i/o*/
+#define DEBUG_FS	0		/* VFS and general filesystem*/
+#define DEBUG_FAT	0		/* FAT filesystem*/
+#define DEBUG_MINIX	0		/* Minix filesystem*/
+#define DEBUG_SIG	0		/* signals*/
+#define DEBUG_SUP	0		/* superblock, mount, umount*/
+
+#if DEBUG_BLK
+#define debug_blk	printk
+#else
+#define debug_blk(...)
+#endif
+
+#if DEBUG_FILE
+#define debug_file	printk
+#else
+#define debug_file(...)
+#endif
+
+#if DEBUG_SIG
+#define debug_sig	printk
+#else
+#define debug_sig(...)
+#endif
+
+#if DEBUG_SUP
+#define debug_sup	printk
+#else
+#define debug_sup(...)
+#endif
+
+/* Old debug mechanism - deprecated.
+ * This sets up a standard set of macros that can be used with any of the
+=======
 /* This sets up a standard set of macros that can be used with any of the
+>>>>>>> parent of 283a2260... [minix] Fix Minix umount super block unchecked flag, add new debug mechanism
  * files that make up the ELKS kernel. They can handle calls with up to 9
  * parameters after the format string.
  */

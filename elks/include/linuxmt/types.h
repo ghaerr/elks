@@ -39,9 +39,7 @@ typedef __u16			uid_t;
 typedef __u16			umode_t;
 
 typedef __u8			cc_t;
-#ifndef sig_t
-typedef __u8			sig_t;
-#endif
+typedef __u16			sig_t;
 
 /*@ignore@*/
 

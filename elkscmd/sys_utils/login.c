@@ -25,6 +25,7 @@
 #include <dirent.h>
 #include <utmp.h>
 #include <limits.h>
+#include <signal.h>
 
 /*#define USE_UTMP*/	/* Disabled until we fix the "utmp file corrupt" */
 			/* issue. 17/4/2002 Harry Kalogirou */
@@ -102,6 +103,7 @@ int main(int argc, char ** argv)
 	char *p;
 
 
+	signal(SIGTSTP, SIG_IGN);		/* ignore ^Z stop signal*/
 	for (;;) {
 		if (argc == 1) {
 			write(STDOUT_FILENO,"login: ",7);
