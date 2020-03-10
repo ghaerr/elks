@@ -16,14 +16,13 @@
 	.global early_printk
 
 entry:
+
 /*
 ! Setup.S already initialized DS and ES (but not SS)
 ! In addition, registers contain:
 !   BX, Text size
 !   SI, Data size
 !   DX, BSS size
-!   CX, Kernel DS
-!
 */
 	mov	%bx,_endtext
 	mov	%si,_enddata
@@ -33,7 +32,7 @@ entry:
 // Start cleaning BSS. Still using setup.S stack
 
 	mov	_enddata,%di	// start of BSS
-	xchg	%dx,%cx		// CX = BSS size, DX = Kernel DS
+	mov	%dx,%cx       // CX = BSS size
 	xor	%ax,%ax
 	shr	$1,%cx
 	cld
@@ -45,7 +44,8 @@ entry:
 	mov	%cs,kernel_cs
 	mov	%ds,kernel_ds
 
-	mov	%dx,%ss		// in ROMCODE stack is ready placed
+	mov	%ds,%ax       // in ROMCODE stack is ready placed
+	mov	%ax,%ss
 	mov	$task + TASK_USER_AX,%sp
 
 /*
@@ -89,7 +89,6 @@ ep_end:
 	.extern	kernel_cs
 	.extern	kernel_ds
 	.extern task
-	.global mfld
 
 _endtext:
 	.word	0

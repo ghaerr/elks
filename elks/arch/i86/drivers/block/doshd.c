@@ -44,18 +44,14 @@
 
 #ifdef CONFIG_BLK_DEV_BIOS
 
+#define DMA_OVR  // activate DMASEG patch
+
 #define MAJOR_NR BIOSHD_MAJOR
 #define BIOSDISK
 
 #include "blk.h"
 
 /* #define MULT_SECT_RQ */
-
-#if !defined(CONFIG_ARCH_SIBO)
-#define BUFSEG SETUP_DATA
-#else
-#define BUFSEG 0x800
-#endif
 
 struct elks_disk_parms {
     __u16 track_max;		/* number of tracks, little-endian */
@@ -328,7 +324,7 @@ int read_sector(int drive, int track, int sector)
 
 	BD_AX = (unsigned short int) (BIOSHD_READ | 1); /* Read 1 sector  */
 	BD_BX = 0;					/* Seg offset = 0 */
-	BD_ES = BUFSEG;					/* Target segment */
+	BD_ES = DMASEG;					/* Target segment */
 	BD_CX = (unsigned short int) ((track << 8) | sector);
 	BD_DX = drive;					/* Head 0 | drive */
 
@@ -402,7 +398,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 
 	if (!read_sector(target, 0, 1)) {
 	    struct elks_boot_sect __far *boot
-		= (struct elks_boot_sect __far *)((__u32)BUFSEG << 16);
+		= (struct elks_boot_sect __far *)((__u32)DMASEG << 16);
 	    struct elks_disk_parms __far *parms = &boot->disk_parms;
 
 	    if (parms->marker[0] == 'e' && parms->marker[1] == 'L'
@@ -740,11 +736,11 @@ static void do_bioshd_request(void)
 #ifdef DMA_OVR
 		if (req->rq_cmd == WRITE) {
 		    BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
-		    fmemcpyb(NULL, BUFSEG, buff, req->rq_seg, (this_pass << 9));
+		    fmemcpyb(NULL, DMASEG, buff, req->rq_seg, (this_pass << 9));
 		}
 		else BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
 		BD_BX = 0;
-		BD_ES = BUFSEG;
+		BD_ES = DMASEG;
 #else
 		BD_AX = (req->rq_cmd == WRITE ? BIOSHD_WRITE : BIOSHD_READ) | this_pass;
 		BD_BX = (__u16) buff;
@@ -772,7 +768,7 @@ static void do_bioshd_request(void)
 
 #ifdef DMA_OVR
 	    if (req->rq_cmd == READ)
-		fmemcpyb(buff, req->rq_seg, NULL, BUFSEG, (word_t)(this_pass << 9));
+		fmemcpyb(buff, req->rq_seg, NULL, DMASEG, (word_t)(this_pass << 9));
 #endif
 	    count -= this_pass;
 	    start += this_pass;

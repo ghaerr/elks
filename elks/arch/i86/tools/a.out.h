@@ -10,12 +10,12 @@ struct exec {			/* a.out header */
     unsigned char a_hdrlen;	/* length of header */
     unsigned char a_unused;	/* reserved for future use */
     unsigned short a_version;	/* version stamp (not used at present) */
-    int32_t a_text;		/* size of text segement in bytes */
-    int32_t a_data;		/* size of data segment in bytes */
-    int32_t a_bss;			/* size of bss segment in bytes */
-    int32_t a_entry;		/* entry point */
-    int32_t a_total;		/* total memory allocated */
-    int32_t a_syms;		/* size of symbol table */
+    int32_t a_text;		/* +8:  size of text section in bytes */
+    int32_t a_data;		/* +12: size of data section in bytes */
+    int32_t a_bss;		/* +16: size of bss  section in bytes */
+    int32_t a_entry;	/* +20: entry point */
+    int32_t a_total;	/* +24: total memory allocated */
+    int32_t a_syms;		/* +28: size of symbol table */
 
     /* SHORT FORM ENDS HERE */
     int32_t a_trsize;		/* text relocation size */

@@ -248,8 +248,13 @@ good_sig:
 //;-------------------------------------------------------
 //;-- from here the real loader starts
 //;-------------------------------------------------------
+
 start_os:
-	mov	$INITSEG,%ax       //;datasegment setup.S
+
+	mov $hello_mess,%si
+	call prtstr
+
+	mov $INITSEG,%ax
 	mov	%ax,%ds
 
 //; The root device is obviously /dev/rom0
@@ -318,7 +323,6 @@ novga:	mov	%al,14		// CGA 25 rows
 #else
 	xor	%ax,%ax
 	mov	%ax,%es		// Access BIOS DATA AREA
-//	seg es
 	mov	%es:0x485,%ax	// POINTS - Height of character matrix
 	mov	%ax,16
 #endif
@@ -479,7 +483,48 @@ size_ok:
 //
 #elif defined(REL_SYS)
 
-// Relocate setup data
+	mov $INITSEG,%ax
+	mov %ax,%ds
+
+// Get the memory size
+// TODO: optional BIOS INT 12h
+
+	int $0x12   // AX in KB
+	mov $6,%cl  // to paragraphs
+	shl %cl,%ax
+
+// Move to the highest & aligned 64K
+
+	sub $0x1000,%ax
+	and $0xF000,%ax
+	mov %ax,%es
+
+	mov 0x1F1,%al  // setup sector count
+	cbw
+	mov $8,%cl     // to words
+	shl %cl,%ax
+	mov %ax,%cx
+
+	mov $512,%si   // skip raw sector
+	xor %di,%di
+	cld
+	rep
+	movsw
+
+// Rebase CS DS ES SS to work in the 64K segment
+
+	mov %es,%ax
+	mov %ax,%ss   // automatic CLI for next instruction
+	xor %sp,%sp
+
+	push %ax
+	mov $_next1,%ax
+	push %ax
+	retf
+
+_next1:
+
+// Relocate setup data (= raw boot sector)
 
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
@@ -492,13 +537,10 @@ size_ok:
 	rep
 	movsw
 
-// Assume kernel data+bss size > 5 Kbytes
-// Calculate values needed
+// Check system header
 
 	mov	$SYSSEG,%ax
 	mov	%ax,%ds
-
-// Check system header
 
 	cmpw $0x0301,0   // ELKS a.out magic
 	jne sys_hdr_bad
@@ -509,151 +551,82 @@ size_ok:
 	jmp sys_hdr_good
 
 sys_hdr_bad:
-	mov	$SETUPSEG,%ax
+	mov %ss,%ax
 	mov	%ax,%ds
 	lea sys_hdr_msg,%si
 	call prtstr
 sys_hdr_loop:
 	jmp sys_hdr_loop
 sys_hdr_msg:
-	.ascii "Bad sys hdr!"
+	.ascii "Bad system header!"
 	.byte 0
 
 // System header is good
 
 sys_hdr_good:
-	mov	24,%bx
-	push	%bx
-	mov	12,%bx
-	mov	%bx,%dx
-	push	%bx		// Data size
-	add	16,%bx
-	add $0xF,%bx     // align on next paragraph (issue #209)
-	mov	$4,%cl
-	shr	%cl,%bx
-	add	$REL_SYSSEG,%bx	// BX = Relocated kernel code segment
-	mov	8,%ax
-	push	%ax		// Code size
-	mov	$4,%cl
-	shr	%cl,%ax
-	mov	%ax,%cx
-	add	%bx,%ax		// AX = Relocated kernel data segment
-	add	$SYSSEG+2,%cx
-	push	16		// Bss size
-	push	%cx		// Kernel data segment
+
+	mov %sp,%bp
+	mov 8,%dx     // code size
+	push %dx
 	add $0xF,%dx     // align on next paragraph (issue #209)
 	mov	$4,%cl
-	shr	%cl,%dx
-	add	%ax,%dx		// DX = Rel rel segment
-	mov	%sp,%bp
+	shr %cl,%dx   // DX = code segment size in paragraph
 
+	mov 12,%ax    // data size
+	push %ax
+	mov 16,%ax    // bss size
+	push %ax
+	mov 20,%ax    // entry point
+	push %ax
 
-/*
-! Variables in stack as follows:
-! Offset from BP	variable
-!	8		entry point
-!	6		data size
-!	4		code size
-!	2		bss size
-!	0		kernel data segment
-*/
+// Relocate kernel code
 
-	cmp	$SYSSEG+2,%bx
-	ja	move_back
+	mov $SYSSEG+2,%ax
+	mov %ax,%ds
+	mov $REL_SYSSEG,%ax
+	mov %ax,%es
 
-// Move forward
-
-	mov	%bx,%es		// Move code segment
-	mov	$SYSSEG+2,%cx
-	mov	%cx,%ds
-	mov	4(%bp),%cx
+	mov -2(%bp),%cx  // code size
 	xor	%si,%si
 	mov	%si,%di
-	rep
-	movsb
-	mov	%ax,%es		// Move data segment
-	mov	(%bp),%ds
-	mov	6(%bp),%cx
-	xor	%si,%si
-	jmp	rel_rel
-
-// Move backward
-
-move_back:
-	std
-	mov	%ax,%es		// Move data segment
-	mov	(%bp),%ds
-	mov	6(%bp),%cx
-	mov	%cx,%si
-	dec	%si
-	mov	%si,%di
-	rep
-	movsb
-	mov	%bx,%es		// Move code segment
-	mov	$SYSSEG+2,%cx
-	mov	%cx,%ds
-	mov	4(%bp),%cx
-	mov	%cx,%si
-	dec	%si
-rel_rel:
-	mov	%si,%di
-	rep
-	movsb
-
-// Relocate relocation code to next to relocated kernel data
-// segment because current setup code might be overwritten
-
-	mov	%dx,%es
-	mov	%cs,%cx
-	mov	%cx,%ds
-	mov	$cont,%si
-	xor	%di,%di
-	push	%es		// build far return address
-	push	%di
-	mov	$end_reloc-cont,%cx
 	cld
 	rep
 	movsb
-	lret			// jump to dx:0
 
-// Still using the old stack. Switch to new stack
-// AX = Rel. kernel data seg. BX = Rel. kernel code seg. DX = Rel. rel. seg.
+// Relocate kernel data (not bss)
+// Kernel resets bss itself
 
-cont:	mov	%ax,%ds
-	pop	%di		// Empty old stack
-	pop	%di
-	pop	%ax
-	pop	%si
-	pop	%bp
-	mov	%dx,%ss		// Set new stack
-	mov	$end_reloc-cont+512,%sp
-	mov	%di,%dx		// Move kernel data segment to REL_SYSSEG
-	mov	$REL_SYSSEG,%cx
-	mov	%cx,%es
-	mov	%si,%cx
-	push	%cx
-	xor	%si,%si
-	xor	%di,%di
+	mov $SYSSEG+2,%ax
+	add %dx,%ax
+	mov %ax,%ds
+	mov $REL_SYSSEG,%ax
+	add %dx,%ax
+	mov %ax,%es
+
+	mov -4(%bp),%cx  // data size
+	xor %si,%si
+	mov %si,%di
+	cld
 	rep
 	movsb
 
-/*
-! Load registers as expected by crt0.S
-!	BX, Text size
-!	SI, Data size
-!	DX, BSS size
-! DS,ES,CX, Kernel DS
-*/
+// Load registers as kernel expects
 
-	xchg	%bx,%ax
-	pop	%si
-	mov	%es,%cx
-	mov	%cx,%ds
-	push	%ax		// Build far return address to relocated code segment
-	push	%bp		// Address to start
+	mov %es,%ax
+	mov %ax,%ds
 
+	mov -2(%bp),%bx    // code size
+	mov -4(%bp),%si    // data size
+	mov -6(%bp),%dx    // bss size
+	mov -8(%bp),%cx    // entry point
+
+// Jump to kernel entry point
+
+	mov $REL_SYSSEG,%ax
+	push %ax
+	push %cx
 	lret
-end_reloc:
+
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Case for kernel in disk, no kernel relocation
 //
@@ -664,7 +637,7 @@ end_reloc:
 	mov 8,%bx	// TSeg
 	mov 12,%si	// DSeg
 	mov 16,%dx	// BSeg
-	mov 24,%bp	// start
+	mov 20,%bp	// entry point
 	mov %bx,%ax	// Get Text size
 	mov $4,%cl
 	shr %cl,%ax	// Data in paragraphs
@@ -676,7 +649,9 @@ end_reloc:
 	mov %cx,%es
 	push %bp
 	retf
-#endif
+
+#endif // REL_SYS
+
 /*
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 !
@@ -1141,6 +1116,10 @@ v_id3:	.byte 0,0,0,0
 
 no_sig_mess:	.ascii	"No ELKS setup signature found ..."
 		.byte	0x00
+
+hello_mess:
+	.ascii "\r\nELKS Setup\r\n"
+	.byte 0
 
 // variables in ROM are not very usefull
 start_sys_seg:	.word	SYSSEG
