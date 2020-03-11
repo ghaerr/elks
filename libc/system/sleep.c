@@ -1,4 +1,5 @@
 #ifdef L_sleep
+#include <signal.h>
 #include <unistd.h>
 
 #ifdef __ELKS__
