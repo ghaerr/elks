@@ -3,10 +3,6 @@
 #ifndef LX86_ARCH_TYPES_H
 #define LX86_ARCH_TYPES_H
 
-/* Include the host & target common types */
-
-#include <types.h>
-
 /*@-namechecks@*/
 
 /* First we define all of the __u and __s types...*/
@@ -27,9 +23,13 @@ typedef signed short int		__sint,		*__psint;
 
 /* 8086 types */
 
-typedef u16_t word_t;
-typedef u16_t seg_t;
-typedef u32_t addr_t;
+typedef __u16 __seg_t;
+#ifdef __KERNEL__
+typedef __u8 byte_t;
+typedef __u16 word_t;
+typedef __u16 seg_t;
+typedef __u32 addr_t;
+#endif
 
 /* Then we define registers, etc... */
 

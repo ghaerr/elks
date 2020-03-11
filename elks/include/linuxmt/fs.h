@@ -1,9 +1,11 @@
-#ifndef LX86_LINUXMT_FS_H
-#define LX86_LINUXMT_FS_H
+#ifndef __LINUXMT_FS_H
+#define __LINUXMT_FS_H
 
 /*
  * This file has definitions for some important file table structures etc.
  */
+
+#ifdef __KERNEL__
 
 #include <linuxmt/types.h>
 #include <linuxmt/wait.h>
@@ -32,6 +34,8 @@
 #ifdef CONFIG_ROMFS_FS
 #include <linuxmt/romfs_fs.h>
 #endif
+
+#endif /* __KERNEL__ */
 
 #define USE_GETBLK
 
@@ -89,6 +93,8 @@
  */
 #define MS_RMT_MASK (MS_RDONLY)
 
+#ifdef __KERNEL__
+
 /*
  * Note that read-only etc flags are inode-specific: setting some file-system
  * flags just means all the inodes inherit those flags by default. It might be
@@ -106,8 +112,6 @@
 
 #define IS_APPEND(inode) ((inode)->i_flags & S_APPEND)
 #define IS_IMMUTABLE(inode) ((inode)->i_flags & S_IMMUTABLE)
-
-#ifdef __KERNEL__
 
 extern void buffer_init(void);
 extern void inode_init(void);
@@ -536,6 +540,6 @@ extern int open_fd(int flags, struct inode *inode);
 
 extern void mark_buffer_uptodate(struct buffer_head *,int);
 
-#endif
+#endif /* __KERNEL__ */
 
 #endif

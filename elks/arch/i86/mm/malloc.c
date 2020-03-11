@@ -667,7 +667,7 @@ int sys_brk(__pptr newbrk)
 }
 
 
-int sys_sbrk (int increment, u16_t * pbrk)
+int sys_sbrk (int increment, __u16 * pbrk)
 {
 	__pptr brk = current->t_endbrk;		/* always return start of old break*/
 	if (increment) {
