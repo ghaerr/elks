@@ -5,19 +5,19 @@
 
 # set BPB and mkfs options based on passed image size
 ifeq ($(SIZE),  360)
-	BPB=-B9,2
+	BPB=-B9,2,40
 	MINIX_MKFSOPTS=-1 -n14 -i192 -s360
 endif
 ifeq ($(SIZE), 720)
-	BPB=-B9,2
+	BPB=-B9,2,80
 	MINIX_MKFSOPTS=-1 -n14 -i256 -s720
 endif
 ifeq ($(SIZE), 1440)
-	BPB=-B18,2
+	BPB=-B18,2,80
 	MINIX_MKFSOPTS=-1 -n14 -i360 -s1440
 endif
 ifeq ($(SIZE), 2880)
-	BPB=-B36,2
+	BPB=-B36,2,80
 	MINIX_MKFSOPTS=-1 -n14 -i720 -s2880
 endif
 ifeq ($(SIZE), 31752)
