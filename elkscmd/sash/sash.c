@@ -219,7 +219,6 @@ static	int	sourcecount;
 #endif
 
 static	void	catchint();
-static	void	catchtstp();
 static	void	catchquit();
 static	void	readfile();
 static	void	command();
@@ -834,17 +833,6 @@ showprompt()
 	write(STDOUT, prompt, strlen(prompt));
 }
 
-
-static void
-catchtstp()
-{
-	signal(SIGTSTP, catchtstp);
-
-	intflag = TRUE;
-
-	if (intcrlf)
-		write(STDOUT, "\n", 1);
-}
 
 static void
 catchint()

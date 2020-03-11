@@ -20,6 +20,7 @@
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/debug.h>
 
 #include <arch/segment.h>
 #include <arch/io.h>
@@ -297,9 +298,9 @@ int sys_setsid(void)
 {
     register __ptask currentp = current;
 
-    if (currentp->session == currentp->pid) {
+    if (currentp->session == currentp->pid)
 	return -EPERM;
-    }
+    debug_sig("SETSID pgrp %d\n", currentp->pid);
     currentp->session = currentp->pgrp = currentp->pid;
     currentp->tty = NULL;
 

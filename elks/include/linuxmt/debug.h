@@ -47,6 +47,12 @@
 #define debug_file(...)
 #endif
 
+#if DEBUG_SIG
+#define debug_sig	printk
+#else
+#define debug_sig(...)
+#endif
+
 #if DEBUG_SUP
 #define debug_sup	printk
 #else
