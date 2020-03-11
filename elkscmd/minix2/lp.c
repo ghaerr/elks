@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <sys/wait.h>
 
-char LPD1[] = "/usr/sbin/lpd";		/* Proper place of lpd */
+char LPD1[] = "/bin/lpd";			/* Proper place of lpd */
 char LPD2[] = "/usr/bin/lpd";		/* Minix has no sbin directories. */
 
 void report(char *mess)

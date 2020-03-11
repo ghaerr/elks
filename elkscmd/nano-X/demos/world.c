@@ -17,7 +17,7 @@
 #define O_BINARY 	0
 #endif
 
-#define	MAPFILE	"/usr/bin/world.map"	
+#define	MAPFILE	"/lib/world.map"
 
 #define	SELECTBUTTON	GR_BUTTON_L
 #define	COORDBUTTON	GR_BUTTON_R

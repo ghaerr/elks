@@ -88,7 +88,7 @@ poweroff: poweroff.o
 chmem: chmem.o
 	$(LD) $(LDFLAGS) -o chmem chmem.o $(LDLIBS)
 
-unreal16: unreal16
+unreal16:
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o
 	$(LD) -melks-libc -mcmodel=small -nostdlib -o unreal16 unreal16.o
 

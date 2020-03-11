@@ -8,7 +8,7 @@
  *
  * The environment is checked for these variables:
  *   MANSECT=1:2:3:4:5:6:7:8:9		# Manual section search order.
- *   MANPATH=/usrlocal/man:/usr/man	# Directorys to search for man tree.
+ *   MANPATH=/lib/man:/usr/man	# Directories to search for man tree.
  *   PAGER=more				# pager progam to use.
  *   PATH=...				# Search for gzip/uncompress
  *
@@ -86,7 +86,7 @@ void print_footer(void);
 
 int find_page(char *name, char *sect)
 {
-static char defpath[] = "/usr/local/man:/usr/man";
+static char defpath[] = "/lib/man:/usr/man";
 static char defsect[] = "1:2:3:4:5:6:7:8:9";
 static char defsuff[] = ":.gz:.Z";
 static char manorcat[] = "man:cat";

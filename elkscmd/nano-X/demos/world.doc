@@ -14,7 +14,7 @@ parallel lines).  This means that there is much distortion for the lands
 which are near the North and South poles.  If floating point was avaiable,
 a good projection could be used instead (such as a true spherical view!).
 
-The file "world.map" is the database, and should be installed in "/usr/lib".
+The file "world.map" is the database, and should be installed in "/lib".
 Otherwise you need to edit world.c and change MAPFILE as desired.
 
 To build the program (assuming mini-X is installed), use the command:

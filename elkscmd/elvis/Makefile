@@ -55,7 +55,7 @@ O=	.o
 EXTRA=
 EXTRA2=
 LIBS=
-BIN=	/usr/bin
+BIN=	/bin
 
 OF=	-o 
 RF=	-c
