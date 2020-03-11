@@ -16,18 +16,20 @@
 
 #include <arch/segment.h>
 
-static void generate(int sig, sigset_t msksig, register struct task_struct *p)
+static void generate(sig_t sig, sigset_t msksig, register struct task_struct *p)
 {
     register __sighandler_t sa;
 
     sa = p->sig.action[sig - 1].sa_handler;
     if ((sa == SIG_IGN) || ((sa == SIG_DFL) && (msksig &
-	    (SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG))))
+	    (SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG)))) {
+	if (!(msksig & SM_SIGCHLD)) debug_sig("SIGNAL ignoring %d pid %d\n", sig, p->pid);
 	return;
-    debug1("SIGNAL: Generating sig %d.\n", sig);
+    }
+    debug_sig("SIGNAL generate sig %d %x pid %d\n", sig, msksig, p->pid);
     p->signal |= msksig;
     if ((p->state == TASK_INTERRUPTIBLE) /* && (p->signal & ~p->blocked) */ ) {
-	debug("SIGNAL: Waking up.\n");
+	debug_sig("SIGNAL wakeup pid %d\n", p->pid);
 	wake_up_process(p);
     }
 }
@@ -37,7 +39,7 @@ int send_sig(sig_t sig, register struct task_struct *p, int priv)
     register __ptask currentp = current;
     sigset_t msksig;
 
-    debug1("SIGNAL: Killing with sig %d.\n", sig);
+    if (sig != SIGCHLD) debug_sig("SIGNAL send_sig %d pid %d.\n", sig, p->pid);
     if (!priv && ((sig != SIGCONT) || (currentp->session != p->session)) &&
 	(currentp->euid ^ p->suid) && (currentp->euid ^ p->uid) &&
 	(currentp->uid ^ p->suid) && (currentp->uid ^ p->uid) && !suser())
@@ -60,10 +62,18 @@ int kill_pg(pid_t pgrp, sig_t sig, int priv)
     register struct task_struct *p;
     int err = -ESRCH;
 
-    debug1("SIGNAL: Killing pg %d\n", pgrp);
-    for_each_task(p)
-	if (p->pgrp == pgrp)
-	    err = send_sig(sig, p, priv);
+    if (!pgrp) {
+	debug_sig("SIGNAL kill_pg 0 ignored\n");
+	return 0;
+    }
+    debug_sig("SIGNAL kill_pg %d\n", pgrp);
+    for_each_task(p) {
+	if (p->pgrp == pgrp) {
+		if (p->state < TASK_ZOMBIE)
+		    err = send_sig(sig, p, priv);
+		else debug_sig("SIGNAL skip kill_pg pgrp %d pid %d state %d\n", pgrp, p->pid, p->state);
+	}
+    }
     return err;
 }
 
@@ -71,7 +81,7 @@ int kill_process(pid_t pid, sig_t sig, int priv)
 {
     register struct task_struct *p;
 
-    debug2("SIGNAL: Killing PID %d with sig %d.\n", pid, sig);
+    debug_sig("SIGNAL kill sig %d pid %d\n", sig, pid);
     for_each_task(p)
 	if (p->pid == pid)
 	    return send_sig(sig, p, 0);
@@ -104,9 +114,8 @@ int sys_kill(pid_t pid, sig_t sig)
 
 int sys_signal(int signr, __sighandler_t handler)
 {
-    debug2("SIGNAL: Registering action %x for signal %d.\n", handler, signr);
-    if ( ((unsigned int)signr > NSIG)
-	 || signr == SIGKILL || signr == SIGSTOP)
+    debug_sig("SIGNAL sys_signal %d action %x pid %d\n", signr, handler, current->pid);
+    if (((unsigned int)signr > NSIG) || signr == SIGKILL || signr == SIGSTOP)
 	return -EINVAL;
     current->sig.action[signr - 1].sa_handler = handler;
     return 0;

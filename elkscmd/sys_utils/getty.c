@@ -74,6 +74,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <signal.h>
 
 #define LOGIN		"/bin/login"
 #define HOSTFILE	"/etc/HOSTNAME"
@@ -184,6 +185,7 @@ int main(int argc, char **argv) {
     char *ptr;
     int n;
 
+    signal(SIGTSTP, SIG_IGN);		/* ignore ^Z stop signal*/
     debug1("DEBUG: main( %d, **argv )\n",argc);
     if (argc < 2 || argc > 3) {
 	fprintf(stderr,

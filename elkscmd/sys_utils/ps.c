@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 	struct task_struct task_table;
 	struct passwd * pwent;
 
-	printf("  PID   GRP USER  STAT INODE COMMAND\n");
+	printf("  PID   GRP  TTY USER  STAT INODE COMMAND\n");
 	if ((fd = open("/dev/kmem", O_RDONLY)) < 0) {
 		perror("ps");
 		exit(1);
@@ -87,9 +87,10 @@ int main(int argc, char **argv)
 		if (task_table.t_kstackm != KSTACK_MAGIC) break;
 		if (task_table.t_regs.ss == 0) continue;
 			pwent = (getpwuid(task_table.uid));
-			printf("%5d %5d %-8s %c %5u ",
+			printf("%5d %5d %4x %-8s %c %5u ",
 				task_table.pid,
 				task_table.pgrp,
+				task_table.tty,
 				(pwent ? pwent->pw_name : "unknown"),
 				((task_table.state == TASK_RUNNING) ? 'R' : 'S'),
 				task_table.t_inode);
