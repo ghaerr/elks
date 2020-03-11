@@ -2,7 +2,7 @@
  * Copyright (c) 1999 Greg Haerr <greg@censoft.com>
  *
  * 4 planes Memory Video Driver for MicroWindows
- *
+ * 
  * 4bpp colors are stored bit-packed into memory, 1 bit of color per plane
  * planes 0-3 are sequential in memory
  *
@@ -45,13 +45,13 @@ mempl4_drawpixel(PSD psd, COORD x, COORD y, PIXELVAL c)
 	assert (c >= 0 && c < psd->ncolors);
 
 	addr += x/8 + y * psd->linelen;
-	if (gr_mode == MODE_XOR) {
-		for (plane=0; plane<4; ++plane) {
+	if(gr_mode == MODE_XOR) {
+		for(plane=0; plane<4; ++plane) {
 			*addr = (*addr & notmask[x&7]) ^ (c << (7-(x&7)));
 			addr += planesize;
 		}
 	} else {
-		for (plane=0; plane<4; ++plane) {
+		for(plane=0; plane<4; ++plane) {
 			*addr = (*addr & notmask[x&7]) | (c << (7-(x&7)));
 			addr += planesize;
 		}
@@ -72,8 +72,8 @@ mempl4_readpixel(PSD psd, COORD x, COORD y)
 	assert (y >= 0 && y < psd->yres);
 
 	addr += x/8 + y * psd->linelen;
-	for (plane=0; plane<4; ++plane) {
-		if (*addr & mask[x&7])
+	for(plane=0; plane<4; ++plane) {
+		if(*addr & mask[x&7])
 			c |= 1 << plane;
 		addr += planesize;
 	}
@@ -97,8 +97,8 @@ mempl4_drawhorzline(PSD psd, COORD x1, COORD x2, COORD y, PIXELVAL c)
 	assert (c >= 0 && c < psd->ncolors);
 
 	addr += x1/8 + y * psd->linelen;
-	if (gr_mode == MODE_XOR) {
-		while (x1 < x2) {
+	if(gr_mode == MODE_XOR) {
+		while(x1 < x2) {
 			*addr = (*addr & notmask[x1&7]) ^ (c << (7-(x1&7)));
 			addr += planesize;
 			*addr = (*addr & notmask[x1&7]) ^ (c << (7-(x1&7)));
@@ -107,11 +107,11 @@ mempl4_drawhorzline(PSD psd, COORD x1, COORD x2, COORD y, PIXELVAL c)
 			addr += planesize;
 			*addr = (*addr & notmask[x1&7]) ^ (c << (7-(x1&7)));
 			addr -= planesize * 3;
-			if ((++x1 & 7) == 0)
+			if((++x1 & 7) == 0)
 				++addr;
 		}
 	} else {
-		while (x1 < x2) {
+		while(x1 < x2) {
 			*addr = (*addr & notmask[x1&7]) | (c << (7-(x1&7)));
 			addr += planesize;
 			*addr = (*addr & notmask[x1&7]) | (c << (7-(x1&7)));
@@ -120,7 +120,7 @@ mempl4_drawhorzline(PSD psd, COORD x1, COORD x2, COORD y, PIXELVAL c)
 			addr += planesize;
 			*addr = (*addr & notmask[x1&7]) | (c << (7-(x1&7)));
 			addr -= planesize * 3;
-			if ((++x1 & 7) == 0)
+			if((++x1 & 7) == 0)
 				++addr;
 		}
 	}
@@ -142,8 +142,8 @@ mempl4_drawvertline(PSD psd, COORD x, COORD y1, COORD y2, PIXELVAL c)
 	assert (c >= 0 && c < psd->ncolors);
 
 	addr += x/8 + y1 * linelen;
-	if (gr_mode == MODE_XOR)
-		while (y1++ < y2) {
+	if(gr_mode == MODE_XOR)
+		while(y1++ < y2) {
 			*addr = (*addr & notmask[x&7]) ^ (c << (7-(x&7)));
 			addr += planesize;
 			*addr = (*addr & notmask[x&7]) ^ (c << (7-(x&7)));
@@ -154,7 +154,7 @@ mempl4_drawvertline(PSD psd, COORD x, COORD y1, COORD y2, PIXELVAL c)
 			addr = addr - (planesize * 3) + linelen;
 		}
 	else
-		while (y1++ < y2) {
+		while(y1++ < y2) {
 			*addr = (*addr & notmask[x&7]) | (c << (7-(x&7)));
 			addr += planesize;
 			*addr = (*addr & notmask[x&7]) | (c << (7-(x&7)));
@@ -192,10 +192,10 @@ mempl4_to_mempl4_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 	assert (srcx+w <= srcpsd->xres);
 	assert (srcy+h <= srcpsd->yres);
 
-	while (--h >= 0) {
+	while(--h >= 0) {
 		dst = (char *)dstpsd->addr + dstx/8 + dsty * dlinelen;
 		src = (char *)srcpsd->addr + srcx/8 + srcy * slinelen;
-		for (i=0; i<w; ++i) {
+		for(i=0; i<w; ++i) {
 			COORD	dx = dstx;
 			COORD	sx = srcx;
 			*dst = (*dst & notmask[dx&7]) |
@@ -214,9 +214,9 @@ mempl4_to_mempl4_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 			   ((*src >> (7-(sx&7)) & 0x01) << (7-(dx&7)));
 			dst -= dplanesize * 3;
 			src -= splanesize * 3;
-			if ((++dx & 7) == 0)
+			if((++dx & 7) == 0)
 				++dst;
-			if ((++sx & 7) == 0)
+			if((++sx & 7) == 0)
 				++src;
 		}
 	}
@@ -250,8 +250,8 @@ vga_to_vga_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 	src = SCREENBASE + srcx/8 + srcy * BYTESPERLINE;
 	x1 = dstx/8;
 	x2 = (dstx + w - 1) / 8;
-	while (--h >= 0) {
-		for (plane=0; plane<4; ++plane) {
+	while(--h >= 0) {
+		for(plane=0; plane<4; ++plane) {
 			volatile FARADDR d = dst;
 			volatile FARADDR s = src;
 
@@ -259,7 +259,7 @@ vga_to_vga_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 			set_write_planes(1 << plane);
 
 			select_mask();
-			if (x1 == x2) {
+			if(x1 == x2) {
 		  		set_mask((0xff >> (x1 & 7)) & (0xff << (7 - (x2 & 7))));
 				PUTBYTE_FP(d, GETBYTE_FP(s));
 			} else {
@@ -267,7 +267,7 @@ vga_to_vga_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 				PUTBYTE_FP(d++, GETBYTE_FP(s++));
 
 				set_mask(0xff);
-		  		for (i=x1+1; i<x2; ++i)
+		  		for(i=x1+1; i<x2; ++i)
 					PUTBYTE_FP(d++, GETBYTE_FP(s++));
 
 		  		set_mask(0xff << (7 - (x2 & 7)));

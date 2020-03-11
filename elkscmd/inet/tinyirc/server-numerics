@@ -94,7 +94,7 @@
 
 /*
  * -- avalon -- 19 Nov 1991
- * Added ERR_USERSDONTMATCH
+ * Added ERR_USERSDONTMATCH 
  *
  * -- avalon -- 06 Nov 1991
  * Added RPL_BANLIST, RPL_BANLISTEND, ERR_BANNEDFROMCHAN

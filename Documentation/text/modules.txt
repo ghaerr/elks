@@ -20,7 +20,7 @@ objchop.c	- Program that takes the compiled, linked module and splits it
 		  into text and data images to be directly loaded into the
 		  kernel.
 
-vals.c		- Program that chops the empty bits off the text and data
+vals.c		- Program that chops the empty bits off the text and data 
 		  images.
 
 Because the module is linked to the kernel symbols at compile time, the module

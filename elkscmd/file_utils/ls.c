@@ -429,9 +429,9 @@ int main(int argc, char **argv)
  * Set relevant flags for command name
  */
 
-    while ( --argc && ((cp = * ++argv)[0] == '-') ) {
+    while ( --argc && ((cp = * ++argv)[0]=='-') ) {
 	while (*++cp) {
-	    switch (*cp) {
+	    switch(*cp) {
 		case 'l':
 			flags |= LSF_LONG;
 			break;

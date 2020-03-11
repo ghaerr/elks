@@ -126,13 +126,13 @@ main(int argc, char * argv[])
 {
 	char * progname = strrchr(argv[0], '/');
 
-	if (!progname || (progname == argv[0] && !progname[1]))
+	if(!progname || (progname == argv[0] && !progname[1]))
 		progname = argv[0];
 	else
 		progname++;
 
 	/* If our name was called, assume argv[1] is the command */
-	if (strcmp(progname, "busyelks") == 0) {
+	if(strcmp(progname, "busyelks") == 0) {
 		progname = argv[1];
 		argv++;
 		argc--;
@@ -141,13 +141,13 @@ main(int argc, char * argv[])
 	{
 		struct cmd * c = bsearch(progname, cmd, CMD_MAX, sizeof(struct cmd), cmd_cmp);
 
-		if (c != NULL)
+		if(c != NULL)
 			return c->fun(argc, argv);
 	}
 
 	fputs("BusyELKS", stderr);
 
-	if (*progname)
+	if(*progname)
 	{
 		fputs(": Unknown command: ", stderr);
 		fputs(progname, stderr);
@@ -157,25 +157,25 @@ main(int argc, char * argv[])
 	{
 		unsigned i;
 
-		for (i = 0; i < CMD_MAX; i++)
+		for(i = 0; i < CMD_MAX; i++)
 		{
 			fputc('\t', stderr);
 			fputs(cmd[i].name, stderr);
 #if defined(CMD_INFO_ARGS)
 			fputc(' ', stderr);
-			if (cmd[i].args != NULL)
+			if(cmd[i].args != NULL)
 				fputs(cmd[i].args, stderr);
 #	if defined(CMD_INFO_DESCR)
-			if (cmd[i].descr != NULL)
+			if(cmd[i].descr != NULL)
 			{
 				char const * s;
 
 				fputs("\n\t\t", stderr);
 
-				for (s = cmd[i].descr; *s; s++)
+				for(s = cmd[i].descr; *s; s++)
 				{
 					fputc(*s, stderr);
-					if (*s == '\n')
+					if(*s == '\n')
 						fputs("\t\t", stderr);
 				}
 			}

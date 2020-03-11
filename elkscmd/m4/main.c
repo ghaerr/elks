@@ -191,7 +191,7 @@ char *argv[];
 	initkwds();
 
 	while ((c = getopt(argc, argv, "tD:U:o:")) != EOF)
-		switch (c) {
+		switch(c) {
 
 		case 'D':               /* define something..*/
 			for (p = optarg; *p; p++)
@@ -330,7 +330,7 @@ macro() {
 			putc(t, active);	/* output directly..	 */
 		}
 
-		else switch (t) {
+		else switch(t) {
 
 		case LPAREN:
 			if (PARLEV > 0)

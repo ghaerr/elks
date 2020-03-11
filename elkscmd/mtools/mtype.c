@@ -46,7 +46,7 @@ char *argv[];
 					/* get command line options */
 	oops = 0;
 	while ((c = getopt(argc, argv, "st")) != EOF) {
-		switch (c) {
+		switch(c) {
 			case 's':
 				stripmode = 1;
 				break;
@@ -159,7 +159,7 @@ int num;
 					/* stop at size not EOF marker */
 	for (i=0; i<buflen; i++) {
 		current++;
-		if (current > size)
+		if (current > size) 
 			break;
 		if (textmode && buf[i] == '\r')
 			continue;

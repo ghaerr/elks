@@ -10,10 +10,10 @@ echo ':i86-elks:M::\x01\x03\x20\x00:\xff\xff\xff\x83:/usr/bin/elksemu:' \
      > /proc/sys/fs/binfmt_misc/register
 
 Note, however, if binfmt_misc is compiled as a module it will not auto
-load so you will have to do this manually.
+load so you will have to do this manually. 
 
 If your kernel version is 1.2.13 then apply the patch in the Kernel_patch
-file.
+file. 
 
 If you're using one of the other 2.0.X series then the binfmt_elks.c module
 should be able to compile and install. BUT do note you need the modules

@@ -31,7 +31,7 @@ register LITER lit; /* sekvanta litero */
         while ( 1 ){
             if ( (nod -= i) < 0 ) nod += HDIM;
             if ( nod_d[nod] == 0 ) break; /* ne ekzistas */
-            if ( nod_patro[nod] == nod_d[nun] && *(nod_d[nod]+niv) == lit )
+            if ( nod_patro[nod]==nod_d[nun] && *(nod_d[nod]+niv)==lit )
                 return( nod ); /* tawgas! */
         }
     }

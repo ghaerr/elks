@@ -3,8 +3,8 @@
  * Based on code by Jakob Eriksson.
  *
  * Hercules Graphics Screen Driver, PC bios version
- * 	This driver uses int10 bios to to get the address of the
- * 	ROM character font which is used for the character bitmaps.
+ * 	This driver uses int10 bios to to get the address of the 
+ * 	ROM character font which is used for the character bitmaps.  
  * 	All other access to the hardware is controlled through this driver.
  *
  * 	All text/font drawing code is based on the above routines and
@@ -65,12 +65,12 @@ HERC_open(PSD psd)
 {
 #if LINUX
 	/* get permission to write to the hercules ports*/
-	if (ioperm(0x3b4, 0x0d, 1))
+	if(ioperm(0x3b4, 0x0d, 1))
 		return -1;
 #endif
 #if ELKS
 	/* disallow console switching while in graphics mode*/
-	if (ioctl(0, DCGET_GRAPH) != 0)
+	if(ioctl(0, DCGET_GRAPH) != 0)
 		return -1;
 #endif
 
@@ -123,14 +123,14 @@ HERC_close(PSD psd)
 	outportb(0x3bf, 0);
 	outportb(0x3b8, 0);
 
-	for (i = 0; i < 12; ++i) {
+	for(i = 0; i < 12; ++i) {
 		outportb(0x3b4, i);
 		outportb(0x3b5, herc_txt_tbl[i]);
 	}
 
 	/* blank screen*/
 	dst = SCREENADDR(0);
-	for (i = 0; i <= 0x3fff; ++i) {
+	for(i = 0; i <= 0x3fff; ++i) {
 		PUTBYTE_FP(dst++, 0x00);
 		PUTBYTE_FP(dst++, 0x07);
 	}
@@ -168,7 +168,7 @@ HERC_drawpixel(PSD psd,COORD x, COORD y, PIXELVAL c)
 	offset += 90*(y/4) + x/8;
 	dst = SCREENADDR(offset);
 	mask >>= x & 7;
-	if (c)
+	if(c)
 		ORBYTE_FP(dst, mask);
 	else ANDBYTE_FP(dst, ~mask);
 }
@@ -197,10 +197,10 @@ HERC_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c)
 
 	/*offset of the row */
 	rowoffset = 8192 * (y % 4) + (y / 4) * 90;
-
+	
 	/*offset of first byte in line */
 	x1yoffset = rowoffset + (x1 / 8);
-
+	
 	/*ofset of the last byte in line */
 	x2yoffset = rowoffset + (x2 / 8);
 
@@ -213,28 +213,28 @@ HERC_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c)
 	/* convert x1yoffset to a screen address */
 	dst = SCREENADDR(x1yoffset);
 
-	if (c)
+	if(c)
 		ORBYTE_FP(dst, startbyte);    /* output byte to mem */
 	else ANDBYTE_FP(dst, ~startbyte);
 
 	x1yoffset++; /* increment so we are writing to the next byte */
-	while (x1yoffset < x2yoffset) {
+	while(x1yoffset < x2yoffset) {
 	       	dst = SCREENADDR(x1yoffset); /*convert x1yoffset to a scr address */
-		if (c)
+		if(c)
 			ORBYTE_FP(dst, 0xff); /*ouput bytes */
 		else ANDBYTE_FP(dst, ~0xff);
 		x1yoffset++;
 		}
 
 	dst = SCREENADDR(x2yoffset); /* convert x2yoffset to a screen address */
-	if (c)
+	if(c)
 		ORBYTE_FP(dst, endbyte); /* output byte to mem */
 	else ANDBYTE_FP(dst, ~endbyte);
 
 
 
 	/*NON Optimized version left in case my one goes wroung */
-	/*while (x1 <= x2)
+	/*while(x1 <= x2)
 	  HERC_drawpixel(psd, x1++, y, c);*/
 }
 
@@ -245,14 +245,14 @@ HERC_drawvline(PSD psd,COORD x, COORD y1, COORD y2, PIXELVAL c)
 	/*
 	 * Driver doesn't support vline yet
 	 */
-	while (y1 <= y2)
+	while(y1 <= y2)
 		HERC_drawpixel(psd, x, y1++, c);
 }
 
 static void
 HERC_fillrect(PSD psd,COORD x1, COORD y1, COORD x2, COORD y2, PIXELVAL c)
 {
-	while (y1 <= y2)
+	while(y1 <= y2)
 		HERC_drawhline(psd, x1, x2, y1++, c);
 }
 

@@ -35,7 +35,7 @@ GdSetClipRects(int count, CLIPRECT *table)
 {
   RECT	rc;
 
-  if (clipregion)
+  if(clipregion)
 	  GdDestroyClipRegion(clipregion);
   clipregion = GdAllocClipRegion();
 

@@ -16,7 +16,7 @@ SYSSIZE = DEF_SYSSIZE
 !	modified by Drew Eckhardt
 !	modified by Bruce Evans (bde)
 !	modified by Alan Cox for Linux/ELKS and 8088 compatiblity
-!	modified for Linux/16 by Chad Page
+!	modified for Linux/16 by Chad Page 
 !
 ! bootsect.s is loaded at 0x7c00 by the bios-startup routines, and moves
 ! itself out of the way to address INITSEG:0, and jumps there.
@@ -25,12 +25,12 @@ SYSSIZE = DEF_SYSSIZE
 ! memory.  Use int 0x12 to get the top of memory, etc.
 !
 ! It then loads 'setup' directly after itself (INITSEG+20:0), and the system
-! at SYSSEG:0, using BIOS interrupts.
+! at SYSSEG:0, using BIOS interrupts. 
 !
-! NOTE! currently system is at most (8*65536-4096) bytes long. This should
+! NOTE! currently system is at most (8*65536-4096) bytes long. This should 
 ! be no problem, even in the future. I want to keep it simple. This 508 kB
 ! kernel size should be enough, especially as this doesn't contain the
-! buffer cache as in minix (and especially now that the kernel is
+! buffer cache as in minix (and especially now that the kernel is 
 ! compressed :-)
 !
 ! The loader has been made as simple as possible, and continuous
@@ -58,7 +58,7 @@ ROOT_DEV = 0
 
 #ifndef RAMDISK
 #define RAMDISK 	0
-#endif
+#endif 
 
 #include <linuxmt/boot.h>
 
@@ -100,7 +100,7 @@ go:	mov     $0x4000-12,%di
 	mov     %ax,%ss  /* put stack at INITSEG:0x4000-12. */
 	mov     %di,%sp
 /*
- *	Many BIOS's default disk parameter tables will not
+ *	Many BIOS's default disk parameter tables will not 
  *	recognize multi-sector reads beyond the maximum sector number
  *	specified in the default diskette parameter tables - this may
  *	mean 7 sectors in some cases.
@@ -108,7 +108,7 @@ go:	mov     $0x4000-12,%di
  *	Since single sector reads are slow and out of the question,
  *	we must take care of this by creating new parameter tables
  *	(for the first disk) in RAM.  We will set the maximum sector
- *	count to 36 - the most we will encounter on an ED 2.88.
+ *	count to 36 - the most we will encounter on an ED 2.88.  
  *
  *	High doesn't hurt.  Low does.
  *
@@ -229,8 +229,8 @@ got_sectors:
 
 !	mov	ah,#0x03		! read cursor pos
 !	xor	bh,bh
-!	int	0x10
-!
+!	int	0x10			
+!	
 !	mov	cx,#6
 !	mov	bl,#0x0007		! page 0, attribute 7 (normal)
 !	mov	bp,#msg1
@@ -318,7 +318,7 @@ read_it:
 die:
     jne     die			/* es must be at 64kB boundary */
 	xor     %si,%si		/* zero sectors read */
-
+	
 rp_read:
 	mov     %es,%ax
 	sub     $SYSSEG,%ax
@@ -376,7 +376,7 @@ read_track:
 	push    %dx
 	push    %ax
 	push    %bx
-
+	
 	mov     $'.',%al 	/* loading... message 2e = . */
 	call    print_chr
 
@@ -423,24 +423,24 @@ bad_rt:
 !	push sectors
 */
 	call    print_all			/* ah = error, al = read */
-
-
+	
+	
 	xor     %ah,%ah
 	xor     %dl,%dl
 	int     $0x13
-
+	
 
 	add     $10,%sp
-
+		
 	pop     %bx
 	pop     %ax
 	pop     %dx
 	jmp     read_track
 /*
- *	print_all is for debugging purposes.
+ *	print_all is for debugging purposes.  
  *	It will print out all of the registers.  The assumption is that this is
  *	called from a routine, with a stack frame like
- *	dx
+ *	dx 
  *	cx
  *	bx
  *	ax
@@ -448,7 +448,7 @@ bad_rt:
  *	ret <- sp
  *
 */
-
+ 
 print_all:
 	mov     $5,%cx		/* error code + 4 registers */
 	mov     %sp,%bp
@@ -464,7 +464,7 @@ no_reg:
 print_loop:
 	call    print_nl	/* nl for readability */
 
-
+	
 	mov     $0x0e05 + 'A' - 1,%ax
 	sub     %cl,%al
 	int     $0x10

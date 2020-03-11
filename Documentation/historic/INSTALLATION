@@ -2,29 +2,29 @@
    WARNING from Jody Bruchon: This document is significantly out of date.
 
                               Installing ELKS
-
+                                      
                       Original Author: [1]Matt Balaun
                      Editor/Contributor: [2]Al Riddoch
                        Sub-editor: [3]Riley Williams
 
    Here are basic instructions on installing ELKS, the Embeddable Linux
    Kernel Subset, onto one or more floppy disks for use on your PC.
-
+   
    If you are looking for information on ELKS development or on compiling
    the kernel, please refer to the README file or the ELKS FAQ.
      __________________________________________________________________
-
+   
                                Table of Contents
-
+                                       
     1. [4]Introduction
     2. [5]Creating the installation floppies
     3. [6]Installing and booting ELKS
     4. [7]Credits/Thanks
-
+       
    If you have any questions relating to this document, please post your
    question to the [8]Linux 8086 discussion list on the Internet.
      __________________________________________________________________
-
+   
 Introduction
 
    ELKS, the Embeddable Linux Kernel Subset, is an open-source project
@@ -33,10 +33,10 @@ Introduction
    disks only; there is no officially supported means of booting ELKS
    directly from a hard drive as of yet. This document will tell you
    step-by-step how to create your own set of ELKS floppy disks.
-
+   
    These are the disk images for ELKS as contained in the file IMAGES.ZIP
    and as of ELKS version 0.0.82:
-
+   
         boot    Disk image used in creating the boot disk
         root    Disk image used in creating the root disk
 
@@ -49,48 +49,48 @@ Introduction
    Thus, if you have only 360k floppies, make separate boot and root
    disks.
      __________________________________________________________________
-
+   
 Creating your installation floppies
 
    The first step in installing ELKS is to create the installation
    floppies. As a preliminary step, you will need...
-
+   
      * To download the IMAGES.ZIP archive from the ELKS website.
      * One 720k or larger floppy, if you wish to create a single floppy
        installation and boot system.
      * Two floppies of any size, if you wish to create a "boot & root"
        installation and boot system.
-
+       
    Depending on the system you intend to use to create the installation
    floppies, you may need additional tools as well.
-
+   
    The method for creating the installation floppies differs wildly
    depending on the system you are using to create them, so has been
    separated into the following sections:
-
+   
     1. Using an [9]MS-DOS or PC-DOS system
     2. Using a [10]Microsoft Windows system
     3. Using a [11]Linux system
     4. Using a [12]Psion 3 SIBO system (Under Construction)
-
+       
    When you have created your floppies, [13]click here for instructions
    relating to installing and booting ELKS.
      __________________________________________________________________
-
+   
 Using an MS-DOS or PC-DOS system
 
    For those of you using a DOS-based system, or a system where you have
    access to a DOS prompt, you will additionally need...
-
+   
      * The [14]RAWRITE package.
-
+       
    First, unzip IMAGES.ZIP into a directory on your hard drive. If you
    don't know how to do this, or if you haven't the tools to do this,
    download PKZ204G.EXE from ftp.pkware.com, install it, and read the
    documentation included with it.
-
+   
    Here is an example session:
-
+   
 
         C:\> md elks
         C:\> copy images.zip c:\elks\
@@ -98,135 +98,135 @@ Using an MS-DOS or PC-DOS system
         C:\ELKS> pkunzip images.zip
 
    Second, put a copy of RAWRITE.EXE in the same directory:
-
+   
         C:\> copy c:\rawrite.exe c:\elks\
 
    Finally, decide which set of images you wish to make:
-
+   
      * Separate [15]Boot & Root floppies.
      * A [16]combined floppy.
      __________________________________________________________________
-
+   
   Separate Boot & Root floppies
-
+  
    First, label a blank floppy "ELKS Boot", put it in drive A: and create
    the boot floppy:
-
+   
         C:\ELKS> rawrite boot a:
 
    Take it out and put it on one side, then label a second blank floppy
    "ELKS Root", put it in the drive, and create the root floppy:
-
+   
         C:\ELKS> rawrite root a:
 
    Take it out and put it with the "ELKS Boot" floppy, then take both
    floppies over to the system you wish to install ELKS on.
      __________________________________________________________________
-
+   
   A combined floppy
-
+  
    Label a blank floppy "ELKS Combined", put it in drive A: and create
    the floppy:
-
+   
         C:\ELKS> rawrite comb a:
 
    Take it out and take it over to the system you wish to install ELKS
    on.
      __________________________________________________________________
-
+   
 Using a Microsoft Windows system
 
    For those of you running a Microsoft Windows system where you can
    access a DOS Prompt, you are advised to do so, and to follow the
    [17]MS-DOS or PC-DOS instructions.
-
+   
    For other Microsoft Windows users, details will be posted here when
    available.
      __________________________________________________________________
-
+   
 Using a Linux system
 
    Linux systems supply all the tools you need as part of a standard
    installation. You will therefore only need to verify that the relevant
    tools were installed on your system, and add them if not. To verify
    this, type the following commands:
-
+   
         $ type -path unzip
         $ type -path dd
 
    If either of those commands fails to produce any output, the relevant
    command is not installed on your system and you will need to install
    it.
-
+   
    First, unzip the IMAGES.ZIP archive somewhere:
-
+   
         $ mkdir ~/ELKS
         $ mv IMAGES.ZIP ~/ELKS
         $ cd ~/ELKS
         $ unzip IMAGES.ZIP
 
    Next, decide which type of installation you wish to make:
-
+   
      * Separate [18]Boot & Root floppies.
      * A [19]combined floppy.
      __________________________________________________________________
-
+   
   Separate Boot & Root floppies
-
+  
    First, label a blank floppy "ELKS Boot", put it in drive A: and create
    the boot floppy:
-
+   
         $ dd if=boot of=/dev/fd0
 
    Take it out and put it on one side, then label a second blank floppy
    "ELKS Root", put it in the drive, and create the root floppy:
-
+   
         $ dd if=root of=/dev/fd0
 
    Take it out and put it with the "ELKS Boot" floppy, then take both
    floppies over to the system you wish to install ELKS on.
      __________________________________________________________________
-
+   
   A combined floppy
-
+  
    Label a blank floppy "ELKS Combined", put it in drive A: and create
    the floppy:
-
+   
         $ dd if=comb of=/dev/fd0
 
    Take it out and take it over to the system you wish to install ELKS
    on.
      __________________________________________________________________
-
+   
 Psion3 SIBO
 
    The SIBO port is not currently mature enough to be worth installing.
    If you are interested in testing and developing the SIBO kernel,
    please refer to the section on the ELKS website at
-
+   
                [20]http://www.elks.ecs.soton.ac.uk/sibo.php3
-
+   
    WARNING - the SIBO port will wipe the SSD disk in slot B and the
    ramdisk of your Psion 3c. Backup your data/applications and to be safe
    remove the SSD from slot A
      __________________________________________________________________
-
+   
 Installing and booting ELKS
 
    The procedure for installing and booting ELKS is quite simple, but
    differs slightly depending on whether the installation is from a
    [21]combined floppy or from separate [22]boot & root floppies.
      __________________________________________________________________
-
+   
   Installing and booting from a combined floppy
-
+  
    This is the simplest procedure: Just put the floppy in the floppy
    drive of the system you wish to run ELKS on, and boot the machine from
    that floppy drive.
      __________________________________________________________________
-
+   
   Installing and booting from separate boot & root floppies
-
+  
    The procedure here is to insert the ELKS BOOT floppy in the floppy
    drive of the target machine and boot the machine from that floppy
    drive. At the relevant point in the boot procedure, it will ask you to
@@ -234,22 +234,22 @@ Installing and booting ELKS
    remove the boot floppy and insert the root floppy in its place, then
    press the key indicated on the screen.
      __________________________________________________________________
-
+   
 Credits/Thanks
 
    In updating v0.0.2 of this document, Al Riddoch contributed technical
    corrections throughout the whole text.
-
+   
    In helping to distribute this document to all who are interested in
    ELKS, Phillip Rhoades has set up the ELKS Documentation Project
    homepage (http://www.crosswinds.net/~edp/) where the latest version of
    this and other documents relating to the ELKS project should always be
    available.
-
+   
    Thanks to Al, Phillip, and all the other fine people working on the
    ELKS project.
      __________________________________________________________________
-
+   
    PS: Bug reports are welcome. Requests for help will be answered when
    time permits.
 

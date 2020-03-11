@@ -23,7 +23,7 @@ CLNTFILES = nanox/client.o
 NETFILES = nanox/srvnet.o
 STUBFILES = nanox/stubs.o
 
-# nano-X demo programs
+# nano-X demo programs 
 NANOXDEMO =  demos/demo.o
 NANOXDEMO += demos/landmine.o
 NANOXDEMO += demos/world.o				#world needs world map - does not fit on full3

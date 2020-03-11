@@ -80,7 +80,7 @@ void v_cs()
 /* clear to end: get cursor position and emit the aproppriate number
  * of spaces, without moving cursor.
  */
-
+ 
 void v_ce()
 {
 	int cx, dx;
@@ -164,7 +164,7 @@ int v_put(ch)
 	if (ch>=' ')
 		video(0x900|ch,&cx,(int *)0);
 	video(0xe00|ch,(int *)0, (int *)0);
-	if (ch == '\n')
+	if (ch=='\n')
 	{	exwrote = TRUE;
 		video(0xe0d, (int *)0, (int *)0);
 	}
@@ -180,7 +180,7 @@ int v_cols()
 	union REGS regs;
 	regs.h.ah=0x0f;
 	int86(0x10, &regs, &regs);
-	if (regs.h.al == 7)			/* monochrome mode ? */
+	if (regs.h.al==7)			/* monochrome mode ? */
 		screen=1;
 	else
 		screen=0;
@@ -226,9 +226,9 @@ int v_rows()
 		video(0xe0a,(int *)0,(int *)0);
 		video(0x300,(int *)0,&line);
 		line>>=8;
-		if (oldline == line)
+		if (oldline==line)
 			return line+1;
-		oldline=line;
+		oldline=line;	
 	}
 }
 
@@ -240,7 +240,7 @@ static void video(ax, cx, dx)
 	union REGS regs;
 
 	regs.x.ax=ax;
-	if ((ax&0xff00) == 0x600 || (ax&0xff00) == 0x700)
+	if ((ax&0xff00)==0x600 || (ax&0xff00)==0x700)
 		regs.h.bh=attr[screen][vmode];
 	else
 	{
@@ -258,7 +258,7 @@ static void video(ax, cx, dx)
  * commandline-options by command.com. This system call is undocumented
  * and valid for versions < 4.00 only.
  */
-
+ 
 int switchar()
 {
 	union REGS regs;

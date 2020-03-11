@@ -4,11 +4,11 @@ This is a slightly modified version of sash which works under ELKS.
 -----------------------------------------------------------------------
 30th April 1997
 Added config.h to configure in the various built in commands. This is
-essentially so that
+essentially so that 
 
 a) a simple shell without builtins
 
-b) a medium size shell with some useful builtins, but not too much bulk
+b) a medium size shell with some useful builtins, but not too much bulk 
 
 c) a full stand alone shell with all the high level features
 
@@ -22,7 +22,7 @@ almost all the builtin commands. These can be used in association with a
 sash compiled without these commands, or with any other shell.
 
 To install take a root disk with init and login from the elkscmd/initlogin
-directory in the bin directory. Install sash as /bin/sh, and copy the
+directory in the bin directory. Install sash as /bin/sh, and copy the 
 binaries from the stand-alone directory into the bin directory of the disk.
 
 - Alistair Riddoch

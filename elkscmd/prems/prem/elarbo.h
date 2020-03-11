@@ -15,7 +15,7 @@
 typedef int HASHNUM; /* numeroj de nodoj en la tabelo */
 
 /* DATAOJ POR LA NODOJ DE LA ARBO */
-/* post la hash-tabelo kushas nekodotaj nodoj (kun nivelo == 1) */
+/* post la hash-tabelo kushas nekodotaj nodoj (kun nivelo==1) */
 extern FRAZ *
     /* [HDIM+NEKODOT] */
     nod_d; /* direktilo al la komenco de la frazo           */

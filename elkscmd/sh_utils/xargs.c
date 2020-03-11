@@ -180,7 +180,7 @@ char * next_token()
 				out_of_mem();
 			}
 		}
-
+			
 	}
 }
 
@@ -199,7 +199,7 @@ char * next_token()
 void run(char * argv0, char ** argv)
 {
 	int pid;
-
+	
 	pid = vfork();
 	switch (pid) {
 		case -1:

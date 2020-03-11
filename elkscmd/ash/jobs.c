@@ -841,9 +841,9 @@ waitproc(block, status)
         /*
          * 19980216 Vincent Zweije <zweije@xs4all.nl>
          * ELKS does not obey WNOHANG
-         * If requested, return -1 with errno == EINVAL
+         * If requested, return -1 with errno==EINVAL
          */
-        if (block == 0) {
+        if (block==0) {
                 errno = EINVAL;
                 return -1;
         }

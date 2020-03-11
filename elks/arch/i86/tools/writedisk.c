@@ -1,7 +1,7 @@
 /* This tool copies a Minix Disk image to the 'B' Flash SSD, it assumes
  * that the disk is a 128K Flash and the source file for the image is
  * LOC::M:\MINIX.DSK
- * It is rather slow at present but uses the SSD driver stuff so should
+ * It is rather slow at present but uses the SSD driver stuff so should 
  * pick up any improvements as that developes.
  */
 

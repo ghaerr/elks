@@ -16,7 +16,7 @@ int main()
 
 	GrMapWindow(window);
 
-	while (1)
+	while(1)
 		GrCheckNextEvent(&event);
 
 	GrClose();

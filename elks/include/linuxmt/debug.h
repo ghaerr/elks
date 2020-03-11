@@ -1,6 +1,6 @@
 /* linuxmt/include/linuxmt/debug.h for ELKS v. >=0.0.47
  * (C) 1997 Chad Page
- *
+ * 
  * This file contains the #defines to turn on and off various printk()-related
  * functions...
  */
@@ -15,13 +15,6 @@
  * Al Riddoch <ajr@ecs.soton.ac.uk> 14th Oct. 1997
  */
 
-/* To enable debugging for any particular module, just include -DDEBUG
- * on the command line for that module. Note however that for the memory
- * management module, you will additionally need -DDEBUGMM included.
- *
- * Riley Williams <Riley@Williams.Name> 25 Apr 2002
- */
-
 /* This switches which version of the kstack-tracker gets used */
 
 /* Replaced by the 'true' kernel-strace */
@@ -31,9 +24,51 @@
 #define pstrace(_a)
 #endif
 
-/* This sets up a standard set of macros that can be used with any of the
+/*
+ * New kernel debug mechanism, set here or in autoconf.h, works across multiple files.
+ */
+#define DEBUG_BLK	0		/* block i/o*/
+#define DEBUG_FILE	0		/* sys open and file i/o*/
+#define DEBUG_FS	0		/* VFS and general filesystem*/
+#define DEBUG_FAT	0		/* FAT filesystem*/
+#define DEBUG_MINIX	0		/* Minix filesystem*/
+#define DEBUG_SIG	0		/* signals*/
+#define DEBUG_SUP	0		/* superblock, mount, umount*/
+
+#if DEBUG_BLK
+#define debug_blk	printk
+#else
+#define debug_blk(...)
+#endif
+
+#if DEBUG_FILE
+#define debug_file	printk
+#else
+#define debug_file(...)
+#endif
+
+#if DEBUG_SIG
+#define debug_sig	printk
+#else
+#define debug_sig(...)
+#endif
+
+#if DEBUG_SUP
+#define debug_sup	printk
+#else
+#define debug_sup(...)
+#endif
+
+/* Old debug mechanism - deprecated.
+ * This sets up a standard set of macros that can be used with any of the
  * files that make up the ELKS kernel. They can handle calls with up to 9
  * parameters after the format string.
+ *
+ * To enable debugging for any particular module, just include -DDEBUG
+ * on the command line for that module. Note however that for the memory
+ * management module, you will additionally need -DDEBUGMM included.
+ *
+ * Riley Williams <Riley@Williams.Name> 25 Apr 2002
  */
 
 #ifdef DEBUG

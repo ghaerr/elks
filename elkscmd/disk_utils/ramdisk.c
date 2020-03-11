@@ -23,7 +23,7 @@ char **argv;
 		sscanf(argv[3], "%d", &size);
 	else
 		size = 64; /* default */
-
+	
 	if ((size < 1) || (size > MAX_SIZE)) {
 		fprintf(stderr, "ramdisk: invalid size; use integer in range of 1 .. %d\n", MAX_SIZE);
 		exit(1);

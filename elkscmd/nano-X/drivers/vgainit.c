@@ -100,7 +100,7 @@ ega_hwterm(void)
   srcoffset = rom_char_addr;
   destoffset = MK_FP(EGA_BASE, 0);
   for (ch = 0; ch < FONT_CHARS; ch++) {
-	for (row = 0; row < ROM_CHAR_HEIGHT; row++) {
+	for(row = 0; row < ROM_CHAR_HEIGHT; row++) {
 		data = GETBYTE_FP(srcoffset++);
 		PUTBYTE_FP(destoffset++, data);
 	}

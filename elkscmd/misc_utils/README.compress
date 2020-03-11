@@ -74,7 +74,7 @@ REMARKS
   (The read a head function is not working as expected). For those
   system use the default BSIZE input buffer size.
 
-- (N)compress can by slower on small files (<10Kb) because of a greate
+- (N)compress can by slower on small files (<10Kb) because of a greate 
   table reset overhead. Use cpio or tar to make 1 bigger file if
   posible, it is faster and also gives a beter compression ratio most
   of the time.
@@ -82,9 +82,9 @@ REMARKS
 - (N)compress is slower in vax systems because of removing some
   undocumented inline asembler.
 
-- files compressed on a large machine with more bits than allowed by
+- files compressed on a large machine with more bits than allowed by 
   a version of compress on a smaller machine cannot be decompressed!  Use the
-  "-b12" flag to generate a file on a large machine that can be uncompressed
+  "-b12" flag to generate a file on a large machine that can be uncompressed 
   on a 16-bit machine.
 
 - compatibility with compress 3.0 has not been tested in the 4.2 release of

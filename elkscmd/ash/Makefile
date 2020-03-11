@@ -7,7 +7,7 @@ BASEDIR = ..
 
 include $(BASEDIR)/Make.defs
 
-LOCALFLAGS = -DSHELL -I. -D_MINIX -D_POSIX_SOURCE
+LOCALFLAGS = -DSHELL -I. -D_MINIX -D_POSIX_SOURCE -Dlint
 
 ###############################################################################
 #

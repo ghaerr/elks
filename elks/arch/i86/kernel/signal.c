@@ -28,13 +28,13 @@ int do_signal(void)
     signr = 1;
     mask = (sigset_t)1;
     while (currentp->signal) {
-	while (!(currentp->signal & mask)) {
+	while(!(currentp->signal & mask)) {
 	    signr++;
 	    mask <<= 1;
 	}
 	currentp->signal ^= mask;
 
-	debug2("Process %d has signal %d.\n", currentp->pid, signr);
+	debug_sig("SIGNAL process signal %d pid %d\n", signr, currentp->pid);
 	sah = &currentp->sig.action[signr - 1].sa_handler;
 	if (*sah == SIG_DFL) {				/* Default */
 	    if ((mask &					/* Default Ignore */
@@ -43,6 +43,7 @@ int do_signal(void)
 		continue;
 	    else if (mask &				/* Default Stop */
 			(SM_SIGSTOP | SM_SIGTSTP | SM_SIGTTIN | SM_SIGTTOU)) {
+		debug_sig("SIGNAL pid %d stopped\n", currentp->pid);
 		currentp->state = TASK_STOPPED;
 		/* Let the parent know */
 		currentp->p_parent->child_lastend = currentp->pid;
@@ -59,16 +60,18 @@ int do_signal(void)
 	    }
 	}
 	else if (*sah != SIG_IGN) {			/* Set handler */
-	    debug1("Setting up return stack for sig handler %x.\n",(unsigned)(*sah));
-	    debug1("Stack at %x\n", currentp->t_regs.sp);
+	    debug_sig("SIGNAL setup return stack for handler %x\n",(unsigned)(*sah));
+	    //debug_sig("Stack at %x\n", currentp->t_regs.sp);
 	    arch_setup_sighandler_stack(currentp, *sah, signr);
-	    debug1("Stack at %x\n", currentp->t_regs.sp);
+	    //debug_sig("Stack at %x\n", currentp->t_regs.sp);
 	    *sah = SIG_DFL;
+	    debug_sig("SIGNAL reset pending signals\n");
 	    currentp->signal = 0;
 
 	    return 1;
 	}
-	/* else (*sah == SIG_IGN) Ignore */
+	else /* else (*sah == SIG_IGN) Ignore */
+	    debug_sig("SIGNAL signal %d ignored pid %d\n", signr, currentp->pid);
     }
     return 0;
 }

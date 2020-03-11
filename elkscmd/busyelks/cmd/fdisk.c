@@ -129,7 +129,7 @@ quit(void)
 static void
 list_part(void)
 {
-    if (*dev!=0)
+    if(*dev!=0)
 	list_partition(NULL);
 }
 
@@ -149,7 +149,7 @@ add_part(void)
 	fflush(stdout);
 	fgets(buf,8,stdin);
 	part=atoi(buf);
-	if (*buf == '\n')
+	if (*buf=='\n')
 	    return;
     }
 
@@ -161,11 +161,11 @@ add_part(void)
 	fflush(stdout);
 	fgets(buf,8,stdin);
 	scyl=atoi(buf);
-	if (*buf == '\n')
+	if (*buf=='\n')
 	    return;
     }
 
-    pentry[1]=scyl == 0?1:0;
+    pentry[1]=scyl==0?1:0;
     pentry[2]=1+((scyl >> 2) & 0xc0);
     pentry[3]=(scyl&0xff);
 
@@ -180,7 +180,7 @@ add_part(void)
 	fflush(stdout);
 	fgets(buf,8,stdin);
 	ecyl=atoi(buf);
-	if (*buf == '\n')
+	if(*buf=='\n')
 	    return;
     }
 
@@ -189,7 +189,7 @@ add_part(void)
     pentry[7]=(ecyl&0xff);
 
     tmp=spc*(unsigned long)scyl;
-    if (scyl == 0)
+    if (scyl==0)
 	tmp=(unsigned long)geometry.sectors;
 
     pentry[11]=(unsigned char)((tmp>>24uL)&0x000000ffuL);
@@ -198,7 +198,7 @@ add_part(void)
     pentry[ 8]=(unsigned char)((tmp      )&0x000000fful);
 
     tmp=spc*(unsigned long)(ecyl-scyl+1);
-    if (scyl == 0)
+    if (scyl==0)
 	tmp-=(unsigned long)geometry.sectors;
 
     pentry[15]=(unsigned char)((tmp>>24uL)&0x000000ffuL);
@@ -219,17 +219,17 @@ set_boot(void)
     int part, a;
 
     printf("Toggle bootable flag:\n\n");
-    for (part=0;part<1 || part>4;) {
+    for(part=0;part<1 || part>4;) {
 	printf("Which partition to toggle(1-4): ");
 	fflush(stdout);
 	fgets(buf,8,stdin);
 	part=atoi(buf);
-	if (*buf == '\n')
+	if (*buf=='\n')
 	    return;
     }
 
     a=(0x1ae)+(part*16);
-    partitiontable[a]=(partitiontable[a] == 0x00?0x80:0x00);
+    partitiontable[a]=(partitiontable[a]==0x00?0x80:0x00);
 }
 
 static int
@@ -267,7 +267,7 @@ set_type(void)  /* FIXME - Should make this more flexible */
 	fflush(stdout);
 	fgets(buf,8,stdin);
 	part=atoi(buf);
-	if (*buf == '\n')
+	if (*buf=='\n')
 	    return;
     }
     a=(0x1ae)+(part*16)+4;
@@ -308,7 +308,7 @@ del_part(void)
 	fflush(stdout);
 	fgets(buf,8,stdin);
 	part=atoi(buf);
-	if (*buf == '\n')
+	if (*buf=='\n')
 	    return;
     }
     printf("Deleting partition %d...",part);
@@ -353,7 +353,7 @@ char *devname;
     int i;
 
     if (devname!=NULL) {
-	if ((pFd=open(devname,O_RDONLY)) == -1) {
+	if ((pFd=open(devname,O_RDONLY))==-1) {
 	    printf("Error opening %s (%d)\n",devname,-pFd);
 	    exit(1);
 	}
@@ -374,8 +374,8 @@ char *devname;
 		 (unsigned long) partition[12];
 	if (partition[5])
 	    printf("%s%d  %c     %2d    %3d    %5d     %2d    %3d    %5d    %2x    %10ld\n",
-		devname == NULL?dev:devname,1+((i-0x1be)/16),
-		partition[0] == 0?' ':(partition[0] == 0x80?'*':'?'),
+		devname==NULL?dev:devname,1+((i-0x1be)/16),
+		partition[0]==0?' ':(partition[0]==0x80?'*':'?'),
 		partition[1],				     /* Start head */
 		partition[2] & 0x3f,			     /* Start sector */
 		partition[3] | ((partition[2] & 0xc0) << 2), /* Start cylinder */
@@ -397,15 +397,15 @@ fdisk_main(int argc, char * argv[])
 
     dev[0]=0;
     for (i=1;i<argc;i++) {
-	if (*argv[i] == '/') {
+	if (*argv[i]=='/') {
 	    if (*dev!=0) {
 		printf("Can only specify one device on the command line.\n");
 		return 1;
 	    } else
 		strncpy(dev,argv[i],256); /* FIXME - Should be some value from a header */
 	} else
-	    if (*argv[i] == '-')
-		switch (*(argv[i]+1)) {
+	    if (*argv[i]=='-')
+		switch(*(argv[i]+1)) {
 		    case 'l':
 			mode=MODE_LIST;
 			break;
@@ -417,7 +417,7 @@ fdisk_main(int argc, char * argv[])
 		die;
     }
 
-    if (argc == 1)
+    if(argc==1)
 #ifdef DEFAULT_DEV
 	strncpy(dev,DEFAULT_DEV,256);
 #else
@@ -425,7 +425,7 @@ fdisk_main(int argc, char * argv[])
 #endif
 
 
-    if (mode == MODE_LIST) {
+    if (mode==MODE_LIST) {
 	if (*dev!=0)
 	    list_partition(dev);
 	else {
@@ -436,12 +436,12 @@ fdisk_main(int argc, char * argv[])
 	return(1);
     }
 
-    if (mode == MODE_EDIT) {
+    if (mode==MODE_EDIT) {
 	char buf[CMDLEN];
 	Funcs *tmp;
 	int flag=0;
 
-	if ((pFd=open(dev,O_RDWR)) == -1) {
+	if ((pFd=open(dev,O_RDWR))==-1) {
 	    printf("Error opening %s (%d)\n",dev,-pFd);
 	    return 1;
 	}
@@ -456,20 +456,20 @@ fdisk_main(int argc, char * argv[])
 	    printf("Error getting geometry of disk, exiting.\n");
 	    return 1;
 	}
-	if (geometry.heads == 0 && geometry.cylinders == 0 && geometry.sectors == 0)
+	if (geometry.heads==0 && geometry.cylinders==0 && geometry.sectors==0)
 	    printf("WARNING!  Read disk geometry as 0/0/0.  Things may break.\n");
 	printf("\nGeometry: %d cylinders, %d heads, %d sectors.\n\n",
 		geometry.cylinders,geometry.heads,geometry.sectors);
 	fflush(stdout);
-	while (!feof(stdin)) {
-	    printf("Command%s:",flag == 0?" (? for help)":"");
+	while(!feof(stdin)) {
+	    printf("Command%s:",flag==0?" (? for help)":"");
 	    flag=1;
 	    fflush(stdout);
 	    *buf = 0;
 	    if (fgets(buf,CMDLEN-1,stdin)) {
 		printf("\n");
 		for (tmp=funcs; tmp->cmd; tmp++)
-		    if (*buf == tmp->cmd) {
+		    if (*buf==tmp->cmd) {
 			tmp->func();
 			break;
 		    }

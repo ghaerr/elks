@@ -40,7 +40,7 @@ char tcp_states[11][13] = {
 	"CLOSE_WAIT",
 	"CLOSING",
 	"LAST_ACK",
-	"TIME_WAIT"
+	"TIME_WAIT"	
 };
 
 int s;
@@ -56,7 +56,7 @@ int main(void)
     int i;
     char addr[16];
     __u8 *addrbytes;
-
+	    
     if ( (s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 	perror("socket error");
 	exit(-1);
@@ -64,7 +64,7 @@ int main(void)
 
     localadr.sin_family = AF_INET;
     localadr.sin_port = 0;
-    localadr.sin_addr.s_addr = INADDR_ANY;
+    localadr.sin_addr.s_addr = INADDR_ANY;  
     ret = bind(s, &localadr, sizeof(struct sockaddr_in));
     if ( ret == -1) {
 	perror("bind error");
@@ -81,9 +81,9 @@ int main(void)
     }
 
     sr.type = NS_GENERAL;
-    write(s, &sr, sizeof(sr));
+    write(s, &sr, sizeof(sr));	
     ret = read(s, buf, sizeof(buf));
-    gstats = buf;
+    gstats = buf;	
     printf("Retransmition memory     : %d bytes\n", gstats->retrans_memory);
     printf("Number of control blocks : %d\n\n", gstats->cb_num);
 
@@ -92,7 +92,7 @@ int main(void)
     sr.type = NS_CB;
     for (i = 0 ;; i++){
 		sr.extra = i;
-		write(s, &sr, sizeof(sr));
+		write(s, &sr, sizeof(sr));	
 		read(s, buf, sizeof(buf));
 		cbstats = buf;
 		if (cbstats->valid == 0)break;

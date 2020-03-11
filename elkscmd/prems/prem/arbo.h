@@ -12,7 +12,7 @@
 #include <alloc.h>
 
 #define MAKSNOD   4096   /* maksimuma kvanto da nodoj en la arbo */
-#define NEKODOT   256    /* 256 nodoj kun nivelo == 1,             */
+#define NEKODOT   256    /* 256 nodoj kun nivelo==1,             */
                          /* kiuj neniam estas kodataj            */
 
 #define FOLIO     32767

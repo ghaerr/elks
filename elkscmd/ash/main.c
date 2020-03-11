@@ -105,6 +105,9 @@ main(argc, argv)  char **argv; {
 	register char *profile = NULL;
 	register char *ashrc = NULL;
 
+#if !JOBS
+	signal(SIGTSTP, SIG_IGN);	/* ignore ^Z stop signal on ELKS*/
+#endif
 #if PROFILE
 	monitor(4, etext, profile_buf, sizeof profile_buf, 50);
 #endif

@@ -64,7 +64,7 @@ char *prompt;
         result[0] = 0;
     } else {
 	char * p = strchr(result, '\n');
-	if (p) *p = '\0';
+	if(p) *p = '\0';
     }
 
     /* reset our terminal, if necessary */

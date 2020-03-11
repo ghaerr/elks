@@ -60,7 +60,7 @@
 #define	ASCSTEP	1	/* step for cursor movement inside ascii field */
 
 /* type of representation - the two following values are sensitive to display */
-/* organization								      */
+/* organization 							      */
 
 #define	HEX	14
 #define	OCT	17
@@ -87,7 +87,7 @@
 /* define searching direction for `search' function	*/
 
 #define	FORW	1
-#define	BACK	-1
+#define	BACK   	-1
 
 #define	BLKSIZE	1024	/* general purpouse buffer size	*/
 
@@ -551,7 +551,7 @@ static long base;		/* address in the file of the page	*/
 				/* currently displayed			*/
 static int l;			/* length of the last data read		*/
 static int reply;		/* auxiliary var			*/
-static int newfile;		/* boolean var indicating whether the	*/
+static int newfile;		/* boolean var indicating whether the 	*/
 				/* file did exist or not		*/
 static int hnum;		/* start value for column numbering	*/
 static int inpfd = -1;		/* descriptor of the input file		*/
@@ -1311,7 +1311,7 @@ static void error(code)
 	mvcur(statusline,1);
 	cleareos();
 
-	switch (code) {
+	switch(code) {
 	case WRITEERR:	printf(mesg[36],BELL);
 			break;
 	case INSERTERR:	printf(mesg[37],BELL);
@@ -1473,7 +1473,7 @@ static void getcmd() {
 
 	cmd[i] = '\0';
 	mvcur(statusline,1);
-	switch (cmd[0]) {
+	switch(cmd[0]) {
 
 	case 'q':
 		if (nochange || cmd[1] == '!')
@@ -1638,7 +1638,7 @@ static void getcmd() {
 			}
 
 			if (strncmp(&cmd[j], "base=", 5) == 0) {
-				switch (cmd[j+5]) {
+				switch(cmd[j+5]) {
 				case '8':
 					b_select(OCT);
 					break;
@@ -1660,7 +1660,7 @@ static void getcmd() {
 				if (strncmp(&cmd[j], "pagesz=", 7) == 0) {
 					i = atoi(&cmd[j+7]);
 					if (i/nbytes > maxrow - FIRSTROW - 2 ||
-						i/nbytes <= 0) {
+				    	    i/nbytes <= 0) {
 						mvcur(statusline,1);
 						cleareos();
 						printf(mesg[39]);
@@ -1710,7 +1710,7 @@ static void getcmd() {
 
 			/* goto or ".=" command	*/
 
-			switch (cmd[0]) {
+			switch(cmd[0]) {
 
 			case '.':
 
@@ -1733,7 +1733,7 @@ static void getcmd() {
 				/* goto command	*/
 
 				if (stoln(cmd,&address,det0) == -1) {
-					cleareos();
+				 	cleareos();
 					printf(mesg[14]);
 					mvcur(y,x);
 					return;
@@ -1765,7 +1765,7 @@ static void getcmd() {
 			}
 
 			reply = 0;
-			switch (cmd[0]) {
+			switch(cmd[0]) {
 
 			case '.':
 				if (!isspace(cmd[1]) && cmd[1] != ',')
@@ -1794,7 +1794,7 @@ static void getcmd() {
 			}
 
 			while (isspace(*++cptr));
-			switch (*cptr) {
+			switch(*cptr) {
 
 			case '.':
 				addr2 = base + actpos;
@@ -1814,7 +1814,7 @@ static void getcmd() {
 			}
 
 			while (!isspace(*cptr++));
-			switch (*cptr) {
+			switch(*cptr) {
 
 			case 'd':
 			case 'w':
@@ -2022,7 +2022,7 @@ static void help() {
 		for (i = 0; i < sizeof(qref)/sizeof(*qref); i++)
 			printf("%s\n\r",qref[i]);
 		printf("choose: ");
-		switch (GETACHAR) {
+		switch(GETACHAR) {
 
 			case '1':
 				ip = qref_cm;
@@ -2080,7 +2080,7 @@ static void help() {
  *			  or more columns.
  *
  *	SYNOPSIS
- *		void help80()
+ *	 	void help80()
  *
  *	DESCRIPTION
  *		It displays a compact command quick reference guide on
@@ -2189,7 +2189,7 @@ static void insert(mode,fd)
 	mvcur(y,x);
 
 	while (~eoi)
-		switch (readtty(&c,esc_match)) {
+		switch(readtty(&c,esc_match)) {
 
 		case NORM:
 
@@ -2558,7 +2558,7 @@ static int isvalidname(string)
 {
 	while (*string) {
 		if (! isalnum(*string))
-			switch (*string) {
+			switch(*string) {
 
 			case '/':
 			case '-':
@@ -2815,7 +2815,7 @@ char	**argv;
 		setjmp(env);
 		c=GETACHAR;
 
-		switch (c) {
+		switch(c) {
 
 		case 'h':
 		case '\b':
@@ -3223,7 +3223,7 @@ static void mreplace() {
 	offs = base + actpos;
 
 	while (~eoi) {
-		switch (readtty(&c,esc_match)) {
+		switch(readtty(&c,esc_match)) {
 
 		case NORM:
 
@@ -3511,7 +3511,7 @@ static void pattmatch(direction,whichpattern)
 		eoi = FALSE;
 
 		while (~eoi)
-			switch (readtty(&c,spec_match)) {
+			switch(readtty(&c,spec_match)) {
 			case NORM:
 				if (x < curfield.lcmax) {
 					curpattern[i++] = c;
@@ -3527,7 +3527,7 @@ static void pattmatch(direction,whichpattern)
 				break;
 
 			case MATCH:
-				switch (c) {
+				switch(c) {
 				case '\t':
 
 					changefield(1);
@@ -3880,7 +3880,7 @@ static int readtty(c,ismchar)
 				return(MATCH);
 
 			if (radix == 7 && i == 0)
-				switch (*c) {
+				switch(*c) {
 				case '0':
 				case '1':
 				case '2':
@@ -4258,7 +4258,7 @@ static setparam() {
 		case RANGE:
 			for (;;)
 				if (strcmp(rbuffer, option[i].value[0]) >= 0 &&
-				strcmp(rbuffer, option[i].value[1]) <= 0) {
+			    	strcmp(rbuffer, option[i].value[1]) <= 0) {
 					option[i].curvalue = atoi(rbuffer);
 					break;
 				}

@@ -1,8 +1,8 @@
 /* linuxmt/kernel/exit.c
  * (C) 1997 Chad Page
- *
+ * 
  * This is the ELKS code to handle wait (partial V7-style implementation),
- * and sys_exit().  I've thrown this together to handle mini-sh so I can
+ * and sys_exit().  I've thrown this together to handle mini-sh so I can 
  * get this to 0.(0?)1.0 :)
  */
 
@@ -15,7 +15,7 @@ extern struct task_struct *next_task_slot;
 
 /* Note: sys_wait only keeps *one* task in the task_struct right now...
  * this is different than V7 symantics I think, but good enough for 0.0.51
- * Whoops - we have to do wait3 for now :)
+ * Whoops - we have to do wait3 for now :) 
  */
 
 int sys_wait4(pid_t pid, int *status, int options)

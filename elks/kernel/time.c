@@ -11,14 +11,14 @@
  *       updating it properly in the timer IRQ handler.
  *
  * revision: 1998-01-01, kerr@wizard.net
- *     Added code for timezones.
+ *     Added code for timezones. 
  *     Added settimeofday().
  *     Removed the code to set the clock on system boot - this is more
  *       properly done from a program that uses settimeofday() to set the time.
  *     Cleaned up gettimeofday() a bit.
- *
+ * 
  * note: The check for valid timezones in settimeofday() is a little cheesy,
- *       but I've decided to keep it the way it is in interests of saving
+ *       but I've decided to keep it the way it is in interests of saving 
  *       space.
  *
  * todo: adjtime() and/or adjtimex()

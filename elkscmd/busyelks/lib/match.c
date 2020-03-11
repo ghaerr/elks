@@ -42,12 +42,12 @@ match(text, pattern)
 		ch = *pattern++;
 
 		switch (ch) {
-			case '*':
+			case '*':  
 				retrypat = pattern;
 				retrytxt = text;
 				break;
 
-			case '[':
+			case '[':  
 				found = 0;
 				while ((ch = *pattern++) != ']') {
 					if (ch == '\\')
@@ -63,18 +63,18 @@ match(text, pattern)
 				}
 				/* fall into next case */
 
-			case '?':
+			case '?':  
 				if (*text++ == '\0')
 					return 0;
 				break;
 
-			case '\\':
+			case '\\':  
 				ch = *pattern++;
 				if (ch == '\0')
 					return 0;
 				/* fall into next case */
 
-			default:
+			default:        
 				if (*text == ch) {
 					if (*text)
 						text++;

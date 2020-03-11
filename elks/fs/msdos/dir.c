@@ -72,7 +72,7 @@ unicode_to_ascii(char *ascii, unsigned char *uni)
 {
 	char *op = ascii;
 
-	while (*uni && *uni!=0xff){
+	while(*uni && *uni!=0xff){
 		*op++ = *uni;
 		uni += 2;
 	}

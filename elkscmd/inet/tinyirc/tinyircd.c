@@ -62,7 +62,7 @@ struct user_list {
     time_t creation;
     int hopcount;
 };
-
+    
 /*************************************************************/
 
 int my_stricmp(str1, str2)

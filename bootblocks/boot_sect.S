@@ -495,7 +495,8 @@ elks_parms_start:
 track_max:
 #   if defined(CONFIG_IMG_FD360)
 	.word 40
-#   elif defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1440)
+#   elif defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1200) \
+	  || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680)
 	.word 80
 #   elif defined(CONFIG_IMG_HD)
 	.word CONFIG_IMG_CYL

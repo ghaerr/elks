@@ -57,7 +57,7 @@ long size, date;
 }
 
 /*
- * Make a subdirectory grow in length.  Only subdirectories (not root)
+ * Make a subdirectory grow in length.  Only subdirectories (not root) 
  * may grow.  Returns a 0 on success or 1 on failure (disk full).
  */
 

@@ -160,7 +160,7 @@ char writer[] = "\
 
 int main(int argc, char **argv)
 {
-	FILE *cfile, *hfile;
+	FILE *cfile, *hfile;	
 	struct sig *sigp;
 	int maxsig;
 	int i;

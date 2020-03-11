@@ -4,10 +4,10 @@
  */
 /*
  * getoptX -- public domain version of standard System V routine
- *
+ * 
  * Strictly enforces the System V Command Syntax Standard; provided by D A
  * Gwyn of BRL for generic ANSI C implementations
- *
+ * 
  * #define STRICT to prevent acceptance of clustered options with arguments
  * and ommision of whitespace between option and arg.
  */

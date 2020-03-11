@@ -3,7 +3,7 @@
  *
  * MicroWindows
  * ELKS EGA/VGA Screen Driver 16 color 4 planes - 16-bit assembly version
- *
+ * 
  * This file is an adapation of the asmplan4.s MSC asm driver for ELKS
  */
 #include "../device.h"
@@ -60,7 +60,7 @@ ega_drawhorzline(PSD psd, int x1, int x2, int y, int color)
 	; configure the graphics controller
 
 	mov	dx, #$03ce	; DX := Graphics Controller port address
-
+	
 	mov	al, #3		; set data rotate register
 	lea	bx, _mode_table
 	add	bx, _gr_mode
@@ -154,7 +154,7 @@ L42:	mov 	ah, bh		; AH := bit mask for first byte
 
 L43:	mov 	ah, #$0ff	; AH := bit mask
 	out	dx, ax		; update Bit Mask register
-	rep
+	rep 
 	movsb			; update all pixels in the line
 
 	; set pixels in the rightmost byte of the line
@@ -416,7 +416,7 @@ L112:	out	dx, ax		; select bit plane
 
 	pop	ds
 	pop	si
-	pop	bp
+	pop	bp	
 #endasm
 }
 
@@ -431,15 +431,15 @@ ega_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 	srcvga = srcpsd->flags & PSF_SCREEN;
 	dstvga = dstpsd->flags & PSF_SCREEN;
 
-	if (srcvga) {
-		if (dstvga)
+	if(srcvga) {
+		if(dstvga)
 			vga_to_vga_blit(dstpsd, dstx, dsty, w, h,
 				srcpsd, srcx, srcy, op);
 		else
 			vga_to_mempl4_blit(dstpsd, dstx, dsty, w, h,
 				srcpsd, srcx, srcy, op);
 	} else {
-		if (dstvga)
+		if(dstvga)
 			mempl4_to_vga_blit(dstpsd, dstx, dsty, w, h,
 				srcpsd, srcx, srcy, op);
 		else

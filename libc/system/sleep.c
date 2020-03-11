@@ -18,7 +18,7 @@ sleep(unsigned int seconds)
   unsigned int prev_sec;
 
   prev_sec = alarm(0);
-  if (prev_sec <= seconds)
+  if(prev_sec <= seconds)
    prev_sec = 1;
   else
    prev_sec -= seconds;

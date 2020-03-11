@@ -52,7 +52,7 @@ static char sccsid[] = "@(#)error.c	5.1 (Berkeley) 3/7/91";
 #ifdef __STDC__
 #include "stdarg.h"
 #else
-#include <varargs.h>
+#include <varargs.h>	
 #endif
 #include <errno.h>
 

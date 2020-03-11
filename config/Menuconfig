@@ -3,7 +3,7 @@
 # This script is used to configure the ELKS kernel.
 #
 # It was inspired by a desire to not have to hit <enter> 9 million times
-# or startup the X server just to change a single kernel parameter.
+# or startup the X server just to change a single kernel parameter.  
 #
 # This script attempts to parse the configuration files, which are
 # scattered throughout the kernel source tree, and creates a temporary
@@ -13,7 +13,7 @@
 # It uses a very modified/mutilated version of the "dialog" utility
 # written by Savio Lam (lam836@cs.cuhk.hk). Savio is not responsible
 # for this script or the version of dialog used by this script.
-# Please do not contact him with questions. The official version of
+# Please do not contact him with questions. The official version of 
 # dialog is available at sunsite.unc.edu or a sunsite mirror.
 #
 # Portions of this script were borrowed from the original Configure
@@ -80,7 +80,7 @@
 #	- Support for multiple conditions in dep_tristate().
 #	- Implemented new functions: define_tristate(), define_int(),
 #	  define_hex(), define_string(), dep_bool().
-#
+# 
 # 24 Feb 2002 Riley H Williams <rhw@memalpha.cx>
 #	- Standardised formatting.
 #
@@ -237,7 +237,7 @@ function dep_tristate () {
 	tristate "$ques" "$var"
     elif [ "$dep" = m ]; then
 	mod_bool "$ques" "$var"
-    else
+    else 
 	define_tristate "$var" n
     fi
 }
@@ -260,7 +260,7 @@ function dep_bool () {
     done
     if [ "$dep" = y ]; then
 	bool "$ques" "$var"
-    else
+    else 
 	define_bool "$var" n
     fi
 }
@@ -280,7 +280,7 @@ function dep_mbool () {
     done
     if [ "$dep" = y ]; then
 	bool "$ques" "$var"
-    else
+    else 
 	define_bool "$var" n
     fi
 }
@@ -394,7 +394,7 @@ function show_readme () {
 	    --textbox scripts/README.Menuconfig $ROWS $COLS
 }
 
-# Begin building the dialog menu command and Initialize the
+# Begin building the dialog menu command and Initialize the 
 # Radiolist function file.
 
 function menu_name () {
@@ -709,14 +709,15 @@ function parser(ifile,menu) {
 	else if ($1 ~ "endmenu") {
 	    printf("}\n") >>menu
 	    return
-	}
+	} 
 	else if ($1 == "source") {
 	    parser($2,menu)
 	}
 	else {
 	    print >>menu
 	}
-    }
+	}
+	close(ifile) close(menu)
 }'
 }
 
@@ -735,7 +736,7 @@ function parser(ifile,menu) {
 	}
 	else if ($1 ~ /mainmenu_option|endmenu/) {
 	    printf("") >>menu
-	}
+	} 
 	else if ($1 == "source") {
 	    parser($2,menu)
 	}
@@ -849,12 +850,12 @@ function activate_menu () {
 	libraries installed on your machine.
 
 	You may also need to rebuild lxdialog. This can be done by moving to
-	the /usr/src/elks/scripts/lxdialog directory and issuing the
+	the /usr/src/elks/scripts/lxdialog directory and issuing the 
 	"make clean all" command.
 
 	If you have verified that your ncurses install is correct, you may
 	email the maintainer <mec@shout.net> or post a message to
-	<linux-8086@vger.kernel.org> for additional assistance.
+	<linux-8086@vger.kernel.org> for additional assistance. 
 
 .EOM
 			cleanup
@@ -896,13 +897,13 @@ last retrieved.  Leave blank to abort." 11 55 "$ALT_CONFIG" 2> MCdialog.out
 	    cat > help.out <<-.EOM
 
 	For various reasons, one may wish to keep several different kernel
-	configurations available on a single machine.
+	configurations available on a single machine.  
 
 	If you have saved a previous configuration in a file other than the
 	kernel's default, entering the name of the file here will allow you
 	to modify that configuration.
 
-	If you are uncertain, then you have probably never used alternate
+	If you are uncertain, then you have probably never used alternate 
 	configuration files.  You should therefor leave this blank to abort.
 
 .EOM
@@ -946,10 +947,10 @@ as an alternate.  Leave blank to abort." 10 55 "$ALT_CONFIG" 2> MCdialog.out
 	    cat > help.out <<-.EOM
 
 	For various reasons, one may wish to keep different kernel
-	configurations available on a single machine.
+	configurations available on a single machine.  
 
 	Entering a file name here will allow you to later retrieve, modify
-	and use the current configuration as an alternate to whatever
+	and use the current configuration as an alternate to whatever 
 	configuration options you have selected at that time.
 
 	If you are uncertain what all this means then you should probably
@@ -1013,7 +1014,7 @@ save_configuration () {
 	    elif [ "$1" = m -a "$x" != n ]; then
 		x=m
 		shift
-	    else
+	    else 
 		x=n
 		shift $#
 	    fi
@@ -1028,7 +1029,7 @@ save_configuration () {
 	while [ $# -gt 0 ]; do
 	    if [ "$1" = y ]; then
 		shift
-	    else
+	    else 
 		x=n
 		shift $#
 	    fi
@@ -1043,7 +1044,7 @@ save_configuration () {
 	while [ $# -gt 0 ]; do
 	    if [ "$1" = y -o "$1" = m ]; then
 		shift
-	    else
+	    else 
 		x=n
 		shift $#
 	    fi
@@ -1150,7 +1151,7 @@ save_configuration () {
 	    shift 2
 	done
 	#
-	# Use the default if none were set.
+	# Use the default if none were set.  
 	#
 	: ${current:=$default}
 	#
@@ -1260,7 +1261,7 @@ set_geometry () {
     # Some distributions export these with incorrect values
     # which can really screw up some ncurses programs.
     LINES=  COLUMNS=
-    ROWS=${1:-24}  COLS=${2:-80}
+    ROWS=${1:-24}  COLS=${2:-80} 
     # Just in case the nasty rlogin bug returns.
     [ $ROWS = 0 ] && ROWS=24
     [ $COLS = 0 ] && COLS=80
@@ -1268,7 +1269,7 @@ set_geometry () {
 	echo -e "\n\007Your display is too small to run Menuconfig!"
 	echo "It must be at least 19 lines by 80 columns."
 	exit 0
-    fi
+    fi 
     ROWS=$((ROWS-4))  COLS=$((COLS-5))
 }
 
@@ -1337,7 +1338,7 @@ fi
 > .menuconfig.log
 
 # Load the functions used by the config.in files.
-echo -n "Preparing scripts: functions"
+echo -n "Preparing scripts: functions" 
 load_functions
 
 if [ ! -e $CFG_IN ]; then

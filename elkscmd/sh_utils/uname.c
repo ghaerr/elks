@@ -35,7 +35,7 @@ main (argc, argv)
 
 	for (i=1;i<argc;i++)
 	{
-		switch (argv[i][1])
+		switch(argv[i][1])
 		{
 	        case 's':
         		toprint |= PRINT_SYSNAME;

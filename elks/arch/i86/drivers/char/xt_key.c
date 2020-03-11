@@ -148,7 +148,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 
     /* Necessary for the XT. */
     mode = inb_p((void *) KBD_CTL);
-    //printk("\nkey read:%X,mode:%X,ModeState:%d\n",code,mode,ModeState);
+    //printk("\nkey read:%X,mode:%X,ModeState:%d\n",code,mode,ModeState);    
     outb_p((unsigned char) (mode | 0x80), (void *) KBD_CTL);
     outb_p((unsigned char) mode, (void *) KBD_CTL);
 
@@ -169,7 +169,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	E0Prefix = 0;
     }
 
-/* the highest bit is set when the key was released.
+/* the highest bit is set when the key was released. 
  * Save pressed/relased state in IsReleasep. Bit set = released */
     IsReleasep = (char *)(code & 0x80);
     code &= 0x7F; /* clear bit indicating released key */
@@ -186,7 +186,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
     } else {
       mode = SSC;
     }
-
+      
     /* --------------Process status keys-------------- */
     if (!(mode & 0xC0)) { /*not a simple scan code*/
 
@@ -197,7 +197,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 #endif
 	if (IsReleasep) { /* the key was released */
 	  if (mode == 16) {
-	    if (capslocktoggle == 0) {
+	    if (capslocktoggle==0) {
 	      capslocktoggle=1;
 	    } else {
 	      capslocktoggle=0;
@@ -211,17 +211,17 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
     /* did set the ModeState according to the modifier key and return now */
 	return;
     }
-
+    
     if (IsReleasep) /* a simple scan code was released */
 	return;
 
     switch(mode & 0xC0) {
-
+      
     /* --------------Handle Function keys-------------- */
     case 0x40:	/* F1 .. F10 - adding ESC plus mode byte to queue */
     /* F11 and F12 function keys need 89 byte table like keys-de.h */
     /* function keys are not posix standard here */
-
+    
 #ifdef CONFIG_CONSOLE_DIRECT
 	if (ModeState & ALT) {
 	    Console_set_vc((unsigned) (code - 0x3B));
@@ -243,7 +243,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 		AddQueue('[');
 #endif
 	    }
-	    //printk("key read2:%X,mode:%X,ModeState:%d,mode+0A:%X\n",code,mode,ModeState,(mode + 0x0A));
+	    //printk("key read2:%X,mode:%X,ModeState:%d,mode+0A:%X\n",code,mode,ModeState,(mode + 0x0A));    
 	    AddQueue(mode + 0x0A);
 	    return;
 	}
@@ -253,13 +253,13 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	if ((code == 0x53) && (ModeState & CTRL) && (ModeState & ALT))
 	    ctrl_alt_del();
 
-    /* --------------Handle simple scan codes-------------- */
+    /* --------------Handle simple scan codes-------------- */	
     /*
      *      Pick the right keymap determined by the ModeState
      */
 	mode = ((ModeState & ~(NUM | ALT_GR)) >> 1) | (ModeState & 0x01);
 	mode = state_code[mode];
-
+	
 	if (!mode && (ModeState & ALT_GR))
 	    mode = 3; /*ctrl_alt table*/
 
@@ -275,16 +275,16 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
      */
 	if (ModeState & ALT && !(ModeState & CTRL))	/* Changed to support CTRL-ALT */
 	    keyp_E0 = (char *)(((int) keyp_E0) | 0x80); /* META-.. */	/*[ keyp ]*/
-
+	    
 	if (!keyp_E0)			/* non meta-@ is 64 */	/*[ keyp ]*/
 	    keyp_E0 = (char *) '@';	/*[ keyp ]*/
-
+	    
 	if (ModeState & CTRL && !(ModeState & ALT))	/* Changed to support CTRL-ALT */
 	    keyp_E0 = (char *)(((int) keyp_E0) & 0x1F); /* CTRL-.. */	/*[ keyp ]*/
-
+	    
 	if (((int)keyp_E0) == '\r')	/*[ keyp ]*/
 	    keyp_E0 = (char *) '\n';	/*[ keyp ]*/
-	//printk("keyp_E0:%X\n",keyp_E0);
+	//printk("keyp_E0:%X\n",keyp_E0);    
 	AddQueue((unsigned char) keyp_E0);
     }
 }

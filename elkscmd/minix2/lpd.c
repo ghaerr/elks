@@ -233,7 +233,7 @@ void print(FILE *f) {
 		    put(c);
 		    break;
 		default:		/* Check anything else */
-		    switch (control[c]) {
+		    switch(control[c]) {
 			case 1: 	/* Assume smart user */
 			    do {
 				buf[count++] = c;
@@ -333,7 +333,7 @@ void haunt(void) {
 	/* We have a controlling tty!  Disconnect. */
 	close(fd);
 
-	switch (fork()) {
+	switch(fork()) {
 	    case -1:
 		fatal("can't fork");
 	    case  0:

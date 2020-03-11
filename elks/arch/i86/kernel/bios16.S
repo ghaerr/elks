@@ -31,7 +31,7 @@ call_bios:
 
 	mov 4(%bp),%bx
 
-//	Load the register block from the table
+//	Load the register block from the table	
 
 	mov 2(%bx),%ax
 	mov 6(%bx),%cx

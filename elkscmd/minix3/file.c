@@ -82,7 +82,7 @@ char *argv[];
   L_flag= 0;
   while ((c= getopt(argc, argv, "L?")) != -1)
   {
-	switch (c)
+	switch(c)
 	{
 	case 'L':
 		L_flag= 1;
@@ -261,7 +261,7 @@ int type;
   }
 
   if (type == 3) {	/* Core file in <sys/core.h> format */
-	switch (buf[36] & 0xff)
+	switch(buf[36] & 0xff)
 	{
 		case 1:	printf(" of i86 executable"); break;
 		case 2:	printf(" of i386 executable"); break;

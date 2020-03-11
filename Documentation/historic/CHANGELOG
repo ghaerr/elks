@@ -40,7 +40,7 @@ Tommy McCabe 	      rocketjet314@yahoo.com		31 May 2004
 
 -------------------------------------------------------------------------------
 
-Thu Feb 16 17:03:00 EST 2012	Jody Bruchon <jody@jodybruchon.com>
+Thu Feb 16 17:03:00 EST 2012	Jody Bruchon <jody@jodybruchon.com>	
 	* Removed elksfs. It was a copy of the MINIX fs and no tools
 	  exist to make such a filesystem.
 
@@ -52,7 +52,7 @@ Thu Nov 23 21:35:28 EST 2006	Segin <segin2005@gmail.com>
 Wed Nov  8 17:49:52 EST 2006	Segin <segin2005@gmail.com>
 
 	* Changed ELKS init sequence to check all locations for 'init'
-	  that the Linux kernel does. This is to follow more
+	  that the Linux kernel does. This is to follow more 
 	  "traditional" behaviour.
 
 Sun Aug 20 21:51:25 UTC 2006	Claudio Matsuoka <claudio@mandriva.com>
@@ -127,7 +127,7 @@ Thu Jan 02 16:12:36 EET 2003	Harry Kalogirou <harkal@gmx.net>
 Fri Nov 01 01:52:44 EET 2002	Harry Kalogirou <harkal@gmx.net>
 
         * Changed the position of ds in the _registers struct.
-        * Added support for loading the new ELKS executable format. This is
+        * Added support for loading the new ELKS executable format. This is 
           actualy the big header a.out format. The how things work is
           explained in the Documentation/bin_formats.txt file.
         * Optimized sys_execve() not to reload the code segment from disk
@@ -137,7 +137,7 @@ Fri Nov 01 01:52:44 EET 2002	Harry Kalogirou <harkal@gmx.net>
           process.
         * Removed FLOAT_HOLES related code from malloc.c
         * Stack overflow check for new the new process memory setup.
-        * Added CONFIG_ADVANCED_MM option to select the inclusion of
+        * Added CONFIG_ADVANCED_MM option to select the inclusion of 
           growing holes and relocatable code and data segments code.
         * Removed CONFIG_EXEC_MINIX. We support minix executables by default
         * Rearranged memory manager related config menus
@@ -158,7 +158,7 @@ Sun Oct 27 20:08:36 EET 2002	Jay Barr
           numbers
 
 Sat Oct 26 20:38:26 EEST 2002	Harry Kalogirou <harkal@gmx.net>
-
+        
         * Removed panic from sys_socket() when unsupported protocol
           is requested.
         * Fixed inet_create() to fail if there is no ktcp running.
@@ -1061,7 +1061,7 @@ NOTE:	* Found bugs that prevented meta.c from compiling. Produced hack
 Sun Jan 27 02:37:33 EET 2002	Harry Kalogirou <harkal@gmx.net>
 
 	* Made the code aware that the serial tty devices minor numbers
-	  was changed.
+	  was changed. 
 
 Sat Jan 26 10:08:44 GMT 2002	Riley Williams <rhw@MemAlpha.cx>
 
@@ -1341,7 +1341,7 @@ Sun Nov 11 12:35:14 EET 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 	* Fixed case when a process writes to a closed pipe from the other
 	  end of the connection. Now returns EPIPE.
 	* Fixes in the tcp state machine concerning LAST_ACK state.
-	* More "RFC" behavior of inet_read().
+	* More "RFC" behavior of inet_read(). 
 
 Sat Nov 10 18:27:17 EET 2001	Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
 
@@ -1635,7 +1635,7 @@ Tue Aug 21 18:50:53 GMT 2001	Harry Kalogirou <HarKal@rainbow.cs.unipi.gr>
 	* Changed in scripts/Menuconfig and scripts/Configure a "linux"
 	  leftover to "linuxmt" that caused configuration header file not
 	  to be written.
-
+	  
 Tue Aug 21 18:09:08 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 
 	* Whilst I was validating the printk() format strings, I came across
@@ -2006,7 +2006,7 @@ Mon Jan 31 12:00:00 GMT 2000	Christoph Plattner <Christoph.Plattner@dot.at>
 	  sector offset address and byte offset address at fmemcpy.
 	* In rd_info and rd_segment a fix preloaded disk can be defined
 	  (CONFIG_PRELOAD_DISK, the values are hard coded for test purpose).
-
+	
 Thu Jan 20 12:30:30 GMT 2000	Mario Frasca
 
 	* Support for suid/sgid exec.
@@ -2137,7 +2137,7 @@ Thu Sep 30 05:24:30 UTC 1999	Thomas McWilliams <tgm@netcom.com>
 Fri Sep 24 16:24:30 BST 1999	Thomas McWilliams <tgm@netcom.com>
 
 	* Fixes and code cleanups in file system code.
-
+	
 Thu Sep 16 12:04:30 BST 1999	Thomas McWilliams <tgm@netcom.com>
 
 	* Fixes and code cleanups in file system code.
@@ -2192,7 +2192,7 @@ Wed Aug 18 19:40:30 BST 1999	Alistair Riddoch <ajr@ecs.soton.ac.uk>
 	* Replaced scheduler code with a more compact round robin version.
 	* Changed default size of block and inode values from 32 to 16 bit.
 	* Made closing a terminal HUP the process group.
-
+	
 Tue Jul 20 18:11:30 BST 1999	Alistair Riddoch <ajr@ecs.soton.ac.uk>
 
 	* Removed unused members of file system structures.
@@ -2538,17 +2538,17 @@ Sun Sep 25 12:37:30 BST 1998	Alistair Riddoch <ajr@ecs.soton.ac.uk>
 	* Removed redundant code from the dircon driver.
 
 Sat Sep 26 02:07:30 CET 1998	Simon Weijgers <mbit@mbit.doa.org>
-
+	
 	* Added a ### Dependencies line at the end of the Makefiles
 	  in fs/ and fs/elksfs/.
 
 Sat Sep 26 01:50:30 CET 1998	Simon Weijgers <mbit@mbit.doa.org>
-
+	
 	* Fixed various things (typos etc) in fs/exec.c and
 	  include/linuxmt/msdos.h to make .exe-support compilable.
 
 Sat Sep 26 00:32:30 CET 1998	Simon Weijgers <mbit@mbit.doa.org>
-
+	
 	* "Fixed" Documentation/Configure.help so that help text
 	  fits in the menuconfig help-window line length.
 
@@ -2570,7 +2570,7 @@ Thu Sep 24 23:28:33 CET 1998	Simon Weijgers <mbit@mbit.doa.org>
 
 	* Changed top level Makefile to make it clean up all dependency
 	  stuff in all Makefiles. Should make it easier (no rejects) to
-	  patch and diff stuff.
+	  patch and diff stuff. 
 
 Wed Sep 23 16:10:04 CET 1998	Simon Weijgers <mbit@mbit.doa.org>
 

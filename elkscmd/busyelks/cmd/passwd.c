@@ -1,4 +1,4 @@
-/*
+/* 
  * file:         passwd.c
  * description:  change user password
  * author:       Shane Kerr <kerr@wizard.net>
@@ -24,7 +24,7 @@
 #define MAX_FAILURE 5
 
 /* valid characters for a salt value */
-char salt_char[] =
+char salt_char[] = 
           "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
 
 int passwd_main(argc,argv)
@@ -57,7 +57,7 @@ char ** argv;
 	        return 1;
 	    }
 	    if ((getuid() != 0) && (getuid() != pwd->pw_uid)) {
-		fprintf(stderr, "You may not change the password for %s.\n",
+		fprintf(stderr, "You may not change the password for %s.\n", 
 		     argv[1]);
 		return 1;
 	    }

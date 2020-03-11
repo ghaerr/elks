@@ -2,7 +2,7 @@
  * Copyright (c) 1999 Greg Haerr <greg@censoft.com>
  *
  * Screen Driver Utilities
- *
+ * 
  * MicroWindows Proportional Font Routine Header (proportional font format)
  *
  * These routines are screen driver entry points.

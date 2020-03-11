@@ -29,8 +29,8 @@ struct pipe_inode_info {
 #define PIPE_WRITERS(inode)	((inode).u.pipe_i.writers)
 #define PIPE_LOCK(inode)	((inode).u.pipe_i.lock)
 
-#define PIPE_EMPTY(inode)	(PIPE_LEN(inode) == 0)
-#define PIPE_FULL(inode)	(PIPE_LEN(inode) == PIPE_BUF)
+#define PIPE_EMPTY(inode)	(PIPE_LEN(inode)==0)
+#define PIPE_FULL(inode)	(PIPE_LEN(inode)==PIPE_BUF)
 #define PIPE_FREE(inode)	(PIPE_BUF - PIPE_LEN(inode))
 #define PIPE_END(inode)		((PIPE_START(inode)+PIPE_LEN(inode))&\
 							   (PIPE_BUF-1))

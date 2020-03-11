@@ -15,7 +15,7 @@ Unix box only has a 80 track floppy, you can:
 			drives to write 40 tracks.
 
 	2) Get a conventional device driver and purchase a 40 track
-	drive.  You'll still need the device driver unless your
+	drive.  You'll still need the device driver unless your 
 	Unix vendor was thoughtful enough to leave you some "extras".
 
 		Pros: High success rates (40 track to 40 track)

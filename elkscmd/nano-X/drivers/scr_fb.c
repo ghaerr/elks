@@ -49,7 +49,7 @@ FB_open(PSD psd)
 	/* fb_init selects the proper framebuffer subdriver and
 	 * inits the SCREENDEVICE struct
 	 */
-	if (fb_init(psd) == 0)
+	if(fb_init(psd) == 0)
 		return -1;	/* fail*/
 	return 1;		/* ok*/
 }
@@ -71,11 +71,11 @@ FB_getscreeninfo(PSD psd,PSCREENINFO psi)
 	psi->pixtype = psd->pixtype;
 	psi->fonts = NUMBER_FONTS;
 
-	if (psd->yres > 480) {
+	if(psd->yres > 480) {
 		/* SVGA 800x600*/
 		psi->xdpcm = 33;	/* assumes screen width of 24 cm*/
 		psi->ydpcm = 33;	/* assumes screen height of 18 cm*/
-	} else if (psd->yres > 350) {
+	} else if(psd->yres > 350) {
 		/* VGA 640x480*/
 		psi->xdpcm = 27;	/* assumes screen width of 24 cm*/
 		psi->ydpcm = 27;	/* assumes screen height of 18 cm*/
@@ -117,7 +117,7 @@ FB_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c)
 
 	/*
 	 * Uncomment the following if driver doesn't support hline
-	while (x1 <= x2)
+	while(x1 <= x2)
 		fb_drawpixel(psd, x1++, y, c);
 	 */
 }
@@ -132,7 +132,7 @@ FB_drawvline(PSD psd,COORD x, COORD y1, COORD y2, PIXELVAL c)
 
 	/*
 	 * Uncomment the following if driver doesn't support vline
-	while (y1 <= y2)
+	while(y1 <= y2)
 		fb_drawpixel(psd, x, y1++, c);
 	 */
 }
@@ -144,7 +144,7 @@ FB_fillrect(PSD psd,COORD x1, COORD y1, COORD x2, COORD y2, PIXELVAL c)
 	 * Call fb hline (type 2) to save size
 	 */
 	++x2;		/* fix fb last point not drawn*/
-	while (y1 <= y2)
+	while(y1 <= y2)
 		fb_drawhorzline(psd, x1, x2, y1++, c);
 }
 

@@ -35,7 +35,7 @@
 !	6:	video mode, 1 byte
 !	7:	window width, 1 byte
 !	8:	video data, 2 bytes
-!	10:	mono/color, video memory size, 2 bytes
+!	10:	mono/color, video memory size, 2 bytes 
 !	12:	feature bits, switch settings, 2 bytes
 !	14:	window height, 1 byte
 !	15:	VGA present, 1 byte
@@ -240,7 +240,7 @@ good_sig:
 	movw $start_os,4*0x19
 	mov %cs,4*0x19+2      //;set os/loader int
 
-	pop %ds
+	pop %ds 
 	lret                           //;back to BIOS
 #endif
 
@@ -814,7 +814,7 @@ is8086:
 	mov	$0x21,%cl	// 80188/86 uses only the five lower
 	shr	%cl,%al		// bits of cl to determine the number
 	jnz	is80186		// of shifts.
-	sti
+	sti             
 	xor	%si,%si
 	mov	$0xffff,%cx
 	nop
@@ -839,7 +839,7 @@ is80186:call	queue
 is80188:mov	$4,%cl
 	lea	p80188,%si
 	jmp	cpu_store
-isv30:
+isv30:	
 	call	queue
 	jz	isv20
 	mov	$3,%cl
@@ -920,7 +920,7 @@ queue_start:
 	lea	q_end,%di
 #ifdef CONFIG_ROMCODE
         sub $queue_start,%di   //;we have new offset
-#endif
+#endif	
 	mov	$0xfb,%al
 	mov	$0x03,%cx
 	cli

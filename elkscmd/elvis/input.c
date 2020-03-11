@@ -772,7 +772,7 @@ MARK input(from, to, when)
 						}
 					}
 #endif
-				} /* end switch (*key) */
+				} /* end switch(*key) */
 			} /* end for (;;) */
 BreakBreak:;
 

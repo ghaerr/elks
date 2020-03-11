@@ -5,13 +5,13 @@
  *
  * SIGBUS SIGTRAP SIGIOT SIGEMT SIGSYS SIGSTKFLT SIGPOLL
  * SIGCPU SIGPROF SIGPWR SIGILL SIGFPE
- *
+ * 
  * So we can have much tighter signal code if we have 16 bit signal
  * mask by losing all these unused signals.
  */
-#define SMALLSIG
-
 #include <linuxmt/types.h>
+
+#define SMALLSIG		/* 16-bit sigset_t*/
 
 #ifdef SMALLSIG
 
@@ -34,6 +34,8 @@ typedef unsigned short sigset_t;	/* at least 16 bits */
 #define SIGPIPE		13
 #define SIGALRM		14
 #define SIGTERM		15
+#define SIGTTIN		0		/* FIXME not implemented*/
+#define SIGUSR2		0		/* FIXME not implemented*/
 
 #define _NSIG		16
 
@@ -173,7 +175,7 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 
 #endif
 
-#endif
+#endif /* __KERNEL__*/
 
 /*@-namechecks@*/
 
@@ -182,7 +184,7 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 #define SIG_SETMASK        2	/* for setting the signal mask */
 
 /* Type of a signal handler.  */
-typedef void (*__sighandler_t) ();
+typedef void (*__sighandler_t)(int);
 
 /*@+namechecks@*/ /*@ignore@*/
 
@@ -203,10 +205,12 @@ struct sigaction {
 
 };
 
+#ifdef __KERNEL__
 struct task_struct;
 extern int send_sig(sig_t,struct task_struct *,int);
 extern void arch_setup_sighandler_stack(register struct task_struct *,
 					__sighandler_t,unsigned);
 extern void ctrl_alt_del(void);
+#endif /* __KERNEL__*/
 
 #endif

@@ -57,7 +57,7 @@ Table of Contents
 
 
 Oikarinen & Reed                                                [Page 1]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -113,7 +113,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                                [Page 2]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -169,7 +169,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                                [Page 3]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -225,7 +225,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                                [Page 4]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -281,7 +281,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                                [Page 5]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -337,7 +337,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                                [Page 6]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -393,7 +393,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                                [Page 7]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -449,7 +449,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                                [Page 8]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -505,7 +505,7 @@ NOTES:
 
 
 Oikarinen & Reed                                                [Page 9]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -561,7 +561,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 10]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -617,7 +617,7 @@ Example 4:
 
 
 Oikarinen & Reed                                               [Page 11]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -673,7 +673,7 @@ Example 6:
 
 
 Oikarinen & Reed                                               [Page 12]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -729,7 +729,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 13]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -785,7 +785,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 14]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -841,7 +841,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 15]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -897,7 +897,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 16]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -953,7 +953,7 @@ SERVER test.oulu.fi 1 :[tolsun.oulu.fi] Experimental server
 
 
 Oikarinen & Reed                                               [Page 17]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1009,7 +1009,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 18]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1065,7 +1065,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 19]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1121,7 +1121,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 20]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1177,7 +1177,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 21]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1233,7 +1233,7 @@ MODE #Finnish +o Kilroy         ; Gives 'chanop' privileges to Kilroy on
 
 
 Oikarinen & Reed                                               [Page 22]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1289,7 +1289,7 @@ MODE WiZ -o                     ; WiZ 'deopping' (removing operator
 
 
 Oikarinen & Reed                                               [Page 23]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1345,7 +1345,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 24]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1401,7 +1401,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 25]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1457,7 +1457,7 @@ following:
 
 
 Oikarinen & Reed                                               [Page 26]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1513,7 +1513,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 27]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1569,7 +1569,7 @@ STATS m                         ; check the command usage for the server
 
 
 Oikarinen & Reed                                               [Page 28]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1625,7 +1625,7 @@ CONNECT tolsun.oulu.fi          ; Attempt to connect a server to
 
 
 Oikarinen & Reed                                               [Page 29]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1681,7 +1681,7 @@ TRACE *.oulu.fi                 ; TRACE to a server matching *.oulu.fi
 
 
 Oikarinen & Reed                                               [Page 30]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1737,7 +1737,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 31]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1793,7 +1793,7 @@ PRIVMSG jto@tolsun.oulu.fi :Hello !
 
 
 Oikarinen & Reed                                               [Page 32]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1849,7 +1849,7 @@ PRIVMSG #*.edu :NSFNet is undergoing work, expect interruptions
 
 
 Oikarinen & Reed                                               [Page 33]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1905,7 +1905,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 34]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -1961,7 +1961,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 35]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2017,7 +2017,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 36]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2073,7 +2073,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 37]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2129,7 +2129,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 38]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2185,7 +2185,7 @@ REHASH                          ; message from client with operator
 
 
 Oikarinen & Reed                                               [Page 39]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2241,7 +2241,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 40]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2297,7 +2297,7 @@ USERS eff.org                   ; request a list of users logged in on
 
 
 Oikarinen & Reed                                               [Page 41]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2353,7 +2353,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 42]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2409,7 +2409,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 43]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2465,7 +2465,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 44]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2521,7 +2521,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 45]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2577,7 +2577,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 46]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2633,7 +2633,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 47]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2689,7 +2689,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 48]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2745,7 +2745,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 49]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2801,7 +2801,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 50]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2857,7 +2857,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 51]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2913,7 +2913,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 52]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -2969,7 +2969,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 53]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -3025,7 +3025,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 54]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -3081,7 +3081,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 55]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -3137,7 +3137,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 56]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -3193,7 +3193,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 57]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -3249,7 +3249,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 58]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -3305,7 +3305,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 59]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -3361,7 +3361,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 60]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -3417,7 +3417,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 61]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -3473,7 +3473,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 62]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -3529,7 +3529,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 63]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -3585,7 +3585,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
 Oikarinen & Reed                                               [Page 64]
-
+
 RFC 1459              Internet Relay Chat Protocol              May 1993
 
 
@@ -3641,4 +3641,4 @@ Security Considerations
 
 
 Oikarinen & Reed                                               [Page 65]
-
+

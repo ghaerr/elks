@@ -14,11 +14,11 @@ char *s;
     char * ptr;
     static char c1 = 0;
     static char c2 = 0;
-    static char uniq_ch[] =
+    static char uniq_ch[] = 
 	 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     struct stat stbuf;
 
-
+    
     if (!s || strlen(s) < 6) {
         errno = EINVAL;
         return 0;

@@ -12,9 +12,9 @@
 #include <malloc.h>
 #include <ctype.h>
 
-#define	PATHLEN		256
-#define	CMDLEN		512
-#define	MAXARGS		500
+#define	PATHLEN		256	
+#define	CMDLEN		512	
+#define	MAXARGS		500	
 #define	ALIASALLOC	20
 #define	STDIN		0
 #define	STDOUT		1

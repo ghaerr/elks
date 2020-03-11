@@ -7,7 +7,7 @@
  * fread will often be used to read in large chunks of data calling read()
  * directly can be a big win in this case. Beware also fgetc calls this
  * function to fill the buffer.
- *
+ * 
  * This ignores __MODE__IOTRAN; probably exactly what you want. (It _is_ what
  * fgetc wants)
  */

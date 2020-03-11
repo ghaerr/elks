@@ -7,7 +7,7 @@ include $(TOPDIR)/Make.defs
 
 .PHONY: all clean kconfig defconfig config menuconfig
 
-all: .config
+all: .config include/autoconf.h
 	$(MAKE) -C libc all
 	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' install
 	$(MAKE) -C elks all
@@ -30,7 +30,7 @@ clean:
 	    echo ' * `make config` or `make menuconfig` to configure it.' ;\
 	    echo ;\
 	fi
-	
+
 elks/arch/i86/drivers/char/KeyMaps/config.in:
 	$(MAKE) -C elks/arch/i86/drivers/char/KeyMaps config.in
 
@@ -38,7 +38,11 @@ kconfig:
 	$(MAKE) -C config all
 
 defconfig:
+	$(RM) .config
 	@yes '' | ${MAKE} config
+
+include/autoconf.h: .config
+	@yes '' | config/Configure -D config.in
 
 config: elks/arch/i86/drivers/char/KeyMaps/config.in kconfig
 	config/Configure config.in

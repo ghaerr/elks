@@ -15,8 +15,8 @@ start ELKS like this:
 Qemu will then e.g. report:
 "char device redirected to /dev/pts/3 (label serial0)"
 
-So you will know that you can communicate with the
-serial device "/dev/ttys0" on ELKS by connecting to
+So you will know that you can communicate with the 
+serial device "/dev/ttys0" on ELKS by connecting to 
 the device "/dev/pts/3" on the host.
 
 If you want to configure two serial lines you could
@@ -57,11 +57,11 @@ an ANSI terminal emulation.
 ---------------------------
 
 To connect to a host from ELKS via a serial line you can use the
-miniterm application that is located in /usr/bin. On the host you
-will have to edit the inittab file to enable logins on the serial
+miniterm application that is located in /usr/bin. On the host you 
+will have to edit the inittab file to enable logins on the serial 
 device that Qemu has provided, e.g. "/dev/pts/3".
 
-Miniterm starts using the "/dev/ttyS0" device on ELKS as default but
+Miniterm starts using the "/dev/ttyS0" device on ELKS as default but 
 you can change that using parameters on the command line.
 
 
@@ -72,25 +72,25 @@ Qemu does not support different baud rates on emulated serial lines. If you
 run ELKS on a PC with real serial lines, you can set these with the stty
 command.
 
-When you enter
+When you enter 
 
-# stty
+# stty 
 
-a line of current settings of your terminal will be displayed. The command
+a line of current settings of your terminal will be displayed. The command 
 
 # stty -a
 
-will show all parameter settings of your terminal. With
+will show all parameter settings of your terminal. With 
 
 # stty 1200
 
-you would set the speed of your current terminal to 1200 baud.
+you would set the speed of your current terminal to 1200 baud. 
 
-The commands
+The commands 
 
-# stty < /dev/ttys0
-or
-# stty -a < /dev/ttys0
+# stty < /dev/ttys0 
+or 
+# stty -a < /dev/ttys0 
 
 will show the current settings of the first serial line.
 
@@ -100,12 +100,12 @@ will show the current settings of the first serial line.
 
 The command:
 
-# cat > /dev/ttyS0
+# cat > /dev/ttyS0 
 
 will send the keyboard input out on the first serial line. You can
 also send e.g. the file "testfile" as well:
 
-# cat testfile > /dev/ttyS0
+# cat testfile > /dev/ttyS0 
 
 
 14th of April 2017

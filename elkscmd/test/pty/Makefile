@@ -20,7 +20,7 @@ ptyshell: $(OBJS)
 install: ptyshell
 	$(INSTALL) ptyshell $(DESTDIR)/bin
 
-clean:
+clean: 
 	rm -f *.o ptyshell
 
 dep:

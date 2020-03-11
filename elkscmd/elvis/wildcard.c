@@ -70,12 +70,12 @@ char **wildexpand(argc, argv)
 	char **argv;
 {
 	int i;
-
+	
 	for (i=0; i<*argc; i++)
 		expand(argv[i]);
 	*argc=nfiles;
 	return files;
-}
+}	
 #endif
 
 expand(name)
@@ -97,9 +97,9 @@ expand(name)
 		;
 
 	while (--filespec>=buf)
-	{	if (*filespec == '?' || *filespec == '*')
+	{	if (*filespec=='?' || *filespec=='*')
 			wildcard=1;
-		if (*filespec == '/' || *filespec == '\\' || *filespec == ':')
+		if (*filespec=='/' || *filespec=='\\' || *filespec==':')
 			break;
 	}
 	if (!wildcard)

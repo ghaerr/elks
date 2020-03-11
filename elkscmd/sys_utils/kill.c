@@ -30,7 +30,7 @@ static void usage()
 	write(STDOUT_FILENO, "\n  e.g. kill -KILL 5\n\n",22);
 }
 
-void main ( int argc, char **argv ) {
+void main ( int argc, char **argv ) {  
 	char	*cp;
 	int	sig;
 	int	pid;
@@ -61,10 +61,10 @@ void main ( int argc, char **argv ) {
 		}
 		argc--;
 		argv++;
-	} else {
+	} else {	
 		if (argc == 1) usage();
 	}
-
+	
 	while (argc-- > 1) {
 		cp = *++argv;
 		pid = 0;
@@ -72,8 +72,8 @@ void main ( int argc, char **argv ) {
 			pid = pid * 10 + *cp++ - '0';
 
 		if (*cp) {
-			usage();
-			write(STDERR_FILENO, "\n  Error: non-numeric pid!\n\n", 27);
+			usage();	
+			write(STDERR_FILENO, "\n  Error: non-numeric pid!\n\n", 27);			
 			exit(1);
 		}
 

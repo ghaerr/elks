@@ -116,7 +116,7 @@ int rpipe(cmd, in)
 	strcpy(output+fd, SCRATCHIN+3);
 	mktemp(output);
 	close(creat(output, 0666));
-	if ((fd=open(output, O_RDWR)) == -1)
+	if ((fd=open(output, O_RDWR))==-1)
 	{
 		unlink(output);
 		return -1;

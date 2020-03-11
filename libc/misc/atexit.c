@@ -5,10 +5,10 @@
 
 /*
  * This deals with both the atexit and on_exit function calls
- *
+ * 
  * Note calls installed with atexit are called with the same args as on_exit
  * fuctions; the void* is given the NULL value.
- *
+ * 
  */
 
 #include <errno.h>
@@ -34,13 +34,13 @@ extern int __on_exit_count;
 
 int atexit (vfuncp ptr)
 {
-   if (__on_exit_count < 0 || __on_exit_count >= MAXONEXIT)
+   if( __on_exit_count < 0 || __on_exit_count >= MAXONEXIT)
    {
       errno = ENOMEM;
       return -1;
    }
    _cleanup = __do_exit;
-   if (ptr )
+   if( ptr )
    {
       __on_exit_table[__on_exit_count].called = ptr;
       __on_exit_table[__on_exit_count].argument = 0;
@@ -55,13 +55,13 @@ on_exit(ptr, arg)
 vfuncp ptr;
 void *arg;
 {
-   if (__on_exit_count < 0 || __on_exit_count >= MAXONEXIT)
+   if( __on_exit_count < 0 || __on_exit_count >= MAXONEXIT)
    {
       errno = ENOMEM;
       return -1;
    }
    __cleanup = __do_exit;
-   if (ptr )
+   if( ptr )
    {
       __on_exit_table[__on_exit_count].called = ptr;
       __on_exit_table[__on_exit_count].argument = arg;

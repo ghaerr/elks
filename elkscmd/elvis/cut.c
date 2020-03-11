@@ -44,8 +44,8 @@ static char	cbname;	/* name chosen for next cut/paste operation */
  * cut buffers, then this will fail disastrously, because buffer overflow
  * is *not* allowed for.
  */
-/* BLK *need	this is where we deposit the list */
-int cutneeds(BLK *need)
+int cutneeds(need)
+	BLK		*need;	/* this is where we deposit the list */
 {
 	struct cutbuf	*cb;	/* used to count through cut buffers */
 	int		i;	/* used to count through blocks of a cut buffer */
@@ -82,7 +82,8 @@ int cutneeds(BLK *need)
 #endif
 
 /* This function frees a cut buffer */
-static void cutfree(REG struct cutbuf *buf)
+static void cutfree(buf)
+	REG struct cutbuf	*buf;
 {
 	char	cutfname[50];
 	int	i;
@@ -136,8 +137,8 @@ static void cutfree(REG struct cutbuf *buf)
  * To minimize the number of extra files lying around, only named cut buffers
  * are preserved in a file switch; the annonymous buffers just go away.
  */
-/* char *tmpname	name of the tmp file */
-void cutswitch(char *tmpname)
+void cutswitch(tmpname)
+	char	*tmpname; /* name of the tmp file */
 {
 	char	cutfname[50];	/* used to build a new name for the tmp file */
 	int	fd;		/* a new fd for the current tmp file */
@@ -202,7 +203,7 @@ void cutswitch(char *tmpname)
 }
 
 /* This function should be called just before termination of vi */
-void cutend(void)
+void cutend()
 {
 	int	i;
 
@@ -217,17 +218,19 @@ void cutend(void)
 
 
 /* This function is used to select the cut buffer to be used next */
-/* int name	a single character */
-void cutname(int name)
+void cutname(name)
+	int	name;	/* a single character */
 {
 	cbname = name;
 }
 
 
+
+
 /* This function copies a selected segment of text to a cut buffer */
-/* MARK from	start of text to cut
- * MARK to	end of text to cut */
-void cut(MARK from, MARK to)
+void cut(from, to)
+	MARK	from;		/* start of text to cut */
+	MARK	to;		/* end of text to cut */
 {
 	int		first;	/* logical number of first block in cut */
 	int		last;	/* logical number of last block used in cut */
@@ -418,7 +421,9 @@ void cut(MARK from, MARK to)
 }
 
 
-static void readcutblk(REG struct cutbuf *cb, int blkno)
+static void readcutblk(cb, blkno)
+	REG struct cutbuf	*cb;
+	int		blkno;
 {
 	int		fd;	/* either tmpfd or cb->fd */
 
@@ -444,33 +449,45 @@ static void readcutblk(REG struct cutbuf *cb, int blkno)
 /* This function inserts text from a cut buffer, and returns the MARK where
  * insertion ended.  Return MARK_UNSET on errors.
  */
-/* MARK at	where to insert the text
- * int after	boolean: insert after mark? (rather than before)
- * int retend	boolean: return end of text? (rather than start) */
-MARK paste(MARK at, int after, int retend)
+MARK paste(at, after, retend)
+	MARK	at;	/* where to insert the text */
+	int	after;	/* boolean: insert after mark? (rather than before) */
+	int	retend;	/* boolean: return end of text? (rather than start) */
 {
 	REG struct cutbuf	*cb;
 	int			i;
 
 	/* decide which cut buffer to use */
 	if (cbname >= 'A' && cbname <= 'Z')
+	{
 		cb = &named[cbname - 'A'];
+	}
 	else if (cbname >= 'a' && cbname <= 'z')
+	{
 		cb = &named[cbname - 'a'];
+	}
 	else if (cbname >= '1' && cbname <= '9')
+	{
 		cb = &annon[cbname - '1'];
+	}
 	else if (cbname == '.')
+	{
 		cb = &named[26];
+	}
 	else if (!cbname)
+	{
 		cb = annon;
-	else {
+	}
+	else
+	{
 		msg("Invalid cut buffer name: \"%c", cbname);
 		cbname = '\0';
 		return MARK_UNSET;
 	}
 
 	/* make sure it isn't empty */
-	if (cb->nblks == 0) {
+	if (cb->nblks == 0)
+	{
 		if (cbname)
 			msg("Cut buffer \"%c is empty", cbname);
 		else
@@ -481,17 +498,31 @@ MARK paste(MARK at, int after, int retend)
 	cbname = '\0';
 
 	/* adjust the insertion MARK for "after" and line-mode cuts */
-	if (cb->lnmode) {
+	if (cb->lnmode)
+	{
 		at &= ~(BLKSIZE - 1);
-		if (after) at += BLKSIZE;
-	} else if (after) {
+		if (after)
+		{
+			at += BLKSIZE;
+		}
+	}
+	else if (after)
+	{
 		/* careful! if markidx(at) == 0 we might be pasting into an
 		 * empty line -- so we can't blindly increment "at".
 		 */
-		if (markidx(at) == 0) {
+		if (markidx(at) == 0)
+		{
 			pfetch(markline(at));
-			if (plen != 0) at++;
-		} else at++;
+			if (plen != 0)
+			{
+				at++;
+			}
+		}
+		else
+		{
+			at++;
+		}
 	}
 
 	/* put a copy of the "at" mark in the mark[] array, so it stays in
@@ -500,19 +531,25 @@ MARK paste(MARK at, int after, int retend)
 	mark[27] = at;
 
 	/* simple one-block paste? */
-	if (cb->nblks == 1) {
+	if (cb->nblks == 1)
+	{
 		/* get the block */
 		readcutblk(cb, 0);
 
 		/* isolate the text we need within it */
-		if (cb->end) tmpblk.c[cb->end] = '\0';
+		if (cb->end)
+		{
+			tmpblk.c[cb->end] = '\0';
+		}
 
 		/* insert it */
 		ChangeText
 		{
 			add(at, &tmpblk.c[cb->start]);
 		}
-	} else {
+	}
+	else
+	{
 		/* multi-block paste */
 
 		ChangeText
@@ -520,7 +557,8 @@ MARK paste(MARK at, int after, int retend)
 			i = cb->nblks - 1;
 
 			/* add text from the last block first */
-			if (cb->end > 0) {
+			if (cb->end > 0)
+			{
 				readcutblk(cb, i);
 				tmpblk.c[cb->end] = '\0';
 				add(at, tmpblk.c);
@@ -528,7 +566,8 @@ MARK paste(MARK at, int after, int retend)
 			}
 
 			/* add intervening blocks */
-			while (i > 0) {
+			while (i > 0)
+			{
 				readcutblk(cb, i);
 				add(at, tmpblk.c);
 				i--;
@@ -545,9 +584,14 @@ MARK paste(MARK at, int after, int retend)
 	rptlabel = "pasted";
 
 	/* return the mark at the beginning/end of inserted text */
-	if (retend) return mark[27] - 1L;
+	if (retend)
+	{
+		return mark[27] - 1L;
+	}
 	return at;
 }
+
+
 
 
 #ifndef NO_AT
@@ -558,41 +602,65 @@ MARK paste(MARK at, int after, int retend)
  * a number >= size) then the characters will not have been copied.
  * It returns 0 if the cut buffer is empty, and -1 for invalid cut buffers.
  */
-/* int name		the name of a cut-buffer to get: a-z only!
- * char *buf		where to put the string
- * unsigned size	size of buf */
-int cb2str(int name, char *buf, unsigned size)
+int cb2str(name, buf, size)
+	int	name;	/* the name of a cut-buffer to get: a-z only! */
+	char	*buf;	/* where to put the string */
+	unsigned size;	/* size of buf */
 {
 	REG struct cutbuf	*cb;
 	REG char		*src;
 	REG char		*dest;
 
 	/* decide which cut buffer to use */
-	if (name >= 'a' && name <= 'z') cb = &named[name - 'a'];
-	else return -1;
+	if (name >= 'a' && name <= 'z')
+	{
+		cb = &named[name - 'a'];
+	}
+	else
+	{
+		return -1;
+	}
 
 	/* if the buffer is empty, return 0 */
-	if (cb->nblks == 0) return 0;
+	if (cb->nblks == 0)
+	{
+		return 0;
+	}
 
 	/* !!! if not a single-block cut, then fail */
-	if (cb->nblks != 1) return size;
+	if (cb->nblks != 1)
+	{
+		return size;
+	}
 
 	/* if too big, return the size now, without doing anything */
-	if (cb->end - cb->start >= size) return cb->end - cb->start;
+	if (cb->end - cb->start >= size)
+	{
+		return cb->end - cb->start;
+	}
 
 	/* get the block */
 	readcutblk(cb, 0);
 
 	/* isolate the string within that blk */
-	if (cb->start == 0) tmpblk.c[cb->end] = '\0';
-	else {
-		for (dest = tmpblk.c, src = dest + cb->start; src < tmpblk.c + cb->end;)
+	if (cb->start == 0)
+	{
+		tmpblk.c[cb->end] = '\0';
+	}
+	else
+	{
+		for (dest = tmpblk.c, src = dest + cb->start; src < tmpblk.c + cb->end; )
+		{
 			*dest++ = *src++;
+		}
 		*dest = '\0';
 	}
 
 	/* copy the string into the buffer */
-	if (buf != tmpblk.c) strcpy(buf, tmpblk.c);
+	if (buf != tmpblk.c)
+	{
+		strcpy(buf, tmpblk.c);
+	}
 
 	/* return the length */
 	return cb->end - cb->start;

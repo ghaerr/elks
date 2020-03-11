@@ -22,8 +22,8 @@ struct utmp *
 getutent(void)
 {
   static struct utmp utmp;
-  if (ut_fd == -1) setutent();
-  if (ut_fd == -1) return NULL;
+  if (ut_fd==-1) setutent();
+  if (ut_fd==-1) return NULL;
 
   if (read(ut_fd, (char *) &utmp, sizeof(struct utmp))!=sizeof(struct utmp))
     return NULL;
@@ -61,19 +61,19 @@ struct utmp *
 getutid(const struct utmp * utmp_entry)
 {
   struct utmp * utmp;
-
+  
   while ((utmp=getutent())!=NULL)
     {
-      if ((utmp_entry->ut_type == RUN_LVL   ||
-	   utmp_entry->ut_type == BOOT_TIME ||
-	   utmp_entry->ut_type == NEW_TIME  ||
-	   utmp_entry->ut_type == OLD_TIME) &&
-	  utmp->ut_type == utmp_entry->ut_type)
+      if ((utmp_entry->ut_type==RUN_LVL   ||
+	   utmp_entry->ut_type==BOOT_TIME ||
+	   utmp_entry->ut_type==NEW_TIME  ||
+	   utmp_entry->ut_type==OLD_TIME) &&
+	  utmp->ut_type==utmp_entry->ut_type)
 	return utmp;
-      if ((utmp_entry->ut_type == INIT_PROCESS ||
-	   utmp_entry->ut_type == DEAD_PROCESS ||
-	   utmp_entry->ut_type == LOGIN_PROCESS ||
-	   utmp_entry->ut_type == USER_PROCESS) &&
+      if ((utmp_entry->ut_type==INIT_PROCESS ||
+	   utmp_entry->ut_type==DEAD_PROCESS ||
+	   utmp_entry->ut_type==LOGIN_PROCESS ||
+	   utmp_entry->ut_type==USER_PROCESS) &&
 	  !strncmp(utmp->ut_id, utmp_entry->ut_id,sizeof(utmp->ut_id)))
 	return utmp;
     }
@@ -94,8 +94,8 @@ getutline(const struct utmp * utmp_entry)
 
   while ((utmp=getutent())!=NULL)
     {
-      if ((utmp->ut_type == USER_PROCESS  ||
-	   utmp->ut_type == LOGIN_PROCESS) &&
+      if ((utmp->ut_type==USER_PROCESS  ||
+	   utmp->ut_type==LOGIN_PROCESS) &&
 	  !strcmp(utmp->ut_line, utmp_entry->ut_line))
 	return utmp;
     }
@@ -118,7 +118,7 @@ pututline(const struct utmp * utmp_entry)
 
   if ((ut=getutid(utmp_entry))!=NULL)
       lseek(ut_fd, (off_t) -sizeof(struct utmp), SEEK_CUR);
-  else if (ut_fd == -1 )
+  else if( ut_fd==-1 )
       return NULL;
   else
       lseek(ut_fd, (off_t) 0, SEEK_END);

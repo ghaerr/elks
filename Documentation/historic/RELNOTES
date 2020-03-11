@@ -108,7 +108,7 @@ VERSION 0.0.83 NOTES
 	  descriptors used.
 	* Fixed socket disconnection code so nano sockets now work
 	  with nano-X.
-
+	
 VERSION 0.0.82 NOTES
 --------------------
 
@@ -126,7 +126,7 @@ VERSION 0.0.81 NOTES
 	* Replaced the bulky timer mechanism with a much simpler one.
 	* Merged in code that allows the kernel to be built and booted
 	  from a ROM contributed by Christian Mardmuller (chm@kdt.de).
-
+	
 VERSION 0.0.80 NOTES
 --------------------
 
@@ -138,7 +138,7 @@ VERSION 0.0.80 NOTES
 	* Latest version of ramdisk driver by Blaz Antonic.
 	* Removed unused features from kernel.
 	* Added full features to kill(2) system call.
-
+	
 VERSION 0.0.79 NOTES
 --------------------
 
@@ -728,7 +728,7 @@ VERSION 0.0.56 NOTES
 	  syscall is made. Shouldn't slow things down *too* much, since
 	  it's a very short routine. If the stack grows too long, sys_exit
 	  is called immediately to kill the process.
-	* stat() now sets the file size properly (it didn't copy it over)
+	* stat() now sets the file size properly (it didn't copy it over)  
 	* ls in sash now prints sizes properly.
 	* Wrote a six-line implementation of sys_rename. It probably
 	  doesn't do it the right way, but we don't have space to write
@@ -855,7 +855,7 @@ VERSION 0.0.50 NOTES
 	  afterwards (those were 'minor' bugs to me, compared to how many
 	  there were before :)
 
-VERSION pre-0.0.50 (not released) NOTES
+VERSION pre-0.0.50 (not released) NOTES 
 ---------------------------------------
 
 	* I've been working on the file write code (which was completely

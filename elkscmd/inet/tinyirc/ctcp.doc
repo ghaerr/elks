@@ -63,7 +63,7 @@ Characters between client and server are 8 bit bytes (also known as
 octets) and can have nummeric values from octal 0 up to 0377 inclusive
 (0 up to 255 decimal). Some characters are special.
 
-	CHARS	::= '\000' .. '\377'
+	CHARS	::= '\000' .. '\377' 
 	NUL	::= '\000'
 	NL	::= '\n'
 	CR	::= '\r'
@@ -343,7 +343,7 @@ arrives. This gets low level dequoted into
 
 	:actor PRIVMSG victim :Say hi to Ron\n\t/actor\001USERINFO\001
 
-and thereafter split up into
+and thereafter split up into 
 
 	:actor PRIVMSG victim :Say hi to Ron\n\t/actor
 
@@ -402,7 +402,7 @@ KNOWN EXTENDED DATA
 
 <To be written by msa? Should include something about X-DELIM X-DELIM,
 ie CTCP message with empty tag, should translate into just X-DELIM in
-message.>
+message.> 
 
 *************************
 KNOWN REQUEST/REPLY PAIRS
@@ -453,7 +453,7 @@ running in.
 
 Using
 
-	X-N-CLN	::= '\000' .. '\071' | '\073' .. '\377'
+	X-N-CLN	::= '\000' .. '\071' | '\073' .. '\377' 
 
 the client name is a string of type X-N-CLN saying things like "Kiwi"
 or "ircII", the version saying things like "5.2" or "2.1.5c", the
@@ -482,7 +482,7 @@ directory.
 
 Using
 
-	X-N-SPC	::= '\000' .. '\037' | '\041' .. '\377'
+	X-N-SPC	::= '\000' .. '\037' | '\041' .. '\377' 
 
 the name of the FTP site is to be given by name like "cs.bu.edu" or
 "funic.funet.fi".
@@ -654,6 +654,6 @@ proceed with building the client after having gotten the files.
 End of file.
 
 ------- End of Forwarded Message
-
+ 
 
 

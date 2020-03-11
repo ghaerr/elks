@@ -40,7 +40,7 @@ devices:
 #	$MKSET   0 7  $(MKDEV) /dev/ram b 1
 
 ##############################################################################
-# Pseudo-TTY master devices.
+# Pseudo-TTY master devices. 
 
 	$(MKDEV) /dev/ptyp0 c 2 8
 	$(MKDEV) /dev/ptyp1 c 2 9
@@ -75,7 +75,7 @@ devices:
 #	$MKSET   0 3  $(MKDEV) /dev/fd b 2	# Ought to be.
 
 ##############################################################################
-# Pseudo-TTY slave devices.
+# Pseudo-TTY slave devices. 
 
 	$(MKDEV) /dev/ttyp0 c 4 8
 	$(MKDEV) /dev/ttyp1 c 4 9

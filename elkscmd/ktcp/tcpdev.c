@@ -336,7 +336,7 @@ static void tcpdev_release(void)
     n = tcpcb_find_by_sock(sock);
     if (n) {
 	cb = &n->tcpcb;
-	switch (cb->state){
+	switch(cb->state){
 	    case TS_CLOSED:
 		tcpcb_remove(n);
 		break;

@@ -158,7 +158,7 @@ char bits[] = {1, 2, 4, 8, 16, 32, 64, 128};
 #define MAXDEPTH	20	/* maximum {}-nesting level */
 #define MAXLABS		50	/* max # of labels that can be handled */
 
-#define SKIPWS(pc)	while ((*pc == ' ') || (*pc == '\t')) pc++
+#define SKIPWS(pc)	while ((*pc==' ') || (*pc=='\t')) pc++
 #define ABORT(msg)	(fprintf(stderr, msg, linebuf), exit(2))
 #define IFEQ(x, v)	if (*x == v) x++ ,	/* do expression */
 

@@ -38,7 +38,7 @@ int opt_nocopyzero = 0;		/* don't copy zero-length files starting with . */
  * @param nblks_p - returns size of file system
  * @param inodes_p - return number of requested inodes
  */
-/*
+/* 
  * -n namelen
  * -1 -> version1
  * -2|v -> version2
@@ -51,7 +51,7 @@ void parse_mkfs(int argc,char **argv,int *magic_p,int *nblks_p,int *inodes_p) {
   int version = 1;
   *nblks_p = 1440;
   *inodes_p = 360;
-
+    
   optind = 1;
   while (1) {
     c = getoptX(argc,argv,"12vi:n:s:k");

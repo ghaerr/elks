@@ -38,7 +38,7 @@ fflush(FILE *fp)
 	 do
 	 {
 	    cc = write(fp->fd, bstart, len);
-	    if (cc > 0 )
+	    if( cc > 0 )
 	    {
 	       bstart+=cc; len-=cc;
 	    }

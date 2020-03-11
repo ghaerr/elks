@@ -4,12 +4,12 @@
 
 E5.  OPTIONSF
 
-        Options may be set or examined via the colon command "set".  The
-     values of options will affect the operation of later commands.
+        Options may be set or examined via the colon command "set".  The 
+     values of options will affect the operation of later commands.  
 
-        For convenience, options have both a long descriptive name and a
+        For convenience, options have both a long descriptive name and a 
      short name  which  is  easy  to  type.    You  may  use either name
-     interchangably.  I like the short names, myself.
+     interchangably.  I like the short names, myself.  
 
 -1long name       short   type    default         meaning                       -0
 autoindent      ai      Bool    noai            auto-indent during input
@@ -56,7 +56,7 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
      Boolean  options  are made TRUE by giving the name of the option as
      an argument to the "set" command; they are made FALSE by  prefixing
      the name  with  "no".    For  example,  "set  autoindent" makes the
-     autoindent option TRUE, and "set noautoindent" makes it FALSE.
+     autoindent option TRUE, and "set noautoindent" makes it FALSE.  
 
 
 
@@ -70,9 +70,9 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
 
         To change the value of a string  or  numeric  option,  pass  the
      "set"  command  the name of the option, followed by an "=" sign and
-     the option's new value.  For example, "set tabstop=8" will give the
+     the option's new value.  For example, "set tabstop=8" will give the 
      tabstop option a value of 8.  For string options, you  may  enclose
-     the new value in quotes.
+     the new value in quotes.  
 
 
    E5.1  AutoIndentF
@@ -80,14 +80,14 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
         During  input  mode, the autoindent option will cause each added
      line to begin with the same amount of  leading  whitespace  as  the
      line above  it.    Without  autoindent,  added  lines are initially
-     empty.
+     empty.  
 
 
    E5.2  AutoPrintF
 
         This option only affects EX mode.  If the autoprint  option  on,
-     and either the cursor has moved to a different line or the previous
-     command modified the file, then Elvis will print the current line.
+     and either the cursor has moved to a different line or the previous 
+     command modified the file, then Elvis will print the current line.  
 
 
    E5.3  AutoWriteF
@@ -95,34 +95,34 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
         When  you're  editing one file and decide to switch to another -
      via the :tag command, or :next command, perhaps - if  your  current
      file  has  been  modified,  then Elvis will normally print an error
-     message and refuse to switch.
+     message and refuse to switch.  
 
         However, if the autowrite option is on, then  Elvis  will  write
-     the modified version of the current file and successfully switch to
-     the new file.
+     the modified version of the current file and successfully switch to 
+     the new file.  
 
 
    E5.4  CCF
 
         The :cc  command runs the C compiler.  This option should be set
-     to the name of your compiler.
+     to the name of your compiler.  
 
 
    E5.5  CharAttrF
 
-        Many text formatting programs allow you to designate portions of
+        Many text formatting programs allow you to designate portions of 
      your text to be underlined, italicized, or  boldface  by  embedding
      the special  strings  \fU,  \fI, and \fB in your text.  The special
-     string \fR marks the end of underlined or boldface text.
+     string \fR marks the end of underlined or boldface text.  
 
         Elvis normally treats those special strings just like any  other
-     text.
+     text.  
 
-        However, if the charattr option is on, then Elvis will interpret
+        However, if the charattr option is on, then Elvis will interpret 
      those  special strings correctly, to display underlined or boldface
      text on the screen.  (This only works, of course, if your  terminal
      can  display underlined and boldface, and if the TERMCAP entry says
-     how to do it.)
+     how to do it.) 
 
 
 
@@ -137,25 +137,25 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
    E5.6  COlumnsF
 
         This is a "read only" option.  You can't change its  value,  but
-     you can have Elvis print it.  It shows how wide your screen is.
+     you can have Elvis print it.  It shows how wide your screen is.  
 
 
    E5.7  DIGraphF
 
         This  option  is used to enable/disable recognition of digraphs.
      The default value is nodigraph, which means that digraphs will  not
-     be recognized.
+     be recognized.  
 
 
    E5.8  DIRectoryF
 
-        Elvis stores text in temporary files.  This option allows you to
+        Elvis stores text in temporary files.  This option allows you to 
      control which  directory those temporary files will appear in.  The
-     default is /usr/tmp.
+     default is /usr/tmp.  
 
         This option can only be set in a .exrc file; after  that,  elvis
      will  have  already  started  making  temporary files in some other
-     directory, so it would be too late.
+     directory, so it would be too late.  
 
 
    E5.9  EDcompatibleF
@@ -163,33 +163,33 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
         This     option     affects     the     behaviour     of     the
      ":s/regexp/text/options" command.    It  is normally off (:se noed)
      which causes all of the  substitution  options  to  be  off  unless
-     explicitly given.
+     explicitly given.  
 
-        However, with edcompatible on (:se ed), the substitution command
+        However, with edcompatible on (:se ed), the substitution command 
      remembers which  options  you  used  last time.  Those same options
      will continue to be used until you change them.    In  edcompatible
      mode,  when  you explicitly give the name of a substitution option,
-     you will toggle the state of that option.
+     you will toggle the state of that option.  
 
         This all seems very strange to me, but  its  implementation  was
      almost  free  when  I added the ":&" command to repeat the previous
-     substitution, so there it is.
+     substitution, so there it is.  
 
 
    E5.10  ErrorBellsF
 
         Elvis normally rings a bell when you do something wrong.    This
-     option lets you disable the bell.
+     option lets you disable the bell.  
 
 
    E5.11  ExRefreshF
 
         The EX  mode  of Elvis writes many lines to the screen.  You can
-     make Elvis either write each line to the screen separately, or save
-     up many lines and write them all at once.
+     make Elvis either write each line to the screen separately, or save 
+     up many lines and write them all at once.  
 
         The exrefresh option is normally on, so each line is written  to
-     the screen separately.
+     the screen separately.  
 
 
 
@@ -201,22 +201,22 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
 
 
         You  may wish to turn the exrefresh option off (:se noer) if the
-     "write" system call is costly on your machine, or if you're using a
+     "write" system call is costly on your machine, or if you're using a 
      windowing environment.  (Windowing environments scroll text  a  lot
-     faster when you write many lines at once.)
+     faster when you write many lines at once.) 
 
-        This option has no effect in visual command mode or input mode.
+        This option has no effect in visual command mode or input mode.  
 
 
    E5.12  FlipCaseF
 
         The  flipcase  option  allows  you  to control how the non-ASCII
-     characters are altered by the "~" command.
+     characters are altered by the "~" command.  
 
         The string is divided into pairs of characters.    When  "~"  is
      applied  to  a non-ASCII character, Elvis looks up the character in
      the flipcase string to see which pair it's in, and replaces  it  by
-     the other character of the pair.
+     the other character of the pair.  
 
 
    E5.13  HideFormatF
@@ -225,36 +225,36 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
      your text, on lines  that  start  with  a  "."  character.    Elvis
      normally  displays  these  lines  like  any  other text, but if the
      hideformat option is on, then format lines are displayed  as  blank
-     lines.
+     lines.  
 
 
    E5.14  IgnoreCaseF
 
         Normally,  when  Elvis  searches  for  text, it treats uppercase
-     letters as being different for lowercase letters.
+     letters as being different for lowercase letters.  
 
         When the ignorecase option is on, uppercase  and  lowercase  are
-     treated as equal.
+     treated as equal.  
 
 
    E5.15  InputModeF
 
         This  option  allows  you to have Elvis start up in insert mode.
      You can still exit insert mode at any time by hitting the ESC  key,
-     as usual.  Usually, this option would be set in your ".exrc" file.
+     as usual.  Usually, this option would be set in your ".exrc" file.  
 
 
    E5.16  KeyTimeF
 
         The   arrow  keys  of  most  terminals  send  a  multi-character
-     sequence.  It takes a measurable amount of time for these sequences
+     sequence.  It takes a measurable amount of time for these sequences 
      to be transmitted.  The keytime option allows you  to  control  the
      maximum  amount  of time to allow for an arrow key (or other mapped
-     key) to be received in full.
+     key) to be received in full.  
 
         The default keytime value  is  2.    Because  of  the  way  UNIX
      timekeeping  works,  the  actual  amount  of time allowed will vary
-     slightly, but it will always be between 1 and 2 seconds.
+     slightly, but it will always be between 1 and 2 seconds.  
 
 
 
@@ -271,51 +271,51 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
      keyboard's response be a little faster (mostly for  the  ESC  key),
      but  on those occasions where the time allowed happens to be closer
      to 0 than 1 second, Elvis may fail to  allow  enough  time  for  an
-     arrow key's sequence to be received fully.  Ugh.
+     arrow key's sequence to be received fully.  Ugh.  
 
-        As a special case, you can set keytime to 0 to disable this time
+        As a special case, you can set keytime to 0 to disable this time 
      limit stuff  altogether.    The  big problem here is: If your arrow
-     keys' sequences start with an ESC, then every time you hit your ESC
+     keys' sequences start with an ESC, then every time you hit your ESC 
      key Elvis will wait...  and wait...  to see if maybe that  ESC  was
-     part of an arrow key's sequence.
+     part of an arrow key's sequence.  
 
         NOTE:  this  option is a generalization of the timeout option of
-     the real vi.
+     the real vi.  
 
 
    E5.17  KeywordPrgF
 
-        Elvis has a special keyword lookup feature.  You move the cursor
+        Elvis has a special keyword lookup feature.  You move the cursor 
      onto a word, and hit shift-K, and Elvis  uses  another  program  to
-     look up the word and display information about it.
+     look up the word and display information about it.  
 
-        This option says which program gets run.
+        This option says which program gets run.  
 
         The  default  value  of this option is "ref", which is a program
      that looks up the definition of a function in C.  It looks  up  the
-     function name in a file called "refs" which is created by ctags.
+     function name in a file called "refs" which is created by ctags.  
 
         You  can subtitute other programs, such as an English dictionary
      program or the online manual.  Elvis runs the  program,  using  the
-     keyword as its only argument.  The program should write information
+     keyword as its only argument.  The program should write information 
      to stdout.   The program's exit status should be 0, unless you want
-     Elvis to print "<<< failed >>>".
+     Elvis to print "<<< failed >>>".  
 
 
    E5.18  LiNesF
 
-        This "read only" option shows how many lines you screen has.
+        This "read only" option shows how many lines you screen has.  
 
 
    E5.19  LIstF
 
         In nolist mode (the default), elvis displays text in a  "normal"
      manner  --  with  tabs expanded to an appropriate number of spaces,
-     etc.
+     etc.  
 
-        However, sometimes it is useful to have tab characters displayed
+        However, sometimes it is useful to have tab characters displayed 
      differently.  In list mode, tabs are displayed as "^I", and  a  "$"
-     is displayed at the end of each line.
+     is displayed at the end of each line.  
 
 
 
@@ -335,32 +335,32 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
    E5.20  MAgicF
 
         The  search  mechanism in Elvis can accept "regular expressions"
-     -- strings in which certain characters have special meaning.
+     -- strings in which certain characters have special meaning.  
 
         The magic option is normally on, which causes  these  characters
-     to be treated specially.
+     to be treated specially.  
 
-        If you turn the magic option off (:se noma), then all characters
-     except ^ and $ are treated literally.  ^ and $ retain their special
-     meanings regardless of the setting of magic.
+        If you turn the magic option off (:se noma), then all characters 
+     except ^ and $ are treated literally.  ^ and $ retain their special 
+     meanings regardless of the setting of magic.  
 
 
    E5.21  MaKeF
 
-        The :make command runs your "make" program.  This option defines
-     the name of your "make" program.
+        The :make command runs your "make" program.  This option defines 
+     the name of your "make" program.  
 
 
    E5.22  ModeLineF
 
         Elvis supports   modelines.     Modelines  are  lines  near  the
-     beginning or end of your text file which contain "ex:yowza:", where
+     beginning or end of your text file which contain "ex:yowza:", where 
      "yowza" is any EX command.  A typical "yowza"  would  be  something
-     like "set ts=4 ca kp=spell".
+     like "set ts=4 ca kp=spell".  
 
         Normally  these  lines are ignored, for security reasons, but if
      you have  "set  modeline"  in  your  .exrc  file  then  "yowza"  is
-     executed.
+     executed.  
 
 
    E5.23  PAragraphsF
@@ -368,16 +368,16 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
         The  {  and  }  commands  move the cursor forward or backward in
      increments of one paragraph.  Paragraphs may be separated by  blank
      lines, or  by  a "dot" command of a text formatter.  Different text
-     formatters use different "dot" commands.  This option allows you to
-     configure Elvis to work with your text formatter.
+     formatters use different "dot" commands.  This option allows you to 
+     configure Elvis to work with your text formatter.  
 
         It is assumed that your formatter uses commands that start  with
      a  "."  character  at  the front of a line, and then have a one- or
-     two-character command name.
+     two-character command name.  
 
         The value of the paragraphs option is a  string  in  which  each
      pair  of  characters  is one possible form of your text formatter's
-     paragraph command.
+     paragraph command.  
 
 
    E5.24  ReadOnlyF
@@ -385,7 +385,7 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
         Normally, Elvis will let you write back any file  to  which  you
      have write  permission.    If you don't have write permission, then
      you can only write the changed version of the file to  a  -1different-0
-     file.
+     file.  
 
 
 
@@ -401,10 +401,10 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
         If  you  set  the  readonly  option, then Elvis will pretend you
      don't have write permission to -1any-0 file you edit.    It  is  useful
      when  you  really  only mean to use Elvis to look at a file, not to
-     change it.  This way you can't change it accidentally.
+     change it.  This way you can't change it accidentally.  
 
         This option is normally off, unless you use the "view" alias  of
-     Elvis.  "View" is like "vi" except that the readonly option is on.
+     Elvis.  "View" is like "vi" except that the readonly option is on.  
 
 
    E5.25  REportF
@@ -414,14 +414,14 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
      done and  how  many lines were affected.  This option allows you to
      define what "a lot of lines" means.   The  default  is  5,  so  any
      command  which  affects  5 or more lines will cause a message to be
-     shown.
+     shown.  
 
 
    E5.26  SCrollF
 
-        The ^U and ^D keys normally scroll backward or forward by half a
+        The ^U and ^D keys normally scroll backward or forward by half a 
      screenful, but this is adjustable.  The value of this  option  says
-     how many lines those keys should scroll by.
+     how many lines those keys should scroll by.  
 
 
    E5.27  SEctionsF
@@ -429,12 +429,12 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
         The  [[  and  ]] commands move the cursor backward or forward in
      increments of 1  section.    Sections  may  be  delimited  by  a  {
      character  in  column  1  (which is useful for C source code) or by
-     means of a text formatter's "dot" commands.
+     means of a text formatter's "dot" commands.  
 
-        This option allows you to configure Elvis to work with your text
+        This option allows you to configure Elvis to work with your text 
      formatter's "section" command, in exectly the  same  way  that  the
      paragraphs  option  makes it work with the formatter's "paragraphs"
-     command.
+     command.  
 
 
    E5.28  SHellF
@@ -443,14 +443,14 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
      commands) this  is  the  program  that is uses as a shell.  This is
      "/bin/sh" by default, unless you have set the  SHELL  (or  COMSPEC,
      for  MS-DOS)  environment variable, it which case the default value
-     is copied from the environment.
+     is copied from the environment.  
 
 
    E5.29  ShiftWidthF
 
         The < and > commands shift text left or right  by  some  uniform
      number of  columns.    The  shiftwidth option defines that "uniform
-     number".  The default is 8.
+     number".  The default is 8.  
 
 
 
@@ -466,8 +466,8 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
 
    E5.30  ShowMatchF
 
-        With showmatch set, in input mode every time you hit one of )}],
-     Elvis will momentarily move the cursor to the matching ({[.
+        With showmatch set, in input mode every time you hit one of )}], 
+     Elvis will momentarily move the cursor to the matching ({[.  
 
 
    E5.31  ShowMoDeF
@@ -477,21 +477,21 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
      option is off, and you haven't a clue as to which mode  you're  in.
      If  you  turn the showmode option on, though, a little message will
      appear in the lower right-hand corner of your screen,  telling  you
-     which mode you're in.
+     which mode you're in.  
 
 
    E5.32  SideScrollF
 
-        For long lines, Elvis scrolls sideways.  (This is different from
+        For long lines, Elvis scrolls sideways.  (This is different from 
      the  real  vi,  which wraps a single long line onto several rows of
-     the screen.)
+     the screen.) 
 
-        To minimize the number of scrolls needed, Elvis moves the screen
-     sideways by several characters at a time.  The value of this option
-     says how many characters' widths to scroll at a time.
+        To minimize the number of scrolls needed, Elvis moves the screen 
+     sideways by several characters at a time.  The value of this option 
+     says how many characters' widths to scroll at a time.  
 
         Generally, the faster your screen can be redrawn, the lower  the
-     value you will want in this option.
+     value you will want in this option.  
 
 
    E5.33  SYncF
@@ -500,22 +500,22 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
      work can be recovered from the temporary file that  elvis  uses  to
      store changes.   However, sometimes the OS will not copy changes to
      the hard disk immediately, so recovery might not be possible.   The
-     [no]sync option lets you control this.
+     [no]sync option lets you control this.  
 
         In  nosync mode (which is the default, for UNIX), elvis lets the
-     operating system control when data is written to the disk.  This is
-     generally faster.
+     operating system control when data is written to the disk.  This is 
+     generally faster.  
 
         In sync mode (which is the default, for  MS-DOS),  elvis  forces
      all changes  out  to  disk  every  time you make a change.  This is
-     generally safer, but slower.  It can also be a rather rude thing to
-     do on a multi-user system.
+     generally safer, but slower.  It can also be a rather rude thing to 
+     do on a multi-user system.  
 
 
    E5.34  TabStopF
 
         Tab characters are normally  8  characters  wide,  but  you  can
-     change their widths by means of this option.
+     change their widths by means of this option.  
 
 
 
@@ -532,40 +532,40 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
 
    E5.35  TErmF
 
-        This "read only" option shows the name of the termcap entry that
-     Elvis is using for your terminal.
+        This "read only" option shows the name of the termcap entry that 
+     Elvis is using for your terminal.  
 
 
    E5.36  VBellF
 
-        If your termcap entry describes a visible alternative to ringing
-     your terminal's bell, then this option will say whether the visible
-     version gets used or not.  Normally it will be.
+        If your termcap entry describes a visible alternative to ringing 
+     your terminal's bell, then this option will say whether the visible 
+     version gets used or not.  Normally it will be.  
 
-        If your termcap does NOT include a visible bell capability, then
-     the vbell option will be off, and you can't turn it on.
+        If your termcap does NOT include a visible bell capability, then 
+     the vbell option will be off, and you can't turn it on.  
 
 
    E5.37  WArnF
 
-        If you have modified a file but not yet written it back to disk,
-     then Elvis will normally print a warning before executing a ":!cmd"
-     command.  However, in nowarn mode, this warning is not given.
+        If you have modified a file but not yet written it back to disk, 
+     then Elvis will normally print a warning before executing a ":!cmd" 
+     command.  However, in nowarn mode, this warning is not given.  
 
         Elvis  also  normally prints a message after a successful search
      that wrapped at EOF.  The [no]warn option  can  also  disable  this
-     warning.
+     warning.  
 
 
    E5.38  WrapMarginF
 
         Normally   (with  wrapmargin=0)  Elvis  will  let  you  type  in
-     extremely long lines, if you wish.
+     extremely long lines, if you wish.  
 
         However,  with  warpmargin  set  to  something  other   that   0
      (wrapmargin=10  is nice), Elvis will automatically cause long lines
      to be "wrapped" on a word break for lines longer than  wrapmargin's
-     setting.
+     setting.  
 
 
    E5.39  WrapScanF
@@ -573,11 +573,11 @@ wrapscan        ws      Bool    ws              at EOF, searches wrap to line 1
         Normally,  when  you search for something, Elvis will find it no
      matter where it is in  the  file.    Elvis  starts  at  the  cursor
      position, and  searches forward.  If Elvis hits EOF without finding
-     what you're looking for, then it wraps around to continue searching
-     from line 1.
+     what you're looking for, then it wraps around to continue searching 
+     from line 1.  
 
         If you turn off the wrapscan option (:se nows), then when  Elvis
-     hits EOF during a search, it will stop and say so.
+     hits EOF during a search, it will stop and say so.  
 
 
 

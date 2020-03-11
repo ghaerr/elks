@@ -31,7 +31,7 @@ cmdtype cmd;
 
     *newpos = ERR;
     switch (cmd) {			/* move around */
-
+    
     case GO_LEFT:
 	*newpos = max(lstart, curp-max(count,1));
 	break;
@@ -42,7 +42,7 @@ cmdtype cmd;
 
     case GO_UP:
     case GO_DOWN:
-	*newpos = nextline(cmd == GO_DOWN, curp, count);
+	*newpos = nextline(cmd==GO_DOWN, curp, count);
 	if (*newpos >= 0 && *newpos < bufmax)
 	    *newpos = findcol(*newpos,xp);
 	break;
@@ -51,7 +51,7 @@ cmdtype cmd;
     case TO_WD:
     case BACK_WD:
     case BTO_WD:
-	*newpos = moveword(curp,(cmd <= TO_WD),(cmd == TO_WD || cmd == BTO_WD));
+	*newpos = moveword(curp,(cmd <= TO_WD),(cmd==TO_WD || cmd==BTO_WD));
 	break;
 
     case NOTWHITE:
@@ -72,19 +72,19 @@ cmdtype cmd;
 	do
 	    curp = findfwd("^*[ \t$",curp+1,bufmax-1);
 	while (curp != ERR && --count > 0);
-	*newpos = (curp == ERR)?bufmax:curp;
+	*newpos = (curp==ERR)?bufmax:curp;
 	break;
 
     case PARA_BACK:
 	do
 	    curp = findback("^*[ \t$",curp-1,0);
 	while (curp != ERR && --count > 0);
-	*newpos = (curp == ERR)?0:curp;
+	*newpos = (curp==ERR)?0:curp;
 	break;
 
     case SENT_FWD:
     case SENT_BACK:
-	*newpos = sentence(curp, cmd == SENT_FWD);
+	*newpos = sentence(curp, cmd==SENT_FWD);
 	break;
 
     case MATCHEXPR:
@@ -100,12 +100,12 @@ cmdtype cmd;
 	    return ESCAPED;
 	if (cmd<=UPTO_CHAR) {
 	    *newpos = fchar(curp,*newpos);
-	    if (cmd == UPTO_CHAR && *newpos>=0)
+	    if (cmd==UPTO_CHAR && *newpos>=0)
 		*newpos = max(curp, *newpos-1);
 	}
 	else {
 	    *newpos = bchar(curp,*newpos);
-	    if (cmd == BACKTO_CHAR && *newpos>=0)
+	    if (cmd==BACKTO_CHAR && *newpos>=0)
 		*newpos = min(curp, *newpos+1);
 	}
 	break;
@@ -135,13 +135,13 @@ cmdtype cmd;
 
     case TO_MARK:
     case TO_MARK_LINE:
-	*newpos = getcontext((char)tolower(readchar()), cmd == TO_MARK_LINE);
+	*newpos = getcontext((char)tolower(readchar()), cmd==TO_MARK_LINE);
 	break;
 
     case CR_FWD:
     case CR_BACK:
-	curp = nextline(cmd == CR_FWD, curp, count);
-	if (cmd == CR_BACK && curp > 0)
+	curp = nextline(cmd==CR_FWD, curp, count);
+	if (cmd==CR_BACK && curp > 0)
 	    curp = bseekeol(curp);
 	*newpos = skipws(curp);
 	break;
@@ -160,7 +160,7 @@ cmdtype cmd;
 	    if (!nlsearch)
 		return BADMOVE;
 	    tsearch = nlsearch;
-	    printch(instring[0] = (cmd == FSEARCH)?nlsearch:((nlsearch == '?')?'/':'?') );
+	    printch(instring[0] = (cmd==FSEARCH)?nlsearch:((nlsearch=='?')?'/':'?') );
 	    prints(lastpatt);
 	    instring[1] = 0;
 	}
@@ -185,14 +185,14 @@ movearound(cmd)
 cmdtype cmd;
 {
     int cp;
-
+    
     switch (findCP(curr, &cp, cmd)) {
 	case LEGALMOVE:
 	    if (cp < bufmax) {
 		if (cmd >= PATT_FWD)		/* absolute move */
 		    contexts[0] = curr;	/* so save old position... */
 		curr = cp;			/* goto new position */
-		if (cmd == GO_UP || cmd == GO_DOWN) /* reset Xpos */
+		if (cmd==GO_UP || cmd==GO_DOWN) /* reset Xpos */
 		    deranged = TRUE;
 		else
 		    xp = setX(cp);		/* just reset XP */
@@ -232,13 +232,13 @@ cmdtype cmd;
     }
     mvcur(yp, xp);
 }
-
+    
 int PROC
 findcol(ip, col)
 int ip, col;
 {
     int tcol, endd;
-
+    
     ip = bseekeol(ip);			/* start search here */
     endd = fseekeol(ip);		/* end search here */
 
@@ -263,7 +263,7 @@ int p;
 {
     char srcchar, dstchar;
     int lev, step;
-
+    
     while ((lev = scan(6,'=',core[p],srcpatt)) >= 6 && core[p] != EOL)
 	p++;
     if (lev < 6) {
@@ -328,7 +328,7 @@ bool forwd, toword;
 {
     int step;
     register char *ccl;
-
+    
     step = setstep[forwd];	/* set direction to move.. */
     if (!toword)
 	cp += step;		/* advance one character */

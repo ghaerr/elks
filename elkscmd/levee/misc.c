@@ -25,7 +25,7 @@ getline(str)
 {
     int len;
     char flag;
-
+    
     flag = line(str, 0, COLS-curpos.x, &len);
     str[len] = 0;
     strput(CE);
@@ -106,7 +106,7 @@ setX(cp)
 int cp;
 {
     int top, xp;
-
+    
     top = bseekeol(cp);
     xp = 0;
     while (top < cp) {
@@ -127,7 +127,7 @@ setY(cp)
 int cp;
 {
     int yp, ix;
-
+    
     ix = ptop;
     yp = -1;
     cp = min(cp,bufmax-1);
@@ -165,13 +165,13 @@ int line;
     }
     return(cp);
 } /* to_index */
-
+    
 PROC
 swap(a,b)
  register int *a,*b;
 {
     int c;
-
+    
     c = *a;
     *a = *b;
     *b = c;
@@ -199,7 +199,7 @@ register unsigned char c;
 	return 2;
     if (c == '' || c < ' ')
 	return 1;
-#if MSDOS == 0
+#if MSDOS==0
     if (c & 0x80)
 	return 3;
 #endif
@@ -275,7 +275,7 @@ lookup(c)
 char c;
 {
     int ix = MAXMACROS;
-
+    
     while (--ix >= 0 && mbuffer[ix].token != c)
 	;
     return ix;
@@ -287,7 +287,7 @@ fixmarkers(base,offset)
 int base,offset;
 {
     char c;
-
+    
     for (c = 0;c<'z'-'`';c++)
 	if (contexts[c] > base)
 	    if (contexts[c]+offset < base || contexts[c]+offset >= bufmax)
@@ -330,7 +330,7 @@ wr_stat()
 static int  tabptr,
 	    tabstack[20],
 	    ixp;
-
+	
 PROC
 back_up(c)
 char c;
@@ -361,7 +361,7 @@ int start, endd;
     int col0,
 	ip;
     char c;
-
+    
     col0 = ixp = curpos.x;
     ip = start;
     tabptr = 0;
@@ -380,7 +380,7 @@ int start, endd;
 	    tabptr = 0;
 	    mvcur(-1,ixp=col0);
 	}
-	else if (c == erasechar) {
+	else if (c==erasechar) {
 	    if (ip>start)
 		back_up(s[--ip]);
 	    else {
@@ -388,9 +388,9 @@ int start, endd;
 		return(0);
 	    }
 	}
-	else if (c == '\n' || c == '\r' || c == ESC) {
+	else if (c=='\n' || c=='\r' || c==ESC) {
 	    *size = (ip-start);
-            return (c == ESC) ? ESC : EOL;
+            return (c==ESC) ? ESC : EOL;
 	}
 	else if ((!beautify) || c == TAB || c == 0x16		/* ^V */
 			     || (c >= ' ' && c <= '~')) {
@@ -446,7 +446,7 @@ PROC
 setend()
 {
     int bottom, count;
-
+    
     bottom = ptop;
     count = LINES-1;
     while (bottom < bufmax && count > 0) {
@@ -465,7 +465,7 @@ settop(lines)
 int lines;
 {
     int top, yp;
-
+    
     top = curr;
     yp = -1;
     do {

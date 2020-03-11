@@ -64,7 +64,7 @@ int fstat(fd, buff)
 
   ttmp.tm_year  = (int) ftmp.fd_date[0];
   ttmp.tm_mon   = (int) ftmp.fd_date[1] - 1;
-  ttmp.tm_mday  = (int) ftmp.fd_date[2];
+  ttmp.tm_mday  = (int) ftmp.fd_date[2];	
   ttmp.tm_hour  = (int) ftmp.fd_date[3];
   ttmp.tm_min   = (int) ftmp.fd_date[4];
   ttmp.tm_sec   = 0;
@@ -74,10 +74,10 @@ int fstat(fd, buff)
 
   ttmp.tm_year  = (int) ftmp.fd_dcr[0];
   ttmp.tm_mon   = (int) ftmp.fd_dcr[1] - 1;
-  ttmp.tm_mday  = (int) ftmp.fd_dcr[2];
+  ttmp.tm_mday  = (int) ftmp.fd_dcr[2];	
   ttmp.tm_hour  = ttmp.tm_min = ttmp.tm_sec = 0;
   ttmp.tm_isdst = -1;
-
+  
   buff->st_ctime = mktime(&ttmp);
 
   memcpy(&(buff->st_size), ftmp.fd_fsize, sizeof(long));  /* misalignment! */
@@ -94,7 +94,7 @@ int fstat(fd, buff)
 
 /*
  * s t a t
- */
+ */	
 int stat(filename, buff)
   char        *filename;
   struct stat *buff;
@@ -161,7 +161,7 @@ int (*func)();
 			sig_table[i] = exit;
 		_sig_install = 1;
 		intercept(sig_handler);
-	}
+	}	
 	sav = sig_table[sig];
 	switch ((int) func) {
 		case SIG_DFL : sig_table[sig] = exit;

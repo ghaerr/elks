@@ -8,11 +8,11 @@
 
 #ifndef P_tmpdir
 #define P_tmpdir "/tmp"
-#endif
+#endif 
 
 #ifndef L_tmpnam
 #define L_tmpnam 20
-#endif
+#endif 
 
 char *tmpnam(s)
 char *s;
@@ -21,12 +21,12 @@ char *s;
     static char c1 = 0;
     static char c2 = 0;
     static char c3 = 0;
-    static char uniq_ch[] =
+    static char uniq_ch[] = 
 	 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     struct stat stbuf;
 
     do {
-        sprintf(ret_val, "%s/%05d%c%c%c", P_tmpdir, getpid(),
+        sprintf(ret_val, "%s/%05d%c%c%c", P_tmpdir, getpid(), 
 	     uniq_ch[c1], uniq_ch[c2], uniq_ch[c3]);
         if (++c1 >= 62) {
   	    c1 = 0;

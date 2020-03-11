@@ -3,13 +3,13 @@
  * (C) 1997 Chad Page et. al
  *
  * Modified by Greg Haerr <greg@censoft.com> for screen editors
- *
+ * 
  * 03/27/2001 : Modified for raw mode support (HarKal)
  */
 
-/*
+/* 
  * This new tty sub-system builds around the character queue to provide a
- * VFS interface to the character drivers (what a mouthful! :)
+ * VFS interface to the character drivers (what a mouthful! :)  
  */
 
 #include <linuxmt/types.h>
@@ -23,7 +23,7 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
 #include <linuxmt/init.h>
-#include <linuxmt/major.h>
+#include <linuxmt/debug.h>
 
 /*
  * XXX plac: setting default to B9600 instead of B1200
@@ -54,17 +54,19 @@ extern struct tty_ops ttyp_ops;
 
 int tty_intcheck(register struct tty *ttyp, unsigned char key)
 {
-    register char *psig = 0;
+    sig_t sig = 0;
 
-    if ((ttyp->termios.c_lflag & ISIG) && (ttyp->pgrp)) {
+    if ((ttyp->termios.c_lflag & ISIG) && ttyp->pgrp) {
 	if (key == ttyp->termios.c_cc[VINTR])
-	    psig = (char *) SIGINT;
+	    sig = SIGINT;
 	if (key == ttyp->termios.c_cc[VSUSP])
-	    psig = (char *) SIGTSTP;
-	if (psig)
-	    kill_pg(ttyp->pgrp, (sig_t) psig, 1);
+	    sig = SIGTSTP;
+	if (sig) {
+	    debug_sig("TTY signal %d to pgrp %d pid %d\n", sig, ttyp->pgrp, current->pid);
+	    kill_pg(ttyp->pgrp, sig, 1);
+	}
     }
-    return (int)psig;
+    return sig;
 }
 
 /* Turns a dev_t variable into its tty, or NULL if it's not valid */
@@ -90,6 +92,7 @@ int tty_open(struct inode *inode, struct file *file)
     if (!(otty = determine_tty(inode->i_rdev)))
 	return -ENODEV;
 
+    debug_sig("TTY open pid %d\n", currentp->pid);
 #if 0
     memcpy(&otty->termios, &def_vals, sizeof(struct termios));
 #endif
@@ -98,6 +101,7 @@ int tty_open(struct inode *inode, struct file *file)
     if (!err) {
 	if (otty->pgrp == 0 && currentp->session == currentp->pid
 		&& currentp->tty == NULL) {
+	    debug_sig("TTY setting pgrp %d pid %d\n", currentp->pgrp, currentp->pid);
 	    otty->pgrp = currentp->pgrp;
 	    currentp->tty = otty;
 	}
@@ -121,8 +125,10 @@ void tty_release(struct inode *inode, struct file *file)
     if (!rtty)
 	return;
 
+    debug_sup("TTY close pid %d\n", current->pid);
     if (current->pid == rtty->pgrp) {
 	kill_pg(rtty->pgrp, SIGHUP, 1);
+	debug_sup("TTY release pgrp %d\n", current->pid);
 	rtty->pgrp = 0;
     }
     rtty->flags &= ~TTY_OPEN;
@@ -144,11 +150,11 @@ void tty_release(struct inode *inode, struct file *file)
  */
 int tty_outproc(register struct tty *tty)
 {
-    register char *t_oflag;	/* WARNING: highly arch dependent! */
+    int t_oflag;	/* WARNING: highly arch dependent, termios.c_oflag truncated to 16 bits*/
     int ch;
 
     ch = tty->outq.base[tty->outq.start];
-    if ((int)(t_oflag = (char *)tty->termios.c_oflag) & OPOST) {
+    if ((t_oflag = (int)tty->termios.c_oflag) & OPOST) {
 	switch(tty->ostate & ~0x0F) {
 	case 0x20:		/* Expand tabs to spaces */
 	    ch = ' ';
@@ -160,19 +166,19 @@ int tty_outproc(register struct tty *tty)
 	default:
 	    switch(ch) {
 	    case '\n':
-		if ((unsigned)t_oflag & ONLCR) {
+		if (t_oflag & ONLCR) {
 		    ch = '\r';				/* Expand NL -> CR NL */
 		    tty->ostate = 0x10;
 		}
 		break;
 #if 0
 	    case '\r':
-		if ((unsigned)t_oflag & OCRNL)
+		if (t_oflag & OCRNL)
 		    ch = '\n';				/* Map CR to NL */
 		break;
 #endif
 	    case '\t':
-		if (((unsigned)t_oflag & TABDLY) == TAB3) {
+		if ((t_oflag & TABDLY) == TAB3) {
 		    ch = ' ';				/* Expand tabs to spaces */
 		    tty->ostate = 0x20 + TAB_SPACES - 1;
 		}
@@ -208,28 +214,27 @@ void tty_echo(register struct tty *tty, unsigned char ch)
 size_t tty_write(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
-    register char *pi;
-    int s;
+    int i, s;
 
-    pi = 0;
-    while (((int)pi) < len) {
+    i = 0;
+    while (i < len) {
 	s = chq_wait_wr(&tty->outq, file->f_flags & O_NONBLOCK);
 	if (s < 0) {
-	    if ((int)pi == 0)
-		pi = (char *)s;
+	    if (i == 0)
+		i = s;
 	    break;
 	}
 	chq_addch(&tty->outq, get_user_char((void *)(data++)));
 	tty->ops->write(tty);
-	pi++;
+	i++;
     }
-    return (size_t)pi;
+    return i;
 }
 
 size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
-    register char *pi = 0;
+    int i = 0;
     int ch, k, icanon;
     int nonblock = (file->f_flags & O_NONBLOCK);
 
@@ -242,16 +247,16 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 	    }
 	    ch = chq_wait_rd(&tty->inq, nonblock);
 	    if (ch < 0) {
-		if ((int)pi == 0)
-		    pi = (char *)ch;
+		if (i == 0)
+		    i = ch;
 		break;
 	    }
 	    ch = chq_getch(&tty->inq);
 
 	    if (icanon) {
 		if (ch == tty->termios.c_cc[VERASE]) {
-		    if ((int)pi > 0) {
-			pi--;
+		    if (i > 0) {
+			i--;
 			k = ((get_user_char((void *)(--data))
 			    == '\t') ? TAB_SPACES : 1);
 			do {
@@ -268,12 +273,12 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
 	    }
 	    put_user_char(ch, (void *)(data++));
 	    tty_echo(tty, ch);
-	    if ((int)(++pi) >= len)
+	    if (++i >= len)
 		break;
 	} while ((icanon && (ch != '\n') && (ch != tty->termios.c_cc[VEOL]))
-		    || (!icanon && (pi < tty->termios.c_cc[VMIN])));
+		    || (!icanon && (i < tty->termios.c_cc[VMIN])));
     }
-    return (int)pi;
+    return i;
 }
 
 int tty_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
@@ -347,7 +352,7 @@ static struct file_operations tty_fops = {
 void tty_init(void)
 {
     register struct tty *ttyp;
-    register char *pi;
+    int i;
 
     ttyp = &ttys[MAX_TTYS];
     do {
@@ -358,14 +363,14 @@ void tty_init(void)
 
 #if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
 
-    for (pi = 0 ; ((int)pi) < NR_CONSOLES ; pi++) {
+    for (i = 0 ; i < NR_CONSOLES ; i++) {
 #ifdef CONFIG_CONSOLE_BIOS
 	ttyp->ops = &bioscon_ops;
 #else
 	ttyp->ops = &dircon_ops;
 #endif
 	chq_init(&ttyp->inq, ttyp->inq_buf, INQ_SIZE);
-	(ttyp++)->minor = (int)pi;
+	(ttyp++)->minor = i;
     }
 
 #endif
@@ -373,9 +378,9 @@ void tty_init(void)
 #ifdef CONFIG_CHAR_DEV_RS
 
     /* put serial entries after console entries */
-    for (pi = RS_MINOR_OFFSET; ((int)pi) < NR_SERIAL + RS_MINOR_OFFSET; pi++) {
+    for (i = RS_MINOR_OFFSET; i < NR_SERIAL + RS_MINOR_OFFSET; i++) {
 	ttyp->ops = &rs_ops;
-	(ttyp++)->minor = ((int)pi);		/* ttyS0 = RS_MINOR_OFFSET */
+	(ttyp++)->minor = i;		/* ttyS0 = RS_MINOR_OFFSET */
     }
 
 #endif
@@ -383,9 +388,9 @@ void tty_init(void)
 #ifdef CONFIG_PSEUDO_TTY
     /* start at minor = 8 fixed to match pty entries in MAKEDEV */
     /* put slave pseudo tty entries after serial entries */
-    for (pi = 8; ((int)pi) < NR_PTYS + 8; pi++) {
+    for (i = 8; (i) < NR_PTYS + 8; i++) {
 	ttyp->ops = &ttyp_ops;
-	(ttyp++)->minor = (int)pi;
+	(ttyp++)->minor = i;
     }
 #endif
 

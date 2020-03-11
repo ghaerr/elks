@@ -6,11 +6,11 @@
 char *basename(char *name)
 {
 	char *base;
-
+	
 	base = strrchr(name, '/');
 	return base ? base + 1 : name;
 }
-
+                                
 
 int main(int argc, char **argv)
 {
@@ -19,14 +19,14 @@ int main(int argc, char **argv)
 
 	if (argc < 2) goto usage;
 
-/*	if (((argv[1][0] == '-') && (argv[1][1] == 'r')) || ((argv[2][0] == '-') && (argv[2][1] == 'r')))
+/*	if (((argv[1][0] == '-') && (argv[1][1] == 'r')) || ((argv[2][0] == '-') && (argv[2][1] == 'r'))) 
 		recurse = 1;
-
+	
         if (((argv[1][0] == '-') && (argv[1][1] == 'i')) || ((argv[2][0] == '-') && (argv[2][1] == 'i')))
-		interact = 1;
- */
+		interact = 1;        
+ */	
 	for (i = /*recurse+interact+*/1; i < argc; i++) {
-		if (argv[i][0] != '-') {
+		if (argv[i][0] != '-') {	
 
 #ifdef CONFIG_FS_FAT
 			if (access(argv[i], 0) != -1) {

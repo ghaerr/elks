@@ -20,51 +20,51 @@
 # Name		No	Args	Flag, comment
 #
 exit		+1	1	* c exit does stdio, _exit in crt0
-fork		+2	0
-read		+3	3
-write		+4	3
+fork		+2	0	 
+read		+3	3	 
+write		+4	3	 
 open		+5	3	!
-close		+6	1
+close		+6	1	 
 wait4		+7	4
 creat		8	0	- Not needed alias for open
-link		+9	2
-unlink		+10	1
+link		+9	2	 
+unlink		+10	1	 
 execve		+11	3	* execve minix style
-chdir		+12	1
+chdir		+12	1	 
 time		13	1	- Use settimeofday
-mknod		+14	3
-chmod		+15	2
-chown		+16	3
+mknod		+14	3	 
+chmod		+15	2	 
+chown		+16	3	 
 brk		+17	1	* This is only to tell the system
-stat		+18	2
+stat		+18	2	 
 lseek		+19	3	* nb 2nd arg is an io ptr to long not a long.
 getpid		+20	1	* this gets both pid & ppid
-mount		+21	5
-umount		+22	1
-setuid		+23	1
+mount		+21	5	 
+umount		+22	1	 
+setuid		+23	1	 
 getuid		+24	1	* this gets both uid and euid
 stime		25	2	- this must not exist - even as a libc.
 ptrace		26	4	@ adb/sdb/dbx need this.
 alarm		27	2
-fstat		+28	2
-pause		29	0
-utime		+30	2
+fstat		+28	2	 
+pause		29	0	 
+utime		+30	2	 
 chroot		+31	1
 vfork		+32	0
-access		+33	2
+access		+33	2	 
 nice		34	1
 sleep		35	1
-sync		+36	0
-kill		+37	2
-rename		+38	2
-mkdir		+39	2
-rmdir		+40	1
+sync		+36	0	 
+kill		+37	2	 
+rename		+38	2	 
+mkdir		+39	2	 
+rmdir		+40	1	 
 dup		+41	1	. There is a fcntl lib function too.
 pipe		+42	1	= CONFIG_PIPE
 times		43	2	* 2nd arg is pointer for long ret val.
 profil		44	4	@
 dup2		+45	2
-setgid		+46	1
+setgid		+46	1	 
 getgid		47	1	* this gets both gid and egid
 signal		+48	2	* have put the despatch table in user space.
 getinfo		49	1	@ possible? gets pid,ppid,uid,euid etc
@@ -78,7 +78,7 @@ mpx		56	2	- Replaced by fifos and select.
 lstat		+57	2
 symlink		+58	2
 readlink	+59	3
-umask		+60	1
+umask		+60	1	 
 settimeofday	+61	2
 gettimeofday	+62	2
 select		+63	5	. 5 paramaters is possible
