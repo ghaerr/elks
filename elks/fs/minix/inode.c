@@ -218,6 +218,7 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 		ms->s_state &= ~MINIX_VALID_FS;
 		mark_buffer_dirty(bh, 1);
 		s->s_dirt = 1;
+		fsync_dev(s->s_dev);	/* force unchecked flag immediately after mount*/
     }
 
     minix_mount_warning(s, err0);
