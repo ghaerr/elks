@@ -5,9 +5,9 @@ endif
 
 include $(TOPDIR)/Make.defs
 
-.PHONY: all clean kconfig defconfig reconfig config menuconfig
+.PHONY: all clean kconfig defconfig config menuconfig
 
-all: .config reconfig
+all: .config include/autoconf.h
 	$(MAKE) -C libc all
 	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' install
 	$(MAKE) -C elks all
@@ -41,9 +41,8 @@ defconfig:
 	$(RM) .config
 	@yes '' | ${MAKE} config
 
-# Update include/autoconf.h from .config.
-reconfig: .config
-	@yes '' | ${MAKE} config
+include/autoconf.h: .config
+	@yes '' | config/Configure -D config.in
 
 config: elks/arch/i86/drivers/char/KeyMaps/config.in kconfig
 	config/Configure config.in

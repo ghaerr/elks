@@ -146,7 +146,7 @@ function help () {
 #	readln prompt default oldval
 #
 function readln () {
-    if [ "$DEFAULT" = "-d" -a -n "$3" ]; then
+    if [ -n "$DEFAULT" -a -n "$3" ]; then
 	echo "$1"
 	ans=$2
     else
@@ -665,6 +665,10 @@ if [ "$1" = "-d" ] ; then
     DEFAULT="-d"
     shift
 fi
+if [ "$1" = "-D" ] ; then	# only update autoconf.h  -- tkchia 20200310
+    DEFAULT="-D"
+    shift
+fi
 CFG_IN=./config.in
 if [ "$1" != "" ] ; then
     CFG_IN=$1
@@ -692,10 +696,14 @@ else
 fi
 . $CFG_IN
 rm -f .config.old
-if [ -f .config ]; then
-    mv .config .config.old
+if [ "$DEFAULT" = -D ]; then
+    rm .tmpconfig
+else
+    if [ -f .config ]; then
+	mv .config .config.old
+    fi
+    mv .tmpconfig .config
 fi
-mv .tmpconfig .config
 mv .tmpconfig.h include/autoconf.h
 echo
 exit 0
