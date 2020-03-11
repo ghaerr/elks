@@ -31,6 +31,9 @@ typedef __u32			ino_t;
 typedef __u16			ino_t;
 #endif
 #endif /* __KERNEL__*/
+typedef __u16			pid_t;
+typedef __u16			uid_t;
+typedef __u16			gid_t;
 
 typedef __u16			mode_t;
 typedef __u16			nlink_t;
