@@ -122,7 +122,7 @@ clean:
 images: images-minix images-fat
 
 
-images-minix: fd360-minix fd720-minix fd1440-minix
+images-minix: fd360-minix fd720-minix fd1440-minix hd32-minix
 
 fd360-minix:
 	$(MAKE) -f Make.package NAME=fd360 FS=minix SIZE=360 TAGS=":boot|:small"
@@ -132,6 +132,9 @@ fd720-minix:
 
 fd1440-minix:
 	$(MAKE) -f Make.package NAME=fd1440 FS=minix SIZE=1440 TAGS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+
+hd32-minix:
+	$(MAKE) -f Make.package NAME=hd32 FS=minix SIZE=31752 TAGS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
 
 
 images-fat: fd360-fat fd720-fat fd1440-fat fd2880-fat
@@ -148,3 +151,8 @@ fd1440-fat:
 # FAT16 image
 fd2880-fat:
 	$(MAKE) -f Make.package NAME=fd2880 FS=fat SIZE=2880 TAGS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+
+# FAT32 image (fails on mformat currently)
+hd32-fat:
+	$(MAKE) -f Make.package NAME=hd32 FS=fat SIZE=31752 TAGS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
+
