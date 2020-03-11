@@ -13,9 +13,11 @@ include $(BASEDIR)/Make.rules
 OUTS = ramdisk mkfs fsck partype
 OUTS_BE = fdisk
 
-PROGS = $(OUTS)
-ifeq "$(CONFIG_APP_DISK_UTILS)" "y"
+ifdef CONFIG_APP_DISK_UTILS
+	PROGS = $(OUTS)
+ ifeq "$(CONFIG_APP_DISK_UTILS)" "y"
 	PROGS += $(OUTS_BE)
+ endif
 endif
 
 SPROGS=mkfs
@@ -26,7 +28,7 @@ install_sibo: all
 	$(INSTALL) $(SPROGS) $(DESTDIR)/bin
 
 install: all
-	$(INSTALL) $(PROGS) $(DESTDIR)/bin
+	if test "$(PROGS)" != ''; then $(INSTALL) $(PROGS) $(DESTDIR)/bin; fi
 
 fsck: fsck.o
 	$(LD) $(LDFLAGS) -o fsck fsck.o $(LDLIBS)

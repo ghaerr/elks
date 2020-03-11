@@ -13,9 +13,11 @@ include $(BASEDIR)/Make.rules
 OUTS = grep ln ls mkdir mkfifo mknod more mv rm rmdir sync touch
 OUTS_BE += cat chgrp chmod chown cmp cp dd
 
-PRGS = $(OUTS)
-ifeq "$(CONFIG_APP_FILE_UTILS)" "y"
+ifdef CONFIG_APP_FILE_UTILS
+	PRGS = $(OUTS)
+ ifeq "$(CONFIG_APP_FILE_UTILS)" "y"
 	PRGS += $(OUTS_BE)
+ endif
 endif
 
 all: $(PRGS)
@@ -81,7 +83,7 @@ touch: touch.o
 	$(LD) $(LDFLAGS) -o touch touch.o $(LDLIBS)
 
 install: $(PRGS)
-	$(INSTALL) $(PRGS) $(DESTDIR)/bin
+	if test "$(PRGS)" != ''; then $(INSTALL) $(PRGS) $(DESTDIR)/bin; fi
 
 clean:
 	rm -f $(OUTS) $(OUTS_BE) *.o

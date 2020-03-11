@@ -18,9 +18,11 @@ OUTS_BE = ed
 
 #TODO: fix compress uncompress zcat lpfilter disabled
 
-PRGS = $(OUTS)
-ifeq "$(CONFIG_APP_MISC_UTILS)" "y"
+ifdef CONFIG_APP_MISC_UTILS
+	PRGS = $(OUTS)
+ ifeq "$(CONFIG_APP_MISC_UTILS)" "y"
 	PRGS += $(OUTS_BE)
+ endif
 endif
 
 PRGS_HOST=compress.host
@@ -49,7 +51,7 @@ zcat: compress
 	ln -sf compress zcat
 
 install: $(PRGS)
-	$(INSTALL) $(PRGS) $(DESTDIR)/bin
+	if test "$(PROGS)" != ''; then $(INSTALL) $(PRGS) $(DESTDIR)/bin; fi
 
 clean:
 	rm -f $(OUTS) $(OUTS_BE) $(PRGS_HOST) *~ *.o

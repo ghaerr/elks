@@ -15,9 +15,11 @@ include $(BASEDIR)/Make.rules
 OUTS = file head sed sort tail tee
 OUTS_BE = cal diff find
 
-PRGS = $(OUTS)
-ifeq "$(CONFIG_APP_MINIX1)" "y"
+ifdef CONFIG_APP_MINIX3
+	PRGS = $(OUTS)
+ ifeq "$(CONFIG_APP_MINIX3)" "y"
 	PRGS += $(OUTS_BE)
+ endif
 endif
 
 
@@ -62,7 +64,7 @@ all: $(PRGS)
 
 
 install: $(PRGS)
-	$(INSTALL) $(PRGS) $(DESTDIR)/bin
+	if test "$(PRGS)" != ''; then $(INSTALL) $(PRGS) $(DESTDIR)/bin; fi
 
 clean:
 	rm -f core *.o $(OUTS) $(OUTS_BE)

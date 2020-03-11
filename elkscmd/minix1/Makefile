@@ -15,9 +15,11 @@ LOCALFLAGS=-D_POSIX_SOURCE
 OUTS =	banner decomp16 fgrep grep proto sum uniq wc
 OUTS_BE = cksum cut du
 
-PRGS = $(OUTS)
-ifeq "$(CONFIG_APP_MINIX1)" "y"
+ifdef CONFIG_APP_MINIX1
+	PRGS = $(OUTS)
+ ifeq "$(CONFIG_APP_MINIX1)" "y"
 	PRGS += $(OUTS_BE)
+ endif
 endif
 
 NETPRGS = decomp16 du grep wc
@@ -58,7 +60,7 @@ wc: wc.o
 	$(LD) $(LDFLAGS) -o wc wc.o $(LDLIBS)
 
 install: $(PRGS)
-	$(INSTALL) $(PRGS) $(DESTDIR)/bin
+	if test "$(PRGS)" != ''; then $(INSTALL) $(PRGS) $(DESTDIR)/bin; fi
 
 clean:
 	rm -f $(OUTS) $(OUTS_BE) *.o
