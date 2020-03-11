@@ -18,7 +18,7 @@ DEPEND  	=
 
 DISTFILES	= empty system.afl system.rsz tux.pic
 
-NOINDENT	= crt1.c
+NOINDENT	=
 
 #########################################################################
 # Include the standard rules.
