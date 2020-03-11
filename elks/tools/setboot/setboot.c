@@ -3,7 +3,7 @@
  *
  * 7 Feb 2020 Greg Haerr <greg@censoft.com>
  *
- * Usage: setboot <image> [-F] [-B<sectors>,<heads>] [<input_boot_sector>]
+ * Usage: setboot <image> [-F] [-B<sectors>,<heads>[,<tracks>]] [<input_boot_sector>]
  *
  *	setboot writes image after optionally reading an input boot sector and
  *		optionally modifying boot sector disk parameters passed as parameters.
@@ -27,6 +27,7 @@
 #define SECT_SIZE 512
 
 /* See bootblocks/minix.map for the offsets */
+#define ELKS_BPB_NumTracks	0x1F7		/* offset of number of tracks (word)*/
 #define ELKS_BPB_SecPerTrk	0x1F9		/* offset of sectors per track (byte)*/
 #define ELKS_BPB_NumHeads	0x1FA		/* offset of number of heads (byte)*/
 
@@ -34,13 +35,17 @@
 #define FATBPB_START	11				/* start at bytes per sector*/
 #define FATBPB_END		61				/* through end of file system type*/
 
-static int SecPerTrk, NumHeads;
+static unsigned int SecPerTrk, NumHeads, NumTracks;
 
 /* set sector and head parameters in buffer*/
 static void setSHparms(unsigned char *buf)
 {
 	buf[ELKS_BPB_SecPerTrk] = (unsigned char)SecPerTrk;
 	buf[ELKS_BPB_NumHeads] = (unsigned char)NumHeads;
+	if (NumTracks) {
+		buf[ELKS_BPB_NumTracks] = (unsigned char)NumTracks;
+		buf[ELKS_BPB_NumTracks+1] = (unsigned char)(NumTracks >> 8);
+	}
 }
 
 /* Print an error message and die*/
@@ -68,6 +73,17 @@ static void die(const char *s,...)
 	exit(1);
 }
 
+static int numcommas(char *line)
+{
+	int count = 0;
+	char *p;
+
+	for (p=line; *p; )
+		if (*p++ == ',')
+			count++;
+	return count;
+}
+
 int main(int argc,char **argv)
 {
 	FILE *ifp = NULL, *ofp;
@@ -80,16 +96,23 @@ int main(int argc,char **argv)
 	unsigned char inblk[SECT_SIZE];
 
 	if (argc != 3 && argc != 4 && argc != 5)
-		fatalmsg("Usage: %s <image> [-F] [-B<sectors>,<heads>] [<input_boot_image>]\n", argv[0]);
+		fatalmsg("Usage: %s <image> [-F] [-B<sectors>,<heads>[,<tracks>]] [<input_boot_image>]\n", argv[0]);
 
 	outfile = *++argv; argc--;
 
 	while (argv[1] && argv[1][0] == '-') {
 		if (argv[1][1] == 'B') {
 			opt_updatebpb = 1;			/* BPB update specified*/
-			if (sscanf(&argv[1][2], "%d,%d", &SecPerTrk, &NumHeads) != 2)
-				fatalmsg("Invalid -B<sectors>,<heads> option\n");
-			printf("Updating BPB to %d sectors, %d heads\n", SecPerTrk, NumHeads);
+			if (numcommas(&argv[1][2]) == 2) {		/* tracks specified*/
+					if (sscanf(&argv[1][2], "%d,%d,%d", &SecPerTrk, &NumHeads, &NumTracks) != 3)
+						fatalmsg("Invalid -B<sectors>,<heads>,<tracks> option\n");
+					printf("Updating BPB to %d sectors, %d heads, %d tracks\n",
+						SecPerTrk, NumHeads, NumTracks);
+			} else {
+					if (sscanf(&argv[1][2], "%d,%d", &SecPerTrk, &NumHeads) != 2)
+						fatalmsg("Invalid -B<sectors>,<heads> option\n");
+					printf("Updating BPB to %d sectors, %d heads\n", SecPerTrk, NumHeads);
+			}
 			argv++;
 			argc--;
 		}
