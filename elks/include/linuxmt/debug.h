@@ -1,12 +1,12 @@
+#ifndef LX86_LINUXMT_DEBUG_H
+#define LX86_LINUXMT_DEBUG_H
+
 /* linuxmt/include/linuxmt/debug.h for ELKS v. >=0.0.47
  * (C) 1997 Chad Page
  * 
  * This file contains the #defines to turn on and off various printk()-related
  * functions...
  */
-
-#ifndef LX86_LINUXMT_DEBUG_H
-#define LX86_LINUXMT_DEBUG_H
 
 /* Found that strings were still included if debugging disabled so
  * re-organised so that each has a different macro depending on the number
@@ -25,13 +25,11 @@
 #endif
 
 /*
- * New kernel debug mechanism, set here or in autoconf.h, works across multiple files.
+ * Kernel debug options, set =1 to turn on. Works across multiple files.
  */
 #define DEBUG_BLK	0		/* block i/o*/
-#define DEBUG_FILE	0		/* sys open and file i/o*/
-#define DEBUG_FS	0		/* VFS and general filesystem*/
 #define DEBUG_FAT	0		/* FAT filesystem*/
-#define DEBUG_MINIX	0		/* Minix filesystem*/
+#define DEBUG_FILE	0		/* sys open and file i/o*/
 #define DEBUG_SIG	0		/* signals*/
 #define DEBUG_SUP	0		/* superblock, mount, umount*/
 
@@ -39,6 +37,12 @@
 #define debug_blk	printk
 #else
 #define debug_blk(...)
+#endif
+
+#if DEBUG_FAT
+#define debug_fat	printk
+#else
+#define debug_fat(...)
 #endif
 
 #if DEBUG_FILE

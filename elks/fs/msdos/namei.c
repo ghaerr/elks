@@ -14,6 +14,7 @@
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/debug.h>
 
 unsigned char get_fs_byte(const void *dv)
 {
@@ -71,8 +72,8 @@ static int msdos_find(struct inode *dir,const char *name,int len,
 
 	if ((res = msdos_format_name(name,len, msdos_name)) < 0) return res;
 	res = msdos_scan(dir,msdos_name,bh,de,ino);
-msdos_name[MSDOS_NAME] = 0;
-fsdebug("find '%11s', ino=%ld\n", msdos_name, (unsigned long)*ino);
+	msdos_name[MSDOS_NAME] = 0;
+	debug_fat("find '%11s', ino=%ld\n", msdos_name, (unsigned long)*ino);
 	return res;
 }
 
@@ -163,7 +164,7 @@ static int msdos_create_entry(register struct inode *dir,char *name,int is_dir,
 	int res;
 	ino_t ino;
 
-fsdebug("create_entry\n");
+	debug_fat("create_entry\n");
 	/* find empty directory entry*/
 	if ((res = msdos_scan(dir,NULL,&bh,&de,&ino)) < 0) {
 		/* if rootdir return no space*/
@@ -178,7 +179,7 @@ fsdebug("create_entry\n");
 	de->start = 0;
 	date_unix2dos(CURRENT_TIME,&de->time,&de->date);
 	de->size = 0;
-fsdebug("create_entry block write %d\n", bh->b_blocknr);
+	debug_fat("create_entry block write %d\n", bh->b_blocknr);
 	bh->b_dirty = 1;
 	if ((*result = iget(dir->i_sb,ino)) != 0) msdos_read_inode(*result);
 	unmap_brelse(bh);
@@ -311,7 +312,7 @@ int msdos_rmdir(register struct inode *dir,const char *name,int len)
 	dir->i_mtime = CURRENT_TIME;
 	inode->i_dirt = dir->i_dirt = 1;
 	de->name[0] = DELETED_FLAG;
-fsdebug("rmdir block write %d\n", bh->b_blocknr);
+	debug_fat("rmdir block write %d\n", bh->b_blocknr);
 	bh->b_dirty = 1;
 	res = 0;
 rmdir_done:
@@ -351,12 +352,13 @@ int msdos_unlink(register struct inode *dir,const char *name,int len)
 	inode->i_dirt = 1;
 	de->name[0] = DELETED_FLAG;
 	dir->i_dirt = 1;
-fsdebug("unlink block write %d\n", bh->b_blocknr);
+	debug_fat("unlink block write %d\n", bh->b_blocknr);
 	bh->b_dirty = 1;
 unlink_done:
 	unmap_brelse(bh);
-if (inode) fsdebug("unlink iput inode %u dirt %d count %d\n", inode->i_ino, inode->i_dirt, inode->i_count);
-if (dir) fsdebug("unlink iput dir %u dirt %d count %d\n", dir->i_ino, dir->i_dirt, dir->i_count);
+	if (inode) debug_fat("unlink iput inode %u dirt %d count %d\n",
+		inode->i_ino, inode->i_dirt, inode->i_count);
+	if (dir) debug_fat("unlink iput dir %u dirt %d count %d\n", dir->i_ino, dir->i_dirt, dir->i_count);
 	iput(inode);
 	iput(inode);	/* 2nd call required from iget() above*/
 	iput(dir);

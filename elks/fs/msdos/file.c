@@ -16,6 +16,7 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/debug.h>
 
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
@@ -69,7 +70,7 @@ static int msdos_file_read(register struct inode *inode,register struct file *fi
 	struct buffer_head *bh;
 	void *data;
 
-//fsdebug("file_read cnt %u\n", count);
+	//debug_fat("file_read cnt %u\n", count);
 	if (!inode) {
 		printk("FAT: read NULL inode\n");
 		return -EINVAL;
@@ -105,7 +106,7 @@ static int msdos_file_write(register struct inode *inode,register struct file *f
 	struct buffer_head *bh;
 	void *data;
 
-fsdebug("file_write\n");
+	debug_fat("file_write\n");
 	if (!inode) {
 		printk("FAT: write NULL inode\n");
 		return -EINVAL;
@@ -139,7 +140,7 @@ fsdebug("file_write\n");
 			inode->i_size = filp->f_pos;
 			inode->i_dirt = 1;
 		}
-fsdebug("file block write %d\n", bh->b_blocknr);
+		debug_fat("file block write %d\n", bh->b_blocknr);
 		bh->b_dirty = 1;
 		unmap_brelse(bh);
 	}
@@ -154,7 +155,7 @@ void msdos_truncate(register struct inode *inode)
 {
 	int cluster;
 
-fsdebug("truncate\n");
+	debug_fat("truncate\n");
 	cluster = SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 	(void)fat_free(inode,(inode->i_size + (cluster-1)) / cluster);
 	inode->u.msdos_i.i_attrs |= ATTR_ARCH;

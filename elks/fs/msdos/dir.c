@@ -16,6 +16,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/debug.h>
 
 static int msdos_dir_read(struct inode *dir, struct file *filp, char *buf, int count)
 {
@@ -196,7 +197,7 @@ int msdos_get_entry_long(
 				else if (!strcmp(de->name,MSDOS_DOTDOT))
 					*ino = msdos_parent_ino(dir,0);
 
-fsdebug("dir: '%s' attr %x\n", de->name, de->attr);
+				debug_fat("dir: '%s' attr %x\n", de->name, de->attr);
 				if (is_long) {
 					*namelen = long_len;
 					*dirpos = oldpos;
