@@ -49,7 +49,7 @@ zcat: compress
 	ln -sf compress zcat
 
 install: $(PRGS)
-	$(INSTALL) $(PRGS) $(DESTDIR)/usr/bin
+	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
 	rm -f $(OUTS) $(OUTS_BE) $(PRGS_HOST) *~ *.o

@@ -23,10 +23,10 @@ SPROGS=mkfs
 all: $(PROGS)
 
 install_sibo: all
-	$(INSTALL) $(SPROGS) $(DESTDIR)/sbin
+	$(INSTALL) $(SPROGS) $(DESTDIR)/bin
 
 install: all
-	$(INSTALL) $(PROGS) $(DESTDIR)/sbin
+	$(INSTALL) $(PROGS) $(DESTDIR)/bin
 
 fsck: fsck.o
 	$(LD) $(LDFLAGS) -o fsck fsck.o $(LDLIBS)

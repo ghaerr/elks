@@ -15,7 +15,7 @@
 #include <termcap.h>
 
 char PRINTER[]	= "/dev/lp";
-char SPOOL[]	= "/usr/spool/lpd";
+char SPOOL[]	= "/var/spool";
 char LOG[]	= "/dev/log";
 
 void report(char *mess) {

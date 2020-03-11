@@ -60,11 +60,11 @@ CONFIG_APP_FILE_UTILS	file_utils/		File utilities from Alistair Riddoch.  (B opt
 										l, ln, ls, mkdir, mkfifo, mknod, more, mv, rm, rmdir, sync, touch
 
 CONFIG_APP_DISK_UTILS	disk_utils/		Disk utilities from early 1990s.  (B option when busyelks selected)
-										Installs in /sbin: fdisk, fsck, mkfs, partype, ramdisk
+										Installs in /bin: fdisk, fsck, mkfs, partype, ramdisk
 
 CONFIG_APP_MISC_UTILS	misc_utils/		Miscellaneous utilities from various sources, including sash.
 										(B option when busyelks selected)
-										Installs in /usr/bin: ed, miniterm, tar
+										Installs in /bin: ed, miniterm, tar
 										Not installed: compress, uncompress, zcat
 
 CONFIG_APP_MINIX1		minix1/			MINIX utilities, part 1.  (B option when busyelks selected)	
@@ -73,7 +73,7 @@ CONFIG_APP_MINIX1		minix1/			MINIX utilities, part 1.  (B option when busyelks s
 
 CONFIG_APP_MINIX2		minix2/			MINIX utilities, part 2.
 										Installs in /bin: env, lp, pwdauth, synctree, tget
-										Not built: eject, install, lpd, man, mt
+										Not built: eject, install, lpd, man(also in sys_utils), mt
 
 
 CONFIG_APP_MINIX3		minix3/			MINIX utilities, part 3.  (B option when busyelks selected)
@@ -91,7 +91,7 @@ CONFIG_APP_BUSYELKS		busyelks/		Not selected by default. When selected, B option
 CONFIG_APP_LEVEE		levee/			1st vi editor, installs as /bin/vi
 
 CONFIG_APP_MTOOLS		mtools/			Early MSDOS mtools v1.6.2 from 1989, with man pages.
-										Installs into /usr/bin: mcopy, mdel, mdir, mkdfs, mmd, mrd, mread,
+										Installs into /bin: mcopy, mdel, mdir, mkdfs, mmd, mrd, mread,
 											mren, mtype, mwrite
 CONFIG_APP_NANOX		nano-X/			Nano-X Graphical Window System v0.86 from 1999.
 										Too many programs to fit on 1440k floppy
@@ -109,7 +109,7 @@ CONFIG_APP_PREMS		prems/			Compression library and compress/gzip lookalike.
 CONFIG_APP_BYACC		byacc/			Berkely Yacc. Not selectable so never compiles.
 
 CONFIG_APP_ELVIS		elvis/			2nd vi editor, Makefile broken, not built.
-											Installs as /usr/bin/[elvis,vi,ex,view,input]
+											Installs as /bin/[elvis,vi,ex,view,input]
 CONFIG_APP_XVI			xvi/			3rd vi editor, won't compile, installs as /bin/xvi
 
 CONFIG_APP_SCREEN		screen/			Text multi-screen support. Doesn't compile or install.
