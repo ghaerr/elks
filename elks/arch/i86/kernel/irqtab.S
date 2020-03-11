@@ -13,10 +13,10 @@
  */
 
 	.align 1
+
+// FIXME: data in code segment - move to INITSEG
 ds_kernel:
-#if defined(REL_SYS)
-	.word	REL_SYSSEG
-#elif defined(CONFIG_ROMCODE)
+#if defined(CONFIG_ROMCODE)
 	.word	CONFIG_ROM_KERNEL_DATA
 #else
 	.word	0
@@ -54,8 +54,7 @@ ds_kernel:
 irqtab_init:
 	cli
 
-#if !defined(REL_SYS) && !defined(CONFIG_ROMCODE)
-//	seg	cs
+#if !defined(CONFIG_ROMCODE)
 	mov	%ss,%cs:ds_kernel
 #endif
 

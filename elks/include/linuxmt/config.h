@@ -62,8 +62,19 @@
 
 #if !defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SIBO)
 #define REL_SYS
-#define REL_INITSEG	0x60
-#define REL_SYSSEG	0x80
+#define REL_INITSEG	0x60  /* future CONFIG_MEM_LOW */
+#define REL_SYSSEG	0xC0  /* after DMASEG */
+#endif
+
+// DMASEG is a bouncing buffer of 1K (= BLOCKSIZE)
+// below the first 64K boundary (= 0x1000:0)
+// for use with the old 8237 DMA controller
+
+#if !defined(CONFIG_ARCH_SIBO)
+#define DMASEG 0x80    /* after REL_INITSEG */
+#define DMASEGSZ 1024  /* BLOCK_SIZE */
+#else
+#define DMASEG 0x800
 #endif
 
 #if defined(REL_SYS)
