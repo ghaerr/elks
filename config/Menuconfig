@@ -716,7 +716,8 @@ function parser(ifile,menu) {
 	else {
 	    print >>menu
 	}
-    }
+	}
+	close(ifile) close(menu)
 }'
 }
 
