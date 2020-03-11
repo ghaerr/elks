@@ -13,6 +13,8 @@
 
 // These settings are for testing under QEMU
 
+typedef unsigned char byte_t;
+
 static byte_t mac_zero  [6] = {0, 0, 0, 0, 0, 0};
 static byte_t mac_addr  [6] = {0x52, 0x55, 10, 0, 2, 15};
 static byte_t mac_broad [6] = {255, 255, 255, 255, 255, 255};

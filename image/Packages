@@ -44,7 +44,7 @@
 # Note: For FAT disks, /dev must be first or second root directory to work
 # -------------	----------------------------------------------------------
 /dev			:boot
-/bin			:boot
+/bin			:boot :base :net :shutil :fileutil :net
 /bin/banner								:app
 /bin/basename					:shutil
 /bin/bc									:app
@@ -155,28 +155,27 @@
 /root			:boot
 /root/.profile	:boot
 #/root/thisisaverylongfilenameandthatisallthereistoit	:boot
-/sbin					:base :fileutil
-/sbin/fdisk							:fileutil
-/sbin/fsck				:base
-/sbin/mkfs							:fileutil
-/sbin/partype						:fileutil
-/sbin/ramdisk						:fileutil
+# old /sbin
+/bin/fdisk							:fileutil
+/bin/fsck				:base
+/bin/mkfs							:fileutil
+/bin/partype						:fileutil
+/bin/ramdisk						:fileutil
 /tmp			:boot
-/usr							:shutil :fileutil :net
-/usr/bin						:shutil :fileutil :net
-/usr/bin/ed						:shutil
-/usr/bin/mcopy						:fileutil
-/usr/bin/mdel						:fileutil
-/usr/bin/mdir						:fileutil
-/usr/bin/miniterm			:net
-/usr/bin/mkdfs						:fileutil
-/usr/bin/mmd						:fileutil
-/usr/bin/mrd						:fileutil
-/usr/bin/mread						:fileutil
-/usr/bin/mren						:fileutil
-/usr/bin/mtype						:fileutil
-/usr/bin/mwrite						:fileutil
-/usr/bin/tar						:fileutil
+# old /usr/bin
+/bin/ed							:shutil
+/bin/mcopy							:fileutil
+/bin/mdel							:fileutil
+/bin/mdir							:fileutil
+/bin/miniterm				:net
+/bin/mkdfs							:fileutil
+/bin/mmd							:fileutil
+/bin/mrd							:fileutil
+/bin/mread							:fileutil
+/bin/mren							:fileutil
+/bin/mtype							:fileutil
+/bin/mwrite							:fileutil
+/bin/tar							:fileutil
 /var			:boot
 /var/run		:boot
 /var/run/utmp	:boot

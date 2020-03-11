@@ -18,7 +18,7 @@ include $(BASEDIR)/Make.rules
 
 COMPRESS=../misc_utils/compress.host
 
-PREFIX	= /usr
+PREFIX	=
 BINDIR	= $(PREFIX)/bin
 MANDIR  = $(PREFIX)/man/man1
 PROGS	= mdir mread mwrite mdel mtype mmd mrd mren mcopy mkdfs

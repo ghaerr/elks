@@ -16,7 +16,7 @@ include $(BASEDIR)/Make.defs
 #
 #  LIBDIR and BINDIR are where bc and libmath.b will be put.
 
-PREFIX = /usr
+PREFIX =
 LIBDIR = $(PREFIX)/lib
 BINDIR = $(PREFIX)/bin
 

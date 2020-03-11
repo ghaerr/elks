@@ -254,19 +254,33 @@ _disk_read:
 dr_loop:
 	// Compute the CHS from logical sector
 	// AX = logical sector
+	xchg %ax,%bx
+	mov sect_max,%al
+	mulb head_max
+	xchg %ax,%bx
+	xor %dx,%dx
+	div %bx
+	mov %al,%ch      // CH = low 8 bits of physical cylinder number
+	ror %ah
+	ror %ah
+	mov %ah,%cl      // stash higher 2 bits of cylinder number in CL
+
+	xchg %ax,%dx
+	xor %dx,%dx
+#ifndef BOOT_FAT
 	mov sect_max,%bl
 	xor %bh,%bh
-	xor %dx,%dx
-	divw %bx
-	mov %dl,%cl      // CL = physical sector number in track, minus 1
-	divb head_max
-	mov %al,%ch      // CH = physical cylinder number
-	xchg %ax,%dx     // DH = physical head number
+#else
+	mov sect_max,%bx // BX = sectors per track
+#endif
+	div %bx          // DL = physical sector number - 1
+	or %dl,%cl       // stash {physical sector number - 1} in CL
+	mov %al,%dh      // DH = physical head number
 
 	// Compute number of sectors to read
 	// First limit the sector count to the end of the track
 
-	sub %cl,%bl
+	sub %dl,%bl
 	inc %cx          // base 1 for sector number
 	mov -4(%bp),%ax
 	cmp %bx,%ax
@@ -493,49 +507,49 @@ elks_parms_start:
 // TODO: number of tracks is not used
 
 track_max:
-#   if defined(CONFIG_IMG_FD360)
+#if defined(CONFIG_IMG_FD360)
 	.word 40
-#   elif defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1200) \
-	  || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680)
+#elif defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1200) \
+      || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680)
 	.word 80
-#   elif defined(CONFIG_IMG_HD)
+#elif defined(CONFIG_IMG_HD)
 	.word CONFIG_IMG_CYL
-#   else
-	.warning "Unknown number of disk tracks!"
+#else
+	.error "Unknown number of disk tracks!"
 	.word 0
-#   endif
+#endif
 
-#   ifndef BOOT_FAT
+#ifndef BOOT_FAT
 sect_max:
-#   endif
-#   if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720)
+#endif
+#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720)
 	.byte 9
-#   elif defined(CONFIG_IMG_FD1200)
+#elif defined(CONFIG_IMG_FD1200)
 	.byte 15
-#   elif defined(CONFIG_IMG_FD1440)
+#elif defined(CONFIG_IMG_FD1440)
 	.byte 18
-#   elif defined(CONFIG_IMG_FD1680)
+#elif defined(CONFIG_IMG_FD1680)
 	.byte 21
-#   elif defined(CONFIG_IMG_HD)
+#elif defined(CONFIG_IMG_HD)
 	.byte CONFIG_IMG_SECT
-#   else
-	.warning "Unknown number of disk sectors per track!"
+#else
+	.error "Unknown number of disk sectors per track!"
 	.byte 0
-#   endif
+#endif
 
-#   ifndef BOOT_FAT
+#ifndef BOOT_FAT
 head_max:
-#   endif
-#   if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) \
-       || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) \
-       || defined(CONFIG_IMG_FD1680)
+#endif
+#if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) \
+    || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) \
+    || defined(CONFIG_IMG_FD1680)
 	.byte 2
-#   elif defined(CONFIG_IMG_HD)
+#elif defined(CONFIG_IMG_HD)
 	.byte CONFIG_IMG_HEAD
-#   else
-	.warning "Unknown number of disk sides/heads!"
+#else
+	.error "Unknown number of disk sides/heads!"
 	.byte 0
-#   endif
+#endif
 
 // Marker to indicate presence and size of ELKS parameter structure
 

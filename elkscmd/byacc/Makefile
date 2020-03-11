@@ -12,7 +12,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-BINDIR	      = /usr/bin
+BINDIR	      = /bin
 
 HDRS	      = defs.h
 
@@ -60,7 +60,7 @@ $(PROGRAM):	$(OBJS) $(LIBS)
 	$(LINKER) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
 
 install: $(PROGRAM)
-	$(INSTALL) $(PROGRAM) $(DESTDIR)/usr/bin
+	$(INSTALL) $(PROGRAM) $(DESTDIR)/bin
 
 clean:
 	rm -f $(OBJS) $(PROGRAM) core

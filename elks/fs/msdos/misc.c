@@ -10,6 +10,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
+#include <linuxmt/debug.h>
 
 struct buffer_head *msdos_sread(int dev,long sector,void **start)
 {
@@ -19,7 +20,7 @@ struct buffer_head *msdos_sread(int dev,long sector,void **start)
 		return NULL;
 
 	map_buffer(bh);
-//fsdebug("msread sector %ld block %d\n", sector, bh->b_blocknr);
+	//debug_fat("msread sector %ld block %d\n", sector, bh->b_blocknr);
 	*start = bh->b_data + (((int)sector & 1) << SECTOR_BITS);
 	return bh;
 }
@@ -54,7 +55,7 @@ int msdos_add_cluster(register struct inode *inode)
 	struct buffer_head *bh;
 	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
 
-fsdebug("add_cluster\n");
+	debug_fat("add_cluster\n");
 #ifndef FAT_BITS_32
 	if (fatsz != 32)
 		if (inode->i_ino == MSDOS_ROOT_INO) return -ENOSPC;
@@ -134,7 +135,7 @@ printk("zeroing sector %d\r\n",sector);
 			else memset(data,0,SECTOR_SIZE);
 		}
 		if (bh) {
-fsdebug("add_cluster block write %d\n", bh->b_blocknr);
+			debug_fat("add_cluster block write %d\n", bh->b_blocknr);
 			bh->b_dirty = 1;
 			unmap_brelse(bh);
 		}
@@ -259,7 +260,7 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 			return -1;
 		}
 #endif
-//fsdebug("get entry %ld\n", sector);
+		//debug_fat("get entry %ld\n", sector);
 		return (sector << MSDOS_DPS_BITS)+((offset & (SECTOR_SIZE-1)) >> MSDOS_DIR_BITS);
 	}
 }

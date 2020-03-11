@@ -12,6 +12,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
+#include <linuxmt/debug.h>
 
 #ifdef CONFIG_FS_DEV
 struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
@@ -38,7 +39,8 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
 
 void msdos_put_inode(register struct inode *inode)
 {
-if (inode->i_dirt) fsdebug("put_inode %ld count %d dirty %d\n", (unsigned long)inode->i_ino, inode->i_count, inode->i_dirt);
+	if (inode->i_dirt) debug_fat("put_inode %ld count %d dirty %d\n",
+		(unsigned long)inode->i_ino, inode->i_count, inode->i_dirt);
 	if (!inode->i_nlink) {
 		inode->i_size = 0;
 		msdos_truncate(inode);
@@ -49,7 +51,7 @@ if (inode->i_dirt) fsdebug("put_inode %ld count %d dirty %d\n", (unsigned long)i
 
 void msdos_put_super(register struct super_block *sb)
 {
-fsdebug("put_super\n");
+	debug_fat("put_super\n");
 	cache_inval_dev(sb->s_dev);
 	lock_super(sb);
 	sb->s_dev = 0;
@@ -214,7 +216,7 @@ void msdos_read_inode(register struct inode *inode)
 	long this,nr;
 	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
 
-//fsdebug("read_inode %ld\n", (unsigned long)inode->i_ino);
+	//debug_fat("read_inode %ld\n", (unsigned long)inode->i_ino);
 	inode->u.msdos_i.i_busy = 0;
 	inode->i_uid = current->uid;
 	inode->i_gid = current->gid;
@@ -307,7 +309,7 @@ void msdos_write_inode(register struct inode *inode)
 	if (inode->i_ino < DEVINO_BASE + DEVDIR_SIZE)
 		return;
 #endif
-fsdebug("write_inode %ld %d\n", (unsigned long)inode->i_ino, inode->i_dirt);
+	debug_fat("write_inode %ld %d\n", (unsigned long)inode->i_ino, inode->i_dirt);
 	if (inode->i_ino == MSDOS_ROOT_INO || !inode->i_nlink) return;
 	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS)))) {
 	    printk("FAT: write inode fail\n");
@@ -326,7 +328,7 @@ fsdebug("write_inode %ld %d\n", (unsigned long)inode->i_ino, inode->i_dirt);
 	raw_entry->start = (unsigned short)inode->u.msdos_i.i_start;
 	raw_entry->starthi = ((unsigned short *)&inode->u.msdos_i.i_start)[1];
 	date_unix2dos(inode->i_mtime,&raw_entry->time,&raw_entry->date);
-fsdebug("write_inode block write %d\n", bh->b_blocknr);
+	debug_fat("write_inode block write %d\n", bh->b_blocknr);
 	bh->b_dirty = 1;
 	unmap_brelse(bh);
 }

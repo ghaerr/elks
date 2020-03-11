@@ -148,11 +148,10 @@ install: $(LIBC)
 	$(INSTALL_DATA) include/*.h $(TOPDIR)/include/autoconf.h $(MULTIINCDIR)
 	$(INSTALL_DATA) include/asm/*.h $(MULTIINCDIR)/asm
 	$(INSTALL_DATA) include/sys/*.h $(MULTIINCDIR)/sys
+	$(INSTALL_DATA) include/linuxmt/arpa/*.h $(MULTIINCDIR)/linuxmt/arpa
 	$(INSTALL_DATA) $(TOPDIR)/elks/include/arch/*.h $(MULTIINCDIR)/arch
 	$(INSTALL_DATA) $(TOPDIR)/elks/include/linuxmt/*.h \
 	    $(MULTIINCDIR)/linuxmt
-	$(INSTALL_DATA) $(TOPDIR)/elks/include/linuxmt/arpa/*.h \
-	    $(MULTIINCDIR)/linuxmt/arpa
 uninstall:
 	$(RM) $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/$(notdir $(LIBC)) \
 	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/$(notdir $(CRT0)) \
@@ -160,11 +159,11 @@ uninstall:
 	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/elks-tiny.ld \
 	      $(MULTIINCDIR)/autoconf.h \
 	      $(patsubst include/%,$(MULTIINCDIR)/%, \
-		  $(wildcard include/*.h include/asm/*.h include/sys/*.h)) \
+		  $(wildcard include/*.h include/asm/*.h include/sys/*.h \
+			     include/linuxmt/arpa/*.h)) \
 	      $(patsubst $(TOPDIR)/elks/include/%,$(MULTIINCDIR)/%, \
 		  $(wildcard $(TOPDIR)/elks/include/arch/*.h \
-			     $(TOPDIR)/elks/include/linuxmt/*.h \
-			     $(TOPDIR)/elks/include/linuxmt/arpa/*.h))
+			     $(TOPDIR)/elks/include/linuxmt/*.h))
 endif
 
 else

@@ -9,6 +9,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/debug.h>
 
 static struct fat_cache *fat_cache,cache[FAT_CACHE];
 
@@ -87,11 +88,11 @@ long fat_access(register struct super_block *sb,long this,long new_value)
 				*p_first = new_value & 0xff;
 				*p_last = (*p_last & 0xf0) | (new_value >> 8);
 			}
-if (bh != bh2) fsdebug("fat_access block bh2 dirty %d\n", bh2->b_blocknr);
+			if (bh != bh2) debug_fat("fat_access block bh2 dirty %d\n", bh2->b_blocknr);
 			bh2->b_dirty = 1;
 		}
 #endif
-fsdebug("fat_access block bh dirty %d\n", bh->b_blocknr);
+		debug_fat("fat_access block bh dirty %d\n", bh->b_blocknr);
 		bh->b_dirty = 1;
 #if 0000 //FIXME
 		/* update extra FAT table copies*/
@@ -105,7 +106,7 @@ fsdebug("fat_access block bh dirty %d\n", bh->b_blocknr);
 						(long)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS) +
 						MSDOS_SB(sb)->fat_length*copy),&c_data))) break;
 			memcpy(c_data,data,SECTOR_SIZE);
-fsdebug("fat_access block cbh write %d\n", bh->b_blocknr);
+		debug_fat("fat_access block cbh write %d\n", bh->b_blocknr);
 			c_bh->b_dirty = 1;
 			if (data != data2 || bh != bh2) {
 				if (!(c_bh2 = msdos_sread(sb->s_dev,
@@ -116,7 +117,7 @@ fsdebug("fat_access block cbh write %d\n", bh->b_blocknr);
 				}
 				memcpy(c_data2,data2,SECTOR_SIZE);
 				c_bh2->b_dirty = 1;		//FIXME looks like bug without this
-fsdebug("fat_access block cbh2 write %d\n", c_bh2->b_blocknr);
+		debug_fat("fat_access block cbh2 write %d\n", c_bh2->b_blocknr);
 				unmap_brelse(c_bh2);
 			}
 			unmap_brelse(c_bh);
@@ -283,7 +284,7 @@ int fat_free(register struct inode *inode,long skip)
 {
 	long this,last;
 
-fsdebug("fat_free\n");
+	debug_fat("fat_free\n");
 	if (!(this = inode->u.msdos_i.i_start)) return 0;
 	last = 0;
 	while (skip--) {
