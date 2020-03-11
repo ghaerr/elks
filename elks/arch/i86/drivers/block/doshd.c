@@ -723,7 +723,7 @@ static void do_bioshd_request(void)
 	    head = (unsigned int) (tmp % (sector_t)drivep->heads);
 	    cylinder = (unsigned int) (tmp / (sector_t)drivep->heads);
 	    this_pass = drivep->sectors - sector + 1;
-	/* Fix for weird BIOS behavior with 720K floppy */
+	/* Fix for weird BIOS behavior with 720K floppy (issue #39) */
 	    if (this_pass < 3) this_pass = 1;
 	/* End of fix */
 	    if ((sector_t)this_pass > count) this_pass = (unsigned int) count;
@@ -734,6 +734,7 @@ static void do_bioshd_request(void)
 		dma_avail = 0;
 /*	    	BD_IRQ = BIOSHD_INT;*/
 #ifdef DMA_OVR
+		if (this_pass > (DMASEGSZ >> 9)) this_pass = (DMASEGSZ >> 9);
 		if (req->rq_cmd == WRITE) {
 		    BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
 		    fmemcpyb(NULL, DMASEG, buff, req->rq_seg, (this_pass << 9));
