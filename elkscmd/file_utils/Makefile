@@ -10,7 +10,9 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-OUTS = grep ln ls mkdir mkfifo mknod more mv rm rmdir sync touch
+OUTS = ln ls mkdir mkfifo mknod more mv rm rmdir sync touch
+#OUTS += grep
+
 OUTS_BE += cat chgrp chmod chown cmp cp dd
 
 PRGS = $(OUTS)
@@ -84,4 +86,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(OUTS) $(OUTS_BE) *.o
+	rm -f $(OUTS) $(OUTS_BE) grep *.o
