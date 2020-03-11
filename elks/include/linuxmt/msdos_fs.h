@@ -8,13 +8,6 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/ctype.h>
 
-/* temporary FAT filesystem debugging*/
-#ifdef FSDEBUG
-#define fsdebug			printk
-#else
-#define fsdebug(...)
-#endif
-
 #ifndef toupper
 extern char toupper(char c);
 #endif
