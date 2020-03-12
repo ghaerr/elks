@@ -3,6 +3,7 @@
 
 #include <features.h>
 #include <sys/types.h>
+#include <sys/select.h>
 
 typedef int intptr_t;
 typedef intptr_t ssize_t;
