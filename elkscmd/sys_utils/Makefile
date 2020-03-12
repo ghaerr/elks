@@ -28,6 +28,7 @@ PRGS = \
 	chmem \
 	clock \
 	unreal16 \
+	mouse \
 	# EOL
 
 # clock enabled and has direct I/O port access
@@ -87,6 +88,9 @@ poweroff: poweroff.o
 
 chmem: chmem.o
 	$(LD) $(LDFLAGS) -o chmem chmem.o $(LDLIBS)
+
+mouse: mouse.o
+	$(LD) $(LDFLAGS) -o mouse mouse.o $(LDLIBS)
 
 unreal16: unreal16.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o
