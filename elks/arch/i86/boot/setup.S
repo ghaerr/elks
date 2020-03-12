@@ -251,6 +251,8 @@ good_sig:
 
 start_os:
 
+	push	%cs
+	pop	%ds
 	mov $hello_mess,%si
 	call prtstr
 
