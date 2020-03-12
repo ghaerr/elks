@@ -92,6 +92,7 @@
 /bin/mknod				:base
 /bin/more				:base
 /bin/mount		:boot
+/bin/mouse								:nanox
 /bin/mv				:small
 /bin/netstat				:net
 /bin/nslookup				:net
