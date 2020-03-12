@@ -1,8 +1,10 @@
 #ifdef L_sleep
 #include <signal.h>
 #include <unistd.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
-#ifdef __ELKS__
+#if 0
 /* This uses SIGALRM, it does keep the previous alarm call but will lose
  * any alarms that go off during the sleep
  */
