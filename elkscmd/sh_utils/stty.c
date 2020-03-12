@@ -89,7 +89,7 @@ int column= 0, max_column=80;		/* Assume 80 character terminals. */
 struct winsize winsize;
 #endif
 
-#if __minix
+#ifdef __minix
 #define PROTO(a) _ARGS(a)
 #else
 #define PROTO(a) ()
@@ -189,9 +189,10 @@ int flags;
 	{	/* We have to write the termios structure in a encoded form
 		 * to stdout.
 		 */
-		printf(":%x:%x:%x:%x:%x:%x", termios.c_iflag, termios.c_oflag,
-			termios.c_cflag, termios.c_lflag, cfgetispeed(&termios),
-			cfgetospeed(&termios));
+		printf(":%lx:%lx:%lx:%lx:%lx:%lx",
+			(unsigned long)termios.c_iflag, (unsigned long)termios.c_oflag,
+			(unsigned long)termios.c_cflag, (unsigned long)termios.c_lflag,
+			(unsigned long)cfgetispeed(&termios), (unsigned long)cfgetospeed(&termios));
 		for (i= 0; i<NCCS; i++)
 			printf(":%x", termios.c_cc[i]);
 		printf(":\n");
@@ -272,9 +273,9 @@ int flags;
 	c_oflag= termios.c_oflag;
 
 	print_flags(c_oflag, (unsigned long)OPOST, (unsigned long)TOUTPUT_DEF, "-opost", all);
-#ifdef __minix
 	print_flags(c_oflag, (unsigned long)ONLCR, (unsigned long)TOUTPUT_DEF, "-onlcr", all);
 	print_flags(c_oflag, (unsigned long)XTABS, (unsigned long)TOUTPUT_DEF, "-xtabs", all);
+#ifdef __minix
 	print_flags(c_oflag, (unsigned long)ONOEOT, (unsigned long)TOUTPUT_DEF, "-onoeot", all);
 #endif
 	if (all)
@@ -622,7 +623,7 @@ char *opt, *next;
 	termios.c_oflag &= ~OPOST;
 	return 0;
   }
-#ifdef __minix
+
   if (match(opt, "onlcr")) {
 	termios.c_oflag |= ONLCR;
 	return 0;
@@ -641,6 +642,7 @@ char *opt, *next;
 	return 0;
   }
 
+#ifdef __minix
   if (match(opt, "onoeot")) {
 	termios.c_oflag |= ONOEOT;
 	return 0;
@@ -824,8 +826,8 @@ char *opt, *next;
 	return 0;
   }
 
-  if (match(opt, "cooked") || match(opt, "raw")) {
-	int x = opt[0] == 'c' ? 1 : 0;
+  if (match(opt, "cooked") || match(opt, "-raw") || match(opt, "raw")) {
+	int x = opt[0] == 'r' ? 0 : 1;
 
 	option(x + "-icrnl", "");	/* off in raw mode, on in cooked mode */
 	option(x + "-ixon", "");

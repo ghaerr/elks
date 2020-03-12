@@ -38,15 +38,15 @@
  * all of the extra functionality regarding the /etc/issue code sequences.
  */
 
-/* #define SUPER_SMALL		/* Disable for super-small binary */
+//#define SUPER_SMALL		/* Disable for super-small binary */
 
 /* For development work, the following two defines are available. The
  * first causes general debugging lines to be displayed, and the latter
  * causes a detailed trace of program execution to be displayed.
  */
 
-/* #define DEBUG   		/* Enable for testing only */
-/* #define TRACE   		/* Enable for testing only */
+//#define DEBUG   		/* Enable for testing only */
+//#define TRACE   		/* Enable for testing only */
 
 #ifdef DEBUG
 #define debug(fmt)		fprintf(stderr,fmt)
@@ -73,8 +73,12 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
+#include <time.h>
+#include <termios.h>
 
 #define LOGIN		"/bin/login"
 #define HOSTFILE	"/etc/HOSTNAME"
@@ -95,7 +99,7 @@ void host(void) {
     char *ptr;
     int fp = open(HOSTFILE,O_RDONLY), sz;
 
-    if (fp != NULL) {
+    if (fp) {
 	sz = read( fp, Host, 255);
 	if (sz >= 0)
 	    Host[sz] = '\0';
@@ -184,6 +188,7 @@ void when(void) {
 int main(int argc, char **argv) {
     char *ptr;
     int n;
+    struct termios termios;
 
     signal(SIGTSTP, SIG_IGN);		/* ignore ^Z stop signal*/
     debug1("DEBUG: main( %d, **argv )\n",argc);
@@ -268,7 +273,7 @@ int main(int argc, char **argv) {
 			    put(ch);
 			    break;
 			case 'B':			/* Baud Rate */
-			    if (argv > 2) {
+			    if (argc > 2) {
 				state(argv[2]);
 				state(" Baud");
 			    } else
@@ -281,7 +286,7 @@ int main(int argc, char **argv) {
 			    state(Host);
 			    break;
 			case 'L':			/* Line used */
-			    if (argv > 1) {
+			    if (argc > 1) {
 				ptr = rindex(argv[1],'/');
 				if (ptr == NULL)
 				    ptr = argv[1];
@@ -323,6 +328,23 @@ int main(int argc, char **argv) {
 	close(fd);
     }
     trace1("TRACE: Finished with %s\n", ISSUE);
+
+    /* setup tty termios state*/
+    if (tcgetattr(STDIN_FILENO, &termios) >= 0) {
+        termios.c_lflag |= ISIG | ICANON | ECHO | ECHOE | ECHONL;
+        termios.c_lflag &= ~(IEXTEN | ECHOK | NOFLSH);
+        termios.c_iflag |= BRKINT | ICRNL;
+        termios.c_iflag &= ~(IGNBRK | IGNPAR | PARMRK | INPCK | ISTRIP | INLCR | IGNCR
+		| IXON | IXOFF | IXANY);
+        termios.c_oflag |= OPOST | ONLCR;
+        termios.c_oflag &= ~XTABS;
+        termios.c_cflag |= CS8 | HUPCL;
+        termios.c_cflag &= ~(PARENB | CREAD);
+        termios.c_cc[VMIN] = 0;
+        termios.c_cc[VTIME] = 0;
+        tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios);
+    }
+
     for (;;) {
 	state("login: ");
 	n=read(STDIN_FILENO,Buffer,sizeof(Buffer)-1);
