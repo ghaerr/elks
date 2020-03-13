@@ -1,6 +1,6 @@
 include $(TOPDIR)/libc/Makefile.inc
 
-CFLAGS	+= -DL_execlp
+CFLAGS	+= -DL_execlp -DL_sleep
 
 ifneq "$(VPATH)" ""
 	dir	= $(VPATH)/

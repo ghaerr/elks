@@ -53,7 +53,7 @@ chroot		+31	1
 vfork		+32	0
 access		+33	2	 
 nice		34	1
-sleep		35	1
+sleep		35	1	- use alarm & signal, or select, instead
 sync		+36	0	 
 kill		+37	2	 
 rename		+38	2	 
