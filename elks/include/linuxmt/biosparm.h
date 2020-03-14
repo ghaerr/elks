@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_BIOSPARM_H
-#define LX86_LINUXMT_BIOSPARM_H
+#ifndef __LINUXMT_BIOSPARM_H
+#define __LINUXMT_BIOSPARM_H
 
 /* biosparm.h
  * Copyright (C) 1994 Yggdrasil Computing, Incorporated

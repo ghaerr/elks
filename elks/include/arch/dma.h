@@ -5,8 +5,8 @@
  * and John Boyd, Nov. 1992.
  */
 
-#ifndef LX86_ARCH_DMA_H
-#define LX86_ARCH_DMA_H
+#ifndef __ARCH_8086_DMA_H
+#define __ARCH_8086_DMA_H
 
 #include <arch/io.h>		/* need byte IO */
 

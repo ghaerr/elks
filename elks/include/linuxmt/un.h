@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_UN_H
-#define LX86_LINUXMT_UN_H
+#ifndef __LINUXMT_UN_H
+#define __LINUXMT_UN_H
 
 #define UNIX_PATH_MAX	108
 

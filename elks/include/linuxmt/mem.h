@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_MEM_H
-#define LX86_LINUXMT_MEM_H
+#ifndef __LINUXMT_MEM_H
+#define __LINUXMT_MEM_H
 
 #define DATASIZE 2048
 #define TEXTSIZE 2048

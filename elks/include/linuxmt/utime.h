@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_UTIME_H
-#define LX86_LINUXMT_UTIME_H
+#ifndef __LINUXMT_UTIME_H
+#define __LINUXMT_UTIME_H
 
 struct utimbuf {
     time_t actime;		/* Access time.  */

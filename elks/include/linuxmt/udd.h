@@ -9,8 +9,8 @@
  * Header file for the ELKS meta driver for user space device drivers
  */
 
-#ifndef LX86_LINUXMT_UDD_H
-#define LX86_LINUXMT_UDD_H
+#ifndef __LINUXMT_UDD_H
+#define __LINUXMT_UDD_H
 
 #include <linuxmt/fs.h>
 

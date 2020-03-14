@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_SIGNAL_H
-#define LX86_LINUXMT_SIGNAL_H
+#ifndef __LINUXMT_SIGNAL_H
+#define __LINUXMT_SIGNAL_H
 
 /* The following signals mean nothing under ELKS currently:
  *

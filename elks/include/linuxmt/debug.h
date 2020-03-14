@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_DEBUG_H
-#define LX86_LINUXMT_DEBUG_H
+#ifndef __LINUXMT_DEBUG_H
+#define __LINUXMT_DEBUG_H
 
 /* linuxmt/include/linuxmt/debug.h for ELKS v. >=0.0.47
  * (C) 1997 Chad Page

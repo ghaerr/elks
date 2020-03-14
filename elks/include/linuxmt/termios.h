@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_TERMIOS_H
-#define LX86_LINUXMT_TERMIOS_H
+#ifndef __LINUXMT_TERMIOS_H
+#define __LINUXMT_TERMIOS_H
 
 #include <linuxmt/types.h>
 

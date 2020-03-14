@@ -3,8 +3,8 @@
  * combined into a single file.
  */
 
-#ifndef LX86_LINUXMT_ERRNO_H
-#define LX86_LINUXMT_ERRNO_H
+#ifndef __LINUXMT_ERRNO_H
+#define __LINUXMT_ERRNO_H
 
 /*@-namechecks@*/
 

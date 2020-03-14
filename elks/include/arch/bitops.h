@@ -1,5 +1,5 @@
-#ifndef LX86_ARCH_BITOPS_H
-#define LX86_ARCH_BITOPS_H
+#ifndef __ARCH_8086_BITOPS_H
+#define __ARCH_8086_BITOPS_H
 
 extern unsigned char clear_bit(unsigned int,void *);
 extern unsigned char set_bit(unsigned int,void *);

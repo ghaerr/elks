@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_LP_H
-#define LX86_LINUXMT_LP_H
+#ifndef __LINUXMT_LP_H
+#define __LINUXMT_LP_H
 
 /* lp.h header for ELKS kernel
  * Copyright (C) 1997 Blaz Antonic
