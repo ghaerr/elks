@@ -12,7 +12,6 @@
 
 	.global entry
 	.extern	start_kernel
-	.extern arch_boot
 	.global early_printk
 
 entry:
@@ -55,7 +54,6 @@ entry:
 ! Must be in data as its in use when we wipe the BSS
 */
 
-	call	arch_boot
 	call	start_kernel	// Break point if it returns
 	int	$3
 

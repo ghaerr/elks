@@ -105,9 +105,9 @@ else
 
 # Begin PC image build
 
-boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt1.o boot/crt0.o
+boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt0.o
 	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -M $(ARCH_LD) -T $(TOPDIR)/elks/elks-small.ld \
-		$(ARCH_DIR)/boot/crt0.o $(ARCH_DIR)/boot/crt1.o \
+		$(ARCH_DIR)/boot/crt0.o \
 		init/main.o '-(' $(ARCHIVES) $(DRIVERS) '-)' \
 		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.map)
 #		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
