@@ -147,7 +147,7 @@ all:
 
 install:
 	@echo "TAGS=$(TAGS)" | tr -d ' '
-	awk /`echo "$(TAGS)" | tr -d ' '`/{print} $(PACKAGE) | sed "/^#/d" > Filelist
+	awk /`echo "$(TAGS)" | tr -d ' '`/{print} $(PACKAGE) | sed '/^#/d' > Filelist
 	@while IFS= read -r line; \
 	do \
 		file=`echo $$line | cut -d" " -f 1`; \
