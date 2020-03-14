@@ -145,6 +145,8 @@ all:
 	then echo -e "\n*** ERROR: You must configure ELKS first ***\n" >&2; exit 1; fi
 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR all || exit 1; done
 
+# use bash instead of /bin/sh for curly brace expansion
+SHELL=/bin/bash
 install:
 	@echo "TAGS=$(TAGS)" | tr -d ' '
 	awk /`echo "$(TAGS)" | tr -d ' '`/{print} $(PACKAGE) | sed '/^#/d' > Filelist
