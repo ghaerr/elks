@@ -1,7 +1,7 @@
 /* arch/i86/include/asm/types.h - Basic Linux/MT data types. */
 
-#ifndef LX86_ARCH_TYPES_H
-#define LX86_ARCH_TYPES_H
+#ifndef __ARCH_8086_TYPES_H
+#define __ARCH_8086_TYPES_H
 
 /*@-namechecks@*/
 
@@ -60,4 +60,4 @@ typedef __u16			__pptr;
 #define NULL		((void *) 0)
 #endif
 
-#endif /* !LX86_ARCH_TYPES_H */
+#endif /* !__ARCH_8086_TYPES_H */

@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_MINIX_FS_H
-#define LX86_LINUXMT_MINIX_FS_H
+#ifndef __LINUXMT_MINIX_FS_H
+#define __LINUXMT_MINIX_FS_H
 
 /* The minix filesystem constants/structures
  *

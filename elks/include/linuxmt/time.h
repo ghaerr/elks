@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_TIME_H
-#define LX86_LINUXMT_TIME_H
+#ifndef __LINUXMT_TIME_H
+#define __LINUXMT_TIME_H
 
 #define DST_NONE        0	/* not on dst */
 #define DST_USA         1	/* USA style dst */

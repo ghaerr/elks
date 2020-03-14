@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef LX86_ARCH_DEBUG_DISP_H
-#define LX86_ARCH_DEBUG_DISP_H
+#ifndef __ARCH_8086_DEBUG_DISP_H
+#define __ARCH_8086_DEBUG_DISP_H
 
 #define DEBUG_DISP_PORT   0x0280
 

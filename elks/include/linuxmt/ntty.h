@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_NTTY_H
-#define LX86_LINUXMT_NTTY_H
+#ifndef __LINUXMT_NTTY_H
+#define __LINUXMT_NTTY_H
 
 /*
  * 'ntty.h' defines some structures used by ntty.c and some defines.

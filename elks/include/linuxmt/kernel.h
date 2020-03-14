@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_KERNEL_H
-#define LX86_LINUXMT_KERNEL_H
+#ifndef __LINUXMT_KERNEL_H
+#define __LINUXMT_KERNEL_H
 
 #include <linuxmt/types.h>
 #include <stddef.h>

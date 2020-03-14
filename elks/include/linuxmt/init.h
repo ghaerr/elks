@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_INIT_H
-#define LX86_LINUXMT_INIT_H
+#ifndef __LINUXMT_INIT_H
+#define __LINUXMT_INIT_H
 
 /* Assorted initializers */
 

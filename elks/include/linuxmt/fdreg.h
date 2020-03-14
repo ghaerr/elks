@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_FDREG_H
-#define LX86_LINUXMT_FDREG_H
+#ifndef __LINUXMT_FDREG_H
+#define __LINUXMT_FDREG_H
 
 /* This file contains some defines for the floppy disk controller. Various
  * sources. Mostly "IBM Microcomputers: A Programmers Handbook" by Sanches

@@ -1,5 +1,5 @@
-#ifndef LX86_ARCH_DIR_H
-#define LX86_ARCH_DIR_H
+#ifndef __LINUXMT_DIRENT_H
+#define __LINUXMT_DIRENT_H
 
 #include <linuxmt/types.h>
 

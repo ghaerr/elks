@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_TCPDEV_H
-#define LX86_LINUXMT_TCPDEV_H
+#ifndef __LINUXMT_TCPDEV_H
+#define __LINUXMT_TCPDEV_H
 
 /* tcpdev.h header for ELKS kernel
  * Copyright (C) 2001 Harry Kalogirou

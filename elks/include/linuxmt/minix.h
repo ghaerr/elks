@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_MINIX_H
-#define LX86_LINUXMT_MINIX_H
+#ifndef __LINUXMT_MINIX_H
+#define __LINUXMT_MINIX_H
 
 /*
  *	Minix binary formats

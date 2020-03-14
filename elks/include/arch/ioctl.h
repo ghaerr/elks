@@ -1,5 +1,5 @@
-#ifndef ARCH_IOCTL_H
-#define ARCH_IOCTL_H
+#ifndef __ARCH_8086_IOCTL_H
+#define __ARCH_8086_IOCTL_H
 
 
 // Use MAJOR as high-level byte for numbering

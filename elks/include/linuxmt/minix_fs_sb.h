@@ -1,5 +1,5 @@
-#ifndef LX86_LINUX_MINIX_FS_SB
-#define LX86_LINUX_MINIX_FS_SB
+#ifndef __LINUXMT_MINIX_FS_SB_H
+#define __LINUXMT_MINIX_FS_SB_H
 
 /*
  * minix super-block data in memory

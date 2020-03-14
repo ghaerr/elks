@@ -1,5 +1,5 @@
-#ifndef LX86_ARCH_IO_H
-#define LX86_ARCH_IO_H
+#ifndef __ARCH_8086_IO_H
+#define __ARCH_8086_IO_H
 
 extern void bell(void);
 
@@ -51,4 +51,4 @@ _v; \
 
 #endif /* __ia16__ */
 
-#endif /* !LX86_ARCH_IO_H*/
+#endif /* !__ARCH_8086_IO_H*/

@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_FD_H
-#define LX86_LINUXMT_FD_H
+#ifndef __LINUXMT_FD_H
+#define __LINUXMT_FD_H
 
 #define FDCLRPRM 0		/* clear user-defined parameters */
 #define FDSETPRM 1		/* set user-defined parameters for current media */

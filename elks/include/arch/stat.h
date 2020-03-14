@@ -1,5 +1,5 @@
-#ifndef LX86_ARCH_STAT_H
-#define LX86_ARCH_STAT_H
+#ifndef __ARCH_8086_STAT_H
+#define __ARCH_8086_STAT_H
 
 #include <linuxmt/types.h>
 

@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_MAJOR_H
-#define LX86_LINUXMT_MAJOR_H
+#ifndef __LINUXMT_MAJOR_H
+#define __LINUXMT_MAJOR_H
 
 /*
  * This file has definitions for major device numbers
@@ -54,4 +54,4 @@
 #define ROMFLASH_MAJOR    6
 
 
-#endif  /* !LX86_LINUXMT_MAJOR_H */
+#endif  /* !__LINUXMT_MAJOR_H */

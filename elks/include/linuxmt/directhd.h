@@ -1,8 +1,8 @@
 /* directhd.h header for ELKS kernel - Copyright (C) 1998 Blaz Antonic
  */
 
-#ifndef LX86_LINUXMT_DIRECTHD_H
-#define LX86_LINUXMT_DIRECTHD_H
+#ifndef __LINUXMT_DIRECTHD_H
+#define __LINUXMT_DIRECTHD_H
 
 /* define offsets from base port address */
 #define DIRECTHD_ERROR 1

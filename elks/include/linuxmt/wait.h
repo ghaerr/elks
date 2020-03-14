@@ -1,6 +1,7 @@
 // Wait functions
 
-#pragma once
+#ifndef __LINUXMT_WAIT_H
+#define __LINUXMT_WAIT_H
 
 #include <linuxmt/types.h>
 
@@ -45,3 +46,5 @@ bool_t _wait_event (cond_t * c, bool_t i);
 
 #define wait_event(_c) _wait_event ((_c), 0)
 #define wait_event_interruptible(_c) _wait_event ((_c), 1)
+
+#endif

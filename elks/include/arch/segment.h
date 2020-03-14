@@ -1,5 +1,5 @@
-#ifndef LX86_ARCH_SEGMENT_H
-#define LX86_ARCH_SEGMENT_H
+#ifndef __ARCH_8086_SEGMENT_H
+#define __ARCH_8086_SEGMENT_H
 
 #include <linuxmt/types.h>
 
@@ -16,4 +16,4 @@ extern pid_t get_pid(void);
 
 extern short *_endtext, *_enddata, *_endbss;
 
-#endif /* !LX86_ARCH_SEGMENT_H */
+#endif /* !__ARCH_8086_SEGMENT_H */

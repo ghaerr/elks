@@ -1,5 +1,5 @@
-#ifndef LX86_ARCH_SYSTEM_H
-#define LX86_ARCH_SYSTEM_H
+#ifndef __ARCH_8086_SYSTEM_H
+#define __ARCH_8086_SYSTEM_H
 
 #include <linuxmt/types.h>
 
