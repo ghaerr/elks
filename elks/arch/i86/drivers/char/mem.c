@@ -23,6 +23,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/mem.h>
+#include <linuxmt/heap.h>
 
 #include <arch/segment.h>
 
@@ -151,6 +152,18 @@ size_t kmem_write(struct inode *inode, register struct file *filp,
     return len;
 }
 
+// Heap iterator callback
+
+#ifdef HEAP_DEBUG
+
+void heap_cb (heap_s * h)
+{
+	printk ("heap:%X:%u:%s\n",h, h->size, h->tag & HEAP_TAG_USED ? "used" : "free");
+}
+
+#endif /* HEAP_DEBUG */
+
+
 int kmem_ioctl(struct inode *inode, struct file *file, int cmd, register char *arg)
 {
     struct mem_usage mu;
@@ -193,6 +206,10 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, register char *a
 	mu.used_memory = mm_get_usage(MM_MEM, 1);
 
 	memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
+
+#ifdef HEAP_DEBUG
+	heap_iterate (heap_cb);
+#endif /* HEAP_DEBUG */
 	
 	return 0;
     }

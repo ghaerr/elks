@@ -69,11 +69,12 @@ void mm_stat(seg_t start, seg_t end)
 
 #endif
 
-    printk(".\nELKS kernel (%u text + %u data + %u bss)\n"
+    printk(".\nELKS kernel (%u text + %u data + %u bss + %u heap)\n"
 	   "Kernel text at %x:0000, data at %x:0000\n"
 	   "%u K of memory for user processes.\n",
 	   (unsigned)_endtext, (unsigned)_enddata,
 	   (unsigned)_endbss - (unsigned)_enddata,
+	   1 + ~ (unsigned) _endbss,
 	   kernel_cs, kernel_ds,
 	   (int) ((end - start) >> 6));
 
