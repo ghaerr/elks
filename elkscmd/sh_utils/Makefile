@@ -10,10 +10,9 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
+# TODO: uname write	# Do not compile
 PRGS=basename date dirname echo false printenv pwd true which whoami yes \
 	logname tr xargs mesg stty test
-
-# uname write	# Do not compile
 
 write: write.o ../sys_utils/utent.o
 

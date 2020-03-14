@@ -2,6 +2,9 @@ BASEDIR	= ..
 include $(BASEDIR)/Make.defs
 include $(BASEDIR)/Make.rules
 
+# Install destination
+DESTDIR=$(TOPDIR)/target
+
 NAME	= busyelks
 
 OUT	= $(NAME)
@@ -131,7 +134,26 @@ doc:	README.html
 README.html:	README
 	asciidoc README
 
-install: $(OUT) busyelks.tar.xz
+install: inst links
+
+inst: $(OUT)
+	$(INSTALL) $(OUT) $(DESTDIR)/bin
+
+# create symlinks for each command compiled into busyelks
+links:
+	@echo "$(CFLAGS)" | tr -s '[:blank:]' '[\n*]' \
+		| grep -- "-DCMD_" | sed 's/-DCMD_INFO.*//' | sed 's/-DCMD_//' \
+		| while read f; \
+			do \
+				if [ "$$f" != "" ]; \
+				then \
+					echo ln -s /bin/$(OUT) $(DESTDIR)/bin/$$f; \
+					ln -s /bin/$(OUT) $(DESTDIR)/bin/$$f; \
+				fi \
+			done
+
+# unused
+oldinstall: $(OUT) busyelks.tar.xz
 	$(INSTALL) $(OUT) $(DESTDIR)/bin
 	tar Jxf busyelks.tar.xz -C $(DESTDIR)
 
