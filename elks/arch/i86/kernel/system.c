@@ -47,14 +47,6 @@ void setup_arch(seg_t *start, seg_t *end)
 
 	heap_add (_endbss, 1 + ~ (unsigned) _endbss);
 
-	/* TEMP: just to demonstrate the heap */
-
-	void * h1 = heap_alloc (100);
-	void * h2 = heap_alloc (100);
-	heap_free (h1);
-	h1 = heap_alloc (50);
-	heap_free (h1);
-
 	/* Misc */
 
     ROOT_DEV = setupw(0x1fc);
