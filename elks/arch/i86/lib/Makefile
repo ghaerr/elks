@@ -36,7 +36,6 @@ SRCS1 = \
 	fmemcmpb.S fmemcmpw.S \
 	setupb.S setupw.S \
 	string.S \
-	seglist.S \
 #	farlist.S \
 	# end of list
 

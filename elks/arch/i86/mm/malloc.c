@@ -7,288 +7,212 @@
 #include <linuxmt/mm.h>
 //#include <linuxmt/mem.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/heap.h>
 
 #include <arch/segment.h>
-#include <asm/seglist.h>
 
 #define MIN_STACK_SIZE 0x1000	/* 4k min stack above heap*/
 
+// TODO: reduce size
+// TODO: convert to tag
 #define SEG_FLAG_USED 0x0001
 
-/* Segment header */
-/* No more than one paragraph */
+// Segment descriptor
 
-#define SEG_HEAD_NODE  0
-#define SEG_HEAD_SIZE  4
-#define SEG_HEAD_FLAGS 6
-#define SEG_HEAD_COUNT 8
-
-struct seg_head_s {
-	seglist_node_t node;
-	seg_t          size;
-	word_t         flags;
-	word_t         ref_count;
-};
-
-typedef struct seg_head_s seg_head_t;
-
-static seg_t _seg_first;
+// Allocated in local memory for speed
+// and to ease the 286 protected mode
+// whenever that mode comes back one day
 
 
-/* Split a segment if too large */
+// TODO: locking
+static segment_s * _seg_first;
 
-static seg_t seg_split (seg_t node_seg, seg_t node_size, seg_t req_size)
+
+// Split segment if enough large
+
+static int seg_split (segment_s * s1, segext_t size0)
 {
-	seg_t split_size;
-	seg_t next_seg = 0;
+	segext_t size2 = s1->size - size0;
 
-	split_size = req_size + 1;
-	if (node_size > split_size) {
-		pokew (SEG_HEAD_SIZE, node_seg, req_size);
+	if (size2 > 0 /* SEG_MIN_SIZE */) {
 
-		next_seg = node_seg + split_size;
-		seglist_insert_after (SEG_HEAD_NODE, node_seg, next_seg);
+		// TODO: use pool_alloc
+		segment_s * s2 = (segment_s *) heap_alloc (sizeof (segment_s), HEAP_TAG_SEG);
+		if (!s2) return -ENOMEM;
 
-		pokew (SEG_HEAD_SIZE,  next_seg, node_size - split_size);
-		pokew (SEG_HEAD_FLAGS, next_seg, 0);  /* free */
-		pokew (SEG_HEAD_COUNT, next_seg, 0);
+		s2->base = s1->base + size0;
+		s2->size = size2;
+		s2->flags = 0;  // free
+		s2->ref_count = 0;
+
+		list_insert_after (&s1->node, &s2->node);
+
+		s1->size = size0;
 	}
 
-	return next_seg;
+	return 0;  // success
 }
 
-/* Get a free segment */
 
-static seg_t seg_free_get (seg_t req_size)
+// Get free segment
+
+static segment_s * seg_free_get (segext_t size0)
 {
-	word_t node_size;
-	word_t node_flags;
+	segment_s * best_seg  = 0;
+	segext_t best_size = 0xFFFF;
 
-	seg_t  best_seg  = 0;
-	seg_t  best_size = 0xFFFF;
+	if (!_seg_first) return 0;
+	segment_s * seg = _seg_first;
 
-	seg_t  node_seg = _seg_first;
-
-	/* First get the smallest suitable free segment */
+	// First get the smallest suitable free segment
+	// TODO: improve speed with free list
 
 	while (1) {
-		node_size  = peekw (SEG_HEAD_SIZE, node_seg);
-		node_flags = peekw (SEG_HEAD_FLAGS, node_seg);
-
-		if (!(node_flags & SEG_FLAG_USED) && (node_size >= req_size) && (node_size < best_size)) {
-			best_seg  = node_seg;
-			best_size = node_size;
+		segext_t size1 = seg->size;
+		if (!(seg->flags & SEG_FLAG_USED) && (size1 >= size0) && (size1 < best_size)) {
+			best_seg  = seg;
+			best_size = size1;
+			if (size1 == size0) break;
 		}
 
-		seglist_next (SEG_HEAD_NODE, node_seg, &node_seg);
-		if (node_seg == _seg_first) break;
+		seg = structof (seg->node.next, segment_s, node);
+		if (seg == _seg_first) break;
 	}
 
-	/* Then allocate that free segment */
+	// Then allocate that free segment
 
 	if (best_seg) {
-		seg_split (best_seg, best_size, req_size);
-		pokew (SEG_HEAD_FLAGS, best_seg, SEG_FLAG_USED);
-		pokew (SEG_HEAD_COUNT, best_seg, 1);
+		int err = seg_split (best_seg, size0);
+		if (err)
+			printk ("seg:cannot split:heap full");
+
+		best_seg->flags = SEG_FLAG_USED;
+		best_seg->ref_count = 1;
 	}
 
 	return best_seg;
 }
 
-/* Merge two contiguous segments */
 
-static void seg_merge (seg_t first_seg, seg_t next_seg)
+// Merge two contiguous segments
+
+static void seg_merge (segment_s * s1, segment_s * s2)
 {
-	seg_t first_size;
-	seg_t next_size;
-
-	next_size = peekw (SEG_HEAD_SIZE, next_seg);
-	seglist_remove (SEG_HEAD_NODE, next_seg);
-
-	first_size = peekw (SEG_HEAD_SIZE, first_seg) + 1 + next_size;
-	pokew (SEG_HEAD_SIZE, first_seg, first_size);
+	list_remove (&s2->node);
+	s1->size += s2->size;
+	heap_free (s2);
 }
 
-/* Merge to left */
 
-static seg_t seg_merge_left (seg_t node_seg)
+// Try to merge with previous segment
+
+static segment_s * seg_merge_prev (segment_s * seg)
 {
-	seg_t left_seg = 0;
-
-	while (1) {
-		if (node_seg == _seg_first) break;
-		seglist_prev (SEG_HEAD_NODE, node_seg, &left_seg);
-		if (peekw (SEG_HEAD_FLAGS, left_seg) & SEG_FLAG_USED) {
-			left_seg = 0;
-			break;
+	if (seg == _seg_first) return seg;
+	segment_s * prev = structof (seg->node.prev, segment_s, node);
+	if (prev->flags & SEG_FLAG_USED) return seg;
+	seg_merge (prev, seg);
+	return prev;
 		}
 
-		seg_merge (left_seg, node_seg);
-		break;
+
+// Try to merge with next segment
+
+static void seg_merge_right (segment_s * seg)
+{
+	segment_s * next = structof (seg->node.next, segment_s, node);
+	if (next != _seg_first && !(next->flags & SEG_FLAG_USED))
+		seg_merge (seg, next);
+}
+
+
+// Allocate segment
+
+segment_s * seg_alloc (segext_t size)
+{
+	segment_s * seg = 0;
+	//lock_wait (&_seg_lock);
+	seg = seg_free_get (size);
+	//unlock_event (&_seg_lock);
+	return seg;
+}
+
+
+// Free segment
+
+void seg_free (segment_s * seg1)
+{
+	//lock_wait (&_seg_lock);
+	segment_s * seg2 = seg_merge_prev (seg1);
+	if (seg1 == seg2)  // no segment merge
+		seg1->flags = 0;  // free
+
+	seg_merge_right (seg2);
+	//unlock_event (&_seg_lock);
 	}
 
-	return left_seg;
-}
 
-/* Merge to right */
+// Increase segment reference count
 
-static void seg_merge_right (seg_t node_seg)
+segment_s * seg_get (segment_s * seg)
 {
-	seg_t right_seg = 0;
-
-	seglist_next (SEG_HEAD_NODE, node_seg, &right_seg);
-	if ((right_seg != _seg_first) && !(peekw (SEG_HEAD_FLAGS, right_seg) & SEG_FLAG_USED))
-		seg_merge (node_seg, right_seg);
+	// TODO: atomic increment
+	seg->ref_count++;
+	return seg;
 }
 
-/*
- *     Allocate a segment
- */
 
-seg_t mm_alloc(segext_t pages)
+// Decrease segment reference count */
+// Free segment on no more reference
+
+void seg_put (segment_s * seg)
 {
-	seg_t res = seg_free_get (pages);
-	if (res) res++;  /* skip header */
-	return res;
+	// TODO: atomic decrement
+	if (!--seg->ref_count)
+		seg_free (seg);
 }
 
-void mm_free (seg_t base)
+
+// Allocate segment and copy from another
+// Typically used by process fork
+
+segment_s * seg_dup (segment_s * src)
 {
-	seg_t left_seg;
+	segment_s * dst = seg_free_get (src->size);
+	if (dst)
+		fmemcpyb (NULL, dst->base, 0, src->base, src->size << 4);
 
-	seg_t node_seg = base - 1;  /* back to header */
-	left_seg = seg_merge_left (node_seg);
-	if (left_seg) {
-		node_seg = left_seg;
-	} else {
-		pokew (SEG_HEAD_FLAGS, node_seg, 0);  /* free */
-		pokew (SEG_HEAD_COUNT, node_seg, 0);
-	}
-
-	seg_merge_right (node_seg);
+	return dst;
 }
 
-/* 	Increase segment reference count */
 
-void mm_get(seg_t base)
-{
-    seg_t node_seg = base - 1;  /* back to header */
-    word_t count = peekw (SEG_HEAD_COUNT, node_seg);
-    pokew (SEG_HEAD_COUNT, node_seg, count + 1);
-}
+// Get memory information (free or used) in KB
 
-/* Decrease segment reference count */
-/* Free the segment on no more reference */
-
-/*
- *	Caution: A process can be killed dead by another.
- *	Be sure to catch that in exit...
- */
-
-void mm_put(seg_t base)
-{
-	seg_t node_seg = base - 1;  /* back to header */
-	word_t count = peekw (SEG_HEAD_COUNT, node_seg);
-	if (count > 1)
-		pokew (SEG_HEAD_COUNT, node_seg, count - 1);
-	else
-		mm_free (base);
-}
-
-/*
- *	Allocate a segment and copy it from another
- */
-
-seg_t mm_dup(seg_t base)
-{
-	seg_t new_seg;
-
-	seg_t old_seg = base - 1;  /* back to header */
-	seg_t old_size = peekw (SEG_HEAD_SIZE, old_seg);
-	new_seg = seg_free_get (old_size);
-	if (new_seg)
-		fmemcpyb (NULL, ++new_seg, 0, base, old_size << 4);
-
-    return new_seg;
-}
-
-/*
- * Returns memory usage information in KB's.
- * "type" is either MM_MEM and "used"
- * selects if we request the used or free memory.
- */
 unsigned int mm_get_usage(int type, int used)
 {
-	seg_t  node_size;
-	word_t node_flags;
+	segment_s * seg = _seg_first;
+	if (!_seg_first) return 0;
 
 	word_t res = 0;
-	seg_t  node_seg = _seg_first;
 
 	if (type == MM_MEM) {
 		while (1) {
-			node_size  = peekw (SEG_HEAD_SIZE, node_seg);
-			node_flags = peekw (SEG_HEAD_FLAGS, node_seg);
-			/*if (used) printk ("seg %X: size %X used %d count %d\n",
-				node_seg, node_size, node_flags, peekw (SEG_HEAD_COUNT, node_seg));*/
-			if ((node_flags & SEG_FLAG_USED) == used)
-				res += (node_size >> 6);
-			seglist_next (SEG_HEAD_NODE, node_seg, &node_seg);
-			if (node_seg == _seg_first) break;
+			/*if (used) printk ("seg %X: size %u used %u count %u\n",
+				seg->base, seg->size, seg->flags, seg->ref_count);*/
+
+			if ((seg->flags & SEG_FLAG_USED) == used)
+				res += seg->size >> 6;
+
+			seg = structof (seg->node.next, segment_s, node);
+			if (seg == _seg_first) break;
+			}
 		}
-	}
 
 	return res;
-}
-
-/* Try to change the size of an allocated segment */
-
-seg_t mm_realloc (seg_t base, seg_t req_size)
-{
-	seg_t node_size;
-
-	seg_t next_seg;
-	seg_t next_size;
-
-	seg_t node_seg = base - 1;  /* back to header */
-
-	while (1) {
-		node_size = peekw (SEG_HEAD_SIZE, node_seg);
-		if (node_size == req_size) break;
-
-		if (node_size > req_size) {
-			next_seg = seg_split (node_seg, node_size, req_size);
-			if (next_seg) {
-				pokew (SEG_HEAD_FLAGS, next_seg, 0);  /* free */
-				pokew (SEG_HEAD_COUNT, next_seg, 0);
-				seg_merge_right (next_seg);
-			}
-
-			break;
 		}
 
-		seglist_next (SEG_HEAD_NODE, node_seg, &next_seg);
-		if ((next_seg == _seg_first) || (peekw (SEG_HEAD_FLAGS, next_seg) & SEG_FLAG_USED)) {
-			node_seg = 0;
-			break;
-		}
 
-		req_size = req_size - node_size - 1;
-		next_size = peekw (SEG_HEAD_SIZE, next_seg);
-		if (next_size < req_size) {
-			node_seg = 0;
-			break;
-		}
-
-		seg_split (next_seg, next_size, req_size);
-		seg_merge (node_seg, next_seg);
-		break;
-	}
-
-	if (node_seg) node_seg++;  /* skip header */
-	return node_seg;
-}
-
+// User data segment functions
 
 int sys_brk(__pptr newbrk)
 {
@@ -334,16 +258,19 @@ int sys_sbrk (int increment, __u16 * pbrk)
 }
 
 
-/*
- *	Initialise the memory manager.
- */
+// Initialize the memory manager.
 
 void mm_init(seg_t start, seg_t end)
 {
-    _seg_first = start;
-    seglist_init (SEG_HEAD_NODE, start);            /* seg_head.node */
-    pokew (SEG_HEAD_SIZE,  start, end - start -1);  /* seg_head.size */
-    pokew (SEG_HEAD_FLAGS, start, 0);               /* seg_head.flags = free */
-    pokew (SEG_HEAD_COUNT, start, 0);               /* seg_head.count = 0 */
+	segment_s * seg = (segment_s *) heap_alloc (sizeof (segment_s), HEAP_TAG_SEG);
+	if (seg) {
+		seg->base = start;
+		seg->size = end - start;
+		seg->flags = 0;  // free
+		seg->ref_count = 0;
+
+		list_init (&seg->node);
+		_seg_first = seg;
+	}
 }
 

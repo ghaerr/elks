@@ -48,6 +48,7 @@ static struct rd_infot {
 };
 
 static struct rd_segmentt {
+	segment_s * seg_desc;
     seg_t segment;
     unsigned int next;
     rd_sector_t seg_size;	/* segment size in 512 byte blocks */
@@ -79,7 +80,7 @@ void rd_load(void)
 
 static void rd_release (struct inode * inode, struct file * filp)
 {
-    int target = DEVICE_NR(inode->i_rdev);
+    //int target = DEVICE_NR(inode->i_rdev);
 
     debug1("RD: release ram%d\n", target);
 
@@ -168,8 +169,11 @@ int rd_dealloc(int target)
 	debug5("RD: dealloc pass: %d, purging rd_segment[%d].segment = 0x%x, next index %d, size = %d\n",
 	     a, j, rd_segment[j].segment, rd_segment[j].next,
 	     rd_segment[j].seg_size);
-	mm_put(rd_segment[j].segment);
+	if (rd_segment[j].seg_desc) {
+		seg_put (rd_segment[j].seg_desc);
+		rd_segment[j].seg_desc = 0;
 	rd_segment[j].segment = 0;
+	}
 	rd_segment[j].seg_size = 0;
 	i = rd_segment[j].next;
 	rd_segment[j].next = MAX_ENTRIES + 1;
@@ -222,11 +226,12 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
 		else
 		    size = SEG_SIZE;
 
-		rd_segment[j].segment = mm_alloc(size);
-		if (rd_segment[j].segment == -1) {
+		rd_segment[j].seg_desc = seg_alloc (size);
+		if (rd_segment[j].seg_desc == 0) {
 		    rd_dealloc(target);
 		    return -ENOMEM;
 		}
+		rd_segment[j].segment = rd_segment[j].seg_desc->base;
 		debug4("RD: ioctl pass: %d, allocated %d pages, rd_segment[%d].segment = 0x%x\n",
 		       i, (int) size, j, rd_segment[j].segment);
 
