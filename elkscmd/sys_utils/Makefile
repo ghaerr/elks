@@ -10,6 +10,9 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
+# clock enabled and has direct I/O port access
+# knl removed as useless
+# exitemu disabled because it calls INT directly to DOSEMU
 PRGS = \
 	init \
 	getty \
@@ -30,10 +33,6 @@ PRGS = \
 	unreal16 \
 	mouse \
 	# EOL
-
-# clock enabled and has direct I/O port access
-# knl removed as useless
-# exitemu disabled because it calls INT directly to DOSEMU
 
 init: init.o
 	$(LD) $(LDFLAGS) -o init init.o $(LDLIBS)

@@ -10,13 +10,8 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-OUTS = grep ln ls mkdir mkfifo mknod more mv rm rmdir sync touch
-OUTS_BE += cat chgrp chmod chown cmp cp dd
-
-PRGS = $(OUTS)
-ifeq "$(CONFIG_APP_FILE_UTILS)" "y"
-	PRGS += $(OUTS_BE)
-endif
+PRGS = grep ln ls mkdir mkfifo mknod more mv rm rmdir sync touch \
+	cat chgrp chmod chown cmp cp dd
 
 all: $(PRGS)
 
@@ -84,4 +79,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(OUTS) $(OUTS_BE) *.o
+	rm -f $(PRGS) *.o

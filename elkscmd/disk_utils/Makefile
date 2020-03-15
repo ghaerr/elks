@@ -10,23 +10,17 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-OUTS = ramdisk mkfs fsck partype
-OUTS_BE = fdisk
+PRGS = ramdisk mkfs fsck partype fdisk
 
-PROGS = $(OUTS)
-ifeq "$(CONFIG_APP_DISK_UTILS)" "y"
-	PROGS += $(OUTS_BE)
-endif
+SPRGS=mkfs
 
-SPROGS=mkfs
-
-all: $(PROGS)
+all: $(PRGS)
 
 install_sibo: all
-	$(INSTALL) $(SPROGS) $(DESTDIR)/bin
+	$(INSTALL) $(SPRGS) $(DESTDIR)/bin
 
 install: all
-	$(INSTALL) $(PROGS) $(DESTDIR)/bin
+	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 fsck: fsck.o
 	$(LD) $(LDFLAGS) -o fsck fsck.o $(LDLIBS)
@@ -44,4 +38,4 @@ ramdisk: ramdisk.o
 	$(LD) $(LDFLAGS) -o ramdisk ramdisk.o $(LDLIBS)
 
 clean:
-	rm -f *.o $(FORMATMOD) core $(OUTS) $(OUTS_BE)
+	rm -f *.o $(FORMATMOD) core $(PRGS)

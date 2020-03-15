@@ -120,7 +120,7 @@ fat:
 	#mdir -i $(MSDOS_IMAGE) -/ -a ::
 	for f in `cat Filelist`; \
 	do \
-		if [ ! -e $(DESTDIR)$$f ]; \
+		if [ ! -e $(DESTDIR)$$f -a ! -L $(DESTDIR)$$f ]; \
 		then \
 			echo "File specified in $(PACKAGE) not found: $(DESTDIR)$$f"; \
 			exit 1; \

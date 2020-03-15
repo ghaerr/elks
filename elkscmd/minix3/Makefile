@@ -12,14 +12,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-OUTS = file head sed sort tail tee
-OUTS_BE = cal diff find
-
-PRGS = $(OUTS)
-ifeq "$(CONFIG_APP_MINIX1)" "y"
-	PRGS += $(OUTS_BE)
-endif
-
+PRGS = file head sed sort tail tee cal diff find
 
 #
 # Rules
@@ -65,4 +58,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f core *.o $(OUTS) $(OUTS_BE)
+	rm -f core *.o $(PRGS)

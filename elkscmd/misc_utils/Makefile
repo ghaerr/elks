@@ -13,16 +13,8 @@ HOST_CFLAGS = -O2
 
 ###############################################################################
 
-OUTS = tar miniterm
-OUTS_BE = ed
-
 #TODO: fix compress uncompress zcat lpfilter disabled
-
-PRGS = $(OUTS)
-ifeq "$(CONFIG_APP_MISC_UTILS)" "y"
-	PRGS += $(OUTS_BE)
-endif
-
+PRGS = tar miniterm ed
 PRGS_HOST=compress.host
 
 all: $(PRGS) $(PRGS_HOST)
@@ -52,4 +44,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(OUTS) $(OUTS_BE) $(PRGS_HOST) *~ *.o
+	rm -f $(PRGS) $(PRGS_HOST) *~ *.o

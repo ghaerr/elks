@@ -12,6 +12,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
+# TODO: lpd mt	# Do not compile.
 PRGS=env lp pwdauth remsync synctree tget
 
 env: env.o
@@ -32,10 +33,6 @@ synctree: synctree.o
 tget: tget.o
 	$(LD) $(LDFLAGS) -o tget tget.o $(LDLIBS)
 
-# install   # Same name as phony target install
-# lpd mt	# Do not compile.
-
-NETPRGS=env
 
 all: $(PRGS)
 
