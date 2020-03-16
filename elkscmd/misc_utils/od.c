@@ -12,17 +12,18 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <getopt.h>
 #include <sys/stat.h>
 
+/* ELKS specific port*/
 typedef int		smallint;
 #define MIN(a,b)			((a) < (b)? (a): (b))
-#define isprint_asciionly	isprint
+#define isprint_asciionly(a) ((unsigned)((a) - 0x20) <= 0x7e - 0x20)
 #define fseeko				fseek
-#define STDIN				1
 
 static void die(const char *s,...) {
 	va_list p;
@@ -42,9 +43,11 @@ static const char *skip_whitespace(const char *s)
 
 char *strndup(const char *s, size_t len)
 {
-	char *p = malloc(len);
-	if (p)
-		strncpy(p, (char *)s, len);
+	char *p = malloc(len + 1);
+	if (p) {
+		memcpy(p, (char *)s, len);
+		p[len] = '\0';
+	}
 	return p;
 }
 
@@ -534,7 +537,7 @@ static void do_skip(priv_dumper_t *dumper, const char *fname, int statok)
 
 	if (statok) {
 		if (!strcmp(fname, "stdin"))
-			fstat(STDIN, &sbuf);
+			fstat(STDIN_FILENO, &sbuf);
 		else
 			stat(fname, &sbuf);
 		if (!(S_ISCHR(sbuf.st_mode) || S_ISBLK(sbuf.st_mode) || S_ISFIFO(sbuf.st_mode))
