@@ -96,6 +96,7 @@ sh_utils/xargs					:shutil
 sh_utils/yes					:shutil
 misc_utils/miniterm				:miscutil
 misc_utils/tar					:miscutil
+misc_utils/od					:miscutil
 misc_utils/ed					:be-miscutil
 levee/lev	::bin/vi			:levee			:360k
 minix1/banner					:minix1
