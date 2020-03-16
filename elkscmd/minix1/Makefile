@@ -12,15 +12,8 @@ include $(BASEDIR)/Make.rules
 
 LOCALFLAGS=-D_POSIX_SOURCE
 
-OUTS =	banner decomp16 fgrep grep proto sum uniq wc
-OUTS_BE = cksum cut du
-
-PRGS = $(OUTS)
-ifeq "$(CONFIG_APP_MINIX1)" "y"
-	PRGS += $(OUTS_BE)
-endif
-
-NETPRGS = decomp16 du grep wc
+# TODO: grep removed for now, duplicated in file_utils
+PRGS = banner decomp16 fgrep proto sum uniq wc cksum cut du
 
 all: $(PRGS)
 
@@ -61,4 +54,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(OUTS) $(OUTS_BE) *.o
+	rm -f $(PRGS) *.o

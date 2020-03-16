@@ -15,6 +15,8 @@
 #define LONG_MAX	((long)(~0UL>>1))
 #define ULONG_MAX	(~0UL)
 
+#define structof(p,t,m) ((t *) ((char *) (p) - offsetof (t,m)))
+
 extern void do_exit(int);
 
 extern int kill_pg(pid_t,sig_t,int);

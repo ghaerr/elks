@@ -3,7 +3,6 @@
 	.text
 	.globl _main
 	.extern	_start_kernel
-	.extern _arch_boot
 
 _main:
 	cli
@@ -67,7 +66,6 @@ datacopy:
 	mov ax, #0xFFFF
 	mov sp, ax
 
-	call	_arch_boot
 	sti
 
 	call	_start_kernel

@@ -31,9 +31,11 @@ ifeq "$(CONFIG_APP_MISC_UTILS)" "b"
 	CMD_ed		= yes
 endif
 
-#CMD_basename	= yes
-#CMD_date	= yes
-#CMD_dirname	= yes
-#CMD_echo	= yes
-#CMD_false	= yes
-#CMD_true	= yes
+ifeq "$(CONFIG_APP_SH_UTILS)" "b"
+	CMD_basename= yes
+	CMD_date	= yes
+	CMD_dirname	= yes
+	CMD_echo	= yes
+	CMD_false	= yes
+	CMD_true	= yes
+endif

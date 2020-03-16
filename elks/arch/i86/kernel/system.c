@@ -4,6 +4,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/config.h>
 #include <linuxmt/fs.h> /* for ROOT_DEV */
+#include <linuxmt/heap.h>
 
 #include <arch/segment.h>
 
@@ -30,24 +31,31 @@ void setup_arch(seg_t *start, seg_t *end)
  *	Fill in the MM numbers - really ought to be in mm not kernel ?
  */
 
-/*
- *	This computes the 640K - _endbss
- */
+	/* Extend kernel data segment to maximum of 64K */
+	/* to make room for local heap */
+
+	/* *start = kernel_ds + (((unsigned int) (_endbss+15)) >> 4); */
+	*start = kernel_ds + 0x1000;
 
 #ifndef CONFIG_ARCH_SIBO
-
     *end = (seg_t)((setupw(0x2a) << 6) - RAM_REDUCE);
-
-    /* XXX plac: free root ram disk */
-
-    *start = kernel_ds + (((unsigned int) (_endbss+15)) >> 4);
-
 #else
-
     *end = (basmem)<<6;
-    *start = kernel_ds + (unsigned int) 0x1000;
-
 #endif
+
+	/* Now insert local heap at end of kernel data segment */
+
+	heap_add (_endbss, 1 + ~ (unsigned) _endbss);
+
+	/* TEMP: just to demonstrate the heap */
+
+	void * h1 = heap_alloc (100);
+	void * h2 = heap_alloc (100);
+	heap_free (h1);
+	h1 = heap_alloc (50);
+	heap_free (h1);
+
+	/* Misc */
 
     ROOT_DEV = setupw(0x1fc);
 

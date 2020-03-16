@@ -5,16 +5,16 @@
 
 #include <linuxmt/types.h>
 
+//
+// Atomic operations
+//
+
 typedef volatile word_t atomic_t;
 
-//
-// Reference counting
-//
+atomic_t atomic_get (atomic_t * count);
 
-typedef atomic_t count_t;
-
-void count_up   (count_t * count);
-void count_down (count_t * count);
+void atomic_inc (atomic_t * count);
+void atomic_dec (atomic_t * count);
 
 //
 // Locking (non reentrant mutexing)
