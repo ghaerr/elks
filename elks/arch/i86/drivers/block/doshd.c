@@ -656,7 +656,7 @@ static void do_bioshd_request(void)
     sector_t start, count, tmp;
     int drive, errs;
     unsigned int cylinder, head, sector, this_pass;
-    unsigned short int minor;
+    unsigned short int minor, in_ax, out_ax;
 
 #if 0
     int part;
@@ -753,16 +753,18 @@ static void do_bioshd_request(void)
 		debug5("cylinder=%d head=%d sector=%d drive=0x%x CMD=%d\n",
 		    cylinder, head, sector, drive, req->rq_cmd);
 		debug1("blocks %d\n", this_pass);
-		minor = 0;
+		in_ax = BD_AX;
+		out_ax = 0;
 		if (call_bios(&bdt)) {
-		    minor = BD_AX;
+		    out_ax = BD_AX;
 		    reset_bioshd(drive); /* controller should be reset upon error detection */
 		}
 		dma_avail = 1;
 		wake_up(&dma_wait);
-	    } while (minor && --errs);	/* On error, retry up to MAX_ERRS times */
-	    if (minor) {
-		printk("hd: error: AX=0x%02X\n", minor >> 8);
+	    } while (out_ax && --errs);	/* On error, retry up to MAX_ERRS times */
+	    if (out_ax) {
+		printk("hd: error: out AX=0x%04X in AX=0x%04X "
+		       "ES:BX=0x%04X:0x%04X\n", out_ax, in_ax, BD_ES, BD_BX);
 		end_request(0);
 		goto next_block;
 	    }
