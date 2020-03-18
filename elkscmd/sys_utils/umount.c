@@ -6,18 +6,18 @@
  * Most simple built-in commands are here.
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <signal.h>
-#include <pwd.h>
-#include <grp.h>
-#include <utime.h>
-#include <errno.h>
+#include <sys/mount.h>
 
 int main(int argc, char **argv)
 {
+	if (argc != 2) {
+		write(STDERR_FILENO, "Usage: umount <device>|<directory>\n", 35);
+		exit(1);
+	}
 	if (umount(argv[1]) < 0) {
 		perror(argv[1]);
 		exit(1);

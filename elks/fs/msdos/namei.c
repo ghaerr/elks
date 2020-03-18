@@ -360,7 +360,6 @@ unlink_done:
 		inode->i_ino, inode->i_dirt, inode->i_count);
 	if (dir) debug_fat("unlink iput dir %u dirt %d count %d\n", dir->i_ino, dir->i_dirt, dir->i_count);
 	iput(inode);
-	iput(inode);	/* 2nd call required from iget() above*/
 	iput(dir);
 	return res;
 }

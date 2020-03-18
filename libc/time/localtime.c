@@ -1,8 +1,7 @@
-
 #include <time.h>
-
 #include <sys/time.h>
 
+extern int _tz_is_set;
 extern void __tm_conv();
 
 struct tm * localtime (const time_t * timep)
@@ -13,6 +12,10 @@ struct tm * localtime (const time_t * timep)
 
    gettimeofday((void*)0, &tz);
 
+   if (!_tz_is_set) {
+	tzset();
+	tz.tz_minuteswest = timezone / 60;
+   }
    offt = -tz.tz_minuteswest*60L;
 
    /* tmb.tm_isdst = ? */

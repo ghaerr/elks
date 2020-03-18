@@ -4,5 +4,6 @@ compress.host
 ed
 tar
 od
+time
 uncompress
 zcat

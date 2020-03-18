@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>
+#include <sys/mount.h>
 #include <sys/select.h>
 
 int main(int argc, char **argv)
@@ -35,4 +36,3 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 }
-
