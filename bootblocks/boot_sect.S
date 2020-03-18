@@ -20,6 +20,13 @@
 #define ELKS_INITSEG (0x0100)
 #define ELKS_SYSSEG  (0x1000)
 
+// Whether to copy and modify the BIOS floppy parameter table to allow
+// whole-track reads in the bootloader
+//
+// This is currently disabled because it may clash with setup.S which may
+// overwrite the area used by the new table
+#undef FROB_DDPT
+
 	.code16
 
 	.text
@@ -28,10 +35,12 @@
 
 entry:
 
+#ifdef FROB_DDPT
 // Allow the new BIOS floppy parameter table to clobber the first few bytes
 // of the boot sector after we are done with them
 
 floppy_table:
+#endif
 
 #ifdef BOOT_FAT
 	jmp entry1
@@ -68,6 +77,7 @@ entry1:
 	rep
 	movsw
 
+#ifdef FROB_DDPT
 	// Copy the current BIOS floppy parameter table
 	// so that we could modify it locally
 
@@ -89,6 +99,7 @@ entry1:
 	mov %cx,%ds    // CX = 0
 	popw (%bx)
 	mov %es,2(%bx)
+#endif
 
 	// Rebase CS DS ES SS to work in the 64K segment
 
@@ -114,10 +125,12 @@ _next1:
 	mov $msg_boot,%bx
 	call _puts
 
+#ifdef FROB_DDPT
 	// Set sector count in floppy parameter table
 
 	mov sect_max,%al
 	mov %al,floppy_table + 4
+#endif
 
 #ifndef BOOT_FAT
 	// Load the second sector of the boot block
