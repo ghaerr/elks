@@ -14,8 +14,9 @@ HOST_CFLAGS = -O2
 ###############################################################################
 
 #TODO: fix compress uncompress zcat lpfilter disabled
-PRGS = tar miniterm ed
-PRGS_HOST=compress.host
+PRGS = tar miniterm ed od
+
+#PRGS_HOST=compress.host
 
 all: $(PRGS) $(PRGS_HOST)
 
@@ -25,6 +26,9 @@ ed: ed.o
 tar: tar.o
 	$(LD) $(LDFLAGS) -o tar tar.o $(LDLIBS)
 	
+od: od.o
+	$(LD) $(LDFLAGS) -o od od.o $(LDLIBS)
+
 compress: compress.o
 	$(LD) $(LDFLAGS) -o compress compress.o $(LDLIBS)
 

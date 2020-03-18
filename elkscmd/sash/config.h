@@ -11,7 +11,7 @@
 #define CMD_CMP       /*  904 bytes */
 #define CMD_CP        /* 1108 bytes */
 #define CMD_DD        /* 2524 bytes */
-#define CMD_ECHO      /*  264 bytes 
+#define CMD_ECHO      /*  264 bytes */
 #define CMD_ED        /* 8300 bytes */
 #define CMD_GREP      /*  144 bytes */
 #define CMD_HELP      /*   88 bytes */

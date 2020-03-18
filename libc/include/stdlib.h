@@ -45,12 +45,16 @@ typedef struct
   } ldiv_t;
 
 
-extern char *getenv __P ((__const char *__name));
-extern char *mktemp __P ((char *__template));
+char *getenv(const char *name);
+int putenv(char *string);
+char *mktemp(char *template);
 
 void abort (void);
 int atexit (void (* function) ());
 void exit (int status);
+int system(const char *command);
+int qsort(void *base, size_t nel, size_t width,
+	int (*compar)(/*const void *, const void * */));
 
 #ifndef __STRICT_ANSI__
 void breakpoint ();

@@ -11,6 +11,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <pwd.h>
 #include <grp.h>
@@ -213,7 +214,7 @@ lsfile(name, statbuf, flags)
 	*cp = '\0';
 
 	if (flags & LSF_INODE) {
-		sprintf(cp, "%5d ", (unsigned long)statbuf->st_ino);
+		sprintf(cp, "%5lu ", (unsigned long)statbuf->st_ino);
 		cp += strlen(cp);
 	}
 

@@ -50,7 +50,7 @@ static	char	outname[NAMSIZ];
 
 static	void	doheader();
 static	void	dodata();
-static	void	createpath();
+static	void	createpath(char *name, mode_t mode);
 static	long	getoctal();
 
 int main(int argc, char **argv)
@@ -62,7 +62,6 @@ int main(int argc, char **argv)
 	int	cc;
 	long	incc;
 	int	blocksize;
-	BOOL	createflag;
 	BOOL	listflag;
 	BOOL	fileflag;
 	char	buf[8192];
@@ -72,7 +71,6 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	createflag = FALSE;
 	extracting = FALSE;
 	listflag = FALSE;
 	fileflag = FALSE;
@@ -184,12 +182,11 @@ static void
 doheader(hp)
 	struct	header	*hp;
 {
-	long mode;
+	mode_t mode;
 	int	uid;
 	int	gid;
-	int	chksum;
 	long	size;
-	long	mtime;
+	time_t	mtime;
 	char	*name;
 	int	cc;
 	BOOL	hardlink;
@@ -215,9 +212,9 @@ doheader(hp)
 	gid = getoctal(hp->gid, sizeof(hp->gid));
 	size = getoctal(hp->size, sizeof(hp->size));
 	mtime = getoctal(hp->mtime, sizeof(hp->mtime));
-	chksum = getoctal(hp->chksum, sizeof(hp->chksum));
+	//int chksum = getoctal(hp->chksum, sizeof(hp->chksum));
 
-	if ((mode < 0) || (uid < 0) || (gid < 0) || (size < 0)) {
+	if ((uid < 0) || (gid < 0) || (size < 0)) {
 		if (!badheader)
 			fprintf(stderr, "Bad tar header, skipping\n");
 		badheader = TRUE;
@@ -354,8 +351,7 @@ dodata(cp, count)
  * here, as failures to restore files can be reported later.
  */
 static void
-createpath(name, mode)
-	char	*name;
+createpath(char *name, mode_t mode)
 {
 	char	*cp;
 	char	*cpold;
@@ -433,7 +429,7 @@ static	CHUNK *	chunklist;
  * This is static and so is overwritten on each call.
  */
 char *
-modestring(mode)
+modestring(mode_t mode)
 {
 	static	char	buf[12];
 
@@ -501,10 +497,9 @@ modestring(mode)
  * each call.
  */
 char *
-timestring(t)
-	long	t;
+timestring(time_t t)
 {
-	long		now;
+	time_t		now;
 	char		*str;
 	static	char	buf[26];
 
@@ -515,7 +510,7 @@ timestring(t)
 	strcpy(buf, &str[4]);
 	buf[12] = '\0';
 
-	if ((t > now) || (t < now - 365*24*60*60L)) {
+	if ((t > now) || (t < now - 365*24*60L*60)) {
 		strcpy(&buf[7], &str[20]);
 		buf[11] = '\0';
 	}

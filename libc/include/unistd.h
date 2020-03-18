@@ -51,9 +51,16 @@ int execve(char *fname, char **argv, char **envp);
 int execvp(char *fname, char **argv);
 int isatty (int fd);
 off_t lseek (int fildes, off_t offset, int whence);
+int link(const char *path1, const char *path2);
+int symlink(const char *path1, const char *path2);
 int unlink(const char *fname);
+int access(const char *path, int mode);
+ssize_t readlink(const char * restrict path, char * restrict buf, size_t bufsize);
+int chdir(const char *path);
+int rmdir(const char *path);
 
 pid_t fork(void);
+pid_t vfork(void);
 pid_t getpid(void);
 pid_t setsid(void);
 
@@ -66,6 +73,8 @@ int getgid(void);
 int getpgrp(void);
 int getppid(void);
 int setpgrp(void);
+
+void sync(void);
 void usleep(unsigned long useconds);
 
 extern char ** environ;

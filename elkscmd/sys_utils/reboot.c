@@ -17,23 +17,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include <unistd.h>		// FIXME can't include as sys_sleep defined which is a NOP
+#include <unistd.h>
 #include <errno.h>
 #include <time.h>
 #include <sys/select.h>
-
-static unsigned int
-sleep(unsigned int seconds)
-{
-	struct timeval timeout;
-
-	time_t start = time(NULL);
-	timeout.tv_sec = seconds;
-	timeout.tv_usec = 0;
-	select(1, NULL, NULL, NULL, &timeout);
-	return seconds - (time(NULL) - start);
-}
-
 
 int main(int argc, char **argv)
 {

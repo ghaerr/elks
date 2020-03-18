@@ -175,7 +175,7 @@ static int slip_receive(int fd, char *buf, size_t len)
  * \param baudrate Numberic baud rate
  * \return speed_t baud rate
  */
-static speed_t convert_baudrate(unsigned int baudrate)
+static speed_t convert_baudrate(speed_t baudrate)
 {
 	switch (baudrate) {
 		case 50: return B50;
@@ -217,7 +217,7 @@ static speed_t convert_baudrate(unsigned int baudrate)
 		default: return -1;
 #else
 		default:
-			fprintf(stderr, "Unknown baud rate %d\n", baudrate);
+			fprintf(stderr, "Unknown baud rate %lu\n", (unsigned long)baudrate);
 			exit(1);
 #endif
 	}
@@ -233,11 +233,11 @@ static speed_t convert_baudrate(unsigned int baudrate)
  * \param old Pointer to termios structure for storing previous settings (may be \c NULL)
  * \return File descriptor
  */
-static int serial_open(const char *device, unsigned int baudrate, bool rtscts, struct termios *old)
+static int serial_open(const char *device, speed_t baudrate, bool rtscts, struct termios *old)
 {
 	struct termios new;
 	int fd;
-	int b;
+	speed_t b;
 
 	fd = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
 
@@ -260,7 +260,7 @@ static int serial_open(const char *device, unsigned int baudrate, bool rtscts, s
 
 	b = convert_baudrate(baudrate);
 
-	if (b == -1) {
+	if (b == (speed_t)-1L) {
 #ifdef __linux__
 		struct serial_struct ss;
 
@@ -380,7 +380,7 @@ int main(int argc, char **argv)
 {
 	struct termios stdin_termio, stdout_termio, serial_termio;
 	int fd, retval = 0, ch;
-	unsigned int baudrate = 9600;
+	speed_t baudrate = 9600;
 	enum terminal_mode mode = MODE_TEXT;
 	bool escape = false, rtscts = false;
 	bool enable_rts = false, enable_dtr = false;
@@ -391,7 +391,7 @@ int main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "s:SrdRxh")) != -1) {
 		switch (ch) {
 			case 's':
-				baudrate = atoi(optarg);
+				baudrate = atol(optarg);
 				break;
 			case 'r':
 				rtscts = true;
@@ -457,7 +457,9 @@ int main(int argc, char **argv)
 #if ELKS
 	usage(argv[0]);
 #endif
-	fprintf(stderr, "Connected to %s at %ubps. Press '%c%c' to exit, '%c%c' for help.\n\n", device, baudrate, ESCAPE_CHARACTER, EXIT_CHARACTER, ESCAPE_CHARACTER, HELP_CHARACTER);
+	fprintf(stderr, "Connected to %s at %lubps. Press '%c%c' to exit, '%c%c' for help.\n\n",
+		device, (unsigned long)baudrate, ESCAPE_CHARACTER, EXIT_CHARACTER,
+		ESCAPE_CHARACTER, HELP_CHARACTER);
 
 	if (mode == MODE_TEXT) {
 		struct termios new;

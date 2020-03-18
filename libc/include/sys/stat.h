@@ -14,6 +14,11 @@ int fstat __P((int __fd, struct stat * __statbuf));
 #define S_IEXEC		S_IXUSR /* execute/search permission, owner */
 
 int stat (const char * restrict path, struct stat * restrict buf);
-int mkfifo(char * path, int mode);
+int mkdir(const char *pathm, mode_t mode);
+int mknod(char *path, mode_t mode, dev_t dev);
+int mkfifo(char *path, mode_t mode);
+mode_t umask(mode_t mode);
+int chmod(const char *path, mode_t mode);
+int chown(const char *path, uid_t owner, gid_t group);
 
 #endif

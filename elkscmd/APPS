@@ -8,9 +8,8 @@ CONFIG_APP_ASH			ash/			Default shell, installs as /bin/sh. Early BASH compatibl
 										Scripting builtins: break, continue, return
 										No non-std builtins.
 
-CONFIG_APP_SASH			sash/			Good shell for slow floppy systems. Installs as /bin/sash when ash
-										also selected, otherwise /bin/sh. If both shells installed,
-										edit /etc/passwd to specify /bin/sash on login.
+CONFIG_APP_SASH			sash/			Good shell for slow floppy systems. Installs as /bin/sash.
+										Edit /etc/passwd to specify /bin/sash on login.
 										Sash has some standard and large number of useful builtins.
 										Not BASH-compatible and no scripting, however it will call /bin/sh
 										for seamless BASH shell script execution.
@@ -34,7 +33,7 @@ CONFIG_APP_COREUTILS	core_utils/		Core utilities, Installed in /bin. Sources mov
 										Move from file_utils:
 											cat, chgrp, chmod, chown, cp, dd, grep, ln, mkdir, mknod,
 											more, mv, rm, rmdir, sync, touch
-										Move from minix1: grep (overwrites file_utils/grep)
+										Move from minix1:
 										Move from minix2: env
 										Move from minix3: 
 										Move from misc_utils: ed, tar
@@ -54,39 +53,36 @@ CONFIG_APP_SYS_UTILS	sys_utils/		System utilities from various origins.
 										Not compiled: exitemu, insmod, min_init, rdev, utent(lib routine)
 										Some manual pages present.
 
-CONFIG_APP_FILE_UTILS	file_utils/		File utilities from Alistair Riddoch.  (B option when busyelks selected)
+CONFIG_APP_FILE_UTILS	file_utils/		File utilities from Alistair Riddoch.
 										Rewritten from GNU fileutils 3.14 and sash.
 										Installs in /bin: cat, chgrp, chmod, chown, cmp, cp, dd, grep,
 										l, ln, ls, mkdir, mkfifo, mknod, more, mv, rm, rmdir, sync, touch
 
-CONFIG_APP_DISK_UTILS	disk_utils/		Disk utilities from early 1990s.  (B option when busyelks selected)
+CONFIG_APP_DISK_UTILS	disk_utils/		Disk utilities from early 1990s.
 										Installs in /bin: fdisk, fsck, mkfs, partype, ramdisk
 
 CONFIG_APP_MISC_UTILS	misc_utils/		Miscellaneous utilities from various sources, including sash.
-										(B option when busyelks selected)
-										Installs in /bin: ed, miniterm, tar
+										Installs in /bin: ed, miniterm, tar, od
 										Not installed: compress, uncompress, zcat
 
-CONFIG_APP_MINIX1		minix1/			MINIX utilities, part 1.  (B option when busyelks selected)	
-										Installs in /bin: banner, cksum, cut, decomp16, du, fgrep, grep,
+CONFIG_APP_MINIX1		minix1/			MINIX utilities, part 1.
+										Installs in /bin: banner, cksum, cut, decomp16, du, fgrep,
 											proto, sum, uniq, wc
+										Not installed: grep (duplicated in file_utils)
 
 CONFIG_APP_MINIX2		minix2/			MINIX utilities, part 2.
 										Installs in /bin: env, lp, pwdauth, synctree, tget
 										Not built: eject, install, lpd, man(also in sys_utils), mt
 
-
-CONFIG_APP_MINIX3		minix3/			MINIX utilities, part 3.  (B option when busyelks selected)
+CONFIG_APP_MINIX3		minix3/			MINIX utilities, part 3.
 										Installs in /bin: cal, diff, file, find, head, sed, sort, tail, tee
 
 # busyelks
 CONFIG_APP_BUSYELKS		busyelks/		Not selected by default. When selected, B options occur on:
-											disk_utils, file_utils, minix1, minix3, misc_utils.
-											B option currently broken.
-										Installs /bin/busyelks, and symlinks to:
+											file_utils, sh_utils, disk_utils, minix1, minix3, misc_utils.
+										Installs /bin/busyelks, and symlinks to following depending on B options:
 											basename, cal, cat, chgrp, chmod, chown, chksum, cmp,
 											cp, cut, date, dd, diff, dirname, du, echo, ed, fdisk, find.
-											Looks like many others coming.
 # Other commands
 CONFIG_APP_LEVEE		levee/			1st vi editor, installs as /bin/vi
 
@@ -99,18 +95,19 @@ CONFIG_APP_NANOX		nano-X/			Nano-X Graphical Window System v0.86 from 1999.
 										Builds but doesn't install: demo, demo2, nclock
 										Doesn't build: nterm, world
 
-CONFIG_APP_BC			bc/				Calculator
+CONFIG_APP_OTHER		bc/				Calculator
 
-CONFIG_APP_M4			m4/				Macro processor, including man page
-
-CONFIG_APP_PREMS		prems/			Compression library and compress/gzip lookalike.
+CONFIG_APP_OTHER		prems/			Compression library and compress/gzip lookalike.
 										Installs /bin/pres. flparc not installed.
+
 # Not compiling or broken commands
 CONFIG_APP_BYACC		byacc/			Berkely Yacc. Not selectable so never compiles.
 
 CONFIG_APP_ELVIS		elvis/			2nd vi editor, Makefile broken, not built.
 											Installs as /bin/[elvis,vi,ex,view,input]
 CONFIG_APP_XVI			xvi/			3rd vi editor, won't compile, installs as /bin/xvi
+
+CONFIG_APP_M4			m4/				Macro processor, including man page
 
 CONFIG_APP_SCREEN		screen/			Text multi-screen support. Doesn't compile or install.
 

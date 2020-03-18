@@ -12,6 +12,10 @@
 #include <malloc.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include "config.h"
 
 #define	PATHLEN		256	
@@ -47,8 +51,8 @@ extern	void	do_kill(), do_grep(), do_ed();
 
 
 extern	char	*buildname();
-extern	char	*modestring();
-extern	char	*timestring();
+extern	char	*modestring(mode_t mode);
+extern	char	*timestring(time_t t);
 extern	BOOL	isadir();
 extern	BOOL	copyfile();
 extern	BOOL	match();

@@ -34,7 +34,7 @@ static	CHUNK *	chunklist;
  * This is static and so is overwritten on each call.
  */
 char *
-modestring(mode)
+modestring(mode_t mode)
 {
 	static	char	buf[12];
 
@@ -105,10 +105,9 @@ modestring(mode)
  * each call.
  */
 char *
-timestring(t)
-	long	t;
+timestring(time_t t)
 {
-	long		now;
+	time_t		now;
 	char		*str;
 	static	char	buf[26];
 
@@ -119,7 +118,7 @@ timestring(t)
 	strcpy(buf, &str[4]);
 	buf[12] = '\0';
 
-	if ((t > now) || (t < now - 365*24*60*60L)) {
+	if ((t > now) || (t < now - 365*24*60L*60)) {
 		strcpy(&buf[7], &str[20]);
 		buf[11] = '\0';
 	}

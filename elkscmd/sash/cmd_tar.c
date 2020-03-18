@@ -51,7 +51,7 @@ static	char	outname[NAMSIZ];
 
 static	void	doheader();
 static	void	dodata();
-static	void	createpath();
+static	void	createpath(char *name, mode_t mode);
 static	long	getoctal();
 
 
@@ -66,7 +66,6 @@ do_tar(argc, argv)
 	int	cc;
 	long	incc;
 	int	blocksize;
-	BOOL	createflag;
 	BOOL	listflag;
 	BOOL	fileflag;
 	char	buf[8192];
@@ -76,7 +75,6 @@ do_tar(argc, argv)
 		return;
 	}
 
-	createflag = FALSE;
 	extracting = FALSE;
 	listflag = FALSE;
 	fileflag = FALSE;
@@ -131,6 +129,7 @@ do_tar(argc, argv)
 		return;
 	}
 
+	cp = buf;
 	while (TRUE) {
 		if ((incc == 0) && !eof) {
 			while (incc < blocksize) {
@@ -194,12 +193,11 @@ static void
 doheader(hp)
 	struct	header	*hp;
 {
-	int	mode;
+	mode_t	mode;
 	int	uid;
 	int	gid;
-	int	chksum;
 	long	size;
-	long	mtime;
+	time_t	mtime;
 	char	*name;
 	int	cc;
 	BOOL	hardlink;
@@ -225,9 +223,9 @@ doheader(hp)
 	gid = getoctal(hp->gid, sizeof(hp->gid));
 	size = getoctal(hp->size, sizeof(hp->size));
 	mtime = getoctal(hp->mtime, sizeof(hp->mtime));
-	chksum = getoctal(hp->chksum, sizeof(hp->chksum));
+	//int chksum = getoctal(hp->chksum, sizeof(hp->chksum));
 
-	if ((mode < 0) || (uid < 0) || (gid < 0) || (size < 0)) {
+	if ((uid < 0) || (gid < 0) || (size < 0)) {
 		if (!badheader)
 			fprintf(stderr, "Bad tar header, skipping\n");
 		badheader = TRUE;
@@ -256,7 +254,7 @@ doheader(hp)
 
 	if (!extracting) {
 		if (verbose)
-			printf("%s %3d/%-d %9d %s %s", modestring(mode),
+			printf("%s %3d/%-d %9ld %s %s", modestring(mode),
 				uid, gid, size, timestring(mtime), name);
 		else
 			printf("%s", name);
@@ -362,8 +360,7 @@ dodata(cp, count)
  * here, as failures to restore files can be reported later.
  */
 static void
-createpath(name, mode)
-	char	*name;
+createpath(char *name, mode_t mode)
 {
 	char	*cp;
 	char	*cpold;
