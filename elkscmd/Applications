@@ -18,7 +18,8 @@
 #	Tag			Description									Directory
 #	--------	-----------------------------------------	-----------
 #	:boot		Required for ELKS to boot
-#	:360k		Minimal set of apps for very small disks
+#	:360k		Minimal set of apps to fit on 360k disks
+#	:720k		Set of apps to fit on 720k disks (includes :net)
 #	:ash		Ash (bash) shell							ash
 #	:sash		Sash (standalone very small) shell			sash
 #	:sysutil	System utilities							sys_utils
@@ -49,83 +50,83 @@ sys_utils/clock			:boot	:sysutil
 sys_utils/shutdown		:boot	:sysutil
 sh_utils/test			:boot	:shutil
 sh_utils/echo			:boot	:be-shutil
-file_utils/cat					:be-fileutil	:360k
-file_utils/chgrp				:be-fileutil
-file_utils/chmod				:be-fileutil
-file_utils/chown				:be-fileutil
+file_utils/cat			:boot	:be-fileutil
+file_utils/chgrp				:be-fileutil		:720k
+file_utils/chmod				:be-fileutil	:360k
+file_utils/chown				:be-fileutil		:720k
 file_utils/cmp					:be-fileutil
 file_utils/cp					:be-fileutil	:360k
-file_utils/dd					:be-fileutil
-file_utils/grep					:fileutil
+file_utils/dd					:be-fileutil		:720k
+file_utils/grep					:fileutil		:360k
 file_utils/mkdir				:fileutil		:360k
 file_utils/mknod				:fileutil
 file_utils/mkfifo				:fileutil
-file_utils/more					:fileutil
+file_utils/more					:fileutil			:720k
 file_utils/mv					:fileutil		:360k
-file_utils/ln					:fileutil
+file_utils/ln					:fileutil			:720k
 file_utils/ls					:fileutil		:360k
 file_utils/rm					:fileutil		:360k
 file_utils/rmdir				:fileutil		:360k
 file_utils/sync					:fileutil		:360k
-file_utils/touch				:fileutil
-sys_utils/chmem					:sysutil
+file_utils/touch				:fileutil			:720k
+sys_utils/chmem					:sysutil			:720k
 sys_utils/kill					:sysutil		:360k
 sys_utils/ps					:sysutil		:360k
 sys_utils/reboot				:sysutil		:360k
 sys_utils/man					:sysutil
-sys_utils/meminfo				:sysutil
+sys_utils/meminfo				:sysutil			:720k
 sys_utils/mouse					:sysutil
-sys_utils/passwd				:sysutil
-sys_utils/poweroff				:sysutil
+sys_utils/passwd				:sysutil			:720k
+sys_utils/poweroff				:sysutil			:720k
 sys_utils/who					:sysutil
 sys_utils/unreal16				:sysutil
-sh_utils/basename				:be-shutil
+sh_utils/basename				:be-shutil			:720k
 sh_utils/date					:be-shutil		:360k
-sh_utils/dirname				:be-shutil
-sh_utils/false					:be-shutil
-sh_utils/true					:be-shutil
+sh_utils/dirname				:be-shutil			:720k
+sh_utils/false					:be-shutil			:720k
+sh_utils/true					:be-shutil			:720k
 sh_utils/logname				:shutil
-sh_utils/mesg					:shutil			:360k
+sh_utils/mesg					:shutil
 sh_utils/stty					:shutil			:360k
-sh_utils/printenv				:shutil
+sh_utils/printenv				:shutil			:360k
 sh_utils/pwd					:shutil			:360k
-sh_utils/tr						:shutil
+sh_utils/tr						:shutil				:720k
 sh_utils/which					:shutil
 sh_utils/whoami					:shutil
-sh_utils/xargs					:shutil
-sh_utils/yes					:shutil
-misc_utils/miniterm				:miscutil
-misc_utils/tar					:miscutil
-misc_utils/od					:miscutil
-misc_utils/time					:miscutil
-misc_utils/ed					:be-miscutil
+sh_utils/xargs					:shutil				:720k
+sh_utils/yes					:shutil				:720k
+misc_utils/miniterm				:miscutil			:720k
+misc_utils/tar					:miscutil			:720k
+misc_utils/od					:miscutil		:360k
+misc_utils/time					:miscutil		:360k
+misc_utils/ed					:be-miscutil		:720k
 levee/lev	::bin/vi			:levee			:360k
 minix1/banner					:minix1
 minix1/decomp16					:minix1
-minix1/fgrep					:minix1
+minix1/fgrep					:minix1				:720k
 #minix1/grep					:minix1
 minix1/sum						:minix1
-minix1/uniq						:minix1
+minix1/uniq						:minix1				:720k
 minix1/wc						:minix1
 minix1/proto					:minix1
-minix1/cut						:be-minix1
+minix1/cut						:be-minix1			:720k
 minix1/cksum					:be-minix1
 minix1/du						:be-minix1		:360k
-minix2/env						:minix2			:360k
+minix2/env						:minix2
 minix2/lp						:minix2
 minix2/pwdauth					:minix2
 minix2/remsync					:minix2
 minix2/synctree					:minix2
 minix2/tget						:minix2
-minix3/sed						:minix3
-minix3/file						:minix3
-minix3/head						:minix3
-minix3/sort						:minix3
-minix3/tail						:minix3
-minix3/tee						:minix3
+minix3/sed						:minix3				:720k
+minix3/file						:minix3				:720k
+minix3/head						:minix3				:720k
+minix3/sort						:minix3				:720k
+minix3/tail						:minix3				:720k
+minix3/tee						:minix3				:720k
 minix3/cal						:be-minix3
-minix3/diff						:be-minix3
-minix3/find						:be-minix3
+minix3/diff						:be-minix3			:720k
+minix3/find						:be-minix3			:720k
 disk_utils/fsck					:diskutil
 disk_utils/mkfs					:diskutil
 disk_utils/partype				:diskutil
@@ -142,9 +143,9 @@ inet/telnet/telnet				:net
 inet/telnetd/telnetd			:net
 inet/tinyirc/tinyirc			:net
 inet/urlget/urlget				:net
-mtools/mcopy					:mtools
+mtools/mcopy					:mtools				:720k
 mtools/mdel						:mtools
-mtools/mdir						:mtools
+mtools/mdir						:mtools				:720k
 mtools/mkdfs					:mtools
 mtools/mmd						:mtools
 mtools/mrd						:mtools
@@ -154,4 +155,4 @@ mtools/mtype					:mtools
 mtools/mwrite					:mtools
 bc/bc							:other
 prems/pres/pres					:other
-nano-X/bin/landmine				:nanox
+nano-X/bin/landmine				:nanox				:720k
