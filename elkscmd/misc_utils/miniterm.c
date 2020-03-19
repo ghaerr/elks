@@ -223,6 +223,15 @@ static speed_t convert_baudrate(speed_t baudrate)
 	}
 }
 
+static void set_raw(int fd)
+{
+	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+}
+
+static void set_normal(int fd)
+{
+	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
+}
 
 /**
  * Opens serial port
@@ -244,16 +253,7 @@ static int serial_open(const char *device, speed_t baudrate, bool rtscts, struct
 	if (fd == -1)
 		return -1;
 
-#if ELKS
-	b = fcntl(fd, F_GETFL, 0);
-	fcntl(fd, F_SETFL, b | O_NONBLOCK);
-	/* no block on stdin */
-	b = fcntl(0, F_GETFL, 0);
-	fcntl(0, F_SETFL, b | O_NONBLOCK);
-	b=0;
-#else
-	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
-#endif
+	set_raw(fd);
 
 	if (old != NULL)
 		tcgetattr(fd, old);
@@ -454,9 +454,10 @@ int main(int argc, char **argv)
 		perror(device);
 		exit(1);
 	}
-#if ELKS
+
+	set_raw(0);
+
 	usage(argv[0]);
-#endif
 	fprintf(stderr, "Connected to %s at %lubps. Press '%c%c' to exit, '%c%c' for help.\n\n",
 		device, (unsigned long)baudrate, ESCAPE_CHARACTER, EXIT_CHARACTER,
 		ESCAPE_CHARACTER, HELP_CHARACTER);
@@ -508,6 +509,7 @@ int main(int argc, char **argv)
 			fd = serial_open(device, baudrate, rtscts, &serial_termio);
 			if (fd == -1) {
 				perror(device);
+				set_normal(0);
 				exit(1);
 			}
 		}
@@ -651,9 +653,9 @@ int main(int argc, char **argv)
 	} else if (fd != -1) {
 		serial_close(fd, &serial_termio);
 	}
+	set_normal(0);
 
 	fprintf(stderr, "\nConnection closed.\n");
 
 	return retval;
 }
-
