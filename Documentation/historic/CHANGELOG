@@ -137,8 +137,6 @@ Fri Nov 01 01:52:44 EET 2002	Harry Kalogirou <harkal@gmx.net>
           process.
         * Removed FLOAT_HOLES related code from malloc.c
         * Stack overflow check for new the new process memory setup.
-        * Added CONFIG_ADVANCED_MM option to select the inclusion of 
-          growing holes and relocatable code and data segments code.
         * Removed CONFIG_EXEC_MINIX. We support minix executables by default
         * Rearranged memory manager related config menus
         * Added the CONFIG_EXEC_ELKS to control the inclusion of code to
@@ -1739,7 +1737,6 @@ Mon Aug 13 18:50:50 BST 2001	Riley Williams <rhw@MemAlpha.cx>
 	ROM_8253_100HZ			CONFIG_HW_8253_VALUE_FOR_100HZ
 	ROM_ADD_BIOS			CONFIG_ROM_ADD_BIOS_IMAGE
 	ROM_BASIS			CONFIG_ROM_BASE
-	ROM_BOGOMIPS			CONFIG_BOGOMIPS
 	ROM_CHECKSUM_SIZE		CONFIG_ROM_CHECKSUM_SIZE
 	ROM_CODE_DEBUG			CONFIG_ROM_DEBUG
 	ROM_CONFIG_8253			CONFIG_HW_8253_SYSTEM_CLOCK

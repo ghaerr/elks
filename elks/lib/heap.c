@@ -19,7 +19,7 @@ static heap_s * _heap_first;
 
 // Split block if enough large
 
-static void split (heap_s * h1, word_t size0)
+static void heap_split (heap_s * h1, word_t size0)
 {
 	word_t size2 = h1->size - size0;
 
@@ -35,16 +35,17 @@ static void split (heap_s * h1, word_t size0)
 }
 
 
-// Get a free block
+// Get free block
 
-static heap_s * free_get (word_t size0)
+static heap_s * free_get (word_t size0, byte_t tag)
 {
 	heap_s * best_h  = 0;
 	word_t best_size = 0xFFFF;
 
+	if (!_heap_first) return 0;
 	heap_s * h = _heap_first;
 
-	// First get the smallest suitable block
+	// First get the smallest suitable free block
 	// TODO: improve speed with free list
 
 	while (1) {
@@ -63,8 +64,8 @@ static heap_s * free_get (word_t size0)
 	// Then allocate that free block
 
 	if (best_h) {
-		split (best_h, size0);
-		best_h->tag = HEAP_TAG_USED;
+		heap_split (best_h, size0);
+		best_h->tag = HEAP_TAG_USED | tag;
 	}
 
 	return best_h;
@@ -73,40 +74,40 @@ static heap_s * free_get (word_t size0)
 
 // Merge two contiguous blocks
 
-static void merge (heap_s * h1, heap_s * h2)
+static void heap_merge (heap_s * h1, heap_s * h2)
 {
-	list_remove (&(h2->node));
 	h1->size = h1->size + sizeof (heap_s) + h2->size;
+	list_remove (&(h2->node));
 }
 
 
-// Try merge with previous block
+// Try to heap_merge with previous block
 
-static heap_s * merge_prev (heap_s * h)
+static heap_s * heap_merge_prev (heap_s * h)
 {
 	if (h == _heap_first) return h;
 	heap_s * prev = structof (h->node.prev, heap_s, node);
 	if (prev->tag & HEAP_TAG_USED) return h;
-	merge (prev, h);
+	heap_merge (prev, h);
 	return prev;
 }
 
-// Try merge with next block
+// Try to heap_merge with next block
 
-static void merge_next (heap_s * h)
+static void heap_merge_next (heap_s * h)
 {
 	heap_s * next = structof (h->node.next, heap_s, node);
 	if ((next != _heap_first) && !((next->tag) & HEAP_TAG_USED))
-		merge (h, next);
+		heap_merge (h, next);
 }
 
 
-// Allocate block on heap
+// Allocate block
 
-void * heap_alloc (word_t size)
+void * heap_alloc (word_t size, byte_t tag)
 {
 	wait_lock (&_heap_lock);
-	heap_s * h = free_get (size);
+	heap_s * h = free_get (size, tag);
 	if (h) h++;  // skip header
 	event_unlock (&_heap_lock);
 	return h;
@@ -118,11 +119,11 @@ void heap_free (void * data)
 {
 	wait_lock (&_heap_lock);
 	heap_s * h1 = ((heap_s *) (data)) - 1;  // back to header
-	heap_s * h2 = merge_prev (h1);
-	if (h1 == h2)  // no merge
-		h2->tag = 0;  // free
+	heap_s * h2 = heap_merge_prev (h1);
+	if (h1 == h2)  // no heap_merge
+		h1->tag = 0;  // free
 
-	merge_next (h2);
+	heap_merge_next (h2);
 	event_unlock (&_heap_lock);
 }
 

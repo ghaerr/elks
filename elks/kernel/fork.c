@@ -76,22 +76,22 @@ pid_t do_fork(int virtual)
     /*
      * We do shared text.
      */
-    mm_get(currentp->mm.cseg);
+    seg_get(currentp->mm.seg_code);
 
     if (virtual) {
-	mm_get(currentp->mm.dseg);
+	seg_get(currentp->mm.seg_data);
     } else {
-	t->mm.dseg = mm_dup(currentp->mm.dseg);
+	t->mm.seg_data = seg_dup(currentp->mm.seg_data);
 
-	if (t->mm.dseg == 0) {
-	    mm_put(currentp->mm.cseg);
+	if (t->mm.seg_data == 0) {
+	    seg_put (currentp->mm.seg_code);
 	    t->state = TASK_UNUSED;
             task_slots_unused++;
             next_task_slot = t;
 	    return -ENOMEM;
 	}
 
-	t->t_regs.ds = t->t_regs.es = t->t_regs.ss = t->mm.dseg;
+	t->t_regs.ds = t->t_regs.es = t->t_regs.ss = (t->mm.seg_data)->base;
     }
 
     /* Increase the reference count to all open files */

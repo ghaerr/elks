@@ -51,12 +51,12 @@ void do_exit(int status)
 
     /* Let go of the process */
     current->state = TASK_EXITING;
-    if (current->mm.cseg)
-	mm_put(current->mm.cseg);
-    if (current->mm.dseg)
-	mm_put(current->mm.dseg);
+    if (current->mm.seg_code)
+	seg_put(current->mm.seg_code);
+    if (current->mm.seg_data)
+	seg_put(current->mm.seg_data);
 
-    current->mm.cseg = current->mm.dseg = 0;
+    current->mm.seg_code = current->mm.seg_data = 0;
 
     /* Keep all of the family stuff straight */
     if ((task = current->p_prevsib)) {
