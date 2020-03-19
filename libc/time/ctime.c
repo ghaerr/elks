@@ -17,10 +17,9 @@ __const time_t * timep;
   
   gettimeofday((void*)0, &tz);
   
-  if (!_tz_is_set) {
+  if (!_tz_is_set)
 	tzset();
-	tz.tz_minuteswest = timezone / 60;
-  }
+  tz.tz_minuteswest = timezone / 60;
   offt = -tz.tz_minuteswest*60L;
   
   /* tmb.tm_isdst = ? */
