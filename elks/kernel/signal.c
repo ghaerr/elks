@@ -26,7 +26,7 @@ static void generate(sig_t sig, sigset_t msksig, register struct task_struct *p)
 	if (!(msksig & SM_SIGCHLD)) debug_sig("SIGNAL ignoring %d pid %d\n", sig, p->pid);
 	return;
     }
-    debug_sig("SIGNAL generate sig %d %x pid %d\n", sig, msksig, p->pid);
+    debug_sig("SIGNAL gen_sig %d mask %x pid %d\n", sig, msksig, p->pid);
     p->signal |= msksig;
     if ((p->state == TASK_INTERRUPTIBLE) /* && (p->signal & ~p->blocked) */ ) {
 	debug_sig("SIGNAL wakeup pid %d\n", p->pid);
@@ -81,7 +81,7 @@ int kill_process(pid_t pid, sig_t sig, int priv)
 {
     register struct task_struct *p;
 
-    debug_sig("SIGNAL kill sig %d pid %d\n", sig, pid);
+    debug_sig("SIGNAL kill_proc sig %d pid %d\n", sig, pid);
     for_each_task(p)
 	if (p->pid == pid)
 	    return send_sig(sig, p, 0);
@@ -94,6 +94,7 @@ int sys_kill(pid_t pid, sig_t sig)
     register struct task_struct *p;
     int count, err, retval;
 
+    debug_sig("SIGNAL sys_kill %d, %d pid %d\n", pid, sig, current->pid);
     if ((unsigned int)(sig - 1) > (NSIG-1))
 	return -EINVAL;
 

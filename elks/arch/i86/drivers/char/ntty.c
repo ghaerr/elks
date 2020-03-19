@@ -125,10 +125,10 @@ void tty_release(struct inode *inode, struct file *file)
     if (!rtty)
 	return;
 
-    debug_sup("TTY close pid %d\n", current->pid);
+    debug_sig("TTY close pid %d\n", current->pid);
     if (current->pid == rtty->pgrp) {
+	debug_sig("TTY release pgrp %d\n", current->pid);
 	kill_pg(rtty->pgrp, SIGHUP, 1);
-	debug_sup("TTY release pgrp %d\n", current->pid);
 	rtty->pgrp = 0;
     }
     rtty->flags &= ~TTY_OPEN;
