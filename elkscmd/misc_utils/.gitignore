@@ -3,5 +3,6 @@ compress
 compress.host
 ed
 tar
+od
 uncompress
 zcat

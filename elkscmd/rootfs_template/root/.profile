@@ -1,4 +1,4 @@
 PATH=/bin:/usr/bin:/sbin
 export PATH
-TZ=0
+TZ=GMT0
 export TZ

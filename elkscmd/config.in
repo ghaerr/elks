@@ -26,7 +26,7 @@ mainmenu_option next_comment
 	bool 'nano-X'			CONFIG_APP_NANOX		y
 	bool 'other'         	CONFIG_APP_OTHER         y
 
-	#comment 'Commands not compiling'
+	comment 'Commands not compiling'
 
 	bool 'byacc'      CONFIG_APP_BYACC      n
 	bool 'elvis'      CONFIG_APP_ELVIS      n

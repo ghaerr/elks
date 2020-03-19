@@ -436,6 +436,7 @@ do_cp(argc, argv)
 	}
 
 	while (argc-- > 2) {
+		srcname = argv[1];
 		destname = lastarg;
 		if (dirflag)
 			destname = buildname(destname, srcname);
@@ -508,9 +509,6 @@ do_cmp(argc, argv)
 	int		cc1;
 	int		cc2;
 	long		pos;
-	char		*srcname;
-	char		*destname;
-	char		*lastarg;
 	char		*bp1;
 	char		*bp2;
 	char		buf1[512];

@@ -72,7 +72,7 @@
 static void lsfile();
 static void setfmt();
 static char *modestring(int mode);
-static char *timestring(long t);
+static char *timestring(time_t t);
 
 
 struct stack
@@ -185,7 +185,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
     *cp = '\0';
 
     if (flags & LSF_INODE) {
-	sprintf(cp, "%5ld ", (unsigned long)statbuf->st_ino);
+	sprintf(cp, "%5lu ", (unsigned long)statbuf->st_ino);
 	cp += strlen(cp);
     }
 
@@ -353,9 +353,9 @@ static char *modestring(int mode)
  * The string is returned from a static buffer, and so is overwritten for
  * each call.
  */
-static char *timestring(long t)
+static char *timestring(time_t t)
 {
-    long  now;
+    time_t  now;
     char  *str;
     static char buf[26];
 

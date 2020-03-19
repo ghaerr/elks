@@ -90,7 +90,7 @@ extern FILE stderr[1];
 
 #define ferror(fp)	(((fp)->mode&__MODE_ERR) != 0)
 #define feof(fp)   	(((fp)->mode&__MODE_EOF) != 0)
-#define clearerr(fp)	((fp)->mode &= ~(__MODE_EOF|__MODE_ERR),0)
+#define clearerr(fp)	((fp)->mode &= ~(__MODE_EOF|__MODE_ERR))
 #define fileno(fp)	((fp)->fd)
 
 /* declare functions; not like it makes much difference without ANSI */
@@ -142,6 +142,7 @@ int vsprintf (char * sp, const char * format, va_list ap);
 #define stdio_pending(fp) ((fp)->bufread>(fp)->bufpos)
 
 void perror (const char * s);
+int rename(const char *old, const char *new);
 
 int scanf (const char * format, ...);
 int sscanf (const char * str, const char * format, ...);

@@ -131,7 +131,7 @@ docommands()
 
 		cp = buf;
 		while (isblank(*cp))
-			*cp++;
+			cp++;
 
 		have1 = FALSE;
 		have2 = FALSE;
@@ -754,6 +754,7 @@ initedit()
 
 	for (i = 0; i < 26; i++)
 		marks[i] = 0;
+	return TRUE;
 }
 
 

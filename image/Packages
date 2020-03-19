@@ -96,6 +96,7 @@
 /bin/mv				:small
 /bin/netstat				:net
 /bin/nslookup				:net
+/bin/od								:fileutil
 /bin/passwd				:base
 /bin/poweroff			:base
 /bin/printenv					:shutil

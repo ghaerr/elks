@@ -254,7 +254,6 @@ int main(int argc, char **argv)
 		putenv("PATH=/bin:/usr/bin:/sbin");
 
 #ifdef CMD_SOURCE
-#ifdef LATER
 	cp = getenv("HOME");
 	if (cp) {
 		strcpy(buf, cp);
@@ -264,7 +263,6 @@ int main(int argc, char **argv)
 		if ((access(buf, 0) == 0) || (errno != ENOENT))
 			readfile(buf);
 	}
-#endif
 
 	if (argc > 1) {
 		readfile(argv[1]);
@@ -404,6 +402,16 @@ command(char *cmd)
 {
 	char	**argv;
 	int	argc;
+	int	newargc;
+#ifdef WILDCARDS
+	int	oac;
+	int	matches;
+	int	i;
+	char	*newargv[MAXARGS];
+	char	*nametable[MAXARGS];
+#else
+	char **newargv;
+#endif
 #ifdef CMD_ALIAS
 	ALIAS	*alias;
 	char	buf[CMDLEN];
@@ -441,20 +449,51 @@ command(char *cmd)
 	}
 #endif
 
+#ifdef WILDCARDS
+	/*
+	 * Now for each command argument, see if it is a wildcard, and if
+	 * so, replace the argument with the list of matching filenames.
+	 */
+	newargv[0] = argv[0];
+	newargc = 1;
+	oac = 0;
+
+	while (++oac < argc) {
+		matches = expandwildcards(argv[oac], MAXARGS, nametable);
+		if (matches < 0)
+			return;
+
+		if ((newargc + matches) >= MAXARGS) {
+			fprintf(stderr, "Too many arguments\n");
+			return;
+		}
+
+		if (matches == 0)
+			newargv[newargc++] = argv[oac];
+
+		for (i = 0; i < matches; i++)
+			newargv[newargc++] = nametable[i];
+	}
+	newargv[newargc] = NULL;
+#else
+	newargc = argc;
+	newargv = argv;
+#endif
+
 	/*
 	 * Check if the command line has '>', '<', '&' etc that require a full shell.
 	 * If so, then the external program will be run rather than the builtin.
 	 */
 	if (!needfullshell(cmd)) {
-		if (trybuiltin(argc, argv))
+		/* pass non-expanded args also for alias and prompt*/
+		if (trybuiltin(newargc, newargv, argc, argv))
 			return;
 	}
 
 	/*
 	 * Not a builtin or needs full shell, run the program along the PATH list.
 	 */
-	 runcmd(cmd, argc, argv);
-
+	 runcmd(cmd, newargc, newargv);
 }
 
 /*
@@ -463,17 +502,9 @@ command(char *cmd)
  * command succeeds.  Returns FALSE if this is not a built-in command.
  */
 static BOOL
-trybuiltin(int argc, char **argv)
+trybuiltin(int wildargc, char **wildargv, int argc, char **argv)
 {
 	CMDTAB	*cmdptr;
-#ifdef WILDCARDS
-	int	oac;
-	int	matches;
-	int	newargc;
-	int	i;
-	char	*newargv[MAXARGS];
-	char	*nametable[MAXARGS];
-#endif
 
 	cmdptr = cmdtab - 1;
 	do {
@@ -508,37 +539,8 @@ trybuiltin(int argc, char **argv)
 		return TRUE;
 	}
 
-#ifdef WILDCARDS
-	/*
-	 * Now for each command argument, see if it is a wildcard, and if
-	 * so, replace the argument with the list of matching filenames.
-	 */
-	newargv[0] = argv[0];
-	newargc = 1;
-	oac = 0;
+	(*cmdptr->func)(wildargc, wildargv);
 
-	while (++oac < argc) {
-		matches = expandwildcards(argv[oac], MAXARGS, nametable);
-		if (matches < 0)
-			return TRUE;
-
-		if ((newargc + matches) >= MAXARGS) {
-			fprintf(stderr, "Too many arguments\n");
-			return TRUE;
-		}
-
-		if (matches == 0)
-			newargv[newargc++] = argv[oac];
-
-		for (i = 0; i < matches; i++)
-			newargv[newargc++] = nametable[i];
-	}
-
-	(*cmdptr->func)(newargc, newargv);
-#else
-	(*cmdptr->func)(argc, argv);
-
-#endif
 	return TRUE;
 }
 
@@ -687,8 +689,7 @@ do_alias(argc, argv)
 		count = aliascount + ALIASALLOC;
 
 		if (aliastable)
-			alias = (ALIAS *) realloc(aliastable,
-				sizeof(ALIAS *) * count);
+			alias = (ALIAS *) realloc(aliastable, sizeof(ALIAS *) * count);
 		else
 			alias = (ALIAS *) malloc(sizeof(ALIAS *) * count);
 

@@ -86,7 +86,7 @@ do_grep(argc, argv)
 				if (tellname)
 					printf("%s: ", name);
 				if (tellline)
-					printf("%d: ", line);
+					printf("%ld: ", line);
 
 				fputs(buf, stdout);
 			}
