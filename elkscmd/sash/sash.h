@@ -16,6 +16,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/mount.h>
 #include "config.h"
 
 #define	PATHLEN		256	

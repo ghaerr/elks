@@ -124,6 +124,7 @@
 /bin/telnetd				:net
 /bin/test		:boot
 /bin/tget							:fileutil
+/bin/time							:fileutil
 /bin/tinyirc				:net
 /bin/touch							:fileutil
 /bin/tr							:shutil

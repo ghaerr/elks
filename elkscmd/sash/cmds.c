@@ -161,9 +161,13 @@ void
 do_rm(argc, argv)
 	char	**argv;
 {
+	struct stat sbuf;
+
 	while (argc-- > 1) {
-		if (unlink(argv[1]) < 0)
-			perror(argv[1]);
+		if (!lstat(argv[1], &sbuf)) {
+			if (unlink(argv[1]) < 0)
+				fprintf(stderr, "Could not remove %s\n", argv[1]);
+		} else fprintf(stderr, "%s not found\n", argv[1]);
 		argv++;
 	}
 }
@@ -480,7 +484,7 @@ do_mount(argc, argv)
 	}
 
 	if (argc != 2) {
-		fprintf(stderr, "Wrong number of arguments for mount\n");
+		fprintf(stderr, "Usage: mount [-t type] <device> <directory\n");
 		return;
 	}
 
@@ -494,6 +498,10 @@ void
 do_umount(argc, argv)
 	char	**argv;
 {
+	if (argc != 2) {
+		fprintf(stderr, "Usage: umount <device>|<directory>\n");
+		return;
+	}
 	if (umount(argv[1]) < 0)
 		perror(argv[1]);
 }

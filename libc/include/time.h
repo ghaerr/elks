@@ -38,9 +38,9 @@ struct timezone {
 #define	__isleap(year)	\
   ((year) % 4 == 0 && ((year) % 100 != 0 || (year) % 400 == 0))
 
-extern char *tzname[2];
-extern int daylight;
-extern long int timezone;
+//extern char *tzname[2];
+//extern int daylight;
+extern long timezone;
 
 __BEGIN_DECLS
 
