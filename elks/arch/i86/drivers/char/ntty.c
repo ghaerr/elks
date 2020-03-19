@@ -74,9 +74,14 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
 struct tty *determine_tty(dev_t dev)
 {
     register struct tty *ttyp = &ttys[0];
+    unsigned short minor = MINOR(dev);
+
+    /* handle /dev/tty*/
+    if (minor == 255 && current->pgrp && (current->pgrp == ttyp->pgrp))
+	return current->tty;
 
     do {
-	if (ttyp->minor == (unsigned short int)MINOR(dev))
+	if (ttyp->minor == minor)
 	    return ttyp;
     } while (++ttyp < &ttys[MAX_TTYS]);
 

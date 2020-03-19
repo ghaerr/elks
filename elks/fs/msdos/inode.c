@@ -24,16 +24,14 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "kmem",	S_IFCHR | 0644, MKDEV(1, 2) },
     { "null",	S_IFCHR | 0644, MKDEV(1, 3) },
     { "zero",	S_IFCHR | 0644, MKDEV(1, 5) },
-//  { "full",	S_IFCHR | 0644, MKDEV(1, 7) },
     { "tcpdev",	S_IFCHR | 0644, MKDEV(8, 0) },
     { "eth",	S_IFCHR | 0644, MKDEV(9, 0) },
     { "tty1",	S_IFCHR | 0644, MKDEV(4, 0) },
     { "tty2",	S_IFCHR | 0644, MKDEV(4, 1) },
-    { "tty3",	S_IFCHR | 0644, MKDEV(4, 2) },
     { "ttyS0",	S_IFCHR | 0644, MKDEV(4, 64)},
     { "ttyS1",	S_IFCHR | 0644, MKDEV(4, 65)},
     { "ttyS2",	S_IFCHR | 0644, MKDEV(4, 66)},
-//  { "ttyS3",	S_IFCHR | 0644, MKDEV(4, 67)},
+    { "tty",	S_IFCHR | 0666, MKDEV(4, 255) },
 };
 #endif
 

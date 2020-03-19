@@ -115,30 +115,24 @@ devices:
 #	$MKSET  64 63 $(MKDEV) /dev/hdb b 3	# Ought to be.
 
 ##############################################################################
-# Virtual consoles. Note that tty4 through tty7 can't be enabled at this
-# time because of the possible conflict with ttyS0 through ttyS3 which
-# used to use the node numbers these now use. However, it is expected that
-# this restriction can be removed in the near future.
-
-# CM: ELKS wants tty1 to be minor 0, so we can't use $MKSET
+# Virtual consoles and serial ports.
 
 	$(MKDEV) /dev/tty1	c 4 0
 	$(MKDEV) /dev/tty2	c 4 1
 	$(MKDEV) /dev/tty3	c 4 2
 	$(MKDEV) /dev/tty4	c 4 3
 
-#	$MKSET  0 3  $(MKDEV) /dev/tty c 4	# Currently
-#	$MKSET  0 15 $(MKDEV) /dev/tty c 4	# Soon to be
+# /dev/tty is minor 255, last of the /dev/ttye range
+
+	$(MKDEV) /dev/tty	c 4 255 1 1 0666
 
 # Serial ports, as detected by the ROM BIOS.
 
 	$(MKDEV) /dev/ttyS c 4 64 4
-#	$MKSET 64 3  $(MKDEV) /dev/ttyS c 4
 
 ##############################################################################
 # Alternate TTY devices. These are not yet supported.
 
-	$(MKDEV) /dev/tty	c 5 0
 #	$(MKDEV) /dev/console	c 5 1
 #	$(MKDEV) /dev/ptmx	c 5 2
 

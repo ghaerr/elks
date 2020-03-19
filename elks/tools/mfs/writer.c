@@ -169,25 +169,27 @@ void cmd_mknode(struct minix_fs_dat *fs,int argc,char **argv) {
   int major = 0, minor = 0, count = 0,inc = 1;
 
   if (argc < 4 || (type = ftype(argv[2])) < 0)
-    fatalmsg("Usage: %s path [c|b] major minor [count inc]\n", argv[0]);
+    fatalmsg("Usage: %s path [c|b] major minor [count inc mode]\n", argv[0]);
   
-  mode = type | 0644;
+  mode = 0644;
   major = atoi(argv[3]);
   minor = atoi(argv[4]);
   if (argc > 5) count = atoi(argv[5]);
   if (argc > 6) inc = atoi(argv[6]);
+  if (argc > 7) sscanf(argv[7], "%o", &mode);
   if (inc < 1) fatalmsg("Invalid increment value: %d\n",inc);
+  if (mode == -1) fatalmsg("Invalid mode %s\n", argv[7]);
 
-  if (count && (type == S_IFBLK || type == S_IFCHR)) {
+  if (count > 1 && (type == S_IFBLK || type == S_IFCHR)) {
     int i = 0;
     char b[256];
     do {
       snprintf(b,sizeof b,"%s%d",argv[1],i++);
-      make_node(fs,b,mode,uid,gid,DEVNUM(major,minor),NOW,NOW,NOW,NULL);
+      make_node(fs,b,mode|type,uid,gid,DEVNUM(major,minor),NOW,NOW,NOW,NULL);
       minor += inc;
     } while (--count);
   } else {
-      make_node(fs, argv[1], mode, uid, gid, DEVNUM(major,minor), NOW, NOW, NOW, NULL);
+      make_node(fs, argv[1], mode|type, uid, gid, DEVNUM(major,minor), NOW, NOW, NOW, NULL);
   }
 }
 
