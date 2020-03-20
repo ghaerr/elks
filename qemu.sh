@@ -10,7 +10,10 @@ echo "Using QEMU: $QEMU"
 
 # Select disk image to use
 # MINIX or FAT .config build
+#IMAGE="-fda image/fd2880.bin"
 IMAGE="-fda image/fd1440.bin"
+#IMAGE="-fda image/fd720.bin"
+#IMAGE="-fda image/fd360.bin"
 #IMAGE="-hda image/hd.bin"
 
 # FAT package manager build

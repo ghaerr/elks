@@ -523,7 +523,8 @@ track_max:
 #if defined(CONFIG_IMG_FD360)
 	.word 40
 #elif defined(CONFIG_IMG_FD720) || defined(CONFIG_IMG_FD1200) \
-      || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680)
+      || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680) \
+	  || defined(CONFIG_IMG_FD2880)
 	.word 80
 #elif defined(CONFIG_IMG_HD)
 	.word CONFIG_IMG_CYL
@@ -543,6 +544,8 @@ sect_max:
 	.byte 18
 #elif defined(CONFIG_IMG_FD1680)
 	.byte 21
+#elif defined(CONFIG_IMG_FD2880)
+	.byte 36
 #elif defined(CONFIG_IMG_HD)
 	.byte CONFIG_IMG_SECT
 #else
@@ -555,7 +558,7 @@ head_max:
 #endif
 #if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) \
     || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) \
-    || defined(CONFIG_IMG_FD1680)
+    || defined(CONFIG_IMG_FD1680) || defined(CONFIG_IMG_FD2880)
 	.byte 2
 #elif defined(CONFIG_IMG_HD)
 	.byte CONFIG_IMG_HEAD

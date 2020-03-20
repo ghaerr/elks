@@ -46,6 +46,9 @@ TAGS=
 # Old-style installation
 INSTDIRS=
 
+#
+# Install apps by source directory
+#
 ifdef CONFIG_APP_ASH
 	TAGS += :ash|
 endif
@@ -130,6 +133,25 @@ endif
 
 ifdef CONFIG_APP_TEST
 	INSTDIRS += test
+endif
+
+#
+# Install apps by image size
+#
+ifdef CONFIG_APPS_360K
+	TAGS = :boot|:360k|
+endif
+
+ifdef CONFIG_APPS_720K
+	TAGS = :boot|:360k|:net|:720k|
+endif
+
+ifdef CONFIG_APPS_1440K
+	TAGS = :*|
+endif
+
+ifdef CONFIG_APPS_2880K
+	TAGS = :*|
 endif
 
 TAGS += :end

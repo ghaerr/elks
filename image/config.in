@@ -14,9 +14,8 @@ mainmenu_option next_comment
 	if [ "$CONFIG_IMG_ROM" != "y" ]; then
 
 		choice 'Medium' \
-		"FD1680 CONFIG_IMG_FD1680 \
+		"FD2880 CONFIG_IMG_FD2880 \
 		 FD1440 CONFIG_IMG_FD1440 \
-		 FD1200 CONFIG_IMG_FD1200 \
 		 FD720  CONFIG_IMG_FD720  \
 		 FD360  CONFIG_IMG_FD360  \
 		 HD     CONFIG_IMG_HD" FD1440
