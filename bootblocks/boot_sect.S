@@ -20,12 +20,15 @@
 #define ELKS_INITSEG (0x0100)
 #define ELKS_SYSSEG  (0x1000)
 
-// Whether to copy and modify the BIOS floppy parameter table to allow
-// whole-track reads in the bootloader
+// Whether to try to do whole-track reads, or read one sector at a time
 //
-// This is currently disabled because it may clash with setup.S which may
-// overwrite the area used by the new table
-#undef FROB_DDPT
+// Whole-track reads are disabled for the FAT bootloader because we are a
+// bit short of code space :-(
+#ifndef BOOT_FAT
+#   define FAST_READ
+#else
+#   undef FAST_READ
+#endif
 
 	.code16
 
@@ -35,12 +38,10 @@
 
 entry:
 
-#ifdef FROB_DDPT
 // Allow the new BIOS floppy parameter table to clobber the first few bytes
 // of the boot sector after we are done with them
 
 floppy_table:
-#endif
 
 #ifdef BOOT_FAT
 	jmp entry1
@@ -68,6 +69,8 @@ entry1:
 	sub $0x1000,%ax
 	and $0xF000,%ax
 	mov %ax,%es
+	mov %ax,%ss   // automatic CLI for next instruction
+	xor %sp,%sp
 
 	xor %di,%di
 	mov %di,%ds
@@ -77,12 +80,18 @@ entry1:
 	rep
 	movsw
 
-#ifdef FROB_DDPT
 	// Copy the current BIOS floppy parameter table
 	// so that we could modify it locally
+	//
+	// Keep a pointer to the original table so that _restore_ddpt can
+	// restore it later
 
 	mov $0x78,%bx  // 0:78h (INT vector 1Eh)
 	lds (%bx),%si  // ds:si = BIOS original table
+	push %ds
+	push %si
+	push %cs
+	push %bx
 .if floppy_table == entry
 	xor %di,%di
 .else
@@ -99,15 +108,11 @@ entry1:
 	mov %cx,%ds    // CX = 0
 	popw (%bx)
 	mov %es,2(%bx)
-#endif
 
-	// Rebase CS DS ES SS to work in the 64K segment
+	// Rebase CS DS to work in the 64K segment
 
 	push %es
 	pop %ds
-	push %es
-	pop %ss        // automatic CLI for next instruction
-	xor %sp,%sp
 
 	push %ss
 	mov $_next1,%cl  // CH = 0
@@ -125,12 +130,10 @@ _next1:
 	mov $msg_boot,%bx
 	call _puts
 
-#ifdef FROB_DDPT
 	// Set sector count in floppy parameter table
 
 	mov sect_max,%al
 	mov %al,floppy_table + 4
-#endif
 
 #ifndef BOOT_FAT
 	// Load the second sector of the boot block
@@ -165,26 +168,47 @@ no_system:
 except:
 _except:
 	// AL = exception code
-	xor %sp,%sp
+	call _restore_ddpt
 	add $'0',%al  // first version with single digit
 	call _putc
 	mov $msg_error,%bx
-	jmp _reboot1
+	jmp _reboot2
 
 	.global _reboot
 
 _reboot:
 
-	mov $msg_reboot,%bx
+	call _restore_ddpt
 
 _reboot1:
+	mov $msg_reboot,%bx
+
+_reboot2:
 	call _puts
 
 	xor %ax,%ax  // wait for key
 	int $0x16
 
 	int $0x19    // BIOS bootstrap
-	jmp _reboot
+	jmp _reboot1
+
+//------------------------------------------------------------------------------
+
+// Restore the original (i.e. BIOS's) Diskette Drive Parameter Table
+//
+// Note: this routine preserves AX, and resets DS and SP!  Use it only upon
+// an error or just before handing over to /linux
+
+_restore_ddpt:
+	pop %cx
+	mov $-8,%sp
+	pop %bx
+	pop %ds
+	popw (%bx)
+	popw 2(%bx)
+	push %cs
+	pop %ds
+	jmp %cx
 
 //------------------------------------------------------------------------------
 
@@ -288,13 +312,14 @@ dr_loop:
 #endif
 	div %bx          // DL = physical sector number - 1
 	or %dl,%cl       // stash {physical sector number - 1} in CL
+	inc %cx          // base 1 for sector number
 	mov %al,%dh      // DH = physical head number
 
+#ifdef FAST_READ
 	// Compute number of sectors to read
 	// First limit the sector count to the end of the track
 
 	sub %dl,%bl
-	inc %cx          // base 1 for sector number
 	mov -4(%bp),%ax
 	cmp %bx,%ax
 	jna dr_over
@@ -318,16 +343,23 @@ dr_over2:
 	xchg %ax,%bx     // AL = number of sectors to read for this round
 
 dr_over3:
+#endif
 	mov drive_num,%dl
 
 dr_try:
+#ifdef FAST_READ
 	push %ax
+#endif
 	push %cx
 	push %dx
 	push %es
 	mov -6(%bp),%bx
 	mov 4(%bp),%es
+#ifdef FAST_READ
 	mov $0x02,%ah    // BIOS read disk
+#else
+	mov $0x0201,%ax
+#endif
 	int $0x13
 	pop %es
 
@@ -344,8 +376,10 @@ dr_try:
 	decb -7(%bp)
 	pop %dx
 	pop %cx
+#ifdef FAST_READ
 	pop %ax
 	mov $1,%al       // if retry needed, try reading just _one_ sector...
+#endif
 	jnz dr_try
 
 	// TODO: use BIOS returned error
@@ -364,6 +398,7 @@ dr_cont:
 
 	pop %dx
 	pop %cx
+#ifdef FAST_READ
 	pop %ax
 
 	// Update logical sector number and logical count
@@ -378,6 +413,13 @@ dr_cont:
 
 	shl %al          // cannot overflow :-)
 	add %al,-6+1(%bp)
+#else
+	decw -4(%bp)
+	jz dr_exit
+	incw -2(%bp)
+
+	addb $2,-6+1(%bp)
+#endif
 	jnc dr_next
 	addb $0x10,4+1(%bp)
 
@@ -450,7 +492,6 @@ binfile:
 	mov drive_num,%dl
 	xor %dh,%dh
 
-	push %ds
 	mov $LOADSEG,%ax
 	mov %ax,%ds
 
@@ -463,6 +504,7 @@ binfile:
 
 not_elks:
 
+	push %cs
 	pop %ds
 	mov $ERR_BAD_SYSTEM,%al
 	jmp _except
@@ -472,8 +514,6 @@ boot_it:
 	.error
 .endif
 
-	pop %ax
-
 	// Signify that /linux was loaded as 1 blob
 .if ((EF_AS_BLOB|EF_BIOS_DEV_NUM) & 0xff) == 0
 	orb $(EF_AS_BLOB|EF_BIOS_DEV_NUM)>>8,elks_flags+1
@@ -481,6 +521,8 @@ boot_it:
 	orw $(EF_AS_BLOB|EF_BIOS_DEV_NUM),elks_flags
 .endif
 	mov %dx,root_dev
+
+	call _restore_ddpt
 
 	mov $ELKS_INITSEG,%ax
 	mov %ax,%ds

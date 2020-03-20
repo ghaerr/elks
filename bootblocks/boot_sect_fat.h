@@ -217,6 +217,7 @@ not_elks:
 
 boot_it:
 	// w00t!
+	call _restore_ddpt
 	mov drive_num,%al
 	xor %ah,%ah
 	push %es
