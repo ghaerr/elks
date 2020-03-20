@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 	int	col;
 	char 	next[80];
 
-	cin = open("/dev/tty1", O_RDONLY); /* should be 'tty', not tty1. */
+	cin = open("/dev/tty", O_RDONLY); 
 					   /* should do error checking, */
 					   /* but will not be used unless stdout */
 					   /* is a tty. */
@@ -93,6 +93,7 @@ int main(int argc, char **argv)
 				puts("::::::::::::::");
 				puts(name);
 				puts("::::::::::::::");
+				fflush(stdout);
 				line += 3;
 			}
 		} else 
@@ -150,7 +151,7 @@ int main(int argc, char **argv)
 			line = 1; 
 		}
 		if (multi && line > 1 && argc > 2) {
-			strcat(&next[0], "--Next file: "); /* force copy to start at next[0] */
+			strcpy(&next[0], "--Next file: "); 
 			if (more_wait(cin, 1, strcat(next, argv[1])) < 0)
 				exit(0);
 		}
