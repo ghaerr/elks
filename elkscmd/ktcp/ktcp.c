@@ -100,7 +100,7 @@ int main(int argc,char **argv)
     sprintf(dname, "/dev/eth");
 
     if (argc < 3) {
-	printf("Syntax :\n    %s local_ip [interface] [gateway] [netmask]\n", argv[0]);
+	printf("Usage: %s local_ip [interface] [gateway] [netmask]\n", argv[0]);
 	exit(3);
     }
 
@@ -130,10 +130,7 @@ int main(int argc,char **argv)
 	debug("Init /dev/eth\n");
     	dev->type = 1;
 	intfd = deveth_init(dname);
-	if (intfd < 0) {
-	      printf("failed to open /dev/eth [%d]\n", intfd);
-	      exit(1);
-	}
+	if (intfd < 0) exit(1);
     } else { /* fall back to slip */
 	dev->type=0;
 	intfd = slip_init(argv[2]);

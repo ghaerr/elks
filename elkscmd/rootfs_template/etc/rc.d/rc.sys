@@ -3,8 +3,7 @@
 echo Running $0 script
 
 umask 022
-PATH=/bin:/usr/bin
-export PATH
+export PATH=/bin
 
 # init date from hardware
 clock -s
@@ -29,19 +28,19 @@ then
 	echo -n ' eth'
 	fi
 	
-	ktcp $localip $interface &
 	echo ' ktcp'
+	ktcp $localip $interface &
 	
 	echo -n "Starting network services: "
 	for daemon in telnetd httpd
 	do
 		if test -f /bin/$daemon 
 		then
-			echo -n " $daemon"
-			$daemon &
+			echo -n " $daemon "
+			$daemon || true
 		fi
 	done
-	echo .
+	echo
 
 fi
 

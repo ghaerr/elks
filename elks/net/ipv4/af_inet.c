@@ -75,6 +75,8 @@ static int inet_release(struct socket *sock, struct socket *peer)
     int ret;
 
     debug1("inet_release(sock: 0x%x)\n", sock);
+	if (!tcpdev_inuse)
+		return -EINVAL;
     cmd = (struct tdb_release *)get_tdout_buf();
     cmd->cmd = TDC_RELEASE;
     cmd->sock = sock;

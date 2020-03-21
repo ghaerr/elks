@@ -1,7 +1,10 @@
-#pragma once
+/* libc errno.h*/
+#include __SYSINC__(errno.h)
 
+extern int errno;
+
+#if 0
 // From asm-generic/errno-base.h
-
 #define EPERM    1  // Operation not permitted
 #define ENOENT   2	// No such file or directory
 #define EINTR    4  // Interrupted system call
@@ -40,9 +43,6 @@
 #define	EDOM		33	// Math argument out of domain of func
 */
 
-// From ???
-
 #define ENOSYS  38  // Function not implemented
 
-
-extern int errno;
+#endif /* #if 0*/
