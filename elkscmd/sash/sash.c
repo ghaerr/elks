@@ -591,7 +591,8 @@ runcmd(char *cmd, int argc, char **argv)
 			return;
 
 		fprintf(stderr, "pid %d: %s (signal %d)\n", pid,
-			(status & 0x80) ? "core dumped" : "killed",
+			(status & 0x80) ? "core dumped" :
+			(((status & 0x7f) == SIGTSTP)? "stopped" : "killed"),
 			status & 0x7f);
 
 		return;

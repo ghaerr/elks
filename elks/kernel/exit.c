@@ -41,6 +41,10 @@ int sys_wait4(pid_t pid, int *status, int options)
 						return -EFAULT;
 				}
 
+				/* just return status on stopped state, don't release task*/
+				if (p->state == TASK_STOPPED)
+					return p->pid;
+
 				/* must reparent orphans before unassigning task slot*/
 				for_each_task(q) {
 					if (q->p_parent == p) {
