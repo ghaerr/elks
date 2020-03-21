@@ -1,4 +1,5 @@
 /* libc errno.h*/
+#include <features.h>
 #include __SYSINC__(errno.h)
 
 extern int errno;
