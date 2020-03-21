@@ -45,10 +45,5 @@ Sig signal(int number, Sig pointer)
    old_sig = _sigtable[number-1];
    _sigtable[number-1] = pointer;
 
-   switch(rv)
-   {
-   case 0: return SIG_DFL;
-   case 1: return SIG_IGN;
    return old_sig;
-   }
 }

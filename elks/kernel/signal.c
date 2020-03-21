@@ -39,7 +39,7 @@ int send_sig(sig_t sig, register struct task_struct *p, int priv)
     register __ptask currentp = current;
     sigset_t msksig;
 
-    if (sig != SIGCHLD) debug_sig("SIGNAL send_sig %d pid %d.\n", sig, p->pid);
+    if (sig != SIGCHLD) debug_sig("SIGNAL send_sig %d pid %d\n", sig, p->pid);
     if (!priv && ((sig != SIGCONT) || (currentp->session != p->session)) &&
 	(currentp->euid ^ p->suid) && (currentp->euid ^ p->uid) &&
 	(currentp->uid ^ p->suid) && (currentp->uid ^ p->uid) && !suser())
@@ -71,7 +71,9 @@ int kill_pg(pid_t pgrp, sig_t sig, int priv)
 	if (p->pgrp == pgrp) {
 		if (p->state < TASK_ZOMBIE)
 		    err = send_sig(sig, p, priv);
-		else debug_sig("SIGNAL skip kill_pg pgrp %d pid %d state %d\n", pgrp, p->pid, p->state);
+		else if (p->state != TASK_UNUSED)
+		    debug_sig("SIGNAL skip kill_pg pgrp %d pid %d state %d\n",
+					pgrp, p->pid, p->state);
 	}
     }
     return err;

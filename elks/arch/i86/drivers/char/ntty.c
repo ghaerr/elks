@@ -62,7 +62,7 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
 	if (key == ttyp->termios.c_cc[VSUSP])
 	    sig = SIGTSTP;
 	if (sig) {
-	    debug_sig("TTY signal %d to pgrp %d pid %d\n", sig, ttyp->pgrp, current->pid);
+	    debug_tty("TTY signal %d to pgrp %d pid %d\n", sig, ttyp->pgrp, current->pid);
 	    kill_pg(ttyp->pgrp, sig, 1);
 	}
     }
@@ -97,7 +97,7 @@ int tty_open(struct inode *inode, struct file *file)
     if (!(otty = determine_tty(inode->i_rdev)))
 	return -ENODEV;
 
-    debug_sig("TTY open pid %d\n", currentp->pid);
+    debug_tty("TTY open pid %d\n", currentp->pid);
 #if 0
     memcpy(&otty->termios, &def_vals, sizeof(struct termios));
 #endif
@@ -106,7 +106,7 @@ int tty_open(struct inode *inode, struct file *file)
     if (!err) {
 	if (otty->pgrp == 0 && currentp->session == currentp->pid
 		&& currentp->tty == NULL) {
-	    debug_sig("TTY setting pgrp %d pid %d\n", currentp->pgrp, currentp->pid);
+	    debug_tty("TTY setting pgrp %d pid %d\n", currentp->pgrp, currentp->pid);
 	    otty->pgrp = currentp->pgrp;
 	    currentp->tty = otty;
 	}
@@ -130,9 +130,9 @@ void tty_release(struct inode *inode, struct file *file)
     if (!rtty)
 	return;
 
-    debug_sig("TTY close pid %d\n", current->pid);
+    debug_tty("TTY close pid %d\n", current->pid);
     if (current->pid == rtty->pgrp) {
-	debug_sig("TTY release pgrp %d\n", current->pid);
+	debug_tty("TTY release pgrp %d\n", current->pid);
 	kill_pg(rtty->pgrp, SIGHUP, 1);
 	rtty->pgrp = 0;
     }

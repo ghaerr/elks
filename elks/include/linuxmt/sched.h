@@ -80,8 +80,7 @@ struct task_struct {
     struct task_struct		*p_nextsib;
     struct task_struct		*p_child;
     struct wait_queue		child_wait;
-    pid_t			child_lastend;
-    int 			lastend_status;
+    int				exit_status;	/* process exit status*/
     struct inode		* t_inode;
     sigset_t			signal;		/* Signal status */
     struct signal_struct	sig;		/* Signal block */
@@ -102,14 +101,15 @@ struct task_struct {
 
 #define KSTACK_MAGIC 0x5476
 
+/* the order of these matter for signal handling*/
 #define TASK_RUNNING 		0
 #define TASK_INTERRUPTIBLE	1
 #define TASK_UNINTERRUPTIBLE 	2
-#define TASK_ZOMBIE		3
+#define TASK_WAITING		3
 #define TASK_STOPPED		4
-#define TASK_UNUSED		6
-#define TASK_WAITING		7
-#define TASK_EXITING		8
+#define TASK_ZOMBIE		5
+#define TASK_EXITING		6
+#define TASK_UNUSED		7
 
 /*@-namechecks@*/
 

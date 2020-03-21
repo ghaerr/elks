@@ -87,7 +87,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     seg_code = 0;
     currentp = &task[0];
     do {
-	if ((currentp->state != TASK_UNUSED) && (currentp->t_inode == inode)) {
+	if ((currentp->state <= TASK_STOPPED) && (currentp->t_inode == inode)) {
+	    debug_wait("EXEC found copy\n");
 	    seg_code = currentp->mm.seg_code;
 	    break;
 	}
