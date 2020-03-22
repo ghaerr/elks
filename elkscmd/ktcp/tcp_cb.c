@@ -68,7 +68,7 @@ struct tcpcb_list_s *tcpcb_new(void)
 
     n = (struct tcpcb_list_s *) malloc(sizeof(struct tcpcb_list_s));
     if (n == NULL) {
-	printf("ERROR : Out of memory\n");
+	printf("ktcp: Out of memory\n");
 	return NULL;
     }
 
