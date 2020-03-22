@@ -39,6 +39,10 @@ mainmenu_option next_comment
 			bool 'Bootable' CONFIG_IMG_BOOT y
 		fi
 
+		comment 'Binary Images'
+
+		bool 'Build extra binary images' CONFIG_IMG_ALL	n
+
 	fi
 
 endmenu

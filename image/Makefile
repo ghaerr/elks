@@ -1,158 +1,127 @@
 # Makefile for the ELKS images
 
-include Make.defs
-include Make.rules
+ifndef TOPDIR
+$(error TOPDIR is not defined, ELKS not configured yet)
+endif
 
-# Template directory for installing applications and linux before mkfs
+# for CONFIG_IMG_ALL
+include $(TOPDIR)/.config
 
-TEMPLATE_DIR = $(ELKSCMD_DIR)/rootfs_template
-
-# DESTDIR is used in elkscmd/* Makefiles for installation destination
-
+# Directory for final filesystem to be generated from
 DESTDIR = $(TOPDIR)/target
 export DESTDIR
 
-#VERBOSE=-v
+TARGETS = image
 
-# Determine what to build for 'all' target
-
-TARGETS =
-
-ifdef CONFIG_IMG_BOOT
-TARGETS += $(FD_MINIX_BOOT) $(FD_FAT_BOOT) $(ELKS_DIR)/arch/i86/boot/Image
+ifdef CONFIG_IMG_ALL
+TARGETS += images
 endif
 
-ifdef CONFIG_IMG_MINIX
-TARGETS += template minixfs
-endif
-
-ifdef CONFIG_IMG_FAT
-TARGETS += template fatfs
-endif
-
-ifdef CONFIG_IMG_ROM
-TARGETS += template romfs
-endif
-
-ifdef CONFIG_IMG_RAW
-TARGETS += raw
-endif
-
-.PHONY: all $(TARGETS)
+.PHONY: all clean
 
 all: $(TARGETS)
 
-# Populate template for filesystem genfs
+image:
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/.config"
 
-template:
-	-rm -rf $(DESTDIR)
-	cp -a $(TEMPLATE_DIR) $(DESTDIR)
-	find $(DESTDIR) -name .keep -delete
-	$(MAKE) -C $(ELKSCMD_DIR) install
-	$(MAKE) -C $(BOOTBLOCKS_DIR)
-	bash -c "./ver.pl $(ELKS_DIR)/Makefile-rules > $(DESTDIR)/etc/issue"
-	git log --abbrev-commit | head -1 | sed 's/commit/ELKS built from commit/' > $(DESTDIR)/etc/motd
-ifdef CONFIG_IMG_BOOT
-	install $(ELKS_DIR)/arch/i86/boot/Image $(DESTDIR)/linux
-endif
+images: images-minix hd32-minix images-fat
 
-# Create MINIX filesystem from template
+images-minix: fd360-minix fd720-minix fd1440-minix fd2880-minix hd32-minix
 
-minixfs: template
-	rm -f $(TARGET_FILE)
-	mfs $(VERBOSE) $(TARGET_FILE) genfs $(MKFS_OPTS) $(DESTDIR)
-ifdef CONFIG_IMG_DEV
-	# command to make char/block devices in image (no sudo required)
-	$(MAKE) -f Make.devices "MKDEV=mfs $(TARGET_FILE) mknod"
-endif
-ifdef CONFIG_IMG_BOOT
-	setboot $(TARGET_FILE) $(FD_MINIX_BOOT)
-endif
-	mfsck -fv $(TARGET_FILE)
-	mfs $(TARGET_FILE) stat
+images-fat: fd360-fat fd720-fat fd1440-fat fd2880-fat
 
-# Create FAT filesystem from template
+fd360-minix:
+	echo CONFIG_APPS_360K=y		> Config
+	echo CONFIG_IMG_FD360=y		>> Config
+	echo CONFIG_IMG_MINIX=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd360-minix
+	rm Config
 
-fatfs: template
-	rm -f $(TARGET_FILE)
-	dd if=/dev/zero of=$(TARGET_FILE) bs=1024 count=$(TARGET_BLKS)
-	mformat -i $(TARGET_FILE) $(MKFS_OPTS)
-	# Linux has to be the first file for the boot sector loader
-	rm -f linux; touch linux
-	mcopy -i $(TARGET_FILE) $(CPFS_OPTS) linux ::/linux
-	rm linux
-	# Device folder has to be first or second for the 'fake dev' to work
-	mmd -i $(TARGET_FILE) ::/dev
-	for f in $$(cd $(DESTDIR); find * -name '*'); do \
-		[ -d $(DESTDIR)/$$f -a "$$f" != "dev" ] && mmd -i $(TARGET_FILE) ::$$f; \
-		[ -f $(DESTDIR)/$$f ] && mcopy -i $(TARGET_FILE) $(CPFS_OPTS) $(DESTDIR)/$$f ::$$f; \
-	done
-	# Protect contiguous /linux by marking as RO, System and Hidden
-	mattrib -i $(TARGET_FILE) +r +s +h ::/linux
-	# Read boot sector, skip FAT BPB, set ELKS PB sectors/heads and write boot
-ifdef CONFIG_IMG_BOOT
-	setboot $(TARGET_FILE) -F $(FD_FAT_BOOT)
-endif
+fd720-minix:
+	echo CONFIG_APPS_720K=y		> Config
+	echo CONFIG_IMG_FD720=y		>> Config
+	echo CONFIG_IMG_MINIX=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd720-minix
+	rm Config
 
-# Create ROM filesystem from template
+fd1440-minix:
+	echo CONFIG_APPS_1440K=y	> Config
+	echo CONFIG_IMG_FD1440=y	>> Config
+	echo CONFIG_IMG_MINIX=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd1440-minix
+	rm Config
 
-romfs: template
-	-rm -f romfs.devices
-	$(MAKE) -f Make.devices "MKDEV=echo >> romfs.devices"
-	mkromfs -d romfs.devices $(DESTDIR)
+fd2880-minix:
+	echo CONFIG_APPS_2880K=y	> Config
+	echo CONFIG_IMG_FD2880=y	>> Config
+	echo CONFIG_IMG_MINIX=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd2880-minix
+	rm Config
 
-# Create RAW filesystem
+hd32-minix:
+	echo CONFIG_APPS_2880K=y	> Config
+	echo CONFIG_IMG_HD=y		>> Config
+	echo CONFIG_IMG_BLOCKS=31752 >> Config
+	echo CONFIG_IMG_SECT=63		>> Config
+	echo CONFIG_IMG_HEAD=16		>> Config
+	echo CONFIG_IMG_CYL=63		>> Config
+	echo CONFIG_IMG_MINIX=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=hd32-minix
+	rm Config
 
-raw: $(ELKS_DIR)/arch/i86/boot/Image
-	dd if=/dev/zero of=$(TARGET_FILE) bs=1024 count=$(TARGET_BLKS)
-	dd if=$(ELKS_DIR)/arch/i86/boot/Image of=$(TARGET_FILE) conv=notrunc
+fd360-fat:
+	echo CONFIG_APPS_360K=y		> Config
+	echo CONFIG_IMG_FD360=y		>> Config
+	echo CONFIG_IMG_FAT=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd360-fat
+	rm Config
+
+fd720-fat:
+	echo CONFIG_APPS_720K=y		> Config
+	echo CONFIG_IMG_FD720=y		>> Config
+	echo CONFIG_IMG_FAT=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd720-fat
+	rm Config
+
+fd1440-fat:
+	echo CONFIG_APPS_1440K=y	> Config
+	echo CONFIG_IMG_FD1440=y	>> Config
+	echo CONFIG_IMG_FAT=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd1440-fat
+	rm Config
+
+# FAT16 image
+fd2880-fat:
+	echo CONFIG_APPS_2880K=y	> Config
+	echo CONFIG_IMG_FD2880=y	>> Config
+	echo CONFIG_IMG_FAT=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd2880-fat
+	rm Config
+
+# FAT32 image (fails on mformat currently)
+hd32-fat:
 
 # Clean target
 
 clean:
-	-rm -f $(TARGET_FILE)
 	-rm -rf $(DESTDIR)
 	-rm -f *.bin
-
-# Application package management
-
-# Type 'make images' after normal ELKS build to create all disk images
-# Applications are tagged for disk images in the 'Packages' file
-
-images: images-minix images-fat
-
-
-images-minix: fd360-minix fd720-minix fd1440-minix hd32-minix
-
-fd360-minix:
-	$(MAKE) -f Make.package NAME=fd360 FS=minix SIZE=360 TAGS=":boot|:small"
-
-fd720-minix:
-	$(MAKE) -f Make.package NAME=fd720 FS=minix SIZE=720 TAGS=":boot|:small|:base|:net"
-
-fd1440-minix:
-	$(MAKE) -f Make.package NAME=fd1440 FS=minix SIZE=1440 TAGS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
-
-hd32-minix:
-	$(MAKE) -f Make.package NAME=hd32 FS=minix SIZE=31752 TAGS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
-
-
-images-fat: fd360-fat fd720-fat fd1440-fat fd2880-fat
-
-fd360-fat:
-	$(MAKE) -f Make.package NAME=fd360 FS=fat SIZE=360 TAGS=":boot|:small"
-
-fd720-fat:
-	$(MAKE) -f Make.package NAME=fd720 FS=fat SIZE=720 TAGS=":boot|:small|:base|:net"
-
-fd1440-fat:
-	$(MAKE) -f Make.package NAME=fd1440 FS=fat SIZE=1440 TAGS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
-
-# FAT16 image
-fd2880-fat:
-	$(MAKE) -f Make.package NAME=fd2880 FS=fat SIZE=2880 TAGS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
-
-# FAT32 image (fails on mformat currently)
-hd32-fat:
-	$(MAKE) -f Make.package NAME=hd32 FS=fat SIZE=31752 TAGS=":boot|:small|:base|:net|:shutil|:fileutil|:app|:nanox"
 
