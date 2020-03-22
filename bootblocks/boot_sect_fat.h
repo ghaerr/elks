@@ -219,6 +219,7 @@ boot_it:
 	// w00t!
 	mov drive_num,%al
 	xor %ah,%ah
+	RESTORE_DDPT
 	push %es
 	pop %ds
 	// Signify that /linux was loaded as 1 blob
