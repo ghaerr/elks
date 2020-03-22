@@ -551,8 +551,7 @@ trybuiltin(int wildargc, char **wildargv, int argc, char **argv)
 static void
 runcmd(char *cmd, int argc, char **argv)
 {
-	int		pid;
-	int		status;
+	int		pid, status, ret;
 
 	/*
 	 * If a full shell is required, run 'sh -c cmd' unless we are the only shell.
@@ -561,10 +560,11 @@ runcmd(char *cmd, int argc, char **argv)
 		if (isbinshell)
 			fprintf(stderr, "%s: No such file or directory\n", argv[0]);
 		else {
-			system(cmd);
-			wait(&status);	/* synchronize shell prompt*/
+			status = system(cmd);
+			if (status & 0xff)
+				fprintf(stderr, "killed (signal %d)\n", status & 0x7f);
+			return;
 		}
-		return;
 	}
 
 	/*
@@ -583,15 +583,16 @@ runcmd(char *cmd, int argc, char **argv)
 		status = 0;
 		intcrlf = FALSE;
 
-		while (((pid = wait(&status)) < 0) && (errno == EINTR))
-			;
+		while ((ret = waitpid(pid, &status, 0)) != pid)
+			continue;
 
 		intcrlf = TRUE;
 		if ((status & 0xff) == 0)
 			return;
 
 		fprintf(stderr, "pid %d: %s (signal %d)\n", pid,
-			(status & 0x80) ? "core dumped" : "killed",
+			(status & 0x80) ? "core dumped" :
+			(((status & 0x7f) == SIGTSTP)? "stopped" : "killed"),
 			status & 0x7f);
 
 		return;

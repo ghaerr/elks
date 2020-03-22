@@ -107,11 +107,12 @@ pid_t do_fork(int virtual)
     t->fs.root->i_count++;
     t->fs.pwd->i_count++;
 
+    t->exit_status = 0;
+
     /* Set up our family tree */
     t->ppid = currentp->pid;
     t->p_parent = currentp;
     t->p_nextsib = t->p_child = NULL;
-    t->child_lastend = t->lastend_status = 0;
     if ((t->p_prevsib = currentp->p_child) != NULL) {
 	currentp->p_child->p_nextsib = t;
     }

@@ -642,7 +642,7 @@ waitforjob(jp)
 	int st;
 
 	INTOFF;
-	TRACE(("waitforjob(%%%d) called\n", jp - jobtab + 1));
+	TRACE(("waitforjob(%d) called\n", jp - jobtab + 1));
 	while (jp->state == 0 && dowait(1, jp) != -1) ;
 #if JOBS
 	if (jp->jobctl) {
@@ -838,15 +838,6 @@ waitproc(block, status)
 	return wait(status);
 #else
 #if POSIX
-        /*
-         * 19980216 Vincent Zweije <zweije@xs4all.nl>
-         * ELKS does not obey WNOHANG
-         * If requested, return -1 with errno==EINVAL
-         */
-        if (block==0) {
-                errno = EINVAL;
-                return -1;
-        }
 	return waitpid(-1, status, block == 0 ? WNOHANG : 0);
 #else
 	if (block == 0)

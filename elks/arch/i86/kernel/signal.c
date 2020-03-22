@@ -46,8 +46,7 @@ int do_signal(void)
 		debug_sig("SIGNAL pid %d stopped\n", currentp->pid);
 		currentp->state = TASK_STOPPED;
 		/* Let the parent know */
-		currentp->p_parent->child_lastend = currentp->pid;
-		currentp->p_parent->lastend_status = (int) signr;
+		currentp->exit_status = signr;
 		schedule();
 	    }
 	    else {					/* Default Core or Terminate */
@@ -56,6 +55,7 @@ int do_signal(void)
 		      (SM_SIGQUIT|SM_SIGILL|SM_SIGABRT|SM_SIGFPE|SM_SIGSEGV|SM_SIGTRAP))
 		    dump_core();
 #endif
+		debug_sig("SIGNAL terminating pid %d\n", currentp->pid);
 		do_exit((int) signr);			/* Default Terminate */
 	    }
 	}

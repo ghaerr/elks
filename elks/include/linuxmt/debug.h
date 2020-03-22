@@ -32,6 +32,8 @@
 #define DEBUG_FILE	0		/* sys open and file i/o*/
 #define DEBUG_SIG	0		/* signals*/
 #define DEBUG_SUP	0		/* superblock, mount, umount*/
+#define DEBUG_TTY	0		/* wait, exit*/
+#define DEBUG_WAIT	0		/* wait, exit*/
 
 #if DEBUG_BLK
 #define debug_blk	printk
@@ -61,6 +63,18 @@
 #define debug_sup	printk
 #else
 #define debug_sup(...)
+#endif
+
+#if DEBUG_TTY
+#define debug_tty	printk
+#else
+#define debug_tty(...)
+#endif
+
+#if DEBUG_WAIT
+#define debug_wait	printk
+#else
+#define debug_wait(...)
 #endif
 
 /* Old debug mechanism - deprecated.
