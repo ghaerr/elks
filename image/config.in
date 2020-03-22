@@ -41,7 +41,7 @@ mainmenu_option next_comment
 
 		comment 'Binary Images'
 
-		bool 'Build extra binary images' CONFIG_IMG_ALL	n
+		bool 'Build extra binary images' CONFIG_IMG_EXTRA_IMAGES	n
 
 	fi
 

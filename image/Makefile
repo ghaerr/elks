@@ -4,7 +4,7 @@ ifndef TOPDIR
 $(error TOPDIR is not defined, ELKS not configured yet)
 endif
 
-# for CONFIG_IMG_ALL
+# for CONFIG_IMG_EXTRA_IMAGES
 include $(TOPDIR)/.config
 
 # Directory for final filesystem to be generated from
@@ -13,7 +13,7 @@ export DESTDIR
 
 TARGETS = image
 
-ifdef CONFIG_IMG_ALL
+ifdef CONFIG_IMG_EXTRA_IMAGES
 TARGETS += images
 endif
 

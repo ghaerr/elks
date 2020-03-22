@@ -243,5 +243,5 @@ CONFIG_IMG_BOOT=y
 #
 # Binary Images
 #
-# CONFIG_IMG_ALL is not set
+# CONFIG_IMG_EXTRA_IMAGES is not set
 
