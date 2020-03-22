@@ -30,6 +30,18 @@
 #   undef FAST_READ
 #endif
 
+// Macro to restore the original (i.e. BIOS's) Diskette Drive Parameter Table
+//
+// Note: this clobbers BX and DS, and resets SP!  Use it only upon an error
+// or just before handing over to /linux
+.macro RESTORE_DDPT
+	mov $-8,%sp
+	pop %bx
+	pop %ds
+	popw (%bx)
+	popw 2(%bx)
+.endm
+
 	.code16
 
 	.text
@@ -83,7 +95,7 @@ entry1:
 	// Copy the current BIOS floppy parameter table
 	// so that we could modify it locally
 	//
-	// Keep a pointer to the original table so that _restore_ddpt can
+	// Keep a pointer to the original table so that RESTORE_DDPT can
 	// restore it later
 
 	mov $0x78,%bx  // 0:78h (INT vector 1Eh)
@@ -168,47 +180,24 @@ no_system:
 except:
 _except:
 	// AL = exception code
-	call _restore_ddpt
+	xor %sp,%sp
 	add $'0',%al  // first version with single digit
 	call _putc
 	mov $msg_error,%bx
-	jmp _reboot2
+	jmp _reboot1
 
 	.global _reboot
 
 _reboot:
-
-	call _restore_ddpt
-
-_reboot1:
 	mov $msg_reboot,%bx
 
-_reboot2:
+_reboot1:
 	call _puts
 
 	xor %ax,%ax  // wait for key
 	int $0x16
 
-	int $0x19    // BIOS bootstrap
-	jmp _reboot1
-
-//------------------------------------------------------------------------------
-
-// Restore the original (i.e. BIOS's) Diskette Drive Parameter Table
-//
-// Note: this routine preserves AX, and resets DS and SP!  Use it only upon
-// an error or just before handing over to /linux
-
-_restore_ddpt:
-	pop %cx
-	mov $-8,%sp
-	pop %bx
-	pop %ds
-	popw (%bx)
-	popw 2(%bx)
-	push %cs
-	pop %ds
-	jmp %cx
+	ljmpw $0xffff,$0  // do a cold(er) boot
 
 //------------------------------------------------------------------------------
 
@@ -522,7 +511,7 @@ boot_it:
 .endif
 	mov %dx,root_dev
 
-	call _restore_ddpt
+	RESTORE_DDPT
 
 	mov $ELKS_INITSEG,%ax
 	mov %ax,%ds

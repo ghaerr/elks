@@ -217,9 +217,9 @@ not_elks:
 
 boot_it:
 	// w00t!
-	call _restore_ddpt
 	mov drive_num,%al
 	xor %ah,%ah
+	RESTORE_DDPT
 	push %es
 	pop %ds
 	// Signify that /linux was loaded as 1 blob
