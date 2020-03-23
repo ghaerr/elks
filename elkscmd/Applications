@@ -21,7 +21,7 @@
 #	:boot		Required for ELKS to boot
 #	:360k		Minimal set of apps to fit on 360k disks
 #	:720k		Set of apps to fit on 720k disks (includes :net)
-#	:1440k		Almost all apps except Nano-X for 1440k disks
+#	:1440k		All apps selected for 1440k disks
 #	:ash		Ash (bash) shell							ash
 #	:sash		Sash (standalone very small) shell			sash
 #	:sysutil	System utilities							sys_utils
@@ -134,7 +134,7 @@ disk_utils/mkfs					:diskutil				:1440k
 disk_utils/partype				:diskutil				:1440k
 disk_utils/ramdisk				:diskutil				:1440k
 disk_utils/fdisk				:be-diskutil			:1440k
-busyelks/busyelks				:busyelks				:1440k
+busyelks/busyelks				:busyelks
 inet/httpd/httpd				:net
 inet/httpd/sample_index.html	::var/www/index.html	:net
 ktcp/ktcp						:net
@@ -157,9 +157,9 @@ mtools/mtype					:mtools					:1440k
 mtools/mwrite					:mtools					:1440k
 bc/bc							:other					:1440k
 prems/pres/pres					:other					:1440k
-nano-X/bin/nxclock				:nanox
-nano-X/bin/nxdemo				:nanox
+nano-X/bin/nxclock				:nanox					:1440k
+nano-X/bin/nxdemo				:nanox					:1440k
 nano-X/bin/nxlandmine			:nanox				:720k
-nano-X/bin/nxterm				:nanox
-nano-X/bin/nxworld				:nanox
-nano-X/bin/nxworld.map	::lib/nxworld.map	:nanox
+nano-X/bin/nxterm				:nanox					:1440k
+nano-X/bin/nxworld				:nanox					:1440k
+nano-X/bin/nxworld.map	::lib/nxworld.map	:nanox		:1440k
