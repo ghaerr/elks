@@ -28,6 +28,7 @@ typedef int (*__dir_compar_fn_t) __P ((
 extern DIR *opendir __P ((__const char *__name));
 extern int closedir __P ((DIR * __dirp));
 extern struct dirent *readdir __P ((DIR * __dirp));
+extern int _readdir(int fd, struct dirent *buf, int count);
 extern void rewinddir __P ((DIR * __dirp));
 
 extern void seekdir __P ((DIR * __dirp, off_t __pos));

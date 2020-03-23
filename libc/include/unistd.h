@@ -48,7 +48,9 @@ int execle(char *fname, char *arg0, ...);
 int execlp(char *fname, char *arg0, ...);
 int execv(char *fname, char **argv);
 int execve(char *fname, char **argv, char **envp);
+int _execve(char *fname, char *stk_ptr, int stack_bytes);
 int execvp(char *fname, char **argv);
+void _exit(int status);
 int isatty (int fd);
 off_t lseek (int fildes, off_t offset, int whence);
 int link(const char *path1, const char *path2);
@@ -63,17 +65,18 @@ pid_t fork(void);
 pid_t vfork(void);
 pid_t getpid(void);
 pid_t setsid(void);
-
-uid_t getuid (void);
-
-char * getcwd (char * buf, size_t size);
-int getegid(void);
-int geteuid(void);
-int getgid(void);
 int getpgrp(void);
 int getppid(void);
 int setpgrp(void);
 
+uid_t getuid (void);
+uid_t _getuid(int *euid);	//FIXME euid return not implemented in kernel
+int getgid(void);
+uid_t _getgid(int *euid);	//FIXME euid return not implemented in kernel
+int getegid(void);
+int geteuid(void);
+
+char * getcwd (char * buf, size_t size);
 void sync(void);
 void usleep(unsigned long useconds);
 

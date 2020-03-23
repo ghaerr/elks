@@ -3,10 +3,9 @@
  */
 
 #include <unistd.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
-
-#define namlen
 
 char *mktemp(s)
 char *s;
@@ -16,7 +15,6 @@ char *s;
     static char c2 = 0;
     static char uniq_ch[] = 
 	 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    struct stat stbuf;
 
     
     if (!s || strlen(s) < 6) {
@@ -31,7 +29,7 @@ char *s;
 	    return 0;
 	}
     }
-    sprintf(ptr, "%04d%c%c", getpid(), uniq_ch[c1], uniq_ch[c2]);
+    sprintf(ptr, "%04d%c%c", getpid(), uniq_ch[(int)c1], uniq_ch[(int)c2]);
 
     return s;
 }

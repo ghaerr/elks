@@ -27,7 +27,7 @@ static int extras = 0;
    {
       if( memcmp(var, *p, len) == 0 && (*p)[len] == '=' )
       {
-         while( p[0] = p[1] ) p++;
+         while ((p[0] = p[1])) p++;
          extras++;
          break;
       }
