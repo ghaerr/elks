@@ -48,9 +48,9 @@ int main(int argc, char **argv)
 			}
 		} else goto usage;
 	}
-	exit(er);
+	return er;
 
 usage:
 	fprintf(stderr, "usage: %s new_dir1 [new_dir2] ...\n", argv[0]);
-	exit(1);
+	return 1;
 }

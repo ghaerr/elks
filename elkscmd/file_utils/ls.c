@@ -479,7 +479,7 @@ int main(int argc, char **argv)
     for ( ; *argv; argv++) {
 	if (LSTAT(*argv, &statbuf) < 0) {
 	    perror(*argv);
-	    exit(EXIT_FAILURE);
+	    return EXIT_FAILURE;
 	}
 	if (recursive && S_ISDIR(statbuf.st_mode))
 	    pushstack(&dirs, strdup(*argv));
@@ -526,7 +526,7 @@ int main(int argc, char **argv)
     } while (files.size || dirs.size);
     if (!(flags & (LSF_LONG|LSF_ONEPER)))
 	fputc('\n', stdout);
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
 
 usage:
     fprintf(stderr, "usage: %s [-aAdFilrR1] [file1] [file2] ...\n", argv[0]);
@@ -539,5 +539,5 @@ usage:
     fprintf(stderr, "  -r: reverse sort order\n");
     fprintf(stderr, "  -R: recursively list directory contents\n");
     fprintf(stderr, "  -1: one entry per line\n");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
 }

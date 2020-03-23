@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 			break;
 		default:
 			write(STDERR_FILENO,"mknod: usage error\n",19);
-			exit(1);
+			return 1;
 		}
 		major = (int)strtol(argv[3],NULL,0);
 		minor = (int)strtol(argv[4],NULL,0);
@@ -56,5 +56,5 @@ int main(int argc, char **argv)
 	
 		write(STDERR_FILENO,"mknod: usage error\n",19);
 	}
-	exit(0);
+	return 0;
 }

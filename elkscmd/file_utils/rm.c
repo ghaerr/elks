@@ -34,9 +34,9 @@ int main(int argc, char **argv)
 			} else fprintf(stderr, "rm: %s not found\n", argv[i]);
 		}
 	}
-	exit(0);
+	return 0;
 
 usage:
 	fprintf(stderr, "usage: %s file1 [file2] ...\n", argv[0]);
-	exit(1);
+	return 1;
 }

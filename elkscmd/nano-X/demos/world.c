@@ -17,7 +17,7 @@
 #define O_BINARY 	0
 #endif
 
-#define	MAPFILE	"/lib/world.map"
+#define	MAPFILE	"/lib/nxworld.map"
 
 #define	SELECTBUTTON	GR_BUTTON_L
 #define	COORDBUTTON	GR_BUTTON_R
@@ -352,6 +352,7 @@ dokeydown(kp)
 				break;
 
 			case '\033':	/* cancel selection */
+			case 'c':
 				showselection(GR_FALSE);
 				selectmode = SELECT_NONE;
 				break;
@@ -365,7 +366,9 @@ dokeydown(kp)
 			GrClose();
 			exit(0);
 
-		case 't':		/* redraw total map */
+		case 'r':		/* redraw total map */
+		case ' ':
+		case '\n':
 			Longitude = ITOF(0);
 			Latitude = ITOF(0);
 			setzoom(ITOF(1));

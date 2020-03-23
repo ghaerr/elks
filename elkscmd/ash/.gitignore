@@ -8,8 +8,6 @@ mksignames
 mksyntax
 nodes.c
 nodes.h
-signames.c
-signames.h
 syntax.c
 syntax.h
 token.def

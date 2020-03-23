@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 			fd = open(name, O_RDONLY);
 			if (fd == -1) {
 				perror(name);
-				exit(1);
+				return 1;
 			}
 			if (multi) {	/* if more than one file, print name */
 				puts("::::::::::::::");
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 		if (!isatty(1)) {	/* output is not terminal, just copy */
 			if (cat_file(fd, 1) < 0) {
 				perror("more :");
-				exit(1);
+				return 1;
 			}
 			continue;
 		}
@@ -146,18 +146,18 @@ int main(int argc, char **argv)
 				break;
 			}
 			if (mw < 0)
-				exit(0);
+				return 0;
 			col = 0;
 			line = 1; 
 		}
 		if (multi && line > 1 && argc > 2) {
 			strcpy(&next[0], "--Next file: "); 
 			if (more_wait(cin, 1, strcat(next, argv[1])) < 0)
-				exit(0);
+				return 0;
 		}
 		if (fd)
 			close(fd);
 	} while (--argc > 1);
 	close(cin);
-	exit(0);
+	return 0;
 }

@@ -40,37 +40,37 @@ int main(int argc, char **argv)
 
 	if (stat(argv[1], &statbuf1) < 0) {
 		perror(argv[1]);
-		exit(2);
+		return 2;
 	}
 
 	if (stat(argv[2], &statbuf2) < 0) {
 		perror(argv[2]);
-		exit(2);
+		return 2;
 	}
 
 	if ((statbuf1.st_dev == statbuf2.st_dev) &&
 		(statbuf1.st_ino == statbuf2.st_ino))
 	{
 		printf("Files are links to each other\n");
-		exit(0);
+		return 0;
 	}
 
 	if (statbuf1.st_size != statbuf2.st_size) {
 		printf("Files are different sizes\n");
-		exit(1);
+		return 1;
 	}
 
 	fd1 = open(argv[1], 0);
 	if (fd1 < 0) {
 		perror(argv[1]);
-		exit(2);
+		return 2;
 	}
 
 	fd2 = open(argv[2], 0);
 	if (fd2 < 0) {
 		perror(argv[2]);
 		close(fd1);
-		exit(2);
+		return 2;
 	}
 
 	pos = 0;
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 		cc1 = read(fd1, buf1, sizeof(buf1));
 		if (cc1 < 0) {
 			perror(argv[1]);
-			exit(2);
+			return 2;
 		}
 
 		cc2 = read(fd2, buf2, sizeof(buf2));
@@ -116,10 +116,10 @@ int main(int argc, char **argv)
 		goto differ;
 	}
 same:
-	exit(0);
+	return 0;
 
 usage:
 	fprintf(stderr, "usage: %s file1 file2\n", argv[0]);
 differ:
-	exit(1);
+	return 1;
 }

@@ -45,11 +45,11 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	exit(0);
+	return 0;
 
 error_read:
 	fprintf(stderr, "%s: %s: %s\n",
 		argv[0], argv[i], strerror(errno));
 	close(fd);
-	exit(1);
+	return 1;
 }

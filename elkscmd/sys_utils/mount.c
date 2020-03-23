@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 			case 't':
 				if ((argc <= 0) || (**argv == '-')) {
 					write(STDERR_FILENO, "mount: missing file system type\n", 32);
-					exit(1);
+					return 1;
 				}
 
 				type = *argv++;
@@ -38,18 +38,18 @@ int main(int argc, char **argv)
 
 			default:
 				write(STDERR_FILENO, "mount: unknown option\n", 22);
-				exit(1);
+				return 1;
 		}
 	}
 
 	if (argc != 2) {
 		write(STDERR_FILENO, "Usage: mount [-t type] <device> <directory>\n", 44);
-		exit(1);
+		return 1;
 	}
 
 	if (mount(argv[0], argv[1], type, 0) < 0) {
 		perror("mount failed");
-		exit(1);
+		return 1;
 	}
-	exit(0);
+	return 0;
 }
