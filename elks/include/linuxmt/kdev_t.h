@@ -55,10 +55,6 @@ extern char *kdevname(kdev_t);	  /* note: returns pointer to static data! */
 #define MINOR(dev)		(((dev) & MINORMASK))
 #define MKDEV(major,minor)	((major) << MINORBITS | (minor))
 
-#include <stdint.h>
-
-typedef uint16_t kdev_t;
-
 #endif
 
 #undef INCLUDE_OK

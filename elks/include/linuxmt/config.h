@@ -2,8 +2,6 @@
 #define __LINUXMT_CONFIG_H
 
 #include <autoconf.h>
-
-#include <linuxmt/kdev_t.h>
 #include <linuxmt/major.h>
 
 #define REGOPT register

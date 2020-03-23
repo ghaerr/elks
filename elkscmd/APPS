@@ -124,4 +124,3 @@ CONFIG_APP_URLGET		inet/urlget/	Installs /bin/urlget
 
 # Other directories in elkscmd/
 rootfs_template/						Root filesystem template for static files not built in elkscmd/
-lib/									Unused. putenv.c, sleep.c, bsd/daemon.c, bsd/err.c
