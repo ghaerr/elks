@@ -55,24 +55,22 @@ static	NUM	searchlines();
 static	LEN	findstring();
 static	LINE	*findline();
 
-void
-main(argc, argv)
-	char	**argv;
+int main(int argc, char **argv)
 {
 	if (!initedit())
-		return;
+		return 1;
 
 	if (argc > 1) {
 		filename = strdup(argv[1]);
 		if (filename == NULL) {
 			fprintf(stderr, "No memory\n");
 			termedit();
-			exit(1);
+			return 1;
 		}
 
 		if (!readlines(filename, 1)) {
 			termedit();
-			exit(0);
+			return 0;
 		}
 
 		if (lastnum)
@@ -84,7 +82,7 @@ main(argc, argv)
 	docommands();
 
 	termedit();
-	exit(0);
+	return 0;
 }
 
 

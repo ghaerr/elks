@@ -50,10 +50,10 @@ int main(int argc, char **argv)
 			perror(argv[1]);
 		argv++;
 	}
-	exit(0);
+	return 0;
 
 usage:
 	fprintf(stderr, "usage: %s mode file1 [file2] ...\n", argv[0]);
 	fprintf(stderr, "Mode must be specified as an octal number (i.e. 755 is 'rwxr-xr-x')\n");
-	exit(1);
+	return 1;
 }

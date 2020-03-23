@@ -26,7 +26,7 @@ mainmenu_option next_comment
 		busyelks 'minix3'		CONFIG_APP_MINIX3		y
 		busyelks 'miscutils'	CONFIG_APP_MISC_UTILS	y
 		bool 'mtools'			CONFIG_APP_MTOOLS		y
-		bool 'nano-X'			CONFIG_APP_NANOX		y
+		bool 'nano-X'			CONFIG_APP_NANOX		n
 		bool 'other'         	CONFIG_APP_OTHER        y
 
 		comment 'Commands not compiling'

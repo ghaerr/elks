@@ -16,11 +16,11 @@ int main(int argc, char **argv)
 {
 	if (argc != 2) {
 		write(STDERR_FILENO, "Usage: umount <device>|<directory>\n", 35);
-		exit(1);
+		return 1;
 	}
 	if (umount(argv[1]) < 0) {
 		perror(argv[1]);
 		exit(1);
 	}
-	exit(0);
+	return 0;
 }

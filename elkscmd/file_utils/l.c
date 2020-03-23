@@ -103,7 +103,7 @@ int main(int argc, char **argv)
 		list = (char **) malloc(LISTSIZE * sizeof(char *));
 		if (list == NULL) {
 			fputs (err_mem, stderr);
-			exit(1);
+			return 1;
 		}
 		listsize = LISTSIZE;
 	}
@@ -223,5 +223,5 @@ int main(int argc, char **argv)
 		listused = 0;
 	}
 	fputs("\n", stdout);
-	exit(0);
+	return 0;
 }

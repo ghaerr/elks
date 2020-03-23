@@ -9,10 +9,29 @@ include $(BASEDIR)/Make.defs
 LOCALFLAGS = -DELKS=1 -DUNIX=1 -DDEBUG=1 -Dconst= -Dvolatile= -I.
 MATHLIB =
 
-## mouse and kbd drivers
+# nano-X demo programs
+NANOXDEMOS = bin/nxlandmine
+NANOXDEMOS += bin/nxworld
+NANOXDEMOS += bin/nxclock
+NANOXDEMOS += bin/nxterm			# enable pseudo ttys in ELKS
+NANOXDEMOS += bin/nxdemo
+#NANOXDEMOS += bin/nxdemo2
+#NANOXDEMOS += bin/nxvgatest		# low-level vga routines test
+
+# mouse and kbd drivers
 DRIVERS += drivers/mou_ser.o
-#DRIVERS += drivers/mou_null.o
 DRIVERS += drivers/kbd_tty.o
+
+# portable C VGA driver
+DRIVERS += drivers/scr_bios.o drivers/vgaplan4.o drivers/mempl4.o
+
+# higher speed asm VGA driver
+#DRIVERS += drivers/scr_bios.o drivers/elkplan4.o drivers/mempl4.o
+
+# hercules driver
+#DRIVERS += drivers/scr_herc.o
+
+DRIVERS += drivers/romfont.o drivers/elksutilasm.o
 
 # The following line links the nano-X application with the server.
 # This is required if no network is present, or for speed or debugging.
@@ -23,39 +42,70 @@ CLNTFILES = nanox/client.o
 NETFILES = nanox/srvnet.o
 STUBFILES = nanox/stubs.o
 
-# nano-X demo programs 
-NANOXDEMO =  demos/demo.o
-NANOXDEMO += demos/landmine.o
-NANOXDEMO += demos/world.o				#world needs world map - does not fit on full3
-NANOXDEMO += demos/nclock.o
-NANOXDEMO += demos/nterm.o				#works if pseudo tty enabled in ELKS menuconfig
-NANOXDEMO += demos/demo2.o
-NANOXDEMO += demos/demo-vga.o			#low-level vga routines test
-
 ifdef LINK_APP_INTO_SERVER
 CFLAGS += -DNONETWORK=1
 NANOXFILES += $(STUBFILES)
-ALL += nano-X
+ALL += salibs $(NANOXDEMOS)
 else
-xNANOXDEMO =demos/demo2.o
 NANOXFILES += $(NETFILES)
 DEMOLIBS += libnano-X.a
-ALL += libnano-X.a nano-Xd demo
+ALL += libnano-X.a nano-X nxdemos
 endif
 
 SERVFILES = engine/devdraw.o engine/devmouse.o engine/devkbd.o engine/devclip1.o \
 	engine/devpal1.o engine/devpal2.o engine/devpal4.o
 
-## higher speed asm VGA driver
-#DRIVERS += drivers/scr_bios.o drivers/elkplan4.o drivers/romfont.o drivers/elksutilasm.o drivers/mempl4.o
-## portable C VGA driver
-DRIVERS += drivers/scr_bios.o drivers/vgaplan4.o drivers/romfont.o drivers/elksutilasm.o drivers/mempl4.o
-## hercules driver
-#DRIVERS += drivers/scr_herc.o drivers/romfont.o drivers/elksutilasm.o
-
 SERVFILES += $(DRIVERS)
 
 all: $(ALL)
+
+libnano-X.a: $(CLNTFILES)
+	$(AR) rc libnano-X.a $(CLNTFILES)
+
+salibs: $(SERVFILES) $(NANOXFILES)
+
+bin/nxlandmine: demos/landmine.o
+	$(LD) $(LDFLAGS) $(NANOXFILES) demos/landmine.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxlandmine $(MATHLIB) $(LDLIBS)
+
+bin/nxworld: demos/world.o
+	$(LD) $(LDFLAGS) $(NANOXFILES) demos/world.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxworld $(MATHLIB) $(LDLIBS)
+	cp demos/world.map bin/nxworld.map
+
+bin/nxclock: demos/nclock.o
+	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nclock.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxclock $(MATHLIB) $(LDLIBS)
+
+bin/nxterm: demos/nterm.o
+	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nterm.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxterm $(MATHLIB) $(LDLIBS)
+
+bin/nxdemo: demos/demo.o
+	$(LD) $(LDFLAGS) $(NANOXFILES) demos/demo.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxdemo $(MATHLIB) $(LDLIBS)
+
+bin/nxdemo2: demos/demo2.o
+	$(LD) $(LDFLAGS) $(NANOXFILES) demos/demo2.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxdemo2 $(MATHLIB) $(LDLIBS)
+
+bin/nxvgatest: demos/demo-vga.o
+	$(LD) $(LDFLAGS) demos/demo-vga.o $(DRIVERS) $(LIBS) -o bin/nxvgatest $(MATHLIB) $(LDLIBS)
+
+
+#
+# client/server
+#
+nano-X: $(SERVFILES) $(NANOXFILES)
+	$(LD) $(LDFLAGS) $(NANOXFILES) $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nano-X $(MATHLIB) $(LDFLAGS)
+
+# only a few demos work in client/server mode
+nxdemos: libnano-X.a
+	$(LD) $(LDFLAGS) demos/demo.o $(DEMOLIBS) -o bin/demo $(MATHLIB) $(LDFLAGS)
+	$(LD) $(LDFLAGS) demos/demo2.o $(DEMOLIBS) -o bin/demo2 $(MATHLIB) $(LDFLAGS)
+	$(LD) $(LDFLAGS) demos/landmine.o $(DEMOLIBS) -o bin/landmine $(MATHLIB) $(LDFLAGS)
+#	$(LD) $(LDFLAGS) demos/nterm.o $(DEMOLIBS) -o bin/nterm $(MATHLIB)	 $(LDFLAGS)
+#	$(LD) $(LDFLAGS) demos/nclock.o $(DEMOLIBS) -o bin/nclock $(MATHLIB)	 $(LDFLAGS)
+#	$(LD) $(LDFLAGS) demos/world.o $(DEMOLIBS) -o bin/world $(MATHLIB) $(LDFLAGS)
+#	cp demos/demo.sh bin/demo.sh
+
+install: $(NANOXDEMOS)
+	$(INSTALL) $(NANOXDEMOS) $(DESTDIR)/bin
+	$(INSTALL) demos/world.map $(DESTDIR)/lib/nxworld.map
 
 clean:
 	rm -f *.o *.a nano-X core
@@ -64,38 +114,3 @@ clean:
 	rm -f nanox/*.o
 	rm -f engine/*.o
 	rm -f demos/*.o
-
-libnano-X.a: $(CLNTFILES)
-	$(AR) rc libnano-X.a $(CLNTFILES)
-
-nano-X: $(SERVFILES) $(NANOXFILES) $(NANOXDEMO)
-	$(LD) $(LDFLAGS) demos/demo-vga.o $(DRIVERS) $(LIBS) -o bin/demo-vga $(MATHLIB) $(LDLIBS)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/demo.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/demo $(MATHLIB) $(LDLIBS)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/demo2.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/demo2 $(MATHLIB) $(LDLIBS)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/world.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/world $(MATHLIB) $(LDLIBS)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/landmine.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/landmine $(MATHLIB) $(LDLIBS)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nterm.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nterm $(MATHLIB) $(LDLIBS)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nclock.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nclock $(MATHLIB) $(LDLIBS)
-	cp demos/world.map bin/world.map
-
-nano-Xd: $(SERVFILES) $(NANOXFILES)
-	$(LD) $(LDFLAGS) $(NANOXFILES) $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nano-X $(MATHLIB) $(LDFLAGS)
-
-#only a few demos work in client/server mode
-demo: $(NANOXDEMO) libnano-X.a
-#	$(LD) $(LDFLAGS) $(NANOXDEMO) $(DEMOLIBS) -o bin/demo $(LDFLAGS)
-	$(LD) $(LDFLAGS) demos/demo.o $(DEMOLIBS) -o bin/demo $(MATHLIB) $(LDFLAGS)
-	$(LD) $(LDFLAGS) demos/landmine.o $(DEMOLIBS) -o bin/landmine $(MATHLIB) $(LDFLAGS)
-#	$(LD) $(LDFLAGS) demos/nterm.o $(DEMOLIBS) -o bin/nterm $(MATHLIB)	 $(LDFLAGS)
-#	$(LD) $(LDFLAGS) demos/nclock.o $(DEMOLIBS) -o bin/nclock $(MATHLIB)	 $(LDFLAGS)
-	$(LD) $(LDFLAGS) demos/demo2.o $(DEMOLIBS) -o bin/demo2 $(MATHLIB) $(LDFLAGS)
-#	$(LD) $(LDFLAGS) demos/world.o $(DEMOLIBS) -o bin/world $(MATHLIB) $(LDFLAGS)
-#	cp demos/world.map bin/world.map
-#	cp demos/demo.sh bin/demo.sh
-
-.PHONY: install
-
-install:
-#	install bin/demo $(DESTDIR)/bin/ndemo
-#	install bin/nclock $(DESTDIR)/bin/nclock
-	install bin/landmine $(DESTDIR)/bin/landmine

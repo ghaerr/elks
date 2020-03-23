@@ -14,7 +14,7 @@ int main(int argc, char **argv)
 
 	if (argc < 2) {
 		write(STDERR_FILENO, "usage: touch file1 [file2] [file3] ...\n", 39);
-		exit(1);
+		return 1;
 	}
 	if ((argv[1][0] == '-') && (argv[1][1] == 'c'))
 		ncreate = 1;
@@ -28,5 +28,5 @@ int main(int argc, char **argv)
 				er = utime(argv[i], NULL);
 		}
 	}
-	exit(er ? 0 : 1);
+	return (er ? 0 : 1);
 }

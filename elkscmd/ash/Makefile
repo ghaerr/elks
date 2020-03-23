@@ -38,7 +38,7 @@ OBJS=	builtins.o cd.o dirent.o error.o eval.o exec.o expand.o input.o \
 
 CLEANFILES= $(OBJS) \
 	builtins.c builtins.h init.c mkinit mknodes mksignames mksyntax \
-	nodes.c nodes.h signames.c signames.h syntax.c syntax.h token.def \
+	nodes.c nodes.h syntax.c syntax.h token.def \
 	bltin/operators.h bltin/operators.c
 
 all:	ash
@@ -72,11 +72,11 @@ nodes.c nodes.h: mknodes nodetypes nodes.c.pat
 mknodes: mknodes.c
 	gcc -O2 mknodes.c -o $@
 
-signames.c signames.h: mksignames
-	./mksignames
+#signames.c signames.h: mksignames
+#	./mksignames
 
-mksignames: mksignames.c
-	gcc -O2 mksignames.c -o $@
+#mksignames: mksignames.c
+#	gcc -O2 mksignames.c -o $@
 
 syntax.c syntax.h: mksyntax
 	./mksyntax

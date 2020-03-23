@@ -59,9 +59,9 @@ int main(int argc, char **argv)
 			(chown(*argv, uid, statbuf.st_gid) < 0))
 				perror(*argv);
 	}
-	exit(0);
+	return 0;
 
 usage:
 	fprintf(stderr, "usage: %s new_owner file1 [file2] ...\n", argv[0]);
-	exit(1);
+	return 1;
 }

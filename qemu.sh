@@ -26,13 +26,17 @@ IMAGE="-fda image/fd1440.bin"
 #IMAGE="-fda image/fd360-minix.bin"
 #IMAGE="-fda image/fd720-minix.bin"
 #IMAGE="-fda image/fd1440-minix.bin"
+#IMAGE="-fda image/fd2880-minix.bin"
 
 # Second disk for mount after boot
 #DISK2="-fdb image/fd360-fat.bin"
 #DISK2="-fdb image/fd720-fat.bin"
 #DISK2="-fdb image/fd1440-fat.bin"
 #DISK2="-fdb image/fd2880-fat.bin"
+#DISK2="-fdb image/fd360-minix.bin"
+#DISK2="-fdb image/fd720-minix.bin"
 #DISK2="-fdb image/fd1440-minix.bin"
+#DISK2="-fdb image/fd2880-minix.bin"
 
 [ -z "$IMAGE" ] && { echo 'Disk image not found!'; exit 1; }
 echo "Using disk image: $IMAGE"

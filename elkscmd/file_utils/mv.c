@@ -205,10 +205,10 @@ int main(int argc, char **argv)
 		if (unlink(srcname) < 0)
 			perror(srcname);
 	}
-	exit(0);
+	return 0;
 
 usage:
 	fprintf(stderr, "usage: %s source_file dest_file\n", argv[0]);
 	fprintf(stderr, "       %s file1 [file2] ... dest_dir\n", argv[0]);
-	exit(1);
+	return 1;
 }

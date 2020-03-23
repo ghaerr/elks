@@ -75,9 +75,9 @@ int main(int argc, char **argv)
 
 		if (symlink(argv[2], argv[3]) < 0) {
 			perror(argv[3]);
-			exit(1);
+			return 1;
 		}
-		exit(0);
+		return 0;
 	}
 
 	/*
@@ -107,12 +107,12 @@ int main(int argc, char **argv)
 			continue;
 		}
 	}
-	exit(0);
+	return 0;
 
 usage:
 	fprintf(stderr, "usage: %s [-s] link_target link_name\n", argv[0]);
 	fprintf(stderr, "Hard links are made by default. The -s option creates symbolic links instead.\n");
 	fprintf(stderr, "Creating hard links to directories is not allowed and will return an error.\n");
-	exit(1);
+	return 1;
 }
 

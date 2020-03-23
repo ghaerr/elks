@@ -59,9 +59,9 @@ int main(int argc, char **argv)
 			(chown(*argv, statbuf.st_uid, gid) < 0))
 				perror(*argv);
 	}
-	exit(0);
+	return 0;
 
 usage:
 	fprintf(stderr, "usage: %s group_name file1 [file2] ...\n", argv[0]);
-	exit(1);
+	return 1;
 }

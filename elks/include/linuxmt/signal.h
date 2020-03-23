@@ -11,9 +11,9 @@
  */
 #include <linuxmt/types.h>
 
-#define SMALLSIG		/* 16-bit sigset_t*/
+#define __SMALLSIG		/* 16-bit sigset_t*/
 
-#ifdef SMALLSIG
+#ifdef __SMALLSIG
 
 typedef unsigned short sigset_t;	/* at least 16 bits */
 
@@ -112,7 +112,7 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 #define SA_PROBE SA_ONESHOT
 #define SA_SAMPLE_RANDOM SA_RESTART
 
-#ifdef SMALLSIG
+#ifdef __SMALLSIG
 
 #define SM_SIGHUP	(1 << (SIGHUP - 1))
 #define SM_SIGINT	(1 << (SIGINT - 1))
