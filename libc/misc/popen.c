@@ -1,5 +1,6 @@
-
 #include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 
 FILE * popen(command, rw)
@@ -37,6 +38,6 @@ FILE *fd;
 {
    int waitstat;
    if( fclose(fd) != 0 ) return EOF;
-   wait(&waitstat);
+   return wait(&waitstat);
 }
 

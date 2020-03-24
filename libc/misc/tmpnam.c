@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <string.h>
 
 #ifndef P_tmpdir
 #define P_tmpdir "/tmp"
@@ -27,7 +28,7 @@ char *s;
 
     do {
         sprintf(ret_val, "%s/%05d%c%c%c", P_tmpdir, getpid(), 
-	     uniq_ch[c1], uniq_ch[c2], uniq_ch[c3]);
+	     uniq_ch[(int)c1], uniq_ch[(int)c2], uniq_ch[(int)c3]);
         if (++c1 >= 62) {
   	    c1 = 0;
 	    if (++c2 >= 62) {
