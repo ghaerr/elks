@@ -12,31 +12,11 @@
 #define MKDEV(ma,mi)	((kdev_t) (((ma) << MINORBITS) | (mi)))
 #define NODEV		MKDEV(0,0)
 
-#ifdef __BCC__
-#define INCLUDE_OK
-#endif
-
-#ifdef __WATCOMC__
-#define INCLUDE_OK
-#endif
-
-#ifdef __ia16__
-#define INCLUDE_OK
-#endif
-
-#ifdef S_SPLINT_S
-#define INCLUDE_OK
-#endif
-
-#ifdef INCLUDE_OK
-
 #include <linuxmt/types.h>
 
 typedef __u16 kdev_t;
 
 extern char *kdevname(kdev_t);	  /* note: returns pointer to static data! */
-
-#endif
 
 /* As long as device numbers in the outside world have 16 bits only,
  * we use these conversions.
@@ -55,12 +35,6 @@ extern char *kdevname(kdev_t);	  /* note: returns pointer to static data! */
 #define MINOR(dev)		(((dev) & MINORMASK))
 #define MKDEV(major,minor)	((major) << MINORBITS | (minor))
 
-#include <stdint.h>
-
-typedef uint16_t kdev_t;
-
 #endif
-
-#undef INCLUDE_OK
 
 #endif

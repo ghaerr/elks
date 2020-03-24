@@ -1,16 +1,6 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 
-#ifdef __WATCOMC__
-#define offsetof(__typ,__id) ((size_t)((char *)&(((__typ*)0)->__id) - (char *)0))
-#else
-#ifdef __ia16__
-#define offsetof(TYPE, MEMBER) __builtin_offsetof (TYPE, MEMBER)
-#else
-#define offsetof(s,m) ((size_t)&(((s *)0)->m))
-#endif
-#endif
-
 extern int TASK_KRNL_SP, TASK_USER_DS, TASK_USER_AX, TASK_USER_SS;
 extern int TASK_USER_BX, TASK_USER_SI, TASK_USER_DI;
 
