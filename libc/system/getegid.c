@@ -1,6 +1,6 @@
 #include <unistd.h>
 
-int
+uid_t
 getegid(void)
 {
    int egid;

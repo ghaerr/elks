@@ -29,27 +29,28 @@ static int dumpfile(int fd)
 
 int main(int argc, char **argv)
 {
-	int i, fd;
+	int i, fd = -1;
 
 	if (argc <= 1) {
-		if (dumpfile(STDIN_FILENO)) goto error_read;
+		if (dumpfile(STDIN_FILENO)) {
+			perror("stdin");
+			return 1;
+		}
 	} else {
 		for (i = 1; i < argc; i++) {
 			errno = 0;
-			fd = open(argv[i], O_RDONLY);
-			if (fd == -1) {
-				goto error_read;
+			if ((fd = open(argv[i], O_RDONLY)) < 0) {
+				perror(argv[i]);
+				return 1;
 			} else {
-				if (dumpfile(fd)) goto error_read;
+				if (dumpfile(fd)) {
+					perror(argv[i]);
+					close(fd);
+					return 1;
+				}
 				close(fd);
 			}
 		}
 	}
 	return 0;
-
-error_read:
-	fprintf(stderr, "%s: %s: %s\n",
-		argv[0], argv[i], strerror(errno));
-	close(fd);
-	return 1;
 }

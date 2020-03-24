@@ -32,6 +32,7 @@
 static int C_A_D = 1;
 
 extern void hard_reset_now(void);
+extern void apm_shutdown_now(void);
 extern int sys_kill(sig_t,pid_t);
 
 /*
@@ -125,14 +126,26 @@ int sys_setgid(gid_t gid)
     return 0;
 }
 
-uid_t sys_getuid(void)
+static int twovalues(int retval, int *copyval, int *copyaddr)
 {
-    return current->uid;
+    if (verified_memcpy_tofs(copyaddr, copyval, sizeof(int)) != 0)
+	return -EFAULT;
+    return retval;
 }
 
-pid_t sys_getpid(void)
+uid_t sys_getuid(int *euid)
 {
-    return current->pid;
+    return twovalues(current->uid, (int *)&current->euid, euid);
+}
+
+uid_t sys_getgid(int *egid)
+{
+    return twovalues(current->gid, (int *)&current->egid, egid);
+}
+
+pid_t sys_getpid(int *ppid)
+{
+    return twovalues(current->pid, (int *)&current->ppid, ppid);
 }
 
 unsigned short int sys_umask(unsigned short int mask)
