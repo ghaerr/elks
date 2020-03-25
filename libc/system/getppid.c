@@ -1,11 +1,9 @@
-#ifdef L_getppid
 #include <unistd.h>
 
-int
+pid_t
 getppid(void)
 {
    int ppid;
-   __getpid(&ppid);
+   _getpid(&ppid);
    return ppid;
 }
-#endif

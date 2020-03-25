@@ -1,6 +1,6 @@
 #include <unistd.h>
 
-int
+uid_t
 geteuid(void)
 {
    int euid;

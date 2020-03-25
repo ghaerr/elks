@@ -1,7 +1,8 @@
-#ifdef L_getgid
-int getgid(void)
+#include <unistd.h>
+
+uid_t
+getgid(void)
 {
    int egid;
-   return __getgid(&egid);
+   return _getgid(&egid);
 }
-#endif

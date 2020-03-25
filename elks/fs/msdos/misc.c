@@ -46,7 +46,7 @@ void unlock_creation(void)
 
 int msdos_add_cluster(register struct inode *inode)
 {
-	static struct wait_queue *wait = NULL;
+	static struct wait_queue wait;
 	static int lock = 0;
 	//FIXME: using previous on booted FAT volume with mounted FAT floppy won't work well
 	static long previous = 0; /* works best if one FS is being used */
