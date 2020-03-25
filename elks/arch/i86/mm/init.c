@@ -5,6 +5,7 @@
 
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/utsname.h>
 #include <linuxmt/config.h>
 
 #include <arch/system.h>
@@ -31,26 +32,25 @@ __u16 kernel_cs, kernel_ds;
 
 void mm_stat(seg_t start, seg_t end)
 {
-    register char *pi;
+    register int i;
     register char *cp;
 
-    pi = (char *)0x30;
+    i = 0x30;
     cp = proc_name;
     do {
-	*cp++ = setupb((int)pi++);
+	*cp++ = setupb(i++);
 
 #ifndef CONFIG_ARCH_SIBO
-
-	if(pi == (char *) 0x40) {
-	    printk("PC/%cT class machine, %s CPU\n%uK base RAM",
+	if (i == 0x40) {
+	    printk("PC/%cT class machine, %s CPU, %uK base RAM",
 		    arch_cpu > 5 ? 'A' : 'X', proc_name, setupw(0x2a));
 	    cp = proc_name;
-	    pi = (char *) 0x50;
+	    i = 0x50;
 	}
 
 #endif
 
-    } while ((int)pi <
+    } while (i <
 #ifndef CONFIG_ARCH_SIBO
 			0x5D);
 #else
@@ -69,9 +69,10 @@ void mm_stat(seg_t start, seg_t end)
 
 #endif
 
-    printk(".\nELKS kernel (%u text + %u data + %u bss + %u heap)\n"
-	   "Kernel text at %x:0000, data at %x:0000\n"
-	   "%u K of memory for user processes.\n",
+    printk(".\nELKS kernel %s (%u text + %u data + %u bss + %u heap)\n"
+	   "Kernel text at %x:0000, data at %x:0000, "
+	   "%uK for user processes.\n",
+	   system_utsname.release,
 	   (unsigned)_endtext, (unsigned)_enddata,
 	   (unsigned)_endbss - (unsigned)_enddata,
 	   1 + ~ (unsigned) _endbss,

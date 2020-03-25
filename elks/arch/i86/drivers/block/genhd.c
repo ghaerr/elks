@@ -62,6 +62,7 @@ static void add_partition(register struct gendisk *hd,
     hdp->start_sect = start;
     hdp->nr_sects = size;
     print_minor_name(hd, minor);
+	printk("(%ld,%ld) ", start, size);
 }
 
 static int is_extended_partition(register struct partition *p)
@@ -244,7 +245,7 @@ void check_partition(register struct gendisk *hd, kdev_t dev)
     sector_t first_sector;
 
     if (first_time)
-	printk("Partition check:\n");
+	printk("Partitions:");
     first_time = 0;
     first_sector = hd->part[MINOR(dev)].start_sect;
 
@@ -259,7 +260,6 @@ void check_partition(register struct gendisk *hd, kdev_t dev)
     }
 #endif
 
-    printk(" ");
     print_minor_name(hd, MINOR(dev));
 
 #ifdef CONFIG_MSDOS_PARTITION
@@ -267,7 +267,7 @@ void check_partition(register struct gendisk *hd, kdev_t dev)
 	return;
 #endif
 
-    printk(" unknown partition table\n");
+    printk(" none.\n");
 }
 #endif
 
