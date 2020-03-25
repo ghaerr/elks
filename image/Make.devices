@@ -31,13 +31,35 @@ devices:
 #	$(MKDEV) /dev/kmsg c 1 11
 #	$(MKDEV) /dev/oldmem c 1 12
 
-
 ##############################################################################
 # RAM disks.
 
 	$(MKDEV) /dev/ram b 1 0 8
 	$(MKDEV) /dev/ramdisk b 1 1
 #	$MKSET   0 7  $(MKDEV) /dev/ram b 1
+
+##############################################################################
+# BIOS devices.
+# BIOS hard disks.
+# Limit to 4 primary partitions per disk (MBR).
+
+	$(MKDEV) /dev/bda  b 3 0
+	$(MKDEV) /dev/bda1 b 3 1
+	$(MKDEV) /dev/bda2 b 3 2
+	$(MKDEV) /dev/bda3 b 3 3
+	$(MKDEV) /dev/bda4 b 3 4
+	$(MKDEV) /dev/bdb  b 3 64
+	$(MKDEV) /dev/bdb1 b 3 65
+	$(MKDEV) /dev/bdb2 b 3 66
+	$(MKDEV) /dev/bdb3 b 3 67
+	$(MKDEV) /dev/bdb4 b 3 68
+#	$MKSET   0 15 $(MKDEV) /dev/bda b 3	# Currently
+#	$MKSET  64 15 $(MKDEV) /dev/bdb b 3	# Currently
+
+# BIOS Floppy diskettes.
+
+	$(MKDEV) /dev/fd0	b 3 128
+	$(MKDEV) /dev/fd1	b 3 192
 
 ##############################################################################
 # Pseudo-TTY master devices. 
@@ -65,14 +87,6 @@ devices:
 #	$MKSET 208 15 $(MKDEV) /dev/ptyc x 2
 #	$MKSET 224 15 $(MKDEV) /dev/ptyd x 2
 #	$MKSET 240 15 $(MKDEV) /dev/ptye x 2
-
-##############################################################################
-# Floppy diskettes. Only the auto-detect nodes are listed.
-
-	$(MKDEV) /dev/fd0	b 3 128 	# Currently.
-	$(MKDEV) /dev/fd1	b 3 192 	# Currently.
-
-#	$MKSET   0 3  $(MKDEV) /dev/fd b 2	# Ought to be.
 
 ##############################################################################
 # Pseudo-TTY slave devices. 
@@ -211,24 +225,6 @@ devices:
 
 #	$MKSET   0 63 $(MKDEV) /dev/xda b 13
 #	$MKSET  64 63 $(MKDEV) /dev/xdb b 13
-
-##############################################################################
-# BIOS hard disks.
-# Limit to 4 primary partitions per disk (MBR).
-
-	$(MKDEV) /dev/bda b 3  0    # Currently.
-	$(MKDEV) /dev/bda b 3  0 4  # Currently.
-	$(MKDEV) /dev/bdb b 3 64    # Currently.
-	$(MKDEV) /dev/bdb b 3 64 4  # Currently.
-#	$MKSET   0 15 $(MKDEV) /dev/bda b 3	# Currently
-#	$MKSET  64 15 $(MKDEV) /dev/bdb b 3	# Currently
-#	$MKSET 128 15 $(MKDEV) /dev/bdc b 3	# Currently
-#	$MKSET 192 15 $(MKDEV) /dev/bdd b 3	# Currently
-
-#	$MKSET   0 63 $(MKDEV) /dev/bda b 14	# Ought to be
-#	$MKSET  64 63 $(MKDEV) /dev/bdb b 14	# Ought to be
-#	$MKSET 128 63 $(MKDEV) /dev/bdc b 14	# Ought to be
-#	$MKSET 192 63 $(MKDEV) /dev/bdd b 14	# Ought to be
 
 ##############################################################################
 # Joysticks. These are not yet supported.

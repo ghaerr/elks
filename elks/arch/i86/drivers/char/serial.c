@@ -364,10 +364,9 @@ int rs_init(void)
     } while (++sp < &ports[NR_SERIAL]);
 
     sp = ports;
-    printk("Serial driver version 0.02\n");
     do {
 	if (sp->tty != NULL) {
-	    printk("ttyS%d at 0x%x (irq = %d) is a%s\n", ttyno,
+	    printk("ttyS%d at 0x%x, irq %d is a%s\n", ttyno,
 		       sp->io, sp->irq, serial_type[sp->flags & 0x3]);
 	}
 	sp++;
