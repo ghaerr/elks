@@ -42,6 +42,7 @@ static char sccsid[] = "@(#)var.c	5.3 (Berkeley) 4/12/91";
  * Shell variables.
  */
 
+#include <unistd.h>
 #include "shell.h"
 #include "output.h"
 #include "expand.h"

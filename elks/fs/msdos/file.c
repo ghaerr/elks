@@ -20,9 +20,9 @@
 
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
-static int msdos_file_read(struct inode *inode,struct file *filp,char *buf,
+static size_t msdos_file_read(struct inode *inode,struct file *filp,char *buf,
     size_t count);
-static int msdos_file_write(struct inode *inode,struct file *filp,char *buf,
+static size_t msdos_file_write(struct inode *inode,struct file *filp,char *buf,
     size_t count);
 
 
@@ -61,7 +61,7 @@ struct inode_operations msdos_file_inode_operations_no_bmap = {
 };
 
 
-static int msdos_file_read(register struct inode *inode,register struct file *filp,
+static size_t msdos_file_read(register struct inode *inode,register struct file *filp,
 	char *buf,size_t count)
 {
 	char *start;
@@ -96,7 +96,7 @@ static int msdos_file_read(register struct inode *inode,register struct file *fi
 }
 
 
-static int msdos_file_write(register struct inode *inode,register struct file *filp,char *buf,
+static size_t msdos_file_write(register struct inode *inode,register struct file *filp,char *buf,
     size_t count)
 {
 	long sector;

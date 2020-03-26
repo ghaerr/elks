@@ -190,7 +190,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	? (__pptr)base_data
 	: currentp->t_endseg) - slen;
     currentp->t_regs.sp = (__u16)(currentp->t_begstack);
-    fmemcpyb(currentp->t_begstack, seg_data->base, (word_t) sptr, ds, (word_t) slen);
+    fmemcpyb((byte_t *)currentp->t_begstack, seg_data->base, (byte_t *)sptr, ds, (word_t) slen);
 
     /* From this point, the old code and data segments are not needed anymore */
 

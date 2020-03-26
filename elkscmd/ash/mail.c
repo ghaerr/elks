@@ -48,6 +48,8 @@ static char sccsid[] = "@(#)mail.c	5.1 (Berkeley) 3/7/91";
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
+#include <unistd.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 

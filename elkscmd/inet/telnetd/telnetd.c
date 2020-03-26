@@ -204,6 +204,7 @@ int main(int argc, char *argv[]) {
   addr_in.sin_port = htons(23);
   if (bind(sockfd, (struct sockaddr*)&addr_in, sizeof(addr_in)) == -1) {
     perror("bind error");
+	close(sockfd);
     exit(-1);
   }
 
@@ -219,7 +220,8 @@ int main(int argc, char *argv[]) {
 	dup2(ret, 0);
 	dup2(ret, 1);
 	dup2(ret, 2);
-	close(ret);
+	if (ret > 2)
+		close(ret);
 
 	while (1) {
 		connectionfd = accept (sockfd, (struct sockaddr *) NULL, NULL);

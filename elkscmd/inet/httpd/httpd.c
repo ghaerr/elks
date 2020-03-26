@@ -192,7 +192,8 @@ char** argv;
 	dup2(ret, 0);
 	dup2(ret, 1);
 	dup2(ret, 2);
-	close(ret);
+	if (ret > 2)
+		close(ret);
 	setsid();
 
 	while (1){

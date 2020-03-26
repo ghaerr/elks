@@ -38,6 +38,8 @@
 static char sccsid[] = "@(#)memalloc.c	5.2 (Berkeley) 3/13/91";
 #endif /* not lint */
 
+#include <unistd.h>
+#include <stdlib.h>
 #include "shell.h"
 #include "output.h"
 #include "memalloc.h"

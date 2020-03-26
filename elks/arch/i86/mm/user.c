@@ -68,7 +68,7 @@ void put_user_char(unsigned char dv, void *dp)
 
 unsigned short int get_user(void *dv)
 {
-    return peekw(dv, current->t_regs.ds);
+    return peekw((word_t)dv, current->t_regs.ds);
 }
 
 void put_user(unsigned short int dv, void *dp)

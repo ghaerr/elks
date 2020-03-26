@@ -23,6 +23,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/stat.h>
+#include <linuxmt/debug.h>
 
 #include <arch/segment.h>
 
@@ -633,6 +634,7 @@ int sys_socket(int family, int type, int protocol)
 	sock_release(sock);
 	return fd;
     }
+    debug_net("SOCK success\n");
 
     if ((fd = get_fd(SOCK_INODE(sock))) < 0) {
 	sock_release(sock);

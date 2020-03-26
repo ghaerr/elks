@@ -30,9 +30,10 @@
 #define DEBUG_BLK	0		/* block i/o*/
 #define DEBUG_FAT	0		/* FAT filesystem*/
 #define DEBUG_FILE	0		/* sys open and file i/o*/
+#define DEBUG_NET	0		/* networking*/
 #define DEBUG_SIG	0		/* signals*/
 #define DEBUG_SUP	0		/* superblock, mount, umount*/
-#define DEBUG_TTY	0		/* wait, exit*/
+#define DEBUG_TTY	0		/* tty driver*/
 #define DEBUG_WAIT	0		/* wait, exit*/
 
 #if DEBUG_BLK
@@ -51,6 +52,12 @@
 #define debug_file	printk
 #else
 #define debug_file(...)
+#endif
+
+#if DEBUG_NET
+#define debug_net	printk
+#else
+#define debug_net(...)
 #endif
 
 #if DEBUG_SIG

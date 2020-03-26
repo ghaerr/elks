@@ -54,6 +54,7 @@ static char sccsid[] = "@(#)cd.c	5.2 (Berkeley) 3/13/91";
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <unistd.h>
 
 
 #ifdef __STDC__

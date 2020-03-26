@@ -42,6 +42,9 @@ static char sccsid[] = "@(#)miscbltin.c	5.2 (Berkeley) 3/13/91";
  * Miscelaneous builtins.
  */
 
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include "shell.h"
 #include "options.h"
 #include "var.h"

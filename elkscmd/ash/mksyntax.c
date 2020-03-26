@@ -222,7 +222,7 @@ void digit_convert(void)
 		for (p = digit ; *p && *p != i ; p++);
 		if (*p == '\0')
 			p = digit;
-		fprintf(cfile, "      %d,\n", p - digit);
+		fprintf(cfile, "      %ld,\n", (long)(p - digit));
 	}
 	fputs("};\n", cfile);
 }
