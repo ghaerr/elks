@@ -95,12 +95,18 @@ void ktcp_run(void)
 int main(int argc,char **argv)
 {
     __u8 * addr;
-
+    int daemon = 0;
+    char *progname = argv[0];
     const char dname[9];
     sprintf(dname, "/dev/eth");
 
+    if (argc > 1 && !strcmp("-b", argv[1])) {
+	daemon = 1;
+	argc--;
+	argv++;
+    }
     if (argc < 3) {
-	printf("Usage: %s local_ip [interface] [gateway] [netmask]\n", argv[0]);
+	printf("Usage: %s [-b] local_ip [interface] [gateway] [netmask]\n", progname);
 	exit(3);
     }
 
@@ -122,6 +128,7 @@ int main(int argc,char **argv)
     printf ("netmask_ip: %2X.%2X.%2X.%2X\n", addr [0], addr [1], addr [2], addr [3]);
     */
 
+    /* must exit() in next two stages on error to reset kernel tcpdev_inuse to 0*/
     debug("\nKTCP: 2. init tcpdev\n");
     if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0) exit(1);
 
@@ -135,6 +142,14 @@ int main(int argc,char **argv)
 	dev->type=0;
 	intfd = slip_init(argv[2]);
 	if (intfd < 0) exit(2);
+    }
+
+    /* become daemon now that tcpdev_inuse race condition over*/
+    if (daemon) {
+	if (fork())
+	    exit(0);
+	close(0);
+	close(1);
     }
 
     arp_init ();

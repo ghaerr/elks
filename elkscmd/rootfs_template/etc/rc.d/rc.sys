@@ -29,17 +29,17 @@ then
 	fi
 	
 	echo ' ktcp'
-	ktcp $localip $interface &
-	
-	for daemon in telnetd httpd
-	do
-		if test -f /bin/$daemon 
-		then
-			echo -n " $daemon "
-			$daemon || true
-		fi
-	done
-
+	# run ktcp as background daemon if successful starting networking
+	if ktcp -b $localip $interface ; then
+		for daemon in telnetd httpd
+		do
+			if test -f /bin/$daemon
+			then
+				echo -n " $daemon "
+				$daemon || true
+			fi
+		done
+	fi
 fi
 
 # 
