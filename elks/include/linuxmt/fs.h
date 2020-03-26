@@ -359,7 +359,7 @@ struct inode_operations {
     int 			(*follow_link) ();
 
 #ifdef USE_GETBLK
-    struct buffer_head *	(*getblk) ();
+    struct buffer_head *	(*getblk) (struct inode *, block_t, int);
 #endif
 
     void			(*truncate) ();

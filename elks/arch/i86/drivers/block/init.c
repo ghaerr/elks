@@ -26,6 +26,7 @@
 #include <linuxmt/string.h>
 
 #include <arch/system.h>
+#include <arch/segment.h>
 
 extern void rd_load();
 extern void chr_dev_init();

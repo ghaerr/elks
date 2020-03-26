@@ -61,6 +61,7 @@ static char sccsid[] = "@(#)jobs.c	5.1 (Berkeley) 3/7/91";
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
+#include <unistd.h>
 #ifdef BSD
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -79,13 +80,13 @@ MKINIT short backgndpid = -1;	/* pid of last background process */
 #if JOBS
 int initialpgrp;		/* pgrp of shell on invocation */
 short curjob;			/* current job */
+STATIC void restartjob(struct job *);
+STATIC int procrunning(int);
 #endif
 
 #ifdef __STDC__
-STATIC void restartjob(struct job *);
 STATIC struct job *getjob(char *);
 STATIC void freejob(struct job *);
-STATIC int procrunning(int);
 STATIC int dowait(int, struct job *);
 STATIC int waitproc(int, int *);
 STATIC char *commandtext(union node *);
@@ -439,6 +440,7 @@ currentjob:
 		}
 	}
 	error("No such job: %s", name);
+	return NULL;
 }
 
 

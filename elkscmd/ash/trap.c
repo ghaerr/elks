@@ -38,6 +38,7 @@
 static char sccsid[] = "@(#)trap.c	5.2 (Berkeley) 4/12/91";
 #endif /* not lint */
 
+#include <unistd.h>
 #include "shell.h"
 #include "main.h"
 #include "nodes.h"	/* for other headers */

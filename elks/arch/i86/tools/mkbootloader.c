@@ -280,7 +280,7 @@ int main(int argcnt, char **arg)
 		    for (i = check.start; i < check.end; i++)
 			l += rom[i] & 0xff;
 		    rom[check.end] = -l;
-		    printf("[%02hhx @%05x]\n", rom[check.end] & 0xff,
+		    printf("[%02hhx @%05x]\n", (unsigned char)(rom[check.end] & 0xff),
 			   check.end);
 		    if ((unsigned char) rom[check.start + 2] < 3)
 			printf

@@ -18,6 +18,7 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/net.h>
 #include <linuxmt/tcpdev.h>
+#include <linuxmt/debug.h>
 
 #include "af_inet.h"
 
@@ -55,7 +56,7 @@ extern char tcpdev_inuse;
 
 static int inet_create(struct socket *sock, int protocol)
 {
-    debug1("inet_create(sock: 0x%x)\n", sock);
+    debug_net("NET inet_create(sock: 0x%x) tcpdev %d\n", sock, tcpdev_inuse);
 
     if (protocol != 0 || !tcpdev_inuse)
         return -EINVAL;
@@ -74,7 +75,7 @@ static int inet_release(struct socket *sock, struct socket *peer)
     register struct tdb_release *cmd;
     int ret;
 
-    debug1("inet_release(sock: 0x%x)\n", sock);
+    debug_net("NET inet_release(sock: 0x%x) tcpdev %d\n", sock, tcpdev_inuse);
 	if (!tcpdev_inuse)
 		return -EINVAL;
     cmd = (struct tdb_release *)get_tdout_buf();

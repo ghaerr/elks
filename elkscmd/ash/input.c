@@ -44,14 +44,17 @@ static char sccsid[] = "@(#)input.c	5.4 (Berkeley) 7/1/91";
 
 #include <sys/types.h>
 #include <stdio.h>	/* defines BUFSIZ */
+#include <string.h>
 #include "shell.h"
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 #include "syntax.h"
 #include "input.h"
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
+#include "redir.h"
 
 #define EOF_NLEFT -99		/* value of parsenleft when EOF pushed back */
 
@@ -92,8 +95,6 @@ STATIC void pushfile(void);
 #else
 STATIC void pushfile();
 #endif
-
-
 
 #ifdef mkinit
 INCLUDE "input.h"

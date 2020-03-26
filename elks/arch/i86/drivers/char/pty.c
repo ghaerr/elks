@@ -77,7 +77,7 @@ int pty_select (struct inode *inode, struct file *file, int sel_type)
 	return res;
 }
 
-size_t pty_read (struct inode *inode, struct file *file, char *data, int len)
+size_t pty_read (struct inode *inode, struct file *file, char *data, size_t len)
 {
 	int count = 0;
 	int err;
@@ -100,7 +100,7 @@ size_t pty_read (struct inode *inode, struct file *file, char *data, int len)
 	return count;
 }
 
-size_t pty_write (struct inode *inode, struct file *file, char *data, int len)
+size_t pty_write (struct inode *inode, struct file *file, char *data, size_t len)
 {
 	int count = 0;
 	int err;

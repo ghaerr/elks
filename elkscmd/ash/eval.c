@@ -62,6 +62,7 @@ static char sccsid[] = "@(#)eval.c	5.3 (Berkeley) 4/12/91";
 #include "mystring.h"
 #include <sys/types.h>
 #include <signal.h>
+#include <unistd.h>
 #include "debug.h"
 
 

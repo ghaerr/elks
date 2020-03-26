@@ -17,6 +17,7 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/tcpdev.h>
+#include <linuxmt/debug.h>
 
 #include <arch/segment.h>
 
@@ -36,7 +37,7 @@ char tcpdev_inuse;
 char *get_tdout_buf(void)
 {
     down(&bufout_sem);
-    return tdout_buf;
+    return (char *)tdout_buf;
 }
 
 static size_t tcpdev_read(struct inode *inode, struct file *filp, char *data,
@@ -99,7 +100,7 @@ static size_t tcpdev_write(struct inode *inode, struct file *filp,
 	memcpy_fromfs(tdin_buf, data, len);
 
 	/* Call the af_inet code to handle the data */
-	inet_process_tcpdev(tdin_buf, len);
+	inet_process_tcpdev((char *)tdin_buf, len);
     }
     debug1("TCPDEV: write() returning %u\n", len);
     return len;
@@ -134,24 +135,24 @@ static int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
 
 static int tcpdev_open(struct inode *inode, struct file *file)
 {
-    debug2("TCPDEV: open( %p, %p )\n",inode,file);
+    debug_net("TCPDEV: open(%p, %p) tcpdev_inuse %d\n",inode,file, tcpdev_inuse);
     if (!suser()) {
-	debug("TCPDEV: open() returning -EPERM\n");
+	debug_net("TCPDEV: open() returning -EPERM\n");
     	return -EPERM;
     }
     if (tcpdev_inuse) {
-	debug("TCPDEV: open() returning -EBUSY\n");
+	debug_net("TCPDEV: open() returning -EBUSY\n");
 	return -EBUSY;
     }
+    debug_net("TCP open OK\n");
     tdin_tail = tdout_tail = 0;
     tcpdev_inuse = 1;
-    debug("TCPDEV: open() returning 0\n");
     return 0;
 }
 
 static void tcpdev_release(struct inode *inode, struct file *file)
 {
-    debug2("TCPDEV: release( %p, %p )\n",inode,file);
+    debug_net("TCPDEV: release(%p, %p) tcpdev_inuse %d\n",inode,file,tcpdev_inuse);
     tcpdev_inuse = 0;
 }
 
@@ -180,7 +181,7 @@ void tcpdev_init(void)
 {
     register_chrdev(TCPDEV_MAJOR, "tcpdev", &tcpdev_fops);
 
-    debug("TCPDEV: init()\n");
+    debug_net("TCPDEV: init()\n");
     bufin_sem = bufout_sem = 0;
     tcpdev_inuse = 0;
 }

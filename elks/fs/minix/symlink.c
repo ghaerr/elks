@@ -64,7 +64,7 @@ static int minix_follow_link(struct inode *dir,
 }
 
 static int minix_readlink(register struct inode *inode,
-			  char *buffer, int buflen)
+			  char *buffer, size_t buflen)
 {
     register struct buffer_head *bh;
     size_t len;

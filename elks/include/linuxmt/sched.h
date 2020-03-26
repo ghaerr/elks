@@ -113,6 +113,9 @@ struct task_struct {
 
 /*@-namechecks@*/
 
+#define DEPRECATED
+//#define DEPRECATED	__attribute__ ((deprecated))
+
 /* We use typedefs to avoid using struct foobar (*) */
 typedef struct task_struct __task, *__ptask;
 
@@ -137,8 +140,8 @@ extern void wait_clear(struct wait_queue *);
 
 // This old style sleep is unsafe
 // Use wait_event instead
-extern void sleep_on(struct wait_queue *) __attribute__ ((deprecated));
-extern void interruptible_sleep_on(struct wait_queue *)__attribute__ ((deprecated));
+extern void sleep_on(struct wait_queue *) DEPRECATED;
+extern void interruptible_sleep_on(struct wait_queue *) DEPRECATED;
 
 /*@-namechecks@*/
 
@@ -149,8 +152,8 @@ extern void _wake_up(struct wait_queue *,unsigned short int);
 // These old style semaphore functions are unsafe
 // Use count_t for reference counting
 // Use lock_t for object locking
-extern void down (short int *) __attribute__ ((deprecated));
-extern void up (short int *) __attribute__ ((deprecated));
+extern void down (short int *)  DEPRECATED;
+extern void up (short int *)  DEPRECATED;
 
 extern void wake_up_process(struct task_struct *);
 

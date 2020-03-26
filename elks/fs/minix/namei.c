@@ -335,7 +335,7 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
 static int empty_dir(register struct inode *inode)
 {
     unsigned short offset;
-    register struct buffer_head *bh;
+    register struct buffer_head *bh = NULL;
     struct minix_dir_entry *de;
     unsigned short dirsize;
     __u32 bo;

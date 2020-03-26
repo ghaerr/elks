@@ -49,6 +49,8 @@ static char sccsid[] = "@(#)error.c	5.1 (Berkeley) 3/7/91";
 #include "error.h"
 #include <sys/types.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 #ifdef __STDC__
 #include "stdarg.h"
 #else

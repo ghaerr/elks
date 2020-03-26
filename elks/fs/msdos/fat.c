@@ -18,11 +18,14 @@ static struct fat_cache *fat_cache,cache[FAT_CACHE];
 
 long fat_access(register struct super_block *sb,long this,long new_value)
 {
-	struct buffer_head *bh,*bh2,*c_bh,*c_bh2;
+	struct buffer_head *bh,*bh2;
 	unsigned char *p_first,*p_last;
-	void *data,*data2,*c_data,*c_data2;
-	long first,last,next,copy;
+	void *data,*data2;
+	long first,last,next;
 	int fatsz = MSDOS_SB(sb)->fat_bits;
+	//long copy;
+	//void *c_data, *c_data2;
+	//struct buffer_head *c_bh, *c_bh2;
 
 #ifndef FAT_BITS_32
 	if (fatsz == 32)

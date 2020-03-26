@@ -165,19 +165,19 @@ static struct gendisk bioshd_gendisk = {
 static unsigned short int bioshd_gethdinfo(void)
 {
     unsigned short int ndrives = 0;
-    register char *drive;
+    int drive;
     register struct drive_infot *drivep = &drive_info[0];
 
-    drive = (char *)0x80;
+    drive = 0x80;
     do {
-	if ((drivep->heads = setupw((int)drive))) {
-	    drivep->sectors = setupw((int)drive + 2);
-	    drivep->cylinders = setupw((int)drive + 4) + 1;
+	if ((drivep->heads = setupw(drive))) {
+	    drivep->sectors = setupw(drive + 2);
+	    drivep->cylinders = setupw(drive + 4) + 1;
 	    drivep->fdtype = -1;
 	    ndrives++;
 	}
 	drivep++;
-    } while ((int)((drive += 6) <= 0x86));
+    } while ((drive += 6) <= 0x86);
     return ndrives;
 }
 
@@ -306,7 +306,7 @@ static void reset_bioshd(int drive)
  */
 #if 0
     if (CARRY_SET)
-	printk("hd: unable to reset.\n");
+	printk("bioshd: unable to reset.\n");
 #endif
 }
 
@@ -317,7 +317,7 @@ int read_sector(int drive, int track, int sector)
  * when new floppy probe is used
  */
 
-    register char *count = (char *)MAX_ERRS;
+    register int count = MAX_ERRS;
 
     do {
 	/* BIOS read sector */
@@ -331,7 +331,7 @@ int read_sector(int drive, int track, int sector)
 	set_irq();
 	if (!call_bios(&bdt)) return 0;			/* everything is OK */
 	reset_bioshd(drive);
-    } while ((int)(--count) > 0);
+    } while (--count > 0);
     return 1;			/* error */
 }
 
@@ -349,7 +349,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	return -ENXIO;
     if ((unsigned int)target >= 4)
 	return -ENXIO;
-    if (((int) hdp->start_sect) == -1)
+    if (hdp->start_sect == -1)
 	return -ENXIO;
 
 #if 0
@@ -552,16 +552,16 @@ int init_bioshd(void)
 
 #ifdef CONFIG_BLK_DEV_BFD
 #ifdef CONFIG_BLK_DEV_BHD
-    printk("doshd: %d floppy drive%s and %d hard drive%s\n",
+    printk("bioshd: %d floppy drive%s and %d hard drive%s\n",
 	   _fd_count, _fd_count == 1 ? "" : "s",
 	   _hd_count, _hd_count == 1 ? "" : "s");
 #else
-    printk("doshd: %d floppy drive%s\n",
+    printk("bioshd: %d floppy drive%s\n",
 	   _fd_count, _fd_count == 1 ? "" : "s");
 #endif
 #else
 #ifdef CONFIG_BLK_DEV_BHD
-    printk("doshd: %d hard drive%s\n",
+    printk("bioshd: %d hard drive%s\n",
 	   _hd_count, _hd_count == 1 ? "" : "s");
 #endif
 #endif
@@ -613,7 +613,7 @@ int init_bioshd(void)
 	}
 	bioshd_initialized = 1;
     } else {
-	printk("hd: unable to register\n");
+	printk("bioshd: unable to register\n");
     }
     return count;
 }
@@ -652,7 +652,7 @@ static void do_bioshd_request(void)
 {
     register struct drive_infot *drivep;
     register struct request *req;
-    char *buff;
+    unsigned char *buff;
     sector_t start, count, tmp;
     int drive, errs;
     unsigned int cylinder, head, sector, this_pass;
@@ -694,7 +694,7 @@ static void do_bioshd_request(void)
 /* make sure it's a disk that we are dealing with. */
 
 	if ((unsigned int)drive > 3 || drivep->heads == 0) {
-	    printk("hd: non-existent drive\n");
+	    printk("bioshd: non-existent drive\n");
 	    end_request(0);
 	    continue;
 	}
@@ -707,11 +707,10 @@ static void do_bioshd_request(void)
 #endif
 
 	start = req->rq_sector;
-	buff = req->rq_buffer;
-	if ((int) hd[minor].start_sect == -1 || start >= hd[minor].nr_sects) {
-	    printk("hd: bad partition start=%d sect=%d nr_sects=%d.\n",
-		   start, (int) hd[minor].start_sect,
-		   (int) hd[minor].nr_sects);
+	buff = (unsigned char *)req->rq_buffer;
+	if (hd[minor].start_sect == -1 || start >= hd[minor].nr_sects) {
+	    printk("bioshd: bad partition start=%ld sect=%ld nr_sects=%ld.\n",
+		   start, hd[minor].start_sect, hd[minor].nr_sects);
 	    end_request(0);
 	    continue;
 	}
@@ -750,9 +749,8 @@ static void do_bioshd_request(void)
 		BD_CX = (unsigned short int)
 			    ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
 		BD_DX = (head << 8) | drive;
-		debug5("cylinder=%d head=%d sector=%d drive=0x%x CMD=%d\n",
-		    cylinder, head, sector, drive, req->rq_cmd);
-		debug1("blocks %d\n", this_pass);
+		debug6("cylinder=%d head=%d sector=%d blocks=%d drive=0x%x CMD=%d\n",
+		    cylinder, head, sector, this_pass, drive, req->rq_cmd);
 		in_ax = BD_AX;
 		out_ax = 0;
 		if (call_bios(&bdt)) {
@@ -763,7 +761,7 @@ static void do_bioshd_request(void)
 		wake_up(&dma_wait);
 	    } while (out_ax && --errs);	/* On error, retry up to MAX_ERRS times */
 	    if (out_ax) {
-		printk("hd: error: out AX=0x%04X in AX=0x%04X "
+		printk("bioshd: error: out AX=0x%04X in AX=0x%04X "
 		       "ES:BX=0x%04X:0x%04X\n", out_ax, in_ax, BD_ES, BD_BX);
 		end_request(0);
 		goto next_block;

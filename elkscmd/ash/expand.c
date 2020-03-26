@@ -62,6 +62,7 @@ static char sccsid[] = "@(#)expand.c	5.1 (Berkeley) 3/7/91";
 #include <sys/stat.h>
 #include <errno.h>
 #include <dirent.h>
+#include <unistd.h>
 #if USEGETPW
 #include <pwd.h>
 #endif

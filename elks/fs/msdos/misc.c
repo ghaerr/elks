@@ -26,7 +26,7 @@ struct buffer_head *msdos_sread(int dev,long sector,void **start)
 }
 
 
-static struct wait_queue *creation_wait = NULL;
+static struct wait_queue creation_wait;
 static int creation_lock = 0;
 
 
