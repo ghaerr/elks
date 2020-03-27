@@ -54,6 +54,9 @@ ELKSCMD_DIR=$(TOPDIR)/elkscmd
 
 INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(ELKS_DIR)/include
 
+# temporarily turn off typical non-K&R warnings for now
+WARNINGS = -Wno-implicit-int
+
 ##############################################################################
 #
 # Determine the ELKS kernel version.
@@ -88,7 +91,7 @@ ifeq ($(PLATFORM),DEFAULT)
 	AS=as
 endif
 
-CFLAGS=$(CFLBASE) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
+CFLAGS=$(CFLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
 
 ###############################################################################
 #

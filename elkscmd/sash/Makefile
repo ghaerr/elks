@@ -4,6 +4,8 @@ BASEDIR=..
 
 include $(BASEDIR)/Make.defs
 
+LOCALFLAGS = -Wno-implicit-int
+
 ###############################################################################
 #
 # Include standard packaging commands.
