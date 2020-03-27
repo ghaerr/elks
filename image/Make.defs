@@ -30,19 +30,20 @@ FD_FAT_BOOT = $(BOOTBLOCKS_DIR)/fat.bin
 MINIX_MKFSOPTS=
 
 # mformat options
-# -f size	image size in kilobytes
+# -f size	image size in kilobytes (up to 2880k only)
+# -s secs	num sectors/track
+# -h heads	num disk heads
+# -t tracks	num disk tracks
+# -c 1		cluster size 1 sector
 # -M 512	software sector size 512 (=physical sector size)
 # -d 2		2 FAT tables
 # -L 9		9 FAT sectors (mformat forces 3 for 360k, 5 for 720k)
 # -r 14		14 root directory sectors
-# -c 1		cluster size 1 sector
 # -R 1		1 reserve sector (boot, may need to reserve 2)
-# -B boot      use passed boot file (not used)
 # -k		only update offsets 11 through 61 in boot block, all else unchanged
 # -N 0		serial number 0
 # -v label	volume label (don't use with first format as uses two directory entries)
-# -C		create image (buggy, leaves nonzero data in image)
-FAT_MKFSOPTS = -f $(TARGET_BLKS) -M 512 -d 2 -L 9 -r 14 -c 1 -k -N 0
+FAT_MKFSOPTS = -f $(TARGET_BLKS) -M 512 -d 2 -L 9 -r 14 -k -N 0 -c 1
 
 # mcopy options
 # -v		verbose
@@ -82,8 +83,8 @@ TARGET_FILE = $(IMG_DIR)/fd2880.bin
 TARGET_BLKS = 2880
 BPB = -B36,2,80
 MINIX_MKFSOPTS = -1 -n14 -i720 -s$(TARGET_BLKS)
-# use cluster size of 2 for 2880 FAT image
-FAT_MKFSOPTS = -f $(TARGET_BLKS) -M 512 -d 2 -L 9 -r 14 -c 2 -k -N 0
+# FAT12 2880k, use cluster size 2
+FAT_MKFSOPTS = -f $(TARGET_BLKS) -M 512 -d 2 -L 9 -r 14 -k -N 0 -c 2
 endif
 
 ifdef CONFIG_IMG_HD
@@ -91,7 +92,9 @@ TARGET_FILE = $(IMG_DIR)/hd.bin
 TARGET_BLKS = $(CONFIG_IMG_BLOCKS)
 BPB = -B$(CONFIG_IMG_SECT),$(CONFIG_IMG_HEAD),$(CONFIG_IMG_CYL)
 MINIX_MKFSOPTS = -1 -n14 -i720 -s$(CONFIG_IMG_BLOCKS)
-FAT_MKFS_OPTS = -s $(CONFIG_IMG_SECT) -h $(CONFIG_IMG_HEAD) -t $(CONFIG_IMG_CYL)
+# FAT16 HD, cluster size 2, autocalc num root directory sectors
+FAT_MKFSOPTS = -s $(CONFIG_IMG_SECT) -h $(CONFIG_IMG_HEAD) -t $(CONFIG_IMG_CYL) \
+					-M 512 -d 2 -k -N 0 -c 2
 endif
 
 ifdef CONFIG_IMG_RAW

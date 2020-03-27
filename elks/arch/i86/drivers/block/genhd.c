@@ -168,12 +168,6 @@ static void extended_partition(register struct gendisk *hd, kdev_t dev)
 
   done:
     unmap_brelse(bh);
-
-#if 0
-    unmap_buffer(bh);
-    brelse(bh);
-#endif
-
 }
 
 static int msdos_partition(struct gendisk *hd,
@@ -184,13 +178,9 @@ static int msdos_partition(struct gendisk *hd,
     register struct hd_struct *hdp;
     unsigned short int i, minor = current_minor;
 
-#if 0
-    int mask = (1 << hd->minor_shift) - 1;
-#endif
-
     if (!(bh = bread(dev, (block_t) 0))) {
-	printk(" unable to read partition table\n");
-	return -1;
+	printk(" no MBR");
+	return 0;
     }
     map_buffer(bh);
 
@@ -198,7 +188,8 @@ static int msdos_partition(struct gendisk *hd,
      * that nobody else tries to re-use this data.
      */
     if (*(unsigned short *) (bh->b_data + 0x1fe) != 0xAA55) {
-	printk(" bad magic number\n");
+out:
+	printk(" no mbr");
 	unmap_brelse(bh);
 	return 0;
     }
@@ -210,6 +201,9 @@ static int msdos_partition(struct gendisk *hd,
 	hdp = &hd->part[minor];
 	if (!NR_SECTS(p))
 	    continue;
+	/* if invalid partition entry, assume no MBR*/
+	if (p->boot_ind != 0x00 && p->boot_ind != 0x80)
+	    goto out;
 	add_partition(hd, minor, first_sector + START_SECT(p), NR_SECTS(p));
 	if (is_extended_partition(p)) {
 	    printk(" <");
@@ -230,12 +224,6 @@ static int msdos_partition(struct gendisk *hd,
     }
     printk("\n");
     unmap_brelse(bh);
-
-#if 0
-    unmap_buffer(bh);
-    brelse(bh);
-#endif
-
     return 1;
 }
 
