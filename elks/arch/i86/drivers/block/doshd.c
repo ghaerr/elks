@@ -44,9 +44,6 @@
 
 #ifdef CONFIG_BLK_DEV_BIOS
 
-#define DMA_OVR  // activate DMASEG patch
-/* #define MULT_SECT_RQ */
-
 /* the following must match with /dev minor numbering scheme*/
 #define NUM_MINOR	32	/* max minor devices per drive*/
 #define MINOR_SHIFT	5	/* =log2(NUM_MINOR) shift to get drive num*/
@@ -655,6 +652,7 @@ static void do_bioshd_request(void)
 {
     register struct drive_infot *drivep;
     register struct request *req;
+    seg_t seg;
     unsigned char *buff;
     sector_t start, count, tmp;
     int drive, errs;
@@ -703,7 +701,7 @@ static void do_bioshd_request(void)
 	}
 
 	drive = hd_drive_map[drive];
-#ifdef MULT_SECT_RQ
+#ifdef BLOAT_FS
 	count = req->rq_nr_sectors;
 #else
 	count = 2;
@@ -711,6 +709,7 @@ static void do_bioshd_request(void)
 
 	start = req->rq_sector;
 	buff = (unsigned char *)req->rq_buffer;
+	seg = req->rq_seg;
 	if (hd[minor].start_sect == -1 || start >= hd[minor].nr_sects) {
 	    printk("bioshd: bad partition start=%ld sect=%ld nr_sects=%ld.\n",
 		   start, hd[minor].start_sect, hd[minor].nr_sects);
@@ -732,23 +731,40 @@ static void do_bioshd_request(void)
 
 	    errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
 	    do {
+		unsigned rq_start_dma_page, rq_end_dma_page;
+		int need_dma_seg;
+
 		while (!dma_avail) sleep_on(&dma_wait);
 		dma_avail = 0;
-/*	    	BD_IRQ = BIOSHD_INT;*/
-#ifdef DMA_OVR
-		if (this_pass > (DMASEGSZ >> 9)) this_pass = (DMASEGSZ >> 9);
-		if (req->rq_cmd == WRITE) {
-		    BD_AX = (unsigned short int) (BIOSHD_WRITE | this_pass);
-		    fmemcpyb(NULL, DMASEG, buff, req->rq_seg, (this_pass << 9));
+
+		/* Try to gauge if we can do the read/write directly on the actual source/
+		   target buffer without crossing a 64 KiB DMA boundary
+
+		   If not, then do the read/write by way of DMASEG:0 */
+		rq_start_dma_page = (seg + ((__u16) buff >> 4)) >> 12;
+		rq_end_dma_page = (seg + ((__u16) (buff + this_pass * 512 - 1) >> 4)) >> 12;
+		need_dma_seg = (rq_start_dma_page != rq_end_dma_page);
+
+		if (need_dma_seg) {
+		    if (this_pass > (DMASEGSZ >> 9)) {
+			/* Then again, if we limit our read/write request to DMASEGSZ bytes,
+			   it may turn out that we no longer need DMASEG:0... (!) */
+			this_pass = (DMASEGSZ >> 9);
+			rq_end_dma_page = (seg + ((__u16) (buff + DMASEGSZ - 1) >> 4)) >> 12;
+			need_dma_seg = (rq_start_dma_page != rq_end_dma_page);
+		    }
 		}
-		else BD_AX = (unsigned short int) (BIOSHD_READ | this_pass);
-		BD_BX = 0;
-		BD_ES = DMASEG;
-#else
+
+		if (need_dma_seg) {
+		    if (req->rq_cmd == WRITE)
+			fmemcpyb(NULL, DMASEG, buff, seg, (this_pass << 9));
+		    BD_BX = 0;
+		    BD_ES = DMASEG;
+		} else {
+		    BD_BX = (__u16) buff;
+		    BD_ES = seg;
+		}
 		BD_AX = (req->rq_cmd == WRITE ? BIOSHD_WRITE : BIOSHD_READ) | this_pass;
-		BD_BX = (__u16) buff;
-		BD_ES = req->rq_seg;
-#endif
 		BD_CX = (unsigned short int)
 			    ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
 		BD_DX = (head << 8) | drive;
@@ -756,13 +772,17 @@ static void do_bioshd_request(void)
 		    cylinder, head, sector, this_pass, drive, req->rq_cmd);
 		in_ax = BD_AX;
 		out_ax = 0;
+
 		if (call_bios(&bdt)) {
 		    out_ax = BD_AX;
 		    reset_bioshd(drive); /* controller should be reset upon error detection */
-		}
+		} else if (need_dma_seg && req->rq_cmd == READ)
+		    fmemcpyb(buff, seg, NULL, DMASEG, (word_t)(this_pass << 9));
+
 		dma_avail = 1;
 		wake_up(&dma_wait);
 	    } while (out_ax && --errs);	/* On error, retry up to MAX_ERRS times */
+
 	    if (out_ax) {
 		printk("bioshd: error: out AX=0x%04X in AX=0x%04X "
 		       "ES:BX=0x%04X:0x%04X\n", out_ax, in_ax, BD_ES, BD_BX);
@@ -770,10 +790,6 @@ static void do_bioshd_request(void)
 		goto next_block;
 	    }
 
-#ifdef DMA_OVR
-	    if (req->rq_cmd == READ)
-		fmemcpyb(buff, req->rq_seg, NULL, DMASEG, (word_t)(this_pass << 9));
-#endif
 	    count -= this_pass;
 	    start += this_pass;
 	    buff += this_pass * 512;
