@@ -20,7 +20,7 @@ mainmenu_option next_comment
 		busyelks 'fileutils'	CONFIG_APP_FILE_UTILS	y
 		busyelks 'shutils'	 	CONFIG_APP_SH_UTILS		y
 		bool 'sysutils'			CONFIG_APP_SYS_UTILS	y
-		bool 'vi'				CONFIG_APP_LEVEE		y
+		bool 'vi'      			CONFIG_APP_ELVIS		y
 		busyelks 'minix1'		CONFIG_APP_MINIX1		y
 		bool 'minix2'			CONFIG_APP_MINIX2		y
 		busyelks 'minix3'		CONFIG_APP_MINIX3		y
@@ -32,11 +32,11 @@ mainmenu_option next_comment
 		comment 'Commands not compiling'
 
 		bool 'byacc'      		CONFIG_APP_BYACC      n
-		bool 'elvis'      		CONFIG_APP_ELVIS      n
 		bool 'm4'         		CONFIG_APP_M4         n
 		bool 'screen'     		CONFIG_APP_SCREEN     n
 		bool 'test'       		CONFIG_APP_TEST       n
-		bool 'xvi'        		CONFIG_APP_XVI        n
+		#bool 'levee'			CONFIG_APP_LEVEE      n
+		#bool 'xvi'        		CONFIG_APP_XVI        n
 
 		comment "Internet stack and utilities"
 

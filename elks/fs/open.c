@@ -344,7 +344,7 @@ int sys_fchown(unsigned int fd, uid_t user, gid_t group)
 }
 
 #if DEBUG_FILE
-static char *get_userspace_filename(char *filename)
+char *get_userspace_filename(char *filename)
 {
 	static char name[32];
 
@@ -379,7 +379,7 @@ int sys_open(char *filename, int flags, int mode)
     if ((mode_t)((flags + 1) & O_ACCMODE)) flag++;
     if (flag & (O_TRUNC | O_CREAT)) flag |= FMODE_WRITE;
 
-    debug_file("OPEN '%s' flags %x\n", get_userspace_filename(filename), flags);
+    debug_file("OPEN '%s' flags 0x%x\n", get_userspace_filename(filename), flags);
     error = open_namei(filename, flag, mode, &inode, NULL);
     if (!error) {
 	pinode = inode;
@@ -425,6 +425,7 @@ int sys_close(unsigned int fd)
     register struct file *filp;
     register struct file_struct *cfiles = &current->files;
 
+    debug_file("CLOSE %d\n", fd);
     if (fd < NR_OPEN) {
 	clear_bit(fd, &cfiles->close_on_exec);
 	if ((filp = cfiles->fd[fd])) {

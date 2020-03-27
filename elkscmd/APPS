@@ -84,7 +84,7 @@ CONFIG_APP_BUSYELKS		busyelks/		Not selected by default. When selected, B option
 											basename, cal, cat, chgrp, chmod, chown, chksum, cmp,
 											cp, cut, date, dd, diff, dirname, du, echo, ed, fdisk, find.
 # Other commands
-CONFIG_APP_LEVEE		levee/			1st vi editor, installs as /bin/vi
+CONFIG_APP_ELVIS		elvis/			Elvis vi editor, installs as /bin/vi.
 
 CONFIG_APP_MTOOLS		mtools/			Early MSDOS mtools v1.6.2 from 1989, with man pages.
 										Installs into /bin: mcopy, mdel, mdir, mkdfs, mmd, mrd, mread,
@@ -103,15 +103,15 @@ CONFIG_APP_OTHER		prems/			Compression library and compress/gzip lookalike.
 # Not compiling or broken commands
 CONFIG_APP_BYACC		byacc/			Berkely Yacc. Not selectable so never compiles.
 
-CONFIG_APP_ELVIS		elvis/			2nd vi editor, Makefile broken, not built.
-											Installs as /bin/[elvis,vi,ex,view,input]
-CONFIG_APP_XVI			xvi/			3rd vi editor, won't compile, installs as /bin/xvi
-
 CONFIG_APP_M4			m4/				Macro processor, including man page
 
 CONFIG_APP_SCREEN		screen/			Text multi-screen support. Doesn't compile or install.
 
 CONFIG_APP_TEST			test/			Various test programs, not selected by default.
+
+CONFIG_APP_LEVEE		levee/			Levee vi editor, broken, not installed.
+
+CONFIG_APP_XVI			xvi/			vi editor, won't compile, not installed.
 
 # Internet stack
 CONFIG_APP_KTCP			ktcp/			ELKS TCP/IP stack. Installs /bin/ktcp and /etc/resolv.conf

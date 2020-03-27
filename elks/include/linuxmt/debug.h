@@ -50,6 +50,7 @@
 
 #if DEBUG_FILE
 #define debug_file	printk
+extern char *get_userspace_filename(char *filename);
 #else
 #define debug_file(...)
 #endif

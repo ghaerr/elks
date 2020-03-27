@@ -516,6 +516,7 @@ int sys_rmdir(char *pathname)
 
 int sys_unlink(char *pathname)
 {
+    debug_file("UNLINK '%s'\n", get_userspace_filename(pathname));
     return __do_rmthing(pathname, offsetof(struct inode_operations,unlink));
 }
 
@@ -534,15 +535,14 @@ int sys_link(char *oldname, char *pathname)
     return -EROFS;
 #else
     struct inode *oldinode;
-    register char *error;
+    int error;
 
-    error = (char *)namei(oldname, &oldinode, 0, 0);
-    if (!((int)error)) {
-	error = (char *)do_mknod(pathname, offsetof(struct inode_operations,link),
-			 (int)oldinode, 0);
-	iput(oldinode);
-    }
-    return (int)error;
+    debug_file("LINK '%s' ", get_userspace_filename(oldname));
+    debug_file("'%s'\n", get_userspace_filename(pathname));
+    error = namei(oldname, &oldinode, 0, 0);
+    if (!error)
+	error = do_mknod(pathname, offsetof(struct inode_operations,link), (int)oldinode, 0);
+    return error;
 #endif
 }
 

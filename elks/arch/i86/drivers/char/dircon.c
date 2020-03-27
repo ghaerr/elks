@@ -155,10 +155,10 @@ static void ScrollUp(register Console * C, int y)
 static void ScrollDown(register Console * C, int y)
 {
     register __u16 *vp;
-    int yy = MaxRow + 1;
+    int yy = MaxRow;
 
     vp = (__u16 *)((__u16)(yy * Width) << 1);
-    while (--yy > y) {
+    while (--yy >= y) {
 	fmemcpyb((byte_t *)vp, (seg_t) C->vseg,
 		(byte_t *)(vp - Width), (seg_t) C->vseg, (Width << 1));
 	vp -= Width;

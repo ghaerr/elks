@@ -44,8 +44,8 @@ ifdef CONFIG_APP_FILE_UTILS
 	endif
 endif
 
-ifdef CONFIG_APP_LEVEE
-	TAGS += :levee|
+ifdef CONFIG_APP_ELVIS
+	TAGS += :elvis|
 endif
 
 ifdef CONFIG_APP_KTCP
