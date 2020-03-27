@@ -73,8 +73,6 @@ int main(int argc, char **argv)
   char *cp;
   int tflag, files;
 
-  if (argc < 2) goto usage;
-
   /* Get flags. */
   files = argc - 1;
   k = 1;

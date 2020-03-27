@@ -48,7 +48,7 @@ extern	void	do_cp(), do_mv(), do_rm(), do_chmod(), do_mkdir(), do_rmdir();
 extern	void	do_mknod(), do_chown(), do_chgrp(), do_sync(), do_printenv();
 extern	void	do_more(), do_cmp(), do_touch(), do_ls(), do_dd(), do_tar();
 extern	void	do_mount(), do_umount(), do_setenv(), do_pwd(), do_echo();
-extern	void	do_kill(), do_grep(), do_ed();
+extern	void	do_kill(), do_grep(), do_ed(), do_history();
 
 
 extern	char	*buildname();
