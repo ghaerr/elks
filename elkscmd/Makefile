@@ -15,12 +15,13 @@ include $(BASEDIR)/Make.defs
 # All subdirectories to build & clean
 
 # TODO: broken command compilations
-# byacc elvis screen m4 xvi
+# byacc screen m4 xvi
 SUBDIRS =       \
 	ash         \
 	bc          \
 	busyelks    \
 	disk_utils  \
+	elvis	    \
 	file_utils  \
 	inet        \
 	ktcp        \
