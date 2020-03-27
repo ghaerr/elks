@@ -28,7 +28,7 @@ images: images-minix hd32-minix images-fat
 
 images-minix: fd360-minix fd720-minix fd1440-minix fd2880-minix hd32-minix
 
-images-fat: fd360-fat fd720-fat fd1440-fat fd2880-fat
+images-fat: fd360-fat fd720-fat fd1440-fat fd2880-fat hd32-fat
 
 fd360-minix:
 	echo CONFIG_APPS_360K=y		> Config
@@ -116,8 +116,19 @@ fd2880-fat:
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd2880-fat
 	rm Config
 
-# FAT32 image (fails on mformat currently)
+# FAT32 image
 hd32-fat:
+	echo CONFIG_APPS_2880K=y	> Config
+	echo CONFIG_IMG_HD=y		>> Config
+	echo CONFIG_IMG_BLOCKS=31752 >> Config
+	echo CONFIG_IMG_SECT=63		>> Config
+	echo CONFIG_IMG_HEAD=16		>> Config
+	echo CONFIG_IMG_CYL=63		>> Config
+	echo CONFIG_IMG_FAT=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=hd32-fat
+	rm Config
 
 # Clean target
 
