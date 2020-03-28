@@ -46,23 +46,30 @@ static void print_minor_name(register struct gendisk *hd,
 			     unsigned short int minor)
 {
     unsigned int part;
+    struct hd_struct *hdp = &hd->part[minor];
 
     printk(" %s%c", hd->major_name, 'a' + (unsigned char)(minor >> hd->minor_shift));
     if ((part = (unsigned) (minor & ((1 << hd->minor_shift) - 1))))
 	printk("%d", part);
-    printk(":");
+    printk(":(%lu,%lu) ", hdp->start_sect, hdp->nr_sects);
 }
 
-static void add_partition(register struct gendisk *hd,
-			  unsigned short int minor, sector_t start,
-			  sector_t size)
+static void add_partition(struct gendisk *hd, unsigned short int minor,
+			  sector_t start, sector_t size)
 {
-    register struct hd_struct *hdp = &hd->part[minor];
+    struct hd_struct *hdp = &hd->part[minor];
+#if 0
+    struct hd_struct *hd0 = &hd->part[0];
 
+    /* additional partition check since no MBR signature*/
+    if (start > hd0->nr_sects || start+size > hd0->nr_sects) {
+	printk(":skip%d ", minor);
+	return;
+    }
+#endif
     hdp->start_sect = start;
     hdp->nr_sects = size;
     print_minor_name(hd, minor);
-	printk("(%ld,%ld) ", start, size);
 }
 
 static int is_extended_partition(register struct partition *p)

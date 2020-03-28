@@ -32,7 +32,36 @@
 
 #endif
 
-#include "fdisk.h"
+#define DEFAULT_DEV "/dev/bda"
+
+#define MODE_EDIT 0
+#define MODE_LIST 1
+#define MODE_SIZE 2
+#define CMDLEN 8
+
+int pFd;
+char dev[256];
+unsigned char partitiontable[512];
+
+typedef struct {
+  int cmd;
+  char *help;
+  void (*func)();
+} Funcs;
+
+struct hd_geometry geometry;
+
+void quit();
+void list_part();
+void del_part();
+void add_part();
+void help();
+void write_out();
+void list_types();
+void list_part();
+void set_boot();
+void set_type();
+void list_partition(char *dev);
 
 #define isxdigit(x)	( ((x)>='0' && (x)<='9') || ((x)>='A' && (x)<='F') \
 						 || ((x)>='a' && (x)<='f') )
@@ -353,7 +382,7 @@ int main(int argc, char **argv)
     for (i = 1; i < argc; i++) {
 	if (*argv[i] == '/') {
 	    if (*dev != 0) goto usage;
-	    else strncpy(dev, argv[i], 256); /* FIXME - Should be some value from a header */
+	    else strncpy(dev, argv[i], sizeof(dev));
 	} else {
 	    if (*argv[i] == '-')
 		switch(*(argv[i] + 1)) {

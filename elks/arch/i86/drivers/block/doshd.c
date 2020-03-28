@@ -45,13 +45,19 @@
 #ifdef CONFIG_BLK_DEV_BIOS
 
 #define DMA_OVR  // activate DMASEG patch
+/* #define MULT_SECT_RQ */
+
+/* the following must match with /dev minor numbering scheme*/
+#define NUM_MINOR	32	/* max minor devices per drive*/
+#define MINOR_SHIFT	5	/* =log2(NUM_MINOR) shift to get drive num*/
+#define NUM_DRIVES	8	/* =256/NUM_MINOR max number of drives*/
+#define DRIVE_FD0	4	/* first floppy drive =NUM_DRIVES/2*/
+#define DRIVE_FD1	5	/* second floppy drive*/
 
 #define MAJOR_NR BIOSHD_MAJOR
 #define BIOSDISK
 
 #include "blk.h"
-
-/* #define MULT_SECT_RQ */
 
 struct elks_disk_parms {
     __u16 track_max;		/* number of tracks, little-endian */
@@ -79,11 +85,7 @@ static int bioshd_initialized = 0;
 
 #if 0
 static struct wait_queue busy_wait;
-static int force_bioshd;
-#endif
-
-#if 0				/* Currently not used */
-static int revalidate_hddisk(int, int);
+static int revalidate_hddisk(int, int);	/* Currently not used*/
 #endif
 
 static struct biosparms bdt;
@@ -101,28 +103,24 @@ static struct biosparms bdt;
 #define BD_ES bdt.es
 #define BD_FL bdt.fl
 
-static struct drive_infot {
+static struct drive_infot {		/* CHS per drive*/
     int cylinders;
     int sectors;
     int heads;
-    int fdtype;			/* matches fd_types or -1 if hd */
-} drive_info[4];
+    int fdtype;				/* floppy fd_types[] index  or -1 if hd */
+} drive_info[NUM_DRIVES];
 
 /* This makes probing order more logical and
  * avoids a few senseless seeks in some cases
  */
 
-static struct hd_struct hd[4 << 6];
+static struct hd_struct hd[NUM_DRIVES << MINOR_SHIFT];	/* partitions start, size*/
 
-static int access_count[4] = { 0, 0, 0, 0 };
+static int access_count[NUM_DRIVES];	/* for invalidating buffers/inodes*/
 
-static int bioshd_sizes[4 << 6] = { 0, };
+static int bioshd_sizes[NUM_DRIVES << MINOR_SHIFT];	/* used only with BDEV_SIZE_CHK*/
 
-static struct wait_queue dma_wait;
-
-static int dma_avail = 1;
-
-struct drive_infot fd_types[] = {
+struct drive_infot fd_types[] = {	/* AT/PS2 BIOS reported floppy formats*/
     {40,  9, 2, 0},
     {80, 15, 2, 1},
     {80,  9, 2, 2},
@@ -130,24 +128,26 @@ struct drive_infot fd_types[] = {
     {80, 36, 2, 4},
 };
 
-static unsigned char hd_drive_map[4] = {
-    0x80, 0x81,			/* hda, hdb */
-    0x00, 0x01			/* fd0, fd1 */
+static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
+    0x80, 0x81, 0x82, 0x83,		/* hda, hdb */
+    0x00, 0x01, 0x02, 0x03		/* fd0, fd1 */
 };
 
+static int _fd_count = 0;  		/* number of floppy disks */
+static int _hd_count = 0;  		/* number of hard disks */
 
-static int _fd_count = 0;  /* number of floppy disks */
-static int _hd_count = 0;  /* number of hard disks */
+static struct wait_queue dma_wait;
 
+static int dma_avail = 1;
 
 static void bioshd_geninit(void);
 
 static struct gendisk bioshd_gendisk = {
     MAJOR_NR,			/* Major number */
     "bd",			/* Major name */
-    6,				/* Bits to shift to get real from partition */
-    1 << 6,			/* Number of partitions per real */
-    4,				/* maximum number of real */
+    MINOR_SHIFT,		/* Bits to shift to get real from partition */
+    1 << MINOR_SHIFT,		/* Number of partitions per real */
+    NUM_DRIVES,			/* maximum number of real */
     bioshd_geninit,		/* init function */
     hd,				/* hd struct */
     bioshd_sizes,		/* sizes not blocksizes */
@@ -174,6 +174,8 @@ static unsigned short int bioshd_gethdinfo(void)
 	    drivep->sectors = setupw(drive + 2);
 	    drivep->cylinders = setupw(drive + 4) + 1;
 	    drivep->fdtype = -1;
+	    printk("bioshd: gethdinfo CHS %d,%d,%d\n", drivep->cylinders,
+		drivep->heads, drivep->sectors);
 	    ndrives++;
 	}
 	drivep++;
@@ -217,8 +219,8 @@ static unsigned short int bioshd_getfdinfo(void)
  *	  4	2.88 MB or Unknown
  */
 
-    drive_info[2] = fd_types[2];	/*  /dev/fd0    */
-    drive_info[3] = fd_types[2];	/*  /dev/fd1    */
+    drive_info[DRIVE_FD0] = fd_types[2];	/*  /dev/fd0    */
+    drive_info[DRIVE_FD1] = fd_types[2];	/*  /dev/fd1    */
 
 /* That's it .. you're done :-)
  *
@@ -229,7 +231,7 @@ static unsigned short int bioshd_getfdinfo(void)
 
 #else
 
-    register struct drive_infot *drivep = &drive_info[2];
+    register struct drive_infot *drivep = &drive_info[DRIVE_FD0];
     unsigned short int drive;
 
 /* We get the # of drives from the BPB, which is PC-friendly
@@ -254,6 +256,7 @@ static unsigned short int bioshd_getfdinfo(void)
  */
 	*drivep = fd_types[arch_cpu > 5 ? 3 : 0];
 #ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
+
 /* Some XT's return strange results - Al
  * The arch_cpu is a safety check
  */
@@ -285,7 +288,7 @@ static void bioshd_release(struct inode *inode, struct file *filp)
     sync_dev(dev);
     target = DEVICE_NR(dev);
     access_count[target]--;
-    if ((target >= 2) && (access_count[target] == 0)) {
+    if ((target >= DRIVE_FD0) && (access_count[target] == 0)) {
 	invalidate_inodes(dev);
 	invalidate_buffers(dev);
     }
@@ -340,14 +343,14 @@ static int bioshd_open(struct inode *inode, struct file *filp)
     int target;
     register struct hd_struct *hdp;
 
-    target = DEVICE_NR(inode->i_rdev);	/* >> 6 */
+    target = DEVICE_NR(inode->i_rdev);	/* >> MINOR_SHIFT */
     hdp = &hd[MINOR(inode->i_rdev)];
 
 /* Bounds testing */
 
     if (bioshd_initialized == 0)
 	return -ENXIO;
-    if ((unsigned int)target >= 4)
+    if ((unsigned int)target >= NUM_DRIVES)
 	return -ENXIO;
     if (hdp->start_sect == -1)
 	return -ENXIO;
@@ -372,7 +375,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
  */
 
 #ifdef CONFIG_BLK_DEV_BFD
-    if (target >= 2) {		/* 2,3 are the floppydrives */
+    if (target >= DRIVE_FD0) {		/* the floppy drives */
 	register struct drive_infot *drivep = &drive_info[target];
 
 /* probing range can be easily extended by adding more values to these
@@ -512,10 +515,10 @@ static struct file_operations bioshd_fops = {
 };
 
 #ifdef DOSHD_VERBOSE_DRIVES
-#define TEMP_PRINT_DRIVES_MAX		4
+#define TEMP_PRINT_DRIVES_MAX		NUM_DRIVES
 #else
 #ifdef CONFIG_BLK_DEV_BHD
-#define TEMP_PRINT_DRIVES_MAX		2
+#define TEMP_PRINT_DRIVES_MAX		(NUM_DRIVES/2)
 #endif
 #endif
 
@@ -629,7 +632,7 @@ static int bioshd_ioctl(struct inode *inode,
 	return -EINVAL;
 
     dev = DEVICE_NR(inode->i_rdev);
-    if (dev >= ((dev < 2) ? _hd_count : (2 + _fd_count)))
+    if (dev >= ((dev < DRIVE_FD0) ? _hd_count : (DRIVE_FD0 + _fd_count)))
     	return -ENODEV;
 
     drivep = &drive_info[dev];
@@ -685,15 +688,15 @@ static void do_bioshd_request(void)
 	minor = MINOR(req->rq_dev);
 
 #if 0
-	part = minor & ((1 << 6) - 1);
+	part = minor & ((1 << MINOR_SHIFT) - 1);
 #endif
 
-	drive = minor >> 6;
+	drive = minor >> MINOR_SHIFT;
 	drivep = &drive_info[drive];
 
 /* make sure it's a disk that we are dealing with. */
 
-	if ((unsigned int)drive > 3 || drivep->heads == 0) {
+	if (drive > DRIVE_FD1 || drivep->heads == 0) {
 	    printk("bioshd: non-existent drive\n");
 	    end_request(0);
 	    continue;
@@ -849,8 +852,8 @@ static void bioshd_geninit(void)
     int i;
 
     drivep = drive_info;
-    for (i = 0; i < 4 << 6; i++) {
-	if ((i & ((1 << 6) - 1)) == 0) {
+    for (i = 0; i < NUM_DRIVES << MINOR_SHIFT; i++) {
+	if ((i & ((1 << MINOR_SHIFT) - 1)) == 0) {
 	    hdp->nr_sects = (sector_t) drivep->sectors *
 		drivep->heads * drivep->cylinders;
 	    hdp->start_sect = 0;
@@ -866,6 +869,18 @@ static void bioshd_geninit(void)
     blksize_size[MAJOR_NR] = 1024;	/* Currently unused */
 #endif
 
+}
+
+/* convert a bios drive number to a bioshd kdev_t*/
+kdev_t bioshd_conv_bios_drive(unsigned int biosdrive)
+{
+    int minor;
+
+    if (biosdrive & 0x80)	/* hard drive*/
+	minor = biosdrive & 0x03;
+    else
+	minor = (biosdrive & 0x03) + DRIVE_FD0;
+    return MKDEV(BIOSHD_MAJOR, minor << MINOR_SHIFT);
 }
 
 #endif
