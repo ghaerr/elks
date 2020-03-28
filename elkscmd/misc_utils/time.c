@@ -49,8 +49,8 @@ int main(int argc, char **argv)
 	}
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
-	while(wait(&status) != p)
-		times(&start);
+	while (waitpid(p, &status, 0) != p)
+		continue;
 	if((status&0377) != 0)
 		fprintf(stderr,"Command terminated abnormally.\n");
 	times(&end);
