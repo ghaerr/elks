@@ -19,7 +19,7 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "bda",	S_IFBLK | 0644, MKDEV(3, 0) },
     { "bda1",	S_IFBLK | 0644, MKDEV(3, 1) },
     { "fd0",	S_IFBLK | 0644, MKDEV(3, 128)},
-    { "fd1",	S_IFBLK | 0644, MKDEV(3, 192)},
+    { "fd1",	S_IFBLK | 0644, MKDEV(3, 160)},
     { "mem",	S_IFCHR | 0644, MKDEV(1, 1) },
     { "kmem",	S_IFCHR | 0644, MKDEV(1, 2) },
     { "null",	S_IFCHR | 0644, MKDEV(1, 3) },

@@ -151,7 +151,7 @@ static void floppy_off();	/*(unsigned int nr); */
 
 #define DEVICE_NAME "BIOSHD"
 #define DEVICE_REQUEST do_bioshd_request
-#define DEVICE_NR(device) (MINOR(device)>>6)
+#define DEVICE_NR(device) (MINOR(device)>>MINOR_SHIFT)
 #define DEVICE_ON(device)
 #define DEVICE_OFF(device)
 

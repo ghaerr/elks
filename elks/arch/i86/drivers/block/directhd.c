@@ -93,7 +93,7 @@ void directhd_geninit(void)
     for (i = 0; i < 4 << 6; i++) {
 	if ((i & ((1 << 6) - 1)) == 0) {
 	    hd[i].start_sect = 0;
-	    hd[i].nr_sects = drive_info[i >> 6].sectors *
+	    hd[i].nr_sects = (sector_t)drive_info[i >> 6].sectors *
 		drive_info[i >> 6].heads * drive_info[i >> 6].cylinders;
 	} else {
 	    hd[i].start_sect = -1;
@@ -541,7 +541,7 @@ void do_directhd_request(void)
 		/* wait */
 		while (WAITING(port)) {
 #ifdef USE_DEBUG_CODE
-		    printk("athd: statusa: 0x%x\n", STATUS(port));
+		    //printk("athd: statusa: 0x%x\n", STATUS(port));
 #endif
 		}
 		if ((STATUS(port) & 1) == 1) {
@@ -568,7 +568,7 @@ void do_directhd_request(void)
 		    } else {
 			tmp = STATUS(port);
 #ifdef USE_DEBUG_CODE
-			printk("athd: statusb: 0x%x\n", tmp);
+			//printk("athd: statusb: 0x%x\n", tmp);
 #endif
 		    }
 		}
@@ -587,7 +587,7 @@ void do_directhd_request(void)
 		/* wait */
 		while (WAITING(port)) {
 #ifdef USE_DEBUG_CODE
-		    printk("athd: statusa: 0x%x\n", STATUS(port));
+		    //printk("athd: statusa: 0x%x\n", STATUS(port));
 #endif
 		}
 		if ((STATUS(port) & 1) == 1) {
@@ -614,7 +614,7 @@ void do_directhd_request(void)
 		    } else {
 			tmp = STATUS(port);
 #ifdef USE_DEBUG_CODE
-			printk("athd: statusb: 0x%x\n", tmp);
+			//printk("athd: statusb: 0x%x\n", tmp);
 #endif
 		    }
 		}

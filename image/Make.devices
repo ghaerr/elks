@@ -40,7 +40,7 @@ devices:
 
 ##############################################################################
 # BIOS devices.
-# BIOS hard disks.
+# BIOS hard and floppy disks.
 # Limit to 4 primary partitions per disk (MBR).
 
 	$(MKDEV) /dev/bda  b 3 0
@@ -48,18 +48,15 @@ devices:
 	$(MKDEV) /dev/bda2 b 3 2
 	$(MKDEV) /dev/bda3 b 3 3
 	$(MKDEV) /dev/bda4 b 3 4
-	$(MKDEV) /dev/bdb  b 3 64
-	$(MKDEV) /dev/bdb1 b 3 65
-	$(MKDEV) /dev/bdb2 b 3 66
-	$(MKDEV) /dev/bdb3 b 3 67
-	$(MKDEV) /dev/bdb4 b 3 68
-#	$MKSET   0 15 $(MKDEV) /dev/bda b 3	# Currently
-#	$MKSET  64 15 $(MKDEV) /dev/bdb b 3	# Currently
-
-# BIOS Floppy diskettes.
-
-	$(MKDEV) /dev/fd0	b 3 128
-	$(MKDEV) /dev/fd1	b 3 192
+	$(MKDEV) /dev/bdb  b 3 32
+	$(MKDEV) /dev/bdb1 b 3 33
+	$(MKDEV) /dev/bdb2 b 3 34
+	$(MKDEV) /dev/bdb3 b 3 35
+	$(MKDEV) /dev/bdb4 b 3 36
+	$(MKDEV) /dev/bdc  b 3 64
+	$(MKDEV) /dev/bdd  b 3 96
+	$(MKDEV) /dev/fd0  b 3 128
+	$(MKDEV) /dev/fd1  b 3 160
 
 ##############################################################################
 # Pseudo-TTY master devices. 
