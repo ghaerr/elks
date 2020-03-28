@@ -60,11 +60,6 @@ mainmenu_option next_comment
 			bool '  Use INT 13h for floppy count' CONFIG_HW_USE_INT13_FOR_FLOPPY n
 		fi
 
-		bool 'Hard drive(s)'   CONFIG_HW_HARD_DRIVE   y
-		if [ "$CONFIG_HW_HARD_DRIVE" == "y" ]; then
-			bool '  Use INT 13h for disk parameters' CONFIG_HW_USE_INT13_FOR_DISKPARMS n
-		fi
-
 		comment 'BIOS support'
 
 		bool 'System has keyboard BIOS support'    CONFIG_HW_KEYBOARD_BIOS y
