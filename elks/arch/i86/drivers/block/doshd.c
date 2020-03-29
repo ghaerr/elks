@@ -165,18 +165,27 @@ static unsigned short int bioshd_gethdinfo(void)
     int drive;
     register struct drive_infot *drivep = &drive_info[0];
 
-    drive = 0x80;
-    do {
-	if ((drivep->heads = setupw(drive))) {
-	    drivep->sectors = setupw(drive + 2);
-	    drivep->cylinders = setupw(drive + 4) + 1;
+    BD_AX = BIOSHD_DRIVE_PARMS;
+    BD_DX = 0x80;
+    BD_ES = BD_SI = 0;	/* some buggy BIOS's need this acoording to INT13 on Wiki*/
+    ndrives = (call_bios(&bdt) ? 0 : BD_DX & 0xff);
+    if (ndrives > NUM_DRIVES/2)
+	ndrives = NUM_DRIVES/2;
+    for (drive = 0; drive < ndrives; drive++) {
+	BD_AX = BIOSHD_DRIVE_PARMS;
+	BD_DX = drive + 0x80;
+	BD_ES = BD_SI = 0;
+	if (call_bios(&bdt) == 0) {
+	    drivep->heads = (BD_DX >> 8) + 1;
+	    drivep->sectors = BD_CX & 0x3f;
+	    /* NOTE: some BIOS may underreport cylinders by 1*/
+	    drivep->cylinders = (((BD_CX & 0xc0) << 2) | (BD_CX >> 8)) + 1;
 	    drivep->fdtype = -1;
 	    printk("bioshd: gethdinfo CHS %d,%d,%d\n", drivep->cylinders,
 		drivep->heads, drivep->sectors);
-	    ndrives++;
 	}
 	drivep++;
-    } while ((drive += 6) <= 0x86);
+    }
     return ndrives;
 }
 
