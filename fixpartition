@@ -1,0 +1,16 @@
+# fix MSDOS 6.22 MBR to boot on QEMU
+cp hd-msdos-6.22.img mstest.bin
+cc -DMSDOS622 -o writepart writepart.c
+./writepart mstest.bin
+
+# add MBR partition to hd32-minix.bin
+dd if=/dev/zero bs=512 count=1 | cat - image/hd32-minix.bin > hdtest.bin
+cc -DMINIX -o writepart writepart.c
+./writepart hdtest.bin
+setboot hdtest.bin ../dev86/bootblocks/mbr.bin
+
+# add MBR partition to hd32-fat.bin
+dd if=/dev/zero bs=512 count=1 | cat - image/hd32-fat.bin > fattest.bin
+cc -DMINIX -o writepart writepart.c
+./writepart fattest.bin
+setboot fattest.bin ../dev86/bootblocks/mbr.bin

@@ -43,6 +43,7 @@
    Fields which are specific to ELKS are indicated below.  */
 
 #if defined __ASSEMBLER__ && !defined BOOTSEG
+elks_offset =	0x1e4
 elks_magic	=	0x1e6		/* should read "ELKS" (45 4c 4b 53) */
 setup_sects	=	0x1f1
 root_flags	=	0x1f2
