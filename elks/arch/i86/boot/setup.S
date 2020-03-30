@@ -65,14 +65,7 @@
 !	0x30:	zero terminated string containing the processor's name, 16 bytes
 !	0x40:	unused (was FPU name), 16 bytes
 !	0x50:	zero terminated string containing the cpuid, 13 bytes
-!	0x80:	BIOS data for harddisk 0, 6 bytes
-!			0x80, no. of heads, 2 bytes (0, no disk)
-!			0x82, no. of sectors/track, 2 bytes
-!			0x84, no. of cylinders - 1, 2 bytes
-!	0x86:	BIOS data for harddisk 1, 6 bytes
-!			0x86, no. of heads, 2 bytes (0, no disk)
-!			0x88, no. of sectors/track, 2 bytes
-!			0x8A, no. of cylinders - 1, 2 bytes
+!	...
 !	0x8c:	data for floppy disk 0, 6 bytes
 !			0x8C, no. of heads, 2 bytes (0, no disk)
 !			0x8E, no. of sectors/track, 2 bytes
