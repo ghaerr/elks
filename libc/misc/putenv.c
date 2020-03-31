@@ -7,7 +7,14 @@
 #include <malloc.h>
 #include <errno.h>
 
-extern char ** environ;
+/* macro for matching environment name in string*/
+#define ENVNAME(var,buf,len)    (memcmp(var,buf,len) == 0 && (buf)[len] == '=')
+
+/* external data*/
+extern char **  environ;                /* process global environment*/
+
+/* local data*/
+static char **  putenv_environ = NULL;  /* ptr to any environment we allocated*/
 
 /*
  * Put or delete a string from the global process environment
