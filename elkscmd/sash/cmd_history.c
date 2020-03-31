@@ -14,10 +14,12 @@ static  int     lastcom = -1;   /* index of most recent command */
 static  int     histind = 0;    /* cmd # for history list */
 static  char    **histbuf;      /* array holding commands */
 int     histcnt = HISTMIN;
+
+/*#define HDEBUG*/
+#ifdef HDEBUG
 static	void	phex(char *);
 static	void	phlist();
-
-/*#define DEBUG*/
+#endif
 
 void
 init_hist() {
@@ -41,19 +43,31 @@ init_hist() {
 
 
 void
-do_history(argc, argv) /* list ccommands in history buffer */
-	int argc;
-        char **argv;
+do_history(int argc, char **argv) /* list ccommands in history buffer */
 {
         int k = 0;
         int j = lastcom+1;
+	int histpage = 0;
+	int counter = 0;
+	char *cp, inp[3];
 
+	cp = getenv("HISTPAGE");
+	if (cp)
+		histpage = atoi(cp);
         while (k < histcnt) {
-                if (histbuf[j])
+                if (histbuf[j]) {
                         printf(" %i  %s\n", histind-histcnt+k+1, histbuf[j]);
+			counter++;
+		}
                 if (++j >= histcnt)
                         j = 0;  /* wrap around */
                 k++;
+		if (histpage && (counter >= histpage)) {
+			printf("--MORE--");
+			fgets(inp, 3, stdin);
+			counter = 0;
+			if (*inp == 'q') break;
+		}
         }
 }
 
@@ -125,7 +139,7 @@ int
 add_to_history(char *cm) {
 
         char *p;
-#ifdef DEBUG
+#ifdef HDEBUG
         phex(cm);
 #endif
         if (++lastcom >= histcnt) lastcom = 0; /* wrap around */
@@ -141,11 +155,13 @@ add_to_history(char *cm) {
         }
         histbuf[lastcom] = p;
         histind++;
-        /*fprintf(stderr, " CMD: %s --- adr: %04x %04x %04x\n", cm, p, histbuf[lastcom]);
-        phlist();*/
+#ifdef HDEBUG
+        fprintf(stderr, " CMD: %s --- adr: %04x %04x %04x\n", cm, p, histbuf[lastcom]);
+        phlist();
+#endif
         return(0);
 }
-#ifdef DEBUG
+#ifdef HDEBUG
 int dmap_ind(int idx) {
         int index;      /* debug wrapper for map_ind() */
         index = map_ind(idx);

@@ -215,7 +215,7 @@ static	ALIAS	*findalias();
 #endif
 
 #ifdef CMD_HISTORY
-static  void	init_hist();
+extern  void	init_hist();
 extern	int	history();
 extern	int	histcnt;
 #endif
@@ -263,11 +263,9 @@ int main(int argc, char **argv)
 	if (getenv("PATH") == NULL)
 		putenv("PATH=/bin:/usr/bin:/sbin");
 
-#ifdef CMD_HISTORY
-	init_hist();
-#endif /* CMD_HISTORY */
-
 #ifdef CMD_SOURCE
+	if ((access("etc/sashrc", 0) == 0) || (errno != 0))
+		readfile("/etc/sashrc");
 	cp = getenv("HOME");
 	if (cp) {
 		strcpy(buf, cp);
@@ -278,12 +276,19 @@ int main(int argc, char **argv)
 			readfile(buf);
 	}
 
+#ifdef CMD_HISTORY
+	init_hist(); 	/* needs the environment if it's there */
+#endif /* CMD_HISTORY */
+
 	if (argc > 1) {
 		readfile(argv[1]);
 	} else {
 		readfile(NULL);
 	}
 #else
+#ifdef CMD_HISTORY
+	init_hist();
+#endif /* CMD_HISTORY */
 	readfile(NULL);
 #endif
 
@@ -327,7 +332,7 @@ readfile(name)
 
 	while (TRUE) {
 		fflush(stdout);
-		showprompt();
+		if (ttyflag) showprompt(); /* don't prompt if we're reading from a file. */
 
 #ifdef CMD_SOURCE
 		if (intflag && !ttyflag && (fp != stdin)) {
@@ -354,7 +359,7 @@ readfile(name)
 		buf[cc] = '\0';
 		if (strlen(buf) < 1) continue; 	/* blank line */
 #ifdef CMD_HISTORY
-		if (histcnt && history(buf))
+		if ((fp == stdin) && histcnt && history(buf))
 				continue;	
 
 #endif
