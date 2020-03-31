@@ -21,7 +21,7 @@ pid_t get_pid(void)
 	if (p->pid == last_pid || p->pgrp == last_pid ||
 	    p->session == last_pid) {
 	  startgp:
-	    if (++last_pid < 0)
+	    if ((int)(++last_pid) < 0)
 		last_pid = 1;
 	    p = &task[0];
 	}

@@ -33,41 +33,6 @@
  * from the compile-time kernel rather than querying the current kernel.
  * These are all works in progress.
  */
-
-/* For those requiring a super-small getty, the following define cuts out
- * all of the extra functionality regarding the /etc/issue code sequences.
- */
-
-//#define SUPER_SMALL		/* Disable for super-small binary */
-
-/* For development work, the following two defines are available. The
- * first causes general debugging lines to be displayed, and the latter
- * causes a detailed trace of program execution to be displayed.
- */
-
-//#define DEBUG   		/* Enable for testing only */
-//#define TRACE   		/* Enable for testing only */
-
-#ifdef DEBUG
-#define debug(fmt)		fprintf(stderr,fmt)
-#define debug1(fmt,a)		fprintf(stderr,fmt,a)
-#define debug2(fmt,a,b) 	fprintf(stderr,fmt,a,b)
-#else
-#define debug(fmt)
-#define debug1(fmt,a)
-#define debug2(fmt,a,b)
-#endif
-
-#ifdef TRACE
-#define trace(fmt)		fprintf(stderr,fmt)
-#define trace1(fmt,a)		fprintf(stderr,fmt,a)
-#define trace2(fmt,a,b) 	fprintf(stderr,fmt,a,b)
-#else
-#define trace(fmt)
-#define trace1(fmt,a)
-#define trace2(fmt,a,b)
-#endif
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
@@ -79,21 +44,51 @@
 #include <string.h>
 #include <time.h>
 #include <termios.h>
+#include <stdarg.h>
+#include <errno.h>
+
+#define DEBUG		0			/* set =1 for debug messages*/
 
 #define LOGIN		"/bin/login"
 #define HOSTFILE	"/etc/HOSTNAME"
 #define ISSUE		"/etc/issue"
+#define CONSOLE		"/dev/tty1"
 
+/* For those requiring a super-small getty, the following define cuts out
+ * all of the extra functionality regarding the /etc/issue code sequences.
+ */
+//#define SUPER_SMALL		/* Disable for super-small binary */
+
+#if DEBUG
+#define debug		consolemsg
+#else
+#define debug(...)
+#endif
+
+char *	progname;
 char	Buffer[64];
+int	ch, col = 0, fd;
+
+void consolemsg(const char *str, ...)
+{
+	static int consolefd = -1;
+	char buf[80];
+
+	if (consolefd < 0)
+		consolefd = open(CONSOLE, O_RDWR);
+
+	va_list args;
+	va_start(args, str);
+	sprintf(buf, "%s: ", progname);
+	write(consolefd, buf, strlen(buf));
+	vsprintf(buf, str, args);
+	write(consolefd, buf, strlen(buf));
+	va_end(args);
+}
+
 
 #ifndef SUPER_SMALL
 char	Host[256], *Date = 0, *Time = 0;
-#endif
-
-char	*nargv[3] = {NULL, NULL, NULL};
-int	ch, col = 0, fd;
-
-#ifndef SUPER_SMALL
 
 void host(void) {
     char *ptr;
@@ -108,38 +103,13 @@ void host(void) {
 	close(fp);
     }
     for (ptr = Host; isprint(*ptr); ptr++)
-	/* Do nothing */;
-    while (ptr[-1] == ' ')
+	continue;
+    while (ptr >= &Host[1] && ptr[-1] == ' ')
 	ptr--;
     *ptr = '\0';
     if (!*Host)
 	strcpy( Host, "LocalHost" );
-    debug1( "DEBUG: host() = <%s>\n", Host );
 }
-
-#endif
-
-void put(int ch) {
-    if (ch == '\n' || ch == '\f')
-	col = 0;
-    else
-	col++;
-#ifdef TRACE
-    if (ch < 32)
-	fprintf(stderr, "TRACE: put(%3d) => Col %u\n", ch, col);
-    else
-	fprintf(stderr, "TRACE: put('%c') => Col %u\n", ch, col);
-#else
-    write(1,&ch,1);
-#endif
-}
-
-void state(char *s) {
-    trace1("TRACE: state( \"%s\" )\n",s);
-    write(1,s,strlen(s));
-}
-
-#ifndef SUPER_SMALL
 
 /*	Before  = "Sun Dec 25 12:34:56 7890"
  *	Columns = "0....:....1....:....2..."
@@ -179,37 +149,88 @@ void when(void) {
 	    Date++;
 	Time = Result + 12;
     }
-    debug2( "DEBUG: when() = <%s> @ <%s>\n", Date, Time );
-    return;
+}
+#endif
+
+static void put(unsigned char ch)
+{
+    col++;
+    if (ch == '\r' || ch == '\n')
+	col = 0;
+    write(STDOUT_FILENO, &ch, 1);
 }
 
-#endif
+static void state(char *s)
+{
+    write(STDOUT_FILENO, s, strlen(s));
+}
 
-int main(int argc, char **argv) {
+static speed_t convert_baudrate(speed_t baudrate)
+{
+	switch (baudrate) {
+	case 50: return B50;
+	case 75: return B75;
+	case 110: return B110;
+	case 134: return B134;
+	case 150: return B150;
+	case 200: return B200;
+	case 300: return B300;
+	case 600: return B600;
+	case 1200: return B1200;
+	case 1800: return B1800;
+	case 2400: return B2400;
+	case 4800: return B4800;
+	case 9600: return B9600;
+	case 19200: return B19200;
+	case 38400: return B38400;
+	case 57600: return B57600;
+	case 115200: return B115200;
+#ifdef B230400
+	case 230400: return B230400;
+#endif
+#ifdef B460800
+	case 460800: return B460800;
+#endif
+#ifdef B500000
+	case 500000: return B500000;
+#endif
+#ifdef B576000
+	case 576000: return B576000;
+#endif
+#ifdef B921600
+	case 921600: return B921600;
+#endif
+#ifdef B1000000
+	case 1000000: return B1000000;
+#endif
+	}
+	return 0;
+}
+
+
+int main(int argc, char **argv)
+{
     char *ptr;
     int n;
+    speed_t baud = 0;
     struct termios termios;
 
+    progname = argv[0];
     signal(SIGTSTP, SIG_IGN);		/* ignore ^Z stop signal*/
-    debug1("DEBUG: main( %d, **argv )\n",argc);
+
     if (argc < 2 || argc > 3) {
-	fprintf(stderr,
-		"\nERROR:   Invalid number of arguments: %d\nCommand: %s",
-		argc-1,*argv);
-	for (n=1; n<argc; n++)
-	    fprintf(stderr," \"%s\"",argv[n]);
-	fprintf(stderr,"\nUsage:   %s device [baudrate]\n\n",*argv);
-#ifndef INIT_BUG_WORKAROUND
+	consolemsg("Usage: %s device [baudrate]\n", argv[0]);
 	exit(3);
-#endif
     }
-    debug("\n\n\nDEBUG: Running...\n");
+
+    if (argc == 2) debug("'%s'\n", argv[1]);
+    else if (argc == 3) {
+	baud = atol(argv[2]);
+	debug("'%s' %ld\n", argv[1], baud);
+    }
+
     fd = open(ISSUE, O_RDONLY);
-    trace1("TRACE: /etc/issue status = %d\n",fd);
-    if (fd < 0) {
-	perror("ERROR");
-    } else {
-	trace1("TRACE: File exists: %s\n", ISSUE);
+    if (fd >= 0) {
 	put(13);
 #ifdef SUPER_SMALL
 	while ((n=read(fd,Buffer,sizeof(Buffer))) > 0)
@@ -220,7 +241,6 @@ int main(int argc, char **argv) {
 	*Buffer = '\0';
 	while (read(fd,Buffer,1) > 0) {
 	    ch = *Buffer;
-	    trace1("TRACE: Found '%c'\n", ch);
 	    if (ch == '\\' || ch == '@') {
 		Buffer[1] = ch;
 		read(fd,Buffer+1,1);
@@ -232,7 +252,6 @@ int main(int argc, char **argv) {
 		    break;
 		case '\\':
 		    ch = Buffer[1];
-		    debug1("DEBUG: Found '\\%c'\n",ch);
 		    switch(ch) {
 			case '0':			/* NUL */
 			    ch = 0;
@@ -267,7 +286,6 @@ int main(int argc, char **argv) {
 		    break;
 		case '@':
 		    ch = Buffer[1];
-		    debug1("DEBUG: Found '@%c'\n",ch);
 		    switch(ch) {
 			case '@':
 			    put(ch);
@@ -327,9 +345,9 @@ int main(int argc, char **argv) {
 #endif
 	close(fd);
     }
-    trace1("TRACE: Finished with %s\n", ISSUE);
 
     /* setup tty termios state*/
+    baud = convert_baudrate(baud);
     if (tcgetattr(STDIN_FILENO, &termios) >= 0) {
         termios.c_lflag |= ISIG | ICANON | ECHO | ECHOE | ECHONL;
         termios.c_lflag &= ~(IEXTEN | ECHOK | NOFLSH);
@@ -338,7 +356,10 @@ int main(int argc, char **argv) {
 		| IXON | IXOFF | IXANY);
         termios.c_oflag |= OPOST | ONLCR;
         termios.c_oflag &= ~XTABS;
-        termios.c_cflag |= CS8 | HUPCL;
+        if (baud)
+            termios.c_cflag = baud;
+        termios.c_cflag |= CS8 | CLOCAL | HUPCL;
+        /*termios.c_cflag |= CRTSCTS;*/
         termios.c_cflag &= ~(PARENB | CREAD);
         termios.c_cc[VMIN] = 0;
         termios.c_cc[VTIME] = 0;
@@ -348,17 +369,24 @@ int main(int argc, char **argv) {
     for (;;) {
 	state("login: ");
 	n=read(STDIN_FILENO,Buffer,sizeof(Buffer)-1);
-	if (n < 1)
-	    exit(1);
+	if (n < 1) {
+	    debug("read fail errno %d\n", errno);
+	    if (errno != -EINTR)
+		exit(1);
+	    continue;
+	}
 	Buffer[n] = '\0';
 	while (n > 0)
 	    if (Buffer[--n] < ' ')
 		Buffer[n] = '\0';
 	if (*Buffer) {
+	    char *nargv[3];
+
 	    nargv[0] = LOGIN;
 	    nargv[1] = Buffer;
+	    nargv[2] = NULL;
 	    execv(nargv[0], nargv);
-	    debug("DEBUG: Execv failed.\n\n");
+	    debug("execv fail\n");
 	    exit(2);
 	}
     }

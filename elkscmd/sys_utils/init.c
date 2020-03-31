@@ -234,54 +234,59 @@ pid_t respawn(const char **a)
     char *devtty;
 
     if (a[3] == NULL) return 1;
-    debug("spawning '%s'\n", a[3]);
 
     pid = fork();
-    if (-1 == pid) fatalmsg("No fork\n");
+    if (pid == -1) fatalmsg("No fork\n");
+    if (pid) debug("spawning %d '%s'\n", pid, a[3]);
 
     if (0 == pid) {
 	setsid();
-#if DEBUG
-	close(0);
-	close(1);
-	close(2);
-#endif
 	strcpy(buf, a[3]);
-	if (!strncmp(buf, GETTY, sizeof GETTY -1)) {
+	if (!strncmp(buf, GETTY, sizeof(GETTY)-1)) {
+	    char *baudrate;
 	    devtty = strchr(buf, ' ');
 
-	    if (!devtty) fatalmsg("Bad getty line\n");
-	    *(devtty++) = 0;
+	    if (!devtty) fatalmsg("Bad getty line: '%s'\n", buf);
+	    *devtty++ = 0;
+	    baudrate = strchr(devtty, ' ');
+	    if (baudrate)
+		*baudrate++ = 0;
 	    if ((fd = open(devtty, O_RDWR)) < 0) fatalmsg("Can't open %s\n", devtty);
+
+	    argv[0] = GETTY;
+	    argv[1] = devtty;
+	    argv[2] = baudrate;
+	    argv[3] = NULL;
+	    //debug("execv '%s' '%s' '%s'\n", argv[0], argv[1], argv[2]);
 
 	    dup2(fd ,STDIN_FILENO);
 	    dup2(fd ,STDOUT_FILENO);
 	    dup2(fd ,STDERR_FILENO);
-
-	    argv[0] = GETTY;
-	    argv[1] = devtty;
-	    argv[2] = NULL;
+	    if (fd > STDERR_FILENO)
+		close(fd);
 	    execv(argv[0], argv);
 	}
 	else
 	{
 	    if ((fd = open(DEVTTY, O_RDWR)) < 0) fatalmsg("Can't open %s\n", DEVTTY);
 
-	    dup2(fd ,STDIN_FILENO);
-	    dup2(fd ,STDOUT_FILENO);
-	    dup2(fd ,STDERR_FILENO);
-
 	    argv[0] = SHELL;
 	    argv[1] = "-e";
 	    argv[2] = buf;
 	    argv[3] = strtok(buf, " ");
 	    argv[4] = NULL;
-		execv(argv[0], argv);
+	    //debug("execv '%s' '%s' '%s' '%s'\n", argv[0], argv[1], argv[2], argv[3]);
+
+	    dup2(fd ,STDIN_FILENO);
+	    dup2(fd ,STDOUT_FILENO);
+	    dup2(fd ,STDERR_FILENO);
+	    if (fd > STDERR_FILENO)
+		close(fd);
+	    execv(argv[0], argv);
 	}
 
 	fatalmsg("exec failed: %s\n", argv[0]);
     }
-    debug("process owns %d\n", pid);
 
 /* here I must do something about utmp */
     return pid;
@@ -482,9 +487,9 @@ int main(int argc, char **argv)
 		/* wait for signals. */
 		while (1) {
 			pid = wait(NULL);
+			debug("wait child exit %d\n", pid);
 			if (pid == -1) continue;
 
-			debug("wait got child %d\n", pid);
 			thisOne = matchPid(pid);
 			if (!thisOne) continue;
 
