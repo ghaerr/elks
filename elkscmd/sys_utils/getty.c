@@ -231,7 +231,7 @@ int main(int argc, char **argv)
 
     fd = open(ISSUE, O_RDONLY);
     if (fd >= 0) {
-	put(13);
+	put('\n');
 #ifdef SUPER_SMALL
 	while ((n=read(fd,Buffer,sizeof(Buffer))) > 0)
 	    write(1,Buffer,n);
@@ -247,7 +247,6 @@ int main(int argc, char **argv)
 	    }
 	    switch (ch) {
 		case '\n':
-		    put(' ');
 		    put(ch);
 		    break;
 		case '\\':
