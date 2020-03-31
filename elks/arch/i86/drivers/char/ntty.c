@@ -131,8 +131,9 @@ void tty_release(struct inode *inode, struct file *file)
 	return;
 
     debug_tty("TTY close pid %d\n", current->pid);
-    if (current->pid == rtty->pgrp) {
-	debug_tty("TTY release pgrp %d\n", current->pid);
+    /* don't release pgrp for /dev/tty, only real tty*/
+    if (current->pid == rtty->pgrp && MINOR(inode->i_rdev) != 255) {
+	debug_tty("TTY release pgrp %d, sending SIGHUP\n", current->pid);
 	kill_pg(rtty->pgrp, SIGHUP, 1);
 	rtty->pgrp = 0;
     }

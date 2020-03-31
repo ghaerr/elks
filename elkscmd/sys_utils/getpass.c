@@ -75,6 +75,9 @@ char *getpass(char *prompt)
 #endif
     }
 
+    if (in != stdin)
+	fclose(in);
+
     /* return a pointer to our result string */
     return result;
 }
