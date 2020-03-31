@@ -66,12 +66,12 @@ floppy_table:
 entry1:
 #endif
 
-	cmp	$0x4c65,%ax			// coming from ELKS MBR?
-	jnz	_next0
+	cmp $0x4c65,%ax			// coming from ELKS MBR?
+	jnz _next0
 
 	mov 8(%si),%bx			// get MBR start sector from partion table at DS:SI
-	mov	$BOOTADDR>>4,%ax	// setup DS for saving sect_offset
-	mov	%ax,%ds
+	mov $BOOTADDR>>4,%ax	// setup DS for saving sect_offset
+	mov %ax,%ds
 	mov %bx,sect_offset
 _next0:
 
@@ -274,9 +274,7 @@ _disk_read:
 	mov $5,%bh
 	push %bp
 	mov %sp,%bp
-
 	add sect_offset,%ax
-
 	push %ax
 	push %dx
 	push %cx
@@ -492,9 +490,7 @@ binfile:
 
 	mov drive_num,%dl
 	xor %dh,%dh
-
 	mov sect_offset,%cx
-
 	mov $LOADSEG,%ax
 	mov %ax,%ds
 
@@ -524,8 +520,7 @@ boot_it:
 	orw $(EF_AS_BLOB|EF_BIOS_DEV_NUM),elks_flags
 .endif
 	mov %dx,root_dev
-
-	mov	%cx,elks_offset
+	mov %cx,elks_offset
 
 	RESTORE_DDPT
 

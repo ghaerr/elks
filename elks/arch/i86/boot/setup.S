@@ -82,14 +82,16 @@
 !			0x94, no. of sectors/track, 2 bytes
 !			0x96, no. of cylinders, 2 bytes
 !	...
+!	0x1e4:	elks_offset, 2 bytes. Offset of booted MBR partition
+!	0x1e6:	elks_magic, 2 bytes
 !	0x1ef:	SETUPSEG
-!	0x1f1:	SETUPSECS
-!	0x1f2:	ROOTFLAGS
-!	0x1f4:	SYSSIZE
-!	0x1f6:	ELKSFLAGS
+!	0x1f1:	SETUPSECS, 1 byte
+!	0x1f2:	ROOTFLAGS, 2 bytes
+!	0x1f4:	SYSSIZE, 2 bytes
+!	0x1f6:	ELKSFLAGS, 2 bytes
 !	0x1f8:	RAMDISK
 !	0x1fa:	SVGA_MODE
-!	0x1fc:	ROOT_DEV
+!	0x1fc:	ROOT_DEV, 2 bytes. Currently either BIOS device or ROOT_DEV
 !	0x1fe:	0x55 = boot_flag, Low part
 !	0x1ff:	0xAA = boot_flag, High part/PS2 mouse device present (0, not present)
 !

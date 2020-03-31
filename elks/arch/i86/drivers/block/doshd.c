@@ -900,13 +900,12 @@ static void bioshd_geninit(void)
 kdev_t bioshd_conv_bios_drive(unsigned int biosdrive)
 {
     int minor;
-    int offset, partition = 0;
+    int partition = 0;
+    extern int boot_partition;
 
-    offset = setupw(0x1e4);	/* sector offset if MBR boot*/
-    if (biosdrive & 0x80) {	/* hard drive*/
+    if (biosdrive & 0x80) {		/* hard drive*/
 	minor = biosdrive & 0x03;
-	if (offset)		/* temp kluge: need partition #*/
-	    partition = 1;
+	partition = boot_partition;	/* saved from add_partition()*/
     } else
 	minor = (biosdrive & 0x03) + DRIVE_FD0;
     return MKDEV(BIOSHD_MAJOR, (minor << MINOR_SHIFT) + partition);
