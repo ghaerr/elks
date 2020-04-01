@@ -66,6 +66,7 @@ floppy_table:
 entry1:
 #endif
 
+	// instructions through _next0 not needed for floppy, only MBR boot
 	cmp $0x4c65,%ax			// coming from ELKS MBR?
 	jnz _next0
 
