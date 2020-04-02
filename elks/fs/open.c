@@ -175,20 +175,21 @@ int sys_access(char *filename, int mode)
     register __ptask currentp = current;
     uid_t old_euid;
     gid_t old_egid;
-    int res;
+    int error;
 
     if (mode != (mode & S_IRWXO))	/* where's F_OK, X_OK, W_OK, R_OK? */
-	res = -EINVAL;
+	error = -EINVAL;
     else {
 	old_euid = currentp->euid;
 	old_egid = currentp->egid;
 	currentp->euid = currentp->uid;
 	currentp->egid = currentp->gid;
-	res = namei(filename, &inode, 0, mode);
+	error = namei(filename, &inode, 0, mode);
+	if (!error) iput(inode);
 	currentp->euid = old_euid;
 	currentp->egid = old_egid;
     }
-    return res;
+    return error;
 }
 
 int sys_chdir(char *filename)
