@@ -7,6 +7,9 @@ endif
 # for CONFIG_IMG_EXTRA_IMAGES
 include $(TOPDIR)/.config
 
+# MBR boot sector
+HD_MBR_BOOT = $(TOPDIR)/bootblocks/mbr.bin
+
 # Directory for final filesystem to be generated from
 DESTDIR = $(TOPDIR)/target
 export DESTDIR
@@ -135,15 +138,14 @@ hd32-fat:
 # MBR images
 hd32mbr-minix:
 	dd if=/dev/zero bs=512 count=1 | cat - hd32-minix.bin > hd32mbr-minix.bin
-	setboot hd32mbr-minix.bin -P63,16,63 ../../dev86/bootblocks/mbr.bin
+	setboot hd32mbr-minix.bin -P63,16,63 $(HD_MBR_BOOT)
 
 hd32mbr-fat:
 	dd if=/dev/zero bs=512 count=1 | cat - hd32-fat.bin > hd32mbr-fat.bin
-	setboot hd32mbr-fat.bin -P63,16,63 ../../dev86/bootblocks/mbr.bin
+	setboot hd32mbr-fat.bin -P63,16,63 $(HD_MBR_BOOT)
 
 # Clean target
 
 clean:
 	-rm -rf $(DESTDIR)
 	-rm -f *.bin
-

@@ -14,7 +14,7 @@ LDFLAGS = -T $(TOPDIR)/elks/elks-raw.ld
 
 .PHONY: all
 
-all: minix.bin probe.bin fat.bin
+all: minix.bin probe.bin fat.bin mbr.bin
 
 minix.bin: boot_sect.o boot_minix.o
 	$(LD) $(LDFLAGS) -M -o minix.bin boot_sect.o boot_minix.o > minix.map
@@ -37,6 +37,12 @@ boot_minix.o: boot_minix.c $(TOPDIR)/include/autoconf.h
 
 fat.bin: boot_sect_fat.o $(TOPDIR)/include/autoconf.h
 	$(LD) $(LDFLAGS) -M -o fat.bin boot_sect_fat.o > fat.map
+
+mbr.bin: mbr.S
+	$(CC) $(INCLUDES) -E -o mbr.tmp mbr.S
+	$(AS) $(ASFLAGS) -o mbr.o mbr.tmp
+	$(LD) $(LDFLAGS) -M -o mbr.bin mbr.o > mbr.map
+	rm -f mbr.tmp
 
 boot_sect_fat.o: boot_sect.S boot_sect_fat.h $(TOPDIR)/include/autoconf.h
 	$(CC) $(INCLUDES) -E -DBOOT_FAT -o boot_sect_fat.tmp boot_sect.S
