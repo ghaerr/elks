@@ -1,10 +1,11 @@
-#ifndef LX86_LINUXMT_MM_H
-#define LX86_LINUXMT_MM_H
+#ifndef __LINUXMT_MM_H
+#define __LINUXMT_MM_H
 
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/string.h>
+#include <linuxmt/list.h>
 
 extern unsigned long high_memory;
 
@@ -14,6 +15,16 @@ extern unsigned long high_memory;
 #define VERIFY_WRITE 1
 
 #define MM_MEM	0
+
+struct segment {
+	list_s    node;
+	seg_t     base;
+	segext_t  size;
+	word_t    flags;
+	word_t    ref_count;
+};
+
+typedef struct segment segment_s;
 
 /* memory primitives */
 /* TODO: move these to a new library header memory.h */
@@ -58,15 +69,18 @@ extern int verified_memcpy_fromfs(void *,void *,size_t);
 
 /* Memory allocation */
 
-extern void mm_init(seg_t,seg_t);
-extern seg_t mm_alloc(segext_t);
-extern seg_t mm_realloc(seg_t,segext_t);
-extern void mm_free(seg_t);
-extern void mm_get(seg_t);
-extern void mm_put(seg_t);
-extern seg_t mm_dup(seg_t);
-extern void mm_stat(seg_t,seg_t);
-extern unsigned int mm_get_usage(int,int);
+void mm_init (seg_t, seg_t);
+
+segment_s * seg_alloc (segext_t);
+void seg_free (segment_s *);
+
+segment_s * seg_get (segment_s *);
+void seg_put (segment_s *);
+
+segment_s * seg_dup (segment_s *);
+
+void mm_stat (seg_t, seg_t);
+unsigned int mm_get_usage (int, int);
 
 #endif
 #endif

@@ -89,22 +89,22 @@ static int lp_char_polled(char c, unsigned int target)
 #endif
 
     {
-	register char *statusp;
+	int status;
 
 	/* safety checks */
-	statusp = (char *) LP_STATUS(lpp);
+	status = LP_STATUS(lpp);
 
 	/* safety checks, note that LP_ERROR and LP_SELECTED
 	 * are inverted signals */
 
-	if (((int)statusp) & LP_OUTOFPAPER) { /* printer out of paper */
+	if (status & LP_OUTOFPAPER) { /* printer out of paper */
 	    printk("lp%d: out of paper\n", target);
 	    return 0;
 	}
 
 #if 0
 
-	if (!(((int)statusp) & LP_SELECTED)) { /* printer offline */
+	if (!(status & LP_SELECTED)) { /* printer offline */
 	    printk("lp%d: printer offline\n", target);
 	    return 0;
 	}
@@ -113,7 +113,7 @@ static int lp_char_polled(char c, unsigned int target)
 
 	wait = LP_CHAR_WAIT + 1;
 
-	while (!(((int)(statusp = (char *)LP_STATUS(lpp))) & LP_SELECTED))
+	while (!((status = LP_STATUS(lpp)) & LP_SELECTED))
 	    /* while not ready do busy loop */
 	    {
 		if (!--wait) {
@@ -129,7 +129,7 @@ static int lp_char_polled(char c, unsigned int target)
 	    }
 #endif
 
-	if (!(((int)statusp) & LP_ERROR)) { /* printer error */
+	if (!(status & LP_ERROR)) { /* printer error */
 	    printk("lp%d: printer error\n", target);
 	    return 0;
 	}
@@ -159,7 +159,7 @@ static int lp_char_polled(char c, unsigned int target)
     return 1;
 }
 
-static size_t lp_write(struct inode *inode, struct file *file, char *buf, int count)
+static size_t lp_write(struct inode *inode, struct file *file, char *buf, size_t count)
 {
     register char *chrsp;
 
@@ -183,11 +183,8 @@ static size_t lp_write(struct inode *inode, struct file *file, char *buf, int co
 static int lp_open(struct inode *inode, struct file *file)
 {
     register struct lp_info *lpp;
-    register char *statusp;
+    short status;
     unsigned short int target;
-#if 0
-    short int status;
-#endif
 
     target = MINOR(inode->i_rdev);
 
@@ -197,14 +194,14 @@ static int lp_open(struct inode *inode, struct file *file)
     lpp = &ports[port_order[target]];
 #endif
 
-    statusp = (char *)((short int)(lpp->flags));
+    status = lpp->flags;
 
-    if (!(((short int)statusp) & LP_EXIST)) { /* if LP_EXIST flag not set */
+    if (!(status & LP_EXIST)) { /* if LP_EXIST flag not set */
 	debug1("lp: device lp%d doesn't exist\n", target);
 	return -ENODEV;
     }
 
-    if (((short int)statusp) & LP_BUSY) { /* if LP_BUSY flag set */
+    if (status & LP_BUSY) { /* if LP_BUSY flag set */
 	debug1("lp: device lp%d busy\n", target);
 	return -EBUSY;
     }

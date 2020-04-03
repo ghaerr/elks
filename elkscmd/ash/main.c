@@ -47,6 +47,7 @@ static char sccsid[] = "@(#)main.c	5.2 (Berkeley) 3/13/91";
 #include <sys/types.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include "shell.h"
 #include "main.h"
 #include "mail.h"
@@ -81,10 +82,8 @@ extern int etext();
 
 #ifdef __STDC__
 STATIC void read_profile(char *);
-char *getenv(char *);
 #else
 STATIC void read_profile();
-char *getenv();
 #endif
 
 

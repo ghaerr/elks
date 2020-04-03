@@ -31,13 +31,32 @@ devices:
 #	$(MKDEV) /dev/kmsg c 1 11
 #	$(MKDEV) /dev/oldmem c 1 12
 
-
 ##############################################################################
 # RAM disks.
 
 	$(MKDEV) /dev/ram b 1 0 8
 	$(MKDEV) /dev/ramdisk b 1 1
 #	$MKSET   0 7  $(MKDEV) /dev/ram b 1
+
+##############################################################################
+# BIOS devices.
+# BIOS hard and floppy disks.
+# Limit to 4 primary partitions per disk (MBR).
+
+	$(MKDEV) /dev/bda  b 3 0
+	$(MKDEV) /dev/bda1 b 3 1
+	$(MKDEV) /dev/bda2 b 3 2
+	$(MKDEV) /dev/bda3 b 3 3
+	$(MKDEV) /dev/bda4 b 3 4
+	$(MKDEV) /dev/bdb  b 3 32
+	$(MKDEV) /dev/bdb1 b 3 33
+	$(MKDEV) /dev/bdb2 b 3 34
+	$(MKDEV) /dev/bdb3 b 3 35
+	$(MKDEV) /dev/bdb4 b 3 36
+	$(MKDEV) /dev/bdc  b 3 64
+	$(MKDEV) /dev/bdd  b 3 96
+	$(MKDEV) /dev/fd0  b 3 128
+	$(MKDEV) /dev/fd1  b 3 160
 
 ##############################################################################
 # Pseudo-TTY master devices. 
@@ -65,14 +84,6 @@ devices:
 #	$MKSET 208 15 $(MKDEV) /dev/ptyc x 2
 #	$MKSET 224 15 $(MKDEV) /dev/ptyd x 2
 #	$MKSET 240 15 $(MKDEV) /dev/ptye x 2
-
-##############################################################################
-# Floppy diskettes. Only the auto-detect nodes are listed.
-
-	$(MKDEV) /dev/fd0	b 3 128 	# Currently.
-	$(MKDEV) /dev/fd1	b 3 192 	# Currently.
-
-#	$MKSET   0 3  $(MKDEV) /dev/fd b 2	# Ought to be.
 
 ##############################################################################
 # Pseudo-TTY slave devices. 
@@ -115,30 +126,24 @@ devices:
 #	$MKSET  64 63 $(MKDEV) /dev/hdb b 3	# Ought to be.
 
 ##############################################################################
-# Virtual consoles. Note that tty4 through tty7 can't be enabled at this
-# time because of the possible conflict with ttyS0 through ttyS3 which
-# used to use the node numbers these now use. However, it is expected that
-# this restriction can be removed in the near future.
-
-# CM: ELKS wants tty1 to be minor 0, so we can't use $MKSET
+# Virtual consoles and serial ports.
 
 	$(MKDEV) /dev/tty1	c 4 0
 	$(MKDEV) /dev/tty2	c 4 1
 	$(MKDEV) /dev/tty3	c 4 2
 	$(MKDEV) /dev/tty4	c 4 3
 
-#	$MKSET  0 3  $(MKDEV) /dev/tty c 4	# Currently
-#	$MKSET  0 15 $(MKDEV) /dev/tty c 4	# Soon to be
+# /dev/tty is minor 255, last of the /dev/ttye range
+
+	$(MKDEV) /dev/tty	c 4 255 1 1 0666
 
 # Serial ports, as detected by the ROM BIOS.
 
 	$(MKDEV) /dev/ttyS c 4 64 4
-#	$MKSET 64 3  $(MKDEV) /dev/ttyS c 4
 
 ##############################################################################
 # Alternate TTY devices. These are not yet supported.
 
-	$(MKDEV) /dev/tty	c 5 0
 #	$(MKDEV) /dev/console	c 5 1
 #	$(MKDEV) /dev/ptmx	c 5 2
 
@@ -217,24 +222,6 @@ devices:
 
 #	$MKSET   0 63 $(MKDEV) /dev/xda b 13
 #	$MKSET  64 63 $(MKDEV) /dev/xdb b 13
-
-##############################################################################
-# BIOS hard disks.
-# Limit to 4 primary partitions per disk (MBR).
-
-	$(MKDEV) /dev/bda b 3  0    # Currently.
-	$(MKDEV) /dev/bda b 3  0 4  # Currently.
-	$(MKDEV) /dev/bdb b 3 64    # Currently.
-	$(MKDEV) /dev/bdb b 3 64 4  # Currently.
-#	$MKSET   0 15 $(MKDEV) /dev/bda b 3	# Currently
-#	$MKSET  64 15 $(MKDEV) /dev/bdb b 3	# Currently
-#	$MKSET 128 15 $(MKDEV) /dev/bdc b 3	# Currently
-#	$MKSET 192 15 $(MKDEV) /dev/bdd b 3	# Currently
-
-#	$MKSET   0 63 $(MKDEV) /dev/bda b 14	# Ought to be
-#	$MKSET  64 63 $(MKDEV) /dev/bdb b 14	# Ought to be
-#	$MKSET 128 63 $(MKDEV) /dev/bdc b 14	# Ought to be
-#	$MKSET 192 63 $(MKDEV) /dev/bdd b 14	# Ought to be
 
 ##############################################################################
 # Joysticks. These are not yet supported.

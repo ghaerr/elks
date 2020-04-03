@@ -4,7 +4,6 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
 #include <linuxmt/fcntl.h>
-#include <linuxmt/utsname.h>
 
 #include <arch/system.h>
 
@@ -49,7 +48,6 @@ void start_kernel(void)
     fs_init();
 
     mm_stat(base, end);
-    printk("ELKS version %s\n", system_utsname.release);
 
     kfork_proc(init_task);
     wake_up_process(&task[1]);

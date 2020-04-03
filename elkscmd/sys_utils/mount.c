@@ -6,15 +6,11 @@
  * Most simple built-in commands are here.
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <signal.h>
-#include <pwd.h>
-#include <grp.h>
-#include <utime.h>
-#include <errno.h>
+#include <stdlib.h>
+#include <sys/mount.h>
 
 int main(int argc, char **argv)
 {
@@ -32,8 +28,8 @@ int main(int argc, char **argv)
 		while (*++str) switch (*str) {
 			case 't':
 				if ((argc <= 0) || (**argv == '-')) {
-					write(STDERR_FILENO, "Missing file system type\n", 25);
-					exit(1);
+					write(STDERR_FILENO, "mount: missing file system type\n", 32);
+					return 1;
 				}
 
 				type = *argv++;
@@ -41,19 +37,19 @@ int main(int argc, char **argv)
 				break;
 
 			default:
-				write(STDERR_FILENO, "Unknown option\n", 15);
-				exit(1);
+				write(STDERR_FILENO, "mount: unknown option\n", 22);
+				return 1;
 		}
 	}
 
 	if (argc != 2) {
-		write(STDERR_FILENO, "Wrong number of arguments for mount\n", 36);
-		exit(1);
+		write(STDERR_FILENO, "Usage: mount [-t type] <device> <directory>\n", 44);
+		return 1;
 	}
 
 	if (mount(argv[0], argv[1], type, 0) < 0) {
 		perror("mount failed");
-		exit(1);
+		return 1;
 	}
-	exit(0);
+	return 0;
 }

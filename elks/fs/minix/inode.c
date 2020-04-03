@@ -288,8 +288,7 @@ static unsigned short map_iblock(struct inode *inode, block_t i,
     return *b_zone;
 }
 
-unsigned short _minix_bmap(register struct inode *inode,
-			   unsigned short block, int create)
+unsigned short _minix_bmap(register struct inode *inode, block_t block, int create)
 {
     register char *i;
 
@@ -331,8 +330,7 @@ unsigned short _minix_bmap(register struct inode *inode,
     return (unsigned short)i;
 }
 
-struct buffer_head *minix_getblk(register struct inode *inode,
-				 unsigned short block, int create)
+struct buffer_head *minix_getblk(register struct inode *inode, block_t block, int create)
 {
     unsigned short blknum;
 

@@ -64,7 +64,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     struct file *filp;
     int retval;
     __u16 ds;
-    seg_t cseg, dseg, base_data = 0;
+    seg_t base_data = 0;
+    segment_s * seg_code;
+    segment_s * seg_data;
     lsize_t len;
 
     /* Open the image */
@@ -82,11 +84,12 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if ((retval = open_filp(O_RDONLY, inode, &filp))) goto error_exec2;
 
     /* Look for the binary in memory */
-    cseg = 0;
+    seg_code = 0;
     currentp = &task[0];
     do {
-	if ((currentp->state != TASK_UNUSED) && (currentp->t_inode == inode)) {
-	    cseg = currentp->mm.cseg;
+	if ((currentp->state <= TASK_STOPPED) && (currentp->t_inode == inode)) {
+	    debug_wait("EXEC found copy\n");
+	    seg_code = currentp->mm.seg_code;
 	    break;
 	}
     } while (++currentp < &task[MAX_TASKS]);
@@ -147,11 +150,11 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /*
      *      Looks good. Get the memory we need
      */
-    if (!cseg) {
+    if (!seg_code) {
 	retval = -ENOMEM;
-	cseg = mm_alloc((segext_t) ((mh.tseg + 15) >> 4));
-	if (!cseg) goto error_exec3;
-	currentp->t_regs.ds = cseg;
+	seg_code = seg_alloc((segext_t) ((mh.tseg + 15) >> 4));
+	if (!seg_code) goto error_exec3;
+	currentp->t_regs.ds = seg_code->base;  // segment used by read()
 	retval = filp->f_op->read(inode, filp, 0, (size_t)mh.tseg);
 	if (retval != (int)mh.tseg) {
 	    debug2("EXEC(tseg read): bad result %u, expected %u\n",
@@ -159,19 +162,19 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    goto error_exec4;
 	}
     } else {
-	mm_get(cseg);
+	seg_get (seg_code);
 	filp->f_pos += mh.tseg;
     }
 
     debug1("EXEC: Allocating %lu bytes for data segment\n", len);
 
     retval = -ENOMEM;
-    dseg = mm_alloc((segext_t) (len >> 4));
-    if (!dseg) goto error_exec4;
+    seg_data = seg_alloc ((segext_t) (len >> 4));
+    if (!seg_data) goto error_exec4;
 
-    debug2("EXEC: Malloc succeeded - cs=%x ds=%x\n", cseg, dseg);
+    debug2("EXEC: Malloc succeeded - cs=%x ds=%x\n", seg_code->base, seg_data->base);
 
-    currentp->t_regs.ds = dseg;
+    currentp->t_regs.ds = seg_data->base;  // segment used by read()
     retval = filp->f_op->read(inode, filp, (char *)base_data, (size_t)mh.dseg);
 
     if (retval != (size_t)mh.dseg) {
@@ -187,20 +190,23 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	? (__pptr)base_data
 	: currentp->t_endseg) - slen;
     currentp->t_regs.sp = (__u16)(currentp->t_begstack);
-    fmemcpyb((word_t) currentp->t_begstack, dseg, (word_t) sptr, ds, (word_t) slen);
+    fmemcpyb((byte_t *)currentp->t_begstack, seg_data->base, (byte_t *)sptr, ds, (word_t) slen);
 
     /* From this point, the old code and data segments are not needed anymore */
 
     /* Flush the old binary out.  */
-    if (currentp->mm.cseg) mm_put(currentp->mm.cseg);
-    if (currentp->mm.dseg) mm_put(currentp->mm.dseg);
+    if (currentp->mm.seg_code) seg_put(currentp->mm.seg_code);
+    if (currentp->mm.seg_data) seg_put(currentp->mm.seg_data);
     debug("EXEC: old binary flushed.\n");
 
-    currentp->t_xregs.cs = currentp->mm.cseg = cseg;
-    currentp->t_regs.es = currentp->t_regs.ss = currentp->mm.dseg = dseg;
+    currentp->mm.seg_code = seg_code;
+    currentp->t_xregs.cs = seg_code->base;
+
+    currentp->mm.seg_data = seg_data;
+    currentp->t_regs.es = currentp->t_regs.ss = seg_data->base;
 
     /* Wipe the BSS */
-    fmemsetb((word_t) ((seg_t) mh.dseg + base_data), dseg, 0, (word_t) mh.bseg);
+    fmemsetb((seg_t) mh.dseg + base_data, seg_data->base, 0, (word_t) mh.bseg);
     {
 	register char *pi = (char *)0;
 
@@ -262,10 +268,10 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     goto normal_out;
 
   error_exec5:
-    mm_put(dseg);
+    seg_put (seg_data);
 
   error_exec4:
-    mm_put(cseg);
+    seg_put (seg_code);
 
   error_exec3:
     currentp->t_regs.ds = ds;

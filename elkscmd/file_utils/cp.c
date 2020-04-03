@@ -169,7 +169,7 @@ int main(int argc, char **argv)
 
 	if ((argc > 3) && !dirflag) {
 		fprintf(stderr, "%s: not a directory\n", lastarg);
-		exit(1);
+		return 1;
 	}
 
 	while (argc-- > 2) {
@@ -179,13 +179,13 @@ int main(int argc, char **argv)
 
 		if (!copyfile(*++argv, destname, 0)) goto error_copy;
 	}
-	exit(0);
+	return 0;
 
 error_copy:
 	fprintf(stderr, "Failed to copy %s -> %s\n", srcname, destname);
-	exit(1);
+	return 1;
 usage:
 	fprintf(stderr, "usage: %s source_file dest_file\n", argv[0]);
 	fprintf(stderr, "       %s file1 file2 ... dest_directory\n", argv[0]);
-	exit(1);
+	return 1;
 }

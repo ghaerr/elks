@@ -42,7 +42,7 @@ extern char * strerror __P ((int));
 /* Other common BSD functions */
 extern int strcasecmp __P ((char*, char*));
 extern int strncasecmp __P ((char*, char*, size_t));
-char *strpbrk __P ((char *, char *));
+char *strpbrk __P ((const char *, const char *));
 char *strsep __P ((char **, char *));
 
 char * strstr (const char *, const char *);

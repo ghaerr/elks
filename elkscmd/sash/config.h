@@ -34,6 +34,7 @@
 #define CMD_TAR       /* 5576 bytes */
 #define CMD_TOUCH     /*  236 bytes */
 #define CMD_UMASK     /*  272  bytes */
+#define CMD_HISTORY
 
 #ifdef CMD_CP
 #define FUNC_COPYFILE

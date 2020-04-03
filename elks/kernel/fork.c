@@ -21,7 +21,7 @@ pid_t get_pid(void)
 	if (p->pid == last_pid || p->pgrp == last_pid ||
 	    p->session == last_pid) {
 	  startgp:
-	    if (++last_pid < 0)
+	    if ((int)(++last_pid) < 0)
 		last_pid = 1;
 	    p = &task[0];
 	}
@@ -76,22 +76,22 @@ pid_t do_fork(int virtual)
     /*
      * We do shared text.
      */
-    mm_get(currentp->mm.cseg);
+    seg_get(currentp->mm.seg_code);
 
     if (virtual) {
-	mm_get(currentp->mm.dseg);
+	seg_get(currentp->mm.seg_data);
     } else {
-	t->mm.dseg = mm_dup(currentp->mm.dseg);
+	t->mm.seg_data = seg_dup(currentp->mm.seg_data);
 
-	if (t->mm.dseg == 0) {
-	    mm_put(currentp->mm.cseg);
+	if (t->mm.seg_data == 0) {
+	    seg_put (currentp->mm.seg_code);
 	    t->state = TASK_UNUSED;
             task_slots_unused++;
             next_task_slot = t;
 	    return -ENOMEM;
 	}
 
-	t->t_regs.ds = t->t_regs.es = t->t_regs.ss = t->mm.dseg;
+	t->t_regs.ds = t->t_regs.es = t->t_regs.ss = (t->mm.seg_data)->base;
     }
 
     /* Increase the reference count to all open files */
@@ -107,11 +107,12 @@ pid_t do_fork(int virtual)
     t->fs.root->i_count++;
     t->fs.pwd->i_count++;
 
+    t->exit_status = 0;
+
     /* Set up our family tree */
     t->ppid = currentp->pid;
     t->p_parent = currentp;
     t->p_nextsib = t->p_child = NULL;
-    t->child_lastend = t->lastend_status = 0;
     if ((t->p_prevsib = currentp->p_child) != NULL) {
 	currentp->p_child->p_nextsib = t;
     }

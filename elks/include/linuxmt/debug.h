@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_DEBUG_H
-#define LX86_LINUXMT_DEBUG_H
+#ifndef __LINUXMT_DEBUG_H
+#define __LINUXMT_DEBUG_H
 
 /* linuxmt/include/linuxmt/debug.h for ELKS v. >=0.0.47
  * (C) 1997 Chad Page
@@ -30,8 +30,11 @@
 #define DEBUG_BLK	0		/* block i/o*/
 #define DEBUG_FAT	0		/* FAT filesystem*/
 #define DEBUG_FILE	0		/* sys open and file i/o*/
+#define DEBUG_NET	0		/* networking*/
 #define DEBUG_SIG	0		/* signals*/
 #define DEBUG_SUP	0		/* superblock, mount, umount*/
+#define DEBUG_TTY	0		/* tty driver*/
+#define DEBUG_WAIT	0		/* wait, exit*/
 
 #if DEBUG_BLK
 #define debug_blk	printk
@@ -47,8 +50,15 @@
 
 #if DEBUG_FILE
 #define debug_file	printk
+extern char *get_userspace_filename(char *filename);
 #else
 #define debug_file(...)
+#endif
+
+#if DEBUG_NET
+#define debug_net	printk
+#else
+#define debug_net(...)
 #endif
 
 #if DEBUG_SIG
@@ -61,6 +71,18 @@
 #define debug_sup	printk
 #else
 #define debug_sup(...)
+#endif
+
+#if DEBUG_TTY
+#define debug_tty	printk
+#else
+#define debug_tty(...)
+#endif
+
+#if DEBUG_WAIT
+#define debug_wait	printk
+#else
+#define debug_wait(...)
 #endif
 
 /* Old debug mechanism - deprecated.

@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_MSDOS_H
-#define LX86_LINUXMT_MSDOS_H
+#ifndef __LINUXMT_MSDOS_H
+#define __LINUXMT_MSDOS_H
 
 /*
  *	MSDOS binary formats

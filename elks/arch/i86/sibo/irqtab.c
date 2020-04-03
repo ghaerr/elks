@@ -7,7 +7,7 @@
  *
  * moving variables from code segment to an extra segment
  * CONFIG_ROM_IRQ_DATA for the ROM_CODE-Version
- * ELKS 0.76 7/1999 Christian Mard”ller  (chm@kdt.de)
+ * ELKS 0.76 7/1999 Christian Mard?ller  (chm@kdt.de)
  */
 
 #ifdef CONFIG_ROMCODE
@@ -442,15 +442,7 @@ updct:
 !
         mov     bx,_current
         mov     sp,TASK_USER_SP[bx]
-#ifndef CONFIG_ADVANCED_MM
         mov     ss,TASK_USER_SS[bx]
-#else
-	mov ax, TASK_USER_SS[bx] ! user ds
-	mov bp, sp
-        mov ss, ax
-	mov 12[bp], ax	! change the es in the stack
-	mov 14[bp], ax	! change the ds in the stack
-#endif
 	j	noschedpop
 !
 !	Now we have to rescue our stack pointer/segment.

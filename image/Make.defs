@@ -1,78 +1,113 @@
-# Make defines for images
+# Make defines and options for images
 
 ifndef TOPDIR
 $(error TOPDIR is not defined)
 endif
 
-include $(TOPDIR)/Make.defs
-
 # Dependencies folders
 
+IMG_DIR = $(TOPDIR)/image
 ELKS_DIR = $(TOPDIR)/elks
 ELKSCMD_DIR = $(TOPDIR)/elkscmd
-BOOTBLOCKS_DIR = $(TOPDIR)/bootblocks
+TEMPLATE_DIR = $(ELKSCMD_DIR)/rootfs_template
 
+BOOTBLOCKS_DIR = $(TOPDIR)/bootblocks
 FD_MINIX_BOOT = $(BOOTBLOCKS_DIR)/minix.bin
 FD_FAT_BOOT = $(BOOTBLOCKS_DIR)/fat.bin
-# TODO: replace these exports by includes
-export FD_MINIX_BOOT FD_FAT_BOOT
 
 # Image file options
 
-IMGDIR=$(TOPDIR)/image
-export IMGDIR
+# mfs options
+# -v		verbose
+# mkfs		initialize filesystem
+# genfs		generate filesystem from template
+# addfs		generate filesytem from filelist
+# mfs genfs options
+# -1		create MINIX v1 filesystem
+# -n14		filename size 14
+# -i<size>	max inodes
+# -s<size>	image size in 1k blocks
+MINIX_MKFSOPTS=
+
+# mformat options
+# -f size	image size in kilobytes (up to 2880k only)
+# -s secs	num sectors/track
+# -h heads	num disk heads
+# -t tracks	num disk tracks
+# -c 1		cluster size 1 sector
+# -M 512	software sector size 512 (=physical sector size)
+# -d 2		2 FAT tables
+# -L 9		9 FAT sectors (mformat forces 3 for 360k, 5 for 720k)
+# -r 14		14 root directory sectors
+# -R 1		1 reserve sector (boot, may need to reserve 2)
+# -k		only update offsets 11 through 61 in boot block, all else unchanged
+# -N 0		serial number 0
+# -v label	volume label (don't use with first format as uses two directory entries)
+FAT_MKFSOPTS = -f $(TARGET_BLKS) -M 512 -d 2 -L 9 -r 14 -k -N 0 -c 1
+
+# mcopy options
+# -v		verbose
+# -p		preserve attributes
+# -m		preserve file modtime
+# -Q		quit on error
+# -D o		overwrite primary name if exists
+FAT_COPYOPTS = -pmQ -D o
+
+# mdir options
+# -a		also list hidden files
+# -/		recursive output (buggy: will fail on empty, newly formatted disks!
 
 ifdef CONFIG_IMG_FD360
-TARGET_FILE = $(IMGDIR)/fd360.bin
+TARGET_FILE = $(IMG_DIR)/fd360.bin
 TARGET_BLKS = 360
+BPB = -B9,2,40
+MINIX_MKFSOPTS = -1 -n14 -i192 -s$(TARGET_BLKS)
 endif
 
 ifdef CONFIG_IMG_FD720
-TARGET_FILE = $(IMGDIR)/fd720.bin
+TARGET_FILE = $(IMG_DIR)/fd720.bin
 TARGET_BLKS = 720
-endif
-
-ifdef CONFIG_IMG_FD1200
-TARGET_FILE = $(IMGDIR)/fd1200.bin
-TARGET_BLKS = 1200
+BPB = -B9,2,80
+MINIX_MKFSOPTS = -1 -n14 -i256 -s$(TARGET_BLKS)
 endif
 
 ifdef CONFIG_IMG_FD1440
-TARGET_FILE = $(IMGDIR)/fd1440.bin
+TARGET_FILE = $(IMG_DIR)/fd1440.bin
 TARGET_BLKS = 1440
+BPB = -B18,2,80
+MINIX_MKFSOPTS = -1 -n14 -i360 -s$(TARGET_BLKS)
 endif
 
-ifdef CONFIG_IMG_FD1680
-TARGET_FILE = $(IMGDIR)/fd1680.bin
-TARGET_BLKS = 1680
-endif
-
-# FIXME: should use SIBODEV instead of MAKEDEV
-ifdef CONFIG_IMG_SIBO
-TARGET_FILE = $(IMGDIR)/sibo.bin
-TARGET_BLKS = 128
+ifdef CONFIG_IMG_FD2880
+TARGET_FILE = $(IMG_DIR)/fd2880.bin
+TARGET_BLKS = 2880
+BPB = -B36,2,80
+MINIX_MKFSOPTS = -1 -n14 -i720 -s$(TARGET_BLKS)
+# FAT12 2880k, use cluster size 2
+FAT_MKFSOPTS = -f $(TARGET_BLKS) -M 512 -d 2 -L 9 -r 14 -k -N 0 -c 2
 endif
 
 ifdef CONFIG_IMG_HD
-TARGET_FILE = $(IMGDIR)/hd.bin
+TARGET_FILE = $(IMG_DIR)/hd.bin
 TARGET_BLKS = $(CONFIG_IMG_BLOCKS)
+BPB = -B$(CONFIG_IMG_SECT),$(CONFIG_IMG_HEAD),$(CONFIG_IMG_CYL)
+MINIX_MKFSOPTS = -1 -n14 -i720 -s$(CONFIG_IMG_BLOCKS)
+# FAT16 HD, cluster size 2, autocalc num root directory sectors
+FAT_MKFSOPTS = -s $(CONFIG_IMG_SECT) -h $(CONFIG_IMG_HEAD) -t $(CONFIG_IMG_CYL) \
+					-M 512 -d 2 -k -N 0 -c 2
 endif
 
 ifdef CONFIG_IMG_RAW
-TARGET_FILE = $(IMGDIR)/fd.bin
+TARGET_FILE = $(IMG_DIR)/fd.bin
 endif
 
-# Image filesystem options
-
-ifdef CONFIG_IMG_MINIX
-MKFS_OPTS = -1 -n14 -i360 -s$(TARGET_BLKS) -k
+# should use SIBODEV instead of MAKEDEV
+ifdef CONFIG_IMG_SIBO
+TARGET_FILE = $(IMG_DIR)/sibo.bin
+TARGET_BLKS = 128
 endif
 
-ifdef CONFIG_IMG_FAT
-ifdef CONFIG_IMG_HD
-MKFS_OPTS = -s $(CONFIG_IMG_SECT) -h $(CONFIG_IMG_HEAD) -t $(CONFIG_IMG_CYL)
-else
-MKFS_OPTS = -f $(TARGET_BLKS) -M 512 -d 2 -L 9 -r 14 -c 1 -k -N 0
-endif
-CPFS_OPTS = -pmQ -D o
+# override default image name if NAME specified
+ifdef NAME
+TARGET_FILE = $(IMG_DIR)/$(NAME).bin
 endif

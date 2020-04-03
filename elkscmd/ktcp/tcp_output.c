@@ -220,7 +220,7 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
 
     n = (struct tcp_retrans_list_s *)malloc(sizeof(struct tcp_retrans_list_s));
     if (n == NULL) {
-	printf("ERROR : Out of memory\n");
+	printf("ktcp: Out of memory\n");
 
 	/* In this case has to be avoided */
 	exit(0);

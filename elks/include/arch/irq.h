@@ -1,5 +1,5 @@
-#ifndef LX86_ARCH_IRQ_H
-#define LX86_ARCH_IRQ_H
+#ifndef __ARCH_8086_IRQ_H
+#define __ARCH_8086_IRQ_H
 
 #include <linuxmt/types.h>
 

@@ -84,14 +84,11 @@ static const unsigned short int __mon_lengths[2][12] =
 
 
 void
-__tm_conv(tmbuf, t, offset)
-struct tm *tmbuf;
-time_t *t;
-time_t offset;
+__tm_conv(struct tm *tmbuf, time_t *t, time_t offset)
 {
   long days, rem;
   register int y;
-  register unsigned short int *ip;
+  register const unsigned short *ip;
 
   days = *t / SECS_PER_DAY;
   rem = *t % SECS_PER_DAY;

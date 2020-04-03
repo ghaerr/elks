@@ -86,6 +86,11 @@ static	CMDTAB	cmdtab[] = {
 	1,		MAXARGS,
 #endif
 
+#ifdef CMD_HISTORY
+	"history",	"", 			do_history,
+	1,		1,
+#endif
+
 #ifdef CMD_KILL
 	"kill",	"[-sig] pid ...",	do_kill,
 	2,		MAXARGS,
@@ -209,9 +214,15 @@ static	int	aliascount;
 static	ALIAS	*findalias();
 #endif
 
+#ifdef CMD_HISTORY
+static  void	init_hist();
+extern	int	history();
+extern	int	histcnt;
+#endif
+
 static	BOOL	intcrlf = TRUE;
 static	char	*prompt;
-static BOOL		isbinshell;
+static	BOOL	isbinshell;
 
 #ifdef CMD_SOURCE
 static	FILE	*sourcefiles[MAXSOURCE];
@@ -227,7 +238,6 @@ static	void	showprompt();
 static	BOOL	trybuiltin();
 
 BOOL	intflag;
-
 
 int main(int argc, char **argv)
 {
@@ -252,6 +262,10 @@ int main(int argc, char **argv)
 
 	if (getenv("PATH") == NULL)
 		putenv("PATH=/bin:/usr/bin:/sbin");
+
+#ifdef CMD_HISTORY
+	init_hist();
+#endif /* CMD_HISTORY */
 
 #ifdef CMD_SOURCE
 	cp = getenv("HOME");
@@ -338,7 +352,12 @@ readfile(name)
 		while ((cc > 0) && isblank(buf[cc - 1]))
 			cc--;
 		buf[cc] = '\0';
+		if (strlen(buf) < 1) continue; 	/* blank line */
+#ifdef CMD_HISTORY
+		if (histcnt && history(buf))
+				continue;	
 
+#endif
 		command(buf);
 	}
 
@@ -427,7 +446,6 @@ command(char *cmd)
 
 	if ((*cmd == '\0') || (*cmd == '#') || !makeargs(cmd, &argc, &argv))
 		return;
-
 #ifdef CMD_ALIAS
 	/*
 	 * Search for the command in the alias table.
@@ -479,7 +497,6 @@ command(char *cmd)
 	newargc = argc;
 	newargv = argv;
 #endif
-
 	/*
 	 * Check if the command line has '>', '<', '&' etc that require a full shell.
 	 * If so, then the external program will be run rather than the builtin.
@@ -534,6 +551,9 @@ trybuiltin(int wildargc, char **wildargv, int argc, char **argv)
 #ifdef CMD_PROMPT
 	(cmdptr->func == do_prompt) ||
 #endif
+#ifdef CMD_HISTORY
+	(cmdptr->func == do_history) ||
+#endif
 	   0) {
 		(*cmdptr->func)(argc, argv);
 		return TRUE;
@@ -551,8 +571,7 @@ trybuiltin(int wildargc, char **wildargv, int argc, char **argv)
 static void
 runcmd(char *cmd, int argc, char **argv)
 {
-	int		pid;
-	int		status;
+	int		pid, status, ret;
 
 	/*
 	 * If a full shell is required, run 'sh -c cmd' unless we are the only shell.
@@ -561,10 +580,11 @@ runcmd(char *cmd, int argc, char **argv)
 		if (isbinshell)
 			fprintf(stderr, "%s: No such file or directory\n", argv[0]);
 		else {
-			system(cmd);
-			wait(&status);	/* synchronize shell prompt*/
+			status = system(cmd);
+			if (status & 0xff)
+				fprintf(stderr, "killed (signal %d)\n", status & 0x7f);
+			return;
 		}
-		return;
 	}
 
 	/*
@@ -583,15 +603,16 @@ runcmd(char *cmd, int argc, char **argv)
 		status = 0;
 		intcrlf = FALSE;
 
-		while (((pid = wait(&status)) < 0) && (errno == EINTR))
-			;
+		while ((ret = waitpid(pid, &status, 0)) != pid)
+			continue;
 
 		intcrlf = TRUE;
 		if ((status & 0xff) == 0)
 			return;
 
 		fprintf(stderr, "pid %d: %s (signal %d)\n", pid,
-			(status & 0x80) ? "core dumped" : "killed",
+			(status & 0x80) ? "core dumped" :
+			(((status & 0x7f) == SIGTSTP)? "stopped" : "killed"),
 			status & 0x7f);
 
 		return;
@@ -737,7 +758,6 @@ findalias(name)
 	return NULL;
 }
 #endif /* CMD_ALIAS */
-
 
 #ifdef CMD_SOURCE
 void

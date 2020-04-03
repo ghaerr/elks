@@ -1,5 +1,5 @@
-#ifndef LX86_ARCH_KEYBOARD_H
-#define LX86_ARCH_KEYBOARD_H
+#ifndef __ARCH_8086_KEYBOARD_H
+#define __ARCH_8086_KEYBOARD_H
 
 struct pt_regs;
 extern void keyboard_irq(int,struct pt_regs *,void *);

@@ -19,9 +19,7 @@
 #include <errno.h>
 
 
-void
-main(argc, argv)
-	char	**argv;
+int main(int argc, char **argv)
 {
 	BOOL	first;
 	char *	sptr;
@@ -35,5 +33,5 @@ main(argc, argv)
 		write(STDOUT_FILENO, sptr, strlen(sptr));
 	}
 	write(STDOUT_FILENO, "\n", 1);
-	exit(0);
+	return 0;
 }

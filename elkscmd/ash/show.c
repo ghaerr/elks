@@ -239,7 +239,7 @@ indent(amount, pfx, fp)
 
 FILE *tracefile;
 
-#if DEBUG == 2
+#if DEBUG >= 2
 int debug = 1;
 #else
 int debug = 0;
@@ -351,6 +351,9 @@ opentrace() {
 	}
 	scopy(p, s);
 	strcat(s, "/trace");
+#if DEBUG == 3
+tracefile = stderr;
+#else
 	if ((tracefile = fopen(s, "a")) == NULL) {
 		fprintf(stderr, "Can't open %s\n", s);
 		return;
@@ -359,6 +362,7 @@ opentrace() {
 	if ((flags = fcntl(fileno(tracefile), F_GETFL, 0)) >= 0)
 		fcntl(fileno(tracefile), F_SETFL, flags | O_APPEND);
 #endif
+#endif /* DEBUG*/
 	fputs("\nTracing started.\n", tracefile);
 	fflush(tracefile);
 }

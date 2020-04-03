@@ -1,7 +1,8 @@
 // Atomic primitives
 // Architecture dependent
 
-#pragma once
+#ifndef __LINUXMT_ATOMIC_H
+#define __LINUXMT_ATOMIC_H
 
 #include <linuxmt/types.h>
 
@@ -29,3 +30,5 @@ volatile lock_t try_lock (lock_t * lock);
 // Unconditional unlock
 
 void unlock (lock_t * lock);
+
+#endif

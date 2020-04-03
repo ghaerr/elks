@@ -65,14 +65,7 @@
 !	0x30:	zero terminated string containing the processor's name, 16 bytes
 !	0x40:	unused (was FPU name), 16 bytes
 !	0x50:	zero terminated string containing the cpuid, 13 bytes
-!	0x80:	BIOS data for harddisk 0, 6 bytes
-!			0x80, no. of heads, 2 bytes (0, no disk)
-!			0x82, no. of sectors/track, 2 bytes
-!			0x84, no. of cylinders - 1, 2 bytes
-!	0x86:	BIOS data for harddisk 1, 6 bytes
-!			0x86, no. of heads, 2 bytes (0, no disk)
-!			0x88, no. of sectors/track, 2 bytes
-!			0x8A, no. of cylinders - 1, 2 bytes
+!	...
 !	0x8c:	data for floppy disk 0, 6 bytes
 !			0x8C, no. of heads, 2 bytes (0, no disk)
 !			0x8E, no. of sectors/track, 2 bytes
@@ -355,9 +348,6 @@ no_psmouse:
 	rep
 	stosw
 	pop	%es
-#ifdef CONFIG_HW_HARD_DRIVE
-	call	gethd		// Get geometry for harddisk 0/1.
-#endif
 #ifdef CONFIG_HW_FLOPPY_DRIVE
 	call	getfloppy	// Get geometry for floppy disk 0/1.
 #endif
@@ -1014,72 +1004,6 @@ f1200:	.word 2,15,80
 f1440:	.word 2,18,80
 f2880:	.word 2,36,80
 floppies: .word f360, f1200, f720, f1440, f2880, f2880
-#endif
-
-//
-// gethd
-//
-#ifdef CONFIG_HW_HARD_DRIVE
-gethd:
-	mov	$INITSEG,%ax
-	mov	%ax,%ds
-	mov	%ax,%es
-
-
-
-
-
-
-	mov	$0x08,%ah	// check for first drive
-	mov	$0x80,%dl
-	int	$0x13
-	jc	no_hd0		// carry flag set -> an error occured
-	or	%ah,%ah
-	jnz	no_hd0		// error code != 0 -> bad
-	or	%dl,%dl
-	jz	no_hd0		// dl contains the number of harddisks
-	push	%dx
-	mov	%dh,%dl
-	xor	%dh,%dh
-	inc	%dx		// DX -> no. of heads
-	mov	%cx,%bx
-	and	$0x3f,%bx	// BX -> no. of sectors
-	mov	%ch,%al
-	mov	%cl,%ah
-	mov	$6,%cl
-	shr	%cl,%ah		// AX -> no. of cylinders - 1
-	mov	%dx,0x80
-	mov	%bx,0x82
-	mov	%ax,0x84
-	pop	%dx
-	dec	%dl		// only one harddisk?
-	jz	no_hd1
-no_hd0:
-
-
-
-
-
-
-	mov	$0x08,%ah	// check for second drive
-	mov	$0x81,%dl
-	int	$0x13
-	jc	no_hd1
-	or	%ah,%ah
-	jnz	no_hd1
-	mov	%dh,%dl
-	xor	%dh,%dh
-	inc	%dx		// DX -> no. of heads
-	mov	%cx,%bx
-	and	$0x3f,%bx	// BX -> no. of sectors
-	mov	%ch,%al
-	mov	%cl,%ah
-	mov	$6,%cl
-	shr	%cl,%ah		// AX -> no. of cylinders - 1
-	mov	%dx,0x86
-	mov	%bx,0x88
-	mov	%ax,0x8a
-no_hd1:	ret
 #endif
 
 

@@ -1,9 +1,7 @@
-#ifndef LX86_LINUXMT_CONFIG_H
-#define LX86_LINUXMT_CONFIG_H
+#ifndef __LINUXMT_CONFIG_H
+#define __LINUXMT_CONFIG_H
 
 #include <autoconf.h>
-
-#include <linuxmt/kdev_t.h>
 #include <linuxmt/major.h>
 
 #define REGOPT register

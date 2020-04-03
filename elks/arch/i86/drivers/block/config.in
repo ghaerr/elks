@@ -31,8 +31,8 @@ mainmenu_option next_comment
 	    bool '  BIOS hard drive support'	CONFIG_BLK_DEV_BHD	y
 	fi
 	if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
-	    bool 'Normal floppy disk support'	CONFIG_BLK_DEV_FD	n
-	    bool 'Normal IDE hardisk support'	CONFIG_BLK_DEV_HD	n
+	    bool 'Experimental HW floppy disk support'	CONFIG_BLK_DEV_FD	n
+	    bool 'Experimental HW IDE hardisk support'	CONFIG_BLK_DEV_HD	n
 	else
 		comment '(direct disk support is experimental)'
 	fi

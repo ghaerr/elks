@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_PIPE_FS_I_H
-#define LX86_LINUXMT_PIPE_FS_I_H
+#ifndef __LINUXMT_PIPE_FS_I_H
+#define __LINUXMT_PIPE_FS_I_H
 
 #include <linuxmt/chqueue.h>
 

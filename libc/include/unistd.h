@@ -48,7 +48,9 @@ int execle(char *fname, char *arg0, ...);
 int execlp(char *fname, char *arg0, ...);
 int execv(char *fname, char **argv);
 int execve(char *fname, char **argv, char **envp);
+int _execve(char *fname, char *stk_ptr, int stack_bytes);
 int execvp(char *fname, char **argv);
+void _exit(int status);
 int isatty (int fd);
 off_t lseek (int fildes, off_t offset, int whence);
 int link(const char *path1, const char *path2);
@@ -61,19 +63,21 @@ int rmdir(const char *path);
 
 pid_t fork(void);
 pid_t vfork(void);
-pid_t getpid(void);
 pid_t setsid(void);
-
-uid_t getuid (void);
-
-char * getcwd (char * buf, size_t size);
-int getegid(void);
-int geteuid(void);
-int getgid(void);
+pid_t getpid(void);
+pid_t getppid(void);
+uid_t _getpid(int *ppid);
 int getpgrp(void);
-int getppid(void);
 int setpgrp(void);
 
+uid_t getuid (void);
+uid_t _getuid(int *euid);
+uid_t getgid(void);
+uid_t _getgid(int *egid);
+uid_t getegid(void);
+uid_t geteuid(void);
+
+char * getcwd (char * buf, size_t size);
 void sync(void);
 void usleep(unsigned long useconds);
 

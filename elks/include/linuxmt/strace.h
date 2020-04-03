@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_STRACE_H
-#define LX86_LINUXMT_STRACE_H
+#ifndef __LINUXMT_STRACE_H
+#define __LINUXMT_STRACE_H
 
 /* include/linuxmt/strace.h (C) 1997 Chad Page
  *

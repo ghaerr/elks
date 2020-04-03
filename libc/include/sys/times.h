@@ -14,7 +14,7 @@ struct tms {
 
 __BEGIN_DECLS
 
-clock_t times (struct tms * buffer);
+clock_t times (struct tms *tp);
 
 __END_DECLS
 

@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_SCHED_H
-#define LX86_LINUXMT_SCHED_H
+#ifndef __LINUXMT_SCHED_H
+#define __LINUXMT_SCHED_H
 
 #define MAX_TASKS 15
 #define NGROUPS	13		/* Supplementary groups */
@@ -34,8 +34,8 @@ struct fs_struct {
 };
 
 struct mm_struct {
-    __seg_t			cseg;
-    __seg_t			dseg;
+	struct segment * seg_code;
+	struct segment * seg_data;
     char			flags;
 };
 
@@ -80,8 +80,7 @@ struct task_struct {
     struct task_struct		*p_nextsib;
     struct task_struct		*p_child;
     struct wait_queue		child_wait;
-    pid_t			child_lastend;
-    int 			lastend_status;
+    int				exit_status;	/* process exit status*/
     struct inode		* t_inode;
     sigset_t			signal;		/* Signal status */
     struct signal_struct	sig;		/* Signal block */
@@ -102,16 +101,20 @@ struct task_struct {
 
 #define KSTACK_MAGIC 0x5476
 
+/* the order of these matter for signal handling*/
 #define TASK_RUNNING 		0
 #define TASK_INTERRUPTIBLE	1
 #define TASK_UNINTERRUPTIBLE 	2
-#define TASK_ZOMBIE		3
+#define TASK_WAITING		3
 #define TASK_STOPPED		4
-#define TASK_UNUSED		6
-#define TASK_WAITING		7
-#define TASK_EXITING		8
+#define TASK_ZOMBIE		5
+#define TASK_EXITING		6
+#define TASK_UNUSED		7
 
 /*@-namechecks@*/
+
+#define DEPRECATED
+//#define DEPRECATED	__attribute__ ((deprecated))
 
 /* We use typedefs to avoid using struct foobar (*) */
 typedef struct task_struct __task, *__ptask;
@@ -137,8 +140,8 @@ extern void wait_clear(struct wait_queue *);
 
 // This old style sleep is unsafe
 // Use wait_event instead
-extern void sleep_on(struct wait_queue *) __attribute__ ((deprecated));
-extern void interruptible_sleep_on(struct wait_queue *)__attribute__ ((deprecated));
+extern void sleep_on(struct wait_queue *) DEPRECATED;
+extern void interruptible_sleep_on(struct wait_queue *) DEPRECATED;
 
 /*@-namechecks@*/
 
@@ -149,8 +152,8 @@ extern void _wake_up(struct wait_queue *,unsigned short int);
 // These old style semaphore functions are unsafe
 // Use count_t for reference counting
 // Use lock_t for object locking
-extern void down (short int *) __attribute__ ((deprecated));
-extern void up (short int *) __attribute__ ((deprecated));
+extern void down (short int *)  DEPRECATED;
+extern void up (short int *)  DEPRECATED;
 
 extern void wake_up_process(struct task_struct *);
 

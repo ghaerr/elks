@@ -1,47 +1,157 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <getopt.h>
+#include <dirent.h>
+#include <fcntl.h>
 
-char *basename(char *name)
-{
-	char *base;
-	
-	base = strrchr(name, '/');
-	return base ? base + 1 : name;
+static 	int	errcode;
+static	int	usage(char *);
+static	void	rm();
+static 	int	yes();
+static	int 	dotname();
+
+int
+main(int argc, char **argv) {
+	int force=0, recurse = 0, interact =0 ;
+	char *arg;
+
+	if (argc < 2)
+		return(usage(argv[0]));
+	errcode = 0;
+
+        while(argc>1 && argv[1][0]=='-') {
+                arg = *++argv;
+                argc--;
+
+                /*
+                 *  all files following a single '-' are considered file names
+                 */
+                if (*(arg+1) == '\0') break;
+
+                while(*++arg != '\0')
+                        switch(*arg) {
+                        case 'f':
+                                force++;
+                                break;
+                        case 'i':
+                                interact++;
+                                break;
+                        case 'r':
+                                recurse++;
+                                break;
+                        default:
+                                return(usage(*argv));
+                        }
+        }
+        while(--argc > 0) {
+                if(!strcmp(*++argv, "..")) {
+                        fprintf(stderr, "rm: cannot remove `..'\n");
+                        continue;
+                }
+                rm(*argv, force, recurse, interact, 0);
+        }
+
+        return(errcode);
+}
+
+int usage(char * a) {
+	fprintf(stderr, "usage: %s [-rfi] file1 [file2] ...\n", a);
+	return(1);
+}
+
+void
+rm(char *arg, int fflg, int rflg, int iflg, int level) {
+        struct stat buf;
+        struct dirent *dp;
+        DIR *dirp;
+        char name[BUFSIZ];
+
+        if(lstat(arg, &buf)) {
+                if (fflg==0) {
+                        printf("rm: %s nonexistent\n", arg);
+                        ++errcode;
+                }
+                return;
+        }
+        if ((buf.st_mode&S_IFMT) == S_IFDIR) {
+                if(rflg) {
+                        if (access(arg, O_WRONLY) < 0) {
+                                if (fflg==0)
+                                        printf("rm: %s not changed\n", arg);
+                                errcode++;
+                                return;
+                        }
+                        if(iflg && level!=0) {
+                                printf("rm: remove directory %s? ", arg);
+                                if(!yes())
+                                        return;
+                        }
+                        if((dirp = opendir(arg)) == NULL) {
+                                printf("rm: cannot read %s?\n", arg);
+                                return;
+                        }
+                        while((dp = readdir(dirp)) != NULL) {
+                                if(dp->d_ino != 0 && !dotname(dp->d_name)) {
+                                        sprintf(name, "%s/%s", arg, dp->d_name);
+                                        rm(name, fflg, rflg, iflg, level+1);
+                                }
+                        }
+                        closedir(dirp);
+                        if (dotname(arg))
+                                return;
+                        if (rmdir(arg) < 0) {
+                                fprintf(stderr, "rm: ");
+                                perror(arg);
+                                errcode++;
+                        }
+                        return;
+                }
+                fprintf(stderr, "rm: %s is a directory\n", arg);
+                ++errcode;
+                return;
+        }
+
+        if(iflg) {
+                printf("rm: remove %s? ", arg);
+                if(!yes())
+                        return;
+        } else if(!fflg) {
+                if ((buf.st_mode&S_IFMT) != S_IFLNK && access(arg, 02) < 0) {
+                        printf("rm: override protection %o for %s? ", buf.st_mode&0777, arg);
+                        if(!yes())
+                                return;
+                }
+        }
+        if (unlink(arg) && (fflg==0 || iflg)) {
+                fprintf(stderr, "rm: %s not removed\n", arg);
+                ++errcode;
+        }
+	return;
 }
                                 
 
-int main(int argc, char **argv)
-{
-	int i;	/*, recurse = 0, interact =0 */
-	struct stat sbuf;
+int
+dotname(char *s) {
+        if ((s[0] == '.')) {
+                if (s[1] == '.')
+                        if (s[2] == '\0')
+                                return(1);
+                        else
+                                return(0);
+                else if(s[1] == '\0')
+                        return(1);
+        }
+	return(0);
+}
 
-	if (argc < 2) goto usage;
+int yes(void) {
+        int i, b;
 
-/*	if (((argv[1][0] == '-') && (argv[1][1] == 'r')) || ((argv[2][0] == '-') && (argv[2][1] == 'r'))) 
-		recurse = 1;
-	
-        if (((argv[1][0] == '-') && (argv[1][1] == 'i')) || ((argv[2][0] == '-') && (argv[2][1] == 'i')))
-		interact = 1;        
- */	
-	for (i = /*recurse+interact+*/1; i < argc; i++) {
-		if (argv[i][0] != '-') {	
-
-#ifdef CONFIG_FS_FAT
-			if (access(argv[i], 0) != -1) {
-#else
-			if (!lstat(argv[i],&sbuf)) {
-#endif
-				if (unlink(argv[i])) {
-					fprintf(stderr,"rm: could not remove %s\n", argv[i]);
-				}
-			}
-		}
-	}
-	exit(0);
-
-usage:
-	fprintf(stderr, "usage: %s file1 [file2] ...\n", argv[0]);
-	exit(1);
+        i = b = getchar();
+        while(b != '\n' && b != EOF)
+                b = getchar();
+        return(i == 'y');
 }

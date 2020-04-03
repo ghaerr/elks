@@ -1,8 +1,10 @@
-#ifndef LX86_ARCH_POSIX_TYPES_H
-#define LX86_ARCH_POSIX_TYPES_H
+#ifndef __ARCH_8086_POSIX_TYPES_H
+#define __ARCH_8086_POSIX_TYPES_H
 
+#ifdef __KERNEL__
 #include <arch/irq.h>
 #include <arch/bitops.h>
+#endif
 
 /*
  * This file is generally used by user-level software, so you need to

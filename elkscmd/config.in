@@ -5,58 +5,69 @@
 mainmenu_option next_comment
 	comment 'Userland'
 
-	comment "Shell"
+	bool 'Select Applications by Image Size'	CONFIG_APPS_BY_IMAGESZ	n
+	if [ "$CONFIG_APPS_BY_IMAGESZ" == "n" ]; then
 
-	bool 'ash'        CONFIG_APP_ASH        y
-	bool 'sash'       CONFIG_APP_SASH       y
+		comment "Shell"
 
-	comment 'Applications'
+		bool 'ash'        CONFIG_APP_ASH        y
+		bool 'sash'       CONFIG_APP_SASH       y
 
-	bool 'busyelks'			CONFIG_APP_BUSYELKS		n
-	busyelks 'diskutils'	CONFIG_APP_DISK_UTILS	y
-	busyelks 'fileutils'	CONFIG_APP_FILE_UTILS	y
-	busyelks 'shutils'	 	CONFIG_APP_SH_UTILS		y
-	bool 'sysutils'			CONFIG_APP_SYS_UTILS	y
-	bool 'vi'				CONFIG_APP_LEVEE		y
-	busyelks 'minix1'		CONFIG_APP_MINIX1		y
-	bool 'minix2'			CONFIG_APP_MINIX2		y
-	busyelks 'minix3'		CONFIG_APP_MINIX3		y
-	busyelks 'miscutils'	CONFIG_APP_MISC_UTILS	y
-	bool 'mtools'			CONFIG_APP_MTOOLS		y
-	bool 'nano-X'			CONFIG_APP_NANOX		y
-	bool 'other'         	CONFIG_APP_OTHER         y
+		comment 'Applications'
 
-	comment 'Commands not compiling'
+		bool 'busyelks'			CONFIG_APP_BUSYELKS		n
+		busyelks 'diskutils'	CONFIG_APP_DISK_UTILS	y
+		busyelks 'fileutils'	CONFIG_APP_FILE_UTILS	y
+		busyelks 'shutils'	 	CONFIG_APP_SH_UTILS		y
+		bool 'sysutils'			CONFIG_APP_SYS_UTILS	y
+		bool 'vi'      			CONFIG_APP_ELVIS		y
+		busyelks 'minix1'		CONFIG_APP_MINIX1		y
+		bool 'minix2'			CONFIG_APP_MINIX2		y
+		busyelks 'minix3'		CONFIG_APP_MINIX3		y
+		busyelks 'miscutils'	CONFIG_APP_MISC_UTILS	y
+		bool 'mtools'			CONFIG_APP_MTOOLS		y
+		bool 'nano-X'			CONFIG_APP_NANOX		y
+		bool 'other'         	CONFIG_APP_OTHER        y
 
-	bool 'byacc'      CONFIG_APP_BYACC      n
-	bool 'elvis'      CONFIG_APP_ELVIS      n
-	bool 'm4'         CONFIG_APP_M4         n
-	bool 'screen'     CONFIG_APP_SCREEN     n
-	bool 'test'       CONFIG_APP_TEST       n
-	bool 'xvi'        CONFIG_APP_XVI        n
+		comment 'Commands not compiling'
 
-	comment "Internet stack and utilities"
+		bool 'byacc'      		CONFIG_APP_BYACC      n
+		bool 'm4'         		CONFIG_APP_M4         n
+		bool 'screen'     		CONFIG_APP_SCREEN     n
+		bool 'test'       		CONFIG_APP_TEST       n
+		#bool 'levee'			CONFIG_APP_LEVEE      n
+		#bool 'xvi'        		CONFIG_APP_XVI        n
 
-	if [ "$CONFIG_INET" == "y" ]; then
-		bool 'ktcp' CONFIG_APP_KTCP y
+		comment "Internet stack and utilities"
 
-		#if [ "$CONFIG_APP_KTCP" == "y" ]; then
+		if [ "$CONFIG_INET" == "y" ]; then
+			bool 'ktcp' CONFIG_APP_KTCP y
 
-			#comment "Internet applets"
+			#if [ "$CONFIG_APP_KTCP" == "y" ]; then
 
-			#bool 'httpd'      CONFIG_APP_HTTPD      y
-			#bool 'nettools'   CONFIG_APP_NET_TOOLS  y
-			#bool 'telnet'     CONFIG_APP_TELNET     y
-			#bool 'telnetd'    CONFIG_APP_TELNETD    y
-			#bool 'tinyirc'    CONFIG_APP_TINYIRC    y
-			#bool 'urlget'     CONFIG_APP_URLGET     y
+				#comment "Internet applets"
 
-		#else
-			#comment "(internet applets need ktcp)"
-		#fi
+				#bool 'httpd'      CONFIG_APP_HTTPD      y
+				#bool 'nettools'   CONFIG_APP_NET_TOOLS  y
+				#bool 'telnet'     CONFIG_APP_TELNET     y
+				#bool 'telnetd'    CONFIG_APP_TELNETD    y
+				#bool 'tinyirc'    CONFIG_APP_TINYIRC    y
+				#bool 'urlget'     CONFIG_APP_URLGET     y
 
+			#else
+				#comment "(internet applets need ktcp)"
+			#fi
+		else
+			comment '(ktcp needs TCP/IP sockets)'
+		fi
 	else
-		comment '(ktcp needs TCP/IP sockets)'
+		comment "Select Applications by Image Size"
+
+		choice 'Apps and Image Size' \
+		"All-2880k/HD	CONFIG_APPS_2880K	\
+		 Large-1440k	CONFIG_APPS_1440K	\
+		 Medium-720k	CONFIG_APPS_720K	\
+		 Small-360k		CONFIG_APPS_360K" Large-1440k
 	fi
 
 endmenu

@@ -1,5 +1,5 @@
-#ifndef LX86_ARCH_ERRNO_H
-#define LX86_ARCH_ERRNO_H
+#ifndef __ARCH_8086_ERRNO_H
+#define __ARCH_8086_ERRNO_H
 
 /*@-namechecks@*/
 

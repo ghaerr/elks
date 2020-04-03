@@ -9,6 +9,7 @@
 
 #include <pwd.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <termios.h>
 
@@ -23,7 +24,6 @@ char *getpass(char *prompt)
     struct termio old, new;
 #endif
     int reset_terminal;
-    int n;
 
     /* grab our input device */
     in = fopen("/dev/tty", "r");
@@ -74,6 +74,9 @@ char *getpass(char *prompt)
 	ioctl(in_fd, TCSETA, &old);
 #endif
     }
+
+    if (in != stdin)
+	fclose(in);
 
     /* return a pointer to our result string */
     return result;

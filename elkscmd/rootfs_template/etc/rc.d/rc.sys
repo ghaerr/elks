@@ -3,8 +3,7 @@
 echo Running $0 script
 
 umask 022
-PATH=/bin:/usr/bin
-export PATH
+export PATH=/bin
 
 # init date from hardware
 clock -s
@@ -21,7 +20,7 @@ ttybaud=4800
 
 if test -f /bin/ktcp
 then
-	echo -n 'Starting network process:'
+	echo -n 'Starting networking:'
 	if test "$interface" != "/dev/eth" 
 	then stty $ttybaud < $interface
 	echo -n ' stty slip'
@@ -29,20 +28,18 @@ then
 	echo -n ' eth'
 	fi
 	
-	ktcp $localip $interface &
 	echo ' ktcp'
-	
-	echo -n "Starting network services: "
-	for daemon in telnetd httpd
-	do
-		if test -f /bin/$daemon 
-		then
-			echo -n " $daemon"
-			$daemon &
-		fi
-	done
-	echo .
-
+	# run ktcp as background daemon if successful starting networking
+	if ktcp -b $localip $interface ; then
+		for daemon in telnetd httpd
+		do
+			if test -f /bin/$daemon
+			then
+				echo -n " $daemon "
+				$daemon || true
+			fi
+		done
+	fi
 fi
 
 # 
@@ -53,3 +50,4 @@ then
     cat /etc/motd
 fi
 
+date

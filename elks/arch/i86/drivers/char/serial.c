@@ -96,28 +96,28 @@ static void flush_input_fifo(register struct serial_info *sp)
 static int rs_probe(register struct serial_info *sp)
 {
     int status1, status2;
-    register char *scratch;
+    unsigned char scratch;
 
     inb(sp->io + UART_IER);
     outb_p(0, sp->io + UART_IER);
-    scratch = (char *)inb_p(sp->io + UART_IER);
-    outb_p((unsigned char)scratch, sp->io + UART_IER);
-    if ((unsigned char)scratch)
+    scratch = inb_p(sp->io + UART_IER);
+    outb_p(scratch, sp->io + UART_IER);
+    if (scratch)
 	return -1;
 
     /* this code is weird, IMO */
-    scratch = (char *)inb_p(sp->io + UART_LCR);
-    outb_p((unsigned char)scratch | UART_LCR_DLAB, sp->io + UART_LCR);
+    scratch = inb_p(sp->io + UART_LCR);
+    outb_p(scratch | UART_LCR_DLAB, sp->io + UART_LCR);
     outb_p(0, sp->io + UART_EFR);
-    outb_p((unsigned char)scratch, sp->io + UART_LCR);
+    outb_p(scratch, sp->io + UART_LCR);
 
     outb_p(UART_FCR_ENABLE_FIFO, sp->io + UART_FCR);
 
     /* upper two bits of IIR define UART type, but according to both RB's
      * intlist and HelpPC this code is wrong, see comments marked with [*]
      */
-    scratch = (char *)(inb_p(sp->io + UART_IIR) >> 6);
-    switch ((unsigned char)scratch) {
+    scratch = inb_p(sp->io + UART_IIR) >> 6;
+    switch (scratch) {
     case 0:
 	sp->flags = (unsigned char) (SERF_EXIST | ST_16450);
 	break;
@@ -133,13 +133,13 @@ static int rs_probe(register struct serial_info *sp)
     }
 
     /* 8250 UART if scratch register isn't present */
-    if (!(unsigned char)scratch) {
-	scratch = (char *)inb_p(sp->io + UART_SCR);
+    if (!scratch) {
+	scratch = inb_p(sp->io + UART_SCR);
 	outb_p(0xA5, sp->io + UART_SCR);
 	status1 = inb_p(sp->io + UART_SCR);
 	outb_p(0x5A, sp->io + UART_SCR);
 	status2 = inb_p(sp->io + UART_SCR);
-	outb_p((unsigned char)scratch, sp->io + UART_SCR);
+	outb_p(scratch, sp->io + UART_SCR);
 	if ((status1 != 0xA5) || (status2 != 0x5A))
 	    sp->flags = (unsigned char) (SERF_EXIST | ST_8250);
     }
@@ -220,17 +220,17 @@ static void receive_chars(register struct serial_info *sp)
 void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
     register struct serial_info *sp;
-    register char *statusp;
+    int status;
 
 
     debug1("SERIAL: Interrupt %d received.\n", irq);
     sp = &ports[(int)irq_port[irq - 2]];
     do {
-	statusp = (char *)inb_p(sp->io + UART_LSR);
-	if ((int)statusp & UART_LSR_DR)		/* Receiver buffer full? */
+	status = inb_p(sp->io + UART_LSR);
+	if (status & UART_LSR_DR)		/* Receiver buffer full? */
 	    receive_chars(sp);
 #if 0
-	if (((int)statusp) & UART_LSR_THRE)	/* Transmitter buffer empty? */
+	if (status & UART_LSR_THRE)		/* Transmitter buffer empty? */
 	    transmit_chars(sp);
 #endif
     } while (!(inb_p(sp->io + UART_IIR) & UART_IIR_NO_INT));
@@ -364,10 +364,9 @@ int rs_init(void)
     } while (++sp < &ports[NR_SERIAL]);
 
     sp = ports;
-    printk("Serial driver version 0.02\n");
     do {
 	if (sp->tty != NULL) {
-	    printk("ttyS%d at 0x%x (irq = %d) is a%s\n", ttyno,
+	    printk("ttyS%d at 0x%x, irq %d is a%s\n", ttyno,
 		       sp->io, sp->irq, serial_type[sp->flags & 0x3]);
 	}
 	sp++;

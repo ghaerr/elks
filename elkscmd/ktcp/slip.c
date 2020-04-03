@@ -42,8 +42,10 @@ int slip_init(char *fdev)
     struct termios tios;
 
     devfd = open(fdev, O_NONBLOCK|O_RDWR);
-    if (devfd < 0)
-	printf("ERROR : failed to open serial device %s\n",fdev);
+    if (devfd < 0) {
+	printf("ktcp: failed to open serial device %s\n",fdev);
+	return -1;
+    }
 
     /* Setup the tty
      */

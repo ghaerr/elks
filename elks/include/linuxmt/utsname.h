@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_UTSNAME_H
-#define LX86_LINUXMT_UTSNAME_H
+#ifndef __LINUXMT_UTSNAME_H
+#define __LINUXMT_UTSNAME_H
 
 struct utsname {
     char sysname[16];

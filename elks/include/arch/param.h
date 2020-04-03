@@ -1,5 +1,5 @@
-#ifndef LX86_ARCH_PARAM_H
-#define LX86_ARCH_PARAM_H
+#ifndef __ARCH_8086_PARAM_H
+#define __ARCH_8086_PARAM_H
 
 #include <linuxmt/config.h>
 

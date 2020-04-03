@@ -20,7 +20,7 @@ unsigned char get_fs_byte(const void *dv)
 {
     unsigned char retv;
 
-    memcpy_fromfs(&retv,dv,1);
+    memcpy_fromfs(&retv,(void *)dv,1);
     return retv;
 }
 
@@ -112,7 +112,7 @@ static int msdos_find_long(struct inode *dir, const char *name, int len,
 
 }
 
-int msdos_lookup(register struct inode *dir,const char *name,int len,
+int msdos_lookup(register struct inode *dir,char *name,size_t len,
     register struct inode **result)
 {
 	ino_t ino;
@@ -360,7 +360,6 @@ unlink_done:
 		inode->i_ino, inode->i_dirt, inode->i_count);
 	if (dir) debug_fat("unlink iput dir %u dirt %d count %d\n", dir->i_ino, dir->i_dirt, dir->i_count);
 	iput(inode);
-	iput(inode);	/* 2nd call required from iget() above*/
 	iput(dir);
 	return res;
 }

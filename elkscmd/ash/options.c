@@ -38,6 +38,7 @@
 static char sccsid[] = "@(#)options.c	5.2 (Berkeley) 3/13/91";
 #endif /* not lint */
 
+#include <unistd.h>
 #include "shell.h"
 #define DEFINE_OPTIONS
 #include "options.h"

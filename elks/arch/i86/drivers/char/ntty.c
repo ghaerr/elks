@@ -62,7 +62,7 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
 	if (key == ttyp->termios.c_cc[VSUSP])
 	    sig = SIGTSTP;
 	if (sig) {
-	    debug_sig("TTY signal %d to pgrp %d pid %d\n", sig, ttyp->pgrp, current->pid);
+	    debug_tty("TTY signal %d to pgrp %d pid %d\n", sig, ttyp->pgrp, current->pid);
 	    kill_pg(ttyp->pgrp, sig, 1);
 	}
     }
@@ -74,9 +74,14 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
 struct tty *determine_tty(dev_t dev)
 {
     register struct tty *ttyp = &ttys[0];
+    unsigned short minor = MINOR(dev);
+
+    /* handle /dev/tty*/
+    if (minor == 255 && current->pgrp && (current->pgrp == ttyp->pgrp))
+	return current->tty;
 
     do {
-	if (ttyp->minor == (unsigned short int)MINOR(dev))
+	if (ttyp->minor == minor)
 	    return ttyp;
     } while (++ttyp < &ttys[MAX_TTYS]);
 
@@ -92,7 +97,7 @@ int tty_open(struct inode *inode, struct file *file)
     if (!(otty = determine_tty(inode->i_rdev)))
 	return -ENODEV;
 
-    debug_sig("TTY open pid %d\n", currentp->pid);
+    debug_tty("TTY open pid %d\n", currentp->pid);
 #if 0
     memcpy(&otty->termios, &def_vals, sizeof(struct termios));
 #endif
@@ -101,7 +106,7 @@ int tty_open(struct inode *inode, struct file *file)
     if (!err) {
 	if (otty->pgrp == 0 && currentp->session == currentp->pid
 		&& currentp->tty == NULL) {
-	    debug_sig("TTY setting pgrp %d pid %d\n", currentp->pgrp, currentp->pid);
+	    debug_tty("TTY setting pgrp %d pid %d\n", currentp->pgrp, currentp->pid);
 	    otty->pgrp = currentp->pgrp;
 	    currentp->tty = otty;
 	}
@@ -125,10 +130,11 @@ void tty_release(struct inode *inode, struct file *file)
     if (!rtty)
 	return;
 
-    debug_sup("TTY close pid %d\n", current->pid);
-    if (current->pid == rtty->pgrp) {
+    debug_tty("TTY close pid %d\n", current->pid);
+    /* don't release pgrp for /dev/tty, only real tty*/
+    if (current->pid == rtty->pgrp && MINOR(inode->i_rdev) != 255) {
+	debug_tty("TTY release pgrp %d, sending SIGHUP\n", current->pid);
 	kill_pg(rtty->pgrp, SIGHUP, 1);
-	debug_sup("TTY release pgrp %d\n", current->pid);
 	rtty->pgrp = 0;
     }
     rtty->flags &= ~TTY_OPEN;
@@ -211,7 +217,7 @@ void tty_echo(register struct tty *tty, unsigned char ch)
  *
  */
 
-size_t tty_write(struct inode *inode, struct file *file, char *data, int len)
+size_t tty_write(struct inode *inode, struct file *file, char *data, size_t len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
     int i, s;
@@ -231,7 +237,7 @@ size_t tty_write(struct inode *inode, struct file *file, char *data, int len)
     return i;
 }
 
-size_t tty_read(struct inode *inode, struct file *file, char *data, int len)
+size_t tty_read(struct inode *inode, struct file *file, char *data, size_t len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
     int i = 0;

@@ -276,7 +276,7 @@ cleanup2:
 	printf("%ld+%d records out\n", outtotal / blocksize,
 		(outtotal % blocksize) != 0);
 	printf("%ld bytes (%ld%c KiB) copied\n", outtotal, outtotal >> 10, (outtotal & 0x3ff) ? '+' : '\0');
-	exit(retval);
+	return retval;
 
 usage:
 	write(STDERR_FILENO, "\nUsage: dd if=<inflie> of=<outfile> [optional_params ...]\n\n", 59);
@@ -284,5 +284,5 @@ usage:
 	write(STDERR_FILENO, "bs=<blocksize>  seek=<count>  skip=<count>  count=<count>\n", 58);
 	write(STDERR_FILENO, "seek/skip skips <count> blocks in input/output files, respectively\n", 67);
 	write(STDERR_FILENO, "count copies only <count> blocks (default is until end of file)\n\n", 65);
-	exit(retval);
+	return retval;
 }

@@ -153,7 +153,7 @@ long get_cluster(struct inode *inode,long cluster);
 
 /* namei.c */
 
-extern int msdos_lookup(struct inode *dir,const char *name,int len,
+extern int msdos_lookup(struct inode *dir,char *name,size_t len,
 	struct inode **result);
 extern int msdos_create(struct inode *dir,const char *name,int len,int mode,
 	struct inode **result);

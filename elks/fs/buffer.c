@@ -102,7 +102,9 @@ void buffer_init(void)
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 	// TODO: allocate buffer one by one in global memory
-    _buf_ds = mm_alloc(NR_BUFFERS << (BLOCK_SIZE_BITS - 4));
+	// TODO: release on kernel shutdown ?
+	segment_s * seg = seg_alloc (NR_BUFFERS << (BLOCK_SIZE_BITS - 4));
+    _buf_ds = seg->base;
     unsigned int i = NR_MAPBUFS;
     do {
 	bufmem_map[--i] = NULL;

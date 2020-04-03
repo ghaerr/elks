@@ -1,17 +1,12 @@
-#ifndef LX86_LINUXMT_POSIX_TYPES_H
-#define LX86_LINUXMT_POSIX_TYPES_H
+#ifndef __LINUXMT_POSIX_TYPES_H
+#define __LINUXMT_POSIX_TYPES_H
 
-#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 
 /* This file is generally used by user-level software, so you need to
  * be a little careful about namespace pollution etc.  Also, we cannot
  * assume GCC is being used.
  */
-
-#ifndef NULL
-#define NULL		((void *) 0)
-#endif
 
 /* This allows for 20 file descriptors: if NR_OPEN is ever grown beyond
  * that you'll have to change this too. For now 20 fd's seem to be

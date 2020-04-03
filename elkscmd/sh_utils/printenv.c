@@ -18,9 +18,7 @@
 #include <utime.h>
 #include <errno.h>
 
-void
-main(argc, argv)
-	char	**argv;
+int main(int argc, char **argv)
 {
 	char		**env;
 	char		*eptr;
@@ -35,7 +33,7 @@ main(argc, argv)
 			write(STDOUT_FILENO, eptr, strlen(eptr));
 			write(STDOUT_FILENO, "\n", 1);
 		}
-		exit(0);
+		return 0;
 	}
 
 	len = strlen(argv[1]);
@@ -46,9 +44,9 @@ main(argc, argv)
 			eptr = &env[0][len+1];
 			write(STDOUT_FILENO, eptr, strlen(eptr));
 			write(STDOUT_FILENO, "\n", 1);
-			exit(0);
+			return 0;
 		}
 		env++;
 	}
-	exit(0);
+	return 0;
 }

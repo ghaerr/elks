@@ -17,8 +17,10 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/mount.h>
 
 int main(argc,argv)
 int argc;

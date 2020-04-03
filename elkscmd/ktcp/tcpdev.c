@@ -34,7 +34,7 @@ int tcpdev_init(char *fdev)
 {
     tcpdevfd = open(fdev, O_NONBLOCK | O_RDWR);
     if (tcpdevfd < 0)
-	printf("ERROR : failed to open tcpdev device %s\n",fdev);
+	printf("ktcp: failed to open tcpdev device %s\n",fdev);
     return tcpdevfd;
 }
 

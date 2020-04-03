@@ -116,7 +116,7 @@ int main(int argc, char **argv)
 
 			default:
 				fprintf(stderr, "Unknown option\n");
-				exit(1);
+				return 1;
 		}
 	}
 
@@ -156,14 +156,14 @@ int main(int argc, char **argv)
 
 		fclose(fp);
 	}
-	exit(0);
+	return 0;
 
 error_line_length:
 	fprintf(stderr, "%s: Line too long (is this really a text file?)\n", name);
-	exit(1);
+	return 1;
 usage:
 	fprintf(stderr, "usage: %s [-i][-n] string file1 [file2] ...\n", argv[0]);
 	fprintf(stderr, "  -i: ignore upper/lower case ('z' and 'Z' match)\n");
 	fprintf(stderr, "  -n: show line numbers in output\n");
-	exit(1);
+	return 1;
 }

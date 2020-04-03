@@ -1,56 +1,102 @@
-/* Copyright (C) 1995,1996 Robert de Bath <rdebath@cix.compulink.co.uk>
- * This file is part of the Linux-8086 C library and is distributed
+/* 
+ * Written by Gregory Haerr for the ELKS project, published
  * under the GNU Library General Public License.
  */
 #include <string.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <errno.h>
 
-extern char ** environ;
-#define ADD_NUM 4
+/* macro for matching environment name in string*/
+#define ENVNAME(var,buf,len)    (memcmp(var,buf,len) == 0 && (buf)[len] == '=')
 
+/* external data*/
+extern char **  environ;                /* process global environment*/
+
+/* local data*/
+static char **  putenv_environ = NULL;  /* ptr to any environment we allocated*/
+
+/*
+ * Put or delete a string from the global process environment
+ *
+ * 'NAME=value'	adds environment variable name with value
+ * 'NAME'	deletes environent variable if exists
+ */
 int
 putenv(var)
 char * var;
 {
-static char ** mall_env = 0;
-static int extras = 0;
-   char **p, **d;
-   char * r;
-   int len;
+	char **	env;
+	int	envp_count;
+	int	envp_len;
+	int	namelen;
+	int 	heap_bytes;
+	char **	newenv;
+	char **	nextarg;
+	char *	nextstr;
+	char *	rp;
 
-   r = strchr(var, '=');
-   if( r == 0 )  len = strlen(var);
-   else          len = r-var;
+	/* figure environment variable name length*/
+	if ( (rp = strchr(var, '=')) == NULL)
+		namelen = strlen(var);
+	else namelen = rp - var;
 
-   for(p=environ; *p; p++)
-   {
-      if( memcmp(var, *p, len) == 0 && (*p)[len] == '=' )
-      {
-         while( p[0] = p[1] ) p++;
-         extras++;
-         break;
-      }
-   }
-   if( r == 0 ) return 0;
-   if( extras <= 0 )	/* Need more space */
-   {
-      d = malloc((p-environ+1+ADD_NUM)*sizeof(char*));
-      if( d == 0 ) return -1;
+	/* count environment bytes*/
+again:
+	envp_len = 0;
+	env = environ;
+	while (*env) {
+		/* check for variable in current environment*/
+		if (ENVNAME(var, *env, namelen)) {
 
-      memcpy((void*) d, (void*) environ, (p-environ+1)*sizeof(char*));
-      p = d + (p-environ);
-      extras=ADD_NUM;
+			/* match, delete it and copy remaining up*/
+			while ( (env[0] = env[1]) != NULL)
+				++env;
 
-      if( mall_env ) free(mall_env);
-      environ = d;
-      mall_env = d;
-   }
-   *p++ = var;
-   *p = '\0';
-   extras--;
+			/* if requested to delete, we're done*/
+			if (rp == NULL)
+				return 0;
 
-   return 0;
+			goto again;
+		}
+		envp_len += strlen(*env++) + 1;
+	}
+
+	envp_len += strlen(var) + 1;		/* new environment variable*/
+	envp_count = env - environ + 2;		/* + 1 for NULL terminator*/
+						/* + 1 for newly added var*/
+
+	/* compute new environment allocation size*/
+	heap_bytes = envp_count * sizeof(char *) + envp_len;
+
+	/* allocate new environment*/
+	if ( (newenv = malloc(heap_bytes)) == NULL) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	/* build new environment*/
+	nextarg = newenv;
+	nextstr = (char *)&newenv[envp_count];
+	env = environ;
+	while (*env) {
+		*nextarg++ = nextstr;
+		strcpy(nextstr, *env);
+		nextstr += strlen(nextstr) + 1;
+		++env;
+	}
+
+	/* add new variable*/
+	strcpy(nextstr, var);
+	*nextarg++ = nextstr;
+	*nextarg = NULL;
+
+	/* free previous environment*/
+	if (putenv_environ)
+		free(putenv_environ);
+
+	/* set new global environment*/
+	environ = putenv_environ = newenv;
+	return 0;
 }
-
 

@@ -4,6 +4,8 @@ BASEDIR=..
 
 include $(BASEDIR)/Make.defs
 
+LOCALFLAGS = -Wno-implicit-int
+
 ###############################################################################
 #
 # Include standard packaging commands.
@@ -12,7 +14,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-OBJS = sash.o cmds.o cmd_dd.o cmd_ed.o cmd_grep.o cmd_ls.o cmd_tar.o utils.o
+OBJS = sash.o cmds.o cmd_dd.o cmd_ed.o cmd_grep.o cmd_ls.o cmd_tar.o utils.o cmd_history.o
 #LDFLAGS += -maout-chmem=0xc000
 
 all: sash

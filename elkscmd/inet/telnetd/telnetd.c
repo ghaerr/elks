@@ -173,8 +173,7 @@ int main(int argc, char *argv[]) {
 
   char	*cp;
   struct sockaddr_in addr_in;
-  int sockfd,connectionfd,rc,afunix,lv;
-  afunix=0;
+  int sockfd,connectionfd,ret,lv = 10;
   
 #ifndef __linux__  
   if (argv[1][0] == '-') {
@@ -195,7 +194,6 @@ int main(int argc, char *argv[]) {
 	  
 #endif
 
-  lv=10;
   if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
     perror("socket error");
     exit(-1);
@@ -206,6 +204,7 @@ int main(int argc, char *argv[]) {
   addr_in.sin_port = htons(23);
   if (bind(sockfd, (struct sockaddr*)&addr_in, sizeof(addr_in)) == -1) {
     perror("bind error");
+	close(sockfd);
     exit(-1);
   }
 
@@ -214,6 +213,15 @@ int main(int argc, char *argv[]) {
     close(sockfd);
     exit(-1);
   } 
+
+	if (fork())
+		exit(0);
+	ret = open("/dev/null", O_RDWR);
+	dup2(ret, 0);
+	dup2(ret, 1);
+	dup2(ret, 2);
+	if (ret > 2)
+		close(ret);
 
 	while (1) {
 		connectionfd = accept (sockfd, (struct sockaddr *) NULL, NULL);

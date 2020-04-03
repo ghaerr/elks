@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
 #include <signal.h>
 #include <pwd.h>
 #include <grp.h>
@@ -30,7 +31,8 @@ static void usage()
 	write(STDOUT_FILENO, "\n  e.g. kill -KILL 5\n\n",22);
 }
 
-void main ( int argc, char **argv ) {  
+int main(int argc, char **argv)
+{
 	char	*cp;
 	int	sig;
 	int	pid;
@@ -56,7 +58,7 @@ void main ( int argc, char **argv ) {
 
 			if (*cp) {
 				write(STDERR_FILENO, "Unknown signal\n", 15);
-				exit(1);
+				return 1;
 			}
 		}
 		argc--;
@@ -74,11 +76,11 @@ void main ( int argc, char **argv ) {
 		if (*cp) {
 			usage();	
 			write(STDERR_FILENO, "\n  Error: non-numeric pid!\n\n", 27);			
-			exit(1);
+			return 1;
 		}
 
 		if (kill(pid, sig) < 0)
 			perror(*argv);
 	}
-	exit(0);
+	return 0;
 }

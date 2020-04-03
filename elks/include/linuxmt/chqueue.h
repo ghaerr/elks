@@ -1,7 +1,7 @@
 /* chqueue.h (C) 1997 Chad Page */
 
-#ifndef LX86_LINUXMT_CHQ_H
-#define LX86_LINUXMT_CHQ_H
+#ifndef __LINUXMT_CHQ_H
+#define __LINUXMT_CHQ_H
 
 struct ch_queue {
     char		*base;

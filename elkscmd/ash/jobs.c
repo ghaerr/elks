@@ -61,6 +61,7 @@ static char sccsid[] = "@(#)jobs.c	5.1 (Berkeley) 3/7/91";
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
+#include <unistd.h>
 #ifdef BSD
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -79,13 +80,13 @@ MKINIT short backgndpid = -1;	/* pid of last background process */
 #if JOBS
 int initialpgrp;		/* pgrp of shell on invocation */
 short curjob;			/* current job */
+STATIC void restartjob(struct job *);
+STATIC int procrunning(int);
 #endif
 
 #ifdef __STDC__
-STATIC void restartjob(struct job *);
 STATIC struct job *getjob(char *);
 STATIC void freejob(struct job *);
-STATIC int procrunning(int);
 STATIC int dowait(int, struct job *);
 STATIC int waitproc(int, int *);
 STATIC char *commandtext(union node *);
@@ -439,6 +440,7 @@ currentjob:
 		}
 	}
 	error("No such job: %s", name);
+	return NULL;
 }
 
 
@@ -642,7 +644,7 @@ waitforjob(jp)
 	int st;
 
 	INTOFF;
-	TRACE(("waitforjob(%%%d) called\n", jp - jobtab + 1));
+	TRACE(("waitforjob(%d) called\n", jp - jobtab + 1));
 	while (jp->state == 0 && dowait(1, jp) != -1) ;
 #if JOBS
 	if (jp->jobctl) {
@@ -838,15 +840,6 @@ waitproc(block, status)
 	return wait(status);
 #else
 #if POSIX
-        /*
-         * 19980216 Vincent Zweije <zweije@xs4all.nl>
-         * ELKS does not obey WNOHANG
-         * If requested, return -1 with errno==EINVAL
-         */
-        if (block==0) {
-                errno = EINVAL;
-                return -1;
-        }
 	return waitpid(-1, status, block == 0 ? WNOHANG : 0);
 #else
 	if (block == 0)

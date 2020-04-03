@@ -10,26 +10,37 @@ echo "Using QEMU: $QEMU"
 
 # Select disk image to use
 # MINIX or FAT .config build
+#IMAGE="-fda image/fd2880.bin"
 IMAGE="-fda image/fd1440.bin"
+#IMAGE="-fda image/fd720.bin"
+#IMAGE="-fda image/fd360.bin"
 #IMAGE="-hda image/hd.bin"
+#IMAGE="-boot order=a -fda image/fd1440.bin -drive file=image/hd32-minix.bin,format=raw,if=ide"
 
 # FAT package manager build
 #IMAGE="-fda image/fd360-fat.bin"
 #IMAGE="-fda image/fd720-fat.bin"
 #IMAGE="-fda image/fd1440-fat.bin"
 #IMAGE="-fda image/fd2880-fat.bin"
+#IMAGE="-hda image/hd32-fat.bin"
+#IMAGE="-hda image/hd32-fat.bin -fda image/fd1440-minix.bin"
 
 # MINIX package manager build
 #IMAGE="-fda image/fd360-minix.bin"
 #IMAGE="-fda image/fd720-minix.bin"
 #IMAGE="-fda image/fd1440-minix.bin"
+#IMAGE="-fda image/fd2880-minix.bin"
+#IMAGE="-hda image/hd32-minix.bin"
 
 # Second disk for mount after boot
 #DISK2="-fdb image/fd360-fat.bin"
 #DISK2="-fdb image/fd720-fat.bin"
 #DISK2="-fdb image/fd1440-fat.bin"
 #DISK2="-fdb image/fd2880-fat.bin"
+#DISK2="-fdb image/fd360-minix.bin"
+#DISK2="-fdb image/fd720-minix.bin"
 #DISK2="-fdb image/fd1440-minix.bin"
+#DISK2="-fdb image/fd2880-minix.bin"
 
 [ -z "$IMAGE" ] && { echo 'Disk image not found!'; exit 1; }
 echo "Using disk image: $IMAGE"

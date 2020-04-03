@@ -56,6 +56,9 @@ static char sccsid[] = "@(#)redir.c	5.1 (Berkeley) 3/7/91";
 #include <fcntl.h>
 #include <errno.h>
 #include <limits.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 
 #define EMPTY -2		/* marks an unused slot in redirtab */

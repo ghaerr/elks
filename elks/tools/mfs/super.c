@@ -196,7 +196,7 @@ struct minix_fs_dat *open_fs(const char *fn,int chk) {
     fatalmsg("invalid magic fs-type %x",FSMAGIC(fs));
   }
   if (MINIX_VALID_FS != fs->msb.s_state) {
-    if (chk) die("Filesystem in an unknown state");
+    if (chk) fatalmsg("Filesystem %s in an unknown state, use -f", fn);
     fprintf(stderr,"Warning: %s in an unknown state\n",fn);
   }
 

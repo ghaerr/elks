@@ -1,0 +1,169 @@
+# ELKSCMD install Makefile
+
+ifndef TOPDIR
+$(error TOPDIR is not defined, ELKS not configured yet)
+endif
+
+# include selected config file for installation instructions
+include $(CONFIG)
+
+# Installation commands
+INSTALL=install
+LN=ln
+
+# Application Package List
+PACKAGE=$(TOPDIR)/elkscmd/Applications
+# Install destination
+DESTDIR=$(TOPDIR)/target
+TAGS=
+# Old-style installation
+INSTDIRS=
+
+#
+# Install apps by source directory
+#
+ifdef CONFIG_APP_ASH
+	TAGS += :ash|
+endif
+
+ifdef CONFIG_APP_BUSYELKS
+	TAGS += :busyelks|
+endif
+
+ifdef CONFIG_APP_DISK_UTILS
+	TAGS += :diskutil|
+	ifeq ($(CONFIG_APP_DISK_UTILS), y)
+		TAGS += :be-diskutil|
+	endif
+endif
+
+ifdef CONFIG_APP_FILE_UTILS
+	TAGS += :fileutil|
+	ifeq ($(CONFIG_APP_FILE_UTILS), y)
+		TAGS += :be-fileutil|
+	endif
+endif
+
+ifdef CONFIG_APP_ELVIS
+	TAGS += :elvis|
+endif
+
+ifdef CONFIG_APP_KTCP
+	TAGS += :net|
+endif
+
+ifdef CONFIG_APP_MINIX1
+	TAGS += :minix1|
+	ifeq ($(CONFIG_APP_MINIX1), y)
+		TAGS += :be-minix1|
+	endif
+endif
+
+ifdef CONFIG_APP_MINIX2
+	TAGS += :minix2|
+endif
+
+ifdef CONFIG_APP_MINIX3
+	TAGS += :minix3|
+	ifeq ($(CONFIG_APP_MINIX3), y)
+		TAGS += :be-minix3|
+	endif
+endif
+
+ifdef CONFIG_APP_MTOOLS
+	TAGS += :mtools|
+endif
+
+ifdef CONFIG_APP_MISC_UTILS
+	TAGS += :miscutil|
+	ifeq ($(CONFIG_APP_MISC_UTILS), y)
+		TAGS += :be-miscutil|
+	endif
+endif
+
+ifdef CONFIG_APP_NANOX
+	TAGS += :nanox|
+endif
+
+ifdef CONFIG_APP_OTHER
+	TAGS += :other|
+endif
+
+ifdef CONFIG_APP_SASH
+	TAGS += :sash|
+endif
+
+ifdef CONFIG_APP_SH_UTILS
+	TAGS += :shutil|
+	ifeq ($(CONFIG_APP_SH_UTILS), y)
+		TAGS += :be-shutil|
+	endif
+endif
+
+ifdef CONFIG_APP_SYS_UTILS
+	TAGS += :sysutil|
+endif
+
+ifdef CONFIG_APP_TEST
+	INSTDIRS += test
+endif
+
+#
+# Install apps by image size
+#
+ifdef CONFIG_APPS_360K
+	TAGS = :boot|:360k|
+endif
+
+ifdef CONFIG_APPS_720K
+	TAGS = :boot|:360k|:net|:720k|
+endif
+
+ifdef CONFIG_APPS_1440K
+	TAGS = :boot|:360k|:net|:720k|:1440k|
+endif
+
+ifdef CONFIG_APPS_2880K
+	TAGS = :*|
+endif
+
+TAGS += :end
+
+###############################################################################
+#
+# Install selected files.
+
+.PHONY: install
+
+# use bash instead of /bin/sh for curly brace expansion
+SHELL=/bin/bash
+install:
+	@echo "TAGS=$(TAGS)" | tr -d ' '
+	awk /`echo "$(TAGS)" | tr -d ' '`/{print} $(PACKAGE) | sed '/^#/d' > Filelist
+	@while IFS= read -r line; \
+	do \
+		file=`echo $$line | cut -d" " -f 1`; \
+		dir=`echo $$line | cut -d" " -f 2`; \
+		if [ "$${dir:0:2}" == "::" ]; \
+		then \
+			instdir=$${dir:2}; \
+		else \
+			instdir=bin; \
+		fi; \
+		echo install $$file to $$instdir; \
+		if [ ! -e $$file ]; \
+		then \
+			echo "File specified in $(PACKAGE) not found: $$file"; \
+			exit 1; \
+		else \
+			[ ! -d $$file ] && mkdir -p $$(dirname $(DESTDIR)/$$instdir); \
+			[ -f $$file ] && $(INSTALL) $$file $(DESTDIR)/$$instdir; \
+		fi \
+	done < Filelist
+	rm Filelist
+ifdef CONFIG_APP_BUSYELKS
+	$(MAKE) -C busyelks links
+endif
+	for DIR in $(INSTDIRS); do $(MAKE) -C $$DIR install || exit 1; done
+
+###############################################################################

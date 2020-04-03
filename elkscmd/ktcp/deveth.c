@@ -53,7 +53,7 @@ int deveth_init(char *fdev)
 
     devfd = open(fdev, O_NONBLOCK|O_RDWR);
     if (devfd < 0) {
-	printf("ERROR: failed to open eth device %s\n", fdev);
+	printf("ktcp: failed to open eth device %s\n", fdev);
 	return -1;
     }
 

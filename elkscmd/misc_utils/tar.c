@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 
 	if (argc < 2) {
 		fprintf(stderr, "Too few arguments for tar\n");
-		exit(1);
+		return 1;
 	}
 
 	extracting = FALSE;
@@ -95,34 +95,34 @@ int main(int argc, char **argv)
 			case 'c':
 			case 'a':
 				fprintf(stderr, "Writing is not supported\n");
-				exit(1);
+				return 1;
 
 			default:
 				fprintf(stderr, "Unknown tar flag\n");
-				exit(1);
+				return 1;
 		}
 	}
 
 	if (!fileflag) {
 		fprintf(stderr, "The 'f' flag must be specified\n");
-		exit(1);
+		return 1;
 	}
 
 	if (argc < 3) {
 		fprintf(stderr, "Missing input name\n");
-		exit(1);
+		return 1;
 	}
 	devname = argv[2];
 
 	if (extracting + listflag != 1) {
 		fprintf(stderr, "Exactly one of 'x' or 't' must be specified\n");
-		exit(1);
+		return 1;
 	}
 
 	devfd = open(devname, 0);
 	if (devfd < 0) {
 		perror(devname);
-		exit(1);
+		return 1;
 	}
 
 	while (TRUE) {
@@ -174,7 +174,7 @@ int main(int argc, char **argv)
 
 done:
 	close(devfd);
-	exit(0);
+	return 0;
 }
 
 

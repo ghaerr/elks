@@ -11,8 +11,8 @@
  * a 8250, 16450, or 16550(A).
  */
 
-#ifndef LX86_LINUXMT_SERIAL_REG_H
-#define LX86_LINUXMT_SERIAL_REG_H
+#ifndef __LINUXMT_SERIAL_REG_H
+#define __LINUXMT_SERIAL_REG_H
 
 #define UART_RX		0	/* In:  Receive buffer (DLAB=0) */
 #define UART_TX		0	/* Out: Transmit buffer (DLAB=0) */

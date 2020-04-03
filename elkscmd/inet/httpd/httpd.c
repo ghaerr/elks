@@ -28,6 +28,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
 #ifndef __linux__
 #include <linuxmt/in.h>
 #include <linuxmt/net.h>
@@ -162,36 +164,46 @@ char** argv;
 	int ret;
 	struct sockaddr_in localadr;
 
+	strcpy(doc_base, DEF_DOCBASE);
+
+	if ((listen_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		perror("socket error");
+		exit(-1);
+	}
+
+	localadr.sin_family = AF_INET;
+	localadr.sin_port = htons(DEF_PORT);
+	localadr.sin_addr.s_addr = INADDR_ANY;
+
+	if (bind(listen_sock, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in)) < 0) {
+		perror("bind error");
+		exit(-1);
+	}
+	if (listen(listen_sock, 5) < 0) {
+		perror("listen error");
+		exit(-1);
+	}
+
 	ret = fork();
-	if (ret > 0 || ret == -1){
+	if (ret > 0 || ret == -1) {
 		exit(0);	
 	}
 	ret = open("/dev/null", O_RDWR); /* our log file! */
 	dup2(ret, 0);
 	dup2(ret, 1);
 	dup2(ret, 2);
-	close(ret);
+	if (ret > 2)
+		close(ret);
 	setsid();
-
-	strcpy(doc_base, DEF_DOCBASE);
-	
-	listen_sock = socket(AF_INET, SOCK_STREAM, 0);
-	
-	localadr.sin_family = AF_INET;
-	localadr.sin_port = htons(DEF_PORT);
-	localadr.sin_addr.s_addr = INADDR_ANY;
-
-	ret = bind(	listen_sock,
-    			(struct sockaddr *)&localadr,
-    			sizeof(struct sockaddr_in));
-
-	ret = listen(listen_sock, 5);
 
 	while (1){
 		conn_sock = accept(listen_sock, NULL, NULL);
 		
-		if (conn_sock < 0)
+		if (conn_sock < 0) {
+			if (errno == ENOTSOCK)
+				exit(-1);
 			continue;
+		}
 
 		ret = fork();
 		if (ret == 0){

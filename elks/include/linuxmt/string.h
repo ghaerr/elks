@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_STRING_H
-#define LX86_LINUXMT_STRING_H
+#ifndef __LINUXMT_STRING_H
+#define __LINUXMT_STRING_H
 
 #include <linuxmt/types.h>
 #include <stddef.h>

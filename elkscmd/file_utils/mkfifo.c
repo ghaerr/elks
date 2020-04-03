@@ -22,9 +22,9 @@ int main(int argc, char **argv)
 			er &= 1;
 		}
 	}
-	exit(er);
+	return er;
 
 usage:
 	fprintf(stderr, "usage: %s fifo_name [fifo_name] ...\n", argv[0]);
-	exit(1);
+	return 1;
 }

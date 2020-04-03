@@ -46,19 +46,27 @@ static void print_minor_name(register struct gendisk *hd,
 			     unsigned short int minor)
 {
     unsigned int part;
+    struct hd_struct *hdp = &hd->part[minor];
 
     printk(" %s%c", hd->major_name, 'a' + (unsigned char)(minor >> hd->minor_shift));
     if ((part = (unsigned) (minor & ((1 << hd->minor_shift) - 1))))
 	printk("%d", part);
-    printk(":");
+    printk(":(%lu,%lu) ", hdp->start_sect, hdp->nr_sects);
 }
 
-static void add_partition(register struct gendisk *hd,
-			  unsigned short int minor, sector_t start,
-			  sector_t size)
+static void add_partition(struct gendisk *hd, unsigned short int minor,
+			  sector_t start, sector_t size)
 {
-    register struct hd_struct *hdp = &hd->part[minor];
+    struct hd_struct *hdp = &hd->part[minor];
+#if 0
+    struct hd_struct *hd0 = &hd->part[0];
 
+    /* additional partition check since no MBR signature*/
+    if (start > hd0->nr_sects || start+size > hd0->nr_sects) {
+	printk(":skip%d ", minor);
+	return;
+    }
+#endif
     hdp->start_sect = start;
     hdp->nr_sects = size;
     print_minor_name(hd, minor);
@@ -167,12 +175,6 @@ static void extended_partition(register struct gendisk *hd, kdev_t dev)
 
   done:
     unmap_brelse(bh);
-
-#if 0
-    unmap_buffer(bh);
-    brelse(bh);
-#endif
-
 }
 
 static int msdos_partition(struct gendisk *hd,
@@ -183,13 +185,9 @@ static int msdos_partition(struct gendisk *hd,
     register struct hd_struct *hdp;
     unsigned short int i, minor = current_minor;
 
-#if 0
-    int mask = (1 << hd->minor_shift) - 1;
-#endif
-
     if (!(bh = bread(dev, (block_t) 0))) {
-	printk(" unable to read partition table\n");
-	return -1;
+	printk(" no MBR");
+	return 0;
     }
     map_buffer(bh);
 
@@ -197,7 +195,8 @@ static int msdos_partition(struct gendisk *hd,
      * that nobody else tries to re-use this data.
      */
     if (*(unsigned short *) (bh->b_data + 0x1fe) != 0xAA55) {
-	printk(" bad magic number\n");
+out:
+	printk(" no mbr");
 	unmap_brelse(bh);
 	return 0;
     }
@@ -209,6 +208,9 @@ static int msdos_partition(struct gendisk *hd,
 	hdp = &hd->part[minor];
 	if (!NR_SECTS(p))
 	    continue;
+	/* if invalid partition entry, assume no MBR*/
+	if (p->boot_ind != 0x00 && p->boot_ind != 0x80)
+	    goto out;
 	add_partition(hd, minor, first_sector + START_SECT(p), NR_SECTS(p));
 	if (is_extended_partition(p)) {
 	    printk(" <");
@@ -229,12 +231,6 @@ static int msdos_partition(struct gendisk *hd,
     }
     printk("\n");
     unmap_brelse(bh);
-
-#if 0
-    unmap_buffer(bh);
-    brelse(bh);
-#endif
-
     return 1;
 }
 
@@ -244,7 +240,7 @@ void check_partition(register struct gendisk *hd, kdev_t dev)
     sector_t first_sector;
 
     if (first_time)
-	printk("Partition check:\n");
+	printk("Partitions:");
     first_time = 0;
     first_sector = hd->part[MINOR(dev)].start_sect;
 
@@ -259,7 +255,6 @@ void check_partition(register struct gendisk *hd, kdev_t dev)
     }
 #endif
 
-    printk(" ");
     print_minor_name(hd, MINOR(dev));
 
 #ifdef CONFIG_MSDOS_PARTITION
@@ -267,7 +262,7 @@ void check_partition(register struct gendisk *hd, kdev_t dev)
 	return;
 #endif
 
-    printk(" unknown partition table\n");
+    printk(" none.\n");
 }
 #endif
 

@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_TYPES_H
-#define LX86_LINUXMT_TYPES_H
+#ifndef __LINUXMT_TYPES_H
+#define __LINUXMT_TYPES_H
 
 #include <arch/types.h>
 #include <linuxmt/config.h>
@@ -54,16 +54,9 @@ typedef __u32			time_t;
 
 typedef __u32			fd_mask_t;
 
-#include <linuxmt/config.h>
 #include <linuxmt/posix_types.h>
 
 typedef __kernel_fd_set 	fd_set;
-
-#define PRINT_STATS(a) {					\
-	int __counter;						\
-	printk("Entering %s : (%x, %x)\n",			\
-		a, current->t_regs.sp, current->t_kstack);	\
-}
 
 struct ustat {
     daddr_t			f_tfree;

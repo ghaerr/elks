@@ -2,8 +2,8 @@
  * boot variables, ready for use by any file needing access to them.
  */
 
-#ifndef LX86_LINUXMT_BOOT_H
-#define LX86_LINUXMT_BOOT_H
+#ifndef __LINUXMT_BOOT_H
+#define __LINUXMT_BOOT_H
 
 /* Root flags */
 

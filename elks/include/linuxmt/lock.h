@@ -1,6 +1,7 @@
 // Locking primitives
 
-#pragma once
+#ifndef __LINUXMT_LOCK_H
+#define __LINUXMT_LOCK_H
 
 #include <linuxmt/atomic.h>
 
@@ -13,3 +14,5 @@ void wait_lock (lock_t * lock);
 
 void event_unlock (lock_t * lock);
 #define unlock_event event_unlock
+
+#endif

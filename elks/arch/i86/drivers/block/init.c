@@ -26,6 +26,7 @@
 #include <linuxmt/string.h>
 
 #include <arch/system.h>
+#include <arch/segment.h>
 
 extern void rd_load();
 extern void chr_dev_init();
@@ -47,33 +48,20 @@ void device_setup(void)
     rd_load();
 #endif
 
-#if ! defined CONFIG_ROMCODE || ! defined CONFIG_ROMFS_FS
+#ifdef CONFIG_BLK_DEV_BIOS
     /*
      * The bootloader may have passed us a ROOT_DEV which is actually a BIOS
      * drive number.  If so, convert it into a proper <major, minor> block
      * device number.  -- tkchia 20200308
      */
     if ((setupw(0x1f6) & EF_BIOS_DEV_NUM) != 0) {
-	printk("device_setup: root device is on BIOS drive number 0x%x\n",
-	       (unsigned) ROOT_DEV);
+	extern kdev_t bioshd_conv_bios_drive(unsigned int biosdrive);
 
-	switch (ROOT_DEV) {
-	default:
-	    printk("device_setup: unknown BIOS drive, falling back on fd0\n");
-	    /* fall thru */
-	case 0x00:
-	    ROOT_DEV = MKDEV(BIOSHD_MAJOR, 0x80);
-	    break;
-	case 0x01:
-	    ROOT_DEV = MKDEV(BIOSHD_MAJOR, 0xc0);
-	    break;
-	case 0x80:
-	    ROOT_DEV = MKDEV(BIOSHD_MAJOR, 0x00);
-	    break;
-	case 0x81:
-	    ROOT_DEV = MKDEV(BIOSHD_MAJOR, 0x40);
-	    break;
-	}
+	kdev_t rootdev = bioshd_conv_bios_drive((unsigned)ROOT_DEV);
+
+	printk("device_setup: BIOS drive 0x%x converted to root device 0x%x\n",
+		ROOT_DEV, rootdev);
+	ROOT_DEV = rootdev;
     }
 #endif
 

@@ -1,5 +1,5 @@
-#ifndef LX86_LINUXMT_BIOSHD_H
-#define LX86_LINUXMT_BIOSHD_H
+#ifndef __LINUXMT_BIOSHD_H
+#define __LINUXMT_BIOSHD_H
 
 /* bioshd.h
  * Copyright (C) 1994 Yggdrasil Computing, Incorporated

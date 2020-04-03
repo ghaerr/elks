@@ -146,7 +146,8 @@ static void ScrollUp(register Console * C, int y)
 
     vp = (__u16 *)((__u16)(y * Width) << 1);
     if ((unsigned int)y < MaxRow)
-	fmemcpyb(vp, (seg_t) C->vseg, vp + Width, (seg_t) C->vseg, (MaxRow - y)*(Width << 1));
+	fmemcpyb((byte_t *)vp, (seg_t) C->vseg,
+		(byte_t *)(vp + Width), (seg_t) C->vseg, (MaxRow - y)*(Width << 1));
     ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
@@ -154,11 +155,12 @@ static void ScrollUp(register Console * C, int y)
 static void ScrollDown(register Console * C, int y)
 {
     register __u16 *vp;
-    int yy = MaxRow + 1;
+    int yy = MaxRow;
 
     vp = (__u16 *)((__u16)(yy * Width) << 1);
-    while (--y > y) {
-	fmemcpyb(vp, (seg_t) C->vseg, vp - Width, (seg_t) C->vseg, (Width << 1));
+    while (--yy >= y) {
+	fmemcpyb((byte_t *)vp, (seg_t) C->vseg,
+		(byte_t *)(vp - Width), (seg_t) C->vseg, (Width << 1));
 	vp -= Width;
     }
     ClearRange(C, 0, y, MaxCol, y);
@@ -168,22 +170,22 @@ static void ScrollDown(register Console * C, int y)
 #if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
 static void Console_gotoxy(register Console * C, int x, int y)
 {
-    register char *xp = (char *)x;
+    register int xp = x;
 
-    C->cx = ((((int) xp) >= MaxCol) ? MaxCol : ((((int)xp) < 0) ? 0 : (int)xp));
-    xp = (char *)y;
-    C->cy = ((((int) xp) >= MaxRow) ? MaxRow : ((((int)xp) < 0) ? 0 : (int)xp));
+    C->cx = (xp >= MaxCol) ? MaxCol : (xp < 0) ? 0 : xp;
+    xp = y;
+    C->cy = (xp >= MaxRow) ? MaxRow : (xp < 0) ? 0 : xp;
 }
 #endif
 
 #ifdef CONFIG_EMUL_ANSI
 static int parm1(register unsigned char *buf)
 {
-    register char *np;
+    int n;
 
-    if (!(np = (char *) atoi((char *) buf)))
-	np = 1;
-    return np;
+    if (!(n = atoi((char *)buf)))
+	n = 1;
+    return n;
 }
 
 static int parm2(register unsigned char *buf)
@@ -540,7 +542,7 @@ struct tty_ops dircon_ops = {
 void init_console(void)
 {
     register Console *C;
-    register char *pi;
+    register int i;
     unsigned PageSizeW;
     unsigned VideoSeg;
 
@@ -560,14 +562,14 @@ void init_console(void)
     C = Con;
     Visible = C;
 
-    for (pi = 0; ((unsigned int)pi) < NumConsoles; pi++) {
+    for (i = 0; i < NumConsoles; i++) {
 	C->cx = C->cy = 0;
-	if (!pi) {
+	if (!i) {
 	    C->cx = peekb(0x50, 0x40);
 	    C->cy = peekb(0x51, 0x40);
 	}
 	C->fsm = std_char;
-	C->basepage = (int)pi * PageSizeW;
+	C->basepage = i * PageSizeW;
 	C->vseg = VideoSeg + (C->basepage >> 3);
 	C->attr = A_DEFAULT;
 
