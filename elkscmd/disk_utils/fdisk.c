@@ -1,38 +1,54 @@
 /*
  *  fdisk.c  Disk partitioning program.
  *  Copyright (C) 1997  David Murn
+ *	Updated by Greg Haerr March 2020
  *
  *  This program is distributed under the GNU General Public Licence, and
  *  as such, may be freely distributed.
  *
  */
-
 #include <stdio.h>
-
-#ifdef linux
-
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <linux/hdreg.h>
 
-#else
-
-#include <linuxmt/types.h>
-#include <linuxmt/errno.h>
-#include <linuxmt/genhd.h>
+#ifdef __ia16__
 #include <linuxmt/hdreg.h>
-#include <linuxmt/major.h>
-#include <linuxmt/bioshd.h>
-#include <linuxmt/fs.h>
-#include <linuxmt/string.h>
-#include <linuxmt/fcntl.h>
-
 #endif
 
-#define DEFAULT_DEV "/dev/bda"
+struct partition
+{
+    unsigned char boot_ind;	/* 0x80 - active */
+    unsigned char head;		/* starting head */
+    unsigned char sector;	/* starting sector */
+    unsigned char cyl;		/* starting cylinder */
+    unsigned char sys_ind;	/* What partition type */
+    unsigned char end_head;	/* end head */
+    unsigned char end_sector;	/* end sector */
+    unsigned char end_cyl;	/* end cylinder */
+    unsigned short start_sect;	/* starting sector counting from 0 */
+    unsigned short start_sect_hi;
+    unsigned short nr_sects;		/* nr of sectors in partition */
+    unsigned short nr_sects_hi;
+};
+
+/*
+ * Seperate structure than hd_geometry for host compilation.
+ */
+struct geometry {
+    unsigned char heads;
+    unsigned char sectors;
+    unsigned short cylinders;
+    unsigned long start;
+};
+
+#define DEFAULT_DEV			"/dev/bda"
+#define PARTITION_TYPE		0x80	/* ELKS, Old Minix*/
+
+#define PARTITION_START		0x01be	/* offset of partition table in MBR*/
+#define PARTITION_END		0x01fd	/* end of partition 4 in MBR*/
 
 #define MODE_EDIT 0
 #define MODE_LIST 1
@@ -40,8 +56,8 @@
 #define CMDLEN 8
 
 int pFd;
-char dev[256];
-unsigned char partitiontable[512];
+char dev[80];
+unsigned char MBR[512];
 
 typedef struct {
   int cmd;
@@ -49,7 +65,7 @@ typedef struct {
   void (*func)();
 } Funcs;
 
-struct hd_geometry geometry;
+struct geometry geometry;
 
 void quit();
 void list_part();
@@ -58,7 +74,6 @@ void add_part();
 void help();
 void write_out();
 void list_types();
-void list_part();
 void set_boot();
 void set_type();
 void list_partition(char *dev);
@@ -66,12 +81,12 @@ void list_partition(char *dev);
 #define isxdigit(x)	( ((x)>='0' && (x)<='9') || ((x)>='A' && (x)<='F') \
 						 || ((x)>='a' && (x)<='f') )
 
-#define spc ((unsigned long)(geometry.heads*geometry.sectors))
+#define sects_per_cyl ((unsigned long)(geometry.heads * geometry.sectors))
 
 
 /* Available commands and their respective functions */
 static Funcs funcs[] = {
-    { 'a',"Set bootable flag",     set_boot },
+    { 'b',"Set bootable flag",     set_boot },
     { 'd',"Delete partition",      del_part },
     { 'l',"List partition types",  list_types },
     { 'n',"Create new partion",    add_part },
@@ -129,97 +144,98 @@ void list_part(void)
 
 void add_part(void)
 {
-    unsigned char pentry[16];
-    char buf[8];
-    unsigned long tmp;
+    unsigned long start_sect, nr_sects;
     unsigned char *oset;
     int part, scyl, ecyl;
+    struct partition p;
+    char buf[32];
 
-    pentry[0] = 0;
+    p.boot_ind = 0;
     printf("Create new partition:\n");
     for (part = 0; part < 1 || part > 4;) {
 	printf("Enter partition number (1-4): ");
 	fflush(stdout);
-	fgets(buf, 8, stdin);
+	fgets(buf, 31, stdin);
 	part = atoi(buf);
 	if (*buf=='\n')
 	    return;
     }
 
-    oset = partitiontable + (0x1be) + ((part - 1) * 16);
+    oset = MBR + PARTITION_START + ((part - 1) * 16);
 
     printf("Total cylinders: %d\n", geometry.cylinders);
     for (scyl = geometry.cylinders + 1; scyl < 0 || scyl > geometry.cylinders;) {
 	printf("First cylinder (%d-%d): ", 0, geometry.cylinders);
 	fflush(stdout);
-	fgets(buf, 8, stdin);
+	fgets(buf, 31, stdin);
 	scyl = atoi(buf);
 	if (*buf == '\n')
 	    return;
     }
 
-    pentry[1] = scyl == 0 ? 1 : 0;
-    pentry[2] = 1 + ((scyl >> 2) & 0xc0);
-    pentry[3] = (scyl & 0xff);
-
-#ifdef PART_TYPE
-    pentry[4] = PART_TYPE;
+#if 0
+    /* skip cylinder 0 head 0 sectors, use head 1 sector 1*/
+    p.head	= (scyl == 0) ? 1 : 0;
+    p.sector	= 1 + ((scyl >> 2) & 0xc0);
 #else
-    pentry[4] = 0x80;
+    /* don't skip any cylinder 0 sectors, use cylinder 0 sector 2*/
+    p.head	= 0;
+    p.sector	= ((scyl == 0) ? 2: 1) + ((scyl >> 2) & 0xc0);
 #endif
+    p.cyl	= (scyl & 0xff);
+    p.sys_ind	= PARTITION_TYPE;
 
     for (ecyl = geometry.cylinders + 1; ecyl < scyl || ecyl > geometry.cylinders;) {
 	printf("Ending cylinder (%d-%d): ", 0, geometry.cylinders);
 	fflush(stdout);
-	fgets(buf, 8, stdin);
+	fgets(buf, 31, stdin);
 	ecyl = atoi(buf);
 	if (*buf == '\n')
 	    return;
     }
 
-    pentry[5] = geometry.heads - 1;
-    pentry[6] = geometry.sectors + ((ecyl >> 2) & 0xc0);
-    pentry[7] = (ecyl & 0xff);
+    p.end_head	= geometry.heads - 1;
+    p.end_sector= geometry.sectors + ((ecyl >> 2) & 0xc0);
+    p.end_cyl	= ecyl & 0xff;
 
-    tmp = spc * (unsigned long)scyl;
+    start_sect = sects_per_cyl * (unsigned long)scyl;
     if (scyl == 0)
-	tmp = (unsigned long)geometry.sectors;
+	start_sect = geometry.sectors;
 
-    pentry[11] = (unsigned char)((tmp>>24uL)&0x000000ffuL);
-    pentry[10] = (unsigned char)((tmp>>16uL)&0x000000ffuL);
-    pentry[ 9] = (unsigned char)((tmp>> 8uL)&0x000000ffuL);
-    pentry[ 8] = (unsigned char)((tmp      )&0x000000fful);
+    p.start_sect 	= start_sect & 0xffff;
+    p.start_sect_hi	= start_sect >> 16;
 
-    tmp = spc * (unsigned long)(ecyl - scyl + 1);
+    nr_sects = sects_per_cyl * (unsigned long)(ecyl - scyl + 1);
     if (scyl == 0)
-	tmp -= (unsigned long)geometry.sectors;
+	nr_sects -= geometry.sectors;
 
-    pentry[15] = (unsigned char)((tmp>>24uL)&0x000000ffuL);
-    pentry[14] = (unsigned char)((tmp>>16uL)&0x000000ffuL);
-    pentry[13] = (unsigned char)((tmp>> 8uL)&0x000000ffuL);
-    pentry[12] = (unsigned char)((tmp      )&0x000000ffuL);
+    p.nr_sects		= nr_sects & 0xffff;
+    p.nr_sects_hi	= nr_sects >> 16;
 
     printf("Adding partition %d\n", part);
-    memcpy(oset, pentry, 16);
+    memcpy(oset, &p, 16);
 }
 
 void set_boot(void)
 {
-    char buf[8];
-    int part, a;
+    int part, i;
+    char buf[32];
 
-    printf("Toggle bootable flag\n");
+    printf("Set bootable flag\n");
     for (part = 0; part < 1 || part > 4;) {
 	printf("Which partition (1-4): ");
 	fflush(stdout);
-	fgets(buf, 8, stdin);
+	fgets(buf, 31, stdin);
 	part = atoi(buf);
 	if (*buf=='\n')
 	    return;
     }
 
-    a = (0x1ae) + (part * 16);
-    partitiontable[a] = (partitiontable[a] == 0x00 ? 0x80 : 0x00);
+    /* clear any boot flags*/
+    for (i=0; i<4; i++)
+	MBR[PARTITION_START + (i * 16)] = 0x00;
+
+    MBR[PARTITION_START + ((part - 1) * 16)] = 0x80;
 }
 
 int atohex(char *s)
@@ -246,24 +262,24 @@ int atohex(char *s)
 
 void set_type()  /* FIXME - Should make this more flexible */
 {
-    char buf[8];
+    char buf[32];
     int part, type, a;
 
     printf("Set partition type:\n\n");
     for (part=0;part<1 || part>4;) {
 	printf("Which partition to toggle(1-4): ");
 	fflush(stdout);
-	fgets(buf,8,stdin);
+	fgets(buf,31,stdin);
 	part=atoi(buf);
 	if (*buf=='\n')
 	    return;
     }
-    a=(0x1ae)+(part*16)+4;
+    a = PARTITION_START + ((part - 1) * 16);
     type=256;
     while (1) {
 	printf("Set partition type (l for list, q to quit): ");
 	fflush(stdout);
-	fgets(buf,8,stdin);
+	fgets(buf,31,stdin);
 	if (isxdigit(*buf)) {
 	    type=atohex(buf) % 256;
 	    break;
@@ -283,25 +299,25 @@ void set_type()  /* FIXME - Should make this more flexible */
 	    }
 	}
     }
-    partitiontable[a]=type;
+    MBR[a+4] = type;
 }
 
 void del_part()
 {
-    char buf[8];
+    char buf[32];
     int part;
 
     printf("Delete partition\n");
     for (part = 0; part<1 || part>4;) {
 	printf("Which partition (1-4): ");
 	fflush(stdout);
-	fgets(buf, 8, stdin);
+	fgets(buf, 31, stdin);
 	part = atoi(buf);
 	if (*buf == '\n')
 	    return;
     }
     printf("Deleting partition %d\n",part);
-    memset(partitiontable + (0x1be) + ((part - 1) * 16), 0, 16);
+    memset(MBR + PARTITION_START + ((part - 1) * 16), 0, 16);
 }
 
 void write_out()
@@ -311,9 +327,9 @@ void write_out()
     if (lseek(pFd, 0L, SEEK_SET) != 0)
 	printf("error: cannot seek to offset 0\n");
     else {
-        partitiontable[510] = 0x55;
-        partitiontable[511] = 0xAA;
-	if ((i=write(pFd,partitiontable,512))!=512) {
+        MBR[510] = 0x55;
+        MBR[511] = 0xAA;
+	if ((i=write(pFd,MBR,512))!=512) {
 	    printf("error: wrote %d of 512 bytes to the partition table.\n", i);
 	} else
 	    printf("Partition table written to %s\n",dev);
@@ -331,106 +347,117 @@ void help()
 
 void list_partition(char *devname)
 {
-    unsigned char ptbl[512],*partition;
-    unsigned long seccnt;
-    int i;
+    int i, fd;
+    unsigned char table[512];
 
     if (devname!=NULL) {
-	if ((pFd=open(devname,O_RDONLY))==-1) {
-	    printf("Error opening %s (%d)\n",devname,-pFd);
+	if ((fd=open(devname,O_RDONLY))==-1) {
+	    printf("Error opening %s\n",devname);
 	    exit(1);
 	}
-	if ((i=read(pFd,ptbl,512))!=512) {
+	if ((i=read(fd,table,512))!=512) {
 	    printf("Unable to read first 512 bytes from %s, only read %d bytes\n",
 		   devname,i);
 	    exit(1);
 	}
     } else
-	memcpy(ptbl,partitiontable,512);
-    printf("                      START                  END\n");
-    printf("Device    Boot  Head Sector Cylinder   Head Sector Cylinder  Type  Sector count\n\n");
-    for (i=0x1be;i<0x1fe;i+=16) {
-	partition=ptbl+i;   /* FIXME /--- gotta be a better way to do this ---\ */
-	seccnt= ((unsigned long) partition[15] << 24uL) + \
-		((unsigned long) partition[14] << 16uL) + \
-		((unsigned long) partition[13] <<  8uL) + \
-		 (unsigned long) partition[12];
-	if (partition[5])
-	    printf("%s%d  %c     %2d    %3d    %5d     %2d    %3d    %5d    %2x    %10ld\n",
-		devname==NULL?dev:devname,1+((i-0x1be)/16),
-		partition[0]==0?' ':(partition[0]==0x80?'*':'?'),
-		partition[1],				     /* Start head */
-		partition[2] & 0x3f,			     /* Start sector */
-		partition[3] | ((partition[2] & 0xc0) << 2), /* Start cylinder */
-		partition[5],				     /* End head */
-		partition[6] & 0x3f,			     /* End sector */
-		partition[7] | ((partition[6] & 0xc0) << 2), /* End cylinder */
-		partition[4],				     /* Partition type */
-		seccnt);				     /* Sector count */
+	memcpy(table,MBR,512);
+    printf("                           START              END           SECTOR\n");
+    printf("Device           #:ID  Head Sect  Cyl   Head Sect  Cyl  Start   Size\n\n");
+    for (i=0; i<4; i++) {
+	struct partition *p = (struct partition *)&table[PARTITION_START + (i<<4)];
+	unsigned long start_sect = p->start_sect | ((unsigned long)p->start_sect_hi << 16);
+	unsigned long nr_sects = p->nr_sects | ((unsigned long)p->nr_sects_hi << 16);
+	char device[32];
+	strcpy(device, devname? devname: dev);
+	if (device[0] == '/') {
+		char *p = &device[strlen(device)];
+		*p++ = '1' + i;
+		*p = 0;
+	}
+	//if (p->end_head)
+	    printf("%-15s %c%d:%02x    %2d  %3d%5d     %2d  %3d%5d %6lu  %6lu\n",
+		device,
+		p->boot_ind==0?' ':(p->boot_ind==0x80?'*':'?'),
+		i+1,			     		     /* #*/
+		p->sys_ind,				     /* Partition type */
+		p->head,				     /* Start head */
+		p->sector & 0x3f,			     /* Start sector */
+		p->cyl | ((p->sector & 0xc0) << 2),	     /* Start cylinder */
+		p->end_head,				     /* End head */
+		p->end_sector & 0x3f,			     /* End sector */
+		p->end_cyl | ((p->end_sector & 0xc0) << 2),  /* End cylinder */
+		start_sect,				     /* Size*/
+		nr_sects);				     /* Sector count */
     }
     if (devname!=NULL)
-	close(pFd);
-    fflush(stdout);
+	close(fd);
 }
 
 int main(int argc, char **argv)
 {
-    int i;
-    int mode = MODE_EDIT;
+	int i;
+	int mode = MODE_EDIT;
 
-    dev[0] = 0;
-    for (i = 1; i < argc; i++) {
-	if (*argv[i] == '/') {
-	    if (*dev != 0) goto usage;
-	    else strncpy(dev, argv[i], sizeof(dev));
-	} else {
-	    if (*argv[i] == '-')
-		switch(*(argv[i] + 1)) {
-		    case 'l':
-			mode = MODE_LIST;
-			break;
-		    default:
-			goto usage;
+	dev[0] = 0;
+	for (i = 1; i < argc; i++) {
+		if (*argv[i] == '-') {
+			switch(*(argv[i] + 1)) {
+			case 'l':
+				mode = MODE_LIST;
+				break;
+			default:
+				goto usage;
+			}
+		} else {
+			if (*dev != 0) goto usage;
+			else strcpy(dev, argv[i]);
 		}
-	    else goto usage;
 	}
-    }
 
-    if (argc == 1)
-#ifdef DEFAULT_DEV
-	strncpy(dev,DEFAULT_DEV,256);
-#else
-	goto usage;
-#endif
+	if (argc == 1)
+		strcpy(dev,DEFAULT_DEV);
 
 
     if (mode == MODE_LIST) {
 	if (*dev != 0) {
 	    list_partition(dev);
 	    exit(0);
-	} else {
-	    goto usage;
-	}
+	} else goto usage;
     }
 
     if (mode == MODE_EDIT) {
 	char buf[CMDLEN];
 	Funcs *tmp;
-	int flag = 0;
 
 	if ((pFd = open(dev, O_RDWR)) == -1) {
 	    printf("Error opening %s (%d)\n", dev, -pFd);
 	    exit(1);
 	}
 
-	if ((i=read(pFd,partitiontable,512)) != 512) {
+	if ((i=read(pFd,MBR,512)) != 512) {
 	    printf("Unable to read boot sector from %s\n", dev);
 	    exit(1);
 	}
 
-	if (ioctl(pFd, HDIO_GETGEO, &geometry)) {
+	{
+#ifdef __ia16__
+	struct hd_geometry hdgeometry;
+	if (ioctl(pFd, HDIO_GETGEO, &hdgeometry)) {
 	    printf("Error reading geometry for %s\n", dev);
 	    exit(1);
+	}
+	geometry.sectors = hdgeometry.sectors;
+	geometry.heads = hdgeometry.heads;
+	geometry.cylinders = hdgeometry.cylinders;
+	geometry.start = hdgeometry.start;
+#else
+	//FIXME read from FAT VBR or ELKS EPB
+	geometry.sectors = 63;
+	geometry.heads = 16;
+	geometry.cylinders = 63;
+	geometry.start = 1;			/* start sector*/
+#endif
 	}
 
 	printf("Geometry: %d cylinders, %d heads, %d sectors.\n",
@@ -460,7 +487,6 @@ int main(int argc, char **argv)
     exit(0);
 
 usage:
-    fprintf(stderr, "usage: %s [-l] /dev/device\n", argv[0]);
-    fprintf(stderr, "  -l: lists partition table and exits\n");
+    fprintf(stderr, "Usage: %s [-l] device_or_image\n", argv[0]);
     exit(1);
 }
