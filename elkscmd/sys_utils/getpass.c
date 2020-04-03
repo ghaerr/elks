@@ -9,6 +9,7 @@
 
 #include <pwd.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <termios.h>
 
@@ -23,7 +24,6 @@ char *getpass(char *prompt)
     struct termio old, new;
 #endif
     int reset_terminal;
-    int n;
 
     /* grab our input device */
     in = fopen("/dev/tty", "r");
