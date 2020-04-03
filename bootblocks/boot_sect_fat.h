@@ -232,7 +232,7 @@ boot_it:
 	orw $(EF_AS_BLOB|EF_BIOS_DEV_NUM),elks_flags
 .endif
 	mov %ax,root_dev
-	mov %cx,elks_offset
+	mov %cx,part_offset  // save sector offset of booted partition
 	ljmp $ELKS_INITSEG+0x20,$0
 
 kernel_name:

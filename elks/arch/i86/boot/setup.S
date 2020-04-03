@@ -82,7 +82,7 @@
 !			0x94, no. of sectors/track, 2 bytes
 !			0x96, no. of cylinders, 2 bytes
 !	...
-!	0x1e4:	elks_offset, 2 bytes. Offset of booted MBR partition
+!	0x1e4:	part_offset, 2 bytes. Sector offset of booted MBR partition
 !	0x1e6:	elks_magic, 2 bytes
 !	0x1ef:	SETUPSEG
 !	0x1f1:	SETUPSECS, 1 byte
