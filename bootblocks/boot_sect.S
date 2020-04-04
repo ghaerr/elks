@@ -66,6 +66,15 @@ floppy_table:
 entry1:
 #endif
 
+	// instructions through _next0 not needed for floppy, only MBR boot
+	cmp $0x4c65,%ax			// coming from ELKS MBR?
+	jnz _next0
+	mov 8(%si),%bx			// get MBR start sector from partion table at DS:SI
+	xor %ax,%ax				// save in sect_offset
+	mov %ax,%ds
+	mov %bx,BOOTADDR+sect_offset
+_next0:
+
 	// Get the memory size
 	// TODO: optional BIOS INT 12h
 
@@ -265,6 +274,7 @@ _disk_read:
 	mov $5,%bh
 	push %bp
 	mov %sp,%bp
+	add sect_offset,%ax
 	push %ax
 	push %dx
 	push %cx
@@ -480,7 +490,7 @@ binfile:
 
 	mov drive_num,%dl
 	xor %dh,%dh
-
+	mov sect_offset,%cx
 	mov $LOADSEG,%ax
 	mov %ax,%ds
 
@@ -510,6 +520,7 @@ boot_it:
 	orw $(EF_AS_BLOB|EF_BIOS_DEV_NUM),elks_flags
 .endif
 	mov %dx,root_dev
+	mov %cx,part_offset  // save sector offset of booted partition
 
 	RESTORE_DDPT
 
@@ -530,6 +541,9 @@ msg_error:
 
 msg_reboot:
 	.asciz "Press key\r\n"
+
+sect_offset:
+	.word 0
 
 	.global last_code
 last_code:

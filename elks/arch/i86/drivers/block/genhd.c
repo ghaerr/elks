@@ -24,6 +24,7 @@
 #include <linuxmt/string.h>
 
 #include <arch/system.h>
+#include <arch/segment.h>
 
 #define NR_SECTS(p)	p->nr_sects
 #define START_SECT(p)	p->start_sect
@@ -31,6 +32,7 @@
 extern int blk_dev_init();
 
 struct gendisk *gendisk_head = NULL;
+int boot_partition = 0;		/* MBR boot partition, if any*/
 
 #ifdef BDEV_SIZE_CHK
 extern int blk_size[];
@@ -67,6 +69,11 @@ static void add_partition(struct gendisk *hd, unsigned short int minor,
 	return;
     }
 #endif
+
+    /* save boot partition # based on start offset*/
+    if ((int)start == setupw(0x1e4))
+	boot_partition = minor;
+
     hdp->start_sect = start;
     hdp->nr_sects = size;
     print_minor_name(hd, minor);

@@ -7,6 +7,9 @@ endif
 # for CONFIG_IMG_EXTRA_IMAGES
 include $(TOPDIR)/.config
 
+# MBR boot sector
+HD_MBR_BOOT = $(TOPDIR)/bootblocks/mbr.bin
+
 # Directory for final filesystem to be generated from
 DESTDIR = $(TOPDIR)/target
 export DESTDIR
@@ -24,11 +27,13 @@ all: $(TARGETS)
 image:
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/.config"
 
-images: images-minix hd32-minix images-fat
+images: images-minix hd32-minix images-fat images-mbr
 
 images-minix: fd360-minix fd720-minix fd1440-minix fd2880-minix hd32-minix
 
 images-fat: fd360-fat fd720-fat fd1440-fat fd2880-fat hd32-fat
+
+images-mbr: hd32mbr-minix hd32mbr-fat
 
 fd360-minix:
 	echo CONFIG_APPS_360K=y		> Config
@@ -130,9 +135,17 @@ hd32-fat:
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=hd32-fat
 	rm Config
 
+# MBR images
+hd32mbr-minix:
+	dd if=/dev/zero bs=512 count=1 | cat - hd32-minix.bin > hd32mbr-minix.bin
+	setboot hd32mbr-minix.bin -P63,16,63 $(HD_MBR_BOOT)
+
+hd32mbr-fat:
+	dd if=/dev/zero bs=512 count=1 | cat - hd32-fat.bin > hd32mbr-fat.bin
+	setboot hd32mbr-fat.bin -P63,16,63 $(HD_MBR_BOOT)
+
 # Clean target
 
 clean:
 	-rm -rf $(DESTDIR)
 	-rm -f *.bin
-
