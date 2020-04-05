@@ -201,14 +201,17 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 .endif
 	push %bx
 	call disk_read
+	mov sect_offset,%cx
 
 	// Check for ELKS magic number
 	mov $elks_magic,%di
 	mov $0x4C45,%ax
 	scasw
+.if 0 // removed for FAT boot space
 	jnz not_elks
 	mov $0x534B,%ax
 	scasw
+.endif
 	jz boot_it
 
 not_elks:
@@ -229,6 +232,7 @@ boot_it:
 	orw $(EF_AS_BLOB|EF_BIOS_DEV_NUM),elks_flags
 .endif
 	mov %ax,root_dev
+	mov %cx,part_offset  // save sector offset of booted partition
 	ljmp $ELKS_INITSEG+0x20,$0
 
 kernel_name:

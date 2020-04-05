@@ -3,7 +3,7 @@
  *
  * 7 Feb 2020 Greg Haerr <greg@censoft.com>
  *
- * Usage: setboot <image> [-F] [-B<sectors>,<heads>[,<tracks>]] [<input_boot_sector>]
+ * Usage: setboot <image> [-F] [-{B,P}<sectors>,<heads>[,<tracks>]] [<input_boot_sector>]
  *
  *	setboot writes image after optionally reading an input boot sector and
  *		optionally modifying boot sector disk parameters passed as parameters.
@@ -13,6 +13,8 @@
  * 			-> set 9 sectors 2 heads on boot sector or bootable disk <image> file
  *		setboot <image> -B18,2 <bootsector>
  *			-> read <bootsector>, set 18 sectors 2 heads, write <image>
+ *		setboot <image> -P63,16,63 <bootsector>
+ *			-> read <bootsector>, write partition table, write <image>
  *		setboot <image> -F <bootsector>
  *			-> read <bootsector>, copy skipping FAT BPB to output <image>
  *
@@ -36,6 +38,46 @@
 #define FATBPB_END		61				/* through end of file system type*/
 
 static unsigned int SecPerTrk, NumHeads, NumTracks;
+
+struct partition
+{
+    unsigned char boot_ind;	/* 0x80 - active */
+    unsigned char head;		/* starting head */
+    unsigned char sector;	/* starting sector */
+    unsigned char cyl;		/* starting cylinder */
+    unsigned char sys_ind;	/* What partition type */
+    unsigned char end_head;	/* end head */
+    unsigned char end_sector;	/* end sector */
+    unsigned char end_cyl;	/* end cylinder */
+    unsigned short start_sect;	/* starting sector counting from 0 */
+    unsigned short start_sect_hi;
+    unsigned short nr_sects;		/* nr of sectors in partition */
+    unsigned short nr_sects_hi;
+};
+#define PARTITION_START		0x01be	/* offset of partition table in MBR*/
+
+/* write partition table in buffer*/
+static void writePartition(unsigned char *buf)
+{
+	struct partition *p = (struct partition *)&buf[PARTITION_START];
+	unsigned long nr_sects = ((long)NumTracks) * NumHeads * SecPerTrk;
+
+	/* create partition #1 at sector 2 using max CHS as size*/
+	p->boot_ind = 0x80;
+	p->head = 0;
+	p->sector = 2;				/* next sector after MBR, non-standard*/
+	p->cyl = 0;
+	p->sys_ind = 0x80;			/* ELKS, Old Minix*/
+	p->end_head = NumHeads;
+	p->end_sector = SecPerTrk | ((NumTracks >> 2) & 0xc0);
+	p->end_cyl = NumTracks & 0xff;
+	p->start_sect = 1;			/* zero-relative start sector here*/
+	p->start_sect_hi = 0;
+	p->nr_sects = nr_sects & 0xffff;
+	p->nr_sects_hi = nr_sects >> 16;
+	buf[510] = 0x55;
+	buf[511] = 0xAA;
+}
 
 /* set sector and head parameters in buffer*/
 static void setSHparms(unsigned char *buf)
@@ -91,12 +133,13 @@ int main(int argc,char **argv)
 	int count, i;
 	int opt_new_bootsect = 0, opt_updatebpb = 0;
 	int opt_skipfatbpb = 0;
+	int opt_writepartitiontable = 0;
 	char *outfile, *infile = NULL;
 	unsigned char blk[SECT_SIZE*2];
 	unsigned char inblk[SECT_SIZE];
 
 	if (argc != 3 && argc != 4 && argc != 5)
-		fatalmsg("Usage: %s <image> [-F] [-B<sectors>,<heads>[,<tracks>]] [<input_boot_image>]\n", argv[0]);
+		fatalmsg("Usage: %s <image> [-F] [-{B,P}<sectors>,<heads>[,<tracks>]] [<input_boot_image>]\n", argv[0]);
 
 	outfile = *++argv; argc--;
 
@@ -116,6 +159,15 @@ int main(int argc,char **argv)
 			argv++;
 			argc--;
 		}
+		else if (argv[1][1] == 'P') {
+			opt_writepartitiontable = 1;
+				if (sscanf(&argv[1][2], "%d,%d,%d", &SecPerTrk, &NumHeads, &NumTracks) != 3)
+					fatalmsg("Invalid -P<sectors>,<heads>,<cylinders> option\n");
+				printf("Creating partition table %d sectors, %d heads, %d cylinders\n",
+					SecPerTrk, NumHeads, NumTracks);
+			argv++;
+			argc--;
+		}
 		else if (argv[1][1] == 'F') {
 			opt_skipfatbpb = 1;			/* skip FAT BPB specified*/
 			printf("Skipping FAT BPB\n");
@@ -130,6 +182,9 @@ int main(int argc,char **argv)
 
 	if (opt_skipfatbpb && !opt_new_bootsect)
 		fatalmsg("-F option requires input_boot_image\n");
+
+	if (opt_writepartitiontable && !opt_new_bootsect)
+		fatalmsg("-P option requires input_boot_image\n");
 
 	if (opt_new_bootsect) {
 		if (stat(infile,&sb)) die("stat(%s)",infile);
@@ -167,15 +222,21 @@ int main(int argc,char **argv)
 			if (count != sb.st_size) die("fread(%s)", infile);
 
 		}
-		if (blk[510] != 0x55 || blk[511] != 0xaa)
-		fprintf(stderr, "Warning: '%s' may not be valid bootable sector\n", infile);
 
-		if (opt_updatebpb)		/* update BPB before writing*/
-				setSHparms(blk);
+		if (opt_writepartitiontable) {	/* create parititon table before writing*/
+			writePartition(blk);
+			count = 512;
+		}
+		if (opt_updatebpb)				/* update BPB before writing*/
+			setSHparms(blk);
+
+		if (blk[510] != 0x55 || blk[511] != 0xaa)
+			fprintf(stderr, "Warning: '%s' may not be valid bootable sector\n", infile);
+
 		if (fwrite(blk,1,count,ofp) != count) die("fwrite(%s)", infile);
-			fclose(ofp);
-			fclose(ifp);
-		} else {			/* perform BPB update only on existing boot block*/
+		fclose(ofp);
+		fclose(ifp);
+	} else {			/* perform BPB update only on existing boot block*/
 			ofp = fopen(outfile, "r+b");
 			if (!ofp) die(outfile);
 
@@ -187,6 +248,6 @@ int main(int argc,char **argv)
 				die("fseek(%s)", outfile);
 			if (fwrite(blk,1,SECT_SIZE,ofp) != SECT_SIZE) die("fwrite(%s)", outfile);
 			fclose(ofp);
-		}
+	}
 	return 0;
 }

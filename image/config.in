@@ -20,7 +20,7 @@ mainmenu_option next_comment
 		 FD360  CONFIG_IMG_FD360  \
 		 HD     CONFIG_IMG_HD" FD1440
 
-		if [ "$CONFIG_IMG_MINIX" == "y" -o "$CONFIG_IMG_ROM" == "y" ]; then
+		if [ "$CONFIG_IMG_MINIX" == "y" -o "$CONFIG_IMG_ROM" == "y" -o "$CONFIG_IMG_FAT" == "y" ]; then
 			define_bool CONFIG_IMG_DEV y
 		fi
 

@@ -59,7 +59,7 @@ void device_setup(void)
 
 	kdev_t rootdev = bioshd_conv_bios_drive((unsigned)ROOT_DEV);
 
-	printk("device_setup: BIOS drive 0x%x converted to root device 0x%x\n",
+	printk("device_setup: BIOS drive 0x%x, root device 0x%x\n",
 		ROOT_DEV, rootdev);
 	ROOT_DEV = rootdev;
     }
