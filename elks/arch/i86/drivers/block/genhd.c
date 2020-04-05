@@ -79,7 +79,14 @@ static void add_partition(struct gendisk *hd, unsigned short int minor,
 	return;
     }
 
-    /* save boot partition # based on start offset*/
+    /*
+     * Save boot partition # based on start offset.  This is needed if
+     * ROOT_DEV is still a BIOS drive number at this point (see init.c), and
+     * if we have not yet figured out which partition is the boot partition.
+     *
+     * If the root device is already fully known, i.e. ROOT_DEV is already
+     * a device number, then we do not really need boot_partition.
+     */
     if (ROOT_DEV == (0x80 | minor >> hd->minor_shift)) {
 	sector_t boot_start = setupw(0x1e2) | (sector_t) setupw(0x1e4) << 16;
 	if (start == boot_start)
