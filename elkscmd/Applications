@@ -100,6 +100,7 @@ sh_utils/yes					:shutil				:720k
 misc_utils/miniterm				:miscutil			:720k
 misc_utils/tar					:miscutil			:720k
 misc_utils/od					:miscutil			:720k
+misc_utils/hd					:miscutil			:720k
 misc_utils/time					:miscutil			:720k
 misc_utils/ed					:be-miscutil		:720k
 elvis/elvis	::bin/vi			:elvis			:360k
