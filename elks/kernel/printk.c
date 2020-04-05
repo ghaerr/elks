@@ -208,6 +208,15 @@ void printk(char *fmt, ...)
     va_end(p);
 }
 
+void halt(void)
+{
+    /* Lock up with infinite loop */
+    kputs("\nSYSTEM HALTED - Press CTRL-ALT-DEL to reboot:");
+
+    while (1)
+	/* Do nothing */;
+}
+
 void panic(char *error, ...)
 {
     va_list p;
@@ -219,6 +228,7 @@ void panic(char *error, ...)
     va_start(p, error);
     vprintk(error, p);
     va_end(p);
+
     kputs("\napparent call stack:\n"
 	  "Line: Addr    Parameters\n"
 	  "~~~~: ~~~~    ~~~~~~~~~~");
@@ -232,10 +242,5 @@ void panic(char *error, ...)
 	} while ((int)(++j) <= 8);
     } while (++i < 9);
 
-    /* Lock up with infinite loop */
-
-    kputs("\n\nSYSTEM LOCKED - Press CTRL-ALT-DEL to reboot:");
-
-    while (1)
-	/* Do nothing */;
+    halt();
 }

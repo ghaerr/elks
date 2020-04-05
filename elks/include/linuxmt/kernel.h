@@ -23,6 +23,7 @@ extern int kill_pg(pid_t,sig_t,int);
 
 extern int kill_sl(void);
 
+extern void halt(void);
 extern void panic(char *, ...);
 extern void printk(char *, ...);
 extern void early_printk (char *);

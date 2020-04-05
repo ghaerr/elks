@@ -499,7 +499,10 @@ void mount_root(void)
 	root_mountflags |= MS_RDONLY;
 	retval = open_filp(0, d_inode, &filp);
     }
-    if (retval) panic("VFS: Unable to open root device %s\n", kdevname(ROOT_DEV));
+    if (retval) {
+	printk("VFS: Unable to open root device %s\n", kdevname(ROOT_DEV));
+	halt();
+    }
 
     fs_type = &file_systems[0];
     do {
@@ -535,5 +538,6 @@ void mount_root(void)
     }
 #endif
 
-    panic("VFS: Unable to mount root fs on %s\n", kdevname(ROOT_DEV));
+    printk("VFS: Unable to mount root fs on %s\n", kdevname(ROOT_DEV));
+    halt();
 }
