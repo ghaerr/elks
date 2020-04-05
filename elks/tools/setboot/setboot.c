@@ -64,14 +64,21 @@ static void writePartition(unsigned char *buf)
 
 	/* create partition #1 at sector 2 using max CHS as size*/
 	p->boot_ind = 0x80;
+#if 1
+	p->head = 1;
+	p->sector = 1;				/* next cylinder after MBR, standard*/
+	p->cyl = 0;
+	p->start_sect = NumTracks;	/* zero-relative start sector here*/
+#else
 	p->head = 0;
 	p->sector = 2;				/* next sector after MBR, non-standard*/
 	p->cyl = 0;
+	p->start_sect = 1;			/* zero-relative start sector here*/
+#endif
 	p->sys_ind = 0x80;			/* ELKS, Old Minix*/
 	p->end_head = NumHeads;
 	p->end_sector = SecPerTrk | ((NumTracks >> 2) & 0xc0);
 	p->end_cyl = NumTracks & 0xff;
-	p->start_sect = 1;			/* zero-relative start sector here*/
 	p->start_sect_hi = 0;
 	p->nr_sects = nr_sects & 0xffff;
 	p->nr_sects_hi = nr_sects >> 16;

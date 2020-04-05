@@ -173,8 +173,8 @@ void add_part(void)
 	    return;
     }
 
-#if 0
-    /* skip cylinder 0 head 0 sectors, use head 1 sector 1*/
+#if 1
+    /* skip cylinder 0 head 0 sectors, use head 1 sector 1 (standard)*/
     p.head	= (scyl == 0) ? 1 : 0;
     p.sector	= 1 + ((scyl >> 2) & 0xc0);
 #else
@@ -362,8 +362,8 @@ void list_partition(char *devname)
 	}
     } else
 	memcpy(table,MBR,512);
-    printf("                           START              END           SECTOR\n");
-    printf("Device           #:ID  Head Sect  Cyl   Head Sect  Cyl  Start   Size\n\n");
+    printf("                           START              END          SECTOR\n");
+    printf("Device           #:ID   Cyl Head Sect    Cyl Head Sect  Start   Size\n\n");
     for (i=0; i<4; i++) {
 	struct partition *p = (struct partition *)&table[PARTITION_START + (i<<4)];
 	unsigned long start_sect = p->start_sect | ((unsigned long)p->start_sect_hi << 16);
@@ -376,17 +376,17 @@ void list_partition(char *devname)
 		*p = 0;
 	}
 	//if (p->end_head)
-	    printf("%-15s %c%d:%02x    %2d  %3d%5d     %2d  %3d%5d %6lu  %6lu\n",
+	    printf("%-15s %c%d:%02x    %2d  %3d%5d     %2d  %3d%5d %6lu %6lu\n",
 		device,
 		p->boot_ind==0?' ':(p->boot_ind==0x80?'*':'?'),
 		i+1,			     		     /* #*/
 		p->sys_ind,				     /* Partition type */
+		p->cyl | ((p->sector & 0xc0) << 2),	     /* Start cylinder */
 		p->head,				     /* Start head */
 		p->sector & 0x3f,			     /* Start sector */
-		p->cyl | ((p->sector & 0xc0) << 2),	     /* Start cylinder */
+		p->end_cyl | ((p->end_sector & 0xc0) << 2),  /* End cylinder */
 		p->end_head,				     /* End head */
 		p->end_sector & 0x3f,			     /* End sector */
-		p->end_cyl | ((p->end_sector & 0xc0) << 2),  /* End cylinder */
 		start_sect,				     /* Size*/
 		nr_sects);				     /* Sector count */
     }

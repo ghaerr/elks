@@ -59,24 +59,29 @@ static void print_minor_name(register struct gendisk *hd,
 static void add_partition(struct gendisk *hd, unsigned short int minor,
 			  sector_t start, sector_t size)
 {
-    struct hd_struct *hdp = &hd->part[minor];
-#if 0
     struct hd_struct *hd0 = &hd->part[0];
-
-    /* additional partition check since no MBR signature*/
-    if (start > hd0->nr_sects || start+size > hd0->nr_sects) {
-	printk(":skip%d ", minor);
-	return;
-    }
-#endif
-
-    /* save boot partition # based on start offset*/
-    if ((int)start == setupw(0x1e4))
-	boot_partition = minor;
+    struct hd_struct *hdp = &hd->part[minor];
 
     hdp->start_sect = start;
     hdp->nr_sects = size;
     print_minor_name(hd, minor);
+
+    /*
+     * Additional partition check since no MBR signature:
+     * Some BIOS subtract a cylinder, making direct comparison incorrect.
+     * A CHS cylinder an have 63 max sectors * 255 heads, so adjust for that.
+     */
+    sector_t adj_nr_sects = hd0->nr_sects + 63 * 255;
+    if (start > adj_nr_sects || start+size > adj_nr_sects) {
+	printk("skipped ");
+	hdp->start_sect = -1;
+	hdp->nr_sects = 0;
+	return;
+    }
+
+    /* save boot partition # based on start offset*/
+    if ((int)start == setupw(0x1e4))
+	boot_partition = minor;
 }
 
 static int is_extended_partition(register struct partition *p)
