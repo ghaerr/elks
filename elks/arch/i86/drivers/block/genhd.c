@@ -80,8 +80,11 @@ static void add_partition(struct gendisk *hd, unsigned short int minor,
     }
 
     /* save boot partition # based on start offset*/
-    if ((int)start == setupw(0x1e4))
-	boot_partition = minor;
+    if (ROOT_DEV == (0x80 | minor >> hd->minor_shift)) {
+	sector_t boot_start = setupw(0x1e2) | (sector_t) setupw(0x1e4) << 16;
+	if (start == boot_start)
+	    boot_partition = minor;
+    }
 }
 
 static int is_extended_partition(register struct partition *p)

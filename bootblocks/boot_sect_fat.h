@@ -117,6 +117,7 @@ bpb_num_heads:				// Number of heads
 head_max:
 	.word FAT_NUM_HEADS
 bpb_hidd_sec:				// Hidden sectors
+sect_offset:
 	.long 0
 bpb_tot_sec_32:				// Total number of sectors, 32-bit
 .if FAT_TOT_SEC > 0xffff
@@ -202,6 +203,7 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 	push %bx
 	call disk_read
 	mov sect_offset,%cx
+	mov sect_offset+2,%si
 
 	// Check for ELKS magic number
 	mov $elks_magic,%di
@@ -233,6 +235,7 @@ boot_it:
 .endif
 	mov %ax,root_dev
 	mov %cx,part_offset  // save sector offset of booted partition
+	mov %si,part_offset+2
 	ljmp $ELKS_INITSEG+0x20,$0
 
 kernel_name:
