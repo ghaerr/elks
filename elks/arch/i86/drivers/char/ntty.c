@@ -203,11 +203,12 @@ void tty_echo(register struct tty *tty, unsigned char ch)
 {
     if ((tty->termios.c_lflag & ECHO)
 		|| ((tty->termios.c_lflag & ECHONL) && (ch == '\n'))) {
-	chq_addch(&tty->outq, ch);
-	if ((ch == '\b') && (tty->termios.c_lflag & ECHOE)) {
+	if ((ch == tty->termios.c_cc[VERASE]) && (tty->termios.c_lflag & ECHOE)) {
+	    chq_addch(&tty->outq, '\b');
 	    chq_addch(&tty->outq, ' ');
 	    chq_addch(&tty->outq, '\b');
-	}
+	} else
+	    chq_addch(&tty->outq, ch);
 	tty->ops->write(tty);
     }
 }
