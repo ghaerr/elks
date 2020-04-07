@@ -1,5 +1,5 @@
 /*
- * elkscmd/sysutils/getty.c
+ * elkscmd/sys_utils/getty.c
  *
  * Copyright (C) 1998 Alistair Riddoch <ajr@ecs.soton.ac.uk>
  *
@@ -67,7 +67,7 @@
 
 char *	progname;
 char	Buffer[64];
-int	ch, col = 0, fd;
+int	ch, col = 0;
 
 void consolemsg(const char *str, ...)
 {
@@ -211,7 +211,7 @@ static speed_t convert_baudrate(speed_t baudrate)
 int main(int argc, char **argv)
 {
     char *ptr;
-    int n;
+    int n, fd;
     speed_t baud = 0;
     struct termios termios;
 
@@ -223,10 +223,28 @@ int main(int argc, char **argv)
 	exit(3);
     }
 
-    if (argc == 2) debug("'%s'\n", argv[1]);
+    if (argc == 2)
+	debug("startup args '%s'\n", argv[1]);
     else if (argc == 3) {
 	baud = atol(argv[2]);
-	debug("'%s' %ld\n", argv[1], baud);
+	debug("startup args '%s' %ld\n", argv[1], baud);
+    }
+
+    /* allow execution outside of init*/
+    if (getppid() > 1) {
+	int tty = open(argv[1], O_RDWR);
+	if (tty < 0) {
+		consolemsg("cannot open terminal %s\n", argv[1]);
+		exit(4);
+	}
+
+	debug("redirecting stdio to %s\n", argv[1]);
+	close(0); close(1); close(2); /* close inherited stdio */
+	if (dup2(tty, 0) != 0 || dup2(tty, 1) != 1 || dup2(tty, 2) != 2) {
+		consolemsg("cannot redirect stdio (error %d)\n", errno);
+		exit(5);
+	}
+	close(tty);
     }
 
     fd = open(ISSUE, O_RDONLY);
@@ -303,14 +321,9 @@ int main(int argc, char **argv)
 			    state(Host);
 			    break;
 			case 'L':			/* Line used */
-			    if (argc > 1) {
-				ptr = rindex(argv[1],'/');
-				if (ptr == NULL)
-				    ptr = argv[1];
-			    } else
-				ptr = NULL;
+			    ptr = rindex(argv[1],'/');
 			    if (ptr == NULL)
-				ptr = "tty";
+				ptr = argv[1];
 			    state(ptr);
 			    break;
 			case 'S':			/* System */
@@ -347,6 +360,7 @@ int main(int argc, char **argv)
 
     /* setup tty termios state*/
     baud = convert_baudrate(baud);
+    if (baud) debug("setting termio baudcode %ld\n", baud);
     if (tcgetattr(STDIN_FILENO, &termios) >= 0) {
         termios.c_lflag |= ISIG | ICANON | ECHO | ECHOE | ECHONL;
         termios.c_lflag &= ~(IEXTEN | ECHOK | NOFLSH);
@@ -369,7 +383,7 @@ int main(int argc, char **argv)
 	state("login: ");
 	n=read(STDIN_FILENO,Buffer,sizeof(Buffer)-1);
 	if (n < 1) {
-	    debug("read fail errno %d\n", errno);
+	    debug("read fail on stdin, errno %d\n", errno);
 	    if (errno != -EINTR)
 		exit(1);
 	    continue;
@@ -381,6 +395,7 @@ int main(int argc, char **argv)
 	if (*Buffer) {
 	    char *nargv[3];
 
+	    debug("calling login: %s\n", Buffer);
 	    nargv[0] = LOGIN;
 	    nargv[1] = Buffer;
 	    nargv[2] = NULL;
