@@ -1,4 +1,4 @@
 # init file for sash
-setenv TZ GMT
+setenv TZ GMT0
 setenv HISTORY 30
 setenv HISTPAGE 20
