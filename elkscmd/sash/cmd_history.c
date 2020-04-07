@@ -10,6 +10,8 @@
 
 #define HISTMAX 200
 #define HISTMIN 20
+#define CMDBUF  80
+
 static  int     lastcom = -1;   /* index of most recent command */
 static  int     histind = 0;    /* cmd # for history list */
 static  char    **histbuf;      /* array holding commands */
@@ -95,12 +97,12 @@ cmd_edit(char *cm, char *edit, char *dst) {
 
         if (!cm)
                 return("\0");   /* got null string */
-        if (!(tmp = malloc(82 + strlen(edit)))) {
+        if (!(tmp = malloc(CMDBUF + 2 + strlen(edit)))) {
                 printf("Malloc error in substitute.\n");
                 return(NULL);
         }
-	strcpy(&tmp[81], edit);
-	edit = &tmp[81];
+	strcpy(&tmp[CMDBUF+1], edit);
+	edit = &tmp[CMDBUF+1];
         *tmp = '\0';
         if ((pmid = strchr(++edit, (int) delim))) {
                 *pmid = '\0';
