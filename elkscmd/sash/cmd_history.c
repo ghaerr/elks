@@ -82,7 +82,7 @@ cmd_get(int idx) { /* return the selected command from the history buffer */
 }
 
 /* 
- * Edit the commandline in cm using substitute operation in 'edit', reslt pointed to by dst
+ * Edit the commandline in cm using substitute operation in 'edit', result pointed to by dst
  * syntax: ^old^new<EOL>
  * Return NULL on error 
  * TODO: Does not (yet) support multiple occurences of the replacement string
@@ -95,18 +95,21 @@ cmd_edit(char *cm, char *edit, char *dst) {
 
         if (!cm)
                 return("\0");   /* got null string */
-        if (!(tmp = malloc(80))) {
+        if (!(tmp = malloc(82 + strlen(edit)))) {
                 printf("Malloc error in substitute.\n");
                 return(NULL);
         }
+	strcpy(&tmp[81], edit);
+	edit = &tmp[81];
+        *tmp = '\0';
         if ((pmid = strchr(++edit, (int) delim))) {
                 *pmid = '\0';
                 /*fprintf(stderr, "subst: %s -- %s\n", cm, edit);*/
                 if (!(psub = strstr(cm, edit))) {
                         fprintf(stderr, "substitution failed\n");
-                        *tmp = '\0';
                 } else {
                         strncpy(tmp, cm, (int)(psub - cm));
+			tmp[(int)(psub - cm)] = '\0';
                         strcat(tmp, ++pmid);
                         strcat(tmp, (char *)(psub+strlen(edit)));
                         /* warning - buffer oveflow possible in *tmp */
@@ -185,7 +188,7 @@ history(char *cmd) {
          */
         int prev_cmd, h;
         char hnum[5];
-        char *cm;
+        char *cm, *rcmd = NULL;
 
         prev_cmd = 0;
         h = 0;
@@ -195,7 +198,7 @@ history(char *cmd) {
         /* todo: Add argument substitution (!$-notation) */
 
         case '^':
-                /* do substitution */
+                /* do substitution on the previous command */
                 if (!cmd_edit(cmd_get(-1), cmd, cm)) return(1);
                 puts(cm);
                 break;
@@ -220,12 +223,11 @@ history(char *cmd) {
                                 return(1);
                         }
                         fflush(stderr);
+			cmd--;
                 }
                 if (*++cmd == ':') {    /* the request has a modifier */
                         switch (*++cmd) {
                         case 'p':       /* print the selected command and make it current */
-                                        /* TODO: should add the rest of the cmd line (if any) */
-                                        /* to the old cmd line */
                                 strcpy(cm, cmd_get(prev_cmd));
                                 puts(cm);               /* echo */
                                 add_to_history(cm);     /* add to history list */
@@ -236,7 +238,18 @@ history(char *cmd) {
                         }
 
                 }
+		if (strlen(cmd) > 0 ) { /* add the rest of the command line if any */
+			if (!(rcmd = malloc(strlen(cmd)+1))) {
+				fputs("history: malloc error\n", stderr);
+				return(1);
+			}
+			strcpy(rcmd, cmd);
+		}
                 strcpy(cm, cmd_get(prev_cmd)) ;
+		if (rcmd) {
+			strcat(cm, rcmd);
+			free(rcmd);
+		}
                 puts(cm);
                 break;
         }      
