@@ -32,14 +32,16 @@
 
 // Macro to restore the original (i.e. BIOS's) Diskette Drive Parameter Table
 //
-// Note: this clobbers BX and DS, and resets SP!  Use it only upon an error
+// Note: this may clobber BX and DS, and reset SP!  Use it only upon an error
 // or just before handing over to /linux
 .macro RESTORE_DDPT
+#ifdef FAST_READ
 	mov $-8,%sp
 	pop %bx
 	pop %ds
 	popw (%bx)
 	popw 2(%bx)
+#endif
 .endm
 
 	.code16
@@ -67,12 +69,17 @@ entry1:
 #endif
 
 	// instructions through _next0 not needed for floppy, only MBR boot
+	cld
 	cmp $0x4c65,%ax			// coming from ELKS MBR?
 	jnz _next0
-	mov 8(%si),%bx			// get MBR start sector from partion table at DS:SI
-	xor %ax,%ax				// save in sect_offset
-	mov %ax,%ds
-	mov %bx,BOOTADDR+sect_offset
+	mov 8(%si),%ax			// get MBR start sector from partion table at DS:SI
+	mov 10(%si),%si
+	push %cs
+	pop %es
+	mov $BOOTADDR+sect_offset,%di
+	stosw
+	xchg %ax,%si
+	stosw
 _next0:
 
 	// Get the memory size
@@ -97,10 +104,10 @@ _next0:
 	mov %di,%ds
 	mov $BOOTADDR,%si
 	mov $256,%cx  // 256 words = 512 B
-	cld
 	rep
 	movsw
 
+#ifdef FAST_READ
 	// Copy the current BIOS floppy parameter table
 	// so that we could modify it locally
 	//
@@ -129,6 +136,7 @@ _next0:
 	mov %cx,%ds    // CX = 0
 	popw (%bx)
 	mov %es,2(%bx)
+#endif
 
 	// Rebase CS DS to work in the 64K segment
 
@@ -151,10 +159,12 @@ _next1:
 	mov $msg_boot,%bx
 	call _puts
 
+#ifdef FAST_READ
 	// Set sector count in floppy parameter table
 
 	mov sect_max,%al
 	mov %al,floppy_table + 4
+#endif
 
 #ifndef BOOT_FAT
 	// Load the second sector of the boot block
@@ -274,7 +284,6 @@ _disk_read:
 	mov $5,%bh
 	push %bp
 	mov %sp,%bp
-	add sect_offset,%ax
 	push %ax
 	push %dx
 	push %cx
@@ -295,6 +304,8 @@ dr_loop:
 	mulb head_max
 	xchg %ax,%bx
 	xor %dx,%dx
+	add sect_offset,%ax
+	adc sect_offset+2,%dx
 	div %bx
 	mov %al,%ch      // CH = low 8 bits of physical cylinder number
 	ror %ah
@@ -491,6 +502,7 @@ binfile:
 	mov drive_num,%dl
 	xor %dh,%dh
 	mov sect_offset,%cx
+	mov sect_offset+2,%bx
 	mov $LOADSEG,%ax
 	mov %ax,%ds
 
@@ -521,6 +533,7 @@ boot_it:
 .endif
 	mov %dx,root_dev
 	mov %cx,part_offset  // save sector offset of booted partition
+	mov %bx,part_offset+2
 
 	RESTORE_DDPT
 
@@ -542,8 +555,10 @@ msg_error:
 msg_reboot:
 	.asciz "Press key\r\n"
 
+#ifndef BOOT_FAT
 sect_offset:
-	.word 0
+	.long 0
+#endif
 
 	.global last_code
 last_code:

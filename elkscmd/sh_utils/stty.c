@@ -95,7 +95,7 @@ struct winsize winsize;
 #define PROTO(a) ()
 #endif
 
-void main PROTO(( int argc, char **argv ));
+int main PROTO(( int argc, char **argv ));
 void report PROTO(( int flags ));
 int option PROTO(( char *opt, char *next ));
 int match PROTO(( char *s1, char *s2 ));
@@ -114,7 +114,7 @@ void set_min_tim PROTO(( int option, char *value ));
 #define print_char(c,d,n,a) (do_print_char((unsigned)(c),(unsigned)(d),(n),(a)))
 #define print_num(m,d,n,a) (do_print_num((unsigned)(m),(unsigned)(d),(n),(a)))
 
-void main(argc, argv)
+int main(argc, argv)
 int argc;
 char *argv[];
 {
@@ -886,7 +886,7 @@ char *opt, *next;
 	 */
 	termios.c_iflag= (TINPUT_DEF & ~(IGNPAR|ISTRIP|INPCK))
 		| (termios.c_iflag & (IGNPAR|ISTRIP|INPCK));
-	termios.c_oflag= (TOUTPUT_DEF & ~(XTABS))
+	termios.c_oflag= (TOUTPUT_DEF & ~(XTABS)) | ONLCR
 		| (termios.c_oflag & (XTABS));
 	termios.c_cflag= (TCTRL_DEF & ~(CLOCAL|CSIZE|CSTOPB|PARENB|PARODD))
 		| (termios.c_cflag & (CLOCAL|CSIZE|CSTOPB|PARENB|PARODD));
