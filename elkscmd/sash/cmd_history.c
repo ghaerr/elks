@@ -110,7 +110,7 @@ cmd_edit(char *cm, char *edit, char *dst) {
                 *pmid = '\0';
 		if ((pend = strchr((pmid+1), (int)delim))) /* third caret */
 			*pend = '\0';	/* supporting blanks at the end of the subst */
-                fprintf(stderr, "subst: %s --%s--\n", cm, (char *)(pmid+1));
+                /*fprintf(stderr, "subst: %s --%s--\n", cm, (char *)(pmid+1));*/
                 if (!(psub = strstr(cm, edit))) {
                         fprintf(stderr, "substitution failed\n");
                 } else {

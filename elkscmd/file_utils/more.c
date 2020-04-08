@@ -62,21 +62,20 @@ int cat_file(int m_in, int m_out) {
 	}
 	return (m_stat);
 } 
- 
 
 int main(int argc, char **argv)
 {
 	int	cin, multi, mw;
-	char	*name;
-	char	ch;
+	char	*name, ch, next[80];
 	int	line;
 	int	col;
-	char 	next[80];
+	char 	*divider = "\n::::::::::::::\n";
 
-	cin = open("/dev/tty", O_RDONLY); 
-					   /* should do error checking, */
-					   /* but will not be used unless stdout */
-					   /* is a tty. */
+#if 0 /* temp fix */
+	if ((cin = open("/dev/tty", O_RDONLY)) < 0) 
+		fputs("Open /dev/tty failed, exiting\n", stderr); 
+#endif /* 0 */
+	cin = 2; /*temporary --- using stderr */
 	multi = (argc >= 3); 		/* multiple input files */
 	do {
 		line = 1;
@@ -90,14 +89,14 @@ int main(int argc, char **argv)
 				return 1;
 			}
 			if (multi) {	/* if more than one file, print name */
-				puts("::::::::::::::");
-				puts(name);
-				puts("::::::::::::::");
+				fputs(&divider[1], stdout);
+				fputs(name, stdout);
+				fputs(divider, stdout);
 				fflush(stdout);
 				line += 3;
 			}
 		} else 
-			fd = 0;
+			fd = 0;		/* use stdin */
 		if (!isatty(1)) {	/* output is not terminal, just copy */
 			if (cat_file(fd, 1) < 0) {
 				perror("more :");
