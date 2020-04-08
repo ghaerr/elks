@@ -215,7 +215,7 @@ static	ALIAS	*findalias();
 #endif
 
 #ifdef CMD_HISTORY
-static  void	init_hist();
+extern  void	init_hist();
 extern	int	history();
 extern	int	histcnt;
 #endif
@@ -327,7 +327,7 @@ readfile(name)
 
 	while (TRUE) {
 		fflush(stdout);
-		showprompt();
+		if (ttyflag) showprompt();
 
 #ifdef CMD_SOURCE
 		if (intflag && !ttyflag && (fp != stdin)) {
@@ -354,7 +354,7 @@ readfile(name)
 		buf[cc] = '\0';
 		if (strlen(buf) < 1) continue; 	/* blank line */
 #ifdef CMD_HISTORY
-		if (histcnt && history(buf))
+		if ((fp == stdin) && histcnt && history(buf))
 				continue;	
 
 #endif
