@@ -30,7 +30,7 @@ mainmenu_option next_comment
 		define_bool                        CONFIG_FULL_VFS            y
 	fi
 
-	bool '32-bit INode number'             CONFIG_32BIT_INODES        n
+	bool '32-bit Inode number'             CONFIG_32BIT_INODES        y
 
 	bool 'Extra external buffer cache'     CONFIG_FS_EXTERNAL_BUFFER  y
 	bool 'Pipe support'                    CONFIG_PIPE                y

@@ -215,7 +215,7 @@ static	ALIAS	*findalias();
 #endif
 
 #ifdef CMD_HISTORY
-static  void	init_hist();
+extern  void	init_hist();
 extern	int	history();
 extern	int	histcnt;
 #endif

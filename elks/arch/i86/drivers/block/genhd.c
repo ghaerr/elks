@@ -69,7 +69,7 @@ static void add_partition(struct gendisk *hd, unsigned short int minor,
     /*
      * Additional partition check since no MBR signature:
      * Some BIOS subtract a cylinder, making direct comparison incorrect.
-     * A CHS cylinder an have 63 max sectors * 255 heads, so adjust for that.
+     * A CHS cylinder can have 63 max sectors * 255 heads, so adjust for that.
      */
     sector_t adj_nr_sects = hd0->nr_sects + 63 * 255;
     if (start > adj_nr_sects || start+size > adj_nr_sects) {

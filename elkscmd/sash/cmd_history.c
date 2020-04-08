@@ -16,8 +16,8 @@ static  int     lastcom = -1;   /* index of most recent command */
 static  int     histind = 0;    /* cmd # for history list */
 static  char    **histbuf;      /* array holding commands */
 int     histcnt = HISTMIN;
-static	void	phex(char *);
-static	void	phlist();
+void	phex(char *);
+void	phlist();
 
 /*#define DEBUG*/
 
