@@ -202,6 +202,42 @@ static int rs_write(struct tty *tty)
     return (int)i;
 }
 
+#if 1
+void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
+{
+    struct serial_info *sp;
+    struct ch_queue *q;
+    int i, status;
+    char *io;
+    unsigned char buf[4];
+
+    i = 0;
+    sp = &ports[(int)irq_port[irq - 2]];
+    io = sp->io;
+
+    clr_irq();
+    /* read from uart into temp buffer with interrupts off*/
+    do {
+	status = inb_p(io + UART_LSR);
+	if (status & UART_LSR_DR) {			/* Receiver buffer full? */
+	    do {
+		buf[i++] = inb_p(io + UART_RX);		/* Read received data */
+	    } while ((inb_p(io + UART_LSR) & UART_LSR_DR) && i < 4);
+	}
+    } while (!(inb_p(io + UART_IIR) & UART_IIR_NO_INT) && i < 4);
+    set_irq();
+
+    /* then process received chars*/
+    q = &sp->tty->inq;
+    for (status=0; status < i; status++) {
+	if (!tty_intcheck(sp->tty, buf[status]))
+	    chq_addch(q, buf[status]);			/* Save data in queue */
+    }
+    wake_up(&q->wait);
+}
+
+#else
+
 static void receive_chars(register struct serial_info *sp)
 {
     register struct ch_queue *q;
@@ -235,6 +271,7 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 #endif
     } while (!(inb_p(sp->io + UART_IIR) & UART_IIR_NO_INT));
 }
+#endif
 
 static void rs_release(struct tty *tty)
 {
