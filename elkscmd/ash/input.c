@@ -89,7 +89,10 @@ char *readline __P((const char *prompt));
 void add_history __P((char *line));
 char *r_use_prompt = NULL;	/* the prompt to use with readline */
 #endif
-
+#if LINENOISE
+#include "linenoise.h"
+char *r_use_prompt = NULL;	/* the prompt to use with readline */
+#endif
 #ifdef __STDC__
 STATIC void pushfile(void);
 #else
@@ -207,6 +210,30 @@ preadbuffer() {
 	p[i++] = '\n';
     } else {
 #endif
+#if LINENOISE
+    /* Use the linenoise() call if a prompt is to be printed (interactive). */
+    if (r_use_prompt != NULL) {
+	char *prompt;
+	char *line;
+
+	p = parsenextc = parsefile->buf;
+	prompt = r_use_prompt;
+	r_use_prompt = NULL;
+    line = linenoise(prompt);
+	if (line == NULL) {
+                parsenleft = EOF_NLEFT;
+                return PEOF;
+	}
+	printf("\r"); /* or next prompt is not printed at left border */
+    fflush(stdout);
+    linenoiseHistoryAdd(line); /* Add to the history. */
+	strcpy(p, line);
+    linenoiseFree(line); /* The returned line has to be freed */
+	i = strlen(p);
+	p[i++] = '\n';
+    } else {
+#endif
+        
 retry:
 	/*
 	 * 19980225 Vincent Zweije <zweije@xs4all.nl>
@@ -236,7 +263,7 @@ retry:
                 parsenleft = EOF_NLEFT;
                 return PEOF;
 	}
-#if READLINE
+#if READLINE || LINENOISE
     }
 #endif
 	parsenleft = i - 1;

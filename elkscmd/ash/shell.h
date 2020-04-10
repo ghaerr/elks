@@ -47,6 +47,7 @@
  *	ATTY -> 1 to include code for atty(1).
  *	SHORTNAMES -> 1 if your linker cannot handle long names.
  *	READLINE -> 1 if line editing by readline() should be enabled.
+ *  LINENOISE -> 1 if line editing by linenoise() should be enabled
  *	define BSD if you are running 4.2 BSD or later.
  *	define SYSV if you are running under System V.
  *	define DEBUG=1 to compile in debugging (set global "debug" to turn on)
@@ -71,6 +72,7 @@
 #define USEGETPW  0
 #define ATTY	  0
 #define READLINE  0
+#define LINENOISE 1
 /* #define BSD */
 #define POSIX	  1
 #define DEBUG	  0

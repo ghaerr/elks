@@ -1,0 +1,52 @@
+ELKS uses the ash or Almquist shell. This is the port for ELKS which was ported 
+from the MINIX version in 1998.
+
+This had commented code to include the GNU Readline library or the editline 
+library (by Simmule Turner and Rich Salz). 
+
+These libraries provide a set of functions that allow users to edit command 
+lines as they are typed in. They also include additional functions to maintain 
+a list of previously-entered command lines, to recall and perhaps reedit those 
+lines. Both libraries were not used with ELKS, probably because of memory space
+requirements.
+
+I now added these functions using the small Linenoise library by Salvatore 
+Sanfilippo from Sicily. It is available on GitHub at 
+https://github.com/antirez/linenoise . This library was reduced in size and
+adapted to ELKS and its ash port.
+
+This library adds the following commands to allow for line editing and command
+history:
+
+Cursor-Up
+    Search backward in the history.
+Cursor-Down
+    Search forward in the history.
+
+Cursor-Left / Control-b
+    Move back one character. 
+Cursor-Right / Control-f
+    Move forward one character. 
+Backspace
+    Delete the character to the left of the cursor. 
+DEL 
+    Delete the character underneath the cursor.
+Printing characters
+    Insert the character into the line at the cursor position.
+ 
+Home / Control-a
+    Move to the start of the line. 
+End / Control-e
+    Move to the end of the line. 
+
+Control-u
+    Delete entire line
+Control-l
+    Clear the screen, reprinting the current line at the top. 
+Control-k
+    Delete the text from the current cursor position to the end of the line.
+Control-w
+    Delete from the cursor to the previous word.
+
+    
+11th of April 2020 Georg Potthast
