@@ -24,6 +24,16 @@ fflush(FILE *fp)
       return 0;
    }
 
+   /*
+    * Immediately error out if this is a fake FILE from snprintf etc.  Do
+    * _not_ clear the buffer in this case!
+    */
+   if (fp->fd < 0)
+   {
+      fp->mode |= __MODE_ERR;
+      return EOF;
+   }
+
    /* If there's output data pending */
    if (fp->mode & __MODE_WRITING)
    {

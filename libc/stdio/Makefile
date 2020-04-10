@@ -33,6 +33,7 @@ OBJS = \
 	setbuffer.o \
 	setvbuf.o \
 	sprintf.o \
+	snprintf.o \
 	sscanf.o \
 	stderr.o \
 	stdin.o \
@@ -45,6 +46,8 @@ OBJS = \
 	vscanf.o \
 	vprintf.o \
 	vsprintf.o \
+	vsnprintf.o \
+	# end of list
 
 all: out.a
 
