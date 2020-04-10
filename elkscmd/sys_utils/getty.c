@@ -46,13 +46,20 @@
 #include <termios.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <autoconf.h>		/* get CONFIG_CONSOLE_SERIAL*/
 
-#define DEBUG		0			/* set =1 for debug messages*/
+#define DEBUG		0	/* set =1 for debug messages*/
+
+/* debug messages go here*/
+#ifdef CONFIG_CONSOLE_SERIAL
+#define CONSOLE       "/dev/ttyS0"
+#else
+#define CONSOLE       "/dev/tty1"
+#endif
 
 #define LOGIN		"/bin/login"
 #define HOSTFILE	"/etc/HOSTNAME"
 #define ISSUE		"/etc/issue"
-#define CONSOLE		"/dev/tty1"
 
 /* For those requiring a super-small getty, the following define cuts out
  * all of the extra functionality regarding the /etc/issue code sequences.
@@ -231,7 +238,7 @@ int main(int argc, char **argv)
     }
 
     /* allow execution outside of init*/
-    if (getppid() > 1) {
+    if (getppid() != 1) {
 	int tty = open(argv[1], O_RDWR);
 	if (tty < 0) {
 		consolemsg("cannot open terminal %s\n", argv[1]);
@@ -377,7 +384,7 @@ int main(int argc, char **argv)
         termios.c_cc[VMIN] = 0;
         termios.c_cc[VTIME] = 0;
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios);
-    }
+    } else debug("tcgetattr(0) failed\n");
 
     for (;;) {
 	state("login: ");

@@ -22,11 +22,11 @@ struct serial_info {
     unsigned char flags;
     unsigned char lcr;
     unsigned char mcr;
+    unsigned char usecount;
     struct tty *tty;
 
 #define SERF_TYPE	15
 #define SERF_EXIST	16
-#define SERF_INUSE	32
 #define ST_8250		0
 #define ST_16450	1
 #define ST_16550	2
@@ -49,10 +49,10 @@ struct serial_info {
 #define MAX_RX_BUFFER_SIZE 16
 
 static struct serial_info ports[NR_SERIAL] = {
-    {(char *)0x3f8, 4, 0, DEFAULT_LCR, DEFAULT_MCR, NULL},
-    {(char *)0x2f8, 3, 0, DEFAULT_LCR, DEFAULT_MCR, NULL},
-    {(char *)0x3e8, 5, 0, DEFAULT_LCR, DEFAULT_MCR, NULL},
-    {(char *)0x2e8, 2, 0, DEFAULT_LCR, DEFAULT_MCR, NULL},
+    {(char *)0x3f8, 4, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
+    {(char *)0x2f8, 3, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
+    {(char *)0x3e8, 5, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
+    {(char *)0x2e8, 2, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
 };
 
 static char irq_port[NR_SERIAL] = { 3, 1, 0, 2 };
@@ -240,26 +240,23 @@ static void rs_release(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
 
-    debug("SERIAL: rs_release called\n");
-    port->flags &= ~SERF_INUSE;
-    outb_p(0, port->io + UART_IER);	/* Disable all interrupts */
+    debug_tty("SERIAL close %d\n", current->pid);
+    if (--port->usecount == 0)
+	outb_p(0, port->io + UART_IER);	/* Disable all interrupts */
 }
 
 static int rs_open(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
 
-    debug("SERIAL: rs_open called\n");
+    debug_tty("SERIAL open %d\n", current->pid);
 
     if (!(port->flags & SERF_EXIST))
 	return -ENODEV;
 
-    /* is port already in use ? */
-    if (port->flags & SERF_INUSE)
-	return -EBUSY;
-
-    /* no, mark it in use */
-    port->flags |= SERF_INUSE;
+    /* increment use count, don't init if already open*/
+    if (port->usecount++)
+	return 0;
 
     /* clear RX buffer */
     inb_p(port->io + UART_LSR);
@@ -318,7 +315,7 @@ static int get_serial_info(struct serial_info *info,
 static int rs_ioctl(struct tty *tty, int cmd, char *arg)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
-    register char *retvalp = 0;
+    int retval = 0;
 
     /* few sanity checks should be here */
     debug2("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd);
@@ -330,14 +327,17 @@ static int rs_ioctl(struct tty *tty, int cmd, char *arg)
 	update_port(port);
 	break;
     case TIOCSSERIAL:
-	retvalp = (char *) set_serial_info(port, (struct serial_info *)arg);
+	retval = set_serial_info(port, (struct serial_info *)arg);
 	break;
 
     case TIOCGSERIAL:
-	retvalp = (char *) get_serial_info(port, (struct serial_info *)arg);
+	retval = get_serial_info(port, (struct serial_info *)arg);
+
+    default:
+	return -EINVAL;
     }
 
-    return (int) retvalp;
+    return retval;
 }
 
 int rs_init(void)
@@ -400,7 +400,8 @@ void con_charout(char Ch)
 
 int wait_for_keypress(void)
 {
-    /* Do something */
+    /* FIXME*/
+    return '\n';
 }
 
 #endif
