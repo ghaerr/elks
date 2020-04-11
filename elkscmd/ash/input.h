@@ -76,7 +76,7 @@ void closescript();
 
 #define pgetc_macro()	(--parsenleft >= 0? *parsenextc++ : preadbuffer())
 
-#if READLINE
+#if READLINE || LINENOISE
 /* The variable "r_use_prompt" indicates the prompt to use with readline,
  * *and* that readline may only be used if non-NULL.
  */
