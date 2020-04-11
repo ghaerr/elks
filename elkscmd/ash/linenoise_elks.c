@@ -140,7 +140,9 @@ char *hints(const char *buf, int *color, int *bold) {
 #include <sys/ioctl.h>
 #include <unistd.h> 
 #include "linenoise.h"
+#include "shell.h"
 
+#if LINENOISE
 /* set these to 0 to reduce the code size */
 #define MASK_ON 0
 #define COMPLETION_ON 0
@@ -1303,3 +1305,4 @@ int linenoiseHistoryLoad(const char *filename) {
     fclose(fp);
     return 0;
 }
+#endif //LINENOISE
