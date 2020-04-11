@@ -903,8 +903,12 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
 #endif            
             return (int)l.len;
         case CTRL_C:     /* ctrl-c */
-            errno = EAGAIN;
-            return -1;
+            buf[0] = '\0';
+            l.pos = l.len = 0;
+            refreshLine(&l);
+            history_len--;
+            free(history[history_len]);
+            return (int)l.len;
         case BACKSPACE:   /* backspace */
         case 8:     /* ctrl-h */
             linenoiseEditBackspace(&l);
