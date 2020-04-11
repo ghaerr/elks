@@ -48,6 +48,10 @@ devices:
 	$(MKDEV) /dev/bda2 b 3 2
 	$(MKDEV) /dev/bda3 b 3 3
 	$(MKDEV) /dev/bda4 b 3 4
+	$(MKDEV) /dev/bda5 b 3 5
+	$(MKDEV) /dev/bda6 b 3 6
+	$(MKDEV) /dev/bda7 b 3 7
+	$(MKDEV) /dev/bda8 b 3 8
 	$(MKDEV) /dev/bdb  b 3 32
 	$(MKDEV) /dev/bdb1 b 3 33
 	$(MKDEV) /dev/bdb2 b 3 34

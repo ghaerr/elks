@@ -72,7 +72,7 @@
 #define USEGETPW  0
 #define ATTY	  0
 #define READLINE  0
-#define LINENOISE 1
+#define LINENOISE 0
 /* #define BSD */
 #define POSIX	  1
 #define DEBUG	  0
