@@ -86,11 +86,11 @@ static unsigned int divisors[] = {
 /* Flush input fifo */
 static void flush_input_fifo(register struct serial_info *sp)
 {
-    register char *pi = (char *)MAX_RX_BUFFER_SIZE;
+    int i = MAX_RX_BUFFER_SIZE;
 
     do {
 	inb_p(sp->io + UART_RX);
-    } while (--pi && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
+    } while (--i && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
 }
 
 static int rs_probe(register struct serial_info *sp)
@@ -207,7 +207,7 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
     struct serial_info *sp;
     struct ch_queue *q;
-    int i, status;
+    int i, j, status;
     char *io;
     unsigned char buf[4];
 
@@ -215,21 +215,28 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     sp = &ports[(int)irq_port[irq - 2]];
     io = sp->io;
 
-    /* read from uart into temp buffer with interrupts off*/
-    do {
+    status = inb_p(io + UART_LSR);			/* check for data overrun*/
+    /* read from uart into temp buffer*/
+    //do {
 	//status = inb_p(io + UART_LSR);
-	//if (status & UART_LSR_DR) {			/* Receiver buffer full? */
+	/* QEMU sometimes has interrupt w/o data available bit set*/
+	//if (status & UART_LSR_DR)			/* Receiver buffer full? */
 	    do {
 		buf[i++] = inb_p(io + UART_RX);		/* Read received data */
 	    } while ((inb_p(io + UART_LSR) & UART_LSR_DR) && i < 4);
 	//}
-    } while (!(inb_p(io + UART_IIR) & UART_IIR_NO_INT) && i < 4);
+    //} while (!(inb_p(io + UART_IIR) & UART_IIR_NO_INT) && i < 4);
+
+    if (status & UART_LSR_FE)
+	printk("serial: framing error\n");
+    if ((status & UART_LSR_DR) == 0)
+	printk("serial: interrupt w/o data available\n");
 
     /* then process received chars*/
     q = &sp->tty->inq;
-    for (status=0; status < i; status++) {
-	if (!tty_intcheck(sp->tty, buf[status]))
-	    chq_addch(q, buf[status]);			/* Save data in queue */
+    for (j=0; j < i; j++) {
+	if (!tty_intcheck(sp->tty, buf[j]))
+	    chq_addch(q, buf[j]);			/* Save data in queue */
     }
     wake_up(&q->wait);
 }
@@ -305,7 +312,7 @@ static int rs_open(struct tty *tty)
     /* set serial port parameters to match ports[rs_minor] */
     update_port(port);
 
-    /* enable receiver data interrupt; FIXME: update code to utilize full interrupt interface */
+    /* enable receiver data interrupt*/
     outb_p(UART_IER_RDI, port->io + UART_IER);
 
     outb_p(port->mcr, port->io + UART_MCR);
