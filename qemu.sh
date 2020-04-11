@@ -54,6 +54,11 @@ KEYBOARD=
 SERIAL="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
 #SERIAL="-chardev msmouse,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
 
+# Uncomment this to route ELKS /dev/ttyS0 to host terminal
+#CONSOLE="-serial stdio"
+# Hides qemu window also
+#CONSOLE="-serial stdio -nographic"
+
 # Host forwarding for networking
 # No forwarding: only outgoing from ELKS to host
 # HOSTFWD="-net user"
@@ -71,6 +76,6 @@ HOSTFWD="-net user"
 
 # Configure QEMU as pure ISA system
 
-$QEMU -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 1M \
+exec $QEMU $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 1M \
 $KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \
 -net nic,model=ne2k_isa $HOSTFWD $NETDUMP $IMAGE $DISK2 $@

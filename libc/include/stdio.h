@@ -135,9 +135,11 @@ int fscanf(FILE * fp, const char * fmt, ...);
 extern int printf __P ((__const char*, ...));
 extern int fprintf __P ((FILE*, __const char*, ...));
 extern int sprintf __P ((char*, __const char*, ...));
+extern int snprintf __P ((char*, size_t, __const char*, ...));
 
 int vfprintf (FILE * stream, const char * format, va_list ap);
 int vsprintf (char * sp, const char * format, va_list ap);
+int vsnprintf (char * sp, size_t, const char * format, va_list ap);
 
 #define stdio_pending(fp) ((fp)->bufread>(fp)->bufpos)
 

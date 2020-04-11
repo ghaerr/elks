@@ -16,8 +16,8 @@ static  int     lastcom = -1;   /* index of most recent command */
 static  int     histind = 0;    /* cmd # for history list */
 static  char    **histbuf;      /* array holding commands */
 int     histcnt = HISTMIN;
-static	void	phex(char *);
-static	void	phlist();
+void	phex(char *);
+void	phlist();
 
 /*#define DEBUG*/
 
@@ -93,11 +93,13 @@ cmd_get(int idx) { /* return the selected command from the history buffer */
 char *
 cmd_edit(char *cm, char *edit, char *dst) {
         char delim = *edit;
-        char *pmid, *psub, *tmp;
+        char *pmid, *psub, *pend, *tmp;
+	int len;
 
         if (!cm)
                 return("\0");   /* got null string */
-        if (!(tmp = malloc(CMDBUF + 2 + strlen(edit)))) {
+	len = CMDBUF + 2 + strlen(edit);
+        if (!(tmp = malloc(len))) {
                 printf("Malloc error in substitute.\n");
                 return(NULL);
         }
@@ -106,15 +108,16 @@ cmd_edit(char *cm, char *edit, char *dst) {
         *tmp = '\0';
         if ((pmid = strchr(++edit, (int) delim))) {
                 *pmid = '\0';
-                /*fprintf(stderr, "subst: %s -- %s\n", cm, edit);*/
+		if ((pend = strchr((pmid+1), (int)delim))) /* third caret */
+			*pend = '\0';	/* supporting blanks at the end of the subst */
+                /*fprintf(stderr, "subst: %s --%s--\n", cm, (char *)(pmid+1));*/
                 if (!(psub = strstr(cm, edit))) {
                         fprintf(stderr, "substitution failed\n");
                 } else {
                         strncpy(tmp, cm, (int)(psub - cm));
 			tmp[(int)(psub - cm)] = '\0';
                         strcat(tmp, ++pmid);
-                        strcat(tmp, (char *)(psub+strlen(edit)));
-                        /* warning - buffer oveflow possible in *tmp */
+                        strncat(tmp, (char *)(psub+strlen(edit)), len - strlen(tmp) -1);
                 }
         }
         strcpy(dst, tmp);

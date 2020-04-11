@@ -66,6 +66,7 @@ mainmenu_option next_comment
 		choice 'Apps and Image Size' \
 		"All-2880k/HD	CONFIG_APPS_2880K	\
 		 Large-1440k	CONFIG_APPS_1440K	\
+		 Medium-1200k	CONFIG_APPS_1200K	\
 		 Medium-720k	CONFIG_APPS_720K	\
 		 Small-360k		CONFIG_APPS_360K" Large-1440k
 	fi

@@ -4,6 +4,9 @@
  * Usage: /bin/init
  *       init [0123456]
  *
+ * Apr 2020 Greg Haerr
+ *	Many more bug fixes.
+ *
  * 2001-08-23  Harry Kalogirou
  *	Many bug fixes. In general made it finaly work.
  *	Also corrected the C formating.
@@ -28,13 +31,20 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
-#include <assert.h>
 #include <memory.h>
 #include <errno.h>
 #include <time.h>
+#include <autoconf.h>		/* get CONFIG_CONSOLE_SERIAL*/
 
 #define USE_UTMP	0	/* =1 to use /var/run/utmp*/
 #define DEBUG		0	/* =1 for debug messages*/
+
+/* debug and sysinit/respawn sh -e output goes here*/
+#ifdef CONFIG_CONSOLE_SERIAL
+#define DEVTTY       "/dev/ttyS0"
+#else
+#define DEVTTY       "/dev/tty1"
+#endif
 
 #if !DEBUG
 #define debug(...)
@@ -49,7 +59,6 @@
 #define INITLVL      "/etc/initlvl"
 #define SHELL        "/bin/sh"
 #define GETTY        "/bin/getty"
-#define DEVTTY       "/dev/tty1"
 #define MAXCHILD     8
 
 /* 'hashed' strings */
@@ -123,9 +132,9 @@ static void debug2(const char *str)
 
 void parseLine(const char* line, void func())
 {
-	char *a[4];
+	char *a[5];
 	int k = 0;
-	char buf[256], *p;
+	char buf[BUFSIZE], *p;
 
 	strcpy(buf, line);
 	a[k++] = p = buf;
@@ -146,22 +155,25 @@ void parseLine(const char* line, void func())
 void scanFile(void func())
 {
 	int f, left;
-	char buf[BUFSIZE], *line, *next;
+	char *line, *next;
+	char buf[BUFSIZE+1];
 
 	f = open(INITTAB, O_RDONLY);
-	if (-1 == f) fatalmsg("Missing %s\n", INITTAB);
+	if (f < 0) fatalmsg("Missing %s\n", INITTAB);
 
 	left = read(f, buf, BUFSIZE);
+	buf[left] = 0;
 	line = strtok(buf, "\n");
 	next = strtok(NULL, "\n");
 
 	while (1) {
 		if (!next) {
 			if (line == buf) goto out;
-			memmove(buf, line, left);
+			if (left) memmove(buf, line, left);
 			left += read(f, buf+left, BUFSIZE-left);
-			line = buf;
-			next = strtok(buf, "\n");
+			buf[left] = 0;
+			line = strtok(buf, "\n");
+			next = strtok(NULL, "\n");
 		}
 		else {
 			parseLine(line, func);
@@ -213,19 +225,6 @@ void removeChild(struct tabentry *pos)
 	memcpy(pos, --nextchild, sizeof (struct tabentry));
 }
 
-void doSleep(int sec)
-{
-/*
- struct timeval tv;
-
- tv.tv_sec = sec;
- tv.tv_usec = 0;
-
- while (select(0, NULL, NULL, NULL, &tv) < 0 && errno == EINTR)
-  ;
- */
-}
-
 pid_t respawn(const char **a)
 {
     int pid;
@@ -240,6 +239,9 @@ pid_t respawn(const char **a)
     if (pid) debug("spawning %d '%s'\n", pid, a[3]);
 
     if (0 == pid) {
+#if DEBUG
+	sleep(1);	/* allow init messages prior to ours*/
+#endif
 	setsid();
 	strcpy(buf, a[3]);
 	if (!strncmp(buf, GETTY, sizeof(GETTY)-1)) {
@@ -257,7 +259,7 @@ pid_t respawn(const char **a)
 	    argv[1] = devtty;
 	    argv[2] = baudrate;
 	    argv[3] = NULL;
-	    //debug("execv '%s' '%s' '%s'\n", argv[0], argv[1], argv[2]);
+	    debug("execv '%s' '%s' '%s'\n", argv[0], argv[1], argv[2]);
 
 	    dup2(fd ,STDIN_FILENO);
 	    dup2(fd ,STDOUT_FILENO);
@@ -275,7 +277,7 @@ pid_t respawn(const char **a)
 	    argv[2] = buf;
 	    argv[3] = strtok(buf, " ");
 	    argv[4] = NULL;
-	    //debug("execv '%s' '%s' '%s' '%s'\n", argv[0], argv[1], argv[2], argv[3]);
+	    debug("execv '%s' '%s' '%s' '%s'\n", argv[0], argv[1], argv[2], argv[3]);
 
 	    dup2(fd ,STDIN_FILENO);
 	    dup2(fd ,STDOUT_FILENO);
@@ -331,7 +333,7 @@ void getRunlevel(char **a)
 
 void exitRunlevel(char **a)
 {
-	debug("%s:%s:%s:%s ", a[0], a[1], a[2], a[3]);
+	debug("EXITRUNLVL %s:%s:%s:%s ", a[0], a[1], a[2], a[3]);
 
 	if (a[1][0] && !strchr(a[1], runlevel)) {
 		struct tabentry *child;
@@ -350,7 +352,7 @@ void exitRunlevel(char **a)
 		}
 		kill(child->pid, SIGTERM);
 
-		doSleep(2);                  /* give it the time */
+		sleep(2);                  /* give it the time */
 
 		/* if still running, kill it right away */
 		child = matchId(a[0]);
@@ -365,7 +367,7 @@ void enterRunlevel(const char **a)
 {
 	pid_t pid;
 
-	debug("%s:%s:%s:%s ", a[0], a[1], a[2], a[3]);
+	debug("ENTERUNLVL %s:%s:%s:%s ", a[0], a[1], a[2], a[3]);
 
 	if (!a[1][0] || strchr(a[1], runlevel)) {
 		int andWait=0;
@@ -377,6 +379,7 @@ void enterRunlevel(const char **a)
 				andWait = 1;
 			case RESPAWN:
 			case ONCE:
+				debug2("\n");
 				pid = respawn(a);
 				if (andWait) while (pid != wait(NULL));
 				else appendChild(a[0], pid);
@@ -414,20 +417,21 @@ void spawnThisOne(const char **a)
 
 void handle_signal(int sig)
 {
-	debug("signaled\n");
+	debug("signaled %d\n", sig);
 	switch(sig) {
-		case SIGHUP:
+	case SIGHUP:
 		/* got signaled by another instance of init, change runlevel! */
-		{
-			prevRunlevel = runlevel;
-			scanFile(getRunlevel);
-
-			if (runlevel != prevRunlevel) {
-				/* -stop all running children not needed in new run-level */
-				scanFile(exitRunlevel);
-				/* -start all non running children needed in new run-level */
-				scanFile(enterRunlevel);
-			}
+		prevRunlevel = runlevel;
+		debug("SCAN getrunlevel\n");
+		scanFile(getRunlevel);
+		debug("previous runlevel %c, new runlevel %c\n", prevRunlevel, runlevel);
+		if (runlevel != prevRunlevel) {
+			/* -stop all running children not needed in new run-level */
+			debug("SCAN exitrunlevel\n");
+			scanFile(exitRunlevel);
+			/* -start all non running children needed in new run-level */
+			debug("SCAN start runlevel %c\n", runlevel);
+			scanFile(enterRunlevel);
 		}
 		break;
 	}
@@ -460,31 +464,21 @@ int main(int argc, char **argv)
 #endif
 	/* am I the No.1 init? */
 	if (getpid() == 1) {
-		/*   signal(SIGALRM,  handle_signal); */
 		signal(SIGHUP,   handle_signal);
-		/*   signal(SIGINT,   handle_signal); */
-		/*   signal(SIGCHLD,  handle_signal); */
-		/*   signal(SIGPWR,   handle_signal); */
-		/*   signal(SIGWINCH, handle_signal); */
-		/*   signal(SIGUSR1,  handle_signal); */
-		/*   signal(SIGSTOP,  handle_signal); */
-		/*   signal(SIGTSTP,  handle_signal); */
-		/*   signal(SIGCONT,  handle_signal); */
-		/*   signal(SIGSEGV,  handle_signal); */
 #if USE_UTMP
 		setutent();
 #endif
 		/* get runlevel & spawn sysinit */
-		debug("scan inittab pass 1\n");
+		debug("SCAN sysinit\n");
 		scanFile(passOne);
 
 		/* spawn needed children */
-		debug("scan inittab runlevel %c\n", runlevel);
+		debug("SCAN start runlevel %c\n", runlevel);
 		scanFile(enterRunlevel);
 #if USE_UTMP
 		endutent();
 #endif
-		/* wait for signals. */
+		/* endless loop waiting for signals or child exit*/
 		while (1) {
 			pid = wait(NULL);
 			debug("wait child exit %d\n", pid);
@@ -493,7 +487,7 @@ int main(int argc, char **argv)
 			thisOne = matchPid(pid);
 			if (!thisOne) continue;
 
-			debug("scan inittab spawn\n");
+			debug("SCAN respawn child exit\n");
 			scanFile(spawnThisOne);
 		}
 	} else {

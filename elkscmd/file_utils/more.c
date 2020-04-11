@@ -6,50 +6,50 @@
 
 #include "futils.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <signal.h>
-#include <pwd.h>
-#include <grp.h>
-#include <utime.h>
-#include <errno.h>
+#include <termios.h>
 
 int fd;
 char mbuf[BUFSIZ];
 
-int more_wait(int fin, int fout, char *msg)  {
+int more_wait(int fout, char *msg)
+{
+	struct termios termios;
 	char buf[80], ch;
 
-        write(fout, msg, strlen(msg));
-                               
-        if (read(fin, buf, sizeof(buf)) < 1) {
-             perror("more: ");
-             close(fd);
-             return(-1);
-        }       
-        write(fout,"\r",1); /* move cursor to pos 0 */
-        ch = buf[0];
-        if (ch == ':')
-              ch = buf[1];
-                                       
-        switch (ch) {
-              case 'N':
-              case 'n':
-                   close(fd);
-                   fd = -1;
-                   return(1);
-                               
-              case 'Q':
-              case 'q':
-                   close(fd);
-                   return(-1);
+	write(fout, msg, strlen(msg));
+
+	if (tcgetattr(1, &termios) >= 0) {
+		struct termios termios2;
+		termios2.c_lflag &= ~ICANON;
+		termios2.c_cc[VMIN] = 0;
+		tcsetattr(1, TCSAFLUSH, &termios2);
 	}
-	return(0);
+	read(1, buf, sizeof(buf));
+	tcsetattr(1, TCSAFLUSH, &termios);
+
+	write(fout,"\r",1); /* move cursor to pos 0 */
+	ch = buf[0];
+	if (ch == ':')
+		ch = buf[1];
+
+	switch (ch) {
+	case 'N':
+	case 'n':
+		close(fd);
+		fd = -1;
+		return 1;
+	case 'Q':
+	case 'q':
+		write(1, "        \r", 9);
+		close(fd);
+		return -1;
+	}
+	return 0;
 }
 
 int cat_file(int m_in, int m_out) {
@@ -62,21 +62,15 @@ int cat_file(int m_in, int m_out) {
 	}
 	return (m_stat);
 } 
- 
 
 int main(int argc, char **argv)
 {
-	int	cin, multi, mw;
-	char	*name;
-	char	ch;
+	int	multi, mw;
 	int	line;
 	int	col;
-	char 	next[80];
+	char	*name, ch, next[80];
+	char 	*divider = "\n::::::::::::::\n";
 
-	cin = open("/dev/tty", O_RDONLY); 
-					   /* should do error checking, */
-					   /* but will not be used unless stdout */
-					   /* is a tty. */
 	multi = (argc >= 3); 		/* multiple input files */
 	do {
 		line = 1;
@@ -90,14 +84,14 @@ int main(int argc, char **argv)
 				return 1;
 			}
 			if (multi) {	/* if more than one file, print name */
-				puts("::::::::::::::");
-				puts(name);
-				puts("::::::::::::::");
+				fputs(&divider[1], stdout);
+				fputs(name, stdout);
+				fputs(divider, stdout);
 				fflush(stdout);
 				line += 3;
 			}
 		} else 
-			fd = 0;
+			fd = 0;		/* use stdin */
 		if (!isatty(1)) {	/* output is not terminal, just copy */
 			if (cat_file(fd, 1) < 0) {
 				perror("more :");
@@ -141,7 +135,7 @@ int main(int argc, char **argv)
 			if (col > 0)
 				putchar('\n');
 
-			if ((mw = more_wait(cin, 1, "--More--")) > 0) {
+			if ((mw = more_wait(1, "--More--")) > 0) {
 				line = 1; /* user requested next file immediately */
 				break;
 			}
@@ -152,12 +146,11 @@ int main(int argc, char **argv)
 		}
 		if (multi && line > 1 && argc > 2) {
 			strcpy(&next[0], "--Next file: "); 
-			if (more_wait(cin, 1, strcat(next, argv[1])) < 0)
+			if (more_wait(1, strcat(next, argv[1])) < 0)
 				return 0;
 		}
 		if (fd)
 			close(fd);
 	} while (--argc > 1);
-	close(cin);
 	return 0;
 }

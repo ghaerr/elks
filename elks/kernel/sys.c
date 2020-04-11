@@ -313,7 +313,7 @@ int sys_setsid(void)
 
     if (currentp->session == currentp->pid)
 	return -EPERM;
-    debug_sig("SETSID pgrp %d\n", currentp->pid);
+    debug_tty("SETSID pgrp %d\n", currentp->pid);
     currentp->session = currentp->pgrp = currentp->pid;
     currentp->tty = NULL;
 

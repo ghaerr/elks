@@ -516,7 +516,7 @@ int getsize(signo)
 #if OSK
 		write(2, "\l", 1);
 #endif
-		endwin();
+		//endwin();
 		exit(2);
 	}
 
