@@ -215,17 +215,15 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     sp = &ports[(int)irq_port[irq - 2]];
     io = sp->io;
 
-    clr_irq();
     /* read from uart into temp buffer with interrupts off*/
     do {
-	status = inb_p(io + UART_LSR);
-	if (status & UART_LSR_DR) {			/* Receiver buffer full? */
+	//status = inb_p(io + UART_LSR);
+	//if (status & UART_LSR_DR) {			/* Receiver buffer full? */
 	    do {
 		buf[i++] = inb_p(io + UART_RX);		/* Read received data */
 	    } while ((inb_p(io + UART_LSR) & UART_LSR_DR) && i < 4);
-	}
+	//}
     } while (!(inb_p(io + UART_IIR) & UART_IIR_NO_INT) && i < 4);
-    set_irq();
 
     /* then process received chars*/
     q = &sp->tty->inq;
