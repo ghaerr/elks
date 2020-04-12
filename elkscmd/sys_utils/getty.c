@@ -229,6 +229,26 @@ int main(int argc, char **argv)
 	debug("'%s' %ld\n", argv[1], baud);
     }
 
+    /* setup tty termios state*/
+    baud = convert_baudrate(baud);
+    if (tcgetattr(STDIN_FILENO, &termios) >= 0) {
+        termios.c_lflag |= ISIG | ICANON | ECHO | ECHOE;
+        termios.c_lflag &= ~(IEXTEN | ECHONL | ECHOK | NOFLSH);
+        termios.c_iflag |= BRKINT | ICRNL;
+        termios.c_iflag &= ~(IGNBRK | IGNPAR | PARMRK | INPCK | ISTRIP | INLCR | IGNCR
+		| IXON | IXOFF | IXANY);
+        termios.c_oflag |= OPOST | ONLCR;
+        termios.c_oflag &= ~XTABS;
+        if (baud)
+            termios.c_cflag = baud;
+        termios.c_cflag |= CS8 | CLOCAL | HUPCL;
+        /*termios.c_cflag |= CRTSCTS;*/
+        termios.c_cflag &= ~(PARENB | CREAD);
+        termios.c_cc[VMIN] = 0;
+        termios.c_cc[VTIME] = 0;
+        tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios);
+    }
+
     fd = open(ISSUE, O_RDONLY);
     if (fd >= 0) {
 	put('\n');
@@ -343,26 +363,6 @@ int main(int argc, char **argv)
 	}
 #endif
 	close(fd);
-    }
-
-    /* setup tty termios state*/
-    baud = convert_baudrate(baud);
-    if (tcgetattr(STDIN_FILENO, &termios) >= 0) {
-        termios.c_lflag |= ISIG | ICANON | ECHO | ECHOE | ECHONL;
-        termios.c_lflag &= ~(IEXTEN | ECHOK | NOFLSH);
-        termios.c_iflag |= BRKINT | ICRNL;
-        termios.c_iflag &= ~(IGNBRK | IGNPAR | PARMRK | INPCK | ISTRIP | INLCR | IGNCR
-		| IXON | IXOFF | IXANY);
-        termios.c_oflag |= OPOST | ONLCR;
-        termios.c_oflag &= ~XTABS;
-        if (baud)
-            termios.c_cflag = baud;
-        termios.c_cflag |= CS8 | CLOCAL | HUPCL;
-        /*termios.c_cflag |= CRTSCTS;*/
-        termios.c_cflag &= ~(PARENB | CREAD);
-        termios.c_cc[VMIN] = 0;
-        termios.c_cc[VTIME] = 0;
-        tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios);
     }
 
     for (;;) {
