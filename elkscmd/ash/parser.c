@@ -109,7 +109,7 @@ STATIC int noexpand __P((char *));
 STATIC void synexpect __P((int));
 STATIC void synerror __P((char *));
 
-#if ATTY || READLINE
+#if ATTY || READLINE || LINENOISE
 STATIC void putprompt __P((char *));
 #else /* not ATTY */
 #define putprompt(s)	out2str(s)
@@ -1179,7 +1179,7 @@ RESET {
 #endif
 
 
-#if READLINE
+#if READLINE || LINENOISE
 /*
  * Remember a prompt for use with readline if input and output is a terminal.
  */

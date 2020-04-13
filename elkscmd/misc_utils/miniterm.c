@@ -433,6 +433,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+#if later
 	if (ioctl(fd, TIOCMGET, &flags) == -1) {
 		perror(device);
 		exit(1);
@@ -454,6 +455,7 @@ int main(int argc, char **argv)
 		perror(device);
 		exit(1);
 	}
+#endif
 
 	set_raw(0);
 
