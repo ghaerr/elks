@@ -169,5 +169,8 @@ ifdef CONFIG_APP_BUSYELKS
 	$(MAKE) -C busyelks links
 endif
 	for DIR in $(INSTDIRS); do $(MAKE) -C $$DIR install || exit 1; done
+ifdef CONFIG_APP_CGATEXT
+	make -C cgatext install
+endif
 
 ###############################################################################
