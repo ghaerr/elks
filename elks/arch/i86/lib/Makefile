@@ -64,6 +64,18 @@ OBJS3 = $(SRCS3:.c=.o)
 OBJS		= $(OBJS1) $(OBJS2) $(OBJS3)
 #OBJS		= $(OBJS1) $(OBJS2) $(OBJS3) $(JOBJS)
 
+OBJS_MEM = \
+	peekb.o \
+	peekw.o \
+	pokeb.o \
+	pokew.o \
+	fmemsetb.o \
+	fmemsetw.o \
+	fmemcpyb.o \
+	fmemcpyw.o \
+	fmemcmpb.o \
+	fmemcmpw.o \
+
 # miscellaneous
 # TODO: move them to the C library
 
@@ -73,10 +85,13 @@ JOBJS       = inport.o inportb.o outport.o outportb.o irqflag.o \
 #########################################################################
 # Commands.
 
-all:	lib86.a
+all:	lib86.a libmem.a
 
 lib86.a: $(OBJS)
 	$(AR) rcs lib86.a $(OBJS)
+
+libmem.a: $(OBJS_MEM)
+	$(AR) rcs $@ $^
 
 $(TMPS1): $(SRCS1)
 $(OBJS1): $(TMPS1)
