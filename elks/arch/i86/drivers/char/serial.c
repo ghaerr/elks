@@ -263,7 +263,7 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     struct ch_queue *q;
     int i, j, status;
     char *io;
-    unsigned char buf[4];
+    unsigned char buf[10];
 
     i = 0;
     sp = &ports[(int)irq_port[irq - 2]];
@@ -277,9 +277,9 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 	//if (status & UART_LSR_DR)			/* Receiver buffer full? */
 	    do {
 		buf[i++] = inb_p(io + UART_RX);		/* Read received data */
-	    } while ((inb_p(io + UART_LSR) & UART_LSR_DR) && i < 4);
+	    } while ((inb_p(io + UART_LSR) & UART_LSR_DR) && i < 10);
 	//}
-    //} while (!(inb_p(io + UART_IIR) & UART_IIR_NO_INT) && i < 4);
+    //} while (!(inb_p(io + UART_IIR) & UART_IIR_NO_INT) && i < 10);
 
     if (status & UART_LSR_OE)
 	printk("serial: data overrun\n");
@@ -360,8 +360,12 @@ static int rs_open(struct tty *tty)
     /* Flush input fifo */
     flush_input_fifo(port);
 
-    /* enable FIFO with 1 byte trigger */
-    //outb_p(UART_FCR_ENABLE_FIFO, port->io + UART_FCR);
+#define UART_FCR_ENABLE_FIFO14	(UART_FCR_ENABLE_FIFO | 0xC0)
+#define UART_FCR_ENABLE_FIFO8	(UART_FCR_ENABLE_FIFO | 0x80)
+#define UART_FCR_ENABLE_FIFO4	(UART_FCR_ENABLE_FIFO | 0x40)
+    /* enable FIFO with 8 byte trigger */
+    //if ((port->flags & SERF_TYPE) > ST_16450)
+	//outb_p(UART_FCR_ENABLE_FIFO8, port->io + UART_FCR);
 
     inb_p(port->io + UART_IIR);
     inb_p(port->io + UART_MSR);
