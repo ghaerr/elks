@@ -300,34 +300,33 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, size_t len)
 int tty_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
-    register char *ret;
+    int ret;
 
     switch (cmd) {
     case TCGETS:
-	ret = (char *)verified_memcpy_tofs(arg, &tty->termios, sizeof(struct termios));
+	ret = verified_memcpy_tofs(arg, &tty->termios, sizeof(struct termios));
 	break;
     case TCSETS:
     case TCSETSW:
     case TCSETSF:
-	ret = (char *)verified_memcpy_fromfs(&tty->termios, arg, sizeof(struct termios));
+	ret = verified_memcpy_fromfs(&tty->termios, arg, sizeof(struct termios));
 
 	/* Inform driver that things have changed */
-	if (tty->ops->ioctl != NULL)
-	    tty->ops->ioctl(tty, cmd, arg);
+	if (ret == 0 && tty->ops->ioctl != NULL)
+	    ret = tty->ops->ioctl(tty, cmd, arg);
 	break;
     default:
-	ret = (char *)((tty->ops->ioctl == NULL)
+	ret = ((tty->ops->ioctl == NULL)
 	    ? -EINVAL
 	    : tty->ops->ioctl(tty, cmd, arg));
     }
-    return (int)ret;
+    return ret;
 }
 
-int tty_select(struct inode *inode,	/* how revolting, K&R style defs */
-	       struct file *file, int sel_type)
+int tty_select(struct inode *inode, struct file *file, int sel_type)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
-    register char *ret = 0;
+    int ret = 0;
 
     switch (sel_type) {
     case SEL_IN:
@@ -336,14 +335,14 @@ int tty_select(struct inode *inode,	/* how revolting, K&R style defs */
 	select_wait(&tty->inq.wait);
 	break;
     case SEL_OUT:
-	ret = (char *)(tty->outq.len != tty->outq.size);
+	ret = (tty->outq.len != tty->outq.size);
 	if (!ret)
 	    select_wait(&tty->outq.wait);
 	    /*@fallthrough@*/
 /*      case SEL_EX: */
 /*  	break; */
     }
-    return (int) ret;
+    return ret;
 }
 
 /*@-type@*/

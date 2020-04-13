@@ -30,6 +30,8 @@ struct serial_info {
 #define ST_8250		0
 #define ST_16450	1
 #define ST_16550	2
+#define ST_16550A	3
+#define ST_16750	4
 #define ST_UNKNOWN	15
 
 };
@@ -92,6 +94,55 @@ static void flush_input_fifo(register struct serial_info *sp)
 	inb_p(sp->io + UART_RX);
     } while (--i && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
 }
+
+#if 1
+static int rs_probe(register struct serial_info *sp)
+{
+    int status, type;
+    unsigned char scratch;
+
+    inb(sp->io + UART_IER);
+    outb_p(0, sp->io + UART_IER);
+    scratch = inb_p(sp->io + UART_IER);
+    outb_p(scratch, sp->io + UART_IER);
+    if (scratch)
+	return -1;
+
+    /* try to enable 64 byte FIFO and max trigger*/
+    outb_p(0xE7, sp->io + UART_FCR);
+
+    /* then read FIFO status*/
+    status = inb_p(sp->io + UART_IIR);
+    if (status & 0x40) {
+	if (status & 0x80) {		/* FIFO enabled*/
+	    if (status & 0x20)		/* 64 byte FIFO enabled*/
+		type = ST_16750;
+	    else type = ST_16550A;
+	} else type = ST_16550;
+    } else {
+	/* no FIFO, try writing arbitrary value to scratch reg*/
+	outb_p(0x2A, sp->io + UART_SCR);
+	if (inb_p(sp->io + UART_SCR) == 0x2a)
+	    type = ST_16450;
+	else type = ST_8250;
+    }
+    sp->flags = SERF_EXIST | type;
+
+    /*
+     *      Reset the chip
+     */
+    outb_p(0x00, sp->io + UART_MCR);
+
+    /* FIFO off, clear RX and TX FIFOs */
+    outb_p(UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT, sp->io + UART_FCR);
+
+    /* clear RX register */
+    flush_input_fifo(sp);
+
+    return 0;
+}
+
+#else
 
 static int rs_probe(register struct serial_info *sp)
 {
@@ -159,6 +210,7 @@ static int rs_probe(register struct serial_info *sp)
 
     return 0;
 }
+#endif /* old rs_probe function*/
 
 static void update_port(register struct serial_info *port)
 {
@@ -170,6 +222,8 @@ static void update_port(register struct serial_info *port)
     if (cflags & CBAUDEX)
 	cflags = B38400 + (cflags & 03);
     divisor = divisors[cflags];
+
+    //FIXME: update lcr from parity and word termios values
 
     clr_irq();
 
@@ -227,8 +281,8 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 	//}
     //} while (!(inb_p(io + UART_IIR) & UART_IIR_NO_INT) && i < 4);
 
-    if (status & UART_LSR_FE)
-	printk("serial: framing error\n");
+    if (status & UART_LSR_OE)
+	printk("serial: data overrun\n");
     if ((status & UART_LSR_DR) == 0)
 	printk("serial: interrupt w/o data available\n");
 
@@ -276,7 +330,7 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 #endif
     } while (!(inb_p(sp->io + UART_IIR) & UART_IIR_NO_INT));
 }
-#endif
+#endif /* old rs_irq function*/
 
 static void rs_release(struct tty *tty)
 {
@@ -306,6 +360,9 @@ static int rs_open(struct tty *tty)
     /* Flush input fifo */
     flush_input_fifo(port);
 
+    /* enable FIFO with 1 byte trigger */
+    //outb_p(UART_FCR_ENABLE_FIFO, port->io + UART_FCR);
+
     inb_p(port->io + UART_IIR);
     inb_p(port->io + UART_MSR);
 
@@ -330,12 +387,11 @@ static int set_serial_info(struct serial_info *info,
 			   struct serial_info *new_info)
 {
     register struct tty *tty;
-    register char *errp;
+    int err;
 
     tty = info->tty;
-    errp = (char *) verified_memcpy_fromfs(info, new_info,
-					   sizeof(struct serial_info));
-    if (!errp) {
+    err = verified_memcpy_fromfs(info, new_info, sizeof(struct serial_info));
+    if (!err) {
 	/* shutdown serial port and restart UART with new settings */
 
 	/* witty cheat :) - either we do this (and waste some DS) or duplicate
@@ -343,9 +399,9 @@ static int set_serial_info(struct serial_info *info,
 	 */
 	info->tty = tty;
 	rs_release(tty);
-	errp = (char *) rs_open(tty);
+	err = rs_open(tty);
     }
-    return (int) errp;
+    return err;
 }
 
 static int get_serial_info(struct serial_info *info,
@@ -362,11 +418,12 @@ static int rs_ioctl(struct tty *tty, int cmd, char *arg)
     /* few sanity checks should be here */
     debug2("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd);
     switch (cmd) {
-	/* Unlike Linux we use verified_memcpy*fs() which calls verify_area() for us */
     case TCSETS:
     case TCSETSW:
-    case TCSETSF:		/* For information, return value is ignored */
-	update_port(port);
+    case TCSETSF:
+	/* verified_memcpy*fs() already called by ntty.c ioctl handler*/
+	//FIXME: update_port() only sets baud rate from termios, not parity or wordlen*/
+	update_port(port);	/* ignored return value*/
 	break;
     case TIOCSSERIAL:
 	retval = set_serial_info(port, (struct serial_info *)arg);
@@ -391,6 +448,8 @@ int rs_init(void)
 	"n 8250",
 	" 16450",
 	" 16550",
+	" 16550A",
+	" 16750",
 	" UNKNOWN",
     };
 
@@ -398,9 +457,6 @@ int rs_init(void)
 	if (!rs_probe(sp) && !request_irq(sp->irq, rs_irq, NULL)) {
 	    sp->tty = tty;
 	    update_port(sp);
-#if 0
-	    outb_p(? ? ? ?, sp->io + UART_MCR);
-#endif
 	}
 	tty++;
     } while (++sp < &ports[NR_SERIAL]);
