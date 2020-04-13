@@ -33,7 +33,7 @@ int fd;
 	termios.c_cc[VINTR] = 3;
 	termios.c_cc[VMIN] = 1;
 	termios.c_cc[VTIME] = 0;
-	tcsetattr(2, TCSANOW, &termios);
+	tcsetattr(fd, TCSANOW, &termios);
 }
 
 setcooked(fd)
