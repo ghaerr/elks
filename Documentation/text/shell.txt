@@ -13,7 +13,7 @@ requirements.
 I now added these functions using the small Linenoise library by Salvatore 
 Sanfilippo from Sicily. It is available on GitHub at 
 https://github.com/antirez/linenoise . This library was reduced in size and
-adapted to ELKS and its ash port.
+adapted to ELKS and its ash shell port.
 
 This library adds the following commands to allow for line editing and command
 history:
@@ -49,4 +49,34 @@ Control-w
     Delete from the cursor to the previous word.
 
     
-11th of April 2020 Georg Potthast
+Linenoise features autocompletion (or TAB completion) which has been adapted 
+for ELKS.
+
+a) if you enter one or more letters on the command line and press TAB, 
+the shell will list the programs in the /bin directory that begin with 
+these letters on the screen and put the first one of these on the command line.
+If only one program matches the letters entered, there will be no list shown 
+and just this program will be put on the command line.
+You can select the program which is put on the command line by pressing enter
+or enter TAB again to get the next program in the list being displayed on the
+command line which you can then select with enter.
+
+b) if you enter "./" on the command line and press TAB, the shell will list
+the programs in the current directory and show the first of these on the
+command line. You can either select that with enter or press TAB to put the
+next program on the command line.
+
+c) if you enter e.g. ls, cat, vi etc. plus a blank and press TAB, the shell
+will list all the files in the current directory which are not executables on
+the screen and put the first one on the command line. You can select that with
+enter or press TAB to get the next one on the command line. This way you can
+select a file to use with ls, cat or vi using autocompletion.
+
+d) if you enter "cd " on the command line and press TAB, the shell will list
+all the directories in the current directory and put the first of them on the 
+command line. If you press enter you can move into that directory, or select
+"cd .." from the list by pressing TAB to move up one directory. 
+If you enter "cd /" and press TAB, the shell will display all the directories 
+in the root directory. If you press TAB again you can select one of these.
+    
+12th of April 2020 Georg Potthast

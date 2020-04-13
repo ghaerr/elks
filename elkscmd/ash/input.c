@@ -91,6 +91,7 @@ char *r_use_prompt = NULL;	/* the prompt to use with readline */
 #endif
 #if LINENOISE
 #include "linenoise.h"
+void completion(const char *buf, linenoiseCompletions *lc);
 char *r_use_prompt = NULL;	/* the prompt to use with readline */
 #endif
 #ifdef __STDC__
@@ -215,6 +216,8 @@ preadbuffer() {
     if (r_use_prompt != NULL) {
 	char *prompt;
 	char *line;
+
+    linenoiseSetCompletionCallback(completion);
 
 	p = parsenextc = parsefile->buf;
 	prompt = r_use_prompt;

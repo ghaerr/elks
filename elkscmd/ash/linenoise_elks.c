@@ -146,7 +146,7 @@ char *hints(const char *buf, int *color, int *bold) {
 
 /* set these to 0 to reduce the code size */
 #define MASK_ON 0
-#define COMPLETION_ON 0
+#define COMPLETION_ON 1
 #define MULTILINE_ON 0
 #define BEEP_ON 0
 #define HISTORY_SAVE 0
@@ -918,9 +918,13 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
             write(l.ofd, "\r\n", 2);  /* tty1 requires \r, serial doesn't*/
             return (int)l.len;
         case CTRL_C:     /* ctrl-c */
-            //errno = EAGAIN;
-            write(l.ofd, "\r\n", 2);  /* simulate old ^C behaviour*/
-            return 0;                 /* -1 will exit shell*/
+            /* avoid writing cancelled stuff into history - clear line and home cursor */
+            buf[0] = '\0';
+            l.pos = l.len = 0;
+            refreshLine(&l);
+            history_len--;
+            free(history[history_len]);
+            return (int)l.len;
         case BACKSPACE:   /* backspace */
         case CTRL_H:      /* ctrl-h */
             linenoiseEditBackspace(&l);
@@ -932,7 +936,7 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
             } else {
                 history_len--;
                 free(history[history_len]);
-                return -1;      // this will cause the shell to exit
+                return 0;      // -1 would cause the shell to exit
             }
             break;
         case CTRL_T:    /* ctrl-t, swaps current character with previous. */
