@@ -21,14 +21,14 @@ include $(BASEDIR)/Make.rules
 SRCS=	builtins.c cd.c dirent.c error.c eval.c exec.c expand.c input.c \
 	jobs.c mail.c main.c memalloc.c miscbltin.c mystring.c nodes.c \
 	options.c parser.c redir.c show.c signames.c syntax.c trap.c \
-	output.c var.c linenoise_elks.c
+	output.c var.c linenoise_elks.c autocomplete.c
 
 OBJS=	builtins.o cd.o dirent.o error.o eval.o exec.o expand.o input.o \
 	jobs.o mail.o main.o memalloc.o miscbltin.o mystring.o nodes.o \
 	options.o parser.o redir.o show.o signames.o syntax.o trap.o \
 	output.o var.o init.o \
 	bltin/echo.o bltin/expr.o bltin/regexp.o bltin/operators.o \
-	linenoise_elks.o
+	linenoise_elks.o autocomplete.o
 
 #LDFLAGS += -maout-chmem=0xc000
 
