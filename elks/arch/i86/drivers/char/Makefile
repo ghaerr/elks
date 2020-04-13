@@ -43,6 +43,10 @@ else
 OBJS  = serial.o lp.o xt_key.o init.o dircon.o mem.o \
 	ntty.o meta.o tcpdev.o pty.o bell.o
 
+ifdef CONFIG_CHAR_DEV_CGATEXT
+	OBJS += cgatext.o
+endif
+
 ifdef CONFIG_CONSOLE_BIOS
 OBJS += bioscon.o bioscon-low.o
 endif

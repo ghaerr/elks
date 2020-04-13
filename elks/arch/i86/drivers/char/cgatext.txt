@@ -1,0 +1,18 @@
+/dev/cgatext
+============
+Marcin Laszewski Marcin.Laszewski@gmail.com
+
+Example: screen saver
+---------------------
+
+Save
+~~~~
+.....................................
+# cat /dev/cgatext > /tmp/screen.save
+.....................................
+
+Restore
+~~~~~~~
+.....................................
+# cat /tmp/screen.save > /dev/cgatext
+.....................................
