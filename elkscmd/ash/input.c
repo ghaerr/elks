@@ -219,16 +219,14 @@ preadbuffer() {
 	p = parsenextc = parsefile->buf;
 	prompt = r_use_prompt;
 	r_use_prompt = NULL;
-    line = linenoise(prompt);
+	line = linenoise(prompt);
 	if (line == NULL) {
                 parsenleft = EOF_NLEFT;
                 return PEOF;
 	}
-	printf("\r"); /* or next prompt is not printed at left border */
-    fflush(stdout);
-    linenoiseHistoryAdd(line); /* Add to the history. */
 	strcpy(p, line);
-    linenoiseFree(line); /* The returned line has to be freed */
+	linenoiseHistoryAdd(line); /* Add to the history. */
+	linenoiseFree(line); /* The returned line has to be freed */
 	i = strlen(p);
 	p[i++] = '\n';
     } else {
