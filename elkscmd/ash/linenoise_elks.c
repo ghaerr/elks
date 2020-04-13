@@ -936,7 +936,7 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
             } else {
                 history_len--;
                 free(history[history_len]);
-                return 0;      // -1 would cause the shell to exit
+                return -1;      // this will cause the shell to exit
             }
             break;
         case CTRL_T:    /* ctrl-t, swaps current character with previous. */
