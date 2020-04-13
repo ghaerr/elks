@@ -56,17 +56,17 @@
  * flickering effect with some slow terminal, but the lesser sequences
  * the more compatible.
  *
- * EL (Erase Line) [ESC K]
+ * EL (Erase Line)
  *    Sequence: ESC [ n K
  *    Effect: if n is 0 or missing, clear from cursor to end of line
  *    Effect: if n is 1, clear from beginning of line to cursor
  *    Effect: if n is 2, clear entire line
  *
- * CUF (CUrsor Forward) [ESC C]
+ * CUF (CUrsor Forward)
  *    Sequence: ESC [ n C
  *    Effect: moves cursor forward n chars
  *
- * CUB (CUrsor Backward) [ESC D]
+ * CUB (CUrsor Backward)
  *    Sequence: ESC [ n D
  *    Effect: moves cursor backward n chars
  *
@@ -81,11 +81,11 @@
  * When multi line mode is enabled, we also use an additional escape
  * sequence. However multi line editing is disabled by default.
  *
- * CUU (Cursor Up) [ESC A]
+ * CUU (Cursor Up)
  *    Sequence: ESC [ n A
  *    Effect: moves cursor up of n chars.
  *
- * CUD (Cursor Down) [ESC B]
+ * CUD (Cursor Down)
  *    Sequence: ESC [ n B
  *    Effect: moves cursor down of n chars.
  *
@@ -93,11 +93,11 @@
  * are used in order to clear the screen and position the cursor at home
  * position.
  *
- * CUP (Cursor position) [ESC H]
+ * CUP (Cursor position)
  *    Sequence: ESC [ H
  *    Effect: moves the cursor to upper left corner
  *
- * ED (Erase display) [ESC H] + [ESC J]
+ * ED (Erase display)
  *    Sequence: ESC [ 2 J
  *    Effect: clear the whole screen
  *
@@ -145,8 +145,8 @@ char *hints(const char *buf, int *color, int *bold) {
 #if LINENOISE
 /* set these to 0 to reduce the code size */
 #define MASK_ON 0
-#define COMPLETION_ON 0
-#define MULTILINE_ON 1
+#define COMPLETION_ON 1
+#define MULTILINE_ON 0
 #define BEEP_ON 0
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
@@ -292,7 +292,6 @@ static int enableRawMode(int fd) {
 
     /* put terminal in raw mode after flushing */
     if (tcsetattr(fd,TCSAFLUSH,&raw) < 0) goto fatal;
-    //if (tcsetattr(fd,TCSANOW,&raw) < 0) goto fatal;
     rawmode = 1;
     return 0;
 
@@ -497,6 +496,10 @@ void linenoiseAddCompletion(linenoiseCompletions *lc, const char *str) {
     lc->cvec = cvec;
     lc->cvec[lc->len++] = copy;
 }
+#else //COMPLETION_ON - stubs to allow to compile with COMPLETION_ON set to zero
+/* Register a callback function to be called for tab-completion. */
+void linenoiseSetCompletionCallback(linenoiseCompletionCallback *fn) {}
+void linenoiseAddCompletion(linenoiseCompletions *lc, const char *str) {}
 #endif
 /* =========================== Line editing ================================= */
 
@@ -890,8 +893,10 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
         case LINEFEED:
             history_len--;
             free(history[history_len]);
-#if 0
+#if MULTILINE_ON
             if (mlmode) linenoiseEditMoveEnd(&l);
+#endif
+#if COMPLETION_ON
             if (hintsCallback) {
                 /* Force a refresh without hints to leave the previous
                  * line as the user typed it after a newline. */
@@ -1101,7 +1106,7 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
     if (enableRawMode(STDIN_FILENO) == -1) return -1;
     count = linenoiseEdit(STDIN_FILENO, STDOUT_FILENO, buf, buflen, prompt);
     disableRawMode(STDIN_FILENO);
-    printf("\r"); /* linefeed already echoed by ELKS, add CR only */
+    write(fileno(stdout), "\r", 2); /* linefeed already echoed by ELKS, add CR only */
     return count;
 }
 
@@ -1156,7 +1161,7 @@ char *linenoise(const char *prompt) {
     } else if (isUnsupportedTerm()) {
         size_t len;
         
-        printf("%s",prompt);
+        write(fileno(stdout), prompt, strlen(prompt)+1);
         fflush(stdout);
         if (fgets(buf,LINENOISE_MAX_LINE,stdin) == NULL) return NULL;
         len = strlen(buf);
@@ -1168,8 +1173,6 @@ char *linenoise(const char *prompt) {
     } else {
         count = linenoiseRaw(buf,LINENOISE_MAX_LINE,prompt);
         if (count == -1) return NULL;
-        //printf("%s",strdup(buf));
-        //fflush( stdout );
         return strdup(buf);
     }    
 }
@@ -1226,7 +1229,7 @@ int linenoiseHistoryAdd(const char *line) {
 
     /* Add an heap allocated copy of the line in the history.
      * If we reached the max length, remove the older line. */
-    linecopy = strdup(line);
+    linecopy = strdup((char*)line);
     if (!linecopy) return 0;
     if (history_len == history_max_len) {
         free(history[0]);
@@ -1277,7 +1280,7 @@ int linenoiseHistorySave(const char *filename) {
     FILE *fp;
     int j;
 
-    fp = fopen(filename,"w");
+    fp = fopen((char*)filename,"w");
     umask(old_umask);
     if (fp == NULL) return -1;
     chmod(filename,S_IRUSR|S_IWUSR);
@@ -1293,7 +1296,7 @@ int linenoiseHistorySave(const char *filename) {
  * If the file exists and the operation succeeded 0 is returned, otherwise
  * on error -1 is returned. */
 int linenoiseHistoryLoad(const char *filename) {
-    FILE *fp = fopen(filename,"r");
+    FILE *fp = fopen((char*)filename,"r");
     char buf[LINENOISE_MAX_LINE];
 
     if (fp == NULL) return -1;
