@@ -16,6 +16,7 @@
 
 #include "config.h"
 #include "vi.h"
+#include <unistd.h>
 
 #if ANY_UNIX
 # if UNIXV
@@ -161,7 +162,7 @@ void initscr()
 #if ANY_UNIX
 # if UNIXV
 	/*ioctl(2, TCGETS, &oldtermios);*/
-	tcgetattr(2, &oldtermios);
+	tcgetattr(STDOUT_FILENO, &oldtermios);
 # else
 	ioctl(2, TIOCGETP, &oldsgttyb);
 # endif
@@ -211,7 +212,7 @@ void suspend_curses()
 #if ANY_UNIX
 # if UNIXV
 	/*ioctl(2, TCSETS, &oldtermios);*/
-	tcsetattr(2, TCSANOW, &oldtermios);
+	tcsetattr(STDOUT_FILENO, TCSANOW, &oldtermios);
 # else
 	ioctl(2, TIOCSETP, &oldsgttyb);
 
@@ -254,7 +255,7 @@ void resume_curses(quietly)
 		newtermios.c_cc[VSWTCH] = 0;
 #  endif
 		/*ioctl(2, TCSETS, &newtermios);*/
-		tcsetattr(2, TCSANOW, &newtermios);
+		tcsetattr(STDOUT_FILENO, TCSANOW, &newtermios);
 # else /* BSD or V7 or Coherent or Minix */
 		struct tchars	tbuf;
 #  ifdef TIOCSLTC
