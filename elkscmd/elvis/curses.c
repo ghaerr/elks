@@ -470,6 +470,68 @@ static void starttcap()
 #undef PAIR
 }
 
+/* Use the ESC [6n escape sequence to query the cursor position
+ * and return it. On error -1 is returned, on success the position of the
+ * cursor. */
+static int getCursorPosition(int ifd, int ofd, int *rows, int *cols)
+{
+    char buf[32];
+    unsigned int i = 0;
+    struct termios org, vmin;
+
+    /* change to raw mode to wait 200ms instead of 1 character for DSR response*/
+    if (tcgetattr(ifd,&org) == -1) return -1;
+    vmin = org;
+	vmin.c_iflag &= (IXON|IXOFF|IXANY|ISTRIP|IGNBRK);
+	vmin.c_oflag &= ~OPOST;
+	vmin.c_lflag &= ISIG;
+    vmin.c_cc[VMIN] = 0; vmin.c_cc[VTIME] = 2; /* 0 bytes, 200ms timer */
+    //vmin.c_cc[VMIN] = 1; vmin.c_cc[VTIME] = 0; /* 1 bytes, no timer */
+    if (tcsetattr(ifd,TCSAFLUSH,&vmin) == -1) return -1;
+
+    /* Report cursor location */
+    if (write(ofd, "\x1b[6n", 4) != 4) return -1;
+
+    /* Read the response: ESC [ rows ; cols R */
+    while (i < sizeof(buf)-1) {
+        if (read(ifd,buf+i,1) != 1) return -1;
+        if (buf[i++] == 'R') break;
+    }
+    buf[i] = '\0';
+
+    /* reset to original mode*/
+    tcsetattr(ifd,TCSAFLUSH,&org);
+
+//printf("\nBUF='%s'\n", buf+1);
+    /* Parse it. */
+    if (buf[0] != 033 || buf[1] != '[') return -1;
+    if (sscanf(buf+2,"%d;%d",rows,cols) != 2) return -1;
+    return 0;
+}
+
+/* Try to get the number of columns in the current terminal.
+ * Returns 0 on success, -1 on error. */
+static int getWindowSize(int ifd, int ofd, int *rows, int *cols)
+{
+        int orig_row, orig_col, retval;
+
+        /* Get the initial position so we can restore it later. */
+        retval = getCursorPosition(ifd,ofd,&orig_row,&orig_col);
+        if (retval == -1) return -1;
+
+        /* Go to right/bottom margin and get position. */
+        if (write(ofd,"\x1b[999C\x1b[999B",12) != 12) return -1;
+        retval = getCursorPosition(ifd,ofd,rows,cols);
+        if (retval == -1) return -1;
+
+        /* Restore position. */
+        char seq[32];
+        sprintf(seq,"\x1b[%d;%dH",orig_row,orig_col);
+        if (write(ofd,seq,strlen(seq)) == -1) {
+            /* Can't recover... */
+        }
+        return 0;
+}
 
 /* This function gets the window size.  It uses the TIOCGWINSZ ioctl call if
  * your system has it, or tgetnum("li") and tgetnum("co") if it doesn't.
@@ -493,12 +555,22 @@ int getsize(signo)
 	/* get the window size, one way or another. */
 	lines = cols = 0;
 #ifdef TIOCGWINSZ
-	if (ioctl(2, TIOCGWINSZ, &size) >= 0)
+	if (ioctl(2, TIOCGWINSZ, &size) >= 0 && size.ws_col > 0)
 	{
 		lines = size.ws_row;
 		cols = size.ws_col;
 	}
 #endif
+	/* try using ANSI DSR to get screen size*/
+	if ((lines == 0 || cols == 0) && signo == 0)
+	{
+		int l, c;
+		if (getWindowSize(0, 1, &l, &c) == 0)
+		{
+			lines = l;
+			cols = c;
+		}
+	}
 	if ((lines == 0 || cols == 0) && signo == 0)
 	{
 		LINES = CHECKBIOS(v_rows(), tgetnum("li"));

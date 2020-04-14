@@ -317,6 +317,13 @@ static int getCursorPosition(int ifd, int ofd) {
     char buf[32];
     int cols, rows;
     unsigned int i = 0;
+    struct termios org, vmin;
+
+    /* change raw mode to wait 200ms instead of 1 character for DSR response*/
+    tcgetattr(ifd,&org);
+    vmin = org;
+    vmin.c_cc[VMIN] = 0; vmin.c_cc[VTIME] = 2; /* 0 bytes, 200ms timer */
+    tcsetattr(ifd,TCSAFLUSH,&vmin);
 
     /* Report cursor location */
     if (write(ofd, "\x1b[6n", 4) != 4) return -1;
@@ -328,6 +335,9 @@ static int getCursorPosition(int ifd, int ofd) {
         i++;
     }
     buf[i] = '\0';
+
+    /* reset raw mode*/
+    tcsetattr(ifd,TCSAFLUSH,&org);
 
     /* Parse it. */
     if (buf[0] != ESC || buf[1] != '[') return -1;
@@ -342,9 +352,13 @@ static int getColumns(int ifd, int ofd) {
 
     if (ioctl(1, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
         /* ioctl() failed. Try to query the terminal itself. */
-        int start, cols;
+        int start;
+        static int cols = 0;
 
-goto failed;	//FIXME after implementing ESC [6n
+        /* only get columns one time if no TIOCGWINSZ*/
+        if (cols > 0)
+            return cols;
+
         /* Get the initial position so we can restore it later. */
         start = getCursorPosition(ifd,ofd);
         if (start == -1) goto failed;
@@ -917,14 +931,6 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
             }
             write(l.ofd, "\r\n", 2);  /* tty1 requires \r, serial doesn't*/
             return (int)l.len;
-        case CTRL_C:     /* ctrl-c */
-            /* avoid writing cancelled stuff into history - clear line and home cursor */
-            buf[0] = '\0';
-            l.pos = l.len = 0;
-            refreshLine(&l);
-            history_len--;
-            free(history[history_len]);
-            return (int)l.len;
         case BACKSPACE:   /* backspace */
         case CTRL_H:      /* ctrl-h */
             linenoiseEditBackspace(&l);
@@ -1046,6 +1052,7 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
             if (linenoiseEditInsert(&l,c)) return 0;    /* -1 will exit shell*/
             break;
         case CTRL_U: /* Ctrl+u, delete the whole line. */
+        case CTRL_C: /* ctrl-c */
             buf[0] = '\0';
             l.pos = l.len = 0;
             refreshLine(&l);

@@ -24,6 +24,7 @@ struct serial_info {
     unsigned char flags;
     unsigned char lcr;
     unsigned char mcr;
+    unsigned int  divisor;
     unsigned char usecount;
     struct tty *tty;
 
@@ -53,10 +54,10 @@ struct serial_info {
 #define MAX_RX_BUFFER_SIZE 16
 
 static struct serial_info ports[NR_SERIAL] = {
-    {(char *)0x3f8, 4, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
-    {(char *)0x2f8, 3, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
-    {(char *)0x3e8, 5, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
-    {(char *)0x2e8, 2, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
+    {(char *)0x3f8, 4, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
+    {(char *)0x2f8, 3, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
+    {(char *)0x3e8, 5, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
+    {(char *)0x2e8, 2, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
 };
 
 static char irq_port[NR_SERIAL] = { 3, 1, 0, 2 };
@@ -225,21 +226,26 @@ static void update_port(register struct serial_info *port)
 	cflags = B38400 + (cflags & 03);
     divisor = divisors[cflags];
 
-    //FIXME: update lcr from parity and word termios values
+    //FIXME: update lcr parity and data width from termios values
 
-    clr_irq();
+    /* update divisor only if changed, since we have not TCSETW*/
+    if (divisor != port->divisor) {
+	port->divisor = divisor;
 
-    /* Set the divisor latch bit */
-    outb_p(port->lcr | UART_LCR_DLAB, port->io + UART_LCR);
+	clr_irq();
 
-    /* Set the divisor low and high byte */
-    outb_p((unsigned char)divisor, port->io + UART_DLL);
-    outb_p((unsigned char)(divisor >> 8), port->io + UART_DLM);
+	/* Set the divisor latch bit */
+	outb_p(port->lcr | UART_LCR_DLAB, port->io + UART_LCR);
 
-    /* Clear the divisor latch bit */
-    outb_p(port->lcr, port->io + UART_LCR);
+	/* Set the divisor low and high byte */
+	outb_p((unsigned char)divisor, port->io + UART_DLL);
+	outb_p((unsigned char)(divisor >> 8), port->io + UART_DLM);
 
-    set_irq();
+	/* Clear the divisor latch bit */
+	outb_p(port->lcr, port->io + UART_LCR);
+
+	set_irq();
+    }
 }
 
 /* WARNING: Polling write function */
@@ -272,7 +278,10 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     io = sp->io;
 
     status = inb_p(io + UART_LSR);			/* check for data overrun*/
-    /* read quickly from uart into temp buffer*/
+    //if ((status & UART_LSR_DR) == 0)			/* QEMU may interrupt w/no data*/
+	//return;
+
+    /* empty fifo from uart into temp buffer*/
     //do {
 	//status = inb_p(io + UART_LSR);
 	//if (status & UART_LSR_DR)			/* Receiver buffer full? */

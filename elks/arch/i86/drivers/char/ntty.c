@@ -25,15 +25,32 @@
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 
-/*
- * XXX plac: setting default to B9600 instead of B1200
- */
-struct termios def_vals = { BRKINT|ICRNL,
-    OPOST|ONLCR,
-    (tcflag_t) (B9600 | CS8),
-    (tcflag_t) (ISIG | ICANON | ECHO | ECHOE | ECHONL),
+/* default termios, set at init time, not reset at open*/
+struct termios def_vals = {
+    BRKINT|ICRNL,					/* c_iflag*/
+    OPOST|ONLCR,					/* c_oflag*/
+    (tcflag_t) (B9600 | CS8),				/* c_cflag*/
+    (tcflag_t) (ISIG | ICANON | ECHO | ECHOE),		/* c_lflag*/
+    0,							/* c_line*/
+    { 3,	/* VINTR*/
+    28,		/* VQUIT*/
+    /*127*/ 8,	/* VERASE*/
+    21,		/* VKILL*/
+    4,		/* VEOF*/
+    0,		/* VTIME*/
+    1,		/* VMIN*/
+    0,		/* VSWTC*/
+    17,		/* VSTART*/
+    19,		/* VSTOP*/
+    26,		/* VSUSP*/
+    0,		/* VEOL*/
+    18,		/* VREPRINT*/
+    15,		/* VDISCARD*/
+    23,		/* VWERASE*/
+    22,		/* VLNEXT*/
+    0,		/* VEOL2*/
     0,
-    {3, 28, /*127*/010, 21, 4, 0, 1, 0, 17, 19, 26, 0, 18, 15, 23, 22, 0, 0, 0}
+    0 }
 };
 
 #define TAB_SPACES 8
@@ -250,19 +267,28 @@ size_t tty_write(struct inode *inode, struct file *file, char *data, size_t len)
 size_t tty_read(struct inode *inode, struct file *file, char *data, size_t len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
+    int icanon = tty->termios.c_lflag & ICANON;
+    int vtime = tty->termios.c_cc[VTIME];
+    int nonblock = (file->f_flags & O_NONBLOCK) || (!icanon && vtime);
+    jiff_t timeout = jiffies + vtime * (HZ / 10);
     int i = 0;
-    int ch, k, icanon;
-    int nonblock = (file->f_flags & O_NONBLOCK);
+    int ch, k;
 
     if (len > 0) {
-	icanon = tty->termios.c_lflag & ICANON;
 	do {
 	    if (tty->ops->read) {
 		tty->ops->read(tty);
 		nonblock = 1;
 	    }
+again:
 	    ch = chq_wait_rd(&tty->inq, nonblock);
 	    if (ch < 0) {
+		if (!icanon && vtime) {
+		    if (jiffies < timeout) {
+			schedule();
+			goto again;
+		    }
+		}
 		if (i == 0)
 		    i = ch;
 		break;
