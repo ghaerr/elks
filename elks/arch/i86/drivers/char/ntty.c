@@ -311,7 +311,7 @@ int tty_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
     case TCSETSF:
 	ret = verified_memcpy_fromfs(&tty->termios, arg, sizeof(struct termios));
 
-	/* Inform driver that things have changed */
+	/* Inform subdriver of new settings*/
 	if (ret == 0 && tty->ops->ioctl != NULL)
 	    ret = tty->ops->ioctl(tty, cmd, arg);
 	break;

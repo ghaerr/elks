@@ -597,7 +597,11 @@ static int Console_ioctl(register struct tty *tty, int cmd, char *arg)
 	    kraw = 0;
 	    return 1;
 	}
-/*  	break; */
+	break;
+    case TCSETS:
+    case TCSETSW:
+    case TCSETSF:
+	return 0;
     }
 
     return -EINVAL;
