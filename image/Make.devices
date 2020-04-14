@@ -93,6 +93,10 @@ devices:
 	$(MKDEV) /dev/ttyp2 c 4 10
 	$(MKDEV) /dev/ttyp3 c 4 11
 
+##############################################################################
+# CGATEXT
+	$(MKDEV) /dev/cgatext	c 10 0
+
 # These are not yet supported by the ELKS kernel.
 #	$MKSET   0 15 $(MKDEV) /dev/ttyp x 3
 #	$MKSET  16 15 $(MKDEV) /dev/ttyq x 3
