@@ -43,11 +43,6 @@ void pty_release(struct inode *inode, struct file *file)
 	kill_pg(otty->pgrp, SIGHUP, 1);
 }
 
-int pty_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
-{
-    return -EINVAL;
-}
-
 int pty_select (struct inode *inode, struct file *file, int sel_type)
 {
 	int res = 0;
@@ -137,7 +132,7 @@ static struct file_operations pty_fops = {
     pty_write,
     NULL,
     pty_select,			/* Select - needs doing */
-    pty_ioctl,			/* ioctl */
+    NULL,			/* ioctl */
     pty_open,
     pty_release
 #ifdef BLOAT_FS

@@ -41,7 +41,7 @@ mainmenu_option next_comment
 	    define_bool CONFIG_CHAR_DEV_RS y
 	fi
 	bool 'Parallel device driver'		CONFIG_CHAR_DEV_LP	  y
-	bool 'CGA text mode videobuffer'	CONFIG_CHAR_DEV_CGATEXT	  y
+	bool 'CGA text mode videobuffer'	CONFIG_CHAR_DEV_CGATEXT	  n
     fi
     bool 'Memory character devices'		CONFIG_CHAR_DEV_MEM	  y
     bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y
