@@ -12,6 +12,7 @@ extern int directhd_init(void);
 extern int rs_init(void);
 
 extern void buffer_init(void);
+extern void cgatext_init(void);
 extern void floppy_init(void);
 extern void fs_init(void);
 extern void idt_init(void);

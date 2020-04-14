@@ -7,7 +7,7 @@
 
 /* limits */
 
-#define MAX_CHRDEV 10
+#define MAX_CHRDEV 11
 #define MAX_BLKDEV  7
 
 /*
@@ -42,7 +42,7 @@
 #define MISC_MAJOR        7
 #define TCPDEV_MAJOR      8
 #define ETH_MAJOR         9  /* should be rather a network-class driver */
-
+#define CGATEXT_MAJOR     10
 
 /* These are the block devices */
 
