@@ -13,6 +13,9 @@ void chr_dev_init(void)
 #ifdef CONFIG_CONSOLE_BIOS
     xtk_init();
 #endif
+#ifdef CONFIG_CHAR_DEV_CGATEXT
+    cgatext_init();
+#endif
 #ifdef CONFIG_CONSOLE_DIRECT
 #ifndef CONFIG_ARCH_SIBO
     xtk_init();
