@@ -9,8 +9,10 @@
 #include <linuxmt/ntty.h>
 #include <linuxmt/termios.h>
 #include <linuxmt/debug.h>
-
 #include <arch/io.h>
+
+#define NEW		1	/* set =0 for old driver code if needed*/
+#define FIFO		0	/* set =1 to enable new FIFO code for testing*/
 
 #if defined (CONFIG_CHAR_DEV_RS) || defined (CONFIG_CONSOLE_SERIAL)
 
@@ -95,7 +97,7 @@ static void flush_input_fifo(register struct serial_info *sp)
     } while (--i && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
 }
 
-#if 1
+#if NEW
 static int rs_probe(register struct serial_info *sp)
 {
     int status, type;
@@ -256,7 +258,7 @@ static int rs_write(struct tty *tty)
     return (int)i;
 }
 
-#if 1
+#if NEW
 void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
     struct serial_info *sp;
@@ -270,10 +272,9 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     io = sp->io;
 
     status = inb_p(io + UART_LSR);			/* check for data overrun*/
-    /* read from uart into temp buffer*/
+    /* read quickly from uart into temp buffer*/
     //do {
 	//status = inb_p(io + UART_LSR);
-	/* QEMU sometimes has interrupt w/o data available bit set*/
 	//if (status & UART_LSR_DR)			/* Receiver buffer full? */
 	    do {
 		buf[i++] = inb_p(io + UART_RX);		/* Read received data */
@@ -283,10 +284,11 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 
     if (status & UART_LSR_OE)
 	printk("serial: data overrun\n");
-    if ((status & UART_LSR_DR) == 0)
-	printk("serial: interrupt w/o data available\n");
+    /* QEMU sometimes has interrupt w/o data available bit set*/
+    //if ((status & UART_LSR_DR) == 0)
+	//printk("serial: interrupt w/o data available\n");
 
-    /* then process received chars*/
+    /* process received chars*/
     q = &sp->tty->inq;
     for (j=0; j < i; j++) {
 	if (!tty_intcheck(sp->tty, buf[j]))
@@ -364,8 +366,10 @@ static int rs_open(struct tty *tty)
 #define UART_FCR_ENABLE_FIFO8	(UART_FCR_ENABLE_FIFO | 0x80)
 #define UART_FCR_ENABLE_FIFO4	(UART_FCR_ENABLE_FIFO | 0x40)
     /* enable FIFO with 8 byte trigger */
-    //if ((port->flags & SERF_TYPE) > ST_16450)
-	//outb_p(UART_FCR_ENABLE_FIFO8, port->io + UART_FCR);
+#if FIFO
+    if ((port->flags & SERF_TYPE) > ST_16450)
+	outb_p(UART_FCR_ENABLE_FIFO8, port->io + UART_FCR);
+#endif
 
     inb_p(port->io + UART_IIR);
     inb_p(port->io + UART_MSR);
