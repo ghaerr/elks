@@ -270,7 +270,7 @@ int main(int argc, char **argv)
         termios.c_cflag |= CS8 | CLOCAL | HUPCL;
         /*termios.c_cflag |= CRTSCTS;*/
         termios.c_cflag &= ~(PARENB | CREAD);
-        termios.c_cc[VMIN] = 0;
+        termios.c_cc[VMIN] = 1;
         termios.c_cc[VTIME] = 0;
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios);
     } else debug("tcgetattr(0) failed\n");

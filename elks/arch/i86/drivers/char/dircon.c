@@ -197,6 +197,20 @@ static int parm2(register unsigned char *buf)
     return parm1(buf);
 }
 
+static void itoaQueue(int i)
+{
+   unsigned char a[6];
+   unsigned char *b = a + sizeof(a) - 1;
+
+   *b = 0;
+   do {
+      *--b = '0' + (i % 10);
+      i /= 10;
+   } while (i);
+   while (*b)
+	AddQueue(*b++);
+}
+
 static void AnsiCmd(register Console * C, char c)
 {
     register unsigned char *p;
@@ -297,6 +311,17 @@ static void AnsiCmd(register Console * C, char c)
 	    }
 	    break;
 	}
+    case 'n':
+	if (parm1(C->params) == 6) {		/* device status report*/
+	    //FIXME sequence can be interrupted by kbd input
+	    AddQueue(ESC);
+	    AddQueue('[');
+	    itoaQueue(C->cy+1);
+	    AddQueue(';');
+	    itoaQueue(C->cx+1);
+	    AddQueue('R');
+	}
+	break;
     }
     C->fsm = std_char;
 }
