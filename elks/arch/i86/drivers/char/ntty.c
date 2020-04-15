@@ -270,12 +270,13 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, size_t len)
     int icanon = tty->termios.c_lflag & ICANON;
     int vtime = tty->termios.c_cc[VTIME];
     int nonblock = (file->f_flags & O_NONBLOCK) || (!icanon && vtime);
-    jiff_t timeout = jiffies + vtime * (HZ / 10);
+    jiff_t timeout;
     int i = 0;
     int ch, k;
 
     if (len > 0) {
 	do {
+	    timeout = jiffies + vtime * (HZ / 10);
 	    if (tty->ops->read) {
 		tty->ops->read(tty);
 		nonblock = 1;
@@ -288,6 +289,7 @@ again:
 			schedule();
 			goto again;
 		    }
+		    ch = 0;	/* return 0 on VTIME timeout*/
 		}
 		if (i == 0)
 		    i = ch;
