@@ -268,26 +268,37 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, size_t len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
     int icanon = tty->termios.c_lflag & ICANON;
+    int vmin = tty->termios.c_cc[VMIN];
     int vtime = tty->termios.c_cc[VTIME];
-    int nonblock = (file->f_flags & O_NONBLOCK) || (!icanon && vtime);
+    int nonblock = (file->f_flags & O_NONBLOCK) || (!icanon && vtime && !vmin);
     jiff_t timeout;
     int i = 0;
     int ch, k;
 
-    if (len > 0) {
-	do {
-	    timeout = jiffies + vtime * (HZ / 10);
-	    if (tty->ops->read) {
-		tty->ops->read(tty);
-		nonblock = 1;
-	    }
+    while (i < len) {
+	timeout = jiffies + vtime * (HZ / 10);
 again:
+	if (tty->ops->read) {
+	    tty->ops->read(tty);
+	    nonblock = 1;
+	}
+
+	if (chq_peekch(&tty->inq))
+	    ch = chq_getch(&tty->inq);
+	else {
+	    if (!icanon && !vtime && (i >= vmin))
+		break;
 	    ch = chq_wait_rd(&tty->inq, nonblock);
 	    if (ch < 0) {
 		if (!icanon && vtime) {
 		    if (jiffies < timeout) {
 			schedule();
-			goto again;
+			if (!vmin)
+			    goto again;		/* VMIN = 0 don't reset timer*/
+			else {
+			    nonblock = 1;
+			    continue;		/* VMIN > 0 reset timer*/
+			}
 		    }
 		    ch = 0;	/* return 0 on VTIME timeout*/
 		}
@@ -296,6 +307,7 @@ again:
 		break;
 	    }
 	    ch = chq_getch(&tty->inq);
+	}
 
 	    if (icanon) {
 		if (ch == tty->termios.c_cc[VERASE]) {
@@ -317,10 +329,9 @@ again:
 	    }
 	    put_user_char(ch, (void *)(data++));
 	    tty_echo(tty, ch);
-	    if (++i >= len)
+	    i++;
+	    if (icanon && ((ch == '\n') || (ch == tty->termios.c_cc[VEOL])))
 		break;
-	} while ((icanon && (ch != '\n') && (ch != tty->termios.c_cc[VEOL]))
-		    || (!icanon && (i < tty->termios.c_cc[VMIN])));
     }
     return i;
 }

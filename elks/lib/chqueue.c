@@ -36,24 +36,20 @@ void chq_init(register struct ch_queue *q, unsigned char *buf, int size)
     q->base = (char *) buf;
     q->size = size;
     q->len = q->start = 0;
-/*    chq_erase(q);*/
 }
 
 int chq_wait_wr(register struct ch_queue *q, int nonblock)
 {
-    register char *pi;
-
-    pi = 0;
     if (q->len == q->size) {
 	if (nonblock)
-	    pi = (char *)(-EAGAIN);
+	    return -EAGAIN;
 	else {
 	    interruptible_sleep_on(&q->wait);
 	    if (q->len == q->size)
-		pi = (char *)(-EINTR);
+		return -EINTR;
 	}
     }
-    return (int)pi;
+    return 0;
 }
 
 /* Adds character c if there is room (or otherwise throws out new char) */
@@ -83,45 +79,42 @@ int chq_delch(register struct ch_queue *q)
 
 int chq_wait_rd(register struct ch_queue *q, int nonblock)
 {
-    register char *pi;
-
-    pi = 0;
     if (!q->len) {
 	if (nonblock)
-	    pi = (char *)(-EAGAIN);
+	    return -EAGAIN;
 	else {
 	    interruptible_sleep_on(&q->wait);
 	    if (!q->len)
-		pi = (char *)(-EINTR);
+		return -EINTR;
 	}
     }
-    return (int)pi;
+    return 0;
 }
 
 /* Gets start character */
 int chq_getch(register struct ch_queue *q)
 {
-    register char *retval;
+    int retval;
 
     debug4("CHQ: chq_getch(%d) q->len=%d q->start=%d q->size=%d\n",
 	   q, q->len, q->start, q->size);
 
     if (!q->len)
-	retval = (char *)(-EAGAIN);
+	return -EAGAIN;
     else {
-	retval = (char *)((int)(q->base[q->start]) & 0xFF);
+	retval = q->base[q->start] & 0xFF;
 	q->start++;
 	q->start &= q->size - 1;
 	q->len--;
 	wake_up(&q->wait);
     }
-    return (int)retval;
+    return retval;
 }
 
-/*int chq_peekch(struct ch_queue *q)
+int chq_peekch(struct ch_queue *q)
 {
     return (q->len != 0);
-}*/
+}
 
 /*int chq_full(register struct ch_queue *q)
 {
