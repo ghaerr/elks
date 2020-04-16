@@ -92,7 +92,9 @@
 */
 struct tabentry {
 	char id[3];
+	char norespawn;			/* don't respawn if fails within 3 seconds*/
 	pid_t pid;
+	time_t starttime;		/* start time of first spawn*/
 };
 
 static char *initname;			/* full path to this program*/
@@ -253,7 +255,8 @@ pid_t respawn(const char **a)
 	    baudrate = strchr(devtty, ' ');
 	    if (baudrate)
 		*baudrate++ = 0;
-	    if ((fd = open(devtty, O_RDWR)) < 0) fatalmsg("Can't open %s\n", devtty);
+	    if ((fd = open(devtty, O_RDWR)) < 0)
+			fatalmsg("Can't open %s (errno %d)\n", devtty, errno);
 
 	    argv[0] = GETTY;
 	    argv[1] = devtty;
@@ -270,7 +273,8 @@ pid_t respawn(const char **a)
 	}
 	else
 	{
-	    if ((fd = open(DEVTTY, O_RDWR)) < 0) fatalmsg("Can't open %s\n", DEVTTY);
+	    if ((fd = open(DEVTTY, O_RDWR)) < 0)
+		fatalmsg("Can't open %s (errno %d)\n", DEVTTY, errno);
 
 	    argv[0] = SHELL;
 	    argv[1] = "-e";
@@ -371,6 +375,7 @@ void enterRunlevel(const char **a)
 
 	if (!a[1][0] || strchr(a[1], runlevel)) {
 		int andWait=0;
+		struct tabentry *t;
 
 		/* if not running, spawn it */
 		if (!matchId(a[0])) {
@@ -382,7 +387,14 @@ void enterRunlevel(const char **a)
 				debug2("\n");
 				pid = respawn(a);
 				if (andWait) while (pid != wait(NULL));
-				else appendChild(a[0], pid);
+				else {
+					appendChild(a[0], pid);
+					t = matchId(a[0]);
+					if (t) {
+						t->starttime = time(NULL);
+						t->norespawn = 0;
+					}
+				}
 				break;
 			default:
 				debug2("discarded\n");
@@ -397,7 +409,12 @@ void spawnThisOne(const char **a)
 		switch (hash(a[2])) {
 		case RESPAWN:
 		case ONDEMAND:
-			thisOne->pid = respawn(a);
+			if (time(NULL) - thisOne->starttime < 3) {
+				debug("Respawn timeout on pid %d, stopping\n", thisOne->pid);
+				thisOne->norespawn = 1;
+			}
+			if (!thisOne->norespawn)
+				thisOne->pid = respawn(a);
 			break;
 		default:
 			removeChild(thisOne);
