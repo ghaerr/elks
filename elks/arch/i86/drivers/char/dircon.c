@@ -67,6 +67,8 @@ struct console {
     unsigned int vseg;		/* video segment for page */
     int basepage;		/* start of video ram */
     unsigned char attr;		/* current attribute */
+    unsigned char XN;		/* delayed newline on column 80 */
+    unsigned char color;	/* fg/bg attr */
 #ifdef CONFIG_EMUL_VT52
     unsigned char tmp;		/* ESC Y ch save */
 #endif
@@ -175,6 +177,7 @@ static void Console_gotoxy(register Console * C, int x, int y)
     C->cx = (xp >= MaxCol) ? MaxCol : (xp < 0) ? 0 : xp;
     xp = y;
     C->cy = (xp >= MaxRow) ? MaxRow : (xp < 0) ? 0 : xp;
+    C->XN = 0;
 }
 #endif
 
@@ -213,7 +216,7 @@ static void itoaQueue(int i)
 
 static void AnsiCmd(register Console * C, char c)
 {
-    register unsigned char *p;
+    int n;
 
     /* ANSI param gathering and processing */
     if (C->parmptr < &C->params[MAXPARMS - 1])
@@ -269,48 +272,42 @@ static void AnsiCmd(register Console * C, char c)
 	ScrollUp(C, C->cy);
 	break;
     case 'm':			/* ansi color */
-	p = C->params;
-	for (;;) {
-	    switch (*p++) {
-	    case ';':
-		continue;
-	    case '0':
-		C->attr = A_DEFAULT;
-		continue;
-	    case '1':
-		C->attr |= A_BOLD;
-		continue;
-	    case '5':
-		C->attr |= A_BLINK;
-		continue;
-	    case '7':
-		C->attr = A_REVERSE;
-		continue;
-	    case '8':
-		C->attr = A_BLANK;
-		continue;
-
-	    case '4':				/* Set background color */
-		if (*p >= '0' && *p <= '7') {
-		    C->attr &= 0x8f;
-		    C->attr |= (*p++ << 4) & 0x70;
-		    continue;
-		}
-		/* fall thru */
-	    case 'm':
-		if (p != &C->params[1])
-		    break;
-	    case '3':				/* Set foreground color */
-		if (*p >= '0' && *p <= '7') {
-		    C->attr &= 0xf8;
-		    C->attr |= *p++ & 0x07;
-		    continue;
-		}
-	    default:
-		C->attr = A_DEFAULT;
-	    }
-	    break;
+	n = atoi((char *)C->params);
+	if (n >= 30 && n <= 37) {
+	    C->attr &= 0xf8;
+	    C->attr |= (n-30) & 0x07;
+	    C->color = C->attr;
 	}
+	else if (n >= 40 && n <= 47) {
+	    C->attr &= 0x8f;
+	    C->attr |= ((n-40) << 4) & 0x70;
+	    C->color = C->attr;
+	}
+	else switch (n) {
+	    case 0:
+		C->attr = C->color;
+		break;
+	    case 1:
+		C->attr |= A_BOLD;
+		break;
+	    case 5:
+		C->attr |= A_BLINK;
+		break;
+	    case 7:
+		n = C->attr;
+		C->attr &= ~(A_DEFAULT | A_REVERSE);
+		C->attr |= ((n >> 4) & 0x07) | ((n << 4) & 0x70);
+		break;
+	    case 8:
+		C->attr = A_BLANK;
+		break;
+	    case 39:
+	    case 49:
+	    default:
+		C->attr = C->color = A_DEFAULT;
+		break;
+	}
+	break;
     case 'n':
 	if (parm1(C->params) == 6) {		/* device status report*/
 	    //FIXME sequence can be interrupted by kbd input
@@ -419,6 +416,7 @@ static void std_char(register Console * C, char c)
 	bell();
 	break;
     case '\b':
+	C->XN = 0;
 	if (C->cx > 0) {
 	    --C->cx;
 	    VideoWrite(C, ' ');
@@ -428,9 +426,11 @@ static void std_char(register Console * C, char c)
 	C->cx = (C->cx | 0x07) + 1;
 	goto linewrap;
     case '\n':
+	C->XN = 0;
 	++C->cy;
 	break;
     case '\r':
+	C->XN = 0;
 	C->cx = 0;
 	break;
 
@@ -441,6 +441,15 @@ static void std_char(register Console * C, char c)
 #endif
 
     default:
+	if (C->XN) {
+	    C->XN = 0;
+	    C->cx = 0;
+	    C->cy++;
+	    if (C->cy > MaxRow) {
+		ScrollUp(C, 0);
+		C->cy = MaxRow;
+	    }
+	}
 	VideoWrite(C, c);
 	C->cx++;
       linewrap:
@@ -449,8 +458,8 @@ static void std_char(register Console * C, char c)
 #ifdef CONFIG_EMUL_VT52
 	    C->cx = MaxCol;
 #else
-	    C->cx = 0;
-	    C->cy++;
+	    C->XN = 1;
+	    C->cx = MaxCol;
 #endif
 
 	}
@@ -601,6 +610,7 @@ void init_console(void)
 	C->basepage = i * PageSizeW;
 	C->vseg = VideoSeg + (C->basepage >> 3);
 	C->attr = A_DEFAULT;
+	C->color = A_DEFAULT;
 
 #ifdef CONFIG_EMUL_ANSI
 

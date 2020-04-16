@@ -20,7 +20,7 @@
 #include "extern.h"
 
 bool PROC
-getline(str)
+ourgetline(str)
  char *str;
 {
     int len;
@@ -30,7 +30,7 @@ getline(str)
     str[len] = 0;
     strput(CE);
     return (flag == EOL);
-} /* getline */
+} /* ourgetline */
 
 
 char PROC

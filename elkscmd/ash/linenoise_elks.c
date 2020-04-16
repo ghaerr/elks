@@ -204,8 +204,7 @@ enum KEY_ACTION{
 	CTRL_U = 21,        /* Ctrl+u */
 	CTRL_W = 23,        /* Ctrl+w */
 	ESC = 27,           /* Escape */
-	BACKSPACE =  127,   /* Backspace */
-	LINEFEED = 10       /* Linefeed */
+	BACKSPACE =  127    /* Backspace */
 };
 
 static void linenoiseAtExit(void);
@@ -917,7 +916,6 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
 
         switch((unsigned int)c) {
         case ENTER:    /* enter */
-        case LINEFEED:
             history_len--;
             free(history[history_len]);
             if (mlmode) linenoiseEditMoveEnd(&l);
@@ -966,7 +964,8 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
         case CTRL_N:    /* ctrl-n */
             linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_NEXT);
             break;
-            /* Extended key sequences. */
+            /* ELKS extended key sequences. */
+#if 0 /* handled with ANSI sequences*/
         case 0xb7: /* Home */
             linenoiseEditMoveHome(&l);
             break;
@@ -987,6 +986,7 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
         case 0xb3: /* Page down */
             linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_NEXT);
             break;
+#endif
         case 0x8c: /* + Num keypad */
             linenoiseEditInsert(&l,'+');
             break;
@@ -1009,6 +1009,12 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
                         switch(seq[1]) {
                         case '3': /* Delete key. */
                             linenoiseEditDelete(&l);
+                            break;
+                        case '5': /* Page up */
+                            linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_PREV);
+                            break;
+                        case '6': /* Page dn */
+                            linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_NEXT);
                             break;
                         }
                     }

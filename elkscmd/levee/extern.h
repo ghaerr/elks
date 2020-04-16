@@ -194,7 +194,7 @@ cmdtype movemap[];
 extern findstates findCP();
 extern exec_type editcore();
 extern char line(), peekc(), readchar();
-extern bool getline();
+extern bool ourgetline();
 extern char *findparse(),*makepat();
 extern bool putfile();
 extern bool doyank(), deletion(), putback();
