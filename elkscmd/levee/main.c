@@ -248,7 +248,7 @@ exec_type emode;
     mode=emode;
     do {
 	prompt(FALSE,":");
-	if (getline(instring))
+	if (ourgetline(instring))
 	    exec(instring, &mode, &noquit);
 	indirect = FALSE;
 	if (mode == E_VISUAL && zotscreen && noquit) {	/*ask for more*/

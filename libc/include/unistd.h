@@ -5,9 +5,6 @@
 #include <sys/types.h>
 #include <sys/select.h>
 
-typedef int intptr_t;
-typedef intptr_t ssize_t;
-
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2

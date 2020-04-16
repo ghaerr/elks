@@ -25,6 +25,8 @@ OBJS = \
 	ftell.o \
 	fwrite.o \
 	puts.o \
+	getdelim.o \
+	getline.o \
 	gets.o \
 	printf.o \
 	putchar.o \

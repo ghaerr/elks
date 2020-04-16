@@ -238,7 +238,7 @@ _PROTOTYPE(static void command, (sedcmd *ipc));
 _PROTOTYPE(static void openfile, (char *file));
 _PROTOTYPE(static void get, (void));
 _PROTOTYPE(static void initget, (void));
-_PROTOTYPE(static char *getline, (char *buf));
+_PROTOTYPE(static char *ourgetline, (char *buf));
 _PROTOTYPE(static int Memcmp, (char *a, char *b, int count));
 _PROTOTYPE(static void readout, (void));
 
@@ -956,7 +956,7 @@ void sed_execute()
   for (;;) {
 
 	/* Get next line to filter */
-	if ((execp = getline(linebuf)) == BAD) return;
+	if ((execp = ourgetline(linebuf)) == BAD) return;
 	spend = execp;
 	anysub = FALSE;
 
@@ -1422,7 +1422,7 @@ sedcmd *ipc;
       case NCMD:		/* read next line into pattern space */
 	if (!nflag) puts(linebuf);	/* flush out the current line */
 	if (aptr > appends) readout();	/* do pending a, r commands */
-	if ((execp = getline(linebuf)) == BAD) {
+	if ((execp = ourgetline(linebuf)) == BAD) {
 		delete = TRUE;
 		break;
 	}
@@ -1433,7 +1433,7 @@ sedcmd *ipc;
       case CNCMD:		/* append next line to pattern space */
 	if (aptr > appends) readout();
 	*spend++ = '\n';
-	if ((execp = getline(spend)) == BAD) {
+	if ((execp = ourgetline(spend)) == BAD) {
 		*--spend = 0;
 		break;
 	}
@@ -1542,7 +1542,7 @@ static void initget()
   get();
 }
 
-static char *getline(buf)
+static char *ourgetline(buf)
 /* Get next line of text to be edited, return pointer to end */
 register char *buf;		/* where to send the input */
 {
