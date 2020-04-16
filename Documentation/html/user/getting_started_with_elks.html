@@ -1,0 +1,426 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 6.3.3.2.0 (Linux)"/>
+	<meta name="created" content="00:00:00"/>
+	<meta name="changed" content="2020-04-16T21:29:12.590689637"/>
+	<style type="text/css">
+		@page { size: 21cm 29.7cm; margin: 2cm }
+		p { margin-bottom: 0.25cm; background: transparent; line-height: 120%; background: transparent }
+		h1 { margin-bottom: 0.21cm; background: transparent; background: transparent; page-break-after: avoid }
+		h1.western { font-family: "Liberation Serif", serif; font-size: 24pt; font-weight: bold }
+		h1.cjk { font-family: "Droid Sans Fallback"; font-size: 24pt; font-weight: bold }
+		h1.ctl { font-family: "Droid Sans Devanagari"; font-size: 24pt; font-weight: bold }
+		h2 { margin-top: 0.35cm; margin-bottom: 0.21cm; background: transparent; background: transparent; page-break-after: avoid }
+		h2.western { font-family: "Arial", sans-serif; font-size: 14pt; font-style: italic; font-weight: bold }
+		h2.cjk { font-family: "Microsoft YaHei"; font-size: 14pt; font-style: italic; font-weight: bold }
+		h2.ctl { font-family: "Lucida Sans"; font-size: 14pt; font-style: italic; font-weight: bold }
+		pre { background: transparent; background: transparent }
+		pre.western { font-family: "Liberation Mono", monospace; font-size: 10pt }
+		pre.cjk { font-family: "NSimSun", monospace; font-size: 10pt }
+		pre.ctl { font-family: "Liberation Mono", monospace; font-size: 10pt }
+		td p { margin-bottom: 0.25cm; background: transparent; line-height: 120%; background: transparent }
+		a:link { color: #000080; so-language: zxx; text-decoration: underline }
+		a:visited { color: #800000; so-language: zxx; text-decoration: underline }
+	</style>
+</head>
+<body lang="de-DE" link="#000080" vlink="#800000" dir="ltr"><h1 class="western" align="left">
+<br/>
+<br/>
+
+</h1>
+<h1 class="western" align="left"><font face="Arial, sans-serif"><font size="7" style="font-size: 32pt">Getting
+started with ELKS</font></font> <font face="Arial, sans-serif"><font size="4" style="font-size: 14pt"><br/>
+<br/>
+</font></font><font face="Arial, sans-serif"><font size="4" style="font-size: 14pt"><u><b>Contents</b></u></font></font></h1>
+<ol>
+	<li><p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><b>What
+	is ELKS?</b></font></p>
+	<li><p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><b>First
+	steps with ELKS </b></font>
+	</p>
+	<li><p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><b>Downloading
+	and Compiling ELKS</b></font></p>
+	<li><p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><b>Configuring
+	the kernel and selecting the keyboard driver</b></font></p>
+	<li><p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><b>Generating
+	and mounting disk images </b></font>
+	</p>
+	<li><p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><b>Making
+	a bootable CD image with ELKS</b></font></p>
+	<li><p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><b>Development
+	tools for ELKS</b></font></p>
+</ol>
+<table width="714" cellpadding="4" cellspacing="0">
+	<col width="706"/>
+
+	<tr>
+		<td width="706" valign="top" style="border: none; padding: 0cm"><p style="margin-bottom: 0.5cm">
+			<br/>
+<br/>
+
+			</p>
+			<p style="margin-bottom: 0.5cm; font-variant: normal; font-style: normal">
+			<font face="Arial, sans-serif"><font size="4" style="font-size: 14pt"><b>1.
+			What is ELKS?</b></font></font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">ELKS
+			is a Linux-like system for 16-bit x86 PCs and embedded systems.
+			The entire system can fit on a single floppy disk image. ELKS is
+			free software and available under the GNU General Public License
+			(GPL).</font></font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">ELKS
+			was named Linux-8086, when its development started in 1995 by
+			Linux kernel developers Alan Cox and Chad Page as a fork of the
+			standard Linux. By early 1996 the project was already renamed
+			ELKS. Many developers have contributed to this project since 1995.
+			In 2012 ELKS migrated to GIT and numerous patches from the
+			Linux-8086 mailing list were committed to the new repository. </font></font>
+			</p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">The
+			objective</font></font> <font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">of
+			the ELKS project is to create a Linux option for 8086 class PC's
+			since Linux itself requires a 32 bit processor. However, there is
+			only very few hardware for embeddable systems available now which
+			would require a system like ELKS. Most hardware platforms have got
+			far more powerful since the beginning of ELKS. </font></font>
+			</p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">The
+			ELKS concept is very</font></font> <font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">similar
+			to Linux so that you can use a lot of the available information
+			for Linux to get to know ELKS. The documentation that is available
+			for Linux on the internet can to a large extend</font></font> <font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">be
+			used to explain the code in ELKS. However, some parts are based on
+			the Minix operating system, for example the format of the</font></font>
+			<font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">executable
+			files and the use of the Minix file system.</font></font></p>
+			<h2 class="western" style="font-variant: normal; font-style: normal">
+			<font size="4" style="font-size: 14pt">2. First steps with ELKS</font></h2>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">The
+			easiest way to get to know ELKS is to use a prepared</font> <font face="Arial, sans-serif">ELKS
+			disk image. If you have an account with GitHub and can log into
+			it, you can download a disk image</font> <font face="Arial, sans-serif">here:
+			<a href="https://github.com/elks-org/elks/actions">https://github.com/elks-org/elks/actions</a><br/>
+ELKS
+			uses Continuous Integration (CI) with GitHub actions. On this web
+			page there is a list showing when the „main“ or „cross“
+			workflows</font> <font face="Arial, sans-serif">have</font> <font face="Arial, sans-serif">been
+			executed. The main workflow will build disk images based on the
+			latest version. If you click on „main“ at the top of the list,
+			you will see e.g. „fd1440.bin“ as an artifact. This file is a
+			disk image you can download and execute e.g. in Qemu. You can run
+			that with Qemu with the following command: „qemu-system-i386
+			-fda fd1440.bin</font>“</p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">On
+			Windows you can install the Qemu Manager from many sites e.g.
+			here: <a href="http://qemu-manager.en.lo4d.com/">http://qemu-manager.en.lo4d.com/</a>
+			Configure the fd1440.bin</font> <font face="Arial, sans-serif">image
+			file as the floppy to boot from and it will run.</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">If
+			you cannot download the artifact mentioned above, you have to
+			download and compile the source code and compile it as described
+			in the next chapter.</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">After
+			ELKS has booted log in as „root“ without entering a password.
+			Following that the current directory is the empty home directory
+			of root. From there get into the ELKS root directory by entering
+			„cd /“ or „cd ..“. If you then enter „ls -l“ you see
+			the directory structure. The programs you can run are in etc/bin
+			and usr/bin. The file /usr/bin/ed is an editor. <br/>
+Here is a
+			description how to use it:
+			<a href="https://www.geeksforgeeks.org/ed-command-in-linux-with-examples/">https://www.geeksforgeeks.org/ed-command-in-linux-with-examples/</a>
+			So in the root directory you could enter „usr/bin/ed
+			var/www/index.html“. This will load the index.html file. The
+			command „ ,p “ will display it in the editor and „q“ will
+			terminate ed again.</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">If
+			you want to test ELKS on a real PC you can write the fd1440.bin</font>
+			<font face="Arial, sans-serif">image file to a floppy disk. Check
+			first what the device name for the floppy disk is on your PC, it
+			may be /dev/fd0, /dev/sdb or /dev/sdd. The command „df“ will
+			tell you that as long as a floppy is inserted in the drive. Use dd
+			to copy the image file to the floppy: </font>„<font face="Arial, sans-serif">dd
+			if=fd1440.bin</font> <font face="Arial, sans-serif">of=/dev/sdd
+			bs=2048“.<br/>
+Using Windows you can use the Rawwrite utility to
+			write the floppy image to a real floppy.</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">ELKS
+			has the following default directory structure:</font></p>
+			<pre class="western">\       = root
+\-bin   = binary executables providing common linux commands such as ls, cp, ps.
+\-dev   = device files such as fd0, hda0, tty1 (floppy, hard disk, terminal)
+\-etc   = configuration files such as inittab, passwd, rc.d, termcap
+\-home  = home directories
+\-lib   = library files
+\-linux = kernel file
+\-mnt   = mount directory to mount filesystems
+\-root  = root user’s home directory
+\-sbin  = system binaries such as fdisk, fsck, mkfs, partype, ramdisk
+\-tmp   = temporary files
+\-usr---        
+        \-bin   = application programs and user binaries
+\-var--- 
+        \- run  = run-time variable data containing system information
+
+        \- www  = pages for the webserver application</pre><p style="margin-bottom: 0.5cm; font-variant: normal; font-style: normal; font-weight: normal; text-decoration: none">
+			<font color="#000000"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">With
+			the „du“ command entered in the root directory you can
+			determine how much disk space in kbyte is used by the files in the
+			directories. The „meminfo“ command shows the current memory
+			usage and the „ps“ command the currently running processes.</font></font></font></p>
+			<p style="margin-bottom: 0.5cm; font-variant: normal; font-style: normal; font-weight: normal; text-decoration: none">
+			<font color="#000000"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">Further
+			commands are documented in the
+			„Documentation/html/technical/ELKS_commands_and_utilities.html“
+			file and there is also a One-Page-Manual available:
+			„Documentation/html/user/ELKS_OPM.html“.</font></font></font></p>
+			<p style="margin-bottom: 0.5cm; font-variant: normal; font-style: normal; font-weight: normal; text-decoration: none">
+			<font color="#000000"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">In
+			the /bin directory there are also the „Mtools“ commands which
+			all begin with the letter „M“. This is a group of MSDOS tools
+			to allow you to read and write to MSDOS formatted diskettes from a
+			Unix based system like ELKS. These commands are documented in the
+			„elks/elkscmd/mtools/Readme“ file.</font></font></font></p>
+			<p style="margin-bottom: 0.5cm; font-variant: normal; font-style: normal; font-weight: normal; text-decoration: none">
+			<font color="#000000"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">If
+			you want to terminate your ELKS session you should not just turn
+			your PC off or terminate the Qemu emulation. ELKS keeps files in
+			its internal buffers and these get lost this way. Typically new
+			files which you generated will be missing next time you start
+			ELKS.</font></font></font></p>
+			<p style="margin-bottom: 0.5cm; font-variant: normal; font-style: normal; font-weight: normal; text-decoration: none">
+			<font color="#000000"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">To
+			avoid this use the “shutdown”, “poweroff” or “reboot”
+			commands. The shutdown and poweroff commands are kernel options
+			which may not be compiled in. Poweroff supports APM. </font></font></font>
+			</p>
+			<p style="margin-bottom: 0.5cm; font-variant: normal; font-style: normal; font-weight: normal; text-decoration: none">
+			<font color="#000000"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">These
+			commands will execute the „sync“ command to write the buffers
+			to the disk and use the “umount /” command to unmount the root
+			file system to avoid data loss. If the shutdown command is not
+			available you have to enter these on the command line before
+			switching off the power of your PC.</font></font></font></p>
+			<h2 class="western" style="font-variant: normal; font-style: normal">
+			3. Downloading and compiling ELKS</h2>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Download
+			the latest version from GitHub. Select 'clone or download' from
+			this page: <a href="https://github.com/elks-org/elks">https://github.com/elks-org/elks</a></font>
+			<font face="Arial, sans-serif">and click on 'download zip'. Then
+			unpack the downloaded 'elks-master.zip' archive into an 'elks'
+			directory in the root of your home directory.</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">If
+			you have GIT installed on your system, you can clone ELKS with the
+			following command in your home directory: </font>
+			</p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">git
+			clone https://github.com/elks-org/elks.git</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">This
+			will generate an elks directory in your home directory. You can
+			now execute the './build.sh' script in the elks directory which
+			will do it all for you. Before that, generate a directory called
+			'cross', where the GCC-ia16 compiler will be put into. </font>
+			</p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">After
+			the 'build.sh' script has finished you can set the environment
+			variables with ' . env.sh' - observe the dot command here. Then,
+			provided you have already installed qemu, enter ./qemu.sh to run
+			the fd1440.bin image with ELKS on it. This was generated with the
+			'build.sh' script. You may have to modify the 'qemu.sh' script
+			removing the 'tsc' parameter after 486.</font></p>
+			<h2 class="western" style="margin-top: 0cm; margin-bottom: 0.5cm; font-variant: normal; font-style: normal">
+			<font face="Arial, sans-serif">4. Configuring the kernel and
+			selecting the keyboard driver</font></h2>
+			<h2 class="western" style="margin-top: 0cm; margin-bottom: 0.5cm; font-variant: normal; font-style: normal; font-weight: normal">
+			<font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">The
+			default configuration does not include all available features due
+			to memory constraints. There is a configuration script which
+			allows you to select the available options from a menu system. To
+			execute this, run 'make menuconfig' in the elks directory to
+			configure the kernel and add options. Before that run the „.
+			./env.sh“ script to set the required environment variables, if
+			you have not already done so. Most of the options you can choose
+			from are explained in the file 'elks/config/Configure.help'. The
+			selected options will be stored in the file „elks/.config“.
+			When you exit menuconfig it will ask you to save the selected
+			settings as the current configuration. Do not select „Save
+			Configuration to an Alternate File“ before, because this
+			configuration will not be used as the current configuration after
+			being saved. </font></font>
+			</h2>
+			<h2 class="western" style="margin-top: 0cm; margin-bottom: 0.5cm; font-variant: normal; font-style: normal; font-weight: normal">
+			<font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">If
+			you require a non-US keyboard driver you have to use 'make
+			menuconfig' to configure this. Select „Kernel &amp;
+			Hardware→Drivers→Character device drivers→(American) XT
+			Keyboard support. If you click on the last item a menu will open
+			where you can select various keyboard drivers different from the
+			(American) XT keyboard support. Also check that networking and
+			unix domain sockets are enabled if you want to use these. Remember
+			that you cannot select all the options due to memory constraints.</font></font></h2>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">After
+			selecting your options with <span style="font-variant: normal"><font size="3" style="font-size: 12pt"><span style="font-style: normal"><span style="font-weight: normal">'make
+			menuconfig' you have to compile the kernel again. For this </span></span></font></span>enter
+			„make clean“ and then enter „make all“ to compile ELKS
+			with the newly selected options and generate a floppy disk image
+			file called „fd1440.bin“ in the elks/image directory. You can
+			execute this image file using the „./qemu.sh“ script. </font>
+			</p>
+			<h2 class="western" style="margin-top: 0cm; margin-bottom: 0.5cm; font-variant: normal; font-style: normal">
+			<font face="Arial, sans-serif">5. Generating and mounting disk
+			images</font></h2>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Using
+			menuconfig you can select different disk images, floppy images and
+			hard disk images, and compile ELKS again to get these generat<font color="#000000">ed.
+			If you select the „Build extra binary images“ option in the
+			„Target image“ section, ELKS will generate images of all the
+			available disk types in the image directory. You can also
+			configure one of these images as a second di</font>sk in the
+			„./qemu.sh“ script with the line:</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">IMAGE=&quot;-boot
+			order=a -fda image/fd1440.bin -drive
+			file=image/hd.bin,format=raw,if=ide&quot;</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">This
+			way ELKS boots from the fd1440.bin image. After booting ELKS<font color="#000000">
+			you have to mount these second disk images with the mount command
+			using „/mnt“ as the mo</font>unt point:</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt">mount
+			/dev/bda /mnt</font></font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Or,
+			if the disk is formated as a FAT disk you enter:</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt">mount
+			-t msdos /dev/bda /mnt</font></font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">After
+			that you can enter „cd /mnt“ to get into the second hard disk,
+			use e.g. „mkdir tmp“ to put to a new directory on it and enter
+			„ls“ to see this displayed on the screen. Menuconfig allows
+			you to specify if the generated hard disk image will allow to boot
+			ELKS. Currently the generated disk images will have no partition
+			table.</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Now,
+			this is how you can make a disk image with a partition table.
+			First generate an empty disk image on your Linux system:</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">dd
+			if=/dev/zero of=hdisk.img bs=1024 count=32200</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Then
+			specify two disks with this line in the qemu.sh:</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">IMAGE=&quot;-boot
+			order=a -fda image/fd1440.bin -drive
+			file=hdisk.img,format=raw,if=ide&quot;</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">This
+			will boot ELKS from the fd1440.bin floppy image. The new disk
+			image will be the „<span style="font-style: normal">/dev/bda“
+			device.</span> Using the fdisk utility on ELKS you can configure
+			partitions on this hard disk image. Enter „fd<span style="font-style: normal">isk
+			/dev/bda“ to run fdisk. </span><span style="font-style: normal">Use
+			the „n“ command to create a new partition, use „t“ to set
+			the ID to 80, select „w“ to write the new partition table to
+			the disk image and „q“ to exit fdisk again.</span> Then
+			generate a Minix file system on the first partition:</font></p>
+			<p style="margin-bottom: 0.5cm; font-style: normal"><font face="Arial, sans-serif">/bin/mkfs
+			</font><font face="Arial, sans-serif">/dev/bda</font><font face="Arial, sans-serif">1
+			32200  </font>
+			</p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">If
+			you partitioned the /<span style="font-style: normal">dev/bda disk
+			into four partitions these will be called  /dev/bda1,  /dev/bda2,
+			/dev/bda3 and  /dev/bda4. You can then mount these partitions with
+			the command: </span></font>
+			</p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><span style="font-style: normal">mount
+			/dev/bda1 /mnt</span></font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">On
+			Linux you can mount the disk image as a loop device and write your
+			required files on it. This operation is explained in the document
+			„writing apps in C for elks.html“.</font></p>
+			<h2 class="western" style="margin-top: 0cm; margin-bottom: 0.5cm; font-variant: normal; font-style: normal">
+			<font face="Arial, sans-serif">6. Making a bootable CD image with
+			ELKS</font></h2>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">You
+			can make a bootable ELKS CD from the fd1440.bin image. Use mkisofs
+			with Linux to generate an elks.iso image:</font></p>
+			<pre class="western" style="margin-bottom: 0.5cm"><font color="#000000"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><font face="Liberation Mono, monospace">mkisofs -r -b image/fd1440.bin</font> <font face="Liberation Mono, monospace">-c boot/boot.catalog -o elks.iso . </font></font></font></font></pre><p style="margin-bottom: 0.5cm">
+			<font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">Now
+			you can burn the elks.iso image on a CD. If you only have one CD
+			drive in your PC you can enter:</font></font></p>
+			<pre class="western" style="margin-bottom: 0.5cm"><font color="#000000"><font face="Liberation Mono, monospace"><font size="2" style="font-size: 10pt">sudo cdrecord speed=2 elks.iso</font></font></font></pre><p style="margin-bottom: 0.5cm">
+			<font face="Arial, sans-serif">This will result in a CD which will
+			boot ELKS on power up. If the CD drive is not the first drive your
+			PC will select to</font> <font face="Arial, sans-serif">boot from,
+			select the CD drive from the boot menu of the BIOS. </font>
+			</p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Or
+			run the elks.iso image in qemu:</font></p>
+			<pre class="western" style="margin-bottom: 0.5cm"><font color="#000000"><font face="Liberation Mono, monospace"><font size="2" style="font-size: 10pt">qemu-system-i386 -boot d -cdrom elks.iso </font></font></font></pre><p style="margin-bottom: 0.5cm">
+			<font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">To
+			burn a hard disk image instead of a floppy image on a CD you have
+			to add the -hard-disk-boot option:</font></font></p>
+			<pre class="western" style="margin-bottom: 0.5cm"><font color="#000000"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><font face="Liberation Mono, monospace">mkisofs -r -hard-disk-boot -b image/hd.bin</font> <font face="Liberation Mono, monospace">-c boot/boot.catalog -o elks.iso .</font></font></font></font></pre><p style="margin-bottom: 0.5cm">
+			<font face="Arial, sans-serif">You can also run ELKS in a browser
+			using a Javascript or Java based PC emulator. For example after
+			making</font> <font face="Arial, sans-serif">a bootable CD image
+			(El Torito) from an</font> <font face="Arial, sans-serif">ELKS
+			hard disk image</font> <font face="Arial, sans-serif">I</font>
+			<font face="Arial, sans-serif">could load and run it in virtual
+			x86 on this page: <a href="http://copy.sh/v86/">http://copy.sh/v86/</a></font>
+			<font face="Arial, sans-serif">The floppy image did not work
+			though.There are further emulators like JPC
+			<a href="http://jpc.sourceforge.net/home_home.html">http://jpc.sourceforge.net/home_home.html</a></font>
+			<font face="Arial, sans-serif">or PCjs <a href="http://www.pcjs.org/">http://www.pcjs.org/</a></font>
+			<font face="Arial, sans-serif">which may work as well.</font></p>
+			<h2 class="western"><span style="font-variant: normal"><span style="font-style: normal">7.
+			Development tools for ELKS  </span></span>
+			</h2>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">ELKS
+			and application programs for ELKS are cross-compiled on a standard
+			Linux system with GCC for IA16, a 16 bit version of GCC.</font> 
+			</p>
+			<p style="margin-bottom: 0.5cm"><font color="#111111"><font face="Arial, sans-serif">If
+			you compiled ELKS as described above with the „build.sh“
+			script, the gcc-ia16 compiler has been installed already.
+			Otherwise you could run the script „tools/build.sh“ while
+			being in the „elks/“ directory. This script will automatically
+			download and build the gcc-ia16 tool chain into the „cross“
+			directory. </font></font>
+			</p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">For
+			Ubuntu and Debian distributions you can download a pre-compiled
+			cross directory from here:
+			<a href="https://github.com/elks-org/elks/actions">https://github.com/elks-org/elks/actions</a>
+			On this web page there is a list showing when the „main“ or
+			„cross“ workflows have been executed. The cross workflow will
+			build a tool chain in a cross directory. If you click on the top
+			„cross“ entry of the list, you will see the „cross“
+			directory as an artifact. You can download that, provided you are
+			logged into GitHub,</font> <font face="Arial, sans-serif">and add
+			it into the elks directory on your local disk.</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">If
+			you want to develop applications using the C language, see the
+			document „writing apps with C.html“. There is also a document
+			for assembler programs: „writing apps with assembler.html“.</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">The
+			ELKS package includes the elksemu program in the elksemu directory
+			which allows to run 8086 ELKS programs under Linux. This way new
+			programs can be tested quickly without adding them to the ELKS
+			image file and booting ELKS.<br/>
+</font><br/>
+<br/>
+
+			</p>
+			<p><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">16th
+			April Georg Potthast</font></font></p>
+		</td>
+	</tr>
+</table>
+<p style="margin-bottom: 0.5cm"><br/>
+<br/>
+
+</p>
+<p style="margin-bottom: 0.5cm"><br/>
+<br/>
+
+</p>
+</body>
+</html>
