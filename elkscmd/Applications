@@ -103,6 +103,7 @@ misc_utils/od					:miscutil			:720k
 misc_utils/hd					:miscutil			:720k
 misc_utils/time					:miscutil			:720k
 misc_utils/ed					:be-miscutil		:720k
+misc_utils/tty					:miscutil		:1200k
 elvis/elvis	::bin/vi			:elvis			:360k
 minix1/banner					:minix1					:1440k
 minix1/decomp16					:minix1					:1440k
