@@ -1,40 +1,131 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML>
-<HEAD>
-	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
-	<TITLE></TITLE>
-	<META NAME="GENERATOR" CONTENT="OpenOffice 4.1.2  (Win32)">
-	<META NAME="AUTHOR" CONTENT="Georg Potthast">
-	<META NAME="CREATED" CONTENT="20170105;19172240">
-	<META NAME="CHANGEDBY" CONTENT="Georg Potthast">
-	<META NAME="CHANGED" CONTENT="20170326;18003120">
-	<STYLE TYPE="text/css">
-	<!--
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=windows-1252"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 5.2.7.2 (Windows)"/>
+	<meta name="author" content="Georg Potthast"/>
+	<meta name="created" content="00:00:00"/>
+	<meta name="changed" content="2020-04-13T22:16:06.868000000"/>
+	<meta name="created" content="00:00:00">
+	<meta name="changed" content="2020-02-26T18:48:13.118000000">
+	<style type="text/css">
 		@page { margin: 2cm }
-		TD P { margin-bottom: 0cm }
-		P { margin-bottom: 0.21cm }
-		PRE.cjk { font-family: "NSimSun", monospace }
-		H2 { margin-bottom: 0.21cm }
-		H2.western { font-family: "Arial", sans-serif; font-size: 14pt; font-style: italic }
-		H2.cjk { font-family: "Microsoft YaHei"; font-size: 14pt; font-style: italic }
-		H2.ctl { font-family: "Lucida Sans"; font-size: 14pt; font-style: italic }
-		A:link { so-language: zxx }
-	-->
-	</STYLE>
-</HEAD>
-<BODY LANG="de-DE" DIR="LTR">
-<P STYLE="page-break-before: always"><BR><BR>
-</P>
-<TABLE WIDTH=718 BORDER=0 CELLPADDING=4 CELLSPACING=0>
-	<COL WIDTH=710>
-	<TR>
-		<TD WIDTH=710 VALIGN=TOP>
-			<H2 CLASS="western"><SPAN STYLE="font-style: normal">Writing
-			applications for ELKS in assembler</SPAN></H2>
-			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">If
-			you want to compile an assembler program with as86 here is an
-			example:</FONT></P>
-			<PRE CLASS="western">.text
+		p { margin-bottom: 0.21cm }
+		td p { margin-bottom: 0cm }
+		pre.cjk { font-family: "NSimSun", monospace }
+		h2 { margin-bottom: 0.21cm }
+		h2.western { font-family: "Arial", sans-serif; font-size: 14pt; font-style: italic }
+		h2.cjk { font-family: "Microsoft YaHei"; font-size: 14pt; font-style: italic }
+		h2.ctl { font-family: "Lucida Sans"; font-size: 14pt; font-style: italic }
+		a:link { so-language: zxx }
+		code.cjk { font-family: "NSimSun", monospace }
+	</style>
+</head>
+<body lang="de-DE" dir="ltr">
+<p style="page-break-before: always"><br/>
+<br/>
+
+</p>
+<table width="718" cellpadding="0" cellspacing="0">
+	<col width="718">
+	<tr>
+		<td width="718" valign="top" style="border: none; padding: 0cm">
+			<h2 class="western" style="font-variant: normal; font-style: normal">
+			<font size="5" style="font-size: 18pt">Writing applications for
+			ELKS with the GNU as assembler</font></h2>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">If
+			you want to compile an assembler program with gnu as to use it
+			with DLKS, here is a hello world example:</font></p>
+			<pre class="western">        .code16
+        .text
+        .global entry
+entry:
+        movw    $len,%dx
+        movw    $msg,%cx
+        movw    $1,%bx
+        movw    $4,%ax
+        int     $0x80
+
+        movw    $0,%bx
+        movw    $1,%ax
+        int     $0x80
+        .data
+msg:
+        .ascii  &quot;Hello, world\n&quot;
+        len = . - msg</pre><p style="margin-bottom: 0.5cm">
+			<code class="western"><font face="Arial, sans-serif">Make a new
+			&bdquo;testing&ldquo; directory and copy and save this </font></code><code class="western"><font face="Arial, sans-serif">code</font></code><code class="western"><font face="Arial, sans-serif">
+			as 'hello.S' with a text editor in the elks/testing directory.
+			Then get into this directory and compile it with these commands: </font></code>
+			</p>
+			<pre class="western"><code class="western">$ ia16-elf-gcc -melks-libc -mcmodel=small -c hello.S -o hello.o</code>
+<code class="western">$ ia16-elf-gcc -melks-libc -mcmodel=small -nostdlib hello.o -o hello</code></pre><p style="margin-bottom: 0.5cm">
+			<font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">To
+			see if this program will work with ELKS enter: &bdquo;../elksemu/elksemu
+			hello&ldquo; on the command line. The elksemu emulator will run
+			the hello program then. Further alternatives to run the program
+			are described in the &bdquo;Writing applications for ELKS in C&ldquo;
+			document.</font></font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">The
+			entry points can be defined as entry or _start, as handled in
+			ELKS's C library linker scripts.</font></font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">The
+			system calls implemented by ELKS are listed in the file</font>
+			<font face="Arial, sans-serif">Documentation/function.lst. The
+			system call numbers are identical to Linux. So you will find these
+			numbers on this page: <a href="http://asm.sourceforge.net/syscall.html">http://asm.sourceforge.net/syscall.html</a>
+			and further details here:
+			<a href="https://www.tutorialspoint.com/assembly_programming/assembly_system_calls.htm">https://www.tutorialspoint.com/assembly_programming/assembly_system_calls.htm</a></font></p>
+			<p style="margin-bottom: 0.5cm; font-variant: normal; font-style: normal">
+			<font face="Arial, sans-serif">If an error number is returned you
+			can look that up in the file 'elks\include\arch\errno.h'.</font></p>
+			<h2 class="western" style="margin-top: 0cm; margin-bottom: 0.5cm; font-variant: normal; font-style: normal">
+			<font face="Arial, sans-serif"><font size="5" style="font-size: 18pt">Writing
+			applications for ELKS with the NASM assembler</font></font></h2>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">It
+			is also possible to use NASM with the -f elf switch to generate an
+			object file for ELKS. Here is an example:</font></p>
+			<pre class="western">BITS 16
+section .text                   ;section declaration
+global _start                   
+_start:                         ;write our string to stdout
+
+    mov     dx,len              ;3rd arg: message length
+    mov     cx,msg              ;2nd arg: pointer to message to write
+    mov     bx,1                ;1st arg: file handle (stdout)
+    mov     ax,4                ;system call number (sys_write)
+    int     0x80                ;call kernel
+
+                                ;exit now
+    mov     bx,0                ;1st syscall arg: exit code
+    mov     ax,1                ;system call number (sys_exit)
+    int     0x80                ;call kernel
+
+section .data                   ;section declaration
+
+msg db      &quot;Hello, world!&quot;,0xa ;the message string
+len equ     $ - msg             ;length of string
+</pre><p style="margin-bottom: 0.5cm">
+			<font face="Arial, sans-serif">Save this code as the file
+			hello.</font><font face="Arial, sans-serif">asm</font><font face="Arial, sans-serif">.
+			</font><font face="Arial, sans-serif">Make sure the paths are set
+			to find ia16-elf-gcc by running the script &bdquo;. env.sh&ldquo;
+			in an elks directory.</font><font face="Arial, sans-serif"> Then
+			you can compile t</font><font face="Arial, sans-serif">he code</font><font face="Arial, sans-serif">
+			with these commands:</font></p>
+			<pre class="western" style="margin-bottom: 0.5cm">nasm -f elf -o hello.o hello.asm
+ia16-elf-gcc -melks-libc -mcmodel=small -nostdlib hello.o -o hello</pre><p style="margin-bottom: 0.5cm">
+			<font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">Then
+			enter: &bdquo;../elksemu/elksemu hello&ldquo; on the command line</font></font><font face="Arial, sans-serif">
+			and see the message on the screen.</font></p>
+			<h2 class="western"><span style="font-variant: normal"><font size="5" style="font-size: 18pt"><span style="font-style: normal">Writing
+			applications for ELKS with the as86 assembler</span></font></span></h2>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Unlike
+			GNU as the as86 assembler has Intel syntax like masm or tasm. If
+			you want to compile an assembler program with as86, here is an
+			example:</font></p>
+			<pre class="western">.text
 .global _main
 _main:
 push es
@@ -60,77 +151,37 @@ pop es
 xor bx,bx
 ret
 .data
-.bss</PRE><P STYLE="margin-bottom: 0.5cm">
-			<FONT FACE="Arial, sans-serif">Save this code as the file abc.s.
-			Then you can compile it with these commands:</FONT></P>
-			<PRE CLASS="western">as86 -o abc.o abc.s
-bcc -o abc abc.o</PRE><P STYLE="margin-bottom: 0.5cm">
-			<FONT FACE="Arial, sans-serif">Instead of the command &bdquo;bcc
-			-o abc abc.o&ldquo; you can also invoke the ld86 linker and enter:</FONT></P>
-			<PRE CLASS="western" STYLE="margin-bottom: 0.5cm">ld86 -i -o abc abc.o</PRE><P STYLE="margin-bottom: 0.5cm">
-			<FONT FACE="Arial, sans-serif">You can reduce the memory
+.bss</pre><p style="margin-bottom: 0.5cm">
+			<font face="Arial, sans-serif">Save this code in the file abc.S.
+			Then you can compile it with these commands:</font></p>
+			<pre class="western">as86 -o abc.o abc.S
+ld86 -i -o abc abc.o</pre><p style="margin-bottom: 0.5cm">
+			<font face="Arial, sans-serif">You can also call the ld86 linker
+			via bcc like this instead:</font></p>
+			<pre class="western" style="margin-bottom: 0.5cm">bcc -o abc abc.o</pre><p style="margin-bottom: 0.5cm">
+			<font face="Arial, sans-serif">You can reduce the memory
 			requirements of a program if you modify the total program size
-			(chmem) in the header with a hex editor. The abc.s program above
-			is linked to require 32.752 bytes by bcc/ld86. If you set the size
+			(chmem) with the provided ld86 options. The abc.s program above is
+			linked to require 32.752 bytes by bcc/ld86. If you reduce the size
 			to 1.024 bytes instead it will run just as well. ELKS considers a
 			memory requirement below 1.024 bytes invalid and will refuse to
 			load the program with the message &bdquo;out of space&ldquo;. See
-			the check in fs/exec.c. The c program hello.c above is linked to
-			require 33.520 bytes and can be reduced to 3.984 bytes instead.
-			Just add the code, data and bss sections together and add 256
-			bytes for the stack. You will have to increase the stack size for
-			a larger program.</FONT></P>
-			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Unlike
-			gas the as86 assembler has Intel syntax like masm or tasm. </FONT>
-			</P>
-			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">It
-			is also possible to use NASM with the -f 86 switch to generate an
-			object file for ELKS. Here is an example:</FONT></P>
-			<PRE CLASS="western">section .text                   ;section declaration
-global _main                            ;ELKS needs main
-_main:
-                                ;write our string to stdout
+			the check in fs/exec.c. Add the code, data and bss sections and
+			add e.g. 256 bytes for the stack. </font>
+			</p>
+			<p style="margin-bottom: 0.5cm; font-variant: normal; font-style: normal">
+			<font face="Arial, sans-serif">14</font><font face="Arial, sans-serif">th</font>
+			<font face="Arial, sans-serif">of </font><font face="Arial, sans-serif">April</font><font face="Arial, sans-serif">
+			2020 Georg Potthast with help from tkchia</font></p>
+			<p><br/>
 
-    mov     dx,len              ;3rd arg: message length
-    mov     cx,msg              ;2nd arg: pointer to message to write
-    mov     bx,1                ;1st arg: file handle (stdout)
-    mov     ax,4                ;system call number (sys_write)
-    int     0x80                ;call kernel
+			</p>
+		</td>
+	</tr>
+</table>
+<p><br/>
+<br/>
 
-                                ;exit now
-    mov     bx,0                ;1st syscall arg: exit code
-    mov     ax,1                ;system call number (sys_exit)
-    int     0x80                ;call kernel
-
-section .data                   ;section declaration
-
-msg db      &quot;Hello, world!&quot;,0xa ;the message string
-len equ     $ - msg             ;length of string</PRE><P STYLE="margin-bottom: 0.5cm">
-			<FONT FACE="Arial, sans-serif">Save this code as the file hello.s.
-			Then you can compile it with these commands:</FONT></P>
-			<PRE CLASS="western">nasm -f as86 -o hello.o hello.s
-bcc -o hello hello.o</PRE><P STYLE="margin-bottom: 0.5cm">
-			<FONT FACE="Arial, sans-serif">Transfer the executable hello to
-			ELKS as described above and see the message on the screen.</FONT></P>
-			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">You
-			cannot just bang any assembler program for NASM with the switch -f
-			as86 to ELKS, you need to make a few modifications. See the
-			e3-16.asm code for details.</FONT></P>
-			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">The
-			system calls implemented by ELKS are listed in
-			Documentation/function.lst. The system call numbers are
-			identical to Linux. So you will find these numbers on this page:
-			<A HREF="http://asm.sourceforge.net/syscall.html">http://asm.sourceforge.net/syscall.html</A>
-			and further details here:
-			<A HREF="https://www.tutorialspoint.com/assembly_programming/assembly_system_calls.htm">https://www.tutorialspoint.com/assembly_programming/assembly_system_calls.htm</A></FONT></P>
-			<P STYLE="margin-bottom: 0.5cm; font-style: normal"><FONT FACE="Arial, sans-serif">26</FONT><SUP><FONT FACE="Arial, sans-serif">th</FONT></SUP><FONT FACE="Arial, sans-serif">
-			of March 2017 Georg Potthast</FONT></P>
-			<P><BR>
-			</P>
-		</TD>
-	</TR>
-</TABLE>
-<P><BR><BR>
-</P>
-</BODY>
-</HTML>
+</p>
+</body>
+</html>

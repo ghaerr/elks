@@ -153,7 +153,7 @@ cmdtype cmd;
 	clrprompt();
 	if (cmd == PATT_FWD || cmd == PATT_BACK) {
 	    printch(tsearch = instring[0] = chars[cmd-PATT_FWD]);
-	    if (!getline(&instring[1]))
+	    if (!ourgetline(&instring[1]))
 		return ESCAPED;	/* needs to skip later tests */
 	}
 	else {

@@ -27,7 +27,7 @@ static int chars = 0;
 /* The meat of the whole affair */
 static char *nowline, *prevline, buf1[1024], buf2[1024];
 
-static int getline(char *buf, int count);
+static int ourgetline(char *buf, int count);
 
 static FILE *xfopen(const char *fn, const char *mode)
 {
@@ -84,13 +84,13 @@ static int uniq(void)
 
   /* Setup */
   prevline = buf1;
-  if (getline(prevline, 1024) < 0) return(0);
+  if (ourgetline(prevline, 1024) < 0) return(0);
   seen = 1;
   nowline = buf2;
 
   /* Get nowline and compare if not equal, dump prevline and swap
    * pointers else continue, bumping seen count */
-  while (getline(nowline, 1024) > 0) {
+  while (ourgetline(nowline, 1024) > 0) {
 	if (!equal(prevline, nowline)) {
 		show(prevline, seen);
 		seen = 1;
@@ -105,7 +105,7 @@ static int uniq(void)
 }
 
 
-static int getline(char *buf, int count)
+static int ourgetline(char *buf, int count)
 {
   int c;
   int ct = 0;

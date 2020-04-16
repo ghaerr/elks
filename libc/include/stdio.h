@@ -113,6 +113,11 @@ extern int fclose __P((FILE*));
 extern int fflush __P((FILE*));
 extern char *fgets __P((char*, size_t, FILE*));
 
+ssize_t getdelim(char **__restrict lineptr, size_t *__restrict n,
+		int delimiter, register FILE *__restrict stream);
+ssize_t getline(char **__restrict lineptr, size_t *__restrict n,
+		FILE *__restrict stream);
+
 extern FILE *fopen __P((char*, char*));
 extern FILE *fdopen __P((int, char*));
 extern FILE *freopen  __P((char*, char*, FILE*));

@@ -31,7 +31,7 @@ int equal();
 void show();
 int uniq();
 void uniq_usage();
-int getline();
+int ourgetline();
 
 FILE *xfopen(fn, mode)
 char *fn, *mode;
@@ -150,13 +150,13 @@ int uniq()
 
   /* Setup */
   prevline = buf1;
-  if (getline(prevline, 1024) < 0) return(0);
+  if (ourgetline(prevline, 1024) < 0) return(0);
   seen = 1;
   nowline = buf2;
 
   /* Get nowline and compare if not equal, dump prevline and swap
    * pointers else continue, bumping seen count */
-  while (getline(nowline, 1024) > 0) {
+  while (ourgetline(nowline, 1024) > 0) {
 	if (!equal(prevline, nowline)) {
 		show(prevline, seen);
 		seen = 1;
@@ -175,7 +175,7 @@ void uniq_usage()
   fprintf(stderr, "Usage: uniq [-udc] [+n] [-n] [input [output]]\n");
 }
 
-int getline(buf, count)
+int ourgetline(buf, count)
 char *buf;
 int count;
 {

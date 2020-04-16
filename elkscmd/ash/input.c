@@ -91,6 +91,7 @@ char *r_use_prompt = NULL;	/* the prompt to use with readline */
 #endif
 #if LINENOISE
 #include "linenoise.h"
+void completion(const char *buf, linenoiseCompletions *lc);
 char *r_use_prompt = NULL;	/* the prompt to use with readline */
 #endif
 #ifdef __STDC__
@@ -216,19 +217,19 @@ preadbuffer() {
 	char *prompt;
 	char *line;
 
+    linenoiseSetCompletionCallback(completion);
+
 	p = parsenextc = parsefile->buf;
 	prompt = r_use_prompt;
 	r_use_prompt = NULL;
-    line = linenoise(prompt);
+	line = linenoise(prompt);
 	if (line == NULL) {
                 parsenleft = EOF_NLEFT;
                 return PEOF;
 	}
-	printf("\r"); /* or next prompt is not printed at left border */
-    fflush(stdout);
-    linenoiseHistoryAdd(line); /* Add to the history. */
 	strcpy(p, line);
-    linenoiseFree(line); /* The returned line has to be freed */
+	linenoiseHistoryAdd(line); /* Add to the history. */
+	linenoiseFree(line); /* The returned line has to be freed */
 	i = strlen(p);
 	p[i++] = '\n';
     } else {

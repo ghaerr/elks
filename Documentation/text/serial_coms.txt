@@ -45,12 +45,23 @@ the following line:
 
 then recompile elks and start it with qemu as described above.
 
-If you then start a terminal program on your host and open the
-device e.g. "/dev/pts/3" you will get a login prompt after you
-press enter and you can then log in as root.
+If you then run "screen /dev/pts/3" on your host system you will
+get a login prompt after you press enter and you can then log in
+as root on the ELKS system running in Qemu. Screen will emulate
+an ANSI terminal. To use e.g. vi properly, you need a program that 
+supports an ANSI terminal emulation.
 
-To use vi properly, you will need a terminal program that supports
-an ANSI terminal emulation.
+After entering CTRL-A and "?" the "screen" program will display
+a help screen and with CTRL-A and "k" you can terminate "screen".
+You can also detach from ELKS by entering CTRL-A and "d". After
+that you can attach again with "screen -x". 
+When you press CTRL-A followed by SHIFT-H, "screen" will create a
+screenlog.x file where it records the data received and transmitted.
+There is also a ".screenrc" file which allows to configure "screen".
+An extensive manual is available for the screen program.
+
+You may also start a terminal program on your host and open the
+device e.g. "/dev/pts/3", provided the program supports this. 
 
 
 3. The miniterm application

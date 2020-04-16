@@ -108,11 +108,13 @@ int sys_lstat(char *filename, struct stat *statbuf)
 int sys_fstat(unsigned int fd, register struct stat *statbuf)
 {
     struct file *f;
+    int ret;
 
-    return (fd_check(fd, (char *) statbuf, sizeof(struct stat),
-				FMODE_WRITE | FMODE_READ, &f)
-		? cp_stat(f->f_inode, statbuf)
-		: 0);
+    ret = fd_check(fd, (char *) statbuf, sizeof(struct stat),
+				FMODE_WRITE | FMODE_READ, &f);
+    if (!ret)
+	cp_stat(f->f_inode, statbuf);
+    return ret;
 }
 
 int sys_readlink(char *path, char *buf, size_t bufsiz)

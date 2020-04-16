@@ -282,8 +282,23 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	if (ModeState & CTRL && !(ModeState & ALT))	/* Changed to support CTRL-ALT */
 	    keyp_E0 = (char *)(((int) keyp_E0) & 0x1F); /* CTRL-.. */	/*[ keyp ]*/
 	    
-	if (((int)keyp_E0) == '\r')	/*[ keyp ]*/
-	    keyp_E0 = (char *) '\n';	/*[ keyp ]*/
+#ifdef CONFIG_EMUL_ANSI
+	code = mode = 0;
+	switch ((unsigned int)keyp_E0) {
+	case 0xb7: code = 'H'; break;			/* home*/
+	case 0xb1: code = 'F'; break;			/* end*/
+	case 0xb9: code = '5'; mode = '~'; break;	/* page up*/
+	case 0xb3: code = '6'; mode = '~'; break;	/* page dn*/
+	}
+	if (code) {
+	    AddQueue(ESC);
+	    AddQueue('[');
+	    AddQueue(code);
+	    if (mode)
+		AddQueue(mode);
+	    return;
+	}
+#endif
 	//printk("keyp_E0:%X\n",keyp_E0);    
 	AddQueue((unsigned char) keyp_E0);
     }

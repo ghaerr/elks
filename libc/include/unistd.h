@@ -5,9 +5,6 @@
 #include <sys/types.h>
 #include <sys/select.h>
 
-typedef int intptr_t;
-typedef intptr_t ssize_t;
-
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
@@ -52,6 +49,7 @@ int _execve(char *fname, char *stk_ptr, int stack_bytes);
 int execvp(char *fname, char **argv);
 void _exit(int status);
 int isatty (int fd);
+char *ttyname(int fd);
 off_t lseek (int fildes, off_t offset, int whence);
 int link(const char *path1, const char *path2);
 int symlink(const char *path1, const char *path2);

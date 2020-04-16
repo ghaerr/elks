@@ -71,7 +71,7 @@ int  PROC fseekeol(int  origin);
 int  PROC gcount(void);
 int  PROC getKey(void);
 int  PROC getcontext(char  c,int  begline);
-int  PROC getline(char  *str);
+int  PROC ourgetline(char  *str);
 int  PROC initialize(int  count,char  * *args);
 int  PROC inputf(char  *fname,int  newbuf);
 int  PROC insert_to_undo(struct  undostack *u,int  start,int  size);

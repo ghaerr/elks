@@ -16,6 +16,7 @@ mainmenu_option next_comment
 		comment 'Applications'
 
 		bool 'busyelks'			CONFIG_APP_BUSYELKS		n
+		bool 'cgatext'			CONFIG_APP_CGATEXT	n
 		busyelks 'diskutils'	CONFIG_APP_DISK_UTILS	y
 		busyelks 'fileutils'	CONFIG_APP_FILE_UTILS	y
 		busyelks 'shutils'	 	CONFIG_APP_SH_UTILS		y
@@ -25,7 +26,7 @@ mainmenu_option next_comment
 		bool 'minix2'			CONFIG_APP_MINIX2		y
 		busyelks 'minix3'		CONFIG_APP_MINIX3		y
 		busyelks 'miscutils'	CONFIG_APP_MISC_UTILS	y
-		bool 'mtools'			CONFIG_APP_MTOOLS		y
+		bool 'mtools'			CONFIG_APP_MTOOLS		n
 		bool 'nano-X'			CONFIG_APP_NANOX		y
 		bool 'other'         	CONFIG_APP_OTHER        y
 
