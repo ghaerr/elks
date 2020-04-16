@@ -123,7 +123,7 @@ enum KEY_ACTION{
         CTRL_S = 19,        /* Ctrl-s */
         CTRL_U = 21,        /* Ctrl-u */
         ESC = 27,           /* Escape */
-        BACKSPACE =  127,   /* Backspace */
+        DELETE =  127,      /* Delete */
         /* The following are just soft codes, not really reported by the
          * terminal directly. */
         ARROW_LEFT = 1000,
@@ -163,12 +163,14 @@ void editorSetStatusMessage(const char *fmt, ...);
 /* C / C++ */
 char *C_HL_extensions[] = {".c",".cpp",NULL};
 char *C_HL_keywords[] = {
-        /* A few C / C++ keywords */
-        "switch","if","while","for","break","continue","return","else",
-        "struct","union","typedef","static","enum","class","register",
+        /* C keywords */
+        "auto","break","case","continue","default","do","else","enum",
+        "extern","for","goto","if","register","return","sizeof","static",
+        "struct","switch","typedef","union","volatile","while",
+
         /* C types */
         "int|","long|","double|","float|","char|","unsigned|","signed|",
-        "void|",NULL
+		"void|","short|","auto|","const|",NULL
 };
 
 /* Here we define an array of syntax highlights by extensions, keywords,
@@ -1019,7 +1021,7 @@ void editorFind(int fd) {
         editorRefreshScreen();
 
         int c = editorReadKey(fd);
-        if (c == DEL_KEY || c == CTRL_H || c == BACKSPACE) {
+        if (c == DEL_KEY || c == CTRL_H || c == DELETE) {
             if (qlen != 0) query[--qlen] = '\0';
             last_match = -1;
         } else if (c == ESC || c == ENTER) {
@@ -1206,9 +1208,12 @@ void editorProcessKeypress(int fd) {
     case CTRL_F:
         editorFind(fd);
         break;
-    case BACKSPACE:     /* Backspace */
     case CTRL_H:        /* Ctrl-h */
+        editorDelChar();
+		break;
+    case DELETE:        /* Delete */
     case DEL_KEY:
+		editorMoveCursor(ARROW_RIGHT);
         editorDelChar();
         break;
     case PAGE_UP:
