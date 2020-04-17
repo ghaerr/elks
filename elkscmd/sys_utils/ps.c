@@ -13,6 +13,9 @@
  * It is not fully functional, and it is not portable.
  */
 
+#define __KERNEL__
+#include <linuxmt/ntty.h>
+#undef __KERNEL__
 #include <linuxmt/mem.h>
 #include <linuxmt/sched.h>
 #include <unistd.h>
@@ -23,6 +26,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pwd.h>
+#include <dirent.h>
+#include <string.h>
 
 int read_task(int fd, unsigned int off, unsigned int ds,
 		struct task_struct *task_table)
@@ -39,7 +44,7 @@ int read_task(int fd, unsigned int off, unsigned int ds,
 	return 0;
 }
 
-int get_name(int fd, unsigned int seg, unsigned int off)
+int process_name(int fd, unsigned int off, unsigned int seg)
 {
 	int i;
 	unsigned int strptr;
@@ -56,6 +61,47 @@ int get_name(int fd, unsigned int seg, unsigned int off)
 	return 0;
 }
 
+
+char *devname(unsigned int minor)
+{
+	struct dirent *d;
+	dev_t ttydev = MKDEV(4, minor);
+	struct stat st;
+	static char dev[] = "/dev";
+	static char name[16]; /* should be MAXNAMLEN but that's overkill */
+
+	DIR *fp = opendir(dev);
+	if (fp == 0)
+		return "??";
+	strcpy(name, dev);
+	strcat(name, "/");
+
+	while ((d = readdir(fp)) != 0) {
+		if( strlen(d->d_name) > sizeof(name) - sizeof(dev) - 1)
+			continue;
+		strcpy(name + sizeof(dev), d->d_name);
+		if (!stat(name, &st) && st.st_rdev == ttydev) {
+			closedir(fp);
+			return name+8;
+		}
+	}
+	closedir(fp);
+	return "?";
+}
+
+char *tty_name(int fd, unsigned int off, unsigned int seg)
+{
+	off_t addr = ((off_t)seg << 4) + off;
+	struct tty tty;
+
+	if (off == 0)
+		return "";
+	if (lseek(fd, addr, SEEK_SET) == -1) return "?";
+
+	if (read(fd, &tty, sizeof(tty)) != sizeof(tty)) return "?";
+
+	return devname(tty.minor);
+}
 
 int main(int argc, char **argv)
 {
@@ -96,11 +142,11 @@ int main(int argc, char **argv)
 		default:					c = '?'; break;
 		}
 		pwent = (getpwuid(task_table.uid));
-		printf("%5d %5d %4x %-8s %c %5u ",
-				task_table.pid, task_table.pgrp, (int)task_table.tty,
+		printf("%5d %5d %4s %-8s %c %5u ",
+				task_table.pid, task_table.pgrp, tty_name(fd, (unsigned int)task_table.tty, ds),
 				(pwent ? pwent->pw_name : "unknown"),
 				c, (unsigned int)task_table.t_inode);
-		get_name(fd, task_table.t_regs.ss, task_table.t_begstack + 2);
+		process_name(fd, task_table.t_begstack + 2, task_table.t_regs.ss);
 		fflush(stdout);
 	}
 	exit(0);
