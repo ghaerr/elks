@@ -54,11 +54,12 @@
  * removed volatile and fixed function definitions
  */
 
+#ifdef CONFIG_BLK_DEV_FD
+
 #define TRP_TIMER
 #define TRP_SIG
 
 #define REALLY_SLOW_IO
-#define FLOPPY_IRQ 6
 #define FLOPPY_DMA 2
 
 #include <linuxmt/config.h>
@@ -77,15 +78,6 @@
 #include <arch/io.h>
 #include <arch/segment.h>
 
-#ifdef CONFIG_BLK_DEV_FD
-#if 1
-/* Hack until this code works */
-void floppy_init(void)
-{
-/* Do nothing */
-}
-
-#else
 
 #define FLOPPYDISK
 #define MAJOR_NR FLOPPY_MAJOR
@@ -1450,7 +1442,5 @@ void floppy_init(void)
 	reset_floppy();
     }
 }
-
-#endif
 
 #endif

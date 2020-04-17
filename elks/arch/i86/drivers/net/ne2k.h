@@ -1,11 +1,7 @@
 #ifndef NE2K_H
 #define NE2K_H
 
-
-// Default in QEMU
-
-#define NE2K_IRQ 9
-
+#include <arch/ports.h>
 
 // NE2K status
 
