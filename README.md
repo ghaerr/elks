@@ -1,8 +1,8 @@
-![logo](https://github.com/elks-org/elks/blob/master/Documentation/img/ELKS-Logo.png)
+![logo](https://github.com/jbruchon/elks/blob/master/Documentation/img/ELKS-Logo.png)
 
 
-![cross](https://github.com/elks-org/elks/workflows/cross/badge.svg)
-![main](https://github.com/elks-org/elks/workflows/main/badge.svg)
+![cross](https://github.com/jbruchon/elks/workflows/cross/badge.svg)
+![main](https://github.com/jbruchon/elks/workflows/main/badge.svg)
 
 
 # What is this ?
@@ -15,7 +15,9 @@ Such systems are ancient computers (IBM-PC XT / AT and clones), or more
 recent SBC / SoC / FPGA that reuse the huge hardware & software legacy
 from that popular platform.
 
-Watch ELKS in action (thanks @xrayer): https://www.youtube.com/watch?v=6rwlqmdebxk
+Watch ELKS in action:
+- https://www.youtube.com/watch?v=6rwlqmdebxk (thanks @xrayer)
+- https://youtu.be/ZDffBj6zY-w?t=687 (thanks Alejandro)
 
 # How to build ?
 
