@@ -5,7 +5,7 @@
 #include "_stdio.h"
 
 FILE *
-__fopen(char * fname, int fd, FILE * fp, char * mode)
+__fopen(const char * fname, int fd, FILE * fp, const char * mode)
 {
    int   open_mode = 0;
 #if __MODE_IOTRAN && !O_BINARY

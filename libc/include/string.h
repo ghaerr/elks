@@ -18,7 +18,7 @@ extern char * strncpy __P ((char*, char*, size_t));
 char * strchr  (const char * s, int c);
 char * strrchr (const char * s, int c);
 
-extern char * strdup __P ((char*));
+extern char * strdup __P ((const char*));
 
 /* Basic mem functions */
 extern void * memccpy __P ((void*, void*, int, size_t));

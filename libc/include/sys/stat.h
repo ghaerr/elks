@@ -19,6 +19,5 @@ int mknod(char *path, mode_t mode, dev_t dev);
 int mkfifo(char *path, mode_t mode);
 mode_t umask(mode_t mode);
 int chmod(const char *path, mode_t mode);
-int chown(const char *path, uid_t owner, gid_t group);
 
 #endif

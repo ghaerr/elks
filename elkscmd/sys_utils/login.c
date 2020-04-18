@@ -33,7 +33,7 @@
 #define PATHLEN 256
 #define STR_SIZE (PATHLEN + 7)
 
-char ** environ;
+extern char *getpass(char *prompt);
 
 void login(register struct passwd * pwd, struct utmp * ut_ent)
 {
@@ -95,11 +95,8 @@ void login(register struct passwd * pwd, struct utmp * ut_ent)
 int main(int argc, char ** argv)
 {
 	struct passwd *pwd;
-	struct utmp entry;
-	struct utmp *entryp;
-	struct utmp newentry;
+	struct utmp *entryp = NULL;
 	char lbuf[UT_NAMESIZE], *pbuf, salt[3];
-	char *tty_name;
 	char *p;
 
 
@@ -119,6 +116,10 @@ int main(int argc, char ** argv)
 		}
 		pwd = getpwnam(lbuf);
 #ifdef USE_UTMP
+		struct utmp entry;
+		struct utmp newentry;
+		char *tty_name;
+
 		if ((tty_name = ttyname(0)) == NULL) {
 			goto not_tty;
 		}

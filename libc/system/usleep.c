@@ -1,5 +1,6 @@
 #ifdef L_usleep
 #include <unistd.h>
+#include <sys/time.h>
 
 void
 usleep(unsigned long useconds)
