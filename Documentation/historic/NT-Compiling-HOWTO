@@ -1,0 +1,110 @@
+Date: Thu, 28 May 1998 13:57:06 +0100
+From: Paul Roberts <proberts@stnc.com>
+To: linux-8086 <linux-8086@vger.rutgers.edu>
+Subject: Compiling ELKS on NT
+
+This briefly describes the steps I have taken to compile ELKS on NT 4.0:
+
+1)	Download and install gnuwin32 beta 19.
+	(from www.cygnus.com)
+
+2)	Change the mount points in the registry to binary.
+	Use regedit to edit the keys under
+	"HKEY_CURRENT_USER\Software\Cygnus Solutions\CYGWIN.DLL
+	setup\b15.0\mounts\".
+	Under each key there is a variable fBinary which needs
+	changing from 0 to 1 this makes the cygnus c-librarys
+	handle files in binary mode by default. If you don't
+	do this you get spurious CR\LF conversion happening.
+
+3)	Find an editor that will edit unix files without
+	converting them to a dos file.
+
+4)	Download and extract Dev86src-0.14.3.tar.gz (I have
+	\gnuwin32\b19\H-i386-cygwin32\ mounted as /usr and
+	extract every thing to /usr/src).
+
+5)	Hack makefile.in:
+		a) Change the definitions of INDAT INEXE INSCR to remove
+		   flags for owner and group;
+		b) Remove elksemu from the target all;
+		c) Remove install-emu from the target install.
+
+6)	Hack linux-86/man/Makefile:
+	Remove "-o xxxx -g xxxxx" from install lines.
+
+7)	Edit some of the libc makefiles to change refs from "sh" to "bash"
+
+	a) linux-86\libc\gnu_i386\Makefile(30): from "sh mksyscall" to "bash
+	   mksyscall"
+	b) linux-86\libc\i386sys\Makefile(27): from "sh mksyscall" to "bash
+	   mksyscall"
+	c) linux-86\libc\syscall\Makefile(33): from "sh mksyscall" to "bash
+	   mksyscall"
+
+8)	Edit linux-86\ld\objdump.c:
+	change line 19 from "FILE * ifd = stdin;" to "FILE * ifd;"
+	insert line 67 "ifd = stdin;"
+
+9)	cd /usr/src/linux-86
+
+10)	make install
+
+Assuming that Dev86 all compiled, linked, installed, etc. correctly:
+
+11)	Download and extract elks-0.0.71.tar.gz
+
+12)	cd /usr/src/elks
+
+13)	Unfortunately make config doesn't work with cygwin32 bash so
+	cp arch/i86/defconfig .config
+
+14)	make dep
+
+15)	make
+
+NOTE: There are 4 .S files that are preprocessed into .s files when the
+kernel is built; unfortunately Windows thinks these are the same files so if
+you "make clean" these get deleted. These aren't files that I've changed so
+I just extract them from the archive each time I make clean.
+
+to run ELKS in an NT VM
+
+1)	cd /usr/src/elks
+
+2)	make clean
+
+3)	Edit elks/include/linuxmt/config.h:
+	change these defines: 
+	#define DEF_INITSEG 0x0100
+	#define DEF_SETUPSEG 0x0120
+	to:
+	#define DEF_INITSEG 0x9000
+	#define DEF_SETUPSEG 0x9020
+
+4)	Extract the following files from the archive:
+	arch/i86/boot/bootsect.S
+	arch/i86/boot/setup.S
+	arch/i86/lib/setupb.S
+	arch/i86/lib/setupw.S
+
+5)	make
+
+6)	Write a program that loads elks/arch/i86/tools/system
+	to DEF_SYSSEG, then does all that
+	elks/arch/boot/setup.S does. Compile that using bcc as
+	a .com file (-Md)
+
+I've done step 5 and it works and boots the kernel and reads a root disk and
+seems fine, although NT complains when it probes the Hard Disk during
+initialization.
+I'll release the sources as soon as they are vaguely tidy :)
+
+I don't know if any of this works on 95 although I guess it should.
+
+Things TODO!
+ * Write some tools for creating/editing root disks from NT (I'm kindof
+   working on this);
+ * Write an NT VDD to fake direct hard disk access for a VM (I've read
+   the docs on how to do this and it looks possible (it should be possible
+   for the VM to use an image file as a virtual hard disk)).
