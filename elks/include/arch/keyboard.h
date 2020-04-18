@@ -11,7 +11,4 @@ extern int psiongetchar(void);
 
 #endif
 
-#define KBD_IO	0x60
-#define KBD_CTL	0x61
-
 #endif

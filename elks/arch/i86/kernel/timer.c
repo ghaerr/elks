@@ -5,6 +5,7 @@
 
 #include <arch/io.h>
 #include <arch/irq.h>
+#include <arch/ports.h>
 
 /*
  *	Timer tick routine
@@ -33,9 +34,6 @@ extern void keyboard_irq(int, struct pt_regs *, void *);
  *  hypothetical exact reference frequency for the timer is 39375000/33 Hz.
  *  The macros use scaled fixed point arithmetic for greater accuracy.
  */
-
-#define TIMER_CMDS_PORT ((void *) 0x43) 	/* command port */
-#define TIMER_DATA_PORT ((void *) 0x40) 	/* data port    */
 
 #define TIMER_MODE0 0x30   /* timer 0, binary count, mode 0, lsb/msb */
 #define TIMER_MODE2 0x34   /* timer 0, binary count, mode 2, lsb/msb */
@@ -79,9 +77,9 @@ void enable_timer_tick(void)
 {
 #ifndef CONFIG_ARCH_SIBO
     /* set the clock frequency */
-    outb (TIMER_MODE2, TIMER_CMDS_PORT);
-    outb (TIMER_LO_BYTE, TIMER_DATA_PORT);	/* LSB */
-    outb (TIMER_HI_BYTE, TIMER_DATA_PORT);	/* MSB */
+    outb (TIMER_MODE2, (void*)TIMER_CMDS_PORT);
+    outb (TIMER_LO_BYTE, (void*)TIMER_DATA_PORT);	/* LSB */
+    outb (TIMER_HI_BYTE, (void*)TIMER_DATA_PORT);	/* MSB */
 
 #else
 
@@ -95,8 +93,8 @@ void enable_timer_tick(void)
 void stop_timer(void)
 {
 #ifndef CONFIG_ARCH_SIBO
-    outb (TIMER_MODE0, TIMER_CMDS_PORT);
-    outb (0, TIMER_DATA_PORT);
-    outb (0, TIMER_DATA_PORT);
+    outb (TIMER_MODE0, (void*)TIMER_CMDS_PORT);
+    outb (0, (void*)TIMER_DATA_PORT);
+    outb (0, (void*)TIMER_DATA_PORT);
 #endif
 }

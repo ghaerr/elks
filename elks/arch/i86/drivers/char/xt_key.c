@@ -28,6 +28,7 @@
 #include <linuxmt/ntty.h>
 
 #include <arch/io.h>
+#include <arch/ports.h>
 #include <arch/keyboard.h>
 
 #ifdef CONFIG_CONSOLE_DIRECT
@@ -126,7 +127,7 @@ void xtk_init(void)
 {
     /* Set off the initial keyboard interrupt handler */
 
-    if (request_irq(1, keyboard_irq, NULL))
+    if (request_irq(KBD_IRQ, keyboard_irq, NULL))
 	panic("Unable to get keyboard");
 }
 
