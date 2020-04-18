@@ -92,4 +92,5 @@ Questions? Problems? Patches? Open an issue in this project!
 
 You can also join and email the 'Linux-8086' list at linux-8086@vger.kernel.org.
 
-More information in the Documentation folder: `Documentation/index.html`
+More information in the Documentation folder: [Index of ELKS Documentation](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/index.html)
+

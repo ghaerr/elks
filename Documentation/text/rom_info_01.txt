@@ -1,47 +1,3 @@
-Status der Portierung ELKS im ROM
-----------------------------------
-
-Die meisten nderungen beziehen sich bisher auf:
-  - den OS/loader (setup.S)
-  - das Interruptinterface.
-  
-Im Ersteren habe ich eine Reihe von Konfigurationstest so auskommentiert,
-daß das Ergebnis (falls bekannt) direkt angegeben werden kann. Gerade das
-Vorhalten der vielen Prozessorvarianten als ASCII-Zeichenkette verschwendet
-relativ viel Speicherplatz im ROM. 
-
-Abweichend zur Diskettenversion mssen die Segmente anders initialisiert 
-werden. In der Diskettenversion wird das kernel image im Block (CODE+DATA)
-in den Speicher geladen. Auch der Code befindet sich somit im RAM (und 
-zwar direkt unter dem DATA/BSS/STACK Segment. In der ROM Version w„re es 
-Verschwendung, noch eine Kopie, des sich bereits im Adreßbereich des 
-Prozessors befindlichen Codes, im RAM anzufertigen. Daher bleibt CODE im 
-ROM, w„hrend DATA (initialisierter Teil des Datensegmentes) aus dem ROM 
-ins RAM kopiert wird.
-
-Ein großes Problem stellten einige CS-Variablen (Variablen im Codesegment)
-dar. Programmtechnisch ist dieses eine einfache Art Werte in einem Interrupt
-wieder zu finden (DS, SS , ES k”nnen undefiniert sein). Ich habe fr diese
-Variablen ein neues, absolut plaziertes Segment aufgemacht.
-
-
-bisheriges Ergebnis:
-
-Der startup und die Initialisierung des kernels l„uft durch. Der inittask wird
-gestartet. Beim laden von /bin/init kommt es dann jedoch zu H„ngern. Da mein
-derzeitiger Debugger noch nicht ganz Multitasking ist, konnte ich den genauen
-Grund noch nicht aufspren. Zur Zeit arbeite ich an der entsprechenden 
-Hardwareerweiterung meines ROM-Debuggers.
-
-Die gemachten nderungen *scheinen* auf die Diskettenversion keinen negativen
-Einfluß zu haben.
-
-10/1999
-Christian Mardm”ller (christian.mardmoeller@quante.de / chm@kdt.de)
-
-
------------------------
-
 State of the port
 
 The most changes are made
@@ -76,5 +32,51 @@ I work on a hardware extension for my ROM debugger.
 
 
 10/1999
-Christian Mardm”ller (christian.mardmoeller@quante.de / chm@kdt.de)
+Christian Mardmöller (christian.mardmoeller@quante.de / chm@kdt.de)
+
+--------------------------------------------------------------------------------
+
+
+Status der Portierung ELKS im ROM
+----------------------------------
+
+Die meisten Änderungen beziehen sich bisher auf:
+  - den OS/loader (setup.S)
+  - das Interruptinterface.
+  
+Im Ersteren habe ich eine Reihe von Konfigurationstest so auskommentiert,
+daß das Ergebnis (falls bekannt) direkt angegeben werden kann. Gerade das
+Vorhalten der vielen Prozessorvarianten als ASCII-Zeichenkette verschwendet
+relativ viel Speicherplatz im ROM. 
+
+Abweichend zur Diskettenversion mssen die Segmente anders initialisiert 
+werden. In der Diskettenversion wird das kernel image im Block (CODE+DATA)
+in den Speicher geladen. Auch der Code befindet sich somit im RAM (und 
+zwar direkt unter dem DATA/BSS/STACK Segment. In der ROM Version wäre es 
+Verschwendung, noch eine Kopie, des sich bereits im Adreßbereich des 
+Prozessors befindlichen Codes, im RAM anzufertigen. Daher bleibt CODE im 
+ROM, während DATA (initialisierter Teil des Datensegmentes) aus dem ROM 
+ins RAM kopiert wird.
+
+Ein großes Problem stellten einige CS-Variablen (Variablen im Codesegment)
+dar. Programmtechnisch ist dieses eine einfache Art Werte in einem Interrupt
+wieder zu finden (DS, SS , ES können undefiniert sein). Ich habe für diese
+Variablen ein neues, absolut plaziertes Segment aufgemacht.
+
+
+bisheriges Ergebnis:
+
+Der startup und die Initialisierung des kernels läuft durch. Der inittask wird
+gestartet. Beim laden von /bin/init kommt es dann jedoch zu Hängern. Da mein
+derzeitiger Debugger noch nicht ganz Multitasking ist, konnte ich den genauen
+Grund noch nicht aufspüren. Zur Zeit arbeite ich an der entsprechenden 
+Hardwareerweiterung meines ROM-Debuggers.
+
+Die gemachten Änderungen *scheinen* auf die Diskettenversion keinen negativen
+Einfluß zu haben.
+
+10/1999
+Christian Mardmöller (christian.mardmoeller@quante.de / chm@kdt.de)
+
+-----------------------
 
