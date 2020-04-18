@@ -118,12 +118,12 @@ ssize_t getdelim(char **__restrict lineptr, size_t *__restrict n,
 ssize_t getline(char **__restrict lineptr, size_t *__restrict n,
 		FILE *__restrict stream);
 
-extern FILE *fopen __P((char*, char*));
+extern FILE *fopen __P((const char*, const char*));
 extern FILE *fdopen __P((int, char*));
 extern FILE *freopen  __P((char*, char*, FILE*));
 
 #ifdef __LIBC__
-extern FILE *__fopen __P((char*, int, FILE*, char*));
+extern FILE *__fopen __P((const char*, int, FILE*, const char*));
 #endif
 
 extern int fputs __P((const char*, FILE*));

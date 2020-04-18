@@ -41,7 +41,7 @@
 #ifdef CONFIG_CHAR_DEV_RS
 #define CONFIG_NEED_IRQ4		/* COM1*/
 #define CONFIG_NEED_IRQ3		/* COM2*/
-#define CONFIG_NEED_IRQ5		/* COM3*/
+//#define CONFIG_NEED_IRQ5		/* COM3*/
 //#define CONFIG_NEED_IRQ2		/* COM4, XT only*/
 #endif
 

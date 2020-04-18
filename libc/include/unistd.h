@@ -59,6 +59,9 @@ ssize_t readlink(const char * restrict path, char * restrict buf, size_t bufsize
 int chdir(const char *path);
 int rmdir(const char *path);
 
+int chown(const char *path, uid_t owner, gid_t group);
+int fchown(int fd, uid_t owner, gid_t group);
+
 pid_t fork(void);
 pid_t vfork(void);
 pid_t setsid(void);
@@ -69,6 +72,8 @@ int getpgrp(void);
 int setpgrp(void);
 
 uid_t getuid (void);
+int setuid(uid_t uid);
+int setgid(uid_t gid);
 uid_t _getuid(int *euid);
 uid_t getgid(void);
 uid_t _getgid(int *egid);

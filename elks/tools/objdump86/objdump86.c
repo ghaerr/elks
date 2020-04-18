@@ -550,7 +550,7 @@ disp_syms()
       offset = symtab[i].offset;
 
       symtype &= 0x3FFF;
-      if (nameoff > str_len || nameoff < 0)
+      if (nameoff > str_len || (int)nameoff < 0)
 	 symnames[i] = strtab + str_len;
       else
 	 symnames[i] = strtab+nameoff;

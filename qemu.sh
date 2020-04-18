@@ -51,7 +51,7 @@ echo "Using disk image: $IMAGE"
 KEYBOARD=
 
 # Select pty serial port or serial mouse driver
-SERIAL="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
+#SERIAL="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
 #SERIAL="-chardev msmouse,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
 
 # Uncomment this to route ELKS /dev/ttyS0 to host terminal
