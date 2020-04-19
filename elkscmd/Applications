@@ -84,6 +84,7 @@ sys_utils/poweroff				:sysutil			:720k
 sys_utils/who					:sysutil				:1440k
 sys_utils/unreal16				:sysutil				:1440k
 sh_utils/basename				:be-shutil			:720k
+sh_utils/clear					:be-shutil		:1440k
 sh_utils/date					:be-shutil		:360k
 sh_utils/dirname				:be-shutil			:720k
 sh_utils/false					:be-shutil				:1440k
