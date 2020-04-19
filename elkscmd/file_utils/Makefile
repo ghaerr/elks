@@ -19,7 +19,7 @@ cat: cat.o
 	$(LD) $(LDFLAGS) -o cat cat.o $(LDLIBS)
 
 chgrp: chgrp.o
-	$(LD) $(LDFLAGS) -maout-chmem=0xc000 -o chgrp chgrp.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-chmem=0x6000 -o chgrp chgrp.o $(LDLIBS)
 
 chmod: chmod.o
 	$(LD) $(LDFLAGS) -o chmod chmod.o $(LDLIBS)
