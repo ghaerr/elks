@@ -21,18 +21,16 @@
 int pty_open(struct inode *inode, struct file *file)
 {
     register struct tty *otty;
-    register char *pi;
 
-    pi = 0;
     if (!(otty = determine_tty(inode->i_rdev))) {
 	debug("failed: NODEV\n");
-	pi = (char *)(-ENODEV);
+	return -ENODEV;
     }
-    else if (otty->flags & TTY_OPEN) {
+    if (otty->flags & TTY_OPEN) {
 	debug("failed: BUSY\n");
-	pi = (char *)(-EBUSY);
+	return -EBUSY;
     }
-    return (int)pi;
+    return 0;
 }
 
 void pty_release(struct inode *inode, struct file *file)

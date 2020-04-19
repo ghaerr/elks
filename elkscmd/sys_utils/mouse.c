@@ -96,7 +96,7 @@ open_mouse(void)
 #endif
 
 	/* open mouse port*/
-	mouse_fd = open(MOUSE_DEVICE, O_NONBLOCK);
+	mouse_fd = open(MOUSE_DEVICE, O_EXCL | O_NOCTTY | O_NONBLOCK);
 	if (mouse_fd < 0) {
 		printf("Can't open %s, error %d\n", MOUSE_DEVICE, errno);
  		return -1;
@@ -187,6 +187,7 @@ read_mouse(int *dx, int *dy, int *dz, int *bptr)
 	return 0;
 }
 
+#if MOUSE_PC
 /*
  * Input routine for PC mouse.
  * Returns nonzero when a new mouse state has been completed.
@@ -246,8 +247,9 @@ parsePC(int byte)
 	}
 	return 0;
 }
+#endif
 
-
+#if MOUSE_MICROSOFT
 /*
  * Input routine for Microsoft mouse.
  * Returns nonzero when a new mouse state has been completed.
@@ -281,6 +283,7 @@ parseMS(int byte)
 	}
 	return 0;
 }
+#endif
 
 int main(int argc, char **argv)
 {

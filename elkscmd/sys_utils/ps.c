@@ -13,6 +13,7 @@
 #define __KERNEL__
 #include <linuxmt/ntty.h>
 #undef __KERNEL__
+#include <linuxmt/major.h>
 #include <linuxmt/mem.h>
 #include <linuxmt/sched.h>
 #include <stdio.h>
@@ -69,7 +70,7 @@ void process_name(int fd, unsigned int off, unsigned int seg)
 char *devname(unsigned int minor)
 {
 	struct dirent *d;
-	dev_t ttydev = MKDEV(4, minor);
+	dev_t ttydev = MKDEV(TTY_MAJOR, minor);
 	struct stat st;
 	static char dev[] = "/dev";
 	static char name[16]; /* should be MAXNAMLEN but that's overkill */

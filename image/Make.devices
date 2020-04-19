@@ -89,18 +89,6 @@ devices:
 #	$MKSET 224 15 $(MKDEV) /dev/ptyd x 2
 #	$MKSET 240 15 $(MKDEV) /dev/ptye x 2
 
-##############################################################################
-# Pseudo-TTY slave devices. 
-
-	$(MKDEV) /dev/ttyp0 c 4 8
-	$(MKDEV) /dev/ttyp1 c 4 9
-	$(MKDEV) /dev/ttyp2 c 4 10
-	$(MKDEV) /dev/ttyp3 c 4 11
-
-##############################################################################
-# CGATEXT
-	$(MKDEV) /dev/cgatext	c 10 0
-
 # These are not yet supported by the ELKS kernel.
 #	$MKSET   0 15 $(MKDEV) /dev/ttyp x 3
 #	$MKSET  16 15 $(MKDEV) /dev/ttyq x 3
@@ -134,12 +122,18 @@ devices:
 #	$MKSET  64 63 $(MKDEV) /dev/hdb b 3	# Ought to be.
 
 ##############################################################################
-# Virtual consoles and serial ports.
+# Virtual consoles, pseudo-tty slaves and serial ports.
 
 	$(MKDEV) /dev/tty1	c 4 0
 	$(MKDEV) /dev/tty2	c 4 1
 	$(MKDEV) /dev/tty3	c 4 2
-	$(MKDEV) /dev/tty4	c 4 3
+
+# Pseudo-TTY slave devices.
+
+	$(MKDEV) /dev/ttyp0 c 4 8
+	$(MKDEV) /dev/ttyp1 c 4 9
+	$(MKDEV) /dev/ttyp2 c 4 10
+	$(MKDEV) /dev/ttyp3 c 4 11
 
 # /dev/tty is minor 255, last of the /dev/ttye range
 
@@ -175,6 +169,10 @@ devices:
 # Ethernet device
 
 	$(MKDEV) /dev/eth c 9 0
+
+##############################################################################
+# CGATEXT
+	$(MKDEV) /dev/cgatext	c 10 0
 
 ##############################################################################
 # SATA / SCSI disks. These are not yet supported.

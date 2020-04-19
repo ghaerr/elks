@@ -10,7 +10,15 @@ si::sysinit:/etc/rc.d/rc.sys
 
 #ud::once:/sbin/update
 
-1:2345:respawn:/bin/getty /dev/tty1
-s0:2345:respawn:/bin/getty /dev/ttyS0 9600
-#2:2345:respawn:/bin/getty /dev/tty2
-#3:2345:respawn:/bin/getty /dev/tty3
+# getty runlevels
+# 1 single user tty1 only
+# 2 single user ttyS0 only
+# 3 multiuser tty1 and ttyS0
+# 4 multiuser serial only (ttyS0,ttyS1)
+# 5 multiuser console only (tty1,tty2,tty3)
+# 6 multiuser console and serial
+t1:1356:respawn:/bin/getty /dev/tty1
+t2:56:respawn:/bin/getty /dev/tty2
+t3:56:respawn:/bin/getty /dev/tty3
+s0:2346:respawn:/bin/getty /dev/ttyS0 9600
+s1:46:respawn:/bin/getty /dev/ttyS1 9600
