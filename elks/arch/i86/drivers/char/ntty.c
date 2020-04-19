@@ -119,13 +119,16 @@ int tty_open(struct inode *inode, struct file *file)
     memcpy(&otty->termios, &def_vals, sizeof(struct termios));
 #endif
 
+    if ((file->f_flags & O_EXCL) && (otty->flags & TTY_OPEN))
+	return -EBUSY;
+
     /* don't call driver on /dev/tty open*/
     if (MINOR(inode->i_rdev) == 255)
 	return 0;
 
     err = otty->ops->open(otty);
     if (!err) {
-	if (otty->pgrp == 0 && currentp->session == currentp->pid
+	if (!(file->f_flags & O_NOCTTY) && currentp->session == currentp->pid && otty->pgrp == 0
 		&& currentp->tty == NULL) {
 	    debug_tty("TTY setting pgrp %d pid %d\n", currentp->pgrp, currentp->pid);
 	    otty->pgrp = currentp->pgrp;

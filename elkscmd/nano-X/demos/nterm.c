@@ -161,6 +161,7 @@ again:
 		return -1;
 	}
 	if (!pid) {
+		putenv("TERM=dumb");
 		close(STDIN_FILENO);
 		close(STDOUT_FILENO);
 		close(STDERR_FILENO);

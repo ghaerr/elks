@@ -317,10 +317,6 @@ int sys_setsid(void)
     currentp->session = currentp->pgrp = currentp->pid;
     currentp->tty = NULL;
 
-#if 0
-    currentp->tty_old_pgrp = 0;
-#endif
-
     return currentp->pgrp;
 }
 
