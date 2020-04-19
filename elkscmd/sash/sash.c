@@ -227,6 +227,8 @@ static	BOOL	isbinshell;
 #ifdef CMD_SOURCE
 static	FILE	*sourcefiles[MAXSOURCE];
 static	int	sourcecount;
+
+static	void	sourcecfg();
 #endif
 
 static	void	catchint();
@@ -242,7 +244,6 @@ BOOL	intflag;
 int main(int argc, char **argv)
 {
 	char	*cp;
-	char	buf[PATHLEN];
 
 	signal(SIGINT, catchint);
 	signal(SIGQUIT, catchquit);
@@ -261,22 +262,18 @@ int main(int argc, char **argv)
 	strcpy(prompt, getuid()? "$ ": "# ");
 
 	if (getenv("PATH") == NULL)
-		putenv("PATH=/bin:/usr/bin:/sbin");
+		putenv("PATH=/bin");
 
 #ifdef CMD_HISTORY
 	init_hist();
 #endif /* CMD_HISTORY */
 
 #ifdef CMD_SOURCE
-	cp = getenv("HOME");
-	if (cp) {
-		strcpy(buf, cp);
-		strcat(buf, "/");
-		strcat(buf, ".sashrc");
+	sourcecfg("/etc", CFGFILE);
 
-		if ((access(buf, 0) == 0) || (errno != ENOENT))
-			readfile(buf);
-	}
+	cp = getenv("HOME");
+	if (cp)
+		sourcecfg(cp, "." CFGFILE);
 
 	if (argc > 1) {
 		readfile(argv[1]);
@@ -290,6 +287,29 @@ int main(int argc, char **argv)
 	exit(0);
 }
 
+
+/*
+ * Sources a config file.
+ */
+
+#ifdef CMD_SOURCE
+
+static void
+sourcecfg(path, cfgfile)
+  char *path;
+  char *cfgfile;
+{
+  char buf[PATHLEN];
+
+  strcpy(buf, path);
+  strcat(buf, "/");
+  strcat(buf, cfgfile);
+
+  if ((access(buf, 0) == 0) || (errno != ENOENT))
+    readfile(buf);
+}
+
+#endif
 
 /*
  * Read commands from the specified file.
