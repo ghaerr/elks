@@ -237,12 +237,19 @@ static	void	runcmd();
 static	void	showprompt();
 static	BOOL	trybuiltin();
 
+#ifdef CMD_SOURCE
+static	void	sourcecfg();
+#endif
+
 BOOL	intflag;
 
 int main(int argc, char **argv)
 {
 	char	*cp;
+
+#ifdef CMD_SOURCE
 	char	buf[PATHLEN];
+#endif
 
 	signal(SIGINT, catchint);
 	signal(SIGQUIT, catchquit);
@@ -261,21 +268,20 @@ int main(int argc, char **argv)
 	strcpy(prompt, getuid()? "$ ": "# ");
 
 	if (getenv("PATH") == NULL)
-		putenv("PATH=/bin:/usr/bin:/sbin");
+		putenv("PATH=/bin");
 
 #ifdef CMD_HISTORY
 	init_hist();
 #endif /* CMD_HISTORY */
 
 #ifdef CMD_SOURCE
+	sourcecfg("/etc/");
+
 	cp = getenv("HOME");
 	if (cp) {
 		strcpy(buf, cp);
-		strcat(buf, "/");
-		strcat(buf, ".sashrc");
-
-		if ((access(buf, 0) == 0) || (errno != ENOENT))
-			readfile(buf);
+		strcat(buf, "/.");
+		sourcecfg(buf);
 	}
 
 	if (argc > 1) {
@@ -290,6 +296,27 @@ int main(int argc, char **argv)
 	exit(0);
 }
 
+
+/*
+ * Sources a config file.
+ */
+
+#ifdef CMD_SOURCE
+
+static void
+sourcecfg(path)
+  char *path;
+{
+  char buf[PATHLEN];
+
+  strcpy(buf, path);
+  strcat(buf, CFGFILE);
+
+  if ((access(buf, 0) == 0) || (errno != ENOENT))
+    readfile(buf);
+}
+
+#endif
 
 /*
  * Read commands from the specified file.
