@@ -227,6 +227,8 @@ static	BOOL	isbinshell;
 #ifdef CMD_SOURCE
 static	FILE	*sourcefiles[MAXSOURCE];
 static	int	sourcecount;
+
+static	void	sourcecfg();
 #endif
 
 static	void	catchint();
@@ -237,19 +239,11 @@ static	void	runcmd();
 static	void	showprompt();
 static	BOOL	trybuiltin();
 
-#ifdef CMD_SOURCE
-static	void	sourcecfg();
-#endif
-
 BOOL	intflag;
 
 int main(int argc, char **argv)
 {
 	char	*cp;
-
-#ifdef CMD_SOURCE
-	char	buf[PATHLEN];
-#endif
 
 	signal(SIGINT, catchint);
 	signal(SIGQUIT, catchquit);
@@ -275,6 +269,8 @@ int main(int argc, char **argv)
 #endif /* CMD_HISTORY */
 
 #ifdef CMD_SOURCE
+	char	buf[PATHLEN];
+
 	sourcecfg("/etc/");
 
 	cp = getenv("HOME");
