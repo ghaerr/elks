@@ -269,16 +269,11 @@ int main(int argc, char **argv)
 #endif /* CMD_HISTORY */
 
 #ifdef CMD_SOURCE
-	char	buf[PATHLEN];
-
-	sourcecfg("/etc/");
+	sourcecfg("/etc", CFGFILE);
 
 	cp = getenv("HOME");
-	if (cp) {
-		strcpy(buf, cp);
-		strcat(buf, "/.");
-		sourcecfg(buf);
-	}
+	if (cp)
+		sourcecfg(cp, "." CFGFILE);
 
 	if (argc > 1) {
 		readfile(argv[1]);
@@ -300,13 +295,15 @@ int main(int argc, char **argv)
 #ifdef CMD_SOURCE
 
 static void
-sourcecfg(path)
+sourcecfg(path, cfgfile)
   char *path;
+  char *cfgfile;
 {
   char buf[PATHLEN];
 
   strcpy(buf, path);
-  strcat(buf, CFGFILE);
+  strcat(buf, "/");
+  strcat(buf, cfgfile);
 
   if ((access(buf, 0) == 0) || (errno != ENOENT))
     readfile(buf);
