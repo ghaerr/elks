@@ -11,8 +11,8 @@ include $(BASEDIR)/Make.rules
 ###############################################################################
 
 # TODO: uname write	# Do not compile
-PRGS=basename date dirname echo false printenv pwd true which whoami yes \
-	logname tr xargs mesg stty test
+PRGS=basename clear date dirname echo false printenv pwd true which whoami \
+	yes logname tr xargs mesg stty test
 
 write: write.o ../sys_utils/utent.o
 
@@ -20,6 +20,9 @@ all: $(PRGS)
 
 basename: basename.o
 	$(LD) $(LDFLAGS) -o basename basename.o $(LDLIBS)
+
+clear: clear.o
+	$(LD) $(LDFLAGS) -o clear clear.o $(LDLIBS)
 
 date: date.o
 	$(LD) $(LDFLAGS) -o date date.o $(LDLIBS)
