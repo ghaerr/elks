@@ -23,10 +23,9 @@ CLEANME 	=
 
 DEPEND  	= 
 
-DISTFILES	= CGAsnow Changes NEW_NOTES NOTES
+DISTFILES	=
 
 NOINDENT	= bell.c bioscon.c
-# console.c sibo_con.c
 
 #########################################################################
 # Include standard commands.
@@ -37,8 +36,8 @@ include $(BASEDIR)/Makefile-rules
 # Objects to be compiled.
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
-OBJS  = init.o con_asm.o font.o sibo_key.o key_asm.o mem.o \
-	sibo_con.o meta.o ntty.o ser_asm.o pty.o
+OBJS  = init.o sibo_con.o sibo_conasm.o sibo_font.o sibo_key.o sibo_keyasm.o mem.o \
+	meta.o ntty.o sibo_serasm.o pty.o
 else
 OBJS  = serial.o lp.o xt_key.o init.o dircon.o mem.o \
 	ntty.o meta.o tcpdev.o pty.o bell.o

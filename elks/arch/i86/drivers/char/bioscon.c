@@ -33,8 +33,6 @@
 
 #ifdef CONFIG_CONSOLE_BIOS
 
-/*#include "console.h"*/
-
 /* Assumes ASCII values. */
 #define isalpha(c) (((unsigned char)(((c) | 0x20) - 'a')) < 26)
 
