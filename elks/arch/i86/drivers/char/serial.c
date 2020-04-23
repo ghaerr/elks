@@ -13,7 +13,7 @@
 #include <arch/ports.h>
 
 #define NEW		1	/* set =0 for old driver code if needed*/
-#define FIFO		0	/* set =1 to enable new FIFO code for testing*/
+#define FIFO		1	/* set =1 to enable new FIFO code for testing*/
 
 #if defined (CONFIG_CHAR_DEV_RS) || defined (CONFIG_CONSOLE_SERIAL)
 
@@ -92,14 +92,15 @@ static unsigned int divisors[] = {
 /* Flush input fifo */
 static void flush_input_fifo(register struct serial_info *sp)
 {
+#if !FIFO	/* HW FIFO cleared when reset or enabled*/
     int i = MAX_RX_BUFFER_SIZE;
 
     do {
 	inb_p(sp->io + UART_RX);
     } while (--i && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
+#endif
 }
 
-#if NEW
 static int rs_probe(register struct serial_info *sp)
 {
     int status, type;
@@ -117,12 +118,13 @@ static int rs_probe(register struct serial_info *sp)
 
     /* then read FIFO status*/
     status = inb_p(sp->io + UART_IIR);
-    if (status & 0x40) {
-	if (status & 0x80) {		/* FIFO enabled*/
-	    if (status & 0x20)		/* 64 byte FIFO enabled*/
-		type = ST_16750;
-	    else type = ST_16550A;
-	} else type = ST_16550;
+    if (status & 0x80) {		/* FIFO available*/
+	if (status & 0x20)		/* 64 byte FIFO enabled*/
+	    type = ST_16750;
+	else if (status & 0x40)		/* 16 byte FIFO OK */
+	    type = ST_16550A;
+	else
+	    type = ST_16550;		/* Non-functional FIFO */
     } else {
 	/* no FIFO, try writing arbitrary value to scratch reg*/
 	outb_p(0x2A, sp->io + UART_SCR);
@@ -130,6 +132,7 @@ static int rs_probe(register struct serial_info *sp)
 	    type = ST_16450;
 	else type = ST_8250;
     }
+
     sp->flags = SERF_EXIST | type;
 
     /*
@@ -145,76 +148,6 @@ static int rs_probe(register struct serial_info *sp)
 
     return 0;
 }
-
-#else
-
-static int rs_probe(register struct serial_info *sp)
-{
-    int status1, status2;
-    unsigned char scratch;
-
-    inb(sp->io + UART_IER);
-    outb_p(0, sp->io + UART_IER);
-    scratch = inb_p(sp->io + UART_IER);
-    outb_p(scratch, sp->io + UART_IER);
-    if (scratch)
-	return -1;
-
-    /* this code is weird, IMO */
-    scratch = inb_p(sp->io + UART_LCR);
-    outb_p(scratch | UART_LCR_DLAB, sp->io + UART_LCR);
-    outb_p(0, sp->io + UART_EFR);
-    outb_p(scratch, sp->io + UART_LCR);
-
-    outb_p(UART_FCR_ENABLE_FIFO, sp->io + UART_FCR);
-
-    /* upper two bits of IIR define UART type, but according to both RB's
-     * intlist and HelpPC this code is wrong, see comments marked with [*]
-     */
-    scratch = inb_p(sp->io + UART_IIR) >> 6;
-    switch (scratch) {
-    case 0:
-	sp->flags = (unsigned char) (SERF_EXIST | ST_16450);
-	break;
-    case 1:			/* [*] this denotes broken 16550 UART,
-				 * not 16550A or any newer type */
-	sp->flags = (unsigned char) (ST_UNKNOWN);
-	break;
-    case 2:			/* invalid combination */
-    case 3:			/* Could be a 16650.. we dont care */
-	/* [*] 16550A or newer with enabled FIFO buffers
-	 */
-	sp->flags = (unsigned char) (SERF_EXIST | ST_16550);
-    }
-
-    /* 8250 UART if scratch register isn't present */
-    if (!scratch) {
-	scratch = inb_p(sp->io + UART_SCR);
-	outb_p(0xA5, sp->io + UART_SCR);
-	status1 = inb_p(sp->io + UART_SCR);
-	outb_p(0x5A, sp->io + UART_SCR);
-	status2 = inb_p(sp->io + UART_SCR);
-	outb_p(scratch, sp->io + UART_SCR);
-	if ((status1 != 0xA5) || (status2 != 0x5A))
-	    sp->flags = (unsigned char) (SERF_EXIST | ST_8250);
-    }
-
-    /*
-     *      Reset the chip
-     */
-
-    outb_p(0x00, sp->io + UART_MCR);
-
-    /* clear RX and TX FIFOs */
-    outb_p((unsigned char) (UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT),
-			sp->io + UART_FCR);
-
-    /* clear RX register */
-    flush_input_fifo(sp);
-
-    return 0;
-}
-#endif /* old rs_probe function*/
 
 static void update_port(register struct serial_info *port)
 {
@@ -272,7 +205,7 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     struct ch_queue *q;
     int i, j, status;
     char *io;
-    unsigned char buf[10];
+    unsigned char buf[MAX_RX_BUFFER_SIZE];
 
     i = 0;
     sp = &ports[(int)irq_port[irq - 2]];
@@ -288,9 +221,9 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 	//if (status & UART_LSR_DR)			/* Receiver buffer full? */
 	    do {
 		buf[i++] = inb_p(io + UART_RX);		/* Read received data */
-	    } while ((inb_p(io + UART_LSR) & UART_LSR_DR) && i < 10);
+	    } while ((inb_p(io + UART_LSR) & UART_LSR_DR) && i < MAX_RX_BUFFER_SIZE);
 	//}
-    //} while (!(inb_p(io + UART_IIR) & UART_IIR_NO_INT) && i < 10);
+    //} while (!(inb_p(io + UART_IIR) & UART_IIR_NO_INT) && i < MAX_RX_BUFFER_SIZE);
 
     if (status & UART_LSR_OE)
 	printk("serial: data overrun\n");
@@ -375,10 +308,10 @@ static int rs_open(struct tty *tty)
 #define UART_FCR_ENABLE_FIFO14	(UART_FCR_ENABLE_FIFO | 0xC0)
 #define UART_FCR_ENABLE_FIFO8	(UART_FCR_ENABLE_FIFO | 0x80)
 #define UART_FCR_ENABLE_FIFO4	(UART_FCR_ENABLE_FIFO | 0x40)
-    /* enable FIFO with 8 byte trigger */
+    /* enable FIFO with 14 byte trigger */
 #if FIFO
-    if ((port->flags & SERF_TYPE) > ST_16450)
-	outb_p(UART_FCR_ENABLE_FIFO8, port->io + UART_FCR);
+    if ((port->flags & SERF_TYPE) > ST_16550)
+	outb_p(UART_FCR_ENABLE_FIFO14, port->io + UART_FCR);
 #endif
 
     inb_p(port->io + UART_IIR);
@@ -487,7 +420,7 @@ int rs_init(void)
     do {
 	if (sp->tty != NULL) {
 	    printk("ttyS%d at 0x%x, irq %d is a%s\n", ttyno,
-		       sp->io, sp->irq, serial_type[sp->flags & 0x3]);
+		       sp->io, sp->irq, serial_type[sp->flags & SERF_TYPE]);
 	}
 	sp++;
     } while (++ttyno < NR_SERIAL);
