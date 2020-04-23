@@ -252,6 +252,10 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     currentp->t_enddata = (__pptr) ((__u16)mh.dseg + (__u16)mh.bseg + base_data);
     currentp->t_endbrk =  currentp->t_enddata;
 
+	/* ease libc memory allocations by setting even break address*/
+	if ((int)currentp->t_endbrk & 1)
+		currentp->t_endbrk++;
+
     /*
      *      Arrange our return to be to CS:entry
      */

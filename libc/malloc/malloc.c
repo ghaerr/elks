@@ -208,7 +208,9 @@ malloc(size_t size)
    }
 #endif
 
+#ifdef __MINI_MALLOC__
    __alloca_alloc = malloc;	/* We'll be messing with the heap now TVM */
+#endif
 
 #ifdef LAZY_FREE
    ptr = __search_chunk(sz);
