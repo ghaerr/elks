@@ -157,38 +157,6 @@ void parseLine(const char* line, void func())
 void scanFile(void func())
 {
 	char buf[BUFSIZE+1];
-
-#if 0
-	int f, left;
-	char *line, *next;
-
-	f = open(INITTAB, O_RDONLY);
-	if (f < 0) fatalmsg("Missing %s\r\n", INITTAB);
-	left = read(f, buf, BUFSIZE);
-	buf[left] = 0;
-	line = strtok(buf, "\n");
-	next = strtok(NULL, "\n");
-
-	while (1) {
-		if (!next) {
-			if (line == buf) goto out;
-			if (left) memmove(buf, line, left);
-			left += read(f, buf+left, BUFSIZE-left);
-			buf[left] = 0;
-			line = strtok(buf, "\n");
-			next = strtok(NULL, "\n");
-		}
-		else {
-			parseLine(line, func);
-
-			left -= next-line;
-			line = next;
-			next = strtok(NULL, "\n");
-		}
-	}
-out:
-	close(f);
-#else /*0*/
 	FILE *fp;
 
 	fp = fopen(INITTAB, "r");
@@ -200,7 +168,6 @@ out:
 		parseLine(buf, func);
 	}
 	fclose(fp);
-#endif
 }
 
 /* returns a pointer to the child or NULL */

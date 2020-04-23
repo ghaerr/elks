@@ -13,8 +13,8 @@ static void printt(char * s, long se, long us)
 	long mins, secs;
 
 	if (se == -1 ) {		/* microsecs only */
-		if (us < 1000)		/* round up to 1/1000 second*/
-			us = 1000;
+		if (us < 1000L)		/* round up to 1/1000 second*/
+			us = 1000L;
 
 		mins = us / 60000000L;
 		if (mins)
@@ -24,9 +24,9 @@ static void printt(char * s, long se, long us)
 		if (secs)
 			us -= secs * 1000000L;
 	} else {
-		mins = se / 60;
+		mins = se / 60L;
 		secs = se;
-		if (mins) secs -= se * 60;
+		if (mins) secs -= se * 60L;
 	}
 	us /= 1000L;
 
@@ -69,8 +69,8 @@ int main(int argc, char **argv)
 	after.tv_sec -= before.tv_sec;
 	after.tv_usec -= before.tv_usec;
         if (after.tv_usec < 0)
-                after.tv_sec--, after.tv_usec += 1000000;
-	if (after.tv_usec > 500000) after.tv_sec++;
+                after.tv_sec--, after.tv_usec += 1000000L;
+	if (after.tv_usec > 500000L) after.tv_sec++;
 	fprintf(stderr, "\n");
 	printt("real", after.tv_sec, after.tv_usec);
 	//printt("user", -1, end.tms_cutime - start.tms_cutime);
