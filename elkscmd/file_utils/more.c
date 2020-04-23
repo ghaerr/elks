@@ -25,8 +25,9 @@ int more_wait(int fout, char *msg)
 
 	if (tcgetattr(1, &termios) >= 0) {
 		struct termios termios2;
+		tcgetattr(1, &termios2);
 		termios2.c_lflag &= ~ICANON;
-		termios2.c_cc[VMIN] = 0;
+		termios2.c_cc[VMIN] = 1;
 		tcsetattr(1, TCSAFLUSH, &termios2);
 	}
 	read(1, buf, sizeof(buf));
@@ -45,7 +46,7 @@ int more_wait(int fout, char *msg)
 		return 1;
 	case 'Q':
 	case 'q':
-		write(1, "        \r", 9);
+		write(1, "          \r", 11);
 		close(fd);
 		return -1;
 	}
