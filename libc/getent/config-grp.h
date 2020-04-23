@@ -30,7 +30,7 @@
  * On larger systems, you will want to define this, because grp will _not_
  * deal with long lines gracefully (they will be skipped).
  */
-#define GR_SCALE_DYNAMIC
+//#define GR_SCALE_DYNAMIC	/* option must remain off, memory overwrite bugs when on*/
 
 #ifndef GR_SCALE_DYNAMIC
 /*
