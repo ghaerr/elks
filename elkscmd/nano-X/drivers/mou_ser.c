@@ -135,7 +135,7 @@ MOU_Open(MOUSEDEVICE *pmd)
 		return -1;
 
 	/* open mouse port*/
-	mouse_fd = open(port, O_NONBLOCK);
+	mouse_fd = open(port, O_EXCL | O_NOCTTY | O_NONBLOCK);
 	if (mouse_fd < 0) {
 		fprintf(stderr,
 			"Error %d opening serial mouse type %s on port %s.\n",

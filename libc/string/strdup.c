@@ -2,7 +2,7 @@
 #include <string.h>
 
 char *
-strdup(char * s)
+strdup(const char * s)
 {
    register size_t len;
    register char * p;

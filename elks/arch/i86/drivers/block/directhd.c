@@ -58,7 +58,7 @@ static struct file_operations directhd_fops = {
 /* what is this good for ? */
 static int access_count[4] = { 0, };
 
-static int io_ports[2] = { 0x1f0, 0x170 };
+static int io_ports[2] = { HD1_PORT, HD2_PORT };
 
 static int directhd_initialized = 0;
 

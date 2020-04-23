@@ -1,0 +1,716 @@
+# Linux ELKS Kernel Configuration
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Advanced - for Developers and Hackers only
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Prompt for development and/or incomplete code/drivers
+CONFIG_EXPERIMENTAL
+  Some of the various things that ELKS supports (such as network drivers,
+  file systems, network protocols, etc.) can be in a state of development
+  where the functionality, stability, or level of testing is not yet high
+  enough for general use. This is usually known as the "alpha-test" phase
+  amongst developers. If a feature is currently in alpha-test, then the
+  developers usually discourage uninformed widespread use of this feature
+  by the general public to avoid "Why doesn't this work?" type email
+  messages.
+
+  However, active testing and use of these systems is welcomed. Just be
+  aware that it may not meet the normal level of reliability or it may
+  fail to work in some special cases. Detailed bug reports from people
+  familiar with the kernel internals are usually welcomed by developers.
+
+  Unless you intend to help test and develop a feature or driver that
+  falls into this category, or you have a situation that requires using
+  these features, you should probably say N here, which will cause the
+  configure script to present you with fewer choices. If you say Y here,
+  you will be offered the choice of using features or drivers that are
+  currently considered to be in the alpha-test phase.
+
+  Just say N and live in peace.
+
+Prompt for obsolete drivers
+CONFIG_OBSOLETE
+  Some of the drivers that ELKS supports have been superceded by later
+  drivers with more general support, but have been left in the source
+  tree for various reasons. However, the kernel developers discourage
+  use of the obsolete drivers, at least partly because they are likely
+  to vanish without further warning in a forthcoming kernel release.
+
+  Just say N and live in peace.
+
+Modular kernel
+CONFIG_MODULES
+  This facility is not currently present in the ELKS kernel, so can be
+  ignored at this time.
+
+# Architecture selection
+# ~~~~~~~~~~~~~~~~~~~~~~
+
+Auto-detect architecture
+CONFIG_ARCH_AUTO
+  Use this option to specify the architecture the kernel will run on.
+  The supported options are:
+
+	Auto	Automatically detect at boot time.
+
+	IBM-PC	Computers compatible with one of the IBM PC range.
+
+	SIBO	The SIBO range of computers.
+
+Auto detect PC architecture
+CONFIG_PC_AUTO
+  Use this option to specify the architecture the kernel will run on.
+  The supported options are:
+
+	Auto	Automatically detect at boot time.
+
+	MCA	Computers based on IBM's MicroChannel Architecture.
+
+	PC/AT	Computers based on the 80286 processor that are compatible
+		with the IBM PC/AT computer.
+
+	PC/XT	Computers based on the 8088 or 8086 processor that are
+		compatible with the IBM PC/XT computer.
+
+Select a true IBM PC/XT clone
+CONFIG_IBMPC_CLONE
+  Use this option to specify the level of IBM PC/XT compatibility.
+  The supported options are:
+
+	TrueClone	The IBM PC/XT or a true clone thereof. This is
+			by far the commonest case.
+
+	CompaQ		One of the CompaQ clones of the IBM PC/XT.
+
+# Model-specific options
+# ~~~~~~~~~~~~~~~~~~~~~~
+
+Switch COMPAQ DeskPro into fast mode
+CONFIG_COMPAQ_FAST
+  Saying yes includes code to switch COMPAQ Deskpro machines that default
+  to slow speed to fast speed.
+
+# ROM code kernel loader
+# ~~~~~~~~~~~~~~~~~~~~~~
+
+Build kernel as ROM-bootable
+CONFIG_ROMCODE
+  Saying yes will allow the kernel to be programmed into an EPROM for
+  use as a replacement boot ROM.
+
+Select the processor architecture
+CONFIG_CPU_8086
+  Select the target processor for which this kernel image is to be
+  built. The available options are:
+
+	8086	The 8086 and 8088 processors.		(Default)
+
+	80186	The 80186 and 80188 processors.
+
+	80286	The 80286 processor.
+
+	80386	The 80386 processor.
+
+	80486+	The 80486 and later processors.
+
+System has a maths coprocessor.
+CONFIG_HW_FPU
+  Saying no will compile the code for use in systems without
+  a maths coprocessor.
+
+System has no keyboard BIOS support.
+CONFIG_HW_KEYBOARD_BIOS
+  Saying no will compile the code for systems that do not support
+  the Keyboard BIOS interrupt 16.
+
+System has no VGA video adapter
+CONFIG_HW_VGA
+  Saying no will compile the code without support for VGA video
+  adapters, but will still allow use on systems with MDA, CGA or
+  EGA adapters.
+
+System has no PS/2 pointing device
+CONFIG_HW_PS2_MOUSE
+  Saying no will compile the code without PS/2 pointing device
+  support.
+
+System has no hard disk (in 0.76 should be "y")
+CONFIG_HW_HARD_DRIVE
+  Saying no will compile the code without hard disk support.
+
+System has no floppy disk
+CONFIG_HW_FLOPPY_DRIVE
+  Saying no will compile the code without floppy support.
+
+Get extended memory size via BIOS Interrupt 15
+CONFIG_XMS_INT15
+  Saying yes will allow ELKS to get the extended memory size 
+  by calling BIOS Int 15 (function 88).
+
+Extended memory size in kB
+CONFIG_XMS_SIZE
+  Specify how many Kilobytes of extended memory is in the target
+  system.
+
+Get fontinfo via CRT-BIOS (40h:85h)
+CONFIG_HW_VIDEO_HOC
+  Saying yes will get the System font info using the CRT-BIOS at
+  40h:85h.
+
+High of character in lines
+CONFIG_HW_VIDEO_LINES_PER_CHARACTER
+  Specify the maximan height of a charactor on the display in pixels.
+
+Lines per page
+CONFIG_HW_VIDEO_LINES_PER_SCREEN
+  Specify the number of lines that can be displayed on the screen.
+
+# Absolute segment
+# ~~~~~~~~~~~~~~~~
+
+Code segment for setup.S      (SEG, size ca. 0x60 ROM)
+CONFIG_ROM_SETUP_CODE
+  Code segment location for the setup code when programmed into a ROM.
+  This is usually the base segment address of the ROM.
+
+Code segment kernel           (SEG, ca. 64k ROM)
+CONFIG_ROM_KERNEL_CODE
+  Code segment location for the kernel code when programmed into a ROM.
+  This is usually the base segment address of the ROM + 0x60.
+
+Data segment for setup.S      (SEG, size ca. 0x20 RAM)
+CONFIG_ROM_SETUP_DATA
+  Segment location in RAM where the setup code keeps the values it
+  is going to pass to the kernel.
+
+Data segment (IRQ-Scheduler)  (SEG, size ca. 0x10 RAM)
+CONFIG_ROM_IRQ_DATA
+  Segment location of an absolute area of RAM where the kernel
+  stores certain variables that it must be able to access
+  when it does not know where its data segment is.
+
+Data segment (DATA+BSS+STACK) (SEG, ca. 64k RAM)
+CONFIG_ROM_KERNEL_DATA
+  Segment location of the kernels data segment, used only when the
+  kernel image is in ROM.
+
+# Information for ROM image generator
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Start address of ROM (for offset in image-file)
+CONFIG_ROM_BASE
+  Set the memory address of the executable part of the code in HEX (0x????),
+  this is also used to set the offset in the ROM image file.
+
+Area with BIOS Checksum in kbytes (normally 64)
+CONFIG_ROM_CHECKSUM_SIZE
+  Size of the ROM image to be prepared. This value is stored in
+  the ROM header, and the whole ROM must checksum to zero.
+
+Make image-file bootable by reset
+CONFIG_ROM_BOOTABLE_BY_RESET
+  Saying yes will allow the image file to boot via a warm boot
+  sequence.
+
+Address jumped to after reset (offset in image)
+CONFIG_ROM_RESET_ADDRESS
+  The offset in the image-file that should be jumped to for a
+  warm boot.
+
+Add startup module to image (BIOS-functions)
+CONFIG_ROM_ADD_BIOS_IMAGE
+  Saying yes will allow you to add a BIOS to the image-file.
+
+Name of module
+CONFIG_ROM_BIOS_MODULE
+  The location of the BIOS image to add to the ELKS image-file.
+
+Module codesegment address
+CONFIG_ROM_BIOS_MODULE_ADDR
+  The memory address to jump to after BIOS functions have run.
+  See CONFIG_ROM_BASE.
+
+Use EPROM-Simulator after make
+CONFIG_ROM_USE_SIMULATOR
+  Saying yes will load an EPROM simulator/emulator after make
+  has finished.
+
+# Cannot realy create help for a string var
+Program call
+CONFIG_ROM_SIMULATOR_PROGRAM
+  The location of the executable to run for the EPROM
+  simulator/emulator, including any command-line perameters etc.
+
+# Generate debug code
+# ~~~~~~~~~~~~~~~~~~~
+
+ROM-CODE debug infos
+CONFIG_ROM_DEBUG
+  Saying yes will compile the ROM image with all debug information
+  turned on.
+
+# ROM code configuration
+# ~~~~~~~~~~~~~~~~~~~~~~
+
+Use IRQ-Mask of 8259 at boot time as default
+CONFIG_HW_259_USE_ORIGINAL_MASK
+  Saying yes will force the irq system to read in the original
+  interrupt mask befor it starts sorting out interrupts. 
+
+  By default the kernel disables all interrupts.
+
+  This should only be used by kernel hackers.
+
+Ticks for BogoMIPS (0 = check at boot time)
+CONFIG_BOGOMIPS
+  Enter the number of ticks for the BogoMIPS (integer)
+
+NO Floppy count at 40:10 use INT13.08
+CONFIG_HW_USE_INT13_FOR_FLOPPY
+  Saying yes will get the number of floppy drive via the BIOS
+  interrupt 13 function 8, get drive perameters.
+
+  On the PC/XT this only works on Hard Drives.
+
+Use interrupt 13 function 8 for floppy information
+CONFIG_HW_USE_INT13_FOR_DISKPARMS
+  Saying yes will explicitly tell ELKS to use BIOS interrupt
+  13 function 8 to get Floppy information
+
+  On the PC/XT this only works on Hard Drives.
+
+# Memory configuration
+# ~~~~~~~~~~~~~~~~~~~~
+
+Base memory size (64k pages)
+CONFIG_MEM_PAGES
+  Specifies the minimum amount of memory in 64k pages that the target
+  system is required to have. The default is 8 pages (512k) and this
+  can be set between 4 pages (256k) and 10 pages (640k).
+
+Extended (XMS) Memory Support
+CONFIG_XMS
+  Includes support for XMS memory. This is memory that is mapped above
+  the first megabyte of memory on systems based on 80286 and later
+  processors.
+
+High Memory (HMA) Support
+  Includes support for the HMA on systems based on 80286 and later
+  processors.
+
+  The HMA is the first 65,520 bytes of the second megabyte of memory,
+  and can be accessed by making use of a side-effect of the fact that
+  memory addresses do not wrap round on the later processors. Because
+  of this, a segment address of 0xFFFF produces a memory segment that
+  contains the last 16 bytes of the first megabyte together with the
+  HMA and this area is accessible from real mode once set up.
+
+Advanced Memory Manager
+CONFIG_ADVANCED_MM
+  Adds some features to the MM like resizable holes and relocatable
+  code and data segments for processes. If you are going to use the 
+  ELKS executable format then you better say Y here. 
+  This enlarges the kernel by around 110 bytes.
+
+Swap support (Experimental)
+CONFIG_SWAP
+  Include support for swapping to virtual memory.
+  This enlarges kernel by about 2KB.
+
+  WARNING: This code is VERY experimental at the moment.
+
+# 286 Protected Mode support - 286+ features
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+286 Protected Mode support
+CONFIG_286PMODE
+  Include support for 286 Protected Mode. Experimental.
+  Use at your own risk.
+
+  This option will probably not interact well with the BIOS disk
+  drivers.
+
+# 286 Protected Mode support - 386+ features
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Support more than 16 Megs of RAM
+CONFIG_386RAM
+  Add support for RAM beyond 16 megs on 386+ systems.
+
+  Currently nonexistant.
+
+# Kernel hacking
+# ~~~~~~~~~~~~~~
+
+Strace
+CONFIG_STRACE
+  Strace displays a trace of all system calls made to the kernel.
+  Only kernel hackers need this option.
+
+  Say N and rest in peace.
+
+Optimise for size rather than speed
+CONFIG_OPT_SMALL
+  Where two versions of a function exist this will cause the smaller
+  version rather than the faster version to be included.
+
+# System calls
+# ~~~~~~~~~~~~
+
+Include kernel version system call
+CONFIG_SYS_VERSION
+  This includes support for a system call that provides the version
+  number of the current ELKS kernel.
+
+# Console display support
+# ~~~~~~~~~~~~~~~~~~~~~~~
+
+Direct console writes
+CONFIG_CONSOLE_DIRECT
+  A direct console driver. This is currently the only console driver
+  available for ELKS.
+
+Direct console VT52 emulation
+CONFIG_DCON_VT52
+  Saying no removes some of the intelligent features from the console 
+  code leaving a dumb text console which is much smaller.
+
+Direct console ANSI emulation
+CONFIG_DCON_ANSI
+  Provide direct console support for ANSI (VT-102) terminals.
+
+Use ANSI codes in printk()
+CONFIG_DCON_ANSI_PRINTK
+  When the kernel reports something using printk(), the reports will
+  be coloured.
+
+  This feature is of dubious value, so normally say N.
+
+BIOS console writes
+CONFIG_CONSOLE_BIOS
+  The newly implemented BIOS based console driver.
+
+BIOS console VT-52 emulation
+CONFIG_BIOS_VT52
+  This enables the use of VT-52 codes when using the BIOS console
+  driver.
+
+Serial console writes
+CONFIG_CONSOLE_SERIAL
+  The serial console driver.
+
+  Currently minimal support for console output over a serial line.
+
+# Keyboard support
+# ~~~~~~~~~~~~~~~~
+
+Select XT keyboard support for American (US) keyboards
+CONFIG_KEYMAP_US
+  This option specifies that support be provided for XT keyboards with
+  the American key layout. There are no dead keys with this layout.
+
+Select XT keyboard support for Belgian (BE) keyboards
+CONFIG_KEYMAP_BE
+  This option specifies that support be provided for XT keyboards with
+  the Belgian key layout and associated dead keys.
+
+Select XT keyboard support for British (UK) keyboards
+CONFIG_KEYMAP_UK
+  This option specifies that support be provided for XT keyboards with
+  the British key layout. There are no dead keys with this layout.
+
+Select XT keyboard support for Dvorak (DV) keyboards
+CONFIG_KEYMAP_DV
+  This option specifies that support be provided for XT keyboards with
+  the Dvorak key layout and associated dead keys.
+
+Select XT keyboard support for French (FR) keyboards
+CONFIG_KEYMAP_FR
+  This option specifies that support be provided for XT keyboards with
+  the French key layout and associated dead keys.
+
+Select XT keyboard support for German (DE) keyboards
+CONFIG_KEYMAP_DE
+  This option specifies that support be provided for XT keyboards with
+  the German key layout and associated dead keys.
+
+Select XT keyboard support for Spanish (ES) keyboards
+CONFIG_KEYMAP_ES
+  This option specifies that support be provided for XT keyboards with
+  the Spanish key layout and associated dead keys.
+
+Select XT keyboard support for Swedish (ES) keyboards
+CONFIG_KEYMAP_SE
+  This option specifies that support be provided for XT keyboards with
+  the Swedish key layout and associated dead keys.
+
+# Character devices
+# ~~~~~~~~~~~~~~~~~
+
+Enable memory devices
+CONFIG_CHAR_DEV_MEM
+  Saying yes include support for the various memory character devices.
+  Currently only mem, kmem, zero, null and full are supported.
+
+Enable standard parallel (printer) ports
+CONFIG_CHAR_DEV_LP
+  Include support for parallel port devices.
+
+  Currently under development. Please test.
+
+Enable standard serial ports
+CONFIG_CHAR_DEV_RS
+  Include support for serial port devices.
+
+Enable meta device driver
+CONFIG_DEV_META
+  Include meta driver to provide support for userspace device drivers.
+
+  Normally, say N and rest in peace.
+
+Enable pseudo-tty driver
+CONFIG_PSEUDO_TTY
+  Include support for pseudo-tty's.
+
+Number of valid text consoles
+CONFIG_CONSOLES_MAX
+  ELKS (like Linux) can run with multiple virtual text consoles. Unlike
+  Linux, there is a definite limit on the amount of memory available to
+  implement this feature, and there is thus a need to limit the number
+  of these consoles that are made available.
+
+  This option allows the number of consoles to be made available to be
+  configured, and valid responses are in the range from 3 to 9.
+
+  Because of a historical legacy, the default is 3 consoles, as the
+  serial ports were originally mapped to conflict with virtual text
+  consoles 4 to 7.
+
+# Block devices
+# ~~~~~~~~~~~~~
+
+Use DMA for transfers
+CONFIG_DMA
+  Use Direct Memory Access (DMA) for block transfers.
+
+Mount root partition read-only by default
+CONFIG_ROOT_READONLY
+  Specifies that the root partition is to be mounted rad-only by default.
+
+  This may cause problems at the moment, but will eventually be required.
+
+BIOS block device support
+CONFIG_BLK_DEV_BIOS
+  Device driver that allows access to floppy and hard drives through
+  BIOS.
+
+  Currently required.
+
+BIOS Floppy Drive support
+CONFIG_BLK_DEV_BFD
+  Include floppy drive support in BIOS device driver.
+
+Pre-set floppy types
+CONFIG_BLK_DEV_BFD_HARD
+  Pre-set the floppy drive types.
+
+  Useful when the BIOS does not provide information on the floppy
+  drive types.
+
+Primary floppy drive type
+CONFIG_BLK_DEV_BFD0_NONE
+  Specify the type of the primary floppy drive.
+  The available options are:
+
+	None	No floppy drive installed.
+
+	360k	5.25" drive with 360k capacity.
+	1200k	5.25" drive with 1200k capacity.
+
+	720k	3.5" drive with 720k capacity.
+	1440k	3.5" drive with 1440k capacity.
+	2880k	3.5" drive with 2880k capacity.
+
+Secondary floppy drive type
+CONFIG_BLK_DEV_BFD1_NONE
+  Specify the type of the secondary floppy drive.
+  The available options are:
+
+	None	No floppy drive installed.
+
+	360k	5.25" drive with 360k capacity.
+	1200k	5.25" drive with 1200k capacity.
+
+	720k	3.5" drive with 720k capacity.
+	1440k	3.5" drive with 1440k capacity.
+	2880k	3.5" drive with 2880k capacity.
+
+BIOD Hard Drive support
+CONFIG_BLK_DEV_BHD
+  Include hard drive support in BIOS device driver.
+
+Normal Floppy Disk support
+CONFIG_BLK_DEV_FD
+  Device driver that provides direct support for floppy drives.
+  Currently does not work.
+
+Normal Hard Disk support
+CONFIG_BLK_DEV_HD
+  Device driver that provides direct access to IDE hard disks by
+  Blaz Antonic.
+
+  Currently not tested. Use at you own risk.
+
+RAM Drive support
+CONFIG_BLK_DEV_RAM
+  Support for a RAM disk device driver which allows up to eight
+  64K ramdrives to be implemented. Not very useful, but can be
+  adapted to make use of EMS cards etc.
+
+Character access to block devices
+CONFIG_BLK_DEV_CHAR
+  Used to create and check filesystems, and by fdisk.
+
+  Recommended.
+
+# File systems
+# ~~~~~~~~~~~~
+
+# Select available file systems
+
+Minix file system support
+CONFIG_MINIX_FS
+  Support for the basic Minix filesystem. The only currently working 
+  filesystem. Until another filesystem is working this is required.
+
+ROM file system support
+CONFIG_ROMFS_FS
+  Incomplete support for the Read Only filesystem.
+
+Full VFS support
+CONFIG_FULL_VFS
+  If you say no to this then the vfs will only support one filesystem 
+  type. You do not need to say yes currently as only minixfs is
+  available.
+
+Extra external buffer cache
+CONFIG_FS_EXTERNAL_BUFFER
+  If you say no to this then the filesystem will not allocate 64K of
+  buffers in main memory. This saves RAM, and makes the kernel smaller
+  and simpler, but cripples performance on systems with slow block
+  devices like floppies or old hard disks.
+
+  This option should only be specified as no for systems which have
+  very fast block devices such as RAM, ROM or Flash disks.
+
+  It is also useful for stress testing the block device code.
+  
+Inter-process pipe support
+CONFIG_PIPE
+  Include support for standard UNIX inter-process pipes.
+
+Make all file systems read-only
+CONFIG_FS_RO
+  Saying y to this option makes all access to the filesystem read only.
+  Support for system calls that modify the filesystem is removed.
+
+  This option allows a considerable amount of code space to be saved,
+  thus allowing other features into the kernel.
+
+# Executable file formats
+# ~~~~~~~~~~~~~~~~~~~~~~~
+
+ELKS file format
+CONFIG_EXEC_ELKS
+  Adds support for the new ELKS executable format that supports a growing
+  heap. If you are only going to run MINIX executables and you don't care
+  for a growing heap say N, otherwise say Y. 
+  This will enlarge the kernel by around 210 bytes.
+
+# Networking support
+# ~~~~~~~~~~~~~~~~~~
+
+Socket support
+CONFIG_SOCKET
+  Include support for BSD style socket system calls.
+
+  Currently under development.
+
+UNIX sockets
+CONFIG_UNIX
+  Include support for AF_UNIX sockets.
+
+  Enlarges kernel by 3KB. Currently under development.
+
+NANO sockets
+CONFIG_NANO
+  Include support for experimental AF_NANO sockets.
+
+  Enlarges kernel by 3KB. Currently under development.
+
+INET_sockets
+CONFIG_INET
+  Include support for AF_INET TCP/IP sockets.
+
+  This depends on a userspace process to work. Read the file
+  Documentation/networking.txt for more info.
+
+  Enlarges kernel by 3KB.
+
+  WARNING: This code is very unstable.
+
+Enable status report
+CONFIG_INET_STATUS
+  If you intent to use utilities like netstat say YES.
+
+  If you don't, say NO it will save size from ktcp.
+  
+CSLIP TCP/IP header compression
+CONFIG_CSLIP
+  Add support for compressed TCP/IP headers in SLIP.
+
+  This will improve a lot the networking over slow lines at the
+  cost of enlarging memory usage.
+
+Only support client sockets
+CONFIG_SOCK_CLIENTONLY
+  Only include support for outgoing connections.
+
+  Use this in case you just need to save some extra bytes from
+  the kernel. Saves around 450 bytes.
+
+  If you are not sure just say NO.
+
+Support SiBO Solid State Disks
+CONFIG_BLK_DEV_SSD
+  Say "y" here to include support for SiBO solid state disks.
+
+#############################################################################
+
+Options that do not need help texts.
+CONFIG_ARCH_IBMPC
+CONFIG_ARCH_SIBO
+CONFIG_BLK_DEV_BFD0_360
+CONFIG_BLK_DEV_BFD0_720
+CONFIG_BLK_DEV_BFD0_1200
+CONFIG_BLK_DEV_BFD0_1440
+CONFIG_BLK_DEV_BFD0_2880
+CONFIG_BLK_DEV_BFD1_360
+CONFIG_BLK_DEV_BFD1_720
+CONFIG_BLK_DEV_BFD1_1200
+CONFIG_BLK_DEV_BFD1_1440
+CONFIG_BLK_DEV_BFD1_2880
+CONFIG_CPU_80186
+CONFIG_CPU_80286
+CONFIG_CPU_80286_PLUS
+CONFIG_CPU_80386
+CONFIG_CPU_80386_PLUS
+CONFIG_CPU_80486
+CONFIG_CPU_SUB_80286
+CONFIG_IBMPC_COMPAQ
+CONFIG_PC_XT
+CONFIG_PC_AT
+CONFIG_PC_MCA
+
+# EOF

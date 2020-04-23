@@ -248,7 +248,7 @@ static int serial_open(const char *device, speed_t baudrate, bool rtscts, struct
 	int fd;
 	speed_t b;
 
-	fd = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
+	fd = open(device, O_RDWR | O_EXCL | O_NOCTTY | O_NONBLOCK);
 
 	if (fd == -1)
 		return -1;
@@ -385,7 +385,6 @@ int main(int argc, char **argv)
 	bool escape = false, rtscts = false;
 	bool enable_rts = false, enable_dtr = false;
 	const char *device = "/dev/ttyS0";
-	int flags;
 	bool no_reset = false;
 
 	while ((ch = getopt(argc, argv, "s:SrdRxh")) != -1) {
@@ -434,6 +433,7 @@ int main(int argc, char **argv)
 	}
 
 #if later
+	int flags;
 	if (ioctl(fd, TIOCMGET, &flags) == -1) {
 		perror(device);
 		exit(1);

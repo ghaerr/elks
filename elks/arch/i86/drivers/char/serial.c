@@ -10,6 +10,7 @@
 #include <linuxmt/termios.h>
 #include <linuxmt/debug.h>
 #include <arch/io.h>
+#include <arch/ports.h>
 
 #define NEW		1	/* set =0 for old driver code if needed*/
 #define FIFO		0	/* set =1 to enable new FIFO code for testing*/
@@ -54,10 +55,10 @@ struct serial_info {
 #define MAX_RX_BUFFER_SIZE 16
 
 static struct serial_info ports[NR_SERIAL] = {
-    {(char *)0x3f8, 4, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
-    {(char *)0x2f8, 3, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
-    {(char *)0x3e8, 5, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
-    {(char *)0x2e8, 2, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
+    {(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
+    {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
+    {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
+    {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
 };
 
 static char irq_port[NR_SERIAL] = { 3, 1, 0, 2 };
@@ -400,6 +401,7 @@ static int rs_open(struct tty *tty)
     return 0;
 }
 
+#if 0	// unused, removed for bloat
 static int set_serial_info(struct serial_info *info,
 			   struct serial_info *new_info)
 {
@@ -426,6 +428,7 @@ static int get_serial_info(struct serial_info *info,
 {
     return verified_memcpy_tofs(ret_info, info, sizeof(struct serial_info));
 }
+#endif
 
 static int rs_ioctl(struct tty *tty, int cmd, char *arg)
 {
@@ -442,12 +445,14 @@ static int rs_ioctl(struct tty *tty, int cmd, char *arg)
 	//FIXME: update_port() only sets baud rate from termios, not parity or wordlen*/
 	update_port(port);	/* ignored return value*/
 	break;
+#if 0
     case TIOCSSERIAL:
 	retval = set_serial_info(port, (struct serial_info *)arg);
 	break;
 
     case TIOCGSERIAL:
 	retval = get_serial_info(port, (struct serial_info *)arg);
+#endif
 
     default:
 	return -EINVAL;

@@ -26,6 +26,7 @@
 #define	STDIN		0
 #define	STDOUT		1
 #define	MAXSOURCE	10
+#define	CFGFILE		"sashrc"
 
 #ifndef	isblank
 #define	isblank(ch)	(((ch) == ' ') || ((ch) == '\t'))

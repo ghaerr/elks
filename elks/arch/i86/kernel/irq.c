@@ -24,6 +24,7 @@
 
 #include <arch/io.h>
 #include <arch/irq.h>
+#include <arch/ports.h>
 
 /* Enable 80386 Traps */
 /*#define ENABLE_TRAPS */
@@ -226,7 +227,7 @@ void init_IRQ(void)
     irqtab_init();			/* Store DS */
 
     /* Set off the initial timer interrupt handler */
-    if (request_irq(0, timer_tick,NULL))
+    if (request_irq(TIMER_IRQ, timer_tick, NULL))
 	panic("Unable to get timer");
 
     /* Re-start the timer only after irq is set */

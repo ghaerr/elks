@@ -103,28 +103,26 @@
  *
  * Examples for completion and hint callbacks:
  * 
-void completion(const char *buf, linenoiseCompletions *lc) {
-    if (buf[0] == 'h') {
-        linenoiseAddCompletion(lc,"hello");
-        linenoiseAddCompletion(lc,"hello there");
-    }
-}
-
-char *hints(const char *buf, int *color, int *bold) {
-    if (!strcasecmp(buf,"hello")) {
-        *color = 35;
-        *bold = 0;
-        return " World";
-    }
-    return NULL;
-}
+ * void completion(const char *buf, linenoiseCompletions *lc) {
+ *     if (buf[0] == 'h') {
+ *         linenoiseAddCompletion(lc,"hello");
+ *         linenoiseAddCompletion(lc,"hello there");
+ *     }
+ * }
+ *
+ * char *hints(const char *buf, int *color, int *bold) {
+ *     if (!strcasecmp(buf,"hello")) {
+ *         *color = 35;
+ *         *bold = 0;
+ *         return " World";
+ *     }
+ *     return NULL;
+ * }
  * 
  * These are installed with:
  *
- linenoiseSetCompletionCallback(completion);
- linenoiseSetHintsCallback(hints);
- * 
- * 
+ * linenoiseSetCompletionCallback(completion);
+ * linenoiseSetHintsCallback(hints);
  */
 
 #include "shell.h"
@@ -145,9 +143,10 @@ char *hints(const char *buf, int *color, int *bold) {
 #include "var.h"
 
 /* set these to 0 to reduce the code size */
-#define MASK_ON 0
 #define COMPLETION_ON 1
 #define MULTILINE_ON 0
+#define HINTS_ON 0
+#define MASK_ON 0
 #define BEEP_ON 0
 #define HISTORY_SAVE 0
 
@@ -156,7 +155,6 @@ char *hints(const char *buf, int *color, int *bold) {
 static char *unsupported_term[] = {"dumb","cons25","emacs",NULL};
 static linenoiseCompletionCallback *completionCallback = NULL;
 static linenoiseHintsCallback *hintsCallback = NULL;
-static linenoiseFreeHintsCallback *freeHintsCallback = NULL;
 
 static struct termios orig_termios; /* In order to restore at exit.*/
 static int maskmode = 0; /* Show "***" instead of input. For passwords. */
@@ -391,14 +389,14 @@ void linenoiseClearScreen(void) {
     }
 }
 
-#if BEEP_ON
 /* Beep, used for completion when there is nothing to complete or when all
  * the choices were already shown. */
 static void linenoiseBeep(void) {
+#if BEEP_ON
     fprintf(stderr, "\x7");
     fflush(stderr);
-}
 #endif
+}
 
 /* ============================== Completion ================================ */
 
@@ -425,9 +423,7 @@ static int completeLine(struct linenoiseState *ls) {
 
     completionCallback(ls->buf,&lc);
     if (lc.len == 0) {
-#if BEEP_ON
         linenoiseBeep();
-#endif        
     } else {
         size_t stop = 0, i = 0;
 
@@ -446,6 +442,10 @@ static int completeLine(struct linenoiseState *ls) {
                 refreshLine(ls);
             }
 
+			/* if only a single match, fill in match and continue*/
+			if (lc.len == 1)
+				goto out;
+
             nread = read(ls->ifd,&c,1);
             if (nread <= 0) {
                 freeCompletions(&lc);
@@ -455,15 +455,14 @@ static int completeLine(struct linenoiseState *ls) {
             switch(c) {
                 case TAB: /* tab */
                     i = (i+1) % (lc.len+1);
-#if BEEP_ON                  
                     if (i == lc.len) linenoiseBeep();
-#endif
                     break;
                 case ESC: /* escape */
                     /* Re-show original buffer */
                     if (i < lc.len) refreshLine(ls);
                     stop = 1;
                     break;
+				out: c = 0;
                 default:
                     /* Update buffer and return */
                     if (i < lc.len) {
@@ -485,18 +484,6 @@ void linenoiseSetCompletionCallback(linenoiseCompletionCallback *fn) {
     completionCallback = fn;
 }
 
-/* Register a hits function to be called to show hits to the user at the
- * right of the prompt. */
-void linenoiseSetHintsCallback(linenoiseHintsCallback *fn) {
-    hintsCallback = fn;
-}
-
-/* Register a function to free the hints returned by the hints callback
- * registered with linenoiseSetHintsCallback(). */
-void linenoiseSetFreeHintsCallback(linenoiseFreeHintsCallback *fn) {
-    freeHintsCallback = fn;
-}
-
 /* This function is used by the callback function registered by the user
  * in order to add completion options given the input string when the
  * user typed <tab>. See the example.c source code for a very easy to
@@ -515,6 +502,22 @@ void linenoiseAddCompletion(linenoiseCompletions *lc, const char *str) {
     }
     lc->cvec = cvec;
     lc->cvec[lc->len++] = copy;
+}
+#endif
+
+#if HINTS_ON
+static linenoiseFreeHintsCallback *freeHintsCallback = NULL;
+
+/* Register a hits function to be called to show hits to the user at the
+ * right of the prompt. */
+void linenoiseSetHintsCallback(linenoiseHintsCallback *fn) {
+    hintsCallback = fn;
+}
+
+/* Register a function to free the hints returned by the hints callback
+ * registered with linenoiseSetHintsCallback(). */
+void linenoiseSetFreeHintsCallback(linenoiseFreeHintsCallback *fn) {
+    freeHintsCallback = fn;
 }
 #endif
 
@@ -547,7 +550,7 @@ static void abFree(struct abuf *ab) {
     free(ab->b);
 }
 
-#if COMPLETION_ON
+#if HINTS_ON
 /* Helper of refreshSingleLine() and refreshMultiLine() to show hints
  * to the right of the prompt. */
 void refreshShowHints(struct abuf *ab, struct linenoiseState *l, int plen) {
@@ -608,8 +611,8 @@ static void refreshSingleLine(struct linenoiseState *l) {
     } else {
         abAppend(&ab,buf,len);
     }
-#if COMPLETION_ON    
-    /* Show hits if any. */
+#if HINTS_ON
+    /* Show hints if any. */
     refreshShowHints(&ab,l,plen);
 #endif    
     /* Erase to right */
@@ -671,8 +674,8 @@ static void refreshMultiLine(struct linenoiseState *l) {
         abAppend(&ab,l->buf,l->len);
     }
 
-#if COMPLETION_ON
-    /* Show hits if any. */
+#if HINTS_ON
+    /* Show hints if any. */
     refreshShowHints(&ab,l,plen);
 #endif
 
@@ -919,6 +922,7 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
             history_len--;
             free(history[history_len]);
             if (mlmode) linenoiseEditMoveEnd(&l);
+#if HINTS_ON
             if (hintsCallback) {
                 /* Force a refresh without hints to leave the previous
                  * line as the user typed it after a newline. */
@@ -927,6 +931,7 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
                 refreshLine(&l);
                 hintsCallback = hc;
             }
+#endif
             write(l.ofd, "\r\n", 2);  /* tty1 requires \r, serial doesn't*/
             return (int)l.len;
         case BACKSPACE:   /* backspace */
