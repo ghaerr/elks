@@ -24,6 +24,7 @@
 #include <linuxmt/ntty.h>
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/heap.h>
 
 /* default termios, set at init time, not reset at open*/
 struct termios def_vals = {
@@ -105,6 +106,25 @@ struct tty *determine_tty(dev_t dev)
     return NULL;
 }
 
+int tty_allocq(struct tty *tty, int insize, int outsize)
+{
+    if ((tty->inq_buf = heap_alloc(insize, 0)) == NULL)
+	return -ENOMEM;
+    if ((tty->outq_buf = heap_alloc(outsize, 0)) == NULL) {
+	heap_free(tty->inq_buf);
+	return -ENOMEM;
+    }
+    chq_init(&tty->inq, tty->inq_buf, insize);
+    chq_init(&tty->outq, tty->outq_buf, outsize);
+    return 0;
+}
+
+void tty_freeq(struct tty *tty)
+{
+    heap_free(tty->inq_buf);
+    heap_free(tty->outq_buf);
+}
+
 int tty_open(struct inode *inode, struct file *file)
 {
     register struct tty *otty;
@@ -135,15 +155,8 @@ int tty_open(struct inode *inode, struct file *file)
 	    currentp->tty = otty;
 	}
 	otty->flags |= TTY_OPEN;
-	chq_init(&otty->inq, otty->inq_buf, INQ_SIZE);
-	chq_init(&otty->outq, otty->outq_buf, OUTQ_SIZE);
     }
     return err;
-}
-
-int ttynull_openrelease(struct tty *tty)
-{
-    return 0;
 }
 
 void tty_release(struct inode *inode, struct file *file)
@@ -420,32 +433,28 @@ void tty_init(void)
 
 #if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
 
-    for (i = 0 ; i < NR_CONSOLES ; i++) {
+    for (i = TTY_MINOR_OFFSET ; i < NR_CONSOLES + TTY_MINOR_OFFSET ; i++) {
 #ifdef CONFIG_CONSOLE_BIOS
 	ttyp->ops = &bioscon_ops;
 #else
 	ttyp->ops = &dircon_ops;
 #endif
-	chq_init(&ttyp->inq, ttyp->inq_buf, INQ_SIZE);
 	(ttyp++)->minor = i;
     }
-
 #endif
 
 #ifdef CONFIG_CHAR_DEV_RS
-
     /* put serial entries after console entries */
     for (i = RS_MINOR_OFFSET; i < NR_SERIAL + RS_MINOR_OFFSET; i++) {
 	ttyp->ops = &rs_ops;
 	(ttyp++)->minor = i;		/* ttyS0 = RS_MINOR_OFFSET */
     }
-
 #endif
 
 #ifdef CONFIG_PSEUDO_TTY
     /* start at minor = 8 fixed to match pty entries in MAKEDEV */
     /* put slave pseudo tty entries after serial entries */
-    for (i = 8; (i) < NR_PTYS + 8; i++) {
+    for (i = PTY_MINOR_OFFSET; (i) < NR_PTYS + PTY_MINOR_OFFSET; i++) {
 	ttyp->ops = &ttyp_ops;
 	(ttyp++)->minor = i;
     }

@@ -282,13 +282,16 @@ static void rs_release(struct tty *tty)
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
 
     debug_tty("SERIAL close %d\n", current->pid);
-    if (--port->usecount == 0)
+    if (--port->usecount == 0) {
 	outb_p(0, port->io + UART_IER);	/* Disable all interrupts */
+	tty_freeq(tty);
+    }
 }
 
 static int rs_open(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
+    int err;
 
     debug_tty("SERIAL open %d\n", current->pid);
 
@@ -298,6 +301,12 @@ static int rs_open(struct tty *tty)
     /* increment use count, don't init if already open*/
     if (port->usecount++)
 	return 0;
+
+    err = tty_allocq(tty, RSINQ_SIZE, RSOUTQ_SIZE);
+    if (err) {
+	--port->usecount;
+	return err;
+    }
 
     /* clear RX buffer */
     inb_p(port->io + UART_LSR);
@@ -436,8 +445,7 @@ void init_console(void)
     register struct serial_info *sp = &ports[CONSOLE_PORT];
 
     rs_init();
-    memcpy((void *)&(sp->tty->termios),
-		    &def_vals, sizeof(struct termios));
+    memcpy((void *)&(sp->tty->termios), &def_vals, sizeof(struct termios));
     update_port(sp);
     con_init = 1;
     printk("Console: Serial\n");

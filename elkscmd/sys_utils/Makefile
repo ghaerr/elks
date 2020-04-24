@@ -32,6 +32,7 @@ PRGS = \
 	clock \
 	unreal16 \
 	mouse \
+	sercat \
 	# EOL
 
 init: init.o
@@ -90,6 +91,9 @@ chmem: chmem.o
 
 mouse: mouse.o
 	$(LD) $(LDFLAGS) -o mouse mouse.o $(LDLIBS)
+
+sercat: sercat.o
+	$(LD) $(LDFLAGS) -o sercat sercat.o $(LDLIBS)
 
 unreal16: unreal16.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o

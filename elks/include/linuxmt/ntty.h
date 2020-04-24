@@ -5,14 +5,16 @@
  * 'ntty.h' defines some structures used by ntty.c and some defines.
  */
 
-#define INQ_SIZE 512
-#define OUTQ_SIZE 64
+#define INQ_SIZE	128	/* tty/pty input queue size*/
+#define OUTQ_SIZE	64	/* tty/pty output queue size*/
+
+#define RSINQ_SIZE	1200	/* serial input queue SLIP_MTU+128+8*/
+#define RSOUTQ_SIZE	64	/* serial output queue size*/
 
 /*
  * Note: don't mess with NR_PTYS until you understand the tty minor
  * number allocation game...
- * (Note: the *_driver.minor_start values 1, 64, 128, 192 are
- * hardcoded at present.)
+ * (Note: the *_driver.minor_start values 0, 8, 64, 255 are hardcoded at present.)
  */
 
 /* Predefined maximum number of tty character devices */
@@ -21,6 +23,8 @@
 #define MAX_SERIAL   4
 #define MAX_PTYS     4
 
+#define TTY_MINOR_OFFSET 0
+#define PTY_MINOR_OFFSET 8
 #define RS_MINOR_OFFSET 64
 
 #if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
@@ -71,20 +75,13 @@ struct tty {
     struct tty_ops *ops;
     unsigned short int minor;
     unsigned int flags;
-
-#if 0
-    struct wait_queue *sleep;
-#endif
-
     struct ch_queue inq, outq;
     struct termios termios;
     int ostate;
     pid_t pgrp;
-    unsigned char outq_buf[OUTQ_SIZE], inq_buf[INQ_SIZE];
+    unsigned char *outq_buf;
+    unsigned char *inq_buf;
 };
-
-extern int ttynull_openrelease(struct tty *);
-		/* Empty function, returns zero. useful */
 
 extern int tty_intcheck(struct tty *,unsigned char);
 		/* Check for ctrl-C etc.. */
@@ -100,6 +97,10 @@ extern struct termios def_vals;
 
 struct tty *determine_tty(dev_t);
 		/* Function to determine relevant tty */
+
+extern int tty_allocq(struct tty *tty, int insize, int outsize);
+extern void tty_freeq(struct tty *tty);
+		/* Allocate and free character queues*/
 
 /* tty.flags */
 #define TTY_STOPPED 	1
