@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <grp.h>
-#include "config.h"
+#include "config-grp.h"
 
 /*
  * This is the core group-file read function.  It behaves exactly like

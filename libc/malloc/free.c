@@ -13,7 +13,9 @@ free(void * ptr)
 		return;		/* free(NULL) - be nice */
 	chk--;
 
+#ifdef __MINI_MALLOC__
  try_this:;
+#endif
 	top = (mem *) sbrk(0);
 	if (chk + m_size(chk) == top) {
 		__noise("FREE brk", chk);
