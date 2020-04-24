@@ -309,9 +309,9 @@ again:
 		if (!icanon && vtime) {
 		    if (jiffies < timeout) {
 			schedule();
-			if (!vmin)
-			    goto again;		/* VMIN = 0 don't reset timer*/
-			else {
+			goto again;		/* don't reset timer*/
+		    } else {
+			if (vmin && (i == 0)) {
 			    nonblock = 1;
 			    continue;		/* VMIN > 0 reset timer*/
 			}
@@ -342,6 +342,9 @@ again:
 
 		if (ch == tty->termios.c_cc[VEOF])
 		    break;
+	    } else {
+		if (vtime && vmin)	/* start timeout after first character*/
+		    nonblock = 1;
 	    }
 	    put_user_char(ch, (void *)(data++));
 	    tty_echo(tty, ch);

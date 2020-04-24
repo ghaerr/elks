@@ -36,7 +36,7 @@ void copyfile(int ifd, int ofd)
 	while ((n = read(ifd, readbuf, BUF_SIZE)) > 0) {
 		if (n == 1 && readbuf[0] == CTRL_D)
 			return;
-		if (verbose) fprintf(stderr, "%d bytes read\n", n);
+		if (verbose) fprintf(stderr, " %d bytes read\n", n);
 		write(ofd, readbuf, n);
 	}
 	if (n < 0) perror("read");
@@ -60,8 +60,8 @@ int main(int argc, char **argv)
 		new = org;
 		new.c_lflag &= ~(ECHO | ECHOE | ECHONL);
 		new.c_lflag &= ~ICANON;
-		new.c_cc[VMIN] = 1;				/* min bytes to read if VTIME = 0*/
-		new.c_cc[VTIME] = 0;			/* intercharacter timeout if VMIN > 0, timeout if VMIN = 0*/
+		new.c_cc[VMIN] = 255;			/* min bytes to read if VTIME = 0*/
+		new.c_cc[VTIME] = 1;			/* intercharacter timeout if VMIN > 0, timeout if VMIN = 0*/
 		//new.c_cflag = B19200 | CS8;
         //new.c_cflag |= CRTSCTS;
 		tcsetattr(fd, TCSAFLUSH, &new);
