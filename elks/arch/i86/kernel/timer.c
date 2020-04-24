@@ -18,7 +18,7 @@
  *        8254 timers. - Thomas McWilliams  <tmwo@users.sourceforge.net>
  */
 
-jiff_t jiffies = 0;
+volatile jiff_t jiffies = 0;
 
 extern void do_timer(struct pt_regs *);
 extern void keyboard_irq(int, struct pt_regs *, void *);
