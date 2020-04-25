@@ -13,7 +13,6 @@
 #include <arch/ports.h>
 
 #define NEW		1	/* set =0 for old driver code if needed*/
-#define FIFO		1	/* set =1 to enable new FIFO code for testing*/
 
 #if defined (CONFIG_CHAR_DEV_RS) || defined (CONFIG_CONSOLE_SERIAL)
 
@@ -89,10 +88,13 @@ static unsigned int divisors[] = {
 #define	RS_IALLMOSTFULL 	(3 * INQ_SIZE / 4)
 #define	RS_IALLMOSTEMPTY	(    INQ_SIZE / 4)
 
-/* Flush input fifo */
-static void flush_input_fifo(register struct serial_info *sp)
+/*
+ * Flush input by reading RX register.
+ * Not used when FIFO enabled, as HW fifo cleared when enabled.
+ */
+static void flush_input(register struct serial_info *sp)
 {
-#if !FIFO	/* HW FIFO cleared when reset or enabled*/
+#ifndef CONFIG_HW_SERIAL_FIFO
     int i = MAX_RX_BUFFER_SIZE;
 
     do {
@@ -144,7 +146,7 @@ static int rs_probe(register struct serial_info *sp)
     outb_p(UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT, sp->io + UART_FCR);
 
     /* clear RX register */
-    flush_input_fifo(sp);
+    flush_input(sp);
 
     return 0;
 }
@@ -311,16 +313,13 @@ static int rs_open(struct tty *tty)
     /* clear RX buffer */
     inb_p(port->io + UART_LSR);
 
-    /* Flush input fifo */
-    flush_input_fifo(port);
-
-#define UART_FCR_ENABLE_FIFO14	(UART_FCR_ENABLE_FIFO | 0xC0)
-#define UART_FCR_ENABLE_FIFO8	(UART_FCR_ENABLE_FIFO | 0x80)
-#define UART_FCR_ENABLE_FIFO4	(UART_FCR_ENABLE_FIFO | 0x40)
-    /* enable FIFO with 14 byte trigger */
-#if FIFO
+    /* enable FIFO and flush input*/
+#ifdef CONFIG_HW_SERIAL_FIFO
     if ((port->flags & SERF_TYPE) > ST_16550)
 	outb_p(UART_FCR_ENABLE_FIFO14, port->io + UART_FCR);
+#else
+    /* flush input*/
+    flush_input(port);
 #endif
 
     inb_p(port->io + UART_IIR);

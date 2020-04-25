@@ -40,6 +40,11 @@
 #define UART_FCR_TRIGGER_4	0x40	/* Mask for trigger set at 4 */
 #define UART_FCR_TRIGGER_8	0x80	/* Mask for trigger set at 8 */
 #define UART_FCR_TRIGGER_14	0xC0	/* Mask for trigger set at 14 */
+/* enable fifo with various triggers and clear rcvr/xmit buffer */
+#define UART_FCR_ENABLE_FIFO14	(UART_FCR_ENABLE_FIFO | 0xC6)
+#define UART_FCR_ENABLE_FIFO8	(UART_FCR_ENABLE_FIFO | 0x86)
+#define UART_FCR_ENABLE_FIFO4	(UART_FCR_ENABLE_FIFO | 0x46)
+#define UART_FCR_ENABLE_FIFO1	(UART_FCR_ENABLE_FIFO | 0x06)
 
 /* 16650 redefinitions */
 #define UART_FCR6_R_TRIGGER_8	0x00	/* Mask for receive trigger set at 1 */
