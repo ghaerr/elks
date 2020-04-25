@@ -1,23 +1,29 @@
 LZSS_URL	= https://github.com/marcin-laszewski/lzss/archive/master.zip
 LZSS_ZIP	= lzss-master.zip
 LZSS_DIR	= lzss-master
-LZSS_OUT_FILES	= lzss-c lzss-d
+LZSS_OUT_FILES	= lzss-c lzss-d lzss-exec-d
 LZSS_OUTS	= $(addprefix $(LZSS_DIR)/,$(LZSS_OUT_FILES))
 LZSS_INST	= $(addprefix $(DESTDIR)/bin/,$(LZSS_OUT_FILES))
+LZSS_INST	+= $(DESTDIR)/bin/lzss-exec-c $(DESTDIR)/bin/exec-lzss
 
 all:	$(LZSS_OUTS)
 
 install: $(LZSS_INST)
 
+$(DESTDIR)/bin/exec-lzss: exec-lzss
+	@echo '[INST]	$@'
+	@cp $^ $@
+
 $(DESTDIR)/bin/%: $(LZSS_DIR)/%
 	@echo '[INST]	$@'
 	@cp $^ $@
+
+$(LZSS_DIR)/lzss-exec-d: CFLAGS += -DCHMOD
 
 $(LZSS_OUTS): $(LZSS_DIR)/makefile LZSS-FORCE
 	@echo '[MAKE]	$(dir $@)	$(notdir $@)'
 	@CC='$(CC)' CFLAGS='$(CFLAGS)' LDFLAGS='$(LDFLAGS)' \
 		make -s --no-print-directory -C $(dir $@) $(notdir $@)
-
 
 $(LZSS_DIR)/makefile: $(LZSS_ZIP)
 	@echo '[UNZIP]	$@'
