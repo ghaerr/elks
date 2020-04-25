@@ -31,9 +31,9 @@ CONFIG_APP_COREUTILS	core_utils/		Core utilities, Installed in /bin. Sources mov
 											cat, date, env
 										Move from sys_utils: clock, getty, init, login, mount, umount
 										Move from file_utils:
-											cat, chgrp, chmod, chown, cp, dd, grep, ln, mkdir, mknod,
+											cat, chgrp, chmod, chown, cp, dd, ln, mkdir, mknod,
 											more, mv, rm, rmdir, sync, touch
-										Move from minix1:
+										Move from minix1: grep
 										Move from minix2: env
 										Move from minix3: 
 										Move from misc_utils: ed, tar
@@ -55,8 +55,9 @@ CONFIG_APP_SYS_UTILS	sys_utils/		System utilities from various origins.
 
 CONFIG_APP_FILE_UTILS	file_utils/		File utilities from Alistair Riddoch.
 										Rewritten from GNU fileutils 3.14 and sash.
-										Installs in /bin: cat, chgrp, chmod, chown, cmp, cp, dd, grep,
+										Installs in /bin: cat, chgrp, chmod, chown, cmp, cp, dd,
 										l, ln, ls, mkdir, mkfifo, mknod, more, mv, rm, rmdir, sync, touch
+										Not installed: grep (broken)
 
 CONFIG_APP_DISK_UTILS	disk_utils/		Disk utilities from early 1990s.
 										Installs in /bin: fdisk, fsck, mkfs, partype, ramdisk
@@ -66,9 +67,8 @@ CONFIG_APP_MISC_UTILS	misc_utils/		Miscellaneous utilities from various sources,
 										Not installed: compress, uncompress, zcat
 
 CONFIG_APP_MINIX1		minix1/			MINIX utilities, part 1.
-										Installs in /bin: banner, cksum, cut, decomp16, du, fgrep,
+										Installs in /bin: banner, cksum, cut, decomp16, du, fgrep, grep,
 											proto, sum, uniq, wc
-										Not installed: grep (duplicated in file_utils)
 
 CONFIG_APP_MINIX2		minix2/			MINIX utilities, part 2.
 										Installs in /bin: env, lp, pwdauth, synctree, tget
