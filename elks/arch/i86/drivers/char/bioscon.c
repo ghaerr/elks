@@ -621,12 +621,14 @@ static int Console_write(register struct tty *tty)
 
 static void Console_release(struct tty *tty)
 {
-/* Do nothing */
+    tty_freeq(tty);
 }
 
 int Console_open(register struct tty *tty)
 {
-    return (tty->minor >= NumConsoles) ? -ENODEV : 0;
+    if (tty->minor >= NumConsoles)
+	return -ENODEV;
+    return tty_allocq(tty, INQ_SIZE, OUTQ_SIZE);
 }
 
 struct tty_ops bioscon_ops = {
