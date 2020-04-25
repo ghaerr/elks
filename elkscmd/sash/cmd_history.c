@@ -10,7 +10,7 @@
 
 #define HISTMAX 200
 #define HISTMIN 20
-#define CMDBUF  80
+#define CMDBUF  100
 
 static  int     lastcom = -1;   /* index of most recent command */
 static  int     histind = 0;    /* cmd # for history list */
@@ -43,7 +43,7 @@ init_hist() {
 
 
 void
-do_history(argc, argv) /* list ccommands in history buffer */
+do_history(argc, argv) /* list commands in history buffer */
 	int argc;
         char **argv;
 {
@@ -81,6 +81,20 @@ char *
 cmd_get(int idx) { /* return the selected command from the history buffer */
                    /* error processing already done */
         return(histbuf[map_ind(idx)]);
+}
+
+char *
+cmd_search(char * pat) {
+	int idx, i;
+	char *found;
+
+	//printf("search %s, cht %d\n", pat, histcnt);
+	for (i = 0; i < histcnt; i++) {
+		idx = map_ind(-i);
+		if ((found = strstr(histbuf[idx], pat)))
+			return(found);
+	}
+	return(NULL);
 }
 
 /* 
@@ -183,6 +197,18 @@ phlist() {
 }
 #endif
 
+void
+fixbuf(char *cmd, char *prev, char *pos, char *cm) {
+
+	char buf[CMDBUF];
+
+	strcpy(buf, cmd);
+	strcat(buf, prev);
+	strcat(buf, pos);
+	strcpy(cm, buf);
+	return;
+}
+
 int
 history(char *cmd) {
         /*
@@ -191,35 +217,77 @@ history(char *cmd) {
          * request modifier.
          * Supported: !!, !<number>, !<number>:<modifier>, history (list)
          */
-        int prev_cmd, h;
-        char hnum[5];
-        char *cm, *rcmd = NULL;
+        int prev_cmd, h, pflag, echo;
+        char hnum[10];
+        char *cm, *pos, *prev, *rest;
 
         prev_cmd = 0;
-        h = 0;
+	pflag = 0;
+        h = echo = 0;
         cm = cmd;       /* save pointer for reuse */
 
-        switch (*cmd) {
-        /* todo: Add argument substitution (!$-notation) */
+        while (1) {	/* for an easy break */
 
-        case '^':
+        if (*cmd == '^') {
                 /* do substitution on the previous command */
                 if (!cmd_edit(cmd_get(-1), cmd, cm)) return(1);
-                puts(cm);
-                break;
-
-        case '!':
-                if (isalpha((int)*++cmd)) {
-                        printf("History search not implemented.\n");
-                        return(1);
-                /* TODO: add search in command history here */
+                echo++;
+		break;
+	}
+	if ((pos = strchr(cmd, '!'))) {
+		if (pos > cmd && *(pos -1) == '\\') {	/* bang is escaped, ignore */
+			pos--;
+			while (*pos != '\0') {
+				*pos = *(pos+1); /* remove backslash */
+				pos++;
+			}
+			break;
+		}
+		*pos = '\0';
+		if ((prev = strchr(pos+1, ':'))) { /* find modifier, only 'p' supported */
+			if (tolower((int)*(prev+1)) == 'p')
+				pflag++;
+			else {
+				printf("Illegal history modifier.\n");
+				return (1);
+			}
+			*prev = '\0';
+		}
+		if (*(pos+1) == '$') {		/* add last arg from prev cmd to current */
+			prev = strrchr(cmd_get(-1), ' ');
+			*pos = '\0';
+			fixbuf(cmd, prev, pos+2, cm);
+			break;
+		}
+		prev = pos;
+                if (isalpha((int)*(++pos))) {
+			while (isalpha(pos) && h < 10)  /* max 9 chars to search */
+				hnum[h++] = *pos++;
+			if (strlen(pos)) 		/* there is more */
+				rest = pos;	/* there is more, keep it */
+			else 
+				*rest = '\0';
+			if ((prev = cmd_search(hnum))) 
+				fixbuf(cmd, prev, rest, cm);
+			else {
+				printf("Event not found.\n");
+				return (1);
+			}
+			echo++;
+			break;
                 }
-                if (*cmd == '!')  {
-                        prev_cmd = -1;          /* previous cmd */
-                } else if (isdigit (*cmd) || (*cmd == '-')) {
-                        hnum[h++] = *cmd++;
-                        while (isdigit(*cmd) && h < 4) {  /* cmd # from history */
-                                hnum[h++] = *cmd++;
+                if (*pos == '!')  {		/* repeat last command */
+			if (histind) 		/* sanity check */
+				fixbuf(cmd, cmd_get(-1), pos+1, cm);
+			else
+				printf("Event not found.\n");
+			echo++;
+			break;
+		}
+                if (isdigit (*pos) || (*pos == '-')) {
+                        hnum[h++] = *pos++;
+                        while (isdigit(*pos) && h < 4) {  /* cmd # from history */
+                                hnum[h++] = *pos++;
                         }
                         hnum[h] = '\0';
                         prev_cmd = atoi(hnum);
@@ -227,38 +295,17 @@ history(char *cmd) {
                                 printf("%d: Event not found.\n", prev_cmd);
                                 return(1);
                         }
-                        fflush(stderr);
-			cmd--;
+			fixbuf(cmd, cmd_get(prev_cmd), pos, cm);
+			echo++;
+			break;
                 }
-                if (*++cmd == ':') {    /* the request has a modifier */
-                        switch (*++cmd) {
-                        case 'p':       /* print the selected command and make it current */
-                                strcpy(cm, cmd_get(prev_cmd));
-                                puts(cm);               /* echo */
-                                add_to_history(cm);     /* add to history list */
-                                return(1);                      /* don't execute */
-                        default:
-                                fputs("Illegal history modifier\n", stderr);
-                                return(1); /* nothing to do */
-                        }
-
-                }
-		if (strlen(cmd) > 0 ) { /* add the rest of the command line if any */
-			if (!(rcmd = malloc(strlen(cmd)+1))) {
-				fputs("history: malloc error\n", stderr);
-				return(1);
-			}
-			strcpy(rcmd, cmd);
-		}
-                strcpy(cm, cmd_get(prev_cmd)) ;
-		if (rcmd) {
-			strcat(cm, rcmd);
-			free(rcmd);
-		}
-                puts(cm);
-                break;
-        }      
+        } else break;
+	}
         add_to_history(cm);
+	if (echo) 
+		puts(cm);
+	if (pflag) 
+		return(1);
         return(0);
 }
 
