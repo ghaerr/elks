@@ -39,6 +39,10 @@ OBJS  = buffer.o super.o bufops.o devices.o fcntl.o stat.o inode.o file_table.o 
 	block_dev.o namei.o ioctl.o filesystems.o open.o read_write.o \
 	readdir.o exec.o select.o pipe.o
 
+ifdef CONFIG_EXEC_LZSS
+include lzss.mk
+endif
+
 #########################################################################
 # Commands.
 

@@ -46,6 +46,13 @@
 
 #include <arch/segment.h>
 
+#if defined(CONFIG_EXEC_LZSS)
+#	include <lzss.h>
+
+/* lzss magic file: 0x4C5A5353 = "LZSS" */
+#	define	EXEC_LZSS	0x4C5A5353
+#endif
+
 static struct minix_exec_hdr mh;
 #ifdef CONFIG_EXEC_ELKS
 static struct minix_supl_hdr msuph;
@@ -56,6 +63,67 @@ static struct minix_supl_hdr msuph;
 #define INIT_HEAP  0x0     // For future use (inverted heap and stack)
 #define INIT_STACK 0x4000  // 16 K (space for both stack and heap)
 
+#if defined(CONFIG_EXEC_LZSS)
+/* Structre for callback function lzss_getc() */
+struct lzss
+{
+  /* Is is a regular file (1) or compressed (0) ? */
+  unsigned char	regular;
+
+  /* Data for LZSS */
+  struct lzss_decode l;
+  struct lzss_decode_stream f;
+
+  /* Data for ELKS */
+  struct inode *inode;
+  struct file *filp;
+};
+
+/*
+Callback function called by decoding function:
+get one charakter from compressed file.
+*/
+static int
+lzss_getc(struct lzss * l)
+{
+  char c;
+
+  if (l->filp->f_op->read(l->inode, l->filp, &c, 1) != 1)
+    return lzss_EOF;
+
+  return c;
+}
+
+/* 'read' regular and compressed files */
+static size_t
+lzss_read(struct lzss * l, char *buf, size_t count)
+{
+  /* Is a regular file ? */
+  if(l->regular)
+    return l->filp->f_op->read(l->inode, l->filp, buf, count);
+
+  /* Fill the buf decoding compressed file ....*/
+  /* (Unfortunatelly character by character. TOFIX) */
+  {
+    size_t i;
+
+    for(i = 0; i < count; i++)
+    {
+      int c;
+
+      /*
+      Get one character from stream of already uncompressed stream.
+      Use lzss_get() to get a bytes from compresed file.
+      */
+      c = lzss_decode_get(&l->f, &l->l, lzss_get(lzss_getc), &l);
+      if(c < 0) /* Is it the "end of file" ?*/
+        break;
+    }
+
+    return i;
+  }
+}
+#endif
 
 int sys_execve(char *filename, char *sptr, size_t slen)
 {
@@ -68,6 +136,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     segment_s * seg_code;
     segment_s * seg_data;
     lsize_t len;
+#if defined(CONFIG_EXEC_LZSS)
+    struct lzss	l;
+#endif
 
     /* Open the image */
     /*debug1("EXEC: opening file: %s\n", filename);*/
@@ -103,7 +174,37 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
 
     currentp->t_regs.ds = kernel_ds;
+#if defined(CONFIG_EXEC_LZSS)
+    l.inode = inode;
+    l.filp = filp;
+
+    /* Read the magic bytes of file */
+    retval = filp->f_op->read(inode, filp, (char *)&mh, sizeof(mh.type));
+    if(mh.type == EXEC_LZSS)
+    {
+      /* Compressed file */
+      l.regular = 0;
+
+      /* Init lzss data */
+      lzss_decode_init(&l.l);
+      lzss_decode_open(&l.f);
+
+      /* Continue as usually using lzss_read() */
+      retval = lzss_read(&l, (char*)&mh, sizeof(mh));
+    }
+    else
+    {
+      /* Not compressed file */
+      l.regular = 1;
+
+      /* Read rest of header (- magic bytes). */
+      retval += filp->f_op->read(inode, filp,
+                  ((char *)&mh) + sizeof(mh.type),
+                     sizeof(mh) - sizeof(mh.type));
+    }
+#else
     retval = filp->f_op->read(inode, filp, (char *) &mh, sizeof(mh));
+#endif
 
     /* Sanity check it.  */
     if (retval != (int)sizeof(mh) ||
@@ -112,7 +213,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	debug1("EXEC: bad header, result %u\n", retval);
 	goto error_exec3;
     }
-
     /*
      * Size for data segment
      * mh.chmem was used by old ld86
@@ -128,7 +228,13 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 #ifdef CONFIG_EXEC_ELKS
     if ((unsigned int) mh.hlen == 0x30) {
 	/* BIG HEADER */
-	retval = filp->f_op->read(inode, filp, (char *) &msuph, sizeof(msuph));
+	retval =
+#if defined(CONFIG_EXEC_LZSS)
+      lzss_read(&l,
+#else
+	    filp->f_op->read(inode, filp,
+#endif
+        (char *) &msuph, sizeof(msuph));
 	if (retval != (int)sizeof(msuph)) {
 	    debug1("EXEC: Bad secondary header, result %u\n", retval);
 	    goto error_exec3;
@@ -155,7 +261,14 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	seg_code = seg_alloc((segext_t) ((mh.tseg + 15) >> 4));
 	if (!seg_code) goto error_exec3;
 	currentp->t_regs.ds = seg_code->base;  // segment used by read()
-	retval = filp->f_op->read(inode, filp, 0, (size_t)mh.tseg);
+
+	retval =
+#if defined(CONFIG_EXEC_LZSS)
+      lzss_read(&l,
+#else
+        filp->f_op->read(inode, filp,
+#endif
+         0, (size_t)mh.tseg);
 	if (retval != (int)mh.tseg) {
 	    debug2("EXEC(tseg read): bad result %u, expected %u\n",
 	    retval, mh.tseg);
@@ -173,9 +286,14 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if (!seg_data) goto error_exec4;
 
     debug2("EXEC: Malloc succeeded - cs=%x ds=%x\n", seg_code->base, seg_data->base);
-
     currentp->t_regs.ds = seg_data->base;  // segment used by read()
-    retval = filp->f_op->read(inode, filp, (char *)base_data, (size_t)mh.dseg);
+    retval =
+#if defined(CONFIG_EXEC_LZSS)
+      lzss_read(&l,
+#else
+      filp->f_op->read(inode, filp,
+#endif
+          (char *)base_data, (size_t)mh.dseg);
 
     if (retval != (size_t)mh.dseg) {
 	debug2("EXEC(dseg read): bad result %d, expected %d\n", retval, mh.dseg);

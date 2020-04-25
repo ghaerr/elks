@@ -92,7 +92,7 @@ mainmenu_option next_comment
 	bool 'Include development code/drivers' CONFIG_EXPERIMENTAL n
 
     bool 'Modular kernel (NOT IMPLEMENTED)'	CONFIG_MODULES		n
-
+    bool 'Compressed executables (EXPERIMENTAL)'	CONFIG_EXEC_LZSS	n
 endmenu
 
 if [ "$CONFIG_ROMCODE" = "y" ]; then
