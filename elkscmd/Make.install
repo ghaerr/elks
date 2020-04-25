@@ -173,4 +173,8 @@ ifdef CONFIG_APP_CGATEXT
 	make -C cgatext install
 endif
 
+ifdef CONFIG_APP_LZSS
+include lzss.mk
+endif
+
 ###############################################################################

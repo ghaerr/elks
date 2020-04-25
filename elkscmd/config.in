@@ -19,6 +19,7 @@ mainmenu_option next_comment
 		bool 'cgatext'			CONFIG_APP_CGATEXT	n
 		busyelks 'diskutils'	CONFIG_APP_DISK_UTILS	y
 		busyelks 'fileutils'	CONFIG_APP_FILE_UTILS	y
+		busyelks 'lzss'		CONFIG_APP_LZSS		y
 		busyelks 'shutils'	 	CONFIG_APP_SH_UTILS		y
 		bool 'sysutils'			CONFIG_APP_SYS_UTILS	y
 		bool 'vi'      			CONFIG_APP_ELVIS		y
