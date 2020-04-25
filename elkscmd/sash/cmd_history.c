@@ -88,7 +88,7 @@ cmd_search(char * pat) {
 	int idx, i;
 	char *found;
 
-	printf("search %s, cht %d\n", pat, histcnt);
+	//printf("search %s, cht %d\n", pat, histcnt);
 	for (i = 0; i < histcnt; i++) {
 		idx = map_ind(-i);
 		if ((found = strstr(histbuf[idx], pat)))
@@ -257,7 +257,6 @@ history(char *cmd) {
 			prev = strrchr(cmd_get(-1), ' ');
 			*pos = '\0';
 			fixbuf(cmd, prev, pos+2, cm);
-			echo++;
 			break;
 		}
 		prev = pos;
@@ -300,25 +299,11 @@ history(char *cmd) {
 			echo++;
 			break;
                 }
-#if 0
-                if (*++cmd == ':') {    /* the request has a modifier */
-                        switch (*++cmd) {
-                        case 'p':       /* print the selected command and make it current */
-                                strcpy(cm, cmd_get(prev_cmd));
-                                puts(cm);               /* echo */
-                                add_to_history(cm);     /* add to history list */
-                                return(1);                      /* don't execute */
-                        default:
-                                fputs("Illegal history modifier\n", stderr);
-                                return(1); /* nothing to do */
-                        }
-
-                }
-#endif
         } else break;
 	}
         add_to_history(cm);
-	if (echo) puts(cm);
+	if (echo) 
+		puts(cm);
 	if (pflag) 
 		return(1);
         return(0);
