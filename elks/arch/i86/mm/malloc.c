@@ -191,7 +191,7 @@ unsigned int mm_get_usage(int type, int used)
 	segment_s * seg = _seg_first;
 	if (!_seg_first) return 0;
 
-	word_t res = 0;
+	long res = 0;
 
 	if (type == MM_MEM) {
 		while (1) {
@@ -199,14 +199,14 @@ unsigned int mm_get_usage(int type, int used)
 				seg->base, seg->size, seg->flags, seg->ref_count);*/
 
 			if ((seg->flags & SEG_FLAG_USED) == used)
-				res += seg->size >> 6;
+				res += seg->size;
 
 			seg = structof (seg->node.next, segment_s, node);
 			if (seg == _seg_first) break;
 		}
 	}
 
-	return res;
+	return ((res + 31) >> 6);		/* floor, not ceiling, so average return*/
 }
 
 

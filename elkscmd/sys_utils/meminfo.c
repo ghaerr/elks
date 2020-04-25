@@ -63,7 +63,7 @@ void dump_heap(int fd)
 		word_t flags, ref_count;
 
 		printf("  %4x   %s %5d", mem, heaptype[tag], size);
-		total_size += size;
+		total_size += size + sizeof(heap_s);
 
 		switch (tag) {
 		case HEAP_TAG_SEG:
@@ -98,9 +98,11 @@ int main(int argc, char **argv)
 
 	dump_heap(fd);
 
-	if (!ioctl(fd, MEM_GETUSAGE, &mu))
+	if (!ioctl(fd, MEM_GETUSAGE, &mu)) {
+		/* note MEM_GETUSAGE amounts are floors, so total may display less by 1k than actual*/
 		printf("  Memory usage %4dKB total, %4dKB used, %4dKB free\n",
 			mu.used_memory + mu.free_memory, mu.used_memory, mu.free_memory);
+	}
 
 	return 0;
 }
