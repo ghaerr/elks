@@ -1,20 +1,8 @@
 #ifndef __LINUXMT_MM_H
 #define __LINUXMT_MM_H
 
-#include <linuxmt/sched.h>
-#include <linuxmt/errno.h>
-#include <linuxmt/kernel.h>
-#include <linuxmt/string.h>
+#include <linuxmt/types.h>
 #include <linuxmt/list.h>
-
-extern unsigned long high_memory;
-
-#ifdef __KERNEL__
-
-#define VERIFY_READ 0
-#define VERIFY_WRITE 1
-
-#define MM_MEM	0
 
 struct segment {
 	list_s    node;
@@ -25,6 +13,26 @@ struct segment {
 };
 
 typedef struct segment segment_s;
+
+// TODO: convert to tag
+#define SEG_FLAG_USED	0x0080
+#define SEG_FLAG_TYPE	0x000F
+#define SEG_FLAG_CSEG	0x0001
+#define SEG_FLAG_DSEG	0x0002
+#define SEG_FLAG_EXTBUF	0x0003
+#define SEG_FLAG_RAMDSK	0x0004
+
+#ifdef __KERNEL__
+
+#include <linuxmt/sched.h>
+#include <linuxmt/errno.h>
+#include <linuxmt/kernel.h>
+#include <linuxmt/string.h>
+
+#define VERIFY_READ 0
+#define VERIFY_WRITE 1
+
+#define MM_MEM	0
 
 #include <linuxmt/memory.h>
 
@@ -54,7 +62,7 @@ extern int verified_memcpy_fromfs(void *,void *,size_t);
 
 void mm_init (seg_t, seg_t);
 
-segment_s * seg_alloc (segext_t);
+segment_s * seg_alloc (segext_t, word_t);
 void seg_free (segment_s *);
 
 segment_s * seg_get (segment_s *);

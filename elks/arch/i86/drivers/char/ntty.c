@@ -108,9 +108,9 @@ struct tty *determine_tty(dev_t dev)
 
 int tty_allocq(struct tty *tty, int insize, int outsize)
 {
-    if ((tty->inq_buf = heap_alloc(insize, 0)) == NULL)
+    if ((tty->inq_buf = heap_alloc(insize, HEAP_TAG_TTY)) == NULL)
 	return -ENOMEM;
-    if ((tty->outq_buf = heap_alloc(outsize, 0)) == NULL) {
+    if ((tty->outq_buf = heap_alloc(outsize, HEAP_TAG_TTY)) == NULL) {
 	heap_free(tty->inq_buf);
 	return -ENOMEM;
     }

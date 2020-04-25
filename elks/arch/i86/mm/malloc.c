@@ -14,8 +14,6 @@
 #define MIN_STACK_SIZE 0x1000	/* 4k min stack above heap*/
 
 // TODO: reduce size
-// TODO: convert to tag
-#define SEG_FLAG_USED 0x0001
 
 // Segment descriptor
 
@@ -56,7 +54,7 @@ static int seg_split (segment_s * s1, segext_t size0)
 
 // Get free segment
 
-static segment_s * seg_free_get (segext_t size0)
+static segment_s * seg_free_get (segext_t size0, word_t type)
 {
 	segment_s * best_seg  = 0;
 	segext_t best_size = 0xFFFF;
@@ -86,7 +84,7 @@ static segment_s * seg_free_get (segext_t size0)
 		if (err)
 			printk ("seg:cannot split:heap full");
 
-		best_seg->flags = SEG_FLAG_USED;
+		best_seg->flags = SEG_FLAG_USED | type;
 		best_seg->ref_count = 1;
 	}
 
@@ -128,11 +126,11 @@ static void seg_merge_right (segment_s * seg)
 
 // Allocate segment
 
-segment_s * seg_alloc (segext_t size)
+segment_s * seg_alloc (segext_t size, word_t type)
 {
 	segment_s * seg = 0;
 	//lock_wait (&_seg_lock);
-	seg = seg_free_get (size);
+	seg = seg_free_get (size, type);
 	//unlock_event (&_seg_lock);
 	return seg;
 }
@@ -178,7 +176,7 @@ void seg_put (segment_s * seg)
 
 segment_s * seg_dup (segment_s * src)
 {
-	segment_s * dst = seg_free_get (src->size);
+	segment_s * dst = seg_free_get (src->size, src->flags);
 	if (dst)
 		fmemcpyb (NULL, dst->base, 0, src->base, src->size << 4);
 
@@ -193,7 +191,7 @@ unsigned int mm_get_usage(int type, int used)
 	segment_s * seg = _seg_first;
 	if (!_seg_first) return 0;
 
-	word_t res = 0;
+	long res = 0;
 
 	if (type == MM_MEM) {
 		while (1) {
@@ -201,15 +199,15 @@ unsigned int mm_get_usage(int type, int used)
 				seg->base, seg->size, seg->flags, seg->ref_count);*/
 
 			if ((seg->flags & SEG_FLAG_USED) == used)
-				res += seg->size >> 6;
+				res += seg->size;
 
 			seg = structof (seg->node.next, segment_s, node);
 			if (seg == _seg_first) break;
-			}
 		}
+	}
 
-	return res;
-		}
+	return ((res + 31) >> 6);		/* floor, not ceiling, so average return*/
+}
 
 
 // User data segment functions
@@ -222,7 +220,7 @@ int sys_brk(__pptr newbrk)
 		current->pid, newbrk, currentp->t_enddata, currentp->t_endbrk,
 		currentp->t_regs.sp - currentp->t_endbrk,
 		currentp->t_regs.sp, currentp->t_endseg,
-		mm_get_usage(MM_MEM, 1), mm_get_usage(MM_MEM, 0));*/
+		mm_get_usage(MM_MEM, SEG_FLAG_USED), mm_get_usage(MM_MEM, 0));*/
 
     if (newbrk < currentp->t_enddata)
         return -ENOMEM;

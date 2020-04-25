@@ -152,7 +152,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      */
     if (!seg_code) {
 	retval = -ENOMEM;
-	seg_code = seg_alloc((segext_t) ((mh.tseg + 15) >> 4));
+	seg_code = seg_alloc((segext_t) ((mh.tseg + 15) >> 4), SEG_FLAG_CSEG);
 	if (!seg_code) goto error_exec3;
 	currentp->t_regs.ds = seg_code->base;  // segment used by read()
 	retval = filp->f_op->read(inode, filp, 0, (size_t)mh.tseg);
@@ -165,11 +165,10 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	seg_get (seg_code);
 	filp->f_pos += mh.tseg;
     }
-
     debug1("EXEC: Allocating %lu bytes for data segment\n", len);
 
     retval = -ENOMEM;
-    seg_data = seg_alloc ((segext_t) (len >> 4));
+    seg_data = seg_alloc ((segext_t) (len >> 4), SEG_FLAG_DSEG);
     if (!seg_data) goto error_exec4;
 
     debug2("EXEC: Malloc succeeded - cs=%x ds=%x\n", seg_code->base, seg_data->base);

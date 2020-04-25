@@ -226,7 +226,7 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
 		else
 		    size = SEG_SIZE;
 
-		rd_segment[j].seg_desc = seg_alloc (size);
+		rd_segment[j].seg_desc = seg_alloc (size, SEG_FLAG_RAMDSK);
 		if (rd_segment[j].seg_desc == 0) {
 		    rd_dealloc(target);
 		    return -ENOMEM;

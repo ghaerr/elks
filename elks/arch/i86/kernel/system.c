@@ -43,12 +43,13 @@ void setup_arch(seg_t *start, seg_t *end)
     *end = (basmem)<<6;
 #endif
 
-	/* Now insert local heap at end of kernel data segment */
+	/* Heap allocations at even addresses, helps debugging*/
+	unsigned int endbss = (unsigned int)(_endbss + 1) & ~1;
 
-	heap_add (_endbss, 1 + ~ (unsigned) _endbss);
+	/* Now insert local heap at end of kernel data segment */
+	heap_add ((void *)endbss, 1 + ~endbss);
 
 	/* Misc */
-
     ROOT_DEV = setupw(0x1fc);
 
     arch_cpu = setupb(0x20);
