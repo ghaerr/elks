@@ -20,6 +20,7 @@ typedef struct segment segment_s;
 #define SEG_FLAG_CSEG	0x0001
 #define SEG_FLAG_DSEG	0x0002
 #define SEG_FLAG_EXTBUF	0x0003
+#define SEG_FLAG_RAMDSK	0x0004
 
 #ifdef __KERNEL__
 
@@ -61,7 +62,7 @@ extern int verified_memcpy_fromfs(void *,void *,size_t);
 
 void mm_init (seg_t, seg_t);
 
-segment_s * seg_alloc (segext_t);
+segment_s * seg_alloc (segext_t, word_t);
 void seg_free (segment_s *);
 
 segment_s * seg_get (segment_s *);

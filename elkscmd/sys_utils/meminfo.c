@@ -49,7 +49,7 @@ void dump_heap(int fd)
 	word_t total_size = 0;
 	long total_segsize = 0;
 	static char *heaptype[] = { "free", "SEG ", "STR ", "TTY " };
-	static char *segtype[] = { "free", "CSEG", "DSEG", "BUF " };
+	static char *segtype[] = { "free", "CSEG", "DSEG", "BUF ", "RDSK" };
 
 	if (!h)
 		return;
