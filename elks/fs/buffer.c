@@ -104,6 +104,7 @@ void buffer_init(void)
 	// TODO: allocate buffer one by one in global memory
 	// TODO: release on kernel shutdown ?
 	segment_s * seg = seg_alloc (NR_BUFFERS << (BLOCK_SIZE_BITS - 4));
+	seg->flags |= SEG_FLAG_EXTBUF;
     _buf_ds = seg->base;
     unsigned int i = NR_MAPBUFS;
     do {

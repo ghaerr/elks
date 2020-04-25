@@ -14,6 +14,7 @@
 #define MEM_GETTASK	4
 #define MEM_GETDS	5
 #define MEM_GETCS	6
+#define MEM_GETHEAP	7
 
 struct mem_usage {
 	unsigned int free_memory;

@@ -12,7 +12,7 @@
 // TODO: regroup in one structure
 
 static lock_t _heap_lock;
-static heap_s * _heap_first;
+heap_s * _heap_first;
 // TODO: free block list
 //static heap_s * _heap_free;
 
@@ -152,7 +152,7 @@ void heap_add (void * data, word_t size)
 
 #ifdef HEAP_DEBUG
 
-void heap_iterate (int (* cb) (heap_s *))
+void heap_iterate (void (* cb) (heap_s *))
 {
 	if (!_heap_first) return;
 	heap_s * h = _heap_first;

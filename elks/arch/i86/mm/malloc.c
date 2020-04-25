@@ -14,8 +14,6 @@
 #define MIN_STACK_SIZE 0x1000	/* 4k min stack above heap*/
 
 // TODO: reduce size
-// TODO: convert to tag
-#define SEG_FLAG_USED 0x0001
 
 // Segment descriptor
 
@@ -205,11 +203,11 @@ unsigned int mm_get_usage(int type, int used)
 
 			seg = structof (seg->node.next, segment_s, node);
 			if (seg == _seg_first) break;
-			}
 		}
+	}
 
 	return res;
-		}
+}
 
 
 // User data segment functions
@@ -222,7 +220,7 @@ int sys_brk(__pptr newbrk)
 		current->pid, newbrk, currentp->t_enddata, currentp->t_endbrk,
 		currentp->t_regs.sp - currentp->t_endbrk,
 		currentp->t_regs.sp, currentp->t_endseg,
-		mm_get_usage(MM_MEM, 1), mm_get_usage(MM_MEM, 0));*/
+		mm_get_usage(MM_MEM, SEG_FLAG_USED), mm_get_usage(MM_MEM, 0));*/
 
     if (newbrk < currentp->t_enddata)
         return -ENOMEM;

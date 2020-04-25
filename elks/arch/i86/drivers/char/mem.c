@@ -156,7 +156,7 @@ size_t kmem_write(struct inode *inode, register struct file *filp,
 
 #ifdef HEAP_DEBUG
 
-int heap_cb (heap_s * h)
+void heap_cb (heap_s * h)
 {
 	printk ("heap:%Xh:%u:%hxh\n",h, h->size, h->tag);
 }
@@ -164,56 +164,47 @@ int heap_cb (heap_s * h)
 #endif /* HEAP_DEBUG */
 
 
-int kmem_ioctl(struct inode *inode, struct file *file, int cmd, register char *arg)
+int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 {
+    unsigned short retword;
     struct mem_usage mu;
+    extern heap_s *_heap_first;
 
-    debugmem1("[k]mem_ioctl() %d\n", cmd);
     switch (cmd) {
-
 #ifdef CONFIG_MODULES
-
     case MEM_GETMODTEXT:
-	put_user((unsigned short int)module_init, (void *)arg);
-	return 0;
+	retword = module_init;
+	break;
     case MEM_GETMODDATA:
-	put_user((unsigned short int)module_data, (void *)arg);
-	return 0;
-
+	retword = module_data;
+	break;
 #endif
-
     case MEM_GETTASK:
-	put_user((unsigned short int)task, (void *)arg);
-
-#if 0
-
-	/* Include this code to make ps dump memory info. The dmem()
-	 * function must also be included in arch/i86/mm/malloc.c
-	 */
-	dmem();
-
-#endif
-
-	return 0;
+	retword = (unsigned short)task;
+	break;
     case MEM_GETCS:
-	put_user((unsigned short int)kernel_cs, (void *)arg);
-	return 0;
+	retword = kernel_cs;
+	break;
     case MEM_GETDS:
-	put_user((unsigned short int)kernel_ds, (void *)arg);
-	return 0;
+	retword = kernel_ds;
+	break;
     case MEM_GETUSAGE:
 	mu.free_memory = mm_get_usage(MM_MEM, 0);
-	mu.used_memory = mm_get_usage(MM_MEM, 1);
+	mu.used_memory = mm_get_usage(MM_MEM, SEG_FLAG_USED);
 
 	memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
-
 #ifdef HEAP_DEBUG
 	heap_iterate (heap_cb);
-#endif /* HEAP_DEBUG */
-	
+#endif
 	return 0;
+    case MEM_GETHEAP:
+	retword = (unsigned short)_heap_first;
+	break;
+    default:
+	return -EINVAL;
     }
-    return -EINVAL;
+    put_user(retword, arg);
+    return 0;
 }
 
 /*@-type@*/

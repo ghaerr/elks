@@ -9,12 +9,13 @@
  * This is a small version of ps for use in the ELKS project.
  * Enhanced by Greg Haerr 17 Apr 2020
  */
-
 #define __KERNEL__
 #include <linuxmt/ntty.h>
 #undef __KERNEL__
-#include <linuxmt/major.h>
+
+#include <linuxmt/mm.h>
 #include <linuxmt/mem.h>
+#include <linuxmt/major.h>
 #include <linuxmt/sched.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -128,7 +129,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	printf("  PID   GRP  TTY USER  STAT INODE COMMAND\n");
+	printf("  PID   GRP  TTY USER STAT CSEG  HEAP   FREE   SIZE COMMAND\n");
 	for (j = 1; j < MAX_TASKS; j++) {
 		if (!memread(fd, off + j*sizeof(struct task_struct), ds, &task_table, sizeof(task_table))) {
 			perror("ps");
@@ -152,10 +153,30 @@ int main(int argc, char **argv)
 		}
 		pwent = (getpwuid(task_table.uid));
 
-		printf("%5d %5d %4s %-8s %c %5u ",
-				task_table.pid, task_table.pgrp, tty_name(fd, (unsigned int)task_table.tty, ds),
+		/* pid grp tty user stat*/
+		printf("%5d %5d %4s %-8s%c ",
+				task_table.pid,
+				task_table.pgrp,
+				tty_name(fd, (unsigned int)task_table.tty, ds),
 				(pwent ? pwent->pw_name : "unknown"),
-				c, (unsigned int)task_table.t_inode);
+				c);
+
+		/* CSEG*/
+		printf("%4x ", getword(fd, (word_t)task_table.mm.seg_code+offsetof(struct segment, base), ds));
+
+		/* heap*/
+		printf("%5d ", (word_t)(task_table.t_endbrk - task_table.t_enddata));
+
+		/* free*/
+		printf(" %5d ", (word_t)(task_table.t_regs.sp - task_table.t_endbrk));
+
+		/* stack*/
+		//printf("%5d ", (word_t)(task_table.t_begstack - task_table.t_regs.sp));
+
+		/* size*/
+		segext_t size = getword(fd, (word_t)task_table.mm.seg_code+offsetof(struct segment, size), ds)
+					  + getword(fd, (word_t)task_table.mm.seg_data+offsetof(struct segment, size), ds);
+		printf("%6ld ", (long)size << 4);
 
 		process_name(fd, task_table.t_begstack, task_table.t_regs.ss);
 	}
