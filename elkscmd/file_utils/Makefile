@@ -10,7 +10,8 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS = grep ln ls mkdir mkfifo mknod more mv rm rmdir sync touch \
+# note: grep broken, replaced with minix1/grep
+PRGS = ln ls mkdir mkfifo mknod more mv rm rmdir sync touch \
 	cat chgrp chmod chown cmp cp dd
 
 all: $(PRGS)
