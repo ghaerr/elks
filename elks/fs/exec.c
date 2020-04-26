@@ -69,6 +69,11 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     segment_s * seg_data;
     lsize_t len;
 
+#define	MAX 692	/* MAX <= 692 ? OK : ERROR */
+    unsigned char data[MAX];
+
+    printk("data = %u\n", *data);
+
     /* Open the image */
     /*debug1("EXEC: opening file: %s\n", filename);*/
     debug1("EXEC: slen = %d\n", slen);
