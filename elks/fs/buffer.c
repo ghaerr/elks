@@ -12,9 +12,7 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 
-// Number of external buffers
-
-#define NR_EXT_BUFFERS 64
+// Number of external buffers specified in config by CONFIG_FS_NR_EXT_BUFFERS
 
 // Number of internal buffers
 // used to "map" external buffers
@@ -28,7 +26,7 @@
 // Number of internal buffers
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-#define NR_BUFFERS NR_EXT_BUFFERS
+#define NR_BUFFERS CONFIG_FS_NR_EXT_BUFFERS
 #else
 #define NR_BUFFERS NR_MAPBUFS
 #endif
@@ -48,13 +46,12 @@ static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
 static struct buffer_head *bh_lru = buffers;
 static struct buffer_head *bh_llru = buffers;
 
-// External buffers are allocated in one big 64K segment
-// in the global memory (BLOCK_SIZE * NR_EXT_BUFFERS)
+// External buffers are allocated in multiple up to 64K segments
+// in the global memory (BLOCK_SIZE * CONFIG_FS_NR_EXT_BUFFERS)
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 static struct wait_queue bufmapwait;	/* Wait for a free L1 buffer area */
 static struct buffer_head *bufmem_map[NR_MAPBUFS]; /* Array of bufmem's allocation */
-static __u16 _buf_ds;			/* Segment(s?) of L2 buffer cache */
 static int lastumap;
 #endif
 
@@ -99,21 +96,19 @@ static void put_last_lru(register struct buffer_head *bh)
 
 void buffer_init(void)
 {
-
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-	// TODO: allocate buffer one by one in global memory
-	// TODO: release on kernel shutdown ?
-	segment_s * seg = seg_alloc (NR_BUFFERS << (BLOCK_SIZE_BITS - 4), SEG_FLAG_EXTBUF);
-    _buf_ds = seg->base;
-    unsigned int i = NR_MAPBUFS;
+    struct buffer_head *bh = buffers;
+    segment_s *seg = 0;		/* init stops compiler warning*/
+    int bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
+    int nbufs = 0;
+    int i = NR_MAPBUFS;
+
     do {
 	bufmem_map[--i] = NULL;
     } while (i > 0);
 #else
 	char * p = bufmem;
 #endif
-
-    struct buffer_head *bh = buffers;
 
     goto buf_init;
     do {
@@ -122,9 +117,19 @@ void buffer_init(void)
       buf_init:
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-	bh->b_data = (char *)0;			/* L1 buffer cache is reserved! */
+	if (--nbufs <= 0) {
+	    /* allocate buffers in 64k chunks so addressable with segment/offset*/
+	    if ((nbufs = bufs_to_alloc) > 64)
+		nbufs = 64;
+	    bufs_to_alloc -= nbufs;
+	    seg = seg_alloc (nbufs << (BLOCK_SIZE_BITS - 4), SEG_FLAG_EXTBUF);
+	    //if (!seg) panic("No extbuf mem");
+	}
+	bh->b_ds = seg->base;
+	bh->b_data = (char *)0;		/* L1 buffer cache is reserved! */
 	bh->b_mapcount = 0;
-	bh->b_num = i++;	/* Used to compute L2 location */
+	bh->b_offset = i & 63;		/* used to compute L2 location*/
+	bh->b_num = i++;
 #else
 	bh->b_data = p;
 	p += BLOCK_SIZE;
@@ -477,7 +482,7 @@ void map_buffer(register struct buffer_head *bh)
 	    debug1("BUFMAP: Buffer %u unmapped from L1\n",
 		    bmap->b_num);
 	    /* Now unmap it */
-		fmemcpyb((byte_t *) (bmap->b_num << BLOCK_SIZE_BITS), _buf_ds,
+		fmemcpyb((byte_t *) (bmap->b_offset << BLOCK_SIZE_BITS), bmap->b_ds,
 			(byte_t *) bmap->b_data, kernel_ds, BLOCK_SIZE);
 	    bmap->b_data = 0;
 	    /* success */
@@ -497,9 +502,10 @@ void map_buffer(register struct buffer_head *bh)
     /* We can just map here! */
     bufmem_map[(int)pi] = bh;
     bh->b_data = (char *)bufmem + ((int)pi << BLOCK_SIZE_BITS);
-    if (bh->b_uptodate)
+    if (bh->b_uptodate) {
 	fmemcpyb ((byte_t *) bh->b_data, kernel_ds,
-		(byte_t *) (bh->b_num << BLOCK_SIZE_BITS), _buf_ds, BLOCK_SIZE);
+		(byte_t *) (bh->b_offset << BLOCK_SIZE_BITS), bh->b_ds, BLOCK_SIZE);
+    }
     debug3("BUFMAP: Buffer %u (block %u) mapped into L1 slot %d.\n",
 	bh->b_num, bh->b_blocknr, (int)pi);
   end_map_buffer:

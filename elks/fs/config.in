@@ -33,6 +33,9 @@ mainmenu_option next_comment
 	bool '32-bit Inode number'             CONFIG_32BIT_INODES        y
 
 	bool 'Extra external buffer cache'     CONFIG_FS_EXTERNAL_BUFFER  y
+	if [ "$CONFIG_FS_EXTERNAL_BUFFER" == "y" ]; then
+	    int 'Number of external buffers'   CONFIG_FS_NR_EXT_BUFFERS   128
+	fi
 	bool 'Pipe support'                    CONFIG_PIPE                y
 
 	comment 'Executable file formats'
