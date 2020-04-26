@@ -128,3 +128,5 @@ extern volatile struct elks_cpu_s elks_cpu;
 void db_printf(const char *, ...);
 int elks_syscall(void);
 void minix_syscall(void);
+
+int reboot(int magic1, int magic2, int magic3);

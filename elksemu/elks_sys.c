@@ -21,7 +21,6 @@
 #include <sys/ioctl.h>
 #include <dirent.h>
 #include <sys/time.h>
-#include <linux/reboot.h>
 #include "elks.h" 
 
 #include "efile.h"
