@@ -83,12 +83,12 @@ cmd_get(int idx) { /* return the selected command from the history buffer */
         return(histbuf[map_ind(idx)]);
 }
 
-char *
+static char *
 cmd_search(char * pat) {
 	int idx, i;
 	char *found;
 
-	//printf("search %s, cht %d\n", pat, histcnt);
+	//printf("search %s, histcnt %d\n", pat, histcnt);
 	for (i = 0; i < histcnt; i++) {
 		idx = map_ind(-i);
 		if ((found = strstr(histbuf[idx], pat)))
@@ -197,7 +197,7 @@ phlist() {
 }
 #endif
 
-void
+static void
 fixbuf(char *cmd, char *prev, char *pos, char *cm) {
 
 	char buf[CMDBUF];
@@ -215,11 +215,14 @@ history(char *cmd) {
          * print command history or replace the command line with
          * the chosen command from the history list, modified by the
          * request modifier.
-         * Supported: !!, !<number>, !<number>:<modifier>, history (list)
+         * Supported: !!, !<number>, !<name>, history (list), !$
+	 * all with extra text before and/or after. Add :p to print 
+	 * a command and make it current w/o executing.
+	 * Check bash or csh man pages for details.
          */
         int prev_cmd, h, pflag, echo;
         char hnum[10];
-        char *cm, *pos, *prev, *rest;
+        char *cm, *pos, *prev;
 
         prev_cmd = 0;
 	pflag = 0;
@@ -248,7 +251,7 @@ history(char *cmd) {
 			if (tolower((int)*(prev+1)) == 'p')
 				pflag++;
 			else {
-				printf("Illegal history modifier.\n");
+				printf("Illegal history modifier\n");
 				return (1);
 			}
 			*prev = '\0';
@@ -261,16 +264,13 @@ history(char *cmd) {
 		}
 		prev = pos;
                 if (isalpha((int)*(++pos))) {
-			while (isalpha(pos) && h < 10)  /* max 9 chars to search */
+			while (isalpha(*pos) && h < 10)  /* max 9 chars to search */
 				hnum[h++] = *pos++;
-			if (strlen(pos)) 		/* there is more */
-				rest = pos;	/* there is more, keep it */
-			else 
-				*rest = '\0';
+			hnum[h] = '\0';
 			if ((prev = cmd_search(hnum))) 
-				fixbuf(cmd, prev, rest, cm);
+				fixbuf(cmd, prev, pos, cm);
 			else {
-				printf("Event not found.\n");
+				printf("Event not found\n");
 				return (1);
 			}
 			echo++;
@@ -280,7 +280,7 @@ history(char *cmd) {
 			if (histind) 		/* sanity check */
 				fixbuf(cmd, cmd_get(-1), pos+1, cm);
 			else
-				printf("Event not found.\n");
+				printf("Event not found\n");
 			echo++;
 			break;
 		}
@@ -292,7 +292,7 @@ history(char *cmd) {
                         hnum[h] = '\0';
                         prev_cmd = atoi(hnum);
                         if (map_ind(prev_cmd) < 0) {
-                                printf("%d: Event not found.\n", prev_cmd);
+                                printf("%d: Event not found\n", prev_cmd);
                                 return(1);
                         }
 			fixbuf(cmd, cmd_get(prev_cmd), pos, cm);
