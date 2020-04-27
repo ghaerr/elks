@@ -115,11 +115,21 @@ size_t pty_write (struct inode *inode, struct file *file, char *data, size_t len
 	return count;
 }
 
-int ttyp_write(register struct tty *tty)
+static int ttyp_write(register struct tty *tty)
 {
     if (tty->outq.len == tty->outq.size)
 	interruptible_sleep_on(&tty->outq.wait);
     return 0;
+}
+
+static int ttyp_open(struct tty *tty)
+{
+    return tty_allocq(tty, RSINQ_SIZE, RSOUTQ_SIZE);
+}
+
+static void ttyp_release(struct tty *tty)
+{
+    tty_freeq(tty);
 }
 
 /*@-type@*/
@@ -142,11 +152,11 @@ static struct file_operations pty_fops = {
 };
 
 struct tty_ops ttyp_ops = {
-    ttynull_openrelease,	/* None of these really need to do anything */
-    ttynull_openrelease,
+    ttyp_open,
+    ttyp_release,
     ttyp_write,
     NULL,
-    NULL,
+    NULL			/* ioctl*/
 };
 
 /*@+type@*/

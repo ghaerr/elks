@@ -1378,7 +1378,7 @@ then
 
 	 * End of ELKS kernel configuration.
 	 *
-	 * You may now run \`make\` to build.
+	 * You may now run \`make clean\` and \`make\` to build.
 
 .EOM
 else

@@ -38,9 +38,6 @@
 /* this is the structure holding the base time (in UTC, of course) */
 struct timeval xtime;
 
-/* ticks updated by the timer interrupt, to be added to the base time */
-extern jiff_t jiffies;
-
 /* timezone in effect */
 static struct timezone xzone;
 

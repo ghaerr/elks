@@ -4,11 +4,12 @@ elks|vt52|vt-52|ELKS VT-52 console:\
 	:le=\ED:nd=\EC:sr=\EM:ta=^I:up=\EA:
 
 ansi|vt100|vt-100|ELKS ANSI (VT-100) console:\
-	:al=\E[L:am:bl=^G:bs:co#80:it#8:li#25:\
-	:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:do=\E[B:ho=\E[H:\
-	:kd=\E[B:kl=\E[D:kr=\E[C:ku=\E[A:\
-	:kh=\E[H:kH=\E[F:kP=\E[5~:kN=\E[6~:\
-	:le=\E[D:nd=\E[C:ta=^I:up=\E[A:se=\E[m:so=\E[7m:sr=\E[L:
+        :al=\E[L:bl=^G:bs:co#80:it#8:li#25:\
+        :cd=\E[J:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:do=\E[B:ho=\E[H:\
+        :kd=\E[B:kl=\E[D:kr=\E[C:ku=\E[A:\
+        :kh=\E[H:kH=\E[F:kP=\E[5~:kN=\E[6~:dc=\E[P:\
+        :le=\E[D:nd=\E[C:ta=^I:up=\E[A:se=\E[m:so=\E[7m:sr=\E[L:\
+        :ic=\E[@:IC=\E[%d@:AL=\E[%dL:dl=\E[M:DL=\E[%dM:DC=\E[%dP:
 
 ansi77|ANSI 3.64 standard 1977 version:\
 	:am:bs:co#80:it#8:li#24:mi:\

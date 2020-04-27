@@ -59,6 +59,7 @@ mainmenu_option next_comment
 		if [ "$CONFIG_HW_FLOPPY_DRIVE" == "y" ]; then
 			bool '  Use INT 13h for floppy count' CONFIG_HW_USE_INT13_FOR_FLOPPY y
 		fi
+		bool 'Serial port FIFO' CONFIG_HW_SERIAL_FIFO y
 
 		comment 'BIOS support'
 

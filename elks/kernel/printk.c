@@ -30,12 +30,6 @@
 #include <linuxmt/mm.h>
 #include <stdarg.h>
 
-#ifdef __BCC__
-#define REGISTER register
-#else
-#define REGISTER
-#endif
-
 /*
  *	Just to make it work for now
  */
@@ -130,7 +124,7 @@ static void vprintk(register char *fmt, va_list p)
 {
     unsigned long v;
     int width, zero;
-    char c;
+    int c;
     register char *tmp;
 
     while ((c = *fmt++)) {
@@ -181,8 +175,8 @@ static void vprintk(register char *fmt, va_list p)
 	    case 's':
 	    case 't':
 		tmp = va_arg(p, char*);
-		while ((zero = (int)(c == 's' ? *tmp : (char)get_user_char(tmp)))) {
-		    kputchar((char)zero);
+		while ((zero = (c == 's' ? *tmp : get_user_char(tmp)))) {
+		    kputchar(zero);
 		    tmp++;
 		    width--;
 		}
@@ -201,7 +195,7 @@ static void vprintk(register char *fmt, va_list p)
 
 void printk(char *fmt, ...)
 {
-    REGISTER va_list p;
+    va_list p;
 
     va_start(p, fmt);
     vprintk(fmt, p);

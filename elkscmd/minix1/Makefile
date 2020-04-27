@@ -12,8 +12,7 @@ include $(BASEDIR)/Make.rules
 
 LOCALFLAGS=-D_POSIX_SOURCE
 
-# TODO: grep removed for now, duplicated in file_utils
-PRGS = banner decomp16 fgrep proto sum uniq wc cksum cut du
+PRGS = banner decomp16 fgrep grep proto sum uniq wc cksum cut du
 
 all: $(PRGS)
 
