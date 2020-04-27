@@ -140,9 +140,9 @@ struct buffer_head {
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     unsigned char		b_offset;	/* Offset into L2 allocation block */
-    unsigned int		b_mapcount;	/* Used for the new L2 buffer cache scheme */
+    int				b_mapcount;	/* count of L2 buffer mapped into L1 */
     unsigned int		b_ds;		/* L2 buffer data segment */
-    unsigned char		b_num;		/* Buffer number, not really needed */
+    unsigned char		b_num;		/* Buffer number, for debugging */
 #endif
 
 };
