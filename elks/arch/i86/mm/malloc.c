@@ -227,8 +227,8 @@ int sys_brk(__pptr newbrk)
 
     if (currentp->t_begstack > currentp->t_endbrk) {	/* Old format? */
         if (newbrk > currentp->t_endseg - MIN_STACK_SIZE) {	/* Yes */
-			printk("sys_brk failed: brk %x > endseg %x\n",
-				newbrk, currentp->t_endseg - MIN_STACK_SIZE);
+			printk("sys_brk(%d) fail: brk %x over by %d bytes\n",
+				currentp->pid, newbrk, newbrk - (currentp->t_endseg - MIN_STACK_SIZE));
             return -ENOMEM;
 		}
     }

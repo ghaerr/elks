@@ -25,7 +25,8 @@ static char buf_out [MAX_BUFFER];
 
 static int tfd, tfs;
 pid_t pid;
-char * nargv[2] = {"/bin/sh", NULL};
+//char * nargv[2] = {"/bin/sh", NULL};
+char * nargv[2] = {"/bin/login", NULL};
 
 void sigchild(int signo)
 {
@@ -37,7 +38,6 @@ int term_init()
 {
 	char pty_name[12];
 	int n = 0;
-	int rc;
 	
 	struct termios slave_orig_term_settings; // Saved terminal settings
 	struct termios new_term_settings; // Current terminal settings
@@ -61,7 +61,7 @@ again:
 	}
 	if (pid>0) {
 		// Save the default parameters of the slave side of the PTY - unused yet
-		rc = tcgetattr(tfs, &slave_orig_term_settings);
+		tcgetattr(tfs, &slave_orig_term_settings);
 		new_term_settings = slave_orig_term_settings;
 		// Set raw mode on the slave side of the PTY - not line oriented
 		//cfmakeraw (&new_term_settings);
@@ -222,6 +222,7 @@ int main(int argc, char *argv[]) {
 	dup2(ret, 2);
 	if (ret > 2)
 		close(ret);
+	setsid();
 
 	while (1) {
 		connectionfd = accept (sockfd, (struct sockaddr *) NULL, NULL);

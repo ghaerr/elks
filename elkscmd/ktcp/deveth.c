@@ -9,7 +9,11 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <linuxmt/limits.h>
 #include <arch/ioctl.h>
@@ -47,10 +51,6 @@ void deveth_printhex(char* packet, int len)
 
 int deveth_init(char *fdev)
 {
-    int i, err;
-    __u8 *addr;
-    char tmpstring[16];
-
     devfd = open(fdev, O_NONBLOCK|O_RDWR);
     if (devfd < 0) {
 	printf("ktcp: failed to open eth device %s\n", fdev);
@@ -68,7 +68,7 @@ int deveth_init(char *fdev)
     }
 
     /*
-    addr = (__u8 *) &eth_local_addr;
+    __u8 addr = (__u8 *) &eth_local_addr;
     printf ("eth_local_addr: %2X.%2X.%2X.%2X.%2X.%2X \n",
         addr [0], addr [1], addr [2], addr [3], addr [4],addr [5]);
     */
@@ -118,8 +118,7 @@ void deveth_process ()
 
 void deveth_send(char *packet, int len)
 {
-    int i;
     //printf("deveth_send:\n");
     //deveth_printhex(packet,len);
-    i = write(devfd, packet, len);
+    write(devfd, packet, len);
 }

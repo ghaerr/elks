@@ -14,6 +14,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <linuxmt/tcpdev.h>
 #include <linuxmt/net.h>
 #include <linuxmt/in.h>
@@ -198,7 +201,6 @@ void tcpdev_read(void)
     struct tcpcb_s *cb;
     struct tdb_return_data *ret_data;
     int data_avail;
-    register int bcc_bug;
     __u16 sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
@@ -284,7 +286,6 @@ static void tcpdev_write(void)
     struct tdb_write *db = sbuf;
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
-    struct tdb_return_data *ret_data;
     __u16  sock = db->sock;
 
     db = sbuf;
@@ -386,7 +387,6 @@ void tcpdev_sock_state(struct tcpcb_s *cb, int state)
 
 void tcpdev_process(void)
 {
-    struct tdb_bind *db;
     int len = read(tcpdevfd, sbuf, TCPDEV_BUFSIZE);
 
     if (len <= 0)

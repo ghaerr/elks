@@ -45,7 +45,7 @@ ipaddr_t netmask_ip;
 
 __u16	next_port;
 
-typedef struct ip_ll
+struct ip_ll
 {
          __u8  ll_eth_dest[6]; 	/* link layer MAC destination address */
          __u8  ll_eth_src[6]; 	/* link layer MAC source address */
