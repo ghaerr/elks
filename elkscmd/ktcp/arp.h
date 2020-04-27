@@ -4,14 +4,14 @@
 #include "ip.h"
 
 
-typedef struct arp_addr {
+struct arp_addr {
 	ipaddr_t daddr;		/* IP destination address */
 	ipaddr_t saddr;		/* IP source address */
 	__u8  eth_dest[6]; 	/* MAC destination address */
 	__u8  eth_src[6]; 	/* MAC source address */
 };
 
-typedef struct arp
+struct arp
 {
          __u8  ll_eth_dest[6]; 	/* link layer MAC destination address */
          __u8  ll_eth_src[6]; 	/* link layer MAC source address */

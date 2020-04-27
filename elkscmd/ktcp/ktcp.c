@@ -11,7 +11,10 @@
 
 #include <time.h>
 #include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "slip.h"
 #include "tcpdev.h"
@@ -27,6 +30,8 @@
 #else
 #define debug(s)
 #endif
+
+char deveth[] = "/dev/eth";
 
 extern int tcp_timeruse;
 
@@ -96,17 +101,23 @@ int main(int argc,char **argv)
 {
     __u8 * addr;
     int daemon = 0;
+    speed_t baudrate = 0;
     char *progname = argv[0];
-    const char dname[9];
-    sprintf(dname, "/dev/eth");
 
     if (argc > 1 && !strcmp("-b", argv[1])) {
 	daemon = 1;
 	argc--;
 	argv++;
     }
+    if (argc > 1 && !strcmp("-s", argv[1])) {
+	if (argc <= 2) goto usage;
+	baudrate = atol(argv[2]);
+	argc -= 2;
+	argv += 2;
+    }
     if (argc < 3) {
-	printf("Usage: %s [-b] local_ip [interface] [gateway] [netmask]\n", progname);
+usage:
+	printf("Usage: %s [-b] [-s baud] local_ip [interface] [gateway] [netmask]\n", progname);
 	exit(3);
     }
 
@@ -133,14 +144,14 @@ int main(int argc,char **argv)
     if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0) exit(1);
 
     debug("KTCP: 3. init interface\n");
-    if (strcmp(argv[2],dname) == 0) {
+    if (strcmp(argv[2],deveth) == 0) {
 	debug("Init /dev/eth\n");
     	dev->type = 1;
-	intfd = deveth_init(dname);
+	intfd = deveth_init(deveth);
 	if (intfd < 0) exit(1);
     } else { /* fall back to slip */
 	dev->type=0;
-	intfd = slip_init(argv[2]);
+	intfd = slip_init(argv[2], baudrate);
 	if (intfd < 0) exit(2);
     }
 

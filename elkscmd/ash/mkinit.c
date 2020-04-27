@@ -343,7 +343,7 @@ void dodecl(char *line1, FILE *fp)
 		if (! amiddecls)
 			addchar('\n', &decls);
 		q = NULL;
-		for (p = line1 + 6 ; *p != '=' && *p != '/' ; p++);
+		for (p = line1 + 6 ; *p != '=' && *p != '/' && *p != '\0'; p++);
 		if (*p == '=') {		/* eliminate initialization */
 			for (q = p ; *q && *q != ';' ; q++);
 			if (*q == '\0')

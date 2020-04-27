@@ -12,7 +12,10 @@
 #include "config.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
 #include <linuxmt/termios.h>
 
 #include "slip.h"
@@ -36,12 +39,61 @@ static unsigned char 	packet[SLIP_MTU + 128];
 static unsigned int	packpos;
 static int devfd;
 
-int slip_init(char *fdev)
+static speed_t convert_baudrate(speed_t baudrate)
 {
-    int len;
+	switch (baudrate) {
+	case 50: return B50;
+	case 75: return B75;
+	case 110: return B110;
+	case 134: return B134;
+	case 150: return B150;
+	case 200: return B200;
+	case 300: return B300;
+	case 600: return B600;
+	case 1200: return B1200;
+	case 1800: return B1800;
+	case 2400: return B2400;
+	case 4800: return B4800;
+	case 9600: return B9600;
+	case 19200: return B19200;
+	case 38400: return B38400;
+	case 57600: return B57600;
+	case 115200: return B115200;
+#ifdef B230400
+	case 230400: return B230400;
+#endif
+#ifdef B460800
+	case 460800: return B460800;
+#endif
+#ifdef B500000
+	case 500000: return B500000;
+#endif
+#ifdef B576000
+	case 576000: return B576000;
+#endif
+#ifdef B921600
+	case 921600: return B921600;
+#endif
+#ifdef B1000000
+	case 1000000: return B1000000;
+#endif
+	default:
+		printf("Unknown baud rate %lu\n", (unsigned long)baudrate);
+		return -1;
+	}
+}
+
+int slip_init(char *fdev, speed_t baudrate)
+{
+    speed_t baud = 0;
     struct termios tios;
 
-    devfd = open(fdev, O_NONBLOCK|O_RDWR);
+    if (baudrate)
+	baud = convert_baudrate(baudrate);
+    if (baud == -1)
+	return -1;
+
+    devfd = open(fdev, O_RDWR | O_NONBLOCK | O_EXCL | O_NOCTTY);
     if (devfd < 0) {
 	printf("ktcp: failed to open serial device %s\n",fdev);
 	return -1;
@@ -50,9 +102,15 @@ int slip_init(char *fdev)
     /* Setup the tty
      */
     ioctl(devfd, TCGETS, &tios);
-    tios.c_lflag &= ~(ICANON|ECHO);
+    tios.c_lflag &= ~(ICANON|ECHO|ECHOE);
     tios.c_oflag &= ~ONLCR;
-
+    if (baud)
+	tios.c_cflag = baud;
+    tios.c_cflag |= CS8 | CREAD;
+    tios.c_cflag |= CLOCAL;
+    /*tios.c_cflag |= CRTSCTS;*/
+    tios.c_cc[VMIN] = 255;	/* try for max 255 byte reads*/
+    tios.c_cc[VTIME] = 1;	/* 100ms intercharacter timeout*/
     ioctl(devfd, TCSETS, &tios);
 
     /* Init some variables
@@ -193,9 +251,6 @@ void cslip_compress(__u8 **packet, int *len)
 {
     pkt_ut p;
     __u8 type;
-    size_t orig_len;
-
-    orig_len = *len;
 
     p.p_data = *packet;
     p.p_size = *len;
