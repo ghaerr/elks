@@ -14,8 +14,8 @@
 
 // Number of external buffers specified in config by CONFIG_FS_NR_EXT_BUFFERS
 
-// Number of internal buffers
-// used to "map" external buffers
+// Number of internal L1 buffers
+// used to map/copy external L2 buffers to/from kernel data segment
 
 #ifdef CONFIG_FS_FAT
 #define NR_MAPBUFS  12
@@ -23,7 +23,7 @@
 #define NR_MAPBUFS  8
 #endif
 
-// Number of internal buffers
+// Number of internal L1 buffers
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 #define NR_BUFFERS CONFIG_FS_NR_EXT_BUFFERS
@@ -33,26 +33,25 @@
 
 // Buffer heads (internal or external)
 
-static struct buffer_head buffers[NR_BUFFERS];
+static struct buffer_head buffer_heads[NR_BUFFERS];
 
-// Internal buffers
+// Internal L1 buffers
 
-static char bufmem[NR_MAPBUFS][BLOCK_SIZE];	/* L1 buffer area */
+static char L1buf[NR_MAPBUFS][BLOCK_SIZE];
 
-/*
- *	STUBS for the buffer cache when we put it in
- */
-/*static struct buffer_head *bh_chain = buffers; */
-static struct buffer_head *bh_lru = buffers;
-static struct buffer_head *bh_llru = buffers;
+// Buffer cache
 
-// External buffers are allocated in multiple up to 64K segments
-// in the global memory (BLOCK_SIZE * CONFIG_FS_NR_EXT_BUFFERS)
+static struct buffer_head *bh_lru = buffer_heads;
+static struct buffer_head *bh_llru = buffer_heads;
+
+// External L2 buffers are allocated within global memory segments
+// each segment being up to 64K in size for segment register addressing
+// Total global memory used is (BLOCK_SIZE * CONFIG_FS_NR_EXT_BUFFERS)
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-static struct wait_queue bufmapwait;	/* Wait for a free L1 buffer area */
-static struct buffer_head *bufmem_map[NR_MAPBUFS]; /* Array of bufmem's allocation */
-static int lastumap;
+static struct buffer_head *L1map[NR_MAPBUFS];	/* L1 indexed pointer to L2 buffer */
+static struct wait_queue L1wait;		/* Wait for a free L1 buffer area */
+static int lastL1map;
 #endif
 
 /* Uncomment next line to debug free buffer_head count */
@@ -97,17 +96,17 @@ static void put_last_lru(register struct buffer_head *bh)
 void buffer_init(void)
 {
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-    struct buffer_head *bh = buffers;
+    struct buffer_head *bh = buffer_heads;
     segment_s *seg = 0;		/* init stops compiler warning*/
     int bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
     int nbufs = 0;
     int i = NR_MAPBUFS;
 
     do {
-	bufmem_map[--i] = NULL;
+	L1map[--i] = NULL;
     } while (i > 0);
 #else
-	char * p = bufmem;
+	char * p = L1buf;
 #endif
 
     goto buf_init;
@@ -135,7 +134,7 @@ void buffer_init(void)
 	p += BLOCK_SIZE;
 #endif
 
-    } while (++bh < &buffers[NR_BUFFERS]);
+    } while (++bh < &buffer_heads[NR_BUFFERS]);
 }
 
 /*
@@ -193,7 +192,9 @@ static void sync_buffers(kdev_t dev, int wait)
 	/*
 	 *      Skip clean buffers.
 	 */
-	if ((dev && (bh->b_dev != dev)) || (buffer_clean(bh))) continue;
+	if ((dev && (bh->b_dev != dev)) || (buffer_clean(bh)))
+	   continue;
+
 	/*
 	 *      Locked buffers..
 	 *
@@ -204,6 +205,7 @@ static void sync_buffers(kdev_t dev, int wait)
 	    if (!wait) continue;
 	    wait_on_buffer(bh);
 	}
+
 	/*
 	 *      Do the stuff
 	 */
@@ -441,73 +443,60 @@ int sys_sync(void)
 }
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-
-/* map_buffer forces a buffer into L1 buffer space. It will freeze forever
+/* map_buffer copies a buffer into L1 buffer space. It will freeze forever
  * before failing, so it can return void.  This is mostly 8086 dependant,
- * although the interface is not. */
-
+ * although the interface is not.
+ */
 void map_buffer(register struct buffer_head *bh)
 {
     struct buffer_head *bmap;
-    register char *pi;
+    int i;
 
-    /* If buffer is already mapped, just increase the refcount and return
-     */
-    debug2("mapping buffer %u (%d)\n", bh->b_num, bh->b_mapcount);
-
+    /* If buffer is already mapped, just increase the refcount and return */
     if (bh->b_data /*|| bh->b_seg != kernel_ds*/) {
-
-#ifdef DEBUG
-	if (!bh->b_mapcount) {
-	    debug("BUFMAP: Buffer %u (block %u) `remapped' into L1.\n",
-		  bh->b_num, bh->b_blocknr);
-	}
-#endif
-
+	if (!bh->b_mapcount)
+	    debug("REMAP: %d\n", bh->b_num);
 	goto end_map_buffer;
     }
 
-    pi = (char *)lastumap;
-    /* Keep trying till we succeed */
-    do {
-	if ((int)(++pi) >= NR_MAPBUFS) pi = (char *)0;
-	debug1("BUFMAP: trying slot %d\n", (int)pi);
+    i = lastL1map;
+    /* search for free L1 buffer or wait until one is available*/
+    for (;;) {
+	if (++i >= NR_MAPBUFS) i = 0;
+	debug("map:   %d try %d\n", bh->b_num, i);
 
-	/* First check for the tivial case, to avoid dereferencing a null pointer */
-	if (!(bmap = bufmem_map[(int)pi])) break;
-
-	/* Now, we check for a mapped buffer with no count and then
-	 * hopefully find one to send back to L2 */
-	if (!bmap->b_mapcount) {
-	    debug1("BUFMAP: Buffer %u unmapped from L1\n",
-		    bmap->b_num);
-	    /* Now unmap it */
-		fmemcpyb((byte_t *) (bmap->b_offset << BLOCK_SIZE_BITS), bmap->b_ds,
-			(byte_t *) bmap->b_data, kernel_ds, BLOCK_SIZE);
-	    bmap->b_data = 0;
-	    /* success */
+	/* First check for the trivial case, to avoid dereferencing a null pointer */
+	if (!(bmap = L1map[i]))
 	    break;
-	}
-	if ((int)pi == lastumap) {
-	    /* The scan of all buffers failed */
-	    /* The last resort is to wait until unmap gets a b_mapcount down to 0 */
-	    /* replaced debug1 with printk here to indicate where it gets stuck - Georg P. */
-	    debug1("BUFMAP: buffer #%u waiting on L1 slot\n", bh->b_num);	/*Back to debug1*/
-	    sleep_on(&bufmapwait);
-	    debug("BUFMAP: wait queue woken up...\n");
-	}
-    } while (1);
 
-    lastumap = (int)pi;
-    /* We can just map here! */
-    bufmem_map[(int)pi] = bh;
-    bh->b_data = (char *)bufmem + ((int)pi << BLOCK_SIZE_BITS);
-    if (bh->b_uptodate) {
-	fmemcpyb ((byte_t *) bh->b_data, kernel_ds,
-		(byte_t *) (bh->b_offset << BLOCK_SIZE_BITS), bh->b_ds, BLOCK_SIZE);
+	/* L1 with zero count can be unmapped and reused for this request*/
+	if (bmap->b_mapcount < 0)
+		printk("map_buffer: %d BAD mapcount %d\n", bmap->b_num, bmap->b_mapcount);
+	if (!bmap->b_mapcount) {
+	    debug("UNMAP: %d <- %d\n", bmap->b_num, i);
+
+	    /* Unmap/copy L1 to L2 */
+	    fmemcpyb((byte_t *) (bmap->b_offset << BLOCK_SIZE_BITS), bmap->b_ds,
+		     (byte_t *) bmap->b_data, kernel_ds, BLOCK_SIZE);
+	    bmap->b_data = 0;
+	    break;		/* success */
+	}
+	if (i == lastL1map) {
+	    /* no free L1 buffers, must wait for L1 unmap_buffer*/
+	    debug("MAPWAIT: %d\n", bh->b_num);
+	    sleep_on(&L1wait);
+	}
     }
-    debug3("BUFMAP: Buffer %u (block %u) mapped into L1 slot %d.\n",
-	bh->b_num, bh->b_blocknr, (int)pi);
+
+    /* Map/copy L2 to L1 */
+    lastL1map = i;
+    L1map[i] = bh;
+    bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
+    if (bh->b_uptodate) {
+	fmemcpyb((byte_t *) bh->b_data, kernel_ds,
+		 (byte_t *) (bh->b_offset << BLOCK_SIZE_BITS), bh->b_ds, BLOCK_SIZE);
+    }
+    debug("MAP:   %d -> %d\n", bh->b_num, i);
   end_map_buffer:
     bh->b_mapcount++;
 }
@@ -515,20 +504,19 @@ void map_buffer(register struct buffer_head *bh)
 /* unmap_buffer decreases bh->b_mapcount, and wakes up anyone waiting over
  * in map_buffer if it's decremented to 0... this is a bit of a misnomer,
  * since the unmapping is actually done in map_buffer to prevent frivoulous
- * unmaps if possible... */
-
+ * unmaps if possible.
+ */
 void unmap_buffer(register struct buffer_head *bh)
 {
     if (bh) {
-	debug1("unmapping buffer %u\n", bh->b_num);
 	if (bh->b_mapcount <= 0) {
-	    printk("unmap_buffer: buffer #%u's b_mapcount<=0 already\n",
-		   bh->b_num);
+	    printk("unmap_buffer: %d BAD mapcount %d\n", bh->b_num, bh->b_mapcount);
 	    bh->b_mapcount = 0;
-	} else if (!(--bh->b_mapcount)) {
-	    debug1("BUFMAP: buffer %u released from L1.\n", bh->b_num);
-	    wake_up(&bufmapwait);
-	}
+	} else if (--bh->b_mapcount == 0) {
+	    debug("unmap: %d\n", bh->b_num);
+	    wake_up(&L1wait);
+	} else
+	    debug("unmap_buffer: %d mapcount %d\n", bh->b_num, bh->b_mapcount+1);
     }
 }
 
@@ -539,4 +527,4 @@ void unmap_brelse(register struct buffer_head *bh)
 	__brelse(bh);
     }
 }
-#endif
+#endif /* CONFIG_FS_EXTERNAL_BUFFER*/
