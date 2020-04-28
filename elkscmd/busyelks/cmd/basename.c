@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <string.h>
+#include <libgen.h>
 
 #include "cmd.h"
 #include "lib.h"
@@ -19,18 +20,6 @@ remove_suffix (name, suffix)
 	if (np > name)
 		*np = '\0';
 }
-                             
-
-char *
-basename (name)
-	char *name;
-{
-	char *base;
-
-	base = rindex (name, '/');
-	return base ? base + 1 : name;
-}
-           
 
 int
 basename_main(int argc, char * argv[])
@@ -38,7 +27,6 @@ basename_main(int argc, char * argv[])
 	char *line;
 	
 	if (argc == 2 || argc == 3) {
-		strip_trailing_slashes(argv[1]);
 		line = basename(argv[1]);
                 if (argc == 3)
 			remove_suffix (line, argv[2]);
