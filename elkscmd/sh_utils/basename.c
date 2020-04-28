@@ -1,60 +1,44 @@
 #include <unistd.h>
 #include <string.h>
+#include <libgen.h>
 
 static void
-remove_suffix (name, suffix)
-	register char *name, *suffix;
+remove_suffix (register char *name, register char *suffix)
 {
-	register char *np, *sp;
+  register char *np, *sp;
 
-	np = name + strlen (name);
-	sp = suffix + strlen (suffix);
+  np = name + strlen (name);
+  sp = suffix + strlen (suffix);
 
-	while (np > name && sp > suffix)
-		if (*--np != *--sp)
-			return;
-	if (np > name)
-		*np = '\0';
+  while (np > name && sp > suffix)
+    if (*--np != *--sp)
+      return;
+
+  if (np > name)
+    *np = '\0';
 }
-                             
 
-char *
-basename (name)
-	char *name;
+int
+main (int argc, char *argv[])
 {
-	char *base;
+  char *line;
 
-	base = rindex (name, '/');
-	return base ? base + 1 : name;
-}
-           
+  if (argc < 2)
+  {
+    write(STDERR_FILENO, "Usage: basename [PATH] [SUFFIX]\n", 32);
+    return 1;
+  }
 
+  if (argc == 2 || argc == 3)
+  {
+    line = basename(argv[1]);
 
-void
-strip_trailing_slashes (path)
-char *path;
-{
-	int last;
+    if (argc == 3)
+      remove_suffix (line, argv[2]);
 
-	last = strlen (path) - 1;
-	while (last > 0 && path[last] == '/')
-		path[last--] = '\0';
-}
-               
+    write(STDOUT_FILENO, line, strlen(line));
+    write(STDOUT_FILENO, "\n", 1);
+  }
 
-void
-main (argc, argv)
-	int argc;
-	char **argv;
-{
-	char *line;
-	
-	if (argc == 2 || argc == 3) {
-		strip_trailing_slashes(argv[1]);
-		line = basename(argv[1]);
-                if (argc == 3)
-			remove_suffix (line, argv[2]);
-		write(STDOUT_FILENO,line,strlen(line));
-		write(STDOUT_FILENO,"\n",1);
-	}
+  return 0;
 }
