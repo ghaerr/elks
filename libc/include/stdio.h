@@ -62,11 +62,7 @@ struct __stdio_file {
 
 typedef struct __stdio_file FILE;
 
-#ifdef __AS386_16__
-#define BUFSIZ	(256)
-#else
-#define BUFSIZ	(2048)
-#endif
+#define BUFSIZ	(1024)
 
 extern FILE stdin[1];
 extern FILE stdout[1];

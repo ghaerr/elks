@@ -13,10 +13,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#define BUF_SIZE 4096
-
-static char buf[BUF_SIZE];
-
 /*
  * See if the specified word is found in the specified string.
  */
@@ -92,6 +88,7 @@ int main(int argc, char **argv)
 	int	ignorecase;
 	int	tellline;
 	long	line;
+	char	buf[BUFSIZ];
 
 	if (argc < 2) goto usage;
 
@@ -136,7 +133,9 @@ int main(int argc, char **argv)
 
 		line = 0;
 
-		while (fgets(buf, BUF_SIZE, fp)) {
+		while (fgets(buf, sizeof(buf), fp)) {
+			line++;
+
 			/* Make sure the data is text and didn't overflow */
 			cp = &buf[strlen(buf) - 1];
 			if (*cp != '\n') goto error_line_length;

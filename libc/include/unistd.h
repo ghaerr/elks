@@ -84,4 +84,10 @@ char * getcwd (char * buf, size_t size);
 void sync(void);
 void usleep(unsigned long useconds);
 
+int getopt(int argc, char * const argv[], const char *opts);
+extern char *optarg;
+extern int optind;
+extern int optopt;
+extern int opterr;
+
 extern char ** environ;

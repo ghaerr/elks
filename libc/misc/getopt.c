@@ -56,7 +56,7 @@ int optind = 1;
 int optopt;
 char *optarg;
 
-int getopt(int argc, char **argv, char *opts)
+int getopt(int argc, char * const argv[], const char *opts)
 {
     register char *cp;
     static int sp = 1;
