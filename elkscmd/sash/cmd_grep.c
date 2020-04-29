@@ -27,7 +27,7 @@ do_grep(argc, argv)
 	BOOL	ignorecase;
 	BOOL	tellline;
 	long	line;
-	char	buf[8192];
+	char	buf[BUFSIZ];
 
 	ignorecase = FALSE;
 	tellline = FALSE;

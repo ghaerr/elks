@@ -57,7 +57,7 @@ CONFIG_APP_FILE_UTILS	file_utils/		File utilities from Alistair Riddoch.
 										Rewritten from GNU fileutils 3.14 and sash.
 										Installs in /bin: cat, chgrp, chmod, chown, cmp, cp, dd,
 										l, ln, ls, mkdir, mkfifo, mknod, more, mv, rm, rmdir, sync, touch
-										Not installed: grep (broken)
+										Not installed: grep
 
 CONFIG_APP_DISK_UTILS	disk_utils/		Disk utilities from early 1990s.
 										Installs in /bin: fdisk, fsck, mkfs, partype, ramdisk

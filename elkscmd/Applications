@@ -110,7 +110,7 @@ elvis/elvis	::bin/vi			:elvis				:720k
 minix1/banner					:minix1					:1440k
 minix1/decomp16					:minix1					:1440k
 minix1/fgrep					:minix1					:1440k
-minix1/grep					:minix1			:360k
+minix1/grep						:minix1			:360k
 minix1/sum						:minix1					:1440k
 minix1/uniq						:minix1				:720k
 minix1/wc						:minix1					:1440k

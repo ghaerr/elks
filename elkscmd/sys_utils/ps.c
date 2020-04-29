@@ -129,7 +129,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	printf("  PID   GRP  TTY USER STAT CSEG  HEAP   FREE   SIZE COMMAND\n");
+	printf("  PID   GRP  TTY USER STAT CSEG DSEG  HEAP   FREE   SIZE COMMAND\n");
 	for (j = 1; j < MAX_TASKS; j++) {
 		if (!memread(fd, off + j*sizeof(struct task_struct), ds, &task_table, sizeof(task_table))) {
 			perror("ps");
@@ -163,6 +163,9 @@ int main(int argc, char **argv)
 
 		/* CSEG*/
 		printf("%4x ", getword(fd, (word_t)task_table.mm.seg_code+offsetof(struct segment, base), ds));
+
+		/* DSEG*/
+		printf("%4x ", getword(fd, (word_t)task_table.mm.seg_data+offsetof(struct segment, base), ds));
 
 		/* heap*/
 		printf("%5d ", (word_t)(task_table.t_endbrk - task_table.t_enddata));
