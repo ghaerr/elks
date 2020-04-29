@@ -223,9 +223,9 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 	//if (status & UART_LSR_DR)			/* Receiver buffer full? */
 	    do {
 		buf[i++] = inb_p(io + UART_RX);		/* Read received data */
-	    } while ((inb_p(io + UART_LSR) & UART_LSR_DR) && i < MAX_RX_BUFFER_SIZE);
+	    //} while ((inb_p(io + UART_LSR) & UART_LSR_DR) && i < MAX_RX_BUFFER_SIZE);
 	//}
-    //} while (!(inb_p(io + UART_IIR) & UART_IIR_NO_INT) && i < MAX_RX_BUFFER_SIZE);
+    } while (!(inb_p(io + UART_IIR) & UART_IIR_NO_INT) && i < MAX_RX_BUFFER_SIZE);
 
     if (status & UART_LSR_OE)
 	printk("serial: data overrun\n");
