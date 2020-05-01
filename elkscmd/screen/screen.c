@@ -13,7 +13,7 @@
  * screen 2.0a code as released on 19th October 1988.
  */
 
-static char ScreenVersion[] = "screen 2.0a.1 (ELKS) 25-Apr-2020";
+static char ScreenVersion[] = "screen 2.0a.2 (ELKS) 30-Apr-2020";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,21 +58,6 @@ static char ScreenVersion[] = "screen 2.0a.1 (ELKS) 25-Apr-2020";
 #include "screen.h"
 
 struct mode OldMode, NewMode;
-
-#ifdef ELKS
-#undef	FD_SET
-#undef	FD_ISSET
-#undef	FD_ZERO
-#undef  FD_SETSIZE
-typedef struct fd_set
-{
-  int fd_bits[1];
-}      fd_set_s;
-# define FD_ZERO(fd) ((fd)->fd_bits[0] = 0)
-# define FD_SET(b, fd) ((fd)->fd_bits[0] |= 1 << (b))
-# define FD_ISSET(b, fd) ((fd)->fd_bits[0] & 1 << (b))
-# define FD_SETSIZE 32
-#endif
 
 #ifdef GETTTYENT
 #   include <ttyent.h>
@@ -218,7 +203,7 @@ char **av;
     register struct win **pp, *p;
     char *ap;
     int s, x = 0;
-    fd_set_s r_readfd, w_writefd, e_errfd;
+    fd_set r_readfd, w_writefd, e_errfd;
     int aflag = 0;
     int lflag = 0;
     struct timeval tv;
