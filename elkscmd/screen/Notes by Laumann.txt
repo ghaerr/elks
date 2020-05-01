@@ -1,6 +1,3 @@
-=== screen.shar1 =========================
-From riacs!eos!amelia!ames!ucsd!rutgers!gatech!bbn!bbn.com!rsalz Thu Feb  9 09:34:37 PST 1989
-
 Submitted-by: "Oliver Laumann" <tub!net>
 Posting-number: Volume 17, Issue 82
 Archive-name: screen2/part01
@@ -21,13 +18,4 @@ Regards,
     Oliver Laumann, Technical University of Berlin, Germany.
     ...!pyramid!tub!net   or   net@TUB.BITNET
 
-----------------------------------------------------------------------------
-=== screen.shar2 =========================
-From riacs!eos!amelia!ames!ucsd!rutgers!gatech!bbn!bbn.com!rsalz Thu Feb  9 09:34:46 PST 1989
-
-Submitted-by: "Oliver Laumann" <tub!net>
-Posting-number: Volume 17, Issue 83
-Archive-name: screen2/part02
-
-[ Yes, the subject line is misleading, you could run this on your Blit.  --r$ ]
 

@@ -1,0 +1,20 @@
+#
+#example .screenrc file
+#
+#redefine bell message
+bell "Bell rang in %"
+#
+#make / the current directory
+#chdir /
+#
+#escape example -leave at Ctrl+A
+escape Aa
+#
+#let Ctrl+A space show the version
+bind " " version
+#
+#open additional windows
+# arguments not supported yet
+screen 1 
+screen 2 
+screen 3 
