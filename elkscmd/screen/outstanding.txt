@@ -1,0 +1,7 @@
+Known issues
+------------
+
+detach and reattach do not work
+
+screen command in the .screenrc file does not
+allow for arguments

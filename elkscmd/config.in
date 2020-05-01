@@ -16,7 +16,8 @@ mainmenu_option next_comment
 		comment 'Applications'
 
 		bool 'busyelks'			CONFIG_APP_BUSYELKS		n
-		bool 'cgatext'			CONFIG_APP_CGATEXT	n
+		bool 'cgatext'			CONFIG_APP_CGATEXT	    n
+        bool 'screen'     		CONFIG_APP_SCREEN       y
 		busyelks 'diskutils'	CONFIG_APP_DISK_UTILS	y
 		busyelks 'fileutils'	CONFIG_APP_FILE_UTILS	y
 		busyelks 'shutils'	 	CONFIG_APP_SH_UTILS		y
@@ -34,7 +35,6 @@ mainmenu_option next_comment
 
 		bool 'byacc'      		CONFIG_APP_BYACC      n
 		bool 'm4'         		CONFIG_APP_M4         n
-		bool 'screen'     		CONFIG_APP_SCREEN     n
 		bool 'test'       		CONFIG_APP_TEST       n
 		#bool 'levee'			CONFIG_APP_LEVEE      n
 		#bool 'xvi'        		CONFIG_APP_XVI        n

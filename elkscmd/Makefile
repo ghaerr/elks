@@ -34,6 +34,7 @@ SUBDIRS =       \
 	nano-X      \
 	prems       \
 	sash        \
+	screen      \
 	sh_utils    \
 	sys_utils   \
 	test        \

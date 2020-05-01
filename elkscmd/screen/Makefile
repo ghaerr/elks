@@ -18,15 +18,37 @@
 # You should install as set-uid with owner root, so that it can read/write
 # /etc/utmp, read /dev/kmem, and chown/chmod the allocated pseudo-ttys.
 
-INCDIR	= `pwd`/../../elks/include
+##################################################################################
 
-OPTIONS	= -DELKS -DUSEBCOPY # -DLOADAV -DSUNLOADAV -DGETTTYENT -DUSEBCOPY
+# Makefile for screen
 
-LOCALFLAGS	= -I$(INCDIR) $(OPTIONS)
+BASEDIR=..
 
-all:	screen
+include $(BASEDIR)/Make.defs
 
-screen:	ansi.o screen.o
+OPTIONS	= -DELKS # -DUSEBCOPY # -DLOADAV -DSUNLOADAV -DGETTTYENT -DUSEBCOPY
+
+LOCALFLAGS = -Wno-implicit-int \
+		-Wno-unused-function \
+		-Wno-unused-variable \
+		-Wno-incompatible-pointer-types \
+		-Wno-char-subscripts \
+		$(OPTIONS)
+		
+LOCALFLAGS += -maout-chmem=0x8000 
+
+
+###############################################################################
+#
+# Include standard packaging commands.
+
+include $(BASEDIR)/Make.rules
+
+###############################################################################
+
+all: screen
+
+screen:	screen.o ansi.o 
 	$(CC) $(CFLAGS) -s -o screen screen.o ansi.o
 
 screen.o: screen.c screen.h
@@ -37,3 +59,7 @@ ansi.o: ansi.c screen.h
 
 clean:
 	rm -f screen *.o core *~
+
+install: screen
+	$(INSTALL) screen $(DESTDIR)/bin/screen
+

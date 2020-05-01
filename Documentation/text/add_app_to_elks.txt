@@ -1,0 +1,97 @@
+﻿
+Adding a new program to the ELKS installation system
+----------------------------------------------------
+
+If you have written a new program for ELKS or ported an existing one, e.g. 
+Firefox, you can add it to the ELKS code base so it will be compiled together
+with ELKS and all the other programs and then written to a disk image. This 
+text describes how this can be done.
+
+
+1) Where to place the code
+
+Programs and utilites will be placed in the „elkscmd“ folder. Either in a 
+sparate subfolder, if they are large like Firefox, or into an existing 
+subdirectory if the program is small and consists of one or two files. These
+subdirectories are:
+	disk_utils  
+	file_utils  
+	misc_utils  
+	sh_utils    
+	sys_utils
+
+For Firefox you would make a subdirectory „firefox“ in the „elkscmd“ folder 
+which contains all the required files. In this subdirectory there has to be 
+a Makefile that can be executed to compile the Firefox program. This Makefile
+will be called by the Makefile in the elkscmd directory. That Makefile contains
+a list of the subdirectories and executes alle Makefiles in these. Therefore
+you have to add the Firefox subdirectory to this Makefile.
+
+
+2) Requirements for the Makefile
+
+Your Makefile in the firefox directory has to have a target like this:
+
+install: firefox
+	$(INSTALL) firefox $(DESTDIR)/bin/firefox
+
+When your Makefile is executed with this target, the firefox executable will be
+placed into the /bin directory on the final ELKS disk image.
+
+If you add you program into one of the mentioned subdirectories, you have to
+add this to the list of programs which the Makefile in this subdirectory
+contains, plus a command how to compile your program. Then your program will be
+compiled and placed into the /bin directory together with the other programs in
+this subdirectory during the install process.
+
+
+3) Add your program to a number of files
+
+a) the elkscmd/config.in file
+Here you define a MACRO for your program which will be used in the following
+files. In our example this would be 
+
+bool 'firefox' 		CONFIG_APP_FIREFOX 		y “
+
+The menuconfig script reads this config.in file and generates a file with the
+selected configuration options.
+
+b) the elkscmd/APPS file
+In the APPS file you define the directory where the executable of your program
+is located with this line:
+
+CONFIG_APP_FIREFOX		firefox/	Internet browser
+
+So this is the MACRO CONFIG_APP_FIREFOX we just defined, the subdirectory and
+a description.
+
+c) the elkscmd/Make.install file
+
+This is the Makefile to run the installation. The entry in there could look
+like this:
+
+ifdef CONFIG_APP_FIREFOX
+	TAGS += :firefox|
+endif
+
+d) the elkscmd/Applications file
+
+This file controls which files are added to the disk image depending on the
+size of it. Put into that the following line:
+
+firefox/firefox 	::bin/firefox 	:firefox 	:1440k 
+
+The first entry is the directory and the program name. Then there is an 
+optional tag „::bin/firefox“ which could be used to add the executable to the 
+disk image under a different name. Then there is a tag with the directory name
+the executable is located and the last tag specifies that this program shall be
+added to the 1.440k disk image.
+
+
+4) Configure ELKS with Firefox added and generate a disk image containing that.
+
+Then you run „make menuconfig“ and select the new entry with the name 
+„Firefox“. After that enter „make clean“ and „make“ and your firefox port will
+be added to the /bin directory on the resulting ELKS disk image.
+
+27th April 2020 Georg Potthast
