@@ -70,6 +70,8 @@ typedef int bool;
 #define DTR_OFF_CHARACTER 'd'	    /**< DTR off character */
 #define RTS_ON_CHARACTER 'R'	    /**< RTS on character */
 #define RTS_OFF_CHARACTER 'r'	    /**< RTS off character */
+#define CRLF_ON_CHARACTER 'L'	    /**< CR+LF on character */
+#define CRLF_OFF_CHARACTER 'l'	    /**< CR+LF off character */
 #define EXIT_CHARACTER '.'	    /**< Exit character */
 #define EXIT_NO_RST_CHARACTER 'x'   /**< Exit with no reset character */
 
@@ -341,6 +343,7 @@ static void usage(const char *argv0)
 		"  -r          enable RTS/CTS hardware flow control (default: disable)\n"
 		"  -d          enable DTR (default: disable)\n"
 		"  -R          enable RTS when flow control disabled (default: disable)\n"
+		"  -l          add LF to every CR received (default: disable)\n"
 		"  -x          print received data in hex (read-only)\n"
 		"  -S          print received data as SLIP packets (read-only)\n"
 		"  -h          print this message\n"
@@ -384,10 +387,11 @@ int main(int argc, char **argv)
 	enum terminal_mode mode = MODE_TEXT;
 	bool escape = false, rtscts = false;
 	bool enable_rts = false, enable_dtr = false;
+	bool add_lf = false;
 	const char *device = "/dev/ttyS0";
 	bool no_reset = false;
 
-	while ((ch = getopt(argc, argv, "s:SrdRxh")) != -1) {
+	while ((ch = getopt(argc, argv, "s:SrdRlxh")) != -1) {
 		switch (ch) {
 			case 's':
 				baudrate = atol(optarg);
@@ -400,6 +404,9 @@ int main(int argc, char **argv)
 				break;
 			case 'R':
 				enable_rts = true;
+				break;
+			case 'l':
+				add_lf = true;
 				break;
 			case 'x':
 				mode = MODE_HEX;
@@ -558,6 +565,8 @@ int main(int argc, char **argv)
 						printf("\r\n%c%c  Disable DTR", ESCAPE_CHARACTER, DTR_OFF_CHARACTER);
 						printf("\r\n%c%c  Enable RTS", ESCAPE_CHARACTER, RTS_ON_CHARACTER);
 						printf("\r\n%c%c  Disable RTS", ESCAPE_CHARACTER, RTS_OFF_CHARACTER);
+						printf("\r\n%c%c  Enable CR+LF", ESCAPE_CHARACTER, CRLF_ON_CHARACTER);
+						printf("\r\n%c%c  Disable CR+LF", ESCAPE_CHARACTER, CRLF_OFF_CHARACTER);
 						printf("\r\n%c%c  Exit program", ESCAPE_CHARACTER, EXIT_CHARACTER);
 						printf("\r\n%c%c  Exit program (no reset)\r\n", ESCAPE_CHARACTER, EXIT_NO_RST_CHARACTER);
 					} else if (ibuf[i] == BREAK_CHARACTER) {
@@ -582,6 +591,10 @@ int main(int argc, char **argv)
 						ioctl(fd, TIOCMGET, &flags);
 						flags &= ~TIOCM_RTS;
 						ioctl(fd, TIOCMSET, &flags);
+					} else if (ibuf[i] == CRLF_ON_CHARACTER) {
+						add_lf = true;
+					} else if (ibuf[i] == CRLF_OFF_CHARACTER) {
+						add_lf = false;
 					} else if (ibuf[i] == EXIT_CHARACTER) {
 						quit = true;
 						break;
@@ -621,6 +634,7 @@ int main(int argc, char **argv)
 
 		if (fd != -1 && FD_ISSET(fd, &rds)) {
 			char buf[4096];
+			char c, *cr_found;
 			int len, wrote, res;
 
 			if ((len = read(fd, buf, sizeof(buf))) < 1)
@@ -628,7 +642,18 @@ int main(int argc, char **argv)
 
 			if (mode == MODE_TEXT) {
 				for (wrote = 0; wrote < len; ) {
-					res = write(1, buf + wrote, len - wrote);
+					res = -1;
+					if (add_lf && (cr_found = memchr(buf + wrote, 13, len - wrote))) {
+						res = write(1, buf + wrote, cr_found - (buf + wrote) + 1U);
+						if (cr_found && (res > 0)) {
+							c = 10;
+							if (write(1, &c, 1U) < 1) {
+								retval = 1;
+								break;
+							}
+						}
+					} else
+						res = write(1, buf + wrote, len - wrote);
 
 					if (res < 1) {
 						retval = 1;
