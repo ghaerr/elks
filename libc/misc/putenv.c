@@ -62,6 +62,10 @@ again:
 		envp_len += strlen(*env++) + 1;
 	}
 
+	if (rp == NULL) {	/* missing '=' - reject */
+		errno = 22;
+		return -1;
+	}
 	envp_len += strlen(var) + 1;		/* new environment variable*/
 	envp_count = env - environ + 2;		/* + 1 for NULL terminator*/
 						/* + 1 for newly added var*/
