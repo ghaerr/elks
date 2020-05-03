@@ -13,16 +13,19 @@
  * TODO : IP fragmentation and reassemply of fragmented IP packets
  */
 
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 #include "ip.h"
 #include "icmp.h"
+#include "slip.h"
 #include "tcp.h"
 #include "tcpdev.h"
 #include <linuxmt/arpa/inet.h>
 #include "deveth.h"
+#include "arp.h"
 
 #if 0
 #define IP_VERSION(s)	((s)->version_ihl>>4&0xf)
@@ -123,7 +126,8 @@ void ip_print(struct iphdr_s *head)
 void ip_recvpacket(char *packet,int size)
 {
     struct iphdr_s *iphdr;
-    __u8 *addr, *data;
+    __u8 *data;
+    //__u8 *addr;
 
     iphdr = (struct iphdr_s *)packet;
 
@@ -172,8 +176,8 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
 {
     struct iphdr_s *iph = (struct iphdr_s *)&ipbuf;
     __u16 tlen;
-    __u8 *addr;
-    ipaddr_t tmpaddress;
+    //__u8 *addr;
+    //ipaddr_t tmpaddress;
     char llbuf[15];
     struct ip_ll *ipll = (struct ip_ll *)&llbuf;
 

@@ -17,13 +17,16 @@
 #include <string.h>
 
 #include "slip.h"
+#include "tcp.h"
 #include "tcpdev.h"
+#include "tcp_output.h"
 #include "timer.h"
 #include <linuxmt/arpa/inet.h>
 #include "ip.h"
-#include "tcp.h"
+#include "icmp.h"
 #include "netconf.h"
 #include "deveth.h"
+#include "arp.h"
 
 #ifdef DEBUG
 #define debug	printf
@@ -35,7 +38,7 @@ char deveth[] = "/dev/eth";
 
 extern int tcp_timeruse;
 
-//static int tcpdevfd; /* defined in ip.h */
+static int tcpdevfd;
 static int intfd;
 
 unsigned long int in_aton(const char *str)
@@ -99,7 +102,7 @@ void ktcp_run(void)
 
 int main(int argc,char **argv)
 {
-    __u8 * addr;
+    //__u8 * addr;
     int daemon = 0;
     speed_t baudrate = 0;
     char *progname = argv[0];

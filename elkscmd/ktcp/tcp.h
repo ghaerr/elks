@@ -158,4 +158,10 @@ void tcp_output();
 
 unsigned long int in_aton(const char *str);
 
-#endif
+void tcp_update(void);
+int tcp_init(void);
+void tcp_process(struct iphdr_s *iph);
+void tcp_connect(struct tcpcb_s *cb);
+void tcp_send_fin(struct tcpcb_s *cb);
+
+#endif /* !TCP_H */

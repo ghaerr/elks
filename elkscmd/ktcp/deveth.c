@@ -19,7 +19,9 @@
 #include <arch/ioctl.h>
 
 #include "config.h"
+#include "tcp.h"
 #include "deveth.h"
+#include "ip.h"
 #include "tcpdev.h"
 #include "arp.h"
 

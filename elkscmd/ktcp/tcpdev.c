@@ -23,13 +23,15 @@
 #include <linuxmt/errno.h>
 
 #include <linuxmt/arpa/inet.h>
+#include "ip.h"
 #include "tcp.h"
+#include "tcp_cb.h"
 #include "tcpdev.h"
 #include "netconf.h"
 
-static unsigned char sbuf[TCPDEV_BUFSIZE];
-
 static int tcpdevfd;
+
+static unsigned char sbuf[TCPDEV_BUFSIZE];
 
 extern int cbs_in_user_timeout;
 

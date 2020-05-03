@@ -9,6 +9,9 @@
  *	2 of the License, or (at your option) any later version.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -267,7 +270,7 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
     ip_sendpacket(n->tcph, n->len, &n->apair);
 }
 
-int tcp_retrans(void)
+void tcp_retrans(void)
 {
     struct tcp_retrans_list_s *n;
     int datalen, rtt;
@@ -314,8 +317,8 @@ void tcp_output(struct tcpcb_s *cb)
     struct addr_pair apair;
     __u16 len;
     __u8 *options, header_len, option_len;
-    __u8 addr[4], *addr2;
-    __u32 temp;
+    //__u8 addr[4], *addr2;
+    //__u32 temp;
 
     th->sport = htons(cb->localport);
     th->dport = htons(cb->remport);

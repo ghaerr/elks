@@ -12,6 +12,7 @@
 #include "config.h"
 #include <linuxmt/arpa/inet.h>
 #include "tcp.h"
+#include "tcp_cb.h"
 #include "tcpdev.h"
 #include "netconf.h"
 

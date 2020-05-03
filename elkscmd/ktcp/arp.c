@@ -20,6 +20,7 @@
 #include "ip.h"
 #include "arp.h"
 
+static int tcpdevfd;
 
 /* ARP operations */
 /* as big endian values */

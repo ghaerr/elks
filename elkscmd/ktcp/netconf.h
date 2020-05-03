@@ -30,4 +30,4 @@ void netconf_init();
 void netconf_send();
 void netconf_request();
 
-#endif
+#endif /* !NETCONF_H */

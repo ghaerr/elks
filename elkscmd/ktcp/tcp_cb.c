@@ -9,9 +9,14 @@
  *	2 of the License, or (at your option) any later version.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "config.h"
 #include "tcp.h"
 #include "tcpdev.h"
+#include "tcp_output.h"
 
 static struct tcpcb_list_s	*tcpcbs;
 int cbs_in_time_wait, cbs_in_user_timeout;
@@ -229,7 +234,7 @@ void tcpcb_push_data(void)
 }
 
 /* There must be free space greater-equal than len */
-int tcpcb_buf_write(struct tcpcb_s *cb, __u8 *data, __u16 len)
+void tcpcb_buf_write(struct tcpcb_s *cb, __u8 *data, __u16 len)
 {
     int tail;
     register int i;
@@ -241,7 +246,7 @@ int tcpcb_buf_write(struct tcpcb_s *cb, __u8 *data, __u16 len)
 }
 
 /* same here */
-int tcpcb_buf_read(struct tcpcb_s *cb, __u8 *data, __u16 len)
+void tcpcb_buf_read(struct tcpcb_s *cb, __u8 *data, __u16 len)
 {
     register int head = cb->buf_head, i;
 
