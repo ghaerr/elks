@@ -11,12 +11,19 @@
 /* This file contains terminal I/O functions */
 
 #include "config.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 #if BSD || COHERENT
 # include <setjmp.h>
 #endif
 #include <signal.h>
-#include "vi.h"
 
+#include "vi.h"
+#include "tio.h"
+#include "tmp.h"
 
 /* This function reads in a line from the terminal. */
 int vgets(prompt, buf, bsize)

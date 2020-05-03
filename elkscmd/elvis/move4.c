@@ -12,6 +12,7 @@
 
 #include "config.h"
 #include "vi.h"
+#include "tio.h"
 
 /* This moves the cursor to a particular row on the screen */
 /*ARGSUSED*/

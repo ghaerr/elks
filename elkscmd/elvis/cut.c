@@ -12,6 +12,9 @@
 
 #include "config.h"
 #include "vi.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #if TURBOC
 #include <process.h>		/* needed for getpid */
 #endif

@@ -10,10 +10,20 @@
 
 /* This file contains some of the commands - mostly ones that change text */
 
-#include <ctype.h>
 #include "config.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <ctype.h>
+
 #include "vi.h"
 #include "regexp.h"
+#include "tio.h"
+#include "system.h"
+#include "ex.h"
+
 #if TOS
 # include <stat.h>
 #else

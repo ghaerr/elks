@@ -13,6 +13,9 @@
  */
 
 #include "config.h"
+
+#include <unistd.h>
+
 #include "vi.h"
 
 #ifndef NBUFS

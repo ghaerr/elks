@@ -29,9 +29,13 @@
  * That right, this file contains TWO versions of the code.
  */
 
+#include "config.h"
+
+#include <stdlib.h>
+#include <string.h>
 #include <setjmp.h>
 #include <ctype.h>
-#include "config.h"
+
 #include "vi.h"
 #include "regexp.h"
 

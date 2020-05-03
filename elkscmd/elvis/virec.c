@@ -11,9 +11,15 @@
 
 
 #include "config.h"
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 #include <ctype.h>
+
 #include "vi.h"
+
 #if TOS
 # include <stat.h>
 #else
@@ -23,6 +29,8 @@
 #  include <sys/stat.h>
 # endif
 #endif
+
+void copytext (int tmpfd, FILE *fp);
 
 extern char	*getenv();
 struct stat	stbuf;
@@ -223,10 +231,13 @@ BreakBreak:;
 }
 
 
-/* This function moves text from the tmp file to the normal file */
-copytext(tmpfd, fp)
-	int	tmpfd;	/* fd of the tmp file */
-	FILE	*fp;	/* the stream to write it to */
+/* This function moves text from the tmp file to the normal file
+ *
+ * tmpfd  fd of the tmp file
+ * fp     the stream to write it to
+ */
+
+void copytext(int tmpfd, FILE *fp)
 {
 	int	i;
 

@@ -15,8 +15,15 @@
  */
 
 #include "config.h"
-#include "vi.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
+#include <sys/ioctl.h>
+
+#include "vi.h"
+#include "curses.h"
 
 #if ANY_UNIX
 # if UNIXV
@@ -533,13 +540,15 @@ static int getWindowSize(int ifd, int ofd, int *rows, int *cols)
         return 0;
 }
 
-/* This function gets the window size.  It uses the TIOCGWINSZ ioctl call if
- * your system has it, or tgetnum("li") and tgetnum("co") if it doesn't.
- * This function is called once during initialization, and thereafter it is
- * called whenever the SIGWINCH signal is sent to this process.
+/*
+ * This function gets the window size. It uses the TIOCGWINSZ ioctl
+ * call if your system has it, or tgetnum("li") and tgetnum("co") if
+ * it doesn't. This function is called once during initialization,
+ * and thereafter it is called whenever the SIGWINCH signal is sent
+ * to this process.
  */
-int getsize(signo)
-	int	signo;
+
+int getsize(int signo)
 {
 	int	lines;
 	int	cols;

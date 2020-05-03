@@ -7,6 +7,9 @@
  */
 
 #include "config.h"
+
+#include <string.h>
+
 #include "vi.h"
 
 #ifdef DEBUG
