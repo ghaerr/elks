@@ -8,14 +8,18 @@
  */
 
 
-/* This file contains the input() function, which implements vi's INPUT mode.
- * It also contains the code that supports digraphs.
+/* This file contains the input() function, which implements vi's
+ * INPUT mode. It also contains the code that supports digraphs.
  */
 
-#include <ctype.h>
 #include "config.h"
-#include "vi.h"
 
+#include <unistd.h>
+#include <ctype.h>
+
+#include "vi.h"
+#include "tio.h"
+#include "redraw.h"
 
 #ifndef NO_DIGRAPH
 static struct _DIG

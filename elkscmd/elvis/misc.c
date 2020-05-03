@@ -11,6 +11,9 @@
 /* This file contains functions which didn't seem happy anywhere else */
 
 #include "config.h"
+
+#include <string.h>
+
 #include "vi.h"
 
 

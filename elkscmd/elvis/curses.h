@@ -10,10 +10,9 @@
 
 /* This is the header file for a small, fast, fake curses package */
 
-/* termcap stuff */
-extern char	*tgoto();
-extern char	*tgetstr();
-extern void	tputs();
+#include "tinytcap.h"
+
+extern int getsize(int signo);
 
 #if MSDOS
 /* BIOS interface used instead of termcap for MS-DOS */

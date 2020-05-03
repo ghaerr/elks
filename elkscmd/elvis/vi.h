@@ -61,19 +61,19 @@ extern int errno;
 
 #define BLKSIZE	1024		/* size of blocks */
 #define MAXBLKS	(BLKSIZE / sizeof(unsigned short))
+
 typedef union
 {
-	char		c[BLKSIZE];	/* for text blocks */
-	unsigned short	n[MAXBLKS];	/* for the header block */
-}
-	BLK;
+  char           c[BLKSIZE]; /* for text blocks      */
+  unsigned short n[MAXBLKS]; /* for the header block */
+} BLK;
 
 /*------------------------------------------------------------------------*/
 /* These are used manipulate BLK buffers.                                 */
 
-extern BLK	hdr;		/* buffer for the header block */
-extern BLK	*blkget();	/* given index into hdr.c[], reads block */
-extern BLK	*blkadd();	/* inserts a new block into hdr.c[] */
+extern BLK hdr;       /* buffer for the header block           */
+extern BLK *blkget(); /* given index into hdr.c[], reads block */
+extern BLK *blkadd(); /* inserts a new block into hdr.c[]      */
 
 /*------------------------------------------------------------------------*/
 /* These are used to keep track of various flags                          */

@@ -11,8 +11,11 @@
 /* This file contains the code for reading ex commands. */
 
 #include "config.h"
+#include <unistd.h>
+#include <string.h>
 #include <ctype.h>
 #include "vi.h"
+#include "tio.h"
 
 #ifndef isascii
 # define isascii(c) !((c)&~0x7f)

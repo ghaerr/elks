@@ -24,8 +24,14 @@
  *	-F	output a formfeed character between files
  */
 
-#include <stdio.h>
 #include "config.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+void usage(void);
+void refont(FILE *fp);
 
 /* the program name, for diagnostics */
 char	*progname;
@@ -39,9 +45,7 @@ int infmt = 0;
 /* do we insert formfeeds between input files? */
 int add_form_feed = 0;
 
-main(argc, argv)
-	int	argc;	/* number of command-line args */
-	char	**argv;	/* values of the command line args */
+int main(int argc, char **argv)
 {
 	FILE	*fp;
 	int	i, j;
@@ -117,10 +121,10 @@ main(argc, argv)
 		}
 	}
 
-	exit(retcode);
+	return retcode;
 }
 
-usage()
+void usage(void)
 {
 	fputs("usage: ", stderr);
 	fputs(progname, stderr);
@@ -130,8 +134,8 @@ usage()
 
 /* This function does the refont thing to a single file */
 /* I apologize for the length of this function.  It is gross. */
-refont(fp)
-	FILE	*fp;
+
+void refont(FILE *fp)
 {
 	char	textbuf[1025];	/* chars of a line of text */
 	char	fontbuf[1025];	/* fonts of chars in fontbuf */

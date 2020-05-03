@@ -11,6 +11,11 @@
 /* This program looks up the declarations of library functions. */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int lookinfor (char *filename, char *func);
+int desired (char *line, char *word);
 
 /* This is the list of files that are searched. */
 #ifdef OSK
@@ -57,10 +62,15 @@ main(argc, argv)
 }
 
 
-/* This function checks a single file for the function.  Returns 1 if found */
-int lookinfor(filename, func)
-	char	*filename;	/* name of file to look in */
-	char	*func;		/* name of function to look for */
+/*
+ * This function checks a single file for the function. Returns 1 if
+ * found.
+ *
+ * filename  name of file to look in
+ * func      name of function to look for
+ */
+
+int lookinfor(char *filename, char *func)
 {
 	FILE	*fp;	/* stream used to access the database */
 	char	linebuf[300];
@@ -102,11 +112,15 @@ int lookinfor(filename, func)
 }
 
 
-/* This function checks to see if a given line is the first line of the */
-/* entry the user wants to see.  If it is, return non-0 else return 0   */
-desired(line, word)
-	char	*line;	/* the line buffer */
-	char	*word;	/* the string it should contain */
+/*
+ * This function checks to see if a given line is the first line of the
+ * entry the user wants to see. If it is, return non-0 or else return 0.
+ *
+ * line	 the line buffer
+ * word  the string it should contain
+ */
+
+int desired(char *line, char *word)
 {
 	static	wlen = -1;/* length of the "word" variable's value */
 	register char *scan;

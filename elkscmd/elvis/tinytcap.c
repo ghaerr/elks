@@ -28,11 +28,13 @@ static int	nansi;
 # define VAL3(v,a,n)	(n)
 #endif
 
+/*
+ * bp    buffer for storing the entry -- ignored
+ * name  name of the entry
+ */
 
 /*ARGSUSED*/
-int tgetent(bp, name)
-	char	*bp;	/* buffer for storing the entry -- ignored */
-	char	*name;	/* name of the entry */
+int tgetent(char *bp, char *name)
 {
 #if MSDOS
 	nansi = strcmp(name, "ansi");
@@ -40,8 +42,7 @@ int tgetent(bp, name)
 	return 1;
 }
 
-int tgetnum(id)
-	char	*id;
+int tgetnum(char *id)
 {
 	switch (CAP(id))
 	{
@@ -53,8 +54,7 @@ int tgetnum(id)
 	}
 }
 
-int tgetflag(id)
-	char	*id;
+int tgetflag(char *id)
 {
 	switch (CAP(id))
 	{
@@ -67,10 +67,12 @@ int tgetflag(id)
 	}
 }
 
+/*
+ * bp  pointer to pointer to buffer - ignored
+ */
+
 /*ARGSUSED*/
-char *tgetstr(id, bp)
-	char	*id;
-	char	**bp;	/* pointer to pointer to buffer - ignored */
+char *tgetstr(char *id, char **bp)
 {
 	switch (CAP(id))
 	{
@@ -122,11 +124,14 @@ char *tgetstr(id, bp)
 	}
 }
 
+/*
+ * cm       cursor movement string -- ignored
+ * destcol  destination column, 0 - 79
+ * destrow  destination row, 0 - 24
+ */
+
 /*ARGSUSED*/
-char *tgoto(cm, destcol, destrow)
-	char	*cm;	/* cursor movement string -- ignored */
-	int	destcol;/* destination column, 0 - 79 */
-	int	destrow;/* destination row, 0 - 24 */
+char *tgoto(char *cm, int destcol, int destrow)
 {
 	static char buf[30];
 
@@ -139,11 +144,14 @@ char *tgoto(cm, destcol, destrow)
 	return buf;
 }
 
+/*
+ * cp      the string to output
+ * affcnt  number of affected lines -- ignored
+ * outfn   the output function
+ */
+
 /*ARGSUSED*/
-void tputs(cp, affcnt, outfn)
-	char	*cp;		/* the string to output */
-	int	affcnt;		/* number of affected lines -- ignored */
-	int	(*outfn)();	/* the output function */
+void tputs(char *cp, int affcnt, int (*outfn)())
 {
 	while (*cp)
 	{

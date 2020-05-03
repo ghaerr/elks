@@ -18,6 +18,9 @@
  */
 
 #include "config.h"
+
+#include <unistd.h>
+
 #include "vi.h"
 
 /* This variable contains the line number that smartdrawtext() knows best */
