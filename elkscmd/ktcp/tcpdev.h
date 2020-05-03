@@ -6,6 +6,8 @@
 #define MAX_ADDR_LEN    7
 #define IFNAMSIZ        16
 
+extern int tcpdevfd;
+
 struct net_device
  {
     char name[ IFNAMSIZ ];	/* name of the device */

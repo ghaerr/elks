@@ -38,7 +38,7 @@ char deveth[] = "/dev/eth";
 
 extern int tcp_timeruse;
 
-static int tcpdevfd;
+int tcpdevfd;
 static int intfd;
 
 unsigned long int in_aton(const char *str)

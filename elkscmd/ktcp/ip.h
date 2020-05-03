@@ -52,8 +52,6 @@ struct ip_ll
          __u16 ll_type_len;	/* 0x800 big endian for IP */
 };
 
-/* static int tcpdevfd; */
-
 int ip_init(void);
 void ip_recvpacket(char *packet, int size);
 void ip_sendpacket(char *packet, int len, struct addr_pair *apair);

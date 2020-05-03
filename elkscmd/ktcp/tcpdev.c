@@ -29,14 +29,14 @@
 #include "tcpdev.h"
 #include "netconf.h"
 
-static int tcpdevfd;
-
 static unsigned char sbuf[TCPDEV_BUFSIZE];
 
 extern int cbs_in_user_timeout;
 
 int tcpdev_init(char *fdev)
 {
+    int tcpdevfd;
+
     tcpdevfd = open(fdev, O_NONBLOCK | O_RDWR);
     if (tcpdevfd < 0)
 	printf("ktcp: failed to open tcpdev device %s\n",fdev);
