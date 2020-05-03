@@ -63,7 +63,7 @@ again:
 	}
 
 	if (rp == NULL) {	/* missing '=' - reject */
-		errno = 22;
+		errno = EINVAL;
 		return -1;
 	}
 	envp_len += strlen(var) + 1;		/* new environment variable*/
