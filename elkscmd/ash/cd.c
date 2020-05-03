@@ -102,6 +102,7 @@ cdcmd(argc, argv)  char **argv; {
 			return 0;
 	}
 	error("can't cd to %s", dest);
+	return 1;
 }
 
 
