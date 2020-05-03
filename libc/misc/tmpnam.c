@@ -15,8 +15,7 @@
 #define L_tmpnam 20
 #endif 
 
-char *tmpnam(s)
-char *s;
+char *tmpnam(char *s)
 {
     static char ret_val[L_tmpnam];
     static char c1 = 0;
