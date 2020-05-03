@@ -32,13 +32,16 @@ init_hist() {
                 if (histcnt > HISTMAX)
                         histcnt = HISTMAX;
         }
+	if (!histcnt) return;
         histbuf = malloc(histcnt * sizeof(char*));
         if (!histbuf) {
                 fprintf(stderr, "No history buffer, history turned off\n");
                 histcnt = 0;
-        }
-        while (k < histcnt)     /* initialize history list */
-                histbuf[k++] = NULL;
+        } else {
+        	while (k < histcnt)     /* initialize history list */
+                	histbuf[k++] = NULL;
+	}
+	return;
 }
 
 
@@ -92,7 +95,7 @@ cmd_search(char * pat) {
 	for (i = 0; i < histcnt; i++) {
 		idx = map_ind(-i);
 		if ((found = strstr(histbuf[idx], pat)))
-			return(found);
+			return(histbuf[idx]);
 	}
 	return(NULL);
 }
@@ -202,10 +205,14 @@ fixbuf(char *cmd, char *prev, char *pos, char *cm) {
 
 	char buf[CMDBUF];
 
-	strcpy(buf, cmd);
-	strcat(buf, prev);
-	strcat(buf, pos);
-	strcpy(cm, buf);
+	if ((strlen(cmd) + strlen(prev) + strlen(pos)) > (CMDBUF -1)) 
+		fprintf(stderr, "Buffer overflow in command history \n");
+	else {
+		strcpy(buf, cmd);
+		strcat(buf, prev);
+		strcat(buf, pos);
+		strcpy(cm, buf);
+	}
 	return;
 }
 

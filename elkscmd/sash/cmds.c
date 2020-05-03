@@ -727,7 +727,9 @@ do_setenv(argc, argv)
 		strcat(buf, "=");
 		strcat(buf, argv[2]);
 	}
-	putenv(buf);
+	if (putenv(buf)) 
+		fprintf(stderr, "usage: setenv VAR=value - value is optional, '=' is required.\n");
+
 }
 #endif /* CMD_SETENV */
 
