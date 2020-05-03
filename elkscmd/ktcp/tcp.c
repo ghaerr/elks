@@ -272,7 +272,7 @@ void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST)
 	cb->state = TS_LISTEN;		/* FIXME: not valid any more */
-    else if ((!h->flags) & TF_ACK)
+    else if ((h->flags & TF_ACK) == 0)
 	printf("NO ACK IN SYNRECV\n");
     else {
 	cb->state = TS_ESTABLISHED;
