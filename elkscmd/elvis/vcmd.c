@@ -12,7 +12,13 @@
 
 
 #include "config.h"
+
+#include <string.h>
+
 #include "vi.h"
+#include "tio.h"
+#include "system.h"
+
 #if MSDOS
 #include <process.h>
 #include <string.h>
@@ -627,7 +633,7 @@ MARK v_keyword(keyword, m, cnt)
 	waswarn = *o_warn;
 	*o_warn = FALSE;
 	suspend_curses();
-	if (system(cmdline))
+	if (elvis_system(cmdline))
 	{
 		addstr("<<< failed >>>\n");
 	}

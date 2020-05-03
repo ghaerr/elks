@@ -11,6 +11,9 @@
 /* This function contains the movement functions that perform RE searching */
 
 #include "config.h"
+
+#include <stdlib.h>
+
 #include "vi.h"
 #include "regexp.h"
 

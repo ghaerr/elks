@@ -1,0 +1,353 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 6.3.3.2.0 (Linux)"/>
+	<meta name="created" content="2020-04-23T07:51:06.969597739"/>
+	<meta name="changed" content="2020-05-02T09:16:29.066179395"/>
+	<style type="text/css">
+		@page { size: 21cm 29.7cm; margin: 2cm }
+		p { margin-bottom: 0.25cm; line-height: 115%; background: transparent }
+		a:link { color: #000080; so-language: zxx; text-decoration: underline }
+	</style>
+</head>
+<body lang="de-DE" link="#000080" vlink="#800000" dir="ltr"><p><br/>
+<br/>
+
+</p>
+<table width="635" cellpadding="4" cellspacing="0">
+	<col width="627"/>
+
+	<tr>
+		<td width="627" valign="top" style="border: none; padding: 0cm"><p align="center" style="margin-bottom: 0cm">
+			<font face="Arial, sans-serif"><font size="4" style="font-size: 16pt"><b>The
+			Screen Window Manager for ELKS<br/>
+</b></font></font><br/>
+
+			</p>
+			<table width="617" cellpadding="4" cellspacing="0">
+				<col width="609"/>
+
+				<tr>
+					<td width="609" valign="top" style="border: none; padding: 0cm"><p align="left"><a name="index-_002escreenrc"></a><a name="index-screenrc"></a>
+						<font face="Arial, sans-serif"><br/>
+<b>Introduction<br/>
+<br/>
+</b>Screen
+						is a full-screen window manager that multiplexes a physical
+						terminal between several processes, typically interactive
+						shells. Each virtual terminal provides the functions of the DEC
+						VT100 terminal. <br/>
+<br/>
+When screen is called, it creates a
+						single window with a shell in it and then gets out of your way
+						so that you can use the program as you normally would. Then, at
+						any time, you can create new (full-screen) windows with other
+						programs in them (including more shells), kill the current
+						window, view a list of the active windows, switch between
+						windows, etc. All windows run their programs completely
+						independent of each other. Programs continue to run when their
+						window is currently not visible.<br/>
+<br/>
+Everything you type
+						is sent to the program running in the current window. The only
+						exception to this is the one keystroke that is used to initiate
+						a command to the window manager. By default, each command
+						begins with a control-a, and is followed by one other
+						keystroke. <br/>
+<br/>
+The standard way to create a new window
+						is to type Ctrl-a c. This creates a new window running a shell
+						and switches to that window immediately, regardless of the
+						state of the process running in the current window.
+						<br/>
+<br/>
+<b>History<br/>
+<br/>
+</b>The first version of the
+						screen program was published on 20th March 1987 by Oliver
+						Laumann, Technical University of Berlin, on the net.sources
+						group. This was version 1.1b and called „BSD screen manager“.
+						For ELKS the version 2.01a was used which was published on 19th
+						October 1988. This is already a much extended version from
+						1.1b. <br/>
+<br/>
+This document covers the features implemented
+						in the version used by ELKS. <br/>
+<br/>
+<b>Invoking
+						screen<br/>
+<br/>
+</b>Screen supports the following command
+						line parameters:<br/>
+<br/>
+‘-a’ <br/>
+Include all
+						capabilities (with some minor exceptions) in each window’s
+						termcap, even if screen must redraw parts of the display in
+						order to implement a function.<br/>
+ <br/>
+‘-e xy’ <br/>
+Set
+						the command character to x, and the character generating a
+						literal command character (when typed after the command
+						character) to y. The defaults are Ctrl+a and a, which can be
+						specified as ‘-eAa’. This option is equivalent to the
+						command escape in the .screenrc file.<br/>
+<br/>
+‘-f’ <br/>
+Set
+						flow-control to on.<br/>
+<br/>
+‘-n’ <br/>
+turns off
+						flow-control<br/>
+<br/>
+‘-r‘ <br/>
+Resume a detached screen
+						session. No other options may be specified. This feature is
+						currently disabled for ELKS.<br/>
+<br/>
+<b>Commands<br/>
+<br/>
+</b>While
+						in a screen session you can send the following commands to
+						screen. Each keyboard command consists of a Ctrl-a character
+						followed by one other character. This character can also be
+						pressed in combination with the CTRL key.<br/>
+<br/>
+Ctrl+a ?
+						Displays commands and their defaults (help)<br/>
+Ctrl+a c
+						Create a new window (with shell) (shell)<br/>
+Ctrl+a n Switch
+						to the next window. (next)<br/>
+Ctrl+ p Switch to the previous
+						window (opposite of C-a n). (prev)<br/>
+Ctrl+a w Show a list of
+						active windows. (windows)<br/>
+Ctrl+a 0 opens window 0
+						(screen0)<br/>
+    …..<br/>
+Ctrl+a 9 opens window 9
+						(screen0)<br/>
+Ctrl+a k Destroy the current window.
+						(kill)<br/>
+Ctrl+a K Kill all windows and terminate screen.
+						(quit)<br/>
+Ctrl+a l Fully refresh the current window.
+						(redisplay)<br/>
+Ctrl+a h Write a hardcopy of the current
+						window to the file “hardcopy.n”. (hardcopy)<br/>
+Ctrl+a v
+						Display the version and compilation date. (version)<br/>
+Ctrl+a
+						q Send a ^Q (ASCII XON) to the current window. This has to be
+						enabled <br/>
+with the -f  command line parameter. (xon)<br/>
+Ctrl+a
+						s Send a ^S (ASCII XOFF) to the current window. (xoff)<br/>
+Ctrl+a
+						. Write out a .termcap file. (dumptermcap)<br/>
+Ctrl+a t Show
+						the load average and xref. (time)<br/>
+Ctrl+a d Detach from the
+						current screen session, and leave it running. (detach) <br/>
+Use
+						screen -r to resume. Currently disabled.<br/>
+<br/>
+You can
+						also specify these commands in the .screenrc file, the command
+						keywords for this are specified in brackets above.<br/>
+<br/>
+<b>The
+						.screenrc file<br/>
+</b><br/>
+When screen is invoked, it
+						executes initialization commands from the file .screenrc in the
+						user’s home directory.<br/>
+Commands in this file are used to
+						set options, bind commands to keys, and to automatically
+						establish one or more windows at the beginning of your screen
+						session. Commands are listed one per line, with empty lines
+						being ignored. A command’s arguments are separated by tabs or
+						spaces, and may be surrounded by single or double quotes. A ‘#’
+						turns the rest of the line into a comment, except in quotes.
+						<br/>
+<br/>
+Commands in `.screenrc' are mainly used to
+						automatically establish a number of windows each time screen is
+						called, and to bind functions to specific keys.  In this
+						version of screen, the following initialization commands are
+						supported in the .screenrc
+						file:<br/>
+screen<br/>
+escape<br/>
+bind<br/>
+bell<br/>
+chdir<br/>
+mode<br/>
+<br/>
+a)
+						Screen Command<br/>
+<br/>
+screen [n] [cmds args]<br/>
+<br/>
+Establish
+						a window. If an optional number n in the range 0..9 is given,
+						the window number n is assigned to the newly created window
+						(or, if this number is already in use, the next higher number).
+						Note that n has a value of zero for the standard shell window
+						created after `.screenrc'  has been read.  If a command is
+						specified after `screen', this command (with the given
+						arguments) is started in the window; if no command is given, a
+						shell is created in the window.	Thus, if your `.screenrc'
+						contains the lines<br/>
+<br/>
+# example for .screenrc:<br/>
+screen
+						1<br/>
+screen 2 /usr/ucb/telnet foobar<br/>
+<br/>
+screen
+						creates a shell window (window #1), a window with a TELNET
+						connection to the machine foobar (window #2), and, finally, a
+						second shell window (the default window) which gets a window
+						number of zero.  When the initialization is completed, screen
+						always switches to the default window, so window #0 is
+						displayed when the above `.screenrc' is used.<br/>
+ <br/>
+b)
+						Command Character<br/>
+<br/>
+escape xy<br/>
+<br/>
+Set the
+						command character to x and the character generating a literal
+						command character to y. Because it is difficult to enter a
+						control character in a file with an editor, in the ELKS version
+						you enter the letter you want to combine with the CTRL key. So
+						&quot;B“ will be converted by screen for ELKS to Ctrl+B.<br/>
+The
+						escapes command can be used to specify a different command
+						character and a character which, when typed immediately after
+						the command character, generates a literal command character. 
+						The defaults for these two characters are &quot;Ctrl+a&quot;
+						and „a“'. It may be necessary to change this combination
+						because Ctrl+a is mapped to the common command
+						beginning-of-line in GNU Readline. Linenoise and Bash-like
+						shells. <br/>
+<br/>
+c) Bind Command<br/>
+<br/>
+bind key
+						[function | cmd args]<br/>
+<br/>
+Bind a function to a key.  By
+						default, each function provided by screen is bound to one or
+						more keys as indicated by the above  table,  e.g.  the function
+						to  create a new window is bound to &quot;C-c&quot; and &quot;c&quot;.
+						The `bind' command can be used to redefine the key bindings and
+						to define new bindings.  The key argument is either a single
+						character, a sequence of the form &quot;^x&quot; meaning &quot;C-x&quot;,
+						or an octal number specifying the ASCII code  of the character.
+						 If no further argument is given, any previously established
+						binding for this key is removed.  The function argument can be
+						one of the keywords mentioned in the Commands section
+						above.<br/>
+<br/>
+In addition, a key can be bound such that a
+						window is created running a different command than the shell
+						when that key is pressed.  In this case, the pathname of the
+						command optionally followed by arguments must be given instead
+						of one of the above-listed keywords; the pathname must start
+						with a `/'.  For example, the commands<br/>
+<br/>
+bind ' '
+						windows<br/>
+bind ^f /usr/ucb/telnet foobar<br/>
+bind 033
+						/bin/su<br/>
+<br/>
+1)would bind the space key to the function
+						that displays a list of windows (that is, the function usually
+						invoked by &quot;Ctrl+a w&quot; would also be	available
+						as	Ctrl+a  space, <br/>
+2)bind &quot;Ctrl+f&quot; to the
+						function &quot;create a window with a TELNET connection to
+						foobar&quot;, <br/>
+3) and bind &quot;escape&quot; to the
+						function that creates a window with a super-user shell.<br/>
+<br/>
+d)
+						Bell command<br/>
+<br/>
+When a bell character is sent to a
+						background window, screen displays a notification in the
+						message line.  The notification message can be redefined by
+						means of the &quot;bell&quot; command. Each occurrence of `%'
+						in message is replaced by the number of the window to which a
+						bell has been sent. The default message is<br/>
+<br/>
+'Bell in
+						window %'<br/>
+<br/>
+An empty message can be supplied to the
+						&quot;bell&quot; command to suppress output of a message line
+						(bell &quot;&quot;).<br/>
+<br/>
+bell &quot;&quot;<br/>
+bell
+						&quot;The bell rang in window %&quot;<br/>
+<br/>
+e) Chdir
+						command<br/>
+<br/>
+chdir [directory]<br/>
+<br/>
+Change the
+						current directory of screen to the specified directory or, if
+						called without an argument, to your home directory  (the 
+						value	 of  the environment  variable $HOME).  All windows that
+						are created by means of the &quot;screen&quot; command from
+						within &quot;.screenrc&quot; use this as their default
+						directory.  Without a chdir command, this would be the
+						directory from which screen was invoked.   Hardcopy files are
+						always written to the window's default directory, not the
+						current directory of the process running in the window. <br/>
+<br/>
+There
+						is an example .screenrc file included in the elkscmd/screen
+						directory in the ELKS sources. If you want to use a .screenrc
+						file, you can put your version into the
+						elkscmd/rootfs_template/root/ directory. Then, when you compile
+						ELKS, the .screenrc file will be put into the root directory on
+						the resulting ELKS image. This is the home directory of the
+						user root and will be read when you execute the screen program
+						after logging in as root.<br/>
+<br/>
+Additional information is
+						available in the man page screen.1 in the elks/elkscmd/screen
+						directory. Open this fle with „man ./screen.1“ or man will
+						search in the „/usr“ directory first and load the latest
+						version of this file installed with your Linux distro. This
+						will cover the features in the latest screen version which are
+						not available in this version provided with ELKS.<br/>
+<br/>
+02.05.20
+						Georg Potthast</font></p>
+					</td>
+				</tr>
+			</table>
+			<p align="left" style="margin-bottom: 0cm; line-height: 100%"><br/>
+
+			</p>
+		</td>
+	</tr>
+</table>
+<p style="margin-bottom: 0cm; line-height: 100%"><br/>
+
+</p>
+</body>
+</html>

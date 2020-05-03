@@ -11,8 +11,10 @@ OBJS = \
 	atexit.o \
 	atoi.o \
 	atol.o \
+	basename.o \
 	crypt.o \
 	ctype.o \
+	dirname.o \
 	getcwd.o \
 	getenv.o \
 	getopt.o \

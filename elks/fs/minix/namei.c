@@ -359,9 +359,9 @@ static int empty_dir(register struct inode *inode)
 	if (!offset) {
 	    unmap_brelse(bh);
 	    bh = minix_bread(inode, (__u16)(bo >> BLOCK_SIZE_BITS), 0);
-	    if (!bh) {
+	    if (!bh)
 		continue;
-	    }
+	    map_buffer(bh);
 	}
 	de = (struct minix_dir_entry *) (bh->b_data + offset);
 	if (de->inode) {

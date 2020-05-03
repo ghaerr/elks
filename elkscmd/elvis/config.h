@@ -178,13 +178,6 @@ extern char *strchr();
 # define uchar		unsigned char
 #endif
 
-/* Some compilers prefer to have malloc declared as returning a (void *) */
-#if BSD
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-
 /* Most compilers could benefit from using the "register" storage class */
 #if 1
 #define REG	register

@@ -14,23 +14,15 @@ clock -s
 
 #localip=192.168.1.100
 localip=10.0.2.15
-#interface=/dev/ttyS0
 interface=/dev/eth
+#interface=/dev/ttyS0
 ttybaud=4800
 
 if test -f /bin/ktcp
 then
-	echo -n 'Starting networking:'
-	if test "$interface" != "/dev/eth" 
-	then stty $ttybaud < $interface
-	echo -n ' stty slip'
-	else
-	echo -n ' eth'
-	fi
-	
-	echo ' ktcp'
+	echo 'Starting networking: ktcp'
 	# run ktcp as background daemon if successful starting networking
-	if ktcp -b $localip $interface ; then
+	if ktcp -b -s $ttybaud $localip $interface ; then
 		for daemon in telnetd httpd
 		do
 			if test -f /bin/$daemon

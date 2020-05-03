@@ -9,10 +9,14 @@
 
 
 #include "config.h"
+
+#include <unistd.h>
+#include <string.h>
 #include <ctype.h>
+
 #include "vi.h"
-
-
+#include "tio.h"
+#include "redraw.h"
 
 /* This array describes what each key does */
 #define NO_FUNC		(MARK (*)())0

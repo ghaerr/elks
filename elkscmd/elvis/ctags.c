@@ -44,9 +44,14 @@
  * a line number or a slash-delimited search string.
  */
 
+#include "config.h"
+
 #include <ctype.h>
 #include <stdio.h>
-#include "config.h"
+#include <stdlib.h>
+#include <string.h>
+
+void ctags(FILE *fp, char *name, FILE *refs);
 
 #define REFS	"refs"
 
@@ -156,11 +161,15 @@ main(argc, argv)
 }
 
 
-/* this function finds all tags in a given file */
-ctags(fp, name, refs)
-	FILE	*fp;		/* stream of the file to scan */
-	char	*name;		/* name of the file being scanned */
-	FILE	*refs;		/* NULL, or where to write refs lines */
+/*
+ * This function finds all tags in a given file
+ *
+ * fp    stream of the file to scan
+ * name  name of the file being scanned
+ * refs  NULL, or where to write refs lines
+ */
+
+void ctags(FILE *fp, char *name, FILE *refs)
 {
 	int	context;	/* context - either EXPECTFN, ARGS, or BODY */
 	long	lnum;		/* line number */

@@ -21,18 +21,28 @@
  */
 
 #include "config.h"
-#include "vi.h"
-#include <signal.h>
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <signal.h>
+#include <sys/wait.h>
+
+#include "vi.h"
+
 extern char	**environ;
 
 #if ANY_UNIX
 
-/* This is a new version of the system() function.  The only difference
- * between this one and the library one is: this one uses the o_shell option.
+/* This is a new version of the system() function. The only difference
+ * between this one and the library one is: this one uses the o_shell
+ * option.
+ *
+ * cmd  a command to run
  */
-int system(cmd)
-	char	*cmd;	/* a command to run */
+
+int elvis_system(char *cmd)
 {
 	int	status;	/* exit status of the command */
 

@@ -62,11 +62,7 @@ struct __stdio_file {
 
 typedef struct __stdio_file FILE;
 
-#ifdef __AS386_16__
-#define BUFSIZ	(256)
-#else
-#define BUFSIZ	(2048)
-#endif
+#define BUFSIZ	(1024)
 
 extern FILE stdin[1];
 extern FILE stdout[1];
@@ -150,6 +146,8 @@ int vsnprintf (char * sp, size_t, const char * format, va_list ap);
 
 void perror (const char * s);
 int rename(const char *old, const char *new);
+
+char *tmpnam (char *s);
 
 int scanf (const char * format, ...);
 int sscanf (const char * str, const char * format, ...);

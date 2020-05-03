@@ -16,7 +16,6 @@ include config.mk
 ifdef CMD_basename
 	CFLAGS	+= -DCMD_basename
 	OBJS	+= cmd/basename.o
-	NEED_stripslash	= yes
 endif
 ifdef CMD_cal
 	CFLAGS	+= -DCMD_cal
@@ -73,7 +72,6 @@ endif
 ifdef CMD_dirname
 	CFLAGS	+= -DCMD_dirname
 	OBJS	+= cmd/dirname.o
-	NEED_stripslash	= yes
 endif
 ifdef CMD_du
 	CFLAGS	+= -DCMD_du
@@ -110,9 +108,6 @@ ifdef NEED_copyfile
 endif
 ifdef NEED_isadir
 	OBJS	+= lib/isadir.o
-endif
-ifdef NEED_stripslash
-	OBJS	+= lib/stripslash.o
 endif
 ifdef	NEED_utc_mktime
 	OBJS	+= lib/utc_mktime.o

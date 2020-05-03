@@ -552,31 +552,32 @@ poplocalvars() {
 	}
 }
 
-
-setvarcmd(argc, argv)  register char **argv; {
-	if (argc <= 2)
-		return unsetcmd(argc, argv);
-	else if (argc == 3)
-		setvar(argv[1], argv[2], 0);
-	else
-		error("List assignment not implemented");
-	return 0;
-}
-
-
 /*
  * The unset builtin command.  We unset the function before we unset the
  * variable to allow a function to be unset when there is a readonly variable
  * with the same name.
  */
 
-unsetcmd(argc, argv)  char **argv; {
+int unsetcmd(int argc, char **argv)
+{
 	register char **ap;
 
 	for (ap = argv + 1 ; *ap ; ap++) {
 		unsetfunc(*ap);
 		unsetvar(*ap);
 	}
+	return 0;
+}
+
+
+int setvarcmd(int argc, register char **argv)
+{
+	if (argc <= 2)
+		return unsetcmd(argc, argv);
+	else if (argc == 3)
+		setvar(argv[1], argv[2], 0);
+	else
+		error("List assignment not implemented");
 	return 0;
 }
 

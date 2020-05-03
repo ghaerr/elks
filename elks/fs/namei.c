@@ -475,7 +475,7 @@ int sys_mkdir(char *pathname, int mode)
 #endif
 }
 
-int __do_rmthing(char *pathname, size_t offst)
+int do_rmthing(char *pathname, size_t offst)
 {
     register struct inode *dirp;
     register struct inode_operations *iop;
@@ -511,13 +511,13 @@ int __do_rmthing(char *pathname, size_t offst)
 
 int sys_rmdir(char *pathname)
 {
-    return __do_rmthing(pathname, offsetof(struct inode_operations,rmdir));
+    return do_rmthing(pathname, offsetof(struct inode_operations,rmdir));
 }
 
 int sys_unlink(char *pathname)
 {
-    debug_file("UNLINK '%s'\n", get_userspace_filename(pathname));
-    return __do_rmthing(pathname, offsetof(struct inode_operations,unlink));
+    debug_file("UNLINK '%t'\n", pathname);
+    return do_rmthing(pathname, offsetof(struct inode_operations,unlink));
 }
 
 int sys_symlink(char *oldname, char *pathname)
@@ -537,8 +537,7 @@ int sys_link(char *oldname, char *pathname)
     struct inode *oldinode;
     int error;
 
-    debug_file("LINK '%s' ", get_userspace_filename(oldname));
-    debug_file("'%s'\n", get_userspace_filename(pathname));
+    debug_file("LINK '%t' '%t'\n", oldname, pathname);
     error = namei(oldname, &oldinode, 0, 0);
     if (!error)
 	error = do_mknod(pathname, offsetof(struct inode_operations,link), (int)oldinode, 0);

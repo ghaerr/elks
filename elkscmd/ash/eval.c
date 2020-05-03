@@ -646,7 +646,8 @@ evalcommand(cmd, flags, backcmd)
 			return;
 		}
 		/* implement the bltin builtin here */
-		if (cmdentry.cmdtype == CMDBUILTIN && cmdentry.u.index == BLTINCMD) {
+		if ((cmdentry.cmdtype == CMDBUILTIN) &&
+			(cmdentry.u.index == BLTINCMD)) {
 			for (;;) {
 				argv++;
 				if (--argc == 0)

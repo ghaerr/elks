@@ -11,9 +11,17 @@
 /* This file contains the main() function of vi */
 
 #include "config.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 #include <signal.h>
 #include <setjmp.h>
+
 #include "vi.h"
+#include "ex.h"
+#include "tmp.h"
 
 extern		trapint(); /* defined below */
 extern char	*getenv();
@@ -25,9 +33,7 @@ static init_digraphs();
 
 /*---------------------------------------------------------------------*/
 
-void main(argc, argv)
-	int	argc;
-	REG char	*argv[];
+int main(int argc, REG char *argv[])
 {
 	int	i;
 	char	*cmd = (char *)0;
@@ -330,7 +336,7 @@ void main(argc, argv)
 	refresh();
 	endwin();
 
-	exit(0);
+	return 0;
 	/*NOTREACHED*/
 }
 

@@ -15,6 +15,8 @@ This section contains some HOWTOs to help using ELKS.
 
 * [Shell command line editing and Tab completion](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/html/user/shell.html)
 
+* [The screen window manager](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/html/user/screen.html)
+
 * [Writing applications for ELKS in C](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/html/user/writing_apps_in_C.html)
 
 * [Writing applications for ELKS in assembler](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/html/user/writing_apps_in_assembler.html)
@@ -79,7 +81,9 @@ This section contains some HOWTOs to help using ELKS.
 
 * [Some development notes](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/text/Development-notes.txt)
 
-* [Text file that is used for help when you run "make config"](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/text/Configure.help.txt)
+* [Add an application to ELKS](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/text/Development-notes.txt)
+
+* [Text file that is used for help when you run "make config"](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/text/add_app_to_elks.txt)
 
 * [Notes on the code itself](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/text/source.txt)
 

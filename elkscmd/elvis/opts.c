@@ -13,6 +13,11 @@
  */
 
 #include "config.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "vi.h"
 #ifndef NULL
 #define NULL (char *)0

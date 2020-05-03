@@ -8,11 +8,17 @@
  * not modified.
  */
 
-char AnsiVersion[] = "ansi 2.0a 19-Oct-88";
+char AnsiVersion[] = "ansi 2.0a (ELKS) 25-Apr-2020";
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <string.h>
+#include <termcap.h>
 #include "screen.h"
+#include "ansi.h"
 
 #define A_SO     0x1    /* Standout mode */
 #define A_US     0x2    /* Underscore mode */
@@ -42,7 +48,7 @@ enum move_t {
 
 #define ASCII        0
 
-extern char *getenv(), *tgetstr(), *tgoto(), *malloc();
+extern char *getenv(), *tgetstr(), *tgoto();
 
 int rows, cols;
 int status;
@@ -56,9 +62,9 @@ time_t TimeDisplayed;
 
 static char tbuf[1024], tentry[1024];
 static char *tp = tentry;
-static char *TI, *TE, *BL, *VB, *BC, *CR, *NL, *CL, *IS, *CM;
+ char *TI, *TE, *BL, *VB, *BC, *CR, *NL, *CL, *IS, *CM;
 static char *US, *UE, *SO, *SE, *CE, *CD, *DO, *SR, *SF, *AL;
-static char *CS, *DL, *DC, *IC, *IM, *EI, *UP, *ND, *KS, *KE;
+char *CS, *DL, *DC, *IC, *IM, *EI, *UP, *ND, *KS, *KE;
 static char *MB, *MD, *MH, *MR, *ME, *PO, *PF;
 static char *CDC, *CDL, *CAL;
 static AM;
@@ -110,7 +116,7 @@ InitTerm () {
 	Msg (0, "Clear screen capability required.");
     if (!(CM = tgetstr ("cm", &tp)))
 	Msg (0, "Addressable cursor capability required.");
-    if (s = tgetstr ("ps", &tp))
+    if ((s = tgetstr ("ps", &tp)))
 	PC = s[0];
     flowctl = !tgetflag ("NF");
     AM = tgetflag ("am");
@@ -130,7 +136,7 @@ InitTerm () {
     if (!(CR = tgetstr ("cr", &tp)))
 	CR = "\r";
     if (!(NL = tgetstr ("nl", &tp)))
-	NL = "\n";
+	NL = "\r\n"; /*add CR for ELKS */
     IS = tgetstr ("is", &tp);
     if (tgetnum ("sg") <= 0) {
 	US = tgetstr ("us", &tp);
@@ -204,11 +210,13 @@ InitTerm () {
     PutStr (IS);
     PutStr (TI);
     PutStr (CL);
+    return 0;
 }
 
 FinitTerm () {
     PutStr (TE);
     PutStr (IS);
+    return 0;
 }
 
 static AddCap (s) char *s; {
@@ -220,6 +228,7 @@ static AddCap (s) char *s; {
     }
     strcat (Termcap, s);
     tcLineLen += n;
+    return 0;
 }
 
 char *MakeTermcap (aflag) {
@@ -281,7 +290,7 @@ char *MakeTermcap (aflag) {
 	AddCap ("pf=\\E[4i:");
     }
     for (pp = KeyCaps; *pp; ++pp)
-	if (p = tgetstr (*pp, &tp)) {
+	if ((p = tgetstr (*pp, &tp))) {
 	    MakeString (*pp, buf, p);
 	    AddCap (buf);
 	}
@@ -293,7 +302,7 @@ static MakeString (cap, buf, s) char *cap, *buf; register char *s; {
     register unsigned c;
 
     *p++ = *cap++; *p++ = *cap; *p++ = '=';
-    while (c = *s++) {
+    while ((c = *s++)) {
 	switch (c) {
 	case '\033':
 	    *p++ = '\\'; *p++ = 'E'; break;
@@ -310,6 +319,7 @@ static MakeString (cap, buf, s) char *cap, *buf; register char *s; {
 	}
     }
     *p++ = ':'; *p = '\0';
+    return 0;
 }
 
 Activate (wp) struct win *wp; {
@@ -324,6 +334,7 @@ Activate (wp) struct win *wp; {
 	PutStr (tgoto (CS, curr->bot, curr->top));
     Redisplay ();
     KeypadMode (curr->keypad);
+    return 0;
 }
 
 ResetScreen (p) register struct win *p; {
@@ -348,9 +359,10 @@ ResetScreen (p) register struct win *p; {
     p->LocalCharset = G0;
     for (i = G0; i <= G3; i++)
 	p->charsets[i] = ASCII;
+    return 0;
 }
 
-WriteString (wp, buf, len) struct win *wp; register char *buf; {
+void WriteString (wp, buf, len) struct win *wp; register char *buf; {
     register c, intermediate = 0;
 
     if (!len)
@@ -569,7 +581,7 @@ static Special (c) register c; {
     return 0;
 }
 
-static DoESC (c, intermediate) {
+void DoESC (c, intermediate) {
     switch (intermediate) {
     case 0:
 	switch (c) {
@@ -811,20 +823,24 @@ static DoCSI (c, intermediate) {
 	}
 	break;
     }
+    return 0;
 }
 
 static PutChar (c) {
     putchar (c);
+    return 0;
 }
 
 static PutStr (s) char *s; {
     if (display && s)
 	tputs (s, 1, PutChar);
+    return 0;
 }
 
 static CPutStr (s, c) char *s; {
     if (display && s)
 	tputs (tgoto (s, 0, c), 1, PutChar);  /* XXX */
+    return 0;
 }
 
 static SetChar (c) register c; {
@@ -833,12 +849,14 @@ static SetChar (c) register c; {
     p->image[p->y][p->x] = c;
     p->attr[p->y][p->x] = p->LocalAttr;
     p->font[p->y][p->x] = p->charsets[p->ss ? p->ss : p->LocalCharset];
+    return 0;
 }
 
 static StartString (type) enum string_t type; {
     curr->StringType = type;
     curr->stringp = curr->string;
     curr->state = STR;
+    return 0;
 }
 
 static AddChar (c) {
@@ -846,6 +864,7 @@ static AddChar (c) {
 	curr->state = LIT;
     else
 	*(curr->stringp)++ = c;
+    return 0;
 }
 
 static PrintChar (c) {
@@ -853,6 +872,7 @@ static PrintChar (c) {
 	PrintFlush ();
     else
 	*(curr->stringp)++ = c;
+    return 0;
 }
 
 static PrintFlush () {
@@ -864,6 +884,7 @@ static PrintFlush () {
 	(void) fflush (stdout);
 	curr->stringp = curr->string;
     }
+    return 0;
 }
 
 /* Insert mode is a toggle on some terminals, so we need this hack:
@@ -875,6 +896,7 @@ static InsertMode (on) {
     } else if (insert)
 	PutStr (EI);
     insert = on;
+    return 0;
 }
 
 /* ...and maybe keypad application mode is a toggle, too:
@@ -886,6 +908,7 @@ static KeypadMode (on) {
     } else if (keypad)
 	PutStr (KE);
     keypad = on;
+    return 0;
 }
 
 static DesignateCharset (c, n) {
@@ -899,6 +922,7 @@ static DesignateCharset (c, n) {
 	    GlobalCharset = c;
 	}
     }
+    return 0;
 }
 
 static MapCharset (n) {
@@ -908,9 +932,10 @@ static MapCharset (n) {
 	NewCharset (GlobalCharset, curr->charsets[n]);
 	GlobalCharset = curr->charsets[n];
     }
+    return 0;
 }
 
-static NewCharset (old, new) {
+static void NewCharset (old, new) {
     char buf[8];
 
     if (old == new)
@@ -921,7 +946,7 @@ static NewCharset (old, new) {
     }
 }
 
-static SaveCursor () {
+static SaveCursor (void) {
     curr->saved = 1;
     curr->Saved_x = curr->x;
     curr->Saved_y = curr->y;
@@ -929,9 +954,10 @@ static SaveCursor () {
     curr->SavedLocalCharset = curr->LocalCharset;
     bcopy ((char *)curr->charsets, (char *)curr->SavedCharsets,
 	4 * sizeof (int));
+    return 0;
 }
 
-static RestoreCursor () {
+static RestoreCursor (void) {
     if (curr->saved) {
 	curr->LocalAttr = curr->SavedLocalAttr;
 	NewRendition (GlobalAttr, curr->LocalAttr);
@@ -945,14 +971,15 @@ static RestoreCursor () {
 	curr->x = curr->Saved_x;
 	curr->y = curr->Saved_y;
     }
+    return 0;
 }
 
 /*ARGSUSED*/
-static CountChars (c) {
+static void CountChars (int c) {
     StrCost++;
 }
 
-static CalcCost (s) register char *s; {
+static CalcCost (register char* s) {
     if (s) {
 	StrCost = 0;
 	tputs (s, 1, CountChars);
@@ -960,7 +987,7 @@ static CalcCost (s) register char *s; {
     } else return EXPENSIVE;
 }
 
-static Goto (y1, x1, y2, x2) {
+static void Goto (int y1, int x1, int y2, int x2) {
     register dy, dx;
     register cost = 0;
     register char *s;
@@ -1041,7 +1068,7 @@ DoCM:
     }
 }
 
-static RewriteCost (y, x1, x2) {
+static RewriteCost (int y, int x1, int x2) {
     register cost, dx;
     register char *p = curr->attr[y]+x1, *f = curr->font[y]+x1;
 
@@ -1059,7 +1086,7 @@ static RewriteCost (y, x1, x2) {
     return cost;
 }
 
-static BackSpace () {
+static BackSpace (void) {
     if (curr->x > 0) {
 	if (curr->x < cols) {
 	    if (BC)
@@ -1069,16 +1096,18 @@ static BackSpace () {
 	}
 	curr->x--;
     }
+    return 0;
 }
 
-static Return () {
+static Return (void) {
     if (curr->x > 0) {
 	curr->x = 0;
 	PutStr (CR);
     }
+    return 0;
 }
 
-static LineFeed () {
+static LineFeed (void) {
     if (curr->y == curr->bot) {
 	ScrollUpMap (curr->image);
 	ScrollUpMap (curr->attr);
@@ -1087,9 +1116,10 @@ static LineFeed () {
 	curr->y++;
     }
     PutStr (NL);
+    return 0;
 }
 
-static ReverseLineFeed () {
+static ReverseLineFeed (void) {
     if (curr->y == curr->top) {
 	ScrollDownMap (curr->image);
 	ScrollDownMap (curr->attr);
@@ -1104,9 +1134,10 @@ static ReverseLineFeed () {
     } else if (curr->y > 0) {
 	CursorUp (1);
     }
+    return 0;
 }
 
-static InsertAChar (c) {
+static void InsertAChar (int c) {
     register y = curr->y, x = curr->x;
 
     if (x == cols)
@@ -1134,7 +1165,7 @@ static InsertAChar (c) {
     }
 }
 
-static InsertChar (n) {
+static void InsertChar (int n) {
     register i, y = curr->y, x = curr->x;
 
     if (x == cols)
@@ -1166,7 +1197,7 @@ static InsertChar (n) {
     }
 }
 
-static DeleteChar (n) {
+static void DeleteChar (int n) {
     register i, y = curr->y, x = curr->x;
 
     if (x == cols)
@@ -1193,7 +1224,7 @@ static DeleteChar (n) {
     }
 }
 
-static DeleteLine (n) {
+static DeleteLine (int n) {
     register i, old = curr->top;
 
     if (n > curr->bot-curr->y+1)
@@ -1222,9 +1253,10 @@ static DeleteLine (n) {
 	Goto (-1, -1, curr->y, curr->x);
     } else Redisplay ();
     curr->top = old;
+    return 0;
 }
 
-static InsertLine (n) {
+static InsertLine (int n) {
     register i, old = curr->top;
 
     if (n > curr->bot-curr->y+1)
@@ -1253,9 +1285,10 @@ static InsertLine (n) {
 	Goto (-1, -1, curr->y, curr->x);
     } else Redisplay ();
     curr->top = old;
+    return 0;
 }
 
-static ScrollUpMap (pp) char **pp; {
+static ScrollUpMap (char **pp) {
     register char *tmp = pp[curr->top];
 
     bcopy ((char *)(pp+curr->top+1), (char *)(pp+curr->top),
@@ -1265,9 +1298,10 @@ static ScrollUpMap (pp) char **pp; {
     else
 	bzero (tmp, cols);
     pp[curr->bot] = tmp;
+    return 0;
 }
 
-static ScrollDownMap (pp) char **pp; {
+static ScrollDownMap (char **pp) {
     register char *tmp = pp[curr->bot];
 
     bcopy ((char *)(pp+curr->top), (char *)(pp+curr->top+1),
@@ -1277,9 +1311,10 @@ static ScrollDownMap (pp) char **pp; {
     else
 	bzero (tmp, cols);
     pp[curr->top] = tmp;
+    return 0;
 }
 
-static ForwardTab () {
+static ForwardTab (void) {
     register x = curr->x;
 
     if (curr->tabs[x] && x < cols-1)
@@ -1288,9 +1323,10 @@ static ForwardTab () {
 	x++;
     Goto (curr->y, curr->x, curr->y, x);
     curr->x = x;
+    return 0;
 }
 
-static BackwardTab () {
+static BackwardTab (void) {
     register x = curr->x;
 
     if (curr->tabs[x] && x > 0)
@@ -1299,9 +1335,10 @@ static BackwardTab () {
 	x--;
     Goto (curr->y, curr->x, curr->y, x);
     curr->x = x;
+    return 0;
 }
 
-static ClearScreen () {
+static ClearScreen (void) {
     register i;
 
     PutStr (CL);
@@ -1310,9 +1347,10 @@ static ClearScreen () {
 	bzero (curr->attr[i], cols);
 	bzero (curr->font[i], cols);
     }
+    return 0;
 }
 
-static ClearFromBOS () {
+static ClearFromBOS (void) {
     register n, y = curr->y, x = curr->x;
 
     for (n = 0; n < y; ++n)
@@ -1320,9 +1358,10 @@ static ClearFromBOS () {
     ClearInLine (1, y, 0, x);
     Goto (curr->y, curr->x, y, x);
     curr->y = y; curr->x = x;
+    return 0;
 }
 
-static ClearToEOS () {
+static ClearToEOS (void) {
     register n, y = curr->y, x = curr->x;
 
     if (CD)
@@ -1332,25 +1371,28 @@ static ClearToEOS () {
 	ClearInLine (!CD, n, 0, cols-1);
     Goto (curr->y, curr->x, y, x);
     curr->y = y; curr->x = x;
+    return 0;
 }
 
-static ClearLine () {
+static ClearLine (void) {
     register y = curr->y, x = curr->x;
 
     ClearInLine (1, y, 0, cols-1);
     Goto (curr->y, curr->x, y, x);
     curr->y = y; curr->x = x;
+    return 0;
 }
 
-static ClearToEOL () {
+static ClearToEOL (void) {
     register y = curr->y, x = curr->x;
 
     ClearInLine (1, y, x, cols-1);
     Goto (curr->y, curr->x, y, x);
     curr->y = y; curr->x = x;
+    return 0;
 }
 
-static ClearFromBOL () {
+static void ClearFromBOL (void) {
     register y = curr->y, x = curr->x;
 
     ClearInLine (1, y, 0, x);
@@ -1358,12 +1400,12 @@ static ClearFromBOL () {
     curr->y = y; curr->x = x;
 }
 
-static ClearInLine (displ, y, x1, x2) {
+static void ClearInLine (int displ, int y, int x1, int x2) {
     register i, n;
 
     if (x1 == cols) x1--;
     if (x2 == cols) x2--;
-    if (n = x2 - x1 + 1) {
+    if ((n = (x2 - x1 + 1))) {
 	bclear (curr->image[y]+x1, n);
 	bzero (curr->attr[y]+x1, n);
 	bzero (curr->font[y]+x1, n);
@@ -1388,7 +1430,7 @@ static ClearInLine (displ, y, x1, x2) {
     }
 }
 
-static CursorRight (n) register n; {
+static void CursorRight (register n) {
     register x = curr->x;
 
     if (x == cols)
@@ -1398,7 +1440,7 @@ static CursorRight (n) register n; {
     Goto (curr->y, x, curr->y, curr->x);
 }
 
-static CursorUp (n) register n; {
+static void CursorUp (register n) {
     register y = curr->y;
 
     if ((curr->y -= n) < curr->top)
@@ -1406,7 +1448,7 @@ static CursorUp (n) register n; {
     Goto (y, curr->x, curr->y, curr->x);
 }
 
-static CursorDown (n) register n; {
+static void CursorDown (register n) {
     register y = curr->y;
 
     if ((curr->y += n) > curr->bot)
@@ -1414,7 +1456,7 @@ static CursorDown (n) register n; {
     Goto (y, curr->x, curr->y, curr->x);
 }
 
-static CursorLeft (n) register n; {
+static void CursorLeft (register n) {
     register x = curr->x;
 
     if ((curr->x -= n) < 0)
@@ -1422,7 +1464,7 @@ static CursorLeft (n) register n; {
     Goto (curr->y, x, curr->y, curr->x);
 }
 
-static SetMode (on) {
+static SetMode (int on) {
     register i;
 
     for (i = 0; i < curr->NumArgs; ++i) {
@@ -1433,9 +1475,10 @@ static SetMode (on) {
 	    break;
 	}
     }
+    return 0;
 }
 
-static SelectRendition () {
+static SelectRendition (void) {
     register i, old = GlobalAttr;
 
     if (curr->NumArgs == 0)
@@ -1443,9 +1486,10 @@ static SelectRendition () {
     else for (i = 0; i < curr->NumArgs; ++i)
 	SetRendition (curr->args[i]);
     NewRendition (old, GlobalAttr);
+    return 0;
 }
 
-static SetRendition (n) register n; {
+static SetRendition (register n) {
     switch (n) {
     case 0:
 	GlobalAttr = 0; break;
@@ -1473,9 +1517,10 @@ static SetRendition (n) register n; {
 	GlobalAttr &= ~A_RV; break;
     }
     curr->LocalAttr = GlobalAttr;
+    return 0;
 }
 
-static NewRendition (old, new) register old, new; {
+static void NewRendition (register old, register new) {
     register i;
 
     if (old == new)
@@ -1508,21 +1553,23 @@ static NewRendition (old, new) register old, new; {
 	PutStr (MR);
 }
 
-static SaveAttr (newattr) {
+static SaveAttr (int newattr) {
     NewRendition (GlobalAttr, newattr);
     NewCharset (GlobalCharset, ASCII);
     if (curr->insert)
 	InsertMode (0);
+    return 0;
 }
 
-static RestoreAttr (oldattr) {
+static RestoreAttr (int oldattr) {
     NewRendition (oldattr, GlobalAttr);
     NewCharset (ASCII, GlobalCharset);
     if (curr->insert)
 	InsertMode (1);
+    return 0;
 }
 
-static FillWithEs () {
+static FillWithEs (void) {
     register i;
     register char *p, *ep;
 
@@ -1538,9 +1585,10 @@ static FillWithEs () {
     }
     RestoreAttr (0);
     Redisplay ();
+    return 0;
 }
 
-static Redisplay () {
+static Redisplay (void) {
     register i;
 
     PutStr (CL);
@@ -1556,9 +1604,10 @@ static Redisplay () {
     NewRendition (TmpAttr, GlobalAttr);
     NewCharset (TmpCharset, GlobalCharset);
     Goto (last_y, last_x, curr->y, curr->x);
+    return 0;
 }
 
-static DisplayLine (os, oa, of, s, as, fs, y, from, to)
+static void DisplayLine (os, oa, of, s, as, fs, y, from, to)
 	register char *os, *oa, *of, *s, *as, *fs; {
     register i, x, a, f;
 
@@ -1588,7 +1637,7 @@ static DisplayLine (os, oa, of, s, as, fs, y, from, to)
     }
 }
 
-static RedisplayLine (os, oa, of, y, from, to) char *os, *oa, *of; {
+static void RedisplayLine (os, oa, of, y, from, to) char *os, *oa, *of; {
     if (curr->insert)
 	InsertMode (0);
     NewRendition (GlobalAttr, 0);
@@ -1605,12 +1654,13 @@ static RedisplayLine (os, oa, of, y, from, to) char *os, *oa, *of; {
 	InsertMode (1);
 }
 
-static MakeBlankLine (p, n) register char *p; register n; {
+static MakeBlankLine (register char *p, register n) {
     do *p++ = ' ';
     while (--n);
+    return 0;
 }
 
-MakeStatus (msg, wp) char *msg; struct win *wp; {
+int MakeStatus (msg, wp) char *msg; struct win *wp; {
     struct win *ocurr = curr;
     int odisplay = display;
     register char *s, *t;
@@ -1639,9 +1689,10 @@ MakeStatus (msg, wp) char *msg; struct win *wp; {
     }
     curr = ocurr;
     display = odisplay;
+    return 0;
 }
 
-RemoveStatus (p) struct win *p; {
+void RemoveStatus (struct win *p)  {
     struct win *ocurr = curr;
     int odisplay = display;
 

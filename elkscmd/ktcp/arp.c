@@ -9,7 +9,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <linuxmt/arpa/inet.h>
 
@@ -39,7 +42,7 @@ typedef struct arp_cache_s arp_cache_t;
 static arp_cache_t _arp_cache [ARP_CACHE_MAX];
 
 
-static int arp_cache_init (void)
+static void arp_cache_init (void)
 {
 	memset (_arp_cache, 0, ARP_CACHE_MAX * sizeof (arp_cache_t));
 }
@@ -118,7 +121,6 @@ void arp_reply(char *packet,int size)
 {
     struct arp_addr apair;
     struct arp *arp_r;
-  __u8 *addr;
 
     arp_r = (struct arp *) packet;
 
@@ -146,13 +148,10 @@ void arp_reply(char *packet,int size)
 int arp_request(ipaddr_t ipaddress)
 {
     int i;
-    __u8 *addr;
     fd_set fdset;
     struct arp *arp_r;
     static char packet[sizeof(struct arp)];
     arp_r = (struct arp *)packet;
-
-    addr = &ipaddress;
 
     /* build arp request */
     for (i=0;i<6;i++) arp_r->ll_eth_dest[i]=0xFF; /*broadcast*/
