@@ -44,6 +44,7 @@ char copyright[] =
 static char sccsid[] = "@(#)main.c	5.2 (Berkeley) 3/13/91";
 #endif /* not lint */
 
+#include <unistd.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -56,6 +57,7 @@ static char sccsid[] = "@(#)main.c	5.2 (Berkeley) 3/13/91";
 #include "parser.h"
 #include "nodes.h"
 #include "eval.h"
+#include "exec.h"
 #include "jobs.h"
 #include "input.h"
 #include "trap.h"
@@ -309,7 +311,8 @@ readcmdfile(name)
  * search for the file, but a path search doesn't make any sense.
  */
 
-dotcmd(argc, argv)  register char **argv; {
+int dotcmd(int argc, register char **argv)
+{
 	exitstatus = 0;
 	if (argc >= 2) {		/* That's what SVR2 does */
 		setinputfile(argv[1], 1);
@@ -321,14 +324,16 @@ dotcmd(argc, argv)  register char **argv; {
 }
 
 
-exitcmd(argc, argv)  char **argv; {
+void exitcmd(int argc, char **argv)
+{
 	if (argc > 1)
 		exitstatus = number(argv[1]);
 	exitshell(exitstatus);
 }
 
 
-lccmd(argc, argv)  char **argv; {
+int lccmd(int argc, char **argv)
+{
 	if (argc > 1) {
 		defun(argv[1], prevcmd);
 		return 0;

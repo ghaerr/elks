@@ -34,6 +34,8 @@
  * SUCH DAMAGE.
  */
 
+#include <stdlib.h>
+
 #ifndef lint
 static char sccsid[] = "@(#)mystring.c	5.1 (Berkeley) 3/7/91";
 #endif /* not lint */
