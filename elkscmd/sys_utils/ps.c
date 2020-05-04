@@ -64,7 +64,6 @@ void process_name(int fd, unsigned int off, unsigned int seg)
 			return;
 		printf("%s ",buf);
 	}
-	printf("\n");
 }
 
 
@@ -113,6 +112,7 @@ int main(int argc, char **argv)
 {
 	int i, c, fd;
 	unsigned int j, ds, off;
+	word_t cseg, dseg;
 	struct task_struct task_table;
 	struct passwd * pwent;
 
@@ -162,26 +162,31 @@ int main(int argc, char **argv)
 				c);
 
 		/* CSEG*/
-		printf("%4x ", getword(fd, (word_t)task_table.mm.seg_code+offsetof(struct segment, base), ds));
+		cseg = (word_t)task_table.mm.seg_code;
+		printf("%4x ", cseg? getword(fd, (word_t)cseg+offsetof(struct segment, base), ds): 0);
 
 		/* DSEG*/
-		printf("%4x ", getword(fd, (word_t)task_table.mm.seg_data+offsetof(struct segment, base), ds));
+		dseg = (word_t)task_table.mm.seg_data;
+		printf("%4x ", dseg? getword(fd, (word_t)dseg+offsetof(struct segment, base), ds): 0);
 
-		/* heap*/
-		printf("%5d ", (word_t)(task_table.t_endbrk - task_table.t_enddata));
+		if (dseg) {
+			/* heap*/
+			printf("%5d ", (word_t)(task_table.t_endbrk - task_table.t_enddata));
 
-		/* free*/
-		printf(" %5d ", (word_t)(task_table.t_regs.sp - task_table.t_endbrk));
+			/* free*/
+			printf(" %5d ", (word_t)(task_table.t_regs.sp - task_table.t_endbrk));
 
-		/* stack*/
-		//printf("%5d ", (word_t)(task_table.t_begstack - task_table.t_regs.sp));
+			/* stack*/
+			//printf("%5d ", (word_t)(task_table.t_begstack - task_table.t_regs.sp));
 
-		/* size*/
-		segext_t size = getword(fd, (word_t)task_table.mm.seg_code+offsetof(struct segment, size), ds)
-					  + getword(fd, (word_t)task_table.mm.seg_data+offsetof(struct segment, size), ds);
-		printf("%6ld ", (long)size << 4);
+			/* size*/
+			segext_t size = getword(fd, (word_t)cseg+offsetof(struct segment, size), ds)
+							+ getword(fd, (word_t)dseg+offsetof(struct segment, size), ds);
+			printf("%6ld ", (long)size << 4);
 
-		process_name(fd, task_table.t_begstack, task_table.t_regs.ss);
+			process_name(fd, task_table.t_begstack, task_table.t_regs.ss);
+		}
+		printf("\n");
 	}
 	return 0;
 }
