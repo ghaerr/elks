@@ -276,13 +276,15 @@ int main(int argc, char **argv)
 	init_hist();
 #endif /* CMD_HISTORY */
 
-	if (argc > 1) {
-		readfile(argv[1]);
-	} else {
-		readfile(NULL);
+	if (argc > 2 && !strcmp(argv[1], "-c")) {
+		command(argv[2]);
 	}
-	exit(0);
+	else if (argc > 1)
+		readfile(argv[1]);
+	else
+		readfile(NULL);
 
+	exit(0);
 }
 
 
