@@ -66,7 +66,7 @@ extern int optind;
  * but we'll specify it here just in case it's been left out.
  */
 #ifndef LINE_MAX
-#define LINE_MAX 2048		/* minimum acceptable lower bound */
+#define LINE_MAX 128		/* minimum acceptable lower bound */
 #endif
 
 /* Magic numbers suggested or required by Posix specification */

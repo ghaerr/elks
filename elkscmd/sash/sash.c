@@ -255,6 +255,14 @@ int main(int argc, char **argv)
 	else cp = argv[0];
 	isbinshell = !strcmp(cp, "sh");
 
+#ifdef CMD_SOURCE
+	sourcecfg("/etc", CFGFILE);
+
+	cp = getenv("HOME");
+	if (cp)
+		sourcecfg(cp, "." CFGFILE);
+#endif
+
 #ifdef CMD_PROMPT
 	if ((prompt = malloc(3)) == 0)
 #endif
@@ -268,21 +276,13 @@ int main(int argc, char **argv)
 	init_hist();
 #endif /* CMD_HISTORY */
 
-#ifdef CMD_SOURCE
-	sourcecfg("/etc", CFGFILE);
-
-	cp = getenv("HOME");
-	if (cp)
-		sourcecfg(cp, "." CFGFILE);
-
-	if (argc > 1) {
-		readfile(argv[1]);
-	} else {
-		readfile(NULL);
+	if (argc > 2 && !strcmp(argv[1], "-c")) {
+		command(argv[2]);
 	}
-#else
-	readfile(NULL);
-#endif
+	else if (argc > 1)
+		readfile(argv[1]);
+	else
+		readfile(NULL);
 
 	exit(0);
 }
