@@ -131,13 +131,4 @@ void AddQueue(unsigned char Key)
     chq_addch(&ttyp->inq, Key);
 }
 
-/*
- *      Busy wait for a keypress in kernel state for bootup/debug.
- */
-
-int wait_for_keypress(void)
-{
-    return chq_wait_rd(&ttys[0].inq, 0);
-}
-
 #endif

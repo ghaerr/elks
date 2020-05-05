@@ -39,7 +39,6 @@
 #if 0
 /* public interface of bioscon.c: */
 
-void con_charout(char Ch);
 int Console_write(struct tty *tty);
 void Console_release(struct tty *tty);
 int Console_open(struct tty *tty);
@@ -187,16 +186,6 @@ static void kbd_timer(int __data)
 	}
     }
     restart_timer();
-}
-
-/*
- *      Busy wait for a keypress in kernel state for bootup/debug.
- */
-
-int wait_for_keypress(void)
-{
-    set_irq();
-    return chq_wait_rd(&ttys[0].inq, 0);
 }
 
 static void PositionCursorSet(register Console * C)
@@ -543,12 +532,14 @@ static void WriteChar(register Console * C, char c)
     C->fsm(C, c);
 }
 
-void con_charout(char Ch)
+void Console_conout(dev_t dev, char Ch)
 {
+    Console *C = &Con[MINOR(dev)];
+
     if (Ch == '\n')
-	WriteChar(Visible, '\r');
-    WriteChar(Visible, Ch);
-    PositionCursorSet(Visible);
+	WriteChar(C, '\r');
+    WriteChar(C, Ch);
+    PositionCursorSet(C);
 }
 
 /* This also tells the keyboard driver which tty to direct it's output to...
@@ -621,14 +612,14 @@ static int Console_write(register struct tty *tty)
 
 static void Console_release(struct tty *tty)
 {
-    tty_freeq(tty);
+    ttystd_release(tty);
 }
 
 int Console_open(register struct tty *tty)
 {
     if (tty->minor >= NumConsoles)
 	return -ENODEV;
-    return tty_allocq(tty, INQ_SIZE, OUTQ_SIZE);
+    return ttystd_open(tty);
 }
 
 struct tty_ops bioscon_ops = {
@@ -637,9 +628,10 @@ struct tty_ops bioscon_ops = {
     Console_write,
     NULL,
     Console_ioctl,
+    Console_conout
 };
 
-void init_console(void)
+void console_init(void)
 {
     register Console *C;
     register char *pi;
@@ -678,7 +670,7 @@ void init_console(void)
 	C++;
     }
 
-    printk("Console: BIOS %ux%u"TERM_TYPE"(%u virtual consoles)\n",
+    printk("BIOS console %ux%u"TERM_TYPE"(%u virtual consoles)\n",
 	   Width, Height, NumConsoles);
 }
 

@@ -46,16 +46,11 @@
 #include <termios.h>
 #include <stdarg.h>
 #include <errno.h>
-#include <autoconf.h>		/* get CONFIG_CONSOLE_SERIAL*/
 
 #define DEBUG		0	/* set =1 for debug messages*/
 
 /* debug messages go here*/
-#ifdef CONFIG_CONSOLE_SERIAL
-#define CONSOLE       "/dev/ttyS0"
-#else
-#define CONSOLE       "/dev/tty1"
-#endif
+#define CONSOLE		"/dev/console"
 
 #define LOGIN		"/bin/login"
 #define HOSTFILE	"/etc/HOSTNAME"

@@ -81,6 +81,7 @@ sys_utils/mouse					:sysutil				:1440k
 sys_utils/passwd				:sysutil				:1440k
 sys_utils/poweroff				:sysutil			:720k
 sys_utils/sercat				:sysutil				:1440k
+sys_utils/console				:sysutil				:1440k
 sys_utils/who					:sysutil				:1440k
 sys_utils/unreal16				:sysutil				:1440k
 screen/screen					:screen				:1440k

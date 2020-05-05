@@ -64,6 +64,7 @@
 
 #define TIOCMIWAIT	(__TERMIOS_MAJ+0x5C)	/* wait for a change on serial input line(s) */
 #define TIOCGICOUNT	(__TERMIOS_MAJ+0x5D)	/* read serial port inline interrupt counts */
+#define TIOSETCONSOLE	(__TERMIOS_MAJ+0x5E)	/* set console dev_t*/
 
 /* Used for packet mode */
 #define TIOCPKT_DATA		 0

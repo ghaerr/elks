@@ -77,6 +77,7 @@
 !	...
 !	0x1e2:	part_offset, 4 bytes. Sector offset of booted MBR partition
 !	0x1e6:	elks_magic, 2 bytes
+!	0x1e8:	boot_opts, 2 bytes
 !	0x1ef:	SETUPSEG
 !	0x1f1:	SETUPSECS, 1 byte
 !	0x1f2:	ROOTFLAGS, 2 bytes
@@ -337,6 +338,22 @@ novga:	mov	%al,14		// CGA 25 rows
 	movb	$0xaa,boot_flag+1 // device present
 	nop
 no_psmouse:
+#endif
+
+// parse boot options in OPT_SEG
+#define DEVTTY1		((4<<8)|0)
+#define DEVTTYS0	((4<<8)|64)
+
+	movw	$0,boot_opts	// default no options
+#ifndef CONFIG_ROMCODE
+	push	%ds
+	mov	$DEF_OPTSEG,%ax	// look at OPTSEG:0
+	mov	%ax,%ds
+	cmpb	$'s',0		// check serial
+	pop	%ds
+	jnz	no_opts
+	movw	$DEVTTYS0,boot_opts
+no_opts:
 #endif
 
 	call	getcpu
