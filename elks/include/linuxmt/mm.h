@@ -15,6 +15,7 @@ struct segment {
 typedef struct segment segment_s;
 
 // TODO: convert to tag
+#define SEG_FLAG_FREE   0x0000
 #define SEG_FLAG_USED	0x0080
 #define SEG_FLAG_TYPE	0x000F
 #define SEG_FLAG_CSEG	0x0001

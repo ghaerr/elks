@@ -10,6 +10,7 @@
 
 // Heap block header
 
+#define HEAP_TAG_FREE    0x00
 #define HEAP_TAG_USED    0x80
 #define HEAP_TAG_TYPE    0x0F
 #define HEAP_TAG_SEG     0x01

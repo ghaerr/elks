@@ -40,7 +40,7 @@ static int seg_split (segment_s * s1, segext_t size0)
 
 		s2->base = s1->base + size0;
 		s2->size = size2;
-		s2->flags = 0;  // free
+		s2->flags = SEG_FLAG_FREE;
 		s2->ref_count = 0;
 
 		list_insert_after (&s1->node, &s2->node);
@@ -143,7 +143,7 @@ void seg_free (segment_s * seg1)
 	//lock_wait (&_seg_lock);
 	segment_s * seg2 = seg_merge_prev (seg1);
 	if (seg1 == seg2)  // no segment merge
-		seg1->flags = 0;  // free
+		seg1->flags = SEG_FLAG_FREE;
 
 	seg_merge_right (seg2);
 	//unlock_event (&_seg_lock);
@@ -264,7 +264,7 @@ void mm_init(seg_t start, seg_t end)
 	if (seg) {
 		seg->base = start;
 		seg->size = end - start;
-		seg->flags = 0;  // free
+		seg->flags = SEG_FLAG_FREE;
 		seg->ref_count = 0;
 
 		list_init (&seg->node);

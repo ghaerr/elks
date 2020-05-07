@@ -34,7 +34,7 @@ mainmenu_option next_comment
 
 	bool 'Extra external buffer cache'     CONFIG_FS_EXTERNAL_BUFFER  y
 	if [ "$CONFIG_FS_EXTERNAL_BUFFER" == "y" ]; then
-	    int 'Number of external buffers'   CONFIG_FS_NR_EXT_BUFFERS   128
+	    int 'Number of external buffers'   CONFIG_FS_NR_EXT_BUFFERS   64
 	fi
 	bool 'Pipe support'                    CONFIG_PIPE                y
 
