@@ -8,7 +8,7 @@
 #include "ip.h"
 #include <linuxmt/arpa/inet.h>
 
-/* #define DEBUG */
+//#define DEBUG
 
 #define PROTO_TCP	0x06
 

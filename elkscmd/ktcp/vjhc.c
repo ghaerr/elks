@@ -46,6 +46,7 @@ Created:	Nov 11, 1993 by Philip Homburg <philip@cs.vu.nl>
  * the variable 'opt_d' doesn't exist, presumably because this was
  * ported from something else that provided it. */
 #ifdef DEBUGHC
+//int opt_d = 1;
 #define DBG(a) a
 #else
 #define DBG(a)

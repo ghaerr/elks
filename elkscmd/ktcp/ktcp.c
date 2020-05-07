@@ -35,7 +35,6 @@ char deveth[] = "/dev/eth";
 
 extern int tcp_timeruse;
 
-//static int tcpdevfd; /* defined in ip.h */
 static int intfd;
 
 unsigned long int in_aton(const char *str)
@@ -160,7 +159,7 @@ usage:
 	if (fork())
 	    exit(0);
 	close(0);
-	close(1);
+	//close(1);		//FIXME required for printf output in -b
     }
 
     arp_init ();

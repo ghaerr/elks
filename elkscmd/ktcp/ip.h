@@ -52,6 +52,6 @@ struct ip_ll
          __u16 ll_type_len;	/* 0x800 big endian for IP */
 };
 
-static int tcpdevfd;
+extern int tcpdevfd;
 
 #endif

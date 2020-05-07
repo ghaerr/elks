@@ -14,7 +14,7 @@ OBJS		= $(CFILES:.c=.o)
 all:	ktcp
 
 ktcp:	$(OBJS)
-	$(LD) $(LDFLAGS) -maout-chmem=0x3000 -o ktcp $(OBJS) $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-chmem=0x4000 -o ktcp $(OBJS) $(LDLIBS)
 
 lint:
 	@for FILE in *.c ; do \

@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 #include <linuxmt/arpa/inet.h>
 
@@ -176,7 +177,10 @@ selectagain:
     FD_SET(tcpdevfd, &fdset);
     i = select(tcpdevfd + 1, &fdset, NULL, NULL, NULL);
     if (i < 0) {
-	//if (errno == EINTR) goto selectagain;
+	if (errno == EINTR) {
+		fprintf(stderr, "arp: select EINTR\n");
+		goto selectagain;
+	}
 	perror("select");
 	return -1;
     }

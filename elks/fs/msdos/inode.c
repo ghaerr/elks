@@ -30,7 +30,7 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "ttyS0",	S_IFCHR | 0644, MKDEV(4, 64)},
     { "ttyS1",	S_IFCHR | 0644, MKDEV(4, 65)},
     { "ttyS2",	S_IFCHR | 0644, MKDEV(4, 66)},
-    { "console",S_IFCHR | 0644, MKDEV(4, 254)},
+    { "console",S_IFCHR | 0600, MKDEV(4, 254)},
     { "tty",	S_IFCHR | 0666, MKDEV(4, 255) },
 };
 #endif
