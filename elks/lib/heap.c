@@ -121,7 +121,7 @@ void heap_free (void * data)
 	heap_s * h1 = ((heap_s *) (data)) - 1;  // back to header
 	heap_s * h2 = heap_merge_prev (h1);
 	if (h1 == h2)  // no heap_merge
-		h1->tag = 0;  // free
+		h1->tag = HEAP_TAG_FREE;  // free
 
 	heap_merge_next (h2);
 	event_unlock (&_heap_lock);
@@ -135,7 +135,7 @@ void heap_add (void * data, word_t size)
 		wait_lock (&_heap_lock);
 		heap_s * h = (heap_s *) data;
 		h->size = size - sizeof (heap_s);
-		h->tag = 0;   // free
+		h->tag = HEAP_TAG_FREE;   // free
 
 		if (_heap_first)
 			list_insert_before (&(_heap_first->node), &(h->node));  // add tail

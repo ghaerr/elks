@@ -223,6 +223,7 @@ extern	int	histcnt;
 static	BOOL	intcrlf = TRUE;
 static	char	*prompt;
 static	BOOL	isbinshell;
+static BOOL     cflag;
 
 #ifdef CMD_SOURCE
 static	FILE	*sourcefiles[MAXSOURCE];
@@ -277,6 +278,7 @@ int main(int argc, char **argv)
 #endif /* CMD_HISTORY */
 
 	if (argc > 2 && !strcmp(argv[1], "-c")) {
+		cflag = TRUE;
 		command(argv[2]);
 	}
 	else if (argc > 1)
@@ -598,48 +600,51 @@ runcmd(char *cmd, int argc, char **argv)
 	 */
 	if (needfullshell(cmd)) {
 		if (isbinshell)
-			fprintf(stderr, "%s: No such file or directory\n", argv[0]);
+			fprintf(stderr, "Not supported by standalone shell: '%s'\n", cmd);
 		else {
 			status = system(cmd);
 			if (status & 0xff)
 				fprintf(stderr, "killed (signal %d)\n", status & 0x7f);
+		}
+		return;
+	}
+
+	/*
+	 * No magic characters in the command, so do the exec ourself.
+	 * Fork not required if sh -c.
+	 * If the exec fails with ENOEXEC, then run the
+	 * shell anyway since it might be a shell script.
+	 */
+	if (cflag == 0) {
+		pid = vfork();
+
+		if (pid < 0) {
+			perror("fork failed");
+			return;
+		}
+
+		if (pid) {
+			status = 0;
+			intcrlf = FALSE;
+
+			while ((ret = waitpid(pid, &status, 0)) != pid)
+				continue;
+
+			intcrlf = TRUE;
+			if ((status & 0xff) == 0)
+				return;
+
+			fprintf(stderr, "pid %d: %s (signal %d)\n", pid,
+				(status & 0x80) ? "core dumped" :
+				(((status & 0x7f) == SIGTSTP)? "stopped" : "killed"),
+				status & 0x7f);
+
 			return;
 		}
 	}
 
 	/*
-	 * No magic characters in the command, so do the fork and
-	 * exec ourself.  If this fails with ENOEXEC, then run the
-	 * shell anyway since it might be a shell script.
-	 */
-	pid = vfork();
-
-	if (pid < 0) {
-		perror("fork failed");
-		return;
-	}
-
-	if (pid) {
-		status = 0;
-		intcrlf = FALSE;
-
-		while ((ret = waitpid(pid, &status, 0)) != pid)
-			continue;
-
-		intcrlf = TRUE;
-		if ((status & 0xff) == 0)
-			return;
-
-		fprintf(stderr, "pid %d: %s (signal %d)\n", pid,
-			(status & 0x80) ? "core dumped" :
-			(((status & 0x7f) == SIGTSTP)? "stopped" : "killed"),
-			status & 0x7f);
-
-		return;
-	}
-
-	/*
-	 * We are the child, so run the program.
+	 * We are the child or run as sh -c, so run the program.
 	 * First close any extra file descriptors we have opened.
 	 */
 #ifdef CMD_SOURCE
