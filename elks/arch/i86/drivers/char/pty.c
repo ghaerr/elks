@@ -122,16 +122,6 @@ static int ttyp_write(register struct tty *tty)
     return 0;
 }
 
-static int ttyp_open(struct tty *tty)
-{
-    return tty_allocq(tty, RSINQ_SIZE, RSOUTQ_SIZE);
-}
-
-static void ttyp_release(struct tty *tty)
-{
-    tty_freeq(tty);
-}
-
 /*@-type@*/
 
 static struct file_operations pty_fops = {
@@ -152,8 +142,8 @@ static struct file_operations pty_fops = {
 };
 
 struct tty_ops ttyp_ops = {
-    ttyp_open,
-    ttyp_release,
+    ttystd_open,
+    ttystd_release,
     ttyp_write,
     NULL,
     NULL			/* ioctl*/

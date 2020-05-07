@@ -4,8 +4,10 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
 #include <linuxmt/fcntl.h>
+#include <linuxmt/ntty.h>
 
 #include <arch/system.h>
+#include <arch/segment.h>
 
 /*
  *	System variable setups
@@ -37,7 +39,16 @@ void start_kernel(void)
     init_IRQ();
     tty_init();
 
-    init_console();
+#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
+	console_init();
+#endif
+
+	/* set console from bootopts console device, 0=default*/
+    set_console((dev_t)setupw(0x1e8));
+
+#ifdef CONFIG_CHAR_DEV_RS
+	serial_console_init();
+#endif
 
     device_setup();
 
@@ -75,11 +86,7 @@ static void init_task()
 	run_init_process("/bin/init");
 
 	/* No init, open stdin and try running shell*/
-#ifdef CONFIG_CONSOLE_SERIAL
-    num = sys_open(s="/dev/ttyS0", O_RDWR, 0);
-#else
-    num = sys_open(s="/dev/tty1", O_RDWR, 0);
-#endif
+    num = sys_open(s="/dev/console", O_RDWR, 0);
     if (num < 0)
 		printk("Unable to open %s (error %d)\n", s, -num);
 

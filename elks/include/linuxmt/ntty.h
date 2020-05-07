@@ -69,6 +69,7 @@ struct tty_ops {
     int (*write) ();
     int (*read) ();
     int (*ioctl) ();
+    void (*conout) (dev_t, char);
 };
 
 struct tty {
@@ -77,7 +78,8 @@ struct tty {
     unsigned int flags;
     struct ch_queue inq, outq;
     struct termios termios;
-    int ostate;
+    unsigned char ostate;
+    unsigned char usecount;
     pid_t pgrp;
     unsigned char *outq_buf;
     unsigned char *inq_buf;
@@ -98,9 +100,13 @@ extern struct termios def_vals;
 struct tty *determine_tty(dev_t);
 		/* Function to determine relevant tty */
 
+extern int ttystd_open(struct tty *tty);
+extern void ttystd_release(struct tty *tty);
 extern int tty_allocq(struct tty *tty, int insize, int outsize);
 extern void tty_freeq(struct tty *tty);
 		/* Allocate and free character queues*/
+
+extern void set_console(dev_t dev);
 
 /* tty.flags */
 #define TTY_STOPPED 	1
