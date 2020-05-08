@@ -102,13 +102,13 @@ int slip_init(char *fdev, speed_t baudrate)
     /* Setup the tty
      */
     ioctl(devfd, TCGETS, &tios);
-    tios.c_lflag &= ~(ICANON|ECHO|ECHOE);
+    tios.c_lflag &= ~(ISIG | ICANON | ECHO | ECHOE);
     tios.c_oflag &= ~ONLCR;
     if (baud)
 	tios.c_cflag = baud;
     tios.c_cflag |= CS8 | CREAD;
-    tios.c_cflag |= CLOCAL;
-    /*tios.c_cflag |= CRTSCTS;*/
+    tios.c_cflag |= CLOCAL;	/* ignore modem control lines*/
+    //tios.c_cflag |= CRTSCTS;	/* hw flow control*/
     tios.c_cc[VMIN] = 255;	/* try for max 255 byte reads*/
     tios.c_cc[VTIME] = 1;	/* 100ms intercharacter timeout*/
     ioctl(devfd, TCSETS, &tios);
