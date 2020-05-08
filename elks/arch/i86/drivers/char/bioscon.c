@@ -36,16 +36,6 @@
 /* Assumes ASCII values. */
 #define isalpha(c) (((unsigned char)(((c) | 0x20) - 'a')) < 26)
 
-#if 0
-/* public interface of bioscon.c: */
-
-int Console_write(struct tty *tty);
-void Console_release(struct tty *tty);
-int Console_open(struct tty *tty);
-struct tty_ops dircon_ops;
-void init_console(void);
-#endif
-
 /* Function from bioscon-low */
 /* TODO: move these functions to a BIOS library */
 
@@ -79,8 +69,9 @@ typedef struct console Console;
 struct console {
     int cx, cy;			/* cursor position */
     void (*fsm)(register Console *, char);
-    int pageno;			/* video ram page # */
     unsigned char attr;		/* current attribute */
+    unsigned char XN;		/* delayed newline on column 80 */
+    unsigned char color;	/* fg/bg attr */
 #ifdef CONFIG_EMUL_VT52
     unsigned char tmp;		/* ESC Y ch save */
 #endif
@@ -89,6 +80,7 @@ struct console {
     unsigned char *parmptr;	/* ptr to params */
     unsigned char params[MAXPARMS];	/* ANSI params */
 #endif
+    int pageno;			/* video ram page # */
 };
 
 static struct wait_queue glock_wait;
@@ -97,8 +89,6 @@ static Console *glock;		/* Which console owns the graphics hardware */
 static int Width, MaxCol, Height, MaxRow;
 static unsigned short int NumConsoles = MAX_CONSOLES;
 static struct timer_list timer;
-
-extern struct tty ttys[];
 
 /* for keyboard.c */
 int Current_VCminor = 0;
@@ -112,16 +102,9 @@ int kraw = 0;
 #define TERM_TYPE " dumb "
 #endif
 
+extern void AddQueue(unsigned char Key);
 static void std_char(register Console *, char);
 static void Console_set_vc(unsigned int);
-
-static void AddQueue(unsigned char Key)
-{
-    register struct tty *ttyp = &ttys[Current_VCminor];
-
-    if (!tty_intcheck(ttyp, Key))
-	chq_addch(&ttyp->inq, Key);
-}
 
 static void kbd_timer(int __data);
 /*
@@ -161,21 +144,29 @@ static void kbd_timer(int __data)
 	    AddQueue(dav & 0x7F);
 	else {
 	    dav = (dav >> 8) & 0xFF;
-	    if ((dav >= 0x3B) && (dav < 0x45))	/* Function keys */
+	    if (dav >= 0x3B && dav <= 0x3D) {	/* temp console switch on F1-F3*/
+		Console_set_vc(dav - 0x3B);
+		dav = 0;
+	    }
+	    else if (dav >= 0x3B && dav < 0x45)	/* Function keys */
 		dav = dav - 0x3B + 'a';
-	    else if ((dav >= 0x57) && (dav < 0x59))
+	    else if (dav >= 0x57 && dav < 0x59)
 		dav = dav - 0x57 + 'k';
-	    else if ((dav>= 0x48) && (dav <= 0x50) && ((1 << (dav - 0x48) & 0x129))) {
-		dav = (((0x4A - dav) >> 1) & 0x07) + ('A' - 3); /* Arrows */
-		if (dav < 'A')
-		    dav = 'A';
+	    else if ((dav >= 0x48 && dav <= 0x50) && ((1 << (dav - 0x48) & 0x129))) {
+		/* arrow keys*/
+		switch(dav) {
+		case 0x48: dav = 'A'; break;
+		case 0x50: dav = 'B'; break;
+		case 0x4d: dav = 'C'; break;
+		case 0x4b: dav = 'D'; break;
+		default:   dav = 0;
+		}
 	    }
 	    else if ((dav >= 0x68) && (dav < 0x6B)) {	/* Change VC */
 		Console_set_vc((unsigned)(dav - 0x68));
 		dav = 0;
 	    }
-	    else
-		dav = 0;
+	    else dav = 0;
 	    if (dav) {
 		AddQueue(ESC);
 #ifdef CONFIG_EMUL_ANSI
@@ -188,7 +179,7 @@ static void kbd_timer(int __data)
     restart_timer();
 }
 
-static void PositionCursorSet(register Console * C)
+static void PositionCursor(register Console * C)
 {
     int x, y, p;
 
@@ -216,7 +207,7 @@ static void VideoWrite(register Console * C, char c)
     VideoWriteLow (c, a, p);
 }
 
-static void genscro(register Console * C, int n, int x, int y, int xx, int yy)
+static void scroll(register Console * C, int n, int x, int y, int xx, int yy)
 {
     int a;
 
@@ -234,313 +225,23 @@ static void genscro(register Console * C, int n, int x, int y, int xx, int yy)
 
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 {
-    genscro(C, 26, x, y, xx, yy);
+    scroll(C, 26, x, y, xx, yy);
 }
 
 static void ScrollUp(register Console * C, int y)
 {
-    genscro(C, 1, 0, y, MaxCol, MaxRow);
+    scroll(C, 1, 0, y, MaxCol, MaxRow);
 }
 
 #if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
 static void ScrollDown(register Console * C, int y)
 {
-    genscro(C, -1, 0, y, MaxCol, MaxRow);
+    scroll(C, -1, 0, y, MaxCol, MaxRow);
 }
 #endif
 
-#if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
-static void Console_gotoxy(register Console * C, int x, int y)
-{
-    register char *xp = (char *)x;
-
-    C->cx = ((((int) xp) >= MaxCol) ? MaxCol : ((((int)xp) < 0) ? 0 : (int)xp));
-    xp = (char *)y;
-    C->cy = ((((int) xp) >= MaxRow) ? MaxRow : ((((int)xp) < 0) ? 0 : (int)xp));
-}
-#endif
-
-#ifdef CONFIG_EMUL_ANSI
-static int parm1(register unsigned char *buf)
-{
-    register char *np;
-
-    np = (char *) atoi((char *) buf);
-    return (np) ? ((int) np) : 1;
-
-}
-
-static int parm2(register unsigned char *buf)
-{
-    while (*buf != ';' && *buf)
-	buf++;
-    if (*buf)
-	buf++;
-    return parm1(buf);
-}
-
-static void AnsiCmd(register Console * C, char c)
-{
-    register unsigned char *p;
-
-    /* ANSI param gathering and processing */
-    if (C->parmptr < &C->params[MAXPARMS - 1])
-	*C->parmptr++ = (unsigned char) c;
-    if (!isalpha(c)) {
-	return;
-    }
-    *(C->parmptr) = 0;
-
-    switch (c) {
-    case 's':			/* Save the current location */
-	C->savex = C->cx;
-	C->savey = C->cy;
-	break;
-    case 'u':			/* Restore saved location */
-	C->cx = C->savex;
-	C->cy = C->savey;
-	break;
-    case 'A':			/* Move up n lines */
-	C->cy -= parm1(C->params);
-	if (C->cy < 0)
-	    C->cy = 0;
-	break;
-    case 'B':			/* Move down n lines */
-	C->cy += parm1(C->params);
-	if (C->cy > MaxRow)
-	    C->cy = MaxRow;
-	break;
-    case 'C':			/* Move right n characters */
-	C->cx += parm1(C->params);
-	if (C->cx > MaxCol)
-	    C->cx = MaxCol;
-	break;
-    case 'D':			/* Move left n characters */
-	C->cx -= parm1(C->params);
-	if (C->cx < 0)
-	    C->cx = 0;
-	break;
-    case 'H':			/* cursor move */
-	Console_gotoxy(C, parm2(C->params) - 1, parm1(C->params) - 1);
-	break;
-    case 'J':			/* erase */
-	if (parm1(C->params) == 2)
-	    ClearRange(C, 0, 0, MaxCol, MaxRow);
-	break;
-    case 'K':			/* Clear to EOL */
-	ClearRange(C, C->cx, C->cy, MaxCol, C->cy);
-	break;
-    case 'L':			/* insert line */
-	ScrollDown(C, C->cy);
-	break;
-    case 'M':			/* remove line */
-	ScrollUp(C, C->cy);
-	break;
-    case 'm':			/* ansi color */
-	p = C->params;
-	for (;;) {
-	    switch (*p++) {
-	    case ';':
-		continue;
-	    case '0':
-		C->attr = A_DEFAULT;
-		continue;
-	    case '1':
-		C->attr |= A_BOLD;
-		continue;
-	    case '5':
-		C->attr |= A_BLINK;
-		continue;
-	    case '7':
-		C->attr = A_REVERSE;
-		continue;
-	    case '8':
-		C->attr = A_BLANK;
-		continue;
-
-	    case '4':				/* Set background color */
-		if (*p >= '0' && *p <= '7') {
-		    C->attr &= 0x8f;
-		    C->attr |= (*p++ << 4) & 0x70;
-		    continue;
-		}
-		/* fall thru */
-	    case 'm':
-		if (p != &C->params[1])
-		    break;
-	    case '3':				/* Set foreground color */
-		if (*p >= '0' && *p <= '7') {
-		    C->attr &= 0xf8;
-		    C->attr |= *p++ & 0x07;
-		    continue;
-		}
-	    default:
-		C->attr = A_DEFAULT;
-	    }
-	    break;
-	}
-    }
-    C->fsm = std_char;
-}
-
-/* Escape character processing */
-static void esc_char(register Console * C, char c)
-{
-    /* Parse CSI sequence */
-    C->parmptr = C->params;
-    C->fsm = (c == '[' ? AnsiCmd : std_char);
-}
-#endif
-
-#ifdef CONFIG_EMUL_VT52
-static void esc_Y2(register Console * C, char c)
-{
-    Console_gotoxy(C, c - ' ', C->tmp);
-    C->fsm = std_char;
-}
-
-static void esc_YS(register Console * C, char c)
-{
-    switch(C->tmp) {
-    case 'Y':
-	C->tmp = (unsigned char) (c - ' ');
-	C->fsm = esc_Y2;
-	break;
-    case '/':
-	C->tmp = 'Z';		/* Discard next char */
-	break;
-    case 'Z':
-	C->fsm = std_char;
-	break;
-    }
-}
-
-/* Escape character processing */
-static void esc_char(register Console * C, char c)
-{
-    /* process single ESC char sequences */
-    C->fsm = std_char;
-    switch (c) {
-    case 'I':			/* linefeed reverse */
-	if (!C->cy) {
-	    ScrollDown(C, 0);
-	    break;
-	}
-    case 'A':			/* up */
-	if (C->cy)
-	    --C->cy;
-	break;
-    case 'B':			/* down */
-	if (C->cy < MaxRow)
-	    ++C->cy;
-	break;
-    case 'C':			/* right */
-	if (C->cx < MaxCol)
-	    ++C->cx;
-	break;
-    case 'D':			/* left */
-	if (C->cx)
-	    --C->cx;
-	break;
-    case 'H':			/* home */
-	C->cx = C->cy = 0;
-	break;
-    case 'J':			/* clear to eoscreen */
-	ClearRange(C, 0, C->cy+1, MaxCol, MaxRow);
-    case 'K':			/* clear to eol */
-	ClearRange(C, C->cx, C->cy, MaxCol, C->cy);
-	break;
-    case 'L':			/* insert line */
-	ScrollDown(C, C->cy);
-	break;
-    case 'M':			/* remove line */
-	ScrollUp(C, C->cy);
-	break;
-    case '/':			/* Remove echo for identify response */
-    case 'Y':			/* cursor move */
-	C->tmp = c;
-	C->fsm = esc_YS;
-	break;
-    case 'Z':			/* identify as VT52 */
-	AddQueue(ESC);
-	AddQueue('/');
-	AddQueue('K');
-    }
-}
-#endif
-
-/* Normal character processing */
-static void std_char(register Console * C, char c)
-{
-    switch(c) {
-    case BEL:
-	bell();
-	break;
-    case '\b':
-	if (C->cx > 0) {
-	    --C->cx;
-	    PositionCursorSet(C);
-	    VideoWrite(C, ' ');
-	}
-	break;
-    case '\t':
-	C->cx = (C->cx | 0x07) + 1;
-	goto linewrap;
-    case '\n':
-	++C->cy;
-	break;
-    case '\r':
-	C->cx = 0;
-	break;
-
-#if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
-    case ESC:
-	C->fsm = esc_char;
-	break;
-#endif
-
-    default:
-	PositionCursorSet(C);
-	VideoWrite(C, c);
-	C->cx++;
-      linewrap:
-	if (C->cx > MaxCol) {
-
-#ifdef CONFIG_EMUL_VT52
-	    C->cx = MaxCol;
-#else
-	    C->cx = 0;
-	    C->cy++;
-#endif
-
-	}
-    }
-    if (C->cy > MaxRow) {
-	ScrollUp(C, 0);
-	C->cy = MaxRow;
-    }
-}
-
-static void WriteChar(register Console * C, char c)
-{
-    /* check for graphics lock */
-    while (glock) {
-	if (glock == C)
-	    return;
-	sleep_on(&glock_wait);
-    }
-    C->fsm(C, c);
-}
-
-void Console_conout(dev_t dev, char Ch)
-{
-    Console *C = &Con[MINOR(dev)];
-
-    if (Ch == '\n')
-	WriteChar(C, '\r');
-    WriteChar(C, Ch);
-    PositionCursorSet(C);
-}
+/* shared console routines*/
+#include "console.c"
 
 /* This also tells the keyboard driver which tty to direct it's output to...
  * CAUTION: It *WILL* break if the console driver doesn't get tty0-X.
@@ -548,78 +249,13 @@ void Console_conout(dev_t dev, char Ch)
 
 static void Console_set_vc(unsigned int N)
 {
-    if ((N >= NumConsoles)
-	|| (Visible == &Con[N])
-	|| (glock))
+    if ((N >= NumConsoles) || (Visible == &Con[N]) || glock)
 	return;
     Visible = &Con[N];
 
     SetDisplayPage(N);
-    PositionCursorSet(Visible);
+    PositionCursor(Visible);
     Current_VCminor = (int) N;
-}
-
-static int Console_ioctl(register struct tty *tty, int cmd, char *arg)
-{
-    switch (cmd) {
-    case DCGET_GRAPH:
-	if (!glock) {
-	    glock = &Con[tty->minor];
-	    return 0;
-	}
-	return -EBUSY;
-    case DCREL_GRAPH:
-	if (glock == &Con[tty->minor]) {
-	    glock = NULL;
-	    wake_up(&glock_wait);
-	    return 0;
-	}
-	break;
-    case DCSET_KRAW:
-	if (glock == &Con[tty->minor]) {
-	    kraw = 1;
-	    return 0;
-	}
-	break;
-    case DCREL_KRAW:
-	if ((glock == &Con[tty->minor]) && (kraw == 1)) {
-	    kraw = 0;
-	    return 1;
-	}
-	break;
-    case TCSETS:
-    case TCSETSW:
-    case TCSETSF:
-	return 0;
-    }
-
-    return -EINVAL;
-}
-
-static int Console_write(register struct tty *tty)
-{
-    register Console *C = &Con[tty->minor];
-    int cnt = 0;
-
-    while ((tty->outq.len > 0) && !glock) {
-	WriteChar(C, (char)tty_outproc(tty));
-	cnt++;
-    }
-    if (C == Visible)
-	PositionCursorSet(C);
-    return cnt;
-}
-
-static void Console_release(struct tty *tty)
-{
-    ttystd_release(tty);
-}
-
-int Console_open(register struct tty *tty)
-{
-    if (tty->minor >= NumConsoles)
-	return -ENODEV;
-    return ttystd_open(tty);
 }
 
 struct tty_ops bioscon_ops = {
@@ -634,7 +270,7 @@ struct tty_ops bioscon_ops = {
 void console_init(void)
 {
     register Console *C;
-    register char *pi;
+    register int i;
 
     MaxCol = (Width = setupb(7)) - 1;
 
@@ -647,16 +283,17 @@ void console_init(void)
     C = Con;
     Visible = C;
 
-    for (pi = 0; ((unsigned int)pi) < NumConsoles; pi++) {
+    for (i = 0; i < NumConsoles; i++) {
 	C->cx = C->cy = 0;
-	if (!pi) {
+	if (!i) {
 		// Get current cursor position
 		// to write after boot messages
 		PositionCursorGet (&C->cx, &C->cy);
 	}
 	C->fsm = std_char;
-	C->pageno = (int) pi;
+	C->pageno = i;
 	C->attr = A_DEFAULT;
+	C->color = A_DEFAULT;
 
 #ifdef CONFIG_EMUL_ANSI
 

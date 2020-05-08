@@ -34,6 +34,7 @@
 #ifdef CONFIG_CONSOLE_DIRECT
 
 extern struct tty ttys[];
+extern void AddQueue(unsigned char Key);
 
 #define ESC 27
 #define KB_SIZE 64
@@ -106,17 +107,6 @@ static unsigned char *scan_tabs[] = {
     xtkb_scan_caps,	/*mode = 2*/
     xtkb_scan_ctrl_alt,	/*mode = 3*/
 };
-
-/* Ack.  We can't add a character until the queue's ready
- */
-
-void AddQueue(unsigned char Key)
-{
-    register struct tty *ttyp = &ttys[Current_VCminor];
-
-    if (!tty_intcheck(ttyp, Key))
-	chq_addch(&ttyp->inq, Key);
-}
 
 /*************************************************************************
  * Queue for input received but not yet read by the application. SA 1996 *
@@ -223,8 +213,8 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
     /* F11 and F12 function keys need 89 byte table like keys-de.h */
     /* function keys are not posix standard here */
     
-	//if (ModeState & ALT) {	/* AltF1-F3 are console switch*/
-	if (code <= 0x3D) {		/* F1-F3 are console switch*/
+	/* AltF1-F3 are console switch*/
+	if ((ModeState & ALT) || code <= 0x3D) {/* temp console switch on F1-F3*/
 	    Console_set_vc((unsigned) (code - 0x3B));
 	    return;
 	}
