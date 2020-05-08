@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
 
 #include "slip.h"
@@ -156,10 +157,14 @@ usage:
 
     /* become daemon now that tcpdev_inuse race condition over*/
     if (daemon) {
+	int fd;
 	if (fork())
 	    exit(0);
 	close(0);
-	//close(1);		//FIXME required for printf output in -b
+	/* redirect messages to console*/
+	fd = open("/dev/console", O_WRONLY);
+	dup2(fd, 1);		/* required for printf output*/
+	dup2(fd, 2);
     }
 
     arp_init ();
