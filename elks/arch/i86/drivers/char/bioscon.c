@@ -132,7 +132,7 @@ void xtk_init(void)
  */
 static void kbd_timer(int __data)
 {
-    int dav;
+    int dav, extra = 0;
 #if 0
     static int clk[4] = {0x072D, 0x075C, 0x077C, 0x072F,};
     static int c = 0;
@@ -148,31 +148,35 @@ static void kbd_timer(int __data)
 		Console_set_vc(dav - 0x3B);
 		dav = 0;
 	    }
-	    else if (dav >= 0x3B && dav < 0x45)	/* Function keys */
-		dav = dav - 0x3B + 'a';
-	    else if (dav >= 0x57 && dav < 0x59)
-		dav = dav - 0x57 + 'k';
-	    else if ((dav >= 0x48 && dav <= 0x50) && ((1 << (dav - 0x48) & 0x129))) {
-		/* arrow keys*/
-		switch(dav) {
-		case 0x48: dav = 'A'; break;
-		case 0x50: dav = 'B'; break;
-		case 0x4d: dav = 'C'; break;
-		case 0x4b: dav = 'D'; break;
-		default:   dav = 0;
-		}
-	    }
 	    else if ((dav >= 0x68) && (dav < 0x6B)) {	/* Change VC */
 		Console_set_vc((unsigned)(dav - 0x68));
 		dav = 0;
 	    }
-	    else dav = 0;
+	    else if (dav >= 0x3B && dav < 0x45)	/* Function keys */
+		dav = dav - 0x3B + 'a';
+	    else {
+		switch(dav) {
+		case 0x48: dav = 'A'; break;	/* up*/
+		case 0x50: dav = 'B'; break;	/* down*/
+		case 0x4d: dav = 'C'; break;	/* right*/
+		case 0x4b: dav = 'D'; break;	/* left*/
+		case 0x47: dav = 'H'; break;	/* home*/
+		case 0x4f: dav = 'F'; break;	/* end*/
+		case 0x49: dav = '5'; extra = '~'; break; /* pgup*/
+		case 0x51: dav = '6'; extra = '~'; break; /* pgdn*/
+		default:   dav = 0;
+		}
+	    }
 	    if (dav) {
 		AddQueue(ESC);
 #ifdef CONFIG_EMUL_ANSI
 		AddQueue('[');
 #endif
 		AddQueue(dav);
+#ifdef CONFIG_EMUL_ANSI
+		if (extra)
+		    AddQueue(extra);
+#endif
 	    }
 	}
     }
