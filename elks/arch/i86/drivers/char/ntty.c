@@ -197,8 +197,11 @@ void tty_release(struct inode *inode, struct file *file)
 
     /* don't release pgrp for /dev/tty, only real tty*/
     if (current->pid == rtty->pgrp) {
-	debug_tty("TTY release pgrp %d, sending SIGHUP\n", current->pid);
-	kill_pg(rtty->pgrp, SIGHUP, 1);
+	debug_tty("TTY release pgrp %d\n", current->pid);
+	if ((int)rtty->termios.c_cflag & HUPCL) {	/* warning truncated to 16 bits*/
+		debug_tty("TTY sending SIGHUP\n", current->pid);
+		kill_pg(rtty->pgrp, SIGHUP, 1);
+	}
 	rtty->pgrp = 0;
     }
     rtty->flags &= ~TTY_OPEN;

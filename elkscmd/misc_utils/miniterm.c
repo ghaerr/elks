@@ -30,27 +30,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/*
- * compile for ELKS with:
- * bcc -ansi  -I/home/georg/elks-dev/elks-os/elks-0.2.0/elks/include -I/usr/lib64/bcc/include  -o miniterm miniterm.c
- * will not work if -I parameters are not in this sequence !!!
- */
-
-#define ELKS 1
-
 #include <stdio.h>
 #include <stdlib.h>
-#if ELKS
 #include <linuxmt/types.h>
 #include <linuxmt/time.h> /*FD_SET, FD_ZERO, FD_ISSET */
 #include <getopt.h>
-typedef int bool;
-#define true	1
-#define false	0
-#else
-#include <stdbool.h>
-#endif
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -80,6 +64,10 @@ typedef int bool;
 #define SLIP_ESC_END	0334    /**< Escaped END byte */
 #define SLIP_ESC_ESC	0335    /**< Escaped ESC byte */
 
+#define true	1
+#define false	0
+typedef int bool;
+
 bool suspend = false;	/**< Suspension flag, the serial port is closed */
 
 /** Terminal mode */
@@ -97,15 +85,9 @@ enum terminal_mode {
  */
 static void dump(const char *buf, size_t len)
 {
-#if ELKS
-	char hextab[16], line[80];
 	size_t i;
-	sprintf(hextab,"0123456789abcdef");
-#else
-	char hextab[16] = "0123456789abcdef", line[80];
-	size_t i;
-#endif
-
+	char line[80];
+	static char hextab[16] = "0123456789abcdef";
 
 	for (i = 0; i < len; i++) {
 
@@ -474,7 +456,7 @@ int main(int argc, char **argv)
 	if (mode == MODE_TEXT) {
 		struct termios new;
 
-		new.c_cflag = B38400 | CS8 | CLOCAL | CREAD;
+		new.c_cflag |= CS8 | CREAD;
 		new.c_iflag = IGNPAR;
 		new.c_oflag = 0;
 		new.c_lflag = 0;
@@ -491,7 +473,7 @@ int main(int argc, char **argv)
 	}
 
 	if (mode == MODE_SLIP) {
-		char buf[4096];
+		char buf[1200];
 		int len;
 
 		for (;;) {
@@ -547,9 +529,9 @@ int main(int argc, char **argv)
 		}
 
 		if (mode == MODE_TEXT && FD_ISSET(0, &rds)) {
-			char ibuf[4096], obuf[4096];
 			int i, wrote, ilen, olen = 0;
 			bool quit = false;
+			char ibuf[512], obuf[512];
 
 			if ((ilen = read(0, ibuf, sizeof(ibuf))) < 1)
 				break;
@@ -633,9 +615,9 @@ int main(int argc, char **argv)
 		}
 
 		if (fd != -1 && FD_ISSET(fd, &rds)) {
-			char buf[4096];
 			char c, *cr_found;
 			int len, wrote, res;
+			char buf[1200];
 
 			if ((len = read(fd, buf, sizeof(buf))) < 1)
 				break;

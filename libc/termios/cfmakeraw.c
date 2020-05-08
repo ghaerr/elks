@@ -21,7 +21,7 @@ cfmakeraw(struct termios *t)
 	t->c_cc[VTIME] = 1;
 	/* clear some bits with &= ~(bits), set others with |= */
 	t->c_cflag &= ~(CSIZE | PARENB | CSTOPB);
-	t->c_cflag |= (CS8 | HUPCL | CREAD);
+	t->c_cflag |= (CS8 | CREAD);
 	t->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | INPCK | ISTRIP);
 	t->c_iflag &= ~(INLCR | IGNCR | ICRNL | IXON | IXOFF);
 	t->c_iflag |= (BRKINT | IGNPAR);

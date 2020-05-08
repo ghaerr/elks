@@ -11,7 +11,7 @@ include $(BASEDIR)/Make.rules
 ###############################################################################
 
 # clock enabled and has direct I/O port access
-# knl removed as useless
+# knl, insmod removed as useless
 # exitemu disabled because it calls INT directly to DOSEMU
 PRGS = \
 	init \

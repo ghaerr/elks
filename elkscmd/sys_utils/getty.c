@@ -262,9 +262,10 @@ int main(int argc, char **argv)
         termios.c_oflag &= ~XTABS;
         if (baud)
             termios.c_cflag = baud;
-        termios.c_cflag |= CS8 | CLOCAL | HUPCL;
-        /*termios.c_cflag |= CRTSCTS;*/
-        termios.c_cflag &= ~(PARENB | CREAD);
+        termios.c_cflag &= ~PARENB;
+        termios.c_cflag |= CS8 | CREAD | HUPCL;
+        termios.c_cflag |= CLOCAL;			/* ignore modem control lines*/
+        //termios.c_cflag |= CRTSCTS;		/* hw flow control*/
         termios.c_cc[VMIN] = 1;
         termios.c_cc[VTIME] = 0;
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios);
