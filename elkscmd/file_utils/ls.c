@@ -413,7 +413,7 @@ int not_dotdir(char *name)
 int main(int argc, char **argv)
 {
     char  *cp;
-    char  *name;
+    char  *name = argv[0];
     int  flags, recursive, is_dir;
     struct stat statbuf;
     static char *def[] = {".", 0};
@@ -529,7 +529,7 @@ int main(int argc, char **argv)
     return EXIT_SUCCESS;
 
 usage:
-    fprintf(stderr, "usage: %s [-aAdFilrR1] [file1] [file2] ...\n", argv[0]);
+    fprintf(stderr, "usage: %s [-aAdFilrR1] [file1] [file2] ...\n", name);
     fprintf(stderr, "  -a: list all files (including '.' and '..')\n");
     fprintf(stderr, "  -A: list hidden files too\n");
     fprintf(stderr, "  -d: list directory entries instead of contents (not implemented)\n");
