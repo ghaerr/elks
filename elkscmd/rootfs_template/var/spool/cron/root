@@ -1,0 +1,2 @@
+* * * * * echo Hello! Here is cron >>cron.out
+10,20,30,40,50 * * * * echo Message by cron >>cron.out

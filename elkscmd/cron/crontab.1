@@ -1,0 +1,83 @@
+.Dd October 16, 2007
+.Os ELKS
+.Dt CRONTAB 1
+.Sh NAME
+.Nm crontab
+.Nd manage crontab files
+.Sh SYNOPSIS
+.Nm
+.Op Fl u Ar user
+.Op Pa file
+.br
+.Nm
+.Op Fl u Ar user
+.Bro
+\& 
+.Fl l ,
+.Fl r ,
+.Fl e
+\& 
+.Brc
+.Sh DESCRIPTION
+The
+.Nm
+utility is used to update, delete, or display the
+files that
+.Xr cron 8
+uses to schedule jobs.  If invoked without options,
+.Nm
+copies the specified file, or the standard input
+if no file is specified, into the directory that
+holds all the system
+.Xr crontabs 5 .
+.Pp
+The following options are supported:
+.Bl -tag -width Fl XX
+.It Fl e
+Edits a copy of the current user's crontab file, or creates an
+empty file to edit if their crontab does not exist.  When editing
+is complete, the file is install as the user's crontab file.
+.Pp The environment variables
+.Em \&$EDITOR
+and
+.Em \&$VISUAL
+determines which editor is used
+.Po
+.Em \&$EDITOR ,
+then
+.Em \&$VISUAL ,
+and if neither of these is defined,
+.Em vi
+.Pc
+.It Fl l
+Lists the crontab file for the current user.
+.It Fl r
+Removes the crontab file for the current user.
+.It Fl u Ar user
+If you are logged in as the superuser,  you can
+use 
+.Fl u
+to specify a particular user's crontab to update,
+delete, or list.
+.El
+.Sh BUGS
+If you inadvertently enter the crontab command with no
+arguments, you will lose your existing crontab unless
+you exit with a
+.Sy Control-C .
+.Nm Crontab
+attempts to catch this bug by refusing to overwrite a
+crontab with an empty one, but it's better to be safe
+than sorry.
+.Sh FILES
+.Bl -tag -width "/var/spool/cron"
+.It Pa "/var/spool/cron"
+Where 
+.Xr cron 8
+looks for crontabs.
+.El
+.Sh SEE ALSO
+.Xr crontab 5 ,
+.Xr cron 8 .
+.Sh AUTHOR
+David Parsons (orc@pell.portland.or.us)

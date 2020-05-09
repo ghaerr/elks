@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice 4.1.2  (Win32)">
+	<META NAME="AUTHOR" CONTENT="Georg Potthast">
+	<META NAME="CREATED" CONTENT="20200509;11552626">
+	<META NAME="CHANGEDBY" CONTENT="Georg Potthast">
+	<META NAME="CHANGED" CONTENT="20200509;14172590">
+	<STYLE TYPE="text/css">
+	<!--
+		@page { margin: 2cm }
+		P { margin-bottom: 0.21cm }
+		TD P { margin-bottom: 0cm }
+		A:link { so-language: zxx }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="de-DE" DIR="LTR">
+<TABLE WIDTH=632 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-before: always">
+	<COL WIDTH=624>
+	<TR>
+		<TD WIDTH=624 VALIGN=TOP>
+			<P ALIGN=CENTER STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>The
+			cron time-based job scheduler </B></FONT></FONT>
+			</P>
+			<P><FONT FACE="Arial, sans-serif"><BR>The cron program is used to
+			schedule commands (Cron Jobs) at a specified <BR>time. There is a
+			cron and a crontab program. Crontab is the program used <BR>to
+			install, deinstall or list the crontab table used to drive the
+			cron program.<BR><BR>To run cron, you can enter it on the command
+			line or add it to the <BR>&quot;/etc/rc.d/rc.sys&quot; file to
+			have it started when ELKS boots. The etc directory<BR>can be found
+			in &quot;elkscmd/rootfs_template/etc/&quot;. Edit the rc.sys file
+			in there<BR>and add cron. Then the disk image will be generated
+			with the modified file.<BR>Cron will scan the directory
+			/var/spool/cron for crontab files and execute <BR>these if there
+			are any or they have been modified. If you logged in as root <BR>the
+			name of your crontab file will be root. Cron runs as a daemon in
+			the background and therefore will not output anything to the
+			console screen. If you want to save the output of the executed
+			program you have to add e.g. &bdquo;&gt;&gt; cron.out&ldquo; to
+			the command in the crontab file.<BR><BR>The ELKS version of cron
+			will not send an email when the scheduled job<BR>is completed but
+			make an entry in the /var/spool/cron/cron.log file.<BR><BR>If you
+			run ELKS on qemu, the hardware time will be UTC or Greenich mean
+			time.<BR>Therefore the jobs will not be executed at the local time
+			if you do not set<BR>the ELKS time to your local time. If you
+			schedule a lot of jobs you may<BR>run out of slots. Increase
+			POLL_MAX in the limits.h file then.<BR><BR>To display the contents
+			of the crontab file call the crontab program<BR>with the &quot;-l&quot;
+			parameter:<BR><BR><FONT FACE="Courier New, monospace">$ crontab
+			-l</FONT><BR><BR>To edit the cron jobs, do:<BR><BR><FONT FACE="Courier New, monospace">$
+			crontab -e</FONT><BR><BR>crontab defaults to the vi editor in this
+			case and opens the crontab file in<BR>the vi editor. To set it to
+			the kilo editor, set the environment variable $EDITOR <BR>to
+			kilo.<BR><BR>Each line in the crontab file defines a different
+			command or cron job which can be <BR>executed at different times.
+			An example of such a line would be:<BR><BR><FONT FACE="Courier New, monospace">*/5
+			* * * * ls -l &gt;&gt;/var/spool/cron/cron.log</FONT><BR><BR>This
+			runs &quot;ls -l&quot;, which is the cron job, at every 5th
+			minute. For example if <BR>the time is 10:00, the next job will
+			run at 10:05, 10:10, 10:15 and so on.<BR><BR>The five stars before
+			the command are defined as follows:<BR><FONT FACE="Courier New, monospace"><BR>#
+			.---------------- minute (0 - 59)<BR># | .------------- hour (0 -
+			23)<BR># | | .---------- day of month (1 - 31)<BR># | | | .-------
+			month (1 - 12) OR jan,feb,mar,apr ...<BR># | | | | .---- day of
+			week (0 - 6) (Sunday=0 or 7) OR sun,<BR># | | | |
+			|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mon,tue,wed,thu,fri,sat<BR># * * *
+			* * command to be executed<BR></FONT><BR>Here are examples of cron
+			jobs which can be defined in the crontab file:<BR><BR>1. To run a
+			cron job at every minute, the format should be like below.<BR><BR><FONT FACE="Courier New, monospace">*
+			* * * * &lt;command-to-execute&gt;</FONT><BR><BR>For example if
+			the time is 10:00, the next job will run at 10:01, 10:02, 10:03
+			and so on.<BR><BR>2. To run a cron job at every quarter hour (i.e
+			every 15th minute), add this:<BR><BR><FONT FACE="Courier New, monospace">*/15
+			* * * * &lt;command-to-execute&gt;</FONT><BR><BR>For example if
+			the time is 10:00, the next job will run at 10:15, 10:30, 10:45
+			and so on.<BR><BR>3. To run a cron job every hour at minute
+			30:<BR><BR><FONT FACE="Courier New, monospace">30 * * * *
+			&lt;command-to-execute&gt;</FONT><BR><BR>For example if the time
+			is 10:00, the next job will run at 10:30, 11:30, 12:30 and so
+			on.<BR><BR>4. You can also define multiple time intervals
+			separated by commas. For example, the following cron job will run
+			three times every hour, at minute 0, 5 and 10:<BR><BR><FONT FACE="Courier New, monospace">0,5,10
+			* * * * &lt;command-to-execute&gt;</FONT><BR><BR>5. Run a job
+			every hour (at minute 0):<BR><BR><FONT FACE="Courier New, monospace">0
+			* * * * &lt;command-to-execute&gt;</FONT><BR><BR>For example if
+			the time is now 10:00, the next job will run at 11:00, 12:00,
+			12:00 and so on.<BR><BR>6. Run a job every 2 hours:<BR><BR><FONT FACE="Courier New, monospace">0
+			*/2 * * * &lt;command-to-execute&gt;</FONT><BR><BR>For example if
+			the time is now 10:00, the next job will run at 12:00.<BR><BR>7.
+			Run a job every day at 3am:<BR><BR><FONT FACE="Courier New, monospace">0
+			3 * * * &lt;command-to-execute&gt;</FONT><BR><BR>8. Run a job
+			every Sunday:<BR><BR><FONT FACE="Courier New, monospace">0 0 * *
+			sun &lt;command-to-execute&gt;</FONT><BR><BR>9. Run a job on every
+			day-of-week from Monday through Friday i.e every weekday:<BR><BR><FONT FACE="Courier New, monospace">0
+			0 * * 1-5 &lt;command-to-execute&gt;</FONT><BR><BR>The job will
+			start at 00:00.<BR><BR>10. Run a job at 16:15 on day-of-month
+			1:<BR><BR><FONT FACE="Courier New, monospace">15 16 1 * *
+			&lt;command-to-execute&gt;</FONT><BR><BR><BR>In the ELKS version
+			you cannot use % or newline to add input for the command.<BR><BR>9<SUP>th</SUP>
+			of May 2020 Georg Potthast</FONT></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=624 VALIGN=TOP>
+			<P ALIGN=CENTER><BR>
+			</P>
+		</TD>
+	</TR>
+</TABLE>
+<P STYLE="margin-bottom: 0cm"><BR>
+</P>
+</BODY>
+</HTML>
