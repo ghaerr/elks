@@ -36,4 +36,33 @@ struct minix_supl_hdr {
     long		msh_dbase;	/* data relocation base */
 };
 
+#ifdef CONFIG_EXEC_ELKS
+struct elks_supl_hdr {
+    unsigned short	esh_ftseg;	/* far text size */
+    unsigned long	esh_ftrsize;	/* far text relocation size */
+    unsigned short	unused3;
+    unsigned long	unused4, unused5;
+};
+#endif
+
+struct minix_reloc {
+    unsigned long	r_vaddr;	/* address of place within section */
+    unsigned short	r_symndx;	/* index into symbol table */
+    unsigned short	r_type;		/* relocation type */
+};
+
+/* r_type values */
+#ifdef CONFIG_EXEC_ELKS
+#define R_SEGWORD	80
+#endif
+
+/* special r_symndx values */
+#define S_ABS		((unsigned short)-1U)
+#define S_TEXT		((unsigned short)-2U)
+#define S_DATA		((unsigned short)-3U)
+#define S_BSS		((unsigned short)-4U)
+#ifdef CONFIG_EXEC_ELKS
+#define S_FTEXT		((unsigned short)-5U)
+#endif
+
 #endif
