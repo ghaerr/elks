@@ -29,21 +29,18 @@ struct minix_exec_hdr {
     unsigned long	unused2;
 };
 
-struct minix_supl_hdr {
+struct elks_supl_hdr {
+    /* optional fields */
     long		msh_trsize;	/* text relocation size */
     long		msh_drsize;	/* data relocation size */
     long		msh_tbase;	/* text relocation base */
     long		msh_dbase;	/* data relocation base */
-};
-
-#ifdef CONFIG_EXEC_ELKS
-struct elks_supl_hdr {
+    /* even more optional fields --- for ELKS medium memory model support */
     unsigned short	esh_ftseg;	/* far text size */
     unsigned long	esh_ftrsize;	/* far text relocation size */
     unsigned short	unused3;
     unsigned long	unused4, unused5;
 };
-#endif
 
 struct minix_reloc {
     unsigned long	r_vaddr;	/* address of place within section */
@@ -52,17 +49,14 @@ struct minix_reloc {
 };
 
 /* r_type values */
-#ifdef CONFIG_EXEC_ELKS
 #define R_SEGWORD	80
-#endif
 
 /* special r_symndx values */
 #define S_ABS		((unsigned short)-1U)
 #define S_TEXT		((unsigned short)-2U)
 #define S_DATA		((unsigned short)-3U)
 #define S_BSS		((unsigned short)-4U)
-#ifdef CONFIG_EXEC_ELKS
+/* for ELKS medium memory model support */
 #define S_FTEXT		((unsigned short)-5U)
-#endif
 
 #endif

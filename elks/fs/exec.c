@@ -48,8 +48,7 @@
 #include <arch/segment.h>
 
 static struct minix_exec_hdr mh;
-#ifdef CONFIG_EXEC_ELKS
-static struct minix_supl_hdr msuph;
+#ifdef CONFIG_EXEC_MMODEL
 static struct elks_supl_hdr esuph;
 #endif
 
@@ -58,7 +57,7 @@ static struct elks_supl_hdr esuph;
 #define INIT_HEAP  0x0     // For future use (inverted heap and stack)
 #define INIT_STACK 0x2000  // 8 K (space for both stack and heap)
 
-#ifdef CONFIG_EXEC_ELKS
+#ifdef CONFIG_EXEC_MMODEL
 // Read relocations for a particular segment and apply them
 // Only IA-16 segment relocations are accepted
 static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
@@ -176,20 +175,35 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     // as we now master the executable header content
     // with the new GNU build tool chain (custom LD script)
 
+			/* executable with no far text, no relocations */
+#define EXEC_HDR_SIZE_0	sizeof(struct minix_exec_hdr)
+			/* executable with relocations, no far text (?) */
+#define SUPL_HDR_SIZE_1	offsetof(struct elks_supl_hdr, esh_ftseg)
+#define EXEC_HDR_SIZE_1	(EXEC_HDR_SIZE_0 + SUPL_HDR_SIZE_1)
+			/* executable with far text (and maybe relocations) */
+#define SUPL_HDR_SIZE_2	(sizeof(struct elks_supl_hdr) - SUPL_HDR_SIZE_1)
+#define EXEC_HDR_SIZE_2 (EXEC_HDR_SIZE_1 + SUPL_HDR_SIZE_2)
+
     switch ((unsigned) mh.hlen) {
-#ifdef CONFIG_EXEC_ELKS
-    case 0x30:
-    case 0x40:
+    case EXEC_HDR_SIZE_0:
+#ifdef CONFIG_EXEC_MMODEL
+	memset(&esuph, 0, sizeof(esuph));
+#endif
+	break;
+#ifdef CONFIG_EXEC_MMODEL
+    case EXEC_HDR_SIZE_1:
+    case EXEC_HDR_SIZE_2:
 	/* BIG HEADER */
-	retval = filp->f_op->read(inode, filp, (char *) &msuph, sizeof(msuph));
-	if (retval != (int)sizeof(msuph)) {
+	retval = filp->f_op->read(inode, filp, (char *) &esuph,
+				  SUPL_HDR_SIZE_1);
+	if (retval != SUPL_HDR_SIZE_1) {
 	    debug1("EXEC: Bad secondary header, result %u\n", retval);
 	    goto error_exec3;
 	}
-	if (mh.hlen == 0x40) {
-	    retval = filp->f_op->read(inode, filp, (char *) &esuph,
-				      sizeof(esuph));
-	    if (retval != (int)sizeof(esuph)) {
+	if (mh.hlen == EXEC_HDR_SIZE_2) {
+	    retval = filp->f_op->read(inode, filp, (char *) &esuph.esh_ftseg,
+				      SUPL_HDR_SIZE_2);
+	    if (retval != SUPL_HDR_SIZE_2) {
 		debug1("EXEC: Bad secondary header, result %u\n", retval);
 		goto error_exec3;
 	    }
@@ -198,29 +212,29 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    if (esuph.esh_ftrsize % sizeof(struct minix_reloc) != 0)
 		goto error_exec3;
 	} else
-	    memset(&esuph, 0, sizeof esuph);
+	    memset(&esuph.esh_ftseg, 0, SUPL_HDR_SIZE_2);
 	debug3("EXEC: text reloc size 0x%lx, data reloc size 0x%lx, "
 	       "text base 0x%lx\n",
-	       msuph.msh_trsize, msuph.msh_drsize, msuph.msh_tbase);
-	if (msuph.msh_trsize % sizeof(struct minix_reloc) != 0 ||
-	    msuph.msh_drsize % sizeof(struct minix_reloc) != 0 ||
-	    msuph.msh_tbase != 0)
+	       esuph.msh_trsize, esuph.msh_drsize, esuph.msh_tbase);
+	if (esuph.msh_tbase != 0)
 	    goto error_exec3;
-	base_data = msuph.msh_dbase;
+	if (esuph.msh_trsize % sizeof(struct minix_reloc) != 0 ||
+	    esuph.msh_drsize % sizeof(struct minix_reloc) != 0)
+	    goto error_exec3;
+#ifdef CONFIG_EXEC_LOW_STACK
+	base_data = esuph.msh_dbase;
 	if (base_data & 0xf)
 	    goto error_exec3;
 	if (base_data != 0) {
 	    debug1("EXEC: New type executable stack = %x\n", base_data);
 	    len = mh.dseg + mh.bseg + base_data + INIT_HEAP;
 	}
-	break;
-#endif
-    case 0x20:
-#ifdef CONFIG_EXEC_ELKS
-	memset(&msuph, 0, sizeof msuph);
-	memset(&esuph, 0, sizeof esuph);
+#else
+	if (base_data != 0)
+	    goto error_exec3;
 #endif
 	break;
+#endif
     default:
 	goto error_exec3;
     }
@@ -237,7 +251,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	segext_t paras;
 	retval = -ENOMEM;
 	paras = (mh.tseg + 15) >> 4;
-#ifdef CONFIG_EXEC_ELKS
+#ifdef CONFIG_EXEC_MMODEL
 	paras += (esuph.esh_ftseg + 15) >> 4;
 #endif
 	debug1("EXEC: Allocating 0x%x paragraphs for text segment(s)\n",
@@ -251,7 +265,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 		   retval, (unsigned)mh.tseg);
 	    goto error_exec4;
 	}
-#ifdef CONFIG_EXEC_ELKS
+#ifdef CONFIG_EXEC_MMODEL
 	if (esuph.esh_ftseg) {
 	    currentp->t_regs.ds = seg_code->base + ((mh.tseg + 15) >> 4);
 	    retval = filp->f_op->read(inode, filp, 0, (size_t)esuph.esh_ftseg);
@@ -265,7 +279,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     } else {
 	seg_get (seg_code);
 	filp->f_pos += mh.tseg;
-#ifdef CONFIG_EXEC_ELKS
+#ifdef CONFIG_EXEC_MMODEL
 	filp->f_pos += esuph.esh_ftseg;
 	need_reloc_code = 0;
 #endif
@@ -287,10 +301,10 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	goto error_exec5;
     }
 
-#ifdef CONFIG_EXEC_ELKS
+#ifdef CONFIG_EXEC_MMODEL
     if (need_reloc_code) {
 	/* Read and apply text segment relocations */
-	if (relocate(seg_code->base, msuph.msh_trsize, seg_code, seg_data,
+	if (relocate(seg_code->base, esuph.msh_trsize, seg_code, seg_data,
 		     currentp, inode, filp) != 0)
 	    goto error_exec5;
 	/* Read and apply far text segment relocations */
@@ -299,11 +313,11 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    goto error_exec5;
     } else {
 	/* If reusing existing text segments, no need to re-relocate */
-	filp->f_pos += msuph.msh_trsize;
+	filp->f_pos += esuph.msh_trsize;
 	filp->f_pos += esuph.esh_ftrsize;
     }
     /* Read and apply data relocations */
-    if (relocate(seg_data->base, msuph.msh_drsize, seg_code, seg_data,
+    if (relocate(seg_data->base, esuph.msh_drsize, seg_code, seg_data,
 		 currentp, inode, filp) != 0)
 	goto error_exec5;
 #endif

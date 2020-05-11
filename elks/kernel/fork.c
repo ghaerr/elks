@@ -138,7 +138,7 @@ pid_t sys_fork(void)
 
 pid_t sys_vfork(void)
 {
-#ifdef CONFIG_EXEC_ELKS
+#if 1
     return do_fork(0);
 #else
     register __ptask currentp = current;
