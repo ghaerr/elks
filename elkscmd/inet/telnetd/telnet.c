@@ -15,7 +15,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <termios.h>
-#include "telnetd.h"
 #include "telnet.h"
 #include <stdio.h>
 #include <sys/ioctl.h>
