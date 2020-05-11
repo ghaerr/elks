@@ -12,8 +12,9 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-SRCS = telnetd.c
+SRCS = telnetd.c telnet.c
 OBJS = $(SRCS:.c=.o) 
+LDFLAGS += -maout-chmem=0x1100
 
 all:	telnetd
 

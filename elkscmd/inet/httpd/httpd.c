@@ -46,14 +46,10 @@
 #define WS(c)	( ((c) == ' ') || ((c) == '\t') || ((c) == '\r') || ((c) == '\n') )
 
 int listen_sock;
-int conn_sock;
 #define BUF_SIZE	2048
 char buf[BUF_SIZE];
-char doc_base[64];
 
-#if 1
-char* get_mime_type(name)
-char* name;
+char* get_mime_type(char *name)
 {
     char* dot;
 
@@ -76,36 +72,30 @@ char* name;
 	return "audio/midi";
     return "text/plain";
 }
-#endif
 
-void send_header(ct)
-char *ct;
+void send_header(int fd, char *ct)
 {
 	buf[0] = 0;
 	sprintf(buf, "HTTP/1.0 200 OK\r\nServer: nanoHTTPd/0.1\r\nDate: Thu Apr 26 15:37:46 GMT 2001\r\nContent-Type: %s\r\n",ct);
-	write(conn_sock, buf, strlen(buf));
+	write(fd, buf, strlen(buf));
 }
 
-void send_error(errnum, str)
-int	errnum;
-char *str;
+void send_error(int fd, int errnum, char *str)
 {
-	buf[0] = 0;
 	sprintf(buf,"HTTP/1.0 %d %s\r\nContent-type: %s\r\n", errnum, str, DEF_CONTENT);
-	write(conn_sock, buf, strlen(buf));
-	buf[0] = 0;
+	write(fd, buf, strlen(buf));
 	sprintf(buf,"Connection: close\r\nDate: Thu Apr 26 15:37:46 GMT 2001\r\n\r\n%s\r\n",str);
-	write(conn_sock, buf, strlen(buf));
+	write(fd, buf, strlen(buf));
 }
 
-void process_request()
+void process_request(int fd)
 {
 	int fin, size;
 	int ret;
 	char *c, *file, fullpath[128];
 	struct stat st;
 	
-	ret = read(conn_sock, buf, BUF_SIZE);
+	ret = read(fd, buf, BUF_SIZE);
 	
 	c = buf;
 	while (*c && !WS(*c) && c < (buf + sizeof(buf))){
@@ -114,7 +104,7 @@ void process_request()
 	*c = 0;
 	
 	if (strcasecmp(buf, "get")){
-		send_error(404, "Method not supported");
+		send_error(fd, 404, "Method not supported");
 		return;		
 	}
 	
@@ -125,11 +115,10 @@ void process_request()
 	*c = 0;
 
 	/* TODO : Use strncat when security is the only problem of this server! */
-	strcpy(fullpath, doc_base);
+	strcpy(fullpath, DEF_DOCBASE);
 	strcat(fullpath, file);
-	stat(fullpath, &st);
 	
-	if ((st.st_mode & S_IFMT) == S_IFDIR){
+	if (!stat(fullpath, &st) && (st.st_mode & S_IFMT) == S_IFDIR) {
 		if (file[strlen(fullpath) - 1] != '/'){
 			strcat(fullpath, "/");
 		}
@@ -138,33 +127,29 @@ void process_request()
 	
 	fin = open(fullpath, O_RDONLY);
 	if (fin < 0){
-		send_error(404, "Document (probably) not found");
+		send_error(fd, 404, "Document (probably) not found");
 		return;
 	}
 	size = lseek(fin, (off_t)0, SEEK_END);
 	lseek(fin, (off_t)0, SEEK_SET);
-	send_header(get_mime_type(fullpath));
-	buf[0] = 0;
+	send_header(fd, get_mime_type(fullpath));
 	sprintf(buf,"Content-Length: %d\r\n\r\n",size);
-	write(conn_sock, buf, strlen(buf));
+	write(fd, buf, strlen(buf));
 	
 	do {
 		ret = read(fin, buf, BUF_SIZE);
-		write(conn_sock, buf, ret);
+		if (ret > 0)
+			write(fd, buf, ret);
 	} while (ret == BUF_SIZE);
 	
 	close(fin);
 	
 }
 
-int main(argc, argv)
-int argc;
-char** argv;
+int main(int argc, char **argv)
 {
-	int ret;
+	int ret, conn_sock;
 	struct sockaddr_in localadr;
-
-	strcpy(doc_base, DEF_DOCBASE);
 
 	if ((listen_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		perror("socket error");
@@ -184,10 +169,10 @@ char** argv;
 		exit(-1);
 	}
 
+	/* become daemon*/
 	ret = fork();
-	if (ret > 0 || ret == -1) {
+	if (ret != 0)
 		exit(0);	
-	}
 	ret = open("/dev/null", O_RDWR); /* our log file! */
 	dup2(ret, 0);
 	dup2(ret, 1);
@@ -196,7 +181,7 @@ char** argv;
 		close(ret);
 	setsid();
 
-	while (1){
+	while (1) {
 		conn_sock = accept(listen_sock, NULL, NULL);
 		
 		if (conn_sock < 0) {
@@ -208,7 +193,7 @@ char** argv;
 		ret = fork();
 		if (ret == 0){
 			close(listen_sock);
-			process_request();
+			process_request(conn_sock);
 			close(conn_sock);
 			exit(0);
 		} else {
@@ -216,4 +201,3 @@ char** argv;
 		}
 	}
 }
-

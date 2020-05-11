@@ -296,25 +296,25 @@ void eth_drv_init ()
 		err = ne2k_probe ();
 		if (err)
 			{
-			printk ("[ne2k] not detected @ IO 300h\n");
+			printk ("eth: NE2K not detected\n");
 			break;
 			}
 
 		err = request_irq (NE2K_IRQ, ne2k_int, NULL);
 		if (err)
 			{
-			printk ("[ne2k] IRQ 9 request error: %i\n", err);
+			printk ("eth: NE2K IRQ %d request error: %i\n", NE2K_IRQ, err);
 			break;
 			}
 
 		err = register_chrdev (ETH_MAJOR, "eth", &eth_fops);
 		if (err)
 			{
-			printk ("[eth] register error: %i\n", err);
+			printk ("eth: register error: %i\n", err);
 			break;
 			}
 
-		printk ("[eth] NE2K driver OK\n");
+		printk ("eth: NE2K at 0x%x, irq %d\n", NE2K_PORT, NE2K_IRQ);
 		break;
 		}
 	}

@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
 	remadr.sin_port = htons( port );
 	remadr.sin_addr.s_addr = in_aton(argv[1]);
 
-	printf("Connecting to %s port %u\n",argv[1], port);
+	printf("Connecting to %s (%lx) port %u\n",argv[1], in_aton(argv[1]), port);
 	ret = connect(tcp_fd, (struct sockaddr *)&remadr,
     			sizeof(struct sockaddr_in));
 	if (ret < 0){

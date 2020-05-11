@@ -280,8 +280,8 @@ static int enableRawMode(int fd) {
     /* input modes: no break, no CR to NL, no parity check, no strip char,
      * no start/stop output control. */
     raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-    /* output modes - disable post processing */
-    raw.c_oflag &= ~(OPOST);
+    /* output modes - don't disable post processing (for kernel printk when running)*/
+    /*raw.c_oflag &= ~(OPOST);*/
     /* control modes - set 8 bit chars */
     raw.c_cflag |= (CS8);
     /* local modes - echo nothing, canonical off, no extended functions,

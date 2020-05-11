@@ -8,8 +8,6 @@
 #include "ip.h"
 #include <linuxmt/arpa/inet.h>
 
-//#define DEBUG
-
 #define PROTO_TCP	0x06
 
 #define SEQ_LT(a,b)	((long)((a)-(b)) < 0)
@@ -17,12 +15,12 @@
 #define SEQ_GT(a,b)	((long)((a)-(b)) > 0)
 #define SEQ_GEQ(a,b)	((long)((a)-(b)) >= 0)
 
-#define	TF_FIN	1
-#define TF_SYN	2
-#define	TF_RST	4
-#define	TF_PSH	8
-#define	TF_ACK	16
-#define TF_URG	32
+#define	TF_FIN	0x01
+#define TF_SYN	0x02
+#define	TF_RST	0x04
+#define	TF_PSH	0x08
+#define	TF_ACK	0x10
+#define TF_URG	0x20
 
 #define TF_ALL (TF_FIN | TF_SYN | TF_RST | TF_PSH | TF_ACK | TF_URG)
 
@@ -115,9 +113,7 @@ struct tcpcb_s {
 	__u16	datalen;
 };
 
-#ifdef CONFIG_INET_STATUS
-int tcpcb_num;
-#endif
+int tcpcb_num;		/* for netstat*/
 
 struct	tcpcb_list_s {
 	struct tcpcb_s		tcpcb;
@@ -144,7 +140,8 @@ int tcp_timeruse;
 int tcpcb_need_push;
 
 #define TCP_RTT_ALPHA		90
-#define TCP_RETRANS_MAXMEM	8192*2
+//#define TCP_RETRANS_MAXMEM	8192*2
+#define TCP_RETRANS_MAXMEM	2048
 int tcp_retrans_memory;
 
 struct tcpcb_list_s *tcpcb_new();

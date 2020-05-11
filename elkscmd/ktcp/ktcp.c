@@ -3,6 +3,8 @@
  *
  * (C) 2001 Harry Kalogirou (harkal@rainbow.cs.unipi.gr)
  *
+ * Major debugging by Greg Haerr May 2020
+ *
  *	This program is free software; you can redistribute it and/or
  *	modify it under the terms of the GNU General Public License
  *	as published by the Free Software Foundation; either version
@@ -29,12 +31,10 @@
 #ifdef DEBUG
 #define debug	printf
 #else
-#define debug(s)
+#define debug(...)
 #endif
 
 char deveth[] = "/dev/eth";
-
-extern int tcp_timeruse;
 
 static int intfd;
 
@@ -65,9 +65,14 @@ void ktcp_run(void)
     fd_set fdset;
     struct timeval timeint, *tv;
     int count;
+extern int tcp_timeruse;
+extern int cbs_in_time_wait;
+extern int cbs_in_user_timeout;
 
     while (1) {
-	if (tcp_timeruse > 0 || tcpcb_need_push > 0) {
+	//if (tcp_timeruse > 0 || tcpcb_need_push > 0) {
+	if (tcp_timeruse > 0 || tcpcb_need_push > 0 || cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
+
 	    timeint.tv_sec  = 1;
 	    timeint.tv_usec = 0;
 	    tv = &timeint;
@@ -91,9 +96,7 @@ void ktcp_run(void)
 
 	if (tcp_timeruse > 0) tcp_retrans();
 
-#ifdef DEBUG
 	tcpcb_printall();
-#endif
     }
 }
 

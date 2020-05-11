@@ -9,6 +9,10 @@
  *	2 of the License, or (at your option) any later version.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "config.h"
 #include "tcp.h"
 #include "tcpdev.h"
@@ -20,13 +24,10 @@ void tcpcb_init(void)
 {
     tcpcbs = NULL;
     tcpcb_need_push = 0;
-
-#ifdef CONFIG_INET_STATUS
-    tcpcb_num = 0;
-#endif
-
     cbs_in_time_wait = 0;
     cbs_in_user_timeout = 0;
+
+    tcpcb_num = 0;	/* for netstat*/
 }
 
 void tcpcb_printall(void)
@@ -36,7 +37,7 @@ void tcpcb_printall(void)
 
     printf("--- Control Blocks --- %d (%d)\n",tcpcb_num,tcp_retrans_memory);
     while (n) {
-	printf("CB:%p sock:0x%x 0x%x State:%d LP:%d RP:%d RTT: %d ms unacc : %d\n",&n->tcpcb, n->tcpcb.sock,
+	printf("CB:%p sock:0x%x 0x%x State:%d LP:%u RP:%u RTT: %d ms unacc : %d\n",&n->tcpcb, n->tcpcb.sock,
 		n->tcpcb.newsock, n->tcpcb.state, n->tcpcb.localport,
 		n->tcpcb.remport, n->tcpcb.rtt * 1000 / 16,
 		n->tcpcb.unaccepted);
@@ -45,8 +46,7 @@ void tcpcb_printall(void)
 #endif
 }
 
-#ifdef CONFIG_INET_STATUS
-
+/* for netstat*/
 struct tcpcb_s *tcpcb_getbynum(int num)
 {
     struct tcpcb_list_s *n;
@@ -60,17 +60,16 @@ struct tcpcb_s *tcpcb_getbynum(int num)
 	    return &n->tcpcb;
 }
 
-#endif
-
 struct tcpcb_list_s *tcpcb_new(void)
 {
     struct tcpcb_list_s *n;
 
     n = (struct tcpcb_list_s *) malloc(sizeof(struct tcpcb_list_s));
     if (n == NULL) {
-	printf("ktcp: Out of memory\n");
+	debug_tcp("ktcp: Out of memory 3\n");
 	return NULL;
     }
+debug_tcp("alloc %d\n", sizeof(struct tcpcb_list_s));
 
     memset(&n->tcpcb, 0, sizeof(struct tcpcb_s));
     n->tcpcb.rtt = 4 << 4; /* 4 sec */
@@ -83,10 +82,7 @@ struct tcpcb_list_s *tcpcb_new(void)
 	tcpcbs = n;
     } else
 	tcpcbs = n;
-
-#ifdef CONFIG_INET_STATUS
-    tcpcb_num++;
-#endif
+    tcpcb_num++;	/* for netstat*/
 
     return n;
 }
@@ -105,9 +101,8 @@ void tcpcb_remove(struct tcpcb_list_s *n)
 {
     struct tcpcb_list_s *next = n->next;
 
-#ifdef CONFIG_INET_STATUS
-    tcpcb_num--;
-#endif
+debug_tcp("REMOVING CB\n");
+    tcpcb_num--;	/* for netstat*/
 
     if (n->prev)
 	n->prev->next = next;
@@ -118,6 +113,7 @@ void tcpcb_remove(struct tcpcb_list_s *n)
 	n->prev = NULL;
 
 	rmv_all_retrans(tcpcbs);
+debug_tcp("FREE 0\n");
 	free(tcpcbs);
 	tcpcbs = n;
 
@@ -129,6 +125,7 @@ void tcpcb_remove(struct tcpcb_list_s *n)
 
     rmv_all_retrans(n);
     free(n);
+debug_tcp("FREE 0\n");
 }
 
 struct tcpcb_list_s *tcpcb_check_port(__u16 lport)
@@ -198,6 +195,7 @@ void tcpcb_expire_timeouts(void)
 
     while (n) {
 	next = n->next;
+debug_tcp("expire state %d\n", n->tcpcb.state);
 	switch (n->tcpcb.state) {
 	    case TS_TIME_WAIT:
 		if (TIME_GT(Now, n->tcpcb.time_wait_exp)) {
@@ -205,11 +203,14 @@ void tcpcb_expire_timeouts(void)
 		    tcpcb_remove(n);
 		}
 		break;
+	    case TS_CLOSE_WAIT:		//FIXME added
+		debug_tcp("expire close\n");
 	    case TS_FIN_WAIT_1:
 	    case TS_FIN_WAIT_2:
 	    case TS_LAST_ACK:
 	    case TS_CLOSING:
-		if (TIME_GT(Now - (240 << 4), n->tcpcb.time_wait_exp)) {
+		//if (TIME_GT(Now - (240 << 4), n->tcpcb.time_wait_exp)) {
+		if (TIME_GT(Now - (10 << 4), n->tcpcb.time_wait_exp)) { //FIXME 10 secs
 		    cbs_in_user_timeout--;
 		    tcpcb_remove(n);
 		}
@@ -229,7 +230,7 @@ void tcpcb_push_data(void)
 }
 
 /* There must be free space greater-equal than len */
-int tcpcb_buf_write(struct tcpcb_s *cb, __u8 *data, __u16 len)
+void tcpcb_buf_write(struct tcpcb_s *cb, __u8 *data, __u16 len)
 {
     int tail;
     register int i;
@@ -241,7 +242,7 @@ int tcpcb_buf_write(struct tcpcb_s *cb, __u8 *data, __u16 len)
 }
 
 /* same here */
-int tcpcb_buf_read(struct tcpcb_s *cb, __u8 *data, __u16 len)
+void tcpcb_buf_read(struct tcpcb_s *cb, __u8 *data, __u16 len)
 {
     register int head = cb->buf_head, i;
 

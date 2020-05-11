@@ -13,6 +13,7 @@ include $(BASEDIR)/Make.rules
 PRG=httpd
 
 LOCALFLAGS=-I$(ELKSCMD_DIR)
+LDFLAGS += -maout-chmem=0x1100
 
 all: $(PRG)
 

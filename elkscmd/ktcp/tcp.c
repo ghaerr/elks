@@ -10,23 +10,16 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/net.h>
-
 #include "slip.h"
 #include "ip.h"
 #include "tcp.h"
 #include "timer.h"
 #include <linuxmt/arpa/inet.h>
 
-//#define DEBUG2
-
-#ifdef DEBUG2
-#define debug	printf
-#else
-#define debug(s)
-#endif
 timeq_t Now;
 
 extern int cbs_in_time_wait;
@@ -34,17 +27,11 @@ extern int cbs_in_user_timeout;
 
 void tcp_print(struct iptcp_s *head)
 {
-#ifdef DEBUG
-    printf("TCP header\n");
-    printf("sport : %d dport :%d \n", ntohs(head->tcph->sport),
-	   ntohs(head->tcph->dport));
-    printf("seq : %lu ack : %lu \n", ntohl(head->tcph->seqnum),
-	   ntohl(head->tcph->acknum));
-    printf("flags :%d\n",head->tcph->flags);
-    printf("window : %d urgpnt : %d\n", ntohs(head->tcph->window),
-	   head->tcph->urgpnt);
-    printf("chksum : %d\n",tcp_chksum(head));
-#endif
+    debug_tcp("TCP: src:%u dst:%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
+    debug_tcp("flags:%x ",head->tcph->flags);
+    debug_tcp("seq:%lx ack:%lx ", ntohl(head->tcph->seqnum), ntohl(head->tcph->acknum));
+    debug_tcp("win:%d urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
+    debug_tcp("chk:%d\n",tcp_chksum(head));
 }
 
 int tcp_init(void)
@@ -150,12 +137,11 @@ void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     if (h->flags & TF_RST)
 	return;
 
-#ifdef DEBUG
-    if (h->flags & TF_ACK){
-	printf("Implement me ACK in listen\n"); }
-#endif
+    if (h->flags & TF_ACK)
+	debug_tcp("tcp: ACK in listen not implemented\n");
 
     n = tcpcb_clone(lcb);    /*copy (struct tcpcb_s)*lcb into linked list tcpcb_list_s*/
+if (!n) return;
     cb = &n->tcpcb;          /*tcp control block in linked list*/
     cb->unaccepted = 1;      /* Mark as unaccepted */
     cb->newsock = lcb->sock; /* lcb-> is the socket in kernel space */
@@ -164,9 +150,7 @@ void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     cb->seg_ack = ntohl(h->acknum); /*read ack number got*/
 
     if (!(h->flags & TF_SYN)){
-#ifdef DEBUG
-	printf("no sync message in listen state\n");
-#endif
+	debug_tcp("tcp: no SYN in listen\n");
 	tcpcb_remove(n); /*remove from linked list again*/
 	return;
     }
@@ -216,8 +200,10 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
 	/* FIXME : check if it fits */
-	if (datasize > CB_BUF_SPACE(cb))
+	if (datasize > CB_BUF_SPACE(cb)) {
+	    printf("tcp: packet data too large: %d\n", datasize);
 	    return;
+	}
 
 	tcpcb_buf_write(cb, data, datasize);
 
@@ -236,7 +222,6 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 
     if (h->flags & TF_RST) {
-
 	/* TODO: Check seqnum for security */
 	rmv_all_retrans(cb);
 	if (cb->state == TS_CLOSE_WAIT) {
@@ -250,6 +235,10 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     if (h->flags & TF_FIN) {
 	cb->rcv_nxt ++;
 	cb->state = TS_CLOSE_WAIT;
+/* FIXME timeout if remote side terminated*/
+debug_tcp("Setting TS_CLOSE_WAIT\n");
+cb->time_wait_exp = Now;
+cbs_in_user_timeout++;
 	tcpdev_sock_state(cb, SS_DISCONNECTING);
     }
 
@@ -268,8 +257,8 @@ void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST)
 	cb->state = TS_LISTEN;		/* FIXME: not valid any more */
-    else if (!h->flags & TF_ACK)
-	printf("NO ACK IN SYNRECV\n");
+    else if ((h->flags & TF_ACK) == 0)
+	debug_tcp("tcp: NO ACK IN SYNRECV\n");
     else {
 	cb->state = TS_ESTABLISHED;
 	tcpdev_checkaccept(cb);
@@ -373,8 +362,10 @@ void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 }
 
+/* called every ktcp run cycle*/
 void tcp_update(void)
 {
+debug_tcp("ktcp: update %d,%d\n", cbs_in_time_wait, cbs_in_user_timeout);
     if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0)
 	tcpcb_expire_timeouts();
 
@@ -382,6 +373,7 @@ void tcp_update(void)
 	tcpcb_push_data();
 }
 
+/* called when input on tcpdevfd*/
 void tcp_process(struct iphdr_s *iph)
 {
     struct iptcp_s iptcp;
@@ -395,19 +387,18 @@ void tcp_process(struct iphdr_s *iph)
     iptcp.tcph = tcph;
     iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_IHL(iph);
 
+    tcp_print(&iptcp);
+
     if (tcp_chksum(&iptcp) != 0) {
-#if 0
-	printf("TCP check sum failed (%x) %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
-#endif
+	debug_tcp("tcp: bad checksum (%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
 	return;
     }
 
+debug_tcp("tcbcb_find %lx, %u, %u\n", iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
     cbnode = tcpcb_find(iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
 
     if (!cbnode) {
-#if 0
-	printf("Refusing packet \n");
-#endif
+	debug_tcp("tcp: Refusing packet \n");
 	/* TODO : send RST and stuff */
 	return;
     }
@@ -431,43 +422,47 @@ void tcp_process(struct iphdr_s *iph)
     switch (cb->state) {
 
 	case TS_LISTEN:
-	    debug("TS_LISTEN\n");
+	    debug_tcp("TS_LISTEN\n");
 	    tcp_listen(&iptcp, cb);
 	    break;
 
 	case TS_SYN_SENT:
-	    debug("TS_SYN_SENT\n");
+	    debug_tcp("TS_SYN_SENT\n");
 	    tcp_syn_sent(&iptcp, cb);
 	    break;
 
 	case TS_SYN_RECEIVED:
-	    debug("TS_SYN_RECEIVED\n");
+	    debug_tcp("TS_SYN_RECEIVED\n");
 	    tcp_synrecv(&iptcp, cb);
 	    break;
 
 	case TS_ESTABLISHED:
+	    debug_tcp("TS_ESTABLISHED\n");
+	    tcp_established(&iptcp, cb);
+	    break;
+
 	case TS_CLOSE_WAIT:
-	    debug("TS_ESTABLISHED-TS_CLOSE_WAIT\n");
+	    debug_tcp("TS_CLOSE_WAIT\n");
 	    tcp_established(&iptcp, cb);
 	    break;
 
 	case TS_FIN_WAIT_1:
-	    debug("TS_FIN_WAIT_1\n");
+	    debug_tcp("TS_FIN_WAIT_1\n");
 	    tcp_fin_wait_1(&iptcp, cb);
 	    break;
 
 	case TS_FIN_WAIT_2:
-	    debug("TS_FIN_WAIT_2\n");
+	    debug_tcp("TS_FIN_WAIT_2\n");
 	    tcp_fin_wait_2(&iptcp, cb);
 	    break;
 
 	case TS_LAST_ACK:
-	    debug("TS_LAST_ACK\n");
+	    debug_tcp("TS_LAST_ACK\n");
 	    tcp_last_ack(&iptcp, cb);
 	    break;
 
 	case TS_CLOSING:
-	    debug("TS_CLOSING\n");
+	    debug_tcp("TS_CLOSING\n");
 	    tcp_closing(&iptcp, cb);
 	    break;
     }
