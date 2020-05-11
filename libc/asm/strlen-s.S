@@ -42,7 +42,6 @@ strlen:
 	mov %dx,%es
 
 	pop %bp
-	ret
 #ifdef __IA16_CALLCVT_CDECL
 	ret
 #elif defined __IA16_CALLCVT_STDCALL
