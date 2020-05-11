@@ -98,7 +98,7 @@
 /* ne2k, eth-main.c*/
 #define io_ne2k_command 0x0300		/* FIXME needs to be included in ne2k-mac.s*/
 #define NE2K_IRQ	9
-
+#define NE2K_PORT	0x300
 
 /* obsolete - experimental IDE hard drive, directhd.c (broken)*/
 #define HD1_PORT	0x1f0

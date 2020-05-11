@@ -155,6 +155,10 @@ void ip_vjhc_init(void)
 			xmit_state= NULL;
 		}
 		xmit_state= calloc(ip_snd_vjhc_state_nr, sizeof(snd_state_ut));
+		if (!xmit_state) {
+			printf("ktcp: Out of memory 4\n");
+			return;	//FIXME return -1
+		}
 
 		xmit_head= 0;
 		for (i= 0; i<ip_snd_vjhc_state_nr; i++)
@@ -173,6 +177,10 @@ void ip_vjhc_init(void)
 			rcv_state= NULL;
 		}
 		rcv_state= calloc(ip_rcv_vjhc_state_nr, sizeof(snd_state_ut));
+		if (!rcv_state) {
+			printf("ktcp: Out of memory 5\n");
+			return;	//FIXME return -1
+		}
 	}
 }
 

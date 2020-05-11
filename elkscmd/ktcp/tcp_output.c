@@ -12,6 +12,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "slip.h"
 #include "ip.h"
@@ -168,7 +171,8 @@ loop2:
 	ret
 #endasm
 #endif
-struct tcp_retrans_list_s *rmv_from_retrans(struct tcp_retrans_list_s *n)
+struct tcp_retrans_list_s *
+rmv_from_retrans(struct tcp_retrans_list_s *n)
 {
     struct tcp_retrans_list_s *next = n->next;
 
@@ -181,6 +185,7 @@ struct tcp_retrans_list_s *rmv_from_retrans(struct tcp_retrans_list_s *n)
 	/* Head update */
 	n = next;
 	n->prev = NULL;
+debug_tcp("Free 1/2\n");
 	free(retrans_list->tcph);
 	free(retrans_list);
 	retrans_list = n;
@@ -191,6 +196,7 @@ struct tcp_retrans_list_s *rmv_from_retrans(struct tcp_retrans_list_s *n)
     if (next)
 	next->prev = n->prev;
 
+debug_tcp("Free 1/2\n");
     free(n->tcph);
     free(n);
 
@@ -221,10 +227,18 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
     n = (struct tcp_retrans_list_s *)malloc(sizeof(struct tcp_retrans_list_s));
     if (n == NULL) {
 	printf("ktcp: Out of memory\n");
-
-	/* In this case has to be avoided */
-	exit(0);
+	return;
     }
+debug_tcp("Alloc %d\n", sizeof(struct tcp_retrans_list_s));
+
+    n->cb = cb;
+    n->tcph = (struct tcphdr_s *)malloc(len);
+    if (!n->tcph) {
+	printf("ktcp: Out of memory 2\n");
+	free(n);
+	return;
+    }
+debug_tcp("Alloc %d\n", len);
 
     /* So thet select in ktcp.c blocks for a specified time only */
     tcp_timeruse++;
@@ -241,12 +255,6 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
 	n->prev = NULL;
     }
 
-    n->cb = cb;
-    n->tcph = (struct tcphdr_s *)malloc(len);
-    if (!n->tcph) {
-	printf("Out of memory\n");
-	exit(0);
-    }
     n->len = len;
     tcp_retrans_memory += len;
     memcpy(n->tcph, th, len);
@@ -267,39 +275,45 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
     ip_sendpacket(n->tcph, n->len, &n->apair);
 }
 
-int tcp_retrans(void)
+/* called every ktcp cycle when tcp_timeruse nonzero*/
+void tcp_retrans(void)
 {
     struct tcp_retrans_list_s *n;
     int datalen, rtt;
 
-#ifdef DEBUG
-    printf("Retrans buffers : %d ", tcp_timeruse);
-#endif
+/* FIXME avoid running out of memory - bug in retrans recovery*/
+if (tcp_retrans_memory > TCP_RETRANS_MAXMEM || tcp_timeruse > 5) {
+	struct tcpcb_s *cb = NULL;
+	printf("tcp: RETRANS limit, timeruse %d\n", tcp_timeruse);
+	n = retrans_list;
+	while (n != NULL) {
+		if (!cb)
+			cb = n->cb;
+		n = rmv_from_retrans(n);
+	}
+	tcp_send_reset(cb);
+	return;
+}
+
+    debug_tcp("Retrans buffers : %d ", tcp_timeruse);
 
     n = retrans_list;
     while (n != NULL) {
 	datalen = n->len - TCP_DATAOFF(n->tcph);
 
-#ifdef DEBUG
-	printf("retrans : %lu %lu",
-		ntohl(n->tcph->seqnum) + datalen,n->cb->send_una);
-#endif
+	debug_tcp("retrans : %lx %lx", ntohl(n->tcph->seqnum) + datalen,n->cb->send_una);
 	if (SEQ_LEQ(ntohl(n->tcph->seqnum) + datalen ,n->cb->send_una)) {
 	    if (n->retrans_num == 0) {
 		rtt = Now - n->first_trans;
 		if (rtt > 0)
-			n->cb->rtt = (TCP_RTT_ALPHA * n->cb->rtt
-				   + (100 - TCP_RTT_ALPHA) * rtt) / 100;
+		    n->cb->rtt =
+		        (TCP_RTT_ALPHA * n->cb->rtt + (100 - TCP_RTT_ALPHA) * rtt) / 100;
 	    }
 	    n = rmv_from_retrans(n);
-#ifdef DEBUG
-	    printf(" remove\n");
-#endif
-	    	continue;
+	    debug_tcp(" remove\n");
+	    continue;
 	}
-#ifdef DEBUG
-	printf("not\n");
-#endif
+	debug_tcp(" not\n");
 	if (TIME_GEQ(Now, n->next_retrans)) {
 	    tcp_reoutput(n);
 	    return;
@@ -310,12 +324,11 @@ int tcp_retrans(void)
 
 void tcp_output(struct tcpcb_s *cb)
 {
-    struct tcphdr_s *th = (struct tcphdr_s *) &buf;
+    struct tcphdr_s *th = (struct tcphdr_s *) buf;
     struct addr_pair apair;
     __u16 len;
     __u8 *options, header_len, option_len;
-    __u8 addr[4], *addr2;
-    __u32 temp;
+    //__u8 addr[4], *addr2;
 
     th->sport = htons(cb->localport);
     th->dport = htons(cb->remport);
