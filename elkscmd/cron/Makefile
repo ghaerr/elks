@@ -7,7 +7,7 @@ BASEDIR=..
 include $(BASEDIR)/Make.defs
 
 LOCALFLAGS = -Wno-implicit-int -Wno-return-type $(OPTIONS)
-LOCALFLAGS += -maout-chmem=0x8000 
+CRONFLAGS = -maout-chmem=0x4800 
 
 ###############################################################################
 #
@@ -26,7 +26,7 @@ all: $(progs)
 install: $(progs)
 
 cron: cron.o runjob.o $(common)
-	$(CC) $(CFLAGS) -o $@ cron.o runjob.o $(common)
+	$(CC) $(CFLAGS) $(CRONFLAGS) -o $@ cron.o runjob.o $(common)
 
 crontab: crontab.o $(common)
 	$(CC) $(CFLAGS) -o $@ crontab.o $(common)

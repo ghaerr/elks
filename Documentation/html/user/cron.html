@@ -35,7 +35,7 @@
 			in &quot;elkscmd/rootfs_template/etc/&quot;. Edit the rc.sys file
 			in there<BR>and add cron. Then the disk image will be generated
 			with the modified file.<BR>Cron will scan the directory
-			/var/spool/cron for crontab files and execute <BR>these if there
+			/var/cron for crontab files and execute <BR>these if there
 			are any or they have been modified. If you logged in as root <BR>the
 			name of your crontab file will be root. Cron runs as a daemon in
 			the background and therefore will not output anything to the
@@ -43,7 +43,7 @@
 			program you have to add e.g. &bdquo;&gt;&gt; cron.out&ldquo; to
 			the command in the crontab file.<BR><BR>The ELKS version of cron
 			will not send an email when the scheduled job<BR>is completed but
-			make an entry in the /var/spool/cron/cron.log file.<BR><BR>If you
+			make an entry in the /var/cron/cron.log file.<BR><BR>If you
 			run ELKS on qemu, the hardware time will be UTC or Greenich mean
 			time.<BR>Therefore the jobs will not be executed at the local time
 			if you do not set<BR>the ELKS time to your local time. If you
@@ -58,7 +58,7 @@
 			kilo.<BR><BR>Each line in the crontab file defines a different
 			command or cron job which can be <BR>executed at different times.
 			An example of such a line would be:<BR><BR><FONT FACE="Courier New, monospace">*/5
-			* * * * ls -l &gt;&gt;/var/spool/cron/cron.log</FONT><BR><BR>This
+			* * * * ls -l &gt;&gt;/var/cron/cron.log</FONT><BR><BR>This
 			runs &quot;ls -l&quot;, which is the cron job, at every 5th
 			minute. For example if <BR>the time is 10:00, the next job will
 			run at 10:05, 10:10, 10:15 and so on.<BR><BR>The five stars before

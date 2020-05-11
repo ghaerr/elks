@@ -226,7 +226,6 @@ visual(struct passwd *pwd)
 int
 main(int argc, char **argv)
 {
-    int i;
     int opt;
     int edit=0,remove=0,list=0;
     char *user = 0;

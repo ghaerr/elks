@@ -235,7 +235,8 @@ printcrontab(crontab *tab, int nrtab)
     return 1;
 }
 #else
-#define printcrontab(t,s)	1
+int
+printcrontab(crontab *tab, int nrtab) {;}
 #endif
 
 
@@ -330,6 +331,11 @@ main(int argc, char **argv)
 	fatal("there are only 60 minutes to the hour.");
     else if (interval < 1)
 	interval = 1;
+    
+    if (xis_crondir() != 0) {
+        printf("No '%s' directory available - terminating\n",CRONDIR);
+        exit (1);
+    }
 
     xchdir(CRONDIR);
 

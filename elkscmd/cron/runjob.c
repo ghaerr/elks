@@ -33,9 +33,9 @@ runjobprocess(crontab *tab,cron *job,struct passwd *usr)
     pid_t jpid;
     char *home = usr->pw_dir ? usr->pw_dir : "/tmp";
     int status;
-    char peek[1];
-    char subject[120];
-    char *shell, *to;
+    int input[2]; 
+    char *shell;
+    input[0] = input[1] = 0;
 
     if ( (shell=jobenv(tab, "SHELL")) == 0 )
 	shell = _PATH_BSHELL;
@@ -58,12 +58,40 @@ runjobprocess(crontab *tab,cron *job,struct passwd *usr)
 
 	setsid();
 
+	close(input[1]);
+	close(0); dup2(input[0], 0); close(input[0]);
+    close(2); dup2(1, 2); 
+
 	execle(shell, "sh", "-c", job->command, (char*)0, tab->env);
 	perror(shell);
     }
     else {					/* runjobprocess() */
+	close(input[0]);
+
+	if (job->input && (fork() == 0) ) {
+	    write(input[1], job->input, strlen(job->input));
+	    close(input[1]);
+	    exit(0);
+	}
+	close(input[1]);
+
+#if 0 //no email support in ELKS yet
+	if ( fork() == 0 ) {
+        if (recv(output[0], peek, 1, MSG_PEEK) == 1 ) {
+		close(0);dup2(output[0],0);
+		if ( (to=jobenv(tab,"MAILTO")) == 0)
+		    to = usr->pw_name;
+		snprintf(subject, sizeof subject,
+			 "Cron <%s> %s", to, job->command);
+		execle(PATH_MAIL, "mail", "-s", subject, to, (char*)0, tab->env);
+		fatal("can't exec(\"%s\"): %s", PATH_MAIL, strerror(errno));
+        }
+        exit(0);
+	}
+#endif        
 	/* wait for all subprocesses to finish */
-	while ( wait(&status) != -1 )
+	//while ( wait(&status) != -1 )
+    while ( waitpid(-1, &status, 0) != -1 )
 	    ;
     }
     exit(0);

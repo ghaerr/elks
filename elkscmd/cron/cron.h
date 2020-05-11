@@ -11,8 +11,6 @@
 #define ELKS
 #define DEBUG 0
 #define ALLOW_OUTPUT 0 /* 1 = output off */
-#define _PATH_BSHELL "/bin/sh"
-#define LOGFILE "/var/spool/cron/cron.log"
 
 /*
  * eventmask is
@@ -78,6 +76,9 @@ void fatal(char*,...);
 void info(char*,...);
 char *jobenv(crontab*,char*);
 void xchdir(char*);
+int xis_crondir (void);
+int printcrontab(crontab *tab, int nrtab);
+
 
 
 extern int interactive;

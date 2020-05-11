@@ -19,7 +19,9 @@
 #define HAVE_SETREGID 1
 #define HAVE_SETREUID 1
 #define PATH_MAIL "/usr/bin/mail"
-#define CRONDIR "/var/spool/cron"
+#define CRONDIR "/var/cron"
+#define LOGFILE "/var/cron/cron.log"
 #define PATH_SED "/usr/bin/sed"
+#define _PATH_BSHELL "/bin/sh"
 
 #endif/* __AC_CRON_D */

@@ -13,6 +13,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <dirent.h>
 
 #include "cron.h"
 
@@ -213,6 +214,19 @@ xchdir(char *path)
 	fatal("%s: %s", path, strerror(errno));
 }
 
+int
+xis_crondir (void)
+{
+    DIR* dir = opendir(CRONDIR);
+    
+    if (dir) { /* Directory exists. */
+        closedir(dir);
+        return 0;
+
+    } else { /* Directory does not exist or opendir failed. */
+        return -1;
+    }
+}
 
 #ifdef ELKS /* setregid not defined */
 
