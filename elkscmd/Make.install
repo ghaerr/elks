@@ -97,6 +97,10 @@ ifdef CONFIG_APP_SCREEN
 	TAGS += :screen|
 endif
 
+ifdef CONFIG_APP_CRON
+	TAGS += :cron|
+endif
+
 ifdef CONFIG_APP_SH_UTILS
 	TAGS += :shutil|
 	ifeq ($(CONFIG_APP_SH_UTILS), y)

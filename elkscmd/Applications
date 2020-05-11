@@ -85,6 +85,8 @@ sys_utils/console				:sysutil				:1440k
 sys_utils/who					:sysutil				:1440k
 sys_utils/unreal16				:sysutil				:1440k
 screen/screen					:screen				:1440k
+cron/cron   					:cron				:1440k
+cron/crontab   					:cron				:1440k
 sh_utils/basename				:be-shutil			:720k
 sh_utils/clear					:shutil		:1440k
 sh_utils/date					:be-shutil		:360k
