@@ -217,14 +217,23 @@ xchdir(char *path)
 int
 xis_crondir (void)
 {
-    DIR* dir = opendir(CRONDIR);
+    FILE *ftmp;
     
+    DIR* dir = opendir(CRONDIR);
     if (dir) { /* Directory exists. */
         closedir(dir);
         return 0;
-
     } else { /* Directory does not exist or opendir failed. */
-        return -1;
+        int result = mkdir(CRONDIR,0777); /*-1 fail, 0 ok */
+        if (result == -1) return -1;
+        /* created CRONDIR, generate root crontab file template */
+        if ( (ftmp = fopen(TEMPLATEFILE, "a+")) == 0 ) {
+            error("can't create crontab template: %s", strerror(errno));
+            return -1;
+        }  
+        fprintf(ftmp,"* * * * * echo Hello! Here is cron >>cron.out\n");
+        fprintf(ftmp,"10,20,30,40,50 * * * * echo Message by cron >>cron.out\n");
+        fclose(ftmp);
     }
 }
 
