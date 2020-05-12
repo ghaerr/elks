@@ -16,6 +16,7 @@
 #include "config.h"
 #include "tcp.h"
 #include "tcpdev.h"
+#include "tcp_output.h"
 
 static struct tcpcb_list_s	*tcpcbs;
 int cbs_in_time_wait, cbs_in_user_timeout;

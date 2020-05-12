@@ -13,4 +13,6 @@ typedef	__u32 timeq_t;
 
 extern timeq_t Now;
 
+timeq_t timer_get_time(void);
+
 #endif

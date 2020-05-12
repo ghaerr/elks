@@ -152,7 +152,11 @@ void tcpcb_remove();
 __u16 tcp_chksum(struct iptcp_s *h);
 __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len);
 void tcp_output();
-
-unsigned long int in_aton(const char *str);
+void tcp_update(void);
+int tcp_init(void);
+void tcp_process(struct iphdr_s *iph);
+void tcp_connect(struct tcpcb_s *cb);
+void tcp_send_fin(struct tcpcb_s *cb);
+unsigned long in_aton(const char *str);
 
 #endif

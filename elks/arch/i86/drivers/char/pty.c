@@ -96,19 +96,21 @@ size_t pty_read (struct inode *inode, struct file *file, char *data, size_t len)
 size_t pty_write (struct inode *inode, struct file *file, char *data, size_t len)
 {
 	int count = 0;
-	int err;
+	register int ret;
 
 	struct tty *tty = determine_tty (inode->i_rdev);
 	if (tty == NULL) return -EBADF;
 
 	while (count < len) {
-		err = chq_wait_wr (&tty->inq, (file->f_flags & O_NONBLOCK) | count);
-		if (err < 0) {
-			if (count == 0) count = err;
+		ret = chq_wait_wr (&tty->inq, (file->f_flags & O_NONBLOCK) | count);
+		if (ret < 0) {
+			if (count == 0) count = ret;
 			break;
 		}
 
-		chq_addch (&tty->inq, get_user_char ((void *)(data++)));
+		ret = get_user_char ((void *)(data++));
+		if (!tty_intcheck(tty, ret))
+			chq_addch (&tty->inq, ret);
 		count++;
 	}
 

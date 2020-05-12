@@ -6,42 +6,43 @@
 
 // TODO: move definitions to ne2k-defs.s
 
-// I/O base @ 300h
+// adjust only this line for card base address
+base               = 0x0300     // I/O base address
 
-io_ne2k_command    = 0x0300
-
-io_ne2k_rx_first   = 0x0301  // page 0
-io_ne2k_rx_last    = 0x0302  // page 0
-io_ne2k_rx_get     = 0x0303  // page 0
+// register array
+io_ne2k_command    = base+0x00  // command
+io_ne2k_rx_first   = base+0x01  // page 0
+io_ne2k_rx_last    = base+0x02  // page 0
+io_ne2k_rx_get     = base+0x03  // page 0
 
 // This is not a true NE2K register
-//io_ne2k_rx_put1    = 0x0306  // page 0 - read
+//io_ne2k_rx_put1  = base+0x06  // page 0 - read
 
-io_ne2k_tx_start   = 0x0304  // page 0 - write
-io_ne2k_tx_len1    = 0x0305  // page 0 - write
-io_ne2k_tx_len2    = 0x0306  // page 0 - write
+io_ne2k_tx_start   = base+0x04  // page 0 - write
+io_ne2k_tx_len1    = base+0x05  // page 0 - write
+io_ne2k_tx_len2    = base+0x06  // page 0 - write
 
-io_ne2k_int_stat   = 0x0307  // page 0
+io_ne2k_int_stat   = base+0x07  // page 0
 
-io_ne2k_dma_addr1  = 0x0308  // page 0
-io_ne2k_dma_addr2  = 0x0309  // page 0
-io_ne2k_dma_len1   = 0x030A  // page 0 - write
-io_ne2k_dma_len2   = 0x030B  // page 0 - write
+io_ne2k_dma_addr1  = base+0x08  // page 0
+io_ne2k_dma_addr2  = base+0x09  // page 0
+io_ne2k_dma_len1   = base+0x0A  // page 0 - write
+io_ne2k_dma_len2   = base+0x0B  // page 0 - write
 
-io_ne2k_rx_stat    = 0x030C  // page 0 - read
+io_ne2k_rx_stat    = base+0x0C  // page 0 - read
 
-io_ne2k_rx_conf    = 0x030C  // page 0 - write
-io_ne2k_tx_conf    = 0x030D  // page 0 - write
-io_ne2k_data_conf  = 0x030E  // page 0 - write
-io_ne2k_int_mask   = 0x030F  // page 0 - write
+io_ne2k_rx_conf    = base+0x0C  // page 0 - write
+io_ne2k_tx_conf    = base+0x0D  // page 0 - write
+io_ne2k_data_conf  = base+0x0E  // page 0 - write
+io_ne2k_int_mask   = base+0x0F  // page 0 - write
 
-io_ne2k_unicast    = 0x0301  // page 1 - 6 bytes
-io_ne2k_rx_put     = 0x0307  // page 1
-io_ne2k_multicast  = 0x0308  // page 1 - 8 bytes
+io_ne2k_unicast    = base+0x01  // page 1 - 6 bytes
+io_ne2k_rx_put     = base+0x07  // page 1
+io_ne2k_multicast  = base+0x08  // page 1 - 8 bytes
 
-io_ne2k_data_io    = 0x0310  // 2 bytes
+io_ne2k_data_io    = base+0x10  // 2 bytes
 
-io_ne2k_reset      = 0x031F
+io_ne2k_reset      = base+0x1F
 
 
 // Ring segmentation

@@ -12,7 +12,6 @@ mainmenu_option next_comment
         bool '  TCP/IP sockets'                        CONFIG_INET             y
         if [ "$CONFIG_INET" = "y" ]; then
             bool '    CSLIP TCP/IP header compression' CONFIG_CSLIP            n
-            bool '    Enable status report'            CONFIG_INET_STATUS      y
             fi
 
         bool '  UNIX sockets'                          CONFIG_UNIX             n

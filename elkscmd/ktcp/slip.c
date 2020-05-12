@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <linuxmt/termios.h>
 
+#include "ip.h"
 #include "slip.h"
 #include "vjhc.h"
 
@@ -238,12 +239,7 @@ void slip_process(void)
 
 void send_char(__u8 ch)
 {
-    int i = write(devfd, &ch, 1);
-
-#if 0
-    if (i <= 0)
-	perror("skata");
-#endif
+    write(devfd, &ch, 1);
 }
 
 #ifdef CONFIG_CSLIP
