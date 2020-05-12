@@ -5,6 +5,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/types.h>
+#include <linuxmt/memory.h>
 
 #include <arch/segment.h>
 
@@ -105,30 +106,31 @@ void arch_setup_user_stack (register struct task_struct * t, word_t entry)
  * We need to make the program return to another point - to the signal
  * handler. The user stack currently looks like this:-
  *
- *          bp  ip  cs  f
+ *              bp  ip  cs  f
  *
  * and will look like this
  *
- *  bp  adr cs  f   ip  sig
+ *  bp  adr adr f   ip  cs  sig
+ *       lo  hi
  *
  * so that we return to the old point afterwards. This will confuse the code
  * as we don't have any way of sorting out a return value yet.
  */
 
 void arch_setup_sighandler_stack(register struct task_struct *t,
-				 __sighandler_t addr,unsigned signr)
+				 __kern_sighandler_t addr,unsigned signr)
 {
     debug5("Stack %x was %x %x %x %x\n", addr, get_ustack(t,0), get_ustack(t,2),
 	   get_ustack(t,4), get_ustack(t,6));
-    put_ustack(t, -4, (int)get_ustack(t,0));
-    put_ustack(t, -2, (int)addr);
-    put_ustack(t, 0, (int)get_ustack(t,4));
-    put_ustack(t, 4, (int)get_ustack(t,2));
-    put_ustack(t, 2, (int)get_ustack(t,6));
+    put_ustack(t, -6, (int)get_ustack(t,0));
+    put_ustack(t, -4, _FP_OFF(addr));
+    put_ustack(t, -2, _FP_SEG(addr));
+    put_ustack(t, 0, (int)get_ustack(t,6));
     put_ustack(t, 6, (int)signr);
-    t->t_regs.sp -= 4;
-    debug6("Stack is %x %x %x %x %x %x\n", get_ustack(t,0), get_ustack(t,2),
-	   get_ustack(t,4), get_ustack(t,6), get_ustack(t,8), get_ustack(t,10));
+    t->t_regs.sp -= 6;
+    debug7("Stack is %x %x %x %x %x %x %x\n", get_ustack(t,0), get_ustack(t,2),
+	   get_ustack(t,4), get_ustack(t,6), get_ustack(t,8), get_ustack(t,10),
+	   get_ustack(t,12));
 }
 
 /*

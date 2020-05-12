@@ -18,15 +18,16 @@
 
 static void generate(sig_t sig, sigset_t msksig, register struct task_struct *p)
 {
-    register __sighandler_t sa;
+    register __sigdisposition_t sd;
 
-    sa = p->sig.action[sig - 1].sa_handler;
-    if ((sa == SIG_IGN) || ((sa == SIG_DFL) && (msksig &
+    sd = p->sig.action[sig - 1].sa_dispose;
+    if ((sd == SIGDISP_IGN) || ((sd == SIGDISP_DFL) && (msksig &
 	    (SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG)))) {
 	if (!(msksig & SM_SIGCHLD)) debug_sig("SIGNAL ignoring %d pid %d\n", sig, p->pid);
 	return;
     }
-    debug_sig("SIGNAL gen_sig %d mask %x pid %d\n", sig, msksig, p->pid);
+    debug_sig("SIGNAL gen_sig %d mask %x action %x:%x pid %d\n", sig, msksig,
+	      _FP_SEG(p->sig.handler), _FP_OFF(p->sig.handler), p->pid);
     p->signal |= msksig;
     if ((p->state == TASK_INTERRUPTIBLE) /* && (p->signal & ~p->blocked) */ ) {
 	debug_sig("SIGNAL wakeup pid %d\n", p->pid);
@@ -115,11 +116,28 @@ int sys_kill(pid_t pid, sig_t sig)
     return kill_process(pid, sig, 0);
 }
 
-int sys_signal(int signr, __sighandler_t handler)
+int sys_signal(int signr, __kern_sighandler_t handler)
 {
-    debug_sig("SIGNAL sys_signal %d action %x pid %d\n", signr, handler, current->pid);
+    debug_sig("SIGNAL sys_signal %d action %x:%x pid %d\n", signr,
+	      _FP_SEG(handler), _FP_OFF(handler), current->pid);
     if (((unsigned int)signr > NSIG) || signr == SIGKILL || signr == SIGSTOP)
 	return -EINVAL;
-    current->sig.action[signr - 1].sa_handler = handler;
+    if (handler == KERN_SIG_DFL)
+	current->sig.action[signr - 1].sa_dispose = SIGDISP_DFL;
+    else if (handler == KERN_SIG_IGN)
+	current->sig.action[signr - 1].sa_dispose = SIGDISP_IGN;
+    else {
+	if (_FP_SEG(handler) < current->mm.seg_code->base ||
+	    _FP_SEG(handler) >= current->mm.seg_code->base
+				+ current->mm.seg_code->size) {
+	    debug_sig("SIGNAL sys_signal supplied handler is bogus!\n");
+	    debug_sig("SIGNAL sys_signal cs not in [%x, %x)\n",
+		      current->mm.seg_code->base,
+		      current->mm.seg_code->base + current->mm.seg_code->size);
+	    return -EINVAL;
+	}
+	current->sig.handler = handler;
+	current->sig.action[signr - 1].sa_dispose = SIGDISP_CUSTOM;
+    }
     return 0;
 }
