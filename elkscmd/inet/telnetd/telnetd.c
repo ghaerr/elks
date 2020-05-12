@@ -23,14 +23,7 @@
 static char buf_in  [MAX_BUFFER];
 static char buf_out [MAX_BUFFER];
 
-//char * nargv[2] = {"/bin/login", NULL};
-char * nargv[2] = {"/bin/sash", NULL};
-
-void sigchild(int signo)
-{
-	fprintf(stderr, "Signal received:%d", signo);
-	exit(0);
-}
+char *nargv[2] = {"/bin/login", NULL};
 
 static pid_t term_init(int sockfd, int *pty_fd)
 {
@@ -38,7 +31,6 @@ static pid_t term_init(int sockfd, int *pty_fd)
 	int tty_fd;
 	pid_t pid;
 	char pty_name[12];
-	struct termios termios;
 
 again:
 	sprintf(pty_name, "/dev/ptyp%d", n);
@@ -50,8 +42,6 @@ again:
 		fprintf(stderr, "Can't create pty %s\n", pty_name);
 		return -1;
 	}
-	//signal(SIGCHLD, sigchild);
-	//signal(SIGINT, sigchild);
 	signal(SIGCHLD, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
 	
@@ -66,7 +56,7 @@ again:
 		close(STDOUT_FILENO);
 		close(STDERR_FILENO);
 		close(*pty_fd);
-		
+
 		setsid();
 		pty_name[5] = 't'; /* results in: /dev/ttyp%d */
 		if ((tty_fd = open(pty_name, O_RDWR)) < 0) {
@@ -74,10 +64,13 @@ again:
 			exit(1);
 		}
 	
-		/* turn off echo*/
+#if 0
+		struct termios termios;
+		/* turn off echo - not needed with telnet ECHO option on*/
 		tcgetattr(tty_fd, &termios);
 		termios.c_lflag &= ~(ECHO);
 		tcsetattr(tty_fd, TCSANOW, &termios);
+#endif
 
 		dup2(tty_fd, STDIN_FILENO);
 		dup2(tty_fd, STDOUT_FILENO);
@@ -93,11 +86,11 @@ static void telnet_init(int ofd)
 {
   tel_init();
 
-  //telopt(ofd, WILL, TELOPT_SGA);
-  //telopt(ofd, DO,   TELOPT_SGA);
-  //telopt(ofd, WILL, TELOPT_BINARY);
-  //telopt(ofd, DO,   TELOPT_BINARY);
-  //telopt(ofd, WILL, TELOPT_ECHO);
+  telopt(ofd, WILL, TELOPT_SGA);
+  telopt(ofd, DO,   TELOPT_SGA);
+  telopt(ofd, WILL, TELOPT_BINARY);
+  telopt(ofd, DO,   TELOPT_BINARY);
+  telopt(ofd, WILL, TELOPT_ECHO);
   //telopt(ofd, DO,   TELOPT_WINCH);
 }
 

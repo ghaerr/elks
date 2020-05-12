@@ -54,4 +54,8 @@ struct ip_ll
 
 extern int tcpdevfd;
 
+int ip_init(void);
+void ip_recvpacket(char *packet, int size);
+void ip_sendpacket(char *packet, int len, struct addr_pair *apair);
+
 #endif

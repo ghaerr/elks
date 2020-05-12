@@ -33,6 +33,7 @@ void arp_cache_add (ipaddr_t ip_addr, eth_addr_t * eth_addr);
 int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr);
 
 void arp_proc (char * packet, int size);
+int arp_request(ipaddr_t ipaddress);
 
 
 #endif /* !ARP_H */

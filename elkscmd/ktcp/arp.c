@@ -18,6 +18,8 @@
 #include <linuxmt/arpa/inet.h>
 
 #include "deveth.h"
+#include "tcp.h"
+#include "tcpdev.h"
 #include "ip.h"
 #include "arp.h"
 

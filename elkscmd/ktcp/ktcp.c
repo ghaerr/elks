@@ -20,13 +20,16 @@
 #include <string.h>
 
 #include "slip.h"
+#include "tcp.h"
+#include "tcp_output.h"
 #include "tcpdev.h"
 #include "timer.h"
 #include <linuxmt/arpa/inet.h>
 #include "ip.h"
-#include "tcp.h"
+#include "icmp.h"
 #include "netconf.h"
 #include "deveth.h"
+#include "arp.h"
 
 #ifdef DEBUG
 #define debug	printf
@@ -38,7 +41,7 @@ char deveth[] = "/dev/eth";
 
 static int intfd;
 
-unsigned long int in_aton(const char *str)
+unsigned long in_aton(const char *str)
 {
     unsigned long l = 0;
     unsigned int val;
@@ -102,7 +105,6 @@ extern int cbs_in_user_timeout;
 
 int main(int argc,char **argv)
 {
-    __u8 * addr;
     int daemon = 0;
     speed_t baudrate = 0;
     char *progname = argv[0];

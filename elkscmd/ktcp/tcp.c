@@ -8,15 +8,18 @@
  *	2 of the License, or (at your option) any later version.
  */
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdio.h>
 #include <fcntl.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/net.h>
 #include "slip.h"
 #include "ip.h"
 #include "tcp.h"
+#include "tcp_cb.h"
+#include "tcpdev.h"
+#include "tcp_output.h"
 #include "timer.h"
 #include <linuxmt/arpa/inet.h>
 
@@ -36,8 +39,6 @@ void tcp_print(struct iptcp_s *head)
 
 int tcp_init(void)
 {
-    struct tcpcb_list_s *n;
-
     tcpcb_init();
     cbs_in_time_wait = 0;
     tcp_retrans_memory = 0;
@@ -380,7 +381,6 @@ void tcp_process(struct iphdr_s *iph)
     struct tcphdr_s *tcph;
     struct tcpcb_list_s *cbnode;
     struct tcpcb_s *cb;
-    __u16 tmp;
 
     tcph = (struct tcphdr_s *)(((char *)iph) + 4 * IP_IHL(iph));
     iptcp.iph = iph;
