@@ -16,8 +16,12 @@ int sys_wait4(pid_t pid, int *status, int options)
 {
 	register struct task_struct *p;
 	struct task_struct *q;
+	int waitagain;
 
 	debug_wait("WAIT(%d) for %d %s\n", current->pid, pid, (options & WNOHANG)? "nohang": "");
+
+ do {
+	waitagain = 0;
 
 	/* reparent orphan zombies to init*/
 	for_each_task(p) {
@@ -33,8 +37,13 @@ int sys_wait4(pid_t pid, int *status, int options)
 	}
 
 	for_each_task(p) {
-		if (p->p_parent == current
-		   && (p->state == TASK_ZOMBIE || p->state == TASK_STOPPED)) {
+		if (p->p_parent == current) {
+
+		  /* keep waiting while process has children*/
+		  if (current->pid != 1)	/* except for init reparented zombies*/
+			waitagain = 1;
+
+		  if (p->state == TASK_ZOMBIE || p->state == TASK_STOPPED) {
 			if (pid == -1 || p->pid == pid || (!pid && p->pgrp == current->pgrp)) {
 				if (status) {
 					if (verified_memcpy_tofs(status, &p->exit_status, sizeof(int)))
@@ -62,16 +71,19 @@ int sys_wait4(pid_t pid, int *status, int options)
 				return p->pid;
 			}
 		}
+	  }
 	}
 
 	if (options & WNOHANG)
 		return 0;
 
-	debug_wait("WAIT sleep\n");
+	debug_wait("WAIT(%d) sleep\n", current->pid);
 	interruptible_sleep_on(&current->child_wait);
-	debug_wait("WAIT wakeup\n");
+	debug_wait("WAIT(%d) wakeup\n", current->pid);
 
-	return -EINTR;
+  } while(waitagain);
+
+	return -ECHILD;
 }
 
 void do_exit(int status)
