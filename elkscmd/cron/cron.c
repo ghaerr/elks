@@ -333,7 +333,7 @@ main(int argc, char **argv)
 	interval = 1;
     
     if (xis_crondir() != 0) {
-        printf("No '%s' directory available - terminating\n",CRONDIR);
+        printf("No '%s' directory - terminating\n",CRONDIR);
         exit (1);
     }
 

@@ -21,6 +21,7 @@
 #define PATH_MAIL "/usr/bin/mail"
 #define CRONDIR "/var/cron"
 #define LOGFILE "/var/cron/cron.log"
+#define TEMPLATEFILE "/var/cron/root"
 #define PATH_SED "/usr/bin/sed"
 #define _PATH_BSHELL "/bin/sh"
 
