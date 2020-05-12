@@ -38,11 +38,6 @@ int sys_wait4(pid_t pid, int *status, int options)
 
 	for_each_task(p) {
 		if (p->p_parent == current) {
-
-		  /* keep waiting while process has children*/
-		  if (current->pid != 1)	/* except for init reparented zombies*/
-			waitagain = 1;
-
 		  if (p->state == TASK_ZOMBIE || p->state == TASK_STOPPED) {
 			if (pid == -1 || p->pid == pid || (!pid && p->pgrp == current->pgrp)) {
 				if (status) {
@@ -70,6 +65,11 @@ int sys_wait4(pid_t pid, int *status, int options)
 				debug_wait("WAIT(%d) got %d\n", current->pid, p->pid);
 				return p->pid;
 			}
+		} else {
+		  /* keep waiting while process has non-zombie/stopped children*/
+		  if (current->pid != 1)	/* except for init reparented zombies*/
+			waitagain = 1;
+
 		}
 	  }
 	}
