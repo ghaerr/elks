@@ -144,6 +144,7 @@
 
 /* set these to 0 to reduce the code size */
 #define COMPLETION_ON 1
+#define DYNAMIC_LINELEN 0
 #define MULTILINE_ON 0
 #define HINTS_ON 0
 #define MASK_ON 0
@@ -280,8 +281,8 @@ static int enableRawMode(int fd) {
     /* input modes: no break, no CR to NL, no parity check, no strip char,
      * no start/stop output control. */
     raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-    /* output modes - disable post processing */
-    raw.c_oflag &= ~(OPOST);
+    /* output modes - don't disable post processing (for kernel printk when running)*/
+    /*raw.c_oflag &= ~(OPOST);*/
     /* control modes - set 8 bit chars */
     raw.c_cflag |= (CS8);
     /* local modes - echo nothing, canonical off, no extended functions,
@@ -307,6 +308,7 @@ static void disableRawMode(int fd) {
         rawmode = 0;
 }
 
+#if DYNAMIC_LINELEN
 /* Use the ESC [6n escape sequence to query the horizontal cursor position
  * and return it. On error -1 is returned, on success the position of the
  * cursor. */
@@ -341,10 +343,13 @@ static int getCursorPosition(int ifd, int ofd) {
     if (sscanf(buf+2,"%d;%d",&rows,&cols) != 2) return -1;
     return cols;
 }
+#endif /* DYNAMIC_LINELEN*/
 
 /* Try to get the number of columns in the current terminal, or assume 80
  * if it fails. */
-static int getColumns(int ifd, int ofd) {
+static int getColumns(int ifd, int ofd)
+{
+#if DYNAMIC_LINELEN
     struct winsize ws;
 
     if (ioctl(1, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
@@ -379,6 +384,7 @@ static int getColumns(int ifd, int ofd) {
     }
 
 failed:
+#endif /* DYNAMIC_LINELEN*/
     return 80;
 }
 

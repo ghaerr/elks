@@ -46,16 +46,11 @@
 #include <termios.h>
 #include <stdarg.h>
 #include <errno.h>
-#include <autoconf.h>		/* get CONFIG_CONSOLE_SERIAL*/
 
 #define DEBUG		0	/* set =1 for debug messages*/
 
 /* debug messages go here*/
-#ifdef CONFIG_CONSOLE_SERIAL
-#define CONSOLE       "/dev/ttyS0"
-#else
-#define CONSOLE       "/dev/tty1"
-#endif
+#define CONSOLE		"/dev/console"
 
 #define LOGIN		"/bin/login"
 #define HOSTFILE	"/etc/HOSTNAME"
@@ -267,9 +262,10 @@ int main(int argc, char **argv)
         termios.c_oflag &= ~XTABS;
         if (baud)
             termios.c_cflag = baud;
-        termios.c_cflag |= CS8 | CLOCAL | HUPCL;
-        /*termios.c_cflag |= CRTSCTS;*/
-        termios.c_cflag &= ~(PARENB | CREAD);
+        termios.c_cflag &= ~PARENB;
+        termios.c_cflag |= CS8 | CREAD | HUPCL;
+        termios.c_cflag |= CLOCAL;			/* ignore modem control lines*/
+        //termios.c_cflag |= CRTSCTS;		/* hw flow control*/
         termios.c_cc[VMIN] = 1;
         termios.c_cc[VTIME] = 0;
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios);

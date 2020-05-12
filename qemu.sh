@@ -66,7 +66,8 @@ KEYBOARD=
 # HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
 # Incoming http forwarding: example: connect to ELKS httpd with 'http://localhost:8080'
 # HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80"
-HOSTFWD="-net user"
+# Simultaneous telnet and http forwarding
+HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
 
 # Enable network dump here:
 # NETDUMP="-net dump"

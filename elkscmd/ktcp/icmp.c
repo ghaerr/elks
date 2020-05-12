@@ -13,8 +13,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "slip.h"
-#include "icmp.h"
 #include "ip.h"
+#include "icmp.h"
 #include <linuxmt/arpa/inet.h>
 
 int icmp_init(void)

@@ -11,7 +11,7 @@ include $(BASEDIR)/Make.rules
 ###############################################################################
 
 # clock enabled and has direct I/O port access
-# knl removed as useless
+# knl, insmod removed as useless
 # exitemu disabled because it calls INT directly to DOSEMU
 PRGS = \
 	init \
@@ -33,6 +33,7 @@ PRGS = \
 	unreal16 \
 	mouse \
 	sercat \
+	console \
 	# EOL
 
 init: init.o
@@ -94,6 +95,9 @@ mouse: mouse.o
 
 sercat: sercat.o
 	$(LD) $(LDFLAGS) -o sercat sercat.o $(LDLIBS)
+
+console: console.o
+	$(LD) $(LDFLAGS) -o console console.o $(LDLIBS)
 
 unreal16: unreal16.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o

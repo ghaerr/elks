@@ -15,14 +15,18 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdio.h>
+#include <string.h>
 #include <fcntl.h>
 
 #include "ip.h"
 #include "icmp.h"
+#include "slip.h"
 #include "tcp.h"
 #include "tcpdev.h"
 #include <linuxmt/arpa/inet.h>
 #include "deveth.h"
+#include "arp.h"
 
 #if 0
 #define IP_VERSION(s)	((s)->version_ihl>>4&0xf)
@@ -30,7 +34,6 @@
 #define IP_FLAGS(s)	((s)->frag_off>>13)
 #endif
 
-/*#define DEBUG*/
 //#define USE_ASM
 
 static char ipbuf[TCPDEV_BUFSIZE];
@@ -95,52 +98,48 @@ loop1:
 
 void ip_print(struct iphdr_s *head)
 {
-#ifdef DEBUG
+#if 0
     int i;
     __u8 *addr;
 
-    printf("Version/IHL: %d/%d ",IP_VERSION(head),IP_IHL(head));
-    printf("TypeOfService/Length: %d/%d\n",head->tos,ntohs(head->tot_len));
-    printf("Id/flags/fragment offset: %d/%d ",head->id,head->frag_off);
-    printf("ttl: %d ",head->ttl);
-    printf("Protocol: %d\n",head->protocol);
+    debug_ip("Version/IHL: %d/%d ",IP_VERSION(head),IP_IHL(head));
+    debug_ip("TypeOfService/Length: %d/%d\n",head->tos,ntohs(head->tot_len));
+    debug_ip("Id/flags/fragment offset: %d/%d ",head->id,head->frag_off);
+    debug_ip("ttl: %d ",head->ttl);
+    debug_ip("Protocol: %d\n",head->protocol);
 
     addr = (__u8 *)&head->saddr;
-    printf("saddr : %d.%d.%d.%d ",addr[0],addr[1],addr[2],addr[3]);
+    debug_ip("saddr : %d.%d.%d.%d ",addr[0],addr[1],addr[2],addr[3]);
     addr = (__u8 *)&head->daddr;
-    printf("daddr : %d.%d.%d.%d ",addr[0],addr[1],addr[2],addr[3]);
+    debug_ip("daddr : %d.%d.%d.%d ",addr[0],addr[1],addr[2],addr[3]);
 
-    printf("check sum = %d\n",ip_calc_chksum(head, 4 * IP_IHL(head)));
+    debug_ip("check sum = %d\n",ip_calc_chksum(head, 4 * IP_IHL(head)));
 
     addr = (__u8 *)head + 4 * IP_IHL(head);
     for ( i = 0 ; i < ntohs(head->tot_len) - 20 ; i++ )
-	printf("%x ",addr[i]);
+	debug_ip("%x ",addr[i]);
 
-    printf("\n");
+    debug_ip("\n");
 #endif
 }
 
 void ip_recvpacket(char *packet,int size)
 {
     struct iphdr_s *iphdr;
-    __u8 *addr, *data;
+    __u8 *data;
 
     iphdr = (struct iphdr_s *)packet;
 
-    /*printf("IP: Got packet of size : %d \n",size,*packet);
-    ip_print(iphdr);*/
+    debug_ip("IP: Got packet size %d\n",size);
+    ip_print(iphdr);
 
     if (IP_VERSION(iphdr) != 4){
-#ifdef DEBUG
-        printf("IP : Bad IP version\n");
-#endif
+        debug_ip("IP : Bad IP version\n");
 	return;
     }
 
     if (IP_IHL(iphdr) < 5){
-#ifdef DEBUG
-        printf("IP : Bad IHL\n");
-#endif
+        debug_ip("IP : Bad IHL\n");
 	return;
     }
 
@@ -148,44 +147,34 @@ void ip_recvpacket(char *packet,int size)
 
     switch (iphdr->protocol) {
     case PROTO_ICMP:
-#ifdef DEBUG
-                printf("IP : ICMP packet\n");
-#endif
-
-		icmp_process(iphdr, data);
-		break;
-
-    case PROTO_TCP:
-#ifdef DEBUG
-                printf("IP : TCP packet\n");
-#endif
-		tcp_process(iphdr);
-		break;
-
-    default:
+        debug_ip("IP: icmp packet\n");
+	icmp_process(iphdr, data);
 	break;
 
+    case PROTO_TCP:
+        debug_ip("IP: tcp packet\n");
+	tcp_process(iphdr);
+	break;
     }
 }
 
 void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
 {
-    struct iphdr_s *iph = (struct iphdr_s *)&ipbuf;
+    struct iphdr_s *iph = (struct iphdr_s *)ipbuf;
     __u16 tlen;
-    __u8 *addr;
-    ipaddr_t tmpaddress;
     char llbuf[15];
-    struct ip_ll *ipll = (struct ip_ll *)&llbuf;
-
+    struct ip_ll *ipll = (struct ip_ll *)llbuf;
     ipaddr_t ip_addr;
     eth_addr_t eth_addr;
 
-    /*
-    addr = (__u8 *) &apair->daddr;
-    printf ("daddr: %2X.%2X.%2X.%2X\n", addr [0], addr [1], addr [2], addr [3]);
-    */
+    unsigned char *addr = (unsigned char *) &apair->daddr;
+    debug_ip("IPSEND daddr: %d.%d.%d.%d\n", addr [0], addr [1], addr [2], addr [3]);
+
+    if (apair->daddr == local_ip || apair->daddr == 0x0100007f) //FIXME
+	goto local;
 
     if (dev->type == 1) {  /* Ethernet */
+debug_ip("ETH ROUTE\n");
         /* Is this the best place for the IP routing to happen ? */
         /* I think no, because actual sending interface is coming from the routing */
 
@@ -218,6 +207,7 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     ipll->ll_type_len=0x08; /*=0x0800 bigendian*/
     } //if (dev->type == 1)
 
+local:
     /*ip layer*/
     iph->version_ihl	= 0x45;
 
@@ -233,6 +223,7 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     if (dev->type == 1) {
       iph->daddr		= apair->daddr;
       iph->saddr		= local_ip;
+//iph->saddr		= apair->saddr;
     } else {
       iph->daddr		= apair->daddr;
       iph->saddr		= apair->saddr;
@@ -241,21 +232,23 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     iph->check		= 0;
     iph->check		= ip_calc_chksum((char *)iph, tlen);
 
-    //ip_print(iph);
+    ip_print(iph);
 
     memcpy(&ipbuf[tlen], packet, len);
-    if (dev->type == 1) { /*add link layer*/
-      memmove(&ipbuf[14],&ipbuf, TCPDEV_BUFSIZE-14);
-      memcpy(&ipbuf,&llbuf,14);
+
+    /* "route"  127.0.0.1*/
+    if (iph->daddr == local_ip || iph->daddr == 0x0100007f) {
+	debug_ip("ip: route localhost\n");
+	ip_recvpacket(ipbuf, tlen + len);
+	return;
     }
 
-    /* "route" */
-    /* if (iph->daddr == local_ip && iph->daddr == 0x0100007f) { */
-	/* 127.0.0.1 */
-	/* TODO */
-
-	if (dev->type == 1)
-		deveth_send(&ipbuf, tlen + len + 14);  /* add link layer length */
-        else
-		slip_send(&ipbuf, tlen + len);
+    if (dev->type == 1) { /*add link layer*/
+      memmove(&ipbuf[14],ipbuf, TCPDEV_BUFSIZE-14);
+      memcpy(ipbuf,llbuf,14);
+    }
+    if (dev->type == 1)
+	deveth_send(ipbuf, tlen + len + 14);  /* add link layer length */
+    else
+	slip_send(ipbuf, tlen + len);
 }

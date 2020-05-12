@@ -10,6 +10,7 @@
 // Global constants
 
 #define LOADSEG 0x0100
+#define OPTSEG	0x0050		// bootopts copied here
 
 // Global variables
 
@@ -25,6 +26,8 @@ static byte_t sb_block [BLOCK_SIZE];  // super block block buffer
 static struct super_block *sb_data;   // super block structure
 
 static int i_now;
+static int i_boot;
+static int loadaddr;
 static int ib_first;                 // inode first block
 
 static byte_t i_block [BLOCK_SIZE];  // inode block buffer
@@ -34,7 +37,7 @@ static byte_t z_block [LEVEL_MAX] [BLOCK_SIZE];  // zone block buffer
 
 static file_pos f_pos;
 
-static byte_t d_dir [BLOCK_SIZE];  // latest in program segment
+static byte_t d_dir [BLOCK_SIZE];    // root directory buffer
 
 
 //------------------------------------------------------------------------------
@@ -52,6 +55,13 @@ void disk_read (const int sect, const int count,
 
 void run_prog ();
 
+static int strcmp (const char * s, const char * d);
+static void load_super ();
+static void load_inode ();
+static void load_zone (int level, zone_nr * z_start, zone_nr * z_end);
+static void load_file ();
+
+
 //------------------------------------------------------------------------------
 
 // FIXME: this is a lot of source code just to get at the data segment value
@@ -66,7 +76,43 @@ void run_prog ();
 // by specifying -fno-toplevel-reorder in the Makefile, which forces GCC to
 // output all functions, variables, and __asm's in the same order as in the
 // source code.  FIXME: find a better way.
-__asm("jmp load_prog");
+
+void load_prog ()
+{
+	/*
+	puts ("C=");
+	word_hex (track_max);
+	puts (" H=");
+	word_hex (head_max);
+	puts (" S=");
+	word_hex (sect_max);
+	puts ("\r\n");
+	*/
+
+	load_super ();
+
+	i_boot = i_now = 0;
+	load_file ();
+
+	for (int d = 0; d < BLOCK_SIZE /*(int)i_data->i_size*/; d += DIRENT_SIZE) {
+		if (!strcmp ((char *)(d_dir + 2 + d), "linux")) {
+			puts ("Linux found ");
+			i_boot = i_now = (*(int *)(d_dir + d)) - 1;
+			loadaddr = LOADSEG << 4;
+			load_file ();
+			continue;
+		}
+		if (!strcmp ((char *)(d_dir + 2 + d), "bootopts")) {
+			//puts("opts ");
+			i_now = (*(int *)(d_dir + d)) - 1;
+			loadaddr = OPTSEG << 4;
+			load_file ();
+			continue;
+		}
+	}
+	if (i_boot)
+		run_prog ();
+}
 
 //------------------------------------------------------------------------------
 
@@ -75,7 +121,7 @@ static int strcmp (const char * s, const char * d)
 	const char * p1 = s;
 	const char * p2 = d;
 
-	char c1, c2;
+	int c1, c2;
 
 	while ((c1 = *p1++) == (c2 = *p2++) && c1 /* && c2*/);
 	return c1 - c2;
@@ -131,10 +177,10 @@ static void load_zone (int level, zone_nr * z_start, zone_nr * z_end)
 	for (zone_nr * z = z_start; z < z_end; z++) {
 		if (level == 0) {
 			if (i_now) {
-				long lin_addr = ((file_pos) LOADSEG << 4) + f_pos;
+				long lin_addr = loadaddr + f_pos;
 				disk_read ((*z) << 1, 2, (byte_t *) (unsigned) lin_addr, (unsigned) (lin_addr >> 4) & 0xf000);
 			} else
-				disk_read ((*z) << 1, 2, d_dir + f_pos, seg_data ());
+				disk_read ((*z) << 1, 2, d_dir /*+ f_pos*/, seg_data ());
 			f_pos += BLOCK_SIZE;
 			if (f_pos >= i_data->i_size) break;
 		} else {
@@ -156,7 +202,6 @@ static void load_file ()
 	word_hex (i_data->i_size);
 	puts ("\r\n");
 	*/
-
 	f_pos = 0;
 
 	// Direct zones
@@ -169,37 +214,6 @@ static void load_file ()
 
 	// Double-indirect zones
 	//load_zone (2, &(i_data->i_zone [ZONE_IND_L2]), &(i_data->i_zone [ZONE_IND_END]));
-}
-
-//------------------------------------------------------------------------------
-
-void load_prog ()
-{
-	/*
-	puts ("C=");
-	word_hex (track_max);
-	puts (" H=");
-	word_hex (head_max);
-	puts (" S=");
-	word_hex (sect_max);
-	puts ("\r\n");
-	*/
-
-	load_super ();
-
-	i_now = 0;
-	load_file ();
-
-	for (int d = 0; d < i_data->i_size; d += DIRENT_SIZE) {
-		if (!strcmp ((char *)(d_dir + 2 + d), "linux")) {
-			puts ("Linux found\r\n");
-			i_now = (*(int *)(d_dir + d)) - 1;
-			load_file ();
-
-			run_prog ();
-			break;
-		}
-	}
 }
 
 //------------------------------------------------------------------------------

@@ -30,7 +30,7 @@ long offset = 0;
 
 void usage(void)
 {
-   fprintf(stderr, "Usage: hd [-r] [-o outfile] [-sSkip_bytes] [file]\n");
+   fprintf(stderr, "Usage: hd [-r] [-o outfile] [-sSkip_bytes] [[seg:off#size] [file]]\n");
    exit(1);
 }
 
@@ -99,7 +99,40 @@ void do_fd(void)
 	 else
 	    buf[j] = '.';
       }
-      printline(offset, num, buf, ch == EOF);
+       printline(offset, num, buf, ch == EOF);
+   }
+}
+
+void do_mem(char *spec)
+{
+   unsigned int seg = 0, off = 0;
+   unsigned char __far *addr;
+   long   count = 256;
+   char  buf[20];
+   int   num[16];
+
+   sscanf(spec, "%x:%x#%ld", &seg, &off, &count);
+   //printf("SEG %x OFF %x CNT %ld\n", seg, off, count);
+
+   addr = (unsigned char __far *)(((unsigned long)seg << 16) | off);
+   offset = (((unsigned long)seg << 4) | off);
+   for ( ; count > 0; count -= 16, offset += 16)
+   {
+      int j, ch;
+      memset(buf, '\0', 16);
+      for (j = 0; j < 16; j++)
+	 num[j] = -1;
+      for (j = 0; j < 16; j++)
+      {
+	 ch = *addr++;
+
+	 num[j] = ch;
+	 if (isprint(ch) && ch < 0x80)
+	    buf[j] = ch;
+	 else
+	    buf[j] = '.';
+      }
+      printline(offset, num, buf, 0);
    }
 }
 
@@ -202,17 +235,21 @@ int main(int argc, char **argv)
 	       exit(9);
 	    }
 	 }
-	 fd = fopen(argv[ar], "rb");
-	 if (fd == 0)
-	    fprintf(stderr, "Cannot open file '%s'\n", argv[ar]);
-	 else
-	 {
-	    if( reverse )
-	       do_rev_fd();
+	 if (strchr(argv[ar], ':'))
+	   do_mem(argv[ar]);
+	 else {
+	    fd = fopen(argv[ar], "rb");
+	    if (fd == 0)
+	       fprintf(stderr, "Cannot open file '%s'\n", argv[ar]);
 	    else
-	       do_fd();
-	    fclose(fd);
-	 }
+	    {
+	       if( reverse )
+	          do_rev_fd();
+	       else
+	          do_fd();
+	       fclose(fd);
+	    }
+         }
 	 done = 1;
       }
 

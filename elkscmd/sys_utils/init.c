@@ -34,17 +34,12 @@
 #include <memory.h>
 #include <errno.h>
 #include <time.h>
-#include <autoconf.h>		/* get CONFIG_CONSOLE_SERIAL*/
 
 #define USE_UTMP	0	/* =1 to use /var/run/utmp*/
 #define DEBUG		0	/* =1 for debug messages*/
 
 /* debug and sysinit/respawn sh -e output goes here*/
-#ifdef CONFIG_CONSOLE_SERIAL
-#define DEVTTY       "/dev/ttyS0"
-#else
-#define DEVTTY       "/dev/tty1"
-#endif
+#define CONSOLE       "/dev/console"
 
 #if !DEBUG
 #define debug(...)
@@ -257,8 +252,8 @@ pid_t respawn(const char **a)
 	}
 	else
 	{
-	    if ((fd = open(DEVTTY, O_RDWR)) < 0)
-		fatalmsg("Can't open %s (errno %d)\r\n", DEVTTY, errno);
+	    if ((fd = open(CONSOLE, O_RDWR)) < 0)
+		fatalmsg("Can't open %s (errno %d)\r\n", CONSOLE, errno);
 
 	    argv[0] = SHELL;
 	    argv[1] = "-e";
@@ -463,7 +458,7 @@ int main(int argc, char **argv)
 //	argv[0] = "init";
 	initname = argv[0];
 #if DEBUG
-	int fd = open(DEVTTY, O_RDWR);
+	int fd = open(CONSOLE, O_RDWR);
 	dup2(fd, 0);
 	dup2(fd, 1);
 	dup2(fd, 2);

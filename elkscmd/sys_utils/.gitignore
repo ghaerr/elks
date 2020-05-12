@@ -1,5 +1,6 @@
-clock
 chmem
+clock
+console
 exitemu
 getty
 init

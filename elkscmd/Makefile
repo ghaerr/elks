@@ -35,6 +35,7 @@ SUBDIRS =       \
 	prems       \
 	sash        \
 	screen      \
+	cron        \
 	sh_utils    \
 	sys_utils   \
 	test        \

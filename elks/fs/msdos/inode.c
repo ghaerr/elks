@@ -20,7 +20,6 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "bda1",	S_IFBLK | 0644, MKDEV(3, 1) },
     { "fd0",	S_IFBLK | 0644, MKDEV(3, 128)},
     { "fd1",	S_IFBLK | 0644, MKDEV(3, 160)},
-    { "mem",	S_IFCHR | 0644, MKDEV(1, 1) },
     { "kmem",	S_IFCHR | 0644, MKDEV(1, 2) },
     { "null",	S_IFCHR | 0644, MKDEV(1, 3) },
     { "zero",	S_IFCHR | 0644, MKDEV(1, 5) },
@@ -31,6 +30,7 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "ttyS0",	S_IFCHR | 0644, MKDEV(4, 64)},
     { "ttyS1",	S_IFCHR | 0644, MKDEV(4, 65)},
     { "ttyS2",	S_IFCHR | 0644, MKDEV(4, 66)},
+    { "console",S_IFCHR | 0600, MKDEV(4, 254)},
     { "tty",	S_IFCHR | 0666, MKDEV(4, 255) },
 };
 #endif

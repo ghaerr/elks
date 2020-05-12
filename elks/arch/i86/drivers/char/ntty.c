@@ -22,6 +22,8 @@
 #include <linuxmt/termios.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
+#include <linuxmt/major.h>
+#include <linuxmt/kdev_t.h>
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/heap.h>
@@ -93,10 +95,15 @@ struct tty *determine_tty(dev_t dev)
 {
     register struct tty *ttyp = &ttys[0];
     unsigned short minor = MINOR(dev);
+    extern dev_t dev_console;
 
     /* handle /dev/tty*/
     if (minor == 255 && current->pgrp && (current->pgrp == ttyp->pgrp))
 	return current->tty;
+
+    /* handle /dev/console*/
+    if (minor == 254)
+	return determine_tty(dev_console);
 
     do {
 	if (ttyp->minor == minor)
@@ -104,6 +111,21 @@ struct tty *determine_tty(dev_t dev)
     } while (++ttyp < &ttys[MAX_TTYS]);
 
     return NULL;
+}
+
+/* standard ops open/release routines for dircon, bioscon, pty*/
+int ttystd_open(struct tty *tty)
+{
+    /* increment use count, don't init if already open*/
+    if (tty->usecount++)
+	return 0;
+    return tty_allocq(tty, INQ_SIZE, OUTQ_SIZE);
+}
+
+void ttystd_release(struct tty *tty)
+{
+    if (--tty->usecount == 0)
+	tty_freeq(tty);
 }
 
 int tty_allocq(struct tty *tty, int insize, int outsize)
@@ -148,8 +170,8 @@ int tty_open(struct inode *inode, struct file *file)
 
     err = otty->ops->open(otty);
     if (!err) {
-	if (!(file->f_flags & O_NOCTTY) && currentp->session == currentp->pid && otty->pgrp == 0
-		&& currentp->tty == NULL) {
+	if (!(file->f_flags & O_NOCTTY) && currentp->session == currentp->pid
+		&& currentp->tty == NULL && otty->pgrp == 0) {
 	    debug_tty("TTY setting pgrp %d pid %d\n", currentp->pgrp, currentp->pid);
 	    otty->pgrp = currentp->pgrp;
 	    currentp->tty = otty;
@@ -175,8 +197,11 @@ void tty_release(struct inode *inode, struct file *file)
 
     /* don't release pgrp for /dev/tty, only real tty*/
     if (current->pid == rtty->pgrp) {
-	debug_tty("TTY release pgrp %d, sending SIGHUP\n", current->pid);
-	kill_pg(rtty->pgrp, SIGHUP, 1);
+	debug_tty("TTY release pgrp %d\n", current->pid);
+	if ((int)rtty->termios.c_cflag & HUPCL) {	/* warning truncated to 16 bits*/
+		debug_tty("TTY sending SIGHUP\n", current->pid);
+		kill_pg(rtty->pgrp, SIGHUP, 1);
+	}
 	rtty->pgrp = 0;
     }
     rtty->flags &= ~TTY_OPEN;
@@ -203,7 +228,7 @@ int tty_outproc(register struct tty *tty)
 
     ch = tty->outq.base[tty->outq.start];
     if ((t_oflag = (int)tty->termios.c_oflag) & OPOST) {
-	switch(tty->ostate & ~0x0F) {
+	switch((int)(tty->ostate & ~0x0F)) {
 	case 0x20:		/* Expand tabs to spaces */
 	    ch = ' ';
 	    if (--tty->ostate & 0xF)
@@ -358,7 +383,7 @@ again:
 int tty_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
-    int ret;
+    int ret, dev;
 
     switch (cmd) {
     case TCGETS:
@@ -373,6 +398,12 @@ int tty_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 	if (ret == 0 && tty->ops->ioctl != NULL)
 	    ret = tty->ops->ioctl(tty, cmd, arg);
 	break;
+    case TIOSETCONSOLE:
+	dev = get_user(arg);
+	if (MAJOR(dev) != TTY_MAJOR)
+	    return -EINVAL;
+	set_console(dev);
+	return 0;
     default:
 	ret = ((tty->ops->ioctl == NULL)
 	    ? -EINVAL
@@ -401,6 +432,16 @@ int tty_select(struct inode *inode, struct file *file, int sel_type)
 /*  	break; */
     }
     return ret;
+}
+
+/*
+ * Busy wait for a keypress in kernel state
+ * Only used in mount_root for changing floppies
+ */
+int wait_for_keypress(void)
+{
+    set_irq();
+    return chq_wait_rd(&ttys[0].inq, 0);
 }
 
 /*@-type@*/

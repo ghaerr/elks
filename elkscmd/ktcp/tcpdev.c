@@ -23,22 +23,24 @@
 #include <linuxmt/errno.h>
 
 #include <linuxmt/arpa/inet.h>
+#include "ip.h"
 #include "tcp.h"
+#include "tcp_cb.h"
 #include "tcpdev.h"
 #include "netconf.h"
 
 static unsigned char sbuf[TCPDEV_BUFSIZE];
 
-static int tcpdevfd;
+int tcpdevfd;
 
 extern int cbs_in_user_timeout;
 
 int tcpdev_init(char *fdev)
 {
-    tcpdevfd = open(fdev, O_NONBLOCK | O_RDWR);
-    if (tcpdevfd < 0)
+    int fd  = open(fdev, O_NONBLOCK | O_RDWR);
+    if (fd < 0)
 	printf("ktcp: failed to open tcpdev device %s\n",fdev);
-    return tcpdevfd;
+    return fd;
 }
 
 void retval_to_sock(__u16 sock,short int r)
@@ -165,7 +167,7 @@ static void tcpdev_connect(void)
 
     n = tcpcb_find_by_sock(db->sock);
     if (!n || n->tcpcb.state != TS_CLOSED) {
-	printf("KTCP Panic in connect\n");
+	printf("ktcp: panic in connect\n");
 	exit(1);
     }
 
@@ -205,7 +207,7 @@ void tcpdev_read(void)
 
     n = tcpcb_find_by_sock(sock);
     if (!n) {
-	printf("KTCP Panic in read\n");
+	printf("ktcp: panic in read\n");
 	exit(1);
     }
 
@@ -293,13 +295,14 @@ static void tcpdev_write(void)
 
     /* This is a bit ugly but I'm to lazy right now */
     if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
+printf("tcp: RETRANS limit exceeded\n");
 	retval_to_sock(sock, -ERESTARTSYS);
 	return;
     }
 
     n = tcpcb_find_by_sock(sock);
     if (!n) {
-	printf("KTCP panic in write (unknown sock:0x%x)\n",sock);
+	printf("ktcp: panic in write (unknown sock:0x%x)\n",sock);
 	return;
     }
 
@@ -385,6 +388,7 @@ void tcpdev_sock_state(struct tcpcb_s *cb, int state)
     write(tcpdevfd, sbuf, sizeof(struct tdb_return_data));
 }
 
+/* called every ktcp cycle when tcpdevfd data is ready*/
 void tcpdev_process(void)
 {
     int len = read(tcpdevfd, sbuf, TCPDEV_BUFSIZE);
@@ -392,9 +396,7 @@ void tcpdev_process(void)
     if (len <= 0)
 	return;
 
-#ifdef DEBUG
-    printf("tcpdev_process : read %d bytes\n",len);
-#endif
+    //printf("tcpdev_process : read %d bytes\n",len);
 
     switch (sbuf[0]){
 	case TDC_BIND:
@@ -404,6 +406,7 @@ void tcpdev_process(void)
 	    tcpdev_accept();
 	    break;
 	case TDC_CONNECT:
+//printf("tcpdev: got connect\n");
 	    tcpdev_connect();
 	    break;
 	case TDC_LISTEN:

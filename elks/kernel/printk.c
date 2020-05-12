@@ -28,14 +28,40 @@
 #include <linuxmt/config.h>
 #include <arch/segment.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/kdev_t.h>
+#include <linuxmt/major.h>
+#include <linuxmt/ntty.h>
 #include <stdarg.h>
 
-/*
- *	Just to make it work for now
- */
-extern void con_charout(char);
+dev_t dev_console;
 
-#define kputchar(ch) con_charout(ch)
+#ifdef CONFIG_CONSOLE_SERIAL
+#define DEVCONSOLE  MKDEV(TTY_MAJOR,RS_MINOR_OFFSET)	/* /dev/ttyS0*/
+extern void rs_conout(dev_t, char);
+static void (*kputc)(dev_t, char) = rs_conout;
+#else
+#define DEVCONSOLE  MKDEV(TTY_MAJOR,TTY_MINOR_OFFSET)	/* /dev/tty1*/
+extern void Console_conout(dev_t, char);
+static void (*kputc)(dev_t, char) = Console_conout;
+#endif
+
+void set_console(dev_t dev)
+{
+	register struct tty *ttyp;
+
+	if (dev == 0)
+		dev = DEVCONSOLE;
+	if ((ttyp = determine_tty(dev))) {
+		kputc = ttyp->ops->conout;
+		dev_console = dev;
+	}
+}
+
+void kputchar(int ch)
+{
+	if (kputc)
+		(*kputc)(dev_console, ch);
+}
 
 static void kputs(register char *buf)
 {

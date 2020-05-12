@@ -3,6 +3,8 @@
  *
  * (C) 2001 Harry Kalogirou (harkal@rainbow.cs.unipi.gr)
  *
+ * Major debugging by Greg Haerr May 2020
+ *
  *	This program is free software; you can redistribute it and/or
  *	modify it under the terms of the GNU General Public License
  *	as published by the Free Software Foundation; either version
@@ -14,31 +16,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
 
 #include "slip.h"
+#include "tcp.h"
+#include "tcp_output.h"
 #include "tcpdev.h"
 #include "timer.h"
 #include <linuxmt/arpa/inet.h>
 #include "ip.h"
-#include "tcp.h"
+#include "icmp.h"
 #include "netconf.h"
 #include "deveth.h"
+#include "arp.h"
 
 #ifdef DEBUG
 #define debug	printf
 #else
-#define debug(s)
+#define debug(...)
 #endif
 
 char deveth[] = "/dev/eth";
 
-extern int tcp_timeruse;
-
-//static int tcpdevfd; /* defined in ip.h */
 static int intfd;
 
-unsigned long int in_aton(const char *str)
+unsigned long in_aton(const char *str)
 {
     unsigned long l = 0;
     unsigned int val;
@@ -65,9 +68,14 @@ void ktcp_run(void)
     fd_set fdset;
     struct timeval timeint, *tv;
     int count;
+extern int tcp_timeruse;
+extern int cbs_in_time_wait;
+extern int cbs_in_user_timeout;
 
     while (1) {
-	if (tcp_timeruse > 0 || tcpcb_need_push > 0) {
+	//if (tcp_timeruse > 0 || tcpcb_need_push > 0) {
+	if (tcp_timeruse > 0 || tcpcb_need_push > 0 || cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
+
 	    timeint.tv_sec  = 1;
 	    timeint.tv_usec = 0;
 	    tv = &timeint;
@@ -91,15 +99,12 @@ void ktcp_run(void)
 
 	if (tcp_timeruse > 0) tcp_retrans();
 
-#ifdef DEBUG
 	tcpcb_printall();
-#endif
     }
 }
 
 int main(int argc,char **argv)
 {
-    __u8 * addr;
     int daemon = 0;
     speed_t baudrate = 0;
     char *progname = argv[0];
@@ -157,10 +162,14 @@ usage:
 
     /* become daemon now that tcpdev_inuse race condition over*/
     if (daemon) {
+	int fd;
 	if (fork())
 	    exit(0);
 	close(0);
-	close(1);
+	/* redirect messages to console*/
+	fd = open("/dev/console", O_WRONLY);
+	dup2(fd, 1);		/* required for printf output*/
+	dup2(fd, 2);
     }
 
     arp_init ();

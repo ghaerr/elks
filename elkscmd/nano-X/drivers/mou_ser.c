@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 #include "../device.h"
 
 #define TERMIOS		1	/* set to use termios serial port control*/
@@ -169,7 +170,7 @@ MOU_Open(MOUSEDEVICE *pmd)
 	termios.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG);
 	termios.c_iflag &= ~(ICRNL | INPCK | ISTRIP | IXON | BRKINT | IGNBRK);
 	termios.c_cflag &= ~(CSIZE | PARENB);
-	termios.c_cflag |= CS8;
+	termios.c_cflag |= CS8 | CREAD;
 	termios.c_cc[VMIN] = 0;
 	termios.c_cc[VTIME] = 0;
 	if(tcsetattr(mouse_fd, TCSAFLUSH, &termios) < 0)

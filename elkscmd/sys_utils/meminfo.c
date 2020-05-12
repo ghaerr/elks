@@ -20,6 +20,12 @@
 
 #define LINEARADDRESS(off, seg)		((off_t) (((off_t)seg << 4) + off))
 
+int aflag;		/* show application memory*/
+int fflag;		/* show free memory*/
+int tflag;		/* show tty memory*/
+int bflag;		/* show buffer memory*/
+int allflag;	/* show all memory*/
+
 unsigned int ds;
 unsigned int heap_first;
 
@@ -60,32 +66,75 @@ void dump_heap(int fd)
 		word_t mem = h + sizeof(heap_s);
 		seg_t segbase;
 		segext_t segsize;
-		word_t flags, ref_count;
+		word_t segflags, ref_count;
+		int free, used, tty, buffer;
 
-		printf("  %4x   %s %5d", mem, heaptype[tag], size);
-		total_size += size + sizeof(heap_s);
+		if (tag == HEAP_TAG_SEG)
+			segflags = getword(fd, mem + offsetof(segment_s, flags), ds) & SEG_FLAG_TYPE;
+		else segflags = -1;
+		free = (tag == HEAP_TAG_FREE || segflags == SEG_FLAG_FREE);
+		used = ((tag == HEAP_TAG_SEG) && (segflags == SEG_FLAG_CSEG || segflags == SEG_FLAG_DSEG));
+		tty = (tag == HEAP_TAG_TTY);
+		buffer = ((tag == HEAP_TAG_SEG) && (segflags == SEG_FLAG_EXTBUF));
 
-		switch (tag) {
-		case HEAP_TAG_SEG:
-			segbase = getword(fd, mem + offsetof(segment_s, base), ds);
-			segsize = getword(fd, mem + offsetof(segment_s, size), ds);
-			flags = getword(fd, mem + offsetof(segment_s, flags), ds);
-			ref_count = getword(fd, mem + offsetof(segment_s, ref_count), ds);
-			printf("   %4x   %s %7ld %4d", segbase, segtype[flags & 0x0F], (long)segsize << 4, ref_count);
-			total_segsize += (long)segsize << 4;
-			break;
+		if (allflag ||
+		   (fflag && free) || (aflag && used) || (tflag && tty) || (bflag && buffer)) {
+			printf("  %4x   %s %5d", mem, heaptype[tag], size);
+			total_size += size + sizeof(heap_s);
+
+			switch (tag) {
+			case HEAP_TAG_SEG:
+				segbase = getword(fd, mem + offsetof(segment_s, base), ds);
+				segsize = getword(fd, mem + offsetof(segment_s, size), ds);
+				ref_count = getword(fd, mem + offsetof(segment_s, ref_count), ds);
+				printf("   %4x   %s %7ld %4d", segbase, segtype[segflags], (long)segsize << 4, ref_count);
+				total_segsize += (long)segsize << 4;
+				break;
+			}
+			printf("\n");
 		}
 
-		printf("\n");
+		/* next in heap*/
 		h = getword(fd, (word_t)h + offsetof(heap_s, node) + offsetof(list_s, next), ds);
 	} while (h != heap_first);
+
 	printf("  Total heap  %5d     Total mem %7ld\n", total_size, total_segsize);
+}
+
+void usage(void)
+{
+	printf("usage: meminfo [-a][-f][-t][-b]\n");
 }
 
 int main(int argc, char **argv)
 {
-	int fd;
+	int fd, c;
 	struct mem_usage mu;
+
+	if (argc < 2)
+		allflag = 1;
+	else while ((c = getopt(argc, argv, "aftbh")) != -1) {
+		switch (c) {
+			case 'a':
+				aflag = 1;
+				break;
+			case 'f':
+				fflag = 1;
+				break;
+			case 't':
+				tflag = 1;
+				break;
+			case 'b':
+				bflag = 1;
+				break;
+			case 'h':
+				usage();
+				return 0;
+			default:
+				usage();
+				return 1;
+		}
+	}
 
 	if ((fd = open("/dev/kmem", O_RDONLY)) < 0) {
 		perror("meminfo");

@@ -105,7 +105,9 @@ CONFIG_APP_BYACC		byacc/			Berkely Yacc. Not selectable so never compiles.
 
 CONFIG_APP_M4			m4/				Macro processor, including man page
 
-CONFIG_APP_SCREEN		screen/			Text multi-screen support. Doesn't compile or install.
+CONFIG_APP_SCREEN		screen/			Text multi-screen support.
+
+CONFIG_APP_CRON		    cron/			Daemon to schedule program execution.
 
 CONFIG_APP_TEST			test/			Various test programs, not selected by default.
 

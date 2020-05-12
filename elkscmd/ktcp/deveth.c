@@ -20,6 +20,8 @@
 
 #include "config.h"
 #include "deveth.h"
+#include "tcp.h"
+#include "ip.h"
 #include "tcpdev.h"
 #include "arp.h"
 

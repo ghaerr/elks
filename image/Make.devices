@@ -135,9 +135,10 @@ devices:
 	$(MKDEV) /dev/ttyp2 c 4 10
 	$(MKDEV) /dev/ttyp3 c 4 11
 
-# /dev/tty is minor 255, last of the /dev/ttye range
+# /dev/tty is minor 255, /dev/console minor 254
 
-	$(MKDEV) /dev/tty	c 4 255 1 1 0666
+	$(MKDEV) /dev/tty		c 4 255 1 1 0666
+	$(MKDEV) /dev/console	c 4 254 1 1 0600
 
 # Serial ports, as detected by the ROM BIOS.
 

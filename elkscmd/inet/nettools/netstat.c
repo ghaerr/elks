@@ -84,7 +84,7 @@ int main(void)
     write(s, &sr, sizeof(sr));	
     ret = read(s, buf, sizeof(buf));
     gstats = buf;	
-    printf("Retransmition memory     : %d bytes\n", gstats->retrans_memory);
+    printf("Retransmit memory        : %d bytes\n", gstats->retrans_memory);
     printf("Number of control blocks : %d\n\n", gstats->cb_num);
 
     printf(" no        State    RTT lport        raddress  rport\n");
@@ -99,7 +99,7 @@ int main(void)
 		addrbytes = (__u8 *)&cbstats->remaddr;
 		sprintf(addr,"%d.%d.%d.%d",addrbytes[0],addrbytes[1],addrbytes[2],addrbytes[3]);
 		printf("%3d %12s %4dms", i+1, tcp_states[cbstats->state], cbstats->rtt);
-		printf(" %5d %15s  %5d\n", cbstats->localport, addr, cbstats->remport);
+		printf(" %5u %15s  %5u\n", cbstats->localport, addr, cbstats->remport);
     }
 }
 

@@ -4,9 +4,6 @@
 
 void chr_dev_init(void)
 {
-#ifdef CONFIG_CHAR_DEV_RS
-    rs_init();
-#endif
 #ifdef CONFIG_CHAR_DEV_LP
     lp_init();
 #endif

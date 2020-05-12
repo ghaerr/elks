@@ -12,6 +12,7 @@
 #include "config.h"
 #include <linuxmt/arpa/inet.h>
 #include "tcp.h"
+#include "tcp_cb.h"
 #include "tcpdev.h"
 #include "netconf.h"
 
@@ -29,9 +30,9 @@ void netconf_request(struct stat_request_s *sr)
     sreq.extra = sr->extra;
 }
 
+/* send netstat status*/
 void netconf_send(struct tcpcb_s *cb)
 {
-#ifdef CONFIG_INET_STATUS
     struct general_stats_s gstats;
     struct cb_stats_s cbstats;
     struct tcpcb_s *ncb;
@@ -39,7 +40,7 @@ void netconf_send(struct tcpcb_s *cb)
     if (sreq.type == NS_GENERAL) {
 	gstats.cb_num = tcpcb_num;
 	gstats.retrans_memory = tcp_retrans_memory;
-	tcpcb_buf_write(cb, &gstats, sizeof(gstats));
+	tcpcb_buf_write(cb, (unsigned char *)&gstats, sizeof(gstats));
     } else if (sreq.type == NS_CB) {
 	ncb = tcpcb_getbynum(sreq.extra);
 	if (ncb) {
@@ -51,8 +52,7 @@ void netconf_send(struct tcpcb_s *cb)
 	    cbstats.localport = ncb->localport;
 	} else
 	    cbstats.valid = 0;
-	tcpcb_buf_write(cb, &cbstats, sizeof(cbstats) );
+	tcpcb_buf_write(cb, (unsigned char *)&cbstats, sizeof(cbstats) );
     }
-#endif
-    cb->bytes_to_push = CB_BUF_USED(cb);
+	cb->bytes_to_push = CB_BUF_USED(cb);
 }

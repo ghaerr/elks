@@ -7,6 +7,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/serial_reg.h>
 #include <linuxmt/ntty.h>
+#include <linuxmt/kdev_t.h>
 #include <linuxmt/termios.h>
 #include <linuxmt/debug.h>
 #include <arch/io.h>
@@ -14,7 +15,7 @@
 
 #define NEW		1	/* set =0 for old driver code if needed*/
 
-#if defined (CONFIG_CHAR_DEV_RS) || defined (CONFIG_CONSOLE_SERIAL)
+#ifdef CONFIG_CHAR_DEV_RS
 
 extern struct tty ttys[];
 
@@ -25,7 +26,6 @@ struct serial_info {
     unsigned char lcr;
     unsigned char mcr;
     unsigned int  divisor;
-    unsigned char usecount;
     struct tty *tty;
 
 #define SERF_TYPE	15
@@ -54,13 +54,13 @@ struct serial_info {
 #define MAX_RX_BUFFER_SIZE 16
 
 static struct serial_info ports[NR_SERIAL] = {
-    {(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
-    {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
-    {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
-    {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0, NULL},
+    {(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
+    {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
+    {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
+    {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
 };
 
-static char irq_port[NR_SERIAL] = { 3, 1, 0, 2 };
+static char irq_port[NR_SERIAL] = { 3, 1, 0, 2 }; //FIXME must change with ports.h
 
 static unsigned int divisors[] = {
     0,				/*  0 = B0      */
@@ -284,7 +284,7 @@ static void rs_release(struct tty *tty)
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
 
     debug_tty("SERIAL close %d\n", current->pid);
-    if (--port->usecount == 0) {
+    if (--tty->usecount == 0) {
 	outb_p(0, port->io + UART_IER);	/* Disable all interrupts */
 	tty_freeq(tty);
     }
@@ -301,12 +301,12 @@ static int rs_open(struct tty *tty)
 	return -ENODEV;
 
     /* increment use count, don't init if already open*/
-    if (port->usecount++)
+    if (tty->usecount++)
 	return 0;
 
     err = tty_allocq(tty, RSINQ_SIZE, RSOUTQ_SIZE);
     if (err) {
-	--port->usecount;
+	--tty->usecount;
 	return err;
     }
 
@@ -402,10 +402,32 @@ static int rs_ioctl(struct tty *tty, int cmd, char *arg)
     return retval;
 }
 
-int rs_init(void)
+static void rs_init(void)
 {
     register struct serial_info *sp = ports;
     register struct tty *tty = ttys + NR_CONSOLES;
+
+    do {
+	if (!rs_probe(sp) && !request_irq(sp->irq, rs_irq, NULL)) {
+	    sp->tty = tty;
+	    update_port(sp);
+	}
+	tty++;
+    } while (++sp < &ports[NR_SERIAL]);
+}
+
+void rs_conout(dev_t dev, char Ch)
+{
+    register struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
+
+    while (!(inb_p(sp->io + UART_LSR) & UART_LSR_TEMT))
+	continue;
+    outb(Ch, sp->io + UART_TX);
+}
+
+void serial_console_init(void)
+{
+    register struct serial_info *sp = ports;
     int ttyno = 0;
     static char *serial_type[] = {
 	"n 8250",
@@ -416,15 +438,8 @@ int rs_init(void)
 	" UNKNOWN",
     };
 
-    do {
-	if (!rs_probe(sp) && !request_irq(sp->irq, rs_irq, NULL)) {
-	    sp->tty = tty;
-	    update_port(sp);
-	}
-	tty++;
-    } while (++sp < &ports[NR_SERIAL]);
+    rs_init();
 
-    sp = ports;
     do {
 	if (sp->tty != NULL) {
 	    printk("ttyS%d at 0x%x, irq %d is a%s\n", ttyno,
@@ -432,46 +447,15 @@ int rs_init(void)
 	}
 	sp++;
     } while (++ttyno < NR_SERIAL);
-    return 0;
 }
-
-#ifdef CONFIG_CONSOLE_SERIAL
-
-static int con_init = 0;
-
-void init_console(void)
-{
-    register struct serial_info *sp = &ports[CONSOLE_PORT];
-
-    rs_init();
-    memcpy((void *)&(sp->tty->termios), &def_vals, sizeof(struct termios));
-    update_port(sp);
-    con_init = 1;
-    printk("Console: Serial\n");
-}
-
-void con_charout(char Ch)
-{
-    if (con_init) {
-	while (!(inb_p(ports[CONSOLE_PORT].io + UART_LSR) & UART_LSR_TEMT));
-	outb(Ch, ports[CONSOLE_PORT].io + UART_TX);
-    }
-}
-
-int wait_for_keypress(void)
-{
-    /* FIXME*/
-    return '\n';
-}
-
-#endif
 
 struct tty_ops rs_ops = {
     rs_open,
     rs_release,
     rs_write,
     NULL,
-    rs_ioctl
+    rs_ioctl,
+    rs_conout
 };
 
 #endif
