@@ -10,19 +10,21 @@ clock -s
 
 #
 # Network initialization
+# Defaults are QEMU ip address and external gateway
+# See qemu.sh NET= line for host forwarding into ELKS
 #
-
-#localip=192.168.1.100
 localip=10.0.2.15
+gateway=10.0.2.2
+netmask=255.255.255.0
 interface=/dev/eth
 #interface=/dev/ttyS0
-ttybaud=4800
+#slipbaud="-s 4800"
 
 if test -f /bin/ktcp
 then
 	echo 'Starting networking: ktcp'
 	# run ktcp as background daemon if successful starting networking
-	if ktcp -b -s $ttybaud $localip $interface ; then
+	if ktcp -b $slipbaud $localip $interface $gateway $netmask; then
 		for daemon in telnetd httpd
 		do
 			if test -f /bin/$daemon

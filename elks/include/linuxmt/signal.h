@@ -183,33 +183,61 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 #define SIG_UNBLOCK        1	/* for unblocking signals */
 #define SIG_SETMASK        2	/* for setting the signal mask */
 
-/* Type of a signal handler.  */
+/* Type of a signal handler within userland.  */
 typedef void (*__sighandler_t)(int);
+/* Type of a signal handler which interfaces with the kernel.  This is always
+   a far function that uses the `stdcall' calling convention, even for a
+   user program that is being compiled for a different calling convention.  */
+typedef __attribute__((__stdcall__)) __far void (*__kern_sighandler_t)(int);
 
 /*@+namechecks@*/ /*@ignore@*/
+
+/*
+ * Because this stuff can get pretty confusing:
+ *   * SIG_DFL, SIG_IGN, and SIG_ERR are used within userland.  These may be
+ *     16-bit near "pointers", or (for medium model programs) 32-bit far
+ *     "pointers".
+ *   * KERN_SIG_DFL and KERN_SIG_IGN are used by the userland <-> kernel
+ *     interface.  These are always 32-bit.
+ *   * SIGDISP_DFL, SIGDISP_IGN, and SIGDISP_CUSTOM are used internally by
+ *     the kernel, to record the disposition of each particular type of
+ *     signal --- whether to use the default handling, to ignore the signal,
+ *     or to use the custom handler (which is the same throughout a single
+ *     process).  As there are only 3 possible dispositions, the SIGDISP_*
+ *     values can be 8-bit or smaller.  -- tkchia 20200512
+ */
 
 #define SIG_DFL	((__sighandler_t) 0)	/* default signal handling */
 #define SIG_IGN	((__sighandler_t) 1)	/* ignore signal */
 #define SIG_ERR	((__sighandler_t) -1)	/* error return from signal */
 
+typedef unsigned char __sigdisposition_t;
+
+#ifdef __KERNEL__
+#define KERN_SIG_DFL ((__kern_sighandler_t) 0L)  /* default signal handling */
+#define KERN_SIG_IGN ((__kern_sighandler_t) 1L)  /* ignore signal */
+
+#define SIGDISP_DFL	((__sigdisposition_t) 0)
+#define SIGDISP_IGN	((__sigdisposition_t) 1)
+#define SIGDISP_CUSTOM	((__sigdisposition_t) 2)
+#endif
+
 /*@end@*/
 
-struct sigaction {
-    __sighandler_t sa_handler;
-
+struct __kern_sigaction_struct {
+    __sigdisposition_t sa_dispose;
 #if 0
     sigset_t sa_mask;
     unsigned long sa_flags;
     void (*sa_restorer)();
 #endif
-
 };
 
 #ifdef __KERNEL__
 struct task_struct;
 extern int send_sig(sig_t,struct task_struct *,int);
 extern void arch_setup_sighandler_stack(register struct task_struct *,
-					__sighandler_t,unsigned);
+					__kern_sighandler_t,unsigned);
 extern void ctrl_alt_del(void);
 #endif /* __KERNEL__*/
 

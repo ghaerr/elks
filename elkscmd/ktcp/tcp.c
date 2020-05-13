@@ -196,7 +196,7 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     datasize = iptcp->tcplen - TCP_DATAOFF(h);
 
     if (datasize != 0) {
-
+	debug_tcp("tcp: data in len %d\n", datasize);
 	/* Process the data */
 	data = (__u8 *)h + TCP_DATAOFF(h);
 

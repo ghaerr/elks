@@ -1,11 +1,20 @@
-
 #include <errno.h>
 #include <signal.h>
 
 typedef __sighandler_t Sig;
 
 extern int _signal (int, __kern_sighandler_t);
-extern Sig _syscall_signal () __attribute__((stdcall));
+#if defined __TINY__ || defined __SMALL__ || defined __COMPACT__
+/*
+ * If we are building libc for a near-code memory model (tiny, small, or
+ * compact), then we will arrange for _syscall_signal( ) to be within the
+ * same near code section as this module.
+ */
+extern __attribute__((near_section, stdcall))
+#else
+extern __attribute__((stdcall))
+#endif
+    __far void _syscall_signal (int);
 
 Sig _sigtable[_NSIG-1];
 
@@ -36,9 +45,9 @@ Sig signal(int number, Sig pointer)
    if( number < 1 || number >= _NSIG ) { errno=EINVAL; return SIG_ERR; }
 
    if( pointer == SIG_DFL || pointer == SIG_IGN )
-      rv = _signal(number, (__kern_sighandler_t) pointer);
+      rv = _signal(number, (__kern_sighandler_t) (long) (int) pointer);
    else
-      rv = _signal(number, (__sighandler_t) _syscall_signal);
+      rv = _signal(number, (__kern_sighandler_t) _syscall_signal);
 
    if( rv < 0 ) return SIG_ERR;
 
