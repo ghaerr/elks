@@ -20,4 +20,8 @@ extern void fmemcpyw (byte_t * dst_off, seg_t dst_seg, byte_t * src_off, seg_t s
 extern word_t fmemcmpb (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
 extern word_t fmemcmpw (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count);
 
+/* macros from decomposing far pointers (a la Turbo C++ and Open Watcom) */
+#define _FP_SEG(fp)	((unsigned)((unsigned long)(void __far *)(fp) >> 16))
+#define _FP_OFF(fp)	((unsigned)(unsigned long)(void __far *)(fp))
+
 #endif

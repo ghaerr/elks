@@ -147,7 +147,7 @@ _syscall_signal:
 	push %di
 	push %es
 
-	mov 4(%bp),%bx
+	mov 6(%bp),%bx
 	push %bx
 	add %bx,%bx
 	mov	_sigtable-2(%bx),%bx  // offset by 2 because no entry for signal 0
@@ -167,7 +167,7 @@ _syscall_signal:
 	popf
 
 	pop %bp
-	ret $2  // get rid of the signum
+	lret $2  // get rid of the signum
 
 //------------------------------------------------------------------------------
 

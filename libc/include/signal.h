@@ -7,11 +7,6 @@
 #undef __KERNEL__
 #include __SYSINC__(signal.h)
 
-/* Type of a signal handler to pass to the kernel.  This is always a `stdcall'
-   function, even if the user program is being compiled for a different
-   calling convention.  */
-typedef void (__attribute__((stdcall)) *__kern_sighandler_t)(int);
-
 /* BSDisms */
 #ifdef BSD
 extern __const char * __const sys_siglist[];

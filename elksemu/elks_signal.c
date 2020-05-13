@@ -9,26 +9,30 @@
 #include <sys/stat.h>
 #include "elks.h" 
 
-static int elks_sigtrap= -1;
+static int elks_sigtrap_ip = -1, elks_sigtrap_cs = -1;
 
 void sig_trap(int signo)
 {
    elks_cpu.regs.xsp -= 2;
    ELKS_POKE(unsigned short, elks_cpu.regs.xsp, signo);
    elks_cpu.regs.xsp -= 2;
+   ELKS_POKE(unsigned short, elks_cpu.regs.xsp, elks_cpu.regs.xcs);
+   elks_cpu.regs.xsp -= 2;
    ELKS_POKE(unsigned short, elks_cpu.regs.xsp, elks_cpu.regs.xip);
-   elks_cpu.regs.xip = elks_sigtrap;
+   elks_cpu.regs.xip = elks_sigtrap_ip;
+   elks_cpu.regs.xcs = elks_sigtrap_cs;
 }
 
 int elks_signal(int bx,int cx,int dx,int di,int si)
 {
    void (*oldsig)(int) = 0;
    if( bx < 0 || bx >= NSIG ) { errno = EINVAL; return -1; }
-   if( cx == 0 )      oldsig = signal(bx, SIG_DFL);
-   else if( cx == 1 ) oldsig = signal(bx, SIG_IGN);
+   if( cx == 0 && dx == 0 )      oldsig = signal(bx, SIG_DFL);
+   else if( cx == 1 && dx == 0 ) oldsig = signal(bx, SIG_IGN);
    else 
    {
-      elks_sigtrap = cx;
+      elks_sigtrap_ip = cx;
+      elks_sigtrap_cs = dx;
       oldsig = signal(bx, sig_trap);
    }
    if( oldsig == SIG_ERR) return -1;

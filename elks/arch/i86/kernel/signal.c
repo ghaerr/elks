@@ -15,13 +15,15 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/memory.h>
 
 #include <arch/segment.h>
 
 int do_signal(void)
 {
     register __ptask currentp = current;
-    register __sighandler_t *sah;
+    register __sigdisposition_t *sd;
+    register __kern_sighandler_t sah;
     unsigned signr;
     sigset_t mask;
 
@@ -35,8 +37,9 @@ int do_signal(void)
 	currentp->signal ^= mask;
 
 	debug_sig("SIGNAL process signal %d pid %d\n", signr, currentp->pid);
-	sah = &currentp->sig.action[signr - 1].sa_handler;
-	if (*sah == SIG_DFL) {				/* Default */
+	sah = currentp->sig.handler;
+	sd = &currentp->sig.action[signr - 1].sa_dispose;
+	if (*sd == SIGDISP_DFL) {			/* Default */
 	    if ((mask &					/* Default Ignore */
 			(SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG))
 			|| (currentp->pid == 1))
@@ -59,18 +62,19 @@ int do_signal(void)
 		do_exit((int) signr);			/* Default Terminate */
 	    }
 	}
-	else if (*sah != SIG_IGN) {			/* Set handler */
-	    debug_sig("SIGNAL setup return stack for handler %x\n",(unsigned)(*sah));
+	else if (*sd != SIGDISP_IGN) {			/* Set handler */
+	    debug_sig("SIGNAL setup return stack for handler %x:%x\n",
+		      _FP_SEG(sah), _FP_OFF(sah));
 	    //debug_sig("Stack at %x\n", currentp->t_regs.sp);
-	    arch_setup_sighandler_stack(currentp, *sah, signr);
+	    arch_setup_sighandler_stack(currentp, sah, signr);
 	    //debug_sig("Stack at %x\n", currentp->t_regs.sp);
-	    *sah = SIG_DFL;
+	    *sd = SIGDISP_DFL;
 	    debug_sig("SIGNAL reset pending signals\n");
 	    currentp->signal = 0;
 
 	    return 1;
 	}
-	else /* else (*sah == SIG_IGN) Ignore */
+	else /* else (*sd == SIGDISP_IGN) Ignore */
 	    debug_sig("SIGNAL signal %d ignored pid %d\n", signr, currentp->pid);
     }
     return 0;

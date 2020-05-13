@@ -40,7 +40,8 @@ struct mm_struct {
 };
 
 struct signal_struct {
-    struct sigaction		action[NSIG];
+    __kern_sighandler_t		handler;
+    struct __kern_sigaction_struct action[NSIG];
 };
 
 struct task_struct {
