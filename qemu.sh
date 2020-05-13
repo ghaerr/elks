@@ -66,8 +66,13 @@ KEYBOARD=
 # HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
 # Incoming http forwarding: example: connect to ELKS httpd with 'http://localhost:8080'
 # HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80"
+
 # Simultaneous telnet and http forwarding
-HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
+FWD="hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
+# new style
+#NET="-net nic,model=ne2k_isa -net user,$FWD"
+# old style, with configurable interrupt line
+NET="-netdev user,id=mynet,$FWD -device ne2k_isa,irq=9,netdev=mynet"
 
 # Enable network dump here:
 # NETDUMP="-net dump"
@@ -79,4 +84,4 @@ HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80,hostfwd=tcp:127.0.0.1
 
 exec $QEMU $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 1M \
 $KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \
--net nic,model=ne2k_isa $HOSTFWD $NETDUMP $IMAGE $DISK2 $@
+$NET $NETDUMP $IMAGE $DISK2 $@
