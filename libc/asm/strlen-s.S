@@ -3,6 +3,8 @@
 // size_t strlen (const char * s);
 //------------------------------------------------------------------------------
 
+#include <libc-private/call-cvt.h>
+
 	.code16
 
 	.text
@@ -24,7 +26,7 @@ strlen:
 
 	// Do the scan
 
-	mov 4(%bp),%di  // s
+	mov 4+FAR_ADJ_(%bp),%di  // s
 	mov $-1,%cx
 	xor %ax,%ax
 
@@ -42,13 +44,7 @@ strlen:
 	mov %dx,%es
 
 	pop %bp
-#ifdef __IA16_CALLCVT_CDECL
-	ret
-#elif defined __IA16_CALLCVT_STDCALL
-	ret $2
-#else
-#error "unknown calling convention"
-#endif
+	RET_(2)
 
 //------------------------------------------------------------------------------
 

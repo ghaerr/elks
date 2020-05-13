@@ -3,6 +3,8 @@
 // void * memset (void * s, int c, size_t n);
 //------------------------------------------------------------------------------
 
+#include <libc-private/call-cvt.h>
+
 	.code16
 
 	.text
@@ -24,9 +26,9 @@ memset:
 
 	// Do the setup
 
-	mov 4(%bp),%di  // s
-	mov 6(%bp),%ax  // c
-	mov 8(%bp),%cx  // n
+	mov 4+FAR_ADJ_(%bp),%di  // s
+	mov 6+FAR_ADJ_(%bp),%ax  // c
+	mov 8+FAR_ADJ_(%bp),%cx  // n
 
 	cld
 	rep
@@ -39,15 +41,9 @@ memset:
 
 	// Return value is destination
 
-	mov 4(%bp),%ax
+	mov 4+FAR_ADJ_(%bp),%ax
 
 	pop %bp
-#ifdef __IA16_CALLCVT_CDECL
-	ret
-#elif defined __IA16_CALLCVT_STDCALL
-	ret $6
-#else
-#error "unknown calling convention"
-#endif
+	RET_(6)
 
 //------------------------------------------------------------------------------

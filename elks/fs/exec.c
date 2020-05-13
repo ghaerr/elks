@@ -117,7 +117,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     segment_s * seg_code;
     segment_s * seg_data;
     lsize_t len;
+#ifdef CONFIG_EXEC_MMODEL
     int need_reloc_code = 1;
+#endif
 
     /* Open the image */
     /*debug1("EXEC: opening file: %s\n", filename);*/

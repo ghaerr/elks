@@ -1,6 +1,8 @@
 // C runtime bootstrap
 // This must be the first module of the executable
 
+#include <libc-private/call-cvt.h>
+
 	.code16
 
 	.text
@@ -29,12 +31,12 @@ _start:
 	push %ax
 	push %bx
 	push %cx
-	call main
+	CALL_(main)
 #ifdef __IA16_CALLCVT_CDECL
 	add $6,%sp
 #endif
 	push %ax  // main return value
-	call exit  // no return
+	CALL_N_(exit)  // no return
 	int $3
 
 	.global exit
@@ -42,14 +44,22 @@ _start:
 exit:
 	push %bp
 	mov %sp,%bp
+#if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+	mov $_cleanup,%si
+	mov (%si),%bx
+	or 2(%si),%bx
+	jz _exit_end
+	lcallw *(%si)
+#else
 	mov _cleanup,%bx
 	or %bx,%bx
 	jz _exit_end
 	call *%bx
+#endif
 
 _exit_end:
-	push 4(%bp)  // exit code
-	call _exit  // kernel one - no return
+	push 4+FAR_ADJ_(%bp)  // exit code
+	CALL_(_exit)  // kernel one - no return
 	int $3
 
 	.data
