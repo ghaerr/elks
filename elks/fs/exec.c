@@ -56,12 +56,6 @@ static struct minix_supl_hdr msuph;
 #define INIT_HEAP  0x0     // For future use (inverted heap and stack)
 #define INIT_STACK 0x2000  // 8 K (space for both stack and heap)
 
-static __attribute__((stdcall, near_section)) __far void
-bogus_sig_handler(int signr)
-{
-    panic("signal tables corrupt");
-}
-
 int sys_execve(char *filename, char *sptr, size_t slen)
 {
     register __ptask currentp;
@@ -232,7 +226,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	do {
 	    currentp->sig.action[(int)pi].sa_dispose = SIGDISP_DFL;
 	} while ((int)(++pi) < NSIG);
-	currentp->sig.handler = bogus_sig_handler;
+	currentp->sig.handler = (__kern_sighandler_t)NULL;
 
 	/* Close required files */
 	pi = (char *)0;
