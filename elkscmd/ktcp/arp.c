@@ -156,6 +156,7 @@ int arp_request(ipaddr_t ipaddress)
     static char packet[sizeof(struct arp)];
     arp_r = (struct arp *)packet;
 
+    debug_arp("arp: send request\n");
     /* build arp request */
     for (i=0;i<6;i++) arp_r->ll_eth_dest[i]=0xFF; /*broadcast*/
     memcpy(arp_r->ll_eth_src, eth_local_addr, 6);
@@ -175,6 +176,8 @@ int arp_request(ipaddr_t ipaddress)
 
     /* wait for reply */
 selectagain:
+    debug_arp("arp: wait reply\n");
+
     FD_ZERO(&fdset);
     FD_SET(tcpdevfd, &fdset);
     i = select(tcpdevfd + 1, &fdset, NULL, NULL, NULL);
@@ -186,6 +189,7 @@ selectagain:
 	perror("select");
 	return -1;
     }
+    debug_arp("arp: got reply\n");
     deveth_process(); /*get reply*/
 
     return 0;
@@ -198,6 +202,7 @@ void arp_proc (char * packet, int size)
 {
 	struct arp * arp_r;
 
+	debug_arp("arp: incoming packet\n");
 	arp_r = (struct arp *) packet;
 	switch (arp_r->op) {
 	case ARP_REQUEST:

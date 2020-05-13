@@ -1,8 +1,4 @@
 /*
-ttn.c
-*/
-
-/*
  * Telnet for ELKS 
  *
  * Based on minix telnet client.
@@ -28,40 +24,38 @@ ttn.c
 #include <linuxmt/net.h>
 #include <linuxmt/time.h>
 #include <linuxmt/arpa/inet.h>
-
-/*#define assert(a)*/
 #else
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
 
-/*#include <netdb.h>*/
-
 #include "ttn.h"
 
-/*#define DEBUG 1*/
+//#define DEBUG 1
 
 #if DEBUG
 #define where() (fprintf(stderr, "%s %d:", __FILE__, __LINE__))
 #endif
 
+#define BUFSIZE		1024
+
 static char *prog_name;
 static int tcp_fd;
 static char *term_env;
-static char done;
 static struct termios def_termios;
 static int writeall (int fd, char *buffer, int buf_size);
 static int process_opt (char *bp, int count);
 
 void finish()
 {
+	int nonblock = 0;
+	ioctl(0, FIONBIO, &nonblock);
 	tcsetattr(0, TCSANOW, &def_termios);
 	exit(0);	
 }
 
-unsigned long int in_aton(str)
-const char *str;
+unsigned long int in_aton(const char *str)
 {
         unsigned long l;
         unsigned int val;
@@ -89,16 +83,15 @@ const char *str;
 }
 
 
-static void keybd()
+static void keybd(void)
 {
-	char buffer[1024];
-	int result;
 	int count;
+	char buffer[BUFSIZE];
 
 		count= read (0, buffer, sizeof(buffer));
 		if (!count)
 			return;
-#if DEBUG && 0
+#if DEBUG
  { where(); fprintf(stderr, "writing %d bytes\r\n", count); }
 #endif
 		count = write(tcp_fd, buffer, count);
@@ -109,22 +102,24 @@ static void keybd()
 		}
 }
 
-static void scrn()
+static void scrn(void)
 {
-	char buffer[1024], *bp, *iacptr;
+	char *bp, *iacptr;
 	int count, optsize;
+	char buffer[BUFSIZE];
 
 		count = read (tcp_fd, buffer, sizeof(buffer));
-#if DEBUG && 0
+#if DEBUG
  { where(); fprintf(stderr, "read %d bytes\r\n", count); }
 #endif
 		if (count < 0)
 		{
-			perror ("Connection closed");
+			printf("\r\nConnection closed\r\n");
 			finish();
 		}
 		if (!count)
 			return;
+
 		bp= buffer;
 		do
 		{
@@ -147,7 +142,7 @@ static void scrn()
 			if (iacptr)
 			{
 				optsize= process_opt(bp, count);
-#if DEBUG && 0
+#if DEBUG
  { where(); fprintf(stderr, "process_opt(...)= %d\r\n", optsize); }
 #endif
 				if (optsize<0)
@@ -159,20 +154,12 @@ assert (optsize);
 		} while (count);
 }
 
-
-
 int main(int argc, char *argv[])
 {
-	long host;
 	unsigned short port;
-	int pid, ppid;
-	int result, count;
-	char buffer[1024];
 	struct sockaddr_in locadr, remadr;
-	char *tcp_device;
 	int ret;
-	short nonblock;
-	fd_set fdset;
+	int nonblock;
 
 	prog_name= argv[0];
 	if (argc <2 || argc>3)
@@ -180,6 +167,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Usage: %s host <port>\r\n", argv[0]);
 		exit(1);
 	}
+    signal(SIGINT, finish);
 
 	tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
 	
@@ -195,12 +183,11 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (argc == 3){
-		sscanf(argv[2],"%d", &port);
-	} else {
+	if (argc == 3)
+		port = atoi(argv[2]);
+	else
 		port = 23;	
-	}
-		
+
 	remadr.sin_family = AF_INET;
 	remadr.sin_port = htons( port );
 	remadr.sin_addr.s_addr = in_aton(argv[1]);
@@ -220,6 +207,7 @@ int main(int argc, char *argv[])
 	ioctl(0, FIONBIO, &nonblock);
 
 	for (;;){
+		fd_set fdset;
 		FD_ZERO(&fdset);
         FD_SET(0, &fdset);
         FD_SET(tcp_fd, &fdset);
@@ -240,11 +228,10 @@ int main(int argc, char *argv[])
 	if (offset<count) { (var) = bp[offset++]; } \
 	else { read(tcp_fd, (char *)&(var), 1); }
 
-static void do_option (optsrt)
-int optsrt;
+static void do_option (int optsrt)
 {
-	unsigned char reply[3], *rp;
-	int count, result;
+	int result;
+	unsigned char reply[3];
 
 	switch (optsrt)
 	{
@@ -285,11 +272,10 @@ int optsrt;
 		perror("write");
 }
 
-static void will_option (optsrt)
-int optsrt;
+static void will_option (int optsrt)
 {
-	unsigned char reply[3], *rp;
-	int count, result;
+	int result;
+	unsigned char reply[3];
 
 	switch (optsrt)
 	{
@@ -372,12 +358,8 @@ assert (result <= buf_size);
 	return 0;
 }
 
-static void dont_option (optsrt)
-int optsrt;
+static void dont_option (int optsrt)
 {
-	unsigned char reply[3], *rp;
-	int count, result;
-
 	switch (optsrt)
 	{
 	default:
@@ -388,12 +370,8 @@ int optsrt;
 	}
 }
 
-static void wont_option (optsrt)
-int optsrt;
+static void wont_option (int optsrt)
 {
-	unsigned char reply[3], *rp;
-	int count, result;
-
 	switch (optsrt)
 	{
 	default:
@@ -404,9 +382,7 @@ int optsrt;
 	}
 }
 
-static int sb_termtype (bp, count)
-char *bp;
-int count;
+static int sb_termtype (char *bp, int count)
 {
 	unsigned char command, iac, optsrt;
 	unsigned char buffer[4];
@@ -479,7 +455,7 @@ static int process_opt (char *bp, int count)
 {
 	unsigned char iac, command, optsrt, sb_command;
 	int offset, result;	;
-#if DEBUG && 0
+#if DEBUG
  { where(); fprintf(stderr, "process_opt(bp= 0x%x, count= %d)\r\n",
 	bp, count); }
 #endif
@@ -522,7 +498,7 @@ fprintf(stderr, "got a GA\r\n");
 		switch (sb_command)
 		{
 		case OPT_TERMTYPE:
-#if DEBUG && 0
+#if DEBUG
 fprintf(stderr, "got SB TERMINAL-TYPE\r\n");
 #endif
 			result= sb_termtype(bp+offset, count-offset);
@@ -570,4 +546,3 @@ fprintf(stderr, "got unknown command (%d)\r\n", command);
 	}
 	return offset;
 }
-

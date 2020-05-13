@@ -37,7 +37,7 @@ xit:
   pop	di
 #endasm
 #else /* ifdef BCC_ASM */
-   register char *p=(char *)str;
+   register unsigned char *p=(unsigned char *)str;
    while(l-- > 0)
    {
       if(*p == c) return p;
