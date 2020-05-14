@@ -26,7 +26,7 @@ clean_exit () {
 
 if [ "$1" != "auto" ]; then
 	mkdir -p "$CROSSDIR"
-	test -f "$CROSSDIR/.gcc.install" || tools/build.sh || clean_exit 1
+	tools/build.sh || clean_exit 1
 fi
 
 # Configure all
