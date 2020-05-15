@@ -13,11 +13,13 @@ This section contains some HOWTOs to help using ELKS.
 
 * [ELKS One Page Manual](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/html/user/ELKS_OPM.html)
 
-* [Shell command line editing and Tab completion](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/html/user/shell.html)
+* [Shell command line editing and Tab completion](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/master/Documentation/html/user/shell.html)
 
-* [The screen window manager](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/html/user/screen.html)
+* [The screen window manager](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/master/Documentation/html/user/screen.html)
 
-* [The cron job scheduler](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/html/user/cron.html)
+* [The cron job scheduler](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/master/Documentation/html/user/cron.html)
+
+* [The Kilo editor](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/master/Documentation/html/user/kilo.html)
 
 * [Writing applications for ELKS in C](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/html/user/writing_apps_in_C.html)
 
