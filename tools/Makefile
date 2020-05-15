@@ -24,7 +24,9 @@ BINUTILS_DIST=binutils-ia16-$(BINUTILS_VER)
 
 $(DISTDIR)/$(BINUTILS_DIST).zip:
 	mkdir -p $(DISTDIR)
-	cd $(DISTDIR) && wget https://github.com/tkchia/binutils-ia16/archive/$(BINUTILS_VER).zip -O $(BINUTILS_DIST).zip
+	rm -rf $(DISTDIR)/binutils-ia16-*.zip $(DISTDIR)/binutils-ia16-*.zip.tmp
+	cd $(DISTDIR) && wget https://github.com/tkchia/binutils-ia16/archive/$(BINUTILS_VER).zip -O $(BINUTILS_DIST).zip.tmp
+	cd $(DISTDIR) && mv $(BINUTILS_DIST).zip.tmp $(BINUTILS_DIST).zip
 
 $(BUILDDIR)/.binutils.src: $(DISTDIR)/$(BINUTILS_DIST).zip
 	mkdir -p $(BUILDDIR)
@@ -54,7 +56,9 @@ GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).zip:
 	mkdir -p $(DISTDIR)
-	cd $(DISTDIR) && wget https://github.com/tkchia/gcc-ia16/archive/$(GCC_VER).zip -O $(GCC_DIST).zip
+	rm -rf $(DISTDIR)/gcc-ia16-*.zip $(DISTDIR)/gcc-ia16-*.zip.tmp
+	cd $(DISTDIR) && wget https://github.com/tkchia/gcc-ia16/archive/$(GCC_VER).zip -O $(GCC_DIST).zip.tmp
+	cd $(DISTDIR) && mv $(GCC_DIST).zip.tmp $(GCC_DIST).zip
 
 $(BUILDDIR)/.gcc.src: $(DISTDIR)/$(GCC_DIST).zip
 	mkdir -p $(BUILDDIR)
@@ -85,7 +89,9 @@ EMU86_DIST=emu86-$(EMU86_VER)
 
 $(DISTDIR)/$(EMU86_DIST).zip:
 	mkdir -p $(DISTDIR)
-	cd $(DISTDIR) && wget https://github.com/mfld-fr/emu86/archive/$(EMU86_VER).zip -O $(EMU86_DIST).zip
+	rm -rf $(DISTDIR)/emu86-*.zip $(DISTDIR)/emu86-*.zip.tmp
+	cd $(DISTDIR) && wget https://github.com/mfld-fr/emu86/archive/$(EMU86_VER).zip -O $(EMU86_DIST).zip.tmp
+	cd $(DISTDIR) && mv $(EMU86_DIST).zip.tmp $(EMU86_DIST).zip
 
 $(BUILDDIR)/.emu86.src: $(DISTDIR)/$(EMU86_DIST).zip
 	mkdir -p $(BUILDDIR)
