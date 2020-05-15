@@ -157,6 +157,6 @@ int tcp_init(void);
 void tcp_process(struct iphdr_s *iph);
 void tcp_connect(struct tcpcb_s *cb);
 void tcp_send_fin(struct tcpcb_s *cb);
-unsigned long in_aton(const char *str);
+void tcp_send_reset(struct tcpcb_s *cb);
 
 #endif

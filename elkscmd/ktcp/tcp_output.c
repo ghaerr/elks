@@ -216,6 +216,19 @@ void rmv_all_retrans(struct tcpcb_list_s *lcb)
 	    n = n->next;
 }
 
+void rmv_all_retrans_cb(struct tcpcb_s *cb)
+{
+    struct tcp_retrans_list_s *n;
+
+    n = retrans_list;
+
+    while (n != NULL)
+	if (n->cb == cb)
+	    n = rmv_from_retrans(n);
+	else
+	    n = n->next;
+}
+
 void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
 		     struct addr_pair *apair)
 {
@@ -272,7 +285,7 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
     n->rto *= 2;
     n->next_retrans = Now + n->rto;
 
-    ip_sendpacket(n->tcph, n->len, &n->apair);
+    ip_sendpacket((unsigned char *)n->tcph, n->len, &n->apair);
 }
 
 /* called every ktcp cycle when tcp_timeruse nonzero*/
@@ -382,5 +395,5 @@ void tcp_output(struct tcpcb_s *cb)
     printf("daddr: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);
 */
     add_for_retrans(cb, th, len, &apair);
-    ip_sendpacket(th, len, &apair);
+    ip_sendpacket((unsigned char *)th, len, &apair);
 }

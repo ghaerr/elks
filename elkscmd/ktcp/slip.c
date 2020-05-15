@@ -268,9 +268,9 @@ void cslip_compress(__u8 **packet, int *len)
 #endif
 
 /*
- * TODO : Use a buffer to reduse the write calls
+ * TODO : Use a buffer to reduse the write calls //FIXME
  */
-void slip_send(char *packet, int len)
+void slip_send(unsigned char *packet, int len)
 {
     __u8 *p = (__u8 *)packet;
 

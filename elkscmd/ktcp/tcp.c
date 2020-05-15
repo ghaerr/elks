@@ -46,7 +46,7 @@ int tcp_init(void)
     return 0;
 }
 
-__u32 choose_seq(void)
+static __u32 choose_seq(void)
 {
     return timer_get_time();
 }
@@ -66,13 +66,14 @@ void tcp_send_reset(struct tcpcb_s *cb)
     tcp_output(cb);
 }
 
-void tcp_send_ack(struct tcpcb_s *cb)
+static void tcp_send_ack(struct tcpcb_s *cb)
 {
     cb->flags = TF_ACK;
     cb->datalen = 0;
     tcp_output(cb);
 }
 
+/* entry point, not called from state machine*/
 void tcp_connect(struct tcpcb_s *cb)
 {
     cb->iss = choose_seq();
@@ -87,7 +88,7 @@ void tcp_connect(struct tcpcb_s *cb)
     tcp_output(cb);
 }
 
-void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     struct tcphdr_s *h = iptcp->tcph;
 
@@ -182,7 +183,7 @@ if (!n) return;
  * state change here in this function
  */
 
-void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     struct tcphdr_s *h;
     __u32 acknum;
@@ -224,11 +225,12 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST) {
 	/* TODO: Check seqnum for security */
-	rmv_all_retrans(cb);
+printf("tcp: RST recevied, removing retrans packets\n");
+	rmv_all_retrans_cb(cb);
 	if (cb->state == TS_CLOSE_WAIT) {
 	    ENTER_TIME_WAIT(cb);
 	} else
-	    cb->state = TS_CLOSED;
+	    cb->state = TS_CLOSED;	//FIXME how does cb get deallocated?
 	tcpdev_sock_state(cb, SS_UNCONNECTED);
 	return;
     }
@@ -252,7 +254,7 @@ cbs_in_user_timeout++;
     tcp_output(cb);
 }
 
-void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     struct tcphdr_s *h = iptcp->tcph;
 
@@ -267,7 +269,7 @@ void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 }
 
-void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     __u32 lastack;
     int needack = 0;
@@ -302,7 +304,7 @@ void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 }
 
-void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     int needack = 0;
 
@@ -327,7 +329,7 @@ void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 }
 
-void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     __u32 lastack;
 
@@ -351,7 +353,7 @@ void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 }
 
-void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     cb->time_wait_exp = Now;
     if (iptcp->tcph->flags & (TF_ACK|TF_RST)) {
@@ -398,7 +400,7 @@ debug_tcp("tcbcb_find %lx, %u, %u\n", iph->saddr, ntohs(tcph->dport), ntohs(tcph
     cbnode = tcpcb_find(iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
 
     if (!cbnode) {
-	debug_tcp("tcp: Refusing packet \n");
+	printf("tcp: Refusing packet\n");
 	/* TODO : send RST and stuff */
 	return;
     }

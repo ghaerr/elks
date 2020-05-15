@@ -12,32 +12,36 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "slip.h"
+#include <stdio.h>
+#include "config.h"
 #include "ip.h"
 #include "icmp.h"
 #include <linuxmt/arpa/inet.h>
+
+#define ICMP_ECHO_REPLY		0
 
 int icmp_init(void)
 {
     return 0;
 }
 
-void icmp_process(struct iphdr_s *iph,char *packet)
+void icmp_process(struct iphdr_s *iph,unsigned char *packet)
 {
     struct addr_pair apair;
     int len;
 
     switch (packet[0]){
 	case 8: /* ICMP_ECHO */
+	    debug_ip("icmp: PING from %s\n", in_ntoa(iph->saddr));
 	    apair.daddr = iph->saddr;
 	    apair.saddr = iph->daddr;
 	    apair.protocol = PROTO_ICMP;
 	    len = ntohs(iph->tot_len) - 20;	/* Do this right */
-
-/*	Set the type to ICMP_ECHO_REPLY
- */
-	    packet[0] = 0;
+	    packet[0] = ICMP_ECHO_REPLY;
 	    ip_sendpacket(packet, len, &apair);
+	    break;
+	default:
+	    debug_ip("icmp: unregocognized ICMP request %d\n", packet[0]);
 	    break;
     }
 }

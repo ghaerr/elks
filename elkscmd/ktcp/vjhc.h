@@ -43,7 +43,7 @@ Created:	May 25, 1993 by Philip Homburg <philip@cs.vu.nl>
 
 typedef struct pkt
 {
-	char *p_data;
+	unsigned char *p_data;
 	size_t p_offset;
 	size_t p_size;
 	size_t p_maxsize;

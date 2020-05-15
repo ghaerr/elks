@@ -3,7 +3,7 @@
 
 
 /* Ethernet II types */
-/* as big endian values */
+/* as big endian values */ //FIXME
 
 #define ETH_TYPE_IPV4 0x0008
 #define ETH_TYPE_ARP  0x0608
@@ -25,9 +25,9 @@ typedef struct eth_head_s eth_head_t;
 extern eth_addr_t eth_local_addr;
 
 
-void deveth_printhex(char* packet, int len);
+void deveth_printhex(unsigned char *packet, int len);
 int  deveth_init(char *fdev);
 void deveth_process(void);
-void deveth_send(char *packet, int len);
+void deveth_send(unsigned char *packet, int len);
 
 #endif /* !DEVETH_H */

@@ -33,7 +33,7 @@ static int devfd;
 static eth_addr_t broad_addr = {255, 255, 255, 255, 255, 255};
 
 
-void deveth_printhex(char* packet, int len)
+void deveth_printhex(unsigned char *packet, int len)
 {
   unsigned char *p;
   int i;
@@ -112,13 +112,13 @@ void deveth_process ()
 	  break;
 
   case ETH_TYPE_ARP:
-	  arp_proc (sbuf, len);
+	  arp_recvpacket (sbuf, len);
 	  break;
   }
 }
 
 
-void deveth_send(char *packet, int len)
+void deveth_send(unsigned char *packet, int len)
 {
     //printf("deveth_send:\n");
     //deveth_printhex(packet,len);

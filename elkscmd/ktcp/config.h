@@ -3,6 +3,8 @@
 
 #include <autoconf.h>
 
+//#define ARP_WAIT_KLUGE	/* force loop on arp reply*/
+
 #define DEBUG_TCP	0
 #define DEBUG_IP	0
 #define DEBUG_ARP	0

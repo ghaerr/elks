@@ -96,50 +96,45 @@ loop1:
 
 #endif
 
-void ip_print(struct iphdr_s *head)
+static void ip_print(struct iphdr_s *head, int size)
 {
-#if 0
+#if DEBUG_IP
+    debug_ip("IP: %s ", size? "recv": "send");
+    debug_ip("%s -> ", in_ntoa(head->saddr));
+    debug_ip("%s ", in_ntoa(head->daddr));
+    debug_ip("v%d hl:%d ",IP_VERSION(head), IP_IHL(head));
+    debug_ip("tos:%d len:%d ", head->tos, ntohs(head->tot_len));
+    debug_ip("id:%d fo:%d ",head->id, head->frag_off);
+    debug_ip("chk:%d ",ip_calc_chksum((char *)head, 4 * IP_IHL(head)));
+    debug_ip("ttl:%d ",head->ttl);
+    debug_ip("prot:%d\n",head->protocol);
+#if DEBUG_IP > 1
+    debug_ip("   opts:");
     int i;
-    __u8 *addr;
-
-    debug_ip("Version/IHL: %d/%d ",IP_VERSION(head),IP_IHL(head));
-    debug_ip("TypeOfService/Length: %d/%d\n",head->tos,ntohs(head->tot_len));
-    debug_ip("Id/flags/fragment offset: %d/%d ",head->id,head->frag_off);
-    debug_ip("ttl: %d ",head->ttl);
-    debug_ip("Protocol: %d\n",head->protocol);
-
-    addr = (__u8 *)&head->saddr;
-    debug_ip("saddr : %d.%d.%d.%d ",addr[0],addr[1],addr[2],addr[3]);
-    addr = (__u8 *)&head->daddr;
-    debug_ip("daddr : %d.%d.%d.%d ",addr[0],addr[1],addr[2],addr[3]);
-
-    debug_ip("check sum = %d\n",ip_calc_chksum(head, 4 * IP_IHL(head)));
-
-    addr = (__u8 *)head + 4 * IP_IHL(head);
-    for ( i = 0 ; i < ntohs(head->tot_len) - 20 ; i++ )
-	debug_ip("%x ",addr[i]);
-
+    unsigned char *addr = (__u8 *)head + 4 * IP_IHL(head);
+    for (i = 0 ; i < ntohs(head->tot_len) - 20 ; i++ )
+	debug_ip("%02x ",addr[i]);
     debug_ip("\n");
+#endif
 #endif
 }
 
-void ip_recvpacket(char *packet,int size)
+void ip_recvpacket(unsigned char *packet,int size)
 {
     struct iphdr_s *iphdr;
     __u8 *data;
 
     iphdr = (struct iphdr_s *)packet;
 
-    debug_ip("IP: Got packet size %d\n",size);
-    ip_print(iphdr);
+    ip_print(iphdr, size);
 
     if (IP_VERSION(iphdr) != 4){
-        debug_ip("IP : Bad IP version\n");
+        debug_ip("IP: Bad IP version\n");
 	return;
     }
 
     if (IP_IHL(iphdr) < 5){
-        debug_ip("IP : Bad IHL\n");
+        debug_ip("IP: Bad HL\n");
 	return;
     }
 
@@ -147,18 +142,18 @@ void ip_recvpacket(char *packet,int size)
 
     switch (iphdr->protocol) {
     case PROTO_ICMP:
-        debug_ip("IP: icmp packet\n");
+        debug_ip("IP: recv icmp packet\n");
 	icmp_process(iphdr, data);
 	break;
 
     case PROTO_TCP:
-        debug_ip("IP: tcp packet\n");
+        debug_ip("IP: recv tcp packet\n");
 	tcp_process(iphdr);
 	break;
     }
 }
 
-void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
+void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
 {
     struct iphdr_s *iph = (struct iphdr_s *)ipbuf;
     __u16 tlen;
@@ -167,14 +162,12 @@ void ip_sendpacket(char *packet,int len,struct addr_pair *apair)
     ipaddr_t ip_addr;
     eth_addr_t eth_addr;
 
-    unsigned char *addr = (unsigned char *) &apair->daddr;
-    debug_ip("IPSEND daddr: %d.%d.%d.%d\n", addr [0], addr [1], addr [2], addr [3]);
-
-    if (apair->daddr == local_ip || apair->daddr == 0x0100007f) //FIXME
+#if later
+    if (apair->daddr == local_ip || apair->daddr == 0x0100007f)
 	goto local;
+#endif
 
     if (dev->type == 1) {  /* Ethernet */
-debug_ip("ETH ROUTE\n");
         /* Is this the best place for the IP routing to happen ? */
         /* I think no, because actual sending interface is coming from the routing */
 
@@ -187,25 +180,44 @@ debug_ip("ETH ROUTE\n");
             /* Route to the local destination */
             ip_addr = apair->daddr;
 
+#ifdef ARP_WAIT_KLUGE
         /* The ARP transaction should occur before sending the IP packet */
         /* So this part should be moved upward in the IP protocol automaton */
         /* to avoid this dangerous unlimited try again loop */
-
+        /* Until issue jbruchon#67 fixed, we block until ARP reply */
         while (arp_cache_get (ip_addr, eth_addr))
-            /* MAC not in cache */
-            /* Issue an ARP request to get it */
-            /* Until issue jbruchon#67 fixed, we block until ARP reply */
             arp_request (ip_addr);
+#else
+	/* get ethernet address if cached, otherwise TCP packet will auto retans*/
+	/* FIXME if arp_cache_get fails, eth_addr is garbage*/
+        if (arp_cache_get (ip_addr, eth_addr)) {
 
-    /*link layer*/
+	    /* send ARP request once, timed wait for reply*/
+            if (!arp_request (ip_addr))
 
-    /* The Ethernet header should be built by the Ethernet module */
-    /* So this part should be moved downward */
+		/* succeeded, try cache once more*/
+		if (arp_cache_get (ip_addr, eth_addr)) {
 
-    memcpy(ipll->ll_eth_dest, eth_addr, 6);
-    memcpy(ipll->ll_eth_src,eth_local_addr, 6);
-    ipll->ll_type_len=0x08; /*=0x0800 bigendian*/
-    } //if (dev->type == 1)
+		    /* No ARP reply. Temporary solution, drop sending IP packet.
+		     * TCP should retransmit after timeout,
+		     * but ICMP/echo will fail until ARP reply seen.
+		     */
+		    printf("ip: no ARP cache entry for %s, DROPPING packet\n",
+			in_ntoa(ip_addr));
+		    return;
+		}
+	}
+#endif
+
+        /*link layer*/
+
+        /* The Ethernet header should be built by the Ethernet module */
+        /* So this part should be moved downward */
+
+        memcpy(ipll->ll_eth_dest, eth_addr, 6);
+        memcpy(ipll->ll_eth_src,eth_local_addr, 6);
+        ipll->ll_type_len=0x08; /*=0x0800 bigendian*/ //FIXME
+    }
 
 local:
     /*ip layer*/
@@ -223,7 +235,9 @@ local:
     if (dev->type == 1) {
       iph->daddr		= apair->daddr;
       iph->saddr		= local_ip;
-//iph->saddr		= apair->saddr;
+#if later
+	  iph->saddr		= apair->saddr;	// for localhost
+#endif
     } else {
       iph->daddr		= apair->daddr;
       iph->saddr		= apair->saddr;
@@ -232,16 +246,18 @@ local:
     iph->check		= 0;
     iph->check		= ip_calc_chksum((char *)iph, tlen);
 
-    ip_print(iph);
+    ip_print(iph, 0);
 
     memcpy(&ipbuf[tlen], packet, len);
 
+#if later
     /* "route"  127.0.0.1*/
     if (iph->daddr == local_ip || iph->daddr == 0x0100007f) {
 	debug_ip("ip: route localhost\n");
 	ip_recvpacket(ipbuf, tlen + len);
 	return;
     }
+#endif
 
     if (dev->type == 1) { /*add link layer*/
       memmove(&ipbuf[14],ipbuf, TCPDEV_BUFSIZE-14);
