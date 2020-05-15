@@ -33,7 +33,7 @@ static struct tcp_retrans_list_s *retrans_list;
 __u16 tcp_chksum(struct iptcp_s *h)
 {
     __u32 sum = htons(h->tcplen);
-    __u16 *data = (__u16) h->tcph, len = h->tcplen;
+    __u16 *data = (__u16 *)h->tcph, len = h->tcplen;
 
     for (; len > 1 ; len -= 2)
 	sum += *data++;
@@ -234,7 +234,10 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
 {
     struct tcp_retrans_list_s *n;
 
-    if (((th->flags & 0xff00) == TF_ACK) && cb->datalen == 0)
+    if (cb->flags == TF_ACK && cb->datalen == 0)
+	return;
+
+    if (cb->state == TS_CLOSED)
 	return;
 
     n = (struct tcp_retrans_list_s *)malloc(sizeof(struct tcp_retrans_list_s));
@@ -253,7 +256,7 @@ debug_tcp("Alloc %d\n", sizeof(struct tcp_retrans_list_s));
     }
 debug_tcp("Alloc %d\n", len);
 
-    /* So thet select in ktcp.c blocks for a specified time only */
+    /* So that select in ktcp.c blocks for a specified time only */
     tcp_timeruse++;
 
     /* Link it to the list */
@@ -339,7 +342,7 @@ void tcp_output(struct tcpcb_s *cb)
 {
     struct tcphdr_s *th = (struct tcphdr_s *) buf;
     struct addr_pair apair;
-    __u16 len;
+    int len;
     __u8 *options, header_len, option_len;
     //__u8 addr[4], *addr2;
 
@@ -356,11 +359,9 @@ void tcp_output(struct tcpcb_s *cb)
 
     cb->send_nxt += cb->datalen;
 
-    len = (__u16)CB_BUF_SPACE(cb);
+    len = CB_BUF_SPACE(cb);
     if (len == 0)
 	len = 1;		/* Never advertise zero window size */
-    if (len>255)
-        len=256; //use even len, reducing the len causes the servers to pause
     th->window = htons(len);
     th->urgpnt = 0;
     th->flags = cb->flags;

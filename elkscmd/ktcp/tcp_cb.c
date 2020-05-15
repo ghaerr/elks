@@ -33,15 +33,15 @@ void tcpcb_init(void)
 
 void tcpcb_printall(void)
 {
-#if 0
+#if DEBUG_CB
     struct tcpcb_list_s *n = tcpcbs;
 
     printf("--- Control Blocks --- %d (%d)\n",tcpcb_num,tcp_retrans_memory);
     while (n) {
-	printf("CB:%p sock:0x%x 0x%x State:%d LP:%u RP:%u RTT: %d ms unacc : %d\n",&n->tcpcb, n->tcpcb.sock,
-		n->tcpcb.newsock, n->tcpcb.state, n->tcpcb.localport,
-		n->tcpcb.remport, n->tcpcb.rtt * 1000 / 16,
-		n->tcpcb.unaccepted);
+	printf("CB:%p sock:%04x %04xx State:%d LP:%u RP:%u RTT:%d unacc: %d\n",
+	    &n->tcpcb, n->tcpcb.sock, n->tcpcb.newsock,
+	    n->tcpcb.state, n->tcpcb.localport, n->tcpcb.remport,
+	    n->tcpcb.rtt * 1000 / 16, n->tcpcb.unaccepted);
 	n = n->next;
     }
 #endif
@@ -156,7 +156,7 @@ struct tcpcb_list_s *tcpcb_find(__u32 addr, __u16 lport, __u16 rport)
     return NULL;
 }
 
-struct tcpcb_list_s *tcpcb_find_by_sock(__u16 sock)
+struct tcpcb_list_s *tcpcb_find_by_sock(void *sock)
 {
     struct tcpcb_list_s *n;
 
@@ -167,7 +167,7 @@ struct tcpcb_list_s *tcpcb_find_by_sock(__u16 sock)
     return NULL;
 }
 
-struct tcpcb_list_s *tcpcb_find_unaccepted(__u16 sock)
+struct tcpcb_list_s *tcpcb_find_unaccepted(void *sock)
 {
     struct tcpcb_list_s *n;
 

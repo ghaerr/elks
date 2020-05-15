@@ -75,8 +75,8 @@ struct iptcp_s {
 #define CB_BUF_TAIL(x)	(((x)->buf_head + (x)->buf_len) % (CB_IN_BUF_SIZE - 1))
 
 struct tcpcb_s {
-	__u16	newsock;
-	__u16	sock;	/* the socket in kernel space */
+	void *	newsock;
+	void *	sock;	/* the socket in kernel space */
 #define SS_NULL		0
 #define	SS_ACCEPT	1
 	__u32	localaddr;
@@ -146,7 +146,7 @@ int tcp_retrans_memory;
 
 struct tcpcb_list_s *tcpcb_new();
 struct tcpcb_list_s *tcpcb_find(__u32 addr, __u16 lport, __u16 rport);
-struct tcpcb_list_s *tcpcb_find_by_sock(__u16 sock);
+struct tcpcb_list_s *tcpcb_find_by_sock(void *sock);
 void tcpcb_remove();
 
 __u16 tcp_chksum(struct iptcp_s *h);

@@ -9,6 +9,8 @@
 #define DEBUG_IP	0
 #define DEBUG_ARP	0
 
+#define DEBUG_CB	0		/* dump control blocks*/
+
 #if DEBUG_TCP
 #define debug_tcp	printf
 #else

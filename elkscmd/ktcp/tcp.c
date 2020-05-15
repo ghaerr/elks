@@ -97,18 +97,19 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST) {
 	retval_to_sock(cb->sock, -ECONNREFUSED);
+	cb->state = TS_CLOSED;
+	tcpcb_remove(cb); 	/* deallocate*/
 	return;
     }
 
     if (h->flags & (TF_SYN|TF_ACK)) {
 	if (cb->seg_ack != cb->send_una + 1) {
 
-	    /* Send RESET */
+	    /* Send RST */
 	    cb->send_nxt = h->acknum;
-	    cb->state = TF_RST;
-
-	    cb->datalen = 0;
-	    tcp_output(cb);
+	    cb->state = TS_CLOSED;
+	    tcp_send_reset(cb);
+	    tcpcb_remove(cb); 	/* deallocate*/
 	    return;
 	}
 
@@ -130,7 +131,7 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 }
 
-void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
+static void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
 {
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
@@ -139,23 +140,23 @@ void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     if (h->flags & TF_RST)
 	return;
 
+    if (!(h->flags & TF_SYN)) {
+	debug_tcp("tcp: no SYN in listen\n");
+	return;
+    }
+
     if (h->flags & TF_ACK)
 	debug_tcp("tcp: ACK in listen not implemented\n");
 
     n = tcpcb_clone(lcb);    /*copy (struct tcpcb_s)*lcb into linked list tcpcb_list_s*/
-if (!n) return;
-    cb = &n->tcpcb;          /*tcp control block in linked list*/
+    if (!n)
+	return;		     /* no memory for new connection*/
+    cb = &n->tcpcb;
     cb->unaccepted = 1;      /* Mark as unaccepted */
     cb->newsock = lcb->sock; /* lcb-> is the socket in kernel space */
 
     cb->seg_seq = ntohl(h->seqnum); /*read sequence number got*/
     cb->seg_ack = ntohl(h->acknum); /*read ack number got*/
-
-    if (!(h->flags & TF_SYN)){
-	debug_tcp("tcp: no SYN in listen\n");
-	tcpcb_remove(n); /*remove from linked list again*/
-	return;
-    }
 
     cb->remaddr = iptcp->iph->saddr; /*sender's ip address*/
     cb->remport = ntohs(h->sport);   /*sender's port*/
@@ -167,7 +168,7 @@ if (!n) return;
     cb->send_nxt = cb->iss; /*put that into send_nxt*/
 
     cb->state = TS_SYN_RECEIVED; /*update state*/
-    cb->flags = TF_SYN|TF_ACK;   /*set SYN + ACK flag*/
+    cb->flags = TF_SYN|TF_ACK;   /*send SYN + ACK flag*/
 
     cb->datalen = 0;  /* no data yet */
     tcp_output(cb);   /*send the tcp part of the packet*/
@@ -225,12 +226,14 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST) {
 	/* TODO: Check seqnum for security */
-printf("tcp: RST recevied, removing retrans packets\n");
+printf("tcp: RST received, removing retrans packets\n");
 	rmv_all_retrans_cb(cb);
 	if (cb->state == TS_CLOSE_WAIT) {
 	    ENTER_TIME_WAIT(cb);
-	} else
-	    cb->state = TS_CLOSED;	//FIXME how does cb get deallocated?
+	} else {
+	    cb->state = TS_CLOSED;
+	    tcpcb_remove(cb); 	/* deallocate*/
+	}
 	tcpdev_sock_state(cb, SS_UNCONNECTED);
 	return;
     }
@@ -361,7 +364,7 @@ static void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	/* our FIN was acked */
 	cbs_in_user_timeout--;
 	cb->state = TS_CLOSED;
-	tcpcb_remove(cb); /* Remove the cb */
+	tcpcb_remove(cb); 	/* deallocate*/
     }
 }
 

@@ -35,4 +35,6 @@ int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr);
 void arp_recvpacket (unsigned char * packet, int size);
 int arp_request(ipaddr_t ipaddress);
 
+char *mac_ntoa(unsigned char *p);
+
 #endif /* !ARP_H */

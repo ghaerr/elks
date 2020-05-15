@@ -39,9 +39,9 @@ typedef struct iphdr_s iphdr_t;
 
 __u16 ip_calc_chksum(char *data, int len);
 
-ipaddr_t local_ip;
-ipaddr_t gateway_ip;
-ipaddr_t netmask_ip;
+extern ipaddr_t local_ip;
+extern ipaddr_t gateway_ip;
+extern ipaddr_t netmask_ip;
 
 __u16	next_port;
 

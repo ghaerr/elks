@@ -39,21 +39,21 @@ struct arp_cache_s {
 
 typedef struct arp_cache_s arp_cache_t;
 
-static arp_cache_t _arp_cache [ARP_CACHE_MAX];
+static arp_cache_t arp_cache [ARP_CACHE_MAX];
 
 
 static void arp_cache_init (void)
 {
-	memset (_arp_cache, 0, ARP_CACHE_MAX * sizeof (arp_cache_t));
+	memset (arp_cache, 0, ARP_CACHE_MAX * sizeof (arp_cache_t));
 }
 
 
 int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr)
 {
-	arp_cache_t * entry = _arp_cache;
+	register arp_cache_t * entry = arp_cache;
 
 	/* First pair is the more recent */
-	while (entry < _arp_cache + ARP_CACHE_MAX) {
+	while (entry < arp_cache + ARP_CACHE_MAX) {
 		if (!entry->ip_addr)
 		    break;
 		if (entry->ip_addr == ip_addr) {
@@ -65,8 +65,7 @@ int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr)
 	}
 
 	debug_arp("arp: no cached entry for %s\n", in_ntoa(ip_addr));
-	memset(eth_addr, 0, sizeof(eth_addr_t));
-	return -1;
+	return 1;
 }
 
 
@@ -75,8 +74,8 @@ void arp_cache_add (ipaddr_t ip_addr, eth_addr_t * eth_addr)
 	if (arp_cache_get (ip_addr, eth_addr)) {
 
 		/* Shift the whole cache */
-		arp_cache_t * entry = _arp_cache + ARP_CACHE_MAX - 1;
-		while (entry > _arp_cache) {
+		arp_cache_t * entry = arp_cache + ARP_CACHE_MAX - 1;
+		while (entry > arp_cache) {
 			memcpy (entry, entry - 1, sizeof (arp_cache_t));
 			entry--;
 		}
@@ -90,7 +89,7 @@ void arp_cache_add (ipaddr_t ip_addr, eth_addr_t * eth_addr)
 }
 
 
-static char *mac_ntoa(unsigned char *p)
+char *mac_ntoa(unsigned char *p)
 {
     static char b[18];
 
@@ -98,7 +97,7 @@ static char *mac_ntoa(unsigned char *p)
     return b;
 }
 
-static void arp_print(struct arp *arp)
+static void arp_print(register struct arp *arp)
 {
 #if DEBUG_ARP
     printf("ARP: ");
@@ -121,44 +120,42 @@ int arp_init (void)
 
 void arp_reply(unsigned char *packet,int size)
 {
+    register struct arp *arp = (struct arp *)packet;
     struct arp_addr apair;
-    struct arp *arp_r;
 
-    arp_r = (struct arp *) packet;
-
-    debug_arp("arp: SEND reply to %s\n", in_ntoa(arp_r->ip_src));
+    debug_arp("arp: SEND reply to %s\n", in_ntoa(arp->ip_src));
 
     /* swap ip addresses and mac addresses */
-    apair.daddr = arp_r->ip_src;
-    apair.saddr = arp_r->ip_dest;
-    memcpy(apair.eth_dest, arp_r->eth_src, 6);
+    apair.daddr = arp->ip_src;
+    apair.saddr = arp->ip_dest;
+    memcpy(apair.eth_dest, arp->eth_src, 6);
     memcpy(apair.eth_src, eth_local_addr, 6);
 
     /* build arp reply */
-    arp_r->op = htons(ARP_REPLY);
-    memcpy(arp_r->ll_eth_dest, apair.eth_dest, 6);
-    memcpy(arp_r->ll_eth_src, apair.eth_src, 6);
+    arp->op = htons(ARP_REPLY);
+    memcpy(arp->ll_eth_dest, apair.eth_dest, 6);
+    memcpy(arp->ll_eth_src, apair.eth_src, 6);
 
-    memcpy(arp_r->eth_src, apair.eth_src, 6);
-    arp_r->ip_src=apair.saddr;
-    memcpy(arp_r->eth_dest, apair.eth_dest, 6);
-    arp_r->ip_dest=apair.daddr;
+    memcpy(arp->eth_src, apair.eth_src, 6);
+    arp->ip_src=apair.saddr;
+    memcpy(arp->eth_dest, apair.eth_dest, 6);
+    arp->ip_dest=apair.daddr;
 
-    arp_print(arp_r);
+    arp_print(arp);
     deveth_send(packet, sizeof (struct arp));
 }
 
 int arp_request(ipaddr_t ipaddress)
 {
-    static struct arp arpreq;
+    struct arp arpreq;
 
     debug_arp("arp: SEND request\n");
 
     /* build arp request */
     memset(arpreq.ll_eth_dest, 0xFF, 6);	/* broadcast*/
-	memcpy(arpreq.ll_eth_src, eth_local_addr, 6);
+    memcpy(arpreq.ll_eth_src, eth_local_addr, 6);
     /*specify below in big endian*/ //FIXME
-	arpreq.ll_type_len = ETH_TYPE_ARP;
+    arpreq.ll_type_len = ETH_TYPE_ARP;
     arpreq.hard_type=0x0100;
     arpreq.proto_type = ETH_TYPE_IPV4;
     arpreq.hard_len=6;
@@ -177,7 +174,7 @@ int arp_request(ipaddr_t ipaddress)
     struct timeval timeint;
     fd_set fdset;
     timeint.tv_sec  = 0;
-    timeint.tv_usec = 500000L;	/* 1/2 second*/
+    timeint.tv_usec = 200000L;	/* 200 msec*/
     FD_ZERO(&fdset);
     FD_SET(tcpdevfd, &fdset);
     int i = select(tcpdevfd + 1, &fdset, NULL, NULL, &timeint);
@@ -189,24 +186,22 @@ int arp_request(ipaddr_t ipaddress)
     return 1;		/* error*/
 }
 
-
 /* Process incoming ARP packets */
 void arp_recvpacket(unsigned char *packet, int size)
 {
-	struct arp * arp_r;
+	register struct arp *arp = (struct arp *)packet;
 
-	arp_r = (struct arp *) packet;
-	arp_print(arp_r);
-	switch (ntohs(arp_r->op)) {
+	arp_print(arp);
+	switch (ntohs(arp->op)) {
 	case ARP_REQUEST:
 		debug_arp("arp: incoming REQUEST\n");
-		arp_cache_add (arp_r->ip_src, arp_r->eth_src);
+		arp_cache_add (arp->ip_src, &arp->eth_src);
 		arp_reply (packet, size);
 		break;
 
 	case ARP_REPLY:
 		debug_arp("arp: incoming REPLY\n");
-		arp_cache_add (arp_r->ip_src, arp_r->eth_src);
+		arp_cache_add (arp->ip_src, &arp->eth_src);
 		break;
 	}
 }

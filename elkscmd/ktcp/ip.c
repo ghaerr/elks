@@ -28,15 +28,9 @@
 #include "deveth.h"
 #include "arp.h"
 
-#if 0
-#define IP_VERSION(s)	((s)->version_ihl>>4&0xf)
-#define IP_IHL(s)	((s)->version_ihl&0xf)
-#define IP_FLAGS(s)	((s)->frag_off>>13)
-#endif
-
 //#define USE_ASM
 
-static char ipbuf[TCPDEV_BUFSIZE];
+static unsigned char ipbuf[TCPDEV_BUFSIZE];
 
 int ip_init(void)
 {
@@ -121,10 +115,8 @@ static void ip_print(struct iphdr_s *head, int size)
 
 void ip_recvpacket(unsigned char *packet,int size)
 {
-    struct iphdr_s *iphdr;
-    __u8 *data;
-
-    iphdr = (struct iphdr_s *)packet;
+    register struct iphdr_s *iphdr = (struct iphdr_s *)packet;
+    unsigned char *data;
 
     ip_print(iphdr, size);
 
@@ -133,16 +125,15 @@ void ip_recvpacket(unsigned char *packet,int size)
 	return;
     }
 
-    if (IP_IHL(iphdr) < 5){
+    if (IP_IHL(iphdr) < 5) {
         debug_ip("IP: Bad HL\n");
 	return;
     }
 
-    data = packet + 4 * IP_IHL(iphdr);
-
     switch (iphdr->protocol) {
     case PROTO_ICMP:
         debug_ip("IP: recv icmp packet\n");
+	data = packet + 4 * IP_IHL(iphdr);
 	icmp_process(iphdr, data);
 	break;
 
@@ -156,7 +147,7 @@ void ip_recvpacket(unsigned char *packet,int size)
 void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
 {
     struct iphdr_s *iph = (struct iphdr_s *)ipbuf;
-    __u16 tlen;
+    int tlen;
     char llbuf[15];
     struct ip_ll *ipll = (struct ip_ll *)llbuf;
     ipaddr_t ip_addr;
@@ -167,7 +158,7 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
 	goto local;
 #endif
 
-    if (dev->type == 1) {  /* Ethernet */
+    if (eth_device) {
         /* Is this the best place for the IP routing to happen ? */
         /* I think no, because actual sending interface is coming from the routing */
 
@@ -185,18 +176,18 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
         /* So this part should be moved upward in the IP protocol automaton */
         /* to avoid this dangerous unlimited try again loop */
         /* Until issue jbruchon#67 fixed, we block until ARP reply */
-        while (arp_cache_get (ip_addr, eth_addr))
+        while (arp_cache_get (ip_addr, &eth_addr))
             arp_request (ip_addr);
 #else
 	/* get ethernet address if cached, otherwise TCP packet will auto retans*/
 	/* FIXME if arp_cache_get fails, eth_addr is garbage*/
-        if (arp_cache_get (ip_addr, eth_addr)) {
+        if (arp_cache_get (ip_addr, &eth_addr)) {
 
 	    /* send ARP request once, timed wait for reply*/
             if (!arp_request (ip_addr))
 
 		/* succeeded, try cache once more*/
-		if (arp_cache_get (ip_addr, eth_addr)) {
+		if (arp_cache_get (ip_addr, &eth_addr)) {
 
 		    /* No ARP reply. Temporary solution, drop sending IP packet.
 		     * TCP should retransmit after timeout,
@@ -219,7 +210,7 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
         ipll->ll_type_len=0x08; /*=0x0800 bigendian*/ //FIXME
     }
 
-local:
+//local:
     /*ip layer*/
     iph->version_ihl	= 0x45;
 
@@ -232,7 +223,7 @@ local:
     iph->ttl		= 64;
     iph->protocol	= apair->protocol;
 
-    if (dev->type == 1) {
+    if (eth_device) {
       iph->daddr		= apair->daddr;
       iph->saddr		= local_ip;
 #if later
@@ -259,12 +250,11 @@ local:
     }
 #endif
 
-    if (dev->type == 1) { /*add link layer*/
-      memmove(&ipbuf[14],ipbuf, TCPDEV_BUFSIZE-14);
-      memcpy(ipbuf,llbuf,14);
-    }
-    if (dev->type == 1)
+    if (eth_device) {
+	/* add link layer*/
+	memmove(&ipbuf[14],ipbuf, TCPDEV_BUFSIZE-14);
+	memcpy(ipbuf,llbuf,14);
 	deveth_send(ipbuf, tlen + len + 14);  /* add link layer length */
-    else
+    } else
 	slip_send(ipbuf, tlen + len);
 }

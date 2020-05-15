@@ -23,7 +23,7 @@ struct eth_head_s {
 typedef struct eth_head_s eth_head_t;
 
 extern eth_addr_t eth_local_addr;
-
+extern int eth_device;
 
 void deveth_printhex(unsigned char *packet, int len);
 int  deveth_init(char *fdev);
