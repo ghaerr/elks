@@ -177,54 +177,36 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     // as we now master the executable header content
     // with the new GNU build tool chain (custom LD script)
 
-			/* executable with no far text, no relocations */
-#define EXEC_HDR_SIZE_0	sizeof(struct minix_exec_hdr)
-			/* executable with relocations, no far text (?) */
-#define SUPL_HDR_SIZE_1	offsetof(struct elks_supl_hdr, esh_ftseg)
-#define EXEC_HDR_SIZE_1	(EXEC_HDR_SIZE_0 + SUPL_HDR_SIZE_1)
-			/* executable with far text (and maybe relocations) */
-#define SUPL_HDR_SIZE_2	(sizeof(struct elks_supl_hdr) - SUPL_HDR_SIZE_1)
-#define EXEC_HDR_SIZE_2 (EXEC_HDR_SIZE_1 + SUPL_HDR_SIZE_2)
+#ifdef CONFIG_EXEC_MMODEL
+    memset(&esuph, 0, sizeof(esuph));
+#endif
 
     switch ((unsigned) mh.hlen) {
-    case EXEC_HDR_SIZE_0:
-#ifdef CONFIG_EXEC_MMODEL
-	memset(&esuph, 0, sizeof(esuph));
-#endif
+    case EXEC_MINIX_HDR_SIZE:
 	break;
 #ifdef CONFIG_EXEC_MMODEL
-    case EXEC_HDR_SIZE_1:
-    case EXEC_HDR_SIZE_2:
+    case EXEC_RELOC_HDR_SIZE:
+    case EXEC_FARTEXT_HDR_SIZE:
 	/* BIG HEADER */
 	retval = filp->f_op->read(inode, filp, (char *) &esuph,
-				  SUPL_HDR_SIZE_1);
-	if (retval != SUPL_HDR_SIZE_1) {
+				  mh.hlen - EXEC_MINIX_HDR_SIZE);
+	if (retval != mh.hlen - EXEC_MINIX_HDR_SIZE) {
 	    debug1("EXEC: Bad secondary header, result %u\n", retval);
 	    goto error_exec3;
 	}
-	if (mh.hlen == EXEC_HDR_SIZE_2) {
-	    retval = filp->f_op->read(inode, filp, (char *) &esuph.esh_ftseg,
-				      SUPL_HDR_SIZE_2);
-	    if (retval != SUPL_HDR_SIZE_2) {
-		debug1("EXEC: Bad secondary header, result %u\n", retval);
-		goto error_exec3;
-	    }
-	    debug2("EXEC: far text size 0x%x, far text reloc size 0x%lx\n",
-		   esuph.esh_ftseg, esuph.esh_ftrsize);
-	    if (esuph.esh_ftrsize % sizeof(struct minix_reloc) != 0)
-		goto error_exec3;
-	} else
-	    memset(&esuph.esh_ftseg, 0, SUPL_HDR_SIZE_2);
-	debug3("EXEC: text reloc size 0x%lx, data reloc size 0x%lx, "
-	       "text base 0x%lx\n",
-	       esuph.msh_trsize, esuph.msh_drsize, esuph.msh_tbase);
+	debug4("EXEC: text reloc size 0x%lx, data reloc size 0x%lx, "
+	       "far text reloc size 0x%x, text base 0x%lx\n",
+	       esuph.msh_trsize, esuph.msh_drsize, esuph.esh_ftrsize,
+	       esuph.msh_tbase);
 	if (esuph.msh_tbase != 0)
 	    goto error_exec3;
 	if (esuph.msh_trsize % sizeof(struct minix_reloc) != 0 ||
-	    esuph.msh_drsize % sizeof(struct minix_reloc) != 0)
+	    esuph.msh_drsize % sizeof(struct minix_reloc) != 0 ||
+	    esuph.esh_ftrsize % sizeof(struct minix_reloc) != 0 ||
+	    esuph.unused3 != 0 || esuph.unused4 != 0 || esuph.unused5 != 0)
 	    goto error_exec3;
-#ifdef CONFIG_EXEC_LOW_STACK
 	base_data = esuph.msh_dbase;
+#ifdef CONFIG_EXEC_LOW_STACK
 	if (base_data & 0xf)
 	    goto error_exec3;
 	if (base_data != 0) {

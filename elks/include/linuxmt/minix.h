@@ -31,10 +31,10 @@ struct minix_exec_hdr {
 
 struct elks_supl_hdr {
     /* optional fields */
-    long		msh_trsize;	/* text relocation size */
-    long		msh_drsize;	/* data relocation size */
-    long		msh_tbase;	/* text relocation base */
-    long		msh_dbase;	/* data relocation base */
+    unsigned long	msh_trsize;	/* text relocation size */
+    unsigned long	msh_drsize;	/* data relocation size */
+    unsigned long	msh_tbase;	/* text relocation base */
+    unsigned long	msh_dbase;	/* data relocation base */
     /* even more optional fields --- for ELKS medium memory model support */
     unsigned short	esh_ftseg;	/* far text size */
     unsigned long	esh_ftrsize;	/* far text relocation size */
@@ -58,5 +58,15 @@ struct minix_reloc {
 #define S_BSS		((unsigned short)-4U)
 /* for ELKS medium memory model support */
 #define S_FTEXT		((unsigned short)-5U)
+
+/* header sizes */
+/* executable with no far text, no relocations */
+#define EXEC_MINIX_HDR_SIZE	sizeof(struct minix_exec_hdr)
+/* executable with relocations, no far text (?) */
+#define SUPL_RELOC_HDR_SIZE	offsetof(struct elks_supl_hdr, esh_ftseg)
+#define EXEC_RELOC_HDR_SIZE	(EXEC_MINIX_HDR_SIZE + SUPL_RELOC_HDR_SIZE)
+/* executable with far text, and optionally relocations */
+#define SUPL_FARTEXT_HDR_SIZE	sizeof(struct elks_supl_hdr)
+#define EXEC_FARTEXT_HDR_SIZE	(EXEC_MINIX_HDR_SIZE + SUPL_FARTEXT_HDR_SIZE)
 
 #endif
