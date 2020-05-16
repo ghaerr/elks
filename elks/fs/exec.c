@@ -160,7 +160,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /* Sanity check it.  */
     if (retval != (int)sizeof(mh) ||
 	(mh.type != MINIX_SPLITID_AHISTORICAL && mh.type != MINIX_SPLITID) ||
-	mh.tseg == 0) {
+	mh.tseg == 0 || mh.version != 0) {
 	debug1("EXEC: bad header, result %u\n", retval);
 	goto error_exec3;
     }
@@ -181,7 +181,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     memset(&esuph, 0, sizeof(esuph));
 #endif
 
-    switch ((unsigned) mh.hlen) {
+    switch (mh.hlen) {
     case EXEC_MINIX_HDR_SIZE:
 	break;
 #ifdef CONFIG_EXEC_MMODEL
@@ -202,8 +202,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    goto error_exec3;
 	if (esuph.msh_trsize % sizeof(struct minix_reloc) != 0 ||
 	    esuph.msh_drsize % sizeof(struct minix_reloc) != 0 ||
-	    esuph.esh_ftrsize % sizeof(struct minix_reloc) != 0 ||
-	    esuph.unused3 != 0 || esuph.unused4 != 0 || esuph.unused5 != 0)
+	    esuph.esh_ftrsize % sizeof(struct minix_reloc) != 0)
 	    goto error_exec3;
 	base_data = esuph.msh_dbase;
 #ifdef CONFIG_EXEC_LOW_STACK

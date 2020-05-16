@@ -20,13 +20,15 @@
 
 struct minix_exec_hdr {
     unsigned long	type;
-    unsigned long	hlen;
+    unsigned char	hlen;
+    unsigned char	reserved1;
+    unsigned short	version;
     unsigned long	tseg;
     unsigned long	dseg;
     unsigned long	bseg;
     unsigned long	entry;
     unsigned long	chmem;
-    unsigned long	unused2;
+    unsigned long	syms;
 };
 
 struct elks_supl_hdr {
@@ -38,8 +40,8 @@ struct elks_supl_hdr {
     /* even more optional fields --- for ELKS medium memory model support */
     unsigned short	esh_ftseg;	/* far text size */
     unsigned long	esh_ftrsize;	/* far text relocation size */
-    unsigned short	unused3;
-    unsigned long	unused4, unused5;
+    unsigned short	esh_reserved1;
+    unsigned long	esh_reserved2, esh_reserved3;
 };
 
 struct minix_reloc {
