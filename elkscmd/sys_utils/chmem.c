@@ -54,7 +54,8 @@ int main(int argc, char **argv)
 
   p = argv[1];
   if (argc != 3) 
-	fatalmsg("Usage: %s {=+-}<# bytes dynamic data> <executable>\n", argv[0]);
+	fatalmsg("Usage: %s {=+-}<# bytes dynamic data> <executable>\n\
+       or\n       %s -l <executable> to list the header\n", argv[0], argv[0]);
   if (*p != '=' && *p != '+' && *p != '-') usage();
   lsize = atol(p+1);
   if (lsize > MAX) fatalmsg("chmem: %lu too large, max %lu\n", lsize, MAX);
@@ -72,6 +73,12 @@ int main(int argc, char **argv)
 	olddynam = 0;
   else olddynam = header[TOT] - dsegsize;
   if (separate == 0) olddynam -= header[TEXT];
+  
+  if (*(p+1)=='l') {
+        printf("Header of '%s': TEXT %lu DATA %lu BSS %ld TOT %lu DYNMEM %lu [TOT-(DATA-BSS)]\n",
+	    argv[2], header[TEXT], header[DATA], header[BSS], header[TOT], olddynam);
+        exit(0);
+    }
 
   printf("Old %s: DATA %lu BSS %ld TOT %lu DYNMEM %lu\n",
 	argv[2], header[DATA], header[BSS], header[TOT], olddynam);
