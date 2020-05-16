@@ -23,11 +23,11 @@ struct minix_exec_hdr {
     unsigned char	hlen;
     unsigned char	reserved1;
     unsigned short	version;
-    unsigned long	tseg;
-    unsigned long	dseg;
-    unsigned long	bseg;
+    unsigned short	tseg, reserved2;
+    unsigned short	dseg, reserved3;
+    unsigned short	bseg, reserved4;
     unsigned long	entry;
-    unsigned long	chmem;
+    unsigned short	chmem, reserved5;
     unsigned long	syms;
 };
 

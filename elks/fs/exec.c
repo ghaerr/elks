@@ -57,6 +57,23 @@ static struct elks_supl_hdr esuph;
 #define INIT_HEAP  0x0     // For future use (inverted heap and stack)
 #define INIT_STACK 0x2000  // 8 K (space for both stack and heap)
 
+#ifndef __GNUC__
+/* FIXME: evaluates some operands twice */
+#   define add_overflow(a, b, res) \
+	(*(res) = (a) + (b), *(res) < (b))
+#   define bytes_to_paras(bytes) \
+	((segext_t)((unsigned long)(bytes) + 15) >> 4))
+#else
+#   define add_overflow	__builtin_add_overflow
+#   define bytes_to_paras(bytes) ({ \
+	segext_t __w; \
+	__asm("addw $15, %0; rcrw %0" \
+	      : "=&r" (__w) : "0" (bytes) \
+	      : "cc"); \
+	__w >> 3; \
+    })
+#endif
+
 #ifdef CONFIG_EXEC_MMODEL
 // Read relocations for a particular segment and apply them
 // Only IA-16 segment relocations are accepted
@@ -81,7 +98,7 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 	    case S_TEXT:
 		val = seg_code->base; break;
 	    case S_FTEXT:
-		val = seg_code->base + ((mh.tseg + 15) >> 4); break;
+		val = seg_code->base + bytes_to_paras(mh.tseg); break;
 	    case S_DATA:
 		val = seg_data->base; break;
 	    default:
@@ -116,7 +133,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     seg_t base_data = 0;
     segment_s * seg_code;
     segment_s * seg_data;
-    lsize_t len;
+    size_t len, min_len;
 #ifdef CONFIG_EXEC_MMODEL
     int need_reloc_code = 1;
 #endif
@@ -165,14 +182,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	goto error_exec3;
     }
 
-    /*
-     * Size for data segment
-     * mh.chmem was used by old ld86
-     * New LD script sets this to zero (default)
-     */
-    len = mh.chmem;
-    if (!len) len = mh.dseg + mh.bseg + INIT_HEAP + INIT_STACK;
-
     // TODO: revise the ELKS specific executable format
     // as we now master the executable header content
     // with the new GNU build tool chain (custom LD script)
@@ -208,10 +217,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 #ifdef CONFIG_EXEC_LOW_STACK
 	if (base_data & 0xf)
 	    goto error_exec3;
-	if (base_data != 0) {
+	if (base_data != 0)
 	    debug1("EXEC: New type executable stack = %x\n", base_data);
-	    len = mh.dseg + mh.bseg + base_data + INIT_HEAP;
-	}
 #else
 	if (base_data != 0)
 	    goto error_exec3;
@@ -222,8 +229,33 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	goto error_exec3;
     }
 
-    len = (len + 15) & ~15L;
-    if (len > (lsize_t) 0xFFFFL) goto error_exec3;  // 64K - 1 to avoid 16 bits rounding
+    min_len = mh.dseg;
+    if (add_overflow(min_len, base_data, &min_len) ||
+	add_overflow(min_len, mh.bseg, &min_len))
+	goto error_exec3;
+
+    /*
+     * Size for data segment
+     * mh.chmem was used by old ld86
+     * New LD script sets this to zero (default)
+     */
+    len = mh.chmem;
+    if (!len) {
+	len = min_len;
+	if (base_data) {
+	    if (add_overflow(len, INIT_HEAP, &len))
+		goto error_exec3;
+	} else {
+	    if (add_overflow(len, INIT_HEAP + INIT_STACK, &len))
+		goto error_exec3;
+	}
+    } else if (len < min_len)
+	goto error_exec3;
+
+    /* Round data segment length up to a paragraph boundary */
+    if (add_overflow(len, 15, &len))
+	goto error_exec3;
+    len &= ~(size_t)15;
 
     debug("EXEC: Malloc time\n");
 
@@ -233,9 +265,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if (!seg_code) {
 	segext_t paras;
 	retval = -ENOMEM;
-	paras = (mh.tseg + 15) >> 4;
+	paras = bytes_to_paras(mh.tseg);
 #ifdef CONFIG_EXEC_MMODEL
-	paras += (esuph.esh_ftseg + 15) >> 4;
+	paras += bytes_to_paras(esuph.esh_ftseg);
 #endif
 	debug1("EXEC: Allocating 0x%x paragraphs for text segment(s)\n",
 	       paras);
@@ -250,7 +282,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	}
 #ifdef CONFIG_EXEC_MMODEL
 	if (esuph.esh_ftseg) {
-	    currentp->t_regs.ds = seg_code->base + ((mh.tseg + 15) >> 4);
+	    currentp->t_regs.ds = seg_code->base + bytes_to_paras(mh.tseg);
 	    retval = filp->f_op->read(inode, filp, 0, (size_t)esuph.esh_ftseg);
 	    if (retval != (int)esuph.esh_ftseg) {
 		debug2("EXEC(ftseg read): bad result %u, expected %u\n",
@@ -291,8 +323,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 		     currentp, inode, filp) != 0)
 	    goto error_exec5;
 	/* Read and apply far text segment relocations */
-	if (relocate(seg_code->base + ((mh.tseg + 15) >> 4), esuph.esh_ftrsize,
-		     seg_code, seg_data, currentp, inode, filp) != 0)
+	if (relocate(seg_code->base + bytes_to_paras(mh.tseg),
+		     esuph.esh_ftrsize, seg_code, seg_data, currentp, inode,
+		     filp) != 0)
 	    goto error_exec5;
     } else {
 	/* If reusing existing text segments, no need to re-relocate */
