@@ -62,7 +62,7 @@ static struct elks_supl_hdr esuph;
 #   define add_overflow(a, b, res) \
 	(*(res) = (a) + (b), *(res) < (b))
 #   define bytes_to_paras(bytes) \
-	((segext_t)((unsigned long)(bytes) + 15) >> 4))
+	((segext_t)(((unsigned long)(bytes) + 15) >> 4))
 #else
 #   define add_overflow	__builtin_add_overflow
 #   define bytes_to_paras(bytes) ({ \
@@ -365,7 +365,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /* Wipe the BSS */
     fmemsetb((seg_t) mh.dseg + base_data, seg_data->base, 0, (word_t) mh.bseg);
     {
-	register char *pi = (char *)0;
+	register int i = 0;
 
 	/* argv and envp are two NULL-terminated arrays of pointers, located
 	 * right after argc.  This fixes them up so that the loaded program
@@ -373,38 +373,39 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
 	slen = 0;	/* Start skiping argc */
 	do {
-	    pi = (char *)(((__u16 *)pi) + 1);
-	    if ((retval = get_ustack(currentp, (int)pi)) != 0) 
-		put_ustack(currentp, (int)pi, (currentp->t_begstack + retval));
+	    i += sizeof(__u16);
+	    if ((retval = get_ustack(currentp, i)) != 0)
+		put_ustack(currentp, i, (currentp->t_begstack + retval));
 	    else slen++;	/* increments for each array traversed */
 	} while (slen < 2);
 	retval = 0;
 
 	/* Clear signal handlers */
-	pi = (char *)0;
+	i = 0;
 	do {
-	    currentp->sig.action[(int)pi].sa_dispose = SIGDISP_DFL;
-	} while ((int)(++pi) < NSIG);
+	    currentp->sig.action[i].sa_dispose = SIGDISP_DFL;
+	} while (++i < NSIG);
 	currentp->sig.handler = (__kern_sighandler_t)NULL;
 
 	/* Close required files */
-	pi = (char *)0;
+	i = 0;
 	do {
-	    if (FD_ISSET(((int)pi), &currentp->files.close_on_exec))
-		sys_close((int)pi);
-	} while ((int)(++pi) < NR_OPEN);
+	    if (FD_ISSET(i, &currentp->files.close_on_exec))
+		sys_close(i);
+	} while (++i < NR_OPEN);
+    }
 
+    {
     /* this could be a good place to set the effective user identifier
      * in case the suid bit of the executable had been set */
 
-	pi = (char *)inode;
-	currentp->t_inode = (struct inode *)pi;
+	currentp->t_inode = inode;
 
     /* can I trust the following fields?  */
-	if (((struct inode *)pi)->i_mode & S_ISUID)
-	    currentp->euid = ((struct inode *)pi)->i_uid;
-	if (((struct inode *)pi)->i_mode & S_ISGID)
-	    currentp->egid = ((struct inode *)pi)->i_gid;
+	if (inode->i_mode & S_ISUID)
+	    currentp->euid = inode->i_uid;
+	if (inode->i_mode & S_ISGID)
+	    currentp->egid = inode->i_gid;
     }
 
     currentp->t_enddata = (__pptr) ((__u16)mh.dseg + (__u16)mh.bseg + base_data);
