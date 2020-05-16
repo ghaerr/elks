@@ -196,7 +196,7 @@ static void tcpdev_listen(void)
     retval_to_sock(db->sock, 0);
 }
 
-void tcpdev_read(void)
+static void tcpdev_read(void)
 {
     struct tdb_read *db = (struct tdb_read *)sbuf;
     struct tcpcb_list_s *n;
@@ -212,8 +212,9 @@ void tcpdev_read(void)
     }
 
     cb = &n->tcpcb;
-    if (cb->state == TS_CLOSING && cb->state == TS_LAST_ACK
-				&& cb->state == TS_TIME_WAIT) {
+    if (cb->state == TS_CLOSING || cb->state == TS_LAST_ACK ||
+        cb->state == TS_TIME_WAIT) {
+printf("tcpdev_read: returning -EPIPE to socket read\n");
 	retval_to_sock(sock, -EPIPE);
 	return;
     }

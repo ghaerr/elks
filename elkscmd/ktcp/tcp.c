@@ -210,15 +210,15 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	tcpcb_buf_write(cb, data, datasize);
 
-	if (h->flags & TF_PSH || CB_BUF_SPACE(cb) == 0) {
-	    if (cb->bytes_to_push <=0)
+	if ((h->flags & TF_PSH) || CB_BUF_SPACE(cb) == 0) {
+	    if (cb->bytes_to_push <= 0)
 		tcpcb_need_push++;
 	    cb->bytes_to_push = CB_BUF_USED(cb);
 	}
 	tcpdev_checkread(cb);
     } /* datasize != 0 */
 
-    if (h->flags & TF_ACK) { /*update una*/
+    if (h->flags & TF_ACK) { 	/*update unacked*/
 	acknum = ntohl(h->acknum);
 	if (SEQ_LT(cb->send_una, acknum))
 	    cb->send_una = acknum;
@@ -239,12 +239,8 @@ printf("tcp: RST received, removing retrans packets\n");
     }
 
     if (h->flags & TF_FIN) {
-	cb->rcv_nxt ++;
+	cb->rcv_nxt++;
 	cb->state = TS_CLOSE_WAIT;
-/* FIXME timeout if remote side terminated*/
-debug_tcp("Setting TS_CLOSE_WAIT\n");
-cb->time_wait_exp = Now;
-cbs_in_user_timeout++;
 	tcpdev_sock_state(cb, SS_DISCONNECTING);
     }
 

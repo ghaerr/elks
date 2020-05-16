@@ -234,7 +234,7 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
 {
     struct tcp_retrans_list_s *n;
 
-    if (cb->flags == TF_ACK && cb->datalen == 0)
+    if ((cb->flags & TF_ALL) == TF_ACK && cb->datalen == 0)
 	return;
 
     if (cb->state == TS_CLOSED)
