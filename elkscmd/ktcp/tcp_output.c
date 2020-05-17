@@ -328,6 +328,8 @@ if (tcp_retrans_memory > TCP_RETRANS_MAXMEM || tcp_timeruse > 5) {
 	    n = rmv_from_retrans(n);
 	    continue;
 	}
+
+printf("retrans %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
 	if (TIME_GEQ(Now, n->next_retrans)) {
 	    tcp_reoutput(n);
 	    return;
@@ -351,8 +353,8 @@ void tcp_output(struct tcpcb_s *cb)
 
     cb->send_nxt += cb->datalen;
 
-    len = CB_BUF_SPACE(cb);
-    if (len == 0)
+    len = CB_BUF_SPACE(cb) - PUSH_THRESHOLD;
+    if (len <= 0)
 	len = 1;		/* Never advertise zero window size */
     th->window = htons(len);
     th->urgpnt = 0;

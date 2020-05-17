@@ -215,7 +215,7 @@ static void tcpdev_read(void)
     cb = &n->tcpcb;
     if (cb->state == TS_CLOSING || cb->state == TS_LAST_ACK ||
         cb->state == TS_TIME_WAIT) {
-printf("tcpdev_read: returning -EPIPE to socket read\n");
+debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
@@ -339,7 +339,7 @@ static void tcpdev_release(void)
     struct tcpcb_s *cb;
     void * sock = db->sock;
 
-printf("tcpdev: got close from ELKS process\n");
+debug_tcp("tcpdev: got close from ELKS process\n");
     n = tcpcb_find_by_sock(sock);
     if (n) {
 	cb = &n->tcpcb;

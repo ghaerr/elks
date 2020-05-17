@@ -8,6 +8,12 @@
 #include "ip.h"
 #include <linuxmt/arpa/inet.h>
 
+/* control block input buffer size - max window size*/
+#define CB_IN_BUF_SIZE	2048
+
+/* bytes to subtract from window size and when to force app write*/
+#define PUSH_THRESHOLD	1024
+
 #define PROTO_TCP	0x06
 
 #define SEQ_LT(a,b)	((long)((a)-(b)) < 0)
@@ -69,7 +75,6 @@ struct iptcp_s {
 #define	TS_LAST_ACK	9
 #define	TS_TIME_WAIT	10
 
-#define CB_IN_BUF_SIZE	2048 /* 1024 too small */
 #define CB_BUF_USED(x)	((x)->buf_len)
 #define CB_BUF_SPACE(x)	(CB_IN_BUF_SIZE - CB_BUF_USED((x)))
 #define CB_BUF_TAIL(x)	(((x)->buf_head + (x)->buf_len) % (CB_IN_BUF_SIZE - 1))

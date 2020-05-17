@@ -211,7 +211,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	tcpcb_buf_write(cb, data, datasize);
 
-	if ((h->flags & TF_PSH) || CB_BUF_SPACE(cb) == 0) {
+	if ((h->flags & TF_PSH) || CB_BUF_SPACE(cb) <= PUSH_THRESHOLD) {
 	    if (cb->bytes_to_push <= 0)
 		tcpcb_need_push++;
 	    cb->bytes_to_push = CB_BUF_USED(cb);
