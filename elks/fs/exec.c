@@ -182,6 +182,10 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	goto error_exec3;
     }
 
+    min_len = mh.dseg;
+    if (add_overflow(min_len, mh.bseg, &min_len))
+	goto error_exec3;
+
     // TODO: revise the ELKS specific executable format
     // as we now master the executable header content
     // with the new GNU build tool chain (custom LD script)
@@ -219,6 +223,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    goto error_exec3;
 	if (base_data != 0)
 	    debug1("EXEC: New type executable stack = %x\n", base_data);
+
+	if (add_overflow(min_len, base_data, &min_len))
+	    goto error_exec3;
 #else
 	if (base_data != 0)
 	    goto error_exec3;
@@ -229,11 +236,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	goto error_exec3;
     }
 
-    min_len = mh.dseg;
-    if (add_overflow(min_len, base_data, &min_len) ||
-	add_overflow(min_len, mh.bseg, &min_len))
-	goto error_exec3;
-
     /*
      * Size for data segment
      * mh.chmem was used by old ld86
@@ -242,13 +244,14 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     len = mh.chmem;
     if (!len) {
 	len = min_len;
+#ifdef CONFIG_EXEC_LOW_STACK
 	if (base_data) {
 	    if (add_overflow(len, INIT_HEAP, &len))
 		goto error_exec3;
-	} else {
-	    if (add_overflow(len, INIT_HEAP + INIT_STACK, &len))
-		goto error_exec3;
-	}
+	} else
+#endif
+	if (add_overflow(len, INIT_HEAP + INIT_STACK, &len))
+	    goto error_exec3;
     } else if (len < min_len)
 	goto error_exec3;
 
