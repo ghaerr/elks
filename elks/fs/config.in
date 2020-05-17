@@ -40,6 +40,6 @@ mainmenu_option next_comment
 
 	comment 'Executable file formats'
 
-	bool 'Support ELKS file format'        CONFIG_EXEC_ELKS           y
+	bool 'Support medium memory model'     CONFIG_EXEC_MMODEL         y
 
 endmenu

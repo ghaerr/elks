@@ -232,11 +232,11 @@ int sys_brk(__pptr newbrk)
             return -ENOMEM;
 		}
     }
-#ifdef CONFIG_EXEC_ELKS
+#ifdef CONFIG_EXEC_LOW_STACK
     if (newbrk > currentp->t_endseg) {
         return -ENOMEM;
     }
-#endif /* CONFIG_EXEC_ELKS */
+#endif /* CONFIG_EXEC_LOW_STACK */
     currentp->t_endbrk = newbrk;
 
     return 0;

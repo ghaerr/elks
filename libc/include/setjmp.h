@@ -11,6 +11,9 @@
 typedef struct
 {
    unsigned int pc;
+#if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+   unsigned int cs;
+#endif
    unsigned int sp;
    unsigned int bp;
    unsigned int si;

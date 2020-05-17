@@ -43,18 +43,85 @@
 #include <linuxmt/msdos.h>
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/memory.h>
 
 #include <arch/segment.h>
 
 static struct minix_exec_hdr mh;
-#ifdef CONFIG_EXEC_ELKS
-static struct minix_supl_hdr msuph;
+#ifdef CONFIG_EXEC_MMODEL
+static struct elks_supl_hdr esuph;
 #endif
 
 // Default data sizes
 
 #define INIT_HEAP  0x0     // For future use (inverted heap and stack)
 #define INIT_STACK 0x2000  // 8 K (space for both stack and heap)
+
+#ifndef __GNUC__
+/* FIXME: evaluates some operands twice */
+#   define add_overflow(a, b, res) \
+	(*(res) = (a) + (b), *(res) < (b))
+#   define bytes_to_paras(bytes) \
+	((segext_t)(((unsigned long)(bytes) + 15) >> 4))
+#else
+#   define add_overflow	__builtin_add_overflow
+#   define bytes_to_paras(bytes) ({ \
+	segext_t __w; \
+	__asm("addw $15, %0; rcrw %0" \
+	      : "=&r" (__w) : "0" (bytes) \
+	      : "cc"); \
+	__w >> 3; \
+    })
+#endif
+
+#ifdef CONFIG_EXEC_MMODEL
+// Read relocations for a particular segment and apply them
+// Only IA-16 segment relocations are accepted
+static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
+		    segment_s *seg_data, __ptask currentp, struct inode *inode,
+		    struct file *filp)
+{
+    __u16 save_ds = currentp->t_regs.ds;
+    currentp->t_regs.ds = kernel_ds;
+    debug2("EXEC: applying 0x%lx bytes of relocations to segment 0x%x\n",
+	   (unsigned long)rsize, place_base);
+    while (rsize >= sizeof(struct minix_reloc)) {
+	struct minix_reloc reloc;
+	word_t val;
+	int retval = filp->f_op->read(inode, filp, (char *)&reloc,
+				      sizeof(reloc));
+	if (retval != (int)sizeof(reloc))
+	    goto error;
+	switch (reloc.r_type) {
+	case R_SEGWORD:
+	    switch (reloc.r_symndx) {
+	    case S_TEXT:
+		val = seg_code->base; break;
+	    case S_FTEXT:
+		val = seg_code->base + bytes_to_paras(mh.tseg); break;
+	    case S_DATA:
+		val = seg_data->base; break;
+	    default:
+		debug1("EXEC: bad relocation symbol index 0x%x\n",
+		       reloc.r_symndx);
+		goto error;
+	    }
+	    pokew(reloc.r_vaddr, place_base, val);
+	    break;
+	default:
+	    debug1("EXEC: bad relocation type 0x%x\n", reloc.r_type);
+	    goto error;
+	}
+	rsize -= sizeof(struct minix_reloc);
+    }
+    currentp->t_regs.ds = save_ds;
+    return 0;
+  error:
+    debug("EXEC: error in relocations\n");
+    currentp->t_regs.ds = save_ds;
+    return -1;
+}
+#endif
 
 int sys_execve(char *filename, char *sptr, size_t slen)
 {
@@ -66,7 +133,10 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     seg_t base_data = 0;
     segment_s * seg_code;
     segment_s * seg_data;
-    lsize_t len;
+    size_t len, min_len;
+#ifdef CONFIG_EXEC_MMODEL
+    int need_reloc_code = 1;
+#endif
 
     /* Open the image */
     /*debug1("EXEC: opening file: %s\n", filename);*/
@@ -107,8 +177,62 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /* Sanity check it.  */
     if (retval != (int)sizeof(mh) ||
 	(mh.type != MINIX_SPLITID_AHISTORICAL && mh.type != MINIX_SPLITID) ||
-	mh.tseg == 0) {
+	mh.tseg == 0 || mh.version != 0) {
 	debug1("EXEC: bad header, result %u\n", retval);
+	goto error_exec3;
+    }
+
+    min_len = mh.dseg;
+    if (add_overflow(min_len, mh.bseg, &min_len))
+	goto error_exec3;
+
+    // TODO: revise the ELKS specific executable format
+    // as we now master the executable header content
+    // with the new GNU build tool chain (custom LD script)
+
+#ifdef CONFIG_EXEC_MMODEL
+    memset(&esuph, 0, sizeof(esuph));
+#endif
+
+    switch (mh.hlen) {
+    case EXEC_MINIX_HDR_SIZE:
+	break;
+#ifdef CONFIG_EXEC_MMODEL
+    case EXEC_RELOC_HDR_SIZE:
+    case EXEC_FARTEXT_HDR_SIZE:
+	/* BIG HEADER */
+	retval = filp->f_op->read(inode, filp, (char *) &esuph,
+				  mh.hlen - EXEC_MINIX_HDR_SIZE);
+	if (retval != mh.hlen - EXEC_MINIX_HDR_SIZE) {
+	    debug1("EXEC: Bad secondary header, result %u\n", retval);
+	    goto error_exec3;
+	}
+	debug4("EXEC: text reloc size 0x%lx, data reloc size 0x%lx, "
+	       "far text reloc size 0x%x, text base 0x%lx\n",
+	       esuph.msh_trsize, esuph.msh_drsize, esuph.esh_ftrsize,
+	       esuph.msh_tbase);
+	if (esuph.msh_tbase != 0)
+	    goto error_exec3;
+	if (esuph.msh_trsize % sizeof(struct minix_reloc) != 0 ||
+	    esuph.msh_drsize % sizeof(struct minix_reloc) != 0 ||
+	    esuph.esh_ftrsize % sizeof(struct minix_reloc) != 0)
+	    goto error_exec3;
+	base_data = esuph.msh_dbase;
+#ifdef CONFIG_EXEC_LOW_STACK
+	if (base_data & 0xf)
+	    goto error_exec3;
+	if (base_data != 0)
+	    debug1("EXEC: New type executable stack = %x\n", base_data);
+
+	if (add_overflow(min_len, base_data, &min_len))
+	    goto error_exec3;
+#else
+	if (base_data != 0)
+	    goto error_exec3;
+#endif
+	break;
+#endif
+    default:
 	goto error_exec3;
     }
 
@@ -118,31 +242,23 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      * New LD script sets this to zero (default)
      */
     len = mh.chmem;
-    if (!len) len = mh.dseg + mh.bseg + INIT_HEAP + INIT_STACK;
-
-    // TODO: revise the ELKS specific executable format
-    // as we now master the executable header content
-    // with the new GNU build tool chain (custom LD script)
-
-#ifdef CONFIG_EXEC_ELKS
-    if ((unsigned int) mh.hlen == 0x30) {
-	/* BIG HEADER */
-	retval = filp->f_op->read(inode, filp, (char *) &msuph, sizeof(msuph));
-	if (retval != (int)sizeof(msuph)) {
-	    debug1("EXEC: Bad secondary header, result %u\n", retval);
-	    goto error_exec3;
-	}
-	base_data = msuph.msh_dbase;
-	if (base_data & 0xf) goto error_exec3;
-	debug1("EXEC: New type executable stack = %x\n", base_data);
-	len = mh.dseg + mh.bseg + base_data + INIT_HEAP;
-    }
-    else
+    if (!len) {
+	len = min_len;
+#ifdef CONFIG_EXEC_LOW_STACK
+	if (base_data) {
+	    if (add_overflow(len, INIT_HEAP, &len))
+		goto error_exec3;
+	} else
 #endif
-    if ((unsigned int) mh.hlen != 0x20) goto error_exec3;
+	if (add_overflow(len, INIT_HEAP + INIT_STACK, &len))
+	    goto error_exec3;
+    } else if (len < min_len)
+	goto error_exec3;
 
-    len = (len + 15) & ~15L;
-    if (len > (lsize_t) 0xFFFFL) goto error_exec3;  // 64K - 1 to avoid 16 bits rounding
+    /* Round data segment length up to a paragraph boundary */
+    if (add_overflow(len, 15, &len))
+	goto error_exec3;
+    len &= ~(size_t)15;
 
     debug("EXEC: Malloc time\n");
 
@@ -150,21 +266,44 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      *      Looks good. Get the memory we need
      */
     if (!seg_code) {
+	segext_t paras;
 	retval = -ENOMEM;
-	seg_code = seg_alloc((segext_t) ((mh.tseg + 15) >> 4), SEG_FLAG_CSEG);
+	paras = bytes_to_paras(mh.tseg);
+#ifdef CONFIG_EXEC_MMODEL
+	paras += bytes_to_paras(esuph.esh_ftseg);
+#endif
+	debug1("EXEC: Allocating 0x%x paragraphs for text segment(s)\n",
+	       paras);
+	seg_code = seg_alloc(paras, SEG_FLAG_CSEG);
 	if (!seg_code) goto error_exec3;
 	currentp->t_regs.ds = seg_code->base;  // segment used by read()
 	retval = filp->f_op->read(inode, filp, 0, (size_t)mh.tseg);
 	if (retval != (int)mh.tseg) {
 	    debug2("EXEC(tseg read): bad result %u, expected %u\n",
-	    retval, mh.tseg);
+		   retval, (unsigned)mh.tseg);
 	    goto error_exec4;
 	}
+#ifdef CONFIG_EXEC_MMODEL
+	if (esuph.esh_ftseg) {
+	    currentp->t_regs.ds = seg_code->base + bytes_to_paras(mh.tseg);
+	    retval = filp->f_op->read(inode, filp, 0, (size_t)esuph.esh_ftseg);
+	    if (retval != (int)esuph.esh_ftseg) {
+		debug2("EXEC(ftseg read): bad result %u, expected %u\n",
+		       retval, esuph.esh_ftseg);
+		goto error_exec4;
+	    }
+	}
+#endif
     } else {
 	seg_get (seg_code);
 	filp->f_pos += mh.tseg;
+#ifdef CONFIG_EXEC_MMODEL
+	filp->f_pos += esuph.esh_ftseg;
+	need_reloc_code = 0;
+#endif
     }
-    debug1("EXEC: Allocating %lu bytes for data segment\n", len);
+    debug1("EXEC: Allocating 0x%x paragraphs for data segment\n",
+	   (segext_t) (len >> 4));
 
     retval = -ENOMEM;
     seg_data = seg_alloc ((segext_t) (len >> 4), SEG_FLAG_DSEG);
@@ -179,6 +318,29 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	debug2("EXEC(dseg read): bad result %d, expected %d\n", retval, mh.dseg);
 	goto error_exec5;
     }
+
+#ifdef CONFIG_EXEC_MMODEL
+    if (need_reloc_code) {
+	/* Read and apply text segment relocations */
+	if (relocate(seg_code->base, esuph.msh_trsize, seg_code, seg_data,
+		     currentp, inode, filp) != 0)
+	    goto error_exec5;
+	/* Read and apply far text segment relocations */
+	if (relocate(seg_code->base + bytes_to_paras(mh.tseg),
+		     esuph.esh_ftrsize, seg_code, seg_data, currentp, inode,
+		     filp) != 0)
+	    goto error_exec5;
+    } else {
+	/* If reusing existing text segments, no need to re-relocate */
+	filp->f_pos += esuph.msh_trsize;
+	filp->f_pos += esuph.esh_ftrsize;
+    }
+    /* Read and apply data relocations */
+    if (relocate(seg_data->base, esuph.msh_drsize, seg_code, seg_data,
+		 currentp, inode, filp) != 0)
+	goto error_exec5;
+#endif
+
     /* From this point, exec() will surely succeed */
 
     currentp->t_endseg = (__pptr)len;	/* Needed for sys_brk() */
@@ -206,7 +368,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /* Wipe the BSS */
     fmemsetb((seg_t) mh.dseg + base_data, seg_data->base, 0, (word_t) mh.bseg);
     {
-	register char *pi = (char *)0;
+	register int i = 0;
 
 	/* argv and envp are two NULL-terminated arrays of pointers, located
 	 * right after argc.  This fixes them up so that the loaded program
@@ -214,38 +376,39 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
 	slen = 0;	/* Start skiping argc */
 	do {
-	    pi = (char *)(((__u16 *)pi) + 1);
-	    if ((retval = get_ustack(currentp, (int)pi)) != 0) 
-		put_ustack(currentp, (int)pi, (currentp->t_begstack + retval));
+	    i += sizeof(__u16);
+	    if ((retval = get_ustack(currentp, i)) != 0)
+		put_ustack(currentp, i, (currentp->t_begstack + retval));
 	    else slen++;	/* increments for each array traversed */
 	} while (slen < 2);
 	retval = 0;
 
 	/* Clear signal handlers */
-	pi = (char *)0;
+	i = 0;
 	do {
-	    currentp->sig.action[(int)pi].sa_dispose = SIGDISP_DFL;
-	} while ((int)(++pi) < NSIG);
+	    currentp->sig.action[i].sa_dispose = SIGDISP_DFL;
+	} while (++i < NSIG);
 	currentp->sig.handler = (__kern_sighandler_t)NULL;
 
 	/* Close required files */
-	pi = (char *)0;
+	i = 0;
 	do {
-	    if (FD_ISSET(((int)pi), &currentp->files.close_on_exec))
-		sys_close((int)pi);
-	} while ((int)(++pi) < NR_OPEN);
+	    if (FD_ISSET(i, &currentp->files.close_on_exec))
+		sys_close(i);
+	} while (++i < NR_OPEN);
+    }
 
+    {
     /* this could be a good place to set the effective user identifier
      * in case the suid bit of the executable had been set */
 
-	pi = (char *)inode;
-	currentp->t_inode = (struct inode *)pi;
+	currentp->t_inode = inode;
 
     /* can I trust the following fields?  */
-	if (((struct inode *)pi)->i_mode & S_ISUID)
-	    currentp->euid = ((struct inode *)pi)->i_uid;
-	if (((struct inode *)pi)->i_mode & S_ISGID)
-	    currentp->egid = ((struct inode *)pi)->i_gid;
+	if (inode->i_mode & S_ISUID)
+	    currentp->euid = inode->i_uid;
+	if (inode->i_mode & S_ISGID)
+	    currentp->egid = inode->i_gid;
     }
 
     currentp->t_enddata = (__pptr) ((__u16)mh.dseg + (__u16)mh.bseg + base_data);
