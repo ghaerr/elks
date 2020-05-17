@@ -29,6 +29,7 @@
 #include "tcpdev.h"
 #include "netconf.h"
 
+static __u16	next_port;
 static unsigned char sbuf[TCPDEV_BUFSIZE];
 
 int tcpdevfd;

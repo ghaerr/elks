@@ -36,6 +36,7 @@ ipaddr_t local_ip;
 ipaddr_t gateway_ip;
 ipaddr_t netmask_ip;
 
+char junk[8000];	//FIXME low core getting trashed
 char deveth[] = "/dev/eth";
 
 static int intfd;	/* interface fd*/
@@ -66,16 +67,23 @@ extern int cbs_in_user_timeout;
 
 	Now = timer_get_time();
 
+	/* expire timeouts and push data*/
 	tcp_update();
 
+	/* process received packets*/
 	if (FD_ISSET(intfd, &fdset)) {
 		if (eth_device)
 			deveth_process();
 		else slip_process();
 	}
-	if (FD_ISSET(tcpdevfd, &fdset)) tcpdev_process();
 
-	if (tcp_timeruse > 0) tcp_retrans();
+	/* process application socket actions*/
+	if (FD_ISSET(tcpdevfd, &fdset))
+		tcpdev_process();
+
+	/* check for retransmit needed*/
+	if (tcp_timeruse > 0)
+		tcp_retrans();
 
 	tcpcb_printall();
     }

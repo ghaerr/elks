@@ -25,6 +25,8 @@ struct net_device {
 };
 #endif
 
+extern int tcpdevfd;
+
 void tcpdev_process(void);
 int tcpdev_init(char *fdev);
 void retval_to_sock(void *sock, short int r);

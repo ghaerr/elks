@@ -2,7 +2,8 @@
 #define	_ARPA_INET_H_
 
 #ifndef ntohs
-#define ntohs(x)	(((unsigned)(x) >> 8) | ((x) << 8))
+#define ntohs(x)	( (((x) >> 8) & 0xff) | ((unsigned char)(x) << 8) )
+//#define ntohs(x)	( ((unsigned)(x) >> 8) | ((x) << 8) )
 
 #define htons(x)	ntohs(x)
 #endif

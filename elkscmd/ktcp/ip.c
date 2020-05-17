@@ -30,7 +30,7 @@
 
 //#define USE_ASM
 
-static unsigned char ipbuf[TCPDEV_BUFSIZE];
+static unsigned char ipbuf[TCPDEV_BUFSIZE + sizeof(struct ip_ll)];
 
 int ip_init(void)
 {
@@ -126,7 +126,7 @@ void ip_recvpacket(unsigned char *packet,int size)
     }
 
     if (IP_IHL(iphdr) < 5) {
-        debug_ip("IP: Bad HL\n");
+        debug_ip("IP: Bad HLEN\n");
 	return;
     }
 
@@ -146,19 +146,14 @@ void ip_recvpacket(unsigned char *packet,int size)
 
 void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
 {
-    struct iphdr_s *iph = (struct iphdr_s *)ipbuf;
-    int tlen;
-    char llbuf[15];
-    struct ip_ll *ipll = (struct ip_ll *)llbuf;
+    struct ip_ll *ipll = (struct ip_ll *)ipbuf;
+    register struct iphdr_s *iph = (struct iphdr_s *)(ipbuf + sizeof(struct ip_ll));
+    int iphdrlen;
     ipaddr_t ip_addr;
     eth_addr_t eth_addr;
 
-#if later
-    if (apair->daddr == local_ip || apair->daddr == 0x0100007f)
-	goto local;
-#endif
-
-    if (eth_device) {
+	/* deal with ethernet layer if destination not local_ip*/
+    if (eth_device && (apair->daddr != local_ip)) {
         /* Is this the best place for the IP routing to happen ? */
         /* I think no, because actual sending interface is coming from the routing */
 
@@ -180,7 +175,6 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
             arp_request (ip_addr);
 #else
 	/* get ethernet address if cached, otherwise TCP packet will auto retans*/
-	/* FIXME if arp_cache_get fails, eth_addr is garbage*/
         if (arp_cache_get (ip_addr, &eth_addr)) {
 
 	    /* send ARP request once, timed wait for reply*/
@@ -200,61 +194,48 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
 	}
 #endif
 
-        /*link layer*/
-
         /* The Ethernet header should be built by the Ethernet module */
         /* So this part should be moved downward */
 
+        /* add link layer*/
         memcpy(ipll->ll_eth_dest, eth_addr, 6);
         memcpy(ipll->ll_eth_src,eth_local_addr, 6);
-        ipll->ll_type_len=0x08; /*=0x0800 bigendian*/ //FIXME
+        ipll->ll_type_len = 0x08; //FIXME what is 0x0800
     }
 
-//local:
-    /*ip layer*/
+    /* ip layer*/
     iph->version_ihl	= 0x45;
-
-    tlen = 4 * IP_IHL(iph);
-
+    iphdrlen		= 4 * IP_IHL(iph);
     iph->tos 		= 0;
-    iph->tot_len	= htons(tlen + len);
+    iph->tot_len	= htons(iphdrlen + len);
     iph->id		= 0;
     iph->frag_off 	= 0;
     iph->ttl		= 64;
+    iph->saddr		= apair->saddr;
+    iph->daddr		= apair->daddr;
     iph->protocol	= apair->protocol;
-
-    if (eth_device) {
-      iph->daddr		= apair->daddr;
-      iph->saddr		= local_ip;
-#if later
-	  iph->saddr		= apair->saddr;	// for localhost
-#endif
-    } else {
-      iph->daddr		= apair->daddr;
-      iph->saddr		= apair->saddr;
-    }
-
     iph->check		= 0;
-    iph->check		= ip_calc_chksum((char *)iph, tlen);
+    iph->check		= ip_calc_chksum((char *)iph, iphdrlen);
+    memcpy((char *)iph + iphdrlen, packet, len);
 
     ip_print(iph, 0);
-
-    memcpy(&ipbuf[tlen], packet, len);
-
-#if later
-    /* "route"  127.0.0.1*/
-    if (iph->daddr == local_ip || iph->daddr == 0x0100007f) {
-	debug_ip("ip: route localhost\n");
-	ip_recvpacket(ipbuf, tlen + len);
-	return;
-    }
+#if DEBUG_TCP
+    struct iptcp_s iptcp;
+    iptcp.iph = iph;
+    iptcp.tcph = (struct tcphdr_s *)(((char *)iph) + 4 * IP_IHL(iph));
+    iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_IHL(iph);
+    tcp_print(&iptcp, 0);
 #endif
 
-    if (eth_device) {
-	/* add link layer*/
-	memmove(&ipbuf[14],ipbuf, TCPDEV_BUFSIZE-14);
-	memcpy(ipbuf,llbuf,14);
-	deveth_send(ipbuf, tlen + len + 14);  /* add link layer length */
-    } else
-	slip_send(ipbuf, tlen + len);
+    /* route packet right back to us if local_ip*/
+    if (iph->daddr == local_ip) {
+	debug_ip("ip: route localhost\n");
+	ip_recvpacket((unsigned char *)iph, iphdrlen + len);
+	return;
+    }
+
+    if (eth_device)
+	deveth_send((unsigned char *)ipll, sizeof(struct ip_ll) + iphdrlen + len);
+    else
+	slip_send((unsigned char *)iph, iphdrlen + len);
 }

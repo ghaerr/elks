@@ -25,16 +25,17 @@
 
 timeq_t Now;
 
-extern int cbs_in_time_wait;
+extern int cbs_in_time_wait;		// FIXME remove extern
 extern int cbs_in_user_timeout;
 
-void tcp_print(struct iptcp_s *head)
+void tcp_print(struct iptcp_s *head, int recv)
 {
-    debug_tcp("TCP: src:%u dst:%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
+    debug_tcp("TCP: %s ", recv? "recv": "send");
+    debug_tcp("src:%u dst:%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
     debug_tcp("flags:%x ",head->tcph->flags);
     debug_tcp("seq:%lx ack:%lx ", ntohl(head->tcph->seqnum), ntohl(head->tcph->acknum));
-    debug_tcp("win:%d urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
-    debug_tcp("chk:%d\n",tcp_chksum(head));
+    debug_tcp("win:%u urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
+    debug_tcp("chk:%x len:%u\n",tcp_chksum(head), head->tcplen);
 }
 
 int tcp_init(void)
@@ -198,13 +199,13 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     datasize = iptcp->tcplen - TCP_DATAOFF(h);
 
     if (datasize != 0) {
-	debug_tcp("tcp: data in len %d\n", datasize);
+	debug_tcp("tcp: recv data len %u\n", datasize);
 	/* Process the data */
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
 	/* FIXME : check if it fits */
 	if (datasize > CB_BUF_SPACE(cb)) {
-	    printf("tcp: packet data too large: %d\n", datasize);
+	    printf("tcp: packet data too large: %u\n", datasize);
 	    return;
 	}
 
@@ -367,7 +368,7 @@ static void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 /* called every ktcp run cycle*/
 void tcp_update(void)
 {
-debug_tcp("ktcp: update %d,%d\n", cbs_in_time_wait, cbs_in_user_timeout);
+debug_tcp("ktcp: update %x,%x\n", cbs_in_time_wait, cbs_in_user_timeout);
     if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0)
 	tcpcb_expire_timeouts();
 
@@ -388,7 +389,7 @@ void tcp_process(struct iphdr_s *iph)
     iptcp.tcph = tcph;
     iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_IHL(iph);
 
-    tcp_print(&iptcp);
+    tcp_print(&iptcp, 1);
 
     if (tcp_chksum(&iptcp) != 0) {
 	debug_tcp("tcp: bad checksum (%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
