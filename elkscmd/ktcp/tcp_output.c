@@ -33,7 +33,8 @@ static struct tcp_retrans_list_s *retrans_list;
 __u16 tcp_chksum(struct iptcp_s *h)
 {
     __u32 sum = htons(h->tcplen);
-    __u16 *data = (__u16) h->tcph, len = h->tcplen;
+    __u16 *data = (__u16 *)h->tcph;
+    __u16 len = h->tcplen;
 
     for (; len > 1 ; len -= 2)
 	sum += *data++;
@@ -185,7 +186,7 @@ rmv_from_retrans(struct tcp_retrans_list_s *n)
 	/* Head update */
 	n = next;
 	n->prev = NULL;
-debug_tcp("Free 1/2\n");
+debug_mem("retrans free buffers %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
 	free(retrans_list->tcph);
 	free(retrans_list);
 	retrans_list = n;
@@ -196,7 +197,7 @@ debug_tcp("Free 1/2\n");
     if (next)
 	next->prev = n->prev;
 
-debug_tcp("Free 1/2\n");
+debug_mem("retrans free buffers %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
     free(n->tcph);
     free(n);
 
@@ -216,12 +217,28 @@ void rmv_all_retrans(struct tcpcb_list_s *lcb)
 	    n = n->next;
 }
 
+void rmv_all_retrans_cb(struct tcpcb_s *cb)
+{
+    struct tcp_retrans_list_s *n;
+
+    n = retrans_list;
+
+    while (n != NULL)
+	if (n->cb == cb)
+	    n = rmv_from_retrans(n);
+	else
+	    n = n->next;
+}
+
 void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
 		     struct addr_pair *apair)
 {
     struct tcp_retrans_list_s *n;
 
-    if (((th->flags & 0xff00) == TF_ACK) && cb->datalen == 0)
+    if ((cb->flags & TF_ALL) == TF_ACK && cb->datalen == 0)
+	return;
+
+    if (cb->state == TS_CLOSED)
 	return;
 
     n = (struct tcp_retrans_list_s *)malloc(sizeof(struct tcp_retrans_list_s));
@@ -229,7 +246,6 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
 	printf("ktcp: Out of memory\n");
 	return;
     }
-debug_tcp("Alloc %d\n", sizeof(struct tcp_retrans_list_s));
 
     n->cb = cb;
     n->tcph = (struct tcphdr_s *)malloc(len);
@@ -238,10 +254,6 @@ debug_tcp("Alloc %d\n", sizeof(struct tcp_retrans_list_s));
 	free(n);
 	return;
     }
-debug_tcp("Alloc %d\n", len);
-
-    /* So thet select in ktcp.c blocks for a specified time only */
-    tcp_timeruse++;
 
     /* Link it to the list */
     if (retrans_list) {
@@ -255,8 +267,12 @@ debug_tcp("Alloc %d\n", len);
 	n->prev = NULL;
     }
 
-    n->len = len;
+    /* start timeout blocking in main loop*/
+    tcp_timeruse++;
+
     tcp_retrans_memory += len;
+debug_mem("retrans alloc buffers %d, mem %d\n", tcp_timeruse, tcp_retrans_memory);
+    n->len = len;
     memcpy(n->tcph, th, len);
     memcpy(&n->apair, apair, sizeof(struct addr_pair));
     n->retrans_num = 0;
@@ -271,8 +287,8 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
     n->retrans_num ++;
     n->rto *= 2;
     n->next_retrans = Now + n->rto;
-
-    ip_sendpacket(n->tcph, n->len, &n->apair);
+printf("retrans retry #%d rto %ld\n", n->retrans_num, n->rto);
+    ip_sendpacket((unsigned char *)n->tcph, n->len, &n->apair);
 }
 
 /* called every ktcp cycle when tcp_timeruse nonzero*/
@@ -295,13 +311,13 @@ if (tcp_retrans_memory > TCP_RETRANS_MAXMEM || tcp_timeruse > 5) {
 	return;
 }
 
-    debug_tcp("Retrans buffers : %d ", tcp_timeruse);
+    debug_mem("retrans check buffers %d, mem %d\n", tcp_timeruse, tcp_retrans_memory);
 
     n = retrans_list;
     while (n != NULL) {
 	datalen = n->len - TCP_DATAOFF(n->tcph);
 
-	debug_tcp("retrans : %lx %lx", ntohl(n->tcph->seqnum) + datalen,n->cb->send_una);
+	//debug_tcp("retrans: %lx %lx", ntohl(n->tcph->seqnum) + datalen,n->cb->send_una);
 	if (SEQ_LEQ(ntohl(n->tcph->seqnum) + datalen ,n->cb->send_una)) {
 	    if (n->retrans_num == 0) {
 		rtt = Now - n->first_trans;
@@ -310,10 +326,10 @@ if (tcp_retrans_memory > TCP_RETRANS_MAXMEM || tcp_timeruse > 5) {
 		        (TCP_RTT_ALPHA * n->cb->rtt + (100 - TCP_RTT_ALPHA) * rtt) / 100;
 	    }
 	    n = rmv_from_retrans(n);
-	    debug_tcp(" remove\n");
 	    continue;
 	}
-	debug_tcp(" not\n");
+
+printf("retrans %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
 	if (TIME_GEQ(Now, n->next_retrans)) {
 	    tcp_reoutput(n);
 	    return;
@@ -326,28 +342,20 @@ void tcp_output(struct tcpcb_s *cb)
 {
     struct tcphdr_s *th = (struct tcphdr_s *) buf;
     struct addr_pair apair;
-    __u16 len;
+    int len;
     __u8 *options, header_len, option_len;
-    //__u8 addr[4], *addr2;
+    //__u8 addr[4];
 
     th->sport = htons(cb->localport);
     th->dport = htons(cb->remport);
     th->seqnum = htonl(cb->send_nxt);
     th->acknum = htonl(cb->rcv_nxt);
-/*
-    memcpy(&addr,&th->seqnum,4);
-    printf("sequence: %2X,%2X,%2X,%2X ",addr[0],addr[1],addr[2],addr[3]);
-    memcpy(&addr,&th->acknum,4);
-    printf("acknum: %2X,%2X,%2X,%2X\n",addr[0],addr[1],addr[2],addr[3]);
-*/
 
     cb->send_nxt += cb->datalen;
 
-    len = (__u16)CB_BUF_SPACE(cb);
-    if (len == 0)
+    len = CB_BUF_SPACE(cb) - PUSH_THRESHOLD;
+    if (len <= 0)
 	len = 1;		/* Never advertise zero window size */
-    if (len>255)
-        len=256; //use even len, reducing the len causes the servers to pause
     th->window = htons(len);
     th->urgpnt = 0;
     th->flags = cb->flags;
@@ -358,7 +366,7 @@ void tcp_output(struct tcpcb_s *cb)
     if (cb->flags & TF_SYN) {
 	header_len += 4;
 	option_len += 4;
-	options[0] = 2; 	/* MSS */
+	options[0] = 2; 	/* MSS */ //FIXME
 	options[1] = 4;
 	*(__u16 *)(options + 2) = htons(SLIP_MTU - 40);
     }
@@ -375,12 +383,6 @@ void tcp_output(struct tcpcb_s *cb)
     apair.daddr = cb->remaddr;
     apair.protocol = PROTO_TCP;
 
-/*
-    memcpy(addr,apair.saddr,4);
-    printf("saddr: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);
-    memcpy(addr,apair.daddr,4);
-    printf("daddr: %2X.%2X.%2X.%2X ",addr[0],addr[1],addr[2],addr[3]);
-*/
     add_for_retrans(cb, th, len, &apair);
-    ip_sendpacket(th, len, &apair);
+    ip_sendpacket((unsigned char *)th, len, &apair);
 }

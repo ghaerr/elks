@@ -5,6 +5,6 @@
 
 void slip_process(void);
 int slip_init(char *fdev, speed_t baudrate);
-void slip_send(char *packet, int len);
+void slip_send(unsigned char *packet, int len);
 
 #endif

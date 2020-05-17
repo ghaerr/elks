@@ -8,8 +8,9 @@ void tcpcb_buf_write(struct tcpcb_s *cb, __u8 *data, __u16 len);
 void tcpcb_expire_timeouts(void);
 void tcpcb_push_data(void);
 struct tcpcb_list_s *tcpcb_check_port(__u16 lport);
-struct tcpcb_list_s *tcpcb_find_unaccepted(__u16 sock);
+struct tcpcb_list_s *tcpcb_find_unaccepted(void *sock);
 void tcpcb_rmv_all_unaccepted(struct tcpcb_s *cb);
 struct tcpcb_s *tcpcb_getbynum(int num);
+void tcpcb_printall(void);
 
 #endif

@@ -12,7 +12,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "slip.h"
+#include <stdio.h>
+#include "config.h"
 #include "ip.h"
 #include "icmp.h"
 #include <linuxmt/arpa/inet.h>
@@ -22,22 +23,34 @@ int icmp_init(void)
     return 0;
 }
 
-void icmp_process(struct iphdr_s *iph,char *packet)
+void icmp_process(struct iphdr_s *iph,unsigned char *packet)
 {
+    struct icmp_echo_s *ep = (struct icmp_echo_s *)packet;
     struct addr_pair apair;
     int len;
 
     switch (packet[0]){
-	case 8: /* ICMP_ECHO */
-	    apair.daddr = iph->saddr;
-	    apair.saddr = iph->daddr;
-	    apair.protocol = PROTO_ICMP;
-	    len = ntohs(iph->tot_len) - 20;	/* Do this right */
+    case ICMP_ECHO_REQUEST:
+	printf("icmp: PING from %s (len %d id %d seqnum %d)\n",
+	    in_ntoa(iph->saddr), ntohs(iph->tot_len), ntohs(ep->id), ntohs(ep->seqnum));
+	ep->type = ICMP_ECHO_REPLY;
+	ep->code = 0;
+	/* return received id and seqnum*/
+	ep->chksum = 0;
+	ep->chksum = ip_calc_chksum((char *)ep, sizeof(struct icmp_echo_s));
 
-/*	Set the type to ICMP_ECHO_REPLY
- */
-	    packet[0] = 0;
-	    ip_sendpacket(packet, len, &apair);
-	    break;
+	apair.daddr = iph->saddr;
+	apair.saddr = iph->daddr;
+	apair.protocol = PROTO_ICMP;
+	len = ntohs(iph->tot_len) - IP_IHL(iph);
+	ip_sendpacket(packet, len, &apair);
+	break;
+   case ICMP_ECHO_DESTUNREACHABLE:
+	printf("icmp: destination unreachable code %d from %s\n",
+		ep->code, in_ntoa(iph->saddr));
+	break;
+    default:
+	debug_ip("icmp: unrecognized ICMP request %d\n", ep->type);
+	break;
     }
 }

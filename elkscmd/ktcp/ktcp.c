@@ -22,6 +22,7 @@
 #include "slip.h"
 #include "tcp.h"
 #include "tcp_output.h"
+#include "tcp_cb.h"
 #include "tcpdev.h"
 #include "timer.h"
 #include <linuxmt/arpa/inet.h>
@@ -31,37 +32,14 @@
 #include "deveth.h"
 #include "arp.h"
 
-#ifdef DEBUG
-#define debug	printf
-#else
-#define debug(...)
-#endif
+ipaddr_t local_ip;
+ipaddr_t gateway_ip;
+ipaddr_t netmask_ip;
 
+char junk[8000];	//FIXME low core getting trashed
 char deveth[] = "/dev/eth";
 
-static int intfd;
-
-unsigned long in_aton(const char *str)
-{
-    unsigned long l = 0;
-    unsigned int val;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-	l <<= 8;
-	if (*str != '\0') {
-	    val = 0;
-	    while (*str != '\0' && *str != '.') {
-		val *= 10;
-		val += *str++ - '0';
-	    }
-	    l |= val;
-	    if (*str != '\0')
-		str++;
-	}
-    }
-    return htonl(l);
-}
+static int intfd;	/* interface fd*/
 
 void ktcp_run(void)
 {
@@ -89,15 +67,23 @@ extern int cbs_in_user_timeout;
 
 	Now = timer_get_time();
 
+	/* expire timeouts and push data*/
 	tcp_update();
 
+	/* process received packets*/
 	if (FD_ISSET(intfd, &fdset)) {
-		if (dev->type == 0) slip_process();
-		else deveth_process();
+		if (eth_device)
+			deveth_process();
+		else slip_process();
 	}
-	if (FD_ISSET(tcpdevfd, &fdset)) tcpdev_process();
 
-	if (tcp_timeruse > 0) tcp_retrans();
+	/* process application socket actions*/
+	if (FD_ISSET(tcpdevfd, &fdset))
+		tcpdev_process();
+
+	/* check for retransmit needed*/
+	if (tcp_timeruse > 0)
+		tcp_retrans();
 
 	tcpcb_printall();
     }
@@ -126,7 +112,6 @@ usage:
 	exit(3);
     }
 
-    debug("KTCP: 1. local_ip \n");
     local_ip = in_aton(argv[1]);
 
     if (argc > 3) gateway_ip = in_aton(argv[3]);
@@ -135,29 +120,21 @@ usage:
     if (argc > 4) netmask_ip = in_aton(argv[4]);
     else netmask_ip = in_aton("255.255.255.0");
 
-    /*
-    addr = (__u8 *) &local_ip;
-    printf ("local_ip: %2X.%2X.%2X.%2X\n", addr [0], addr [1], addr [2], addr[3]);
-    addr = (__u8 *) &gateway_ip;
-    printf ("gateway_ip: %2X.%2X.%2X.%2X\n", addr [0], addr [1], addr [2], addr [3]);
-    addr = (__u8 *) &netmask_ip;
-    printf ("netmask_ip: %2X.%2X.%2X.%2X\n", addr [0], addr [1], addr [2], addr [3]);
-    */
+    printf("ktcp: ip %s, ", in_ntoa(local_ip));
+    printf("gateway %s, ", in_ntoa(gateway_ip));
+    printf("netmask %s\n", in_ntoa(netmask_ip));
 
     /* must exit() in next two stages on error to reset kernel tcpdev_inuse to 0*/
-    debug("\nKTCP: 2. init tcpdev\n");
-    if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0) exit(1);
+    if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)
+	exit(1);
 
-    debug("KTCP: 3. init interface\n");
     if (strcmp(argv[2],deveth) == 0) {
-	debug("Init /dev/eth\n");
-    	dev->type = 1;
-	intfd = deveth_init(deveth);
-	if (intfd < 0) exit(1);
-    } else { /* fall back to slip */
-	dev->type=0;
-	intfd = slip_init(argv[2], baudrate);
-	if (intfd < 0) exit(2);
+	if ((intfd = deveth_init(deveth)) < 0)
+	    exit(1);
+	eth_device = 1;
+    } else {
+	if ((intfd = slip_init(argv[2], baudrate)) < 0)
+	    exit(2);
     }
 
     /* become daemon now that tcpdev_inuse race condition over*/
@@ -173,22 +150,45 @@ usage:
     }
 
     arp_init ();
-
-    debug("KTCP: 4. ip_init()\n");
     ip_init();
-
-    debug("KTCP: 5. icmp_init()\n");
     icmp_init();
-
-    debug("KTCP: 6. tcp_init()\n");
     tcp_init();
-
-    debug("KTCP: 7. netconf_init()\n");
     netconf_init();
 
-    debug("KTCP: 8. ktcp_run()\n");
     ktcp_run();
 
-    debug("KTCP: 9. exit(0)\n");
     exit(0);
+}
+
+unsigned long in_aton(const char *str)
+{
+    unsigned long l = 0;
+    unsigned int val;
+    int i;
+
+    for (i = 0; i < 4; i++) {
+	l <<= 8;
+	if (*str != '\0') {
+	    val = 0;
+	    while (*str != '\0' && *str != '.') {
+		val *= 10;
+		val += *str++ - '0';
+	    }
+	    l |= val;
+	    if (*str != '\0')
+		str++;
+	}
+    }
+    return htonl(l);
+}
+
+char *
+in_ntoa(ipaddr_t in)
+{
+    register unsigned char *p;
+    static char b[18];
+
+    p = (unsigned char *)&in;
+    sprintf(b, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
+    return b;
 }
