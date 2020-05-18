@@ -240,6 +240,7 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
+//printf("tcpdev read: sending %d bytes\n", data_avail);
     ret_data = (struct tdb_return_data *)sbuf;
     ret_data->type = 0;
     ret_data->ret_value = data_avail;
@@ -259,6 +260,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 	return;
 
     if (cb->wait_data == 0) {
+//printf("tcpdev checkread: updating select for %d bytes\n", cb->bytes_to_push);
 
 	/* Update the avail_data in the kernel socket (for select) */
 	sock = cb->sock;
@@ -275,6 +277,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
+//printf("tcpdev checkread: sending %d bytes\n", data_avail);
     ret_data->type = 0;
     ret_data->ret_value = data_avail;
     ret_data->sock = cb->sock;

@@ -329,7 +329,7 @@ if (tcp_retrans_memory > TCP_RETRANS_MAXMEM || tcp_timeruse > 5) {
 	    continue;
 	}
 
-printf("retrans %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
+debug_tcp("retrans %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
 	if (TIME_GEQ(Now, n->next_retrans)) {
 	    tcp_reoutput(n);
 	    return;
@@ -361,6 +361,7 @@ void tcp_output(struct tcpcb_s *cb)
     th->flags = cb->flags;
 
     header_len = 20;
+#if 0
     option_len = 0;
     options = &th->options;
     if (cb->flags & TF_SYN) {
@@ -370,7 +371,7 @@ void tcp_output(struct tcpcb_s *cb)
 	options[1] = 4;
 	*(__u16 *)(options + 2) = htons(SLIP_MTU - 40);
     }
-
+#endif
     TCP_SETHDRSIZE(th, header_len);
 
     len = cb->datalen + header_len;
