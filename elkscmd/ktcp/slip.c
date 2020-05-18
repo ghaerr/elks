@@ -247,6 +247,7 @@ void cslip_compress(__u8 **packet, int *len)
 {
     pkt_ut p;
     __u8 type;
+    //int orig_len = len;
 
     p.p_data = *packet;
     p.p_size = *len;
@@ -261,16 +262,14 @@ void cslip_compress(__u8 **packet, int *len)
         *packet[0] |= type;
     }
 
-#ifdef DEBUG
-    printf("cslip : from %d to %d\n", orig_len, p.p_size);
-#endif
+    //printf("cslip : from %d to %d\n", orig_len, p.p_size);
 }
 #endif
 
 /*
- * TODO : Use a buffer to reduse the write calls
+ * TODO : Use a buffer to reduse the write calls //FIXME
  */
-void slip_send(char *packet, int len)
+void slip_send(unsigned char *packet, int len)
 {
     __u8 *p = (__u8 *)packet;
 

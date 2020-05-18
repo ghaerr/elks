@@ -26,6 +26,7 @@
 #include "arp.h"
 
 eth_addr_t eth_local_addr;
+int eth_device;
 
 static unsigned char sbuf [MAX_PACKET_ETH];
 static int devfd;
@@ -33,23 +34,20 @@ static int devfd;
 static eth_addr_t broad_addr = {255, 255, 255, 255, 255, 255};
 
 
-void deveth_printhex(char* packet, int len)
+#if DEBUG
+void deveth_printhex(unsigned char *packet, int len)
 {
-  unsigned char *p;
-  int i;
+  unsigned char *p = packet;
+  int i = 0;
   printf("deveth_process():%d bytes\n",len);
   if (len > 128) len = 128;
-  p = packet;
-  i = 1;
   while (len--) {
-	printf("%02X",*p);
-	if ((i % 2) == 0) printf(" "); /*%=modulo*/
-	if ((i % 16) == 0) printf("\n"); /*%=modulo*/
-	p++;
-	i++;
+	printf("%02X ", *p++);
+	if ((i++ & 15) == 15) printf("\n");
   }
   printf("\n");
 }
+#endif
 
 int deveth_init(char *fdev)
 {
@@ -61,7 +59,7 @@ int deveth_init(char *fdev)
 
     /* read mac of nic */
     if (ioctl (devfd, IOCTL_ETH_ADDR_GET, eth_local_addr) < 0) {
-        perror ("ioctl /dev/eth addr_get");
+        printf("ktcp: IOCTL_ETH_ADDR_GET fail\n");
 
         /* MAC not available is a fatal error */
         /* because it means the driver does not work */
@@ -69,11 +67,7 @@ int deveth_init(char *fdev)
         return -2;
     }
 
-    /*
-    __u8 addr = (__u8 *) &eth_local_addr;
-    printf ("eth_local_addr: %2X.%2X.%2X.%2X.%2X.%2X \n",
-        addr [0], addr [1], addr [2], addr [3], addr [4],addr [5]);
-    */
+    debug_arp("eth_local_addr: %s\n", mac_ntoa(&eth_local_addr));
 
     return devfd;
 }
@@ -83,16 +77,12 @@ int deveth_init(char *fdev)
  *  Called when select in ktcp indicates we have new data waiting
  */
 
-void deveth_process ()
+void deveth_process(void)
 {
-  int len;
-  int head_size;
   eth_head_t * eth_head;
-
-  head_size = sizeof (eth_head_t);
-
-  len = read (devfd, sbuf, MAX_PACKET_ETH);
-  if (len < head_size) return;
+  int len = read (devfd, sbuf, MAX_PACKET_ETH);
+  if (len < sizeof(eth_head_t))
+	return;
 
   eth_head = (eth_head_t *) sbuf;
 
@@ -108,19 +98,19 @@ void deveth_process ()
 
   switch (eth_head->eth_type) {
   case ETH_TYPE_IPV4:
-	  ip_recvpacket (sbuf + head_size, len - head_size);  /* strip link layer */
+	  /* strip link layer */
+	  ip_recvpacket (sbuf + sizeof(eth_head_t), len - sizeof(eth_head_t));
 	  break;
 
   case ETH_TYPE_ARP:
-	  arp_proc (sbuf, len);
+	  arp_recvpacket (sbuf, len);
 	  break;
   }
 }
 
 
-void deveth_send(char *packet, int len)
+void deveth_send(unsigned char *packet, int len)
 {
-    //printf("deveth_send:\n");
     //deveth_printhex(packet,len);
     write(devfd, packet, len);
 }

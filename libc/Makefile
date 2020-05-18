@@ -90,13 +90,11 @@ endif
 
 MAINMULTISUBDIR=$(firstword $(subst ;, ,$(MAINMULTI)))
 
-# For now do not build multilibs for the regparmcall calling convention or
-# the medium memory model, as the assembly code in elks-libc does not yet
-# support these.  TODO.  -- tkchia
+# For now do not build multilibs for the regparmcall calling convention, as
+# the assembly code in elks-libc does not yet support it.  TODO.  -- tkchia
 BUILDMULTIS:=$(strip \
     $(foreach ml,$(BUILDMULTIS), \
-	$(if $(findstring @mregparmcall@,$(ml)@)$(findstring \
-			  @mcmodel=medium@,$(ml)@),,$(ml))))
+	$(if $(findstring @mregparmcall@,$(ml)@),,$(ml))))
 ifeq "" "$(BUILDMULTIS)"
 $(error no multilib variants to build for elks-libc)
 endif
@@ -144,9 +142,14 @@ install: $(LIBC)
 	mkdir -p $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR) \
 		 $(MULTIINCDIR)/asm $(MULTIINCDIR)/sys \
 		 $(MULTIINCDIR)/arch $(MULTIINCDIR)/linuxmt/arpa
+ifeq "" "$(filter -mcmodel=medium,$(MULTILIB))"
 	$(INSTALL_DATA) $(LIBC) $(CRT0) \
 	    $(TOPDIR)/elks/elks-small.ld $(TOPDIR)/elks/elks-tiny.ld \
 	    $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)
+else
+	$(INSTALL_DATA) $(LIBC) $(CRT0) $(TOPDIR)/elks/elks-medium.ld \
+	    $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)
+endif
 	$(INSTALL_DATA) include/*.h $(TOPDIR)/include/autoconf.h $(MULTIINCDIR)
 	$(INSTALL_DATA) include/asm/*.h $(MULTIINCDIR)/asm
 	$(INSTALL_DATA) include/sys/*.h $(MULTIINCDIR)/sys
@@ -157,6 +160,7 @@ install: $(LIBC)
 uninstall:
 	$(RM) $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/$(notdir $(LIBC)) \
 	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/$(notdir $(CRT0)) \
+	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/elks-medium.ld \
 	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/elks-small.ld \
 	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/elks-tiny.ld \
 	      $(MULTIINCDIR)/autoconf.h \

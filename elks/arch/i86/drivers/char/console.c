@@ -317,8 +317,10 @@ static void std_char(register Console * C, char c)
 #ifdef CONFIG_CONSOLE_BIOS
 	PositionCursor(C);
 #endif
-	VideoWrite(C, c);
-	C->cx++;
+	if (c >= ' ') {
+		VideoWrite(C, c);
+		C->cx++;
+	}
       linewrap:
 	if (C->cx > MaxCol) {
 

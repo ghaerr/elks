@@ -33,15 +33,15 @@ void tcpcb_init(void)
 
 void tcpcb_printall(void)
 {
-#if 0
+#if DEBUG_CB
     struct tcpcb_list_s *n = tcpcbs;
 
     printf("--- Control Blocks --- %d (%d)\n",tcpcb_num,tcp_retrans_memory);
     while (n) {
-	printf("CB:%p sock:0x%x 0x%x State:%d LP:%u RP:%u RTT: %d ms unacc : %d\n",&n->tcpcb, n->tcpcb.sock,
-		n->tcpcb.newsock, n->tcpcb.state, n->tcpcb.localport,
-		n->tcpcb.remport, n->tcpcb.rtt * 1000 / 16,
-		n->tcpcb.unaccepted);
+	printf("CB:%p sock:%04x %04xx State:%d LP:%u RP:%u RTT:%d unacc: %d\n",
+	    &n->tcpcb, n->tcpcb.sock, n->tcpcb.newsock,
+	    n->tcpcb.state, n->tcpcb.localport, n->tcpcb.remport,
+	    n->tcpcb.rtt * 1000 / 16, n->tcpcb.unaccepted);
 	n = n->next;
     }
 #endif
@@ -70,7 +70,7 @@ struct tcpcb_list_s *tcpcb_new(void)
 	debug_tcp("ktcp: Out of memory 3\n");
 	return NULL;
     }
-debug_tcp("alloc %d\n", sizeof(struct tcpcb_list_s));
+debug_mem("Alloc CB %d bytes\n", sizeof(struct tcpcb_list_s));
 
     memset(&n->tcpcb, 0, sizeof(struct tcpcb_s));
     n->tcpcb.rtt = 4 << 4; /* 4 sec */
@@ -102,7 +102,7 @@ void tcpcb_remove(struct tcpcb_list_s *n)
 {
     struct tcpcb_list_s *next = n->next;
 
-debug_tcp("REMOVING CB\n");
+debug_tcp("tcp: REMOVING control block\n");
     tcpcb_num--;	/* for netstat*/
 
     if (n->prev)
@@ -114,7 +114,7 @@ debug_tcp("REMOVING CB\n");
 	n->prev = NULL;
 
 	rmv_all_retrans(tcpcbs);
-debug_tcp("FREE 0\n");
+debug_mem("Free CB\n");
 	free(tcpcbs);
 	tcpcbs = n;
 
@@ -126,7 +126,7 @@ debug_tcp("FREE 0\n");
 
     rmv_all_retrans(n);
     free(n);
-debug_tcp("FREE 0\n");
+debug_mem("Free CB\n");
 }
 
 struct tcpcb_list_s *tcpcb_check_port(__u16 lport)
@@ -156,7 +156,7 @@ struct tcpcb_list_s *tcpcb_find(__u32 addr, __u16 lport, __u16 rport)
     return NULL;
 }
 
-struct tcpcb_list_s *tcpcb_find_by_sock(__u16 sock)
+struct tcpcb_list_s *tcpcb_find_by_sock(void *sock)
 {
     struct tcpcb_list_s *n;
 
@@ -167,7 +167,7 @@ struct tcpcb_list_s *tcpcb_find_by_sock(__u16 sock)
     return NULL;
 }
 
-struct tcpcb_list_s *tcpcb_find_unaccepted(__u16 sock)
+struct tcpcb_list_s *tcpcb_find_unaccepted(void *sock)
 {
     struct tcpcb_list_s *n;
 
@@ -247,8 +247,9 @@ void tcpcb_buf_read(struct tcpcb_s *cb, __u8 *data, __u16 len)
 {
     register int head = cb->buf_head, i;
 
+if (len > cb->buf_len) printf("tcpcb_buf_read: BAD READ\n"); //FIXME
     for (i=0; i<len; i++)
 	*(data + i) = cb->in_buf[head++ & (CB_IN_BUF_SIZE - 1)];
-    cb->buf_head = head;
+    cb->buf_head = head & (CB_IN_BUF_SIZE - 1);
     cb->buf_len -= len;
 }

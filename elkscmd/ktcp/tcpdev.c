@@ -29,6 +29,7 @@
 #include "tcpdev.h"
 #include "netconf.h"
 
+static __u16	next_port;
 static unsigned char sbuf[TCPDEV_BUFSIZE];
 
 int tcpdevfd;
@@ -39,13 +40,13 @@ int tcpdev_init(char *fdev)
 {
     int fd  = open(fdev, O_NONBLOCK | O_RDWR);
     if (fd < 0)
-	printf("ktcp: failed to open tcpdev device %s\n",fdev);
+	printf("ktcp: can't open tcpdev device %s\n",fdev);
     return fd;
 }
 
-void retval_to_sock(__u16 sock,short int r)
+void retval_to_sock(void *sock,short int r)
 {
-    struct tdb_return_data *ret_data = sbuf;
+    struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
 
     ret_data->type = 0;
     ret_data->ret_value = r;
@@ -55,7 +56,7 @@ void retval_to_sock(__u16 sock,short int r)
 
 static void tcpdev_bind(void)
 {
-    struct tdb_bind *db = sbuf;
+    struct tdb_bind *db = (struct tdb_bind *)sbuf;
     struct tcpcb_list_s *n;
     __u16 port;
 
@@ -102,10 +103,10 @@ static void tcpdev_bind(void)
 static void tcpdev_accept(void)
 {
     struct tcpcb_list_s *n,*newn;
-    struct tdb_accept *db = sbuf;
+    struct tdb_accept *db = (struct tdb_accept *)sbuf;
     struct tdb_accept_ret *ret_data;
     struct tcpcb_s *cb;
-    __u16  sock = db->sock;
+    void *  sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state != TS_LISTEN) {
@@ -128,7 +129,7 @@ static void tcpdev_accept(void)
     cb->sock = db->newsock;
     cb->newsock = 0;
 
-    ret_data = sbuf;
+    ret_data = (struct tdb_accept_ret *)sbuf;
     ret_data->type = 0;
     ret_data->ret_value = 0;
     ret_data->sock = sock;
@@ -147,7 +148,7 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
 	return;
     listencb = &tcpcb_find_by_sock(cb->newsock)->tcpcb;
 
-    ret_data = sbuf;
+    ret_data = (struct tdb_accept_ret *)sbuf;
     ret_data->type = 123;
     ret_data->ret_value = 0;
     ret_data->sock = cb->sock;
@@ -162,7 +163,7 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
 
 static void tcpdev_connect(void)
 {
-    struct tdb_connect *db = sbuf;
+    struct tdb_connect *db = (struct tdb_connect *)sbuf;
     struct tcpcb_list_s *n;
 
     n = tcpcb_find_by_sock(db->sock);
@@ -183,7 +184,7 @@ static void tcpdev_connect(void)
 
 static void tcpdev_listen(void)
 {
-    struct tdb_listen *db = sbuf;
+    struct tdb_listen *db = (struct tdb_listen *)sbuf;
     struct tcpcb_list_s *n;
 
     n = tcpcb_find_by_sock(db->sock);
@@ -196,24 +197,25 @@ static void tcpdev_listen(void)
     retval_to_sock(db->sock, 0);
 }
 
-void tcpdev_read(void)
+static void tcpdev_read(void)
 {
-    struct tdb_read *db = sbuf;
+    struct tdb_read *db = (struct tdb_read *)sbuf;
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
     struct tdb_return_data *ret_data;
     int data_avail;
-    __u16 sock = db->sock;
+    void * sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
-    if (!n) {
+    if (!n || n->tcpcb.state == TS_CLOSED) {
 	printf("ktcp: panic in read\n");
 	exit(1);
     }
 
     cb = &n->tcpcb;
-    if (cb->state == TS_CLOSING && cb->state == TS_LAST_ACK
-				&& cb->state == TS_TIME_WAIT) {
+    if (cb->state == TS_CLOSING || cb->state == TS_LAST_ACK ||
+        cb->state == TS_TIME_WAIT) {
+debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
@@ -238,7 +240,8 @@ void tcpdev_read(void)
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
-    ret_data = sbuf;
+//printf("tcpdev read: sending %d bytes\n", data_avail);
+    ret_data = (struct tdb_return_data *)sbuf;
     ret_data->type = 0;
     ret_data->ret_value = data_avail;
     ret_data->sock = sock;
@@ -249,14 +252,15 @@ void tcpdev_read(void)
 
 void tcpdev_checkread(struct tcpcb_s *cb)
 {
-    struct tdb_return_data *ret_data = sbuf;
+    struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
     int data_avail = CB_BUF_USED(cb);
-    __u16 sock;
+    void * sock;
 
     if (cb->bytes_to_push <= 0)
 	return;
 
     if (cb->wait_data == 0) {
+//printf("tcpdev checkread: updating select for %d bytes\n", cb->bytes_to_push);
 
 	/* Update the avail_data in the kernel socket (for select) */
 	sock = cb->sock;
@@ -273,6 +277,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
+//printf("tcpdev checkread: sending %d bytes\n", data_avail);
     ret_data->type = 0;
     ret_data->ret_value = data_avail;
     ret_data->sock = cb->sock;
@@ -285,12 +290,12 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 
 static void tcpdev_write(void)
 {
-    struct tdb_write *db = sbuf;
+    struct tdb_write *db = (struct tdb_write *)sbuf;
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
-    __u16  sock = db->sock;
+    void *  sock = db->sock;
 
-    db = sbuf;
+    db = (struct tdb_write *)sbuf;
     sock = db->sock;
 
     /* This is a bit ugly but I'm to lazy right now */
@@ -301,8 +306,8 @@ printf("tcp: RETRANS limit exceeded\n");
     }
 
     n = tcpcb_find_by_sock(sock);
-    if (!n) {
-	printf("ktcp: panic in write (unknown sock:0x%x)\n",sock);
+    if (!n || n->tcpcb.state == TS_CLOSED) {
+	printf("ktcp: panic in write\n");
 	return;
     }
 
@@ -332,11 +337,12 @@ printf("tcp: RETRANS limit exceeded\n");
 
 static void tcpdev_release(void)
 {
-    struct tdb_release *db = sbuf;
+    struct tdb_release *db = (struct tdb_release *)sbuf;
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
-    __u16 sock = db->sock;
+    void * sock = db->sock;
 
+debug_tcp("tcpdev: got close from ELKS process\n");
     n = tcpcb_find_by_sock(sock);
     if (n) {
 	cb = &n->tcpcb;
@@ -358,13 +364,7 @@ static void tcpdev_release(void)
 		cb->state = TS_FIN_WAIT_1;
 		cbs_in_user_timeout++;
 		cb->time_wait_exp = Now;
-
 		tcp_send_fin(cb);
-		/* Handle it as abort */
-#if 0
-		tcp_send_reset(cb);
-		tcpcb_remove(cb);
-#endif
 		break;
 	    case TS_CLOSE_WAIT:
 		cb->state = TS_LAST_ACK;
@@ -378,8 +378,8 @@ static void tcpdev_release(void)
 
 void tcpdev_sock_state(struct tcpcb_s *cb, int state)
 {
-    struct tdb_return_data *ret_data = sbuf;
-    __u16 sock = cb->sock;
+    struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
+    void * sock = cb->sock;
 
     ret_data->type = TDT_CHG_STATE;
     ret_data->ret_value = state;
@@ -406,7 +406,6 @@ void tcpdev_process(void)
 	    tcpdev_accept();
 	    break;
 	case TDC_CONNECT:
-//printf("tcpdev: got connect\n");
 	    tcpdev_connect();
 	    break;
 	case TDC_LISTEN:

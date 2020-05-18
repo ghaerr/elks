@@ -8,6 +8,12 @@
 #include "ip.h"
 #include <linuxmt/arpa/inet.h>
 
+/* control block input buffer size - max window size*/
+#define CB_IN_BUF_SIZE	1024	/* must be power of 2*/
+
+/* bytes to subtract from window size and when to force app write*/
+#define PUSH_THRESHOLD	512
+
 #define PROTO_TCP	0x06
 
 #define SEQ_LT(a,b)	((long)((a)-(b)) < 0)
@@ -69,14 +75,13 @@ struct iptcp_s {
 #define	TS_LAST_ACK	9
 #define	TS_TIME_WAIT	10
 
-#define CB_IN_BUF_SIZE	2048 /* 1024 too small */
 #define CB_BUF_USED(x)	((x)->buf_len)
 #define CB_BUF_SPACE(x)	(CB_IN_BUF_SIZE - CB_BUF_USED((x)))
-#define CB_BUF_TAIL(x)	(((x)->buf_head + (x)->buf_len) % (CB_IN_BUF_SIZE - 1))
+#define CB_BUF_TAIL(x)	((((x)->buf_head + (x)->buf_len)) & (CB_IN_BUF_SIZE - 1))
 
 struct tcpcb_s {
-	__u16	newsock;
-	__u16	sock;	/* the socket in kernel space */
+	void *	newsock;
+	void *	sock;	/* the socket in kernel space */
 #define SS_NULL		0
 #define	SS_ACCEPT	1
 	__u32	localaddr;
@@ -146,17 +151,18 @@ int tcp_retrans_memory;
 
 struct tcpcb_list_s *tcpcb_new();
 struct tcpcb_list_s *tcpcb_find(__u32 addr, __u16 lport, __u16 rport);
-struct tcpcb_list_s *tcpcb_find_by_sock(__u16 sock);
+struct tcpcb_list_s *tcpcb_find_by_sock(void *sock);
 void tcpcb_remove();
 
 __u16 tcp_chksum(struct iptcp_s *h);
 __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len);
+void tcp_print(struct iptcp_s *head, int recv);
 void tcp_output();
 void tcp_update(void);
 int tcp_init(void);
 void tcp_process(struct iphdr_s *iph);
 void tcp_connect(struct tcpcb_s *cb);
 void tcp_send_fin(struct tcpcb_s *cb);
-unsigned long in_aton(const char *str);
+void tcp_send_reset(struct tcpcb_s *cb);
 
 #endif

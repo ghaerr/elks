@@ -25,16 +25,17 @@
 
 timeq_t Now;
 
-extern int cbs_in_time_wait;
+extern int cbs_in_time_wait;		// FIXME remove extern
 extern int cbs_in_user_timeout;
 
-void tcp_print(struct iptcp_s *head)
+void tcp_print(struct iptcp_s *head, int recv)
 {
-    debug_tcp("TCP: src:%u dst:%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
+    debug_tcp("TCP: %s ", recv? "recv": "send");
+    debug_tcp("src:%u dst:%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
     debug_tcp("flags:%x ",head->tcph->flags);
     debug_tcp("seq:%lx ack:%lx ", ntohl(head->tcph->seqnum), ntohl(head->tcph->acknum));
-    debug_tcp("win:%d urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
-    debug_tcp("chk:%d\n",tcp_chksum(head));
+    debug_tcp("win:%u urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
+    debug_tcp("chk:%x len:%u\n",tcp_chksum(head), head->tcplen);
 }
 
 int tcp_init(void)
@@ -46,7 +47,7 @@ int tcp_init(void)
     return 0;
 }
 
-__u32 choose_seq(void)
+static __u32 choose_seq(void)
 {
     return timer_get_time();
 }
@@ -66,13 +67,14 @@ void tcp_send_reset(struct tcpcb_s *cb)
     tcp_output(cb);
 }
 
-void tcp_send_ack(struct tcpcb_s *cb)
+static void tcp_send_ack(struct tcpcb_s *cb)
 {
     cb->flags = TF_ACK;
     cb->datalen = 0;
     tcp_output(cb);
 }
 
+/* entry point, not called from state machine*/
 void tcp_connect(struct tcpcb_s *cb)
 {
     cb->iss = choose_seq();
@@ -87,7 +89,7 @@ void tcp_connect(struct tcpcb_s *cb)
     tcp_output(cb);
 }
 
-void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     struct tcphdr_s *h = iptcp->tcph;
 
@@ -96,18 +98,19 @@ void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST) {
 	retval_to_sock(cb->sock, -ECONNREFUSED);
+	cb->state = TS_CLOSED;
+	tcpcb_remove(cb); 	/* deallocate*/
 	return;
     }
 
     if (h->flags & (TF_SYN|TF_ACK)) {
 	if (cb->seg_ack != cb->send_una + 1) {
 
-	    /* Send RESET */
+	    /* Send RST */
 	    cb->send_nxt = h->acknum;
-	    cb->state = TF_RST;
-
-	    cb->datalen = 0;
-	    tcp_output(cb);
+	    cb->state = TS_CLOSED;
+	    tcp_send_reset(cb);
+	    tcpcb_remove(cb); 	/* deallocate*/
 	    return;
 	}
 
@@ -129,7 +132,7 @@ void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 }
 
-void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
+static void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
 {
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
@@ -138,23 +141,23 @@ void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     if (h->flags & TF_RST)
 	return;
 
+    if (!(h->flags & TF_SYN)) {
+	debug_tcp("tcp: no SYN in listen\n");
+	return;
+    }
+
     if (h->flags & TF_ACK)
 	debug_tcp("tcp: ACK in listen not implemented\n");
 
     n = tcpcb_clone(lcb);    /*copy (struct tcpcb_s)*lcb into linked list tcpcb_list_s*/
-if (!n) return;
-    cb = &n->tcpcb;          /*tcp control block in linked list*/
+    if (!n)
+	return;		     /* no memory for new connection*/
+    cb = &n->tcpcb;
     cb->unaccepted = 1;      /* Mark as unaccepted */
     cb->newsock = lcb->sock; /* lcb-> is the socket in kernel space */
 
     cb->seg_seq = ntohl(h->seqnum); /*read sequence number got*/
     cb->seg_ack = ntohl(h->acknum); /*read ack number got*/
-
-    if (!(h->flags & TF_SYN)){
-	debug_tcp("tcp: no SYN in listen\n");
-	tcpcb_remove(n); /*remove from linked list again*/
-	return;
-    }
 
     cb->remaddr = iptcp->iph->saddr; /*sender's ip address*/
     cb->remport = ntohs(h->sport);   /*sender's port*/
@@ -166,7 +169,7 @@ if (!n) return;
     cb->send_nxt = cb->iss; /*put that into send_nxt*/
 
     cb->state = TS_SYN_RECEIVED; /*update state*/
-    cb->flags = TF_SYN|TF_ACK;   /*set SYN + ACK flag*/
+    cb->flags = TF_SYN|TF_ACK;   /*send SYN + ACK flag*/
 
     cb->datalen = 0;  /* no data yet */
     tcp_output(cb);   /*send the tcp part of the packet*/
@@ -182,7 +185,7 @@ if (!n) return;
  * state change here in this function
  */
 
-void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     struct tcphdr_s *h;
     __u32 acknum;
@@ -196,27 +199,28 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     datasize = iptcp->tcplen - TCP_DATAOFF(h);
 
     if (datasize != 0) {
-	debug_tcp("tcp: data in len %d\n", datasize);
+	debug_tcp("tcp: recv data len %u\n", datasize);
 	/* Process the data */
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
+//printf("space free %d\n", CB_BUF_SPACE(cb));
 	/* FIXME : check if it fits */
 	if (datasize > CB_BUF_SPACE(cb)) {
-	    printf("tcp: packet data too large: %d\n", datasize);
+	    printf("tcp: packet data too large: %u > %d\n", datasize, CB_BUF_SPACE(cb));
 	    return;
 	}
 
 	tcpcb_buf_write(cb, data, datasize);
 
-	if (h->flags & TF_PSH || CB_BUF_SPACE(cb) == 0) {
-	    if (cb->bytes_to_push <=0)
+	if ((h->flags & TF_PSH) || CB_BUF_SPACE(cb) <= PUSH_THRESHOLD) {
+	    if (cb->bytes_to_push <= 0)
 		tcpcb_need_push++;
 	    cb->bytes_to_push = CB_BUF_USED(cb);
 	}
 	tcpdev_checkread(cb);
     } /* datasize != 0 */
 
-    if (h->flags & TF_ACK) { /*update una*/
+    if (h->flags & TF_ACK) { 	/*update unacked*/
 	acknum = ntohl(h->acknum);
 	if (SEQ_LT(cb->send_una, acknum))
 	    cb->send_una = acknum;
@@ -224,22 +228,21 @@ void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST) {
 	/* TODO: Check seqnum for security */
-	rmv_all_retrans(cb);
+printf("tcp: RST received, removing retrans packets\n");
+	rmv_all_retrans_cb(cb);
 	if (cb->state == TS_CLOSE_WAIT) {
 	    ENTER_TIME_WAIT(cb);
-	} else
+	} else {
 	    cb->state = TS_CLOSED;
+	    tcpcb_remove(cb); 	/* deallocate*/
+	}
 	tcpdev_sock_state(cb, SS_UNCONNECTED);
 	return;
     }
 
     if (h->flags & TF_FIN) {
-	cb->rcv_nxt ++;
+	cb->rcv_nxt++;
 	cb->state = TS_CLOSE_WAIT;
-/* FIXME timeout if remote side terminated*/
-debug_tcp("Setting TS_CLOSE_WAIT\n");
-cb->time_wait_exp = Now;
-cbs_in_user_timeout++;
 	tcpdev_sock_state(cb, SS_DISCONNECTING);
     }
 
@@ -252,7 +255,7 @@ cbs_in_user_timeout++;
     tcp_output(cb);
 }
 
-void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     struct tcphdr_s *h = iptcp->tcph;
 
@@ -267,7 +270,7 @@ void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 }
 
-void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     __u32 lastack;
     int needack = 0;
@@ -302,7 +305,7 @@ void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 }
 
-void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     int needack = 0;
 
@@ -327,7 +330,7 @@ void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 }
 
-void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     __u32 lastack;
 
@@ -351,7 +354,7 @@ void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     }
 }
 
-void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
+static void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     cb->time_wait_exp = Now;
     if (iptcp->tcph->flags & (TF_ACK|TF_RST)) {
@@ -359,14 +362,14 @@ void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	/* our FIN was acked */
 	cbs_in_user_timeout--;
 	cb->state = TS_CLOSED;
-	tcpcb_remove(cb); /* Remove the cb */
+	tcpcb_remove(cb); 	/* deallocate*/
     }
 }
 
 /* called every ktcp run cycle*/
 void tcp_update(void)
 {
-debug_tcp("ktcp: update %d,%d\n", cbs_in_time_wait, cbs_in_user_timeout);
+debug_tcp("ktcp: update %x,%x\n", cbs_in_time_wait, cbs_in_user_timeout);
     if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0)
 	tcpcb_expire_timeouts();
 
@@ -387,18 +390,18 @@ void tcp_process(struct iphdr_s *iph)
     iptcp.tcph = tcph;
     iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_IHL(iph);
 
-    tcp_print(&iptcp);
+    tcp_print(&iptcp, 1);
 
     if (tcp_chksum(&iptcp) != 0) {
-	debug_tcp("tcp: bad checksum (%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
-	return;
+	printf("tcp: bad checksum (%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
+	//return;
     }
 
-debug_tcp("tcbcb_find %lx, %u, %u\n", iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
+//debug_tcp("tcbcb_find %lx, %u, %u\n", iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
     cbnode = tcpcb_find(iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
 
     if (!cbnode) {
-	debug_tcp("tcp: Refusing packet \n");
+	printf("tcp: Refusing packet\n");
 	/* TODO : send RST and stuff */
 	return;
     }

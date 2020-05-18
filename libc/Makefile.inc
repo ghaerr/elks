@@ -4,10 +4,14 @@ VERSION=elks-0.3.0
 INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
 DEFINES=-D__LIBC__ -D__LIBC_VER__='"$(VERSION)"' -D__HAS_NO_FLOATS__
 
+INCS=$(INCLUDES)
 SDEFS=$(DEFINES)
 CDEFS=$(DEFINES)
 
-ARCH=-ffreestanding -fno-inline -melks -mcmodel=small -mno-segment-relocation-stuff -mtune=i8086
+ARCH=-ffreestanding -fno-inline -melks -mtune=i8086
+ifeq "" "$(filter -mcmodel=%,$(MULTILIB))"
+ARCH+=-mcmodel=small -mno-segment-relocation-stuff
+endif
 
 CC=ia16-elf-gcc
 AS=ia16-elf-as
