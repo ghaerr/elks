@@ -203,9 +203,10 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	/* Process the data */
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
+//printf("space free %d\n", CB_BUF_SPACE(cb));
 	/* FIXME : check if it fits */
 	if (datasize > CB_BUF_SPACE(cb)) {
-	    printf("tcp: packet data too large: %u\n", datasize);
+	    printf("tcp: packet data too large: %u > %d\n", datasize, CB_BUF_SPACE(cb));
 	    return;
 	}
 
@@ -392,11 +393,11 @@ void tcp_process(struct iphdr_s *iph)
     tcp_print(&iptcp, 1);
 
     if (tcp_chksum(&iptcp) != 0) {
-	debug_tcp("tcp: bad checksum (%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
-	return;
+	printf("tcp: bad checksum (%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
+	//return;
     }
 
-debug_tcp("tcbcb_find %lx, %u, %u\n", iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
+//debug_tcp("tcbcb_find %lx, %u, %u\n", iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
     cbnode = tcpcb_find(iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
 
     if (!cbnode) {

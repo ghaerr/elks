@@ -36,7 +36,6 @@ ipaddr_t local_ip;
 ipaddr_t gateway_ip;
 ipaddr_t netmask_ip;
 
-char junk[8000];	//FIXME low core getting trashed
 char deveth[] = "/dev/eth";
 
 static int intfd;	/* interface fd*/
@@ -63,7 +62,8 @@ extern int cbs_in_user_timeout;
 	FD_SET(intfd, &fdset);
 	FD_SET(tcpdevfd, &fdset);
 	count = select(intfd > tcpdevfd ? intfd + 1 : tcpdevfd + 1, &fdset, NULL, NULL, tv);
-	if (count < 0) return;
+	if (count < 0)
+		return;	//FIXME
 
 	Now = timer_get_time();
 

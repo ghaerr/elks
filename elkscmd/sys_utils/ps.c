@@ -171,13 +171,13 @@ int main(int argc, char **argv)
 
 		if (dseg) {
 			/* heap*/
-			printf("%5d ", (word_t)(task_table.t_endbrk - task_table.t_enddata));
+			printf("%5u ", (word_t)(task_table.t_endbrk - task_table.t_enddata));
 
 			/* free*/
-			printf(" %5d ", (word_t)(task_table.t_regs.sp - task_table.t_endbrk));
+			printf(" %5u ", (word_t)(task_table.t_regs.sp - task_table.t_endbrk));
 
 			/* stack*/
-			//printf("%5d ", (word_t)(task_table.t_begstack - task_table.t_regs.sp));
+			//printf("%5u ", (word_t)(task_table.t_begstack - task_table.t_regs.sp));
 
 			/* size*/
 			segext_t size = getword(fd, (word_t)cseg+offsetof(struct segment, size), ds)

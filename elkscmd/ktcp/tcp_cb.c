@@ -247,8 +247,9 @@ void tcpcb_buf_read(struct tcpcb_s *cb, __u8 *data, __u16 len)
 {
     register int head = cb->buf_head, i;
 
+if (len > cb->buf_len) printf("tcpcb_buf_read: BAD READ\n"); //FIXME
     for (i=0; i<len; i++)
 	*(data + i) = cb->in_buf[head++ & (CB_IN_BUF_SIZE - 1)];
-    cb->buf_head = head;
+    cb->buf_head = head & (CB_IN_BUF_SIZE - 1);
     cb->buf_len -= len;
 }

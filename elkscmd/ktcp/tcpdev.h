@@ -1,7 +1,7 @@
 #ifndef TCPDEV_H
 #define TCPDEV_H
 
-#define TCPDEV_BUFSIZE	2046
+#define TCPDEV_BUFSIZE	2048	/* must be at least as big as CB_IN_BUF_SIZE*/
 
 #if 0
 #define MAX_ADDR_LEN    7
