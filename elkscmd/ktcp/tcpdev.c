@@ -25,12 +25,12 @@
 #include <linuxmt/arpa/inet.h>
 #include "ip.h"
 #include "tcp.h"
-#include "tcp_cb.h"
 #include "tcpdev.h"
+#include "tcp_cb.h"
 #include "netconf.h"
 
 static __u16	next_port;
-static unsigned char sbuf[TCPDEV_BUFSIZE];
+static unsigned char sbuf[TCPDEV_BUFSIZ];
 
 int tcpdevfd;
 
@@ -169,7 +169,7 @@ static void tcpdev_connect(void)
     n = tcpcb_find_by_sock(db->sock);
     if (!n || n->tcpcb.state != TS_CLOSED) {
 	printf("ktcp: panic in connect\n");
-	exit(1);
+	return;
     }
 
     n->tcpcb.remaddr = db->addr.sin_addr.s_addr;
@@ -209,7 +209,7 @@ static void tcpdev_read(void)
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state == TS_CLOSED) {
 	printf("ktcp: panic in read\n");
-	exit(1);
+	return;
     }
 
     cb = &n->tcpcb;
@@ -332,7 +332,6 @@ printf("tcp: RETRANS limit exceeded\n");
     tcp_output(cb);
 
     retval_to_sock(sock, db->size);
-    return;
 }
 
 static void tcpdev_release(void)
@@ -391,7 +390,7 @@ void tcpdev_sock_state(struct tcpcb_s *cb, int state)
 /* called every ktcp cycle when tcpdevfd data is ready*/
 void tcpdev_process(void)
 {
-    int len = read(tcpdevfd, sbuf, TCPDEV_BUFSIZE);
+    int len = read(tcpdevfd, sbuf, TCPDEV_BUFSIZ);
 
     if (len <= 0)
 	return;
