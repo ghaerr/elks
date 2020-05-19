@@ -6,13 +6,28 @@
 #include "config.h"
 #include "timer.h"
 #include "ip.h"
+#include <linuxmt/tcpdev.h>
 #include <linuxmt/arpa/inet.h>
+
+/*
+ * /etc/tcpdev max read/write size
+ * Must be at least as big as CB_IN_BUF_SIZE
+ * And at least as big as TCPDEV_INBUFFERSIZE in <linuxmt/tcpdev.h> (currently 1024)
+ */
+#define TCPDEV_BUFSIZ	(2048 + sizeof(struct tdb_return_data) - 1)
+
+/* max tcp buffer size (no ip header)*/
+#define TCP_BUFSIZ	(TCPDEV_BUFSIZ + sizeof(tcphdr_t) + TCP_OPT_MSS_LEN)
+
+/* max ip buffer size (with link layer frame)*/
+#define IP_BUFSIZ	(TCP_BUFSIZ + sizeof(iphdr_t) + sizeof(struct ip_ll))
 
 /* control block input buffer size - max window size*/
 #define CB_IN_BUF_SIZE	1024	/* must be power of 2*/
 
 /* bytes to subtract from window size and when to force app write*/
 #define PUSH_THRESHOLD	512
+
 
 #define PROTO_TCP	0x06
 
@@ -34,13 +49,13 @@
 
 #define TCP_SETHDRSIZE(c,s)	( (c)->data_off = (s) << 2 )
 
-#define ENTER_TIME_WAIT(cb)	(cb)->time_wait_exp = Now + (30 << 4); \
-				(cb)->state = TS_TIME_WAIT; \
-				tcp_timeruse++; \
-				cbs_in_time_wait++;
+#define ENTER_TIME_WAIT(cb)	{ (cb)->time_wait_exp = Now + (30 << 4); \
+				  (cb)->state = TS_TIME_WAIT; \
+				  tcp_timeruse++; \
+				  cbs_in_time_wait++; }
 
-#define LEAVE_TIME_WAIT(cb)	tcp_timeruse--; \
-				cbs_in_time_wait--;
+#define LEAVE_TIME_WAIT(cb)	{ tcp_timeruse--; \
+				  cbs_in_time_wait--; }
 
 struct tcphdr_s {
 	__u16	sport;
@@ -52,7 +67,7 @@ struct tcphdr_s {
 	__u16	window;
 	__u16	chksum;
 	__u16	urgpnt;
-	__u8	options;
+	__u8	options[];
 };
 
 typedef struct tcphdr_s tcphdr_t;
@@ -118,7 +133,12 @@ struct tcpcb_s {
 	__u16	datalen;
 };
 
-int tcpcb_num;		/* for netstat*/
+/* TCP options*/
+#define TCP_OPT_EOL		0
+#define TCP_OPT_NOP		1
+#define TCP_OPT_MSS		2
+
+#define TCP_OPT_MSS_LEN		4	/* total MSS option length*/
 
 struct	tcpcb_list_s {
 	struct tcpcb_s		tcpcb;

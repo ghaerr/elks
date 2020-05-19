@@ -23,18 +23,14 @@
 #include "timer.h"
 #include "tcpdev.h"
 
-char buf[128];
-
-//#define USE_ASM
-
 static struct tcp_retrans_list_s *retrans_list;
+static unsigned char tcpbuf[TCP_BUFSIZ];
 
-#ifndef USE_ASM
 __u16 tcp_chksum(struct iptcp_s *h)
 {
     __u32 sum = htons(h->tcplen);
-    __u16 *data = (__u16 *)h->tcph;
     __u16 len = h->tcplen;
+    register __u16 *data = (__u16 *)h->tcph;
 
     for (; len > 1 ; len -= 2)
 	sum += *data++;
@@ -48,11 +44,11 @@ __u16 tcp_chksum(struct iptcp_s *h)
     sum += (h->iph->daddr >> 16) & 0xffff;
     sum += htons((__u16)6);
 
-    return ~((sum & 0xffff) + ((sum >> 16) & 0xffff));
+    while (sum >> 16)
+	sum = (sum & 0xffff) + (sum >> 16);
+    return ~(__u16)sum;
 }
-#else
-#asm
-/*__u16 tcp_chksum(struct iptcp_s *h)*/
+/*** __u16 tcp_chksum(struct iptcp_s *h)
 	.text
 	.globl _tcp_chksum
 _tcp_chksum:
@@ -101,9 +97,8 @@ loop1:
 	pop	di
 	pop	bp
 	ret
-#endasm
-#endif
-#ifndef USE_ASM
+***/
+
 __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len)
 {
     __u32 sum = htons(len);
@@ -121,11 +116,11 @@ __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len)
     sum += (daddr >> 16) & 0xffff;
     sum += htons((__u16)6);
 
-    return ~((sum & 0xffff) + ((sum >> 16) & 0xffff));
+    while (sum >> 16)
+	sum = (sum & 0xffff) + (sum >> 16);
+    return ~(__u16)sum;
 }
-#else
-#asm
-/*__u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len)*/
+/*** __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len)
 	.text
 	.globl _tcp_chksumraw
 _tcp_chksumraw:
@@ -170,8 +165,8 @@ loop2:
 	pop	di
 	pop	bp
 	ret
-#endasm
-#endif
+***/
+
 struct tcp_retrans_list_s *
 rmv_from_retrans(struct tcp_retrans_list_s *n)
 {
@@ -238,7 +233,10 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
     if ((cb->flags & TF_ALL) == TF_ACK && cb->datalen == 0)
 	return;
 
-    if (cb->state == TS_CLOSED)
+    if (cb->flags & TF_RST)
+	return;
+
+    if (cb->state == TS_CLOSED)	//FIXME remove
 	return;
 
     n = (struct tcp_retrans_list_s *)malloc(sizeof(struct tcp_retrans_list_s));
@@ -278,7 +276,7 @@ debug_mem("retrans alloc buffers %d, mem %d\n", tcp_timeruse, tcp_retrans_memory
     n->retrans_num = 0;
     n->first_trans = Now;
 
-    n->rto = cb->rtt << 1;
+    n->rto = cb->rtt << 1;			//FIXME possibly shorten
     n->next_retrans = Now + n->rto;
 }
 
@@ -322,8 +320,7 @@ if (tcp_retrans_memory > TCP_RETRANS_MAXMEM || tcp_timeruse > 5) {
 	    if (n->retrans_num == 0) {
 		rtt = Now - n->first_trans;
 		if (rtt > 0)
-		    n->cb->rtt =
-		        (TCP_RTT_ALPHA * n->cb->rtt + (100 - TCP_RTT_ALPHA) * rtt) / 100;
+		    n->cb->rtt = (TCP_RTT_ALPHA * n->cb->rtt + (100 - TCP_RTT_ALPHA) * rtt) / 100;
 	    }
 	    n = rmv_from_retrans(n);
 	    continue;
@@ -340,11 +337,9 @@ debug_tcp("retrans %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
 
 void tcp_output(struct tcpcb_s *cb)
 {
-    struct tcphdr_s *th = (struct tcphdr_s *) buf;
+    struct tcphdr_s *th = (struct tcphdr_s *)tcpbuf;
     struct addr_pair apair;
-    int len;
-    __u8 *options, header_len, option_len;
-    //__u8 addr[4];
+    int header_len, len;
 
     th->sport = htons(cb->localport);
     th->dport = htons(cb->remport);
@@ -360,18 +355,17 @@ void tcp_output(struct tcpcb_s *cb)
     th->urgpnt = 0;
     th->flags = cb->flags;
 
-    header_len = 20;
-#if 0
-    option_len = 0;
-    options = &th->options;
+    header_len = sizeof(tcphdr_t);
     if (cb->flags & TF_SYN) {
-	header_len += 4;
-	option_len += 4;
-	options[0] = 2; 	/* MSS */ //FIXME
-	options[1] = 4;
+	__u8 *options = th->options;
+
+	options[0] = TCP_OPT_MSS;
+	options[1] = TCP_OPT_MSS_LEN;		/* total options length (4)*/
 	*(__u16 *)(options + 2) = htons(SLIP_MTU - 40);
+	//*(__u16 *)(options + 2) = htons(512 - 40);
+	header_len += TCP_OPT_MSS_LEN;
     }
-#endif
+
     TCP_SETHDRSIZE(th, header_len);
 
     len = cb->datalen + header_len;

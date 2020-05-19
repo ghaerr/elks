@@ -20,41 +20,38 @@
 #include <fcntl.h>
 
 #include "ip.h"
-#include "icmp.h"
-#include "slip.h"
 #include "tcp.h"
 #include "tcpdev.h"
+#include "icmp.h"
+#include "slip.h"
 #include <linuxmt/arpa/inet.h>
 #include "deveth.h"
 #include "arp.h"
 
-//#define USE_ASM
-
-static unsigned char ipbuf[TCPDEV_BUFSIZE + sizeof(struct ip_ll)];
+static unsigned char ipbuf[IP_BUFSIZ];
 
 int ip_init(void)
 {
     return 0;
 }
 
-#ifndef USE_ASM
 __u16 ip_calc_chksum(char *data, int len)
 {
     __u32 sum = 0;
-    int i;
-    __u16 *p = (__u16 *) data;
+    register __u16 *p = (__u16 *) data;
 
+if (len & 1) printf("ip: chksum on bad length %d\n", len); //FIXME
     len >>= 1;
 
-    for (i=0; i < len ; i++){
+    do {
 	sum += *p++;
-    }
+    } while (--len > 0);
 
-    return ~((sum & 0xffff) + ((sum >> 16) & 0xffff));
+    while (sum >> 16)
+	sum = (sum & 0xffff) + (sum >> 16);
+    return ~(__u16)sum;
 }
-#else
-#asm
-/*__u16 ip_calc_chksum(char *data, int len)*/
+/*** __u16 ip_calc_chksum(char *data, int len)
 	.text
 	.globl _ip_calc_chksum
 _ip_calc_chksum:
@@ -85,10 +82,7 @@ loop1:
 	pop bp
 
 	ret
-#endasm
-
-
-#endif
+***/
 
 static void ip_print(struct iphdr_s *head, int size)
 {
@@ -96,16 +90,17 @@ static void ip_print(struct iphdr_s *head, int size)
     debug_ip("IP: %s ", size? "recv": "send");
     debug_ip("%s -> ", in_ntoa(head->saddr));
     debug_ip("%s ", in_ntoa(head->daddr));
-    debug_ip("v%d hl:%d ",IP_VERSION(head), IP_IHL(head));
+    debug_ip("v%d hl:%d ", IP_VERSION(head), IP_HLEN(head));
     debug_ip("tos:%d len:%d ", head->tos, ntohs(head->tot_len));
-    debug_ip("id:%d fo:%d ",head->id, head->frag_off);
-    debug_ip("chk:%d ",ip_calc_chksum((char *)head, 4 * IP_IHL(head)));
-    debug_ip("ttl:%d ",head->ttl);
-    debug_ip("prot:%d\n",head->protocol);
+    debug_ip("id:%u ", ntohs(head->id));
+    debug_ip("fo:%x ", ntohs(head->frag_off));	//FIXME add FM_ flags
+    debug_ip("chk:%d ", ip_calc_chksum((char *)head, 4 * IP_HLEN(head)));
+    debug_ip("ttl:%d ", head->ttl);
+    debug_ip("prot:%d\n", head->protocol);
 #if DEBUG_IP > 1
     debug_ip("   opts:");
     int i;
-    unsigned char *addr = (__u8 *)head + 4 * IP_IHL(head);
+    unsigned char *addr = (__u8 *)head + 4 * IP_HLEN(head);
     for (i = 0 ; i < ntohs(head->tot_len) - 20 ; i++ )
 	debug_ip("%02x ",addr[i]);
     debug_ip("\n");
@@ -125,7 +120,7 @@ void ip_recvpacket(unsigned char *packet,int size)
 	return;
     }
 
-    if (IP_IHL(iphdr) < 5) {
+    if (IP_HLEN(iphdr) < 5) {
         debug_ip("IP: Bad HLEN\n");
 	return;
     }
@@ -133,7 +128,7 @@ void ip_recvpacket(unsigned char *packet,int size)
     switch (iphdr->protocol) {
     case PROTO_ICMP:
         debug_ip("IP: recv icmp packet\n");
-	data = packet + 4 * IP_IHL(iphdr);
+	data = packet + 4 * IP_HLEN(iphdr);
 	icmp_process(iphdr, data);
 	break;
 
@@ -148,12 +143,16 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
 {
     struct ip_ll *ipll = (struct ip_ll *)ipbuf;
     register struct iphdr_s *iph = (struct iphdr_s *)(ipbuf + sizeof(struct ip_ll));
-    int iphdrlen;
+    int iphdrlen, localpacket;
     ipaddr_t ip_addr;
     eth_addr_t eth_addr;
+    static __u16 nextID = 1;
 
-	/* deal with ethernet layer if destination not local_ip*/
-    if (eth_device && (apair->daddr != local_ip)) {
+    /* determine if packet is routed to localhost*/
+    localpacket =  apair->saddr == local_ip && apair->daddr == local_ip;
+
+    /* deal with ethernet layer if destination not local_ip*/
+    if (eth_device && !localpacket) {
         /* Is this the best place for the IP routing to happen ? */
         /* I think no, because actual sending interface is coming from the routing */
 
@@ -205,10 +204,10 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
 
     /* ip layer*/
     iph->version_ihl	= 0x45;
-    iphdrlen		= 4 * IP_IHL(iph);
+    iphdrlen		= 4 * IP_HLEN(iph);
     iph->tos 		= 0;
     iph->tot_len	= htons(iphdrlen + len);
-    iph->id		= 0;
+    iph->id		= htons(nextID); nextID++;
     iph->frag_off 	= 0;
     iph->ttl		= 64;
     iph->saddr		= apair->saddr;
@@ -216,19 +215,19 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
     iph->protocol	= apair->protocol;
     iph->check		= 0;
     iph->check		= ip_calc_chksum((char *)iph, iphdrlen);
-    memcpy((char *)iph + iphdrlen, packet, len);
+    memcpy((char *)iph + iphdrlen, packet, len);	//FIXME don't copy, fixup in upper layer
 
     ip_print(iph, 0);
 #if DEBUG_TCP
     struct iptcp_s iptcp;
     iptcp.iph = iph;
-    iptcp.tcph = (struct tcphdr_s *)(((char *)iph) + 4 * IP_IHL(iph));
-    iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_IHL(iph);
+    iptcp.tcph = (struct tcphdr_s *)(((char *)iph) + 4 * IP_HLEN(iph));
+    iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_HLEN(iph);
     tcp_print(&iptcp, 0);
 #endif
 
     /* route packet right back to us if local_ip*/
-    if (iph->daddr == local_ip) {
+    if (localpacket) {
 	debug_ip("ip: route localhost\n");
 	ip_recvpacket((unsigned char *)iph, iphdrlen + len);
 	return;
