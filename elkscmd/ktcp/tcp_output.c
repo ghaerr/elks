@@ -29,8 +29,8 @@ static unsigned char tcpbuf[TCP_BUFSIZ];
 __u16 tcp_chksum(struct iptcp_s *h)
 {
     __u32 sum = htons(h->tcplen);
-    __u16 *data = (__u16 *)h->tcph;
     __u16 len = h->tcplen;
+    register __u16 *data = (__u16 *)h->tcph;
 
     for (; len > 1 ; len -= 2)
 	sum += *data++;
