@@ -21,15 +21,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 #include <linuxmt/minix_fs.h>
 
-#define DEFAULT_DEV	"/dev/fd0"
 #define BLOCK_SIZE	1024
 
 int df(char *device);
 
 typedef int bit_t;
 bit_t bit_count(unsigned blocks, bit_t bits, int fd);
+char *devname(char *dirname);
 
 int iflag= 0;	/* Focus on inodes instead of blocks. */
 int Pflag= 0;	/* Posix standard output. */
@@ -38,13 +39,14 @@ int istty;	/* isatty(1) */
 
 void usage(void)
 {
-	fprintf(stderr, "Usage: df [-ikP] [-t type] [device]...\n");
+	fprintf(stderr, "Usage: df [-ikP] [device]...\n");
 	exit(1);
 }
 
 int main(int argc, char *argv[])
 {
-  char *device = DEFAULT_DEV;
+  char *device = "/";
+  char *blockdev;
 
   while (argc > 1 && argv[1][0] == '-') {
   	char *opt= argv[1]+1;
@@ -54,12 +56,6 @@ int main(int argc, char *argv[])
   		case 'i':	iflag= 1;	break;
   		case 'k':	kflag= 1;	break;
   		case 'P':	Pflag= 1;	break;
-  		//case 't':
-			//if (argc < 3) usage();
-			//type= argv[2];		//FIXME add FAT
-			//argv++;
-			//argc--;
-			//break;
 		default:
 			usage();
 		}
@@ -69,6 +65,14 @@ int main(int argc, char *argv[])
   }
 
   istty= isatty(1);
+
+  if (argc > 1)
+	device = argv[1];
+
+  if (!(blockdev = devname(device))) {
+	fprintf(stderr, "Can't find /dev/ device for %s\n", device);
+	exit(1);
+  }
 
   if (Pflag) {
 	printf(!iflag ? "\
@@ -82,10 +86,8 @@ Filesystem        Files     free     used    %  BUsed%"
 	);
   }
 
-  if (argc > 1)
-  	device = argv[1];
 
-  return df(device);
+  return df(blockdev);
 }
 
 /* (num / tot) in percentages rounded up. */
@@ -242,3 +244,39 @@ bit_t bit_count(unsigned blocks, bit_t bits, int fd)
 /*
  * $PchId: df.c,v 1.7 1998/07/27 18:42:17 philip Exp $
  */
+
+/* return /dev/ device from dirname*/
+char *devname(char *dirname)
+{
+   static char dev[] = "/dev";
+   struct stat st, dst;
+   DIR  *fp;
+   struct dirent *d;
+   static char name[16]; /* should be MAXNAMLEN but that's overkill */
+
+   if (!strncmp(dirname, "/dev/", 5))
+	return dirname;
+
+   if (stat(dirname, &st) < 0)
+      return 0;
+
+   fp = opendir(dev);
+   if (fp == 0)
+      return 0;
+   strcpy(name, dev);
+   strcat(name, "/");
+
+   while ((d = readdir(fp)) != 0) {
+      if(d->d_name[0] == '.' || strlen(d->d_name) > sizeof(name) - sizeof(dev) - 1)
+         continue;
+      strcpy(name + sizeof(dev), d->d_name);
+      if (stat(name, &dst) == 0) {
+		if (st.st_dev == dst.st_rdev) {
+			closedir(fp);
+			return name;
+        }
+      }
+   }
+   closedir(fp);
+   return 0;
+}
