@@ -12,7 +12,7 @@ include $(BASEDIR)/Make.rules
 
 # note: grep doesn't read stdin, replaced with minix1/grep
 PRGS = ln ls mkdir mkfifo mknod more mv rm rmdir sync touch \
-	cat chgrp chmod chown cmp cp dd grep
+	cat chgrp chmod chown cmp cp dd df grep
 
 all: $(PRGS)
 
@@ -33,6 +33,9 @@ cmp: cmp.o
 
 cp: cp.o
 	$(LD) $(LDFLAGS) -o cp cp.o $(LDLIBS)
+
+df: df.o
+	$(LD) $(LDFLAGS) -o df df.o $(LDLIBS)
 
 dd: dd.o
 	$(LD) $(LDFLAGS) -o dd dd.o $(LDLIBS)

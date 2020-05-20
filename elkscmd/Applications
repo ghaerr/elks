@@ -59,6 +59,7 @@ file_utils/chmod				:be-fileutil	:360k
 file_utils/chown				:be-fileutil		:720k
 file_utils/cmp					:be-fileutil			:1440k
 file_utils/cp					:be-fileutil	:360k
+file_utils/df					:be-fileutil			:1440k
 file_utils/dd					:be-fileutil			:1440k
 file_utils/mkdir				:fileutil		:360k
 file_utils/mknod				:fileutil				:1440k
