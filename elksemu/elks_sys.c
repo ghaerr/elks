@@ -164,15 +164,15 @@ static int elks_wait4(int bx,int cx,int dx,int di,int si)
 {
 	int status;
 	uint16_t *tp=ELKS_PTR(uint16_t, cx);
-	int r;
+	pid_t r;
 	struct rusage use;
 
 	dbprintf(("wait4(%d, %d, %d, %d)\n", bx, cx, dx, di));
-	r=wait4((int)(short)bx, &status, dx, &use );
+	r=wait4(elks_to_linux_pid(bx), &status, dx, &use );
 
 	*tp=status;
 	if( di ) memcpy(ELKS_PTR(void, di), &use, sizeof(use));
-	return r;
+	return linux_to_elks_pid(r);
 }
 
 #define sys_link elks_link
@@ -271,8 +271,8 @@ static int elks_lseek(int bx,int cx,int dx,int di,int si)
 static int elks_getpid(int bx,int cx,int dx,int di,int si)
 {
 	dbprintf(("getpid/getppid()\n"));
-	ELKS_POKE(uint16_t, bx, getppid());
-	return getpid();
+	ELKS_POKE(uint16_t, bx, linux_to_elks_pid(getppid()));
+	return linux_to_elks_pid(getpid());
 }
 
 #define sys_setuid elks_setuid
@@ -344,7 +344,7 @@ static int elks_sync(int bx,int cx,int dx,int di,int si)
 static int elks_kill(int bx,int cx,int dx,int di,int si)
 {
 	dbprintf(("kill(%d,%d)\n",bx,cx));
-	return kill(bx,cx);
+	return kill(elks_to_linux_pid(bx),cx);
 }
 
 #define sys_pipe elks_pipe

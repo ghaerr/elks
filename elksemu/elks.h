@@ -3,6 +3,7 @@
  */
 
 #include <stdint.h>
+#include <sys/types.h>
 #include <sys/user.h>
  
 #define HZ			100
@@ -128,5 +129,8 @@ extern volatile struct elks_cpu_s elks_cpu;
 void db_printf(const char *, ...);
 int elks_syscall(void);
 void minix_syscall(void);
+void elks_pid_init(void);
+pid_t elks_to_linux_pid(int16_t);
+int16_t linux_to_elks_pid(pid_t);
 
 int reboot(int magic1, int magic2, int magic3);

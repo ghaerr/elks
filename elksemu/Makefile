@@ -25,7 +25,7 @@ endif
 # For gcc making a.out with a basically ELF compiler
 # CFLAGS=-O2 -fno-strength-reduce -b i486-linuxaout -N -s -static
 
-OBJ=elks.o elks_sys.o elks_signal.o minix.o
+OBJ=elks.o elks_sys.o elks_signal.o elks_pid.o minix.o
 
 elksemu:	$(OBJ)
 		$(CC) $(CFLAGS) -o $@ $^

@@ -418,6 +418,7 @@ main(int argc, char *argv[], char *envp[])
 
 	dbprintf(("ELKSEMU\n"));
 	elks_init();
+	elks_pid_init();
 
 	pg_sz = getpagesize();
 	if (pg_sz < 0)
