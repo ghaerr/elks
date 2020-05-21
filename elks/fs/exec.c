@@ -52,11 +52,6 @@ static struct minix_exec_hdr mh;
 static struct elks_supl_hdr esuph;
 #endif
 
-// Default data sizes
-
-#define INIT_HEAP  0x0     // For future use (inverted heap and stack)
-#define INIT_STACK 0x2000  // 8 K (space for both stack and heap)
-
 #ifndef __GNUC__
 /* FIXME: evaluates some operands twice */
 #   define add_overflow(a, b, res) \
@@ -75,8 +70,10 @@ static struct elks_supl_hdr esuph;
 #endif
 
 #ifdef CONFIG_EXEC_MMODEL
-// Read relocations for a particular segment and apply them
-// Only IA-16 segment relocations are accepted
+/*
+ * Read relocations for a particular segment and apply them
+ * Only IA-16 segment relocations are accepted
+ */
 static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 		    segment_s *seg_data, __ptask currentp, struct inode *inode,
 		    struct file *filp)
@@ -133,7 +130,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     seg_t base_data = 0;
     segment_s * seg_code;
     segment_s * seg_data;
-    size_t len, min_len;
+    size_t len, min_len, stack;
 #ifdef CONFIG_EXEC_MMODEL
     int need_reloc_code = 1;
 #endif
@@ -186,10 +183,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if (add_overflow(min_len, mh.bseg, &min_len))
 	goto error_exec3;
 
-    // TODO: revise the ELKS specific executable format
-    // as we now master the executable header content
-    // with the new GNU build tool chain (custom LD script)
-
 #ifdef CONFIG_EXEC_MMODEL
     memset(&esuph, 0, sizeof(esuph));
 #endif
@@ -224,37 +217,41 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	if (base_data != 0)
 	    debug1("EXEC: New type executable stack = %x\n", base_data);
 
-	if (add_overflow(min_len, base_data, &min_len))
+	if (add_overflow(min_len, base_data, &min_len))	/* adds stack size*/
 	    goto error_exec3;
 #else
 	if (base_data != 0)
 	    goto error_exec3;
 #endif
 	break;
-#endif
+#endif /* CONFIG_EXEC_MMODEL*/
     default:
 	goto error_exec3;
     }
 
     /*
-     * Size for data segment
-     * mh.chmem was used by old ld86
-     * New LD script sets this to zero (default)
+     * chmem is size of data+bss+heap, 0 means use default heap
+     * old ld86 used chmem as size of data+bss+heap+stack
      */
-    len = mh.chmem;
+    len = mh.chmem;					/* = data+bss+heap*/
     if (!len) {
 	len = min_len;
-#ifdef CONFIG_EXEC_LOW_STACK
-	if (base_data) {
-	    if (add_overflow(len, INIT_HEAP, &len))
-		goto error_exec3;
-	} else
-#endif
-	if (add_overflow(len, INIT_HEAP + INIT_STACK, &len))
+	if (add_overflow(len, INIT_HEAP, &len))		/* add default heap*/
 	    goto error_exec3;
-    } else if (len < min_len)
+    } else {
+	debug2("heap %u len %u\n", mh.chmem - min_len, len);
+	if (len < min_len)
+	   goto error_exec3;
+    }
+#ifndef CONFIG_EXEC_LOW_STACK
+    stack = mh.minstack;
+    /* if no explicit stack specified, allow older max heap+stack programs to run*/
+    if (!stack && len < 0xFFF0)
+	stack = INIT_STACK;
+    if (add_overflow(len, stack, &len))			/* add stack*/
 	goto error_exec3;
-
+    if (stack) debug1("stack %u\n", stack);
+#endif
     /* Round data segment length up to a paragraph boundary */
     if (add_overflow(len, 15, &len))
 	goto error_exec3;
@@ -351,6 +348,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	: currentp->t_endseg) - slen;
     currentp->t_regs.sp = (__u16)(currentp->t_begstack);
     fmemcpyb((byte_t *)currentp->t_begstack, seg_data->base, (byte_t *)sptr, ds, (word_t) slen);
+    currentp->t_minstack = stack;
 
     /* From this point, the old code and data segments are not needed anymore */
 
