@@ -130,7 +130,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     seg_t base_data = 0;
     segment_s * seg_code;
     segment_s * seg_data;
-    size_t len, min_len, stack;
+    size_t len, min_len, stack = 0;
 #ifdef CONFIG_EXEC_MMODEL
     int need_reloc_code = 1;
 #endif
@@ -174,7 +174,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /* Sanity check it.  */
     if (retval != (int)sizeof(mh) ||
 	(mh.type != MINIX_SPLITID_AHISTORICAL && mh.type != MINIX_SPLITID) ||
-	mh.tseg == 0 || mh.version != 0) {
+	mh.tseg == 0) {
 	debug1("EXEC: bad header, result %u\n", retval);
 	goto error_exec3;
     }
@@ -230,28 +230,62 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     }
 
     /*
-     * chmem is size of data+bss+heap, 0 means use default heap
-     * old ld86 used chmem as size of data+bss+heap+stack
+     * mh.version == 1: chmem is size of heap, 0 means use default heap
+     * mh.version == 0: old ld86 used chmem as size of data+bss+heap+stack
      */
-    len = mh.chmem;					/* = data+bss+heap*/
-    if (!len) {
-	len = min_len;
-	if (add_overflow(len, INIT_HEAP, &len))		/* add default heap*/
-	    goto error_exec3;
-    } else {
-	debug2("heap %u len %u\n", mh.chmem - min_len, len);
-	if (len < min_len)
-	   goto error_exec3;
-    }
-#ifndef CONFIG_EXEC_LOW_STACK
-    stack = mh.minstack;
-    /* if no explicit stack specified, allow older max heap+stack programs to run*/
-    if (!stack && len < 0xFFF0)
-	stack = INIT_STACK;
-    if (add_overflow(len, stack, &len))			/* add stack*/
+    switch (mh.version) {
+    default:
 	goto error_exec3;
-    if (stack) debug1("stack %u\n", stack);
+    case 1:
+	len = mh.chmem;					/* = heap */
+	if (!len)
+	    len = INIT_HEAP;				/* default heap */
+	else
+	    debug1("EXEC: heap %u\n", len);
+	if (add_overflow(len, min_len, &len))
+	    goto error_exec3;
+	debug1("EXEC: len with heap is %u\n", len);
+#ifdef CONFIG_EXEC_LOW_STACK
+	if (!base_data)
 #endif
+	{
+	    stack = mh.minstack;
+	    if (!stack)
+		stack = INIT_STACK;
+	    else
+		debug1("EXEC: stack %u\n", stack);
+	    if (add_overflow(len, stack, &len) ||	/* add stack */
+		add_overflow(len, slen, &len))		/* add argv, envp */
+		goto error_exec3;
+	    debug1("EXEC: len with stack, argv, envp is %u\n", len);
+	}
+	break;
+    case 0:
+	len = mh.chmem;
+	if (len) {
+	    if (len < min_len)
+		goto error_exec3;
+	    /* if the total data size is directly specified, then there is
+	       no well-defined "minimum stack" :-| */
+	    stack = 0;
+	} else {
+	    len = min_len;
+#ifdef CONFIG_EXEC_LOW_STACK
+	    if (base_data) {
+		if (add_overflow(len, INIT_HEAP, &len))
+		    goto exec_error3;
+	    } else
+#endif
+	    {
+		if (add_overflow(len, INIT_HEAP + INIT_STACK, &len))
+		    goto error_exec3;
+		stack = INIT_STACK;
+	    }
+	    if (add_overflow(len, slen, &len))
+		goto error_exec3;
+	}
+    }
+
     /* Round data segment length up to a paragraph boundary */
     if (add_overflow(len, 15, &len))
 	goto error_exec3;

@@ -19,7 +19,7 @@ BUILDDIR=$(CROSSDIR)/build
 
 # BINUTILS for IA16
 
-BINUTILS_VER=83669cf502a4e207882c459e14981058ed6cab27
+BINUTILS_VER=a4cf258f3263cd70e7019c3a98bfd04fa45a316a
 BINUTILS_DIST=binutils-ia16-$(BINUTILS_VER)
 
 $(DISTDIR)/$(BINUTILS_DIST).zip:
@@ -51,7 +51,7 @@ all:: $(CROSSDIR)/.binutils.install
 
 # GCC for IA16
 
-GCC_VER=546ba36d7024335dc4cf4553440c2b5bdc0e87cf
+GCC_VER=ac1517e0027b6e208ec50d26bfe7828c220a2605
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).zip:
@@ -66,8 +66,8 @@ $(BUILDDIR)/.gcc.src: $(DISTDIR)/$(GCC_DIST).zip
 	cd $(BUILDDIR) && unzip -q $(DISTDIR)/$(GCC_DIST).zip
 	rm -rf $(BUILDDIR)/gcc-src
 	cd $(BUILDDIR) && mv $(GCC_DIST) gcc-src
-	touch $(BUILDDIR)/.gcc.src
 	cd $(BUILDDIR)/gcc-src && contrib/download_prerequisites
+	touch $(BUILDDIR)/.gcc.src
 
 $(BUILDDIR)/.gcc.build: $(BUILDDIR)/.gcc.src $(BUILDDIR)/.binutils.build
 	cd $(BUILDDIR) && rm -rf gcc-build
