@@ -263,11 +263,19 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     case 0:
 	len = mh.chmem;
 	if (len) {
-	    if (len < min_len)
+	    if (len <= min_len)
 		goto error_exec3;
-	    /* if the total data size is directly specified, then there is
-	       no well-defined "minimum stack" :-| */
-	    stack = 0;
+	    /*
+	     * Try to reserve INIT_STACK bytes of the non-static data memory
+	     * for a stack.  If this is not possible, reserve all the
+	     * remaining memory for a stack, and give a warning.
+	     */
+	    stack = len - min_len;
+	    if (stack < INIT_STACK)
+	      printk("EXEC: warn: using all %u byte(s) avail. chmem "
+		     "for stack\n", stack);
+	    else
+	      stack = INIT_STACK;
 	} else {
 	    len = min_len;
 #ifdef CONFIG_EXEC_LOW_STACK
