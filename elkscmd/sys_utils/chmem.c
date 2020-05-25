@@ -108,10 +108,7 @@ do_chmem(char *filename, int changeheap, int changestack,
 	header.chmem = (unsigned)heap;
 	header.minstack = (unsigned)stack;
 
-	if ((unsigned)heap != 0 || (unsigned)stack != 0)
-		header.version = 1;
-	else
-		header.version = 0;
+	header.version = 1;
 
 	lseek(fd, 0L, SEEK_SET);
 	if (write(fd, &header, sizeof(header)) != sizeof(header))
