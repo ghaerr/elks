@@ -7,6 +7,7 @@
  *
  */
 
+//#define DEBUG
 #include <linuxmt/kernel.h>
 #include <linuxmt/types.h>
 #include <linuxmt/config.h>
@@ -57,6 +58,7 @@ static size_t tcpdev_read(struct inode *inode, struct file *filp, char *data,
      *  buffer it will lose data, so the tcpip stack should read BIG.
      */
     len = len < tdout_tail ? len : tdout_tail;
+//printk("TDOUT_TAIL %u\n", len);
     debug1("TCPDEV: read() mark 1 - len = %u\n",len);
     memcpy_tofs(data, tdout_buf, len);
     tdout_tail = 0;
@@ -96,6 +98,7 @@ static size_t tcpdev_write(struct inode *inode, struct file *filp,
     if (len > 0) {
 	down(&bufin_sem);
 
+//printk("TDIN_TAIL %u\n", len);
 	tdin_tail = (unsigned) len;
 	memcpy_fromfs(tdin_buf, data, len);
 

@@ -133,7 +133,7 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	cb->datalen = 0;
 	tcp_output(cb);
-
+printf("CONNECT complete\n");
 	retval_to_sock(cb->sock, 0);
 
 	return;
@@ -214,15 +214,16 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 //printf("space free %d\n", CB_BUF_SPACE(cb));
 	/* FIXME : check if it fits */
 	if (datasize > CB_BUF_SPACE(cb)) {
-	    printf("tcp: packet data too large: %u > %d\n", datasize, CB_BUF_SPACE(cb));
-	    tcp_reset_connection(cb);	//FIXME this causes RST received then panic in read/write
+	    printf("tcp: dropping packet, data too large: %u > %d\n", datasize, CB_BUF_SPACE(cb));
+	    //tcp_reset_connection(cb);	//FIXME this causes RST received then panic in read/write
 	    return;
 	}
 
 	tcpcb_buf_write(cb, data, datasize);
 
-	if ((h->flags & TF_PSH) || CB_BUF_SPACE(cb) <= PUSH_THRESHOLD) {
-	    if (cb->bytes_to_push <= 0)
+	if (1 || (h->flags & TF_PSH) || CB_BUF_SPACE(cb) <= PUSH_THRESHOLD) {
+	    //if (cb->bytes_to_push <= 0)
+	    if (cb->bytes_to_push >= 0)
 		tcpcb_need_push++;
 	    cb->bytes_to_push = CB_BUF_USED(cb);
 	}
@@ -383,7 +384,7 @@ debug_tcp("ktcp: update %x,%x\n", cbs_in_time_wait, cbs_in_user_timeout);
     if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0)
 	tcpcb_expire_timeouts();
 
-    if (tcpcb_need_push > 0)
+    //if (tcpcb_need_push > 0)
 	tcpcb_push_data();
 }
 

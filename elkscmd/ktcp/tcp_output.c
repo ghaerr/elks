@@ -316,7 +316,7 @@ if (tcp_retrans_memory > TCP_RETRANS_MAXMEM || tcp_timeruse > 5) {
 	datalen = n->len - TCP_DATAOFF(n->tcph);
 
 	//debug_tcp("retrans: %lx %lx", ntohl(n->tcph->seqnum) + datalen,n->cb->send_una);
-	if (SEQ_LEQ(ntohl(n->tcph->seqnum) + datalen ,n->cb->send_una)) {
+	if (SEQ_LEQ(ntohl(n->tcph->seqnum) + datalen, n->cb->send_una)) {
 	    if (n->retrans_num == 0) {
 		rtt = Now - n->first_trans;
 		if (rtt > 0)
@@ -326,7 +326,7 @@ if (tcp_retrans_memory > TCP_RETRANS_MAXMEM || tcp_timeruse > 5) {
 	    continue;
 	}
 
-debug_tcp("retrans %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
+//debug_tcp("retrans %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
 	if (TIME_GEQ(Now, n->next_retrans)) {
 	    tcp_reoutput(n);
 	    return;
@@ -351,6 +351,7 @@ void tcp_output(struct tcpcb_s *cb)
     len = CB_BUF_SPACE(cb) - PUSH_THRESHOLD;
     if (len <= 0)
 	len = 1;		/* Never advertise zero window size */
+len = 255;	//FIXME testing only
     th->window = htons(len);
     th->urgpnt = 0;
     th->flags = cb->flags;
@@ -368,8 +369,9 @@ void tcp_output(struct tcpcb_s *cb)
 
     TCP_SETHDRSIZE(th, header_len);
 
+    if (cb->datalen)
+	memcpy((char *)th + header_len, cb->data, cb->datalen);
     len = cb->datalen + header_len;
-    memcpy((char *)th + header_len, cb->data, cb->datalen);
 
     th->chksum = 0;
     th->chksum = tcp_chksumraw(th, cb->localaddr, cb->remaddr, len);

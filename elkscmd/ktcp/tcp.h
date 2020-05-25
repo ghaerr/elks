@@ -23,7 +23,8 @@
 #define IP_BUFSIZ	(TCP_BUFSIZ + sizeof(iphdr_t) + sizeof(struct ip_ll))
 
 /* control block input buffer size - max window size*/
-#define CB_IN_BUF_SIZE	1024	/* must be power of 2*/
+//#define CB_IN_BUF_SIZE	1024	/* must be power of 2*/
+#define CB_IN_BUF_SIZE	4096	/* must be power of 2*/
 
 /* bytes to subtract from window size and when to force app write*/
 #define PUSH_THRESHOLD	512
