@@ -46,7 +46,8 @@ void usage(void)
 
 /* Print an error message and die */
 static int
-do_chmem(char *filename, int changeit, unsigned long heap, unsigned long stack)
+do_chmem(char *filename, int changeheap, int changestack,
+	 unsigned long heap, unsigned long stack)
 {
 	int				fd;
 	unsigned int	oldheap, dsegsize;
@@ -62,12 +63,18 @@ do_chmem(char *filename, int changeit, unsigned long heap, unsigned long stack)
 	if ((header.type & 0xFFFF) != MAGIC)
 		return msg("%s: not an executable\n", filename);
 
+	if (header.version > 1)
+		return msg("%s: unsupported a.out version %u\n", filename,
+			   (unsigned)header.version);
+
 	dsegsize = header.dseg + header.bseg;
 	if ((header.type & SEPBIT) == 0)	/* not seperate I&D*/
 		dsegsize += header.tseg;
 
 	if (header.chmem == 0)				/* default heap*/
 		oldheap = 0;
+	else if (header.version == 1)
+		oldheap = header.chmem;
 	else
 		oldheap = header.chmem - dsegsize;
 
@@ -75,8 +82,13 @@ do_chmem(char *filename, int changeit, unsigned long heap, unsigned long stack)
 		header.tseg, header.dseg, header.bseg, oldheap, header.minstack, (unsigned long)oldheap+dsegsize,
 		(long)header.tseg+header.dseg+header.bseg+oldheap, filename);
 
-	if (!changeit)
+	if (!changeheap && !changestack)
 		return 0;
+
+	if (!changeheap)
+		heap = oldheap;
+	if (!changestack)
+		stack = header.minstack;
 
 	newstack = stack? stack: INIT_STACK;
 	if (newstack > MAX)
@@ -93,11 +105,11 @@ do_chmem(char *filename, int changeit, unsigned long heap, unsigned long stack)
 	       header.tseg, header.dseg, header.bseg, heap, stack, heap+dsegsize,
 		   header.tseg+header.dseg+header.bseg+heap, filename);
 
-	if ((unsigned)heap == dsegsize || (unsigned)heap == 0)
-		header.chmem = 0;
-	else
-		header.chmem = (unsigned)heap + dsegsize;
+	header.chmem = (unsigned)heap;
 	header.minstack = (unsigned)stack;
+
+	header.version = 1;
+
 	lseek(fd, 0L, SEEK_SET);
 	if (write(fd, &header, sizeof(header)) != sizeof(header))
 		return msg("Can't write header: %s\n", filename);
@@ -109,7 +121,7 @@ int
 main(int argc, char **argv)
 {
 	int 			ch, err;
-	int				changeit = 0;
+	int				changeheap = 0, changestack = 0;
 	unsigned long	heap = 0, stack = 0;
 
 	progname = argv[0];
@@ -117,11 +129,11 @@ main(int argc, char **argv)
 		switch (ch) {
 		case 'h':
 			heap = strtoul(optarg, NULL, 0);
-			changeit = 1;
+			changeheap = 1;
 			break;
 		case 's':
 			stack = strtoul(optarg, NULL, 0);
-			changeit = 1;
+			changestack = 1;
 			break;
 		default:
 			usage();
@@ -133,7 +145,8 @@ main(int argc, char **argv)
 
 	printf(" TEXT   DATA    BSS   HEAP  STACK  TOTDATA  TOTAL\n");
 	while (optind < argc) {
-		if (do_chmem(argv[optind], changeit, heap, stack))
+		if (do_chmem(argv[optind], changeheap, changestack,
+					   heap, stack))
 			err = 1;
 		argc--;
 		argv++;

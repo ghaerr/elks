@@ -30,6 +30,13 @@ SECTIONS {
 		. = ALIGN(0x10);
 		ASSERT (. + 0x100 <= 0xfff0,
 		    "Error: too large for a medium-model ELKS a.out file.");
+		/* Sanity check any -maout-total= and -maout-chmem= values */
+		PROVIDE (_total = 0);
+		PROVIDE (_chmem = 0);
+		ASSERT (_total <= 0xfff0 && . + _chmem <= 0xfff0,
+		    "Error: total data segment size too large.");
+		ASSERT ((_total == 0 || _total > .) && _chmem >= 0,
+		    "Error: total data segment size too small.");
 	}
 	/DISCARD/ : { *(*) }
 }
