@@ -42,7 +42,7 @@ void
 minix_syscall()
 {
    static char *nm[4] = {"?", "send", "receive", "sendrec"};
-   char   tsks[10], syss[10];
+   char   tsks[13], syss[12];
 
    int   sr  = (unsigned short) elks_cpu.regs.xcx;
    int   tsk = (unsigned short) elks_cpu.regs.xax;

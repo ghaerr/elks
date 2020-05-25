@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,12 +6,21 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <sys/ptrace.h>
 #include "elks.h" 
 
 static int elks_sigtrap_ip = -1, elks_sigtrap_cs = -1;
 
 void sig_trap(int signo)
 {
+   pid_t child = elks_cpu.child, pid;
+   int status;
+   kill(elks_cpu.child, SIGSTOP);
+   while (ptrace(PTRACE_GETREGS, child, NULL, &elks_cpu.regs) != 0) {
+      if (errno != ESRCH)
+	 return;
+   }
    elks_cpu.regs.xsp -= 2;
    ELKS_POKE(unsigned short, elks_cpu.regs.xsp, signo);
    elks_cpu.regs.xsp -= 2;
@@ -21,6 +29,9 @@ void sig_trap(int signo)
    ELKS_POKE(unsigned short, elks_cpu.regs.xsp, elks_cpu.regs.xip);
    elks_cpu.regs.xip = elks_sigtrap_ip;
    elks_cpu.regs.xcs = elks_sigtrap_cs;
+   if (ptrace(PTRACE_SETREGS, child, NULL, &elks_cpu.regs) != 0)
+      return;
+   kill(elks_cpu.child, SIGCONT);
 }
 
 int elks_signal(int bx,int cx,int dx,int di,int si)

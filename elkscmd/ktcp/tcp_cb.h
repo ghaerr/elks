@@ -1,6 +1,8 @@
 #ifndef TCP_CB_H
 #define TCP_CB_H
 
+extern int tcpcb_num;
+
 void tcpcb_init(void);
 struct tcpcb_list_s *tcpcb_clone(struct tcpcb_s *cb);
 void tcpcb_buf_read(struct tcpcb_s *cb, __u8 *data, __u16 len);

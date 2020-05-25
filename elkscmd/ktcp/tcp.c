@@ -35,7 +35,7 @@ void tcp_print(struct iptcp_s *head, int recv)
     debug_tcp("flags:%x ",head->tcph->flags);
     debug_tcp("seq:%lx ack:%lx ", ntohl(head->tcph->seqnum), ntohl(head->tcph->acknum));
     debug_tcp("win:%u urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
-    debug_tcp("chk:%x len:%u\n",tcp_chksum(head), head->tcplen);
+    debug_tcp("chk:%x len:%u\n", tcp_chksum(head), head->tcplen);
 }
 
 int tcp_init(void)
@@ -50,6 +50,13 @@ int tcp_init(void)
 static __u32 choose_seq(void)
 {
     return timer_get_time();
+}
+
+/* abruptly terminate connection*/
+static void tcp_reset_connection(struct tcpcb_s *cb)
+{
+	tcp_send_reset(cb);
+	tcpcb_remove(cb);	/* deallocate*/
 }
 
 void tcp_send_fin(struct tcpcb_s *cb)
@@ -98,7 +105,7 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST) {
 	retval_to_sock(cb->sock, -ECONNREFUSED);
-	cb->state = TS_CLOSED;
+	//cb->state = TS_CLOSED;
 	tcpcb_remove(cb); 	/* deallocate*/
 	return;
     }
@@ -108,9 +115,10 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	    /* Send RST */
 	    cb->send_nxt = h->acknum;
-	    cb->state = TS_CLOSED;
-	    tcp_send_reset(cb);
-	    tcpcb_remove(cb); 	/* deallocate*/
+	    cb->state = TS_CLOSED;	//FIXME not needed
+	    tcp_reset_connection(cb);	/* deallocate*/
+	    //tcp_send_reset(cb);
+	    //tcpcb_remove(cb);
 	    return;
 	}
 
@@ -207,6 +215,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	/* FIXME : check if it fits */
 	if (datasize > CB_BUF_SPACE(cb)) {
 	    printf("tcp: packet data too large: %u > %d\n", datasize, CB_BUF_SPACE(cb));
+	    tcp_reset_connection(cb);	//FIXME this causes RST received then panic in read/write
 	    return;
 	}
 
@@ -233,7 +242,8 @@ printf("tcp: RST received, removing retrans packets\n");
 	if (cb->state == TS_CLOSE_WAIT) {
 	    ENTER_TIME_WAIT(cb);
 	} else {
-	    cb->state = TS_CLOSED;
+	    //cb->state = TS_CLOSED;
+	    tcpdev_sock_state(cb, SS_UNCONNECTED);
 	    tcpcb_remove(cb); 	/* deallocate*/
 	}
 	tcpdev_sock_state(cb, SS_UNCONNECTED);
@@ -385,16 +395,16 @@ void tcp_process(struct iphdr_s *iph)
     struct tcpcb_list_s *cbnode;
     struct tcpcb_s *cb;
 
-    tcph = (struct tcphdr_s *)(((char *)iph) + 4 * IP_IHL(iph));
+    tcph = (struct tcphdr_s *)(((char *)iph) + 4 * IP_HLEN(iph));
     iptcp.iph = iph;
     iptcp.tcph = tcph;
-    iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_IHL(iph);
+    iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_HLEN(iph);
 
     tcp_print(&iptcp, 1);
 
     if (tcp_chksum(&iptcp) != 0) {
-	printf("tcp: bad checksum (%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
-	//return;
+	printf("tcp: BAD CHECKSUM (%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
+	return;
     }
 
 //debug_tcp("tcbcb_find %lx, %u, %u\n", iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));

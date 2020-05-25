@@ -30,22 +30,23 @@ void icmp_process(struct iphdr_s *iph,unsigned char *packet)
     int len;
 
     switch (packet[0]){
-    case ICMP_ECHO_REQUEST:
-	printf("icmp: PING from %s (len %d id %d seqnum %d)\n",
-	    in_ntoa(iph->saddr), ntohs(iph->tot_len), ntohs(ep->id), ntohs(ep->seqnum));
-	ep->type = ICMP_ECHO_REPLY;
+    case ICMP_TYPE_ECHO_REQ:
+	len = ntohs(iph->tot_len) - IP_HLEN(iph);
+	printf("icmp: PING from %s (len %d id %u seqnum %u)\n",
+	    in_ntoa(iph->saddr), len, ntohs(ep->id), ntohs(ep->seqnum));
+
+	ep->type = ICMP_TYPE_ECHO_REPL;
 	ep->code = 0;
-	/* return received id and seqnum*/
+	/* return received id, seqnum and extra data*/
 	ep->chksum = 0;
-	ep->chksum = ip_calc_chksum((char *)ep, sizeof(struct icmp_echo_s));
+	ep->chksum = ip_calc_chksum((char *)ep, len);
 
 	apair.daddr = iph->saddr;
 	apair.saddr = iph->daddr;
 	apair.protocol = PROTO_ICMP;
-	len = ntohs(iph->tot_len) - IP_IHL(iph);
 	ip_sendpacket(packet, len, &apair);
 	break;
-   case ICMP_ECHO_DESTUNREACHABLE:
+   case ICMP_TYPE_DST_UNRCH:
 	printf("icmp: destination unreachable code %d from %s\n",
 		ep->code, in_ntoa(iph->saddr));
 	break;

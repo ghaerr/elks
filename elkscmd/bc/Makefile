@@ -34,7 +34,7 @@ LOCALFLAGS=-D_POSIX_SOURCE
 CFLBASE += -mrtd
 
 # For ELKS, bc needs more data segment space than the kernel-given default.
-LDFLAGS += -maout-chmem=0xc000
+LDFLAGS += -maout-chmem=46000
 
 OFILES = scan.o util.o main.o number.o storage.o load.o execute.o 
 

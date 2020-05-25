@@ -52,6 +52,7 @@ struct task_struct {
     __pptr			t_begstack;
     __pptr			t_endbrk;
     __pptr			t_endseg;
+    int				t_minstack;
 
 /* Kernel info */
     pid_t			pid;

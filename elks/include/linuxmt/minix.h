@@ -18,6 +18,10 @@
 #define MINIX_S_SPLITID	0x04600301UL
 #define MINIX_DLLID	0x04A00301UL
 
+/* Default data allocations*/
+#define INIT_HEAP  4096		/* Default heap*/
+#define INIT_STACK 4096		/* Default stack*/
+
 struct minix_exec_hdr {
     unsigned long	type;
     unsigned char	hlen;
@@ -27,7 +31,8 @@ struct minix_exec_hdr {
     unsigned short	dseg, reserved3;
     unsigned short	bseg, reserved4;
     unsigned long	entry;
-    unsigned short	chmem, reserved5;
+    unsigned short	chmem;
+    unsigned short	minstack;
     unsigned long	syms;
 };
 

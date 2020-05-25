@@ -11,7 +11,7 @@
 #define IPOPT_TIMESTAMP 68
 
 #define IP_VERSION(s)	((s)->version_ihl >> 4 & 0xf)
-#define IP_IHL(s)	((s)->version_ihl & 0xf)
+#define IP_HLEN(s)	((s)->version_ihl & 0xf)
 #define IP_FLAGS(s)	((s)->frag_off >> 13)
 
 typedef __u32	ipaddr_t;

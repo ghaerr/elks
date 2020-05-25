@@ -1,99 +1,143 @@
-/* chmem - set total memory size for execution	Author: Andy Tanenbaum */
-/* from original Minix 1 source in "Operating Systems: Design and Implentation", 1st ed.*/
-/* ported to ELKS by Greg Haerr*/
+/* chmem - set total memory size for execution	Author: Andy Tanenbaum
+ * from original Minix 1 source in "Operating Systems: Design and Implentation", 1st ed.
+ *
+ * Completely rewritten for ELKS by Greg Haerr
+ *	Also functions as 'size' program.
+ *
+* The 8088 architecture does not make it possible to catch stacks that grow big.  The
+ * only way to deal with this problem is to let the stack grow down towards the data
+ * segment and the data segment grow up towards the stack. Normally, a total of 64K is
+ * allocated for the two of them, but if the programmer knows that a smaller amount is
+ * sufficient, he can change it using chmem.
+ *
+ * chmem =4096 prog  sets the total space for stack + data growth to 4096 chmem +200  prog
+ * increments the total space for stack + data growth by 200
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <linuxmt/minix.h>
 
-#define HLONG            8	/* header size in longs */
-#define TEXT             2	/* where is text size in header */
-#define DATA             3	/* where is data size in header */
-#define BSS              4	/* where is bss size in header */
-#define TOT              6	/* where in header is total allocation */
 #define TOTPOS          24	/* where is total in header */
 #define SEPBIT   0x00200000	/* this bit is set for separate I/D */
 #define MAGIC       0x0301	/* magic number for executable progs */
 #define MAX         65520L	/* maximum allocation size */
 
-/* Print an error message and die*/
-static void fatalmsg(const char *s,...)
+char *progname;
+
+int
+msg(const char *s, ...)
 {
-	va_list p;
-	va_start(p,s);
-	vfprintf(stderr,s,p);
+	va_list		p;
+	va_start(p, s);
+	vfprintf(stderr, s, p);
 	va_end(p);
-	putc('\n',stderr);
-	exit(-1);
+	return 1;
 }
 
-static void usage(void)
+void usage(void)
 {
-	fatalmsg("Usage: %s {=+-}<# bytes dynamic data> <executable>\n");
+	msg("Usage: %s [-h heap] [-s stack] files...\n", progname);
+	exit(1);
 }
 
-int main(int argc, char **argv)
+/* Print an error message and die */
+static int
+do_chmem(char *filename, int changeit, unsigned long heap, unsigned long stack)
 {
-/* The 8088 architecture does not make it possible to catch stacks that grow
- * big.  The only way to deal with this problem is to let the stack grow down
- * towards the data segment and the data segment grow up towards the stack.
- * Normally, a total of 64K is allocated for the two of them, but if the
- * programmer knows that a smaller amount is sufficient, he can change it
- * using chmem.
- *
- * chmem =4096 prog  sets the total space for stack + data growth to 4096
- * chmem +200  prog  increments the total space for stack + data growth by 200
- */
+	int				fd;
+	unsigned int	oldheap, dsegsize;
+	unsigned long	newstack;
+	struct minix_exec_hdr header;
 
+	if ((fd = open(filename, 2)) < 0)
+		return msg("Can't open %s\n", filename);
 
-  char *p;
-  int fd, separate;
-  unsigned long lsize, olddynam, newdynam = 0, newtot, overflow, dsegsize;
-  unsigned long header[HLONG];
+	if (read(fd, &header, sizeof(header)) != sizeof(header))
+		return msg("Bad header: %s\n", filename);
 
-  p = argv[1];
-  if (argc != 3) 
-	fatalmsg("Usage: %s {=+-}<# bytes dynamic data> <executable>\n", argv[0]);
-  if (*p != '=' && *p != '+' && *p != '-') usage();
-  lsize = atol(p+1);
-  if (lsize > MAX) fatalmsg("chmem: %lu too large, max %lu\n", lsize, MAX);
+	if ((header.type & 0xFFFF) != MAGIC)
+		return msg("%s: not an executable\n", filename);
 
-  fd = open(argv[2], 2);
-  if (fd < 0) fatalmsg("chmem: can't open ", argv[2], "\n");
+	dsegsize = header.dseg + header.bseg;
+	if ((header.type & SEPBIT) == 0)	/* not seperate I&D*/
+		dsegsize += header.tseg;
 
-  if (read(fd, header, sizeof(header)) != sizeof(header))
-	fatalmsg("chmem: ", argv[2], "bad header\n");
-  if ( (header[0] & 0xFFFF) != MAGIC)
-	fatalmsg("chmem: ", argv[2], " not executable\n");
-  separate = (header[0] & SEPBIT ? 1 : 0);
-  dsegsize = header[DATA] + header[BSS];
-  if (header[TOT] == 0)		/* handle ELKS default INIT_STACK case*/
-	olddynam = 0;
-  else olddynam = header[TOT] - dsegsize;
-  if (separate == 0) olddynam -= header[TEXT];
+	if (header.chmem == 0)				/* default heap*/
+		oldheap = 0;
+	else
+		oldheap = header.chmem - dsegsize;
 
-  printf("Old %s: DATA %lu BSS %ld TOT %lu DYNMEM %lu\n",
-	argv[2], header[DATA], header[BSS], header[TOT], olddynam);
+	printf("%5u  %5u  %5u  %5u  %5u   %6lu %6lu %s\n",
+		header.tseg, header.dseg, header.bseg, oldheap, header.minstack, (unsigned long)oldheap+dsegsize,
+		(long)header.tseg+header.dseg+header.bseg+oldheap, filename);
 
-  if (*p == '=') newdynam = lsize;
-  else if (*p == '+') newdynam = olddynam + lsize;
-  else if (*p == '-') newdynam = olddynam - lsize;
-  newtot = dsegsize + newdynam;
-  overflow = (newtot > MAX ? newtot - MAX : 0);	/* 64K max */
-  newdynam -= overflow;
-  newtot -= overflow;
+	if (!changeit)
+		return 0;
 
-  if (newtot == dsegsize)	/* handle ELKS default INIT_STACK case*/
-	newtot = 0;
-  printf("New %s: DATA %lu BSS %ld TOT %lu DYNMEM %lu\n",
-	argv[2], header[DATA], header[BSS], newtot, newdynam);
+	newstack = stack? stack: INIT_STACK;
+	if (newstack > MAX)
+		return msg("%s: stack too large: %ld\n", filename, newstack);
 
-  if (separate == 0) newtot += header[TEXT];
-  lseek(fd, (long) TOTPOS, SEEK_SET);
-  if (write(fd, &newtot, 4) < 0)
-	fatalmsg("chmem: can't modify ", argv[2], "\n");
-  printf("%s: Stack+malloc area changed from %lu to %lu bytes.\n",
-			 argv[2], olddynam, newdynam);
-  return 0;
+	if ((unsigned long)dsegsize+heap+newstack > MAX) {
+		heap = MAX - dsegsize - newstack;
+		if (heap < dsegsize)
+			return msg("%s: heap+stack too large: %ld\n", filename, heap + newstack);
+		msg("Warning: heap truncated to %ld\n", heap);
+	}
+
+	printf("%5u  %5u  %5u  %5lu  %5lu   %6lu %6lu %s\n",
+	       header.tseg, header.dseg, header.bseg, heap, stack, heap+dsegsize,
+		   header.tseg+header.dseg+header.bseg+heap, filename);
+
+	if ((unsigned)heap == dsegsize || (unsigned)heap == 0)
+		header.chmem = 0;
+	else
+		header.chmem = (unsigned)heap + dsegsize;
+	header.minstack = (unsigned)stack;
+	lseek(fd, 0L, SEEK_SET);
+	if (write(fd, &header, sizeof(header)) != sizeof(header))
+		return msg("Can't write header: %s\n", filename);
+
+	return 0;
+}
+
+int
+main(int argc, char **argv)
+{
+	int 			ch, err;
+	int				changeit = 0;
+	unsigned long	heap = 0, stack = 0;
+
+	progname = argv[0];
+	while ((ch = getopt(argc, argv, "h:s:")) != -1) {
+		switch (ch) {
+		case 'h':
+			heap = strtoul(optarg, NULL, 0);
+			changeit = 1;
+			break;
+		case 's':
+			stack = strtoul(optarg, NULL, 0);
+			changeit = 1;
+			break;
+		default:
+			usage();
+			break;
+		}
+	}
+	if (optind >= argc)
+		usage();
+
+	printf(" TEXT   DATA    BSS   HEAP  STACK  TOTDATA  TOTAL\n");
+	while (optind < argc) {
+		if (do_chmem(argv[optind], changeit, heap, stack))
+			err = 1;
+		argc--;
+		argv++;
+	}
+
+	return err;
 }

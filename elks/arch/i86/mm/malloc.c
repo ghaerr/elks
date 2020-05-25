@@ -11,8 +11,6 @@
 
 #include <arch/segment.h>
 
-#define MIN_STACK_SIZE 0x1000	/* 4k min stack above heap*/
-
 // TODO: reduce size
 
 // Segment descriptor
@@ -225,18 +223,17 @@ int sys_brk(__pptr newbrk)
     if (newbrk < currentp->t_enddata)
         return -ENOMEM;
 
-    if (currentp->t_begstack > currentp->t_endbrk) {	/* Old format? */
-        if (newbrk > currentp->t_endseg - MIN_STACK_SIZE) {	/* Yes */
+    if (currentp->t_begstack > currentp->t_endbrk) {				/* stack above heap?*/
+        if (newbrk > currentp->t_endseg - currentp->t_minstack) {
 			printk("sys_brk(%d) fail: brk %x over by %d bytes\n",
-				currentp->pid, newbrk, newbrk - (currentp->t_endseg - MIN_STACK_SIZE));
+				currentp->pid, newbrk, newbrk - (currentp->t_endseg - currentp->t_minstack));
             return -ENOMEM;
 		}
     }
 #ifdef CONFIG_EXEC_LOW_STACK
-    if (newbrk > currentp->t_endseg) {
+    if (newbrk > currentp->t_endseg)
         return -ENOMEM;
-    }
-#endif /* CONFIG_EXEC_LOW_STACK */
+#endif
     currentp->t_endbrk = newbrk;
 
     return 0;
