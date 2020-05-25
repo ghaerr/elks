@@ -33,6 +33,7 @@
 #include "ttn.h"
 
 //#define DEBUG 1
+//#define RAWTELNET	/* set in telnet and telnetd for raw telnet without IAC*/
 
 #if DEBUG
 #define where() (fprintf(stderr, "%s %d:", __FILE__, __LINE__))
@@ -89,8 +90,10 @@ static void keybd(void)
 	char buffer[BUFSIZE];
 
 		count= read (0, buffer, sizeof(buffer));
-		if (!count)
+		if (count <= 0) {
+			finish();
 			return;
+		}
 #if DEBUG
  { where(); fprintf(stderr, "writing %d bytes\r\n", count); }
 #endif
@@ -119,7 +122,14 @@ static void scrn(void)
 		}
 		if (!count)
 			return;
-
+#ifdef RAWTELNET
+		if (count > sizeof(buffer)) {
+			fprintf(stderr, "TELNET BAD READ %d\n", count);
+			exit(1);
+			return;
+		}
+		write(1, buffer, count);
+#else
 		bp= buffer;
 		do
 		{
@@ -128,6 +138,7 @@ static void scrn(void)
 			{
 				write(1, bp, count);
 				count= 0;
+				return;
 			}
 			if (iacptr && iacptr>bp)
 			{
@@ -152,6 +163,7 @@ assert (optsize);
 				count -= optsize;
 			}
 		} while (count);
+#endif
 }
 
 int main(int argc, char *argv[])
@@ -167,6 +179,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Usage: %s host <port>\r\n", argv[0]);
 		exit(1);
 	}
+	tcgetattr(0, &def_termios);
     signal(SIGINT, finish);
 
 	tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -201,18 +214,31 @@ int main(int argc, char *argv[])
 	}
 	printf("Connected\r\n");
 
-	tcgetattr(0, &def_termios);
-	
+#ifdef RAWTELNET
+	{
+	struct termios termios;
+	tcgetattr(0, &termios);
+	termios.c_iflag &= ~(ICRNL|IGNCR|INLCR|IXON|IXOFF);
+	termios.c_oflag &= ~(OPOST);
+	termios.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG);
+	tcsetattr(0, TCSANOW, &termios);
+	}
+#endif
 	nonblock = 1;
 	ioctl(0, FIONBIO, &nonblock);
 
 	for (;;){
+		int ret;
 		fd_set fdset;
 		FD_ZERO(&fdset);
         FD_SET(0, &fdset);
         FD_SET(tcp_fd, &fdset);
 
-		select(tcp_fd + 1, &fdset, NULL, NULL, NULL);
+		ret = select(tcp_fd + 1, &fdset, NULL, NULL, NULL);
+		if (ret < 0) {
+			perror("select");
+			break;
+		}
 
 		if (FD_ISSET(tcp_fd, &fdset)){
 			scrn();
@@ -222,11 +248,13 @@ int main(int argc, char *argv[])
 			keybd();
 		}			
 	}
+	finish();
 }
 
+#ifndef RAWTELNET
 #define next_char(var) \
 	if (offset<count) { (var) = bp[offset++]; } \
-	else { read(tcp_fd, (char *)&(var), 1); }
+	else { if (read(tcp_fd, (char *)&(var), 1) != 1) printf("TELNET BAD READ2\n"); exit(1); }
 
 static void do_option (int optsrt)
 {
@@ -546,3 +574,4 @@ fprintf(stderr, "got unknown command (%d)\r\n", command);
 	}
 	return offset;
 }
+#endif /* RAWTELNET*/

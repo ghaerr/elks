@@ -111,6 +111,7 @@ static void ip_print(struct iphdr_s *head, int size)
 void ip_recvpacket(unsigned char *packet,int size)
 {
     register struct iphdr_s *iphdr = (struct iphdr_s *)packet;
+    int len;
     unsigned char *data;
 
     ip_print(iphdr, size);
@@ -120,9 +121,15 @@ void ip_recvpacket(unsigned char *packet,int size)
 	return;
     }
 
-    if (IP_HLEN(iphdr) < 5) {
+    len = IP_HLEN(iphdr) * 4;
+    if (len < 20) {
         debug_ip("IP: Bad HLEN\n");
 	return;
+    }
+
+    if (ip_calc_chksum((char *)iphdr, len)) {
+	printf("IP: BAD CHKSUM (%x) len %d\n", ip_calc_chksum((char *)iphdr, len), len);
+	//return;
     }
 
     switch (iphdr->protocol) {
@@ -237,4 +244,17 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
 	deveth_send((unsigned char *)ipll, sizeof(struct ip_ll) + iphdrlen + len);
     else
 	slip_send((unsigned char *)iph, iphdrlen + len);
+}
+
+#undef memcpy
+void *xxmemcpy(void * d, const void * s, int l)
+{
+	register char *s1=d, *s2=(char *)s;
+
+//printf("MEMCPY %u,%u,%u\n", d, s, l);
+if (s == NULL || s < 6) printf("SRC NULL\n");
+if (d == NULL || d < 6) printf("DST NULL\n");
+	for( ; l>0; l--)
+		*((unsigned char*)s1++) = *((unsigned char*)s2++);
+	return d;
 }

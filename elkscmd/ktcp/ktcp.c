@@ -40,6 +40,23 @@ char deveth[] = "/dev/eth";
 
 static int intfd;	/* interface fd*/
 
+void setp(unsigned char **p)
+{
+	*p = 0;
+}
+
+char *zero;
+void printp()
+{
+unsigned char *p;
+//int i;
+setp(&p);
+
+//printf(zero="ZERO\n");
+//for (i=0; i<16; i++) printf("%d (%c) ", p[i], p[i]);
+//printf("\n");
+}
+
 void ktcp_run(void)
 {
     fd_set fdset;
@@ -57,6 +74,8 @@ extern int cbs_in_user_timeout;
 	    timeint.tv_usec = 0;
 	    tv = &timeint;
 	} else tv = NULL;
+
+printp();
 
 	FD_ZERO(&fdset);
 	FD_SET(intfd, &fdset);
@@ -95,6 +114,8 @@ int main(int argc,char **argv)
     speed_t baudrate = 0;
     char *progname = argv[0];
 
+printp();
+//printf("ZERO is at %x\n", zero);
     if (argc > 1 && !strcmp("-b", argv[1])) {
 	daemon = 1;
 	argc--;
