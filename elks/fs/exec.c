@@ -183,7 +183,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     min_len = mh.dseg;
     if (add_overflow(min_len, mh.bseg, &min_len)) {
-	retval = -ENOMEM;
+	retval = -EINVAL;
 	goto error_exec3;
     }
 
@@ -226,12 +226,14 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    debug1("EXEC: New type executable stack = %x\n", base_data);
 
 	if (add_overflow(min_len, base_data, &min_len))	{ /* adds stack size*/
-	    retval = -ENOMEM;
+	    retval = -EINVAL;
 	    goto error_exec3;
 	}
 #else
-	if (base_data != 0)
+	if (base_data != 0) {
+	    retval = -EINVAL;
 	    goto error_exec3;
+	}
 #endif
 	break;
 #endif /* CONFIG_EXEC_MMODEL*/
@@ -253,7 +255,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	else
 	    debug1("EXEC: heap %u\n", len);
 	if (add_overflow(len, min_len, &len)) {
-	    retval = -ENOMEM;
+	    retval = -EFBIG;
 	    goto error_exec3;
 	}
 	debug1("EXEC: len with heap is %u\n", len);
@@ -266,9 +268,12 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 		stack = INIT_STACK;
 	    else
 		debug1("EXEC: stack %u\n", stack);
-	    if (add_overflow(len, stack, &len) ||	/* add stack */
-		add_overflow(len, slen, &len)) {	/* add argv, envp */
-		retval = -ENOMEM;
+	    if (add_overflow(len, stack, &len)) {	/* add stack */
+		retval = -EFBIG;
+		goto error_exec3;
+	    }
+	    if (add_overflow(len, slen, &len)) {	/* add argv, envp */
+		retval = -E2BIG;
 		goto error_exec3;
 	    }
 	    debug1("EXEC: len with stack, argv, envp is %u\n", len);
@@ -297,26 +302,29 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 #ifdef CONFIG_EXEC_LOW_STACK
 	    if (base_data) {
 		if (add_overflow(len, INIT_HEAP, &len)) {
-		    retval = -ENOMEM;
+		    retval = -EFBIG;
 		    goto exec_error3;
 		}
 	    } else
 #endif
 	    {
 		if (add_overflow(len, INIT_HEAP + INIT_STACK, &len)) {
-		    retval = -ENOMEM;
+		    retval = -EFBIG;
 		    goto error_exec3;
 		}
 		stack = INIT_STACK;
 	    }
-	    if (add_overflow(len, slen, &len))
+	    if (add_overflow(len, slen, &len)) {
+		retval = -E2BIG;
 		goto error_exec3;
+	    }
 	}
     }
 
-    /* Round data segment length up to a paragraph boundary */
+    /* Round data segment length up to a paragraph boundary
+       (If the length overflows at this point, blame argv and envp...) */
     if (add_overflow(len, 15, &len)) {
-	retval = -ENOMEM;
+	retval = -E2BIG;
 	goto error_exec3;
     }
     len &= ~(size_t)15;
