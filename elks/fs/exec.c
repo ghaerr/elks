@@ -257,7 +257,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 		retval = -E2BIG;
 		goto error_exec3;
 	    }
-	    debug1("EXEC: len is %u with stack, argv, envp is %u\n", len);
 	}
 	heap = mh.chmem? mh.chmem: INIT_HEAP;
 	if (heap >= 0xFFF0)				/* max heap specified*/
