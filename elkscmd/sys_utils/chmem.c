@@ -82,8 +82,10 @@ do_chmem(char *filename, int changeheap, int changestack,
 		header.tseg, header.dseg, header.bseg, oldheap, header.minstack, (unsigned long)oldheap+dsegsize,
 		(long)header.tseg+header.dseg+header.bseg+oldheap, filename, header.version == 0? " (v0 header)": "");
 
-	if (!changeheap && !changestack)
+	if (!changeheap && !changestack) {
+		close(fd);
 		return 0;
+	}
 
 	if (!changeheap)
 		heap = oldheap;
@@ -113,6 +115,7 @@ do_chmem(char *filename, int changeheap, int changestack,
 	lseek(fd, 0L, SEEK_SET);
 	if (write(fd, &header, sizeof(header)) != sizeof(header))
 		return msg("Can't write header: %s\n", filename);
+	close(fd);
 
 	return 0;
 }
