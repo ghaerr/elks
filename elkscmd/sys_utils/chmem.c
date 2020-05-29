@@ -2,16 +2,27 @@
  * from original Minix 1 source in "Operating Systems: Design and Implentation", 1st ed.
  *
  * Completely rewritten for ELKS by Greg Haerr
- *	Also functions as 'size' program.
  *
-* The 8088 architecture does not make it possible to catch stacks that grow big.  The
+ * The 8088 architecture does not make it possible to catch stacks that grow big.  The
  * only way to deal with this problem is to let the stack grow down towards the data
- * segment and the data segment grow up towards the stack. Normally, a total of 64K is
- * allocated for the two of them, but if the programmer knows that a smaller amount is
+ * segment and the data segment grow up towards the stack. Normally, a total of 4K is
+ * allocated for each of them, but if the programmer knows that a smaller amount is
  * sufficient, he can change it using chmem.
  *
- * chmem =4096 prog  sets the total space for stack + data growth to 4096 chmem +200  prog
- * increments the total space for stack + data growth by 200
+ * Usage: chmem [-h heap] [-s stack] files...
+ *	Heap or stack values are specified in decimal by default, or hex with leading 0x.
+ *	Maximum heap can be specified using -h 0xffff, which is treated specially by the kernel.
+ *	When specifying heap or stack options, chmem will always write out a v1 header.
+ *	Functions as 'size' program when run with no options.
+ *
+ * Explanations of chmem (size) output:
+ *	TEXT	size of code
+ *	DATA	size of initialized data
+ *	BSS		size of uninitialized data
+ * 	HEAP	header heap size (0 = default 4K, 0xFFFF = allocate maximum heap)
+ *	STACK	header minimum stack size (0 = default 4K)
+ *	TOTDATA	size of DATA+BSS+heap+stack
+ *	TOTAL	size of TODATA+TEXT (in-memory size less environment)
  */
 
 #include <stdio.h>
@@ -21,15 +32,14 @@
 #include <fcntl.h>
 #include <linuxmt/minix.h>
 
-#define TOTPOS          24	/* where is total in header */
 #define SEPBIT   0x00200000	/* this bit is set for separate I/D */
 #define MAGIC       0x0301	/* magic number for executable progs */
 #define MAX         65520L	/* maximum allocation size */
 
 char *progname;
 
-int
-msg(const char *s, ...)
+/* Print an error message and die */
+int msg(const char *s, ...)
 {
 	va_list		p;
 	va_start(p, s);
@@ -44,14 +54,12 @@ void usage(void)
 	exit(1);
 }
 
-/* Print an error message and die */
-static int
-do_chmem(char *filename, int changeheap, int changestack,
+int do_chmem(char *filename, int changeheap, int changestack,
 	 unsigned long heap, unsigned long stack)
 {
 	int				fd;
-	unsigned int	oldheap, dsegsize;
-	unsigned long	newstack;
+	unsigned int	oldheap, oldstack, dsegsize, displayheap, newheap;
+	unsigned long	newstack, totdata, total;
 	struct minix_exec_hdr header;
 
 	if ((fd = open(filename, 2)) < 0)
@@ -71,16 +79,28 @@ do_chmem(char *filename, int changeheap, int changestack,
 	if ((header.type & SEPBIT) == 0)	/* not seperate I&D*/
 		dsegsize += header.tseg;
 
-	if (header.chmem == 0)					/* default heap*/
-		oldheap = 0;
-	else if (header.version == 1)
-		oldheap = header.chmem;
+	if (header.chmem == 0) {				/* default heap*/
+		oldheap = INIT_HEAP;
+		displayheap = 0;
+	} else if (header.version == 1)
+		displayheap = oldheap = header.chmem;
 	else
-		oldheap = header.chmem - dsegsize;	/* v0 displays effective heap, not header value*/
+		displayheap = oldheap = header.chmem - dsegsize;	/* v0 displays effective heap, not header value*/
 
+	if (header.version == 1)
+		oldstack = header.minstack? header.minstack: INIT_STACK;
+	else oldstack = 0;						/* v0 doesn't display seperate stack*/
+
+	if (header.chmem >= 0xFFF0) {
+		totdata = 0xFFF0;
+		total = totdata + header.tseg;
+	} else {
+		totdata = (unsigned long)oldheap+oldstack+dsegsize;
+		total = (unsigned long)header.tseg+header.dseg+header.bseg+oldheap+oldstack;
+	}
 	printf("%5u  %5u  %5u  %5u  %5u   %6lu %6lu %s%s\n",
-		header.tseg, header.dseg, header.bseg, oldheap, header.minstack, (unsigned long)oldheap+dsegsize,
-		(long)header.tseg+header.dseg+header.bseg+oldheap, filename, header.version == 0? " (v0 header)": "");
+		header.tseg, header.dseg, header.bseg, displayheap, header.minstack, totdata, total,
+		filename, header.version == 0? " (v0 header)": "");
 
 	if (!changeheap && !changestack) {
 		close(fd);
@@ -88,28 +108,35 @@ do_chmem(char *filename, int changeheap, int changestack,
 	}
 
 	if (!changeheap)
-		heap = oldheap;
+		heap = header.chmem;
 	if (!changestack)
 		stack = header.minstack;
 
 	newstack = stack? stack: INIT_STACK;
+	newheap = heap? heap: INIT_HEAP;
 	if (newstack > MAX)
 		return msg("%s: stack too large: %ld\n", filename, newstack);
 
-	if ((unsigned long)dsegsize+heap+newstack > MAX) {
+	if (newheap < 0xFFF0 && (unsigned long)dsegsize+newheap+newstack > MAX) {
 		heap = MAX - dsegsize - newstack;
 		if (heap < dsegsize)
 			return msg("%s: heap+stack too large: %ld\n", filename, heap + newstack);
 		msg("Warning: heap truncated to %ld\n", heap);
+		newheap = heap;
 	}
 
+	if (newheap >= 0xFFF0) {
+		totdata = 0xFFF0;
+		total = totdata + header.tseg;
+	} else {
+		totdata = (unsigned long)newheap+newstack+dsegsize;
+		total = (unsigned long)header.tseg+header.dseg+header.bseg+newheap+newstack;
+	}
 	printf("%5u  %5u  %5u  %5lu  %5lu   %6lu %6lu %s\n",
-	       header.tseg, header.dseg, header.bseg, heap, stack, heap+dsegsize,
-		   header.tseg+header.dseg+header.bseg+heap, filename);
+	       header.tseg, header.dseg, header.bseg, heap, stack, totdata, total, filename);
 
 	header.chmem = (unsigned)heap;
 	header.minstack = (unsigned)stack;
-
 	header.version = 1;
 
 	lseek(fd, 0L, SEEK_SET);
