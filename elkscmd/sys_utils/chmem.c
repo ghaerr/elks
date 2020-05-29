@@ -71,16 +71,16 @@ do_chmem(char *filename, int changeheap, int changestack,
 	if ((header.type & SEPBIT) == 0)	/* not seperate I&D*/
 		dsegsize += header.tseg;
 
-	if (header.chmem == 0)				/* default heap*/
+	if (header.chmem == 0)					/* default heap*/
 		oldheap = 0;
 	else if (header.version == 1)
 		oldheap = header.chmem;
 	else
-		oldheap = header.chmem - dsegsize;
+		oldheap = header.chmem - dsegsize;	/* v0 displays effective heap, not header value*/
 
-	printf("%5u  %5u  %5u  %5u  %5u   %6lu %6lu %s\n",
+	printf("%5u  %5u  %5u  %5u  %5u   %6lu %6lu %s%s\n",
 		header.tseg, header.dseg, header.bseg, oldheap, header.minstack, (unsigned long)oldheap+dsegsize,
-		(long)header.tseg+header.dseg+header.bseg+oldheap, filename);
+		(long)header.tseg+header.dseg+header.bseg+oldheap, filename, header.version == 0? " (v0 header)": "");
 
 	if (!changeheap && !changestack)
 		return 0;

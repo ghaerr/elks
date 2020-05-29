@@ -132,7 +132,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     seg_t base_data = 0;
     segment_s * seg_code;
     segment_s * seg_data;
-    size_t len, min_len, stack = 0;
+    size_t len, min_len, heap, stack = 0;
 #ifdef CONFIG_EXEC_MMODEL
     int need_reloc_code = 1;
 #endif
@@ -249,16 +249,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     default:
 	goto error_exec3;
     case 1:
-	len = mh.chmem;					/* = heap */
-	if (!len)
-	    len = INIT_HEAP;				/* default heap */
-	else
-	    debug1("EXEC: heap %u\n", len);
-	if (add_overflow(len, min_len, &len)) {
-	    retval = -EFBIG;
-	    goto error_exec3;
-	}
-	debug1("EXEC: len with heap is %u\n", len);
+	len = min_len;
 #ifdef CONFIG_EXEC_LOW_STACK
 	if (!base_data)
 #endif
@@ -267,7 +258,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    if (!stack)
 		stack = INIT_STACK;
 	    else
-		debug1("EXEC: stack %u\n", stack);
+		printk("EXEC: stack %u\n", stack);
 	    if (add_overflow(len, stack, &len)) {	/* add stack */
 		retval = -EFBIG;
 		goto error_exec3;
@@ -276,8 +267,18 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 		retval = -E2BIG;
 		goto error_exec3;
 	    }
-	    debug1("EXEC: len with stack, argv, envp is %u\n", len);
+	    debug1("EXEC: len is %u with stack, argv, envp is %u\n", len);
 	}
+	heap = mh.chmem? mh.chmem: INIT_HEAP;
+	if (heap >= 0xFFF0)				/* max heap specified*/
+	    len = 0xFFF0;
+	else {
+	    if (add_overflow(len, heap, &len)) {	/* add heap */
+		retval = -EFBIG;
+		goto error_exec3;
+	    }
+	}
+	printk("EXEC: stack %u heap %u env %u total %u\n", stack, heap, slen, len);
 	break;
     case 0:
 	len = mh.chmem;
