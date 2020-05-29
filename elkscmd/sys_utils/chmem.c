@@ -118,7 +118,7 @@ int do_chmem(char *filename, int changeheap, int changestack,
 		return msg("%s: stack too large: %ld\n", filename, newstack);
 
 	if (newheap < 0xFFF0 && (unsigned long)dsegsize+newheap+newstack > MAX) {
-		heap = MAX - dsegsize - newstack;
+		heap = MAX - dsegsize - newstack - 128;		/* reserve 128 bytes for environment*/
 		if (heap < dsegsize)
 			return msg("%s: heap+stack too large: %ld\n", filename, heap + newstack);
 		msg("Warning: heap truncated to %ld\n", heap);

@@ -228,6 +228,8 @@ STATIC const struct errname errormsg[] = {
 	{ ELOOP,     ALL,     "symbolic link loop"        },
 #endif
 	{ E2BIG,     E_EXEC,  "argument list too long"    },
+	{ EFBIG,     E_EXEC,  "file memory too large"     },
+	{ EINVAL,    E_EXEC,  "invalid argument"          },
 #ifdef ELIBACC
 	{ ELIBACC,   E_EXEC,  "shared library missing"    },
 #endif
