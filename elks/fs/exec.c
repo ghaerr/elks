@@ -259,9 +259,10 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    }
 	}
 	heap = mh.chmem? mh.chmem: INIT_HEAP;
-	if (heap >= 0xFFF0)				/* max heap specified*/
-	    len = 0xFFF0;
-	else {
+	if (heap >= 0xFFF0) {				/* max heap specified*/
+	    if (len < 0xFFF0)				/* len could be near overflow from above*/
+		len = 0xFFF0;
+	} else {
 	    if (add_overflow(len, heap, &len)) {	/* add heap */
 		retval = -EFBIG;
 		goto error_exec3;
@@ -273,18 +274,19 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	stack = INIT_STACK;
 	len = mh.chmem;
 	if (len) {
-	    if (len <= min_len) {
+	    if (len <= min_len) {			/* check bad chmem*/
 		retval = -EINVAL;
 		goto error_exec3;
 	    }
-	    if (mh.chmem < 0xFFF0) {			/* max heap not requested*/
-		unsigned int haveextra = len - min_len;
-		if (haveextra < INIT_STACK+slen) {	/* try allocating more for stack and env*/
-		    if (add_overflow(len, INIT_STACK+slen-haveextra, &len)) {
-			retval = -EFBIG;
-			goto error_exec3;
-		    }
-		}
+	    heap = len - min_len;
+	    if (heap < INIT_STACK) {			/* check space for stack*/
+		retval = -EINVAL;
+		goto error_exec3;
+	    }
+	    heap -= INIT_STACK;
+	    if (heap < slen) {				/* check space for environment*/
+		retval = -E2BIG;
+		goto error_exec3;
 	    }
 	} else {
 	    len = min_len;
@@ -307,7 +309,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 		goto error_exec3;
 	    }
 	}
-	debug4("EXEC v0: stack %u heap %u env %u total %u\n", stack, mh.chmem, slen, len);
+	debug4("EXEC v0: stack %u heap %u env %u total %u\n", stack, len-min_len-stack-slen, slen, len);
     }
 
     /* Round data segment length up to a paragraph boundary
