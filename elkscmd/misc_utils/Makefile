@@ -36,7 +36,7 @@ time: time.o
 	$(LD) $(LDFLAGS) -o time time.o $(LDLIBS)
 
 kilo: kilo.o
-	$(LD) $(LDFLAGS) -maout-total=0xfff0 -o kilo kilo.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=0xffff -o kilo kilo.o $(LDLIBS)
 
 tty: tty.o
 	$(LD) $(LDFLAGS) -o tty tty.o $(LDLIBS)

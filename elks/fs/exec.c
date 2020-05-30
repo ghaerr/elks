@@ -132,7 +132,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     seg_t base_data = 0;
     segment_s * seg_code;
     segment_s * seg_data;
-    size_t len, min_len, stack = 0;
+    size_t len, min_len, heap, stack = 0;
 #ifdef CONFIG_EXEC_MMODEL
     int need_reloc_code = 1;
 #endif
@@ -208,14 +208,12 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	       "far text reloc size 0x%x, text base 0x%lx\n",
 	       esuph.msh_trsize, esuph.msh_drsize, esuph.esh_ftrsize,
 	       esuph.msh_tbase);
-	if (esuph.msh_tbase != 0) {
-	    retval = -EINVAL;
+	retval = -EINVAL;
+	if (esuph.msh_tbase != 0)
 	    goto error_exec3;
-	}
 	if (esuph.msh_trsize % sizeof(struct minix_reloc) != 0 ||
 	    esuph.msh_drsize % sizeof(struct minix_reloc) != 0 ||
 	    esuph.esh_ftrsize % sizeof(struct minix_reloc) != 0) {
-	    retval = -EINVAL;
 	    goto error_exec3;
 	}
 	base_data = esuph.msh_dbase;
@@ -225,15 +223,11 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	if (base_data != 0)
 	    debug1("EXEC: New type executable stack = %x\n", base_data);
 
-	if (add_overflow(min_len, base_data, &min_len))	{ /* adds stack size*/
-	    retval = -EINVAL;
+	if (add_overflow(min_len, base_data, &min_len)) /* adds stack size*/
 	    goto error_exec3;
-	}
 #else
-	if (base_data != 0) {
-	    retval = -EINVAL;
+	if (base_data != 0)
 	    goto error_exec3;
-	}
 #endif
 	break;
 #endif /* CONFIG_EXEC_MMODEL*/
@@ -249,25 +243,12 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     default:
 	goto error_exec3;
     case 1:
-	len = mh.chmem;					/* = heap */
-	if (!len)
-	    len = INIT_HEAP;				/* default heap */
-	else
-	    debug1("EXEC: heap %u\n", len);
-	if (add_overflow(len, min_len, &len)) {
-	    retval = -EFBIG;
-	    goto error_exec3;
-	}
-	debug1("EXEC: len with heap is %u\n", len);
+	len = min_len;
 #ifdef CONFIG_EXEC_LOW_STACK
 	if (!base_data)
 #endif
 	{
-	    stack = mh.minstack;
-	    if (!stack)
-		stack = INIT_STACK;
-	    else
-		debug1("EXEC: stack %u\n", stack);
+	    stack = mh.minstack? mh.minstack: INIT_STACK;
 	    if (add_overflow(len, stack, &len)) {	/* add stack */
 		retval = -EFBIG;
 		goto error_exec3;
@@ -276,34 +257,44 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 		retval = -E2BIG;
 		goto error_exec3;
 	    }
-	    debug1("EXEC: len with stack, argv, envp is %u\n", len);
 	}
+	heap = mh.chmem? mh.chmem: INIT_HEAP;
+	if (heap >= 0xFFF0) {				/* max heap specified*/
+	    if (len < 0xFFF0)				/* len could be near overflow from above*/
+		len = 0xFFF0;
+	} else {
+	    if (add_overflow(len, heap, &len)) {	/* add heap */
+		retval = -EFBIG;
+		goto error_exec3;
+	    }
+	}
+	debug4("EXEC: stack %u heap %u env %u total %u\n", stack, heap, slen, len);
 	break;
     case 0:
+	stack = INIT_STACK;
 	len = mh.chmem;
 	if (len) {
-	    if (len <= min_len) {
+	    if (len <= min_len) {			/* check bad chmem*/
 		retval = -EINVAL;
 		goto error_exec3;
 	    }
-	    /*
-	     * Try to reserve INIT_STACK bytes of the non-static data memory
-	     * for a stack.  If this is not possible, reserve all the
-	     * remaining memory for a stack, and give a warning.
-	     */
-	    stack = len - min_len;
-	    if (stack < INIT_STACK)
-	      printk("EXEC: warn: using all %u byte(s) avail. chmem "
-		     "for stack\n", stack);
-	    else
-	      stack = INIT_STACK;
+	    heap = len - min_len;
+	    if (heap < INIT_STACK) {			/* check space for stack*/
+		retval = -EINVAL;
+		goto error_exec3;
+	    }
+	    heap -= INIT_STACK;
+	    if (heap < slen) {				/* check space for environment*/
+		retval = -E2BIG;
+		goto error_exec3;
+	    }
 	} else {
 	    len = min_len;
 #ifdef CONFIG_EXEC_LOW_STACK
 	    if (base_data) {
 		if (add_overflow(len, INIT_HEAP, &len)) {
 		    retval = -EFBIG;
-		    goto exec_error3;
+		    goto error_exec3;
 		}
 	    } else
 #endif
@@ -312,13 +303,13 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 		    retval = -EFBIG;
 		    goto error_exec3;
 		}
-		stack = INIT_STACK;
 	    }
 	    if (add_overflow(len, slen, &len)) {
 		retval = -E2BIG;
 		goto error_exec3;
 	    }
 	}
+	debug4("EXEC v0: stack %u heap %u env %u total %u\n", stack, len-min_len-stack-slen, slen, len);
     }
 
     /* Round data segment length up to a paragraph boundary
