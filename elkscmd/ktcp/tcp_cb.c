@@ -75,7 +75,8 @@ struct tcpcb_list_s *tcpcb_new(void)
 debug_mem("Alloc CB %d bytes\n", sizeof(struct tcpcb_list_s));
 
     memset(&n->tcpcb, 0, sizeof(struct tcpcb_s));
-    n->tcpcb.rtt = 4 << 4; /* 4 sec */
+    //n->tcpcb.rtt = 4 << 4; /* 4 sec */
+    n->tcpcb.rtt = 1 << 4; /* 1 sec */	//FIXME
 
     /* Link it to the list */
     if (tcpcbs) {

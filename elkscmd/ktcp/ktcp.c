@@ -92,7 +92,7 @@ printp();
 	/* process received packets*/
 	if (FD_ISSET(intfd, &fdset)) {
 		if (eth_device)
-			deveth_process();
+			deveth_process(0);
 		else slip_process();
 	}
 

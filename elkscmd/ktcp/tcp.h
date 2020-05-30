@@ -148,18 +148,19 @@ struct	tcpcb_list_s {
 };
 
 struct	tcp_retrans_list_s {
+	struct tcp_retrans_list_s	*prev;
+	struct tcp_retrans_list_s	*next;
+
 	int				retrans_num;
 	timeq_t 			rto;
 	timeq_t 			next_retrans;
 	timeq_t 			first_trans;
 
 	struct tcpcb_s			*cb;
-	struct tcphdr_s 		*tcph;
 	struct addr_pair		apair;
 	__u16				len;
+	struct tcphdr_s 		tcphdr[];
 
-	struct tcp_retrans_list_s	*prev;
-	struct tcp_retrans_list_s	*next;
 };
 
 int tcp_timeruse;
