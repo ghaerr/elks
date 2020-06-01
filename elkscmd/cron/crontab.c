@@ -248,6 +248,11 @@ main(int argc, char **argv)
 	fatal("you don't seem to have a password entry?\n");
     strncpy(whoami, pwd->pw_name, sizeof whoami);
 
+    if (xis_crondir() != 0) {
+        printf("No '%s' directory - terminating\n",CRONDIR);
+        exit (1);
+    }
+    
     while ( (opt=getopt(argc,argv, "elru:")) != EOF ) {
 	switch (opt) {
 	case 'e': edit = 1; what = "edit"; break;
