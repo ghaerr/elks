@@ -139,7 +139,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 
     /* Necessary for the XT. */
     mode = inb_p((void *) KBD_CTL);
-    //printk("\nkey read:%X,mode:%X,ModeState:%d\n",code,mode,ModeState);    
+    //printk("\nkey read1:%X,mode:%X,ModeState:%d\n",code,mode,ModeState);    
     outb_p((unsigned char) (mode | 0x80), (void *) KBD_CTL);
     outb_p((unsigned char) mode, (void *) KBD_CTL);
 
@@ -277,6 +277,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	switch ((unsigned int)keyp_E0) {
 	case 0xb7: code = 'H'; break;			/* home*/
 	case 0xb1: code = 'F'; break;			/* end*/
+    case 0x7e: code = '2'; mode = '~'; break;	/* insert*/
 	case 0xb9: code = '5'; mode = '~'; break;	/* page up*/
 	case 0xb3: code = '6'; mode = '~'; break;	/* page dn*/
 	}
