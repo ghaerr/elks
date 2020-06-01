@@ -27,7 +27,7 @@ extern int eth_device;
 
 void deveth_printhex(unsigned char *packet, int len);
 int  deveth_init(char *fdev);
-void deveth_process(void);
+void deveth_process(int flag);
 void deveth_send(unsigned char *packet, int len);
 
 #endif /* !DEVETH_H */

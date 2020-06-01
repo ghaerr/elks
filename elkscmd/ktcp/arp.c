@@ -180,7 +180,7 @@ int arp_request(ipaddr_t ipaddress)
     int i = select(tcpdevfd + 1, &fdset, NULL, NULL, &timeint);
     if (i >= 0) {
 	printf("arp: got reply on timed wait\n");
-	deveth_process();
+	deveth_process(1);
 	return 0;	/* success*/
     }
     return 1;		/* error*/

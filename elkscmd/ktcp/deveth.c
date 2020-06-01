@@ -28,7 +28,7 @@
 eth_addr_t eth_local_addr;
 int eth_device;
 
-static unsigned char sbuf [MAX_PACKET_ETH];
+static unsigned char sbuf[2][MAX_PACKET_ETH];	//FIXME ARP wait fix
 static int devfd;
 
 static eth_addr_t broad_addr = {255, 255, 255, 255, 255, 255};
@@ -75,16 +75,16 @@ int deveth_init(char *fdev)
 
 /*
  *  Called when select in ktcp indicates we have new data waiting
+ *	FIXME also called by arp_request() which overwrites buffer on icmp reply
  */
-
-void deveth_process(void)
+void deveth_process(int flag)
 {
   eth_head_t * eth_head;
-  int len = read (devfd, sbuf, MAX_PACKET_ETH);
+  int len = read (devfd, sbuf[flag], MAX_PACKET_ETH);
   if (len < sizeof(eth_head_t))
 	return;
 
-  eth_head = (eth_head_t *) sbuf;
+  eth_head = (eth_head_t *) sbuf[flag];
 
   /* Filter on MAC addresses */
   /* in case of promiscuous mode */
@@ -99,11 +99,11 @@ void deveth_process(void)
   switch (eth_head->eth_type) {
   case ETH_TYPE_IPV4:
 	  /* strip link layer */
-	  ip_recvpacket (sbuf + sizeof(eth_head_t), len - sizeof(eth_head_t));
+	  ip_recvpacket (sbuf[flag] + sizeof(eth_head_t), len - sizeof(eth_head_t));
 	  break;
 
   case ETH_TYPE_ARP:
-	  arp_recvpacket (sbuf, len);
+	  arp_recvpacket (sbuf[flag], len);
 	  break;
   }
 }

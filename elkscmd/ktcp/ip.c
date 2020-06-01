@@ -129,7 +129,7 @@ void ip_recvpacket(unsigned char *packet,int size)
 
     if (ip_calc_chksum((char *)iphdr, len)) {
 	printf("IP: BAD CHKSUM (%x) len %d\n", ip_calc_chksum((char *)iphdr, len), len);
-	//return;
+	return;
     }
 
     switch (iphdr->protocol) {
