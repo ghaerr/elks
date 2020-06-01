@@ -78,6 +78,7 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 		    segment_s *seg_data, __ptask currentp, struct inode *inode,
 		    struct file *filp)
 {
+    int retval = 0;
     __u16 save_ds = currentp->t_regs.ds;
     currentp->t_regs.ds = kernel_ds;
     debug2("EXEC: applying 0x%lx bytes of relocations to segment 0x%x\n",
@@ -85,8 +86,7 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
     while (rsize >= sizeof(struct minix_reloc)) {
 	struct minix_reloc reloc;
 	word_t val;
-	int retval = filp->f_op->read(inode, filp, (char *)&reloc,
-				      sizeof(reloc));
+	retval = filp->f_op->read(inode, filp, (char *)&reloc, sizeof(reloc));
 	if (retval != (int)sizeof(reloc))
 	    goto error;
 	switch (reloc.r_type) {
@@ -116,7 +116,9 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
   error:
     debug("EXEC: error in relocations\n");
     currentp->t_regs.ds = save_ds;
-    return -1;
+    if (retval >= 0)
+	retval = -EINVAL;
+    return retval;
 }
 #endif
 
@@ -130,7 +132,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     seg_t base_data = 0;
     segment_s * seg_code;
     segment_s * seg_data;
-    size_t len, min_len, stack;
+    size_t len, min_len, heap, stack = 0;
 #ifdef CONFIG_EXEC_MMODEL
     int need_reloc_code = 1;
 #endif
@@ -174,14 +176,16 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /* Sanity check it.  */
     if (retval != (int)sizeof(mh) ||
 	(mh.type != MINIX_SPLITID_AHISTORICAL && mh.type != MINIX_SPLITID) ||
-	mh.tseg == 0 || mh.version != 0) {
+	mh.tseg == 0) {
 	debug1("EXEC: bad header, result %u\n", retval);
 	goto error_exec3;
     }
 
     min_len = mh.dseg;
-    if (add_overflow(min_len, mh.bseg, &min_len))
+    if (add_overflow(min_len, mh.bseg, &min_len)) {
+	retval = -EINVAL;
 	goto error_exec3;
+    }
 
 #ifdef CONFIG_EXEC_MMODEL
     memset(&esuph, 0, sizeof(esuph));
@@ -204,12 +208,14 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	       "far text reloc size 0x%x, text base 0x%lx\n",
 	       esuph.msh_trsize, esuph.msh_drsize, esuph.esh_ftrsize,
 	       esuph.msh_tbase);
+	retval = -EINVAL;
 	if (esuph.msh_tbase != 0)
 	    goto error_exec3;
 	if (esuph.msh_trsize % sizeof(struct minix_reloc) != 0 ||
 	    esuph.msh_drsize % sizeof(struct minix_reloc) != 0 ||
-	    esuph.esh_ftrsize % sizeof(struct minix_reloc) != 0)
+	    esuph.esh_ftrsize % sizeof(struct minix_reloc) != 0) {
 	    goto error_exec3;
+	}
 	base_data = esuph.msh_dbase;
 #ifdef CONFIG_EXEC_LOW_STACK
 	if (base_data & 0xf)
@@ -217,7 +223,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	if (base_data != 0)
 	    debug1("EXEC: New type executable stack = %x\n", base_data);
 
-	if (add_overflow(min_len, base_data, &min_len))	/* adds stack size*/
+	if (add_overflow(min_len, base_data, &min_len)) /* adds stack size*/
 	    goto error_exec3;
 #else
 	if (base_data != 0)
@@ -230,31 +236,88 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     }
 
     /*
-     * chmem is size of data+bss+heap, 0 means use default heap
-     * old ld86 used chmem as size of data+bss+heap+stack
+     * mh.version == 1: chmem is size of heap, 0 means use default heap
+     * mh.version == 0: old ld86 used chmem as size of data+bss+heap+stack
      */
-    len = mh.chmem;					/* = data+bss+heap*/
-    if (!len) {
+    switch (mh.version) {
+    default:
+	goto error_exec3;
+    case 1:
 	len = min_len;
-	if (add_overflow(len, INIT_HEAP, &len))		/* add default heap*/
-	    goto error_exec3;
-    } else {
-	debug2("heap %u len %u\n", mh.chmem - min_len, len);
-	if (len < min_len)
-	   goto error_exec3;
-    }
-#ifndef CONFIG_EXEC_LOW_STACK
-    stack = mh.minstack;
-    /* if no explicit stack specified, allow older max heap+stack programs to run*/
-    if (!stack && len < 0xFFF0)
-	stack = INIT_STACK;
-    if (add_overflow(len, stack, &len))			/* add stack*/
-	goto error_exec3;
-    if (stack) debug1("stack %u\n", stack);
+#ifdef CONFIG_EXEC_LOW_STACK
+	if (!base_data)
 #endif
-    /* Round data segment length up to a paragraph boundary */
-    if (add_overflow(len, 15, &len))
+	{
+	    stack = mh.minstack? mh.minstack: INIT_STACK;
+	    if (add_overflow(len, stack, &len)) {	/* add stack */
+		retval = -EFBIG;
+		goto error_exec3;
+	    }
+	    if (add_overflow(len, slen, &len)) {	/* add argv, envp */
+		retval = -E2BIG;
+		goto error_exec3;
+	    }
+	}
+	heap = mh.chmem? mh.chmem: INIT_HEAP;
+	if (heap >= 0xFFF0) {				/* max heap specified*/
+	    if (len < 0xFFF0)				/* len could be near overflow from above*/
+		len = 0xFFF0;
+	} else {
+	    if (add_overflow(len, heap, &len)) {	/* add heap */
+		retval = -EFBIG;
+		goto error_exec3;
+	    }
+	}
+	debug4("EXEC: stack %u heap %u env %u total %u\n", stack, heap, slen, len);
+	break;
+    case 0:
+	stack = INIT_STACK;
+	len = mh.chmem;
+	if (len) {
+	    if (len <= min_len) {			/* check bad chmem*/
+		retval = -EINVAL;
+		goto error_exec3;
+	    }
+	    heap = len - min_len;
+	    if (heap < INIT_STACK) {			/* check space for stack*/
+		retval = -EINVAL;
+		goto error_exec3;
+	    }
+	    heap -= INIT_STACK;
+	    if (heap < slen) {				/* check space for environment*/
+		retval = -E2BIG;
+		goto error_exec3;
+	    }
+	} else {
+	    len = min_len;
+#ifdef CONFIG_EXEC_LOW_STACK
+	    if (base_data) {
+		if (add_overflow(len, INIT_HEAP, &len)) {
+		    retval = -EFBIG;
+		    goto error_exec3;
+		}
+	    } else
+#endif
+	    {
+		if (add_overflow(len, INIT_HEAP + INIT_STACK, &len)) {
+		    retval = -EFBIG;
+		    goto error_exec3;
+		}
+	    }
+	    if (add_overflow(len, slen, &len)) {
+		retval = -E2BIG;
+		goto error_exec3;
+	    }
+	}
+	debug4("EXEC v0: stack %u heap %u env %u total %u\n", stack, len-min_len-stack-slen, slen, len);
+    }
+
+    /* Round data segment length up to a paragraph boundary
+       (If the length overflows at this point, blame argv and envp...) */
+    if (add_overflow(len, 15, &len)) {
+	retval = -E2BIG;
 	goto error_exec3;
+    }
     len &= ~(size_t)15;
 
     debug("EXEC: Malloc time\n");
@@ -319,13 +382,15 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 #ifdef CONFIG_EXEC_MMODEL
     if (need_reloc_code) {
 	/* Read and apply text segment relocations */
-	if (relocate(seg_code->base, esuph.msh_trsize, seg_code, seg_data,
-		     currentp, inode, filp) != 0)
+	retval = relocate(seg_code->base, esuph.msh_trsize, seg_code, seg_data,
+			  currentp, inode, filp);
+	if (retval != 0)
 	    goto error_exec5;
 	/* Read and apply far text segment relocations */
-	if (relocate(seg_code->base + bytes_to_paras(mh.tseg),
-		     esuph.esh_ftrsize, seg_code, seg_data, currentp, inode,
-		     filp) != 0)
+	retval = relocate(seg_code->base + bytes_to_paras(mh.tseg),
+			  esuph.esh_ftrsize, seg_code, seg_data, currentp,
+			  inode, filp);
+	if (retval != 0)
 	    goto error_exec5;
     } else {
 	/* If reusing existing text segments, no need to re-relocate */
@@ -333,8 +398,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	filp->f_pos += esuph.esh_ftrsize;
     }
     /* Read and apply data relocations */
-    if (relocate(seg_data->base, esuph.msh_drsize, seg_code, seg_data,
-		 currentp, inode, filp) != 0)
+    retval = relocate(seg_data->base, esuph.msh_drsize, seg_code, seg_data,
+		      currentp, inode, filp);
+    if (retval != 0)
 	goto error_exec5;
 #endif
 

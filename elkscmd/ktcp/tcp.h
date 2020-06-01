@@ -23,7 +23,8 @@
 #define IP_BUFSIZ	(TCP_BUFSIZ + sizeof(iphdr_t) + sizeof(struct ip_ll))
 
 /* control block input buffer size - max window size*/
-#define CB_IN_BUF_SIZE	1024	/* must be power of 2*/
+//#define CB_IN_BUF_SIZE	1024	/* must be power of 2*/
+#define CB_IN_BUF_SIZE	4096	/* must be power of 2*/
 
 /* bytes to subtract from window size and when to force app write*/
 #define PUSH_THRESHOLD	512
@@ -147,18 +148,19 @@ struct	tcpcb_list_s {
 };
 
 struct	tcp_retrans_list_s {
+	struct tcp_retrans_list_s	*prev;
+	struct tcp_retrans_list_s	*next;
+
 	int				retrans_num;
 	timeq_t 			rto;
 	timeq_t 			next_retrans;
 	timeq_t 			first_trans;
 
 	struct tcpcb_s			*cb;
-	struct tcphdr_s 		*tcph;
 	struct addr_pair		apair;
 	__u16				len;
+	struct tcphdr_s 		tcphdr[];
 
-	struct tcp_retrans_list_s	*prev;
-	struct tcp_retrans_list_s	*next;
 };
 
 int tcp_timeruse;

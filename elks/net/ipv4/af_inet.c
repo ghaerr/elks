@@ -8,6 +8,7 @@
  * user space (ktcp)..
  */
 
+//#define DEBUG
 #include <linuxmt/errno.h>
 #include <linuxmt/config.h>
 #include <linuxmt/socket.h>
@@ -250,6 +251,8 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
 
     if (ret > 0) {
+//printk("INET_READ %d (%c%c)\n", ret, (ret>>8)&0xff, ret&0xff);
+//if (ret > 100) ret = 1;
         memcpy_tofs(ubuf, &((struct tdb_return_data *)tdin_buf)->data, (size_t) ret);
         sock->avail_data = 0;
     }
@@ -287,6 +290,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
         cmd->size = count > TDB_WRITE_MAX ? TDB_WRITE_MAX : count;
 
+//printk("INET_WRITE %u\n", cmd->size);
         memcpy_fromfs(cmd->data, ubuf, (size_t) cmd->size);
 	usize = cmd->size;
         tcpdev_inetwrite(cmd, sizeof(struct tdb_write));

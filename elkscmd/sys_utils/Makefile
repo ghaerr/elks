@@ -37,10 +37,10 @@ PRGS = \
 	# EOL
 
 init: init.o
-	$(LD) $(LDFLAGS) -o init init.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=4096 -maout-stack=1024 -o init init.o $(LDLIBS)
 
 getty: getty.o
-	$(LD) $(LDFLAGS) -o getty getty.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=1024 -maout-stack=1024 -o getty getty.o $(LDLIBS)
 
 login: getpass.o login.o
 	$(LD) $(LDFLAGS) -o login getpass.o login.o $(LDLIBS)

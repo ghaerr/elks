@@ -36,7 +36,7 @@ execve(char *fname, char **argv, char **envp)
 	if( argv_len < 0 || envp_len < 0 || stack_bytes <= 0
 	 || (int)(stk_ptr = (char*)sbrk(stack_bytes)) == -1)
 	{
-	   errno = ENOMEM;
+	   errno = E2BIG;
 	   return -1;
 	}
 

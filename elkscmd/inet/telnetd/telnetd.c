@@ -19,6 +19,8 @@
 #include <linuxmt/arpa/inet.h>
 #include "telnet.h"
 
+//#define RAWTELNET	/* set in telnet and telnetd for raw telnet without IAC*/
+
 #define MAX_BUFFER 100
 static char buf_in  [MAX_BUFFER];
 static char buf_out [MAX_BUFFER];
@@ -84,6 +86,7 @@ again:
 
 static void telnet_init(int ofd)
 {
+#ifndef RAWTELNET
   tel_init();
 
   telopt(ofd, WILL, TELOPT_SGA);
@@ -92,6 +95,7 @@ static void telnet_init(int ofd)
   telopt(ofd, DO,   TELOPT_BINARY);
   telopt(ofd, WILL, TELOPT_ECHO);
   //telopt(ofd, DO,   TELOPT_WINCH);
+#endif
 }
 
 static void client_loop (int fdsock, int fdterm)
@@ -129,8 +133,11 @@ static void client_loop (int fdsock, int fdterm)
 			}
 		}
 		if (count_in && FD_ISSET (fdterm, &fds_write)) {
-			//count = write (fdterm, buf_in, count_in);
+#ifdef RAWTELNET
+			count = write (fdterm, buf_in, count_in);
+#else
 			tel_in(fdterm, fdsock, buf_in, count_in);
+#endif
 			count_in = 0;
 		}
 
@@ -143,8 +150,11 @@ static void client_loop (int fdsock, int fdterm)
 			}
 		}
 		if (count_out && FD_ISSET (fdsock, &fds_write)) {
-			//count = write (fdsock, buf_out, count_out);
+#ifdef RAWTELNET
+			count = write (fdsock, buf_out, count_out);
+#else
 			tel_out(fdsock, buf_out, count_out);
+#endif
 			count_out = 0;
 		}
     }

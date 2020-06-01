@@ -182,7 +182,6 @@ rmv_from_retrans(struct tcp_retrans_list_s *n)
 	n = next;
 	n->prev = NULL;
 debug_mem("retrans free buffers %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
-	free(retrans_list->tcph);
 	free(retrans_list);
 	retrans_list = n;
 
@@ -193,7 +192,6 @@ debug_mem("retrans free buffers %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
 	next->prev = n->prev;
 
 debug_mem("retrans free buffers %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
-    free(n->tcph);
     free(n);
 
     return next;
@@ -239,19 +237,13 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
     if (cb->state == TS_CLOSED)	//FIXME remove
 	return;
 
-    n = (struct tcp_retrans_list_s *)malloc(sizeof(struct tcp_retrans_list_s));
+    n = (struct tcp_retrans_list_s *)malloc(sizeof(struct tcp_retrans_list_s) + len);
     if (n == NULL) {
 	printf("ktcp: Out of memory\n");
 	return;
     }
 
     n->cb = cb;
-    n->tcph = (struct tcphdr_s *)malloc(len);
-    if (!n->tcph) {
-	printf("ktcp: Out of memory 2\n");
-	free(n);
-	return;
-    }
 
     /* Link it to the list */
     if (retrans_list) {
@@ -261,8 +253,7 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
 	retrans_list = n;
     } else {
 	retrans_list = n;
-	n->next = NULL;
-	n->prev = NULL;
+	n->prev = n->next = NULL;
     }
 
     /* start timeout blocking in main loop*/
@@ -271,22 +262,23 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
     tcp_retrans_memory += len;
 debug_mem("retrans alloc buffers %d, mem %d\n", tcp_timeruse, tcp_retrans_memory);
     n->len = len;
-    memcpy(n->tcph, th, len);
+    memcpy(n->tcphdr, th, len);
     memcpy(&n->apair, apair, sizeof(struct addr_pair));
     n->retrans_num = 0;
     n->first_trans = Now;
 
-    n->rto = cb->rtt << 1;			//FIXME possibly shorten
+    //n->rto = cb->rtt << 1;			//FIXME possibly shorten
+    n->rto = cb->rtt;
     n->next_retrans = Now + n->rto;
 }
 
 void tcp_reoutput(struct tcp_retrans_list_s *n)
 {
     n->retrans_num ++;
-    n->rto *= 2;
+    //n->rto *= 2;		//FIXME
     n->next_retrans = Now + n->rto;
-printf("retrans retry #%d rto %ld\n", n->retrans_num, n->rto);
-    ip_sendpacket((unsigned char *)n->tcph, n->len, &n->apair);
+printf("retrans retry #%d rto %ld mem %u\n", n->retrans_num, n->rto, tcp_retrans_memory);
+    ip_sendpacket((unsigned char *)n->tcphdr, n->len, &n->apair);
 }
 
 /* called every ktcp cycle when tcp_timeruse nonzero*/
@@ -296,7 +288,7 @@ void tcp_retrans(void)
     int datalen, rtt;
 
 /* FIXME avoid running out of memory - bug in retrans recovery*/
-if (tcp_retrans_memory > TCP_RETRANS_MAXMEM || tcp_timeruse > 5) {
+if (tcp_retrans_memory > TCP_RETRANS_MAXMEM /*|| tcp_timeruse > 5*/) {
 	struct tcpcb_s *cb = NULL;
 	printf("tcp: RETRANS limit, timeruse %d\n", tcp_timeruse);
 	n = retrans_list;
@@ -313,10 +305,10 @@ if (tcp_retrans_memory > TCP_RETRANS_MAXMEM || tcp_timeruse > 5) {
 
     n = retrans_list;
     while (n != NULL) {
-	datalen = n->len - TCP_DATAOFF(n->tcph);
+	datalen = n->len - TCP_DATAOFF(&n->tcphdr[0]);
 
-	//debug_tcp("retrans: %lx %lx", ntohl(n->tcph->seqnum) + datalen,n->cb->send_una);
-	if (SEQ_LEQ(ntohl(n->tcph->seqnum) + datalen ,n->cb->send_una)) {
+	//debug_tcp("retrans: %lx %lx", ntohl(n->tcphdr[0].seqnum) + datalen,n->cb->send_una);
+	if (SEQ_LEQ(ntohl(n->tcphdr[0].seqnum) + datalen, n->cb->send_una)) {
 	    if (n->retrans_num == 0) {
 		rtt = Now - n->first_trans;
 		if (rtt > 0)
@@ -326,7 +318,7 @@ if (tcp_retrans_memory > TCP_RETRANS_MAXMEM || tcp_timeruse > 5) {
 	    continue;
 	}
 
-debug_tcp("retrans %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
+//debug_tcp("retrans %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
 	if (TIME_GEQ(Now, n->next_retrans)) {
 	    tcp_reoutput(n);
 	    return;
@@ -351,6 +343,7 @@ void tcp_output(struct tcpcb_s *cb)
     len = CB_BUF_SPACE(cb) - PUSH_THRESHOLD;
     if (len <= 0)
 	len = 1;		/* Never advertise zero window size */
+len = 255;	//FIXME testing only
     th->window = htons(len);
     th->urgpnt = 0;
     th->flags = cb->flags;
@@ -368,8 +361,9 @@ void tcp_output(struct tcpcb_s *cb)
 
     TCP_SETHDRSIZE(th, header_len);
 
+    if (cb->datalen)
+	memcpy((char *)th + header_len, cb->data, cb->datalen);
     len = cb->datalen + header_len;
-    memcpy((char *)th + header_len, cb->data, cb->datalen);
 
     th->chksum = 0;
     th->chksum = tcp_chksumraw(th, cb->localaddr, cb->remaddr, len);

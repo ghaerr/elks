@@ -240,7 +240,7 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
-//printf("tcpdev read: sending %d bytes\n", data_avail);
+//printf("tcpdev READ: %d bytes\n", data_avail);
     ret_data = (struct tdb_return_data *)sbuf;
     ret_data->type = 0;
     ret_data->ret_value = data_avail;
@@ -260,7 +260,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 	return;
 
     if (cb->wait_data == 0) {
-//printf("tcpdev checkread: updating select for %d bytes\n", cb->bytes_to_push);
+//printf("tcpdev checkSELECT: %d bytes\n", cb->bytes_to_push);
 
 	/* Update the avail_data in the kernel socket (for select) */
 	sock = cb->sock;
@@ -277,7 +277,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
-//printf("tcpdev checkread: sending %d bytes\n", data_avail);
+//printf("tcpdev checkREAD: %d bytes\n", data_avail);
     ret_data->type = 0;
     ret_data->ret_value = data_avail;
     ret_data->sock = cb->sock;
@@ -324,6 +324,8 @@ printf("tcp: RETRANS limit exceeded\n");
 	retval_to_sock(sock, db->size);
 	return;
     }
+
+//printf("WRITE window %ld timer %d\n", cb->send_nxt - cb->send_una, tcp_timeruse);
 
     cb->flags = TF_PSH|TF_ACK;
     cb->datalen = db->size;
@@ -399,24 +401,31 @@ void tcpdev_process(void)
 
     switch (sbuf[0]){
 	case TDC_BIND:
+	    //printf("tcpdev_bind\n");
 	    tcpdev_bind();
 	    break;
 	case TDC_ACCEPT:
+	    //printf("tcpdev_accept\n");
 	    tcpdev_accept();
 	    break;
 	case TDC_CONNECT:
+	    //printf("tcpdev_connect\n");
 	    tcpdev_connect();
 	    break;
 	case TDC_LISTEN:
+	    //printf("tcpdev_listen\n");
 	    tcpdev_listen();
 	    break;
 	case TDC_RELEASE:
+	    //printf("tcpdev_release\n");
 	    tcpdev_release();
 	    break;
 	case TDC_READ:
+	    //printf("tcpdev_read\n");
 	    tcpdev_read();
 	    break;
 	case TDC_WRITE:
+	    //printf("tcpdev_write\n");
 	    tcpdev_write();
 	    break;
     }

@@ -55,4 +55,6 @@ void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair);
 unsigned long in_aton(const char *str);
 char *in_ntoa(ipaddr_t in);
 
+#define memcpy	xxmemcpy
+extern void *xxmemcpy(void *,const void *,int);
 #endif

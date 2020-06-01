@@ -192,7 +192,7 @@ enum KEY_ACTION{
 	CTRL_D = 4,         /* Ctrl-d */
 	CTRL_E = 5,         /* Ctrl-e */
 	CTRL_F = 6,         /* Ctrl-f */
-	CTRL_H = 8,         /* Ctrl-h */
+	CTRL_H = 8,         /* Ctrl-h - Backspace*/
 	TAB = 9,            /* Tab */
 	CTRL_K = 11,        /* Ctrl+k */
 	CTRL_L = 12,        /* Ctrl+l */
@@ -203,7 +203,7 @@ enum KEY_ACTION{
 	CTRL_U = 21,        /* Ctrl+u */
 	CTRL_W = 23,        /* Ctrl+w */
 	ESC = 27,           /* Escape */
-	BACKSPACE =  127    /* Backspace */
+	DELETE =  127       /* Delete */
 };
 
 static void linenoiseAtExit(void);
@@ -940,7 +940,9 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
 #endif
             write(l.ofd, "\r\n", 2);  /* tty1 requires \r, serial doesn't*/
             return (int)l.len;
-        case BACKSPACE:   /* backspace */
+        case DELETE:      /* Delete */
+            linenoiseEditMoveRight(&l);
+            /* fall through */
         case CTRL_H:      /* ctrl-h */
             linenoiseEditBackspace(&l);
             break;

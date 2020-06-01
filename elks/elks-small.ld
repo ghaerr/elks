@@ -1,33 +1,34 @@
-OUTPUT_FORMAT(binary)
+OUTPUT_FORMAT(elks)
+ENTRY(_start)
 
 SECTIONS {
-	.hdr : {
-		SHORT (0x0301);  /* ELKS a.out magic */
-		BYTE (0x30);     /* flags : executable with separated I & D */
-		BYTE (0x04);     /* CPU : i8086 */
-		BYTE (0x20);     /* header length (32) */
-		BYTE (0);        /* unused */
-		SHORT (0);       /* version (unused) */
-		LONG(SIZEOF (.text));
-		LONG(SIZEOF (.data));
-		LONG (SIZEOF (.bss));
-		LONG (_start);    /* entry point */
-		LONG (_total_adjusted); /* total memory allocated */
-		LONG (0);        /* symbol table size */
-		}
-	_begintext = ALIGN(0x20);
-	.text 0 : AT(_begintext) { *(.text*); . = ALIGN(0x10); }
-	_begindata = _begintext + .;
-	.data 0 : AT(_begindata) { *(.nildata*) *(.rodata*) *(.data*) }
+	.text 0 : {
+		CREATE_OBJECT_SYMBOLS
+		*(.text .text.*)
+		. = ALIGN(0x10);
+	}
+	.data 0 : AT(0x20000) {
+		*(.nildata .nildata.*)
+		*(.rodata .rodata.*)
+		*(.data .data.*)
+		CONSTRUCTORS
+		. = ALIGN(0x10);
+	}
 	.bss : {
-		*(.bss) *(COMMON)
+		*(.bss .bss.*)
+		*(COMMON)
+		. = ALIGN(0x10);
 		ASSERT (. + 0x100 <= 0xfff0,
 		    "Error: too large for a small-model ELKS a.out file.");
+		/* Sanity check any -maout-total= and -maout-chmem= values */
+		PROVIDE (_total = 0);
+		PROVIDE (_chmem = 0);
+		ASSERT (_total <= 0xfff0 && . + _chmem <= 0xfff0,
+		    "Error: total data segment size too large.");
+		ASSERT ((_total == 0 || _total > .) && _chmem >= 0,
+		    "Error: total data segment size too small.");
 	}
-	PROVIDE (_start = entry); /* `entry' was the old entry point symbol */
-	PROVIDE (_chmem = 0);
-	PROVIDE (_total = _chmem == 0 ? 0 : . + _chmem);
-	_total_adjusted = _total == 0 ? 0
-			  : MIN (0xfff0, MAX (. + 0x100, _total));
-	/DISCARD/ : { *(.comment) }
+	/* `entry' was the old entry point symbol */
+	PROVIDE (_start = DEFINED (entry) ? entry : 0);
+	/DISCARD/ : { *(*) }
 }
