@@ -58,7 +58,7 @@ do_dd(argc, argv)
 	long	intotal;
 	long	outtotal;
 	char	*buf;
-	char	localbuf[8192];
+	char	localbuf[1024];
 
 	infile = NULL;
 	outfile = NULL;

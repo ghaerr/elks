@@ -720,7 +720,7 @@ void
 do_setenv(argc, argv)
 	char	**argv;
 {
-	char	buf[1024];
+	char	buf[CMDLEN];
 
 	strcpy(buf, argv[1]);
 	if (argc > 2) {

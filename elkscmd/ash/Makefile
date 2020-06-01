@@ -30,7 +30,7 @@ OBJS=	builtins.o cd.o dirent.o error.o eval.o exec.o expand.o input.o \
 	bltin/echo.o bltin/expr.o bltin/regexp.o bltin/operators.o \
 	linenoise_elks.o autocomplete.o
 
-LDFLAGS += -maout-heap=6144 -maout-stack=2048
+LDFLAGS += -maout-heap=6144 -maout-stack=5000
 
 #
 # Set READLINE in shell.h and add -ledit to LIBS if you want to use the

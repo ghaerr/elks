@@ -43,7 +43,7 @@ __execvve(char * fname, char **interp, char **argv, char **envp)
 	if( argv_len < 0 || envp_len < 0 || stack_bytes <= 0
 	 || (int)(stk_ptr = (char*)sbrk(stack_bytes)) == -1)
 	{
-	   errno = ENOMEM;
+	   errno = E2BIG;
 	   return -1;
 	}
 
@@ -144,6 +144,10 @@ execvp(char *fname, char **argv)
 	    if(p) *p = '\0';
 	    plen = strlen(path);
 	    pname = sbrk(plen+flen);
+	    if ((int)pname == -1) {
+		errno = E2BIG;
+		goto out;
+	    }
 
 	    strcpy(pname, path);
 	    strcat(pname, "/");
@@ -161,6 +165,7 @@ execvp(char *fname, char **argv)
    }
 
    tryrun(pname, argv);
+out:
    brk(bp);
    if( errno == ENOENT || errno == 0 ) errno = besterr;
    return -1;
