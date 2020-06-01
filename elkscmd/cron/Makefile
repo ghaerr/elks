@@ -7,7 +7,7 @@ BASEDIR=..
 include $(BASEDIR)/Make.defs
 
 LOCALFLAGS = -Wno-implicit-int -Wno-return-type $(OPTIONS)
-CRONFLAGS = -maout-chmem=0x4800 
+CRONFLAGS = -maout-heap=0x3800
 
 ###############################################################################
 #

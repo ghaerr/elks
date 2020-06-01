@@ -40,7 +40,7 @@ sed: sed.o
 # Use gcc-ia16's -maout-chmem= option so that the a.out header will ask the
 # kernel for more non-static memory.
 sort: sort.o
-	$(LD) $(LDFLAGS) -maout-chmem=0xc000 -o sort sort.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=0xb000 -o sort sort.o $(LDLIBS)
 
 tail: tail.o
 	$(LD) $(LDFLAGS) -o tail tail.o $(LDLIBS)

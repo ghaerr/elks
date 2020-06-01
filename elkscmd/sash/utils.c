@@ -163,10 +163,10 @@ copyfile(srcname, destname, setmodes)
 	int		rcc;
 	int		wcc;
 	char		*bp;
-	static char buf[BUF_SIZE];
 	struct	stat	statbuf1;
 	struct	stat	statbuf2;
 	struct	utimbuf	times;
+	char buf[BUF_SIZE];
 
 	if (stat(srcname, &statbuf1) < 0) {
 		perror(srcname);

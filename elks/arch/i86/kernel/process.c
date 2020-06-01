@@ -43,14 +43,23 @@ void stack_check(void)
     register __ptask currentp = current;
     register char *end = (char *)currentp->t_endbrk;
 
-    if (currentp->t_begstack > currentp->t_enddata) {
-	if (currentp->t_regs.sp > (__u16)end)
-	    return;
-    }
-    else {
+#ifdef CONFIG_EXEC_LOW_STACK
+    if (currentp->t_begstack <= currentp->t_enddata) {	/* stack below heap?*/
 	if (currentp->t_regs.sp < (__u16)end)
 	    return;
 	end = 0;
+    } else
+#endif
+    {
+	/* optional: check stack over min stack*/
+	if (currentp->t_regs.sp < currentp->t_begstack - currentp->t_minstack) {
+	    printk("(%d)STACK OVER MINSTACK by %u BYTES\n", currentp->pid,
+		currentp->t_begstack - currentp->t_minstack - currentp->t_regs.sp);
+	}
+
+	/* check stack overflow heap*/
+	if (currentp->t_regs.sp > (__u16)end)
+	    return;
     }
     printk("STACK OVERFLOW BY %u BYTES\n", (__u16)end - currentp->t_regs.sp);
     do_exit(SIGSEGV);

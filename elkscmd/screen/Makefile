@@ -35,7 +35,7 @@ LOCALFLAGS = -Wno-implicit-int \
 		-Wno-char-subscripts \
 		$(OPTIONS)
 		
-LOCALFLAGS += -maout-chmem=0x8000 
+LOCALFLAGS += -maout-heap=0x7000
 
 
 ###############################################################################
