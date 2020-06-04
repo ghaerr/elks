@@ -20,9 +20,9 @@ void completion(const char *buf, linenoiseCompletions *lc)
 	struct dirent *dp;
 	int count;
 	char dir[128];
-	char line[128];
-	char result[128];
-	char lastentry[128];
+	char line[LINENOISE_MAX_LINE];
+	char result[LINENOISE_MAX_LINE];
+	char lastentry[LINENOISE_MAX_LINE];
 
 	strcpy(line, buf);
 
