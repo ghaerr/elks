@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=windows-1252"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 5.2.7.2 (Windows)"/>
+	<meta name="author" content="Georg Potthast"/>
+	<meta name="created" content="2020-06-04T00:00:00.019382087"/>
+	<meta name="changed" content="2020-06-04T21:50:04.077000000"/>
+	<style type="text/css">
+		@page { margin: 2cm }
+		p { margin-bottom: 0.21cm }
+		a:link { so-language: zxx }
+	</style>
+</head>
+<body lang="de-DE" dir="ltr">
+<p style="margin-bottom: 0cm"><br/>
+
+</p>
+<p style="margin-bottom: 0cm"><font face="Arial, sans-serif"><font size="5" style="font-size: 18pt"><b>Keymaps
+for the keyboard driver</b></font></font></p>
+<p style="margin-bottom: 0cm"><br/>
+
+</p>
+<table width="639" cellpadding="4" cellspacing="0">
+	<col width="631">
+	<tr>
+		<td width="631" valign="top" style="border: none; padding: 0cm">
+			<p><font color="#000000"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">The
+			IBM PC keyboard does not generate ASCII codes directly. The keys
+			are each identified with a number, starting with the keys that are
+			located in the upper left of the original PC keyboard. 1 for the
+			&quot;ESC'' key, 2 for the &quot;1'', and so on. Each key is
+			assigned a number, including modifier keys like the left SHIFT and
+			right SHIFT keys, numbers 42 and 54. When a key is pressed, ELKS
+			receives the key number as a scan code. A scan code is also
+			generated when a key is released, but the code generated upon
+			release has the most significant bit set (equivalent to adding 128
+			to the key number). Thus a key press and a key release can be
+			distinguished. By keeping track of which modifier keys have been
+			pressed and not yet released, a large number of combinations are
+			possible.<br/>
+<br/>
+Because the keyboard delivers scan codes
+			rather than the character codes used by application software, the
+			keyboard driver must convert between the scan codes and the ASCII
+			codes by using a table. To support international keyboards the
+			driver must map the different keyboards with different tables.
+			<br/>
+<br/>
+</font></font></font><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">For
+			the ELKS operating system, these tables are in the
+			elks/arch/i86/drivers/char/KeyMaps directory. The keyboard driver,
+			xt_key.c, includes the KeyMaps/</font></font><font color="#000000"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">Keymaps.h
+			file which is automatically created. This includes alle the keymap
+			files in the KeyMaps directory for the different keyboard layouts
+			needed for different languages. The xt_key.c keyboard driver has
+			been extended to support AT keyboards as well.<br/>
+<br/>
+The
+			keycode tables in the keymap header files are arranged with
+			ascending scancode values. These are specified in hex codes after
+			each line. There are four tables in each header file, one for
+			normal keys, one for shifted keys, one for keys being pressed in
+			combination with the ALT+CTRL keys and one in combination with the
+			caps lock key. The ASCII value can be entered in the table as a
+			character or as an octal code. For the extended or grey keys,
+			these have to have an octal value of 200 or higher. This are no
+			ASCII codes, the driver will translate these keys as needed to
+			handle the extended keys. <br/>
+<br/>
+Here is a list of the octal
+			codes used in the keymaps tables. The driver will subtract the 200
+			octal or 0x80 and use the lower seven bits (0 to 7) then. </font></font></font><font color="#000000"><font size="3" style="font-size: 12pt"><br/>
+</font></font><font color="#000000"><font face="Courier New, monospace"><font size="3" style="font-size: 12pt"><br/>
+</font></font></font><font color="#000000"><font face="Courier New, monospace"><font size="3" style="font-size: 12pt">Scan
+			- ASCII - Octal<br/>
+code - code &ndash;  code<br/>
+ 2A &ndash;
+			l.SHIFT  0200<br/>
+</font></font></font><font face="Courier New, monospace">
+			2B - '\'         <br/>
+ 2C - 'z'          <br/>
+...<br/>
+ 35 - '/'
+			    <br/>
+ 36 &ndash; r.SHIFT  0201<br/>
+ 37 - '*'       <br/>
+ 38
+			- ALT      0203 <br/>
+ 39 - ' '          <br/>
+ 3A - CapsLock
+			0204<br/>
+ 3B - F1       0241<br/>
+ 3C - F2       0242<br/>
+ 3D -
+			F3       0243<br/>
+ 3E - F4       0244<br/>
+ 3F - F5       0245<br/>
+
+			40 - F6       0246 <br/>
+ 41 - F7       0247 <br/>
+ 42 - F8      
+			0250 <br/>
+ 43 - F9       0251 <br/>
+ 44 - F10      0252 <br/>
+ 45
+			- NumLock  0205 <br/>
+ 46 - ScrLock  0210 <br/>
+ 47 - Home    
+			0267<br/>
+ 48 - CurUp    0270<br/>
+ 49 - PgUp     0271<br/>
+ 4A -
+			'-'      0211<br/>
+ 4B - Left     0264<br/>
+ 4C - MID      0265<br/>
+
+			4D - Right    0266<br/>
+ 4E - '+'      0214<br/>
+ 4F - End     
+			0261<br/>
+ 50 - Down     0262<br/>
+ 51 - PgDown   0263<br/>
+ 52 -
+			Insert   0272<br/>
+ 53 - Delete   0177<br/>
+ 54 - Enter  
+			<br/>
+<br/>
+Shifted keys<br/>
+ 40 - F6       0226 <br/>
+ 41 - F7  
+			    0227 <br/>
+ 42 - F8       0230 <br/>
+ 43 - F9       0231 <br/>
+
+			44 - F10      0232 <br/>
+ 45 - NumLock  0204 <br/>
+ 46 - ScrLock 
+			0213<br/>
+<br/>
+</font><font face="Arial, sans-serif">Each of the
+			keyboard tables defines up to 89 scancode entries. Most keyboards
+			do not feature more keys.<br/>
+<br/>
+If &ldquo;ANSI console
+			terminal emulation&ldquo; has been selected in &ldquo;make
+			menuconfig&ldquo;, the keyboard driver will translate the HOME,
+			END, INSERT, PageUP and PageDown keys to ANSI terminal sequences.
+			<br/>
+Thus the HOME key is defined in the keymap table with the
+			octal code of 267. The driver will deduct octal 200 from this
+			value resulting in the hex code 0xb7 for octal 67. The driver will
+			then send &ldquo;ESC[H&ldquo; to the application for the code
+			0xb7. <br/>
+<br/>
+4th of July 2020 Georg Potthast</font></p>
+		</td>
+	</tr>
+</table>
+<p style="margin-bottom: 0cm"><br/>
+
+</p>
+</body>
+</html>

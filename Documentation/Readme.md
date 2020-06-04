@@ -79,6 +79,8 @@ This section contains some HOWTOs to help using ELKS.
 
 * [Makefile structure](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/html/technical/Makefile-structure.html)
 
+* [Keymaps for the keyboard driver](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/html/technical/keymaps.html)
+
 * [Explanations on the spanish keymap](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/text/keymap.es.txt)
 
 * [Implementation of module code](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/text/modules.txt)
