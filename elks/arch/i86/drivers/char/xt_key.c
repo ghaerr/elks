@@ -268,7 +268,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	case 0272: code = '2'; mode = '~'; break;	/* insert*/
 	case 0271: code = '5'; mode = '~'; break;	/* page up*/
 	case 0263: code = '6'; mode = '~'; break;	/* page dn*/
-	default: if (key > 127) printk("Unknown key (0%o 0x%x)\n", key, key);
+	//default: if (key > 127) printk("Unknown key (0%o 0x%x)\n", key, key);
 	}
 	if (code) {
 	    AddQueue(ESC);
