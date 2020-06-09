@@ -317,7 +317,7 @@ static void std_char(register Console * C, char c)
 #ifdef CONFIG_CONSOLE_BIOS
 	PositionCursor(C);
 #endif
-	if (c >= ' ') {
+	if (c != 0) {
 		VideoWrite(C, c);
 		C->cx++;
 	}

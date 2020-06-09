@@ -39,6 +39,8 @@
 #ifndef __LINENOISE_H
 #define __LINENOISE_H
 
+#define LINENOISE_MAX_LINE 128
+
 #ifdef __cplusplus
 extern "C" {
 #endif

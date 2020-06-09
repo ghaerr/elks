@@ -112,10 +112,12 @@ int do_chmem(char *filename, int changeheap, int changestack,
 	if (!changestack)
 		stack = header.minstack;
 
+	if (heap > 0xFFFF)
+		return msg("%s: heap too large: %ld\n", filename, heap);
+	if (stack > MAX)
+		return msg("%s: stack too large: %ld\n", filename, stack);
 	newstack = stack? stack: INIT_STACK;
 	newheap = heap? heap: INIT_HEAP;
-	if (newstack > MAX)
-		return msg("%s: stack too large: %ld\n", filename, newstack);
 
 	if (newheap < 0xFFF0 && (unsigned long)dsegsize+newheap+newstack > MAX) {
 		heap = MAX - dsegsize - newstack - 128;		/* reserve 128 bytes for environment*/

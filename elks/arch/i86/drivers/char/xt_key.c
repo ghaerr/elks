@@ -36,8 +36,8 @@
 extern struct tty ttys[];
 extern void AddQueue(unsigned char Key);
 
-#define ESC 27
-#define KB_SIZE 64
+#define ESC	 27	/* ascii value for Escape*/
+#define DEL_SCAN 0x53	/* scan code for Delete key*/
 
 /*
  * Include the relevant keymap.
@@ -56,17 +56,14 @@ int kraw = 0;
  * SA 1996                                   *
  *********************************************/
 
-#define LSHIFT 1
-#define RSHIFT 2
-#define CTRL 4
-#define ALT 8
-#define CAPS 16
-#define NUM 32
-#define ALT_GR 64
-
-#define ANYSHIFT (LSHIFT | RSHIFT)
-
-#define SSC 0xC0 /*Simple Scan Code*/
+#define LSHIFT	0x01
+#define RSHIFT	0x02
+#define CTRL	0x04
+#define ALT	0x08
+#define CAPS	0x10
+#define NUM	0x20
+#define ALT_GR	0x40
+#define SSC	0xC0	/* simple scan code*/
 
 static unsigned char tb_state[] = {
     SSC, CTRL, SSC, SSC,			/*1C->1F*/
@@ -77,8 +74,8 @@ static unsigned char tb_state[] = {
     'a', 'b', 'c', 'd', 'e',			/*3B->3F, Function Keys*/
     'f', 'g', 'h', 'i', 'j',			/*40->44, Function Keys*/
     NUM, SSC, SSC,				/*45->47*/
-    0xB7, SSC, SSC, 0xBA, SSC, 0xB9, SSC, SSC,	/*48->4F*/
-    0xB8, SSC, SSC, SSC, SSC, SSC, SSC, 'k', 'l'/*50->58 F11-F12*/
+    SSC, SSC, SSC, SSC, SSC, SSC, SSC, SSC,	/*48->4F*/
+    SSC, SSC, SSC, SSC, SSC, SSC, SSC, 'k', 'l' /*50->58, F11-F12*/
 };
 
 static unsigned char state_code[] = {
@@ -132,14 +129,15 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
     static int E0Prefix = 0;
     static int capslocktoggle =0;
     int code, mode;
-    register char *keyp_E0 = (char *)0;	/*[char *keyp; int E0]*/
-    register char *IsReleasep;
+    int E0key = 0;
+    unsigned int key;
+    int keyReleased;
 
     code = inb_p((void *) KBD_IO);
 
     /* Necessary for the XT. */
     mode = inb_p((void *) KBD_CTL);
-    //printk("\nkey read:%X,mode:%X,ModeState:%d\n",code,mode,ModeState);    
+    //printk("\nkey read1:%X,mode:%X,ModeState:%d\n",code,mode,ModeState);    
     outb_p((unsigned char) (mode | 0x80), (void *) KBD_CTL);
     outb_p((unsigned char) mode, (void *) KBD_CTL);
 
@@ -153,18 +151,16 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	E0Prefix = 1;
 	return;
     }
-
-    /* temporary store EOPrefix in keyp_E0 e.g. for ALT_GR */
     if (E0Prefix) {
-	keyp_E0 = (char *)1;	/*[ E0 ]*/
+	E0key = 1;
 	E0Prefix = 0;
     }
 
-/* the highest bit is set when the key was released. 
- * Save pressed/relased state in IsReleasep. Bit set = released */
-    IsReleasep = (char *)(code & 0x80);
-    code &= 0x7F; /* clear bit indicating released key */
+    /* high bit set when key released */
+    keyReleased = code & 0x80;
+    code &= 0x7F;
 
+    //printk("scan %x\n", code);
     /*
      * Classify scancode such that
      *  mode = 00xx xxxxB, Status key
@@ -172,113 +168,107 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
      *         10xx xxxxB, Control key
      *         11xx xxxxB, Simple Scan Code
      */
-    if (code >= 0x1C) {
-      mode = tb_state[code - 0x1C]; /*is key a modifier key?*/
-    } else {
-      mode = SSC;
-    }
-      
-    /* --------------Process status keys-------------- */
-    if (!(mode & 0xC0)) { /*not a simple scan code*/
+    if (code >= 0x1C)
+	mode = tb_state[code - 0x1C]; /*is key a modifier key?*/
+    else
+        mode = SSC;
 
-#if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE) /* || defined(CONFIG_KEYMAP_ES) */
-	/* ALT_GR has a EO prefix this is stored in keyp_E0 above */
-	if ((mode == ALT) && ((int)keyp_E0 != 0))	/*[ E0 ]*/
+    if (!(mode & 0xC0)) {
+    /* --------------Process status keys-------------- */
+#if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE)
+			   /* || defined(CONFIG_KEYMAP_ES) */
+	/* ALT_GR has a E0 prefix*/
+	if ((mode == ALT) && E0key)
 	    mode = ALT_GR;
 #endif
-	if (IsReleasep) { /* the key was released */
-	  if (mode == 16) {
-	    if (capslocktoggle==0) {
-	      capslocktoggle=1;
-	    } else {
-	      capslocktoggle=0;
-	    }
-	  } //mode == 16
-	  if ((mode != 16) | (capslocktoggle == 0)) ModeState &= ~mode; /*clear*/
-	} else {
-	  ModeState |= mode;  /*set*/
-	}
-
-    /* did set the ModeState according to the modifier key and return now */
+	if (keyReleased) {
+	    if (mode == CAPS)
+		capslocktoggle = !capslocktoggle;
+	  if (mode != CAPS || !capslocktoggle)
+		ModeState &= ~mode;
+	} else
+	    ModeState |= mode;
 	return;
     }
     
-    if (IsReleasep) /* a simple scan code was released */
+    /* no further processing on key release for non-status keys*/
+    if (keyReleased)
 	return;
 
     switch(mode & 0xC0) {
-      
     /* --------------Handle Function keys-------------- */
-    case 0x40:	/* F1 .. F10 - adding ESC plus mode byte to queue */
+    case 0x40:	/* F1 .. F10*/
     /* F11 and F12 function keys need 89 byte table like keys-de.h */
     /* function keys are not posix standard here */
     
 	/* AltF1-F3 are console switch*/
 	if ((ModeState & ALT) || code <= 0x3D) {/* temp console switch on F1-F3*/
-	    Console_set_vc((unsigned) (code - 0x3B));
+	    Console_set_vc(code - 0x3B);
 	    return;
 	}
 
-	AddQueue(ESC);
-	AddQueue((unsigned char)mode);
+	AddQueue(ESC);		/* F1 = ESC a, F2 = ESC b, etc*/
+	AddQueue(mode);
 	return;
 
     /* --------------Handle extended scancodes-------------- */
     case 0x80:
-	if ((int)keyp_E0) {		/* Is extended scancode? */	/*[ E0 ]*/
+	if (E0key) {		/* Is extended scancode? */
 	    mode &= 0x3F;
 	    if (mode) {
-		AddQueue(ESC);
+		AddQueue(ESC);	/* Up=0x37 -> ESC [ A, Down=0x38 -> ESC [ B, etc*/
 #ifdef CONFIG_EMUL_ANSI
 		AddQueue('[');
 #endif
 	    }
-	    //printk("key read2:%X,mode:%X,ModeState:%d,mode+0A:%X\n",code,mode,ModeState,(mode + 0x0A));    
-	    AddQueue(mode + 0x0A);
+	    //printk("key 0%o 0x%x\n", mode, mode);
+	    AddQueue(mode + 10);
 	    return;
 	}
+	/* fall through*/
 
     default:
-    /* --------------Handle CTRL-ALT-DEL-------------- */
-	if ((code == 0x53) && (ModeState & CTRL) && (ModeState & ALT))
+    /* --------------Handle simple scan codes-------------- */
+	if (code == DEL_SCAN && ((ModeState & (CTRL|ALT)) == (CTRL|ALT)))
 	    ctrl_alt_del();
 
-    /* --------------Handle simple scan codes-------------- */	
-    /*
-     *      Pick the right keymap determined by the ModeState
-     */
+        /* Pick the right keymap determined by ModeState*/
 	mode = ((ModeState & ~(NUM | ALT_GR)) >> 1) | (ModeState & 0x01);
 	mode = state_code[mode];
 	
 	if (!mode && (ModeState & ALT_GR))
 	    mode = 3; /*ctrl_alt table*/
 
-	if ((ModeState & CTRL && code < 14 && !(ModeState & ALT))
-		|| (code < 70 && ModeState & NUM))
+	if ((((ModeState & (CTRL|ALT)) == CTRL) && code < 14) ||
+	     ((ModeState & NUM) && code < 70))
 	    mode = 1; /*shift keys*/
 
 	/* now read the key code from the selected table by mode */
-	keyp_E0 = (char *)(*(scan_tabs[mode] + code));	/*[ keyp ]*/
+	key = *(scan_tabs[mode] + code);
 
-    /*
-     *      Apply special modifiers
-     */
-	if (ModeState & ALT && !(ModeState & CTRL))	/* Changed to support CTRL-ALT */
-	    keyp_E0 = (char *)(((int) keyp_E0) | 0x80); /* META-.. */	/*[ keyp ]*/
+        /* Apply special modifiers*/
+	if ((ModeState & (CTRL|ALT)) == ALT)
+	    key |= 0x80;	/* META-.. */
 	    
-	if (!keyp_E0)			/* non meta-@ is 64 */	/*[ keyp ]*/
-	    keyp_E0 = (char *) '@';	/*[ keyp ]*/
+	if (!key)		/* non meta-@ is 64 */
+	    key = '@';
 	    
-	if (ModeState & CTRL && !(ModeState & ALT))	/* Changed to support CTRL-ALT */
-	    keyp_E0 = (char *)(((int) keyp_E0) & 0x1F); /* CTRL-.. */	/*[ keyp ]*/
+	if ((ModeState & (CTRL|ALT)) == CTRL)
+	    key &= 0x1F;	/* CTRL-.. */
 	    
 #ifdef CONFIG_EMUL_ANSI
 	code = mode = 0;
-	switch ((unsigned int)keyp_E0) {
-	case 0xb7: code = 'H'; break;			/* home*/
-	case 0xb1: code = 'F'; break;			/* end*/
-	case 0xb9: code = '5'; mode = '~'; break;	/* page up*/
-	case 0xb3: code = '6'; mode = '~'; break;	/* page dn*/
+	switch (key) {
+	case 0270: code = 'A'; break;			/* up*/
+	case 0262: code = 'B'; break;			/* down*/
+	case 0266: code = 'C'; break;			/* right*/
+	case 0264: code = 'D'; break;			/* left*/
+	case 0267: code = 'H'; break;			/* home*/
+	case 0261: code = 'F'; break;			/* end*/
+	case 0272: code = '2'; mode = '~'; break;	/* insert*/
+	case 0271: code = '5'; mode = '~'; break;	/* page up*/
+	case 0263: code = '6'; mode = '~'; break;	/* page dn*/
+	//default: if (key > 127) printk("Unknown key (0%o 0x%x)\n", key, key);
 	}
 	if (code) {
 	    AddQueue(ESC);
@@ -289,9 +279,8 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	    return;
 	}
 #endif
-	//printk("keyp_E0:%X\n",keyp_E0);    
-	AddQueue((unsigned char) keyp_E0);
+	//printk("key 0%o 0x%x\n", key, key);
+	AddQueue(key);
     }
 }
-
-#endif
+#endif /* CONFIG_CONSOLE_DIRECT*/
