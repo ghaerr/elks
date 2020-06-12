@@ -15,8 +15,10 @@
 #define ASSERT(p)	if(!(p))botch(#p);else
 static void botch(char *s);
 static int allock(void);
+void showheap(void);
 #else
 #define ASSERT(p)
+#define showheap()
 #endif
 
 #if DEBUG > 1
@@ -47,7 +49,7 @@ static int allock(void);
 #define ALIGN int
 #define NALIGN 1
 #define WORD sizeof(union store)
-#define BLOCK 1024	/* a multiple of WORD*/
+#define BLOCK 1028	/* 1024+4, amount to sbrk*/
 #define GRANULE 0	/* sbrk granularity*/
 #define BUSY 1
 #ifndef NULL
@@ -127,8 +129,10 @@ debug("malloc(%d) %d ", getpid(), nbytes);
 		}
 
 		q = (union store *)sbrk(temp*WORD);
-		if((INT)q == -1)
+		if((INT)q == -1) {
+			showheap();
 			return(NULL);
+		}
 		ASSERT(!((INT)q & 1));
 		ASSERT(q>alloct);
 		alloct->ptr = q;
@@ -225,15 +229,42 @@ allock(void)
 	register union store *p;
 	int x;
 	x = 0;
-	//printf("[(%x),", alloct);
-	for(p= &allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
-		//printf("%x,", (int)p &~ 1);
+	//printf("[(%x),", (int)alloct);
+	for(p=&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
+		//printf("%x,", (int)p);
 		if(p==allocp)
 			x++;
 	}
 	//printf("]\n");
-	if (p != alloct) printf("%x %x %x\n", p, alloct, p->ptr);
+	if (p != alloct) printf("%x %x %x\n", (int)p, (int)alloct, (int)p->ptr);
 	ASSERT(p==alloct);
 	return((x==1)|(p==allocp));
+}
+
+void
+showheap(void)
+{
+	register union store *p;
+	int n = 1;
+	int size, alloc = 0, free = 0;
+
+	printf("HEAP LIST\n");
+	allock();
+	for(p=&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
+		size = (int)clearbusy(p->ptr) - (int)clearbusy(p) - 2;
+		printf("%d: %04x size %d", n, (int)p+2, size);
+		if (!testbusy(p->ptr)) {
+			printf(" (free)");
+			free += size;
+		} else {
+			if (n < 3)		/* don't count ptr to first sbrk()*/
+				printf(" (skipped)");
+			else alloc += size + 2;
+		}
+		n++;
+		printf("\n");
+	}
+	printf("%d: %x (top)\n", n, (int)alloct);
+	printf("Total alloc %u, free %u\n", alloc, free);
 }
 #endif
