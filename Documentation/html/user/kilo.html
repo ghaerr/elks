@@ -5,7 +5,7 @@
 	<title></title>
 	<meta name="generator" content="LibreOffice 6.3.3.2.0 (Linux)"/>
 	<meta name="created" content="2020-05-12T00:00:00.021243300"/>
-	<meta name="changed" content="2020-05-15T22:05:38.407556227"/>
+	<meta name="changed" content="2020-05-31T23:16:41.029075316"/>
 	<style type="text/css">
 		@page { size: 21cm 29.7cm; margin: 2cm }
 		p { margin-bottom: 0.25cm; background: transparent; line-height: 115%; background: transparent }
@@ -24,11 +24,11 @@
 <br/>
 
 </p>
-<table width="643" cellpadding="4" cellspacing="0">
-	<col width="635"/>
+<table width="643" cellpadding="0" cellspacing="0">
+	<col width="643"/>
 
 	<tr>
-		<td width="635" valign="top" style="border: none; padding: 0cm"><p align="center" style="margin-bottom: 0.5cm">
+		<td width="643" valign="top" style="border: none; padding: 0cm"><p align="center" style="margin-bottom: 0.5cm">
 			<font face="Arial, sans-serif"><font size="5" style="font-size: 18pt"><b>The
 			Kilo editor</b></font></font></p>
 			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Kilo
@@ -41,12 +41,27 @@
 			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Unlike
 			</font><code><font face="Arial, sans-serif">vi</font></code><font face="Arial, sans-serif">,
 			there is no need to enter Edit Mode before inputting text; you can
-			begin typing as soon as the window opens. Use the arrow keys to
-			move the cursor. Or use Home and End to set it at the beginning or
-			end of the current line. You can also use the PageUp or PageDown
-			keys to move through the file.</font> <font face="Arial, sans-serif">The
-			most important commands available are displayed in a status line
-			at the bottom of the terminal window. </font>
+			begin typing as soon as the window opens. The commands supported
+			by Kilo</font> <font face="Arial, sans-serif">are displayed on a
+			help page which you can open by entering CTRL+a.</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">The
+			default setting is inserting the chararcters at the current cursor
+			position and moving the following characters to the right. You can
+			set Kilo into replace mode using the Insert key and back into
+			insert mode by pressing this key again.</font></p>
+			<h3 class="western"><font face="Arial, sans-serif">Moving the
+			cursor</font></h3>
+			<p style="margin-bottom: 0.5cm; font-weight: normal"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">You
+			can use the arrow keys to move the cursor in the text. You can
+			select the Home key to move the cursor to the beginning of a line
+			and the End key to move the cursor to the end of a line. Using the
+			Page up and Page down keys you can scroll through the text. If you
+			enter CTRL+t you will move to the top of the file and if you enter
+			CTRL+e you will move to the end of the file.</font></font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Use
+			the arrow keys to move the cursor. Or use Home and End to set it
+			at the beginning or end of the current line. You can also use the
+			PageUp or PageDown keys to move through the file.</font> 
 			</p>
 			<h3 class="western"><font face="Arial, sans-serif">Opening and
 			Creating Files </font>
@@ -54,27 +69,150 @@
 			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">To
 			open an existing file or to create a new file, type kilo followed
 			by the file name. This opens a new editor window, and you can
-			start editing the file. </font>
-			</p>
+			start editing the file. If you do not supply a file name you have
+			to specify the name when you save the file.</font></p>
 			<h3 class="western"><img src="../../img/kilo.png" name="Bild1" align="left" width="635" height="407" border="0"/>
-<font face="Arial, sans-serif">Search
-			Text</font></h3>
+<br/>
+<br/>
+
+			</h3>
+			<h3 class="western"><br/>
+<br/>
+
+			</h3>
+			<h3 class="western"><br/>
+<br/>
+
+			</h3>
+			<h3 class="western"><br/>
+<br/>
+
+			</h3>
+			<h3 class="western"><font face="Arial, sans-serif"><br/>
+Syntax
+			Highlighting</font></h3>
+			<h3 class="western" style="font-weight: normal"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt">Kilo
+			supports syntax highlighting for c/cpp, python, go and javascript.
+			It selects the highlighting type depending on the file suffix and
+			displays the selected highlighting type in the status bar after
+			loading the file. If the file type is not recognized or it is a
+			text file, the display will be white text on a black background.</font></font></h3>
+			<h3 class="western"><font face="Arial, sans-serif">Search and
+			Replace Text</font></h3>
 			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">To
 			search for text in a document, use CTRL+f. This will open a search
-			prompt where you can enter the search string. Do not press enter,
-			use the cursor keys to move to the next occurrence of the string
-			or move back to the previous one. Press ESC to exit the search
-			function.</font></p>
+			prompt where you can enter the search string. Kilo will jump to
+			the first occurence of this string in the file. Use cursor-down to
+			jump to the next occurence of this string or use cursor-up to go
+			back up in the file to search for the string. If you press enter
+			you will leave the search function and the cursor will stay on the
+			same line where the string was found. If you press ESC, you will
+			return to the location where you started the search.</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">If
+			you press CTRL+r you will be asked if you want to be prompted to
+			replace a string found or if you want to replace all occurences in
+			the file without asking. You will then be prompted for a string to
+			search for and a string to replace this string with. Then Kilo
+			will jump to the first occurence of the search string. If you
+			press the Home key then, you will replace the string found. If you
+			enter cursor-down, you will not replace the string but jump to the
+			next occurence. <br/>
+If you selected to replace the string in the
+			entire file you will not be prompted to decide if you want to
+			replace. You can leave the replace function with Enter or ESC.</font></p>
+			<h3 class="western"><font face="Arial, sans-serif">Bookmarks</font></h3>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">To
+			jump directly to predefined lines in the edited file, you can use
+			up to seven bookmarks. If you enter CTRL+b, you can set, select or
+			delete bookmarks and view the stored bookmarks. If you enter a
+			number between 1 and 7 you can store the current line as a
+			bookmark with that number. If a bookmark with that number has been
+			stored already, kilo will jump to that line for you. However, if
+			that line is the current line now and you selected the number of
+			the bootmark used to store that line, the bookmark will be
+			deleted. Entering ‘d‘ will clear the screen and show a list of
+			the stored bookmarks. You can select one of these to jump to that
+			line or delete it.</font></p>
+			<h3 class="western"><font face="Arial, sans-serif">Copy and Paste</font></h3>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">When
+			you enter CTRL+c Kilo will allow you to select and copy a block of
+			characters into a buffer. The current position when you enter
+			CTRL+c is the start of the block and you can then use the cursor
+			keys to select characters and lines to the right or below the
+			start of this block. When you press enter the characters from the
+			start of the block up to but not including the current cursor
+			position will be copied into the buffer.</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">You
+			can then move the cursor to a different location in the text and
+			insert this block there using CTRL+v. If you load a new file using
+			CTRL+o you can paste the copied line(s) into this new file. CTRL+x
+			will delete the current line and also copy it into the buffer so
+			you can paste it into the text at any position using CTRL+v.</font></p>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">You
+			can write the contents of the copy buffer to the file
+			kilobuffer.txt using CTRL+p. You can use CTLR+L later to insert
+			this file anywhere into your current file.</font></p>
+			<h3 class="western"><font face="Arial, sans-serif">Insert file</font></h3>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">If
+			you want to insert a file from disk into the file you are
+			currently editing, enter CTRL+L and Kilo will ask you for the name
+			of the desired file. Then it will insert the lines of that file at
+			the current cursor position.</font></p>
+			<h3 class="western"><font face="Arial, sans-serif">Undo</font></h3>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Kilo
+			has a very simple undo feature. When you enter a space character,
+			a Tab or press the Enter key in the edited text, Kilo will mark
+			this as a beginning of an undo block. You can use CTRL+z then to
+			erase the text from the current cursor position to the beginning
+			of the block, e.g. the last space chararcter. Kilo willl not erase
+			a newline that it inserted after an Enter key, it will just erase
+			entered characters. </font>
+			</p>
 			<h3 class="western"><a name="save"></a><font face="Arial, sans-serif">Save</font></h3>
 			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">To
 			save your work, use CTRL+s. This will save the document and leave
-			kilo open for you to continue working.</font></p>
+			kilo running for you to continue editing.<br/>
+You can also use
+			CTRL+w to save the file with a different name.</font></p>
+			<h3 class="western"><font face="Arial, sans-serif">Open</font></h3>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">You
+			can load a new file when you enter CTRL+o. You will be asked
+			whether to save your edited file to avoid discarding the
+			modifications you made in the loaded file.</font></p>
+			<h3 class="western"><font face="Arial, sans-serif">New</font></h3>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">When
+			you enter CTRL+n Kilo will remove the edited file and allow you to
+			type in a new file from scratch. You will be asked to save your
+			currently edited file to avoid discarding the modifications you
+			made. If you copied a block of characters into the internal buffer
+			using CTRL+c, you can use CTRL+v to enter these into the new file.</font></p>
+			<h3 class="western"><font face="Arial, sans-serif">List of
+			recently opened files</font></h3>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">When
+			you press CTRL+j Kilo will display a list of the files you opened
+			recently. Kilo has saved this list on disk in the file
+			“.kilorecent“. You will be asked to select a file from the
+			list. Kilo will then save the currently edited file and load the
+			selected file. It has stored the cursor position when you last
+			used this file and will put the cursor at that position. This way
+			you can switch quickly between several files just as if these were
+			opened in subwindows. Using cut and paste you can copy characters
+			from one file to the other.</font></p>
+			<h3 class="western"><img src="../../img/kilo-help-page.png" name="Bild2" align="left" width="643" height="396" border="0"/>
+<font face="Arial, sans-serif">Help</font></h3>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">If
+			you enter CTRL+a, kilo will clear the screen and display a help
+			page. If you press any key kilo will display the edited text again
+			and execute the entered key. You can select a CTRL key from the
+			list to execute that, e.g. CTRL+w to save the file under a
+			different name. But if you want no change, just enter CTRL+a again
+			to clear the help page.</font></p>
 			<h3 class="western"><a name="exit"></a><font face="Arial, sans-serif">Exit</font></h3>
 			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Use
 			CTRL+q to exit kilo. If you have not saved your work, you will be
-			prompted to enter CTRL+q several times to exit.</font></p>
+			prompted to enter ‘y‘ to discard your modifications.</font></p>
 			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">A
-			screencast is available here:
+			screencast demonstrating Kilo is available here:
 			<a href="https://asciinema.org/a/90r2i9bq8po03nazhqtsifksb">https://asciinema.org/a/90r2i9bq8po03nazhqtsifksb</a></font></p>
 			<h3 class="western"><font face="Arial, sans-serif">Development</font></h3>
 			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Kilo
@@ -94,34 +232,22 @@
 			code:<br/>
 <a href="https://viewsourcecode.org/snaptoken/kilo/">https://viewsourcecode.org/snaptoken/kilo/</a><br/>
 <a href="https://web.archive.org/web/20200122083220/https://viewsourcecode.org/snaptoken/kilo/">https://web.archive.org/web/20200122083220/https://viewsourcecode.org/snaptoken/kilo/</a><br/>
-Also
-			the openemacs editor is based on Kilo.</font></p>
+Several
+			editors are based on Kilo, e.g.</font> <font face="Arial, sans-serif">the
+			openemacs editor.</font></p>
 			<h3 class="western"><font face="Arial, sans-serif">ELKS port of
 			Kilo</font></h3>
-			<p><font face="Arial, sans-serif">Greg Haerr ported Kilo to ELKS.
-			Here are notes from his original commit:<br/>
+			<p style="margin-bottom: 0.5cm"><font face="Arial, sans-serif">Greg
+			Haerr ported Kilo to ELKS. Here is a link to <a href="https://github.com/jbruchon/elks/pull/554">his
+			original commit</a>. It describes the changes that were required
+			to get Kilo to run with ELKS.<br/>
 <br/>
-Runs on
-			console and serial port with terminal emulator.<br/>
-Fix ANSI
-			color display on console. (ESC [ 30-47 m ] )<br/>
-Fix ANSI delayed
-			column 80 auto-wrap on console.<br/>
-Fix low-level keyboard CR -&gt;
-			LF conversion bug.<br/>
-Send ANSI escape sequences for console
-			Home, End, PgUp, PgDn keys.<br/>
-Add /etc/termcap entries for
-			above keys to allow </font><code><font face="Arial, sans-serif">vi</font></code>
-			<font face="Arial, sans-serif">to use them.<br/>
-Add </font><code><font face="Arial, sans-serif">getline</font></code>
-			<font face="Arial, sans-serif">and </font><code><font face="Arial, sans-serif">getdelim</font></code>
-			<font face="Arial, sans-serif">stdio libc routines.<br/>
-Plus
-			fixed a bug with the delete key.<br/>
-<br/>
-15th of May 2020 Georg
-			Potthast</font></p>
+I looked through the
+			uncommitted pull requests and issues raised on the Kilo site on
+			GitHub and extended Kilo based on that. Debugged and rewrote
+			several pull requests in the process. Then I added quite a number
+			of additional features to Kilo.</font></p>
+			<p><font face="Arial, sans-serif">31th of May 2020 Georg Potthast</font></p>
 		</td>
 	</tr>
 </table>
