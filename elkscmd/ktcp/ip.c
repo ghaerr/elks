@@ -177,17 +177,17 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
         /* So this part should be moved upward in the IP protocol automaton */
         /* to avoid this dangerous unlimited try again loop */
         /* Until issue jbruchon#67 fixed, we block until ARP reply */
-        while (arp_cache_get (ip_addr, &eth_addr))
+        while (arp_cache_get (ip_addr, &eth_addr, 0))
             arp_request (ip_addr);
 #else
 	/* get ethernet address if cached, otherwise TCP packet will auto retans*/
-        if (arp_cache_get (ip_addr, &eth_addr)) {
+        if (arp_cache_get (ip_addr, &eth_addr, 0)) {
 
 	    /* send ARP request once, timed wait for reply*/
             if (!arp_request (ip_addr))
 
 		/* succeeded, try cache once more*/
-		if (arp_cache_get (ip_addr, &eth_addr)) {
+		if (arp_cache_get (ip_addr, &eth_addr, 0)) {
 
 		    /* No ARP reply. Temporary solution, drop sending IP packet.
 		     * TCP should retransmit after timeout,

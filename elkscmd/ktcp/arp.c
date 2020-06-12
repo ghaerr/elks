@@ -40,7 +40,6 @@ struct arp_cache_s {
 typedef struct arp_cache_s arp_cache_t;
 
 static arp_cache_t arp_cache [ARP_CACHE_MAX];
-static int merge_flag = 0;     /* tell arp_cache_get to merge the incoming address */
 
 static void arp_cache_init (void)
 {
@@ -48,7 +47,7 @@ static void arp_cache_init (void)
 }
 
 
-int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr)
+int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr, int merge)
 {
 	register arp_cache_t * entry = arp_cache;
 
@@ -57,9 +56,8 @@ int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr)
 		if (!entry->ip_addr)
 		    break;
 		if (entry->ip_addr == ip_addr) {
-		    if (merge_flag) {
+		    if (merge) {
 				memcpy (entry->eth_addr, eth_addr, sizeof (eth_addr_t));
-			    merge_flag = 0;
 				debug_arp("arp: updating cached entry for %s\n", in_ntoa(ip_addr));
 			} else {
 				memcpy (eth_addr, entry->eth_addr, sizeof (eth_addr_t));
@@ -77,7 +75,7 @@ int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr)
 
 void arp_cache_add (ipaddr_t ip_addr, eth_addr_t * eth_addr)
 {
-	if (arp_cache_get (ip_addr, eth_addr)) {
+	if (arp_cache_get (ip_addr, eth_addr, 0)) {
 
 		/* Shift the whole cache */
 		arp_cache_t * entry = arp_cache + ARP_CACHE_MAX - 1;
@@ -202,9 +200,7 @@ void arp_recvpacket(unsigned char *packet, int size)
 	switch (ntohs(arp->op)) {
 	case ARP_REQUEST:
 		debug_arp("arp: incoming REQUEST\n");
-		arp_cache_add (arp->ip_src, &arp->eth_src);
-		merge_flag++;
-		notfound = arp_cache_get(arp->ip_src, &arp->eth_src); /* possible cache update */
+		notfound = arp_cache_get(arp->ip_src, &arp->eth_src, 1); /* possible cache update */
 		if (arp->ip_dest == local_ip) {
 			if (notfound)
 				arp_cache_add(arp->ip_src, &arp->eth_src);
