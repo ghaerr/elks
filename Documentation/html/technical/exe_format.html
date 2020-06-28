@@ -1,37 +1,252 @@
-<h1>ELKS Executable Formats</h1>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 6.3.3.2.0 (Linux)"/>
+	<meta name="created" content="00:00:00"/>
+	<meta name="changed" content="2020-06-18T21:18:06.560827988"/>
+	<style type="text/css">
+		@page { size: 21cm 29.7cm; margin-left: 2cm; margin-right: 1cm; margin-top: 1cm; margin-bottom: 1cm }
+		p { margin-bottom: 0.25cm; background: transparent; line-height: 115%; background: transparent }
+		h1 { margin-bottom: 0.21cm; background: transparent; background: transparent; page-break-after: avoid }
+		h1.western { font-family: "Liberation Serif", serif; font-size: 24pt; font-weight: bold }
+		h1.cjk { font-family: "Droid Sans Fallback"; font-size: 24pt; font-weight: bold }
+		h1.ctl { font-family: "Droid Sans Devanagari"; font-size: 24pt; font-weight: bold }
+		h2 { margin-top: 0.35cm; margin-bottom: 0.21cm; background: transparent; background: transparent; page-break-after: avoid }
+		h2.western { font-family: "Liberation Serif", serif; font-size: 18pt; font-weight: bold }
+		h2.cjk { font-family: "Droid Sans Fallback"; font-size: 18pt; font-weight: bold }
+		h2.ctl { font-family: "Droid Sans Devanagari"; font-size: 18pt; font-weight: bold }
+		pre { background: transparent; font-family: "Liberation Mono", monospace; font-size: 10pt; background: transparent }
+		td p { background: transparent; background: transparent }
+		code.western { font-family: "Courier New", monospace }
+		code.cjk { font-family: "NSimSun", monospace }
+		code.ctl { font-family: "Courier New", monospace }
+		a:link { color: #000080; so-language: zxx; text-decoration: underline }
+		a:visited { color: #800000; so-language: zxx; text-decoration: underline }
+	</style>
+</head>
+<body lang="de-DE" link="#000080" vlink="#800000" dir="ltr"><p><br/>
+<br/>
 
-<h2>Linking</h2>
+</p>
+<h1 class="western">ELKS Executable Formats</h1>
+<p><br/>
+<br/>
 
-<p>ELKS C source code is compiled by GCC for the IA16 platform ('gcc-ia16') and
-object & static library files are worked with the BINUTILS ('binutils-ia16'),
-so using the ELF format.</p>
-
-<p>At link time, custom 'ld' scripts (see '*.ld' files) convert ELF format to
-legacy 'a.out' format, and drop out all that is not 'code', 'data', 'bbs' and
-'rodata'. So the final executable contains neither symbol nor comment.</p>
-
-<h2>A.OUT executable</h2>
-
-<p>Executable are still using the legacy A.OUT format with splitted I/D option:</p>
+</p>
+<h2 class="western">Compiling the kernel</h2>
+<p>ELKS C source code is compiled by GCC for the IA16 platform
+('<font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">ia16-elf-gcc
+</font></font>') and object &amp; static library files are worked
+<br/>
+with the BINUTILS ('binutils-ia16'), so using the ELF format.</p>
+<h2 class="western">Linking the kernel</h2>
+<p>At link time, custom 'ld' scripts (see '*.ld' files) convert ELF
+format to legacy 'a.out' format, and drop out all that is not 'code',
+'<br/>
+data', 'bss' and 'rodata'. So the final executable contains
+neither symbol nor comment.</p>
+<h2 class="western">Compiling and linking application programs</h2>
+<p>Application programs in C for the ELKS operating system can also
+be compiled with GCC for the IA16 <font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">platform
+('ia16-elf-gcc ') <br/>
+and linked with the 'ld' scripts. A typical
+command line would be:</font></font></p>
+<p><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">ia16-elf-gcc
+hello.c -o hello -melks-libc -mcmodel=small</font></font></p>
+<p><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">The
+'-mcmodel=small' parameter specifies an executable with the splitted
+I/D option, this means code and data are in separate segments.</font></font></p>
+<p><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">Alternatively
+application programs can be compiled with the bcc compiler. A command
+line for that would be:</font></font></p>
+<pre style="margin-bottom: 0.5cm"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">bcc -ansi hello.c -o hello</font></font></pre><h2 class="western">
+A.OUT executable</h2>
+<p>Executables are still using the legacy A.OUT format defined for
+Minix1 with splitted I/D option:</p>
 <ul>
-<li>A.OUT header</li>
-<li>code section (up to 64K)</li>
-<li>data section (up to 64K)</li>
+	<li><p style="margin-bottom: 0cm">A.OUT header 
+	</p>
+	<li><p style="margin-bottom: 0cm">text (code) section (up to 64K) 
+	</p>
+	<li><p>data section (up to 64K) 
+	</p>
 </ul>
+<p><font face="Liberation Serif, serif">The data section contains
+initialized data, uninitialized data (bss) and the stack. The default
+size for uninitialized data (bss) is 4Kbytes <br/>
+and for the stack
+4Kbytes as well. With the <font size="3" style="font-size: 12pt">ia16-elf-gcc
+compiler you can use the '-maout-heap=0xffff' parameter to allocate
+the max heap size <br/>
+including 4k of stack. You can set the stack
+size with the '-maout-stack=' parameter. In this case you have to
+calculate the heap size for the <br/>
+'</font><strike> </strike><span style="text-decoration: none"><font size="3" style="font-size: 12pt">maout-heap'
+parameter. The maximum size is 65520 bytes or 64Kbytes. If you deduct
+4096 bytes for the stack you get 61424 for the heap or
+<br/>
+'-maout-heap=0xeff0'.</font></span></font></p>
+<h2 class="western">A.OUT header</h2>
+<table width="267" cellpadding="2" cellspacing="0">
+	<col width="97"/>
 
-<h2>A.OUT header</h2>
+	<col width="160"/>
 
-<table>
-<tr><td>uint32_t</td><td>type;</td></tr>
-<tr><td>uint32_t</td><td>header size</td></tr>
-<tr><td>uint32_t</td><td>code section size (.text)</td></tr>
-<tr><td>uint32_t</td><td>initialized data section (.data)</td></tr>
-<tr><td>uint32_t</td><td>uninitialized data section (.bss)</td></tr>
-<tr><td>uint32_t</td><td>unused 1</td></tr>
-<tr><td>uint32_t</td><td>total data segment size</td></tr>
-<tr><td>uint32_t</td><td>unused 2</td></tr>
+	<tr>
+		<td width="97" style="border-top: 1.00pt solid #000000; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: none; padding-top: 0.05cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0cm"><p>
+			uint32_t</p>
+		</td>
+		<td width="160" style="border: 1.00pt solid #000000; padding: 0.05cm"><p>
+			type</p>
+		</td>
+	</tr>
+	<tr>
+		<td width="97" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: none; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0cm"><p>
+			uint32_t</p>
+		</td>
+		<td width="160" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: 1.00pt solid #000000; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0.05cm"><p>
+			header size</p>
+		</td>
+	</tr>
+	<tr>
+		<td width="97" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: none; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0cm"><p>
+			uint32_t</p>
+		</td>
+		<td width="160" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: 1.00pt solid #000000; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0.05cm"><p>
+			code section size (.text)</p>
+		</td>
+	</tr>
+	<tr>
+		<td width="97" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: none; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0cm"><p>
+			uint32_t</p>
+		</td>
+		<td width="160" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: 1.00pt solid #000000; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0.05cm"><p>
+			initialized data section (.data)</p>
+		</td>
+	</tr>
+	<tr>
+		<td width="97" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: none; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0cm"><p>
+			uint32_t</p>
+		</td>
+		<td width="160" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: 1.00pt solid #000000; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0.05cm"><p>
+			uninitialized data section (.bss)</p>
+		</td>
+	</tr>
+	<tr>
+		<td width="97" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: none; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0cm"><p>
+			uint32_t</p>
+		</td>
+		<td width="160" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: 1.00pt solid #000000; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0.05cm"><p>
+			unused 1</p>
+		</td>
+	</tr>
+	<tr>
+		<td width="97" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: none; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0cm"><p>
+			uint32_t</p>
+		</td>
+		<td width="160" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: 1.00pt solid #000000; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0.05cm"><p>
+			total data segment size</p>
+		</td>
+	</tr>
+	<tr>
+		<td width="97" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: none; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0cm"><p>
+			uint32_t</p>
+		</td>
+		<td width="160" style="border-top: none; border-bottom: 1.00pt solid #000000; border-left: 1.00pt solid #000000; border-right: 1.00pt solid #000000; padding-top: 0cm; padding-bottom: 0.05cm; padding-left: 0.05cm; padding-right: 0.05cm"><p>
+			unused 2</p>
+		</td>
+	</tr>
 </table>
+<p><font face="Liberation Serif, serif">ELKS does not use the
+optional relocation fields as the IA16 code is natively relocatable
+inside a segment with relative offsets.</font></p>
+<p><font face="Liberation Serif, serif">The third byte in the type
+field is a bitfield giving the properties of the </font><code class="western"><font face="Liberation Serif, serif">a.out</font></code>
+<font face="Liberation Serif, serif">file. ELKS uses</font> <font face="Liberation Serif, serif">the
+following flags:</font></p>
+<table width="269" cellpadding="4" cellspacing="0">
+	<col width="74"/>
 
-<p>ELKS does not use the optional relocation fields as the IA16 code
-is natively relocatable inside a segment with relative offsets.</p>
+	<col width="52"/>
 
+	<col width="116"/>
+
+	<tr valign="top">
+		<td width="74" style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: none; padding-top: 0.1cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0cm"><pre><code class="western">A_EXEC</code></pre>
+		</td>
+		<td width="52" style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: none; padding-top: 0.1cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0cm"><pre><code class="western">0x10</code></pre>
+		</td>
+		<td width="116" style="border: 1px solid #000000; padding: 0.1cm"><pre><code class="western">executable</code></pre>
+		</td>
+	</tr>
+	<tr valign="top">
+		<td width="74" style="border-top: none; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: none; padding-top: 0cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0cm"><pre><code class="western">A_SEP</code></pre>
+		</td>
+		<td width="52" style="border-top: none; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: none; padding-top: 0cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0cm"><pre><code class="western">0x20</code></pre>
+		</td>
+		<td width="116" style="border-top: none; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000; padding-top: 0cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0.1cm"><pre><code class="western">separate I/D</code></pre>
+		</td>
+	</tr>
+</table>
+<p><code class="western"><font face="Liberation Serif, serif">The
+only valid values for ELKS are 0x20 and 0x30 which is 0x10 and 0x20
+combined. A program compiled with ia16-elf-gcc will have a 0x30
+<br/>
+value in this field while a program compiled with bcc will have
+0x20 in there to indicate an executable program. The value 0x10 would
+<br/>
+indicate a program with combined I/D which uses the same
+segment for text and data. This model is not supported by ELKS.</font></code></p>
+<p><code class="western"><font face="Liberation Serif, serif">A
+program with splitted I/D loaded into memory will e.g. have the
+following layout:</font></code></p>
+<p><img src="../../img/executable.png" name="Bild1" align="left" width="680" height="447">
+  <br clear="left"/>
+</img>
+<code class="western"><font face="Liberation Serif, serif"><br/>
+</font></code><code class="western"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">The
+area between 207k and 208k is the heap. The grey box shows the memory
+usage in case of a combined I/D exectuable for comparison.</font></font></code></p>
+<h2 class="western"><code class="western"><font face="Liberation Serif, serif">The
+chmem utility</font></code></h2>
+<p><code class="western"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">To
+view the heap and stack specified for e.g. the kilo program you can
+call the 'chmem' utility like this:</font></font></code></p>
+<p><code class="western"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">chmem
+</font></font></code><code class="western"><span style="font-variant: normal"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt"><span style="font-style: normal">/bin/kilo</span></font></font></span></code></p>
+<p><code class="western"><span style="font-variant: normal"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt"><span style="font-style: normal">If
+the default values for heap and stack were specified, chmem will
+report these as zero. You can modify the heap parameter of a compiled
+<br/>
+executable</span></font></font></span></code><code class="western"><span style="font-variant: normal">
+</span></code><code class="western"><span style="font-variant: normal"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt"><span style="font-style: normal">using
+the '-h' parameter and the stack with the '-s' parameter.</span></font></font></span></code></p>
+<p><code class="western"><span style="font-variant: normal"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt"><span style="font-style: normal">To
+view the memory usage of the currently running programs, you can call
+the 'ps' utility which will report information about this.</span></font></font></span></code></p>
+<h2 class="western"><code class="western"><font face="Liberation Serif, serif"><font size="5" style="font-size: 18pt">The
+medium executable model</font></font></code></h2>
+<p><code class="western"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">There
+is an additional executable format defined called the medium or FAR
+text model. This allows for more than 64k code using relocation</font></font></code><code class="western">
+</code><code class="western"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">to
+support <br/>
+a larger kernel size. The max data section size remains
+64k. This model is compiled with the following command line:</font></font></code></p>
+<p><code class="western"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">ia16-elf-gcc
+-melks -mcmodel=medium</font></font></code></p>
+<p><code class="western"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt">For
+this model the a.out header has been extended, there are
+supplementary and relocation structures defined in the
+'/elks/include/linuxmt/minix.h' header file.</font></font></code></p>
+<p><code class="western"><font face="Liberation Serif, serif"><font size="3" style="font-size: 12pt"><br/>
+18th
+of June 2020 Georg Potthast</font></font></code></p>
+<p><br/>
+<br/>
+
+</p>
+</body>
+</html>
