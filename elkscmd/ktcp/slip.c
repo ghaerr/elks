@@ -119,14 +119,14 @@ int slip_init(char *fdev, speed_t baudrate)
     packpos = 128;
     lastchar = 0;
 
-#ifdef CONFIG_CSLIP
+#ifdef CSLIP
     ip_vjhc_init();
 #endif
 
     return devfd;
 }
 
-#ifdef CONFIG_CSLIP
+#ifdef CSLIP
 void cslip_decompress(__u8 **packet, size_t *len){
     pkt_ut p;
     __u8 c;
@@ -216,7 +216,7 @@ printf("}");
 			    break;
 
 			p_size = packpos - 128;
-#ifdef CONFIG_CSLIP
+#ifdef CSLIP
 			p = packet;
 		        cslip_decompress(&p, &p_size);
 #else
@@ -240,7 +240,7 @@ printf("}");
 	}
     }
 
-#ifdef CONFIG_CSLIP
+#ifdef CSLIP
 void cslip_compress(__u8 **packet, int *len)
 {
     pkt_ut p;
@@ -270,7 +270,7 @@ void slip_send(unsigned char *packet, int len)
     unsigned char *p = packet;
     unsigned char *q = buf;
 
-#ifdef CONFIG_CSLIP
+#ifdef CSLIP
     cslip_compress(&p, &len);
 #endif
 

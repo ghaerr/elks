@@ -3,6 +3,7 @@
 
 //#include <autoconf.h>
 #undef CONFIG_CSLIP
+//#define CSLIP
 
 //#define ARP_WAIT_KLUGE	/* force loop on arp reply*/
 
