@@ -1,7 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <autoconf.h>
+//#include <autoconf.h>
+#undef CONFIG_CSLIP
 
 //#define ARP_WAIT_KLUGE	/* force loop on arp reply*/
 

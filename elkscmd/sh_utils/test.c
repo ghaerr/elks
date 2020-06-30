@@ -11,7 +11,7 @@
  *			| "!" expr
  *			;
  *		unary-operator ::= "-r"|"-w"|"-f"|"-d"|"-s"|"-t"|"-z"|"-n"|"-x";
- *		binary-operator ::= "="|"!="|"-eq"|"-ne"|"-ge"|"-gt"|"-le"|"-lt";
+ *		binary-operator ::= "="|"!="|"-eq"|"-ne"|"-ge"|"-gt"|"-le"|"-lt|-newer";
  *		operand ::= <any legal UNIX file name>
  *
  * Author:	Erik Baalbergen	erikb@cs.vu.nl
@@ -121,7 +121,7 @@ struct op {
   {	0,	0,	0	}
 };
 
-#define _PROTOTYPE(a,b)	
+#define _PROTOTYPE(a,b)	a b
 
 char **ip;
 char *prog;

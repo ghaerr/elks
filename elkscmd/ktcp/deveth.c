@@ -81,10 +81,8 @@ void deveth_process(int flag)
 {
   eth_head_t * eth_head;
   int len = read (devfd, sbuf[flag], MAX_PACKET_ETH);
-  if (len < (int)sizeof(eth_head_t)) {
-	perror("deveth_process");
+  if (len < (int)sizeof(eth_head_t))
 	return;
-  }
 
   eth_head = (eth_head_t *) sbuf[flag];
 
