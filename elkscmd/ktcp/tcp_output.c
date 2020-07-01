@@ -354,7 +354,7 @@ len = 255;	//FIXME testing only
 
 	options[0] = TCP_OPT_MSS;
 	options[1] = TCP_OPT_MSS_LEN;		/* total options length (4)*/
-	*(__u16 *)(options + 2) = htons(SLIP_MTU - 40);
+	*(__u16 *)(options + 2) = htons(MTU - 40);
 	//*(__u16 *)(options + 2) = htons(512 - 40);
 	header_len += TCP_OPT_MSS_LEN;
     }

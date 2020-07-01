@@ -26,7 +26,6 @@
 #include "arp.h"
 
 eth_addr_t eth_local_addr;
-int eth_device;
 
 static unsigned char sbuf[2][MAX_PACKET_ETH];	//FIXME ARP wait fix
 static int devfd;
@@ -81,10 +80,8 @@ void deveth_process(int flag)
 {
   eth_head_t * eth_head;
   int len = read (devfd, sbuf[flag], MAX_PACKET_ETH);
-  if (len < (int)sizeof(eth_head_t)) {
-	perror("deveth_process");
+  if (len < (int)sizeof(eth_head_t))
 	return;
-  }
 
   eth_head = (eth_head_t *) sbuf[flag];
 

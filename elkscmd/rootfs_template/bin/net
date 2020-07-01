@@ -1,0 +1,93 @@
+# Start/stop ELKS networking
+#
+# Usage: net [start|stop] [eth|slip|cslip] [baud] [device]
+#
+# Examples:
+#	net start eth			start ethernet networking
+#	net start slip			start slip networking at default baudrate
+#	net start slip 19200	start slip at 19200 baud
+#	net start cslip 4800 /dev/ttyS1
+#
+# See slattach.sh for Linux slip setup
+# See qemu.sh NET= line for host forwarding into ELKS using QEMU
+#
+
+# default IP address, gateway and network mask
+localip=10.0.2.15
+gateway=10.0.2.2
+netmask=255.255.255.0
+
+# default link layer [eth|slip|cslip]
+link=eth
+
+# default serial port and baud rate if slip/cslip
+device=/dev/ttyS0
+baud=57600
+
+usage()
+{
+	echo "Usage: net [start|stop] [eth|slip|cslip] [baud] [device]"
+	exit 1
+}
+
+getty_off()
+{
+	# turn off any serial gettys running
+	init 1
+}
+
+start_network()
+{
+	echo "Starting networking" on $link
+	case "$link" in
+	slip)
+		getty_off
+		ktcp="ktcp -b -p slip -s $baud -l $device $localip $device $gateway $netmask"
+		;;
+	cslip)
+		getty_off
+		ktcp="ktcp -b -p cslip -s $baud -l $device $localip $device $gateway $netmask"
+		;;
+	eth)
+		ktcp="ktcp -b $localip $gateway $netmask"
+		;;
+	*)
+		usage ;;
+	esac
+	# run ktcp as background daemon if successful starting networking
+	echo $ktcp
+	if $ktcp; then
+		for daemon in telnetd httpd
+		do
+			if test -f /bin/$daemon
+			then
+				echo -n " $daemon "
+				$daemon || true
+			fi
+		done
+	else
+		echo "Network start failed"
+		exit 1
+	fi
+}
+
+stop_network()
+{
+	echo "Stopping network"
+}
+
+if test "$#" -lt 1; then
+	usage
+fi
+
+case "$1" in
+start)
+	if test "$2" != ""; then link=$2; fi
+	if test "$3" != ""; then baud=$3; fi
+	if test "$4" != ""; then device=$4; fi
+	start_network ;;
+stop) stop_network ;;
+*) usage ;;
+esac
+
+exit 0

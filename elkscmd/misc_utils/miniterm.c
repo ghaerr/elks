@@ -446,8 +446,6 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	set_raw(0);
-
 	usage(argv[0]);
 	fprintf(stderr, "Connected to %s at %lubps. Press '%c%c' to exit, '%c%c' for help.\n\n",
 		device, (unsigned long)baudrate, ESCAPE_CHARACTER, EXIT_CHARACTER,
@@ -455,6 +453,8 @@ int main(int argc, char **argv)
 
 	if (mode == MODE_TEXT) {
 		struct termios new;
+
+		set_raw(0);
 
 		new.c_cflag |= CS8 | CREAD;
 		new.c_iflag = IGNPAR;

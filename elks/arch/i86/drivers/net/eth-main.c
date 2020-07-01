@@ -234,12 +234,12 @@ static int eth_open (struct inode * inode, struct file * file)
 
 		ne2k_reset ();
 
-		err = ne2k_init ();
+		err = ne2k_init ();	/* FIXME always returns 0*/
 		if (err) break;
 
 		ne2k_addr_set (mac_addr);
 
-		err = ne2k_start ();
+		err = ne2k_start ();	/* FIXME always returns 0*/
 		if (err) break;
 
 		eth_inuse = 1;
@@ -293,13 +293,14 @@ void eth_drv_init ()
 
 	while (1)
 		{
+#if 0	/* FIXME probe routine does nothing because of QEMU*/
 		err = ne2k_probe ();
 		if (err)
 			{
 			printk ("eth: NE2K not detected\n");
 			break;
 			}
-
+#endif
 		err = request_irq (NE2K_IRQ, ne2k_int, NULL);
 		if (err)
 			{
@@ -314,7 +315,7 @@ void eth_drv_init ()
 			break;
 			}
 
-		printk ("eth: NE2K at 0x%x, irq %d\n", NE2K_PORT, NE2K_IRQ);
+		printk ("eth: NE2K driver compiled for 0x%x, irq %d\n", NE2K_PORT, NE2K_IRQ);
 		break;
 		}
 	}

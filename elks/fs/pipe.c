@@ -77,11 +77,11 @@ int pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
  *	V7, and they should be buffers
  */
 
-static char pipe_base[MAX_PIPES][PAGE_SIZE];
+static unsigned char pipe_base[MAX_PIPES][PAGE_SIZE];
 
 static int pipe_in_use[(MAX_PIPES + 15)/16];
 
-static char *get_pipe_mem(void)
+static unsigned char *get_pipe_mem(void)
 {
     register char *i = 0;
 
@@ -95,7 +95,7 @@ static char *get_pipe_mem(void)
     return NULL;
 }
 
-static void free_pipe_mem(char *buf)
+static void free_pipe_mem(unsigned char *buf)
 {
     register char *i;
 

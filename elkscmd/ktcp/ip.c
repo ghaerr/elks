@@ -91,10 +91,10 @@ static void ip_print(struct iphdr_s *head, int size)
     debug_ip("%s -> ", in_ntoa(head->saddr));
     debug_ip("%s ", in_ntoa(head->daddr));
     debug_ip("v%d hl:%d ", IP_VERSION(head), IP_HLEN(head));
-    debug_ip("tos:%d len:%d ", head->tos, ntohs(head->tot_len));
+    debug_ip("tos:%d len:%u ", head->tos, ntohs(head->tot_len));
     debug_ip("id:%u ", ntohs(head->id));
     debug_ip("fo:%x ", ntohs(head->frag_off));	//FIXME add FM_ flags
-    debug_ip("chk:%d ", ip_calc_chksum((char *)head, 4 * IP_HLEN(head)));
+    debug_ip("chk:%x ", ip_calc_chksum((char *)head, 4 * IP_HLEN(head)));
     debug_ip("ttl:%d ", head->ttl);
     debug_ip("prot:%d\n", head->protocol);
 #if DEBUG_IP > 1
@@ -159,7 +159,7 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
     localpacket =  apair->saddr == local_ip && apair->daddr == local_ip;
 
     /* deal with ethernet layer if destination not local_ip*/
-    if (eth_device && !localpacket) {
+    if (linkprotocol == LINK_ETHER && !localpacket) {
         /* Is this the best place for the IP routing to happen ? */
         /* I think no, because actual sending interface is coming from the routing */
 
@@ -240,7 +240,7 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
 	return;
     }
 
-    if (eth_device)
+    if (linkprotocol == LINK_ETHER)
 	deveth_send((unsigned char *)ipll, sizeof(struct ip_ll) + iphdrlen + len);
     else
 	slip_send((unsigned char *)iph, iphdrlen + len);

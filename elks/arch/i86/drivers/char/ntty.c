@@ -130,21 +130,21 @@ void ttystd_release(struct tty *tty)
 
 int tty_allocq(struct tty *tty, int insize, int outsize)
 {
-    if ((tty->inq_buf = heap_alloc(insize, HEAP_TAG_TTY)) == NULL)
+    if ((tty->inq.base = heap_alloc(insize, HEAP_TAG_TTY)) == NULL)
 	return -ENOMEM;
-    if ((tty->outq_buf = heap_alloc(outsize, HEAP_TAG_TTY)) == NULL) {
-	heap_free(tty->inq_buf);
+    if ((tty->outq.base = heap_alloc(outsize, HEAP_TAG_TTY)) == NULL) {
+	heap_free(tty->inq.base);
 	return -ENOMEM;
     }
-    chq_init(&tty->inq, tty->inq_buf, insize);
-    chq_init(&tty->outq, tty->outq_buf, outsize);
+    chq_init(&tty->inq, tty->inq.base, insize);
+    chq_init(&tty->outq, tty->outq.base, outsize);
     return 0;
 }
 
 void tty_freeq(struct tty *tty)
 {
-    heap_free(tty->inq_buf);
-    heap_free(tty->outq_buf);
+    heap_free(tty->inq.base);
+    heap_free(tty->outq.base);
 }
 
 int tty_open(struct inode *inode, struct file *file)

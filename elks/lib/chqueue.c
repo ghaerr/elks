@@ -25,15 +25,10 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 
-/*void chq_erase(register struct ch_queue *q)
-{
-    q->len = q->start = 0;
-}*/
-
 void chq_init(register struct ch_queue *q, unsigned char *buf, int size)
 {
     debug3("CHQ: chq_init(%d, %d, %d)\n", q, buf, size);
-    q->base = (char *) buf;
+    q->base = buf;
     q->size = size;
     q->len = q->start = 0;
 }
@@ -58,24 +53,14 @@ void chq_addch(register struct ch_queue *q, unsigned char c)
     debug5("CHQ: chq_addch(%d, %c, %d) q->len=%d q->start=%d\n", q, c, 0,
 	   q->len, q->start);
 
+    clr_irq();
     if (q->len < q->size) {
-	q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = (char)c;
+	q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = c;
 	q->len++;
+	set_irq();
 	wake_up(&q->wait);
-    }
+    } else set_irq();
 }
-
-#if 0
-/* Deletes last character in list */
-int chq_delch(register struct ch_queue *q)
-{
-    if (q->len == q->size) {
-	q->len--;
-	return 1;
-    }
-    return 0;
-}
-#endif
 
 int chq_wait_rd(register struct ch_queue *q, int nonblock)
 {
@@ -102,10 +87,12 @@ int chq_getch(register struct ch_queue *q)
     if (!q->len)
 	return -EAGAIN;
     else {
-	retval = q->base[q->start] & 0xFF;
+	clr_irq();
+	retval = q->base[q->start];
 	q->start++;
 	q->start &= q->size - 1;
 	q->len--;
+	set_irq();
 	wake_up(&q->wait);
     }
     return retval;
@@ -116,7 +103,24 @@ int chq_peekch(struct ch_queue *q)
     return (q->len != 0);
 }
 
-/*int chq_full(register struct ch_queue *q)
+#if 0
+/* Deletes last character in list */
+int chq_delch(register struct ch_queue *q)
+{
+    if (q->len == q->size) {
+	q->len--;
+	return 1;
+    }
+    return 0;
+}
+
+void chq_erase(register struct ch_queue *q)
+{
+    q->len = q->start = 0;
+}
+
+int chq_full(register struct ch_queue *q)
 {
     return (q->len == q->size);
-}*/
+}
+#endif

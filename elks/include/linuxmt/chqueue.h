@@ -4,9 +4,9 @@
 #define __LINUXMT_CHQ_H
 
 struct ch_queue {
-    char		*base;
-    struct wait_queue	wait;
+    unsigned char	*base;
     int 		size, start, len;
+    struct wait_queue	wait;
 };
 
 extern void chq_init(register struct ch_queue *,unsigned char *,int);

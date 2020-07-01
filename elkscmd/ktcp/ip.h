@@ -47,6 +47,13 @@ extern ipaddr_t local_ip;
 extern ipaddr_t gateway_ip;
 extern ipaddr_t netmask_ip;
 
+#define LINK_ETHER	0
+#define LINK_SLIP	1
+#define LINK_CSLIP	2
+
+extern int linkprotocol;
+extern unsigned int MTU;
+
 int ip_init(void);
 __u16 ip_calc_chksum(char *data, int len);
 void ip_recvpacket(unsigned char *packet, int size);

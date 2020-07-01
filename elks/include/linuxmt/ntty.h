@@ -5,10 +5,11 @@
  * 'ntty.h' defines some structures used by ntty.c and some defines.
  */
 
+/* NOTE: all queue sizes must be a power of two!*/
 #define INQ_SIZE	128	/* tty/pty input queue size*/
 #define OUTQ_SIZE	64	/* tty/pty output queue size*/
 
-#define RSINQ_SIZE	1200	/* serial input queue SLIP_MTU+128+8*/
+#define RSINQ_SIZE	1024	/* serial input queue SLIP_MTU+128+8*/
 #define RSOUTQ_SIZE	64	/* serial output queue size*/
 
 /*
@@ -81,8 +82,6 @@ struct tty {
     unsigned char ostate;
     unsigned char usecount;
     pid_t pgrp;
-    unsigned char *outq_buf;
-    unsigned char *inq_buf;
 };
 
 extern int tty_intcheck(struct tty *,unsigned char);
