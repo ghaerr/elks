@@ -119,14 +119,15 @@ int slip_init(char *fdev, speed_t baudrate)
     packpos = 128;
     lastchar = 0;
 
-#ifdef CSLIP
-    ip_vjhc_init();
+#if CSLIP
+    if (linkprotocol == LINK_CSLIP)
+	ip_vjhc_init();
 #endif
 
     return devfd;
 }
 
-#ifdef CSLIP
+#if CSLIP
 void cslip_decompress(__u8 **packet, size_t *len){
     pkt_ut p;
     __u8 c;
@@ -134,7 +135,7 @@ void cslip_decompress(__u8 **packet, size_t *len){
     p.p_data = *packet;
     p.p_size = *len;
     p.p_offset = 128;
-    p.p_maxsize = SLIP_MTU;
+    p.p_maxsize = MTU;
 
     c = *(*packet + 128) & 0xf0;
     if ( c != TYPE_IP){
@@ -216,12 +217,13 @@ printf("}");
 			    break;
 
 			p_size = packpos - 128;
-#ifdef CSLIP
-			p = packet;
-		        cslip_decompress(&p, &p_size);
-#else
-			p = packet + 128;
+#if CSLIP
+			if (linkprotocol == LINK_CSLIP) {
+			    p = packet;
+		            cslip_decompress(&p, &p_size);
+			} else
 #endif
+			    p = packet + 128;
 		        if (p_size > 0)
 			    ip_recvpacket(p, p_size);
 
@@ -240,7 +242,7 @@ printf("}");
 	}
     }
 
-#ifdef CSLIP
+#if CSLIP
 void cslip_compress(__u8 **packet, int *len)
 {
     pkt_ut p;
@@ -250,7 +252,7 @@ void cslip_compress(__u8 **packet, int *len)
     p.p_data = *packet;
     p.p_size = *len;
     p.p_offset = 0;
-    p.p_maxsize = SLIP_MTU;
+    p.p_maxsize = MTU;
 
     type = ip_vjhc_compress(&p);
 
@@ -270,8 +272,9 @@ void slip_send(unsigned char *packet, int len)
     unsigned char *p = packet;
     unsigned char *q = buf;
 
-#ifdef CSLIP
-    cslip_compress(&p, &len);
+#if CSLIP
+    if (linkprotocol == LINK_CSLIP)
+	cslip_compress(&p, &len);
 #endif
 
     *q++ = END;

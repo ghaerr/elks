@@ -159,7 +159,7 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
     localpacket =  apair->saddr == local_ip && apair->daddr == local_ip;
 
     /* deal with ethernet layer if destination not local_ip*/
-    if (eth_device && !localpacket) {
+    if (linkprotocol == LINK_ETHER && !localpacket) {
         /* Is this the best place for the IP routing to happen ? */
         /* I think no, because actual sending interface is coming from the routing */
 
@@ -240,7 +240,7 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
 	return;
     }
 
-    if (eth_device)
+    if (linkprotocol == LINK_ETHER)
 	deveth_send((unsigned char *)ipll, sizeof(struct ip_ll) + iphdrlen + len);
     else
 	slip_send((unsigned char *)iph, iphdrlen + len);

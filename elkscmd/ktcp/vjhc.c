@@ -16,7 +16,7 @@ Created:	Nov 11, 1993 by Philip Homburg <philip@cs.vu.nl>
 */
 
 #include "config.h"
-#ifdef CSLIP
+#if CSLIP
 
 #include <stdio.h>
 #include <stdlib.h>

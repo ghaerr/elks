@@ -26,7 +26,6 @@
 #include "arp.h"
 
 eth_addr_t eth_local_addr;
-int eth_device;
 
 static unsigned char sbuf[2][MAX_PACKET_ETH];	//FIXME ARP wait fix
 static int devfd;

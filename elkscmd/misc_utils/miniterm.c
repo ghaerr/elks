@@ -646,14 +646,7 @@ int main(int argc, char **argv)
 				}
 			} else {
 				printf("Read %d byte(s):\n", len);
-{
-int i;
-printf("{");
-for (i=0; i<len; i++)
-    printf("%2x,", buf[i]&0xff);
-printf("}");
-}
-				//dump(buf, len);
+				dump(buf, len);
 				printf("\n");
 			}
 		}

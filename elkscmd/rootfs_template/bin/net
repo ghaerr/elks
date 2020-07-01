@@ -42,14 +42,14 @@ start_network()
 	case "$link" in
 	slip)
 		getty_off
-		ktcp="ktcp -b -s $baud $localip $device $gateway $netmask"
+		ktcp="ktcp -b -p slip -s $baud -l $device $localip $device $gateway $netmask"
 		;;
 	cslip)
 		getty_off
-		ktcp="ktcp -b -c -s $baud $localip $device $gateway $netmask"
+		ktcp="ktcp -b -p cslip -s $baud -l $device $localip $device $gateway $netmask"
 		;;
 	eth)
-		ktcp="ktcp -b $localip /dev/eth $gateway $netmask"
+		ktcp="ktcp -b $localip $gateway $netmask"
 		;;
 	*)
 		usage ;;
