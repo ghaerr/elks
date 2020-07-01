@@ -129,7 +129,7 @@ void catch(int sig)
 
 static void usage(void)
 {
-    printf("Usage: ktcp [-b] [-d] [-m MTU] [-p eth|slip|cslip] [-s baud] [-l device] [local_ip] [interface] [gateway] [netmask]\n");
+    printf("Usage: ktcp [-b] [-d] [-m MTU] [-p eth|slip|cslip] [-s baud] [-l device] [local_ip] [gateway] [netmask]\n");
     exit(1);
 }
 
@@ -140,7 +140,7 @@ int main(int argc,char **argv)
 printp();
 //printf("ZERO is at %x\n", zero);
 
-    while ((ch = getopt(argc, argv, "bdp:s:l:")) != -1) {
+    while ((ch = getopt(argc, argv, "bdm:p:s:l:")) != -1) {
 	switch (ch) {
 	case 'b':		/* background daemon*/
 	    bflag = 1;
