@@ -16,7 +16,7 @@ pkill slattach
 /sbin/slattach -p $protocol -s $baud -v -L $device &
 
 # configure sl0 interface
-/sbin/ifconfig sl0 $gateway pointtopoint $elks
+/sbin/ifconfig sl0 up $gateway pointtopoint $elks netmask 255.255.255.0 mtu 1024
 
 # display connection
 /sbin/ifconfig
