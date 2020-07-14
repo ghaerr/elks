@@ -106,7 +106,7 @@ printp();
 	/* process received packets*/
 	if (FD_ISSET(intfd, &fdset)) {
 		if (linkprotocol == LINK_ETHER)
-			deveth_process(0);
+			eth_process();
 		else slip_process();
 	}
 

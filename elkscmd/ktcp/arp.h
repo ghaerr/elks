@@ -27,13 +27,24 @@ struct arp
          __u32 ip_dest; 	/* IP destination address */
 };
 
+struct arp_cache {
+	ipaddr_t   ip_addr;	/* IPv4 address */
+	eth_addr_t eth_addr;	/* MAC address */
+	int valid;		/* eth_addr valid flag*/
+	unsigned char *qpacket;	/* queued packet waiting for ARP reply*/
+	int len;		/* queued packet length*/
+};
+
+/* arp_cache_get flags*/
+#define ARP_VALID	1	/* retrieve valid eth_addr entry only*/
+#define ARP_UPDATE	2	/* if present, update cache with passed eth_addr*/
+
 int arp_init (void);
-
-void arp_cache_add (ipaddr_t ip_addr, eth_addr_t * eth_addr);
-int arp_cache_get (ipaddr_t ip_addr, eth_addr_t * eth_addr, int merge);
-
+struct arp_cache *arp_cache_get(ipaddr_t ip_addr, eth_addr_t * eth_addr, int flags);
+struct arp_cache *arp_cache_update(ipaddr_t ip_addr, eth_addr_t *eth_addr);
+struct arp_cache *arp_cache_add(ipaddr_t ip_addr, eth_addr_t * eth_addr);
 void arp_recvpacket (unsigned char * packet, int size);
-int arp_request(ipaddr_t ipaddress);
+void arp_request(ipaddr_t ipaddress);
 
 char *mac_ntoa(unsigned char *p);
 
