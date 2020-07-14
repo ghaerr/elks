@@ -9,7 +9,7 @@
 
 This is a project to write a Linux-like OS for systems based on the Intel
 IA16 architecture (16 bits processors: 8088, 8086, 80188, 80186, 80286,
-Nec V20, V30 and compatibles).
+NEC V20, V30 and compatibles).
 
 Such systems are ancient computers (IBM-PC XT / AT and clones), or more
 recent SBC / SoC / FPGA that reuse the huge hardware & software legacy
