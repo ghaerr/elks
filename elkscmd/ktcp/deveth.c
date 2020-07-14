@@ -54,8 +54,6 @@ int deveth_init(char *fdev)
         return -2;
     }
 
-    debug_arp("eth_local_addr: %s\n", mac_ntoa(&eth_local_addr));
-
     return devfd;
 }
 
@@ -72,10 +70,12 @@ void eth_process(void)
 
   eth_head = (eth_head_t *) sbuf;
 
-  /* Filter on MAC addresses in case of promiscuous mode FIXME remove*/
+#if 0
+  /* Filter on MAC addresses in case of promiscuous mode*/
   if (memcmp (eth_head->eth_dst, broad_addr, sizeof (eth_addr_t))
     && memcmp (eth_head->eth_dst, eth_local_addr, sizeof (eth_addr_t)))
       return;
+#endif
 
   /* dispatch to IP or ARP*/
   switch (eth_head->eth_type) {
