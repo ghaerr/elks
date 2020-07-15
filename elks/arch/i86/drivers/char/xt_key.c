@@ -307,12 +307,13 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 /* Wait until the controller is ready; return zero if this times out. */
 static int kb_wait(void)
 {
-    int retries, status;
+    int retries;
+    unsigned char status;
 
     retries = MAX_KB_BUSY_RETRIES + 1;	/* wait until not busy */
-    while (--retries != 0 && (status = inb(KB_STATUS)) & (KB_IN_FULL|KB_OUT_FULL)) {
+    while (--retries != 0 && (status = inb_p(KB_STATUS)) & (KB_IN_FULL|KB_OUT_FULL)) {
 	if (status & KB_OUT_FULL)
-	    inb(KEYBD);		/* discard */
+	    inb_p(KEYBD);		/* discard */
     }
     return(retries);		/* nonzero if ready */
 }
@@ -323,7 +324,7 @@ static int kb_ack(void)
     int retries;
 
     retries = MAX_KB_ACK_RETRIES + 1;
-    while (--retries != 0 && inb(KEYBD) != KB_ACK)
+    while (--retries != 0 && inb_p(KEYBD) != KB_ACK)
 	;			/* wait for ack */
     return(retries);		/* nonzero if ack received */
 }
@@ -333,14 +334,19 @@ void set_leds(void)
 {
     if (arch_cpu <= 5) return;	/* PC/XT doesn't have LEDs */
 
-printk("[%x]", ModeState);
+printk("1");
     kb_wait();			/* wait for buffer empty  */
-    outb(KEYBD, LED_CODE);	/* prepare keyboard to accept LED values */
+    outb_p(LED_CODE, KEYBD);	/* prepare keyboard to accept LED values */
+printk("2");
     kb_ack();			/* wait for ack response  */
+printk("3");
 
     kb_wait();			/* wait for buffer empty  */
-    outb(KEYBD, (char)ModeState);/* give keyboard LED values */
+printk("4");
+    outb_p(ModeState, KEYBD);	/* give keyboard LED values */
+printk("5");
     kb_ack();			/* wait for ack response  */
+printk("[%x]", ModeState);
 }
 
 #endif /* CONFIG_CONSOLE_DIRECT*/
