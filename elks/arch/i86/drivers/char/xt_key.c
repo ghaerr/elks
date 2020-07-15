@@ -30,11 +30,13 @@
 #include <arch/io.h>
 #include <arch/ports.h>
 #include <arch/keyboard.h>
+#include <arch/system.h>
 
 #ifdef CONFIG_CONSOLE_DIRECT
 
 extern struct tty ttys[];
 extern void AddQueue(unsigned char Key);
+void set_leds(void);
 
 #define ESC	 27	/* ascii value for Escape*/
 #define DEL_SCAN 0x53	/* scan code for Delete key*/
@@ -46,6 +48,7 @@ extern void AddQueue(unsigned char Key);
 
 int Current_VCminor = 0;
 int kraw = 0;
+static unsigned int ModeState = 0;	/* also led state*/
 
 /*
  *	Keyboard state - the poor little keyboard controller hasnt
@@ -112,8 +115,9 @@ static unsigned char *scan_tabs[] = {
 
 void xtk_init(void)
 {
-    /* Set off the initial keyboard interrupt handler */
+    set_leds();		/* turn off numlock led*/
 
+    /* Set off the initial keyboard interrupt handler */
     if (request_irq(KBD_IRQ, keyboard_irq, NULL))
 	panic("Unable to get keyboard");
 }
@@ -125,7 +129,6 @@ void xtk_init(void)
 
 void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
-    static unsigned int ModeState = 0;
     static int E0Prefix = 0;
     static int capslocktoggle =0;
     int code, mode;
@@ -184,10 +187,11 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	if (keyReleased) {
 	    if (mode == CAPS)
 		capslocktoggle = !capslocktoggle;
-	  if (mode != CAPS || !capslocktoggle)
+	    if (mode != CAPS || !capslocktoggle)
 		ModeState &= ~mode;
 	} else
 	    ModeState |= mode;
+	set_leds();
 	return;
     }
     
@@ -283,4 +287,60 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	AddQueue(key);
     }
 }
+
+/* LED routines from MINIX 2*/
+
+/* Standard and AT keyboard.  (PS/2 MCA implies AT throughout.) */
+#define KEYBD		0x60	/* I/O port for keyboard data */
+
+/* AT keyboard. */
+#define KB_COMMAND	0x64	/* I/O port for commands on AT */
+#define KB_STATUS	0x64	/* I/O port for status on AT */
+#define KB_ACK		0xFA	/* keyboard ack response */
+#define KB_OUT_FULL	0x01	/* status bit set when keypress char pending */
+#define KB_IN_FULL	0x02	/* status bit set when not ready to receive */
+#define LED_CODE	0xED	/* command to keyboard to set LEDs */
+#define MAX_KB_ACK_RETRIES 0x1000	/* max #times to wait for kb ack */
+#define MAX_KB_BUSY_RETRIES 0x1000	/* max #times to loop while kb busy */
+#define KBIT		0x80	/* bit used to ack characters to keyboard */
+
+/* Wait until the controller is ready; return zero if this times out. */
+static int kb_wait(void)
+{
+    int retries, status;
+
+    retries = MAX_KB_BUSY_RETRIES + 1;	/* wait until not busy */
+    while (--retries != 0 && (status = inb(KB_STATUS)) & (KB_IN_FULL|KB_OUT_FULL)) {
+	if (status & KB_OUT_FULL)
+	    inb(KEYBD);		/* discard */
+    }
+    return(retries);		/* nonzero if ready */
+}
+
+/* Wait until kbd acknowledges last command; return zero if this times out. */
+static int kb_ack(void)
+{
+    int retries;
+
+    retries = MAX_KB_ACK_RETRIES + 1;
+    while (--retries != 0 && inb(KEYBD) != KB_ACK)
+	;			/* wait for ack */
+    return(retries);		/* nonzero if ack received */
+}
+
+/* Set the LEDs on the caps, num, and scroll lock keys */
+void set_leds(void)
+{
+    if (arch_cpu <= 5) return;	/* PC/XT doesn't have LEDs */
+
+printk("[%x]", ModeState);
+    kb_wait();			/* wait for buffer empty  */
+    outb(KEYBD, LED_CODE);	/* prepare keyboard to accept LED values */
+    kb_ack();			/* wait for ack response  */
+
+    kb_wait();			/* wait for buffer empty  */
+    outb(KEYBD, (char)ModeState);/* give keyboard LED values */
+    kb_ack();			/* wait for ack response  */
+}
+
 #endif /* CONFIG_CONSOLE_DIRECT*/
