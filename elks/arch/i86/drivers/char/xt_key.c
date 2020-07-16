@@ -1,20 +1,25 @@
-/* Tables from the Minix book, as that's all I have on XT keyboard
+/*
+ * Direct console XT and AT keyboard driver
+ *
+ * Tables from the Minix book, as that's all I have on XT keyboard
  * controllers. They need to be loadable, this doesn't look good on
  * my Finnish keyboard.
  *
- ***************************************************************
- * Added primitive buffering, and function stubs for vfs calls *
- * Removed vfs funcs, they belong better to the console driver *
- * Saku Airila 1996                                            *
- ***************************************************************
- * Changed code to work with belgian keyboard                  *
- * Stefaan (Stefke) Van Dooren 1998                            *
- ***************************************************************
- * Changed code to support int'l keys 42 + 45, enable caps lock*
- * preliminary F11+F12 support,                                *
- * add comments to increase readability                        *
- * Georg Potthast 2017                                         *
- * ************************************************************/
+ * Added primitive buffering, and function stubs for vfs calls
+ * Removed vfs funcs, they belong better to the console driver
+ * Changed this a lot. Made it work, too. ;)
+ * Saku Airila 1996
+ *
+ * Changed code to work with belgian keyboard
+ * Stefaan (Stefke) Van Dooren 1998
+ *
+ * Changed code to support int'l keys 42 + 45, enable caps lock
+ * preliminary F11+F12 support, add comments to increase readability
+ * Georg Potthast 2017
+ *
+ * 14 Jul 20 Helge Skrivervik Added LED and NUMLOCK/CAPSLOCK processing.
+ * 15 Jul 20 Greg Haerr Added SCRLOCK processing and documentation.
+ */
 
 #include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
@@ -36,7 +41,8 @@
 
 extern struct tty ttys[];
 extern void AddQueue(unsigned char Key);
-void set_leds(void);
+static void set_leds(void);
+static int kb_read(void);
 
 #define ESC	 27	/* ascii value for Escape*/
 #define DEL_SCAN 0x53	/* scan code for Delete key*/
@@ -48,17 +54,10 @@ void set_leds(void);
 
 int Current_VCminor = 0;
 int kraw = 0;
-static unsigned int ModeState = 0;	/* also led state*/
-
 /*
  *	Keyboard state - the poor little keyboard controller hasnt
  *	got the brains to remember itself.
- *
- *********************************************
- * Changed this a lot. Made it work, too. ;) *
- * SA 1996                                   *
- *********************************************/
-
+ */
 #define LSHIFT	0x01
 #define RSHIFT	0x02
 #define CTRL	0x04
@@ -67,8 +66,18 @@ static unsigned int ModeState = 0;	/* also led state*/
 #define NUM	0x20
 #define ALT_GR	0x40
 #define SSC	0xC0	/* simple scan code*/
+#define SLOCK	0x100	/* FIXME non functional, need to redefine SSC in order for this to work*/
 
-static unsigned char tb_state[] = {
+static unsigned int ModeState = 0;
+static int capslock;
+static int numlock;
+static int scrlock;
+
+/*
+ * Table for mapping scancodes >= 0x1C into scan code class.
+ * scancodes < 0x1C are all simple scan codes (SSC).
+ */
+static unsigned int tb_state[] = {
     SSC, CTRL, SSC, SSC,			/*1C->1F*/
     SSC, SSC, SSC, SSC, SSC, SSC, SSC, SSC,	/*20->27*/
     SSC, SSC, LSHIFT, SSC, SSC, SSC, SSC, SSC,	/*28->2F*/
@@ -76,11 +85,15 @@ static unsigned char tb_state[] = {
     ALT, SSC, CAPS,				/*38->3A*/
     'a', 'b', 'c', 'd', 'e',			/*3B->3F, Function Keys*/
     'f', 'g', 'h', 'i', 'j',			/*40->44, Function Keys*/
-    NUM, SSC, SSC,				/*45->47*/
+    NUM, SLOCK, SSC,				/*45->47*/
     SSC, SSC, SSC, SSC, SSC, SSC, SSC, SSC,	/*48->4F*/
     SSC, SSC, SSC, SSC, SSC, SSC, SSC, 'k', 'l' /*50->58, F11-F12*/
 };
 
+/*
+ * Map CAPS|ALT|CTL|SHIFT into NORMAL,SHIFT,CAPS,CTL-ALT,
+ * which are used to index into scan_tabs[].
+ */
 static unsigned char state_code[] = {
     0,	/*0= All status are 0 */
     1,	/*1= SHIFT */
@@ -100,7 +113,10 @@ static unsigned char state_code[] = {
     3,	/*15= CAPS SHIFT CTRL ALT */
 };
 
-/* tables defined in KeyMaps/keys-xx.h files*/
+/*
+ * Map NORMAL,SHIFT,CAPS,CTL-ALT into per-country kbd tables
+ * defined in KeyMaps/keys-xx.h files by config option.
+ */
 static unsigned char *scan_tabs[] = {
     xtkb_scan,		/*mode = 0*/
     xtkb_scan_shifted,	/*mode = 1*/
@@ -108,18 +124,15 @@ static unsigned char *scan_tabs[] = {
     xtkb_scan_ctrl_alt,	/*mode = 3*/
 };
 
-/*************************************************************************
- * Queue for input received but not yet read by the application. SA 1996 *
- * There needs to be many buffers if we implement virtual consoles...... *
- *************************************************************************/
-
 void xtk_init(void)
 {
-    set_leds();		/* turn off numlock led*/
-
     /* Set off the initial keyboard interrupt handler */
+
     if (request_irq(KBD_IRQ, keyboard_irq, NULL))
 	panic("Unable to get keyboard");
+
+    set_leds();
+    kb_read();      /* discard any unread keyboard input*/
 }
 
 /*
@@ -130,19 +143,13 @@ void xtk_init(void)
 void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
     static int E0Prefix = 0;
-    static int capslocktoggle =0;
     int code, mode;
     int E0key = 0;
     unsigned int key;
     int keyReleased;
 
-    code = inb_p((void *) KBD_IO);
-
-    /* Necessary for the XT. */
-    mode = inb_p((void *) KBD_CTL);
-    //printk("\nkey read1:%X,mode:%X,ModeState:%d\n",code,mode,ModeState);    
-    outb_p((unsigned char) (mode | 0x80), (void *) KBD_CTL);
-    outb_p((unsigned char) mode, (void *) KBD_CTL);
+    /* read XT or AT keyboard*/
+    code = kb_read();
 
     if (kraw) {
 	AddQueue((unsigned char) code);
@@ -165,34 +172,67 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 
     //printk("scan %x\n", code);
     /*
-     * Classify scancode such that
-     *  mode = 00xx xxxxB, Status key
-     *         01xx xxxxB, Function key
-     *         10xx xxxxB, Control key
-     *         11xx xxxxB, Simple Scan Code
+     * Three tables and seven steps are used to get from scancode to returned keyboard character:
+     * First, scancode is classified into Status, FnKey, Extended or Simple
+     *	directly by value if < 0x1C, or using tb_state[] lookup if >= 0x1C.
+     *	Status, FnKey or Extended scan code classes are handled specially.
+     * For simple scan codes, ModeState (CAPS|ALT|CTL|SHIFT) values are used to
+     *	index into state_code[] to map state to NORMAL, SHIFT, CAPS or CTL-ALT.
+     * Then, further processing is done to the map state for some special status cases (ALTGR, NUM and CTL).
+     * The NORMAL,SHIFT,CAPS,CTL-ALT map state is used to index the per-country scan-tabs[]
+     *	array to get the keyboard character.
+     * Further process the keyboard character based on special status cases (CTL and ALT).
+     * Finally, if the keyboard character is octal 0260-277, it is converted into an ANSI
+     *	function key sequence.
+     */
+
+    /*
+     * Step 1: Classify scancode such that
+     *  mode = 00xx xxxxB, 0x00 Status key
+     *         01xx xxxxB, 0x40 Function key
+     *         10xx xxxxB, 0x80 Extended scan code
+     *         11xx xxxxB, 0xC0 Simple Scan Code
      */
     if (code >= 0x1C)
 	mode = tb_state[code - 0x1C]; /*is key a modifier key?*/
     else
         mode = SSC;
 
-    if (!(mode & 0xC0)) {
     /* --------------Process status keys-------------- */
-#if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE)
-			   /* || defined(CONFIG_KEYMAP_ES) */
+    if (!(mode & 0xC0) || mode == SLOCK) {  /* Not a simple scancode*/
+#if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE) /* || defined(CONFIG_KEYMAP_ES) */
 	/* ALT_GR has a E0 prefix*/
 	if ((mode == ALT) && E0key)
 	    mode = ALT_GR;
 #endif
 	if (keyReleased) {
-	    if (mode == CAPS)
-		capslocktoggle = !capslocktoggle;
-	    if (mode != CAPS || !capslocktoggle)
-		ModeState &= ~mode;
-	} else
-	    ModeState |= mode;
-	set_leds();
-	return;
+	    switch (mode) {
+	    case CAPS:
+		capslock = !capslock;
+		if (capslock) mode = 0;
+		//printk("C%d", capslock);
+		set_leds();
+		break;
+	    case NUM:
+		numlock = !numlock;
+		if (numlock) mode = 0;
+		//printk("N%d", numlock);
+		set_leds();
+		break;
+	    case SLOCK:
+		scrlock = !scrlock;
+		if (scrlock) mode = 0;
+		//printk("S%d", scrclock);
+		set_leds();
+		break;
+	    }
+	    ModeState &= ~mode;		/* key up: clear these and other modes*/
+        } else
+	    ModeState |= mode;		/* key down: set mode bit */
+
+        /* ModeState updated - now return */
+        //printk("[%02x]", ModeState);
+        return;
     }
     
     /* no further processing on key release for non-status keys*/
@@ -236,23 +276,45 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	if (code == DEL_SCAN && ((ModeState & (CTRL|ALT)) == (CTRL|ALT)))
 	    ctrl_alt_del();
 
-        /* Pick the right keymap determined by ModeState*/
-	mode = ((ModeState & ~(NUM | ALT_GR)) >> 1) | (ModeState & 0x01);
+        /* Steps 2 & 3:
+	 * Pick the right keymap determined by ModeState bits:
+	 *  8    7   6    5    4    3    2   1   0
+	 *  SLCK SSC AGR  NUM CAPS ALT  CTL  RS  LS
+	 *
+	 * CAPS|ALT|CTL|RS are shifted right and OR'd with LS, forming
+	 * 4-bit entry into state_code[], which maps multiple status keys
+	 * (CAPS|ALT|CTL|SHIFT) into into a 2-bit table of per-country tables
+	 * which are indexed by (NORMAL,SHIFT,CAPS,CTL-ALT) in scan_tabs[] which
+	 * point to the actual keyboard maps, which then have ASCII or octal
+	 * values for keys or function keys.
+	 */
+	mode = ((ModeState & ~(SLOCK | NUM | ALT_GR)) >> 1) | (ModeState & 0x01);
+	//printk("{%x,%d}", ModeState, mode);
 	mode = state_code[mode];
 	
+	/* Step 4:
+	 * Perform additional special processing for:
+	 * NORMAL+ALTGR		-> CTL-ALT
+	 * CTL & code < 14	-> SHIFT	(unknown/untested)
+	 * NUM & code < 17	-> SHIFT	(unknown/breaks Shift-Capslock)
+	 * ALT-code		-> code | 0x80
+	 * CTL-code		-> code & 0x1f
+	 * '\0'			-> '@'
+	 */
 	if (!mode && (ModeState & ALT_GR))
-	    mode = 3; /*ctrl_alt table*/
+	    mode = 3;		/* CTRL-ALT-.. */
 
-	if ((((ModeState & (CTRL|ALT)) == CTRL) && code < 14) ||
-	     ((ModeState & NUM) && code < 70))
-	    mode = 1; /*shift keys*/
+	if ((((ModeState & (CTRL|ALT)) == CTRL) && code < 14)
+	    //|| ((ModeState & NUM) && code < 70)	/* FIXME removed, breaks Shift-Capslock*/
+		)
+	    mode = 1;		/* SHIFT-.. */
 
-	/* now read the key code from the selected table by mode */
+	/* Step 5: Read the key code from the selected table by mode */
 	key = *(scan_tabs[mode] + code);
 
-        /* Apply special modifiers*/
+        /* Step 6: Modify keyboard character based on some special states*/
 	if ((ModeState & (CTRL|ALT)) == ALT)
-	    key |= 0x80;	/* META-.. */
+	    key |= 0x80;	/* META-.. (assume codepage is OEM 437) */
 	    
 	if (!key)		/* non meta-@ is 64 */
 	    key = '@';
@@ -261,8 +323,9 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	    key &= 0x1F;	/* CTRL-.. */
 	    
 #ifdef CONFIG_EMUL_ANSI
+	/* Step 7: Convert octal 0260-0277 values to ANSI escape sequences*/
 	code = mode = 0;
-	switch (key) {
+	switch (key) {					/* FIXME need octal func key list*/
 	case 0270: code = 'A'; break;			/* up*/
 	case 0262: code = 'B'; break;			/* down*/
 	case 0266: code = 'C'; break;			/* right*/
@@ -304,6 +367,20 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 #define MAX_KB_BUSY_RETRIES 0x1000	/* max #times to loop while kb busy */
 #define KBIT		0x80	/* bit used to ack characters to keyboard */
 
+/* Read keyboard and acknowledge controller */
+static int kb_read(void)
+{
+    int code, mode;
+
+    code = inb_p(KBD_IO);
+    mode = inb_p(KBD_CTL);
+
+    outb_p((mode | 0x80), KBD_CTL);
+    outb_p(mode, KBD_CTL);
+
+    return(code);
+}
+
 /* Wait until the controller is ready; return zero if this times out. */
 static int kb_wait(void)
 {
@@ -330,23 +407,20 @@ static int kb_ack(void)
 }
 
 /* Set the LEDs on the caps, num, and scroll lock keys */
-void set_leds(void)
+static void set_leds(void)
 {
+    unsigned char leds;
+
     if (arch_cpu <= 5) return;	/* PC/XT doesn't have LEDs */
 
-printk("1");
     kb_wait();			/* wait for buffer empty  */
     outb_p(LED_CODE, KEYBD);	/* prepare keyboard to accept LED values */
-printk("2");
     kb_ack();			/* wait for ack response  */
-printk("3");
 
     kb_wait();			/* wait for buffer empty  */
-printk("4");
-    outb_p(ModeState, KEYBD);	/* give keyboard LED values */
-printk("5");
+    leds = scrlock | (numlock << 1) | (capslock << 2);	/* encode led bits*/
+    outb_p(leds, KEYBD);	/* give keyboard LED values */
     kb_ack();			/* wait for ack response  */
-printk("[%x]", ModeState);
 }
 
 #endif /* CONFIG_CONSOLE_DIRECT*/
