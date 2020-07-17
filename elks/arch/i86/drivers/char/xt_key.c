@@ -288,26 +288,29 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	 * point to the actual keyboard maps, which then have ASCII or octal
 	 * values for keys or function keys.
 	 */
-	mode = ((ModeState & ~(SLOCK | NUM | ALT_GR)) >> 1) | (ModeState & 0x01);
+	mode = ((ModeState & (CAPS|ALT|CTRL|RSHIFT)) >> 1) | (ModeState & LSHIFT);
 	//printk("{%x,%d}", ModeState, mode);
 	mode = state_code[mode];
 	
 	/* Step 4:
 	 * Perform additional special processing for:
-	 * NORMAL+ALTGR		-> CTL-ALT
-	 * CTL & code < 14	-> SHIFT	(unknown/untested)
-	 * NUM & code < 17	-> SHIFT	(unknown/breaks Shift-Capslock)
-	 * ALT-code		-> code | 0x80
-	 * CTL-code		-> code & 0x1f
-	 * '\0'			-> '@'
+	 * NORMAL+ALTGR			-> CTL-ALT
+	 * CAPS & SHIFT & code < 0x0E	-> SHIFT	handle top row shift when capslock
+	 * NUM & code >= 0x46		-> SHIFT	handle 10 keypad when numlock
+	 * ALT-code			-> code | 0x80
+	 * CTL-code			-> code & 0x1f
+	 * '\0'				-> '@'
 	 */
 	if (!mode && (ModeState & ALT_GR))
 	    mode = 3;		/* CTRL-ALT-.. */
 
-	if ((((ModeState & (CTRL|ALT)) == CTRL) && code < 14)
-	    //|| ((ModeState & NUM) && code < 70)	/* FIXME removed, breaks Shift-Capslock*/
-		)
+	if (!mode && capslock && code < 0x0E)		/* main top row 1-0,-,= */
 	    mode = 1;		/* SHIFT-.. */
+
+	if ((ModeState & NUM) && code >= 0x46)		/* 10 key keypad */
+	    if (ModeState & LSHIFT)			/* LSHIFT added by controller for arrow keys*/
+	        mode = 0;	/* NORMAL for arrow keys*/
+	    else mode = 1;	/* SHIFT-.. for keypad keys*/
 
 	/* Step 5: Read the key code from the selected table by mode */
 	key = *(scan_tabs[mode] + code);
