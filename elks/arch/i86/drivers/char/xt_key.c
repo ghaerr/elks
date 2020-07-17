@@ -304,10 +304,11 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	if (!mode && capslock && code < SCAN_BACKSPACE)	/* main top row 1-0,-,= */
 	    mode = 1;		/* SHIFT-.. */
 
-	if ((ModeState & NUM) && code >= SCAN_KP7)	/* 10 key keypad */
+	if ((ModeState & NUM) && code >= SCAN_KP7) {	/* 10 key keypad */
 	    if (ModeState & LSHIFT)			/* LSHIFT added by controller for arrow keys*/
 	        mode = 0;	/* NORMAL for arrow keys*/
 	    else mode = 1;	/* SHIFT-.. for keypad keys*/
+	}
 
 	/* Step 5: Read the key code from the selected table by mode */
 	key = *(scan_tabs[mode] + code);
