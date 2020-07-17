@@ -12,7 +12,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#define CAT_BUF_SIZE 4096
+#define CAT_BUF_SIZE	BUFSIZ		/* use disk block size for stack limit and efficiency*/
 
 static char readbuf[CAT_BUF_SIZE];
 

@@ -64,7 +64,7 @@
 #endif
 
 #define NUMBYTES     4	/* Any number fits in this many bytes. */
-#define CHUNK     4096	/* Transfer files in this size chunks. */
+#define CHUNK     BUFSIZ	/* Transfer files in this size chunks. */
 
 static int install= 0;	/* Install files, do not delete, update if newer. */
 static int interact= 0;	/* Ask permission to install too. */

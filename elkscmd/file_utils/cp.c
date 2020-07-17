@@ -21,7 +21,7 @@
 #include <utime.h>
 #include <errno.h>
 
-#define BUF_SIZE 4096
+#define BUF_SIZE	BUFSIZ		/* use disk block size for stack limit and efficiency*/
 
 static char buf[BUF_SIZE];
 

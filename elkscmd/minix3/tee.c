@@ -12,7 +12,7 @@
 #include "defs.h"
 
 #define	MAXFD	18
-#define CHUNK_SIZE	4096
+#define CHUNK_SIZE	BUFSIZ		/* use disk block size for stack limit and efficiency*/
 
 int fd[MAXFD];
 

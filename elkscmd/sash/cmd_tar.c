@@ -68,7 +68,7 @@ do_tar(argc, argv)
 	int	blocksize;
 	BOOL	listflag;
 	BOOL	fileflag;
-	char	buf[1024];
+	char	buf[BUFSIZ];
 
 	if (argc < 2) {
 		fprintf(stderr, "Too few arguments for tar\n");
