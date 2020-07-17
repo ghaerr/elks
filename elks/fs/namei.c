@@ -114,11 +114,7 @@ static int lookup(register struct inode *dir, char *name, size_t len,
 	}
 	iop = dir->i_op;
 	if (!iop || !iop->lookup) {
-
-#if 1
-	    panic("Oops - trying to access dir\n");
-#endif
-
+	    printk("Oops - trying to access dir\n");	//FIXME remove
 	    iput(dir);
 	    retval = -ENOTDIR;
 	} else if (perm != 0) {
@@ -199,6 +195,9 @@ static int dir_namei(register char *pathname, size_t * namelen,
 	    }
 	    debug("namei: left dir_namei succesfully\n");
 	    break;
+	} else { /* discard multiple '/'s*/
+	    while (get_user_char(pathname) == '/')
+		pathname++;
 	}
 	error = lookup(base, thisname, len, &inode);
 	if (error)
