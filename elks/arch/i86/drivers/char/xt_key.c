@@ -47,7 +47,6 @@ static int kb_read(void);
 #define ESC		27	/* ascii value for Escape*/
 #define SCAN_DEL	0x53	/* scan code for Delete key*/
 #define SCAN_F1		0x3B	/* scan code for F1 key*/
-#define SCAN_BACKSPACE	0x0E	/* scan code for Backspace key*/
 #define SCAN_KP7	0x47	/* scan code for Keypad 7 key*/
 
 /*
@@ -107,13 +106,13 @@ static unsigned char state_code[] = {
     1,	/*5= SHIFT ALT */
     3,	/*6= CTRL ALT */
     1,	/*7= SHIFT CTRL ALT */
-    2,	/*8= CAPS */ /* CAPS >>1 */
-    0,	/*9= CAPS SHIFT */
-    2,	/*10= CAPS CTRL */
-    0,	/*11= CAPS SHIFT CTRL */
-    2,	/*12= CAPS ALT */
-    0,	/*13= CAPS SHIFT ALT */
-    2,	/*14= CAPS CTRL ALT */
+    2,	/*8= CAPS */
+    2,	/*9= CAPS SHIFT */
+    0,	/*10= CAPS CTRL */
+    2,	/*11= CAPS SHIFT CTRL */
+    0,	/*12= CAPS ALT */
+    2,	/*13= CAPS SHIFT ALT */
+    3,	/*14= CAPS CTRL ALT */
     3,	/*15= CAPS SHIFT CTRL ALT */
 };
 
@@ -181,6 +180,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
      *	Status, FnKey or Extended scan code classes are handled specially.
      * For simple scan codes, ModeState (CAPS|ALT|CTL|SHIFT) values are used to
      *	index into state_code[] to map state to NORMAL, SHIFT, CAPS or CTL-ALT.
+     * Handle CAPS state processing and caps table zero entries (which use normal/shift tables).
      * Then, further processing is done to the map state for some special status cases (ALT_GR, NUM and CTL).
      * The NORMAL,SHIFT,CAPS,CTL-ALT map state is used to index the per-country scan-tabs[]
      *	array to get the keyboard character.
@@ -274,7 +274,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	if (code == SCAN_DEL && ((ModeState & (CTRL|ALT)) == (CTRL|ALT)))
 	    ctrl_alt_del();
 
-        /* Steps 2 & 3:
+        /* Step 2:
 	 * Pick the right keymap determined by ModeState bits:
 	 *  8    7   6    5    4    3    2   1   0
 	 *  SLCK SSC AGR  NUM CAPS ALT  CTL  RS  LS
@@ -288,21 +288,28 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	 */
 	mode = ((ModeState & (CAPS|ALT|CTRL|RSHIFT)) >> 1) | (ModeState & LSHIFT);
 	mode = state_code[mode];
+
+	/* Step 3:
+	 * Handle CAPS table specially based on SHIFT status.
+	 */
+	if (mode == 2) {
+	    key = *(scan_tabs[2] + code);
+	    if(!key)			/* zero caps table value means use normal/shift table*/
+		mode = (ModeState & (RSHIFT|LSHIFT))? 1: 0;	/* normal SHIFT for non-CAPS chars*/
+	    else
+		mode = (ModeState & (RSHIFT|LSHIFT))? 0: 2;	/* reversed SHIFT for CAPS characters*/
+	}
 	
 	/* Step 4:
 	 * Perform additional special processing for:
 	 * ALT_GR			-> CTL-ALT
-	 * CAPS+SHIFT & code < BS	-> SHIFT	handle top row shift when capslock
 	 * NUM & code >= KP7		-> SHIFT	handle 10 keypad when numlock
 	 * ALT-code			-> code | 0x80
 	 * CTL-code			-> code & 0x1f
-	 * '\0'				-> '@'
+	 * Zero table entries		-> '@'
 	 */
 	if (!mode && (ModeState & ALT_GR))
 	    mode = 3;		/* CTRL-ALT-.. */
-
-	if (!mode && capslock && code < SCAN_BACKSPACE)	/* main top row 1-0,-,= */
-	    mode = 1;		/* SHIFT-.. */
 
 	if ((ModeState & NUM) && code >= SCAN_KP7) {	/* 10 key keypad */
 	    if (ModeState & LSHIFT)			/* LSHIFT added by controller for arrow keys*/
@@ -317,7 +324,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	if ((ModeState & (CTRL|ALT)) == ALT)
 	    key |= 0x80;	/* ALT-.. (assume codepage is OEM 437) */
 	    
-	if (!key)		/* non meta-@ is 64 */
+	if (!key)		/* map zero table entries to '@' */
 	    key = '@';
 	    
 	if ((ModeState & (CTRL|ALT)) == CTRL)
