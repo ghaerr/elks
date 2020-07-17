@@ -106,7 +106,7 @@ printp();
 	/* process received packets*/
 	if (FD_ISSET(intfd, &fdset)) {
 		if (linkprotocol == LINK_ETHER)
-			deveth_process(0);
+			eth_process();
 		else slip_process();
 	}
 
@@ -137,6 +137,7 @@ int main(int argc,char **argv)
 {
     int ch;
     int bflag = 0;
+    static char *linknames[3] = { "ethernet", "slip", "cslip" };
 printp();
 //printf("ZERO is at %x\n", zero);
 
@@ -174,22 +175,26 @@ printp();
     gateway_ip = in_aton(optind < argc? argv[optind++]: DEFAULT_GATEWAY);
     netmask_ip = in_aton(optind < argc? argv[optind++]: DEFAULT_NETMASK);
 
-    printf("ktcp: ip %s, ", in_ntoa(local_ip));
-    printf("gateway %s, ", in_ntoa(gateway_ip));
-    printf("netmask %s\n", in_ntoa(netmask_ip));
-    printf("link %d serdev %s baud %lu mtu %u\n", linkprotocol, serdev, baudrate, MTU);
-
     /* must exit() in next two stages on error to reset kernel tcpdev_inuse to 0*/
     if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)
 	exit(1);
 
-    if (linkprotocol == LINK_ETHER) {
-	if ((intfd = deveth_init(ethdev)) < 0)
-	    exit(1);
-    } else {
-	if ((intfd = slip_init(serdev, baudrate)) < 0)
-	    exit(2);
-    }
+    if (linkprotocol == LINK_ETHER)
+	intfd = deveth_init(ethdev);
+    else
+	intfd = slip_init(serdev, baudrate);
+    if (intfd < 0)
+	exit(2);
+
+    printf("ktcp: ip %s, ", in_ntoa(local_ip));
+    printf("gateway %s, ", in_ntoa(gateway_ip));
+    printf("netmask %s\n", in_ntoa(netmask_ip));
+
+    printf("ktcp: %s ", linknames[linkprotocol]);
+    if (linkprotocol == LINK_ETHER)
+	printf("%s", mac_ntoa((unsigned char *)&eth_local_addr));
+    else printf("%s baud %lu", serdev, baudrate);
+    printf(" mtu %u\n", MTU);
 
     signal(SIGHUP, catch);
     signal(SIGINT, catch);

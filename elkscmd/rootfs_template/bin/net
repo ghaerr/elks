@@ -42,11 +42,11 @@ start_network()
 	case "$link" in
 	slip)
 		getty_off
-		ktcp="ktcp -b -p slip -s $baud -l $device $localip $device $gateway $netmask"
+		ktcp="ktcp -b -p slip -s $baud -l $device $localip $gateway $netmask"
 		;;
 	cslip)
 		getty_off
-		ktcp="ktcp -b -p cslip -s $baud -l $device $localip $device $gateway $netmask"
+		ktcp="ktcp -b -p cslip -s $baud -l $device $localip $gateway $netmask"
 		;;
 	eth)
 		ktcp="ktcp -b $localip $gateway $netmask"
@@ -57,14 +57,16 @@ start_network()
 	# run ktcp as background daemon if successful starting networking
 	echo $ktcp
 	if $ktcp; then
+		echo -n "Starting daemons "
 		for daemon in telnetd httpd
 		do
 			if test -f /bin/$daemon
 			then
-				echo -n " $daemon "
+				echo -n "$daemon "
 				$daemon || true
 			fi
 		done
+		echo ""
 	else
 		echo "Network start failed"
 		exit 1

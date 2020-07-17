@@ -1,8 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-//#define ARP_WAIT_KLUGE	/* force loop on arp reply*/
-
 /* compile time options*/
 #define CSLIP		1	/* compile in CSLIP support*/
 
