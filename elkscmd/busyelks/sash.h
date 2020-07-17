@@ -39,7 +39,7 @@ struct  chunk   {
 #define	FALSE	0
 #define	TRUE	1
 
-#define BUF_SIZE 4096
+#define BUF_SIZE 1024		/* for stack limit and efficiency*/
 
 extern	void	do_alias(), do_cd(), do_exec(), do_exit(), do_prompt();
 extern	void	do_source(), do_umask(), do_unalias(), do_help(), do_ln();

@@ -12,7 +12,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-# TODO: lpd mt	# Do not compile.
+# TODO: lpd mt install	# Do not compile.
 PRGS=env lp pwdauth remsync synctree tget
 
 env: env.o
