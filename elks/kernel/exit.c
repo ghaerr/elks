@@ -16,7 +16,7 @@ int sys_wait4(pid_t pid, int *status, int options)
 {
 	register struct task_struct *p;
 	struct task_struct *q;
-	int waitagain;
+	int waitagain, orphans;
 
 	debug_wait("WAIT(%d) for %d %s\n", current->pid, pid, (options & WNOHANG)? "nohang": "");
 
@@ -24,17 +24,19 @@ int sys_wait4(pid_t pid, int *status, int options)
 	waitagain = 0;
 
 	/* reparent orphan zombies to init*/
+	orphans = 0;
 	for_each_task(p) {
 		if (p->state == TASK_ZOMBIE) {
 			debug_wait("Zombie pid %d ppid %d\n", p->pid, p->p_parent->pid);
 			if (p->p_parent->state == TASK_UNUSED) {
 				debug_wait("WAIT(%d) reparenting %d to 1\n", current->pid, p->pid);
 				p->p_parent = &task[1];
-				wake_up(&task[1].child_wait);
+				orphans++;
 			}
-
 		}
 	}
+	if (orphans)
+		wake_up(&task[1].child_wait);
 
 	for_each_task(p) {
 		if (p->p_parent == current) {
@@ -50,10 +52,12 @@ int sys_wait4(pid_t pid, int *status, int options)
 					return p->pid;
 
 				/* must reparent orphans before unassigning task slot*/
+				orphans = 0;
 				for_each_task(q) {
 					if (q->p_parent == p) {
 						debug_wait("Orphan child %d\n", q->pid);
 						q->p_parent = &task[1];
+						orphans++;
 					}
 				}
 
@@ -61,6 +65,9 @@ int sys_wait4(pid_t pid, int *status, int options)
 				p->state = TASK_UNUSED;
 				next_task_slot = p;
 				task_slots_unused++;
+
+				if (orphans)
+					wake_up(&task[1].child_wait);
 
 				debug_wait("WAIT(%d) got %d\n", current->pid, p->pid);
 				return p->pid;
