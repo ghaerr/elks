@@ -43,6 +43,9 @@ struct packet_stats_s {
 	__u32	arpsndreplycnt;
 	__u32	arpsndreqcnt;
 	__u32	arpcacheadds;
+
+	__u32	slipsndcnt;
+	__u32	sliprcvcnt;
 };
 
 extern struct packet_stats_s netstats;

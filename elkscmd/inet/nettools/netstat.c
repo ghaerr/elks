@@ -55,6 +55,7 @@ int main(void)
     struct packet_stats_s *ns;
     struct stat_request_s sr;
     int i;
+    unsigned int retrans_mem;
     char addr[16];
     __u8 *addrbytes;
 	    
@@ -66,7 +67,7 @@ int main(void)
     localadr.sin_family = AF_INET;
     localadr.sin_port = 0;
     localadr.sin_addr.s_addr = INADDR_ANY;  
-    ret = bind(s, &localadr, sizeof(struct sockaddr_in));
+    ret = bind(s, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in));
     if ( ret == -1) {
 	perror("bind error");
 	exit(-1);
@@ -75,7 +76,7 @@ int main(void)
     remaddr.sin_family = AF_INET;
     remaddr.sin_port = htons(NETCONF_PORT);
     remaddr.sin_addr.s_addr = 0;
-    ret = connect(s, &remaddr, sizeof(struct sockaddr_in));
+    ret = connect(s, (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in));
     if ( ret == -1) {
 	perror("connect error");
 	exit(-1);
@@ -85,26 +86,27 @@ int main(void)
     write(s, &sr, sizeof(sr));	
     ret = read(s, buf, sizeof(buf));
     gstats = (struct general_stats_s *)buf;
-    printf("Retransmit memory        : %d bytes\n", gstats->retrans_memory);
-    printf("Number of control blocks : %d\n\n", gstats->cb_num);
+    retrans_mem = gstats->retrans_memory;
 
     sr.type = NS_NETSTATS;
     write(s, &sr, sizeof(sr));
     ret = read(s, buf, sizeof(buf));
     ns = (struct packet_stats_s *)buf;
-    printf("TCP Packets Rcv%8ld  TCP Packets Sent%8ld\n", ns->tcprcvcnt, ns->tcpsndcnt);
-    printf("TCP Pkt Dropped%8ld  TCP Retransmits %8ld\n", ns->tcpdropcnt, ns->tcpretranscnt);
-    printf("TCP Bad Chksum %8ld\n", ns->tcpbadchksum);
-    printf("IP Packets Rcv %8ld  IP Packets Sent %8ld\n", ns->iprcvcnt, ns->ipsndcnt);
-    printf("IP Bad Chksum  %8ld  IP Bad Headers  %8ld\n", ns->ipbadchksum, ns->ipbadhdr);
-    printf("ICMP Pkts Rcv  %8ld  ICMP Packets Snt%8ld\n", ns->icmprcvcnt, ns->icmpsndcnt);
-    printf("ETH Packets Rcv%8ld  ETH Packets Sent%8ld\n", ns->ethrcvcnt, ns->ethsndcnt);
-    printf("ARP Reply Rcv  %8ld  ARP Reply Sent  %8ld\n", ns->arprcvreplycnt, ns->arpsndreplycnt);
-    printf("ARP Request Rcv%8ld  ARP Request Sent%8ld\n", ns->arprcvreqcnt, ns->arpsndreqcnt);
-    printf("ARP Cache Adds %8ld\n", ns->arpcacheadds);
+    printf("----- Received ---------  ----- Sent -------------\n");
+    printf("TCP Packets      %7lu  TCP Packets      %7lu\n", ns->tcprcvcnt, ns->tcpsndcnt);
+    printf("TCP Dropped      %7lu  TCP Retransmits  %7lu\n", ns->tcpdropcnt, ns->tcpretranscnt);
+    printf("TCP Bad Checksum %7lu  TCP Retrans Memory%6u\n", ns->tcpbadchksum, retrans_mem);
+    printf("IP Packets       %7lu  IP Packets       %7lu\n", ns->iprcvcnt, ns->ipsndcnt);
+    printf("IP Bad Checksum  %7lu  IP Bad Headers   %7lu\n", ns->ipbadchksum, ns->ipbadhdr);
+    printf("ICMP Packets     %7lu  ICMP Packets     %7lu\n", ns->icmprcvcnt, ns->icmpsndcnt);
+    printf("SLIP Packets     %7lu  SLIP Packets     %7lu\n", ns->sliprcvcnt, ns->slipsndcnt);
+    printf("ETH Packets      %7lu  ETH Packets      %7lu\n", ns->ethrcvcnt, ns->ethsndcnt);
+    printf("ARP Requests     %7lu  ARP Requests     %7lu\n", ns->arprcvreqcnt, ns->arpsndreqcnt);
+    printf("ARP Replies      %7lu  ARP Replies      %7lu\n", ns->arprcvreplycnt, ns->arpsndreplycnt);
+    printf("ARP Cache Adds   %7lu\n", ns->arpcacheadds);
     printf("\n");
 
-    printf(" no        State    RTT lport        raddress  rport\n");
+    printf(" No        State    RTT lport        raddress  rport\n");
     printf("-----------------------------------------------------\n");
     sr.type = NS_CB;
     for (i = 0 ;; i++){
@@ -119,4 +121,3 @@ int main(void)
 		printf(" %5u %15s  %5u\n", cbstats->localport, addr, cbstats->remport);
     }
 }
-

@@ -21,6 +21,7 @@
 #include "ip.h"
 #include "slip.h"
 #include "vjhc.h"
+#include "netconf.h"
 
 /*#define DEBUG*/
 
@@ -224,8 +225,10 @@ printf("}");
 			} else
 #endif
 			    p = packet + 128;
-		        if (p_size > 0)
+		        if (p_size > 0) {
 			    ip_recvpacket(p, p_size);
+			    netstats.sliprcvcnt++;
+			}
 
 			/* Reset */
 			packpos = 128;
@@ -298,4 +301,5 @@ void slip_send(unsigned char *packet, int len)
     }
     *q++ = END;
     write(devfd, buf, q - buf);
+    netstats.slipsndcnt++;
 }
