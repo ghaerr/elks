@@ -27,6 +27,7 @@
 #include <linuxmt/arpa/inet.h>
 #include "deveth.h"
 #include "arp.h"
+#include "netconf.h"
 
 static unsigned char ipbuf[IP_BUFSIZ];
 
@@ -118,17 +119,20 @@ void ip_recvpacket(unsigned char *packet,int size)
 
     if (IP_VERSION(iphdr) != 4){
         debug_ip("IP: Bad IP version\n");
+	netstats.ipbadhdr++;
 	return;
     }
 
     len = IP_HLEN(iphdr) * 4;
     if (len < 20) {
         debug_ip("IP: Bad HLEN\n");
+	netstats.ipbadhdr++;
 	return;
     }
 
     if (ip_calc_chksum((char *)iphdr, len)) {
 	printf("IP: BAD CHKSUM (%x) len %d\n", ip_calc_chksum((char *)iphdr, len), len);
+	netstats.ipbadchksum++;
 	return;
     }
 
@@ -137,13 +141,16 @@ void ip_recvpacket(unsigned char *packet,int size)
         debug_ip("IP: recv icmp packet\n");
 	data = packet + 4 * IP_HLEN(iphdr);
 	icmp_process(iphdr, data);
+	netstats.icmprcvcnt++;
 	break;
 
     case PROTO_TCP:
         debug_ip("IP: recv tcp packet\n");
 	tcp_process(iphdr);
+	netstats.tcprcvcnt++;
 	break;
     }
+    netstats.iprcvcnt++;
 }
 
 void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair)
@@ -178,6 +185,7 @@ void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair)
 #endif
 
     ip_route((unsigned char *)iph, iphdrlen + len, apair);	/* route packet using src and dst address*/
+    netstats.ipsndcnt++;
 }
 
 void ip_route(unsigned char *packet, int len, struct addr_pair *apair)
@@ -212,10 +220,13 @@ void *xxmemcpy(void * d, const void * s, int l)
 {
 	register char *s1=d, *s2=(char *)s;
 
-//printf("MEMCPY %u,%u,%u\n", d, s, l);
+//printf("MEMCPY %04x,%04x,%d->", d, s, l);
 if (s == NULL || s < 6) printf("SRC NULL\n");
 if (d == NULL || d < 6) printf("DST NULL\n");
-	for( ; l>0; l--)
+	for( ; l>0; l--) {
+		//printf("%x ", *(unsigned char *)s2);
 		*((unsigned char*)s1++) = *((unsigned char*)s2++);
+	}
+	//printf("\n");
 	return d;
 }

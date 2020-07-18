@@ -1,0 +1,85 @@
+/*
+ * arp - display arp cache
+ *
+ * 18 Jul 20 Greg Haerr
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ */
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <linuxmt/net.h>
+#include <linuxmt/in.h>
+#include <ktcp/tcp.h>
+#include <ktcp/netconf.h>
+#include <ktcp/deveth.h>
+#include <ktcp/arp.h>
+#include <linuxmt/arpa/inet.h>
+
+struct sockaddr_in localadr,remaddr;
+struct arp_cache arp_cache[ARP_CACHE_MAX];
+
+char *in_ntoa(ipaddr_t in)
+{
+    register unsigned char *p;
+    static char b[18];
+
+    p = (unsigned char *)&in;
+    sprintf(b, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
+    return b;
+}
+
+char *mac_ntoa(eth_addr_t eth_addr)
+{
+	unsigned char *p = (unsigned char *)eth_addr;
+    static char b[18];
+
+    sprintf(b, "%02x.%02x.%02x.%02x.%02x.%02x",p[0],p[1],p[2],p[3],p[4],p[5]);
+    return b;
+}
+
+int main(void)
+{
+    int i, s, ret;
+    struct stat_request_s sr;
+
+    if ( (s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+	perror("socket error");
+	exit(-1);
+    }
+
+    localadr.sin_family = AF_INET;
+    localadr.sin_port = 0;
+    localadr.sin_addr.s_addr = INADDR_ANY;  
+    ret = bind(s, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in));
+    if ( ret == -1) {
+	perror("bind error");
+	exit(-1);
+    }
+
+    remaddr.sin_family = AF_INET;
+    remaddr.sin_port = htons(NETCONF_PORT);
+    remaddr.sin_addr.s_addr = 0;
+    ret = connect(s, (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in));
+    if ( ret == -1) {
+	perror("connect error");
+	exit(-1);
+    }
+
+    sr.type = NS_ARP;
+    write(s, &sr, sizeof(sr));	
+    ret = read(s, arp_cache, ARP_CACHE_MAX*sizeof(struct arp_cache));
+    if (ret != ARP_CACHE_MAX*sizeof(struct arp_cache)) {
+	perror("read");
+	exit(-1);
+    }
+
+    for(i=0; i<ARP_CACHE_MAX; i++) {
+	printf("%-15s %s\n", in_ntoa(arp_cache[i].ip_addr), mac_ntoa(arp_cache[i].eth_addr));
+    }
+}

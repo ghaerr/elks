@@ -26,15 +26,9 @@
 #include "ip.h"
 #include "deveth.h"
 #include "arp.h"
+#include "netconf.h"
 
-/* ARP operations */
-#define ARP_REQUEST  1
-#define ARP_REPLY    2
-
-/* Local ARP cache */
-#define ARP_CACHE_MAX 5
-
-static struct arp_cache arp_cache [ARP_CACHE_MAX];
+struct arp_cache arp_cache [ARP_CACHE_MAX];
 
 int arp_init (void)
 {
@@ -42,7 +36,7 @@ int arp_init (void)
 	return 0;
 }
 
-struct arp_cache *arp_cache_get(ipaddr_t ip_addr, eth_addr_t *eth_addr, int flags)
+struct arp_cache *arp_cache_get(ipaddr_t ip_addr, eth_addr_t eth_addr, int flags)
 {
 	register struct arp_cache *entry = arp_cache;
 
@@ -55,10 +49,12 @@ struct arp_cache *arp_cache_get(ipaddr_t ip_addr, eth_addr_t *eth_addr, int flag
 				return NULL;	/* not yet valid - awaiting ARP reply*/
 			if (flags & ARP_UPDATE) {
 				memcpy (entry->eth_addr, eth_addr, sizeof (eth_addr_t));
-				debug_arp("arp: merging cached entry for %s\n", in_ntoa(ip_addr));
+				debug_arp("arp: merging cached entry for %s (%s)\n",
+					in_ntoa(ip_addr), mac_ntoa(entry->eth_addr));
 			} else {
 				memcpy (eth_addr, entry->eth_addr, sizeof (eth_addr_t));
-				debug_arp("arp: using cached entry for %s\n", in_ntoa(ip_addr));
+				debug_arp("arp: using cached entry for %s (%s)\n",
+					in_ntoa(ip_addr),mac_ntoa(entry->eth_addr));
 			}
 			return entry;	/* success*/
 		}
@@ -69,19 +65,22 @@ struct arp_cache *arp_cache_get(ipaddr_t ip_addr, eth_addr_t *eth_addr, int flag
 	return NULL;			/* not found*/
 }
 
-struct arp_cache *arp_cache_update(ipaddr_t ip_addr, eth_addr_t *eth_addr)
+struct arp_cache *arp_cache_update(ipaddr_t ip_addr, eth_addr_t eth_addr)
 {
 	struct arp_cache *entry;
+	eth_addr_t existing_addr;
 
-	if ((entry = arp_cache_get(ip_addr, eth_addr, 0))) {
+	if ((entry = arp_cache_get(ip_addr, existing_addr, 0))) {
 		memcpy (entry->eth_addr, eth_addr, sizeof (eth_addr_t));
+		debug_arp("arp: updating cached entry for %s (%s)\n",
+			in_ntoa(entry->ip_addr), mac_ntoa(entry->eth_addr));
 		entry->valid = 1;
 	} else debug_arp("arp: no cached entry to update for %s\n", in_ntoa(ip_addr));
 
 	return entry;
 }
 
-struct arp_cache *arp_cache_add(ipaddr_t ip_addr, eth_addr_t *eth_addr)
+struct arp_cache *arp_cache_add(ipaddr_t ip_addr, eth_addr_t eth_addr)
 {
 	struct arp_cache *entry;
 
@@ -101,11 +100,13 @@ struct arp_cache *arp_cache_add(ipaddr_t ip_addr, eth_addr_t *eth_addr)
 	entry->qpacket = NULL;
 	debug_arp("arp: adding cache entry for %s, valid=%d\n", in_ntoa(ip_addr), entry->valid);
 
+	netstats.arpcacheadds++;
 	return entry;
 }
 
-char *mac_ntoa(unsigned char *p)
+char *mac_ntoa(eth_addr_t eth_addr)
 {
+	unsigned char *p = (unsigned char *)eth_addr;
     static char b[18];
 
     sprintf(b, "%02x.%02x.%02x.%02x.%02x.%02x",p[0],p[1],p[2],p[3],p[4],p[5]);
@@ -152,6 +153,7 @@ void arp_reply(unsigned char *packet,int size)
 
     arp_print(arp);
     eth_write(packet, sizeof (struct arp));
+    netstats.arpsndreplycnt++;
 }
 
 void arp_request(ipaddr_t ipaddress)
@@ -177,6 +179,7 @@ void arp_request(ipaddr_t ipaddress)
 
     arp_print(&arpreq);
     eth_write((unsigned char *)&arpreq, sizeof(arpreq));
+    netstats.arpsndreqcnt++;
 }
 
 /* Process incoming ARP packets */
@@ -189,18 +192,19 @@ void arp_recvpacket(unsigned char *packet, int size)
 	switch (ntohs(arp->op)) {
 	case ARP_REQUEST:
 		debug_arp("arp: incoming REQUEST\n");
-		entry = arp_cache_get(arp->ip_src, &arp->eth_src, ARP_UPDATE); /* possible cache update */
+		entry = arp_cache_get(arp->ip_src, arp->eth_src, ARP_UPDATE); /* possible cache update */
 		if (arp->ip_dest == local_ip) {
 			if (!entry)
-				arp_cache_add(arp->ip_src, &arp->eth_src);
+				arp_cache_add(arp->ip_src, arp->eth_src);
 			arp_reply (packet, size);
 		}
+		netstats.arprcvreqcnt++;
 		break;
 
 	case ARP_REPLY:
 		debug_arp("arp: incoming REPLY\n");
 		/* update cache, check for queued packet*/
-		entry = arp_cache_update(arp->ip_src, &arp->eth_src);
+		entry = arp_cache_update(arp->ip_src, arp->eth_src);
 		if (entry) {
 			if (entry->qpacket) {
 				debug_arp("arp: sending queued packet\n");
@@ -209,6 +213,7 @@ void arp_recvpacket(unsigned char *packet, int size)
 				entry->qpacket = NULL;
 			}
 		}
+		netstats.arprcvreplycnt++;
 		break;
 	}
 }

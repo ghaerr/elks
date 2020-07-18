@@ -27,14 +27,13 @@
 #include "deveth.h"
 #include "tcpdev.h"
 #include "arp.h"
+#include "netconf.h"
 
 eth_addr_t eth_local_addr;
 
 static unsigned char sbuf[MAX_PACKET_ETH];
 static int devfd;
-
-static eth_addr_t broad_addr = {255, 255, 255, 255, 255, 255};
-
+//static eth_addr_t broad_addr = {255, 255, 255, 255, 255, 255};
 
 int deveth_init(char *fdev)
 {
@@ -88,6 +87,7 @@ void eth_process(void)
 	  arp_recvpacket (sbuf, len);
 	  break;
   }
+  netstats.ethrcvcnt++;
 }
 
 /*
@@ -102,7 +102,7 @@ void eth_route(unsigned char *packet, int len, ipaddr_t ip_addr)
 	unsigned char *p;
 
 	/* try to get cached ethernet address and send packet*/
-	if (arp_cache_get (ip_addr, &eth_addr, ARP_VALID)) {
+	if (arp_cache_get (ip_addr, eth_addr, ARP_VALID)) {
 		eth_sendpacket(packet, len, eth_addr);
 		return;
 	}
@@ -146,11 +146,14 @@ void eth_sendpacket(unsigned char *packet, int len, eth_addr_t eth_addr)
 /* raw ethernet packet send*/
 void eth_write(unsigned char *packet, int len)
 {
-    //eth_printhex(packet,len);
+#if DEBUG_ETH
+    eth_printhex(packet,len);
+#endif
     write(devfd, packet, len);
+    netstats.ethsndcnt++;
 }
 
-#if DEBUG
+#if DEBUG_ETH
 void eth_printhex(unsigned char *packet, int len)
 {
   unsigned char *p = packet;

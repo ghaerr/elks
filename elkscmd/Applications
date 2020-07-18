@@ -150,6 +150,7 @@ ktcp/ktcp						:net
 ktcp/resolv.conf	::etc/resolv.conf	:net
 inet/nettools/netstat			:net
 inet/nettools/nslookup			:net
+inet/nettools/arp				:net
 inet/telnet/telnet				:net
 inet/telnetd/telnetd			:net
 inet/tinyirc/tinyirc			:net
