@@ -16,6 +16,7 @@
 #include "config.h"
 #include "ip.h"
 #include "icmp.h"
+#include "netconf.h"
 #include <linuxmt/arpa/inet.h>
 
 int icmp_init(void)
@@ -45,6 +46,7 @@ void icmp_process(struct iphdr_s *iph,unsigned char *packet)
 	apair.saddr = iph->daddr;
 	apair.protocol = PROTO_ICMP;
 	ip_sendpacket(packet, len, &apair);
+	netstats.icmpsndcnt++;
 	break;
    case ICMP_TYPE_DST_UNRCH:
 	printf("icmp: destination unreachable code %d from %s\n",

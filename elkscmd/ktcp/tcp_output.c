@@ -22,6 +22,7 @@
 #include <linuxmt/arpa/inet.h>
 #include "timer.h"
 #include "tcpdev.h"
+#include "netconf.h"
 
 static struct tcp_retrans_list_s *retrans_list;
 static unsigned char tcpbuf[TCP_BUFSIZ];
@@ -279,6 +280,7 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
     n->next_retrans = Now + n->rto;
 printf("retrans retry #%d rto %ld mem %u\n", n->retrans_num, n->rto, tcp_retrans_memory);
     ip_sendpacket((unsigned char *)n->tcphdr, n->len, &n->apair);
+    netstats.tcpretranscnt++;
 }
 
 /* called every ktcp cycle when tcp_timeruse nonzero*/
@@ -374,4 +376,5 @@ len = 255;	//FIXME testing only
 
     add_for_retrans(cb, th, len, &apair);
     ip_sendpacket((unsigned char *)th, len, &apair);
+    netstats.tcpsndcnt++;
 }

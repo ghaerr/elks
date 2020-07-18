@@ -21,6 +21,7 @@
 #include "tcpdev.h"
 #include "tcp_output.h"
 #include "timer.h"
+#include "netconf.h"
 #include <linuxmt/arpa/inet.h>
 
 timeq_t Now;
@@ -216,6 +217,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	if (datasize > CB_BUF_SPACE(cb)) {
 	    printf("tcp: dropping packet, data too large: %u > %d\n", datasize, CB_BUF_SPACE(cb));
 	    //tcp_reset_connection(cb);	//FIXME this causes RST received then panic in read/write
+	    netstats.tcpdropcnt++;
 	    return;
 	}
 
@@ -405,6 +407,7 @@ void tcp_process(struct iphdr_s *iph)
 
     if (tcp_chksum(&iptcp) != 0) {
 	printf("tcp: BAD CHECKSUM (%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
+	netstats.tcpbadchksum++;
 	return;
     }
 
@@ -414,6 +417,7 @@ void tcp_process(struct iphdr_s *iph)
     if (!cbnode) {
 	printf("tcp: Refusing packet\n");
 	/* TODO : send RST and stuff */
+	netstats.tcpdropcnt++;
 	return;
     }
 

@@ -26,6 +26,7 @@
 #include "ip.h"
 #include "deveth.h"
 #include "arp.h"
+#include "netconf.h"
 
 /* ARP operations */
 #define ARP_REQUEST  1
@@ -101,6 +102,7 @@ struct arp_cache *arp_cache_add(ipaddr_t ip_addr, eth_addr_t *eth_addr)
 	entry->qpacket = NULL;
 	debug_arp("arp: adding cache entry for %s, valid=%d\n", in_ntoa(ip_addr), entry->valid);
 
+	netstats.arpcacheadds++;
 	return entry;
 }
 
@@ -152,6 +154,7 @@ void arp_reply(unsigned char *packet,int size)
 
     arp_print(arp);
     eth_write(packet, sizeof (struct arp));
+    netstats.arpsndreplycnt++;
 }
 
 void arp_request(ipaddr_t ipaddress)
@@ -177,6 +180,7 @@ void arp_request(ipaddr_t ipaddress)
 
     arp_print(&arpreq);
     eth_write((unsigned char *)&arpreq, sizeof(arpreq));
+    netstats.arpsndreqcnt++;
 }
 
 /* Process incoming ARP packets */
@@ -195,6 +199,7 @@ void arp_recvpacket(unsigned char *packet, int size)
 				arp_cache_add(arp->ip_src, &arp->eth_src);
 			arp_reply (packet, size);
 		}
+		netstats.arprcvreqcnt++;
 		break;
 
 	case ARP_REPLY:
@@ -209,6 +214,7 @@ void arp_recvpacket(unsigned char *packet, int size)
 				entry->qpacket = NULL;
 			}
 		}
+		netstats.arprcvreplycnt++;
 		break;
 	}
 }

@@ -52,6 +52,7 @@ int main(void)
 {
     struct general_stats_s *gstats;
     struct cb_stats_s *cbstats;
+    struct packet_stats_s *ns;
     struct stat_request_s sr;
     int i;
     char addr[16];
@@ -83,9 +84,25 @@ int main(void)
     sr.type = NS_GENERAL;
     write(s, &sr, sizeof(sr));	
     ret = read(s, buf, sizeof(buf));
-    gstats = buf;	
+    gstats = (struct general_stats_s *)buf;
     printf("Retransmit memory        : %d bytes\n", gstats->retrans_memory);
     printf("Number of control blocks : %d\n\n", gstats->cb_num);
+
+    sr.type = NS_NETSTATS;
+    write(s, &sr, sizeof(sr));
+    ret = read(s, buf, sizeof(buf));
+    ns = (struct packet_stats_s *)buf;
+    printf("TCP Packets Rcv%8ld  TCP Packets Sent%8ld\n", ns->tcprcvcnt, ns->tcpsndcnt);
+    printf("TCP Pkt Dropped%8ld  TCP Retransmits %8ld\n", ns->tcpdropcnt, ns->tcpretranscnt);
+    printf("TCP Bad Chksum %8ld\n", ns->tcpbadchksum);
+    printf("IP Packets Rcv %8ld  IP Packets Sent %8ld\n", ns->iprcvcnt, ns->ipsndcnt);
+    printf("IP Bad Chksum  %8ld  IP Bad Headers  %8ld\n", ns->ipbadchksum, ns->ipbadhdr);
+    printf("ICMP Pkts Rcv  %8ld  ICMP Packets Snt%8ld\n", ns->icmprcvcnt, ns->icmpsndcnt);
+    printf("ETH Packets Rcv%8ld  ETH Packets Sent%8ld\n", ns->ethrcvcnt, ns->ethsndcnt);
+    printf("ARP Reply Rcv  %8ld  ARP Reply Sent  %8ld\n", ns->arprcvreplycnt, ns->arpsndreplycnt);
+    printf("ARP Request Rcv%8ld  ARP Request Sent%8ld\n", ns->arprcvreqcnt, ns->arpsndreqcnt);
+    printf("ARP Cache Adds %8ld\n", ns->arpcacheadds);
+    printf("\n");
 
     printf(" no        State    RTT lport        raddress  rport\n");
     printf("-----------------------------------------------------\n");
@@ -94,7 +111,7 @@ int main(void)
 		sr.extra = i;
 		write(s, &sr, sizeof(sr));	
 		read(s, buf, sizeof(buf));
-		cbstats = buf;
+		cbstats = (struct cb_stats_s *)buf;
 		if (cbstats->valid == 0)break;
 		addrbytes = (__u8 *)&cbstats->remaddr;
 		sprintf(addr,"%d.%d.%d.%d",addrbytes[0],addrbytes[1],addrbytes[2],addrbytes[3]);
