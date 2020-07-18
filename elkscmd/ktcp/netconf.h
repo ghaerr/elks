@@ -54,6 +54,7 @@ extern struct packet_stats_s netstats;
 #define NS_GENERAL	1
 #define NS_CB		2
 #define NS_NETSTATS	3
+#define NS_ARP		4
 
 void netconf_init();
 void netconf_send();

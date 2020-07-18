@@ -220,10 +220,13 @@ void *xxmemcpy(void * d, const void * s, int l)
 {
 	register char *s1=d, *s2=(char *)s;
 
-//printf("MEMCPY %u,%u,%u\n", d, s, l);
+//printf("MEMCPY %04x,%04x,%d->", d, s, l);
 if (s == NULL || s < 6) printf("SRC NULL\n");
 if (d == NULL || d < 6) printf("DST NULL\n");
-	for( ; l>0; l--)
+	for( ; l>0; l--) {
+		//printf("%x ", *(unsigned char *)s2);
 		*((unsigned char*)s1++) = *((unsigned char*)s2++);
+	}
+	//printf("\n");
 	return d;
 }

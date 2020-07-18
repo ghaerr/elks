@@ -8,6 +8,7 @@
 #define DEBUG_TCP	0
 #define DEBUG_IP	0
 #define DEBUG_ARP	0
+#define DEBUG_ETH	0
 
 /* leave these off for now - too much info*/
 #define DEBUG_MEM	0		/* debug memory allocations*/

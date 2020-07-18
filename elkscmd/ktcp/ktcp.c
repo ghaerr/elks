@@ -192,7 +192,7 @@ printp();
 
     printf("ktcp: %s ", linknames[linkprotocol]);
     if (linkprotocol == LINK_ETHER)
-	printf("%s", mac_ntoa((unsigned char *)&eth_local_addr));
+	printf("%s", mac_ntoa(eth_local_addr));
     else printf("%s baud %lu", serdev, baudrate);
     printf(" mtu %u\n", MTU);
 

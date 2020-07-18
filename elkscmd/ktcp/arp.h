@@ -35,17 +35,25 @@ struct arp_cache {
 	int len;		/* queued packet length*/
 };
 
+/* ARP operations */
+#define ARP_REQUEST  1
+#define ARP_REPLY    2
+
 /* arp_cache_get flags*/
 #define ARP_VALID	1	/* retrieve valid eth_addr entry only*/
 #define ARP_UPDATE	2	/* if present, update cache with passed eth_addr*/
 
+/* Local ARP cache */
+#define ARP_CACHE_MAX 5
+extern struct arp_cache arp_cache [ARP_CACHE_MAX];
+
 int arp_init (void);
-struct arp_cache *arp_cache_get(ipaddr_t ip_addr, eth_addr_t * eth_addr, int flags);
-struct arp_cache *arp_cache_update(ipaddr_t ip_addr, eth_addr_t *eth_addr);
-struct arp_cache *arp_cache_add(ipaddr_t ip_addr, eth_addr_t * eth_addr);
+struct arp_cache *arp_cache_get(ipaddr_t ip_addr, eth_addr_t eth_addr, int flags);
+struct arp_cache *arp_cache_update(ipaddr_t ip_addr, eth_addr_t eth_addr);
+struct arp_cache *arp_cache_add(ipaddr_t ip_addr, eth_addr_t eth_addr);
 void arp_recvpacket (unsigned char * packet, int size);
 void arp_request(ipaddr_t ipaddress);
 
-char *mac_ntoa(unsigned char *p);
+char *mac_ntoa(eth_addr_t eth_addr);
 
 #endif /* !ARP_H */
