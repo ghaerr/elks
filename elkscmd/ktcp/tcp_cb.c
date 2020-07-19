@@ -75,8 +75,7 @@ struct tcpcb_list_s *tcpcb_new(void)
 debug_mem("Alloc CB %d bytes\n", sizeof(struct tcpcb_list_s));
 
     memset(&n->tcpcb, 0, sizeof(struct tcpcb_s));
-    //n->tcpcb.rtt = 4 << 4; /* 4 sec */
-    n->tcpcb.rtt = 1 << 4; /* 1 sec */	//FIXME
+    n->tcpcb.rtt = TIMEOUT_INITIAL_RTT << 4;
 
     /* Link it to the list */
     if (tcpcbs) {
@@ -213,8 +212,7 @@ debug_tcp("expire state %d\n", n->tcpcb.state);
 	    case TS_FIN_WAIT_2:
 	    case TS_LAST_ACK:
 	    case TS_CLOSING:
-		//if (TIME_GT(Now - (240 << 4), n->tcpcb.time_wait_exp)) {
-		if (TIME_GT(Now - (10 << 4), n->tcpcb.time_wait_exp)) { //FIXME 10 secs
+		if (TIME_GT(Now - (TIMEOUT_CLOSE_WAIT << 4), n->tcpcb.time_wait_exp)) {
 		    cbs_in_user_timeout--;
 		    tcpcb_remove(n);
 		}
