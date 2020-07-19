@@ -3,7 +3,7 @@
 
 #include <sys/types.h>
 
-/* time_t is the time type counted in 62.5ms (1/16 sec) quantums */
+/* time_t is the time type counted in 62ms quantums */
 typedef	__u32 timeq_t;
 
 #define TIME_LT(a,b)		((long)((a)-(b)) < 0)

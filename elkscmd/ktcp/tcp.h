@@ -29,16 +29,6 @@
 /* bytes to subtract from window size and when to force app write*/
 #define PUSH_THRESHOLD	512
 
-/* timeout values in seconds*/
-//#define TIMEOUT_ENTER_WAIT	30	/* length of TIME_WAIT state*/
-#define TIMEOUT_ENTER_WAIT	10	/* length of TIME_WAIT state*/
-//#define TIMEOUT_CLOSE_WAIT	240	/* length of CLOSING/LAST_ACK/FIN_WAIT states*/
-#define TIMEOUT_CLOSE_WAIT	10	/* length of CLOSING/LAST_ACK/FIN_WAIT states*/
-//#define TIMEOUT_INITIAL_RTT	4	/* initial RTT before retransmit*/
-#define TIMEOUT_INITIAL_RTT	1	/* initial RTT before retransmit*/
-
-/* following timeout is in 1/16 ticks, not seconds*/
-#define TIMEOUT_MIN_SLIP	8	/* minimum retrans timeout for slip/cslip (1/2 sec)*/
 
 #define PROTO_TCP	0x06
 
@@ -60,7 +50,7 @@
 
 #define TCP_SETHDRSIZE(c,s)	( (c)->data_off = (s) << 2 )
 
-#define ENTER_TIME_WAIT(cb)	{ (cb)->time_wait_exp = Now + (TIMEOUT_ENTER_WAIT << 4); \
+#define ENTER_TIME_WAIT(cb)	{ (cb)->time_wait_exp = Now + (30 << 4); \
 				  (cb)->state = TS_TIME_WAIT; \
 				  tcp_timeruse++; \
 				  cbs_in_time_wait++; }
@@ -116,7 +106,7 @@ struct tcpcb_s {
 	__u16	remport;
 
 	__u8	state;
-	timeq_t	rtt;				/* in 1/16 secs*/
+	timeq_t	rtt;
 
 	__u32	time_wait_exp;
 	__u8	unaccepted;			/* boolean */

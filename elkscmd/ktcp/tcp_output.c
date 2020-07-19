@@ -268,16 +268,15 @@ debug_mem("retrans alloc buffers %d, mem %d\n", tcp_timeruse, tcp_retrans_memory
     n->retrans_num = 0;
     n->first_trans = Now;
 
-    n->rto = cb->rtt << 1;
-    if (linkprotocol != LINK_ETHER && n->rto < TIMEOUT_MIN_SLIP)
-	n->rto = TIMEOUT_MIN_SLIP;		/* 1/2 sec min retrans timeout for slip/cslip*/
+    //n->rto = cb->rtt << 1;			//FIXME possibly shorten
+    n->rto = cb->rtt;
     n->next_retrans = Now + n->rto;
 }
 
 void tcp_reoutput(struct tcp_retrans_list_s *n)
 {
     n->retrans_num ++;
-    n->rto *= 2;
+    //n->rto *= 2;		//FIXME
     n->next_retrans = Now + n->rto;
 printf("retrans retry #%d rto %ld mem %u\n", n->retrans_num, n->rto, tcp_retrans_memory);
     ip_sendpacket((unsigned char *)n->tcphdr, n->len, &n->apair);
