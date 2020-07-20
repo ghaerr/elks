@@ -74,7 +74,7 @@ int sys_wait4(pid_t pid, int *status, int options)
 			}
 		} else {
 		  /* keep waiting while process has non-zombie/stopped children*/
-		  if (current->pid != 1)	/* except for init reparented zombies*/
+		  if (current->pid != 1 || current->ppid != 0)	/* except for init reparented zombies*/
 			waitagain = 1;
 
 		}
@@ -90,6 +90,7 @@ int sys_wait4(pid_t pid, int *status, int options)
 
   } while(waitagain);
 
+    debug_wait("WAIT(%d) return -ECHILD\n", current->pid);
 	return -ECHILD;
 }
 
