@@ -14,15 +14,17 @@
 #include "tcp.h"
 #include "tcp_cb.h"
 #include "tcpdev.h"
+#include "deveth.h"
+#include "arp.h"
 #include "netconf.h"
 
+struct packet_stats_s netstats;
+static struct stat_request_s sreq;
 
 void netconf_init(void)
 {
     /* Do nothing */
 }
-
-static struct stat_request_s sreq;
 
 void netconf_request(struct stat_request_s *sr)
 {
@@ -37,11 +39,13 @@ void netconf_send(struct tcpcb_s *cb)
     struct cb_stats_s cbstats;
     struct tcpcb_s *ncb;
 
-    if (sreq.type == NS_GENERAL) {
+    switch (sreq.type) {
+    case NS_GENERAL:
 	gstats.cb_num = tcpcb_num;
 	gstats.retrans_memory = tcp_retrans_memory;
 	tcpcb_buf_write(cb, (unsigned char *)&gstats, sizeof(gstats));
-    } else if (sreq.type == NS_CB) {
+	break;
+    case NS_CB:
 	ncb = tcpcb_getbynum(sreq.extra);
 	if (ncb) {
 	    cbstats.valid = 1;
@@ -52,7 +56,14 @@ void netconf_send(struct tcpcb_s *cb)
 	    cbstats.localport = ncb->localport;
 	} else
 	    cbstats.valid = 0;
-	tcpcb_buf_write(cb, (unsigned char *)&cbstats, sizeof(cbstats) );
+	tcpcb_buf_write(cb, (unsigned char *)&cbstats, sizeof(cbstats));
+	break;
+    case NS_NETSTATS:
+	tcpcb_buf_write(cb, (unsigned char *)&netstats, sizeof(netstats));
+	break;
+    case NS_ARP:
+	tcpcb_buf_write(cb, (unsigned char *)&arp_cache, ARP_CACHE_MAX*sizeof(struct arp_cache));
+	break;
     }
-	cb->bytes_to_push = CB_BUF_USED(cb);
+    cb->bytes_to_push = CB_BUF_USED(cb);
 }

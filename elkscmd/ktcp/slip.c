@@ -21,6 +21,7 @@
 #include "ip.h"
 #include "slip.h"
 #include "vjhc.h"
+#include "netconf.h"
 
 /*#define DEBUG*/
 
@@ -29,10 +30,10 @@
 /*
  * SLIP codes
  */
-#define END		0300
-#define ESC		0333
-#define ESC_END		0334
-#define ESC_ESC		0335
+#define END		0300	/* 0xC0*/
+#define ESC		0333	/* 0xDB*/
+#define ESC_END		0334	/* 0xDC*/
+#define ESC_ESC		0335	/* 0xDD*/
 
 static unsigned char 	sbuf[SERIAL_BUFFER_SIZE];
 static unsigned char	lastchar;
@@ -110,23 +111,24 @@ int slip_init(char *fdev, speed_t baudrate)
     tios.c_cflag |= CS8 | CREAD;
     tios.c_cflag |= CLOCAL;	/* ignore modem control lines*/
     //tios.c_cflag |= CRTSCTS;	/* hw flow control*/
-    tios.c_cc[VMIN] = 255;	/* try for max 255 byte reads*/
-    tios.c_cc[VTIME] = 1;	/* 100ms intercharacter timeout*/
+    //tios.c_cc[VMIN] = 255;	/* try for max 255 byte reads*/
+    //tios.c_cc[VTIME] = 1;	/* 100ms intercharacter timeout*/
+    tios.c_cc[VMIN] = 1;
+    tios.c_cc[VTIME] = 0;
     ioctl(devfd, TCSETS, &tios);
 
-    /* Init some variables
-     */
     packpos = 128;
     lastchar = 0;
 
-#ifdef CONFIG_CSLIP
-    ip_vjhc_init();
+#if CSLIP
+    if (linkprotocol == LINK_CSLIP)
+	ip_vjhc_init();
 #endif
 
     return devfd;
 }
 
-#ifdef CONFIG_CSLIP
+#if CSLIP
 void cslip_decompress(__u8 **packet, size_t *len){
     pkt_ut p;
     __u8 c;
@@ -134,7 +136,7 @@ void cslip_decompress(__u8 **packet, size_t *len){
     p.p_data = *packet;
     p.p_size = *len;
     p.p_offset = 128;
-    p.p_maxsize = SLIP_MTU;
+    p.p_maxsize = MTU;
 
     c = *(*packet + 128) & 0xf0;
     if ( c != TYPE_IP){
@@ -168,22 +170,26 @@ void cslip_decompress(__u8 **packet, size_t *len){
 
 /*
  * slip_process()
- *  Called when we have new data waiting
- *  at the serial port
- *	FIXME : Handle the buffer overrun when out
- *          MTU is not honored.
+ *  Called when we have new data waiting at the serial port
  */
 void slip_process(void)
 {
     size_t p_size;
-    __u8 *p;
-    int i, len, packet_num = 0;
+    unsigned char *p;
+    int i, len;
 
-    while (packet_num < 3) {
-	len = read(devfd, &sbuf, SERIAL_BUFFER_SIZE);
-	if (len <= 0)
-	    break;
-
+    len = read(devfd, sbuf, SERIAL_BUFFER_SIZE);
+    if (len <= 0)
+	return;
+#ifdef DEBUG
+{
+printf("[%d]", len);
+printf("{");
+for (i=0; i<len; i++)
+    printf("%2x,", sbuf[i]);
+printf("}");
+}
+#endif
 	for (i=0; i < len ; i++) {
 	    if (lastchar == ESC) {
 		switch (sbuf[i]) {
@@ -212,37 +218,34 @@ void slip_process(void)
 			    break;
 
 			p_size = packpos - 128;
-#ifdef CONFIG_CSLIP
-			p = packet;
-		        cslip_decompress(&p, &p_size);
-#else
-			p = packet + 128;
+#if CSLIP
+			if (linkprotocol == LINK_CSLIP) {
+			    p = packet;
+		            cslip_decompress(&p, &p_size);
+			} else
 #endif
-		        if (p_size > 0)
+			    p = packet + 128;
+		        if (p_size > 0) {
 			    ip_recvpacket(p, p_size);
-
-			packet_num++;
+			    netstats.sliprcvcnt++;
+			}
 
 			/* Reset */
 			packpos = 128;
 			lastchar = 0;
-			break;
+			continue;
 
 		    default:
-			packet[packpos++] = sbuf[i];
+			/* drop characters over SLIP_MTU*/
+			if (packpos < sizeof(packet))
+			    packet[packpos++] = sbuf[i];
 		}
 	    }
 	    lastchar = sbuf[i];
 	}
     }
-}
 
-void send_char(__u8 ch)
-{
-    write(devfd, &ch, 1);
-}
-
-#ifdef CONFIG_CSLIP
+#if CSLIP
 void cslip_compress(__u8 **packet, int *len)
 {
     pkt_ut p;
@@ -252,7 +255,7 @@ void cslip_compress(__u8 **packet, int *len)
     p.p_data = *packet;
     p.p_size = *len;
     p.p_offset = 0;
-    p.p_maxsize = SLIP_MTU;
+    p.p_maxsize = MTU;
 
     type = ip_vjhc_compress(&p);
 
@@ -266,40 +269,37 @@ void cslip_compress(__u8 **packet, int *len)
 }
 #endif
 
-/*
- * TODO : Use a buffer to reduse the write calls //FIXME
- */
 void slip_send(unsigned char *packet, int len)
 {
-    __u8 *p = (__u8 *)packet;
+    unsigned char buf[128+2];
+    unsigned char *p = packet;
+    unsigned char *q = buf;
 
-#ifdef CONFIG_CSLIP
-    cslip_compress(&p, &len);
+#if CSLIP
+    if (linkprotocol == LINK_CSLIP)
+	cslip_compress(&p, &len);
 #endif
 
-    send_char(END);
+    *q++ = END;
     while (len--) {
 	switch (*p) {
-
-	    case END:
-		send_char(ESC);
-		send_char(ESC_END);
-		break;
-
-	    case ESC:
-		send_char(ESC);
-		send_char(ESC_ESC);
-		break;
-
-	    default:
-		send_char(*p);
-		break;
-
+	case END:
+	    *q++ = ESC;
+	    *q++ = ESC_END;
+	    break;
+	case ESC:
+	    *q++ = ESC;
+	    *q++ = ESC_ESC;
+	    break;
+	default:
+	    *q++ = *p;
+	    break;
 	}
 	p++;
+	if (q - buf >= sizeof(buf) - 2)
+	    write(devfd, buf, q - buf);
     }
-    send_char(END);
+    *q++ = END;
+    write(devfd, buf, q - buf);
+    netstats.slipsndcnt++;
 }
-
-
-

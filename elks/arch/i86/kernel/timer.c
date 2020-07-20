@@ -43,9 +43,15 @@ extern void keyboard_irq(int, struct pt_regs *, void *);
 
 #endif
 
+extern void rs_pump(void);
+
 void timer_tick(int irq, struct pt_regs *regs, void *data)
 {
     do_timer(regs);
+
+#if CONFIG_CHAR_DEV_RS
+    rs_pump();		/* check if received serial chars and call wake_up*/
+#endif
 
 #ifndef CONFIG_ARCH_SIBO
 

@@ -37,20 +37,22 @@ struct iphdr_s {
 
 typedef struct iphdr_s iphdr_t;
 
-struct ip_ll {
-	__u8  ll_eth_dest[6]; 	/* link layer MAC destination address */
-	__u8  ll_eth_src[6]; 	/* link layer MAC source address */
-	__u16 ll_type_len;
-};
-
 extern ipaddr_t local_ip;
 extern ipaddr_t gateway_ip;
 extern ipaddr_t netmask_ip;
+
+#define LINK_ETHER	0
+#define LINK_SLIP	1
+#define LINK_CSLIP	2
+
+extern int linkprotocol;
+extern unsigned int MTU;
 
 int ip_init(void);
 __u16 ip_calc_chksum(char *data, int len);
 void ip_recvpacket(unsigned char *packet, int size);
 void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair);
+void ip_route(unsigned char *packet, int len, struct addr_pair *apair);
 
 unsigned long in_aton(const char *str);
 char *in_ntoa(ipaddr_t in);

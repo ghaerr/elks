@@ -22,6 +22,7 @@
 #include <linuxmt/arpa/inet.h>
 #include "timer.h"
 #include "tcpdev.h"
+#include "netconf.h"
 
 static struct tcp_retrans_list_s *retrans_list;
 static unsigned char tcpbuf[TCP_BUFSIZ];
@@ -267,18 +268,20 @@ debug_mem("retrans alloc buffers %d, mem %d\n", tcp_timeruse, tcp_retrans_memory
     n->retrans_num = 0;
     n->first_trans = Now;
 
-    //n->rto = cb->rtt << 1;			//FIXME possibly shorten
-    n->rto = cb->rtt;
+    n->rto = cb->rtt << 1;
+    if (linkprotocol != LINK_ETHER && n->rto < TIMEOUT_MIN_SLIP)
+	n->rto = TIMEOUT_MIN_SLIP;		/* 1/2 sec min retrans timeout for slip/cslip*/
     n->next_retrans = Now + n->rto;
 }
 
 void tcp_reoutput(struct tcp_retrans_list_s *n)
 {
     n->retrans_num ++;
-    //n->rto *= 2;		//FIXME
+    n->rto *= 2;
     n->next_retrans = Now + n->rto;
 printf("retrans retry #%d rto %ld mem %u\n", n->retrans_num, n->rto, tcp_retrans_memory);
     ip_sendpacket((unsigned char *)n->tcphdr, n->len, &n->apair);
+    netstats.tcpretranscnt++;
 }
 
 /* called every ktcp cycle when tcp_timeruse nonzero*/
@@ -354,7 +357,7 @@ len = 255;	//FIXME testing only
 
 	options[0] = TCP_OPT_MSS;
 	options[1] = TCP_OPT_MSS_LEN;		/* total options length (4)*/
-	*(__u16 *)(options + 2) = htons(SLIP_MTU - 40);
+	*(__u16 *)(options + 2) = htons(MTU - 40);
 	//*(__u16 *)(options + 2) = htons(512 - 40);
 	header_len += TCP_OPT_MSS_LEN;
     }
@@ -374,4 +377,5 @@ len = 255;	//FIXME testing only
 
     add_for_retrans(cb, th, len, &apair);
     ip_sendpacket((unsigned char *)th, len, &apair);
+    netstats.tcpsndcnt++;
 }

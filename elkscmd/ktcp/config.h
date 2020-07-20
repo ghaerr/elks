@@ -1,14 +1,14 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <autoconf.h>
-
-//#define ARP_WAIT_KLUGE	/* force loop on arp reply*/
+/* compile time options*/
+#define CSLIP		1	/* compile in CSLIP support*/
 
 /* turn these on for ELKS debugging*/
 #define DEBUG_TCP	0
 #define DEBUG_IP	0
 #define DEBUG_ARP	0
+#define DEBUG_ETH	0
 
 /* leave these off for now - too much info*/
 #define DEBUG_MEM	0		/* debug memory allocations*/

@@ -13,11 +13,7 @@
 #include <arch/io.h>
 #include <arch/ports.h>
 
-#define NEW		1	/* set =0 for old driver code if needed*/
-
 #ifdef CONFIG_CHAR_DEV_RS
-
-extern struct tty ttys[];
 
 struct serial_info {
              char *io;
@@ -27,7 +23,10 @@ struct serial_info {
     unsigned char mcr;
     unsigned int  divisor;
     struct tty *tty;
+    int pad1, pad2, pad3;	// round out to 16 bytes for faster addressing of ports[]
+};
 
+/* flags*/
 #define SERF_TYPE	15
 #define SERF_EXIST	16
 #define ST_8250		0
@@ -37,9 +36,11 @@ struct serial_info {
 #define ST_16750	4
 #define ST_UNKNOWN	15
 
-};
-
 #define CONSOLE_PORT 0
+
+/* I/O delay settings*/
+#define INB		inb	// use inb_p for 1us delay
+#define OUTB		outb	// use outb_p for 1us delay
 
 /* all boxes should be able to do 9600 at least,
  * afaik 8250 works fine up to 19200
@@ -51,16 +52,12 @@ struct serial_info {
 #define DEFAULT_MCR		\
 	((unsigned char) (UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2))
 
-#define MAX_RX_BUFFER_SIZE 16
-
 static struct serial_info ports[NR_SERIAL] = {
     {(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
     {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
     {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
     {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
 };
-
-static char irq_port[NR_SERIAL] = { 3, 1, 0, 2 }; //FIXME must change with ports.h
 
 static unsigned int divisors[] = {
     0,				/*  0 = B0      */
@@ -84,6 +81,8 @@ static unsigned int divisors[] = {
     0				/*  0 = B230400 */
 };
 
+extern struct tty ttys[];
+
 /* Flow control buffer markers */
 #define	RS_IALLMOSTFULL 	(3 * INQ_SIZE / 4)
 #define	RS_IALLMOSTEMPTY	(    INQ_SIZE / 4)
@@ -95,11 +94,9 @@ static unsigned int divisors[] = {
 static void flush_input(register struct serial_info *sp)
 {
 #ifndef CONFIG_HW_SERIAL_FIFO
-    int i = MAX_RX_BUFFER_SIZE;
-
     do {
-	inb_p(sp->io + UART_RX);
-    } while (--i && (inb_p(sp->io + UART_LSR) & UART_LSR_DR));
+	INB(sp->io + UART_RX);
+    } while (INB(sp->io + UART_LSR) & UART_LSR_DR);
 #endif
 }
 
@@ -108,18 +105,18 @@ static int rs_probe(register struct serial_info *sp)
     int status, type;
     unsigned char scratch;
 
-    inb(sp->io + UART_IER);
-    outb_p(0, sp->io + UART_IER);
-    scratch = inb_p(sp->io + UART_IER);
-    outb_p(scratch, sp->io + UART_IER);
+    INB(sp->io + UART_IER);
+    OUTB(0, sp->io + UART_IER);
+    scratch = INB(sp->io + UART_IER);
+    OUTB(scratch, sp->io + UART_IER);
     if (scratch)
 	return -1;
 
     /* try to enable 64 byte FIFO and max trigger*/
-    outb_p(0xE7, sp->io + UART_FCR);
+    OUTB(0xE7, sp->io + UART_FCR);
 
     /* then read FIFO status*/
-    status = inb_p(sp->io + UART_IIR);
+    status = INB(sp->io + UART_IIR);
     if (status & 0x80) {		/* FIFO available*/
 	if (status & 0x20)		/* 64 byte FIFO enabled*/
 	    type = ST_16750;
@@ -129,8 +126,8 @@ static int rs_probe(register struct serial_info *sp)
 	    type = ST_16550;		/* Non-functional FIFO */
     } else {
 	/* no FIFO, try writing arbitrary value to scratch reg*/
-	outb_p(0x2A, sp->io + UART_SCR);
-	if (inb_p(sp->io + UART_SCR) == 0x2a)
+	OUTB(0x2A, sp->io + UART_SCR);
+	if (INB(sp->io + UART_SCR) == 0x2a)
 	    type = ST_16450;
 	else type = ST_8250;
     }
@@ -140,10 +137,10 @@ static int rs_probe(register struct serial_info *sp)
     /*
      *      Reset the chip
      */
-    outb_p(0x00, sp->io + UART_MCR);
+    OUTB(0x00, sp->io + UART_MCR);
 
     /* FIFO off, clear RX and TX FIFOs */
-    outb_p(UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT, sp->io + UART_FCR);
+    OUTB(UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT, sp->io + UART_FCR);
 
     /* clear RX register */
     flush_input(sp);
@@ -171,113 +168,138 @@ static void update_port(register struct serial_info *port)
 	clr_irq();
 
 	/* Set the divisor latch bit */
-	outb_p(port->lcr | UART_LCR_DLAB, port->io + UART_LCR);
+	OUTB(port->lcr | UART_LCR_DLAB, port->io + UART_LCR);
 
 	/* Set the divisor low and high byte */
-	outb_p((unsigned char)divisor, port->io + UART_DLL);
-	outb_p((unsigned char)(divisor >> 8), port->io + UART_DLM);
+	OUTB((unsigned char)divisor, port->io + UART_DLL);
+	OUTB((unsigned char)(divisor >> 8), port->io + UART_DLM);
 
 	/* Clear the divisor latch bit */
-	outb_p(port->lcr, port->io + UART_LCR);
+	OUTB(port->lcr, port->io + UART_LCR);
 
 	set_irq();
     }
 }
 
-/* WARNING: Polling write function */
+/* serial write - busy loops until transmit buffer available */
 static int rs_write(struct tty *tty)
 {
     register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
-    register char *i;
+    int i = 0;
 
-    i = 0;
     while (tty->outq.len > 0) {
-	do {				/* Wait until transmitter buffer empty */
-	} while (!(inb_p(port->io + UART_LSR) & UART_LSR_TEMT));
+	/* Wait until transmitter hold buffer empty */
+	while (!(INB(port->io + UART_LSR) & UART_LSR_THRE))
+		;
 	outb((char)tty_outproc(tty), port->io + UART_TX);
-	i++;				/* Write data to transmit buffer */
+	i++;
     }
-    return (int)i;
+    return i;
 }
 
-#if NEW
-void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
+/* called from timer interrupt - check ring buffer and wakeup waiting processes*/
+void rs_pump(void)
 {
     struct serial_info *sp;
     struct ch_queue *q;
-    int i, j, status;
-    char *io;
-    unsigned char buf[MAX_RX_BUFFER_SIZE];
 
-    i = 0;
-    sp = &ports[(int)irq_port[irq - 2]];
-    io = sp->io;
-
-    status = inb_p(io + UART_LSR);			/* check for data overrun*/
-    //if ((status & UART_LSR_DR) == 0)			/* QEMU may interrupt w/no data*/
-	//return;
-
-    /* empty fifo from uart into temp buffer*/
-    //do {
-	//status = inb_p(io + UART_LSR);
-	//if (status & UART_LSR_DR)			/* Receiver buffer full? */
-	    do {
-		buf[i++] = inb_p(io + UART_RX);		/* Read received data */
-	    } while ((inb_p(io + UART_LSR) & UART_LSR_DR) && i < MAX_RX_BUFFER_SIZE);
-	//}
-    //} while (!(inb_p(io + UART_IIR) & UART_IIR_NO_INT) && i < MAX_RX_BUFFER_SIZE);
-
-    if (status & UART_LSR_OE)
-	printk("serial: data overrun\n");
-    /* QEMU sometimes has interrupt w/o data available bit set*/
-    //if ((status & UART_LSR_DR) == 0)
-	//printk("serial: interrupt w/o data available\n");
-
-    /* process received chars*/
+#ifdef CONFIG_FAST_IRQ4
+    sp = &ports[0];
     q = &sp->tty->inq;
-    for (j=0; j < i; j++) {
-	if (!tty_intcheck(sp->tty, buf[j]))
-	    chq_addch(q, buf[j]);			/* Save data in queue */
-    }
-    wake_up(&q->wait);
+
+    if (sp->tty->usecount && q->len)
+	wake_up(&q->wait);
+#endif
+#ifdef CONFIG_FAST_IRQ3
+    sp = &ports[1];
+    q = &sp->tty->inq;
+
+    if (sp->tty->usecount && q->len)
+	wake_up(&q->wait);
+#endif
 }
 
-#else
-
-static void receive_chars(register struct serial_info *sp)
+#ifdef CONFIG_FAST_IRQ4
+/*
+ * Fast serial driver for slower machines. Should work up to 58400 baud.
+ * No ISIG (tty signal interrupt) handling for shells, used for fast SLIP transfer.
+ *
+ * Specially-coded fast C interrupt handler, called from asm irq_com[12] after saving
+ * scratch registers AX,BX,CX,DX & DS and setting DS to kernel data segment.
+ * NOTE: no parameters can be passed, nor any code written which
+ * emits code using SP or BP addressing, as SS is not set and not guaranteed to equal DS.
+ * Use 'ia16-elfk-objdump -D -r -Mi8086 serial.o' to look at code generated.
+ */
+void fast_com1_irq(void)
 {
-    register struct ch_queue *q;
-    unsigned char ch;
+    struct serial_info *sp = &ports[0];
+    char *io = sp->io;
+    struct ch_queue *q = &sp->tty->inq;
+    unsigned char c;
 
-    q = &sp->tty->inq;
-    do {
-	ch = inb_p(sp->io + UART_RX);		/* Read received data */
-	if (!tty_intcheck(sp->tty, ch)) {
-	    chq_addch(q, ch);			/* Save data in queue */
-	}
-    } while (inb_p(sp->io + UART_LSR) & UART_LSR_DR);
-    wake_up(&q->wait);
+    c = INB(io + UART_RX);		/* Read received data */
+    if (q->len < q->size) {
+	q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = c;
+	q->len++;
+    }
 }
+#endif
 
+#ifdef CONFIG_FAST_IRQ3
+void fast_com2_irq(void)
+{
+    struct serial_info *sp = &ports[1];
+    char *io = sp->io;
+    struct ch_queue *q = &sp->tty->inq;
+    unsigned char c;
+
+    c = INB(io + UART_RX);		/* Read received data */
+    if (q->len < q->size) {
+	q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = c;
+	q->len++;
+    }
+}
+#endif
+
+#if defined(CONFIG_NEED_IRQ4) || defined(CONFIG_NEED_IRQ3)
+static int irq_port[NR_SERIAL] = { 3, 1, 0, 2 }; //FIXME must change with ports.h
+
+/*
+ * Slower serial interrupt routine, called from _irq_com with passed irq #
+ * Reads all FIFO data available per interrupt and can provide serial stats
+ */
 void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
-    register struct serial_info *sp;
-    int status;
+    struct serial_info *sp = &ports[irq_port[irq - 2]];
+    char *io = sp->io;
+    struct ch_queue *q = &sp->tty->inq;
 
-
-    debug1("SERIAL: Interrupt %d received.\n", irq);
-    sp = &ports[(int)irq_port[irq - 2]];
-    do {
-	status = inb_p(sp->io + UART_LSR);
-	if (status & UART_LSR_DR)		/* Receiver buffer full? */
-	    receive_chars(sp);
-#if 0
-	if (status & UART_LSR_THRE)		/* Transmitter buffer empty? */
-	    transmit_chars(sp);
+#if 0	// turn on for serial stats
+    int status = INB(io + UART_LSR);			/* check for data overrun*/
+    if (status & UART_LSR_OE)
+	printk("serial: data overrun\n");
+    if (status & (UART_LSR_FE|UART_LSR_PE))
+	printk("serial: frame/parity error\n");
+    if ((status & UART_LSR_DR) == 0)			/* QEMU may interrupt w/no data*/
+	printk("serial: interrupt w/o data available\n");
 #endif
-    } while (!(inb_p(sp->io + UART_IIR) & UART_IIR_NO_INT));
+
+    /* read uart/fifo until empty*/
+    do {
+	unsigned char c = INB(io + UART_RX);		/* Read received data */
+	if (!tty_intcheck(sp->tty, c)) {
+	    clr_irq();
+	    if (q->len < q->size) {
+		q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = c;
+		q->len++;
+	    }
+	    set_irq();
+	}
+    } while (INB(io + UART_LSR) & UART_LSR_DR); /* while data available (for FIFOs)*/
+
+    wake_up(&q->wait);
 }
-#endif /* old rs_irq function*/
+#endif
 
 static void rs_release(struct tty *tty)
 {
@@ -285,7 +307,7 @@ static void rs_release(struct tty *tty)
 
     debug_tty("SERIAL close %d\n", current->pid);
     if (--tty->usecount == 0) {
-	outb_p(0, port->io + UART_IER);	/* Disable all interrupts */
+	OUTB(0, port->io + UART_IER);	/* Disable all interrupts */
 	tty_freeq(tty);
     }
 }
@@ -311,33 +333,33 @@ static int rs_open(struct tty *tty)
     }
 
     /* clear RX buffer */
-    inb_p(port->io + UART_LSR);
+    INB(port->io + UART_LSR);
 
     /* enable FIFO and flush input*/
 #ifdef CONFIG_HW_SERIAL_FIFO
     if ((port->flags & SERF_TYPE) > ST_16550)
-	outb_p(UART_FCR_ENABLE_FIFO14, port->io + UART_FCR);
+	OUTB(UART_FCR_ENABLE_FIFO14, port->io + UART_FCR);
 #else
     /* flush input*/
     flush_input(port);
 #endif
 
-    inb_p(port->io + UART_IIR);
-    inb_p(port->io + UART_MSR);
+    INB(port->io + UART_IIR);
+    INB(port->io + UART_MSR);
 
     /* set serial port parameters to match ports[rs_minor] */
     update_port(port);
 
     /* enable receiver data interrupt*/
-    outb_p(UART_IER_RDI, port->io + UART_IER);
+    OUTB(UART_IER_RDI, port->io + UART_IER);
 
-    outb_p(port->mcr, port->io + UART_MCR);
+    OUTB(port->mcr, port->io + UART_MCR);
 
     /* clear Line/Modem Status, Intr ID and RX register */
-    inb_p(port->io + UART_LSR);
-    inb_p(port->io + UART_RX);
-    inb_p(port->io + UART_IIR);
-    inb_p(port->io + UART_MSR);
+    INB(port->io + UART_LSR);
+    INB(port->io + UART_RX);
+    INB(port->io + UART_IIR);
+    INB(port->io + UART_MSR);
 
     return 0;
 }
@@ -408,7 +430,22 @@ static void rs_init(void)
     register struct tty *tty = ttys + NR_CONSOLES;
 
     do {
-	if (!rs_probe(sp) && !request_irq(sp->irq, rs_irq, NULL)) {
+	if (!rs_probe(sp)) {
+	    switch(sp->irq) {
+	    default:
+#if defined(CONFIG_NEED_IRQ4) || defined(CONFIG_NEED_IRQ3)
+		request_irq(sp->irq, rs_irq, NULL);
+#endif
+		break;
+#ifdef CONFIG_FAST_IRQ4
+	    case 4:
+#endif
+#ifdef CONFIG_FAST_IRQ3
+	    case 3:
+#endif
+		enable_irq(sp->irq);
+		break;
+	    }
 	    sp->tty = tty;
 	    update_port(sp);
 	}
@@ -420,7 +457,7 @@ void rs_conout(dev_t dev, char Ch)
 {
     register struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
 
-    while (!(inb_p(sp->io + UART_LSR) & UART_LSR_TEMT))
+    while (!(INB(sp->io + UART_LSR) & UART_LSR_TEMT))
 	continue;
     outb(Ch, sp->io + UART_TX);
 }

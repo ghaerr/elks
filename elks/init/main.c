@@ -94,6 +94,9 @@ static void init_task()
     sys_dup(num);		/* open stderr*/
     printk("No init - running /bin/sh\n");
 
+	/* unset special sys_wait4() processing for init, set ppid to 1*/
+	current->ppid = 1;
+
     run_init_process("/bin/sh");
     run_init_process("/bin/sash");
     panic("No init or sh found");

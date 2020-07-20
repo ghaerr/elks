@@ -10,7 +10,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS=netstat nslookup
+PRGS=netstat nslookup arp
 
 LOCALFLAGS=-I$(ELKSCMD_DIR)
 
@@ -24,6 +24,9 @@ netstat: netstat.o
 
 nslookup: nslookup.o
 	$(LD) $(LDFLAGS) nslookup.o -o nslookup $(LDLIBS)
+
+arp: arp.o
+	$(LD) $(LDFLAGS) arp.o -o arp $(LDLIBS)
 
 clean:
 	rm -f core *.o $(PRGS)

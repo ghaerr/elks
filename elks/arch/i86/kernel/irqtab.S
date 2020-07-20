@@ -16,6 +16,7 @@
 	.align 1
 
 // FIXME: data in code segment - move to INITSEG
+	.global	ds_kernel
 ds_kernel:
 #if defined(CONFIG_ROMCODE)
 	.word	CONFIG_ROM_KERNEL_DATA
@@ -39,12 +40,12 @@ ds_kernel:
 #else
 #define M2	0
 #endif
-#ifdef CONFIG_NEED_IRQ3
+#if defined(CONFIG_NEED_IRQ3) || defined (CONFIG_FAST_IRQ3)
 #define M3	0x08
 #else
 #define M3	0
 #endif
-#ifdef CONFIG_NEED_IRQ4
+#if defined(CONFIG_NEED_IRQ4) || defined (CONFIG_FAST_IRQ4)
 #define M4	0x10
 #else
 #define M4	0
@@ -180,15 +181,29 @@ _irq2:			// Cascade
 	call	_irqit
 	.byte	2
 #endif
-#ifdef CONFIG_NEED_IRQ3
+#if defined(CONFIG_NEED_IRQ3) || defined(CONFIG_FAST_IRQ3)
 _irq3:			// COM2
-	call	_irqit
+#ifdef CONFIG_FAST_IRQ3
+	.global _irq_com2	// fastest possible interrupt routine, fixed com2 port
+	jmp	_irq_com2
+	.byte	3		// ignored
+#endif
+#ifdef CONFIG_NEED_IRQ3
+	call	_irqit		// original ELKS overhead interrupt routine
 	.byte	3
 #endif
-#ifdef CONFIG_NEED_IRQ4
+#endif
+#if defined(CONFIG_NEED_IRQ4) || defined(CONFIG_FAST_IRQ4)
 _irq4:			// COM1
-	call	_irqit
+#ifdef CONFIG_FAST_IRQ4
+	.global _irq_com1	// fastest possible interrupt routine, fixed com1 port
+	jmp	_irq_com1
+	.byte	4		// ignored
+#endif
+#ifdef CONFIG_NEED_IRQ4
+	call	_irqit		// original ELKS overhead interrupt routine
 	.byte	4
+#endif
 #endif
 #ifdef CONFIG_NEED_IRQ5
 _irq5:			// XT HD

@@ -190,6 +190,8 @@ main(int argc,char **argv)
 }
 
 
+static PIXELVAL	intable[W2_WIDTH * W2_HEIGHT];
+static PIXELVAL	outtable[W2_WIDTH * W2_HEIGHT * 4];
 /*
  * Here when a button is pressed.
  */
@@ -197,8 +199,6 @@ void
 do_buttondown(bp)
 	GR_EVENT_BUTTON	*bp;
 {
-	PIXELVAL	intable[W2_WIDTH * W2_HEIGHT];
-	PIXELVAL	outtable[W2_WIDTH * W2_HEIGHT * 4];
 	PIXELVAL	*inp;
 	PIXELVAL	*outp;
 	PIXELVAL	*oldinp;

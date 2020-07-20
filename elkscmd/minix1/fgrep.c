@@ -33,7 +33,7 @@
 
 #define MAX_STR_LEN	 256	/* maximum length of strings to search for */
 #define BYTE		0xFF	/* convert from char to int */
-#define READ_SIZE	4096	/* read() request size */
+#define READ_SIZE	BUFSIZ	/* read() request size */
 #define BUF_SIZE (2*READ_SIZE)	/* size of buffer */
 
 typedef struct test_str {

@@ -27,6 +27,7 @@
 #include <linuxmt/arpa/inet.h>
 #include "deveth.h"
 #include "arp.h"
+#include "netconf.h"
 
 static unsigned char ipbuf[IP_BUFSIZ];
 
@@ -91,10 +92,10 @@ static void ip_print(struct iphdr_s *head, int size)
     debug_ip("%s -> ", in_ntoa(head->saddr));
     debug_ip("%s ", in_ntoa(head->daddr));
     debug_ip("v%d hl:%d ", IP_VERSION(head), IP_HLEN(head));
-    debug_ip("tos:%d len:%d ", head->tos, ntohs(head->tot_len));
+    debug_ip("tos:%d len:%u ", head->tos, ntohs(head->tot_len));
     debug_ip("id:%u ", ntohs(head->id));
     debug_ip("fo:%x ", ntohs(head->frag_off));	//FIXME add FM_ flags
-    debug_ip("chk:%d ", ip_calc_chksum((char *)head, 4 * IP_HLEN(head)));
+    debug_ip("chk:%x ", ip_calc_chksum((char *)head, 4 * IP_HLEN(head)));
     debug_ip("ttl:%d ", head->ttl);
     debug_ip("prot:%d\n", head->protocol);
 #if DEBUG_IP > 1
@@ -118,17 +119,20 @@ void ip_recvpacket(unsigned char *packet,int size)
 
     if (IP_VERSION(iphdr) != 4){
         debug_ip("IP: Bad IP version\n");
+	netstats.ipbadhdr++;
 	return;
     }
 
     len = IP_HLEN(iphdr) * 4;
     if (len < 20) {
         debug_ip("IP: Bad HLEN\n");
+	netstats.ipbadhdr++;
 	return;
     }
 
     if (ip_calc_chksum((char *)iphdr, len)) {
 	printf("IP: BAD CHKSUM (%x) len %d\n", ip_calc_chksum((char *)iphdr, len), len);
+	netstats.ipbadchksum++;
 	return;
     }
 
@@ -137,77 +141,24 @@ void ip_recvpacket(unsigned char *packet,int size)
         debug_ip("IP: recv icmp packet\n");
 	data = packet + 4 * IP_HLEN(iphdr);
 	icmp_process(iphdr, data);
+	netstats.icmprcvcnt++;
 	break;
 
     case PROTO_TCP:
         debug_ip("IP: recv tcp packet\n");
 	tcp_process(iphdr);
+	netstats.tcprcvcnt++;
 	break;
     }
+    netstats.iprcvcnt++;
 }
 
-void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
+void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair)
 {
-    struct ip_ll *ipll = (struct ip_ll *)ipbuf;
+    /* save space for possible ethernet header before ip packet in eth_route()/eth_sendpacket()*/
     register struct iphdr_s *iph = (struct iphdr_s *)(ipbuf + sizeof(struct ip_ll));
-    int iphdrlen, localpacket;
-    ipaddr_t ip_addr;
-    eth_addr_t eth_addr;
+    int iphdrlen;
     static __u16 nextID = 1;
-
-    /* determine if packet is routed to localhost*/
-    localpacket =  apair->saddr == local_ip && apair->daddr == local_ip;
-
-    /* deal with ethernet layer if destination not local_ip*/
-    if (eth_device && !localpacket) {
-        /* Is this the best place for the IP routing to happen ? */
-        /* I think no, because actual sending interface is coming from the routing */
-
-        if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip))
-            /* Not on the same local network */
-            /* Route to the gateway as local destination */
-            ip_addr = gateway_ip;
-        else
-            /* On the same local network */
-            /* Route to the local destination */
-            ip_addr = apair->daddr;
-
-#ifdef ARP_WAIT_KLUGE
-        /* The ARP transaction should occur before sending the IP packet */
-        /* So this part should be moved upward in the IP protocol automaton */
-        /* to avoid this dangerous unlimited try again loop */
-        /* Until issue jbruchon#67 fixed, we block until ARP reply */
-        while (arp_cache_get (ip_addr, &eth_addr, 0))
-            arp_request (ip_addr);
-#else
-	/* get ethernet address if cached, otherwise TCP packet will auto retans*/
-        if (arp_cache_get (ip_addr, &eth_addr, 0)) {
-
-	    /* send ARP request once, timed wait for reply*/
-            if (!arp_request (ip_addr))
-
-		/* succeeded, try cache once more*/
-		if (arp_cache_get (ip_addr, &eth_addr, 0)) {
-
-		    /* No ARP reply. Temporary solution, drop sending IP packet.
-		     * TCP should retransmit after timeout,
-		     * but ICMP/echo will fail until ARP reply seen.
-		     */
-		    printf("ip: no ARP cache entry for %s, DROPPING packet\n",
-			in_ntoa(ip_addr));
-		    return;
-		}
-	}
-#endif
-
-        /* The Ethernet header should be built by the Ethernet module */
-        /* So this part should be moved downward */
-
-        /* add link layer*/
-        memcpy(ipll->ll_eth_dest, eth_addr, 6);
-        memcpy(ipll->ll_eth_src,eth_local_addr, 6);
-        ipll->ll_type_len = 0x08; //FIXME what is 0x0800
-    }
 
     /* ip layer*/
     iph->version_ihl	= 0x45;
@@ -233,17 +184,35 @@ void ip_sendpacket(unsigned char *packet,int len,struct addr_pair *apair)
     tcp_print(&iptcp, 0);
 #endif
 
-    /* route packet right back to us if local_ip*/
-    if (localpacket) {
+    ip_route((unsigned char *)iph, iphdrlen + len, apair);	/* route packet using src and dst address*/
+    netstats.ipsndcnt++;
+}
+
+void ip_route(unsigned char *packet, int len, struct addr_pair *apair)
+{
+    ipaddr_t ip_addr;
+
+    /* determine if packet is routed to localhost, route right back to us*/
+    if (apair->saddr  == local_ip && apair->daddr == local_ip) {
 	debug_ip("ip: route localhost\n");
-	ip_recvpacket((unsigned char *)iph, iphdrlen + len);
+	ip_recvpacket(packet, len);
 	return;
     }
 
-    if (eth_device)
-	deveth_send((unsigned char *)ipll, sizeof(struct ip_ll) + iphdrlen + len);
+    /* route based on netmask. FIXME: interface never changed; ignored for SLIP/CSLIP interface*/
+    if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip))
+        /* Not on the same local network */
+        /* Route to the gateway as local destination */
+        ip_addr = gateway_ip;
     else
-	slip_send((unsigned char *)iph, iphdrlen + len);
+        /* On the same local network */
+        /* Route to the local destination */
+        ip_addr = apair->daddr;
+
+    if (linkprotocol == LINK_ETHER)
+	eth_route(packet, len, ip_addr);
+    else
+	slip_send(packet, len);
 }
 
 #undef memcpy
@@ -251,10 +220,13 @@ void *xxmemcpy(void * d, const void * s, int l)
 {
 	register char *s1=d, *s2=(char *)s;
 
-//printf("MEMCPY %u,%u,%u\n", d, s, l);
+//printf("MEMCPY %04x,%04x,%d->", d, s, l);
 if (s == NULL || s < 6) printf("SRC NULL\n");
 if (d == NULL || d < 6) printf("DST NULL\n");
-	for( ; l>0; l--)
+	for( ; l>0; l--) {
+		//printf("%x ", *(unsigned char *)s2);
 		*((unsigned char*)s1++) = *((unsigned char*)s2++);
+	}
+	//printf("\n");
 	return d;
 }

@@ -41,7 +41,7 @@ static struct param params[] = {
 
 
 /* Fixed buffer */
-static char localbuf[4096];
+static char localbuf[BUFSIZ];		/* use disk block size for efficiency*/
 
 
 /*
