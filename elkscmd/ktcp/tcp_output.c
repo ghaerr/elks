@@ -316,7 +316,7 @@ if (tcp_retrans_memory > TCP_RETRANS_MAXMEM /*|| tcp_timeruse > 5*/) {
 		rtt = Now - n->first_trans;
 		if (rtt > 0)
 		    n->cb->rtt = (TCP_RTT_ALPHA * n->cb->rtt + (100 - TCP_RTT_ALPHA) * rtt) / 100;
-		debug_tcp("rtt %d RTT %ld RTO %ld\n", rtt, n->cb->rtt, n->rto*2);
+		debug_tcp("rtt %d RTT %ld RTO %ld\n", rtt, n->cb->rtt, n->rto);
 	    }
 	    n = rmv_from_retrans(n);
 	    continue;
