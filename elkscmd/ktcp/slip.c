@@ -90,6 +90,11 @@ int slip_init(char *fdev, speed_t baudrate)
     speed_t baud = 0;
     struct termios tios;
 
+#if CSLIP
+    if (linkprotocol == LINK_CSLIP)
+	if (ip_vjhc_init() < 0)
+	    return -1;
+#endif
     if (baudrate)
 	baud = convert_baudrate(baudrate);
     if (baud == -1)
@@ -119,11 +124,6 @@ int slip_init(char *fdev, speed_t baudrate)
 
     packpos = 128;
     lastchar = 0;
-
-#if CSLIP
-    if (linkprotocol == LINK_CSLIP)
-	ip_vjhc_init();
-#endif
 
     return devfd;
 }

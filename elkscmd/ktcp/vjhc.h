@@ -68,7 +68,7 @@ extern int ip_rcv_vjhc;
 extern int ip_rcv_vjhc_state_nr;
 extern int ip_rcv_vjhc_compress_cid;
 
-void ip_vjhc_init(void);
+int ip_vjhc_init(void);
 int ip_vjhc_compress(pkt_ut *pkt);
 void ip_vjhc_arr_uncompr(pkt_ut *pkt);
 void ip_vjhc_arr_compr(pkt_ut *pkt);
