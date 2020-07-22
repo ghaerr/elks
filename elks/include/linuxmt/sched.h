@@ -128,7 +128,8 @@ extern __ptask current;		/* next; */
 extern int need_resched;
 
 extern struct timeval xtime;
-#define CURRENT_TIME ((xtime.tv_sec) + (jiffies/HZ))
+extern jiff_t xtime_jiffies;
+#define CURRENT_TIME (xtime.tv_sec + (jiffies - xtime_jiffies)/HZ)
 
 #define for_each_task(p) \
 	for (p = &task[0] ; p!=&task[MAX_TASKS]; p++ )

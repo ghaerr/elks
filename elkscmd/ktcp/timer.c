@@ -19,5 +19,6 @@ timeq_t timer_get_time(void)
 
     gettimeofday(&tv, &tz);
 
-    return (tv.tv_sec << 4) | (tv.tv_usec / 62500);
+	/* return 1/16 second ticks, 1,000,000/16 = 62500*/
+    return (tv.tv_sec << 4) | ((unsigned long)tv.tv_usec / 62500U);
 }
