@@ -415,7 +415,8 @@ void tcp_process(struct iphdr_s *iph)
     cbnode = tcpcb_find(iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
 
     if (!cbnode) {
-	printf("tcp: Refusing packet\n");
+	printf("tcp: Refusing packet %s:%d->%d\n", in_ntoa(iph->saddr), ntohs(tcph->sport), ntohs(tcph->dport));
+
 	/* TODO : send RST and stuff */
 	netstats.tcpdropcnt++;
 	return;

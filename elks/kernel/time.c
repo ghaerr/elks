@@ -37,6 +37,7 @@
 
 /* this is the structure holding the base time (in UTC, of course) */
 struct timeval xtime;
+jiff_t xtime_jiffies;
 
 /* timezone in effect */
 static struct timezone xzone;
@@ -46,7 +47,6 @@ int sys_settimeofday(register struct timeval *tv, struct timezone *tz)
 {
     struct timeval tmp_tv;
     struct timezone tmp_tz;
-    jiff_t now;
 
     /* only user running as root can set the time */
     if (current->euid != 0)
@@ -54,19 +54,16 @@ int sys_settimeofday(register struct timeval *tv, struct timezone *tz)
 
     /* verify we have valid addresses to read from */
     if (tv != NULL) {
-	if (verified_memcpy_fromfs(&tmp_tv, tv,
-				   sizeof(struct timeval)))
+	if (verified_memcpy_fromfs(&tmp_tv, tv, sizeof(struct timeval)))
 	    return -EFAULT;
 	if (((unsigned long) tmp_tv.tv_usec) >= 1000000L)
 	    return -EINVAL;
     }
 
     if (tz != NULL) {
-	if (verified_memcpy_fromfs(&tmp_tz, tz,
-				   sizeof(struct timezone)))
+	if (verified_memcpy_fromfs(&tmp_tz, tz, sizeof(struct timezone)))
 	    return -EFAULT;
-	if (((unsigned int)(tmp_tz.tz_dsttime - DST_NONE))
-	    > (DST_AUSTALT - DST_NONE))
+	if (((unsigned int)(tmp_tz.tz_dsttime - DST_NONE)) > (DST_AUSTALT - DST_NONE))
 	    return -EINVAL;
 	/* Setting the timezone is easy, just a straight copy */
 	xzone = tmp_tz;
@@ -75,11 +72,13 @@ int sys_settimeofday(register struct timeval *tv, struct timezone *tz)
     /* Setting time is a bit tricky, since we don't really keep the time in the xtime
      * structure.  So we need to figure out the offset from the current time and
      * set xtime based on that.
+     * Too tricky: fix negative tv_usec bug, just store base time and
+     * current jiffies for later use as offset - ghaerr.
      */
     if (tv != NULL) {
-	now = jiffies;
-	xtime.tv_sec = tmp_tv.tv_sec - (now / HZ);
-	xtime.tv_usec = tmp_tv.tv_usec - ((now % HZ) * (1000000l / HZ));
+	xtime_jiffies = jiffies;
+	xtime.tv_sec = tmp_tv.tv_sec;
+	xtime.tv_usec = tmp_tv.tv_usec;
     }
 
     /* success */
@@ -95,15 +94,15 @@ int sys_gettimeofday(register struct timeval *tv, struct timezone *tz)
     /* load the current time into the structures passed */
     if (tv != NULL) {
 	now = jiffies;
-	tmp_tv.tv_sec = xtime.tv_sec + (now / HZ);
-	tmp_tv.tv_usec = xtime.tv_usec + ((now % HZ) * (1000000l / HZ));
-	if (verified_memcpy_tofs(tv, &tmp_tv,
-				 sizeof(struct timeval)))
+	tmp_tv.tv_sec = xtime.tv_sec + (now - xtime_jiffies) / HZ;
+	tmp_tv.tv_usec = xtime.tv_usec + ((now - xtime_jiffies) % HZ) * (1000000L / HZ);
+	if (tmp_tv.tv_usec >= 10000000L)
+	    tmp_tv.tv_usec -= 10000000L;
+	if (verified_memcpy_tofs(tv, &tmp_tv, sizeof(struct timeval)))
 	    return -EFAULT;
     }
     if (tz != NULL)
-	if (verified_memcpy_tofs(tz, &xzone,
-					  sizeof(struct timezone)))
+	if (verified_memcpy_tofs(tz, &xzone, sizeof(struct timezone)))
 	    return -EFAULT;
 
     /* success */
