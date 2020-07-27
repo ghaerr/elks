@@ -196,6 +196,7 @@ int main(int argc, char **argv)
 	dup2(fd, STDERR_FILENO);
 	if (fd > STDERR_FILENO)
 		close(fd);
+	setsid();
 
 	while (1) {
 		connectionfd = accept (sockfd, (struct sockaddr *) NULL, NULL);
