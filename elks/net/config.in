@@ -10,10 +10,6 @@ mainmenu_option next_comment
     if [ "$CONFIG_SOCKET" = "y" ]; then
         bool '  NANO sockets'                          CONFIG_NANO             n
         bool '  TCP/IP sockets'                        CONFIG_INET             y
-        if [ "$CONFIG_INET" = "y" ]; then
-            bool '    CSLIP TCP/IP header compression' CONFIG_CSLIP            n
-            fi
-
         bool '  UNIX sockets'                          CONFIG_UNIX             n
 
         comment '  Advanced socket options'
