@@ -9,6 +9,7 @@
 #define DEBUG_IP	0
 #define DEBUG_ARP	0
 #define DEBUG_ETH	0
+#define DEBUG_CSLIP	0
 
 /* leave these off for now - too much info*/
 #define DEBUG_MEM	0		/* debug memory allocations*/
@@ -30,6 +31,12 @@
 #define debug_arp	printf
 #else
 #define debug_arp(...)
+#endif
+
+#if DEBUG_CSLIP
+#define debug_cslip	printf
+#else
+#define debug_cslip(...)
 #endif
 
 #if DEBUG_MEM

@@ -209,6 +209,7 @@ printp();
 	fd = open("/dev/console", O_WRONLY);
 	dup2(fd, 1);		/* required for printf output*/
 	dup2(fd, 2);
+	setsid();
     }
 
     arp_init ();
