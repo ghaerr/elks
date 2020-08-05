@@ -6,6 +6,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
 #include <linuxmt/wait.h>
+#include <linuxmt/debug.h>
 
 /*
  *	Wait queue functionality for Linux ELKS. Taken from sched.c/h of
@@ -43,6 +44,7 @@ static void __sleep_on(register struct wait_queue *p, __s16 state)
 
     if (pcurrent == &task[0])
 	panic("task[0] trying to sleep from %x", (int)p);
+    debug_sched("sleep: %d waitq %04x\n", pcurrent->pid, p);
     pcurrent->state = state;
     wait_set(p);
     schedule();
@@ -71,12 +73,13 @@ void interruptible_sleep_on(struct wait_queue *p)
 void wake_up_process(register struct task_struct *p)
 {
 	flag_t flags;
+
+	debug_sched("wakeup: %d\n", p->pid);
 	save_flags(flags);
 	clr_irq();
 	p->state = TASK_RUNNING;
-	if (!p->next_run){
+	if (!p->next_run)
 	    add_to_runqueue(p);
-	}
 	restore_flags(flags);
 }
 
@@ -96,9 +99,7 @@ void _wake_up(register struct wait_queue *q, unsigned short int it)
     // FIXME: task list not protected against interruption
 
     for_each_task(p) {
-	if ((p->waitpt == q)
-	    || ((p->waitpt == &select_queue) && select_poll (p, q))
-	    )
+	if ((p->waitpt == q) || ((p->waitpt == &select_queue) && select_poll (p, q)))
 	    if (p->state == TASK_INTERRUPTIBLE ||
 		(it && p->state == TASK_UNINTERRUPTIBLE)) {
 		wake_up_process(p);
@@ -120,7 +121,7 @@ void down(register short int *s)
 {
     /* Wait for the semaphore */
     while (*s < 0)
-	sleep_on((void *) s);
+	    sleep_on((void *) s);
 
     /* Take it */
     --(*s);

@@ -10,9 +10,8 @@
 
 /* Config parameters */
 
-/* This tells strace to print stack params */
-
-#define STRACE_PRINTSTACK 1
+#define STRACE_PRINTSTACK 	/* This tells strace to print stack params */
+//#define STRACE_RETWAIT	/* Wait until syscall finished before print*/
 
 struct syscall_info
 {

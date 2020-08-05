@@ -149,7 +149,7 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
     listencb = &tcpcb_find_by_sock(cb->newsock)->tcpcb;
 
     ret_data = (struct tdb_accept_ret *)sbuf;
-    ret_data->type = 123;
+    ret_data->type = 123;		//FIXME
     ret_data->ret_value = 0;
     ret_data->sock = cb->sock;
     ret_data->addr_ip = cb->remaddr;
@@ -231,7 +231,8 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
 	else if (db->nonblock)
 	    retval_to_sock(sock, -EAGAIN);
 	else
-	    cb->wait_data = db->size;
+	    //cb->wait_data = db->size;	  /* wait_data use removed, no async reads*/
+	    retval_to_sock(sock, -EINTR); /* don't set wait_data, return -EINTR instead*/
 	return;
     }
 
@@ -240,7 +241,7 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
-//printf("tcpdev READ: %d bytes\n", data_avail);
+//printf("ktcpdev READ: sock %x %d bytes\n", sock, data_avail);
     ret_data = (struct tdb_return_data *)sbuf;
     ret_data->type = 0;
     ret_data->ret_value = data_avail;
@@ -260,7 +261,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 	return;
 
     if (cb->wait_data == 0) {
-//printf("tcpdev checkSELECT: %d bytes\n", cb->bytes_to_push);
+//printf("ktcpdev checkSELECT: sock %x %d bytes\n", sock, cb->bytes_to_push);
 
 	/* Update the avail_data in the kernel socket (for select) */
 	sock = cb->sock;
@@ -272,12 +273,13 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 	return;
     }
 
+#if 0 /* removed - wait_data mechanism no longer used in inet_read*/
     data_avail = cb->wait_data < cb->bytes_to_push ? cb->wait_data : cb->bytes_to_push;
     cb->bytes_to_push -= data_avail;
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
-//printf("tcpdev checkREAD: %d bytes\n", data_avail);
+//printf("ktcpdev checkREAD: sock %x %d bytes\n", sock, data_avail);
     ret_data->type = 0;
     ret_data->ret_value = data_avail;
     ret_data->sock = cb->sock;
@@ -286,6 +288,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
     write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail - 1);
 
     cb->wait_data = 0;
+#endif
 }
 
 static void tcpdev_write(void)
@@ -325,7 +328,7 @@ printf("tcp: RETRANS limit exceeded\n");
 	return;
     }
 
-//printf("WRITE window %ld timer %d\n", cb->send_nxt - cb->send_una, tcp_timeruse);
+//printf("ktcpdev WRITE sock %x window %ld timer %d\n", sock, cb->send_nxt - cb->send_una, tcp_timeruse);
 
     cb->flags = TF_PSH|TF_ACK;
     cb->datalen = db->size;

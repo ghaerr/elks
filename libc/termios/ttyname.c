@@ -1,4 +1,3 @@
-
 #include <errno.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -30,7 +29,9 @@ char * ttyname (int fd)
 
    while ((d = readdir(fp)) != 0)
    {
-      if( strlen(d->d_name) > sizeof(name) - sizeof(dev) - 1)
+      if (strlen(d->d_name) > sizeof(name) - sizeof(dev) - 1)
+         continue;
+      if (d->d_name[0] == '.')
          continue;
       strcpy(name + sizeof(dev), d->d_name);
       if (stat(name, &dst) == 0

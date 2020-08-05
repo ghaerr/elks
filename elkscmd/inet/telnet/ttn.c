@@ -115,8 +115,17 @@ static void scrn(void)
 #if DEBUG
  { where(); fprintf(stderr, "read %d bytes\r\n", count); }
 #endif
+		if (count > (int)sizeof(buffer)) { //FIXME buffer overflow from inet_read
+			printf("\r\nTELNET BUFFER OVERFLOW\r\n");
+			finish();
+		}
 		if (count < 0)
 		{
+			if (errno == EINTR)		//FIXME kernel debug of inet_read
+			{
+				printf("\r\nTELNET GOT EINTR\r\n");
+				return;
+			}
 			printf("\r\nConnection closed\r\n");
 			finish();
 		}
