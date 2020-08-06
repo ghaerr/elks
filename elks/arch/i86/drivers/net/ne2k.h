@@ -8,6 +8,7 @@
 #define NE2K_STAT_RX    0x0001  // packet received
 #define NE2K_STAT_TX    0x0002  // packet sent
 #define NE2K_STAT_OF    0x0010  // RX ring overflow
+#define NE2K_STAT_RDC   0x0040  // Remote DMA complete
 
 
 // From low level NE2K PHY
@@ -39,5 +40,10 @@ extern word_t ne2k_pack_get (byte_t * pack);
 extern word_t ne2k_pack_put (byte_t * pack, word_t len);
 
 extern word_t ne2k_test ();
+
+extern word_t ne2k_getpage(void);
+extern void ne2k_get_addr(byte_t *);
+extern void ne2k_get_hw_addr(word_t *);
+extern void ne2k_clr_oflow(byte_t *);
 
 #endif /* !NE2K_H */
