@@ -125,7 +125,7 @@ int minix_lookup(register struct inode *dir, char *name, size_t len,
 	if (S_ISDIR(dir->i_mode)) {
 	    debug("minix_lookup: Entering minix_find_entry\n");
 	    bh = minix_find_entry(dir, name, len, &de);
-	    debug2("minix_lookup: minix_find_entry returned %x %d\n", bh,
+	    debug("minix_lookup: minix_find_entry returned %x %d\n", bh,
 		   bh->b_mapcount);
 	    if (bh) {
 		*result = iget(dir->i_sb, (ino_t) de->inode);
@@ -189,7 +189,7 @@ static int minix_add_entry(register struct inode *dir,
 	if (!de->inode)
 	    break;
 	if (namecompare(namelen, info->s_namelen, name, de->name)) {
-	    debug2("MINIXadd_entry: file %t==%s (already exists)\n",
+	    debug("MINIXadd_entry: file %t==%s (already exists)\n",
 		    name, de->name);
 	    unmap_brelse(bh);
 	    return -EEXIST;

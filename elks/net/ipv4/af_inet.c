@@ -92,7 +92,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     register struct tdb_bind *cmd;
     int ret;
 
-    debug1("inet_bind(sock: 0x%x)\n", sock);
+    debug("inet_bind(sock: 0x%x)\n", sock);
     if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
         return -EINVAL;
 
@@ -121,7 +121,7 @@ static int inet_connect(register struct socket *sock,
     register struct tdb_connect *cmd;
     int ret;
 
-    debug1("inet_connect(sock: 0x%x)\n", sock);
+    debug("inet_connect(sock: 0x%x)\n", sock);
 
     if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
         return -EINVAL;
@@ -163,7 +163,7 @@ static int inet_listen(register struct socket *sock, int backlog)
     register struct tdb_listen *cmd;
     int ret;
 
-    debug1("inet_listen(socket : 0x%x)\n", sock);
+    debug("inet_listen(socket : 0x%x)\n", sock);
     cmd = (struct tdb_listen *)get_tdout_buf();
     cmd->cmd = TDC_LISTEN;
     cmd->sock = sock;
@@ -192,7 +192,7 @@ static int inet_accept(register struct socket *sock,
     register struct tdb_accept *cmd;
     int ret;
 
-    debug2("inet_accept(sock: 0x%x newsock: 0x%x)\n", sock, newsock);
+    debug("inet_accept(sock: 0x%x newsock: 0x%x)\n", sock, newsock);
     cmd = (struct tdb_accept *)get_tdout_buf();
     cmd->cmd = TDC_ACCEPT;
     cmd->sock = sock;
@@ -230,7 +230,7 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     register struct tdb_read *cmd;
     int ret;
 
-    debug3("inet_read(socket: 0x%x size:%d nonblock: %d)\n", sock, size,
+    debug("inet_read(socket: 0x%x size:%d nonblock: %d)\n", sock, size,
 	   nonblock);
 
     if (size > TCPDEV_MAXREAD)
@@ -270,7 +270,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
     register struct tdb_write *cmd;
     int ret, usize, count;
 
-    debug3("inet_write(socket: 0x%x size:%d nonblock: %d)\n", sock, size,
+    debug("inet_write(socket: 0x%x size:%d nonblock: %d)\n", sock, size,
 	   nonblock);
     if (size <= 0)
         return 0;
