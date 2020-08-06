@@ -251,6 +251,13 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     if (size > TCPDEV_MAXREAD)
 	size = TCPDEV_MAXREAD;
 
+    /* ensure read blocks until data - wait for ktcp to report data available*/
+    while (sock->avail_data == 0) {
+	interruptible_sleep_on(sock->wait);
+	if (current->signal)
+	    return -EINTR;
+    }
+
     down(&rwlock);
     cmd = (struct tdb_read *)get_tdout_buf();
     cmd->cmd = TDC_READ;

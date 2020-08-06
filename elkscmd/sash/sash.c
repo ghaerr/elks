@@ -384,7 +384,7 @@ readfile(name)
 	}
 
 	if (ferror(fp)) {
-		perror("Reading command line");
+		perror("Error reading command line");
 #ifdef CMD_SOURCE
 		if (fp == stdin)
 			exit(1);
