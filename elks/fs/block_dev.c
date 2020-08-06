@@ -13,6 +13,9 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
+#ifdef DEBUG
+#	include <linuxmt/stat.h>
+#endif
 
 #include <arch/segment.h>
 #include <arch/system.h>
