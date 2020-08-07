@@ -58,7 +58,6 @@ static size_t tcpdev_read(struct inode *inode, struct file *filp, char *data,
      *  buffer it will lose data, so the tcpip stack should read BIG.
      */
     len = len < tdout_tail ? len : tdout_tail;
-//printk("TDOUT_TAIL %u\n", len);
     debug("TCPDEV: read() mark 1 - len = %u\n",len);
     memcpy_tofs(data, tdout_buf, len);
     tdout_tail = 0;
@@ -72,8 +71,10 @@ static size_t tcpdev_read(struct inode *inode, struct file *filp, char *data,
 int tcpdev_inetwrite(char *data, unsigned int len)
 {
     debug("TCPDEV: inetwrite( %p, %u )\n",data,len);
-    if (len > TCPDEV_OUTBUFFERSIZE)
-	return -EINVAL;		/* FIXME: make sure this never happens */
+    if (len > TCPDEV_OUTBUFFERSIZE) {
+	debug_net("tcpdev_inetwrite: len too large\n");
+	return -EINVAL;
+    }
     debug("TCPDEV: inetwrite() mark 1.\n");
 
     /* Data already in tdout_buf buffer */
@@ -95,10 +96,13 @@ static size_t tcpdev_write(struct inode *inode, struct file *filp,
 			char *data, size_t len)
 {
     debug("TCPDEV: write( %p, %p, %p, %u )\n",inode,filp,data,len);
+    if (len > TCPDEV_INBUFFERSIZE) {
+	debug_net("tcpdev_write len too large\n");
+	return -EINVAL;
+    }
     if (len > 0) {
 	down(&bufin_sem);
 
-//printk("TDIN_TAIL %u\n", len);
 	tdin_tail = (unsigned) len;
 	memcpy_fromfs(tdin_buf, data, len);
 
@@ -111,21 +115,21 @@ static size_t tcpdev_write(struct inode *inode, struct file *filp,
 
 static int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
 {
-    register char *ret = (char *)0;
+    int ret = 0;
 
     debug("TCPDEV: select( %p, %p, %d )\n",inode,filp,sel_type);
     switch (sel_type) {
     case SEL_OUT:
 	debug("TCPDEV: select() chose SEL_OUT\n");
 	if (bufin_sem == 0)
-	    ret = (char *)1;
+	    ret = 1;
 	else
 	    select_wait(&tcpdevq);
 	break;
     case SEL_IN:
 	debug("TCPDEV: select() chose SEL_IN\n");
 	if (tdout_tail != 0)
-	    ret = (char *)1;
+	    ret = 1;
 	else
 	    select_wait(&tcpdevq);
 	break;
@@ -133,7 +137,7 @@ static int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
 	debug("TCPDEV: select() chose unknown option %d.\n",sel_type);
     }
     debug("TCPDEV: select() returning %d\n",ret);
-    return (int)ret;
+    return ret;
 }
 
 static int tcpdev_open(struct inode *inode, struct file *file)

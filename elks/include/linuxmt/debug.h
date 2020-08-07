@@ -31,6 +31,7 @@
 #define DEBUG_FAT	0		/* FAT filesystem*/
 #define DEBUG_FILE	0		/* sys open and file i/o*/
 #define DEBUG_NET	0		/* networking*/
+#define DEBUG_SCHED	0		/* scheduler/wait*/
 #define DEBUG_SIG	0		/* signals*/
 #define DEBUG_SUP	0		/* superblock, mount, umount*/
 #define DEBUG_TTY	0		/* tty driver*/
@@ -58,6 +59,12 @@
 #define debug_net	printk
 #else
 #define debug_net(...)
+#endif
+
+#if DEBUG_SCHED
+#define debug_sched	printk
+#else
+#define debug_sched(...)
 #endif
 
 #if DEBUG_SIG

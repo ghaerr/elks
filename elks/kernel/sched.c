@@ -3,21 +3,18 @@
  *  (C) 1995 Chad Page
  *
  *  This is the main scheduler - hopefully simpler than Linux's at present.
- *
- *
  */
-
-/* Commnent in below to use the old scheduler which uses counters */
 
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/init.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/string.h>
+#include <linuxmt/debug.h>
 
 #include <arch/irq.h>
 
-#define init_task task[0]
+#define idle_task task[0]
 
 __task task[MAX_TASKS];
 unsigned char nr_running;
@@ -32,9 +29,9 @@ static void run_timer_list();
 void add_to_runqueue(register struct task_struct *p)
 {
     nr_running++;
-    (p->prev_run = init_task.prev_run)->next_run = p;
-    p->next_run = &init_task;
-    init_task.prev_run = p;
+    (p->prev_run = idle_task.prev_run)->next_run = p;
+    p->next_run = &idle_task;
+    idle_task.prev_run = p;
 }
 
 void del_from_runqueue(register struct task_struct *p)
@@ -45,7 +42,7 @@ void del_from_runqueue(register struct task_struct *p)
     return;
     }
 #endif
-    if (p == &init_task) {
+    if (p == &idle_task) {
         printk("idle task may not sleep\n");
         return;
     }
@@ -60,10 +57,7 @@ static void process_timeout(int __data)
 {
     register struct task_struct *p = (struct task_struct *) __data;
 
-#if 0
-    printk("process_timeout called!  data=%x, waking task %d\n", __data,
-       p->pid);
-#endif
+    debug_sched("sched: timeout %d\n", p->pid);
     p->timeout = 0UL;
     wake_up_process(p);
 }
@@ -90,8 +84,7 @@ void schedule(void)
     if (intr_count > 0) {
     /* Taking a timer IRQ during another IRQ or while in kernel space is
      * quite legal. We just dont switch then */
-	printk("Aiee: scheduling in interrupt %d - %d\n",
-	    intr_count, prev->pid);
+	printk("Aiee: scheduling in interrupt %d - %d\n", intr_count, prev->pid);
 	return;
     }
 
@@ -113,7 +106,7 @@ void schedule(void)
     next = prev->next_run;
     if (prev->state != TASK_RUNNING)
 	del_from_runqueue(prev);
-    if (next == &init_task)
+    if (next == &idle_task)
         next = next->next_run;
 
     set_irq();
@@ -130,13 +123,14 @@ void schedule(void)
 
         previous = prev;
         current = next;
-
+	debug_sched("sched: %d\n", current->pid);
         tswitch();  /* Won't return for a new task */
 
         if (timeout) {
             del_timer(&timer);
         }
-    }
+    } else if (current->pid)
+	debug_sched("resched: %d prevstate %d\n", current->pid, prev->state);
 }
 
 struct timer_list tl_list = { NULL, NULL, 0L, 0, NULL };

@@ -76,7 +76,7 @@ int chq_wait_rd(register struct ch_queue *q, int nonblock)
     return 0;
 }
 
-/* Gets start character */
+/* Return first character in queue*/
 int chq_getch(register struct ch_queue *q)
 {
     int retval;
@@ -93,7 +93,6 @@ int chq_getch(register struct ch_queue *q)
 	q->start &= q->size - 1;
 	q->len--;
 	set_irq();
-	wake_up(&q->wait);
     }
     return retval;
 }

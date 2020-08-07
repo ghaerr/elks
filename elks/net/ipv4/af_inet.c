@@ -2,6 +2,7 @@
  * net/ipv4/af_inet.c
  *
  * (C) 2001 Harry Kalogirou (harkal@rainbow.cs.unipi.gr)
+ * 4 Aug 20 Greg Haerr - debugged semaphores and added multiprocess support
  *
  * The kernel side part of the ELKS TCP/IP stack. It uses tcpdev.c
  * to communicate with the actual TCP/IP stack that resides in
@@ -30,11 +31,16 @@ extern short bufin_sem, bufout_sem;
 extern int tcpdev_inetwrite();
 extern char *get_tdout_buf();
 
+static short rwlock;	/* global inet_read/write semaphore*/
+
 int inet_process_tcpdev(register char *buf, int len)
 {
     register struct socket *sock;
+//int n;
 
     sock = ((struct tdb_return_data *)buf)->sock;
+    debug_net("inet_process_tcpdev(%d) sock %x, type %d, wait %x\n",
+	current->pid, sock, ((struct tdb_return_data *)buf)->type, sock->wait);
 
     switch (((struct tdb_return_data *)buf)->type) {
     case TDT_CHG_STATE:
@@ -44,9 +50,14 @@ int inet_process_tcpdev(register char *buf, int len)
     case TDT_AVAIL_DATA:
         down(&sock->sem);
         sock->avail_data = ((struct tdb_return_data *)buf)->ret_value;
+debug_net("avail_data sock %x %u, bufin %d\n", sock, sock->avail_data, bufin_sem);
         up(&sock->sem);
         tcpdev_clear_data_avail();
+        wake_up(sock->wait);
+	break;
     default:
+//n = ((struct tdb_return_data *)buf)->ret_value;
+debug_net("retval %d, bufin %d\n", n, bufin_sem);
         wake_up(sock->wait);
     }
 
@@ -121,7 +132,7 @@ static int inet_connect(register struct socket *sock,
     register struct tdb_connect *cmd;
     int ret;
 
-    debug("inet_connect(sock: 0x%x)\n", sock);
+    debug_net("inet_connect(sock: 0x%x)\n", sock);
 
     if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
         return -EINVAL;
@@ -135,6 +146,7 @@ static int inet_connect(register struct socket *sock,
 /*    if (sock->state == SS_CONNECTED)
         return -EISCONN;*/	/*Already checked in socket.c*/
 
+    down(&rwlock);
     cmd = (struct tdb_connect *)get_tdout_buf();
     cmd->cmd = TDC_CONNECT;
     cmd->sock = sock;
@@ -148,6 +160,7 @@ static int inet_connect(register struct socket *sock,
 
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
+    up(&rwlock);
 
     if (ret >= 0) {
 	sock->state = SS_CONNECTED;
@@ -192,7 +205,7 @@ static int inet_accept(register struct socket *sock,
     register struct tdb_accept *cmd;
     int ret;
 
-    debug("inet_accept(sock: 0x%x newsock: 0x%x)\n", sock, newsock);
+    debug_net("inet_accept(sock: 0x%x newsock: 0x%x)\n", sock, newsock);
     cmd = (struct tdb_accept *)get_tdout_buf();
     cmd->cmd = TDC_ACCEPT;
     cmd->sock = sock;
@@ -214,7 +227,7 @@ printk("inet_accept: RESTARTSYS\n");
 
     ret = ((struct tdb_accept_ret *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
-
+debug_net("ACCEPT retval %d\n", ret);
     if (ret >= 0) {
 	newsock->state = SS_CONNECTED;
 	ret = 0;
@@ -230,11 +243,22 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     register struct tdb_read *cmd;
     int ret;
 
-    debug("inet_read(socket: 0x%x size:%d nonblock: %d)\n", sock, size,
-	   nonblock);
+    debug_net("inet_READ(socket: 0x%x size:%d nonblock: %d bufin %d)\n", sock, size,
+	   nonblock, bufin_sem);
+
+//printk("[[[[[[ %d\n", bufin_sem);
 
     if (size > TCPDEV_MAXREAD)
 	size = TCPDEV_MAXREAD;
+
+    /* ensure read blocks until data - wait for ktcp to report data available*/
+    while (sock->avail_data == 0) {
+	interruptible_sleep_on(sock->wait);
+	if (current->signal)
+	    return -EINTR;
+    }
+
+    down(&rwlock);
     cmd = (struct tdb_read *)get_tdout_buf();
     cmd->cmd = TDC_READ;
     cmd->sock = sock;
@@ -242,25 +266,30 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     cmd->nonblock = nonblock;
     tcpdev_inetwrite(cmd, sizeof(struct tdb_read));
 
+    debug_net("inet_read(%d) waiting on wait %x, bufin %d\n",
+	current->pid, sock->wait, bufin_sem);
     /* Sleep until tcpdev has news and we have a lock on the buffer */
-    while (bufin_sem == 0)
+    while (bufin_sem == 0) {
+	debug_net("read WAIT(%d) sock %x bufin_sem\n", current->pid, sock);
         interruptible_sleep_on(sock->wait);
+    }
+    debug_net("got read WAIT(%d) bufin_sem %d\n", current->pid, bufin_sem);
 
     down(&sock->sem);
 
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
 
     if (ret > 0) {
-//printk("INET_READ %d (%c%c)\n", ret, (ret>>8)&0xff, ret&0xff);
-//if (ret > 100) ret = 1;
+debug_net("INET_READ %u, %u\n", ret, sock->avail_data);
         memcpy_tofs(ubuf, &((struct tdb_return_data *)tdin_buf)->data, (size_t) ret);
         sock->avail_data = 0;
-    }
+    } else debug_net("INET_READ %d, %u\n", ret, sock->avail_data);
 
     up(&sock->sem);
 
     tcpdev_clear_data_avail();
-
+    up(&rwlock);
+//printk("]]]]]\n");
     return ret;
 }
 
@@ -283,6 +312,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
     count = size;
     while (count) {
+	down(&rwlock);
 	cmd = (struct tdb_write *)get_tdout_buf();
 	cmd->cmd = TDC_WRITE;
 	cmd->sock = sock;
@@ -290,18 +320,22 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
         cmd->size = count > TDB_WRITE_MAX ? TDB_WRITE_MAX : count;
 
-//printk("INET_WRITE %u\n", cmd->size);
+debug_net("INET_WRITE(%d) %u\n", current->pid, cmd->size);
         memcpy_fromfs(cmd->data, ubuf, (size_t) cmd->size);
 	usize = cmd->size;
         tcpdev_inetwrite(cmd, sizeof(struct tdb_write));
 
 	/* Sleep until tcpdev has news and we have a lock on the buffer */
         while (bufin_sem == 0) {
+	    debug_net("write WAIT(%d) sock %x bufin_sem\n", current->pid, sock);
             interruptible_sleep_on(sock->wait);
 	}
-
+	debug_net("got write WAIT(%d) bufin_sem %d\n", current->pid, bufin_sem);
 	ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
+debug_net("INET_WRITE retval %d\n", ret);
 	tcpdev_clear_data_avail();
+	up(&rwlock);
+
 	if (ret < 0) {
             if (ret == -ERESTARTSYS) {
 printk("inet_write: RESTARTSYS\n");
@@ -319,10 +353,11 @@ printk("inet_write: RESTARTSYS\n");
 }
 
 
-static int inet_select(register struct socket *sock,
-		       int sel_type)
+static int inet_select(register struct socket *sock, int sel_type)
 {
-    debug("inet_select\n");
+    debug_net("inet_select(%d) sock %04x wait %04x type %d, %u\n",
+	current->pid, sock, sock->wait, sel_type, sock->avail_data);
+
     if (sel_type == SEL_IN) {
         if (sock->avail_data || sock->state != SS_CONNECTED)
             return 1;

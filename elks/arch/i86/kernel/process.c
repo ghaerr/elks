@@ -30,7 +30,7 @@ int run_init_process(register char *cmd)
 
     strcpy((char *)&args[4], cmd);
     if (!(num = sys_execve(cmd, (char *)args, sizeof(args))))
-		ret_from_syscall();
+		ret_from_syscall();		/* no return, returns to user mode*/
     return num;
 }
 
@@ -61,7 +61,8 @@ void stack_check(void)
 	if (currentp->t_regs.sp > (__u16)end)
 	    return;
     }
-    printk("STACK OVERFLOW BY %u BYTES\n", (__u16)end - currentp->t_regs.sp);
+    printk("(%d)STACK OVERFLOW BY %u BYTES\n",
+	currentp->pid, (__u16)end - currentp->t_regs.sp);
     do_exit(SIGSEGV);
 }
 
@@ -167,7 +168,7 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
  *
  * Our child process needs to look as if it had called tswitch(), and
  * when it goes back into userland give ax = 0. This is conveniently
- * achieved by making tswitch() return ax=0. Stack for the CHILD must look
+ * achieved by making ret_from_syscall return ax=0. Stack for the CHILD must look
  * like this:
  *
  *             Kernel Stack                              User Stack
