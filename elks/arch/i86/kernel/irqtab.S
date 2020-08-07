@@ -2,6 +2,8 @@
 #include <arch/asm-offsets.h>
 #include <arch/ports.h>
 
+#define CHECK_SS	// integrity check interrupt from user mode
+
 	.code16
 
 	.text
@@ -361,11 +363,11 @@ _syscall_int:		// Syscall
 	.extern	stack_check
 	.extern	syscall
 #ifdef CHECK_SS
-	.extern	_panic
+	.extern	panic
 #endif
 #ifdef CONFIG_STRACE
-	.extern	_strace
-	.extern	_ret_strace
+	.extern	strace
+	.extern	ret_strace
 #endif
 
 _irqit:
@@ -374,6 +376,7 @@ _irqit:
 //
 	push	%ds
 	push	%si
+	push	%di
 //
 //	Recover data segment
 //
@@ -390,7 +393,7 @@ ktask:				// Already using interrupt stack
 //	Already using interrupt stack, keep using it
 //
 	mov	%sp,%si
-	sub	$8,%si
+	sub	$6,%si
 	jmp	save_regs
 //
 //	Using a process's kernel stack, switch to interrupt stack
@@ -407,6 +410,7 @@ utask:
 //
 //	We were in user mode, first confirm
 //
+	mov	%ss,%di
 	cmp	TASK_USER_SS(%si),%di // entry SS = current->t_regs.ss?
 	je	utask1		// User using the right stack
 //
@@ -414,19 +418,19 @@ utask:
 //
 	mov	$pmsg,%ax
 	push	%ax
-	call	_panic
+	call	panic
+utask1:
+#endif
 //
 //	Switch to kernel stack
 //
-utask1:
-#endif
 	add	$TASK_USER_DI,%si
 //
 //	Save segment, index, BP and SP registers
 //
 save_regs:
 	incw	_gint_count
-	mov	%di,(%si)		// DI
+	pop	(%si)		// DI
 	pop	2(%si)		// SI
 	pop	6(%si)		// DS
 	pop	%di		// Pointer to interrupt number
@@ -466,8 +470,8 @@ save_regs:
 //	strace(syscall#, params...)
 //
 	push	%ax
-	call	_strace
-	pop	%ax
+	call	strace		// strace must be compiled with tail function optim off
+	pop     %ax
 #endif
 //
 //	syscall(params...)
@@ -478,7 +482,7 @@ save_regs:
 //
 //	ret_strace(retval)
 //
-	call	_ret_strace
+	call	ret_strace
 #endif
 //
 //	Restore registers
@@ -488,6 +492,12 @@ save_regs:
 	jmp	restore_regs
 //
 //	Done.
+//
+
+//
+// Called through arch_build_stack after kfork_proc(NULL) for the idle task
+// and run_init_process (after sys_execve) for /bin/init.
+// Switch to kernel stack specified by 'current' and return ax=0 into user mode.
 //
 ret_from_syscall:
 	mov	current,%bx	// Ensure we have the
@@ -504,7 +514,7 @@ ret_from_syscall:
 !
 */
 updct:
-	incw	intr_count
+	incw	intr_count	// only needed for schedule during interrupt warning
 //
 //	Call the C code
 //

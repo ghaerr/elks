@@ -1,5 +1,3 @@
-#ifdef CONFIG_STRACE
-
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
@@ -7,6 +5,9 @@
 #include <linuxmt/config.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/sched.h>
+#include <linuxmt/mm.h>
+
+#ifdef CONFIG_STRACE
 
 /* The table describing the system calls has been moved to a separate
  * header file, and is included by the following include line.
@@ -16,9 +17,9 @@
 
 static char *fmtspec[] = {
     NULL,   "&0x%X", "0x%X",  "0x%X",
-    "'%c'", "'%c'",  "\"%t\"","&\"%t\"",
+    "'%c'", "'%c'",  "\"%t\"","\"%t\"",
     "%u",   "%d",    "&%u",   "&%d",
-    "%lu",  "%ld",   NULL,    NULL,
+    NULL,    NULL,    NULL,    NULL
 };
 
 void print_syscall(register struct syscall_params *p, int retval)
@@ -29,14 +30,13 @@ void print_syscall(register struct syscall_params *p, int retval)
 
     if (p->s_num >= sizeof(elks_table)/sizeof(struct syscall_info))
 	printk("Syscall not recognised: %u\n", p->s_num);
-    else if ((((s = &elks_table[p->s_num])->s_params) & 0xf) > 5) {
-	printk("Syscall not supported: nosys_%s\n", p->s_name);
-    }
+    else if ((((s = &elks_table[p->s_num])->s_params) & 0xf) > 5)
+	printk("Syscall not supported: nosys_%s\n", s->s_name);
     else {
 
 #ifdef STRACE_PRINTSTACK
 
-	printk("[%d/%p: %d %12s(", current->pid, current->t_regs.sp,
+	printk("[%d/%p: %2d %12s(", current->pid, current->t_regs.sp,
 	       p->s_num, s->s_name);
 
 #else
@@ -52,19 +52,23 @@ void print_syscall(register struct syscall_params *p, int retval)
 	    printk(", ");
 
 	 pscl:
-	    if (fmtspec[tmpa & 0xf] != NULL) {
+	    if (fmtspec[tmpa & 0xf] != NULL)
 		printk(fmtspec[tmpa & 0xf], p->s_param[i]);
-	    }
 	    else switch (tmpa & 0xf) {
-
 	    case P_PULONG:
-		printk("%lu", get_user_long(p->s_param[i]));
+		printk("%lu", get_user_long((void *)p->s_param[i]));
 		break;
 
 	    case P_PSLONG:
-		printk("%ld", get_user_long(p->s_param[i]));
+		printk("%ld", get_user_long((void *)p->s_param[i]));
+		break;
 
-	    default:
+	    case P_SLONG:	/* currently unused*/
+		printk("%ld", *(long *)&p->s_param[i++]);
+		break;
+
+	    case P_ULONG:	/* currently unused*/
+		printk("%lu", *(unsigned long *)&p->s_param[i++]);
 		break;
 	    }
 	    i++;

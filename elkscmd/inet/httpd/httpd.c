@@ -198,6 +198,7 @@ int main(int argc, char **argv)
 			exit(0);
 		} else {
 			close(conn_sock);
+			waitpid(ret, NULL, 0);
 		}
 	}
 }

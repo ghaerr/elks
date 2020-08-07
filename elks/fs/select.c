@@ -21,10 +21,7 @@
 #include <linuxmt/string.h>
 #include <linuxmt/time.h>
 #include <linuxmt/types.h>
-
-#if 0
-#include <linuxmt/personality.h>
-#endif
+#include <linuxmt/debug.h>
 
 #include <arch/segment.h>
 #include <arch/system.h>
@@ -95,6 +92,12 @@ int select_poll (struct task_struct * t, struct wait_queue *q)
  * wait queue this time.  The second call is not necessary if the
  * select_table is NULL indicating an earlier file check was ready
  * and we aren't going to sleep on the select_table.  -- jrs
+ *
+ * The select loop will be repeated with current->state == TASK_RUNNING
+ * in the case of the race condition cited above. We reset task state to
+ * TASK_INTERRUPTIBLE and rerun the check loop in the case that the
+ * fops->select handler doesn't know about a previous wake_up call
+ * to stop infinite looping.  -- ghaerr
  */
 
 static int check(int flag, register struct file *file)
@@ -127,8 +130,12 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
     n = count + 1;
     count = 0;
     wait_set(&select_queue);
-    current->state = TASK_INTERRUPTIBLE;
   repeat:
+    /* Note: Race condition here where wake_up_process sets TASK_RUNNING state
+     * but check()/fops->select returns 0. This then causes schedule() to
+     * reschedule current task since current->state == TASK_RUNNING by wake_up.
+     */
+    current->state = TASK_INTERRUPTIBLE;
     memset (current->poll, 0, sizeof (struct wait_queue *) * POLL_MAX);
     filp = current->files.fd;
     for (pi = 0; ((int)pi) < n; pi++, filp++) {
@@ -147,8 +154,8 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 	    }
 	}
     }
-    if (!count && current->timeout
-	&& !(current->signal /* & ~currentp->blocked */ )) {
+    if (!count && current->timeout && !(current->signal /* & ~currentp->blocked */ )) {
+	debug_sched("select(%d): timeout %lx\n", current->pid, current->timeout);
 	schedule();
 	goto repeat;
     }
@@ -212,13 +219,7 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
     zero_fd_set(&res_out);
     zero_fd_set(&res_ex);
     current->timeout = timeout;
-    error = do_select(n,
-		      /*(fd_set *) */ &in,
-		      /*(fd_set *) */ &out,
-		      /*(fd_set *) */ &ex,
-		      /*(fd_set *) */ &res_in,
-		      /*(fd_set *) */ &res_out,
-		      /*(fd_set *) */ &res_ex);
+    error = do_select(n, &in, &out, &ex, &res_in, &res_out, &res_ex);
 
     current->timeout = 0UL;
     if (!error && (current->signal /* & ~current->blocked */ ))
