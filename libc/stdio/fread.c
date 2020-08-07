@@ -13,8 +13,7 @@
  */
 size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
 {
-   size_t len;
-   int v;
+   int len, v;
    size_t bytes, got = 0;
    Inline_init;
 
@@ -47,7 +46,6 @@ size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
 
    /* Need more; do it with a direct read */
    len = read(fp->fd, (char *)buf + got, bytes - got);
-
    /* Possibly for now _or_ later */
    if (len < 0)
    {

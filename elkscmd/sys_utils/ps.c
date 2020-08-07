@@ -82,7 +82,9 @@ char *devname(unsigned int minor)
 	strcat(name, "/");
 
 	while ((d = readdir(fp)) != 0) {
-		if( strlen(d->d_name) > sizeof(name) - sizeof(dev) - 1)
+		if (strlen(d->d_name) > sizeof(name) - sizeof(dev) - 1)
+			continue;
+		if (d->d_name[0] == '.')
 			continue;
 		strcpy(name + sizeof(dev), d->d_name);
 		if (!stat(name, &st) && st.st_rdev == ttydev) {

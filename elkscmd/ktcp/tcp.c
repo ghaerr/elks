@@ -214,6 +214,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 //printf("space free %d\n", CB_BUF_SPACE(cb));
 	/* FIXME : check if it fits */
+//tcpdev_checkread(cb);
 	if (datasize > CB_BUF_SPACE(cb)) {
 	    printf("tcp: dropping packet, data too large: %u > %d\n", datasize, CB_BUF_SPACE(cb));
 	    //tcp_reset_connection(cb);	//FIXME this causes RST received then panic in read/write

@@ -56,6 +56,9 @@ entry.S: syscall.dat mkentry.sh
 	sh mkentry.sh > entry.tmp
 	mv entry.tmp entry.S
 
+strace.o: strace.c
+	$(CC) $(CFLAGS) -fno-optimize-sibling-calls -c -o strace.o strace.c
+
 #########################################################################
 # Standard commands.
 

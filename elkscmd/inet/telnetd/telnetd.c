@@ -127,6 +127,10 @@ static void client_loop (int fdsock, int fdterm)
 		/* network -> login process*/
 		if (!count_in && FD_ISSET (fdsock, &fds_read)) {
 			count_in = read (fdsock, buf_in, MAX_BUFFER);
+			if (count_in < 0 && errno == EINTR) {	//FIXME debugs kernel inet_read()
+				strcpy(buf_in, "\nTELNETD GOT EINTR\n");
+				count_in = strlen(buf_in);
+			}
 			if (count_in <= 0) {
 				perror ("read sock");
 				break;

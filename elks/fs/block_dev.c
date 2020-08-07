@@ -13,6 +13,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/stat.h>
 
 #include <arch/segment.h>
 #include <arch/system.h>
