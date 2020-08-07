@@ -201,9 +201,12 @@ printp();
 
     /* become daemon now that tcpdev_inuse race condition over*/
     if (bflag) {
-	int fd;
-	if (fork())
-	    exit(0);
+	int fd, ret;
+	if ((ret = fork()) == -1) {
+	    printf("ktcp: Can't fork to become daemon\n");
+	    exit(1);
+	}
+	if (ret) exit(0);
 	close(0);
 	/* redirect messages to console*/
 	fd = open("/dev/console", O_WRONLY);
