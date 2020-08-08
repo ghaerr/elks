@@ -393,13 +393,13 @@ ktask:				// Already using interrupt stack
 //	Already using interrupt stack, keep using it
 //
 	mov	%sp,%si
-	sub	$6,%si
+	sub	$8,%si		// 14 offsets less 6 already on stack
 	jmp	save_regs
 //
 //	Using a process's kernel stack, switch to interrupt stack
 //
 itask:
-	mov	$_intstack-12,%si
+	mov	$_intstack-14,%si // 14 offsets 0-13 of SI below
 	jmp	save_regs
 //
 //	User mode case
@@ -432,12 +432,13 @@ save_regs:
 	incw	_gint_count
 	pop	(%si)		// DI
 	pop	2(%si)		// SI
-	pop	6(%si)		// DS
+	pop	8(%si)		// DS
 	pop	%di		// Pointer to interrupt number
 	push	%bp		// BP
-	mov	%sp,8(%si)	// SP
-	mov	%ss,10(%si)	// SS
-	mov	%es,4(%si)	// ES
+	mov	%sp,10(%si)	// SP
+	mov	%ss,12(%si)	// SS
+	mov	%es,6(%si)	// ES
+	mov	%ax,4(%si)	// orig_ax
 //
 //	Load new segment and SP registers
 //
@@ -580,8 +581,10 @@ was_trap:
 //
 // This path will return directly to user space
 //
+	sti			// Enable interrupts to help fast devices
 	call	schedule	// Task switch
 	call	do_signal	// Check signals
+	cli
 //
 //	Restore registers and return
 //
@@ -593,12 +596,13 @@ restore_regs:
 	pop	%dx
 	pop	%di
 	pop	%si
+	pop	%bp		// discard orig_AX
 	pop	%es
 	pop	%ds
-	pop	%bp
+	pop	%bp		// SP
 	pop	%ss
 	mov	%bp,%sp
-	pop	%bp
+	pop	%bp		// user BP
 //
 //	Iret restores CS:IP and F (thus including the interrupt bit)
 //

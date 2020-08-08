@@ -196,3 +196,17 @@ void arch_build_stack(struct task_struct *t, char *addr)
     t->t_xregs.ksp = (__u16)(tsp - 3);	/* Initial value for SP register */
 #endif
 }
+
+/*
+ * Restart last system call.
+ * Usage: instead of returning -ERESTARTSYS from kernel system call,
+ * use "return restart_syscall()".
+ */
+int restart_syscall(void)
+{
+    struct uregs __far *user_stack;
+
+    user_stack = _MK_FP(current->t_regs.ss, current->t_regs.sp);
+    user_stack->ip -= 2;		/* backup to INT 80h*/
+    return current->t_regs.orig_ax;	/* restore syscall # to user mode AX*/
+}

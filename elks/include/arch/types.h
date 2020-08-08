@@ -31,20 +31,28 @@ typedef __u32 addr_t;
 
 /* Then we define registers, etc... */
 
+/* ordering of saved registers on kernel stack after syscall/interrupt entry*/
 struct _registers {
-    __u16	ax, bx, cx, dx, di, si,
-		es, ds, sp, ss;
+    /* SI offset                 0   2        4   6   8  10  12*/
+    __u16       ax, bx, cx, dx, di, si, orig_ax, es, ds, sp, ss;
 };
 
 typedef struct _registers		__registers,	*__pregisters;
 
 struct xregs {
-    __u16	cs, ksp;
+    __u16       cs;	/* code segment to use in arch_setup_user_stack()*/
+    __u16       ksp;	/* saved kernel SP used by twsitch()*/
 };
 
+/* ordering of saved registers on user stack after interrupt entry*/
+struct uregs {
+    __u16       bp, ip, cs, f;
+};
+
+/* duplicate of _registers*/
 struct pt_regs {
-    __u16	ax, bx, cx, dx, di, si,
-		es, ds, sp, ss;
+    /* SI offset                 0   2        4   6   8  10  12*/
+    __u16       ax, bx, cx, dx, di, si, orig_ax, es, ds, sp, ss;
 };
 
 /* Changed to unsigned short int as that is what it is here.
