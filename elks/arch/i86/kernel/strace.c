@@ -106,7 +106,20 @@ void ret_strace(unsigned int retval)
 #ifdef STRACE_RETWAIT
     print_syscall(&current->sc_info, retval);
 #else
+#ifdef STRACE_KSTACKUSED
+    int n;
+    static int max = 0;
+
+    for (n=0; n<KSTACK_BYTES; n++)
+	if (current->t_kstack[n] != 0x55)
+	    break;
+    n = KSTACK_BYTES - n;
+    if (n > max) max = n;
+    printk("[%d:%s/ret=%d,ks=%d/%d]\n",
+	current->pid, current->sc_info.s_name, retval, n, max);
+#else
     printk("[%d:%s/ret=%d]\n", current->pid, current->sc_info.s_name, retval);
+#endif
 #endif
 }
 
