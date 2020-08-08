@@ -38,6 +38,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
+//#include <sys/wait.h>		// FIXME conflict with linuxmt/net.h including linuxmt/wait.h above*/
+extern pid_t waitpid(pid_t, int *, int);
 
 #define DEF_PORT		80
 #define DEF_DOCBASE	"/var/www"
@@ -152,7 +154,7 @@ int main(int argc, char **argv)
 	struct sockaddr_in localadr;
 
 	if ((listen_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("socket error");
+		fprintf(stderr, "httpd: Can't open socket (check if ktcp running)\n");
 		exit(-1);
 	}
 
@@ -161,7 +163,7 @@ int main(int argc, char **argv)
 	localadr.sin_addr.s_addr = INADDR_ANY;
 
 	if (bind(listen_sock, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in)) < 0) {
-		perror("bind error");
+		fprintf(stderr, "httpd: bind error (may already be running)\n");
 		exit(-1);
 	}
 	if (listen(listen_sock, 5) < 0) {
@@ -169,10 +171,12 @@ int main(int argc, char **argv)
 		exit(-1);
 	}
 
-	/* become daemon*/
-	ret = fork();
-	if (ret != 0)
-		exit(0);	
+	/* become daemon, debug output on 1 and 2*/
+	if ((ret = fork()) == -1) {
+		fprintf(stderr, "httpd: Can't fork to become daemon\n");
+		exit(1);
+	}
+	if (ret) exit(0);
 	ret = open("/dev/null", O_RDWR); /* our log file! */
 	dup2(ret, 0);
 	dup2(ret, 1);
@@ -190,8 +194,9 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		ret = fork();
-		if (ret == 0){
+		if ((ret = fork()) == -1)
+			fprintf(stderr, "httpd: No processes\n");
+		else if (ret == 0) {
 			close(listen_sock);
 			process_request(conn_sock);
 			close(conn_sock);

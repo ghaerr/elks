@@ -132,7 +132,7 @@ int main(int argc, char **argv)
 	}
 
 	printf("  PID   GRP  TTY USER STAT CSEG DSEG  HEAP   FREE   SIZE COMMAND\n");
-	for (j = 1; j < MAX_TASKS; j++) {
+	for (j = 1; j <= MAX_TASKS; j++) {
 		if (!memread(fd, off + j*sizeof(struct task_struct), ds, &task_table, sizeof(task_table))) {
 			perror("ps");
 			return 1;
