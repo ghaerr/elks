@@ -103,7 +103,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     register struct tdb_bind *cmd;
     int ret;
 
-    debug1("inet_bind(sock: 0x%x)\n", sock);
+    debug("inet_bind(sock: 0x%x)\n", sock);
     if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
         return -EINVAL;
 
@@ -176,7 +176,7 @@ static int inet_listen(register struct socket *sock, int backlog)
     register struct tdb_listen *cmd;
     int ret;
 
-    debug1("inet_listen(socket : 0x%x)\n", sock);
+    debug("inet_listen(socket : 0x%x)\n", sock);
     cmd = (struct tdb_listen *)get_tdout_buf();
     cmd->cmd = TDC_LISTEN;
     cmd->sock = sock;
@@ -299,7 +299,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
     register struct tdb_write *cmd;
     int ret, usize, count;
 
-    debug3("inet_write(socket: 0x%x size:%d nonblock: %d)\n", sock, size,
+    debug("inet_write(socket: 0x%x size:%d nonblock: %d)\n", sock, size,
 	   nonblock);
     if (size <= 0)
         return 0;

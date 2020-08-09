@@ -399,7 +399,7 @@ static int rs_ioctl(struct tty *tty, int cmd, char *arg)
     int retval = 0;
 
     /* few sanity checks should be here */
-    debug2("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd);
+    debug("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd);
     switch (cmd) {
     case TCSETS:
     case TCSETSW:

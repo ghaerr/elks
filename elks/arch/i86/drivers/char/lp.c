@@ -197,12 +197,12 @@ static int lp_open(struct inode *inode, struct file *file)
     status = lpp->flags;
 
     if (!(status & LP_EXIST)) { /* if LP_EXIST flag not set */
-	debug1("lp: device lp%d doesn't exist\n", target);
+	debug("lp: device lp%d doesn't exist\n", target);
 	return -ENODEV;
     }
 
     if (status & LP_BUSY) { /* if LP_BUSY flag set */
-	debug1("lp: device lp%d busy\n", target);
+	debug("lp: device lp%d busy\n", target);
 	return -EBUSY;
     }
 

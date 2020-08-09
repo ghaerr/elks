@@ -81,7 +81,7 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
     int retval = 0;
     __u16 save_ds = currentp->t_regs.ds;
     currentp->t_regs.ds = kernel_ds;
-    debug2("EXEC: applying 0x%lx bytes of relocations to segment 0x%x\n",
+    debug("EXEC: applying 0x%lx bytes of relocations to segment 0x%x\n",
 	   (unsigned long)rsize, place_base);
     while (rsize >= sizeof(struct minix_reloc)) {
 	struct minix_reloc reloc;
@@ -99,14 +99,14 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 	    case S_DATA:
 		val = seg_data->base; break;
 	    default:
-		debug1("EXEC: bad relocation symbol index 0x%x\n",
+		debug("EXEC: bad relocation symbol index 0x%x\n",
 		       reloc.r_symndx);
 		goto error;
 	    }
 	    pokew(reloc.r_vaddr, place_base, val);
 	    break;
 	default:
-	    debug1("EXEC: bad relocation type 0x%x\n", reloc.r_type);
+	    debug("EXEC: bad relocation type 0x%x\n", reloc.r_type);
 	    goto error;
 	}
 	rsize -= sizeof(struct minix_reloc);
@@ -138,11 +138,11 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 #endif
 
     /* Open the image */
-    debug2("EXEC: '%t' env %d\n", filename, slen);
+    debug("EXEC: '%t' env %d\n", filename, slen);
 
     retval = open_namei(filename, 0, 0, &inode, NULL);
 
-    debug1("EXEC: open returned %d\n", -retval);
+    debug("EXEC: open returned %d\n", -retval);
     if (retval) goto error_exec1;
 
     debug("EXEC: start building a file handle\n");
@@ -167,7 +167,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 
     if (!(filp->f_op) || !(filp->f_op->read)) goto error_exec2_5;
 
-    debug1("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
+    debug("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
 
     currentp->t_regs.ds = kernel_ds;
     retval = filp->f_op->read(inode, filp, (char *) &mh, sizeof(mh));
@@ -176,7 +176,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if (retval != (int)sizeof(mh) ||
 	(mh.type != MINIX_SPLITID_AHISTORICAL && mh.type != MINIX_SPLITID) ||
 	mh.tseg == 0) {
-	debug1("EXEC: bad header, result %u\n", retval);
+	debug("EXEC: bad header, result %u\n", retval);
 	goto error_exec3;
     }
 
@@ -200,10 +200,10 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	retval = filp->f_op->read(inode, filp, (char *) &esuph,
 				  mh.hlen - EXEC_MINIX_HDR_SIZE);
 	if (retval != mh.hlen - EXEC_MINIX_HDR_SIZE) {
-	    debug1("EXEC: Bad secondary header, result %u\n", retval);
+	    debug("EXEC: Bad secondary header, result %u\n", retval);
 	    goto error_exec3;
 	}
-	debug4("EXEC: text reloc size 0x%lx, data reloc size 0x%lx, "
+	debug("EXEC: text reloc size 0x%lx, data reloc size 0x%lx, "
 	       "far text reloc size 0x%x, text base 0x%lx\n",
 	       esuph.msh_trsize, esuph.msh_drsize, esuph.esh_ftrsize,
 	       esuph.msh_tbase);
@@ -220,7 +220,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	if (base_data & 0xf)
 	    goto error_exec3;
 	if (base_data != 0)
-	    debug1("EXEC: New type executable stack = %x\n", base_data);
+	    debug("EXEC: New type executable stack = %x\n", base_data);
 
 	if (add_overflow(min_len, base_data, &min_len)) /* adds stack size*/
 	    goto error_exec3;
@@ -267,7 +267,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 		goto error_exec3;
 	    }
 	}
-	debug4("EXEC: stack %u heap %u env %u total %u\n", stack, heap, slen, len);
+	debug("EXEC: stack %u heap %u env %u total %u\n", stack, heap, slen, len);
 	break;
     case 0:
 	stack = INIT_STACK;
@@ -308,7 +308,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 		goto error_exec3;
 	    }
 	}
-	debug4("EXEC v0: stack %u heap %u env %u total %u\n", stack, len-min_len-stack-slen, slen, len);
+	debug("EXEC v0: stack %u heap %u env %u total %u\n", stack, len-min_len-stack-slen, slen, len);
     }
 
     /* Round data segment length up to a paragraph boundary
@@ -331,14 +331,14 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 #ifdef CONFIG_EXEC_MMODEL
 	paras += bytes_to_paras(esuph.esh_ftseg);
 #endif
-	debug1("EXEC: Allocating 0x%x paragraphs for text segment(s)\n",
+	debug("EXEC: Allocating 0x%x paragraphs for text segment(s)\n",
 	       paras);
 	seg_code = seg_alloc(paras, SEG_FLAG_CSEG);
 	if (!seg_code) goto error_exec3;
 	currentp->t_regs.ds = seg_code->base;  // segment used by read()
 	retval = filp->f_op->read(inode, filp, 0, (size_t)mh.tseg);
 	if (retval != (int)mh.tseg) {
-	    debug2("EXEC(tseg read): bad result %u, expected %u\n",
+	    debug("EXEC(tseg read): bad result %u, expected %u\n",
 		   retval, (unsigned)mh.tseg);
 	    goto error_exec4;
 	}
@@ -347,7 +347,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	    currentp->t_regs.ds = seg_code->base + bytes_to_paras(mh.tseg);
 	    retval = filp->f_op->read(inode, filp, 0, (size_t)esuph.esh_ftseg);
 	    if (retval != (int)esuph.esh_ftseg) {
-		debug2("EXEC(ftseg read): bad result %u, expected %u\n",
+		debug("EXEC(ftseg read): bad result %u, expected %u\n",
 		       retval, esuph.esh_ftseg);
 		goto error_exec4;
 	    }
@@ -361,20 +361,20 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	need_reloc_code = 0;
 #endif
     }
-    debug1("EXEC: Allocating 0x%x paragraphs for data segment\n",
+    debug("EXEC: Allocating 0x%x paragraphs for data segment\n",
 	   (segext_t) (len >> 4));
 
     retval = -ENOMEM;
     seg_data = seg_alloc ((segext_t) (len >> 4), SEG_FLAG_DSEG);
     if (!seg_data) goto error_exec4;
 
-    debug2("EXEC: Malloc succeeded - cs=%x ds=%x\n", seg_code->base, seg_data->base);
+    debug("EXEC: Malloc succeeded - cs=%x ds=%x\n", seg_code->base, seg_data->base);
 
     currentp->t_regs.ds = seg_data->base;  // segment used by read()
     retval = filp->f_op->read(inode, filp, (char *)base_data, (size_t)mh.dseg);
 
     if (retval != (size_t)mh.dseg) {
-	debug2("EXEC(dseg read): bad result %d, expected %d\n", retval, mh.dseg);
+	debug("EXEC(dseg read): bad result %d, expected %d\n", retval, mh.dseg);
 	goto error_exec5;
     }
 
@@ -514,6 +514,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
   error_exec2:
 	iput(inode);
   error_exec1:
-    debug1("EXEC: Returning %d\n", retval);
+    debug("EXEC: Returning %d\n", retval);
     return retval;
 }

@@ -591,12 +591,12 @@ int init_bioshd(void)
 
 		/* Select appropriate unit */
 		while (size > 99999 && unit[1]) {
-		    debug3("DBG: Size = %lu (%X/%X)\n", size, *unit, unit[1]);
+		    debug("DBG: Size = %lu (%X/%X)\n", size, *unit, unit[1]);
 		    size += 512U;
 		    size /= 1024U;
 		    unit++;
 		}
-		debug3("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
+		debug("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
 		printk("/dev/%cd%c: %d cylinders, %d heads, %d sectors = %lu.%u %cb\n",
 		    (count < 2 ? 'h' : 'f'), (count % 2) + (count < 2 ? 'a' : '0'),
 		    drivep->cylinders, drivep->heads, drivep->sectors,
@@ -777,7 +777,7 @@ static void do_bioshd_request(void)
 		BD_CX = (unsigned short int)
 			    ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
 		BD_DX = (head << 8) | drive;
-		debug6("cylinder=%d head=%d sector=%d blocks=%d drive=0x%x CMD=%d\n",
+		debug("cylinder=%d head=%d sector=%d blocks=%d drive=0x%x CMD=%d\n",
 		    cylinder, head, sector, this_pass, drive, req->rq_cmd);
 		in_ax = BD_AX;
 		out_ax = 0;
