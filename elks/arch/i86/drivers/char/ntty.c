@@ -329,7 +329,6 @@ again:
 	else {
 	    if (!icanon && !vtime && (i >= vmin))
 		break;
-	    //FIXME: race between peekch and wait_rd could force wait for another character
 	    ch = chq_wait_rd(&tty->inq, nonblock);
 	    if (ch < 0) {
 		if (!icanon && vtime) {
