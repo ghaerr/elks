@@ -62,6 +62,16 @@ void chq_addch(register struct ch_queue *q, unsigned char c)
     } else set_irq();
 }
 
+void chq_addch_nowakeup(register struct ch_queue *q, unsigned char c)
+{
+    clr_irq();
+    if (q->len < q->size) {
+	q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = c;
+	q->len++;
+    }
+    set_irq();
+}
+
 int chq_wait_rd(register struct ch_queue *q, int nonblock)
 {
     int	res = 0;
