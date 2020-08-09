@@ -36,7 +36,6 @@ static short rwlock;	/* global inet_read/write semaphore*/
 int inet_process_tcpdev(register char *buf, int len)
 {
     register struct socket *sock;
-//int n;
 
     sock = ((struct tdb_return_data *)buf)->sock;
     debug_net("inet_process_tcpdev(%d) sock %x, type %d, wait %x\n",
@@ -56,8 +55,7 @@ debug_net("avail_data sock %x %u, bufin %d\n", sock, sock->avail_data, bufin_sem
         wake_up(sock->wait);
 	break;
     default:
-//n = ((struct tdb_return_data *)buf)->ret_value;
-debug_net("retval %d, bufin %d\n", n, bufin_sem);
+debug_net("retval %d, bufin %d\n", ((struct tdb_return_data *)buf)->ret_value, bufin_sem);
         wake_up(sock->wait);
     }
 
@@ -253,6 +251,7 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
 
     /* ensure read blocks until data - wait for ktcp to report data available*/
     while (sock->avail_data == 0) {
+	debug_net("inet_read: waiting on sock->avail_data sock %x\n", sock);
 	interruptible_sleep_on(sock->wait);
 	if (current->signal)
 	    return -EINTR;

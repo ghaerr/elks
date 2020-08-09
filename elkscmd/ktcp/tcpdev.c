@@ -220,9 +220,6 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
 	return;
     }
 
-    if (cb->remport == NETCONF_PORT && cb->remaddr == 0)
-	netconf_send(cb);
-
     data_avail = cb->bytes_to_push;
 
     if (data_avail == 0) {
@@ -322,8 +319,11 @@ printf("tcp: RETRANS limit exceeded\n");
     }
 
     if (cb->remport == NETCONF_PORT && cb->remaddr == 0) {
-	if (db->size == sizeof(struct stat_request_s))
+	if (db->size == sizeof(struct stat_request_s)) {
 	    netconf_request(db->data);
+	    netconf_send(cb);		/* queue response*/
+	    tcpdev_checkread(cb);	/* set sock->data_avail to allow inet_read()*/
+	}
 	retval_to_sock(sock, db->size);
 	return;
     }
