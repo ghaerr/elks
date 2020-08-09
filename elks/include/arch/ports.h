@@ -39,11 +39,11 @@
 //#define CONFIG_NEED_IRQ2		/* only available on XT, slave PIC on AT*/
 
 #ifdef CONFIG_CHAR_DEV_RS
-//#define CONFIG_FAST_IRQ4		/* COM1 very fast serial driver, no ISIG handling*/
+#define CONFIG_FAST_IRQ4		/* COM1 very fast serial driver, no ISIG handling*/
 //#define CONFIG_FAST_IRQ3		/* COM2 very fast serial driver, no ISIG handling*/
-#define CONFIG_NEED_IRQ4		/* COM1 normal serial driver*/
+//#define CONFIG_NEED_IRQ4		/* COM1 normal serial driver*/
 #define CONFIG_NEED_IRQ3		/* COM2 normal serial driver*/
-#define CONFIG_NEED_IRQ5		/* COM3*/
+//#define CONFIG_NEED_IRQ5		/* COM3*/
 //#define CONFIG_NEED_IRQ2		/* COM4, XT only*/
 #endif
 
@@ -53,7 +53,7 @@
 //#define CONFIG_NEED_IRQ8
 
 #ifdef CONFIG_ETH_NE2K
-#define CONFIG_NEED_IRQ12
+#define CONFIG_NEED_IRQ9
 #endif
 
 /* unused*/
@@ -98,7 +98,8 @@
 #define COM4_IRQ	2		/* unregistered unless COM4_PORT found*/
 
 /* ne2k, eth-main.c*/
-#define NE2K_IRQ	12
+#define io_ne2k_command 0x0300		/* FIXME needs to be included in ne2k-mac.s*/
+#define NE2K_IRQ	9
 #define NE2K_PORT	0x300
 
 /* obsolete - experimental IDE hard drive, directhd.c (broken)*/
