@@ -141,10 +141,20 @@ extern void schedule(void);
 extern void wait_set(struct wait_queue *);
 extern void wait_clear(struct wait_queue *);
 
-// This old style sleep is unsafe
-// Use wait_event instead
+/*
+ * Using sleep_on allows a race condition which in certain circumstances
+ * may lose a wake_up between the condition check and sleep_on/schedule.
+ * Only wait queues or condition checks changed by hw interrupts need
+ * use race-safe sleep calls.
+ */
 extern void sleep_on(struct wait_queue *) DEPRECATED;
 extern void interruptible_sleep_on(struct wait_queue *) DEPRECATED;
+
+/* simple race-safe sleep calls */
+void prepare_to_wait_interruptible(struct wait_queue *p);
+void prepare_to_wait(struct wait_queue *p);
+void do_wait(void);
+void finish_wait(struct wait_queue *p);
 
 /*@-namechecks@*/
 
