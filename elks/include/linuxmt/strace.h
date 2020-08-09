@@ -11,7 +11,8 @@
 /* Config parameters */
 
 #define STRACE_PRINTSTACK 	/* This tells strace to print stack params */
-//#define STRACE_RETWAIT	/* Wait until syscall finished before print*/
+#define STRACE_KSTACKUSED	/* Calculate amount of kernel stack used */
+//#define STRACE_RETWAIT	/* Wait until syscall finished before print */
 
 struct syscall_info
 {
