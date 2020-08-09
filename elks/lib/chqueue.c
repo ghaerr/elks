@@ -66,17 +66,17 @@ int chq_wait_rd(register struct ch_queue *q, int nonblock)
 {
     int	res = 0;
 
-    pre_wait_interruptible(&q->wait);
+    prepare_to_wait_interruptible(&q->wait);
     if (!q->len) {
 	if (nonblock)
 	    res = -EAGAIN;
 	else {
-	    wait();
+	    do_wait();
 	    if (!q->len)
 		res = -EINTR;
 	}
     }
-    post_wait(&q->wait);
+    finish_wait(&q->wait);
     return res;
 }
 

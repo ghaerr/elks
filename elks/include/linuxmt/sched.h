@@ -151,10 +151,10 @@ extern void sleep_on(struct wait_queue *) DEPRECATED;
 extern void interruptible_sleep_on(struct wait_queue *) DEPRECATED;
 
 /* simple race-safe sleep calls */
-void pre_wait_interruptible(struct wait_queue *p);
-void pre_wait(struct wait_queue *p);
-void wait(void);
-void post_wait(struct wait_queue *p);
+void prepare_to_wait_interruptible(struct wait_queue *p);
+void prepare_to_wait(struct wait_queue *p);
+void do_wait(void);
+void finish_wait(struct wait_queue *p);
 
 /*@-namechecks@*/
 

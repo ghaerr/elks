@@ -30,31 +30,31 @@
  *	if (!ready())
  *	    interruptible_sleep_on(&waitq);
  * New:
- *	pre_wait_interruptible(&waitq);
+ *	prepare_to_wait_interruptible(&waitq);
  *	if (!ready())
- *	    wait();
- *	post_wait(&waitq);
+ *	    do_wait();
+ *	finish_wait(&waitq);
  */
 
-void pre_wait_interruptible(struct wait_queue *p)
+void prepare_to_wait_interruptible(struct wait_queue *p)
 {
     current->state = TASK_INTERRUPTIBLE;;
     wait_set(p);
 }
 
-void pre_wait(struct wait_queue *p)
+void prepare_to_wait(struct wait_queue *p)
 {
     current->state = TASK_UNINTERRUPTIBLE;
     wait_set(p);
 }
 
-void wait(void)
+void do_wait(void)
 {
     debug_sched("sleep: %d waitq %04x\n", current->pid, current->waitpt);
     schedule();
 }
 
-void post_wait(struct wait_queue *p)
+void finish_wait(struct wait_queue *p)
 {
     current->state = TASK_RUNNING;
     wait_clear(p);
