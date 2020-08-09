@@ -1,7 +1,7 @@
 #ifndef __LINUXMT_SCHED_H
 #define __LINUXMT_SCHED_H
 
-#define MAX_TASKS 15
+#define MAX_TASKS 16
 #define NGROUPS	13		/* Supplementary groups */
 #define NOGROUP 0xFFFF
 #define KSTACK_BYTES 988	/* Size of kernel stacks */

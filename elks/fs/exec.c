@@ -138,8 +138,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 #endif
 
     /* Open the image */
-    /*debug1("EXEC: opening file: %s\n", filename);*/
-    debug1("EXEC: slen = %d\n", slen);
+    debug2("EXEC: '%t' env %d\n", filename, slen);
 
     retval = open_namei(filename, 0, 0, &inode, NULL);
 

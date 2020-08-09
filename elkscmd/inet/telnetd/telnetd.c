@@ -27,7 +27,7 @@ static char buf_out [MAX_BUFFER];
 
 char *nargv[2] = {"/bin/login", NULL};
 
-static pid_t term_init(int sockfd, int *pty_fd)
+static pid_t term_init(int *pty_fd)
 {
 	int n = 0;
 	int tty_fd;
@@ -52,8 +52,6 @@ again:
 		return -1;
 	}
 	if (!pid) {
-		
-		close(sockfd);
 		close(STDIN_FILENO);
 		close(STDOUT_FILENO);
 		close(STDERR_FILENO);
@@ -166,36 +164,39 @@ static void client_loop (int fdsock, int fdterm)
 
 int main(int argc, char **argv)
 {
-  struct sockaddr_in addr_in;
-  int sockfd,connectionfd,fd,lv = 10;
-  int pty_fd;
-  pid_t pid;
-  
-  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-    perror("socket error");
-    exit(-1);
-  }
-  memset(&addr_in, 0, sizeof(addr_in));
-  addr_in.sin_family = AF_INET;
-  addr_in.sin_addr.s_addr = htons(INADDR_ANY);
-  addr_in.sin_port = htons(23);
-  if (bind(sockfd, (struct sockaddr*)&addr_in, sizeof(addr_in)) == -1) {
-    perror("bind error");
-	close(sockfd);
-    exit(-1);
-  }
+	struct sockaddr_in addr_in;
+	int sockfd,connectionfd,fd;
+	int pty_fd, ret;
+	pid_t pid;
 
-  if (listen(sockfd, lv) == -1) {
-    perror("listen error");
-    close(sockfd);
-    exit(-1);
-  } 
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		fprintf(stderr, "telnetd: Can't open socket (check if ktcp running)\n");
+		exit(-1);
+	}
+	memset(&addr_in, 0, sizeof(addr_in));
+	addr_in.sin_family = AF_INET;
+	addr_in.sin_addr.s_addr = htons(INADDR_ANY);
+	addr_in.sin_port = htons(23);
+	if (bind(sockfd, (struct sockaddr *)&addr_in, sizeof(addr_in)) == -1) {
+		fprintf(stderr, "telnetd: bind error (may already be running)\n");
+		close(sockfd);
+		exit(-1);
+	}
+
+	if (listen(sockfd, 3) == -1) {
+		perror("listen error");
+		close(sockfd);
+		exit(-1);
+	}
 
 	/* become daemon, debug output on 1 and 2*/
-	if (fork())
-		exit(0);
+	if ((ret = fork()) == -1) {
+		fprintf(stderr, "telnetd: Can't fork to become daemon\n");
+		exit(1);
+	}
+	if (ret) exit(0);
 	fd = open("/dev/console", O_RDWR);
-	close(0);
+	close(STDIN_FILENO);
 	dup2(fd, STDOUT_FILENO);
 	dup2(fd, STDERR_FILENO);
 	if (fd > STDERR_FILENO)
@@ -209,13 +210,20 @@ int main(int argc, char **argv)
 			break;
 		}
 
-		pid = term_init(sockfd, &pty_fd);
-		if (pid != -1) {
-			client_loop (connectionfd, pty_fd);
-			kill (pid, SIGKILL);
+		if ((ret = fork()) == -1)
+			fprintf(stderr, "telnetd: No processes\n");
+		else if (ret == 0) {
+			close(sockfd);
+			pid = term_init(&pty_fd);
+			if (pid != -1) {
+				client_loop (connectionfd, pty_fd);
+				kill (pid, SIGKILL);
+			}
+			close (connectionfd);
+			close (pty_fd);
+		} else {
+			close(connectionfd);
 		}
-		close (connectionfd);
-		close (pty_fd);
 	}
 
 	close (sockfd);
