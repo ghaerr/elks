@@ -64,16 +64,20 @@ void chq_addch(register struct ch_queue *q, unsigned char c)
 
 int chq_wait_rd(register struct ch_queue *q, int nonblock)
 {
+    int	res = 0;
+
+    prepare_to_wait_interruptible(&q->wait);
     if (!q->len) {
 	if (nonblock)
-	    return -EAGAIN;
+	    res = -EAGAIN;
 	else {
-	    interruptible_sleep_on(&q->wait);
+	    do_wait();
 	    if (!q->len)
-		return -EINTR;
+		res = -EINTR;
 	}
     }
-    return 0;
+    finish_wait(&q->wait);
+    return res;
 }
 
 /* Return first character in queue*/

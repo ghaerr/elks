@@ -8,6 +8,8 @@
 #include <linuxmt/wait.h>
 #include <linuxmt/debug.h>
 
+//#define CHECK	/* check matched sleep/wakeup when writing/testing drivers */
+
 /*
  *	Wait queue functionality for Linux ELKS. Taken from sched.c/h of
  *	its big brother..
@@ -20,12 +22,54 @@
  *	not Linux needs
  */
 
+/*
+ * Simple, race-safe versions of sleep/wait functions. Greg Haerr Aug 2020.
+ * Only required when wait queue used or condition check changed by hw interrupt.
+ *
+ * Old:
+ *	if (!ready())
+ *	    interruptible_sleep_on(&waitq);
+ * New:
+ *	prepare_to_wait_interruptible(&waitq);
+ *	if (!ready())
+ *	    do_wait();
+ *	finish_wait(&waitq);
+ */
+
+void prepare_to_wait_interruptible(struct wait_queue *p)
+{
+    current->state = TASK_INTERRUPTIBLE;;
+    wait_set(p);
+}
+
+void prepare_to_wait(struct wait_queue *p)
+{
+    current->state = TASK_UNINTERRUPTIBLE;
+    wait_set(p);
+}
+
+void do_wait(void)
+{
+    debug_sched("sleep: %d waitq %04x\n", current->pid, current->waitpt);
+    schedule();
+}
+
+void finish_wait(struct wait_queue *p)
+{
+    current->state = TASK_RUNNING;
+    wait_clear(p);
+}
+
+/**********************************/
+
 void wait_set(struct wait_queue *p)
 {
     register __ptask pcurrent = current;
 
+#ifdef CHECK
     if (pcurrent->waitpt)
 	panic("double wait");
+#endif
     pcurrent->waitpt = p;
 }
 
@@ -33,19 +77,18 @@ void wait_clear(struct wait_queue *p)
 {
     register __ptask pcurrent = current;
 
+#ifdef CHECK
     if (pcurrent->waitpt != p)
 	panic("wrong waitpt");
+#endif
     pcurrent->waitpt = NULL;
 }
 
 static void __sleep_on(register struct wait_queue *p, __s16 state)
 {
-    register __ptask pcurrent = current;
-
-    if (pcurrent == &task[0])
-	panic("task[0] trying to sleep from %x", (int)p);
-    debug_sched("sleep: %d waitq %04x\n", pcurrent->pid, p);
-    pcurrent->state = state;
+    //if (current == &task[0]) panic("task[0] trying to sleep from %x", p);
+    debug_sched("sleep: %d waitq %04x\n", current->pid, p);
+    current->state = state;
     wait_set(p);
     schedule();
     wait_clear(p);
@@ -95,8 +138,6 @@ void wake_up_process(register struct task_struct *p)
 void _wake_up(register struct wait_queue *q, unsigned short int it)
 {
     register struct task_struct *p;
-
-    // FIXME: task list not protected against interruption
 
     for_each_task(p) {
 	if ((p->waitpt == q) || ((p->waitpt == &select_queue) && select_poll (p, q)))
