@@ -298,10 +298,11 @@ size_t tty_write(struct inode *inode, struct file *file, char *data, size_t len)
 		i = s;
 	    break;
 	}
-	chq_addch(&tty->outq, get_user_char((void *)(data++)));
+	chq_addch_nowakeup(&tty->outq, get_user_char((void *)data++));
 	tty->ops->write(tty);
 	i++;
     }
+    wake_up(&tty->outq.wait);
     return i;
 }
 
