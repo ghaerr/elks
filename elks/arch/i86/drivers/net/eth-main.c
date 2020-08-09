@@ -185,8 +185,8 @@ static void ne2k_int (int irq, struct pt_regs * regs, void * dev_id)
 	word_t stat, page;
 
 	stat = ne2k_int_stat ();
-        page = ne2k_getpage();
-        printk("$%02x$B%02x$", (page>>8)&0xff, page&0xff);
+        //page = ne2k_getpage();
+        //printk("$%02x$B%02x$", (page>>8)&0xff, page&0xff);
 
         if (stat & NE2K_STAT_OF) {
 		printk("Warning: NIC receive buffer overflow\n");

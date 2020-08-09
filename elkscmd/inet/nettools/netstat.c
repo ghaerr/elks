@@ -60,7 +60,7 @@ int main(void)
     __u8 *addrbytes;
 	    
     if ( (s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-	perror("socket error");
+	fprintf(stderr, "netstat: Can't open socket (check if ktcp running)\n");
 	exit(-1);
     }
 
