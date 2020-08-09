@@ -287,8 +287,14 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     /* read uart/fifo until empty*/
     do {
 	unsigned char c = INB(io + UART_RX);		/* Read received data */
-	if (!tty_intcheck(sp->tty, c))
-	    chq_addch_nowakeup(q, c);
+	if (!tty_intcheck(sp->tty, c)) {
+	    clr_irq();
+	    if (q->len < q->size) {
+		q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = c;
+		q->len++;
+	    }
+	    set_irq();
+	}
     } while (INB(io + UART_LSR) & UART_LSR_DR); /* while data available (for FIFOs)*/
 
     wake_up(&q->wait);
