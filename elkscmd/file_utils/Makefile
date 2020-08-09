@@ -50,7 +50,7 @@ ln: ln.o
 	$(LD) $(LDFLAGS) -o ln ln.o $(LDLIBS)
 
 ls: ls.o
-	$(LD) $(LDFLAGS) -o ls ls.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=6144 -o ls ls.o $(LDLIBS)
 
 mkdir: mkdir.o
 	$(LD) $(LDFLAGS) -o mkdir mkdir.o $(LDLIBS)

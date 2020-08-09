@@ -3,7 +3,7 @@
 # run "net start slip" on ELKS after running this script
 #
 
-baud=57600
+baud=38400
 device=/dev/ttyS0
 protocol=slip
 elks=10.0.2.15
