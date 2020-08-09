@@ -72,7 +72,7 @@ FWD="hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80,hostfwd=tcp:127.0.0.1:2323-10.0.2.1
 # new style
 #NET="-net nic,model=ne2k_isa -net user,$FWD"
 # old style, with configurable interrupt line
-NET="-netdev user,id=mynet,$FWD -device ne2k_isa,irq=9,netdev=mynet"
+NET="-netdev user,id=mynet,$FWD -device ne2k_isa,irq=12,netdev=mynet"
 
 # Enable network dump here:
 # NETDUMP="-net dump"
