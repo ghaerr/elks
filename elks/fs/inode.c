@@ -321,7 +321,7 @@ struct inode *__iget(struct super_block *sb,
     register struct inode *inode;
     register struct inode *n_ino;
 
-    debug3("iget called(%x, %lu, %d)\n", sb, (unsigned long)inr, 0 /* crossmntp */ );
+    debug("iget called(%x, %lu, %d)\n", sb, (unsigned long)inr, 0 /* crossmntp */ );
     if (!sb)
 	panic("VFS: iget with sb==NULL");
 

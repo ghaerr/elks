@@ -22,7 +22,7 @@ link=eth
 
 # default serial port and baud rate if slip/cslip
 device=/dev/ttyS0
-baud=57600
+baud=38400
 
 usage()
 {

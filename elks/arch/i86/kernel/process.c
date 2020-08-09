@@ -134,7 +134,7 @@ void arch_setup_user_stack (register struct task_struct * t, word_t entry)
 void arch_setup_sighandler_stack(register struct task_struct *t,
 				 __kern_sighandler_t addr,unsigned signr)
 {
-    debug6("Stack %x:%x was %x %x %x %x\n", _FP_SEG(addr), _FP_OFF(addr),
+    debug("Stack %x:%x was %x %x %x %x\n", _FP_SEG(addr), _FP_OFF(addr),
 	   get_ustack(t,0), get_ustack(t,2), get_ustack(t,4), get_ustack(t,6));
     put_ustack(t, -6, (int)get_ustack(t,0));
     put_ustack(t, -4, _FP_OFF(addr));
@@ -142,7 +142,7 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
     put_ustack(t, 0, (int)get_ustack(t,6));
     put_ustack(t, 6, (int)signr);
     t->t_regs.sp -= 6;
-    debug7("Stack is %x %x %x %x %x %x %x\n", get_ustack(t,0), get_ustack(t,2),
+    debug("Stack is %x %x %x %x %x %x %x\n", get_ustack(t,0), get_ustack(t,2),
 	   get_ustack(t,4), get_ustack(t,6), get_ustack(t,8), get_ustack(t,10),
 	   get_ustack(t,12));
 }

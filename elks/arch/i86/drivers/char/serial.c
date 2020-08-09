@@ -287,14 +287,8 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     /* read uart/fifo until empty*/
     do {
 	unsigned char c = INB(io + UART_RX);		/* Read received data */
-	if (!tty_intcheck(sp->tty, c)) {
-	    clr_irq();
-	    if (q->len < q->size) {
-		q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = c;
-		q->len++;
-	    }
-	    set_irq();
-	}
+	if (!tty_intcheck(sp->tty, c))
+	    chq_addch_nowakeup(q, c);
     } while (INB(io + UART_LSR) & UART_LSR_DR); /* while data available (for FIFOs)*/
 
     wake_up(&q->wait);
@@ -399,7 +393,7 @@ static int rs_ioctl(struct tty *tty, int cmd, char *arg)
     int retval = 0;
 
     /* few sanity checks should be here */
-    debug2("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd);
+    debug("rs_ioctl: sp = %d, cmd = %d\n", tty->minor - RS_MINOR_OFFSET, cmd);
     switch (cmd) {
     case TCSETS:
     case TCSETSW:

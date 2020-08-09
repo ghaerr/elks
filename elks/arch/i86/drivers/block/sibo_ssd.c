@@ -89,7 +89,7 @@ static int ssd_ioctl(register struct inode *inode,
 
     if (!suser())
 	return -EPERM;
-    debug2("SSD_IOCTL %d %s\n", target, (cmd ? "kill" : "make"));
+    debug("SSD_IOCTL %d %s\n", target, (cmd ? "kill" : "make"));
     switch (cmd) {
     case SSDCREATE:
 	if (rd_segment[target])

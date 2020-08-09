@@ -369,7 +369,7 @@ int sys_pipe(unsigned int *filedes)
 
     if ((error = do_pipe(fd))) return error;
 
-    debug2("PIPE: Returned %d %d.\n", fd[0], fd[1]);
+    debug("PIPE: Returned %d %d.\n", fd[0], fd[1]);
 
     return verified_memcpy_tofs(filedes, fd, 2 * sizeof(int));
 }

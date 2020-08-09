@@ -230,12 +230,12 @@ int _namei(char *pathname, register struct inode *base, int follow_links,
     debug("_namei: calling dir_namei\n");
     *res_inode = NULL;
     error = dir_namei(pathname, &namelen, &basename, base, &inode);
-    debug1("_namei: dir_namei returned %d\n", error);
+    debug("_namei: dir_namei returned %d\n", error);
     if (!error) {
 	base = inode;
 	debug("_namei: calling lookup\n");
 	error = lookup(base, basename, namelen, &inode);
-	debug1("_namei: lookup returned %d\n", error);
+	debug("_namei: lookup returned %d\n", error);
 	if (!error) {
 	    if (follow_links) {
 		error = follow_link(base, inode, 0, 0, &inode);

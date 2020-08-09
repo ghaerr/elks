@@ -104,31 +104,9 @@
  */
 
 #ifdef DEBUG
-
-#define debug					printk
-#define debug1					printk
-#define debug2					printk
-#define debug3					printk
-#define debug4					printk
-#define debug5					printk
-#define debug6					printk
-#define debug7					printk
-#define debug8					printk
-#define debug9					printk
-
+#	define	debug(...)	printk(__VA_ARGS__)
 #else
-
-#define debug(a,...)
-#define debug1(a,b)
-#define debug2(a,b,c)
-#define debug3(a,b,c,d)
-#define debug4(a,b,c,d,e)
-#define debug5(a,b,c,d,e,f)
-#define debug6(a,b,c,d,e,f,g)
-#define debug7(a,b,c,d,e,f,g,h)
-#define debug8(a,b,c,d,e,f,g,h,i)
-#define debug9(a,b,c,d,e,f,g,h,i,j)
-
+#	define	debug(...)
 #endif
 
 /* This is really chatty, and not recommended for use on a 5150 :)
