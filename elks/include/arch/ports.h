@@ -39,9 +39,9 @@
 //#define CONFIG_NEED_IRQ2		/* only available on XT, slave PIC on AT*/
 
 #ifdef CONFIG_CHAR_DEV_RS
-#define CONFIG_FAST_IRQ4		/* COM1 very fast serial driver, no ISIG handling*/
+//#define CONFIG_FAST_IRQ4		/* COM1 very fast serial driver, no ISIG handling*/
 //#define CONFIG_FAST_IRQ3		/* COM2 very fast serial driver, no ISIG handling*/
-//#define CONFIG_NEED_IRQ4		/* COM1 normal serial driver*/
+#define CONFIG_NEED_IRQ4		/* COM1 normal serial driver*/
 #define CONFIG_NEED_IRQ3		/* COM2 normal serial driver*/
 //#define CONFIG_NEED_IRQ5		/* COM3*/
 //#define CONFIG_NEED_IRQ2		/* COM4, XT only*/
