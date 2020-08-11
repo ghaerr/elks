@@ -18,6 +18,8 @@
 
 
 // Static data
+struct wait_queue rxwait;
+struct wait_queue txwait;
 
 static byte_t eth_inuse = 0;
 
@@ -27,47 +29,34 @@ static byte_t mac_addr [6]; // Current MAC address, from HW or set
 static byte_t recv_buf [MAX_PACKET_ETH+4];
 static byte_t send_buf [MAX_PACKET_ETH];
 
-
-// Receive condition
-
-static bool_t rx_flag;  // dummy flag
-
-static bool_t rx_test (void * p)
-{
-	return (ne2k_rx_stat () == NE2K_STAT_RX);
-}
-
-static cond_t rx_cond = { rx_test, &rx_flag };
-
-
 // Get packet
 
 static size_t eth_read (struct inode * inode, struct file * filp,
 	char * data, size_t len)
 {
 	size_t res;
-	word_t page;	//debug
 
 	while (1) {
 		size_t size;  // actual packet size
 
+		prepare_to_wait_interruptible(&rxwait);
 		if (ne2k_rx_stat () != NE2K_STAT_RX) {
 
 			if (filp->f_flags & O_NONBLOCK) {
 				res = -EAGAIN;
 				break;
 			}
-
-			if (wait_event_interruptible (&rx_cond)) {
-				res = -EINTR;  // interrupted by signal
+			do_wait();
+			if (current->signal) {
+				res = -EINTR;
 				break;
 			}
 		}
 
-                //page = ne2k_getpage();
+                //word_t page = ne2k_getpage();
                 //printk("/C%02x|B%02x/ ", (page>>8)&0xff, page&0xff);
 		if (ne2k_pack_get (recv_buf)) {
-			res = -ERESTARTSYS;  // panic
+			res = -EIO;
 			break;
 		}
 
@@ -83,20 +72,9 @@ static size_t eth_read (struct inode * inode, struct file * filp,
 		break;
 	}
 
+	finish_wait(&rxwait);
 	return res;
 }
-
-
-// Transmit condition
-
-static bool_t tx_flag;  // dummy flag
-
-static bool_t tx_test (void * p)
-{
-	return (ne2k_tx_stat () == NE2K_STAT_TX);
-}
-
-static cond_t tx_cond = { tx_test, &tx_flag };
 
 
 // Put packet
@@ -107,15 +85,16 @@ static size_t eth_write (struct inode * inode, struct file * file,
 	size_t res;
 
 	while (1) {
+		prepare_to_wait_interruptible(&txwait);
 		if (ne2k_tx_stat () != NE2K_STAT_TX) {
 
 			if (file->f_flags & O_NONBLOCK) {
 				res = -EAGAIN;
 				break;
 			}
-
-			if (wait_event_interruptible (&tx_cond)) {
-				res = -EINTR;  // interrupted by signal
+			do_wait();
+			if (current->signal) {
+				res = -EINTR;
 				break;
 			}
 		}
@@ -128,7 +107,7 @@ static size_t eth_write (struct inode * inode, struct file * file,
 
 		if (len < 64) len = 64;  /* issue #133 */
 		if (ne2k_pack_put (send_buf, len)) {
-			res = -ERESTARTSYS;  // panic
+			res = -EIO;
 			break;
 		}
 
@@ -136,6 +115,7 @@ static size_t eth_write (struct inode * inode, struct file * file,
 		break;
 	}
 
+	finish_wait(&txwait);
 	return res;
 }
 
@@ -150,28 +130,23 @@ int eth_select (struct inode * inode, struct file * filp, int sel_type)
 
 	switch (sel_type) {
 		case SEL_OUT:
-			if (ne2k_tx_stat () != NE2K_STAT_TX)
-			{
-				select_wait ((struct wait_queue *) &tx_flag);
+			if (ne2k_tx_stat () != NE2K_STAT_TX) {
+				select_wait(&txwait);
 				break;
 			}
-
 			res = 1;
 			break;
 
 		case SEL_IN:
-			if (ne2k_rx_stat () != NE2K_STAT_RX)
-			{
-				select_wait ((struct wait_queue *) &rx_flag);
+			if (ne2k_rx_stat () != NE2K_STAT_RX) {
+				select_wait(&rxwait);
 				break;
 			}
-
 			res = 1;
 			break;
 
 		default:
 			res = -EINVAL;
-
 	}
 
 	return res;
@@ -182,18 +157,22 @@ int eth_select (struct inode * inode, struct file * filp, int sel_type)
 
 static void ne2k_int (int irq, struct pt_regs * regs, void * dev_id)
 {
-	word_t stat, page;
+	word_t stat;
 
 	stat = ne2k_int_stat ();
-        //page = ne2k_getpage();
+        //word_t page = ne2k_getpage();
         //printk("$%02x$B%02x$", (page>>8)&0xff, page&0xff);
 
         if (stat & NE2K_STAT_OF) {
 		printk("Warning: NIC receive buffer overflow\n");
 		//page = ne2k_getpage();
 		//printk("/C%02x|B%02x/ ", (page>>8)&0xff, page&0xff);
-		// FIXME: This procedure is still being debugged
-		wake_up ((struct wait_queue *) &rx_flag);
+		// FIXME: probabluy shouldn't wake up reader if no packet ready,
+		// and the check below will do so if STAT_RX bit is set anyways.
+		// Could handle the error here, except this code could be interrupting
+		// a process already in the read routine, so that will likely mess up
+		// that reader and/or the driver state.
+		//wake_up (&rxwait);
 		//ne2k_clr_oflow(recv_buf); // The reset procedure needs to read the
                                           // last complete packet in the buffer.
 		// If recv_buf is busy, this will overwrite the contents.
@@ -202,12 +181,12 @@ static void ne2k_int (int irq, struct pt_regs * regs, void * dev_id)
 
 	if (stat & NE2K_STAT_RX) {
 		//printk("|r|");
-		wake_up ((struct wait_queue *) &rx_flag);
+		wake_up(&rxwait);
 	}
 
 	if (stat & NE2K_STAT_TX) {
 		//printk("|t|");
-		wake_up ((struct wait_queue *) &tx_flag);
+		wake_up(&txwait);
 	}
 	if (stat & NE2K_STAT_RDC) {
 		printk("RDC intr.\n");
