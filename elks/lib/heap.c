@@ -1,9 +1,9 @@
 // Kernel library
 // Local heap management
 
-#include <linuxmt/lock.h>
-#include <linuxmt/heap.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/heap.h>
+//#include <linuxmt/lock.h>
 
 // Minimal block size to hold header and free list node
 #define HEAP_MIN_SIZE (sizeof (heap_s) + sizeof (list_s))
@@ -11,7 +11,11 @@
 // Heap root
 // TODO: regroup in one structure
 
-static lock_t _heap_lock;
+// locks not needed unless SMP or reentrant kernel
+//static lock_t _heap_lock;
+#define WAIT_LOCK(lockp)
+#define EVENT_UNLOCK(lockp)
+
 heap_s * _heap_first;
 // TODO: free block list
 //static heap_s * _heap_free;
@@ -106,10 +110,10 @@ static void heap_merge_next (heap_s * h)
 
 void * heap_alloc (word_t size, byte_t tag)
 {
-	wait_lock (&_heap_lock);
+	WAIT_LOCK (&_heap_lock);
 	heap_s * h = free_get (size, tag);
 	if (h) h++;  // skip header
-	event_unlock (&_heap_lock);
+	EVENT_UNLOCK (&_heap_lock);
 	return h;
 }
 
@@ -117,14 +121,14 @@ void * heap_alloc (word_t size, byte_t tag)
 
 void heap_free (void * data)
 {
-	wait_lock (&_heap_lock);
+	WAIT_LOCK (&_heap_lock);
 	heap_s * h1 = ((heap_s *) (data)) - 1;  // back to header
 	heap_s * h2 = heap_merge_prev (h1);
 	if (h1 == h2)  // no heap_merge
 		h1->tag = HEAP_TAG_FREE;  // free
 
 	heap_merge_next (h2);
-	event_unlock (&_heap_lock);
+	EVENT_UNLOCK (&_heap_lock);
 }
 
 // Add space to heap
@@ -132,7 +136,7 @@ void heap_free (void * data)
 void heap_add (void * data, word_t size)
 {
 	if (size >= HEAP_MIN_SIZE) {
-		wait_lock (&_heap_lock);
+		WAIT_LOCK (&_heap_lock);
 		heap_s * h = (heap_s *) data;
 		h->size = size - sizeof (heap_s);
 		h->tag = HEAP_TAG_FREE;   // free
@@ -144,7 +148,7 @@ void heap_add (void * data, word_t size)
 			_heap_first = h;
 		}
 
-	event_unlock (&_heap_lock);
+		EVENT_UNLOCK (&_heap_lock);
 	}
 }
 

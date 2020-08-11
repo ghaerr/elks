@@ -199,7 +199,7 @@ ifneq ($(USEBCC), N)
 AS      = ia16-elf-as
 ASFLAGS = $(CPU_AS) $(ARCH_AS)
 CC      = $(CROSS_CC)
-CFLAGS  = $(CROSS_CFLAGS) $(CPU_CC) $(ARCH_CC) $(CFLBASE) -Wall -Os
+CFLAGS  = $(CROSS_CFLAGS) $(CPU_CC) $(ARCH_CC) $(CFLBASE) -Wall -Os -Wno-strict-aliasing
 LD      = ia16-elf-ld
 LDFLAGS = $(CPU_LD) -s
 AR      = ia16-elf-ar
