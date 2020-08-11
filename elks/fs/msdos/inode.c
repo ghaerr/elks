@@ -15,6 +15,7 @@
 #include <linuxmt/debug.h>
 
 #ifdef CONFIG_FS_DEV
+/* max 16 entries in FAT device table*/
 struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "bda",	S_IFBLK | 0644, MKDEV(3, 0) },
     { "bda1",	S_IFBLK | 0644, MKDEV(3, 1) },
@@ -25,11 +26,13 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "zero",	S_IFCHR | 0644, MKDEV(1, 5) },
     { "tcpdev",	S_IFCHR | 0644, MKDEV(8, 0) },
     { "eth",	S_IFCHR | 0644, MKDEV(9, 0) },
+    { "ptyp0",	S_IFCHR | 0644, MKDEV(2,  8)},
+    { "ttyp0",	S_IFCHR | 0644, MKDEV(4,  8)},
     { "tty1",	S_IFCHR | 0644, MKDEV(4, 0) },
-    { "tty2",	S_IFCHR | 0644, MKDEV(4, 1) },
     { "ttyS0",	S_IFCHR | 0644, MKDEV(4, 64)},
     { "ttyS1",	S_IFCHR | 0644, MKDEV(4, 65)},
-    { "ttyS2",	S_IFCHR | 0644, MKDEV(4, 66)},
+    //{ "tty2",	S_IFCHR | 0644, MKDEV(4, 1) },
+    //{ "ttyS2",S_IFCHR | 0644, MKDEV(4, 66)},
     { "console",S_IFCHR | 0600, MKDEV(4, 254)},
     { "tty",	S_IFCHR | 0666, MKDEV(4, 255) },
 };

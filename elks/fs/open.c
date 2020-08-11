@@ -369,13 +369,14 @@ int sys_open(char *filename, int flags, int mode)
     if ((mode_t)((flags + 1) & O_ACCMODE)) flag++;
     if (flag & (O_TRUNC | O_CREAT)) flag |= FMODE_WRITE;
 
-    debug_file("OPEN '%t' flags 0x%x\n", filename, flags);
+    debug_file("OPEN '%t' flags 0x%x", filename, flags);
     error = open_namei(filename, flag, mode, &inode, NULL);
     if (!error) {
 	pinode = inode;
 	if ((error = open_fd(flags, pinode)) < 0)
 	    iput(pinode);
     }
+    debug_file(" = %d\n", error);
     return error;
 }
 

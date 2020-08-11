@@ -108,7 +108,7 @@ misc_utils/tar					:miscutil				:1440k
 misc_utils/od					:miscutil				:1440k
 misc_utils/hd					:miscutil		:360k
 misc_utils/time					:miscutil			:720k
-misc_utils/kilo					:miscutil		:360k
+misc_utils/kilo					:miscutil				:1440k
 misc_utils/tty					:miscutil				:1440k
 misc_utils/ed					:be-miscutil		:720k
 elvis/elvis	::bin/vi			:elvis				:720k
