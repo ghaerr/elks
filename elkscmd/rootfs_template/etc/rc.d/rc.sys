@@ -8,12 +8,29 @@ export PATH=/bin
 # init date from hardware
 clock -s
 
+#
 # start networking
-#net start
-#net start eth
-#net start cslip 19200
-#net start slip 115200 /dev/ttyS0
-#net stop
+#
+# first check /bootopts "net=" environment variable
+case "$net" in
+eth)
+	net start eth
+	;;
+slip)
+	net start slip
+	;;
+cslip)
+	net start clsip
+	;;
+*)
+	# normal network start
+	#net start
+	#net start eth
+	#net start cslip 19200
+	#net start slip 115200 /dev/ttyS0
+	#net stop
+	;;
+esac
 
 # View message of day
 if test -f /etc/motd

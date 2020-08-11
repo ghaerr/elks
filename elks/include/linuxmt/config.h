@@ -57,7 +57,7 @@
 #define DEF_SYSSEG	0x1000
 #define DEF_SETUPSEG	DEF_INITSEG + 0x20
 #define DEF_SYSSIZE	0x2F00
-#define DEF_OPTSEG	0x50
+#define DEF_OPTSEG	0x50  /* /bootopts loaded at this segment*/
 
 #if !defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SIBO)
 #define REL_SYS

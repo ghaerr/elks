@@ -14,8 +14,6 @@
 #include <linuxmt/types.h>
 #include <linuxmt/string.h>
 
-char *___strtok = NULL;
-
 #ifndef __HAVE_ARCH_STRCPY
 
 char *strcpy(char *dest, char *src)
@@ -46,9 +44,8 @@ int atoi(register char *number)
     if (((neg = *number) == '-') || (*number == '+')) {
 	++number;
     }
-    while ((*number - '0') <= 9) {
+    while (*number >= '0' && *number <= '9')
 	n = (n * 10) + (*number++ - '0');
-    }
     return (neg == '-' ? -n : n);
 }
 
@@ -219,6 +216,8 @@ char *strpbrk(char *cs, char *ct)
 #endif
 
 #ifndef __HAVE_ARCH_STRTOK
+
+char *___strtok = NULL;
 
 char *strtok(char *s, char *ct)
 {

@@ -25,12 +25,21 @@ static char *args[] = {
 
 extern void ret_from_syscall(void);
 
-int run_init_process(register char *cmd)
+int run_init_process(char *cmd)
 {
     int num;
 
     strcpy((char *)&args[4], cmd);
     if (!(num = sys_execve(cmd, (char *)args, sizeof(args))))
+		ret_from_syscall();		/* no return, returns to user mode*/
+    return num;
+}
+
+int run_init_process_sptr(char *cmd, char *sptr, int slen)
+{
+    int num;
+
+    if (!(num = sys_execve(cmd, sptr, slen)))
 		ret_from_syscall();		/* no return, returns to user mode*/
     return num;
 }
