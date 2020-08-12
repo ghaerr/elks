@@ -49,13 +49,13 @@ int inet_process_tcpdev(register char *buf, int len)
     case TDT_AVAIL_DATA:
         down(&sock->sem);
         sock->avail_data = ((struct tdb_return_data *)buf)->ret_value;
-debug_net("avail_data sock %x %u, bufin %d\n", sock, sock->avail_data, bufin_sem);
+	debug_net("avail_data sock %x %u, bufin %d\n", sock, sock->avail_data, bufin_sem);
         up(&sock->sem);
         tcpdev_clear_data_avail();
         wake_up(sock->wait);
 	break;
     default:
-debug_net("retval %d, bufin %d\n", ((struct tdb_return_data *)buf)->ret_value, bufin_sem);
+	debug_net("retval %d, bufin %d\n", ((struct tdb_return_data *)buf)->ret_value, bufin_sem);
         wake_up(sock->wait);
     }
 
@@ -225,7 +225,6 @@ printk("inet_accept: RESTARTSYS\n");
 
     ret = ((struct tdb_accept_ret *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
-debug_net("ACCEPT retval %d\n", ret);
     if (ret >= 0) {
 	newsock->state = SS_CONNECTED;
 	ret = 0;
@@ -243,8 +242,6 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
 
     debug_net("inet_READ(socket: 0x%x size:%d nonblock: %d bufin %d)\n", sock, size,
 	   nonblock, bufin_sem);
-
-//printk("[[[[[[ %d\n", bufin_sem);
 
     if (size > TCPDEV_MAXREAD)
 	size = TCPDEV_MAXREAD;
@@ -279,7 +276,7 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
 
     if (ret > 0) {
-debug_net("INET_READ %u, %u\n", ret, sock->avail_data);
+	debug_net("INET_READ %u, %u\n", ret, sock->avail_data);
         memcpy_tofs(ubuf, &((struct tdb_return_data *)tdin_buf)->data, (size_t) ret);
         sock->avail_data = 0;
     } else debug_net("INET_READ %d, %u\n", ret, sock->avail_data);
@@ -288,7 +285,6 @@ debug_net("INET_READ %u, %u\n", ret, sock->avail_data);
 
     tcpdev_clear_data_avail();
     up(&rwlock);
-//printk("]]]]]\n");
     return ret;
 }
 
@@ -319,7 +315,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
         cmd->size = count > TDB_WRITE_MAX ? TDB_WRITE_MAX : count;
 
-debug_net("INET_WRITE(%d) %u\n", current->pid, cmd->size);
+	debug_net("INET_WRITE(%d) %u\n", current->pid, cmd->size);
         memcpy_fromfs(cmd->data, ubuf, (size_t) cmd->size);
 	usize = cmd->size;
         tcpdev_inetwrite(cmd, sizeof(struct tdb_write));
@@ -330,8 +326,10 @@ debug_net("INET_WRITE(%d) %u\n", current->pid, cmd->size);
             interruptible_sleep_on(sock->wait);
 	}
 	debug_net("got write WAIT(%d) bufin_sem %d\n", current->pid, bufin_sem);
+
 	ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
-debug_net("INET_WRITE retval %d\n", ret);
+
+	debug_net("INET_WRITE retval %d\n", ret);
 	tcpdev_clear_data_avail();
 	up(&rwlock);
 
@@ -387,7 +385,7 @@ static int inet_recv(struct socket *sock, void *buff, int len, int nonblock,
     return inet_read(sock, (char *) buff, len, nonblock);
 }
 
-int not_implemented(void)	/* Originally returned void */
+int not_implemented(void)
 {
     debug("not_implemented\n");
     return 0;
