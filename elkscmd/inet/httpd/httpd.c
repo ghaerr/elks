@@ -38,7 +38,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
-//#include <sys/wait.h>		// FIXME conflict with linuxmt/net.h including linuxmt/wait.h above*/
+#include <sys/wait.h>
 extern pid_t waitpid(pid_t, int *, int);
 
 #define DEF_PORT		80

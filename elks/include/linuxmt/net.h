@@ -3,7 +3,6 @@
 
 #include <linuxmt/types.h>
 #include <linuxmt/config.h>
-#include <linuxmt/wait.h>
 #include <linuxmt/socket.h>
 
 /* Number of protocols */

@@ -113,7 +113,7 @@ int sys_knlvsn(char *vsn)
 int sys_setgid(gid_t gid)
 {
     register __ptask currentp = current;
-    gid_t old_egid = currentp->egid;
+    //gid_t old_egid = currentp->egid;
 
     if (suser())
 	currentp->gid = currentp->egid = currentp->sgid = gid;
@@ -121,8 +121,8 @@ int sys_setgid(gid_t gid)
 	currentp->egid = gid;
     else
 	return -EPERM;
-    if (currentp->egid != old_egid)
-	currentp->dumpable = 0;
+    //if (currentp->egid != old_egid)
+	//currentp->dumpable = 0;
     return 0;
 }
 
@@ -173,7 +173,7 @@ unsigned short int sys_umask(unsigned short int mask)
 int sys_setuid(uid_t uid)
 {
     register __ptask currentp = current;
-    uid_t old_euid = currentp->euid;
+    //uid_t old_euid = currentp->euid;
 
     if (suser())
 	currentp->uid = currentp->euid = currentp->suid = uid;
@@ -181,8 +181,8 @@ int sys_setuid(uid_t uid)
 	currentp->euid = uid;
     else
 	return -EPERM;
-    if (currentp->euid != old_euid)
-	currentp->dumpable = 0;
+    //if (currentp->euid != old_euid)
+	//currentp->dumpable = 0;
     return 0;
 }
 

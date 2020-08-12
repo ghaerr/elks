@@ -24,7 +24,7 @@ extern struct wait_queue select_queue;
 // to allow composite ones through indirection (poll and select cases)
 // while saving code size (see issue #222)
 
-typedef __u16 bool_t;
+typedef __u16 bool_t;	//FIXME should not introduce boolean type here
 
 typedef bool_t (* test_t) (void *);
 
