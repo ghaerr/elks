@@ -4,7 +4,7 @@
 #define MAX_TASKS 16
 #define NGROUPS	13		/* Supplementary groups */
 #define NOGROUP 0xFFFF
-#define KSTACK_BYTES 988	/* Size of kernel stacks */
+#define KSTACK_BYTES 512	/* Size of kernel stacks */
 
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
