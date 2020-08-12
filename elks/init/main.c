@@ -118,12 +118,15 @@ static void init_task(void)
 
     mount_root();
 
-    /* Open std files in case init= is a shell*/
-    num = sys_open(s="/dev/console", O_RDWR, 0);
-    if (num < 0) /* FIXME w/o "s" below, sys_open fails, guessing string addr == DS:0*/
-	printk("Unable to open %s (error %d)\n", s, num, "s");
-    sys_dup(num);		/* open stdout*/
-    sys_dup(num);		/* open stderr*/
+    /* Don't open /dev/console for /bin/init, 0-2 closed immediately and fragments heap*/
+    if (strcmp(init_command, bininit) != 0) {
+	/* Set stdin/stdout/stderr to /dev/console if not running /bin/init*/
+	num = sys_open(s="/dev/console", O_RDWR, 0);
+	if (num < 0) /* FIXME w/o "s" below, sys_open fails, guessing string addr == DS:0*/
+	    printk("Unable to open %s (error %d)\n", s, num, "s");
+	sys_dup(num);		/* open stdout*/
+	sys_dup(num);		/* open stderr*/
+    }
 
 #ifdef CONFIG_BOOTOPTS
     /* special handling if argc/argv array setup*/

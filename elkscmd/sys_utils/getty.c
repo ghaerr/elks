@@ -53,7 +53,7 @@
 #define CONSOLE		"/dev/console"
 
 #define LOGIN		"/bin/login"
-#define HOSTFILE	"/etc/HOSTNAME"
+#define HOSTFILE	"/etc/hostname"
 #define ISSUE		"/etc/issue"
 
 /* For those requiring a super-small getty, the following define cuts out
