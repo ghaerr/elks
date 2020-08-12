@@ -109,7 +109,7 @@ void * heap_alloc (word_t size, byte_t tag)
 	wait_lock (&_heap_lock);
 	heap_s * h = free_get (size, tag);
 	if (h) h++;  // skip header
-	event_unlock (&_heap_lock);
+	EVENT_UNLOCK (&_heap_lock);
 	if (!h) printk("HEAP: no memory (%u bytes)\n", size);
 	return h;
 }
