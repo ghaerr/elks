@@ -84,7 +84,7 @@ size_t null_read(struct inode *inode, struct file *filp, char *data, size_t len)
 
 size_t null_write(struct inode *inode, struct file *filp, char *data, size_t len)
 {
-    debugmem1("null write: ignoring %d bytes!\n", len);
+    debugmem("null write: ignoring %d bytes!\n", len);
     return (size_t)len;
 }
 
@@ -100,7 +100,7 @@ size_t full_read(struct inode *inode, struct file *filp, char *data, size_t len)
 
 size_t full_write(struct inode *inode, struct file *filp, char *data, size_t len)
 {
-    debugmem1("full_write: objecting to %d bytes!\n", len);
+    debugmem("full_write: objecting to %d bytes!\n", len);
     return -ENOSPC;
 }
 
@@ -132,7 +132,7 @@ size_t kmem_read(struct inode *inode, register struct file *filp,
 
     debugmem("[k]mem_read()\n");
     sseg = split_seg_off(&soff, filp->f_pos);
-    debugmem3("Reading %u %p %p.\n", len, sseg, soff);
+    debugmem("Reading %u %p %p.\n", len, sseg, soff);
     fmemcpyb((byte_t *)data, current->t_regs.ds, (byte_t *)soff, sseg, (word_t) len);
     filp->f_pos += len;
     return (size_t) len;
@@ -146,7 +146,7 @@ size_t kmem_write(struct inode *inode, register struct file *filp,
     debugmem("[k]mem_write()\n");
 
     dseg = split_seg_off(&doff, filp->f_pos);
-    debugmem2("Writing to %d:%d\n", dseg, doff);
+    debugmem("Writing to %d:%d\n", dseg, doff);
     fmemcpyb((byte_t *)doff, dseg, (byte_t *)data, current->t_regs.ds, (word_t) len);
     filp->f_pos += len;
     return len;
@@ -321,7 +321,7 @@ int memory_open(register struct inode *inode, struct file *filp)
 	printk("Device minor %d not supported.\n", minor);
 	return -ENXIO;
     }
-    debugmem2("memory_open: minor = %u; it's /dev/%s\n",
+    debugmem("memory_open: minor = %u; it's /dev/%s\n",
 		minor, mdev_nam[minor]);
     filp->f_op = mdev_fops[minor];
     return 0;

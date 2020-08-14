@@ -116,17 +116,11 @@
 
 #ifdef DEBUGMM
 
-#define debugmem				debug
-#define debugmem1				debug1
-#define debugmem2				debug2
-#define debugmem3				debug3
+#define debugmem(...)				debug(__VA_ARGS__)
 
 #else
 
-#define debugmem(_a)
-#define debugmem1(_a,_b)
-#define debugmem2(_a,_b,_c)
-#define debugmem3(_a,_b,_c,_d)
+#define debugmem(...)
 
 #endif
 
