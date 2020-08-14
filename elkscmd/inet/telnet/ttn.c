@@ -119,24 +119,14 @@ static void scrn(void)
 			printf("\r\nTELNET BUFFER OVERFLOW\r\n");
 			finish();
 		}
-		if (count < 0)
+		if (count <= 0)
 		{
-			if (errno == EINTR)		//FIXME kernel debug of inet_read
-			{
-				printf("\r\nTELNET GOT EINTR\r\n");
-				return;
-			}
+			if (count < 0)
+				perror("Read socket");
 			printf("\r\nConnection closed\r\n");
 			finish();
 		}
-		if (!count)
-			return;
 #ifdef RAWTELNET
-		if (count > sizeof(buffer)) {
-			fprintf(stderr, "TELNET BAD READ %d\n", count);
-			exit(1);
-			return;
-		}
 		write(1, buffer, count);
 #else
 		bp= buffer;

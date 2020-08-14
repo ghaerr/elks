@@ -17,6 +17,7 @@
 #include <linuxmt/socket.h>
 #include <linuxmt/in.h>
 #include <linuxmt/arpa/inet.h>
+#include <sys/wait.h>
 #include "telnet.h"
 
 //#define RAWTELNET	/* set in telnet and telnetd for raw telnet without IAC*/
@@ -118,19 +119,16 @@ static void client_loop (int fdsock, int fdterm)
 
 		count = select (count_fd, &fds_read, &fds_write, NULL, NULL);
 		if (count < 0) {
-			perror ("select");
+			perror ("telnetd select");
 			break;
 		}
 
 		/* network -> login process*/
 		if (!count_in && FD_ISSET (fdsock, &fds_read)) {
 			count_in = read (fdsock, buf_in, MAX_BUFFER);
-			if (count_in < 0 && errno == EINTR) {	//FIXME debugs kernel inet_read()
-				strcpy(buf_in, "\nTELNETD GOT EINTR\n");
-				count_in = strlen(buf_in);
-			}
 			if (count_in <= 0) {
-				perror ("read sock");
+				if (count < 0)
+					perror ("telnetd read sock");
 				break;
 			}
 		}
@@ -147,7 +145,8 @@ static void client_loop (int fdsock, int fdterm)
 		if (!count_out && FD_ISSET (fdterm, &fds_read)) {
 			count_out = read (fdterm, buf_out, MAX_BUFFER);
 			if (count_out <= 0) {
-				perror ("read term");
+				if (count_out < 0)
+					perror ("telnetd read term");
 				break;
 			}
 		}
@@ -161,6 +160,14 @@ static void client_loop (int fdsock, int fdterm)
 		}
     }
 }
+
+#if 0
+void sigchild(void)
+{
+	waitpid(-1, NULL, WNOHANG);
+	signal(SIGCHLD, sigchild);
+}
+#endif
 
 int main(int argc, char **argv)
 {
@@ -202,25 +209,31 @@ int main(int argc, char **argv)
 	if (fd > STDERR_FILENO)
 		close(fd);
 	setsid();
+	//signal(SIGCHLD, sigchild);
 
 	while (1) {
 		connectionfd = accept (sockfd, (struct sockaddr *) NULL, NULL);
 		if (connectionfd < 0) {
-			perror ("accept");
+			perror ("telnetd accept");
 			break;
 		}
 
-		if ((ret = fork()) == -1)
+		waitpid(-1, NULL, WNOHANG);		/* reap previous accepts*/
+
+		if ((ret = fork()) == -1)		/* handle new accept*/
 			fprintf(stderr, "telnetd: No processes\n");
 		else if (ret == 0) {
 			close(sockfd);
 			pid = term_init(&pty_fd);
 			if (pid != -1) {
 				client_loop (connectionfd, pty_fd);
+
 				kill (pid, SIGKILL);
+				waitpid(pid, NULL, 0);
 			}
 			close (connectionfd);
 			close (pty_fd);
+			exit(0);
 		} else {
 			close(connectionfd);
 		}
