@@ -45,6 +45,11 @@ int inet_process_tcpdev(register char *buf, int len)
     case TDT_CHG_STATE:
         sock->state = (unsigned char) ((struct tdb_return_data *)buf)->ret_value;
         tcpdev_clear_data_avail();
+	debug_net("CHG_STATE(%d) sock %x %d\n", current->pid, sock, sock->state);
+	if (sock->state == SS_DISCONNECTING) {
+	    sock->flags |= SO_CLOSING;
+	    wake_up(sock->wait);
+	}
         break;
     case TDT_AVAIL_DATA:
         down(&sock->sem);
@@ -214,9 +219,9 @@ static int inet_accept(register struct socket *sock,
 
     /* Sleep until tcpdev has news */
     while (bufin_sem == 0) {
-        sock->flags |= SO_WAITDATA;
+        //sock->flags |= SO_WAITDATA;
         interruptible_sleep_on(sock->wait);
-        sock->flags &= ~SO_WAITDATA;
+        //sock->flags &= ~SO_WAITDATA;
         if (current->signal) {
 printk("inet_accept: RESTARTSYS\n");
             return -ERESTARTSYS;
@@ -248,7 +253,10 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
 
     /* ensure read blocks until data - wait for ktcp to report data available*/
     while (sock->avail_data == 0) {
-	debug_net("inet_read: waiting on sock->avail_data sock %x\n", sock);
+	/* return EOF on socket remote closed*/
+	if (sock->flags & SO_CLOSING)
+	    return 0;
+	debug_net("inet_read(%d): waiting on sock->avail_data sock %x\n", current->pid, sock);
 	interruptible_sleep_on(sock->wait);
 	if (current->signal)
 	    return -EINTR;
@@ -276,7 +284,7 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
 
     if (ret > 0) {
-	debug_net("INET_READ %u, %u\n", ret, sock->avail_data);
+	debug_net("INET_READ(%d) %u, %u\n", current->pid, ret, sock->avail_data);
         memcpy_tofs(ubuf, &((struct tdb_return_data *)tdin_buf)->data, (size_t) ret);
         sock->avail_data = 0;
     } else debug_net("INET_READ %d, %u\n", ret, sock->avail_data);
