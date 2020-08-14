@@ -29,12 +29,12 @@ int root_mountflags = 0;
 #endif
 static int boot_console;
 static char bininit[] = "/bin/init";
+static char *init_command = bininit;
 
 #ifdef CONFIG_BOOTOPTS
 /*
  * Parse /bootopts startup options
  */
-static char *init_command = bininit;
 static int argv_slen;
 /* argv_init doubles as sptr data for sys_execv later*/
 static char *argv_init[80] = { NULL, bininit, NULL };
