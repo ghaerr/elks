@@ -113,7 +113,7 @@ struct tty *determine_tty(dev_t dev)
     return NULL;
 }
 
-/* standard ops open/release routines for dircon, bioscon, pty*/
+/* standard ops open/release routines for dircon and bioscon*/
 int ttystd_open(struct tty *tty)
 {
     /* increment use count, don't init if already open*/
@@ -452,7 +452,7 @@ static struct file_operations tty_fops = {
     tty_read,
     tty_write,
     NULL,
-    tty_select,			/* Select - needs doing */
+    tty_select,
     tty_ioctl,			/* ioctl */
     tty_open,
     tty_release

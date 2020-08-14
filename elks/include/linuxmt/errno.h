@@ -159,7 +159,7 @@
 
 /* Should never be seen by user programs */
 
-#define ERESTARTSYS	512	/* Restart system */
+#define ERESTARTSYS	512	/* Restart system call*/
 #define ERESTARTNOINTR	513	/* Restart without interrupts */
 #define ENOIOCTLCMD	515	/* No ioctl command */
 

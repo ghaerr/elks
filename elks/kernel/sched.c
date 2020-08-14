@@ -17,18 +17,17 @@
 #define idle_task task[0]
 
 __task task[MAX_TASKS];
-unsigned char nr_running;
-
 __ptask current = task;
 __ptask previous;
 
+//static unsigned char nr_running;
 extern int intr_count;
 
 static void run_timer_list();
 
 void add_to_runqueue(register struct task_struct *p)
 {
-    nr_running++;
+    //nr_running++;
     (p->prev_run = idle_task.prev_run)->next_run = p;
     p->next_run = &idle_task;
     idle_task.prev_run = p;
@@ -38,15 +37,15 @@ void del_from_runqueue(register struct task_struct *p)
 {
 #if 0       /* sanity tests */
     if (!p->next_run || !p->prev_run) {
-    printk("task %d not on run-queue (state=%d)\n", p->pid, p->state);
-    return;
+	printk("task %d not on run-queue (state=%d)\n", p->pid, p->state);
+	return;
     }
-#endif
     if (p == &idle_task) {
         printk("idle task may not sleep\n");
         return;
     }
-    nr_running--;
+#endif
+    //nr_running--;
     (p->next_run->prev_run = p->prev_run)->next_run = p->next_run;
     p->next_run = p->prev_run = NULL;
 
@@ -102,13 +101,13 @@ void schedule(void)
 	    timeout = prev->timeout;
 	}
     }
+
     /* Choose a task to run next */
     next = prev->next_run;
     if (prev->state != TASK_RUNNING)
 	del_from_runqueue(prev);
     if (next == &idle_task)
         next = next->next_run;
-
     set_irq();
 
     if (next != prev) {

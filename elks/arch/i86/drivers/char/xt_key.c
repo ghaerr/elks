@@ -321,15 +321,21 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	key = *(scan_tabs[mode] + code);
 
         /* Step 6: Modify keyboard character based on some special states*/
-	if ((ModeState & (CTRL|ALT)) == ALT)
+	if ((ModeState & (CTRL|ALT)) == ALT) {
+	    /* Alt-1 - Alt-3 are also console switch (for systems w/no fnkeys)*/
+	    if (key >= '1' && key <= '3') {
+		Console_set_vc(key - '1');
+		return;
+	    }
 	    key |= 0x80;	/* ALT-.. (assume codepage is OEM 437) */
+	}
 	    
 	if (!key)		/* map zero table entries to '@' */
 	    key = '@';
 	    
 	if ((ModeState & (CTRL|ALT)) == CTRL)
 	    key &= 0x1F;	/* CTRL-.. */
-	    
+
 #ifdef CONFIG_EMUL_ANSI
 	/* Step 7: Convert octal 0260-0277 values to ANSI escape sequences*/
 	code = mode = 0;

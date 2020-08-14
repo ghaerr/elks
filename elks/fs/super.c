@@ -519,7 +519,7 @@ void mount_root(void)
 	    sb->s_covered = sb->s_mounted;
 /*	    sb->s_flags = (unsigned short int) root_mountflags;*/
 	    current->fs.pwd = current->fs.root = sb->s_mounted;
-	    printk("VFS: Mounted root (%s filesystem)%s.\n",
+	    printk("VFS: Mounted root 0x%04x (%s filesystem)%s.\n", ROOT_DEV,
 		   fp->name, (sb->s_flags & MS_RDONLY) ? " readonly" : "");
 	    iput(d_inode);
 	    filp->f_count = 0;

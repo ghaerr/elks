@@ -463,6 +463,23 @@ int main(int argc, char **argv)
 	dup2(fd, 1);
 	dup2(fd, 2);
 	debug("starting\r\n");
+
+	/* debug /bootopts:*/
+	printf("ARGS: ");
+	char **av = argv;
+	while (*av)
+		printf("'%s'", *av++);
+	printf("\n");
+	printf("ENV: ");
+	extern char **environ;
+	char **env = environ;
+	while (*env)
+		printf("'%s'", *env++);
+	printf("\n");
+#else
+	close(0);
+	close(1);
+	close(2);
 #endif
 
 #if USE_UTMP
@@ -486,6 +503,9 @@ int main(int argc, char **argv)
 		debug("SCAN sysinit\r\n");
 		scanFile(passOne);
 
+		if (argc > 1 && argv[1][0] >= '0' && argv[1][0] <= '9')
+			runlevel = argv[1][0];
+
 		/* spawn needed children */
 		debug("SCAN start runlevel %c\r\n", runlevel);
 		scanFile(enterRunlevel);
@@ -505,6 +525,9 @@ int main(int argc, char **argv)
 			scanFile(spawnThisOne);
 		}
 	} else {
+		if (argc < 2)
+			fatalmsg("Usage: init <runlevel>\n");
+
 		/* try to store new run-level into /etc/initrunlvl*/
 		int f = open(INITLVL, O_CREAT|O_WRONLY, 0644);
 		if (f < 0)

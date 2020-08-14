@@ -4,7 +4,7 @@
 #define MAX_TASKS 16
 #define NGROUPS	13		/* Supplementary groups */
 #define NOGROUP 0xFFFF
-#define KSTACK_BYTES 988	/* Size of kernel stacks */
+#define KSTACK_BYTES 512	/* Size of kernel stacks */
 
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
@@ -69,7 +69,7 @@ struct task_struct {
     __s16			state;
     __u32			timeout;	/* for select() */
     struct wait_queue		*waitpt;	/* Wait pointer */
-    struct wait_queue       *poll [POLL_MAX];  /* polled queues */
+    struct wait_queue		*poll[POLL_MAX];  /* polled queues */
     struct task_struct		*next_run;
     struct task_struct		*prev_run;
     struct file_struct		files;		/* File system structure */
@@ -83,10 +83,9 @@ struct task_struct {
     struct task_struct		*p_child;
     struct wait_queue		child_wait;
     int				exit_status;	/* process exit status*/
-    struct inode		* t_inode;
+    struct inode		*t_inode;
     sigset_t			signal;		/* Signal status */
     struct signal_struct	sig;		/* Signal block */
-    int 			dumpable;	/* Can core dump */
 
 #ifdef CONFIG_SUPPLEMENTARY_GROUPS
     gid_t			groups[NGROUPS];
@@ -162,11 +161,8 @@ extern void _wake_up(struct wait_queue *,unsigned short int);
 
 /*@+namechecks@*/
 
-// These old style semaphore functions are unsafe
-// Use count_t for reference counting
-// Use lock_t for object locking
-extern void down (short int *)  DEPRECATED;
-extern void up (short int *)  DEPRECATED;
+extern void down(short *);
+extern void up(short *);
 
 extern void wake_up_process(struct task_struct *);
 

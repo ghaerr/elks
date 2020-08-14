@@ -3,7 +3,6 @@
 
 #include <linuxmt/types.h>
 #include <linuxmt/config.h>
-#include <linuxmt/wait.h>
 #include <linuxmt/socket.h>
 
 /* Number of protocols */
@@ -69,6 +68,7 @@ struct proto_ops {
     int (*fcntl) ();
 };
 
+#define SO_CLOSING	(1 << 12)
 #define SO_ACCEPTCON	(1 << 13)
 #define SO_WAITDATA	(1 << 14)
 #define SO_NOSPACE	(1 << 15)

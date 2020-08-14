@@ -6,8 +6,11 @@
  */
 
 /* NOTE: all queue sizes must be a power of two!*/
-#define INQ_SIZE	128	/* tty/pty input queue size*/
-#define OUTQ_SIZE	64	/* tty/pty output queue size*/
+#define INQ_SIZE	128	/* tty input queue size*/
+#define OUTQ_SIZE	64	/* tty output queue size*/
+
+#define PTYINQ_SIZE	64	/* pty input queue size*/
+#define PTYOUTQ_SIZE	128	/* pty output queue size*/
 
 #define RSINQ_SIZE	1024	/* serial input queue SLIP_MTU+128+8*/
 #define RSOUTQ_SIZE	64	/* serial output queue size*/

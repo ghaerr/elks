@@ -152,13 +152,13 @@ void _wake_up(register struct wait_queue *q, unsigned short int it)
  *	Semaphores. These are not IRQ safe nor needed to be so for ELKS
  */
 
-void up(register short int *s)
+void up(register short *s)
 {
     if (++(*s) == 0)		/* Gone non-negative */
 	wake_up((void *) s);
 }
 
-void down(register short int *s)
+void down(register short *s)
 {
     /* Wait for the semaphore */
     while (*s < 0)

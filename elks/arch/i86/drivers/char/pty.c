@@ -23,11 +23,11 @@ int pty_open(struct inode *inode, struct file *file)
     register struct tty *otty;
 
     if (!(otty = determine_tty(inode->i_rdev))) {
-	debug("failed: NODEV\n");
+	debug("pty open fail NODEV\n");
 	return -ENODEV;
     }
     if (otty->flags & TTY_OPEN) {
-	debug("failed: BUSY\n");
+	debug("pty open fail BUSY\n");
 	return -EBUSY;
     }
     return 0;
@@ -37,6 +37,7 @@ void pty_release(struct inode *inode, struct file *file)
 {
     register struct tty *otty;
 
+    debug("pty release\n");
     if ((otty = determine_tty(inode->i_rdev)))
 	kill_pg(otty->pgrp, SIGHUP, 1);
 }
@@ -48,7 +49,8 @@ int pty_select (struct inode *inode, struct file *file, int sel_type)
 
 	switch (sel_type) {
 		case SEL_IN:
-		if (tty->outq.len == 0) {
+		debug("pty select(%d)\n", current->pid);
+		if (tty->outq.len == 0 && tty->usecount) {
 			select_wait (&tty->outq.wait);
 			break;
 		}
@@ -77,6 +79,10 @@ size_t pty_read (struct inode *inode, struct file *file, char *data, size_t len)
 
 	struct tty *tty = determine_tty (inode->i_rdev);
 	if (tty == NULL) return -EBADF;
+
+	/* return EOF on master closed*/
+	if (!tty->usecount)
+		return 0;
 
 	while (count < len) {
 		err = chq_wait_rd (&tty->outq, (file->f_flags & O_NONBLOCK) | count);
@@ -117,6 +123,22 @@ size_t pty_write (struct inode *inode, struct file *file, char *data, size_t len
 	return count;
 }
 
+static int ttyp_open(struct tty *tty)
+{
+	if (tty->usecount++)
+		return 0;
+	return tty_allocq(tty, PTYINQ_SIZE, PTYOUTQ_SIZE);
+}
+
+static void ttyp_release(struct tty *tty)
+{
+	debug("TTYP release\n");
+	if (--tty->usecount == 0) {
+		tty_freeq(tty);
+		wake_up(&tty->outq.wait);
+	}
+}
+
 static int ttyp_write(register struct tty *tty)
 {
     if (tty->outq.len == tty->outq.size)
@@ -144,8 +166,8 @@ static struct file_operations pty_fops = {
 };
 
 struct tty_ops ttyp_ops = {
-    ttystd_open,
-    ttystd_release,
+    ttyp_open,
+    ttyp_release,
     ttyp_write,
     NULL,
     NULL			/* ioctl*/
