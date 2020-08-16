@@ -64,14 +64,28 @@ again:
 			fprintf(stderr, "telnetd: Can't open pty %s\n", pty_name);
 			exit(1);
 		}
-	
-#if 0
+
+		/* set login tty to sane mode, since getty not called*/
+{
 		struct termios termios;
-		/* turn off echo - not needed with telnet ECHO option on*/
 		tcgetattr(tty_fd, &termios);
-		termios.c_lflag &= ~(ECHO);
+
+		termios.c_lflag |= ISIG | ICANON | ECHO | ECHOE;
+		termios.c_lflag &= ~(IEXTEN | ECHOK | NOFLSH | ECHONL);
+		termios.c_iflag |= BRKINT | ICRNL;
+		termios.c_iflag &= ~(IGNBRK | IGNPAR | PARMRK | INPCK | ISTRIP | INLCR | IGNCR | IXON | IXOFF | IXANY);
+		termios.c_oflag |= OPOST | ONLCR;
+		termios.c_oflag &= ~XTABS;
+		termios.c_cflag &= ~PARENB;
+		termios.c_cflag |= CS8 | CREAD | HUPCL;
+		termios.c_cflag |= CLOCAL;			/* ignore modem control lines*/
+		termios.c_cc[VMIN] = 1;
+		termios.c_cc[VTIME] = 0;
+
+		/* turn off echo - not needed with telnet ECHO option on*/
+		//termios.c_lflag &= ~ECHO;
 		tcsetattr(tty_fd, TCSANOW, &termios);
-#endif
+}
 
 		dup2(tty_fd, STDIN_FILENO);
 		dup2(tty_fd, STDOUT_FILENO);
