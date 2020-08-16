@@ -7,6 +7,16 @@ SECTIONS {
 		*(.text .text.*)
 		. = ALIGN(0x10);
 	}
+	.fartext 0 : AT(0x10000) {
+		/*
+		 * Some small-model programs might want to break out of the
+		 * small memory model a bit --- and choose to place some of
+		 * their code in a far segment outside the default text
+		 * segment.  Allow this.
+		 */
+		*(.fartext .fartext$ .fartext.*)
+		. = ALIGN(0x10);
+	}
 	.data 0 : AT(0x20000) {
 		*(.nildata .nildata.*)
 		*(.rodata .rodata.*)
