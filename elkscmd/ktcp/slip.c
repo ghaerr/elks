@@ -271,13 +271,16 @@ void cslip_compress(__u8 **packet, int *len)
 
 void slip_send(unsigned char *packet, int len)
 {
-    unsigned char buf[128+2];
+    unsigned char buf[SLIP_MTU+2];
     unsigned char *p = packet;
     unsigned char *q = buf;
 
 #if CSLIP
     if (linkprotocol == LINK_CSLIP)
 	cslip_compress(&p, &len);
+#endif
+#ifdef DEBUG
+    printf("slip: send %d\n", len);
 #endif
 
     *q++ = END;
