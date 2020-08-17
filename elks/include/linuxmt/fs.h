@@ -499,9 +499,11 @@ extern void ll_rw_blk(int,struct buffer_head *);
 extern void ll_rw_page(void);
 
 // FIXME: duplicates
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
 extern void map_buffer(struct buffer_head *);
 extern void unmap_buffer(struct buffer_head *);
 extern void unmap_brelse(struct buffer_head *);
+#endif
 extern void print_bufmap_status(void);
 
 extern void put_super(kdev_t);
