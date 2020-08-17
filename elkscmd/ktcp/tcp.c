@@ -113,13 +113,13 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & (TF_SYN|TF_ACK)) {
 	if (cb->seg_ack != cb->send_una + 1) {
-
+printf("SYN sent, wrong ACK (listen port not expired)\n");
 	    /* Send RST */
 	    cb->send_nxt = h->acknum;
 	    cb->state = TS_CLOSED;	//FIXME not needed
-	    tcp_reset_connection(cb);	/* deallocate*/
+	    //tcp_reset_connection(cb);	/* deallocate*/
 	    //tcp_send_reset(cb);
-	    //tcpcb_remove(cb);
+	    tcpcb_remove(cb);
 	    return;
 	}
 
@@ -134,7 +134,7 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	cb->datalen = 0;
 	tcp_output(cb);
-printf("CONNECT complete\n");
+//printf("CONNECT complete\n");
 	retval_to_sock(cb->sock, 0);
 
 	return;
@@ -391,7 +391,7 @@ debug_tcp("ktcp: update %x,%x\n", cbs_in_time_wait, cbs_in_user_timeout);
 	tcpcb_push_data();
 }
 
-/* called when input on tcpdevfd*/
+/* process an incoming TCP packet*/
 void tcp_process(struct iphdr_s *iph)
 {
     struct iptcp_s iptcp;

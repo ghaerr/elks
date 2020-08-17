@@ -24,6 +24,7 @@
 #include <linuxmt/net.h>
 #include <linuxmt/time.h>
 #include <linuxmt/arpa/inet.h>
+#include "netlib.h"
 #else
 #include <sys/time.h>
 #include <netinet/in.h>
@@ -41,7 +42,6 @@
 
 #define BUFSIZE		1024
 
-static char *prog_name;
 static int tcp_fd;
 static char *term_env;
 static struct termios def_termios;
@@ -55,34 +55,6 @@ void finish()
 	tcsetattr(0, TCSANOW, &def_termios);
 	exit(0);	
 }
-
-unsigned long int in_aton(const char *str)
-{
-        unsigned long l;
-        unsigned int val;
-        int i;
-
-        l = 0;
-        for (i = 0; i < 4; i++)
-        {
-                l <<= 8;
-                if (*str != '\0')
-                {
-                        val = 0;
-                        while (*str != '\0' && *str != '.')
-                        {
-                                val *= 10;
-                                val += *str - '0';
-                                str++;
-                        }
-                        l |= val;
-                        if (*str != '\0')
-                                str++;
-                }
-        }
-        return(htonl(l));   
-}
-
 
 static void keybd(void)
 {
@@ -169,44 +141,37 @@ int main(int argc, char *argv[])
 {
 	unsigned short port;
 	struct sockaddr_in locadr, remadr;
-	int ret;
-	int nonblock;
+	int ret, nonblock;
+	ipaddr_t ipaddr;
 
-	prog_name= argv[0];
-	if (argc <2 || argc>3)
-	{
+	if (argc < 2 || argc > 3) {
 		fprintf(stderr, "Usage: %s host <port>\r\n", argv[0]);
 		exit(1);
 	}
 	tcgetattr(0, &def_termios);
-    signal(SIGINT, finish);
+	signal(SIGINT, finish);
 
 	tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
 	
 	locadr.sin_family = AF_INET;
-	locadr.sin_port = 0; /* any port */
+	locadr.sin_port = PORT_ANY;
 	locadr.sin_addr.s_addr = INADDR_ANY;
 
-    ret = bind(	tcp_fd,
-    			(struct sockaddr *)&locadr,
-    			sizeof(struct sockaddr_in));
+	ret = bind(tcp_fd, (struct sockaddr *)&locadr, sizeof(struct sockaddr_in));
 	if (ret < 0){
 		perror("Bind failed");
 		exit(1);
 	}
 
-	if (argc == 3)
-		port = atoi(argv[2]);
-	else
-		port = 23;	
+	ipaddr = in_gethostbyname(argv[1]);
+	port = (argc >= 3)? atoi(argv[2]): 23;
 
 	remadr.sin_family = AF_INET;
-	remadr.sin_port = htons( port );
-	remadr.sin_addr.s_addr = in_aton(argv[1]);
+	remadr.sin_port = htons(port);
+	remadr.sin_addr.s_addr = ipaddr;
 
-	printf("Connecting to %s (%lx) port %u\n",argv[1], in_aton(argv[1]), port);
-	ret = connect(tcp_fd, (struct sockaddr *)&remadr,
-    			sizeof(struct sockaddr_in));
+	printf("Connecting to %s (%s:%u)\n", argv[1], in_ntoa(ipaddr), port);
+	ret = connect(tcp_fd, (struct sockaddr *)&remadr, sizeof(struct sockaddr_in));
 	if (ret < 0){
 		perror("Connection failed");
 		exit(1);
@@ -227,11 +192,10 @@ int main(int argc, char *argv[])
 	ioctl(0, FIONBIO, &nonblock);
 
 	for (;;){
-		int ret;
 		fd_set fdset;
 		FD_ZERO(&fdset);
-        FD_SET(0, &fdset);
-        FD_SET(tcp_fd, &fdset);
+		FD_SET(0, &fdset);
+		FD_SET(tcp_fd, &fdset);
 
 		ret = select(tcp_fd + 1, &fdset, NULL, NULL, NULL);
 		if (ret < 0) {
@@ -239,13 +203,10 @@ int main(int argc, char *argv[])
 			break;
 		}
 
-		if (FD_ISSET(tcp_fd, &fdset)){
+		if (FD_ISSET(tcp_fd, &fdset))
 			scrn();
-		}
-
-		if (FD_ISSET(0, &fdset)){
+		if (FD_ISSET(0, &fdset))
 			keybd();
-		}			
 	}
 	finish();
 }

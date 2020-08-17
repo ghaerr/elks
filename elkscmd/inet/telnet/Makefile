@@ -12,7 +12,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-SRCS = ttn.c ttn_conf.c
+SRCS = ttn.c ttn_conf.c netlib.c
 OBJS = $(SRCS:.c=.o)
 
 all:	telnet
