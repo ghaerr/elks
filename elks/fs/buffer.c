@@ -95,8 +95,8 @@ static void put_last_lru(register struct buffer_head *bh)
 
 void buffer_init(void)
 {
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
     struct buffer_head *bh = buffer_heads;
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
     segment_s *seg = 0;		/* init stops compiler warning*/
     int bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
     int nbufs = 0;
@@ -106,7 +106,7 @@ void buffer_init(void)
 	L1map[--i] = NULL;
     } while (i > 0);
 #else
-	char * p = L1buf;
+    char *p = (char *)L1buf;
 #endif
 
     goto buf_init;
