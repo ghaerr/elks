@@ -11,8 +11,8 @@ struct sockaddr_in {
     struct in_addr sin_addr;
 };
 
-#define INADDR_ANY	((unsigned long int) 0x00000000)
-#define PORT_ANY	((unsigned int) 0x0000)
+#define INADDR_ANY	((unsigned long) 0x00000000)
+#define PORT_ANY	((unsigned short) 0x0000)
 #define INADDR_NODE	0xffffffff
 #define INADDR_LOOPBACK	0x7f000001
 

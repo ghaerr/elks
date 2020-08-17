@@ -165,6 +165,7 @@ static void tcpdev_connect(void)
 {
     struct tdb_connect *db = (struct tdb_connect *)sbuf;
     struct tcpcb_list_s *n;
+    ipaddr_t addr;
 
     n = tcpcb_find_by_sock(db->sock);
     if (!n || n->tcpcb.state != TS_CLOSED) {
@@ -172,7 +173,12 @@ static void tcpdev_connect(void)
 	return;
     }
 
-    n->tcpcb.remaddr = db->addr.sin_addr.s_addr;
+    /* convert localhost to local_ip*/
+    addr = db->addr.sin_addr.s_addr;
+    if (addr == ntohl(INADDR_LOOPBACK))
+	addr = local_ip;
+//printf("connect rem %s\n", in_ntoa(addr));
+    n->tcpcb.remaddr = addr;
     n->tcpcb.remport = ntohs(db->addr.sin_port);
 
     if (n->tcpcb.remport == NETCONF_PORT && n->tcpcb.remaddr == 0) {
@@ -251,7 +257,7 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
 void tcpdev_checkread(struct tcpcb_s *cb)
 {
     struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
-    int data_avail = CB_BUF_USED(cb);
+    //int data_avail = CB_BUF_USED(cb);
     void * sock;
 
     if (cb->bytes_to_push <= 0)
@@ -395,14 +401,15 @@ void tcpdev_sock_state(struct tcpcb_s *cb, int state)
 /* called every ktcp cycle when tcpdevfd data is ready*/
 void tcpdev_process(void)
 {
-    int len = read(tcpdevfd, sbuf, TCPDEV_BUFSIZ);
+	int len = read(tcpdevfd, sbuf, TCPDEV_BUFSIZ);
+	if (len > (int)sizeof(sbuf)) printf("ktcp: tcpdev_process OVERFLOW\n"); //FIXME
 
-    if (len <= 0)
-	return;
+	if (len <= 0)
+		return;
 
-    //printf("tcpdev_process : read %d bytes\n",len);
+	//printf("tcpdev_process : read %d bytes\n",len);
 
-    switch (sbuf[0]){
+	switch (sbuf[0]){
 	case TDC_BIND:
 	    //printf("tcpdev_bind\n");
 	    tcpdev_bind();
@@ -431,5 +438,5 @@ void tcpdev_process(void)
 	    //printf("tcpdev_write\n");
 	    tcpdev_write();
 	    break;
-    }
+	}
 }
