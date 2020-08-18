@@ -18,13 +18,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
-
+#include <arpa/inet.h>
 #include "ip.h"
 #include "tcp.h"
 #include "tcpdev.h"
 #include "icmp.h"
 #include "slip.h"
-#include <linuxmt/arpa/inet.h>
 #include "deveth.h"
 #include "arp.h"
 #include "netconf.h"

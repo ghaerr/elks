@@ -1,17 +1,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#ifndef __linux__ 
-#include <linuxmt/socket.h>
-#include <linuxmt/un.h>
-#include <linuxmt/in.h>
-#include <linuxmt/arpa/inet.h>
-#else
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include<string.h>
-#endif
 
 char *socket_path = "/var/uds";
 

@@ -1,45 +1,15 @@
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
-#include <linuxmt/arpa/inet.h>
-#include "netlib.h"
+#include <arpa/inet.h>
+#include <netdb.h>
+/*
+ * Aug 2020 Greg Haerr
+ *
+ * Inspired by very old BSD code, Copyright (c) 1983 Regents of the University of California.
+ * All rights reserved.
+ */
 
-/* ascii to ip address in host byte order*/
-ipaddr_t in_aton(const char *str)
-{
-	unsigned long addr = 0;
-	unsigned int val;
-	int i;
-
-	for (i = 0; i < 4; i++) {
-		addr <<= 8;
-		if (*str) {
-			val = 0;
-			while (*str && *str != '.') {
-				val *= 10;
-				val += *str++ - '0';
-			}
-			addr |= val;
-			if (*str)
-				str++;
-		}
-	}
-	return htonl(addr);
-}
-
-/* ip address to ascii*/
-char *in_ntoa(ipaddr_t in)
-{
-	register unsigned char *p;
-	static char b[18];
-
-	p = (unsigned char *)&in;
-	sprintf(b, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
-	return b;
-}
-
-#define HOSTSFILE	"/etc/hosts"
-
+/* return ip address in network byte order of host by reading /etc/hosts file*/
 ipaddr_t in_gethostbyname(char *str)
 {
 	char *p, *cp;
@@ -56,7 +26,7 @@ ipaddr_t in_gethostbyname(char *str)
 	if (!strcmp(str, "localhost"))
 		return htonl(INADDR_LOOPBACK);
 
-	if ((fp = fopen(HOSTSFILE, "r")) == NULL)
+	if ((fp = fopen(_PATH_HOSTS, "r")) == NULL)
 		return 0;
 
 	while ((p = fgets(buf, sizeof(buf), fp)) != NULL) {

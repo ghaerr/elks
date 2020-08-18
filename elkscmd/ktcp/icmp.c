@@ -13,11 +13,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <arpa/inet.h>
 #include "config.h"
 #include "ip.h"
 #include "icmp.h"
 #include "netconf.h"
-#include <linuxmt/arpa/inet.h>
 
 int icmp_init(void)
 {

@@ -21,13 +21,11 @@ Created:	Nov 11, 1993 by Philip Homburg <philip@cs.vu.nl>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
+#include <arpa/inet.h>
 #include "ip.h"
 #include "tcp.h"
 #include "slip.h"
 #include "vjhc.h"
-
-#include <linuxmt/arpa/inet.h>
 
 #define IP_MIN_HDR_SIZE 20
 #define IP_MAX_HDR_SIZE 60

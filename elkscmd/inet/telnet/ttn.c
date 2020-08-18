@@ -18,19 +18,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
-
-#ifndef __linux__
-#include <linuxmt/in.h>
-#include <linuxmt/net.h>
-#include <linuxmt/time.h>
-#include <linuxmt/arpa/inet.h>
-#include "netlib.h"
-#else
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
-
 #include "ttn.h"
 
 //#define DEBUG 1

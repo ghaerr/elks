@@ -9,8 +9,8 @@
  *	2 of the License, or (at your option) any later version.
  */
 
+#include <arpa/inet.h>
 #include "config.h"
-#include <linuxmt/arpa/inet.h>
 #include "tcp.h"
 #include "tcp_cb.h"
 #include "tcpdev.h"

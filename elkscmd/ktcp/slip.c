@@ -16,7 +16,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <linuxmt/termios.h>
+#include <termios.h>
 
 #include "ip.h"
 #include "slip.h"

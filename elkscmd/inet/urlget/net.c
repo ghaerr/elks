@@ -13,47 +13,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifndef __linux__
-#include <linuxmt/in.h>
-#include <linuxmt/net.h>
-#include <linuxmt/time.h>
-#include <linuxmt/arpa/inet.h>
-#else
 #include <sys/time.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
-
-#include <sys/socket.h>
-
-
-unsigned long int in_aton(str)
-const char *str;
-{
-        unsigned long l;
-        unsigned int val;
-        int i;
-
-        l = 0;
-        for (i = 0; i < 4; i++)
-        {
-                l <<= 8;
-                if (*str != '\0')
-                {
-                        val = 0;
-                        while (*str != '\0' && *str != '.')
-                        {
-                                val *= 10;
-                                val += *str - '0';
-                                str++;
-                        }
-                        l |= val;
-                        if (*str != '\0')
-                                str++;
-                }
-        }
-        return(htonl(l));   
-}
 
 int net_connect(host, port)
 char *host;
@@ -66,7 +29,7 @@ int port;
 	netfd = socket(AF_INET, SOCK_STREAM, 0);
 	
 	in_adr.sin_family = AF_INET;
-	in_adr.sin_port = 0; /* any port */
+	in_adr.sin_port = PORT_ANY;
 	in_adr.sin_addr.s_addr = INADDR_ANY;
 
     ret = bind(netfd, (struct sockaddr *)&in_adr, sizeof(struct sockaddr_in));
@@ -77,7 +40,7 @@ int port;
 	
 	in_adr.sin_family = AF_INET;
 	in_adr.sin_port = htons(port);
-	in_adr.sin_addr.s_addr = in_aton(host);
+	in_adr.sin_addr.s_addr = in_gethostbyname(host);
 
 	ret = connect(netfd, (struct sockaddr *)&in_adr, sizeof(struct sockaddr_in));
 	if (ret < 0){

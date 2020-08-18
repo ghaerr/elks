@@ -30,14 +30,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#ifndef __linux__
-#include <linuxmt/in.h>
-#include <linuxmt/net.h>
-#include <linuxmt/arpa/inet.h>
-#else
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
 #include <sys/wait.h>
 extern pid_t waitpid(pid_t, int *, int);
 
