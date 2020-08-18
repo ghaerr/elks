@@ -139,10 +139,11 @@ ifneq "" "$(DESTDIR)"
 INSTALL_DATA = install -c -m 644
 MULTIINCDIR = $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/include
 .PHONY: install
-install: $(LIBC)
+install: $(LIBC) uninstall
 	mkdir -p $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR) \
 		 $(MULTIINCDIR)/asm $(MULTIINCDIR)/sys \
-		 $(MULTIINCDIR)/arch $(MULTIINCDIR)/arpa $(MULTIINCDIR)/netinet
+		 $(MULTIINCDIR)/arch $(MULTIINCDIR)/arpa \
+		 $(MULTIINCDIR)/netinet $(MULTIINCDIR)/linuxmt
 ifeq "" "$(filter -mcmodel=medium,$(MULTILIB))"
 	$(INSTALL_DATA) $(LIBC) $(CRT0) \
 	    $(TOPDIR)/elks/elks-small.ld $(TOPDIR)/elks/elks-tiny.ld \
