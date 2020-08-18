@@ -166,12 +166,20 @@ uninstall:
 	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/elks-small.ld \
 	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/elks-tiny.ld \
 	      $(MULTIINCDIR)/autoconf.h \
-	      $(patsubst include/%,$(MULTIINCDIR)/%, \
-		  $(wildcard include/*.h include/asm/*.h include/sys/*.h \
-			     include/arpa/*.h include/netinet/*.h)) \
-	      $(patsubst $(TOPDIR)/elks/include/%,$(MULTIINCDIR)/%, \
-		  $(wildcard $(TOPDIR)/elks/include/arch/*.h \
-			     $(TOPDIR)/elks/include/linuxmt/*.h))
+	      $(patsubst include/%,$(MULTIINCDIR)/%,$(wildcard include/*.h))
+	# Assume that all <asm/*>, <sys/*>, <arpa/*>, <netinet/*>, <arch/*>,
+	# & <linuxmt/*> header files were installed from here (elks-libc) &
+	# not from elsewhere.
+	#
+	# This also allows us to clean away obsolete internal header files
+	# such as <linuxmt/arpa/inet.h> --- see discussion at
+	# https://github.com/jbruchon/elks/pull/713 .
+	#
+	# This code will need to be adjusted if the assumption is ever broken.
+	#	-- tkchia 20200818
+	$(RM) -r $(MULTIINCDIR)/asm $(MULTIINCDIR)/sys $(MULTIINCDIR)/arpa \
+		 $(MULTIINCDIR)/netinet $(MULTIINCDIR)/arch \
+		 $(MULTIINCDIR)/linuxmt
 endif
 
 else
