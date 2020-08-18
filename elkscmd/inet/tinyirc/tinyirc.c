@@ -56,15 +56,8 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <sys/socket.h>
-#ifdef ELKS
-#include <linuxmt/in.h>
-#include <linuxmt/net.h>
-#include <linuxmt/time.h>
-#include <linuxmt/arpa/inet.h>
-#else
 #include <netinet/in.h>
 #include <netdb.h>
-#endif
 #include <signal.h>
 #include <utmp.h>
 struct dlist {
@@ -110,31 +103,6 @@ int _res_flg;
 #define resetty() (_tty.sg_flags = _res_flg, \
 	(void) ioctl(my_tty, TIOCSETP, &_tty))
 #endif
-#endif
-#ifdef ELKS
-unsigned long int in_aton(str)
-const char *str;
-{
-    unsigned long l = 0;
-    unsigned int val;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-        l <<= 8;
-        if (*str != '\0') {
-            val = 0;
-            while (*str != '\0' && *str != '.') {
-                val *= 10;
-                val += *str - '0';
-                str++;
-            }
-            l |= val;
-            if (*str != '\0')
-            str++;
-        }
-    }
-    return(htonl(l));
-}
 #endif
 int putchar_x(c)
 int c;
@@ -933,7 +901,7 @@ char *hostname;
 	sa.sin_port = htons((unsigned short) IRCPORT);
 	s = socket(hp->h_addrtype, SOCK_STREAM, 0);
 #else
-	sa.sin_addr.s_addr = in_aton(hostname);
+	sa.sin_addr.s_addr = in_gethostbyname(hostname);
 	sa.sin_family = AF_INET;
 	sa.sin_port = htons((unsigned short) IRCPORT);
 	s = socket(AF_INET, SOCK_STREAM, 0);

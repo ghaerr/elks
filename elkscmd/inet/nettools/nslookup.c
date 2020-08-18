@@ -1,19 +1,10 @@
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <sys/socket.h>
-
-#ifndef __linux__ 
-#include <linuxmt/un.h>
-#include <linuxmt/in.h>
-#include "linuxmt/arpa/inet.h"
-#else
-#include <sys/types.h>
+#include <arpa/inet.h>
 #include <netdb.h>
-#endif
 
 struct DNS_HEADER
 {
@@ -31,28 +22,6 @@ struct QUESTION
     __u16 qtype;
     __u16 qclass;
 };
-
-unsigned long int in_aton(const char *str)
-{
-    unsigned long l = 0;
-    unsigned int val;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-	l <<= 8;
-	if (*str != '\0') {
-	    val = 0;
-	    while (*str != '\0' && *str != '.') {
-		val *= 10;
-		val += *str++ - '0';
-	    }
-	    l |= val;
-	    if (*str != '\0')
-		str++;
-	}
-    }
-    return htonl(l);
-}
 
 /* convert e.g. www.google.com (host) to 3www6google3com (dns) */
 void ChangetoDnsNameFormat(unsigned char* dns,unsigned char* host) 
@@ -147,7 +116,7 @@ int main(int argc, char *argv[]) {
   addr.sin_family = AF_INET;
   nameserver=get_dns_server();
   printf("Nameserver queried:%s\n",nameserver);
-  addr.sin_addr.s_addr = in_aton(nameserver); 
+  addr.sin_addr.s_addr = in_gethostbyname(nameserver);
   addr.sin_port = htons(53);
   
   if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {

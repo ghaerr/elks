@@ -13,11 +13,9 @@
 #include <termios.h>
 #include <signal.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <linuxmt/socket.h>
-#include <linuxmt/in.h>
-#include <linuxmt/arpa/inet.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include "telnet.h"
 
 //#define RAWTELNET	/* set in telnet and telnetd for raw telnet without IAC*/

@@ -18,9 +18,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <time.h>
-
-#include <linuxmt/arpa/inet.h>
-
+#include <arpa/inet.h>
 #include "tcp.h"
 #include "tcpdev.h"
 #include "ip.h"

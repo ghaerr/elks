@@ -20,14 +20,13 @@
 #include <string.h>
 #include <getopt.h>
 #include <signal.h>
-
+#include <arpa/inet.h>
 #include "slip.h"
 #include "tcp.h"
 #include "tcp_output.h"
 #include "tcp_cb.h"
 #include "tcpdev.h"
 #include "timer.h"
-#include <linuxmt/arpa/inet.h>
 #include "ip.h"
 #include "icmp.h"
 #include "netconf.h"
@@ -171,9 +170,10 @@ printp();
 	}
     }
 
-    local_ip = in_aton(optind < argc? argv[optind++]: DEFAULT_IP);
-    gateway_ip = in_aton(optind < argc? argv[optind++]: DEFAULT_GATEWAY);
-    netmask_ip = in_aton(optind < argc? argv[optind++]: DEFAULT_NETMASK);
+    /* using in_gethostbyname rather than in_aton allows /etc/hosts aliases to be used as parms*/
+    local_ip = in_gethostbyname(optind < argc? argv[optind++]: DEFAULT_IP);
+    gateway_ip = in_gethostbyname(optind < argc? argv[optind++]: DEFAULT_GATEWAY);
+    netmask_ip = in_gethostbyname(optind < argc? argv[optind++]: DEFAULT_NETMASK);
 
     /* must exit() in next two stages on error to reset kernel tcpdev_inuse to 0*/
     if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)
@@ -224,37 +224,4 @@ printp();
     ktcp_run();
 
     exit(0);
-}
-
-unsigned long in_aton(const char *str)
-{
-    unsigned long l = 0;
-    unsigned int val;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-	l <<= 8;
-	if (*str != '\0') {
-	    val = 0;
-	    while (*str != '\0' && *str != '.') {
-		val *= 10;
-		val += *str++ - '0';
-	    }
-	    l |= val;
-	    if (*str != '\0')
-		str++;
-	}
-    }
-    return htonl(l);
-}
-
-char *
-in_ntoa(ipaddr_t in)
-{
-    register unsigned char *p;
-    static char b[18];
-
-    p = (unsigned char *)&in;
-    sprintf(b, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
-    return b;
 }

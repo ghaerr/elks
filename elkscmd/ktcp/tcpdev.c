@@ -17,12 +17,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
+#include <arpa/inet.h>
 #include <linuxmt/tcpdev.h>
-#include <linuxmt/net.h>
-#include <linuxmt/in.h>
-#include <linuxmt/errno.h>
-
-#include <linuxmt/arpa/inet.h>
 #include "ip.h"
 #include "tcp.h"
 #include "tcpdev.h"

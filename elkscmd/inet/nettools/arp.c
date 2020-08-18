@@ -13,26 +13,14 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <linuxmt/net.h>
-#include <linuxmt/in.h>
 #include <ktcp/tcp.h>
 #include <ktcp/netconf.h>
 #include <ktcp/deveth.h>
 #include <ktcp/arp.h>
-#include <linuxmt/arpa/inet.h>
+#include <arpa/inet.h>
 
 struct sockaddr_in localadr,remaddr;
 struct arp_cache arp_cache[ARP_CACHE_MAX];
-
-char *in_ntoa(ipaddr_t in)
-{
-    register unsigned char *p;
-    static char b[18];
-
-    p = (unsigned char *)&in;
-    sprintf(b, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
-    return b;
-}
 
 char *mac_ntoa(eth_addr_t eth_addr)
 {

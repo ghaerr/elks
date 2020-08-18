@@ -1,8 +1,8 @@
-# Makefile of /libc/time module
+# Makefile of /libc/net module
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS= gmtime.c localtime.c ctime.c tm_conv.c asctime.c asc_conv.c tzset.c
+SRCS= in_aton.c in_ntoa.c in_gethostbyname.c
 OBJS= $(SRCS:.c=.o)
 
 $(OBJS): $(SRCS)

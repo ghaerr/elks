@@ -23,11 +23,9 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <linuxmt/net.h>
-#include <linuxmt/in.h>
+#include <arpa/inet.h>
 #include <ktcp/tcp.h>
 #include <ktcp/netconf.h>
-#include <linuxmt/arpa/inet.h>
 
 char tcp_states[11][13] = {
 	"CLOSED",

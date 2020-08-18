@@ -7,7 +7,7 @@
 #include "timer.h"
 #include "ip.h"
 #include <linuxmt/tcpdev.h>
-#include <linuxmt/arpa/inet.h>
+#include <arpa/inet.h>
 
 /*
  * /etc/tcpdev max read/write size

@@ -12,8 +12,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <linuxmt/errno.h>
-#include <linuxmt/net.h>
+#include <errno.h>
+#include <arpa/inet.h>
 #include "slip.h"
 #include "ip.h"
 #include "tcp.h"
@@ -22,7 +22,6 @@
 #include "tcp_output.h"
 #include "timer.h"
 #include "netconf.h"
-#include <linuxmt/arpa/inet.h>
 
 timeq_t Now;
 

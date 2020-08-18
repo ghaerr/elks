@@ -17,6 +17,7 @@ SUBDIRS = \
 	getent \
 	malloc \
 	misc \
+	net \
 	regex \
 	stdio \
 	string \
@@ -141,7 +142,7 @@ MULTIINCDIR = $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/include
 install: $(LIBC)
 	mkdir -p $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR) \
 		 $(MULTIINCDIR)/asm $(MULTIINCDIR)/sys \
-		 $(MULTIINCDIR)/arch $(MULTIINCDIR)/linuxmt/arpa
+		 $(MULTIINCDIR)/arch $(MULTIINCDIR)/arpa $(MULTIINCDIR)/netinet
 ifeq "" "$(filter -mcmodel=medium,$(MULTILIB))"
 	$(INSTALL_DATA) $(LIBC) $(CRT0) \
 	    $(TOPDIR)/elks/elks-small.ld $(TOPDIR)/elks/elks-tiny.ld \
@@ -153,7 +154,8 @@ endif
 	$(INSTALL_DATA) include/*.h $(TOPDIR)/include/autoconf.h $(MULTIINCDIR)
 	$(INSTALL_DATA) include/asm/*.h $(MULTIINCDIR)/asm
 	$(INSTALL_DATA) include/sys/*.h $(MULTIINCDIR)/sys
-	$(INSTALL_DATA) include/linuxmt/arpa/*.h $(MULTIINCDIR)/linuxmt/arpa
+	$(INSTALL_DATA) include/arpa/*.h $(MULTIINCDIR)/arpa
+	$(INSTALL_DATA) include/netinet/*.h $(MULTIINCDIR)/netinet
 	$(INSTALL_DATA) $(TOPDIR)/elks/include/arch/*.h $(MULTIINCDIR)/arch
 	$(INSTALL_DATA) $(TOPDIR)/elks/include/linuxmt/*.h \
 	    $(MULTIINCDIR)/linuxmt
@@ -166,7 +168,7 @@ uninstall:
 	      $(MULTIINCDIR)/autoconf.h \
 	      $(patsubst include/%,$(MULTIINCDIR)/%, \
 		  $(wildcard include/*.h include/asm/*.h include/sys/*.h \
-			     include/linuxmt/arpa/*.h)) \
+			     include/arpa/*.h include/netinet/*.h)) \
 	      $(patsubst $(TOPDIR)/elks/include/%,$(MULTIINCDIR)/%, \
 		  $(wildcard $(TOPDIR)/elks/include/arch/*.h \
 			     $(TOPDIR)/elks/include/linuxmt/*.h))

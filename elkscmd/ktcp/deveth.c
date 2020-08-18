@@ -17,10 +17,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-#include <linuxmt/limits.h>
-#include <arch/ioctl.h>
-
+#include <limits.h>
+#include <arch/limits.h>
 #include "config.h"
 #include "tcp.h"
 #include "ip.h"
