@@ -28,6 +28,7 @@ static byte_t mac_addr [6]; // Current MAC address, from HW or set
 
 static byte_t recv_buf [MAX_PACKET_ETH+4];
 static byte_t send_buf [MAX_PACKET_ETH];
+extern word_t _ne2k_skip_cnt;
 
 // Get packet
 
@@ -76,7 +77,6 @@ static size_t eth_read (struct inode * inode, struct file * filp,
 	return res;
 }
 
-
 // Put packet
 
 static size_t eth_write (struct inode * inode, struct file * file,
@@ -93,7 +93,7 @@ static size_t eth_write (struct inode * inode, struct file * file,
 				break;
 			}
 			do_wait();
-			if (current->signal) {
+			if(current->signal) {
 				res = -EINTR;
 				break;
 			}
@@ -157,26 +157,32 @@ int eth_select (struct inode * inode, struct file * filp, int sel_type)
 
 static void ne2k_int (int irq, struct pt_regs * regs, void * dev_id)
 {
-	word_t stat;
+	word_t stat, page;
 
 	stat = ne2k_int_stat ();
-        //word_t page = ne2k_getpage();
+        //page = ne2k_getpage();
         //printk("$%02x$B%02x$", (page>>8)&0xff, page&0xff);
+	//printk("/%02X",stat&0xff);
 
         if (stat & NE2K_STAT_OF) {
-		printk("Warning: NIC receive buffer overflow\n");
+		word_t skip_buf[2] = {};	// the low level routine needs this one.
+
+		_ne2k_skip_cnt = 0;	// Zero is the default, discard entire buffer
+					// On a floppy based system, anything else is useless.
+		printk("Warning: NIC receive buffer overflow, skipping ");
+		if (_ne2k_skip_cnt) 
+			printk("%d packets.\n", _ne2k_skip_cnt);
+		else
+			printk("all packets.\n");
 		//page = ne2k_getpage();
 		//printk("/C%02x|B%02x/ ", (page>>8)&0xff, page&0xff);
-		// FIXME: probabluy shouldn't wake up reader if no packet ready,
-		// and the check below will do so if STAT_RX bit is set anyways.
-		// Could handle the error here, except this code could be interrupting
-		// a process already in the read routine, so that will likely mess up
-		// that reader and/or the driver state.
-		//wake_up (&rxwait);
-		//ne2k_clr_oflow(recv_buf); // The reset procedure needs to read the
-                                          // last complete packet in the buffer.
-		// If recv_buf is busy, this will overwrite the contents.
-		// What do we do with the contents? As is, this is a discard..
+
+		// FIXME: This procedure is still being debugged
+		//wake_up ((struct wait_queue *) &rx_flag);
+
+		page = ne2k_clr_oflow(skip_buf); // Reset the nic, discard the given number of packets
+		//printk("/C%02x|B%02x/ ", (page>>8)&0xff, page&0xff);
+		//printk("/N%02x|S%02x/ ", (skip_buf[0]>>8)&0xff, skip_buf[0]&0xff);
 	}
 
 	if (stat & NE2K_STAT_RX) {
@@ -189,9 +195,13 @@ static void ne2k_int (int irq, struct pt_regs * regs, void * dev_id)
 		wake_up(&txwait);
 	}
 	if (stat & NE2K_STAT_RDC) {
-		printk("RDC intr.\n");
-		// debug only, but keep this code, the RDC interrupt should be disabled in
-		// the low level driver.
+		printk("Warning: RDC intr.\n");
+		// The RDC interrupt should be disabled in the low level driver.
+		// When real DMA transfer from NIC til system RAM is enabled, this is where
+		// we handle transfer completion.
+		// NOTICE: If we get here, a remote DMA transfer was aborted, probably a bug
+		// in the driver.
+		ne2k_rdc();
 	}
 }
 
@@ -219,6 +229,29 @@ static int eth_ioctl (struct inode * inode, struct file * file,
 		case IOCTL_ETH_ADDR_SET:
 			memcpy_fromfs (mac_addr, (char *) arg, 6);
 			ne2k_addr_set (mac_addr);
+			break;
+
+		case IOCTL_ETH_HWADDR_GET:
+			// Get the hardware address of the NIC,	which may be different
+			// from the currently programmed address. Be careful with this,
+			// it may interrupt ongoing send/receives.
+			// FIXME: Needs more testing.
+			ne2k_get_hw_addr((word_t *) arg);
+			break;
+
+		//case IOCTL_ETH_GETSTAT:
+			// Get statistics from the NIC hardware (error counts etc.)
+			// NOt implemented
+
+		case IOCTL_ETH_OFWSKIP_SET:
+			// Set the number of packets to skip @ ring buffer overflow
+			_ne2k_skip_cnt = arg;
+			//printk("ne2k: OFW skip-cnt is now %d.\n", _ne2k_skip_cnt);
+			break;
+
+		case IOCTL_ETH_OFWSKIP_GET:
+			// Get the current overflow skip counter
+			arg = _ne2k_skip_cnt;
 			break;
 
 		default:

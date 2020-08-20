@@ -44,6 +44,7 @@ extern word_t ne2k_test ();
 extern word_t ne2k_getpage(void);
 extern void ne2k_get_addr(byte_t *);
 extern void ne2k_get_hw_addr(word_t *);
-extern void ne2k_clr_oflow(byte_t *);
+extern word_t ne2k_clr_oflow(word_t *);
+extern void ne2k_rdc(void);
 
 #endif /* !NE2K_H */
