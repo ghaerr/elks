@@ -409,7 +409,7 @@ static int elks_execve(int bx,int cx,int dx,int di,int si)
 	uint16_t *bp;
 	unsigned char *base;
 	uint16_t *tmp;
-	struct elks_exec_hdr mh;
+	struct minix_exec_hdr mh;
 	int is_elks = 1;
 	
 	dbprintf(("exec(%s,%d,%d)\n",ELKS_PTR(char, bx), cx, dx));
@@ -428,7 +428,7 @@ static int elks_execve(int bx,int cx,int dx,int di,int si)
 		return -1;
 	}
 	close(fd);
-	if(mh.hlen!=EXEC_HEADER_SIZE || mh.type!=ELKS_SPLITID)
+	if(mh.type != ELKS_SPLITID || mh.type != ELKS_SPLITID_AHISTORICAL)
 	   is_elks = 0;
 
 	arg_ct = env_ct = 0;

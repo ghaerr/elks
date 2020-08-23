@@ -2,6 +2,7 @@
  *	Definitions for emulating ELKS
  */
 
+#include <stddef.h>
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/user.h>
@@ -66,22 +67,64 @@ struct elks_stat
  *	Elks binary formats
  */
  
-#define EXEC_HEADER_SIZE	32
+#define EXEC_MINIX_HDR_SIZE	sizeof(struct minix_exec_hdr)
+#define SUPL_RELOC_HDR_SIZE	offsetof(struct elks_supl_hdr, esh_ftseg)
+#define EXEC_RELOC_HDR_SIZE	(EXEC_MINIX_HDR_SIZE + SUPL_RELOC_HDR_SIZE)
+#define SUPL_FARTEXT_HDR_SIZE	sizeof(struct elks_supl_hdr)
+#define EXEC_FARTEXT_HDR_SIZE	(EXEC_MINIX_HDR_SIZE + SUPL_FARTEXT_HDR_SIZE)
 
-struct elks_exec_hdr
+struct __attribute__((packed)) minix_exec_hdr
 {
 	uint32_t type;
 #define ELKS_COMBID	0x04100301L
 #define ELKS_SPLITID	0x04200301L
 #define ELKS_SPLITID_AHISTORICAL 0x04300301L
-	uint32_t hlen;
-	uint32_t tseg;
-	uint32_t dseg;
-	uint32_t bseg;
+	uint8_t hlen;
+	uint8_t reserved1;
+	uint16_t version;
+	uint16_t tseg, reserved2;
+	uint16_t dseg, reserved3;
+	uint16_t bseg, reserved4;
 	uint32_t entry;
-	uint32_t total;
-	uint32_t unused2; 
+	uint16_t chmem;
+	uint16_t minstack;
+	uint32_t syms; 
 };
+
+struct __attribute__((packed)) elks_supl_hdr
+{
+	/* optional fields */
+	uint32_t msh_trsize;
+	uint32_t msh_drsize;
+	uint32_t msh_tbase;
+	uint32_t msh_dbase;
+	/* even more optional fields */
+	uint16_t esh_ftseg;
+	uint32_t esh_ftrsize;
+	uint16_t esh_reserved1;
+	uint32_t esh_reserved2, esh_reserved3;
+};
+
+struct __attribute__((packed)) minix_reloc
+{
+	uint32_t r_vaddr;
+	uint16_t r_symndx;
+	uint16_t r_type;
+};
+
+/* r_type values */
+#define R_SEGWORD	80
+
+/* special r_symndx values */
+#define S_ABS		((uint16_t)-1U)
+#define S_TEXT		((uint16_t)-2U)
+#define S_DATA		((uint16_t)-3U)
+#define S_BSS		((uint16_t)-4U)
+/* for ELKS medium memory model support */
+#define S_FTEXT		((uint16_t)-5U)
+
+#define INIT_HEAP	4096
+#define INIT_STACK	4096
 
 #define ELKS_PTR(_t,x)	  ((_t *) (elks_data_base+((x)&0xFFFFU)) )
 #define ELKS_PEEK(_t,x)	(*((_t *) (elks_data_base+((x)&0xFFFFU)) ))
