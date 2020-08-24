@@ -1,6 +1,9 @@
-//-----------------------------------------------------------------------------
-// NE2K Ethernet driver (really DP8390 driver)
-//-----------------------------------------------------------------------------
+/*
+ *
+ * NE2K Ethernet driver - supports NICs using the NS DP8390 chip and
+ * RTL 8029 chips (tested) and other compatible chip sets.
+ *
+ */
 
 #include <linuxmt/errno.h>
 #include <linuxmt/major.h>
@@ -35,7 +38,8 @@ static byte_t mac_addr [6]; /* Current MAC address, from HW or default */
 
 static byte_t recv_buf [MAX_PACKET_ETH+4];
 static byte_t send_buf [MAX_PACKET_ETH];
-extern word_t _ne2k_skip_cnt;
+extern word_t _ne2k_skip_cnt;	/* In case the NIC ring buffer overflows, skip this # of packets,
+				 * zero means 'all'. */
 
 /*
  * Get packet

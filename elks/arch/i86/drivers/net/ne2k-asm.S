@@ -126,8 +126,6 @@ dma_init:
 	push    %ax
 	push    %dx
 
-	// assume page 0
-
 	// set DMA start address
 
 	mov     $io_ne2k_dma_addr1,%dx
@@ -155,15 +153,11 @@ dma_init:
 //-----------------------------------------------------------------------------
 // Write block to chip with internal DMA
 //-----------------------------------------------------------------------------
-
+//
 // BX    : chip memory address (to write to)
 // CX    : byte count
 // DS:SI : host memory address (to read from)
 //-------------------------------------
-// TODO: It would make sense to have the first read operation get a full page (256 bytes) 
-// instead of just the first 4 bytes. That way a single DMA read operation will cover
-// most incoming packets in interactive sessions.
-//
 
 dma_write:
 
@@ -172,7 +166,7 @@ dma_write:
 	push    %dx
 	push    %si
 
-	cli		//Experimental
+	cli		// Experimental
 	inc     %cx     // make byte count even
 	and     $0xfffe,%cx
 	call    dma_init
@@ -182,9 +176,7 @@ dma_write:
 	// start DMA write
 
 	mov     $io_ne2k_command,%dx
-	//mov	$0x0a,%al	// per app note (P 1-17)
-	//out     %al,%dx
-	mov	$0x12,%al	// per app note (P 1-17)
+	mov	$0x12,%al	
 	out     %al,%dx
 
 	// I/O write loop
@@ -280,6 +272,7 @@ dma_read:
 	push    %cx
 	push    %dx
 	push    %di
+	push    %es  // compiler scratch
 
 	cli		//Experimental
 	inc     %cx     // make byte count even
@@ -290,36 +283,25 @@ dma_read:
 	// start DMA read
 
 	mov     $io_ne2k_command,%dx
-	//in	%dx,%al
-	//and	$0x07,%al	// ensure pg 0
-	//or	$0x08,%al	// 0x8 = read
-	mov	$0x0a,%al	// 0ah per application note
+	mov	$0x0a,%al	// RD0 & STA
 	out     %al,%dx
 
 	// I/O read loop
 
-	push    %es  // compiler scratch
 	mov     %ds,%ax
 	mov     %ax,%es
 
-
 	mov     $io_ne2k_data_io,%dx
 	cld
-	//cli	// FIXME disable interrupts - for testing
 
 emr_loop:
-
 	in      %dx,%ax
 	stosw
 	loop    emr_loop
 
-	//sti	// re-enable int
-	pop	%es
-
 	// wait for DMA to complete
 
 	mov     $io_ne2k_int_stat,%dx
-
 check_dma_r:
 	in      %dx,%al
 	test    $0x40,%al       // dma done?
@@ -327,9 +309,9 @@ check_dma_r:
 
 	mov     $0x40,%al       // reset ISR (RDC bit only)
 	out     %al,%dx
-
 	sti		//Experimental
 
+	pop	%es
 	pop     %di
 	pop     %dx
 	pop     %cx
@@ -339,14 +321,19 @@ check_dma_r:
 
 //
 //-----------------------------------------------------------------------
-// ne2k_getpage -- return current page numbers in BOUNDARY / CURRENT registers
-// AH = CURRENT, AL = BOUNDARY
-// for debugging only
+// ne2k_getpage -- return current ring buffer page numbers in AX:
+// AH = CURRENT - where the next received packet will be stored,
+// AL = BOUNDARY - where the next read from the buffer will start
+// NOTE: BOUNDARY is always one behind where the next read will start, the real 
+// 	read point is in the variable _NE2K_NEXT_PK. This trick is necessary
+//	because the internal logic in the NIC will trogger an overrun interrupt
+//	if the BOUNDARY pointer matches or exceeds the CURRENT pointer.
+// Used internally, exposed externally for debuggin purposes.
 //
 	.global ne2k_getpage
 
 ne2k_getpage:
-	mov	$0x42,%al	// page 1
+	mov	$0x42,%al		// page 1
 	mov	$io_ne2k_command,%dx
 	out	%al,%dx
 
@@ -354,7 +341,7 @@ ne2k_getpage:
 	in      %dx,%al
 	mov     %al,%cl
 
-	mov	$0x02,%al	// page 0
+	mov	$0x02,%al		// page 0
 	mov	$io_ne2k_command,%dx
 	out	%al,%dx
 
@@ -368,11 +355,9 @@ ne2k_getpage:
 //-----------------------------------------------------------------------------
 // Get RX status
 //-----------------------------------------------------------------------------
-
-// returns:
-
+// Returns:
 // AX: status
-//   01h = packet received
+//   01h = Data available in NIC ring buffer
 
 	.global ne2k_rx_stat
 
@@ -380,6 +365,7 @@ ne2k_rx_stat:
 
 	// get RX put pointer
 
+#if 0
 	mov	$0x42,%al	// page 1
 	mov	$io_ne2k_command,%dx
 	out	%al,%dx
@@ -394,33 +380,30 @@ ne2k_rx_stat:
 
 	// get RX get pointer
 
-	mov	_ne2k_next_pk,%al
+#endif
+	call	ne2k_getpage	// get current page pointers
+	mov	_ne2k_next_pk,%al // but ignore BOUNDARY, use the 'real' one.
 
-	// check ring is not empty
-
-	cmp     %al,%cl
+	cmp     %al,%cl		// The ring is empty if they are equal.
 	jz      nrs_empty
 
-	mov     $1,%ax
+	mov     $1,%ax		// Yes, we have data
 	jmp     nrs_exit
 
 nrs_empty:
-
 	xor     %ax,%ax
 
 nrs_exit:
-
 	ret
 
 //-----------------------------------------------------------------------------
 // Get received packet
 //-----------------------------------------------------------------------------
-
-// arg1 : packet buffer to write to
-
+// arg1 : packet buffer to receive the data. The buffer must be 4 bytes to hold 
+//	the NIC header plus the mac Ethernet frame size.
+//
 // returns:
-
-// AX : error code
+// AX : error code [currently unused since we don't accept packets with errors].
 
 	.global ne2k_pack_get
 
@@ -429,7 +412,6 @@ ne2k_pack_get:
 	push    %bp
 	mov     %sp,%bp
 	push    %di		// used by compiler
-	push	%bx
 
 	// get RX_put pointer
 
@@ -446,13 +428,15 @@ ne2k_pack_get:
 	mov	2(%di),%cx  // packet size (without CRC)
 
 #if 0
-	// check packet size - not really required since the NIC will not
+	// -------------------------------------------------------------
+	// Check packet size - not really required since the NIC will not
 	// accept such packets per our initialization. Also, in order to handle error-
-	// packets, we would have to update the rx_get pointer.
-	or      %cx,%cx
+	// packets, we would have to update the rx_get (BOUNDARY) pointer.
+	// -------------------------------------------------------------
+	or      %cx,%cx		// zero length
 	jz      npg_err2
 
-	cmp     $1528,%cx  // max - head - crc
+	cmp     $1528,%cx	// max - head - crc
 	jnc     npg_err
 #endif
 	sub	$252,%cx	// Got entire packet?
@@ -493,30 +477,28 @@ npg_next:
 	jmp     npg_exit
 #if 0
 npg_err:
-
-	mov     $-1,%ax
+	mov     $-1,%ax		// Packet too big
 	jmp	npg_exit
 
 npg_err2:
-	mov	$-2,%ax
+	mov	$-2,%ax		// zero length packet
 #endif
 
 npg_exit:
 	// clear RX bit in ISR
-	mov     %ax,%bx 		// save return valu
-					// assume page 0
+	mov     %ax,%bx 		// save return value
 	mov     $io_ne2k_int_stat,%dx   // reset the interrupt bit
 	mov     $1,%al  		// NE2K_STAT_RX 
 	out     %al,%dx
 	mov     %bx,%ax 		// unsave
 
-	pop	%bx
 	pop     %di
 	pop     %bp
 	ret
 
 //-----------------------------------------------------------------------------
-// Get TX status
+// Get TX status: Read the TXP bit in the command reg, if reset, there is no 
+// transmit in progress.
 //-----------------------------------------------------------------------------
 
 // returns:
@@ -544,7 +526,8 @@ nts_exit:
 	ret
 
 //-----------------------------------------------------------------------------
-// Put packet to send
+// Send packet: First transfer packet data to NIC memory, then kick off
+// the actual transmit and return.
 //-----------------------------------------------------------------------------
 
 // arg1 : packet buffer to read from
@@ -564,15 +547,16 @@ ne2k_pack_put:
 
 	// write packet to chip memory
 
-	mov     6(%bp),%cx
+	mov     6(%bp),%cx	// arg2
 	xor     %bl,%bl
 	mov     $tx_first,%bh
-	mov     4(%bp),%si
-	call    dma_write
+	mov     4(%bp),%si	// arg1
+	call    dma_write	// copy the data
 
 	// set TX pointer and length
 
-	mov     $io_ne2k_tx_start,%dx
+	mov     $io_ne2k_tx_start,%dx	// FIXME: This may not be required, done
+					// at initialization time, never changes.
 	mov     $tx_first,%al
 	out     %al,%dx
 
@@ -589,15 +573,14 @@ ne2k_pack_put:
 	mov	$6,%al		// Set TX bit, starts transfer...
 	out	%al,%dx
 
-	mov	$io_ne2k_int_stat,%dx	// reset tx intr bit
-	mov	$2,%al		// Test, should not make any difference
-	out	%al,%dx
+	//mov	$io_ne2k_int_stat,%dx	// reset tx intr bit
+	//mov	$2,%al		// Test, should not make any difference
+	//out	%al,%dx
 				// Not waiting for completion
 	xor     %ax, %ax	// always zero return
 
 	pop     %si
 	pop     %bp
-	//sti		//Experimental
 	ret
 
 //-----------------------------------------------------------------------------
@@ -616,11 +599,7 @@ ne2k_pack_put:
 
 ne2k_int_stat:
 
-	// assume page 0
-
 	// get interrupt status
-
-	xor     %ah,%ah
 
 	mov     $io_ne2k_int_stat,%dx
 	in      %dx,%al
@@ -631,7 +610,7 @@ ne2k_int_stat:
 
 	// clear TX interrupt only
 	push	%ax	
-	//mov	$2,%al		// removing this for test, reset all ints see what happens ..
+	mov	$2,%al		// removing this for test, reset all ints see what happens ..
 	out     %al,%dx
 	pop	%ax
 
