@@ -20,6 +20,7 @@ int more_wait(int fout, char *msg)
 {
 	struct termios termios;
 	char buf[80], ch;
+	int cnt, ret = 0;
 
 	write(fout, msg, strlen(msg));
 
@@ -30,27 +31,38 @@ int more_wait(int fout, char *msg)
 		termios2.c_cc[VMIN] = 1;
 		tcsetattr(1, TCSAFLUSH, &termios2);
 	}
-	read(1, buf, sizeof(buf));
-	tcsetattr(1, TCSAFLUSH, &termios);
 
-	write(fout,"\r",1); /* move cursor to pos 0 */
+	cnt = read(1, buf, sizeof(buf));
+
 	ch = buf[0];
-	if (ch == ':')
+	if (ch == ':') {
+		write(fout, "\r          \r:", 13);
+		if (cnt < 2) 
+	           cnt = read(1, &buf[1], sizeof(buf-1));
 		ch = buf[1];
-
+	}
 	switch (ch) {
 	case 'N':
 	case 'n':
 		close(fd);
 		fd = -1;
-		return 1;
+		ret = 1;
+		break;
 	case 'Q':
 	case 'q':
-		write(1, "          \r", 11);
 		close(fd);
-		return -1;
+		ret = -1;
+		break;
+	case '1':
+                if (cnt < 2) 
+                   cnt = read(1, &buf[2], sizeof(buf-2));
+		if (buf[2] == 'G') 	/* rewind to beginning of file */
+		    (void) lseek(fd, 0, SEEK_SET);
+		/* else just ignore */
 	}
-	return 0;
+	write(fout, "\r          \r", 12);
+	tcsetattr(1, TCSAFLUSH, &termios);
+	return ret;
 }
 
 int cat_file(int m_in, int m_out) {
