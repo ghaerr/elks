@@ -29,7 +29,8 @@
 #include "elks.h" 
 
 volatile struct elks_cpu_s elks_cpu;
-unsigned char *elks_base, *elks_data_base;	/* Paragraph aligned */
+/* Paragraph aligned */
+unsigned char *elks_base, *elks_fartext_base, *elks_data_base;
 unsigned short brk_at = 0;
 
 #ifdef DEBUG
@@ -46,24 +47,31 @@ static int modify_ldt(int func, void *ptr, unsigned long bytes)
 static void elks_init()
 {
 	uint64_t ldt[8192];
-	struct user_desc cs_desc, ds_desc;
+	struct user_desc cs_desc, fcs_desc, ds_desc;
 	memset(ldt, 0, sizeof ldt);
-	int cs_idx = 0, ds_idx, ldt_count = modify_ldt(0, ldt, sizeof ldt);
-	unsigned cs, ds;
+	int cs_idx = 0, fcs_idx, ds_idx,
+	    ldt_count = modify_ldt(0, ldt, sizeof ldt);
+	unsigned cs, fcs, ds;
 	if (ldt_count < 0)
 		ldt_count = 0;
 	while (cs_idx < ldt_count && ldt[cs_idx] != 0)
 		++cs_idx;
-	ds_idx = cs_idx + 1;
+	fcs_idx = cs_idx + 1;
+	while (fcs_idx < ldt_count && ldt[fcs_idx] != 0)
+		++fcs_idx;
+	ds_idx = fcs_idx + 1;
 	while (ds_idx < ldt_count && ldt[ds_idx] != 0)
 		++ds_idx;
-	if (cs_idx >= 8192 || ds_idx >= 8192)
+	if (cs_idx >= 8192 || fcs_idx >= 8192 || ds_idx >= 8192)
 	{
 		fprintf(stderr, "No free LDT descriptors for text and data "
 				"segments\n");
 		exit(255);
 	}
 	elks_cpu.regs.xcs = cs = cs_idx * 8 + 7;
+	/* Stash the far text descriptor number in .orig_eax or .orig_rax
+	   first... */
+	elks_cpu.regs.orig_xax = fcs = fcs_idx * 8 + 7;
 	elks_cpu.regs.xds = elks_cpu.regs.xes = elks_cpu.regs.xss
 			  = ds = ds_idx * 8 + 7;
 	dbprintf(("LDT descriptor for text is %#x\n", cs));
@@ -73,11 +81,16 @@ static void elks_init()
 	cs_desc.entry_number = cs_idx;
 	cs_desc.contents = MODIFY_LDT_CONTENTS_CODE;
 	cs_desc.useable = 1;
+	memset(&fcs_desc, 0, sizeof fcs_desc);
+	fcs_desc.entry_number = fcs_idx;
+	fcs_desc.contents = MODIFY_LDT_CONTENTS_CODE;
+	fcs_desc.useable = 1;
 	memset(&ds_desc, 0, sizeof ds_desc);
 	ds_desc.entry_number = ds_idx;
 	ds_desc.contents = MODIFY_LDT_CONTENTS_DATA;
 	ds_desc.useable = 1;
 	if (modify_ldt(1, &cs_desc, sizeof cs_desc) != 0
+	    || modify_ldt(1, &fcs_desc, sizeof fcs_desc) != 0
 	    || modify_ldt(1, &ds_desc, sizeof ds_desc) != 0)
 	{
 		fprintf(stderr, "Cannot allocate LDT descriptors for text "
@@ -118,64 +131,236 @@ static void elks_take_interrupt(int arg)
 	/* Finally resume the child process */
 }
 
+size_t count_argv_envp_bytes(char ** argv, char ** envp)
+{
+	char **p;
+	size_t argv_len=0, argv_count=0;
+	size_t envp_len=0, envp_count=0;
+	size_t argv_envp_bytes;
 
-static int load_elks(int fd)
+	/* How much space for argv */
+	for(p=argv; *p; p++)
+	{
+	   argv_count++; argv_len += strlen(*p)+1;
+	}
+	if (argv_len % 2)
+		argv_len++;
+
+	/* How much space for envp */
+	for(p=envp; *p; p++)
+	{
+	   envp_count++; envp_len += strlen(*p)+1;
+	}
+	if (envp_len % 2)
+		envp_len++;
+
+	/* tot it all up */
+	argv_envp_bytes = 2			/* argc */
+			  + argv_count * 2 + 2	/* argv */
+			  + argv_len
+			  + envp_count * 2 + 2	/* envp */
+			  + envp_len;
+
+#ifdef DEBUG
+	fprintf(stderr, "Argv = (%d,%d), Envp=(%d,%d), stack=%d\n",
+		argv_count, argv_len, envp_count, envp_len, argv_envp_bytes);
+#endif
+
+	return argv_envp_bytes;
+}
+
+static int relocate(unsigned char *place_base, size_t rsize, unsigned cs,
+		    unsigned fcs, unsigned ds, int fd)
+{
+#ifdef DEBUG
+	fprintf(stderr, "Applying %#zx bytes of relocations to segment with "
+			"linear base %p\n", rsize, place_base);
+#endif
+	while (rsize >= sizeof(struct minix_reloc)) {
+		struct minix_reloc reloc;
+		uint16_t val;
+		ssize_t r = read(fd, &reloc, sizeof reloc);
+		if (r != sizeof(reloc))
+			return r >= 0 ? -EINVAL : -errno;
+		switch (reloc.r_type) {
+		case R_SEGWORD:
+			switch (reloc.r_symndx) {
+			case S_TEXT:
+				val = cs;	break;
+			case S_FTEXT:
+				val = fcs;	break;
+			case S_DATA:
+				val = ds;	break;
+			default:
+				return -EINVAL;
+			}
+			place_base[(uint16_t)reloc.r_vaddr] =
+			    (unsigned char)val;
+			place_base[(uint16_t)(reloc.r_vaddr + 1)] =
+			    (unsigned char)(val >> 8);
+			break;
+		default:
+			return -EINVAL;
+		}
+		rsize -= sizeof(struct minix_reloc);
+	}
+	return 0;
+}
+
+static int load_elks(int fd, uint16_t argv_envp_bytes)
 {
 	/* Load the elks binary image and set it up in the text and data
 	   segments. Load CS and DS/SS according to image type. Allocate
 	   data segment according to a.out total field */
-	struct elks_exec_hdr mh;
-	struct user_desc cs_desc, ds_desc;
+	struct minix_exec_hdr mh;
+	struct elks_supl_hdr esuph;
+	struct user_desc cs_desc, fcs_desc, ds_desc;
+	uint16_t len, min_len, heap, stack;
+	unsigned cs, fcs, ds;
+	int retval;
+
 	if(read(fd, &mh,sizeof(mh))!=sizeof(mh))
-		return -ENOEXEC;
-	if(mh.hlen!=EXEC_HEADER_SIZE)
 		return -ENOEXEC;
 	if(mh.type!=ELKS_SPLITID && mh.type!=ELKS_SPLITID_AHISTORICAL)
 		return -ENOEXEC;
+
+	memset(&esuph, 0, sizeof esuph);
+
+	switch (mh.hlen) {
+	default:
+		return -ENOEXEC;
+	case EXEC_MINIX_HDR_SIZE:
+		break;
+	case EXEC_RELOC_HDR_SIZE:
+	case EXEC_FARTEXT_HDR_SIZE:
+		retval = read(fd, &esuph, mh.hlen - sizeof(mh));
+		if (retval != mh.hlen - sizeof(mh))
+			return retval >= 0 ? -ENOEXEC : -errno;
+		if (esuph.msh_tbase != 0 ||
+		    esuph.msh_trsize % sizeof(struct minix_reloc) != 0 ||
+		    esuph.msh_drsize % sizeof(struct minix_reloc) != 0 ||
+		    esuph.esh_ftrsize % sizeof(struct minix_reloc) != 0)
+			return -EINVAL;
+		/* not supported by elksemu for now */
+		if (esuph.msh_dbase != 0)
+			return -EINVAL;
+		break;
+	}
+
+	if (mh.tseg == 0)
+		return -ENOEXEC;
+
 #ifdef DEBUG
 	fprintf(stderr,"Linux-86 binary - %lX. tseg=%ld dseg=%ld bss=%ld\n",
 		mh.type,mh.tseg,mh.dseg,mh.bseg);
 #endif
-	if (mh.total == 0)
-		mh.total = mh.dseg + mh.bseg + 0x4000ul;
-	if (mh.tseg > 0xfffful || mh.dseg > 0xfffful
-	    || mh.bseg > 0xfffful - mh.dseg || mh.entry >= mh.tseg
-	    || mh.total > 0xfff0ul || mh.total <= mh.dseg + mh.bseg)
-	{
-		fprintf(stderr, "Bogus a.out headers\n");
-		exit(1);
+
+	min_len = mh.dseg;
+	if (__builtin_add_overflow(min_len, mh.bseg, &min_len))
+		return -EINVAL;
+	/*
+	 * mh.version == 1: chmem is size of heap, 0 means use default heap
+	 * mh.version == 0: old ld86 used chmem as size of data+bss+heap+stack
+	 */
+	switch (mh.version) {
+	default:
+		return -ENOEXEC;
+	case 1:
+		len = min_len;
+		stack = mh.minstack ? mh.minstack : INIT_STACK;
+		if (__builtin_add_overflow(len, stack, &len))
+			return -EFBIG;
+		if (__builtin_add_overflow(len, argv_envp_bytes, &len))
+			return -E2BIG;
+		heap = mh.chmem ? mh.chmem : INIT_HEAP;
+		if (heap >= 0xfff0) {
+			if (len < 0xfff0)
+				len = 0xfff0;
+		} else if (__builtin_add_overflow(len, heap, &len))
+			return -EFBIG;
+		break;
+
+	case 0:
+		stack = INIT_STACK;
+		len = mh.chmem;
+		if (len) {
+			if (len <= min_len)
+				return -EINVAL;
+			heap = len - min_len;
+			if (heap < INIT_STACK)
+				return -EINVAL;
+			heap -= INIT_STACK;
+			if (heap < argv_envp_bytes)
+				return -E2BIG;
+		} else {
+			len = min_len;
+			if (__builtin_add_overflow(len, INIT_HEAP + INIT_STACK,
+						   &len))
+				return -EFBIG;
+			if (__builtin_add_overflow(len, argv_envp_bytes, &len))
+				return -E2BIG;
+		}
 	}
-	mh.total = (mh.total + 0xful) & 0xfff0ul;
+
 	if(read(fd,elks_base,mh.tseg)!=mh.tseg)
 		return -ENOEXEC;
-	elks_data_base=elks_base+65536;
+	elks_fartext_base=elks_base+0x10000;
+	if(read(fd,elks_fartext_base,esuph.esh_ftseg)!=esuph.esh_ftseg)
+		return -ENOEXEC;
+	elks_data_base=elks_base+0x20000;
 	if(read(fd,elks_data_base,mh.dseg)!=mh.dseg)
 		return -ENOEXEC;
 	memset(elks_data_base+mh.dseg,0, mh.bseg);
+
+	cs = elks_cpu.regs.xcs;
+	fcs = elks_cpu.regs.orig_xax;
+	ds = elks_cpu.regs.xds;
+
+	/*
+	 *	Apply relocations
+	 */
+	retval = relocate(elks_base, esuph.msh_trsize, cs, fcs, ds, fd);
+	if (retval != 0)
+		return retval;
+	retval = relocate(elks_fartext_base, esuph.esh_ftrsize, cs, fcs, ds,
+			  fd);
+	if (retval != 0)
+		return retval;
+	retval = relocate(elks_data_base, esuph.msh_drsize, cs, fcs, ds, fd);
+	if (retval != 0)
+		return retval;
+
 	/*
 	 *	Really set up the LDT descriptors
 	 */
-	 
 	memset(&cs_desc, 0, sizeof cs_desc);
+	memset(&fcs_desc, 0, sizeof ds_desc);
 	memset(&ds_desc, 0, sizeof ds_desc);
-	cs_desc.entry_number = elks_cpu.regs.xcs / 8;
+	cs_desc.entry_number = cs / 8;
 	cs_desc.base_addr = (uintptr_t)elks_base;
 	cs_desc.limit = mh.tseg - 1;
 	cs_desc.contents = MODIFY_LDT_CONTENTS_CODE;
 	cs_desc.seg_not_present = mh.tseg == 0;
-	ds_desc.entry_number = elks_cpu.regs.xss / 8;
+	fcs_desc.entry_number = fcs / 8;
+	fcs_desc.base_addr = (uintptr_t)elks_fartext_base;
+	fcs_desc.limit = esuph.esh_ftseg - 1;
+	fcs_desc.contents = MODIFY_LDT_CONTENTS_CODE;
+	fcs_desc.seg_not_present = esuph.esh_ftseg == 0;
+	ds_desc.entry_number = ds / 8;
 	ds_desc.base_addr = (uintptr_t)elks_data_base;
-	ds_desc.limit = mh.total - 1;
+	ds_desc.limit = len - 1;
 	ds_desc.contents = MODIFY_LDT_CONTENTS_DATA;
-	ds_desc.seg_not_present = mh.dseg == 0 && mh.bseg == 0;
+	ds_desc.seg_not_present = len == 0;
 	if (modify_ldt(1, &cs_desc, sizeof cs_desc) != 0
+	    || modify_ldt(1, &fcs_desc, sizeof fcs_desc) != 0
 	    || modify_ldt(1, &ds_desc, sizeof ds_desc) != 0)
 	{
 		fprintf(stderr, "Cannot set LDT descriptors for text and data "
 				"segments\n");
 		exit(255);
 	}
-	elks_cpu.regs.xsp = mh.total;	/* Args stacked later */
+
+	elks_cpu.regs.xsp = len;	/* Args stacked later */
 	elks_cpu.regs.xip = mh.entry;	/* Run from entry point */
 	elks_cpu.child = 0;
 	brk_at = mh.dseg + mh.bseg;
@@ -317,45 +502,22 @@ void run_elks()
 	}
 }
 
-void build_stack(char ** argv, char ** envp)
+void build_stack(char ** argv, char ** envp, size_t argv_envp_bytes)
 {
 	char **p;
-	int argv_len=0, argv_count=0;
-	int envp_len=0, envp_count=0;
-	int stack_bytes;
+	size_t argv_count = 0, envp_count = 0;
 	unsigned short * pip;
 	unsigned short pcp;
 
-	/* How much space for argv */
+	/* We need to calculate argv_count and envp_count again... */
 	for(p=argv; *p; p++)
-	{
-	   argv_count++; argv_len += strlen(*p)+1;
-	}
-	if (argv_len % 2)
-		argv_len++;
+	   argv_count++;
 
-	/* How much space for envp */
 	for(p=envp; *p; p++)
-	{
-	   envp_count++; envp_len += strlen(*p)+1;
-	}
-	if (envp_len % 2)
-		envp_len++;
+	   envp_count++;
 
-	/* tot it all up */
-	stack_bytes = 2				/* argc */
-	            + argv_count * 2 + 2	/* argv */
-		    + argv_len
-		    + envp_count * 2 + 2	/* envp */
-		    + envp_len;
-
-	/* Allocate it */
-	elks_cpu.regs.xsp -= stack_bytes;
-
-#ifdef DEBUG
-	fprintf(stderr, "Argv = (%d,%d), Envp=(%d,%d), stack=%d\n",
-		argv_count, argv_len, envp_count, envp_len, stack_bytes);
-#endif
+	/* Allocate stack space in ELKS memory for argv and envp */
+	elks_cpu.regs.xsp -= argv_envp_bytes;
 
 	/* Now copy in the strings */
 	pip=ELKS_PTR(unsigned short, elks_cpu.regs.xsp);
@@ -386,6 +548,8 @@ main(int argc, char *argv[], char *envp[])
 	struct stat st;
 	int ruid, euid, rgid, egid;
 	int pg_sz;
+	int err;
+	size_t argv_envp_bytes;
 
 	if(argc<=1)
 	{
@@ -428,8 +592,8 @@ main(int argc, char *argv[], char *envp[])
 	}
 
 	/* The Linux vm will deal with not allocating the unused pages */
-	elks_base = mmap(NULL, 0x20000 + pg_sz,
-	                  PROT_EXEC|PROT_READ|PROT_WRITE,
+	elks_base = mmap(NULL, 0x30000 + pg_sz,
+			  PROT_EXEC|PROT_READ|PROT_WRITE,
 			  MAP_ANON|MAP_PRIVATE|MAP_32BIT, 
 			  -1, 0);
 	if( (intptr_t)elks_base < 0 || (uintptr_t)elks_base >= 0x100000000ull)
@@ -437,17 +601,29 @@ main(int argc, char *argv[], char *envp[])
 		fprintf(stderr, "Elks memory is at an illegal address\n");
 		exit(255);
 	}
-	mprotect(elks_base + 0x20000, pg_sz, PROT_NONE);
+	mprotect(elks_base + 0x30000, pg_sz, PROT_NONE);
 	
-	if(load_elks(fd) < 0)
+	argv_envp_bytes = count_argv_envp_bytes(argv + 1, envp);
+
+	if (argv_envp_bytes > 0xffffu)
 	{
-		fprintf(stderr,"Not a elks binary.\n");
+		fprintf(stderr, "Not enough space for argv and envp!\n");
+		exit(255);
+	}
+
+	if((err = load_elks(fd, (uint16_t)argv_envp_bytes)) < 0)
+	{
+		if (err == -ENOEXEC)
+			fprintf(stderr, "Not a elks binary.\n");
+		else
+			fprintf(stderr, "Unsupported elks binary (%s).\n",
+				strerror(-err));
 		exit(1);
 	}
 	
 	close(fd);
 
-	build_stack(argv+1, envp);
+	build_stack(argv + 1, envp, argv_envp_bytes);
 
 	while(1)
 		run_elks();
