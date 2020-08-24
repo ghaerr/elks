@@ -99,8 +99,8 @@ int main(void)
     printf("ICMP Packets     %7lu  ICMP Packets     %7lu\n", ns->icmprcvcnt, ns->icmpsndcnt);
     printf("SLIP Packets     %7lu  SLIP Packets     %7lu\n", ns->sliprcvcnt, ns->slipsndcnt);
     printf("ETH Packets      %7lu  ETH Packets      %7lu\n", ns->ethrcvcnt, ns->ethsndcnt);
-    printf("ARP Replies (rcv)%7lu  ARP Requests(snd)%7lu\n", ns->arprcvreplycnt, ns->arpsndreqcnt);
-    printf("ARP Requests(rcv)%7lu  ARP Replies (snd)%7lu\n", ns->arprcvreqcnt, ns->arpsndreplycnt);
+    printf("ARP Reqs Sent    %7lu  ARP Replies Rcvd %7lu\n", ns->arpsndreqcnt, ns->arprcvreplycnt);
+    printf("ARP Reqs Rcvd    %7lu  ARP Replies Sent %7lu\n", ns->arprcvreqcnt, ns->arpsndreplycnt);
     printf("ARP Cache Adds   %7lu\n", ns->arpcacheadds);
     printf("\n");
 
