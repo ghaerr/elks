@@ -23,11 +23,11 @@
 
 /* Default settings, the Minix ones are defined in <termios.h> */
 #ifndef TCTRL_DEF
-#define TCTRL_DEF	(PARENB | CREAD | CS7)
+#define TCTRL_DEF	(CREAD | CS8)
 #endif
 
 #ifndef TSPEED_DEF
-#define TSPEED_DEF	B1200
+#define TSPEED_DEF	B9600
 #endif
 
 #ifndef TINPUT_DEF
@@ -914,6 +914,10 @@ char *opt, *next;
 		termios.c_cc[VMIN]= TMIN_DEF;
 		termios.c_cc[VTIME]= TTIME_DEF;
 	}
+	if (cfgetispeed(&termios) < B1200) // not sane ...
+		cfsetispeed(&termios, TSPEED_DEF);
+	if (cfgetospeed(&termios) < B1200) // not sane ...
+		cfsetospeed(&termios, TSPEED_DEF);
 	return 0;
   }
 

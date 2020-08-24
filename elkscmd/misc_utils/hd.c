@@ -57,8 +57,7 @@ printline(long address, int *num, char *chr, int eofflag)
 
    lastaddr = address;
    fprintf(ofd, "%06lx:", address);
-   for (j = 0; j < 16; j++)
-   {
+   for (j = 0; j < 16; j++) {
       if (j == 8)
 	 fputc(' ', ofd);
       if (num[j] >= 0)
@@ -82,13 +81,11 @@ void do_fd(void)
    if (offset)
       fseek(fd, offset, 0);
 
-   for (ch = 0; ch != EOF; offset += 16)
-   {
+   for (ch = 0; ch != EOF; offset += 16) {
       memset(buf, '\0', 16);
       for (j = 0; j < 16; j++)
 	 num[j] = -1;
-      for (j = 0; j < 16; j++)
-      {
+      for (j = 0; j < 16; j++) {
 	 ch = fgetc(fd);
 	 if (ch == EOF)
 	    break;
@@ -99,7 +96,7 @@ void do_fd(void)
 	 else
 	    buf[j] = '.';
       }
-       printline(offset, num, buf, ch == EOF);
+       if (j) printline(offset, num, buf, ch == EOF);
    }
 }
 
@@ -116,8 +113,7 @@ void do_mem(char *spec)
 
    addr = (unsigned char __far *)(((unsigned long)seg << 16) | off);
    offset = (((unsigned long)seg << 4) | off);
-   for ( ; count > 0; count -= 16, offset += 16)
-   {
+   for ( ; count > 0; count -= 16, offset += 16) {
       int j, ch;
       memset(buf, '\0', 16);
       for (j = 0; j < 16; j++)
@@ -201,8 +197,7 @@ int main(int argc, char **argv)
 
    for (ar = 1; ar < argc; ar++)
       if (aflag && argv[ar][0] == '-')
-	 switch (argv[ar][1])
-	 {
+	 switch (argv[ar][1]) {
 	 case 'r': /* Reverse */
 	    reverse = 1;
 	    break;
@@ -214,8 +209,7 @@ int main(int argc, char **argv)
 	    break;
 	 case 'o': /* Output */
 	    if( argv[ar][2] ) outfile = argv[ar]+2;
-	    else
-	    {
+	    else {
 	       if( ++ar >= argc ) usage();
 	       outfile = argv[ar];
 	    }
@@ -223,14 +217,11 @@ int main(int argc, char **argv)
 	 default:
 	    usage();
 	 }
-      else
-      {
-         if( outfile )
-	 {
+      else {
+         if( outfile ) {
 	    if( ofd != stdout ) fclose(ofd);
 	    ofd = fopen(outfile, "w");
-	    if( ofd ==  0 )
-	    {
+	    if( ofd ==  0 ) {
 	       fprintf(stderr, "Cannot open file '%s'\n", outfile);
 	       exit(9);
 	    }
@@ -241,9 +232,8 @@ int main(int argc, char **argv)
 	    fd = fopen(argv[ar], "rb");
 	    if (fd == 0)
 	       fprintf(stderr, "Cannot open file '%s'\n", argv[ar]);
-	    else
-	    {
-	       if( reverse )
+	    else {
+	       if (reverse)
 	          do_rev_fd();
 	       else
 	          do_fd();
@@ -253,8 +243,7 @@ int main(int argc, char **argv)
 	 done = 1;
       }
 
-   if (!done)
-   {
+   if (!done) {
       fd = stdin;
       if( reverse )
          do_rev_fd();
