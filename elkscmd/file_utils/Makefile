@@ -12,7 +12,7 @@ include $(BASEDIR)/Make.rules
 
 # note: grep doesn't read stdin, replaced with minix1/grep
 PRGS = ln ls mkdir mkfifo mknod more mv rm rmdir sync touch \
-	cat chgrp chmod chown cmp cp dd df grep
+	cat chgrp chmod chown cmp cp dd df grep uuencode uudecode
 
 all: $(PRGS)
 
@@ -78,6 +78,12 @@ sync: sync.o
 
 touch: touch.o
 	$(LD) $(LDFLAGS) -o touch touch.o $(LDLIBS)
+
+uuencode: uuencode.o
+	$(LD) $(LDFLAGS) -o uuencode uuencode.o $(LDLIBS)
+
+uudecode: uudecode.o
+	$(LD) $(LDFLAGS) -o uudecode uudecode.o $(LDLIBS)
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
