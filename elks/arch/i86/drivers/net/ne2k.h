@@ -25,10 +25,10 @@ extern word_t ne2k_int_stat ();
 extern word_t ne2k_probe ();
 extern void   ne2k_reset ();
 
-extern word_t ne2k_init ();
+extern void   ne2k_init ();
 extern void   ne2k_term ();
 
-extern word_t ne2k_start ();
+extern void   ne2k_start ();
 extern void   ne2k_stop ();
 
 extern void   ne2k_addr_set (byte_t *addr);
@@ -44,7 +44,8 @@ extern word_t ne2k_test ();
 extern word_t ne2k_getpage(void);
 extern void ne2k_get_addr(byte_t *);
 extern void ne2k_get_hw_addr(word_t *);
-extern word_t ne2k_clr_oflow(word_t *);
+extern word_t ne2k_clr_oflow(void);
 extern void ne2k_rdc(void);
+extern void ne2k_get_errstat(byte_t *);
 
 #endif /* !NE2K_H */
