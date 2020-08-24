@@ -8,7 +8,6 @@
 
 // Ethernet generic driver operations
 
-#define IOCTL_ETH_TEST		0x0900
 #define IOCTL_ETH_ADDR_GET	0x0901
 #define IOCTL_ETH_ADDR_SET	0x0902
 #define IOCTL_ETH_HWADDR_GET	0x0903  // get physical HW address from NIC
