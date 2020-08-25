@@ -33,11 +33,9 @@ void icmp_process(struct iphdr_s *iph,unsigned char *packet)
     switch (packet[0]){
     case ICMP_TYPE_ECHO_REQ:
 	len = ntohs(iph->tot_len) - 4 * IP_HLEN(iph);
-#if 0
-	/* for debugging */
-	printf("icmp: PING from %s (len %d id %u seqnum %u)\n",
+	debug_ip("icmp: PING from %s (len %d id %u seqnum %u)\n",
 	    in_ntoa(iph->saddr), len, ntohs(ep->id), ntohs(ep->seqnum));
-#endif
+
 	ep->type = ICMP_TYPE_ECHO_REPL;
 	ep->code = 0;
 	/* return received id, seqnum and extra data*/

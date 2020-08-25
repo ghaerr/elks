@@ -38,14 +38,15 @@ int ip_init(void)
 __u16 ip_calc_chksum(char *data, int len)
 {
     __u32 sum = 0;
-    register __u16 *p = (__u16 *) data;
+    __u16 *p = (__u16 *) data;
 
-if (len & 1) printf("ip: chksum on bad length %d\n", len); //FIXME
-    len >>= 1;
+//if (len & 1) printf("ip: chksum on bad length %d\n", len); //FIXME
 
-    do {
+    for (; len > 1 ; len -= 2)
 	sum += *p++;
-    } while (--len > 0);
+
+    if (len == 1)
+	sum += (__u16)(*(__u8 *)p);
 
     while (sum >> 16)
 	sum = (sum & 0xffff) + (sum >> 16);
