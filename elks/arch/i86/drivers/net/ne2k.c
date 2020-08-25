@@ -1,7 +1,8 @@
 /*
  *
- * NE2K Ethernet driver - supports NICs using the NS DP8390 chip and
- * RTL 8029 chips (tested) and other compatible chip sets.
+ * NE2K Ethernet driver - supports NICs using the NS DP8390 and
+ * compatible chip sets. Tested with Eagle 8390 (6321839050001 (PnP) and
+ * Winbond W89C902P based cards.
  *
  */
 

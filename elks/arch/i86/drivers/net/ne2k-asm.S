@@ -942,6 +942,8 @@ w_reset:
 
 ne2k_clr_oflow:
 
+	push	%di
+
         mov	$io_ne2k_command,%dx
         mov	$0x21,%al       // pg 0, stop, reset DMA
         out	%al,%dx
@@ -1030,6 +1032,7 @@ of_drop_ok:
 	out	%al,%dx
 
 	pop	%ax	// return value as if we'd callet get_page() (for debugging)
+	pop	%di
 	ret
 
 
