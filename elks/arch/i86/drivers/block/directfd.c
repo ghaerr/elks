@@ -1,5 +1,7 @@
-/* linux/kernel/floppy.c
+/*
+ * NOTE: experimental direct fd driver - NOT COMPILING
  *
+ * linux/kernel/floppy.c
  * Copyright (C) 1991, 1992  Linus Torvalds
  *
  * 02.12.91 - Changed to static variables to indicate need for reset
@@ -53,8 +55,6 @@
  *
  * removed volatile and fixed function definitions
  */
-
-#ifdef CONFIG_BLK_DEV_FD
 
 #define TRP_TIMER
 #define TRP_SIG
@@ -1442,5 +1442,3 @@ void floppy_init(void)
 	reset_floppy();
     }
 }
-
-#endif

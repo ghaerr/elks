@@ -1,4 +1,6 @@
 /*
+ * NOTE: experimental direct hd driver - NOT WORKING
+ *
  * directhd driver for ELKS kernel
  * Copyright (C) 1998 Blaz Antonic
  * 14.04.1998 Bugfixes by Alastair Bridgewater nyef@sudval.org
@@ -15,8 +17,6 @@
 
 #include <arch/io.h>
 #include <arch/segment.h>
-
-#ifdef CONFIG_BLK_DEV_HD
 
 /* maybe we should have word-wide input here instead of byte-wide ? */
 #define STATUS(port) inb_p(port + DIRECTHD_STATUS)
@@ -630,5 +630,3 @@ void do_directhd_request(void)
     }
     return;
 }
-
-#endif

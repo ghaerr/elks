@@ -1,4 +1,8 @@
-/* doshd.c copyright (C) 1994 Yggdrasil Computing, Incorporated
+/*
+ * bioshd.c - ELKS floppy and hard disk driver - uses BIOS
+ *
+ * Originally from
+ * doshd.c copyright (C) 1994 Yggdrasil Computing, Incorporated
  * 4880 Stevens Creek Blvd. Suite 205
  * San Jose, CA 95129-1034
  * USA
@@ -42,8 +46,6 @@
 #include <arch/system.h>
 #include <arch/irq.h>
 
-#ifdef CONFIG_BLK_DEV_BIOS
-
 /* the following must match with /dev minor numbering scheme*/
 #define NUM_MINOR	32	/* max minor devices per drive*/
 #define MINOR_SHIFT	5	/* =log2(NUM_MINOR) shift to get drive num*/
@@ -71,24 +73,11 @@ struct elks_boot_sect {
     __u8 xx2[2];		/* 0xAA55 */
 } __attribute__((packed));
 
-static int bioshd_ioctl(struct inode *, struct file *,
-	unsigned int, unsigned int);
-
-static int bioshd_open(struct inode *, struct file *);
-
-static void bioshd_release(struct inode *, struct file *);
-
 static int bioshd_initialized = 0;
-
-#if 0
-static struct wait_queue busy_wait;
-static int revalidate_hddisk(int, int);	/* Currently not used*/
-#endif
 
 static struct biosparms bdt;
 
 /* Useful defines for accessing the above structure. */
-
 #define CARRY_SET (bdt.fl & 0x1)
 #define BD_IRQ bdt.irq
 #define BD_AX bdt.ax
@@ -133,10 +122,12 @@ static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
 static int _fd_count = 0;  		/* number of floppy disks */
 static int _hd_count = 0;  		/* number of hard disks */
 
+static int dma_avail = 1;
 static struct wait_queue dma_wait;
 
-static int dma_avail = 1;
-
+static int bioshd_ioctl(struct inode *, struct file *, unsigned int, unsigned int);
+static int bioshd_open(struct inode *, struct file *);
+static void bioshd_release(struct inode *, struct file *);
 static void bioshd_geninit(void);
 
 static struct gendisk bioshd_gendisk = {
@@ -344,43 +335,15 @@ int read_sector(int drive, int track, int sector)
     return 1;			/* error */
 }
 
-static int bioshd_open(struct inode *inode, struct file *filp)
+#ifdef CONFIG_BLK_DEV_BFD
+static void probe_floppy(int target, struct hd_struct *hdp)
 {
-    int target;
-    register struct hd_struct *hdp;
-
-    target = DEVICE_NR(inode->i_rdev);	/* >> MINOR_SHIFT */
-    hdp = &hd[MINOR(inode->i_rdev)];
-
-/* Bounds testing */
-
-    if (bioshd_initialized == 0)
-	return -ENXIO;
-    if ((unsigned int)target >= NUM_DRIVES)
-	return -ENXIO;
-    if (hdp->start_sect == -1)
-	return -ENXIO;
-
-#if 0
-
-/* Wait until it's free */
-
-    while (busy[target])
-	sleep_on(&busy_wait);
-
-#endif
-
-/* Register that we're using the device */
-
-    access_count[target]++;
-
 /* Check for disk type */
 
 /* I guess it works now as it should. Tested under dosemu with 720Kb,
  * 1.2 MB and 1.44 MB floppy image and works fine - Blaz Antonic
  */
 
-#ifdef CONFIG_BLK_DEV_BFD
     if (target >= DRIVE_FD0) {		/* the floppy drives */
 	register struct drive_infot *drivep = &drive_info[target];
 
@@ -495,8 +458,28 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	hdp->start_sect = 0;
 	hdp->nr_sects = ((sector_t)(drivep->sectors * drivep->heads))
 				* ((sector_t)drivep->cylinders);
-
     }
+}
+#endif /* CONFIG_BLK_DEV_BFD*/
+
+static int bioshd_open(struct inode *inode, struct file *filp)
+{
+    unsigned int target = DEVICE_NR(inode->i_rdev);	/* >> MINOR_SHIFT */
+    struct hd_struct *hdp = &hd[MINOR(inode->i_rdev)];
+
+    if (!bioshd_initialized || target >= NUM_DRIVES || hdp->start_sect == -1)
+	return -ENXIO;
+
+#if 0
+    while (busy[target])
+	sleep_on(&busy_wait);
+#endif
+
+    access_count[target]++;	/* Register that we're using the device */
+
+#ifdef CONFIG_BLK_DEV_BFD
+    if (access_count[target] == 1)	/* probe only on initial open*/
+	probe_floppy(target, hdp);
 #endif
 
     inode->i_size = (hdp->nr_sects) << 9;
@@ -513,8 +496,7 @@ static struct file_operations bioshd_fops = {
     bioshd_open,		/* open */
     bioshd_release		/* release */
 #ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
+    ,NULL,			/* fsync */
     NULL,			/* check_media_change */
     NULL			/* revalidate */
 #endif
@@ -541,7 +523,7 @@ int init_bioshd(void)
 #ifndef CONFIG_SMALL_KERNEL
     printk("hd Driver Copyright (C) 1994 Yggdrasil Computing, Inc.\n"
 	   "Extended and modified for Linux 8086 by Alan Cox.\n");
-#endif /* CONFIG_SMALL_KERNEL */
+#endif
 
 #ifdef CONFIG_BLK_DEV_BFD
     _fd_count = bioshd_getfdinfo();
@@ -668,10 +650,6 @@ static void do_bioshd_request(void)
     unsigned int cylinder, head, sector, this_pass;
     unsigned short int minor, in_ax, out_ax;
 
-#if 0
-    int part;
-#endif
-
     while (1) {
 
       next_block:
@@ -693,13 +671,9 @@ static void do_bioshd_request(void)
 	    continue;
 	}
 	minor = MINOR(req->rq_dev);
-
-#if 0
-	part = minor & ((1 << MINOR_SHIFT) - 1);
-#endif
-
 	drive = minor >> MINOR_SHIFT;
 	drivep = &drive_info[drive];
+	//int part = minor & ((1 << MINOR_SHIFT) - 1);
 
 /* make sure it's a disk that we are dealing with. */
 
@@ -810,10 +784,11 @@ static void do_bioshd_request(void)
     }
 }
 
-#if 0
-#define DEVICE_BUSY busy[target]
-#endif
+#if 0			/* Currently not used, removing for size. */
+static struct wait_queue busy_wait;
+static int revalidate_hddisk(int, int);	/* Currently not used*/
 
+#define DEVICE_BUSY busy[target]
 #define USAGE access_count[target]
 #define CAPACITY ((sector_t)drive_info[target].heads*drive_info[target].sectors*drive_info[target].cylinders)
 
@@ -832,7 +807,6 @@ static void do_bioshd_request(void)
  * this is our limit.
  */
 
-#if 0			/* Currently not used, removing for size. */
 #ifndef MAYBE_REINIT
 #define MAYBE_REINIT
 #endif
@@ -910,5 +884,3 @@ kdev_t bioshd_conv_bios_drive(unsigned int biosdrive)
 	minor = (biosdrive & 0x03) + DRIVE_FD0;
     return MKDEV(BIOSHD_MAJOR, (minor << MINOR_SHIFT) + partition);
 }
-
-#endif
