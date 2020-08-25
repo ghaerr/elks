@@ -63,7 +63,8 @@ CONFIG_APP_DISK_UTILS	disk_utils/		Disk utilities from early 1990s.
 										Installs in /bin: fdisk, fsck, mkfs, partype, ramdisk
 
 CONFIG_APP_MISC_UTILS	misc_utils/		Miscellaneous utilities from various sources, including sash.
-										Installs in /bin: ed, miniterm, tar, od
+										Installs in /bin: ed, miniterm, tar, od, hd, kilo, time, tty,
+										uuencode, uudecode
 										Not installed: compress, uncompress, zcat
 
 CONFIG_APP_MINIX1		minix1/			MINIX utilities, part 1.
