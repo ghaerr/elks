@@ -1,7 +1,8 @@
 /*
  *
  * NE2K Ethernet driver - supports NICs using the NS DP8390 chip and
- * RTL 8029 chips (tested) and other compatible chip sets.
+ * compatible chip sets. Tested with Eagle 8390 (6321839050001 (PnP) and
+ * Winbond W89C902P based cards.
  *
  */
 
@@ -19,7 +20,7 @@
 
 #include "ne2k.h"
 
-#define DEBUG_ETH	0 /* set =1 for debugging*/
+#define DEBUG_ETH	1 /* set =1 for debugging*/
 
 #if DEBUG_ETH
 #define debug_eth   printk
@@ -189,10 +190,12 @@ static void ne2k_int(int irq, struct pt_regs * regs, void * dev_id)
 	}
 
 	if (stat & NE2K_STAT_RX) {
+		printk("|r|");
 		wake_up(&rxwait);
 	}
 
 	if (stat & NE2K_STAT_TX) {
+		printk("|t|");
 		wake_up(&txwait);
 	}
 	if (stat & NE2K_STAT_RDC) {
