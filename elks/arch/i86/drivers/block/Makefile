@@ -33,15 +33,28 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-ifeq ($(CONFIG_ARCH_SIBO), y)
-OBJS  = init.o genhd.o ll_rw_blk.o rd.o sibo_ssd.o ssd_asm.o
-else
-ifeq ($(CONFIG_ROMFS_FS), y)
-OBJS  = init.o genhd.o ll_rw_blk.o rd.o doshd.o floppy.o directhd.o romflash.o
-else
-OBJS  = init.o genhd.o ll_rw_blk.o rd.o doshd.o floppy.o directhd.o
+OBJS  = init.o genhd.o ll_rw_blk.o rd.o
+
+# BIOS floppy and hard drive support
+ifeq ($(CONFIG_BLK_DEV_BIOS), y)
+OBJS += bioshd.o
 endif
 
+ifeq ($(CONFIG_ROMFS_FS), y)
+OBJS += romflash.o
+endif
+
+ifeq ($(CONFIG_ARCH_SIBO), y)
+OBJS += sibo_ssd.o ssd_asm.o
+endif
+
+# experimental (and not working) direct hd support
+ifeq ($(CONFIG_BLK_DEV_HD), y)
+OBJS += directhd.o
+endif
+# experimental (and not compiling) direct fd support
+ifeq ($(CONFIG_BLK_DEV_FD), y)
+OBJS += directfd.o
 endif
 
 #########################################################################

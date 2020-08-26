@@ -48,8 +48,6 @@ mainmenu_option next_comment
 
 		fi
 
-		int 'Base memory size (64K pages)' CONFIG_MEM_PAGES 8 4 10
-
 		comment 'Devices'
 
 		bool 'PS/2 mouse'       CONFIG_HW_PS2_MOUSE y
