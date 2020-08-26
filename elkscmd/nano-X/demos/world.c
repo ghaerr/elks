@@ -516,7 +516,7 @@ load(fn)
 	GR_COLOR	newcolor;
 	int		n;
 	int		fh;
-	DBPOINT		p[PCount];
+	static DBPOINT		p[PCount];	/* static to avoid large stack usage*/
 
 	LonPrv = ITOF(0);
 	LatPrv = ITOF(0);
