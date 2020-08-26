@@ -9,4 +9,6 @@ time
 kilo
 tty
 uncompress
+uuencode
+uudecode
 zcat

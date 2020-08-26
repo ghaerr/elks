@@ -72,8 +72,6 @@ file_utils/rm					:fileutil		:360k
 file_utils/rmdir				:fileutil			:720k
 file_utils/sync					:fileutil		:360k
 file_utils/touch				:fileutil			:720k
-file_utils/uuencode				:fileutil			:1440k
-file_utils/uudecode				:fileutil			:1440k
 sys_utils/chmem					:sysutil			:720k
 sys_utils/kill					:sysutil			:720k
 sys_utils/ps					:sysutil		:360k
@@ -112,6 +110,8 @@ misc_utils/hd					:miscutil		:360k
 misc_utils/time					:miscutil			:720k
 misc_utils/kilo					:miscutil				:1440k
 misc_utils/tty					:miscutil				:1440k
+misc_utils/uuencode				:miscutil				:1440k
+misc_utils/uudecode				:miscutil				:1440k
 misc_utils/ed					:be-miscutil		:720k
 elvis/elvis	::bin/vi			:elvis				:720k
 minix1/banner					:minix1					:1440k
