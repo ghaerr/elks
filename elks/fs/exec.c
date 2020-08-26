@@ -411,7 +411,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     currentp->t_begstack = (base_data	/* Just above the top of stack */
 	? (__pptr)base_data
 	: currentp->t_endseg) - slen;
-    currentp->t_regs.sp = (__u16)(currentp->t_begstack);
+    currentp->t_begstack &= ~1;		/* force even stack pointer and argv/envp*/
+    currentp->t_regs.sp = (__u16)currentp->t_begstack;
     fmemcpyb((byte_t *)currentp->t_begstack, seg_data->base, (byte_t *)sptr, ds, (word_t) slen);
     currentp->t_minstack = stack;
 
