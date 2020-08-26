@@ -519,6 +519,10 @@ void build_stack(char ** argv, char ** envp, size_t argv_envp_bytes)
 	/* Allocate stack space in ELKS memory for argv and envp */
 	elks_cpu.regs.xsp -= argv_envp_bytes;
 
+	/* Make sp aligned on a 2-byte boundary */
+	if ((elks_cpu.regs.xsp & 1) != 0)
+		--elks_cpu.regs.xsp;
+
 	/* Now copy in the strings */
 	pip=ELKS_PTR(unsigned short, elks_cpu.regs.xsp);
 	pcp=elks_cpu.regs.xsp+2*(1+argv_count+1+envp_count+1);
