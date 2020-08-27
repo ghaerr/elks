@@ -11,8 +11,6 @@
 
 	.code16
 
-// TODO: move definitions to ne2k-defs.s
-// adjust only this line for card base address
 base               = NE2K_PORT     // I/O base address
 
 // register array
@@ -52,7 +50,7 @@ io_ne2k_multicast  = base+0x08  // page 1 - 8 bytes
 
 io_ne2k_data_io    = base+0x10  // 2 bytes
 
-io_ne2k_reset      = base+0x1F
+io_ne2k_reset      = base+0x1F	// Really a port, not a register, force HW reset of the chip
 
 
 // Ring segmentation
@@ -365,7 +363,6 @@ ne2k_rx_stat:
 
 	// get RX put pointer
 
-#if 0
 	mov	$0x42,%al	// page 1
 	mov	$io_ne2k_command,%dx
 	out	%al,%dx
@@ -380,8 +377,7 @@ ne2k_rx_stat:
 
 	// get RX get pointer
 
-#endif
-	call	ne2k_getpage	// get current page pointers
+	//call	ne2k_getpage	// get current page pointers
 	mov	_ne2k_next_pk,%al // but ignore BOUNDARY, use the 'real' one.
 
 	cmp     %al,%cl		// The ring is empty if they are equal.
@@ -486,11 +482,11 @@ npg_err2:
 
 npg_exit:
 	// clear RX bit in ISR
-	mov     %ax,%bx 		// save return value
-	mov     $io_ne2k_int_stat,%dx   // reset the interrupt bit
-	mov     $1,%al  		// NE2K_STAT_RX 
-	out     %al,%dx
-	mov     %bx,%ax 		// unsave
+	//mov     %ax,%bx 		// save return value
+	//mov     $io_ne2k_int_stat,%dx   // reset the interrupt bit
+	//mov     $1,%al  		// NE2K_STAT_RX 
+	//out     %al,%dx
+	//mov     %bx,%ax 		// unsave
 
 	pop     %di
 	pop     %bp
@@ -604,13 +600,14 @@ ne2k_int_stat:
 	mov     $io_ne2k_int_stat,%dx
 	in      %dx,%al
 	test    $0x13,%al	// ring buffer overflow, tx, rx
-				// Dont reset RDC intr here, it will break 
+				// Don't reset RDC intr here, it will break 
 				// the dma_read/write routines
 	jz      nis_next
 
 	// clear TX interrupt only
 	push	%ax	
-	mov	$2,%al		// removing this for test, reset all ints see what happens ..
+	mov	$3,%al		// removing this for test, reset all ints see what happens ..
+				// 3 is experimental
 	out     %al,%dx
 	pop	%ax
 
@@ -750,9 +747,6 @@ ne2k_stop:
 	// Stop the DMA and the MAC
 
 	mov     $io_ne2k_command,%dx
-	//in      %dx,%al
-	//and     $0xC0,%al
-	//or      $0x21,%al
 	mov	$0x21,%al	// page 0 + stop
 	out     %al,%dx
 
@@ -818,10 +812,10 @@ ne2k_probe:
 	// register not initialized in QEMU
 	// so do not rely on this one
 
-	//mov     dx, #io_ne2k_command
-	//in      al, dx
-	//and     al, #$3F
-	//cmp     al, #$21
+	//mov     $io_ne2k_command,%dx
+	//in      %dx,%al
+	//and     $0x3F,%al
+	//cmp     $0x21,%al
 	//jnz     np_err
 
 	xor     %ax,%ax
@@ -888,9 +882,12 @@ ne2k_get_hw_addr:
 	mov     4(%bp),%di
 
 	// Effectively a soft reset of the NIC, required in order to get access to the
-	// Address PROM - 32 bytes of which only the first 6 bytes are of interest
+	// Address PROM - 32 bytes of which only the first 6 bytes are of interest.
 	// NOTE: Since we're reading the entire PROM, we also have the opportunity to
-	// detect the type of card. The caller can do this, the entire dataset is being returned.
+	// detect the type of card. The caller can do this since the entire dataset 
+	// is being returned.
+	// FIXME: Some of this code is identical to init() and clr_oflw((),
+	//	 move to its own function.
 
 w_reset:
 	mov	$io_ne2k_command,%dx
@@ -943,6 +940,7 @@ w_reset:
 ne2k_clr_oflow:
 
 	push	%di
+	push	%bp
 
         mov	$io_ne2k_command,%dx
         mov	$0x21,%al       // pg 0, stop, reset DMA
@@ -955,8 +953,9 @@ ne2k_clr_oflow:
 	out	%al,%dx	// clear dma counter
 
 	mov	_ne2k_skip_cnt,%bx	// get # of packets to discard
-	sub	$-4,%sp
-	mov	%sp,%di		// make temp space
+	mov	%sp,%bp
+	sub	$4,%sp		// make temp space
+	mov	%sp,%di
 
 	mov	$io_ne2k_int_stat,%dx
 
@@ -981,7 +980,7 @@ of_reset:	// May need a timeout counter here to avoid being stuck if something g
 	cmp	$0,%bx		// zero - just empty the ring buffer
 	jnz	of_drop_packets	// not zero - dicard %bx packets
 
-	mov	%ah,%al         // CURRENT = BOUNDARY
+	mov	%ah,%al         // set BOUNDARY = CURRENT
 	cmp	$rx_first,%ah   // if CURRENT is at the beginning of the ring (!)
 	jnz	of_clr_pk
 	mov	$rx_last+1,%al  // do the 'one behind' trickery
@@ -1032,6 +1031,8 @@ of_drop_ok:
 	out	%al,%dx
 
 	pop	%ax	// return value as if we'd callet get_page() (for debugging)
+	mov	%bp,%sp
+	pop	%bp
 	pop	%di
 	ret
 
