@@ -175,11 +175,6 @@ static void ne2k_int(int irq, struct pt_regs * regs, void * dev_id)
 	debug_eth("/%02X",stat&0xff);
 
         if (stat & NE2K_STAT_OF) {
-		_ne2k_skip_cnt = 0;	/* # of packets to discard. 
-					 * Zero is the default, discard entire buffer.
-					 * A big # will have the same effect.
-					 * On a floppy based system, anything else is useless.
-					 */
 		printk("eth: NIC ring buffer overflow, skipping ");
 		if (_ne2k_skip_cnt) 
 			printk("%d packets.\n", _ne2k_skip_cnt);
@@ -201,8 +196,8 @@ static void ne2k_int(int irq, struct pt_regs * regs, void * dev_id)
 		/* The RDC interrupt should be disabled in the low level driver.
 		 * When real DMA transfer from NIC til system RAM is enabled, this is where
 		 * we handle transfer completion.
-		 * NOTICE: If we get here, a remote DMA transfer was aborted, probably a bug
-		 * in the driver.
+		 * NOTICE: If we get here, a remote DMA transfer was aborted. This should
+		 * not happen.
 		 */
 		ne2k_rdc();
 	}
@@ -241,6 +236,7 @@ static int eth_ioctl(struct inode * inode, struct file * file, unsigned int cmd,
 			 * arg is byte[3].
 			 */
 			ne2k_get_errstat((byte_t *)arg);
+			break;
 
 		case IOCTL_ETH_OFWSKIP_SET:
 			/* Set the number of packets to skip @ ring buffer overflow. */
@@ -378,6 +374,12 @@ void eth_drv_init() {
 		break;
 
 	}
+	_ne2k_skip_cnt = 0;	/* # of packets to discard if the NIC buffer overflows. 
+				 * Zero is the default, discard entire buffer.
+				 * May be changed via ioctl.
+				 * A big # will have the same effect.
+				 * On a floppy based system, anything else is useless.
+				 */
 	return;
 }
 

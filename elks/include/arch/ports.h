@@ -98,7 +98,7 @@
 #define COM4_PORT	0x2e8
 #define COM4_IRQ	2		/* unregistered unless COM4_PORT found*/
 
-/* ne2k, eth-main.c*/
+/* ne2k, ne2k.c */
 #define NE2K_IRQ	12
 #define NE2K_PORT	0x300
 
