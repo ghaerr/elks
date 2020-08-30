@@ -72,12 +72,14 @@ static void add_partition(struct gendisk *hd, unsigned short int minor,
      * A CHS cylinder can have 63 max sectors * 255 heads, so adjust for that.
      */
     sector_t adj_nr_sects = hd0->nr_sects + 63 * 255;
+#if 0	/* partition skipping disabled as virtual cylinder values sometimes needed for CF cards*/
     if (start > adj_nr_sects || start+size > adj_nr_sects) {
 	printk("skipped ");
 	hdp->start_sect = -1;
 	hdp->nr_sects = 0;
 	return;
     }
+#endif
 
     /*
      * Save boot partition # based on start offset.  This is needed if
