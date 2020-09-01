@@ -78,7 +78,8 @@ struct minix_fs_dat *new_fs(const char *fn,int magic,unsigned long fsize,int ino
   else
     fs->msb.s_nzones = fsize;
   fs->msb.s_state = MINIX_VALID_FS;
-  fs->msb.s_max_size = VERSION_2(fs) ? 0x7fffffff : (7+512+512*512) * 1024;
+  /* v1 volume limit is 7+512+512*512, but limit max_size to blocks in fs*/
+  fs->msb.s_max_size = VERSION_2(fs) ? 0x7fffffff : fsize * 1024;
   fs->msb.s_log_zone_size = 0;		/* zone size is always BLOCK_SIZE*/
 
   /* Manage inodes */
