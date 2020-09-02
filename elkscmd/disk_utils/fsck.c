@@ -38,6 +38,8 @@
  *			      program name and version number when program
  *			      is executed.
  *
+ * Tue Sep 1 2020 - Greg Haerr fixed fsck to work on ELKS
+ *
  * I've had no time to add comments - hopefully the function names
  * are comments enough. As with all file system checkers, this assumes
  * the file system is quiescent - don't use it on a mounted device
@@ -84,7 +86,7 @@
 #define BITS_PER_BLOCK (BLOCK_SIZE<<3)
 
 static char * program_name = "fsck.minix";
-static char * program_version = "1.0 - 12/30/93";
+static char * program_version = "1.0.1 - 09/01/20";
 static char * device_name = NULL;
 static int IN;
 static int repair=0, automatic=0, verbose=0, list=0, show=0, warn_mode=0,
@@ -108,7 +110,7 @@ static char name_list[MAX_DEPTH][NAMELEN+1];
 
 /*static char * inode_buffer = NULL; */
 static char inode_buffer[BLOCK_SIZE];
-#define Inode (((struct minix_inode *) inode_buffer)-1)
+/*#define Inode (((struct minix_inode *) inode_buffer)-1)*/
 static char super_block_buffer[BLOCK_SIZE];
 struct minix_super_block * SupeP = (struct minix_super_block *)super_block_buffer;
 #define Super (*(struct minix_super_block *)super_block_buffer)
@@ -237,14 +239,12 @@ void unmap_inode_buffer()
 
 void inode_dump(struct minix_inode * ptr)
 {
-	int mode = ptr->i_mode;
 	int i;
 
-	printf("Mode %d %d %d %d\n", mode & 7, (mode>>4) & 7, (mode>>4) & 7, (mode>>12) & 7);
-	printf("uid %d size %ld gid %d links %d\n", ptr->i_uid, ptr->i_size, ptr->i_gid, ptr->i_nlinks);
-	for (i = 0; i < 9; i++) {
-		printf("Z%d ", ptr->i_zone[i]);
-	}
+	printf(" size %ld %06o %d/%d links %d Z",
+		ptr->i_size, ptr->i_mode, ptr->i_uid, ptr->i_gid, ptr->i_nlinks);
+	for (i = 0; i < 9; i++)
+		printf("%d ", ptr->i_zone[i]);
 	printf("\n");
 }
 
@@ -261,8 +261,9 @@ struct minix_inode * map_inode(unsigned int nr)
 
 	if (!nr || nr >= INODES)
 		return NULL;
+	nr--;
 	inode_block = nr >> 5;
-	inode_offset = (nr & 31) - 1;
+	inode_offset = nr & 31;
 	printd("Map of inode %d requested which is no %d in block %d\n",
 		nr, inode_offset, inode_block);
 	inode_ptr = ((struct minix_inode *)inode_buffer) + inode_offset;
@@ -289,7 +290,6 @@ struct minix_inode * map_inode(unsigned int nr)
 	/* SET mapped */
 	mapped_block = inode_block;
 	/* RETURN POINTER */
-	inode_dump(inode_ptr);
 	return inode_ptr;
 }
 
@@ -608,7 +608,7 @@ struct minix_inode * get_inode(unsigned int nr)
 			;
 		else {
                         print_current_name();
-                        printf(" has mode %05o\n",inode->i_mode);
+                        printf(" has mode %06o\n",inode->i_mode);
                 }
 
 	} else
@@ -746,7 +746,11 @@ void check_file(struct minix_inode * dir, unsigned long offset)
 		}
 		ino = 0;
 	}
+	if (name_depth < MAX_DEPTH)
+		strncpy(name_list[name_depth],name,NAMELEN);
+	name_depth++;
 	inode = get_inode(ino);
+	name_depth--;
 	if (offset == 0L)
 		if (!inode || strcmp(".",name)) {
 			print_current_name();
@@ -765,7 +769,7 @@ void check_file(struct minix_inode * dir, unsigned long offset)
 		strncpy(name_list[name_depth],name,NAMELEN);
 	name_depth++;
 	print_current_name();
-	printf("\n");
+	inode_dump(inode);
 	if (list) {
 		if (verbose)
 			printf("%6d %07o %3d ",ino,inode->i_mode,inode->i_nlinks);
@@ -876,6 +880,8 @@ void check(void)
 	memset(inode_count,0,INODES*sizeof(*inode_count));
 	memset(zone_count,0,ZONES*sizeof(*zone_count));
 	check_zones(ROOT_INO);
+	printf("/");
+	inode_dump(map_inode(ROOT_INO));
 	recursive_check(ROOT_INO);
 	check_counts();
 }

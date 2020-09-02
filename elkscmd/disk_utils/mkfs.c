@@ -84,7 +84,7 @@ static int dirsize = 16;
 static int magic = MINIX_SUPER_MAGIC;
 static unsigned int ikl;
 
-static char root_block[BLOCK_SIZE] = "\0";
+static char root_block[BLOCK_SIZE];
 
 static char * inode_buffer = NULL;
 #define Inode (((struct minix_inode *) inode_buffer)-1)
@@ -237,7 +237,8 @@ void setup_tables(void)
 	memset(super_block_buffer,0,BLOCK_SIZE);
 	MAGIC = magic;
 	ZONESIZE = 0;
-	MAXSIZE = (7+512+512L*512L)*1024L;
+	/* volume limit is 7+512+512L*512L but set max_size to blocks in fs*/
+	MAXSIZE = BLOCKS*1024L;
 	ZONES = BLOCKS;
 	INODES = BLOCKS/3;
 	if ( BLOCKS > 32768L ) INODES += (BLOCKS-32768)*4/3;
