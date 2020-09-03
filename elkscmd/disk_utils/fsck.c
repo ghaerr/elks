@@ -771,10 +771,9 @@ void check_file(struct minix_inode * dir, unsigned long offset)
 	if (verbose > 1) {
 		print_current_name();
 		inode_dump(inode);
-	}
-	if (list) {
+	} else if (list) {
 		if (verbose)
-			printf("%6d %07o %3d ",ino,inode->i_mode,inode->i_nlinks);
+			printf("%6d %06o %3d ",ino,inode->i_mode,inode->i_nlinks);
 		print_current_name();
 		if (S_ISDIR(inode->i_mode))
 			printf(":\n");
