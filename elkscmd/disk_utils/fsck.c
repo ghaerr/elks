@@ -565,7 +565,7 @@ void read_tables(void)
 		printf("Pre-zone blocks 2+%d+%d+%d %d\n", IMAPS, ZMAPS, INODE_BLOCKS, NORM_FIRSTZONE);
 		printf("Firstdatazone=%d (%d)\n",FIRSTZONE,NORM_FIRSTZONE);
 		printf("Zonesize=%d\n",BLOCK_SIZE<<ZONESIZE);
-		printf("Maxsize=%ld\n",MAXSIZE);
+		printf("Maxsize=%ld bytes\n",MAXSIZE);
 		printf("Filesystem state=%d\n", SupeP->s_state);
 		printf("namelen=14\n\n"); /* RUBOUT */
 	}
@@ -628,7 +628,7 @@ void check_root(void)
 
 	if (!inode || !S_ISDIR(inode->i_mode))
 		die("root inode isn't a directory");
-	printf("Root inode is a directory.\n");
+	printd("Root inode is a directory.\n");
 }
 
 static int add_zone(unsigned short * znr, int * corrected)
@@ -768,11 +768,12 @@ void check_file(struct minix_inode * dir, unsigned long offset)
 	if (name_depth < MAX_DEPTH)
 		strncpy(name_list[name_depth],name,NAMELEN);
 	name_depth++;
-	print_current_name();
-	inode_dump(inode);
-	if (list) {
+	if (verbose > 1) {
+		print_current_name();
+		inode_dump(inode);
+	} else if (list) {
 		if (verbose)
-			printf("%6d %07o %3d ",ino,inode->i_mode,inode->i_nlinks);
+			printf("%6d %06o %3d ",ino,inode->i_mode,inode->i_nlinks);
 		print_current_name();
 		if (S_ISDIR(inode->i_mode))
 			printf(":\n");
@@ -880,8 +881,10 @@ void check(void)
 	memset(inode_count,0,INODES*sizeof(*inode_count));
 	memset(zone_count,0,ZONES*sizeof(*zone_count));
 	check_zones(ROOT_INO);
-	printf("/");
-	inode_dump(map_inode(ROOT_INO));
+	if (verbose > 1) {
+		printf("/");
+		inode_dump(map_inode(ROOT_INO));
+	}
 	recursive_check(ROOT_INO);
 	check_counts();
 }
@@ -909,7 +912,7 @@ int main(int argc, char ** argv)
 				case 'l': list=1; break;
 				case 'a': automatic=1; repair=1; break;
 				case 'r': automatic=0; repair=1; break;
-				case 'v': verbose=1; break;
+				case 'v': verbose++; break;
 				case 's': show=1; break;
 				case 'm': warn_mode=1; break;
 				case 'f': force=1; break;
@@ -929,6 +932,7 @@ int main(int argc, char ** argv)
 	IN = open(device_name,repair?O_RDWR:O_RDONLY);
 	if (IN < 0)
 		die("unable to open '%s'");
+	printf("%s %s\n", program_name, program_version);
 	for (count=0 ; count<3 ; count++)
 		sync();
 	read_tables();
@@ -939,7 +943,6 @@ int main(int argc, char ** argv)
 	 * flags and whether or not the -f switch was specified on the
 	 * command line.
 	 */
-	printf("%s, %s\n", program_name, program_version);
 	if (!(SupeP->s_state & MINIX_ERROR_FS) &&
 	      (SupeP->s_state & MINIX_VALID_FS) &&
 	      !force) {
