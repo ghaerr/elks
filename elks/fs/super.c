@@ -27,7 +27,7 @@ extern int root_mountflags;
 
 struct super_block super_blocks[NR_SUPER];
 
-static int do_remount_sb();
+static int do_remount_sb(register struct super_block *sb, int flags, char *data);
 
 kdev_t ROOT_DEV;
 
@@ -359,8 +359,6 @@ static int do_remount_sb(register struct super_block *sb, int flags, char *data)
     register struct super_operations *sop = sb->s_op;
 
     debug_sup("REMOUNT sb check %d,%d\n", sb->s_flags, flags);
-    if (!(flags & MS_RDONLY) && sb->s_dev) return -EACCES;
-
 #if 0
     flags |= MS_RDONLY;
 #endif
@@ -380,11 +378,9 @@ static int do_remount_sb(register struct super_block *sb, int flags, char *data)
     return 0;
 }
 
-#ifdef BLOAT_FS			/* Never called */
-
 static int do_remount(char *dir, int flags, char *data)
 {
-    register struct inode *dir_i;
+    struct inode *dir_i;
     int retval;
 
     if (!(retval = namei(dir, &dir_i, 0, 0))) {
@@ -394,21 +390,19 @@ static int do_remount(char *dir, int flags, char *data)
     }
     return retval;
 }
-#endif
 
 /*
  * Flags is a 16-bit value that allows up to 16 non-fs dependent flags to
  * be given to the mount() call (ie: read-only, no-dev, no-suid etc).
  */
 
-int sys_mount(char *dev_name, char *dir_name, char *type)
+int sys_mount(char *dev_name, char *dir_name, char *type, int flags)
 {
     register struct file_system_type *fstype;
     struct inode *inode;
     register struct inode *inodep;
     struct file *filp;
     int retval;
-    int new_flags = 0;
 
 #ifdef CONFIG_FULL_VFS
     /* FIXME ltype is way too big for our stack goal.. */
@@ -417,11 +411,8 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 
     if (!suser()) return -EPERM;
 
-#ifdef BLOAT_FS			/* new_flags is set to zero, so this is never true. */
-    if ((new_flags & MS_REMOUNT) == MS_REMOUNT) {
-	return do_remount(dir_name, new_flags & ~MS_REMOUNT, NULL);
-    }
-#endif
+    if (flags & MS_REMOUNT)
+	return do_remount(dir_name, flags & ~MS_REMOUNT, NULL);
 
     /* FIXME: copy type to user cleanly or use numeric types ??  */
 
@@ -446,34 +437,24 @@ int sys_mount(char *dev_name, char *dir_name, char *type)
 
     filp = NULL;
 
-#ifdef BLOAT_FS
-    if (fstype->requires_dev) {
-#endif
 	retval = namei(dev_name, &inode, 0, 0);
 	if (retval) return retval;
 	inodep = inode;
 	debug("MOUNT: made it through namei\n");
-	if (!S_ISBLK(inodep->i_mode)) {
+	if (!S_ISBLK(inodep->i_mode))
 	    retval = -ENOTBLK;
-	}
-	else if (IS_NODEV(inodep)) {
+	else if (IS_NODEV(inodep))
 	    retval = -EACCES;
-	}
-	else if (MAJOR(inodep->i_rdev) >= MAX_BLKDEV) {
+	else if (MAJOR(inodep->i_rdev) >= MAX_BLKDEV)
 	    retval = -ENXIO;
-	}
 	else
-	    retval = open_filp((mode_t)((new_flags & MS_RDONLY) ? 1 : 3), inodep, &filp);
+	    retval = open_filp((mode_t)((flags & MS_RDONLY) ? 1 : 3), inodep, &filp);
 	if (retval) {
 	    iput(inodep);
 	    return retval;
 	}
 
-#ifdef BLOAT_FS
-    } else printk("unnumbered fs is unsupported.\n");
-#endif
-
-    retval = do_mount(inodep->i_rdev, dir_name, fstype->name, new_flags, NULL);
+    retval = do_mount(inodep->i_rdev, dir_name, fstype->name, flags, NULL);
     if (retval && filp)
 	close_filp(inodep, filp);
     iput(inodep);

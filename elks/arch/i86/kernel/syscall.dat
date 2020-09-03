@@ -39,7 +39,7 @@ brk		+17	1	* This is only to tell the system
 stat		+18	2	 
 lseek		+19	3	* nb 2nd arg is an io ptr to long not a long.
 getpid		+20	1	* this gets both pid & ppid
-mount		+21	5	 
+mount		+21	4	 
 umount		+22	1	 
 setuid		+23	1	 
 getuid		+24	1	* this gets both uid and euid
