@@ -59,7 +59,6 @@ static void print_minor_name(register struct gendisk *hd,
 static void add_partition(struct gendisk *hd, unsigned short int minor,
 			  sector_t start, sector_t size)
 {
-    struct hd_struct *hd0 = &hd->part[0];
     struct hd_struct *hdp = &hd->part[minor];
 
     hdp->start_sect = start;
@@ -72,6 +71,7 @@ static void add_partition(struct gendisk *hd, unsigned short int minor,
      * A CHS cylinder can have 63 max sectors * 255 heads, so adjust for that.
      */
 #if 0	/* partition skipping disabled as virtual cylinder values sometimes needed for CF cards*/
+    struct hd_struct *hd0 = &hd->part[0];
     sector_t adj_nr_sects = hd0->nr_sects + 63 * 255;
     if (start > adj_nr_sects || start+size > adj_nr_sects) {
 	printk("skipped ");
