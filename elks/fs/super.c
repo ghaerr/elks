@@ -46,6 +46,7 @@ extern struct file_system_type msdos_fs_type;
 #endif
 
 static struct file_system_type *file_systems[] = {
+/* first filesystem is default filesystem for mount w/o -t parm*/
 #ifdef CONFIG_MINIX_FS
 	&minix_fs_type,
 #endif

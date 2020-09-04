@@ -16,7 +16,7 @@
 int main(int argc, char **argv)
 {
 	char	*str;
-	int		type = FST_MINIX;
+	int		type = 0;		/* default fs*/
 	int		flags = 0;
 	char	*option;
 
