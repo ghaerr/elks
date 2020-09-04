@@ -335,10 +335,8 @@ void msdos_write_inode(register struct inode *inode)
 }
 
 struct file_system_type msdos_fs_type = {
-	msdos_read_super, "msdos"
-#ifdef BLOAT_FS
-	,1
-#endif
+	msdos_read_super,
+	FST_MSDOS
 };
 
 int init_msdos_fs(void)

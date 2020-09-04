@@ -16,7 +16,7 @@
 int main(int argc, char **argv)
 {
 	char	*str;
-	char	*type = "minix";
+	int		type = FST_MINIX;
 	int		flags = 0;
 	char	*option;
 
@@ -34,7 +34,13 @@ int main(int argc, char **argv)
 					return 1;
 				}
 
-				type = *argv++;
+				option = *argv++;
+				if (!strcmp(option, "minix"))
+					type = FST_MINIX;
+				else if (!strcmp(option, "msdos") || !strcmp(option, "fat"))
+					type = FST_MSDOS;
+				else if (!strcmp(option, "romfs"))
+					type = FST_ROMFS;
 				argc--;
 				break;
 

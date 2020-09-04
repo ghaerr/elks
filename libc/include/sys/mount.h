@@ -1,5 +1,11 @@
 /* sys/mount.h*/
 
+/* filesystem types*/
+#define FST_MINIX	1
+#define FST_MSDOS	2
+#define FST_ROMFS	3
+
+/* filesystem mount flags*/
 #define MS_RDONLY	    1	/* mount read-only */
 #define MS_NOSUID	    2	/* ignore suid and sgid bits */
 #define MS_NODEV	    4	/* disallow access to device special files */
@@ -7,7 +13,7 @@
 #define MS_SYNCHRONOUS	   16	/* writes are synced at once */
 #define MS_REMOUNT	   32	/* alter flags of a mounted FS */
 
-int mount(const char *dev, const char *dir, const char *type, int flags);
+int mount(const char *dev, const char *dir, int type, int flags);
 int umount(const char *dir);
 
 int reboot(int magic1, int magic2, int magic3);

@@ -57,15 +57,16 @@ static struct file_system_type *file_systems[] = {
 #endif
 	NULL
 };
+static char *fsname[] = { NULL, "minix", "msdos", "romfs" };
 
-/* Should only be called with a near pointer */
 #ifdef CONFIG_FULL_VFS
-struct file_system_type *get_fs_type(char *name)
+static struct file_system_type *get_fs_type(int type)
 {
     int ct = -1;
-    if (!name) return file_systems[0];
+
+    if (type == 0) return file_systems[0];
     while (file_systems[++ct])
-	if (!strcmp(name, file_systems[ct]->name)) break;
+	if (file_systems[ct]->type == type) break;
     return file_systems[ct];
 }
 #endif
@@ -161,7 +162,7 @@ int sys_ustat(__u16 dev, struct ustat *ubuf)
 
 #endif
 
-static struct super_block *read_super(kdev_t dev, char *name, int flags,
+static struct super_block *read_super(kdev_t dev, int t, int flags,
 				      char *data, int silent)
 {
     register struct super_block *s;
@@ -175,8 +176,8 @@ static struct super_block *read_super(kdev_t dev, char *name, int flags,
     if (s) return s;
 
 #if CONFIG_FULL_VFS
-    if (!(type = get_fs_type(name))) {
-	printk("VFS: dev %s: get_fs_type(%s) failed\n", kdevname(dev), name);
+    if (!(type = get_fs_type(t))) {
+	printk("VFS: device %s unknown fs type %d\n", kdevname(dev), t);
 	return NULL;
     }
 #else
@@ -315,7 +316,7 @@ int sys_umount(char *name)
  * might need new info.
  */
 
-int do_mount(kdev_t dev, char *dir, char *type, int flags, char *data)
+int do_mount(kdev_t dev, char *dir, int type, int flags, char *data)
 {
     struct inode *dir_i;
     register struct inode *dirp;
@@ -395,8 +396,7 @@ static int do_remount(char *dir, int flags, char *data)
  * Flags is a 16-bit value that allows up to 16 non-fs dependent flags to
  * be given to the mount() call (ie: read-only, no-dev, no-suid etc).
  */
-
-int sys_mount(char *dev_name, char *dir_name, char *type, int flags)
+int sys_mount(char *dev_name, char *dir_name, int type, int flags)
 {
     register struct file_system_type *fstype;
     struct inode *inode;
@@ -404,31 +404,15 @@ int sys_mount(char *dev_name, char *dir_name, char *type, int flags)
     struct file *filp;
     int retval;
 
-#ifdef CONFIG_FULL_VFS
-    /* FIXME ltype is way too big for our stack goal.. */
-    char ltype[16];		/* is enough isn't it? */
-#endif
-
     if (!suser()) return -EPERM;
 
     if (flags & MS_REMOUNT)
 	return do_remount(dir_name, flags & ~MS_REMOUNT, NULL);
 
-    /* FIXME: copy type to user cleanly or use numeric types ??  */
-
 #ifdef CONFIG_FULL_VFS
     debug("MOUNT: performing type check\n");
 
-    retval = strnlen_fromfs(type, 15);
-/*    if ((retval = strlen_fromfs(type)) >= 16) {
-	debug("MOUNT: type size exceeds 16 characters, truncating\n");
-	retval = 15;
-    }*/
-
-    verified_memcpy_fromfs(ltype, type, retval);
-    ltype[retval] = '\0';	/* make asciiz again */
-
-    fstype = get_fs_type(ltype);
+    fstype = get_fs_type(type);
     if (!fstype) return -ENODEV;
     debug("MOUNT: type check okay\n");
 #else
@@ -454,7 +438,7 @@ int sys_mount(char *dev_name, char *dir_name, char *type, int flags)
 	    return retval;
 	}
 
-    retval = do_mount(inodep->i_rdev, dir_name, fstype->name, flags, NULL);
+    retval = do_mount(inodep->i_rdev, dir_name, fstype->type, flags, NULL);
     if (retval && filp)
 	close_filp(inodep, filp);
     iput(inodep);
@@ -493,7 +477,7 @@ void mount_root(void)
 	if (!fp->requires_dev) continue;
 #endif
 
-	sb = read_super(ROOT_DEV, fp->name, root_mountflags, NULL, 1);
+	sb = read_super(ROOT_DEV, fp->type, root_mountflags, NULL, 1);
 	if (sb) {
 	    /* NOTE! it is logically used 4 times, not 1 */
 	    sb->s_mounted->i_count += 3;
@@ -501,7 +485,7 @@ void mount_root(void)
 /*	    sb->s_flags = (unsigned short int) root_mountflags;*/
 	    current->fs.pwd = current->fs.root = sb->s_mounted;
 	    printk("VFS: Mounted root 0x%04x (%s filesystem)%s.\n", ROOT_DEV,
-		   fp->name, (sb->s_flags & MS_RDONLY) ? " readonly" : "");
+		   fsname[fp->type], (sb->s_flags & MS_RDONLY) ? " readonly" : "");
 	    iput(d_inode);
 	    filp->f_count = 0;
 	    return;
