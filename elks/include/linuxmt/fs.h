@@ -74,10 +74,14 @@
 #define IS_DIR		1
 #define NOT_DIR 	2
 
+/* filesystem types, used by sys_mount*/
+#define FST_MINIX	1
+#define FST_MSDOS	2
+#define FST_ROMFS	3
+
 /*
  * These are the fs-independent mount-flags: up to 16 flags are supported
  */
-
 #define MS_RDONLY	    1	/* mount read-only */
 #define MS_NOSUID	    2	/* ignore suid and sgid bits */
 #define MS_NODEV	    4	/* disallow access to device special files */
@@ -166,45 +170,6 @@ void wait_on_buffer (struct buffer_head *);
 void lock_buffer (struct buffer_head *);
 void unlock_buffer (struct buffer_head *);
 
-
-/*
- * Attribute flags.  These should be or-ed together to figure out what
- * has been changed!
- */
-
-#define ATTR_MODE	1
-#define ATTR_UID	2
-#define ATTR_GID	4
-#define ATTR_SIZE	8
-#define ATTR_ATIME	16
-#define ATTR_MTIME	32
-#define ATTR_CTIME	64
-#define ATTR_ATIME_SET	128
-#define ATTR_MTIME_SET	256
-#define ATTR_FORCE	512
-
-/*
- * This is the Inode Attributes structure, used for notify_change(). It uses
- * the above definitions as flags, to know which values have changed. Also in
- * this manner, a Filesystem can look at only the values it cares about.
- *
- * Basically, these are the attributes that the VFS layer can request to
- * change from the FS layer.
- *
- * Derek Atkins <warlord@MIT.EDU> 94-10-20
- */
-struct iattr {
-    unsigned int		ia_valid;
-    umode_t			ia_mode;
-    uid_t			ia_uid;
-    gid_t			ia_gid;
-    off_t			ia_size;
-    time_t			ia_atime;
-    time_t			ia_mtime;
-    time_t			ia_ctime;
-};
-
-
 struct inode {
 
     /* This stuff is on disk */
@@ -221,16 +186,6 @@ struct inode {
     kdev_t			i_rdev;
     time_t			i_atime;
     time_t			i_ctime;
-
-#ifdef BLOAT_FS
-    unsigned long int		i_blksize;
-    unsigned long int		i_blocks;
-    unsigned long int		i_version;
-    unsigned short int		i_wcount;
-    unsigned char int		i_seek;
-    unsigned char int		i_update;
-#endif
-
     struct inode_operations	*i_op;
     struct super_block		*i_sb;
     struct inode		*i_next;
@@ -241,8 +196,16 @@ struct inode {
     unsigned short		i_flags;
     unsigned char		i_lock;
     unsigned char		i_dirt;
-
     short			i_sem;
+
+#ifdef BLOAT_FS
+    unsigned long int		i_blksize;
+    unsigned long int		i_blocks;
+    unsigned long int		i_version;
+    unsigned short int		i_wcount;
+    unsigned char int		i_seek;
+    unsigned char int		i_update;
+#endif
 
     union {
 #ifdef CONFIG_PIPE
@@ -283,26 +246,21 @@ struct file {
 struct super_block {
     kdev_t			s_dev;
     unsigned char		s_lock;
-
-#ifdef BLOAT_FS
-    unsigned char		s_rd_only;
-#endif
-
     unsigned char		s_dirt;
     struct file_system_type	*s_type;
     struct super_operations	*s_op;
     unsigned short int		s_flags;
-
-#ifdef BLOAT_FS
-    __u32			s_magic;
-    time_t			s_time;
-#endif
-
     struct inode		*s_covered;
     struct inode		*s_mounted;
     struct wait_queue		s_wait;
 
-	union {
+#ifdef BLOAT_FS
+    unsigned char		s_rd_only;
+    __u32			s_magic;
+    time_t			s_time;
+#endif
+
+    union {
 #ifdef CONFIG_MINIX_FS
 		struct minix_sb_info minix_sb;
 #endif
@@ -313,7 +271,7 @@ struct super_block {
 		struct romfs_super_info romfs;
 #endif
 		void * generic_sbp;
-	} u;
+    } u;
 };
 
 void wait_on_super (struct super_block *);
@@ -394,10 +352,51 @@ struct super_operations {
 
 struct file_system_type {
     struct super_block		*(*read_super) ();
-    char			*name;
+    int				type;
 };
 
+#ifdef BLOAT_FS
+/*
+ * Attribute flags.  These should be or-ed together to figure out what
+ * has been changed!
+ */
+
+#define ATTR_MODE	1
+#define ATTR_UID	2
+#define ATTR_GID	4
+#define ATTR_SIZE	8
+#define ATTR_ATIME	16
+#define ATTR_MTIME	32
+#define ATTR_CTIME	64
+#define ATTR_ATIME_SET	128
+#define ATTR_MTIME_SET	256
+#define ATTR_FORCE	512
+
+/*
+ * This is the Inode Attributes structure, used for notify_change(). It uses
+ * the above definitions as flags, to know which values have changed. Also in
+ * this manner, a Filesystem can look at only the values it cares about.
+ *
+ * Basically, these are the attributes that the VFS layer can request to
+ * change from the FS layer.
+ *
+ * Derek Atkins <warlord@MIT.EDU> 94-10-20
+ */
+struct iattr {
+    unsigned int		ia_valid;
+    umode_t			ia_mode;
+    uid_t			ia_uid;
+    gid_t			ia_gid;
+    off_t			ia_size;
+    time_t			ia_atime;
+    time_t			ia_mtime;
+    time_t			ia_ctime;
+};
+
+extern int notify_change(struct inode *,struct iattr *);
+
 extern int event;		/* Event counter */
+#endif
 
 extern int sys_open(char *,int,int);
 extern int sys_close(unsigned int);	/* yes, it's really unsigned */
@@ -439,8 +438,6 @@ extern struct inode_operations pipe_inode_operations;
 extern struct inode_operations sock_inode_operations;
 #endif
 
-extern struct file_system_type *get_fs_type(char *);
-
 extern int fs_may_mount(kdev_t);
 extern int fs_may_umount(kdev_t,struct inode *);
 extern int fs_may_remount_ro(kdev_t);
@@ -454,7 +451,6 @@ extern void sync_inodes(kdev_t);
 extern void sync_dev(kdev_t);
 extern void fsync_dev(kdev_t);
 extern void sync_supers(kdev_t);
-extern int notify_change(struct inode *,struct iattr *);
 extern int namei(char *,struct inode **,int,int);
 
 #define lnamei(_a,_b) _namei(_a,NULL,0,_b)

@@ -394,11 +394,7 @@ static struct super_block * romfs_read_super (struct super_block * s, void * dat
 }
 
 
-struct file_system_type romfs_fs_type =
-	{
+struct file_system_type romfs_fs_type = {
 	romfs_read_super,
-	"romfs"
-#ifdef BLOAT_FS
-	,1  /* device required ? not really ! */
-#endif
-	};
+	FST_ROMFS
+};

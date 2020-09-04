@@ -475,11 +475,8 @@ int minix_sync_inode(register struct inode *inode)
 #endif
 
 struct file_system_type minix_fs_type = {
-#ifdef BLOAT_FS
-    minix_read_super, "minix", 1
-#else
-    minix_read_super, "minix"
-#endif
+    minix_read_super,
+	FST_MINIX
 };
 
 int init_minix_fs(void)
