@@ -3,10 +3,11 @@
  * Permission is granted to use, distribute, or modify this source,
  * provided that this copyright notice remains intact.
  *
- * Most simple built-in commands are here.
+ * Sep 2020 - added ro and remount,rw options - ghaerr
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -15,11 +16,12 @@
 int main(int argc, char **argv)
 {
 	char	*str;
-	char	*type;
+	char	*type = "minix";
+	int		flags = 0;
+	char	*option;
 
 	argc--;
 	argv++;
-	type = "minix";
 
 	while ((argc > 0) && (**argv == '-')) {
 		argc--;
@@ -36,6 +38,26 @@ int main(int argc, char **argv)
 				argc--;
 				break;
 
+			case 'o':
+				if ((argc <= 0) || (**argv == '-')) {
+					write(STDERR_FILENO, "mount: missing option string\n", 29);
+					return 1;
+				}
+
+				option = *argv++;
+				if (!strcmp(option, "ro"))
+					flags = MS_RDONLY;
+				else if (!strcmp(option, "remount,rw"))
+					flags = MS_REMOUNT;
+				else if (!strcmp(option, "remount,ro"))
+					flags = MS_REMOUNT|MS_RDONLY;
+				else {
+					write(STDERR_FILENO, "mount: bad option string\n", 25);
+					return 1;
+				}
+				argc--;
+				break;
+
 			default:
 				write(STDERR_FILENO, "mount: unknown option\n", 22);
 				return 1;
@@ -43,11 +65,11 @@ int main(int argc, char **argv)
 	}
 
 	if (argc != 2) {
-		write(STDERR_FILENO, "Usage: mount [-t type] <device> <directory>\n", 44);
+		write(STDERR_FILENO, "Usage: mount [-t type] [-o ro|remount,rw] <device> <directory>\n", 63);
 		return 1;
 	}
 
-	if (mount(argv[0], argv[1], type, 0) < 0) {
+	if (mount(argv[0], argv[1], type, flags) < 0) {
 		perror("mount failed");
 		return 1;
 	}

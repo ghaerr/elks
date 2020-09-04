@@ -395,11 +395,6 @@ struct super_operations {
 struct file_system_type {
     struct super_block		*(*read_super) ();
     char			*name;
-
-#ifdef BLOAT_FS
-    int 			requires_dev;
-#endif
-
 };
 
 extern int event;		/* Event counter */
