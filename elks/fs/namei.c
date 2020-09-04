@@ -37,7 +37,8 @@ int permission(register struct inode *inode, int mask)
     __u16 mode = inode->i_mode;
     int error = -EACCES;
 
-    if ((mask & MAY_WRITE) && (IS_RDONLY(inode)))
+    if ((mask & MAY_WRITE) && IS_RDONLY(inode) &&
+        !S_ISCHR(inode->i_mode) && !S_ISBLK(inode->i_mode)) /* allow writable devices*/
 	error = -EROFS;
 
 #ifdef BLOAT_FS
