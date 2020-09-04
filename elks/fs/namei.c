@@ -400,7 +400,9 @@ int open_namei(char *pathname, int flag, int mode,
 
 int do_mknod(char *pathname, int offst, int mode, dev_t dev)
 {
-#ifndef CONFIG_FS_RO
+#ifdef CONFIG_FS_RO
+    return -EROFS;
+#else
     register struct inode *dirp;
     register struct inode_operations *iop;
     struct inode *dir;

@@ -33,7 +33,7 @@ images-minix: fd360-minix fd720-minix fd1440-minix fd2880-minix hd32-minix
 
 images-fat: fd360-fat fd720-fat fd1440-fat fd2880-fat hd32-fat hd32mbr-fat
 
-images-mbr: hd32mbr-minix
+images-mbr: hd32-minix hd32mbr-minix
 
 fd360-minix:
 	echo CONFIG_APPS_360K=y		> Config

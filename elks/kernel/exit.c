@@ -26,7 +26,7 @@ int sys_wait4(pid_t pid, int *status, int options)
 	/* reparent orphan zombies to init*/
 	orphans = 0;
 	for_each_task(p) {
-		if (p->state == TASK_ZOMBIE) {
+		if (p->state == TASK_ZOMBIE && p->p_parent) {
 			debug_wait("Zombie pid %d ppid %d\n", p->pid, p->p_parent->pid);
 			if (p->p_parent->state == TASK_UNUSED) {
 				debug_wait("WAIT(%d) reparenting %d to 1\n", current->pid, p->pid);

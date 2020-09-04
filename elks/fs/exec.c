@@ -155,7 +155,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     currentp = &task[0];
     do {
 	if ((currentp->state <= TASK_STOPPED) && (currentp->t_inode == inode)) {
-	    debug_wait("EXEC found copy\n");
+	    debug("EXEC found copy\n");
 	    seg_code = currentp->mm.seg_code;
 	    break;
 	}
