@@ -42,9 +42,11 @@
 #include <linuxmt/config.h>
 #include <linuxmt/debug.h>
 
+#include <arch/io.h>
 #include <arch/segment.h>
 #include <arch/system.h>
 #include <arch/irq.h>
+#include <linuxmt/heap.h>
 
 /* the following must match with /dev minor numbering scheme*/
 #define NUM_MINOR	32	/* max minor devices per drive*/
@@ -55,6 +57,20 @@
 
 #define MAJOR_NR BIOSHD_MAJOR
 #define BIOSDISK
+#define HD1_PORT	0x1f0	/* Port address, first controller [IDE] */
+#define HD2_PORT	0x170	/* Port address, first controller [IDE] */
+#define IDE_DRIVE_ID	0xec	/* IDE command to get access to drive data */
+#define IDE_STATUS	7	/* get drive status */
+#define IDE_ERROR	1
+
+#define IDE_PROBE_ENABLE	/* enable CHS priobing via the disk IDE interface */
+#define IDE_DEBUG	0	/* IDE probe debugging */
+
+/* For IDE/ATA access */
+#define STATUS(port) inb_p(port + IDE_STATUS)
+#define ERROR(port) inb_p(port + IDE_ERROR)
+
+#define WAITING(port) (STATUS(port) & 0x80) == 0x80
 
 #include "blk.h"
 
@@ -74,6 +90,7 @@ struct elks_boot_sect {
 } __attribute__((packed));
 
 static int bioshd_initialized = 0;
+static int io_ports[2] = { HD1_PORT, HD2_PORT };	/* physical port addresses */
 
 static struct biosparms bdt;
 
@@ -129,6 +146,7 @@ static int bioshd_ioctl(struct inode *, struct file *, unsigned int, unsigned in
 static int bioshd_open(struct inode *, struct file *);
 static void bioshd_release(struct inode *, struct file *);
 static void bioshd_geninit(void);
+static int get_ide_data(word_t port, struct drive_infot *); 
 
 static struct gendisk bioshd_gendisk = {
     MAJOR_NR,			/* Major number */
@@ -172,9 +190,22 @@ static unsigned short int bioshd_gethdinfo(void)
 	    /* NOTE: some BIOS may underreport cylinders by 1*/
 	    drivep->cylinders = (((BD_CX & 0xc0) << 2) | (BD_CX >> 8)) + 1;
 	    drivep->fdtype = -1;
-	    printk("bioshd: gethdinfo CHS %d,%d,%d\n", drivep->cylinders,
+	    printk("bioshd: bd%c BIOS CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
 		drivep->heads, drivep->sectors);
 	}
+#ifdef IDE_PROBE_ENABLE
+	if (arch_cpu > 5) {	/* Do this only if AT or higher */
+		struct drive_infot ide_data;
+		if (!get_ide_data(drive, &ide_data)) {	/* get CHS from the drive itself */
+	    		printk("bioshd: bd%c IDEdata CHS %d,%d,%d\n", 'a'+drive, ide_data.cylinders,
+			ide_data.heads, ide_data.sectors);
+			/* sanity checks already done - using IDE data */
+			drivep->cylinders = ide_data.cylinders;
+			drivep->heads = ide_data.heads;
+			drivep->sectors = ide_data.sectors;
+		}
+	}
+#endif
 	drivep++;
     }
     return ndrives;
@@ -882,5 +913,116 @@ kdev_t bioshd_conv_bios_drive(unsigned int biosdrive)
 	partition = boot_partition;	/* saved from add_partition()*/
     } else
 	minor = (biosdrive & 0x03) + DRIVE_FD0;
+
     return MKDEV(BIOSHD_MAJOR, (minor << MINOR_SHIFT) + partition);
 }
+
+#ifdef IDE_PROBE_ENABLE
+/*
+ * Query the IDE/ATA drive for physical data
+ * Added by HS - sep-2020
+ *
+ * ELKS: ported from directhd.c 
+ */
+
+void insw(word_t port, word_t *buffer, int count) {
+    int i;
+
+    for (i = 0; i < count / 2; i++)
+	buffer[i] = inw(port);
+    return;
+}
+
+void out_hd(word_t drive, word_t nsect, word_t sect,
+	    word_t head, word_t cyl, word_t cmd)
+{
+    word_t port;
+
+    port = io_ports[drive / 2];
+
+    outb(0xff, ++port);		/* the supposedly correct value for WPCOM on IDE */
+    outb_p(nsect, ++port);
+    outb_p(sect, ++port);
+    outb_p(cyl, ++port);
+    outb_p(cyl >> 8, ++port);
+    outb_p(0xA0 | ((drive % 2) << 4) | head, ++port);
+    outb_p(cmd, ++port);
+
+    return;
+}
+
+static int get_ide_data(word_t drive, struct drive_infot *drive_info) {
+
+	int port;
+	word_t *ide_buffer = (word_t *)heap_alloc(512, 0);
+
+	/* send drive_ID command to drive */
+	port = io_ports[drive / 2];
+	out_hd(drive, 0, 0, 0, 0, IDE_DRIVE_ID);
+
+	/* wait */
+	while (WAITING(port));
+	//printk("get_ide_data: drive %i at 0x%3X\n", drive, port);
+
+	if ((STATUS(port) & 1) == 1) {
+	    /* error - drive not found or non-ide */
+#if IDE_DEBUG
+	    printk("bd%s: drive at port 0x%x not found\n", 'a'+drive, port);
+#endif
+	   return -1;
+	}
+
+	/* get drive info */
+
+	insw(port, ide_buffer, 512);
+
+	/* Gather useful info	- this obviously works only for
+	 * IDE/ATA drives, don't call this function if arch < 5.
+	 * Could detect ATAPI drives here (extreme head count).
+	 *
+	 * Safety check - head, cyl and sector values must be other than
+	 * 0 and buffer has to contain valid data (first entry in buffer
+	 * must be other than 0)
+	 *
+	 * This is some sort of bugfix, we will use same method as real Linux -
+	 * work with disk geometry set in current translation mode rather than
+	 * using physical drive info. Physical info might correspond to logical
+	 * info for some drives (those which don't support/use LBA mode).
+	 *
+	 * We're using 'current numbers' from the ID data, could have used 'default CHS 
+	 * numbers' -  words 1, 3 and 6 instead of 54, 55 & 56.
+	 * Apparently, on some drives, the CHS values are programmable. In that case
+	 * the latter are the morer dependable ...
+	 * Surprisingly, the programmability does not seem to be the case on CF cards. 
+	 *  HS sep2020
+	 */
+
+	if ((ide_buffer[54] < 34096) && (*ide_buffer != 0)	/* this is the real sanity check */
+	    && (ide_buffer[54] != 0) && (ide_buffer[55] != 0)
+	    && (ide_buffer[56] != 0)) {
+	    /* Physical value word offsets: cyl 2, heads 3, sectors 6 */
+#if IDE_DEBUG
+	    ide_buffer[20] = 0;
+	    printk("IDE default CHS: %d/%d/%d serial %s\n", ide_buffer[1], ide_buffer[3], ide_buffer[6],
+			&ide_buffer[10]);
+#endif
+	    drive_info->cylinders = ide_buffer[54];
+	    drive_info->heads = ide_buffer[55];
+	    drive_info->sectors = ide_buffer[56];
+
+	}
+
+	/* print drive info */
+	/* sanity check */
+	if (drive_info->heads != 0) {
+#if IDE_DEBUG
+	    printk("bda: %d heads, %d cylinders, %d sectors\n",
+		   drive_info->heads, drive_info->cylinders, drive_info->sectors);
+#endif
+	} else 
+		printk("bd%c: Error in IDE device data.\n", 'a'+drive);
+
+	heap_free(ide_buffer);
+	return 0;
+}
+#endif
