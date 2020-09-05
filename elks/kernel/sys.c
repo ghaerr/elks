@@ -63,7 +63,7 @@ int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
 	    case 0x6789:		/* shutdown*/
 		sys_kill(1, SIGKILL);
 		sys_kill(-1, SIGKILL);
-		printk("System halting\n");
+		printk("System halted\n");
 		do_exit(0);
 #ifdef CONFIG_APM
 	    case 0xDEAD:		/* poweroff*/
