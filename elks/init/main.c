@@ -35,6 +35,7 @@ static char *init_command = bininit;
 /*
  * Parse /bootopts startup options
  */
+static int args, envs;
 static int argv_slen;
 /* argv_init doubles as sptr data for sys_execv later*/
 static char *argv_init[80] = { NULL, bininit, NULL };
@@ -44,7 +45,8 @@ static char *envp_init[MAX_INIT_ENVS+1];
 static unsigned char options[256];
 
 extern int boot_rootdev;
-static void parse_options(void);
+static int parse_options(void);
+static void finalize_options(void);
 static char *option(char *s);
 #endif
 
@@ -76,7 +78,7 @@ void start_kernel(void)
 
 #ifdef CONFIG_BOOTOPTS
     /* parse options found in /bootops */
-    parse_options();
+    int opts = parse_options();
 #endif
 
     /* set console from /bootopts console= or 0=default*/
@@ -93,6 +95,10 @@ void start_kernel(void)
 #endif
 
     fs_init();
+
+#ifdef CONFIG_BOOTOPTS
+    if (opts) finalize_options();
+#endif
 
     mm_stat(base, end);
 
@@ -149,27 +155,54 @@ static void init_task(void)
 }
 
 #ifdef CONFIG_BOOTOPTS
+static struct dev_name_struct {
+	char *name;
+	int num;
+} devices[] = {
+	/* root_dev_name needs first 5 in order*/
+	{ "bda",     0x0300 },
+	{ "bdb",     0x0320 },
+	{ "bdc",     0x0340 },
+	{ "fd0",     0x0380 },
+	{ "fd1",     0x03a0 },
+	{ "ttyS",    0x0440 },
+	{ "tty1",    0x0400 },
+	{ "tty2",    0x0401 },
+	{ "tty3",    0x0402 },
+	{ NULL,           0 }
+};
+
+/*
+ * Convert a root device number to name.
+ * Device number could be bios device, not kdev_t.
+ */
+static char *root_dev_name(int dev)
+{
+	int i;
+#define NAMEOFF	13
+	static char name[18] = "ROOTDEV=/dev/";
+
+	for (i=0; i<5; i++) {
+		if (devices[i].num == (dev & 0xfff0)) {
+			strcpy(&name[NAMEOFF], devices[i].name);
+			if (i < 3) {
+				if (dev & 0x03) {
+					name[NAMEOFF+3] = '0' + (dev & 3);
+					name[NAMEOFF+4] = 0;
+				}
+			}
+			return name;
+		}
+	}
+	return NULL;
+}
+
 /*
  * Convert a /dev/ name to device number.
  */
 static int parse_dev(char * line)
 {
 	int base = 0;
-	static struct dev_name_struct {
-		char *name;
-		int num;
-	} devices[] = {
-		{ "bda",     0x0300 },
-		{ "bdb",     0x0320 },
-		{ "bdc",     0x0340 },
-		{ "fd0",     0x0380 },
-		{ "fd1",     0x03a0 },
-		{ "ttyS",    0x0440 },
-		{ "tty1",    0x0400 },
-		{ "tty2",    0x0401 },
-		{ "tty3",    0x0402 },
-		{ NULL,           0 }
-	};
 	struct dev_name_struct *dev = devices;
 
 	if (strncmp(line,"/dev/",5) == 0)
@@ -195,12 +228,10 @@ static int parse_dev(char * line)
  * This routine also checks for options meant for the kernel.
  * These options are not given to init - they are for internal kernel use only.
  */
-static void parse_options(void)
+static int parse_options(void)
 {
 	char *line = (char *)options;
 	char *next;
-	int args, i;
-	int envs = 0;
 
 	/* copy /bootops loaded by boot loader at 0050:0000*/
 	fmemcpyb(options, kernel_ds, 0, DEF_OPTSEG, sizeof(options));
@@ -208,7 +239,7 @@ static void parse_options(void)
 	/* check file starts with ## and max len 255 bytes*/
 	if (*(unsigned short *)options != 0x2323 || options[255]) {
 		printk("Ignoring /bootopts: header not ## or size > 255\n");
-		return;
+		return 0;
 	}
 #if DEBUG
 	printk("/bootopts: %s", &options[3]);
@@ -279,6 +310,16 @@ static void parse_options(void)
 		}
 #endif
 	}
+	return 1;	/* success*/
+}
+
+static void finalize_options(void)
+{
+	int i;
+
+	/* set ROOTDEV environment variable for rc.sys fsck*/
+	if (envs < MAX_INIT_ENVS)
+		envp_init[envs++] = root_dev_name(ROOT_DEV);
 
 #if DEBUG
 	printk("args: ");

@@ -8,6 +8,23 @@ export PATH=/bin
 # init date from hardware
 clock -s
 
+check_filesystem()
+{
+	if test "$ROOTDEV" != ""
+	then
+		echo -n "Checking $ROOTDEV... "
+		umount /
+		fsck $ROOTDEV
+		mount -o remount,rw $ROOTDEV /
+	fi
+}
+
+if test "$ROOTDEV" != "/dev/fd0" -a "$ROOTDEV" != "/dev/fd1"
+then
+#	uncomment next line to check minix HD filesystem, will fail on msdos fat
+#	check_filesystem
+fi
+
 #
 # start networking
 #
