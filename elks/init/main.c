@@ -22,7 +22,7 @@
 #define MAX_INIT_ARGS	8
 #define MAX_INIT_ENVS	8
 
-#ifdef CONFIG_FS_RO
+#if defined(CONFIG_FS_RO) || defined(CONFIG_ROOT_READONLY)
 int root_mountflags = MS_RDONLY;
 #else
 int root_mountflags = 0;
