@@ -23,7 +23,7 @@ install: all
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 fsck: fsck.o
-	$(LD) $(LDFLAGS) -o fsck fsck.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -o fsck -maout-heap=0xffff fsck.o $(LDLIBS)
 
 fdisk: fdisk.o
 	$(LD) $(LDFLAGS) -o fdisk fdisk.o $(LDLIBS)

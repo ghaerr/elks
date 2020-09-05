@@ -71,11 +71,9 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/minix_fs.h>
 
-#ifndef __linux__
-#define volatile
-#endif
+#define printd(...)
+/*#define printd		printf*/
 
-#define printd /*printf*/
 /* FIXME remove all commented out code with RUBOUT in it */
 
 
@@ -129,7 +127,7 @@ struct minix_super_block * SupeP = (struct minix_super_block *)super_block_buffe
 #define NORM_FIRSTZONE (2+IMAPS+ZMAPS+INODE_BLOCKS)
 
 static char inode_map[BLOCK_SIZE * MINIX_I_MAP_SLOTS];
-static char zone_map[BLOCK_SIZE * 2];
+static char zone_map[BLOCK_SIZE * MINIX_Z_MAP_SLOTS];
 
 static unsigned char * inode_count = NULL;
 static unsigned char * zone_count = NULL;
@@ -181,8 +179,8 @@ unsigned char test_bit(unsigned int nr, void * add)
 */
 
 #define bit(addr,bit) (test_bit((bit),(addr)) != 0)
-#define setbit(addr,bit) (set_bit((bit),(addr)) != 0)
-#define clrbit(addr,bit) (clear_bit((bit),(addr)) != 0)
+#define setbit(addr,bit) set_bit((bit),(addr))
+#define clrbit(addr,bit) clear_bit((bit),(addr))
 
 
 #define inode_in_use(x) (bit(inode_map,(x)))
@@ -199,7 +197,7 @@ unsigned char test_bit(unsigned int nr, void * add)
  * to compile this under minix, volatile gives a warning, as
  * exit() isn't defined as volatile under minix.
  */
-volatile void fatal_error(const char * fmt_string, int status)
+/*volatile*/ void fatal_error(const char * fmt_string, int status)
 {
 	fprintf(stderr,fmt_string,program_name,device_name);
 	exit(status);
@@ -514,7 +512,6 @@ void write_tables(void)
 
 void read_tables(void)
 {
-	int foo;
 /*	unsigned int inode_buffer_size = INODE_BUFFER_SIZE; RUBOUT */
 
 	memset(inode_map,0,sizeof(inode_map));
@@ -539,15 +536,17 @@ void read_tables(void)
 		die("bad s_imap_blocks field in super-block");
 	if (!ZMAPS || ZMAPS > MINIX_Z_MAP_SLOTS)
 		die("bad s_zmap_blocks field in super-block");
-/*	inode_buffer = malloc(BLOCK_SIZE); RUBOUT */
+/*	inode_buffer = malloc(BLOCK_SIZE); RUBOUT
 	if (!inode_buffer)
-		die("Unable to allocate buffer for inodes");
+		die("Unable to allocate buffer for inodes"); RUBOUT */
 	inode_count = malloc(INODES);
 	if (!inode_count)
 		die("Unable to allocate buffer for inode count");
 	zone_count = malloc(ZONES);
 	if (!zone_count)
 		die("Unable to allocate buffer for zone count");
+	printd("inodes %d zones %d\n", INODES, ZONES);
+	printd("imaps %d zmaps %d\n", IMAPS, ZMAPS);
 	if ((IMAPS * BLOCK_SIZE) != read(IN, inode_map, (IMAPS * BLOCK_SIZE)))
 		die("Unable to read inode map");
 	if ((ZMAPS * BLOCK_SIZE) != read(IN, zone_map, (ZMAPS * BLOCK_SIZE)))
@@ -586,11 +585,12 @@ struct minix_inode * get_inode(unsigned int nr)
 				nr);
 			print_current_name();
 			printf("'\n");
-			if (repair)
+			if (repair) {
 				if (ask("Mark in use",1))
 					mark_inode(nr);
-			else
+				else
 			        errors_uncorrected = 1;
+			}
 		}
 		if (S_ISDIR(inode->i_mode))
 			directory++;
@@ -633,11 +633,9 @@ void check_root(void)
 
 static int add_zone(unsigned short * znr, int * corrected)
 {
-	int result;
 	int block;
 
 	printd("add_zone %d\n", * znr);
-	result = 0;
 	block = check_zone_nr(znr, corrected);
 	if (!block)
 		return 0;
@@ -751,18 +749,20 @@ void check_file(struct minix_inode * dir, unsigned long offset)
 	name_depth++;
 	inode = get_inode(ino);
 	name_depth--;
-	if (offset == 0L)
+	if (offset == 0L) {
 		if (!inode || strcmp(".",name)) {
 			print_current_name();
 			printf(": bad directory: '.' isn't first\n");
 			errors_uncorrected = 1;
 		} else return;
-	if (offset == (unsigned long)DIRSIZE)
+	}
+	if (offset == (unsigned long)DIRSIZE) {
 		if (!inode || strcmp("..",name)) {
 			print_current_name();
 			printf(": bad directory: '..' isn't second\n");
 			errors_uncorrected = 1;
 		} else return;
+	}
 	if (!inode)
 		return;
 	if (name_depth < MAX_DEPTH)
@@ -892,7 +892,6 @@ void check(void)
 int main(int argc, char ** argv)
 {
 	struct termios termios,tmp;
-	int i;
 	int count;
 	int retcode = 0;
 

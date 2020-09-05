@@ -42,7 +42,7 @@ int do_signal(void)
 	if (*sd == SIGDISP_DFL) {			/* Default */
 	    if ((mask &					/* Default Ignore */
 			(SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG))
-			|| (currentp->pid == 1))
+		|| (currentp->pid == 1 && signr != SIGKILL))
 		continue;
 	    else if (mask &				/* Default Stop */
 			(SM_SIGSTOP | SM_SIGTSTP | SM_SIGTTIN | SM_SIGTTOU)) {

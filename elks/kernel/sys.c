@@ -47,27 +47,26 @@ extern int sys_kill(sig_t,pid_t);
 
 int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
 {
-    if (!suser()) {
+    if (!suser())
 	return -EPERM;
-    }
 
-    if ((magic == 0x1D1E) && (magic_too == 0xC0DE)) {
-	register int *pflag = (int *)flag;
-
-	switch((int)pflag) {
+    if (magic == 0x1D1E && magic_too == 0xC0DE) {
+	switch(flag) {
 	    case 0x4567:
-		pflag = (int *)1;
+		flag = 1;
+		/* fall through*/
 	    case 0:
-		C_A_D = (int)pflag;
+		C_A_D = flag;
 		return 0;
-	    case 0x0123:
+	    case 0x0123:		/* reboot*/
 		hard_reset_now();
-	    case 0x6789:
-		printk("System halted\n");
+	    case 0x6789:		/* shutdown*/
+		sys_kill(1, SIGKILL);
 		sys_kill(-1, SIGKILL);
+		printk("System halting\n");
 		do_exit(0);
 #ifdef CONFIG_APM
-	    case 0xDEAD:
+	    case 0xDEAD:		/* poweroff*/
 		apm_shutdown_now();
 		printk("APM shutdown failed\n");
 #endif
