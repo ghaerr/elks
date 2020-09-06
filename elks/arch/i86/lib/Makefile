@@ -36,6 +36,7 @@ SRCS1 = \
 	fmemcmpb.S fmemcmpw.S \
 	setupb.S setupw.S \
 	string.S \
+	ia16-far-call-thunks.S \
 #	farlist.S \
 	# end of list
 

@@ -540,7 +540,10 @@ _next1:
 	jne sys_hdr_bad
 	cmpw $0x0430,2   // i8086 - executable with separated I & D
 	jne sys_hdr_bad
-	cmpb $0x20,4     // header size (no relocs)
+	mov 4,%bx        // BX = header size
+	cmp $0x20,%bx   // header size (no relocs)
+	je sys_hdr_good
+	cmp $0x40,%bx   // header size (relocs)
 	jne sys_hdr_bad
 	jmp sys_hdr_good
 
@@ -565,6 +568,7 @@ sys_hdr_good:
 	add $0xF,%dx     // align on next paragraph (issue #209)
 	mov	$4,%cl
 	shr %cl,%dx   // DX = code segment size in paragraph
+	shr %cl,%bx   // BX = header size in paragraphs
 
 	mov 12,%ax    // data size
 	push %ax
@@ -575,7 +579,8 @@ sys_hdr_good:
 
 // Relocate kernel code
 
-	mov $SYSSEG+2,%ax
+	mov $SYSSEG,%ax
+	add %bx,%ax   // skip header
 	mov %ax,%ds
 	mov $REL_SYSSEG,%ax
 	mov %ax,%es
@@ -587,11 +592,49 @@ sys_hdr_good:
 	rep
 	movsb
 
+// Relocate kernel far text
+
+	xor %ax,%ax   // far text size = 0
+	push %ax      // -10(%bp)
+	push %ax      // -12(%bp)
+	push %ax      // -14(%bp)
+	cmp $0x04,%bx // extended header?
+	jne sys_no_far_text
+	mov $SYSSEG,%ax
+	mov %ax,%ds
+	mov 0x30,%ax  // far text size in bytes
+	mov %ax,-12(%bp)
+	mov 0x20,%ax  // text relocation size in bytes
+	mov %ax,-14(%bp)
+	add $15,%ax
+	mov $4,%cl
+	shr %cl,%ax   // far text size in paragraphs
+	mov %ax,-10(%bp)
+
+	mov 0x30,%cx  // far text size in bytes
+	cmp %cx,%cx
+	jz sys_no_far_text
+	mov $SYSSEG,%ax
+	add %bx,%ax   // skip header
+	add %dx,%ax   // skip code
+	mov %ax,%ds
+	mov $REL_SYSSEG,%ax
+	add %dx,%ax
+	mov %ax,%es
+
+	xor	%si,%si
+	mov	%si,%di
+	cld
+	rep
+	movsb
+sys_no_far_text:
+
 // Relocate kernel data (not bss)
 // Kernel resets bss itself
 
-	mov $SYSSEG+2,%ax
-	add %dx,%ax
+	mov $SYSSEG,%ax
+	add %bx,%ax   // skip header
+	add %dx,%ax   // skip code
 	mov %ax,%ds
 	mov $REL_SYSSEG,%ax
 	add %dx,%ax
@@ -599,7 +642,8 @@ sys_hdr_good:
 
 	mov -4(%bp),%cx  // data size
 	xor %si,%si
-	mov %si,%di
+	add -12(%bp),%si // skip far text
+	xor %di,%di
 	cld
 	rep
 	movsb
@@ -610,6 +654,7 @@ sys_hdr_good:
 	mov %ax,%ds
 
 	mov -2(%bp),%bx    // code size
+	add -12(%bp),%bx   // FIXME may overflow, needs farcode size
 	mov -4(%bp),%si    // data size
 	mov -6(%bp),%dx    // bss size
 	mov -8(%bp),%cx    // entry point

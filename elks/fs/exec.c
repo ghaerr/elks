@@ -75,12 +75,11 @@ static struct elks_supl_hdr esuph;
  * Only IA-16 segment relocations are accepted
  */
 static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
-		    segment_s *seg_data, __ptask currentp, struct inode *inode,
-		    struct file *filp)
+		    segment_s *seg_data, struct inode *inode, struct file *filp)
 {
     int retval = 0;
-    __u16 save_ds = currentp->t_regs.ds;
-    currentp->t_regs.ds = kernel_ds;
+    __u16 save_ds = current->t_regs.ds;
+    current->t_regs.ds = kernel_ds;
     debug("EXEC: applying 0x%lx bytes of relocations to segment 0x%x\n",
 	   (unsigned long)rsize, place_base);
     while (rsize >= sizeof(struct minix_reloc)) {
@@ -103,7 +102,9 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 		       reloc.r_symndx);
 		goto error;
 	    }
-	    pokew(reloc.r_vaddr, place_base, val);
+	    debug("EXEC: reloc %d,%d: %04x, %x, %x\n", reloc.r_type,
+		reloc.r_symndx, (word_t)reloc.r_vaddr, place_base, val);
+	    pokew((word_t)reloc.r_vaddr, place_base, val);
 	    break;
 	default:
 	    debug("EXEC: bad relocation type 0x%x\n", reloc.r_type);
@@ -111,11 +112,11 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 	}
 	rsize -= sizeof(struct minix_reloc);
     }
-    currentp->t_regs.ds = save_ds;
+    current->t_regs.ds = save_ds;
     return 0;
   error:
     debug("EXEC: error in relocations\n");
-    currentp->t_regs.ds = save_ds;
+    current->t_regs.ds = save_ds;
     if (retval >= 0)
 	retval = -EINVAL;
     return retval;
@@ -382,12 +383,12 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if (need_reloc_code) {
 	/* Read and apply text segment relocations */
 	retval = relocate(seg_code->base, esuph.msh_trsize, seg_code, seg_data,
-			  currentp, inode, filp);
+			  inode, filp);
 	if (retval != 0)
 	    goto error_exec5;
 	/* Read and apply far text segment relocations */
 	retval = relocate(seg_code->base + bytes_to_paras(mh.tseg),
-			  esuph.esh_ftrsize, seg_code, seg_data, currentp,
+			  esuph.esh_ftrsize, seg_code, seg_data,
 			  inode, filp);
 	if (retval != 0)
 	    goto error_exec5;
@@ -398,7 +399,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     }
     /* Read and apply data relocations */
     retval = relocate(seg_data->base, esuph.msh_drsize, seg_code, seg_data,
-		      currentp, inode, filp);
+		      inode, filp);
     if (retval != 0)
 	goto error_exec5;
 #endif

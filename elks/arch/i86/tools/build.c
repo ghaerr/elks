@@ -234,13 +234,15 @@ int main(int argc, char **argv)
     }
 
     lseek(id, 0, 0);
-#else
+#endif
+#if 1
     if (fstat(id, &sb)) {
 	perror("fstat");
 	die("Unable to stat 'system'");
     }
     sz = sb.st_size;
-    fprintf(stderr, "System is %d kB\n", sz / 1024);
+    //fprintf(stderr, "System is %d kB\n", sz / 1024);
+    fprintf(stderr, "System is %d B\n", sz);
 #endif
     sys_size = (sz + 15) / 16;
     fprintf(stderr, "System is %d\n", sz);
