@@ -15,7 +15,7 @@
 #define IDE_STATUS	7	/* get drive status */
 #define IDE_ERROR	1
 
-#define IDE_DEBUG	1	/* IDE probe debugging */
+#define IDE_DEBUG	0	/* IDE probe debugging */
 
 /* For IDE/ATA access */
 #define STATUS(port) inb_p(port + IDE_STATUS)
@@ -39,11 +39,9 @@ void insw(word_t port, word_t *buffer, int count) {
     }
 }
 
-void out_hd(word_t drive, word_t cmd)
+void out_hd(int drive, word_t cmd)
 {
-    word_t port;
-
-    port = io_ports[drive / 2];
+    word_t port = io_ports[drive / 2];
 
     outb(0xff, ++port);		/* Feature set, should not matter */
     outb_p(0, ++port);
@@ -52,29 +50,7 @@ void out_hd(word_t drive, word_t cmd)
     outb_p(0, ++port);
     outb_p(0xA0 | ((drive % 2) << 4), ++port);
     outb_p(cmd, ++port);
-
-    /* wait for ready */
-    while (WAITING(port-7));
 }
-
-#if 0
-void out_hd(word_t drive, word_t nsect, word_t sect,
-	    word_t head, word_t cyl, word_t cmd)
-{
-    word_t port;
-
-    port = io_ports[drive / 2];
-
-    outb(0xff, ++port);		/* the supposedly correct value for WPCOM on IDE */
-    outb_p(nsect, ++port);
-    outb_p(sect, ++port);
-    outb_p(cyl, ++port);
-    outb_p(cyl >> 8, ++port);
-    outb_p(0xA0 | ((drive % 2) << 4) | head, ++port);
-    outb_p(cmd, ++port);
-
-}
-#endif
 
 #if IDE_DEBUG
 static void dump_ide(word_t *buffer, int size) {
@@ -96,31 +72,37 @@ static void dump_ide(word_t *buffer, int size) {
  * Could detect ATAPI drives here (extreme head count).
  */
 
-static word_t ide_buffer[256];
 int get_ide_data(int drive, struct drive_infot *drive_info) {
 
-	int port = io_ports[drive / 2];
+	word_t port = io_ports[drive / 2];
 	int retval = 0;
 
+	word_t *ide_buffer = (word_t *)heap_alloc(512, 0);
 #if IDE_DEBUG
-	printk("get_ide_data: drive %i at 0x%3X\n", drive, port);
+	printk("get_ide_data: drive %i at 0x%3X, buffer @ %04X\n", drive, port, ide_buffer);
 #endif
-	//word_t *ide_buffer = (word_t *)heap_alloc(512, 0);
-
-	out_hd(drive, IDE_DRIVE_ID);
-	//out_hd(drive, 0, 0, 0, 0, IDE_DRIVE_ID);
 
 	while (1) {
+	    out_hd(drive, IDE_DRIVE_ID);
+    	    while (WAITING(port));
+
 	    if ((STATUS(port) & 1) == 1) {
-		/* error - drive not found or non-ide */
+		/* Error - drive not found or non-IDE.
+		 * If drive # is 2 it may actually be physical drive 3 -
+		 * slave, not master. Take another round to check.
+		 */
+		if (drive == 2) {
+		    drive++;
+		    continue;
+		}
 #if IDE_DEBUG
-		printk("bd%s: drive at port 0x%x not found\n", 'a'+drive, port);
+		printk("bd%c: drive at port 0x%x not found\n", 'a'+drive, port);
 #endif
 		retval = -1;
 		break;
 	    }
 
-	    insw(drive, ide_buffer, 512/2);	/* read - word size */
+	    insw(port, ide_buffer, 512/2);	/* read - word size */
 
 	    /*
 	     * Sanity check: Head, cyl and sector values must be other than
@@ -135,6 +117,7 @@ int get_ide_data(int drive, struct drive_infot *drive_info) {
 	     * Check for large # of heads to detect ATPI CDROMs.
 	     * 							HS sep2020
 	     */
+
 	    if ((ide_buffer[54] < 34096) && (*ide_buffer != 0)	/* this is the real sanity check */
 	    	&& (ide_buffer[54] != 0) && (ide_buffer[55] != 0)
 	    	&& (ide_buffer[56] != 0)) {
@@ -147,20 +130,22 @@ int get_ide_data(int drive, struct drive_infot *drive_info) {
 	    	drive_info->heads = ide_buffer[55];
 	    	drive_info->sectors = ide_buffer[56];
 #if IDE_DEBUG
+		/* If the 3rd drive is slave, not master, it will be reported as
+		 * bdd, not bdc here. */
 	    	printk("bd%c: %d heads, %d cylinders, %d sectors\n", 'a'+drive,
 		   drive_info->heads, drive_info->cylinders, drive_info->sectors);
 #endif
 	    } else {
 		retval = -2;
-		printk("bd%c: Error in IDE device data.\n", 'a'+drive);
 #if IDE_DEBUG
+		printk("bd%c: Error in IDE device data.\n", 'a'+drive);
 		dump_ide(ide_buffer, 256);
 #endif
 	    }
 	    break;
 	}
 
-	//heap_free(ide_buffer);
+	heap_free(ide_buffer);
 
 	return retval;
 }

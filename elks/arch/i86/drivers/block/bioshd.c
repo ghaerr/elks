@@ -179,12 +179,11 @@ static unsigned short int bioshd_gethdinfo(void) {
 	}
 #ifdef IDE_PROBE_ENABLE
 	if (arch_cpu > 5) {	/* Do this only if AT or higher */
-
-		if (!get_ide_data(drive, drivep)) {	/* get CHS from the drive itself */
-			/* sanity checks already done, accepting data */
-	    		printk("bioshd: bd%c IDEdata CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
-			drivep->heads, drivep->sectors);
-		}
+	    if (!get_ide_data(drive, drivep)) {	/* get CHS from the drive itself */
+		/* sanity checks already done, accepting data */
+	    	printk("bioshd: bd%c IDEdata CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
+		drivep->heads, drivep->sectors);
+	    }
 	}
 #endif
 	drivep++;
