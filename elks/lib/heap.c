@@ -5,20 +5,22 @@
 #include <linuxmt/heap.h>
 //#include <linuxmt/lock.h>
 
-// Minimal block size to hold header and free list node
-#define HEAP_MIN_SIZE (sizeof (heap_s) + sizeof (list_s))
+// Minimal block size to hold heap header
+// plus enough space in body to be useful
+// (one paragraph for now but to be tuned
+// to size of smallest allocation)
+
+#define HEAP_MIN_SIZE (sizeof (heap_s) + 16)
 
 // Heap root
-// TODO: regroup in one structure
 
 // locks not needed unless SMP or reentrant kernel
 //static lock_t _heap_lock;
 #define WAIT_LOCK(lockp)
 #define EVENT_UNLOCK(lockp)
 
-heap_s * _heap_first;
-// TODO: free block list
-//static heap_s * _heap_free;
+list_s _heap_all;
+static list_s _heap_free;
 
 
 // Split block if enough large
@@ -32,9 +34,10 @@ static void heap_split (heap_s * h1, word_t size0)
 
 		heap_s * h2 = (heap_s *) ((byte_t *) (h1 + 1) + size0);
 		h2->size = size2 - sizeof (heap_s);
-		h2->tag = 0;  // free
+		h2->tag = HEAP_TAG_FREE;
 
-		list_insert_after (&(h1->node), &(h2->node));
+		list_insert_after (&(h1->all), &(h2->all));
+		list_insert_after (&(h1->free), &(h2->free));
 	}
 }
 
@@ -43,26 +46,24 @@ static void heap_split (heap_s * h1, word_t size0)
 
 static heap_s * free_get (word_t size0, byte_t tag)
 {
+	// First get the smallest suitable free block
+
 	heap_s * best_h  = 0;
 	word_t best_size = 0xFFFF;
+	list_s * n = _heap_free.next;
 
-	if (!_heap_first) return 0;
-	heap_s * h = _heap_first;
+	while (n != &_heap_free) {
 
-	// First get the smallest suitable free block
-	// TODO: improve speed with free list
-
-	while (1) {
+		heap_s * h = structof (n, heap_s, free);
 		word_t size1  = h->size;
 
-		if (!(h->tag & HEAP_TAG_USED) && (size1 >= size0) && (size1 < best_size)) {
+		if ((h->tag == HEAP_TAG_FREE) && (size1 >= size0) && (size1 < best_size)) {
 			best_h  = h;
 			best_size = size1;
 			if (size1 == size0) break;
 		}
 
-		h = structof (h->node.next, heap_s, node);
-		if (h == _heap_first) break;
+		n = h->free.next;
 	}
 
 	// Then allocate that free block
@@ -70,6 +71,7 @@ static heap_s * free_get (word_t size0, byte_t tag)
 	if (best_h) {
 		heap_split (best_h, size0);
 		best_h->tag = HEAP_TAG_USED | tag;
+		list_remove (&(best_h->free));
 	}
 
 	return best_h;
@@ -81,28 +83,7 @@ static heap_s * free_get (word_t size0, byte_t tag)
 static void heap_merge (heap_s * h1, heap_s * h2)
 {
 	h1->size = h1->size + sizeof (heap_s) + h2->size;
-	list_remove (&(h2->node));
-}
-
-
-// Try to heap_merge with previous block
-
-static heap_s * heap_merge_prev (heap_s * h)
-{
-	if (h == _heap_first) return h;
-	heap_s * prev = structof (h->node.prev, heap_s, node);
-	if (prev->tag & HEAP_TAG_USED) return h;
-	heap_merge (prev, h);
-	return prev;
-}
-
-// Try to heap_merge with next block
-
-static void heap_merge_next (heap_s * h)
-{
-	heap_s * next = structof (h->node.next, heap_s, node);
-	if ((next != _heap_first) && !((next->tag) & HEAP_TAG_USED))
-		heap_merge (h, next);
+	list_remove (&(h2->all));
 }
 
 
@@ -118,19 +99,55 @@ void * heap_alloc (word_t size, byte_t tag)
 	return h;
 }
 
+
 // Free block
 
 void heap_free (void * data)
 {
 	WAIT_LOCK (&_heap_lock);
-	heap_s * h1 = ((heap_s *) (data)) - 1;  // back to header
-	heap_s * h2 = heap_merge_prev (h1);
-	if (h1 == h2)  // no heap_merge
-		h1->tag = HEAP_TAG_FREE;  // free
 
-	heap_merge_next (h2);
+	heap_s * h = ((heap_s *) (data)) - 1;  // back to header
+
+	// Free block will be inserted to free list:
+	//   - tail if merged to previous or next free block
+	//   - head if still alone to increase 'exact hit'
+	//     chance on next allocation of same size
+
+	list_s * p = &_heap_free;
+
+	// Try to merge with previous block if free
+
+	if (_heap_all.next != &(h->all)) {
+		heap_s * prev = structof (h->all.prev, heap_s, all);
+		if (prev->tag == HEAP_TAG_FREE) {
+			heap_merge (prev, h);
+			list_remove (&(prev->free));
+			p = _heap_free.prev;
+			h = prev;
+		} else {
+			h->tag = HEAP_TAG_FREE;
+		}
+	}
+
+	// Try to merge with next block if free
+
+	list_s * n = h->all.next;
+	if (n->next != &_heap_all) {
+		heap_s * next = structof (n, heap_s, all);
+		if (next->tag == HEAP_TAG_FREE) {
+			heap_merge (h, next);
+			list_remove (&(next->free));
+			p = _heap_free.prev;
+		}
+	}
+
+	// Insert to free list head or tail
+
+	list_insert_after (p, &(h->free));
+
 	EVENT_UNLOCK (&_heap_lock);
 }
+
 
 // Add space to heap
 
@@ -140,17 +157,24 @@ void heap_add (void * data, word_t size)
 		WAIT_LOCK (&_heap_lock);
 		heap_s * h = (heap_s *) data;
 		h->size = size - sizeof (heap_s);
-		h->tag = HEAP_TAG_FREE;   // free
+		h->tag = HEAP_TAG_FREE;
 
-		if (_heap_first)
-			list_insert_before (&(_heap_first->node), &(h->node));  // add tail
-		else {
-			list_init (&(h->node));
-			_heap_first = h;
-		}
+		// Add large block to tails of both lists
+		// as almost no chance for 'exact hit'
+
+		list_insert_before (&_heap_all, &(h->all));
+		list_insert_before (&_heap_free, &(h->free));
 
 		EVENT_UNLOCK (&_heap_lock);
 	}
+}
+
+// Initialize heap
+
+void heap_init ()
+{
+	list_init (&_heap_all);
+	list_init (&_heap_free);
 }
 
 // Dump heap
@@ -159,13 +183,12 @@ void heap_add (void * data, word_t size)
 
 void heap_iterate (void (* cb) (heap_s *))
 {
-	if (!_heap_first) return;
-	heap_s * h = _heap_first;
+	list_s * n = _heap_all.next;
 
-	while (1) {
+	while (n != &_heap_all) {
+		heap_s * h = structof (n, heap_s, all);
 		(*cb) (h);
-		h = structof (h->node.next, heap_s, node);
-		if (h == _heap_first) break;
+		n = h->all.next;
 	}
 }
 
