@@ -54,13 +54,20 @@ static void init_task(void);
 extern int run_init_process(char *cmd);
 extern int run_init_process_sptr(char *cmd, char *sptr, int slen);
 
-
 #define FARPROC __far  __attribute__ ((far_section, noinline))
-//#define FARPROC
 
-static void FARPROC test()
+int a = 3;
+
+void FARPROC nearproc(void) // FIXME works only if FARPROC
 {
-    printk("hello far kernel!!!\n");
+	a = 2;
+}
+
+void FARPROC farproc()
+{
+	a = 1;
+	nearproc();
+    //printk("hello far kernel!!!\n");
 }
 
 void start_kernel(void)
@@ -93,7 +100,9 @@ void start_kernel(void)
     serial_console_init();
 #endif
 
-	//test();
+	printk("BEFORE %d, ", a);
+	farproc();
+	printk("AFTER %d\n", a);
     device_setup();
 
 #ifdef CONFIG_SOCKET
@@ -158,7 +167,6 @@ static void init_task(void)
     run_init_process("/bin/sh");
     run_init_process("/bin/sash");
     panic("No init or sh found");
-	test();
 }
 
 #ifdef CONFIG_BOOTOPTS

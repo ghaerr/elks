@@ -14,6 +14,6 @@ extern pid_t get_pid(void);
 
 /*@-namechecks@*/
 
-extern short *_endtext, *_enddata, *_endbss;
+extern short *_endtext, *_endftext, *_enddata, *_endbss;
 
 #endif /* !__ARCH_8086_SEGMENT_H */

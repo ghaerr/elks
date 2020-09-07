@@ -454,11 +454,12 @@ size_ok:
 */
 #if defined(CONFIG_ROMCODE)
 
-// BX,CX,DX,SI,DS,ES are expected in kernel crt0.S
+// BX,CX,DX,SI,DI,DS,ES are expected in kernel crt0.S
 
 	mov 0x10,%dx  // bss size
 	mov 0x0c,%si  // data size
 	mov 0x08,%bx  // text size
+	xor %di,%di   // far text size
 	mov 0x18,%ax  // entry point
 	mov %es,%cx   // data segment
 	mov %cx,%ds
@@ -558,72 +559,147 @@ sys_hdr_msg:
 	.ascii "Bad system header!"
 	.byte 0
 
+// Add AX to DS:SI and normalize segment
+add_ptr:
+	push %cx
+	add %si,%ax
+	mov	%ax,%si
+	and $15,%si
+	mov $4,%cl
+	shr %cl,%ax
+	mov %ds,%cx
+	add %cx,%ax
+	mov %ax,%ds
+	pop %cx
+	ret
+
+putc:
+	push %bx
+	push %cx
+	push %dx
+	mov   $0x0E,%ah
+	mov   $07,%bx
+	int   $0x10
+	pop %dx
+	pop %cx
+	pop %bx
+	ret
+
+hex1:
+	push %ax
+    and $0x0F,%al
+    add $'0',%al
+    cmp $'9',%al
+    jle 1f
+    add $('A'-'9'-1),%al
+1:  call putc
+	pop %ax
+	ret
+
+hex2:
+	push %ax
+	push %cx
+	push %dx
+    mov %al,%dl
+
+    mov $4,%cl
+    shr %cl,%al
+    call hex1
+    mov %dl,%al
+    call hex1
+	pop %dx
+	pop %cx
+	pop %ax
+	ret
+
+hex4:
+    push %ax
+    push %ax
+    mov %ah,%al
+    call hex2
+    pop %ax
+    call hex2
+	pop %ax
+	ret
+
+
 // System header is good
 
 sys_hdr_good:
 
 	mov %sp,%bp
-	mov 8,%dx     // code size
+	mov 8,%dx     // code size -2(%bp)
 	push %dx
 	add $0xF,%dx     // align on next paragraph (issue #209)
 	mov	$4,%cl
 	shr %cl,%dx   // DX = code segment size in paragraph
 	shr %cl,%bx   // BX = header size in paragraphs
 
-	mov 12,%ax    // data size
+	mov 12,%ax    // data size -(4%bp)
 	push %ax
-	mov 16,%ax    // bss size
+	mov 16,%ax    // bss size -6(%bp)
 	push %ax
-	mov 20,%ax    // entry point
+	mov 20,%ax    // entry point -8(%bp)
 	push %ax
 
 // Relocate kernel code
 
+	mov $'T',%ax
+	call putc
+
 	mov $SYSSEG,%ax
 	add %bx,%ax   // skip header
 	mov %ax,%ds
+	xor	%si,%si
+
 	mov $REL_SYSSEG,%ax
 	mov %ax,%es
+	xor %di,%di
+	call hex4
 
-	mov -2(%bp),%cx  // code size
-	xor	%si,%si
-	mov	%si,%di
+	mov -2(%bp),%cx  // code size in bytes
 	cld
 	rep
 	movsb
 
 // Relocate kernel far text
 
-	xor %ax,%ax   // far text size = 0
-	push %ax      // -10(%bp)
-	push %ax      // -12(%bp)
-	push %ax      // -14(%bp)
+	xor %ax,%ax   // far text size -10(%bp)
+	push %ax
+	push %ax      // text reloc size -12(%bp)
+	push %ax      // far text reloc size -14(%bp)
+	push %ax      // data reloc size -16(%bp)
 	cmp $0x04,%bx // extended header?
 	jne sys_no_far_text
 	mov $SYSSEG,%ax
 	mov %ax,%ds
-	mov 0x30,%ax  // far text size in bytes
+	mov 0x20,%ax  // text reloc size
 	mov %ax,-12(%bp)
-	mov 0x20,%ax  // text relocation size in bytes
+	mov 0x32,%ax  // far text reloc size
 	mov %ax,-14(%bp)
-	add $15,%ax
-	mov $4,%cl
-	shr %cl,%ax   // far text size in paragraphs
-	mov %ax,-10(%bp)
-
-	mov 0x30,%cx  // far text size in bytes
-	cmp %cx,%cx
+	mov 0x24,%ax  // data reloc size
+	mov %ax,-16(%bp)
+	mov 0x30,%cx  // far text size
+	mov %cx,-10(%bp)
+	and %cx,%cx
 	jz sys_no_far_text
-	mov $SYSSEG,%ax
-	add %bx,%ax   // skip header
-	add %dx,%ax   // skip code
-	mov %ax,%ds
-	mov $REL_SYSSEG,%ax
-	add %dx,%ax
-	mov %ax,%es
 
+	mov $'F',%ax
+	call putc
+
+	mov $SYSSEG,%ax
+	add %bx,%ax       // skip header
+	mov %ax,%ds
 	xor	%si,%si
-	mov	%si,%di
+	mov -2(%bp),%ax   // skip code bytes
+	call add_ptr
+
+	mov $REL_SYSSEG,%ax
+	add %dx,%ax       // skip code paragraphs
+	mov %ax,%es
+	xor %di,%di
+	call hex4
+
 	cld
 	rep
 	movsb
@@ -632,32 +708,105 @@ sys_no_far_text:
 // Relocate kernel data (not bss)
 // Kernel resets bss itself
 
+	mov $'f',%ax
+	call putc
+	mov -10(%bp),%ax // far text size
+	mov $4,%cl
+	shr %cl,%ax
+	mov %ax,%cx
+	call hex4
+
+	mov $'D',%ax
+	call putc
+
 	mov $SYSSEG,%ax
-	add %bx,%ax   // skip header
-	add %dx,%ax   // skip code
+	add %bx,%ax      // skip header
 	mov %ax,%ds
+	xor %si,%si
+	mov -2(%bp),%ax  // skip code bytes
+	call add_ptr
+	mov -10(%bp),%ax // far text size
+	call add_ptr
+	push %si
+
 	mov $REL_SYSSEG,%ax
-	add %dx,%ax
+	add %dx,%ax      // skip code paragraphs
+	add %cx,%ax      // skip far text
 	mov %ax,%es
+	call hex4
 
 	mov -4(%bp),%cx  // data size
-	xor %si,%si
-	add -12(%bp),%si // skip far text
 	xor %di,%di
 	cld
 	rep
 	movsb
 
+// Handle code/far text/data segment relocation
+
+	pop %si
+	mov -4(%bp),%ax  // skip data size
+	call add_ptr
+
+	push %es
+	mov -12(%bp),%cx // text reloc size
+
+text_reloc:
+	jcxz 1f
+	mov $'t',%ax
+	call putc
+	mov $REL_SYSSEG,%ax
+	mov %ax,%es      // ES -> text segment
+
+	call relocat
+	sub $8,%cx
+	add $8,%si
+	jmp text_reloc
+1:
+
+	mov -14(%bp),%cx // far text reloc size
+ftext_reloc:
+	jcxz 2f
+	mov $'f',%ax
+	call putc
+	mov $REL_SYSSEG,%ax
+	add %dx,%ax      // skip code
+	mov %ax,%es      // ES -> far text segment
+
+	call relocat
+	sub $8,%cx
+	add $8,%si
+	jmp ftext_reloc
+2:
+
+	mov -16(%bp),%cx // data reloc size
+data_reloc:
+	jcxz 3f
+	mov $'d',%ax
+	call putc
+	pop %es          // ES -> data segment
+	push %es
+
+	call relocat
+	sub $8,%cx
+	add $8,%si
+	jmp data_reloc
+3:
+	mov $'\r',%ax
+	call putc
+	mov $'\n',%ax
+	call putc
+
 // Load registers as kernel expects
 
+	pop %es          // ES -> data segment
 	mov %es,%ax
 	mov %ax,%ds
 
 	mov -2(%bp),%bx    // code size
-	add -12(%bp),%bx   // FIXME may overflow, needs farcode size
 	mov -4(%bp),%si    // data size
 	mov -6(%bp),%dx    // bss size
 	mov -8(%bp),%cx    // entry point
+	mov -10(%bp),%di   // far text size
 
 // Jump to kernel entry point
 
@@ -665,6 +814,75 @@ sys_no_far_text:
 	push %ax
 	push %cx
 	lret
+
+// Relocate segment at ES: from relocation record at DS:SI
+
+relocat:
+	mov (%si),%ax
+	call hex4
+	mov $' ',%ax
+	call putc
+	mov 2(%si),%ax
+	call hex4
+	mov $' ',%ax
+	call putc
+	mov 4(%si),%ax
+	call hex4
+	mov $' ',%ax
+	call putc
+	mov 6(%si),%ax
+	call hex4
+	mov $' ',%ax
+	call putc
+
+	mov (%si),%di      // get r_vaddr
+	mov 6(%si),%ax     // get r_type
+	cmp $80,%ax        // R_SEGWORD
+	jnz sys_hdr_bad
+	mov 4(%si),%ax     // get r_symndx
+	cmp $-2,%ax        // S_TEXT
+	jnz 1f
+
+	mov $REL_SYSSEG,%ax// code segment
+	jmp reloc_wr
+1:
+	cmp $-5,%ax        // S_FTEXT
+	jnz 2f
+
+	mov $REL_SYSSEG,%ax
+	add %dx,%ax        // skip code = far text segment
+	jmp reloc_wr
+2:
+	cmp $-3,%ax        // S_DATA
+	jnz sys_hdr_bad
+
+	mov -10(%bp),%ax   // far text size
+	mov $4,%cl
+	shr %cl,%ax        // skip far text
+	add %dx,%ax        // skip code
+	add $REL_SYSSEG,%ax// = data segment
+
+reloc_wr:
+	push %ax
+	mov $'[',%ax
+	call putc
+	mov %es,%ax
+	call hex4
+	mov $':',%ax
+	call putc
+	mov %di,%ax
+	call hex4
+	mov $'=',%ax
+	call putc
+	pop %ax
+	call hex4
+	push %ax
+	mov $']',%ax
+	call putc
+	pop %ax
+
+	mov %ax,%es:(%di)
+	ret
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Case for kernel in disk, no kernel relocation
@@ -674,6 +892,7 @@ sys_no_far_text:
 	mov $SYSSEG,%ax	// in ROM ds ist always set
 	mov %ax,%ds	// Get the header into DS
 	mov 8,%bx	// TSeg
+	xor %di,%di // far TSeg
 	mov 12,%si	// DSeg
 	mov 16,%dx	// BSeg
 	mov 20,%bp	// entry point

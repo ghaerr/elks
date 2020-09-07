@@ -20,10 +20,12 @@ entry:
 ! Setup.S already initialized DS and ES (but not SS)
 ! In addition, registers contain:
 !   BX, Text size
+!   DI  Far text size
 !   SI, Data size
 !   DX, BSS size
 */
 	mov	%bx,_endtext
+	mov	%di,_endftext
 	mov	%si,_enddata
 	add	%dx,%si
 	mov	%si,_endbss
@@ -82,6 +84,7 @@ ep_end:
 
 	.data
 	.global _endtext
+	.global _endftext
 	.global _enddata
 	.global _endbss
 	.extern	kernel_cs
@@ -89,6 +92,9 @@ ep_end:
 	.extern task
 
 _endtext:
+	.word	0
+
+_endftext:
 	.word	0
 
 _enddata:

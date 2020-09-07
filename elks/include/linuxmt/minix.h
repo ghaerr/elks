@@ -44,15 +44,15 @@ struct elks_supl_hdr {
     unsigned long	msh_dbase;	/* data relocation base */
     /* even more optional fields --- for ELKS medium memory model support */
     unsigned short	esh_ftseg;	/* far text size */		// 0x30
-    unsigned long	esh_ftrsize;	/* far text relocation size */	// 0x34
+    unsigned long	esh_ftrsize;	/* far text relocation size */	// 0x32
     unsigned short	esh_reserved1;
     unsigned long	esh_reserved2, esh_reserved3;
 };
 
 struct minix_reloc {
     unsigned long	r_vaddr;	/* address of place within section */
-    unsigned short	r_symndx;	/* index into symbol table */
-    unsigned short	r_type;		/* relocation type */
+    unsigned short	r_symndx;	/* index into symbol table */	// 0x04
+    unsigned short	r_type;		/* relocation type */		// 0x06
 };
 
 /* r_type values */
