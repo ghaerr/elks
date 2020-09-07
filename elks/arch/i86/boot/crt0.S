@@ -82,6 +82,12 @@ ep_end:
 
 //	Segment beginnings
 
+// Zero for NULL pointers (near and far)
+// Will be linked as first section in data segment
+	.section .nildata
+	.word 	0
+	.word	0
+
 	.data
 	.global _endtext
 	.global _endftext

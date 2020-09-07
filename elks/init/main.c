@@ -56,18 +56,10 @@ extern int run_init_process_sptr(char *cmd, char *sptr, int slen);
 
 #define FARPROC __far  __attribute__ ((far_section, noinline))
 
-int a = 3;
-
-void FARPROC nearproc(void) // FIXME works only if FARPROC
-{
-	a = 2;
-}
-
 void FARPROC farproc()
 {
-	a = 1;
-	nearproc();
-    //printk("hello far kernel!!!\n");
+	// call nearproc
+    printk("hello far kernel!!!\n");
 }
 
 void start_kernel(void)
@@ -100,9 +92,6 @@ void start_kernel(void)
     serial_console_init();
 #endif
 
-	printk("BEFORE %d, ", a);
-	farproc();
-	printk("AFTER %d\n", a);
     device_setup();
 
 #ifdef CONFIG_SOCKET
@@ -116,6 +105,8 @@ void start_kernel(void)
 #endif
 
     mm_stat(base, end);
+
+	farproc();
 
     kfork_proc(init_task);
     wake_up_process(&task[1]);
@@ -143,8 +134,8 @@ static void init_task(void)
     if (strcmp(init_command, bininit) != 0) {
 	/* Set stdin/stdout/stderr to /dev/console if not running /bin/init*/
 	num = sys_open(s="/dev/console", O_RDWR, 0);
-	if (num < 0) /* FIXME w/o "s" below, sys_open fails, guessing string addr == DS:0*/
-	    printk("Unable to open %s (error %d)\n", s, num, "s");
+	if (num < 0)
+	    printk("Unable to open %s (error %d)\n", s, num);
 	sys_dup(num);		/* open stdout*/
 	sys_dup(num);		/* open stderr*/
     }

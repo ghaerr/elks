@@ -733,10 +733,10 @@ sys_no_far_text:
 	add %dx,%ax      // skip code paragraphs
 	add %cx,%ax      // skip far text
 	mov %ax,%es
+	xor %di,%di
 	call hex4
 
 	mov -4(%bp),%cx  // data size
-	xor %di,%di
 	cld
 	rep
 	movsb

@@ -25,6 +25,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 //#include "ia16-preamble.h"
 
 	/* These routines must go into the near text segment, if at all.  */
+	.code16
 	.text
 
 	.global	__ia16_far_call_thunk.bx.si
@@ -32,6 +33,12 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 	.global	__ia16_far_call_thunk.bx.di
 	.type	__ia16_far_call_thunk.bx.di, @function
 __ia16_far_call_thunk.bx.si:
+	// fast version when si is zero
+	and	%si,%si
+	jnz	00f
+	call	%bx
+	retf
+00:
 	pushw	%bp			/* set up stack frame */
 	movw	%sp,	%bp
 	pushw	%bx			/* preserve %bx and %cx */
@@ -39,6 +46,12 @@ __ia16_far_call_thunk.bx.si:
 	movw	%si,	%cx		/* move stack args. size to %cx */
 	jmp	0f
 __ia16_far_call_thunk.bx.di:
+	// fast version when di is zero
+	and	%di,%di
+	jnz	00f
+	call	%bx
+	retf
+00:
 	pushw	%bp
 	movw	%sp,	%bp
 	pushw	%bx
@@ -50,7 +63,7 @@ __ia16_far_call_thunk.bx.di:
 	addw	%cx,	%bx
 	shrw	%cx
 1:
-	pushw	%ss:(%bx)
+	pushw	(%bx)			// SS: prefix removed
 	decw	%bx
 	decw	%bx
 	loop	1b
