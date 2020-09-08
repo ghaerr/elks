@@ -90,12 +90,7 @@ static struct biosparms bdt;
 #define BD_ES bdt.es
 #define BD_FL bdt.fl
 
-static struct drive_infot {		/* CHS per drive*/
-    int cylinders;
-    int sectors;
-    int heads;
-    int fdtype;				/* floppy fd_types[] index  or -1 if hd */
-} drive_info[NUM_DRIVES];
+static struct drive_infot drive_info[NUM_DRIVES];
 
 /* This makes probing order more logical and
  * avoids a few senseless seeks in some cases

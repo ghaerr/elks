@@ -10,27 +10,26 @@
 #include <arch/io.h>
 #include <linuxmt/heap.h>
 #include <arch/ports.h>
+#include "blk.h"
 
 #define IDE_DRIVE_ID	0xec	/* IDE command to get access to drive data */
 #define IDE_STATUS	7	/* get drive status */
 #define IDE_ERROR	1
 
-#define IDE_DEBUG	1	/* IDE probe debugging */
+#define IDE_DEBUG	0	/* IDE probe debugging */
 
 /* For IDE/ATA access */
-#define STATUS(port) inb_p(port + IDE_STATUS)
-#define ERROR(port) inb_p(port + IDE_ERROR)
-#define WAITING(port) (STATUS(port) & 0x80) == 0x80
+#define STATUS(port)	inb_p(port + IDE_STATUS)
+#define ERROR(port)	inb_p(port + IDE_ERROR)
+#define WAITING(port)	(STATUS(port) & 0x80) == 0x80
+
+#if IDE_DEBUG
+#define debug   printk
+#else
+#define debug(...)
+#endif
 
 static int io_ports[2] = { HD1_PORT, HD2_PORT };	/* physical port addresses */
-
-/* FIXME: should be moved to a header file */
-struct drive_infot {		/* CHS per drive*/
-    int cylinders;
-    int sectors;
-    int heads;
-    int fdtype;			/* floppy fd_types[] index  or -1 if hd */
-};
 
 void insw(word_t port, word_t *buffer, int count) {
 
@@ -41,14 +40,14 @@ void insw(word_t port, word_t *buffer, int count) {
 
 void out_hd(int drive, word_t cmd)
 {
-    word_t port = io_ports[drive / 2];
+    word_t port = io_ports[drive >> 1];
 
     outb(0xff, ++port);		/* Feature set, should not matter */
     outb_p(0, ++port);
     outb_p(0, ++port);
     outb_p(0, ++port);
     outb_p(0, ++port);
-    outb_p(0xA0 | ((drive % 2) << 4), ++port);
+    outb_p(0xA0 | ((drive & 1) << 4), ++port);
     outb_p(cmd, ++port);
 }
 
@@ -74,16 +73,10 @@ static void dump_ide(word_t *buffer, int size) {
 
 int get_ide_data(int drive, struct drive_infot *drive_info) {
 
-	word_t port = io_ports[drive / 2];
+	word_t port = io_ports[drive >> 1];
 	int retval = 0;
 
-	word_t *ide_buffer = (word_t *)heap_alloc(516, 0);
-	ide_buffer[255] = 0x1234;
-	ide_buffer[256] = 0x5678;
-	ide_buffer[257] = 0xabcd;
-#if IDE_DEBUG
-	printk("get_ide_data: drive %i at 0x%3X, buffer @ %04X\n", drive, port, ide_buffer);
-#endif
+	word_t *ide_buffer = (word_t *)heap_alloc(512, 0);
 
 	while (1) {
 	    out_hd(drive, IDE_DRIVE_ID);
@@ -98,15 +91,13 @@ int get_ide_data(int drive, struct drive_infot *drive_info) {
 		    drive++;
 		    continue;
 		}
-#if IDE_DEBUG
-		printk("bd%c: drive at port 0x%x not found\n", 'a'+drive, port);
-#endif
+		debug("bd%c: drive at port 0x%x not found\n", 'a'+drive, port);
+
 		retval = -1;
 		break;
 	    }
 
 	    insw(port, ide_buffer, 512/2);	/* read - word size */
-	    dump_ide(ide_buffer, 258);
 
 	    /*
 	     * Sanity check: Head, cyl and sector values must be other than
@@ -126,19 +117,18 @@ int get_ide_data(int drive, struct drive_infot *drive_info) {
 	    	&& (ide_buffer[54] != 0) && (ide_buffer[55] != 0)
 	    	&& (ide_buffer[56] != 0)) {
 #if IDE_DEBUG
-	    	ide_buffer[20] = 0;
+	    	ide_buffer[20] = 0; /* String termination */
 	    	printk("IDE default CHS: %d/%d/%d serial %s\n", ide_buffer[1], ide_buffer[3], ide_buffer[6],
 			&ide_buffer[10]);
 #endif
 	    	drive_info->cylinders = ide_buffer[54];
 	    	drive_info->heads = ide_buffer[55];
 	    	drive_info->sectors = ide_buffer[56];
-#if IDE_DEBUG
-		/* If the 3rd drive is slave, not master, it will be reported as
+
+		/* Note: If the 3rd drive is slave, not master, it will be reported as
 		 * bdd, not bdc here. */
-	    	printk("bd%c: %d heads, %d cylinders, %d sectors\n", 'a'+drive,
-		   drive_info->heads, drive_info->cylinders, drive_info->sectors);
-#endif
+		debug("bd%c: %d heads, %d cylinders, %d sectors\n", 'a'+drive,
+			drive_info->heads, drive_info->cylinders, drive_info->sectors);
 	    } else {
 		retval = -2;
 #if IDE_DEBUG
@@ -148,7 +138,6 @@ int get_ide_data(int drive, struct drive_infot *drive_info) {
 	    }
 	    break;
 	}
-
 	heap_free(ide_buffer);
 
 	return retval;
