@@ -54,8 +54,6 @@ static void init_task(void);
 extern int run_init_process(char *cmd);
 extern int run_init_process_sptr(char *cmd, char *sptr, int slen);
 
-#define FARPROC __far  __attribute__ ((far_section, noinline))
-
 void FARPROC farproc()
 {
 	// call nearproc
