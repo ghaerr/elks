@@ -15,7 +15,7 @@
 #define IDE_STATUS	7	/* get drive status */
 #define IDE_ERROR	1
 
-#define IDE_DEBUG	0	/* IDE probe debugging */
+#define IDE_DEBUG	1	/* IDE probe debugging */
 
 /* For IDE/ATA access */
 #define STATUS(port) inb_p(port + IDE_STATUS)
@@ -34,9 +34,9 @@ struct drive_infot {		/* CHS per drive*/
 
 void insw(word_t port, word_t *buffer, int count) {
 
-    while (--count) {
+    do {
    	*buffer++ = inw(port);
-    }
+    } while (--count);
 }
 
 void out_hd(int drive, word_t cmd)
@@ -56,14 +56,14 @@ void out_hd(int drive, word_t cmd)
 static void dump_ide(word_t *buffer, int size) {
 	int counter = 0;
 
-	while(--size) {
+	do {
 		printk("%04X ", *buffer++);
 		if (++counter == 16) {
 			printk("\n");
 			counter = 0;
 		}
-	}
-	printk("\n");
+	} while (--size);
+	if (counter) printk("\n");
 }
 #endif
 
@@ -77,7 +77,10 @@ int get_ide_data(int drive, struct drive_infot *drive_info) {
 	word_t port = io_ports[drive / 2];
 	int retval = 0;
 
-	word_t *ide_buffer = (word_t *)heap_alloc(512, 0);
+	word_t *ide_buffer = (word_t *)heap_alloc(516, 0);
+	ide_buffer[255] = 0x1234;
+	ide_buffer[256] = 0x5678;
+	ide_buffer[257] = 0xabcd;
 #if IDE_DEBUG
 	printk("get_ide_data: drive %i at 0x%3X, buffer @ %04X\n", drive, port, ide_buffer);
 #endif
@@ -103,6 +106,7 @@ int get_ide_data(int drive, struct drive_infot *drive_info) {
 	    }
 
 	    insw(port, ide_buffer, 512/2);	/* read - word size */
+	    dump_ide(ide_buffer, 258);
 
 	    /*
 	     * Sanity check: Head, cyl and sector values must be other than

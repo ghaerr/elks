@@ -130,7 +130,6 @@ static int bioshd_ioctl(struct inode *, struct file *, unsigned int, unsigned in
 static int bioshd_open(struct inode *, struct file *);
 static void bioshd_release(struct inode *, struct file *);
 static void bioshd_geninit(void);
-extern int get_ide_data(int, struct drive_infot *); 
 
 static struct gendisk bioshd_gendisk = {
     MAJOR_NR,			/* Major number */
