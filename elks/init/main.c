@@ -54,12 +54,6 @@ static void init_task(void);
 extern int run_init_process(char *cmd);
 extern int run_init_process_sptr(char *cmd, char *sptr, int slen);
 
-void FARPROC farproc()
-{
-	// call nearproc
-    printk("hello far kernel!!!\n");
-}
-
 void start_kernel(void)
 {
     seg_t base, end;
@@ -103,8 +97,6 @@ void start_kernel(void)
 #endif
 
     mm_stat(base, end);
-
-	farproc();
 
     kfork_proc(init_task);
     wake_up_process(&task[1]);
