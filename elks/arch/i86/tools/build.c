@@ -40,7 +40,8 @@
 
 #include "a.out.h"
 
-#define MINIX_HEADER 32
+#define MINIX_HEADER 0x20
+#define SUPL_HEADER  0x40
 
 #define N_MAGIC_OFFSET 1024
 
@@ -104,7 +105,7 @@ void usage(void)
 
 int main(int argc, char **argv)
 {
-    int32_t i, c, id, sz;
+    int32_t i, c, id, sz, fsz;
     uint32_t sys_size;
     char buf[1024];
 
@@ -112,7 +113,7 @@ int main(int argc, char **argv)
     struct exec *ex = (struct exec *) buf;
 #endif
 
-    char major_root, minor_root;
+    unsigned char major_root, minor_root;
     struct stat sb;
     unsigned char setup_sectors;
 
@@ -217,17 +218,26 @@ int main(int argc, char **argv)
     if ((id = open(argv[3], O_RDONLY, 0)) < 0)
 	die("Unable to open 'system'");
 #ifndef __BFD__
-    if (read(id, buf, MINIX_HEADER) != MINIX_HEADER)
+    if (read(id, buf, SUPL_HEADER) != SUPL_HEADER)
 	die("Unable to read header of 'system'");
     if ((ex->a_magic[0] != 0x01) || (ex->a_magic[1] != 0x03)) {
 	die("Non-MINIX header of 'system'");
     }
-    fprintf(stderr, "System is %d B (%d B code, %d B data and %u B bss)\n",
-	    (intel_long(ex->a_text) + intel_long(ex->a_data) +
-	     intel_long(ex->a_bss)), intel_long(ex->a_text),
-	    intel_long(ex->a_data), (unsigned) intel_long(ex->a_bss));
-    sz = MINIX_HEADER + intel_long(ex->a_text) + intel_long(ex->a_data);
-
+    fsz = 0;
+    sz = intel_long(ex->a_text) + intel_long(ex->a_data) + intel_long(ex->a_bss);
+    if (ex->a_hdrlen == SUPL_HEADER) {
+	fsz = intel_short(ex->esh_ftseg);
+	sz += fsz;
+    }
+    fprintf(stderr, "System is %d B (%d B code, %d fartext, %d B data and %u B bss)\n",
+	sz, intel_long(ex->a_text), fsz,
+	intel_long(ex->a_data), (unsigned) intel_long(ex->a_bss));
+    sz = ex->a_hdrlen + intel_long(ex->a_text) + intel_long(ex->a_data);
+    if (ex->a_hdrlen == SUPL_HEADER) {
+	    sz += fsz;
+	    sz += intel_long(ex->a_trsize) + intel_long(ex->a_drsize)
+	       + intel_short(ex->esh_ftrsize);
+    }
     if (intel_long(ex->a_data) + intel_long(ex->a_bss) > 65535) {
 	fprintf(stderr, "Image too large.\n");
 	exit(1);

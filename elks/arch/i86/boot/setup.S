@@ -26,6 +26,9 @@
 ! changes to support having setup + ELKS kernel as one single blob
 ! March 2020 https://github.com/tkchia
 !
+! changes to support .fartext headers and relocation
+! Sep 2020 Greg Haerr
+!
 ! The following data is passed to the main kernel (relative to INITSEG)
 !
 ! index
@@ -138,21 +141,12 @@ entry:
 	cmpw	$SIG1,setup_sig1
 	jne	no_sig
 	cmpw	$SIG2,setup_sig2
-	jne	no_sig
-	jmp	move_kernel     //;why double jmp
-	nop
+	je	move_kernel
 
-
-// Routine to print asciiz-string at DS:SI
-prts_1:	mov	$0x0007,%bx   //page 0
-	mov	$0x0e,%ah
-	int	$0x10
-
-prtstr:	lodsb
-	test	%al,%al
-	jnz	prts_1
-	ret
-
+no_sig:	lea	no_sig_mess,%si
+	call	puts
+1:                             // And halt
+	jmp	1b
 
 
 // If setup and kernel were loaded as a blob, we need to separate them out,
@@ -209,17 +203,7 @@ move_kernel_in_64ks:
 	rep
 	movsw
 	jmp	move_kernel_in_64ks
-#endif
 
-no_sig:
-	lea	no_sig_mess,%si
-	call	prtstr
-no_sig_loop:			// And halt
-	jmp	no_sig_loop
-
-
-//;------------------------------------------------
-#ifndef CONFIG_ROMCODE
 done_move_kernel:
 	cld
 	mov	$INITSEG,%ax
@@ -249,7 +233,7 @@ start_os:
 	push	%cs
 	pop	%ds
 	mov $hello_mess,%si
-	call prtstr
+	call puts
 
 	mov $INITSEG,%ax
 	mov	%ax,%ds
@@ -358,14 +342,18 @@ no_psmouse:
 	int	$0x12		// determine the size of the basememory
 	mov	%ax,0x2a
 
-//----------------------------
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Case for ROM code
+//
+
 #ifdef CONFIG_ROMCODE
+// Case for kernel in ROM
 // We must now copy the kernel to RAM (SYSSEG)
 
 	mov %cs,%ax          //;string is in this codeseg
 	mov %ax,%ds
 	lea load_kernel,%si
-	call prtstr
+	call puts
 
    	mov $CONFIG_ROM_KERNEL_CODE,%ax   //;the ROM image
    	mov %ax,%ds
@@ -388,7 +376,7 @@ aouterr:
    	mov %cs,%ax
    	mov %ax,%ds
    	lea kernel_aouterr,%si
-   	call prtstr
+	call puts
 err_loop:
 	jmp err_loop
 
@@ -415,7 +403,7 @@ size_error:
    	mov %cs,%ax
    	mov %ax,%ds
    	lea kernel_to_big,%si
-   	call prtstr
+	call puts
    	jmp err_loop  //;and halt
 
 size_ok:
@@ -434,31 +422,12 @@ size_ok:
         rep
         movsw
 
-//; now ist the data and code ad the right position
-#endif
-
-/*
-!--------------------------------------------------------
-! We setup ds, es, and ss now
-!
-!
-!	For BCC generated code the rules are simple
-!
-!	ES=DS=SS. SP is at the top end of the segment, data at the bottom
-!	CS = DS is allowed (code then is start of data) or split.
-!
-
-!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-! Case for kernel in ROM
-!
-*/
-#if defined(CONFIG_ROMCODE)
-
-// BX,CX,DX,SI,DS,ES are expected in kernel crt0.S
+// BX,CX,DX,SI,DI,DS,ES are expected in kernel crt0.S
 
 	mov 0x10,%dx  // bss size
 	mov 0x0c,%si  // data size
 	mov 0x08,%bx  // text size
+	xor %di,%di   // far text size
 	mov 0x18,%ax  // entry point
 	mov %es,%cx   // data segment
 	mov %cx,%ds
@@ -540,17 +509,19 @@ _next1:
 	jne sys_hdr_bad
 	cmpw $0x0430,2   // i8086 - executable with separated I & D
 	jne sys_hdr_bad
-	cmpb $0x20,4     // header size (no relocs)
-	jne sys_hdr_bad
-	jmp sys_hdr_good
+	mov 4,%bx        // BX = header size
+	cmp $0x20,%bx    // header size (no relocs)
+	je sys_hdr_good
+	cmp $0x40,%bx    // header size (relocs)
+	je sys_hdr_good
 
 sys_hdr_bad:
 	mov %ss,%ax
-	mov	%ax,%ds
+	mov %ax,%ds
 	lea sys_hdr_msg,%si
-	call prtstr
-sys_hdr_loop:
-	jmp sys_hdr_loop
+	call puts
+1:                       // halt
+	jmp 1b
 sys_hdr_msg:
 	.ascii "Bad system header!"
 	.byte 0
@@ -558,68 +529,250 @@ sys_hdr_msg:
 // System header is good
 
 sys_hdr_good:
-
 	mov %sp,%bp
-	mov 8,%dx     // code size
+	mov 8,%dx     // -2(%bp) code size
 	push %dx
-	add $0xF,%dx     // align on next paragraph (issue #209)
-	mov	$4,%cl
+	add $15,%dx   // align on next paragraph (issue #209)
+	mov $4,%cl
 	shr %cl,%dx   // DX = code segment size in paragraph
+	shr %cl,%bx   // BX = header size in paragraphs
 
-	mov 12,%ax    // data size
+	mov 12,%ax    // -4(%bp) data size
 	push %ax
-	mov 16,%ax    // bss size
+	mov 16,%ax    // -6(%bp) bss size
 	push %ax
-	mov 20,%ax    // entry point
+	mov 20,%ax    // -8(%bp) entry point
 	push %ax
+	xor %ax,%ax   // -10(%bp) far text size
+	push %ax
+	push %ax      // -12(%bp) text reloc size
+	push %ax      // -14(%bp) far text reloc size
+	push %ax      // -16(%bp) data reloc size
+	push %ax      // -18(%bp) kernel .text segment
+	push %ax      // -20(%bp) kernel .fartext segment
+	push %ax      // -22(%bp) kernel .data segment
 
 // Relocate kernel code
 
-	mov $SYSSEG+2,%ax
+	mov $'T',%ax     // display kernel .text segment
+	call putc
+
+	mov $SYSSEG,%ax  // start of a.out
+	add %bx,%ax      // skip header
 	mov %ax,%ds
+	xor %si,%si
+
 	mov $REL_SYSSEG,%ax
 	mov %ax,%es
+	mov %ax,-18(%bp) // save .text segment
+	call hex4sp
+	add %dx,%ax      // add code paragraphs
+	mov %ax,-20(%bp) // save .data start in case no .fartext
+	xor %di,%di
 
-	mov -2(%bp),%cx  // code size
-	xor	%si,%si
-	mov	%si,%di
+	mov -2(%bp),%cx  // code size in bytes
 	cld
 	rep
 	movsb
+
+// Relocate kernel far text
+
+	cmp $0x04,%bx    // extended header?
+	jne sys_no_far_text
+	mov $SYSSEG,%ax  // readdress a.out header
+	mov %ax,%ds
+	mov 0x20,%ax     // text reloc size
+	mov %ax,-12(%bp)
+	mov 0x32,%ax     // far text reloc size
+	mov %ax,-14(%bp)
+	mov 0x24,%ax     // data reloc size
+	mov %ax,-16(%bp)
+	mov 0x30,%cx     // far text size
+	mov %cx,-10(%bp)
+	and %cx,%cx
+	jz sys_no_far_text
+
+	mov $'F',%ax      // display kernel .fartext segment
+	call putc
+
+	mov $SYSSEG,%ax
+	add %bx,%ax       // skip header
+	mov %ax,%ds
+	xor %si,%si
+	mov -2(%bp),%ax   // skip code bytes
+	call add_ptr
+
+	mov -18(%bp),%ax  // kernel .text segment
+	add %dx,%ax       // skip code paragraphs
+	mov %ax,%es
+	mov %ax,-20(%bp)  // save .fartext segment
+	xor %di,%di
+	call hex4sp
+
+	rep
+	movsb
+sys_no_far_text:
 
 // Relocate kernel data (not bss)
 // Kernel resets bss itself
 
-	mov $SYSSEG+2,%ax
-	add %dx,%ax
+	mov -10(%bp),%ax // conv far text size to paras
+	mov $4,%cl
+	shr %cl,%ax
+	mov %ax,%cx
+
+	mov $'D',%ax
+	call putc
+
+	mov $SYSSEG,%ax
+	add %bx,%ax      // skip header
 	mov %ax,%ds
-	mov $REL_SYSSEG,%ax
-	add %dx,%ax
+	xor %si,%si
+	mov -2(%bp),%ax  // skip code bytes
+	call add_ptr
+	mov -10(%bp),%ax // far text size
+	call add_ptr
+	push %si
+
+	mov -20(%bp),%ax // kernel .fartext segment
+	add %cx,%ax      // skip far text
 	mov %ax,%es
+	mov %ax,-22(%bp) // save .data segment
+	xor %di,%di
+	call hex4sp
 
 	mov -4(%bp),%cx  // data size
-	xor %si,%si
-	mov %si,%di
-	cld
 	rep
 	movsb
 
+// Handle code/far text/data segment relocation
+
+	pop %si          // get src ptr at fartext
+	mov -4(%bp),%ax  // skip data size
+	call add_ptr     // now at relocation entries
+
+	mov -12(%bp),%cx // text reloc size
+text_reloc:
+	jcxz 1f
+	mov $'t',%ax
+	call putc
+	mov -18(%bp),%ax // kernel .text segment
+	mov %ax,%es
+
+	call relocat
+	sub $8,%cx
+	add $8,%si
+	jmp text_reloc
+1:
+
+	mov -14(%bp),%cx // far text reloc size
+ftext_reloc:
+	jcxz 2f
+	mov $'f',%ax
+	call putc
+	mov -20(%bp),%ax // kernel .fartext segment
+	mov %ax,%es
+
+	call relocat
+	sub $8,%cx
+	add $8,%si
+	jmp ftext_reloc
+2:
+
+	mov -16(%bp),%cx // data reloc size
+data_reloc:
+	jcxz 3f
+	mov $'d',%ax
+	call putc
+	mov -22(%bp),%ax   // kernel .data segment
+	mov %ax,%es
+
+	call relocat
+	sub $8,%cx
+	add $8,%si
+	jmp data_reloc
+3:
+	mov $'\r',%ax
+	call putc
+	mov $'\n',%ax
+	call putc
+
 // Load registers as kernel expects
 
-	mov %es,%ax
+	mov -22(%bp),%ax   // kernel .data segment
+	mov %ax,%es
 	mov %ax,%ds
-
 	mov -2(%bp),%bx    // code size
 	mov -4(%bp),%si    // data size
 	mov -6(%bp),%dx    // bss size
 	mov -8(%bp),%cx    // entry point
+	mov -10(%bp),%di   // far text size
 
 // Jump to kernel entry point
 
-	mov $REL_SYSSEG,%ax
+	mov -18(%bp),%ax   // kernel .text segment
 	push %ax
 	push %cx
 	lret
+
+// Relocate segment at ES: from relocation record at DS:SI
+relocat:
+	mov (%si),%di      // get r_vaddr
+	mov 6(%si),%ax     // get r_type
+	cmp $80,%ax        // R_SEGWORD
+	jnz sys_hdr_bad
+	mov 4(%si),%ax     // get r_symndx
+	cmp $-2,%ax        // S_TEXT
+	jnz 1f
+
+	mov -18(%bp),%ax   // kernel .text segment
+	jmp 3f
+1:
+	cmp $-5,%ax        // S_FTEXT
+	jnz 2f
+
+	mov -20(%bp),%ax   // kernel .fartext segment
+	jmp 3f
+2:
+	cmp $-3,%ax        // S_DATA
+	jnz sys_hdr_bad
+
+	mov -22(%bp),%ax   // kernel .data segment
+3:
+	push %ax           // display [seg:off=val]
+	mov $'[',%ax
+	call putc
+	mov %es,%ax
+	call hex4
+	mov $':',%ax
+	call putc
+	mov %di,%ax
+	call hex4
+	mov $'=',%ax
+	call putc
+	pop %ax
+	call hex4
+	push %ax
+	mov $']',%ax
+	call putc
+	pop %ax
+
+	mov %ax,%es:(%di)
+	ret
+
+// Add AX to DS:SI and normalize segment
+add_ptr:
+	push %cx
+	add %si,%ax
+	mov	%ax,%si
+	and $15,%si
+	mov $4,%cl
+	shr %cl,%ax
+	mov %ds,%cx
+	add %cx,%ax
+	mov %ax,%ds
+	pop %cx
+	ret
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Case for kernel in disk, no kernel relocation
@@ -629,6 +782,7 @@ sys_hdr_good:
 	mov $SYSSEG,%ax	// in ROM ds ist always set
 	mov %ax,%ds	// Get the header into DS
 	mov 8,%bx	// TSeg
+	xor %di,%di     // .fartext size
 	mov 12,%si	// DSeg
 	mov 16,%dx	// BSeg
 	mov 20,%bp	// entry point
@@ -645,98 +799,6 @@ sys_hdr_good:
 	retf
 
 #endif /* REL_SYS */
-
-/*
-!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-!
-! This routine checks that the keyboard command queue is empty
-! (after emptying the output buffers)
-!
-! No timeout is used - if this hangs there is something wrong with
-! the machine, and we probably couldn't proceed anyway.
-
-! no call to this functions
-*/
-#if 0
-empty_8042:
-	call	delay
-	in	al,#0x64	! 8042 status port
-	test	al,#1		! output buffer?
-	jz	no_output
-	call	delay
-	in	al,#0x60	! read it
-	jmp	empty_8042
-no_output:
-	test	al,#2		! is input buffer full?
-	jnz	empty_8042	! yes - loop
-	ret
-!
-! Read a key and return the (US-)ascii code in al, scan code in ah
-!
-getkey:
-	xor	ah,ah
-	int	0x16
-	ret
-
-!
-! Read a key with a timeout of 30 seconds. The cmos clock is used to get
-! the time.
-!
-getkt:
-	call	gettime
-	add	al,#30		! wait 30 seconds
-	cmp	al,#60
-	jl	lminute
-	sub	al,#60
-lminute:
-	mov	cl,al
-again:	mov	ah,#0x01
-	int	0x16
-	jnz	getkey		! key pressed, so get it
-	call	gettime
-	cmp	al,cl
-	jne	again
-	mov	al,#0x20	! timeout, return default char `space'
-	ret
-
-!
-! Flush the keyboard buffer
-!
-flush:	mov	ah,#0x01
-	int	0x16
-	jz	empty
-	xor	ah,ah
-	int	0x16
-	jmp	flush
-empty:	ret
-
-!
-! Read the cmos clock. Return the seconds in al
-!
-
-gettime:
-	push	cx
-	mov	ah,#0x02
-	int	0x1a
-	mov	al,dh			! dh contains the seconds
-	and	al,#0x0f
-	mov	ah,dh
-	mov	cl,#0x04
-	shr	ah,cl
-	aad
-	pop	cx
-	ret
-
-!
-! Delay is needed after doing i/o
-!
-delay:
-	.word	0x00eb			! jmp $+2
-	ret
-#endif
-//;from never calls
-
-//form this position are calles code
 
 /*
 ! TODO: move probing to boot tools
@@ -1008,6 +1070,68 @@ f2880:	.word 2,36,80
 floppies: .word f360, f1200, f720, f1440, f2880, f2880
 #endif
 
+
+// Utility/debugging routines
+
+// Write DS:SI asciiz string to console
+1:	call	putc
+puts:	lodsb
+	test	%al,%al
+	jnz	1b
+	ret
+
+// Write AX to console
+putc:	push %bx
+	push %cx
+	push %dx
+	mov $0x0E,%ah
+	mov $7,%bx      // page 0
+	int $0x10
+	pop %dx
+	pop %cx
+	pop %bx
+	ret
+
+// Output hex nibble, byte and word. All registers saved.
+hex1:	push %ax
+	and $0x0F,%al
+	add $'0',%al
+	cmp $'9',%al
+	jle 1f
+	add $('A'-'9'-1),%al
+1:	call putc
+	pop %ax
+	ret
+
+hex2:	push %ax
+	push %cx
+	push %dx
+	mov %al,%dl
+	mov $4,%cl
+	shr %cl,%al
+	call hex1
+	mov %dl,%al
+	call hex1
+	pop %dx
+	pop %cx
+	pop %ax
+	ret
+
+hex4:	push %ax
+	push %ax
+	mov %ah,%al
+	call hex2
+	pop %ax
+	call hex2
+	pop %ax
+	ret
+
+hex4sp: call hex4
+	push %ax
+	mov $' ',%ax
+	call putc
+	pop %ax
+	ret
 
 //
 // The processor name must not be longer than 15 characters!

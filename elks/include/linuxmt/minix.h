@@ -24,12 +24,12 @@
 
 struct minix_exec_hdr {
     unsigned long	type;
-    unsigned char	hlen;
+    unsigned char	hlen;			// 0x04
     unsigned char	reserved1;
     unsigned short	version;
-    unsigned short	tseg, reserved2;
-    unsigned short	dseg, reserved3;
-    unsigned short	bseg, reserved4;
+    unsigned short	tseg, reserved2;	// 0x08
+    unsigned short	dseg, reserved3;	// 0x0c
+    unsigned short	bseg, reserved4;	// 0x10
     unsigned long	entry;
     unsigned short	chmem;
     unsigned short	minstack;
@@ -38,21 +38,21 @@ struct minix_exec_hdr {
 
 struct elks_supl_hdr {
     /* optional fields */
-    unsigned long	msh_trsize;	/* text relocation size */
-    unsigned long	msh_drsize;	/* data relocation size */
+    unsigned long	msh_trsize;	/* text relocation size */	// 0x20
+    unsigned long	msh_drsize;	/* data relocation size */	// 0x24
     unsigned long	msh_tbase;	/* text relocation base */
     unsigned long	msh_dbase;	/* data relocation base */
     /* even more optional fields --- for ELKS medium memory model support */
-    unsigned short	esh_ftseg;	/* far text size */
-    unsigned long	esh_ftrsize;	/* far text relocation size */
+    unsigned short	esh_ftseg;	/* far text size */		// 0x30
+    unsigned long	esh_ftrsize;	/* far text relocation size */	// 0x32
     unsigned short	esh_reserved1;
     unsigned long	esh_reserved2, esh_reserved3;
 };
 
 struct minix_reloc {
     unsigned long	r_vaddr;	/* address of place within section */
-    unsigned short	r_symndx;	/* index into symbol table */
-    unsigned short	r_type;		/* relocation type */
+    unsigned short	r_symndx;	/* index into symbol table */	// 0x04
+    unsigned short	r_type;		/* relocation type */		// 0x06
 };
 
 /* r_type values */

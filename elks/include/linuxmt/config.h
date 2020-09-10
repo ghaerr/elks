@@ -48,6 +48,10 @@
  * in linux/version.h, and should only be used by linux/version.c
  */
 
+/* Compiler attribute and segment defines - here for now */
+#define FARPROC  __far __attribute__ ((far_section, noinline))
+#define INITPROC __far __attribute__ ((far_section, noinline, section (".fartext.init")))
+
 /* Don't touch these, unless you really know what you are doing. */
 #define DEF_INITSEG	0x0100	/* original 0x0100
 				 * for netboot use for example 0x5000, as

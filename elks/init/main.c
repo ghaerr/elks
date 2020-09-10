@@ -54,10 +54,6 @@ static void init_task(void);
 extern int run_init_process(char *cmd);
 extern int run_init_process_sptr(char *cmd, char *sptr, int slen);
 
-/*
- *	For the moment this routine _MUST_ come first.
- */
-
 void start_kernel(void)
 {
     seg_t base, end;
@@ -128,8 +124,8 @@ static void init_task(void)
     if (strcmp(init_command, bininit) != 0) {
 	/* Set stdin/stdout/stderr to /dev/console if not running /bin/init*/
 	num = sys_open(s="/dev/console", O_RDWR, 0);
-	if (num < 0) /* FIXME w/o "s" below, sys_open fails, guessing string addr == DS:0*/
-	    printk("Unable to open %s (error %d)\n", s, num, "s");
+	if (num < 0)
+	    printk("Unable to open %s (error %d)\n", s, num);
 	sys_dup(num);		/* open stdout*/
 	sys_dup(num);		/* open stderr*/
     }
