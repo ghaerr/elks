@@ -24,12 +24,12 @@
 
 struct minix_exec_hdr {
     unsigned long	type;
-    unsigned char	hlen;			// 0x04
+    unsigned char	hlen;		// 0x04
     unsigned char	reserved1;
     unsigned short	version;
-    unsigned short	tseg, reserved2;	// 0x08
-    unsigned short	dseg, reserved3;	// 0x0c
-    unsigned short	bseg, reserved4;	// 0x10
+    unsigned long	tseg;		// 0x08
+    unsigned long	dseg;		// 0x0c
+    unsigned long	bseg;		// 0x10
     unsigned long	entry;
     unsigned short	chmem;
     unsigned short	minstack;
@@ -43,7 +43,7 @@ struct elks_supl_hdr {
     unsigned long	msh_tbase;	/* text relocation base */
     unsigned long	msh_dbase;	/* data relocation base */
     /* even more optional fields --- for ELKS medium memory model support */
-    unsigned short	esh_ftseg;	/* far text size */		// 0x30
+    unsigned short	esh_ftseg;	/* far text size */		// 0x30 FIXME changing to long
     unsigned long	esh_ftrsize;	/* far text relocation size */	// 0x32
     unsigned short	esh_reserved1;
     unsigned long	esh_reserved2, esh_reserved3;
