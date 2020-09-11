@@ -109,13 +109,13 @@ int get_ide_data(int drive, struct drive_infot *drive_info) {
 	     * The difference is that some devices have selectable translation modes,
 	     * which is reflected in 'current' values. ELKS does not use translation 
 	     * modes, so they are always the same.
-	     * Check for large # of heads to detect ATPI CDROMs.
+	     * Check for large # of cyls to detect (and skip) ATAPI CDROMs. 
 	     * 							HS sep2020
 	     */
 
 	    if ((ide_buffer[54] < 34096) && (*ide_buffer != 0)	/* this is the real sanity check */
-	    	&& (ide_buffer[54] != 0) && (ide_buffer[55] != 0)
-	    	&& (ide_buffer[56] != 0)) {
+	    	&& (ide_buffer[54] != 0) && (ide_buffer[55] != 0) && (ide_buffer[55] < 256)
+	    	&& (ide_buffer[56] != 0) && (ide_buffer[56] < 64)) {
 #if IDE_DEBUG
 	    	ide_buffer[20] = 0; /* String termination */
 	    	printk("IDE default CHS: %d/%d/%d serial %s\n", ide_buffer[1], ide_buffer[3], ide_buffer[6],

@@ -58,6 +58,7 @@ devices:
 	$(MKDEV) /dev/bdb3 b 3 35
 	$(MKDEV) /dev/bdb4 b 3 36
 	$(MKDEV) /dev/bdc  b 3 64
+	$(MKDEV) /dev/bdc1 b 3 65
 	$(MKDEV) /dev/bdd  b 3 96
 	$(MKDEV) /dev/fd0  b 3 128
 	$(MKDEV) /dev/fd1  b 3 160
