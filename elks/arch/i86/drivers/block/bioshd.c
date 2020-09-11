@@ -42,6 +42,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/debug.h>
 
+#include <arch/io.h>
 #include <arch/segment.h>
 #include <arch/system.h>
 #include <arch/irq.h>
@@ -55,6 +56,7 @@
 
 #define MAJOR_NR BIOSHD_MAJOR
 #define BIOSDISK
+#define IDE_PROBE_ENABLE	/* enable CHS priobing via the disk IDE interface */
 
 #include "blk.h"
 
@@ -74,7 +76,6 @@ struct elks_boot_sect {
 } __attribute__((packed));
 
 static int bioshd_initialized = 0;
-
 static struct biosparms bdt;
 
 /* Useful defines for accessing the above structure. */
@@ -89,12 +90,7 @@ static struct biosparms bdt;
 #define BD_ES bdt.es
 #define BD_FL bdt.fl
 
-static struct drive_infot {		/* CHS per drive*/
-    int cylinders;
-    int sectors;
-    int heads;
-    int fdtype;				/* floppy fd_types[] index  or -1 if hd */
-} drive_info[NUM_DRIVES];
+static struct drive_infot drive_info[NUM_DRIVES];
 
 /* This makes probing order more logical and
  * avoids a few senseless seeks in some cases
@@ -150,8 +146,7 @@ static struct gendisk bioshd_gendisk = {
 
 #ifdef CONFIG_BLK_DEV_BHD
 
-static unsigned short int bioshd_gethdinfo(void)
-{
+static unsigned short int bioshd_gethdinfo(void) {
     unsigned short int ndrives = 0;
     int drive;
     register struct drive_infot *drivep = &drive_info[0];
@@ -160,6 +155,7 @@ static unsigned short int bioshd_gethdinfo(void)
     BD_DX = 0x80;
     BD_ES = BD_SI = 0;	/* some buggy BIOS's need this acoording to INT13 on Wiki*/
     ndrives = (call_bios(&bdt) ? 0 : BD_DX & 0xff);
+
     if (ndrives > NUM_DRIVES/2)
 	ndrives = NUM_DRIVES/2;
     for (drive = 0; drive < ndrives; drive++) {
@@ -172,9 +168,18 @@ static unsigned short int bioshd_gethdinfo(void)
 	    /* NOTE: some BIOS may underreport cylinders by 1*/
 	    drivep->cylinders = (((BD_CX & 0xc0) << 2) | (BD_CX >> 8)) + 1;
 	    drivep->fdtype = -1;
-	    printk("bioshd: gethdinfo CHS %d,%d,%d\n", drivep->cylinders,
+	    printk("bioshd: bd%c BIOS CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
 		drivep->heads, drivep->sectors);
 	}
+#ifdef IDE_PROBE_ENABLE
+	if (arch_cpu > 5) {	/* Do this only if AT or higher */
+	    if (!get_ide_data(drive, drivep)) {	/* get CHS from the drive itself */
+		/* sanity checks already done, accepting data */
+		printk("bioshd: bd%c IDE CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
+		drivep->heads, drivep->sectors);
+	    }
+	}
+#endif
 	drivep++;
     }
     return ndrives;
@@ -882,5 +887,6 @@ kdev_t bioshd_conv_bios_drive(unsigned int biosdrive)
 	partition = boot_partition;	/* saved from add_partition()*/
     } else
 	minor = (biosdrive & 0x03) + DRIVE_FD0;
+
     return MKDEV(BIOSHD_MAJOR, (minor << MINOR_SHIFT) + partition);
 }

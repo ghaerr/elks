@@ -37,7 +37,7 @@ OBJS  = init.o genhd.o ll_rw_blk.o rd.o
 
 # BIOS floppy and hard drive support
 ifeq ($(CONFIG_BLK_DEV_BIOS), y)
-OBJS += bioshd.o
+OBJS += bioshd.o idequery.o
 endif
 
 ifeq ($(CONFIG_ROMFS_FS), y)
