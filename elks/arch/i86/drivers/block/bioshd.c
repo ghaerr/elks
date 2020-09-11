@@ -175,7 +175,7 @@ static unsigned short int bioshd_gethdinfo(void) {
 	if (arch_cpu > 5) {	/* Do this only if AT or higher */
 	    if (!get_ide_data(drive, drivep)) {	/* get CHS from the drive itself */
 		/* sanity checks already done, accepting data */
-	    	printk("bioshd: bd%c IDEdata CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
+		printk("bioshd: bd%c IDE CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
 		drivep->heads, drivep->sectors);
 	    }
 	}
