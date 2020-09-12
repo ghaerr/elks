@@ -583,7 +583,7 @@ sys_hdr_good:
 	mov %ax,%ds
 	mov 0x20,%ax     // text reloc size
 	mov %ax,-12(%bp)
-	mov 0x32,%ax     // far text reloc size
+	mov 0x32,%ax     // far text reloc size FIXME changing to 0x34
 	mov %ax,-14(%bp)
 	mov 0x24,%ax     // data reloc size
 	mov %ax,-16(%bp)

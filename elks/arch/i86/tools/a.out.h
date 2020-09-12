@@ -10,12 +10,12 @@ struct exec {			/* a.out header */
     unsigned char a_hdrlen;	/* length of header */
     unsigned char a_unused;	/* reserved for future use */
     unsigned short a_version;	/* version stamp (not used at present) */
-    int32_t a_text;		/* +8:  size of text section in bytes */
-    int32_t a_data;		/* +12: size of data section in bytes */
-    int32_t a_bss;		/* +16: size of bss  section in bytes */
-    int32_t a_entry;	/* +20: entry point */
-    int32_t a_total;	/* +24: total memory allocated */
-    int32_t a_syms;		/* +28: size of symbol table */
+    uint32_t a_text;		/* +8:  size of text section in bytes */
+    uint32_t a_data;		/* +12: size of data section in bytes */
+    uint32_t a_bss;		/* +16: size of bss  section in bytes */
+    uint32_t a_entry;		/* +20: entry point */
+    uint32_t a_total;		/* +24: total memory allocated */
+    uint32_t a_syms;		/* +28: size of symbol table */
 
     /* SHORT FORM ENDS HERE */
     uint32_t a_trsize;		/* text relocation size */
@@ -23,10 +23,10 @@ struct exec {			/* a.out header */
     uint32_t a_tbase;		/* text relocation base */
     uint32_t a_dbase;		/* data relocation base */
     /* even more optional fields --- for ELKS medium memory model support */
-    uint16_t esh_ftseg;		/* far text size */
-    uint16_t esh_ftrsize;	/* far text relocation size */ //FIXME should be uint32
+    uint16_t esh_ftseg;		/* far text size */		//FIXME changing to long
+    uint16_t esh_ftrsize;	/* far text relocation size */	//FIXME changing to long
     uint32_t esh_reserved1;
-	uint32_t esh_reserved2;
+    uint32_t esh_reserved2;
     uint32_t esh_reserved3;
 };
 
@@ -55,8 +55,8 @@ struct exec {			/* a.out header */
 #define A_TOVLY	0x80	/* text overlay */	/* not used */
 
 /* Offsets of various things. */
-#define A_HEADERSIZ	32
-#define	A_TEXTPOS(X)	((int32_t)(X).a_hdrlen)
+#define A_MINHDR	32
+#define	A_TEXTPOS(X)	((uint32_t)(X).a_hdrlen)
 #define A_DATAPOS(X)	(A_TEXTPOS(X) + (X).a_text)
 #define	A_HASRELS(X)	((X).a_hdrlen > (unsigned char) A_MINHDR)
 #define A_HASEXT(X)	((X).a_hdrlen > (unsigned char) (A_MINHDR +  8))
@@ -68,7 +68,7 @@ struct exec {			/* a.out header */
   			((X).a_trsize + (X).a_drsize) : 0))
 
 struct reloc {
-    int32_t r_vaddr;		/* virtual address of reference */
+    uint32_t r_vaddr;		/* virtual address of reference */
     unsigned short r_symndx;	/* internal segnum or extern symbol num */
     unsigned short r_type;	/* relocation type */
 };

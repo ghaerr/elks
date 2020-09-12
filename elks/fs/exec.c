@@ -79,6 +79,9 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 {
     int retval = 0;
     __u16 save_ds = current->t_regs.ds;
+
+    if ((int)rsize % sizeof(struct minix_reloc))
+	return -EINVAL;
     current->t_regs.ds = kernel_ds;
     debug("EXEC: applying 0x%lx bytes of relocations to segment 0x%x\n",
 	   (unsigned long)rsize, place_base);
@@ -94,7 +97,7 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 	    case S_TEXT:
 		val = seg_code->base; break;
 	    case S_FTEXT:
-		val = seg_code->base + bytes_to_paras(mh.tseg); break;
+		val = seg_code->base + bytes_to_paras((size_t)mh.tseg); break;
 	    case S_DATA:
 		val = seg_data->base; break;
 	    default:
@@ -176,13 +179,13 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     /* Sanity check it.  */
     if (retval != (int)sizeof(mh) ||
 	(mh.type != MINIX_SPLITID_AHISTORICAL && mh.type != MINIX_SPLITID) ||
-	mh.tseg == 0) {
-	debug("EXEC: bad header, result %u\n", retval);
+	(size_t)mh.tseg == 0) {
+	debug("EXEC: bad header, result %d\n", retval);
 	goto error_exec3;
     }
 
-    min_len = mh.dseg;
-    if (add_overflow(min_len, mh.bseg, &min_len)) {
+    min_len = (size_t)mh.dseg;
+    if (add_overflow(min_len, (size_t)mh.bseg, &min_len)) {
 	retval = -EINVAL;
 	goto error_exec3;
     }
@@ -211,11 +214,6 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	retval = -EINVAL;
 	if (esuph.msh_tbase != 0)
 	    goto error_exec3;
-	if (esuph.msh_trsize % sizeof(struct minix_reloc) != 0 ||
-	    esuph.msh_drsize % sizeof(struct minix_reloc) != 0 ||
-	    esuph.esh_ftrsize % sizeof(struct minix_reloc) != 0) {
-	    goto error_exec3;
-	}
 	base_data = esuph.msh_dbase;
 #ifdef CONFIG_EXEC_LOW_STACK
 	if (base_data & 0xf)
@@ -328,9 +326,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     if (!seg_code) {
 	segext_t paras;
 	retval = -ENOMEM;
-	paras = bytes_to_paras(mh.tseg);
+	paras = bytes_to_paras((size_t)mh.tseg);
 #ifdef CONFIG_EXEC_MMODEL
-	paras += bytes_to_paras(esuph.esh_ftseg);
+	paras += bytes_to_paras((size_t)esuph.esh_ftseg);
 #endif
 	debug("EXEC: Allocating 0x%x paragraphs for text segment(s)\n",
 	       paras);
@@ -338,27 +336,27 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	if (!seg_code) goto error_exec3;
 	currentp->t_regs.ds = seg_code->base;  // segment used by read()
 	retval = filp->f_op->read(inode, filp, 0, (size_t)mh.tseg);
-	if (retval != (int)mh.tseg) {
+	if (retval != (size_t)mh.tseg) {
 	    debug("EXEC(tseg read): bad result %u, expected %u\n",
-		   retval, (unsigned)mh.tseg);
+		   retval, (size_t)mh.tseg);
 	    goto error_exec4;
 	}
 #ifdef CONFIG_EXEC_MMODEL
-	if (esuph.esh_ftseg) {
-	    currentp->t_regs.ds = seg_code->base + bytes_to_paras(mh.tseg);
+	if ((size_t)esuph.esh_ftseg) {
+	    currentp->t_regs.ds = seg_code->base + bytes_to_paras((size_t)mh.tseg);
 	    retval = filp->f_op->read(inode, filp, 0, (size_t)esuph.esh_ftseg);
-	    if (retval != (int)esuph.esh_ftseg) {
+	    if (retval != (size_t)esuph.esh_ftseg) {
 		debug("EXEC(ftseg read): bad result %u, expected %u\n",
-		       retval, esuph.esh_ftseg);
+		       retval, (size_t)esuph.esh_ftseg);
 		goto error_exec4;
 	    }
 	}
 #endif
     } else {
 	seg_get (seg_code);
-	filp->f_pos += mh.tseg;
+	filp->f_pos += (size_t)mh.tseg;
 #ifdef CONFIG_EXEC_MMODEL
-	filp->f_pos += esuph.esh_ftseg;
+	filp->f_pos += (size_t)esuph.esh_ftseg;
 	need_reloc_code = 0;
 #endif
     }
@@ -375,7 +373,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     retval = filp->f_op->read(inode, filp, (char *)base_data, (size_t)mh.dseg);
 
     if (retval != (size_t)mh.dseg) {
-	debug("EXEC(dseg read): bad result %d, expected %d\n", retval, mh.dseg);
+	debug("EXEC(dseg read): bad result %d, expected %u\n", retval, (size_t)mh.dseg);
 	goto error_exec5;
     }
 
@@ -387,7 +385,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	if (retval != 0)
 	    goto error_exec5;
 	/* Read and apply far text segment relocations */
-	retval = relocate(seg_code->base + bytes_to_paras(mh.tseg),
+	retval = relocate(seg_code->base + bytes_to_paras((size_t)mh.tseg),
 			  esuph.esh_ftrsize, seg_code, seg_data,
 			  inode, filp);
 	if (retval != 0)
@@ -431,7 +429,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     currentp->t_regs.es = currentp->t_regs.ss = seg_data->base;
 
     /* Wipe the BSS */
-    fmemsetb((seg_t) mh.dseg + base_data, seg_data->base, 0, (word_t) mh.bseg);
+    fmemsetb((seg_t)(size_t)mh.dseg + base_data, seg_data->base, 0, (word_t)(size_t)mh.bseg);
     {
 	register int i = 0;
 
