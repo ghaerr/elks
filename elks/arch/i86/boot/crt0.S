@@ -10,11 +10,11 @@
 	.code16
 	.text
 
-	.global entry
+	.global _start
 	.extern	start_kernel
 	.global early_printk
 
-entry:
+_start:
 
 /*
 ! Setup.S already initialized DS and ES (but not SS)

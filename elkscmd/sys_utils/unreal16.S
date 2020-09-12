@@ -25,14 +25,17 @@
 # 7th Mar 2020:
 # Ported to GNU as assembler und ELKS. Added huge unreal mode to support
 # code over 64kb. Georg Potthast
+#
+# 12 Sep 2020:
+# Use `_start' rather than `entry' as program entry point. TK Chia
 ##############################################################################
 
     .code16
 
 	.text
 
-	.global	entry
-entry:
+	.global	_start
+_start:
 
 # set text video mode 80x25 and clear screen
         movw $0x0003,%ax

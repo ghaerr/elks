@@ -3,3 +3,4 @@ bin/mfsck
 bin/mfs
 bin/setboot
 bin/objdump86
+bin/elf2elks

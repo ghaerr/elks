@@ -1,31 +1,35 @@
-OUTPUT_FORMAT(binary)
+ENTRY(_start)
 
 SECTIONS {
-	.hdr : {
-		SHORT (0x0301);  /* ELKS a.out magic */
-		BYTE (0x10);     /* flags : executable with mixed I & D */
-		BYTE (0x04);     /* CPU : i8086 */
-		BYTE (0x20);     /* header length (32) */
-		BYTE (0);        /* unused */
-		SHORT (0);       /* version (unused) */
-		LONG (SIZEOF (.text));
-		LONG (0);        /* .data section size */
-		LONG (0);        /* .bss section size */
-		LONG (_start);    /* entry point */
-		LONG (_total_adjusted); /* total memory allocated */
-		LONG (0);        /* symbol table size */
-		}
-	_begintext = ALIGN(0x20);
-	.text 0 : AT(_begintext) { *(.text*) *(.rodata*) *(.data*) }
-	.bss : {
-		*(.bss) *(COMMON)
-		ASSERT (. + 0x100 <= 0xfff0,
+	.text 0x10000 : {
+		/* IA-16 segment start markers. */
+		*(".text!*" ".text.*!")
+		*(".rodata!*" ".rodata.*!")
+		*(".data!*" ".data.*!")
+		*(".bss!*" ".bss.*!")
+
+		/* Actual segment contents. */
+		*(.text .text$* ".text.*[^&]")
+		*(.rodata .rodata$* ".rodata.*[^&]")
+		*(.data .data$* ".data.*[^&]")
+		*(.bss .bss$* ".bss.*[^&]")
+		*(COMMON)
+
+		/* IA-16 segment end markers. */
+		*(".text&*" ".text.*&")
+		*(".nildata&*" ".nildata.*&")
+		*(".rodata&*" ".rodata.*&")
+		*(".data&*" ".data.*&")
+		*(".bss&*" ".bss.*&")
+
+		ASSERT (. + 0x100 - ADDR (.text) <= 0xfff0,
 		    "Error: too large for a tiny-model ELKS a.out file.");
 	}
-	PROVIDE (_start = entry); /* `entry' was the old entry point symbol */
-	PROVIDE (_chmem = 0);
-	PROVIDE (_total = _chmem == 0 ? 0 : . + _chmem);
-	_total_adjusted = _total == 0 ? 0
-			  : MIN (0xfff0, MAX (. + 0x100, _total));
+
 	/DISCARD/ : { *(.comment) }
+
+	/* `entry' was the old entry point symbol.  (Unfortunately this
+	   PROVIDE does not seem to work with the ld.gold linker --- it did
+	   work with ld.bfd.  FIXME?)  */
+	PROVIDE (_start = DEFINED (entry) ? entry : 0);
 }

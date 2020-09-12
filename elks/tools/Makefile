@@ -32,6 +32,7 @@ all:
 	$(MAKE) -C mkromfs all
 	$(MAKE) -C setboot all
 	$(MAKE) -C objdump86 all
+	$(MAKE) -C elf2elks all
 
 
 #########################################################################
