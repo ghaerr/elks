@@ -226,7 +226,7 @@ int main(int argc, char **argv)
     fsz = 0;
     sz = intel_long(ex->a_text) + intel_long(ex->a_data) + intel_long(ex->a_bss);
     if (ex->a_hdrlen == SUPL_HEADER) {
-	fsz = intel_short(ex->esh_ftseg);	//FIXME changing to long
+	fsz = intel_long(ex->esh_ftseg);
 	sz += fsz;
     }
     fprintf(stderr, "System is %d B (%d B code, %d B fartext, %d B data and %u B bss)\n",
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
     if (ex->a_hdrlen == SUPL_HEADER) {
 	    sz += fsz;
 	    sz += intel_long(ex->a_trsize) + intel_long(ex->a_drsize)
-	       + intel_short(ex->esh_ftrsize);	//FIXME changing to long
+	       + intel_long(ex->esh_ftrsize);
     }
     if (intel_long(ex->a_data) + intel_long(ex->a_bss) > 65535) {
 	fprintf(stderr, "Image too large.\n");

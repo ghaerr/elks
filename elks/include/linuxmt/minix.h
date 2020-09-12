@@ -43,10 +43,9 @@ struct elks_supl_hdr {
     unsigned long	msh_tbase;	/* text relocation base */
     unsigned long	msh_dbase;	/* data relocation base */
     /* even more optional fields --- for ELKS medium memory model support */
-    unsigned short	esh_ftseg;	/* far text size */		// 0x30 FIXME changing to long
-    unsigned long	esh_ftrsize;	/* far text relocation size */	// 0x32
-    unsigned short	esh_reserved1;
-    unsigned long	esh_reserved2, esh_reserved3;
+    unsigned long	esh_ftseg;	/* far text size */		// 0x30
+    unsigned long	esh_ftrsize;	/* far text relocation size */	// 0x34
+    unsigned long	esh_reserved1, esh_reserved2;
 };
 
 struct minix_reloc {
