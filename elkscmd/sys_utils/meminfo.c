@@ -27,7 +27,7 @@ int bflag;		/* show buffer memory*/
 int allflag;	/* show all memory*/
 
 unsigned int ds;
-unsigned int heap_first;
+unsigned int heap_all;
 
 int memread(int fd, word_t off, word_t seg, void *buf, int size)
 {
@@ -51,16 +51,16 @@ word_t getword(int fd, word_t off, word_t seg)
 
 void dump_heap(int fd)
 {
-	word_t h = heap_first;
 	word_t total_size = 0;
 	long total_segsize = 0;
 	static char *heaptype[] = { "free", "SEG ", "STR ", "TTY " };
 	static char *segtype[] = { "free", "CSEG", "DSEG", "BUF ", "RDSK" };
 
-	if (!h)
-		return;
 	printf("  HEAP   TYPE  SIZE    SEG   TYPE    SIZE  CNT\n");
-	do {
+
+	word_t n = getword (fd, heap_all + offsetof(list_s, next), ds);
+	while (n != heap_all) {
+		word_t h = n - offsetof(heap_s, all);
 		word_t size = getword(fd, h + offsetof(heap_s, size), ds);
 		byte_t tag = getword(fd, h + offsetof(heap_s, tag), ds) & HEAP_TAG_TYPE;
 		word_t mem = h + sizeof(heap_s);
@@ -95,8 +95,8 @@ void dump_heap(int fd)
 		}
 
 		/* next in heap*/
-		h = getword(fd, (word_t)h + offsetof(heap_s, node) + offsetof(list_s, next), ds);
-	} while (h != heap_first);
+		n = getword(fd, n + offsetof(list_s, next), ds);
+	}
 
 	printf("  Total heap  %5d     Total mem %7ld\n", total_size, total_segsize);
 }
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 		perror("meminfo");
 		return 1;
 	}
-	if (ioctl(fd, MEM_GETDS, &ds) || ioctl(fd, MEM_GETHEAP, &heap_first)) {
+	if (ioctl(fd, MEM_GETDS, &ds) || ioctl(fd, MEM_GETHEAP, &heap_all)) {
 		perror("meminfo");
 		return 1;
 	}

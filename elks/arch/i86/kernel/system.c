@@ -47,6 +47,7 @@ void setup_arch(seg_t *start, seg_t *end)
 	unsigned int endbss = (unsigned int)(_endbss + 1) & ~1;
 
 	/* Now insert local heap at end of kernel data segment */
+	heap_init ();
 	heap_add ((void *)endbss, 1 + ~endbss);
 
 	/* Misc */

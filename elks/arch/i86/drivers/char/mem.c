@@ -168,7 +168,6 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 {
     unsigned short retword;
     struct mem_usage mu;
-    extern heap_s *_heap_first;
 
     switch (cmd) {
 #ifdef CONFIG_MODULES
@@ -198,7 +197,7 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 #endif
 	return 0;
     case MEM_GETHEAP:
-	retword = (unsigned short)_heap_first;
+	retword = (unsigned short) &_heap_all;
 	break;
     default:
 	return -EINVAL;
