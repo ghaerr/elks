@@ -188,9 +188,7 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 	retword = kernel_ds;
 	break;
     case MEM_GETUSAGE:
-	mu.free_memory = mm_get_usage(MM_MEM, 0);
-	mu.used_memory = mm_get_usage(MM_MEM, SEG_FLAG_USED);
-
+	mm_get_usage (&(mu.free_memory), &(mu.used_memory));
 	memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
 #ifdef HEAP_DEBUG
 	heap_iterate (heap_cb);

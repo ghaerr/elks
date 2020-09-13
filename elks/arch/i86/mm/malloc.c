@@ -19,9 +19,7 @@
 // and to ease the 286 protected mode
 // whenever that mode comes back one day
 
-
-// TODO: locking
-static segment_s * _seg_first;
+static list_s _seg_all;
 
 
 // Split segment if enough large
@@ -41,7 +39,7 @@ static int seg_split (segment_s * s1, segext_t size0)
 		s2->flags = SEG_FLAG_FREE;
 		s2->ref_count = 0;
 
-		list_insert_after (&s1->node, &s2->node);
+		list_insert_after (&s1->all, &s2->all);
 
 		s1->size = size0;
 	}
@@ -54,25 +52,24 @@ static int seg_split (segment_s * s1, segext_t size0)
 
 static segment_s * seg_free_get (segext_t size0, word_t type)
 {
-	segment_s * best_seg  = 0;
-	segext_t best_size = 0xFFFF;
-
-	if (!_seg_first) return 0;
-	segment_s * seg = _seg_first;
-
 	// First get the smallest suitable free segment
 	// TODO: improve speed with free list
 
-	while (1) {
+	segment_s * best_seg  = 0;
+	segext_t best_size = 0xFFFF;
+	list_s * n = _seg_all.next;
+
+	while (n != &_seg_all) {
+		segment_s * seg = structof (n, segment_s, all);
 		segext_t size1 = seg->size;
+
 		if (!(seg->flags & SEG_FLAG_USED) && (size1 >= size0) && (size1 < best_size)) {
 			best_seg  = seg;
 			best_size = size1;
 			if (size1 == size0) break;
 		}
 
-		seg = structof (seg->node.next, segment_s, node);
-		if (seg == _seg_first) break;
+		n = seg->all.next;
 	}
 
 	// Then allocate that free segment
@@ -94,7 +91,7 @@ static segment_s * seg_free_get (segext_t size0, word_t type)
 
 static void seg_merge (segment_s * s1, segment_s * s2)
 {
-	list_remove (&s2->node);
+	list_remove (&s2->all);
 	s1->size += s2->size;
 	heap_free (s2);
 }
@@ -104,21 +101,24 @@ static void seg_merge (segment_s * s1, segment_s * s2)
 
 static segment_s * seg_merge_prev (segment_s * seg)
 {
-	if (seg == _seg_first) return seg;
-	segment_s * prev = structof (seg->node.prev, segment_s, node);
+	if (_seg_all.next == &(seg->all)) return seg;
+	segment_s * prev = structof (seg->all.prev, segment_s, all);
 	if (prev->flags & SEG_FLAG_USED) return seg;
 	seg_merge (prev, seg);
 	return prev;
-		}
+}
 
 
 // Try to merge with next segment
 
 static void seg_merge_right (segment_s * seg)
 {
-	segment_s * next = structof (seg->node.next, segment_s, node);
-	if (next != _seg_first && !(next->flags & SEG_FLAG_USED))
-		seg_merge (seg, next);
+	list_s * n = seg->all.next;
+	if (n->next != &_seg_all) {
+		segment_s * next = structof (n, segment_s, all);
+		if (next->flags == SEG_FLAG_FREE)
+			seg_merge (seg, next);
+	}
 }
 
 
@@ -182,29 +182,34 @@ segment_s * seg_dup (segment_s * src)
 }
 
 
-// Get memory information (free or used) in KB
+// Get memory information (free and used) in KB
 
-unsigned int mm_get_usage(int type, int used)
+void mm_get_usage (int * pfree, int * pused)
 {
-	segment_s * seg = _seg_first;
-	if (!_seg_first) return 0;
+	int free = 0;
+	int used = 0;
 
-	long res = 0;
+	list_s * n = _seg_all.next;
 
-	if (type == MM_MEM) {
-		while (1) {
-			/*if (used) printk ("seg %X: size %u used %u count %u\n",
-				seg->base, seg->size, seg->flags, seg->ref_count);*/
+	while (n != &_seg_all) {
+		segment_s * seg = structof (n, segment_s, all);
 
-			if ((seg->flags & SEG_FLAG_USED) == used)
-				res += seg->size;
+		/*if (used) printk ("seg %X: size %u used %u count %u\n",
+			seg->base, seg->size, seg->flags, seg->ref_count);*/
 
-			seg = structof (seg->node.next, segment_s, node);
-			if (seg == _seg_first) break;
-		}
+		if (seg->flags == SEG_FLAG_FREE)
+			free += seg->size;
+		else
+			used += seg->size;
+
+		n = seg->all.next;
 	}
 
-	return ((res + 31) >> 6);		/* floor, not ceiling, so average return*/
+	// Convert paragraphs to kilobytes
+	// Floor, not ceiling, so average return
+
+	*pfree = ((free + 31) >> 6);
+	*pused = ((used + 31) >> 6);
 }
 
 
@@ -257,6 +262,8 @@ int sys_sbrk (int increment, __u16 * pbrk)
 
 void mm_init(seg_t start, seg_t end)
 {
+	list_init (&_seg_all);
+
 	segment_s * seg = (segment_s *) heap_alloc (sizeof (segment_s), HEAP_TAG_SEG);
 	if (seg) {
 		seg->base = start;
@@ -264,8 +271,7 @@ void mm_init(seg_t start, seg_t end)
 		seg->flags = SEG_FLAG_FREE;
 		seg->ref_count = 0;
 
-		list_init (&seg->node);
-		_seg_first = seg;
+		list_insert_before (&_seg_all, &(seg->all));  // add tail
 	}
 }
 
